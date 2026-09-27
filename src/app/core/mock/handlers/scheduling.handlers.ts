@@ -12,13 +12,14 @@ import {
   type ReservaSimulada,
 } from '../fixtures/agenda';
 import { TIPO_CITA_RECONSULTA } from '../fixtures/agenda';
-import { ACTIVIDAD, CANAL, ESTADO, ESTADO_RESERVA, TIPO_BLOQUEO, TIPO_CITA } from '../fixtures/conceptos';
+import { ACTIVIDAD, CANAL, CLASE_ENCUENTRO, ESTADO, ESTADO_ENCUENTRO, ESTADO_RESERVA, TIPO_BLOQUEO, TIPO_CITA } from '../fixtures/conceptos';
+import { encuentros, type EncuentroSimulado } from '../fixtures/clinica';
 import type { FollowUpOrigin } from '../../data-access/scheduling/scheduling.types';
 import { emitirNotificacion } from './notifications.handlers';
 import { solicitudDeLaCita } from './insurance.handlers';
-import { pacientePorId } from '../fixtures/personas';
+import { pacientePorId, pacientes } from '../fixtures/personas';
 import { representaA } from './profiles.handlers';
-import { conflict, forbidden, noContent, notFound, preconditionFailed, reply, validation, type MockRequest, type MockRouter } from '../mock-router';
+import { conflict, forbidden, noContent, notFound, preconditionFailed, reply, validation, type MockReply, type MockRequest, type MockRouter } from '../mock-router';
 import { ahora, cuerpo, masMinutos, nuevoId, texto, uuid } from '../mock-store';
 
 /* ============================================================================
@@ -170,6 +171,66 @@ function avisarDemoraAlPaciente(
     payloadJson: { bookingId: reserva.id, delayMinutes: minutos },
   });
   return true;
+}
+
+/* ---- Idempotency-Key -------------------------------------------------------
+
+   El espejo del `IdempotencyInterceptor` de la API (PR #494 del API) para el
+   turno de mostrador, que es la escritura de este archivo que el cliente manda
+   con la cabecera (PR #727 del front):
+
+   - la clave vale por usuario + método + ruta: la misma en otra operación es
+     otra operación;
+   - la repetición con el mismo cuerpo devuelve **la misma respuesta y el mismo
+     status** sin volver a ejecutar, con `Idempotent-Replayed: true`;
+   - la misma clave con otro cuerpo es **422 `IDEMPOTENCY_KEY_REUSED`**;
+   - sólo se recuerdan los éxitos: un 409 o un 422 de negocio pueden dejar de
+     serlo, y fijarlos obligaría a cambiar de clave para un reintento legítimo;
+   - sin cabecera, nada cambia.
+
+   Sin esto, un doble clic en «Registrar ingreso» daba de alta dos pacientes
+   con la misma cédula en la maqueta, y la API real responde el segundo con la
+   respuesta del primero. */
+
+const idempotentReplies = new Map<string, { readonly fingerprint: string; readonly reply: MockReply }>();
+
+/** JSON con las claves ordenadas: el orden en que viajan no cambia la huella. */
+function canonicalJson(value: unknown): string {
+  if (Array.isArray(value)) return `[${value.map(canonicalJson).join(',')}]`;
+  if (value !== null && typeof value === 'object') {
+    return `{${Object.keys(value)
+      .sort()
+      .map((key) => `${JSON.stringify(key)}:${canonicalJson((value as Record<string, unknown>)[key])}`)
+      .join(',')}}`;
+  }
+  return JSON.stringify(value) ?? 'null';
+}
+
+function withIdempotency(request: MockRequest, execute: () => MockReply): MockReply {
+  const key = request.headers.get('Idempotency-Key');
+  if (key === null) return execute();
+  if (key.trim() === '' || key !== key.trim() || key.length > 255) {
+    return validation('Idempotency-Key inválida', [
+      { field: 'Idempotency-Key', message: 'must be a non-empty string without spaces of up to 255 characters' },
+    ]);
+  }
+  const scope = `${request.user?.id ?? 'anonymous'} ${request.method} ${request.path} ${key}`;
+  const fingerprint = canonicalJson({ body: request.body ?? null, query: request.query.toString() });
+  const previous = idempotentReplies.get(scope);
+  if (previous !== undefined) {
+    if (previous.fingerprint !== fingerprint) {
+      return reply(422, {
+        statusCode: 422,
+        code: 'IDEMPOTENCY_KEY_REUSED',
+        message: 'La clave de idempotencia ya se usó con otro contenido.',
+        error: 'Unprocessable Entity',
+      });
+    }
+    return { ...previous.reply, headers: { ...previous.reply.headers, 'Idempotent-Replayed': 'true' } };
+  }
+  const result = execute();
+  if (result.status >= 200 && result.status < 300) idempotentReplies.set(scope, { fingerprint, reply: result });
+  return result;
 }
 
 export function registrarAgenda(router: MockRouter): void {
@@ -523,6 +584,198 @@ export function registrarAgenda(router: MockRouter): void {
     reservas.agregar(nueva);
     return { status: 201, body: { bookingId: nueva.id, bookableSlotId: cupo.id, statusConceptId: nueva.statusConceptId, retractedSlots: pisados.length } };
   });
+
+  /**
+   * El turno de mostrador (AC-3.3): alta del paciente sin cuenta, reserva,
+   * encuentro abierto e inicio de la atención, todo o nada — el espejo de
+   * `SchedulingWalkInService`.
+   *
+   * Los rechazos, en el orden en que la API los encuentra:
+   *
+   * 1. **400** — falta un dato obligatorio del paciente o de la cita, o viene
+   *    el teléfono del tutor sin su nombre.
+   * 2. **404** — la agenda no existe.
+   * 3. **409** — el documento YA está registrado: el mostrador tiene que
+   *    buscarlo y agendarle con `appointments/direct`, no duplicarlo.
+   * 4. **422** — el horario pisa otro turno vivo de esa agenda.
+   *
+   * La reserva nace `IN_PROGRESS` y el encuentro `IN_PROGRESS`: quien llegó al
+   * mostrador ya está siendo atendido.
+   */
+  router.post('/scheduling/appointments/walk-in', (request) =>
+    withIdempotency(request, () => {
+      const data = cuerpo<{
+        patient: {
+          name?: string;
+          middleName?: string;
+          lastName?: string;
+          motherLastName?: string;
+          nationalId?: string;
+          phone?: string;
+          birthDate?: string;
+          occupationConceptId?: string;
+          issuerAdministrativeAreaConceptId?: string;
+          guardianName?: string;
+          guardianPhone?: string;
+        };
+        resourceId: string;
+        startAt: string;
+        durationMinutes: number;
+        reasonText?: string;
+        channel?: string;
+      }>(request);
+      const patientData = data.patient ?? {};
+
+      const missing = [
+        ...(['name', 'lastName', 'nationalId', 'phone'] as const)
+          .filter((field) => (patientData[field] ?? '').trim() === '')
+          .map((field) => ({ field: `patient.${field}`, message: 'should not be empty' })),
+        ...(['resourceId', 'startAt'] as const)
+          .filter((field) => (data[field] ?? '') === '')
+          .map((field) => ({ field, message: 'should not be empty' })),
+        ...(typeof data.durationMinutes === 'number' && data.durationMinutes > 0
+          ? []
+          : [{ field: 'durationMinutes', message: 'must be a positive number' }]),
+        ...(patientData.guardianPhone !== undefined && (patientData.guardianName ?? '').trim() === ''
+          ? [{ field: 'patient.guardianName', message: 'is required when guardianPhone is present' }]
+          : []),
+      ];
+      if (missing.length > 0) return validation('Faltan datos del turno de mostrador', missing);
+
+      const resource = recursos.get(data.resourceId!);
+      if (resource === undefined) return notFound('La agenda no existe');
+
+      const nationalId = patientData.nationalId!.trim();
+      if (pacientes.todos().some((p) => p.nationalId === nationalId)) {
+        return conflict(
+          'Ya existe un paciente con ese documento de identidad. Buscalo con ' +
+            'GET /profiles/patients?nationalId= en vez de registrarlo de nuevo.',
+        );
+      }
+
+      const startAt = data.startAt!;
+      const endAt = masMinutos(startAt, data.durationMinutes!);
+      const clash = reservas
+        .todos()
+        .find(
+          (r) =>
+            r.resourceId === resource.id &&
+            !estadoEs(r, 'BK-CANCELLED', 'BK-REJECTED', 'BK-COMPLETED', 'BK-NO-SHOW') &&
+            r.startAt < endAt &&
+            r.endAt > startAt,
+        );
+      if (clash !== undefined) {
+        const time = new Date(clash.startAt).toLocaleTimeString('es-BO', { hour: '2-digit', minute: '2-digit' });
+        return preconditionFailed(
+          `${resource.practitionerName ?? 'La agenda'} ya tiene a ${clash.patientName} a las ${time}: el turno de mostrador se superpone.`,
+          { bookingId: clash.id, startAt: clash.startAt, endAt: clash.endAt },
+        );
+      }
+
+      // El alta del paciente: lo mismo que `POST /profiles/patients`, con lo
+      // que el mostrador pregunta y nada inventado para completar la fila.
+      const displayName = [patientData.name, patientData.middleName, patientData.lastName, patientData.motherLastName]
+        .map((part) => (part ?? '').trim())
+        .filter((part) => part !== '')
+        .join(' ');
+      const patientProfileId = nuevoId('paciente-mostrador');
+      const newPatient: Parameters<typeof pacientes.agregar>[0] = {
+        id: patientProfileId,
+        personId: uuid(`person-${patientProfileId}`),
+        userId: uuid(`user-${patientProfileId}`),
+        patientCode: `PAT-${patientProfileId.slice(-8).toUpperCase()}`,
+        displayName,
+        name: patientData.name!.trim(),
+        ...(patientData.middleName === undefined ? {} : { middleName: patientData.middleName.trim() }),
+        lastName: patientData.lastName!.trim(),
+        motherLastName: (patientData.motherLastName ?? '').trim(),
+        birthDate: patientData.birthDate ?? '',
+        nationalId,
+        email: '',
+        phone: patientData.phone!.trim(),
+        municipioId: '',
+        departamentoId: patientData.issuerAdministrativeAreaConceptId ?? '',
+        ocupacionId: patientData.occupationConceptId ?? '',
+        direccion: '',
+        deceased: false,
+        // Nace sin identidad probada: nadie verificó nada en el mostrador.
+        identityVerified: false,
+      };
+      pacientes.agregar(newPatient);
+
+      // La cita, igual que la directa: retira los cupos ofrecidos que pisa.
+      const overlapped = cupos.filtrar((c) => c.resourceId === resource.id && c.startAt < endAt && c.endAt > startAt);
+      for (const c of overlapped) cupos.actualizar(c.id, { remainingCapacity: 0, statusConceptId: ESTADO['ST-CLOSED']! });
+      const slot: CupoSimulado = {
+        id: nuevoId('slot-mostrador'),
+        resourceId: resource.id,
+        scheduleTemplateId: null,
+        startAt,
+        endAt,
+        capacity: 1,
+        remainingCapacity: 0,
+        statusConceptId: ESTADO['ST-ACTIVE']!,
+        serviceConceptId: ACTIVIDAD['ACT-CONSULTA']!,
+      };
+      cupos.agregar(slot);
+      const booking: ReservaSimulada = {
+        id: nuevoId('booking-mostrador'),
+        patientProfileId,
+        resourceId: resource.id,
+        bookableSlotId: slot.id,
+        appointmentId: nuevoId('appointment'),
+        typeConceptId: TIPO_CITA['APT-PRIMERA']!,
+        startAt,
+        endAt,
+        statusConceptId: ESTADO_RESERVA['BK-IN-PROGRESS']!,
+        serviceConceptId: ACTIVIDAD['ACT-CONSULTA']!,
+        bookingChannelConceptId:
+          data.channel === 'TELECONSULTA'
+            ? CANAL['CH-TELECONSULTA']!
+            : data.channel === 'DOMICILIO'
+              ? CANAL['CH-DOMICILIO']!
+              : CANAL['CH-PRESENCIAL']!,
+        confirmedAt: ahora(),
+        checkedInAt: ahora(),
+        reasonText: data.reasonText ?? 'Turno de mostrador',
+        patientName: displayName,
+        insuranceCarrierName: null,
+        rescheduledFrom: null,
+        statusReason: null,
+        delayNotice: null,
+        paymentState: null,
+        followUpOf: null,
+        createdAt: ahora(),
+      };
+      reservas.agregar(booking);
+
+      // El encuentro abierto, que es a donde el médico entra a registrar la
+      // atención apenas se cierra el alta.
+      const encounter: EncuentroSimulado = {
+        id: nuevoId('encounter'),
+        patientProfileId,
+        statusConceptId: ESTADO_ENCUENTRO['ENCST-IN-PROGRESS']!,
+        classConceptId: CLASE_ENCUENTRO['ENC-AMB']!,
+        primaryPractitionerId: resource.resourceRefId,
+        reasonText: booking.reasonText,
+        startAt: ahora(),
+        endAt: null,
+      };
+      encuentros.agregar(encounter);
+
+      return reply(201, {
+        patientProfileId,
+        personId: newPatient.personId,
+        patientCode: newPatient.patientCode,
+        bookingId: booking.id,
+        bookableSlotId: slot.id,
+        appointmentId: booking.appointmentId,
+        encounterId: encounter.id,
+        statusConceptId: booking.statusConceptId,
+        retractedSlots: overlapped.length,
+      });
+    }),
+  );
 
   /* ---- plantillas --------------------------------------------------------- */
 
