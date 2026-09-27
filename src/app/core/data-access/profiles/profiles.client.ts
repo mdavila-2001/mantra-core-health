@@ -340,7 +340,9 @@ export class ProfilesClient {
    * No crea nada todavía: a esa cuenta le llega una notificación y el vínculo
    * nace recién cuando la acepta. `404` es «no hay cuenta con ese CI».
    *
-   * Hoy sólo la atiende el simulador de `mockup`; la API no la publica.
+   * La publica la API desde mdavila-2001/mantra-core-health-api#493: la
+   * solicitud es un apoderamiento pendiente que no habilita nada hasta que la
+   * otra persona lo acepta. El simulador de `mockup` responde lo mismo.
    */
   requestDependentLink(nationalId: string): Observable<DependentLinkRequestSent> {
     return this.http.post<DependentLinkRequestSent>(

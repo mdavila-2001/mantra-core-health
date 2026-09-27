@@ -304,25 +304,25 @@ const CONCEPTOS_DE_DIAGNOSTICOS = {
     },
     {
       conceptId: 'st-cond-activa',
-      code: 'COND-ACTIVE',
+      code: 'COND_ACTIVE',
       display: 'Activa',
       codeSystemVersionId: 'v1',
     },
     {
       conceptId: 'st-confirmado',
-      code: 'DXV-CONFIRMED',
+      code: 'COND_CONFIRMED',
       display: 'Confirmado',
       codeSystemVersionId: 'v1',
     },
     {
       conceptId: 'st-provisional',
-      code: 'DXV-PROVISIONAL',
+      code: 'COND_PROVISIONAL',
       display: 'Provisional',
       codeSystemVersionId: 'v1',
     },
     {
       conceptId: 'st-descartado',
-      code: 'DXV-REFUTED',
+      code: 'COND_REFUTED',
       display: 'Descartado',
       codeSystemVersionId: 'v1',
     },
@@ -915,8 +915,8 @@ describe('MedicalRecord', () => {
   /**
    * **El kill-test del carril.** Si un diagnóstico rechazado apareciera como
    * enfermedad activa, la historia estaría afirmando que la persona tiene algo
-   * que su médico descartó. Es activo en lo clínico (`COND-ACTIVE`) y descartado
-   * en la certeza (`DXV-REFUTED`): la certeza manda.
+   * que su médico descartó. Es activo en lo clínico (`COND_ACTIVE`) y descartado
+   * en la certeza (`COND_REFUTED`): la certeza manda.
    */
   it('un diagnóstico descartado NUNCA aparece como enfermedad activa', async () => {
     await abrirDiagnosticos();

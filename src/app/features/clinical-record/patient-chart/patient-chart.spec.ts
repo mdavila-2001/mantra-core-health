@@ -337,18 +337,18 @@ describe('PatientChart', () => {
     const CONCEPTOS_C3 = {
       items: [
         ...CONCEPTOS.items,
-        { conceptId: 'vs-confirmed', code: 'DXV-CONFIRMED', display: 'Confirmado', codeSystemVersionId: 'v1' },
+        { conceptId: 'vs-confirmed', code: 'COND_CONFIRMED', display: 'Confirmado', codeSystemVersionId: 'v1' },
         {
           conceptId: 'con-hipertension',
           code: 'I10',
           display: 'Hipertensión arterial esencial',
           codeSystemVersionId: 'v1',
         },
-        // `st-activa` (arriba) tiene código `ACTIVE`, no `COND-ACTIVE`
+        // `st-activa` (arriba) tiene código `ACTIVE`, no `COND_ACTIVE`
         // (`CODIGO_ACTIVA`): sirve para el resto de los tests, que sólo miran
         // el texto, pero `diagnosisStateOf` compara por código — necesita el
         // suyo propio para clasificar de verdad como `ACTIVE`.
-        { conceptId: 'st-activa-cond', code: 'COND-ACTIVE', display: 'Activa', codeSystemVersionId: 'v1' },
+        { conceptId: 'st-activa-cond', code: 'COND_ACTIVE', display: 'Activa', codeSystemVersionId: 'v1' },
       ],
       count: CONCEPTOS.count + 3,
       limit: 200,

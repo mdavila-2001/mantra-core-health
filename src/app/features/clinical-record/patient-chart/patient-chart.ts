@@ -221,7 +221,7 @@ export interface FilaClinica {
   /** Por qué se confirmó o rechazó (C3) — ausente o vacío fuera de Diagnósticos. */
   readonly decision?: string;
 
-  /** Si sigue `DXV-PROVISIONAL` (C3) — sólo entonces el menú ofrece confirmar/rechazar. */
+  /** Si sigue `COND_PROVISIONAL` (C3) — sólo entonces el menú ofrece confirmar/rechazar. */
   readonly presuntivo?: boolean;
 
   /** La condición cruda (C3), para pasársela a `app-diagnosis-verify-dialog`. */
@@ -1785,7 +1785,7 @@ export class PatientChart {
 
   /**
    * El código estable de un concepto (C3): `diagnosisStateOf` compara contra
-   * códigos como `DXV-CONFIRMED`, nunca contra el uuid del concepto.
+   * códigos como `COND_CONFIRMED`, nunca contra el uuid del concepto.
    */
   private codigo(conceptId: string | undefined): string | undefined {
     return conceptId === undefined ? undefined : this.etiquetas().get(conceptId)?.code;
