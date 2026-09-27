@@ -490,6 +490,28 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M20 diagnostics',
   },
   {
+    // La cola de trabajo del laboratorio, para su propio personal. Es la misma
+    // pantalla que «Laboratorio e imagen» (`GET /diagnostics/work-orders`),
+    // pero aquélla exige `CLINICIAN`/`PRACTITIONER` y el personal de un centro
+    // de diagnóstico no tiene rol en el token: la API la abre con
+    // `LabStaffGuard` (membresía en un `DIAGNOSTIC_CENTER`), y el menú, igual
+    // que la recepción, mira el tipo de la organización activa. Dos secciones
+    // y no una con dos reglas: `isVisibleTo` no sabe decir «este rol **o**
+    // este tipo de organización», y enseñárselo para una sola pantalla sería
+    // una regla nueva en el corazón del menú.
+    path: 'laboratorio/cola',
+    label: 'Cola de trabajo',
+    group: 'Atención',
+    icon: 'scan',
+    roles: [ANY_ROLE],
+    requiresTenant: true,
+    hiddenFor: ['PATIENT'],
+    onlyForTenantTypes: ['DIAGNOSTIC_CENTER'],
+    availability: 'disponible',
+    summary: 'Seguí las órdenes de trabajo de las muestras que acesionaste.',
+    module: 'M20 diagnostics',
+  },
+  {
     // Carril 12. Los cinco roles perioperatorios que declara `PeriopController`
     // en sus lecturas; `BILLING` queda afuera a propósito: figura sólo en el
     // endpoint de cargos, que es contabilidad del caso y no atención.

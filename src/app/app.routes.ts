@@ -114,6 +114,10 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
   // personal de un centro de diagnóstico.
   'laboratorio/recepcion': () =>
     import('./features/lab-reception/lab-reception').then((m) => m.LabReception),
+  // La cola de trabajo del laboratorio para su propio personal: la misma
+  // pantalla que «Laboratorio e imagen», bajo la sección que ve un centro de
+  // diagnóstico (ver `navigation.map.ts`).
+  'laboratorio/cola': () => import('./features/diagnostics/diagnostics').then((m) => m.Diagnostics),
   interventions: () =>
     import('./features/interventions/interventions').then((m) => m.Interventions),
   'medical-records': () =>

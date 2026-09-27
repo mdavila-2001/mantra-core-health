@@ -843,6 +843,13 @@ function specimenDetail(specimen: LabSpecimenRecord) {
 }
 
 /**
+ * Los catálogos contra los que la API valida el alta de espécimen y de
+ * contenedor (422 `PRECONDITION_FAILED` con `details.reason`).
+ */
+const SPECIMEN_TYPE_IDS: ReadonlySet<string> = new Set(Object.values(SPECIMEN_TYPE));
+const CONTAINER_TYPE_IDS: ReadonlySet<string> = new Set(Object.values(SPECIMEN_CONTAINER_TYPE));
+
+/**
  * Si quien pide es personal del laboratorio del tenant activo: la regla de
  * `LabStaffGuard` en la API. `SUPERADMIN`; `CLINICIAN`/`PRACTITIONER` que
  * valgan en ese tenant (los de `scopedRoles` sólo donde fueron concedidos); o
@@ -1036,7 +1043,14 @@ export function registrarDiagnostico(router: MockRouter): void {
       .map((o) => ({ id: uuid(`imaging-${o.id}`), patientProfileId: o.patientProfileId, serviceRequestId: o.id, statusConceptId: o.statusConceptId, studyInstanceUid: `1.2.826.0.1.${Math.abs(o.id.charCodeAt(0) * 7919)}` })),
   );
 
-  router.get('/diagnostics/work-orders', ({ query }) => {
+  // La cola de trabajo la autoriza `LabStaffGuard` en la API, igual que la
+  // recepción: el personal del laboratorio por su membresía, y
+  // CLINICIAN/PRACTITIONER como antes.
+  router.get('/diagnostics/work-orders', ({ query, headers, user }) => {
+    const tenantId = headers.get('X-Tenant-Id') ?? user?.tenants[0] ?? null;
+    if (!isLabStaff(user, tenantId)) {
+      return forbidden('Se requiere ser personal del laboratorio de la organización activa');
+    }
     const status = texto(query, 'statusConceptId');
     const assigned = texto(query, 'assignedProfileId');
     return ordenesDeTrabajo
@@ -1057,6 +1071,14 @@ export function registrarDiagnostico(router: MockRouter): void {
     const data = cuerpo<{ patientProfileId: string; custodianTenantId: string; specimenTypeConceptId: string; serviceRequestId?: string }>(request);
     const missing = requiredFields(data, ['patientProfileId', 'custodianTenantId', 'specimenTypeConceptId']);
     if (missing.length > 0) return validation('Faltan datos del espécimen', missing);
+    if (!SPECIMEN_TYPE_IDS.has(data.specimenTypeConceptId!)) {
+      return preconditionFailed('El tipo de espécimen no pertenece al catálogo de tipos de espécimen', {
+        reason: 'SPECIMEN_TYPE_NOT_IN_CATALOG',
+        field: 'specimenTypeConceptId',
+        conceptId: data.specimenTypeConceptId,
+        catalog: 'specimen-type',
+      });
+    }
     const specimen: LabSpecimenRecord = {
       id: nuevoId('specimen'),
       patientProfileId: data.patientProfileId!,
@@ -1174,6 +1196,14 @@ export function registrarDiagnostico(router: MockRouter): void {
     const data = cuerpo<{ containerIdentifier: string; containerTypeConceptId: string }>(request);
     const missing = requiredFields(data, ['containerIdentifier', 'containerTypeConceptId']);
     if (missing.length > 0) return validation('Faltan datos del contenedor', missing);
+    if (!CONTAINER_TYPE_IDS.has(data.containerTypeConceptId!)) {
+      return preconditionFailed('El tipo de contenedor no pertenece al catálogo de contenedores de muestra', {
+        reason: 'CONTAINER_TYPE_NOT_IN_CATALOG',
+        field: 'containerTypeConceptId',
+        conceptId: data.containerTypeConceptId,
+        catalog: 'specimen-container-type',
+      });
+    }
     const specimen = labSpecimens.get(request.params['id']!);
     if (specimen === undefined) return notFound('Espécimen no encontrado');
     const container: LabContainerRecord = {
