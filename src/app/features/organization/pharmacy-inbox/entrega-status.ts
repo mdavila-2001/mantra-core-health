@@ -3,7 +3,6 @@ import type {
   PedidoFarmacia,
 } from '../../../core/data-access/pharmacy-orders/pharmacy-orders.types';
 import type { ChipVariant } from '../../../shared/components/atoms/chip/chip.types';
-import { entregaDeEjemplo } from './pharmacy-inbox.fixtures';
 
 /**
  * **Por qué medio se entrega** (carril FAR-I3) — el registro del cliente,
@@ -66,18 +65,17 @@ export interface EntregaEnPantalla {
    */
   readonly modalidad: ModalidadDeEntrega;
   readonly presentacion: EntregaPresentation;
-  /** La dirección, cuando la hay. Hoy sólo la trae el pedido de ejemplo. */
+  /**
+   * La dirección de entrega del contrato (`deliveryAddressText`), cuando la
+   * hay. A un retiro no se le pinta domicilio aunque el pedido traiga uno.
+   */
   readonly direccion: string | null;
-  /** La dirección la puso la maqueta, no el contrato: la pantalla lo rotula. */
-  readonly esEjemplo: boolean;
 }
 
 /**
- * Cómo se entrega un pedido concreto. **La `modalidad` del contrato manda
- * siempre**, también sobre la maqueta: el pedido a domicilio de ejemplo la
- * trae declarada por el backend simulado. Lo único que la maqueta aporta es la
- * dirección de ese pedido —el contrato no la publica—, y sólo con
- * `sampleData` encendido; entonces sale rotulada.
+ * Cómo se entrega un pedido concreto. **Todo sale del contrato**: la
+ * modalidad (`deliveryMode`) y la dirección (`deliveryAddressText`), también
+ * sobre la maqueta, donde las declara el backend simulado.
  *
  * Vive acá y no en cada pantalla porque la bandeja y el detalle tienen que
  * decir lo mismo del mismo pedido. Y devuelve la modalidad, no sólo cómo
@@ -86,26 +84,15 @@ export interface EntregaEnPantalla {
  * domicilio y el botón ofreciendo prepararlo para retiro en mostrador. Lo que
  * la pantalla muestra y lo que ofrece hacer salen de la misma respuesta.
  */
-export function entregaEnPantalla(
-  pedido: PedidoFarmacia,
-  sampleData: boolean,
-): EntregaEnPantalla | null {
+export function entregaEnPantalla(pedido: PedidoFarmacia): EntregaEnPantalla | null {
   const modalidad = pedido.modalidad;
   const presentacion = toEntregaPresentation(modalidad);
   if (modalidad === null || presentacion === null) {
     return null;
   }
-  // Una dirección de ejemplo sólo completa lo que el contrato dejó vacío, y
-  // sólo en un pedido que sale de la farmacia: a un retiro no se le inventa
-  // un domicilio.
-  const ejemplo =
-    sampleData && modalidad !== 'RETIRO' && pedido.direccionDeEntrega === null
-      ? entregaDeEjemplo(pedido)
-      : null;
   return {
     modalidad,
     presentacion,
-    direccion: ejemplo?.direccion ?? pedido.direccionDeEntrega,
-    esEjemplo: ejemplo !== null,
+    direccion: modalidad === 'RETIRO' ? null : pedido.direccionDeEntrega,
   };
 }

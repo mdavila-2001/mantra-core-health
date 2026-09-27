@@ -19,19 +19,29 @@ export interface CategoriaDePromocion {
 
 export interface Promocion {
   readonly id: string;
-  readonly farmacia: string;
+  /**
+   * La farmacia, la ciudad y el medicamento los tiene la maqueta; el contrato
+   * (`GET /promotions/me`) no relaciona una promoción con ninguno de los tres,
+   * y ahí llegan `null`.
+   */
+  readonly farmacia: string | null;
   readonly farmaciaVerificada: boolean;
-  readonly ciudad: string;
+  readonly ciudad: string | null;
   readonly titulo: string;
-  readonly medicamento: string;
+  readonly medicamento: string | null;
   readonly categoria: CategoriaDePromocion;
-  /** Porcentaje de descuento, entero. */
-  readonly porcentaje: number;
-  readonly desde: Date;
-  readonly hasta: Date;
+  /** Porcentaje de descuento, entero; `null` si el descuento es un monto fijo. */
+  readonly porcentaje: number | null;
+  /** Monto fijo con su moneda («20.00 BOB»), o `null` si es porcentual. */
+  readonly montoFijo: string | null;
+  /** `null` cuando la promoción no declara ese extremo de su vigencia. */
+  readonly desde: Date | null;
+  readonly hasta: Date | null;
   /** Multiplicador de puntos como texto exacto, o `null` si no suma extra. */
   readonly factorDePuntos: string | null;
   readonly estado: EstadoDePromocion;
+  /** Los códigos de cupón propios de la persona, si la promoción los pide. */
+  readonly cupones: readonly string[];
 }
 
 const ANALGESICOS = { code: 'analgesicos', label: 'Analgésicos' } as const;
@@ -250,10 +260,12 @@ export function promocionesDeEjemplo(ahora: Date = new Date()): readonly Promoci
       medicamento: semilla.medicamento,
       categoria: semilla.categoria,
       porcentaje: semilla.porcentaje,
+      montoFijo: null,
       desde: new Date(instante + semilla.desdeEnDias * UN_DIA),
       hasta,
       factorDePuntos: semilla.factorDePuntos,
       estado: vencida ? 'vencida' : semilla.vista ? 'vista' : 'nueva',
+      cupones: [],
     };
   });
 }
