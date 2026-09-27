@@ -3,7 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 
 import { InsuranceClient } from './insurance.client';
-import type { BrokerProfile, CarrierDetail, CarrierSummary } from './insurance.types';
+import type { BrokerProfile, CampaignPage, CarrierDetail, CarrierSummary } from './insurance.types';
 
 const CONCEPTO = { code: 'CARRIER_ACTIVE', display: 'Aseguradora activa' };
 const VERIFICADO = { code: 'VERIFICATION_VERIFIED', display: 'Verificado' };
@@ -357,6 +357,145 @@ describe('InsuranceClient', () => {
     expect(detalle?.eob).toEqual({
       id: 'eob-1',
       publishedAt: new Date('2026-09-20T12:00:00.000Z'),
+    });
+  });
+
+  /**
+   * Campañas preventivas de la aseguradora (Tarea 4 · M-06).
+   */
+  describe('campañas preventivas', () => {
+    function campaignWire(overrides: Record<string, unknown> = {}) {
+      return {
+        id: 'camp-1',
+        code: 'CMP-CARDIO-2026',
+        title: 'Chequeo Preventivo Cardiovascular y Perfil Lipídico',
+        description: null,
+        campaignType: 'LABORATORY',
+        status: 'ACTIVE',
+        targetCondition: { code: 'I10', display: 'Hipertensión esencial' },
+        copayBonusPercentage: 100,
+        validFrom: '2026-10-01',
+        validTo: '2026-11-30',
+        activatedAt: '2026-09-25T14:00:00.123456Z',
+        partners: [
+          {
+            id: 'p-1',
+            role: 'PROVIDER',
+            type: 'LABORATORY',
+            name: 'Laboratorio Central AloVida',
+            networkProviderMembershipId: null,
+          },
+        ],
+        createdAt: '2026-09-25T14:00:00.123456Z',
+        updatedAt: '2026-09-25T14:00:00.123456Z',
+        ...overrides,
+      };
+    }
+
+    it('listCampaigns pega en /insurance-campaigns, descarta filtros vacíos y convierte fechas', () => {
+      let page: CampaignPage = { items: [], nextCursor: null };
+      client
+        .listCampaigns({ type: 'LABORATORY', status: undefined, cursor: '', limit: 25 })
+        .subscribe((result) => (page = result));
+
+      const request = http.expectOne((r) => r.url === '/insurance-campaigns');
+      expect(request.request.method).toBe('GET');
+      expect(request.request.params.get('type')).toBe('LABORATORY');
+      expect(request.request.params.get('limit')).toBe('25');
+      // Un filtro vacío llegaría como cadena vacía y reventaría el `@IsIn()` de la API.
+      expect(request.request.params.has('status')).toBe(false);
+      expect(request.request.params.has('cursor')).toBe(false);
+      request.flush({ items: [campaignWire()], nextCursor: 'abc' });
+
+      expect(page.nextCursor).toBe('abc');
+      expect(page.items[0]?.activatedAt).toBeInstanceOf(Date);
+    });
+
+    /**
+     * El defecto que `maybeDateOnly` existe para evitar: la vigencia llega como
+     * `AAAA-MM-DD` y pasarla por `new Date()` la ancla a medianoche UTC, con lo
+     * que retrocede un día al pintarse al oeste de Greenwich (Bolivia es UTC−4).
+     */
+    it('la vigencia se convierte a día civil local, sin correrse un día', () => {
+      let from: Date | undefined;
+      let to: Date | undefined;
+      client.listCampaigns().subscribe((result) => {
+        from = result.items[0]?.validFrom;
+        to = result.items[0]?.validTo;
+      });
+
+      http
+        .expectOne((r) => r.url === '/insurance-campaigns')
+        .flush({ items: [campaignWire()], nextCursor: null });
+
+      expect([from?.getFullYear(), from?.getMonth(), from?.getDate()]).toEqual([2026, 9, 1]);
+      expect([to?.getFullYear(), to?.getMonth(), to?.getDate()]).toEqual([2026, 10, 30]);
+    });
+
+    it('createCampaign hace POST con el cuerpo tal cual y devuelve la campaña convertida', () => {
+      const input = {
+        code: 'CMP-CARDIO-2026',
+        title: 'Chequeo Preventivo Cardiovascular y Perfil Lipídico',
+        campaignType: 'LABORATORY',
+        targetConditionCode: 'I10',
+        copayBonusPercentage: 100,
+        validFrom: '2026-10-01',
+        validTo: '2026-11-30',
+        partners: [{ role: 'PROVIDER', type: 'LABORATORY', name: 'Laboratorio Central AloVida' }],
+        activate: true,
+      } as const;
+      let created: { code: string; validTo: Date } | undefined;
+      client.createCampaign(input).subscribe((result) => (created = result));
+
+      const request = http.expectOne('/insurance-campaigns');
+      expect(request.request.method).toBe('POST');
+      expect(request.request.body).toEqual(input);
+      request.flush(campaignWire());
+
+      expect(created?.code).toBe('CMP-CARDIO-2026');
+      expect(created?.validTo).toBeInstanceOf(Date);
+    });
+
+    it('updateCampaignStatus hace PATCH a /:id/status y codifica el id', () => {
+      let status: string | undefined;
+      client.updateCampaignStatus('id con/barra', 'PAUSED').subscribe((c) => (status = c.status));
+
+      const request = http.expectOne('/insurance-campaigns/id%20con%2Fbarra/status');
+      expect(request.request.method).toBe('PATCH');
+      expect(request.request.body).toEqual({ status: 'PAUSED' });
+      request.flush(campaignWire({ status: 'PAUSED' }));
+
+      expect(status).toBe('PAUSED');
+    });
+
+    it('getActivePatientCampaigns pide con el perfil en la URL y convierte la vigencia', () => {
+      let campaigns: readonly { carrierName: string; validTo: Date }[] = [];
+      client
+        .getActivePatientCampaigns('11111111-1111-4111-8111-111111111111')
+        .subscribe((result) => (campaigns = result));
+
+      const request = http.expectOne(
+        '/insurance-campaigns/patient/11111111-1111-4111-8111-111111111111',
+      );
+      expect(request.request.method).toBe('GET');
+      request.flush([
+        {
+          id: 'camp-1',
+          code: 'CMP-CARDIO-2026',
+          title: 'Chequeo',
+          description: null,
+          campaignType: 'LABORATORY',
+          targetCondition: null,
+          copayBonusPercentage: 100,
+          validFrom: '2026-10-01',
+          validTo: '2026-11-30',
+          carrierName: 'Seguros Andina',
+          partners: [{ role: 'PROVIDER', type: 'LABORATORY', name: 'Laboratorio Central AloVida' }],
+        },
+      ]);
+
+      expect(campaigns[0]?.carrierName).toBe('Seguros Andina');
+      expect(campaigns[0]?.validTo.getDate()).toBe(30);
     });
   });
 });
