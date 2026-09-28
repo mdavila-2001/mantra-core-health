@@ -154,22 +154,16 @@ describe('InsuranceCatalog', () => {
     expect(texto).toContain('25.00');
   });
 
-  it('muestra los canales de contacto de la aseguradora (subtarea 2.3)', () => {
+  it('no repite la ficha de la aseguradora: vive en el perfil de la organización', () => {
     mount();
     http.expectOne('/insurance-carriers').flush({ items: [RESUMEN], count: 1 });
     http.expectOne(`/insurance-carriers/${CARRIER_ID}`).flush(FICHA);
     fixture.detectChanges();
 
     const texto: string = fixture.nativeElement.textContent;
-    expect(texto).toContain('+59171548278');
-    expect(texto).toContain('800-10-6060');
-    expect(texto).toContain('siniestros@aseguradoradelsur.com.bo');
-
-    const enlaces: NodeListOf<HTMLAnchorElement> =
-      fixture.nativeElement.querySelectorAll('a[href^="tel:"]');
-    expect(Array.from(enlaces).some((a) => a.getAttribute('href') === 'tel:800106060')).toBe(
-      true,
-    );
+    expect(texto).not.toContain('Correo de siniestros');
+    expect(texto).not.toContain('Registro ante el regulador');
+    expect(fixture.nativeElement.querySelector('app-status-seal')).toBeNull();
   });
 
   it('no imprime identificadores técnicos', () => {
@@ -179,23 +173,8 @@ describe('InsuranceCatalog', () => {
     fixture.detectChanges();
 
     const texto: string = fixture.nativeElement.textContent;
-    expect(texto).toContain('Aseguradora del Sur S.A.');
+    expect(texto).toContain('Salud Integral');
     expect(texto).not.toContain(CARRIER_ID);
-  });
-
-  /**
-   * Que una aseguradora declare un registro no es que la plataforma lo haya
-   * contrastado. El sello traduce el código, no el texto del catálogo.
-   */
-  it('distingue lo declarado de lo verificado', () => {
-    mount();
-    const verificationVariant = internal<(code: string) => string>('verificationVariant');
-
-    expect(verificationVariant('VERIFICATION_VERIFIED')).toBe('approved');
-    expect(verificationVariant('VERIFICATION_PENDING')).toBe('pending');
-    expect(verificationVariant('UN_CODIGO_QUE_NO_CONOCEMOS')).toBe('unknown');
-
-    http.expectOne('/insurance-carriers').flush({ items: [], count: 0 });
   });
 
   it('mantiene la vista de staff en solo lectura y oculta todas las acciones', () => {

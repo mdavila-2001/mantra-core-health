@@ -23,6 +23,7 @@ import { ToastService } from '../../shared/components/molecules/toast/toast.serv
 import { FormActions } from '../../shared/components/organisms/form-actions/form-actions';
 import { PageHeader } from '../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../shared/components/organisms/view-state-host/view-state-host';
+import { InsurerProfileCard } from '../insurance/insurer-profile-card/insurer-profile-card';
 
 /**
  * El panel de la organización (TP-1).
@@ -72,6 +73,7 @@ import { ViewStateHost } from '../../shared/components/organisms/view-state-host
     FormActions,
     FormField,
     Input,
+    InsurerProfileCard,
     PageHeader,
     ViewStateHost,
   ],
