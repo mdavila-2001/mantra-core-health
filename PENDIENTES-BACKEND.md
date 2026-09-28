@@ -52,7 +52,7 @@ backend.
 | **P42** | La **reconsulta**: `follow_up_of_booking_id` en la reserva, `ACT_FOLLOW_UP`, «una reconsulta futura por cita» y el vínculo en `BookingItemDto`. **Esto sí tiene frontend detrás y funcionando contra el simulador** |
 | **P44** | `GET /patient-spending/me?from=&to=` — los gastos de salud del paciente, movimiento por movimiento. **«Mis gastos» ya está construido contra el simulador** |
 | **P45** | `GET /practitioners/:id/insurance-carriers`: con qué aseguradoras trabaja un médico, para su ficha pública. **El modelo ya lo declara** (`network_provider_memberships`); falta la lectura y la carga de las redes reales |
-| **P46** | El catálogo de la farmacia: la empresa no puede **editar** un producto ni cargarle precio, stock, categoría, descripción o imágenes, y el alta exige `SECURITY_ADMIN` |
+| **P47** | El catálogo de la farmacia: la empresa no puede **editar** un producto ni cargarle precio, stock, categoría, descripción o imágenes, y el alta exige `SECURITY_ADMIN` |
 
 ---
 
@@ -1904,9 +1904,49 @@ literal del plan maestro (§10), no un contrato ampliado acá.
 > `InsuranceClient.listPractitionerCarriers`, la tarjeta `app-practitioner-insurers` proyectada en
 > la ficha justo debajo de la identidad (con carga, vacío y error propios), el doble del simulador
 > y la prueba de navegador `ficha-medico-seguros.spec.ts`.
-## P46 · El catálogo de productos de la farmacia — 28/09/2026
 
-> **P46 · Lo que la pantalla «Catálogo de productos» necesita y la API todavía no da.** Origen:
+## P46 · Plan de pagos de un servicio con reconsultas: nota de venta y factura — 28/09/2026
+
+**Pedido del propietario (pizarra, 28/09/2026):** en «Pagos» de la consulta, un servicio que
+implica **más de una instancia de pago** —una consulta con su serie de reconsultas— abre una
+tabla: ítem, monto a cobrar, monto pagado y **nota de venta**. Mientras el plan tenga saldo, cada
+pago lleva nota de venta, **no factura**. Saldado, se emite una sola factura por el total, un
+renglón por instancia. Un servicio de una sola instancia abre directamente el modal de la
+factura.
+
+**Qué hace hoy el front (`mockup`):** todo contra la facturación simulada (FACT-SIAT-MOCK):
+
+- `SimulatedCharge.plan` (`billing-simulated.types.ts`): instancias con `expectedAmount`,
+  `paidAmount`, `balance`, `bookingId`/`scheduledAt` de la reserva que la atiende y sus
+  `salesNotes` (`NV-000001`, correlativo por emisor).
+- `POST /billing/simulated/charges/:chargeId/instances/:instanceId/payments`
+  `{ methodCode, amount }` → el cobro con la nota nueva. 422 si el monto supera el saldo de la
+  instancia; 409 `PLAN_REQUIRED` si se paga de una vez un servicio con plan; 409 `NOT_A_PLAN` al
+  revés; la factura de un plan con saldo es 412.
+- `GET /billing/simulated/charges?patientProfileId=` para la consulta. Quien atiende
+  (`PRACTITIONER`) opera sólo los cobros de origen `CONSULTATION`: no ve farmacia, ni anula.
+
+**Qué falta en la API real:**
+
+1. **El tipo de servicio no dice cuántas instancias implica.** `ServiceCatalogItem` no tiene nada
+   como «reconsultas incluidas» ni su precio. El simulador declara el tipo
+   `CONS-CARDIO-RECONS` (consulta + 2 reconsultas a Bs 180) en `datos-simulados.ts`. Es una
+   decisión de modelo (¿columna en el catálogo o un plan aparte?) que empieza en el `.puml`.
+2. **Cobro por instancia.** `payments.installment_plans` / `installment_schedules` ya modelan
+   cuotas (P35); falta atar cada instancia a la reserva que la atiende (la reconsulta de P42) y
+   registrar pagos parciales por instancia.
+3. **Nota de venta.** Comprobante interno sin validez fiscal, correlativo por emisor. No existe en
+   el modelo.
+4. **Facturación** en sí: sigue siendo FACT-SIAT-MOCK; el cliente `/billing/simulated/*` se
+   reemplaza cuando la API publique facturación.
+
+**Lo que el frontend ya tiene:** `app-plan-de-pagos` y `app-factura-simulada-dialog`
+(`features/billing/`), `app-cobros-del-paciente` dentro de `app-payments-block`, la nota de venta
+en PDF (`nota-de-venta.ts`) y la prueba de navegador `pagos-plan-nota-venta-factura.spec.ts`.
+
+## P47 · El catálogo de productos de la farmacia — 28/09/2026
+
+> **P47 · Lo que la pantalla «Catálogo de productos» necesita y la API todavía no da.** Origen:
 > pedido del 28/09/2026 con el mockup `farmacia_ecommerce_mantra.html` (catálogo paginado,
 > ficha de producto, importación masiva e inventario). La pantalla
 > (`administration/pharmacy-catalog`) ya está en `dev` y usa **sólo** lo que existe:
@@ -1946,4 +1986,3 @@ literal del plan maestro (§10), no un contrato ampliado acá.
 > navegador, con el resultado fila por fila. Para catálogos de miles, un
 > `POST /pharmacies/:pharmacyId/products:bulk` con informe por fila evitaría cortar la carga si
 > se cierra la pestaña.
-

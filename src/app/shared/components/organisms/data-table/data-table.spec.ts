@@ -43,6 +43,7 @@ const COLUMNAS: readonly ColumnDef<Paciente>[] = [
       [sort]="sort()"
       [cursor]="cursor()"
       [maxHeight]="maxHeight()"
+      [fitContainer]="fitContainer()"
       (sortChanged)="ordenes.push($event)"
       (cursorChanged)="cursores.push($event)"
       (selectionChanged)="selecciones.push($event)"
@@ -61,6 +62,7 @@ class HostComponent {
   readonly sort = signal<SortState | null>(null);
   readonly cursor = signal<CursorState>({});
   readonly maxHeight = signal<string | null>(null);
+  readonly fitContainer = signal(false);
   readonly ordenes: SortState[] = [];
   readonly cursores: string[] = [];
   readonly selecciones: (readonly Paciente[])[] = [];
@@ -436,6 +438,24 @@ describe('DataTable', () => {
 
       expect(css).toContain('.data-table--constrained .data-table__secondary');
       expect(css).toContain('.data-table--constrained .data-table__detail-row');
+    });
+  });
+
+  describe('pliegue por el ancho de la caja, opt-in (modales)', () => {
+    it('por omisión no cambia nada: la tabla no es un container', () => {
+      expect(root().querySelector('app-data-table')?.classList).not.toContain('data-table--fit-container');
+    });
+
+    it('activo, marca el host y el CSS pliega las secundarias por debajo de 52rem de caja', async () => {
+      host.fitContainer.set(true);
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      expect(root().querySelector('app-data-table')?.classList).toContain('data-table--fit-container');
+      const css = readFileSync(DATA_TABLE_CSS, 'utf8');
+      expect(css).toContain('container: data-table / inline-size');
+      expect(css).toContain('@container data-table (width < 52rem)');
+      expect(css).toContain(':host(.data-table--fit-container) .data-table__detail-row');
     });
   });
 });

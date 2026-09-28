@@ -38,9 +38,10 @@ describe('handlers de facturación simulada (FACT-SIAT-MOCK)', () => {
   });
 
   function llamar(method: MockMethod, path: string, body: unknown = null, user: MockUser | null = admin, r = router): MockReply {
-    const match = r.match(method, path);
+    const match = r.match(method, path.split('?')[0]!);
     if (match === null) throw new Error(`No existe ${method} ${path}`);
-    const resultado = match.handler({ method, path, params: match.params, query: new URLSearchParams(), body, headers: new HttpHeaders(), user });
+    const [ruta, consulta = ''] = path.split('?');
+    const resultado = match.handler({ method, path: ruta!, params: match.params, query: new URLSearchParams(consulta), body, headers: new HttpHeaders(), user });
     return isMockReply(resultado) ? resultado : { status: 200, body: resultado };
   }
 
@@ -60,16 +61,69 @@ describe('handlers de facturación simulada (FACT-SIAT-MOCK)', () => {
     return llamar('POST', `/billing/simulated/charges/${c.id}/invoices`, { buyer: comprador(c), ...extra });
   }
 
+  function facturarComo(c: SimulatedCharge, user: MockUser): MockReply {
+    return llamar('POST', `/billing/simulated/charges/${c.id}/invoices`, { buyer: comprador(c) }, user);
+  }
+
+  function conPlan(filtro: (c: SimulatedCharge) => boolean = () => true): SimulatedCharge {
+    return cobros().find((c) => c.plan !== null && filtro(c))!;
+  }
+
   describe('acceso', () => {
     it('apagada por el interruptor responde 404', () => {
       activa = false;
       expect(llamar('GET', '/billing/simulated/charges').status).toBe(404);
     });
 
-    it('sin sesión 401; paciente o médica sin rol de facturación 403', () => {
+    it('sin sesión 401; paciente sin rol de facturación 403', () => {
       expect(llamar('GET', '/billing/simulated/charges', null, null).status).toBe(401);
       expect(llamar('GET', '/billing/simulated/charges', null, paciente).status).toBe(403);
-      expect(llamar('GET', '/billing/simulated/charges', null, medica).status).toBe(403);
+    });
+
+    it('la médica ve y opera sólo los cobros de SUS consultas; lo demás es 404, no 403', () => {
+      const r = llamar('GET', '/billing/simulated/charges', null, medica);
+      expect(r.status).toBe(200);
+      const suyos = (r.body as SimulatedChargesPage).items;
+      expect(suyos.length).toBeGreaterThan(0);
+      expect(suyos.every((c) => c.source === 'CONSULTATION' && c.practitionerProfileId === medica.practitionerProfileId)).toBe(true);
+
+      // Fuera de su alcance, el cobro «no existe»: un 403 diría que sí.
+      const deFarmacia = cobroPagado('PHARMACY');
+      expect(facturarComo(deFarmacia, medica).status).toBe(404);
+      expect(llamar('POST', `/billing/simulated/charges/${deFarmacia.id}/payment`, { methodCode: 1 }, medica).status).toBe(404);
+      const facturaDeFarmacia = facturar(deFarmacia).body as SimulatedInvoice;
+      expect(llamar('GET', `/billing/simulated/invoices/${facturaDeFarmacia.id}`, null, medica).status).toBe(404);
+
+      const f = facturarComo(cobroPagado('CONSULTATION'), medica);
+      expect(f.status).toBe(201);
+      const factura = f.body as SimulatedInvoice;
+      expect(llamar('GET', `/billing/simulated/invoices/${factura.id}`, null, medica).status).toBe(200);
+      expect(llamar('POST', `/billing/simulated/invoices/${factura.id}/annulment`, { reasonCode: 1 }, medica).status).toBe(403);
+      expect(llamar('POST', `/billing/simulated/invoices/${factura.id}/annulment-reversal`, {}, medica).status).toBe(403);
+      expect(llamar('POST', `/billing/simulated/invoices/${factura.id}/email`, { to: 'x@y.bo' }, medica).status).toBe(403);
+      expect(llamar('GET', '/billing/simulated/outbox', null, medica).status).toBe(403);
+    });
+
+    it('otra profesional no ve ni opera los cobros de la médica', () => {
+      const otra: MockUser = { ...medica, id: 'otra', practitionerProfileId: 'otro-perfil-profesional' };
+      const lista = llamar('GET', '/billing/simulated/charges', null, otra);
+      expect((lista.body as SimulatedChargesPage).items).toEqual([]);
+      const deLaMedica = cobroPagado('CONSULTATION');
+      expect(facturarComo(deLaMedica, otra).status).toBe(404);
+    });
+
+    it('sin perfil profesional, el rol de quien atiende no alcanza: 403', () => {
+      const sinPerfil: MockUser = { ...medica, id: 'sin-perfil', practitionerProfileId: undefined };
+      expect(llamar('GET', '/billing/simulated/charges', null, sinPerfil).status).toBe(403);
+    });
+
+    it('a quien atiende no se le entregan credenciales fiscales ni el emisor de farmacia', () => {
+      const estado = llamar('GET', '/billing/simulated/status', null, medica).body as {
+        issuers: { kind: string }[];
+        credentials: unknown[];
+      };
+      expect(estado.credentials).toEqual([]);
+      expect(estado.issuers.every((e) => e.kind === 'PRACTICE')).toBe(true);
     });
   });
 
@@ -93,8 +147,25 @@ describe('handlers de facturación simulada (FACT-SIAT-MOCK)', () => {
       const pagadas = llamar('GET', '/accounting/practitioner/paid-consultations', null, medica, conFinanzas).body as {
         items: { appointmentId: string; paidTotal: string }[];
       };
-      const porCita = new Map(cobros().filter((c) => c.source === 'CONSULTATION').map((c) => [c.sourceRef, c.total]));
+      // Con plan, lo que contabilidad da por pagado en esa cita es la consulta
+      // inicial: su nota de venta, y no el total del servicio con reconsultas.
+      const pagadoEnLaCita = (c: SimulatedCharge): string =>
+        c.plan === null ? c.total : c.plan.instances[0]!.paidAmount;
+      // Sólo los honorarios de consulta: un estudio hecho en la misma cita (el
+      // ECG de la demo) es otro cobro y `paid-consultations` no lo lista.
+      const honorarios = cobros().filter(
+        (c) => c.source === 'CONSULTATION' && (c.plan !== null || c.lines[0]?.productCode === 'CONSULTA-MEDICA'),
+      );
+      const porCita = new Map(honorarios.map((c) => [c.sourceRef, pagadoEnLaCita(c)]));
       for (const item of pagadas.items) expect(porCita.get(item.appointmentId)).toBe(item.paidTotal);
+    });
+
+    it('?patientProfileId= acota los cobros a esa persona', () => {
+      const alguien = cobros().find((c) => c.source === 'CONSULTATION')!.patientProfileId;
+      const suyos = (llamar('GET', `/billing/simulated/charges?patientProfileId=${alguien}`).body as SimulatedChargesPage).items;
+      expect(suyos.length).toBeGreaterThan(0);
+      expect(suyos.every((c) => c.patientProfileId === alguien)).toBe(true);
+      expect(suyos.length).toBeLessThan(cobros().length);
     });
 
     it('el total de cada cobro de farmacia es el totalAmount del pedido', () => {
@@ -107,7 +178,7 @@ describe('handlers de facturación simulada (FACT-SIAT-MOCK)', () => {
     });
 
     it('registrar el pago de un cobro pendiente → 201; pagar otra vez → 409', () => {
-      const pendiente = cobros().find((c) => c.payment === null)!;
+      const pendiente = cobros().find((c) => c.payment === null && c.plan === null)!;
       const r = llamar('POST', `/billing/simulated/charges/${pendiente.id}/payment`, { methodCode: 2 });
       expect(r.status).toBe(201);
       const pagado = r.body as SimulatedCharge;
@@ -116,14 +187,59 @@ describe('handlers de facturación simulada (FACT-SIAT-MOCK)', () => {
     });
 
     it('método de pago fuera del catálogo simulado → 422', () => {
-      const pendiente = cobros().find((c) => c.payment === null)!;
+      const pendiente = cobros().find((c) => c.payment === null && c.plan === null)!;
       expect(llamar('POST', `/billing/simulated/charges/${pendiente.id}/payment`, { methodCode: 99 }).status).toBe(422);
+    });
+  });
+
+  describe('plan de pagos', () => {
+    it('siembra servicios con reconsultas: consulta pagada con nota de venta, reconsultas con saldo', () => {
+      const plan = conPlan().plan!;
+      expect(plan.instances.map((i) => i.kind)).toEqual(['CONSULTATION', 'FOLLOW_UP', 'FOLLOW_UP']);
+      expect(plan.instances[0]!.salesNotes[0]!.number).toMatch(/^NV-\d{6}$/);
+      expect(plan.complete).toBe(false);
+    });
+
+    it('la reconsulta agendada de la agenda es la «Reconsulta 1» del plan de su consulta de origen', () => {
+      const conReconsulta = conPlan((c) => c.plan!.instances[1]!.bookingId !== null);
+      expect(conReconsulta).toBeDefined();
+      expect(conReconsulta.plan!.instances[1]!.scheduledAt).not.toBeNull();
+    });
+
+    it('pagar una instancia → 201 con la nota de venta; facturar con saldo → 412; saldado → 201 y la factura es por el total', () => {
+      const cobro = conPlan();
+      expect(facturar(cobro).status).toBe(412);
+      let actual = cobro;
+      for (const instancia of cobro.plan!.instances.filter((i) => i.balance !== '0.00')) {
+        const r = llamar('POST', `/billing/simulated/charges/${cobro.id}/instances/${instancia.id}/payments`, {
+          methodCode: 1,
+          amount: instancia.balance,
+        }, medica);
+        expect(r.status).toBe(201);
+        actual = r.body as SimulatedCharge;
+      }
+      expect(actual.plan!.complete).toBe(true);
+      expect(actual.payment!.amount).toBe(actual.total);
+      const f = facturarComo(actual, medica);
+      expect(f.status).toBe(201);
+      expect((f.body as SimulatedInvoice).cabecera['montoTotal']).toBe(actual.total);
+    });
+
+    it('un pago de más → 422; pagar de una vez un servicio con plan → 409', () => {
+      const cobro = conPlan();
+      const reconsulta = cobro.plan!.instances[2]!;
+      const r = llamar('POST', `/billing/simulated/charges/${cobro.id}/instances/${reconsulta.id}/payments`, {
+        methodCode: 1,
+        amount: '9999.00',
+      });
+      expect(r.status).toBe(422);
+      expect(llamar('POST', `/billing/simulated/charges/${cobro.id}/payment`, { methodCode: 1 }).status).toBe(409);
     });
   });
 
   describe('emisión', () => {
     it('facturar un cobro sin pago → 412', () => {
-      const pendiente = cobros().find((c) => c.payment === null)!;
+      const pendiente = cobros().find((c) => c.payment === null && c.plan === null)!;
       expect(facturar(pendiente).status).toBe(412);
     });
 

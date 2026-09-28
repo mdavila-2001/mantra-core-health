@@ -73,6 +73,7 @@ import {
   QUOTATION_NEW_ROUTE,
   QUOTATION_PATIENT_QUERY_PARAM,
 } from '../../quotations/quotations.routes';
+import { FACTURACION_SIMULADA_DISPONIBLE } from '../../billing/facturacion-disponible';
 import { PaymentPlanPanel } from './payment-plan-panel/payment-plan-panel';
 
 /** Tope por bloque. La API aplica 50 si no se pide otro. */
@@ -215,6 +216,9 @@ const CASILLAS: Readonly<Record<CasillaDeConsulta, DefinicionDeCasilla>> = {
   },
 };
 
+/** La bajada de «Pagos» cuando la facturación simulada está encendida. */
+const DESCRIPCION_DE_PAGOS_CON_FACTURACION = 'Plan de pagos, notas de venta y factura.';
+
 const ORDEN_DE_CASILLAS: readonly CasillaDeConsulta[] = [
   'formulario',
   'ordenes',
@@ -292,6 +296,8 @@ export class Consultation {
   private readonly dialogs = inject(DialogService);
   private readonly toasts = inject(ToastService);
   private readonly route = inject(ActivatedRoute);
+  /** Con la facturación simulada, «Pagos» cobra y factura; sin ella, sólo lista lo asentado. */
+  private readonly facturacionSimulada = inject(FACTURACION_SIMULADA_DISPONIBLE)();
 
   /**
    * El perfil que se está atendiendo, leído del segmento `:profileId`.
@@ -492,6 +498,8 @@ export class Consultation {
     return ORDEN_DE_CASILLAS.map((clave) => ({
       clave,
       ...CASILLAS[clave],
+      // Con la facturación simulada, «Pagos» cobra y factura: la bajada lo dice.
+      ...(clave === 'pagos' && this.facturacionSimulada ? { descripcion: DESCRIPCION_DE_PAGOS_CON_FACTURACION } : {}),
       cantidad: cantidades[clave],
     }));
   });
@@ -543,10 +551,12 @@ export class Consultation {
    */
   protected readonly descripcionDelModal = computed(() => {
     const quien = this.nombre() === '' ? 'esta persona' : this.nombre();
-    // Pagos no escribe nada, así que prometer que «se registra» sería mentir
-    // en la única línea que explica qué va a pasar al confirmar.
+    // Pagos no escribe en la historia, así que prometer que «se registra»
+    // sería mentir en la única línea que explica qué va a pasar al confirmar.
     if (this.casillaAbierta() === 'pagos') {
-      return `Lo que ${quien} ya pagó, tal como quedó asentado en la caja de la práctica.`;
+      return this.facturacionSimulada
+        ? `Lo que ${quien} tiene que pagar y lo que ya pagó: nota de venta por cada pago del plan y la factura al saldarlo.`
+        : `Lo que ${quien} ya pagó, tal como quedó asentado en la caja de la práctica.`;
     }
     return this.encuentroActual() === null
       ? `Se registra en la historia de ${quien}.`

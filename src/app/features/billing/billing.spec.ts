@@ -111,7 +111,7 @@ describe('Billing · facturación contra el SIAT SIMULADO', () => {
     montar(true);
     responderLectura();
     const componente = fixture.componentInstance;
-    const pendiente = cobroDe((c) => c.payment === null);
+    const pendiente = cobroDe((c) => c.payment === null && c.plan === null);
     componente.seleccionar(pendiente);
     fixture.detectChanges();
     expect(el('formulario-de-pago')).not.toBeNull();
@@ -123,6 +123,31 @@ describe('Billing · facturación contra el SIAT SIMULADO', () => {
     req.flush(r.ok ? r.value : null);
     fixture.detectChanges();
     expect(el('pago-registrado')?.textContent).toContain('SIMULADO');
+    expect(el('formulario-de-factura')).not.toBeNull();
+  });
+
+  it('un cobro con plan se cobra por instancia: tabla del plan, sin pago de una vez ni factura hasta saldarlo', () => {
+    montar(true);
+    responderLectura();
+    const componente = fixture.componentInstance;
+    const conPlan = cobroDe((c) => c.plan !== null && c.payment === null);
+    componente.seleccionar(conPlan);
+    fixture.detectChanges();
+
+    expect(el('plan-de-pagos')).not.toBeNull();
+    expect(el('formulario-de-pago')).toBeNull();
+    expect(el('formulario-de-factura')).toBeNull();
+    // En esta pantalla la factura tiene su formulario propio: el plan no la ofrece.
+    expect(el('plan-generar-factura')).toBeNull();
+
+    // Saldado en el motor, el mismo cobro ya ofrece su formulario de factura.
+    for (const i of conPlan.plan!.instances.filter((x) => x.balance !== '0.00')) {
+      motor.registrarPagoDeInstancia(conPlan.id, i.id, { methodCode: 1, amount: i.balance });
+    }
+    componente['reemplazarCobro'](motor.cobro(conPlan.id)!);
+    fixture.detectChanges();
+    expect(el('plan-saldado')).not.toBeNull();
+    expect(el('pago-registrado')).not.toBeNull();
     expect(el('formulario-de-factura')).not.toBeNull();
   });
 
@@ -277,7 +302,7 @@ describe('Billing · facturación contra el SIAT SIMULADO', () => {
     const toast = TestBed.inject(ToastService);
     const error = vi.spyOn(toast, 'error');
     const componente = fixture.componentInstance;
-    const pendiente = cobroDe((c) => c.payment === null);
+    const pendiente = cobroDe((c) => c.payment === null && c.plan === null);
     componente.seleccionar(pendiente);
     componente.formularioDePago.setValue({ methodCode: 1 });
     componente.registrarPago(pendiente);

@@ -123,7 +123,7 @@ interface FilaConProblema {
  *
  * Precio, stock, categoría, descripción, imágenes, borradores y edición. No se
  * dibujan campos que no se guardan: están pedidos en `PENDIENTES-BACKEND.md`
- * (P46).
+ * (P47).
  *
  * ## De qué farmacia es el catálogo
  *

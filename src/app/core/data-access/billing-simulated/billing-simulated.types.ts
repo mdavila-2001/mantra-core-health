@@ -80,6 +80,59 @@ export interface SimulatedInvoiceSummary {
   readonly simulated: true;
 }
 
+/** Cada instancia de un plan: la consulta que abre el servicio o una de sus reconsultas. */
+export type PlanInstanceKind = 'CONSULTATION' | 'FOLLOW_UP';
+
+/**
+ * **Nota de venta**: el comprobante interno de un pago mientras el plan tiene
+ * saldo. No pasa por el SIAT y no tiene validez fiscal; la factura se emite una
+ * sola vez, por el total del servicio, cuando el plan queda saldado.
+ */
+export interface SimulatedSalesNote {
+  readonly id: string;
+  /** Correlativo del emisor, `NV-000001`. */
+  readonly number: string;
+  readonly instanceId: string;
+  readonly amount: string;
+  readonly methodCode: number;
+  readonly methodLabel: string;
+  readonly issuedAt: string;
+  readonly simulated: true;
+}
+
+export interface SimulatedPlanInstance {
+  readonly id: string;
+  /** 1 es la consulta; de ahí en adelante, las reconsultas en orden. */
+  readonly sequence: number;
+  readonly kind: PlanInstanceKind;
+  readonly label: string;
+  /** Lo que se espera que pague por esta instancia. Decimal en texto. */
+  readonly expectedAmount: string;
+  /** La suma de sus notas de venta. */
+  readonly paidAmount: string;
+  readonly balance: string;
+  /** La reserva de la agenda que atiende esta instancia, si ya hay una. */
+  readonly bookingId: string | null;
+  readonly scheduledAt: string | null;
+  readonly salesNotes: readonly SimulatedSalesNote[];
+}
+
+/**
+ * El plan de pagos de un servicio que **implica más de una instancia** (una
+ * consulta con su serie de reconsultas). Un servicio de una sola instancia no
+ * tiene plan: se cobra y se factura de una vez.
+ */
+export interface SimulatedPaymentPlan {
+  readonly serviceCode: string;
+  readonly serviceName: string;
+  readonly instances: readonly SimulatedPlanInstance[];
+  readonly expectedTotal: string;
+  readonly paidTotal: string;
+  readonly balance: string;
+  /** Saldado: recién ahí el cobro tiene `payment` y se puede facturar. */
+  readonly complete: boolean;
+}
+
 export interface SimulatedCharge {
   readonly id: string;
   readonly source: ChargeSource;
@@ -88,6 +141,8 @@ export interface SimulatedCharge {
   readonly issuerId: string;
   readonly patientProfileId: string;
   readonly patientName: string;
+  /** Quien atendió, en los cobros de consulta; `null` en farmacia. Acota lo que ve un profesional. */
+  readonly practitionerProfileId: string | null;
   readonly description: string;
   readonly lines: readonly ChargeLine[];
   readonly total: string;
@@ -96,6 +151,8 @@ export interface SimulatedCharge {
   readonly payment: SimulatedPayment | null;
   readonly suggestedBuyer: SuggestedBuyer;
   readonly latestInvoice: SimulatedInvoiceSummary | null;
+  /** `null`: el servicio es de una sola instancia. */
+  readonly plan: SimulatedPaymentPlan | null;
   readonly simulated: true;
 }
 
@@ -216,6 +273,13 @@ export interface SimulatedFiscalStatus {
 
 export interface RegisterPaymentInput {
   readonly methodCode: number;
+}
+
+/** Pago de una instancia del plan: emite una nota de venta, no una factura. */
+export interface RegisterInstancePaymentInput {
+  readonly methodCode: number;
+  /** Hasta el saldo de la instancia. Decimal en texto. */
+  readonly amount: string;
 }
 
 export interface BuyerInput {

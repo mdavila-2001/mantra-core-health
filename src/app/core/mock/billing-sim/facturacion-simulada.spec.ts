@@ -101,4 +101,103 @@ describe('FacturacionSimulada', () => {
     const segunda = facturacion.emitirFactura('a', comprador, 'prueba');
     expect(segunda.ok && segunda.value.status).toBe('VALIDATED');
   });
+
+  describe('plan de pagos (consulta con reconsultas)', () => {
+    function conPlan(id: string): CobroInicial {
+      const instancia = (n: number, label: string, monto: string) => ({
+        id: `${id}-i${n}`,
+        kind: n === 1 ? ('CONSULTATION' as const) : ('FOLLOW_UP' as const),
+        label,
+        expectedAmount: monto,
+        bookingId: null,
+        scheduledAt: null,
+        salesNotes: [],
+      });
+      return {
+        ...cobro(id, false),
+        plan: {
+          serviceCode: 'CONS-RECONS',
+          serviceName: 'Consulta con 2 reconsultas',
+          instances: [instancia(1, 'Consulta inicial', '250.00'), instancia(2, 'Reconsulta 1', '180.00'), instancia(3, 'Reconsulta 2', '180.00')],
+        },
+      };
+    }
+
+    beforeEach(() => {
+      facturacion = new FacturacionSimulada({
+        siat,
+        emisores: [EMISOR_CONSULTORIO],
+        cobros: [conPlan('p'), cobro('u', false)],
+        reloj: () => ahora,
+      });
+    });
+
+    it('los renglones y el total salen de las instancias, no de los del cobro', () => {
+      const c = facturacion.cobro('p')!;
+      expect(c.total).toBe('610.00');
+      expect(c.lines.map((l) => l.description)).toEqual([
+        'Consulta con 2 reconsultas · Consulta inicial',
+        'Consulta con 2 reconsultas · Reconsulta 1',
+        'Consulta con 2 reconsultas · Reconsulta 2',
+      ]);
+      expect(c.plan).toEqual(expect.objectContaining({ expectedTotal: '610.00', paidTotal: '0.00', balance: '610.00', complete: false }));
+    });
+
+    it('cada pago de una instancia emite una nota de venta correlativa, y no una factura', () => {
+      const a = facturacion.registrarPagoDeInstancia('p', 'p-i1', { methodCode: 1, amount: '250.00' });
+      const b = facturacion.registrarPagoDeInstancia('p', 'p-i2', { methodCode: 3, amount: '80.00' });
+      if (!a.ok || !b.ok) throw new Error('los pagos tenían que pasar');
+      const [consulta, primera] = b.value.plan!.instances;
+      expect(consulta!.salesNotes.map((n) => n.number)).toEqual(['NV-000001']);
+      expect(primera!.salesNotes.map((n) => [n.number, n.amount])).toEqual([['NV-000002', '80.00']]);
+      expect(primera!).toEqual(expect.objectContaining({ paidAmount: '80.00', balance: '100.00' }));
+      expect(b.value.plan).toEqual(expect.objectContaining({ paidTotal: '330.00', balance: '280.00', complete: false }));
+      expect(b.value.payment).toBeNull();
+      expect(b.value.latestInvoice).toBeNull();
+    });
+
+    it('con saldo, la factura se rechaza con 412 y lo dice', () => {
+      facturacion.registrarPagoDeInstancia('p', 'p-i1', { methodCode: 1, amount: '250.00' });
+      const r = facturacion.emitirFactura('p', comprador, 'prueba');
+      expect(r.ok).toBe(false);
+      if (!r.ok) {
+        expect(r.error.code).toBe('PAYMENT_REQUIRED');
+        expect(r.error.message).toContain('nota de venta');
+      }
+    });
+
+    it('saldado el plan, el cobro tiene su pago por el total y se factura con un renglón por instancia', () => {
+      facturacion.registrarPagoDeInstancia('p', 'p-i1', { methodCode: 1, amount: '250.00' });
+      facturacion.registrarPagoDeInstancia('p', 'p-i2', { methodCode: 1, amount: '180.00' });
+      const ultimo = facturacion.registrarPagoDeInstancia('p', 'p-i3', { methodCode: 3, amount: '180.00' });
+      if (!ultimo.ok) throw new Error('el último pago tenía que pasar');
+      expect(ultimo.value.plan!.complete).toBe(true);
+      expect(ultimo.value.payment).toEqual(expect.objectContaining({ amount: '610.00', methodCode: 3 }));
+      const f = facturacion.emitirFactura('p', comprador, 'prueba');
+      if (!f.ok) throw new Error('la factura tenía que emitirse');
+      expect(f.value.status).toBe('VALIDATED');
+      expect(f.value.detalle).toHaveLength(3);
+      expect(f.value.cabecera['montoTotal']).toBe('610.00');
+      expect(f.value.events[0]!.detail).toContain('NV-000001, NV-000002, NV-000003');
+    });
+
+    it('no acepta más que el saldo de la instancia, ni montos inválidos, ni una instancia ya pagada', () => {
+      const excedido = facturacion.registrarPagoDeInstancia('p', 'p-i2', { methodCode: 1, amount: '180.01' });
+      expect(!excedido.ok && excedido.error.issues?.map((i) => i.field)).toEqual(['amount']);
+      const cero = facturacion.registrarPagoDeInstancia('p', 'p-i2', { methodCode: 99, amount: '0' });
+      expect(!cero.ok && cero.error.issues?.map((i) => i.field)).toEqual(['methodCode', 'amount']);
+      facturacion.registrarPagoDeInstancia('p', 'p-i2', { methodCode: 1, amount: '180.00' });
+      const otraVez = facturacion.registrarPagoDeInstancia('p', 'p-i2', { methodCode: 1, amount: '1.00' });
+      expect(!otraVez.ok && otraVez.error.code).toBe('ALREADY_PAID');
+      expect(facturacion.registrarPagoDeInstancia('p', 'no-existe', { methodCode: 1, amount: '1.00' }).ok).toBe(false);
+    });
+
+    it('un servicio con plan no se paga de una vez, y uno sin plan no se paga por instancia', () => {
+      const deUnaVez = facturacion.registrarPago('p', 1);
+      expect(!deUnaVez.ok && deUnaVez.error.code).toBe('PLAN_REQUIRED');
+      const porInstancia = facturacion.registrarPagoDeInstancia('u', 'x', { methodCode: 1, amount: '1.00' });
+      expect(!porInstancia.ok && porInstancia.error.code).toBe('NOT_A_PLAN');
+      expect(facturacion.cobro('u')!.plan).toBeNull();
+    });
+  });
 });

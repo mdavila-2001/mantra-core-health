@@ -150,8 +150,20 @@
             </tfoot>
           </table>
 
-          <!-- 1 · Pago simulado -->
-          @if (cobro.payment === null) {
+          <!-- 1 · Pago simulado. Con plan (consulta + reconsultas), se paga por
+               instancia y cada pago lleva nota de venta hasta saldarlo. -->
+          @if (cobro.plan !== null) {
+            <app-plan-de-pagos
+              class="bloque"
+              [cobro]="cobro"
+              [metodos]="opcionesDeMetodo()"
+              [emisor]="emisorDe(cobro)"
+              [ofrecerFactura]="false"
+              (actualizado)="reemplazarCobro($event)"
+            />
+          }
+          <!-- Sin plan se cobra de una vez; con plan, cobra el plan de arriba. -->
+          @if (cobro.plan === null && cobro.payment === null) {
             <form class="bloque" [formGroup]="formularioDePago" (ngSubmit)="registrarPago(cobro)" data-testid="formulario-de-pago">
               <h3>Registrar pago (SIMULADO)</h3>
               <p class="nota">Simula el cobro al paciente. No mueve dinero ni usa ninguna pasarela real.</p>
@@ -162,7 +174,7 @@
                 Registrar pago (SIMULADO)
               </button>
             </form>
-          } @else {
+          } @else if (cobro.payment !== null) {
             <p class="nota" data-testid="pago-registrado">
               Pagado el {{ cobro.payment.paidAt.slice(0, 10) }} · {{ cobro.payment.methodLabel }} · Bs {{ cobro.payment.amount }}
               <app-chip size="sm" variant="warning">SIMULADO</app-chip>

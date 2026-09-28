@@ -22,6 +22,7 @@ import type {
   ChargeSource,
   InvoiceEvent,
   IssueInvoiceInput,
+  PlanInstanceKind,
   SiatResponse,
   SimulatedCatalogs,
   SimulatedCharge,
@@ -33,6 +34,9 @@ import type {
   SimulatedIssuer,
   SimulatedOutboxEntry,
   SimulatedPayment,
+  SimulatedPaymentPlan,
+  SimulatedPlanInstance,
+  SimulatedSalesNote,
   SuggestedBuyer,
 } from '../../data-access/billing-simulated/billing-simulated.types';
 import { Coleccion } from '../mock-store';
@@ -71,12 +75,37 @@ export interface CobroInicial {
   readonly issuerId: string;
   readonly patientProfileId: string;
   readonly patientName: string;
+  /** Quien atendió la consulta; farmacia no lo tiene. */
+  readonly practitionerProfileId?: string | null;
   readonly description: string;
   readonly lines: readonly ChargeLine[];
   readonly createdAt: string;
   readonly suggestedBuyer: SuggestedBuyer;
   /** Si la maqueta ya lo da por pagado (T-E4, consultas pagadas). */
   readonly payment: SimulatedPayment | null;
+  /**
+   * El plan, si el tipo de servicio implica más de una instancia de pago (una
+   * consulta con su serie de reconsultas). Con plan, los renglones del cobro
+   * salen de sus instancias: los que traiga el cobro se ignoran.
+   */
+  readonly plan?: PlanDeCobro | null;
+}
+
+/** Una instancia del plan como se guarda: los importes derivados se calculan al leer. */
+export interface InstanciaDePlan {
+  readonly id: string;
+  readonly kind: PlanInstanceKind;
+  readonly label: string;
+  readonly expectedAmount: string;
+  readonly bookingId: string | null;
+  readonly scheduledAt: string | null;
+  readonly salesNotes: readonly SimulatedSalesNote[];
+}
+
+export interface PlanDeCobro {
+  readonly serviceCode: string;
+  readonly serviceName: string;
+  readonly instances: readonly InstanciaDePlan[];
 }
 
 interface CobroGuardado extends CobroInicial {
@@ -104,7 +133,11 @@ export type CodigoDeError =
   | 'PAYMENT_REQUIRED'
   | 'ALREADY_INVOICED'
   | 'INVALID_INPUT'
-  | 'FISCAL_CREDENTIALS';
+  | 'FISCAL_CREDENTIALS'
+  /** El servicio tiene plan: se paga instancia por instancia, no de una vez. */
+  | 'PLAN_REQUIRED'
+  /** Se pidió pagar una instancia de un servicio que no tiene plan. */
+  | 'NOT_A_PLAN';
 
 export interface ErrorDeFacturacion {
   readonly code: CodigoDeError;
@@ -159,6 +192,35 @@ export function totalDeRenglones(lineas: readonly ChargeLine[]): string {
   return importe(lineas.reduce((suma, l) => suma + centavos(l.subtotal), 0));
 }
 
+/** Unidad de medida 58 del SIAT, «unidad servicio»: la de consultas y reconsultas. */
+const UNIDAD_SERVICIO = 58;
+
+/** Los renglones de un cobro con plan: uno por instancia, al monto esperado. */
+export function renglonesDelPlan(plan: PlanDeCobro): ChargeLine[] {
+  return plan.instances.map((i) => ({
+    productCode: plan.serviceCode,
+    description: `${plan.serviceName} · ${i.label}`,
+    quantity: '1',
+    unitOfMeasure: UNIDAD_SERVICIO,
+    unitPrice: i.expectedAmount,
+    discount: null,
+    subtotal: subtotalDeRenglon('1', i.expectedAmount, null),
+  }));
+}
+
+function pagadoDeInstancia(instancia: InstanciaDePlan): number {
+  return instancia.salesNotes.reduce((suma, n) => suma + centavos(n.amount), 0);
+}
+
+function planSaldado(plan: PlanDeCobro): boolean {
+  return plan.instances.every((i) => pagadoDeInstancia(i) >= centavos(i.expectedAmount));
+}
+
+/** El número de una nota de venta, `NV-000042` → 42. */
+function numeroDeNota(nota: SimulatedSalesNote): number {
+  return Number(nota.number.replace(/^NV-/, '')) || 0;
+}
+
 function estadoDeRespuesta(codigoEstado: number): SimulatedInvoiceStatus {
   if (codigoEstado === ESTADO_SIAT.RECEPCION_VALIDADA) return 'VALIDATED';
   if (codigoEstado === ESTADO_SIAT.RECEPCION_OBSERVADA) return 'OBSERVED';
@@ -189,7 +251,7 @@ export class FacturacionSimulada {
     this.siat = opciones.siat;
     this.emisores = new Map(opciones.emisores.map((e) => [e.issuer.id, e]));
     this.reloj = opciones.reloj ?? (() => new Date());
-    this.cobros = new Coleccion<CobroGuardado>(opciones.cobros.map((c) => ({ ...c, total: totalDeRenglones(c.lines) })));
+    this.cobros = new Coleccion<CobroGuardado>(opciones.cobros.map((c) => this.normalizar(c)));
     const clave = opciones.clavePersistencia;
     if (clave !== undefined) {
       this.cobros.persistirEn(`${clave}.cobros`);
@@ -270,6 +332,9 @@ export class FacturacionSimulada {
     const cobro = this.cobros.get(cobroId);
     if (cobro === undefined) return error('NOT_FOUND', 'El cobro no existe');
     if (cobro.payment !== null) return error('ALREADY_PAID', 'El cobro ya está pagado');
+    if (cobro.plan) {
+      return error('PLAN_REQUIRED', 'El servicio tiene plan de pagos: se paga instancia por instancia, con nota de venta');
+    }
     const metodo = CATALOGOS_SIMULADOS.metodosDePago.find((m) => m.codigo === methodCode);
     if (metodo === undefined) {
       return error('INVALID_INPUT', 'Método de pago inválido', [{ field: 'methodCode', problem: 'no está en el catálogo simulado' }]);
@@ -286,12 +351,75 @@ export class FacturacionSimulada {
     return { ok: true, value: this.aCobro(this.cobros.actualizar(cobroId, { payment })!) };
   }
 
+  /**
+   * El pago de una instancia del plan. Emite una **nota de venta**, nunca una
+   * factura: la factura es una sola, por el total del servicio, y se emite
+   * cuando el plan queda saldado. Con este pago saldado, el cobro recibe su
+   * `payment` y pasa a poder facturarse.
+   */
+  registrarPagoDeInstancia(
+    cobroId: string,
+    instanciaId: string,
+    entrada: { readonly methodCode: number; readonly amount: string },
+  ): Resultado<SimulatedCharge> {
+    const cobro = this.cobros.get(cobroId);
+    if (cobro === undefined) return error('NOT_FOUND', 'El cobro no existe');
+    const plan = cobro.plan;
+    if (!plan) return error('NOT_A_PLAN', 'El servicio es de una sola instancia: se cobra y se factura de una vez');
+    const instancia = plan.instances.find((i) => i.id === instanciaId);
+    if (instancia === undefined) return error('NOT_FOUND', 'La instancia no es de este plan');
+
+    const problemas: { field: string; problem: string }[] = [];
+    const metodo = CATALOGOS_SIMULADOS.metodosDePago.find((m) => m.codigo === Number(entrada?.methodCode));
+    if (metodo === undefined) problemas.push({ field: 'methodCode', problem: 'no está en el catálogo simulado' });
+    const monto = String(entrada?.amount ?? '').trim();
+    const saldo = centavos(instancia.expectedAmount) - pagadoDeInstancia(instancia);
+    if (saldo <= 0) {
+      return error('ALREADY_PAID', `«${instancia.label}» ya está pagada`);
+    }
+    if (!DECIMAL.test(monto) || centavos(monto) <= 0) {
+      problemas.push({ field: 'amount', problem: 'decimal mayor que cero con hasta 2 decimales' });
+    } else if (centavos(monto) > saldo) {
+      problemas.push({ field: 'amount', problem: `no puede superar el saldo de la instancia (${importe(saldo)})` });
+    }
+    if (problemas.length > 0 || metodo === undefined) return error('INVALID_INPUT', 'Pago inválido', problemas);
+
+    const ahora = this.reloj().toISOString();
+    const numero = this.ultimaNotaDeVenta(cobro.issuerId) + 1;
+    const nota: SimulatedSalesNote = {
+      id: `nota-${sha256Hex(`${cobroId}|${instanciaId}|${numero}|${ahora}`).slice(0, 16)}`,
+      number: `NV-${String(numero).padStart(6, '0')}`,
+      instanceId: instanciaId,
+      amount: importe(centavos(monto)),
+      methodCode: metodo.codigo,
+      methodLabel: metodo.descripcion,
+      issuedAt: ahora,
+      simulated: true,
+    };
+    const siguiente: PlanDeCobro = {
+      ...plan,
+      instances: plan.instances.map((i) => (i.id === instanciaId ? { ...i, salesNotes: [...i.salesNotes, nota] } : i)),
+    };
+    const actualizado = this.cobros.actualizar(cobroId, {
+      plan: siguiente,
+      payment: planSaldado(siguiente) ? this.pagoDelPlan(cobro, nota) : null,
+    })!;
+    return { ok: true, value: this.aCobro(actualizado) };
+  }
+
   // ---- emisión -----------------------------------------------------------------------
 
   emitirFactura(cobroId: string, entrada: IssueInvoiceInput, usuario: string): Resultado<SimulatedInvoice> {
     const cobro = this.cobros.get(cobroId);
     if (cobro === undefined) return error('NOT_FOUND', 'El cobro no existe');
-    if (cobro.payment === null) return error('PAYMENT_REQUIRED', 'El cobro todavía no está pagado');
+    if (cobro.payment === null) {
+      return error(
+        'PAYMENT_REQUIRED',
+        cobro.plan
+          ? 'El plan de pagos todavía tiene saldo: hasta saldarlo, cada pago lleva nota de venta y no factura'
+          : 'El cobro todavía no está pagado',
+      );
+    }
     const vigente = this.facturaVigente(cobroId);
     if (vigente !== null) return error('ALREADY_INVOICED', `El cobro ya tiene la factura ${vigente.invoiceNumber} vigente`);
 
@@ -355,7 +483,7 @@ export class FacturacionSimulada {
 
     const ahora = this.reloj().toISOString();
     const events: InvoiceEvent[] = [
-      { kind: 'PAYMENT_REGISTERED', at: cobro.payment.paidAt, siatStatusCode: null, detail: `${cobro.payment.methodLabel} · Bs ${cobro.payment.amount}` },
+      { kind: 'PAYMENT_REGISTERED', at: cobro.payment.paidAt, siatStatusCode: null, detail: this.detalleDelPago(cobro) },
       { kind: 'INVOICE_BUILT', at: ahora, siatStatusCode: null, detail: `Factura N.º ${numeroFactura} · sector ${sector} · CUF generado` },
       { kind: 'SENT_TO_SIAT', at: ahora, siatStatusCode: null, detail: `XML gzip ${paquete.bytesComprimidos} bytes · SHA-256 ${paquete.hashArchivo.slice(0, 12)}…` },
       this.eventoDeRespuesta('SIAT_RESPONSE', respuesta, ahora),
@@ -434,6 +562,79 @@ export class FacturacionSimulada {
   }
 
   // ---- privados ----------------------------------------------------------------------
+
+  /** Con plan, los renglones salen de las instancias, y un plan saldado ya trae su pago. */
+  private normalizar(c: CobroInicial): CobroGuardado {
+    if (!c.plan) return { ...c, plan: null, total: totalDeRenglones(c.lines) };
+    const lines = renglonesDelPlan(c.plan);
+    const base: CobroGuardado = { ...c, lines, total: totalDeRenglones(lines) };
+    if (base.payment !== null || !planSaldado(c.plan)) return base;
+    const ultima = c.plan.instances
+      .flatMap((i) => i.salesNotes)
+      .sort((a, b) => a.issuedAt.localeCompare(b.issuedAt))
+      .at(-1);
+    return ultima === undefined ? base : { ...base, payment: this.pagoDelPlan(base, ultima) };
+  }
+
+  /**
+   * El pago de un plan saldado, para que la factura se emita igual que la de
+   * un cobro de una sola vez: por el total, con el medio del último pago.
+   */
+  private pagoDelPlan(cobro: CobroGuardado, ultima: SimulatedSalesNote): SimulatedPayment {
+    return {
+      id: `pago-${sha256Hex(`${cobro.id}|plan|${ultima.id}`).slice(0, 16)}`,
+      methodCode: ultima.methodCode,
+      methodLabel: ultima.methodLabel,
+      amount: cobro.total,
+      currency: 'BOB',
+      paidAt: ultima.issuedAt,
+      simulated: true,
+    };
+  }
+
+  private detalleDelPago(cobro: CobroGuardado): string {
+    const pago = cobro.payment!;
+    if (!cobro.plan) return `${pago.methodLabel} · Bs ${pago.amount}`;
+    const notas = cobro.plan.instances.flatMap((i) => i.salesNotes).map((n) => n.number);
+    return `Plan saldado · ${notas.length} ${notas.length === 1 ? 'nota' : 'notas'} de venta (${notas.join(', ')}) · Bs ${pago.amount}`;
+  }
+
+  /** El correlativo de notas de venta es por emisor, como el de facturas. */
+  private ultimaNotaDeVenta(issuerId: string): number {
+    return this.cobros
+      .filtrar((c) => c.issuerId === issuerId)
+      .flatMap((c) => c.plan?.instances.flatMap((i) => i.salesNotes) ?? [])
+      .reduce((mayor, n) => Math.max(mayor, numeroDeNota(n)), 0);
+  }
+
+  private aPlan(plan: PlanDeCobro): SimulatedPaymentPlan {
+    const instances = plan.instances.map((i, indice): SimulatedPlanInstance => {
+      const pagado = pagadoDeInstancia(i);
+      return {
+        id: i.id,
+        sequence: indice + 1,
+        kind: i.kind,
+        label: i.label,
+        expectedAmount: i.expectedAmount,
+        paidAmount: importe(pagado),
+        balance: importe(Math.max(centavos(i.expectedAmount) - pagado, 0)),
+        bookingId: i.bookingId,
+        scheduledAt: i.scheduledAt,
+        salesNotes: [...i.salesNotes].sort((a, b) => a.issuedAt.localeCompare(b.issuedAt)),
+      };
+    });
+    const esperado = plan.instances.reduce((s, i) => s + centavos(i.expectedAmount), 0);
+    const pagado = plan.instances.reduce((s, i) => s + pagadoDeInstancia(i), 0);
+    return {
+      serviceCode: plan.serviceCode,
+      serviceName: plan.serviceName,
+      instances,
+      expectedTotal: importe(esperado),
+      paidTotal: importe(pagado),
+      balance: importe(Math.max(esperado - pagado, 0)),
+      complete: planSaldado(plan),
+    };
+  }
 
   private contexto(emisor: EmisorSimulado): ContextoFiscal {
     return {
@@ -661,6 +862,7 @@ export class FacturacionSimulada {
       issuerId: c.issuerId,
       patientProfileId: c.patientProfileId,
       patientName: c.patientName,
+      practitionerProfileId: c.practitionerProfileId ?? null,
       description: c.description,
       lines: c.lines,
       total: c.total,
@@ -669,6 +871,7 @@ export class FacturacionSimulada {
       payment: c.payment,
       suggestedBuyer: c.suggestedBuyer,
       latestInvoice: ultima === null ? null : this.aResumen(ultima),
+      plan: c.plan ? this.aPlan(c.plan) : null,
       simulated: true,
     };
   }
