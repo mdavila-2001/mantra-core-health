@@ -1,0 +1,95 @@
+/* ============================================================================
+    «Solicitudes recibidas» (ADR-0015): una tarjeta a lo ancho con buscador y
+    filtros arriba, tabla sin scroll lateral y paginación abajo. Mobile-first:
+    la tabla pliega por prioridad antes que desbordar.
+    ========================================================================== */
+
+.received {
+  display: block;
+}
+
+.received__skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding-block: var(--sp-4);
+}
+
+.received__summary {
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+  margin: var(--sp-4) 0 var(--sp-2);
+}
+
+.received__none {
+  color: var(--text-muted);
+  margin-block: var(--sp-6);
+  text-align: center;
+}
+
+.received__open {
+  display: block;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text-link);
+  font: inherit;
+  font-weight: 600;
+  text-align: start;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  cursor: pointer;
+}
+
+.received__open:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+  border-radius: var(--r-sm);
+}
+
+.received__code {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.received__primary {
+  display: block;
+  color: var(--text-primary);
+}
+
+.received__secondary {
+  display: block;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.received__money {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.received__absent {
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.received__facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: var(--sp-4);
+  margin: 0;
+}
+
+.received__facts dt {
+  margin-block-end: var(--sp-1);
+  font-size: var(--fs-overline);
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.received__facts dd {
+  margin: 0;
+  color: var(--text-primary);
+}

@@ -3,6 +3,7 @@ import { HttpHeaders } from '@angular/common/http';
 import { registrarSeguros } from './insurance.handlers';
 import { MockRouter, type MockMethod, type MockReply } from '../mock-router';
 import { buscarUsuario, type MockUser } from '../mock-session';
+import { PROFESIONALES } from '../fixtures/personas';
 
 interface DetailWire {
   readonly id: string;
@@ -187,5 +188,93 @@ describe('handlers de solicitudes de seguro · antiduplicación de estudios', ()
   it('otra solicitud no trae ningún estudio duplicado', () => {
     const detalle = detalleDe('CLM-2026-0158');
     expect(detalle.lines.every((l) => l.duplicateStudy === null)).toBe(true);
+  });
+});
+
+/**
+ * `GET /practitioners/:id/insurance-carriers` — con qué seguros trabaja un
+ * profesional, para su ficha. El dato sale de las redes que publican Alianza
+ * Seguros y Nacional Seguros (`insurer-network.generated.ts`); estas pruebas
+ * fijan que el doble lo devuelve **tal cual**, sin agregar ni perder planes.
+ */
+describe('handlers de seguros · aseguradoras de un profesional', () => {
+  const router = new MockRouter();
+  const patient = buscarUsuario('paciente')!;
+
+  registrarSeguros(router);
+
+  interface CarriersWire {
+    readonly items: readonly {
+      readonly carrierId: string;
+      readonly carrierName: string;
+      readonly networks: readonly { readonly id: string; readonly name: string }[];
+    }[];
+  }
+
+  function get<T>(path: string): T {
+    const match = router.match('GET', path);
+    if (match === null) throw new Error(`No existe GET ${path}`);
+    return match.handler({
+      method: 'GET',
+      path,
+      params: match.params,
+      query: new URLSearchParams(),
+      body: null,
+      headers: new HttpHeaders(),
+      user: patient,
+    }) as T;
+  }
+
+  const fromNetwork = PROFESIONALES.filter((p) => p.origen === 'RED_ASEGURADORA');
+
+  it('devuelve cada aseguradora de la red con sus planes, por nombre', () => {
+    const both = fromNetwork.find((p) => (p.insurerNetworks?.length ?? 0) === 2)!;
+
+    const body = get<CarriersWire>(`/practitioners/${both.id}/insurance-carriers`);
+
+    expect(body.items.map((c) => c.carrierName)).toEqual(['Alianza Seguros', 'Nacional Seguros']);
+    for (const carrier of body.items) {
+      const source = both.insurerNetworks!.find((n) => n.insurer === carrier.carrierName)!;
+      expect(carrier.networks.map((n) => n.name)).toEqual(source.plans);
+    }
+  });
+
+  it('no agrega ni pierde ningún plan en los médicos de la red', () => {
+    expect(fromNetwork.length).toBeGreaterThan(700);
+
+    for (const practitioner of fromNetwork) {
+      const body = get<CarriersWire>(`/practitioners/${practitioner.id}/insurance-carriers`);
+      const published = [...practitioner.insurerNetworks!]
+        .map((n) => `${n.insurer}: ${n.plans.join(', ')}`)
+        .sort();
+      const served = body.items.map((c) => `${c.carrierName}: ${c.networks.map((n) => n.name).join(', ')}`).sort();
+      expect(served).toEqual(published);
+    }
+  });
+
+  it('la aseguradora que ya está en el catálogo conserva su id', () => {
+    const catalog = get<{ carriers: readonly { id: string; name: string }[] }>(
+      '/insurance-carrier-catalog',
+    );
+    const alianzaId = catalog.carriers.find((c) => c.name === 'Alianza Seguros')!.id;
+    const withAlianza = fromNetwork.find((p) =>
+      p.insurerNetworks!.some((n) => n.insurer === 'Alianza Seguros'),
+    )!;
+
+    const body = get<CarriersWire>(`/practitioners/${withAlianza.id}/insurance-carriers`);
+
+    expect(body.items.find((c) => c.carrierName === 'Alianza Seguros')!.carrierId).toBe(alianzaId);
+  });
+
+  it('un profesional que ninguna aseguradora incluyó en su red devuelve la lista vacía', () => {
+    const outside = PROFESIONALES.find((p) => p.insurerNetworks === undefined)!;
+
+    expect(get<CarriersWire>(`/practitioners/${outside.id}/insurance-carriers`).items).toEqual([]);
+  });
+
+  it('un profesional inexistente es 404', () => {
+    const reply = get<{ status: number }>('/practitioners/no-existe/insurance-carriers');
+
+    expect(reply.status).toBe(404);
   });
 });

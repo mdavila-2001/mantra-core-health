@@ -422,3 +422,34 @@ describe('FilterBar', () => {
     });
   });
 });
+
+@Component({
+  imports: [FilterBar],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  template: `<app-filter-bar [filters]="filtros" [wrap]="envolver()" />`,
+})
+class HostConWrap {
+  readonly filtros = FILTROS;
+  readonly envolver = signal(false);
+}
+
+describe('FilterBar · wrap (opt-in)', () => {
+  beforeEach(() => {
+    TestBed.configureTestingModule({ providers: [provideRouter([])] });
+  });
+
+  it('por omisión no cambia nada: los consumidores existentes siguen en una fila', () => {
+    const fixture = TestBed.createComponent(HostConWrap);
+    fixture.detectChanges();
+    const barra = fixture.debugElement.query(By.directive(FilterBar)).nativeElement as HTMLElement;
+    expect(barra.classList.contains('filter-bar--wrap')).toBe(false);
+  });
+
+  it('con `wrap` el host lleva la clase que deja bajar los controles de renglón', () => {
+    const fixture = TestBed.createComponent(HostConWrap);
+    fixture.componentInstance.envolver.set(true);
+    fixture.detectChanges();
+    const barra = fixture.debugElement.query(By.directive(FilterBar)).nativeElement as HTMLElement;
+    expect(barra.classList.contains('filter-bar--wrap')).toBe(true);
+  });
+});

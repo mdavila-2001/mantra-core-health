@@ -4,6 +4,7 @@ import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 
+import { AuthService } from '../../../core/auth/auth.service';
 import { PractitionerDetail } from './practitioner-detail';
 import type { PerfilProfesionalVisible } from '../../account/my-profile/practitioner-profile/practitioner-profile-view/practitioner-profile-view.types';
 
@@ -241,6 +242,59 @@ describe('PractitionerDetail', () => {
     http.verify();
 
     expect(interno<() => { status: string }>('estado')().status).toBe('not-found');
+  });
+
+  /**
+   * Con qué seguros trabaja: es la pregunta con la que el paciente abre la
+   * ficha, así que va pegada a la identidad y no debajo de la trayectoria.
+   */
+  it('muestra con qué seguros trabaja, justo después de la identidad', async () => {
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        {
+          provide: ActivatedRoute,
+          useValue: { paramMap: of(convertToParamMap({ profileId: 'per-9' })) },
+        },
+        // Sin sesión la disponibilidad no pide cupos: la prueba es sobre seguros.
+        { provide: AuthService, useValue: { isAuthenticated: () => false, activeTenantId: () => null } },
+      ],
+    });
+    http = TestBed.inject(HttpTestingController);
+    const fixture = TestBed.createComponent(PractitionerDetail);
+    fixture.detectChanges();
+    responder();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    http.expectOne('/practitioners/per-9/insurance-carriers').flush({
+      items: [
+        {
+          carrierId: 'car-1',
+          carrierName: 'Alianza Seguros',
+          networks: [{ id: 'net-1', name: 'AFI GOLD' }],
+        },
+      ],
+    });
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    http.verify();
+
+    const page = fixture.nativeElement as HTMLElement;
+    const insurers = page.querySelector('app-practitioner-profile-view [data-testid="practitioner-insurers"]');
+    expect(insurers?.textContent).toContain('Alianza Seguros');
+    expect(insurers?.textContent).toContain('AFI GOLD');
+
+    // Orden en el documento: portada → seguros → actividad.
+    const cover = page.querySelector('.profesional__portada')!;
+    const activity = Array.from(page.querySelectorAll('h2')).find((h) =>
+      h.textContent?.includes('Actividad en la plataforma'),
+    )!;
+    expect(cover.compareDocumentPosition(insurers!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(insurers!.compareDocumentPosition(activity) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
   /** Sin id en la ruta no se pide nada: no hay a quién consultar. */

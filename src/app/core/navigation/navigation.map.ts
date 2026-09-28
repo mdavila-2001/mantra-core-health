@@ -826,6 +826,23 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M26 insurance',
   },
   {
+    // La cara de LA ASEGURADORA de las solicitudes de seguro: lo que cada
+    // prestador le presentó, con paciente, médico, servicio, monto y fechas.
+    // «Solicitudes de seguro» (arriba) es la cara del prestador; ésta es la de
+    // quien paga, y por eso lleva el mismo acceso que «Siniestralidad»: la
+    // autoridad es la membresía en la aseguradora, que resuelve la API.
+    path: 'administration/received-claims',
+    label: 'Solicitudes recibidas',
+    group: 'Administración',
+    icon: 'clipboard',
+    roles: [ANY_ROLE],
+    requiresTenant: true,
+    hiddenFor: ['PATIENT', 'PRACTITIONER'],
+    availability: 'disponible',
+    summary: 'Lo que cada prestador le pidió a tu aseguradora, con médico, servicio y monto.',
+    module: 'M26 insurance',
+  },
+  {
     // Tarea 4 · M-06 — Proceso 4 del registro del cliente, «Módulo de
     // promociones»: la aseguradora publica campañas de prevención junto a
     // laboratorios e importadoras para que el seguro no erogue por

@@ -51,6 +51,7 @@ backend.
 | **P41** | Estados `COND_PROVISIONAL` / `COND_REFUTED` y `POST /clinical/conditions/:id/verification` con motivo y evidencia — **carril C3 no entregado** |
 | **P42** | La **reconsulta**: `follow_up_of_booking_id` en la reserva, `ACT_FOLLOW_UP`, «una reconsulta futura por cita» y el vínculo en `BookingItemDto`. **Esto sí tiene frontend detrás y funcionando contra el simulador** |
 | **P44** | `GET /patient-spending/me?from=&to=` — los gastos de salud del paciente, movimiento por movimiento. **«Mis gastos» ya está construido contra el simulador** |
+| **P45** | `GET /practitioners/:id/insurance-carriers`: con qué aseguradoras trabaja un médico, para su ficha pública. **El modelo ya lo declara** (`network_provider_memberships`); falta la lectura y la carga de las redes reales |
 
 ---
 
@@ -1859,3 +1860,46 @@ literal del plan maestro (§10), no un contrato ampliado acá.
 > ruta `my-account/spending` y el tablero entero, con sus pruebas. Nada más espera; cuando la
 > ruta exista, la pantalla funciona contra la API sin cambios si el contrato se respeta.
 
+---
+
+## P45 · Con qué seguros trabaja un médico — 27/09/2026
+
+> **P45 · La ficha del médico que ve el paciente dice con qué aseguradoras trabaja y en qué
+> planes.** Origen: pedido del propietario del 27/09/2026 («fundamental»). Construido y probado
+> contra el simulador en `mockup`; **la API real no tiene la ruta**, así que llevarlo a `dev` sin
+> ella deja la tarjeta en su estado de error (con «Reintentar»), no la ficha rota.
+>
+> **1. Contrato**
+> `GET /practitioners/:practitionerProfileId/insurance-carriers` — autenticado; lo lee el
+> paciente desde `/directory/:profileId`.
+>
+> ```json
+> { "items": [
+>   { "carrierId": "uuid", "carrierName": "Alianza Seguros",
+>     "networks": [ { "id": "uuid", "name": "AFI GOLD" }, { "id": "uuid", "name": "OASIS" } ] }
+> ] }
+> ```
+>
+> Ordenado por `carrierName`. `networks` puede venir vacío (la aseguradora no detalla planes).
+> Profesional inexistente → **404**. Sin membresías activas → `items: []`: la pantalla dice «Sin
+> seguros informados», **nunca** «no acepta seguros».
+>
+> **2. De dónde sale — sin tablas nuevas**
+> `insurance.network_provider_memberships` activas (`MEMBERSHIP_ACTIVE`) cuyo prestador es el
+> profesional → `provider_networks` → `insurance_carriers`, agrupadas por aseguradora. Hoy `INS`
+> sólo declara `PROVIDER_TYPE_PRACTICE`; falta decidir cómo se identifica al profesional como
+> prestador: `provider_entity_id` = perfil profesional con un tipo de prestador «profesional», o
+> `practitioner_role_assignment_id`, que el modelo ya trae. Es una decisión de modelo, no del
+> endpoint: **no se inventa el concepto en la API**.
+>
+> **3. Datos**
+> Las aseguradoras bolivianas publican su red **por plan**, así que cada plan es una red
+> (`provider_networks.name` = «AFI GOLD»). Los datos reales ya están extraídos en este repo:
+> `data/insurer-networks/` (763 médicos de Alianza Seguros y Nacional Seguros en Santa Cruz,
+> destilados de `markdown_convertidos/`). Cargarlos en la base es trabajo de seeder: una red por
+> plan y una membresía por médico y red.
+>
+> **4. Lo que el frontend ya tiene**
+> `InsuranceClient.listPractitionerCarriers`, la tarjeta `app-practitioner-insurers` proyectada en
+> la ficha justo debajo de la identidad (con carga, vacío y error propios), el doble del simulador
+> y la prueba de navegador `ficha-medico-seguros.spec.ts`.
