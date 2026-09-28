@@ -101,6 +101,11 @@ export interface NewDiagnosticOrder {
   readonly codeConceptId: string;
   readonly encounterId?: string;
   readonly categoryConceptId?: string;
+  /**
+   * La respuesta del formulario médico de la que sale (instancia de `forms`).
+   * En la cita es obligatoria; pendiente de backend (P43).
+   */
+  readonly formInstanceId?: string;
   readonly priorityConceptId?: string;
   readonly requesterProfileId?: string;
   readonly performerTenantId?: string;

@@ -8,10 +8,19 @@ import {
   output,
   signal,
   untracked,
+  viewChild,
 } from '@angular/core';
-import { of, switchMap } from 'rxjs';
+import { catchError, of, switchMap, tap, type Observable } from 'rxjs';
 
 import { ChartTemplatesClient } from '../../../../core/data-access/chart-templates/chart-templates.client';
+import { ClinicalClient } from '../../../../core/data-access/clinical/clinical.client';
+import {
+  AdditionalFields,
+  entradasDelTexto,
+  type EntradaAdicional,
+  type PasoDeRegistro,
+} from '../additional-fields/additional-fields';
+import { mensajeDeFalloDeEscritura } from '../../mensaje-de-escritura';
 import { DiagnosisBlock } from '../diagnosis-block/diagnosis-block';
 import { AllergyBlock } from '../allergy-block/allergy-block';
 import { DiagnosticsBlock } from '../diagnostics-block/diagnostics-block';
@@ -211,6 +220,7 @@ const FORMATO_FECHA = new Intl.DateTimeFormat('es-BO', {
 @Component({
   selector: 'app-specialty-form-block',
   imports: [
+    AdditionalFields,
     Alert,
     AppButton,
     Card,
@@ -238,7 +248,11 @@ export class SpecialtyFormBlock {
   private readonly chartTemplates = inject(ChartTemplatesClient);
   private readonly forms = inject(FormsClient);
   private readonly profiles = inject(ProfilesClient);
+  private readonly clinical = inject(ClinicalClient);
   private readonly toasts = inject(ToastService);
+
+  /** Los campos adicionales del doctor, al final de la ficha. */
+  private readonly adicionales = viewChild(AdditionalFields);
 
   /**
    * El encuentro en curso, o `null` si no hay ninguno abierto.
@@ -651,6 +665,32 @@ export class SpecialtyFormBlock {
     return null;
   });
 
+  /**
+   * Los campos adicionales guardados con la respuesta: las filas de las notas
+   * de este encuentro, y su texto libre. Se leen aparte porque viven en la
+   * nota y no en la instancia del formulario.
+   */
+  protected readonly adicionalesGuardados = signal<readonly EntradaAdicional[]>([]);
+
+  private consultarAdicionales(encounterId: string): void {
+    this.adicionalesGuardados.set([]);
+    this.clinical.getChart(this.patientProfileId()).subscribe({
+      next: (expediente) => {
+        if (this.encounterId() !== encounterId) return;
+        this.adicionalesGuardados.set(
+          expediente.notes
+            .filter((nota) => nota.encounterId === encounterId)
+            .flatMap((nota) => [
+              ...entradasDelTexto(nota.objectiveText),
+              ...(nota.subjectiveText ? [{ label: 'Texto libre', value: nota.subjectiveText }] : []),
+            ]),
+        );
+      },
+      // Sin las notas la respuesta se lee igual: lo que falta es un agregado.
+      error: () => undefined,
+    });
+  }
+
   protected reconsultarRespuesta(): void {
     this.consultarRespuesta(this.encounterId());
   }
@@ -675,6 +715,7 @@ export class SpecialtyFormBlock {
           // El encuentro pudo cambiar mientras la respuesta viajaba.
           if (this.encounterId() !== encounterId) return;
           this.respondido.set(ready(detalle));
+          if (detalle !== null) this.consultarAdicionales(encounterId);
         },
         error: (error: unknown) => {
           if (this.encounterId() !== encounterId) return;
@@ -762,7 +803,7 @@ export class SpecialtyFormBlock {
   protected descargarPdf(): void {
     const detalle = this.formularioRespondido();
     if (detalle === null) return;
-    const cierre = detalle.closedAt === undefined ? undefined : new Date(detalle.closedAt);
+    const cierre = detalle.closedAt == null ? undefined : new Date(detalle.closedAt);
     downloadFormResponsePdf({
       id: detalle.id,
       titulo: this.tituloDeLaRespuesta(),
@@ -936,6 +977,10 @@ export class SpecialtyFormBlock {
       !this.buscandoRespuesta() &&
       this.plantillaElegida() !== null &&
       this.camposObligatoriosCompletos() &&
+      // Los campos adicionales son opcionales, pero lo que se escribió ahí
+      // tiene que estar bien: se guardan con la ficha y no por separado.
+      !(this.adicionales()?.hayProblemas() ?? false) &&
+      (this.adicionales()?.impedimento() ?? null) === null &&
       !this.enviando(),
   );
 
@@ -943,6 +988,12 @@ export class SpecialtyFormBlock {
 
   protected readonly enviando = signal(false);
   protected readonly resultado = signal<ViewState<null>>(ready(null));
+
+  /**
+   * Lo que no se pudo registrar de los campos adicionales, en palabras. La
+   * ficha ya quedó guardada: esto se avisa, no se cuenta como error.
+   */
+  protected readonly fallosDeAdicionales = signal<readonly string[]>([]);
 
   /**
    * El aviso del duplicado — mismo criterio que el diagnóstico: no es un
@@ -989,6 +1040,10 @@ export class SpecialtyFormBlock {
 
     this.enviando.set(true);
     this.resultado.set(loading());
+    this.fallosDeAdicionales.set([]);
+    // La nota y los documentos de los campos adicionales se registran después
+    // de cerrar la respuesta: un fallo ahí no la deshace.
+    const adicionales = this.adicionales()?.pasos(encounterId) ?? [];
 
     this.forms
       .openInstance({ resourceId: encounterId })
@@ -998,16 +1053,21 @@ export class SpecialtyFormBlock {
             .captureValues(instancia.id, values)
             .pipe(switchMap(() => this.forms.closeInstance(instancia.id))),
         ),
-      )
-      .subscribe({
-        next: () => {
-          this.enviando.set(false);
-          this.resultado.set(ready(null));
-          this.valores.set({});
+        tap(() =>
           this.toasts.success(
             `«${plantilla.name}» quedó guardada en la ficha.`,
             'Formulario completado',
-          );
+          ),
+        ),
+        switchMap(() => this.ejecutarEnOrden(adicionales)),
+      )
+      .subscribe({
+        next: (fallos) => {
+          this.enviando.set(false);
+          this.resultado.set(ready(null));
+          this.valores.set({});
+          this.adicionales()?.limpiar();
+          this.fallosDeAdicionales.set(fallos);
           this.cambio.emit();
           // Lo recién guardado se relee del backend y el bloque pasa a lectura.
           this.consultarRespuesta(encounterId);
@@ -1017,6 +1077,44 @@ export class SpecialtyFormBlock {
           this.resultado.set(errorToViewState<null>(error));
         },
       });
+  }
+
+  /**
+   * Corre las altas una detrás de otra y devuelve lo que falló, en palabras.
+   *
+   * Un paso que falla **frena los siguientes** pero no deshace nada: lo hecho,
+   * hecho está, y cada cosa que faltó se nombra. Nunca falla hacia arriba: la
+   * ficha ya quedó guardada y eso no se cuenta como error.
+   */
+  private ejecutarEnOrden(pasos: readonly PasoDeRegistro[]): Observable<readonly string[]> {
+    const [primero, ...resto] = pasos;
+    if (primero === undefined) return of([]);
+    return primero.ejecutar().pipe(
+      tap(() => this.toasts.success(primero.exito, primero.titulo)),
+      switchMap(() => this.ejecutarEnOrden(resto)),
+      catchError((error: unknown) => of(this.fallosDesde(primero, resto, error))),
+    );
+  }
+
+  /** El fallo de un paso y los que no se intentaron por su culpa, ya avisados. */
+  private fallosDesde(
+    paso: PasoDeRegistro,
+    siguientes: readonly PasoDeRegistro[],
+    error: unknown,
+  ): readonly string[] {
+    const estado = errorToViewState<null>(error);
+    const motivo =
+      estado.status === 'validation'
+        ? estado.issues.map((issue) => issue.message).join(' ')
+        : (mensajeDeFalloDeEscritura(estado, { accion: `registrar ${paso.nombre}` }) ?? '');
+    const mensaje = `No se registró ${paso.nombre}${motivo === '' ? '.' : `: ${motivo}`}`;
+    this.toasts.error(mensaje, 'La ficha quedó guardada, pero no todo lo adicional');
+    return [
+      mensaje,
+      ...siguientes.map(
+        (siguiente) => `No se registró ${siguiente.nombre}: se frenó por el fallo anterior.`,
+      ),
+    ];
   }
 
   private valoresParaEnviar(plantilla: ChartTemplate): FieldValueInput[] {

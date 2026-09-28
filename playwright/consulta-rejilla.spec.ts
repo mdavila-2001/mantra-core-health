@@ -11,7 +11,7 @@ import { entrar, estable, irA } from './support/sesion';
  *
  * Lo que sólo un navegador puede afirmar:
  *
- * 1. **Las nueve casillas están a la vista**, sin pestañas que abrir.
+ * 1. **Las ocho casillas están a la vista**, sin pestañas que abrir.
  * 2. **El encuentro se abre desde la misma pantalla** y queda «en curso».
  * 3. **Cada casilla abre su formulario en modal** y el modal se cierra.
  * 4. **La página no scrollea de costado**, ni a 1440 ni a 390 px.
@@ -26,15 +26,15 @@ const MEDICA: Actor = {
   nombre: 'Médica',
 };
 
+// «Nota clínica» y «Documento» salieron de la rejilla el 26/09/2026: viven al
+// final del formulario médico, como campos adicionales con texto y archivos.
 const CASILLAS: readonly { readonly clave: string; readonly modal: string }[] = [
+  { clave: 'formulario', modal: 'Llenar el formulario médico' },
   { clave: 'diagnosticos', modal: 'Nuevo diagnóstico' },
   { clave: 'alergias', modal: 'Nueva alergia' },
   { clave: 'medicacion', modal: 'Prescribir medicación' },
   { clave: 'observaciones', modal: 'Registrar una observación' },
-  { clave: 'notas', modal: 'Escribir una nota clínica' },
   { clave: 'planes', modal: 'Abrir un plan de cuidados' },
-  { clave: 'documentos', modal: 'Registrar un documento' },
-  { clave: 'formulario', modal: 'Llenar un formulario clínico' },
   { clave: 'internacion', modal: 'Registrar una internación' },
 ];
 
@@ -67,10 +67,10 @@ test.describe('Consulta · rejilla de registro', () => {
     await page.waitForURL(/\/medical-records\/[^/]+\/consultation$/, { timeout: 60_000 });
     await estable(page);
 
-    /* ---- 1. las nueve casillas ------------------------------------------- */
+    /* ---- 1. las ocho casillas -------------------------------------------- */
 
     await expect(page.getByTestId('consulta-rejilla')).toBeVisible();
-    await expect(page.locator('[data-testid^="consulta-casilla-"]')).toHaveCount(9);
+    await expect(page.locator('[data-testid^="consulta-casilla-"]')).toHaveCount(8);
     expect(await desbordeHorizontal(page)).toBe(0);
     // Del tamaño de la ventana y no `fullPage`: la captura cosida dibuja el menú
     // lateral fijo encima del contenido, que no es lo que ve una persona.

@@ -27,6 +27,7 @@ import { ToastService } from '../../../../shared/components/molecules/toast/toas
 import { DatePicker } from '../../../../shared/components/organisms/date-picker/date-picker';
 import { FormActions } from '../../../../shared/components/organisms/form-actions/form-actions';
 import type { CitaDelPaciente } from '../diagnosis-block/diagnosis-block';
+import { FormResponsePicker } from '../form-response-picker/form-response-picker';
 import { DRAFT_BLOCK, type DraftBlock } from '../draft-block';
 import { mensajeDeEscritura } from '../../mensaje-de-escritura';
 
@@ -84,6 +85,7 @@ interface ActividadEnCurso {
 @Component({
   selector: 'app-care-plan-block',
   imports: [
+    FormResponsePicker,
     Alert,
     AppButton,
     Card,
@@ -112,6 +114,19 @@ export class CarePlanBlock implements DraftBlock {
 
   /** Las citas de la persona, para atar el plan a la consulta donde se acordó. */
   readonly citas = input<readonly CitaDelPaciente[]>([]);
+
+  /**
+   * En la cita, lo que se emite cuelga sí o sí de una respuesta del formulario
+   * médico: sin ella el botón no se habilita. En el expediente no se exige.
+   */
+  readonly exigeRespuesta = input(false);
+
+  /** La respuesta del formulario médico elegida; por defecto, la más reciente. */
+  protected readonly respuestaDelFormulario = signal<string | null>(null);
+
+  protected readonly faltaRespuesta = computed(
+    () => this.exigeRespuesta() && this.respuestaDelFormulario() === null,
+  );
 
   /**
    * Los diagnósticos de la persona, ya traducidos por el expediente.
@@ -223,7 +238,11 @@ export class CarePlanBlock implements DraftBlock {
 
   /** La meta es lo que esta pantalla exige; el contrato sólo pide el paciente. */
   protected readonly puedeRegistrar = computed(
-    () => this.meta().trim() !== '' && !this.vigenciaInvalida() && !this.registrando(),
+    () =>
+      !this.faltaRespuesta() &&
+      this.meta().trim() !== '' &&
+      !this.vigenciaInvalida() &&
+      !this.registrando(),
   );
 
   /**
@@ -272,6 +291,9 @@ export class CarePlanBlock implements DraftBlock {
         ...(desde === null ? {} : { startDate: desde }),
         ...(hasta === null ? {} : { endDate: hasta }),
         ...(encuentro === null ? {} : { encounterId: encuentro }),
+        ...(this.respuestaDelFormulario() === null
+          ? {}
+          : { formInstanceId: this.respuestaDelFormulario() ?? '' }),
         ...(diagnostico === null ? {} : { conditionId: diagnostico }),
         ...(autor === null ? {} : { authorProfileId: autor }),
         ...(activities.length === 0 ? {} : { activities }),

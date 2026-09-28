@@ -76,6 +76,16 @@ test.describe('C-14/C-23 · contra la API real', () => {
   }
 
   /**
+   * La nota clínica ya no es casilla (26/09/2026): vive dentro del formulario
+   * médico, como su «Hoja en blanco».
+   */
+  async function abrirLaNota(page: Page) {
+    const modal = await abrirCasilla(page, 'formulario');
+    await modal.getByLabel('Qué vas a completar').selectOption({ label: 'Hoja en blanco — escribir sin campos' });
+    return modal;
+  }
+
+  /**
    * Entra, va directo a la ficha del paciente (por id, sin buscar por
    * nombre) y abre un encuentro.
    *
@@ -127,7 +137,7 @@ test.describe('C-14/C-23 · contra la API real', () => {
 
     /* ---- 1 · vacío: paciente recién registrado, cero observaciones ------- */
     await irAConsultaConEncuentro(page, vacia);
-    const modalVacio = await abrirCasilla(page, 'notas');
+    const modalVacio = await abrirLaNota(page);
     await modalVacio.getByRole('tab', { name: 'Cuadrícula' }).click();
     await estable(page);
     await expect(modalVacio.getByTestId('cuadricula-cargando')).toHaveCount(0);
@@ -155,7 +165,7 @@ test.describe('C-14/C-23 · contra la API real', () => {
     });
     const modalError = page.getByRole('dialog');
     if ((await modalError.count()) === 0) {
-      await page.getByTestId('consulta-casilla-notas').click();
+      await abrirLaNota(page);
     }
     await expect(page.getByRole('dialog')).toBeVisible();
     await page.getByRole('dialog').getByRole('tab', { name: 'Cuadrícula' }).click();
@@ -181,8 +191,7 @@ test.describe('C-14/C-23 · contra la API real', () => {
 
     await page.reload();
     await estable(page);
-    await page.getByTestId('consulta-casilla-notas').click();
-    const modalReabierto = page.getByRole('dialog');
+    const modalReabierto = await abrirLaNota(page);
     await expect(modalReabierto).toBeVisible();
     await modalReabierto.getByRole('tab', { name: 'Cuadrícula' }).click();
     await expect(modalReabierto.getByTestId('cuadricula-fila-hoy')).toContainText('65', { timeout: 15_000 });

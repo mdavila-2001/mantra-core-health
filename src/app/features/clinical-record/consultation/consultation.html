@@ -168,9 +168,9 @@
 </app-view-state-host>
 
 <!-- ─── El formulario de la casilla elegida ──────────────────────────────
-     Un solo modal para las diez, con el bloque elegido adentro. Cada bloque
+     Un solo modal para las ocho, con el bloque elegido adentro. Cada bloque
      es EL MISMO que usa el expediente, atado al encuentro en curso cuando lo
-     hay y a una cita ya existente cuando no. La décima —Pagos— no escribe:
+     hay y a una cita ya existente cuando no. La octava —Pagos— no escribe:
      muestra lo cobrado. -->
 @if (casillaAbierta(); as casilla) {
   <app-content-dialog
@@ -205,6 +205,7 @@
         <app-medication-block
           [patientProfileId]="pacienteDeLaFicha()"
           [encounterId]="encuentroActual()"
+          [exigeRespuesta]="true"
           [exigeEncuentro]="false"
           [citas]="citas()"
           [recetas]="recetas()"
@@ -222,30 +223,13 @@
           (cambio)="altaRegistrada()"
         />
       }
-      @case ('notas') {
-        <!-- La hoja en blanco no cierra el modal al guardar: cada guardado
-             crea una versión y quien escribe suele seguir escribiendo. -->
-        <app-free-note-block
-          [patientProfileId]="pacienteDeLaFicha()"
-          [encounterId]="encuentroActual()"
-          [citas]="citas()"
-          (guardada)="recargar()"
-        />
-      }
       @case ('planes') {
         <app-care-plan-block
           [patientProfileId]="pacienteDeLaFicha()"
           [encounterId]="encuentroActual()"
+          [exigeRespuesta]="true"
           [citas]="citas()"
           [diagnosticos]="diagnosticosParaElPlan()"
-          (cambio)="altaRegistrada()"
-        />
-      }
-      @case ('documentos') {
-        <app-document-block
-          [patientProfileId]="pacienteDeLaFicha()"
-          [encounterId]="encuentroActual()"
-          [citas]="citas()"
           (cambio)="altaRegistrada()"
         />
       }

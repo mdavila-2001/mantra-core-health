@@ -6,6 +6,15 @@
   }
 
   <form class="plan__form app-form-grid" (submit)="$event.preventDefault(); registrar()">
+    <!-- En la cita, primero de qué respuesta del formulario médico sale. Viene
+         cargada; con una sola respuesta el selector queda deshabilitado. -->
+    @if (exigeRespuesta()) {
+      <app-form-response-picker
+        class="app-form-grid__ancho"
+        [encounterId]="encounterId()"
+        [(seleccionada)]="respuestaDelFormulario"
+      />
+    }
     <!-- La meta va primero y a lo ancho: es lo que el plan promete, y todo lo
          de abajo existe para llegar ahí. -->
     <app-form-field
