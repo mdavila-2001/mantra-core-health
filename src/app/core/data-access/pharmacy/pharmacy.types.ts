@@ -96,9 +96,8 @@ export interface PharmacyProductIdentifier {
  * la farmacia no elige desde un texto libre y quedan para cuando la pantalla
  * los pueda resolver contra terminología.
  *
- * Los opcionales **no viajan** cuando están vacíos: el backend valida con
- * `forbidNonWhitelisted` y una clave en `undefined` o `''` rompe el
- * `MaxLength`/`IsString` de más de un campo.
+ * Los opcionales **no viajan** cuando están vacíos: `IsOptional` deja pasar
+ * un `''`, y el backend lo guardaría como un nombre vacío.
  */
 export interface PharmacyProductDraft {
   /** Código único del producto dentro de la farmacia (el SKU). 1 a 100. */

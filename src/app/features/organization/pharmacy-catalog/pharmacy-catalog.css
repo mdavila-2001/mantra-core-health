@@ -247,3 +247,24 @@ span.catalogo__secundario {
     grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
   }
 }
+
+/* La muestra de lo que se va a publicar: para ver tildes y nombres antes. */
+.catalogo__muestra ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.catalogo__muestra li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sp-1) var(--sp-2);
+}
+
+.catalogo__en-linea {
+  display: inline;
+}

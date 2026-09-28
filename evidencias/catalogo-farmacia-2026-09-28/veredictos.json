@@ -45,6 +45,16 @@
     "detalle": "2 filas listas para publicar 3 filas a corregir de carga-de-prueba.csv"
   },
   {
+    "nombre": "reconoce el archivo de Excel (Windows-1252)",
+    "cond": true,
+    "detalle": ""
+  },
+  {
+    "nombre": "las tildes llegan intactas a lo que se va a publicar",
+    "cond": true,
+    "detalle": "IMP-MULR1M9D-1 Amoxicilina Evidencia 500 mg Caja x 21 cápsulas IMP-MULR1M9D-2 Loratadina 10 mg Caja x 10"
+  },
+  {
     "nombre": "avisa la columna que ignora",
     "cond": true,
     "detalle": ""
