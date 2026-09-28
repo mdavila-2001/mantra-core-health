@@ -384,6 +384,7 @@ describe('NavigationService', () => {
         '/laboratory-directory',
         '/clinics-directory',
         '/pharmacies-directory',
+        '/insurers-directory',
       ]) {
         expect(alcanzables, ruta).toContain(ruta);
         expect(rutasDelMenu(), ruta).not.toContain(ruta);

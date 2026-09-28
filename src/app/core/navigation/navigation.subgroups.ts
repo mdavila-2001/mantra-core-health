@@ -124,6 +124,7 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
       'laboratory-directory',
       'clinics-directory',
       'pharmacies-directory',
+      'insurers-directory',
     ],
   },
   {

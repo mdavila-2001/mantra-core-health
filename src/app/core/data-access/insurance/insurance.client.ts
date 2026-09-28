@@ -40,6 +40,8 @@ import type {
   CreateCampaignInput,
   CreateAdjudicationInput,
   InsuranceCampaign,
+  InsurerMarketplace,
+  MarketplaceBroker,
   PatientCampaign,
 } from './insurance.types';
 
@@ -192,6 +194,28 @@ export class InsuranceClient {
     return this.http
       .get<WireCarrierDetail>(this.url(`/insurance-carriers/${encodeURIComponent(id)}`))
       .pipe(map(toCarrierDetail));
+  }
+
+  /**
+   * `GET /insurance-marketplace/insurers/:slug` — la vitrina de una
+   * aseguradora para el paciente: productos con planes y cláusulas, y los
+   * brokers con los que puede hablar. Se busca por el slug de su ficha
+   * pública, que es lo que trae el directorio.
+   *
+   * **Sólo existe en la maqueta**: la API todavía no lo expone (P46).
+   */
+  getMarketplace(slug: string): Observable<InsurerMarketplace> {
+    return this.http
+      .get<{
+        readonly carrier: WireCarrierDetail | null;
+        readonly brokers: readonly MarketplaceBroker[];
+      }>(this.url(`/insurance-marketplace/insurers/${encodeURIComponent(slug)}`))
+      .pipe(
+        map((body) => ({
+          carrier: body.carrier === null ? null : toCarrierDetail(body.carrier),
+          brokers: body.brokers,
+        })),
+      );
   }
 
   /** Crea un plan dentro de un producto del carrier del tenant activo. */

@@ -6,6 +6,7 @@ import {
   effect,
   inject,
   signal,
+  untracked,
 } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
@@ -162,6 +163,9 @@ export class Messaging {
     () => this.consulta().trim() !== '' && this.visibles().length === 0,
   );
 
+  /** El `?escribirA=` que espera al perfil propio para abrir su hilo. */
+  private readonly slugPendiente = signal<string | null>(null);
+
   constructor() {
     this.store.iniciar();
     inject(DestroyRef).onDestroy(() => this.store.detener());
@@ -173,14 +177,25 @@ export class Messaging {
       .pipe(debounceTime(ESPERA_DE_BUSQUEDA_MS), takeUntilDestroyed())
       .subscribe((texto) => this.store.buscarGente(texto));
 
-    // El `?escribirA=<slug>` con el que llega el botón «Enviar mensaje» de una
-    // ficha pública. Se atiende cuando el perfil propio ya está resuelto: sin
-    // eso no hay con qué abrir el hilo.
+    // El `?escribirA=<slug>` con el que llegan el botón «Enviar mensaje» de una
+    // ficha pública y «Hablar con el broker» del directorio de aseguradoras. Se
+    // atiende cuando el perfil propio ya está resuelto: sin eso no hay con qué
+    // abrir el hilo. Por eso el slug queda **pendiente** y lo abre el efecto de
+    // abajo: la ruta llega antes que el perfil, y atenderlo en el acto lo
+    // descartaba en silencio —la bandeja quedaba abierta sin hilo—.
     this.ruta.queryParamMap.pipe(takeUntilDestroyed()).subscribe((query) => {
       const slug = query.get('escribirA');
       if (slug !== null && slug !== '') {
-        this.abrirConSlug(slug);
+        this.slugPendiente.set(slug);
       }
+    });
+    effect(() => {
+      const slug = this.slugPendiente();
+      if (slug === null || this.store.perfil() === null) return;
+      untracked(() => {
+        this.slugPendiente.set(null);
+        this.abrirConSlug(slug);
+      });
     });
 
     // «(3) AloVida - Chats» en la pestaña mientras haya sin leer, como

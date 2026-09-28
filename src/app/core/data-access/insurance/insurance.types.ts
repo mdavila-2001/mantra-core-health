@@ -183,6 +183,42 @@ export interface CarrierDetail extends CarrierSummary {
   readonly networks: readonly ProviderNetwork[];
 }
 
+/* ---- mercado de seguros para el paciente ---------------------------------
+   Lo que un paciente puede leer de una aseguradora antes de contratarla: sus
+   productos con planes, cláusulas y coberturas, y los brokers con los que
+   puede hablar. El catálogo comercial completo (`GET /insurance-carriers/:id`)
+   sólo lo lee la propia aseguradora; esto es la vitrina.
+
+   **Contrato pendiente en la API** (P46 de `PENDIENTES-BACKEND.md`): hoy
+   existe sólo en la maqueta de `mockup`. */
+
+/** Un broker que vende productos de la aseguradora, con cómo escribirle. */
+export interface MarketplaceBroker {
+  readonly id: string;
+  readonly brokerCode: string;
+  readonly legalName: string;
+  readonly licenseNumber: string | null;
+  readonly verification: InsuranceConcept;
+  /** Corredor independiente (varias aseguradoras) o de la casa. */
+  readonly independent: boolean;
+  /**
+   * El slug de su perfil público: lo que abre el chat
+   * (`/messaging?escribirA=<slug>`). `null` si todavía no tiene perfil, y
+   * entonces no se ofrece el botón.
+   */
+  readonly chatSlug: string | null;
+}
+
+/** La vitrina de una aseguradora (`GET /insurance-marketplace/insurers/:slug`). */
+export interface InsurerMarketplace {
+  /**
+   * Productos, planes y cláusulas. `null` cuando la aseguradora tiene ficha
+   * pública pero todavía no publicó su catálogo: se dice así, no como error.
+   */
+  readonly carrier: CarrierDetail | null;
+  readonly brokers: readonly MarketplaceBroker[];
+}
+
 /** Un vínculo del broker con una aseguradora. */
 export interface BrokerAgreement {
   readonly id: string;
