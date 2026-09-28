@@ -646,10 +646,10 @@ export function registrarFarmacia(router: MockRouter): void {
     const farmacia = FARMACIAS.find((f) => f.siteId === siteId);
     if (farmacia === undefined) return notFound('Sede de farmacia no encontrada');
     const productId = texto(query, 'product');
-    const items = productos
-      .filtrar((p) => p.pharmacyId === farmacia.id && p.stock > 0)
+    const items = activos()
+      .filter((p) => p.pharmacyId === farmacia.id && p.stock > 0)
       .filter((p) => productId === null || p.id === productId)
-      .sort((a, b) => a.genericName.localeCompare(b.genericName, 'es'))
+      .sort((a, b) => (a.genericName ?? a.productCode).localeCompare(b.genericName ?? b.productCode, 'es'))
       .map((p) => ({
         productId: p.id,
         productCode: p.productCode,
