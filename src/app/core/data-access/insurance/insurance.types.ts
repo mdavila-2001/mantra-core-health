@@ -177,6 +177,28 @@ export interface ProviderNetwork {
   readonly memberCount: number;
 }
 
+/**
+ * Una aseguradora con la que trabaja un profesional: su membresía vigente en
+ * una red de prestadores (`insurance.network_provider_memberships`).
+ *
+ * La carga la aseguradora al firmar el convenio, no el profesional, así que es
+ * de sólo lectura para él. `effectiveTo` nulo es «sin fecha de fin».
+ */
+export interface PractitionerInsuranceNetwork {
+  readonly membershipId: string;
+  readonly carrierId: string;
+  readonly carrierName: string;
+  readonly networkName: string;
+  readonly effectiveFrom: Date | null;
+  readonly effectiveTo: Date | null;
+}
+
+/** `GET /practitioners/:id/insurance-networks`. */
+export interface PractitionerInsuranceNetworkPage {
+  readonly items: readonly PractitionerInsuranceNetwork[];
+  readonly count: number;
+}
+
 /** Ficha de la aseguradora (`GET /insurance-carriers/:id`). */
 export interface CarrierDetail extends CarrierSummary {
   readonly products: readonly Product[];
