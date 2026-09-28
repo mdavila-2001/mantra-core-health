@@ -76,6 +76,7 @@ export const NAV_ICON_NAMES = [
 
   // Dinero.
   'chart',
+  'wallet',
   'star',
 
   // Confianza y llaves.

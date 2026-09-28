@@ -77,6 +77,8 @@ export const NAV_ICON_NAMES = [
 
   // Dinero.
   'chart',
+  /** Billetera: lo que el paciente gastó en su salud («Mis gastos»). */
+  'wallet',
   'star',
 
   // Confianza y llaves.

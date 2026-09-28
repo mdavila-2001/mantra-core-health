@@ -291,13 +291,14 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
     label: 'Mis gestiones',
     group: 'Mi cuenta',
     icon: 'calendar',
-    // Lo que tengo en curso: un turno, un pedido, mis puntos.
+    // Lo que tengo en curso: un turno, un pedido, mis puntos, lo que gasté.
     paths: [
       'my-account/appointments',
       'my-account/pharmacy',
       'my-account/pharmacy-orders',
       'my-account/loyalty',
       'my-account/promotions',
+      'my-account/spending',
     ],
   },
   {

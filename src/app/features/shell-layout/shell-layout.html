@@ -429,6 +429,20 @@
              ofrece con `esPacienteDelCarrito()`. Mismo bloque que Chats, con
              `name="bag"` y el contador del `CartStore`. -->
         @if (esPacienteDelCarrito()) {
+          <!-- Mis gastos: la billetera abre el tablero de lo que el paciente
+               gastó en su salud (propietario, 27/09/2026). Primera de las tres
+               porque es la única que no es una compra. -->
+          <a
+            class="app-header__ajustes"
+            routerLink="/my-account/spending"
+            data-testid="header-gastos"
+            appTooltip="Mis gastos"
+            appTooltipPosition="bottom"
+            aria-label="Mis gastos"
+          >
+            <app-nav-icon name="wallet" />
+          </a>
+
           <!-- Promociones: arriba y no en el menú lateral (cliente, 25/09/2026). -->
           <a
             class="app-header__ajustes"
