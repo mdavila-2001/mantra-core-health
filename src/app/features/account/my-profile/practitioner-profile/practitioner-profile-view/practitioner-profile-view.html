@@ -236,6 +236,46 @@
              a pedido del médico (D-02). El dato sigue en el contrato y en el pie del
              sello de la portada. -->
 
+          <!-- Con qué seguros trabaja (pedido del 28/09/2026). Va con la
+               identidad porque es lo que un paciente pregunta antes de pedir
+               la cita. Lo carga cada aseguradora al sumarlo a su red, así que
+               no hay lápiz ni camino de edición que ofrecer.
+
+               Ausente, el renglón no se dibuja: esa ficha no lo pregunta.
+               `null` es que la lectura falló, y no se dice «ninguna» de
+               alguien que quizá trabaja con tres. -->
+          @if (perfil().seguros !== undefined) {
+            <div class="mi-perfil__dato mi-perfil__dato--ancho" data-testid="perfil-seguros">
+              <dt>Seguros con los que trabaja</dt>
+              <dd>
+                @if (perfil().seguros; as seguros) {
+                  @if (seguros.length > 0) {
+                    <div class="app-chip-lista" role="list">
+                      @for (seguro of seguros; track seguro.id) {
+                        <app-chip
+                          role="listitem"
+                          variant="neutral"
+                          data-testid="perfil-seguro"
+                          [attr.title]="seguro.red"
+                        >
+                          {{ seguro.aseguradora }}
+                        </app-chip>
+                      }
+                    </div>
+                  } @else {
+                    <span class="mi-perfil__ausente">
+                      Ninguna aseguradora te tiene en su red todavía
+                    </span>
+                  }
+                } @else {
+                  <span class="mi-perfil__ausente" data-testid="perfil-seguros-error">
+                    No pudimos traer tus seguros. Recargá la página para reintentar.
+                  </span>
+                }
+              </dd>
+            </div>
+          }
+
           <div class="mi-perfil__dato mi-perfil__dato--ancho">
             <dt>Presentación</dt>
             <dd>
