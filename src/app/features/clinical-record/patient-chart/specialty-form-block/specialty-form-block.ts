@@ -77,6 +77,18 @@ import type { MapaDental } from '../odontogram/odontogram.types';
 export const PLANTILLA_HOJA_LIBRE = 'hoja-libre';
 
 /**
+ * El formulario que arma el doctor a mano: filas «campo: valor», y en cada una
+ * texto, uno o varios archivos o las dos cosas.
+ *
+ * Son los mismos campos adicionales que cierran cualquier plantilla, pero sin
+ * plantilla arriba: para lo que no tiene ficha —el análisis con el que vino la
+ * persona, una medición que no está en ningún formulario—. Tampoco pasa por
+ * `forms`, así que no compite con la ficha ya respondida del encuentro: se
+ * puede registrar antes, después o varias veces.
+ */
+export const PLANTILLA_FORMULARIO_LIBRE = 'formulario-libre';
+
+/**
  * Las tres entradas del selector que **no** son plantillas de `forms`.
  *
  * Diagnosticar, registrar un procedimiento y pedir un estudio son, para quien
@@ -98,7 +110,7 @@ export const BLOQUE_ODONTOLOGIA = 'bloque-odontologia';
 export const BLOQUE_LABORATORIO = 'bloque-laboratorio';
 
 /**
- * Las cinco entradas fijas, en el orden en que se ofrecen.
+ * Las entradas fijas, en el orden en que se ofrecen.
  *
  * Cirugía y odontología van separadas —antes eran una sola opción,
  * «Procedimiento»— porque no comparten ni permiso de servidor ni datos:
@@ -109,6 +121,7 @@ export const BLOQUE_LABORATORIO = 'bloque-laboratorio';
 const ENTRADAS_FIJAS: readonly { readonly value: string; readonly label: string }[] = [
   { value: BLOQUE_DIAGNOSTICO, label: 'Diagnóstico — del catálogo CIE-10' },
   { value: PLANTILLA_HOJA_LIBRE, label: 'Hoja en blanco — escribir sin campos' },
+  { value: PLANTILLA_FORMULARIO_LIBRE, label: 'Formulario libre — campo y valor' },
   { value: BLOQUE_ALERGIA, label: 'Alergia o intolerancia' },
   { value: BLOQUE_CIRUGIA, label: 'Cirugía' },
   { value: BLOQUE_ODONTOLOGIA, label: 'Odontología' },
@@ -452,6 +465,11 @@ export class SpecialtyFormBlock {
   /** Está elegida la hoja en blanco, así que no se dibuja ninguna ficha. */
   protected readonly hojaLibre = computed(() => this.plantillaId() === PLANTILLA_HOJA_LIBRE);
 
+  /** Está elegido el formulario libre: sólo filas «campo: valor», sin plantilla. */
+  protected readonly formularioLibre = computed(
+    () => this.plantillaId() === PLANTILLA_FORMULARIO_LIBRE,
+  );
+
   protected readonly esDiagnostico = computed(() => this.plantillaId() === BLOQUE_DIAGNOSTICO);
 
   protected readonly esAlergia = computed(() => this.plantillaId() === BLOQUE_ALERGIA);
@@ -550,6 +568,13 @@ export class SpecialtyFormBlock {
     this.eleccionManual.set(true);
     this.plantillaId.set(id);
     this.valores.set({});
+    this.fallosDelLibre.set([]);
+    // Lo ya registrado en el encuentro se lee al entrar: el formulario libre
+    // se puede llenar varias veces y conviene ver qué quedó de la anterior.
+    const encounterId = this.encounterId();
+    if (id === PLANTILLA_FORMULARIO_LIBRE && encounterId !== null && encounterId !== '') {
+      this.consultarAdicionales(encounterId);
+    }
   }
 
   constructor() {
@@ -748,7 +773,7 @@ export class SpecialtyFormBlock {
           // El encuentro pudo cambiar mientras la respuesta viajaba.
           if (this.encounterId() !== encounterId) return;
           this.respondido.set(ready(detalle));
-          if (detalle !== null) this.consultarAdicionales(encounterId);
+          if (detalle !== null || this.formularioLibre()) this.consultarAdicionales(encounterId);
         },
         error: (error: unknown) => {
           if (this.encounterId() !== encounterId) return;
@@ -1175,6 +1200,51 @@ export class SpecialtyFormBlock {
       });
   }
 
+  /* -- El formulario libre ------------------------------------------------ */
+
+  /** Lo que no se pudo registrar del formulario libre, en palabras. */
+  protected readonly fallosDelLibre = signal<readonly string[]>([]);
+
+  protected readonly puedeGuardarLibre = computed(
+    () =>
+      this.hayEncuentro() &&
+      (this.adicionales()?.tieneContenido() ?? false) &&
+      !(this.adicionales()?.hayProblemas() ?? false) &&
+      (this.adicionales()?.impedimento() ?? null) === null &&
+      !this.enviando(),
+  );
+
+  /**
+   * Registra el formulario libre: la nota con las filas y un documento por
+   * cada fila con archivos, contra el encuentro en curso. Mismos pasos que los
+   * campos adicionales de una ficha, sin la ficha adelante.
+   *
+   * Si falla la nota —el primer paso— no quedó nada escrito y las filas se
+   * conservan para reintentar. Si falla un documento, la nota ya está: se
+   * vacía lo escrito para no duplicarla al volver a guardar, y lo que faltó
+   * queda nombrado.
+   */
+  protected guardarLibre(): void {
+    const encounterId = this.encounterId();
+    const adicionales = this.adicionales();
+    if (encounterId === null || adicionales === undefined || !this.puedeGuardarLibre()) {
+      return;
+    }
+    const pasos = adicionales.pasos(encounterId);
+    if (pasos.length === 0) return;
+
+    this.enviando.set(true);
+    this.fallosDelLibre.set([]);
+    this.ejecutarEnOrden(pasos, 'El formulario libre no quedó completo').subscribe((fallos) => {
+      this.enviando.set(false);
+      this.fallosDelLibre.set(fallos);
+      if (fallos.length === pasos.length) return;
+      adicionales.limpiar();
+      this.cambio.emit();
+      this.consultarAdicionales(encounterId);
+    });
+  }
+
   /**
    * Las altas que el cierre pide, en el orden en que se registran: primero el
    * diagnóstico tentativo, después la orden de análisis. Ninguna es
@@ -1244,13 +1314,16 @@ export class SpecialtyFormBlock {
    * que se registre desde su casilla. Nunca falla hacia arriba: la ficha ya
    * quedó guardada y eso no se cuenta como error.
    */
-  private ejecutarEnOrden(pasos: readonly PasoDelCierre[]): Observable<readonly string[]> {
+  private ejecutarEnOrden(
+    pasos: readonly PasoDelCierre[],
+    tituloDelFallo = 'La ficha quedó guardada, pero no todo el cierre',
+  ): Observable<readonly string[]> {
     const [primero, ...resto] = pasos;
     if (primero === undefined) return of([]);
     return primero.ejecutar().pipe(
       tap(() => this.toasts.success(primero.exito, primero.titulo)),
-      switchMap(() => this.ejecutarEnOrden(resto)),
-      catchError((error: unknown) => of(this.fallosDesde(primero, resto, error))),
+      switchMap(() => this.ejecutarEnOrden(resto, tituloDelFallo)),
+      catchError((error: unknown) => of(this.fallosDesde(primero, resto, error, tituloDelFallo))),
     );
   }
 
@@ -1259,6 +1332,7 @@ export class SpecialtyFormBlock {
     paso: PasoDelCierre,
     siguientes: readonly PasoDelCierre[],
     error: unknown,
+    tituloDelFallo: string,
   ): readonly string[] {
     const estado = errorToViewState<null>(error);
     const motivo =
@@ -1266,7 +1340,7 @@ export class SpecialtyFormBlock {
         ? estado.issues.map((issue) => issue.message).join(' ')
         : (mensajeDeFalloDeEscritura(estado, { accion: `registrar ${paso.nombre}` }) ?? '');
     const mensaje = `No se registró ${paso.nombre}${motivo === '' ? '.' : `: ${motivo}`}`;
-    this.toasts.error(mensaje, 'La ficha quedó guardada, pero no todo el cierre');
+    this.toasts.error(mensaje, tituloDelFallo);
     return [
       mensaje,
       ...siguientes.map(

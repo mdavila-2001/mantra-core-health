@@ -6,6 +6,7 @@ import {
   ElementRef,
   inject,
   input,
+  type OnInit,
   signal,
 } from '@angular/core';
 import { forkJoin, map, switchMap, type Observable } from 'rxjs';
@@ -120,7 +121,7 @@ function valorDeLaFila(fila: FilaAdicional): string {
   styleUrl: './additional-fields.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class AdditionalFields {
+export class AdditionalFields implements OnInit {
   private readonly notes = inject(ChartNotesClient);
   private readonly documents = inject(ChartDocumentsClient);
   private readonly files = inject(FilesClient);
@@ -133,6 +134,14 @@ export class AdditionalFields {
 
   /** Bloquea la edición mientras el formulario se envía. */
   readonly disabled = input(false);
+
+  /**
+   * La sección **es** el formulario: «Formulario libre — campo y valor» del
+   * selector, sin plantilla arriba. Cambia los textos, no el registro —la
+   * misma nota y un documento por fila con archivos— y arranca con una fila
+   * vacía: acá no es un agregado opcional, es lo que se vino a llenar.
+   */
+  readonly libre = input(false);
 
   protected readonly tope = TOPE_DE_FILAS_ADICIONALES;
   protected readonly topeDeArchivos = TOPE_DE_ARCHIVOS_POR_FILA;
@@ -147,6 +156,12 @@ export class AdditionalFields {
    * leería como algo que falta llenar.
    */
   protected readonly filas = signal<readonly FilaAdicional[]>([]);
+
+  ngOnInit(): void {
+    if (this.libre()) {
+      this.filas.set([filaVacia(this.proximaClave++)]);
+    }
+  }
 
   protected readonly textoLibre = signal('');
 
@@ -256,7 +271,7 @@ export class AdditionalFields {
 
   /** Vuelve a la sección vacía, después de registrar. */
   limpiar(): void {
-    this.filas.set([]);
+    this.filas.set(this.libre() ? [filaVacia(this.proximaClave++)] : []);
     this.textoLibre.set('');
     this.descartados.set([]);
   }

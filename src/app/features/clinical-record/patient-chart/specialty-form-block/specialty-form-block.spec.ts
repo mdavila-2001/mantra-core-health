@@ -3,9 +3,11 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import type { WritableSignal } from '@angular/core';
 import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 
 import { SessionStore } from '../../../../core/auth/session.store';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
+import { AdditionalFields, type FilaAdicional } from '../additional-fields/additional-fields';
 import type { CierreDelFormulario } from '../form-conclusion-block/form-conclusion-block';
 import {
   BLOQUE_CIRUGIA,
@@ -13,6 +15,7 @@ import {
   BLOQUE_DIAGNOSTICO,
   BLOQUE_LABORATORIO,
   BLOQUE_ODONTOLOGIA,
+  PLANTILLA_FORMULARIO_LIBRE,
   PLANTILLA_HOJA_LIBRE,
   SpecialtyFormBlock,
 } from './specialty-form-block';
@@ -159,8 +162,8 @@ describe('SpecialtyFormBlock', () => {
   /**
    * Las **plantillas** que ofrece el desplegable.
    *
-   * Deja fuera las seis entradas fijas a propósito —diagnóstico, alergia, hoja
-   * en blanco, cirugía, odontología y laboratorio—: no son plantillas del
+   * Deja fuera las siete entradas fijas a propósito —diagnóstico, alergia, hoja
+   * en blanco, formulario libre, cirugía, odontología y laboratorio—: no son plantillas del
    * catálogo sino lo que se puede completar sin ninguna, y están siempre. Si
    * contaran, cada prueba sobre qué fichas se ofrecen tendría que sumarles
    * cinco, y el número dejaría de decir lo que la prueba quiere decir. Que
@@ -170,6 +173,7 @@ describe('SpecialtyFormBlock', () => {
     BLOQUE_DIAGNOSTICO,
     BLOQUE_ALERGIA,
     PLANTILLA_HOJA_LIBRE,
+    PLANTILLA_FORMULARIO_LIBRE,
     BLOQUE_CIRUGIA,
     BLOQUE_ODONTOLOGIA,
     BLOQUE_LABORATORIO,
@@ -883,9 +887,10 @@ describe('SpecialtyFormBlock', () => {
     fixture.detectChanges();
 
     const opciones = opcionesCrudas();
-    expect(opciones.slice(0, 6).map((opcion) => opcion.value)).toEqual([
+    expect(opciones.slice(0, 7).map((opcion) => opcion.value)).toEqual([
       BLOQUE_DIAGNOSTICO,
       PLANTILLA_HOJA_LIBRE,
+      PLANTILLA_FORMULARIO_LIBRE,
       BLOQUE_ALERGIA,
       BLOQUE_CIRUGIA,
       BLOQUE_ODONTOLOGIA,
@@ -894,6 +899,8 @@ describe('SpecialtyFormBlock', () => {
     // La hoja en blanco **conserva el segundo lugar**: la alergia entró detrás,
     // no delante. Enterrarla al final equivale a no tenerla.
     expect(opciones[1].label).toContain('Hoja en blanco');
+    // Y el formulario libre, pegado a ella: las dos maneras de escribir sin ficha.
+    expect(opciones[2].label).toBe('Formulario libre — campo y valor');
   });
 
   /**
@@ -1347,6 +1354,172 @@ describe('SpecialtyFormBlock', () => {
 
       expect(error).toHaveBeenCalledTimes(1);
       expect(interno<() => readonly string[]>('fallosDelCierre')()[0]).toContain('organización');
+    });
+  });
+
+  /**
+   * «Formulario libre — campo y valor»: las filas de los campos adicionales,
+   * solas, sin plantilla. No pasa por `forms`, así que una ficha ya respondida
+   * no lo tapa, y registra la nota y un documento por fila con archivos.
+   */
+  describe('el formulario libre', () => {
+    beforeEach(() => {
+      TestBed.inject(SessionStore).start({
+        accessToken: jwt({ sub: 'u-1', roles: ['PRACTITIONER'], tenants: ['t-1'], hpid: 'hp-1' }),
+        refreshToken: 'r-1',
+      });
+    });
+
+    function elegirLibre(notasYaRegistradas: readonly Record<string, unknown>[] = []): void {
+      interno<(id: string | null) => void>('elegirPlantilla')(PLANTILLA_FORMULARIO_LIBRE);
+      const notas = http.expectOne((r) => r.url === '/charts/notes' && r.method === 'GET');
+      expect(notas.request.params.get('encounterId')).toBe('enc-1');
+      notas.flush({ items: notasYaRegistradas, limit: 50, truncated: false });
+      fixture.detectChanges();
+    }
+
+    function escribirFilas(filas: readonly Omit<FilaAdicional, 'clave'>[]): AdditionalFields {
+      const seccion = fixture.debugElement.query(By.directive(AdditionalFields))
+        .componentInstance as AdditionalFields;
+      (seccion as unknown as Record<string, WritableSignal<readonly FilaAdicional[]>>)[
+        'filas'
+      ]!.set(filas.map((fila, indice) => ({ clave: 100 + indice, ...fila })));
+      return seccion;
+    }
+
+    const archivo = (nombre: string) => new File(['x'], nombre, { type: 'image/jpeg' });
+
+    it('con la ficha del encuentro ya respondida, se dibuja igual y muestra lo registrado', () => {
+      llegarAModoLectura();
+      elegirLibre([
+        {
+          noteId: 'nota-1',
+          encounterId: 'enc-1',
+          entries: [{ label: 'Glucemia', value: '98 mg/dL' }],
+          createdAt: '2026-09-28T10:00:00Z',
+          releasedToPatient: false,
+        },
+      ]);
+
+      const html = fixture.nativeElement as HTMLElement;
+      expect(html.querySelector('[data-testid="formulario-respondido"]')).toBeNull();
+      expect(html.querySelector('[data-testid="formulario-libre"]')).not.toBeNull();
+      expect(html.querySelectorAll('[data-testid="adicional-fila"]')).toHaveLength(1);
+      expect(
+        html.querySelector('[data-testid="formulario-libre-guardado"]')?.textContent,
+      ).toContain('Glucemia');
+      // Sin nada escrito, no hay qué guardar.
+      expect(interno<() => boolean>('puedeGuardarLibre')()).toBe(false);
+    });
+
+    it('guardar registra la nota y un documento con todos los archivos de la fila, y relee', () => {
+      let releido = 0;
+      componente.cambio.subscribe(() => (releido += 1));
+      peticionDePlantillas().flush([PLANTILLA]);
+      fixture.detectChanges();
+      peticionDeRespuesta().flush(LISTADO_VACIO);
+      elegirLibre();
+
+      const seccion = escribirFilas([
+        { rotulo: 'Presión arterial', valor: '128/84 mmHg', archivos: [] },
+        {
+          rotulo: 'Análisis con el que vino',
+          valor: '',
+          archivos: [archivo('hemograma.jpg'), archivo('orina.jpg'), archivo('perfil.jpg')],
+        },
+      ]);
+      expect(interno<() => boolean>('puedeGuardarLibre')()).toBe(true);
+
+      interno<() => void>('guardarLibre')();
+
+      // Nada pasa por `forms`: ni instancia abierta ni valores capturados.
+      http.expectNone((r) => r.url.startsWith('/forms/instances') && r.method === 'POST');
+      const nota = http.expectOne((r) => r.url === '/charts/notes' && r.method === 'POST');
+      expect(nota.request.body).toMatchObject({
+        patientProfileId: 'pac-1',
+        authorProfileId: 'hp-1',
+        encounterId: 'enc-1',
+        entries: [
+          { label: 'Presión arterial', value: '128/84 mmHg' },
+          {
+            label: 'Análisis con el que vino',
+            value: 'Adjunto: hemograma.jpg, orina.jpg, perfil.jpg',
+          },
+        ],
+      });
+      nota.flush({ noteId: 'n-1', versionId: 'v-1' });
+
+      const subidas = http.match('/common/files/upload');
+      expect(subidas).toHaveLength(3);
+      subidas.forEach((subida, indice) => subida.flush({ id: `f-${indice}` }));
+      const documento = http.expectOne('/charts/documents');
+      expect(documento.request.body).toMatchObject({
+        title: 'Análisis con el que vino',
+        encounterId: 'enc-1',
+        files: [
+          { fileId: 'f-0', contentRole: 'PRIMARY', ordinal: 0 },
+          { fileId: 'f-1', contentRole: 'ATTACHMENT', ordinal: 1 },
+          { fileId: 'f-2', contentRole: 'ATTACHMENT', ordinal: 2 },
+        ],
+      });
+      documento.flush({ documentId: 'd-1', fileCount: 3 });
+
+      // Relee lo registrado del encuentro y deja una fila nueva, vacía.
+      http
+        .expectOne((r) => r.url === '/charts/notes' && r.method === 'GET')
+        .flush({
+          items: [
+            {
+              noteId: 'n-1',
+              encounterId: 'enc-1',
+              entries: [{ label: 'Presión arterial', value: '128/84 mmHg' }],
+              createdAt: '2026-09-28T10:00:00Z',
+              releasedToPatient: false,
+            },
+          ],
+          limit: 50,
+          truncated: false,
+        });
+      fixture.detectChanges();
+
+      expect(releido).toBe(1);
+      expect(interno<() => readonly string[]>('fallosDelLibre')()).toEqual([]);
+      expect(seccion.tieneContenido()).toBe(false);
+      const html = fixture.nativeElement as HTMLElement;
+      expect(html.querySelectorAll('[data-testid="adicional-fila"]')).toHaveLength(1);
+      expect(
+        html.querySelector('[data-testid="formulario-libre-guardado"]')?.textContent,
+      ).toContain('128/84 mmHg');
+    });
+
+    it('si la nota no se registra, no se sube nada y lo escrito se conserva para reintentar', () => {
+      let releido = 0;
+      componente.cambio.subscribe(() => (releido += 1));
+      peticionDePlantillas().flush([PLANTILLA]);
+      fixture.detectChanges();
+      peticionDeRespuesta().flush(LISTADO_VACIO);
+      elegirLibre();
+      const seccion = escribirFilas([
+        { rotulo: 'Rx tórax', valor: 'Sin hallazgos', archivos: [archivo('rx.jpg')] },
+      ]);
+
+      interno<() => void>('guardarLibre')();
+      http
+        .expectOne((r) => r.url === '/charts/notes' && r.method === 'POST')
+        .flush({ message: 'caído' }, { status: 500, statusText: 'Server Error' });
+
+      http.expectNone('/common/files/upload');
+      expect(releido).toBe(0);
+      expect(seccion.tieneContenido()).toBe(true);
+      const fallos = interno<() => readonly string[]>('fallosDelLibre')();
+      expect(fallos).toHaveLength(2);
+      expect(fallos[0]).toContain('No se registró la nota');
+      fixture.detectChanges();
+      expect(
+        (fixture.nativeElement as HTMLElement).querySelector(
+          '[data-testid="formulario-libre-fallos"]',
+        ),
+      ).not.toBeNull();
     });
   });
 });
