@@ -715,6 +715,32 @@ export function carriersOfPractitioner(
     .sort((a, b) => a.carrierName.localeCompare(b.carrierName, 'es'));
 }
 
+/**
+ * Lo que la práctica espera cobrarles a las aseguradoras, a hoy.
+ *
+ * Enviadas sin dictamen cuentan por lo facturado; aprobadas —total o
+ * parcialmente— y todavía sin pagar, por lo aprobado. Pagadas y rechazadas no
+ * se esperan. Exportado para la contabilidad simple del doctor, que lo
+ * muestra como uno de sus tres números.
+ */
+export function pendienteDeAseguradoras(): { monto: string; solicitudes: number } {
+  let centavos = 0;
+  let cuantas = 0;
+  for (const s of solicitudes.todos()) {
+    const codigo = s.status.code;
+    const importe =
+      codigo === 'SUBMITTED'
+        ? s.billed
+        : codigo === 'APPROVED' || codigo === 'PARTIAL'
+          ? s.approved
+          : null;
+    if (importe === null) continue;
+    centavos += Math.round(Number(importe) * 100);
+    cuantas += 1;
+  }
+  return { monto: (centavos / 100).toFixed(2), solicitudes: cuantas };
+}
+
 export function registrarSeguros(router: MockRouter): void {
   // El sobre `{ carriers }` no es decorativo: `InsuranceClient.listCarrierCatalog`
   // mapea `body.carriers`, y devolver el array pelado le dejaba `undefined`.
