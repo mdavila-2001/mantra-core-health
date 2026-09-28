@@ -12,6 +12,7 @@ import { forkJoin, of } from 'rxjs';
 import { catchError, map, startWith, switchMap } from 'rxjs/operators';
 
 import { AccountingClient } from '../../../core/data-access/accounting/accounting.client';
+import { ContabilidadSimple } from '../registros/registros';
 import type {
   BalanceSheet,
   FinancialStatementLine,
@@ -206,6 +207,7 @@ interface Dinero {
     AppButton,
     AppButtonLink,
     Card,
+    ContabilidadSimple,
     Chip,
     FormField,
     PageHeader,

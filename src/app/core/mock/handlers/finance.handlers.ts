@@ -601,6 +601,19 @@ function periodoAbierto(): { id: string; name: string; status: string } | undefi
   return periodos.todos().find((p) => p.status === 'OPEN');
 }
 
+/**
+ * Las consultas pagadas de la práctica, con su importe.
+ *
+ * Exportado para la contabilidad simple (`simple-accounting.handlers.ts`): el
+ * «cuánto cobraste» de arriba tiene que sumar exactamente lo que esta lista
+ * ofrece registrar en los libros, o las dos pantallas se contradicen.
+ */
+export function consultasPagadas() {
+  return reservas
+    .filtrar((r) => r.paymentState?.state === 'PAID')
+    .map((r, i) => ({ reserva: r, paidTotal: i % 3 === 0 ? '180.00' : '250.00' }));
+}
+
 export function registrarFinanzas(router: MockRouter): void {
   /* ---- el plano SAP: lecturas que la API todavía no tiene ------------------
      `POST fiscal-periods/:id/lock`, `POST open-items`, `POST clearing-documents`
@@ -1040,8 +1053,8 @@ export function registrarFinanzas(router: MockRouter): void {
   router.post('/accounting/journal-transactions/drafts', publicar(true));
 
   router.get('/accounting/practitioner/paid-consultations', () => {
-    const pagadas = reservas.filtrar((r) => r.paymentState?.state === 'PAID').slice(0, 8);
-    const items = pagadas.map((r, i) => ({ invoiceId: uuid(`invoice-${r.id}`), invoiceNumber: `FAC-${2026}-${String(300 + i).padStart(4, '0')}`, encounterId: null, appointmentId: r.appointmentId, patientProfileId: r.patientProfileId, issueDate: r.startAt.slice(0, 10), paidTotal: i % 3 === 0 ? '180.00' : '250.00', currencyConceptId: MONEDA_BOB }));
+    const pagadas = consultasPagadas().slice(0, 8);
+    const items = pagadas.map(({ reserva: r, paidTotal }, i) => ({ invoiceId: uuid(`invoice-${r.id}`), invoiceNumber: `FAC-${2026}-${String(300 + i).padStart(4, '0')}`, encounterId: null, appointmentId: r.appointmentId, patientProfileId: r.patientProfileId, issueDate: r.startAt.slice(0, 10), paidTotal, currencyConceptId: MONEDA_BOB }));
     return { items, count: items.length };
   });
 

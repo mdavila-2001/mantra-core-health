@@ -3,9 +3,11 @@ import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideRouter } from '@angular/router';
+import { NEVER } from 'rxjs';
 import { describe, expect, it } from 'vitest';
 
 import { API_BASE_URL } from '../../../core/data-access/api';
+import { SimpleAccountingClient } from '../../../core/data-access/simple-accounting/simple-accounting.client';
 import { Resumen } from './resumen';
 
 /* ============================================================================
@@ -43,6 +45,18 @@ function montar(): {
       // `routerLink`, y esa directiva pide `ActivatedRoute`.
       provideRouter([]),
       { provide: API_BASE_URL, useValue: BASE },
+      // La contabilidad simple que el resumen monta arriba tiene su propio
+      // cliente y sus propias pruebas. Acá se la deja sin red para que estas
+      // sigan contando, pedido por pedido, sólo lo que pide el resumen.
+      {
+        provide: SimpleAccountingClient,
+        useValue: {
+          summary: () => NEVER,
+          listAccounts: () => NEVER,
+          listRecords: () => NEVER,
+          listTransactions: () => NEVER,
+        },
+      },
     ],
   });
   const fixture = TestBed.createComponent(Resumen);

@@ -1761,3 +1761,45 @@ se está hablando esta semana», que es la pregunta del pedido.
 > `InsuranceClient.getMarketplace`, el directorio, la ficha con una pestaña por plan y la tabla
 > de cláusulas, la sección de brokers y el e2e `playwright/mercado-de-seguros.spec.ts`. El
 > simulador arma la respuesta del mismo catálogo que edita la consola de la aseguradora.
+
+## P47 · La contabilidad simple del doctor — 28/09/2026
+
+> **P47 · `/accounting/practitioner/simple/...`.** Origen: pedido del propietario del 28/09/2026 —
+> «gasto → tipo, activo → tipo, deuda → tipo, transacción debe/haber, nada más; nada de centros
+> de costo; cuenta → modal y tabla, con cuentas generales sembradas», y arriba de todo tres
+> números: pacientes atendidos, cuánto se cobró y cuánto se espera de las aseguradoras. Hoy
+> existe **sólo en el frontend y su simulador**.
+>
+> **1. Modelo**
+> - **Cuenta**: `id`, `code` (`5.3`, lo asigna el servidor), `name`, `accountClass`
+>   (`ASSET | LIABILITY | EQUITY | INCOME | EXPENSE`), `seeded`. Las generales (26, ver
+>   `simple-accounting.handlers.ts`) son de toda práctica: se renombran, no se borran ni cambian
+>   de clase. Las propias cuelgan de la práctica.
+> - **Registro** (gasto, activo o deuda): `kind` (`EXPENSE | ASSET | DEBT`), `date`, `accountId`
+>   —**el tipo es una cuenta de la clase que corresponde**: gasto → EXPENSE, activo → ASSET,
+>   deuda → LIABILITY—, `description`, `amount` (cadena decimal > 0).
+> - **Transacción**: `date`, `description`, `debitAccountId`, `creditAccountId` (distintas),
+>   `amount`.
+>
+> **2. Endpoints** (todos con `practiceId`, sólo `PRACTITIONER` vinculado a la práctica)
+> - `GET /accounting/practitioner/simple/summary?period=month|year` →
+>   `{ period, from, to, patientsSeen, consultations, collected, expectedFromInsurers,
+>   pendingClaims }`. `patientsSeen`: personas distintas con consulta «Atendida» en el período;
+>   `collected`: consultas pagadas del período; `expectedFromInsurers`: **a hoy**, solicitudes
+>   enviadas sin dictamen (por lo facturado) + aprobadas sin pagar (por lo aprobado).
+> - `GET|POST /accounting/practitioner/simple/accounts`, `PUT|DELETE .../accounts/:id`.
+>   `DELETE` → 409 si es general o si la usa algún registro o transacción. Nombre único por
+>   clase, sin distinguir tildes ni mayúsculas (409).
+> - `GET|POST /accounting/practitioner/simple/records?kind=`, `PUT|DELETE .../records/:id`.
+> - `GET|POST /accounting/practitioner/simple/transactions`, `PUT|DELETE .../transactions/:id`.
+> - Validación → 422 con el motivo en castellano (el frontend lo muestra tal cual).
+>
+> **3. Qué NO es**
+> No reemplaza los libros (`/accounting/journal-transactions`) ni el flujo de aprobación de
+> asientos: es la contabilidad llana del consultorio. Si el negocio quiere que cada registro
+> genere además su asiento, es una decisión aparte; hoy no lo hace.
+>
+> **4. Lo que el frontend ya tiene**
+> `SimpleAccountingClient`, la sección arriba de «Contabilidad» (`ContabilidadSimple`) con los
+> tres números y una tarjeta con cinco pestañas, los tres modales y el e2e
+> `playwright/contabilidad-simple.spec.ts`.

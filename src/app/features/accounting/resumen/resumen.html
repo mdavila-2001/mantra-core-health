@@ -20,6 +20,13 @@
   </div>
 }
 
+<!-- La contabilidad simple (28/09/2026): los tres números que el doctor
+     quiere ver primero y sus registros —gasto, activo, deuda, transacción y
+     cuentas—. Lo de abajo sigue igual. -->
+@if (practicaElegida(); as practica) {
+  <app-contabilidad-simple class="contabilidad-simple" [practiceId]="practica" />
+}
+
 <app-view-state-host [state]="estadoDelDinero()" (retry)="recargar()" (refresh)="recargar()">
   @if (datos(); as d) {
     <!-- ═══ 1 · ¿Cuánto hiciste? ══════════════════════════════════════════
