@@ -10,11 +10,13 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { map } from 'rxjs';
 
+import { AuthService } from '../../../core/auth/auth.service';
 import { InsuranceClient } from '../../../core/data-access/insurance/insurance.client';
 import type {
   ClaimDetail,
   ClaimLine,
   ClaimLineDuplicateStudy,
+  CreateAdjudicationInput,
 } from '../../../core/data-access/insurance/insurance.types';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { NavigationService } from '../../../core/navigation/navigation.service';
@@ -22,10 +24,15 @@ import { dataOf, loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Badge } from '../../../shared/components/atoms/badge/badge';
+import { Select } from '../../../shared/components/atoms/select/select';
+import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
+import { Textarea } from '../../../shared/components/atoms/textarea/textarea';
 import { Tooltip } from '../../../shared/components/atoms/tooltip/tooltip';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
+import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
+import { ContentDialog } from '../../../shared/components/organisms/content-dialog/content-dialog';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { currencySuffix, formatAmount, formatMoney } from '../money-format';
@@ -78,9 +85,13 @@ import { InsuranceContactChannels } from './insurance-contact-channels/insurance
     Alert,
     AppButton,
     Badge,
+    ContentDialog,
+    FormField,
     InsuranceContactChannels,
     PageHeader,
     RouterLink,
+    Select,
+    Textarea,
     Tooltip,
     ViewStateHost,
   ],
@@ -95,6 +106,7 @@ import { InsuranceContactChannels } from './insurance-contact-channels/insurance
 })
 export class InsuranceClaimDetail {
 
+  private readonly auth = inject(AuthService);
   private readonly insurance = inject(InsuranceClient);
   private readonly navigation = inject(NavigationService);
   private readonly route = inject(ActivatedRoute);
@@ -103,6 +115,54 @@ export class InsuranceClaimDetail {
   private readonly datePipe = inject(DatePipe);
 
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
+
+  /** Indica si la sesión activa opera como aseguradora (PAYER/CARRIER). */
+  protected readonly isCarrier = computed(() => {
+    const t = this.auth.activeTenantType()?.toUpperCase();
+    return t === 'PAYER' || t === 'CARRIER';
+  });
+
+  /** Si el modal de rechazo de cobertura está abierto. */
+  protected readonly rejectModalOpen = signal(false);
+
+  /** Cláusula contractual de exclusión seleccionada. */
+  protected readonly selectedClause = signal<string | null>(
+    'Cláusula 4.1: Exclusión de preexistencias y períodos de carencia',
+  );
+
+  /** Catálogo de cláusulas frecuentes para dictamen de rechazo. */
+  protected readonly clauseOptions: readonly SelectOption<string>[] = [
+    {
+      value: 'Cláusula 4.1: Exclusión de preexistencias y períodos de carencia',
+      label: 'Cláusula 4.1: Exclusión de preexistencias y períodos de carencia',
+    },
+    {
+      value: 'Cláusula 8.2: Prestación médica no incluida en el vademécum o cobertura contratada',
+      label: 'Cláusula 8.2: Prestación médica no incluida en el vademécum o cobertura contratada',
+    },
+    {
+      value: 'Cláusula 12.3: Falta de pertinencia médica o documentación de respaldo insuficiente',
+      label: 'Cláusula 12.3: Falta de pertinencia médica o documentación de respaldo insuficiente',
+    },
+    {
+      value: 'Cláusula 15.1: Límite máximo de cobertura anual o por evento alcanzado',
+      label: 'Cláusula 15.1: Límite máximo de cobertura anual o por evento alcanzado',
+    },
+    {
+      value: 'Cláusula 19.4: Prestador no adscrito a la red cerrada de la póliza',
+      label: 'Cláusula 19.4: Prestador no adscrito a la red cerrada de la póliza',
+    },
+    {
+      value: 'Otra causa contractual / administrativa',
+      label: 'Otra causa contractual / administrativa',
+    },
+  ];
+
+  /** Fundamentación médica o legal detallada del rechazo. */
+  protected readonly denialRationale = signal('');
+
+  /** Si la adjudicación o publicación está en vuelo. */
+  protected readonly adjudicating = signal(false);
 
   private readonly claimId = toSignal(
     this.route.paramMap.pipe(map((params) => params.get('claimId') ?? '')),
@@ -291,6 +351,139 @@ export class InsuranceClaimDetail {
           this.state.set(errorToViewState<ClaimDetail>(error));
         },
       });
+  }
+
+  /**
+   * Dictamina la aprobación total de la cobertura para la solicitud y emite su EOB.
+   */
+  protected async approveClaim(): Promise<void> {
+    const detail = this.claim();
+    if (!detail || this.adjudicating()) return;
+
+    const confirmed = await this.dialogs.confirm({
+      title: 'Aprobar solicitud de cobertura',
+      message:
+        `¿Confirmás la aprobación total de la solicitud por ${this.money(detail.header.billedTotal)}? ` +
+        'Se generará el dictamen de cobertura completa y se publicará la liquidación (EOB) correspondiente.',
+      confirmLabel: 'Aprobar cobertura',
+    });
+    if (!confirmed) return;
+
+    this.adjudicating.set(true);
+
+    const input: CreateAdjudicationInput = {
+      outcome: 'APPROVED',
+      dispositionText:
+        'Cobertura aprobada en su totalidad conforme a las condiciones de la póliza vigente.',
+      totalApprovedAmount: detail.header.billedTotal.amount,
+      totalPatientAmount: '0.00',
+      totalDeniedAmount: '0.00',
+      lineAdjudications: detail.lines.map((l) => ({
+        insuranceClaimLineId: l.id,
+        decision: 'APPROVED',
+        approvedAmount: l.billedAmount.amount,
+        patientAmount: '0.00',
+        deniedAmount: '0.00',
+      })),
+    };
+
+    this.insurance.adjudicateClaim(detail.header.id, input).subscribe({
+      next: () => {
+        this.insurance.publishEob(detail.header.id).subscribe({
+          next: () => {
+            this.adjudicating.set(false);
+            this.toast.show({
+              type: 'success',
+              message: 'Solicitud aprobada y liquidación (EOB) publicada con éxito.',
+            });
+            this.load();
+          },
+          error: () => {
+            this.adjudicating.set(false);
+            this.toast.show({
+              type: 'warning',
+              message: 'Dictamen registrado; la publicación de la EOB requiere revisión.',
+            });
+            this.load();
+          },
+        });
+      },
+      error: (error: unknown) => {
+        this.adjudicating.set(false);
+        this.state.set(errorToViewState<ClaimDetail>(error));
+      },
+    });
+  }
+
+  /** Abre el modal para capturar la justificación y cláusula del rechazo. */
+  protected openRejectModal(): void {
+    this.denialRationale.set('');
+    this.rejectModalOpen.set(true);
+  }
+
+  /** Dictamina el rechazo con cláusula de exclusión y fundamentación técnica. */
+  protected submitRejection(): void {
+    const detail = this.claim();
+    if (!detail || this.adjudicating()) return;
+
+    const clause = (this.selectedClause() ?? '').trim();
+    const rationale = this.denialRationale().trim();
+
+    if (!rationale) {
+      this.toast.show({
+        type: 'warning',
+        message: 'Por favor ingresá la fundamentación técnica o motivo circunstanciado del rechazo.',
+      });
+      return;
+    }
+
+    this.adjudicating.set(true);
+
+    const input: CreateAdjudicationInput = {
+      outcome: 'DENIED',
+      dispositionText: `Rechazo de cobertura aplicado según ${clause}.`,
+      totalApprovedAmount: '0.00',
+      totalPatientAmount: '0.00',
+      totalDeniedAmount: detail.header.billedTotal.amount,
+      lineAdjudications: detail.lines.map((l) => ({
+        insuranceClaimLineId: l.id,
+        decision: 'DENIED',
+        approvedAmount: '0.00',
+        patientAmount: '0.00',
+        deniedAmount: l.billedAmount.amount,
+        policyClauseReference: clause,
+        denialRationale: rationale,
+      })),
+    };
+
+    this.insurance.adjudicateClaim(detail.header.id, input).subscribe({
+      next: () => {
+        this.insurance.publishEob(detail.header.id).subscribe({
+          next: () => {
+            this.adjudicating.set(false);
+            this.rejectModalOpen.set(false);
+            this.toast.show({
+              type: 'success',
+              message: 'Solicitud rechazada y notificación de liquidación publicada.',
+            });
+            this.load();
+          },
+          error: () => {
+            this.adjudicating.set(false);
+            this.rejectModalOpen.set(false);
+            this.toast.show({
+              type: 'warning',
+              message: 'Dictamen de rechazo guardado; la publicación de la EOB requiere revisión.',
+            });
+            this.load();
+          },
+        });
+      },
+      error: (error: unknown) => {
+        this.adjudicating.set(false);
+        this.state.set(errorToViewState<ClaimDetail>(error));
+      },
+    });
   }
 
   private load(): void {

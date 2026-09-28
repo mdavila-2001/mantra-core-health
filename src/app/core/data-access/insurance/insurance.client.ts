@@ -38,6 +38,7 @@ import type {
   CampaignQuery,
   CampaignTargetStatus,
   CreateCampaignInput,
+  CreateAdjudicationInput,
   InsuranceCampaign,
   PatientCampaign,
 } from './insurance.types';
@@ -358,6 +359,41 @@ export class InsuranceClient {
   ): Observable<{ readonly id: string }> {
     return this.http.post<{ readonly id: string }>(
       this.url(`/insurance-claims/${encodeURIComponent(claimId)}/disputes`),
+      body,
+    );
+  }
+
+  /**
+   * `POST /insurance-claims/:id/adjudications` — adjudica el reclamo por línea (835).
+   * Dictamina aprobación o rechazo (con cláusula y fundamentación).
+   *
+   * @param claimId - Solicitud adjudicada.
+   * @param body - Dictamen y líneas adjudicadas.
+   * @returns El identificador del recurso creado.
+   */
+  adjudicateClaim(
+    claimId: string,
+    body: CreateAdjudicationInput,
+  ): Observable<{ readonly id: string }> {
+    return this.http.post<{ readonly id: string }>(
+      this.url(`/insurance-claims/${encodeURIComponent(claimId)}/adjudications`),
+      body,
+    );
+  }
+
+  /**
+   * `POST /insurance-claims/:id/eob` — publica la Explicación de Beneficios.
+   *
+   * @param claimId - Solicitud para la que se emite la EOB.
+   * @param body - Documento asociado opcional.
+   * @returns El identificador de la EOB creada.
+   */
+  publishEob(
+    claimId: string,
+    body: { readonly documentRecordId?: string } = {},
+  ): Observable<{ readonly id: string }> {
+    return this.http.post<{ readonly id: string }>(
+      this.url(`/insurance-claims/${encodeURIComponent(claimId)}/eob`),
       body,
     );
   }
