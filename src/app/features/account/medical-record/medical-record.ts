@@ -844,7 +844,7 @@ function comoDocumentoDeFormulario(formulario: FormularioVisible): DocumentoDeFo
  * documento — acá jamás viaja el contenido.
  */
 function formularioLeible(detalle: FormInstanceDetail): FormularioVisible {
-  const cierre = detalle.closedAt === undefined ? undefined : new Date(detalle.closedAt);
+  const cierre = detalle.closedAt == null ? undefined : new Date(detalle.closedAt);
   const cerradoEl = cierre !== undefined && !Number.isNaN(cierre.getTime()) ? cierre : undefined;
   const creacion = new Date(detalle.createdAt);
   return {

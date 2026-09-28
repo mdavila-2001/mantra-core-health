@@ -204,6 +204,11 @@ export interface FollowUpOrigin {
   readonly bookingId: string;
   /** El encuentro clínico de esa reserva, si lo tenía. */
   readonly encounterId: string | null;
+  /**
+   * La respuesta del formulario médico de esa consulta de la que sale la
+   * reconsulta. En la cita es obligatoria; pendiente de backend (P43).
+   */
+  readonly formInstanceId?: string;
 }
 
 /**

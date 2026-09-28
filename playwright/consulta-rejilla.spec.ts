@@ -10,16 +10,16 @@ import { entrar, irA } from './support/sesion';
 const OUTPUT = join('docs', 'trabajo', '2026-09-25-encuentro-clinico', 'c0', 'evidencia', 'visual');
 const DOCTOR: Actor = { rol: 'doctora', identificador: 'medica@alovida.mock', clave: 'mock', nombre: 'Médica' };
 const PATIENT: Actor = { rol: 'paciente', identificador: 'paciente@alovida.mock', clave: 'mock', nombre: 'Paciente' };
+// Nota médica y Documento salieron de la rejilla el 26/09/2026: viven al final
+// del formulario médico, como campos adicionales con texto y archivos.
 const TILES = [
-  { key: 'notas', title: 'Nota médica', modal: 'Escribir una nota médica' },
+  { key: 'formulario', title: 'Formulario médico', modal: 'Llenar el formulario médico' },
   { key: 'ordenes', title: 'Orden de análisis', modal: 'Pedir un análisis' },
   { key: 'diagnosticos', title: 'Diagnóstico', modal: 'Nuevo diagnóstico' },
-  { key: 'reconsulta', title: 'Reconsulta', modal: 'Agendar la reconsulta' },
   { key: 'medicacion', title: 'Receta', modal: 'Prescribir medicación' },
-  { key: 'alergias', title: 'Alergia', modal: 'Nueva alergia' },
   { key: 'planes', title: 'Plan de cuidados', modal: 'Abrir un plan de cuidados' },
-  { key: 'documentos', title: 'Documento', modal: 'Registrar un documento' },
-  { key: 'formulario', title: 'Formulario clínico', modal: 'Llenar un formulario clínico' },
+  { key: 'reconsulta', title: 'Reconsulta', modal: 'Agendar la reconsulta' },
+  { key: 'alergias', title: 'Alergia', modal: 'Nueva alergia' },
   { key: 'pagos', title: 'Pagos', modal: 'Pagos de la persona' },
 ] as const;
 const VIEWPORTS = [
@@ -83,7 +83,7 @@ async function checkTile(page: Page, tile: (typeof TILES)[number], capture?: str
   await expect(dialog).toBeVisible();
   await expect(dialog.getByTestId('content-dialog-title')).toHaveText(tile.modal);
   await expect(dialog.getByTestId('content-dialog-title')).toBeVisible();
-  if (tile.key === 'notas') await expect(dialog.getByText('En construcción (C1)', { exact: true })).toBeVisible();
+  if (tile.key === 'formulario') await expect(dialog.locator('app-specialty-form-block')).toBeVisible();
   if (tile.key === 'ordenes') {
     await expect(dialog.locator('app-analysis-order-block')).toBeVisible();
     await expect(dialog.locator('.estudios__formulario')).toBeVisible();
@@ -111,10 +111,10 @@ async function checkTile(page: Page, tile: (typeof TILES)[number], capture?: str
 }
 
 test.describe('C0 · contrato de la consulta', () => {
-  test('diez acciones, modales y encuentro persistente al recargar', async ({ page }) => {
+  test('ocho acciones, modales y encuentro persistente al recargar', async ({ page }) => {
     await openConsultation(page);
     await expect(page.locator('.consulta__casilla-titulo')).toHaveText(TILES.map((tile) => tile.title));
-    await expect(page.locator('[data-testid^="consulta-casilla-"]')).toHaveCount(10);
+    await expect(page.locator('[data-testid^="consulta-casilla-"]')).toHaveCount(8);
     const open = page.getByTestId('consulta-abrir-encuentro');
     if (await open.isVisible()) await open.click();
     await expect(page.getByTestId('encuentros-en-curso')).toBeVisible();
@@ -135,7 +135,7 @@ test.describe('C0 · contrato de la consulta', () => {
         await assertNoOverflow(page);
         for (const close of await page.getByTestId('toast-cerrar').all()) await close.click();
         await page.screenshot({ path: join(OUTPUT, `grid-${viewport.width}-${theme}.png`), fullPage: true, animations: 'disabled' });
-        for (const key of ['notas', 'ordenes', 'reconsulta']) {
+        for (const key of ['formulario', 'ordenes', 'reconsulta']) {
           const tile = TILES.find((candidate) => candidate.key === key)!;
           await checkTile(page, tile, `${key}-${viewport.width}-${theme}`);
         }

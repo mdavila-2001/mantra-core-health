@@ -238,12 +238,23 @@ describe('SpecialtyFormBlock', () => {
     ],
   };
 
+  /**
+   * Las notas del encuentro, que el modo lectura pide para mostrar los campos
+   * adicionales guardados con la respuesta.
+   */
+  function responderNotas(items: readonly Record<string, unknown>[] = []): void {
+    http
+      .expectOne((r) => r.url === '/charts/notes' && r.method === 'GET')
+      .flush({ items, limit: 50, truncated: false });
+  }
+
   /** Deja el bloque en modo lectura: plantillas + una instancia ya respondida. */
   function llegarAModoLectura() {
     peticionDePlantillas().flush([PLANTILLA]);
     fixture.detectChanges();
     peticionDeRespuesta().flush({ ...LISTADO_VACIO, items: [INSTANCIA] });
     http.expectOne((r) => r.url === '/forms/instances/inst-9' && r.method === 'GET').flush(DETALLE);
+    responderNotas();
     fixture.detectChanges();
   }
 
@@ -381,6 +392,47 @@ describe('SpecialtyFormBlock', () => {
     // `http.verify()` del afterEach certifica que no se disparó ningún POST.
   });
 
+  it('en modo lectura muestra los campos adicionales guardados con la respuesta', () => {
+    peticionDePlantillas().flush([PLANTILLA]);
+    fixture.detectChanges();
+    peticionDeRespuesta().flush({ ...LISTADO_VACIO, items: [INSTANCIA] });
+    http.expectOne((r) => r.url === '/forms/instances/inst-9' && r.method === 'GET').flush(DETALLE);
+    const notas = http.expectOne((r) => r.url === '/charts/notes' && r.method === 'GET');
+    // Se piden las del encuentro, no todas las de la persona.
+    expect(notas.request.params.get('encounterId')).toBe('enc-1');
+    notas.flush({
+      items: [
+        {
+          noteId: 'nota-1',
+          encounterId: 'enc-1',
+          entries: [{ label: 'Análisis con el que vino', value: 'Adjunto: hemograma.jpg' }],
+          subjectiveText: 'Refiere mareos.',
+          createdAt: '2026-09-26T10:00:00Z',
+          releasedToPatient: false,
+        },
+        {
+          noteId: 'nota-2',
+          encounterId: 'enc-otro',
+          entries: [{ label: 'De otra consulta', value: 'no va' }],
+          createdAt: '2026-09-20T10:00:00Z',
+          releasedToPatient: false,
+        },
+      ],
+      limit: 50,
+      truncated: false,
+    });
+    fixture.detectChanges();
+
+    const lista = (fixture.nativeElement as HTMLElement).querySelector(
+      '[data-testid="adicionales-guardados"]',
+    );
+    const texto = lista?.textContent ?? '';
+    expect(texto).toContain('Análisis con el que vino');
+    expect(texto).toContain('Adjunto: hemograma.jpg');
+    expect(texto).toContain('Refiere mareos.');
+    expect(texto).not.toContain('De otra consulta');
+  });
+
   it('un valor enmascarado muestra el marcador y jamás el contenido', () => {
     llegarAModoLectura();
 
@@ -410,6 +462,7 @@ describe('SpecialtyFormBlock', () => {
     // La relectura posterior encuentra la instancia recién guardada.
     peticionDeRespuesta().flush({ ...LISTADO_VACIO, items: [INSTANCIA] });
     http.expectOne((r) => r.url === '/forms/instances/inst-9' && r.method === 'GET').flush(DETALLE);
+    responderNotas();
     fixture.detectChanges();
 
     const html = fixture.nativeElement as HTMLElement;
@@ -1219,6 +1272,8 @@ describe('SpecialtyFormBlock', () => {
         patientProfileId: 'pac-1',
         codeConceptId: 'st-1',
         encounterId: 'enc-1',
+        // La orden sale de la respuesta recién cerrada y queda asociada a ella.
+        formInstanceId: 'inst-1',
         category: 'LAB',
         categoryConceptId: 'cat-lab',
       });

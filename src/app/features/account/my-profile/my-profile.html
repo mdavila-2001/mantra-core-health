@@ -434,11 +434,6 @@
                     <p class="mi-perfil__nota mi-perfil__nota--primera">No declaraste ningún seguro.</p>
                   }
 
-                  <!-- Portabilidad de póliza y siniestralidad a 1 clic (subtarea 3.3):
-                       siempre visible, tengas o no coberturas declaradas — el derecho
-                       de portabilidad no depende de eso. -->
-                  <app-insurance-portability-card [coverages]="p.coverages" />
-
                   <!-- Tarea 4 · M-06: beneficios preventivos de la aseguradora. Sólo
                        para quien declaró un seguro: a quien no tiene ninguno no se le
                        dice que «su seguro» no tiene campañas. -->
@@ -451,6 +446,11 @@
                       />
                     }
                   }
+
+                  <!-- Portabilidad de póliza y siniestralidad a 1 clic (subtarea 3.3):
+                       siempre visible, tengas o no coberturas declaradas — el derecho
+                       de portabilidad no depende de eso. -->
+                  <app-insurance-portability-card [coverages]="p.coverages" />
                 } @else {
                   <p class="mi-perfil__nota">Todavía no pudimos traer estos datos.</p>
                 }

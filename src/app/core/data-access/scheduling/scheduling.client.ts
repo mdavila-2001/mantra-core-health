@@ -3,6 +3,7 @@ import { inject, Injectable } from '@angular/core';
 import { map, type Observable } from 'rxjs';
 
 import { API_BASE_URL, apiUrl } from '../api';
+import { sendIdempotent, SubmissionKeys } from '../idempotency';
 import type {
   AgendaResource,
   AgendaResourceCreated,
@@ -98,6 +99,8 @@ import type {
 export class SchedulingClient {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = inject(API_BASE_URL);
+  /** Claves `Idempotency-Key` por intento de envío (ver `../idempotency`). */
+  private readonly submissionKeys = new SubmissionKeys();
 
   /**
    * `GET /scheduling/resources` — los recursos agendables de la organización.
@@ -507,6 +510,9 @@ export class SchedulingClient {
             followUpOf: {
               bookingId: cita.followUpOf.bookingId,
               encounterId: cita.followUpOf.encounterId,
+              ...(cita.followUpOf.formInstanceId === undefined
+                ? {}
+                : { formInstanceId: cita.followUpOf.formInstanceId }),
             },
           }),
     });
@@ -525,46 +531,53 @@ export class SchedulingClient {
    * busca al paciente con `GET /profiles/patients?nationalId=` y se le agenda
    * con {@link createDirectAppointment}—; **422** el horario choca con otro
    * turno del profesional o del paciente.
+   *
+   * Viaja con `Idempotency-Key`: reintentar el mismo envío (doble clic,
+   * timeout) no registra dos veces al paciente ni reserva dos turnos.
    */
   createWalkInAppointment(turno: NewWalkInAppointment): Observable<WalkInAppointmentCreated> {
     const p = turno.patient;
-    return this.http.post<WalkInAppointmentCreated>(
-      this.url('/scheduling/appointments/walk-in'),
-      {
-        // Campo a campo, igual que el resto de este cliente: el backend valida
-        // con `forbidNonWhitelisted` y un opcional en `undefined` viaja como
-        // clave declarada, que vuelve 400. Ojo al agregar campos —lo que el
-        // contrato declare y esta lista no repita se descarta EN SILENCIO.
-        patient: {
-          name: p.name,
-          lastName: p.lastName,
-          nationalId: p.nationalId,
-          phone: p.phone,
-          ...(p.middleName === undefined ? {} : { middleName: p.middleName }),
-          ...(p.motherLastName === undefined ? {} : { motherLastName: p.motherLastName }),
-          ...(p.issuerAdministrativeAreaConceptId === undefined
-            ? {}
-            : { issuerAdministrativeAreaConceptId: p.issuerAdministrativeAreaConceptId }),
-          ...(p.birthDate === undefined ? {} : { birthDate: p.birthDate }),
-          ...(p.occupationConceptId === undefined
-            ? {}
-            : { occupationConceptId: p.occupationConceptId }),
-          ...(p.occupationFreeText === undefined
-            ? {}
-            : { occupationFreeText: p.occupationFreeText }),
-          ...(p.guardianName === undefined ? {} : { guardianName: p.guardianName }),
-          ...(p.guardianPhone === undefined ? {} : { guardianPhone: p.guardianPhone }),
-          ...(p.guardianRelationshipConceptId === undefined
-            ? {}
-            : { guardianRelationshipConceptId: p.guardianRelationshipConceptId }),
-        },
-        resourceId: turno.resourceId,
-        startAt: turno.startAt,
-        durationMinutes: turno.durationMinutes,
-        ...(turno.reasonText === undefined ? {} : { reasonText: turno.reasonText }),
-        // Ausente = presencial: no se manda un valor que nadie eligió.
-        ...(turno.channel === undefined ? {} : { channel: turno.channel }),
+    const body = {
+      // Campo a campo, igual que el resto de este cliente: el backend valida
+      // con `forbidNonWhitelisted` y un opcional en `undefined` viaja como
+      // clave declarada, que vuelve 400. Ojo al agregar campos —lo que el
+      // contrato declare y esta lista no repita se descarta EN SILENCIO.
+      patient: {
+        name: p.name,
+        lastName: p.lastName,
+        nationalId: p.nationalId,
+        phone: p.phone,
+        ...(p.middleName === undefined ? {} : { middleName: p.middleName }),
+        ...(p.motherLastName === undefined ? {} : { motherLastName: p.motherLastName }),
+        ...(p.issuerAdministrativeAreaConceptId === undefined
+          ? {}
+          : { issuerAdministrativeAreaConceptId: p.issuerAdministrativeAreaConceptId }),
+        ...(p.birthDate === undefined ? {} : { birthDate: p.birthDate }),
+        ...(p.occupationConceptId === undefined
+          ? {}
+          : { occupationConceptId: p.occupationConceptId }),
+        ...(p.occupationFreeText === undefined
+          ? {}
+          : { occupationFreeText: p.occupationFreeText }),
+        ...(p.guardianName === undefined ? {} : { guardianName: p.guardianName }),
+        ...(p.guardianPhone === undefined ? {} : { guardianPhone: p.guardianPhone }),
+        ...(p.guardianRelationshipConceptId === undefined
+          ? {}
+          : { guardianRelationshipConceptId: p.guardianRelationshipConceptId }),
       },
+      resourceId: turno.resourceId,
+      startAt: turno.startAt,
+      durationMinutes: turno.durationMinutes,
+      ...(turno.reasonText === undefined ? {} : { reasonText: turno.reasonText }),
+      // Ausente = presencial: no se manda un valor que nadie eligió.
+      ...(turno.channel === undefined ? {} : { channel: turno.channel }),
+    };
+    return sendIdempotent(this.submissionKeys, 'walk-in', body, (headers) =>
+      this.http.post<WalkInAppointmentCreated>(
+        this.url('/scheduling/appointments/walk-in'),
+        body,
+        { headers },
+      ),
     );
   }
 

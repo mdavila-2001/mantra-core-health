@@ -99,6 +99,8 @@ export interface AlergiaSimulada {
 }
 
 export interface RecetaSimulada {
+  /** La respuesta del formulario médico de la que sale (P43). */
+  readonly formInstanceId?: string;
   readonly id: string;
   readonly patientProfileId: string;
   readonly medicationConceptId: string;
@@ -538,6 +540,8 @@ export const notas = new Coleccion<NotaSimulada>(
    sigue estando: es la semilla de la colección, no su contenido. */
 
 export interface PlanSimulado {
+  /** La respuesta del formulario médico de la que sale (P43). */
+  readonly formInstanceId?: string;
   readonly id: string;
   readonly patientProfileId: string;
   readonly statusConceptId: string;
@@ -689,6 +693,8 @@ export function documentosDe(p: PacienteSimulado) {
 /* ---- órdenes (laboratorio e imagen) --------------------------------------- */
 
 export interface OrdenSimulada {
+  /** La respuesta del formulario médico de la que sale (P43). */
+  readonly formInstanceId?: string;
   readonly id: string;
   readonly patientProfileId: string;
   readonly codeConceptId: string;

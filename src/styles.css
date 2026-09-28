@@ -201,7 +201,10 @@
 
     --text-primary: var(--c-neutral-500);    /* 13,46 AAA peor caso */
     --text-secondary: var(--c-neutral-400);  /* 7,24 AAA peor caso */
-    --text-muted: var(--c-neutral-300);      /* 3,86–4,27: excepción E1 — solo terciario */
+    /* terciario. Era neutral-300 (#787B7B): 3,86:1 sobre marfil y 4,27 sobre
+       blanco, la excepción «E1». Ya no hay excepción: ivory-800 da 5,13 en el
+       peor caso (marfil) y sigue un escalón por debajo del secundario (7,24). */
+    --text-muted: var(--c-ivory-800);        /* 5,13 AA peor caso */
     --text-inverse: #FFFFFF;
 
     --brand-primary: var(--c-petrol-500);      /* 7,25 AAA peor caso */
@@ -214,7 +217,10 @@
     --border-default: var(--c-sage-500);   /* divisor decorativo: no delimita controles */
     --border-strong: var(--c-sage-700);    /* 3,34 peor caso ≥ 3:1 */
 
-    --focus-ring: rgba(79, 179, 169, 0.45);
+    /* anillo de foco SÓLIDO. Era aguamarina al 45 %, que compuesta sobre
+       blanco da 1,48:1 y no llega al 3:1 que WCAG pide a un indicador de foco
+       (1.4.11). aqua-700 da 5,71 sobre blanco y 5,16 sobre marfil. */
+    --focus-ring: var(--c-aqua-700);
     --shadow-sm: 0 1px 2px rgba(11, 85, 126, 0.08), 0 1px 1px rgba(11, 85, 126, 0.04);
     --shadow-md: 0 6px 16px rgba(11, 85, 126, 0.10), 0 2px 4px rgba(11, 85, 126, 0.06);
     --shadow-lg: 0 20px 48px rgba(11, 85, 126, 0.16), 0 6px 12px rgba(11, 85, 126, 0.08);
@@ -277,7 +283,7 @@
         --border-default: rgba(255, 255, 255, 0.12);
         --border-strong: rgba(255, 255, 255, 0.24);  /* excepción E3: <3:1 sin foco */
 
-        --focus-ring: rgba(159, 216, 208, 0.45);
+        --focus-ring: var(--c-mint-500);     /* sólido: ≥7,6:1 sobre toda superficie oscura */
         --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
         --shadow-md: 0 8px 20px rgba(0, 0, 0, 0.40);
         --shadow-lg: 0 24px 56px rgba(0, 0, 0, 0.50);
@@ -321,7 +327,7 @@
     --border-default: rgba(255, 255, 255, 0.12);
     --border-strong: rgba(255, 255, 255, 0.24);
 
-    --focus-ring: rgba(159, 216, 208, 0.45);
+    --focus-ring: var(--c-mint-500);
     --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
     --shadow-md: 0 8px 20px rgba(0, 0, 0, 0.40);
     --shadow-lg: 0 24px 56px rgba(0, 0, 0, 0.50);
@@ -385,7 +391,7 @@ h3 { font-size: var(--fs-h3); line-height: var(--lh-h3); font-weight: 500; }
     font-variant-numeric: tabular-nums;
 }
 
-/* foco: anillo aqua/menta de 4 px, dibujado con `outline`.
+/* foco: anillo aqua-700/menta de 4 px, sólido, dibujado con `outline`.
 
    Antes era un `box-shadow`, y eso lo dejaba a merced de cualquier pieza
    enfocable que declarara la suya: el avatar del encabezado, el selector de

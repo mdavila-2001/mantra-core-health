@@ -24,6 +24,15 @@ import { RenderMode, ServerRoute } from '@angular/ssr';
  *
  * Las landings que leen un token del query string (`verificar`, `nueva-clave`) van en `Client`:
  * prerenderizadas mostrarían el estado «falta el código», porque en el build no hay query string.
+ *
+ * ## Los altas que consultan catálogos por HTTP tampoco se prerenderizan
+ *
+ * Con `mockBackend` apagado (dev/producción contra la API real), `patient`, `practitioner` y
+ * `organization` disparan al montarse llamadas reales a catálogos dinámicos (departamentos,
+ * ocupaciones, tipo de credencial vía `/system-context/dynamic-enums`, tipo de entidad legal).
+ * Prerenderizarlos hace que el build les pegue a esas rutas sin que haya ningún backend
+ * escuchando, y la petición cuelga hasta el timeout y tumba la construcción entera. `laboratory`
+ * no inyecta ningún cliente HTTP en su alta y sigue prerenderizándose sin problema.
  */
 export const serverRoutes: ServerRoute[] = [
   {
@@ -37,16 +46,23 @@ export const serverRoutes: ServerRoute[] = [
     renderMode: RenderMode.Prerender,
   },
   {
+    // Consulta catálogos dinámicos por HTTP al montarse (departamentos, ocupaciones,
+    // empleadores, municipios, parentescos): con mockBackend apagado necesitaría un
+    // backend real disponible durante el build.
     path: 'auth/register/patient',
-    renderMode: RenderMode.Prerender,
+    renderMode: RenderMode.Client,
   },
   {
+    // Consulta /system-context/dynamic-enums (tipo de credencial) al montarse: mismo
+    // motivo que 'patient'.
     path: 'auth/register/practitioner',
-    renderMode: RenderMode.Prerender,
+    renderMode: RenderMode.Client,
   },
   {
+    // Consulta el catálogo de tipos de entidad legal por HTTP al montarse: mismo
+    // motivo que 'patient'.
     path: 'auth/register/organization',
-    renderMode: RenderMode.Prerender,
+    renderMode: RenderMode.Client,
   },
   {
     path: 'auth/register/laboratory',
