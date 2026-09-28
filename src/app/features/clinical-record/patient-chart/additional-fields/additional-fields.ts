@@ -211,6 +211,16 @@ export class AdditionalFields implements OnInit {
     () => this.filasConContenido().length > 0 || this.textoLibre().trim() !== '',
   );
 
+  /**
+   * Cuántas cosas lleva la sección: cada fila con contenido —bien escrita o
+   * no: una a medio escribir también es algo que se perdería de vista— y el
+   * texto libre, que en la lectura vuelve como una fila más («Texto libre»).
+   * Así la pestaña dice el mismo número antes y después de guardar.
+   */
+  readonly cantidad = computed(
+    () => this.filasConContenido().length + (this.textoLibre().trim() === '' ? 0 : 1),
+  );
+
   /** Las filas como las lee la nota y la IA del cierre. */
   readonly entradas = computed<readonly MedicalNoteEntry[]>(() =>
     this.filasConContenido().map((fila) => ({
