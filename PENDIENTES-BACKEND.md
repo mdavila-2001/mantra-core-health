@@ -48,7 +48,7 @@ backend.
 | **P40** | `based_on_note_ids` y `category` textual en las órdenes de análisis, más el concepto `SR_OTHER` — **carril C2 no entregado** |
 | **P41** | Estados `COND_PROVISIONAL` / `COND_REFUTED` y `POST /clinical/conditions/:id/verification` con motivo y evidencia — **carril C3 no entregado** |
 | **P42** | La **reconsulta**: `follow_up_of_booking_id` en la reserva, `ACT_FOLLOW_UP`, «una reconsulta futura por cita» y el vínculo en `BookingItemDto`. **Esto sí tiene frontend detrás y funcionando contra el simulador** |
-| **P44** | `GET /practitioners/:id/insurance-carriers`: con qué aseguradoras trabaja un médico, para su ficha pública. **El modelo ya lo declara** (`network_provider_memberships`); falta la lectura y la carga de las redes reales |
+| **P45** | `GET /practitioners/:id/insurance-carriers`: con qué aseguradoras trabaja un médico, para su ficha pública. **El modelo ya lo declara** (`network_provider_memberships`); falta la lectura y la carga de las redes reales |
 
 ---
 
@@ -1808,9 +1808,9 @@ literal del plan maestro (§10), no un contrato ampliado acá.
 > `GET /forms/instances`, que leía `encounterId` cuando el cliente manda `encounter` y por eso
 > nunca encontraba un formulario ya respondido.
 
-## P44 · Con qué seguros trabaja un médico — 27/09/2026
+## P45 · Con qué seguros trabaja un médico — 27/09/2026
 
-> **P44 · La ficha del médico que ve el paciente dice con qué aseguradoras trabaja y en qué
+> **P45 · La ficha del médico que ve el paciente dice con qué aseguradoras trabaja y en qué
 > planes.** Origen: pedido del propietario del 27/09/2026 («fundamental»). Construido y probado
 > contra el simulador en `mockup`; **la API real no tiene la ruta**, así que llevarlo a `dev` sin
 > ella deja la tarjeta en su estado de error (con «Reintentar»), no la ficha rota.
