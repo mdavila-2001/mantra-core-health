@@ -926,6 +926,13 @@
       </app-card>
     }
 
+    <!-- ─── Con qué seguros trabaja ───────────────────────────────────────
+       Hueco para quien arma la ficha: la vista no inyecta clientes, así que
+       la sección que se carga sola (`app-practitioner-insurers`) llega
+       proyectada. Va pegada a la identidad porque es la pregunta con la que
+       el paciente abre la ficha: «¿mi seguro lo cubre?». -->
+    <ng-content select="[profileInsurers]" />
+
     <!-- ─── Dónde atiende ─────────────────────────────────────────────────
        ALV-005/006/010. Es la pregunta que la ficha no sabía contestar: la
        trayectoria dice dónde TRABAJÓ, no dónde encontrarlo hoy. Sin sedes la

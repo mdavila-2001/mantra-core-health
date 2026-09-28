@@ -26,6 +26,7 @@ import type {
   Plan,
   PlanBenefit,
   Product,
+  PractitionerInsuranceCarrier,
   ProviderNetwork,
   CreateInsurancePlanInput,
   CreatePlanBenefitInput,
@@ -40,6 +41,8 @@ import type {
   CreateCampaignInput,
   InsuranceCampaign,
   PatientCampaign,
+  ReceivedClaim,
+  ReceivedClaimList,
 } from './insurance.types';
 
 /* ---- formas de transporte -------------------------------------------------
@@ -98,6 +101,12 @@ type WireBrokerClient = Omit<BrokerClient, 'effectiveFrom' | 'effectiveTo'> & {
 
 type WireClaimListItem = Omit<ClaimListItem, 'submittedAt'> & {
   readonly submittedAt: string | null;
+};
+
+type WireReceivedClaim = Omit<ReceivedClaim, 'submittedAt' | 'serviceDate'> & {
+  readonly submittedAt: string | null;
+  /** `format: 'date'`: se convierte con `maybeDateOnly`, no con `new Date()`. */
+  readonly serviceDate: string | null;
 };
 
 type WireClaimAdjudication = Omit<ClaimAdjudication, 'adjudicatedAt'> & {
@@ -180,6 +189,29 @@ export class InsuranceClient {
           count: body.count,
         })),
       );
+  }
+
+  /**
+   * `GET /practitioners/:id/insurance-carriers` — las aseguradoras en cuya red
+   * atiende un profesional, con los planes de cada una.
+   *
+   * Es lo que el paciente mira en la ficha para saber si su seguro lo cubre.
+   * Una lista vacía es «no hay convenios informados», no «no trabaja con
+   * seguros»: la pantalla lo dice así.
+   *
+   * @param practitionerProfileId - El perfil profesional de la ficha.
+   * @returns Las aseguradoras, ya ordenadas por nombre.
+   */
+  listPractitionerCarriers(
+    practitionerProfileId: string,
+  ): Observable<readonly PractitionerInsuranceCarrier[]> {
+    return this.http
+      .get<{ readonly items: readonly PractitionerInsuranceCarrier[] }>(
+        this.url(
+          `/practitioners/${encodeURIComponent(practitionerProfileId)}/insurance-carriers`,
+        ),
+      )
+      .pipe(map((body) => body.items));
   }
 
   /** `GET /insurance-carriers/:id` — catálogo comercial y red. */
@@ -341,6 +373,31 @@ export class InsuranceClient {
   }
 
   /**
+   * `GET /insurance/received-claims` — lo que los prestadores le presentaron a
+   * la aseguradora activa («Solicitudes recibidas»).
+   *
+   * Trae la ventana entera de una vez, con tope y aviso `truncated`: la
+   * pantalla filtra, busca, ordena y pagina en el cliente (ADR-0015, familia
+   * «lista local»). El alcance lo resuelve el servidor por la membresía en la
+   * aseguradora; el cliente no manda ningún id de aseguradora.
+   *
+   * @returns Las solicitudes recibidas, de la más reciente a la más antigua.
+   */
+  listReceivedClaims(): Observable<ReceivedClaimList> {
+    return this.http
+      .get<{
+        readonly items: readonly WireReceivedClaim[];
+        readonly truncated: boolean;
+      }>(this.url('/insurance/received-claims'))
+      .pipe(
+        map((body) => ({
+          items: body.items.map(toReceivedClaim),
+          truncated: body.truncated,
+        })),
+      );
+  }
+
+  /**
    * `GET /insurance-claims/:id` — cabecera, ítems, dictámenes y disputas.
    *
    * @param id - Solicitud consultada.
@@ -469,6 +526,14 @@ export class InsuranceClient {
 
 function toClaimListItem(body: WireClaimListItem): ClaimListItem {
   return { ...body, submittedAt: maybeDate(body.submittedAt) ?? null };
+}
+
+function toReceivedClaim(body: WireReceivedClaim): ReceivedClaim {
+  return {
+    ...body,
+    submittedAt: maybeDate(body.submittedAt) ?? null,
+    serviceDate: maybeDateOnly(body.serviceDate) ?? null,
+  };
 }
 
 function toClaimAdjudication(body: WireClaimAdjudication): ClaimAdjudication {
