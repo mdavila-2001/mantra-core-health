@@ -102,6 +102,24 @@ export interface CreateInsurancePlanInput {
   readonly monthlyPremiumAmount?: string;
 }
 
+/**
+ * Datos generales de un producto seguro (un plan) que se pueden corregir.
+ *
+ * Reemplazo completo: una vigencia en `null` se quita, no se conserva. La
+ * moneda y la prima quedan afuera a propósito —la prima tiene su propio
+ * endpoint y cambiar la moneda reinterpretaría todos los importes de sus
+ * cláusulas—.
+ *
+ * **Contrato pendiente en la API**: `PUT /insurance-plans/:planId` hoy existe
+ * sólo en la maqueta de `mockup`.
+ */
+export interface UpdateInsurancePlanInput {
+  readonly planCode: string;
+  readonly name: string;
+  readonly effectiveFrom: string | null;
+  readonly effectiveTo: string | null;
+}
+
 /** Reemplazo completo de la prima de lista mensual de un plan (v4.2.14). */
 export interface UpdatePlanPremiumInput {
   readonly monthlyPremiumAmount: string | null;

@@ -79,6 +79,17 @@ const NOMENCLADOR = [...MEDICAL_FEE_SCHEDULE, ...DENTAL_FEE_SCHEDULE].map((item)
   ocrSuspect: item.ocrSuspect,
 }));
 
+/**
+ * La entrada del arancel que corresponde a un concepto.
+ *
+ * La usa la maqueta de seguros para resolver el nombre del servicio de una
+ * cláusula: la cláusula guarda el mismo `conceptId` que el servicio del médico
+ * importado del arancel, y ese es el único id que los dos comparten.
+ */
+export function procedimientoPorConceptId(conceptId: string) {
+  return NOMENCLADOR.find((item) => item.conceptId === conceptId);
+}
+
 /* ---- el catálogo que una organización publica en su ficha ---------------- */
 
 /**

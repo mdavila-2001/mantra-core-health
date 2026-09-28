@@ -3,6 +3,8 @@ import { HttpHeaders } from '@angular/common/http';
 import { registrarSeguros } from './insurance.handlers';
 import { MockRouter, type MockMethod, type MockReply } from '../mock-router';
 import { buscarUsuario, type MockUser } from '../mock-session';
+import { MEDICAL_FEE_SCHEDULE } from '../fixtures/fee-schedules.generated';
+import { uuid } from '../mock-store';
 import { PROFESIONALES } from '../fixtures/personas';
 
 interface DetailWire {
@@ -106,6 +108,69 @@ describe('handlers del catálogo administrativo de seguros', () => {
     expect(benefit.copayAmount).toBeNull();
     expect(benefit.approvalRules.requiredDocuments).toEqual(['ORDEN_MEDICA']);
     expect(benefit.approvalRules.exclusionNotes).toBe('Sin experimentales');
+  });
+
+  it('corrige los datos generales del producto seguro y lo da de baja', () => {
+    const productId = detail().products[0]!.id;
+    const planReply = call<MockReply>(
+      'POST',
+      `/insurance-products/${productId}/plans`,
+      { planCode: 'MOCK-EDITA', name: 'Plan a editar', effectiveFrom: '2026-10-01' },
+      owner,
+    );
+    const planId = (planReply.body as { id: string }).id;
+
+    call('PUT', `/insurance-plans/${planId}`, {
+      planCode: 'MOCK-EDITADO',
+      name: 'Plan editado',
+      effectiveFrom: '2026-11-01',
+      effectiveTo: null,
+    }, owner);
+    const edited = detail().products[0]!.plans.find((item) => item.id === planId) as unknown as {
+      planCode: string;
+      name: string;
+      effectiveFrom: string | null;
+    };
+    expect(edited).toMatchObject({
+      planCode: 'MOCK-EDITADO',
+      name: 'Plan editado',
+      effectiveFrom: '2026-11-01',
+    });
+
+    const deleted = call<MockReply>('DELETE', `/insurance-plans/${planId}`, null, owner);
+    expect(deleted.status).toBe(204);
+    expect(detail().products[0]!.plans.some((item) => item.id === planId)).toBe(false);
+  });
+
+  it('nombra el servicio de la cláusula con la entrada del arancel', () => {
+    const plan = detail().products[0]!.plans[0]!;
+    const procedure = MEDICAL_FEE_SCHEDULE[0]!;
+    const reply = call<MockReply>(
+      'POST',
+      `/insurance-plans/${plan.id}/benefits`,
+      {
+        benefitCategoryConceptId: 'category-1',
+        serviceConceptId: uuid(`nomenclador-${procedure.code}`),
+        coveragePercent: '90',
+      },
+      owner,
+    );
+    const benefitId = (reply.body as { id: string }).id;
+
+    const benefit = detail()
+      .products[0]!.plans[0]!.benefits.find((item) => item.id === benefitId) as unknown as {
+      service: { code: string; display: string } | null;
+    };
+    expect(benefit.service).toEqual({ code: procedure.code, display: procedure.display });
+  });
+
+  it('rechaza que el staff edite o elimine un producto seguro', () => {
+    const planId = detail(staff).products[0]!.plans[0]!.id;
+    expect(
+      call<MockReply>('PUT', `/insurance-plans/${planId}`, { planCode: 'X', name: 'X' }, staff)
+        .status,
+    ).toBe(403);
+    expect(call<MockReply>('DELETE', `/insurance-plans/${planId}`, null, staff).status).toBe(403);
   });
 
   it('da al staff la misma lectura sin acciones y rechaza su escritura', () => {
