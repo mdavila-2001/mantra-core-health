@@ -214,13 +214,15 @@ export const APP_SECTIONS: readonly AppSection[] = [
       'laboratory-directory',
       'clinics-directory',
       'pharmacies-directory',
+      'insurers-directory',
     ],
     label: 'Directorios',
     group: 'General',
     icon: 'directory',
     roles: [ANY_ROLE],
     availability: 'disponible',
-    summary: 'Un mapa de a quién o a dónde buscar: médicos, laboratorios, clínicas y farmacias.',
+    summary:
+      'Un mapa de a quién o a dónde buscar: médicos, laboratorios, clínicas, farmacias y aseguradoras.',
     module: 'M04 directory',
   },
   {
@@ -393,6 +395,27 @@ export const APP_SECTIONS: readonly AppSection[] = [
     availability: 'disponible',
     summary: 'Farmacias de la red, con su ciudad y su verificación.',
     module: 'M22 pharmacy',
+  },
+  {
+    // El mercado de seguros del paciente (28/09/2026): las aseguradoras con sus
+    // productos, planes y cláusulas, y un botón para hablar con su broker. Es
+    // el quinto hermano y sigue la misma disciplina: se entra por la portada
+    // «Directorios» y la ficha cuelga de la misma ruta.
+    //
+    // **La ruta es `insurers-directory` y no `insurance-directory`**: `/insurance`
+    // es prefijo del proxy (`proxy.conf.json`) y la pantalla se habría ido
+    // entera a la API, como pasó con `organizations-directory`.
+    path: 'insurers-directory',
+    // Una aseguradora no se busca a sí misma en el mercado.
+    hiddenForTenantTypes: ['PAYER'],
+    fueraDelMenuPara: [ANY_ROLE],
+    label: 'Directorio de aseguradoras',
+    group: 'General',
+    icon: 'umbrella',
+    roles: [ANY_ROLE],
+    availability: 'disponible',
+    summary: 'Seguros de salud con sus productos, planes, coberturas y exclusiones, y su broker.',
+    module: 'M26 insurance',
   },
 
   /* -- Atención · fase 1 del orden de trabajo ------------------------------ */

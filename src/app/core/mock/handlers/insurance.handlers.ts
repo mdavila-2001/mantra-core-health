@@ -1,3 +1,4 @@
+import { CORREDORES_CON_PERFIL, vitrinas } from '../fixtures/comunidad';
 import { conceptoPorId } from '../fixtures/conceptos';
 import { PACIENTES, PACIENTE, profesionalPorId } from '../fixtures/personas';
 import { forbidden, noContent, notFound, type MockRequest, type MockRouter } from '../mock-router';
@@ -751,6 +752,36 @@ export function registrarSeguros(router: MockRouter): void {
     return carrier === undefined
       ? notFound('Aseguradora no encontrada')
       : conPermiso(carrier, request);
+  });
+
+  // La vitrina de una aseguradora para el paciente (P46): se busca por el slug
+  // de su ficha pública, que es lo que trae el directorio. Lee el MISMO
+  // catálogo que administra la aseguradora —lo que ella corrige en su consola
+  // es lo que ve el paciente— y, si no lo administró todavía, el sembrado.
+  router.get('/insurance-marketplace/insurers/:slug', ({ params }) => {
+    const ficha = vitrinas
+      .todos()
+      .find((vitrina) => vitrina.slug === params['slug'] && vitrina.kind === 'INSURER');
+    if (ficha === undefined) return notFound('Aseguradora no encontrada');
+    const indice = ASEGURADORAS.findIndex((a) => a.name === ficha.displayName);
+    // Tiene ficha pública pero no catálogo cargado: no es un error.
+    if (indice < 0) return { carrier: null, brokers: [] };
+    const aseguradora = ASEGURADORAS[indice]!;
+    const carrier =
+      catalogoAdministrable.get(aseguradora.id) ?? detalleDeAseguradora(aseguradora, indice);
+    const brokers = CORREDORES.flatMap((corredor, i) =>
+      corredor.carriers.includes(indice)
+        ? [
+            {
+              ...resumenDeCorredor(corredor, i),
+              chatSlug:
+                CORREDORES_CON_PERFIL.find((p) => p.brokerCode === corredor.brokerCode)?.slug ??
+                null,
+            },
+          ]
+        : [],
+    );
+    return { carrier: { ...carrier, canAdminister: false }, brokers };
   });
 
   router.post('/insurance-products/:productId/plans', (request) => {

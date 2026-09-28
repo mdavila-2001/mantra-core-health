@@ -189,6 +189,7 @@ export const ACCESO_EN_MODAL: Readonly<Record<string, string>> = {
   'clinics-directory': 'directorio-clinicas',
   'laboratory-directory': 'directorio-laboratorios',
   'pharmacies-directory': 'directorio-farmacias',
+  'insurers-directory': 'directorio-aseguradoras',
 };
 
 /**
@@ -232,7 +233,13 @@ export const ACCESS_AREAS: readonly AccessArea[] = [
     tagline: 'A dónde derivar y a quién: clínicas, laboratorios y farmacias de la plataforma.',
     icon: 'globe',
     tone: 'primary',
-    paths: ['directory', 'clinics-directory', 'laboratory-directory', 'pharmacies-directory'],
+    paths: [
+      'directory',
+      'clinics-directory',
+      'laboratory-directory',
+      'pharmacies-directory',
+      'insurers-directory',
+    ],
     catchAllGroups: ['General'],
   },
   {

@@ -1,0 +1,147 @@
+<app-page-header [title]="titulo()" [subtitle]="bajada()" [breadcrumbs]="breadcrumbs()" />
+
+<div class="ficha-publica">
+  <app-view-state-host [state]="estadoDeLaFicha()" (retry)="cargar()">
+    @if (ficha(); as perfil) {
+      <app-card variant="outlined" padding="lg">
+        <app-section-heading card-header icono="umbrella" titulo="La aseguradora" />
+        <app-fact-list disposicion="columnas" [hechos]="identificacion(perfil)" />
+
+        @if (perfil.biography) {
+          <p class="ficha-publica__bio">{{ perfil.biography }}</p>
+        }
+
+        <!-- La acción principal de la ficha: quien está mirando seguros quiere
+             que alguien le explique cuál le conviene. Abre el chat con el
+             primer broker al que se le puede escribir; los demás, abajo. -->
+        @if (brokerPrincipal(); as broker) {
+          <div class="aseguradora__accion">
+            <a
+              app-button
+              variant="primary"
+              routerLink="/messaging"
+              [queryParams]="{ escribirA: broker.chatSlug }"
+              data-testid="aseguradora-hablar-con-broker"
+            >
+              Hablar con el broker
+            </a>
+            <span class="ficha-publica__nota">Te atiende {{ broker.legalName }} por el chat.</span>
+          </div>
+        }
+      </app-card>
+    }
+  </app-view-state-host>
+
+  <section aria-label="Productos y planes">
+    <app-section-heading icono="shield" titulo="Productos y planes" [cuantos]="items().length" />
+    <p class="ficha-publica__nota">
+      Lo que cubre cada plan y lo que no, tal como lo publicó la aseguradora. La prima es de lista:
+      el broker te confirma la tuya.
+    </p>
+
+    <app-view-state-host [state]="estadoDelCatalogo()" (retry)="recargarCatalogo()">
+      <div vsh-skeleton>
+        <app-skeleton variant="rect" height="16rem" />
+      </div>
+
+      @if (items().length === 0) {
+        <p class="ficha-publica__vacio" role="status" data-testid="aseguradora-sin-productos">
+          Esta aseguradora todavía no publicó sus productos. Su broker te puede contar qué ofrece.
+        </p>
+      } @else {
+        <!-- Una tarjeta con una pestaña por plan (regla 6): lado a lado se
+             comparan mejor que apilados, y la tabla de cláusulas de cada uno
+             se lee entera sin bajar por tres tarjetas. -->
+        <app-card variant="outlined" padding="lg" data-testid="aseguradora-planes">
+          <app-tabs [selectedIndex]="pestana()" (selectedIndexChange)="pestana.set($event)">
+            @for (plan of items(); track plan.id) {
+              <app-tab [label]="plan.nombre">
+                <div class="aseguradora__plan" data-testid="aseguradora-plan">
+                  <dl class="aseguradora__datos">
+                    <div>
+                      <dt class="ficha-publica__rotulo">Producto</dt>
+                      <dd>{{ plan.producto }}</dd>
+                    </div>
+                    @if (plan.segmento) {
+                      <div>
+                        <dt class="ficha-publica__rotulo">Para quién</dt>
+                        <dd>{{ plan.segmento }}</dd>
+                      </div>
+                    }
+                    <div>
+                      <dt class="ficha-publica__rotulo">Prima mensual</dt>
+                      <dd class="ficha-publica__monto tabular-nums" data-testid="aseguradora-prima">
+                        @if (plan.prima; as prima) {
+                          {{ prima }}
+                        } @else {
+                          <span class="ficha-publica__sin-precio">A cotizar con el broker</span>
+                        }
+                      </dd>
+                    </div>
+                  </dl>
+
+                  @if (plan.clausulas.length === 0) {
+                    <p class="ficha-publica__vacio" role="status">
+                      Este plan todavía no tiene cláusulas publicadas.
+                    </p>
+                  } @else {
+                    <app-data-table
+                      [state]="estadoDeClausulas(plan)"
+                      [columns]="columnas"
+                      [trackBy]="porId"
+                      [caption]="'Cláusulas y coberturas de ' + plan.nombre"
+                      wrapHeaders
+                      data-testid="aseguradora-clausulas"
+                    />
+                  }
+                </div>
+              </app-tab>
+            }
+          </app-tabs>
+        </app-card>
+      }
+    </app-view-state-host>
+  </section>
+
+  @if (brokers().length > 0) {
+    <section aria-label="Brokers">
+      <app-section-heading icono="people" titulo="Brokers" [cuantos]="brokers().length" />
+      <p class="ficha-publica__nota">
+        El broker te asesora para elegir el plan, te acompaña al contratarlo y en cada reclamo.
+      </p>
+
+      <ul class="rejilla ficha-publica__rejilla" data-testid="aseguradora-brokers">
+        @for (broker of brokers(); track broker.id) {
+          <li>
+            <article class="rejilla__tarjeta" data-testid="aseguradora-broker">
+              <div class="ficha-publica__titular">
+                <h3 class="rejilla__nombre">{{ broker.legalName }}</h3>
+                @if (verificado(broker)) {
+                  <app-badge variant="success" value="Verificado" />
+                } @else {
+                  <app-badge variant="secondary" value="Declarado" />
+                }
+              </div>
+              <p class="rejilla__resumen">{{ resumenDelBroker(broker) }}</p>
+              @if (broker.chatSlug; as slug) {
+                <a
+                  app-button
+                  variant="outline"
+                  size="sm"
+                  class="aseguradora__chat"
+                  routerLink="/messaging"
+                  [queryParams]="{ escribirA: slug }"
+                  data-testid="broker-hablar"
+                >
+                  Hablar con el broker
+                </a>
+              } @else {
+                <p class="ficha-publica__nota">Todavía no tiene chat en AloVida.</p>
+              }
+            </article>
+          </li>
+        }
+      </ul>
+    </section>
+  }
+</div>

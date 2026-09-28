@@ -11,7 +11,7 @@ import { avatarSvg, Coleccion, imagenSvg, iso, portadaSvg, uuid } from '../mock-
     comentarios, reacciones, reseñas, grupos, temas y mensajería directa.
     ========================================================================== */
 
-export type ClaseDeVitrina = 'PRACTITIONER' | 'ORGANIZATION' | 'PHARMACY' | 'DIAGNOSTIC_UNIT' | 'INSURER' | 'PATIENT';
+export type ClaseDeVitrina = 'PRACTITIONER' | 'ORGANIZATION' | 'PHARMACY' | 'DIAGNOSTIC_UNIT' | 'INSURER' | 'BROKER' | 'PATIENT';
 
 export interface VitrinaSimulada {
   readonly id: string;
@@ -54,6 +54,7 @@ export const TIPO_VITRINA = {
   PHARMACY: uuid('concept-profile-target-pharmacy'),
   DIAGNOSTIC_UNIT: uuid('concept-profile-target-diagnostic-unit'),
   INSURER: uuid('concept-profile-target-insurer'),
+  BROKER: uuid('concept-profile-target-broker'),
   PATIENT: uuid('concept-profile-target-patient'),
 } as const;
 
@@ -165,7 +166,7 @@ function vitrinaDeProfesional(p: ProfesionalSimulado): VitrinaSimulada {
   };
 }
 
-function organizacion(clave: string, datos: { kind: Exclude<ClaseDeVitrina, 'PRACTITIONER' | 'PATIENT'>; tenantId: string; name: string; headline: string; bio: string; city: string; address: string; lat: number; lng: number; rating?: number; color: string; agenda?: boolean; categoria: CategoriaSimulada }): VitrinaSimulada {
+function organizacion(clave: string, datos: { kind: Exclude<ClaseDeVitrina, 'PRACTITIONER' | 'PATIENT'>; tenantId: string; name: string; headline: string; bio: string; city: string; address: string; lat: number; lng: number; rating?: number; color: string; agenda?: boolean; categoria: CategoriaSimulada | null }): VitrinaSimulada {
   return {
     id: uuid(`public-profile-${clave}`),
     tenantId: datos.tenantId,
@@ -194,6 +195,30 @@ function organizacion(clave: string, datos: { kind: Exclude<ClaseDeVitrina, 'PRA
     categoria: datos.categoria,
   };
 }
+
+/**
+ * Los brokers de seguros con perfil propio, para poder escribirles.
+ *
+ * El botón «Hablar con el broker» del directorio de aseguradoras abre el chat
+ * con `?escribirA=<slug>`, y el chat resuelve ese slug contra estas vitrinas.
+ * La clave es el `brokerCode` de `insurance.handlers.ts`: ese archivo lee esta
+ * lista para decirle a la ficha de la aseguradora qué slug abre cada chat.
+ *
+ * Clase `BROKER` y sin categoría: no salen en ningún directorio público —el
+ * buscador filtra por clase—, sólo se los encuentra desde la aseguradora que
+ * representan o buscándolos en el chat.
+ */
+export const CORREDORES_CON_PERFIL: readonly {
+  readonly brokerCode: string;
+  readonly slug: string;
+  readonly name: string;
+  readonly headline: string;
+  readonly city: string;
+}[] = [
+  { brokerCode: 'BRK-001', slug: 'broker-consultores-oriente', name: 'Consultores en Seguros Oriente', headline: 'Broker de seguros de salud · Seguros Andina y La Vitalicia', city: 'Santa Cruz de la Sierra' },
+  { brokerCode: 'BRK-002', slug: 'broker-monica-aguirre', name: 'Mónica Aguirre', headline: 'Broker de seguros de salud · Alianza Seguros', city: 'Cochabamba' },
+  { brokerCode: 'BRK-003', slug: 'broker-andina-corredores', name: 'Andina Corredores', headline: 'Broker de seguros de salud · Seguros Andina', city: 'La Paz' },
+];
 
 export const VITRINAS: readonly VitrinaSimulada[] = [
   ...PROFESIONALES.map(vitrinaDeProfesional),
@@ -229,6 +254,9 @@ export const VITRINAS: readonly VitrinaSimulada[] = [
   organizacion('laboratorio-central', { kind: 'DIAGNOSTIC_UNIT', tenantId: TENANT_LABORATORIO, name: 'Laboratorio Central', headline: 'Laboratorio clínico · resultados en línea', bio: 'Análisis clínicos con resultados el mismo día y toma de muestras a domicilio.', city: 'Santa Cruz de la Sierra', address: 'Calle Sucre N.º 210', lat: -17.7840, lng: -63.1815, rating: 4.8, color: '#4f46e5', categoria: CATEGORIA.LABORATORIO_CLINICO }),
   organizacion('centro-imagen-sur', { kind: 'DIAGNOSTIC_UNIT', tenantId: uuid('tenant-imagen-sur'), name: 'Centro de Imagen Sur', headline: 'Resonancia, tomografía y ecografía', bio: 'Centro de diagnóstico por imágenes con equipos de última generación.', city: 'Santa Cruz de la Sierra', address: 'Av. Cristo Redentor, km 4', lat: -17.7400, lng: -63.1750, rating: 4.4, color: '#4f46e5', categoria: CATEGORIA.IMAGENOLOGIA }),
   organizacion('seguros-andina', { kind: 'INSURER', tenantId: uuid('tenant-seguros-andina'), name: 'Seguros Andina', headline: 'Seguro de salud familiar', bio: 'Planes de salud individuales y familiares con red de más de 200 prestadores.', city: 'La Paz', address: 'Av. Arce N.º 2500', lat: -16.5060, lng: -68.1280, rating: 4.0, color: '#ca8a04', categoria: CATEGORIA.SEGURO_DE_SALUD }),
+  ...CORREDORES_CON_PERFIL.map((corredor) =>
+    organizacion(corredor.slug, { kind: 'BROKER', tenantId: uuid(`tenant-${corredor.slug}`), name: corredor.name, headline: corredor.headline, bio: 'Te asesora para elegir el plan, te acompaña en la contratación y en cada reclamo.', city: corredor.city, address: '', lat: -17.78, lng: -63.18, color: '#ca8a04', categoria: null }),
+  ),
   organizacion('la-vitalicia', { kind: 'INSURER', tenantId: uuid('tenant-vitalicia'), name: 'La Vitalicia', headline: 'Seguros de salud y vida', bio: 'Cobertura nacional e internacional.', city: 'Santa Cruz de la Sierra', address: 'Av. San Martín, Equipetrol', lat: -17.7590, lng: -63.1960, rating: 4.2, color: '#ca8a04', categoria: CATEGORIA.SEGURO_DE_SALUD }),
   {
     id: uuid(`public-profile-${PACIENTE.id}`),
