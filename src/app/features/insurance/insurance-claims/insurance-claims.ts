@@ -13,6 +13,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { catchError, map, of } from 'rxjs';
 
+import { AuthService } from '../../../core/auth/auth.service';
 import { InsuranceClient } from '../../../core/data-access/insurance/insurance.client';
 import type {
   CarrierSummary,
@@ -83,12 +84,19 @@ const PAGE_SIZE = 25;
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InsuranceClaims {
+  private readonly auth = inject(AuthService);
   private readonly insurance = inject(InsuranceClient);
   private readonly navigation = inject(NavigationService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
+
+  /** Indica si la sesión activa opera como aseguradora (PAYER/CARRIER). */
+  protected readonly isCarrier = computed(() => {
+    const t = this.auth.activeTenantType()?.toUpperCase();
+    return t === 'PAYER' || t === 'CARRIER';
+  });
 
   private readonly patientCell =
     viewChild.required<TemplateRef<{ $implicit: ClaimListItem }>>('patientCell');
@@ -185,7 +193,7 @@ export class InsuranceClaims {
         priority: 1,
         cell: this.patientCell(),
       },
-      { key: 'carrierName', header: 'Seguro', priority: 2 },
+      ...(this.isCarrier() ? [] : [{ key: 'carrierName', header: 'Seguro', priority: 2 }]),
       {
         key: 'billedTotal',
         header: 'Monto solicitado',
@@ -319,6 +327,12 @@ export class InsuranceClaims {
    */
   private stateOf(page: ClaimPage): ViewState<readonly ClaimListItem[]> {
     if (page.items.length > 0) return ready(page.items);
+    if (this.isCarrier()) {
+      return empty(
+        { label: 'Volver al panel', route: '/dashboard' },
+        'Todavía no se recibieron solicitudes de cobertura de prestadores médicos.',
+      );
+    }
     return this.carrierFilter() === ''
       ? empty(
           { label: 'Volver al panel', route: '/dashboard' },

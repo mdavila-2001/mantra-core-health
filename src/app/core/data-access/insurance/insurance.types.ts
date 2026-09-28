@@ -615,3 +615,24 @@ export interface PatientCampaign {
   readonly carrierName: string;
   readonly partners: readonly PatientCampaignPartner[];
 }
+
+/** Entrada para adjudicación de línea de reclamo. */
+export interface LineAdjudicationInput {
+  readonly insuranceClaimLineId: string;
+  readonly decision: 'APPROVED' | 'DENIED';
+  readonly approvedAmount?: string;
+  readonly patientAmount?: string;
+  readonly deniedAmount?: string;
+  readonly policyClauseReference?: string;
+  readonly denialRationale?: string;
+}
+
+/** Cuerpo de `POST /insurance-claims/:id/adjudications`. */
+export interface CreateAdjudicationInput {
+  readonly outcome: 'APPROVED' | 'DENIED';
+  readonly dispositionText?: string;
+  readonly totalApprovedAmount?: string;
+  readonly totalPatientAmount?: string;
+  readonly totalDeniedAmount?: string;
+  readonly lineAdjudications: readonly LineAdjudicationInput[];
+}
