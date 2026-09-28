@@ -7,6 +7,13 @@
   container-type: inline-size;
 }
 
+/* Sola, como «Formulario libre», no sigue a ninguna plantilla: el filete que
+   la separaba de los campos de arriba no tiene de qué separarla. */
+.adicionales--libre {
+  padding-block-start: 0;
+  border-block-start: 0;
+}
+
 .adicionales__encabezado {
   display: flex;
   align-items: baseline;

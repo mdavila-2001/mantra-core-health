@@ -12,10 +12,26 @@
   font-weight: 600;
 }
 
+/* A lo ancho de la tarjeta, sin «medida de formulario»: acotado a 40rem, en el
+   modal de la consulta quedaba una columna vacía a la derecha de cada campo
+   (regla del cliente, `docs/components/composition-rules.md` §5). */
 .formulario-especialidad__formulario {
   display: grid;
   gap: var(--sp-4);
-  max-inline-size: 40rem;
+}
+
+/* El formulario libre va suelto bajo el selector, sin el aviso ni el
+   interruptor que en las fichas hacen de separación: el aire se pone acá. */
+.formulario-especialidad__libre {
+  margin-block-start: var(--sp-5);
+}
+
+/* Lo ya registrado, debajo del botón de guardar: separado por un filete para
+   que no se lea como parte de lo que se está por enviar. */
+.formulario-especialidad__ya-registrado {
+  margin-block-start: var(--sp-5);
+  padding-block-start: var(--sp-5);
+  border-block-start: 1px solid var(--border-subtle);
 }
 
 .formulario-especialidad__estado {
@@ -42,7 +58,6 @@
 .formulario-especialidad__respondido {
   display: grid;
   gap: var(--sp-4);
-  max-inline-size: 40rem;
 }
 
 .formulario-especialidad__completado {

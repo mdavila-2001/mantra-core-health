@@ -79,6 +79,60 @@
         [encounterId]="encounterId()"
       />
     }
+  } @else if (formularioLibre()) {
+    <!-- El formulario libre tampoco pasa por `forms`: son las filas «campo:
+         valor» de los campos adicionales, solas. Va antes de la cadena de
+         estados por lo mismo que los bloques propios: una ficha ya respondida
+         en este encuentro no lo tapa, se puede registrar cuantas veces haga
+         falta. -->
+    @if (!hayEncuentro()) {
+      <app-alert tone="info" title="Abrí el encuentro para completar">
+        El formulario libre se registra dentro de la consulta que lo motivó. Registrá el encuentro
+        acá arriba y el formulario aparece.
+      </app-alert>
+    } @else {
+      @if (fallosDelLibre().length > 0) {
+        <app-alert
+          tone="warning"
+          title="El formulario libre no quedó completo"
+          data-testid="formulario-libre-fallos"
+        >
+          @for (fallo of fallosDelLibre(); track fallo) {
+            <p class="formulario-especialidad__fallo">{{ fallo }}</p>
+          }
+        </app-alert>
+      }
+      <form
+        class="formulario-especialidad__formulario formulario-especialidad__libre"
+        data-testid="formulario-libre"
+        (submit)="$event.preventDefault()"
+      >
+        <app-additional-fields
+          [patientProfileId]="patientProfileId()"
+          [disabled]="enviando()"
+          [libre]="true"
+        />
+        <app-form-actions
+          submitLabel="Guardar formulario"
+          [pending]="enviando()"
+          [disabled]="!puedeGuardarLibre()"
+          (submitted)="guardarLibre()"
+        />
+      </form>
+      @if (adicionalesGuardados().length > 0) {
+        <div class="formulario-especialidad__respondido formulario-especialidad__ya-registrado">
+          <p class="formulario-especialidad__completado">Ya registrado en esta consulta</p>
+          <dl class="formulario-especialidad__respuestas" data-testid="formulario-libre-guardado">
+            @for (fila of adicionalesGuardados(); track $index) {
+              <div class="formulario-especialidad__respuesta">
+                <dt>{{ fila.label }}</dt>
+                <dd>{{ fila.value }}</dd>
+              </div>
+            }
+          </dl>
+        </div>
+      }
+    }
   } @else if (!hayEncuentro()) {
     <app-alert tone="info" title="Abrí el encuentro para completar">
       El formulario clínico se completa dentro de la consulta que lo motivó. Registrá el encuentro
