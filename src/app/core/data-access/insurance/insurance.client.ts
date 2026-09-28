@@ -39,6 +39,8 @@ import type {
   CreateCampaignInput,
   InsuranceCampaign,
   PatientCampaign,
+  ReceivedClaim,
+  ReceivedClaimList,
 } from './insurance.types';
 
 /* ---- formas de transporte -------------------------------------------------
@@ -97,6 +99,12 @@ type WireBrokerClient = Omit<BrokerClient, 'effectiveFrom' | 'effectiveTo'> & {
 
 type WireClaimListItem = Omit<ClaimListItem, 'submittedAt'> & {
   readonly submittedAt: string | null;
+};
+
+type WireReceivedClaim = Omit<ReceivedClaim, 'submittedAt' | 'serviceDate'> & {
+  readonly submittedAt: string | null;
+  /** `format: 'date'`: se convierte con `maybeDateOnly`, no con `new Date()`. */
+  readonly serviceDate: string | null;
 };
 
 type WireClaimAdjudication = Omit<ClaimAdjudication, 'adjudicatedAt'> & {
@@ -321,6 +329,31 @@ export class InsuranceClient {
   }
 
   /**
+   * `GET /insurance/received-claims` — lo que los prestadores le presentaron a
+   * la aseguradora activa («Solicitudes recibidas»).
+   *
+   * Trae la ventana entera de una vez, con tope y aviso `truncated`: la
+   * pantalla filtra, busca, ordena y pagina en el cliente (ADR-0015, familia
+   * «lista local»). El alcance lo resuelve el servidor por la membresía en la
+   * aseguradora; el cliente no manda ningún id de aseguradora.
+   *
+   * @returns Las solicitudes recibidas, de la más reciente a la más antigua.
+   */
+  listReceivedClaims(): Observable<ReceivedClaimList> {
+    return this.http
+      .get<{
+        readonly items: readonly WireReceivedClaim[];
+        readonly truncated: boolean;
+      }>(this.url('/insurance/received-claims'))
+      .pipe(
+        map((body) => ({
+          items: body.items.map(toReceivedClaim),
+          truncated: body.truncated,
+        })),
+      );
+  }
+
+  /**
    * `GET /insurance-claims/:id` — cabecera, ítems, dictámenes y disputas.
    *
    * @param id - Solicitud consultada.
@@ -449,6 +482,14 @@ export class InsuranceClient {
 
 function toClaimListItem(body: WireClaimListItem): ClaimListItem {
   return { ...body, submittedAt: maybeDate(body.submittedAt) ?? null };
+}
+
+function toReceivedClaim(body: WireReceivedClaim): ReceivedClaim {
+  return {
+    ...body,
+    submittedAt: maybeDate(body.submittedAt) ?? null,
+    serviceDate: maybeDateOnly(body.serviceDate) ?? null,
+  };
 }
 
 function toClaimAdjudication(body: WireClaimAdjudication): ClaimAdjudication {

@@ -81,4 +81,18 @@
     .filter-bar__action {
         margin-inline-start: auto;
     }
+
+    /* `wrap` (opt-in): el buscador ocupa su propio renglón entero y los
+       filtros se reparten debajo, sin encogerse por debajo de su rótulo. */
+    :host(.filter-bar--wrap) .filter-bar__controls {
+        flex-wrap: wrap;
+    }
+
+    :host(.filter-bar--wrap) .filter-bar__search {
+        flex: 1 1 100%;
+    }
+
+    :host(.filter-bar--wrap) .filter-bar__filter {
+        flex: 1 1 180px;
+    }
 }

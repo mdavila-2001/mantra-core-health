@@ -127,6 +127,7 @@ export interface ActiveFilter {
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
     class: 'filter-bar',
+    '[class.filter-bar--wrap]': 'wrap()',
   },
 })
 export class FilterBar {
@@ -135,6 +136,16 @@ export class FilterBar {
   private readonly destroyRef = inject(DestroyRef);
 
   readonly filters = input<readonly FilterDef[]>([]);
+
+  /**
+   * Deja que los controles bajen de renglón en vez de encogerse.
+   *
+   * Opt-in: con cinco o más filtros por encabezado («Solicitudes recibidas»)
+   * la fila única dejaba el buscador en un puñado de píxeles y cortaba los
+   * rótulos de los desplegables. Los consumidores con pocos filtros no lo
+   * necesitan y siguen exactamente igual.
+   */
+  readonly wrap = input(false, { transform: booleanAttribute });
   readonly searchLabel = input<string>('Buscar en el listado');
 
   /**
