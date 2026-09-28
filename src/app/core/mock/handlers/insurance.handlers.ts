@@ -1,7 +1,8 @@
 import { conceptoPorId } from '../fixtures/conceptos';
 import { PACIENTES, PACIENTE } from '../fixtures/personas';
-import { forbidden, notFound, type MockRequest, type MockRouter } from '../mock-router';
+import { forbidden, noContent, notFound, type MockRequest, type MockRouter } from '../mock-router';
 import { TENANT_ASEGURADORA } from '../mock-session';
+import { procedimientoPorConceptId } from './practice.handlers';
 import {
   ahora,
   Coleccion,
@@ -413,6 +414,17 @@ function concepto(id: string) {
   return c(item?.code ?? id, item?.display ?? id);
 }
 
+/**
+ * El servicio de una cláusula. Se busca primero en el arancel —de ahí salen
+ * los servicios que ofrece el médico— y después en el registro general.
+ */
+function servicioDeClausula(id: string) {
+  const procedimiento = procedimientoPorConceptId(id);
+  return procedimiento === undefined
+    ? concepto(id)
+    : c(procedimiento.code, procedimiento.display);
+}
+
 const CORREDORES = [
   {
     id: uuid('broker-1'),
@@ -754,7 +766,8 @@ export function registrarSeguros(router: MockRouter): void {
     const benefit = {
       id,
       category: concepto(datos.benefitCategoryConceptId ?? ''),
-      service: datos.serviceConceptId === undefined ? null : concepto(datos.serviceConceptId),
+      service:
+        datos.serviceConceptId === undefined ? null : servicioDeClausula(datos.serviceConceptId),
       coveragePercent: datos.coveragePercent ?? null,
       copayAmount: datos.copayAmount ?? null,
       deductibleAmount: datos.deductibleAmount ?? null,
@@ -846,6 +859,43 @@ export function registrarSeguros(router: MockRouter): void {
    * plan. Reemplazo completo de un solo valor, como el resto de las
    * mutaciones económicas del catálogo.
    */
+  /* Editar y dar de baja un producto seguro: **sólo maqueta**. La API real no
+     tiene todavía `PUT` ni `DELETE /insurance-plans/:planId`. */
+  router.put('/insurance-plans/:planId', (request) => {
+    if (!administraCatalogo(request)) return forbidden();
+    const match = localizarPlan(request.params['planId']!);
+    if (match === undefined) return notFound('Plan no encontrado');
+    const datos = cuerpo<{
+      planCode: string;
+      name: string;
+      effectiveFrom: string | null;
+      effectiveTo: string | null;
+    }>(request);
+    const plans = match.product.plans.map((plan) =>
+      plan.id === match.plan.id
+        ? {
+            ...plan,
+            planCode: datos.planCode ?? plan.planCode,
+            name: datos.name ?? plan.name,
+            effectiveFrom: datos.effectiveFrom ?? null,
+            effectiveTo: datos.effectiveTo ?? null,
+          }
+        : plan,
+    );
+    actualizarProducto(match.carrier, match.product, { plans });
+    return { ok: true };
+  });
+
+  router.delete('/insurance-plans/:planId', (request) => {
+    if (!administraCatalogo(request)) return forbidden();
+    const match = localizarPlan(request.params['planId']!);
+    if (match === undefined) return notFound('Plan no encontrado');
+    actualizarProducto(match.carrier, match.product, {
+      plans: match.product.plans.filter((plan) => plan.id !== match.plan.id),
+    });
+    return noContent();
+  });
+
   router.put('/insurance-plans/:planId/premium', (request) => {
     if (!administraCatalogo(request)) return forbidden();
     const match = localizarPlan(request.params['planId']!);

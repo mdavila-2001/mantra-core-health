@@ -3,6 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 
+import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
 import type {
   CarrierDetail,
   UpdatePlanBenefitInput,
@@ -89,10 +90,17 @@ describe('InsuranceCatalog', () => {
   let fixture: ComponentFixture<InsuranceCatalog>;
   let component: InsuranceCatalog;
   let http: HttpTestingController;
+  let confirm: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
+    confirm = vi.fn();
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        { provide: DialogService, useValue: { confirm } },
+      ],
     });
     http = TestBed.inject(HttpTestingController);
   });
@@ -185,9 +193,11 @@ describe('InsuranceCatalog', () => {
 
     const element: HTMLElement = fixture.nativeElement;
     expect(element.textContent).toContain('Vista de solo lectura');
-    expect(element.querySelector('[aria-label^="Crear un plan"]')).toBeNull();
-    expect(element.querySelector('[aria-label^="Crear una cobertura"]')).toBeNull();
-    expect(element.querySelector('[aria-label^="Editar cobertura"]')).toBeNull();
+    expect(element.querySelector('[aria-label^="Añadir un producto seguro"]')).toBeNull();
+    expect(element.querySelector('[aria-label^="Añadir cláusula"]')).toBeNull();
+    expect(element.querySelector('[aria-label^="Editar datos del producto seguro"]')).toBeNull();
+    expect(element.querySelector('[aria-label^="Eliminar producto seguro"]')).toBeNull();
+    expect(element.querySelector('[aria-label^="Editar cláusula"]')).toBeNull();
     expect(element.querySelector('[aria-label^="Editar reglas"]')).toBeNull();
   });
 
@@ -200,14 +210,80 @@ describe('InsuranceCatalog', () => {
     fixture.detectChanges();
 
     const button: HTMLButtonElement = fixture.nativeElement.querySelector(
-      '[aria-label="Crear un plan en Salud Integral"]',
+      '[aria-label="Añadir un producto seguro en Salud Integral"]',
     );
     expect(button).toBeTruthy();
     button.click();
 
-    const selected = internal<() => { id: string } | null>('productForNewPlan')();
-    expect(selected?.id).toBe('p-1');
+    const selected = internal<() => { product: { id: string }; plan: unknown } | null>(
+      'planEditor',
+    )();
+    expect(selected?.product.id).toBe('p-1');
+    expect(selected?.plan).toBeNull();
   });
+
+  it('pone las tres acciones del producto seguro en la línea de su título', () => {
+    mountAsAdmin();
+
+    const heading: HTMLElement = fixture.nativeElement.querySelector('#plan-pl-1')!.parentElement;
+    const labels = [...heading.querySelectorAll('button')].map((b) => b.textContent!.trim());
+    expect(labels).toEqual([
+      'Añadir cláusula',
+      'Editar datos del producto seguro',
+      'Eliminar producto seguro',
+    ]);
+
+    (
+      heading.querySelector(
+        '[aria-label="Editar datos del producto seguro Plan Oro"]',
+      ) as HTMLButtonElement
+    ).click();
+    const editor = internal<() => { product: { id: string }; plan: { id: string } } | null>(
+      'planEditor',
+    )();
+    expect(editor?.product.id).toBe('p-1');
+    expect(editor?.plan.id).toBe('pl-1');
+
+    (heading.querySelector('[aria-label="Añadir cláusula a Plan Oro"]') as HTMLButtonElement).click();
+    const clause = internal<() => { plan: { id: string }; benefit: unknown } | null>(
+      'benefitEditor',
+    )();
+    expect(clause?.plan.id).toBe('pl-1');
+    expect(clause?.benefit).toBeNull();
+  });
+
+  it('elimina el producto seguro sólo después de confirmar, y recarga la ficha', async () => {
+    mountAsAdmin();
+    confirm.mockResolvedValue(true);
+    const plan = internal<() => CarrierDetail | null>('carrier')()!.products[0]!.plans[0]!;
+
+    await internal<(plan: unknown) => Promise<void>>('deletePlan')(plan);
+
+    expect(confirm).toHaveBeenCalledWith(expect.objectContaining({ destructive: true }));
+    const request = http.expectOne('/insurance-plans/pl-1');
+    expect(request.request.method).toBe('DELETE');
+    request.flush(null);
+    http.expectOne(`/insurance-carriers/${CARRIER_ID}`).flush({ ...FICHA, canAdminister: true });
+  });
+
+  it('no elimina nada si se cancela la confirmación', async () => {
+    mountAsAdmin();
+    confirm.mockResolvedValue(false);
+    const plan = internal<() => CarrierDetail | null>('carrier')()!.products[0]!.plans[0]!;
+
+    await internal<(plan: unknown) => Promise<void>>('deletePlan')(plan);
+
+    http.expectNone('/insurance-plans/pl-1');
+  });
+
+  function mountAsAdmin(): void {
+    mount();
+    http
+      .expectOne('/insurance-carriers')
+      .flush({ items: [{ ...RESUMEN, canAdminister: true }], count: 1 });
+    http.expectOne(`/insurance-carriers/${CARRIER_ID}`).flush({ ...FICHA, canAdminister: true });
+    fixture.detectChanges();
+  }
 
   it('actualiza importes y reglas en memoria sin recargar la ficha', () => {
     mount();

@@ -32,6 +32,7 @@ import type {
   UpdatePlanBenefitInput,
   UpdatePlanBenefitRulesInput,
   UpdatePlanPremiumInput,
+  UpdateInsurancePlanInput,
   CampaignCondition,
   CampaignPage,
   CampaignQuery,
@@ -197,6 +198,25 @@ export class InsuranceClient {
       this.url(`/insurance-products/${encodeURIComponent(productId)}/plans`),
       body,
     );
+  }
+
+  /**
+   * `PUT /insurance-plans/:planId` — corrige los datos generales de un
+   * producto seguro. **Sólo existe en la maqueta**: la API todavía no lo expone.
+   */
+  updatePlan(planId: string, body: UpdateInsurancePlanInput): Observable<{ readonly ok: true }> {
+    return this.http.put<{ readonly ok: true }>(
+      this.url(`/insurance-plans/${encodeURIComponent(planId)}`),
+      body,
+    );
+  }
+
+  /**
+   * `DELETE /insurance-plans/:planId` — da de baja un producto seguro con sus
+   * cláusulas. **Sólo existe en la maqueta**: la API todavía no lo expone.
+   */
+  deletePlan(planId: string): Observable<void> {
+    return this.http.delete<void>(this.url(`/insurance-plans/${encodeURIComponent(planId)}`));
   }
 
   /** Crea una cobertura dentro de un plan del carrier del tenant activo. */

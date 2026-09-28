@@ -20,6 +20,7 @@ import { Card } from '../../../shared/components/molecules/card/card';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
+import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
 import { ApprovalRulesDialog } from './approval-rules-dialog';
 import { BenefitFormDialog } from './benefit-form-dialog';
 import { PlanFormDialog } from './plan-form-dialog';
@@ -33,6 +34,12 @@ import { PlanPremiumDialog } from './plan-premium-dialog';
  * (`GET /insurance-carriers`) dice **qué** aseguradora administra esta
  * organización, y sólo la ficha (`/:id`) trae el catálogo. Pedir la ficha
  * primero exigiría que la pantalla adivinara un identificador.
+ *
+ * Vocabulario de la pantalla: cada **plan** se presenta como un «producto
+ * seguro» —datos generales más sus líneas de **cláusulas**— y el producto del
+ * modelo queda como el ramo que los agrupa. Una cláusula es una cobertura del
+ * plan (`insurance_plan_benefits`): declara el servicio, por su
+ * `service_concept_id`, y el porcentaje que paga.
  *
  * Si la organización no tiene aseguradora —porque no es de tipo `PAYER`— la
  * pantalla lo dice y ofrece la salida, en vez de mostrar una tabla vacía que
@@ -59,10 +66,14 @@ import { PlanPremiumDialog } from './plan-premium-dialog';
 export class InsuranceCatalog {
   private readonly insurance = inject(InsuranceClient);
   private readonly toasts = inject(ToastService);
+  private readonly dialogs = inject(DialogService);
 
   protected readonly state = signal<ViewState<CarrierDetail>>(loading());
   protected readonly carrier = computed(() => dataOf(this.state()));
-  protected readonly productForNewPlan = signal<Product | null>(null);
+  protected readonly planEditor = signal<{
+    readonly product: Product;
+    readonly plan: Plan | null;
+  } | null>(null);
   protected readonly benefitEditor = signal<{
     readonly plan: Plan;
     readonly benefit: PlanBenefit | null;
@@ -81,21 +92,46 @@ export class InsuranceCatalog {
     this.load();
   }
 
-  protected planCreated(): void {
-    this.toasts.success('El plan se creó correctamente.');
+  protected planSaved(): void {
+    const editor = this.planEditor();
+    this.toasts.success(
+      editor?.plan === null
+        ? 'El producto seguro se creó correctamente.'
+        : 'Los datos del producto seguro se actualizaron.',
+    );
     this.reloadCarrier();
+  }
+
+  protected async deletePlan(plan: Plan): Promise<void> {
+    const confirmed = await this.dialogs.confirm({
+      title: `Eliminar ${plan.name}`,
+      message:
+        plan.benefits.length === 0
+          ? 'El producto seguro deja de ofrecerse.'
+          : `El producto seguro deja de ofrecerse junto con sus ${plan.benefits.length} cláusulas.`,
+      confirmLabel: 'Eliminar',
+      destructive: true,
+    });
+    if (!confirmed) return;
+    this.insurance.deletePlan(plan.id).subscribe({
+      next: () => {
+        this.toasts.success('El producto seguro se eliminó.');
+        this.reloadCarrier();
+      },
+      error: () => this.toasts.error('No se pudo eliminar el producto seguro. Intentá de nuevo.'),
+    });
   }
 
   protected benefitSaved(update: UpdatePlanBenefitInput | null): void {
     const editor = this.benefitEditor();
     if (editor === null) return;
     if (update === null || editor.benefit === null) {
-      this.toasts.success('La cobertura se creó correctamente.');
+      this.toasts.success('La cláusula se añadió correctamente.');
       this.reloadCarrier();
       return;
     }
     this.patchBenefit(editor.plan.id, editor.benefit.id, update);
-    this.toasts.success('La cobertura se actualizó correctamente.');
+    this.toasts.success('La cláusula se actualizó correctamente.');
   }
 
   protected premiumSaved(monthlyPremiumAmount: string | null): void {
@@ -162,9 +198,7 @@ export class InsuranceCatalog {
         ...current,
         products: current.products.map((product) => ({
           ...product,
-          plans: product.plans.map((plan) =>
-            plan.id === planId ? { ...plan, ...patch } : plan,
-          ),
+          plans: product.plans.map((plan) => (plan.id === planId ? { ...plan, ...patch } : plan)),
         })),
       }),
     );
