@@ -231,6 +231,8 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
   // que `componenteDe()` consulta antes que esta tabla.
   'my-account/promotions': () =>
     import('./features/account/promotions/promotions').then((m) => m.Promotions),
+  'my-account/spending': () =>
+    import('./features/account/spending/spending').then((m) => m.Spending),
   'administration/pharmacy-orders': () =>
     import('./features/organization/pharmacy-inbox/pharmacy-inbox').then(
       (m) => m.PharmacyInbox,

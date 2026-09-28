@@ -1537,6 +1537,24 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M51 promotions',
   },
   {
+    // «Mis gastos» (pedido del propietario, 27/09/2026): el tablero de lo que
+    // el paciente gastó en su salud. Mismo criterio que «Promociones»: fuera
+    // del menú lateral, se llega por la billetera de la barra superior.
+    //
+    // Módulo 17 porque lo que suma son cobros al paciente; el contrato
+    // (`GET /patient-spending/me`) todavía no existe en la API — P43 en
+    // `PENDIENTES-BACKEND.md`.
+    fueraDelMenuPara: [ANY_ROLE],
+    path: 'my-account/spending',
+    label: 'Mis gastos',
+    group: 'Mi cuenta',
+    icon: 'wallet',
+    roles: ['PATIENT'],
+    availability: 'disponible',
+    summary: 'Cuánto gastaste en tu salud: este mes, el año contra el pasado y por categoría.',
+    module: 'M17 billing',
+  },
+  {
     // **«Mis organizaciones»** (propietario, 2026-09-10), en el lugar que
     // ocupaba «Tu organización». Aquélla mostraba la organización del tenant
     // activo —la clínica donde el médico está afiliado—, que no es suya: junto

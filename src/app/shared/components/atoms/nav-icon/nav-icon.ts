@@ -275,6 +275,13 @@ import type { NavIconName } from './nav-icon.types';
           <path d="M3.5 20.5h17" />
           <path d="M7 20.5v-6M12 20.5V5.5M17 20.5v-9.5" />
         }
+        @case ('wallet') {
+          <!-- Billetera con su cierre: lo que salió del bolsillo. -->
+          <path d="M5.5 6.5h13a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2v-9a2 2 0 0 1 2-2z" />
+          <path d="m5.5 6.5 9.8-2.7a1 1 0 0 1 1.2 1V6.5" />
+          <path d="M20.5 11h-3.8a2 2 0 0 0 0 4h3.8" />
+          <circle cx="16.8" cy="13" r="0.6" />
+        }
         @case ('star') {
           <!-- Estrella: los puntos que se acumulan. -->
           <path d="m12 3.4 2.7 5.5 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z" />

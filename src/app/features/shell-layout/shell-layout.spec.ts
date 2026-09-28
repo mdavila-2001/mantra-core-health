@@ -1231,6 +1231,44 @@ describe('ShellLayout', () => {
       });
     });
 
+    /**
+     * 2026-09-27 · La billetera de la cabecera abre «Mis gastos». Mismo
+     * criterio que el carrito: es del paciente, no de la médica.
+     */
+    describe('Billetera en la cabecera', () => {
+      function billetera(): HTMLAnchorElement | null {
+        return raiz().querySelector<HTMLAnchorElement>('[data-testid="header-gastos"]');
+      }
+
+      it('el paciente ve la billetera; la médica, no', () => {
+        abrirSesion({ sub: 'u-1', roles: ['PATIENT'], tenants: ['t-1'] });
+        expect(billetera()).not.toBeNull();
+
+        abrirSesion({ sub: 'u-2', roles: ['PRACTITIONER'], tenants: ['t-1'] });
+        expect(billetera()).toBeNull();
+      });
+
+      it('es un enlace a /my-account/spending con nombre accesible e ícono', () => {
+        abrirSesion({ sub: 'u-1', roles: ['PATIENT'], tenants: ['t-1'] });
+
+        expect(billetera()?.tagName).toBe('A');
+        expect(billetera()?.getAttribute('href')).toBe('/my-account/spending');
+        expect(billetera()?.getAttribute('aria-label')).toBe('Mis gastos');
+        expect(billetera()?.querySelector('app-nav-icon')).not.toBeNull();
+      });
+
+      it('no ocupa un renglón del menú lateral', () => {
+        abrirSesion({ sub: 'u-1', roles: ['PATIENT'], tenants: ['t-1'] });
+        fixture.detectChanges();
+
+        const rutas = [...raiz().querySelectorAll('[data-testid="nav-enlace"]')].map((a) =>
+          a.getAttribute('data-route'),
+        );
+        expect(rutas.length).toBeGreaterThan(0);
+        expect(rutas).not.toContain('/my-account/spending');
+      });
+    });
+
     it('el encabezado ofrece el interruptor de tema junto a Ajustes', () => {
       // Volvió a pedido del cliente (2026-09-18): claro/oscuro es un atajo;
       // Ajustes sigue siendo la puerta a todas las preferencias.

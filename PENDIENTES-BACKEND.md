@@ -1,6 +1,8 @@
 # Lo que el frontend espera del backend
 
-**Actualizado:** 2026-09-26 — **P39 a P42 son nuevos**, de la noche del paquete «Encuentro
+**Actualizado:** 2026-09-27 — **P44 es nuevo**: «Mis gastos», la billetera del paciente, ya
+está construida contra el simulador y espera `GET /patient-spending/me`. Antes,
+2026-09-26 — **P39 a P42 son nuevos**, de la noche del paquete «Encuentro
 clínico» (2026-09-25). De los cuatro **sólo P42 tiene frontend detrás**: la reconsulta está
 construida y andando contra el simulador, y es lo único del paquete que la API va a tener que
 sostener. P39, P40 y P41 nacen numerados porque el plan del paquete los numeró, pero sus carriles
@@ -48,6 +50,7 @@ backend.
 | **P40** | `based_on_note_ids` y `category` textual en las órdenes de análisis, más el concepto `SR_OTHER` — **carril C2 no entregado** |
 | **P41** | Estados `COND_PROVISIONAL` / `COND_REFUTED` y `POST /clinical/conditions/:id/verification` con motivo y evidencia — **carril C3 no entregado** |
 | **P42** | La **reconsulta**: `follow_up_of_booking_id` en la reserva, `ACT_FOLLOW_UP`, «una reconsulta futura por cita» y el vínculo en `BookingItemDto`. **Esto sí tiene frontend detrás y funcionando contra el simulador** |
+| **P44** | `GET /patient-spending/me?from=&to=` — los gastos de salud del paciente, movimiento por movimiento. **«Mis gastos» ya está construido contra el simulador** |
 | **P45** | `GET /practitioners/:id/insurance-carriers`: con qué aseguradoras trabaja un médico, para su ficha pública. **El modelo ya lo declara** (`network_provider_memberships`); falta la lectura y la carga de las redes reales |
 
 ---
@@ -1807,6 +1810,57 @@ literal del plan maestro (§10), no un contrato ampliado acá.
 > sola. El simulador guarda el campo en las cuatro altas. De paso se corrigió el simulador de
 > `GET /forms/instances`, que leía `encounterId` cuando el cliente manda `encounter` y por eso
 > nunca encontraba un formulario ya respondido.
+
+---
+
+## P44 · «Mis gastos»: lo que el paciente gastó en su salud — 27/09/2026
+
+> **P44 · `GET /patient-spending/me`.** Origen: pedido del propietario del 27/09/2026 — una
+> billetera en la barra superior del paciente que abra un tablero de gastos: este mes, el mes
+> anterior, el año contra el pasado, por categoría y otros agregados. Hoy lo sirve **sólo el
+> simulador** (`core/mock/handlers/patient-spending.handlers.ts`); la API real no tiene la ruta,
+> así que en `production-api` la pantalla cae al estado de error.
+>
+> **1. Contrato** (`core/data-access/patient-spending/patient-spending.dto.ts`)
+> `GET /patient-spending/me?from=YYYY-MM-DD&to=YYYY-MM-DD` (ambos inclusive). El titular sale del
+> token; la URL no lleva datos de la persona. Responde `{ currency, from, to, items[] }`, con
+> `items` del más reciente al más antiguo, y cada movimiento:
+> `id` · `occurredAt` · `description` · `category {code, display}` · `providerName` ·
+> `grossAmount` · `coveredAmount` · `discountAmount` · `paidAmount` — importes en texto decimal
+> exacto, con `paidAmount = grossAmount − coveredAmount − discountAmount`.
+>
+> Se piden **movimientos y no totales**: la pantalla compara el mes contra el mismo tramo del
+> anterior, el año contra el mismo tramo del pasado y cada categoría contra sí misma, y cada una
+> es otra suma sobre la misma lista. El front pide un solo rango (1 de enero del año pasado →
+> hoy), unos 150–250 movimientos por paciente.
+>
+> **2. Categorías — conceptos, no enum**
+> `SPEND_CONSULTATION`, `SPEND_PHARMACY`, `SPEND_LABORATORY`, `SPEND_IMAGING`,
+> `SPEND_PROCEDURE`, `SPEND_INSURANCE_PREMIUM`. Hacen falta como value set del modelo; el front
+> las rotula en castellano por `code` y, si llega una que no conoce, muestra el `display` del
+> contrato con un ícono genérico — no se rompe.
+>
+> **3. De dónde sale el dato — y por qué empieza en el repo del modelo**
+> Es una **lectura que une** cobros que hoy viven en módulos distintos: pagos de consultas
+> (`payments` / `billing`), pedidos de farmacia, órdenes de laboratorio e imagenología, y primas
+> del seguro. Dos huecos ya medidos (regla 99 §7): **`appointment_bookings` no tiene dónde
+> guardar el estado de pago** y `payments` no referencia reservas; y **`billing` cuelga de
+> `clinical.encounters`**, no del paciente. Sin resolver esas dos relaciones en el `.puml`, la
+> suma de «consultas» no se puede armar. Lo cubierto por el seguro y lo descontado por
+> promociones tampoco tienen hoy un lugar común por movimiento.
+>
+> **4. Reglas**
+> - **422** si falta `from` o `to`, si no son `YYYY-MM-DD`, si `from > to` o si el rango supera
+>   tres años (lo mismo que aplica el simulador).
+> - Sin perfil de paciente en la sesión: la misma precondición que `GET /promotions/me`.
+> - Nada posterior a hoy.
+> - Sólo lo propio: nunca se aceptan ids de paciente por parámetro (BOLA).
+>
+> **Qué hay del lado del frontend:** la billetera en la barra superior (sólo `PATIENT`), la
+> ruta `my-account/spending` y el tablero entero, con sus pruebas. Nada más espera; cuando la
+> ruta exista, la pantalla funciona contra la API sin cambios si el contrato se respeta.
+
+---
 
 ## P45 · Con qué seguros trabaja un médico — 27/09/2026
 
