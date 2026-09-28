@@ -243,6 +243,34 @@ export const COLUMNAS_DEL_CSV: readonly ColumnaDelCsv[] = [
   },
 ];
 
+/** Cómo venía codificado el archivo. */
+export type CodificacionDelCsv = 'utf-8' | 'windows-1252';
+
+/** El texto del archivo y con qué codificación se leyó. */
+export interface TextoDelCsv {
+  readonly texto: string;
+  readonly codificacion: CodificacionDelCsv;
+}
+
+/**
+ * Decodifica los bytes del archivo: UTF-8 si lo es de verdad, y si no,
+ * Windows-1252.
+ *
+ * Excel en castellano guarda «CSV (delimitado por comas)» en Windows-1252, no
+ * en UTF-8. Leído como UTF-8, cada tilde y cada eñe se vuelven «�» y el
+ * producto se publica así — sin arreglo posible, porque el backend no edita y
+ * el código retirado no se puede volver a usar. UTF-8 se decodifica en modo
+ * estricto: un byte que no le corresponde no se reemplaza, lanza, y entonces
+ * se relee como Windows-1252, que acepta cualquier byte.
+ */
+export function decodificarCsv(bytes: ArrayBuffer | Uint8Array): TextoDelCsv {
+  try {
+    return { texto: new TextDecoder('utf-8', { fatal: true }).decode(bytes), codificacion: 'utf-8' };
+  } catch {
+    return { texto: new TextDecoder('windows-1252').decode(bytes), codificacion: 'windows-1252' };
+  }
+}
+
 /** Un fallo que invalida el archivo entero, antes de mirar fila por fila. */
 export class ArchivoInvalido extends Error {
   override readonly name = 'ArchivoInvalido';
@@ -250,9 +278,14 @@ export class ArchivoInvalido extends Error {
 
 /** Una fila del archivo, ya llevada a los campos del producto. */
 export interface FilaDelCsv {
-  /** El número de línea de datos, contando desde 1 (sin el encabezado). */
+  /**
+   * La línea del archivo donde empieza la fila, contando el encabezado como
+   * la 1: es el número que la persona ve a la izquierda en su planilla.
+   */
   readonly numero: number;
   readonly campos: CamposDelProducto;
+  /** La fila no tiene la forma del encabezado; se rechaza sola, no el archivo. */
+  readonly errorDeForma?: string;
 }
 
 /** Lo que se sacó del archivo. */
@@ -284,8 +317,14 @@ export function leerCsv(contenido: string): LecturaDelCsv {
   }
 
   const renglones = partirEnRenglones(texto, detectarSeparador(texto));
-  const [encabezado, ...datos] = renglones;
-  const nombres = encabezado!.map(normalizarEncabezado);
+  const [primero, ...datos] = renglones;
+  // Excel deja columnas vacías al final del encabezado cuando alguna vez se
+  // escribió más a la derecha: no son columnas, son restos.
+  const encabezado = [...primero!.celdas];
+  while (encabezado.length > 1 && encabezado[encabezado.length - 1]!.trim() === '') {
+    encabezado.pop();
+  }
+  const nombres = encabezado.map(normalizarEncabezado);
 
   if (nombres.some((nombre) => nombre === '')) {
     throw new ArchivoInvalido('Todas las columnas necesitan un encabezado.');
@@ -313,24 +352,32 @@ export function leerCsv(contenido: string): LecturaDelCsv {
     );
   }
 
-  const filas = datos.map((celdas, i): FilaDelCsv => {
-    if (celdas.length !== nombres.length) {
-      throw new ArchivoInvalido(
-        `La fila ${i + 1} tiene ${celdas.length} columnas y el encabezado ${nombres.length}. Revisá si hay un separador de más o una comilla sin cerrar.`,
-      );
+  const filas = datos.map(({ linea, celdas: crudas }): FilaDelCsv => {
+    // Las celdas vacías de más al final son el mismo resto que en el encabezado.
+    const celdas = [...crudas];
+    while (celdas.length > nombres.length && celdas[celdas.length - 1]!.trim() === '') {
+      celdas.pop();
     }
     const campos: Record<keyof CamposDelProducto, string> = { ...CAMPOS_VACIOS };
     destino.forEach((campo, j) => {
       if (campo !== null) {
-        campos[campo] = sinApostrofoDeFormula(celdas[j]!);
+        campos[campo] = sinApostrofoDeFormula(celdas[j] ?? '');
       }
     });
-    return { numero: i + 1, campos };
+    // Una fila mal formada se rechaza sola: tirar el archivo entero por una
+    // coma de más en la fila 300 obligaba a empezar de cero.
+    return celdas.length === nombres.length
+      ? { numero: linea, campos }
+      : {
+          numero: linea,
+          campos,
+          errorDeForma: `Tiene ${celdas.length} columnas y el encabezado ${nombres.length}: revisá si hay un separador de más o una comilla sin cerrar.`,
+        };
   });
 
   return {
     filas,
-    ignoradas: encabezado!.filter((_, j) => destino[j] === null).map((nombre) => nombre.trim()),
+    ignoradas: encabezado.filter((_, j) => destino[j] === null).map((nombre) => nombre.trim()),
   };
 }
 
@@ -350,13 +397,25 @@ function detectarSeparador(texto: string): string {
   return Object.keys(cuentas).sort((a, b) => cuentas[b]! - cuentas[a]!)[0]!;
 }
 
-/** Parte el texto en renglones de celdas, respetando las comillas. */
-function partirEnRenglones(texto: string, separador: string): string[][] {
-  const renglones: string[][] = [];
+/** Un renglón del archivo: sus celdas y la línea donde empieza. */
+interface Renglon {
+  readonly linea: number;
+  readonly celdas: string[];
+}
+
+/**
+ * Parte el texto en renglones de celdas, respetando las comillas, y anota en
+ * qué línea del archivo empieza cada uno (un salto dentro de comillas cuenta
+ * como línea, igual que en la planilla).
+ */
+function partirEnRenglones(texto: string, separador: string): Renglon[] {
+  const renglones: Renglon[] = [];
   let renglon: string[] = [];
   let celda = '';
   let entreComillas = false;
   let recienCerrada = false;
+  let linea = 1;
+  let inicio = 1;
 
   const cerrarCelda = (): void => {
     renglon.push(celda);
@@ -366,7 +425,7 @@ function partirEnRenglones(texto: string, separador: string): string[][] {
   const cerrarRenglon = (): void => {
     cerrarCelda();
     if (renglon.some((valor) => valor.trim() !== '')) {
-      renglones.push(renglon);
+      renglones.push({ linea: inicio, celdas: renglon });
     }
     renglon = [];
   };
@@ -383,6 +442,9 @@ function partirEnRenglones(texto: string, separador: string): string[][] {
           recienCerrada = true;
         }
       } else {
+        if (caracter === '\n' || (caracter === '\r' && texto[i + 1] !== '\n')) {
+          linea++;
+        }
         celda += caracter;
       }
       continue;
@@ -390,7 +452,7 @@ function partirEnRenglones(texto: string, separador: string): string[][] {
     if (caracter === '"') {
       if (celda.trim() !== '' || recienCerrada) {
         throw new ArchivoInvalido(
-          `Hay una comilla en medio de un valor (renglón ${renglones.length + 1}).`,
+          `Hay una comilla en medio de un valor (línea ${linea}).`,
         );
       }
       celda = '';
@@ -402,10 +464,12 @@ function partirEnRenglones(texto: string, separador: string): string[][] {
         i++;
       }
       cerrarRenglon();
+      linea++;
+      inicio = linea;
     } else if (recienCerrada) {
       if (caracter.trim() !== '') {
         throw new ArchivoInvalido(
-          `Hay texto después de cerrar las comillas (renglón ${renglones.length + 1}).`,
+          `Hay texto después de cerrar las comillas (línea ${linea}).`,
         );
       }
     } else {
@@ -443,7 +507,7 @@ function columnaPorNombre(nombre: string): ColumnaDelCsv | undefined {
  * y volver a subir tal cual.
  */
 function sinApostrofoDeFormula(valor: string): string {
-  return /^'[=+\-@]/.test(valor) ? valor.slice(1) : valor;
+  return /^'[=+\-@\t\r]/.test(valor) ? valor.slice(1) : valor;
 }
 
 /* ─── La revisión de la carga ─────────────────────────────────────────────── */
@@ -489,6 +553,15 @@ export function revisarCarga(
   }
 
   return filas.map((fila): FilaRevisada => {
+    if (fila.errorDeForma !== undefined) {
+      return {
+        numero: fila.numero,
+        campos: fila.campos,
+        lista: false,
+        motivo: 'INVALIDA',
+        errores: [fila.errorDeForma],
+      };
+    }
     const revision = revisarProducto(fila.campos);
     if (!revision.valido) {
       return { ...fila, lista: false, motivo: 'INVALIDA', errores: revision.errores };

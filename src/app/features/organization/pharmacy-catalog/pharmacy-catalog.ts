@@ -8,7 +8,7 @@ import {
   viewChild,
   type TemplateRef,
 } from '@angular/core';
-import { concatMap, from, map, of, catchError, type Subscription } from 'rxjs';
+import { EMPTY, concatMap, from, map, of, catchError, type Subscription } from 'rxjs';
 
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Badge } from '../../../shared/components/atoms/badge/badge';
@@ -48,6 +48,7 @@ import type { ViewState } from '../../../core/view-state/view-state.types';
 import {
   ArchivoInvalido,
   BYTES_MAXIMOS_DEL_ARCHIVO,
+  decodificarCsv,
   CAMPOS_VACIOS,
   COLUMNAS_DEL_CSV,
   FILAS_DE_EJEMPLO,
@@ -57,6 +58,7 @@ import {
   revisarCarga,
   revisarProducto,
   type CamposDelProducto,
+  type CodificacionDelCsv,
   type FilaRevisada,
 } from './catalogo.reglas';
 
@@ -154,6 +156,9 @@ interface FilaConProblema {
   templateUrl: './pharmacy-catalog.html',
   styleUrl: './pharmacy-catalog.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: {
+    '(window:beforeunload)': 'alCerrarLaPestana($event)',
+  },
 })
 export class PharmacyCatalog {
   private readonly pharmacy = inject(PharmacyClient);
@@ -195,7 +200,13 @@ export class PharmacyCatalog {
   protected readonly busqueda = signal('');
   protected readonly pagina = signal(1);
   protected readonly porPagina = signal(10);
-  protected readonly retirando = signal<string | null>(null);
+  /** Los productos con un retiro en vuelo: pueden ser varios a la vez. */
+  protected readonly retirando = signal<ReadonlySet<string>>(new Set());
+  private listado: Subscription | null = null;
+  /** Número de la última consulta: una respuesta vieja no pisa a la nueva. */
+  private consulta = 0;
+
+  protected readonly hayListado = computed(() => this.productos().status === 'ready');
 
   protected readonly totalDeProductos = computed(() => dataOf(this.productos())?.length ?? 0);
 
@@ -266,11 +277,27 @@ export class PharmacyCatalog {
   protected readonly revisadas = signal<readonly FilaRevisada[]>([]);
   protected readonly resultados = signal<readonly ResultadoDeFila[]>([]);
   protected readonly detenido = signal(false);
+  protected readonly deteniendo = signal(false);
+  protected readonly publicando = signal(false);
+  protected readonly codificacion = signal<CodificacionDelCsv>('utf-8');
+  /** Un error que no es de la fila (permiso, red, servidor) y cortó la carga. */
+  protected readonly fallaGeneral = signal<string | null>(null);
   private publicacion: Subscription | null = null;
+  /**
+   * Pedido de detenerse. Se mira **entre** filas: la que está en vuelo termina
+   * y se cuenta, porque cortarla a mitad deja una fila que quizá el servidor
+   * guardó y que la pantalla no mostraría en ningún lado.
+   */
+  private detenerSolicitado = false;
+  private detenidoPorLaPersona = false;
+  private destruido = false;
 
   protected readonly listas = computed(() =>
     this.revisadas().flatMap((fila) => (fila.lista ? [fila] : [])),
   );
+
+  /** Las primeras filas listas, para ver antes de publicar que se leyeron bien. */
+  protected readonly muestra = computed(() => this.listas().slice(0, 5));
 
   protected readonly conProblemas = computed<ViewState<readonly FilaConProblema[]>>(() => {
     const filas = this.revisadas().flatMap((fila) =>
@@ -321,14 +348,14 @@ export class PharmacyCatalog {
     viewChild.required<TemplateRef<{ $implicit: ResultadoDeFila }>>('celdaResultado');
 
   protected readonly columnasDeProblemas = computed<readonly ColumnDef<FilaConProblema>[]>(() => [
-    { key: 'fila', header: 'Fila', priority: 1, cell: this.celdaFila() },
+    { key: 'fila', header: 'Línea', priority: 1, cell: this.celdaFila() },
     { key: 'codigo', header: 'Código', priority: 2 },
     { key: 'nombre', header: 'Producto', priority: 3 },
     { key: 'problema', header: 'Qué corregir', priority: 1, cell: this.celdaProblema() },
   ]);
 
   protected readonly columnasDeResultado = computed<readonly ColumnDef<ResultadoDeFila>[]>(() => [
-    { key: 'numero', header: 'Fila', priority: 1 },
+    { key: 'numero', header: 'Línea', priority: 1 },
     { key: 'codigo', header: 'Código', priority: 2 },
     { key: 'nombre', header: 'Producto', priority: 3 },
     { key: 'mensaje', header: 'Respuesta de la API', priority: 1, cell: this.celdaResultado() },
@@ -339,7 +366,20 @@ export class PharmacyCatalog {
 
   constructor() {
     this.cargarFarmacias();
-    this.destroyRef.onDestroy(() => this.publicacion?.unsubscribe());
+    this.destroyRef.onDestroy(() => {
+      this.destruido = true;
+      this.listado?.unsubscribe();
+      // Salir de la pantalla no corta una fila a mitad: la carga se detiene
+      // entre filas y, al terminar, un aviso dice cuántas se publicaron.
+      this.detenerSolicitado = true;
+    });
+  }
+
+  /** Cerrar o recargar la pestaña con una carga en curso pide confirmación. */
+  protected alCerrarLaPestana(evento: BeforeUnloadEvent): void {
+    if (this.publicando()) {
+      evento.preventDefault();
+    }
   }
 
   /* ─── Carga ───────────────────────────────────────────────────────────── */
@@ -374,7 +414,8 @@ export class PharmacyCatalog {
   }
 
   protected elegirFarmacia(id: string | null): void {
-    if (id === this.farmaciaElegida()) {
+    // Con una carga en curso el selector está deshabilitado; esto es la red.
+    if (id === this.farmaciaElegida() || this.publicando()) {
       return;
     }
     this.farmaciaElegida.set(id);
@@ -387,23 +428,31 @@ export class PharmacyCatalog {
     }
   }
 
-  protected recargarProductos(): void {
+  /**
+   * Relee el catálogo. Cada consulta cancela la anterior y lleva su número:
+   * con la búsqueda, «amox» puede volver después de «amoxi», y sin esto la
+   * lista mostraría lo que el campo ya no dice.
+   */
+  protected recargarProductos(conservarPagina = false): void {
     const pharmacyId = this.farmaciaElegida();
     if (pharmacyId === null) {
       return;
     }
     const busqueda = this.busqueda().trim();
+    const consulta = ++this.consulta;
+    this.listado?.unsubscribe();
+    this.truncado.set(false);
     this.productos.set(loading());
-    this.pharmacy
+    this.listado = this.pharmacy
       .searchProducts({ pharmacyId, search: busqueda, limit: TOPE_DEL_LISTADO })
       .subscribe({
         next: (pagina) => {
-          // La respuesta de otra farmacia no pisa a la elegida después.
-          if (this.farmaciaElegida() !== pharmacyId) {
+          if (consulta !== this.consulta) {
             return;
           }
           this.truncado.set(pagina.truncated);
-          this.pagina.set(1);
+          const paginas = Math.max(1, Math.ceil(pagina.items.length / this.porPagina()));
+          this.pagina.set(conservarPagina ? Math.min(this.pagina(), paginas) : 1);
           this.productos.set(
             pagina.items.length > 0
               ? ready(pagina.items)
@@ -415,8 +464,12 @@ export class PharmacyCatalog {
                 : empty({ label: 'Probá con otra palabra' }, `Nada coincide con «${busqueda}».`),
           );
         },
-        error: (error: unknown) =>
-          this.productos.set(errorToViewState<readonly PharmacyProduct[]>(error)),
+        error: (error: unknown) => {
+          if (consulta !== this.consulta) {
+            return;
+          }
+          this.productos.set(errorToViewState<readonly PharmacyProduct[]>(error));
+        },
       });
   }
 
@@ -442,24 +495,39 @@ export class PharmacyCatalog {
       title: '¿Retirar este producto del catálogo?',
       message:
         `«${nombreVisible(producto)}» (${producto.productCode}) deja de publicarse y sus precios ` +
-        'vigentes quedan reemplazados. Los pedidos ya hechos no cambian.',
+        'vigentes quedan reemplazados. Los pedidos ya hechos no cambian. El código queda ' +
+        'reservado: no se puede volver a usar para otro producto.',
       confirmLabel: 'Retirar',
       destructive: true,
     });
     if (!confirmado) {
       return;
     }
-    this.retirando.set(producto.id);
+    this.marcarRetiro(producto.id, true);
     this.pharmacy.retireProduct(pharmacyId, producto.id).subscribe({
       next: () => {
-        this.retirando.set(null);
+        this.marcarRetiro(producto.id, false);
         this.toasts.success(`«${nombreVisible(producto)}» ya no se publica.`);
-        this.recargarProductos();
+        this.recargarProductos(true);
       },
       error: (error: unknown) => {
-        this.retirando.set(null);
+        this.marcarRetiro(producto.id, false);
         this.toasts.error(mensajeDeError(error, 'No se pudo retirar el producto.'));
+        // Un 412 dice que ya estaba retirado: la lista que se ve está vieja.
+        this.recargarProductos(true);
       },
+    });
+  }
+
+  private marcarRetiro(productId: string, enVuelo: boolean): void {
+    this.retirando.update((actuales) => {
+      const siguientes = new Set(actuales);
+      if (enVuelo) {
+        siguientes.add(productId);
+      } else {
+        siguientes.delete(productId);
+      }
+      return siguientes;
     });
   }
 
@@ -532,9 +600,16 @@ export class PharmacyCatalog {
     this.analizando.set(true);
     this.nombreDelArchivo.set(archivo.name);
 
+    const bytes = await archivo.arrayBuffer();
+    if (this.farmaciaElegida() !== pharmacyId || this.archivos()[0] !== archivo) {
+      return;
+    }
+    const { texto, codificacion } = decodificarCsv(bytes);
+    this.codificacion.set(codificacion);
+
     let lectura: ReturnType<typeof leerCsv>;
     try {
-      lectura = leerCsv(await archivo.text());
+      lectura = leerCsv(texto);
     } catch (error: unknown) {
       this.analizando.set(false);
       this.errorDelArchivo.set(
@@ -569,37 +644,45 @@ export class PharmacyCatalog {
   protected publicarCarga(): void {
     const pharmacyId = this.farmaciaElegida();
     const filas = this.listas();
-    if (pharmacyId === null || filas.length === 0) {
+    // Un doble clic no lanza dos cargas.
+    if (pharmacyId === null || filas.length === 0 || this.publicacion !== null) {
       return;
     }
     this.resultados.set([]);
     this.detenido.set(false);
+    this.fallaGeneral.set(null);
+    this.detenerSolicitado = false;
+    this.detenidoPorLaPersona = false;
+    this.publicando.set(true);
     this.paso.set('publicando');
 
     this.publicacion = from(filas)
       .pipe(
-        // En serie: una fila por vez, y la siguiente sale cuando vuelve la anterior.
+        // En serie: una fila por vez, y la siguiente sale cuando vuelve la
+        // anterior. El pedido de detenerse se mira acá, antes de cada fila.
         concatMap((fila) =>
-          this.pharmacy.publishProduct(pharmacyId, fila.borrador).pipe(
-            map(
-              (): ResultadoDeFila => ({
-                numero: fila.numero,
-                codigo: fila.borrador.productCode,
-                nombre: nombreDelBorrador(fila.borrador),
-                publicado: true,
-                mensaje: 'Publicado',
-              }),
-            ),
-            catchError((error: unknown) =>
-              of<ResultadoDeFila>({
-                numero: fila.numero,
-                codigo: fila.borrador.productCode,
-                nombre: nombreDelBorrador(fila.borrador),
-                publicado: false,
-                mensaje: mensajeDeError(error, 'La API rechazó la fila.'),
-              }),
-            ),
-          ),
+          this.detenerSolicitado
+            ? EMPTY
+            : this.pharmacy.publishProduct(pharmacyId, fila.borrador).pipe(
+                map(
+                  (): ResultadoDeFila => ({
+                    numero: fila.numero,
+                    codigo: fila.borrador.productCode,
+                    nombre: nombreDelBorrador(fila.borrador),
+                    publicado: true,
+                    mensaje: 'Publicado',
+                  }),
+                ),
+                catchError((error: unknown) =>
+                  of<ResultadoDeFila>({
+                    numero: fila.numero,
+                    codigo: fila.borrador.productCode,
+                    nombre: nombreDelBorrador(fila.borrador),
+                    publicado: false,
+                    mensaje: this.rechazoDeFila(error),
+                  }),
+                ),
+              ),
         ),
       )
       .subscribe({
@@ -608,16 +691,53 @@ export class PharmacyCatalog {
       });
   }
 
+  /**
+   * El mensaje de una fila rechazada y, si el error no es de la fila, el corte.
+   *
+   * Un 409 o un 422 son de **esa** fila: la siguiente puede andar. Un 403, un
+   * 412 de farmacia inactiva, la falta de red o un 5xx van a fallar igual en
+   * todas: seguir sería mandar 500 peticiones para leer 500 veces lo mismo.
+   */
+  private rechazoDeFila(error: unknown): string {
+    const estado = errorToViewState<never>(error);
+    const mensaje = mensajeDeError(error, 'La API rechazó la fila.');
+    const deLaFila =
+      estado.status === 'validation' &&
+      !estado.issues.some((issue) => issue.code === 'PRECONDITION_FAILED');
+    if (!deLaFila) {
+      this.detenerSolicitado = true;
+      this.fallaGeneral.set(mensaje);
+      return mensaje;
+    }
+    return estado.issues.some((issue) => issue.code === 'CONFLICT')
+      ? `${mensaje} Un código retirado también sigue reservado: usá otro.`
+      : mensaje;
+  }
+
   protected detenerCarga(): void {
-    this.publicacion?.unsubscribe();
-    this.detenido.set(true);
-    this.terminarCarga();
+    this.detenerSolicitado = true;
+    this.detenidoPorLaPersona = true;
+    this.deteniendo.set(true);
   }
 
   private terminarCarga(): void {
     this.publicacion = null;
+    this.publicando.set(false);
+    this.deteniendo.set(false);
+    const publicados = this.publicados().length;
+    if (this.destruido) {
+      // La persona se fue de la pantalla: lo que se alcanzó a publicar se dice
+      // igual, porque nadie va a ver el paso «Resultado».
+      if (publicados > 0) {
+        this.toasts.info(
+          `La importación se detuvo al salir: ${publicados} de ${this.listas().length} productos quedaron publicados.`,
+        );
+      }
+      return;
+    }
+    this.detenido.set(this.detenidoPorLaPersona);
     this.paso.set('resultado');
-    if (this.publicados().length > 0) {
+    if (publicados > 0) {
       this.busqueda.set('');
       this.recargarProductos();
     }
@@ -651,8 +771,12 @@ export class PharmacyCatalog {
   }
 
   protected reiniciarImportacion(): void {
-    this.publicacion?.unsubscribe();
-    this.publicacion = null;
+    // Con una carga en curso no se ofrece reiniciar; si igual llega acá, se
+    // detiene entre filas y el resultado queda a la vista.
+    if (this.publicacion !== null) {
+      this.detenerSolicitado = true;
+      return;
+    }
     this.paso.set('archivo');
     this.archivos.set([]);
     this.nombreDelArchivo.set('');
@@ -661,6 +785,8 @@ export class PharmacyCatalog {
     this.revisadas.set([]);
     this.resultados.set([]);
     this.detenido.set(false);
+    this.fallaGeneral.set(null);
+    this.codificacion.set('utf-8');
     this.analizando.set(false);
   }
 

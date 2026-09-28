@@ -56,6 +56,8 @@ interface Interno {
   alElegirArchivo: (archivos: readonly File[]) => Promise<void>;
   publicarCarga: () => void;
   alElegirAccion: (codigo: string, producto: PharmacyProduct) => Promise<void>;
+  buscar: (termino: string) => void;
+  detenerCarga: () => void;
 }
 
 describe('PharmacyCatalog', () => {
@@ -105,6 +107,21 @@ describe('PharmacyCatalog', () => {
     expect(texto()).toContain('Paracetamol Bagó');
     expect(texto()).toContain('PAR-500');
     expect(texto()).toContain('1 producto publicado');
+  });
+
+  it('una búsqueda vieja que vuelve tarde no pisa a la nueva', () => {
+    montar();
+
+    interno().buscar('amox');
+    interno().buscar('amoxi');
+    const pedidos = http.match((r) => r.url.endsWith('/pharmacy/products'));
+    expect(pedidos.map((p) => p.request.params.get('search'))).toEqual(['amox', 'amoxi']);
+    // La primera se canceló al salir la segunda.
+    expect(pedidos[0]!.cancelled).toBe(true);
+    pedidos[1]!.flush(pagina([producto({ id: 'p-9', productCode: 'AMOXI-1', brandName: 'Amoxi' })]));
+    fixture.detectChanges();
+
+    expect(texto()).toContain('AMOXI-1');
   });
 
   it('un catálogo vacío dice qué hacer', () => {
@@ -260,6 +277,60 @@ describe('PharmacyCatalog', () => {
       expect(resultado).toMatch(/1\s+producto publicado/);
       expect(resultado).toMatch(/1\s+rechazados por la API/);
       expect(texto()).toContain('Ya existe un producto con ese código');
+    });
+
+    it('un 403 no es de la fila: corta la carga en vez de mandar las demás', async () => {
+      montar();
+      await subir(CSV);
+
+      interno().publicarCarga();
+      http
+        .expectOne(`/pharmacies/${FARMACIA.id}/products`)
+        .flush(
+          { statusCode: 403, code: 'FORBIDDEN', message: 'Forbidden resource' },
+          { status: 403, statusText: 'Forbidden' },
+        );
+      fixture.detectChanges();
+
+      // La segunda fila lista no salió.
+      http.expectNone(`/pharmacies/${FARMACIA.id}/products`);
+      expect(raiz().querySelector('[data-testid="catalogo-falla-general"]')).not.toBeNull();
+    });
+
+    it('detener espera a que vuelva la fila en camino y no manda la siguiente', async () => {
+      montar();
+      await subir(CSV);
+
+      interno().publicarCarga();
+      const enCamino = http.expectOne(`/pharmacies/${FARMACIA.id}/products`);
+      interno().detenerCarga();
+      // La fila en vuelo no se cancela: puede haberse guardado en el servidor.
+      expect(enCamino.cancelled).toBe(false);
+      enCamino.flush({ id: 'n-1' }, { status: 201, statusText: 'Created' });
+
+      http.expectNone(`/pharmacies/${FARMACIA.id}/products`);
+      esperarListado([producto({}), producto({ id: 'n-1', productCode: 'A-1' })]);
+      const resultado = raiz().querySelector('[data-testid="catalogo-resultado"]')?.textContent ?? '';
+      expect(resultado).toMatch(/1\s+producto publicado/);
+      expect(texto()).toContain('Detuviste la carga');
+    });
+
+    it('un CSV guardado por Excel en Windows-1252 conserva las tildes', async () => {
+      montar();
+      interno().pestana.set(2);
+      fixture.detectChanges();
+      const bytes = new Uint8Array([
+        ...new TextEncoder().encode('codigo;marca\nB-1;C'),
+        0xe1,
+        ...new TextEncoder().encode('psulas\n'),
+      ]);
+
+      await interno().alElegirArchivo([new File([bytes], 'excel.csv', { type: 'text/csv' })]);
+      http.expectOne((r) => r.url.endsWith('/pharmacy/products')).flush(pagina([]));
+      fixture.detectChanges();
+
+      expect(raiz().querySelector('[data-testid="catalogo-codificacion"]')).not.toBeNull();
+      expect(raiz().querySelector('[data-testid="catalogo-muestra"]')?.textContent).toContain('Cápsulas');
     });
 
     it('rechaza el archivo entero si no trae la columna del código', async () => {

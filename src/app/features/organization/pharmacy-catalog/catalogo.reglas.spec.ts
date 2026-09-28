@@ -1,6 +1,7 @@
 import {
   ArchivoInvalido,
   CAMPOS_VACIOS,
+  decodificarCsv,
   FILAS_MAXIMAS_POR_CARGA,
   esGtinValido,
   leerCsv,
@@ -87,7 +88,7 @@ describe('leerCsv', () => {
 
     expect(lectura.filas).toEqual([
       {
-        numero: 1,
+        numero: 2,
         campos: campos({ codigo: 'A1', marca: 'Gel "Frío"', presentacion: 'Caja x 20, blíster' }),
       },
     ]);
@@ -127,11 +128,35 @@ describe('leerCsv', () => {
     ['codigo\n', 'ningún producto'],
     ['codigo,codigo\nA,B\n', 'mismo encabezado'],
     ['codigo,sku\nA,B\n', 'mismo dato'],
-    ['codigo,marca\nA1\n', 'columnas'],
     ['codigo,marca\nA1,"sin cerrar\n', 'comillas'],
   ])('rechaza el archivo entero: %j', (contenido, pista) => {
     expect(() => leerCsv(contenido)).toThrow(ArchivoInvalido);
     expect(() => leerCsv(contenido)).toThrow(new RegExp(pista));
+  });
+
+  it('numera cada fila con su línea del archivo, contando encabezado, blancos y saltos entre comillas', () => {
+    const lectura = leerCsv('codigo,marca\nA1,x\n\nA2,"dos\nlíneas"\nA3,y\n');
+
+    expect(lectura.filas.map((fila) => fila.numero)).toEqual([2, 4, 6]);
+  });
+
+  it('una fila con otra cantidad de columnas se rechaza sola, no el archivo', () => {
+    const lectura = leerCsv('codigo,marca\nA1\nA2,x\n');
+    const revisadas = revisarCarga(lectura.filas, new Set());
+
+    expect(revisadas.map((fila) => fila.lista)).toEqual([false, true]);
+    expect(revisadas[0]!.lista === false && revisadas[0]!.errores[0]).toMatch(/columnas/);
+  });
+
+  it('ignora las columnas vacías que Excel deja al final', () => {
+    const lectura = leerCsv('codigo;marca;;\nA1;x;;\n');
+
+    expect(lectura.filas[0]!.errorDeForma).toBeUndefined();
+    expect(lectura.filas[0]!.campos.marca).toBe('x');
+  });
+
+  it('deshace también el apóstrofo delante de un tabulador', () => {
+    expect(leerCsv("codigo,marca\nA1,'\tx\n").filas[0]!.campos.marca).toBe('\tx');
   });
 
   it(`corta en ${FILAS_MAXIMAS_POR_CARGA} filas`, () => {
@@ -167,5 +192,32 @@ describe('revisarCarga', () => {
     const revisadas = revisarCarga([fila(1, { codigo: 'A1' })], new Set());
 
     expect(revisadas[0]!.lista === false && revisadas[0]!.motivo).toBe('INVALIDA');
+  });
+});
+
+describe('decodificarCsv', () => {
+  it('lee UTF-8 tal cual', () => {
+    const bytes = new TextEncoder().encode('codigo,marca\nA1,Cápsulas ñandú\n');
+
+    expect(decodificarCsv(bytes)).toEqual({
+      texto: 'codigo,marca\nA1,Cápsulas ñandú\n',
+      codificacion: 'utf-8',
+    });
+  });
+
+  it('relee como Windows-1252 lo que guarda Excel en castellano, sin «�»', () => {
+    // «Cápsulas ñ» en Windows-1252: á = 0xE1, ñ = 0xF1.
+    const bytes = new Uint8Array([
+      ...new TextEncoder().encode('codigo,marca\nA1,C'),
+      0xe1,
+      ...new TextEncoder().encode('psulas '),
+      0xf1,
+      0x0a,
+    ]);
+
+    const { texto, codificacion } = decodificarCsv(bytes);
+    expect(codificacion).toBe('windows-1252');
+    expect(texto).toBe('codigo,marca\nA1,Cápsulas ñ\n');
+    expect(texto).not.toContain('\uFFFD');
   });
 });

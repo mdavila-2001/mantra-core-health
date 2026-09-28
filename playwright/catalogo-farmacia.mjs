@@ -151,7 +151,9 @@ async function main() {
     `IMP-${sufijo}-5;Gel Evidencia;;;Frasco 250 ml;no;1234567890123;9`,
   ].join('\r\n');
   const rutaCsv = `${SALIDA}/carga-de-prueba.csv`;
-  writeFileSync(rutaCsv, csv, 'utf8');
+  // Como lo guarda Excel en castellano: Windows-1252, no UTF-8 (latin1 cubre
+  // las tildes y la eñe de este archivo byte por byte).
+  writeFileSync(rutaCsv, Buffer.from(csv, 'latin1'));
 
   await pestana('Importación masiva').click();
   await capturar('05-importar-archivo');
@@ -159,6 +161,9 @@ async function main() {
   await pagina.getByTestId('catalogo-revision').waitFor({ timeout: 30_000 });
   const revision = await pagina.getByTestId('catalogo-revision').textContent();
   ok('la revisión separa 2 listas de 3 a corregir', /2\s+filas listas/.test(revision) && /3\s+filas a corregir/.test(revision), revision.replace(/\s+/g, ' ').trim());
+  ok('reconoce el archivo de Excel (Windows-1252)', await pagina.getByTestId('catalogo-codificacion').isVisible());
+  const muestra = await pagina.getByTestId('catalogo-muestra').textContent();
+  ok('las tildes llegan intactas a lo que se va a publicar', muestra.includes('cápsulas') && !muestra.includes('\uFFFD'), muestra.replace(/\s+/g, ' ').trim());
   ok('avisa la columna que ignora', (await pagina.textContent('body')).includes('stock: el catálogo todavía no guarda'));
   await capturar('06-importar-revision');
 

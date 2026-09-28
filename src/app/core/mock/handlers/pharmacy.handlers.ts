@@ -543,6 +543,23 @@ export function registrarFarmacia(router: MockRouter): void {
     if (productos.filtrar((p) => p.pharmacyId === pharmacyId && p.productCode === codigo).length > 0) {
       return conflict('Ya existe un producto con ese código en la farmacia', { productCode: codigo });
     }
+    // Los topes del DTO (`MaxLength`): el simulador no deja pasar lo que la
+    // API rechazaría, para que la maqueta no muestre un alta imposible.
+    const topes: readonly [keyof typeof datos, number][] = [
+      ['brandName', 300],
+      ['genericName', 300],
+      ['strengthText', 200],
+      ['packageSizeText', 200],
+    ];
+    const excedido = topes.find(([campo, tope]) => {
+      const valor = datos[campo];
+      return typeof valor === 'string' && valor.length > tope;
+    });
+    if (excedido !== undefined) {
+      return validation(`${excedido[0]} must be shorter than or equal to ${excedido[1]} characters`, [
+        { field: excedido[0], message: `No puede pasar de ${excedido[1]} caracteres.` },
+      ]);
+    }
     const nuevo = productos.agregar({
       id: nuevoId('pharmacy-product'),
       pharmacyId,

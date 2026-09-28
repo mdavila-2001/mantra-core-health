@@ -199,9 +199,10 @@ export class PharmacyClient {
 }
 
 /**
- * El alta sin sus opcionales vacíos: `forbidNonWhitelisted` acepta la clave
- * ausente pero no un `''` que choca con `IsString`/`MaxLength`, ni una lista
- * de identificadores vacía que no dice nada.
+ * El alta sin sus opcionales vacíos. `IsOptional` sólo salta `null` y
+ * `undefined`: un `''` pasa `IsString` y `MaxLength` y se **guarda** como
+ * marca o genérico vacío, que en el catálogo se lee como un producto sin
+ * nombre. Una lista de identificadores vacía tampoco dice nada.
  */
 function sinVacios(draft: PharmacyProductDraft): PharmacyProductDraft {
   const limpio: Record<string, unknown> = {};

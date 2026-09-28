@@ -11,6 +11,7 @@
           [options]="opcionesDeFarmacia()"
           [value]="farmaciaElegida()"
           (valueChange)="elegirFarmacia($event)"
+          [disabled]="publicando()"
           placeholder="Elegí tu farmacia"
         />
       </app-form-field>
@@ -23,18 +24,20 @@
         <!-- ─── Productos ─────────────────────────────────────────────── -->
         <app-tab label="Productos">
           <div class="catalogo__panel">
-            <div class="catalogo__resumen" data-testid="catalogo-resumen">
-              <p class="catalogo__cifra">
-                <strong>{{ totalDeProductos() }}</strong>
-                {{ totalDeProductos() === 1 ? 'producto publicado' : 'productos publicados' }}
-                @if (busqueda() !== '') {
-                  <span class="catalogo__secundario">que coinciden con «{{ busqueda() }}»</span>
+            @if (hayListado()) {
+              <div class="catalogo__resumen" data-testid="catalogo-resumen">
+                <p class="catalogo__cifra">
+                  <strong>{{ truncado() ? 'Más de ' + totalDeProductos() : totalDeProductos() }}</strong>
+                  {{ totalDeProductos() === 1 ? 'producto publicado' : 'productos publicados' }}
+                  @if (busqueda() !== '') {
+                    <span class="catalogo__secundario">que coinciden con «{{ busqueda() }}»</span>
+                  }
+                </p>
+                @if (conReceta() > 0) {
+                  <p class="catalogo__secundario">{{ conReceta() }} de venta bajo receta</p>
                 }
-              </p>
-              @if (conReceta() > 0) {
-                <p class="catalogo__secundario">{{ conReceta() }} de venta bajo receta</p>
-              }
-            </div>
+              </div>
+            }
 
             <div class="catalogo__barra">
               <app-search-field
@@ -45,10 +48,10 @@
                 (searched)="buscar($event)"
               />
               <div class="catalogo__acciones">
-                <button app-button variant="outline" type="button" (click)="irAPestana('importar')">
+                <button app-button variant="outline" type="button" (clicked)="irAPestana('importar')">
                   Importar CSV
                 </button>
-                <button app-button type="button" (click)="irAPestana('nuevo')">
+                <button app-button type="button" (clicked)="irAPestana('nuevo')">
                   Nuevo producto
                 </button>
               </div>
@@ -87,8 +90,9 @@
         <app-tab label="Nuevo producto">
           <form class="catalogo__panel" (submit)="$event.preventDefault(); guardarProducto()" novalidate>
             <p class="catalogo__secundario">
-              El producto se publica apenas lo guardás. El código es único dentro de tu catálogo
-              y no se puede cambiar después: si te equivocás, retiralo y cargalo de nuevo.
+              El producto se publica apenas lo guardás. Revisalo antes: por ahora no se puede
+              editar, y el código es único en tu catálogo y queda reservado aunque retires el
+              producto.
             </p>
 
             @if (erroresDelAlta().length > 0) {
@@ -187,7 +191,7 @@
             </fieldset>
 
             <div class="catalogo__pie">
-              <button app-button variant="ghost" type="button" (click)="limpiarFormulario()">
+              <button app-button variant="ghost" type="button" (clicked)="limpiarFormulario()">
                 Limpiar
               </button>
               <button
@@ -248,7 +252,7 @@
                         </div>
                       }
                     </dl>
-                    <button app-button variant="outline" type="button" (click)="descargarPlantilla()">
+                    <button app-button variant="outline" type="button" (clicked)="descargarPlantilla()">
                       Descargar plantilla
                     </button>
                   </aside>
@@ -267,6 +271,34 @@
                   </p>
                   <p class="catalogo__secundario">de {{ nombreDelArchivo() }}</p>
                 </div>
+
+                @if (codificacion() === 'windows-1252') {
+                  <app-alert tone="info" title="Leímos tu archivo como texto de Excel (Windows-1252)" data-testid="catalogo-codificacion">
+                    No venía en UTF-8. Revisá en la lista de abajo que las tildes y las eñes se
+                    vean bien antes de publicar.
+                  </app-alert>
+                }
+
+                @if (muestra().length > 0) {
+                  <section class="catalogo__muestra" aria-labelledby="catalogo-muestra">
+                    <h2 id="catalogo-muestra" class="catalogo__subtitulo">
+                      Así se van a publicar{{ listas().length > muestra().length ? ' (las primeras ' + muestra().length + ')' : '' }}
+                    </h2>
+                    <ul data-testid="catalogo-muestra">
+                      @for (fila of muestra(); track fila.numero) {
+                        <li>
+                          <code class="catalogo__codigo">{{ fila.borrador.productCode }}</code>
+                          {{ fila.borrador.brandName ?? fila.borrador.genericName }}
+                          @if (fila.borrador.strengthText || fila.borrador.packageSizeText) {
+                            <span class="catalogo__secundario catalogo__en-linea">
+                              {{ fila.borrador.strengthText }} {{ fila.borrador.packageSizeText }}
+                            </span>
+                          }
+                        </li>
+                      }
+                    </ul>
+                  </section>
+                }
 
                 @if (columnasIgnoradas().length > 0) {
                   <app-alert tone="info" title="Columnas que no se cargan">
@@ -291,11 +323,11 @@
                 }
 
                 <div class="catalogo__pie">
-                  <button app-button variant="ghost" type="button" (click)="reiniciarImportacion()">
+                  <button app-button variant="ghost" type="button" (clicked)="reiniciarImportacion()">
                     Elegir otro archivo
                   </button>
                   @if (cuantosConProblemas() > 0) {
-                    <button app-button variant="outline" type="button" (click)="descargarProblemas()">
+                    <button app-button variant="outline" type="button" (clicked)="descargarProblemas()">
                       Descargar filas a corregir
                     </button>
                   }
@@ -303,7 +335,7 @@
                     app-button
                     type="button"
                     [disabled]="listas().length === 0"
-                    (click)="publicarCarga()"
+                    (clicked)="publicarCarga()"
                     data-testid="catalogo-publicar-carga"
                   >
                     Publicar {{ listas().length }} {{ listas().length === 1 ? 'producto' : 'productos' }}
@@ -312,7 +344,7 @@
               }
 
               @case ('publicando') {
-                <div class="catalogo__progreso" role="status" aria-live="polite">
+                <div class="catalogo__progreso">
                   <p>
                     Publicando {{ resultados().length }} de {{ listas().length }}… No cierres esta
                     pestaña hasta que termine.
@@ -320,14 +352,21 @@
                   <app-progress [value]="avance()" label="Avance de la publicación" />
                 </div>
                 <div class="catalogo__pie">
-                  <button app-button variant="outline" type="button" (click)="detenerCarga()">
-                    Detener
+                  <button
+                    app-button
+                    variant="outline"
+                    type="button"
+                    [disabled]="deteniendo()"
+                    (clicked)="detenerCarga()"
+                    data-testid="catalogo-detener"
+                  >
+                    {{ deteniendo() ? 'Deteniendo después de esta fila…' : 'Detener' }}
                   </button>
                 </div>
               }
 
               @case ('resultado') {
-                <div class="catalogo__cifras" data-testid="catalogo-resultado">
+                <div class="catalogo__cifras" role="status" data-testid="catalogo-resultado">
                   <p>
                     <strong>{{ publicados().length }}</strong>
                     {{ publicados().length === 1 ? 'producto publicado' : 'productos publicados' }}
@@ -344,10 +383,18 @@
                   }
                 </div>
 
+                @if (fallaGeneral(); as falla) {
+                  <app-alert tone="error" title="La carga se cortó" data-testid="catalogo-falla-general">
+                    {{ falla }} No es un problema de una fila: las demás iban a fallar igual, así
+                    que no se enviaron. Resolvelo y subí el archivo de nuevo; lo ya publicado se va
+                    a marcar como repetido.
+                  </app-alert>
+                }
+
                 @if (detenido()) {
                   <app-alert tone="warning" title="Detuviste la carga">
-                    Se publicaron las filas que ya habían salido. Las que faltaban no se
-                    enviaron: subí el archivo de nuevo y las ya publicadas se van a marcar como
+                    La fila que estaba en camino terminó y se cuenta arriba; las que faltaban no
+                    se enviaron. Subí el archivo de nuevo y las ya publicadas se van a marcar como
                     repetidas.
                   </app-alert>
                 }
@@ -365,14 +412,14 @@
 
                 <div class="catalogo__pie">
                   @if (cuantosConProblemas() > 0 || resultados().length > publicados().length) {
-                    <button app-button variant="outline" type="button" (click)="descargarProblemas()">
+                    <button app-button variant="outline" type="button" (clicked)="descargarProblemas()">
                       Descargar filas a corregir
                     </button>
                   }
-                  <button app-button variant="ghost" type="button" (click)="reiniciarImportacion()">
+                  <button app-button variant="ghost" type="button" (clicked)="reiniciarImportacion()">
                     Importar otro archivo
                   </button>
-                  <button app-button type="button" (click)="irAlCatalogo()">Ver el catálogo</button>
+                  <button app-button type="button" (clicked)="irAlCatalogo()">Ver el catálogo</button>
                 </div>
               }
             }
@@ -411,7 +458,7 @@
 </ng-template>
 
 <ng-template #celdaAcciones let-producto>
-  @if (retirando() === producto.id) {
+  @if (retirando().has(producto.id)) {
     <span class="catalogo__secundario" role="status">Retirando…</span>
   } @else {
   <app-row-actions
