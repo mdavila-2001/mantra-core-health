@@ -147,6 +147,19 @@ export interface FacturacionVisible {
   readonly razonSocial: string;
 }
 
+/**
+ * Una aseguradora con la que trabaja el profesional, lista para pintar.
+ *
+ * La carga la aseguradora al sumarlo a su red, no el profesional: es de sólo
+ * lectura en la ficha y en el editor.
+ */
+export interface SeguroVisible {
+  readonly id: string;
+  readonly aseguradora: string;
+  /** La red o las redes donde figura, para el `title` del chip. */
+  readonly red: string;
+}
+
 /** El estado de habilitación, con su sello ya decidido. */
 export interface VerificacionVisible {
   readonly label: string;
@@ -194,6 +207,15 @@ export interface PerfilProfesionalVisible {
    * dato roto.
    */
   readonly sedes?: readonly SedeVisible[];
+  /**
+   * Con qué aseguradoras trabaja. Tres valores con tres significados:
+   *
+   * - ausente: esta ficha no lo pregunta (la de la Guía, los fixtures viejos),
+   *   y el renglón no se dibuja;
+   * - `null`: se preguntó y la lectura falló — no es «ninguna»;
+   * - vacío: se preguntó y ninguna aseguradora lo tiene en su red.
+   */
+  readonly seguros?: readonly SeguroVisible[] | null;
   /**
    * Los datos personales, **sólo en la ficha propia**.
    *

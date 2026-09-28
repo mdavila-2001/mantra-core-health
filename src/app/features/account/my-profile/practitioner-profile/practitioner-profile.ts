@@ -4,6 +4,8 @@ import { catchError, forkJoin, map, of, switchMap, type Observable } from 'rxjs'
 import { AuthService } from '../../../../core/auth/auth.service';
 import { CommunityClient } from '../../../../core/data-access/community/community.client';
 import { FilesClient } from '../../../../core/data-access/files/files.client';
+import { InsuranceClient } from '../../../../core/data-access/insurance/insurance.client';
+import type { PractitionerInsuranceNetwork } from '../../../../core/data-access/insurance/insurance.types';
 import { PracticeSitesClient } from '../../../../core/data-access/practice-sites/practice-sites.client';
 import type { PracticeSite } from '../../../../core/data-access/practice-sites/practice-sites.types';
 import { ProfilesClient } from '../../../../core/data-access/profiles/profiles.client';
@@ -41,6 +43,7 @@ import type {
   PerfilProfesionalVisible,
   PuntoDeSerie,
   SedeVisible,
+  SeguroVisible,
 } from './practitioner-profile-view/practitioner-profile-view.types';
 
 /** Lo que se muestra cuando el registro no trae ese dato. */
@@ -96,6 +99,8 @@ interface PerfilResuelto {
   readonly fotoUrl: string | null;
   /** Dónde atiende hoy (ALV-005). Vacío si no tiene sedes o si la lectura falló. */
   readonly sedes: readonly PracticeSite[];
+  /** Con qué aseguradoras trabaja; `null` si la lectura falló. */
+  readonly seguros: readonly PractitionerInsuranceNetwork[] | null;
 }
 
 /**
@@ -154,6 +159,7 @@ export class PractitionerProfile {
   private readonly terminology = inject(TerminologyClient);
   private readonly files = inject(FilesClient);
   private readonly sites = inject(PracticeSitesClient);
+  private readonly insurance = inject(InsuranceClient);
   private readonly auth = inject(AuthService);
   private readonly community = inject(CommunityClient);
   private readonly dialogs = inject(DialogService);
@@ -376,6 +382,10 @@ export class PractitionerProfile {
             // sección más de la ficha, no la ficha; si no se puede leer, la
             // sección no se dibuja y el resto sigue.
             sedes: this.sedesPropias(),
+            // Los seguros, con el mismo criterio, salvo en una cosa: el fallo
+            // queda como `null` y no como vacío, porque «ninguna aseguradora»
+            // dicho de quien trabaja con tres es un dato falso, no un hueco.
+            seguros: this.segurosPropios(),
           }),
         ),
       )
@@ -402,12 +412,30 @@ export class PractitionerProfile {
     );
   }
 
+  /**
+   * Con qué aseguradoras trabaja, o `null` si no se pudo saber.
+   *
+   * Sin perfil profesional en la sesión no hay a quién preguntarle, y eso es
+   * «no se pudo saber», no «ninguna».
+   */
+  private segurosPropios(): Observable<readonly PractitionerInsuranceNetwork[] | null> {
+    const profileId = this.auth.practitionerProfileId();
+    if (profileId === null) {
+      return of(null);
+    }
+    return this.insurance.listNetworksOfPractitioner(profileId).pipe(
+      map((pagina): readonly PractitionerInsuranceNetwork[] | null => pagina.items),
+      catchError(() => of(null)),
+    );
+  }
+
   private convertir(resuelto: PerfilResuelto): PerfilProfesionalVisible {
-    const { perfil, etiquetas, fotoUrl, sedes } = resuelto;
+    const { perfil, etiquetas, fotoUrl, sedes, seguros } = resuelto;
     const especialidades = this.especialidades(perfil, etiquetas);
     const afiliaciones = afiliacionesDe(perfil);
     return {
       sedes: sedes.map(sedeVisible),
+      seguros: seguros === null ? null : segurosVisibles(seguros),
       nombre: perfil.displayName || SIN_DATO,
       titulo: perfil.professionalTitle ?? '',
       especialidadPrincipal: especialidadPrincipal(especialidades),
@@ -806,6 +834,30 @@ function sedeVisible(sede: PracticeSite): SedeVisible {
         ? null
         : { lat: sede.latitude, lng: sede.longitude },
   };
+}
+
+/**
+ * Una fila por aseguradora, en orden alfabético.
+ *
+ * La API devuelve una fila por **red**, y una aseguradora puede tener al
+ * profesional en dos redes: sin juntarlas, la ficha diría dos veces el mismo
+ * seguro. Las redes quedan juntas en `red`.
+ */
+export function segurosVisibles(
+  redes: readonly PractitionerInsuranceNetwork[],
+): readonly SeguroVisible[] {
+  const porAseguradora = new Map<string, SeguroVisible>();
+  for (const red of redes) {
+    const previa = porAseguradora.get(red.carrierId);
+    porAseguradora.set(red.carrierId, {
+      id: red.carrierId,
+      aseguradora: red.carrierName,
+      red: previa ? `${previa.red} · ${red.networkName}` : red.networkName,
+    });
+  }
+  return [...porAseguradora.values()].sort((a, b) =>
+    a.aseguradora.localeCompare(b.aseguradora, 'es'),
+  );
 }
 
 /**
