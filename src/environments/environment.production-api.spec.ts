@@ -22,8 +22,12 @@ describe('environment.production-api', () => {
     expect(productionApi.campaignsDemo).toBe(false);
   });
 
-  it('producción (la maqueta) sigue con el mock y las demos como estaban', () => {
-    expect(produccion.mockBackend).toBe(true);
+  it('producción por defecto también trabaja contra el backend real', () => {
+    // `environment.ts` dejó de ser el default de la maqueta (2026-09-26,
+    // 9abfa65c): en esta línea todo entorno arranca apuntando a la API real
+    // salvo que algo explícito lo encienda. Ver `environment.real-api.spec.ts`,
+    // que fija lo mismo para `environment.development.ts`.
+    expect(produccion.mockBackend).toBe(false);
   });
 
   it('la raíz de la API y del triage se leen igual que en producción', () => {
