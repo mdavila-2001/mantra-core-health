@@ -120,6 +120,7 @@ describe('buildAccessTree', () => {
     ['administration/my-practice'],
     ['administration/pharmacy-orders'],
     ['administration/pharmacy-campaigns'],
+    ['administration/pharmacy-catalog'],
     ['administration/pharmacy-profile'],
   ])('no ofrece %s en «Tus accesos» aunque la sesión lo alcance', (ruta) => {
     expect(seccionesDe(['PRACTITIONER']).map((s) => s.path)).toContain(ruta);

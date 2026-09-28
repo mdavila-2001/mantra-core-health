@@ -1,0 +1,102 @@
+[
+  {
+    "nombre": "la tarjeta está centrada (≤ 2 px de diferencia)",
+    "cond": true,
+    "detalle": "izq 40 · der 40"
+  },
+  {
+    "nombre": "la tarjeta ocupa ≥ 85 % del área",
+    "cond": true,
+    "detalle": "1120 de 1200 px"
+  },
+  {
+    "nombre": "tres pestañas en una tarjeta",
+    "cond": true,
+    "detalle": "Productos · Nuevo producto · Importación masiva"
+  },
+  {
+    "nombre": "el catálogo de la farmacia se lista",
+    "cond": true,
+    "detalle": "10 filas en la primera página"
+  },
+  {
+    "nombre": "publicar en blanco muestra los errores y no guarda",
+    "cond": true,
+    "detalle": ""
+  },
+  {
+    "nombre": "después del alta vuelve a la pestaña Productos",
+    "cond": true,
+    "detalle": ""
+  },
+  {
+    "nombre": "el alta quedó persistida en el simulador",
+    "cond": true,
+    "detalle": "0 → 286"
+  },
+  {
+    "nombre": "tras recargar, el producto nuevo sigue en el catálogo",
+    "cond": true,
+    "detalle": ""
+  },
+  {
+    "nombre": "la revisión separa 2 listas de 3 a corregir",
+    "cond": true,
+    "detalle": "2 filas listas para publicar 3 filas a corregir de carga-de-prueba.csv"
+  },
+  {
+    "nombre": "avisa la columna que ignora",
+    "cond": true,
+    "detalle": ""
+  },
+  {
+    "nombre": "publica las 2 filas listas",
+    "cond": true,
+    "detalle": "2 productos publicados 0 rechazados por la API 3 no enviados por errores del archivo"
+  },
+  {
+    "nombre": "la importación quedó persistida",
+    "cond": true,
+    "detalle": ""
+  },
+  {
+    "nombre": "tras recargar, están los importados y no los rechazados",
+    "cond": true,
+    "detalle": ""
+  },
+  {
+    "nombre": "el retiro quedó persistido como borrado lógico",
+    "cond": true,
+    "detalle": ""
+  },
+  {
+    "nombre": "tras recargar, el retirado ya no se lista",
+    "cond": true,
+    "detalle": ""
+  },
+  {
+    "nombre": "390px sin desborde horizontal",
+    "cond": true,
+    "detalle": "0px"
+  },
+  {
+    "nombre": "768px sin desborde horizontal",
+    "cond": true,
+    "detalle": "0px"
+  },
+  {
+    "nombre": "1440px sin desborde horizontal",
+    "cond": true,
+    "detalle": "0px"
+  },
+  {
+    "nombre": "sin errores de página",
+    "cond": true,
+    "detalle": ""
+  },
+  {
+    "nombre": "el simulador atendió todo (sin «sin manejador»)",
+    "cond": true,
+    "detalle": ""
+  }
+]

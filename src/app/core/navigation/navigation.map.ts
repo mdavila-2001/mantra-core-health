@@ -1577,6 +1577,29 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M51 promotions',
   },
   {
+    // El catálogo de la farmacia: la empresa sube sus productos, uno por uno o
+    // de a cientos con un CSV, y retira los que ya no vende. Mismo criterio de
+    // acceso que sus hermanas: la membresía manda (claim `tenants`), no un rol
+    // del token. Quien de verdad autoriza el alta es la API (`@Roles` en
+    // `pharmacy.controller.ts`); el menú sólo no ofrece puertas ajenas.
+    path: 'administration/pharmacy-catalog',
+    // Aseguradora: el mostrador de una farmacia no es de una organización
+    // PAYER. Ver la nota completa en `directories`.
+    hiddenForTenantTypes: ['PAYER'],
+    roles: [ANY_ROLE],
+    // §4.H · fuera del menú del médico, como la bandeja y las promociones.
+    fueraDelMenuPara: ['PRACTITIONER'],
+    // El paciente compra del catálogo, no lo administra.
+    hiddenFor: ['PATIENT'],
+    label: 'Catálogo de productos',
+    group: 'Administración',
+    icon: 'package',
+    requiresTenant: true,
+    availability: 'disponible',
+    summary: 'Los productos que vende tu farmacia: altas, carga masiva por CSV y retiros.',
+    module: 'M24 pharmacy',
+  },
+  {
     // La ficha legal de la farmacia: lo que la empresa es en los papeles —sus
     // datos de registro, su carpeta de documentos y quién responde por ella—.
     // No es la bandeja ni las promociones: es la farmacia mirándose a sí misma.
