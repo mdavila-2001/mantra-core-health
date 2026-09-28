@@ -141,6 +141,8 @@ export interface SimulatedCharge {
   readonly issuerId: string;
   readonly patientProfileId: string;
   readonly patientName: string;
+  /** Quien atendió, en los cobros de consulta; `null` en farmacia. Acota lo que ve un profesional. */
+  readonly practitionerProfileId: string | null;
   readonly description: string;
   readonly lines: readonly ChargeLine[];
   readonly total: string;

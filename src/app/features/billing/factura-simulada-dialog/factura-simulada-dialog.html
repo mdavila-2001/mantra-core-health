@@ -23,7 +23,7 @@
         <dl class="factura__datos">
           <div>
             <dt>Emisor</dt>
-            <dd>{{ f.issuer.legalName }} · NIT {{ f.issuer.nit }}</dd>
+            <dd>{{ f.issuer.legalName }}<br />NIT {{ f.issuer.nit }}</dd>
           </div>
           <div>
             <dt>Comprador</dt>
@@ -35,7 +35,7 @@
           </div>
           <div>
             <dt>Fecha de emisión</dt>
-            <dd>{{ f.issuedAt }}</dd>
+            <dd>{{ fechaYHora(f.issuedAt) }}</dd>
           </div>
           <div class="factura__dato-ancho">
             <dt>CUF (SIMULADO)</dt>
@@ -128,7 +128,7 @@
 
   <ng-container dialog-actions>
     @if (factura(); as f) {
-      <button app-button variant="secondary" (clicked)="descargarPdf(f)">Descargar PDF (SIMULADO)</button>
+      <button app-button variant="outline" (clicked)="descargarPdf(f)">Descargar PDF (SIMULADO)</button>
       <button app-button variant="outline" (clicked)="descargarXml(f)">Descargar XML (SIMULADO)</button>
     } @else if (!cargandoFactura()) {
       <button

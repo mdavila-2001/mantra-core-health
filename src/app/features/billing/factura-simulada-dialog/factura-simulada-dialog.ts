@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, input, output, signal, type OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -19,7 +20,7 @@ import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 import { ContentDialog } from '../../../shared/components/organisms/content-dialog/content-dialog';
 import { ROTULO_DE_ESTADO, TONO_DE_ESTADO } from '../billing-summary';
-import { bs, mensajeDeError, tieneFacturaVigente } from '../cobros-en-pantalla';
+import { bs, fechaYHora, mensajeDeError, sinMarcaDeCatalogo, tieneFacturaVigente } from '../cobros-en-pantalla';
 import { montoLiteral } from '../monto-literal';
 import { descargarRepresentacionGrafica, descargarXml } from '../representacion-grafica';
 
@@ -62,8 +63,8 @@ export class FacturaSimuladaDialog implements OnInit {
 
   /** La factura quedó emitida (validada, observada o rechazada): el padre relee. */
   readonly emitida = output<SimulatedInvoice>();
-  /** Se registró el pago aunque la factura haya fallado: el padre también relee. */
-  readonly pagado = output<SimulatedCharge>();
+  /** Se registró el pago (o ya estaba) aunque la factura falle: el padre también relee. */
+  readonly pagado = output<void>();
   readonly cerrado = output<void>();
 
   protected readonly factura = signal<SimulatedInvoice | null>(null);
@@ -76,6 +77,7 @@ export class FacturaSimuladaDialog implements OnInit {
   protected readonly pideMedioDePago = computed(() => this.cobro().payment === null && !this.pagoRegistrado());
   protected readonly literal = computed(() => montoLiteral(this.cobro().total));
   protected readonly bs = bs;
+  protected readonly fechaYHora = fechaYHora;
   protected readonly rotuloDeEstado = ROTULO_DE_ESTADO;
   protected readonly tonoDeEstado = TONO_DE_ESTADO;
   protected readonly notasDelPlan = computed(
@@ -83,10 +85,10 @@ export class FacturaSimuladaDialog implements OnInit {
   );
 
   protected readonly opcionesDeMetodo = computed(() =>
-    this.catalogos().paymentMethods.map((m) => ({ value: m.codigo, label: m.descripcion })),
+    this.catalogos().paymentMethods.map((m) => ({ value: m.codigo, label: sinMarcaDeCatalogo(m.descripcion) })),
   );
   protected readonly opcionesDeDocumento = computed(() =>
-    this.catalogos().identityDocumentTypes.map((m) => ({ value: m.codigo, label: m.descripcion })),
+    this.catalogos().identityDocumentTypes.map((m) => ({ value: m.codigo, label: sinMarcaDeCatalogo(m.descripcion) })),
   );
 
   protected readonly formulario = new FormGroup({
@@ -160,7 +162,7 @@ export class FacturaSimuladaDialog implements OnInit {
         switchMap((cobroPagado) => {
           if (cobroPagado !== null) {
             this.pagoRegistrado.set(true);
-            this.pagado.emit(cobroPagado as SimulatedCharge);
+            this.pagado.emit();
           }
           return this.client.issueInvoice(id, entrada);
         }),
@@ -180,6 +182,14 @@ export class FacturaSimuladaDialog implements OnInit {
         },
         error: (e: unknown) => {
           this.enviando.set(false);
+          // El cobro ya estaba pagado (lo pagó otra persona, o el dato era
+          // viejo): el reintento sólo tiene que facturar, no volver a cobrar.
+          if (!this.pagoRegistrado() && yaEstabaPagado(e)) {
+            this.pagoRegistrado.set(true);
+            this.pagado.emit();
+            this.error.set('El cobro ya estaba pagado. Confirmá de nuevo para emitir la factura.');
+            return;
+          }
           this.error.set(mensajeDeError(e, 'No se pudo emitir la factura en el simulador.'));
         },
       });
@@ -192,4 +202,13 @@ export class FacturaSimuladaDialog implements OnInit {
   protected descargarXml(factura: SimulatedInvoice): void {
     descargarXml(factura);
   }
+}
+
+/** 409 con `reason: ALREADY_PAID`: el pago que se quería registrar ya existía. */
+function yaEstabaPagado(error: unknown): boolean {
+  if (!(error instanceof HttpErrorResponse) || error.status !== 409) return false;
+  const cuerpo: unknown = error.error;
+  if (typeof cuerpo !== 'object' || cuerpo === null) return false;
+  const detalles = (cuerpo as { details?: { reason?: unknown } }).details;
+  return detalles?.reason === 'ALREADY_PAID';
 }

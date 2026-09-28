@@ -27,8 +27,8 @@ import type {
   SuggestedBuyer,
 } from '../../data-access/billing-simulated/billing-simulated.types';
 import type { SimulatedSalesNote } from '../../data-access/billing-simulated/billing-simulated.types';
-import { reservas, type ReservaSimulada } from '../fixtures/agenda';
-import { PACIENTE, pacientePorId } from '../fixtures/personas';
+import { RECURSO_CONSULTORIO_MEDICA, recursos, reservas, type ReservaSimulada } from '../fixtures/agenda';
+import { MEDICA, PACIENTE, pacientePorId } from '../fixtures/personas';
 import { renglonesDePedidoSimulado } from '../handlers/pharmacy.handlers';
 import { uuid } from '../mock-store';
 import { CATALOGOS_SIMULADOS } from '../siat-sim/catalogos-simulados';
@@ -169,6 +169,16 @@ function notaDeVenta(semilla: string, numero: number, instanceId: string, method
   };
 }
 
+/**
+ * Quien atendió la reserva: el profesional al que apunta su agenda. El
+ * consultorio de la médica es una agenda de sala, así que se resuelve a ella.
+ */
+function profesionalDe(r: ReservaSimulada): string | null {
+  const recurso = recursos.get(r.resourceId);
+  if (recurso?.resourceRefType === 'health_practitioner_profiles') return recurso.resourceRefId;
+  return r.resourceId === RECURSO_CONSULTORIO_MEDICA ? MEDICA.id : null;
+}
+
 function cobrosDeConsultas(): CobroInicial[] {
   // Mismo criterio y mismos montos que `paid-consultations` (finance.handlers.ts).
   const pagadas = reservas.filtrar((r) => r.paymentState?.state === 'PAID').slice(0, 8);
@@ -188,6 +198,7 @@ function cobrosDeConsultas(): CobroInicial[] {
       issuerId: EMISOR_CONSULTORIO.issuer.id,
       patientProfileId: r.patientProfileId,
       patientName: r.patientName,
+      practitionerProfileId: profesionalDe(r),
       description: `Consulta médica · ${fecha}`,
       lines: [renglonDeConsulta(monto, fecha)],
       createdAt: r.startAt,
@@ -230,14 +241,23 @@ function cobrosDeConsultas(): CobroInicial[] {
     };
   };
 
-  // La paciente de la demo tiene además una consulta suelta pagada y sin
-  // facturar: así «Pagos» muestra los dos caminos —la tabla del plan y el modal
-  // de la factura— en la misma consulta.
   const usadas = new Set(pagadas.map((r) => r.id));
-  const sueltaDeLaDemo = reservas
-    .filtrar((r) => r.patientProfileId === PACIENTE.id && r.paymentState?.state === 'PAID' && !usadas.has(r.id) && !reconsultaDe.has(r.id))
-    .sort((a, b) => b.startAt.localeCompare(a.startAt))
-    .slice(0, 1);
+  // Toda consulta atendida con su reconsulta ya agendada es un servicio con
+  // plan, esté o no entre las que `paid-consultations` da por pagadas: las
+  // reservas se generan relativas a hoy, y atarlo a esa lista hacía que el
+  // plan desapareciera con el correr de los días.
+  const origenesFuera = reservas.filtrar(
+    (r) => reconsultaDe.has(r.id) && !usadas.has(r.id) && r.paymentState !== null,
+  );
+
+  // La paciente de la demo tiene además un servicio de una sola instancia sin
+  // cobrar —el electrocardiograma que se le hizo en su última consulta con la
+  // médica de la demo, que es quien abre la consulta—: así «Pagos» muestra los
+  // dos caminos juntos, la tabla del plan y el modal que cobra y factura.
+  const ultimaDeLaDemo = reservas
+    .filtrar((r) => r.patientProfileId === PACIENTE.id && r.paymentState !== null && profesionalDe(r) === MEDICA.id)
+    .sort((a, b) => b.startAt.localeCompare(a.startAt))[0];
+  const ecgDeLaDemo = ultimaDeLaDemo === undefined ? [] : [electrocardiograma(ultimaDeLaDemo)];
 
   const parciales = reservas
     .filtrar((r) => r.paymentState?.state === 'PARTIALLY_PAID' && !reconsultaDe.has(r.id))
@@ -252,10 +272,32 @@ function cobrosDeConsultas(): CobroInicial[] {
       if (reconsultaDe.has(r.id)) return conPlan(r, monto, 0);
       return cobro(r, monto, pago(`consulta-${r.id}`, i % 2 === 0 ? 1 : 2, monto, r.startAt));
     }),
-    ...sueltaDeLaDemo.map((r) => cobro(r, '250.00', pago(`consulta-${r.id}`, 2, '250.00', r.endAt))),
+    ...origenesFuera.map((r) => conPlan(r, '250.00', r.paymentState?.state === 'PARTIALLY_PAID' ? 1 : 0)),
+    ...ecgDeLaDemo,
     ...parciales.map((r, i) => conPlan(r, '250.00', i + 1)),
     ...[...pendientes, ...enAtencion].map((r) => cobro(r, '250.00', null)),
   ];
+
+  /** El electrocardiograma (`ECG` del catálogo, Bs 120) hecho en esa consulta, todavía sin cobrar. */
+  function electrocardiograma(r: ReservaSimulada): CobroInicial {
+    const fecha = r.startAt.slice(0, 10);
+    return {
+      ...cobro(r, '120.00', null),
+      id: uuid(`cobro-ecg-${r.id}`),
+      description: `Electrocardiograma · ${fecha}`,
+      lines: [
+        {
+          productCode: 'ECG',
+          description: `Electrocardiograma de 12 derivaciones · ${fecha}`,
+          quantity: '1',
+          unitOfMeasure: UNIDAD_SERVICIO,
+          unitPrice: '120.00',
+          discount: null,
+          subtotal: subtotalDeRenglon('1', '120.00', null),
+        },
+      ],
+    };
+  }
 }
 
 /** Pedidos pagados en T-E4 (minutos entre envío y pago) y pendientes de pago. */

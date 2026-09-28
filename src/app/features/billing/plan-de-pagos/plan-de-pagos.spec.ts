@@ -6,6 +6,7 @@ import { API_BASE_URL } from '../../../core/data-access/api';
 import type { SimulatedCharge } from '../../../core/data-access/billing-simulated/billing-simulated.types';
 import type { FacturacionSimulada } from '../../../core/mock/billing-sim/facturacion-simulada';
 import { motorDePrueba } from '../billing.spec-fixtures';
+import { bs } from '../cobros-en-pantalla';
 import { PlanDePagos } from './plan-de-pagos';
 
 /**
@@ -74,7 +75,7 @@ describe('PlanDePagos', () => {
     const texto = el('plan-tabla')!.textContent!;
     for (const instancia of cobro.plan!.instances) expect(texto).toContain(instancia.label);
     expect(texto).toContain(cobro.plan!.instances[0]!.salesNotes[0]!.number);
-    expect(el('plan-saldo')?.textContent).not.toContain('Bs 0,00');
+    expect(el('plan-saldo')?.textContent?.trim()).not.toBe(bs('0.00'));
     // La consulta pagada no ofrece otro pago; las reconsultas, sí.
     expect(botonDePago('Consulta inicial')).toBeNull();
     expect(botonDePago('Reconsulta 1')).not.toBeNull();
@@ -113,6 +114,14 @@ describe('PlanDePagos', () => {
 
     http.expectNone((r) => r.url.includes('/instances/'));
     expect(el('plan-formulario-de-pago')!.textContent).toContain('No puede superar el saldo');
+
+    // Cero tampoco sale, y lo dice; el aviso anterior se borra al escribir.
+    escribirMonto('0.00');
+    expect(el('plan-formulario-de-pago')!.textContent).not.toContain('No puede superar el saldo');
+    el('plan-confirmar-pago')!.click();
+    fixture.detectChanges();
+    http.expectNone((r) => r.url.includes('/instances/'));
+    expect(el('plan-formulario-de-pago')!.textContent).toContain('Tiene que ser mayor que cero');
   });
 
   it('con saldo no ofrece la factura; saldado, sí, y la pide al padre', () => {

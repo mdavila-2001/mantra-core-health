@@ -102,6 +102,11 @@ export class PlanDePagos {
 
   /** La instancia cuyo pago se está cargando, o `null` con el formulario cerrado. */
   protected readonly pagando = signal<SimulatedPlanInstance | null>(null);
+  /**
+   * La última nota emitida, dicha en el propio plan: el aviso flotante queda
+   * debajo del fondo del modal (capa superior del `<dialog>`) y no se lee.
+   */
+  protected readonly ultimaNota = signal<string | null>(null);
   protected readonly enviando = signal(false);
   protected readonly error = signal<string | null>(null);
 
@@ -122,9 +127,9 @@ export class PlanDePagos {
 
   protected readonly columnas = computed<readonly ColumnDef<SimulatedPlanInstance>[]>(() => [
     { key: 'item', header: 'Ítem', priority: 1, cell: this.itemCell() },
-    // En el teléfono los importes se pliegan al detalle de la fila y viajan en
-    // la primera celda («Pagado X de Y»): con la acción fija al borde, más de
-    // dos columnas no entran en un modal de 340 px.
+    // Con poca caja (`fitContainer`: teléfono, o el modal a 1024 px) los
+    // importes se pliegan al detalle de la fila y viajan en la primera celda
+    // («Pagado X de Y»): con la acción fija al borde no entra más.
     { key: 'expected', header: 'Monto a cobrar', priority: 3, align: 'end', cell: this.esperadoCell() },
     { key: 'paid', header: 'Monto pagado', priority: 3, align: 'end', cell: this.pagadoCell() },
     { key: 'receipt', header: 'Nota de venta', priority: 3, cell: this.comprobanteCell() },
@@ -134,30 +139,58 @@ export class PlanDePagos {
   protected readonly porId = (fila: SimulatedPlanInstance): string => fila.id;
   protected readonly nombreDeFila = (fila: SimulatedPlanInstance): string => fila.label;
 
-  /** Si el monto escrito supera el saldo de la instancia: se dice antes de enviarlo. */
-  protected readonly excede = signal(false);
+  /**
+   * Lo que está mal en el monto, dicho antes de enviarlo: más que el saldo, o
+   * cero. Se borra al volver a escribir.
+   */
+  protected readonly errorDeMonto = signal<string | null>(null);
+
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+  private readonly avisoDeNota = viewChild<ElementRef<HTMLElement>>('avisoDeNota');
+
+  constructor() {
+    this.formulario.controls.amount.valueChanges
+      .pipe(takeUntilDestroyed())
+      .subscribe(() => this.errorDeMonto.set(null));
+  }
 
   protected abrirPago(instancia: SimulatedPlanInstance): void {
     this.error.set(null);
-    this.excede.set(false);
+    this.ultimaNota.set(null);
     this.pagando.set(instancia);
     this.formulario.reset({ methodCode: this.metodos()[0]?.value ?? null, amount: instancia.balance });
+    this.errorDeMonto.set(null);
     // El formulario es un `@if`: el título existe después del render.
     afterNextRender(() => this.tituloDelPago()?.nativeElement.focus(), { injector: this.injector });
   }
 
   protected cancelarPago(): void {
+    const instancia = this.pagando();
     this.pagando.set(null);
     this.error.set(null);
+    // El foco vuelve al «Registrar pago» de la fila que abrió el formulario.
+    afterNextRender(
+      () => {
+        const boton = Array.from(this.host.nativeElement.querySelectorAll<HTMLElement>('[data-instancia-id]')).find(
+          (b) => b.dataset['instanciaId'] === instancia?.id,
+        );
+        boton?.focus();
+      },
+      { injector: this.injector },
+    );
   }
 
   protected registrarPago(): void {
     const instancia = this.pagando();
     if (instancia === null) return;
     const { methodCode, amount } = this.formulario.getRawValue();
-    const excede = DECIMAL.test(amount.trim()) && centavos(amount) > centavos(instancia.balance);
-    this.excede.set(excede);
-    if (this.formulario.invalid || methodCode === null || excede || centavos(amount) <= 0) {
+    const valido = DECIMAL.test(amount.trim());
+    if (valido && centavos(amount) > centavos(instancia.balance)) {
+      this.errorDeMonto.set('No puede superar el saldo de la instancia.');
+    } else if (valido && centavos(amount) <= 0) {
+      this.errorDeMonto.set('Tiene que ser mayor que cero.');
+    }
+    if (this.formulario.invalid || methodCode === null || this.errorDeMonto() !== null) {
       this.formulario.markAllAsTouched();
       return;
     }
@@ -171,13 +204,14 @@ export class PlanDePagos {
           this.enviando.set(false);
           this.pagando.set(null);
           const nota = cobro.plan?.instances.find((i) => i.id === instancia.id)?.salesNotes.at(-1);
-          this.toast.success(
-            cobro.plan?.complete
-              ? `Nota de venta ${nota?.number ?? ''} emitida. El plan quedó saldado: ya se puede facturar.`
-              : `Nota de venta ${nota?.number ?? ''} emitida. No es una factura: la factura se emite al saldar el plan.`,
-            'Pago registrado (SIMULADO)',
-          );
+          const aviso = cobro.plan?.complete
+            ? `Nota de venta ${nota?.number ?? ''} por ${bs(nota?.amount ?? '0')} emitida. El plan quedó saldado: ya se puede facturar.`
+            : `Nota de venta ${nota?.number ?? ''} por ${bs(nota?.amount ?? '0')} emitida. No es una factura: la factura se emite al saldar el plan.`;
+          this.ultimaNota.set(aviso);
+          this.toast.success(aviso, 'Pago registrado (SIMULADO)');
           this.actualizado.emit(cobro);
+          // El formulario (y el botón con el foco) se fue: el foco pasa al aviso.
+          afterNextRender(() => this.avisoDeNota()?.nativeElement.focus(), { injector: this.injector });
         },
         error: (error: unknown) => {
           this.enviando.set(false);

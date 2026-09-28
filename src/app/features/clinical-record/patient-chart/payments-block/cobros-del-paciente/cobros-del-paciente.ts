@@ -4,7 +4,6 @@ import {
   Component,
   computed,
   DestroyRef,
-  DOCUMENT,
   ElementRef,
   inject,
   Injector,
@@ -26,6 +25,7 @@ import type {
 import { errorToViewState } from '../../../../../core/http/error-to-view-state';
 import { dataOf, loading, ready } from '../../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../../core/view-state/view-state.types';
+import { ToastService } from '../../../../../shared/components/molecules/toast/toast.service';
 import { AppButton } from '../../../../../shared/components/atoms/button/button';
 import { Chip } from '../../../../../shared/components/atoms/chip/chip';
 import { Alert } from '../../../../../shared/components/molecules/alert/alert';
@@ -38,8 +38,10 @@ import {
   centavos,
   cobradoDeCobro,
   deCentavos,
+  ACCION_COMPLETA,
   ROTULO_DE_ACCION,
   saldoDeCobro,
+  sinMarcaDeCatalogo,
   tipoDeServicio,
 } from '../../../../billing/cobros-en-pantalla';
 import { FacturaSimuladaDialog } from '../../../../billing/factura-simulada-dialog/factura-simulada-dialog';
@@ -87,7 +89,8 @@ export class CobrosDelPaciente {
   private readonly client = inject(BillingSimulatedClient);
   private readonly destroyRef = inject(DestroyRef);
   private readonly injector = inject(Injector);
-  private readonly document = inject(DOCUMENT);
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+  private readonly toast = inject(ToastService);
 
   readonly patientProfileId = input.required<string>();
 
@@ -107,7 +110,7 @@ export class CobrosDelPaciente {
   protected readonly facturando = computed(() => this.cobros().find((c) => c.id === this.facturandoId()) ?? null);
 
   protected readonly metodos = computed(() =>
-    (this.datos()?.catalogos.paymentMethods ?? []).map((m) => ({ value: m.codigo, label: m.descripcion })),
+    (this.datos()?.catalogos.paymentMethods ?? []).map((m) => ({ value: m.codigo, label: sinMarcaDeCatalogo(m.descripcion) })),
   );
 
   protected readonly totales = computed(() => {
@@ -120,6 +123,7 @@ export class CobrosDelPaciente {
   protected readonly rotuloDeEstado = ROTULO_DE_ESTADO;
   protected readonly tonoDeEstado = TONO_DE_ESTADO;
   protected readonly rotuloDeAccion = ROTULO_DE_ACCION;
+  protected readonly accionCompleta = ACCION_COMPLETA;
   protected readonly estadoDe = estadoDeCobro;
   protected readonly accionDe = accionDeCobro;
   protected readonly tipoDe = tipoDeServicio;
@@ -131,13 +135,13 @@ export class CobrosDelPaciente {
   private readonly estadoCell = viewChild<Celda>('estadoCell');
   private readonly accionCell = viewChild<Celda>('accionCell');
   /** `read: ElementRef`: sobre `button[app-button]` la referencia sería el componente. */
-  private readonly volver = viewChild('volver', { read: ElementRef });
+  private readonly volver = viewChild<unknown, ElementRef<HTMLElement>>('volver', { read: ElementRef });
 
   protected readonly columnas = computed<readonly ColumnDef<SimulatedCharge>[]>(() => [
     { key: 'service', header: 'Servicio', priority: 1, cell: this.servicioCell() },
-    // En el teléfono los importes se pliegan al detalle de la fila y viajan en
-    // la primera celda («Pagado X de Y»): con la acción fija al borde, más de
-    // dos columnas no entran en un modal de 340 px.
+    // Con poca caja (`fitContainer`: teléfono, o el modal a 1024 px) los
+    // importes se pliegan al detalle de la fila y viajan en la primera celda
+    // («Pagado X de Y»): con la acción fija al borde no entra más.
     { key: 'expected', header: 'Monto a cobrar', priority: 3, align: 'end', cell: this.esperadoCell() },
     { key: 'paid', header: 'Monto pagado', priority: 3, align: 'end', cell: this.pagadoCell() },
     { key: 'status', header: 'Estado', priority: 3, cell: this.estadoCell() },
@@ -156,19 +160,29 @@ export class CobrosDelPaciente {
           forkJoin({
             cobros: this.client.chargesOfPatient(paciente),
             catalogos: this.client.catalogs(),
-            estadoFiscal: this.client.status(),
+            // Sólo aporta el emisor para el encabezado de la nota de venta: si
+            // falla, el papel dice «Consultorio» y el resto sigue.
+            estadoFiscal: this.client.status().pipe(catchError(() => of(null))),
           }).pipe(
             map(({ cobros, catalogos, estadoFiscal }) =>
               ready<CobrosDeLaPersona>({
                 // Los más recientes primero: es el servicio del que se está hablando.
                 cobros: [...cobros.items].sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
                 catalogos,
-                emisores: estadoFiscal.issuers,
+                emisores: estadoFiscal?.issuers ?? [],
               }),
             ),
             // Una relectura no vuelve a «cargando»: la tabla no parpadea ni pierde el foco.
             startWith(this.datos() === null ? loading() : this.estado()),
-            catchError((error: unknown) => of(errorToViewState<CobrosDeLaPersona>(error))),
+            catchError((error: unknown) => {
+              // Si ya había datos, una relectura fallida no los borra: el modal
+              // de la factura que esté abierto cuelga de ellos. Se avisa y listo.
+              if (this.datos() !== null) {
+                this.toast.warning('No pudimos releer los cobros. Lo que ves puede estar atrasado.', 'Pagos');
+                return of(this.estado());
+              }
+              return of(errorToViewState<CobrosDeLaPersona>(error));
+            }),
           ),
         ),
         takeUntilDestroyed(this.destroyRef),
@@ -200,7 +214,7 @@ export class CobrosDelPaciente {
     // El foco vuelve a la acción de la fila que abrió el plan.
     afterNextRender(
       () => {
-        const boton = Array.from(this.document.querySelectorAll<HTMLElement>('[data-cobro-id]')).find(
+        const boton = Array.from(this.host.nativeElement.querySelectorAll<HTMLElement>('[data-cobro-id]')).find(
           (b) => b.dataset['cobroId'] === id,
         );
         boton?.focus();
@@ -210,6 +224,26 @@ export class CobrosDelPaciente {
   }
 
   protected cerrarFactura(): void {
+    const id = this.facturandoId();
     this.facturandoId.set(null);
+    // El foco vuelve a donde se abrió: la vuelta del plan, o la fila.
+    afterNextRender(
+      () => {
+        if (this.planAbierto() !== null) {
+          this.volver()?.nativeElement.focus();
+          return;
+        }
+        Array.from(this.host.nativeElement.querySelectorAll<HTMLElement>('[data-cobro-id]'))
+          .find((b) => b.dataset['cobroId'] === id)
+          ?.focus();
+      },
+      { injector: this.injector },
+    );
   }
+
+  /** El identificador de la petición que falló (S9), para dictárselo a soporte. */
+  protected readonly idDePeticion = computed(() => {
+    const estado = this.estado();
+    return estado.status === 'error' ? estado.requestId : null;
+  });
 }

@@ -297,6 +297,27 @@ thead .data-table__cell {
    sea de escritorio — es eso, y no un `overflow-x` distinto, lo que evita el
    scroll lateral. Dos clases > una: gana por especificidad, sin `!important`,
    sin depender del orden respecto del media query de arriba. */
+/* `fitContainer` (opt-in): la tabla es su propio *container* y, con menos de
+   46rem de caja, pliega las secundarias como en el teléfono aunque el viewport
+   sea de escritorio. `:host(...)` le gana en especificidad al `@media` de 780 px. */
+:host(.data-table--fit-container) {
+    container: data-table / inline-size;
+}
+
+@container data-table (width < 46rem) {
+    :host(.data-table--fit-container) .data-table__secondary {
+        display: none;
+    }
+
+    :host(.data-table--fit-container) .data-table__detail-toggle-cell {
+        display: table-cell;
+    }
+
+    :host(.data-table--fit-container) .data-table__detail-row {
+        display: table-row;
+    }
+}
+
 .data-table--constrained .data-table__secondary {
     display: none;
 }

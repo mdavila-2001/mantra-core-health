@@ -27,7 +27,23 @@
       </app-alert>
     }
     @case ('error') {
-      <app-alert tone="error" title="No pudimos leer los cobros">
+      <!-- S9: con el identificador de la petición, que es lo que se dicta a soporte. -->
+      <app-alert tone="error" title="No pudimos leer los cobros" data-testid="cobros-error">
+        @if (idDePeticion(); as id) {
+          <p class="cobros__secundario">ID de petición: {{ id }}</p>
+        }
+        <button app-button variant="outline" type="button" (clicked)="recargar()">Reintentar</button>
+      </app-alert>
+    }
+    @case ('not-found') {
+      <!-- S6: no se dice qué no existe; sólo que no hay cobros que leer acá. -->
+      <app-alert tone="info" title="No encontramos cobros para esta persona">
+        <button app-button variant="outline" type="button" (clicked)="recargar()">Volver a buscar</button>
+      </app-alert>
+    }
+    @case ('validation') {
+      <!-- S4: la lectura fue rechazada por el servidor, no está vacía. -->
+      <app-alert tone="warning" title="El servidor rechazó la lectura de los cobros">
         <button app-button variant="outline" type="button" (clicked)="recargar()">Reintentar</button>
       </app-alert>
     }
@@ -70,6 +86,7 @@
           [trackBy]="porId"
           [rowLabel]="nombreDeFila"
           caption="Servicios de la persona: lo que se esperaba cobrar y lo pagado"
+          fitContainer
           data-testid="cobros-tabla"
         />
       }
@@ -114,7 +131,7 @@
     size="sm"
     [variant]="accionDe(cobro) === 'VER_FACTURA' ? 'ghost' : 'outline'"
     [attr.data-cobro-id]="cobro.id"
-    [attr.aria-label]="rotuloDeAccion[accionDe(cobro)] + ': ' + cobro.description"
+    [attr.aria-label]="accionCompleta[accionDe(cobro)] + ': ' + cobro.description"
     (clicked)="abrir(cobro)"
   >
     {{ rotuloDeAccion[accionDe(cobro)] }}

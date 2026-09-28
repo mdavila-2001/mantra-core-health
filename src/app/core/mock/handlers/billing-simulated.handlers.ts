@@ -8,9 +8,11 @@
 
     Roles: los mismos de la sección «Facturación» del menú
     (`navigation.map.ts`), más `SUPERADMIN`. Quien atiende (`PRACTITIONER`)
-    opera además los cobros **de consultas** desde la consulta —cobrar, la
-    nota de venta de cada instancia del plan y la factura—, que son los de su
-    consultorio: no ve farmacia, ni anula, ni la bandeja de correo.
+    opera además, desde la consulta, **sus** cobros de consulta —los de las
+    citas que atendió (`practitionerProfileId`)—: cobrar, la nota de venta de
+    cada instancia del plan y la factura. No ve farmacia ni los cobros de otro
+    profesional (404: no se revela que existen), no anula, no ve la bandeja de
+    correo ni las credenciales fiscales.
     ========================================================================== */
 
 import { environment } from '../../../../environments/environment';
@@ -42,8 +44,15 @@ import { SiatSimuladoAdapter } from '../siat-sim/siat-simulado.adapter';
 
 export const ROLES_DE_FACTURACION: readonly string[] = ['BILLING', 'FINANCE', 'CASHIER', 'PAYMENTS_ADMIN', 'SUPERADMIN'];
 
-/** Quien atiende factura sus consultas: sólo los cobros de origen `CONSULTATION`. */
+/** Quien atiende factura sus consultas: sólo los cobros de las citas que atendió. */
 export const ROLES_DEL_CONSULTORIO: readonly string[] = ['PRACTITIONER'];
+
+/** Lo que alcanza a ver quien opera: todo (facturación) o los cobros de un profesional. */
+type Alcance = { readonly todo: true } | { readonly todo: false; readonly profesional: string };
+
+function dentroDelAlcance(cobro: SimulatedCharge, alcance: Alcance): boolean {
+  return alcance.todo || (cobro.source === 'CONSULTATION' && cobro.practitionerProfileId === alcance.profesional);
+}
 
 /** Las opciones con las que se arma el motor; las pruebas lo arman con las suyas. */
 export interface OpcionesDeFacturacionSimulada {
@@ -101,37 +110,49 @@ export function registrarFacturacionSimulada(router: MockRouter, opciones: Opcio
 
   /**
    * Apagada → 404; sin sesión → 401; sin rol → 403. Con `consultorio`, quien
-   * atiende también entra, y el manejador recibe `soloConsultas` para no
-   * mostrarle ni dejarle operar lo que no es de su consultorio.
+   * atiende también entra —si tiene perfil profesional— y el manejador recibe
+   * su alcance: los cobros de las citas que atendió.
    */
   const con =
     (
-      manejador: (request: MockRequest, motor: FacturacionSimulada, soloConsultas: boolean) => MockReply | unknown,
+      manejador: (request: MockRequest, motor: FacturacionSimulada, alcance: Alcance) => MockReply | unknown,
       { consultorio = false }: { readonly consultorio?: boolean } = {},
     ) =>
     (request: MockRequest): MockReply | unknown => {
       if (!activa()) return notFound('La facturación simulada está apagada (billingSiatDemo = false)');
       if (request.user === null) return unauthorized('Sin sesión');
       const roles = request.user.roles;
-      if (roles.some((rol) => ROLES_DE_FACTURACION.includes(rol))) return manejador(request, facturacion(), false);
-      if (consultorio && roles.some((rol) => ROLES_DEL_CONSULTORIO.includes(rol))) return manejador(request, facturacion(), true);
+      if (roles.some((rol) => ROLES_DE_FACTURACION.includes(rol))) return manejador(request, facturacion(), { todo: true });
+      const profesional = request.user.practitionerProfileId;
+      if (consultorio && profesional !== undefined && roles.some((rol) => ROLES_DEL_CONSULTORIO.includes(rol))) {
+        return manejador(request, facturacion(), { todo: false, profesional });
+      }
       return forbidden('Tu rol no permite operar la facturación');
     };
 
   /**
-   * El cobro de la ruta, o la respuesta que corresponde: 404 si no existe, y
-   * 403 si es de farmacia y lo pide quien atiende.
+   * El cobro de la ruta, o 404: si no existe **o** si está fuera del alcance
+   * de quien lo pide. Un 403 diría que el cobro de otro profesional existe.
    */
-  const cobroDe = (m: FacturacionSimulada, id: string, soloConsultas: boolean): SimulatedCharge | MockReply => {
+  const cobroDe = (m: FacturacionSimulada, id: string, alcance: Alcance): SimulatedCharge | MockReply => {
     const cobro = m.cobro(id);
-    if (cobro === null) return notFound('El cobro no existe');
-    if (soloConsultas && cobro.source !== 'CONSULTATION') return forbidden('Sólo los cobros de consultas se operan desde el consultorio');
+    if (cobro === null || !dentroDelAlcance(cobro, alcance)) return notFound('El cobro no existe');
     return cobro;
   };
 
   router.get(
     '/billing/simulated/status',
-    con((_, m) => m.estadoFiscal(), { consultorio: true }),
+    con(
+      (_, m, alcance) => {
+        const estado = m.estadoFiscal();
+        // Quien atiende necesita el emisor de su consultorio para la nota de
+        // venta; no las credenciales fiscales ni el emisor de farmacia.
+        return alcance.todo
+          ? estado
+          : { ...estado, issuers: estado.issuers.filter((e) => e.kind === 'PRACTICE'), credentials: [] };
+      },
+      { consultorio: true },
+    ),
   );
 
   router.get(
@@ -144,11 +165,11 @@ export function registrarFacturacionSimulada(router: MockRouter, opciones: Opcio
   router.get(
     '/billing/simulated/charges',
     con(
-      (request, m, soloConsultas) => {
+      (request, m, alcance) => {
         const paciente = request.query.get('patientProfileId');
         const items = m
           .listarCobros()
-          .filter((c) => !soloConsultas || c.source === 'CONSULTATION')
+          .filter((c) => dentroDelAlcance(c, alcance))
           .filter((c) => paciente === null || paciente === '' || c.patientProfileId === paciente);
         return { items, count: items.length, simulated: true };
       },
@@ -159,8 +180,8 @@ export function registrarFacturacionSimulada(router: MockRouter, opciones: Opcio
   router.post(
     '/billing/simulated/charges/:chargeId/payment',
     con(
-      (request, m, soloConsultas) => {
-        const cobro = cobroDe(m, request.params['chargeId']!, soloConsultas);
+      (request, m, alcance) => {
+        const cobro = cobroDe(m, request.params['chargeId']!, alcance);
         if (isMockReply(cobro)) return cobro;
         const datos = cuerpo<RegisterPaymentInput>(request);
         return aRespuesta(m.registrarPago(cobro.id, Number(datos.methodCode)), 201);
@@ -173,8 +194,8 @@ export function registrarFacturacionSimulada(router: MockRouter, opciones: Opcio
   router.post(
     '/billing/simulated/charges/:chargeId/instances/:instanceId/payments',
     con(
-      (request, m, soloConsultas) => {
-        const cobro = cobroDe(m, request.params['chargeId']!, soloConsultas);
+      (request, m, alcance) => {
+        const cobro = cobroDe(m, request.params['chargeId']!, alcance);
         if (isMockReply(cobro)) return cobro;
         const datos = cuerpo<RegisterInstancePaymentInput>(request);
         return aRespuesta(
@@ -192,8 +213,8 @@ export function registrarFacturacionSimulada(router: MockRouter, opciones: Opcio
   router.post(
     '/billing/simulated/charges/:chargeId/invoices',
     con(
-      (request, m, soloConsultas) => {
-        const cobro = cobroDe(m, request.params['chargeId']!, soloConsultas);
+      (request, m, alcance) => {
+        const cobro = cobroDe(m, request.params['chargeId']!, alcance);
         if (isMockReply(cobro)) return cobro;
         const datos = cuerpo<IssueInvoiceInput>(request) as IssueInvoiceInput;
         const usuario = request.user?.email.split('@')[0] ?? 'operador-simulado';
@@ -206,10 +227,10 @@ export function registrarFacturacionSimulada(router: MockRouter, opciones: Opcio
   router.get(
     '/billing/simulated/invoices/:invoiceId',
     con(
-      (request, m, soloConsultas) => {
+      (request, m, alcance) => {
         const factura = m.factura(request.params['invoiceId']!);
         if (factura === null) return notFound('La factura no existe');
-        const cobro = cobroDe(m, factura.chargeId, soloConsultas);
+        const cobro = cobroDe(m, factura.chargeId, alcance);
         return isMockReply(cobro) ? cobro : factura;
       },
       { consultorio: true },

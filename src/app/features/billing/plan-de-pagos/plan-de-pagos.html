@@ -27,8 +27,16 @@
       [trackBy]="porId"
       [rowLabel]="nombreDeFila"
       caption="Instancias del servicio: lo que se esperaba cobrar, lo pagado y su nota de venta"
+      fitContainer
       data-testid="plan-tabla"
     />
+
+    @if (ultimaNota(); as aviso) {
+      <!-- tabindex -1: recibe el foco después de registrar el pago. -->
+      <div #avisoDeNota class="plan__aviso" tabindex="-1" role="status" data-testid="plan-ultima-nota">
+        <app-alert tone="success" title="Pago registrado (SIMULADO)">{{ aviso }}</app-alert>
+      </div>
+    }
 
     @if (pagando(); as instancia) {
       <form class="plan__pago" [formGroup]="formulario" (ngSubmit)="registrarPago()" data-testid="plan-formulario-de-pago">
@@ -49,11 +57,10 @@
             [required]="true"
             [hint]="'Hasta ' + bs(instancia.balance)"
             [errorMessage]="
-              excede()
-                ? 'No puede superar el saldo de la instancia.'
-                : formulario.controls.amount.touched && formulario.controls.amount.invalid
-                  ? 'Un importe con hasta dos decimales, por ejemplo 180.00.'
-                  : ''
+              errorDeMonto() ??
+              (formulario.controls.amount.touched && formulario.controls.amount.invalid
+                ? 'Un importe con hasta dos decimales, por ejemplo 180.00.'
+                : '')
             "
           >
             <app-input formControlName="amount" inputMode="decimal" testId="plan-monto" />
@@ -127,13 +134,14 @@
   @for (nota of instancia.salesNotes; track nota.id) {
     <button
       app-button
-      variant="ghost"
+      variant="outline"
       size="sm"
       class="plan__nota-de-venta"
+      title="Descargar la nota de venta (PDF)"
       [attr.aria-label]="'Descargar la nota de venta ' + nota.number + ' de ' + instancia.label"
       (clicked)="descargar(instancia, nota)"
     >
-      {{ nota.number }} · {{ bs(nota.amount) }}
+      <span aria-hidden="true">⤓</span> {{ nota.number }} · {{ bs(nota.amount) }}
     </button>
   } @empty {
     <span class="plan__secundario">Sin pagos</span>
@@ -149,6 +157,7 @@
       variant="outline"
       size="sm"
       [attr.aria-label]="'Registrar pago de ' + instancia.label"
+      [attr.data-instancia-id]="instancia.id"
       [disabled]="enviando()"
       (clicked)="abrirPago(instancia)"
     >

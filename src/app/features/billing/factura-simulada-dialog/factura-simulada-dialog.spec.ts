@@ -135,4 +135,45 @@ describe('FacturaSimuladaDialog', () => {
     expect(el('factura-emitida')).toBeNull();
     expect(emitidas).toHaveLength(0);
   });
+
+  it('si el pago pasa y la factura falla, el reintento sólo factura: no vuelve a cobrar', () => {
+    const cobro = motor.listarCobros().find((c) => c.plan === null && c.payment === null && c.source === 'CONSULTATION')!;
+    montar(cobro);
+    fixture.componentInstance['formulario'].controls.methodCode.setValue(1);
+    confirmar();
+    const pagado = motor.registrarPago(cobro.id, 1);
+    if (!pagado.ok) throw new Error(pagado.error.message);
+    http.expectOne(`/billing/simulated/charges/${cobro.id}/payment`).flush(pagado.value);
+    http
+      .expectOne(`/billing/simulated/charges/${cobro.id}/invoices`)
+      .flush({ code: 'INTERNAL_ERROR', message: 'Caída del simulador', timestamp: '', path: '' }, { status: 500, statusText: 'Error' });
+    fixture.detectChanges();
+    expect(el('factura-error')).not.toBeNull();
+
+    confirmar();
+    http.expectNone(`/billing/simulated/charges/${cobro.id}/payment`);
+    responderFactura(cobro.id);
+    expect(el('factura-emitida')).not.toBeNull();
+  });
+
+  it('un 409 «ya estaba pagado» no traba el modal: el reintento sólo factura', () => {
+    const cobro = motor.listarCobros().find((c) => c.plan === null && c.payment === null && c.source === 'CONSULTATION')!;
+    montar(cobro);
+    fixture.componentInstance['formulario'].controls.methodCode.setValue(1);
+    confirmar();
+    motor.registrarPago(cobro.id, 2); // lo pagó otra persona mientras tanto
+    http
+      .expectOne(`/billing/simulated/charges/${cobro.id}/payment`)
+      .flush(
+        { code: 'CONFLICT', message: 'El cobro ya está pagado', details: { reason: 'ALREADY_PAID' }, timestamp: '', path: '' },
+        { status: 409, statusText: 'Conflict' },
+      );
+    fixture.detectChanges();
+    expect(el('factura-error')?.textContent).toContain('ya estaba pagado');
+
+    confirmar();
+    http.expectNone(`/billing/simulated/charges/${cobro.id}/payment`);
+    responderFactura(cobro.id);
+    expect(el('factura-emitida')).not.toBeNull();
+  });
 });

@@ -7,6 +7,9 @@
 
 .cobros {
   display: grid;
+  /* `minmax(0, …)`: el contenido más ancho no fija la columna ni saca el
+     plan del margen del modal. */
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--sp-4);
 }
 
@@ -80,10 +83,15 @@
   font-size: var(--fs-caption);
 }
 
-/* Desde 780 px (`--bp-md`) «Monto a cobrar» es su propia columna. */
-@media (min-width: 780px) {
+/* Sólo cuando la tabla pliega los importes (container `data-table` de
+   `app-data-table` con `fitContainer`). */
+.cobros__solo-movil {
+  display: none;
+}
+
+@container data-table (width < 46rem) {
   .cobros__solo-movil {
-    display: none;
+    display: block;
   }
 }
 
@@ -96,6 +104,7 @@
 
 .cobros__plan {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--sp-3);
 }
 

@@ -16,8 +16,8 @@ import { entrarAlSimulador, esperarAQueSeAsiente } from './support/simulador';
  *    recarga → UI.
  * 3. Saldado el plan, recién entonces se ofrece la **factura**, que se emite
  *    contra el SIAT simulado (908, CUF).
- * 4. Un servicio de una sola instancia abre **directamente el modal** de la
- *    factura.
+ * 4. Un servicio de una sola instancia (el electrocardiograma, sin cobrar)
+ *    abre **directamente el modal** de la factura, que cobra y emite.
  *
  * Contra el backend simulado de `mockup` (`support/simulador.ts`). El
  * simulador responde **dentro** de Angular (un interceptor), así que no hay
@@ -68,22 +68,34 @@ async function abrirPagos(page: Page): Promise<void> {
   await expect(page.getByTestId('cobros-tabla')).toBeVisible();
 }
 
-/** Sin scroll lateral en la página, y el modal abierto entero dentro del viewport. */
-async function medir(page: Page, nombre: string): Promise<void> {
+/**
+ * En cada ancho: sin scroll lateral en la página, el modal de arriba entero
+ * dentro del viewport, **ninguna tabla desbordando su caja** dentro del modal
+ * (la columna de acción fija tapaba importes a 1024 px) y el plan dentro del
+ * margen de «Pagos». `foco` lleva a la vista lo que la foto tiene que mostrar.
+ */
+async function medir(page: Page, nombre: string, foco?: string): Promise<void> {
   for (const ancho of ANCHOS) {
     await page.setViewportSize(ancho);
     await esperarAQueSeAsiente(page);
-    const { desborde, modalFuera } = await page.evaluate(() => {
+    if (foco !== undefined) await page.getByTestId(foco).scrollIntoViewIfNeeded();
+    const m = await page.evaluate(() => {
       const dialogos = Array.from(document.querySelectorAll('dialog[open]'));
-      const arriba = dialogos.at(-1);
-      const caja = arriba?.getBoundingClientRect();
+      const caja = dialogos.at(-1)?.getBoundingClientRect();
+      const tablas = Array.from(document.querySelectorAll<HTMLElement>('dialog[open] .data-table__scroll'));
+      const contenedor = document.querySelector('[data-testid="cobros-del-paciente"]')?.getBoundingClientRect();
+      const plan = document.querySelector('[data-testid="plan-de-pagos"]')?.getBoundingClientRect();
       return {
         desborde: document.documentElement.scrollWidth - window.innerWidth,
         modalFuera: caja === undefined ? false : caja.left < -1 || caja.right > window.innerWidth + 1,
+        tablaDesbordada: tablas.filter((t) => t.offsetParent !== null).some((t) => t.scrollWidth > t.clientWidth + 1),
+        planFuera: contenedor === undefined || plan === undefined ? false : plan.right > contenedor.right + 1,
       };
     });
-    expect(desborde, `scroll lateral en ${nombre} a ${ancho.width}px`).toBeLessThanOrEqual(0);
-    expect(modalFuera, `modal fuera del viewport en ${nombre} a ${ancho.width}px`).toBe(false);
+    expect(m.desborde, `scroll lateral en ${nombre} a ${ancho.width}px`).toBeLessThanOrEqual(0);
+    expect(m.modalFuera, `modal fuera del viewport en ${nombre} a ${ancho.width}px`).toBe(false);
+    expect(m.tablaDesbordada, `tabla más ancha que su caja en ${nombre} a ${ancho.width}px`).toBe(false);
+    expect(m.planFuera, `plan fuera del margen en ${nombre} a ${ancho.width}px`).toBe(false);
     await page.screenshot({ path: join(FOTOS, `${nombre}-${ancho.width}.png`) });
   }
   await page.setViewportSize({ width: 1440, height: 900 });
@@ -105,7 +117,7 @@ test('plan con reconsultas: nota de venta por pago, persiste al recargar y factu
 
   // ─── 1 · La lista de servicios: uno con plan y uno de pago único ────────
   const verPlan = page.getByRole('button', { name: /^Ver plan de pagos: Consulta cardiológica con 2 reconsultas/ });
-  const facturar = page.getByRole('button', { name: /^Facturar: Consulta médica/ });
+  const facturar = page.getByRole('button', { name: /^Cobrar y facturar: Electrocardiograma/ });
   await expect(verPlan).toBeVisible();
   await expect(facturar).toBeVisible();
   await medir(page, '1-servicios');
@@ -123,8 +135,13 @@ test('plan con reconsultas: nota de venta por pago, persiste al recargar y factu
   // ─── 3 · Pago parcial → nota de venta, no factura ───────────────────────
   await page.getByRole('button', { name: 'Registrar pago de Reconsulta 1' }).click();
   await expect(page.getByTestId('plan-formulario-de-pago')).toBeVisible();
+  // Primero lo que no sale: más que el saldo se dice antes de enviar.
+  await page.getByTestId('plan-monto').fill('999.00');
+  await page.getByTestId('plan-confirmar-pago').click();
+  await expect(page.getByTestId('plan-formulario-de-pago')).toContainText('No puede superar el saldo');
+  await medir(page, '3a-monto-excedido', 'plan-formulario-de-pago');
   await page.getByTestId('plan-monto').fill('80.00');
-  await medir(page, '3-formulario-de-pago');
+  await medir(page, '3-formulario-de-pago', 'plan-formulario-de-pago');
   await page.getByTestId('plan-confirmar-pago').click();
   await expect(page.getByTestId('plan-formulario-de-pago')).toHaveCount(0);
   // Lo que quedó guardado: una nota de venta de 80,00 y el cobro sin pago ni factura.
@@ -137,6 +154,8 @@ test('plan con reconsultas: nota de venta por pago, persiste al recargar y factu
   expect(conPlan.payment).toBeNull();
   expect(tras.facturas.filter((f) => f.chargeId === conPlan.id)).toEqual([]);
   await expect(tabla).toContainText(nota);
+  await expect(page.getByTestId('plan-ultima-nota')).toContainText(nota);
+  await expect(page.getByTestId('plan-ultima-nota')).toBeFocused();
   await expect(page.getByTestId('plan-generar-factura')).toHaveCount(0);
 
   // ─── 4 · Recarga: la nota de venta quedó guardada ───────────────────────
@@ -156,12 +175,12 @@ test('plan con reconsultas: nota de venta por pago, persiste al recargar y factu
   }
   await expect(page.getByTestId('plan-saldado')).toBeVisible();
   await expect(page.getByTestId('plan-saldo')).toContainText('Bs 0,00');
-  await medir(page, '5-plan-saldado');
+  await medir(page, '5-plan-saldado', 'plan-generar-factura');
 
   await page.getByTestId('plan-generar-factura').click();
   await expect(page.getByTestId('factura-formulario')).toBeVisible();
   await expect(page.getByTestId('factura-notas-del-plan')).toContainText(nota);
-  await medir(page, '6-modal-factura-del-plan');
+  await medir(page, '6-modal-factura-del-plan', 'factura-formulario');
   await page.getByTestId('factura-confirmar').click();
   await expect(page.getByTestId('factura-emitida')).toBeVisible();
   const saldado = (await guardados(page)).cobros.find((c) => c.plan !== null)!;
@@ -181,7 +200,7 @@ test('plan con reconsultas: nota de venta por pago, persiste al recargar y factu
   expect(errores, 'Consola del navegador').toEqual([]);
 });
 
-test('servicio de una sola instancia: abre directamente el modal de la factura', async ({ page }) => {
+test('servicio de una sola instancia sin cobrar: el modal cobra y factura', async ({ page }) => {
   test.setTimeout(120_000);
   const errores: string[] = [];
   page.on('pageerror', (e) => errores.push(e.message));
@@ -195,21 +214,29 @@ test('servicio de una sola instancia: abre directamente el modal de la factura',
   await entrarAlSimulador(page, 'medica', BASE);
   await abrirPagos(page);
 
-  await page.getByRole('button', { name: /^Facturar: Consulta médica/ }).click();
+  await page.getByRole('button', { name: /^Cobrar y facturar: Electrocardiograma/ }).click();
   await expect(page.getByTestId('factura-formulario')).toBeVisible();
   await expect(page.getByTestId('plan-de-pagos')).toHaveCount(0);
-  await medir(page, '8-modal-pago-unico');
+  await expect(page.getByTestId('factura-confirmar')).toHaveText(/Cobrar y emitir factura/);
+  await medir(page, '8-modal-pago-unico', 'factura-formulario');
+
+  // Sin medio de pago no sale nada: lo pide.
+  await page.getByTestId('factura-confirmar').click();
+  await expect(page.getByTestId('factura-formulario')).toContainText('Elegí cómo pagó');
+  await page.getByTestId('factura-formulario').getByLabel('Medio de pago').selectOption({ index: 1 });
 
   await page.getByTestId('factura-confirmar').click();
   await expect(page.getByTestId('factura-emitida')).toBeVisible();
-  // Contexto limpio: la única factura guardada es la que se acaba de emitir.
-  expect((await guardados(page)).facturas.map((f) => f.status)).toEqual(['VALIDATED']);
+  // Contexto limpio: el ECG quedó pagado y su factura es la única guardada.
+  const ecg = (await guardados(page)).cobros.find((c) => c.description.startsWith('Electrocardiograma'))!;
+  expect(ecg.payment).not.toBeNull();
+  expect((await guardados(page)).facturas.map((f) => [f.chargeId, f.status])).toEqual([[ecg.id, 'VALIDATED']]);
   await medir(page, '9-factura-pago-unico');
 
   // Recarga: la fila ofrece ver la factura, y el modal abre mostrándola.
   await page.reload();
   await abrirPagos(page);
-  await page.getByRole('button', { name: /^Ver factura: Consulta médica/ }).click();
+  await page.getByRole('button', { name: /^Ver factura: Electrocardiograma/ }).click();
   await expect(page.getByTestId('factura-emitida')).toBeVisible();
   await expect(page.getByTestId('factura-formulario')).toHaveCount(0);
 

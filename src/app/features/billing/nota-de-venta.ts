@@ -23,12 +23,16 @@ import { marcarComoSimulado } from './representacion-grafica';
 
 export const LEYENDA_DE_NOTA_DE_VENTA = 'NOTA DE VENTA — NO VÁLIDA COMO FACTURA';
 
+/** `NV-000042` → 42: el correlativo ordena las notas, la hora no (dos pagos pueden caer en el mismo instante). */
+function correlativo(nota: SimulatedSalesNote): number {
+  return Number(nota.number.replace(/^NV-/, '')) || 0;
+}
+
 /** Lo pagado en el plan hasta esta nota, inclusive: el saldo que figura en el papel. */
 export function pagadoHasta(cobro: SimulatedCharge, nota: SimulatedSalesNote): string {
   const notas = cobro.plan?.instances.flatMap((i) => i.salesNotes) ?? [];
-  return deCentavos(
-    notas.filter((n) => n.issuedAt < nota.issuedAt || n.id === nota.id).reduce((suma, n) => suma + centavos(n.amount), 0),
-  );
+  const hasta = correlativo(nota);
+  return deCentavos(notas.filter((n) => correlativo(n) <= hasta).reduce((suma, n) => suma + centavos(n.amount), 0));
 }
 
 export function bloquesDeNotaDeVenta(

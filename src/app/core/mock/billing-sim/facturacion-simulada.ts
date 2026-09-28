@@ -75,6 +75,8 @@ export interface CobroInicial {
   readonly issuerId: string;
   readonly patientProfileId: string;
   readonly patientName: string;
+  /** Quien atendió la consulta; farmacia no lo tiene. */
+  readonly practitionerProfileId?: string | null;
   readonly description: string;
   readonly lines: readonly ChargeLine[];
   readonly createdAt: string;
@@ -860,6 +862,7 @@ export class FacturacionSimulada {
       issuerId: c.issuerId,
       patientProfileId: c.patientProfileId,
       patientName: c.patientName,
+      practitionerProfileId: c.practitionerProfileId ?? null,
       description: c.description,
       lines: c.lines,
       total: c.total,

@@ -80,23 +80,50 @@ describe('handlers de facturación simulada (FACT-SIAT-MOCK)', () => {
       expect(llamar('GET', '/billing/simulated/charges', null, paciente).status).toBe(403);
     });
 
-    it('la médica ve y opera sólo los cobros de consultas: nada de farmacia, ni anular, ni la bandeja', () => {
+    it('la médica ve y opera sólo los cobros de SUS consultas; lo demás es 404, no 403', () => {
       const r = llamar('GET', '/billing/simulated/charges', null, medica);
       expect(r.status).toBe(200);
       const suyos = (r.body as SimulatedChargesPage).items;
       expect(suyos.length).toBeGreaterThan(0);
-      expect(suyos.every((c) => c.source === 'CONSULTATION')).toBe(true);
+      expect(suyos.every((c) => c.source === 'CONSULTATION' && c.practitionerProfileId === medica.practitionerProfileId)).toBe(true);
 
+      // Fuera de su alcance, el cobro «no existe»: un 403 diría que sí.
       const deFarmacia = cobroPagado('PHARMACY');
-      expect(facturarComo(deFarmacia, medica).status).toBe(403);
-      expect(llamar('POST', `/billing/simulated/charges/${deFarmacia.id}/payment`, { methodCode: 1 }, medica).status).toBe(403);
+      expect(facturarComo(deFarmacia, medica).status).toBe(404);
+      expect(llamar('POST', `/billing/simulated/charges/${deFarmacia.id}/payment`, { methodCode: 1 }, medica).status).toBe(404);
+      const facturaDeFarmacia = facturar(deFarmacia).body as SimulatedInvoice;
+      expect(llamar('GET', `/billing/simulated/invoices/${facturaDeFarmacia.id}`, null, medica).status).toBe(404);
 
       const f = facturarComo(cobroPagado('CONSULTATION'), medica);
       expect(f.status).toBe(201);
       const factura = f.body as SimulatedInvoice;
       expect(llamar('GET', `/billing/simulated/invoices/${factura.id}`, null, medica).status).toBe(200);
       expect(llamar('POST', `/billing/simulated/invoices/${factura.id}/annulment`, { reasonCode: 1 }, medica).status).toBe(403);
+      expect(llamar('POST', `/billing/simulated/invoices/${factura.id}/annulment-reversal`, {}, medica).status).toBe(403);
+      expect(llamar('POST', `/billing/simulated/invoices/${factura.id}/email`, { to: 'x@y.bo' }, medica).status).toBe(403);
       expect(llamar('GET', '/billing/simulated/outbox', null, medica).status).toBe(403);
+    });
+
+    it('otra profesional no ve ni opera los cobros de la médica', () => {
+      const otra: MockUser = { ...medica, id: 'otra', practitionerProfileId: 'otro-perfil-profesional' };
+      const lista = llamar('GET', '/billing/simulated/charges', null, otra);
+      expect((lista.body as SimulatedChargesPage).items).toEqual([]);
+      const deLaMedica = cobroPagado('CONSULTATION');
+      expect(facturarComo(deLaMedica, otra).status).toBe(404);
+    });
+
+    it('sin perfil profesional, el rol de quien atiende no alcanza: 403', () => {
+      const sinPerfil: MockUser = { ...medica, id: 'sin-perfil', practitionerProfileId: undefined };
+      expect(llamar('GET', '/billing/simulated/charges', null, sinPerfil).status).toBe(403);
+    });
+
+    it('a quien atiende no se le entregan credenciales fiscales ni el emisor de farmacia', () => {
+      const estado = llamar('GET', '/billing/simulated/status', null, medica).body as {
+        issuers: { kind: string }[];
+        credentials: unknown[];
+      };
+      expect(estado.credentials).toEqual([]);
+      expect(estado.issuers.every((e) => e.kind === 'PRACTICE')).toBe(true);
     });
   });
 
@@ -124,7 +151,12 @@ describe('handlers de facturación simulada (FACT-SIAT-MOCK)', () => {
       // inicial: su nota de venta, y no el total del servicio con reconsultas.
       const pagadoEnLaCita = (c: SimulatedCharge): string =>
         c.plan === null ? c.total : c.plan.instances[0]!.paidAmount;
-      const porCita = new Map(cobros().filter((c) => c.source === 'CONSULTATION').map((c) => [c.sourceRef, pagadoEnLaCita(c)]));
+      // Sólo los honorarios de consulta: un estudio hecho en la misma cita (el
+      // ECG de la demo) es otro cobro y `paid-consultations` no lo lista.
+      const honorarios = cobros().filter(
+        (c) => c.source === 'CONSULTATION' && (c.plan !== null || c.lines[0]?.productCode === 'CONSULTA-MEDICA'),
+      );
+      const porCita = new Map(honorarios.map((c) => [c.sourceRef, pagadoEnLaCita(c)]));
       for (const item of pagadas.items) expect(porCita.get(item.appointmentId)).toBe(item.paidTotal);
     });
 

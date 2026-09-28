@@ -9,6 +9,7 @@ function cobro(id: string, extra: Partial<SimulatedCharge> = {}): SimulatedCharg
     issuerId: 'e',
     patientProfileId: `p-${id}`,
     patientName: 'X',
+    practitionerProfileId: null,
     description: 'd',
     lines: [],
     total: '100.00',

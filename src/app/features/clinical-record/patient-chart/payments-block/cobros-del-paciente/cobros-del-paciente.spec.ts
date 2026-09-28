@@ -5,7 +5,10 @@ import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { API_BASE_URL } from '../../../../../core/data-access/api';
 import type { SimulatedCharge } from '../../../../../core/data-access/billing-simulated/billing-simulated.types';
 import type { FacturacionSimulada } from '../../../../../core/mock/billing-sim/facturacion-simulada';
+import { By } from '@angular/platform-browser';
+
 import { motorDePrueba } from '../../../../billing/billing.spec-fixtures';
+import { PlanDePagos } from '../../../../billing/plan-de-pagos/plan-de-pagos';
 import { bs, centavos, cobradoDeCobro, deCentavos, saldoDeCobro } from '../../../../billing/cobros-en-pantalla';
 import { CobrosDelPaciente } from './cobros-del-paciente';
 
@@ -70,7 +73,7 @@ describe('CobrosDelPaciente', () => {
     expect(el('cobros-pagado')?.textContent?.trim()).toBe(suma(cobradoDeCobro));
     expect(el('cobros-saldo')?.textContent?.trim()).toBe(suma(saldoDeCobro));
     // El plan sembrado tiene saldo: el total por cobrar no puede ser cero.
-    expect(el('cobros-saldo')?.textContent).not.toContain('Bs 0,00');
+    expect(el('cobros-saldo')?.textContent?.trim()).not.toBe(bs('0.00'));
   });
 
   it('un servicio con reconsultas abre la tabla del plan, no el modal de la factura', () => {
@@ -78,7 +81,8 @@ describe('CobrosDelPaciente', () => {
     montar(conPlan.patientProfileId);
     responder(conPlan.patientProfileId);
 
-    expect(botonDe(conPlan).textContent).toContain('Ver plan de pagos');
+    expect(botonDe(conPlan).textContent?.trim()).toBe('Ver plan');
+    expect(botonDe(conPlan).getAttribute('aria-label')).toMatch(/^Ver plan de pagos: /);
     botonDe(conPlan).click();
     fixture.detectChanges();
 
@@ -92,12 +96,47 @@ describe('CobrosDelPaciente', () => {
     montar(unico.patientProfileId);
     responder(unico.patientProfileId);
 
-    expect(botonDe(unico).textContent).toContain('Cobrar y facturar');
+    expect(botonDe(unico).textContent?.trim()).toBe('Facturar');
+    expect(botonDe(unico).getAttribute('aria-label')).toMatch(/^Cobrar y facturar: /);
     botonDe(unico).click();
     fixture.detectChanges();
 
     expect(el('factura-simulada')).not.toBeNull();
     expect(el('plan-de-pagos')).toBeNull();
+  });
+
+  it('un pago registrado en el plan relee los cobros del backend', () => {
+    const conPlan = motor.listarCobros().find((c) => c.plan !== null)!;
+    montar(conPlan.patientProfileId);
+    responder(conPlan.patientProfileId);
+    botonDe(conPlan).click();
+    fixture.detectChanges();
+
+    const plan = fixture.debugElement.query(By.directive(PlanDePagos)).componentInstance as PlanDePagos;
+    plan.actualizado.emit(conPlan);
+    fixture.detectChanges();
+
+    // Lo que se ve después es lo que quedó guardado: se vuelve a pedir.
+    responder(conPlan.patientProfileId);
+    expect(el('plan-de-pagos')).not.toBeNull();
+  });
+
+  it('una relectura fallida no borra lo que ya se veía', () => {
+    const conPlan = motor.listarCobros().find((c) => c.plan !== null)!;
+    montar(conPlan.patientProfileId);
+    responder(conPlan.patientProfileId);
+    fixture.componentInstance['recargar']();
+    fixture.detectChanges();
+    http
+      .expectOne((r) => r.url === '/billing/simulated/charges')
+      .flush({ code: 'INTERNAL_ERROR', message: 'x' }, { status: 500, statusText: 'Error' });
+    for (const r of http.match((req) => req.url.startsWith('/billing/simulated/'))) {
+      if (!r.cancelled) r.flush(r.request.url.endsWith('/catalogs') ? motor.catalogos() : motor.estadoFiscal());
+    }
+    fixture.detectChanges();
+
+    expect(el('cobros-tabla')).not.toBeNull();
+    expect(el('cobros-error')).toBeNull();
   });
 
   it('volver del plan devuelve la lista', () => {

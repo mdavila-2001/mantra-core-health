@@ -24,6 +24,12 @@
   font-size: var(--fs-caption);
 }
 
+.factura,
+.factura__formulario,
+.factura__resultado {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 .factura__formulario,
 .factura__resultado {
   display: grid;
@@ -77,6 +83,7 @@
 
 .factura__campos {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--sp-3);
 }
 

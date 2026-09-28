@@ -7,6 +7,9 @@
 
 .plan {
   display: grid;
+  /* `minmax(0, …)`: sin él, el control más ancho del formulario fija la
+     columna y el plan se sale del margen del modal a 390 px. */
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--sp-4);
 }
 
@@ -87,30 +90,42 @@
   font-size: var(--fs-caption);
 }
 
+/* Sólo cuando la tabla pliega los importes: la misma consulta de caja que
+   `fitContainer` de `app-data-table`, que declara el container `data-table`. */
 .plan__solo-movil {
-  display: block;
+  display: none;
 }
 
-/* Desde 780 px (`--bp-md`) «Monto a cobrar» es su propia columna. */
-@media (min-width: 780px) {
+@container data-table (width < 46rem) {
   .plan__solo-movil {
-    display: none;
+    display: block;
   }
 }
 
 .plan__nota-de-venta {
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.plan__nota-de-venta + .plan__nota-de-venta {
+  margin-block-start: var(--sp-1);
 }
 
 /* ── El pago y el cierre ─────────────────────────────────────────────────── */
 
-.plan__pago,
-.plan__cierre {
+.plan__pago {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--sp-3);
   padding: var(--sp-4);
   border: 1px solid var(--border-default);
   border-radius: var(--r-md);
+}
+
+/* Sin borde propio: el aviso de adentro ya es una caja. */
+.plan__cierre {
+  display: grid;
+  gap: var(--sp-3);
 }
 
 .plan__pago-titulo {
@@ -119,6 +134,7 @@
   font-weight: 600;
 }
 
+.plan__aviso:focus-visible,
 .plan__pago-titulo:focus-visible {
   outline: none;
   box-shadow: var(--focus-ring);
@@ -126,6 +142,7 @@
 
 .plan__campos {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--sp-3);
 }
 
@@ -139,6 +156,14 @@
   display: flex;
   flex-wrap: wrap;
   gap: var(--sp-2);
+}
+
+/* En el teléfono el rótulo largo parte en dos líneas en vez de empujar el
+   botón contra el borde de la tarjeta. */
+.plan__acciones > button {
+  max-inline-size: 100%;
+  white-space: normal;
+  text-align: center;
 }
 
 .plan__nota {

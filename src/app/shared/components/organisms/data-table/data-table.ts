@@ -64,6 +64,7 @@ import {
     class: 'data-table',
     '[class.data-table--constrained]': 'effectiveMaxHeight() !== null',
     '[class.data-table--wrap-headers]': 'wrapHeaders()',
+    '[class.data-table--fit-container]': 'fitContainer()',
   },
 })
 export class DataTable<Row> {
@@ -131,6 +132,20 @@ export class DataTable<Row> {
    * lateral y sin esconder columnas.
    */
   readonly wrapHeaders = input(false, { transform: booleanAttribute });
+
+  /**
+   * Pliega las columnas secundarias según el ancho **de la caja** y no el del
+   * viewport.
+   *
+   * Opt-in, apagado por omisión. Existe por los modales: el `@media` de 780 px
+   * despliega las columnas en cuanto la pantalla es de tablet, pero dentro de
+   * un modal la tabla puede medir 600 px con el viewport en 1024 —medido en
+   * «Pagos» de la consulta: 704 px de tabla en 596 de caja, con la columna de
+   * acciones fija tapando importes—. Con esto, la tabla es un *container* y
+   * por debajo de 46rem de caja se comporta como en el teléfono: las
+   * secundarias viven en la fila de detalle.
+   */
+  readonly fitContainer = input(false, { transform: booleanAttribute });
 
   /** El valor efectivo: una cadena vacía cae al por omisión, no a una caja de alto cero. */
   protected readonly effectiveMaxHeight = computed(() => this.maxHeight() || null);
