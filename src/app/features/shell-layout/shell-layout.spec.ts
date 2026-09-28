@@ -866,7 +866,7 @@ describe('ShellLayout', () => {
       expect(destinos).toContain('/design-system');
     });
 
-    it('la barra de la aseguradora: cinco renglones, un solo dominio plegable (2026-09-25)', () => {
+    it('la barra de la aseguradora: seis renglones, un solo dominio plegable (2026-09-25, +1 el 2026-09-27)', () => {
       abrirSesion({
         sub: 'u-3',
         roles: ['USER'],
@@ -882,6 +882,8 @@ describe('ShellLayout', () => {
         '/notification-center',
         '/administration/insurance',
         '/administration/insurance-analytics',
+        // 2026-09-27: «Solicitudes recibidas», pedida por la propietaria.
+        '/administration/received-claims',
         // Tarea 4 · M-06: el «Módulo de promociones» del registro de procesos.
         '/administration/insurance-campaigns',
         '/administration/my-organization',

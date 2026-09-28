@@ -1,0 +1,231 @@
+<app-page-header
+  title="Solicitudes recibidas"
+  subtitle="Lo que cada prestador le pidió a tu aseguradora: quién se atendió, con qué médico, qué servicio y cuánto."
+/>
+
+<!-- ADR-0015: una tarjeta a lo ancho con barra arriba, tabla sin scroll lateral
+     y paginación abajo a la derecha. -->
+<app-card class="received" variant="outlined" padding="lg" data-testid="received-claims-card">
+  <app-view-state-host [state]="state()" (retry)="load()">
+    <div vsh-skeleton class="received__skeleton" data-testid="received-claims-loading">
+      <app-skeleton variant="rect" height="var(--sp-10)" />
+      <app-skeleton variant="rect" height="var(--sp-20)" />
+      <app-skeleton variant="rect" height="var(--sp-20)" />
+    </div>
+
+    @if (state().status === 'ready') {
+      @if (truncated()) {
+        <app-alert tone="info" data-testid="received-claims-truncated">
+          Mostramos las solicitudes más recientes. Si buscás una más antigua, acotá por fecha.
+        </app-alert>
+      }
+
+      <!-- El buscador no escribe en la URL: ahí se tipean nombres y CI de pacientes. -->
+      <app-filter-bar
+        searchLabel="Buscar en las solicitudes"
+        searchPlaceholder="Solicitud, paciente, CI o afiliado, médico, servicio o póliza"
+        [searchInUrl]="false"
+        [searchValue]="searchTerm()"
+        [filters]="filters()"
+        wrap
+        (searchChanged)="searchTerm.set($event)"
+      />
+
+      <p class="received__summary" aria-live="polite" data-testid="received-claims-count">
+        {{ totalFiltered() }} {{ totalFiltered() === 1 ? 'solicitud' : 'solicitudes' }}
+        @if (currencyNote()) {
+          · importes en {{ currencyNote().slice(3) }}
+        }
+      </p>
+
+      @if (totalFiltered() === 0) {
+        <p class="received__none" data-testid="received-claims-no-match">
+          Ninguna solicitud coincide con la búsqueda o los filtros.
+        </p>
+      } @else {
+        <app-data-table
+          [state]="tableState()"
+          [columns]="columns()"
+          [trackBy]="byId"
+          [rowLabel]="claimLabel"
+          [sort]="sort()"
+          rowNavigable
+          wrapHeaders
+          caption="Solicitudes recibidas por la aseguradora"
+          maxHeight="560px"
+          data-testid="received-claims-table"
+          (sortChanged)="sort.set($event)"
+          (rowActivated)="openDetail($event)"
+        />
+
+        <app-pagination
+          [totalItems]="totalFiltered()"
+          [(page)]="page"
+          [(pageSize)]="pageSize"
+          data-testid="received-claims-pagination"
+        />
+      }
+    }
+  </app-view-state-host>
+</app-card>
+
+<!-- ---- celdas ------------------------------------------------------------ -->
+
+<!-- El nombre es un botón: la fila entera abre el detalle con el puntero,
+     pero eso es comodidad; el camino por teclado es éste. -->
+<ng-template #patientCell let-claim>
+  <button
+    type="button"
+    class="received__open"
+    data-testid="received-claim-open"
+    [attr.aria-label]="
+      'Ver el detalle de la solicitud ' +
+      claim.claimIdentifier +
+      ' de ' +
+      (claim.patient.displayName ?? 'un paciente sin nombre registrado')
+    "
+    (click)="openDetail(claim)"
+  >
+    {{ claim.patient.displayName ?? 'Paciente sin nombre registrado' }}
+  </button>
+  <span class="received__secondary received__code">{{ claim.claimIdentifier }}</span>
+  @if (claim.patient.memberIdentifier) {
+    <span class="received__secondary">Afiliado {{ claim.patient.memberIdentifier }}</span>
+  }
+</ng-template>
+
+<ng-template #practitionerCell let-claim>
+  @if (claim.practitioner; as practitioner) {
+    <span class="received__primary">{{ practitioner.displayName }}</span>
+    @if (practitioner.specialty) {
+      <span class="received__secondary">{{ practitioner.specialty }}</span>
+    }
+  } @else {
+    <span class="received__absent">Sin atención asociada</span>
+  }
+</ng-template>
+
+<ng-template #serviceCell let-claim>
+  <span class="received__primary">{{ claim.service?.display ?? 'Sin servicio declarado' }}</span>
+  @if (claim.additionalServiceCount > 0) {
+    <span class="received__secondary">
+      y {{ claim.additionalServiceCount }}
+      {{ claim.additionalServiceCount === 1 ? 'servicio más' : 'servicios más' }}
+    </span>
+  }
+</ng-template>
+
+<ng-template #amountCell let-claim>
+  <span class="received__money">{{ amount(claim.billedTotal) }}</span>
+</ng-template>
+
+<ng-template #submittedCell let-claim>
+  @if (claim.submittedAt) {
+    <time [attr.datetime]="claim.submittedAt.toISOString()">
+      {{ claim.submittedAt.toLocaleDateString('es-BO') }}
+    </time>
+  } @else {
+    <span class="received__absent">Sin enviar</span>
+  }
+</ng-template>
+
+<ng-template #serviceDateCell let-claim>
+  @if (claim.serviceDate) {
+    <time [attr.datetime]="claim.serviceDate.toISOString().slice(0, 10)">
+      {{ claim.serviceDate.toLocaleDateString('es-BO') }}
+    </time>
+  } @else {
+    <span class="received__absent">Sin fecha</span>
+  }
+</ng-template>
+
+<ng-template #statusCell let-claim>
+  @if (claim.status) {
+    <app-status-seal [variant]="sealOf(claim)" [label]="claim.status.display" />
+  } @else {
+    <span class="received__absent">Sin estado</span>
+  }
+</ng-template>
+
+
+<!-- ---- detalle ------------------------------------------------------------ -->
+
+@if (claimOnView(); as claim) {
+  <app-content-dialog
+    heading="Detalle de la solicitud"
+    [description]="claim.claimIdentifier"
+    size="lg"
+    data-testid="received-claim-detail"
+    (dismissAttempt)="claimOnView.set(null)"
+    (closed)="claimOnView.set(null)"
+  >
+    <dl class="received__facts">
+      <div>
+        <dt>Solicitud</dt>
+        <dd>{{ claim.claimIdentifier }}</dd>
+      </div>
+      <div>
+        <dt>Paciente</dt>
+        <dd>{{ claim.patient.displayName ?? 'Sin nombre registrado' }}</dd>
+      </div>
+      <div>
+        <dt>Código de paciente</dt>
+        <dd>{{ claim.patient.patientCode ?? 'Sin registrar' }}</dd>
+      </div>
+      <div>
+        <dt>Afiliado</dt>
+        <dd>{{ claim.patient.memberIdentifier ?? 'Sin registrar' }}</dd>
+      </div>
+      <div>
+        <dt>Médico</dt>
+        <dd>
+          {{ claim.practitioner?.displayName ?? 'Sin atención asociada' }}
+          @if (claim.practitioner?.specialty; as specialty) {
+            · {{ specialty }}
+          }
+        </dd>
+      </div>
+      <div>
+        <dt>Prestador</dt>
+        <dd>{{ claim.providerName }}</dd>
+      </div>
+      <div>
+        <dt>Servicio prestado</dt>
+        <dd>
+          {{ claim.service?.display ?? 'Sin servicio declarado' }}
+          @if (claim.additionalServiceCount > 0) {
+            (+{{ claim.additionalServiceCount }})
+          }
+        </dd>
+      </div>
+      <div>
+        <dt>Monto solicitado</dt>
+        <dd>{{ money(claim.billedTotal) }}</dd>
+      </div>
+      <div>
+        <dt>Monto aprobado</dt>
+        <dd>{{ money(claim.approvedTotal) }}</dd>
+      </div>
+      <div>
+        <dt>Fecha de solicitud</dt>
+        <dd>{{ claim.submittedAt?.toLocaleDateString('es-BO') ?? 'Sin enviar' }}</dd>
+      </div>
+      <div>
+        <dt>Fecha de prestación</dt>
+        <dd>{{ claim.serviceDate?.toLocaleDateString('es-BO') ?? 'Sin fecha' }}</dd>
+      </div>
+      <div>
+        <dt>Plan</dt>
+        <dd>{{ claim.planName ?? 'Sin plan registrado' }}</dd>
+      </div>
+      <div>
+        <dt>Póliza</dt>
+        <dd>{{ claim.policyIdentifier ?? 'Sin póliza registrada' }}</dd>
+      </div>
+      <div>
+        <dt>Estado</dt>
+        <dd>{{ claim.status?.display ?? 'Sin estado' }}</dd>
+      </div>
+    </dl>
+  </app-content-dialog>
+}

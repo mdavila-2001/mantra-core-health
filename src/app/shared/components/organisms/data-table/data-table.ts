@@ -63,6 +63,7 @@ import {
   host: {
     class: 'data-table',
     '[class.data-table--constrained]': 'effectiveMaxHeight() !== null',
+    '[class.data-table--wrap-headers]': 'wrapHeaders()',
   },
 })
 export class DataTable<Row> {
@@ -118,6 +119,18 @@ export class DataTable<Row> {
    * omisión, apagado), no como una caja de alto cero.
    */
   readonly maxHeight = input<string | null>(null);
+
+  /**
+   * Deja que los encabezados partan en dos renglones también en escritorio.
+   *
+   * Opt-in, apagado por omisión. Existe porque en escritorio el encabezado es
+   * `nowrap` y, con varias columnas de rótulo largo («Fecha de prestación»,
+   * «Monto solicitado»), es él —no el dato— el que fija el ancho: medido en
+   * «Solicitudes recibidas», 1297 px de tabla en una caja de 1040. Partido,
+   * cada columna mide lo que su palabra más larga y la tabla entra sin scroll
+   * lateral y sin esconder columnas.
+   */
+  readonly wrapHeaders = input(false, { transform: booleanAttribute });
 
   /** El valor efectivo: una cadena vacía cae al por omisión, no a una caja de alto cero. */
   protected readonly effectiveMaxHeight = computed(() => this.maxHeight() || null);

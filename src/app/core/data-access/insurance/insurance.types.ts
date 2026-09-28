@@ -442,6 +442,58 @@ export interface ClaimDetail {
   readonly disputes: readonly ClaimDispute[];
 }
 
+/* ---- solicitudes recibidas por la aseguradora ----------------
+   La cara de QUIEN PAGA del mismo `insurance_claims`: lo que los prestadores le
+   presentaron a esta aseguradora. Todo sale de columnas que el modelo ya
+   declara —ninguna tabla nueva—:
+
+   - médico y fecha de prestación → `insurance_claims.encounter_id` →
+     `clinical.encounters` (profesional y comienzo de la atención);
+   - servicio prestado → `insurance_claim_lines.service_concept_id` (la línea
+     de mayor importe; el resto se cuenta en `additionalServiceCount`);
+   - prestador → `billing_provider_entity_id`.
+
+   Contrato: `docs/contracts/insurer-received-claims.md` (repo del front). La API todavía no
+   expone esta cara; hoy la sirve el simulador. */
+
+/** El médico que prestó el servicio. `null` si la solicitud no nace de una atención. */
+export interface ReceivedClaimPractitioner {
+  readonly id: string;
+  readonly displayName: string;
+  /** Especialidad principal, como la muestra el directorio. */
+  readonly specialty: string | null;
+}
+
+/** Una solicitud recibida por la aseguradora, lista para la tabla. */
+export interface ReceivedClaim {
+  readonly id: string;
+  readonly claimIdentifier: string;
+  readonly patient: ClaimPatient;
+  readonly practitioner: ReceivedClaimPractitioner | null;
+  /** Quien factura: el consultorio o establecimiento del médico. */
+  readonly providerName: string;
+  /** El servicio de mayor importe de la solicitud. */
+  readonly service: InsuranceConcept | null;
+  /** Cuántos servicios más trae la solicitud, además de `service`. */
+  readonly additionalServiceCount: number;
+  readonly billedTotal: Money;
+  /** `null` mientras no haya dictamen. **No es cero.** */
+  readonly approvedTotal: Money | null;
+  readonly submittedAt: Date | null;
+  /** Día de la atención: es una fecha, no un instante. */
+  readonly serviceDate: Date | null;
+  readonly policyIdentifier: string | null;
+  readonly planName: string | null;
+  readonly status: InsuranceConcept | null;
+}
+
+/** Listado completo de solicitudes recibidas en la ventana consultada. */
+export interface ReceivedClaimList {
+  readonly items: readonly ReceivedClaim[];
+  /** `true` si el servidor recortó al tope: hay más solicitudes que las recibidas. */
+  readonly truncated: boolean;
+}
+
 /* ============================================================================
    Campañas preventivas de la aseguradora (Tarea 4 · M-06)
 

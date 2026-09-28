@@ -730,7 +730,7 @@ describe('NavigationService', () => {
     // señal es el tipo de la organización activa (`tenantTypes` del token,
     // claim nuevo de este mismo carril), no un rol: la cuenta sigue siendo
     // `USER` a secas.
-    it('sólo ve lo que el registro de procesos le pide: dos renglones fijos y cuatro de Administración', () => {
+    it('sólo ve lo que el registro de procesos le pide: dos renglones fijos y cinco de Administración', () => {
       abrirSesion(['USER'], ['t-1'], { 't-1': 'PAYER' });
 
       expect(rutasDelMenu()).toEqual([
@@ -738,6 +738,8 @@ describe('NavigationService', () => {
         '/notification-center',
         '/administration/insurance',
         '/administration/insurance-analytics',
+        // 2026-09-27: «Solicitudes recibidas», pedida por la propietaria.
+        '/administration/received-claims',
         // Tarea 4 · M-06: el «Módulo de promociones» del registro de procesos.
         '/administration/insurance-campaigns',
         '/administration/my-organization',
@@ -773,6 +775,7 @@ describe('NavigationService', () => {
         '/messaging',
         '/administration/insurance',
         '/administration/insurance-analytics',
+        '/administration/received-claims',
         '/administration/my-organization',
       ]) {
         expect(alcanzables, ruta).toContain(ruta);
