@@ -177,6 +177,32 @@ export interface ProviderNetwork {
   readonly memberCount: number;
 }
 
+/**
+ * Una red de la aseguradora en la que atiende un profesional.
+ *
+ * Las aseguradoras bolivianas publican su red **por plan** («AFI GOLD»,
+ * «SALUD FLEXIBLE»), así que el nombre de la red es el del plan que la
+ * persona tiene en su carnet.
+ */
+export interface PractitionerNetwork {
+  readonly id: string;
+  readonly name: string;
+}
+
+/**
+ * Una aseguradora con la que trabaja un profesional, con sus redes.
+ *
+ * Sale de `insurance.network_provider_memberships` activas del profesional,
+ * agrupadas por la aseguradora dueña de cada red (`provider_networks →
+ * insurance_carriers`). Es la aseguradora la que da de alta al prestador en
+ * su red (UC-26-01): el profesional no lo declara de sí mismo.
+ */
+export interface PractitionerInsuranceCarrier {
+  readonly carrierId: string;
+  readonly carrierName: string;
+  readonly networks: readonly PractitionerNetwork[];
+}
+
 /** Ficha de la aseguradora (`GET /insurance-carriers/:id`). */
 export interface CarrierDetail extends CarrierSummary {
   readonly products: readonly Product[];

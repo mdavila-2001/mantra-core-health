@@ -72,6 +72,15 @@ export interface ProfesionalSimulado {
    */
   readonly origen?: 'RED_ASEGURADORA' | 'USUARIO_PROPIETARIO' | 'DEMO';
   /**
+   * Las redes de aseguradora en las que atiende, con sus planes, tal como las
+   * publica cada aseguradora. Sólo `RED_ASEGURADORA`: al resto nadie le dio de
+   * alta en una red, y ausente se lee como «sin convenios informados».
+   */
+  readonly insurerNetworks?: readonly {
+    readonly insurer: string;
+    readonly plans: readonly string[];
+  }[];
+  /**
    * Los registros que declara la planilla de usuarios médicos, tal cual.
    * Sólo `USUARIO_PROPIETARIO`.
    */
