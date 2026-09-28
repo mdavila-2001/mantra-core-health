@@ -430,6 +430,40 @@
       </p>
     </section>
 
+    <!-- ---- dictamen y adjudicación de la aseguradora ------------------ -->
+    @if (isCarrier()) {
+      <section class="claim__adjudication-actions" aria-labelledby="claim-carrier-actions" data-testid="carrier-adjudication-panel">
+        <h2 id="claim-carrier-actions" class="claim__section-title">Dictamen de cobertura</h2>
+        <p class="claim__note">
+          Como representante o auditor médico de la aseguradora, evaluá las prestaciones presentadas y emití el dictamen correspondiente.
+        </p>
+
+        <div class="claim__action-buttons">
+          <button
+            app-button
+            variant="primary"
+            type="button"
+            data-testid="claim-approve-button"
+            [disabled]="adjudicating()"
+            (clicked)="approveClaim()"
+          >
+            Aprobar cobertura total
+          </button>
+
+          <button
+            app-button
+            variant="danger"
+            type="button"
+            data-testid="claim-reject-button"
+            [disabled]="adjudicating()"
+            (clicked)="openRejectModal()"
+          >
+            Rechazar solicitud
+          </button>
+        </div>
+      </section>
+    }
+
     <!-- ---- reclamar ----------------------------------------------------- -->
     <section class="claim__actions" aria-labelledby="claim-dispute">
       <h2 id="claim-dispute" class="claim__section-title">Reclamo</h2>
@@ -458,21 +492,23 @@
         <p class="claim__note">Sin reclamos presentados.</p>
       }
 
-      <button
-        app-button
-        variant="outline"
-        type="button"
-        data-testid="claim-dispute-button"
-        [disabled]="claiming()"
-        (clicked)="claimAgain()"
-      >
-        {{ detail.header.hasOpenDispute ? 'Reclamar otra vez' : 'Reclamar' }}
-      </button>
+      @if (!isCarrier()) {
+        <button
+          app-button
+          variant="outline"
+          type="button"
+          data-testid="claim-dispute-button"
+          [disabled]="claiming()"
+          (clicked)="claimAgain()"
+        >
+          {{ detail.header.hasOpenDispute ? 'Reclamar otra vez' : 'Reclamar' }}
+        </button>
 
-      <p class="claim__note">
-        El dictamen anterior no se borra ni se modifica: las versiones son
-        inmutables y el reclamo es una fila nueva que las referencia.
-      </p>
+        <p class="claim__note">
+          El dictamen anterior no se borra ni se modifica: las versiones son
+          inmutables y el reclamo es una fila nueva que las referencia.
+        </p>
+      }
     </section>
 
     <!-- ---- historial ---------------------------------------------------- -->
@@ -495,6 +531,64 @@
           }
         </ul>
       </section>
+    }
+
+    <!-- ---- modal de rechazo con cláusula contractual y fundamentación ---- -->
+    @if (rejectModalOpen()) {
+      <app-content-dialog
+        heading="Rechazar solicitud de cobertura"
+        [description]="'Solicitud ' + detail.header.claimIdentifier"
+        size="md"
+        (closed)="rejectModalOpen.set(false)"
+      >
+        <form class="claim__reject-form" (submit)="$event.preventDefault(); submitRejection()">
+          <app-form-field label="Cláusula contractual de exclusión" controlId="reject-clause">
+            <app-select
+              id="reject-clause"
+              data-testid="reject-clause-select"
+              [options]="clauseOptions"
+              [value]="selectedClause()"
+              (valueChange)="selectedClause.set($event)"
+            />
+          </app-form-field>
+
+          <app-form-field
+            label="Fundamentación técnica circunstanciada"
+            controlId="reject-rationale"
+            hint="Detalle médico o legal que fundamenta el rechazo para conocimiento del prestador y asegurado."
+          >
+            <app-textarea
+              id="reject-rationale"
+              data-testid="reject-rationale-input"
+              [value]="denialRationale()"
+              (valueChange)="denialRationale.set($event)"
+              [rows]="4"
+              [maxLength]="1000"
+              placeholder="Explicá el motivo técnico o legal de la denegación..."
+            />
+          </app-form-field>
+
+          <div class="claim__modal-actions">
+            <button
+              app-button
+              variant="outline"
+              type="button"
+              (clicked)="rejectModalOpen.set(false)"
+            >
+              Cancelar
+            </button>
+            <button
+              app-button
+              variant="danger"
+              type="submit"
+              data-testid="confirm-reject-button"
+              [disabled]="adjudicating()"
+            >
+              Confirmar rechazo
+            </button>
+          </div>
+        </form>
+      </app-content-dialog>
     }
   }
 </app-view-state-host>

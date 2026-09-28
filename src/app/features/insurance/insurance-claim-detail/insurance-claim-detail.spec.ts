@@ -48,6 +48,8 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 
+import { AuthService } from '../../../core/auth/auth.service';
+import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
 import { InsuranceClaimDetail } from './insurance-claim-detail';
 
 const CLAIM_ID = '11111111-1111-4111-8111-111111111111';
@@ -477,3 +479,89 @@ describe('InsuranceClaimDetail · liquidación', () => {
     ).not.toBeNull();
   });
 });
+
+describe('InsuranceClaimDetail · acciones de dictamen para la aseguradora (PAYER)', () => {
+  let fixture: ComponentFixture<InsuranceClaimDetail>;
+  let http: HttpTestingController;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        {
+          provide: ActivatedRoute,
+          useValue: { paramMap: of(convertToParamMap({ claimId: CLAIM_ID })) },
+        },
+        {
+          provide: AuthService,
+          useValue: {
+            activeTenantType: () => 'PAYER',
+          },
+        },
+      ],
+    });
+    http = TestBed.inject(HttpTestingController);
+    fixture = TestBed.createComponent(InsuranceClaimDetail);
+    fixture.detectChanges();
+    http.expectOne(`/insurance-claims/${CLAIM_ID}`).flush(detalleWire());
+    fixture.detectChanges();
+  });
+
+  afterEach(() => http.verify());
+
+  it('muestra el panel de dictamen de cobertura con botones de aprobación y rechazo', () => {
+    const el: HTMLElement = fixture.nativeElement;
+    const panel = el.querySelector('[data-testid="carrier-adjudication-panel"]');
+    expect(panel).not.toBeNull();
+    expect(el.querySelector('[data-testid="claim-approve-button"]')).not.toBeNull();
+    expect(el.querySelector('[data-testid="claim-reject-button"]')).not.toBeNull();
+  });
+
+  it('no muestra el botón de Reclamar al representante de la aseguradora', () => {
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.querySelector('[data-testid="claim-dispute-button"]')).toBeNull();
+  });
+
+  it('aprobar cobertura solicita confirmación y manda POST a adjudications y eob', async () => {
+    const dialogs = TestBed.inject(DialogService);
+    vi.spyOn(dialogs, 'confirm').mockResolvedValue(true);
+
+    const approveBtn: HTMLButtonElement = fixture.nativeElement.querySelector(
+      '[data-testid="claim-approve-button"]',
+    );
+    approveBtn.click();
+    await fixture.whenStable();
+
+    const adjReq = http.expectOne(`/insurance-claims/${CLAIM_ID}/adjudications`);
+    expect(adjReq.request.method).toBe('POST');
+    expect(adjReq.request.body.outcome).toBe('APPROVED');
+    expect(adjReq.request.body.totalApprovedAmount).toBe('300.00');
+    adjReq.flush({ id: 'adj-1' });
+
+    const eobReq = http.expectOne(`/insurance-claims/${CLAIM_ID}/eob`);
+    expect(eobReq.request.method).toBe('POST');
+    eobReq.flush({ id: 'eob-1' });
+
+    // Se recarga el detalle tras adjudicar y publicar EOB
+    http.expectOne(`/insurance-claims/${CLAIM_ID}`).flush(detalleWire());
+  });
+
+  it('rechazar abre el modal para fundamentación y cláusula contractual', () => {
+    const rejectBtn: HTMLButtonElement = fixture.nativeElement.querySelector(
+      '[data-testid="claim-reject-button"]',
+    );
+    rejectBtn.click();
+    fixture.detectChanges();
+
+    const select = fixture.nativeElement.querySelector('[data-testid="reject-clause-select"]');
+    const textarea = fixture.nativeElement.querySelector('[data-testid="reject-rationale-input"]');
+    const confirmBtn = fixture.nativeElement.querySelector('[data-testid="confirm-reject-button"]');
+
+    expect(select).not.toBeNull();
+    expect(textarea).not.toBeNull();
+    expect(confirmBtn).not.toBeNull();
+  });
+});
+

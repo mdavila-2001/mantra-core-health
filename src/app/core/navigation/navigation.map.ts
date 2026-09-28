@@ -750,9 +750,11 @@ export const APP_SECTIONS: readonly AppSection[] = [
     label: 'Solicitudes de seguro',
     group: 'Administración',
     icon: 'clipboard',
-    roles: ['BILLING_OPERATOR', 'SECURITY_ADMIN'],
+    roles: ['BILLING_OPERATOR', 'SECURITY_ADMIN', ANY_ROLE],
+    requiresTenant: true,
+    hiddenFor: ['PATIENT', 'PRACTITIONER'],
     availability: 'disponible',
-    summary: 'Lo que presentaste a cada aseguradora, con lo que aprobó.',
+    summary: 'Solicitudes de cobertura: presentadas por prestadores y recibidas por la aseguradora.',
     module: 'M26 insurance',
   },
   {

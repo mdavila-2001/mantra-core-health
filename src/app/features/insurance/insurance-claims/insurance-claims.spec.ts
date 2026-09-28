@@ -3,6 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 
+import { AuthService } from '../../../core/auth/auth.service';
 import { InsuranceClaims } from './insurance-claims';
 
 const CLAIM_ID = '11111111-1111-4111-8111-111111111111';
@@ -179,4 +180,61 @@ describe('InsuranceClaims', () => {
 
     expect(status()).toBe('error');
   });
+
+  describe('cuando la sesión pertenece a una aseguradora (PAYER)', () => {
+    let carrierFixture: ComponentFixture<InsuranceClaims>;
+
+    beforeEach(() => {
+      TestBed.resetTestingModule();
+      TestBed.configureTestingModule({
+        providers: [
+          provideHttpClient(),
+          provideHttpClientTesting(),
+          provideRouter([]),
+          {
+            provide: AuthService,
+            useValue: {
+              activeTenantType: () => 'PAYER',
+            },
+          },
+        ],
+      });
+      http = TestBed.inject(HttpTestingController);
+      carrierFixture = TestBed.createComponent(InsuranceClaims);
+      carrierFixture.detectChanges();
+      http.expectOne('/insurance-carriers').flush({ items: [], count: 0 });
+    });
+
+    it('muestra el título y subtítulo de la bandeja de entrada de la aseguradora', () => {
+      http.expectOne((req) => req.url === '/insurance-claims').flush({ items: [claimWire()], nextCursor: null });
+      carrierFixture.detectChanges();
+
+      const el: HTMLElement = carrierFixture.nativeElement;
+      expect(el.textContent).toContain('Bandeja de solicitudes recibidas');
+      expect(el.textContent).toContain('Solicitudes presentadas por prestadores');
+    });
+
+    it('oculta el filtro selector de aseguradora porque opera en su propia bandeja', () => {
+      http.expectOne((req) => req.url === '/insurance-claims').flush({ items: [], nextCursor: null });
+      carrierFixture.detectChanges();
+
+      const filter = carrierFixture.nativeElement.querySelector('[data-testid="claims-carrier-filter"]');
+      expect(filter).toBeNull();
+    });
+
+    it('omite la columna redundante de aseguradora en la tabla', () => {
+      const componentInstance = carrierFixture.componentInstance;
+      const columns = (componentInstance as unknown as { columns: () => readonly { key: string }[] }).columns();
+      expect(columns.some((c) => c.key === 'carrierName')).toBe(false);
+    });
+
+    it('muestra estado vacío adaptado a la aseguradora', () => {
+      http.expectOne((req) => req.url === '/insurance-claims').flush({ items: [], nextCursor: null });
+      carrierFixture.detectChanges();
+
+      const el: HTMLElement = carrierFixture.nativeElement;
+      expect(el.textContent).toContain('Todavía no se recibieron solicitudes de cobertura');
+    });
+  });
 });
+
