@@ -135,6 +135,7 @@
 }
 
 .plan__aviso:focus-visible,
+.plan__cierre:focus-visible,
 .plan__pago-titulo:focus-visible {
   outline: none;
   box-shadow: var(--focus-ring);

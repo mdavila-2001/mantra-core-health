@@ -25,7 +25,6 @@ import type {
 import { errorToViewState } from '../../../../../core/http/error-to-view-state';
 import { dataOf, loading, ready } from '../../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../../core/view-state/view-state.types';
-import { ToastService } from '../../../../../shared/components/molecules/toast/toast.service';
 import { AppButton } from '../../../../../shared/components/atoms/button/button';
 import { Chip } from '../../../../../shared/components/atoms/chip/chip';
 import { Alert } from '../../../../../shared/components/molecules/alert/alert';
@@ -41,6 +40,7 @@ import {
   ACCION_COMPLETA,
   ROTULO_DE_ACCION,
   saldoDeCobro,
+  fechaYHora,
   sinMarcaDeCatalogo,
   tipoDeServicio,
 } from '../../../../billing/cobros-en-pantalla';
@@ -90,7 +90,6 @@ export class CobrosDelPaciente {
   private readonly destroyRef = inject(DestroyRef);
   private readonly injector = inject(Injector);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
-  private readonly toast = inject(ToastService);
 
   readonly patientProfileId = input.required<string>();
 
@@ -98,6 +97,13 @@ export class CobrosDelPaciente {
   private readonly intento = signal(0);
 
   protected readonly estado = signal<ViewState<CobrosDeLaPersona>>(loading());
+  /**
+   * S7 · cuándo se leyó por última vez lo que se ve, si una relectura falló.
+   * Se dice dentro del bloque: el aviso flotante queda debajo del modal.
+   */
+  protected readonly atrasadoDesde = signal<Date | null>(null);
+  private ultimaLectura: Date | null = null;
+  protected readonly fechaYHora = fechaYHora;
   protected readonly datos = computed(() => dataOf(this.estado()));
   protected readonly cobros = computed(() => this.datos()?.cobros ?? []);
   protected readonly filas = computed(() => ready(this.cobros()));
@@ -176,9 +182,10 @@ export class CobrosDelPaciente {
             startWith(this.datos() === null ? loading() : this.estado()),
             catchError((error: unknown) => {
               // Si ya había datos, una relectura fallida no los borra: el modal
-              // de la factura que esté abierto cuelga de ellos. Se avisa y listo.
+              // de la factura que esté abierto cuelga de ellos. Se dice cuándo
+              // se leyeron, en el propio bloque.
               if (this.datos() !== null) {
-                this.toast.warning('No pudimos releer los cobros. Lo que ves puede estar atrasado.', 'Pagos');
+                this.atrasadoDesde.set(this.ultimaLectura);
                 return of(this.estado());
               }
               return of(errorToViewState<CobrosDeLaPersona>(error));
@@ -187,7 +194,13 @@ export class CobrosDelPaciente {
         ),
         takeUntilDestroyed(this.destroyRef),
       )
-      .subscribe((estado) => this.estado.set(estado));
+      .subscribe((estado) => {
+        if (estado.status === 'ready' && estado !== this.estado()) {
+          this.ultimaLectura = new Date();
+          this.atrasadoDesde.set(null);
+        }
+        this.estado.set(estado);
+      });
   }
 
   protected recargar(): void {

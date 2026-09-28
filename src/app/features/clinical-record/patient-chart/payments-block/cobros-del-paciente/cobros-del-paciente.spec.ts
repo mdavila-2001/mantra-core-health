@@ -96,7 +96,7 @@ describe('CobrosDelPaciente', () => {
     montar(unico.patientProfileId);
     responder(unico.patientProfileId);
 
-    expect(botonDe(unico).textContent?.trim()).toBe('Facturar');
+    expect(botonDe(unico).textContent?.trim()).toBe('Cobrar');
     expect(botonDe(unico).getAttribute('aria-label')).toMatch(/^Cobrar y facturar: /);
     botonDe(unico).click();
     fixture.detectChanges();
@@ -137,6 +137,8 @@ describe('CobrosDelPaciente', () => {
 
     expect(el('cobros-tabla')).not.toBeNull();
     expect(el('cobros-error')).toBeNull();
+    // S7: se dice, dentro del bloque, que lo que se ve puede estar atrasado.
+    expect(el('cobros-atrasado')?.textContent).toContain('puede estar atrasado');
   });
 
   it('volver del plan devuelve la lista', () => {

@@ -31,11 +31,15 @@
       data-testid="plan-tabla"
     />
 
+    <!-- Saldado, lo dice el cierre de abajo: dos avisos verdes seguidos repetían lo mismo.
+         Sin rol propio: `app-alert` ya es la región viva. -->
     @if (ultimaNota(); as aviso) {
-      <!-- tabindex -1: recibe el foco después de registrar el pago. -->
-      <div #avisoDeNota class="plan__aviso" tabindex="-1" role="status" data-testid="plan-ultima-nota">
-        <app-alert tone="success" title="Pago registrado (SIMULADO)">{{ aviso }}</app-alert>
-      </div>
+      @if (!p.complete) {
+        <!-- tabindex -1: recibe el foco después de registrar el pago. -->
+        <div #avisoDeNota class="plan__aviso" tabindex="-1" data-testid="plan-ultima-nota">
+          <app-alert tone="success" title="Pago registrado (SIMULADO)">{{ aviso }}</app-alert>
+        </div>
+      }
     }
 
     @if (pagando(); as instancia) {
@@ -71,7 +75,7 @@
         }
         <div class="plan__acciones">
           <button app-button type="submit" [isLoading]="enviando()" [disabled]="enviando()" data-testid="plan-confirmar-pago">
-            Registrar pago y emitir nota de venta
+            Emitir nota de venta
           </button>
           <button app-button type="button" variant="ghost" [disabled]="enviando()" (clicked)="cancelarPago()">
             Cancelar
@@ -81,7 +85,8 @@
     }
 
     @if (p.complete) {
-      <div class="plan__cierre" data-testid="plan-saldado">
+      <!-- tabindex -1: recibe el foco cuando el último pago salda el plan. -->
+      <div #cierre class="plan__cierre" tabindex="-1" data-testid="plan-saldado">
         @if (vigente()) {
           <p class="plan__nota">
             Plan saldado y facturado: la factura N.º {{ cobro().latestInvoice?.invoiceNumber }} cubre el total del
@@ -92,8 +97,13 @@
           }
         } @else {
           <app-alert tone="success" title="Plan saldado">
-            Ya no quedan instancias por pagar. Ahora corresponde la factura por el total del servicio,
-            {{ bs(p.expectedTotal) }}, emitida contra el SIAT simulado.
+            @if (ultimaNota(); as aviso) {
+              {{ aviso }}
+            } @else {
+              Ya no quedan instancias por pagar.
+            }
+            Corresponde la factura por el total del servicio, {{ bs(p.expectedTotal) }}, emitida contra el
+            SIAT simulado.
           </app-alert>
           @if (ofrecerFactura()) {
             <button app-button (clicked)="facturar.emit()" data-testid="plan-generar-factura">Generar factura</button>

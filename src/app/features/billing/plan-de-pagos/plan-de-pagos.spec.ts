@@ -138,4 +138,18 @@ describe('PlanDePagos', () => {
     el('plan-generar-factura')!.click();
     expect(facturar).toBe(1);
   });
+
+  it('al pasar a otro cobro descarta el formulario abierto: no paga una instancia del plan anterior', () => {
+    montar(cobro);
+    botonDePago('Reconsulta 1').click();
+    fixture.detectChanges();
+    expect(el('plan-formulario-de-pago')).not.toBeNull();
+
+    const otro = motor.listarCobros().find((c) => c.plan !== null && c.id !== cobro.id)!;
+    fixture.componentRef.setInput('cobro', otro);
+    fixture.detectChanges();
+
+    expect(el('plan-formulario-de-pago')).toBeNull();
+    http.expectNone((r) => r.url.includes('/instances/'));
+  });
 });

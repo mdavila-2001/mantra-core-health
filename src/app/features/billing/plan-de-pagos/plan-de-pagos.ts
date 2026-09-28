@@ -4,12 +4,14 @@ import {
   Component,
   computed,
   DestroyRef,
+  effect,
   ElementRef,
   inject,
   Injector,
   input,
   output,
   signal,
+  untracked,
   viewChild,
   type TemplateRef,
 } from '@angular/core';
@@ -147,11 +149,25 @@ export class PlanDePagos {
 
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly avisoDeNota = viewChild<ElementRef<HTMLElement>>('avisoDeNota');
+  private readonly cierre = viewChild<ElementRef<HTMLElement>>('cierre');
+  private readonly cobroId = computed(() => this.cobro().id);
 
   constructor() {
     this.formulario.controls.amount.valueChanges
       .pipe(takeUntilDestroyed())
       .subscribe(() => this.errorDeMonto.set(null));
+    // Otro cobro, otro plan: en /billing el mismo componente pasa de un cobro
+    // a otro sin recrearse, y un formulario abierto habría pagado una
+    // instancia del plan anterior contra el cobro nuevo.
+    effect(() => {
+      this.cobroId();
+      untracked(() => {
+        this.pagando.set(null);
+        this.ultimaNota.set(null);
+        this.error.set(null);
+        this.errorDeMonto.set(null);
+      });
+    });
   }
 
   protected abrirPago(instancia: SimulatedPlanInstance): void {
@@ -210,8 +226,9 @@ export class PlanDePagos {
           this.ultimaNota.set(aviso);
           this.toast.success(aviso, 'Pago registrado (SIMULADO)');
           this.actualizado.emit(cobro);
-          // El formulario (y el botón con el foco) se fue: el foco pasa al aviso.
-          afterNextRender(() => this.avisoDeNota()?.nativeElement.focus(), { injector: this.injector });
+          // El formulario (y el botón con el foco) se fue: el foco pasa al aviso,
+          // o al cierre si el plan quedó saldado.
+          afterNextRender(() => (this.avisoDeNota() ?? this.cierre())?.nativeElement.focus(), { injector: this.injector });
         },
         error: (error: unknown) => {
           this.enviando.set(false);

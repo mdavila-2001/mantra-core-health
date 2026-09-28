@@ -48,6 +48,13 @@
       </app-alert>
     }
     @default {
+      @if (atrasadoDesde(); as desde) {
+        <!-- S7: el dato puede estar atrasado, y se dice de cuándo es. -->
+        <app-alert tone="warning" title="Lo que ves puede estar atrasado" data-testid="cobros-atrasado">
+          No pudimos releer los cobros; son los leídos el {{ fechaYHora(desde.toISOString()) }}.
+          <button app-button variant="outline" type="button" (clicked)="recargar()">Reintentar</button>
+        </app-alert>
+      }
       @if (planAbierto(); as cobro) {
         <!-- ── El plan de un servicio con reconsultas ─────────────────────── -->
         <div class="cobros__plan">

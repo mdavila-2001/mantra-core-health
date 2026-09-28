@@ -93,7 +93,7 @@ export function accionDeCobro(cobro: SimulatedCharge): AccionDeCobro {
 /** Lo que dice el botón: corto, porque en el teléfono comparte fila con el servicio. */
 export const ROTULO_DE_ACCION: Readonly<Record<AccionDeCobro, string>> = {
   VER_PLAN: 'Ver plan',
-  COBRAR_Y_FACTURAR: 'Facturar',
+  COBRAR_Y_FACTURAR: 'Cobrar',
   FACTURAR: 'Facturar',
   VER_FACTURA: 'Ver factura',
 };

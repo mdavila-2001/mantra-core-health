@@ -85,7 +85,8 @@ export const ROTULO_DE_ESTADO: Readonly<Record<EstadoDeCobro, string>> = {
 export const TONO_DE_ESTADO: Readonly<Record<EstadoDeCobro, ChipVariant>> = {
   SIN_PAGO: 'neutral',
   PAGO_PARCIAL: 'warning',
-  SIN_FACTURAR: 'info',
+  // Una acción pendiente, no un logro: con el tono de éxito se leía igual que «Pagada».
+  SIN_FACTURAR: 'warning',
   VALIDATED: 'success',
   OBSERVED: 'warning',
   REJECTED: 'error',

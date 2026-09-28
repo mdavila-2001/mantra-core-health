@@ -223,6 +223,7 @@ test('servicio de una sola instancia sin cobrar: el modal cobra y factura', asyn
   // Sin medio de pago no sale nada: lo pide.
   await page.getByTestId('factura-confirmar').click();
   await expect(page.getByTestId('factura-formulario')).toContainText('Elegí cómo pagó');
+  await medir(page, '8a-falta-medio-de-pago', 'factura-formulario');
   await page.getByTestId('factura-formulario').getByLabel('Medio de pago').selectOption({ index: 1 });
 
   await page.getByTestId('factura-confirmar').click();
@@ -239,6 +240,50 @@ test('servicio de una sola instancia sin cobrar: el modal cobra y factura', asyn
   await page.getByRole('button', { name: /^Ver factura: Electrocardiograma/ }).click();
   await expect(page.getByTestId('factura-emitida')).toBeVisible();
   await expect(page.getByTestId('factura-formulario')).toHaveCount(0);
+
+  expect(errores, 'Consola del navegador').toEqual([]);
+});
+
+test('/billing: un cobro con plan se paga por instancia y, saldado, ofrece la factura', async ({ page }) => {
+  test.setTimeout(180_000);
+  const errores: string[] = [];
+  page.on('pageerror', (e) => errores.push(e.message));
+  page.on('console', (m) => {
+    if (m.type() === 'error' && !m.text().includes('Content Security Policy')) errores.push(m.text());
+  });
+
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await entrarAlSimulador(page, 'admin', BASE);
+  await page.goto(`${BASE}/billing`);
+  const fila = page.getByTestId('fila-de-cobro').filter({ hasText: 'Pago parcial' }).first();
+  await expect(fila).toBeVisible();
+  const cobroId = await fila.locator('[data-charge-id]').getAttribute('data-charge-id');
+  await fila.locator('[data-charge-id]').click();
+
+  const plan = page.getByTestId('plan-de-pagos');
+  await expect(plan).toBeVisible();
+  await expect(page.getByTestId('formulario-de-pago')).toHaveCount(0);
+  await expect(page.getByTestId('formulario-de-factura')).toHaveCount(0);
+  await expect(page.getByTestId('plan-generar-factura')).toHaveCount(0);
+  await medir(page, '10-billing-plan', 'plan-de-pagos');
+
+  // Cada instancia con saldo, por su saldo.
+  for (let i = 0; i < 3; i++) {
+    const pendiente = plan.getByRole('button', { name: /^Registrar pago de / }).first();
+    if ((await pendiente.count()) === 0) break;
+    await pendiente.click();
+    await page.getByTestId('plan-confirmar-pago').click();
+    await expect(page.getByTestId('plan-formulario-de-pago')).toHaveCount(0);
+  }
+  await expect(page.getByTestId('plan-saldado')).toBeVisible();
+  await expect(page.getByTestId('formulario-de-factura')).toBeVisible();
+
+  // Recarga: el plan sigue saldado y el cobro ofrece su formulario de factura.
+  await page.reload();
+  await page.locator(`[data-charge-id="${cobroId}"]`).click();
+  await expect(page.getByTestId('plan-saldado')).toBeVisible();
+  await expect(page.getByTestId('formulario-de-factura')).toBeVisible();
+  await medir(page, '11-billing-plan-saldado', 'formulario-de-factura');
 
   expect(errores, 'Consola del navegador').toEqual([]);
 });
