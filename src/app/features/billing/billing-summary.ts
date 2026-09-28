@@ -11,14 +11,17 @@ import type {
 } from '../../core/data-access/billing-simulated/billing-simulated.types';
 import type { ChipVariant } from '../../shared/components/atoms/chip/chip.types';
 
-/** Estado de facturación de un cobro, visto desde la pantalla. */
-export type EstadoDeCobro = 'SIN_PAGO' | 'SIN_FACTURAR' | SimulatedInvoiceStatus;
+/**
+ * Estado de facturación de un cobro, visto desde la pantalla. `PAGO_PARCIAL`
+ * es un plan con notas de venta y saldo: todavía no se puede facturar.
+ */
+export type EstadoDeCobro = 'SIN_PAGO' | 'PAGO_PARCIAL' | 'SIN_FACTURAR' | SimulatedInvoiceStatus;
 
 export type FiltroDeOrigen = 'TODOS' | ChargeSource;
 export type FiltroDeEstado = 'TODOS' | EstadoDeCobro;
 
 export interface ResumenDeCobros {
-  /** Suma de los pagos de los cobros visibles, en texto decimal. */
+  /** Suma de lo pagado en los cobros visibles —notas de venta incluidas—, en texto decimal. */
   readonly montoCobrado: string;
   /** Pacientes distintos con al menos un pago entre los cobros visibles. */
   readonly pacientesConPago: number;
@@ -35,16 +38,21 @@ function importe(c: number): string {
 }
 
 export function estadoDeCobro(cobro: SimulatedCharge): EstadoDeCobro {
-  if (cobro.payment === null) return 'SIN_PAGO';
+  if (cobro.payment === null) return cobro.plan !== null && centavos(cobro.plan.paidTotal) > 0 ? 'PAGO_PARCIAL' : 'SIN_PAGO';
   return cobro.latestInvoice?.status ?? 'SIN_FACTURAR';
 }
 
+/** Lo que ya entró por un cobro: su pago, o las notas de venta de su plan. */
+export function pagadoDeCobro(cobro: SimulatedCharge): string {
+  return cobro.payment?.amount ?? cobro.plan?.paidTotal ?? '0.00';
+}
+
 export function resumenDeCobros(cobros: readonly SimulatedCharge[]): ResumenDeCobros {
-  const pagados = cobros.filter((c) => c.payment !== null);
+  const conPago = cobros.filter((c) => centavos(pagadoDeCobro(c)) > 0);
   return {
-    montoCobrado: importe(pagados.reduce((suma, c) => suma + centavos(c.payment!.amount), 0)),
-    pacientesConPago: new Set(pagados.map((c) => c.patientProfileId)).size,
-    cobrosPendientes: cobros.length - pagados.length,
+    montoCobrado: importe(conPago.reduce((suma, c) => suma + centavos(pagadoDeCobro(c)), 0)),
+    pacientesConPago: new Set(conPago.map((c) => c.patientProfileId)).size,
+    cobrosPendientes: cobros.filter((c) => c.payment === null).length,
   };
 }
 
@@ -66,6 +74,7 @@ export const ROTULO_DE_ORIGEN: Readonly<Record<ChargeSource, string>> = {
 /** Los estados fiscales llevan «(SIMULADO)»: ninguno viene del SIN. */
 export const ROTULO_DE_ESTADO: Readonly<Record<EstadoDeCobro, string>> = {
   SIN_PAGO: 'Sin pago',
+  PAGO_PARCIAL: 'Pago parcial · nota de venta',
   SIN_FACTURAR: 'Sin facturar',
   VALIDATED: 'Validada (SIMULADO)',
   OBSERVED: 'Observada (SIMULADO)',
@@ -75,7 +84,9 @@ export const ROTULO_DE_ESTADO: Readonly<Record<EstadoDeCobro, string>> = {
 
 export const TONO_DE_ESTADO: Readonly<Record<EstadoDeCobro, ChipVariant>> = {
   SIN_PAGO: 'neutral',
-  SIN_FACTURAR: 'info',
+  PAGO_PARCIAL: 'warning',
+  // Una acción pendiente: con el tono informativo se leía igual que «Pagada».
+  SIN_FACTURAR: 'warning',
   VALIDATED: 'success',
   OBSERVED: 'warning',
   REJECTED: 'error',

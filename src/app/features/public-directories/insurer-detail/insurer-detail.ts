@@ -141,7 +141,7 @@ const COLUMNAS: readonly ColumnDef<FilaDeClausula>[] = [
  *   a los datos de la aseguradora: es la acción principal de la ficha.
  *
  * El catálogo sale de `GET /insurance-marketplace/insurers/:slug`, el mismo que
- * administra la aseguradora en su consola (P46: hoy sólo en la maqueta).
+ * administra la aseguradora en su consola (P48: hoy sólo en la maqueta).
  */
 @Component({
   selector: 'app-insurer-detail',

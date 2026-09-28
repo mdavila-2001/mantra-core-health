@@ -7,7 +7,7 @@ import { pendienteDeAseguradoras } from './insurance.handlers';
 import { PRACTICAS } from './practice.handlers';
 
 /* ============================================================================
-    La contabilidad simple del doctor (P47, 28/09/2026).
+    La contabilidad simple del doctor (P49, 28/09/2026).
 
     Gasto, activo y deuda con su tipo; transacción debe/haber; cuentas con
     modal y tabla. El tipo de un registro ES una cuenta de su clase, así que

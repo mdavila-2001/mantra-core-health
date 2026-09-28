@@ -292,6 +292,28 @@ thead .data-table__cell {
     }
 }
 
+/* `fitContainer` (opt-in): la tabla es su propio *container* y, con menos de
+   52rem de caja (≈ 728 px: la raíz es de 14 px, `--fs-body`) pliega las
+   secundarias como en el teléfono aunque el viewport sea de escritorio.
+   `:host(...)` le gana en especificidad al `@media` de 780 px. */
+:host(.data-table--fit-container) {
+    container: data-table / inline-size;
+}
+
+@container data-table (width < 52rem) {
+    :host(.data-table--fit-container) .data-table__secondary {
+        display: none;
+    }
+
+    :host(.data-table--fit-container) .data-table__detail-toggle-cell {
+        display: table-cell;
+    }
+
+    :host(.data-table--fit-container) .data-table__detail-row {
+        display: table-row;
+    }
+}
+
 /* Alto máximo, opt-in (H3.S2, ADR-0015 regla 6): con `.data-table--constrained`
    las columnas secundarias siguen plegadas al detalle aunque el viewport ya
    sea de escritorio — es eso, y no un `overflow-x` distinto, lo que evita el

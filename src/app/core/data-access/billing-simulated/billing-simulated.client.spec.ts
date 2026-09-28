@@ -39,6 +39,22 @@ describe('BillingSimulatedClient', () => {
     }
   });
 
+  it('lee los cobros de una persona con patientProfileId en la consulta', () => {
+    client.chargesOfPatient('p 1').subscribe();
+    const req = http.expectOne((r) => r.url === '/billing/simulated/charges');
+    expect(req.request.method).toBe('GET');
+    expect(req.request.params.get('patientProfileId')).toBe('p 1');
+    req.flush({ items: [], count: 0, simulated: true });
+  });
+
+  it('registra el pago de una instancia del plan con método y monto', () => {
+    client.registerInstancePayment('c 1', 'i 2', { methodCode: 1, amount: '80.00' }).subscribe();
+    const req = http.expectOne('/billing/simulated/charges/c%201/instances/i%202/payments');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ methodCode: 1, amount: '80.00' });
+    req.flush({});
+  });
+
   it('registra el pago con el código de método', () => {
     client.registerPayment('c1', 3).subscribe();
     const req = http.expectOne('/billing/simulated/charges/c1/payment');

@@ -229,7 +229,7 @@ export class InsuranceClient {
    * brokers con los que puede hablar. Se busca por el slug de su ficha
    * pública, que es lo que trae el directorio.
    *
-   * **Sólo existe en la maqueta**: la API todavía no lo expone (P46).
+   * **Sólo existe en la maqueta**: la API todavía no lo expone (P48).
    */
   getMarketplace(slug: string): Observable<InsurerMarketplace> {
     return this.http

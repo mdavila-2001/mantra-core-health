@@ -28,7 +28,7 @@ propietario.
   silencio y quedaba la bandeja sin hilo. Afectaba también a «Enviar mensaje» de las fichas
   públicas.
 - **Contrato nuevo**, `GET /insurance-marketplace/insurers/:slug`: `InsuranceClient.getMarketplace`,
-  simulador y P46 en `PENDIENTES-BACKEND.md`. El simulador lee el mismo catálogo que edita la
+  simulador y P48 en `PENDIENTES-BACKEND.md`. El simulador lee el mismo catálogo que edita la
   consola de la aseguradora. Los brokers tienen perfil de comunidad de clase `BROKER`, que no
   sale en ningún directorio público.
 - Prefijo `/insurance-marketplace` declarado en `proxy.conf.json`, `proxy.conf.docker.json` y
@@ -59,11 +59,11 @@ afirmación falsa sobre ella.
   `evidencia/`, inspeccionadas una por una.
 - **En `dev`, `environment.development.ts` trae `mockBackend: false`.** Para esta prueba se
   encendió sólo localmente y **no** se commiteó. Con el simulador apagado, `ng serve` necesita
-  la API real, que no expone todavía P46.
+  la API real, que no expone todavía P48.
 
 ## No verificado
 
-- Contra la API real y PostgreSQL: el endpoint no existe todavía (P46).
+- Contra la API real y PostgreSQL: el endpoint no existe todavía (P48).
 - El modal del directorio de aseguradoras desde «Tus accesos» (panel del médico): compila, pero
   no se recorrió en el navegador.
 - La suite completa (`yarn test`) y el lint global.

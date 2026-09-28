@@ -780,7 +780,7 @@ export function registrarSeguros(router: MockRouter): void {
       : conPermiso(carrier, request);
   });
 
-  // La vitrina de una aseguradora para el paciente (P46): se busca por el slug
+  // La vitrina de una aseguradora para el paciente (P48): se busca por el slug
   // de su ficha pública, que es lo que trae el directorio. Lee el MISMO
   // catálogo que administra la aseguradora —lo que ella corrige en su consola
   // es lo que ve el paciente— y, si no lo administró todavía, el sembrado.

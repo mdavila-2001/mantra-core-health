@@ -1,5 +1,5 @@
 /* ============================================================================
-    Contabilidad simple del doctor (28/09/2026, P47).
+    Contabilidad simple del doctor (28/09/2026, P49).
 
     El pedido del propietario, literal: «gasto → tipo, activo → tipo, deuda →
     tipo, transacción debe/haber, nada más; nada de centros de costo ni cosas

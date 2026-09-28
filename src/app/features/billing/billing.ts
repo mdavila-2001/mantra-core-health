@@ -22,6 +22,7 @@ import type {
   SimulatedCharge,
   SimulatedFiscalStatus,
   SimulatedInvoice,
+  SimulatedIssuer,
   SimulatedOutboxEntry,
 } from '../../core/data-access/billing-simulated/billing-simulated.types';
 import { readApiError } from '../../core/http/api-error';
@@ -52,6 +53,7 @@ import {
 } from './billing-summary';
 import { FACTURACION_SIMULADA_DISPONIBLE } from './facturacion-disponible';
 import { montoLiteral } from './monto-literal';
+import { PlanDePagos } from './plan-de-pagos/plan-de-pagos';
 import { descargarRepresentacionGrafica, descargarXml } from './representacion-grafica';
 
 type Operacion = 'pago' | 'factura' | 'anulacion' | 'reversion' | 'correo' | 'pdf';
@@ -88,7 +90,7 @@ function centavos(importe: string): number {
  */
 @Component({
   selector: 'app-billing',
-  imports: [ReactiveFormsModule, AppButton, Card, Chip, FormField, Input, PageHeader, Select, ViewStateHost],
+  imports: [ReactiveFormsModule, AppButton, Card, Chip, FormField, Input, PageHeader, PlanDePagos, Select, ViewStateHost],
   templateUrl: './billing.html',
   styleUrl: './billing.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -387,7 +389,12 @@ export class Billing {
     this.toast.error(cuerpo?.message || 'No se pudo completar la operación en el simulador.', 'Facturación (SIMULADO)');
   }
 
-  private reemplazarCobro(cobro: SimulatedCharge): void {
+  /** El emisor del cobro, para el encabezado de sus notas de venta. */
+  emisorDe(cobro: SimulatedCharge): SimulatedIssuer | null {
+    return this.datos()?.estadoFiscal.issuers.find((e) => e.id === cobro.issuerId) ?? null;
+  }
+
+  protected reemplazarCobro(cobro: SimulatedCharge): void {
     const actual = this.datos();
     if (actual === null) return;
     this.estado.set(ready({ ...actual, cobros: actual.cobros.map((c) => (c.id === cobro.id ? cobro : c)) }));
