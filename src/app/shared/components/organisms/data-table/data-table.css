@@ -293,13 +293,14 @@ thead .data-table__cell {
 }
 
 /* `fitContainer` (opt-in): la tabla es su propio *container* y, con menos de
-   46rem de caja, pliega las secundarias como en el teléfono aunque el viewport
-   sea de escritorio. `:host(...)` le gana en especificidad al `@media` de 780 px. */
+   52rem de caja (≈ 728 px: la raíz es de 14 px, `--fs-body`) pliega las
+   secundarias como en el teléfono aunque el viewport sea de escritorio.
+   `:host(...)` le gana en especificidad al `@media` de 780 px. */
 :host(.data-table--fit-container) {
     container: data-table / inline-size;
 }
 
-@container data-table (width < 46rem) {
+@container data-table (width < 52rem) {
     :host(.data-table--fit-container) .data-table__secondary {
         display: none;
     }

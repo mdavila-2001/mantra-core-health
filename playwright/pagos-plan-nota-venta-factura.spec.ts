@@ -82,7 +82,9 @@ async function medir(page: Page, nombre: string, foco?: string): Promise<void> {
     const m = await page.evaluate(() => {
       const dialogos = Array.from(document.querySelectorAll('dialog[open]'));
       const caja = dialogos.at(-1)?.getBoundingClientRect();
-      const tablas = Array.from(document.querySelectorAll<HTMLElement>('dialog[open] .data-table__scroll'));
+      const tablas = Array.from(
+        document.querySelectorAll<HTMLElement>('dialog[open] .data-table__scroll, [data-testid="plan-tabla"] .data-table__scroll'),
+      );
       const contenedor = document.querySelector('[data-testid="cobros-del-paciente"]')?.getBoundingClientRect();
       const plan = document.querySelector('[data-testid="plan-de-pagos"]')?.getBoundingClientRect();
       return {
@@ -174,6 +176,8 @@ test('plan con reconsultas: nota de venta por pago, persiste al recargar y factu
     await expect(page.getByTestId('plan-formulario-de-pago')).toHaveCount(0);
   }
   await expect(page.getByTestId('plan-saldado')).toBeVisible();
+  // El último pago salda el plan: el foco pasa al cierre, no se pierde en el modal.
+  await expect(page.getByTestId('plan-saldado')).toBeFocused();
   await expect(page.getByTestId('plan-saldo')).toContainText('Bs 0,00');
   await medir(page, '5-plan-saldado', 'plan-generar-factura');
 

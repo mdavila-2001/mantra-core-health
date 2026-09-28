@@ -446,7 +446,7 @@ describe('DataTable', () => {
       expect(root().querySelector('app-data-table')?.classList).not.toContain('data-table--fit-container');
     });
 
-    it('activo, marca el host y el CSS pliega las secundarias por debajo de 46rem de caja', async () => {
+    it('activo, marca el host y el CSS pliega las secundarias por debajo de 52rem de caja', async () => {
       host.fitContainer.set(true);
       fixture.detectChanges();
       await fixture.whenStable();
@@ -454,7 +454,7 @@ describe('DataTable', () => {
       expect(root().querySelector('app-data-table')?.classList).toContain('data-table--fit-container');
       const css = readFileSync(DATA_TABLE_CSS, 'utf8');
       expect(css).toContain('container: data-table / inline-size');
-      expect(css).toContain('@container data-table (width < 46rem)');
+      expect(css).toContain('@container data-table (width < 52rem)');
       expect(css).toContain(':host(.data-table--fit-container) .data-table__detail-row');
     });
   });

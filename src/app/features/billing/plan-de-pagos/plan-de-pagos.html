@@ -34,7 +34,7 @@
     <!-- Saldado, lo dice el cierre de abajo: dos avisos verdes seguidos repetían lo mismo.
          Sin rol propio: `app-alert` ya es la región viva. -->
     @if (ultimaNota(); as aviso) {
-      @if (!p.complete) {
+      @if (!p.complete && !enfocarCierre()) {
         <!-- tabindex -1: recibe el foco después de registrar el pago. -->
         <div #avisoDeNota class="plan__aviso" tabindex="-1" data-testid="plan-ultima-nota">
           <app-alert tone="success" title="Pago registrado (SIMULADO)">{{ aviso }}</app-alert>

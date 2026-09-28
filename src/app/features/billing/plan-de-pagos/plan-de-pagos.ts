@@ -151,6 +151,12 @@ export class PlanDePagos {
   private readonly avisoDeNota = viewChild<ElementRef<HTMLElement>>('avisoDeNota');
   private readonly cierre = viewChild<ElementRef<HTMLElement>>('cierre');
   private readonly cobroId = computed(() => this.cobro().id);
+  /**
+   * El último pago saldó el plan: el cierre todavía no existe (en la consulta
+   * el padre relee antes de pasar el cobro nuevo), así que el foco se le da
+   * cuando aparece. Sin esto caía en el aviso, que el cierre reemplaza.
+   */
+  protected readonly enfocarCierre = signal(false);
 
   constructor() {
     this.formulario.controls.amount.valueChanges
@@ -159,6 +165,13 @@ export class PlanDePagos {
     // Otro cobro, otro plan: en /billing el mismo componente pasa de un cobro
     // a otro sin recrearse, y un formulario abierto habría pagado una
     // instancia del plan anterior contra el cobro nuevo.
+    effect(() => {
+      const cierre = this.cierre();
+      if (cierre !== undefined && untracked(this.enfocarCierre)) {
+        this.enfocarCierre.set(false);
+        cierre.nativeElement.focus();
+      }
+    });
     effect(() => {
       this.cobroId();
       untracked(() => {
@@ -225,10 +238,14 @@ export class PlanDePagos {
             : `Nota de venta ${nota?.number ?? ''} por ${bs(nota?.amount ?? '0')} emitida. No es una factura: la factura se emite al saldar el plan.`;
           this.ultimaNota.set(aviso);
           this.toast.success(aviso, 'Pago registrado (SIMULADO)');
+          // El formulario (y el botón con el foco) se fue: el foco pasa al
+          // aviso o, si el plan quedó saldado, al cierre en cuanto exista.
+          if (cobro.plan?.complete) {
+            this.enfocarCierre.set(true);
+          } else {
+            afterNextRender(() => this.avisoDeNota()?.nativeElement.focus(), { injector: this.injector });
+          }
           this.actualizado.emit(cobro);
-          // El formulario (y el botón con el foco) se fue: el foco pasa al aviso,
-          // o al cierre si el plan quedó saldado.
-          afterNextRender(() => (this.avisoDeNota() ?? this.cierre())?.nativeElement.focus(), { injector: this.injector });
         },
         error: (error: unknown) => {
           this.enviando.set(false);

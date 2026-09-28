@@ -89,7 +89,7 @@
   display: none;
 }
 
-@container data-table (width < 46rem) {
+@container data-table (width < 52rem) {
   .cobros__solo-movil {
     display: block;
   }

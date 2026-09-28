@@ -96,7 +96,7 @@
   display: none;
 }
 
-@container data-table (width < 46rem) {
+@container data-table (width < 52rem) {
   .plan__solo-movil {
     display: block;
   }

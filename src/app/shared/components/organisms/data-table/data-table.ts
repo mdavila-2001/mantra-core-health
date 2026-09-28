@@ -142,7 +142,7 @@ export class DataTable<Row> {
    * un modal la tabla puede medir 600 px con el viewport en 1024 —medido en
    * «Pagos» de la consulta: 704 px de tabla en 596 de caja, con la columna de
    * acciones fija tapando importes—. Con esto, la tabla es un *container* y
-   * por debajo de 46rem de caja se comporta como en el teléfono: las
+   * por debajo de 52rem de caja (≈ 728 px) se comporta como en el teléfono: las
    * secundarias viven en la fila de detalle.
    */
   readonly fitContainer = input(false, { transform: booleanAttribute });
