@@ -10,11 +10,14 @@ import type {
   PharmacyDetail,
   PharmacyDirectoryPage,
   PharmacyLicensePage,
+  PharmacyProductCreated,
+  PharmacyProductDraft,
   PharmacyProductSearchPage,
   PharmacyProductSearchQuery,
   PharmacySitePage,
   PharmacySitePrices,
   PharmacySiteQuery,
+  PharmacyStatusResult,
 } from './pharmacy.types';
 
 /**
@@ -25,6 +28,10 @@ import type {
  * pueden surtir un pedido). Sólo expone lo que la pantalla «Dónde comprar mi
  * receta» consume; el resto del directorio (perfiles, precios por sede) se
  * agrega cuando alguna pantalla lo pida, no antes.
+ *
+ * Del lado de la escritura sólo el catálogo de la propia farmacia
+ * (`/pharmacies/:pharmacyId/products`): el alta y el retiro que usa la pantalla
+ * «Catálogo de productos». No hay edición: el backend no publica un `PATCH`.
  */
 @Injectable({ providedIn: 'root' })
 export class PharmacyClient {
@@ -154,7 +161,58 @@ export class PharmacyClient {
     });
   }
 
+  /**
+   * `POST /pharmacies/:pharmacyId/products` — publica un producto en el
+   * catálogo de la farmacia (UC-24-04).
+   *
+   * El producto nace activo y aparece en `GET /pharmacy/products` en cuanto
+   * la respuesta vuelve. Un código repetido en la misma farmacia es un 409
+   * (`CONFLICT`); la farmacia no activa, un 412. Quién puede publicar lo
+   * decide el `@Roles` del backend, no esta pantalla.
+   */
+  publishProduct(
+    pharmacyId: string,
+    draft: PharmacyProductDraft,
+  ): Observable<PharmacyProductCreated> {
+    return this.http.post<PharmacyProductCreated>(
+      this.url(`/pharmacies/${encodeURIComponent(pharmacyId)}/products`),
+      sinVacios(draft),
+    );
+  }
+
+  /**
+   * `DELETE /pharmacies/:pharmacyId/products/:productId` — retira el producto
+   * del catálogo (UC-24-09). Es un borrado lógico: el producto deja de
+   * publicarse y sus precios vigentes quedan reemplazados.
+   */
+  retireProduct(pharmacyId: string, productId: string): Observable<PharmacyStatusResult> {
+    return this.http.delete<PharmacyStatusResult>(
+      this.url(
+        `/pharmacies/${encodeURIComponent(pharmacyId)}/products/${encodeURIComponent(productId)}`,
+      ),
+    );
+  }
+
   private url(path: string): string {
     return apiUrl(this.baseUrl, path);
   }
+}
+
+/**
+ * El alta sin sus opcionales vacíos: `forbidNonWhitelisted` acepta la clave
+ * ausente pero no un `''` que choca con `IsString`/`MaxLength`, ni una lista
+ * de identificadores vacía que no dice nada.
+ */
+function sinVacios(draft: PharmacyProductDraft): PharmacyProductDraft {
+  const limpio: Record<string, unknown> = {};
+  for (const [clave, valor] of Object.entries(draft)) {
+    if (valor === undefined || valor === '') {
+      continue;
+    }
+    if (Array.isArray(valor) && valor.length === 0) {
+      continue;
+    }
+    limpio[clave] = valor;
+  }
+  return limpio as unknown as PharmacyProductDraft;
 }
