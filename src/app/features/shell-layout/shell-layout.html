@@ -355,6 +355,32 @@
           </div>
         }
 
+        <!-- Red social (pedido del cliente, 28/09/2026): arriba y para TODOS
+             los tipos de cuenta. Hasta ahora `/posts` sólo se alcanzaba sin
+             sesión —es donde `homeGuard` manda a quien no entró—, así que
+             para leer la red había que cerrar sesión. El marco público ya
+             reconoce la sesión viva (ofrece «Volver a mi panel», no «Entrar»),
+             así que basta con un enlace: no se toca la sesión.
+
+             Enlace y no botón porque navega. Lleva texto visible (ADR-0012
+             §1: «red social» no es un ícono de significado universal); en
+             pantallas angostas queda sólo el ícono y el nombre viaja en el
+             `aria-label` y el globo. -->
+        <a
+          app-button
+          data-variante="secundario"
+          data-tam="sm"
+          class="app-header__red-social"
+          routerLink="/posts"
+          data-testid="header-red-social"
+          appTooltip="Red social"
+          appTooltipPosition="bottom"
+          aria-label="Red social"
+        >
+          <app-nav-icon name="people" />
+          <span class="app-header__red-social-texto">Red social</span>
+        </a>
+
         <!-- Interruptor de tema. Volvió al encabezado a pedido del cliente
              (2026-09-18): claro/oscuro se cambia seguido y no debe exigir ir a
              Ajustes. Es el mismo `switch` sol/luna del marco público y de
