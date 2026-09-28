@@ -1903,3 +1903,42 @@ literal del plan maestro (§10), no un contrato ampliado acá.
 > `InsuranceClient.listPractitionerCarriers`, la tarjeta `app-practitioner-insurers` proyectada en
 > la ficha justo debajo de la identidad (con carga, vacío y error propios), el doble del simulador
 > y la prueba de navegador `ficha-medico-seguros.spec.ts`.
+
+## P46 · Plan de pagos de un servicio con reconsultas: nota de venta y factura — 28/09/2026
+
+**Pedido del propietario (pizarra, 28/09/2026):** en «Pagos» de la consulta, un servicio que
+implica **más de una instancia de pago** —una consulta con su serie de reconsultas— abre una
+tabla: ítem, monto a cobrar, monto pagado y **nota de venta**. Mientras el plan tenga saldo, cada
+pago lleva nota de venta, **no factura**. Saldado, se emite una sola factura por el total, un
+renglón por instancia. Un servicio de una sola instancia abre directamente el modal de la
+factura.
+
+**Qué hace hoy el front (`mockup`):** todo contra la facturación simulada (FACT-SIAT-MOCK):
+
+- `SimulatedCharge.plan` (`billing-simulated.types.ts`): instancias con `expectedAmount`,
+  `paidAmount`, `balance`, `bookingId`/`scheduledAt` de la reserva que la atiende y sus
+  `salesNotes` (`NV-000001`, correlativo por emisor).
+- `POST /billing/simulated/charges/:chargeId/instances/:instanceId/payments`
+  `{ methodCode, amount }` → el cobro con la nota nueva. 422 si el monto supera el saldo de la
+  instancia; 409 `PLAN_REQUIRED` si se paga de una vez un servicio con plan; 409 `NOT_A_PLAN` al
+  revés; la factura de un plan con saldo es 412.
+- `GET /billing/simulated/charges?patientProfileId=` para la consulta. Quien atiende
+  (`PRACTITIONER`) opera sólo los cobros de origen `CONSULTATION`: no ve farmacia, ni anula.
+
+**Qué falta en la API real:**
+
+1. **El tipo de servicio no dice cuántas instancias implica.** `ServiceCatalogItem` no tiene nada
+   como «reconsultas incluidas» ni su precio. El simulador declara el tipo
+   `CONS-CARDIO-RECONS` (consulta + 2 reconsultas a Bs 180) en `datos-simulados.ts`. Es una
+   decisión de modelo (¿columna en el catálogo o un plan aparte?) que empieza en el `.puml`.
+2. **Cobro por instancia.** `payments.installment_plans` / `installment_schedules` ya modelan
+   cuotas (P35); falta atar cada instancia a la reserva que la atiende (la reconsulta de P42) y
+   registrar pagos parciales por instancia.
+3. **Nota de venta.** Comprobante interno sin validez fiscal, correlativo por emisor. No existe en
+   el modelo.
+4. **Facturación** en sí: sigue siendo FACT-SIAT-MOCK; el cliente `/billing/simulated/*` se
+   reemplaza cuando la API publique facturación.
+
+**Lo que el frontend ya tiene:** `app-plan-de-pagos` y `app-factura-simulada-dialog`
+(`features/billing/`), `app-cobros-del-paciente` dentro de `app-payments-block`, la nota de venta
+en PDF (`nota-de-venta.ts`) y la prueba de navegador `pagos-plan-nota-venta-factura.spec.ts`.

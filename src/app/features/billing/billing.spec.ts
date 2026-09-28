@@ -111,7 +111,7 @@ describe('Billing · facturación contra el SIAT SIMULADO', () => {
     montar(true);
     responderLectura();
     const componente = fixture.componentInstance;
-    const pendiente = cobroDe((c) => c.payment === null);
+    const pendiente = cobroDe((c) => c.payment === null && c.plan === null);
     componente.seleccionar(pendiente);
     fixture.detectChanges();
     expect(el('formulario-de-pago')).not.toBeNull();
@@ -277,7 +277,7 @@ describe('Billing · facturación contra el SIAT SIMULADO', () => {
     const toast = TestBed.inject(ToastService);
     const error = vi.spyOn(toast, 'error');
     const componente = fixture.componentInstance;
-    const pendiente = cobroDe((c) => c.payment === null);
+    const pendiente = cobroDe((c) => c.payment === null && c.plan === null);
     componente.seleccionar(pendiente);
     componente.formularioDePago.setValue({ methodCode: 1 });
     componente.registrarPago(pendiente);

@@ -1,0 +1,104 @@
+/* Cobros de la persona: aviso, dos cifras y la tabla de servicios; o, con un
+   plan abierto, la vuelta y el plan. Sólo distribución y tokens. */
+
+:host {
+  display: block;
+}
+
+.cobros {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+.cobros__aviso {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  align-items: center;
+  margin: 0;
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--st-warning-bd);
+  border-radius: var(--r-md);
+  background: var(--st-warning-bg);
+  color: var(--st-warning-fg);
+  font-size: var(--fs-caption);
+}
+
+/* La cifra manda: es lo que se mira con la persona enfrente. */
+.cobros__cifras {
+  display: grid;
+  gap: var(--sp-2);
+  margin: 0;
+}
+
+@media (min-width: 650px) {
+  .cobros__cifras {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.cobros__cifra {
+  display: grid;
+  gap: var(--sp-1);
+  padding: var(--sp-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--bg-surface-alt);
+}
+
+.cobros__cifra dt {
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.cobros__cifra dd {
+  margin: 0;
+  font-size: var(--fs-h2);
+  line-height: var(--lh-h2);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.cobros__servicio {
+  display: block;
+  font-weight: 500;
+}
+
+.cobros__importe {
+  display: block;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.cobros__secundario {
+  display: block;
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+}
+
+/* Desde 780 px (`--bp-md`) «Monto a cobrar» es su propia columna. */
+@media (min-width: 780px) {
+  .cobros__solo-movil {
+    display: none;
+  }
+}
+
+.cobros__vacio {
+  margin: 0;
+  color: var(--text-muted);
+  /* Texto corrido: la medida de lectura manda sobre el ancho del modal. */
+  max-inline-size: 68ch;
+}
+
+.cobros__plan {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.cobros__plan > button {
+  justify-self: start;
+}

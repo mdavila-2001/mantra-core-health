@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import type { Observable } from 'rxjs';
 
@@ -6,6 +6,7 @@ import { API_BASE_URL, apiUrl } from '../api';
 import type {
   AnnulInvoiceInput,
   IssueInvoiceInput,
+  RegisterInstancePaymentInput,
   SimulatedCatalogs,
   SimulatedCharge,
   SimulatedChargesPage,
@@ -43,6 +44,23 @@ export class BillingSimulatedClient {
 
   charges(): Observable<SimulatedChargesPage> {
     return this.http.get<SimulatedChargesPage>(this.url('/billing/simulated/charges'));
+  }
+
+  /** Los cobros de una persona: la lectura de «Pagos» dentro de la consulta. */
+  chargesOfPatient(patientProfileId: string): Observable<SimulatedChargesPage> {
+    return this.http.get<SimulatedChargesPage>(this.url('/billing/simulated/charges'), {
+      params: new HttpParams().set('patientProfileId', patientProfileId),
+    });
+  }
+
+  /** Pago de una instancia del plan. Responde el cobro, con la nota de venta nueva. */
+  registerInstancePayment(chargeId: string, instanceId: string, input: RegisterInstancePaymentInput): Observable<SimulatedCharge> {
+    return this.http.post<SimulatedCharge>(
+      this.url(
+        `/billing/simulated/charges/${encodeURIComponent(chargeId)}/instances/${encodeURIComponent(instanceId)}/payments`,
+      ),
+      input,
+    );
   }
 
   registerPayment(chargeId: string, methodCode: number): Observable<SimulatedCharge> {

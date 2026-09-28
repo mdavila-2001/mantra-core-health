@@ -1,0 +1,122 @@
+<!-- ─── Cobros de la persona (facturación simulada) ───────────────────────────
+     Vive dentro del modal de la consulta, como el resto de «Pagos»: cada
+     estado se dice acá y no con `app-view-state-host`, que resuelve lecturas
+     de pantalla completa. -->
+<section class="cobros" aria-labelledby="cobros-titulo" data-testid="cobros-del-paciente">
+  <h2 id="cobros-titulo" class="sr-only">Cobros y facturas de la persona</h2>
+
+  <p class="cobros__aviso" role="note">
+    <app-chip size="sm" variant="warning">SIMULADO</app-chip>
+    <span>Pagos, notas de venta y facturas contra un SIAT simulado: no se mueve dinero ni se informa al SIN.</span>
+  </p>
+
+  @switch (estado().status) {
+    @case ('loading') {
+      <p class="cobros__secundario" data-testid="cobros-cargando">Buscando los cobros…</p>
+    }
+    @case ('forbidden') {
+      <!-- S5 y no S3: «no podés verlo» no es «no hay nada». -->
+      <app-alert tone="info" title="No podés operar los cobros">
+        Tu rol no incluye la facturación de este consultorio. El resto de la consulta sigue disponible.
+      </app-alert>
+    }
+    @case ('offline') {
+      <app-alert tone="warning" title="Sin conexión">
+        No pudimos leer los cobros de esta persona.
+        <button app-button variant="outline" type="button" (clicked)="recargar()">Reintentar</button>
+      </app-alert>
+    }
+    @case ('error') {
+      <app-alert tone="error" title="No pudimos leer los cobros">
+        <button app-button variant="outline" type="button" (clicked)="recargar()">Reintentar</button>
+      </app-alert>
+    }
+    @default {
+      @if (planAbierto(); as cobro) {
+        <!-- ── El plan de un servicio con reconsultas ─────────────────────── -->
+        <div class="cobros__plan">
+          <button #volver app-button variant="ghost" size="sm" type="button" (clicked)="cerrarPlan()" data-testid="cobros-volver">
+            ← Volver a los servicios
+          </button>
+          <app-plan-de-pagos
+            [cobro]="cobro"
+            [metodos]="metodos()"
+            [emisor]="emisorDe(cobro)"
+            (actualizado)="recargar()"
+            (facturar)="facturandoId.set(cobro.id)"
+          />
+        </div>
+      } @else if (cobros().length === 0) {
+        <p class="cobros__vacio" data-testid="cobros-vacio">
+          Esta persona todavía no tiene cobros. Aparecen acá cuando se atiende una cita: desde esta misma pestaña se
+          cobra, se emite la nota de venta de cada pago del plan y la factura.
+        </p>
+      } @else {
+        <!-- ── La lista de servicios ─────────────────────────────────────── -->
+        <dl class="cobros__cifras" data-testid="cobros-cifras">
+          <div class="cobros__cifra">
+            <dt>Lleva pagado</dt>
+            <dd data-testid="cobros-pagado">{{ totales().cobrado }}</dd>
+          </div>
+          <div class="cobros__cifra">
+            <dt>Saldo por cobrar</dt>
+            <dd data-testid="cobros-saldo">{{ totales().saldo }}</dd>
+          </div>
+        </dl>
+
+        <app-data-table
+          [state]="filas()"
+          [columns]="columnas()"
+          [trackBy]="porId"
+          [rowLabel]="nombreDeFila"
+          caption="Servicios de la persona: lo que se esperaba cobrar y lo pagado"
+          data-testid="cobros-tabla"
+        />
+      }
+    }
+  }
+</section>
+
+@if (facturando(); as cobro) {
+  @if (datos(); as d) {
+    <app-factura-simulada-dialog
+      [cobro]="cobro"
+      [catalogos]="d.catalogos"
+      (pagado)="recargar()"
+      (emitida)="recargar()"
+      (cerrado)="cerrarFactura()"
+    />
+  }
+}
+
+<!-- Celdas con presentación propia: la tabla las instancia por fila. -->
+<ng-template #servicioCell let-cobro>
+  <span class="cobros__servicio">{{ cobro.description }}</span>
+  <span class="cobros__secundario">{{ tipoDe(cobro) }}</span>
+  <span class="cobros__secundario cobros__solo-movil">Pagado {{ bs(cobradoDe(cobro)) }} de {{ bs(cobro.total) }}</span>
+</ng-template>
+
+<ng-template #esperadoCell let-cobro>
+  <span class="cobros__importe">{{ bs(cobro.total) }}</span>
+</ng-template>
+
+<ng-template #pagadoCell let-cobro>
+  <span class="cobros__importe">{{ bs(cobradoDe(cobro)) }}</span>
+</ng-template>
+
+<ng-template #estadoCell let-cobro>
+  <app-chip size="sm" [variant]="tonoDeEstado[estadoDe(cobro)]">{{ rotuloDeEstado[estadoDe(cobro)] }}</app-chip>
+</ng-template>
+
+<ng-template #accionCell let-cobro>
+  <button
+    app-button
+    size="sm"
+    [variant]="accionDe(cobro) === 'VER_FACTURA' ? 'ghost' : 'outline'"
+    [attr.data-cobro-id]="cobro.id"
+    [attr.aria-label]="rotuloDeAccion[accionDe(cobro)] + ': ' + cobro.description"
+    (clicked)="abrir(cobro)"
+  >
+    {{ rotuloDeAccion[accionDe(cobro)] }}
+  </button>
+</ng-template>

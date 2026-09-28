@@ -1,0 +1,146 @@
+<app-content-dialog
+  heading="Factura · SIAT simulado"
+  [description]="cobro().description + ' · ' + cobro().patientName"
+  size="md"
+  [dismissible]="!enviando()"
+  (closed)="cerrado.emit()"
+>
+  <div class="factura" data-testid="factura-simulada">
+    <p class="factura__aviso" role="note">
+      <app-chip size="sm" variant="warning">SIMULADO</app-chip>
+      <span>Se emite contra un SIAT simulado: CUF, códigos y QR son sintéticos y no tienen validez fiscal.</span>
+    </p>
+
+    @if (cargandoFactura()) {
+      <p class="factura__secundario" data-testid="factura-cargando">Leyendo la factura…</p>
+    } @else if (factura(); as f) {
+      <!-- ── La factura emitida ─────────────────────────────────────────── -->
+      <section class="factura__resultado" aria-labelledby="factura-numero" data-testid="factura-emitida">
+        <h3 id="factura-numero" class="factura__titulo">
+          Factura N.º {{ f.invoiceNumber }}
+          <app-chip size="sm" [variant]="tonoDeEstado[f.status]">{{ rotuloDeEstado[f.status] }}</app-chip>
+        </h3>
+        <dl class="factura__datos">
+          <div>
+            <dt>Emisor</dt>
+            <dd>{{ f.issuer.legalName }} · NIT {{ f.issuer.nit }}</dd>
+          </div>
+          <div>
+            <dt>Comprador</dt>
+            <dd>{{ f.cabecera['nombreRazonSocial'] }} · {{ f.cabecera['numeroDocumento'] }}</dd>
+          </div>
+          <div>
+            <dt>Total</dt>
+            <dd>{{ bs('' + f.cabecera['montoTotal']) }}</dd>
+          </div>
+          <div>
+            <dt>Fecha de emisión</dt>
+            <dd>{{ f.issuedAt }}</dd>
+          </div>
+          <div class="factura__dato-ancho">
+            <dt>CUF (SIMULADO)</dt>
+            <dd class="factura__codigo" data-testid="factura-cuf">{{ f.cuf }}</dd>
+          </div>
+          <div class="factura__dato-ancho">
+            <dt>Respuesta del SIAT (SIMULADO)</dt>
+            <dd data-testid="factura-respuesta-siat">
+              {{ f.siatResponse.codigoEstado }} · {{ f.siatResponse.codigoDescripcion }}
+              @if (f.siatResponse.codigoRecepcion !== null) {
+                · recepción {{ f.siatResponse.codigoRecepcion }}
+              }
+            </dd>
+          </div>
+        </dl>
+        @if (f.siatResponse.mensajesList.length > 0) {
+          <ul class="factura__mensajes">
+            @for (m of f.siatResponse.mensajesList; track $index) {
+              <li><strong>{{ m.codigo }}</strong> · {{ m.descripcion }}@if (m.advertencia) { (advertencia)}</li>
+            }
+          </ul>
+        }
+        <p class="factura__secundario">{{ f.detalle.length }} {{ f.detalle.length === 1 ? 'renglón' : 'renglones' }} · anular o reenviar se hace desde Facturación.</p>
+      </section>
+    } @else {
+      <!-- ── Los datos para emitirla ────────────────────────────────────── -->
+      <form class="factura__formulario" [formGroup]="formulario" (ngSubmit)="confirmar()" data-testid="factura-formulario" id="factura-formulario">
+        <div class="factura__resumen">
+          <p class="factura__rotulo">Total a facturar</p>
+          <p class="factura__total" data-testid="factura-total">{{ bs(cobro().total) }}</p>
+          <p class="factura__secundario">{{ literal() }}</p>
+          @if (notasDelPlan().length > 0) {
+            <p class="factura__secundario" data-testid="factura-notas-del-plan">
+              Plan saldado con {{ notasDelPlan().length }} {{ notasDelPlan().length === 1 ? 'nota' : 'notas' }} de venta
+              ({{ notasDelPlan().join(', ') }}). La factura cubre el total del servicio, un renglón por instancia.
+            </p>
+          }
+        </div>
+
+        @if (pideMedioDePago()) {
+          <app-form-field
+            label="Medio de pago"
+            [required]="true"
+            hint="Catálogo simulado · se registra el pago y se emite la factura"
+            [errorMessage]="formulario.controls.methodCode.touched && formulario.controls.methodCode.invalid ? 'Elegí cómo pagó.' : ''"
+          >
+            <app-select formControlName="methodCode" [options]="opcionesDeMetodo()" placeholder="Elegí un medio" />
+          </app-form-field>
+        }
+
+        <fieldset class="factura__comprador">
+          <legend>Comprador</legend>
+          <div class="factura__campos">
+            <app-form-field
+              label="Nombre o razón social"
+              [required]="true"
+              [errorMessage]="formulario.controls.name.touched && formulario.controls.name.invalid ? 'Escribí a nombre de quién va la factura.' : ''"
+            >
+              <app-input formControlName="name" autocomplete="off" />
+            </app-form-field>
+            <app-form-field label="Tipo de documento" [required]="true" hint="Catálogo simulado">
+              <app-select formControlName="documentTypeCode" [options]="opcionesDeDocumento()" />
+            </app-form-field>
+            <app-form-field
+              label="Número de documento"
+              [required]="true"
+              [errorMessage]="formulario.controls.documentNumber.touched && formulario.controls.documentNumber.invalid ? 'Hasta 20 caracteres, obligatorio.' : ''"
+            >
+              <app-input formControlName="documentNumber" autocomplete="off" />
+            </app-form-field>
+            <app-form-field label="Complemento" [errorMessage]="formulario.controls.complement.invalid ? 'Hasta 5 caracteres.' : ''">
+              <app-input formControlName="complement" autocomplete="off" />
+            </app-form-field>
+            <app-form-field
+              label="Correo para la entrega"
+              hint="Sólo queda en la bandeja simulada"
+              [errorMessage]="formulario.controls.email.touched && formulario.controls.email.invalid ? 'No parece un correo.' : ''"
+            >
+              <app-input formControlName="email" type="email" autocomplete="off" />
+            </app-form-field>
+          </div>
+        </fieldset>
+      </form>
+    }
+
+    @if (error(); as mensaje) {
+      <app-alert tone="error" title="No se emitió la factura" data-testid="factura-error">{{ mensaje }}</app-alert>
+    }
+  </div>
+
+  <ng-container dialog-actions>
+    @if (factura(); as f) {
+      <button app-button variant="secondary" (clicked)="descargarPdf(f)">Descargar PDF (SIMULADO)</button>
+      <button app-button variant="outline" (clicked)="descargarXml(f)">Descargar XML (SIMULADO)</button>
+    } @else if (!cargandoFactura()) {
+      <button
+        app-button
+        type="submit"
+        form="factura-formulario"
+        [isLoading]="enviando()"
+        [disabled]="enviando()"
+        data-testid="factura-confirmar"
+      >
+        {{ enviando() ? 'Enviando al SIAT simulado…' : pideMedioDePago() ? 'Cobrar y emitir factura' : 'Emitir factura' }}
+      </button>
+    }
+  </ng-container>
+</app-content-dialog>

@@ -17,6 +17,7 @@ function cobro(id: string, extra: Partial<SimulatedCharge> = {}): SimulatedCharg
     payment: { id: `pay-${id}`, methodCode: 1, methodLabel: 'EFECTIVO', amount: '100.00', currency: 'BOB', paidAt: '2026-09-01T00:00:00.000Z', simulated: true },
     suggestedBuyer: { name: 'X', documentTypeCode: 1, documentNumber: '1', email: null },
     latestInvoice: null,
+    plan: null,
     simulated: true,
     ...extra,
   };
@@ -39,6 +40,22 @@ describe('resumen y filtros de facturación', () => {
       latestInvoice: { id: 'f', invoiceNumber: 1, cuf: 'X', status: 'OBSERVED', siatStatusCode: 904, issuedAt: '', total: '100.00', simulated: true },
     });
     expect(estadoDeCobro(conFactura)).toBe('OBSERVED');
+  });
+
+  it('un plan con notas de venta y saldo es «pago parcial»: cuenta lo pagado y sigue pendiente', () => {
+    const plan = {
+      serviceCode: 'S',
+      serviceName: 'Servicio',
+      instances: [],
+      expectedTotal: '610.00',
+      paidTotal: '330.00',
+      balance: '280.00',
+      complete: false,
+    };
+    const parcial = cobro('p', { payment: null, plan });
+    expect(estadoDeCobro(parcial)).toBe('PAGO_PARCIAL');
+    expect(estadoDeCobro(cobro('q', { payment: null, plan: { ...plan, paidTotal: '0.00' } }))).toBe('SIN_PAGO');
+    expect(resumenDeCobros([parcial, cobro('a')])).toEqual({ montoCobrado: '430.00', pacientesConPago: 2, cobrosPendientes: 1 });
   });
 
   it('filtra por origen y por estado', () => {

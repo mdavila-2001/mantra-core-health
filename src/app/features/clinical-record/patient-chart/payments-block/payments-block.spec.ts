@@ -3,6 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 
+import { FACTURACION_SIMULADA_DISPONIBLE } from '../../../billing/facturacion-disponible';
 import { PaymentsBlock } from './payments-block';
 
 /**
@@ -17,6 +18,10 @@ import { PaymentsBlock } from './payments-block';
  *    disfraza de lista vacía.
  * 4. **Sin práctica no hay caja.** Una organización sin prácticas no es un
  *    error ni una persona sin pagos.
+ * 5. **Con la facturación simulada, «Pagos» cobra y factura** y no lee
+ *    Contabilidad: son dos lecturas del mismo dinero y no se mezclan.
+ *
+ * Las cuatro primeras son la rama sin facturación simulada (la API real).
  */
 
 const PRACTICA = {
@@ -53,7 +58,11 @@ describe('PaymentsBlock', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        { provide: FACTURACION_SIMULADA_DISPONIBLE, useValue: () => false },
+      ],
     });
 
     http = TestBed.inject(HttpTestingController);
@@ -122,5 +131,27 @@ describe('PaymentsBlock', () => {
 
     expect(interno<() => boolean>('hayPagos')()).toBe(false);
     expect(interno<() => boolean>('sinPractica')()).toBe(false);
+  });
+});
+
+describe('PaymentsBlock con la facturación simulada', () => {
+  it('delega en los cobros de la persona y no pide Contabilidad', () => {
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        { provide: FACTURACION_SIMULADA_DISPONIBLE, useValue: () => true },
+      ],
+    });
+    const http = TestBed.inject(HttpTestingController);
+    const fixture = TestBed.createComponent(PaymentsBlock);
+    fixture.componentRef.setInput('patientProfileId', 'p-1');
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('app-cobros-del-paciente')).not.toBeNull();
+    http.expectNone('/practices');
+    http.expectNone((r) => r.url === '/accounting/practitioner/paid-consultations');
+    const cobros = http.expectOne((r) => r.url.endsWith('/billing/simulated/charges'));
+    expect(cobros.request.params.get('patientProfileId')).toBe('p-1');
   });
 });

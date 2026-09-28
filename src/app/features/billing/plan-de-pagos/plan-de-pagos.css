@@ -1,0 +1,152 @@
+/* Plan de pagos: tres cifras, la tabla de instancias y, debajo, el pago o el
+   cierre. Sólo distribución: los colores salen de los tokens. */
+
+:host {
+  display: block;
+}
+
+.plan {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+.plan__encabezado {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  align-items: center;
+  justify-content: space-between;
+}
+
+.plan__titulo {
+  margin: 0;
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+}
+
+/* ── Las cifras ────────────────────────────────────────────────────────────
+   Una columna en el teléfono, tres en cuanto entran. */
+
+.plan__cifras {
+  display: grid;
+  gap: var(--sp-2);
+  margin: 0;
+}
+
+@media (min-width: 650px) {
+  .plan__cifras {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.plan__cifra {
+  display: grid;
+  gap: var(--sp-1);
+  padding: var(--sp-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--bg-surface-alt);
+}
+
+.plan__cifra dt {
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.plan__cifra dd {
+  margin: 0;
+  font-size: var(--fs-h3);
+  font-weight: 700;
+  /* Dinero en columna: las cifras se alinean dígito con dígito. */
+  font-variant-numeric: tabular-nums;
+}
+
+.plan__cifra--saldo {
+  border-color: var(--st-warning-bd);
+}
+
+/* ── Celdas ──────────────────────────────────────────────────────────────── */
+
+.plan__item {
+  display: block;
+  font-weight: 500;
+}
+
+.plan__importe {
+  display: block;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.plan__secundario {
+  display: block;
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+}
+
+.plan__solo-movil {
+  display: block;
+}
+
+/* Desde 780 px (`--bp-md`) «Monto a cobrar» es su propia columna. */
+@media (min-width: 780px) {
+  .plan__solo-movil {
+    display: none;
+  }
+}
+
+.plan__nota-de-venta {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── El pago y el cierre ─────────────────────────────────────────────────── */
+
+.plan__pago,
+.plan__cierre {
+  display: grid;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+}
+
+.plan__pago-titulo {
+  margin: 0;
+  font-size: var(--fs-body);
+  font-weight: 600;
+}
+
+.plan__pago-titulo:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.plan__campos {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+@media (min-width: 650px) {
+  .plan__campos {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.plan__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.plan__nota {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.plan__cierre > button {
+  justify-self: start;
+}

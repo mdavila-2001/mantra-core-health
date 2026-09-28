@@ -1,0 +1,137 @@
+/* El modal de la factura simulada: el aviso, el total arriba y los datos del
+   comprador en dos columnas cuando entran. Sólo distribución y tokens. */
+
+:host {
+  display: contents;
+}
+
+.factura {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+.factura__aviso {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  align-items: center;
+  margin: 0;
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--st-warning-bd);
+  border-radius: var(--r-md);
+  background: var(--st-warning-bg);
+  color: var(--st-warning-fg);
+  font-size: var(--fs-caption);
+}
+
+.factura__formulario,
+.factura__resultado {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+.factura__resumen {
+  display: grid;
+  gap: var(--sp-1);
+  padding: var(--sp-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--bg-surface-alt);
+}
+
+.factura__rotulo {
+  margin: 0;
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.factura__total {
+  margin: 0;
+  font-size: var(--fs-h2);
+  line-height: var(--lh-h2);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.factura__secundario {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+}
+
+.factura__comprador {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-inline-size: 0;
+}
+
+.factura__comprador legend {
+  padding: 0;
+  margin-block-end: var(--sp-2);
+  font-weight: 600;
+}
+
+.factura__campos {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+@media (min-width: 650px) {
+  .factura__campos {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.factura__titulo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  align-items: center;
+  margin: 0;
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+}
+
+.factura__datos {
+  display: grid;
+  gap: var(--sp-3);
+  margin: 0;
+}
+
+@media (min-width: 650px) {
+  .factura__datos {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .factura__dato-ancho {
+    grid-column: 1 / -1;
+  }
+}
+
+.factura__datos dt {
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.factura__datos dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.factura__codigo {
+  /* El CUF es una tira hexadecimal larga: parte donde haga falta. */
+  overflow-wrap: anywhere;
+  font-family: var(--font-mono);
+  font-size: var(--fs-caption);
+}
+
+.factura__mensajes {
+  margin: 0;
+  padding-inline-start: var(--sp-5);
+  font-size: var(--fs-caption);
+}
