@@ -1,0 +1,66 @@
+<app-card variant="outlined" padding="lg" class="insurer">
+  <h2 card-header class="insurer__title">Ficha de la aseguradora</h2>
+
+  <app-view-state-host [state]="state()" (retry)="retry()">
+    @if (carrier(); as aseguradora) {
+      <p class="insurer__name">{{ aseguradora.legalName }}</p>
+      <dl class="insurer__facts">
+        <div>
+          <dt>Código</dt>
+          <dd>{{ aseguradora.carrierCode }}</dd>
+        </div>
+        <div>
+          <dt>Registro ante el regulador</dt>
+          <dd>{{ aseguradora.regulatorIdentifier ?? 'Sin registrar' }}</dd>
+        </div>
+        <div>
+          <dt>Jurisdicción</dt>
+          <dd>{{ aseguradora.jurisdiction?.display ?? 'Sin registrar' }}</dd>
+        </div>
+        <div>
+          <dt>Estado</dt>
+          <dd>{{ aseguradora.status.display }}</dd>
+        </div>
+        <div>
+          <dt>WhatsApp</dt>
+          <dd>
+            @if (aseguradora.whatsappNumber; as whatsapp) {
+              <a app-link [href]="whatsappHref(whatsapp)" [external]="true">{{ whatsapp }}</a>
+            } @else {
+              Sin registrar
+            }
+          </dd>
+        </div>
+        <div>
+          <dt>Call center</dt>
+          <dd>
+            @if (aseguradora.callCenterPhone; as telefono) {
+              <a app-link [href]="'tel:' + dialable(telefono)">{{ telefono }}</a>
+            } @else {
+              Sin registrar
+            }
+          </dd>
+        </div>
+        <div>
+          <dt>Correo de siniestros</dt>
+          <dd>
+            @if (aseguradora.supportEmail; as correo) {
+              <a app-link [href]="'mailto:' + correo">{{ correo }}</a>
+            } @else {
+              Sin registrar
+            }
+          </dd>
+        </div>
+      </dl>
+      <!-- Declarado y verificado se muestran por separado a propósito: que una
+           aseguradora diga tener un registro no es que la plataforma lo haya
+           contrastado. -->
+      <p class="insurer__verification">
+        <app-status-seal
+          [variant]="verificationVariant(aseguradora.verification.code)"
+          [label]="aseguradora.verification.display"
+        />
+      </p>
+    }
+  </app-view-state-host>
+</app-card>

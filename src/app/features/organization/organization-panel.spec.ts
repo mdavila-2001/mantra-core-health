@@ -234,6 +234,33 @@ describe('OrganizationPanel', () => {
     });
   }
 
+  /** La ficha que pide el bloque de aseguradora al montarse. */
+  function responderFicha(): void {
+    http.expectOne('/insurance-carriers').flush({
+      items: [
+        {
+          id: 'car-1',
+          carrierCode: 'CARRIER-AS',
+          legalName: 'Andina Salud S.A.',
+          regulatorIdentifier: 'REG-1',
+          whatsappNumber: null,
+          callCenterPhone: null,
+          supportEmail: null,
+          jurisdiction: null,
+          status: { code: 'CARRIER_ACTIVE', display: 'Aseguradora activa' },
+          verification: { code: 'VERIFICATION_PENDING', display: 'Verificación pendiente' },
+          productCount: 0,
+          planCount: 0,
+          networkCount: 0,
+          createdAt: '2026-08-09T12:00:00.000Z',
+          canAdminister: false,
+        },
+      ],
+      count: 1,
+    });
+    fixture.detectChanges();
+  }
+
   it('una organización sin bloque `payer` no muestra los campos de aseguradora', () => {
     montar();
     responder([organizacion()]);
@@ -251,6 +278,7 @@ describe('OrganizationPanel', () => {
   it('una aseguradora muestra sigla, NIT, dirección y el código de aseguradora', () => {
     montar();
     responder([aseguradora({ canAdminister: false })]);
+    responderFicha();
 
     expect(texto()).toContain('ASEG-01');
     expect(texto()).toContain('NIT-123456');
@@ -259,9 +287,24 @@ describe('OrganizationPanel', () => {
     expect(texto()).not.toContain('Guardar datos');
   });
 
+  /**
+   * La ficha de la aseguradora (regulador, canales, verificación) se mudó del
+   * catálogo de seguros al perfil: una aseguradora la ve acá.
+   */
+  it('una aseguradora ve su ficha con canales de contacto y verificación', () => {
+    montar();
+    responder([aseguradora({ canAdminister: false })]);
+    responderFicha();
+
+    expect(texto()).toContain('Ficha de la aseguradora');
+    expect(texto()).toContain('Correo de siniestros');
+    expect(texto()).toContain('Verificación pendiente');
+  });
+
   it('guardar manda el bloque payer con sigla, dirección y NIT', () => {
     montar();
     responder([aseguradora()]);
+    responderFicha();
 
     (
       fixture.componentInstance as unknown as {

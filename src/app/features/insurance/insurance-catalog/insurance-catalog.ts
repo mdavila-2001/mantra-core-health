@@ -16,14 +16,10 @@ import { dataOf, empty, loading, ready } from '../../../core/view-state/view-sta
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { Chip } from '../../../shared/components/atoms/chip/chip';
 import { AppButton } from '../../../shared/components/atoms/button/button';
-import { Link } from '../../../shared/components/atoms/link/link';
 import { Card } from '../../../shared/components/molecules/card/card';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
-import { StatusSeal } from '../../../shared/components/organisms/status-seal/status-seal';
-import type { StatusSealVariant } from '../../../shared/components/organisms/status-seal/status-seal.types';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
-import { dialable, whatsappDigits } from '../../../shared/utils/telephone/telephone';
 import { ApprovalRulesDialog } from './approval-rules-dialog';
 import { BenefitFormDialog } from './benefit-form-dialog';
 import { PlanFormDialog } from './plan-form-dialog';
@@ -49,9 +45,7 @@ import { PlanPremiumDialog } from './plan-premium-dialog';
     Chip,
     DatePipe,
     AppButton,
-    Link,
     PageHeader,
-    StatusSeal,
     ViewStateHost,
     ApprovalRulesDialog,
     BenefitFormDialog,
@@ -65,16 +59,6 @@ import { PlanPremiumDialog } from './plan-premium-dialog';
 export class InsuranceCatalog {
   private readonly insurance = inject(InsuranceClient);
   private readonly toasts = inject(ToastService);
-
-  /** Teléfono listo para `tel:` (subtarea 2.3): sólo dígitos y el signo `+`. */
-  protected dialable(raw: string): string {
-    return dialable(raw);
-  }
-
-  /** El enlace de WhatsApp de la propia aseguradora, sin mensaje precargado. */
-  protected whatsappHref(raw: string): string {
-    return `https://wa.me/${whatsappDigits(raw)}`;
-  }
 
   protected readonly state = signal<ViewState<CarrierDetail>>(loading());
   protected readonly carrier = computed(() => dataOf(this.state()));
@@ -132,20 +116,6 @@ export class InsuranceCatalog {
       },
     });
     this.toasts.success('Las reglas de aprobación se actualizaron.');
-  }
-
-  /**
-   * Cómo se lee el estado de verificación.
-   *
-   * Se traduce el código del catálogo, no el texto: el `display` puede cambiar
-   * de redacción sin que cambie el significado. Un código desconocido cae en
-   * `unknown` y se muestra con su etiqueta, que es lo que el sello hace en vez
-   * de inventar un veredicto.
-   */
-  protected verificationVariant(code: string): StatusSealVariant {
-    if (code === 'VERIFICATION_VERIFIED') return 'approved';
-    if (code === 'VERIFICATION_PENDING') return 'pending';
-    return 'unknown';
   }
 
   private load(): void {
