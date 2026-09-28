@@ -26,6 +26,7 @@ import type {
   Plan,
   PlanBenefit,
   Product,
+  PractitionerInsuranceCarrier,
   ProviderNetwork,
   CreateInsurancePlanInput,
   CreatePlanBenefitInput,
@@ -187,6 +188,29 @@ export class InsuranceClient {
           count: body.count,
         })),
       );
+  }
+
+  /**
+   * `GET /practitioners/:id/insurance-carriers` — las aseguradoras en cuya red
+   * atiende un profesional, con los planes de cada una.
+   *
+   * Es lo que el paciente mira en la ficha para saber si su seguro lo cubre.
+   * Una lista vacía es «no hay convenios informados», no «no trabaja con
+   * seguros»: la pantalla lo dice así.
+   *
+   * @param practitionerProfileId - El perfil profesional de la ficha.
+   * @returns Las aseguradoras, ya ordenadas por nombre.
+   */
+  listPractitionerCarriers(
+    practitionerProfileId: string,
+  ): Observable<readonly PractitionerInsuranceCarrier[]> {
+    return this.http
+      .get<{ readonly items: readonly PractitionerInsuranceCarrier[] }>(
+        this.url(
+          `/practitioners/${encodeURIComponent(practitionerProfileId)}/insurance-carriers`,
+        ),
+      )
+      .pipe(map((body) => body.items));
   }
 
   /** `GET /insurance-carriers/:id` — catálogo comercial y red. */

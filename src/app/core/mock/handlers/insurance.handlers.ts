@@ -1,5 +1,5 @@
 import { conceptoPorId } from '../fixtures/conceptos';
-import { PACIENTES, PACIENTE } from '../fixtures/personas';
+import { PACIENTES, PACIENTE, profesionalPorId } from '../fixtures/personas';
 import { forbidden, notFound, type MockRequest, type MockRouter } from '../mock-router';
 import { TENANT_ASEGURADORA } from '../mock-session';
 import {
@@ -673,6 +673,35 @@ function itemDeSolicitud(s: SolicitudSimulada) {
   };
 }
 
+/**
+ * Las redes que publica cada aseguradora, con la forma de
+ * `GET /practitioners/:id/insurance-carriers`.
+ *
+ * La aseguradora que ya está en el catálogo del simulador conserva su id —así
+ * el mismo seguro no aparece con dos identidades—; la que no, recibe uno
+ * estable derivado de su nombre. Cada plan publicado es una red: es como la
+ * aseguradora arma su listado.
+ */
+export function carriersOfPractitioner(
+  networks: readonly { readonly insurer: string; readonly plans: readonly string[] }[],
+) {
+  return networks
+    .map((network) => {
+      const carrierId =
+        ASEGURADORAS.find((a) => a.name === network.insurer)?.id ??
+        uuid(`carrier-network-${network.insurer}`);
+      return {
+        carrierId,
+        carrierName: network.insurer,
+        networks: network.plans.map((plan) => ({
+          id: uuid(`network-${network.insurer}-${plan}`),
+          name: plan,
+        })),
+      };
+    })
+    .sort((a, b) => a.carrierName.localeCompare(b.carrierName, 'es'));
+}
+
 export function registrarSeguros(router: MockRouter): void {
   // El sobre `{ carriers }` no es decorativo: `InsuranceClient.listCarrierCatalog`
   // mapea `body.carriers`, y devolver el array pelado le dejaba `undefined`.
@@ -688,6 +717,13 @@ export function registrarSeguros(router: MockRouter): void {
       plans: a.planes.map(([code, name]) => ({ id: uuid(`plan-${code}`), code, name })),
     })),
   }));
+
+  // La ficha del profesional: con qué aseguradoras trabaja (su red y planes).
+  router.get('/practitioners/:id/insurance-carriers', ({ params }) => {
+    const practitioner = profesionalPorId(params['id']!);
+    if (practitioner === undefined) return notFound('Profesional no encontrado');
+    return { items: carriersOfPractitioner(practitioner.insurerNetworks ?? []) };
+  });
 
   router.get('/insurance-carriers', (request) => {
     if (!perteneceALaAseguradora(request)) return { items: [], count: 0 };

@@ -41,6 +41,21 @@ describe('InsuranceClient', () => {
 
   afterEach(() => http.verify());
 
+  it('listPractitionerCarriers pega en la ruta del profesional y desenvuelve items', () => {
+    let result: unknown;
+    client.listPractitionerCarriers('hp 1/x').subscribe((carriers) => (result = carriers));
+
+    const request = http.expectOne('/practitioners/hp%201%2Fx/insurance-carriers');
+    expect(request.request.method).toBe('GET');
+    const items = [
+      { carrierId: 'c-1', carrierName: 'Alianza Seguros', networks: [{ id: 'n-1', name: 'AFI GOLD' }] },
+    ];
+    request.flush({ items });
+    http.verify();
+
+    expect(result).toEqual(items);
+  });
+
   it('listCarriers pega en /insurance-carriers y convierte el alta a Date', () => {
     let filas: readonly CarrierSummary[] = [];
     client.listCarriers().subscribe((directorio) => (filas = directorio.items));
