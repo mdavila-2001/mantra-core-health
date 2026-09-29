@@ -137,7 +137,7 @@ describe('InboxOrder with the real pharmacy-orders contract', () => {
   it('opens a submitted order via review and never renders pickupCode to staff', async () => {
     await mount(pharmacyOrderDtoFixture({ pickupCode: 'MUST-NOT-RENDER' }));
     expect(text()).toContain('Ana Paciente');
-    expect(text()).toContain('En revisión');
+    expect(text()).toContain('Revisión de receta');
     expect(text()).not.toContain('MUST-NOT-RENDER');
     expect(element('[data-testid="mostrador-decision-0"]')).not.toBeNull();
   });
@@ -351,7 +351,7 @@ describe('InboxOrder with the real pharmacy-orders contract', () => {
       pharmacyOrderDtoFixture({ status: { code: 'PINV_ORDER_RETIRADO', display: 'Retirado' } }),
     );
     harness.detectChanges();
-    expect(text()).toContain('Entregado');
+    expect(text()).toContain('Finalizada');
   });
 
   it('renders the explicit 422 PICKUP_CODE_MISMATCH without closing the order', async () => {

@@ -359,12 +359,20 @@ describe('NavigationService', () => {
       expect(alcanzables).toContain('/lab-visits');
       expect(alcanzables).toContain('/dashboard');
 
-      expect(alcanzables).toContain('/administration/pharmacy-campaigns');
-
       expect(rutasDelMenu()).not.toContain('/administration/medical-organization');
-      expect(rutasDelMenu()).not.toContain('/administration/pharmacy-campaigns');
       expect(rutasDelMenu()).not.toContain('/questionnaires');
       expect(rutasDelMenu()).not.toContain('/lab-visits');
+    });
+
+    it('el médico que atiende una farmacia alcanza sus pantallas y no le ocupan un renglón', () => {
+      // Las de farmacia sólo existen en una organización `PHARMACY`
+      // (29/09/2026): con esa organización activa el registro las alcanza —la
+      // ruta abre—, y `fueraDelMenuPara` las sigue sacando de su menú de ocho.
+      abrirSesion(['PRACTITIONER'], ['t-1'], { 't-1': 'PHARMACY' });
+
+      const alcanzables = service.visibleSections().map((seccion) => `/${seccion.path}`);
+      expect(alcanzables).toContain('/administration/pharmacy-campaigns');
+      expect(rutasDelMenu()).not.toContain('/administration/pharmacy-campaigns');
     });
 
     it('el Panel sale del menú de todos, y la puerta sigue abierta', () => {

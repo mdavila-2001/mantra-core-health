@@ -6,9 +6,12 @@ import { API_BASE_URL, apiUrl } from '../api';
 import type {
   AvailabilityQuery,
   AvailabilityResult,
+  PharmacyCategory,
+  PharmacyCategoryPage,
   PharmacyContacts,
   PharmacyDetail,
   PharmacyDirectoryPage,
+  PharmacyInventoryLine,
   PharmacyLicensePage,
   PharmacyProduct,
   PharmacyProductChanges,
@@ -19,6 +22,7 @@ import type {
   PharmacySitePage,
   PharmacySitePrices,
   PharmacySiteQuery,
+  PharmacySummary,
   PharmacyStatusResult,
 } from './pharmacy.types';
 
@@ -214,6 +218,60 @@ export class PharmacyClient {
         `/pharmacies/${encodeURIComponent(pharmacyId)}/products/${encodeURIComponent(productId)}`,
       ),
     );
+  }
+
+  /** `GET /pharmacies/:id/categories` — las categorías de la farmacia (P47, sólo simulador). */
+  listCategories(pharmacyId: string): Observable<PharmacyCategoryPage> {
+    return this.http.get<PharmacyCategoryPage>(this.categoriesUrl(pharmacyId));
+  }
+
+  /** `POST /pharmacies/:id/categories` — crea una categoría. 409 si el nombre ya existe. */
+  createCategory(pharmacyId: string, name: string): Observable<PharmacyCategory> {
+    return this.http.post<PharmacyCategory>(this.categoriesUrl(pharmacyId), { name });
+  }
+
+  /** `PATCH /pharmacies/:id/categories/:categoryId` — renombra; los productos siguen. */
+  renameCategory(
+    pharmacyId: string,
+    categoryId: string,
+    name: string,
+  ): Observable<PharmacyCategory> {
+    return this.http.patch<PharmacyCategory>(
+      `${this.categoriesUrl(pharmacyId)}/${encodeURIComponent(categoryId)}`,
+      { name },
+    );
+  }
+
+  /** `DELETE /pharmacies/:id/categories/:categoryId` — 409 si tiene productos. */
+  deleteCategory(pharmacyId: string, categoryId: string): Observable<PharmacyStatusResult> {
+    return this.http.delete<PharmacyStatusResult>(
+      `${this.categoriesUrl(pharmacyId)}/${encodeURIComponent(categoryId)}`,
+    );
+  }
+
+  /**
+   * `PATCH /pharmacies/:id/inventory` — guarda de una vez las existencias y el
+   * umbral de varios productos (P47, sólo simulador).
+   */
+  updateInventory(
+    pharmacyId: string,
+    lines: readonly PharmacyInventoryLine[],
+  ): Observable<{ readonly updated: number }> {
+    return this.http.patch<{ readonly updated: number }>(
+      this.url(`/pharmacies/${encodeURIComponent(pharmacyId)}/inventory`),
+      { lines },
+    );
+  }
+
+  /** `GET /pharmacy/pharmacies/:id/summary` — los números del resumen (P47, sólo simulador). */
+  getSummary(pharmacyId: string): Observable<PharmacySummary> {
+    return this.http.get<PharmacySummary>(
+      this.url(`/pharmacy/pharmacies/${encodeURIComponent(pharmacyId)}/summary`),
+    );
+  }
+
+  private categoriesUrl(pharmacyId: string): string {
+    return this.url(`/pharmacies/${encodeURIComponent(pharmacyId)}/categories`);
   }
 
   private url(path: string): string {

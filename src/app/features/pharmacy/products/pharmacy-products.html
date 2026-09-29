@@ -1,0 +1,166 @@
+<app-page-header
+  title="Productos"
+  subtitle="Lo que vende tu farmacia: publicados, borradores y retirados. Los pacientes encuentran lo publicado al buscar dónde comprar su receta."
+/>
+
+<app-view-state-host [state]="scope.options()" (retry)="scope.retry()">
+  @if (scope.hasSeveral()) {
+    <div class="products__pharmacy">
+      <app-form-field label="Farmacia" hint="El catálogo que vas a ver y cargar es el de esta farmacia.">
+        <app-select
+          [options]="scope.selectOptions()"
+          [value]="scope.pharmacyId()"
+          (valueChange)="scope.choose($event)"
+          placeholder="Elegí tu farmacia"
+        />
+      </app-form-field>
+    </div>
+  }
+
+  @if (scope.pharmacyId() !== null) {
+    <app-card class="products" padding="lg" data-testid="products-card">
+      <div class="products__panel">
+        <app-filter-bar
+          [filters]="filterDefs()"
+          searchLabel="Buscar en el catálogo"
+          searchPlaceholder="Marca, genérico o código"
+          [wrap]="true"
+        >
+          <div filter-bar-action class="products__actions">
+            <button app-button variant="outline" type="button" (clicked)="exportCsv()" data-testid="products-export">
+              Exportar CSV
+            </button>
+            <button app-button type="button" (clicked)="openNew()" data-testid="products-new">
+              Nuevo producto
+            </button>
+          </div>
+        </app-filter-bar>
+
+        @if (truncated()) {
+          <app-alert tone="warning" title="Se muestran los primeros 500">
+            Tu catálogo tiene más productos de los que entran en un listado. Buscá por marca,
+            genérico o código para llegar a los demás.
+          </app-alert>
+        }
+
+        @if (selection().length > 0) {
+          <div class="products__bulk" role="region" aria-label="Acciones sobre lo seleccionado" data-testid="products-bulk">
+            <span class="products__bulk-count">
+              {{ selection().length === 1 ? '1 producto seleccionado' : selection().length + ' productos seleccionados' }}
+            </span>
+            <button
+              app-button
+              size="sm"
+              variant="outline"
+              type="button"
+              [disabled]="bulkBusy()"
+              (clicked)="publishSelection()"
+              data-testid="products-bulk-publish"
+            >
+              Publicar
+            </button>
+            <button
+              app-button
+              size="sm"
+              variant="danger"
+              type="button"
+              [disabled]="bulkBusy()"
+              (clicked)="withdrawSelection()"
+              data-testid="products-bulk-withdraw"
+            >
+              Retirar
+            </button>
+          </div>
+        }
+
+        <app-data-table
+          caption="Productos de tu farmacia"
+          [state]="pageRows()"
+          [columns]="columns()"
+          [trackBy]="rowId"
+          [rowLabel]="rowLabel"
+          [selectable]="true"
+          [cursor]="cursor()"
+          (cursorChanged)="goToCursor($event)"
+          (selectionChanged)="selection.set($event)"
+          (retry)="reload()"
+          (refresh)="reload()"
+          data-testid="products-table"
+        />
+      </div>
+    </app-card>
+  }
+</app-view-state-host>
+
+@if (dialogTarget() !== undefined && scope.pharmacyId(); as pharmacyId) {
+  <app-product-dialog
+    [pharmacyId]="pharmacyId"
+    [product]="dialogTarget() ?? null"
+    [categories]="categoryNames()"
+    (saved)="onSaved()"
+    (closed)="closeDialog()"
+  />
+}
+
+<ng-template #nameCell let-product>
+  <span class="products__main">{{ name(product) }}</span>
+  <span class="products__secondary">{{ presentation(product) }}</span>
+</ng-template>
+
+<ng-template #codeCell let-product>
+  <code class="products__code">{{ product.productCode }}</code>
+</ng-template>
+
+<ng-template #categoryCell let-product>
+  @if (product.category) {
+    {{ product.category }}
+  } @else {
+    <span class="products__secondary">Sin categoría</span>
+  }
+</ng-template>
+
+<ng-template #priceCell let-product>
+  @if (product.unitPrice) {
+    <span class="products__price">Bs {{ product.unitPrice | number: '1.2-2' }}</span>
+  } @else {
+    <span class="products__secondary">Sin precio</span>
+  }
+</ng-template>
+
+<ng-template #statusCell let-product>
+  @switch (statusOf(product)) {
+    @case ('PUBLISHED') {
+      <app-badge variant="success">{{ statusLabel.PUBLISHED }}</app-badge>
+    }
+    @case ('DRAFT') {
+      <app-badge variant="info">{{ statusLabel.DRAFT }}</app-badge>
+    }
+    @default {
+      <app-badge variant="secondary">{{ statusLabel.WITHDRAWN }}</app-badge>
+    }
+  }
+</ng-template>
+
+<ng-template #availabilityCell let-product>
+  @if (statusOf(product) === 'WITHDRAWN') {
+    <span class="products__secondary">—</span>
+  } @else if (product.inStock === false) {
+    <app-badge variant="error">Sin stock</app-badge>
+  } @else if (isLow(product)) {
+    <app-badge variant="warning">Stock bajo</app-badge>
+  } @else {
+    <app-badge variant="success">Disponible</app-badge>
+  }
+</ng-template>
+
+<ng-template #actionsCell let-product>
+  @if (busy().has(product.id)) {
+    <span class="products__secondary" role="status">Guardando…</span>
+  } @else {
+    <app-row-actions
+      [actions]="actionsOf(product)"
+      [fila]="name(product)"
+      (actionSelected)="onRowAction($event, product)"
+    />
+  }
+</ng-template>

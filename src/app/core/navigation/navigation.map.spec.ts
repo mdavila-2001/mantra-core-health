@@ -129,10 +129,15 @@ describe('APP_SECTIONS', () => {
     for (const ruta of paraElMostrador) {
       const seccion = APP_SECTIONS.find((s) => s.path === ruta);
       expect(seccion, ruta).toBeDefined();
-      expect(isVisibleTo(seccion!, ['USER', 'PATIENT'], conOrganizacion), ruta).toBe(false);
+      // El paciente **con** organización y el tipo que corresponde: es el caso
+      // difícil, y aun así no las ve.
+      const tipo = ruta === 'administration/my-organization' ? null : 'PHARMACY';
+      expect(isVisibleTo(seccion!, ['USER', 'PATIENT'], conOrganizacion, tipo), ruta).toBe(false);
       // Y sigue siendo de quien es: el mostrador no tiene rol propio en el
-      // token, así que se comprueba con la sesión que sí lo atiende.
-      expect(isVisibleTo(seccion!, ['USER'], conOrganizacion), ruta).toBe(true);
+      // token, así que se comprueba con la sesión que sí lo atiende. Desde el
+      // 29/09/2026 las de farmacia sólo existen para una organización
+      // `PHARMACY` (`onlyForTenantTypes`).
+      expect(isVisibleTo(seccion!, ['USER'], conOrganizacion, tipo), ruta).toBe(true);
       // Menos «Tu organización»: es de cualquier organización, aseguradora
       // incluida. Las tres del mostrador de farmacia sí se cierran para una
       // sesión PAYER — `administration/pharmacy-orders` lo demuestra por
@@ -370,11 +375,26 @@ describe('isVisibleTo con `onlyForTenantTypes`', () => {
     expect(isVisibleTo(labSection, ['PATIENT'], ['t-1'], 'DIAGNOSTIC_CENTER')).toBe(false);
   });
 
-  it('las secciones reales son la recepción y la cola del laboratorio, y nada más la usa', () => {
+  it('las secciones reales son las del laboratorio y las ocho de la farmacia, y nada más la usa', () => {
     const flagged = APP_SECTIONS.filter((s) => s.onlyForTenantTypes !== undefined);
-    expect(flagged.map((s) => s.path)).toEqual(['laboratorio/recepcion', 'laboratorio/cola']);
-    for (const labOnly of flagged) {
-      expect(labOnly.onlyForTenantTypes).toEqual(['DIAGNOSTIC_CENTER']);
+    // Desde el 29/09/2026 el menú de la cuenta de farmacia es plano y cerrado:
+    // sus ocho pantallas sólo existen para una organización `PHARMACY`.
+    expect(flagged.map((s) => s.path)).toEqual([
+      'laboratorio/recepcion',
+      'laboratorio/cola',
+      'administration/pharmacy',
+      'administration/pharmacy-catalog',
+      'administration/pharmacy-categories',
+      'administration/pharmacy-import',
+      'administration/pharmacy-inventory',
+      'administration/pharmacy-orders',
+      'administration/pharmacy-campaigns',
+      'administration/pharmacy-profile',
+    ]);
+    for (const section of flagged) {
+      expect(section.onlyForTenantTypes, section.path).toEqual(
+        section.path.startsWith('laboratorio/') ? ['DIAGNOSTIC_CENTER'] : ['PHARMACY'],
+      );
     }
   });
 
@@ -396,8 +416,12 @@ describe('isVisibleTo con `onlyForTenantTypes`', () => {
  * decisión, no un olvido.
  */
 describe('lo que `hiddenForTenantTypes` le cierra a la aseguradora', () => {
-  it('son exactamente estas dieciséis rutas, todas PAYER', () => {
-    const conMarca = APP_SECTIONS.filter((s) => s.hiddenForTenantTypes !== undefined);
+  it('son exactamente estas doce rutas, todas PAYER', () => {
+    // Las cuatro del mostrador de farmacia también se le cierran, pero desde el
+    // 29/09/2026 por el otro lado: sólo existen para `PHARMACY`
+    // (`onlyForTenantTypes`), y el test de arriba demuestra que una sesión PAYER
+    // no las ve.
+    const conMarca = APP_SECTIONS.filter((s) => s.hiddenForTenantTypes?.includes('PAYER') === true);
 
     expect(conMarca.map((s) => s.path)).toEqual([
       'directories',
@@ -413,13 +437,17 @@ describe('lo que `hiddenForTenantTypes` le cierra a la aseguradora', () => {
       'my-account/diagnostic-orders',
       'my-account/cotizaciones',
       'my-account/questionnaires',
-      'administration/pharmacy-orders',
-      'administration/pharmacy-campaigns',
-      'administration/pharmacy-catalog',
-      'administration/pharmacy-profile',
     ]);
     for (const seccion of conMarca) {
-      expect(seccion.hiddenForTenantTypes, seccion.path).toEqual(['PAYER']);
+      // `PAYER` solo, o junto con `PHARMACY` (menú de la cuenta de farmacia):
+      // ningún otro tipo se cuela en esta lista sin que alguien lo decida.
+      expect(['PAYER'], seccion.path).toEqual(
+        seccion.hiddenForTenantTypes!.filter((tipo) => tipo === 'PAYER'),
+      );
+      expect(
+        seccion.hiddenForTenantTypes!.filter((tipo) => tipo !== 'PAYER' && tipo !== 'PHARMACY'),
+        seccion.path,
+      ).toEqual([]);
     }
   });
 
