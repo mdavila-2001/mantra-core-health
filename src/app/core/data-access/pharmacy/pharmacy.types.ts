@@ -117,6 +117,56 @@ export interface PharmacySiteQuery {
   readonly limit?: number;
 }
 
+/** Tipos de identificador que el alta de producto acepta. */
+export type PharmacyProductIdentifierType = 'GTIN' | 'NDC';
+
+/** Un identificador de producto: el código de barras (GTIN) o un NDC. */
+export interface PharmacyProductIdentifier {
+  readonly identifierType: PharmacyProductIdentifierType;
+  readonly identifierValue: string;
+}
+
+/**
+ * El alta de un producto, tal como la espera `POST
+ * /pharmacies/:pharmacyId/products` (`PharmacyCreateProductDto`).
+ *
+ * Sólo lo que el catálogo de la farmacia carga. `medicationConceptId`,
+ * `manufacturerTenantId` y `dosageFormConceptId` son conceptos del modelo que
+ * la farmacia no elige desde un texto libre y quedan para cuando la pantalla
+ * los pueda resolver contra terminología.
+ *
+ * Los opcionales **no viajan** cuando están vacíos: `IsOptional` deja pasar
+ * un `''`, y el backend lo guardaría como un nombre vacío.
+ */
+export interface PharmacyProductDraft {
+  /** Código único del producto dentro de la farmacia (el SKU). 1 a 100. */
+  readonly productCode: string;
+  readonly brandName?: string;
+  readonly genericName?: string;
+  readonly strengthText?: string;
+  readonly packageSizeText?: string;
+  readonly requiresPrescription?: boolean;
+  readonly coldChainRequired?: boolean;
+  readonly identifiers?: readonly PharmacyProductIdentifier[];
+}
+
+/** Lo que devuelve el alta de un producto (`ProductResponseDto`). */
+export interface PharmacyProductCreated {
+  readonly id: string;
+  readonly pharmacyId: string;
+  readonly productCode: string;
+  /** Concepto de estado, como UUID crudo: el alta no lo resuelve. */
+  readonly status: string;
+  readonly identifierCount: number;
+  readonly createdAt: string;
+}
+
+/** Lo que devuelve el retiro de un producto (`StatusResultDto`). */
+export interface PharmacyStatusResult {
+  /** `true` si la operación se aplicó. */
+  readonly ok: boolean;
+}
+
 /** El precio vigente con que una sede ofrece un producto disponible. */
 export interface AvailabilityPrice {
   /** Precio unitario, como texto exacto. */

@@ -122,6 +122,7 @@ describe('APP_SECTIONS', () => {
       'administration/my-organization',
       'administration/pharmacy-orders',
       'administration/pharmacy-campaigns',
+      'administration/pharmacy-catalog',
       'administration/pharmacy-profile',
     ];
 
@@ -395,7 +396,7 @@ describe('isVisibleTo con `onlyForTenantTypes`', () => {
  * decisión, no un olvido.
  */
 describe('lo que `hiddenForTenantTypes` le cierra a la aseguradora', () => {
-  it('son exactamente estas quince rutas, todas PAYER', () => {
+  it('son exactamente estas dieciséis rutas, todas PAYER', () => {
     const conMarca = APP_SECTIONS.filter((s) => s.hiddenForTenantTypes !== undefined);
 
     expect(conMarca.map((s) => s.path)).toEqual([
@@ -413,6 +414,7 @@ describe('lo que `hiddenForTenantTypes` le cierra a la aseguradora', () => {
       'my-account/questionnaires',
       'administration/pharmacy-orders',
       'administration/pharmacy-campaigns',
+      'administration/pharmacy-catalog',
       'administration/pharmacy-profile',
     ]);
     for (const seccion of conMarca) {
