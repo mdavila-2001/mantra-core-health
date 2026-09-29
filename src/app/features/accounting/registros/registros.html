@@ -1,0 +1,194 @@
+<!-- ═══ Los tres números ═══════════════════════════════════════════════════
+     Lo primero que el doctor quiere saber, y en el orden en que lo pidió:
+     a cuántos atendió, cuánto cobró y cuánto le deben las aseguradoras. Los
+     dos importes van separados a propósito: lo cobrado ya está en la mano, lo
+     de las aseguradoras todavía no. -->
+<section class="numeros" aria-labelledby="titulo-numeros">
+  <div class="numeros__cabecera">
+    <app-section-heading icono="chart" titulo="Tu práctica en tres números" id="titulo-numeros" />
+    <app-segmented-control
+      [options]="periodos"
+      [value]="periodo()"
+      ariaLabel="Período de los números"
+      (valueChange)="elegirPeriodo($event)"
+    />
+  </div>
+
+  <app-view-state-host [state]="resumen()" (retry)="cargarResumen()">
+    @if (numeros(); as n) {
+      <div class="numeros__fila" data-testid="contabilidad-numeros">
+        <app-card variant="outlined" class="numero" data-testid="numero-pacientes">
+          <p class="numero__rotulo">Pacientes atendidos</p>
+          <p class="numero__cifra">{{ n.patientsSeen }}</p>
+          <p class="numero__pie">
+            en {{ n.consultations }}
+            {{ n.consultations === 1 ? 'consulta' : 'consultas' }}
+          </p>
+        </app-card>
+        <app-card variant="elevated" class="numero numero--destacado" data-testid="numero-cobrado">
+          <p class="numero__rotulo">Cobraste</p>
+          <p class="numero__cifra">{{ importe(n.collected) }}</p>
+          <p class="numero__pie">consultas pagadas del período</p>
+        </app-card>
+        <app-card variant="outlined" class="numero" data-testid="numero-aseguradoras">
+          <p class="numero__rotulo">Esperás de las aseguradoras</p>
+          <p class="numero__cifra">{{ importe(n.expectedFromInsurers) }}</p>
+          <p class="numero__pie">
+            a hoy, en {{ n.pendingClaims }}
+            {{ n.pendingClaims === 1 ? 'solicitud pendiente' : 'solicitudes pendientes' }}
+          </p>
+        </app-card>
+      </div>
+    }
+  </app-view-state-host>
+</section>
+
+<!-- ═══ Tus registros ═══════════════════════════════════════════════════════
+     Una tarjeta, cinco pestañas (regla 6). Las cinco son la misma tabla del
+     sistema con el mismo modal: gasto, activo y deuda con su tipo; la
+     transacción, debe y haber; y las cuentas, que son también los tipos. -->
+<app-card variant="outlined" padding="lg" class="registros" data-testid="contabilidad-registros">
+  <app-section-heading card-header icono="billing" titulo="Tus registros" />
+  <app-tabs [selectedIndex]="pestana()" (selectedIndexChange)="pestana.set($event)">
+    @for (kind of kinds; track kind) {
+      <app-tab
+        [label]="
+          (kind === 'EXPENSE' ? 'Gastos' : kind === 'ASSET' ? 'Activos' : 'Deudas') +
+          cuantos(registros()[kind])
+        "
+      >
+        <div class="registros__panel">
+          <div class="registros__barra">
+            <button
+              app-button
+              type="button"
+              [attr.data-testid]="'nuevo-' + kind"
+              (clicked)="nuevoRegistro(kind)"
+            >
+              {{ textos[kind].nuevo }}
+            </button>
+          </div>
+          <app-data-table
+            [state]="filasDe(kind)"
+            [columns]="columnasDeRegistro()"
+            [trackBy]="porId"
+            [caption]="textos[kind].tipo"
+            (retry)="cargarRegistros(kind)"
+            [attr.data-testid]="'tabla-' + kind"
+          />
+        </div>
+      </app-tab>
+    }
+
+    <app-tab [label]="'Transacciones' + cuantos(transacciones())">
+      <div class="registros__panel">
+        <div class="registros__barra">
+          <button
+            app-button
+            type="button"
+            data-testid="nueva-transaccion"
+            (clicked)="modal.set({ tipo: 'transaccion', transaccion: null })"
+          >
+            Nueva transacción
+          </button>
+        </div>
+        <app-data-table
+          [state]="filasDeTransacciones()"
+          [columns]="columnasDeTransaccion()"
+          [trackBy]="porId"
+          caption="Transacciones: debe y haber"
+          (retry)="cargarTransacciones()"
+          data-testid="tabla-transacciones"
+        />
+      </div>
+    </app-tab>
+
+    <app-tab [label]="'Cuentas' + cuantos(cuentas())">
+      <div class="registros__panel">
+        <div class="registros__barra">
+          <p class="registros__nota">
+            Las generales vienen cargadas y se pueden renombrar; las tuyas, también borrar.
+          </p>
+          <button
+            app-button
+            type="button"
+            data-testid="nueva-cuenta"
+            (clicked)="modal.set({ tipo: 'cuenta', cuenta: null })"
+          >
+            Nueva cuenta
+          </button>
+        </div>
+        <app-data-table
+          [state]="filasDeCuentas()"
+          [columns]="columnasDeCuenta()"
+          [trackBy]="porId"
+          caption="Cuentas"
+          (retry)="cargarCuentas()"
+          data-testid="tabla-cuentas"
+        />
+      </div>
+    </app-tab>
+  </app-tabs>
+</app-card>
+
+<!-- Las celdas de acciones: la tabla las instancia por fila. -->
+<ng-template #accionesDeRegistro let-fila>
+  <app-row-actions
+    [actions]="acciones"
+    [fila]="fila.descripcion"
+    (actionSelected)="accionDeRegistro(fila, $event)"
+  />
+</ng-template>
+<ng-template #accionesDeTransaccion let-fila>
+  <app-row-actions
+    [actions]="acciones"
+    [fila]="fila.descripcion"
+    (actionSelected)="accionDeTransaccion(fila, $event)"
+  />
+</ng-template>
+<ng-template #accionesDeCuenta let-fila>
+  <app-row-actions
+    [actions]="accionesDe(fila.cuenta)"
+    [fila]="fila.nombre"
+    (actionSelected)="accionDeCuenta(fila, $event)"
+  />
+</ng-template>
+
+@if (modal(); as abierto) {
+  @switch (abierto.tipo) {
+    @case ('registro') {
+      @if (abierto.tipo === 'registro') {
+        <app-registro-dialog
+          [practiceId]="practiceId()"
+          [kind]="abierto.kind"
+          [registro]="abierto.registro"
+          [cuentas]="listaDeCuentas()"
+          (saved)="registroGuardado($event)"
+          (cuentaCreada)="cargarCuentas()"
+          (closed)="modal.set(null)"
+        />
+      }
+    }
+    @case ('transaccion') {
+      @if (abierto.tipo === 'transaccion') {
+        <app-transaccion-dialog
+          [practiceId]="practiceId()"
+          [transaccion]="abierto.transaccion"
+          [cuentas]="listaDeCuentas()"
+          (saved)="transaccionGuardada()"
+          (closed)="modal.set(null)"
+        />
+      }
+    }
+    @case ('cuenta') {
+      @if (abierto.tipo === 'cuenta') {
+        <app-cuenta-dialog
+          [practiceId]="practiceId()"
+          [cuenta]="abierto.cuenta"
+          (saved)="cuentaGuardada()"
+          (closed)="modal.set(null)"
+        />
+      }
+    }
+  }
+}

@@ -53,12 +53,18 @@ describe('DirectoriesOverview', () => {
     fixture.detectChanges();
   }
 
-  it('un paciente ve los cuatro directorios, cada uno con su descripción y su enlace', () => {
+  it('un paciente ve los cinco directorios, cada uno con su descripción y su enlace', () => {
     abrirSesion(['PATIENT']);
     crear();
 
     const enlaces = [...root().querySelectorAll<HTMLAnchorElement>('.rejilla__tarjeta')];
-    expect(enlaces.length).toBe(4);
+    expect(enlaces.length).toBe(5);
+
+    // El mercado de seguros (28/09/2026): el quinto, con la misma tarjeta.
+    const aseguradoras = enlaces.find(
+      (enlace) => enlace.getAttribute('href') === '/insurers-directory',
+    );
+    expect(aseguradoras?.textContent).toContain('Directorio de aseguradoras');
 
     const medicos = enlaces.find((enlace) => enlace.getAttribute('href') === '/directory');
     expect(medicos).toBeDefined();
@@ -72,7 +78,7 @@ describe('DirectoriesOverview', () => {
 
     const enlaces = [...root().querySelectorAll<HTMLAnchorElement>('.rejilla__tarjeta')];
     expect(enlaces.some((enlace) => enlace.getAttribute('href') === '/directory')).toBe(false);
-    expect(enlaces.length).toBe(3);
+    expect(enlaces.length).toBe(4);
   });
 
   it('el nodo central es decorativo: no es un enlace ni compite con los cuatro', () => {

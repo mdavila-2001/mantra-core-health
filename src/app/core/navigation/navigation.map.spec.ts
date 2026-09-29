@@ -337,7 +337,7 @@ describe('isVisibleTo con `hiddenForTenantTypes`', () => {
  * «Tu organización», «Aseguradora» y «Siniestralidad y analítica», que ya
  * existen y no llevan `hiddenForTenantTypes`. Todo lo demás que una sesión
  * `USER` con tenant `PAYER` veía es ajeno, y esta prueba fija la lista
- * cerrada de lo que se le cierra: agregar una décimosexta fila acá es una
+ * cerrada de lo que se le cierra: agregar una decimoséptima fila acá es una
  * decisión, no un olvido.
  */
 describe('lo que `hiddenForTenantTypes` le cierra a la aseguradora', () => {
@@ -350,6 +350,7 @@ describe('lo que `hiddenForTenantTypes` le cierra a la aseguradora', () => {
       'laboratory-directory',
       'clinics-directory',
       'pharmacies-directory',
+      'insurers-directory',
       'my-account/dependents',
       'my-account/appointments',
       'my-account/medical-record',

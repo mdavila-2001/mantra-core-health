@@ -1,3 +1,4 @@
+import { CORREDORES_CON_PERFIL, vitrinas } from '../fixtures/comunidad';
 import { conceptoPorId } from '../fixtures/conceptos';
 import { INSURER_NETWORK_PRACTITIONERS } from '../fixtures/insurer-network.generated';
 import { MEDICA, PACIENTES, PACIENTE } from '../fixtures/personas';
@@ -697,6 +698,32 @@ function itemDeSolicitud(s: SolicitudSimulada) {
   };
 }
 
+/**
+ * Lo que la práctica espera cobrarles a las aseguradoras, a hoy.
+ *
+ * Enviadas sin dictamen cuentan por lo facturado; aprobadas —total o
+ * parcialmente— y todavía sin pagar, por lo aprobado. Pagadas y rechazadas no
+ * se esperan. Exportado para la contabilidad simple del doctor, que lo
+ * muestra como uno de sus tres números.
+ */
+export function pendienteDeAseguradoras(): { monto: string; solicitudes: number } {
+  let centavos = 0;
+  let cuantas = 0;
+  for (const s of solicitudes.todos()) {
+    const codigo = s.status.code;
+    const importe =
+      codigo === 'SUBMITTED'
+        ? s.billed
+        : codigo === 'APPROVED' || codigo === 'PARTIAL'
+          ? s.approved
+          : null;
+    if (importe === null) continue;
+    centavos += Math.round(Number(importe) * 100);
+    cuantas += 1;
+  }
+  return { monto: (centavos / 100).toFixed(2), solicitudes: cuantas };
+}
+
 /* ---- con qué aseguradoras trabaja un profesional ----------------------------
    `GET /practitioners/:id/insurance-networks`. La API real todavía no la sirve
    (`docs/pendientes-backend-seguros-del-medico.md`); la forma es la que pide
@@ -811,6 +838,36 @@ export function registrarSeguros(router: MockRouter): void {
     return carrier === undefined
       ? notFound('Aseguradora no encontrada')
       : conPermiso(carrier, request);
+  });
+
+  // La vitrina de una aseguradora para el paciente (P46): se busca por el slug
+  // de su ficha pública, que es lo que trae el directorio. Lee el MISMO
+  // catálogo que administra la aseguradora —lo que ella corrige en su consola
+  // es lo que ve el paciente— y, si no lo administró todavía, el sembrado.
+  router.get('/insurance-marketplace/insurers/:slug', ({ params }) => {
+    const ficha = vitrinas
+      .todos()
+      .find((vitrina) => vitrina.slug === params['slug'] && vitrina.kind === 'INSURER');
+    if (ficha === undefined) return notFound('Aseguradora no encontrada');
+    const indice = ASEGURADORAS.findIndex((a) => a.name === ficha.displayName);
+    // Tiene ficha pública pero no catálogo cargado: no es un error.
+    if (indice < 0) return { carrier: null, brokers: [] };
+    const aseguradora = ASEGURADORAS[indice]!;
+    const carrier =
+      catalogoAdministrable.get(aseguradora.id) ?? detalleDeAseguradora(aseguradora, indice);
+    const brokers = CORREDORES.flatMap((corredor, i) =>
+      corredor.carriers.includes(indice)
+        ? [
+            {
+              ...resumenDeCorredor(corredor, i),
+              chatSlug:
+                CORREDORES_CON_PERFIL.find((p) => p.brokerCode === corredor.brokerCode)?.slug ??
+                null,
+            },
+          ]
+        : [],
+    );
+    return { carrier: { ...carrier, canAdminister: false }, brokers };
   });
 
   router.post('/insurance-products/:productId/plans', (request) => {

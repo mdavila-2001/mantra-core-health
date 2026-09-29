@@ -50,7 +50,7 @@ export abstract class PublicCatalogDetail<T> implements OnInit {
   /** Qué clase de sujeto espera esta ficha. Un slug de otra clase da 404. */
   protected abstract readonly kind: Extract<
     PublicProfileDetail['kind'],
-    'ORGANIZATION' | 'PHARMACY'
+    'ORGANIZATION' | 'PHARMACY' | 'INSURER'
   >;
 
   /** El directorio del que cuelga, para la miga de pan y la vuelta atrás. */

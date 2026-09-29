@@ -9,6 +9,7 @@ import { registrarDirectorio } from './directory.handlers';
 import { registrarEncuestas } from './surveys-forms.handlers';
 import { registrarFarmacia } from './pharmacy.handlers';
 import { registrarFinanzas } from './finance.handlers';
+import { registrarContabilidadSimple } from './simple-accounting.handlers';
 import { registrarIdentidad } from './identity.handlers';
 import { registrarLaboratorioFarmaceutico } from './pharma-lab.handlers';
 import { registrarModulosAdministrativos } from './admin-modules.handlers';
@@ -50,6 +51,7 @@ export function crearRouterSimulado(): MockRouter {
   registerInsuranceCampaigns(router);
   registrarEncuestas(router);
   registrarFinanzas(router);
+  registrarContabilidadSimple(router);
   registrarModulosAdministrativos(router);
   registrarFarmacia(router);
   registrarDiagnostico(router);

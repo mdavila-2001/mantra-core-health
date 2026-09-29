@@ -1,0 +1,36 @@
+/* Lo propio de la ficha de una aseguradora. La rejilla, la tarjeta y el resto
+   de la ficha salen de las dos hojas compartidas que van antes que ésta. */
+
+/* El botón del broker, debajo de los datos de la aseguradora, con quién
+   atiende al lado. */
+.aseguradora__accion {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3);
+  margin-block-start: var(--sp-4);
+}
+
+.aseguradora__plan {
+  display: grid;
+  gap: var(--sp-4);
+  padding-block-start: var(--sp-4);
+}
+
+/* Producto, para quién y prima: tres datos cortos en un renglón mientras
+   entren; en teléfono bajan uno por renglón. */
+.aseguradora__datos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3) var(--sp-6);
+  margin: 0;
+}
+
+.aseguradora__datos dd {
+  margin: 0;
+}
+
+.aseguradora__chat {
+  justify-self: start;
+  margin-block-start: auto;
+}

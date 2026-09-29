@@ -1766,3 +1766,86 @@ se está hablando esta semana», que es la pregunta del pedido.
 > `POST /pharmacies/:pharmacyId/products:bulk` con informe por fila evitaría cortar la carga si
 > se cierra la pestaña.
 
+## P46 · El mercado de seguros del paciente — 28/09/2026
+
+> **P46 · `GET /insurance-marketplace/insurers/:slug`.** Origen: pedido del propietario del
+> 28/09/2026 — el paciente tiene que poder ver los productos de cada aseguradora con sus
+> cláusulas y coberturas, desde «Directorios», y hablar con su broker. Hoy existe **sólo en el
+> frontend y su simulador**.
+>
+> **1. Qué cambió en la pantalla**
+> «Directorios» suma el nodo «Directorio de aseguradoras» (`/insurers-directory`), con la misma
+> página que clínicas y farmacias sobre `GET /public/search/insurers`, que ya existe. La ficha
+> (`/insurers-directory/:slug`) lee la ficha pública con `GET /public/profiles/s/:slug`, que ya
+> existe, y **el catálogo con este endpoint nuevo**.
+>
+> **2. Por qué hace falta**
+> El catálogo comercial (`GET /insurance-carriers/:id`) sólo lo lee la propia aseguradora: desde
+> el tenant de un paciente responde vacío o 404. El paciente necesita una lectura de vitrina.
+>
+> **3. Contrato**
+> `GET /insurance-marketplace/insurers/:slug`, con sesión de cualquier rol, donde `:slug` es el
+> de la ficha pública de la aseguradora (clase `INSURER`). Responde:
+> - `carrier`: el mismo cuerpo que `GET /insurance-carriers/:id` —productos, planes con prima y
+>   cláusulas (`benefits` con `approvalRules`)—, con `canAdminister: false`. Sólo planes y
+>   cláusulas vigentes. `null` cuando la aseguradora tiene ficha pública pero todavía no cargó
+>   catálogo (la pantalla lo dice así, no como error).
+> - `brokers`: los corredores con acuerdo **vigente** con esa aseguradora —`id`, `brokerCode`,
+>   `legalName`, `licenseNumber`, `verification`, `independent`— más `chatSlug`, el slug de su
+>   perfil de comunidad, o `null` si no tiene.
+> - `404` si el slug no es de una aseguradora publicada.
+>
+> Nada de la cartera del broker ni datos de otros asegurados viaja por acá.
+>
+> **4. El chat con el broker**
+> «Hablar con el broker» abre `/messaging?escribirA=<chatSlug>`, el mismo camino que «Enviar
+> mensaje» de una ficha pública: `GET /community/profiles/by-slug/:slug` y
+> `POST /community/conversations`. Para eso **cada broker necesita un perfil de comunidad**
+> (en el simulador, clase `BROKER`, que no sale en ningún directorio público).
+>
+> **5. Lo que el frontend ya tiene**
+> `InsuranceClient.getMarketplace`, el directorio, la ficha con una pestaña por plan y la tabla
+> de cláusulas, la sección de brokers y el e2e `playwright/mercado-de-seguros.spec.ts`. El
+> simulador arma la respuesta del mismo catálogo que edita la consola de la aseguradora.
+
+## P47 · La contabilidad simple del doctor — 28/09/2026
+
+> **P47 · `/accounting/practitioner/simple/...`.** Origen: pedido del propietario del 28/09/2026 —
+> «gasto → tipo, activo → tipo, deuda → tipo, transacción debe/haber, nada más; nada de centros
+> de costo; cuenta → modal y tabla, con cuentas generales sembradas», y arriba de todo tres
+> números: pacientes atendidos, cuánto se cobró y cuánto se espera de las aseguradoras. Hoy
+> existe **sólo en el frontend y su simulador**.
+>
+> **1. Modelo**
+> - **Cuenta**: `id`, `code` (`5.3`, lo asigna el servidor), `name`, `accountClass`
+>   (`ASSET | LIABILITY | EQUITY | INCOME | EXPENSE`), `seeded`. Las generales (26, ver
+>   `simple-accounting.handlers.ts`) son de toda práctica: se renombran, no se borran ni cambian
+>   de clase. Las propias cuelgan de la práctica.
+> - **Registro** (gasto, activo o deuda): `kind` (`EXPENSE | ASSET | DEBT`), `date`, `accountId`
+>   —**el tipo es una cuenta de la clase que corresponde**: gasto → EXPENSE, activo → ASSET,
+>   deuda → LIABILITY—, `description`, `amount` (cadena decimal > 0).
+> - **Transacción**: `date`, `description`, `debitAccountId`, `creditAccountId` (distintas),
+>   `amount`.
+>
+> **2. Endpoints** (todos con `practiceId`, sólo `PRACTITIONER` vinculado a la práctica)
+> - `GET /accounting/practitioner/simple/summary?period=month|year` →
+>   `{ period, from, to, patientsSeen, consultations, collected, expectedFromInsurers,
+>   pendingClaims }`. `patientsSeen`: personas distintas con consulta «Atendida» en el período;
+>   `collected`: consultas pagadas del período; `expectedFromInsurers`: **a hoy**, solicitudes
+>   enviadas sin dictamen (por lo facturado) + aprobadas sin pagar (por lo aprobado).
+> - `GET|POST /accounting/practitioner/simple/accounts`, `PUT|DELETE .../accounts/:id`.
+>   `DELETE` → 409 si es general o si la usa algún registro o transacción. Nombre único por
+>   clase, sin distinguir tildes ni mayúsculas (409).
+> - `GET|POST /accounting/practitioner/simple/records?kind=`, `PUT|DELETE .../records/:id`.
+> - `GET|POST /accounting/practitioner/simple/transactions`, `PUT|DELETE .../transactions/:id`.
+> - Validación → 422 con el motivo en castellano (el frontend lo muestra tal cual).
+>
+> **3. Qué NO es**
+> No reemplaza los libros (`/accounting/journal-transactions`) ni el flujo de aprobación de
+> asientos: es la contabilidad llana del consultorio. Si el negocio quiere que cada registro
+> genere además su asiento, es una decisión aparte; hoy no lo hace.
+>
+> **4. Lo que el frontend ya tiene**
+> `SimpleAccountingClient`, la sección arriba de «Contabilidad» (`ContabilidadSimple`) con los
+> tres números y una tarjeta con cinco pestañas, los tres modales y el e2e
+> `playwright/contabilidad-simple.spec.ts`.
