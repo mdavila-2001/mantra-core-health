@@ -14,6 +14,7 @@ import type {
   NewUser,
   OrganizationRegistration,
   PasswordReset,
+  PharmacyOrganizationRegistration,
   PasswordResetRequested,
   VerificationResent,
   PasswordResetResult,
@@ -375,6 +376,65 @@ export class IamClient {
         ...(registration.owner.motherLastName === undefined
           ? {}
           : { motherLastName: registration.owner.motherLastName }),
+      },
+    });
+  }
+
+  /**
+   * `POST /iam/auth/register-organization` con `tenantType: 'PHARMACY'`.
+   * Auto-registro de una farmacia: crea el tenant y su usuario owner en la
+   * misma operación. Ver el JSDoc de {@link PharmacyOrganizationRegistration}
+   * para por qué es un método aparte de {@link IamClient.registerOrganization}
+   * en vez de generalizarlo: el bloque específico del tipo de tenant no
+   * coincide (`payer` siempre obligatorio para la aseguradora; la farmacia no
+   * tiene bloque propio en el DTO real).
+   */
+  registerPharmacyOrganization(
+    registration: PharmacyOrganizationRegistration,
+  ): Observable<RegisteredOrganization> {
+    return this.http.post<RegisteredOrganization>(this.url('/iam/auth/register-organization'), {
+      organization: {
+        code: registration.code,
+        legalName: registration.legalName,
+        legalEntityType: registration.legalEntityType,
+        tenantType: 'PHARMACY',
+        legalRepresentative: {
+          fullName: registration.legalRepresentative.fullName,
+          email: registration.legalRepresentative.email,
+          ...(registration.legalRepresentative.idNumber === undefined
+            ? {}
+            : { idNumber: registration.legalRepresentative.idNumber }),
+          ...(registration.legalRepresentative.powerOfAttorneyFileId === undefined
+            ? {}
+            : { powerOfAttorneyFileId: registration.legalRepresentative.powerOfAttorneyFileId }),
+        },
+        ...(registration.legalDocuments === undefined
+          ? {}
+          : { legalDocuments: registration.legalDocuments }),
+        ...(registration.executives === undefined ? {} : { executives: registration.executives }),
+        // `pharmacy.branches`: clave que el backend real todavía no declara
+        // (ver el JSDoc de `PharmacyOrganizationRegistration`, P49). Se manda
+        // igual para que el simulador —que sí la valida— la ejercite.
+        ...(registration.headquarters === undefined && registration.branches === undefined
+          ? {}
+          : {
+              pharmacy: {
+                ...(registration.headquarters === undefined
+                  ? {}
+                  : {
+                      latitude: registration.headquarters.latitude,
+                      longitude: registration.headquarters.longitude,
+                    }),
+                ...(registration.branches === undefined || registration.branches.length === 0
+                  ? {}
+                  : { branches: registration.branches.map((branch) => ({ ...branch })) }),
+              },
+            }),
+      },
+      owner: {
+        email: registration.owner.email,
+        password: registration.owner.password,
+        displayName: registration.owner.displayName,
       },
     });
   }
