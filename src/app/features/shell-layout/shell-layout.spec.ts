@@ -1269,6 +1269,27 @@ describe('ShellLayout', () => {
       });
     });
 
+    it.each([
+      ['paciente', ['USER', 'PATIENT']],
+      ['profesional', ['PRACTITIONER']],
+      ['administración de plataforma', ['PLATFORM_ADMIN']],
+      ['seguridad', ['SECURITY_ADMIN']],
+      ['sin rol', []],
+    ])('el encabezado ofrece la red social a %s, como enlace a /posts', (_quien, roles) => {
+      // Pedido del cliente (28/09/2026): arriba y para todos. Enlace y no
+      // botón, y sin cerrar la sesión en el camino: `/posts` es la misma
+      // pantalla a la que `homeGuard` manda a quien no entró.
+      abrirSesion({ sub: 'u-1', name: 'Ana Salas', roles, tenants: ['t-1'] });
+
+      const red = raiz().querySelector<HTMLAnchorElement>('[data-testid="header-red-social"]');
+
+      expect(red?.tagName).toBe('A');
+      expect(red?.getAttribute('href')).toBe('/posts');
+      expect(red?.getAttribute('aria-label')).toBe('Red social');
+      expect(red?.textContent?.trim()).toBe('Red social');
+      expect(session.isAuthenticated()).toBe(true);
+    });
+
     it('el encabezado ofrece el interruptor de tema junto a Ajustes', () => {
       // Volvió a pedido del cliente (2026-09-18): claro/oscuro es un atajo;
       // Ajustes sigue siendo la puerta a todas las preferencias.
