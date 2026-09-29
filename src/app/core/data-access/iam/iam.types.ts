@@ -556,6 +556,76 @@ export interface RegisteredOrganization {
   readonly representativesRegistered?: number;
 }
 
+/** Una sucursal declarada en el alta pública de farmacia (1.18): sólo lo que el mapa confirma. */
+export interface PharmacyBranchRegistration {
+  readonly name: string;
+  readonly latitude: number;
+  readonly longitude: number;
+}
+
+/**
+ * Alta pública de una farmacia por sí misma (`POST /iam/auth/register-organization`
+ * con `tenantType: 'PHARMACY'`).
+ *
+ * Mismo endpoint que {@link OrganizationRegistration} (la aseguradora): el
+ * registro de procesos repite el mismo onboarding de tenant —empresa,
+ * papeles, representante legal, gerencias, cuenta de acceso— para farmacia,
+ * laboratorio e imagenología (Módulo Farmacia §1). Es una interfaz aparte y
+ * no una unión con `OrganizationRegistration` porque el bloque específico del
+ * tipo de tenant no coincide: la aseguradora exige `payer` siempre; la
+ * farmacia no tiene bloque propio en el DTO real (no hay `PharmacyProfileDto`
+ * — el backend sólo declara `payer`, `broker` y `diagnosticUnit`), así que
+ * `pharmacy.branches` es una clave que **este cliente inventa** para no
+ * perder las sucursales que la persona cargó; el backend real todavía no la
+ * reconoce (ver `PENDIENTES-BACKEND.md`, P49).
+ *
+ * A diferencia de la aseguradora, acá **lo obligatorio es lo más básico**
+ * (decisión D2 del carril de farmacia): razón social, tipo societario, NIT,
+ * dirección legal de la central, nombre y correo del representante, correo de
+ * acceso y contraseña. Los seis papeles en PDF, el GPS de la central, las
+ * sucursales y las tres gerencias se completan después, desde la Ficha.
+ */
+export interface PharmacyOrganizationRegistration {
+  readonly code: string;
+  readonly legalName: string;
+  /** Tipo societario del diccionario `VS_LEGAL_ENTITY_TYPE`, p. ej. `SRL`. */
+  readonly legalEntityType: string;
+  readonly taxIdentifier: string;
+  readonly legalAddress: string;
+  /** Coordenadas de la central, ambas o ninguna. */
+  readonly headquarters?: { readonly latitude: number; readonly longitude: number };
+  readonly branches?: readonly PharmacyBranchRegistration[];
+  /**
+   * El acceso: mismo correo del representante legal, según decide el molde
+   * de esta alta (`RegisterLaboratory`, «Con este correo se entra») — el
+   * registro de procesos no pide un correo de acceso distinto del
+   * representante. `displayName` es la forma que
+   * `RegisterOrganizationOwnerDto` acepta sin partir el nombre en
+   * `name`/`lastName` (deprecada pero vigente): partirlo a mano inventaría
+   * un apellido que el registro de procesos no pregunta.
+   */
+  readonly owner: {
+    readonly email: string;
+    readonly password: string;
+    readonly displayName: string;
+  };
+  /**
+   * Nombre completo y correo del representante legal (1.8, 1.8.2): los dos
+   * únicos datos obligatorios de la persona. `idNumber` y
+   * `powerOfAttorneyFileId` son opcionales acá —a diferencia del alta de
+   * aseguradora— porque el registro de procesos de farmacia no pide la
+   * cédula del representante como dato de alta.
+   */
+  readonly legalRepresentative: {
+    readonly fullName: string;
+    readonly email: string;
+    readonly idNumber?: string;
+    readonly powerOfAttorneyFileId?: string;
+  };
+  readonly legalDocuments?: OrganizationLegalDocuments;
+  readonly executives?: OrganizationExecutives;
+}
+
 /**
  * Resultado de pedir la recuperación.
  *

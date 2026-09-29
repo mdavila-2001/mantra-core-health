@@ -2122,6 +2122,20 @@ export const routes: Routes = [
     title: 'AloVida - Registrar centro de imagenología',
   },
   {
+    // El alta pública de una farmacia: Módulo Farmacia §1 del registro de
+    // procesos. A diferencia del laboratorio y de imagenología, ésta SÍ sale a
+    // la red — `POST /iam/auth/register-organization` con
+    // `tenantType: 'PHARMACY'` — ver el JSDoc de `RegisterPharmacy`.
+    // Diferida por lo mismo que las otras altas largas: arrastra el mapa y el
+    // subidor de PDF.
+    path: 'auth/register/pharmacy',
+    loadComponent: () =>
+      import('./features/auth/register-pharmacy/register-pharmacy').then(
+        (m) => m.RegisterPharmacy,
+      ),
+    title: 'AloVida - Registrar farmacia',
+  },
+  {
     // El enlace del correo trae el token por query string: /auth/verificar?token=…
     path: 'auth/verify-email',
     component: VerifyEmail,
