@@ -104,6 +104,11 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/public-directories/pharmacies-directory').then(
       (m) => m.PharmaciesDirectory,
     ),
+  // El mercado de seguros del paciente (28/09/2026). Ver su fila del registro.
+  'insurers-directory': () =>
+    import('./features/public-directories/insurers-directory').then(
+      (m) => m.InsurersDirectory,
+    ),
   // §4.H del plan de UX · la agenda del médico. Diferida como el resto: sólo
   // la alcanza quien atiende, y el presupuesto del bundle inicial está al
   // límite —cargarla de entrada lo pasaba por 4 kB y le costaba la descarga a
@@ -716,6 +721,16 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/public-directories/clinic-detail/clinic-detail')
         .then((m) => m.ClinicDetail)
+        .catch(() => chunkFallido()),
+  },
+  {
+    // La ficha de una aseguradora: productos, planes y cláusulas, y sus
+    // brokers con el botón que abre el chat.
+    path: 'insurers-directory/:slug',
+    title: `${APP_TITLE} - Aseguradora`,
+    loadComponent: () =>
+      import('./features/public-directories/insurer-detail/insurer-detail')
+        .then((m) => m.InsurerDetail)
         .catch(() => chunkFallido()),
   },
   {

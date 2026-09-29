@@ -224,4 +224,9 @@
       <app-pharmacies-directory [embebido]="true" />
     </app-content-dialog>
   }
+  @case ('directorio-aseguradoras') {
+    <app-content-dialog heading="Directorio de aseguradoras" size="xl" (closed)="cerrarModal()">
+      <app-insurers-directory [embebido]="true" />
+    </app-content-dialog>
+  }
 }

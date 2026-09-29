@@ -53,12 +53,18 @@ describe('DirectoriesOverview', () => {
     fixture.detectChanges();
   }
 
-  it('un paciente ve los cuatro directorios, cada uno con su descripción y su enlace', () => {
+  it('un paciente ve los cinco directorios, cada uno con su descripción y su enlace', () => {
     abrirSesion(['PATIENT']);
     crear();
 
     const enlaces = [...root().querySelectorAll<HTMLAnchorElement>('.rejilla__tarjeta')];
-    expect(enlaces.length).toBe(4);
+    expect(enlaces.length).toBe(5);
+
+    // El mercado de seguros (28/09/2026): el quinto, con la misma tarjeta.
+    const aseguradoras = enlaces.find(
+      (enlace) => enlace.getAttribute('href') === '/insurers-directory',
+    );
+    expect(aseguradoras?.textContent).toContain('Directorio de aseguradoras');
 
     const medicos = enlaces.find((enlace) => enlace.getAttribute('href') === '/directory');
     expect(medicos).toBeDefined();
@@ -72,7 +78,7 @@ describe('DirectoriesOverview', () => {
 
     const enlaces = [...root().querySelectorAll<HTMLAnchorElement>('.rejilla__tarjeta')];
     expect(enlaces.some((enlace) => enlace.getAttribute('href') === '/directory')).toBe(true);
-    expect(enlaces.length).toBe(4);
+    expect(enlaces.length).toBe(5);
   });
 
   it('quien sólo administra no ve el nodo del directorio de médicos', () => {
@@ -217,7 +223,7 @@ describe('DirectoriesOverview', () => {
       await TestBed.inject(Router).navigateByUrl('/directories?directorio=no-existe');
       crear();
 
-      expect(root().querySelectorAll('.rejilla__tarjeta').length).toBe(4);
+      expect(root().querySelectorAll('.rejilla__tarjeta').length).toBe(5);
     });
   });
 });
