@@ -2,7 +2,8 @@ import { HttpHeaders } from '@angular/common/http';
 
 import { INSURER_NETWORK_PRACTITIONERS } from '../fixtures/insurer-network.generated';
 import { MEDICA } from '../fixtures/personas';
-import { registrarSeguros } from './insurance.handlers';
+import { catalogoAdministrable, registrarSeguros } from './insurance.handlers';
+import { vitrinas } from '../fixtures/comunidad';
 import { MockRouter, type MockMethod, type MockReply } from '../mock-router';
 import { buscarUsuario, type MockUser } from '../mock-session';
 import { MEDICAL_FEE_SCHEDULE } from '../fixtures/fee-schedules.generated';
@@ -394,5 +395,155 @@ describe('handlers de seguros · con qué aseguradoras trabaja un profesional', 
 
   it('quien no figura en ninguna red recibe una lista vacía, no un error', () => {
     expect(redes('00000000-0000-0000-0000-000000000000')).toEqual({ items: [], count: 0 });
+  });
+});
+
+describe('handlers de seguros · el mercado de una aseguradora del directorio', () => {
+  const router = new MockRouter();
+  const paciente = buscarUsuario('paciente')!;
+
+  registrarSeguros(router);
+
+  interface Mercado {
+    readonly carrier: {
+      readonly id: string;
+      readonly carrierCode: string;
+      readonly legalName: string;
+      readonly canAdminister: boolean;
+      readonly products: readonly {
+        readonly name: string;
+        readonly productType: { readonly code: string };
+        readonly plans: readonly {
+          readonly id: string;
+          readonly name: string;
+          readonly monthlyPremiumAmount: string | null;
+          readonly benefits: readonly { readonly id: string }[];
+        }[];
+      }[];
+    } | null;
+    readonly brokers: readonly { readonly id: string; readonly chatSlug: string | null }[];
+  }
+
+  function mercado(slug: string): Mercado {
+    const path = `/insurance-marketplace/insurers/${slug}`;
+    const match = router.match('GET', path);
+    if (match === null) throw new Error(`No existe GET ${path}`);
+    return match.handler({
+      method: 'GET',
+      path,
+      params: match.params,
+      query: new URLSearchParams(),
+      body: null,
+      headers: new HttpHeaders(),
+      user: paciente,
+    }) as Mercado;
+  }
+
+  const fichas = vitrinas.todos().filter((vitrina) => vitrina.kind === 'INSURER');
+  const planes = (m: Mercado) => m.carrier?.products.flatMap((producto) => producto.plans) ?? [];
+
+  it('el directorio tiene las 21 aseguradoras: las dos de la maqueta y las 19 reales', () => {
+    expect(fichas).toHaveLength(21);
+  });
+
+  it.each(fichas.map((ficha) => [ficha.slug]))(
+    '%s abre con catálogo, planes con prima y al menos un broker',
+    (slug) => {
+      const respuesta = mercado(slug);
+
+      expect(respuesta.carrier).not.toBeNull();
+      expect(respuesta.carrier!.canAdminister).toBe(false);
+      expect(planes(respuesta).length).toBeGreaterThanOrEqual(1);
+      for (const plan of planes(respuesta)) {
+        expect(plan.benefits.length).toBeGreaterThan(0);
+      }
+      expect(respuesta.brokers.length).toBeGreaterThanOrEqual(1);
+    },
+  );
+
+  it('fuera de Alianza Plata —sin prima a propósito— ningún plan queda «a cotizar»', () => {
+    // Seguros Andina queda fuera: su catálogo es el que edita la aseguradora
+    // en su consola, y un plan dado de alta ahí puede no declarar prima.
+    const sinPrima = fichas
+      .filter((ficha) => ficha.slug !== 'seguros-andina')
+      .flatMap((ficha) => planes(mercado(ficha.slug)))
+      .filter((plan) => plan.monthlyPremiumAmount === null)
+      .map((plan) => plan.name);
+
+    expect(sinPrima).toEqual(['Plan Plata']);
+  });
+
+  it('ningún id de plan ni de cláusula se repite entre aseguradoras', () => {
+    const catalogos = fichas.map((ficha) => mercado(ficha.slug).carrier!);
+    // La Vitalicia tiene dos fichas y un solo catálogo: se cuenta una vez.
+    const unicos = [...new Map(catalogos.map((carrier) => [carrier.id, carrier])).values()];
+    const idsDePlan = unicos.flatMap((carrier) =>
+      carrier.products.flatMap((producto) => producto.plans.map((plan) => plan.id)),
+    );
+    const idsDeClausula = unicos.flatMap((carrier) =>
+      carrier.products.flatMap((producto) =>
+        producto.plans.flatMap((plan) => plan.benefits.map((b) => b.id)),
+      ),
+    );
+
+    expect(new Set(idsDePlan).size).toBe(idsDePlan.length);
+    expect(new Set(idsDeClausula).size).toBe(idsDeClausula.length);
+  });
+
+  it('la La Vitalicia real abre el mismo catálogo sembrado que la de la maqueta', () => {
+    const real = mercado('la-vitalicia-seguros-y-reaseguros-de-vida-s-a');
+    const maqueta = mercado('la-vitalicia');
+
+    expect(real.carrier!.carrierCode).toBe('VITALICIA');
+    expect(real.carrier!.id).toBe(maqueta.carrier!.id);
+    expect(planes(real).map((plan) => plan.name)).toEqual(['Salud Total', 'Salud Básica']);
+  });
+
+  it('Alianza Vida abre el catálogo de Alianza Seguros, con su broker', () => {
+    const alianza = mercado('alianza-vida-seguros-y-reaseguros-s-a');
+
+    expect(alianza.carrier!.carrierCode).toBe('ALIANZA');
+    expect(alianza.brokers.map((broker) => broker.chatSlug)).toEqual(['broker-monica-aguirre']);
+  });
+
+  it('Seguros Andina sigue leyendo el catálogo que administra la aseguradora', () => {
+    const andina = mercado('seguros-andina');
+
+    expect(andina.carrier!.id).toBe(uuid('carrier-andina'));
+    // Lo que la aseguradora corrigió en su consola —los casos de arriba lo
+    // hacen— es lo que ve el paciente.
+    expect(andina.carrier!.products).toEqual(
+      catalogoAdministrable.get(uuid('carrier-andina'))!.products,
+    );
+  });
+
+  it('una aseguradora sin catálogo sembrado recibe uno de ejemplo, igual en cada lectura', () => {
+    const bisa = mercado('bisa-seguros-y-reaseguros-s-a');
+
+    expect(bisa.carrier!.carrierCode).toBe('BISA');
+    expect(bisa.carrier!.legalName).toBe('BISA Seguros y Reaseguros S.A.');
+    expect(bisa.carrier!.products[0]!.productType.code).toBe('HEALTH');
+    expect(planes(bisa).map((plan) => plan.name)).toEqual([
+      'Plan Salud Plus',
+      'Plan Salud Esencial',
+      'Plan Familiar',
+    ]);
+    expect(mercado('bisa-seguros-y-reaseguros-s-a')).toEqual(bisa);
+  });
+
+  it('una de seguros generales ofrece accidentes personales y no salud', () => {
+    const illimani = mercado('seguros-illimani-s-a-generales-y-fianzas');
+    const bisaGenerales = mercado('bisa-seguros-y-reaseguros-s-a-generales-y-fianzas');
+
+    expect(illimani.carrier!.products.map((producto) => producto.productType.code)).toEqual([
+      'PERSONAL_ACCIDENT',
+    ]);
+    expect(planes(illimani).length).toBe(2);
+    // Mismo nombre que la de salud, otra ficha: otro catálogo.
+    expect(bisaGenerales.carrier!.id).not.toBe(mercado('bisa-seguros-y-reaseguros-s-a').carrier!.id);
+  });
+
+  it('un slug que no es de una aseguradora es 404', () => {
+    expect(mercado('clinica-los-olivos')).toMatchObject({ status: 404 });
   });
 });
