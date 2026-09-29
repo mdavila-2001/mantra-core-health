@@ -49,7 +49,13 @@ ENV CYPRESS_INSTALL_BINARY=0 \
     # una construcción con techo de 4 GB moría con
     # `esbuild: all goroutines are asleep - deadlock` y salida 129 —que no dice
     # «me quedé sin memoria», pero es lo que era—.
-    NODE_OPTIONS=--max-old-space-size=1536 \
+    #
+    # 2 GB desde el 29/09/2026: con 1,5 GB el despliegue de `1faba02` murió
+    # con `Worker terminated due to reaching memory limit: JS heap out of
+    # memory` (exit 1, no 137: fue el montón y no el guardián). La aplicación
+    # creció y el compilador de Angular ya no entraba. Medido con Node 24 y un
+    # trabajador: con 1,5 GB falla, con 2 GB compila.
+    NODE_OPTIONS=--max-old-space-size=2048 \
     # Cuántos procesos de esbuild corren a la vez. Por omisión, uno por núcleo:
     # con doce núcleos y 447 fragmentos diferidos el pico se va por encima de los
     # 6 GB y el cgroup mata la construcción (`ng build` a 4,7 GB de RSS, medido).
