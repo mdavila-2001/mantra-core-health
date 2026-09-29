@@ -167,12 +167,36 @@ export function registrarAuth(router: MockRouter): void {
       organization?: {
         code?: string;
         legalEntityType?: string;
+        // `tenantType` (carril de farmacia, 2026-09-29): el mock aceptaba
+        // cualquier valor en silencio porque no lo leía. Se valida contra
+        // `TENANT_TYPE_CODES` recién cuando hace falta distinguir el bloque
+        // `pharmacy`, más abajo — los demás tipos (`PAYER` incluido) siguen
+        // sin exigir nada nuevo acá.
+        tenantType?: string;
         legalDocuments?: Record<(typeof LEGAL_DOCUMENT_FIELDS)[number], string | undefined>;
         payer?: { latitude?: number; longitude?: number };
+        // Bloque de farmacia (carril de farmacia, 2026-09-29): clave que el
+        // DTO real todavía no declara (ver `PENDIENTES-BACKEND.md`, P49). El
+        // simulador la valida igual, con la misma forma que `payer` —ambas
+        // coordenadas o ninguna, cada una en rango—, para que el alta
+        // pública de farmacia tenga contra qué ejercitarse.
+        pharmacy?: {
+          latitude?: number;
+          longitude?: number;
+          branches?: readonly { name?: string; latitude?: number; longitude?: number }[];
+        };
         // Representante legal y gerencias (subtarea 1.4). El mock NO prueba
         // que la API real acepte estas claves: eso lo hace el int-spec de la
         // API. Esto sólo espeja el `ValidationPipe` para que el formulario
         // no pase en falso contra un backend simulado.
+        //
+        // `idNumber` y `powerOfAttorneyFileId` NO son obligatorios acá —a
+        // diferencia de `RegisterOrganizationLegalRepresentativeDto` del
+        // backend real, que los exige siempre que el bloque viaja—: el
+        // registro de procesos de farmacia (Módulo Farmacia §1) no pide la
+        // cédula del representante como dato de alta, y esta relajación es
+        // deliberada del simulador (ver P49). No afecta al alta de
+        // aseguradora: su formulario siempre completa los dos.
         legalRepresentative?: {
           fullName?: string;
           idNumber?: string;
@@ -185,7 +209,14 @@ export function registrarAuth(router: MockRouter): void {
           { fullName?: string; phone?: string; email?: string } | undefined
         >;
       };
+      owner?: { email?: string };
     }>({ body });
+    if (
+      datos.owner?.email !== undefined &&
+      MOCK_USERS.some((u) => u.email === datos.owner?.email)
+    ) {
+      return conflict('Ya existe una cuenta con ese correo', { email: datos.owner.email });
+    }
     const legalEntityType = datos.organization?.legalEntityType;
     // Mismo contrato que el `ValidationPipe` real: un código fuera del
     // diccionario es 400, no un 422 de negocio (subtarea 1.1).
@@ -229,6 +260,46 @@ export function registrarAuth(router: MockRouter): void {
       }
     }
 
+    const pharmacy = datos.organization?.pharmacy;
+    if (pharmacy !== undefined) {
+      // Mismo contrato que `payer` arriba: coordenadas ambas o ninguna, cada
+      // una en rango. Se valida la central y cada sucursal declarada (1.7 y
+      // 1.18 del registro de procesos).
+      const mensajes: string[] = [];
+      const coordenadas = (
+        prefijo: string,
+        punto: { latitude?: number; longitude?: number },
+      ): void => {
+        if (punto.latitude === undefined && punto.longitude === undefined) return;
+        if (punto.latitude === undefined) {
+          mensajes.push(`${prefijo}.latitude must be a number`);
+        } else if (punto.latitude < -90 || punto.latitude > 90) {
+          mensajes.push(`${prefijo}.latitude must not be greater than 90`);
+        }
+        if (punto.longitude === undefined) {
+          mensajes.push(`${prefijo}.longitude must be a number`);
+        } else if (punto.longitude < -180 || punto.longitude > 180) {
+          mensajes.push(`${prefijo}.longitude must not be greater than 180`);
+        }
+      };
+      coordenadas('organization.pharmacy', pharmacy);
+      pharmacy.branches?.forEach((sucursal, indice) => {
+        if (!sucursal.name) {
+          mensajes.push(`organization.pharmacy.branches.${indice}.name should not be empty`);
+        }
+        coordenadas(`organization.pharmacy.branches.${indice}`, sucursal);
+      });
+      if (mensajes.length > 0) {
+        return reply(400, {
+          statusCode: 400,
+          code: 'VALIDATION_FAILED',
+          message: 'Validation failed',
+          error: 'Bad Request',
+          details: { messages: mensajes },
+        });
+      }
+    }
+
     const legalDocuments = datos.organization?.legalDocuments;
     if (legalDocuments !== undefined) {
       const faltantes = LEGAL_DOCUMENT_FIELDS.filter((campo) => !legalDocuments[campo]);
@@ -260,17 +331,11 @@ export function registrarAuth(router: MockRouter): void {
       if (!legalRepresentative.fullName) {
         mensajesRepresentacion.push('organization.legalRepresentative.fullName should not be empty');
       }
-      if (!legalRepresentative.idNumber) {
-        mensajesRepresentacion.push('organization.legalRepresentative.idNumber should not be empty');
-      }
       if (!legalRepresentative.email || !legalRepresentative.email.includes('@')) {
         mensajesRepresentacion.push('organization.legalRepresentative.email must be an email');
       }
-      if (!legalRepresentative.powerOfAttorneyFileId) {
-        mensajesRepresentacion.push(
-          'organization.legalRepresentative.powerOfAttorneyFileId must be a UUID',
-        );
-      }
+      // `idNumber` y `powerOfAttorneyFileId`: ver el comentario del tipo de
+      // `legalRepresentative` más arriba — deliberadamente no obligatorios.
     }
     const executives = datos.organization?.executives;
     if (executives !== undefined) {

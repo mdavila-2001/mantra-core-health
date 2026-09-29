@@ -53,6 +53,7 @@ backend.
 | **P44** | `GET /patient-spending/me?from=&to=` — los gastos de salud del paciente, movimiento por movimiento. **«Mis gastos» ya está construido contra el simulador** |
 | **P45** | `GET /practitioners/:id/insurance-carriers`: con qué aseguradoras trabaja un médico, para su ficha pública. **El modelo ya lo declara** (`network_provider_memberships`); falta la lectura y la carga de las redes reales |
 | **P47** | El catálogo de la farmacia: la empresa no puede **editar** un producto ni cargarle precio, stock, categoría, descripción o imágenes, y el alta exige `SECURITY_ADMIN` |
+| **P50** | Registro de farmacia: la API acepta `tenantType: PHARMACY` pero no crea la fila de `directory.pharmacies`, no tiene bloque `pharmacy.branches` y no enlaza la sede central; lo obligatorio para operar (los 6 PDF, SEDES) hoy no se exige en ninguna capa |
 
 ---
 
@@ -2097,3 +2098,58 @@ en PDF (`nota-de-venta.ts`) y la prueba de navegador `pagos-plan-nota-venta-fact
 > `SimpleAccountingClient`, la sección arriba de «Contabilidad» (`ContabilidadSimple`) con los
 > tres números y una tarjeta con cinco pestañas, los tres modales y el e2e
 > `playwright/contabilidad-simple.spec.ts`.
+
+---
+
+## P50 · El registro público de farmacia — 29/09/2026
+
+> **P50 · Lo que el alta pública de farmacia (`/auth/register/pharmacy`) necesita y la API
+> todavía no da.** Origen: carril A del plan «La cuenta de farmacia — registro y portal»
+> (`docs/trabajo/2026-09-29-farmacia-cuenta/`). La ficha del carril pedía la fila **P49**, pero
+> ese número ya lo tiene la contabilidad simple del consultorio (ver la sección de arriba,
+> también del 29/09/2026); se usa **P50** para no pisarla, y se deja la aclaración acá para quien
+> lea la ficha del carril.
+>
+> La pantalla usa **el mismo endpoint que la aseguradora**, `POST /iam/auth/register-organization`,
+> con `organization.tenantType: 'PHARMACY'`. El DTO real (`register-organization.dto.ts`)
+> **ya declara `PHARMACY`** en `TENANT_TYPE_CODES` y lo acepta sin rechazarlo, pero:
+>
+> **1. No hay bloque de datos propio de farmacia.** El DTO sólo declara `payer`, `broker` y
+> `diagnosticUnit` como bloques específicos por tipo de tenant; no existe un `PharmacyProfileDto`.
+> El cliente manda igual `organization.pharmacy: { latitude?, longitude?, branches?: [{ name,
+> latitude, longitude }] }` —clave **inventada por este cliente**, ver el JSDoc de
+> `PharmacyOrganizationRegistration` en `iam.types.ts`—, y la API real la descarta en silencio
+> (`forbidNonWhitelisted` la rechazaría con 400 si `whitelist` está activo, o la ignora si no).
+> Ni la central ni las sucursales quedan guardadas en ningún lado.
+>
+> **2. No se crea la fila de `directory.pharmacies`.** El alta crea el tenant y el owner —igual
+> que para `PAYER`—, pero no hay nada del lado del servicio que registre la farmacia como tal en
+> el dominio de directorio, ni que la enlace con su sede central.
+>
+> **3. `legalRepresentative.idNumber` y `.powerOfAttorneyFileId` son obligatorios en el DTO real
+> siempre que se manda el bloque**, aunque el registro de procesos de farmacia (Módulo Farmacia
+> §1) no pide la cédula del representante como dato de alta — sólo nombre y correo. El simulador
+> de este carril relaja esos dos campos a opcionales (`auth.handlers.ts`, handler
+> `register-organization`) para poder ejercitar el flujo completo; **la API real los seguiría
+> exigiendo** el día que esto se conecte. A confirmar con quien sea dueño del DTO: o el
+> representante de farmacia no necesita cédula (ajustar el DTO), o el registro de procesos está
+> incompleto y falta agregarla al alta.
+>
+> **4. Lo obligatorio para operar no se exige en ninguna capa.** El registro de procesos declara
+> obligatorios para operar los seis papeles en PDF (constitución, NIT, SEPREC, licencia, SEDES,
+> poder) y en particular el certificado del SEDES —«un laboratorio de sangre sin certificado del
+> SEDES no puede atender», mismo criterio que el molde de laboratorio—, pero el alta pública los
+> deja **todos opcionales** (decisión D2 del carril: «lo obligatorio es lo más básico para
+> nacer»). Eso significa que hoy una farmacia puede terminar el registro sin ningún papel y sin
+> el punto de la central en el mapa. Falta la regla del lado del servidor que impida operar
+> (publicar catálogo, recibir pedidos) sin esos papeles verificados — no es un bloqueante del
+> registro, es un bloqueante de "farmacia habilitada para vender".
+>
+> **5. Lo que el frontend ya tiene.** `RegisterPharmacy` (`features/auth/register-pharmacy/`),
+> la tarjeta «Farmacia» en `/auth/register`, `IamClient.registerPharmacyOrganization`,
+> `PharmacyOrganizationRegistration` en `iam.types.ts`, el handler extendido del simulador
+> (`auth.handlers.ts`) y el e2e `playwright/registro-farmacia.spec.ts`. El submit sale de verdad
+> contra `POST /iam/auth/register-organization` — a diferencia del alta de laboratorio y de
+> imagenología, que son maquetas locales sin red —, así que en cuanto la API declare el bloque
+> `pharmacy` y cree `directory.pharmacies`, conectar el resto es sacar la relajación del punto 3
+> y sumar las claves reales que el DTO termine declarando.
