@@ -25,18 +25,38 @@
         <app-tab label="Productos">
           <div class="catalogo__panel">
             @if (hayListado()) {
-              <div class="catalogo__resumen" data-testid="catalogo-resumen">
-                <p class="catalogo__cifra">
-                  <strong>{{ truncado() ? 'Más de ' + totalDeProductos() : totalDeProductos() }}</strong>
-                  {{ totalDeProductos() === 1 ? 'producto publicado' : 'productos publicados' }}
-                  @if (busqueda() !== '') {
-                    <span class="catalogo__secundario">que coinciden con «{{ busqueda() }}»</span>
-                  }
-                </p>
-                @if (conReceta() > 0) {
-                  <p class="catalogo__secundario">{{ conReceta() }} de venta bajo receta</p>
-                }
-              </div>
+              <ul class="catalogo__indicadores" data-testid="catalogo-resumen" aria-label="Resumen del catálogo">
+                <li class="catalogo__indicador">
+                  <span class="catalogo__indicador-rotulo">Productos publicados</span>
+                  <strong class="catalogo__indicador-cifra">
+                    {{ truncado() ? 'Más de ' + totalDeProductos() : totalDeProductos() }}
+                  </strong>
+                  <span class="catalogo__secundario">
+                    @if (busqueda() !== '') {
+                      que coinciden con «{{ busqueda() }}»
+                    } @else {
+                      en tu catálogo
+                    }
+                  </span>
+                </li>
+                <li class="catalogo__indicador">
+                  <span class="catalogo__indicador-rotulo">Disponibles</span>
+                  <strong class="catalogo__indicador-cifra">{{ conStock() }}</strong>
+                  <span class="catalogo__secundario">los ven los pacientes</span>
+                </li>
+                <li class="catalogo__indicador" [class.catalogo__indicador--alerta]="sinStock() > 0">
+                  <span class="catalogo__indicador-rotulo">Sin stock</span>
+                  <strong class="catalogo__indicador-cifra" data-testid="catalogo-sin-stock">{{ sinStock() }}</strong>
+                  <span class="catalogo__secundario">no se ofrecen hasta que los marques disponibles</span>
+                </li>
+                <li class="catalogo__indicador">
+                  <span class="catalogo__indicador-rotulo">Bajo receta</span>
+                  <strong class="catalogo__indicador-cifra">{{ conReceta() }}</strong>
+                  <span class="catalogo__secundario">
+                    {{ sinPrecio() > 0 ? sinPrecio() + ' todavía sin precio' : 'todos con precio' }}
+                  </span>
+                </li>
+              </ul>
             }
 
             <div class="catalogo__barra">
@@ -47,11 +67,18 @@
                 [value]="busqueda()"
                 (searched)="buscar($event)"
               />
+              <app-select
+                class="catalogo__filtro"
+                [options]="opcionesDeFiltro"
+                [value]="filtroDeStock()"
+                (valueChange)="filtrarPorStock($event)"
+                ariaLabel="Filtrar por disponibilidad"
+              />
               <div class="catalogo__acciones">
                 <button app-button variant="outline" type="button" (clicked)="irAPestana('importar')">
                   Importar CSV
                 </button>
-                <button app-button type="button" (clicked)="irAPestana('nuevo')">
+                <button app-button type="button" (clicked)="cancelarEdicionSinSalir(); irAPestana('nuevo')">
                   Nuevo producto
                 </button>
               </div>
@@ -75,9 +102,9 @@
               data-testid="catalogo-tabla"
             />
 
-            @if (totalDeProductos() > porPagina() || pagina() > 1) {
+            @if (totalFiltrado() > porPagina() || pagina() > 1) {
               <app-pagination
-                [totalItems]="totalDeProductos()"
+                [totalItems]="totalFiltrado()"
                 [(page)]="pagina"
                 [(pageSize)]="porPagina"
                 [pageSizeOptions]="[10, 25, 50]"
@@ -87,13 +114,19 @@
         </app-tab>
 
         <!-- ─── Nuevo producto ────────────────────────────────────────── -->
-        <app-tab label="Nuevo producto">
+        <app-tab [label]="editando() ? 'Editar producto' : 'Nuevo producto'">
           <form class="catalogo__panel" (submit)="$event.preventDefault(); guardarProducto()" novalidate>
-            <p class="catalogo__secundario">
-              El producto se publica apenas lo guardás. Revisalo antes: por ahora no se puede
-              editar, y el código es único en tu catálogo y queda reservado aunque retires el
-              producto.
-            </p>
+            @if (editando(); as producto) {
+              <app-alert tone="info" title="Estás editando {{ nombreDe(producto) }}" data-testid="catalogo-editando">
+                El código no cambia: es la identidad del producto en tu catálogo. Los cambios se
+                ven apenas los guardás.
+              </app-alert>
+            } @else {
+              <p class="catalogo__secundario">
+                El producto se publica apenas lo guardás. El código es único en tu catálogo y
+                queda reservado aunque retires el producto.
+              </p>
+            }
 
             @if (erroresDelAlta().length > 0) {
               <app-alert tone="error" title="Falta resolver esto" data-testid="catalogo-errores-alta">
@@ -116,6 +149,7 @@
                   <app-input
                     [value]="campos().codigo"
                     (valueChange)="fijarCampo('codigo', $event)"
+                    [readonly]="editando() !== null"
                     placeholder="PAR-500-20"
                     autocomplete="off"
                     testId="catalogo-campo-codigo"
@@ -190,10 +224,58 @@
               </div>
             </fieldset>
 
+            <fieldset class="catalogo__grupo">
+              <legend class="catalogo__subtitulo">Venta</legend>
+              <div class="catalogo__campos">
+                <app-form-field label="Precio de venta (Bs)" hint="Con punto o coma. Ej. 18,50.">
+                  <app-input
+                    [value]="campos().precio"
+                    (valueChange)="fijarCampo('precio', $event)"
+                    inputMode="decimal"
+                    placeholder="18,50"
+                    testId="catalogo-campo-precio"
+                  />
+                </app-form-field>
+                <app-form-field label="Categoría">
+                  <app-select
+                    [options]="opcionesDeCategoria()"
+                    [value]="campos().categoria"
+                    (valueChange)="fijarCampo('categoria', $event)"
+                    ariaLabel="Categoría"
+                  />
+                </app-form-field>
+                <app-form-field
+                  label="Disponibilidad"
+                  hint="Como en los pedidos: sólo decís si hoy lo tenés o no."
+                >
+                  <app-select
+                    [options]="opcionesDeDisponibilidad"
+                    [value]="campos().disponible || 'sí'"
+                    (valueChange)="fijarCampo('disponible', $event)"
+                    ariaLabel="Disponibilidad"
+                  />
+                </app-form-field>
+                <app-form-field class="catalogo__campo-ancho" label="Descripción" hint="Lo que lee el paciente en la vitrina.">
+                  <app-textarea
+                    [value]="campos().descripcion"
+                    (valueChange)="fijarCampo('descripcion', $event)"
+                    [rows]="3"
+                    [maxLength]="2000"
+                  />
+                </app-form-field>
+              </div>
+            </fieldset>
+
             <div class="catalogo__pie">
-              <button app-button variant="ghost" type="button" (clicked)="limpiarFormulario()">
-                Limpiar
-              </button>
+              @if (editando()) {
+                <button app-button variant="ghost" type="button" (clicked)="cancelarEdicion()">
+                  Cancelar
+                </button>
+              } @else {
+                <button app-button variant="ghost" type="button" (clicked)="limpiarFormulario()">
+                  Limpiar
+                </button>
+              }
               <button
                 app-button
                 type="submit"
@@ -201,7 +283,7 @@
                 [disabled]="guardando()"
                 data-testid="catalogo-guardar"
               >
-                Publicar producto
+                {{ editando() ? 'Guardar cambios' : 'Publicar producto' }}
               </button>
             </div>
           </form>
@@ -221,6 +303,14 @@
                       Un CSV con una fila por producto, hasta {{ filasMaximas }} por archivo. Si
                       trabajás en Excel: Archivo → Guardar como → CSV UTF-8.
                     </p>
+                    <app-form-field label="¿Qué hago con los códigos que ya están en tu catálogo?">
+                      <app-select
+                        [options]="opcionesDeModo"
+                        [value]="modo()"
+                        (valueChange)="modo.set($event ?? 'CREAR_Y_ACTUALIZAR')"
+                        ariaLabel="Qué hacer con los códigos existentes"
+                      />
+                    </app-form-field>
                     <app-file-input
                       label="Elegir archivo CSV"
                       accept=".csv"
@@ -262,8 +352,12 @@
               @case ('revision') {
                 <div class="catalogo__cifras" data-testid="catalogo-revision">
                   <p>
-                    <strong>{{ listas().length }}</strong>
-                    {{ listas().length === 1 ? 'fila lista' : 'filas listas' }} para publicar
+                    <strong>{{ listas().length - aActualizar() }}</strong>
+                    {{ listas().length - aActualizar() === 1 ? 'producto nuevo' : 'productos nuevos' }}
+                  </p>
+                  <p>
+                    <strong>{{ aActualizar() }}</strong>
+                    {{ aActualizar() === 1 ? 'se actualiza' : 'se actualizan' }} (ya estaban)
                   </p>
                   <p>
                     <strong>{{ cuantosConProblemas() }}</strong>
@@ -293,6 +387,15 @@
                             <span class="catalogo__secundario catalogo__en-linea">
                               {{ fila.borrador.strengthText }} {{ fila.borrador.packageSizeText }}
                             </span>
+                          }
+                          @if (fila.borrador.unitPrice) {
+                            <span class="catalogo__en-linea">Bs {{ fila.borrador.unitPrice | number: '1.2-2' }}</span>
+                          }
+                          @if (fila.borrador.inStock === false) {
+                            <app-badge variant="error">Sin stock</app-badge>
+                          }
+                          @if (fila.accion === 'ACTUALIZAR') {
+                            <app-badge variant="info">Actualiza</app-badge>
                           }
                         </li>
                       }
@@ -338,7 +441,7 @@
                     (clicked)="publicarCarga()"
                     data-testid="catalogo-publicar-carga"
                   >
-                    Publicar {{ listas().length }} {{ listas().length === 1 ? 'producto' : 'productos' }}
+                    Cargar {{ listas().length }} {{ listas().length === 1 ? 'producto' : 'productos' }}
                   </button>
                 </div>
               }
@@ -346,7 +449,7 @@
               @case ('publicando') {
                 <div class="catalogo__progreso">
                   <p>
-                    Publicando {{ resultados().length }} de {{ listas().length }}… No cierres esta
+                    Cargando {{ resultados().length }} de {{ listas().length }}… No cierres esta
                     pestaña hasta que termine.
                   </p>
                   <app-progress [value]="avance()" label="Avance de la publicación" />
@@ -368,8 +471,12 @@
               @case ('resultado') {
                 <div class="catalogo__cifras" role="status" data-testid="catalogo-resultado">
                   <p>
-                    <strong>{{ publicados().length }}</strong>
-                    {{ publicados().length === 1 ? 'producto publicado' : 'productos publicados' }}
+                    <strong>{{ creados() }}</strong>
+                    {{ creados() === 1 ? 'producto publicado' : 'productos publicados' }}
+                  </p>
+                  <p>
+                    <strong>{{ actualizados() }}</strong>
+                    {{ actualizados() === 1 ? 'actualizado' : 'actualizados' }}
                   </p>
                   <p>
                     <strong>{{ resultados().length - publicados().length }}</strong>
@@ -434,8 +541,29 @@
 
 <ng-template #celdaProducto let-producto>
   <span class="catalogo__principal">{{ nombreDe(producto) }}</span>
-  @if (producto.brandName && producto.genericName) {
-    <span class="catalogo__secundario">{{ producto.genericName }}</span>
+  <span class="catalogo__secundario">
+    {{ producto.brandName && producto.genericName ? producto.genericName : '' }}
+    @if (producto.category) {
+      {{ producto.brandName && producto.genericName ? '·' : '' }} {{ producto.category }}
+    }
+  </span>
+</ng-template>
+
+<ng-template #celdaPrecio let-producto>
+  @if (producto.unitPrice) {
+    <span class="catalogo__precio">Bs {{ producto.unitPrice | number: '1.2-2' }}</span>
+  } @else {
+    <span class="catalogo__secundario">Sin precio</span>
+  }
+</ng-template>
+
+<ng-template #celdaStock let-producto>
+  @if (cambiandoStock().has(producto.id)) {
+    <span class="catalogo__secundario" role="status">Guardando…</span>
+  } @else if (producto.inStock === false) {
+    <app-badge variant="error">Sin stock</app-badge>
+  } @else {
+    <app-badge variant="success">Disponible</app-badge>
   }
 </ng-template>
 
@@ -461,11 +589,11 @@
   @if (retirando().has(producto.id)) {
     <span class="catalogo__secundario" role="status">Retirando…</span>
   } @else {
-  <app-row-actions
-    [actions]="acciones"
-    [fila]="nombreDe(producto)"
-    (actionSelected)="alElegirAccion($event, producto)"
-  />
+    <app-row-actions
+      [actions]="accionesDe(producto)"
+      [fila]="nombreDe(producto)"
+      (actionSelected)="alElegirAccion($event, producto)"
+    />
   }
 </ng-template>
 

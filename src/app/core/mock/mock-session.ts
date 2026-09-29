@@ -114,6 +114,10 @@ export const IDS = {
     userId: uuid('user-laboratorio-staff'),
     personId: uuid('person-laboratorio-staff'),
   },
+  farmacia: {
+    userId: uuid('user-farmacia-vida'),
+    personId: uuid('person-farmacia-vida'),
+  },
 } as const;
 
 export const MOCK_USERS: readonly MockUser[] = [
@@ -228,6 +232,20 @@ export const MOCK_USERS: readonly MockUser[] = [
     tenants: [TENANT_LABORATORIO],
     tenantNames: TENANT_NAMES,
     personId: IDS.laboratorio.personId,
+  },
+  {
+    // La encargada de Farmacia Vida: `USER` y la membresía del tenant
+    // `PHARMACY`, igual que la API. Es la cuenta con la que la maqueta recorre
+    // lo que hace una farmacia: su catálogo, sus pedidos y sus promociones.
+    key: 'farmacia',
+    id: IDS.farmacia.userId,
+    email: 'farmacia@alovida.mock',
+    nationalId: '7003001',
+    displayName: 'Mariela Céspedes · Farmacia Vida',
+    roles: ['USER'],
+    tenants: [TENANT_FARMACIA],
+    tenantNames: TENANT_NAMES,
+    personId: IDS.farmacia.personId,
   },
 ];
 

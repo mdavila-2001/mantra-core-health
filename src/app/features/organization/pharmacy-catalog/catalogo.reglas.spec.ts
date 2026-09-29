@@ -1,6 +1,7 @@
 import {
   ArchivoInvalido,
   CAMPOS_VACIOS,
+  cambiosDelBorrador,
   decodificarCsv,
   FILAS_MAXIMAS_POR_CARGA,
   esGtinValido,
@@ -22,7 +23,7 @@ describe('revisarProducto', () => {
 
     expect(revision).toEqual({
       valido: true,
-      borrador: { productCode: 'PAR-500', genericName: 'Paracetamol', strengthText: '500 mg' },
+      borrador: { productCode: 'PAR-500', genericName: 'Paracetamol', strengthText: '500 mg', inStock: true },
     });
   });
 
@@ -103,11 +104,11 @@ describe('leerCsv', () => {
   });
 
   it('acepta alias y avisa las columnas que ignora', () => {
-    const lectura = leerCsv('SKU,nombre,stock\nA1,Algo,12\n');
+    const lectura = leerCsv('SKU,nombre,lote\nA1,Algo,L-12\n');
 
     expect(lectura.filas[0]!.campos.codigo).toBe('A1');
     expect(lectura.filas[0]!.campos.marca).toBe('Algo');
-    expect(lectura.ignoradas).toEqual(['stock']);
+    expect(lectura.ignoradas).toEqual(['lote']);
   });
 
   it('salta las filas en blanco', () => {
@@ -142,7 +143,7 @@ describe('leerCsv', () => {
 
   it('una fila con otra cantidad de columnas se rechaza sola, no el archivo', () => {
     const lectura = leerCsv('codigo,marca\nA1\nA2,x\n');
-    const revisadas = revisarCarga(lectura.filas, new Set());
+    const revisadas = revisarCarga(lectura.filas, new Map());
 
     expect(revisadas.map((fila) => fila.lista)).toEqual([false, true]);
     expect(revisadas[0]!.lista === false && revisadas[0]!.errores[0]).toMatch(/columnas/);
@@ -175,21 +176,31 @@ describe('revisarCarga', () => {
   it('rechaza en todas sus filas un código repetido dentro del archivo', () => {
     const revisadas = revisarCarga(
       [fila(1, { codigo: 'A1', marca: 'x' }), fila(2, { codigo: 'A1', marca: 'y' }), fila(3, { codigo: 'B1', marca: 'z' })],
-      new Set(),
+      new Map(),
     );
 
     expect(revisadas.map((r) => r.lista)).toEqual([false, false, true]);
     expect(revisadas[0]!.lista === false && revisadas[0]!.motivo).toBe('REPETIDA_EN_EL_ARCHIVO');
   });
 
-  it('rechaza lo que ya está en el catálogo: no hay edición en el backend', () => {
-    const revisadas = revisarCarga([fila(1, { codigo: 'A1', marca: 'x' })], new Set(['A1']));
+  it('en «crear y actualizar», lo que ya está en el catálogo se actualiza con su id', () => {
+    const revisadas = revisarCarga([fila(1, { codigo: 'A1', marca: 'x' })], new Map([['A1', 'p-1']]));
+
+    expect(revisadas[0]).toMatchObject({ lista: true, accion: 'ACTUALIZAR', productId: 'p-1' });
+  });
+
+  it('en «sólo crear», lo que ya está en el catálogo se rechaza', () => {
+    const revisadas = revisarCarga(
+      [fila(1, { codigo: 'A1', marca: 'x' })],
+      new Map([['A1', 'p-1']]),
+      'SOLO_CREAR',
+    );
 
     expect(revisadas[0]!.lista === false && revisadas[0]!.motivo).toBe('YA_EN_EL_CATALOGO');
   });
 
   it('una fila inválida conserva sus errores', () => {
-    const revisadas = revisarCarga([fila(1, { codigo: 'A1' })], new Set());
+    const revisadas = revisarCarga([fila(1, { codigo: 'A1' })], new Map());
 
     expect(revisadas[0]!.lista === false && revisadas[0]!.motivo).toBe('INVALIDA');
   });
@@ -219,5 +230,70 @@ describe('decodificarCsv', () => {
     expect(codificacion).toBe('windows-1252');
     expect(texto).toBe('codigo,marca\nA1,Cápsulas ñ\n');
     expect(texto).not.toContain('\uFFFD');
+  });
+});
+
+describe('precio, categoría y disponibilidad', () => {
+  it('acepta coma decimal, la categoría sin tildes y «agotado» como sin stock', () => {
+    const revision = revisarProducto(
+      campos({ codigo: 'A1', marca: 'x', precio: 'Bs 18,5', categoria: 'dermocosmetica', disponible: 'agotado' }),
+    );
+
+    expect(revision.valido && revision.borrador).toMatchObject({
+      unitPrice: 18.5,
+      category: 'Dermocosmética',
+      inStock: false,
+    });
+  });
+
+  it('una cantidad en «disponible» se lee como stock: 0 es sin stock', () => {
+    const cero = revisarProducto(campos({ codigo: 'A1', marca: 'x', disponible: '0' }));
+    const doce = revisarProducto(campos({ codigo: 'A1', marca: 'x', disponible: '12' }));
+
+    expect(cero.valido && cero.borrador.inStock).toBe(false);
+    expect(doce.valido && doce.borrador.inStock).toBe(true);
+  });
+
+  it('vacío es disponible: se carga lo que se vende', () => {
+    const revision = revisarProducto(campos({ codigo: 'A1', marca: 'x' }));
+
+    expect(revision.valido && revision.borrador.inStock).toBe(true);
+  });
+
+  it.each([['1.234,50'], ['-3'], ['0'], ['abc'], ['2000000']])('rechaza el precio %j', (precio) => {
+    expect(revisarProducto(campos({ codigo: 'A1', marca: 'x', precio })).valido).toBe(false);
+  });
+
+  it('rechaza una categoría que no existe', () => {
+    expect(revisarProducto(campos({ codigo: 'A1', marca: 'x', categoria: 'Ferretería' })).valido).toBe(false);
+  });
+
+  it('la columna «stock» de otra planilla se lee como disponibilidad', () => {
+    const lectura = leerCsv('sku,nombre,stock,precio\nA1,Uno,0,10\n');
+
+    expect(lectura.ignoradas).toEqual([]);
+    expect(lectura.filas[0]!.campos).toMatchObject({ disponible: '0', precio: '10' });
+  });
+});
+
+describe('cambiosDelBorrador', () => {
+  const borrador = { productCode: 'A1', brandName: 'Uno', unitPrice: 10, inStock: true } as const;
+
+  it('desde el formulario, lo vacío se borra', () => {
+    expect(cambiosDelBorrador(borrador, true)).toEqual({
+      brandName: 'Uno',
+      genericName: null,
+      strengthText: null,
+      packageSizeText: null,
+      requiresPrescription: null,
+      unitPrice: 10,
+      category: null,
+      description: null,
+      inStock: true,
+    });
+  });
+
+  it('desde el CSV, lo vacío se deja como está', () => {
+    expect(cambiosDelBorrador(borrador, false)).toEqual({ brandName: 'Uno', unitPrice: 10, inStock: true });
   });
 });

@@ -7,14 +7,17 @@ import {
   signal,
   viewChild,
   type TemplateRef,
+  type WritableSignal,
 } from '@angular/core';
-import { EMPTY, concatMap, from, map, of, catchError, type Subscription } from 'rxjs';
+import { DecimalPipe } from '@angular/common';
+import { EMPTY, concatMap, from, map, of, catchError, type Observable, type Subscription } from 'rxjs';
 
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Badge } from '../../../shared/components/atoms/badge/badge';
 import { Input } from '../../../shared/components/atoms/input/input';
 import { Progress } from '../../../shared/components/atoms/progress/progress';
 import { Select } from '../../../shared/components/atoms/select/select';
+import { Textarea } from '../../../shared/components/atoms/textarea/textarea';
 import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { Card } from '../../../shared/components/molecules/card/card';
@@ -51,7 +54,9 @@ import {
   decodificarCsv,
   CAMPOS_VACIOS,
   COLUMNAS_DEL_CSV,
+  CATEGORIAS,
   FILAS_DE_EJEMPLO,
+  cambiosDelBorrador,
   FILAS_MAXIMAS_POR_CARGA,
   LARGO_MAXIMO_DEL_CODIGO,
   leerCsv,
@@ -60,6 +65,7 @@ import {
   type CamposDelProducto,
   type CodificacionDelCsv,
   type FilaRevisada,
+  type ModoDeCarga,
 } from './catalogo.reglas';
 
 /** Tope del listado: el máximo que acepta `GET /pharmacy/products`. */
@@ -69,10 +75,24 @@ const TOPE_DEL_LISTADO = 500;
 export const PESTANAS_DEL_CATALOGO = ['productos', 'nuevo', 'importar'] as const;
 type Pestana = (typeof PESTANAS_DEL_CATALOGO)[number];
 
-/** Las acciones de la fila. Hoy sólo retirar: el backend no publica edición. */
-const ACCIONES_DE_LA_FILA: readonly RowAction[] = [
+/**
+ * Las acciones de la fila, según si hoy lo tiene o no. «Sin stock» es lo que
+ * la farmacia hace en la bandeja de pedidos con un renglón que no tiene: no
+ * lleva un conteo, sólo avisa lo que le falta.
+ */
+const ACCIONES_CON_STOCK: readonly RowAction[] = [
+  { code: 'sin-stock', label: 'Marcar sin stock', icon: 'package' },
+  { code: 'editar', label: 'Editar', icon: 'edit' },
   { code: 'retirar', label: 'Retirar', icon: 'remove', destructive: true },
 ];
+const ACCIONES_SIN_STOCK: readonly RowAction[] = [
+  { code: 'con-stock', label: 'Marcar disponible', icon: 'check' },
+  { code: 'editar', label: 'Editar', icon: 'edit' },
+  { code: 'retirar', label: 'Retirar', icon: 'remove', destructive: true },
+];
+
+/** El filtro de disponibilidad del listado. */
+type FiltroDeStock = 'TODOS' | 'CON' | 'SIN';
 
 /** El paso de la importación en que está la pantalla. */
 type PasoDeImportacion = 'archivo' | 'revision' | 'publicando' | 'resultado';
@@ -83,6 +103,8 @@ interface ResultadoDeFila {
   readonly codigo: string;
   readonly nombre: string;
   readonly publicado: boolean;
+  /** Si fue un alta o la actualización de un producto que ya estaba. */
+  readonly accion: 'CREAR' | 'ACTUALIZAR';
   readonly mensaje: string;
 }
 
@@ -139,6 +161,7 @@ interface FilaConProblema {
     Badge,
     Card,
     DataTable,
+    DecimalPipe,
     FileInput,
     FormField,
     Input,
@@ -151,6 +174,7 @@ interface FilaConProblema {
     Stepper,
     Tab,
     Tabs,
+    Textarea,
     ViewStateHost,
   ],
   templateUrl: './pharmacy-catalog.html',
@@ -167,7 +191,7 @@ export class PharmacyCatalog {
   private readonly csv = inject(CsvExportService);
   private readonly destroyRef = inject(DestroyRef);
 
-  protected readonly acciones = ACCIONES_DE_LA_FILA;
+  protected readonly categorias = CATEGORIAS;
   protected readonly largoDelCodigo = LARGO_MAXIMO_DEL_CODIGO;
   protected readonly filasMaximas = FILAS_MAXIMAS_POR_CARGA;
   protected readonly bytesMaximos = BYTES_MAXIMOS_DEL_ARCHIVO;
@@ -214,11 +238,48 @@ export class PharmacyCatalog {
     () => (dataOf(this.productos()) ?? []).filter((p) => p.requiresPrescription === true).length,
   );
 
+  /** Sin el dato (la API real no lo manda) se cuenta como disponible. */
+  protected readonly sinStock = computed(
+    () => (dataOf(this.productos()) ?? []).filter((p) => p.inStock === false).length,
+  );
+  protected readonly conStock = computed(() => this.totalDeProductos() - this.sinStock());
+  protected readonly sinPrecio = computed(
+    () => (dataOf(this.productos()) ?? []).filter((p) => !p.unitPrice).length,
+  );
+
+  protected readonly filtroDeStock = signal<FiltroDeStock>('TODOS');
+  protected readonly opcionesDeFiltro: readonly SelectOption<FiltroDeStock>[] = [
+    { value: 'TODOS', label: 'Toda la disponibilidad' },
+    { value: 'CON', label: 'Con stock' },
+    { value: 'SIN', label: 'Sin stock' },
+  ];
+
+  /** El listado con el filtro de disponibilidad aplicado. */
+  private readonly filtrados = computed<ViewState<readonly PharmacyProduct[]>>(() => {
+    const filtro = this.filtroDeStock();
+    const estado = this.productos();
+    if (filtro === 'TODOS' || estado.status !== 'ready') {
+      return estado;
+    }
+    const lista = estado.data.filter((p) => (filtro === 'SIN') === (p.inStock === false));
+    return lista.length > 0
+      ? ready(lista)
+      : empty(
+          { label: 'Mostrar toda la disponibilidad' },
+          filtro === 'SIN' ? 'No hay productos marcados sin stock.' : 'No hay productos con stock.',
+        );
+  });
+
+  protected readonly totalFiltrado = computed(() => dataOf(this.filtrados())?.length ?? 0);
+
   /** La página visible, como estado: la tabla pinta los nueve estados sola. */
   protected readonly filasDeLaPagina = computed<ViewState<readonly PharmacyProduct[]>>(() => {
     const desde = (this.pagina() - 1) * this.porPagina();
-    return mapData(this.productos(), (lista) => lista.slice(desde, desde + this.porPagina()));
+    return mapData(this.filtrados(), (lista) => lista.slice(desde, desde + this.porPagina()));
   });
+
+  /** Los productos con un cambio de disponibilidad en vuelo. */
+  protected readonly cambiandoStock = signal<ReadonlySet<string>>(new Set());
 
   private readonly celdaProducto =
     viewChild.required<TemplateRef<{ $implicit: PharmacyProduct }>>('celdaProducto');
@@ -228,6 +289,10 @@ export class PharmacyCatalog {
     viewChild.required<TemplateRef<{ $implicit: PharmacyProduct }>>('celdaPresentacion');
   private readonly celdaReceta =
     viewChild.required<TemplateRef<{ $implicit: PharmacyProduct }>>('celdaReceta');
+  private readonly celdaPrecio =
+    viewChild.required<TemplateRef<{ $implicit: PharmacyProduct }>>('celdaPrecio');
+  private readonly celdaStock =
+    viewChild.required<TemplateRef<{ $implicit: PharmacyProduct }>>('celdaStock');
   private readonly celdaAcciones =
     viewChild.required<TemplateRef<{ $implicit: PharmacyProduct }>>('celdaAcciones');
 
@@ -240,7 +305,9 @@ export class PharmacyCatalog {
       priority: 3,
       cell: this.celdaPresentacion(),
     },
-    { key: 'receta', header: 'Venta', priority: 2, cell: this.celdaReceta() },
+    { key: 'precio', header: 'Precio', priority: 1, align: 'end', cell: this.celdaPrecio() },
+    { key: 'stock', header: 'Disponibilidad', priority: 1, cell: this.celdaStock() },
+    { key: 'receta', header: 'Venta', priority: 3, cell: this.celdaReceta() },
     {
       key: 'acciones',
       header: 'Acciones',
@@ -259,6 +326,18 @@ export class PharmacyCatalog {
   protected readonly campos = signal<CamposDelProducto>(CAMPOS_VACIOS);
   protected readonly erroresDelAlta = signal<readonly string[]>([]);
   protected readonly guardando = signal(false);
+  /** El producto que se está editando; `null` = el formulario da un alta. */
+  protected readonly editando = signal<PharmacyProduct | null>(null);
+
+  protected readonly opcionesDeCategoria = computed<readonly SelectOption<string>[]>(() => [
+    { value: '', label: 'Sin categoría' },
+    ...CATEGORIAS.map((categoria) => ({ value: categoria, label: categoria })),
+  ]);
+
+  protected readonly opcionesDeDisponibilidad: readonly SelectOption<string>[] = [
+    { value: 'sí', label: 'Lo tengo (disponible)' },
+    { value: 'no', label: 'No lo tengo (sin stock)' },
+  ];
 
   protected readonly opcionesSiNo: readonly SelectOption<string>[] = [
     { value: '', label: 'Sin declarar' },
@@ -267,6 +346,12 @@ export class PharmacyCatalog {
   ];
 
   /* ─── Importación masiva ──────────────────────────────────────────────── */
+
+  protected readonly modo = signal<ModoDeCarga>('CREAR_Y_ACTUALIZAR');
+  protected readonly opcionesDeModo: readonly SelectOption<ModoDeCarga>[] = [
+    { value: 'CREAR_Y_ACTUALIZAR', label: 'Crear los nuevos y actualizar los que ya están' },
+    { value: 'SOLO_CREAR', label: 'Sólo crear nuevos (los códigos existentes se rechazan)' },
+  ];
 
   protected readonly paso = signal<PasoDeImportacion>('archivo');
   protected readonly archivos = signal<readonly File[]>([]);
@@ -320,6 +405,15 @@ export class PharmacyCatalog {
   );
 
   protected readonly publicados = computed(() => this.resultados().filter((r) => r.publicado));
+  protected readonly creados = computed(
+    () => this.publicados().filter((r) => r.accion === 'CREAR').length,
+  );
+  protected readonly actualizados = computed(
+    () => this.publicados().filter((r) => r.accion === 'ACTUALIZAR').length,
+  );
+  protected readonly aActualizar = computed(
+    () => this.listas().filter((fila) => fila.accion === 'ACTUALIZAR').length,
+  );
   protected readonly rechazadosPorLaApi = computed<ViewState<readonly ResultadoDeFila[]>>(() => {
     const filas = this.resultados().filter((r) => !r.publicado);
     return filas.length === 0 ? empty({ label: 'La API aceptó todas las filas' }) : ready(filas);
@@ -480,10 +574,109 @@ export class PharmacyCatalog {
 
   /* ─── Retirar ─────────────────────────────────────────────────────────── */
 
+  protected accionesDe(producto: PharmacyProduct): readonly RowAction[] {
+    return producto.inStock === false ? ACCIONES_SIN_STOCK : ACCIONES_CON_STOCK;
+  }
+
   protected async alElegirAccion(codigo: string, producto: PharmacyProduct): Promise<void> {
-    if (codigo === 'retirar') {
-      await this.retirar(producto);
+    switch (codigo) {
+      case 'retirar':
+        await this.retirar(producto);
+        return;
+      case 'editar':
+        this.editar(producto);
+        return;
+      case 'sin-stock':
+        this.cambiarStock(producto, false);
+        return;
+      case 'con-stock':
+        this.cambiarStock(producto, true);
+        return;
     }
+  }
+
+  protected filtrarPorStock(filtro: FiltroDeStock | null): void {
+    this.filtroDeStock.set(filtro ?? 'TODOS');
+    this.pagina.set(1);
+  }
+
+  /**
+   * «No lo tengo» / «ya lo tengo». Lo que se marca sin stock deja de
+   * ofrecerse: no aparece en la vitrina de la farmacia ni cuenta para «dónde
+   * comprar mi receta», igual que el renglón «no disponible» de un pedido.
+   */
+  private cambiarStock(producto: PharmacyProduct, inStock: boolean): void {
+    const pharmacyId = this.farmaciaElegida();
+    if (pharmacyId === null) {
+      return;
+    }
+    this.marcar(this.cambiandoStock, producto.id, true);
+    this.pharmacy.updateProduct(pharmacyId, producto.id, { inStock }).subscribe({
+      next: () => {
+        this.marcar(this.cambiandoStock, producto.id, false);
+        this.toasts.success(
+          inStock
+            ? `«${nombreVisible(producto)}» vuelve a estar disponible.`
+            : `«${nombreVisible(producto)}» quedó sin stock: los pacientes ya no lo ven disponible.`,
+        );
+        this.recargarProductos(true);
+      },
+      error: (error: unknown) => {
+        this.marcar(this.cambiandoStock, producto.id, false);
+        this.toasts.error(mensajeDeError(error, 'No se pudo cambiar la disponibilidad.'));
+      },
+    });
+  }
+
+  protected editar(producto: PharmacyProduct): void {
+    this.editando.set(producto);
+    this.erroresDelAlta.set([]);
+    this.campos.set({
+      ...CAMPOS_VACIOS,
+      codigo: producto.productCode,
+      marca: producto.brandName ?? '',
+      generico: producto.genericName ?? '',
+      concentracion: producto.strengthText ?? '',
+      presentacion: producto.packageSizeText ?? '',
+      receta:
+        producto.requiresPrescription === true ? 'sí' : producto.requiresPrescription === false ? 'no' : '',
+      precio: producto.unitPrice ?? '',
+      categoria: producto.category ?? '',
+      descripcion: producto.description ?? '',
+      disponible: producto.inStock === false ? 'no' : 'sí',
+    });
+    this.irAPestana('nuevo');
+  }
+
+  /** «Nuevo producto» desde el listado: si había una edición a medias, se suelta. */
+  protected cancelarEdicionSinSalir(): void {
+    if (this.editando() !== null) {
+      this.editando.set(null);
+      this.campos.set(CAMPOS_VACIOS);
+      this.erroresDelAlta.set([]);
+    }
+  }
+
+  protected cancelarEdicion(): void {
+    this.editando.set(null);
+    this.limpiarFormulario();
+    this.irAPestana('productos');
+  }
+
+  private marcar(
+    conjunto: WritableSignal<ReadonlySet<string>>,
+    productId: string,
+    enVuelo: boolean,
+  ): void {
+    conjunto.update((actuales) => {
+      const siguientes = new Set(actuales);
+      if (enVuelo) {
+        siguientes.add(productId);
+      } else {
+        siguientes.delete(productId);
+      }
+      return siguientes;
+    });
   }
 
   private async retirar(producto: PharmacyProduct): Promise<void> {
@@ -503,31 +696,19 @@ export class PharmacyCatalog {
     if (!confirmado) {
       return;
     }
-    this.marcarRetiro(producto.id, true);
+    this.marcar(this.retirando, producto.id, true);
     this.pharmacy.retireProduct(pharmacyId, producto.id).subscribe({
       next: () => {
-        this.marcarRetiro(producto.id, false);
+        this.marcar(this.retirando, producto.id, false);
         this.toasts.success(`«${nombreVisible(producto)}» ya no se publica.`);
         this.recargarProductos(true);
       },
       error: (error: unknown) => {
-        this.marcarRetiro(producto.id, false);
+        this.marcar(this.retirando, producto.id, false);
         this.toasts.error(mensajeDeError(error, 'No se pudo retirar el producto.'));
         // Un 412 dice que ya estaba retirado: la lista que se ve está vieja.
         this.recargarProductos(true);
       },
-    });
-  }
-
-  private marcarRetiro(productId: string, enVuelo: boolean): void {
-    this.retirando.update((actuales) => {
-      const siguientes = new Set(actuales);
-      if (enVuelo) {
-        siguientes.add(productId);
-      } else {
-        siguientes.delete(productId);
-      }
-      return siguientes;
     });
   }
 
@@ -549,11 +730,25 @@ export class PharmacyCatalog {
     }
     this.erroresDelAlta.set([]);
     this.guardando.set(true);
-    this.pharmacy.publishProduct(pharmacyId, revision.borrador).subscribe({
+    const editando = this.editando();
+    const guardado: Observable<unknown> =
+      editando === null
+        ? this.pharmacy.publishProduct(pharmacyId, revision.borrador)
+        : this.pharmacy.updateProduct(
+            pharmacyId,
+            editando.id,
+            cambiosDelBorrador(revision.borrador, true),
+          );
+    guardado.subscribe({
       next: () => {
         this.guardando.set(false);
         this.campos.set(CAMPOS_VACIOS);
-        this.toasts.success(`«${nombreDelBorrador(revision.borrador)}» ya está en tu catálogo.`);
+        this.editando.set(null);
+        this.toasts.success(
+          editando === null
+            ? `«${nombreDelBorrador(revision.borrador)}» ya está en tu catálogo.`
+            : `Guardaste los cambios de «${nombreDelBorrador(revision.borrador)}».`,
+        );
         // La prueba del alta es verla en el listado, releído de la API.
         this.busqueda.set('');
         this.recargarProductos();
@@ -567,7 +762,11 @@ export class PharmacyCatalog {
   }
 
   protected limpiarFormulario(): void {
-    this.campos.set(CAMPOS_VACIOS);
+    // En edición, «limpiar» no puede soltar el código: es la identidad.
+    const editando = this.editando();
+    this.campos.set(
+      editando === null ? CAMPOS_VACIOS : { ...CAMPOS_VACIOS, codigo: editando.productCode },
+    );
     this.erroresDelAlta.set([]);
   }
 
@@ -623,10 +822,13 @@ export class PharmacyCatalog {
     this.pharmacy
       .searchProducts({ pharmacyId, limit: TOPE_DEL_LISTADO })
       .pipe(
-        map((pagina) => new Set(pagina.items.map((producto) => producto.productCode))),
+        map(
+          (pagina) =>
+            new Map(pagina.items.map((producto) => [producto.productCode, producto.id] as const)),
+        ),
         // Sin catálogo para comparar, la API igual rechaza el repetido con un
         // 409: se sigue, y el resultado lo dice fila por fila.
-        catchError(() => of(new Set<string>())),
+        catchError(() => of(new Map<string, string>())),
       )
       .subscribe((codigos) => {
         // Se cambió de farmacia o de archivo mientras se releía: este análisis
@@ -636,7 +838,7 @@ export class PharmacyCatalog {
         }
         this.analizando.set(false);
         this.columnasIgnoradas.set(lectura.ignoradas);
-        this.revisadas.set(revisarCarga(lectura.filas, codigos));
+        this.revisadas.set(revisarCarga(lectura.filas, codigos, this.modo()));
         this.paso.set('revision');
       });
   }
@@ -663,14 +865,22 @@ export class PharmacyCatalog {
         concatMap((fila) =>
           this.detenerSolicitado
             ? EMPTY
-            : this.pharmacy.publishProduct(pharmacyId, fila.borrador).pipe(
+            : (fila.accion === 'ACTUALIZAR' && fila.productId !== null
+                ? this.pharmacy
+                    .updateProduct(pharmacyId, fila.productId, cambiosDelBorrador(fila.borrador, false))
+                    .pipe(map(() => 'Actualizado'))
+                : this.pharmacy
+                    .publishProduct(pharmacyId, fila.borrador)
+                    .pipe(map(() => 'Publicado'))
+              ).pipe(
                 map(
-                  (): ResultadoDeFila => ({
+                  (mensaje): ResultadoDeFila => ({
                     numero: fila.numero,
                     codigo: fila.borrador.productCode,
                     nombre: nombreDelBorrador(fila.borrador),
                     publicado: true,
-                    mensaje: 'Publicado',
+                    accion: fila.accion,
+                    mensaje,
                   }),
                 ),
                 catchError((error: unknown) =>
@@ -679,6 +889,7 @@ export class PharmacyCatalog {
                     codigo: fila.borrador.productCode,
                     nombre: nombreDelBorrador(fila.borrador),
                     publicado: false,
+                    accion: fila.accion,
                     mensaje: this.rechazoDeFila(error),
                   }),
                 ),

@@ -1988,6 +1988,31 @@ en PDF (`nota-de-venta.ts`) y la prueba de navegador `pagos-plan-nota-venta-fact
 > se cierra la pestaña.
 
 ---
+>
+> **Actualización 29/09/2026 — lo que la maqueta ya simula y la API tiene que dar.** En la rama
+> `mockup` la pantalla ya hace todo esto contra el simulador; contra la API real cada una de
+> estas cosas es hoy un 400 (`forbidNonWhitelisted`) o un 404:
+>
+> - **Alta con venta:** `POST /pharmacies/:pharmacyId/products` acepta además `unitPrice`
+>   (número, Bs), `category` (una de: Medicamentos, Dermocosmética, Cuidado personal, Bebé y
+>   maternidad, Dispositivos, Bienestar), `description` y `inStock` (boolean).
+> - **Edición:** `PATCH /pharmacies/:pharmacyId/products/:productId` con cualquiera de
+>   `brandName`, `genericName`, `strengthText`, `packageSizeText`, `requiresPrescription`,
+>   `unitPrice`, `category`, `description`, `inStock` (`null` borra el dato). Devuelve el
+>   producto con la forma de la búsqueda. La carga masiva la usa para **actualizar** los códigos
+>   que ya están en el catálogo.
+> - **«Sin stock», como en los pedidos:** la farmacia no lleva un conteo; sólo avisa lo que no
+>   tiene (`inStock: false`), igual que marca «no disponible» un renglón de un pedido. Un
+>   producto sin stock no entra en `GET /pharmacy-inventory/availability` ni en
+>   `GET /pharmacy/sites/:siteId/prices`, y no se reserva en un pedido nuevo.
+> - **Lectura:** `GET /pharmacy/products` devuelve por producto `unitPrice`, `inStock`,
+>   `category` y `description`.
+> - **Catálogo del tenant:** `GET /pharmacy/pharmacies` con un tenant de tipo `PHARMACY`
+>   devuelve sólo esa farmacia (así ya lo dice la API: «del tenant activo»; el simulador lo
+>   respeta y la cuenta `farmacia@alovida.mock` entra directo a su catálogo).
+> - **Vademécum:** el simulador enlaza el genérico escrito a mano con el medicamento del
+>   vademécum para que el producto aparezca al buscar dónde comprar una receta; la API tendría
+>   que resolver `medicationConceptId` igual, o pedírselo a la pantalla.
 
 ## P48 · El mercado de seguros del paciente — 28/09/2026
 
