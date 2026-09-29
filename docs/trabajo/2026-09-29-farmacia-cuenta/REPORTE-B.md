@@ -86,3 +86,29 @@ propios (los avisos de CSP por «inline script» son del cliente de recarga de `
 ## Cierre
 
 `ng serve` del carril (:4210) apagado. Sin cambios en `environments/`.
+
+---
+
+## Actualización 30/09/2026 · Inventario: «hay / no hay» y carga por CSV
+
+Pedido del propietario: poder **subir y actualizar** el inventario, y también llevarlo **sólo como un
+booleano** (hay / no hay).
+
+- **Dos formas de llevarlo** (selector «Cómo llevás tu inventario», se recuerda en el navegador):
+  «Con cantidades» (existencias + umbral, como antes) y «Hay / no hay» (un interruptor por producto, sin
+  contar unidades). Lo escrito en las dos formas se guarda junto; si una fila tiene cantidades y un «hay»
+  a la vez, mandan las cantidades.
+- **Subir CSV**: `codigo` + `existencias` / `umbral` (cantidades) o sólo `disponible` (sí/no, hay/no hay,
+  agotado…). Se revisa **sin mandar nada** —qué cambia, qué ya está igual, qué fila no vale y en qué línea—
+  y «Aplicar» manda un único `PATCH`. Las filas malas no frenan a las buenas. Una fila que contradice
+  (`existencias` 20 y «no hay») se rechaza en vez de adivinar.
+- **Exportar CSV**: el inventario actual con los mismos encabezados, para corregirlo en una planilla y
+  volver a subirlo; sin tocar, el archivo exportado da «0 cambios».
+- **Simulador**: las líneas de `PATCH …/inventory` admiten `inStock` (booleano) además de cantidades;
+  mezclarlos en una línea es 422. Documentado en P47.
+- **Evidencia**: `evidencia/B/inventario-hay-no-hay-1440-claro.png`, `inventario-subir-csv-1440-claro.png`.
+  E2E 13/13; unitarios: `inventory-csv` (28), pantalla y diálogo (51 en la carpeta), simulador (+5).
+- Se cerró una carrera que destapó el e2e: «Subir/Exportar CSV» quedan deshabilitados mientras la tabla
+  carga o se guarda, para no revisar el archivo contra datos viejos.
+- Límite conocido: el CSV admite hasta 500 filas (el tope de las cargas del catálogo) y sólo actualiza
+  productos que ya existen; para altas masivas está la Importación masiva.

@@ -20,9 +20,12 @@ import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { Card } from '../../../shared/components/molecules/card/card';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 import { SearchField } from '../../../shared/components/molecules/search-field/search-field';
+import { SegmentedControl } from '../../../shared/components/molecules/segmented-control/segmented-control';
+import type { SegmentedOption } from '../../../shared/components/molecules/segmented-control/segmented-control.types';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
 import { DataTable } from '../../../shared/components/organisms/data-table/data-table';
 import type { ColumnDef, CursorState } from '../../../shared/components/organisms/data-table/data-table.types';
+import { CsvExportService, type CsvColumn } from '../../../shared/utils/csv-export/csv-export';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 
@@ -38,15 +41,43 @@ import type { ViewState } from '../../../core/view-state/view-state.types';
 import { pharmacyErrorMessage } from '../pharmacy-error-message';
 import { PharmacyScope } from '../pharmacy-scope';
 import { productName, productStatus } from '../products/product-view';
+import {
+  INVENTORY_CSV_HEADERS,
+  INVENTORY_DEFAULT_MINIMUM,
+  INVENTORY_STOCK_MAX,
+  inventoryCsvRows,
+  type InventoryCsvRow,
+} from './inventory-csv';
+import { InventoryUploadDialog } from './upload-dialog/inventory-upload-dialog';
 
 /** Tope de existencias: el mismo del servidor, que atrapa un dedo de más. */
-const STOCK_MAX = 1_000_000;
+const STOCK_MAX = INVENTORY_STOCK_MAX;
 /** Tope del listado: el máximo que acepta `GET /pharmacy/products`. */
 const LIST_LIMIT = 500;
 /** Filas por página. */
 const PAGE_SIZE = 10;
 /** Umbral que el servidor asume mientras la farmacia no fije el suyo. */
-const DEFAULT_MINIMUM = 5;
+const DEFAULT_MINIMUM = INVENTORY_DEFAULT_MINIMUM;
+
+/** Cómo lleva el inventario la farmacia: con cantidades, o sólo si hay o no hay. */
+type InventoryView = 'COUNT' | 'AVAILABILITY';
+
+const VIEW_OPTIONS: readonly SegmentedOption<InventoryView>[] = [
+  { value: 'COUNT', label: 'Con cantidades', description: 'Existencias y umbral de alerta de cada producto' },
+  { value: 'AVAILABILITY', label: 'Hay / no hay', description: 'Sólo si lo tenés o no, sin contar unidades' },
+];
+
+/** Dónde se recuerda la forma elegida: es una preferencia de la persona, no un dato. */
+const VIEW_STORAGE_KEY = 'mch.pharmacy.inventory.view';
+
+function storedView(): InventoryView {
+  try {
+    return localStorage.getItem(VIEW_STORAGE_KEY) === 'AVAILABILITY' ? 'AVAILABILITY' : 'COUNT';
+  } catch {
+    // Sin almacenamiento (SSR, ventana privada): arranca con cantidades.
+    return 'COUNT';
+  }
+}
 
 /** Lo que la persona escribió en una fila, todavía como texto. */
 interface InventoryEdit {
@@ -81,7 +112,9 @@ interface InventoryEdit {
     FormField,
     Input,
     PageHeader,
+    InventoryUploadDialog,
     SearchField,
+    SegmentedControl,
     Select,
     Switch,
     ViewStateHost,
@@ -96,10 +129,17 @@ export class PharmacyInventory {
   private readonly pharmacy = inject(PharmacyClient);
   private readonly toasts = inject(ToastService);
   private readonly route = inject(ActivatedRoute);
+  private readonly csv = inject(CsvExportService);
 
   protected readonly products = signal<ViewState<readonly PharmacyProduct[]>>(loading());
   /** Lo escrito y sin guardar, por producto. */
   protected readonly edits = signal<Readonly<Record<string, InventoryEdit>>>({});
+  protected readonly viewOptions = VIEW_OPTIONS;
+  /** Cómo se lleva el inventario: cantidades o sólo hay / no hay. */
+  protected readonly view = signal<InventoryView>(storedView());
+  /** «Hay / no hay» escrito y sin guardar, por producto. */
+  protected readonly availabilityEdits = signal<Readonly<Record<string, boolean>>>({});
+  protected readonly uploadOpen = signal(false);
   /** Lo que se buscó por nombre o código. */
   protected readonly term = signal('');
   protected readonly onlyAlerts = signal(this.route.snapshot.queryParamMap.get('alerts') === 'true');
@@ -107,7 +147,16 @@ export class PharmacyInventory {
   protected readonly saving = signal(false);
   protected readonly offset = signal(0);
 
-  protected readonly dirtyCount = computed(() => Object.keys(this.edits()).length);
+  /** Todo el catálogo vivo leído, sin filtrar; vacío mientras carga. */
+  protected readonly allProducts = computed(() => dataOf(this.products()) ?? []);
+
+  /** El CSV se revisa contra la tabla: sólo con la tabla leída y sin un guardado en vuelo. */
+  protected readonly canUseCsv = computed(() => this.products().status === 'ready' && !this.saving());
+
+  protected readonly dirtyCount = computed(
+    () =>
+      new Set([...Object.keys(this.edits()), ...Object.keys(this.availabilityEdits())]).size,
+  );
 
   private readonly visible = computed<ViewState<readonly PharmacyProduct[]>>(() => {
     const state = this.products();
@@ -147,14 +196,22 @@ export class PharmacyInventory {
   private readonly nameCell = viewChild.required<TemplateRef<{ $implicit: PharmacyProduct }>>('nameCell');
   private readonly stockCell = viewChild.required<TemplateRef<{ $implicit: PharmacyProduct }>>('stockCell');
   private readonly minimumCell = viewChild.required<TemplateRef<{ $implicit: PharmacyProduct }>>('minimumCell');
+  private readonly hasCell = viewChild.required<TemplateRef<{ $implicit: PharmacyProduct }>>('hasCell');
   private readonly availabilityCell = viewChild.required<TemplateRef<{ $implicit: PharmacyProduct }>>('availabilityCell');
 
-  protected readonly columns = computed<readonly ColumnDef<PharmacyProduct>[]>(() => [
-    { key: 'name', header: 'Producto', priority: 1, cell: this.nameCell() },
-    { key: 'stock', header: 'Existencias', priority: 1, cell: this.stockCell() },
-    { key: 'minimum', header: 'Umbral de alerta', priority: 1, cell: this.minimumCell() },
-    { key: 'availability', header: 'Disponibilidad', priority: 2, cell: this.availabilityCell() },
-  ]);
+  protected readonly columns = computed<readonly ColumnDef<PharmacyProduct>[]>(() =>
+    this.view() === 'AVAILABILITY'
+      ? [
+          { key: 'name', header: 'Producto', priority: 1, cell: this.nameCell() },
+          { key: 'has', header: '¿Lo tenés?', priority: 1, cell: this.hasCell() },
+        ]
+      : [
+          { key: 'name', header: 'Producto', priority: 1, cell: this.nameCell() },
+          { key: 'stock', header: 'Existencias', priority: 1, cell: this.stockCell() },
+          { key: 'minimum', header: 'Umbral de alerta', priority: 1, cell: this.minimumCell() },
+          { key: 'availability', header: 'Disponibilidad', priority: 2, cell: this.availabilityCell() },
+        ],
+  );
 
   protected readonly rowId = (product: PharmacyProduct): string => product.id;
   protected readonly rowLabel = (product: PharmacyProduct): string => productName(product);
@@ -206,6 +263,44 @@ export class PharmacyInventory {
     this.offset.set(0);
   }
 
+  protected setView(view: InventoryView): void {
+    this.view.set(view);
+    this.offset.set(0);
+    try {
+      localStorage.setItem(VIEW_STORAGE_KEY, view);
+    } catch {
+      // No se pudo recordar: la pantalla funciona igual.
+    }
+  }
+
+  /** El texto del filtro de alertas, según cómo se lleva el inventario. */
+  protected readonly alertsLabel = computed(() =>
+    this.view() === 'AVAILABILITY' ? 'Sólo los que no tengo' : 'Sólo con alertas',
+  );
+
+  /** Si hay, con lo escrito por encima: un «hay» escrito, o las existencias escritas. */
+  protected hasNow(product: PharmacyProduct): boolean {
+    const written = this.availabilityEdits()[product.id];
+    if (written !== undefined) {
+      return written;
+    }
+    return this.edits()[product.id] !== undefined ? Number(this.stockOf(product)) > 0 : product.inStock !== false;
+  }
+
+  protected setHas(product: PharmacyProduct, has: boolean): void {
+    const original = product.inStock !== false;
+    this.availabilityEdits.update((current) => {
+      const next = { ...current };
+      // Volver a lo que ya estaba deja la fila como no editada.
+      if (has === original) {
+        delete next[product.id];
+      } else {
+        next[product.id] = has;
+      }
+      return next;
+    });
+  }
+
   /* ─── Lo escrito ──────────────────────────────────────────────────────── */
 
   protected stockOf(product: PharmacyProduct): string {
@@ -243,6 +338,9 @@ export class PharmacyInventory {
 
   /** Sin stock, o con existencias en el umbral o por debajo; lo escrito manda. */
   protected isAlert(product: PharmacyProduct): boolean {
+    if (this.view() === 'AVAILABILITY') {
+      return !this.hasNow(product);
+    }
     const stock = Number(this.stockOf(product));
     const minimum = Number(this.minimumOf(product));
     return stock <= 0 || stock <= minimum;
@@ -253,7 +351,7 @@ export class PharmacyInventory {
   }
 
   protected isEdited(product: PharmacyProduct): boolean {
-    return this.edits()[product.id] !== undefined;
+    return this.edits()[product.id] !== undefined || this.availabilityEdits()[product.id] !== undefined;
   }
 
   /* ─── Guardar ─────────────────────────────────────────────────────────── */
@@ -267,18 +365,22 @@ export class PharmacyInventory {
     const problems: string[] = [];
     for (const product of dataOf(this.products()) ?? []) {
       const edit = this.edits()[product.id];
-      if (edit === undefined) {
-        continue;
+      const has = this.availabilityEdits()[product.id];
+      if (edit !== undefined) {
+        const stock = wholeNumber(edit.stock);
+        const minStock = wholeNumber(edit.minStock);
+        if (stock === null || minStock === null) {
+          problems.push(
+            `«${productName(product)}»: las existencias y el umbral son números enteros de 0 a ${STOCK_MAX}.`,
+          );
+          continue;
+        }
+        // Si la persona escribió cantidades, las cantidades mandan: el «hay» de la
+        // misma fila diría otra cosa a la vez.
+        lines.push({ productId: product.id, stock, minStock });
+      } else if (has !== undefined) {
+        lines.push({ productId: product.id, inStock: has });
       }
-      const stock = wholeNumber(edit.stock);
-      const minStock = wholeNumber(edit.minStock);
-      if (stock === null || minStock === null) {
-        problems.push(
-          `«${productName(product)}»: las existencias y el umbral son números enteros de 0 a ${STOCK_MAX}.`,
-        );
-        continue;
-      }
-      lines.push({ productId: product.id, stock, minStock });
     }
     this.errors.set(problems);
     if (problems.length > 0) {
@@ -289,6 +391,7 @@ export class PharmacyInventory {
       next: (result) => {
         this.saving.set(false);
         this.edits.set({});
+        this.availabilityEdits.set({});
         this.toasts.success(
           result.updated === 1 ? 'Guardaste el inventario de 1 producto.' : `Guardaste el inventario de ${result.updated} productos.`,
         );
@@ -302,8 +405,34 @@ export class PharmacyInventory {
     });
   }
 
+  /* ─── CSV ─────────────────────────────────────────────────────────────── */
+
+  /**
+   * Descarga el inventario tal como está, con los encabezados que la carga
+   * entiende: se corrige en una planilla y se sube de nuevo.
+   */
+  protected exportCsv(): void {
+    const columns: CsvColumn<InventoryCsvRow>[] = [
+      { header: INVENTORY_CSV_HEADERS.code, value: (row) => row.code },
+      { header: INVENTORY_CSV_HEADERS.name, value: (row) => row.name },
+      { header: INVENTORY_CSV_HEADERS.stock, value: (row) => row.stock },
+      { header: INVENTORY_CSV_HEADERS.minimum, value: (row) => row.minimum },
+      { header: INVENTORY_CSV_HEADERS.available, value: (row) => row.available },
+    ];
+    this.csv.download(inventoryCsvRows(dataOf(this.products()) ?? []), columns, 'inventario-de-la-farmacia.csv');
+  }
+
+  protected openUpload(): void {
+    this.uploadOpen.set(true);
+  }
+
+  protected closeUpload(): void {
+    this.uploadOpen.set(false);
+  }
+
   protected discard(): void {
     this.edits.set({});
+    this.availabilityEdits.set({});
     this.errors.set([]);
   }
 }

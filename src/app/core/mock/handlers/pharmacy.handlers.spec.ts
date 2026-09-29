@@ -463,6 +463,74 @@ describe('handlers de farmacia: portal de la farmacia (P47)', () => {
       expect(gestion().find((p) => p.id === a)!.stock).toBe(antes);
     });
 
+    it('una línea booleana dice sólo si hay o no hay, sin tocar las cantidades', () => {
+      const a = crear('B-INV-BOOL-A');
+      const cantidadAntes = gestion().find((p) => p.id === a)!.stock;
+
+      pedir('PATCH', `/pharmacies/${PHARMACY_ID}/inventory`, { lines: [{ productId: a, inStock: false }] });
+
+      const sinStock = gestion().find((p) => p.id === a)!;
+      expect(sinStock.inStock).toBe(false);
+      expect(sinStock.stock).toBe(cantidadAntes);
+      expect(publico().find((p) => p.id === a)!.inStock).toBe(false);
+
+      pedir('PATCH', `/pharmacies/${PHARMACY_ID}/inventory`, { lines: [{ productId: a, inStock: true }] });
+      expect(gestion().find((p) => p.id === a)!.inStock).toBe(true);
+    });
+
+    it('«hay» sobre un producto con cero unidades le da existencias para que de verdad esté disponible', () => {
+      const a = crear('B-INV-BOOL-B', { stock: 0 });
+      expect(gestion().find((p) => p.id === a)!.inStock).toBe(false);
+
+      pedir('PATCH', `/pharmacies/${PHARMACY_ID}/inventory`, { lines: [{ productId: a, inStock: true }] });
+
+      const ahora = gestion().find((p) => p.id === a)!;
+      expect(ahora.inStock).toBe(true);
+      expect(ahora.stock).toBeGreaterThan(0);
+    });
+
+    it('mezclar cantidades y booleano en una misma línea es un 422: diría dos cosas a la vez', () => {
+      const a = crear('B-INV-BOOL-C');
+
+      const resultado = pedir('PATCH', `/pharmacies/${PHARMACY_ID}/inventory`, {
+        lines: [{ productId: a, stock: 4, inStock: true }],
+      });
+
+      expect(estado(resultado)).toBe(422);
+    });
+
+    it('una línea que no dice qué cambiar es un 422, y un booleano que no lo es también', () => {
+      const a = crear('B-INV-BOOL-D');
+
+      expect(estado(pedir('PATCH', `/pharmacies/${PHARMACY_ID}/inventory`, { lines: [{ productId: a }] }))).toBe(422);
+      expect(
+        estado(pedir('PATCH', `/pharmacies/${PHARMACY_ID}/inventory`, { lines: [{ productId: a, inStock: 'quizás' }] })),
+      ).toBe(422);
+    });
+
+    it('el booleano y las cantidades conviven en la misma petición, todo o nada', () => {
+      const a = crear('B-INV-MIX-A');
+      const b = crear('B-INV-MIX-B');
+
+      const roto = pedir('PATCH', `/pharmacies/${PHARMACY_ID}/inventory`, {
+        lines: [
+          { productId: a, inStock: false },
+          { productId: b, stock: -1 },
+        ],
+      });
+      expect(estado(roto)).toBe(422);
+      expect(gestion().find((p) => p.id === a)!.inStock).toBe(true);
+
+      pedir('PATCH', `/pharmacies/${PHARMACY_ID}/inventory`, {
+        lines: [
+          { productId: a, inStock: false },
+          { productId: b, stock: 7, minStock: 2 },
+        ],
+      });
+      expect(gestion().find((p) => p.id === a)!.inStock).toBe(false);
+      expect(gestion().find((p) => p.id === b)).toMatchObject({ stock: 7, minStock: 2, inStock: true });
+    });
+
     it('rechaza un producto de otra farmacia', () => {
       const resultado = pedir('PATCH', `/pharmacies/${PHARMACY_ID}/inventory`, {
         lines: [{ productId: 'no-existe', stock: 1, minStock: 1 }],

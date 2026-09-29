@@ -47,3 +47,33 @@
   font-size: var(--fs-caption);
   color: var(--text-secondary);
 }
+
+.inventory__mode {
+  display: grid;
+  gap: var(--sp-3);
+  align-items: center;
+}
+
+.inventory__mode-label {
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.inventory__csv {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+@media (min-width: 780px) {
+  .inventory__mode {
+    grid-template-columns: auto auto 1fr;
+    gap: var(--sp-4);
+  }
+
+  .inventory__csv {
+    justify-content: flex-end;
+  }
+}

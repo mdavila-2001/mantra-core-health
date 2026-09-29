@@ -2032,6 +2032,14 @@ en PDF (`nota-de-venta.ts`) y la prueba de navegador `pagos-plan-nota-venta-fact
 >   guarda todo o nada (400 por línea inválida). `inStock` **deriva** de `stock > 0`. Cuando exista
 >   la sincronización con el sistema de la farmacia (registro §2.1.2), este endpoint pasa a sólo
 >   lectura.
+> - **Inventario «hay / no hay» y carga por CSV (30/09/2026):** cada línea de `PATCH
+>   /pharmacies/:pharmacyId/inventory` lleva **o bien** cantidades (`stock` y/o `minStock`) **o bien**
+>   sólo `inStock` (booleano, sin conteo: la farmacia que no lleva cantidades y avisa lo que le falta).
+>   Mandar `stock` e `inStock` en la misma línea es un 422 («dirían dos cosas a la vez»); una línea sin
+>   nada que cambiar, también. `inStock: true` sobre un producto con 0 unidades le da existencias «sin
+>   conteo» para que de verdad quede disponible. La pantalla revisa el CSV (`codigo` + `existencias` /
+>   `umbral` / `disponible`) **antes** de mandar y sube sólo las filas que cambian, en un único `PATCH`;
+>   el servidor real tendría que ser todo o nada sobre esa petición, como el simulador.
 > - **Categorías (D8):** `GET|POST /pharmacies/:pharmacyId/categories` y `PATCH|DELETE
 >   …/categories/:categoryId`. Renombrar cambia el nombre en los productos que la usan; eliminar una
 >   con productos es un **409**. La lista parte de las seis del mockup. `category` sigue viajando en
