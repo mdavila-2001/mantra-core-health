@@ -426,15 +426,284 @@ describe('SpecialtyFormBlock', () => {
       truncated: false,
     });
     fixture.detectChanges();
-
-    const lista = (fixture.nativeElement as HTMLElement).querySelector(
-      '[data-testid="adicionales-guardados"]',
+    // Viven en la pestaña «Flexible»: la cerrada no se dibuja.
+    const html = fixture.nativeElement as HTMLElement;
+    const flexible = Array.from(html.querySelectorAll<HTMLButtonElement>('[role="tab"]')).find(
+      (boton) => boton.textContent?.includes('Flexible'),
     );
+    expect(flexible?.textContent?.trim()).toBe('Flexible (2)');
+    flexible?.click();
+    fixture.detectChanges();
+
+    const lista = html.querySelector('[data-testid="adicionales-guardados"]');
     const texto = lista?.textContent ?? '';
     expect(texto).toContain('Análisis con el que vino');
     expect(texto).toContain('Adjunto: hemograma.jpg');
     expect(texto).toContain('Refiere mareos.');
     expect(texto).not.toContain('De otra consulta');
+  });
+
+  describe('pestañas «Plantilla» y «Flexible»', () => {
+    function enCaptura(): HTMLElement {
+      peticionDePlantillas().flush([PLANTILLA]);
+      fixture.detectChanges();
+      peticionDeRespuesta().flush(LISTADO_VACIO);
+      fixture.detectChanges();
+      return fixture.nativeElement as HTMLElement;
+    }
+
+    function pestanas(html: HTMLElement): HTMLButtonElement[] {
+      return Array.from(html.querySelectorAll<HTMLButtonElement>('[role="tab"]'));
+    }
+
+    function elegir(html: HTMLElement, rotulo: RegExp): void {
+      const pestana = pestanas(html).find((boton) => rotulo.test(boton.textContent ?? ''));
+      if (pestana === undefined) throw new Error(`Falta la pestaña ${rotulo}`);
+      pestana.click();
+      fixture.detectChanges();
+    }
+
+    it('arranca en «Plantilla» con los campos fijos; lo flexible no se dibuja', () => {
+      const html = enCaptura();
+
+      expect(pestanas(html).map((boton) => boton.textContent?.trim())).toEqual([
+        'Plantilla',
+        'Flexible',
+      ]);
+      expect(html.querySelectorAll('[data-testid="campo-especialidad"]').length).toBe(2);
+      expect(html.querySelector('[data-testid="campos-adicionales"]')).toBeNull();
+    });
+
+    it('«Flexible» muestra las filas campo: valor y esconde la plantilla', () => {
+      const html = enCaptura();
+
+      elegir(html, /Flexible/);
+
+      expect(html.querySelector('[data-testid="campos-adicionales"]')).not.toBeNull();
+      expect(html.querySelector('[data-testid="campo-especialidad"]')).toBeNull();
+
+      elegir(html, /Plantilla/);
+
+      expect(html.querySelectorAll('[data-testid="campo-especialidad"]').length).toBe(2);
+    });
+
+    it('lo escrito en «Flexible» sobrevive al volver a «Plantilla» y cuenta en la pestaña', () => {
+      const html = enCaptura();
+      elegir(html, /Flexible/);
+      (html.querySelector('[data-testid="adicional-agregar-fila"]') as HTMLElement).click();
+      fixture.detectChanges();
+      const rotulo = html.querySelector<HTMLInputElement>('[data-testid="adicional-rotulo"]');
+      if (rotulo === null) throw new Error('Falta el campo de la fila');
+      rotulo.value = 'Presión arterial';
+      rotulo.dispatchEvent(new Event('input'));
+      fixture.detectChanges();
+      const valor = html.querySelector<HTMLTextAreaElement>(
+        '[data-testid="adicional-valor"] textarea',
+      );
+      if (valor === null) throw new Error('Falta el valor de la fila');
+      valor.value = '128/84 mmHg';
+      valor.dispatchEvent(new Event('input'));
+      fixture.detectChanges();
+
+      elegir(html, /Plantilla/);
+
+      // La pestaña cerrada no se dibuja, pero su componente sigue vivo.
+      expect(html.querySelector('[data-testid="campos-adicionales"]')).toBeNull();
+      expect(pestanas(html)[1].textContent?.trim()).toBe('Flexible (1)');
+      const adicionales =
+        interno<() => { entradas: () => readonly unknown[] } | undefined>('adicionales')();
+      expect(adicionales?.entradas()).toEqual([
+        { label: 'Presión arterial', value: '128/84 mmHg' },
+      ]);
+
+      elegir(html, /Flexible/);
+      expect(html.querySelector<HTMLInputElement>('[data-testid="adicional-rotulo"]')?.value).toBe(
+        'Presión arterial',
+      );
+    });
+
+    it('desde «Flexible» dice junto al botón que faltan obligatorios en «Plantilla»', () => {
+      const html = enCaptura();
+
+      elegir(html, /Flexible/);
+
+      const pendiente = html.querySelector('[data-testid="pendiente-en-la-otra-pestana"]');
+      expect(pendiente?.closest('app-form-actions')).not.toBeNull();
+      expect(pendiente?.getAttribute('role')).toBe('status');
+      expect(pendiente?.textContent?.trim()).toBe('Faltan obligatorios en «Plantilla».');
+
+      interno<(fieldId: string, valor: unknown) => void>('actualizarValor')('f-1', 'Buena');
+      fixture.detectChanges();
+
+      expect(pendiente?.textContent?.trim()).toBe('');
+      expect(interno<() => boolean>('puedeCompletar')()).toBe(true);
+    });
+
+    it('desde «Plantilla» avisa de una fila flexible a medio escribir', () => {
+      const html = enCaptura();
+      interno<(fieldId: string, valor: unknown) => void>('actualizarValor')('f-1', 'Buena');
+      elegir(html, /Flexible/);
+      (html.querySelector('[data-testid="adicional-agregar-fila"]') as HTMLElement).click();
+      fixture.detectChanges();
+      const valor = html.querySelector<HTMLTextAreaElement>(
+        '[data-testid="adicional-valor"] textarea',
+      );
+      if (valor === null) throw new Error('Falta el valor de la fila');
+      // Un valor sin campo: la fila queda mal escrita.
+      valor.value = 'Sin rótulo';
+      valor.dispatchEvent(new Event('input'));
+      fixture.detectChanges();
+
+      elegir(html, /Plantilla/);
+
+      expect(
+        html.querySelector('[data-testid="pendiente-en-la-otra-pestana"]')?.textContent?.trim(),
+      ).toBe('Corregí una fila de «Flexible».');
+      expect(interno<() => boolean>('puedeCompletar')()).toBe(false);
+    });
+
+    it('en lectura sin campos adicionales, «Flexible» lo dice en vez de quedar vacía', () => {
+      llegarAModoLectura();
+      const html = fixture.nativeElement as HTMLElement;
+
+      expect(html.querySelector('[data-testid="respuestas-plantilla"]')).not.toBeNull();
+      elegir(html, /Flexible/);
+
+      expect(html.querySelector('[data-testid="adicionales-vacio"]')).not.toBeNull();
+      expect(html.textContent).toContain('Campos adicionales del doctor');
+    });
+
+    it('en lectura, si no se pudieron leer las notas, lo dice con el ID de la petición', () => {
+      peticionDePlantillas().flush([PLANTILLA]);
+      fixture.detectChanges();
+      peticionDeRespuesta().flush({ ...LISTADO_VACIO, items: [INSTANCIA] });
+      http
+        .expectOne((r) => r.url === '/forms/instances/inst-9' && r.method === 'GET')
+        .flush(DETALLE);
+      http
+        .expectOne((r) => r.url === '/charts/notes' && r.method === 'GET')
+        .flush(
+          { message: 'Falló', requestId: 'req-77' },
+          { status: 500, statusText: 'Server Error', headers: { 'x-request-id': 'req-77' } },
+        );
+      fixture.detectChanges();
+      const html = fixture.nativeElement as HTMLElement;
+
+      // Lo respondido de la plantilla se lee igual.
+      expect(html.querySelector('[data-testid="respuestas-plantilla"]')).not.toBeNull();
+      elegir(html, /Flexible/);
+
+      const alerta = html.querySelector('[data-testid="adicionales-error"]');
+      expect(alerta).not.toBeNull();
+      expect(alerta?.textContent).toContain('req-77');
+      expect(html.querySelector('[data-testid="adicionales-vacio"]')).toBeNull();
+    });
+
+    for (const [caso, status, code] of [
+      ['un 404', 404, 'NOT_FOUND'],
+      ['un 429', 429, 'RATE_LIMITED'],
+    ] as const) {
+      it(`en lectura, ${caso} de las notas es un fallo y no un «no hay nada»`, () => {
+        peticionDePlantillas().flush([PLANTILLA]);
+        fixture.detectChanges();
+        peticionDeRespuesta().flush({ ...LISTADO_VACIO, items: [INSTANCIA] });
+        http
+          .expectOne((r) => r.url === '/forms/instances/inst-9' && r.method === 'GET')
+          .flush(DETALLE);
+        http
+          .expectOne((r) => r.url === '/charts/notes' && r.method === 'GET')
+          .flush({ code, message: 'No' }, { status, statusText: 'x' });
+        fixture.detectChanges();
+        const html = fixture.nativeElement as HTMLElement;
+
+        elegir(html, /Flexible/);
+
+        expect(html.querySelector('[data-testid="adicionales-error"]')).not.toBeNull();
+        expect(html.querySelector('[data-testid="adicionales-vacio"]')).toBeNull();
+      });
+    }
+
+    it('sin ningún valor en la plantilla no deja completar, y lo dice si hay algo flexible', () => {
+      const opcional = {
+        ...PLANTILLA,
+        fields: PLANTILLA.fields.map((campo) => ({ ...campo, required: false })),
+      };
+      peticionDePlantillas().flush([opcional]);
+      fixture.detectChanges();
+      peticionDeRespuesta().flush(LISTADO_VACIO);
+      fixture.detectChanges();
+      const html = fixture.nativeElement as HTMLElement;
+      const pendiente = (): string =>
+        html.querySelector('[data-testid="pendiente-en-la-otra-pestana"]')?.textContent?.trim() ??
+        '';
+
+      // Antes el botón quedaba habilitado y el clic no mandaba nada.
+      expect(interno<() => boolean>('puedeCompletar')()).toBe(false);
+      expect(pendiente()).toBe('');
+
+      elegir(html, /Flexible/);
+      (html.querySelector('[data-testid="adicional-agregar-fila"]') as HTMLElement).click();
+      fixture.detectChanges();
+      const rotulo = html.querySelector<HTMLInputElement>('[data-testid="adicional-rotulo"]');
+      const valor = html.querySelector<HTMLTextAreaElement>(
+        '[data-testid="adicional-valor"] textarea',
+      );
+      if (rotulo === null || valor === null) throw new Error('Falta la fila');
+      rotulo.value = 'Presión arterial';
+      rotulo.dispatchEvent(new Event('input'));
+      valor.value = '128/84 mmHg';
+      valor.dispatchEvent(new Event('input'));
+      fixture.detectChanges();
+
+      expect(interno<() => boolean>('puedeCompletar')()).toBe(false);
+      expect(pendiente()).toBe('Completá al menos un campo de «Plantilla».');
+
+      // Sin la fila (esta sesión no tiene perfil profesional, así que lo
+      // flexible tiene su propio impedimento) y con un valor, se habilita.
+      (html.querySelector('[data-testid="adicional-quitar"]') as HTMLElement).click();
+      interno<(fieldId: string, valor: unknown) => void>('actualizarValor')('f-1', 'Buena');
+      fixture.detectChanges();
+
+      expect(interno<() => boolean>('puedeCompletar')()).toBe(true);
+      expect(pendiente()).toBe('');
+    });
+
+    it('al pasar a lectura vuelve a «Plantilla» aunque se haya completado desde «Flexible»', () => {
+      const html = enCaptura();
+      interno<(fieldId: string, valor: unknown) => void>('actualizarValor')('f-1', 'Buena');
+      elegir(html, /Flexible/);
+
+      interno<() => void>('completar')();
+      http
+        .expectOne((r) => r.url === '/forms/instances' && r.method === 'POST')
+        .flush({ id: 'inst-1', schemaVersion: 1, state: 'open' });
+      http
+        .expectOne((r) => r.url === '/forms/instances/inst-1/values' && r.method === 'POST')
+        .flush({ ids: ['v-1'] });
+      http
+        .expectOne((r) => r.url === '/forms/instances/inst-1/close' && r.method === 'POST')
+        .flush({ ok: true });
+      // La relectura encuentra lo recién guardado y el bloque pasa a lectura.
+      peticionDeRespuesta().flush({ ...LISTADO_VACIO, items: [INSTANCIA] });
+      http
+        .expectOne((r) => r.url === '/forms/instances/inst-9' && r.method === 'GET')
+        .flush(DETALLE);
+      responderNotas();
+      fixture.detectChanges();
+
+      expect(html.querySelector('[data-testid="formulario-respondido"]')).not.toBeNull();
+      const [plantilla, flexible] = pestanas(html);
+      expect(plantilla.getAttribute('aria-selected')).toBe('true');
+      expect(flexible.getAttribute('aria-selected')).toBe('false');
+      expect(html.querySelector('[data-testid="respuestas-plantilla"]')).not.toBeNull();
+      // El cierre D4 le pregunta a la IA por lo respondido; no es lo que se
+      // prueba acá: «sin servicio», que el bloque ya sabe decir.
+      for (const sugerencia of http.match((r) => r.url.endsWith('/v1/diagnosis/suggest'))) {
+        if (!sugerencia.cancelled) {
+          sugerencia.flush(null, { status: 503, statusText: 'Service Unavailable' });
+        }
+      }
+    });
   });
 
   it('un valor enmascarado muestra el marcador y jamás el contenido', () => {
