@@ -434,6 +434,9 @@ function resumenDe(pharmacyId: string) {
     byCategory: [...cuentaPorCategoria.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], 'es')).map(([category, count]) => ({ category, count })),
     recentActivity: actividad
       .filtrar((a) => a.pharmacyId === pharmacyId)
+      // Dos hechos en el mismo milisegundo empatan en `at`: se invierte antes de
+      // ordenar (el sort es estable) para que gane el insertado último.
+      .reverse()
       .sort((a, b) => b.at.localeCompare(a.at))
       .slice(0, 8)
       .map(({ id, at, kind, text }) => ({ id, at, kind, text })),
