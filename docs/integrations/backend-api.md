@@ -1364,13 +1364,15 @@ alcanzable desde este repositorio.
 | `GET` | `/notifications/preferences/me` | `AvisoDeHuecoLibre` y 3 pantallas más | No |
 | `PUT` | `/notifications/preferences/me` | `AvisoDeHuecoLibre` y 3 pantallas más | No |
 
-### `PharmacyClient` — 3 operaciones
+### `PharmacyClient` — 5 operaciones
 
 | Método | Ruta | Consumidor | Pública |
 |---|---|---|---|
+| `DELETE` | `/pharmacies/:pharmacyId/products/:productId` | `PharmacyCatalog` | No |
 | `GET` | `/pharmacy-inventory/availability` | `InboxOrder` y 2 pantallas más | No |
-| `GET` | `/pharmacy/pharmacies` | `InboxOrder` y 2 pantallas más | No |
-| `GET` | `/pharmacy/products` | `InboxOrder` y 2 pantallas más | No |
+| `GET` | `/pharmacy/pharmacies` | `InboxOrder` y 3 pantallas más | No |
+| `GET` | `/pharmacy/products` | `InboxOrder` y 3 pantallas más | No |
+| `POST` | `/pharmacies/:pharmacyId/products` | `PharmacyCatalog` | No |
 
 ### `PharmacyOrdersClient` — 4 operaciones
 

@@ -122,6 +122,7 @@ describe('APP_SECTIONS', () => {
       'administration/my-organization',
       'administration/pharmacy-orders',
       'administration/pharmacy-campaigns',
+      'administration/pharmacy-catalog',
       'administration/pharmacy-profile',
     ];
 
@@ -414,6 +415,7 @@ describe('lo que `hiddenForTenantTypes` le cierra a la aseguradora', () => {
       'my-account/questionnaires',
       'administration/pharmacy-orders',
       'administration/pharmacy-campaigns',
+      'administration/pharmacy-catalog',
       'administration/pharmacy-profile',
     ]);
     for (const seccion of conMarca) {

@@ -47,6 +47,8 @@ import type { ViewState } from '../../../../core/view-state/view-state.types';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { Checkbox } from '../../../../shared/components/atoms/checkbox/checkbox';
 import { SegmentedControl } from '../../../../shared/components/molecules/segmented-control/segmented-control';
+import { Tab } from '../../../../shared/components/molecules/tabs/tab/tab';
+import { Tabs } from '../../../../shared/components/molecules/tabs/tabs';
 import type { SegmentedOption } from '../../../../shared/components/molecules/segmented-control/segmented-control.types';
 import { Input } from '../../../../shared/components/atoms/input/input';
 import { Select } from '../../../../shared/components/atoms/select/select';
@@ -139,6 +141,19 @@ const SI_NO: readonly SegmentedOption<'si' | 'no' | ''>[] = [
   { value: 'si', label: 'Sí' },
   { value: 'no', label: 'No' },
 ];
+
+/**
+ * Las dos pestañas de la ficha: los campos fijos de la plantilla y las filas
+ * «campo: valor» con archivos que agrega quien atiende. Captura y lectura usan
+ * las mismas, en el mismo orden (composition-rules §5).
+ */
+export const PESTANA_PLANTILLA = 0;
+export const PESTANA_FLEXIBLE = 1;
+
+/** El rótulo de la pestaña flexible: dice cuánto lleva, para que se note. */
+function rotuloFlexible(cuantos: number): string {
+  return cuantos > 0 ? `Flexible (${cuantos})` : 'Flexible';
+}
 
 /** Los tipos de dato que este bloque sabe dibujar como campo de captura. */
 type TipoDibujable = 'boolean' | 'integer' | 'decimal' | 'date' | 'text' | 'string';
@@ -282,6 +297,8 @@ interface PasoDelCierre {
     ProceduresBlock,
     SegmentedControl,
     Select,
+    Tab,
+    Tabs,
   ],
   templateUrl: './specialty-form-block.html',
   styleUrl: './specialty-form-block.css',
@@ -461,6 +478,58 @@ export class SpecialtyFormBlock {
       label: plantilla.name,
     })),
   ]);
+
+  /**
+   * La pestaña que se está mirando. `app-tab` no dibuja el panel cerrado, pero
+   * lo proyectado lo instancia este componente: los campos adicionales siguen
+   * vivos —con lo escrito y con su `viewChild`— aunque su pestaña no se vea, y
+   * se completa igual desde cualquiera de las dos.
+   */
+  protected readonly pestana = signal(PESTANA_PLANTILLA);
+
+  /** El rótulo de la pestaña flexible mientras se escribe. */
+  protected readonly rotuloFlexibleEnCaptura = computed(() =>
+    rotuloFlexible(this.adicionales()?.cantidad() ?? 0),
+  );
+
+  /** El mismo rótulo en lectura, con lo que se guardó. */
+  protected readonly rotuloFlexibleEnLectura = computed(() =>
+    // Mientras se leen las notas no se sabe cuántas hay: «Flexible» a secas
+    // se leería como «ninguna».
+    this.buscandoAdicionales()
+      ? 'Flexible (…)'
+      : rotuloFlexible(this.adicionalesGuardados().length),
+  );
+
+  /**
+   * Por qué no se puede completar, cuando la causa está en la pestaña que NO
+   * se está mirando. Va junto al botón: sin esto quedaba gris sin motivo.
+   */
+  protected readonly pendienteEnLaOtraPestana = computed<string | null>(() => {
+    if (this.plantillaElegida() === null || this.formularioRespondido() !== null) return null;
+    if (this.pestana() === PESTANA_FLEXIBLE && !this.camposObligatoriosCompletos()) {
+      return 'Faltan obligatorios en «Plantilla».';
+    }
+    const adicionales = this.adicionales();
+    if (adicionales === undefined) return null;
+    // La respuesta de la plantilla es lo que se guarda primero: sin ningún
+    // valor no hay a qué atar lo flexible, y el botón no enviaría nada.
+    if (this.camposObligatoriosCompletos() && !this.hayValoresDePlantilla()) {
+      return adicionales.tieneContenido() ? 'Completá al menos un campo de «Plantilla».' : null;
+    }
+    if (this.pestana() !== PESTANA_PLANTILLA) return null;
+    if (adicionales.hayProblemas()) {
+      return 'Corregí una fila de «Flexible».';
+    }
+    // No se corrige en la pestaña: es de la sesión. Se dice tal cual.
+    return adicionales.impedimento();
+  });
+
+  /** Si la plantilla tiene algo que enviar: sin valores, completar no hace nada. */
+  private readonly hayValoresDePlantilla = computed(() => {
+    const plantilla = this.plantillaElegida();
+    return plantilla !== null && this.valoresParaEnviar(plantilla).length > 0;
+  });
 
   /** Está elegida la hoja en blanco, así que no se dibuja ninguna ficha. */
   protected readonly hojaLibre = computed(() => this.plantillaId() === PLANTILLA_HOJA_LIBRE);
@@ -724,29 +793,83 @@ export class SpecialtyFormBlock {
    * médicas de este encuentro, y su texto libre. Se leen aparte porque viven
    * en la nota y no en la instancia del formulario.
    */
-  protected readonly adicionalesGuardados = signal<readonly MedicalNoteEntry[]>([]);
+  private readonly lecturaDeAdicionales = signal<ViewState<readonly MedicalNoteEntry[]>>(
+    ready([]),
+  );
+
+  protected readonly adicionalesGuardados = computed<readonly MedicalNoteEntry[]>(() => {
+    const state = this.lecturaDeAdicionales();
+    return state.status === 'ready' ? state.data : [];
+  });
+
+  protected readonly buscandoAdicionales = computed(
+    () => this.lecturaDeAdicionales().status === 'loading',
+  );
+
+  /**
+   * Sin las notas la respuesta de la plantilla se lee igual, pero la pestaña
+   * flexible no puede decir «no hay nada»: dice que no se pudo leer.
+   */
+  protected readonly errorDeAdicionales = computed<string | null>(() => {
+    const state = this.lecturaDeAdicionales();
+    // Todo lo que no sea «buscando» ni «listo» es un fallo: un estado que se
+    // escape de acá caería en «no se agregaron campos», un vacío falso.
+    switch (state.status) {
+      case 'loading':
+      case 'ready':
+        return null;
+      case 'offline':
+        return 'No pudimos conectarnos. Revisá tu conexión y reintentá.';
+      case 'forbidden':
+        return state.message ?? 'Tu rol no permite leer las notas de esta consulta.';
+      case 'not-found':
+        return 'No encontramos las notas de esta consulta.';
+      case 'validation':
+        return (
+          state.issues.map((issue) => issue.message).join(' ') ||
+          'No pudimos leer las notas de esta consulta.'
+        );
+      case 'error':
+        return `${state.message || 'Ocurrió un error inesperado.'} (${state.requestId})`;
+      default:
+        return 'No pudimos leer las notas de esta consulta.';
+    }
+  });
+
+  private encuentroDeLosAdicionales: string | null = null;
 
   private consultarAdicionales(encounterId: string): void {
-    this.adicionalesGuardados.set([]);
+    this.encuentroDeLosAdicionales = encounterId;
+    this.lecturaDeAdicionales.set(loading());
     this.notes
       .listNotes({ patientProfileId: this.patientProfileId(), encounterId, limit: 50 })
       .subscribe({
         next: (pagina) => {
           if (this.encounterId() !== encounterId) return;
-          this.adicionalesGuardados.set(
-            pagina.items
-              .filter((nota) => nota.encounterId === encounterId)
-              .flatMap((nota) => [
-                ...(nota.entries ?? []),
-                ...(nota.subjectiveText
-                  ? [{ label: 'Texto libre', value: nota.subjectiveText }]
-                  : []),
-              ]),
+          this.lecturaDeAdicionales.set(
+            ready(
+              pagina.items
+                .filter((nota) => nota.encounterId === encounterId)
+                .flatMap((nota) => [
+                  ...(nota.entries ?? []),
+                  ...(nota.subjectiveText
+                    ? [{ label: 'Texto libre', value: nota.subjectiveText }]
+                    : []),
+                ]),
+            ),
           );
         },
-        // Sin las notas la respuesta se lee igual: lo que falta es un agregado.
-        error: () => undefined,
+        error: (error: unknown) => {
+          if (this.encounterId() !== encounterId) return;
+          this.lecturaDeAdicionales.set(errorToViewState<readonly MedicalNoteEntry[]>(error));
+        },
       });
+  }
+
+  protected reconsultarAdicionales(): void {
+    if (this.encuentroDeLosAdicionales !== null) {
+      this.consultarAdicionales(this.encuentroDeLosAdicionales);
+    }
   }
 
   protected reconsultarRespuesta(): void {
@@ -1035,6 +1158,8 @@ export class SpecialtyFormBlock {
       !this.buscandoRespuesta() &&
       this.plantillaElegida() !== null &&
       this.camposObligatoriosCompletos() &&
+      // Antes el botón quedaba habilitado y el clic no hacía nada.
+      this.hayValoresDePlantilla() &&
       // Los campos adicionales son opcionales, pero lo que se escribió ahí
       // tiene que estar bien: se guardan con la ficha y no por separado.
       !(this.adicionales()?.hayProblemas() ?? false) &&
@@ -1189,6 +1314,9 @@ export class SpecialtyFormBlock {
           this.cierre.set(SIN_CIERRE);
           this.adicionales()?.limpiar();
           this.fallosDelCierre.set(fallos);
+          // La lectura abre en lo principal —lo respondido de la plantilla—,
+          // aunque se haya completado desde la pestaña flexible.
+          this.pestana.set(PESTANA_PLANTILLA);
           this.cambio.emit();
           // Lo recién guardado se relee del backend y el bloque pasa a lectura.
           this.consultarRespuesta(encounterId);

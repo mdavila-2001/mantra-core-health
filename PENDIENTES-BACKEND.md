@@ -52,6 +52,7 @@ backend.
 | **P42** | La **reconsulta**: `follow_up_of_booking_id` en la reserva, `ACT_FOLLOW_UP`, «una reconsulta futura por cita» y el vínculo en `BookingItemDto`. **Esto sí tiene frontend detrás y funcionando contra el simulador** |
 | **P44** | `GET /patient-spending/me?from=&to=` — los gastos de salud del paciente, movimiento por movimiento. **«Mis gastos» ya está construido contra el simulador** |
 | **P45** | `GET /practitioners/:id/insurance-carriers`: con qué aseguradoras trabaja un médico, para su ficha pública. **El modelo ya lo declara** (`network_provider_memberships`); falta la lectura y la carga de las redes reales |
+| **P47** | El catálogo de la farmacia: la empresa no puede **editar** un producto ni cargarle precio, stock, categoría, descripción o imágenes, y el alta exige `SECURITY_ADMIN` |
 
 ---
 
@@ -1942,6 +1943,49 @@ factura.
 **Lo que el frontend ya tiene:** `app-plan-de-pagos` y `app-factura-simulada-dialog`
 (`features/billing/`), `app-cobros-del-paciente` dentro de `app-payments-block`, la nota de venta
 en PDF (`nota-de-venta.ts`) y la prueba de navegador `pagos-plan-nota-venta-factura.spec.ts`.
+
+## P47 · El catálogo de productos de la farmacia — 28/09/2026
+
+> **P47 · Lo que la pantalla «Catálogo de productos» necesita y la API todavía no da.** Origen:
+> pedido del 28/09/2026 con el mockup `farmacia_ecommerce_mantra.html` (catálogo paginado,
+> ficha de producto, importación masiva e inventario). La pantalla
+> (`administration/pharmacy-catalog`) ya está en `dev` y usa **sólo** lo que existe:
+>
+> - `GET /pharmacy/products?pharmacyId=&limit=500` para listar;
+> - `POST /pharmacies/:pharmacyId/products` (UC-24-04) para el alta, uno por uno y también desde
+>   el CSV, en serie;
+> - `DELETE /pharmacies/:pharmacyId/products/:productId` (UC-24-09) para retirar.
+>
+> **1. Quién puede cargar el catálogo.** `PharmacyController` entero está bajo
+> `@Roles('SECURITY_ADMIN')`. La persona de la farmacia —dueña o encargada, que es una fila de
+> `tenant_memberships` y no un rol del token— recibe un 403 al publicar. La pantalla lo muestra
+> tal cual («Tu usuario no tiene permiso…»), pero para que la empresa suba su catálogo la
+> autorización tiene que ser «miembro activo del tenant dueño de esa farmacia», no un rol global.
+>
+> **2. Edición.** No hay `PATCH /pharmacies/:pharmacyId/products/:productId`. Hoy corregir una
+> marca o una presentación es retirar y volver a cargar, y el código queda tomado para siempre
+> (`findByPharmacyAndCode` no mira el estado). Con edición, la importación también podría
+> **actualizar** los códigos existentes, que es el modo «crear y actualizar» del mockup; hoy esas
+> filas se rechazan antes de mandarlas.
+>
+> **3. Precio.** `POST …/price-lists` y `POST …/price-lists/:id/prices` existen, pero no hay
+> **lectura** de las listas de una farmacia: la pantalla no puede saber a qué lista pública
+> agregar el precio sin crear una nueva por producto. Hace falta
+> `GET /pharmacies/:pharmacyId/price-lists` (o que el alta de producto acepte un `unitAmount`
+> para la lista pública vigente de la sede).
+>
+> **4. Stock.** Se lee (`GET /pharmacy-inventory/sites/:siteId/stock`) pero sólo se escribe por
+> recepción de compra, recuento aprobado o la sincronización interna de ERP. El «nuevo stock» y
+> el «umbral de alerta» del mockup no tienen dónde guardarse.
+>
+> **5. Categoría, descripción, imágenes y borrador.** `pharmacy_products` no tiene categoría
+> comercial, descripción larga ni imágenes, y el producto nace `ACTIVE`: no hay borrador ni «en
+> revisión». Esto **empieza en el repo del modelo**.
+>
+> **6. Carga masiva del lado del servidor (opcional).** Hoy son N `POST` en serie desde el
+> navegador, con el resultado fila por fila. Para catálogos de miles, un
+> `POST /pharmacies/:pharmacyId/products:bulk` con informe por fila evitaría cortar la carga si
+> se cierra la pestaña.
 
 ---
 
