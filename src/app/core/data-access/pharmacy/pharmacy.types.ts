@@ -70,7 +70,25 @@ export interface PharmacyProduct {
   readonly category?: string | null;
   /** Descripción para el paciente. */
   readonly description?: string | null;
+  /*
+   * Lo que sólo ve quien administra el catálogo (`managed=true`). Extensión
+   * del simulador (P47), igual que lo de arriba.
+   */
+  /** Publicado, borrador o retirado. Sin él, es un producto publicado. */
+  readonly status?: PharmacyProductStatus;
+  /** Existencias declaradas. */
+  readonly stock?: number;
+  /** Debajo de este número el inventario avisa. */
+  readonly minStock?: number;
+  /** Hasta {@link MAX_PRODUCT_IMAGES} archivos de `common.files`. */
+  readonly imageFileIds?: readonly string[];
 }
+
+/** El estado de un producto en el catálogo de la farmacia (P47). */
+export type PharmacyProductStatus = 'PUBLISHED' | 'DRAFT' | 'WITHDRAWN';
+
+/** Cuántas imágenes admite un producto (el mockup del cliente). */
+export const MAX_PRODUCT_IMAGES = 3;
 
 /** La página de la búsqueda de productos. */
 export interface PharmacyProductSearchPage {
@@ -92,6 +110,12 @@ export interface PharmacyProductSearchQuery {
    * este filtro la búsqueda mezcla las de todas.
    */
   readonly pharmacyId?: string;
+  /**
+   * Con `true` lista **todo** el catálogo de la farmacia —borradores y
+   * retirados incluidos— y agrega existencias y umbral. Sólo lo pide el portal
+   * de la farmacia (P47).
+   */
+  readonly managed?: boolean;
   readonly limit?: number;
 }
 
@@ -172,6 +196,11 @@ export interface PharmacyProductDraft {
   readonly description?: string;
   /** `false` = la farmacia lo carga pero hoy no lo tiene. */
   readonly inStock?: boolean;
+  /** Sin él, nace publicado. */
+  readonly status?: PharmacyProductStatus;
+  readonly stock?: number;
+  readonly minStock?: number;
+  readonly imageFileIds?: readonly string[];
 }
 
 /**
@@ -189,6 +218,50 @@ export interface PharmacyProductChanges {
   readonly category?: string | null;
   readonly description?: string | null;
   readonly inStock?: boolean;
+  readonly status?: PharmacyProductStatus;
+  readonly stock?: number;
+  readonly minStock?: number;
+  readonly imageFileIds?: readonly string[];
+}
+
+/** Una categoría de la farmacia, con cuántos productos la usan (P47). */
+export interface PharmacyCategory {
+  readonly id: string;
+  readonly name: string;
+  readonly productCount: number;
+}
+
+/** La lista de categorías de una farmacia. */
+export interface PharmacyCategoryPage {
+  readonly items: readonly PharmacyCategory[];
+}
+
+/** Una línea del inventario que se guarda junta con las demás (P47). */
+export interface PharmacyInventoryLine {
+  readonly productId: string;
+  readonly stock: number;
+  readonly minStock: number;
+}
+
+/** Un hecho reciente del catálogo, para «actividad reciente» del resumen. */
+export interface PharmacyActivityEntry {
+  readonly id: string;
+  readonly at: string;
+  readonly kind: 'ALTA' | 'EDICION' | 'RETIRO' | 'IMPORTACION' | 'INVENTARIO' | 'CATEGORIA';
+  readonly text: string;
+}
+
+/** Lo que el resumen de la farmacia dibuja (P47). */
+export interface PharmacySummary {
+  readonly published: number;
+  readonly drafts: number;
+  readonly withdrawn: number;
+  readonly outOfStock: number;
+  readonly lowStock: number;
+  /** Valor del inventario: existencias × precio, en bolivianos con dos decimales. */
+  readonly inventoryValue: string;
+  readonly byCategory: readonly { readonly category: string; readonly count: number }[];
+  readonly recentActivity: readonly PharmacyActivityEntry[];
 }
 
 /** Lo que devuelve el alta de un producto (`ProductResponseDto`). */

@@ -259,13 +259,21 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
   },
   {
     label: 'Farmacia',
-    group: 'Administración',
+    // `General` y no `Administración` (29/09/2026): la cuenta de farmacia ve su
+    // menú plano —ocho renglones sin encabezado—, y un dominio aplanado dibuja
+    // sus bloques sueltos. El bloque sigue existiendo porque el reparto cubre
+    // el registro entero.
+    group: 'General',
     icon: 'bag',
-    // El mostrador: lo que se despacha, lo que se vende, lo que se promociona
-    // y la empresa que está detrás.
+    // El mostrador: lo que se vende, lo que se guarda, lo que se despacha, lo
+    // que se promociona y la empresa que está detrás.
     paths: [
-      'administration/pharmacy-orders',
+      'administration/pharmacy',
       'administration/pharmacy-catalog',
+      'administration/pharmacy-categories',
+      'administration/pharmacy-import',
+      'administration/pharmacy-inventory',
+      'administration/pharmacy-orders',
       'administration/pharmacy-campaigns',
       'administration/pharmacy-profile',
     ],

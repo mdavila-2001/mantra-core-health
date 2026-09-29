@@ -2013,6 +2013,41 @@ en PDF (`nota-de-venta.ts`) y la prueba de navegador `pagos-plan-nota-venta-fact
 > - **Vademécum:** el simulador enlaza el genérico escrito a mano con el medicamento del
 >   vademécum para que el producto aparezca al buscar dónde comprar una receta; la API tendría
 >   que resolver `medicationConceptId` igual, o pedírselo a la pantalla.
+>
+> **Actualización 29/09/2026 (carril B) — el portal de la farmacia como cuenta.** La cuenta de
+> farmacia (`farmacia@alovida.mock`, tenant `PHARMACY`) tiene ahora menú propio de ocho renglones
+> (Resumen · Productos · Categorías · Importación masiva · Inventario · Solicitudes de retiro ·
+> Promociones · Ficha de la farmacia) y el simulador da, además de lo anterior, lo siguiente. Contra
+> la API real cada punto es hoy un 400 (`forbidNonWhitelisted`) o un 404:
+>
+> - **Estado del producto (D6):** `status` (`PUBLISHED` · `DRAFT` · `WITHDRAWN`) en el alta, en el
+>   `PATCH` y en la lectura. Un `DRAFT` no sale en la búsqueda pública ni en la vitrina. `PATCH
+>   {status:'PUBLISHED'}` reactiva un retirado; el código sigue reservado. **No** hay «en revisión».
+> - **Lectura de gestión:** `GET /pharmacy/products?pharmacyId=&managed=true` trae **todo** el
+>   catálogo de esa farmacia (borradores y retirados incluidos) con `status`, `stock`, `minStock` e
+>   `imageFileIds`. Sin `managed`, igual que hoy: sólo lo publicado.
+> - **Inventario (D7):** `stock` y `minStock` (enteros 0–1 000 000) en el alta y el `PATCH`, y
+>   `PATCH /pharmacies/:pharmacyId/inventory` con `{ lines: [{ productId, stock, minStock }] }` que
+>   guarda todo o nada (400 por línea inválida). `inStock` **deriva** de `stock > 0`. Cuando exista
+>   la sincronización con el sistema de la farmacia (registro §2.1.2), este endpoint pasa a sólo
+>   lectura.
+> - **Categorías (D8):** `GET|POST /pharmacies/:pharmacyId/categories` y `PATCH|DELETE
+>   …/categories/:categoryId`. Renombrar cambia el nombre en los productos que la usan; eliminar una
+>   con productos es un **409**. La lista parte de las seis del mockup. `category` sigue viajando en
+>   el producto **por nombre** (no por id).
+> - **Imágenes (D9):** `imageFileIds` (hasta 3 ids de `common.files`, subidos con
+>   `POST /common/files/upload`) en el alta y el `PATCH`. Los productos sembrados no traen imagen.
+> - **Resumen:** `GET /pharmacy/pharmacies/:id/summary` → `{ published, drafts, withdrawn,
+>   outOfStock, lowStock, inventoryValue, byCategory[], recentActivity[] }`. La actividad reciente
+>   (altas, ediciones, retiros, importaciones, inventario, categorías) la escribe el simulador;
+>   la API necesita un registro propio.
+> - **Importación «sólo actualizar» (D10):** el modo nuevo es del cliente: manda `PATCH` sólo a los
+>   códigos que ya existen. Sin el `PATCH` real de arriba no hay forma de actualizar.
+> - **Registro sanitario:** el mockup lo pide y **no** se dibuja: `pharmacy_products` no tiene dónde
+>   guardarlo. Empieza en el repo del modelo, como la categoría comercial.
+> - **Rutas cerradas por tipo de organización:** las ocho pantallas usan `onlyForTenantTypes:
+>   ['PHARMACY']`, así que sólo abren con una organización `PHARMACY` activa (el comodín
+>   `SUPERADMIN` tampoco las abre con otra). La autoridad sigue siendo `@Roles` del controller.
 
 ## P48 · El mercado de seguros del paciente — 28/09/2026
 

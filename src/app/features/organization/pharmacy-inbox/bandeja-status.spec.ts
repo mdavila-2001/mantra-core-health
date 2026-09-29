@@ -27,11 +27,11 @@ describe('bandeja-status', () => {
 
   it('le habla al mostrador, no al paciente', () => {
     // La misma situación, dicha desde el otro lado del mostrador.
-    expect(toBandejaStatusPresentation('ENVIADO').label).toBe('Nuevo');
+    expect(toBandejaStatusPresentation('ENVIADO').label).toBe('Pendiente');
     expect(toBandejaStatusPresentation('ACEPTACION_PENDIENTE').label).toBe(
       'Esperando al paciente',
     );
-    expect(toBandejaStatusPresentation('LISTO_PARA_RETIRO').label).toBe('Esperando el retiro');
+    expect(toBandejaStatusPresentation('LISTO_PARA_RETIRO').label).toBe('Listo para retiro');
   });
 
   it('cada estado cae en un grupo, y los grupos son los de la tarjeta', () => {

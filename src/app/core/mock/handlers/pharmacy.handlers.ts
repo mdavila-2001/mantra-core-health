@@ -200,11 +200,37 @@ interface ProductoSimulado {
   readonly category?: string | null;
   /** Descripción para el paciente (P47: no existe en la API). */
   readonly description?: string | null;
+  /** `DRAFT` no se publica: sólo lo ve la farmacia (P47). Sin él, publicado. */
+  readonly estado?: 'PUBLISHED' | 'DRAFT';
+  /** Debajo de este número el inventario avisa (P47). Sin él, {@link MINIMO_POR_DEFECTO}. */
+  readonly minStock?: number;
+  /** Archivos de `common.files`, hasta {@link MAX_IMAGENES} (P47). */
+  readonly imageFileIds?: readonly string[];
 }
 
-/** Lo que el catálogo publica: sin los retirados, como `findActiveProducts`. */
+/** Umbral de alerta que se asume mientras la farmacia no fije el suyo. */
+const MINIMO_POR_DEFECTO = 5;
+/** Cuántas imágenes admite un producto. */
+const MAX_IMAGENES = 3;
+/** Tope de existencias aceptado: atrapa un dedo de más. */
+const STOCK_MAXIMO = 1_000_000;
+
+/**
+ * Lo que el catálogo publica: sin los retirados, como `findActiveProducts`, y
+ * sin los borradores, que sólo ve la farmacia.
+ */
 function activos(): ProductoSimulado[] {
-  return productos.filtrar((p) => p.retirado !== true);
+  return productos.filtrar((p) => p.retirado !== true && p.estado !== 'DRAFT');
+}
+
+/** Todo lo que la farmacia tiene cargado, borradores y retirados incluidos. */
+function delCatalogo(pharmacyId: string): ProductoSimulado[] {
+  return productos.filtrar((p) => p.pharmacyId === pharmacyId);
+}
+
+function estadoDe(p: ProductoSimulado): 'PUBLISHED' | 'DRAFT' | 'WITHDRAWN' {
+  if (p.retirado === true) return 'WITHDRAWN';
+  return p.estado === 'DRAFT' ? 'DRAFT' : 'PUBLISHED';
 }
 
 /** Si la farmacia lo puede vender hoy: no lo marcó sin stock y le queda. */
@@ -225,13 +251,29 @@ const CATEGORIA_DE_FORMA: Readonly<Record<string, string>> = {
  * campos son una **extensión del simulador** (P47): la API real no los tiene.
  */
 function productoPublico(p: ProductoSimulado) {
-  const { medicationConceptId: _m, price, stock: _s, retirado: _r, sinStock: _x, category, description, ...resto } = p;
+  const { medicationConceptId: _m, price, stock: _s, retirado: _r, sinStock: _x, category: _c, description, estado: _e, minStock: _n, imageFileIds: _i, ...resto } = p;
   return {
     ...resto,
     unitPrice: price,
     inStock: hayStock(p),
-    category: category ?? (p.dosageForm ? (CATEGORIA_DE_FORMA[p.dosageForm.code] ?? null) : null),
+    category: categoriaDe(p),
     description: description ?? null,
+  };
+}
+
+/** La categoría que la farmacia le puso o, si no, la que sale de la forma. */
+function categoriaDe(p: ProductoSimulado): string | null {
+  return p.category ?? (p.dosageForm ? (CATEGORIA_DE_FORMA[p.dosageForm.code] ?? null) : null);
+}
+
+/** Lo que ve quien administra el catálogo: lo público más estado, existencias e imágenes. */
+function productoDeGestion(p: ProductoSimulado) {
+  return {
+    ...productoPublico(p),
+    status: estadoDe(p),
+    stock: p.stock,
+    minStock: p.minStock ?? MINIMO_POR_DEFECTO,
+    imageFileIds: p.imageFileIds ?? [],
   };
 }
 
@@ -256,6 +298,45 @@ function medicamentoDe(generico: string | null | undefined): { conceptId: string
 function importeDe(valor: unknown): string | null {
   const numero = typeof valor === 'number' ? valor : typeof valor === 'string' ? Number(valor) : NaN;
   return Number.isFinite(numero) && numero > 0 ? numero.toFixed(2) : null;
+}
+
+function esEnteroEntre(valor: unknown, minimo: number, maximo: number): boolean {
+  return typeof valor === 'number' && Number.isInteger(valor) && valor >= minimo && valor <= maximo;
+}
+
+/**
+ * Lo que el catálogo de gestión (P47) acepta además del alta de siempre:
+ * estado, existencias, umbral e imágenes. `null` = todo bien.
+ */
+function validarGestion(datos: { status?: string; stock?: number; minStock?: number; imageFileIds?: string[] }) {
+  const errores: { field: string; message: string }[] = [];
+  if (datos.status !== undefined && !['PUBLISHED', 'DRAFT', 'WITHDRAWN'].includes(datos.status)) {
+    errores.push({ field: 'status', message: 'El estado es publicado, borrador o retirado.' });
+  }
+  if (datos.stock !== undefined && !esEnteroEntre(datos.stock, 0, STOCK_MAXIMO)) {
+    errores.push({ field: 'stock', message: `Las existencias son un número entero de 0 a ${STOCK_MAXIMO}.` });
+  }
+  if (datos.minStock !== undefined && !esEnteroEntre(datos.minStock, 0, STOCK_MAXIMO)) {
+    errores.push({ field: 'minStock', message: `El umbral es un número entero de 0 a ${STOCK_MAXIMO}.` });
+  }
+  if (datos.imageFileIds !== undefined && (!Array.isArray(datos.imageFileIds) || datos.imageFileIds.length > MAX_IMAGENES)) {
+    errores.push({ field: 'imageFileIds', message: `Un producto admite hasta ${MAX_IMAGENES} imágenes.` });
+  }
+  return errores.length === 0 ? null : validation('El producto tiene datos inválidos', errores);
+}
+
+const LARGO_MAXIMO_DE_LA_CATEGORIA = 60;
+
+/** El nombre limpio, o `null` si no sirve. */
+function nombreDeCategoria(valor: unknown): string | null {
+  const limpio = typeof valor === 'string' ? valor.trim().replace(/\s+/g, ' ') : '';
+  return limpio.length >= 1 && limpio.length <= LARGO_MAXIMO_DE_LA_CATEGORIA ? limpio : null;
+}
+
+function nombreDeCategoriaInvalido() {
+  return validation('name must be between 1 and 60 characters', [
+    { field: 'name', message: `El nombre es obligatorio y tiene hasta ${LARGO_MAXIMO_DE_LA_CATEGORIA} caracteres.` },
+  ]);
 }
 
 /** Stock de un producto que la farmacia marca disponible sin dar un conteo. */
@@ -286,6 +367,78 @@ const productos = new Coleccion<ProductoSimulado>(
     }),
   ),
 );
+
+/* ---- categorías, actividad y resumen del portal de la farmacia (P47) --------- */
+
+interface CategoriaSimulada {
+  readonly id: string;
+  readonly pharmacyId: string;
+  readonly name: string;
+}
+
+/** Las seis categorías del mockup del cliente: el punto de partida de cada farmacia. */
+const CATEGORIAS_INICIALES = ['Medicamentos', 'Dermocosmética', 'Cuidado personal', 'Bebé y maternidad', 'Dispositivos', 'Bienestar'] as const;
+
+const categorias = new Coleccion<CategoriaSimulada>(
+  FARMACIAS.flatMap((f) => CATEGORIAS_INICIALES.map((name) => ({ id: uuid(`pharmacy-category-${f.id}-${name}`), pharmacyId: f.id, name }))),
+);
+
+interface ActividadSimulada {
+  readonly id: string;
+  readonly pharmacyId: string;
+  readonly at: string;
+  readonly kind: 'ALTA' | 'EDICION' | 'RETIRO' | 'IMPORTACION' | 'INVENTARIO' | 'CATEGORIA';
+  readonly text: string;
+}
+
+/** Lo que la farmacia hizo en el catálogo; el resumen muestra lo último. */
+const actividad = new Coleccion<ActividadSimulada>([]);
+
+function registrarActividad(pharmacyId: string, kind: ActividadSimulada['kind'], text: string): void {
+  actividad.agregar({ id: nuevoId('pharmacy-activity'), pharmacyId, at: ahora(), kind, text });
+}
+
+function categoriaConNombre(pharmacyId: string, nombre: string): CategoriaSimulada | undefined {
+  return categorias.filtrar((cat) => cat.pharmacyId === pharmacyId && sinTildes(cat.name) === sinTildes(nombre))[0];
+}
+
+function nombreDelProducto(p: ProductoSimulado): string {
+  return p.brandName ?? p.genericName ?? p.productCode;
+}
+
+/** Cuántos productos vivos (no retirados) usan la categoría. */
+function productosDeLaCategoria(pharmacyId: string, name: string): ProductoSimulado[] {
+  return delCatalogo(pharmacyId).filter((p) => p.retirado !== true && categoriaDe(p) === name);
+}
+
+function sinTildes(texto: string): string {
+  return texto.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+
+function resumenDe(pharmacyId: string) {
+  const vivos = delCatalogo(pharmacyId).filter((p) => p.retirado !== true);
+  const publicados = vivos.filter((p) => p.estado !== 'DRAFT');
+  const cuentaPorCategoria = new Map<string, number>();
+  for (const p of vivos) {
+    const nombre = categoriaDe(p) ?? 'Sin categoría';
+    cuentaPorCategoria.set(nombre, (cuentaPorCategoria.get(nombre) ?? 0) + 1);
+  }
+  const valor = publicados.filter(hayStock).reduce((suma, p) => suma + p.stock * Number(p.price ?? 0), 0);
+  return {
+    published: publicados.length,
+    drafts: vivos.length - publicados.length,
+    withdrawn: delCatalogo(pharmacyId).length - vivos.length,
+    outOfStock: publicados.filter((p) => !hayStock(p)).length,
+    lowStock: publicados.filter((p) => hayStock(p) && p.stock <= (p.minStock ?? MINIMO_POR_DEFECTO)).length,
+    inventoryValue: valor.toFixed(2),
+    byCategory: [...cuentaPorCategoria.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], 'es')).map(([category, count]) => ({ category, count })),
+    recentActivity: actividad
+      .filtrar((a) => a.pharmacyId === pharmacyId)
+      .sort((a, b) => b.at.localeCompare(a.at))
+      .slice(0, 8)
+      .map(({ id, at, kind, text }) => ({ id, at, kind, text })),
+  };
+}
 
 function distanciaKm(aLat: number, aLng: number, bLat: number, bLng: number): number {
   const r = 6371;
@@ -578,11 +731,14 @@ export function registrarFarmacia(router: MockRouter): void {
     // `pharmacyId` acota a una farmacia, como `searchProducts` en la API (H5).
     const pharmacyId = texto(query, 'pharmacyId');
     const limit = Number(query.get('limit') ?? 50) || 50;
-    const coinciden = activos()
+    // `managed=true` es el portal de la farmacia: todo su catálogo, con
+    // borradores y retirados. Sin `pharmacyId` no tiene de qué farmacia hablar.
+    const gestion = texto(query, 'managed') === 'true' && pharmacyId !== null;
+    const coinciden = (gestion ? delCatalogo(pharmacyId) : activos())
       .filter((p) => contiene(p.brandName, q) || contiene(p.genericName, q) || contiene(p.productCode, q))
       .filter((p) => conceptId === null || p.medicationConceptId === conceptId)
       .filter((p) => pharmacyId === null || p.pharmacyId === pharmacyId);
-    const items = coinciden.slice(0, limit).map(productoPublico);
+    const items = coinciden.slice(0, limit).map(gestion ? productoDeGestion : productoPublico);
     return { items, limit, truncated: coinciden.length > limit };
   });
 
@@ -606,6 +762,10 @@ export function registrarFarmacia(router: MockRouter): void {
       category: string;
       description: string;
       inStock: boolean;
+      status: string;
+      stock: number;
+      minStock: number;
+      imageFileIds: string[];
     }>(request);
     const codigo = typeof datos.productCode === 'string' ? datos.productCode : '';
     if (codigo.length < 1 || codigo.length > 100) {
@@ -635,6 +795,8 @@ export function registrarFarmacia(router: MockRouter): void {
         { field: excedido[0], message: `No puede pasar de ${excedido[1]} caracteres.` },
       ]);
     }
+    const invalido = validarGestion(datos);
+    if (invalido !== null) return invalido;
     const medicamento = medicamentoDe(datos.genericName);
     const nuevo = productos.agregar({
       id: nuevoId('pharmacy-product'),
@@ -652,11 +814,15 @@ export function registrarFarmacia(router: MockRouter): void {
       // Extensión del simulador (P47): precio, categoría, descripción y el
       // «no tengo». Un producto que se sube disponible entra a la vitrina.
       price: importeDe(datos.unitPrice),
-      stock: STOCK_SIN_CONTEO,
+      stock: datos.stock ?? STOCK_SIN_CONTEO,
       sinStock: datos.inStock === false,
       category: datos.category ?? null,
       description: datos.description ?? null,
+      ...(datos.status === 'DRAFT' ? { estado: 'DRAFT' as const } : {}),
+      ...(datos.minStock === undefined ? {} : { minStock: datos.minStock }),
+      ...(datos.imageFileIds === undefined ? {} : { imageFileIds: datos.imageFileIds }),
     });
+    registrarActividad(pharmacyId, 'ALTA', `${datos.status === 'DRAFT' ? 'Guardaste como borrador' : 'Publicaste'} «${nombreDelProducto(nuevo)}».`);
     return {
       status: 201,
       body: {
@@ -674,7 +840,7 @@ export function registrarFarmacia(router: MockRouter): void {
   // mismos campos del alta menos el código, más el «no tengo» (`inStock`).
   router.patch('/pharmacies/:pharmacyId/products/:productId', (request) => {
     const producto = productos.get(request.params['productId']!);
-    if (producto === undefined || producto.pharmacyId !== request.params['pharmacyId'] || producto.retirado === true) {
+    if (producto === undefined || producto.pharmacyId !== request.params['pharmacyId']) {
       return notFound('Producto no encontrado');
     }
     const datos = cuerpo<{
@@ -687,7 +853,18 @@ export function registrarFarmacia(router: MockRouter): void {
       category: string | null;
       description: string | null;
       inStock: boolean;
+      status: string;
+      stock: number;
+      minStock: number;
+      imageFileIds: string[];
     }>(request);
+    // Un retirado sólo se toca para volver a publicarlo: cualquier otro cambio
+    // sobre él es el mismo 404 de siempre.
+    if (producto.retirado === true && datos.status === undefined) {
+      return notFound('Producto no encontrado');
+    }
+    const invalido = validarGestion(datos);
+    if (invalido !== null) return invalido;
     const cambios: { -readonly [K in keyof ProductoSimulado]?: ProductoSimulado[K] } = {};
     const textos = ['brandName', 'genericName', 'strengthText', 'packageSizeText', 'category', 'description'] as const;
     for (const campo of textos) {
@@ -703,6 +880,17 @@ export function registrarFarmacia(router: MockRouter): void {
       // Volver a tenerlo sin conteo previo: queda con el stock «sin conteo».
       if (datos.inStock === true && producto.stock <= 0) cambios.stock = STOCK_SIN_CONTEO;
     }
+    if (datos.stock !== undefined) {
+      cambios.stock = datos.stock;
+      // Fijar existencias es decir cuántas hay: el «no tengo» de antes queda atrás.
+      cambios.sinStock = false;
+    }
+    if (datos.minStock !== undefined) cambios.minStock = datos.minStock;
+    if (datos.imageFileIds !== undefined) cambios.imageFileIds = datos.imageFileIds;
+    if (datos.status !== undefined) {
+      cambios.retirado = datos.status === 'WITHDRAWN';
+      cambios.estado = datos.status === 'DRAFT' ? 'DRAFT' : 'PUBLISHED';
+    }
     if ('genericName' in datos && producto.medicationConceptId === null) {
       const medicamento = medicamentoDe(datos.genericName);
       if (medicamento !== null) {
@@ -710,7 +898,15 @@ export function registrarFarmacia(router: MockRouter): void {
         cambios.medication = c(medicamento.code, medicamento.display);
       }
     }
-    return productoPublico(productos.actualizar(producto.id, cambios)!);
+    const actualizado = productos.actualizar(producto.id, cambios)!;
+    registrarActividad(
+      actualizado.pharmacyId,
+      datos.status === 'WITHDRAWN' ? 'RETIRO' : 'EDICION',
+      datos.status === 'PUBLISHED' && producto.retirado === true
+        ? `Volviste a publicar «${nombreDelProducto(actualizado)}».`
+        : `Editaste «${nombreDelProducto(actualizado)}».`,
+    );
+    return productoDeGestion(actualizado);
   });
 
   // UC-24-09 · retiro (borrado lógico). Un producto ya retirado es un 412,
@@ -724,7 +920,104 @@ export function registrarFarmacia(router: MockRouter): void {
       return preconditionFailed('El producto no está activo', { productId: producto.id });
     }
     productos.actualizar(producto.id, { retirado: true });
+    registrarActividad(producto.pharmacyId, 'RETIRO', `Retiraste «${nombreDelProducto(producto)}».`);
     return { ok: true };
+  });
+
+  // P47 · el inventario: existencias y umbral de varios productos de una vez.
+  // Todo o nada: si una línea no vale, no se guarda ninguna, así la pantalla
+  // no queda a medias.
+  router.patch('/pharmacies/:pharmacyId/inventory', (request) => {
+    const pharmacyId = request.params['pharmacyId']!;
+    if (!FARMACIAS.some((f) => f.id === pharmacyId)) return notFound('Farmacia no encontrada');
+    const { lines } = cuerpo<{ lines: { productId: string; stock: number; minStock: number }[] }>(request);
+    if (!Array.isArray(lines) || lines.length === 0) {
+      return validation('lines must contain at least 1 elements', [{ field: 'lines', message: 'No hay cambios para guardar.' }]);
+    }
+    const errores: { field: string; message: string }[] = [];
+    lines.forEach((linea, i) => {
+      const producto = productos.get(linea.productId);
+      if (producto === undefined || producto.pharmacyId !== pharmacyId || producto.retirado === true) {
+        errores.push({ field: `lines.${i}.productId`, message: 'El producto no está en tu catálogo.' });
+      }
+      if (!esEnteroEntre(linea.stock, 0, STOCK_MAXIMO)) {
+        errores.push({ field: `lines.${i}.stock`, message: `Las existencias son un número entero de 0 a ${STOCK_MAXIMO}.` });
+      }
+      if (!esEnteroEntre(linea.minStock, 0, STOCK_MAXIMO)) {
+        errores.push({ field: `lines.${i}.minStock`, message: `El umbral es un número entero de 0 a ${STOCK_MAXIMO}.` });
+      }
+    });
+    if (errores.length > 0) return validation('lines are invalid', errores);
+    for (const linea of lines) {
+      productos.actualizar(linea.productId, { stock: linea.stock, minStock: linea.minStock, sinStock: false });
+    }
+    registrarActividad(pharmacyId, 'INVENTARIO', `Actualizaste el inventario de ${lines.length} ${lines.length === 1 ? 'producto' : 'productos'}.`);
+    return { updated: lines.length };
+  });
+
+  // P47 · las categorías de la farmacia.
+  router.get('/pharmacies/:pharmacyId/categories', ({ params }) => {
+    const pharmacyId = params['pharmacyId']!;
+    if (!FARMACIAS.some((f) => f.id === pharmacyId)) return notFound('Farmacia no encontrada');
+    const items = categorias
+      .filtrar((cat) => cat.pharmacyId === pharmacyId)
+      .sort((a, b) => a.name.localeCompare(b.name, 'es'))
+      .map((cat) => ({ id: cat.id, name: cat.name, productCount: productosDeLaCategoria(pharmacyId, cat.name).length }));
+    return { items };
+  });
+
+  router.post('/pharmacies/:pharmacyId/categories', (request) => {
+    const pharmacyId = request.params['pharmacyId']!;
+    if (!FARMACIAS.some((f) => f.id === pharmacyId)) return notFound('Farmacia no encontrada');
+    const nombre = nombreDeCategoria(cuerpo<{ name: string }>(request).name);
+    if (nombre === null) return nombreDeCategoriaInvalido();
+    if (categoriaConNombre(pharmacyId, nombre) !== undefined) {
+      return conflict('Ya existe una categoría con ese nombre', { name: nombre });
+    }
+    const nueva = categorias.agregar({ id: nuevoId('pharmacy-category'), pharmacyId, name: nombre });
+    registrarActividad(pharmacyId, 'CATEGORIA', `Creaste la categoría «${nombre}».`);
+    return { status: 201, body: { id: nueva.id, name: nueva.name, productCount: 0 } };
+  });
+
+  router.patch('/pharmacies/:pharmacyId/categories/:categoryId', (request) => {
+    const categoria = categorias.get(request.params['categoryId']!);
+    if (categoria === undefined || categoria.pharmacyId !== request.params['pharmacyId']) {
+      return notFound('Categoría no encontrada');
+    }
+    const nombre = nombreDeCategoria(cuerpo<{ name: string }>(request).name);
+    if (nombre === null) return nombreDeCategoriaInvalido();
+    const repetida = categoriaConNombre(categoria.pharmacyId, nombre);
+    if (repetida !== undefined && repetida.id !== categoria.id) {
+      return conflict('Ya existe una categoría con ese nombre', { name: nombre });
+    }
+    // Los productos siguen a la categoría: se les escribe el nombre nuevo, no
+    // se quedan con uno que ya no existe.
+    const propios = productosDeLaCategoria(categoria.pharmacyId, categoria.name);
+    for (const producto of propios) productos.actualizar(producto.id, { category: nombre });
+    categorias.actualizar(categoria.id, { name: nombre });
+    registrarActividad(categoria.pharmacyId, 'CATEGORIA', `Renombraste «${categoria.name}» a «${nombre}».`);
+    return { id: categoria.id, name: nombre, productCount: propios.length };
+  });
+
+  router.delete('/pharmacies/:pharmacyId/categories/:categoryId', ({ params }) => {
+    const categoria = categorias.get(params['categoryId']!);
+    if (categoria === undefined || categoria.pharmacyId !== params['pharmacyId']) {
+      return notFound('Categoría no encontrada');
+    }
+    const usados = productosDeLaCategoria(categoria.pharmacyId, categoria.name).length;
+    if (usados > 0) {
+      return conflict('La categoría tiene productos: pasalos a otra antes de eliminarla', { productCount: usados });
+    }
+    categorias.borrar(categoria.id);
+    registrarActividad(categoria.pharmacyId, 'CATEGORIA', `Eliminaste la categoría «${categoria.name}».`);
+    return { ok: true };
+  });
+
+  // P47 · los números del resumen.
+  router.get('/pharmacy/pharmacies/:id/summary', ({ params }) => {
+    const f = FARMACIAS.find((farmacia) => farmacia.id === params['id']);
+    if (f === undefined) return notFound('Farmacia no encontrada');
+    return resumenDe(f.id);
   });
 
   // «Farmacia» · pestaña Comprar (25/09/2026): sedes sueltas, con su
@@ -948,3 +1241,5 @@ export function registrarFarmacia(router: MockRouter): void {
 /* Sobreviven a F5 dentro de la pestaña: ver `Coleccion.persistirEn`. */
 productos.persistirEn('mock.pharmacy.productos');
 pedidos.persistirEn('mock.pharmacy.pedidos');
+categorias.persistirEn('mock.pharmacy.categorias');
+actividad.persistirEn('mock.pharmacy.actividad');

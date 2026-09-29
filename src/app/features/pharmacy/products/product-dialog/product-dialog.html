@@ -1,0 +1,240 @@
+<app-content-dialog
+  [heading]="heading()"
+  description="Lo que cargues acá es lo que ven los pacientes al buscar dónde comprar su receta."
+  size="lg"
+  [dismissible]="!saving()"
+  [closeGuard]="confirmClose"
+  data-testid="product-dialog"
+  (closed)="closed.emit()"
+>
+  @if (errors().length > 0) {
+    <app-alert tone="error" title="Falta resolver esto" data-testid="product-dialog-errors">
+      <ul class="product-dialog__errors">
+        @for (error of errors(); track error) {
+          <li>{{ error }}</li>
+        }
+      </ul>
+    </app-alert>
+  }
+
+  <app-tabs [(selectedIndex)]="tab">
+    <!-- ─── General ───────────────────────────────────────────────── -->
+    <app-tab [label]="tabs[0]">
+      <div class="product-dialog__panel">
+        <app-form-field
+          label="Código interno (SKU)"
+          [hint]="'Único en tu catálogo. Hasta ' + codeMaxLength + ' caracteres: letras, números, punto, guion o barra.'"
+          [required]="true"
+        >
+          <app-input
+            [value]="fields().codigo"
+            (valueChange)="setField('codigo', $event)"
+            [readonly]="isEditing()"
+            placeholder="PAR-500-20"
+            autocomplete="off"
+            testId="product-field-code"
+          />
+        </app-form-field>
+        <app-form-field label="Marca o nombre comercial" hint="Con el genérico alcanza si no tiene marca.">
+          <app-input
+            [value]="fields().marca"
+            (valueChange)="setField('marca', $event)"
+            placeholder="Paracetamol Bagó"
+            testId="product-field-brand"
+          />
+        </app-form-field>
+        <app-form-field label="Concentración" hint="Ej. 500 mg, 100 UI/ml.">
+          <app-input
+            [value]="fields().concentracion"
+            (valueChange)="setField('concentracion', $event)"
+            placeholder="500 mg"
+            testId="product-field-strength"
+          />
+        </app-form-field>
+        <app-form-field label="Presentación" hint="Ej. Caja x 20 comprimidos.">
+          <app-input
+            [value]="fields().presentacion"
+            (valueChange)="setField('presentacion', $event)"
+            placeholder="Caja x 20 comprimidos"
+            testId="product-field-package"
+          />
+        </app-form-field>
+        <app-form-field label="¿Se vende bajo receta?">
+          <app-select
+            [options]="yesNoOptions"
+            [value]="fields().receta"
+            (valueChange)="setField('receta', $event)"
+            ariaLabel="¿Se vende bajo receta?"
+          />
+        </app-form-field>
+      </div>
+    </app-tab>
+
+    <!-- ─── Ficha técnica ─────────────────────────────────────────── -->
+    <app-tab [label]="tabs[1]">
+      <div class="product-dialog__panel">
+        <app-form-field label="Nombre genérico o principio activo">
+          <app-input
+            [value]="fields().generico"
+            (valueChange)="setField('generico', $event)"
+            placeholder="Paracetamol"
+            testId="product-field-generic"
+          />
+        </app-form-field>
+        <app-form-field
+          label="Código de barras (GTIN)"
+          hint="Opcional. Los 8, 12, 13 o 14 dígitos impresos bajo las barras."
+        >
+          <app-input
+            [value]="fields().codigoDeBarras"
+            (valueChange)="setField('codigoDeBarras', $event)"
+            inputMode="numeric"
+            placeholder="7790000000000"
+            testId="product-field-gtin"
+          />
+        </app-form-field>
+        <app-form-field label="¿Necesita cadena de frío?">
+          <app-select
+            [options]="yesNoOptions"
+            [value]="fields().cadenaDeFrio"
+            (valueChange)="setField('cadenaDeFrio', $event)"
+            ariaLabel="¿Necesita cadena de frío?"
+          />
+        </app-form-field>
+      </div>
+    </app-tab>
+
+    <!-- ─── Descripción ───────────────────────────────────────────── -->
+    <app-tab [label]="tabs[2]">
+      <div class="product-dialog__panel">
+        <app-form-field label="Descripción" hint="Lo que lee el paciente en la vitrina.">
+          <app-textarea
+            [value]="fields().descripcion"
+            (valueChange)="setField('descripcion', $event)"
+            [rows]="6"
+            [maxLength]="descriptionMaxLength"
+          />
+        </app-form-field>
+      </div>
+    </app-tab>
+
+    <!-- ─── Imágenes ──────────────────────────────────────────────── -->
+    <app-tab [label]="tabs[3]">
+      <div class="product-dialog__panel" data-testid="product-images">
+        <p class="product-dialog__note">
+          Hasta {{ maxImages }} imágenes JPG, PNG o WEBP. Si todavía no tenés fotos, dejalo vacío:
+          el listado muestra un marcador.
+        </p>
+
+        @if (imageIds().length > 0) {
+          <ul class="product-dialog__images" aria-label="Imágenes del producto">
+            @for (id of imageIds(); track id; let i = $index) {
+              <li class="product-dialog__image">
+                @if (previews().get(id); as url) {
+                  <img [src]="url" [alt]="'Imagen ' + (i + 1) + ' del producto'" width="96" height="96" />
+                } @else {
+                  <span class="product-dialog__image-placeholder" aria-hidden="true">Sin vista previa</span>
+                }
+                <button
+                  app-button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  [attr.aria-label]="'Quitar la imagen ' + (i + 1)"
+                  (clicked)="removeImage(id)"
+                >
+                  Quitar
+                </button>
+              </li>
+            }
+          </ul>
+        }
+
+        @if (canAddImages()) {
+          <app-file-input
+            label="Agregar imágenes"
+            [accept]="imageAccept"
+            [maxSizeBytes]="imageMaxBytes"
+            [multiple]="true"
+            [maxFiles]="maxImages - imageIds().length"
+            [disabled]="uploading()"
+            [files]="[]"
+            (filesChange)="addImages($event)"
+            testId="product-image-input"
+          />
+          @if (uploading()) {
+            <p class="product-dialog__note" role="status">Subiendo…</p>
+          }
+        }
+      </div>
+    </app-tab>
+
+    <!-- ─── Publicación ───────────────────────────────────────────── -->
+    <app-tab [label]="tabs[4]">
+      <div class="product-dialog__panel">
+        <app-form-field
+          label="Estado"
+          hint="Un borrador no lo ven los pacientes hasta que lo publiques."
+        >
+          <app-select
+            [options]="statusOptions()"
+            [value]="status()"
+            (valueChange)="setStatus($event)"
+            ariaLabel="Estado del producto"
+            data-testid="product-field-status"
+          />
+        </app-form-field>
+        <app-form-field label="Precio de venta (Bs)" hint="Con punto o coma. Ej. 18,50.">
+          <app-input
+            [value]="fields().precio"
+            (valueChange)="setField('precio', $event)"
+            inputMode="decimal"
+            placeholder="18,50"
+            testId="product-field-price"
+          />
+        </app-form-field>
+        <app-form-field label="Categoría">
+          <app-select
+            [options]="categoryOptions()"
+            [value]="fields().categoria"
+            (valueChange)="setField('categoria', $event)"
+            ariaLabel="Categoría"
+          />
+        </app-form-field>
+        <app-form-field
+          label="Disponibilidad"
+          hint="Como en los pedidos: sólo decís si hoy lo tenés o no. Las existencias se llevan en Inventario."
+        >
+          <app-select
+            [options]="availabilityOptions"
+            [value]="fields().disponible || 'sí'"
+            (valueChange)="setField('disponible', $event)"
+            ariaLabel="Disponibilidad"
+          />
+        </app-form-field>
+      </div>
+    </app-tab>
+  </app-tabs>
+
+  <button
+    dialog-actions
+    app-button
+    type="button"
+    variant="ghost"
+    [disabled]="saving()"
+    (clicked)="dialog().close()"
+  >
+    Cancelar
+  </button>
+  <button
+    dialog-actions
+    app-button
+    type="button"
+    [isLoading]="saving()"
+    [disabled]="saving() || uploading()"
+    data-testid="product-dialog-save"
+    (clicked)="save()"
+  >
+    {{ isEditing() ? 'Guardar cambios' : 'Guardar producto' }}
+  </button>
+</app-content-dialog>

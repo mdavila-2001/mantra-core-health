@@ -1,0 +1,49 @@
+:host {
+  display: block;
+}
+
+.inventory__pharmacy {
+  margin-block-end: var(--sp-4);
+}
+
+.inventory__panel {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+.inventory__errors {
+  margin: 0;
+  padding-left: var(--sp-5);
+}
+
+.inventory__bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+
+.inventory__save {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.inventory__dirty {
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.inventory__main {
+  display: block;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.inventory__code {
+  font-family: var(--font-mono);
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}

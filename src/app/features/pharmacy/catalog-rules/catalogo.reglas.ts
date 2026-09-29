@@ -62,7 +62,10 @@ export interface CamposDelProducto {
   readonly codigoDeBarras: string;
   /** Precio de venta en bolivianos, con punto o coma decimal. */
   readonly precio: string;
-  /** Una de {@link CATEGORIAS}, sin importar mayúsculas ni tildes. */
+  /**
+   * Una de las categorías permitidas —por defecto {@link CATEGORIAS}; la
+   * importación pasa las de la farmacia—, sin importar mayúsculas ni tildes.
+   */
   readonly categoria: string;
   readonly descripcion: string;
   /**
@@ -104,7 +107,10 @@ const NO = new Set(['no', 'n', 'false', '0']);
  * Devuelve **todos** los problemas de una vez: cortar en el primero obliga a
  * corregir y reintentar tantas veces como errores haya.
  */
-export function revisarProducto(campos: CamposDelProducto): RevisionDelProducto {
+export function revisarProducto(
+  campos: CamposDelProducto,
+  categoriasPermitidas: readonly string[] = CATEGORIAS,
+): RevisionDelProducto {
   const errores: string[] = [];
   const codigo = campos.codigo.trim();
   const marca = campos.marca.trim();
@@ -161,9 +167,13 @@ export function revisarProducto(campos: CamposDelProducto): RevisionDelProducto 
       `El precio va en bolivianos, mayor que 0 y hasta ${PRECIO_MAXIMO.toLocaleString('es-BO')}, con punto o coma y hasta dos decimales (sin separador de miles).`,
     );
   }
-  const categoria = categoriaDe(campos.categoria);
+  const categoria = categoriaDe(campos.categoria, categoriasPermitidas);
   if (categoria === 'invalido') {
-    errores.push(`La categoría tiene que ser una de estas: ${CATEGORIAS.join(', ')}.`);
+    errores.push(
+      categoriasPermitidas.length === 0
+        ? 'Tu farmacia todavía no tiene categorías: dejá la categoría vacía o creala antes de importar.'
+        : `La categoría tiene que ser una de estas: ${categoriasPermitidas.join(', ')}.`,
+    );
   }
   if (descripcion.length > LARGO_MAXIMO_DE_LA_DESCRIPCION) {
     errores.push(`La descripción no puede pasar de ${LARGO_MAXIMO_DE_LA_DESCRIPCION} caracteres.`);
@@ -246,12 +256,15 @@ function precioDe(texto: string): number | null | 'invalido' {
 }
 
 /** La categoría con su grafía canónica, o `null` si no se puso. */
-function categoriaDe(texto: string): string | null | 'invalido' {
+function categoriaDe(
+  texto: string,
+  permitidas: readonly string[],
+): string | null | 'invalido' {
   const limpio = sinTildes(texto.trim());
   if (limpio === '') {
     return null;
   }
-  return CATEGORIAS.find((categoria) => sinTildes(categoria) === limpio) ?? 'invalido';
+  return permitidas.find((categoria) => sinTildes(categoria) === limpio) ?? 'invalido';
 }
 
 /** Si la farmacia lo tiene hoy. Vacío = sí. */
@@ -437,11 +450,30 @@ export interface FilaDelCsv {
   readonly errorDeForma?: string;
 }
 
+/**
+ * A qué campo del producto fue a parar cada encabezado del archivo.
+ *
+ * Es el mapeo que {@link leerCsv} ya calculaba por dentro (encabezado o alias);
+ * se expone para que la pantalla de importación lo muestre en vez de esconderlo.
+ */
+export interface CsvColumnMapping {
+  /** El encabezado tal como venía escrito en el archivo (sin espacios a los lados). */
+  readonly header: string;
+  /** El campo del producto al que se asignó, o `null` si la columna se ignora. */
+  readonly field: keyof CamposDelProducto | null;
+  /** El encabezado de la plantilla de ese campo; `null` si se ignora. */
+  readonly canonicalHeader: string | null;
+  /** Si coincidió con el encabezado de la plantilla o con uno de sus alias. */
+  readonly matchedBy: 'HEADER' | 'ALIAS' | null;
+}
+
 /** Lo que se sacó del archivo. */
 export interface LecturaDelCsv {
   readonly filas: readonly FilaDelCsv[];
   /** Encabezados que no corresponden a ninguna columna: se avisan y se ignoran. */
   readonly ignoradas: readonly string[];
+  /** Una entrada por columna del archivo, en su orden, con el campo asignado. */
+  readonly columns: readonly CsvColumnMapping[];
 }
 
 /**
@@ -524,9 +556,20 @@ export function leerCsv(contenido: string): LecturaDelCsv {
         };
   });
 
+  const columns = encabezado.map((crudo, j): CsvColumnMapping => {
+    const columna = columnaPorNombre(nombres[j]!);
+    return {
+      header: crudo.trim(),
+      field: columna?.campo ?? null,
+      canonicalHeader: columna?.encabezado ?? null,
+      matchedBy: columna === undefined ? null : columna.encabezado === nombres[j] ? 'HEADER' : 'ALIAS',
+    };
+  });
+
   return {
     filas,
     ignoradas: encabezado.filter((_, j) => destino[j] === null).map((nombre) => nombre.trim()),
+    columns,
   };
 }
 
@@ -662,10 +705,18 @@ function sinApostrofoDeFormula(valor: string): string {
 /* ─── La revisión de la carga ─────────────────────────────────────────────── */
 
 /** Por qué una fila no se va a mandar. */
-export type MotivoDeRechazo = 'INVALIDA' | 'REPETIDA_EN_EL_ARCHIVO' | 'YA_EN_EL_CATALOGO';
+export type MotivoDeRechazo =
+  | 'INVALIDA'
+  | 'REPETIDA_EN_EL_ARCHIVO'
+  | 'YA_EN_EL_CATALOGO'
+  | 'NO_EN_EL_CATALOGO';
 
-/** Qué hace una carga con los códigos que ya están en el catálogo. */
-export type ModoDeCarga = 'CREAR_Y_ACTUALIZAR' | 'SOLO_CREAR';
+/**
+ * Qué hace una carga con los códigos del archivo según estén o no en el
+ * catálogo: crear los nuevos y actualizar los que ya están, sólo crear (los
+ * existentes se rechazan) o sólo actualizar (los nuevos se rechazan).
+ */
+export type ModoDeCarga = 'CREAR_Y_ACTUALIZAR' | 'SOLO_CREAR' | 'SOLO_ACTUALIZAR';
 
 /** Una fila revisada: lista para mandar, o con sus motivos. */
 export type FilaRevisada =
@@ -694,12 +745,18 @@ export type FilaRevisada =
  * - **Un código repetido dentro del archivo se rechaza en todas sus filas**:
  *   elegir una por el orden sería decidir en silencio cuál vale.
  * - **Un código que ya está en el catálogo se actualiza** con lo que traiga
- *   la fila (en `CREAR_Y_ACTUALIZAR`), o se rechaza (en `SOLO_CREAR`).
+ *   la fila (en `CREAR_Y_ACTUALIZAR` y `SOLO_ACTUALIZAR`), o se rechaza (en
+ *   `SOLO_CREAR`).
+ * - **Un código que no está en el catálogo se crea** (en `CREAR_Y_ACTUALIZAR` y
+ *   `SOLO_CREAR`), o se rechaza (en `SOLO_ACTUALIZAR`).
+ * - La categoría se valida contra `categoriasPermitidas` (las de la farmacia
+ *   que importa; por defecto las de {@link CATEGORIAS}).
  */
 export function revisarCarga(
   filas: readonly FilaDelCsv[],
   catalogo: ReadonlyMap<string, string>,
   modo: ModoDeCarga = 'CREAR_Y_ACTUALIZAR',
+  categoriasPermitidas: readonly string[] = CATEGORIAS,
 ): FilaRevisada[] {
   const vecesPorCodigo = new Map<string, number>();
   for (const fila of filas) {
@@ -719,7 +776,7 @@ export function revisarCarga(
         errores: [fila.errorDeForma],
       };
     }
-    const revision = revisarProducto(fila.campos);
+    const revision = revisarProducto(fila.campos, categoriasPermitidas);
     if (!revision.valido) {
       return { ...fila, lista: false, motivo: 'INVALIDA', errores: revision.errores };
     }
@@ -743,9 +800,33 @@ export function revisarCarga(
           }
         : { ...fila, lista: true, borrador: revision.borrador, accion: 'ACTUALIZAR', productId: existente };
     }
+    if (modo === 'SOLO_ACTUALIZAR') {
+      return {
+        ...fila,
+        lista: false,
+        motivo: 'NO_EN_EL_CATALOGO',
+        errores: [`El código ${codigo} no está en tu catálogo (elegiste «sólo actualizar»).`],
+      };
+    }
     return { ...fila, lista: true, borrador: revision.borrador, accion: 'CREAR', productId: null };
   });
 }
+
+/** Cómo se le llama a cada campo del producto cuando se le habla a la persona. */
+export const ETIQUETAS_DE_CAMPO: Readonly<Record<keyof CamposDelProducto, string>> = {
+  codigo: 'Código interno (SKU)',
+  marca: 'Marca o nombre comercial',
+  generico: 'Nombre genérico',
+  concentracion: 'Concentración',
+  presentacion: 'Presentación',
+  receta: 'Venta bajo receta',
+  cadenaDeFrio: 'Cadena de frío',
+  codigoDeBarras: 'Código de barras (GTIN)',
+  precio: 'Precio de venta (Bs)',
+  categoria: 'Categoría',
+  descripcion: 'Descripción',
+  disponible: 'Disponibilidad',
+};
 
 /** Tres filas de ejemplo para la plantilla: una con cada caso típico. */
 export const FILAS_DE_EJEMPLO: readonly CamposDelProducto[] = [

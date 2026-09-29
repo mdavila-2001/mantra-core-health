@@ -1,6 +1,9 @@
 import {
   ArchivoInvalido,
   CAMPOS_VACIOS,
+  CATEGORIAS,
+  COLUMNAS_DEL_CSV,
+  ETIQUETAS_DE_CAMPO,
   cambiosDelBorrador,
   decodificarCsv,
   FILAS_MAXIMAS_POR_CARGA,
@@ -111,6 +114,48 @@ describe('leerCsv', () => {
     expect(lectura.ignoradas).toEqual(['lote']);
   });
 
+  describe('asignación de columnas', () => {
+    it('dice a qué campo fue cada encabezado, en el orden del archivo, y si fue por alias', () => {
+      const lectura = leerCsv('SKU,Nombre,precio,lote\nA1,Algo,10,L-12\n');
+
+      expect(lectura.columns).toEqual([
+        { header: 'SKU', field: 'codigo', canonicalHeader: 'codigo', matchedBy: 'ALIAS' },
+        { header: 'Nombre', field: 'marca', canonicalHeader: 'marca', matchedBy: 'ALIAS' },
+        { header: 'precio', field: 'precio', canonicalHeader: 'precio', matchedBy: 'HEADER' },
+        { header: 'lote', field: null, canonicalHeader: null, matchedBy: null },
+      ]);
+    });
+
+    it('los encabezados con mayúsculas, tildes o espacios cuentan como el de la plantilla, no como alias', () => {
+      const lectura = leerCsv('Código;Cadena frío;Código de barras\nA1;no;\n');
+
+      expect(lectura.columns.map((c) => [c.field, c.matchedBy])).toEqual([
+        ['codigo', 'HEADER'],
+        ['cadenaDeFrio', 'HEADER'],
+        ['codigoDeBarras', 'ALIAS'],
+      ]);
+    });
+
+    it('las columnas ignoradas de `ignoradas` son exactamente las que quedan sin campo', () => {
+      const lectura = leerCsv('codigo,lote,vence,marca\nA1,L,2027,x\n');
+
+      expect(lectura.columns.filter((c) => c.field === null).map((c) => c.header)).toEqual(lectura.ignoradas);
+      expect(lectura.ignoradas).toEqual(['lote', 'vence']);
+    });
+
+    it('no cuenta las columnas vacías que Excel deja al final', () => {
+      const lectura = leerCsv('codigo;marca;;\nA1;x;;\n');
+
+      expect(lectura.columns.map((c) => c.header)).toEqual(['codigo', 'marca']);
+    });
+
+    it('cada campo del producto tiene su etiqueta para mostrarlo', () => {
+      for (const columna of COLUMNAS_DEL_CSV) {
+        expect(ETIQUETAS_DE_CAMPO[columna.campo]).toBeTruthy();
+      }
+    });
+  });
+
   it('salta las filas en blanco', () => {
     const lectura = leerCsv('codigo,marca\nA1,x\n,\n\nA2,y\n');
 
@@ -204,6 +249,109 @@ describe('revisarCarga', () => {
 
     expect(revisadas[0]!.lista === false && revisadas[0]!.motivo).toBe('INVALIDA');
   });
+
+  describe('«sólo actualizar»', () => {
+    it('actualiza lo que ya está en el catálogo, con su id', () => {
+      const revisadas = revisarCarga(
+        [fila(1, { codigo: 'A1', marca: 'x' })],
+        new Map([['A1', 'p-1']]),
+        'SOLO_ACTUALIZAR',
+      );
+
+      expect(revisadas[0]).toMatchObject({ lista: true, accion: 'ACTUALIZAR', productId: 'p-1' });
+    });
+
+    it('rechaza un código que no está en el catálogo, con un motivo propio y un mensaje que lo dice', () => {
+      const revisadas = revisarCarga(
+        [fila(1, { codigo: 'NUEVO-1', marca: 'x' })],
+        new Map([['A1', 'p-1']]),
+        'SOLO_ACTUALIZAR',
+      );
+
+      const rechazada = revisadas[0]!;
+      expect(rechazada.lista).toBe(false);
+      expect(rechazada.lista === false && rechazada.motivo).toBe('NO_EN_EL_CATALOGO');
+      expect(rechazada.lista === false && rechazada.errores[0]).toContain('NUEVO-1 no está en tu catálogo');
+    });
+
+    it('con el catálogo vacío rechaza todas las filas válidas', () => {
+      const revisadas = revisarCarga(
+        [fila(1, { codigo: 'A1', marca: 'x' }), fila(2, { codigo: 'A2', marca: 'y' })],
+        new Map(),
+        'SOLO_ACTUALIZAR',
+      );
+
+      expect(revisadas.map((r) => r.lista)).toEqual([false, false]);
+    });
+
+    it('una fila inválida o repetida sigue rechazándose por su propio motivo, no por «no está»', () => {
+      const revisadas = revisarCarga(
+        [
+          fila(1, { codigo: 'A1' }),
+          fila(2, { codigo: 'B1', marca: 'x' }),
+          fila(3, { codigo: 'B1', marca: 'y' }),
+        ],
+        new Map(),
+        'SOLO_ACTUALIZAR',
+      );
+
+      expect(revisadas.map((r) => r.lista === false && r.motivo)).toEqual([
+        'INVALIDA',
+        'REPETIDA_EN_EL_ARCHIVO',
+        'REPETIDA_EN_EL_ARCHIVO',
+      ]);
+    });
+
+    it('los otros dos modos no cambian: crear y actualizar acepta el código nuevo', () => {
+      const nueva = [fila(1, { codigo: 'NUEVO-1', marca: 'x' })];
+
+      expect(revisarCarga(nueva, new Map(), 'CREAR_Y_ACTUALIZAR')[0]).toMatchObject({ lista: true, accion: 'CREAR' });
+      expect(revisarCarga(nueva, new Map(), 'SOLO_CREAR')[0]).toMatchObject({ lista: true, accion: 'CREAR' });
+    });
+  });
+
+  describe('categorías de la farmacia', () => {
+    const conCategoria = (categoria: string) => [fila(1, { codigo: 'A1', marca: 'x', categoria })];
+
+    it('sin la lista, valida contra las categorías fijas de siempre', () => {
+      expect(revisarCarga(conCategoria('Bienestar'), new Map())[0]!.lista).toBe(true);
+      expect(revisarCarga(conCategoria('Ferretería'), new Map())[0]!.lista).toBe(false);
+    });
+
+    it('con la lista de la farmacia acepta las suyas y ya no las fijas', () => {
+      const propias = ['Ortopedia', 'Óptica'];
+
+      expect(revisarCarga(conCategoria('Ortopedia'), new Map(), 'CREAR_Y_ACTUALIZAR', propias)[0]!.lista).toBe(true);
+      expect(revisarCarga(conCategoria('Medicamentos'), new Map(), 'CREAR_Y_ACTUALIZAR', propias)[0]!.lista).toBe(false);
+    });
+
+    it('la categoría se reconoce sin mayúsculas ni tildes y se guarda con la grafía de la farmacia', () => {
+      const revisada = revisarCarga(conCategoria('optica'), new Map(), 'CREAR_Y_ACTUALIZAR', ['Ortopedia', 'Óptica'])[0]!;
+
+      expect(revisada.lista && revisada.borrador.category).toBe('Óptica');
+    });
+
+    it('una categoría desconocida es un error de fila con el mensaje de siempre, con las de la farmacia', () => {
+      const revisada = revisarCarga(conCategoria('Ferretería'), new Map(), 'CREAR_Y_ACTUALIZAR', ['Ortopedia', 'Óptica'])[0]!;
+
+      expect(revisada.lista === false && revisada.motivo).toBe('INVALIDA');
+      expect(revisada.lista === false && revisada.errores).toEqual([
+        'La categoría tiene que ser una de estas: Ortopedia, Óptica.',
+      ]);
+    });
+
+    it('dejar la categoría vacía sigue siendo válido aunque la farmacia no tenga ninguna', () => {
+      const sinCategoria = [fila(1, { codigo: 'A1', marca: 'x' })];
+
+      expect(revisarCarga(sinCategoria, new Map(), 'CREAR_Y_ACTUALIZAR', [])[0]!.lista).toBe(true);
+    });
+
+    it('con una farmacia sin categorías, poner una dice que primero hay que crearla', () => {
+      const revisada = revisarCarga(conCategoria('Bienestar'), new Map(), 'CREAR_Y_ACTUALIZAR', [])[0]!;
+
+      expect(revisada.lista === false && revisada.errores[0]).toMatch(/todavía no tiene categorías/);
+    });
+  });
 });
 
 describe('decodificarCsv', () => {
@@ -266,6 +414,22 @@ describe('precio, categoría y disponibilidad', () => {
 
   it('rechaza una categoría que no existe', () => {
     expect(revisarProducto(campos({ codigo: 'A1', marca: 'x', categoria: 'Ferretería' })).valido).toBe(false);
+  });
+
+  it('el formulario, sin lista, sigue validando contra las categorías fijas', () => {
+    const revision = revisarProducto(campos({ codigo: 'A1', marca: 'x', categoria: CATEGORIAS[1] }));
+
+    expect(revision.valido).toBe(true);
+  });
+
+  it('con una lista propia, la categoría se valida contra ella', () => {
+    const propias = ['Ortopedia'];
+
+    expect(revisarProducto(campos({ codigo: 'A1', marca: 'x', categoria: 'ortopedia' }), propias)).toMatchObject({
+      valido: true,
+      borrador: { category: 'Ortopedia' },
+    });
+    expect(revisarProducto(campos({ codigo: 'A1', marca: 'x', categoria: 'Bienestar' }), propias).valido).toBe(false);
   });
 
   it('la columna «stock» de otra planilla se lee como disponibilidad', () => {

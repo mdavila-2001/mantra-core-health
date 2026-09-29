@@ -1,0 +1,128 @@
+<app-page-header
+  title="Inventario"
+  subtitle="Cuántas unidades tenés de cada producto y desde cuántas querés que te avise. Un producto sin existencias deja de ofrecerse a los pacientes."
+/>
+
+<app-view-state-host [state]="scope.options()" (retry)="scope.retry()">
+  @if (scope.hasSeveral()) {
+    <div class="inventory__pharmacy">
+      <app-form-field label="Farmacia">
+        <app-select
+          [options]="scope.selectOptions()"
+          [value]="scope.pharmacyId()"
+          (valueChange)="scope.choose($event)"
+          placeholder="Elegí tu farmacia"
+        />
+      </app-form-field>
+    </div>
+  }
+
+  @if (scope.pharmacyId() !== null) {
+    <app-card class="inventory" padding="lg" data-testid="inventory-card">
+      <div class="inventory__panel">
+        <app-alert tone="info" data-testid="inventory-sync-notice">
+          Cuando exista la sincronización con tu sistema, esta pantalla pasa a ser sólo de lectura.
+        </app-alert>
+
+        @if (errors().length > 0) {
+          <app-alert tone="error" title="Falta resolver esto" data-testid="inventory-errors">
+            <ul class="inventory__errors">
+              @for (error of errors(); track error) {
+                <li>{{ error }}</li>
+              }
+            </ul>
+          </app-alert>
+        }
+
+        <app-search-field
+          label="Buscar en el inventario"
+          placeholder="Marca, genérico o código"
+          [value]="term()"
+          (searched)="search($event)"
+        />
+
+        <div class="inventory__bar">
+          <app-switch
+            label="Sólo con alertas"
+            ariaLabel="Mostrar sólo los productos con alerta de inventario"
+            [checked]="onlyAlerts()"
+            (checkedChange)="toggleAlerts($event)"
+            data-testid="inventory-only-alerts"
+          />
+          <div class="inventory__save">
+            @if (dirtyCount() > 0) {
+              <span class="inventory__dirty" role="status">
+                {{ dirtyCount() === 1 ? '1 cambio sin guardar' : dirtyCount() + ' cambios sin guardar' }}
+              </span>
+              <button app-button variant="ghost" type="button" [disabled]="saving()" (clicked)="discard()">
+                Descartar
+              </button>
+            }
+            <button
+              app-button
+              type="button"
+              [isLoading]="saving()"
+              [disabled]="saving() || dirtyCount() === 0"
+              (clicked)="save()"
+              data-testid="inventory-save"
+            >
+              Guardar cambios
+            </button>
+          </div>
+        </div>
+
+        <app-data-table
+          caption="Inventario de tu farmacia"
+          [state]="pageRows()"
+          [columns]="columns()"
+          [trackBy]="rowId"
+          [rowLabel]="rowLabel"
+          [cursor]="cursor()"
+          (cursorChanged)="goToCursor($event)"
+          (retry)="reload()"
+          (refresh)="reload()"
+          data-testid="inventory-table"
+        />
+      </div>
+    </app-card>
+  }
+</app-view-state-host>
+
+<ng-template #nameCell let-product>
+  <span class="inventory__main">{{ name(product) }}</span>
+  <code class="inventory__code">{{ product.productCode }}</code>
+</ng-template>
+
+<ng-template #stockCell let-product>
+  <app-input
+    type="number"
+    inputMode="numeric"
+    [ariaLabel]="'Existencias de ' + name(product)"
+    [value]="stockOf(product)"
+    (valueChange)="setStock(product, $event)"
+    [step]="1"
+    [testId]="'inventory-stock-' + product.productCode"
+  />
+</ng-template>
+
+<ng-template #minimumCell let-product>
+  <app-input
+    type="number"
+    inputMode="numeric"
+    [ariaLabel]="'Umbral de alerta de ' + name(product)"
+    [value]="minimumOf(product)"
+    (valueChange)="setMinimum(product, $event)"
+    [step]="1"
+    [testId]="'inventory-minimum-' + product.productCode"
+  />
+</ng-template>
+
+<ng-template #availabilityCell let-product>
+  @if (!hasStock(product)) {
+    <app-badge variant="error">Sin stock</app-badge>
+  } @else if (isAlert(product)) {
+    <app-badge variant="warning">Stock bajo</app-badge>
+  } @else {
+    <app-badge variant="success">Disponible</app-badge>
+  }
+</ng-template>

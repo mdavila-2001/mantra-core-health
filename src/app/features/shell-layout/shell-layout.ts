@@ -477,10 +477,13 @@ export class ShellLayout {
     // también farmacia, el visitador y cualquier `USER` sin organización, que
     // el pedido no incluía—: se agrega sólo la condición de tipo que el
     // registro de procesos pide cerrar.
+    //
+    // Ni la farmacia (2026-09-29): su menú es el del mostrador y nada más.
     if (
       esPaciente(roles) ||
       roles.includes('PRACTITIONER') ||
-      this.auth.activeTenantType() === 'PAYER'
+      this.auth.activeTenantType() === 'PAYER' ||
+      this.auth.activeTenantType() === 'PHARMACY'
     ) {
       return menu;
     }

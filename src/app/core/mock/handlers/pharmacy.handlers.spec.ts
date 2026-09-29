@@ -326,3 +326,236 @@ describe('handlers de farmacia: coherencia de precio y disponibilidad', () => {
     });
   });
 });
+
+/**
+ * Carril B (29/09/2026) — lo que el portal de la farmacia le pide al
+ * simulador (P47): estado del producto, inventario, categorías y resumen.
+ *
+ * Cada caso crea sus propios productos y categorías con nombres únicos: el
+ * simulador guarda sus datos en módulo y los casos no se pisan entre sí.
+ */
+describe('handlers de farmacia: portal de la farmacia (P47)', () => {
+  const router = crearRouterSimulado();
+  const farmacia = buscarUsuario('farmacia')!;
+  const PHARMACY_ID = TENANT_FARMACIA;
+
+  function pedir(method: MockMethod, path: string, body: unknown = {}, query = new URLSearchParams()) {
+    const match = router.match(method, path);
+    if (match === null) throw new Error(`No existe ${method} ${path}`);
+    return match.handler({
+      method,
+      path,
+      params: match.params,
+      query,
+      body,
+      headers: new HttpHeaders(),
+      user: farmacia,
+    } satisfies MockRequest);
+  }
+
+  const estado = (resultado: unknown): number => (isMockReply(resultado) ? resultado.status : 200);
+  const cuerpoDe = <T>(resultado: unknown): T => (isMockReply(resultado) ? resultado.body : resultado) as T;
+
+  interface Listed {
+    id: string;
+    productCode: string;
+    status?: string;
+    stock?: number;
+    minStock?: number;
+    inStock: boolean;
+    category: string | null;
+  }
+
+  function crear(codigo: string, extra: Record<string, unknown> = {}): string {
+    const resultado = pedir('POST', `/pharmacies/${PHARMACY_ID}/products`, {
+      productCode: codigo,
+      brandName: `Producto ${codigo}`,
+      ...extra,
+    });
+    expect(estado(resultado)).toBe(201);
+    return cuerpoDe<{ id: string }>(resultado).id;
+  }
+
+  function gestion(): Listed[] {
+    const query = new URLSearchParams({ pharmacyId: PHARMACY_ID, managed: 'true', limit: '500' });
+    return cuerpoDe<{ items: Listed[] }>(pedir('GET', '/pharmacy/products', {}, query)).items;
+  }
+
+  function publico(): Listed[] {
+    const query = new URLSearchParams({ pharmacyId: PHARMACY_ID, limit: '500' });
+    return cuerpoDe<{ items: Listed[] }>(pedir('GET', '/pharmacy/products', {}, query)).items;
+  }
+
+  describe('estado del producto', () => {
+    it('un borrador sólo lo ve la gestión: la vitrina pública no lo lista', () => {
+      const id = crear('B-BORRADOR-1', { status: 'DRAFT' });
+
+      expect(gestion().find((p) => p.id === id)?.status).toBe('DRAFT');
+      expect(publico().some((p) => p.id === id)).toBe(false);
+    });
+
+    it('publicar el borrador lo pasa a la vitrina', () => {
+      const id = crear('B-BORRADOR-2', { status: 'DRAFT' });
+
+      pedir('PATCH', `/pharmacies/${PHARMACY_ID}/products/${id}`, { status: 'PUBLISHED' });
+
+      expect(publico().some((p) => p.id === id)).toBe(true);
+    });
+
+    it('un retirado sigue en la gestión como WITHDRAWN, no en la vitrina, y se puede volver a publicar', () => {
+      const id = crear('B-RETIRADO-1');
+      pedir('DELETE', `/pharmacies/${PHARMACY_ID}/products/${id}`);
+
+      expect(gestion().find((p) => p.id === id)?.status).toBe('WITHDRAWN');
+      expect(publico().some((p) => p.id === id)).toBe(false);
+
+      const republicado = pedir('PATCH', `/pharmacies/${PHARMACY_ID}/products/${id}`, { status: 'PUBLISHED' });
+      expect(estado(republicado)).toBe(200);
+      expect(publico().some((p) => p.id === id)).toBe(true);
+    });
+
+    it('editar un retirado sin pedir volver a publicarlo sigue siendo un 404', () => {
+      const id = crear('B-RETIRADO-2');
+      pedir('DELETE', `/pharmacies/${PHARMACY_ID}/products/${id}`);
+
+      expect(estado(pedir('PATCH', `/pharmacies/${PHARMACY_ID}/products/${id}`, { description: 'x' }))).toBe(404);
+    });
+
+    it('un estado que no existe es un 422 con su campo', () => {
+      const id = crear('B-ESTADO-1');
+
+      const resultado = pedir('PATCH', `/pharmacies/${PHARMACY_ID}/products/${id}`, { status: 'EN_REVISION' });
+
+      expect(estado(resultado)).toBe(422);
+    });
+  });
+
+  describe('inventario', () => {
+    it('guarda existencias y umbral de varios productos juntos, y la disponibilidad se deriva', () => {
+      const a = crear('B-INV-A');
+      const b = crear('B-INV-B');
+
+      const resultado = pedir('PATCH', `/pharmacies/${PHARMACY_ID}/inventory`, {
+        lines: [
+          { productId: a, stock: 0, minStock: 4 },
+          { productId: b, stock: 9, minStock: 2 },
+        ],
+      });
+
+      expect(cuerpoDe<{ updated: number }>(resultado).updated).toBe(2);
+      const listado = gestion();
+      expect(listado.find((p) => p.id === a)).toMatchObject({ stock: 0, minStock: 4, inStock: false });
+      expect(listado.find((p) => p.id === b)).toMatchObject({ stock: 9, minStock: 2, inStock: true });
+    });
+
+    it('es todo o nada: una línea inválida no guarda ninguna', () => {
+      const a = crear('B-INV-C');
+      const antes = gestion().find((p) => p.id === a)!.stock;
+
+      const resultado = pedir('PATCH', `/pharmacies/${PHARMACY_ID}/inventory`, {
+        lines: [
+          { productId: a, stock: 50, minStock: 1 },
+          { productId: a, stock: -1, minStock: 1 },
+        ],
+      });
+
+      expect(estado(resultado)).toBe(422);
+      expect(gestion().find((p) => p.id === a)!.stock).toBe(antes);
+    });
+
+    it('rechaza un producto de otra farmacia', () => {
+      const resultado = pedir('PATCH', `/pharmacies/${PHARMACY_ID}/inventory`, {
+        lines: [{ productId: 'no-existe', stock: 1, minStock: 1 }],
+      });
+
+      expect(estado(resultado)).toBe(422);
+    });
+  });
+
+  describe('categorías', () => {
+    interface Category {
+      id: string;
+      name: string;
+      productCount: number;
+    }
+
+    const listar = () =>
+      cuerpoDe<{ items: Category[] }>(pedir('GET', `/pharmacies/${PHARMACY_ID}/categories`)).items;
+
+    it('parte de las seis del mockup', () => {
+      const nombres = listar().map((c) => c.name);
+
+      for (const esperada of ['Medicamentos', 'Dermocosmética', 'Cuidado personal', 'Bebé y maternidad', 'Dispositivos', 'Bienestar']) {
+        expect(nombres).toContain(esperada);
+      }
+    });
+
+    it('crea, no repite (sin importar mayúsculas ni tildes) y valida el nombre', () => {
+      expect(estado(pedir('POST', `/pharmacies/${PHARMACY_ID}/categories`, { name: 'Vitaminas B' }))).toBe(201);
+      expect(estado(pedir('POST', `/pharmacies/${PHARMACY_ID}/categories`, { name: 'vitaminas b' }))).toBe(409);
+      expect(estado(pedir('POST', `/pharmacies/${PHARMACY_ID}/categories`, { name: '   ' }))).toBe(422);
+    });
+
+    it('renombrar arrastra a los productos que la usan', () => {
+      const creada = cuerpoDe<Category>(pedir('POST', `/pharmacies/${PHARMACY_ID}/categories`, { name: 'Ortopedia B' }));
+      const id = crear('B-CAT-1', { category: 'Ortopedia B' });
+
+      pedir('PATCH', `/pharmacies/${PHARMACY_ID}/categories/${creada.id}`, { name: 'Traumatología B' });
+
+      expect(gestion().find((p) => p.id === id)!.category).toBe('Traumatología B');
+      expect(listar().find((c) => c.id === creada.id)).toMatchObject({ name: 'Traumatología B', productCount: 1 });
+    });
+
+    it('eliminar una con productos es un 409; sin productos, se elimina', () => {
+      const conProductos = cuerpoDe<Category>(pedir('POST', `/pharmacies/${PHARMACY_ID}/categories`, { name: 'Con uso B' }));
+      crear('B-CAT-2', { category: 'Con uso B' });
+      const vacia = cuerpoDe<Category>(pedir('POST', `/pharmacies/${PHARMACY_ID}/categories`, { name: 'Vacía B' }));
+
+      expect(estado(pedir('DELETE', `/pharmacies/${PHARMACY_ID}/categories/${conProductos.id}`))).toBe(409);
+      expect(estado(pedir('DELETE', `/pharmacies/${PHARMACY_ID}/categories/${vacia.id}`))).toBe(200);
+      expect(listar().some((c) => c.id === vacia.id)).toBe(false);
+    });
+  });
+
+  describe('resumen', () => {
+    interface Summary {
+      published: number;
+      drafts: number;
+      withdrawn: number;
+      outOfStock: number;
+      lowStock: number;
+      inventoryValue: string;
+      byCategory: { category: string; count: number }[];
+      recentActivity: { text: string }[];
+    }
+
+    const resumen = () => cuerpoDe<Summary>(pedir('GET', `/pharmacy/pharmacies/${PHARMACY_ID}/summary`));
+
+    it('los números cambian cuando la farmacia trabaja', () => {
+      const antes = resumen();
+
+      const id = crear('B-RES-1', { status: 'DRAFT' });
+      expect(resumen().drafts).toBe(antes.drafts + 1);
+
+      pedir('PATCH', `/pharmacies/${PHARMACY_ID}/products/${id}`, { status: 'PUBLISHED', stock: 3, minStock: 5, unitPrice: 10 });
+      const conStockBajo = resumen();
+      expect(conStockBajo.drafts).toBe(antes.drafts);
+      expect(conStockBajo.published).toBe(antes.published + 1);
+      expect(conStockBajo.lowStock).toBe(antes.lowStock + 1);
+      expect(Number(conStockBajo.inventoryValue)).toBeCloseTo(Number(antes.inventoryValue) + 30, 2);
+
+      pedir('DELETE', `/pharmacies/${PHARMACY_ID}/products/${id}`);
+      expect(resumen().withdrawn).toBe(antes.withdrawn + 1);
+    });
+
+    it('la actividad reciente cuenta lo que se hizo, lo último primero', () => {
+      crear('B-RES-2');
+
+      expect(resumen().recentActivity[0]!.text).toContain('Producto B-RES-2');
+    });
+
+    it('una farmacia que no existe es un 404', () => {
+      expect(estado(pedir('GET', '/pharmacy/pharmacies/no-existe/summary'))).toBe(404);
+    });
+  });
+});

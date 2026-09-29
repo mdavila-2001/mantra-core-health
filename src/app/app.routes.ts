@@ -266,12 +266,20 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/organization/pharmacy-campaigns/pharmacy-campaigns').then(
       (m) => m.PharmacyCampaigns,
     ),
-  // El catálogo de productos de la farmacia: altas, carga masiva y retiros.
-  // Ruta hermana por el mismo motivo que las promociones.
+  // Productos de la farmacia: el listado con filtros y, en un modal con
+  // pestañas, el alta y la edición. Ruta hermana por el mismo motivo que las
+  // promociones. La carga masiva y las demás pantallas del portal de la farmacia
+  // (resumen, categorías, importación, inventario) son de `features/pharmacy/`.
   'administration/pharmacy-catalog': () =>
-    import('./features/organization/pharmacy-catalog/pharmacy-catalog').then(
-      (m) => m.PharmacyCatalog,
-    ),
+    import('./features/pharmacy/products/pharmacy-products').then((m) => m.PharmacyProducts),
+  'administration/pharmacy': () =>
+    import('./features/pharmacy/summary/pharmacy-summary').then((m) => m.PharmacySummaryPage),
+  'administration/pharmacy-categories': () =>
+    import('./features/pharmacy/categories/pharmacy-categories').then((m) => m.PharmacyCategories),
+  'administration/pharmacy-import': () =>
+    import('./features/pharmacy/import/pharmacy-import').then((m) => m.PharmacyImport),
+  'administration/pharmacy-inventory': () =>
+    import('./features/pharmacy/inventory/pharmacy-inventory').then((m) => m.PharmacyInventory),
   // La ficha legal de la farmacia. Ruta hermana de las dos de arriba y no una
   // sección del panel de organización, por el mismo motivo: el panel es de
   // TP-1 y así no se le toca una línea. Diferida: arrastra el mapa.

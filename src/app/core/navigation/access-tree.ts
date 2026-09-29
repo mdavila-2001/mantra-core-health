@@ -141,6 +141,10 @@ export const SECCIONES_FUERA_DEL_ARBOL: readonly string[] = [
   'administration/pharmacy-campaigns',
   'administration/pharmacy-catalog',
   'administration/pharmacy-profile',
+  'administration/pharmacy',
+  'administration/pharmacy-categories',
+  'administration/pharmacy-import',
+  'administration/pharmacy-inventory',
   'tutorials',
 ];
 
