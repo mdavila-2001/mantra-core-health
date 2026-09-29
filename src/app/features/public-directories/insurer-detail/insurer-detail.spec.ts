@@ -144,6 +144,22 @@ describe('planesDelMercado', () => {
     expect(fila!.tope).toBe('150.000,00 Bs');
   });
 
+  it('resume el plan y destaca sus coberturas para la tarjeta de comparación', () => {
+    const [plan] = planesDelMercado({
+      ...CARRIER,
+      createdAt: new Date(CARRIER.createdAt),
+    } as unknown as CarrierDetail);
+
+    expect(plan).toMatchObject({
+      rotulo: 'Salud · Individual y familiar',
+      mayorCobertura: false,
+      destacadas: [{ id: 'b-1', cobertura: 'Internación', cubre: '90\u00a0%' }],
+    });
+    expect(plan!.resumen).toBe(
+      '1 cobertura · tope anual de hasta 150.000,00\u00a0Bs · 1 pide autorización previa',
+    );
+  });
+
   it('sin catálogo no hay planes', () => {
     expect(planesDelMercado(null)).toEqual([]);
   });
@@ -201,6 +217,51 @@ describe('InsurerDetail', () => {
     // Dos brokers, un solo botón: el que no tiene perfil no ofrece chat.
     expect(root().querySelectorAll('[data-testid="aseguradora-broker"]')).toHaveLength(2);
     expect(root().querySelectorAll('[data-testid="broker-hablar"]')).toHaveLength(1);
+  });
+
+  it('con dos planes, la primera pestaña los compara y «Ver cláusulas» abre el del plan', () => {
+    const [producto] = CARRIER.products;
+    const [integral] = producto!.plans;
+    const familiar = {
+      ...integral!,
+      id: 'plan-2',
+      planCode: 'ANDINA-FAM',
+      name: 'Plan Familiar',
+      planType: c('STANDARD', 'Estándar'),
+      monthlyPremiumAmount: null,
+    };
+    responderMercado({
+      carrier: {
+        ...CARRIER,
+        products: [
+          { ...producto!, plans: [{ ...integral!, planType: c('PREMIUM', 'Premium') }, familiar] },
+        ],
+      },
+      brokers: BROKERS,
+    });
+
+    const pestanas = [...root().querySelectorAll('[role="tab"]')].map((t) => t.textContent?.trim());
+    expect(pestanas).toEqual(['Comparar planes', 'Plan Integral', 'Plan Familiar']);
+
+    const ofertas = [...root().querySelectorAll('[data-testid="aseguradora-oferta"]')];
+    expect(ofertas).toHaveLength(2);
+    expect(ofertas[0]!.textContent).toContain('Mayor cobertura');
+    expect(ofertas[0]!.textContent).toContain('450,00');
+    expect(ofertas[0]!.textContent).toContain('Internación');
+    expect(ofertas[0]!.textContent).toContain('1 cobertura · tope anual de hasta 150.000,00');
+    // Sin prima publicada no se inventa una: se cotiza con el broker.
+    expect(ofertas[1]!.textContent).toContain('A cotizar con el broker');
+    expect(ofertas[1]!.textContent).not.toContain('Mayor cobertura');
+    expect(
+      ofertas[0]!.querySelector('[data-testid="oferta-hablar-con-broker"]')?.getAttribute('href'),
+    ).toBe('/messaging?escribirA=broker-consultores-oriente');
+
+    ofertas[1]!.querySelector<HTMLButtonElement>('[data-testid="oferta-ver-clausulas"]')!.click();
+    fixture.detectChanges();
+
+    expect(root().querySelector('[role="tab"][aria-selected="true"]')?.textContent).toContain(
+      'Plan Familiar',
+    );
   });
 
   it('sin catálogo publicado lo dice, y no dibuja una tabla vacía', () => {

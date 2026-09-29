@@ -56,6 +56,20 @@ export interface PharmacyProduct {
   /** El medicamento del vademécum al que responde, resuelto. */
   readonly medication: PharmacyConcept | null;
   readonly requiresPrescription: boolean | null;
+  /*
+   * Los cuatro de abajo son del catálogo que administra la farmacia y **sólo
+   * los sirve el simulador** (P47 de PENDIENTES-BACKEND): la API real no los
+   * manda, por eso son opcionales y cada pantalla tiene que tolerar que
+   * falten.
+   */
+  /** Precio de venta vigente, como texto exacto. */
+  readonly unitPrice?: string | null;
+  /** `false` si la farmacia marcó que no lo tiene. */
+  readonly inStock?: boolean;
+  /** Categoría comercial de la vitrina. */
+  readonly category?: string | null;
+  /** Descripción para el paciente. */
+  readonly description?: string | null;
 }
 
 /** La página de la búsqueda de productos. */
@@ -148,6 +162,33 @@ export interface PharmacyProductDraft {
   readonly requiresPrescription?: boolean;
   readonly coldChainRequired?: boolean;
   readonly identifiers?: readonly PharmacyProductIdentifier[];
+  /*
+   * Extensión del simulador (P47): la API real rechaza estas claves con un
+   * 400 (`forbidNonWhitelisted`) hasta que el DTO las declare.
+   */
+  /** Precio de venta, en bolivianos. */
+  readonly unitPrice?: number;
+  readonly category?: string;
+  readonly description?: string;
+  /** `false` = la farmacia lo carga pero hoy no lo tiene. */
+  readonly inStock?: boolean;
+}
+
+/**
+ * Los cambios a un producto ya publicado (`PATCH`, P47). El código no se
+ * edita: es la identidad del producto dentro de la farmacia. `null` borra el
+ * dato; una clave ausente lo deja como está.
+ */
+export interface PharmacyProductChanges {
+  readonly brandName?: string | null;
+  readonly genericName?: string | null;
+  readonly strengthText?: string | null;
+  readonly packageSizeText?: string | null;
+  readonly requiresPrescription?: boolean | null;
+  readonly unitPrice?: number | null;
+  readonly category?: string | null;
+  readonly description?: string | null;
+  readonly inStock?: boolean;
 }
 
 /** Lo que devuelve el alta de un producto (`ProductResponseDto`). */

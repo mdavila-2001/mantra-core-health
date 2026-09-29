@@ -12,6 +12,7 @@ import {
   ID_PEDIDO_CON_SEGURO,
 } from '../fixtures/pedidos-de-farmacia';
 import { conflict, notFound, preconditionFailed, validation, type MockRequest, type MockRouter } from '../mock-router';
+import { TENANT_TYPES } from '../mock-session';
 import { ahora, Coleccion, contiene, cuerpo, iso, isoDia, masMinutos, nuevoId, texto, uuid } from '../mock-store';
 
 /* ============================================================================
@@ -184,17 +185,81 @@ interface ProductoSimulado {
   readonly medication: { code: string; display: string } | null;
   readonly medicationConceptId: string | null;
   readonly requiresPrescription: boolean | null;
-  /** `null` = sin precio publicado: el alta de producto no fija precio. */
+  /** `null` = sin precio publicado. */
   readonly price: string | null;
   readonly stock: number;
   /** Retirado del catálogo (`DELETE`): borrado lógico, como en la API. */
   readonly retirado?: boolean;
+  /**
+   * La farmacia dijo «no tengo». Es la misma lógica que en la bandeja de
+   * pedidos, donde el mostrador marca un renglón «no disponible»: la farmacia
+   * no lleva un conteo, sólo avisa lo que le falta. Pisa al `stock`.
+   */
+  readonly sinStock?: boolean;
+  /** Categoría comercial de la vitrina (P47: no existe en la API). */
+  readonly category?: string | null;
+  /** Descripción para el paciente (P47: no existe en la API). */
+  readonly description?: string | null;
 }
 
 /** Lo que el catálogo publica: sin los retirados, como `findActiveProducts`. */
 function activos(): ProductoSimulado[] {
   return productos.filtrar((p) => p.retirado !== true);
 }
+
+/** Si la farmacia lo puede vender hoy: no lo marcó sin stock y le queda. */
+function hayStock(p: ProductoSimulado): boolean {
+  return p.sinStock !== true && p.stock > 0;
+}
+
+/** Las categorías de la vitrina, las mismas del mockup del cliente. */
+const CATEGORIA_DE_FORMA: Readonly<Record<string, string>> = {
+  INHALER: 'Medicamentos',
+  CAPSULE: 'Medicamentos',
+  INJECTABLE: 'Medicamentos',
+  TABLET: 'Medicamentos',
+};
+
+/**
+ * Lo que `GET /pharmacy/products` devuelve de un producto. Los cuatro últimos
+ * campos son una **extensión del simulador** (P47): la API real no los tiene.
+ */
+function productoPublico(p: ProductoSimulado) {
+  const { medicationConceptId: _m, price, stock: _s, retirado: _r, sinStock: _x, category, description, ...resto } = p;
+  return {
+    ...resto,
+    unitPrice: price,
+    inStock: hayStock(p),
+    category: category ?? (p.dosageForm ? (CATEGORIA_DE_FORMA[p.dosageForm.code] ?? null) : null),
+    description: description ?? null,
+  };
+}
+
+/**
+ * El medicamento del vademécum al que responde un genérico escrito a mano.
+ * Sin esto, un producto cargado por la farmacia nunca aparecería al buscar
+ * dónde comprar una receta, que busca por concepto.
+ */
+function medicamentoDe(generico: string | null | undefined): { conceptId: string; code: string; display: string } | null {
+  const limpio = (generico ?? '').trim().toLocaleLowerCase('es');
+  if (limpio === '') return null;
+  for (const [code, conceptId] of Object.entries(MEDICAMENTO)) {
+    const display = displayDe(conceptId);
+    if (display.toLocaleLowerCase('es').split(' ')[0] === limpio.split(' ')[0]) {
+      return { conceptId, code, display };
+    }
+  }
+  return null;
+}
+
+/** Un importe escrito como número o texto, a texto con dos decimales. */
+function importeDe(valor: unknown): string | null {
+  const numero = typeof valor === 'number' ? valor : typeof valor === 'string' ? Number(valor) : NaN;
+  return Number.isFinite(numero) && numero > 0 ? numero.toFixed(2) : null;
+}
+
+/** Stock de un producto que la farmacia marca disponible sin dar un conteo. */
+const STOCK_SIN_CONTEO = 100;
 
 const productos = new Coleccion<ProductoSimulado>(
   FARMACIAS.flatMap((f, fi) =>
@@ -444,10 +509,18 @@ function pedidosVisibles(request: MockRequest): PedidoSimulado[] {
 }
 
 export function registrarFarmacia(router: MockRouter): void {
-  router.get('/pharmacy/pharmacies', () => ({
-    items: FARMACIAS.map((f) => ({ id: f.id, code: f.code, name: f.name, siteCount: 1, productCount: activos().filter((p) => p.pharmacyId === f.id).length })),
-    count: FARMACIAS.length,
-  }));
+  router.get('/pharmacy/pharmacies', (request) => {
+    // «Del tenant activo», como la API: quien entra por una farmacia ve la
+    // suya y nada más. Sin tenant de farmacia (el paciente, la plataforma) se
+    // lista el directorio entero, que es lo que esas pantallas esperan.
+    const tenant = request.headers.get('X-Tenant-Id') ?? request.user?.tenants[0] ?? null;
+    const propias = tenant !== null && TENANT_TYPES[tenant] === 'PHARMACY' ? FARMACIAS.filter((f) => f.id === tenant) : [];
+    const visibles = propias.length > 0 ? propias : FARMACIAS;
+    return {
+      items: visibles.map((f) => ({ id: f.id, code: f.code, name: f.name, siteCount: 1, productCount: activos().filter((p) => p.pharmacyId === f.id).length })),
+      count: visibles.length,
+    };
+  });
 
   // Carril A (Ola 0, 2026-09-25) · GET /pharmacy/pharmacies/:id — el perfil de
   // una farmacia. `.filter`, NO `.find`: las 50 sucursales del corpus
@@ -509,9 +582,7 @@ export function registrarFarmacia(router: MockRouter): void {
       .filter((p) => contiene(p.brandName, q) || contiene(p.genericName, q) || contiene(p.productCode, q))
       .filter((p) => conceptId === null || p.medicationConceptId === conceptId)
       .filter((p) => pharmacyId === null || p.pharmacyId === pharmacyId);
-    const items = coinciden
-      .slice(0, limit)
-      .map(({ medicationConceptId: _m, price: _p, stock: _s, retirado: _r, ...p }) => p);
+    const items = coinciden.slice(0, limit).map(productoPublico);
     return { items, limit, truncated: coinciden.length > limit };
   });
 
@@ -531,6 +602,10 @@ export function registrarFarmacia(router: MockRouter): void {
       requiresPrescription: boolean;
       coldChainRequired: boolean;
       identifiers: { identifierType: string; identifierValue: string }[];
+      unitPrice: number;
+      category: string;
+      description: string;
+      inStock: boolean;
     }>(request);
     const codigo = typeof datos.productCode === 'string' ? datos.productCode : '';
     if (codigo.length < 1 || codigo.length > 100) {
@@ -560,6 +635,7 @@ export function registrarFarmacia(router: MockRouter): void {
         { field: excedido[0], message: `No puede pasar de ${excedido[1]} caracteres.` },
       ]);
     }
+    const medicamento = medicamentoDe(datos.genericName);
     const nuevo = productos.agregar({
       id: nuevoId('pharmacy-product'),
       pharmacyId,
@@ -570,11 +646,16 @@ export function registrarFarmacia(router: MockRouter): void {
       strengthText: datos.strengthText ?? null,
       packageSizeText: datos.packageSizeText ?? null,
       dosageForm: null,
-      medication: null,
-      medicationConceptId: null,
+      medication: medicamento === null ? null : c(medicamento.code, medicamento.display),
+      medicationConceptId: medicamento?.conceptId ?? null,
       requiresPrescription: datos.requiresPrescription ?? null,
-      price: null,
-      stock: 0,
+      // Extensión del simulador (P47): precio, categoría, descripción y el
+      // «no tengo». Un producto que se sube disponible entra a la vitrina.
+      price: importeDe(datos.unitPrice),
+      stock: STOCK_SIN_CONTEO,
+      sinStock: datos.inStock === false,
+      category: datos.category ?? null,
+      description: datos.description ?? null,
     });
     return {
       status: 201,
@@ -587,6 +668,49 @@ export function registrarFarmacia(router: MockRouter): void {
         createdAt: ahora(),
       },
     };
+  });
+
+  // P47 · la edición del producto, que la API todavía no publica. Acepta los
+  // mismos campos del alta menos el código, más el «no tengo» (`inStock`).
+  router.patch('/pharmacies/:pharmacyId/products/:productId', (request) => {
+    const producto = productos.get(request.params['productId']!);
+    if (producto === undefined || producto.pharmacyId !== request.params['pharmacyId'] || producto.retirado === true) {
+      return notFound('Producto no encontrado');
+    }
+    const datos = cuerpo<{
+      brandName: string | null;
+      genericName: string | null;
+      strengthText: string | null;
+      packageSizeText: string | null;
+      requiresPrescription: boolean | null;
+      unitPrice: number | null;
+      category: string | null;
+      description: string | null;
+      inStock: boolean;
+    }>(request);
+    const cambios: { -readonly [K in keyof ProductoSimulado]?: ProductoSimulado[K] } = {};
+    const textos = ['brandName', 'genericName', 'strengthText', 'packageSizeText', 'category', 'description'] as const;
+    for (const campo of textos) {
+      if (campo in datos) {
+        const valor = datos[campo];
+        (cambios as Record<string, unknown>)[campo] = typeof valor === 'string' && valor.trim() !== '' ? valor : null;
+      }
+    }
+    if ('requiresPrescription' in datos) cambios.requiresPrescription = datos.requiresPrescription ?? null;
+    if ('unitPrice' in datos) cambios.price = importeDe(datos.unitPrice);
+    if ('inStock' in datos) {
+      cambios.sinStock = datos.inStock === false;
+      // Volver a tenerlo sin conteo previo: queda con el stock «sin conteo».
+      if (datos.inStock === true && producto.stock <= 0) cambios.stock = STOCK_SIN_CONTEO;
+    }
+    if ('genericName' in datos && producto.medicationConceptId === null) {
+      const medicamento = medicamentoDe(datos.genericName);
+      if (medicamento !== null) {
+        cambios.medicationConceptId = medicamento.conceptId;
+        cambios.medication = c(medicamento.code, medicamento.display);
+      }
+    }
+    return productoPublico(productos.actualizar(producto.id, cambios)!);
   });
 
   // UC-24-09 · retiro (borrado lógico). Un producto ya retirado es un 412,
@@ -647,7 +771,7 @@ export function registrarFarmacia(router: MockRouter): void {
     if (farmacia === undefined) return notFound('Sede de farmacia no encontrada');
     const productId = texto(query, 'product');
     const items = activos()
-      .filter((p) => p.pharmacyId === farmacia.id && p.stock > 0)
+      .filter((p) => p.pharmacyId === farmacia.id && hayStock(p))
       .filter((p) => productId === null || p.id === productId)
       .sort((a, b) => (a.genericName ?? a.productCode).localeCompare(b.genericName ?? b.productCode, 'es'))
       .map((p) => ({
@@ -689,8 +813,8 @@ export function registrarFarmacia(router: MockRouter): void {
     const origen = latTexto === null || lngTexto === null ? null : { lat: Number(latTexto), lng: Number(lngTexto) };
     const items = FARMACIAS.map((f) => {
       const enFarmacia = conceptos.map((conceptId) => activos().filter((p) => p.pharmacyId === f.id && p.medicationConceptId === conceptId)[0]);
-      const disponibles = enFarmacia.filter((p): p is ProductoSimulado => p !== undefined && p.stock > 0);
-      const faltantes = ids.filter((_, i) => enFarmacia[i] === undefined || enFarmacia[i]!.stock === 0);
+      const disponibles = enFarmacia.filter((p): p is ProductoSimulado => p !== undefined && hayStock(p));
+      const faltantes = ids.filter((_, i) => enFarmacia[i] === undefined || !hayStock(enFarmacia[i]!));
       const total = disponibles.reduce((s, p) => s + Number(p.price), 0);
       return {
         siteId: f.siteId,
@@ -746,7 +870,7 @@ export function registrarFarmacia(router: MockRouter): void {
       rejectionReasonText: null,
       lineas: (datos.lines ?? []).map((l) => {
         const prod = productos.get(l.productId);
-        const hay = prod !== undefined && prod.stock >= l.quantity;
+        const hay = prod !== undefined && hayStock(prod) && prod.stock >= l.quantity;
         return { productId: l.productId, requestedQuantity: l.quantity, reservedQuantity: hay ? l.quantity : 0, fulfilledQuantity: 0, status: hay ? ('RESERVED' as const) : ('OUT_OF_STOCK' as const) };
       }),
       sustituciones: [],

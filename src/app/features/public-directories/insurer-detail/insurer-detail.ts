@@ -1,3 +1,4 @@
+import { NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { map, tap, type Observable } from 'rxjs';
@@ -14,6 +15,7 @@ import type { PublicPage } from '@core/data-access/public-directory/public-direc
 import { ready } from '@core/view-state/view-state';
 import type { ViewState } from '@core/view-state/view-state.types';
 import { Badge } from '@shared/components/atoms/badge/badge';
+import { AppButton } from '@shared/components/atoms/button/button';
 import { AppButtonLink } from '@shared/components/atoms/button/button-link';
 import { Skeleton } from '@shared/components/atoms/skeleton/skeleton';
 import { Card } from '@shared/components/molecules/card/card';
@@ -49,16 +51,41 @@ export interface FilaDeClausula {
   readonly requisitos: string;
 }
 
+/** Una cobertura del plan dicha en una línea: qué y cuánto cubre. */
+export interface CoberturaDestacada {
+  readonly id: string;
+  readonly cobertura: string;
+  readonly cubre: string;
+}
+
 /** Un plan de la aseguradora, como lo lee quien lo va a contratar. */
 export interface PlanDelMercado {
   readonly id: string;
   readonly nombre: string;
   readonly producto: string;
   readonly segmento: string | null;
+  /**
+   * Qué es y para quién, en una línea: «Salud · Individual y familiar». Es el
+   * rótulo de la tarjeta del plan; el nombre del producto repite el de la
+   * aseguradora, que ya está en el título de la página.
+   */
+  readonly rotulo: string;
   /** La prima mensual formateada, o `null` si la aseguradora no la publicó. */
   readonly prima: string | null;
+  /** El plan de mayor cobertura del producto (`planType` PREMIUM). */
+  readonly mayorCobertura: boolean;
+  /**
+   * Las primeras coberturas, en el orden en que la aseguradora las publicó:
+   * lo que la tarjeta del plan alcanza a decir sin abrir la tabla.
+   */
+  readonly destacadas: readonly CoberturaDestacada[];
+  /** Cuántas coberturas, el tope anual mayor y cuántas piden autorización. */
+  readonly resumen: string;
   readonly clausulas: readonly FilaDeClausula[];
 }
+
+/** Cuántas coberturas se destacan en la tarjeta de un plan. */
+const DESTACADAS = 3;
 
 const SIN_DATO = '—';
 
@@ -95,6 +122,31 @@ function aFila(beneficio: PlanBenefit, moneda: InsuranceConcept | null): FilaDeC
   };
 }
 
+/**
+ * El plan en una frase: «4 coberturas · tope anual de hasta 150.000,00 Bs ·
+ * 1 pide autorización previa». Lo que no se publicó no se dice.
+ */
+function resumenDelPlan(beneficios: readonly PlanBenefit[], moneda: InsuranceConcept | null): string {
+  const partes = [`${beneficios.length} ${beneficios.length === 1 ? 'cobertura' : 'coberturas'}`];
+  // `Number` sólo para comparar: el importe que se muestra es la cadena exacta.
+  const topes = beneficios
+    .map((beneficio) => beneficio.annualLimitAmount)
+    .filter((tope): tope is string => tope !== null);
+  if (topes.length > 0) {
+    const mayor = topes.reduce((a, b) => (Number(b) > Number(a) ? b : a));
+    partes.push(`tope anual de hasta ${importe(mayor, moneda)}`);
+  }
+  const conAutorizacion = beneficios.filter((b) => b.requiresPriorAuthorization === true).length;
+  if (conAutorizacion > 0) {
+    partes.push(
+      conAutorizacion === 1
+        ? '1 pide autorización previa'
+        : `${conAutorizacion} piden autorización previa`,
+    );
+  }
+  return partes.join(' · ');
+}
+
 /** Los planes de todos los productos, en el orden en que la aseguradora los publicó. */
 export function planesDelMercado(carrier: CarrierDetail | null): readonly PlanDelMercado[] {
   if (carrier === null) return [];
@@ -104,10 +156,23 @@ export function planesDelMercado(carrier: CarrierDetail | null): readonly PlanDe
       nombre: plan.name,
       producto: producto.name,
       segmento: producto.marketSegment?.display ?? null,
+      rotulo: [producto.productType.display, producto.marketSegment?.display]
+        .filter((parte): parte is string => parte !== undefined)
+        .join(' · '),
       prima:
         plan.monthlyPremiumAmount === null
           ? null
           : formatKpiAmount(plan.monthlyPremiumAmount, plan.currency),
+      mayorCobertura: plan.planType?.code === 'PREMIUM',
+      destacadas: plan.benefits.slice(0, DESTACADAS).map((beneficio) => ({
+        id: beneficio.id,
+        cobertura: beneficio.category.display,
+        cubre:
+          beneficio.coveragePercent === null
+            ? SIN_DATO
+            : `${beneficio.coveragePercent}\u00a0%`,
+      })),
+      resumen: resumenDelPlan(plan.benefits, plan.currency),
       clausulas: plan.benefits.map((beneficio) => aFila(beneficio, plan.currency)),
     })),
   );
@@ -136,6 +201,13 @@ const COLUMNAS: readonly ColumnDef<FilaDeClausula>[] = [
  * - **Una tarjeta con una pestaña por plan** (regla 6): cada pestaña dice de qué
  *   producto es, cuánto cuesta por mes y la tabla de sus cláusulas —cuánto
  *   cubre, copago, deducible, tope anual, si pide autorización y qué excluye—.
+ * - **Con dos planes o más, la primera pestaña los compara** (29/09/2026,
+ *   «mejorar los visuales»): una tarjeta por plan con la prima al frente, sus
+ *   primeras coberturas y el resumen del resto, y las dos salidas —ver las
+ *   cláusulas, que abre su pestaña, o hablar con el broker—. Es lo que hace que
+ *   la ficha se lea como un mercado y no como una tabla: se elige mirando las
+ *   tarjetas lado a lado y se confirma en la pestaña. Con un solo plan no hay
+ *   nada que comparar y la pestaña sobra.
  * - **Los brokers**, cada uno con «Hablar con el broker», que abre el chat con
  *   `?escribirA=<slug>`. El primero con perfil se ofrece también arriba, junto
  *   a los datos de la aseguradora: es la acción principal de la ficha.
@@ -146,11 +218,13 @@ const COLUMNAS: readonly ColumnDef<FilaDeClausula>[] = [
 @Component({
   selector: 'app-insurer-detail',
   imports: [
+    AppButton,
     AppButtonLink,
     Badge,
     Card,
     DataTable,
     FactList,
+    NgTemplateOutlet,
     PageHeader,
     RouterLink,
     SectionHeading,
@@ -201,6 +275,14 @@ export class InsurerDetail extends PublicCatalogDetail<PlanDelMercado> {
         generatedAt: new Date(),
       })),
     );
+  }
+
+  /** Si la primera pestaña compara los planes: sólo con dos o más. */
+  protected readonly hayComparacion = computed(() => this.items().length > 1);
+
+  /** «Ver cláusulas» de la tarjeta de un plan: abre la pestaña de ese plan. */
+  protected verClausulas(indice: number): void {
+    this.pestana.set(indice + (this.hayComparacion() ? 1 : 0));
   }
 
   protected estadoDeClausulas(plan: PlanDelMercado): ViewState<readonly FilaDeClausula[]> {

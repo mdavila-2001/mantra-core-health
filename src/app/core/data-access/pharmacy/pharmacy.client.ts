@@ -10,6 +10,8 @@ import type {
   PharmacyDetail,
   PharmacyDirectoryPage,
   PharmacyLicensePage,
+  PharmacyProduct,
+  PharmacyProductChanges,
   PharmacyProductCreated,
   PharmacyProductDraft,
   PharmacyProductSearchPage,
@@ -177,6 +179,27 @@ export class PharmacyClient {
     return this.http.post<PharmacyProductCreated>(
       this.url(`/pharmacies/${encodeURIComponent(pharmacyId)}/products`),
       sinVacios(draft),
+    );
+  }
+
+  /**
+   * `PATCH /pharmacies/:pharmacyId/products/:productId` — edita un producto
+   * del catálogo: nombre, presentación, precio, categoría, descripción y si
+   * hoy lo tiene o no (`inStock`).
+   *
+   * **Sólo existe en el simulador** (P47): la API real no publica edición de
+   * productos. Devuelve el producto como lo lista la búsqueda.
+   */
+  updateProduct(
+    pharmacyId: string,
+    productId: string,
+    changes: PharmacyProductChanges,
+  ): Observable<PharmacyProduct> {
+    return this.http.patch<PharmacyProduct>(
+      this.url(
+        `/pharmacies/${encodeURIComponent(pharmacyId)}/products/${encodeURIComponent(productId)}`,
+      ),
+      changes,
     );
   }
 

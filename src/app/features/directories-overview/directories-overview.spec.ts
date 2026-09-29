@@ -105,11 +105,13 @@ describe('DirectoriesOverview', () => {
 
       const barra = root().querySelector('app-filter-bar app-search-field');
       expect(barra).not.toBeNull();
-      expect(barra?.textContent).toContain('médicos, laboratorios, clínicas y farmacias');
+      expect(barra?.textContent).toContain(
+        'médicos, laboratorios, clínicas, farmacias y aseguradoras',
+      );
       expect(root().querySelector('.mapa__nodos')).not.toBeNull();
     });
 
-    it('un término busca en los cuatro directorios y agrupa lo encontrado por directorio', async () => {
+    it('un término busca en los cinco directorios y agrupa lo encontrado por directorio', async () => {
       abrirSesion(['PRACTITIONER']);
       await TestBed.inject(Router).navigateByUrl('/directories?q=central');
       crear();
@@ -152,6 +154,10 @@ describe('DirectoriesOverview', () => {
         totalHint: 1,
         generatedAt: '2026-09-19T00:00:00Z',
       });
+      http
+        .expectOne((pedido) => pedido.url.endsWith('/public/search/insurers'))
+        .flush(PAGINA_VACIA);
+      http.verify();
       fixture.detectChanges();
 
       expect(root().querySelector('.mapa__nodos')).toBeNull();
@@ -161,6 +167,58 @@ describe('DirectoriesOverview', () => {
       ]);
       const tarjeta = root().querySelector<HTMLAnchorElement>('li[app-result-card] a');
       expect(tarjeta?.getAttribute('href')).toBe('/pharmacies-directory/farmacia-central');
+    });
+
+    it('una aseguradora se encuentra desde la portada y su tarjeta abre la ficha con los planes (29/09/2026)', async () => {
+      abrirSesion(['PATIENT']);
+      await TestBed.inject(Router).navigateByUrl(
+        '/directories?q=vitalicia&directorio=insurers-directory',
+      );
+      crear();
+
+      const http = TestBed.inject(HttpTestingController);
+      const aseguradoras = http.expectOne((pedido) =>
+        pedido.url.endsWith('/public/search/insurers'),
+      );
+      expect(aseguradoras.request.params.get('q')).toBe('vitalicia');
+      aseguradoras.flush({
+        items: [
+          {
+            kind: 'INSURER',
+            slug: 'la-vitalicia-seguros-y-reaseguros-de-vida-s-a',
+            displayName: 'LA VITALICIA SEGUROS Y REASEGUROS DE VIDA S.A.',
+            headline: 'Aseguradora de personas · cubre salud',
+            city: 'Bolivia',
+            avatarUrl: null,
+            verified: false,
+            ratingAverage: null,
+            ratingCount: 0,
+            coverUrl: null,
+            address: null,
+            location: null,
+            hasPublishedAgenda: false,
+            nextAvailableDate: null,
+            category: null,
+          },
+        ],
+        nextCursor: null,
+        totalHint: 1,
+        generatedAt: '2026-09-29T00:00:00Z',
+      });
+      http.verify();
+      fixture.detectChanges();
+
+      const rotulos = [...root().querySelectorAll('.directorio__rotulo')];
+      expect(rotulos.map((rotulo) => rotulo.textContent)).toEqual([
+        expect.stringContaining('Directorio de aseguradoras'),
+      ]);
+      const tarjeta = root().querySelector<HTMLAnchorElement>('li[app-result-card] a');
+      expect(tarjeta?.getAttribute('href')).toBe(
+        '/insurers-directory/la-vitalicia-seguros-y-reaseguros-de-vida-s-a',
+      );
+      expect(root().querySelector('app-search-field')?.textContent).toContain(
+        'Buscar aseguradoras por nombre',
+      );
     });
   });
 
@@ -172,7 +230,7 @@ describe('DirectoriesOverview', () => {
         .map((opcion) => opcion.textContent?.trim() ?? '');
     }
 
-    it('va en la misma fila que el buscador, con «Todos» y los cuatro directorios', () => {
+    it('va en la misma fila que el buscador, con «Todos» y los cinco directorios', () => {
       abrirSesion(['PRACTITIONER']);
       crear();
 
@@ -185,6 +243,7 @@ describe('DirectoriesOverview', () => {
         'Laboratorios',
         'Clínicas',
         'Farmacias',
+        'Aseguradoras',
       ]);
     });
 

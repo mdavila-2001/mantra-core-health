@@ -103,10 +103,10 @@ describe('PharmacyCatalog', () => {
   it('con una sola farmacia no pregunta cuál y lista su catálogo', () => {
     montar();
 
-    expect(raiz().querySelector('app-select')).toBeNull();
+    expect(raiz().querySelector('.catalogo__farmacia')).toBeNull();
     expect(texto()).toContain('Paracetamol Bagó');
     expect(texto()).toContain('PAR-500');
-    expect(texto()).toContain('1 producto publicado');
+    expect(raiz().querySelector('[data-testid="catalogo-resumen"]')?.textContent).toMatch(/Productos publicados\s+1\b/);
   });
 
   it('una búsqueda vieja que vuelve tarde no pisa a la nueva', () => {
@@ -159,6 +159,7 @@ describe('PharmacyCatalog', () => {
         strengthText: '400 mg',
         requiresPrescription: false,
         identifiers: [{ identifierType: 'GTIN', identifierValue: '7501031311309' }],
+        inStock: true,
       });
       alta.flush({ id: 'p-2', pharmacyId: FARMACIA.id, productCode: 'IBU-400', status: 's', identifierCount: 1, createdAt: '' }, { status: 201, statusText: 'Created' });
       fixture.detectChanges();
@@ -170,7 +171,7 @@ describe('PharmacyCatalog', () => {
 
       expect(interno().pestana()).toBe(0);
       expect(texto()).toContain('IBU-400');
-      expect(texto()).toContain('2 productos publicados');
+      expect(raiz().querySelector('[data-testid="catalogo-resumen"]')?.textContent).toMatch(/Productos publicados\s+2\b/);
     });
 
     it('no llama a la API si faltan datos, y dice todo lo que falta', () => {
@@ -212,6 +213,46 @@ describe('PharmacyCatalog', () => {
     expect(texto()).toContain('Tu catálogo todavía no tiene productos.');
   });
 
+  it('«marcar sin stock» avisa a la API y relee el catálogo, como un renglón no disponible de un pedido', async () => {
+    montar([producto({ inStock: true, unitPrice: '18.50' })]);
+
+    await interno().alElegirAccion('sin-stock', producto({}));
+    const cambio = http.expectOne(`/pharmacies/${FARMACIA.id}/products/p-1`);
+    expect(cambio.request.method).toBe('PATCH');
+    expect(cambio.request.body).toEqual({ inStock: false });
+    cambio.flush(producto({ inStock: false }));
+
+    esperarListado([producto({ inStock: false, unitPrice: '18.50' })]);
+    expect(raiz().querySelector('[data-testid="catalogo-sin-stock"]')?.textContent?.trim()).toBe('1');
+    expect(texto()).toContain('Sin stock');
+    expect(texto()).toContain('Bs 18.50');
+  });
+
+  it('editar abre el formulario con el producto y guarda con PATCH, sin tocar el código', async () => {
+    montar([producto({ unitPrice: '18.50', category: 'Medicamentos' })]);
+
+    await interno().alElegirAccion('editar', producto({ unitPrice: '18.50', category: 'Medicamentos' }));
+    fixture.detectChanges();
+    expect(interno().pestana()).toBe(1);
+    expect(raiz().querySelector('[data-testid="catalogo-editando"]')).not.toBeNull();
+
+    (raiz().querySelector('[data-testid="catalogo-guardar"]') as HTMLButtonElement).click();
+    fixture.detectChanges();
+
+    const guardado = http.expectOne(`/pharmacies/${FARMACIA.id}/products/p-1`);
+    expect(guardado.request.method).toBe('PATCH');
+    expect(guardado.request.body).toMatchObject({
+      brandName: 'Paracetamol Bagó',
+      unitPrice: 18.5,
+      category: 'Medicamentos',
+      inStock: true,
+    });
+    expect(guardado.request.body).not.toHaveProperty('productCode');
+    guardado.flush(producto({}));
+    esperarListado([producto({})]);
+    expect(interno().pestana()).toBe(0);
+  });
+
   it('no retira nada si se cancela la confirmación', async () => {
     montar();
     confirmar = false;
@@ -244,9 +285,9 @@ describe('PharmacyCatalog', () => {
       await subir(CSV);
 
       const revision = raiz().querySelector('[data-testid="catalogo-revision"]')?.textContent ?? '';
-      expect(revision).toMatch(/2\s+filas listas/);
-      expect(revision).toMatch(/2\s+filas a corregir/);
-      expect(texto()).toContain('ya está en tu catálogo');
+      expect(revision).toMatch(/2\s+productos nuevos/);
+      expect(revision).toMatch(/1\s+se actualiza/);
+      expect(revision).toMatch(/1\s+fila a corregir/);
       http.expectNone(`/pharmacies/${FARMACIA.id}/products`);
     });
 
@@ -259,15 +300,36 @@ describe('PharmacyCatalog', () => {
 
       // Una sola en vuelo: la segunda sale cuando vuelve la primera.
       const primera = http.expectOne(`/pharmacies/${FARMACIA.id}/products`);
-      expect(primera.request.body).toEqual({ productCode: 'A-1', brandName: 'Uno', requiresPrescription: false });
+      expect(primera.request.body).toEqual({
+        productCode: 'A-1',
+        brandName: 'Uno',
+        requiresPrescription: false,
+        inStock: true,
+      });
       primera.flush({ id: 'n-1' }, { status: 201, statusText: 'Created' });
 
       const segunda = http.expectOne(`/pharmacies/${FARMACIA.id}/products`);
-      expect(segunda.request.body).toEqual({ productCode: 'A-2', genericName: 'Dos', requiresPrescription: true });
+      expect(segunda.request.body).toEqual({
+        productCode: 'A-2',
+        genericName: 'Dos',
+        requiresPrescription: true,
+        inStock: true,
+      });
       segunda.flush(
         { statusCode: 409, code: 'CONFLICT', message: 'Ya existe un producto con ese código en la farmacia' },
         { status: 409, statusText: 'Conflict' },
       );
+
+      // El código que ya estaba no se da de alta: se actualiza, y lo vacío
+      // de la fila no pisa lo que el producto ya tenía.
+      const tercera = http.expectOne(`/pharmacies/${FARMACIA.id}/products/p-1`);
+      expect(tercera.request.method).toBe('PATCH');
+      expect(tercera.request.body).toEqual({
+        brandName: 'Ya está',
+        requiresPrescription: false,
+        inStock: true,
+      });
+      tercera.flush(producto({ brandName: 'Ya está' }));
       fixture.detectChanges();
 
       // Hubo al menos un alta: se relee el catálogo.
@@ -275,6 +337,7 @@ describe('PharmacyCatalog', () => {
 
       const resultado = raiz().querySelector('[data-testid="catalogo-resultado"]')?.textContent ?? '';
       expect(resultado).toMatch(/1\s+producto publicado/);
+      expect(resultado).toMatch(/1\s+actualizado/);
       expect(resultado).toMatch(/1\s+rechazados por la API/);
       expect(texto()).toContain('Ya existe un producto con ese código');
     });

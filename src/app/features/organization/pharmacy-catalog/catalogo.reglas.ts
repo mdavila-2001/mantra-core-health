@@ -1,4 +1,5 @@
 import type {
+  PharmacyProductChanges,
   PharmacyProductDraft,
   PharmacyProductIdentifier,
 } from '../../../core/data-access/pharmacy/pharmacy.types';
@@ -27,6 +28,20 @@ export const LARGO_MAXIMO_DEL_DETALLE = 200;
 export const FILAS_MAXIMAS_POR_CARGA = 500;
 /** Tamaño máximo del archivo: 500 filas de catálogo no llegan ni a 100 kB. */
 export const BYTES_MAXIMOS_DEL_ARCHIVO = 1024 * 1024;
+/** Tope de la descripción para el paciente. */
+export const LARGO_MAXIMO_DE_LA_DESCRIPCION = 2000;
+/** Precio máximo aceptado, en bolivianos: atrapa un separador de miles de más. */
+export const PRECIO_MAXIMO = 1_000_000;
+
+/** Las categorías de la vitrina: las del mockup del cliente. */
+export const CATEGORIAS = [
+  'Medicamentos',
+  'Dermocosmética',
+  'Cuidado personal',
+  'Bebé y maternidad',
+  'Dispositivos',
+  'Bienestar',
+] as const;
 
 /**
  * Lo que se carga de un producto, como texto tal cual se escribió.
@@ -45,6 +60,16 @@ export interface CamposDelProducto {
   readonly cadenaDeFrio: string;
   /** El GTIN impreso bajo el código de barras. Opcional. */
   readonly codigoDeBarras: string;
+  /** Precio de venta en bolivianos, con punto o coma decimal. */
+  readonly precio: string;
+  /** Una de {@link CATEGORIAS}, sin importar mayúsculas ni tildes. */
+  readonly categoria: string;
+  readonly descripcion: string;
+  /**
+   * Si hoy lo tiene: sí/no, «agotado», o un número de unidades (0 = no).
+   * Vacío = sí: se carga lo que se vende.
+   */
+  readonly disponible: string;
 }
 
 export const CAMPOS_VACIOS: CamposDelProducto = {
@@ -56,6 +81,10 @@ export const CAMPOS_VACIOS: CamposDelProducto = {
   receta: '',
   cadenaDeFrio: '',
   codigoDeBarras: '',
+  precio: '',
+  categoria: '',
+  descripcion: '',
+  disponible: '',
 };
 
 /** El resultado de revisar un producto: el alta lista, o por qué no. */
@@ -83,6 +112,7 @@ export function revisarProducto(campos: CamposDelProducto): RevisionDelProducto 
   const concentracion = campos.concentracion.trim();
   const presentacion = campos.presentacion.trim();
   const codigoDeBarras = campos.codigoDeBarras.replace(/\s+/g, '');
+  const descripcion = campos.descripcion.trim();
 
   if (codigo === '') {
     errores.push('Falta el código del producto.');
@@ -125,6 +155,24 @@ export function revisarProducto(campos: CamposDelProducto): RevisionDelProducto 
     );
   }
 
+  const precio = precioDe(campos.precio);
+  if (precio === 'invalido') {
+    errores.push(
+      `El precio va en bolivianos, mayor que 0 y hasta ${PRECIO_MAXIMO.toLocaleString('es-BO')}, con punto o coma y hasta dos decimales (sin separador de miles).`,
+    );
+  }
+  const categoria = categoriaDe(campos.categoria);
+  if (categoria === 'invalido') {
+    errores.push(`La categoría tiene que ser una de estas: ${CATEGORIAS.join(', ')}.`);
+  }
+  if (descripcion.length > LARGO_MAXIMO_DE_LA_DESCRIPCION) {
+    errores.push(`La descripción no puede pasar de ${LARGO_MAXIMO_DE_LA_DESCRIPCION} caracteres.`);
+  }
+  const disponible = disponibilidadDe(campos.disponible);
+  if (disponible === 'invalido') {
+    errores.push('«Disponible» se responde con sí, no, «agotado» o la cantidad que tenés.');
+  }
+
   if (errores.length > 0) {
     return { valido: false, errores };
   }
@@ -145,8 +193,85 @@ export function revisarProducto(campos: CamposDelProducto): RevisionDelProducto 
         ? {}
         : { coldChainRequired: cadenaDeFrio }),
       ...(identificadores.length === 0 ? {} : { identifiers: identificadores }),
+      ...(precio === null || precio === 'invalido' ? {} : { unitPrice: precio }),
+      ...(categoria === null || categoria === 'invalido' ? {} : { category: categoria }),
+      ...(descripcion === '' ? {} : { description: descripcion }),
+      inStock: disponible !== false,
     },
   };
+}
+
+/**
+ * Los cambios que un alta revisada le hace a un producto que ya existe.
+ *
+ * - `completo` (el formulario de edición): lo que está vacío se **borra**,
+ *   porque la persona lo vació a propósito.
+ * - Sin `completo` (una fila del CSV): lo vacío **se deja como está**. Una
+ *   planilla con la columna de precio en blanco no tiene que borrarle el
+ *   precio a 300 productos.
+ */
+export function cambiosDelBorrador(
+  borrador: PharmacyProductDraft,
+  completo: boolean,
+): PharmacyProductChanges {
+  const valor = <T>(dato: T | undefined): T | null | undefined =>
+    dato !== undefined ? dato : completo ? null : undefined;
+  const cambios: Record<string, unknown> = {
+    brandName: valor(borrador.brandName),
+    genericName: valor(borrador.genericName),
+    strengthText: valor(borrador.strengthText),
+    packageSizeText: valor(borrador.packageSizeText),
+    requiresPrescription: valor(borrador.requiresPrescription),
+    unitPrice: valor(borrador.unitPrice),
+    category: valor(borrador.category),
+    description: valor(borrador.description),
+    inStock: borrador.inStock ?? true,
+  };
+  return Object.fromEntries(
+    Object.entries(cambios).filter(([, dato]) => dato !== undefined),
+  ) as PharmacyProductChanges;
+}
+
+/** `null` = no se puso precio. */
+function precioDe(texto: string): number | null | 'invalido' {
+  const limpio = texto.trim().replace(/^bs\.?\s*/i, '');
+  if (limpio === '') {
+    return null;
+  }
+  if (!/^\d+([.,]\d{1,2})?$/.test(limpio)) {
+    return 'invalido';
+  }
+  const numero = Number(limpio.replace(',', '.'));
+  return numero > 0 && numero <= PRECIO_MAXIMO ? numero : 'invalido';
+}
+
+/** La categoría con su grafía canónica, o `null` si no se puso. */
+function categoriaDe(texto: string): string | null | 'invalido' {
+  const limpio = sinTildes(texto.trim());
+  if (limpio === '') {
+    return null;
+  }
+  return CATEGORIAS.find((categoria) => sinTildes(categoria) === limpio) ?? 'invalido';
+}
+
+/** Si la farmacia lo tiene hoy. Vacío = sí. */
+function disponibilidadDe(texto: string): boolean | 'invalido' {
+  const limpio = sinTildes(texto.trim());
+  if (limpio === '' || limpio === 'disponible' || limpio === 'en stock' || limpio === 'con stock') {
+    return true;
+  }
+  if (limpio === 'agotado' || limpio === 'sin stock' || limpio === 'no disponible') {
+    return false;
+  }
+  if (/^\d+$/.test(limpio)) {
+    return Number(limpio) > 0;
+  }
+  const respuesta = siONo(limpio);
+  return respuesta === null || respuesta === 'invalido' ? 'invalido' : respuesta;
+}
+
+function sinTildes(texto: string): string {
+  return texto.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 }
 
 /** `null` = no se declaró; así el backend guarda «sin dato» y no un «no» inventado. */
@@ -240,6 +365,30 @@ export const COLUMNAS_DEL_CSV: readonly ColumnaDelCsv[] = [
     campo: 'codigoDeBarras',
     alias: ['codigo_de_barras', 'gtin', 'ean', 'barcode'],
     descripcion: 'GTIN/EAN de 8, 12, 13 o 14 dígitos.',
+  },
+  {
+    encabezado: 'precio',
+    campo: 'precio',
+    alias: ['precio_venta', 'precio_de_venta', 'pvp', 'price'],
+    descripcion: 'En Bs. Ej. 18,50.',
+  },
+  {
+    encabezado: 'categoria',
+    campo: 'categoria',
+    alias: ['rubro', 'category'],
+    descripcion: CATEGORIAS.join(' · '),
+  },
+  {
+    encabezado: 'descripcion',
+    campo: 'descripcion',
+    alias: ['detalle', 'description'],
+    descripcion: 'Lo que lee el paciente.',
+  },
+  {
+    encabezado: 'disponible',
+    campo: 'disponible',
+    alias: ['stock', 'en_stock', 'hay_stock', 'disponibilidad', 'existencias'],
+    descripcion: 'sí / no / agotado, o la cantidad (0 = sin stock). Vacío = sí.',
   },
 ];
 
@@ -515,6 +664,9 @@ function sinApostrofoDeFormula(valor: string): string {
 /** Por qué una fila no se va a mandar. */
 export type MotivoDeRechazo = 'INVALIDA' | 'REPETIDA_EN_EL_ARCHIVO' | 'YA_EN_EL_CATALOGO';
 
+/** Qué hace una carga con los códigos que ya están en el catálogo. */
+export type ModoDeCarga = 'CREAR_Y_ACTUALIZAR' | 'SOLO_CREAR';
+
 /** Una fila revisada: lista para mandar, o con sus motivos. */
 export type FilaRevisada =
   | {
@@ -522,6 +674,10 @@ export type FilaRevisada =
       readonly campos: CamposDelProducto;
       readonly lista: true;
       readonly borrador: PharmacyProductDraft;
+      /** Alta nueva, o cambios a un producto que ya existe. */
+      readonly accion: 'CREAR' | 'ACTUALIZAR';
+      /** El producto a actualizar; `null` en un alta. */
+      readonly productId: string | null;
     }
   | {
       readonly numero: number;
@@ -537,12 +693,13 @@ export type FilaRevisada =
  *
  * - **Un código repetido dentro del archivo se rechaza en todas sus filas**:
  *   elegir una por el orden sería decidir en silencio cuál vale.
- * - **Un código que ya está en el catálogo se rechaza**: el backend no publica
- *   una edición de producto, y mandarlo terminaría en un 409 igual.
+ * - **Un código que ya está en el catálogo se actualiza** con lo que traiga
+ *   la fila (en `CREAR_Y_ACTUALIZAR`), o se rechaza (en `SOLO_CREAR`).
  */
 export function revisarCarga(
   filas: readonly FilaDelCsv[],
-  codigosDelCatalogo: ReadonlySet<string>,
+  catalogo: ReadonlyMap<string, string>,
+  modo: ModoDeCarga = 'CREAR_Y_ACTUALIZAR',
 ): FilaRevisada[] {
   const vecesPorCodigo = new Map<string, number>();
   for (const fila of filas) {
@@ -575,15 +732,18 @@ export function revisarCarga(
         errores: [`El código ${codigo} aparece más de una vez en el archivo.`],
       };
     }
-    if (codigosDelCatalogo.has(codigo)) {
-      return {
-        ...fila,
-        lista: false,
-        motivo: 'YA_EN_EL_CATALOGO',
-        errores: [`El código ${codigo} ya está en tu catálogo.`],
-      };
+    const existente = catalogo.get(codigo);
+    if (existente !== undefined) {
+      return modo === 'SOLO_CREAR'
+        ? {
+            ...fila,
+            lista: false,
+            motivo: 'YA_EN_EL_CATALOGO',
+            errores: [`El código ${codigo} ya está en tu catálogo (elegiste «solo crear nuevos»).`],
+          }
+        : { ...fila, lista: true, borrador: revision.borrador, accion: 'ACTUALIZAR', productId: existente };
     }
-    return { ...fila, lista: true, borrador: revision.borrador };
+    return { ...fila, lista: true, borrador: revision.borrador, accion: 'CREAR', productId: null };
   });
 }
 
@@ -598,6 +758,10 @@ export const FILAS_DE_EJEMPLO: readonly CamposDelProducto[] = [
     receta: 'no',
     cadenaDeFrio: 'no',
     codigoDeBarras: '',
+    precio: '18,50',
+    categoria: 'Medicamentos',
+    descripcion: 'Analgésico y antifebril de venta libre.',
+    disponible: 'sí',
   },
   {
     codigo: 'AMX-500-21',
@@ -608,6 +772,10 @@ export const FILAS_DE_EJEMPLO: readonly CamposDelProducto[] = [
     receta: 'sí',
     cadenaDeFrio: 'no',
     codigoDeBarras: '',
+    precio: '42',
+    categoria: 'Medicamentos',
+    descripcion: '',
+    disponible: 'agotado',
   },
   {
     codigo: 'INS-NPH-10',
@@ -618,5 +786,9 @@ export const FILAS_DE_EJEMPLO: readonly CamposDelProducto[] = [
     receta: 'sí',
     cadenaDeFrio: 'sí',
     codigoDeBarras: '',
+    precio: '185',
+    categoria: 'Medicamentos',
+    descripcion: 'Mantener refrigerado entre 2 y 8 °C.',
+    disponible: '12',
   },
 ];
