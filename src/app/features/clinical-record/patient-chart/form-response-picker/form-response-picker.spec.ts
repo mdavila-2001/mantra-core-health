@@ -84,6 +84,13 @@ describe('FormResponsePicker', () => {
     expect(aviso?.textContent).toContain('Formulario médico');
   });
 
+  it('la API real manda `closedAt: null` en la abierta, y tampoco cuenta', () => {
+    responder([{ ...instancia('inst-abierta'), closedAt: null }, instancia('inst-1', '2026-09-26T10:00:00Z')]);
+
+    expect(fixture.componentInstance.seleccionada()).toBe('inst-1');
+    expect(deshabilitado()).toBe(true);
+  });
+
   it('sin encuentro no pregunta nada y lo dice', () => {
     fixture.componentRef.setInput('encounterId', null);
     fixture.detectChanges();

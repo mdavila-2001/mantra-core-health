@@ -1204,6 +1204,52 @@ describe('PractitionerProfileView', () => {
     });
   });
 
+  /* -- Con qué seguros trabaja (28/09/2026) ------------------------------- */
+
+  describe('los seguros con los que trabaja', () => {
+    const SEGUROS = [
+      { id: 'c-1', aseguradora: 'Alianza Seguros', red: 'Red médica Alianza Seguros' },
+      { id: 'c-2', aseguradora: 'Seguros Andina', red: 'Red Preferente · Red Oro' },
+    ];
+
+    it('los muestra en «Datos personales», uno por aseguradora, con la red en el título', () => {
+      const host = montar({ ...PERFIL, seguros: SEGUROS }, true);
+      const renglon = host.querySelector('[data-testid="perfil-seguros"]');
+      const chips = [...host.querySelectorAll<HTMLElement>('[data-testid="perfil-seguro"]')];
+
+      expect(renglon?.querySelector('dt')?.textContent?.trim()).toBe('Seguros con los que trabaja');
+      expect(chips.map((chip) => chip.textContent?.trim())).toEqual([
+        'Alianza Seguros',
+        'Seguros Andina',
+      ]);
+      expect(chips[1]?.getAttribute('title')).toBe('Red Preferente · Red Oro');
+      expect(renglon?.querySelector('[role="list"]')).not.toBeNull();
+    });
+
+    it('sin ninguna aseguradora lo dice, en vez de dejar el renglón vacío', () => {
+      const host = montar({ ...PERFIL, seguros: [] }, true);
+
+      expect(host.querySelector('[data-testid="perfil-seguros"]')?.textContent).toContain(
+        'Ninguna aseguradora te tiene en su red todavía',
+      );
+      expect(host.querySelector('[data-testid="perfil-seguro"]')).toBeNull();
+    });
+
+    it('con la lectura caída dice que no se pudo traer, no que no hay ninguna', () => {
+      const host = montar({ ...PERFIL, seguros: null }, true);
+      const renglon = host.querySelector('[data-testid="perfil-seguros"]');
+
+      expect(renglon?.querySelector('[data-testid="perfil-seguros-error"]')).not.toBeNull();
+      expect(renglon?.textContent).not.toContain('Ninguna aseguradora');
+    });
+
+    it('una ficha que no los pregunta no dibuja el renglón', () => {
+      const host = montar(PERFIL, true);
+
+      expect(host.querySelector('[data-testid="perfil-seguros"]')).toBeNull();
+    });
+  });
+
   /* -- «Dónde atiendo» después de C-01 y C-02 (doctor, 20/09/2026) --------- */
 
   describe('la pestaña «Dónde atiendo»', () => {

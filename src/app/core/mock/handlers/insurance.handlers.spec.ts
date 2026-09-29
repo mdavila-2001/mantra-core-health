@@ -1,5 +1,7 @@
 import { HttpHeaders } from '@angular/common/http';
 
+import { INSURER_NETWORK_PRACTITIONERS } from '../fixtures/insurer-network.generated';
+import { MEDICA } from '../fixtures/personas';
 import { registrarSeguros } from './insurance.handlers';
 import { MockRouter, type MockMethod, type MockReply } from '../mock-router';
 import { buscarUsuario, type MockUser } from '../mock-session';
@@ -341,5 +343,56 @@ describe('handlers de seguros · aseguradoras de un profesional', () => {
     const reply = get<{ status: number }>('/practitioners/no-existe/insurance-carriers');
 
     expect(reply.status).toBe(404);
+  });
+});
+
+describe('handlers de seguros · con qué aseguradoras trabaja un profesional', () => {
+  const router = new MockRouter();
+  const medica = buscarUsuario('medica')!;
+
+  registrarSeguros(router);
+
+  interface Pagina {
+    readonly items: readonly { readonly carrierId: string; readonly carrierName: string }[];
+    readonly count: number;
+  }
+
+  function redes(profileId: string): Pagina {
+    const path = `/practitioners/${profileId}/insurance-networks`;
+    const match = router.match('GET', path);
+    if (match === null) throw new Error(`No existe GET ${path}`);
+    return match.handler({
+      method: 'GET',
+      path,
+      params: match.params,
+      query: new URLSearchParams(),
+      body: null,
+      headers: new HttpHeaders(),
+      user: medica,
+    }) as Pagina;
+  }
+
+  it('la médica de la demo trabaja con tres aseguradoras del catálogo', () => {
+    const pagina = redes(MEDICA.id);
+
+    expect(pagina.count).toBe(3);
+    expect(pagina.items.map((red) => red.carrierName)).toEqual([
+      'Seguros Andina',
+      'Alianza Seguros',
+      'Caja Nacional de Salud',
+    ]);
+  });
+
+  it('un médico de la red importada trae las aseguradoras que lo publican', () => {
+    const importado = INSURER_NETWORK_PRACTITIONERS[0]!;
+    const pagina = redes(uuid(`hpid-${importado.id}`));
+
+    expect(pagina.items.map((red) => red.carrierName)).toEqual(
+      importado.networks.map((red) => red.insurer),
+    );
+  });
+
+  it('quien no figura en ninguna red recibe una lista vacía, no un error', () => {
+    expect(redes('00000000-0000-0000-0000-000000000000')).toEqual({ items: [], count: 0 });
   });
 });

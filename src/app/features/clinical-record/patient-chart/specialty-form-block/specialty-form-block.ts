@@ -984,7 +984,7 @@ export class SpecialtyFormBlock {
   protected descargarPdf(): void {
     const detalle = this.formularioRespondido();
     if (detalle === null) return;
-    const cierre = detalle.closedAt === undefined ? undefined : new Date(detalle.closedAt);
+    const cierre = detalle.closedAt == null ? undefined : new Date(detalle.closedAt);
     downloadFormResponsePdf({
       id: detalle.id,
       titulo: this.tituloDeLaRespuesta(),

@@ -25,6 +25,8 @@ import type {
   CarrierSummary,
   Plan,
   PlanBenefit,
+  PractitionerInsuranceNetwork,
+  PractitionerInsuranceNetworkPage,
   Product,
   PractitionerInsuranceCarrier,
   ProviderNetwork,
@@ -73,6 +75,14 @@ type WireProduct = Omit<Product, 'plans'> & {
 };
 
 type WireNetwork = Omit<ProviderNetwork, 'effectiveFrom' | 'effectiveTo'> & {
+  readonly effectiveFrom: string | null;
+  readonly effectiveTo: string | null;
+};
+
+type WirePractitionerNetwork = Omit<
+  PractitionerInsuranceNetwork,
+  'effectiveFrom' | 'effectiveTo'
+> & {
   readonly effectiveFrom: string | null;
   readonly effectiveTo: string | null;
 };
@@ -241,6 +251,36 @@ export class InsuranceClient {
         map((body) => ({
           carrier: body.carrier === null ? null : toCarrierDetail(body.carrier),
           brokers: body.brokers,
+        })),
+      );
+  }
+
+  /**
+   * `GET /practitioners/:profileId/insurance-networks` — con qué aseguradoras
+   * trabaja el profesional: sus membresías activas en redes de prestadores.
+   *
+   * Una lista vacía es un estado normal —ninguna aseguradora lo sumó a su red—
+   * y quien la reciba tiene que decirlo así, nunca como un fallo.
+   *
+   * @param practitionerProfileId - Profesional consultado.
+   * @returns Una fila por red, con la aseguradora dueña de la red.
+   */
+  listNetworksOfPractitioner(
+    practitionerProfileId: string,
+  ): Observable<PractitionerInsuranceNetworkPage> {
+    return this.http
+      .get<{
+        readonly items: readonly WirePractitionerNetwork[];
+        readonly count: number;
+      }>(this.url(`/practitioners/${encodeURIComponent(practitionerProfileId)}/insurance-networks`))
+      .pipe(
+        map((body) => ({
+          items: body.items.map((item) => ({
+            ...item,
+            effectiveFrom: maybeDateOnly(item.effectiveFrom) ?? null,
+            effectiveTo: maybeDateOnly(item.effectiveTo) ?? null,
+          })),
+          count: body.count,
         })),
       );
   }
