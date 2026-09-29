@@ -1,6 +1,7 @@
 import { CORREDORES_CON_PERFIL, vitrinas } from '../fixtures/comunidad';
 import { conceptoPorId } from '../fixtures/conceptos';
-import { PACIENTES, PACIENTE } from '../fixtures/personas';
+import { INSURER_NETWORK_PRACTITIONERS } from '../fixtures/insurer-network.generated';
+import { MEDICA, PACIENTES, PACIENTE } from '../fixtures/personas';
 import { forbidden, notFound, type MockRequest, type MockRouter } from '../mock-router';
 import { TENANT_ASEGURADORA } from '../mock-session';
 import {
@@ -723,6 +724,85 @@ export function pendienteDeAseguradoras(): { monto: string; solicitudes: number 
   return { monto: (centavos / 100).toFixed(2), solicitudes: cuantas };
 }
 
+/* ---- con qué aseguradoras trabaja un profesional ----------------------------
+   `GET /practitioners/:id/insurance-networks`. La API real todavía no la sirve
+   (`docs/pendientes-backend-seguros-del-medico.md`); la forma es la que pide
+   ahí el contrato.
+
+   Dos fuentes, y ninguna inventa nada sobre alguien real:
+
+   - La médica escrita a mano (`MEDICA`) es ficticia: se le dan tres redes del
+     catálogo del simulador, con la red y el id que ya sirve
+     `GET /insurance-carriers/:id`, para que la misma red se lea igual desde
+     las dos puntas.
+   - Los médicos de la red importada (`insurer-network.generated.ts`) traen lo
+     que su aseguradora publica: en qué red figuran. La fuente no publica desde
+     cuándo, así que la vigencia viaja nula en vez de fabricarse. */
+
+interface RedDelProfesional {
+  readonly membershipId: string;
+  readonly carrierId: string;
+  readonly carrierName: string;
+  readonly networkName: string;
+  readonly effectiveFrom: string | null;
+  readonly effectiveTo: string | null;
+}
+
+function redDelCatalogo(
+  profesionalId: string,
+  aseguradora: (typeof ASEGURADORAS)[number],
+  desde: string,
+): RedDelProfesional {
+  return {
+    membershipId: uuid(`membership-${profesionalId}-${aseguradora.id}`),
+    carrierId: aseguradora.id,
+    carrierName: aseguradora.name,
+    networkName: `Red de prestadores ${aseguradora.name}`,
+    effectiveFrom: desde,
+    effectiveTo: null,
+  };
+}
+
+let redesDeLaRedImportada: ReadonlyMap<string, readonly RedDelProfesional[]> | null = null;
+
+/** Se arma la primera vez que se pide: son más de mil médicos. */
+function redesImportadas(): ReadonlyMap<string, readonly RedDelProfesional[]> {
+  if (redesDeLaRedImportada !== null) return redesDeLaRedImportada;
+  const mapa = new Map<string, readonly RedDelProfesional[]>();
+  for (const medico of INSURER_NETWORK_PRACTITIONERS) {
+    const id = uuid(`hpid-${medico.id}`);
+    mapa.set(
+      id,
+      medico.networks.map((red) => {
+        const delCatalogo = ASEGURADORAS.find((a) => a.name === red.insurer);
+        const carrierId = delCatalogo?.id ?? uuid(`carrier-${red.insurer}`);
+        return {
+          membershipId: uuid(`membership-${id}-${carrierId}`),
+          carrierId,
+          carrierName: red.insurer,
+          networkName: `Red médica ${red.insurer}`,
+          effectiveFrom: null,
+          effectiveTo: null,
+        };
+      }),
+    );
+  }
+  redesDeLaRedImportada = mapa;
+  return mapa;
+}
+
+/** Las redes en las que figura un profesional; vacío si no figura en ninguna. */
+export function redesDelProfesional(practitionerProfileId: string): readonly RedDelProfesional[] {
+  if (practitionerProfileId === MEDICA.id) {
+    return [
+      redDelCatalogo(MEDICA.id, ASEGURADORAS[0]!, isoDia(-480)),
+      redDelCatalogo(MEDICA.id, ASEGURADORAS[2]!, isoDia(-300)),
+      redDelCatalogo(MEDICA.id, ASEGURADORAS[3]!, isoDia(-120)),
+    ];
+  }
+  return redesImportadas().get(practitionerProfileId) ?? [];
+}
+
 export function registrarSeguros(router: MockRouter): void {
   // El sobre `{ carriers }` no es decorativo: `InsuranceClient.listCarrierCatalog`
   // mapea `body.carriers`, y devolver el array pelado le dejaba `undefined`.
@@ -738,6 +818,11 @@ export function registrarSeguros(router: MockRouter): void {
       plans: a.planes.map(([code, name]) => ({ id: uuid(`plan-${code}`), code, name })),
     })),
   }));
+
+  router.get('/practitioners/:id/insurance-networks', ({ params }) => {
+    const items = redesDelProfesional(params['id']!);
+    return { items, count: items.length };
+  });
 
   router.get('/insurance-carriers', (request) => {
     if (!perteneceALaAseguradora(request)) return { items: [], count: 0 };

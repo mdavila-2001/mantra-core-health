@@ -7,7 +7,7 @@ import { PACIENTE, pacientePorId } from '../fixtures/personas';
 // T-I3 · los identificadores de los pedidos de ejemplo de la bandeja viven en
 // un solo lugar, porque la pantalla también los usa.
 import { ID_PEDIDO_CON_DELIVERY, ID_PEDIDO_CON_SEGURO } from '../fixtures/pedidos-de-farmacia';
-import { notFound, preconditionFailed, type MockRequest, type MockRouter } from '../mock-router';
+import { conflict, notFound, preconditionFailed, validation, type MockRequest, type MockRouter } from '../mock-router';
 import { ahora, Coleccion, contiene, cuerpo, iso, masMinutos, nuevoId, texto, uuid } from '../mock-store';
 
 /* ============================================================================
@@ -71,16 +71,26 @@ interface ProductoSimulado {
   readonly pharmacyId: string;
   readonly pharmacyName: string;
   readonly productCode: string;
-  readonly brandName: string;
-  readonly genericName: string;
-  readonly strengthText: string;
-  readonly packageSizeText: string;
-  readonly dosageForm: { code: string; display: string };
-  readonly medication: { code: string; display: string };
-  readonly medicationConceptId: string;
-  readonly requiresPrescription: boolean;
-  readonly price: string;
+  // Nulos como en la API: un producto que la farmacia sube a mano puede no
+  // tener marca, genérico, forma ni medicamento del vademécum.
+  readonly brandName: string | null;
+  readonly genericName: string | null;
+  readonly strengthText: string | null;
+  readonly packageSizeText: string | null;
+  readonly dosageForm: { code: string; display: string } | null;
+  readonly medication: { code: string; display: string } | null;
+  readonly medicationConceptId: string | null;
+  readonly requiresPrescription: boolean | null;
+  /** `null` = sin precio publicado: el alta de producto no fija precio. */
+  readonly price: string | null;
   readonly stock: number;
+  /** Retirado del catálogo (`DELETE`): borrado lógico, como en la API. */
+  readonly retirado?: boolean;
+}
+
+/** Lo que el catálogo publica: sin los retirados, como `findActiveProducts`. */
+function activos(): ProductoSimulado[] {
+  return productos.filtrar((p) => p.retirado !== true);
 }
 
 const productos = new Coleccion<ProductoSimulado>(
@@ -200,7 +210,9 @@ function settlementForOrder(order: PedidoSimulado) {
       : order.id === uuid('pharmacy-copay-denied') ? 'DENIED' : undefined;
   if (result) return patientSettlementForItems(order.id, result, order.lineas.map((line) => {
     const product = productos.get(line.productId)!;
-    return { id: line.productId, name: product.brandName ?? product.genericName ?? product.productCode, unitAmount: product.price, quantity: line.requestedQuantity };
+    // Los pedidos sembrados usan productos con precio; uno sin precio publicado
+    // suma cero, igual que la API cuando a la lista le falta el renglón.
+    return { id: line.productId, name: product.brandName ?? product.genericName ?? product.productCode, unitAmount: product.price ?? '0.00', quantity: line.requestedQuantity };
   }));
   return { insuranceSettlement: null, insuranceSettlementAvailability: order.estado === 'ENVIADO' ? 'PENDING_PUBLICATION' : 'NOT_AVAILABLE' };
 }
@@ -267,21 +279,112 @@ function pedidosVisibles(request: MockRequest): PedidoSimulado[] {
 
 export function registrarFarmacia(router: MockRouter): void {
   router.get('/pharmacy/pharmacies', () => ({
-    items: FARMACIAS.map((f) => ({ id: f.id, code: f.code, name: f.name, siteCount: 1, productCount: productos.filtrar((p) => p.pharmacyId === f.id).length })),
+    items: FARMACIAS.map((f) => ({ id: f.id, code: f.code, name: f.name, siteCount: 1, productCount: activos().filter((p) => p.pharmacyId === f.id).length })),
     count: FARMACIAS.length,
   }));
 
   router.get('/pharmacy/products', ({ query }) => {
     const q = texto(query, 'search');
     const conceptId = texto(query, 'conceptId');
+    // `pharmacyId` acota a una farmacia, como `searchProducts` en la API (H5).
+    const pharmacyId = texto(query, 'pharmacyId');
     const limit = Number(query.get('limit') ?? 50) || 50;
-    const items = productos
-      .todos()
+    const coinciden = activos()
       .filter((p) => contiene(p.brandName, q) || contiene(p.genericName, q) || contiene(p.productCode, q))
       .filter((p) => conceptId === null || p.medicationConceptId === conceptId)
+      .filter((p) => pharmacyId === null || p.pharmacyId === pharmacyId);
+    const items = coinciden
       .slice(0, limit)
-      .map(({ medicationConceptId: _m, price: _p, stock: _s, ...p }) => p);
-    return { items, limit, truncated: items.length >= limit };
+      .map(({ medicationConceptId: _m, price: _p, stock: _s, retirado: _r, ...p }) => p);
+    return { items, limit, truncated: coinciden.length > limit };
+  });
+
+  // UC-24-04 · el alta de un producto en el catálogo de la farmacia. Nace
+  // activo y sin precio ni stock: esos viven en listas de precios y en el
+  // inventario, que el alta no toca.
+  router.post('/pharmacies/:pharmacyId/products', (request) => {
+    const pharmacyId = request.params['pharmacyId']!;
+    const farmacia = FARMACIAS.find((f) => f.id === pharmacyId);
+    if (farmacia === undefined) return notFound('Farmacia no encontrada');
+    const datos = cuerpo<{
+      productCode: string;
+      brandName: string;
+      genericName: string;
+      strengthText: string;
+      packageSizeText: string;
+      requiresPrescription: boolean;
+      coldChainRequired: boolean;
+      identifiers: { identifierType: string; identifierValue: string }[];
+    }>(request);
+    const codigo = typeof datos.productCode === 'string' ? datos.productCode : '';
+    if (codigo.length < 1 || codigo.length > 100) {
+      return validation('productCode must be longer than or equal to 1 characters', [
+        { field: 'productCode', message: 'El código es obligatorio y tiene hasta 100 caracteres.' },
+      ]);
+    }
+    // Como la API: el código es único por farmacia **incluidos los retirados**
+    // (`findByPharmacyAndCode` no mira el estado).
+    if (productos.filtrar((p) => p.pharmacyId === pharmacyId && p.productCode === codigo).length > 0) {
+      return conflict('Ya existe un producto con ese código en la farmacia', { productCode: codigo });
+    }
+    // Los topes del DTO (`MaxLength`): el simulador no deja pasar lo que la
+    // API rechazaría, para que la maqueta no muestre un alta imposible.
+    const topes: readonly [keyof typeof datos, number][] = [
+      ['brandName', 300],
+      ['genericName', 300],
+      ['strengthText', 200],
+      ['packageSizeText', 200],
+    ];
+    const excedido = topes.find(([campo, tope]) => {
+      const valor = datos[campo];
+      return typeof valor === 'string' && valor.length > tope;
+    });
+    if (excedido !== undefined) {
+      return validation(`${excedido[0]} must be shorter than or equal to ${excedido[1]} characters`, [
+        { field: excedido[0], message: `No puede pasar de ${excedido[1]} caracteres.` },
+      ]);
+    }
+    const nuevo = productos.agregar({
+      id: nuevoId('pharmacy-product'),
+      pharmacyId,
+      pharmacyName: farmacia.name,
+      productCode: codigo,
+      brandName: datos.brandName ?? null,
+      genericName: datos.genericName ?? null,
+      strengthText: datos.strengthText ?? null,
+      packageSizeText: datos.packageSizeText ?? null,
+      dosageForm: null,
+      medication: null,
+      medicationConceptId: null,
+      requiresPrescription: datos.requiresPrescription ?? null,
+      price: null,
+      stock: 0,
+    });
+    return {
+      status: 201,
+      body: {
+        id: nuevo.id,
+        pharmacyId,
+        productCode: nuevo.productCode,
+        status: uuid('concept-pharm-product-active'),
+        identifierCount: datos.identifiers?.length ?? 0,
+        createdAt: ahora(),
+      },
+    };
+  });
+
+  // UC-24-09 · retiro (borrado lógico). Un producto ya retirado es un 412,
+  // como `PreconditionFailedException('El producto no está activo')`.
+  router.delete('/pharmacies/:pharmacyId/products/:productId', ({ params }) => {
+    const producto = productos.get(params['productId']!);
+    if (producto === undefined || producto.pharmacyId !== params['pharmacyId']) {
+      return notFound('Producto no encontrado');
+    }
+    if (producto.retirado === true) {
+      return preconditionFailed('El producto no está activo', { productId: producto.id });
+    }
+    productos.actualizar(producto.id, { retirado: true });
+    return { ok: true };
   });
 
   router.get('/pharmacy-inventory/availability', ({ query }) => {
@@ -298,7 +401,7 @@ export function registrarFarmacia(router: MockRouter): void {
     const lngTexto = query.get('lng') ?? query.get('originLng');
     const origen = latTexto === null || lngTexto === null ? null : { lat: Number(latTexto), lng: Number(lngTexto) };
     const items = FARMACIAS.map((f) => {
-      const enFarmacia = conceptos.map((conceptId) => productos.filtrar((p) => p.pharmacyId === f.id && p.medicationConceptId === conceptId)[0]);
+      const enFarmacia = conceptos.map((conceptId) => activos().filter((p) => p.pharmacyId === f.id && p.medicationConceptId === conceptId)[0]);
       const disponibles = enFarmacia.filter((p): p is ProductoSimulado => p !== undefined && p.stock > 0);
       const faltantes = ids.filter((_, i) => enFarmacia[i] === undefined || enFarmacia[i]!.stock === 0);
       const total = disponibles.reduce((s, p) => s + Number(p.price), 0);
