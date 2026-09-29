@@ -77,6 +77,7 @@
         >
           <!-- `aria-hidden` lo pone el propio átomo: la tarjeta ya se llama
                por su categoría, y anunciarlo lo diría dos veces. -->
+          <img class="rejilla__foto" [src]="fotoDe(tarjeta.codigo)" alt="" loading="lazy" />
           <app-nav-icon class="rejilla__icono" [name]="tarjeta.icono" />
           <span class="rejilla__nombre">{{ tarjeta.nombre }}</span>
           <span class="rejilla__dato">
