@@ -162,6 +162,54 @@ test.describe('portal de la cuenta de farmacia', () => {
     expect(propios).toEqual([]);
   });
 
+  test('inventario: llevarlo sólo como «hay / no hay» y actualizarlo subiendo un CSV', async ({ page }) => {
+    // Un producto sembrado y estable de Farmacia Vida.
+    const codigo = 'FAR-ENALAPRIL';
+    await irPorMenu(page, '/administration/pharmacy-inventory');
+    await page.getByRole('textbox', { name: 'Buscar en el inventario' }).fill(codigo);
+    await page.keyboard.press('Enter');
+
+    // 1 · Cambiar a «Hay / no hay»: un interruptor por producto, sin cantidades.
+    await page.getByTestId('inventory-view').getByText('Hay / no hay').click();
+    // El `<input role="switch">` es nativo pero va oculto tras su estilo: se pulsa
+    // el interruptor visible (el host) y el estado se lee del input.
+    const anfitrion = page.getByTestId(`inventory-has-${codigo}`);
+    const interruptor = anfitrion.getByRole('switch');
+    await expect(anfitrion).toBeVisible();
+    await expect(interruptor).toBeChecked();
+    await expect(page.getByTestId(`inventory-stock-${codigo}`)).toHaveCount(0);
+    await expect(page.getByRole('row').filter({ hasText: codigo })).toContainText('Hay');
+    mkdirSync(EVIDENCIA, { recursive: true });
+    await page.screenshot({ path: join(EVIDENCIA, 'inventario-hay-no-hay-1440-claro.png') });
+
+    // 2 · Marcar «No hay» y guardar: la tabla releída lo confirma.
+    await anfitrion.click();
+    await expect(interruptor).not.toBeChecked();
+    await page.getByTestId('inventory-save').click();
+    await expect(page.getByText('Guardaste el inventario de 1 producto.')).toBeVisible();
+    await page.screenshot({ path: join(EVIDENCIA, 'inventario-despues-de-guardar-1440-claro.png') });
+    await expect(page.getByRole('row').filter({ hasText: codigo })).toContainText('No hay');
+
+    // 3 · Subir un CSV con sólo «disponible»: vuelve a «hay».
+    await page.getByTestId('inventory-upload').click();
+    const modal = page.getByRole('dialog');
+    await modal.locator('input[type="file"]').setInputFiles({
+      name: 'inventario.csv',
+      mimeType: 'text/csv',
+      buffer: Buffer.from(`codigo;disponible\n${codigo};sí\nNO-EXISTE;sí\n`, 'utf-8'),
+    });
+    await expect(modal.getByTestId('inventory-upload-changes')).toHaveText('1');
+    await expect(modal.getByTestId('inventory-upload-problems')).toContainText('NO-EXISTE');
+    await page.screenshot({ path: join(EVIDENCIA, 'inventario-subir-csv-1440-claro.png') });
+    await modal.getByTestId('inventory-upload-apply').click();
+    await expect(modal).toBeHidden();
+    await expect(page.getByRole('row').filter({ hasText: codigo })).toContainText('Hay');
+
+    // 4 · Con cantidades, el mismo producto sigue con existencias (el «hay» no las borró).
+    await page.getByTestId('inventory-view').getByText('Con cantidades').click();
+    await expect(page.getByTestId(`inventory-stock-${codigo}`)).toHaveValue(/\d+/);
+  });
+
   for (const [ruta, nombre] of MENU) {
     test(`la pantalla «${nombre}» se ve centrada, a lo ancho y sin scroll horizontal`, async ({ page }) => {
       await irPorMenu(page, ruta);

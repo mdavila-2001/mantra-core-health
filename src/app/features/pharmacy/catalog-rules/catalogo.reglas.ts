@@ -283,7 +283,7 @@ function disponibilidadDe(texto: string): boolean | 'invalido' {
   return respuesta === null || respuesta === 'invalido' ? 'invalido' : respuesta;
 }
 
-function sinTildes(texto: string): string {
+export function sinTildes(texto: string): string {
   return texto.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 }
 
@@ -573,6 +573,55 @@ export function leerCsv(contenido: string): LecturaDelCsv {
   };
 }
 
+/** Una tabla leída de un CSV: encabezados normalizados y los renglones de datos. */
+export interface TablaCsv {
+  /** `Código de barras` → `codigo_de_barras`, uno por columna. */
+  readonly encabezados: readonly string[];
+  readonly renglones: readonly Renglon[];
+}
+
+/**
+ * Lee cualquier CSV como tabla —separador detectado, comillas respetadas— sin
+ * saber de qué es. Lo usan las cargas que no son de productos (el inventario);
+ * `leerCsv` sigue siendo la del catálogo.
+ *
+ * Lanza {@link ArchivoInvalido} si está vacío, si una columna no tiene
+ * encabezado, si hay dos con el mismo nombre o si pasa del tope de filas.
+ */
+export function leerTablaCsv(contenido: string): TablaCsv {
+  const texto = contenido.replace(/^\uFEFF/, '');
+  if (texto.trim() === '') {
+    throw new ArchivoInvalido('El archivo está vacío.');
+  }
+  const [primero, ...datos] = partirEnRenglones(texto, detectarSeparador(texto));
+  const encabezado = [...primero!.celdas];
+  while (encabezado.length > 1 && encabezado[encabezado.length - 1]!.trim() === '') {
+    encabezado.pop();
+  }
+  const encabezados = encabezado.map(normalizarEncabezado);
+  if (encabezados.some((nombre) => nombre === '')) {
+    throw new ArchivoInvalido('Todas las columnas necesitan un encabezado.');
+  }
+  if (new Set(encabezados).size !== encabezados.length) {
+    throw new ArchivoInvalido('Hay dos columnas con el mismo encabezado.');
+  }
+  if (datos.length === 0) {
+    throw new ArchivoInvalido('El archivo tiene encabezado pero ninguna fila.');
+  }
+  if (datos.length > FILAS_MAXIMAS_POR_CARGA) {
+    throw new ArchivoInvalido(
+      `El archivo tiene ${datos.length} filas y el tope es ${FILAS_MAXIMAS_POR_CARGA}. Partilo en varios.`,
+    );
+  }
+  return {
+    encabezados,
+    renglones: datos.map((renglon) => ({
+      linea: renglon.linea,
+      celdas: renglon.celdas.map((celda) => sinApostrofoDeFormula(celda.trim())),
+    })),
+  };
+}
+
 /** El separador del archivo: el que más aparece en el encabezado, fuera de comillas. */
 function detectarSeparador(texto: string): string {
   const cuentas: Record<string, number> = { ',': 0, ';': 0, '\t': 0 };
@@ -590,7 +639,7 @@ function detectarSeparador(texto: string): string {
 }
 
 /** Un renglón del archivo: sus celdas y la línea donde empieza. */
-interface Renglon {
+export interface Renglon {
   readonly linea: number;
   readonly celdas: string[];
 }

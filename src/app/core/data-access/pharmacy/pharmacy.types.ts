@@ -236,11 +236,21 @@ export interface PharmacyCategoryPage {
   readonly items: readonly PharmacyCategory[];
 }
 
-/** Una línea del inventario que se guarda junta con las demás (P47). */
+/**
+ * Una línea del inventario que se guarda junta con las demás (P47).
+ *
+ * Dos formas de llevar el inventario, y una línea usa **una** de las dos:
+ * - **Con cantidades**: `stock` y/o `minStock`. Hay stock si `stock > 0`.
+ * - **Hay / no hay**: sólo `inStock`, un booleano, sin conteo. Es lo que hace la
+ *   farmacia que no lleva cantidades y sólo avisa lo que le falta.
+ *
+ * Mandar `inStock` junto con `stock` es un error: dirían dos cosas a la vez.
+ */
 export interface PharmacyInventoryLine {
   readonly productId: string;
-  readonly stock: number;
-  readonly minStock: number;
+  readonly stock?: number;
+  readonly minStock?: number;
+  readonly inStock?: boolean;
 }
 
 /** Un hecho reciente del catálogo, para «actividad reciente» del resumen. */

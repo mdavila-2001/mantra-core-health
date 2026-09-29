@@ -1,0 +1,107 @@
+<app-content-dialog
+  heading="Subir inventario por CSV"
+  description="Se revisa el archivo antes de tocar nada: vas a ver qué cambia y qué filas no valen."
+  size="lg"
+  [dismissible]="!applying()"
+  data-testid="inventory-upload-dialog"
+  (closed)="closed.emit()"
+>
+  <div class="upload__body">
+    <p class="upload__note">
+      El archivo necesita una columna <code>codigo</code> y al menos una de estas:
+      <code>existencias</code> y <code>umbral</code> (números enteros), o <code>disponible</code>
+      (sí / no) si no llevás cantidades. La forma más fácil es
+      <strong>exportar el inventario</strong>, corregirlo y subirlo de nuevo.
+    </p>
+
+    <app-file-input
+      label="Elegir archivo CSV"
+      accept=".csv"
+      [maxSizeBytes]="maxBytes"
+      [maxFiles]="1"
+      [disabled]="reading() || applying()"
+      [files]="files()"
+      (filesChange)="choose($event)"
+      (rejected)="reject($event)"
+      testId="inventory-upload-file"
+    />
+
+    @if (reading()) {
+      <p class="upload__note" role="status">Revisando el archivo…</p>
+    }
+
+    @if (fileError(); as message) {
+      <app-alert tone="error" title="El archivo no sirve" data-testid="inventory-upload-file-error">
+        {{ message }}
+      </app-alert>
+    }
+
+    @if (applyError(); as message) {
+      <app-alert tone="error" title="No se pudo aplicar" data-testid="inventory-upload-apply-error">
+        {{ message }}
+      </app-alert>
+    }
+
+    @if (review(); as r) {
+      <div class="upload__summary" data-testid="inventory-upload-summary">
+        <p class="upload__kind">{{ kindText() }}</p>
+        <ul class="upload__counts">
+          <li>
+            <strong data-testid="inventory-upload-changes">{{ r.lines.length }}</strong>
+            {{ r.lines.length === 1 ? 'producto cambia' : 'productos cambian' }}
+          </li>
+          <li>
+            <strong>{{ r.unchanged }}</strong> ya {{ r.unchanged === 1 ? 'está' : 'están' }} igual
+          </li>
+          <li [class.upload__counts--alert]="r.problems.length > 0">
+            <strong data-testid="inventory-upload-problems-count">{{ r.problems.length }}</strong>
+            {{ r.problems.length === 1 ? 'fila a corregir' : 'filas a corregir' }}
+          </li>
+        </ul>
+
+        @if (r.ignoredColumns.length > 0) {
+          <p class="upload__note">
+            Columnas que no se usan: {{ r.ignoredColumns.join(', ') }}.
+          </p>
+        }
+
+        @if (r.problems.length > 0) {
+          <app-alert tone="warning" title="Estas filas no se aplican" data-testid="inventory-upload-problems">
+            <ul class="upload__problems">
+              @for (problem of shownProblems(); track problem.line) {
+                <li><span class="upload__line">Línea {{ problem.line }}</span> {{ problem.message }}</li>
+              }
+            </ul>
+            @if (hiddenProblems() > 0) {
+              <p class="upload__note">… y {{ hiddenProblems() }} más en el archivo.</p>
+            }
+            @if (canApply()) {
+              <p class="upload__note">Las filas buenas se aplican igual.</p>
+            }
+          </app-alert>
+        }
+
+        @if (!canApply() && r.problems.length === 0) {
+          <app-alert tone="info" data-testid="inventory-upload-nothing">
+            El archivo no cambia nada: el inventario ya está como lo dice.
+          </app-alert>
+        }
+      </div>
+    }
+  </div>
+
+  <button dialog-actions app-button type="button" variant="ghost" [disabled]="applying()" (clicked)="dialog().close()">
+    Cancelar
+  </button>
+  <button
+    dialog-actions
+    app-button
+    type="button"
+    [isLoading]="applying()"
+    [disabled]="!canApply() || applying() || reading()"
+    data-testid="inventory-upload-apply"
+    (clicked)="apply()"
+  >
+    {{ canApply() ? 'Aplicar ' + review()!.lines.length + (review()!.lines.length === 1 ? ' cambio' : ' cambios') : 'Aplicar' }}
+  </button>
+</app-content-dialog>

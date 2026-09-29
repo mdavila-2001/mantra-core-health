@@ -40,6 +40,11 @@ interface Internal {
   dirtyCount: () => number;
   toggleAlerts: (only: boolean) => void;
   search: (term: string) => void;
+  setView: (view: 'COUNT' | 'AVAILABILITY') => void;
+  view: () => 'COUNT' | 'AVAILABILITY';
+  setHas: (product: PharmacyProduct, has: boolean) => void;
+  hasNow: (product: PharmacyProduct) => boolean;
+  discard: () => void;
   isAlert: (product: PharmacyProduct) => boolean;
 }
 
@@ -68,6 +73,7 @@ describe('PharmacyInventory', () => {
   }
 
   beforeEach(() => {
+    localStorage.removeItem('mch.pharmacy.inventory.view');
     TestBed.configureTestingModule({
       providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
     });
@@ -170,5 +176,131 @@ describe('PharmacyInventory', () => {
     internal().search('zzz');
     fixture.detectChanges();
     expect(root().textContent).toContain('Nada coincide con «zzz»');
+  });
+
+  describe('hay / no hay', () => {
+    it('cambiar a «Hay / no hay» muestra un interruptor por producto y no las cantidades', () => {
+      mount([product({}), product({ id: 'p-2', productCode: 'B-2', brandName: 'Segundo', inStock: false, stock: 0 })]);
+      expect(root().querySelector('[data-testid="inventory-stock-PAR-500"]')).not.toBeNull();
+
+      internal().setView('AVAILABILITY');
+      fixture.detectChanges();
+
+      expect(root().querySelector('[data-testid="inventory-stock-PAR-500"]')).toBeNull();
+      expect(root().querySelector('[data-testid="inventory-has-PAR-500"]')).not.toBeNull();
+      expect(root().textContent).toContain('¿Lo tenés?');
+    });
+
+    it('la forma elegida se recuerda para la próxima vez', () => {
+      mount([product({})]);
+
+      internal().setView('AVAILABILITY');
+
+      expect(localStorage.getItem('mch.pharmacy.inventory.view')).toBe('AVAILABILITY');
+    });
+
+    it('guarda sólo el booleano —sin existencias— en el mismo PATCH', () => {
+      const first = product({});
+      mount([first, product({ id: 'p-2', productCode: 'B-2', brandName: 'Segundo' })]);
+
+      internal().setView('AVAILABILITY');
+      internal().setHas(first, false);
+      expect(internal().hasNow(first)).toBe(false);
+      expect(internal().dirtyCount()).toBe(1);
+      internal().save();
+
+      const patch = http.expectOne(`/pharmacies/${PHARMACY.id}/inventory`);
+      expect(patch.request.body).toEqual({ lines: [{ productId: 'p-1', inStock: false }] });
+      patch.flush({ updated: 1 });
+
+      expectListing([product({ inStock: false })]);
+      expect(internal().dirtyCount()).toBe(0);
+    });
+
+    it('volver a lo que ya estaba deja la fila como no editada', () => {
+      const first = product({});
+      mount([first]);
+
+      internal().setHas(first, false);
+      expect(internal().dirtyCount()).toBe(1);
+      internal().setHas(first, true);
+      expect(internal().dirtyCount()).toBe(0);
+    });
+
+    it('«sólo los que no tengo» filtra por el booleano', () => {
+      const first = product({});
+      mount([first, product({ id: 'p-2', productCode: 'B-2', brandName: 'Segundo', inStock: false, stock: 0 })]);
+      internal().setView('AVAILABILITY');
+
+      internal().toggleAlerts(true);
+      fixture.detectChanges();
+
+      expect(root().textContent).toContain('Segundo');
+      expect(root().textContent).not.toContain('Paracetamol Bagó');
+      expect(root().querySelector('[data-testid="inventory-only-alerts"]')?.textContent).toContain('Sólo los que no tengo');
+    });
+
+    it('cantidades y booleano pendientes viajan juntos; si una fila tiene las dos, mandan las cantidades', () => {
+      const first = product({});
+      const second = product({ id: 'p-2', productCode: 'B-2', brandName: 'Segundo' });
+      mount([first, second]);
+
+      internal().setStock(first, '4');
+      internal().setHas(first, false);
+      internal().setHas(second, false);
+      internal().save();
+
+      const patch = http.expectOne(`/pharmacies/${PHARMACY.id}/inventory`);
+      expect(patch.request.body).toEqual({
+        lines: [
+          { productId: 'p-1', stock: 4, minStock: 5 },
+          { productId: 'p-2', inStock: false },
+        ],
+      });
+      patch.flush({ updated: 2 });
+      expectListing([first, second]);
+    });
+
+    it('descartar suelta también lo escrito en «hay / no hay»', () => {
+      const first = product({});
+      mount([first]);
+      internal().setHas(first, false);
+
+      internal().discard();
+
+      expect(internal().dirtyCount()).toBe(0);
+      expect(internal().hasNow(first)).toBe(true);
+    });
+  });
+
+  describe('CSV', () => {
+    const disabled = (id: string): string | null | undefined =>
+      root().querySelector(`[data-testid="${id}"]`)?.getAttribute('aria-disabled');
+
+    it('«Subir» y «Exportar» esperan a que la tabla esté leída: el archivo se revisa contra ella', () => {
+      fixture = TestBed.createComponent(PharmacyInventory);
+      fixture.detectChanges();
+      http
+        .expectOne((r) => r.url.endsWith('/pharmacy/pharmacies'))
+        .flush({ items: [{ ...PHARMACY, code: 'FC', siteCount: 1, productCount: 1 }], count: 1 });
+      fixture.detectChanges();
+
+      expect(disabled('inventory-upload')).toBe('true');
+      expect(disabled('inventory-export')).toBe('true');
+
+      expectListing([product({})]);
+
+      expect(disabled('inventory-upload')).not.toBe('true');
+      expect(disabled('inventory-export')).not.toBe('true');
+    });
+
+    it('«Subir CSV» abre el diálogo con el catálogo leído', () => {
+      mount([product({})]);
+
+      (root().querySelector('[data-testid="inventory-upload"]') as HTMLButtonElement).click();
+      fixture.detectChanges();
+
+      expect(root().querySelector('[data-testid="inventory-upload-dialog"]')).not.toBeNull();
+    });
   });
 });

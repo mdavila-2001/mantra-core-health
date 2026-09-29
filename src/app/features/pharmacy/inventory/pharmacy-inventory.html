@@ -1,6 +1,6 @@
 <app-page-header
   title="Inventario"
-  subtitle="Cuántas unidades tenés de cada producto y desde cuántas querés que te avise. Un producto sin existencias deja de ofrecerse a los pacientes."
+  subtitle="Llevalo con cantidades o sólo con un «hay / no hay». Lo que no tenés deja de ofrecerse a los pacientes. Podés editarlo acá o subirlo con un CSV."
 />
 
 <app-view-state-host [state]="scope.options()" (retry)="scope.retry()">
@@ -34,6 +34,25 @@
           </app-alert>
         }
 
+        <div class="inventory__mode">
+          <span class="inventory__mode-label" id="inventory-mode-label">Cómo llevás tu inventario</span>
+          <app-segmented-control
+            ariaLabel="Cómo llevás tu inventario"
+            [options]="viewOptions"
+            [value]="view()"
+            (valueChange)="setView($event)"
+            data-testid="inventory-view"
+          />
+          <div class="inventory__csv">
+            <button app-button variant="outline" size="sm" type="button" [disabled]="!canUseCsv()" (clicked)="exportCsv()" data-testid="inventory-export">
+              Exportar CSV
+            </button>
+            <button app-button variant="outline" size="sm" type="button" [disabled]="!canUseCsv()" (clicked)="openUpload()" data-testid="inventory-upload">
+              Subir CSV
+            </button>
+          </div>
+        </div>
+
         <app-search-field
           label="Buscar en el inventario"
           placeholder="Marca, genérico o código"
@@ -43,8 +62,8 @@
 
         <div class="inventory__bar">
           <app-switch
-            label="Sólo con alertas"
-            ariaLabel="Mostrar sólo los productos con alerta de inventario"
+            [label]="alertsLabel()"
+            [ariaLabel]="alertsLabel()"
             [checked]="onlyAlerts()"
             (checkedChange)="toggleAlerts($event)"
             data-testid="inventory-only-alerts"
@@ -117,6 +136,16 @@
   />
 </ng-template>
 
+<ng-template #hasCell let-product>
+  <app-switch
+    [label]="hasNow(product) ? 'Hay' : 'No hay'"
+    [ariaLabel]="'¿Tenés ' + name(product) + '?'"
+    [checked]="hasNow(product)"
+    (checkedChange)="setHas(product, $event)"
+    [attr.data-testid]="'inventory-has-' + product.productCode"
+  />
+</ng-template>
+
 <ng-template #availabilityCell let-product>
   @if (!hasStock(product)) {
     <app-badge variant="error">Sin stock</app-badge>
@@ -126,3 +155,12 @@
     <app-badge variant="success">Disponible</app-badge>
   }
 </ng-template>
+
+@if (uploadOpen() && scope.pharmacyId(); as pharmacyId) {
+  <app-inventory-upload-dialog
+    [pharmacyId]="pharmacyId"
+    [products]="allProducts()"
+    (applied)="reload()"
+    (closed)="closeUpload()"
+  />
+}

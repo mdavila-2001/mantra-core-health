@@ -927,13 +927,14 @@ export function registrarFarmacia(router: MockRouter): void {
     return { ok: true };
   });
 
-  // P47 · el inventario: existencias y umbral de varios productos de una vez.
-  // Todo o nada: si una línea no vale, no se guarda ninguna, así la pantalla
-  // no queda a medias.
+  // P47 · el inventario de varios productos de una vez. Cada línea lleva
+  // cantidades (`stock`, `minStock`) o sólo un booleano «hay / no hay»
+  // (`inStock`), nunca las dos. Todo o nada: si una línea no vale, no se guarda
+  // ninguna, así la pantalla no queda a medias.
   router.patch('/pharmacies/:pharmacyId/inventory', (request) => {
     const pharmacyId = request.params['pharmacyId']!;
     if (!FARMACIAS.some((f) => f.id === pharmacyId)) return notFound('Farmacia no encontrada');
-    const { lines } = cuerpo<{ lines: { productId: string; stock: number; minStock: number }[] }>(request);
+    const { lines } = cuerpo<{ lines: { productId: string; stock?: number; minStock?: number; inStock?: boolean }[] }>(request);
     if (!Array.isArray(lines) || lines.length === 0) {
       return validation('lines must contain at least 1 elements', [{ field: 'lines', message: 'No hay cambios para guardar.' }]);
     }
@@ -943,16 +944,39 @@ export function registrarFarmacia(router: MockRouter): void {
       if (producto === undefined || producto.pharmacyId !== pharmacyId || producto.retirado === true) {
         errores.push({ field: `lines.${i}.productId`, message: 'El producto no está en tu catálogo.' });
       }
-      if (!esEnteroEntre(linea.stock, 0, STOCK_MAXIMO)) {
+      const traeCantidades = linea.stock !== undefined || linea.minStock !== undefined;
+      if (linea.inStock === undefined && !traeCantidades) {
+        errores.push({ field: `lines.${i}`, message: 'La línea no dice qué cambiar: mandá existencias, umbral o si hay.' });
+      }
+      if (linea.inStock !== undefined && typeof linea.inStock !== 'boolean') {
+        errores.push({ field: `lines.${i}.inStock`, message: 'Hay o no hay: un sí o un no.' });
+      }
+      if (linea.inStock !== undefined && linea.stock !== undefined) {
+        errores.push({ field: `lines.${i}.inStock`, message: 'Mandá las existencias o si hay, no las dos: dirían dos cosas a la vez.' });
+      }
+      if (linea.stock !== undefined && !esEnteroEntre(linea.stock, 0, STOCK_MAXIMO)) {
         errores.push({ field: `lines.${i}.stock`, message: `Las existencias son un número entero de 0 a ${STOCK_MAXIMO}.` });
       }
-      if (!esEnteroEntre(linea.minStock, 0, STOCK_MAXIMO)) {
+      if (linea.minStock !== undefined && !esEnteroEntre(linea.minStock, 0, STOCK_MAXIMO)) {
         errores.push({ field: `lines.${i}.minStock`, message: `El umbral es un número entero de 0 a ${STOCK_MAXIMO}.` });
       }
     });
     if (errores.length > 0) return validation('lines are invalid', errores);
     for (const linea of lines) {
-      productos.actualizar(linea.productId, { stock: linea.stock, minStock: linea.minStock, sinStock: false });
+      const producto = productos.get(linea.productId)!;
+      const cambios: { -readonly [K in keyof ProductoSimulado]?: ProductoSimulado[K] } = {};
+      if (linea.stock !== undefined) {
+        cambios.stock = linea.stock;
+        // Dar las existencias es decir cuántas hay: el «no tengo» de antes queda atrás.
+        cambios.sinStock = false;
+      }
+      if (linea.minStock !== undefined) cambios.minStock = linea.minStock;
+      if (linea.inStock !== undefined) {
+        cambios.sinStock = linea.inStock === false;
+        // «Hay» sin conteo previo queda con el stock «sin conteo».
+        if (linea.inStock && producto.stock <= 0) cambios.stock = STOCK_SIN_CONTEO;
+      }
+      productos.actualizar(producto.id, cambios);
     }
     registrarActividad(pharmacyId, 'INVENTARIO', `Actualizaste el inventario de ${lines.length} ${lines.length === 1 ? 'producto' : 'productos'}.`);
     return { updated: lines.length };
