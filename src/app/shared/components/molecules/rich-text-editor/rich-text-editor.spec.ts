@@ -288,6 +288,25 @@ describe('RichTextEditor', () => {
         expect(llamadas).toEqual([]);
       });
 
+      it('Enter en una cita vacía vuelve a texto normal; en una cita con texto, no', () => {
+        const area = (fixture.nativeElement as HTMLElement).querySelector('[data-testid="editor-area"]') as HTMLElement;
+        const enter = (html: string): KeyboardEvent => {
+          area.innerHTML = html;
+          const cita = area.querySelectorAll('blockquote');
+          const rango = document.createRange();
+          rango.selectNodeContents(cita[cita.length - 1]!);
+          rango.collapse(false);
+          getSelection()!.removeAllRanges();
+          getSelection()!.addRange(rango);
+          const evento = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true });
+          area.dispatchEvent(evento);
+          return evento;
+        };
+        expect(enter('<blockquote>texto</blockquote>').defaultPrevented).toBe(false);
+        expect(enter('<blockquote>texto</blockquote><blockquote><br></blockquote>').defaultPrevented).toBe(true);
+        expect(llamadas).toContainEqual(['formatBlock', false, '<p>']);
+      });
+
       it('apagado (nota clínica), no hace nada', () => {
         fixture.componentRef.setInput('markdownShortcuts', false);
         fixture.detectChanges();

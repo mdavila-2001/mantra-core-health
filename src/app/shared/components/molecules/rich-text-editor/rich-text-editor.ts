@@ -248,6 +248,26 @@ export class RichTextEditor {
     this.guardarCursor();
   }
 
+  /**
+   * Enter en una cita vacía sale de la cita, como en cualquier procesador de
+   * textos. Sin esto Chrome abre otra cita vacía debajo y no hay forma
+   * evidente de volver a texto normal (medido 30/09/2026).
+   *
+   * @param evento - La tecla.
+   */
+  protected alPresionar(evento: KeyboardEvent): void {
+    if (evento.key !== 'Enter' || evento.shiftKey || !this.esNavegador) return;
+    const area = this.area()?.nativeElement;
+    const seleccion = document.getSelection();
+    if (!area || !seleccion?.rangeCount) return;
+    const bloque = bloqueDe(seleccion.getRangeAt(0).startContainer, area);
+    if (!(bloque instanceof Element) || bloque.tagName !== 'BLOCKQUOTE') return;
+    if ((bloque.textContent ?? '').replace(/\u00a0/g, ' ').trim() !== '') return;
+    evento.preventDefault();
+    document.execCommand('formatBlock', false, '<p>');
+    this.recoger();
+  }
+
   /** Si hay que dibujar un separador antes de la herramienta `i` (cambia el grupo). */
   protected empiezaGrupo(i: number): boolean {
     const lista = this.herramientas();
@@ -334,9 +354,8 @@ export class RichTextEditor {
     const marca = rangoDeLosPrimeros(bloque, atajo.marca.length);
     if (!marca) return;
     marca.deleteContents();
-    // El cursor al final del renglón, explícito: si se deja al navegador, la
-    // lista nueva lo pone ANTES del texto y lo que se escribe después queda
-    // delante («Sobrepeso» terminaba al final del artículo, 30/09/2026).
+    // El cursor al final del renglón antes del comando, para que el formato se
+    // aplique a este renglón y no al que el navegador crea más convenientes.
     const final = document.createRange();
     final.selectNodeContents(bloque);
     final.collapse(false);
@@ -344,6 +363,16 @@ export class RichTextEditor {
     seleccion.addRange(final);
     if (atajo.bloque) document.execCommand('formatBlock', false, `<${atajo.bloque}>`);
     else if (atajo.comando) document.execCommand(atajo.comando, false);
+    // Y otra vez DESPUÉS del comando: Chrome deja el cursor en la posición 0
+    // del ítem nuevo (medido 30/09/2026 con `insertUnorderedList`).
+    const actual = seleccion.rangeCount ? seleccion.getRangeAt(0).startContainer : null;
+    if (!actual) return;
+    const nuevo = bloqueDe(actual, area);
+    const alFinal = document.createRange();
+    alFinal.selectNodeContents(nuevo);
+    alFinal.collapse(false);
+    seleccion.removeAllRanges();
+    seleccion.addRange(alFinal);
   }
 
 

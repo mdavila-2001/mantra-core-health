@@ -54,6 +54,7 @@
       [attr.aria-label]="label()"
       [attr.aria-readonly]="readOnly() ? 'true' : null"
       (input)="alEscribir($event); recoger(); guardarCursor()"
+      (keydown)="alPresionar($event)"
       (keyup)="guardarCursor()"
       (mouseup)="guardarCursor()"
       (blur)="guardarCursor(); recoger()"
