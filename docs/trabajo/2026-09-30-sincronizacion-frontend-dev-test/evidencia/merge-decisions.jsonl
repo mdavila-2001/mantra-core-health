@@ -1,0 +1,71 @@
+{"file": "deploy/api-locations.conf", "blocks": ["ours", "theirs"], "reason": "Conservar pharmacies, loyalty y patients/me reales; actualizar referencia P48."}
+{"file": "proxy.conf.docker.json", "blocks": ["ours"], "reason": "Preservar prefijos reales /pharmacies/, /loyalty y /patients/me."}
+{"file": "src/app/core/data-access/diagnostics/diagnostics.types.ts", "blocks": ["theirs"], "reason": "A?adir campos opcionales C2 sin eliminar formInstanceId."}
+{"file": "src/app/core/data-access/insurance/insurance.client.spec.ts", "blocks": ["ours"], "reason": "Conservar prueba de settlement/EOB decimal de dev."}
+{"file": "src/app/core/data-access/insurance/insurance.client.ts", "blocks": ["imports", "theirs", "ours"], "reason": "Unir tipos received-claims y adjudication; preservar adjudicateClaim y publishEob reales."}
+{"file": "src/app/core/data-access/insurance/insurance.types.ts", "blocks": ["theirs", "theirs"], "reason": "A?adir red de profesionales y mantener contratos previos."}
+{"file": "src/app/core/data-access/pharmacy/pharmacy.client.ts", "blocks": ["theirs", "theirs", "theirs"], "reason": "Portal agrega gesti?n/stock sin quitar altas/retiros del cliente."}
+{"file": "src/app/core/data-access/pharmacy/pharmacy.types.ts", "blocks": ["theirs", "theirs"], "reason": "Preservar contratos base y a?adir tipos de portal; limit sigue fuera del bloque."}
+{"file": "src/app/core/data-access/simple-accounting/simple-accounting.client.ts", "blocks": ["theirs"], "reason": "S?lo cambia referencia de pendiente a P49."}
+{"file": "src/app/core/data-access/simple-accounting/simple-accounting.types.ts", "blocks": ["theirs"], "reason": "S?lo cambia referencia de pendiente a P49."}
+{"file": "src/app/core/mock/handlers/simple-accounting.handlers.spec.ts", "blocks": ["theirs"], "reason": "Pruebas id?nticas salvo referencia P49."}
+{"file": "src/app/core/mock/handlers/simple-accounting.handlers.ts", "blocks": ["theirs"], "reason": "Handler id?ntico salvo referencia P49."}
+{"file": "src/app/core/mock/mock-banner.ts", "blocks": ["theirs", "theirs"], "reason": "Restaurar cartel demo; se renderiza s?lo cuando environment.mockBackend est? encendido."}
+{"file": "src/app/core/mock/mock-session.ts", "blocks": ["theirs"], "reason": "Laboratorio demo conserva tipo de tenant real DIAGNOSTIC_CENTER."}
+{"file": "src/app/core/mock/handlers/clinical.handlers.ts", "blocks": ["theirs", "theirs", "theirs"], "reason": "Conservar validaci?n indicaci?n/reasonText; endpoint service-requests ampliado ya existe fuera del bloque, no duplicarlo."}
+{"file": "src/app/core/mock/handlers/index.ts", "blocks": ["theirs", "theirs", "theirs", "theirs"], "reason": "Registrar facturaci?n simulada y received-claims adem?s de handlers originales."}
+{"file": "src/app/core/mock/handlers/insurance.handlers.spec.ts", "blocks": ["theirs", "theirs", "tests"], "reason": "Keep dev settlement tests and incoming network/marketplace suites."}
+{"file": "src/app/core/mock/handlers/insurance.handlers.ts", "blocks": ["theirs", "theirs", "theirs", "ours", "ours", "theirs", "theirs", "theirs"], "reason": "Keep UNDER_REVIEW fixture and portability owner from dev; add network/catalog features."}
+{"file": "src/app/core/mock/handlers/pharmacy.handlers.ts", "blocks": ["theirs", "theirs", "theirs", "theirs", "theirs", "theirs", "theirs"], "reason": "Incoming portal extends stock/categories and preserves active-product filtering."}
+{"file": "src/app/app.routes.ts", "blocks": ["ours", "theirs", "pharmacy-route"], "reason": "Keep progress-notes and new routes; real catalog uses original CSV implementation; expanded portal in demo."}
+{"file": "src/app/core/navigation/navigation.map.ts", "blocks": ["theirs", "theirs", "theirs", "theirs", "theirs", "theirs", "theirs", "theirs", "theirs", "theirs", "theirs", "theirs", "theirs"], "reason": "New role/tenant menus, moved quotations and added invoice/spending routes."}
+{"file": "src/app/core/navigation/navigation.types.ts", "blocks": ["theirs", "theirs"], "reason": "Add explicit onlyForTenantTypes and diagnostic center claim support."}
+{"file": "src/app/core/navigation/navigation.subgroups.ts", "blocks": ["theirs", "theirs", "theirs"], "reason": "Preserve current grouped menu with spending/invoices and moved quotations."}
+{"file": "src/app/core/navigation/access-tree.spec.ts", "blocks": ["theirs", "theirs"], "reason": "Extend assertions to tenant-aware pharmacy access and received claims."}
+{"file": "src/app/core/navigation/navigation.map.spec.ts", "blocks": ["theirs", "theirs"], "reason": "Tests enforce new tenant restrictions, not weakened authorization."}
+{"file": "src/app/core/navigation/navigation.service.spec.ts", "blocks": ["theirs", "theirs"], "reason": "Apply documented header move and hide questionnaires from sidebar, routes remain."}
+{"file": "src/app/features/shell-layout/shell-layout.ts", "blocks": ["theirs"], "reason": "Keep pharmacy/lab menu behavior alongside payer."}
+{"file": "src/app/features/shell-layout/shell-layout.spec.ts", "blocks": ["theirs", "theirs"], "reason": "Validate new menu and add header accessibility cases."}
+{"file": "src/app/features/account/appointments/appointments.css", "blocks": ["theirs"], "reason": "Add follow-up appointment explanation styling."}
+{"file": "src/app/features/dashboard/patient-home/patient-home.spec.ts", "blocks": ["theirs"], "reason": "Only local variable naming differs."}
+{"file": "src/app/features/directory/practitioner-availability/practitioner-availability.ts", "blocks": ["theirs"], "reason": "Keep catalog table lookup needed for availability."}
+{"file": "src/styles/alovida.css", "blocks": ["theirs"], "reason": "Add unread chat badge positioning."}
+{"file": "src/app/shared/components/organisms/department-map/department-map.css", "blocks": ["theirs"], "reason": "Keep additive municipality map styles."}
+{"file": "src/app/shared/components/organisms/department-map/department-map.html", "blocks": ["theirs"], "reason": "Keep accessible municipality and province map overlays."}
+{"file": "src/app/shared/components/organisms/department-map/department-map.ts", "blocks": ["theirs"], "reason": "Keep lazy loaded municipality geometry."}
+{"file": "src/app/shared/components/organisms/map/map.html", "blocks": ["theirs"], "reason": "Add screen-reader keyboard help."}
+{"file": "src/app/shared/components/organisms/map/map.spec.ts", "blocks": ["theirs"], "reason": "Keep added keyboard interaction tests."}
+{"file": "src/app/shared/components/organisms/map/map.ts", "blocks": ["theirs", "theirs", "theirs"], "reason": "Keep keyboard controls and provinces."}
+{"file": "src/app/features/directories-overview/directories-overview.spec.ts", "blocks": ["ours"], "reason": "Keep exact count assertion for administrator (4 accessible directories)."}
+{"file": "src/app/features/accounting/registros/registros.html", "blocks": ["theirs"], "reason": "Add split summary/register rendering without removing fields."}
+{"file": "src/app/features/accounting/registros/registros.ts", "blocks": ["theirs"], "reason": "Default todo preserves old behavior; tabs load only their own data."}
+{"file": "src/app/features/accounting/resumen/resumen.css", "blocks": ["theirs"], "reason": "Add tab panel spacing."}
+{"file": "src/app/features/accounting/resumen/resumen.html", "blocks": ["theirs"], "reason": "Requested Resumen/Registros tabs retain simple accounting."}
+{"file": "src/app/features/public-directories/insurer-detail/insurer-detail.css", "blocks": ["theirs"], "reason": "Incoming marketplace product browsing styles."}
+{"file": "src/app/features/public-directories/insurer-detail/insurer-detail.html", "blocks": ["theirs"], "reason": "Incoming marketplace browsing/detail flow supersedes initial plan tabs."}
+{"file": "src/app/features/public-directories/insurer-detail/insurer-detail.spec.ts", "blocks": ["theirs"], "reason": "Keep all existing tests plus incoming reactive route and marketplace cases."}
+{"file": "src/app/features/public-directories/insurer-detail/insurer-detail.ts", "blocks": ["theirs"], "reason": "Incoming marketplace filter/detail behavior preserves plan data and broker contact."}
+{"file": "src/app/features/public-directories/insurers-directory.html", "blocks": ["theirs"], "reason": "Pass municipality to shared map."}
+{"file": "src/app/features/account/cotizaciones/cotizaciones.css", "blocks": ["theirs"], "reason": "Preserve expanded quotation cart/booking flow and its tests."}
+{"file": "src/app/features/account/cotizaciones/cotizaciones.fuentes.spec.ts", "blocks": ["theirs"], "reason": "Preserve expanded quotation cart/booking flow and its tests."}
+{"file": "src/app/features/account/cotizaciones/cotizaciones.fuentes.ts", "blocks": ["theirs"], "reason": "Preserve expanded quotation cart/booking flow and its tests."}
+{"file": "src/app/features/account/cotizaciones/cotizaciones.html", "blocks": ["theirs", "theirs", "theirs", "theirs"], "reason": "Preserve expanded quotation cart/booking flow and its tests."}
+{"file": "src/app/features/account/cotizaciones/cotizaciones.logic.ts", "blocks": ["theirs", "theirs"], "reason": "Preserve expanded quotation cart/booking flow and its tests."}
+{"file": "src/app/features/account/cotizaciones/cotizaciones.spec.ts", "blocks": ["theirs", "theirs", "theirs", "theirs", "theirs", "theirs", "theirs", "theirs", "theirs"], "reason": "Preserve expanded quotation cart/booking flow and its tests."}
+{"file": "src/app/features/account/cotizaciones/cotizaciones.ts", "blocks": ["theirs", "theirs", "theirs", "theirs", "theirs", "theirs", "theirs", "theirs"], "reason": "Preserve expanded quotation cart/booking flow and its tests."}
+{"file": "playwright/carril-insurance-campaigns.spec.ts", "blocks": ["theirs"], "reason": "Equivalent assertions with English identifiers."}
+{"file": "playwright/carril-insurance-portability.spec.ts", "blocks": ["theirs", "theirs"], "reason": "Updated dependent invitation/acceptance flow preserves portability assertions."}
+{"file": "playwright/carril-insurance-whatsapp.spec.ts", "blocks": ["theirs"], "reason": "Updated split insurance tab selector."}
+{"file": "playwright/consulta-formulario-medico.spec.ts", "blocks": ["theirs"], "reason": "Expanded flexible/template and follow-up workflow."}
+{"file": "playwright/consulta-rejilla.spec.ts", "blocks": ["theirs", "theirs", "theirs"], "reason": "Current eight tiles with reload and viewport coverage."}
+{"file": "playwright/contabilidad-simple.spec.ts", "blocks": ["theirs"], "reason": "Updated tabs with original register persistence cases."}
+{"file": "playwright/d05-iconos.mjs", "blocks": ["theirs"], "reason": "Label now Editar perfil as required by new profile UI."}
+{"file": "src/environments/environment.ts", "blocks": ["theirs"], "reason": "Merge incoming fields first; explicit real defaults applied in S2.M3."}
+{"file": "src/environments/environment.development.ts", "blocks": ["theirs"], "reason": "Merge incoming fields first; explicit real defaults applied in S2.M3."}
+{"file": "PENDIENTES-BACKEND.md", "blocks": ["theirs", "theirs"], "reason": "Updated pending identifiers and expanded P42-P53; dev snapshot preserved with source SHA."}
+{"file": "docs/trabajo/2026-09-23-perfil-medico-configurar-tu-perfil/PLAN.md", "blocks": ["theirs"], "reason": "Retain original mockup report and preserve dev-specific historical snapshot separately."}
+{"file": "docs/trabajo/2026-09-23-perfil-medico-configurar-tu-perfil/REPORTE.md", "blocks": ["theirs"], "reason": "Retain original mockup report and preserve dev-specific historical snapshot separately."}
+{"file": "docs/trabajo/2026-09-23-perfil-medico-configurar-tu-perfil/evidencia/pr-613-mergeable.txt", "blocks": ["theirs"], "reason": "Retain original mockup report and preserve dev-specific historical snapshot separately."}
+{"file": "docs/trabajo/2026-09-28-contabilidad-simple/REPORTE.md", "blocks": ["theirs"], "reason": "Retain original mockup report and preserve dev-specific historical snapshot separately."}
+{"file": "docs/trabajo/2026-09-28-mercado-de-seguros/REPORTE.md", "blocks": ["theirs"], "reason": "Retain original mockup report and preserve dev-specific historical snapshot separately."}
+{"file": "playwright/catalogo-farmacia.mjs", "blocks": ["ours"], "reason": "Keep original CSV/withdrawal/overflow assertions; incoming portal evidence retained in pharmacy-portal-evidence.mjs."}

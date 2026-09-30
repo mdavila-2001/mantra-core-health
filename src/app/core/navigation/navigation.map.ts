@@ -80,14 +80,17 @@ const ROLES_QUE_EJERCEN_O_ADMINISTRAN = [
 export const APP_SECTIONS: readonly AppSection[] = [
   {
     path: 'dashboard',
-    // §4.H · fuera del menú del médico. La lista cerrada del cliente son ocho
-    // y el panel no es una de ellas; se sigue llegando por la marca del
-    // armazón, que ahora es un enlace a `/dashboard` justamente por esto, y es
-    // el destino del login y del cambio de organización.
+    // §4.H, generalizado (2026-09-25): nació `['PRACTITIONER']` porque la
+    // lista cerrada del médico son ocho y el panel no es una de ellas, pero
+    // el motivo real —la marca del armazón ya es un enlace a `/dashboard`,
+    // ofrecer «Panel» abajo es la pantalla en la que ya estás— vale para
+    // cualquier rol, no sólo para el médico (mismo caso que `access-tree.ts`
+    // excluye `dashboard` de su propio panel de accesos). Se sigue llegando
+    // por la marca, por el login y por el cambio de organización.
     //
     // **No se le tocan los `roles`**: el panel lo tiene que poder abrir
     // cualquiera —lo exige `navigation.map.spec`— y esto no habla de permisos.
-    fueraDelMenuPara: ['PRACTITIONER'],
+    fueraDelMenuPara: [ANY_ROLE],
     label: 'Panel',
     group: 'General',
     icon: 'home',
@@ -107,11 +110,13 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // aprender, y el catálogo ya se filtra por rol tutorial por tutorial. Poner
     // roles acá escondería el centro entero a quien tiene pocos.
     path: 'tutorials',
-    // §4.H · fuera del menú del médico. Los recorridos guiados se disparan
-    // **desde la pantalla que explican**, que es donde sirven; un renglón fijo
-    // en el menú para «aprender a usar esto» era además la confesión del
-    // síntoma 1 del plan.
-    fueraDelMenuPara: ['PRACTITIONER'],
+    // N-01 (2026-09-22): pasa de `['PRACTITIONER']` a `[ANY_ROLE]` — ahora es
+    // un ícono con globo en la cabecera (`shell-layout.html`), calcado de
+    // «Ajustes», para los dos roles. La ruta sigue existiendo y funcionando
+    // igual; lo único que cambia es que ya no ocupa un renglón para nadie.
+    // §4.H (el motivo original, para el médico) sigue valiendo: acá se
+    // generaliza al paciente.
+    fueraDelMenuPara: [ANY_ROLE],
     label: 'Tutoriales',
     group: 'General',
     icon: 'teach',
@@ -133,6 +138,10 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // turnos» tampoco los declara—. La pantalla lo dice cuando falta, en vez
     // de esconderse del menú.
     path: 'messaging',
+    // N-01 (2026-09-22): ícono con globo y contador de no leídos en la
+    // cabecera, calcado de «Ajustes» — la ruta sigue existiendo y
+    // funcionando; sólo deja de ocupar un renglón de primer nivel.
+    fueraDelMenuPara: [ANY_ROLE],
     label: 'Chats',
     group: 'General',
     icon: 'chat',
@@ -158,9 +167,10 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // que un texto no puede desincronizarse del otro.
     //
     // `roles: [ANY_ROLE]` porque la portada en sí no oculta nada: quien entra
-    // ve los nodos que sus propios roles ya le abren — p. ej. quien ejerce no
-    // ve el nodo de la guía de médicos, que sigue siendo exclusiva del
-    // paciente (corrección #2). El filtro real vive en cada sección, no acá.
+    // ve los nodos que sus propios roles ya le abren — p. ej. quien administra
+    // no ve el nodo de la guía de médicos, que es del paciente y del médico
+    // (corrección #2, ampliada el 24/09/2026). El filtro real vive en cada
+    // sección, no acá.
     //
     // Va **antes** que los cuatro en este registro a propósito: el orden de
     // dibujo del menú sale de acá (`navigation.subgroups.ts` sólo agrupa).
@@ -195,7 +205,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // token, `tenantTypes` — ver `SessionStore.activeTenantType`. Sin el claim
     // (API vieja, token emitido antes de este cambio) no se oculta nada: es el
     // menú de hoy.
-    hiddenForTenantTypes: ['PAYER'],
+    hiddenForTenantTypes: ['PAYER', 'PHARMACY', 'DIAGNOSTIC_CENTER'],
     // Los cuatro se entran por acá y ya no tienen renglón, así que este
     // renglón se marca también mientras se los recorre: sin esto, abrir un
     // directorio dejaba la barra entera apagada y sin decir dónde estabas.
@@ -259,40 +269,22 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // «Directorios», que es la que ahora ocupa el renglón. Ver el motivo
     // entero en la sección `directories`. Esto **no** toca la corrección #2:
     // `roles` + `exclusiveRoles` siguen siendo quienes cierran la puerta, y
-    // esta línea sólo decide dónde se ofrece — al médico se le sigue negando
-    // la pantalla, no se le esconde un renglón que igual podría abrir.
+    // esta línea sólo decide dónde se ofrece — a quien administra se le sigue
+    // negando la pantalla, no se le esconde un renglón que igual podría abrir.
     fueraDelMenuPara: [ANY_ROLE],
     label: 'Directorio de médicos',
     group: 'General',
     icon: 'directory',
-    roles: ['PATIENT'],
+    // **El médico vuelve a entrar** (pedido del cliente, 24/09/2026): «añadamos
+    // doctores al directorio en el perfil de doctores también». Buscar a un
+    // colega para derivar es parte de atender, igual que saber dónde queda una
+    // farmacia. `exclusiveRoles` se queda: el resto de la corrección #2 —que
+    // no lo vean los roles de administración ni el comodín— no cambió.
+    roles: ['PATIENT', 'PRACTITIONER'],
     exclusiveRoles: true,
     availability: 'disponible',
     summary: 'Todos los médicos de la red, agrupados por especialidad.',
     module: 'M05 profiles',
-  },
-  {
-    // FT-19 (05/09/2026) · farmacias, imagenología y centros médicos cerca
-    // del paciente, a partir de su receta y de su ubicación.
-    //
-    // Sólo `PATIENT`: la pestaña de farmacias lee `medicationRequests` del
-    // propio resumen clínico y enlaza a `WhereToBuy`
-    // (`/my-account/medical-record/where-to-buy/:id`), que ya es sólo del
-    // paciente. Un profesional no tiene "mi receta" que buscar acá.
-    //
-    // Sin `exclusiveRoles`, a diferencia de la Guía de médicos: ahí lo exigió
-    // un pedido explícito del cliente ("no debe aparecer ni ser accesible
-    // para doctor u otros roles"); acá no hay un pedido equivalente, así que
-    // alcanza con `roles` — el comodín de `SUPERADMIN` sigue entrando, como
-    // en el resto del registro.
-    path: 'nearby-places',
-    label: 'Lugares cercanos',
-    group: 'General',
-    icon: 'pin',
-    roles: ['PATIENT'],
-    availability: 'disponible',
-    summary: 'Farmacias, centros de imagenología y centros médicos cerca tuyo, según tu receta.',
-    module: 'M22 pharmacy',
   },
   {
     // Grupos y foros (P7). Es la entrada **mínima** que el carril se permite en
@@ -372,8 +364,8 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // (§4.H, 22/08) se lo quitara, y lo sigue teniendo: la sección es suya
     // —`roles: [ANY_ROLE]`, sin `hiddenFor`—, aparece en su portada de
     // directorios y en «Tus accesos». Lo único que cambia es por dónde entra.
-    // «Directorio de médicos» (`directory`) sigue siendo exclusivo del
-    // paciente por la corrección #2, que esta decisión tampoco toca.
+    // «Directorio de médicos» (`directory`) se le abrió aparte, el 24/09/2026
+    // (ver su fila).
     fueraDelMenuPara: [ANY_ROLE],
     label: 'Directorio de clínicas',
     group: 'General',
@@ -465,25 +457,11 @@ export const APP_SECTIONS: readonly AppSection[] = [
     summary: 'Consultá la historia clínica de los pacientes que atendés.',
     module: 'M08 clinical · M15 chart',
   },
-  {
-    // §4.H del plan de UX · la sexta de las ocho. **Sección propia y no una
-    // pestaña dentro del Archivo clínico**, que era la otra lectura posible.
-    //
-    // El motivo es que la pregunta que responde es transversal: «¿qué escribí
-    // últimamente?», «¿qué quedó a medio firmar?». Dentro del archivo clínico
-    // esa pregunta no se puede hacer — ahí se entra **por persona**, y para
-    // ver las últimas cinco evoluciones habría que acordarse de las cinco
-    // personas. Es la misma razón por la que «Mis turnos» no vive dentro de
-    // cada paciente.
-    path: 'progress-notes',
-    label: 'Evoluciones',
-    group: 'Atención',
-    icon: 'note',
-    roles: ['CLINICIAN', 'PRACTITIONER'],
-    availability: 'disponible',
-    summary: 'Lo último que escribiste, de todos tus pacientes y en un solo lugar.',
-    module: 'M15 chart',
-  },
+  // «Notas médicas» (`progress-notes`) vivió acá como sección propia entre el
+  // 19/09 y el 25/09/2026. Se retiró del menú y del producto a pedido del
+  // propietario: la nota médica se escribe y se lee desde la consulta y el
+  // expediente de cada persona, y una lista transversal de notas no era una
+  // pantalla que quisiera tener.
   {
     path: 'diagnostics',
     // §4.H · fuera del menú del médico: no está en la lista de ocho. La cola
@@ -759,6 +737,9 @@ export const APP_SECTIONS: readonly AppSection[] = [
     label: 'Aseguradora',
     group: 'Administración',
     icon: 'umbrella',
+    // Cuenta de farmacia: su menú es el del mostrador y nada más (D3 del
+    // 29/09/2026). La sección sigue existiendo para quien sí la usa.
+    hiddenForTenantTypes: ['PHARMACY', 'DIAGNOSTIC_CENTER'],
     roles: [ANY_ROLE],
     requiresTenant: true,
     hiddenFor: ['PATIENT', 'PRACTITIONER'],
@@ -817,11 +798,34 @@ export const APP_SECTIONS: readonly AppSection[] = [
     label: 'Siniestralidad y analítica',
     group: 'Administración',
     icon: 'chart',
+    // Cuenta de farmacia: su menú es el del mostrador y nada más (D3 del
+    // 29/09/2026). La sección sigue existiendo para quien sí la usa.
+    hiddenForTenantTypes: ['PHARMACY', 'DIAGNOSTIC_CENTER'],
     roles: [ANY_ROLE],
     requiresTenant: true,
     hiddenFor: ['PATIENT', 'PRACTITIONER'],
     availability: 'disponible',
     summary: 'Tablero actuarial de siniestralidad, gasto per cápita y morbilidad.',
+    module: 'M26 insurance',
+  },
+  {
+    // La cara de LA ASEGURADORA de las solicitudes de seguro: lo que cada
+    // prestador le presentó, con paciente, médico, servicio, monto y fechas.
+    // «Solicitudes de seguro» (arriba) es la cara del prestador; ésta es la de
+    // quien paga, y por eso lleva el mismo acceso que «Siniestralidad»: la
+    // autoridad es la membresía en la aseguradora, que resuelve la API.
+    path: 'administration/received-claims',
+    label: 'Solicitudes recibidas',
+    group: 'Administración',
+    icon: 'clipboard',
+    // Cuenta de farmacia: su menú es el del mostrador y nada más (D3 del
+    // 29/09/2026). La sección sigue existiendo para quien sí la usa.
+    hiddenForTenantTypes: ['PHARMACY', 'DIAGNOSTIC_CENTER'],
+    roles: [ANY_ROLE],
+    requiresTenant: true,
+    hiddenFor: ['PATIENT', 'PRACTITIONER'],
+    availability: 'disponible',
+    summary: 'Lo que cada prestador le pidió a tu aseguradora, con médico, servicio y monto.',
     module: 'M26 insurance',
   },
   {
@@ -835,6 +839,9 @@ export const APP_SECTIONS: readonly AppSection[] = [
     label: 'Campañas preventivas',
     group: 'Administración',
     icon: 'megaphone',
+    // Cuenta de farmacia: su menú es el del mostrador y nada más (D3 del
+    // 29/09/2026). La sección sigue existiendo para quien sí la usa.
+    hiddenForTenantTypes: ['PHARMACY', 'DIAGNOSTIC_CENTER'],
     roles: [ANY_ROLE],
     requiresTenant: true,
     hiddenFor: ['PATIENT', 'PRACTITIONER'],
@@ -1108,7 +1115,9 @@ export const APP_SECTIONS: readonly AppSection[] = [
     group: 'Facturación',
     icon: 'billing',
     roles: ['BILLING', 'FINANCE', 'CASHIER', 'PAYMENTS_ADMIN'],
-    availability: 'planificada',
+    // FACT-SIAT-MOCK: la pantalla existe; lo fiscal va contra el SIAT SIMULADO
+    // y, sin `billingSiatDemo`, dice que la facturación no está conectada.
+    availability: 'disponible',
     summary: 'Emití comprobantes y seguí los cobros de la organización.',
     module: 'M26 billing · M42 payments',
   },
@@ -1144,7 +1153,8 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // es la suya lo hace la API, que responde 403 ante la de otra organización.
     roles: ['SECURITY_ADMIN', 'ACCOUNTING_APPROVER', 'PRACTITIONER'],
     availability: 'disponible',
-    summary: 'Cuánto entró hoy, esta semana y este mes; en qué se te va; quién te debe y a quién le debés.',
+    summary:
+      'Cuánto entró hoy, esta semana y este mes; en qué se te va; quién te debe y a quién le debés.',
     module: 'M16 accounting',
   },
 
@@ -1176,7 +1186,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     path: 'my-account/dependents',
     // Aseguradora: no es de una organización PAYER. Ver la nota completa en
     // `directories`, la primera fila que lleva esta marca.
-    hiddenForTenantTypes: ['PAYER'],
+    hiddenForTenantTypes: ['PAYER', 'PHARMACY', 'DIAGNOSTIC_CENTER'],
     // Es del paciente: a quien atiende no se le ofrece.
     hiddenFor: ['PRACTITIONER'],
     label: 'Dependientes',
@@ -1214,7 +1224,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     path: 'my-account/appointments',
     // Aseguradora: no es de una organización PAYER. Ver la nota completa en
     // `directories`, la primera fila que lleva esta marca.
-    hiddenForTenantTypes: ['PAYER'],
+    hiddenForTenantTypes: ['PAYER', 'PHARMACY', 'DIAGNOSTIC_CENTER'],
     // Es del paciente: al médico no se le ofrece. Mismo mecanismo que
     // «Tu organización» para el paciente (`hiddenFor`, B-14).
     hiddenFor: ['PRACTITIONER'],
@@ -1237,7 +1247,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     path: 'my-account/medical-record',
     // Aseguradora: no es de una organización PAYER. Ver la nota completa en
     // `directories`, la primera fila que lleva esta marca.
-    hiddenForTenantTypes: ['PAYER'],
+    hiddenForTenantTypes: ['PAYER', 'PHARMACY', 'DIAGNOSTIC_CENTER'],
     // Es del paciente: al médico no se le ofrece. Mismo mecanismo que
     // «Tu organización» para el paciente (`hiddenFor`, B-14).
     hiddenFor: ['PRACTITIONER'],
@@ -1260,7 +1270,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     path: 'my-account/diagnostic-results',
     // Aseguradora: no es de una organización PAYER. Ver la nota completa en
     // `directories`, la primera fila que lleva esta marca.
-    hiddenForTenantTypes: ['PAYER'],
+    hiddenForTenantTypes: ['PAYER', 'PHARMACY', 'DIAGNOSTIC_CENTER'],
     // Es del paciente: al médico no se le ofrece. Mismo mecanismo que
     // «Tu organización» para el paciente (`hiddenFor`, B-14).
     hiddenFor: ['PRACTITIONER'],
@@ -1282,7 +1292,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     path: 'my-account/diagnostic-orders',
     // Aseguradora: no es de una organización PAYER. Ver la nota completa en
     // `directories`, la primera fila que lleva esta marca.
-    hiddenForTenantTypes: ['PAYER'],
+    hiddenForTenantTypes: ['PAYER', 'PHARMACY', 'DIAGNOSTIC_CENTER'],
     // Es del paciente: al médico no se le ofrece. Mismo mecanismo que
     // «Tu organización» para el paciente (`hiddenFor`, B-14).
     hiddenFor: ['PRACTITIONER'],
@@ -1293,6 +1303,20 @@ export const APP_SECTIONS: readonly AppSection[] = [
     availability: 'disponible',
     summary: 'Los estudios que te pidió un médico, con las indicaciones para hacértelos.',
     module: 'M20 diagnostics',
+  },
+  {
+    path: 'my-account/cotizaciones',
+    // Aseguradora: no es de una organización PAYER. Ver la nota completa en
+    // `directories`, la primera fila que lleva esta marca.
+    hiddenForTenantTypes: ['PAYER', 'PHARMACY', 'DIAGNOSTIC_CENTER'],
+    hiddenFor: ['PRACTITIONER'],
+    label: 'Cotizaciones',
+    group: 'Mi cuenta',
+    icon: 'billing',
+    roles: [ANY_ROLE],
+    availability: 'disponible',
+    summary: 'Compará referencias de precio y cercanía con su procedencia visible.',
+    module: 'M-cotizaciones',
   },
   {
     // Carril 10, lado paciente. Sin `roles` a propósito, por el mismo motivo
@@ -1308,6 +1332,13 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // Es del paciente: al médico no se le ofrece. Mismo mecanismo que
     // «Tu organización» para el paciente (`hiddenFor`, B-14).
     hiddenFor: ['PRACTITIONER'],
+    // Pedido del propietario (2026-09-25): sacar el renglón de la vista del
+    // paciente mientras se decide qué hacer con la sección — todavía no está
+    // definido. `fueraDelMenuPara` es lo que "apaga una sección de momento
+    // sin perder el código" (mismo mecanismo que «Ajustes»/«Chats» más abajo):
+    // la ruta, el guard y la pantalla siguen enteros, sólo deja de ocupar
+    // renglón. Ver docs/pendiente-decision-cuestionarios.md.
+    fueraDelMenuPara: [ANY_ROLE],
     label: 'Mis cuestionarios',
     group: 'Mi cuenta',
     icon: 'survey',
@@ -1398,8 +1429,41 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M27 identity_assurance',
   },
   {
+    // «Farmacia» — pedido del propietario, 24/09/2026: «mis pedidos y
+    // cotizaciones deben estar dentro de farmacia». Monta «Mis pedidos»
+    // (de abajo) y una «Cotizaciones» fija en Medicamentos (reusando la
+    // sección de más adelante, sin su selector) como pestañas
+    // (`PharmacyHub`). Sólo «Mis pedidos» pierde su fila propia acá: sigue
+    // registrada —ruta, roles, guard—, pero ya no ocupa renglón. La sección
+    // «Cotizaciones» de «Mi cuenta» **conserva la suya**, con las otras tres
+    // verticales (Análisis, Imagenología, Servicios médicos) — no se movió.
+    //
+    // **No es «Directorios · Farmacias»** (`pharmacies-directory`): esa es
+    // la vitrina pública de sedes, y ésta es lo propio de la cuenta del
+    // paciente. Las dos siguen en pie, sin tocarse.
+    //
+    // Mismos roles que «Mis pedidos», que hereda al montarla como pestaña:
+    // su contenido nace de una receta propia.
+    path: 'my-account/pharmacy',
+    label: 'Farmacia',
+    group: 'Mi cuenta',
+    icon: 'bag',
+    roles: ['PATIENT'],
+    availability: 'disponible',
+    summary: 'Tus pedidos de farmacia y cuánto cuesta comprar, en un solo lugar.',
+    module: 'M24 pharmacy',
+  },
+  {
     // Carril FAR-I2 · los pedidos de farmacia de la persona: del envío al
     // retiro, con la decisión de sustitución en el medio.
+    //
+    // **Sin renglón propio desde el 24/09/2026** (`fueraDelMenuPara`): el
+    // punto de entrada del menú es «Farmacia», que la monta como su primera
+    // pestaña. La sección sigue entera —ruta, roles, guard— porque el
+    // detalle de un pedido, el checkout, el recibo y los enlaces de
+    // notificación (`notification-routes.ts`) navegan de vuelta acá con
+    // `/my-account/pharmacy-orders`: sacarle la ruta habría roto esos cuatro
+    // caminos, no sólo el menú.
     //
     // **Con `roles: ['PATIENT']`, a diferencia del resto de «Mi cuenta».** El
     // pedido nace de una receta propia y la guardia del carril lo exige
@@ -1411,6 +1475,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     group: 'Mi cuenta',
     icon: 'bag',
     roles: ['PATIENT'],
+    fueraDelMenuPara: [ANY_ROLE],
     availability: 'disponible',
     summary: 'Seguí tus pedidos de farmacia: del envío al retiro.',
     module: 'M24 pharmacy',
@@ -1428,6 +1493,13 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // así que va `billing`, el de valor acumulado. Un icono propio es del
     // dueño del sistema de iconos, no de este carril.
     path: 'my-account/loyalty',
+    // N-03/Q-17 (2026-09-22, Itzan): «Mis puntos» es una pestaña del perfil
+    // del paciente (#606, 24/09/2026) y no tiene renglón de primer nivel. La
+    // ruta vieja redirige a `/my-account?pestana=puntos` en `app.routes.ts`
+    // (`SECCIONES_REDIRIGIDAS`), conservando el query que traía. La sección se
+    // conserva registrada (roles, disponibilidad) para que esa dirección siga
+    // resolviendo si alguien la tiene guardada.
+    fueraDelMenuPara: [ANY_ROLE],
     label: 'Mis puntos',
     group: 'Mi cuenta',
     icon: 'star',
@@ -1440,6 +1512,10 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // Las promociones que las farmacias le mandaron al paciente (T-E7). Mismo
     // criterio que «Mis puntos»: rol de paciente, sin `exclusiveRoles`. Icono
     // `tag`: ningún otro de «Mi cuenta» lo usa.
+    //
+    // Fuera del menú lateral desde el 25/09/2026, a pedido del cliente: se
+    // llega por el ícono de la barra superior, junto al carrito.
+    fueraDelMenuPara: [ANY_ROLE],
     path: 'my-account/promotions',
     label: 'Promociones',
     group: 'Mi cuenta',
@@ -1450,20 +1526,41 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M51 promotions',
   },
   {
-    // Detrás de «Promociones»: en el bloque «Mis gestiones» el orden es el del
-    // registro, y así no se mete entre citas, pedidos y puntos.
-    path: 'my-account/cotizaciones',
-    // Aseguradora: no es de una organización PAYER. Ver la nota completa en
-    // `directories`, la primera fila que lleva esta marca.
-    hiddenForTenantTypes: ['PAYER'],
-    hiddenFor: ['PRACTITIONER'],
-    label: 'Cotizaciones',
+    // «Mis gastos» (pedido del propietario, 27/09/2026): el tablero de lo que
+    // el paciente gastó en su salud. Mismo criterio que «Promociones»: fuera
+    // del menú lateral, se llega por la billetera de la barra superior.
+    //
+    // Módulo 17 porque lo que suma son cobros al paciente; el contrato
+    // (`GET /patient-spending/me`) todavía no existe en la API — P43 en
+    // `PENDIENTES-BACKEND.md`.
+    fueraDelMenuPara: [ANY_ROLE],
+    path: 'my-account/spending',
+    label: 'Mis gastos',
     group: 'Mi cuenta',
-    icon: 'billing',
+    icon: 'wallet',
+    roles: ['PATIENT'],
+    availability: 'disponible',
+    summary: 'Cuánto gastaste en tu salud: este mes, el año contra el pasado y por categoría.',
+    module: 'M17 billing',
+  },
+  {
+    // «Mis facturas» (pedido del propietario, 30/09/2026): las facturas
+    // emitidas, para **todo** tipo de cuenta, desde un ícono de la barra
+    // superior —como «Mis gastos»—. El paciente ve las que le emitieron; el
+    // médico, la farmacia y facturación, las que emitieron. El lado lo decide
+    // el backend por la sesión.
+    //
+    // Hoy la lee del SIAT **simulado** (FACT-SIAT-MOCK): la API todavía no
+    // publica facturas — P53 en `PENDIENTES-BACKEND.md`.
+    fueraDelMenuPara: [ANY_ROLE],
+    path: 'my-account/invoices',
+    label: 'Mis facturas',
+    group: 'Mi cuenta',
+    icon: 'receipt',
     roles: [ANY_ROLE],
     availability: 'disponible',
-    summary: 'Compará referencias de precio y cercanía con su procedencia visible.',
-    module: 'M-cotizaciones',
+    summary: 'Las facturas emitidas: las que te hicieron o las que hiciste, con su PDF y su XML.',
+    module: 'M26 billing',
   },
   {
     // **«Mis organizaciones»** (propietario, 2026-09-10), en el lugar que
@@ -1538,6 +1635,9 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // `[ANY_ROLE]` y no la ausencia del campo: F-20 exige que toda sección
     // declare sus roles, justamente para que un olvido no se lea como «la ve
     // cualquiera». Acá la ve cualquiera **a propósito**, y así queda dicho.
+    // Cuenta de farmacia: su menú es el del mostrador y nada más (D3 del
+    // 29/09/2026). La sección sigue existiendo para quien sí la usa.
+    hiddenForTenantTypes: ['PHARMACY', 'DIAGNOSTIC_CENTER'],
     roles: [ANY_ROLE],
     label: 'Tu organización',
     group: 'Administración',
@@ -1548,51 +1648,155 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M04 directory',
   },
   {
-    // La bandeja del mostrador de farmacia (carril FAR-I3). Mismo criterio de
-    // acceso que «Tu organización»: la membresía manda (claim `tenants`), no
-    // un rol del token — no existe un rol de farmacia minorista, y
-    // owner/admin/staff son filas de `tenant_memberships` que el front no
-    // decodifica. El corte por TIPO de tenant (farmacia vs clínica) es del
-    // backend de FAR-E2: al leer, el front sólo tiene `tenantTypeConceptId`.
-    path: 'administration/pharmacy-orders',
-    // Aseguradora: el mostrador de una farmacia no es de una organización
-    // PAYER. Ver la nota completa en `directories`.
-    hiddenForTenantTypes: ['PAYER'],
-    // §4.H · fuera del menú del médico: es la bandeja del mostrador de una
-    // farmacia, no del consultorio.
-    fueraDelMenuPara: ['PRACTITIONER'],
+    // El resumen de la farmacia (carril B del 29/09/2026): indicadores, productos por
+    // categoría y atajos. Ruta `administration/pharmacy` y no `/pharmacy`: el proxy
+    // se come todo prefijo `/pharmacy*` (check-route-prefixes).
+    path: 'administration/pharmacy',
+    // Sólo la cuenta de farmacia (D3/D4 del 29/09/2026): el menú del mostrador
+    // es plano y cerrado, así que la sección no existe para otro tipo de
+    // organización. La autoridad sigue siendo la API (`@Roles` del controller).
+    onlyForTenantTypes: ['PHARMACY'],
     roles: [ANY_ROLE],
-    // El mostrador no es del paciente. Ver `hiddenFor` en «Tu organización».
+    // §4.H · fuera del menú del médico. El paciente compra del catálogo, no lo
+    // administra.
+    fueraDelMenuPara: ['PRACTITIONER'],
     hiddenFor: ['PATIENT'],
-    label: 'Pedidos de farmacia',
-    group: 'Administración',
-    icon: 'bag',
+    label: 'Resumen',
+    // `General` y no `Administración`: es un dominio aplanado, así que los
+    // ocho renglones van sueltos, sin encabezado ni desplegable.
+    group: 'General',
+    icon: 'home',
     requiresTenant: true,
     availability: 'disponible',
-    summary: 'La bandeja del mostrador: pedidos que llegan, confirmaciones y retiros.',
+    summary: 'Cómo va tu farmacia hoy: productos, alertas de inventario y actividad reciente.',
     module: 'M24 pharmacy',
   },
   {
-    // Las promociones de la farmacia (carril FAR-I7). Mismo criterio de acceso
-    // que la bandeja de al lado: la membresía manda (claim `tenants`), no un
-    // rol del token — no existe un rol de farmacia minorista.
-    path: 'administration/pharmacy-campaigns',
-    // Aseguradora: el mostrador de una farmacia no es de una organización
-    // PAYER. Ver la nota completa en `directories`.
-    hiddenForTenantTypes: ['PAYER'],
+    // El catálogo de la farmacia: la empresa sube sus productos, uno por uno o de a
+    // cientos, y retira los que ya no vende. Quien de verdad autoriza el alta es la
+    // API (`@Roles` en `pharmacy.controller.ts`); el menú sólo no ofrece puertas
+    // ajenas.
+    path: 'administration/pharmacy-catalog',
+    // Sólo la cuenta de farmacia (D3/D4 del 29/09/2026): el menú del mostrador
+    // es plano y cerrado, así que la sección no existe para otro tipo de
+    // organización. La autoridad sigue siendo la API (`@Roles` del controller).
+    onlyForTenantTypes: ['PHARMACY'],
     roles: [ANY_ROLE],
-    // §4.H · fuera del menú del médico, como la bandeja de al lado. El corte
-    // por membresía es `requiresTenant`, y un tenant es un tenant: el médico
-    // que pertenece a su clínica cumple la condición y terminaba con las
-    // promociones de una farmacia en su menú de ocho. No se le tocan los
-    // `roles` —quien sí atiende el mostrador la sigue viendo, y quien llega
-    // por la ruta entra igual—: esto habla de renglones, no de permisos.
+    // §4.H · fuera del menú del médico. El paciente compra del catálogo, no lo
+    // administra.
     fueraDelMenuPara: ['PRACTITIONER'],
-    // Quien las publica, no quien las recibe: el paciente ve las promociones en
-    // la ficha pública de la farmacia, no en el panel que las administra.
+    hiddenFor: ['PATIENT'],
+    label: 'Productos',
+    // `General` y no `Administración`: es un dominio aplanado, así que los
+    // ocho renglones van sueltos, sin encabezado ni desplegable.
+    group: 'General',
+    icon: 'package',
+    requiresTenant: true,
+    availability: 'disponible',
+    summary: 'Los productos que vende tu farmacia: alta, edición, publicación y retiro.',
+    module: 'M24 pharmacy',
+  },
+  {
+    path: 'administration/pharmacy-categories',
+    // Sólo la cuenta de farmacia (D3/D4 del 29/09/2026): el menú del mostrador
+    // es plano y cerrado, así que la sección no existe para otro tipo de
+    // organización. La autoridad sigue siendo la API (`@Roles` del controller).
+    onlyForTenantTypes: ['PHARMACY'],
+    roles: [ANY_ROLE],
+    // §4.H · fuera del menú del médico. El paciente compra del catálogo, no lo
+    // administra.
+    fueraDelMenuPara: ['PRACTITIONER'],
+    hiddenFor: ['PATIENT'],
+    label: 'Categorías',
+    // `General` y no `Administración`: es un dominio aplanado, así que los
+    // ocho renglones van sueltos, sin encabezado ni desplegable.
+    group: 'General',
+    icon: 'tag',
+    requiresTenant: true,
+    availability: 'disponible',
+    summary: 'Las categorías con las que ordenás tus productos.',
+    module: 'M24 pharmacy',
+  },
+  {
+    path: 'administration/pharmacy-import',
+    // Sólo la cuenta de farmacia (D3/D4 del 29/09/2026): el menú del mostrador
+    // es plano y cerrado, así que la sección no existe para otro tipo de
+    // organización. La autoridad sigue siendo la API (`@Roles` del controller).
+    onlyForTenantTypes: ['PHARMACY'],
+    roles: [ANY_ROLE],
+    // §4.H · fuera del menú del médico. El paciente compra del catálogo, no lo
+    // administra.
+    fueraDelMenuPara: ['PRACTITIONER'],
+    hiddenFor: ['PATIENT'],
+    label: 'Importación masiva',
+    // `General` y no `Administración`: es un dominio aplanado, así que los
+    // ocho renglones van sueltos, sin encabezado ni desplegable.
+    group: 'General',
+    icon: 'clipboard',
+    requiresTenant: true,
+    availability: 'disponible',
+    summary: 'Cargá o actualizá tus productos de a cientos con un archivo CSV.',
+    module: 'M24 pharmacy',
+  },
+  {
+    path: 'administration/pharmacy-inventory',
+    // Sólo la cuenta de farmacia (D3/D4 del 29/09/2026): el menú del mostrador
+    // es plano y cerrado, así que la sección no existe para otro tipo de
+    // organización. La autoridad sigue siendo la API (`@Roles` del controller).
+    onlyForTenantTypes: ['PHARMACY'],
+    roles: [ANY_ROLE],
+    // §4.H · fuera del menú del médico. El paciente compra del catálogo, no lo
+    // administra.
+    fueraDelMenuPara: ['PRACTITIONER'],
+    hiddenFor: ['PATIENT'],
+    label: 'Inventario',
+    // `General` y no `Administración`: es un dominio aplanado, así que los
+    // ocho renglones van sueltos, sin encabezado ni desplegable.
+    group: 'General',
+    icon: 'orders',
+    requiresTenant: true,
+    availability: 'disponible',
+    summary: 'Existencias y umbral de alerta de cada producto.',
+    module: 'M24 pharmacy',
+  },
+  {
+    // La bandeja del mostrador de farmacia (carril FAR-I3). La membresía manda
+    // (claim `tenants`), no un rol del token: no existe un rol de farmacia minorista.
+    path: 'administration/pharmacy-orders',
+    // Sólo la cuenta de farmacia (D3/D4 del 29/09/2026): el menú del mostrador
+    // es plano y cerrado, así que la sección no existe para otro tipo de
+    // organización. La autoridad sigue siendo la API (`@Roles` del controller).
+    onlyForTenantTypes: ['PHARMACY'],
+    roles: [ANY_ROLE],
+    // §4.H · fuera del menú del médico. El paciente compra del catálogo, no lo
+    // administra.
+    fueraDelMenuPara: ['PRACTITIONER'],
+    hiddenFor: ['PATIENT'],
+    label: 'Solicitudes de retiro',
+    // `General` y no `Administración`: es un dominio aplanado, así que los
+    // ocho renglones van sueltos, sin encabezado ni desplegable.
+    group: 'General',
+    icon: 'bag',
+    requiresTenant: true,
+    availability: 'disponible',
+    summary: 'La bandeja del mostrador: solicitudes que llegan, preparación y retiros.',
+    module: 'M24 pharmacy',
+  },
+  {
+    path: 'administration/pharmacy-campaigns',
+    // Sólo la cuenta de farmacia (D3/D4 del 29/09/2026): el menú del mostrador
+    // es plano y cerrado, así que la sección no existe para otro tipo de
+    // organización. La autoridad sigue siendo la API (`@Roles` del controller).
+    onlyForTenantTypes: ['PHARMACY'],
+    roles: [ANY_ROLE],
+    // §4.H · fuera del menú del médico. El paciente compra del catálogo, no lo
+    // administra.
+    fueraDelMenuPara: ['PRACTITIONER'],
     hiddenFor: ['PATIENT'],
     label: 'Promociones',
-    group: 'Administración',
+    // `General` y no `Administración`: es un dominio aplanado, así que los
+    // ocho renglones van sueltos, sin encabezado ni desplegable.
+    group: 'General',
     icon: 'megaphone',
     requiresTenant: true,
     availability: 'disponible',
@@ -1600,56 +1804,116 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M51 promotions',
   },
   {
-    // El catálogo de la farmacia: la empresa sube sus productos, uno por uno o
-    // de a cientos con un CSV, y retira los que ya no vende. Mismo criterio de
-    // acceso que sus hermanas: la membresía manda (claim `tenants`), no un rol
-    // del token. Quien de verdad autoriza el alta es la API (`@Roles` en
-    // `pharmacy.controller.ts`); el menú sólo no ofrece puertas ajenas.
-    path: 'administration/pharmacy-catalog',
-    // Aseguradora: el mostrador de una farmacia no es de una organización
-    // PAYER. Ver la nota completa en `directories`.
-    hiddenForTenantTypes: ['PAYER'],
-    roles: [ANY_ROLE],
-    // §4.H · fuera del menú del médico, como la bandeja y las promociones.
-    fueraDelMenuPara: ['PRACTITIONER'],
-    // El paciente compra del catálogo, no lo administra.
-    hiddenFor: ['PATIENT'],
-    label: 'Catálogo de productos',
-    group: 'Administración',
-    icon: 'package',
-    requiresTenant: true,
-    availability: 'disponible',
-    summary: 'Los productos que vende tu farmacia: altas, carga masiva por CSV y retiros.',
-    module: 'M24 pharmacy',
-  },
-  {
-    // La ficha legal de la farmacia: lo que la empresa es en los papeles —sus
-    // datos de registro, su carpeta de documentos y quién responde por ella—.
-    // No es la bandeja ni las promociones: es la farmacia mirándose a sí misma.
-    //
-    // Mismo criterio de acceso que sus dos hermanas: la membresía manda (claim
-    // `tenants`), no un rol del token — no existe un rol de farmacia minorista,
-    // y owner/admin/staff son filas de `tenant_memberships` que el front no
-    // decodifica.
+    // La ficha legal de la farmacia: lo que la empresa es en los papeles. Reemplaza a
+    // «Tu organización» en el menú de esta cuenta.
     path: 'administration/pharmacy-profile',
-    // Aseguradora: el mostrador de una farmacia no es de una organización
-    // PAYER. Ver la nota completa en `directories`.
-    hiddenForTenantTypes: ['PAYER'],
-    // §4.H · fuera del menú del médico: la ficha legal la lleva quien
-    // administra la farmacia, no el consultorio.
-    fueraDelMenuPara: ['PRACTITIONER'],
+    // Sólo la cuenta de farmacia (D3/D4 del 29/09/2026): el menú del mostrador
+    // es plano y cerrado, así que la sección no existe para otro tipo de
+    // organización. La autoridad sigue siendo la API (`@Roles` del controller).
+    onlyForTenantTypes: ['PHARMACY'],
     roles: [ANY_ROLE],
-    // Y no existe para el paciente. `requiresTenant` no alcanza: el alta de
-    // paciente lo afilia al tenant por defecto, así que cumple la condición y
-    // sin esto la ficha legal de una farmacia le aparecía en el menú.
+    // §4.H · fuera del menú del médico. El paciente compra del catálogo, no lo
+    // administra.
+    fueraDelMenuPara: ['PRACTITIONER'],
     hiddenFor: ['PATIENT'],
     label: 'Ficha de la farmacia',
-    group: 'Administración',
-    // `building` y no `bag`: la bolsa es el mostrador, esto es la empresa.
+    // `General` y no `Administración`: es un dominio aplanado, así que los
+    // ocho renglones van sueltos, sin encabezado ni desplegable.
+    group: 'General',
     icon: 'building',
     requiresTenant: true,
     availability: 'disponible',
     summary: 'Los datos legales de tu farmacia, su carpeta de documentos y sus responsables.',
     module: 'M24 pharmacy',
+  },
+  {
+    // El portal de la cuenta de laboratorio (30/09/2026): el mismo menú plano que
+    // tiene la farmacia desde el 29/09, adaptado a quien vende servicios y no
+    // productos. Rutas bajo `administration/` por la misma razón que las de la
+    // farmacia: nada de prefijos que el proxy se coma (check-route-prefixes).
+    path: 'administration/laboratory',
+    // Sólo la cuenta de laboratorio (30/09/2026): su menú es plano y cerrado,
+    // como el del mostrador de la farmacia. La autoridad sigue siendo la API.
+    onlyForTenantTypes: ['DIAGNOSTIC_CENTER'],
+    roles: [ANY_ROLE],
+    fueraDelMenuPara: ['PRACTITIONER'],
+    hiddenFor: ['PATIENT'],
+    label: 'Resumen',
+    group: 'General',
+    icon: 'home',
+    requiresTenant: true,
+    availability: 'disponible',
+    summary: 'Cómo va tu laboratorio: servicios, órdenes sin resultado y lo último que pasó.',
+    module: 'M20 diagnostics',
+  },
+  {
+    // La recepción de muestras del laboratorio: la bandeja de órdenes que
+    // otras organizaciones le dirigieron (`POST /diagnostics/service-requests/inbox`)
+    // y los dos actos que la vacían —recibir la muestra y acesionarla—. Es el
+    // paso que falta **antes** de «Laboratorio e imagen», cuya cola arranca
+    // cuando la acesión ya existe.
+    //
+    // Quien la opera es el personal de un centro de diagnóstico, que no tiene
+    // rol propio en el token: el dueño entra con `USER` y su autoridad es la
+    // membresía. La API decide con `LabStaffGuard` (miembro activo de un tenant
+    // `DIAGNOSTIC_CENTER`, o `CLINICIAN`/`PRACTITIONER` del tenant activo); el
+    // menú sólo puede mirar el tipo de la organización activa, y es lo que
+    // mira. El paciente queda afuera también por rol: su membresía en el
+    // tenant por defecto no lo vuelve personal de nadie.
+    path: 'laboratorio/recepcion',
+    label: 'Recepción de muestras',
+    // `General` desde el 30/09/2026: es un renglón del menú plano de la cuenta
+    // de laboratorio, como los del mostrador de la farmacia.
+    group: 'General',
+    icon: 'flask',
+    roles: [ANY_ROLE],
+    requiresTenant: true,
+    hiddenFor: ['PATIENT'],
+    onlyForTenantTypes: ['DIAGNOSTIC_CENTER'],
+    availability: 'disponible',
+    summary: 'Recibí las muestras de las órdenes que te derivaron y registrá su acesión.',
+    module: 'M20 diagnostics',
+  },
+  {
+    // La cola de trabajo del laboratorio, para su propio personal. Es la misma
+    // pantalla que «Laboratorio e imagen» (`GET /diagnostics/work-orders`),
+    // pero aquélla exige `CLINICIAN`/`PRACTITIONER` y el personal de un centro
+    // de diagnóstico no tiene rol en el token: la API la abre con
+    // `LabStaffGuard` (membresía en un `DIAGNOSTIC_CENTER`), y el menú, igual
+    // que la recepción, mira el tipo de la organización activa. Dos secciones
+    // y no una con dos reglas: `isVisibleTo` no sabe decir «este rol **o**
+    // este tipo de organización», y enseñárselo para una sola pantalla sería
+    // una regla nueva en el corazón del menú.
+    path: 'laboratorio/cola',
+    label: 'Cola de trabajo',
+    // `General` desde el 30/09/2026: es un renglón del menú plano de la cuenta
+    // de laboratorio, como los del mostrador de la farmacia.
+    group: 'General',
+    icon: 'scan',
+    roles: [ANY_ROLE],
+    requiresTenant: true,
+    hiddenFor: ['PATIENT'],
+    onlyForTenantTypes: ['DIAGNOSTIC_CENTER'],
+    availability: 'disponible',
+    summary: 'Seguí las órdenes de trabajo de las muestras que acesionaste.',
+    module: 'M20 diagnostics',
+  },
+  {
+    // Los resultados: el laboratorio sube archivos de cualquier formato y sin
+    // tope de tamaño (por partes), y ve todo lo subido con su visor.
+    path: 'administration/laboratory-results',
+    // Sólo la cuenta de laboratorio (30/09/2026): su menú es plano y cerrado,
+    // como el del mostrador de la farmacia. La autoridad sigue siendo la API.
+    onlyForTenantTypes: ['DIAGNOSTIC_CENTER'],
+    roles: [ANY_ROLE],
+    fueraDelMenuPara: ['PRACTITIONER'],
+    hiddenFor: ['PATIENT'],
+    label: 'Resultados',
+    group: 'General',
+    icon: 'results',
+    requiresTenant: true,
+    availability: 'disponible',
+    summary: 'Subí los resultados en cualquier formato y mirá todo lo que ya subiste.',
+    module: 'M20 diagnostics',
   },
 ];

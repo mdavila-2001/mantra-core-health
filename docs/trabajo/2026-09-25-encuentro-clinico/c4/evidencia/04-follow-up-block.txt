@@ -1,0 +1,5 @@
+corepack yarn test --watch=false --include=src/app/features/clinical-record/patient-chart/follow-up-block/follow-up-block.spec.ts
+
+ Test Files  1 passed (1)
+      Tests  14 passed (14)
+   Duration  5.39s

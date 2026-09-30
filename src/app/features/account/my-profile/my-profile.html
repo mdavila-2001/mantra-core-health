@@ -96,7 +96,9 @@
             </div>
           </div>
 
-          <!-- FT-11-R04 · el lápiz habilita los campos ACÁ, no manda a otra
+          <!-- «Editar perfil» con el lápiz, igual en todos los perfiles (pedido
+               del 30/09/2026).
+               FT-11-R04 · el lápiz habilita los campos ACÁ, no manda a otra
                pantalla. Lápiz y nombre (D-05, 22/09): el lápiz del 09/09 solo
                no alcanza, porque puede ser editar, firmar o anotar
                (ADR-0012). El botón desaparece mientras se edita: sus acciones
@@ -111,7 +113,7 @@
               (clicked)="editar()"
             >
               <app-nav-icon name="edit" />
-              Editar
+              Editar perfil
             </button>
           }
         </div>
@@ -381,6 +383,15 @@
                       </dd>
                     </div>
                   </dl>
+
+                  <!-- El mismo mapa de residencia que la ficha del médico: el
+                       departamento marcado, el municipio más oscuro y el punto
+                       rojo en el domicilio si trae coordenadas. -->
+                  @if (p.residenceMunicipalityConceptId; as municipio) {
+                    <section class="mi-perfil__residencia" data-testid="mi-perfil-residencia">
+                      <app-residence-readonly [municipioId]="municipio" [punto]="puntoDe(p.homeAddress)" />
+                    </section>
+                  }
                 } @else {
                   <p class="mi-perfil__nota">Todavía no pudimos traer estos datos.</p>
                 }
@@ -418,13 +429,12 @@
                 }
               </app-tab>
 
-              <!-- ─── Seguros y tutores ────────────────────────────────────── -->
+              <!-- ─── Seguros ──────────────────────────────────────────────── -->
+              <!-- Separada de «Tutores» el 24/09/2026 (pedido del propietario):
+                   eran una sola pestaña con dos listas adentro, y una póliza no
+                   es un contacto de emergencia. -->
               <app-tab [label]="pestanas[3]">
                 @if (perfil(); as p) {
-                  <!-- Seguros y tutores van fuera de la lista de datos: son varios y
-                       cada uno tiene más de un dato, así que una fila `dt`/`dd` los
-                       apretaría. El título de cada lista sólo aparece si declaró
-                       alguno; sin ninguno, un renglón dice que no hay. -->
                   @if (p.coverages.length > 0) {
                     <ul class="mi-perfil__lista mi-perfil__coverages">
                       @for (coverage of p.coverages; track coverage.id ?? $index) {
@@ -448,8 +458,19 @@
                     }
                   }
 
+                  <!-- Portabilidad de póliza y siniestralidad a 1 clic (subtarea 3.3):
+                       siempre visible, tengas o no coberturas declaradas — el derecho
+                       de portabilidad no depende de eso. -->
+                  <app-insurance-portability-card [coverages]="p.coverages" />
+                } @else {
+                  <p class="mi-perfil__nota">Todavía no pudimos traer estos datos.</p>
+                }
+              </app-tab>
+
+              <!-- ─── Tutores ──────────────────────────────────────────────── -->
+              <app-tab [label]="pestanas[4]">
+                @if (perfil(); as p) {
                   @if (p.guardians.length > 0) {
-                    <h3 class="mi-perfil__subtitulo">Contactos y tutores</h3>
                     <ul class="mi-perfil__lista">
                       @for (tutor of p.guardians; track tutor.displayName ?? '' ; let i = $index) {
                         <li class="mi-perfil__item">
@@ -469,13 +490,8 @@
                       }
                     </ul>
                   } @else {
-                    <p class="mi-perfil__nota">No declaraste ningún contacto de emergencia ni tutor.</p>
+                    <p class="mi-perfil__nota mi-perfil__nota--primera">No declaraste ningún contacto de emergencia ni tutor.</p>
                   }
-
-                  <!-- Portabilidad de póliza y siniestralidad a 1 clic (subtarea 3.3):
-                       siempre visible, tengas o no coberturas declaradas — el derecho
-                       de portabilidad no depende de eso. -->
-                  <app-insurance-portability-card [coverages]="p.coverages" />
                 } @else {
                   <p class="mi-perfil__nota">Todavía no pudimos traer estos datos.</p>
                 }
@@ -486,7 +502,7 @@
                    misma tarjeta. Es la MISMA pantalla que sirve la ruta
                    `/my-account/loyalty`, embebida: sin su cabecera, porque la
                    tarjeta ya tiene una. -->
-              <app-tab [label]="pestanas[4]">
+              <app-tab [label]="pestanas[5]">
                 <app-loyalty embebido data-testid="mi-perfil-puntos" />
               </app-tab>
             </app-tabs>

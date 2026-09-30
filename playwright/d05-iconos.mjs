@@ -258,7 +258,9 @@ async function editarEnMiPerfil() {
       () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
     );
     if (FASE === 'despues') {
-      ok(`Editar ${celda}: dice «Editar»`, (await boton.innerText()).trim() === 'Editar');
+      // «Editar perfil» desde el 30/09/2026: el mismo nombre en todos los
+      // perfiles —paciente, médico e institución—, no sólo «Editar».
+      ok(`Editar ${celda}: dice «Editar perfil»`, (await boton.innerText()).trim() === 'Editar perfil');
       ok(`Editar ${celda}: conserva el lápiz`, (await boton.locator('svg').count()) === 1);
       ok(`Editar ${celda}: ya no es botón de sólo ícono`, !(await boton.getAttribute('class')).includes('btn--icon-only'));
       ok(

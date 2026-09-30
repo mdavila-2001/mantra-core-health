@@ -3,6 +3,7 @@
      ausencia. Quien monta este componente muestra ahí su «Reintentar». -->
 @if (dibujables().length > 0) {
   <div class="department-map">
+    <div class="department-map__vistas">
     <svg
       class="department-map__lienzo"
       [attr.viewBox]="viewBox"
@@ -30,6 +31,67 @@
             (click)="elegir(departamento.conceptId)"
             (keydown.enter)="elegir(departamento.conceptId)"
             (keydown.space)="elegirConBarra($event, departamento.conceptId)"
+          />
+        </g>
+      }
+
+      <!-- El municipio, más oscuro que su departamento y encima de él. No es
+           un control —el que se elige es el departamento—: `pointer-events:
+           none` deja pasar el clic y `aria-hidden` lo saca del árbol, porque
+           su nombre ya se dice con palabras en la línea de abajo. -->
+      @if (municipioDibujable(); as municipio) {
+        <path
+          class="department-map__municipio"
+          [attr.d]="municipio.d"
+          aria-hidden="true"
+          [attr.data-testid]="testId() + '-municipio'"
+          [attr.data-ine]="municipio.ine"
+        />
+      }
+
+      <!-- Los límites de las provincias, entre los rellenos y las siglas: por
+           encima de los departamentos, para que se vean también sobre el
+           elegido, y por debajo de las siglas, para que no las tachen. No es
+           un control: `pointer-events: none` deja pasar el clic a su
+           departamento, y `aria-hidden` lo saca del árbol accesible. -->
+      <path
+        class="department-map__provincias"
+        [attr.d]="limitesDeProvincias"
+        aria-hidden="true"
+        data-testid="department-map-provincias"
+      />
+
+      @for (departamento of dibujables(); track departamento.conceptId) {
+        <!-- La sigla, no el nombre: a 390 px «Santa Cruz» no entra en su
+             departamento y «Chuquisaca» tampoco. La sigla es además la que la
+             cédula imprime. Va `aria-hidden` porque el nombre completo ya
+             está en el `aria-label` del control. -->
+        <text
+          class="department-map__sigla"
+          [class.department-map__sigla--elegida]="departamento.conceptId === value()"
+          [attr.x]="departamento.etiqueta.x"
+          [attr.y]="departamento.etiqueta.y"
+          text-anchor="middle"
+          dominant-baseline="middle"
+          aria-hidden="true"
+        >
+          {{ departamento.sigla }}
+        </text>
+      }
+
+      <!-- El lugar: un punto rojo con aro blanco —se lee sobre el relleno
+           claro y sobre el oscuro— y un halo para encontrarlo de un vistazo
+           cuando el municipio es chico. Va último para quedar encima de las
+           siglas. -->
+      @if (marca(); as marca) {
+        <g class="department-map__marca" aria-hidden="true" [attr.data-testid]="testId() + '-punto'">
+          <circle class="department-map__marca-halo" [attr.cx]="marca.x" [attr.cy]="marca.y" r="22" />
+          <circle
+            class="department-map__marca-punto"
+            [attr.cx]="marca.x"
+            [attr.cy]="marca.y"
+            r="10"
+            stroke-width="4"
           />
         </g>
       }
@@ -65,12 +127,50 @@
       }
     </svg>
 
+    <!-- El acercamiento: el departamento solo, para que el municipio se vea.
+         Es un dibujo, no un control —el control es el país de al lado—, así
+         que va entero `aria-hidden`: lo que dice ya está en palabras abajo. -->
+    @if (acercamiento(); as zoom) {
+      <svg
+        class="department-map__acercamiento"
+        [attr.viewBox]="zoom.viewBox"
+        aria-hidden="true"
+        focusable="false"
+        [attr.data-testid]="testId() + '-acercamiento'"
+      >
+        @for (otro of zoom.otrosDepartamentos; track $index) {
+          <path class="department-map__acercamiento-otro" [attr.d]="otro" />
+        }
+        <path class="department-map__acercamiento-departamento" [attr.d]="zoom.departamento" />
+        @for (vecino of zoom.vecinos; track vecino.ine) {
+          <path class="department-map__acercamiento-vecino" [attr.d]="vecino.d" />
+        }
+        <path class="department-map__acercamiento-municipio" [attr.d]="zoom.municipio.d" />
+        @if (zoom.marca; as marca) {
+          <g class="department-map__marca">
+            <circle class="department-map__marca-halo" [attr.cx]="marca.x" [attr.cy]="marca.y" [attr.r]="marca.halo" />
+            <circle
+              class="department-map__marca-punto"
+              [attr.cx]="marca.x"
+              [attr.cy]="marca.y"
+              [attr.r]="marca.radio"
+              [attr.stroke-width]="marca.aro"
+            />
+          </g>
+        }
+      </svg>
+    }
+    </div>
+
     <!-- La tercera señal de lo elegido, además del relleno y del trazo: en
          palabras. Es la que sirve cuando no se distinguen los colores y la que
          un lector de pantalla anuncia al cambiar. -->
     <p class="department-map__elegido" aria-live="polite" [attr.data-testid]="testId() + '-elegido'">
       @if (nombreElegido(); as nombre) {
         Departamento elegido: <strong>{{ nombre }}</strong>
+        @if (municipioDibujable(); as municipio) {
+          · <strong>{{ municipio.nombre }}</strong>
+        }
       } @else {
         Todavía no elegiste departamento.
       }

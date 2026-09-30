@@ -92,6 +92,12 @@ export interface NewPractitionerProfile {
 export interface NewSpecialty {
   readonly specialtyConceptId?: string;
   readonly supportingCredentialId?: string;
+  /**
+   * Desde el 23/09/2026 ninguna pantalla lo muestra ni ordena por él
+   * (D-01: el médico pidió todas las especialidades iguales). Sigue en el
+   * contrato porque la API lo guarda; queda como deuda decidir si se retira
+   * del cable.
+   */
   readonly isPrimary?: boolean;
   readonly boardCertified?: boolean;
 }
@@ -152,7 +158,13 @@ export interface PractitionerProfile {
 export interface PractitionerSpecialty {
   readonly id: string;
   readonly specialtyConceptId: string;
-  /** La especialidad con la que se presenta. Hay una sola vigente. */
+  /**
+   * La especialidad con la que se presenta. Hay una sola vigente.
+   *
+   * Desde el 23/09/2026 ninguna pantalla lo muestra ni ordena por él (D-01).
+   * Sigue en el contrato porque la API lo guarda; queda como deuda decidir si
+   * se retira del cable.
+   */
   readonly isPrimary: boolean;
   /** Certificación del colegio o consejo. */
   readonly boardCertified: boolean;
@@ -315,6 +327,15 @@ export interface PractitionerActivity {
 export interface MonthlyCount {
   readonly month: string;
   readonly count: number;
+  /**
+   * De las `count` consultas, cuántas fueron de personas atendidas **con
+   * seguro**. Las demás —`count - insuredCount`— fueron sin seguro.
+   *
+   * Opcional: una instalación que todavía no cruza la consulta con la
+   * cobertura de la persona manda sólo el total, y el gráfico dibuja una serie
+   * en lugar de dos.
+   */
+  readonly insuredCount?: number;
 }
 
 /**
@@ -998,6 +1019,7 @@ export interface OwnPatientProfileChanges {
 /** Una especialidad en la fila de la guía: lo justo para agrupar y rotular. */
 export interface PractitionerListSpecialty {
   readonly specialtyConceptId: string;
+  /** Sin uso en pantalla desde el 23/09/2026 (D-01); sigue en el contrato. */
   readonly isPrimary: boolean;
 }
 
@@ -1207,4 +1229,49 @@ export interface NewDependent {
   readonly nationalId?: string;
   readonly issuerAdministrativeAreaConceptId?: string;
   readonly relationshipConceptId: string;
+}
+
+/**
+ * Una solicitud para representar a alguien que ya tiene cuenta.
+ *
+ * La respuesta no trae el nombre del dueño del CI a propósito: si lo trajera,
+ * cualquiera podría averiguar quién es quién escribiendo documentos.
+ */
+export interface DependentLinkRequestSent {
+  readonly id: string;
+  readonly status: 'PENDING';
+}
+
+/**
+ * A quién se le pide ser dependiente: por su CI, o por el perfil que devolvió
+ * la búsqueda por nombre.
+ *
+ * Son dos formas de señalar a la misma persona; el servidor resuelve las dos
+ * contra la misma regla (una cuenta registrada que no sea la propia).
+ */
+export type DependentLinkTarget =
+  | { readonly nationalId: string }
+  | { readonly patientProfileId: string };
+
+/**
+ * Una cuenta que coincide con el nombre buscado, para elegir a quién enviarle
+ * la solicitud.
+ *
+ * Trae lo mínimo para distinguir homónimos: el nombre y las últimas cifras del
+ * documento, nunca el documento entero. Una búsqueda por nombre no puede
+ * servir para sacar el CI de nadie.
+ */
+export interface DependentCandidate {
+  readonly patientProfileId: string;
+  readonly displayName: string;
+  /** El CI enmascarado, p. ej. `••••4521`. */
+  readonly maskedNationalId?: string;
+}
+
+/** Una solicitud que otra persona le hizo a esta cuenta, pendiente de respuesta. */
+export interface IncomingDependentLinkRequest {
+  readonly id: string;
+  /** Quién pide representarla. */
+  readonly requesterDisplayName: string;
+  readonly createdAt: Date;
 }

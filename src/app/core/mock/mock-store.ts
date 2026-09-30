@@ -287,8 +287,41 @@ export function contiene(haystack: string | null | undefined, needle: string | n
   return (haystack ?? '').toLocaleLowerCase('es').includes(needle.toLocaleLowerCase('es'));
 }
 
+/** Minúsculas y sin diacríticos: «Riñón» y «rinon» quedan iguales. */
+function plegar(valor: string): string {
+  return valor.toLocaleLowerCase('es').normalize('NFD').replace(/\p{Diacritic}/gu, '');
+}
+
+/**
+ * Como {@link contiene}, pero sin distinguir tildes, diéresis ni la ñ.
+ *
+ * Es la búsqueda del glosario: los nombres y sinónimos se escriben con su
+ * ortografía correcta («tiña», «uñas», «riñón») y quien busca los escribe como
+ * le salen del teclado. Las dos formas tienen que encontrarse.
+ */
+export function contieneSinTildes(haystack: string | null | undefined, needle: string | null): boolean {
+  if (needle === null) return true;
+  return plegar(haystack ?? '').includes(plegar(needle));
+}
+
 export function cuerpo<T extends object>(request: { readonly body: unknown }): Partial<T> {
   return (typeof request.body === 'object' && request.body !== null ? request.body : {}) as Partial<T>;
+}
+
+/**
+ * El cuerpo JSON de una búsqueda por `POST …/search` como si fuera su query
+ * string, para que el manejador del `GET` obsoleto y el del `POST` compartan
+ * el filtro y la paginación (`texto`, `paginar`) sin duplicarlos. Sólo pasan
+ * los valores escalares; un `null` o un objeto anidado no es un filtro.
+ */
+export function bodyAsQuery(request: { readonly body: unknown }): URLSearchParams {
+  const query = new URLSearchParams();
+  for (const [key, value] of Object.entries(cuerpo<Record<string, unknown>>(request))) {
+    if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+      query.set(key, String(value));
+    }
+  }
+  return query;
 }
 
 /** Un SVG con iniciales, para avatares y logos sin archivo real. */

@@ -1,0 +1,62 @@
+<app-page-header
+  title="Mis recetas"
+  subtitle="Elegí una receta y te mostramos dónde comprarla completa, ordenado por precio y por distancia."
+/>
+
+<main class="recetas" aria-label="Recetas del paciente">
+  <app-card class="recetas__tarjeta" padding="lg">
+    @if (sinPerfilDePaciente) {
+      <p class="recetas__sin-perfil" data-testid="pharmacy-prescriptions-sin-perfil">
+        Tus recetas están en tu historia clínica de paciente. Entrá con tu cuenta de paciente para
+        verlas.
+      </p>
+    } @else {
+      <app-view-state-host [state]="estado()" (retry)="cargar()">
+        <ul class="recetas__lista" [attr.data-testid]="testids.prescriptionsList">
+          @for (receta of filas(); track porId(receta)) {
+            <li class="receta">
+              <div class="receta__cabecera">
+                <p class="receta__cuando">{{ receta.cuando | date: 'd MMMM y' }}</p>
+                <app-badge [variant]="receta.emitida ? 'success' : 'warning'" size="sm">
+                  {{ receta.emitida ? 'Emitida' : 'Sin emitir' }}
+                </app-badge>
+              </div>
+
+              <p class="receta__cuantos">
+                {{ receta.medicamentos.length }}
+                {{ receta.medicamentos.length === 1 ? 'medicamento' : 'medicamentos' }}
+              </p>
+
+              <ul class="receta__medicamentos">
+                @for (medicamento of receta.medicamentos; track medicamento.conceptId) {
+                  <li class="medicamento">
+                    <span class="medicamento__nombre">{{ medicamento.nombre }}</span>
+                    @if (medicamento.indicacion) {
+                      <span class="medicamento__indicacion">{{ medicamento.indicacion }}</span>
+                    }
+                  </li>
+                }
+              </ul>
+
+              <a
+                app-button
+                variant="primary"
+                size="sm"
+                class="receta__cta"
+                [attr.data-testid]="testids.prescriptionSearch"
+                [routerLink]="rutaDeCompra(receta)"
+                [attr.aria-label]="
+                  'Buscar dónde comprar la receta con ' +
+                  receta.medicamentos.length +
+                  ' medicamentos'
+                "
+              >
+                Buscar dónde comprarla
+              </a>
+            </li>
+          }
+        </ul>
+      </app-view-state-host>
+    }
+  </app-card>
+</main>

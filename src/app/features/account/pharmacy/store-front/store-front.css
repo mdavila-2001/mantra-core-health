@@ -1,0 +1,75 @@
+.tienda {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+/* Una sola tarjeta, centrada y a lo ancho (regla §6 del CLAUDE.md del front).
+   Sin pestañas: no hay dos contenidos que alternar, hay uno con dos maneras
+   de mirarlo, y el selector de modo ya lo dice. */
+.tienda__tarjeta {
+  display: grid;
+  gap: var(--sp-5);
+  width: 100%;
+}
+
+/* Mobile-first: los controles apilados; desde tableta, la búsqueda ocupa la
+   fila entera y modo y orden comparten la siguiente. */
+.tienda__controles {
+  display: grid;
+  gap: var(--sp-3);
+  align-items: end;
+}
+
+@media (min-width: 780px) {
+  .tienda__controles {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .tienda__busqueda,
+  .tienda__origen,
+  .tienda__atajos {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (min-width: 1024px) {
+  .tienda__controles {
+    grid-template-columns: minmax(0, 2fr) repeat(2, minmax(0, 1fr));
+  }
+
+  .tienda__busqueda {
+    grid-column: 1 / 2;
+  }
+}
+
+.tienda__atajos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  align-items: center;
+}
+
+.tienda__sin-perfil,
+.tienda__sin-termino,
+.tienda__sin-origen {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+/* Un botón que se lee como enlace dentro del párrafo: la acción es cambiar el
+   orden, no navegar, así que no puede ser un `<a>`. */
+.tienda__enlace-accion {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text-link);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.tienda__enlace-accion:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+  border-radius: var(--r-xs);
+}

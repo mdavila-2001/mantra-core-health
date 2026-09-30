@@ -2,7 +2,22 @@ import { ChangeDetectionStrategy, Component, computed, input, model, signal } fr
 
 import { SegmentedControl } from '../../molecules/segmented-control/segmented-control';
 import type { SegmentedOption } from '../../molecules/segmented-control/segmented-control.types';
-import { VISTAS_DEL_CUERPO, type IdDeVista, type VistaDelCuerpo } from './body-zones.geometry';
+import {
+  VISTAS_DEL_CUERPO,
+  VISTAS_DEL_CUERPO_FEMENINA,
+  VISTAS_DEL_CUERPO_MASCULINA,
+  type IdDeVista,
+  type VistaDelCuerpo,
+} from './body-zones.geometry';
+
+/**
+ * El sexo con el que se dibuja la silueta, o `undefined` para la neutra.
+ *
+ * No es un dato clínico: es sólo qué proporción de cuerpo dibujar. Quien
+ * monta el organismo decide de dónde sale —el sexo asignado al nacer del
+ * propio perfil, típicamente— y con qué hacer si no lo sabe (acá, la neutra).
+ */
+export type SexoDeLaSilueta = 'MALE' | 'FEMALE';
 
 /**
  * Una zona del cuerpo que se puede elegir, tal como la trae quien monta el
@@ -17,6 +32,7 @@ export interface ZonaElegible {
 /** Una zona ya lista para pintar: su dato y su contorno, juntos. */
 interface ZonaDibujable extends ZonaElegible {
   readonly d: string;
+  readonly centros: readonly (readonly [number, number])[];
   readonly acercaA?: IdDeVista;
 }
 
@@ -59,6 +75,13 @@ export const ZONAS_CON_SILUETA: ReadonlySet<string> = new Set(
  * Si la zona elegida desde afuera (una pastilla, un síntoma) no está en la
  * vista puesta, la figura se da vuelta sola a la primera vista que la tenga:
  * lo elegido siempre está a la vista.
+ *
+ * ## Sexo de la silueta (P-04, 2026-09-25)
+ *
+ * Las tres vistas existen además en proporción masculina y femenina —hombro,
+ * cintura y cadera, nada más—: quien monta el organismo pasa `sexo` con el
+ * del propio perfil, y sin ese dato se ve la neutra de siempre. Ver
+ * {@link SexoDeLaSilueta}.
  *
  * ## El equivalente por teclado no es un añadido, es la mitad del control
  *
@@ -109,8 +132,39 @@ export class BodyMap {
    */
   readonly marcadas = input<readonly string[]>([]);
 
-  /** El `id` del degradado de volumen de esta instancia. */
-  protected readonly idDelVolumen = `body-map-volumen-${siguienteSilueta++}`;
+  /**
+   * El sexo con el que se dibuja la figura (P-04, 2026-09-25).
+   *
+   * `'MALE'` y `'FEMALE'` cambian la proporción de hombro, cintura y cadera
+   * (`body-zones.geometry.ts`); sin ese dato —perfil `INTERSEX`/`UNKNOWN`,
+   * sin sesión, o todavía sin resolver— se dibuja la neutra de siempre. La
+   * cabeza, los brazos, las piernas y la cara son la misma figura en las
+   * tres: no es lo que distingue una silueta de otra en este dibujo
+   * esquemático.
+   */
+  readonly sexo = input<SexoDeLaSilueta | undefined>(undefined);
+
+  /** Las vistas de la proporción que corresponde a {@link sexo}. */
+  private readonly vistasDelSexo = computed<readonly VistaDelCuerpo[]>(() => {
+    switch (this.sexo()) {
+      case 'MALE':
+        return VISTAS_DEL_CUERPO_MASCULINA;
+      case 'FEMALE':
+        return VISTAS_DEL_CUERPO_FEMENINA;
+      default:
+        return VISTAS_DEL_CUERPO;
+    }
+  });
+
+  /**
+   * Los `id` de los degradados de esta instancia: el volumen (costados más
+   * oscuros), la luz (de arriba a la izquierda) y el relleno de la elegida.
+   * Por instancia, para que dos siluetas en la misma página no se los pisen.
+   */
+  private readonly numero = siguienteSilueta++;
+  protected readonly idDelVolumen = `body-map-volumen-${this.numero}`;
+  protected readonly idDeLaLuz = `body-map-luz-${this.numero}`;
+  protected readonly idDeLaElegida = `body-map-elegida-${this.numero}`;
 
   /** La zona bajo el puntero o con el foco, para nombrarla antes de tocarla. */
   private readonly apuntada = signal<string | null>(null);
@@ -137,11 +191,11 @@ export class BodyMap {
    */
   protected readonly vistas = computed<readonly VistaDibujable[]>(() => {
     const porId = new Map(this.zonas().map((zona) => [zona.id, zona]));
-    return VISTAS_DEL_CUERPO.flatMap((vista) => {
+    return this.vistasDelSexo().flatMap((vista) => {
       const zonas = vista.zonas.flatMap((silueta) => {
         const zona = porId.get(silueta.id);
         if (zona === undefined) return [];
-        return [{ ...zona, d: silueta.d, acercaA: silueta.acercaA }];
+        return [{ ...zona, d: silueta.d, centros: silueta.centros, acercaA: silueta.acercaA }];
       });
       return zonas.length > 0 ? [{ vista, zonas }] : [];
     });
@@ -159,6 +213,17 @@ export class BodyMap {
     if (elegida === this.elegidaAlPedirVista()) return pedida;
     if (pedida.zonas.some((zona) => zona.id === elegida)) return pedida;
     return vistas.find((v) => v.zonas.some((zona) => zona.id === elegida)) ?? pedida;
+  });
+
+  /**
+   * Dónde va el marcador de la elegida: un punto por cada parte de la zona en
+   * la vista puesta (las dos manos llevan dos). Vacío si no hay elegida o si
+   * no está en esta vista.
+   */
+  protected readonly centrosDeLaElegida = computed<readonly (readonly [number, number])[]>(() => {
+    const elegida = this.value();
+    if (elegida === null) return [];
+    return this.vista()?.zonas.find((zona) => zona.id === elegida)?.centros ?? [];
   });
 
   protected readonly opcionesDeVista = computed<readonly SegmentedOption<IdDeVista>[]>(() =>

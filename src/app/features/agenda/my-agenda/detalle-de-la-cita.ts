@@ -1,6 +1,9 @@
 import { formatDate } from '@angular/common';
 
-import type { Booking } from '../../../core/data-access/scheduling/scheduling.types';
+import {
+  esReconsulta,
+  type Booking,
+} from '../../../core/data-access/scheduling/scheduling.types';
 
 /**
  * El detalle de una cita, en pares rótulo/valor.
@@ -62,12 +65,22 @@ export function detalleDeLaCita(
   // desde el CUPO, y la reserva puede traer otra hora si el servidor la movió.
   const desde = franja?.desde ?? cita.startAt;
   const hasta = franja?.hasta ?? cita.endAt;
+  // C4 · «Qué es» dice Reconsulta cuando la cita salió de otra consulta. Es lo
+  // primero que hay que saber al abrir el globo: una reconsulta se atiende
+  // sabiendo que ya hubo una consulta antes.
+  const reconsulta = esReconsulta(cita);
   const pares: ParDelDetalle[] = [
     { label: 'Cuándo', value: `${hora(desde)} – ${hora(hasta)}` },
-    { label: 'Qué es', value: 'Cita' },
+    { label: 'Qué es', value: reconsulta ? 'Reconsulta' : 'Cita' },
     { label: 'Estado', value: estado },
     { label: 'Paciente', value: pacienteDeLaCita(cita) },
   ];
+  // De cuándo era la consulta de la que salió. Se omite cuando aquélla quedó
+  // sin horario: un par con un guión no dice nada que valga la línea.
+  const origen = cita.followUpOf?.startAt;
+  if (reconsulta && origen !== undefined && origen !== null) {
+    pares.push({ label: 'De la cita del', value: formatDate(origen, "d 'de' MMMM", idioma) });
+  }
   if (cita.reasonText !== undefined) {
     pares.push({ label: 'Motivo', value: cita.reasonText });
   }

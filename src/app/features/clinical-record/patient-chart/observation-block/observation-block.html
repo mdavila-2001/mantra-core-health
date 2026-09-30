@@ -1,5 +1,5 @@
 <app-card variant="outlined" padding="lg" class="observacion">
-  <h2 class="observacion__titulo">Observación</h2>
+  <h2 class="observacion__titulo">Medición</h2>
 
   @if (errorDeLaObservacion(); as mensaje) {
     <app-alert tone="error" data-testid="observacion-error">{{ mensaje }}</app-alert>
@@ -32,7 +32,7 @@
       @if (opcionesDeCita().length > 1) {
         <app-form-field
           icon="calendar"
-          label="¿En qué cita se tomó?"
+          label="¿En qué consulta se tomó?"
           hint="Opcional. La consulta donde se midió, incluidas las ya finalizadas."
         >
           <app-select
@@ -116,7 +116,7 @@
       </app-form-field>
 
       <app-form-actions
-        submitLabel="Registrar observación"
+        submitLabel="Registrar una medición"
         [pending]="registrando()"
         [disabled]="!puedeRegistrar()"
         (submitted)="registrar()"

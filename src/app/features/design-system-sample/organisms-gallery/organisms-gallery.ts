@@ -193,9 +193,9 @@ export class OrganismsGallery {
   /* ---- page-header -------------------------------------------------------- */
 
   protected readonly accionesPagina: readonly PageHeaderAction[] = [
-    { code: 'print', label: 'Imprimir' },
-    { code: 'export', label: 'Exportar' },
-    { code: 'audit', label: 'Ver auditoría' },
+    { code: 'print', label: 'Imprimir', icon: 'print' },
+    { code: 'export', label: 'Exportar', icon: 'download' },
+    { code: 'audit', label: 'Ver auditoría', icon: 'history' },
   ];
   protected readonly ultimaAccionPagina = signal('—');
 

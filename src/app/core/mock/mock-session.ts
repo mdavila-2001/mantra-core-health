@@ -63,15 +63,17 @@ export const TENANT_NAMES: Readonly<Record<string, string>> = {
  * según quién entra, así que basta una tabla y `emitirAccessToken` la
  * consulta por cada tenant de la cuenta.
  */
-export const TENANT_TYPES: Readonly<Record<string, TenantTypeCode>> = {
+export const TENANT_TYPES: Readonly<Record<string, TenantTypeCode | 'DIAGNOSTIC_CENTER'>> = {
   [TENANT_CONSULTORIO]: 'PROVIDER',
   [TENANT_CLINICA]: 'PROVIDER',
   [TENANT_HOSPITAL]: 'HOSPITAL',
   [TENANT_PLATAFORMA]: 'PROVIDER',
   [TENANT_FARMACIA]: 'PHARMACY',
-  // La API real emitiría 'DIAGNOSTIC_CENTER' (directory.concepts.ts:169 de la
-  // API); el front todavía no lo tiene en TENANT_TYPE_CODES.
-  [TENANT_LABORATORIO]: 'PROVIDER',
+  // Lo que emite la API para un laboratorio dado de alta por
+  // `register-organization` (directory.concepts.ts:169 de la API). No está en
+  // `TENANT_TYPE_CODES` —esa lista es la del alta administrativa— pero sí en el
+  // claim, y es lo que abre «Recepción de muestras» en el menú.
+  [TENANT_LABORATORIO]: 'DIAGNOSTIC_CENTER',
   [TENANT_ASEGURADORA]: 'PAYER',
 };
 
@@ -107,6 +109,14 @@ export const IDS = {
   aseguradoraStaff: {
     userId: uuid('user-aseguradora-staff'),
     personId: uuid('person-aseguradora-staff'),
+  },
+  laboratorio: {
+    userId: uuid('user-laboratorio-staff'),
+    personId: uuid('person-laboratorio-staff'),
+  },
+  farmacia: {
+    userId: uuid('user-farmacia-vida'),
+    personId: uuid('person-farmacia-vida'),
   },
 } as const;
 
@@ -208,21 +218,71 @@ export const MOCK_USERS: readonly MockUser[] = [
     tenantNames: TENANT_NAMES,
     personId: IDS.aseguradoraStaff.personId,
   },
+  {
+    // El personal del laboratorio: `USER` y nada más, como el dueño de un
+    // centro de diagnóstico que se registró solo. Su autoridad es la membresía
+    // del tenant `DIAGNOSTIC_CENTER` —la API la mira en `LabStaffGuard`—, y
+    // es la cuenta con la que la maqueta recorre la recepción de muestras.
+    key: 'laboratorio',
+    id: IDS.laboratorio.userId,
+    email: 'laboratorio@alovida.mock',
+    nationalId: '7002001',
+    displayName: 'Rocío Villarroel · Laboratorio Central',
+    roles: ['USER'],
+    tenants: [TENANT_LABORATORIO],
+    tenantNames: TENANT_NAMES,
+    personId: IDS.laboratorio.personId,
+  },
+  {
+    // La encargada de Farmacia Vida: `USER` y la membresía del tenant
+    // `PHARMACY`, igual que la API. Es la cuenta con la que la maqueta recorre
+    // lo que hace una farmacia: su catálogo, sus pedidos y sus promociones.
+    key: 'farmacia',
+    id: IDS.farmacia.userId,
+    email: 'farmacia@alovida.mock',
+    nationalId: '7003001',
+    displayName: 'Mariela Céspedes · Farmacia Vida',
+    roles: ['USER'],
+    tenants: [TENANT_FARMACIA],
+    tenantNames: TENANT_NAMES,
+    personId: IDS.farmacia.personId,
+  },
 ];
+
+/**
+ * Las cuentas de los pacientes del padrón, que no están en {@link MOCK_USERS}.
+ *
+ * Las resuelve quien conoce el padrón (`auth.handlers`), inyectándolo acá: este
+ * archivo no puede importar los fixtures de personas sin armar un ciclo. Hace
+ * falta para que un dependiente con cuenta pueda entrar a aceptar la solicitud.
+ */
+type ResolverDeCuentas = (criterio: {
+  readonly identificador?: string;
+  readonly id?: string;
+  readonly key?: string;
+}) => MockUser | undefined;
+
+let cuentaDePaciente: ResolverDeCuentas = () => undefined;
+
+export function resolverCuentasDePacientes(resolver: ResolverDeCuentas): void {
+  cuentaDePaciente = resolver;
+}
 
 export function buscarUsuario(identificador: string): MockUser | undefined {
   const limpio = identificador.trim().toLocaleLowerCase('es');
-  return MOCK_USERS.find(
-    (u) =>
-      u.email === limpio ||
-      u.nationalId === limpio ||
-      u.key === limpio ||
-      u.key === limpio.replace(/@.*$/, ''),
+  return (
+    MOCK_USERS.find(
+      (u) =>
+        u.email === limpio ||
+        u.nationalId === limpio ||
+        u.key === limpio ||
+        u.key === limpio.replace(/@.*$/, ''),
+    ) ?? cuentaDePaciente({ identificador: limpio })
   );
 }
 
 export function usuarioPorId(userId: string): MockUser | undefined {
-  return MOCK_USERS.find((u) => u.id === userId);
+  return MOCK_USERS.find((u) => u.id === userId) ?? cuentaDePaciente({ id: userId });
 }
 
 /* ---- tokens ---------------------------------------------------------------- */
@@ -266,7 +326,7 @@ export function emitirRefreshToken(user: MockUser): string {
 export function usuarioDeRefreshToken(refreshToken: string): MockUser | undefined {
   const [prefijo, key] = refreshToken.split('.');
   if (prefijo !== 'mock-refresh' || key === undefined) return undefined;
-  return MOCK_USERS.find((u) => u.key === key);
+  return MOCK_USERS.find((u) => u.key === key) ?? cuentaDePaciente({ key });
 }
 
 export function usuarioDeAccessToken(token: string): MockUser | undefined {

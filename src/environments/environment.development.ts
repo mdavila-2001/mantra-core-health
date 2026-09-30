@@ -20,6 +20,9 @@ import { envFromProcess } from './env.generated';
 export const environment: Environment = {
   apiBaseUrl: envFromProcess.apiBaseUrl ?? '',
 
+  /** Mismo origen: ver `aiBaseUrl` en `environment.types.ts`. */
+  aiBaseUrl: envFromProcess.aiBaseUrl ?? '/ai',
+
   /**
    * Encendida por defecto en desarrollo: quien levanta la app local ve la
    * barra de casos de demostración sin configurar nada. Se apaga con
@@ -51,7 +54,27 @@ export const environment: Environment = {
   campaignsDemo: envFromProcess.campaignsDemo ?? false,
 
   /**
-   * Apagado para trabajar directamente contra el backend real en desarrollo.
+   * Encendida por defecto: sin ella no hay motor fiscal simulado que recorrer.
+   * Se apaga con `PUBLIC_BILLING_SIAT_DEMO=false` — y ese apagado es la prueba
+   * de que la pantalla dice que la facturación no está conectada, sin pedir
+   * nada.
+   */
+  billingSiatDemo: envFromProcess.billingSiatDemo ?? true,
+
+  /**
+   * Encendidas por defecto: en desarrollo se trabaja contra la maqueta y las
+   * pantallas de la bóveda son la referencia. Se apagan con
+   * `PUBLIC_DESIGN_MOCKUPS=false` — y ese apagado es la prueba de que ningún
+   * enlace visible lleva a una de ellas.
+   */
+  designMockups: envFromProcess.designMockups ?? true,
+
+  /**
+   * Siempre encendido en la rama `mockup`: es lo que la define. No lee el
+   * entorno del proceso a propósito, para que no haya forma de apuntar esta
+   * rama a una API real por accidente. Contra la API real se corre con la
+   * configuración explícita `real-api` (`yarn start:real-api`), que lo apaga
+   * sin tocar este archivo: ver `environment.real-api.ts`.
    */
   mockBackend: false,
 

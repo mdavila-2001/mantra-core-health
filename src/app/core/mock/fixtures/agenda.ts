@@ -1,5 +1,7 @@
+import { encuentros } from './clinica';
 import { ACTIVIDAD, CANAL, ESTADO, ESTADO_RESERVA, TIPO_BLOQUEO, TIPO_CITA } from './conceptos';
 import { MEDICA, PACIENTE, PACIENTES, PROFESIONALES, type ProfesionalSimulado } from './personas';
+import type { FollowUpOrigin } from '../../data-access/scheduling/scheduling.types';
 import { TENANT_CLINICA } from '../mock-session';
 import { ahora, Coleccion, fecha, iso, isoDia, masMinutos, uuid } from '../mock-store';
 
@@ -71,6 +73,13 @@ export interface ReservaSimulada {
   readonly statusReason: { reasonText: string; actorKind: 'PATIENT' | 'PROVIDER'; toStateConceptId: string; changedAt: string } | null;
   readonly delayNotice: { delayMinutes: number; message: string; announcedAt: string } | null;
   readonly paymentState: { state: 'PENDING' | 'PARTIALLY_PAID' | 'PAID'; label: string; conceptId: string; insuranceUsed: boolean; markedByUserId: string; markedAt: string } | null;
+  /**
+   * De qué cita salió ésta, si es una reconsulta (C4). `null` es lo corriente.
+   *
+   * El contrato equivalente es `Booking.followUpOf` de `scheduling.types.ts`;
+   * acá el instante viaja en texto, como todo lo que sirve el simulador.
+   */
+  readonly followUpOf: FollowUpOrigin | null;
   readonly createdAt: string;
 }
 
@@ -100,10 +109,55 @@ export function recursoDe(p: ProfesionalSimulado): string {
   return uuid(`resource-${p.id}`);
 }
 
-export const recursos = new Coleccion<RecursoSimulado>(
+/** La zona de una sede que no declara la suya. Es la de las sedes de la maqueta. */
+export const ZONA_HORARIA_POR_OMISION = 'America/La_Paz';
+
+/**
+ * Las dos sedes donde atienden los profesionales de demostración. Las dos son
+ * instituciones inventadas de la maqueta (`instituciones.spec.ts` las nombra
+ * como «los inventados que reemplaza»), así que no se le atribuye a nadie un
+ * lugar real. El consultorio propio de la médica queda afuera: es de una
+ * persona.
+ */
+export const SEDES_DEMO = {
+  'Clínica Los Olivos': { practiceId: PRACTICE_OLIVOS, site: SITIO_OLIVOS },
+  'Hospital San Lucas': { practiceId: PRACTICE_SANLUCAS, site: SITIO_SANLUCAS },
+} as const;
+
+/**
+ * La agenda **simulada** de un profesional de demostración (R-03, 22/09/2026;
+ * D-H3-PROV-01, 23/09/2026).
+ *
+ * Los 13 actores de `PROFESIONALES_DEMO_REGISTRADOS` no son nadie: la sede sale
+ * de su organización (una de `SEDES_DEMO`), el id de la misma semilla que el
+ * resto (`resource-<id del perfil>`) y el nombre dice que la agenda es
+ * simulada. Una sede sin `timeZone` cae en `ZONA_HORARIA_POR_OMISION`.
+ */
+export function recursoDeDemo(
+  p: ProfesionalSimulado,
+  sede: { readonly practiceId: string; readonly site: RecursoSimulado['site'] } = SEDES_DEMO[p.organizacion as keyof typeof SEDES_DEMO] ?? SEDES_DEMO['Clínica Los Olivos'],
+): RecursoSimulado {
+  return {
+    id: recursoDe(p),
+    name: `Agenda simulada · ${p.displayName}`,
+    resourceTypeConceptId: uuid('concept-resource-practitioner'),
+    resourceRefType: 'health_practitioner_profiles',
+    resourceRefId: p.id,
+    practitionerName: p.displayName,
+    practiceId: sede.practiceId,
+    tenantId: p.tenantId,
+    timeZone: sede.site?.timeZone ?? ZONA_HORARIA_POR_OMISION,
+    capacity: 1,
+    stateConceptId: ESTADO['ST-ACTIVE']!,
+    site: sede.site,
+  };
+}
+
+export const recursos = new Coleccion<RecursoSimulado>([
   // Los médicos de la red de las aseguradoras no tienen agenda: nadie publicó
-  // sus horarios, y fabricárselos sería ofrecer turnos que no existen.
-  PROFESIONALES.filter((p) => p.especialidades.length > 0 && p.origen === undefined).flatMap((p, i) => {
+  // sus horarios, y fabricárselos sería ofrecer turnos que no existen. Y un
+  // médico escrito sin especialidad tampoco: no hay nada que reservarle.
+  ...PROFESIONALES.filter((p) => p.especialidades.length > 0 && p.origen === undefined).flatMap((p, i) => {
     const principal: RecursoSimulado = {
       id: recursoDe(p),
       name: `Agenda de ${p.displayName}`,
@@ -136,10 +190,34 @@ export const recursos = new Coleccion<RecursoSimulado>(
       },
     ];
   }),
-);
+  // Los profesionales de demostración van **después** de los escritos: así los
+  // índices de arriba —y con ellos la alternancia mañana/tarde de sus
+  // plantillas— no se mueven. Las personas de la planilla del propietario no
+  // tienen agenda: la planilla no dice dónde atienden (D-H3-PROV-01).
+  ...PROFESIONALES.filter((p) => p.origen === 'DEMO').map((p) => recursoDeDemo(p)),
+]);
 
 export const RECURSO_MEDICA = recursoDe(MEDICA);
 export const RECURSO_CONSULTORIO_MEDICA = uuid(`resource-consultorio-${MEDICA.id}`);
+
+/**
+ * El tipo de cita de una **reconsulta** (C4).
+ *
+ * Se deriva acá y no se lee de `TIPO_CITA` porque `VS_APPOINTMENT_TYPE` todavía
+ * no la declara: `conceptos.ts` tiene `APT-PRIMERA`, `APT-CONTROL` y
+ * `APT-URGENCIA`, y ese archivo es de C0, que no publicó.
+ *
+ * El id que sale de acá es **exactamente** el que produciría `definir()` allá
+ * —misma semilla `concept-<código>`, `conceptos.ts:69—`, así que el día que la
+ * entrada exista el identificador coincide y no hay nada que migrar. Lo único
+ * que falta hasta entonces es la etiqueta del catálogo, y por eso la pantalla
+ * escribe «Reconsulta» literal en vez de buscarla: un uuid crudo en la agenda
+ * sería peor que una palabra fija.
+ *
+ * // TODO C8: reemplazar por `TIPO_CITA['APT-RECONSULTA']` cuando C0 agregue
+ * `['APT-RECONSULTA', 'Reconsulta']` al value set.
+ */
+export const TIPO_CITA_RECONSULTA = uuid('concept-APT-RECONSULTA');
 
 export const plantillas = new Coleccion<PlantillaSimulada>([
   {
@@ -208,37 +286,110 @@ export const plantillas = new Coleccion<PlantillaSimulada>([
 /* ---- cupos: se generan a partir de las plantillas, ±21 días ---------------- */
 
 function generarCupos(): CupoSimulado[] {
+  return plantillas.todos().flatMap((plantilla) => (plantilla.retired ? [] : cuposDePlantilla(plantilla)));
+}
+
+/** Los cupos de ±21 días que abre una plantilla, con la actividad que atiende. */
+function cuposDePlantilla(plantilla: PlantillaSimulada, servicio: string = ACTIVIDAD['ACT-CONSULTA']!): CupoSimulado[] {
   const cupos: CupoSimulado[] = [];
-  for (const plantilla of plantillas.todos()) {
-    if (plantilla.retired) continue;
-    for (let dia = -21; dia <= 21; dia++) {
-      const d = fecha(dia, 0);
-      const regla = plantilla.rules.find((r) => r.dayOfWeek === d.getDay());
-      if (regla === undefined) continue;
-      const [hi, mi] = regla.startTime.split(':').map(Number) as [number, number];
-      const [hf, mf] = regla.endTime.split(':').map(Number) as [number, number];
-      const paso = (regla.slotMinutes ?? plantilla.slotMinutes) + (regla.gapMinutes ?? 0);
-      for (let m = hi * 60 + mi; m + (regla.slotMinutes ?? plantilla.slotMinutes) <= hf * 60 + mf; m += paso) {
-        const inicio = fecha(dia, Math.floor(m / 60), m % 60);
-        const fin = new Date(inicio.getTime() + (regla.slotMinutes ?? plantilla.slotMinutes) * 60_000);
-        cupos.push({
-          id: uuid(`slot-${plantilla.id}-${dia}-${m}`),
-          resourceId: plantilla.resourceId,
-          scheduleTemplateId: plantilla.id,
-          startAt: inicio.toISOString(),
-          endAt: fin.toISOString(),
-          capacity: regla.capacityPerSlot ?? 1,
-          remainingCapacity: regla.capacityPerSlot ?? 1,
-          statusConceptId: ESTADO['ST-ACTIVE']!,
-          serviceConceptId: ACTIVIDAD['ACT-CONSULTA']!,
-        });
-      }
+  for (let dia = -21; dia <= 21; dia++) {
+    const d = fecha(dia, 0);
+    const regla = plantilla.rules.find((r) => r.dayOfWeek === d.getDay());
+    if (regla === undefined) continue;
+    const [hi, mi] = regla.startTime.split(':').map(Number) as [number, number];
+    const [hf, mf] = regla.endTime.split(':').map(Number) as [number, number];
+    const paso = (regla.slotMinutes ?? plantilla.slotMinutes) + (regla.gapMinutes ?? 0);
+    for (let m = hi * 60 + mi; m + (regla.slotMinutes ?? plantilla.slotMinutes) <= hf * 60 + mf; m += paso) {
+      const inicio = fecha(dia, Math.floor(m / 60), m % 60);
+      const fin = new Date(inicio.getTime() + (regla.slotMinutes ?? plantilla.slotMinutes) * 60_000);
+      cupos.push({
+        // Por FECHA, no por distancia a hoy: las reservas sobreviven a F5 en
+        // `sessionStorage` y los cupos se regeneran; con `dia` relativo, al
+        // día siguiente cada id apuntaba a otro día y ninguna reserva guardada
+        // casaba con su cupo — el día entero salía «No disponible».
+        id: uuid(`slot-${plantilla.id}-${isoDia(dia)}-${m}`),
+        resourceId: plantilla.resourceId,
+        scheduleTemplateId: plantilla.id,
+        startAt: inicio.toISOString(),
+        endAt: fin.toISOString(),
+        capacity: regla.capacityPerSlot ?? 1,
+        remainingCapacity: regla.capacityPerSlot ?? 1,
+        statusConceptId: ESTADO['ST-ACTIVE']!,
+        serviceConceptId: servicio,
+      });
     }
   }
   return cupos;
 }
 
 export const cupos = new Coleccion<CupoSimulado>(generarCupos());
+
+/** La tabla a la que apunta la agenda de un centro de diagnóstico. */
+export const TABLA_DE_CENTRO_DIAGNOSTICO = 'diagnostic_units';
+
+/** Lo que la agenda de un centro de diagnóstico necesita saber de él. */
+export interface CentroConAgenda {
+  readonly id: string;
+  readonly name: string;
+  readonly tenantId: string;
+  readonly kind: 'LABORATORY' | 'IMAGING';
+  readonly site: RecursoSimulado['site'];
+}
+
+/**
+ * La agenda **simulada** de un laboratorio o centro de imagen (25/09/2026).
+ *
+ * Desde Cotizaciones, un análisis se reserva como una cita con un profesional:
+ * se elige un cupo de la agenda del centro y se confirma en la misma pantalla
+ * de reserva. Para eso el centro necesita un recurso agendable —apunta a
+ * `diagnostic_units`, no a un perfil profesional— con su plantilla y sus cupos.
+ *
+ * El horario es de maqueta y lo dice el nombre del recurso: ningún centro
+ * publicó el suyo. Laboratorio, toma de muestras de lunes a sábado a la
+ * mañana; imagen, de lunes a viernes en horario corrido. Idempotente: llamarla
+ * dos veces con el mismo centro no duplica nada.
+ *
+ * **Cada parte se completa por separado, y los cupos siempre.** El recurso y la
+ * plantilla sobreviven a F5 en `sessionStorage` (`persistirEn`, al pie del
+ * archivo) pero los cupos no: se regeneran en cada carga. Cortar en «el recurso
+ * ya existe» dejaba, después de la primera recarga, la agenda del centro sin un
+ * solo cupo — «No tiene turnos disponibles en los próximos dos meses».
+ */
+export function abrirAgendaDeCentro(centro: CentroConAgenda): void {
+  const id = uuid(`resource-diagnostic-${centro.id}`);
+  const esLaboratorio = centro.kind === 'LABORATORY';
+  if (!recursos.has(id)) recursos.agregar({
+    id,
+    name: esLaboratorio ? `Toma de muestras (horario simulado) · ${centro.name}` : `Estudios de imagen (horario simulado) · ${centro.name}`,
+    resourceTypeConceptId: uuid('concept-resource-diagnostic'),
+    resourceRefType: TABLA_DE_CENTRO_DIAGNOSTICO,
+    resourceRefId: centro.id,
+    practitionerName: null,
+    practiceId: null,
+    tenantId: centro.tenantId,
+    timeZone: centro.site?.timeZone ?? ZONA_HORARIA_POR_OMISION,
+    capacity: esLaboratorio ? 3 : 1,
+    stateConceptId: ESTADO['ST-ACTIVE']!,
+    site: centro.site,
+  });
+  const plantilla: PlantillaSimulada = {
+    id: uuid(`template-${id}`),
+    resourceId: id,
+    retired: false,
+    name: esLaboratorio ? 'Toma de muestras' : 'Estudios de imagen',
+    rules: esLaboratorio
+      ? [1, 2, 3, 4, 5, 6].map((dayOfWeek) => ({ dayOfWeek, startTime: '07:00', endTime: '10:00', slotMinutes: 15, capacityPerSlot: 3 }))
+      : [1, 2, 3, 4, 5].map((dayOfWeek) => ({ dayOfWeek, startTime: '08:00', endTime: '17:00', slotMinutes: 30, capacityPerSlot: 1 })),
+    slotMinutes: esLaboratorio ? 15 : 30,
+    validFrom: isoDia(-90),
+    bookingPolicyId: POLITICA_ESTANDAR,
+    statusConceptId: ESTADO['ST-PUBLISHED']!,
+  };
+  if (!plantillas.has(plantilla.id)) plantillas.agregar(plantilla);
+  for (const cupo of cuposDePlantilla(plantilla, ACTIVIDAD['ACT-EXAMEN']!)) {
+    if (!cupos.has(cupo.id)) cupos.agregar(cupo);
+  }
+}
 
 /* ---- reservas: pasado y futuro de la médica, con todos los estados --------- */
 
@@ -300,6 +451,7 @@ function reserva(indice: number, cupo: CupoSimulado, estado: keyof typeof ESTADO
       estado === 'BK-COMPLETED'
         ? { state: indice % 2 === 0 ? 'PAID' : 'PARTIALLY_PAID', label: indice % 2 === 0 ? 'Pagada' : 'Pago parcial', conceptId: ESTADO['ST-COMPLETED']!, insuranceUsed: paciente.aseguradora !== undefined, markedByUserId: MEDICA.userId, markedAt: masMinutos(cupo.endAt, 5) }
         : null,
+    followUpOf: null,
     createdAt: masMinutos(cupo.startAt, -60 * 24 * 5),
     ...extra,
   };
@@ -419,9 +571,98 @@ function sembrarCupoPorLiberarse(): void {
   );
 }
 
-export const reservas = new Coleccion<ReservaSimulada>(generarReservas());
+/* ---- la reconsulta sembrada (C4) ------------------------------------------
 
-sembrarCupoPorLiberarse();
+   Una cita futura que **recuerda de qué consulta salió**. Existe para que las
+   tres pantallas que la muestran —la agenda del doctor, el detalle de la cita y
+   «Mis citas» del paciente— tengan qué mostrar sin que nadie tenga que agendar
+   una a mano primero. Es el kill-test del carril: si esto no aparece en
+   `/my-account/appointments`, la reconsulta no existe.
+
+   Se cuelga de una consulta **ya atendida de la paciente principal**, que es la
+   única que se puede abrir con las dos cuentas de la maqueta. No se fija por
+   índice: se busca, porque el generador de arriba reparte estados por posición
+   y un cambio suyo dejaría este seed apuntando a una cita cancelada sin que
+   nada fallara. */
+
+/** El día, en milisegundos. Una reconsulta se agenda **desde mañana**. */
+const UN_DIA = 24 * 60 * 60 * 1000;
+
+/**
+ * El encuentro del que cuelga la reconsulta sembrada, o `null` si no hay ninguno.
+ *
+ * El más reciente ya cerrado de la paciente principal: es una atención que la
+ * historia clínica lista, así que es una en la que la línea del encuentro se
+ * puede desplegar y mirar.
+ */
+function encuentroDeOrigen(): string | null {
+  return (
+    encuentros
+      .todos()
+      .filter((e) => e.patientProfileId === PACIENTE.id)
+      .filter((e) => e.endAt !== null)
+      .sort((a, b) => b.startAt.localeCompare(a.startAt))[0]?.id ?? null
+  );
+}
+
+function sembrarReconsulta(): void {
+  const origen = reservas
+    .todos()
+    .filter((r) => r.patientProfileId === PACIENTE.id)
+    .filter((r) => r.resourceId === RECURSO_MEDICA || r.resourceId === RECURSO_CONSULTORIO_MEDICA)
+    .filter((r) => r.statusConceptId === ESTADO_RESERVA['BK-COMPLETED'])
+    .filter((r) => new Date(r.startAt).getTime() < Date.now())
+    .sort((a, b) => b.startAt.localeCompare(a.startAt))[0];
+  if (origen === undefined) return;
+
+  // D-2 (cierre de tanda 2026-09-25) · idempotencia. `reservas` sobrevive a F5
+  // en `sessionStorage` (`persistirEn`, arriba), pero este módulo se vuelve a
+  // evaluar en cada carga completa de página, y sin esta guarda cada carga
+  // agregaba OTRA reconsulta para el mismo origen: el sello subía solo —2, 3,
+  // 4, 5— sin que nadie agendara nada.
+  const yaSembrada = reservas
+    .todos()
+    .some((r) => r.followUpOf?.bookingId === origen.id);
+  if (yaSembrada) return;
+
+  const desde = Date.now() + UN_DIA;
+  const destino = cupos
+    .todos()
+    .filter((c) => c.resourceId === RECURSO_MEDICA)
+    .filter((c) => c.remainingCapacity > 0 && c.statusConceptId === ESTADO['ST-ACTIVE'])
+    .filter((c) => new Date(c.startAt).getTime() > desde)
+    .sort((a, b) => a.startAt.localeCompare(b.startAt))[0];
+  if (destino === undefined) return;
+
+  reservas.agregar(
+    reserva(0, destino, 'BK-CONFIRMED', {
+      typeConceptId: TIPO_CITA_RECONSULTA,
+      // Presencial y no el canal que le tocaría por índice: una reconsulta se
+      // acuerda con la persona enfrente, en el consultorio.
+      bookingChannelConceptId: CANAL['CH-PRESENCIAL']!,
+      reasonText: `Reconsulta: ${origen.reasonText}`,
+      // C8 · `encounterId` **dejó de ser `null`**. C4 lo dejó así porque este
+      // fixture no modelaba encuentros clínicos, y la nota advertía —con razón—
+      // que atarlo al `appointmentId` habría inventado una relación que el
+      // modelo no declara: el `appointmentId` de una reserva apunta a otra
+      // tabla, y el `Encounter` que se lee ni siquiera lo expone.
+      //
+      // Pero el vínculo que el contrato SÍ declara es exactamente éste
+      // (`FollowUpOriginRef.encounterId`), y sin él la integración de C6 —la
+      // línea del encuentro nombrando la reconsulta— no se puede ver en la
+      // aplicación por ningún camino: quedaba probada en unitarias y muerta en
+      // pantalla. Así que la reconsulta se cuelga de un encuentro **real** de la
+      // misma paciente, y como el origen de arriba, se **busca**: el más
+      // reciente ya cerrado. Fijarlo por índice o derivar su id por convención
+      // de texto lo ataría a cómo `clinica.ts` genera los suyos hoy.
+      followUpOf: { bookingId: origen.id, encounterId: encuentroDeOrigen() },
+      createdAt: ahora(),
+    }),
+  );
+  cupos.actualizar(destino.id, { remainingCapacity: 0 });
+}
+
+export const reservas = new Coleccion<ReservaSimulada>(generarReservas());
 
 /* ---- bloqueos ------------------------------------------------------------- */
 
@@ -504,3 +745,27 @@ plantillas.persistirEn('mock.agenda.plantillas');
 reservas.persistirEn('mock.agenda.reservas');
 bloqueos.persistirEn('mock.agenda.bloqueos');
 listaDeEspera.persistirEn('mock.agenda.listaDeEspera');
+
+/* Los cupos no se guardan y las reservas sí: la capacidad libre de cada cupo se
+   recalcula desde las reservas que quedaron, no desde las que se generaron al
+   cargar. Si no, un cupo marcado como tomado por una reserva que ya no existe
+   —o libre bajo una que sí— dice lo contrario de lo que muestra la agenda. */
+function sincronizarCapacidadConReservas(): void {
+  const ocupados = new Map<string, number>();
+  for (const r of reservas.todos()) {
+    if (r.statusConceptId === ESTADO_RESERVA['BK-CANCELLED'] || r.statusConceptId === ESTADO_RESERVA['BK-REJECTED']) continue;
+    ocupados.set(r.bookableSlotId, (ocupados.get(r.bookableSlotId) ?? 0) + 1);
+  }
+  for (const cupo of cupos.todos()) {
+    cupos.actualizar(cupo.id, { remainingCapacity: Math.max(0, cupo.capacity - (ocupados.get(cupo.id) ?? 0)) });
+  }
+}
+
+// Después de recuperar lo guardado: nace «nueve minutos antes de ahora» en
+// cada carga, y una copia guardada de otra hora ya no sirve para el recorrido.
+sembrarCupoPorLiberarse();
+sincronizarCapacidadConReservas();
+
+// Después de sincronizar: la reconsulta elige un cupo libre, y la capacidad libre
+// sólo dice la verdad una vez recontada contra las reservas que sobrevivieron a F5.
+sembrarReconsulta();

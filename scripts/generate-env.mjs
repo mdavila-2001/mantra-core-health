@@ -70,6 +70,15 @@ const MANIFEST = [
     legacyKey: 'API_BASE_URL',
   },
 
+  // Servicio de triage por IA. Relativo (`/ai`) o absoluto, con las mismas
+  // reglas que el endpoint de trazas: sin credenciales y sin query. El servicio
+  // es público, así que no hay secreto que pueda viajar en esta variable.
+  {
+    key: 'PUBLIC_AI_BASE_URL',
+    field: 'aiBaseUrl',
+    validate: validateTracesEndpoint,
+  },
+
   // --- Telemetría ----------------------------------------------------------
   //
   // Ninguna de estas seis es un secreto, y no puede serlo: el endpoint de
@@ -154,6 +163,27 @@ const MANIFEST = [
   {
     key: 'PUBLIC_CAMPAIGNS_DEMO',
     field: 'campaignsDemo',
+    literal: true,
+    validate: validateBoolean,
+  },
+
+  // Enciende la facturación SIMULADA (FACT-SIAT-MOCK): el motor fiscal del
+  // backend simulado. No es un secreto ni una credencial —el simulador no usa
+  // ninguna—: decide si las rutas `/billing/simulated/*` responden.
+  {
+    key: 'PUBLIC_BILLING_SIAT_DEMO',
+    field: 'billingSiatDemo',
+    literal: true,
+    validate: validateBoolean,
+  },
+
+  // Registra las pantallas portadas de la bóveda, que pintan datos de ejemplo.
+  // Apagada, esas rutas no existen: las que tienen pantalla real redirigen a
+  // ella y el resto da 404. Contra la API real se fija en `false` en el propio
+  // archivo de entorno, sin leer esta variable.
+  {
+    key: 'PUBLIC_DESIGN_MOCKUPS',
+    field: 'designMockups',
     literal: true,
     validate: validateBoolean,
   },

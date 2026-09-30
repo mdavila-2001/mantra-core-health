@@ -3,6 +3,7 @@
      a cuántos atendió, cuánto cobró y cuánto le deben las aseguradoras. Los
      dos importes van separados a propósito: lo cobrado ya está en la mano, lo
      de las aseguradoras todavía no. -->
+@if (parte() !== 'registros') {
 <section class="numeros" aria-labelledby="titulo-numeros">
   <div class="numeros__cabecera">
     <app-section-heading icono="chart" titulo="Tu práctica en tres números" id="titulo-numeros" />
@@ -42,11 +43,13 @@
     }
   </app-view-state-host>
 </section>
+}
 
 <!-- ═══ Tus registros ═══════════════════════════════════════════════════════
      Una tarjeta, cinco pestañas (regla 6). Las cinco son la misma tabla del
      sistema con el mismo modal: gasto, activo y deuda con su tipo; la
      transacción, debe y haber; y las cuentas, que son también los tipos. -->
+@if (parte() !== 'numeros') {
 <app-card variant="outlined" padding="lg" class="registros" data-testid="contabilidad-registros">
   <app-section-heading card-header icono="billing" titulo="Tus registros" />
   <app-tabs [selectedIndex]="pestana()" (selectedIndexChange)="pestana.set($event)">
@@ -130,6 +133,7 @@
     </app-tab>
   </app-tabs>
 </app-card>
+}
 
 <!-- Las celdas de acciones: la tabla las instancia por fila. -->
 <ng-template #accionesDeRegistro let-fila>

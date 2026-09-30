@@ -1,0 +1,4 @@
+paciente · tras entrar: <url de la app>/dashboard
+M4 · directorio-lista-paciente (/directory) → /directory: .specialty-badge__principal=0 · app-badge «Principal»=0 · texto «Principal»=0 · «Valeria Rojas» visible=0
+M4 · directorio-detalle-paciente (/directory/be0f3a66-c03e-4eac-a416-c1068238d3d2) → /directory/be0f3a66-c03e-4eac-a416-c1068238d3d2: .specialty-badge__principal=1 · app-badge «Principal»=0 · texto «Principal»=1 · «Valeria Rojas» visible=5
+consola: 0 distintas · red: 0 distintas

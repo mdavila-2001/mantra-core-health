@@ -473,3 +473,61 @@
   block-size: 96px;
   border-radius: var(--r-lg);
 }
+
+/* ─── Cada cita lleva a sí misma ───────────────────────────────────────────
+   Enlace estirado: el nombre del paciente es el enlace y su `::after` cubre la
+   tarjeta o el renglón entero, así toda la superficie se toca sin envolver la
+   rejilla en un `<a>` ni cambiar lo que anuncia el lector de pantalla. */
+.ahora,
+.lista__fila {
+  position: relative;
+}
+
+.enlace-a-la-cita {
+  color: inherit;
+  text-decoration: none;
+}
+
+.enlace-a-la-cita::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+
+.ahora {
+  cursor: pointer;
+  transition: border-color var(--dur-fast) ease, box-shadow var(--dur-fast) ease;
+}
+
+.ahora:hover {
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-sm);
+}
+
+.ahora:hover .enlace-a-la-cita,
+.lista__fila:hover .enlace-a-la-cita {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.lista__fila {
+  cursor: pointer;
+}
+
+.enlace-a-la-cita:focus-visible {
+  outline: none;
+}
+
+.ahora:has(.enlace-a-la-cita:focus-visible),
+.lista__fila:has(.enlace-a-la-cita:focus-visible) {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+  border-radius: var(--r-md);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ahora {
+    transition: none;
+  }
+}

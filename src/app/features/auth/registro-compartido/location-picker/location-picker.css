@@ -16,3 +16,8 @@
   line-height: var(--lh-caption);
   color: var(--text-secondary);
 }
+
+/* Sólo lectura: se ve, pero no invita a tocarlo. */
+.location-picker__mapa--fijo {
+  cursor: default;
+}

@@ -1,8 +1,11 @@
+import { NgTemplateOutlet } from '@angular/common';
 import {
+  booleanAttribute,
   ChangeDetectionStrategy,
   Component,
   computed,
   inject,
+  input,
   signal,
   viewChild,
   type TemplateRef,
@@ -13,6 +16,7 @@ import { catchError, map, of, startWith, switchMap, type Observable } from 'rxjs
 
 import { environment } from '../../../../environments/environment';
 import { AuthService } from '../../../core/auth/auth.service';
+import { CartStore } from '../../../core/data-access/pharmacy-cart/cart.store';
 import { ProfilesClient } from '../../../core/data-access/profiles/profiles.client';
 import {
   NO_SAVED_PLACES,
@@ -27,6 +31,9 @@ import { Link } from '../../../shared/components/atoms/link/link';
 import { Select } from '../../../shared/components/atoms/select/select';
 import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
+import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
+import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
+import { ContentDialog } from '../../../shared/components/organisms/content-dialog/content-dialog';
 import { EmptyState } from '../../../shared/components/molecules/empty-state/empty-state';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 import { Pagination } from '../../../shared/components/molecules/pagination/pagination';
@@ -34,7 +41,9 @@ import { SearchField } from '../../../shared/components/molecules/search-field/s
 import { DataTable } from '../../../shared/components/organisms/data-table/data-table';
 import type { ColumnDef } from '../../../shared/components/organisms/data-table/data-table.types';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
+import { PractitionerAvailability } from '../../directory/practitioner-availability/practitioner-availability';
 import { SearchOriginPicker } from '../../nearby-places/search-origin-picker/search-origin-picker';
+import { PHARMACY_CART_ROUTE } from '../pharmacy/pharmacy.routes';
 import type { SearchOrigin } from '../../nearby-places/search-origin-picker/search-origin-picker.types';
 import { CotizacionesFuentes, type BusquedaDeCotizaciones } from './cotizaciones.fuentes';
 import {
@@ -43,8 +52,15 @@ import {
   ordenarResultados,
   type CotizacionResultado,
   type OrdenCotizacion,
+  type ReservaDeCotizacion,
   type VerticalCotizacion,
 } from './cotizaciones.logic';
+
+/**
+ * La tabla del recurso agendable que apunta a un centro de diagnóstico. La
+ * agenda de un laboratorio es un recurso más, como la de un profesional.
+ */
+const TABLA_DE_CENTRO_DIAGNOSTICO = 'diagnostic_units';
 
 /** Letras mínimas para buscar: con una sola, cualquier catálogo coincide entero. */
 const LETRAS_MINIMAS = 2;
@@ -89,12 +105,15 @@ interface Consulta {
   imports: [
     Alert,
     AppButton,
+    ContentDialog,
     DataTable,
     EmptyState,
     FormField,
     Link,
+    NgTemplateOutlet,
     PageHeader,
     Pagination,
+    PractitionerAvailability,
     RouterLink,
     SearchField,
     SearchOriginPicker,
@@ -108,6 +127,26 @@ export class Cotizaciones {
   private readonly fuentes = inject(CotizacionesFuentes);
   private readonly auth = inject(AuthService);
   private readonly profiles = inject(ProfilesClient);
+  private readonly cart = inject(CartStore);
+  private readonly dialogs = inject(DialogService);
+  private readonly toast = inject(ToastService);
+
+  protected readonly rutaDelCarrito = PHARMACY_CART_ROUTE;
+  protected readonly tablasDeCentro: readonly string[] = [TABLA_DE_CENTRO_DIAGNOSTICO];
+  protected readonly tenantActivo = this.auth.activeTenantId;
+
+  /** El estudio cuya agenda está abierta en el diálogo, o `null`. */
+  protected readonly reservaAbierta = signal<ReservaDeCotizacion | null>(null);
+
+  /** Los productos del carrito vigente, por sede: la fila dice «En tu carrito». */
+  private readonly enElCarrito = computed<ReadonlySet<string>>(() => {
+    const carrito = this.cart.cart();
+    return new Set(
+      carrito === null
+        ? []
+        : carrito.lines.map((linea) => `${carrito.site.siteId}:${linea.productId}`),
+    );
+  });
 
   /**
    * Con el backend simulado los precios de farmacia y de estudios son de
@@ -115,8 +154,23 @@ export class Cotizaciones {
    */
   protected readonly esMaqueta = environment.mockBackend;
 
+  /**
+   * `true` cuando esta pantalla vive **dentro** de «Farmacia», como una de
+   * sus pestañas (`PharmacyHub`). Igual que en `PharmacyOrders`: sólo cambia
+   * el membrete.
+   */
+  readonly embedded = input(false, { transform: booleanAttribute });
+
+  /**
+   * Con vertical fija, la pantalla arranca ahí y no ofrece el selector: quien
+   * la embebe decide qué compara, no quien mira. Hoy sólo «Farmacia» la usa,
+   * fija en `MEDICAMENTOS` — el comparador de las cuatro verticales sigue
+   * siendo su propio destino, sin tocar.
+   */
+  readonly fixedVertical = input<Exclude<VerticalCotizacion, 'TODAS'> | null>(null);
+
   protected readonly termino = signal('');
-  protected readonly vertical = signal<VerticalCotizacion>('TODAS');
+  protected readonly vertical = signal<VerticalCotizacion>(this.fixedVertical() ?? 'TODAS');
   protected readonly orden = signal<OrdenCotizacion>('PRECIO');
   protected readonly origen = signal<SearchOrigin | null>(null);
   protected readonly pagina = signal(1);
@@ -307,6 +361,59 @@ export class Cotizaciones {
     return fila.distanceKm === null
       ? (fila.sinDistancia ?? 'Sin distancia publicada')
       : `${fila.distanceKm.toLocaleString('es-BO', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} km`;
+  }
+
+  protected estaEnElCarrito(fila: CotizacionResultado): boolean {
+    const carrito = fila.carrito;
+    return (
+      carrito !== undefined &&
+      this.enElCarrito().has(`${carrito.sede.siteId}:${carrito.linea.productId}`)
+    );
+  }
+
+  /**
+   * Agrega el medicamento al carrito, como «Agregar» en la tienda de Farmacia.
+   *
+   * Un carrito es de una sola sede: si ya hay uno de otra, el store devuelve
+   * `conflict` **sin cambiar nada** y decide la persona.
+   */
+  protected async agregarAlCarrito(fila: CotizacionResultado): Promise<void> {
+    const carrito = fila.carrito;
+    if (carrito === undefined) {
+      return;
+    }
+    let resultado = this.cart.add(carrito.sede, carrito.linea);
+    if (resultado === 'conflict') {
+      const confirmado = await this.dialogs.confirm({
+        title: 'Vaciar y cambiar de farmacia',
+        message: `Tu carrito es de otra farmacia. Si seguís, se vacía y queda sólo ${carrito.linea.name} de ${carrito.sede.pharmacyName}.`,
+        confirmLabel: 'Vaciar y cambiar',
+        cancelLabel: 'Dejarlo como está',
+        destructive: true,
+      });
+      if (!confirmado) {
+        return;
+      }
+      this.cart.replaceWith(carrito.sede, [{ ...carrito.linea, quantity: 1 }], null);
+      resultado = 'added';
+    }
+    if (resultado === 'added') {
+      this.toast.success(
+        `${carrito.linea.name} quedó en tu carrito de ${carrito.sede.pharmacyName}.`,
+        'Agregado al carrito',
+      );
+    }
+  }
+
+  /** Abre la agenda del centro para elegir el horario del estudio. */
+  protected abrirReserva(fila: CotizacionResultado): void {
+    if (fila.reserva !== undefined) {
+      this.reservaAbierta.set(fila.reserva);
+    }
+  }
+
+  protected cerrarReserva(): void {
+    this.reservaAbierta.set(null);
   }
 
   protected buscar(termino: string): void {

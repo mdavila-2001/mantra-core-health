@@ -1,6 +1,14 @@
 # Lo que el frontend espera del backend
 
-**Actualizado:** 2026-09-16 — **P32 y P33 están CERRADOS**: el backend publicó el consultorio
+**Actualizado:** 2026-09-27 — **P44 es nuevo**: «Mis gastos», la billetera del paciente, ya
+está construida contra el simulador y espera `GET /patient-spending/me`. Antes,
+2026-09-26 — **P39 a P42 son nuevos**, de la noche del paquete «Encuentro
+clínico» (2026-09-25). De los cuatro **sólo P42 tiene frontend detrás**: la reconsulta está
+construida y andando contra el simulador, y es lo único del paquete que la API va a tener que
+sostener. P39, P40 y P41 nacen numerados porque el plan del paquete los numeró, pero sus carriles
+(C1, C2 y C3) **no se entregaron**: no hay pantalla esperándolos, así que no son deuda que
+bloquee nada — son el alcance que quedó escrito. Antes,
+2026-09-16 — **P32 y P33 están CERRADOS**: el backend publicó el consultorio
 propio y el QR bancario por sede, y **el campo viaja en inglés (`isOwnSite`), no como `esPropio`**
 — que es lo que sirve el simulador de esta rama. Ver las dos fichas de abajo. Antes,
 2026-09-13 — **P33 era nuevo**: el QR bancario con el que el profesional cobra
@@ -38,7 +46,16 @@ backend.
 | **P36** | `schedule_templates` no sabe declarar horario **sin turnos fijos** — empieza en el `.puml`, y falta decidir cómo reserva el paciente en ese modo |
 | **P37** | Las **sucursales** de una cadena de farmacias y su disponibilidad pública dada una receta escrita a mano |
 | **P38** | No hay tendencias del muro: `PostListItem` no trae `hashtags` y no existe un recuento por período |
-| **P44** | El catálogo de la farmacia: la empresa no puede **editar** un producto ni cargarle precio, stock, categoría, descripción o imágenes, y el alta exige `SECURITY_ADMIN` |
+| **P39** | Filas clave/valor de la nota médica: `entries_json` en `chart.clinical_note_versions` — **nadie lo espera todavía**: el carril C1 no se entregó |
+| **P40** | `based_on_note_ids` y `category` textual en las órdenes de análisis, más el concepto `SR_OTHER` — **carril C2 no entregado** |
+| **P41** | Estados `COND_PROVISIONAL` / `COND_REFUTED` y `POST /clinical/conditions/:id/verification` con motivo y evidencia — **carril C3 no entregado** |
+| **P42** | La **reconsulta**: `follow_up_of_booking_id` en la reserva, `ACT_FOLLOW_UP`, «una reconsulta futura por cita» y el vínculo en `BookingItemDto`. **Esto sí tiene frontend detrás y funcionando contra el simulador** |
+| **P44** | `GET /patient-spending/me?from=&to=` — los gastos de salud del paciente, movimiento por movimiento. **«Mis gastos» ya está construido contra el simulador** |
+| **P45** | `GET /practitioners/:id/insurance-carriers`: con qué aseguradoras trabaja un médico, para su ficha pública. **El modelo ya lo declara** (`network_provider_memberships`); falta la lectura y la carga de las redes reales |
+| **P47** | El catálogo de la farmacia: la empresa no puede **editar** un producto ni cargarle precio, stock, categoría, descripción o imágenes, y el alta exige `SECURITY_ADMIN` |
+| **P50** | Registro de farmacia: la API acepta `tenantType: PHARMACY` pero no crea la fila de `directory.pharmacies`, no tiene bloque `pharmacy.branches` y no enlaza la sede central; lo obligatorio para operar (los 6 PDF, SEDES) hoy no se exige en ninguna capa |
+| **P51** | Registro de laboratorio: la API acepta `tenantType: DIAGNOSTIC_CENTER` con `diagnosticUnit`, pero exige país, jurisdicción, cédula y poder del representante que el alta no pide, no conoce `diagnosticUnit.branches` y, sin `diagnosticUnitTypeConceptId`, crea una unidad **de imágenes** |
+| **P52** | Portal de la cuenta de laboratorio: resumen y **resultados** (subida por partes sin tope de tamaño, listado de todo lo subido, contenido, retiro con motivo y aviso al médico y al paciente). Ninguna ruta `/diagnostics/lab/*` existe en la API |
 
 ---
 
@@ -1677,55 +1694,262 @@ se está hablando esta semana», que es la pregunta del pedido.
 
 ---
 
+## P42 · Reconsulta: el vínculo entre una cita y la consulta de la que salió — 25/09/2026
+
+> **P42 · Reconsulta: el vínculo entre una cita y la consulta de la que salió.**
+> Origen: carril C4 del paquete «Encuentro clínico» (2026-09-25). Hoy todo esto vive **sólo en
+> el simulador del frontend** (`core/mock/handlers/scheduling.handlers.ts`); la API real no
+> conoce ninguna de estas piezas.
+>
+> **1. Esquema — `scheduling.appointment_bookings.follow_up_of_booking_id`**
+> Columna nueva, `uuid NULL`, FK a `scheduling.appointment_bookings(id)`. Es el vínculo, y va en
+> **un solo lado**: la reconsulta apunta a la consulta de la que salió. El sentido inverso se
+> **deriva al leer**; guardarlo en los dos dejaría dos verdades que se pueden contradecir —una
+> cancelación que actualizara un lado y no el otro bastaría para que la cita origen siguiera
+> diciendo que ya tiene reconsulta—. Índice sobre la columna: se consulta en cada lectura de la
+> agenda. Recordar que el DDL se genera desde el `.puml` (regla 97.1): la columna se declara en
+> el modelo, no con un `ALTER TABLE` a mano.
+>
+> **2. Terminología — concepto `ACT_FOLLOW_UP`**
+> Entrada nueva en el value set de tipos de cita (`VS_APPOINTMENT_TYPE` en el simulador, con
+> los códigos `APT-*`). La reconsulta nace con ese `type_concept_id`. Como todo catálogo
+> cerrado, va como concepto codificado y **no** como enum de TypeScript ni etiqueta a mano
+> (regla 97.4.7). Del lado del frontend el rótulo visible es el literal «Reconsulta», así que el
+> concepto no bloquea la pantalla: bloquea poder clasificar y contar reconsultas.
+>
+> **3. Regla de negocio — «una reconsulta por consulta»**
+> `POST /scheduling/appointments/direct` con `followUpOf` responde:
+> - **403** si el `resourceId` no es una agenda del profesional de la sesión;
+> - **404** si la cita de origen no existe;
+> - **422** si el paciente no es el de esa cita, o si `startAt` no es futuro;
+> - **409** si esa consulta ya tiene una reconsulta **por venir** y no cancelada —una ya pasada
+>   no bloquea: citar de nuevo a alguien que ya volvió es legítimo—.
+>
+> La unicidad tiene que ser **de la escritura, no de un `if` previo** (regla 96.3.2): dos
+> peticiones simultáneas con el mismo origen no pueden crear dos reconsultas. Un índice único
+> parcial sobre `follow_up_of_booking_id` filtrado por «no cancelada y futura» no es inmutable
+> —«futura» depende de `now()`—, así que la garantía va por bloqueo del origen dentro de la
+> transacción (`SELECT ... FOR UPDATE` sobre la cita de origen) o por un único parcial sobre los
+> estados vivos. Lo que **no** alcanza es comprobar y después insertar.
+>
+> Los cuatro rechazos corren **sólo cuando `followUpOf` viene**: una cita puntual sin
+> reconsulta se sigue creando exactamente como hoy, que es lo que esperan `appointment-new` y
+> el turno de mostrador.
+>
+> **4. Contrato — `BookingItemDto`**
+> `GET /scheduling/bookings` y `GET /scheduling/bookings/:id` tienen que devolver:
+> - `followUpOf: { bookingId, encounterId, startAt } | null` — **`startAt` es el del origen, ya
+>   resuelto por el servidor.** Sin él, la agenda y «Mis citas» necesitan una petición por fila
+>   para poder decir «de la cita del 12 de septiembre», o se quedan sin poder nombrarla. Es el
+>   único campo del vínculo que no viaja en la escritura.
+> - `followUpBookingId: string | null` — la reconsulta viva de esta cita, derivada al leer.
+>
+> Los dos respetan la misma compuerta de privacidad que `patientName` y `reasonText`: viajan al
+> titular y al profesional de esa agenda. Ausente no es `null`: ausente es «no te corresponde
+> verlo», `null` es «se buscó y no hay».
+>
+> **5. Lo que el frontend ya tiene**
+> `follow-up.types.ts` **ya no existe**: C8 subió `FollowUpOrigin`, `FollowUpOriginRef` y los dos
+> campos del vínculo a `scheduling.types.ts`, que es donde viven los tipos congelados del módulo.
+> El simulador implementa el contrato completo de arriba y sus 24 pruebas lo fijan
+> (`core/mock/handlers/scheduling.handlers.spec.ts`), así que sirve de **especificación
+> ejecutable** para la API. Consumidores hoy: la agenda del profesional, el detalle de la cita,
+> «Mis citas» del paciente y la línea del encuentro de «Mi historia».
+
+---
+
+## P39, P40 y P41 · el alcance del paquete que no llegó a construirse — 25/09/2026
+
+Los tres nacieron con el plan del paquete «Encuentro clínico» y **ninguno tiene pantalla
+esperándolo**: sus carriles no se entregaron. Se escriben para que el número no se reuse y para
+que, cuando alguien retome el carril, no haya que volver a decidir el alcance. Lo de abajo es
+literal del plan maestro (§10), no un contrato ampliado acá.
+
+| # | Carril | Qué falta en la API | Estado del frontend |
+|---|---|---|---|
+| **P39** | C1 · nota médica clave/valor | `entries_json jsonb` en `chart.clinical_note_versions` (o `chart.clinical_note_entries`), aceptado en `POST /charts/notes` y `PUT …/versions`, devuelto en `GET /charts/patients/:id/chart` y en el `GET /charts/notes` de `dev` | **Nada.** La casilla «Notas» abre la hoja libre de siempre. El `TODO C8` de `history-view-model.ts:382` marca dónde entrarían los apartados |
+| **P40** | C2 · órdenes de análisis | `based_on_note_ids` (o `clinical.service_request_notes`) y `category` textual en `POST /clinical/service-requests`; lectura en `GET /diagnostics/patients/:id/orders` y `GET /diagnostic-results/me/orders`; concepto `SR_OTHER` | **Nada.** La línea del encuentro deriva la categoría de la orden con una heurística, anotada en el `TODO C8` de `history-view-model.ts:408` |
+| **P41** | C3 · diagnóstico presuntivo | Estados `COND_PROVISIONAL` y `COND_REFUTED` (hoy sólo `COND_CONFIRMED`), `POST /clinical/conditions/:id/verification` con motivo y evidencia (`note_id` / `service_request_id` / `diagnostic_report_id`), y la regla «al confirmar exige fin esperado o curso crónico y pasa a `COND_ACTIVE`». Camino `.puml` → `gen_ddl.py` → `SQL/` → patch → `gen_entities.py` (ADR-0021) | **Parcial, y del lado del simulador.** C6 reparte los diagnósticos en «en estudio / activas / históricos` resolviendo el estado por **código de catálogo**, así que la pantalla ya sabe leer los tres. Lo que no existe es escribirlos: «quién confirmó» y el motivo escrito quedan en los `TODO C8` de `history-view-model.ts:207` y `:247` |
+
+
+---
+
 ## P43 · Lo que se emite en la cita cuelga de la respuesta del formulario médico — 26/09/2026
 
-> **P43 · Receta, orden de análisis y plan de cuidados asociados a la respuesta del formulario
-> médico.** Origen: pedido del propietario del 26/09/2026. Hoy todo esto vive **sólo en el
-> frontend y su simulador**; la API real no conoce el campo.
+> **P43 · Receta, orden de análisis, plan de cuidados y reconsulta asociadas a la respuesta del
+> formulario médico.** Origen: pedido del propietario del 26/09/2026. Hoy todo esto vive **sólo
+> en el frontend y su simulador**; la API real no conoce el campo.
 >
 > **1. Qué cambió en la pantalla**
-> En la cita, «Nota clínica» y «Documento» dejaron de ser casillas: viven al final del
+> En la cita, «Nota médica» y «Documento» dejaron de ser casillas: viven al final del
 > «Formulario médico» como **campos adicionales del doctor**, opcionales, con texto, varios
 > archivos o las dos cosas por fila. Al completar el formulario se registran como una nota
-> médica del encuentro y un documento del expediente por fila con archivos. Eso **no pide nada
-> nuevo** a la API: usa `POST /charts/notes` y `POST /charts/documents` tal como están.
+> médica del encuentro (P39) y un documento del expediente por fila con archivos. Eso **no pide
+> nada nuevo** a la API: usa `POST /charts/notes` y `POST /charts/documents` tal como están.
 >
 > **2. Contrato — `formInstanceId`**
-> Campo nuevo, `uuid` opcional, en tres altas:
+> Campo nuevo, `uuid` opcional, en cuatro altas:
 > - `POST /clinical/medication-requests`
 > - `POST /clinical/service-requests`
 > - `POST /charts/care-plans`
+> - `POST /scheduling/appointments/direct`, **dentro de `followUpOf`**
 >
 > Es el id de la instancia de `forms` (la respuesta cerrada del formulario médico) de la que sale
 > el registro. Mientras la API valide con `forbidNonWhitelisted`, **mandarlo hoy es un 400**: el
 > frontend lo manda sólo desde la cita, que en la rama `mockup` corre contra el simulador.
 >
-> La versión original de este pedido (PR #725) incluía una cuarta alta, la reconsulta
-> (`POST /scheduling/appointments/direct` dentro de `followUpOf`). La reconsulta no existe en
-> esta base de `test`, así que ese punto queda fuera hasta que vuelva.
->
 > **3. Esquema**
 > Una columna `form_instance_id uuid NULL` con FK a la tabla de instancias de `forms` en cada una
-> de las tablas. Nula porque desde el expediente se sigue pudiendo emitir sin formulario.
+> de las cuatro tablas. Nula porque desde el expediente se sigue pudiendo emitir sin formulario.
 >
 > **4. Regla de negocio**
 > Con el campo presente la API rechaza con **422** si la instancia no existe, no está cerrada o
-> es de otro encuentro que el del registro. La obligatoriedad en la cita la aplica hoy la
-> pantalla; si el negocio la quiere garantizada, la regla es «con `encounterId` presente,
-> `formInstanceId` es obligatorio».
+> es de otro encuentro que el del registro (o, en la reconsulta, que el de `followUpOf`). La
+> obligatoriedad en la cita la aplica hoy la pantalla; si el negocio la quiere garantizada, la
+> regla es «con `encounterId` presente, `formInstanceId` es obligatorio».
 >
 > **5. Lo que el frontend ya tiene**
 > `app-form-response-picker` carga las respuestas cerradas del encuentro con
 > `GET /forms/instances?encounter=`, elige la más reciente y queda deshabilitado cuando hay una
-> sola. El simulador guarda el campo en las altas. De paso se corrigió el simulador de
+> sola. El simulador guarda el campo en las cuatro altas. De paso se corrigió el simulador de
 > `GET /forms/instances`, que leía `encounterId` cuando el cliente manda `encounter` y por eso
 > nunca encontraba un formulario ya respondido.
 
 ---
 
-## P44 · El catálogo de productos de la farmacia — 28/09/2026
+## P44 · «Mis gastos»: lo que el paciente gastó en su salud — 27/09/2026
 
-> **P44 · Lo que la pantalla «Catálogo de productos» necesita y la API todavía no da.** Origen:
+> **P44 · `GET /patient-spending/me`.** Origen: pedido del propietario del 27/09/2026 — una
+> billetera en la barra superior del paciente que abra un tablero de gastos: este mes, el mes
+> anterior, el año contra el pasado, por categoría y otros agregados. Hoy lo sirve **sólo el
+> simulador** (`core/mock/handlers/patient-spending.handlers.ts`); la API real no tiene la ruta,
+> así que en `production-api` la pantalla cae al estado de error.
+>
+> **1. Contrato** (`core/data-access/patient-spending/patient-spending.dto.ts`)
+> `GET /patient-spending/me?from=YYYY-MM-DD&to=YYYY-MM-DD` (ambos inclusive). El titular sale del
+> token; la URL no lleva datos de la persona. Responde `{ currency, from, to, items[] }`, con
+> `items` del más reciente al más antiguo, y cada movimiento:
+> `id` · `occurredAt` · `description` · `category {code, display}` · `providerName` ·
+> `grossAmount` · `coveredAmount` · `discountAmount` · `paidAmount` — importes en texto decimal
+> exacto, con `paidAmount = grossAmount − coveredAmount − discountAmount`.
+>
+> Se piden **movimientos y no totales**: la pantalla compara el mes contra el mismo tramo del
+> anterior, el año contra el mismo tramo del pasado y cada categoría contra sí misma, y cada una
+> es otra suma sobre la misma lista. El front pide un solo rango (1 de enero del año pasado →
+> hoy), unos 150–250 movimientos por paciente.
+>
+> **2. Categorías — conceptos, no enum**
+> `SPEND_CONSULTATION`, `SPEND_PHARMACY`, `SPEND_LABORATORY`, `SPEND_IMAGING`,
+> `SPEND_PROCEDURE`, `SPEND_INSURANCE_PREMIUM`. Hacen falta como value set del modelo; el front
+> las rotula en castellano por `code` y, si llega una que no conoce, muestra el `display` del
+> contrato con un ícono genérico — no se rompe.
+>
+> **3. De dónde sale el dato — y por qué empieza en el repo del modelo**
+> Es una **lectura que une** cobros que hoy viven en módulos distintos: pagos de consultas
+> (`payments` / `billing`), pedidos de farmacia, órdenes de laboratorio e imagenología, y primas
+> del seguro. Dos huecos ya medidos (regla 99 §7): **`appointment_bookings` no tiene dónde
+> guardar el estado de pago** y `payments` no referencia reservas; y **`billing` cuelga de
+> `clinical.encounters`**, no del paciente. Sin resolver esas dos relaciones en el `.puml`, la
+> suma de «consultas» no se puede armar. Lo cubierto por el seguro y lo descontado por
+> promociones tampoco tienen hoy un lugar común por movimiento.
+>
+> **4. Reglas**
+> - **422** si falta `from` o `to`, si no son `YYYY-MM-DD`, si `from > to` o si el rango supera
+>   tres años (lo mismo que aplica el simulador).
+> - Sin perfil de paciente en la sesión: la misma precondición que `GET /promotions/me`.
+> - Nada posterior a hoy.
+> - Sólo lo propio: nunca se aceptan ids de paciente por parámetro (BOLA).
+>
+> **Qué hay del lado del frontend:** la billetera en la barra superior (sólo `PATIENT`), la
+> ruta `my-account/spending` y el tablero entero, con sus pruebas. Nada más espera; cuando la
+> ruta exista, la pantalla funciona contra la API sin cambios si el contrato se respeta.
+
+---
+
+## P45 · Con qué seguros trabaja un médico — 27/09/2026
+
+> **P45 · La ficha del médico que ve el paciente dice con qué aseguradoras trabaja y en qué
+> planes.** Origen: pedido del propietario del 27/09/2026 («fundamental»). Construido y probado
+> contra el simulador en `mockup`; **la API real no tiene la ruta**, así que llevarlo a `dev` sin
+> ella deja la tarjeta en su estado de error (con «Reintentar»), no la ficha rota.
+>
+> **1. Contrato**
+> `GET /practitioners/:practitionerProfileId/insurance-carriers` — autenticado; lo lee el
+> paciente desde `/directory/:profileId`.
+>
+> ```json
+> { "items": [
+>   { "carrierId": "uuid", "carrierName": "Alianza Seguros",
+>     "networks": [ { "id": "uuid", "name": "AFI GOLD" }, { "id": "uuid", "name": "OASIS" } ] }
+> ] }
+> ```
+>
+> Ordenado por `carrierName`. `networks` puede venir vacío (la aseguradora no detalla planes).
+> Profesional inexistente → **404**. Sin membresías activas → `items: []`: la pantalla dice «Sin
+> seguros informados», **nunca** «no acepta seguros».
+>
+> **2. De dónde sale — sin tablas nuevas**
+> `insurance.network_provider_memberships` activas (`MEMBERSHIP_ACTIVE`) cuyo prestador es el
+> profesional → `provider_networks` → `insurance_carriers`, agrupadas por aseguradora. Hoy `INS`
+> sólo declara `PROVIDER_TYPE_PRACTICE`; falta decidir cómo se identifica al profesional como
+> prestador: `provider_entity_id` = perfil profesional con un tipo de prestador «profesional», o
+> `practitioner_role_assignment_id`, que el modelo ya trae. Es una decisión de modelo, no del
+> endpoint: **no se inventa el concepto en la API**.
+>
+> **3. Datos**
+> Las aseguradoras bolivianas publican su red **por plan**, así que cada plan es una red
+> (`provider_networks.name` = «AFI GOLD»). Los datos reales ya están extraídos en este repo:
+> `data/insurer-networks/` (763 médicos de Alianza Seguros y Nacional Seguros en Santa Cruz,
+> destilados de `markdown_convertidos/`). Cargarlos en la base es trabajo de seeder: una red por
+> plan y una membresía por médico y red.
+>
+> **4. Lo que el frontend ya tiene**
+> `InsuranceClient.listPractitionerCarriers`, la tarjeta `app-practitioner-insurers` proyectada en
+> la ficha justo debajo de la identidad (con carga, vacío y error propios), el doble del simulador
+> y la prueba de navegador `ficha-medico-seguros.spec.ts`.
+
+## P46 · Plan de pagos de un servicio con reconsultas: nota de venta y factura — 28/09/2026
+
+**Pedido del propietario (pizarra, 28/09/2026):** en «Pagos» de la consulta, un servicio que
+implica **más de una instancia de pago** —una consulta con su serie de reconsultas— abre una
+tabla: ítem, monto a cobrar, monto pagado y **nota de venta**. Mientras el plan tenga saldo, cada
+pago lleva nota de venta, **no factura**. Saldado, se emite una sola factura por el total, un
+renglón por instancia. Un servicio de una sola instancia abre directamente el modal de la
+factura.
+
+**Qué hace hoy el front (`mockup`):** todo contra la facturación simulada (FACT-SIAT-MOCK):
+
+- `SimulatedCharge.plan` (`billing-simulated.types.ts`): instancias con `expectedAmount`,
+  `paidAmount`, `balance`, `bookingId`/`scheduledAt` de la reserva que la atiende y sus
+  `salesNotes` (`NV-000001`, correlativo por emisor).
+- `POST /billing/simulated/charges/:chargeId/instances/:instanceId/payments`
+  `{ methodCode, amount }` → el cobro con la nota nueva. 422 si el monto supera el saldo de la
+  instancia; 409 `PLAN_REQUIRED` si se paga de una vez un servicio con plan; 409 `NOT_A_PLAN` al
+  revés; la factura de un plan con saldo es 412.
+- `GET /billing/simulated/charges?patientProfileId=` para la consulta. Quien atiende
+  (`PRACTITIONER`) opera sólo los cobros de origen `CONSULTATION`: no ve farmacia, ni anula.
+
+**Qué falta en la API real:**
+
+1. **El tipo de servicio no dice cuántas instancias implica.** `ServiceCatalogItem` no tiene nada
+   como «reconsultas incluidas» ni su precio. El simulador declara el tipo
+   `CONS-CARDIO-RECONS` (consulta + 2 reconsultas a Bs 180) en `datos-simulados.ts`. Es una
+   decisión de modelo (¿columna en el catálogo o un plan aparte?) que empieza en el `.puml`.
+2. **Cobro por instancia.** `payments.installment_plans` / `installment_schedules` ya modelan
+   cuotas (P35); falta atar cada instancia a la reserva que la atiende (la reconsulta de P42) y
+   registrar pagos parciales por instancia.
+3. **Nota de venta.** Comprobante interno sin validez fiscal, correlativo por emisor. No existe en
+   el modelo.
+4. **Facturación** en sí: sigue siendo FACT-SIAT-MOCK; el cliente `/billing/simulated/*` se
+   reemplaza cuando la API publique facturación.
+
+**Lo que el frontend ya tiene:** `app-plan-de-pagos` y `app-factura-simulada-dialog`
+(`features/billing/`), `app-cobros-del-paciente` dentro de `app-payments-block`, la nota de venta
+en PDF (`nota-de-venta.ts`) y la prueba de navegador `pagos-plan-nota-venta-factura.spec.ts`.
+
+## P47 · El catálogo de productos de la farmacia — 28/09/2026
+
+> **P47 · Lo que la pantalla «Catálogo de productos» necesita y la API todavía no da.** Origen:
 > pedido del 28/09/2026 con el mockup `farmacia_ecommerce_mantra.html` (catálogo paginado,
 > ficha de producto, importación masiva e inventario). La pantalla
 > (`administration/pharmacy-catalog`) ya está en `dev` y usa **sólo** lo que existe:
@@ -1766,9 +1990,79 @@ se está hablando esta semana», que es la pregunta del pedido.
 > `POST /pharmacies/:pharmacyId/products:bulk` con informe por fila evitaría cortar la carga si
 > se cierra la pestaña.
 
-## P46 · El mercado de seguros del paciente — 28/09/2026
+---
+>
+> **Actualización 29/09/2026 — lo que la maqueta ya simula y la API tiene que dar.** En la rama
+> `mockup` la pantalla ya hace todo esto contra el simulador; contra la API real cada una de
+> estas cosas es hoy un 400 (`forbidNonWhitelisted`) o un 404:
+>
+> - **Alta con venta:** `POST /pharmacies/:pharmacyId/products` acepta además `unitPrice`
+>   (número, Bs), `category` (una de: Medicamentos, Dermocosmética, Cuidado personal, Bebé y
+>   maternidad, Dispositivos, Bienestar), `description` y `inStock` (boolean).
+> - **Edición:** `PATCH /pharmacies/:pharmacyId/products/:productId` con cualquiera de
+>   `brandName`, `genericName`, `strengthText`, `packageSizeText`, `requiresPrescription`,
+>   `unitPrice`, `category`, `description`, `inStock` (`null` borra el dato). Devuelve el
+>   producto con la forma de la búsqueda. La carga masiva la usa para **actualizar** los códigos
+>   que ya están en el catálogo.
+> - **«Sin stock», como en los pedidos:** la farmacia no lleva un conteo; sólo avisa lo que no
+>   tiene (`inStock: false`), igual que marca «no disponible» un renglón de un pedido. Un
+>   producto sin stock no entra en `GET /pharmacy-inventory/availability` ni en
+>   `GET /pharmacy/sites/:siteId/prices`, y no se reserva en un pedido nuevo.
+> - **Lectura:** `GET /pharmacy/products` devuelve por producto `unitPrice`, `inStock`,
+>   `category` y `description`.
+> - **Catálogo del tenant:** `GET /pharmacy/pharmacies` con un tenant de tipo `PHARMACY`
+>   devuelve sólo esa farmacia (así ya lo dice la API: «del tenant activo»; el simulador lo
+>   respeta y la cuenta `farmacia@alovida.mock` entra directo a su catálogo).
+> - **Vademécum:** el simulador enlaza el genérico escrito a mano con el medicamento del
+>   vademécum para que el producto aparezca al buscar dónde comprar una receta; la API tendría
+>   que resolver `medicationConceptId` igual, o pedírselo a la pantalla.
+>
+> **Actualización 29/09/2026 (carril B) — el portal de la farmacia como cuenta.** La cuenta de
+> farmacia (`farmacia@alovida.mock`, tenant `PHARMACY`) tiene ahora menú propio de ocho renglones
+> (Resumen · Productos · Categorías · Importación masiva · Inventario · Solicitudes de retiro ·
+> Promociones · Ficha de la farmacia) y el simulador da, además de lo anterior, lo siguiente. Contra
+> la API real cada punto es hoy un 400 (`forbidNonWhitelisted`) o un 404:
+>
+> - **Estado del producto (D6):** `status` (`PUBLISHED` · `DRAFT` · `WITHDRAWN`) en el alta, en el
+>   `PATCH` y en la lectura. Un `DRAFT` no sale en la búsqueda pública ni en la vitrina. `PATCH
+>   {status:'PUBLISHED'}` reactiva un retirado; el código sigue reservado. **No** hay «en revisión».
+> - **Lectura de gestión:** `GET /pharmacy/products?pharmacyId=&managed=true` trae **todo** el
+>   catálogo de esa farmacia (borradores y retirados incluidos) con `status`, `stock`, `minStock` e
+>   `imageFileIds`. Sin `managed`, igual que hoy: sólo lo publicado.
+> - **Inventario (D7):** `stock` y `minStock` (enteros 0–1 000 000) en el alta y el `PATCH`, y
+>   `PATCH /pharmacies/:pharmacyId/inventory` con `{ lines: [{ productId, stock, minStock }] }` que
+>   guarda todo o nada (400 por línea inválida). `inStock` **deriva** de `stock > 0`. Cuando exista
+>   la sincronización con el sistema de la farmacia (registro §2.1.2), este endpoint pasa a sólo
+>   lectura.
+> - **Inventario «hay / no hay» y carga por CSV (30/09/2026):** cada línea de `PATCH
+>   /pharmacies/:pharmacyId/inventory` lleva **o bien** cantidades (`stock` y/o `minStock`) **o bien**
+>   sólo `inStock` (booleano, sin conteo: la farmacia que no lleva cantidades y avisa lo que le falta).
+>   Mandar `stock` e `inStock` en la misma línea es un 422 («dirían dos cosas a la vez»); una línea sin
+>   nada que cambiar, también. `inStock: true` sobre un producto con 0 unidades le da existencias «sin
+>   conteo» para que de verdad quede disponible. La pantalla revisa el CSV (`codigo` + `existencias` /
+>   `umbral` / `disponible`) **antes** de mandar y sube sólo las filas que cambian, en un único `PATCH`;
+>   el servidor real tendría que ser todo o nada sobre esa petición, como el simulador.
+> - **Categorías (D8):** `GET|POST /pharmacies/:pharmacyId/categories` y `PATCH|DELETE
+>   …/categories/:categoryId`. Renombrar cambia el nombre en los productos que la usan; eliminar una
+>   con productos es un **409**. La lista parte de las seis del mockup. `category` sigue viajando en
+>   el producto **por nombre** (no por id).
+> - **Imágenes (D9):** `imageFileIds` (hasta 3 ids de `common.files`, subidos con
+>   `POST /common/files/upload`) en el alta y el `PATCH`. Los productos sembrados no traen imagen.
+> - **Resumen:** `GET /pharmacy/pharmacies/:id/summary` → `{ published, drafts, withdrawn,
+>   outOfStock, lowStock, inventoryValue, byCategory[], recentActivity[] }`. La actividad reciente
+>   (altas, ediciones, retiros, importaciones, inventario, categorías) la escribe el simulador;
+>   la API necesita un registro propio.
+> - **Importación «sólo actualizar» (D10):** el modo nuevo es del cliente: manda `PATCH` sólo a los
+>   códigos que ya existen. Sin el `PATCH` real de arriba no hay forma de actualizar.
+> - **Registro sanitario:** el mockup lo pide y **no** se dibuja: `pharmacy_products` no tiene dónde
+>   guardarlo. Empieza en el repo del modelo, como la categoría comercial.
+> - **Rutas cerradas por tipo de organización:** las ocho pantallas usan `onlyForTenantTypes:
+>   ['PHARMACY']`, así que sólo abren con una organización `PHARMACY` activa (el comodín
+>   `SUPERADMIN` tampoco las abre con otra). La autoridad sigue siendo `@Roles` del controller.
 
-> **P46 · `GET /insurance-marketplace/insurers/:slug`.** Origen: pedido del propietario del
+## P48 · El mercado de seguros del paciente — 28/09/2026
+
+> **P48 · `GET /insurance-marketplace/insurers/:slug`.** Origen: pedido del propietario del
 > 28/09/2026 — el paciente tiene que poder ver los productos de cada aseguradora con sus
 > cláusulas y coberturas, desde «Directorios», y hablar con su broker. Hoy existe **sólo en el
 > frontend y su simulador**.
@@ -1808,9 +2102,9 @@ se está hablando esta semana», que es la pregunta del pedido.
 > de cláusulas, la sección de brokers y el e2e `playwright/mercado-de-seguros.spec.ts`. El
 > simulador arma la respuesta del mismo catálogo que edita la consola de la aseguradora.
 
-## P47 · La contabilidad simple del doctor — 28/09/2026
+## P49 · La contabilidad simple del doctor — 28/09/2026
 
-> **P47 · `/accounting/practitioner/simple/...`.** Origen: pedido del propietario del 28/09/2026 —
+> **P49 · `/accounting/practitioner/simple/...`.** Origen: pedido del propietario del 28/09/2026 —
 > «gasto → tipo, activo → tipo, deuda → tipo, transacción debe/haber, nada más; nada de centros
 > de costo; cuenta → modal y tabla, con cuentas generales sembradas», y arriba de todo tres
 > números: pacientes atendidos, cuánto se cobró y cuánto se espera de las aseguradoras. Hoy
@@ -1849,3 +2143,197 @@ se está hablando esta semana», que es la pregunta del pedido.
 > `SimpleAccountingClient`, la sección arriba de «Contabilidad» (`ContabilidadSimple`) con los
 > tres números y una tarjeta con cinco pestañas, los tres modales y el e2e
 > `playwright/contabilidad-simple.spec.ts`.
+
+---
+
+## P50 · El registro público de farmacia — 29/09/2026
+
+> **P50 · Lo que el alta pública de farmacia (`/auth/register/pharmacy`) necesita y la API
+> todavía no da.** Origen: carril A del plan «La cuenta de farmacia — registro y portal»
+> (`docs/trabajo/2026-09-29-farmacia-cuenta/`). La ficha del carril pedía la fila **P49**, pero
+> ese número ya lo tiene la contabilidad simple del consultorio (ver la sección de arriba,
+> también del 29/09/2026); se usa **P50** para no pisarla, y se deja la aclaración acá para quien
+> lea la ficha del carril.
+>
+> La pantalla usa **el mismo endpoint que la aseguradora**, `POST /iam/auth/register-organization`,
+> con `organization.tenantType: 'PHARMACY'`. El DTO real (`register-organization.dto.ts`)
+> **ya declara `PHARMACY`** en `TENANT_TYPE_CODES` y lo acepta sin rechazarlo, pero:
+>
+> **1. No hay bloque de datos propio de farmacia.** El DTO sólo declara `payer`, `broker` y
+> `diagnosticUnit` como bloques específicos por tipo de tenant; no existe un `PharmacyProfileDto`.
+> El cliente manda igual `organization.pharmacy: { latitude?, longitude?, branches?: [{ name,
+> latitude, longitude }] }` —clave **inventada por este cliente**, ver el JSDoc de
+> `PharmacyOrganizationRegistration` en `iam.types.ts`—, y la API real la descarta en silencio
+> (`forbidNonWhitelisted` la rechazaría con 400 si `whitelist` está activo, o la ignora si no).
+> Ni la central ni las sucursales quedan guardadas en ningún lado.
+>
+> **2. No se crea la fila de `directory.pharmacies`.** El alta crea el tenant y el owner —igual
+> que para `PAYER`—, pero no hay nada del lado del servicio que registre la farmacia como tal en
+> el dominio de directorio, ni que la enlace con su sede central.
+>
+> **3. `legalRepresentative.idNumber` y `.powerOfAttorneyFileId` son obligatorios en el DTO real
+> siempre que se manda el bloque**, aunque el registro de procesos de farmacia (Módulo Farmacia
+> §1) no pide la cédula del representante como dato de alta — sólo nombre y correo. El simulador
+> de este carril relaja esos dos campos a opcionales (`auth.handlers.ts`, handler
+> `register-organization`) para poder ejercitar el flujo completo; **la API real los seguiría
+> exigiendo** el día que esto se conecte. A confirmar con quien sea dueño del DTO: o el
+> representante de farmacia no necesita cédula (ajustar el DTO), o el registro de procesos está
+> incompleto y falta agregarla al alta.
+>
+> **4. Lo obligatorio para operar no se exige en ninguna capa.** El registro de procesos declara
+> obligatorios para operar los seis papeles en PDF (constitución, NIT, SEPREC, licencia, SEDES,
+> poder) y en particular el certificado del SEDES —«un laboratorio de sangre sin certificado del
+> SEDES no puede atender», mismo criterio que el molde de laboratorio—, pero el alta pública los
+> deja **todos opcionales** (decisión D2 del carril: «lo obligatorio es lo más básico para
+> nacer»). Eso significa que hoy una farmacia puede terminar el registro sin ningún papel y sin
+> el punto de la central en el mapa. Falta la regla del lado del servidor que impida operar
+> (publicar catálogo, recibir pedidos) sin esos papeles verificados — no es un bloqueante del
+> registro, es un bloqueante de "farmacia habilitada para vender".
+>
+> **5. Lo que el frontend ya tiene.** `RegisterPharmacy` (`features/auth/register-pharmacy/`),
+> la tarjeta «Farmacia» en `/auth/register`, `IamClient.registerPharmacyOrganization`,
+> `PharmacyOrganizationRegistration` en `iam.types.ts`, el handler extendido del simulador
+> (`auth.handlers.ts`) y el e2e `playwright/registro-farmacia.spec.ts`. El submit sale de verdad
+> contra `POST /iam/auth/register-organization` — a diferencia del alta de laboratorio y de
+> imagenología, que son maquetas locales sin red —, así que en cuanto la API declare el bloque
+> `pharmacy` y cree `directory.pharmacies`, conectar el resto es sacar la relajación del punto 3
+> y sumar las claves reales que el DTO termine declarando.
+
+---
+
+## P51 · El registro público de laboratorio — 30/09/2026
+
+> **P51 · Lo que el alta pública de laboratorio (`/auth/register/laboratory`) necesita y la API
+> todavía no da.** Origen: carril A de la cuenta de laboratorio, espejo del P50 de farmacia.
+> Hasta el 29/09 esta pantalla era una maqueta que cerraba sin red; desde el 30/09 sale de verdad
+> contra el simulador.
+>
+> La pantalla usa **el mismo endpoint que la aseguradora y la farmacia**,
+> `POST /iam/auth/register-organization`, con `organization.tenantType: 'DIAGNOSTIC_CENTER'` —el
+> código que la API emite para un laboratorio—. A diferencia de la farmacia, el DTO real **sí**
+> tiene bloque propio para este tipo: `diagnosticUnit` (`DiagnosticUnitProfileDto`, en
+> `directory/dto/tenant-type-profile.dto.ts`). El cliente lo usa tal cual: `name` (la razón
+> social) y `primarySite: { name: 'Casa central', address: { lines, latitude?, longitude? } }`.
+> Mismo criterio de obligatoriedad que la farmacia (D2): sólo lo básico frena el alta; los seis
+> PDF, el punto de la central, las sucursales y las tres gerencias son opcionales y viajan
+> «todo o nada» cuando se completan. Aun así, **contra la API real este cuerpo hoy no pasa**:
+>
+> **1. País y jurisdicción.** El servicio exige `countryConceptId` y `jurisdictionConceptId`
+> para todo tipo territorial, `DIAGNOSTIC_CENTER` incluido (422 `missing`). El proceso 4.1 no
+> pregunta ninguno de los dos y el cliente no los manda. O la API los deriva para el alta
+> pública (Bolivia, jurisdicción nacional), o el cliente los resuelve por código contra
+> `dynamic-enums` (`BO`, `JURISDICTION_NATIONAL`), como hacía la rama `test` en cbfce9ee (BR-09).
+>
+> **2. El tipo de unidad.** Sin `diagnosticUnit.diagnosticUnitTypeConceptId` la API crea una
+> unidad **de imágenes** (es su valor por omisión). El cliente no lo manda porque es un
+> concepto, no un código, y leerlo exige el catálogo `diagnostic-unit-type` (`DU_TYPE_LAB`).
+> Esa es también la marca que distinguiría laboratorio de imagenología en el mismo
+> `DIAGNOSTIC_CENTER`: hoy el alta de imagenología (`RegisterImagingCenter`, componente propio
+> en `/auth/register/imaging-center`, no un `?kind=IMAGING` de éste) **sigue siendo maqueta sin
+> red**.
+>
+> **3. Las sucursales.** `diagnosticUnit.branches: [{ name, addressLines, latitude?,
+> longitude? }]` es una clave que **inventa este cliente** (ver el JSDoc de
+> `LaboratoryOrganizationRegistration` en `iam.types.ts`); el DTO sólo conoce una sede
+> primaria, y `forbidNonWhitelisted` rechaza el cuerpo entero con 400. Falta que el alta acepte
+> sedes adicionales de la unidad (el módulo 23 ya sabe crearlas después del alta).
+>
+> **4. El representante sin cédula.** Igual que el punto 3 del P50:
+> `legalRepresentative.idNumber` y `.powerOfAttorneyFileId` son obligatorios en el DTO siempre
+> que viaja el bloque, y el proceso 4.1 sólo pide nombre y correo (4.1.8, 4.1.8.2). El
+> simulador ya relajaba los dos para farmacia; el laboratorio usa esa misma relajación.
+>
+> **5. El NIT y la dirección legal.** El DTO no tiene `taxIdentifier`: el NIT viaja sólo dentro
+> del `code` del tenant (`LAB-<nit>`). La dirección legal viaja como la dirección de la sede
+> primaria, que es lo más parecido que el contrato declara.
+>
+> **6. Lo obligatorio para operar no se exige en ninguna capa.** El SEPREC, la licencia de
+> funcionamiento y el certificado del SEDES son lo que habilita a un laboratorio de sangre a
+> atender, y hasta el 29/09 la maqueta los exigía. Con D2 el alta puede terminar sin ellos, así
+> que falta la regla del lado del servidor que impida operar (recibir órdenes, publicarse en el
+> directorio) sin esos papeles verificados — mismo punto 4 del P50.
+>
+> **7. Lo que el frontend ya tiene.** `RegisterLaboratory` (`features/auth/register-laboratory/`)
+> con `submit()` real, `IamClient.registerLaboratoryOrganization`,
+> `LaboratoryOrganizationRegistration` y `RegisteredOrganization.diagnosticUnitId` en
+> `iam.types.ts`, la rama `DIAGNOSTIC_CENTER` del simulador (`auth.handlers.ts`: coordenadas de
+> la central y de cada sucursal, nombre de sucursal, 422 si `diagnosticUnit` llega con otro
+> tipo, `diagnosticUnitId` en la respuesta) y su spec
+> `core/mock/handlers/auth.handlers.laboratory.spec.ts`.
+
+## P52 · El portal de la cuenta de laboratorio y sus resultados — 30/09/2026
+
+> **P52 · Lo que el portal del laboratorio (`/administration/laboratory*`) necesita y la API no
+> tiene.** Origen: pedido del propietario del 30/09/2026 — «lo mismo que farmacia, para
+> laboratorio», con dos ajustes por ser servicios: **un lugar para subir los resultados en
+> cualquier formato y sin límite de espacio**, y **ver todo lo subido**. Hoy vive sólo en el
+> simulador (`core/mock/handlers/lab-portal.handlers.ts`, con su spec).
+
+Todas las rutas se acotan al tenant del contexto (`X-Tenant-Id`) y las abre el mismo criterio que
+`LabStaffGuard`: miembro activo de un tenant `DIAGNOSTIC_CENTER`. Ninguna lleva el id del
+laboratorio en la ruta.
+
+### Resultados — subida por partes (lo central)
+
+| Método y ruta | Qué hace |
+|---|---|
+| `POST /diagnostics/lab/result-uploads` | Abre una subida: `{ fileName, contentType, sizeBytes, orderId?, note?, notify? }` → `{ uploadId, chunkSizeBytes, totalParts, receivedParts[] }`. **Sin tope de `sizeBytes`.** `orderId` debe ser una orden cuyo ejecutante es este laboratorio (422 si no). |
+| `PUT /diagnostics/lab/result-uploads/:uploadId/parts/:index` | Cuerpo `application/octet-stream` con la parte. 422 si el tamaño no es el esperado o el índice está fuera de rango; 404 si la subida no existe. Idempotente: reenviar una parte la pisa. |
+| `POST /diagnostics/lab/result-uploads/:uploadId/complete` | Cierra y crea el archivo. 409 con `details.missingParts` si faltan partes. |
+| `DELETE /diagnostics/lab/result-uploads/:uploadId` | Aborta y libera las partes. |
+| `GET /diagnostics/lab/result-files?q&kind&orderId&includeWithdrawn` | Todo lo subido, más nuevo primero, con `count` y `totalBytes`. |
+| `GET /diagnostics/lab/result-files/:id/content` | Los bytes, con `Content-Disposition`. **Debe aceptar `Range`** (o devolver una URL firmada de vida corta): el front real no puede traer un video de varios gigas entero a memoria. |
+| `POST /diagnostics/lab/result-files/:id/withdrawal` | `{ reason }` obligatorio. No borra: marca retirado y lo deja en el historial. |
+| `GET /diagnostics/lab/result-targets` | Las órdenes de la bandeja (`service-requests/inbox`) a las que se les puede atar un resultado, con cuántos archivos tienen. |
+
+Cómo se sugiere implementarlo en la API: **multipart upload de MinIO/S3** (ya está en el stack,
+puerto 9002) — cada `PUT` de parte es un `UploadPart`, `complete` es `CompleteMultipartUpload` —
+y la fila en `common.files` + el vínculo a la orden (`service_request`) por el pipeline de
+archivos existente (regla 60 §12). Con eso el límite de 12 MB de `client_max_body_size` de nginx
+**no se toca**: cada parte es de 8 MiB. La clasificación `kind` (`PDF · IMAGE · VIDEO · AUDIO ·
+TEXT · DICOM · OTHER`) la decide el servidor por extensión y MIME (`tipoDeResultado` del
+simulador es la referencia). Con `notify: true` y orden, al cerrar se emite la notificación al
+médico solicitante y al paciente (registro de procesos, Módulo Laboratorio §2.1.9); falta el
+correo (hoy el simulador sólo deja el aviso en la campana).
+
+**Seguridad pendiente de decidir en la API:** escaneo antivirus de lo subido (cualquier formato
+es cualquier formato), cuota por tenant si algún día se quiere, y la retención de lo retirado.
+
+### Resumen
+
+`GET /diagnostics/lab/summary` → servicios publicados, borradores, retirados y no disponibles;
+órdenes de la bandeja sin ningún resultado; cantidad y bytes de lo subido; servicios por
+categoría; actividad reciente.
+
+### Lo que queda para la próxima tanda (el simulador ya lo tiene)
+
+Catálogo de servicios (`/diagnostics/lab/services`, alta, edición, retiro, «se hace hoy / no se
+hace»), categorías (`/diagnostics/lab/categories`, 409 si tienen servicios) e importación CSV
+(`POST /diagnostics/lab/services/import`, modos `CREATE_OR_UPDATE` / `UPDATE_ONLY`). Las
+pantallas de Servicios, Categorías, Importación, Promociones y Ficha del laboratorio todavía no
+están en el menú.
+
+### Qué hay en el front (sólo simulador)
+
+`core/data-access/lab-portal/` (cliente y tipos), `core/mock/handlers/lab-portal.handlers.ts`
+(los bytes subidos se guardan como referencia a las partes del `File` —no se copian— y en
+IndexedDB para sobrevivir a un F5; por eso el interceptor del simulador acepta ahora manejadores
+que devuelven una promesa), `features/laboratory/results/` (cola con pausa, reanudación y
+reintento; visor) y `features/laboratory/summary/`.
+
+## P53 · «Mis facturas»: las facturas emitidas de cada cuenta — 30/09/2026
+
+> **Qué pide el front.** Un ícono de la barra superior abre `/my-account/invoices` para **toda**
+> cuenta. El paciente ve las facturas que le emitieron (consultas y farmacia); el médico, las de
+> sus consultas; la farmacia, las de sus pedidos; facturación de la organización, todas. Cada
+> fila baja el PDF y el XML.
+>
+> **Hoy.** Lo responde el SIAT **simulado** del front (FACT-SIAT-MOCK):
+> `GET /billing/simulated/my-invoices` → `{ view: 'RECEIVED' | 'ISSUED', items, count }` y
+> `GET /billing/simulated/my-invoices/:invoiceId` → la factura completa, con 404 fuera del
+> alcance. El lado (`view`) lo decide el backend por la sesión, no la pantalla.
+>
+> **Falta en la API.** Facturación real (M26): un listado de facturas por comprador (el perfil de
+> paciente de la sesión) y por emisor (la organización o el profesional), con el mismo contrato,
+> para reemplazar el cliente simulado sin tocar la pantalla. Laboratorio, imagenología y
+> aseguradora todavía no emiten facturas: la pantalla lo dice en su estado vacío.

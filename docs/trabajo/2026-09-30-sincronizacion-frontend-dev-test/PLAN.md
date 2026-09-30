@@ -82,8 +82,20 @@ Matriz: laboratorio; C3; dictamen/anulación/refacturación; notificación→acc
 
 - H1 existe en e76f92dd, PR #520 abierto, CI docs rojo; DDL/runtime no comprobados. Contratos ausentes no amplían alcance al backend.
 - Funciones solo simuladas se prueban como demo; casos reales sin contrato quedan BLOQUEADO y no certifican cierre completo.
-- 112 conflictos textuales preliminares en primera integración: lista real se registra después de merge.
+- 113 conflictos textuales reales (112 preliminares) en primera integración: lista real se registra después de merge.
 - CI propio con última ejecución fallida; nunca sustituir un check remoto fallido por una afirmación de verde local.
 - Los conflictos semánticos se contrastan con requisitos, fuentes de contratos y pruebas; hallazgos externos se documentan.
 
 Estados: TODO · EN CURSO · HECHO · A MEDIAS · BLOQUEADO · DESCARTADO. Un solo cambio pesado/test/build a la vez.
+
+## Microtareas descubiertas durante integracion
+
+Pertenecen a H2.S2. Se agregan antes de reparar.
+
+| ID | Microtarea | CA | DoD | Estado |
+|---|---|---|---|---|
+| H2.S2.M6 | Duplicados de automerge | Dados TS2300/TS2451 del primer typecheck, cuando se consoliden miembros identicos, entonces queda una definicion por simbolo. | corepack yarn typecheck -> 0 | EN CURSO |
+| H2.S2.M7 | Compatibilidad notas reales | Dado P39 pendiente, cuando se escriban filas en API real, entonces se serializan como objectiveText sin claves rechazadas; demo conserva entries. | Suite ChartNotesClient alta/enmienda, texto+filas y modo demo en verde | TODO |
+| H2.S2.M8 | Rutas y evidencia farmacia | Dados catalogo real y portal demo, cuando se navegue al catalogo, entonces cada modo usa su contrato y se conservan ambos recorridos. | Prueba del destino por configuracion en verde | TODO |
+
+Correccion factual: progress-notes fue retirado por C1 (26698990) y absorbido por la nota de consulta; no recrear pantalla obsoleta ni importar modulo eliminado. Conservar capacidad en expediente conforme a navegacion vigente.

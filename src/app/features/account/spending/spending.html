@@ -1,0 +1,272 @@
+<app-page-header
+  title="Mis gastos"
+  subtitle="Lo que gastaste en tu salud: consultas, farmacia, análisis, estudios y tu seguro."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+@if (withoutPatientProfile) {
+  <app-alert tone="info" title="Esta sección es para pacientes">
+    Tu cuenta no tiene un perfil de paciente, así que no hay gastos propios que mirar.
+  </app-alert>
+} @else {
+  <app-view-state-host [state]="state()" (retry)="load()">
+    @if (dashboard(); as d) {
+      <div class="spending" data-testid="spending-dashboard">
+        <!-- ================= Este mes (la cifra que manda) ================= -->
+        <app-card class="spending__hero" padding="lg" data-testid="spending-this-month">
+          <p class="spending__overline">
+            <app-nav-icon name="calendar" />
+            Este mes · <span class="spending__capitalize">{{ d.currentMonthLabel }}</span>
+          </p>
+          <p class="spending__hero-value">{{ money(d.thisMonth.cents, d) }}</p>
+          <p class="spending__delta" [attr.data-direction]="direction(d.thisMonth)">
+            <span class="spending__delta-arrow" aria-hidden="true"></span>
+            {{ delta(d.thisMonth, 'el mismo tramo de ' + d.previousMonthLabel) }}
+          </p>
+          <p class="spending__hint">Del 1 al {{ d.dayOfMonth }}: el mes todavía no terminó.</p>
+
+          @if (spark(); as s) {
+            <figure class="spending__spark">
+              <svg
+                [attr.viewBox]="'0 0 ' + sparkWidth + ' ' + sparkHeight"
+                preserveAspectRatio="none"
+                role="img"
+                aria-label="Tendencia de los últimos doce meses"
+              >
+                <path class="spending__spark-area" [attr.d]="s.area" />
+                <path class="spending__spark-line" [attr.d]="s.path" vector-effect="non-scaling-stroke" />
+              </svg>
+              <span
+                class="spending__spark-dot"
+                aria-hidden="true"
+                [style.left.%]="(s.lastX / sparkWidth) * 100"
+                [style.top.%]="(s.lastY / sparkHeight) * 100"
+              ></span>
+              <figcaption class="spending__hint">Últimos 12 meses</figcaption>
+            </figure>
+          }
+        </app-card>
+
+        <!-- ================= Las otras cuatro cifras ======================= -->
+        <ul class="spending__kpis" aria-label="Resumen">
+          <li>
+            <app-card class="spending__kpi" padding="md" data-testid="spending-previous-month">
+              <p class="spending__label">Mes anterior</p>
+              <p class="spending__value">{{ money(d.previousMonth.cents, d) }}</p>
+              <p class="spending__sub">
+                <span class="spending__capitalize">{{ d.previousMonthLabel }}</span>, completo
+              </p>
+            </app-card>
+          </li>
+          <li>
+            <app-card class="spending__kpi" padding="md" data-testid="spending-year-to-date">
+              <p class="spending__label">En lo que va de {{ d.currentYear }}</p>
+              <p class="spending__value">{{ money(d.yearToDate.cents, d) }}</p>
+              <p class="spending__delta spending__delta--small" [attr.data-direction]="direction(d.yearToDate)">
+                <span class="spending__delta-arrow" aria-hidden="true"></span>
+                {{ delta(d.yearToDate, 'el mismo tramo de ' + d.previousYear) }}
+              </p>
+            </app-card>
+          </li>
+          <li>
+            <app-card class="spending__kpi" padding="md" data-testid="spending-previous-year">
+              <p class="spending__label">Todo {{ d.previousYear }}</p>
+              <p class="spending__value">{{ money(d.previousYearTotalCents, d) }}</p>
+              <p class="spending__sub">
+                Promedio de {{ wholeMoney(d.previousYearTotalCents / 12, d) }} por mes
+              </p>
+            </app-card>
+          </li>
+          <li>
+            <app-card class="spending__kpi" padding="md" data-testid="spending-average">
+              <p class="spending__label">Promedio mensual {{ d.currentYear }}</p>
+              <p class="spending__value">{{ money(d.monthlyAverageCents, d) }}</p>
+              <p class="spending__sub">
+                A este ritmo cerrarías el año en {{ wholeMoney(d.projectedYearCents, d) }}
+              </p>
+            </app-card>
+          </li>
+        </ul>
+
+        <!-- ================= Mes a mes ===================================== -->
+        <app-card class="spending__year" padding="lg" data-testid="spending-year-chart">
+          <div class="spending__card-head">
+            <h2 class="spending__title">Mes a mes</h2>
+            <p class="spending__sub">{{ d.currentYear }} contra {{ d.previousYear }}. Pasá el puntero o el foco por un mes para ver el detalle.</p>
+          </div>
+          <app-spending-year-chart
+            [months]="d.months"
+            [currentYear]="d.currentYear"
+            [previousYear]="d.previousYear"
+            [currencyLabel]="d.currencyLabel"
+          />
+        </app-card>
+
+        <!-- ================= Lo que te ahorraste =========================== -->
+        <app-card class="spending__savings" padding="lg" data-testid="spending-savings">
+          <div class="spending__card-head">
+            <h2 class="spending__title">Lo que no pagaste vos</h2>
+            <p class="spending__sub">En {{ d.currentYear }}, entre tu seguro y las promociones.</p>
+          </div>
+          <p class="spending__value spending__value--accent">{{ money(savedCents(), d) }}</p>
+
+          <div
+            class="spending__split"
+            role="img"
+            [attr.aria-label]="'Pagaste ' + share(paidShare()) + ' de lo que costó tu atención; el resto lo cubrieron tu seguro y los descuentos.'"
+          >
+            <span class="spending__split-paid" [style.flex-grow]="paidShare()"></span>
+            <span class="spending__split-saved" [style.flex-grow]="1 - paidShare()"></span>
+          </div>
+
+          <dl class="spending__facts">
+            <div>
+              <dt><span class="spending__swatch spending__swatch--saved"></span>Cubrió tu seguro</dt>
+              <dd>{{ money(d.yearCoveredCents, d) }}</dd>
+            </div>
+            <div>
+              <dt><span class="spending__swatch spending__swatch--saved"></span>Descuentos y promociones</dt>
+              <dd>{{ money(d.yearDiscountCents, d) }}</dd>
+            </div>
+            <div>
+              <dt><span class="spending__swatch spending__swatch--paid"></span>Pagaste vos</dt>
+              <dd>{{ money(d.yearToDate.cents, d) }} · {{ share(paidShare()) }}</dd>
+            </div>
+            <div class="spending__facts-total">
+              <dt>Costo total de tu atención</dt>
+              <dd>{{ money(d.yearGrossCents, d) }}</dd>
+            </div>
+          </dl>
+        </app-card>
+
+        <!-- ================= Por categoría ================================= -->
+        <app-card class="spending__categories" padding="lg" data-testid="spending-categories">
+          <div class="spending__card-head spending__card-head--row">
+            <div>
+              <h2 class="spending__title">Por categoría</h2>
+              <p class="spending__sub">Cada una contra {{ categoryAgainst() }}.</p>
+            </div>
+            <app-segmented-control
+              ariaLabel="Período de las categorías"
+              [options]="categoryPeriods"
+              [value]="categoryPeriod()"
+              (valueChange)="categoryPeriod.set($event)"
+            />
+          </div>
+
+          @if (categories().length === 0) {
+            <p class="spending__sub">Sin gastos en este período.</p>
+          } @else {
+            <ul class="spending__category-list">
+              @for (category of categories(); track category.code) {
+                <li class="spending__category" data-testid="spending-category">
+                  <span class="spending__category-icon" aria-hidden="true">
+                    <app-nav-icon [name]="category.icon" />
+                  </span>
+                  <div class="spending__category-main">
+                    <div class="spending__category-line">
+                      <span class="spending__category-name">{{ category.label }}</span>
+                      <span class="spending__category-amount">{{ money(category.cents, d) }}</span>
+                    </div>
+                    <span class="spending__bar-track" aria-hidden="true">
+                      <span class="spending__bar" [style.width.%]="categoryWidth(category)"></span>
+                    </span>
+                    <div class="spending__category-line spending__sub">
+                      <span>{{ share(category.share) }} del total</span>
+                      <span class="spending__delta spending__delta--inline" [attr.data-direction]="direction(category.comparison)">
+                        <span class="spending__delta-arrow" aria-hidden="true"></span>
+                        {{ delta(category.comparison, 'el tramo anterior') }}
+                      </span>
+                    </div>
+                  </div>
+                </li>
+              }
+            </ul>
+          }
+        </app-card>
+
+        <!-- ================= Dónde gastás más ============================== -->
+        <app-card class="spending__providers" padding="lg" data-testid="spending-providers">
+          <div class="spending__card-head">
+            <h2 class="spending__title">Dónde gastás más</h2>
+            <p class="spending__sub">En {{ d.currentYear }}, {{ d.movementsThisYear }} pagos en total.</p>
+          </div>
+          <ol class="spending__provider-list">
+            @for (provider of d.topProviders; track provider.name) {
+              <li class="spending__provider">
+                <div class="spending__category-line">
+                  <span class="spending__category-name">{{ provider.name }}</span>
+                  <span class="spending__category-amount">{{ money(provider.cents, d) }}</span>
+                </div>
+                <span class="spending__bar-track" aria-hidden="true">
+                  <span class="spending__bar spending__bar--muted" [style.width.%]="providerWidth(provider.cents)"></span>
+                </span>
+                <span class="spending__sub">{{ provider.count }} {{ provider.count === 1 ? 'pago' : 'pagos' }}</span>
+              </li>
+            }
+          </ol>
+
+          @if (d.biggestThisYear; as biggest) {
+            <div class="spending__biggest">
+              <p class="spending__label">Tu mayor gasto del año</p>
+              <p class="spending__biggest-line">
+                <app-nav-icon [name]="biggest.categoryIcon" />
+                <span>
+                  <strong>{{ money(biggest.paidCents, d) }}</strong> · {{ biggest.description }}
+                  <span class="spending__sub"> — {{ biggest.occurredAt | date: 'd MMM y' }}</span>
+                </span>
+              </p>
+            </div>
+          }
+        </app-card>
+
+        <!-- ================= Últimos movimientos =========================== -->
+        <app-card class="spending__recent" padding="lg" data-testid="spending-recent">
+          <div class="spending__card-head">
+            <h2 class="spending__title">Últimos movimientos</h2>
+          </div>
+          <div class="spending__table-wrap">
+            <table class="spending__table">
+              <thead>
+                <tr>
+                  <th scope="col">Fecha</th>
+                  <th scope="col">Detalle</th>
+                  <th scope="col">Categoría</th>
+                  <th scope="col" class="spending__num">Costo</th>
+                  <th scope="col" class="spending__num">Cubierto</th>
+                  <th scope="col" class="spending__num">Pagaste</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (movement of d.recent; track movement.id) {
+                  <tr>
+                    <td class="spending__nowrap">{{ movement.occurredAt | date: 'dd/MM/yyyy' }}</td>
+                    <td>
+                      <span class="spending__category-name">{{ movement.description }}</span>
+                      @if (movement.providerName) {
+                        <span class="spending__sub spending__block">{{ movement.providerName }}</span>
+                      }
+                    </td>
+                    <td>
+                      <span class="spending__tag">
+                        <app-nav-icon [name]="movement.categoryIcon" />
+                        {{ movement.categoryLabel }}
+                      </span>
+                    </td>
+                    <td class="spending__num cifras-tabulares">{{ money(movement.grossCents, d) }}</td>
+                    <td class="spending__num cifras-tabulares">
+                      {{ money(movement.coveredCents + movement.discountCents, d) }}
+                    </td>
+                    <td class="spending__num cifras-tabulares">
+                      <strong>{{ money(movement.paidCents, d) }}</strong>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </app-card>
+      </div>
+    }
+  </app-view-state-host>
+}

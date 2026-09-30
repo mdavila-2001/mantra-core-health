@@ -224,6 +224,7 @@ function profesionalDeLaRed(p: InsurerNetworkPractitioner, indice: number): Prof
     lng: consultorio.lng,
     direccion: consultorio.address,
     origen: 'RED_ASEGURADORA',
+    insurerNetworks: p.networks,
   };
 }
 

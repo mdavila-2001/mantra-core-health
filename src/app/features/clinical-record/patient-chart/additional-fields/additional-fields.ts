@@ -6,6 +6,7 @@ import {
   ElementRef,
   inject,
   input,
+  type OnInit,
   signal,
 } from '@angular/core';
 import { forkJoin, map, switchMap, type Observable } from 'rxjs';
@@ -14,6 +15,7 @@ import { AuthService } from '../../../../core/auth/auth.service';
 import { ChartDocumentsClient } from '../../../../core/data-access/chart-documents/chart-documents.client';
 import type { NewDocumentFile } from '../../../../core/data-access/chart-documents/chart-documents.types';
 import { ChartNotesClient } from '../../../../core/data-access/chart-notes/chart-notes.client';
+import type { MedicalNoteEntry } from '../../../../core/data-access/clinical/clinical.types';
 import { FilesClient } from '../../../../core/data-access/files/files.client';
 import {
   categoryForFile,
@@ -153,7 +155,7 @@ function valorDeLaFila(fila: FilaAdicional): string {
   styleUrl: './additional-fields.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class AdditionalFields {
+export class AdditionalFields implements OnInit {
   private readonly notes = inject(ChartNotesClient);
   private readonly documents = inject(ChartDocumentsClient);
   private readonly files = inject(FilesClient);
@@ -166,6 +168,14 @@ export class AdditionalFields {
 
   /** Bloquea la edición mientras el formulario se envía. */
   readonly disabled = input(false);
+
+  /**
+   * La sección **es** el formulario: «Formulario libre — campo y valor» del
+   * selector, sin plantilla arriba. Cambia los textos, no el registro —la
+   * misma nota y un documento por fila con archivos— y arranca con una fila
+   * vacía: acá no es un agregado opcional, es lo que se vino a llenar.
+   */
+  readonly libre = input(false);
 
   protected readonly tope = TOPE_DE_FILAS_ADICIONALES;
   protected readonly topeDeArchivos = TOPE_DE_ARCHIVOS_POR_FILA;
@@ -180,6 +190,12 @@ export class AdditionalFields {
    * leería como algo que falta llenar.
    */
   protected readonly filas = signal<readonly FilaAdicional[]>([]);
+
+  ngOnInit(): void {
+    if (this.libre()) {
+      this.filas.set([filaVacia(this.proximaClave++)]);
+    }
+  }
 
   protected readonly textoLibre = signal('');
 
@@ -229,8 +245,18 @@ export class AdditionalFields {
     () => this.filasConContenido().length > 0 || this.textoLibre().trim() !== '',
   );
 
+  /**
+   * Cuántas cosas lleva la sección: cada fila con contenido —bien escrita o
+   * no: una a medio escribir también es algo que se perdería de vista— y el
+   * texto libre, que en la lectura vuelve como una fila más («Texto libre»).
+   * Así la pestaña dice el mismo número antes y después de guardar.
+   */
+  readonly cantidad = computed(
+    () => this.filasConContenido().length + (this.textoLibre().trim() === '' ? 0 : 1),
+  );
+
   /** Las filas como las lee la nota y la IA del cierre. */
-  readonly entradas = computed<readonly EntradaAdicional[]>(() =>
+  readonly entradas = computed<readonly MedicalNoteEntry[]>(() =>
     this.filasConContenido().map((fila) => ({
       label: fila.rotulo.trim(),
       value: valorDeLaFila(fila),
@@ -289,7 +315,7 @@ export class AdditionalFields {
 
   /** Vuelve a la sección vacía, después de registrar. */
   limpiar(): void {
-    this.filas.set([]);
+    this.filas.set(this.libre() ? [filaVacia(this.proximaClave++)] : []);
     this.textoLibre.set('');
     this.descartados.set([]);
   }
@@ -324,7 +350,7 @@ export class AdditionalFields {
           patientProfileId,
           authorProfileId: autor,
           encounterId,
-          ...(entradas.length === 0 ? {} : { objectiveText: textoDeLasEntradas(entradas) }),
+          ...(entradas.length === 0 ? {} : { entries: entradas }),
           ...(texto === '' ? {} : { subjectiveText: texto }),
         }),
     };

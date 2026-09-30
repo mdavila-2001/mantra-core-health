@@ -26,6 +26,13 @@ describe('security-headers', () => {
     expect(policy).toContain("frame-ancestors 'none'");
   });
 
+  it('el visor de resultados enmarca sólo URL de objeto locales, nunca un tercero', () => {
+    const policy = contentSecurityPolicy();
+    expect(policy).toContain("frame-src 'self' blob:");
+    expect(policy).toContain("img-src 'self' data: blob: https://tile.openstreetmap.org");
+    expect(policy).not.toMatch(/frame-src[^;]*https?:/);
+  });
+
   describe('hashes de scripts en línea', () => {
     it('el hash es el sha256 del contenido exacto, en formato CSP', () => {
       // Vector conocido: sha256 de la cadena vacía.
@@ -132,12 +139,26 @@ describe('security-headers', () => {
       expect(contentSecurityPolicy()).not.toContain('fonts.googleapis.com');
     });
 
-    it('abre imágenes SOLO a los tiles del proveedor del mapa, y nada más sale a terceros', () => {
+    it('abre imágenes del glosario SOLO a Wikimedia (original y miniatura) y CIMA, host exacto y sólo como imagen', () => {
+      const csp = contentSecurityPolicy();
+      const directiva = csp.split('; ').find((d) => d.startsWith('img-src '));
+
+      expect(directiva).toBe(
+        "img-src 'self' data: blob: https://tile.openstreetmap.org https://upload.wikimedia.org https://thumb.wikimedia.org https://cima.aemps.es",
+      );
+      for (const host of ['https://upload.wikimedia.org', 'https://thumb.wikimedia.org', 'https://cima.aemps.es']) {
+        const otras = csp.split('; ').filter((d) => !d.startsWith('img-src '));
+        expect(otras.some((d) => d.includes(host))).toBe(false);
+      }
+      expect(csp).not.toMatch(/\*\.wikimedia\.org|\*\.aemps\.es/);
+    });
+
+    it('abre imágenes a los tiles del proveedor del mapa (y a nada más que no esté declarado)', () => {
       const csp = contentSecurityPolicy();
 
       // El mapa (Leaflet sin clave de API) pide sus tiles directo del
       // navegador; sin este origen queda un rectángulo gris.
-      expect(csp).toContain("img-src 'self' data: https://tile.openstreetmap.org");
+      expect(csp).toContain("img-src 'self' data: blob: https://tile.openstreetmap.org");
       // El permiso es de imágenes: scripts y conexiones no se abren con él.
       expect(csp).not.toContain('script-src \'self\' https://tile.openstreetmap.org');
       expect(csp).not.toContain('connect-src \'self\' https://tile.openstreetmap.org');

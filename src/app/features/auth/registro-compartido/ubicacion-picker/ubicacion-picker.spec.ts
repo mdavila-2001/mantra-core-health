@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { UbicacionPicker, type Coordenadas, type IdsDePrueba } from './ubicacion-picker';
+import { parseCoordinate } from './ubicacion-picker';
 
 /**
  * Lo que se fija acá es la regla que da sentido al componente: **sólo sale lo
@@ -14,7 +15,6 @@ const IDS: IdsDePrueba = {
   confirmada: 'confirmada',
   avisoGeocodificacion: 'aviso-geo',
   quitar: 'quitar',
-  sinConfirmar: 'sin-confirmar',
   confirmar: 'confirmar',
   usarUbicacion: 'usar',
   marcarEnMapa: 'marcar',
@@ -31,7 +31,6 @@ describe('UbicacionPicker', () => {
     component = fixture.componentInstance;
     fixture.componentRef.setInput('pinId', 'domicilio');
     fixture.componentRef.setInput('etiquetaConfirmada', 'Tu dirección');
-    fixture.componentRef.setInput('pregunta', '¿Es acá donde vivís?');
     fixture.componentRef.setInput('etiquetaQuitar', 'Quitar la ubicación');
     fixture.componentRef.setInput('ids', IDS);
     fixture.detectChanges();
@@ -85,7 +84,6 @@ describe('UbicacionPicker', () => {
     expect(component.marcando()).toBe(false);
     expect(component.confirmada()).toBe(false);
     expect(recibidos).toEqual([]);
-    expect(raiz().querySelector(`[data-testid="${IDS.sinConfirmar}"]`)).not.toBeNull();
     expect(raiz().querySelector(`[data-testid="${IDS.confirmar}"]`)).not.toBeNull();
     // El pin puesto a mano no se llama «Acá te encontramos»: eso sería mentir.
     expect(component['pines']()[0].titulo).toBe('El punto que marcaste');
@@ -186,11 +184,11 @@ describe('UbicacionPicker', () => {
     expect(raiz().querySelector(`[data-testid="${IDS.marcarEnMapa}"]`)).not.toBeNull();
   });
 
-  it('con un punto sin confirmar avisa que no se va a guardar', () => {
+  it('con un punto sin confirmar ofrece confirmarlo', () => {
     component.punto.set({ lat: -17.78, lng: -63.18 });
     fixture.detectChanges();
 
-    expect(raiz().querySelector(`[data-testid="${IDS.sinConfirmar}"]`)).not.toBeNull();
+    expect(raiz().querySelector(`[data-testid="${IDS.confirmar}"]`)).not.toBeNull();
     expect(raiz().querySelector(`[data-testid="${IDS.confirmada}"]`)).toBeNull();
   });
 
@@ -298,5 +296,135 @@ describe('UbicacionPicker', () => {
     expect(component.rechazado()).toBe(true);
     expect(component.pidiendo()).toBe(false);
     expect(raiz().textContent).toContain('No pudimos obtener tu ubicación');
+  });
+  /* ---- sin puntero (WCAG 2.1.1) ------------------------------------------ */
+
+  describe('«Escribir coordenadas»: el pin sin puntero', () => {
+    function byTestId(id: string): HTMLElement | null {
+      return raiz().querySelector(`[data-testid="${id}"]`);
+    }
+
+    function escribir(id: string, valor: string): HTMLInputElement {
+      const campo = byTestId(id) as HTMLInputElement;
+      campo.value = valor;
+      campo.dispatchEvent(new Event('input'));
+      fixture.detectChanges();
+      return campo;
+    }
+
+    function abrirCampos(): void {
+      component.marcarEnMapa();
+      fixture.detectChanges();
+      byTestId('location-coordinates-toggle')?.click();
+      fixture.detectChanges();
+    }
+
+    it('está plegado y se despliega con su botón, que dice si está abierto', () => {
+      component.marcarEnMapa();
+      fixture.detectChanges();
+      const boton = byTestId('location-coordinates-toggle') as HTMLElement;
+      expect(boton.getAttribute('aria-expanded')).toBe('false');
+      expect(byTestId('location-coordinates-lat')).toBeNull();
+
+      boton.click();
+      fixture.detectChanges();
+      expect(boton.getAttribute('aria-expanded')).toBe('true');
+      expect(byTestId('location-coordinates-lat')).not.toBeNull();
+    });
+
+    it('con coma o con punto decimal, pone el pin y lo avisa como un toque (D-06)', () => {
+      const elegidos: Coordenadas[] = [];
+      component.puntoElegido.subscribe((p) => elegidos.push(p));
+      abrirCampos();
+
+      escribir('location-coordinates-lat', '-16,5');
+      escribir('location-coordinates-lng', '-68.15');
+      byTestId('location-coordinates-apply')?.click();
+      fixture.detectChanges();
+
+      expect(component.punto()).toEqual({ lat: -16.5, lng: -68.15 });
+      expect(elegidos).toEqual([{ lat: -16.5, lng: -68.15 }]);
+      // Sin confirmar, igual que el toque: la persona tiene que mirarlo.
+      expect(component.confirmada()).toBe(false);
+      expect(byTestId('location-announcement')?.textContent).toContain(
+        'Pin en latitud -16,50000, longitud -68,15000',
+      );
+    });
+
+    it('fuera de rango o no numérico no mueve nada y dice qué escribir', () => {
+      const elegidos: Coordenadas[] = [];
+      component.puntoElegido.subscribe((p) => elegidos.push(p));
+      abrirCampos();
+
+      escribir('location-coordinates-lat', '95');
+      escribir('location-coordinates-lng', 'oeste');
+      byTestId('location-coordinates-apply')?.click();
+      fixture.detectChanges();
+
+      expect(component.punto()).toBeNull();
+      expect(elegidos).toEqual([]);
+      expect(raiz().textContent).toContain('Escribí un número entre −90 y 90');
+      expect(raiz().textContent).toContain('Escribí un número entre −180 y 180');
+      expect(byTestId('location-coordinates-lat')?.getAttribute('aria-invalid')).toBe('true');
+    });
+
+    it('Enter en un campo aplica y no envía el formulario de alta', () => {
+      abrirCampos();
+      escribir('location-coordinates-lat', '-17.7833');
+      const campo = escribir('location-coordinates-lng', '-63.1821');
+
+      const enter = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true });
+      campo.dispatchEvent(enter);
+      fixture.detectChanges();
+
+      expect(enter.defaultPrevented).toBe(true);
+      expect(component.punto()).toEqual({ lat: -17.7833, lng: -63.1821 });
+    });
+
+    it('abiertos con un pin puesto, llegan llenos con su punto', () => {
+      component.fijarPunto({ lat: -17.78, lng: -63.18 });
+      fixture.detectChanges();
+      byTestId('location-coordinates-toggle')?.click();
+      fixture.detectChanges();
+
+      expect((byTestId('location-coordinates-lat') as HTMLInputElement).value).toBe('-17,78000');
+      expect((byTestId('location-coordinates-lng') as HTMLInputElement).value).toBe('-63,18000');
+    });
+
+    it('cada punto nuevo se anuncia, también el de un toque o de las flechas del mapa', () => {
+      component.marcarEnMapa();
+      fixture.detectChanges();
+      const region = byTestId('location-announcement') as HTMLElement;
+      expect(region.getAttribute('role')).toBe('status');
+      expect(region.textContent?.trim()).toBe('');
+
+      component.fijarPunto({ lat: -17.5, lng: -63.49 });
+      fixture.detectChanges();
+      expect(region.textContent).toContain('longitud -63,49000');
+    });
+  });
+
+  describe('parseCoordinate', () => {
+    it('correcto: coma, punto, signo menos tipográfico y espacios', () => {
+      expect(parseCoordinate('-17,7833', 90)).toBe(-17.7833);
+      expect(parseCoordinate(' -63.1821 ', 180)).toBe(-63.1821);
+      expect(parseCoordinate('−17.5', 90)).toBe(-17.5);
+      expect(parseCoordinate('+12', 90)).toBe(12);
+    });
+
+    it('límite: los extremos entran, un paso más allá no', () => {
+      expect(parseCoordinate('90', 90)).toBe(90);
+      expect(parseCoordinate('-180', 180)).toBe(-180);
+      expect(parseCoordinate('90.00001', 90)).toBeNull();
+      expect(parseCoordinate('-180,1', 180)).toBeNull();
+    });
+
+    it('inválido: vacío, texto, dos números o notación rara', () => {
+      expect(parseCoordinate('', 90)).toBeNull();
+      expect(parseCoordinate('sur', 90)).toBeNull();
+      expect(parseCoordinate('-17,78, -63,18', 90)).toBeNull();
+      expect(parseCoordinate('1e2', 180)).toBeNull();
+      expect(parseCoordinate('17.', 90)).toBeNull();
+    });
   });
 });

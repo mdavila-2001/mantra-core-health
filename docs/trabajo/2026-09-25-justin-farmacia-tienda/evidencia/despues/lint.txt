@@ -1,0 +1,19 @@
+
+C:\Users\usuario\Documents\Sistema Salud\wt-justin-farmacia-tienda\playwright\auditoria-qa-mockup.spec.ts
+   1:29  error  'Page' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  17:20  error  Array type using 'Array<T>' is forbidden. Use 'T[]' instead             @typescript-eslint/array-type
+  18:21  error  Array type using 'Array<T>' is forbidden. Use 'T[]' instead             @typescript-eslint/array-type
+
+C:\Users\usuario\Documents\Sistema Salud\wt-justin-farmacia-tienda\playwright\carril-insurance-whatsapp.spec.ts
+  70:10  error  'esRuidoDelServidorDeDesarrollo' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+C:\Users\usuario\Documents\Sistema Salud\wt-justin-farmacia-tienda\src\app\features\insurance\insurance-claim-detail\insurance-contact-channels\insurance-contact-channels.spec.ts
+  135:75  error  Unexpected empty arrow function  @typescript-eslint/no-empty-function
+
+C:\Users\usuario\Documents\Sistema Salud\wt-justin-farmacia-tienda\src\app\shared\components\molecules\patient-coverage-card\patient-coverage-card.spec.ts
+  114:71  error  Unexpected empty arrow function  @typescript-eslint/no-empty-function
+
+✖ 6 problems (6 errors, 0 warnings)
+  2 errors and 0 warnings potentially fixable with the `--fix` option.
+
+exit=1

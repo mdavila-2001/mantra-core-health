@@ -117,14 +117,21 @@ describe('buildAccessTree', () => {
    * llega desde «Mi perfil»—.
    */
   it.each([
-    ['administration/my-practice'],
-    ['administration/pharmacy-orders'],
-    ['administration/pharmacy-campaigns'],
-    ['administration/pharmacy-catalog'],
-    ['administration/pharmacy-profile'],
-  ])('no ofrece %s en «Tus accesos» aunque la sesión lo alcance', (ruta) => {
-    expect(seccionesDe(['PRACTITIONER']).map((s) => s.path)).toContain(ruta);
-    expect(rutasRepartidas(['PRACTITIONER'])).not.toContain(ruta);
+    ['administration/my-practice', null],
+    // Las de farmacia sólo existen en una organización `PHARMACY`
+    // (29/09/2026): el médico que además atiende un mostrador las alcanza al
+    // activar esa organización, y aun así no ocupan un renglón de su árbol.
+    ['administration/pharmacy-orders', 'PHARMACY'],
+    ['administration/pharmacy-campaigns', 'PHARMACY'],
+    ['administration/pharmacy-catalog', 'PHARMACY'],
+    ['administration/pharmacy-profile', 'PHARMACY'],
+    ['administration/pharmacy', 'PHARMACY'],
+    ['administration/pharmacy-categories', 'PHARMACY'],
+    ['administration/pharmacy-import', 'PHARMACY'],
+    ['administration/pharmacy-inventory', 'PHARMACY'],
+  ])('no ofrece %s en «Tus accesos» aunque la sesión lo alcance', (ruta, tipo) => {
+    expect(seccionesDe(['PRACTITIONER'], tipo).map((s) => s.path)).toContain(ruta);
+    expect(rutasRepartidas(['PRACTITIONER'], tipo)).not.toContain(ruta);
   });
 
   /**
@@ -229,16 +236,12 @@ describe('buildAccessTree', () => {
    * zona por el cajón sin que nada se queje, que es exactamente lo que este
    * archivo existe para impedir.
    */
-  it('la zona de Consultas le abre tres tarjetas al médico', () => {
+  it('la zona de Consultas le abre dos tarjetas al médico', () => {
     const consulta = buildAccessTree(seccionesDe(['PRACTITIONER'])).find(
       (zona) => zona.area.id === 'consulta',
     );
 
-    expect(consulta?.sections.map((s) => s.path)).toEqual([
-      'schedule',
-      'progress-notes',
-      'medical-records',
-    ]);
+    expect(consulta?.sections.map((s) => s.path)).toEqual(['schedule', 'medical-records']);
   });
 
   /**
@@ -323,6 +326,8 @@ describe('buildAccessTree', () => {
       'administration/insurance-campaigns',
       'administration/my-organization',
       'administration/insurance',
+      // 2026-09-27: «Solicitudes recibidas», pedida por la propietaria.
+      'administration/received-claims',
     ]);
   });
 });

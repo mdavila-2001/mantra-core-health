@@ -4,7 +4,7 @@ import { isMockReply, MockRouter, type MockMethod, type MockReply } from '../moc
 import { registrarContabilidadSimple } from './simple-accounting.handlers';
 
 /**
- * El simulador de la contabilidad simple del doctor (P47).
+ * El simulador de la contabilidad simple del doctor (P49).
  *
  * 1. **Las cuentas generales vienen sembradas** y no se borran.
  * 2. **El tipo de un registro es una cuenta de su clase**: un gasto con una

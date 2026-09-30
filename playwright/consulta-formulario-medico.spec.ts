@@ -11,17 +11,19 @@ import { entrar, irA } from './support/sesion';
  *
  * Recorrido, todo contra el simulador:
  *
- * 1. La rejilla tiene ocho casillas: sin «Nota clínica» ni «Documento».
+ * 1. La rejilla tiene ocho casillas: sin «Nota médica» ni «Documento».
  * 2. Antes de responder el formulario, la receta avisa que falta y no emite.
- * 3. El formulario médico termina en «Campos adicionales del doctor»: una fila
- *    con texto y otra sólo con una imagen adjunta. Al completar se registran la
+ * 3. El formulario médico tiene dos pestañas: «Plantilla» y «Flexible»
+ *    («Campos adicionales del doctor»). En «Flexible», una fila con texto y
+ *    otra sólo con una imagen adjunta; cambiar de pestaña no borra lo escrito
+ *    y se completa desde «Plantilla». Al completar se registran la
  *    nota y el documento con su archivo, y el modo lectura los relee.
- * 4. Receta y plan de cuidados traen la respuesta cargada, y con una sola el
- *    selector queda deshabilitado. (La rejilla de esta base no tiene «Orden de
- *    análisis» ni «Reconsulta».)
- * 5. Un plan de cuidados se emite desde la respuesta. Que el alta viaje con
- *    `formInstanceId` lo fija la prueba unitaria del bloque: el simulador vive
- *    en el navegador y no hay red que mirar desde acá.
+ * 4. Receta, orden de análisis, plan de cuidados y reconsulta traen la
+ *    respuesta cargada, y con una sola el selector queda deshabilitado.
+ * 5. Un plan de cuidados se emite desde la respuesta y la línea del encuentro
+ *    lee la nota. Que el alta viaje con `formInstanceId` lo fija la prueba
+ *    unitaria del bloque: el simulador vive en el navegador y no hay red que
+ *    mirar desde acá.
  */
 const SALIDA = join('docs', 'trabajo', '2026-09-26-formulario-medico', 'evidencia');
 const DOCTORA: Actor = {
@@ -121,8 +123,18 @@ test('el formulario médico absorbe nota y documentos, y lo emitido cuelga de su
   modal = await abrirCasilla(page, 'formulario');
   await contestarLaFicha(modal);
 
+  // Dos pestañas: «Plantilla» con los campos fijos y «Flexible» con las filas
+  // «campo: valor» y sus archivos. La cerrada no se dibuja.
+  const pestanaPlantilla = modal.getByRole('tab', { name: 'Plantilla' });
+  const pestanaFlexible = modal.getByRole('tab', { name: /^Flexible/ });
   const seccion = modal.getByTestId('campos-adicionales');
-  await seccion.scrollIntoViewIfNeeded();
+  await expect(pestanaPlantilla).toHaveAttribute('aria-selected', 'true');
+  await expect(seccion).toHaveCount(0);
+  await modal.getByTestId('formulario-pestanas').scrollIntoViewIfNeeded();
+  await page.screenshot({ path: join(SALIDA, '3a-pestana-plantilla.png') });
+  await pestanaFlexible.click();
+  await expect(modal.getByTestId('campo-especialidad')).toHaveCount(0);
+  await expect(seccion).toBeVisible();
   await expect(seccion).toContainText('Campos adicionales del doctor');
   await expect(seccion.getByTestId('adicional-fila')).toHaveCount(0);
 
@@ -143,6 +155,18 @@ test('el formulario médico absorbe nota y documentos, y lo emitido cuelga de su
   await expect(fila).toContainText('hemograma.png');
   await seccion.getByTestId('adicional-texto').locator('textarea').fill('Refiere mareos al levantarse.');
   await seccion.screenshot({ path: join(SALIDA, '3-campos-adicionales.png') });
+  // Dos filas y el texto libre: lo mismo que la lectura va a contar.
+  await expect(pestanaFlexible).toHaveText('Flexible (3)');
+
+  // Se completa desde «Plantilla»: lo flexible viaja igual, y al volver sigue
+  // lo escrito.
+  await pestanaPlantilla.click();
+  await expect(seccion).toHaveCount(0);
+  await pestanaFlexible.click();
+  await expect(fila.getByTestId('adicional-rotulo')).toHaveValue('Análisis clínico con el que vino');
+  await expect(fila).toContainText('hemograma.png');
+  await pestanaPlantilla.click();
+  await page.screenshot({ path: join(SALIDA, '3b-plantilla-con-flexible-pendiente.png') });
 
   // El simulador vive en el navegador: no hay red que mirar. Lo guardado se
   // comprueba releído en pantalla, que es lo que prueba la persistencia.
@@ -155,18 +179,27 @@ test('el formulario médico absorbe nota y documentos, y lo emitido cuelga de su
   ).toBeVisible({ timeout: 30_000 });
 
   await expect(modal.getByTestId('formulario-respondido')).toBeVisible({ timeout: 30_000 });
+  // La lectura repite las pestañas y abre en «Plantilla», con lo respondido.
+  await expect(modal.getByRole('tab', { name: 'Plantilla' })).toHaveAttribute(
+    'aria-selected',
+    'true',
+  );
+  await expect(modal.getByTestId('respuestas-plantilla')).toBeVisible();
+  await page.screenshot({ path: join(SALIDA, '4a-lectura-plantilla.png') });
+  await modal.getByRole('tab', { name: 'Flexible (3)' }).click();
+  await expect(modal.getByTestId('respuestas-plantilla')).toHaveCount(0);
   const guardados = modal.getByTestId('adicionales-guardados');
   await expect(guardados).toContainText('Presión arterial');
   await expect(guardados).toContainText('128/84 mmHg');
   await expect(guardados).toContainText('Adjunto: hemograma.png');
   await expect(guardados).toContainText('Refiere mareos al levantarse.');
-  await expect(modal.getByTestId('formulario-adicionales-fallos')).toHaveCount(0);
+  await expect(modal.getByTestId('formulario-cierre-fallos')).toHaveCount(0);
   await guardados.scrollIntoViewIfNeeded();
   await page.screenshot({ path: join(SALIDA, '4-formulario-respondido.png') });
   await cerrar(page, modal);
 
   /* ---- 4 · la respuesta viene cargada y bloqueada ----------------------- */
-  for (const clave of ['medicacion', 'planes']) {
+  for (const clave of ['medicacion', 'ordenes', 'reconsulta', 'planes']) {
     modal = await abrirCasilla(page, clave);
     const selector = modal.getByTestId('respuesta-del-formulario');
     await expect(selector).toBeVisible({ timeout: 30_000 });
@@ -190,6 +223,12 @@ test('el formulario médico absorbe nota y documentos, y lo emitido cuelga de su
   });
   // Registrar cierra el modal por su cuenta: el alta ya quedó.
   await expect(page.getByTestId('consulta-modal')).toHaveCount(0, { timeout: 30_000 });
+
+  // Y la línea del encuentro lee la nota de los campos adicionales.
+  const linea = page.getByTestId('consulta-lo-registrado');
+  await expect(linea).toContainText('Presión arterial');
+  await expect(linea).toContainText('128/84 mmHg');
+  await page.screenshot({ path: join(SALIDA, '6-lo-registrado.png'), fullPage: true });
 
   expect(errores).toEqual([]);
 });

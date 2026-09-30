@@ -11,12 +11,15 @@ import {
   type PlantillaSimulada,
   type ReservaSimulada,
 } from '../fixtures/agenda';
-import { ACTIVIDAD, CANAL, ESTADO, ESTADO_RESERVA, TIPO_BLOQUEO, TIPO_CITA } from '../fixtures/conceptos';
+import { TIPO_CITA_RECONSULTA } from '../fixtures/agenda';
+import { ACTIVIDAD, CANAL, CLASE_ENCUENTRO, ESTADO, ESTADO_ENCUENTRO, ESTADO_RESERVA, TIPO_BLOQUEO, TIPO_CITA } from '../fixtures/conceptos';
+import { encuentros, type EncuentroSimulado } from '../fixtures/clinica';
+import type { FollowUpOrigin } from '../../data-access/scheduling/scheduling.types';
 import { emitirNotificacion } from './notifications.handlers';
 import { solicitudDeLaCita } from './insurance.handlers';
-import { pacientePorId } from '../fixtures/personas';
+import { pacientePorId, pacientes } from '../fixtures/personas';
 import { representaA } from './profiles.handlers';
-import { conflict, noContent, notFound, preconditionFailed, reply, validation, type MockRequest, type MockRouter } from '../mock-router';
+import { conflict, forbidden, noContent, notFound, preconditionFailed, reply, validation, type MockReply, type MockRequest, type MockRouter } from '../mock-router';
 import { ahora, cuerpo, masMinutos, nuevoId, texto, uuid } from '../mock-store';
 
 /* ============================================================================
@@ -71,6 +74,54 @@ function reservaVisible(request: MockRequest, r: ReservaSimulada): boolean {
   return true;
 }
 
+/* ---- la reconsulta (C4) ---------------------------------------------------
+
+   El vínculo se guarda en UN solo lado —la reconsulta apunta a su origen— y el
+   sentido inverso (`followUpBookingId`) se **deriva al leer**, igual que
+   `insuranceClaim`. Guardarlo en los dos lados dejaría dos verdades que se
+   pueden contradecir: una cancelación que actualizara un lado y no el otro
+   bastaría para que la cita origen siguiera diciendo que ya tiene reconsulta. */
+
+/** La reconsulta viva de una cita, si alguien la agendó. */
+function reconsultaDe(bookingId: string): ReservaSimulada | undefined {
+  return reservas
+    .todos()
+    .find((r) => r.followUpOf?.bookingId === bookingId && !estadoEs(r, 'BK-CANCELLED', 'BK-REJECTED'));
+}
+
+/**
+ * La reconsulta **por venir** de una cita, que es la que impide agendar otra.
+ *
+ * Una reconsulta ya pasada no bloquea: si a la persona se la citó de nuevo en
+ * marzo y ya vino, citarla otra vez por la misma consulta es legítimo. Lo que
+ * la regla prohíbe es tener dos turnos futuros colgando de la misma consulta.
+ */
+function reconsultaVigenteDe(bookingId: string): ReservaSimulada | undefined {
+  const candidata = reconsultaDe(bookingId);
+  if (candidata === undefined) return undefined;
+  return new Date(candidata.startAt).getTime() > Date.now() ? candidata : undefined;
+}
+
+/**
+ * La reserva con los dos campos de reconsulta resueltos, como la ve la API.
+ *
+ * Al origen se le agrega **cuándo fue**: es lo que la agenda y «Mis citas»
+ * necesitan para decir «de la cita del 12 de septiembre», y resolverlo acá
+ * evita una petición por fila. Si el origen ya no existe, el vínculo viaja como
+ * vino: la reconsulta sigue siendo una reconsulta.
+ */
+function conReconsulta(r: ReservaSimulada) {
+  const origen = r.followUpOf === null ? undefined : reservas.get(r.followUpOf.bookingId);
+  return {
+    ...r,
+    followUpOf:
+      r.followUpOf === null || origen === undefined
+        ? r.followUpOf
+        : { ...r.followUpOf, startAt: origen.startAt },
+    followUpBookingId: reconsultaDe(r.id)?.id ?? null,
+  };
+}
+
 function cambiarEstado(id: string, estado: keyof typeof ESTADO_RESERVA, extra: Partial<ReservaSimulada> = {}) {
   const r = reservas.get(id);
   if (r === undefined) return undefined;
@@ -117,6 +168,66 @@ function avisarDemoraAlPaciente(
     payloadJson: { bookingId: reserva.id, delayMinutes: minutos },
   });
   return true;
+}
+
+/* ---- Idempotency-Key -------------------------------------------------------
+
+   El espejo del `IdempotencyInterceptor` de la API (PR #494 del API) para el
+   turno de mostrador, que es la escritura de este archivo que el cliente manda
+   con la cabecera (PR #727 del front):
+
+   - la clave vale por usuario + método + ruta: la misma en otra operación es
+     otra operación;
+   - la repetición con el mismo cuerpo devuelve **la misma respuesta y el mismo
+     status** sin volver a ejecutar, con `Idempotent-Replayed: true`;
+   - la misma clave con otro cuerpo es **422 `IDEMPOTENCY_KEY_REUSED`**;
+   - sólo se recuerdan los éxitos: un 409 o un 422 de negocio pueden dejar de
+     serlo, y fijarlos obligaría a cambiar de clave para un reintento legítimo;
+   - sin cabecera, nada cambia.
+
+   Sin esto, un doble clic en «Registrar ingreso» daba de alta dos pacientes
+   con la misma cédula en la maqueta, y la API real responde el segundo con la
+   respuesta del primero. */
+
+const idempotentReplies = new Map<string, { readonly fingerprint: string; readonly reply: MockReply }>();
+
+/** JSON con las claves ordenadas: el orden en que viajan no cambia la huella. */
+function canonicalJson(value: unknown): string {
+  if (Array.isArray(value)) return `[${value.map(canonicalJson).join(',')}]`;
+  if (value !== null && typeof value === 'object') {
+    return `{${Object.keys(value)
+      .sort()
+      .map((key) => `${JSON.stringify(key)}:${canonicalJson((value as Record<string, unknown>)[key])}`)
+      .join(',')}}`;
+  }
+  return JSON.stringify(value) ?? 'null';
+}
+
+function withIdempotency(request: MockRequest, execute: () => MockReply): MockReply {
+  const key = request.headers.get('Idempotency-Key');
+  if (key === null) return execute();
+  if (key.trim() === '' || key !== key.trim() || key.length > 255) {
+    return validation('Idempotency-Key inválida', [
+      { field: 'Idempotency-Key', message: 'must be a non-empty string without spaces of up to 255 characters' },
+    ]);
+  }
+  const scope = `${request.user?.id ?? 'anonymous'} ${request.method} ${request.path} ${key}`;
+  const fingerprint = canonicalJson({ body: request.body ?? null, query: request.query.toString() });
+  const previous = idempotentReplies.get(scope);
+  if (previous !== undefined) {
+    if (previous.fingerprint !== fingerprint) {
+      return reply(422, {
+        statusCode: 422,
+        code: 'IDEMPOTENCY_KEY_REUSED',
+        message: 'La clave de idempotencia ya se usó con otro contenido.',
+        error: 'Unprocessable Entity',
+      });
+    }
+    return { ...previous.reply, headers: { ...previous.reply.headers, 'Idempotent-Replayed': 'true' } };
+  }
+  const result = execute();
+  if (result.status >= 200 && result.status < 300) idempotentReplies.set(scope, { fingerprint, reply: result });
+  return result;
 }
 
 export function registrarAgenda(router: MockRouter): void {
@@ -212,6 +323,9 @@ export function registrarAgenda(router: MockRouter): void {
       statusReason: null,
       delayNotice: null,
       paymentState: null,
+      // Un turno que el paciente pidió por su cuenta no sale de ninguna
+      // consulta: la reconsulta la agenda el profesional (C4).
+      followUpOf: null,
       createdAt: ahora(),
     };
     reservas.agregar(nueva);
@@ -239,11 +353,16 @@ export function registrarAgenda(router: MockRouter): void {
       .sort((a, b) => a.startAt.localeCompare(b.startAt));
     // `insuranceClaim` se resuelve al leer, como en la API: la solicitud cambia de
     // estado sin que la cita se entere.
-    const items = todos.slice(0, limit).map((r) => ({ ...r, insuranceClaim: solicitudDeLaCita(r) }));
+    const items = todos
+      .slice(0, limit)
+      .map((r) => ({ ...conReconsulta(r), insuranceClaim: solicitudDeLaCita(r) }));
     return { items, count: Math.min(todos.length, limit), limit, truncated: todos.length > limit };
   });
 
-  router.get('/scheduling/bookings/:id', ({ params }) => reservas.get(params['id']!) ?? notFound('Reserva no encontrada'));
+  router.get('/scheduling/bookings/:id', ({ params }) => {
+    const r = reservas.get(params['id']!);
+    return r === undefined ? notFound('Reserva no encontrada') : conReconsulta(r);
+  });
 
   /* El cliente hace `PUT` (es idempotente) y devuelve `PaymentStateInfo`, no
      la reserva: la agenda lee `estado.label` para el aviso. Con `POST` y la
@@ -354,10 +473,66 @@ export function registrarAgenda(router: MockRouter): void {
     return { notified: avisados, affected: afectadas.length, bookingIds: afectadas.map((r) => r.id), detail: `${avisados} de ${afectadas.length} pacientes avisados.` };
   });
 
+  /**
+   * La cita puntual (AG-2) y, desde C4, **la reconsulta**.
+   *
+   * Es el mismo endpoint a propósito: una reconsulta no es otra cosa que una
+   * cita directa que recuerda de qué consulta salió. Lo único que agrega es
+   * `followUpOf`, y con él cuatro rechazos que **sólo corren cuando ese campo
+   * viene**: una cita puntual sin reconsulta se sigue creando exactamente como
+   * antes, que es lo que `appointment-new` y el mostrador esperan.
+   *
+   * Orden de los rechazos, y por qué:
+   *
+   * 1. **403** — la agenda no es del profesional de la sesión. Va primero
+   *    porque es lo único que se decide sin mirar nada ajeno: citar de nuevo a
+   *    alguien en la agenda de un colega no es un error de datos, es no tener
+   *    permiso.
+   * 2. **404** — la cita de origen no existe.
+   * 3. **422** — el paciente no es el de esa cita, o el horario no es futuro.
+   * 4. **409** — esa consulta ya tiene una reconsulta por venir.
+   */
   router.post('/scheduling/appointments/direct', (request) => {
-    const datos = cuerpo<{ patientProfileId: string; resourceId: string; startAt: string; durationMinutes: number; reasonText?: string; channel?: string }>(request);
+    const datos = cuerpo<{ patientProfileId: string; resourceId: string; startAt: string; durationMinutes: number; reasonText?: string; channel?: string; followUpOf?: FollowUpOrigin }>(request);
     const paciente = pacientePorId(datos.patientProfileId ?? '');
     const startAt = datos.startAt ?? ahora();
+    const origenPedido = datos.followUpOf ?? null;
+
+    let origen: ReservaSimulada | undefined;
+    if (origenPedido !== null) {
+      const hpid = request.user?.practitionerProfileId;
+      const propias = new Set(
+        recursos
+          .filtrar((r) => hpid !== undefined && r.resourceRefId === hpid)
+          .map((r) => r.id),
+      );
+      if (!propias.has(datos.resourceId ?? '')) {
+        return forbidden('La reconsulta se agenda en tu propia agenda, no en la de otro profesional');
+      }
+
+      origen = reservas.get(origenPedido.bookingId ?? '');
+      if (origen === undefined) {
+        return notFound('La cita de la que sale esta reconsulta no existe');
+      }
+      if (origen.patientProfileId !== (datos.patientProfileId ?? '')) {
+        return validation('La reconsulta es para el paciente de la cita de origen', [
+          { field: 'patientProfileId', code: 'FOLLOW_UP_PATIENT_MISMATCH', message: 'El paciente no es el de la cita de origen.' },
+        ]);
+      }
+      if (new Date(startAt).getTime() <= Date.now()) {
+        return validation('Una reconsulta se agenda para más adelante', [
+          { field: 'startAt', code: 'FOLLOW_UP_NOT_FUTURE', message: 'La fecha de la reconsulta tiene que ser futura.' },
+        ]);
+      }
+      const yaAgendada = reconsultaVigenteDe(origen.id);
+      if (yaAgendada !== undefined) {
+        return conflict('Esta consulta ya tiene una reconsulta agendada', {
+          bookingId: yaAgendada.id,
+          startAt: yaAgendada.startAt,
+        });
+      }
+    }
+
     const endAt = masMinutos(startAt, datos.durationMinutes ?? 30);
     const pisados = cupos.filtrar((c) => c.resourceId === datos.resourceId && c.startAt < endAt && c.endAt > startAt);
     for (const c of pisados) cupos.actualizar(c.id, { remainingCapacity: 0, statusConceptId: ESTADO['ST-CLOSED']! });
@@ -379,7 +554,7 @@ export function registrarAgenda(router: MockRouter): void {
       resourceId: cupo.resourceId,
       bookableSlotId: cupo.id,
       appointmentId: nuevoId('appointment'),
-      typeConceptId: TIPO_CITA['APT-CONTROL']!,
+      typeConceptId: origen === undefined ? TIPO_CITA['APT-CONTROL']! : TIPO_CITA_RECONSULTA,
       startAt,
       endAt,
       statusConceptId: ESTADO_RESERVA['BK-CONFIRMED']!,
@@ -387,18 +562,223 @@ export function registrarAgenda(router: MockRouter): void {
       bookingChannelConceptId: datos.channel === 'TELECONSULTA' ? CANAL['CH-TELECONSULTA']! : datos.channel === 'DOMICILIO' ? CANAL['CH-DOMICILIO']! : CANAL['CH-PRESENCIAL']!,
       confirmedAt: ahora(),
       checkedInAt: null,
-      reasonText: datos.reasonText ?? 'Cita creada por el profesional',
+      // El motivo que mandaron; si no mandaron ninguno y esto es una
+      // reconsulta, el de la consulta de origen con su prefijo. Una reconsulta
+      // sin motivo es una cita que después nadie sabe explicar.
+      reasonText: datos.reasonText ?? (origen === undefined ? 'Cita creada por el profesional' : `Reconsulta: ${origen.reasonText}`),
       patientName: paciente?.displayName ?? 'Paciente',
       insuranceCarrierName: paciente?.aseguradora ?? null,
       rescheduledFrom: null,
       statusReason: null,
       delayNotice: null,
       paymentState: null,
+      followUpOf:
+        origen === undefined || origenPedido === null
+          ? null
+          : {
+              bookingId: origen.id,
+              encounterId: origenPedido.encounterId ?? null,
+              ...(origenPedido.formInstanceId === undefined
+                ? {}
+                : { formInstanceId: origenPedido.formInstanceId }),
+            },
       createdAt: ahora(),
     };
     reservas.agregar(nueva);
     return { status: 201, body: { bookingId: nueva.id, bookableSlotId: cupo.id, statusConceptId: nueva.statusConceptId, retractedSlots: pisados.length } };
   });
+
+  /**
+   * El turno de mostrador (AC-3.3): alta del paciente sin cuenta, reserva,
+   * encuentro abierto e inicio de la atención, todo o nada — el espejo de
+   * `SchedulingWalkInService`.
+   *
+   * Los rechazos, en el orden en que la API los encuentra:
+   *
+   * 1. **400** — falta un dato obligatorio del paciente o de la cita, o viene
+   *    el teléfono del tutor sin su nombre.
+   * 2. **404** — la agenda no existe.
+   * 3. **409** — el documento YA está registrado: el mostrador tiene que
+   *    buscarlo y agendarle con `appointments/direct`, no duplicarlo.
+   * 4. **422** — el horario pisa otro turno vivo de esa agenda.
+   *
+   * La reserva nace `IN_PROGRESS` y el encuentro `IN_PROGRESS`: quien llegó al
+   * mostrador ya está siendo atendido.
+   */
+  router.post('/scheduling/appointments/walk-in', (request) =>
+    withIdempotency(request, () => {
+      const data = cuerpo<{
+        patient: {
+          name?: string;
+          middleName?: string;
+          lastName?: string;
+          motherLastName?: string;
+          nationalId?: string;
+          phone?: string;
+          birthDate?: string;
+          occupationConceptId?: string;
+          issuerAdministrativeAreaConceptId?: string;
+          guardianName?: string;
+          guardianPhone?: string;
+        };
+        resourceId: string;
+        startAt: string;
+        durationMinutes: number;
+        reasonText?: string;
+        channel?: string;
+      }>(request);
+      const patientData = data.patient ?? {};
+
+      const missing = [
+        ...(['name', 'lastName', 'nationalId', 'phone'] as const)
+          .filter((field) => (patientData[field] ?? '').trim() === '')
+          .map((field) => ({ field: `patient.${field}`, message: 'should not be empty' })),
+        ...(['resourceId', 'startAt'] as const)
+          .filter((field) => (data[field] ?? '') === '')
+          .map((field) => ({ field, message: 'should not be empty' })),
+        ...(typeof data.durationMinutes === 'number' && data.durationMinutes > 0
+          ? []
+          : [{ field: 'durationMinutes', message: 'must be a positive number' }]),
+        ...(patientData.guardianPhone !== undefined && (patientData.guardianName ?? '').trim() === ''
+          ? [{ field: 'patient.guardianName', message: 'is required when guardianPhone is present' }]
+          : []),
+      ];
+      if (missing.length > 0) return validation('Faltan datos del turno de mostrador', missing);
+
+      const resource = recursos.get(data.resourceId!);
+      if (resource === undefined) return notFound('La agenda no existe');
+
+      const nationalId = patientData.nationalId!.trim();
+      if (pacientes.todos().some((p) => p.nationalId === nationalId)) {
+        return conflict(
+          'Ya existe un paciente con ese documento de identidad. Buscalo con ' +
+            'GET /profiles/patients?nationalId= en vez de registrarlo de nuevo.',
+        );
+      }
+
+      const startAt = data.startAt!;
+      const endAt = masMinutos(startAt, data.durationMinutes!);
+      const clash = reservas
+        .todos()
+        .find(
+          (r) =>
+            r.resourceId === resource.id &&
+            !estadoEs(r, 'BK-CANCELLED', 'BK-REJECTED', 'BK-COMPLETED', 'BK-NO-SHOW') &&
+            r.startAt < endAt &&
+            r.endAt > startAt,
+        );
+      if (clash !== undefined) {
+        const time = new Date(clash.startAt).toLocaleTimeString('es-BO', { hour: '2-digit', minute: '2-digit' });
+        return preconditionFailed(
+          `${resource.practitionerName ?? 'La agenda'} ya tiene a ${clash.patientName} a las ${time}: el turno de mostrador se superpone.`,
+          { bookingId: clash.id, startAt: clash.startAt, endAt: clash.endAt },
+        );
+      }
+
+      // El alta del paciente: lo mismo que `POST /profiles/patients`, con lo
+      // que el mostrador pregunta y nada inventado para completar la fila.
+      const displayName = [patientData.name, patientData.middleName, patientData.lastName, patientData.motherLastName]
+        .map((part) => (part ?? '').trim())
+        .filter((part) => part !== '')
+        .join(' ');
+      const patientProfileId = nuevoId('paciente-mostrador');
+      const newPatient: Parameters<typeof pacientes.agregar>[0] = {
+        id: patientProfileId,
+        personId: uuid(`person-${patientProfileId}`),
+        userId: uuid(`user-${patientProfileId}`),
+        patientCode: `PAT-${patientProfileId.slice(-8).toUpperCase()}`,
+        displayName,
+        name: patientData.name!.trim(),
+        ...(patientData.middleName === undefined ? {} : { middleName: patientData.middleName.trim() }),
+        lastName: patientData.lastName!.trim(),
+        motherLastName: (patientData.motherLastName ?? '').trim(),
+        birthDate: patientData.birthDate ?? '',
+        nationalId,
+        email: '',
+        phone: patientData.phone!.trim(),
+        municipioId: '',
+        departamentoId: patientData.issuerAdministrativeAreaConceptId ?? '',
+        ocupacionId: patientData.occupationConceptId ?? '',
+        direccion: '',
+        deceased: false,
+        // Nace sin identidad probada: nadie verificó nada en el mostrador.
+        identityVerified: false,
+      };
+      pacientes.agregar(newPatient);
+
+      // La cita, igual que la directa: retira los cupos ofrecidos que pisa.
+      const overlapped = cupos.filtrar((c) => c.resourceId === resource.id && c.startAt < endAt && c.endAt > startAt);
+      for (const c of overlapped) cupos.actualizar(c.id, { remainingCapacity: 0, statusConceptId: ESTADO['ST-CLOSED']! });
+      const slot: CupoSimulado = {
+        id: nuevoId('slot-mostrador'),
+        resourceId: resource.id,
+        scheduleTemplateId: null,
+        startAt,
+        endAt,
+        capacity: 1,
+        remainingCapacity: 0,
+        statusConceptId: ESTADO['ST-ACTIVE']!,
+        serviceConceptId: ACTIVIDAD['ACT-CONSULTA']!,
+      };
+      cupos.agregar(slot);
+      const booking: ReservaSimulada = {
+        id: nuevoId('booking-mostrador'),
+        patientProfileId,
+        resourceId: resource.id,
+        bookableSlotId: slot.id,
+        appointmentId: nuevoId('appointment'),
+        typeConceptId: TIPO_CITA['APT-PRIMERA']!,
+        startAt,
+        endAt,
+        statusConceptId: ESTADO_RESERVA['BK-IN-PROGRESS']!,
+        serviceConceptId: ACTIVIDAD['ACT-CONSULTA']!,
+        bookingChannelConceptId:
+          data.channel === 'TELECONSULTA'
+            ? CANAL['CH-TELECONSULTA']!
+            : data.channel === 'DOMICILIO'
+              ? CANAL['CH-DOMICILIO']!
+              : CANAL['CH-PRESENCIAL']!,
+        confirmedAt: ahora(),
+        checkedInAt: ahora(),
+        reasonText: data.reasonText ?? 'Turno de mostrador',
+        patientName: displayName,
+        insuranceCarrierName: null,
+        rescheduledFrom: null,
+        statusReason: null,
+        delayNotice: null,
+        paymentState: null,
+        followUpOf: null,
+        createdAt: ahora(),
+      };
+      reservas.agregar(booking);
+
+      // El encuentro abierto, que es a donde el médico entra a registrar la
+      // atención apenas se cierra el alta.
+      const encounter: EncuentroSimulado = {
+        id: nuevoId('encounter'),
+        patientProfileId,
+        statusConceptId: ESTADO_ENCUENTRO['ENCST-IN-PROGRESS']!,
+        classConceptId: CLASE_ENCUENTRO['ENC-AMB']!,
+        primaryPractitionerId: resource.resourceRefId,
+        reasonText: booking.reasonText,
+        startAt: ahora(),
+        endAt: null,
+      };
+      encuentros.agregar(encounter);
+
+      return reply(201, {
+        patientProfileId,
+        personId: newPatient.personId,
+        patientCode: newPatient.patientCode,
+        bookingId: booking.id,
+        bookableSlotId: slot.id,
+        appointmentId: booking.appointmentId,
+        encounterId: encounter.id,
+        statusConceptId: booking.statusConceptId,
+        retractedSlots: overlapped.length,
+      });
+    }),
+  );
 
   /* ---- plantillas --------------------------------------------------------- */
 

@@ -72,8 +72,17 @@ describe('DirectoriesOverview', () => {
     expect(medicos?.textContent).toContain('agrupados por especialidad');
   });
 
-  it('quien ejerce no ve el nodo de la guía de médicos, exclusiva del paciente', () => {
+  it('quien ejerce también ve el nodo del directorio de médicos (24/09/2026)', () => {
     abrirSesion(['PRACTITIONER']);
+    crear();
+
+    const enlaces = [...root().querySelectorAll<HTMLAnchorElement>('.rejilla__tarjeta')];
+    expect(enlaces.some((enlace) => enlace.getAttribute('href') === '/directory')).toBe(true);
+    expect(enlaces.length).toBe(5);
+  });
+
+  it('quien sólo administra no ve el nodo del directorio de médicos', () => {
+    abrirSesion(['SECURITY_ADMIN']);
     crear();
 
     const enlaces = [...root().querySelectorAll<HTMLAnchorElement>('.rejilla__tarjeta')];
@@ -97,16 +106,21 @@ describe('DirectoriesOverview', () => {
 
       const barra = root().querySelector('app-filter-bar app-search-field');
       expect(barra).not.toBeNull();
-      expect(barra?.textContent).toContain('laboratorios, clínicas y farmacias');
+      expect(barra?.textContent).toContain(
+        'médicos, laboratorios, clínicas, farmacias y aseguradoras',
+      );
       expect(root().querySelector('.mapa__nodos')).not.toBeNull();
     });
 
-    it('un término busca en los tres directorios y agrupa lo encontrado por directorio', async () => {
+    it('un término busca en los cinco directorios y agrupa lo encontrado por directorio', async () => {
       abrirSesion(['PRACTITIONER']);
       await TestBed.inject(Router).navigateByUrl('/directories?q=central');
       crear();
 
       const http = TestBed.inject(HttpTestingController);
+      http
+        .expectOne((pedido) => pedido.url.endsWith('/public/search/practitioners'))
+        .flush(PAGINA_VACIA);
       http
         .expectOne((pedido) => pedido.url.endsWith('/diagnostic-units/search'))
         .flush({ items: [], total: 0, limit: 50, offset: 0 });
@@ -141,6 +155,10 @@ describe('DirectoriesOverview', () => {
         totalHint: 1,
         generatedAt: '2026-09-19T00:00:00Z',
       });
+      http
+        .expectOne((pedido) => pedido.url.endsWith('/public/search/insurers'))
+        .flush(PAGINA_VACIA);
+      http.verify();
       fixture.detectChanges();
 
       expect(root().querySelector('.mapa__nodos')).toBeNull();
@@ -151,5 +169,128 @@ describe('DirectoriesOverview', () => {
       const tarjeta = root().querySelector<HTMLAnchorElement>('li[app-result-card] a');
       expect(tarjeta?.getAttribute('href')).toBe('/pharmacies-directory/farmacia-central');
     });
+
+    it('una aseguradora se encuentra desde la portada y su tarjeta abre la ficha con los planes (29/09/2026)', async () => {
+      abrirSesion(['PATIENT']);
+      await TestBed.inject(Router).navigateByUrl(
+        '/directories?q=vitalicia&directorio=insurers-directory',
+      );
+      crear();
+
+      const http = TestBed.inject(HttpTestingController);
+      const aseguradoras = http.expectOne((pedido) =>
+        pedido.url.endsWith('/public/search/insurers'),
+      );
+      expect(aseguradoras.request.params.get('q')).toBe('vitalicia');
+      aseguradoras.flush({
+        items: [
+          {
+            kind: 'INSURER',
+            slug: 'la-vitalicia-seguros-y-reaseguros-de-vida-s-a',
+            displayName: 'LA VITALICIA SEGUROS Y REASEGUROS DE VIDA S.A.',
+            headline: 'Aseguradora de personas · cubre salud',
+            city: 'Bolivia',
+            avatarUrl: null,
+            verified: false,
+            ratingAverage: null,
+            ratingCount: 0,
+            coverUrl: null,
+            address: null,
+            location: null,
+            hasPublishedAgenda: false,
+            nextAvailableDate: null,
+            category: null,
+          },
+        ],
+        nextCursor: null,
+        totalHint: 1,
+        generatedAt: '2026-09-29T00:00:00Z',
+      });
+      http.verify();
+      fixture.detectChanges();
+
+      const rotulos = [...root().querySelectorAll('.directorio__rotulo')];
+      expect(rotulos.map((rotulo) => rotulo.textContent)).toEqual([
+        expect.stringContaining('Directorio de aseguradoras'),
+      ]);
+      const tarjeta = root().querySelector<HTMLAnchorElement>('li[app-result-card] a');
+      expect(tarjeta?.getAttribute('href')).toBe(
+        '/insurers-directory/la-vitalicia-seguros-y-reaseguros-de-vida-s-a',
+      );
+      expect(root().querySelector('app-search-field')?.textContent).toContain(
+        'Buscar aseguradoras por nombre',
+      );
+    });
+  });
+
+  describe('el desplegable de directorio (24/09/2026)', () => {
+    function opciones(): string[] {
+      const select = root().querySelector<HTMLSelectElement>('app-filter-bar select');
+      return [...(select?.options ?? [])]
+        .filter((opcion) => !opcion.hidden)
+        .map((opcion) => opcion.textContent?.trim() ?? '');
+    }
+
+    it('va en la misma fila que el buscador, con «Todos» y los cinco directorios', () => {
+      abrirSesion(['PRACTITIONER']);
+      crear();
+
+      const controles = root().querySelector('app-filter-bar .filter-bar__controls');
+      expect(controles?.querySelector('app-search-field')).not.toBeNull();
+      expect(controles?.querySelector('select')).not.toBeNull();
+      expect(opciones()).toEqual([
+        'Todos los directorios',
+        'Médicos',
+        'Laboratorios',
+        'Clínicas',
+        'Farmacias',
+        'Aseguradoras',
+      ]);
+    });
+
+    it('con un directorio elegido, el término busca sólo en ése', async () => {
+      abrirSesion(['PRACTITIONER']);
+      await TestBed.inject(Router).navigateByUrl(
+        '/directories?q=central&directorio=laboratory-directory',
+      );
+      crear();
+
+      const http = TestBed.inject(HttpTestingController);
+      http
+        .expectOne((pedido) => pedido.url.endsWith('/diagnostic-units/search'))
+        .flush({ items: [], total: 0, limit: 50, offset: 0 });
+      http.expectNone((pedido) => pedido.url.includes('/public/search/'));
+      http.verify();
+
+      expect(root().querySelector('app-search-field')?.textContent).toContain(
+        'Buscar laboratorios por nombre',
+      );
+    });
+
+    it('sin término, el directorio elegido deja sólo su nodo', async () => {
+      abrirSesion(['PATIENT']);
+      await TestBed.inject(Router).navigateByUrl('/directories?directorio=pharmacies-directory');
+      crear();
+
+      const enlaces = [...root().querySelectorAll<HTMLAnchorElement>('.rejilla__tarjeta')];
+      expect(enlaces.map((enlace) => enlace.getAttribute('href'))).toEqual([
+        '/pharmacies-directory',
+      ]);
+    });
+
+    it('un valor que no es un directorio de la sesión se lee como «todos»', async () => {
+      abrirSesion(['PATIENT']);
+      await TestBed.inject(Router).navigateByUrl('/directories?directorio=no-existe');
+      crear();
+
+      expect(root().querySelectorAll('.rejilla__tarjeta').length).toBe(5);
+    });
   });
 });
+
+const PAGINA_VACIA = {
+  items: [],
+  nextCursor: null,
+  totalHint: 0,
+  generatedAt: '2026-09-19T00:00:00Z',
+};

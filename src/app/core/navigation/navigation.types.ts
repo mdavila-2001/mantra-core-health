@@ -76,6 +76,8 @@ export const NAV_ICON_NAMES = [
 
   // Dinero.
   'chart',
+  'wallet',
+  'receipt',
   'star',
 
   // Confianza y llaves.
@@ -118,6 +120,27 @@ export const NAV_ICON_NAMES = [
   'sun',
   'moon',
   'camera',
+
+  // Acciones de desplegable (2026-09-24, 99d6c1da): toda opción de un
+  // desplegable lleva ícono. Entraron al nav y faltaban acá, que es justo la
+  // separación que esta lista existe para impedir. Igual que `remove` y
+  // `edit`, no nombran una sección. El porqué está donde se dibujan:
+  // `atoms/nav-icon/nav-icon.types.ts`.
+  'eye',
+  'eye-off',
+  'check',
+  'check-circle',
+  'close',
+  'arrive',
+  'logout',
+  'paperclip',
+  'refresh',
+  'share',
+  'qr',
+  'print',
+  'download',
+  'merge',
+  'clock',
 ] as const;
 export type NavIconName = (typeof NAV_ICON_NAMES)[number];
 
@@ -349,8 +372,38 @@ export interface AppSection {
    * si la sección existe para esta sesión). Un tipo de organización
    * desconocido o sin organización activa (`activeTenantType === null`) **no
    * oculta nada**: es el menú de hoy, no una restricción nueva.
+   *
+   * Admite también `DIAGNOSTIC_CENTER` (30/09/2026, cuenta de laboratorio), que
+   * viaja en el claim pero no está en `TENANT_TYPE_CODES`: ver
+   * {@link onlyForTenantTypes} para el porqué.
    */
-  readonly hiddenForTenantTypes?: readonly TenantTypeCode[];
+  readonly hiddenForTenantTypes?: readonly (TenantTypeCode | 'DIAGNOSTIC_CENTER')[];
+
+  /**
+   * Tipos de organización **fuera de los cuales** la sección no existe: la
+   * contracara de {@link hiddenForTenantTypes}, mirando el mismo dato
+   * (`SessionStore.activeTenantType`).
+   *
+   * Nació con la recepción de muestras del laboratorio. Quien la opera es el
+   * personal de un centro de diagnóstico, y el token no le trae ningún rol que
+   * lo diga: el dueño del laboratorio tiene el rol global `USER` y su autoridad
+   * es la membresía del tenant —la misma situación que describe `hiddenFor`—.
+   * Lo único que distingue su sesión de la de cualquier otra organización es
+   * el **tipo** del tenant activo, y listar como ocultos todos los demás tipos
+   * sería una lista que se queda corta el día que aparezca uno nuevo.
+   *
+   * Es de texto y no `TenantTypeCode` a propósito: `DIAGNOSTIC_CENTER` viaja en
+   * el claim `tenantTypes`, pero no está en `TENANT_TYPE_CODES` —esa lista es
+   * la del alta administrativa, y un centro de diagnóstico sólo nace por el
+   * alta pública—; agregarlo allá lo ofrecería en selectores que no lo admiten.
+   *
+   * Sin organización activa o sin el claim (`activeTenantType === null`), la
+   * sección **no existe**: al revés que `hiddenForTenantTypes`, acá la duda
+   * oculta, porque ofrecerla sería prometer una pantalla que la API rechaza.
+   * El comodín `SUPERADMIN` tampoco la salva. No reemplaza al guard del
+   * servidor, que sigue siendo la única autoridad.
+   */
+  readonly onlyForTenantTypes?: readonly string[];
 
   /**
    * Roles para los que la sección **sigue existiendo y funcionando, pero no
@@ -529,6 +582,15 @@ export function isVisibleTo(
   if (
     activeTenantType !== null &&
     section.hiddenForTenantTypes?.some((tipo) => tipo === activeTenantType) === true
+  ) {
+    return false;
+  }
+
+  // La contracara: sólo existe en esos tipos de organización, y sin tipo
+  // conocido no existe. Ver {@link AppSection.onlyForTenantTypes}.
+  if (
+    section.onlyForTenantTypes !== undefined &&
+    (activeTenantType === null || !section.onlyForTenantTypes.includes(activeTenantType))
   ) {
     return false;
   }

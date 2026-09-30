@@ -1,8 +1,14 @@
 <div class="location-picker">
+  <!-- En sólo lectura el mapa queda `inert`: se ve el departamento marcado,
+       pero no se puede pulsar ni enfocar. -->
   <app-department-map
+    [class.location-picker__mapa--fijo]="readonly()"
+    [attr.inert]="readonly() ? '' : null"
     [departamentos]="departamentos()"
     [value]="departamentoElegido()"
     (valueChange)="elegirDepartamento($event)"
+    [municipio]="municipioEnMapa()"
+    [punto]="punto()"
     [etiqueta]="mapLabel()"
     [testId]="testId() + '-mapa'"
   />
@@ -26,6 +32,7 @@
       <app-select
         [options]="municipios()"
         [value]="value()"
+        [disabled]="readonly()"
         (valueChange)="elegirMunicipio($event)"
         placeholder="Elegí tu ciudad o municipio"
         [attr.data-testid]="testId() + '-municipio'"

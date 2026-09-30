@@ -2,7 +2,7 @@
 
 # Inventario de operaciones HTTP
 
-415 operaciones declaradas en `src/app/core/data-access/**/*.client.ts`.
+508 operaciones declaradas en `src/app/core/data-access/**/*.client.ts`.
 Ningún componente arma URLs por su cuenta: si esta lista está completa, la
 superficie de red de la aplicación está completa.
 
@@ -31,18 +31,98 @@ Archivo: `src/app/core/data-access/accounting/accounting.client.ts`
 | Método | Ruta |
 |---|---|
 | `GET` | `/accounting/accounts` |
+| `GET` | `/accounting/accrual-objects` |
+| `POST` | `/accounting/accruals/run` |
+| `GET` | `/accounting/assets` |
 | `GET` | `/accounting/balance-sheet` |
+| `POST` | `/accounting/clearing-documents` |
+| `POST` | `/accounting/depreciation/run` |
+| `GET` | `/accounting/dimensions` |
+| `POST` | `/accounting/fiscal-periods/:periodId/lock` |
+| `GET` | `/accounting/fiscal-years` |
 | `GET` | `/accounting/general-ledger` |
 | `GET` | `/accounting/income-statement` |
 | `GET` | `/accounting/journal-transactions` |
 | `POST` | `/accounting/journal-transactions` |
 | `GET` | `/accounting/journal-transactions/:transactionId` |
+| `POST` | `/accounting/journal-transactions/:transactionId/:action` |
+| `GET` | `/accounting/journal-transactions/:transactionId/document-flow` |
 | `POST` | `/accounting/journal-transactions/drafts` |
+| `GET` | `/accounting/open-items` |
 | `POST` | `/accounting/practitioner/consultation-income` |
 | `POST` | `/accounting/practitioner/entries` |
 | `GET` | `/accounting/practitioner/paid-consultations` |
 | `GET` | `/accounting/trial-balance` |
 | `GET` | `/practices` |
+
+## `AssetsLiabilitiesClient`
+
+Archivo: `src/app/core/data-access/assets-liabilities/assets-liabilities.client.ts`
+
+| Método | Ruta |
+|---|---|
+| `GET` | `/accounting/practitioner/assets` |
+| `POST` | `/accounting/practitioner/assets` |
+| `PATCH` | `/accounting/practitioner/assets/:assetId/automation` |
+| `POST` | `/accounting/practitioner/assets/:assetId/progress` |
+| `GET` | `/accounting/practitioner/liabilities` |
+| `POST` | `/accounting/practitioner/liabilities` |
+| `PATCH` | `/accounting/practitioner/liabilities/:liabilityId/automation` |
+| `POST` | `/accounting/practitioner/liabilities/:liabilityId/progress` |
+
+## `WebAnalyticsClient`
+
+Archivo: `src/app/core/data-access/admin-portal/platform.client.ts`
+
+| Método | Ruta |
+|---|---|
+| `GET` | `/admin/analytics/funnels` |
+| `GET` | `/admin/analytics/funnels/:funnelId/report` |
+| `GET` | `/admin/analytics/overview` |
+| `GET` | `/admin/analytics/pipeline-health` |
+| `GET` | `/admin/analytics/sessions` |
+| `GET` | `/admin/analytics/sessions/:id` |
+| `GET` | `/admin/analytics/timeseries` |
+| `GET` | `/admin/analytics/web-vitals` |
+| `GET` | `/admin/ops/backups` |
+| `GET` | `/admin/ops/deployments` |
+| `GET` | `/admin/ops/incidents` |
+| `GET` | `/admin/ops/readiness` |
+| `GET` | `/admin/ops/slos` |
+| `GET` | `/admin/qa/defects` |
+| `GET` | `/admin/qa/environments` |
+| `GET` | `/admin/qa/plans` |
+| `POST` | `/admin/qa/plans` |
+| `GET` | `/admin/qa/plans/:id` |
+| `POST` | `/admin/qa/plans/:planId/approvals` |
+| `POST` | `/admin/qa/plans/:planId/cancel` |
+| `POST` | `/admin/qa/plans/preflight` |
+| `GET` | `/admin/qa/runs` |
+| `GET` | `/admin/qa/runs/:id` |
+| `GET` | `/admin/qa/suites` |
+| `GET` | `/admin/qa/suites/:id` |
+| `GET` | `/admin/qa/targets` |
+
+## `DataCatalogClient`
+
+Archivo: `src/app/core/data-access/admin-portal/data-catalog.client.ts`
+
+| Método | Ruta |
+|---|---|
+| `POST` | `/admin/catalog/annotations/:annotationId/review` |
+| `GET` | `/admin/catalog/coverage` |
+| `GET` | `/admin/catalog/objects` |
+| `GET` | `/admin/catalog/objects/:id` |
+| `PUT` | `/admin/catalog/objects/:objectId/annotation` |
+| `GET` | `/admin/catalog/objects/:objectId/changes` |
+| `GET` | `/admin/catalog/objects/:objectId/columns` |
+| `GET` | `/admin/catalog/objects/:objectId/evidence` |
+| `POST` | `/admin/catalog/objects/:objectId/evidence` |
+| `GET` | `/admin/catalog/objects/:objectId/history` |
+| `GET` | `/admin/catalog/objects/:objectId/impact` |
+| `GET` | `/admin/catalog/scans` |
+| `POST` | `/admin/catalog/scans` |
+| `GET` | `/admin/catalog/schemas` |
 
 ## `ContentPacksClient`
 
@@ -143,11 +223,13 @@ Archivo: `src/app/core/data-access/clinical/clinical.client.ts`
 | `GET` | `/clinical/me/medical-aspects` |
 | `PUT` | `/clinical/me/medical-aspects` |
 | `POST` | `/clinical/medication-requests` |
+| `POST` | `/clinical/medication-requests/:medicationRequestId/edit` |
 | `POST` | `/clinical/medication-requests/:medicationRequestId/issue` |
 | `POST` | `/clinical/medication-requests/:medicationRequestId/sign` |
 | `POST` | `/clinical/medication-requests/:requestId/attachments` |
 | `POST` | `/clinical/observations` |
 | `GET` | `/clinical/patients/:patientProfileId/summary` |
+| `GET` | `/clinical/prescriptions/:medicationRequestId/pdf` |
 | `POST` | `/clinical/procedures/:procedureId/attachments` |
 
 ## `ChartCarePlansClient`
@@ -193,6 +275,7 @@ Archivo: `src/app/core/data-access/diagnostics/diagnostics.client.ts`
 | Método | Ruta |
 |---|---|
 | `POST` | `/clinical/service-requests` |
+| `POST` | `/clinical/service-requests/duplicate-check` |
 | `GET` | `/diagnostic-results/me` |
 | `GET` | `/diagnostic-results/me/:reportId` |
 | `GET` | `/diagnostic-results/me/:reportId/shares` |
@@ -219,6 +302,7 @@ Archivo: `src/app/core/data-access/files/files.client.ts`
 |---|---|
 | `DELETE` | `/common/files/:fileId` |
 | `GET` | `/common/files/:fileId/content` |
+| `GET` | `/common/files/:fileId/content` |
 | `POST` | `/common/files/:fileId/download-url` |
 | `POST` | `/common/files/:fileId/links` |
 | `GET` | `/common/files/links` |
@@ -240,8 +324,10 @@ Archivo: `src/app/core/data-access/community/community.client.ts`
 | `GET` | `/community/comments/media/:fileId/content` |
 | `GET` | `/community/conversations` |
 | `POST` | `/community/conversations` |
+| `GET` | `/community/conversations/:conversationId` |
 | `GET` | `/community/conversations/:conversationId/messages` |
 | `POST` | `/community/conversations/:conversationId/messages` |
+| `PATCH` | `/community/conversations/:conversationId/messages/:messageId` |
 | `POST` | `/community/conversations/:conversationId/read` |
 | `GET` | `/community/feed` |
 | `DELETE` | `/community/follows` |
@@ -268,6 +354,8 @@ Archivo: `src/app/core/data-access/community/community.client.ts`
 | `GET` | `/community/posts/:postId/comments` |
 | `GET` | `/community/posts/:postId/reactions` |
 | `GET` | `/community/profiles/:profileId` |
+| `GET` | `/community/profiles/:profileId/auto-reply` |
+| `PUT` | `/community/profiles/:profileId/auto-reply` |
 | `GET` | `/community/profiles/:profileId/posts` |
 | `POST` | `/community/profiles/:profileId/posts` |
 | `GET` | `/community/profiles/:profileId/reviews` |
@@ -279,6 +367,7 @@ Archivo: `src/app/core/data-access/community/community.client.ts`
 | `PUT` | `/community/reactions` |
 | `POST` | `/community/reports` |
 | `GET` | `/community/topics` |
+| `POST` | `/patients/me/reviews` |
 | `GET` | `/public/search/practitioners` |
 
 ## `ProceduresClient`
@@ -395,6 +484,7 @@ Archivo: `src/app/core/data-access/iam/iam.client.ts`
 | `POST` | `/iam/auth/resend-verification` |
 | `POST` | `/iam/auth/reset-password` |
 | `POST` | `/iam/auth/token/refresh` |
+| `POST` | `/iam/auth/upload-registration-document` |
 | `POST` | `/iam/auth/verify-email` |
 | `GET` | `/iam/users` |
 | `POST` | `/iam/users` |
@@ -451,6 +541,40 @@ Archivo: `src/app/core/data-access/insurance/insurance.client.ts`
 | `GET` | `/insurance-claims` |
 | `POST` | `/insurance-claims/:claimId/disputes` |
 | `GET` | `/insurance-claims/:id` |
+| `POST` | `/insurance-plans/:planId/benefits` |
+| `PUT` | `/insurance-plans/:planId/benefits/:benefitId` |
+| `PUT` | `/insurance-plans/:planId/benefits/:benefitId/rules` |
+| `PUT` | `/insurance-plans/:planId/premium` |
+| `POST` | `/insurance-products/:productId/plans` |
+
+## `InsuranceAnalyticsClient`
+
+Archivo: `src/app/core/data-access/insurance/insurance-analytics.client.ts`
+
+| Método | Ruta |
+|---|---|
+| `GET` | `/insurance/analytics/loss-ratio` |
+
+## `InsurancePortabilityClient`
+
+Archivo: `src/app/core/data-access/insurance/insurance-portability.client.ts`
+
+| Método | Ruta |
+|---|---|
+| `GET` | `/insurance/portability/certificates/:certificateId/json` |
+| `GET` | `/insurance/portability/certificates/:certificateId/pdf` |
+| `POST` | `/insurance/portability/export` |
+| `GET` | `/public/portability/verify/:manifestHash` |
+
+## `SaldoInsuficienteError`
+
+Archivo: `src/app/core/data-access/loyalty/loyalty.client.ts`
+
+| Método | Ruta |
+|---|---|
+| `GET` | `/loyalty/me` |
+| `GET` | `/loyalty/me/points` |
+| `POST` | `/loyalty/me/points/redeem` |
 
 ## `NotificationsClient`
 
@@ -508,7 +632,10 @@ Archivo: `src/app/core/data-access/pharmacy/pharmacy.client.ts`
 |---|---|
 | `GET` | `/pharmacy-inventory/availability` |
 | `GET` | `/pharmacy/pharmacies` |
+| `GET` | `/pharmacy/pharmacies/:id` |
 | `GET` | `/pharmacy/products` |
+| `GET` | `/pharmacy/sites` |
+| `GET` | `/pharmacy/sites/:siteId/prices` |
 
 ## `PharmacyOrdersClient`
 
@@ -541,16 +668,8 @@ Archivo: `src/app/core/data-access/practice-sites/practice-sites.client.ts`
 | `GET` | `/practitioners/me/role-assignments` |
 | `POST` | `/practitioners/me/sites` |
 | `DELETE` | `/practitioners/me/sites/:siteId` |
-
-## `PrescriptionFavoritesClient`
-
-Archivo: `src/app/core/data-access/prescription-favorites/prescription-favorites.client.ts`
-
-| Método | Ruta |
-|---|---|
-| `GET` | `/prescription-favorites` |
-| `POST` | `/prescription-favorites` |
-| `DELETE` | `/prescription-favorites/:id` |
+| `PATCH` | `/practitioners/me/sites/:siteId` |
+| `PUT` | `/practitioners/me/sites/:siteId/bank-qr` |
 
 ## `ProfilesClient`
 
@@ -564,6 +683,8 @@ Archivo: `src/app/core/data-access/profiles/profiles.client.ts`
 | `POST` | `/profiles/patients/:profileId/related-persons` |
 | `GET` | `/profiles/patients/me` |
 | `PATCH` | `/profiles/patients/me` |
+| `GET` | `/profiles/patients/me/dependents` |
+| `POST` | `/profiles/patients/me/dependents` |
 | `DELETE` | `/profiles/patients/me/photo` |
 | `PUT` | `/profiles/patients/me/photo` |
 | `GET` | `/profiles/patients/me/summary` |
@@ -580,12 +701,34 @@ Archivo: `src/app/core/data-access/profiles/profiles.client.ts`
 | `PATCH` | `/profiles/practitioners/me` |
 | `GET` | `/profiles/practitioners/me/affiliations` |
 | `POST` | `/profiles/practitioners/me/affiliations` |
+| `DELETE` | `/profiles/practitioners/me/affiliations/:affiliationId` |
+| `PATCH` | `/profiles/practitioners/me/affiliations/:affiliationId` |
 | `POST` | `/profiles/practitioners/me/credentials` |
 | `DELETE` | `/profiles/practitioners/me/credentials/:credentialId` |
+| `PATCH` | `/profiles/practitioners/me/credentials/:credentialId` |
+| `DELETE` | `/profiles/practitioners/me/jurisdiction-authorizations/:licenseId` |
+| `PATCH` | `/profiles/practitioners/me/jurisdiction-authorizations/:licenseId` |
 | `GET` | `/profiles/practitioners/me/linkable-organizations` |
 | `GET` | `/profiles/practitioners/me/onboarding` |
+| `DELETE` | `/profiles/practitioners/me/specialties/:specialtyId` |
+| `PATCH` | `/profiles/practitioners/me/specialties/:specialtyId` |
+| `PATCH` | `/profiles/practitioners/me/specialties/:specialtyId/primary` |
 | `GET` | `/profiles/practitioners/me/summary` |
 | `GET` | `/profiles/practitioners/specialty-counts` |
+
+## `PublicDirectoryClient`
+
+Archivo: `src/app/core/data-access/public-directory/public-directory.client.ts`
+
+| Método | Ruta |
+|---|---|
+| `GET` | `/public/comments/:commentId/replies` |
+| `GET` | `/public/nearby` |
+| `GET` | `/public/posts` |
+| `GET` | `/public/posts/:postId/comments` |
+| `GET` | `/public/posts/:postId/reactions` |
+| `GET` | `/public/profiles/:prefijo/:slug` |
+| `GET` | `/public/profiles/:prefijo/:slug/reviews` |
 
 ## `PublicClient`
 
@@ -604,14 +747,13 @@ Archivo: `src/app/core/data-access/public-marketplace/public-marketplace.client.
 | `GET` | `/public/medications` |
 | `GET` | `/public/medications/:conceptId/availability` |
 
-## `PublicDirectoryClient`
+## `PublicCatalogClient`
 
-Archivo: `src/app/core/data-access/public-directory/public-directory.client.ts`
+Archivo: `src/app/core/data-access/public-catalog/public-catalog.client.ts`
 
 | Método | Ruta |
 |---|---|
-| `GET` | `/public/posts` |
-| `GET` | `/public/profiles/:prefijo/:slug` |
+| `GET` | `/public/profiles/f/:slug/branch-availability` |
 
 ## `QuotationsClient`
 
@@ -622,7 +764,6 @@ Archivo: `src/app/core/data-access/quotations/quotations.client.ts`
 | `GET` | `/quotations` |
 | `POST` | `/quotations` |
 | `GET` | `/quotations/:id` |
-| `POST` | `/quotations/simulate` |
 
 ## `SchedulingClient`
 
@@ -632,6 +773,7 @@ Archivo: `src/app/core/data-access/scheduling/scheduling.client.ts`
 |---|---|
 | `GET` | `/scheduling/activity-types` |
 | `POST` | `/scheduling/appointments/direct` |
+| `POST` | `/scheduling/appointments/walk-in` |
 | `POST` | `/scheduling/booking-policies` |
 | `GET` | `/scheduling/bookings` |
 | `GET` | `/scheduling/bookings/:bookingId` |
@@ -709,22 +851,8 @@ Archivo: `src/app/core/data-access/terminology/terminology.client.ts`
 | `GET` | `/terminology/concepts` |
 | `GET` | `/terminology/concepts/:conceptId` |
 | `GET` | `/terminology/concepts/:conceptId` |
+| `GET` | `/terminology/import-template` |
 | `GET` | `/terminology/value-sets` |
 | `GET` | `/terminology/value-sets/:valueSetId/$expand` |
 | `POST` | `/terminology/versions/:versionId/import-file` |
 | `POST` | `/terminology/versions/:versionId/publish` |
-
-## `AssetsLiabilitiesClient`
-
-Archivo: `src/app/core/data-access/assets-liabilities/assets-liabilities.client.ts`
-
-| Método | Ruta |
-|---|---|
-| `GET` | `assets` |
-| `POST` | `assets` |
-| `PATCH` | `assets/:assetId/automation` |
-| `POST` | `assets/:assetId/progress` |
-| `GET` | `liabilities` |
-| `POST` | `liabilities` |
-| `PATCH` | `liabilities/:liabilityId/automation` |
-| `POST` | `liabilities/:liabilityId/progress` |

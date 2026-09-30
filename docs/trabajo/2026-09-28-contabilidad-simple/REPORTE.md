@@ -28,7 +28,7 @@ seguros.
   sueldos, insumos, servicios básicos, mantenimiento, impuestos, seguros y colegiatura,
   publicidad, otros. Se renombran, no se borran. Las propias se borran si nada las usa.
 - Montos escritos como en Bolivia (`1.250,50`), normalizados a cadena decimal.
-- Contrato **P47** en `PENDIENTES-BACKEND.md`; simulador con persistencia en `sessionStorage`.
+- Contrato **P49** en `PENDIENTES-BACKEND.md`; simulador con persistencia en `sessionStorage`.
   Los tres números salen de los mismos datos que la agenda, las consultas pagadas de los
   libros y las solicitudes a aseguradoras.
 
@@ -52,6 +52,6 @@ seguros.
 
 ## No verificado
 
-- Contra la API real: P47 no existe todavía.
+- Contra la API real: P49 no existe todavía.
 - La suite completa (`yarn test`) y el lint global.
 - Revisión independiente (`NO_SELF_APPROVAL`).

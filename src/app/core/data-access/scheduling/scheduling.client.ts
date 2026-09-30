@@ -3,6 +3,7 @@ import { inject, Injectable } from '@angular/core';
 import { map, type Observable } from 'rxjs';
 
 import { API_BASE_URL, apiUrl } from '../api';
+import { sendIdempotent, SubmissionKeys } from '../idempotency';
 import type {
   AgendaResource,
   AgendaResourceCreated,
@@ -61,6 +62,7 @@ import type {
   DirectAppointmentCreated,
   NewWalkInAppointment,
   WalkInAppointmentCreated,
+  FollowUpOrigin,
 } from './scheduling.types';
 
 /**
@@ -97,6 +99,8 @@ import type {
 export class SchedulingClient {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = inject(API_BASE_URL);
+  /** Claves `Idempotency-Key` por intento de envío (ver `../idempotency`). */
+  private readonly submissionKeys = new SubmissionKeys();
 
   /**
    * `GET /scheduling/resources` — los recursos agendables de la organización.
@@ -472,8 +476,19 @@ export class SchedulingClient {
    * nada — si el rato pisa un compromiso del profesional en CUALQUIERA de sus
    * sedes, responde 422 con qué, cuándo y dónde, y ese mensaje se puede
    * mostrar tal cual.
+   *
+   * ## La reconsulta entra por acá (C4)
+   *
+   * Con `followUpOf` la cita nace además **atada a la consulta de la que
+   * salió**, y el servidor corre cuatro rechazos más: **403** la agenda no es
+   * del profesional de la sesión, **404** la cita de origen no existe, **422**
+   * el paciente no es el de esa cita o el horario no es futuro, **409** esa
+   * consulta ya tiene una reconsulta por venir. Sin el campo, nada de eso
+   * corre: una cita puntual se sigue creando como siempre.
    */
-  createDirectAppointment(cita: NewDirectAppointment): Observable<DirectAppointmentCreated> {
+  createDirectAppointment(
+    cita: NewDirectAppointment,
+  ): Observable<DirectAppointmentCreated> {
     return this.http.post<DirectAppointmentCreated>(this.url('/scheduling/appointments/direct'), {
       patientProfileId: cita.patientProfileId,
       resourceId: cita.resourceId,
@@ -487,6 +502,19 @@ export class SchedulingClient {
       // en silencio** — la petición sale sin él y nada falla. Es el mismo
       // patrón que dejó la modalidad sin escribir del lado de la API.
       ...(cita.channel === undefined ? {} : { channel: cita.channel }),
+      // La reconsulta (C4). Se manda **sólo si viene**, por la misma razón que
+      // el resto: una clave declarada en `undefined` vuelve 400.
+      ...(cita.followUpOf === undefined
+        ? {}
+        : {
+            followUpOf: {
+              bookingId: cita.followUpOf.bookingId,
+              encounterId: cita.followUpOf.encounterId,
+              ...(cita.followUpOf.formInstanceId === undefined
+                ? {}
+                : { formInstanceId: cita.followUpOf.formInstanceId }),
+            },
+          }),
     });
   }
 
@@ -503,46 +531,53 @@ export class SchedulingClient {
    * busca al paciente con `GET /profiles/patients?nationalId=` y se le agenda
    * con {@link createDirectAppointment}—; **422** el horario choca con otro
    * turno del profesional o del paciente.
+   *
+   * Viaja con `Idempotency-Key`: reintentar el mismo envío (doble clic,
+   * timeout) no registra dos veces al paciente ni reserva dos turnos.
    */
   createWalkInAppointment(turno: NewWalkInAppointment): Observable<WalkInAppointmentCreated> {
     const p = turno.patient;
-    return this.http.post<WalkInAppointmentCreated>(
-      this.url('/scheduling/appointments/walk-in'),
-      {
-        // Campo a campo, igual que el resto de este cliente: el backend valida
-        // con `forbidNonWhitelisted` y un opcional en `undefined` viaja como
-        // clave declarada, que vuelve 400. Ojo al agregar campos —lo que el
-        // contrato declare y esta lista no repita se descarta EN SILENCIO.
-        patient: {
-          name: p.name,
-          lastName: p.lastName,
-          nationalId: p.nationalId,
-          phone: p.phone,
-          ...(p.middleName === undefined ? {} : { middleName: p.middleName }),
-          ...(p.motherLastName === undefined ? {} : { motherLastName: p.motherLastName }),
-          ...(p.issuerAdministrativeAreaConceptId === undefined
-            ? {}
-            : { issuerAdministrativeAreaConceptId: p.issuerAdministrativeAreaConceptId }),
-          ...(p.birthDate === undefined ? {} : { birthDate: p.birthDate }),
-          ...(p.occupationConceptId === undefined
-            ? {}
-            : { occupationConceptId: p.occupationConceptId }),
-          ...(p.occupationFreeText === undefined
-            ? {}
-            : { occupationFreeText: p.occupationFreeText }),
-          ...(p.guardianName === undefined ? {} : { guardianName: p.guardianName }),
-          ...(p.guardianPhone === undefined ? {} : { guardianPhone: p.guardianPhone }),
-          ...(p.guardianRelationshipConceptId === undefined
-            ? {}
-            : { guardianRelationshipConceptId: p.guardianRelationshipConceptId }),
-        },
-        resourceId: turno.resourceId,
-        startAt: turno.startAt,
-        durationMinutes: turno.durationMinutes,
-        ...(turno.reasonText === undefined ? {} : { reasonText: turno.reasonText }),
-        // Ausente = presencial: no se manda un valor que nadie eligió.
-        ...(turno.channel === undefined ? {} : { channel: turno.channel }),
+    const body = {
+      // Campo a campo, igual que el resto de este cliente: el backend valida
+      // con `forbidNonWhitelisted` y un opcional en `undefined` viaja como
+      // clave declarada, que vuelve 400. Ojo al agregar campos —lo que el
+      // contrato declare y esta lista no repita se descarta EN SILENCIO.
+      patient: {
+        name: p.name,
+        lastName: p.lastName,
+        nationalId: p.nationalId,
+        phone: p.phone,
+        ...(p.middleName === undefined ? {} : { middleName: p.middleName }),
+        ...(p.motherLastName === undefined ? {} : { motherLastName: p.motherLastName }),
+        ...(p.issuerAdministrativeAreaConceptId === undefined
+          ? {}
+          : { issuerAdministrativeAreaConceptId: p.issuerAdministrativeAreaConceptId }),
+        ...(p.birthDate === undefined ? {} : { birthDate: p.birthDate }),
+        ...(p.occupationConceptId === undefined
+          ? {}
+          : { occupationConceptId: p.occupationConceptId }),
+        ...(p.occupationFreeText === undefined
+          ? {}
+          : { occupationFreeText: p.occupationFreeText }),
+        ...(p.guardianName === undefined ? {} : { guardianName: p.guardianName }),
+        ...(p.guardianPhone === undefined ? {} : { guardianPhone: p.guardianPhone }),
+        ...(p.guardianRelationshipConceptId === undefined
+          ? {}
+          : { guardianRelationshipConceptId: p.guardianRelationshipConceptId }),
       },
+      resourceId: turno.resourceId,
+      startAt: turno.startAt,
+      durationMinutes: turno.durationMinutes,
+      ...(turno.reasonText === undefined ? {} : { reasonText: turno.reasonText }),
+      // Ausente = presencial: no se manda un valor que nadie eligió.
+      ...(turno.channel === undefined ? {} : { channel: turno.channel }),
+    };
+    return sendIdempotent(this.submissionKeys, 'walk-in', body, (headers) =>
+      this.http.post<WalkInAppointmentCreated>(
+        this.url('/scheduling/appointments/walk-in'),
+        body,
+        { headers },
+      ),
     );
   }
 
@@ -873,7 +908,12 @@ type WireBooking = Omit<
   | 'statusReason'
   | 'delayNotice'
   | 'paymentState'
+  | 'followUpOf'
 > & {
+  // C4: el vínculo de la reconsulta, con el instante del origen todavía en
+  // texto. `followUpBookingId` no lleva fecha y atraviesa `toBooking` dentro
+  // del resto.
+  readonly followUpOf?: (FollowUpOrigin & { readonly startAt?: string | null }) | null;
   readonly startAt?: string | null;
   readonly endAt?: string | null;
   readonly confirmedAt?: string | null;
@@ -921,6 +961,27 @@ function toSlot({ startAt, endAt, ...resto }: WireSlot): AgendaSlot {
 }
 
 /**
+ * El origen de la reconsulta con su instante convertido, o nada si no vino.
+ *
+ * Se omite en vez de normalizarse a `null`: la clave declarada pisaría, y
+ * «no es una reconsulta» tiene que poder distinguirse mirando un solo campo.
+ */
+function aOrigenDeReconsulta(
+  origen: WireBooking['followUpOf'],
+): Pick<Booking, 'followUpOf'> {
+  if (origen === undefined || origen === null) {
+    return origen === null ? { followUpOf: null } : {};
+  }
+  const { startAt, ...resto } = origen;
+  return {
+    followUpOf: {
+      ...resto,
+      ...(startAt === undefined || startAt === null ? {} : { startAt: new Date(startAt) }),
+    },
+  };
+}
+
+/**
  * Una cita con sus cinco instantes convertidos.
  *
  * `startAt` y `endAt` pueden llegar `null` —cita sin cupo— y se normalizan a
@@ -937,10 +998,14 @@ function toBooking({
   rescheduledFrom,
   statusReason,
   delayNotice,
+  followUpOf,
   ...resto
 }: WireBooking): Booking {
   return {
     ...resto,
+    // C4: el origen con su instante convertido. Se omite cuando no vino, por la
+    // misma razón que las cinco fechas de arriba.
+    ...aOrigenDeReconsulta(followUpOf),
     ...optionalDate('startAt', startAt),
     ...optionalDate('endAt', endAt),
     ...optionalDate('confirmedAt', confirmedAt),

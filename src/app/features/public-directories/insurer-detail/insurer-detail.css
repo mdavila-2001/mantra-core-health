@@ -17,20 +17,192 @@
   padding-block-start: var(--sp-4);
 }
 
-/* Producto, para quién y prima: tres datos cortos en un renglón mientras
-   entren; en teléfono bajan uno por renglón. */
-.aseguradora__datos {
+/* ---- «Comparar planes»: una tarjeta por plan --------------------------- */
+
+/* Lado a lado mientras entren —tres en escritorio, dos en tablet— y uno por
+   renglón en el teléfono. `auto-fit` y no el `auto-fill` de la rejilla
+   compartida: son dos o tres planes, y con `auto-fill` quedaba una columna
+   vacía a la derecha de la tarjeta (regla 6). El `min(100%, …)` evita el
+   scroll horizontal en un contenedor más angosto que la pista. */
+.aseguradora__ofertas {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr));
+  gap: var(--sp-4);
+  margin: 0;
+  padding: var(--sp-4) 0 0;
+  list-style: none;
+}
+
+/* La tarjeta del plan. Columna flexible para que las acciones queden al pie y
+   las de una misma fila, alineadas aunque un nombre ocupe dos renglones. */
+.aseguradora__oferta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  block-size: 100%;
+  padding: var(--sp-5);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-lg);
+  background: var(--bg-surface);
+}
+
+/* El plan de mayor cobertura se nota por el marco de marca y el distintivo,
+   no sólo por el color: el distintivo lo dice en palabras. */
+.aseguradora__oferta--destacada {
+  border-color: var(--brand-primary);
+  box-shadow: var(--shadow-md);
+}
+
+/* El rótulo y el nombre, pegados: son un solo bloque que encabeza la tarjeta. */
+.aseguradora__oferta-cabeza {
+  display: grid;
+  gap: var(--sp-1);
+}
+
+/* El nombre y, si es el de mayor cobertura, su distintivo al lado; si no
+   entran, el distintivo baja sin estirar el nombre. */
+.aseguradora__oferta-titular {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--sp-3) var(--sp-6);
+  align-items: center;
+  gap: var(--sp-1) var(--sp-2);
+}
+
+.aseguradora__producto {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+.aseguradora__nombre {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  font-weight: 600;
+}
+
+/* La prima, al frente: es lo primero que se compara entre dos planes. */
+.aseguradora__precio {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sp-1) var(--sp-2);
   margin: 0;
 }
 
-.aseguradora__datos dd {
+.aseguradora__monto {
+  color: var(--brand-primary);
+  font-family: var(--font-display);
+  font-size: var(--fs-h2);
+  line-height: var(--lh-h2);
+  font-weight: 700;
+}
+
+.aseguradora__periodo {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+/* Las primeras coberturas: el nombre a la izquierda y cuánto cubre a la
+   derecha, con un divisor entre renglones para que el ojo no salte de fila. */
+.aseguradora__coberturas {
+  display: grid;
   margin: 0;
+  padding-block-start: var(--sp-3);
+  border-block-start: 1px solid var(--border-default);
+}
+
+.aseguradora__coberturas > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding-block: var(--sp-1);
+}
+
+.aseguradora__coberturas dd {
+  margin: 0;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.aseguradora__resumen {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  text-wrap: pretty;
+}
+
+.aseguradora__oferta-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin-block-start: auto;
+  padding-block-start: var(--sp-2);
+}
+
+/* ---- la pestaña de un plan --------------------------------------------- */
+
+/* El plan en una franja hundida sobre la tabla: qué es y qué resume a la
+   izquierda, la prima y el broker a la derecha. En el teléfono la prima baja
+   debajo del texto en vez de apretarlo. */
+.aseguradora__cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  padding: var(--sp-4) var(--sp-5);
+  border-radius: var(--r-md);
+  background: var(--bg-inset);
+}
+
+.aseguradora__cabecera-texto {
+  display: grid;
+  gap: var(--sp-1);
+  flex: 1 1 20rem;
+  min-inline-size: 0;
+}
+
+.aseguradora__cabecera-precio {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3);
 }
 
 .aseguradora__chat {
   justify-self: start;
   margin-block-start: auto;
+}
+
+/* Las secciones de la ficha son celdas de la rejilla de `.ficha-publica`, y
+   una celda no baja de su `min-content` salvo que se lo digan: con cuatro
+   pestañas —«Comparar planes» y tres planes— la tira medía 600 px y a 390 de
+   ancho empujaba la página entera fuera de la pantalla. Con el mínimo en cero
+   la sección toma el ancho de la columna y la tira se desliza dentro de su
+   tarjeta, que es lo que `app-tabs` ya sabe hacer. */
+.ficha-publica > section {
+  min-inline-size: 0;
+}
+
+/* ---- Buscador, filtros y paginación (ADR-0015, reglas 5 y 7) ----------- */
+
+.aseguradora__filtros {
+  margin-block-end: var(--sp-4);
+}
+
+.aseguradora__sin-resultados {
+  display: grid;
+  justify-items: start;
+  gap: var(--sp-3);
+}
+
+/* Abajo a la derecha de la tabla, como en el resto de los listados. */
+.aseguradora__paginacion {
+  justify-self: end;
 }

@@ -43,6 +43,7 @@ import {
 import { departamentoPorCiudad, normalizarLugar } from '../../shared/geo/departamento-de-ciudad';
 import { NavIcon } from '../../shared/components/atoms/nav-icon/nav-icon';
 import type { NavIconName } from '../../shared/components/atoms/nav-icon/nav-icon.types';
+import { fotoDeDirectorio, temaDeCentroDiagnostico } from '../../shared/utils/foto-de-directorio';
 
 /**
  * Un tramo del directorio de laboratorios.
@@ -177,6 +178,11 @@ const ICONO_POR_CATEGORIA: Readonly<Record<string, NavIconName>> = {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LaboratoryDirectory {
+  /** La foto de la tarjeta de una categoría de la portada. */
+  protected fotoDe(codigo: string): string {
+    return fotoDeDirectorio(temaDeCentroDiagnostico(codigo), codigo);
+  }
+
   /**
    * Si va embebido en otro contenedor —el modal de consulta de «Tus accesos»—.
    *
@@ -573,6 +579,7 @@ function toSearchResult(unit: DiagnosticUnitSearchItem): SearchResultItem {
     title: unit.name,
     link: `/laboratory-directory/${unit.id}`,
     figureText: initials(unit.name),
+    photoUrl: fotoDeDirectorio(temaDeCentroDiagnostico(`${unit.type.code} ${unit.type.display}`), unit.id),
     // La categoría como subtítulo y no como insignia: desde que la portada
     // obliga a elegirla antes de entrar, todas las tarjetas de la lista son de
     // la misma, así que la insignia repetía en cada una la categoría que se

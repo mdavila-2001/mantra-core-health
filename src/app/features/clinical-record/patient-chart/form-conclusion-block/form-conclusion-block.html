@@ -1,0 +1,133 @@
+<app-card variant="outlined" padding="lg" class="cierre" data-testid="cierre-del-formulario">
+  <h3 class="cierre__titulo">Cierre del formulario</h3>
+  <p class="cierre__intro">
+    Con lo respondido en «{{ nombreDeFicha() }}», la IA sugiere diagnósticos tentativos y análisis.
+    Elegí lo que corresponda o dejá los dos campos vacíos: la ficha se completa igual.
+  </p>
+
+  <!-- ─── Las sugerencias ───────────────────────────────────────────────────
+       Cinco estados, cada uno con su frase: sin respuestas no hay qué
+       preguntar; mientras viaja se dice; sin servicio se dice y se sigue a
+       mano; sin sugerencias se dice; con datos, la lista y el disclaimer. -->
+  @if (!hayRespuestas()) {
+    <p class="cierre__estado" data-testid="cierre-sin-respuestas">
+      Respondé la ficha y acá aparecen las sugerencias.
+    </p>
+  } @else if (consultando()) {
+    <p class="cierre__estado" role="status" data-testid="cierre-cargando">
+      Pidiendo sugerencias a la IA…
+    </p>
+  } @else if (sinServicio()) {
+    <app-alert tone="info" title="La IA no está disponible" data-testid="cierre-sin-servicio">
+      No pudimos pedir sugerencias ahora. Elegí el diagnóstico y la orden a mano; la ficha se
+      completa igual.
+    </app-alert>
+  } @else if (sinSugerencias()) {
+    <p class="cierre__estado" data-testid="cierre-vacio">
+      Sin sugerencias para estas respuestas. Elegí a mano si corresponde.
+    </p>
+  } @else if (sugerencia(); as sugerencia) {
+    <ul class="cierre__tentativos" data-testid="cierre-tentativos">
+      @for (tentativo of tentativos(); track tentativo.slug) {
+        <li class="cierre__tentativo">
+          <div class="cierre__tentativo-cabecera">
+            <strong>{{ tentativo.label }}</strong>
+            @if (tentativo.code; as codigo) {
+              <code class="tabular-nums">{{ codigo }}</code>
+            }
+            <app-badge variant="info">{{ porcentaje(tentativo.score) }}</app-badge>
+          </div>
+          @if (tentativo.why) {
+            <p class="cierre__porque">{{ tentativo.why }}</p>
+          }
+          @if (tentativo.suggestedTests.length > 0) {
+            <p class="cierre__pruebas">Pruebas: {{ etiquetasDe(tentativo.suggestedTests) }}</p>
+          }
+          <button
+            app-button
+            variant="outline"
+            size="sm"
+            type="button"
+            data-testid="cierre-usar-tentativo"
+            (clicked)="usarTentativo(tentativo)"
+          >
+            Usar como diagnóstico tentativo
+          </button>
+        </li>
+      }
+    </ul>
+
+    @if (ordenesSugeridas().length > 0) {
+      <h4 class="cierre__subtitulo">Análisis sugeridos</h4>
+      <ul class="cierre__ordenes" data-testid="cierre-ordenes">
+        @for (orden of ordenesSugeridas(); track orden.slug) {
+          <li class="cierre__orden">
+            <span>{{ orden.label }}</span>
+            <span class="cierre__categoria">{{ categoriaEnPalabras(orden.category) }}</span>
+            <button
+              app-button
+              variant="outline"
+              size="sm"
+              type="button"
+              data-testid="cierre-usar-orden"
+              (clicked)="usarOrden(orden)"
+            >
+              Usar como orden
+            </button>
+          </li>
+        }
+      </ul>
+    }
+
+    <!-- Con las palabras del servicio, siempre que haya sugerencias: no es un
+         diagnóstico, nace presuntivo, lo confirma o rechaza el profesional. -->
+    <p class="cierre__disclaimer" role="note" data-testid="cierre-disclaimer">
+      {{ sugerencia.disclaimer }}
+    </p>
+  }
+
+  <!-- ─── Lo que se registra al completar ──────────────────────────────────── -->
+  <div class="cierre__eleccion">
+    <app-form-field
+      label="Diagnóstico tentativo"
+      hint="Opcional. Nace presuntivo: se confirma o rechaza en la casilla «Diagnóstico»."
+    >
+      <app-concept-select
+        [target]="targetDiagnostico"
+        [value]="diagnostico()"
+        (valueChange)="elegirDiagnostico($event)"
+        placeholder="Sin diagnóstico tentativo"
+      />
+    </app-form-field>
+
+    <app-form-field
+      label="Categoría de la orden"
+      hint="Opcional. Laboratorio, imagenología u otro."
+    >
+      <app-select
+        [options]="categorias"
+        [value]="categoriaDeOrden()"
+        (valueChange)="elegirCategoria($event)"
+        ariaLabel="Categoría de la orden de análisis"
+      />
+    </app-form-field>
+
+    <app-form-field
+      label="Orden de análisis"
+      hint="Opcional. Se pide al completar la ficha, dentro de esta consulta."
+    >
+      <app-concept-select
+        [target]="targetEstudio"
+        [value]="estudio()"
+        (valueChange)="elegirEstudio($event)"
+        placeholder="Sin orden de análisis"
+      />
+    </app-form-field>
+
+    @if (ordenIncompleta()) {
+      <p class="cierre__aviso" role="status" data-testid="cierre-orden-incompleta">
+        Elegí la categoría para que la orden se pida al completar.
+      </p>
+    }
+  </div>
+</app-card>

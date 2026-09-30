@@ -1,11 +1,13 @@
-<app-page-header
-  title="Cotizaciones"
-  [subtitle]="
-    esMaqueta
-      ? 'Compará dónde conseguirlo y cuánto cuesta. En esta maqueta, los precios de farmacias y de estudios son de ejemplo; el arancel de referencia es el real.'
-      : 'Compará dónde conseguirlo y cuánto cuesta. Si un precio no está publicado, te lo decimos: no lo inventamos.'
-  "
-/>
+@if (!embedded()) {
+  <app-page-header
+    title="Cotizaciones"
+    [subtitle]="
+      esMaqueta
+        ? 'Compará dónde conseguirlo y cuánto cuesta. En esta maqueta, los precios de farmacias y de estudios son de ejemplo; el arancel de referencia es el real.'
+        : 'Compará dónde conseguirlo y cuánto cuesta. Si un precio no está publicado, te lo decimos: no lo inventamos.'
+    "
+  />
+}
 
 <main class="cotizaciones" aria-label="Cotizaciones del paciente">
   <section class="cotizaciones__controles" aria-label="Qué buscar y cómo ordenar">
@@ -19,14 +21,16 @@
       />
     </app-form-field>
 
-    <app-form-field label="Vertical" class="cotizaciones__campo">
-      <app-select
-        data-testid="cotizaciones-vertical"
-        [options]="opcionesDeVertical"
-        [value]="vertical()"
-        (valueChange)="cambiarVertical($event)"
-      />
-    </app-form-field>
+    @if (fixedVertical() === null) {
+      <app-form-field label="Vertical" class="cotizaciones__campo">
+        <app-select
+          data-testid="cotizaciones-vertical"
+          [options]="opcionesDeVertical"
+          [value]="vertical()"
+          (valueChange)="cambiarVertical($event)"
+        />
+      </app-form-field>
+    }
 
     <app-form-field label="Ordenar por" class="cotizaciones__campo">
       <app-select
@@ -52,7 +56,11 @@
     <app-empty-state
       data-testid="cotizaciones-sin-termino"
       title="Escribí qué querés cotizar"
-      description="Un medicamento, un análisis, un estudio de imagen o una consulta. Buscamos en las farmacias, los centros de diagnóstico y el arancel de referencia."
+      [description]="
+        fixedVertical() === 'MEDICAMENTOS'
+          ? 'Un medicamento. Buscamos en las farmacias de la plataforma.'
+          : 'Un medicamento, un análisis, un estudio de imagen o una consulta. Buscamos en las farmacias, los centros de diagnóstico y el arancel de referencia.'
+      "
     />
   } @else if (faltaOrigen()) {
     <app-empty-state
@@ -180,22 +188,9 @@
               @if (fila.advertencia) {
                 <span class="cotizaciones__advertencia">{{ fila.advertencia }}</span>
               }
-              @if (fila.accion; as accion) {
-                <a app-link class="cotizaciones__accion" [routerLink]="accion.ruta">
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="1.6"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    aria-hidden="true"
-                  >
-                    <path d="M5 12h14M13 6l6 6-6 6" />
-                  </svg>
-                  {{ accion.etiqueta }}
-                </a>
-              }
+              <div class="cotizaciones__acciones">
+                <ng-container *ngTemplateOutlet="celdaAccion; context: { $implicit: fila }" />
+              </div>
             </li>
           }
         </ul>
@@ -259,7 +254,72 @@
 </ng-template>
 
 <ng-template #celdaAccion let-fila>
-  @if (fila.accion; as accion) {
+  @if (fila.carrito) {
+    <!-- Lo mismo que «Agregar» en la tienda de Farmacia: la línea queda en el
+         carrito de esa sede, y la fila avisa que ya está. -->
+    <div class="cotizaciones__acciones">
+      <button
+        app-button
+        type="button"
+        size="sm"
+        variant="primary"
+        data-testid="cotizaciones-agregar-carrito"
+        [attr.aria-label]="'Agregar al carrito: ' + fila.que + ' en ' + fila.donde"
+        (clicked)="agregarAlCarrito(fila)"
+      >
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.6"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <circle cx="9" cy="20" r="1.5" />
+          <circle cx="18" cy="20" r="1.5" />
+          <path d="M2 3h3l2.7 12.4a1.5 1.5 0 0 0 1.5 1.1h8.6a1.5 1.5 0 0 0 1.5-1.1L21 7H6" />
+        </svg>
+        Agregar al carrito
+      </button>
+      @if (estaEnElCarrito(fila)) {
+        <a
+          app-link
+          class="cotizaciones__accion"
+          data-testid="cotizaciones-ver-carrito"
+          [routerLink]="rutaDelCarrito"
+        >
+          En tu carrito · Ver carrito
+        </a>
+      }
+    </div>
+  } @else if (fila.reserva) {
+    <!-- Lo mismo que pedir turno con un profesional: la agenda del centro, en
+         un diálogo, y el cupo elegido abre la misma reserva. -->
+    <button
+      app-button
+      type="button"
+      size="sm"
+      variant="primary"
+      data-testid="cotizaciones-reservar"
+      [attr.aria-label]="'Reservar horario: ' + fila.que + ' en ' + fila.donde"
+      (clicked)="abrirReserva(fila)"
+    >
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.6"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <rect x="3" y="5" width="18" height="16" rx="2" />
+        <path d="M16 3v4M8 3v4M3 11h18" />
+      </svg>
+      Reservar horario
+    </button>
+  } @else if (fila.accion; as accion) {
     <!-- Color: ver `.cotizaciones__accion` en el CSS (contraste en oscuro). -->
     <a app-link class="cotizaciones__accion" [routerLink]="accion.ruta">
       <svg
@@ -277,3 +337,24 @@
     </a>
   }
 </ng-template>
+
+@if (reservaAbierta(); as reserva) {
+  <app-content-dialog
+    size="lg"
+    [heading]="'Reservar ' + reserva.estudio"
+    [description]="
+      reserva.centro + '. Elegí un horario; en el paso siguiente confirmás la reserva.'
+    "
+    (closed)="cerrarReserva()"
+  >
+    <div data-testid="cotizaciones-agenda-centro">
+      <app-practitioner-availability
+        [practitionerProfileId]="reserva.centroId"
+        [tenantId]="tenantActivo()"
+        [resourceRefTypes]="tablasDeCentro"
+        [motivo]="'Estudio: ' + reserva.estudio"
+        sinAgenda="Este centro todavía no publicó horarios. Volvé a mirar más adelante."
+      />
+    </div>
+  </app-content-dialog>
+}

@@ -1,11 +1,20 @@
 @if (resultado(); as r) {
-  <span class="tarjeta-resultado__figura" aria-hidden="true">
-    @if (mostrarImagen()) {
-      <img [src]="r.figureImageUrl" alt="" loading="lazy" (error)="manejarErrorDeImagen()" />
-    } @else {
-      {{ r.figureText }}
-    }
-  </span>
+  <!-- Con foto, la foto es la cabeza de la tarjeta y la figura de iniciales
+       sobra: el nombre ya dice quién es, y dos imágenes apiladas compiten. Es
+       decorativa (`alt=""`): ilustra el tipo de lugar, no lo identifica. -->
+  @if (mostrarFoto()) {
+    <span class="tarjeta-resultado__foto" aria-hidden="true">
+      <img [src]="r.photoUrl" alt="" loading="lazy" (error)="manejarErrorDeFoto()" />
+    </span>
+  } @else {
+    <span class="tarjeta-resultado__figura" aria-hidden="true">
+      @if (mostrarImagen()) {
+        <img [src]="r.figureImageUrl" alt="" loading="lazy" (error)="manejarErrorDeImagen()" />
+      } @else {
+        {{ r.figureText }}
+      }
+    </span>
+  }
 
   <p class="tarjeta-resultado__titulo">
     <!-- El enlace cubre la tarjeta entera con el ::after de abajo, pero el
@@ -51,6 +60,26 @@
     </p>
   }
 
-  <!-- El pie: lo escribe quien usa la tarjeta. Ver el JSDoc del componente. -->
-  <span class="tarjeta-resultado__pie"><ng-content /></span>
+  <!-- El pie: la acción propia comparte el destino con el título sólo cuando
+       salta a una sección concreta (por ejemplo, horarios). El enlace queda
+       por encima del área táctil de la tarjeta y usa el mismo candado de
+       navegación única. -->
+  <span class="tarjeta-resultado__pie">
+    @if (r.action; as accion) {
+      <a
+        app-button
+        variant="outline"
+        size="sm"
+        class="tarjeta-resultado__accion"
+        [attr.href]="accion.link + (accion.fragment ? '#' + accion.fragment : '')"
+        [attr.aria-busy]="navegando() ? 'true' : null"
+        [attr.aria-disabled]="navegando() ? 'true' : null"
+        [style.pointer-events]="navegando() ? 'none' : null"
+        (click)="navegar($event, accion.link, accion.fragment)"
+      >
+        {{ navegando() ? 'Abriendo…' : accion.label }}
+      </a>
+    }
+    <ng-content />
+  </span>
 }

@@ -6,11 +6,23 @@ import { API_BASE_URL, apiUrl } from '../api';
 import type {
   AvailabilityQuery,
   AvailabilityResult,
+  PharmacyCategory,
+  PharmacyCategoryPage,
+  PharmacyContacts,
+  PharmacyDetail,
   PharmacyDirectoryPage,
+  PharmacyInventoryLine,
+  PharmacyLicensePage,
+  PharmacyProduct,
+  PharmacyProductChanges,
   PharmacyProductCreated,
   PharmacyProductDraft,
   PharmacyProductSearchPage,
   PharmacyProductSearchQuery,
+  PharmacySitePage,
+  PharmacySitePrices,
+  PharmacySiteQuery,
+  PharmacySummary,
   PharmacyStatusResult,
 } from './pharmacy.types';
 
@@ -66,6 +78,74 @@ export class PharmacyClient {
   }
 
   /**
+   * `GET /pharmacy/pharmacies/:id` — el perfil de una farmacia, con sus
+   * sedes y direcciones.
+   *
+   * Carril A (Ola 0, 2026-09-25): lo necesita «Farmacia» para mostrar la
+   * ficha de una tienda antes de listar su catálogo.
+   */
+  getPharmacy(id: string): Observable<PharmacyDetail> {
+    return this.http.get<PharmacyDetail>(this.url(`/pharmacy/pharmacies/${id}`));
+  }
+
+  /**
+   * `GET /pharmacy/pharmacies/:id/licenses` — la carpeta de licencias de la
+   * farmacia, con los días hasta el vencimiento ya contados por el servidor.
+   * Sólo la ve el personal de la farmacia: para cualquier otro es un 404.
+   */
+  listLicenses(id: string): Observable<PharmacyLicensePage> {
+    return this.http.get<PharmacyLicensePage>(this.url(`/pharmacy/pharmacies/${id}/licenses`));
+  }
+
+  /**
+   * `GET /pharmacy/pharmacies/:id/contacts` — el representante legal y las
+   * gerencias de la organización dueña. Mismo alcance que las licencias.
+   */
+  getContacts(id: string): Observable<PharmacyContacts> {
+    return this.http.get<PharmacyContacts>(this.url(`/pharmacy/pharmacies/${id}/contacts`));
+  }
+
+  /**
+   * `GET /pharmacy/sites` — las sedes publicadas, sueltas.
+   *
+   * A diferencia de {@link availability}, no exige productos: es lo que
+   * «elegir farmacia» (pestaña Comprar de «Farmacia», 25/09/2026) necesita
+   * antes de que la persona haya buscado nada — ver farmacias cercanas o
+   * buscar una por nombre.
+   */
+  nearbySites(query: PharmacySiteQuery = {}): Observable<PharmacySitePage> {
+    let params = new HttpParams();
+    if (query.search !== undefined && query.search !== '') {
+      params = params.set('search', query.search);
+    }
+    if (query.origin !== undefined) {
+      params = params.set('lat', String(query.origin.lat)).set('lng', String(query.origin.lng));
+    }
+    if (query.limit !== undefined) {
+      params = params.set('limit', String(query.limit));
+    }
+    return this.http.get<PharmacySitePage>(this.url('/pharmacy/sites'), { params });
+  }
+
+  /**
+   * `GET /pharmacy/sites/:siteId/prices` — los precios públicos vigentes de
+   * una sede.
+   *
+   * Carril A (Ola 0, 2026-09-25): el catálogo con precio real de la página
+   * de farmacia. `productId` acota a un producto puntual; sin él, `product`
+   * nunca viaja como clave (el backend valida con `forbidNonWhitelisted`).
+   */
+  getSitePrices(siteId: string, productId?: string): Observable<PharmacySitePrices> {
+    let params = new HttpParams();
+    if (productId !== undefined) {
+      params = params.set('product', productId);
+    }
+    return this.http.get<PharmacySitePrices>(this.url(`/pharmacy/sites/${siteId}/prices`), {
+      params,
+    });
+  }
+
+  /**
    * `GET /pharmacy-inventory/availability` — qué sedes pueden surtir el pedido.
    *
    * El backend ya devuelve las sedes ordenadas: completas primero, después
@@ -107,6 +187,27 @@ export class PharmacyClient {
   }
 
   /**
+   * `PATCH /pharmacies/:pharmacyId/products/:productId` — edita un producto
+   * del catálogo: nombre, presentación, precio, categoría, descripción y si
+   * hoy lo tiene o no (`inStock`).
+   *
+   * **Sólo existe en el simulador** (P47): la API real no publica edición de
+   * productos. Devuelve el producto como lo lista la búsqueda.
+   */
+  updateProduct(
+    pharmacyId: string,
+    productId: string,
+    changes: PharmacyProductChanges,
+  ): Observable<PharmacyProduct> {
+    return this.http.patch<PharmacyProduct>(
+      this.url(
+        `/pharmacies/${encodeURIComponent(pharmacyId)}/products/${encodeURIComponent(productId)}`,
+      ),
+      changes,
+    );
+  }
+
+  /**
    * `DELETE /pharmacies/:pharmacyId/products/:productId` — retira el producto
    * del catálogo (UC-24-09). Es un borrado lógico: el producto deja de
    * publicarse y sus precios vigentes quedan reemplazados.
@@ -117,6 +218,60 @@ export class PharmacyClient {
         `/pharmacies/${encodeURIComponent(pharmacyId)}/products/${encodeURIComponent(productId)}`,
       ),
     );
+  }
+
+  /** `GET /pharmacies/:id/categories` — las categorías de la farmacia (P47, sólo simulador). */
+  listCategories(pharmacyId: string): Observable<PharmacyCategoryPage> {
+    return this.http.get<PharmacyCategoryPage>(this.categoriesUrl(pharmacyId));
+  }
+
+  /** `POST /pharmacies/:id/categories` — crea una categoría. 409 si el nombre ya existe. */
+  createCategory(pharmacyId: string, name: string): Observable<PharmacyCategory> {
+    return this.http.post<PharmacyCategory>(this.categoriesUrl(pharmacyId), { name });
+  }
+
+  /** `PATCH /pharmacies/:id/categories/:categoryId` — renombra; los productos siguen. */
+  renameCategory(
+    pharmacyId: string,
+    categoryId: string,
+    name: string,
+  ): Observable<PharmacyCategory> {
+    return this.http.patch<PharmacyCategory>(
+      `${this.categoriesUrl(pharmacyId)}/${encodeURIComponent(categoryId)}`,
+      { name },
+    );
+  }
+
+  /** `DELETE /pharmacies/:id/categories/:categoryId` — 409 si tiene productos. */
+  deleteCategory(pharmacyId: string, categoryId: string): Observable<PharmacyStatusResult> {
+    return this.http.delete<PharmacyStatusResult>(
+      `${this.categoriesUrl(pharmacyId)}/${encodeURIComponent(categoryId)}`,
+    );
+  }
+
+  /**
+   * `PATCH /pharmacies/:id/inventory` — guarda de una vez las existencias y el
+   * umbral de varios productos (P47, sólo simulador).
+   */
+  updateInventory(
+    pharmacyId: string,
+    lines: readonly PharmacyInventoryLine[],
+  ): Observable<{ readonly updated: number }> {
+    return this.http.patch<{ readonly updated: number }>(
+      this.url(`/pharmacies/${encodeURIComponent(pharmacyId)}/inventory`),
+      { lines },
+    );
+  }
+
+  /** `GET /pharmacy/pharmacies/:id/summary` — los números del resumen (P47, sólo simulador). */
+  getSummary(pharmacyId: string): Observable<PharmacySummary> {
+    return this.http.get<PharmacySummary>(
+      this.url(`/pharmacy/pharmacies/${encodeURIComponent(pharmacyId)}/summary`),
+    );
+  }
+
+  private categoriesUrl(pharmacyId: string): string {
+    return this.url(`/pharmacies/${encodeURIComponent(pharmacyId)}/categories`);
   }
 
   private url(path: string): string {

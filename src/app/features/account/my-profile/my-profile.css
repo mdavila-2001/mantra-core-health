@@ -129,3 +129,10 @@
   display: block;
   margin-block: var(--sp-6);
 }
+
+/* El mapa de residencia, debajo de los datos de contacto y separado de ellos. */
+.mi-perfil__residencia {
+  margin-block-start: var(--sp-5);
+  padding-block-start: var(--sp-5);
+  border-block-start: 1px solid var(--border-default);
+}

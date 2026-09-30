@@ -1,0 +1,184 @@
+@if (sinPerfilDePaciente) {
+  <app-alert tone="info" title="Esta sección es para pacientes">
+    Tu cuenta no tiene un perfil de paciente, así que no hay nada que comprar a su nombre.
+  </app-alert>
+} @else if (farmaciaElegida(); as farmacia) {
+  <section class="tienda__catalogo" aria-label="Catálogo de la farmacia elegida">
+    <header class="tienda__cabecera">
+      <div>
+        <h2 class="tienda__titulo">{{ farmacia.pharmacyName }}</h2>
+        <p class="tienda__subtitulo">{{ farmacia.siteName }}@if (farmacia.addressText) { · {{ farmacia.addressText }} }</p>
+      </div>
+      @if (hayCarrito()) {
+        <button
+          app-button
+          variant="ghost"
+          size="sm"
+          type="button"
+          data-testid="tienda-vaciar-y-cambiar"
+          (clicked)="vaciarCarritoYCambiar()"
+        >
+          Vaciar carrito y cambiar de farmacia
+        </button>
+      } @else {
+        <button
+          app-button
+          variant="ghost"
+          size="sm"
+          type="button"
+          data-testid="tienda-cambiar-farmacia"
+          (clicked)="cambiarDeFarmacia()"
+        >
+          ‹ Cambiar de farmacia
+        </button>
+      }
+    </header>
+
+    <app-form-field label="Buscar en el catálogo" class="tienda__busqueda">
+      <app-search-field
+        data-testid="tienda-busqueda-producto"
+        placeholder="Paracetamol, ibuprofeno…"
+        [value]="terminoProducto()"
+        (searched)="terminoProducto.set($event)"
+      />
+    </app-form-field>
+
+    <app-view-state-host [state]="productos()" (retry)="reintentarProductos()">
+      <ul class="tienda__lista" data-testid="tienda-productos">
+        @for (producto of listaDeProductos(); track producto.id) {
+          <li class="tienda__producto">
+            <div class="tienda__producto-datos">
+              <span class="tienda__producto-nombre">{{ nombreDe(producto) }}</span>
+              <span class="tienda__producto-secundario">
+                @if (producto.strengthText) {
+                  {{ producto.strengthText }}
+                }
+                @if (producto.packageSizeText) {
+                  · {{ producto.packageSizeText }}
+                }
+              </span>
+              @if (producto.requiresPrescription === true) {
+                <app-badge variant="warning" size="sm">Requiere receta</app-badge>
+              }
+            </div>
+
+            @if (producto.requiresPrescription === true) {
+              <a class="tienda__pedir-con-receta" [routerLink]="rutaHistoriaClinica">
+                Pedila desde tu historia clínica
+              </a>
+            } @else {
+              <div
+                class="tienda__cantidad"
+                role="group"
+                [attr.aria-label]="'Cantidad de ' + nombreDe(producto)"
+              >
+                <button
+                  app-button
+                  variant="outline"
+                  size="sm"
+                  type="button"
+                  data-testid="tienda-cantidad-menos"
+                  [attr.aria-label]="'Quitar una unidad de ' + nombreDe(producto)"
+                  [disabled]="cantidadDe(producto) === 0"
+                  (clicked)="cambiarCantidad(producto, -1)"
+                >
+                  −
+                </button>
+                <span
+                  class="tienda__cantidad-valor cifras-tabulares"
+                  aria-live="polite"
+                  data-testid="tienda-cantidad-valor"
+                >{{ cantidadDe(producto) }}</span>
+                <button
+                  app-button
+                  variant="outline"
+                  size="sm"
+                  type="button"
+                  data-testid="tienda-cantidad-mas"
+                  [attr.aria-label]="'Agregar una unidad de ' + nombreDe(producto)"
+                  (clicked)="cambiarCantidad(producto, 1)"
+                >
+                  +
+                </button>
+              </div>
+            }
+          </li>
+        }
+      </ul>
+    </app-view-state-host>
+
+    <aside class="tienda__carrito" aria-label="Tu carrito" data-testid="tienda-carrito">
+      @if (hayCarrito()) {
+        <p class="tienda__carrito-resumen">
+          {{ unidadesEnCarrito() }} unidad{{ unidadesEnCarrito() === 1 ? '' : 'es' }} en tu carrito.
+          El precio y el total salen en el próximo paso, con la disponibilidad real de la sede.
+        </p>
+        @if (errorAlContinuar(); as error) {
+          <app-alert tone="error" title="No pudimos continuar" data-testid="tienda-error-continuar">
+            {{ error }}
+          </app-alert>
+        }
+        <button
+          app-button
+          variant="primary"
+          type="button"
+          data-testid="tienda-continuar"
+          [disabled]="enviando()"
+          (clicked)="continuar()"
+        >
+          {{ enviando() ? 'Confirmando disponibilidad…' : 'Continuar' }}
+        </button>
+      } @else {
+        <p class="tienda__carrito-vacio">Tu carrito está vacío. Elegí una cantidad de algún producto.</p>
+      }
+    </aside>
+  </section>
+} @else {
+  <section class="tienda__buscador" aria-label="Elegir una farmacia">
+    <app-form-field label="Buscar una farmacia" class="tienda__busqueda">
+      <app-search-field
+        data-testid="tienda-busqueda-farmacia"
+        placeholder="Nombre de la farmacia…"
+        [value]="terminoFarmacia()"
+        (searched)="terminoFarmacia.set($event)"
+      />
+    </app-form-field>
+
+    <!-- El origen de la distancia: el mismo selector que «Cotizaciones» y
+         «Lugares cercanos» (casa / trabajo / ubicación actual). -->
+    <div class="tienda__origen" data-testid="tienda-origen">
+      <app-search-origin-picker
+        [places]="lugaresGuardados()"
+        [origin]="origen()"
+        (originChange)="origen.set($event)"
+      />
+    </div>
+
+    <app-view-state-host [state]="sitios()" (retry)="reintentarSitios()">
+      <ul class="tienda__lista-farmacias" data-testid="tienda-farmacias">
+        @for (sitio of listaDeSitios(); track sitio.siteId) {
+          <li class="tienda__farmacia">
+            <div class="tienda__farmacia-datos">
+              <span class="tienda__farmacia-nombre">{{ sitio.pharmacyName }}</span>
+              <span class="tienda__farmacia-secundario">
+                {{ sitio.siteName }}
+                @if (sitio.addressText) { · {{ sitio.addressText }} }
+                @if (sitio.distanceKm !== null) { · {{ sitio.distanceKm }} km }
+              </span>
+            </div>
+            <button
+              app-button
+              variant="secondary"
+              size="sm"
+              type="button"
+              data-testid="tienda-elegir-farmacia"
+              (clicked)="elegirFarmacia(sitio)"
+            >
+              Elegir
+            </button>
+          </li>
+        }
+      </ul>
+    </app-view-state-host>
+  </section>
+}

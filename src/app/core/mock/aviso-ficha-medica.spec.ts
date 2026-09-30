@@ -211,6 +211,16 @@ describe('el aviso de la ficha médica le llega al paciente', () => {
     expect(campanaDe(PACIENTE_USUARIO).length).toBe(antes + 1);
   });
 
+  it('nota primero y diagnóstico después comparten el mismo aviso', () => {
+    const encounterId = abrirConsulta();
+    const before = campanaDe(PACIENTE_USUARIO).length;
+
+    guardarNota(encounterId);
+    guardarDiagnostico(encounterId);
+
+    expect(campanaDe(PACIENTE_USUARIO).length).toBe(before + 1);
+  });
+
   it('dos consultas distintas avisan por separado', () => {
     const primera = abrirConsulta();
     const segunda = abrirConsulta();

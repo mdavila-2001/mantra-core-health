@@ -102,6 +102,24 @@ export interface CreateInsurancePlanInput {
   readonly monthlyPremiumAmount?: string;
 }
 
+/**
+ * Datos generales de un producto seguro (un plan) que se pueden corregir.
+ *
+ * Reemplazo completo: una vigencia en `null` se quita, no se conserva. La
+ * moneda y la prima quedan afuera a propósito —la prima tiene su propio
+ * endpoint y cambiar la moneda reinterpretaría todos los importes de sus
+ * cláusulas—.
+ *
+ * **Contrato pendiente en la API**: `PUT /insurance-plans/:planId` hoy existe
+ * sólo en la maqueta de `mockup`.
+ */
+export interface UpdateInsurancePlanInput {
+  readonly planCode: string;
+  readonly name: string;
+  readonly effectiveFrom: string | null;
+  readonly effectiveTo: string | null;
+}
+
 /** Reemplazo completo de la prima de lista mensual de un plan (v4.2.14). */
 export interface UpdatePlanPremiumInput {
   readonly monthlyPremiumAmount: string | null;
@@ -178,6 +196,32 @@ export interface ProviderNetwork {
 }
 
 /**
+ * Una red de la aseguradora en la que atiende un profesional.
+ *
+ * Las aseguradoras bolivianas publican su red **por plan** («AFI GOLD»,
+ * «SALUD FLEXIBLE»), así que el nombre de la red es el del plan que la
+ * persona tiene en su carnet.
+ */
+export interface PractitionerNetwork {
+  readonly id: string;
+  readonly name: string;
+}
+
+/**
+ * Una aseguradora con la que trabaja un profesional, con sus redes.
+ *
+ * Sale de `insurance.network_provider_memberships` activas del profesional,
+ * agrupadas por la aseguradora dueña de cada red (`provider_networks →
+ * insurance_carriers`). Es la aseguradora la que da de alta al prestador en
+ * su red (UC-26-01): el profesional no lo declara de sí mismo.
+ */
+export interface PractitionerInsuranceCarrier {
+  readonly carrierId: string;
+  readonly carrierName: string;
+  readonly networks: readonly PractitionerNetwork[];
+}
+
+/**
  * Una aseguradora con la que trabaja un profesional: su membresía vigente en
  * una red de prestadores (`insurance.network_provider_memberships`).
  *
@@ -211,7 +255,7 @@ export interface CarrierDetail extends CarrierSummary {
    puede hablar. El catálogo comercial completo (`GET /insurance-carriers/:id`)
    sólo lo lee la propia aseguradora; esto es la vitrina.
 
-   **Contrato pendiente en la API** (P46 de `PENDIENTES-BACKEND.md`): hoy
+   **Contrato pendiente en la API** (P48 de `PENDIENTES-BACKEND.md`): hoy
    existe sólo en la maqueta de `mockup`. */
 
 /** Un broker que vende productos de la aseguradora, con cómo escribirle. */
@@ -693,4 +737,112 @@ export interface CreateAdjudicationInput {
   readonly totalPatientAmount?: string;
   readonly totalDeniedAmount?: string;
   readonly lineAdjudications: readonly LineAdjudicationInput[];
+}
+
+/* ---- solicitudes recibidas por la aseguradora ----------------
+   La cara de QUIEN PAGA del mismo `insurance_claims`: lo que los prestadores le
+   presentaron a esta aseguradora. Todo sale de columnas que el modelo ya
+   declara —ninguna tabla nueva—:
+
+   - médico y fecha de prestación → `insurance_claims.encounter_id` →
+     `clinical.encounters` (profesional y comienzo de la atención);
+   - servicio prestado → `insurance_claim_lines.service_concept_id` (la línea
+     de mayor importe; el resto se cuenta en `additionalServiceCount`);
+   - prestador → `billing_provider_entity_id`.
+
+   Contrato: `docs/contracts/insurer-received-claims.md` (repo del front). La API todavía no
+   expone esta cara; hoy la sirve el simulador. */
+
+/** El médico que prestó el servicio. `null` si la solicitud no nace de una atención. */
+export interface ReceivedClaimPractitioner {
+  readonly id: string;
+  readonly displayName: string;
+  /** Especialidad principal, como la muestra el directorio. */
+  readonly specialty: string | null;
+}
+
+/** Una solicitud recibida por la aseguradora, lista para la tabla. */
+export interface ReceivedClaim {
+  readonly id: string;
+  readonly claimIdentifier: string;
+  readonly patient: ClaimPatient;
+  readonly practitioner: ReceivedClaimPractitioner | null;
+  /** Quien factura: el consultorio o establecimiento del médico. */
+  readonly providerName: string;
+  /** El servicio de mayor importe de la solicitud. */
+  readonly service: InsuranceConcept | null;
+  /** Cuántos servicios más trae la solicitud, además de `service`. */
+  readonly additionalServiceCount: number;
+  readonly billedTotal: Money;
+  /** `null` mientras no haya dictamen. **No es cero.** */
+  readonly approvedTotal: Money | null;
+  readonly submittedAt: Date | null;
+  /** Día de la atención: es una fecha, no un instante. */
+  readonly serviceDate: Date | null;
+  readonly policyIdentifier: string | null;
+  readonly planName: string | null;
+  readonly status: InsuranceConcept | null;
+  /** Los renglones facturados, de mayor a menor importe: `service` es el primero. */
+  readonly lines: readonly ReceivedClaimLine[];
+  /** El dictamen de la aseguradora; `null` mientras la solicitud sigue abierta. */
+  readonly decision: ReceivedClaimDecision | null;
+  /** La factura que produjo el dictamen favorable; `null` sin dictamen o rechazada. */
+  readonly invoice: ReceivedClaimInvoice | null;
+}
+
+/** Un renglón de la solicitud: lo que se ve al pasar el puntero por el servicio. */
+export interface ReceivedClaimLine {
+  readonly sequence: number;
+  /** Código del catálogo de servicios del prestador. */
+  readonly code: string;
+  readonly display: string;
+  readonly quantity: number;
+  readonly unitPrice: Money;
+  readonly billedAmount: Money;
+}
+
+/** Qué decidió la aseguradora. Es definitivo: no hay ruta para deshacerlo. */
+export interface ReceivedClaimDecision {
+  readonly outcome: ReceivedClaimOutcome;
+  readonly decidedAt: Date;
+  readonly decidedBy: string;
+  /** Obligatorio al rechazar o aprobar parcialmente; opcional al aprobar. */
+  readonly reason: string | null;
+}
+
+export type ReceivedClaimOutcome = 'APPROVED' | 'PARTIAL' | 'REJECTED';
+
+export type ReceivedClaimInvoiceStatus = 'ISSUED' | 'ANNULLED';
+
+/**
+ * El evento de facturación que dispara un dictamen favorable: la factura del
+ * prestador a la aseguradora por el monto aprobado. Anularla no reabre el
+ * dictamen; deja la solicitud aprobada y **sin factura vigente** hasta que se
+ * emita la corregida.
+ */
+export interface ReceivedClaimInvoice {
+  readonly id: string;
+  readonly invoiceNumber: string;
+  readonly amount: Money;
+  readonly status: ReceivedClaimInvoiceStatus;
+  readonly issuedAt: Date;
+  readonly annulledAt: Date | null;
+  readonly annulmentReason: string | null;
+  /** Las facturas anuladas antes de ésta, de la más reciente a la más vieja. */
+  readonly previous: readonly ReceivedClaimInvoice[];
+}
+
+/** Lo que manda la pantalla al decidir. */
+export interface ReceivedClaimDecisionInput {
+  readonly outcome: ReceivedClaimOutcome;
+  /** Cadena decimal. Sólo en `PARTIAL`; en `APPROVED` es el monto solicitado y en `REJECTED`, cero. */
+  readonly approvedAmount?: string;
+  readonly reason?: string;
+}
+
+/** Listado completo de solicitudes recibidas en la ventana consultada. */
+export interface ReceivedClaimList {
+  readonly items: readonly ReceivedClaim[];
+  /** `true` si el servidor recortó al tope: hay más solicitudes que las recibidas. */
+  readonly truncated: boolean;
 }

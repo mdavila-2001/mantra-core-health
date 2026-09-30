@@ -1,9 +1,11 @@
-import { CORREDORES_CON_PERFIL, vitrinas } from '../fixtures/comunidad';
+import { CORREDORES_CON_PERFIL, vitrinas, type VitrinaSimulada } from '../fixtures/comunidad';
+import { ASEGURADORAS_REALES, type AseguradoraReal } from '../fixtures/instituciones.generated';
 import { conceptoPorId } from '../fixtures/conceptos';
 import { INSURER_NETWORK_PRACTITIONERS } from '../fixtures/insurer-network.generated';
-import { MEDICA, PACIENTES, PACIENTE } from '../fixtures/personas';
-import { forbidden, notFound, type MockRequest, type MockRouter } from '../mock-router';
+import { MEDICA, PACIENTES, PACIENTE, profesionalPorId } from '../fixtures/personas';
+import { forbidden, noContent, notFound, type MockRequest, type MockRouter } from '../mock-router';
 import { TENANT_ASEGURADORA } from '../mock-session';
+import { procedimientoPorConceptId } from './practice.handlers';
 import {
   ahora,
   Coleccion,
@@ -100,7 +102,40 @@ interface DetalleAseguradoraSimulado {
   }[];
 }
 
-const ASEGURADORAS = [
+/**
+ * Una aseguradora con catálogo en el simulador: las cinco sembradas a mano en
+ * {@link ASEGURADORAS} o una armada para la ficha de un directorio que no
+ * tiene catálogo propio (ver {@link aseguradoraDeLaFicha}).
+ */
+interface AseguradoraDelCatalogo {
+  readonly id: string;
+  readonly carrierCode: string;
+  readonly legalName: string;
+  readonly name: string;
+  readonly regulatorIdentifier: string | null;
+  readonly isPublic: boolean;
+  readonly whatsapp: string | null;
+  readonly callCenter: string | null;
+  readonly supportEmail: string | null;
+  /** `[código, nombre]` de cada plan. El primero es el de mayor cobertura. */
+  readonly planes: readonly (readonly string[])[];
+  /**
+   * Los slugs de sus fichas en el directorio de aseguradoras. Van escritos y no
+   * se deducen del nombre: «Alianza Vida S.A.» no se llama como «Alianza
+   * Seguros», y es la misma compañía de personas.
+   */
+  readonly fichas?: readonly string[];
+  /**
+   * Qué vende: salud (el valor por omisión) o, en una aseguradora de seguros
+   * generales, accidentes personales —que no es un seguro de salud, pero es lo
+   * que esas compañías le ofrecen a una persona—.
+   */
+  readonly ramo?: 'SALUD' | 'ACCIDENTES';
+  /** Primas propias por código de plan; si no, se buscan en {@link PRIMAS}. */
+  readonly primas?: Readonly<Record<string, string>>;
+}
+
+const ASEGURADORAS: readonly AseguradoraDelCatalogo[] = [
   {
     id: uuid('carrier-andina'),
     carrierCode: 'ANDINA',
@@ -112,6 +147,7 @@ const ASEGURADORAS = [
     whatsapp: '+59170000101',
     callCenter: '800-10-0101',
     supportEmail: 'siniestros@andina.mock.bo',
+    fichas: ['seguros-andina'],
     planes: [
       ['ANDINA-INT', 'Plan Integral'],
       ['ANDINA-FAM', 'Plan Familiar'],
@@ -129,6 +165,9 @@ const ASEGURADORAS = [
     whatsapp: null,
     callCenter: '800-10-0102',
     supportEmail: 'siniestros@vitalicia.mock.bo',
+    // La ficha inventada de siempre y la real de la planilla del propietario:
+    // las dos son la misma compañía y abren el mismo catálogo.
+    fichas: ['la-vitalicia', 'la-vitalicia-seguros-y-reaseguros-de-vida-s-a'],
     planes: [
       ['VIT-SALUD', 'Salud Total'],
       ['VIT-BASICO', 'Salud Básica'],
@@ -144,6 +183,9 @@ const ASEGURADORAS = [
     whatsapp: '+59170000103',
     callCenter: '800-10-0103',
     supportEmail: 'siniestros@alianza.mock.bo',
+    // Sus planes son de salud, así que su ficha es la de la compañía de
+    // personas —Alianza Vida— y no la de generales, que tiene la suya.
+    fichas: ['alianza-vida-seguros-y-reaseguros-s-a'],
     planes: [
       ['ALZ-ORO', 'Plan Oro'],
       ['ALZ-PLATA', 'Plan Plata'],
@@ -219,7 +261,7 @@ export function contactChannelsOfCarrier(
   };
 }
 
-function resumenDeAseguradora(a: (typeof ASEGURADORAS)[number], i: number, canAdminister = false) {
+function resumenDeAseguradora(a: AseguradoraDelCatalogo, i: number, canAdminister = false) {
   return {
     id: a.id,
     carrierCode: a.carrierCode,
@@ -239,18 +281,100 @@ function resumenDeAseguradora(a: (typeof ASEGURADORAS)[number], i: number, canAd
   };
 }
 
+/** Una cláusula del simulador: lo que cambia de una a otra; el resto es fijo. */
+function beneficio(
+  id: string,
+  category: ReturnType<typeof c>,
+  datos: Partial<Omit<BeneficioSimulado, 'id' | 'category'>>,
+): BeneficioSimulado {
+  return {
+    id: uuid(id),
+    category,
+    service: null,
+    coveragePercent: null,
+    copayAmount: null,
+    deductibleAmount: null,
+    annualLimitAmount: null,
+    requiresPriorAuthorization: false,
+    approvalRules: { requiredDocuments: [], exclusionNotes: null },
+    effectiveFrom: isoDia(-365),
+    effectiveTo: null,
+    ...datos,
+  };
+}
+
+/** Las cláusulas de un plan de salud. `k === 0` es el plan de mayor cobertura. */
+function beneficiosDeSalud(code: string, k: number): readonly BeneficioSimulado[] {
+  return [
+    beneficio(`benefit-${code}-1`, c('CONSULTATION', 'Consulta médica'), {
+      service: c('CONS', 'Consulta ambulatoria'),
+      coveragePercent: k === 0 ? '100' : '80',
+      copayAmount: k === 0 ? '0.00' : '30.00',
+    }),
+    beneficio(`benefit-${code}-2`, c('HOSPITALIZATION', 'Internación'), {
+      coveragePercent: k === 0 ? '90' : '70',
+      deductibleAmount: '500.00',
+      annualLimitAmount: '150000.00',
+      requiresPriorAuthorization: true,
+      approvalRules: { requiredDocuments: ['ORDEN_MEDICA'], exclusionNotes: null },
+    }),
+    beneficio(`benefit-${code}-3`, c('LAB', 'Laboratorio e imagen'), {
+      coveragePercent: '80',
+      annualLimitAmount: '20000.00',
+    }),
+    beneficio(`benefit-${code}-4`, c('PHARMACY', 'Medicamentos'), {
+      coveragePercent: '60',
+      annualLimitAmount: '8000.00',
+    }),
+  ];
+}
+
+/**
+ * Las cláusulas de un plan de accidentes personales. El capital asegurado va
+ * como tope anual: es lo que paga la póliza, una vez, si pasa lo que cubre.
+ */
+function beneficiosDeAccidentes(code: string, k: number): readonly BeneficioSimulado[] {
+  const capital = k === 0 ? '100000.00' : '50000.00';
+  return [
+    beneficio(`benefit-${code}-1`, c('ACCIDENTAL_DEATH', 'Muerte accidental'), {
+      coveragePercent: '100',
+      annualLimitAmount: capital,
+    }),
+    beneficio(`benefit-${code}-2`, c('PERMANENT_DISABILITY', 'Invalidez total y permanente'), {
+      coveragePercent: '100',
+      annualLimitAmount: capital,
+      approvalRules: { requiredDocuments: ['INFORME_CLINICO'], exclusionNotes: null },
+    }),
+    beneficio(`benefit-${code}-3`, c('ACCIDENT_MEDICAL', 'Gastos médicos por accidente'), {
+      coveragePercent: k === 0 ? '100' : '80',
+      annualLimitAmount: k === 0 ? '15000.00' : '8000.00',
+      approvalRules: {
+        requiredDocuments: ['INFORME_CLINICO'],
+        exclusionNotes: 'Enfermedades que no vengan de un accidente',
+      },
+    }),
+    beneficio(`benefit-${code}-4`, c('FUNERAL', 'Gastos de sepelio'), {
+      coveragePercent: '100',
+      annualLimitAmount: k === 0 ? '5000.00' : '3000.00',
+    }),
+  ];
+}
+
 function detalleDeAseguradora(
-  a: (typeof ASEGURADORAS)[number],
+  a: AseguradoraDelCatalogo,
   i: number,
 ): DetalleAseguradoraSimulado {
+  const accidentes = a.ramo === 'ACCIDENTES';
   return {
     ...resumenDeAseguradora(a, i),
     products: [
       {
         id: uuid(`product-${a.id}`),
-        productCode: `${a.carrierCode}-SALUD`,
-        name: `${a.name} · Salud`,
-        productType: c('HEALTH', 'Salud'),
+        productCode: `${a.carrierCode}-${accidentes ? 'AP' : 'SALUD'}`,
+        name: `${a.name} · ${accidentes ? 'Accidentes personales' : 'Salud'}`,
+        productType: accidentes
+          ? c('PERSONAL_ACCIDENT', 'Accidentes personales')
+          : c('HEALTH', 'Salud'),
         marketSegment: c(
           a.isPublic ? 'PUBLIC' : 'INDIVIDUAL',
           a.isPublic ? 'Seguro social' : 'Individual y familiar',
@@ -262,65 +386,12 @@ function detalleDeAseguradora(
           name: name!,
           planType: c(k === 0 ? 'PREMIUM' : 'STANDARD', k === 0 ? 'Premium' : 'Estándar'),
           currency: BOB,
-          monthlyPremiumAmount: PRIMAS[code!] ?? null,
+          monthlyPremiumAmount: a.primas?.[code!] ?? PRIMAS[code!] ?? null,
           effectiveFrom: isoDia(-365),
           effectiveTo: null,
           status: c('ACTIVE', 'Vigente'),
           policyDocumentFileId: null,
-          benefits: [
-            {
-              id: uuid(`benefit-${code}-1`),
-              category: c('CONSULTATION', 'Consulta médica'),
-              service: c('CONS', 'Consulta ambulatoria'),
-              coveragePercent: k === 0 ? '100' : '80',
-              copayAmount: k === 0 ? '0.00' : '30.00',
-              deductibleAmount: null,
-              annualLimitAmount: null,
-              requiresPriorAuthorization: false,
-              approvalRules: { requiredDocuments: [], exclusionNotes: null },
-              effectiveFrom: isoDia(-365),
-              effectiveTo: null,
-            },
-            {
-              id: uuid(`benefit-${code}-2`),
-              category: c('HOSPITALIZATION', 'Internación'),
-              service: null,
-              coveragePercent: k === 0 ? '90' : '70',
-              copayAmount: null,
-              deductibleAmount: '500.00',
-              annualLimitAmount: '150000.00',
-              requiresPriorAuthorization: true,
-              approvalRules: { requiredDocuments: ['ORDEN_MEDICA'], exclusionNotes: null },
-              effectiveFrom: isoDia(-365),
-              effectiveTo: null,
-            },
-            {
-              id: uuid(`benefit-${code}-3`),
-              category: c('LAB', 'Laboratorio e imagen'),
-              service: null,
-              coveragePercent: '80',
-              copayAmount: null,
-              deductibleAmount: null,
-              annualLimitAmount: '20000.00',
-              requiresPriorAuthorization: false,
-              approvalRules: { requiredDocuments: [], exclusionNotes: null },
-              effectiveFrom: isoDia(-365),
-              effectiveTo: null,
-            },
-            {
-              id: uuid(`benefit-${code}-4`),
-              category: c('PHARMACY', 'Medicamentos'),
-              service: null,
-              coveragePercent: '60',
-              copayAmount: null,
-              deductibleAmount: null,
-              annualLimitAmount: '8000.00',
-              requiresPriorAuthorization: false,
-              approvalRules: { requiredDocuments: [], exclusionNotes: null },
-              effectiveFrom: isoDia(-365),
-              effectiveTo: null,
-            },
-          ],
+          benefits: accidentes ? beneficiosDeAccidentes(code!, k) : beneficiosDeSalud(code!, k),
         })),
       },
     ],
@@ -413,6 +484,17 @@ function actualizarProducto(
 function concepto(id: string) {
   const item = conceptoPorId(id);
   return c(item?.code ?? id, item?.display ?? id);
+}
+
+/**
+ * El servicio de una cláusula. Se busca primero en el arancel —de ahí salen
+ * los servicios que ofrece el médico— y después en el registro general.
+ */
+function servicioDeClausula(id: string) {
+  const procedimiento = procedimientoPorConceptId(id);
+  return procedimiento === undefined
+    ? concepto(id)
+    : c(procedimiento.code, procedimiento.display);
 }
 
 const CORREDORES = [
@@ -699,6 +781,35 @@ function itemDeSolicitud(s: SolicitudSimulada) {
 }
 
 /**
+ * Las redes que publica cada aseguradora, con la forma de
+ * `GET /practitioners/:id/insurance-carriers`.
+ *
+ * La aseguradora que ya está en el catálogo del simulador conserva su id —así
+ * el mismo seguro no aparece con dos identidades—; la que no, recibe uno
+ * estable derivado de su nombre. Cada plan publicado es una red: es como la
+ * aseguradora arma su listado.
+ */
+export function carriersOfPractitioner(
+  networks: readonly { readonly insurer: string; readonly plans: readonly string[] }[],
+) {
+  return networks
+    .map((network) => {
+      const carrierId =
+        ASEGURADORAS.find((a) => a.name === network.insurer)?.id ??
+        uuid(`carrier-network-${network.insurer}`);
+      return {
+        carrierId,
+        carrierName: network.insurer,
+        networks: network.plans.map((plan) => ({
+          id: uuid(`network-${network.insurer}-${plan}`),
+          name: plan,
+        })),
+      };
+    })
+    .sort((a, b) => a.carrierName.localeCompare(b.carrierName, 'es'));
+}
+
+/**
  * Lo que la práctica espera cobrarles a las aseguradoras, a hoy.
  *
  * Enviadas sin dictamen cuentan por lo facturado; aprobadas —total o
@@ -803,6 +914,145 @@ export function redesDelProfesional(practitionerProfileId: string): readonly Red
   return redesImportadas().get(practitionerProfileId) ?? [];
 }
 
+/* ---- de la ficha del directorio al catálogo --------------------------- */
+
+/**
+ * Un nombre para comparar: sin tildes, sin mayúsculas y sin puntuación.
+ * «LA VITALICIA SEGUROS Y REASEGUROS DE VIDA S.A.» y «La Vitalicia Seguros y
+ * Reaseguros de Vida S.A.» son el mismo nombre escrito por dos planillas.
+ */
+function nombreComparable(nombre: string): string {
+  return nombre
+    .normalize('NFD')
+    .replace(/\p{M}/gu, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+}
+
+/** La aseguradora real de la planilla del propietario detrás de una ficha, si la hay. */
+function aseguradoraRealDe(ficha: VitrinaSimulada): AseguradoraReal | undefined {
+  return ASEGURADORAS_REALES.find((real) => uuid(`insurer-${real.id}`) === ficha.targetId);
+}
+
+/**
+ * El índice en {@link ASEGURADORAS} del catálogo sembrado de una ficha, o -1.
+ *
+ * Primero por los slugs que cada aseguradora declara —es lo único que no
+ * depende de cómo escribió el nombre cada planilla— y después por nombre:
+ * el que muestra la ficha o la razón social de la planilla contra el nombre o
+ * la razón social del catálogo, sin distinguir tildes ni mayúsculas. Antes se
+ * comparaba `displayName === name` al pie de la letra, y ninguna de las 19
+ * aseguradoras reales calzaba: todas abrían «todavía no publicó sus productos».
+ */
+function indiceDelCatalogo(ficha: VitrinaSimulada): number {
+  const porSlug = ASEGURADORAS.findIndex((a) => a.fichas?.includes(ficha.slug) ?? false);
+  if (porSlug >= 0) return porSlug;
+  const nombres = new Set(
+    [ficha.displayName, aseguradoraRealDe(ficha)?.name]
+      .filter((nombre): nombre is string => nombre !== undefined)
+      .map(nombreComparable),
+  );
+  return ASEGURADORAS.findIndex(
+    (a) => nombres.has(nombreComparable(a.name)) || nombres.has(nombreComparable(a.legalName)),
+  );
+}
+
+/** Un número estable a partir de un texto: el mismo slug da siempre el mismo. */
+function semilla(texto: string): number {
+  return Number.parseInt(uuid(texto).slice(0, 8), 16);
+}
+
+/** Palabras que no distinguen a una aseguradora de otra en su código. */
+const PALABRAS_GENERICAS = new Set([
+  's', 'a', 'y', 'de', 'la', 'del', 'seguros', 'reaseguros', 'compania', 'empresa',
+  'generales', 'fianzas', 'personales',
+]);
+
+/** «bisa-seguros-y-reaseguros-s-a» → «BISA»; «seguros-illimani-s-a-…» → «ILLIMANI». */
+function codigoDeAseguradora(slug: string): string {
+  const palabras = slug.split('-').filter((palabra) => !PALABRAS_GENERICAS.has(palabra));
+  return (palabras.slice(0, 2).join('-') || 'ASEG').toUpperCase();
+}
+
+/** Un importe redondeado a la decena, con dos decimales, como lo escribe la base. */
+function aDecena(monto: number): string {
+  return (Math.round(monto / 10) * 10).toFixed(2);
+}
+
+/**
+ * **El catálogo de ejemplo de una aseguradora del directorio sin catálogo
+ * sembrado** (29/09/2026).
+ *
+ * «En el directorio al ir a una aseguradora no cargan sus productos»: de las
+ * 21 fichas del directorio, sólo Seguros Andina y La Vitalicia tenían planes;
+ * las otras 19 —las reales de la planilla del propietario— abrían vacías, y el
+ * mercado de seguros parecía no existir.
+ *
+ * Se arma de la ficha, siempre igual para el mismo slug: ids con `uuid()`,
+ * código de la aseguradora sacado del slug y primas que dependen de él. Quien
+ * cubre salud ofrece tres planes de salud; una compañía de seguros generales y
+ * fianzas —que según la planilla no cubre salud— ofrece accidentes personales,
+ * que es lo que esas compañías le venden a una persona. **Son planes de ejemplo**, como el resto de la maqueta:
+ * los nombres son genéricos a propósito para no atribuirle a una compañía real
+ * un producto que no tiene, y no lleva canales de contacto ni matrícula del
+ * regulador por lo mismo.
+ */
+function aseguradoraDeLaFicha(ficha: VitrinaSimulada): AseguradoraDelCatalogo {
+  const real = aseguradoraRealDe(ficha);
+  const cubreSalud = real?.coversHealth ?? ficha.categoria?.code !== 'seguros-generales';
+  const codigo = codigoDeAseguradora(ficha.slug);
+  // La prima base se mueve de a 15 Bs entre compañías: comparar dos
+  // aseguradoras con los mismos precios al centavo no enseñaría nada.
+  const paso = semilla(`prima-${ficha.slug}`) % 7;
+  const planes: readonly (readonly [string, string, number])[] = cubreSalud
+    ? [
+        [`${codigo}-SALUD-PLUS`, 'Plan Salud Plus', (240 + paso * 15) * 1.8],
+        [`${codigo}-SALUD-ESENCIAL`, 'Plan Salud Esencial', 240 + paso * 15],
+        [`${codigo}-SALUD-FAMILIAR`, 'Plan Familiar', (240 + paso * 15) * 2.6],
+      ]
+    : [
+        [`${codigo}-AP-PLUS`, 'Accidentes Personales Plus', 90 + paso * 5],
+        [`${codigo}-AP-INDIVIDUAL`, 'Accidentes Personales Individual', 50 + paso * 5],
+      ];
+  return {
+    id: uuid(`carrier-${ficha.slug}`),
+    carrierCode: codigo,
+    legalName: real?.name ?? ficha.displayName,
+    name: ficha.displayName,
+    regulatorIdentifier: null,
+    isPublic: false,
+    whatsapp: null,
+    callCenter: null,
+    supportEmail: null,
+    fichas: [ficha.slug],
+    ramo: cubreSalud ? 'SALUD' : 'ACCIDENTES',
+    planes: planes.map(([code, name]) => [code, name]),
+    primas: Object.fromEntries(planes.map(([code, , prima]) => [code, aDecena(prima)])),
+  };
+}
+
+/**
+ * Los brokers de una aseguradora del catálogo, con el slug de su chat.
+ *
+ * Una armada para su ficha no figura en `carriers` de ningún corredor, así
+ * que se le asigna uno, siempre el mismo para el mismo slug. Sólo entre los
+ * independientes: «Andina Corredores» trabaja sólo con Seguros Andina, y
+ * ofrecerlo en la ficha de otra aseguradora sería contradecir su tarjeta.
+ */
+function brokersDelMercado(indice: number, slug: string) {
+  const conChat = (corredor: (typeof CORREDORES)[number]) => ({
+    ...resumenDeCorredor(corredor, CORREDORES.indexOf(corredor)),
+    chatSlug:
+      CORREDORES_CON_PERFIL.find((p) => p.brokerCode === corredor.brokerCode)?.slug ?? null,
+  });
+  if (indice >= 0) {
+    return CORREDORES.filter((corredor) => corredor.carriers.includes(indice)).map(conChat);
+  }
+  const independientes = CORREDORES.filter((corredor) => corredor.independent);
+  return [conChat(independientes[semilla(`broker-${slug}`) % independientes.length]!)];
+}
+
 export function registrarSeguros(router: MockRouter): void {
   // El sobre `{ carriers }` no es decorativo: `InsuranceClient.listCarrierCatalog`
   // mapea `body.carriers`, y devolver el array pelado le dejaba `undefined`.
@@ -818,6 +1068,13 @@ export function registrarSeguros(router: MockRouter): void {
       plans: a.planes.map(([code, name]) => ({ id: uuid(`plan-${code}`), code, name })),
     })),
   }));
+
+  // La ficha del profesional: con qué aseguradoras trabaja (su red y planes).
+  router.get('/practitioners/:id/insurance-carriers', ({ params }) => {
+    const practitioner = profesionalPorId(params['id']!);
+    if (practitioner === undefined) return notFound('Profesional no encontrado');
+    return { items: carriersOfPractitioner(practitioner.insurerNetworks ?? []) };
+  });
 
   router.get('/practitioners/:id/insurance-networks', ({ params }) => {
     const items = redesDelProfesional(params['id']!);
@@ -840,33 +1097,29 @@ export function registrarSeguros(router: MockRouter): void {
       : conPermiso(carrier, request);
   });
 
-  // La vitrina de una aseguradora para el paciente (P46): se busca por el slug
+  // La vitrina de una aseguradora para el paciente (P48): se busca por el slug
   // de su ficha pública, que es lo que trae el directorio. Lee el MISMO
   // catálogo que administra la aseguradora —lo que ella corrige en su consola
   // es lo que ve el paciente— y, si no lo administró todavía, el sembrado.
+  // Una ficha sin catálogo sembrado recibe el de ejemplo: ninguna tarjeta del
+  // directorio abre una página sin productos.
   router.get('/insurance-marketplace/insurers/:slug', ({ params }) => {
     const ficha = vitrinas
       .todos()
       .find((vitrina) => vitrina.slug === params['slug'] && vitrina.kind === 'INSURER');
     if (ficha === undefined) return notFound('Aseguradora no encontrada');
-    const indice = ASEGURADORAS.findIndex((a) => a.name === ficha.displayName);
-    // Tiene ficha pública pero no catálogo cargado: no es un error.
-    if (indice < 0) return { carrier: null, brokers: [] };
+    const indice = indiceDelCatalogo(ficha);
+    const brokers = brokersDelMercado(indice, ficha.slug);
+    if (indice < 0) {
+      // Sin catálogo sembrado: el de ejemplo, armado de la ficha. El índice
+      // sólo mueve la fecha de alta y el tamaño de la red.
+      const sintetica = aseguradoraDeLaFicha(ficha);
+      const carrier = detalleDeAseguradora(sintetica, semilla(ficha.slug) % 10);
+      return { carrier: { ...carrier, canAdminister: false }, brokers };
+    }
     const aseguradora = ASEGURADORAS[indice]!;
     const carrier =
       catalogoAdministrable.get(aseguradora.id) ?? detalleDeAseguradora(aseguradora, indice);
-    const brokers = CORREDORES.flatMap((corredor, i) =>
-      corredor.carriers.includes(indice)
-        ? [
-            {
-              ...resumenDeCorredor(corredor, i),
-              chatSlug:
-                CORREDORES_CON_PERFIL.find((p) => p.brokerCode === corredor.brokerCode)?.slug ??
-                null,
-            },
-          ]
-        : [],
-    );
     return { carrier: { ...carrier, canAdminister: false }, brokers };
   });
 
@@ -919,7 +1172,8 @@ export function registrarSeguros(router: MockRouter): void {
     const benefit = {
       id,
       category: concepto(datos.benefitCategoryConceptId ?? ''),
-      service: datos.serviceConceptId === undefined ? null : concepto(datos.serviceConceptId),
+      service:
+        datos.serviceConceptId === undefined ? null : servicioDeClausula(datos.serviceConceptId),
       coveragePercent: datos.coveragePercent ?? null,
       copayAmount: datos.copayAmount ?? null,
       deductibleAmount: datos.deductibleAmount ?? null,
@@ -1011,6 +1265,43 @@ export function registrarSeguros(router: MockRouter): void {
    * plan. Reemplazo completo de un solo valor, como el resto de las
    * mutaciones económicas del catálogo.
    */
+  /* Editar y dar de baja un producto seguro: **sólo maqueta**. La API real no
+     tiene todavía `PUT` ni `DELETE /insurance-plans/:planId`. */
+  router.put('/insurance-plans/:planId', (request) => {
+    if (!administraCatalogo(request)) return forbidden();
+    const match = localizarPlan(request.params['planId']!);
+    if (match === undefined) return notFound('Plan no encontrado');
+    const datos = cuerpo<{
+      planCode: string;
+      name: string;
+      effectiveFrom: string | null;
+      effectiveTo: string | null;
+    }>(request);
+    const plans = match.product.plans.map((plan) =>
+      plan.id === match.plan.id
+        ? {
+            ...plan,
+            planCode: datos.planCode ?? plan.planCode,
+            name: datos.name ?? plan.name,
+            effectiveFrom: datos.effectiveFrom ?? null,
+            effectiveTo: datos.effectiveTo ?? null,
+          }
+        : plan,
+    );
+    actualizarProducto(match.carrier, match.product, { plans });
+    return { ok: true };
+  });
+
+  router.delete('/insurance-plans/:planId', (request) => {
+    if (!administraCatalogo(request)) return forbidden();
+    const match = localizarPlan(request.params['planId']!);
+    if (match === undefined) return notFound('Plan no encontrado');
+    actualizarProducto(match.carrier, match.product, {
+      plans: match.product.plans.filter((plan) => plan.id !== match.plan.id),
+    });
+    return noContent();
+  });
+
   router.put('/insurance-plans/:planId/premium', (request) => {
     if (!administraCatalogo(request)) return forbidden();
     const match = localizarPlan(request.params['planId']!);

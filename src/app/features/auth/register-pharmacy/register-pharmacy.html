@@ -1,0 +1,227 @@
+<!-- Un selector compartido para cada documento; sube de verdad y guarda el `fileId`. -->
+<ng-template #bloqueDocumento let-clave>
+  <app-dropzone-pdf
+    [uploader]="subirDocumento"
+    [label]="etiquetaDeDocumento(clave)"
+    [required]="false"
+    [testId]="'registro-farmacia-doc-' + clave"
+    [documentoInicial]="documentoInicialDe(clave)"
+    (fileIdChange)="registrarDocumento(clave, $event)"
+    (uploaded)="recordarDocumento(clave, $event)"
+  />
+</ng-template>
+
+<app-auth-split
+  claim="Sumá tu farmacia a la red"
+  tagline="Publicá tu catálogo, recibí pedidos con receta y atendé desde un solo lugar."
+  contentWidth="full"
+>
+  <div class="registro-conjunto" [class.registro-conjunto--solo]="registered()">
+    <div class="registro">
+      @if (registered()) {
+        <div class="registro__header">
+          <h1 appAnuncio [asertivo]="false" class="registro__title" data-testid="registro-farmacia-exito">
+            Tu cuenta está lista
+          </h1>
+          <p class="registro__subtitle">
+            Ya podés entrar con el correo del representante legal y la contraseña que elegiste.
+            @if (verificationSent()) {
+              Te mandamos un correo para verificar tu dirección; podés hacerlo cuando quieras, no hace
+              falta para usar tu cuenta.
+            }
+            Tu farmacia queda pendiente de aprobación: mientras la plataforma no la apruebe, no aparece
+            en las búsquedas de pacientes.
+          </p>
+        </div>
+        <button
+          app-button
+          variant="primary"
+          size="lg"
+          class="registro__submit"
+          data-testid="registro-farmacia-ir-login"
+          (clicked)="goToLogin()"
+        >
+          Ir a iniciar sesión
+        </button>
+      } @else {
+        <div class="registro__header">
+          <h1 class="registro__title">Registrá tu farmacia</h1>
+          <p class="registro__subtitle">
+            Necesitamos lo básico para crear tu cuenta. Podés volver atrás en cualquier paso, y
+            completar el resto más adelante desde la Ficha de tu farmacia.
+          </p>
+        </div>
+
+        @if (errorMessage(); as mensaje) {
+          <app-alert appAnuncio tone="error" class="registro__alert" data-testid="registro-farmacia-error">{{
+            mensaje
+          }}</app-alert>
+        }
+
+        <div class="registro__body">
+          <app-paginated-form
+            data-testid="registro-form-farmacia"
+            [paginas]="paginas()"
+            [form]="form"
+            label="Registrar farmacia"
+            submitLabel="Crear cuenta de la farmacia"
+            [iconOnlyNav]="true"
+            [pending]="isSubmitting()"
+            (pasoVisible)="recordarPaso($event)"
+            (rechazada)="alRechazarPagina($event)"
+            (enviado)="submit()"
+          >
+            @for (clave of clavesDeDocumento; track clave) {
+              <ng-template [appCampoPersonalizado]="clave">
+                <ng-container [ngTemplateOutlet]="bloqueDocumento" [ngTemplateOutletContext]="{ $implicit: clave }" />
+              </ng-template>
+            }
+
+            <ng-template appCampoPersonalizado="legalRepName">
+              <app-campos-de-nombre
+                [grupo]="form.controls.legalRepName"
+                [obligatorio]="true"
+                prefijoTestId="registro-farmacia-representante"
+              />
+            </ng-template>
+            <ng-template appCampoPersonalizado="generalManagerName">
+              <app-campos-de-nombre
+                [grupo]="form.controls.generalManagerName"
+                prefijoTestId="registro-farmacia-gerente-general"
+              />
+            </ng-template>
+            <ng-template appCampoPersonalizado="commercialManagerName">
+              <app-campos-de-nombre
+                [grupo]="form.controls.commercialManagerName"
+                prefijoTestId="registro-farmacia-gerente-comercial"
+              />
+            </ng-template>
+            <ng-template appCampoPersonalizado="marketingManagerName">
+              <app-campos-de-nombre
+                [grupo]="form.controls.marketingManagerName"
+                prefijoTestId="registro-farmacia-gerente-marketing"
+              />
+            </ng-template>
+
+            <ng-template appCampoPersonalizado="gpsCentral">
+              @if (direccionPorReescribir()) {
+                <!-- D-06: tocar el mapa vació lo escrito; se dice junto al campo y se
+                     anuncia sin robar el foco, que sigue en el mapa. -->
+                <app-alert
+                  appAnuncio
+                  [asertivo]="false"
+                  [enfocar]="false"
+                  tone="info"
+                  data-testid="registro-farmacia-direccion-reescribir"
+                >
+                  {{ avisoReescribir }}
+                </app-alert>
+              }
+              <app-ubicacion-picker
+                pinId="farmacia-central"
+                etiquetaConfirmada="Tu farmacia"
+                etiquetaQuitar="Quitar la ubicación de la central"
+                etiquetaMapa="La ubicación de tu farmacia en el mapa"
+                [ids]="idsUbicacionCentral"
+                [inicial]="gpsCentral()"
+                (confirmado)="gpsCentral.set($event)"
+                (puntoElegido)="vaciarDireccionPorElMapa()"
+              />
+            </ng-template>
+
+            <!-- Las sucursales. Cada una trae su propio mapa, con su propio pin
+                 y su propia confirmación. -->
+            <ng-template appCampoPersonalizado="sucursales">
+              <div class="farmacia-sucursales">
+                @for (sucursal of sucursales(); track sucursal.id; let i = $index) {
+                  <section class="farmacia-sucursal">
+                    <header class="farmacia-sucursal__cabecera">
+                      <h3 class="farmacia-sucursal__titulo">Sucursal {{ i + 1 }}</h3>
+                      <button
+                        app-button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        [iconOnly]="true"
+                        [attr.aria-label]="'Quitar la sucursal ' + (i + 1)"
+                        [appTooltip]="'Quitar la sucursal ' + (i + 1)"
+                        [attr.data-testid]="'registro-farmacia-quitar-' + sucursal.id"
+                        (clicked)="quitarSucursal(sucursal.id)"
+                      >
+                        <app-nav-icon name="remove" />
+                      </button>
+                    </header>
+
+                    <app-form-field [label]="'Nombre de la sucursal ' + (i + 1)">
+                      <app-input
+                        [testId]="'registro-farmacia-' + sucursal.id + '-nombre'"
+                        placeholder="Sucursal Equipetrol"
+                        [value]="sucursal.nombre"
+                        (valueChange)="escribirNombreDeSucursal(sucursal.id, $event)"
+                      />
+                    </app-form-field>
+
+                    <app-form-field [label]="'Dirección de la sucursal ' + (i + 1)">
+                      <app-input
+                        [testId]="'registro-farmacia-' + sucursal.id + '-direccion'"
+                        placeholder="Av. San Martín 456"
+                        [value]="sucursal.direccion"
+                        (valueChange)="escribirDireccionDeSucursal(sucursal.id, $event)"
+                      />
+                    </app-form-field>
+                    @if (sucursalPorReescribir(sucursal)) {
+                      <app-alert
+                        appAnuncio
+                        [asertivo]="false"
+                        [enfocar]="false"
+                        tone="info"
+                        [attr.data-testid]="'registro-farmacia-' + sucursal.id + '-direccion-reescribir'"
+                      >
+                        {{ avisoReescribir }}
+                      </app-alert>
+                    }
+
+                    <app-ubicacion-picker
+                      [pinId]="sucursal.id"
+                      etiquetaConfirmada="Esta sucursal"
+                      etiquetaQuitar="Quitar la ubicación de esta sucursal"
+                      etiquetaMapa="La ubicación de esta sucursal en el mapa"
+                      [ids]="idsDeSucursal(sucursal.id)"
+                      (confirmado)="fijarGpsDeSucursal(sucursal.id, $event)"
+                      (puntoElegido)="vaciarDireccionDeSucursalPorElMapa(sucursal.id)"
+                    />
+                  </section>
+                } @empty {
+                  <p class="farmacia-sucursales__vacio">
+                    Todavía no agregaste ninguna. Si atendés en un solo local, no hace falta.
+                  </p>
+                }
+
+                <button
+                  app-button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  data-testid="registro-farmacia-agregar-sucursal"
+                  (clicked)="agregarSucursal()"
+                >
+                  + Agregar sucursal
+                </button>
+              </div>
+            </ng-template>
+          </app-paginated-form>
+        </div>
+
+        <div class="registro__footer">
+          <p class="registro__pie">
+            ¿Ya tenés cuenta? <a app-link routerLink="/auth">Iniciá sesión</a>
+          </p>
+        </div>
+      }
+    </div>
+
+    @if (!registered()) {
+      <app-registro-ayuda class="registro-conjunto__ayuda" [tarjetas]="ayudaVisible()" />
+    }
+  </div>
+</app-auth-split>

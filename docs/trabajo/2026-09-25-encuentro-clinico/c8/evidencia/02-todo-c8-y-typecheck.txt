@@ -1,0 +1,13 @@
+$ corepack yarn typecheck
+(sin errores TS; salen sólo las líneas del generador de component-index)
+
+$ grep -rn "TODO C8" src/ | wc -l   (después)
+6
+
+$ grep -rn "TODO C8" src/   (los que quedan y por qué)
+src/app/core/mock/fixtures/agenda.ts:216: * // TODO C8: reemplazar por `TIPO_CITA['APT-RECONSULTA']` cuando C0 agregue
+src/app/features/account/medical-record/history-view-model.ts:207:  // TODO C8: «quién lo confirmó» (§4 del carril) no se puede completar: el
+src/app/features/account/medical-record/history-view-model.ts:247: * // TODO C8: C3 iba a dejar `verification.reasonText` —el motivo escrito del
+src/app/features/account/medical-record/history-view-model.ts:382: * // TODO C8: cuando llegue `entries` de C1, los apartados salen de lo que la
+src/app/features/account/medical-record/history-view-model.ts:408: * // TODO C8: C2 iba a dejar `category` ya resuelta. Mientras tanto la
+src/app/shared/utils/clinical-pdf/historia-con-encuentros.ts:18:    // TODO C8: fundir estas dos secciones dentro de `bloquesDeHistoria` cuando

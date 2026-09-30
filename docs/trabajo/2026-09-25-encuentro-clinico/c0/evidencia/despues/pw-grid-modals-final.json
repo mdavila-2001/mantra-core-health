@@ -1,0 +1,45 @@
+{
+  "outcome": "FAILED",
+  "attempt": 1,
+  "failedTests": [
+    "[chromium] › playwright\\consulta-rejilla.spec.ts:131:11 › C0 · contrato de la consulta › rejilla y tres modales 390 light (11.7s)",
+    "[chromium] › playwright\\consulta-rejilla.spec.ts:131:11 › C0 · contrato de la consulta › rejilla y tres modales 390 dark (12.9s)",
+    "[chromium] › playwright\\consulta-rejilla.spec.ts:131:11 › C0 · contrato de la consulta › rejilla y tres modales 768 light (11.1s)",
+    "[chromium] › playwright\\consulta-rejilla.spec.ts:131:11 › C0 · contrato de la consulta › rejilla y tres modales 768 dark (10.9s)",
+    "[chromium] › playwright\\consulta-rejilla.spec.ts:131:11 › C0 · contrato de la consulta › rejilla y tres modales 1024 light (11.9s)",
+    "[chromium] › playwright\\consulta-rejilla.spec.ts:131:11 › C0 · contrato de la consulta › rejilla y tres modales 1024 dark (13.1s)",
+    "[chromium] › playwright\\consulta-rejilla.spec.ts:131:11 › C0 · contrato de la consulta › rejilla y tres modales 1440 light (15.4s)",
+    "[chromium] › playwright\\consulta-rejilla.spec.ts:131:11 › C0 · contrato de la consulta › rejilla y tres modales 1440 dark (16.2s)",
+    "[chromium] › playwright\\consulta-rejilla.spec.ts:131:11 › C0 · contrato de la consulta › rejilla y tres modales 1920 light (13.6s)",
+    "[chromium] › playwright\\consulta-rejilla.spec.ts:131:11 › C0 · contrato de la consulta › rejilla y tres modales 1920 dark (16.1s)"
+  ],
+  "attempts": [
+    {
+      "attempt": 1,
+      "outcome": "FAILED",
+      "reason": "fallo sin evidencia de infraestructura; no se reintenta",
+      "code": 1,
+      "signal": null,
+      "pid": 8128,
+      "log": "D:\\Trabajos Secundarios\\Mantra Core Technologies\\wt-clinica-c0\\artifacts\\pw-guard\\20260925-200744-intento-1.log",
+      "cleanupConfirmed": true,
+      "failedTests": [
+        "[chromium] › playwright\\consulta-rejilla.spec.ts:131:11 › C0 · contrato de la consulta › rejilla y tres modales 390 light (11.7s)",
+        "[chromium] › playwright\\consulta-rejilla.spec.ts:131:11 › C0 · contrato de la consulta › rejilla y tres modales 390 dark (12.9s)",
+        "[chromium] › playwright\\consulta-rejilla.spec.ts:131:11 › C0 · contrato de la consulta › rejilla y tres modales 768 light (11.1s)",
+        "[chromium] › playwright\\consulta-rejilla.spec.ts:131:11 › C0 · contrato de la consulta › rejilla y tres modales 768 dark (10.9s)",
+        "[chromium] › playwright\\consulta-rejilla.spec.ts:131:11 › C0 · contrato de la consulta › rejilla y tres modales 1024 light (11.9s)",
+        "[chromium] › playwright\\consulta-rejilla.spec.ts:131:11 › C0 · contrato de la consulta › rejilla y tres modales 1024 dark (13.1s)",
+        "[chromium] › playwright\\consulta-rejilla.spec.ts:131:11 › C0 · contrato de la consulta › rejilla y tres modales 1440 light (15.4s)",
+        "[chromium] › playwright\\consulta-rejilla.spec.ts:131:11 › C0 · contrato de la consulta › rejilla y tres modales 1440 dark (16.2s)",
+        "[chromium] › playwright\\consulta-rejilla.spec.ts:131:11 › C0 · contrato de la consulta › rejilla y tres modales 1920 light (13.6s)",
+        "[chromium] › playwright\\consulta-rejilla.spec.ts:131:11 › C0 · contrato de la consulta › rejilla y tres modales 1920 dark (16.1s)"
+      ],
+      "completedTests": 10,
+      "assertionFailure": false,
+      "durationSeconds": 164.77
+    }
+  ],
+  "durationSeconds": 165.02,
+  "exitCode": 1
+}

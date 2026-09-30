@@ -1,17 +1,13 @@
 @if (horas().length === 0) {
   <p class="grilla__vacio">Todavía no publicaste horarios.</p>
 } @else {
-  <div
-    class="grilla"
-    role="group"
-    [attr.aria-label]="conFechas() ? rotuloDeSemana() : 'Tu horario semanal'"
-  >
+  <div class="grilla">
     @if (conFechas()) {
       <p class="grilla__semana">{{ rotuloDeSemana() }}</p>
     }
-    <p class="grilla__caption">
-      Tus horas de atención. Las resaltadas son las que atendés; pasá el mouse por una franja para
-      ver su detalle.
+    <p class="grilla__caption" [id]="ayudaId">
+      Tus horas de atención. Las resaltadas son las que atendés; pasá el mouse por una franja o
+      recorré la grilla con las flechas para ver su detalle.
     </p>
 
     <!-- Una grilla de varias columnas no entra en un teléfono: scrollea dentro
@@ -19,27 +15,74 @@
     <div class="grilla__scroll" #caja>
       <!-- La misma cuadrícula CSS para la cabecera y el cuerpo: la primera
            columna es el carril de las horas, y las demás, un día cada una. -->
+      <!-- `role="grid"`: la cabecera y la capa de celdas de abajo son sus
+           filas; el carril y las columnas dibujadas quedan `aria-hidden`
+           porque dicen lo mismo con forma y color. -->
       <div
         class="grilla__tabla"
+        role="grid"
+        aria-readonly="true"
+        [attr.aria-describedby]="ayudaId"
+        data-testid="schedule-grid"
+        [attr.aria-label]="conFechas() ? rotuloDeSemana() : 'Tu horario semanal'"
+        [attr.aria-rowcount]="filas().length + 1"
+        [attr.aria-colcount]="8"
         [style.grid-template-columns]="columnas().plantilla"
         [style.--con-atencion]="columnas().conAtencion"
         [style.--vacios]="columnas().vacios"
       >
         <!-- ─── Cabecera: el día y, en la semana en curso, su fecha ────── -->
-        <div class="grilla__esquina" aria-hidden="true"></div>
-        @for (dia of dias(); track dia.numero) {
-          <div
-            class="grilla__dia"
-            [class.grilla__dia--vacio]="diaVacio(dia.numero)"
-            [class.grilla__dia--hoy]="dia.esHoy"
-            [attr.aria-current]="dia.esHoy ? 'date' : null"
-          >
-            <span class="grilla__dia-nombre">{{ dia.corto }}</span>
-            @if (conFechas()) {
-              <span class="grilla__dia-numero">{{ dia.fecha.getDate() }}</span>
-            }
+        <div class="grilla__fila" role="row">
+          <div class="grilla__esquina" role="columnheader">
+            <span class="solo-lectores">Hora</span>
           </div>
-        }
+          @for (dia of dias(); track dia.numero) {
+            <div
+              class="grilla__dia"
+              role="columnheader"
+              [class.grilla__dia--vacio]="diaVacio(dia.numero)"
+              [class.grilla__dia--hoy]="dia.esHoy"
+              [attr.aria-current]="dia.esHoy ? 'date' : null"
+            >
+              <span class="grilla__dia-nombre" aria-hidden="true">{{ dia.corto }}</span>
+              @if (conFechas()) {
+                <span class="grilla__dia-numero" aria-hidden="true">{{ dia.fecha.getDate() }}</span>
+              }
+              <span class="solo-lectores">{{ dia.largo }}{{ conFechas() ? ' ' + dia.fecha.getDate() : '' }}</span>
+            </div>
+          }
+        </div>
+
+        <!-- ─── La capa accesible: una fila por hora, una celda por día ───
+             Transparente y sin puntero (`pointer-events: none`): el mouse
+             sigue tocando los bloques de abajo como siempre. Una sola celda
+             lleva `tabindex="0"` (roving tabindex); las flechas mueven esa
+             parada. Ver «Para el teclado y el lector» en el componente. -->
+        <div
+          class="grilla__foco"
+          role="rowgroup"
+          [style.grid-template-columns]="columnas().dias"
+        >
+          @for (fila of filas(); track fila.hora) {
+            <div class="grilla__fila" role="row">
+              <span class="solo-lectores" role="rowheader">{{ rotulo(fila.hora) }}</span>
+              @for (celda of fila.celdas; track celda.id) {
+                <div
+                  class="grilla__celda-foco"
+                  role="gridcell"
+                  data-testid="schedule-grid-cell"
+                  [attr.data-celda]="celda.id"
+                  [attr.tabindex]="esActiva(celda) ? 0 : -1"
+                  [attr.aria-label]="celda.etiqueta"
+                  [attr.aria-describedby]="celdaConGlobo() === celda.id ? 'grilla-globo' : null"
+                  (focus)="alEnfocarCelda($event, celda)"
+                  (blur)="cerrarGlobo()"
+                  (keydown)="alTeclearCelda($event, celda)"
+                ></div>
+              }
+            </div>
+          }
+        </div>
 
         <!-- ─── Cuerpo: filas de hora de fondo, bloques por encima ───────── -->
         <div class="grilla__horas" aria-hidden="true">
@@ -48,7 +91,7 @@
           }
         </div>
         @for (dia of dias(); track dia.numero) {
-          <div class="grilla__columna" [class.grilla__columna--hoy]="dia.esHoy">
+          <div class="grilla__columna" [class.grilla__columna--hoy]="dia.esHoy" aria-hidden="true">
             @for (h of horas(); track h) {
               <div
                 class="grilla__celda"
@@ -57,21 +100,19 @@
               ></div>
             }
             <!-- El color es la mitad: el bloque escribe sus horas y lleva el
-                 día en palabras para quien no distingue el tono. Es enfocable
-                 para que el globo de detalle también se abra con teclado. -->
+                 día en palabras para quien no distingue el tono. Ya no es una
+                 parada de `Tab`: el teclado recorre la capa de celdas de
+                 arriba, que abre el mismo globo con el foco. -->
             @for (bloque of bloquesDe(dia.numero); track bloque.id) {
               <div
                 class="grilla__bloque"
                 data-testid="horario-bloque"
-                tabindex="0"
                 [style.top.%]="bloque.top"
                 [style.height.%]="bloque.alto"
                 [attr.aria-label]="bloque.etiqueta"
                 [attr.aria-describedby]="globo()?.bloque === bloque ? 'grilla-globo' : null"
                 (mouseenter)="abrirGlobo($event, bloque, dia)"
                 (mouseleave)="cerrarGlobo()"
-                (focus)="abrirGlobo($event, bloque, dia)"
-                (blur)="cerrarGlobo()"
               >
                 <span class="grilla__bloque-horas">{{ bloque.desde }} – {{ bloque.hasta }}</span>
                 <span class="grilla__bloque-detalle">{{ bloque.detalle }}</span>

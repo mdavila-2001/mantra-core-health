@@ -1,0 +1,18 @@
+
+✗ check-doc-links — 12 enlace(s) roto(s) de 889
+
+  docs/tareas/subtarea-2.4-transparencia-copagos/verification.md → destino inexistente: ../../../artifacts/patient-coverage-copays/final-mocks/coverage-1440.png
+  docs/tareas/subtarea-2.4-transparencia-copagos/verification.md → destino inexistente: ../../../artifacts/patient-coverage-copays/final-mocks/coverage-390.png
+  docs/tareas/subtarea-2.4-transparencia-copagos/verification.md → destino inexistente: ../../../artifacts/patient-coverage-copays/final-mocks/pharmacy-partial-1440.png
+  docs/tareas/subtarea-2.4-transparencia-copagos/verification.md → destino inexistente: ../../../artifacts/patient-coverage-copays/final-mocks/pharmacy-partial-390.png
+  docs/tareas/subtarea-2.4-transparencia-copagos/verification.md → destino inexistente: ../../../artifacts/patient-coverage-copays/final-mocks/diagnostics-1440.png
+  docs/tareas/subtarea-2.4-transparencia-copagos/verification.md → destino inexistente: ../../../artifacts/patient-coverage-copays/final-mocks/diagnostics-390.png
+  docs/tareas/subtarea-2.4-transparencia-copagos/verification.md → destino inexistente: ../../../artifacts/patient-coverage-copays/final-real-profile/coverage-1440.png
+  docs/tareas/subtarea-2.4-transparencia-copagos/verification.md → destino inexistente: ../../../artifacts/patient-coverage-copays/final-real-profile/coverage-390.png
+  docs/tareas/subtarea-2.4-transparencia-copagos/verification.md → destino inexistente: ../../../artifacts/patient-coverage-copays/final-real-profile/traffic-1440.json
+  docs/tareas/subtarea-2.4-transparencia-copagos/verification.md → destino inexistente: ../../../artifacts/patient-coverage-copays/final-real-profile/traffic-390.json
+  docs/trabajo/2026-09-25-marcelo-calidad/PLAN.md → destino inexistente: ../../../../../AlovidaPromptManager/repartos/2026-09-25/PromptNoche/Marcelo/Noche-CargaMasiva.CalidadE2EVisualYGates/E2EPlaywrightCapturasDobleRevisionGatesYSegundoPerfil.md
+  docs/trabajo/2026-09-25-marcelo-calidad/REPORTE.md → destino inexistente: ../../../AlovidaPromptManager/repartos/2026-09-25/PromptNoche/Marcelo/Marcelo-Daily-Noche-2026-09-25.md
+
+
+EXIT_CODE: 1

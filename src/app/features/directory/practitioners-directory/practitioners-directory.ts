@@ -8,7 +8,7 @@ import {
   untracked,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { catchError, forkJoin, map, of, switchMap, type Observable } from 'rxjs';
 
 import { ProfilesClient } from '../../../core/data-access/profiles/profiles.client';
@@ -33,6 +33,7 @@ import { SpecialtyIcon } from '../../../shared/components/atoms/specialty-icon/s
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { inicialesDe } from '../../../shared/text/iniciales';
+import { fotoDeDirectorio, fotoDeEspecialidad } from '../../../shared/utils/foto-de-directorio';
 import { subtituloProfesional } from '../subtitulo-profesional';
 
 /** Una especialidad en la portada: su nombre y cuánta gente hay detrás. */
@@ -154,9 +155,12 @@ const SIN_ESPECIALIDAD = 'Sin especialidad registrada';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PractitionersDirectory {
+  protected readonly fotoDe = fotoDeEspecialidad;
+
   private readonly profiles = inject(ProfilesClient);
   private readonly terminology = inject(TerminologyClient);
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
 
   /**
    * La especialidad elegida, leída de la URL.
@@ -193,6 +197,9 @@ export class PractitionersDirectory {
   protected readonly tarjetas = computed<readonly TarjetaDeEspecialidad[]>(
     () => dataOf(this.recuento()) ?? [],
   );
+
+  /** La portada también navega una sola vez: cuatro toques no son cuatro cargas. */
+  protected readonly navegandoEspecialidad = signal<string | null>(null);
 
   protected readonly sustantivo = SUSTANTIVO;
 
@@ -322,6 +329,35 @@ export class PractitionersDirectory {
 
   protected recargar(): void {
     this.cargar();
+  }
+
+  /**
+   * Cambia de portada a especialidad sin dejar que el enlace nativo y el
+   * router disparen dos navegaciones distintas. Los modificadores conservan
+   * su significado de enlace (abrir pestaña, ventana o descarga de historial).
+   */
+  protected abrirEspecialidad(evento: MouseEvent, conceptId: string): void {
+    if (
+      evento.button !== 0 ||
+      evento.ctrlKey ||
+      evento.metaKey ||
+      evento.shiftKey ||
+      evento.altKey
+    ) {
+      return;
+    }
+    evento.preventDefault();
+    if (this.navegandoEspecialidad() !== null) {
+      return;
+    }
+    this.navegandoEspecialidad.set(conceptId);
+    void this.router
+      .navigate([], {
+        relativeTo: this.route,
+        queryParams: { especialidad: conceptId },
+        queryParamsHandling: 'merge',
+      })
+      .finally(() => this.navegandoEspecialidad.set(null));
   }
 
   private cargar(): void {
@@ -635,6 +671,7 @@ function toResultado(
       fragment: ANCLA_HORARIOS,
     },
     figureText: inicialesDe(nombre),
+    photoUrl: fotoDeDirectorio('medico', fila.profileId),
     ...(subtitulo === undefined ? {} : { subtitle: subtitulo }),
     meta,
     seals: sellos,

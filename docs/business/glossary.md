@@ -51,6 +51,28 @@ Cómo se comprueba: entrar como paciente y recorrer sus pantallas buscando
 uuids, mayúsculas con guion bajo, «Código», «Roles», «Organización» y «sistema».
 Es la lista que Justin convierte en E2E (J5).
 
+## Clínica — nombres únicos
+
+Contrato doctor–paciente fijado por C0 (ADR-0016). Identificadores contractuales existentes se conservan; la interfaz usa una denominación.
+
+| En la interfaz | Código y contrato | Se retira |
+|---|---|---|
+| Encuentro | `Encounter`, `encounterId`; `clinical.encounters` | «Atención» como sinónimo nuevo de encuentro |
+| Cita | `Booking`, `bookingId`; `scheduling.appointment_bookings` | «Turno» en rótulos nuevos |
+| Nota médica | `ChartNote`, `MedicalNoteEntry`, `medical-note-block`; P39 | «Nota clínica», «Nota de la consulta», «Evolución», «Hoja en blanco» |
+| Medición | `Observation`, `observation-block`; `clinical.observations` | «Observación» como rótulo |
+| Orden de análisis: Laboratorio, Imagenología u Otro | `DiagnosticOrder`, `AnalysisCategory`, `analysis-order-block`; `clinical.service_requests`, P40 | «Estudio», «Orden médica», nombre anterior del bloque |
+| Informe | `DiagnosticReport`; `clinical.diagnostic_reports` | «Resultado» suelto; se conserva «Mis resultados» |
+| Diagnóstico: Presuntivo, Confirmado o Rechazado | `Condition`, `DiagnosisVerification`; `clinical.conditions`, P41 | «Prediagnóstico» |
+| Enfermedad activa | `diagnosisStateOf(...) === 'ACTIVE'` | «Padecimiento», «Condición» en rótulos |
+| Diagnóstico histórico | Estado `HISTORIC`; resolución o fin de vigencia | — |
+| Reconsulta | `FollowUpOrigin`, `followUpOf`, `follow-up-block`; `APT-RECONSULTA`, `ACT-FOLLOW-UP`, P42 | «Control», «Seguimiento» como nombres de esta acción |
+| Receta | `MedicationRequest`; `clinical.medication_requests` | Nombres alternativos de la prescripción |
+| Motivo | `indicationText`; P24 | «Indicación» como rótulo del motivo de la receta |
+| Motivo de la decisión | `DiagnosisVerification.reasonText` y `basedOn`; P41 | — |
+
+Nombres retirados fuera de C0 se coordinan con C7; no se autoriza un renombre transversal. UUID y códigos internos no se muestran al paciente.
+
 ## Los nueve estados del M34
 
 | Código | `status` | Qué significa | Campo obligatorio |

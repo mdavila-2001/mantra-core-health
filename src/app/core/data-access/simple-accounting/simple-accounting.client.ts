@@ -16,7 +16,7 @@ import type {
 } from './simple-accounting.types';
 
 /**
- * La contabilidad simple del doctor (P47): los tres números, las cuentas, los
+ * La contabilidad simple del doctor (P49): los tres números, las cuentas, los
  * gastos, activos y deudas con su tipo, y las transacciones debe/haber.
  *
  * Todo cuelga de `/accounting/practitioner/simple/...` y de la práctica

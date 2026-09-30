@@ -9,12 +9,13 @@ import {
 } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { Router, RouterLink } from '@angular/router';
-import { catchError, map, of, switchMap, type Observable } from 'rxjs';
+import { catchError, map, of, switchMap, timer, type Observable } from 'rxjs';
 
 import { ProfilesClient } from '@core/data-access/profiles/profiles.client';
 import { PublicDirectoryClient } from '@core/data-access/public-directory/public-directory.client';
 import { TerminologyClient } from '@core/data-access/terminology/terminology.client';
 import type { ConceptLabels } from '@core/data-access/terminology/terminology.types';
+import { TriageIaClient } from '@core/data-access/triage-ia/triage-ia.client';
 import { ZONAS_DEL_CUERPO, type ZonaDelCuerpo } from './zonas.datos';
 import { AppButton } from '@shared/components/atoms/button/button';
 import { Chip } from '@shared/components/atoms/chip/chip';
@@ -25,10 +26,12 @@ import { FormField } from '@shared/components/molecules/form-field/form-field';
 import {
   BodyMap,
   ZONAS_CON_SILUETA,
+  type SexoDeLaSilueta,
   type ZonaElegible,
 } from '@shared/components/organisms/body-map/body-map';
 
 import {
+  conceptIdDe,
   enumerar,
   explicar,
   normalizar,
@@ -43,7 +46,21 @@ import {
   TODOS_LOS_SINTOMAS,
 } from './sintomas';
 import { Dictado } from './dictado';
+import {
+  combinar,
+  lecturaVigente,
+  sintomasDeLaLectura,
+  zonasDeLaLectura,
+  type LecturaDelTexto,
+} from './lectura-ia';
 import { ultimaFrase } from './texto';
+
+/**
+ * Cuánto se espera a que la persona haga una pausa antes de preguntarle al
+ * servicio de triage. Mientras tanto el motor local ya pintó lo suyo: esto sólo
+ * evita una petición por tecla.
+ */
+const PAUSA_PARA_LEER_MS = 600;
 
 /** Tope por página del listado de profesionales. */
 const POR_PAGINA = 50;
@@ -112,6 +129,7 @@ export class SymptomCheck {
   private readonly publico = inject(PublicDirectoryClient);
   private readonly terminology = inject(TerminologyClient);
   private readonly router = inject(Router);
+  private readonly triageIa = inject(TriageIaClient);
   protected readonly dictado = inject(Dictado);
 
   constructor() {
@@ -185,6 +203,44 @@ export class SymptomCheck {
   );
 
   /**
+   * El sexo asignado al nacer del propio perfil (P-04, 2026-09-25).
+   *
+   * Se pide **al abrir**, a diferencia de las especialidades: cambia qué
+   * silueta se dibuja desde el primer instante, así que esperar a la primera
+   * tecla se vería como que la figura «cambia sola» a mitad de la pantalla.
+   * Sin sesión no se pide —no hay perfil propio que leer—, y un fallo o un
+   * perfil `INTERSEX`/`UNKNOWN` **no rompen el flujo**: se sigue mostrando la
+   * silueta neutra y la lista completa, que es mejor que arriesgar esconder
+   * un síntoma real por un dato que no se pudo confirmar.
+   */
+  private readonly sexoAlNacer = toSignal(
+    this.sinSesion() ? of(undefined) : this.leerSexoPropio(),
+    { initialValue: undefined as 'MALE' | 'FEMALE' | 'INTERSEX' | 'UNKNOWN' | undefined },
+  );
+
+  /** El sexo, recortado a lo que la silueta sabe dibujar (ver `BodyMap`). */
+  protected readonly siluetaSexo = computed<SexoDeLaSilueta | undefined>(() => {
+    const sexo = this.sexoAlNacer();
+    return sexo === 'MALE' || sexo === 'FEMALE' ? sexo : undefined;
+  });
+
+  /**
+   * Si un síntoma corresponde al sexo del propio perfil.
+   *
+   * Sin `soloParaSexo` es de cualquiera. Sin sexo conocido —`INTERSEX`,
+   * `UNKNOWN`, sin sesión o todavía sin resolver— no se filtra nada: se
+   * prefiere mostrar de más antes que esconder un síntoma real por un dato
+   * que no se pudo confirmar.
+   */
+  private sintomaVisible(sintoma: Sintoma): boolean {
+    const solo = sintoma.soloParaSexo;
+    if (solo === undefined) return true;
+    const sexo = this.siluetaSexo();
+    if (sexo === undefined) return true;
+    return solo === sexo;
+  }
+
+  /**
    * Los síntomas de alarma: los que dice el texto **y los que se tocaron**.
    *
    * Las zonas del cuerpo ofrecen «dolor de pecho» y «dificultad para respirar»
@@ -200,21 +256,91 @@ export class SymptomCheck {
   });
 
   /**
-   * Los chips: lo reconocido en el texto, menos lo quitado, más lo agregado.
+   * Lo que entendió el servicio de triage (AlovidaAIService) del último texto
+   * en el que la persona hizo una pausa, junto con ese texto.
    *
-   * El orden es el de aparición en el texto y después los agregados: ver el
-   * porqué en `reconocer`.
+   * El motor local reconoce las filas de la tabla al instante; el servicio suma
+   * lo que la tabla no tiene —«me duele la pantorrilla», «manchas en la
+   * espalda»— y ubica lo que sí tiene («hormigueo · mano izquierda»). Ver
+   * `lectura-ia.ts`.
+   *
+   * Con menos de tres letras no se pregunta nada, y así en el servidor (texto
+   * vacío) no se programa ni un temporizador. Si el servicio falla o tarda,
+   * `TriageIaClient` devuelve `null` y la pantalla sigue con lo local.
+   */
+  private readonly lecturaGuardada = toSignal(
+    toObservable(this.texto).pipe(
+      map((texto) => texto.trim()),
+      switchMap((texto) =>
+        texto.length < 3
+          ? of(null)
+          : timer(PAUSA_PARA_LEER_MS).pipe(
+              switchMap(() => this.triageIa.analizar(texto)),
+              map((lectura): LecturaDelTexto | null => (lectura === null ? null : { texto, lectura })),
+            ),
+      ),
+    ),
+    { initialValue: null },
+  );
+
+  /** La lectura del servicio que todavía vale para lo escrito. */
+  private readonly lecturaVigente = computed(() =>
+    lecturaVigente(this.lecturaGuardada(), this.texto()),
+  );
+
+  /** Los hallazgos del servicio que todavía valen para lo escrito. */
+  private readonly deLaLectura = computed(() => sintomasDeLaLectura(this.lecturaVigente()));
+
+  /**
+   * Las zonas del cuerpo de lo que se contó: la silueta las ilumina mientras
+   * la persona escribe o dicta, y las pastillas «Piel», «Ánimo» y «General»
+   * también.
+   *
+   * Manda la ubicación del servicio cuando la hay («hormigueo · mano» es la
+   * mano); si no, la primera zona de la tabla que ofrece ese síntoma.
+   */
+  protected readonly zonasMarcadas = computed<readonly string[]>(() => {
+    const delServicio = zonasDeLaLectura(this.lecturaVigente());
+    const marcadas = new Set<string>();
+    for (const sintoma of this.sintomas()) {
+      const ubicadas = delServicio.get(sintoma.id);
+      if (ubicadas !== undefined && ubicadas.length > 0) {
+        ubicadas.forEach((zona) => marcadas.add(zona));
+        continue;
+      }
+      const deLaTabla = ZONAS_DEL_CUERPO.find((zona) => zona.sintomas.includes(sintoma.id));
+      if (deLaTabla !== undefined) marcadas.add(deLaTabla.id);
+    }
+    return [...marcadas];
+  });
+
+  protected estaMarcada(idDeZona: string): boolean {
+    return this.zonasMarcadas().includes(idDeZona);
+  }
+
+  /**
+   * Los chips: lo reconocido en el texto —acá y por el servicio—, menos lo
+   * quitado, más lo agregado.
+   *
+   * El orden es el de aparición en el texto, después lo que sólo vio el
+   * servicio y al final los agregados: ver el porqué en `reconocer` y en
+   * `combinar`.
    */
   protected readonly sintomas = computed<readonly Sintoma[]>(() => {
     const quitados = this.quitados();
-    const delTexto = reconocer(this.texto()).filter((s) => !quitados.has(s.id));
+    const delTexto = combinar(reconocer(this.texto()), this.deLaLectura()).filter(
+      (s) => !quitados.has(s.id),
+    );
     const yaEstan = new Set(delTexto.map((s) => s.id));
-    return [...delTexto, ...this.agregados().filter((s) => !yaEstan.has(s.id))];
+    const todos = [...delTexto, ...this.agregados().filter((s) => !yaEstan.has(s.id))];
+    // «Salud íntima» no ofrece lo que no corresponde al sexo del propio
+    // perfil (P-04): ni por texto reconocido, ni por lo agregado a mano.
+    return todos.filter((s) => this.sintomaVisible(s));
   });
 
   /** Lo que el autocompletado ofrece para la última palabra que se escribe. */
   protected readonly sugerencias = computed(() =>
-    sugerir(ultimaFrase(this.texto()), this.sintomas()),
+    sugerir(ultimaFrase(this.texto()), this.sintomas()).filter((s) => this.sintomaVisible(s)),
   );
 
   protected readonly recomendaciones = computed<readonly Recomendacion[]>(() =>
@@ -292,7 +418,9 @@ export class SymptomCheck {
    *
    * Un `id` de la tabla de zonas que no exista allá **se ignora**: la zona
    * ofrece uno menos y la pantalla sigue en pie. Es la única forma de que dos
-   * listas convivan sin que una rompa a la otra.
+   * listas convivan sin que una rompa a la otra. Y en «Salud íntima», los que
+   * no corresponden al sexo del propio perfil tampoco se ofrecen (P-04):
+   * quien busca en la zona íntima no puede elegir ahí lo del otro sexo.
    */
   protected readonly sintomasDeLaZona = computed<readonly Sintoma[]>(() => {
     const abierta = this.zonaAbierta();
@@ -305,7 +433,8 @@ export class SymptomCheck {
     }
     return zona.sintomas
       .map((id) => TODOS_LOS_SINTOMAS.find((s) => s.id === id))
-      .filter((s): s is Sintoma => s !== undefined);
+      .filter((s): s is Sintoma => s !== undefined)
+      .filter((s) => this.sintomaVisible(s));
   });
 
   /** Abre una zona, o la cierra si ya lo estaba. */
@@ -409,22 +538,41 @@ export class SymptomCheck {
    * memoria por su chip, así que el texto alcanzaba. **Eso cambió**: ahora el
    * directorio acota por `?especialidad=<conceptId>` contra el servidor, y una
    * búsqueda de texto sólo funciona de rebote, porque el buscador matchea el
-   * encabezado del grupo.
+   * encabezado del grupo — y sin ese parámetro el directorio se queda en la
+   * portada agrupada por categoría en vez de abrir la lista.
    *
    * El identificador no cuesta una consulta: la lista de especialidades con
-   * gente ya se lee para no recomendar una vacía, y lo único que faltaba era no
-   * tirar el concepto al quedarse con el nombre.
+   * gente ya se lee para no recomendar una vacía. La búsqueda usa la misma
+   * tolerancia que decidió recomendar la especialidad ({@link conceptIdDe}):
+   * antes acá se buscaba por igualdad exacta mientras que la recomendación se
+   * filtraba con coincidencia difusa («Cardióloga» ↔ «Cardiología»), así que
+   * una especialidad podía recomendarse y no encontrar cómo enlazar — el bug
+   * era «recomienda Traumatología pero al tocarla no lleva a los
+   * traumatólogos».
    *
    * Sin identificador —sesión pública, o un nombre de la tabla de síntomas que
    * el catálogo no tiene— se cae al texto, que es como funcionaba hasta ahora:
    * peor destino, nunca una pantalla rota.
    */
   protected verProfesionales(nombre: string): void {
-    const conceptId = this.especialidadesDisponibles().get(normalizar(nombre));
+    const conceptId = conceptIdDe(nombre, this.especialidadesDisponibles());
     void this.router.navigate([this.rutaDeResultados()], {
       queryParams:
         conceptId === undefined || conceptId === '' ? { q: nombre } : { especialidad: conceptId },
     });
+  }
+
+  /**
+   * El sexo asignado al nacer del propio perfil, tolerante a fallo.
+   *
+   * Sólo se llama con sesión (ver {@link sexoAlNacer}): sin ella no hay
+   * `/profiles/patients/me` que leer.
+   */
+  private leerSexoPropio(): Observable<'MALE' | 'FEMALE' | 'INTERSEX' | 'UNKNOWN' | undefined> {
+    return this.profiles.getOwnPatientProfile().pipe(
+      map((perfil) => perfil.sexAtBirth),
+      catchError(() => of(undefined)),
+    );
   }
 
   /**

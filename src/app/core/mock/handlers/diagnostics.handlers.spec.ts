@@ -59,6 +59,12 @@ describe('POST /clinical/service-requests/duplicate-check', () => {
     readonly windowDays: number;
   }
 
+  it('diagnostics registra el alta trasladada sin depender de registrarClinica', () => {
+    expect(router.rutas().filter(({ method, pattern }) =>
+      method === 'POST' && pattern === '/clinical/service-requests',
+    )).toEqual([{ method: 'POST', pattern: '/clinical/service-requests' }]);
+  });
+
   it('un estudio ya liberado hace poco es duplicado', () => {
     const resultado = call<ResultadoWire>('POST', '/clinical/service-requests/duplicate-check', {
       patientProfileId: PACIENTE.id,

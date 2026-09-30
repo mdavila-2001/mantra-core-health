@@ -67,8 +67,8 @@ describe('PatientHome', () => {
     // el panel quede exactamente como estaba y `verify` siga exigiendo que no haya
     // ninguna otra petición suelta.
     await fixture?.whenStable();
-    for (const pedido of http.match((r) => r.url.startsWith('/insurance-campaigns/patient/'))) {
-      pedido.flush([]);
+    for (const pending of http.match((r) => r.url.startsWith('/insurance-campaigns/patient/'))) {
+      pending.flush([]);
     }
     http.verify();
   });
@@ -93,6 +93,29 @@ describe('PatientHome', () => {
     });
     await TestBed.compileComponents();
     fixture = TestBed.createComponent(PatientHome);
+    fixture.detectChanges();
+    await answerOwnProfile(pid === undefined ? 'without-record' : 'with-record');
+  }
+
+  /**
+   * Responde el `GET /profiles/patients/me` que pide el chequeo de síntomas.
+   *
+   * No es una lectura del panel sino de `SymptomCheck`, que va en su `@defer`:
+   * desde P-04 (2975b45f, 25/09/2026) lee el sexo al nacer del propio perfil
+   * al abrir, para elegir la silueta y qué síntomas de «Salud íntima» ofrece.
+   * Se espera a que el bloque diferido se resuelva antes de contestarla —si no,
+   * la petición aparece o no según cuánto tarde la carga— y se contesta sin
+   * `sexAtBirth`, que no filtra nada: estas pruebas no son sobre la silueta.
+   * Sin ficha de paciente el servidor responde 404, y el chequeo lo tolera.
+   */
+  async function answerOwnProfile(profile: 'with-record' | 'without-record'): Promise<void> {
+    await fixture.whenStable();
+    const request = http.expectOne((r) => r.url === '/profiles/patients/me');
+    if (profile === 'without-record') {
+      request.flush('not found', { status: 404, statusText: 'Not Found' });
+    } else {
+      request.flush({});
+    }
     fixture.detectChanges();
   }
 
@@ -389,10 +412,15 @@ describe('PatientHome', () => {
     expect(texto()).toContain('Ver y descargar');
   });
 
-  it('sin ficha de paciente no sale a la red', async () => {
+  it('sin ficha de paciente no pide turnos ni historia', async () => {
     await montar({ pid: undefined });
 
-    // El `http.verify()` del afterEach falla si algo salió a la red.
+    // El panel no sale a la red por lo suyo: sin ficha no hay turnos ni
+    // historia que leer. La única petición es la del chequeo de síntomas
+    // (`/profiles/patients/me`, ver `answerOwnProfile`), que ya se
+    // contestó; el `http.verify()` del afterEach falla si salió otra.
+    http.expectNone((r) => r.url === '/scheduling/bookings');
+    http.expectNone((r) => r.url === `/clinical/patients/${PERFIL}/summary`);
     expect(texto()).toContain('ficha de paciente');
     expect(
       (fixture.nativeElement as HTMLElement).querySelector('[data-testid="mi-salud-sin-ficha"]'),

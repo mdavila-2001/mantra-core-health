@@ -29,6 +29,7 @@ import {
 import { etiquetaDeDia, horaDelReloj } from '../../../shared/date/hora-de-chat';
 import { Avatar } from '../../../shared/components/atoms/avatar/avatar';
 import { EmptyState } from '../../../shared/components/molecules/empty-state/empty-state';
+import { ContentDialog } from '../../../shared/components/organisms/content-dialog/content-dialog';
 import { Composer } from './composer/composer';
 import { ContactPanel } from './contact-panel/contact-panel';
 import { FilePreview } from '../../../shared/components/molecules/file-preview/file-preview';
@@ -170,7 +171,7 @@ function resaltar(texto: string, termino: string): readonly TrozoDeTexto[] {
  */
 @Component({
   selector: 'app-thread',
-  imports: [Avatar, Composer, ContactPanel, EmptyState, FilePreview, RouterLink],
+  imports: [Avatar, Composer, ContactPanel, ContentDialog, EmptyState, FilePreview, RouterLink],
   templateUrl: './thread.html',
   styleUrls: ['./thread.css', './thread-capas.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -184,6 +185,7 @@ export class Thread {
 
   private readonly marco = viewChild<ElementRef<HTMLElement>>('marco');
   private readonly buscador = viewChild<ElementRef<HTMLInputElement>>('buscador');
+  private readonly forwardDialog = viewChild<ContentDialog>('forwardDialog');
 
   /** Si la vista está al pie. Arranca en `true`: un hilo se abre por el final. */
   private pegadoAbajo = true;
@@ -233,7 +235,9 @@ export class Thread {
   });
 
   /** La imagen que se está mirando a tamaño completo. */
-  protected readonly imagenAbierta = signal<string | null>(null);
+  protected readonly imagenAbierta = signal<{ readonly url: string; readonly nombre: string } | null>(
+    null,
+  );
 
   /** El mensaje al que saltó una cita, para destellarlo. */
   protected readonly destellando = signal<string | null>(null);
@@ -546,7 +550,21 @@ export class Thread {
 
   /* --- Reenviar ------------------------------------------------------------ */
 
-  protected reenviar(mensaje: MensajeDelHilo): void {
+  /**
+   * Abre la elección de destino.
+   *
+   * Antes de abrir, el foco pasa al botón «Opciones del mensaje»: el ítem
+   * «Reenviar» desaparece con el menú en el mismo ciclo en que se crea el
+   * modal, y `app-content-dialog` devuelve el foco a quien lo tenía al
+   * abrirse. Sin este paso volvería a `<body>` y el teclado arrancaría desde
+   * el principio de la página.
+   */
+  protected reenviar(mensaje: MensajeDelHilo, evento?: Event): void {
+    const item = evento?.currentTarget;
+    if (item instanceof HTMLElement) {
+      const trigger = item.closest('.hilo__menu')?.previousElementSibling;
+      if (trigger instanceof HTMLElement) trigger.focus();
+    }
     this.menuAbierto.set(null);
     this.reenviando.set(mensaje);
   }
@@ -555,27 +573,15 @@ export class Thread {
     this.reenviando.set(null);
   }
 
-  /**
-   * Cierra el reenvío sólo si el clic cayó en el fondo, no en el recuadro.
-   *
-   * Antes el recuadro paraba la propagación con un `(click)` propio, y un
-   * `(click)` sin equivalente de teclado no pasa la regla de accesibilidad
-   * —con razón: un recuadro no es un control—. Ponerle un `(keydown)` para
-   * callar al linter habría sido peor, porque también habría frenado el
-   * `Escape` que cierra desde el fondo. Se decide acá, mirando dónde cayó.
-   */
-  protected cerrarReenvioSiEsElFondo(evento: Event): void {
-    if (evento.target === evento.currentTarget) {
-      this.cancelarReenvio();
-    }
-  }
-
   protected reenviarA(conversationId: string): void {
     const mensaje = this.reenviando();
     if (mensaje === null) {
       return;
     }
     this.store.reenviar(mensaje, conversationId);
+    // Por el modal y no bajando la señal: así el foco vuelve a su origen y el
+    // scroll de la página se libera, igual que al cerrar con «Cancelar».
+    this.forwardDialog()?.close(true);
     this.reenviando.set(null);
     const destino = this.store.conversaciones().find((c) => c.id === conversationId);
     this.avisoReenvio.set(`Reenviado a ${destino === undefined ? 'la conversación' : conQuienDe(destino)}`);
@@ -821,8 +827,8 @@ export class Thread {
     }
   }
 
-  protected abrirImagen(url: string): void {
-    this.imagenAbierta.set(url);
+  protected abrirImagen(url: string, nombre: string): void {
+    this.imagenAbierta.set({ url, nombre });
   }
 
   protected cerrarImagen(): void {

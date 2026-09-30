@@ -66,6 +66,9 @@
     /* Recorta el encabezado y el pie contra la curva del panel: sin esto, sus
        fondos planos asomaban por las cuatro esquinas. */
     overflow: hidden;
+    /* Bloque contenedor de lo posicionado del encabezado y el pie (ver el
+       cuerpo, más abajo): sin esto se medía contra el `<dialog>`. */
+    position: relative;
 }
 
 /* -- El encabezado ---------------------------------------------------------
@@ -123,6 +126,17 @@
     flex: 1;
     min-block-size: 0;
     padding: var(--sp-5);
+    /* El bloque contenedor de todo lo `absolute` del contenido.
+
+       Sin él, lo posicionado que no tiene un ancestro propio —el `.sr-only`
+       de cada etiqueta obligatoria, 1 px— se medía contra el `<dialog>`, que
+       es `fixed`: quedaba cientos de píxeles por debajo del panel, el
+       `<dialog>` (con su `overflow: auto` nativo) crecía hasta alcanzarlo y
+       sacaba una SEGUNDA barra de desplazamiento. Al rodar sobre el
+       encabezado o esa barra se movía el modal entero y el pie se despegaba
+       de la pantalla (formulario médico, 28/09/2026). Acá adentro, lo
+       posicionado se recorre con el contenido y el `<dialog>` no desborda. */
+    position: relative;
     overflow-y: auto;
     overscroll-behavior: contain;
     scrollbar-width: thin;

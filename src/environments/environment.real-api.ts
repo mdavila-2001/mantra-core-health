@@ -5,10 +5,10 @@ import { environment as desarrollo } from './environment.development';
  * Entorno de desarrollo **contra la API real**, sin el backend simulado.
  *
  * Es el de desarrollo con `mockBackend` apagado y, además, **sin las demos que
- * fabrican datos**: `campaignsDemo` y `paymentDemo` en `false`. El resto
- * —`apiBaseUrl` relativo, telemetría— se hereda tal cual, así que las
- * peticiones salen relativas y las resuelve `proxy.conf.json` contra la API que
- * ese archivo declara, igual que en desarrollo.
+ * fabrican datos**: `campaignsDemo`, `paymentDemo` y `billingSiatDemo` en
+ * `false`. El resto —`apiBaseUrl` relativo, telemetría— se hereda tal cual,
+ * así que las peticiones salen relativas y las resuelve `proxy.conf.json`
+ * contra la API que ese archivo declara, igual que en desarrollo.
  *
  * ## Por qué también las demos
  *
@@ -44,4 +44,8 @@ export const environment: Environment = {
   mockBackend: false,
   campaignsDemo: false,
   paymentDemo: false,
+  billingSiatDemo: false,
+  // Las pantallas de la bóveda pintan filas escritas a mano: contra la API
+  // real no se registran. Ver `features/alovida/design-mockup-gate.ts`.
+  designMockups: false,
 };

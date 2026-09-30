@@ -52,23 +52,35 @@ describe('las pestañas de la ficha del médico', () => {
   });
 
   /**
-   * Eran una, dos desde el 21/09/2026 y cuatro desde que el alta suma la dirección laboral: se sumó `sexAtBirth`, que estaba
+   * Eran una y pasaron a dos el 21/09/2026: se sumó `sexAtBirth`, que estaba
    * declarado como si viviera en «Datos personales» y ahí no está —la lectura
    * del perfil médico no devuelve el dato, así que no hay nada que mostrar—.
+   * Fueron cinco el 23/09/2026: los tres contactos del trabajo, que el médico
+   * pidió sacar de «Contacto» (D-03). Siete cuando el alta sumó la dirección
+   * laboral y su punto en el mapa, que la ficha todavía no lee. Y seis desde
+   * el 24/09/2026, cuando el correo de trabajo volvió a «Contacto» (#645).
    *
    * La lista se sigue fijando entera a propósito. Es el freno a que ausentarse
    * de la ficha sea la salida fácil: sumar un campo acá exige tocar esta
    * prueba y escribir el motivo, que es exactamente la fricción que se quiere.
    */
-  it('las ausencias son las declaradas, y cada una dice por qué', () => {
+  it('las seis ausencias son las declaradas, y las seis dicen por qué', () => {
     expect(Object.keys(CAMPOS_DEL_ALTA_SIN_PESTANA).sort()).toEqual([
       'gpsTrabajo',
       'password',
       'sexAtBirth',
       'workAddressLines',
+      'workLandline',
+      'workMobilePhone',
     ]);
     expect(CAMPOS_DEL_ALTA_SIN_PESTANA['password']).toContain('Cambiar contraseña');
     expect(CAMPOS_DEL_ALTA_SIN_PESTANA['sexAtBirth']).toContain('no lo devuelve');
+    for (const campo of ['workMobilePhone', 'workLandline']) {
+      expect(CAMPOS_DEL_ALTA_SIN_PESTANA[campo], campo).toContain('(D-03)');
+      expect(CAMPOS_DEL_ALTA_SIN_PESTANA[campo], campo).toContain('«Contacto»');
+    }
+    // El correo de trabajo es un contacto y se corrige en «Contacto» (#645).
+    expect(CAMPO_DEL_ALTA_EN_PESTANA['email']).toBe(PESTANA_MEDICO.contacto);
     expect(CAMPOS_DEL_ALTA_SIN_PESTANA['workAddressLines']).toContain('dirección laboral');
     expect(CAMPOS_DEL_ALTA_SIN_PESTANA['gpsTrabajo']).toContain('lugar de trabajo');
   });
@@ -113,8 +125,9 @@ describe('las pestañas de la ficha del médico', () => {
    * habilitación ejerce?» que es lo que queda en Credenciales.
    */
   it('las especialidades viven en Datos personales, no en Credenciales', () => {
-    expect(CAMPO_DEL_ALTA_EN_PESTANA['specialtyPrimary']).toBe(PESTANA_MEDICO.personales);
     expect(CAMPO_DEL_ALTA_EN_PESTANA['especialidadesExtra']).toBe(PESTANA_MEDICO.personales);
+    // Y no hay «principal» que ubicar: el alta dejó de preguntarla (D-01, 23/09/2026).
+    expect(CAMPO_DEL_ALTA_EN_PESTANA['specialtyPrimary']).toBeUndefined();
   });
 
   it('las tres primeras pestañas se llaman igual que las del paciente', async () => {

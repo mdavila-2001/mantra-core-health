@@ -1,0 +1,21 @@
+H1.S2.M2 — Conteo de agendas ANTES de R-03
+Medido con: src/app/core/mock/fixtures/agendas-cobertura.spec.ts (spec de sólo lectura sobre los fixtures)
+Comando: npx ng test --include=src/app/core/mock/fixtures/agendas-cobertura.spec.ts --watch=false
+Salida real del test (escrita por la propia corrida, no parafraseada):
+
+[H1.S2.M2] directorio=791 conRecurso=14 conCuposEn14dias=14 registrados=13 registradosConEspecialidad=12
+
+Lectura:
+- Profesionales en el directorio (`GET /profiles/practitioners`, `profiles.handlers.ts:939`, sin filtro
+  por especialidad): 791. Incluye los profesionales escritos a mano, la red real de Alianza/Nacional
+  Seguros (`insurer-network.ts`) y los 13 registrados de `USUARIO_MEDICOS_1.md`.
+- Con recurso de agenda (`recursos`, `agenda.ts:106`): 14. Son los profesionales «escritos» con
+  `especialidades.length > 0` — ni la red de aseguradoras ni los 13 registrados tienen recurso, por
+  diseño (`origen !== undefined` los excluye).
+- Con cupos en la ventana ±14 días: 14 (los mismos 14 — todo el que tiene recurso, tiene plantilla y cupos).
+- De los 13 registrados: 12 tienen al menos una especialidad mapeada (`especialidadesDe()`,
+  `registered-people.ts:65`); 1 no tiene ninguna (occupation "MEDICO CIRUJANO" sin `specialty` en la
+  planilla). Ese caso es la base real de H3.S1.M3 (edge case «médico sin especialidad sigue sin agenda»),
+  no un supuesto.
+
+**Los 13 registrados: 0 de 13 tienen agenda hoy.** Ese es el «antes» de R-03.

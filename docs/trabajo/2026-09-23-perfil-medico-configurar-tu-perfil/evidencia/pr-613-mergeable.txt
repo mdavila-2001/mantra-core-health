@@ -49,3 +49,26 @@ $ gh run list --limit 10   (id, estado, conclusión, rama, creada)
 35962183691 completed cancelled justin/baseline-historico-reserva-2026-09-23 2026-09-24T05:56:43Z
 35960755870 queued  codex/patient-insurance-portability-20260924 2026-09-24T05:37:18Z
 35957803404 queued  justin/mockup-corr-04-paciente-imagenologia 2026-09-24T04:56:54Z
+
+
+# Fusión
+
+$ gh pr view 613 --json number,state,mergedAt,mergedBy,mergeCommit,headRefOid,baseRefName,mergeStateStatus
+{"baseRefName":"mockup","headRefOid":"c36afcb4f5513d3bfe27b8787815533f1e803a14","mergeCommit":"04fd526cf87f67fe64555a85adfda2c0da526ac9","mergeStateStatus":"UNKNOWN","mergedAt":"2026-09-24T15:27:59Z","mergedBy":"PabloArauzCaballero","number":613,"state":"MERGED"}
+
+$ gh pr checks 613
+dependencias	pending	0	https://github.com/mdavila-2001/mantra-core-health/actions/runs/36013770158/job/107680907880	
+e2e	pending	0	https://github.com/mdavila-2001/mantra-core-health/actions/runs/36013770158/job/107680907704	
+verificar	pending	0	https://github.com/mdavila-2001/mantra-core-health/actions/runs/36013770158/job/107680907318	
+exit=8
+
+$ gh run view 36013770158 --json status,conclusion,headSha
+{"conclusion":"","headSha":"c36afcb4f5513d3bfe27b8787815533f1e803a14","status":"queued"}
+
+$ git log --format="%h %s" -2 04fd526c
+04fd526c feat(ui): «Editar», el calendario y el mapa con ícono y nombre (D-05) (#613)
+b07429a0 Merge pull request #612 from mdavila-2001/justin/mockup-corr-38-editar-perfil-medico-como-alta
+
+Lectura: el PR se fusionó en mockup como squash (04fd526c), con la punta c36afcb4. Nunca llegó a CLEAN: la corrida
+del CI de esa punta seguía en cola al fusionar, así que ningún check falló, pero tampoco corrió ninguno. Cuando corra,
+«verificar» va a caer en el paso Lint por los 246 errores que mockup ya tenía antes del #613 (lint-con-el-lock.txt).

@@ -1,0 +1,35 @@
+$ git grep -n 'isPrimary' -- src/app ':!*.spec.ts'   (árbol de trabajo, con H2.S2 aplicado)
+src/app/core/data-access/admin-portal/data-catalog.types.ts:183:  readonly isPrimaryKey: boolean;
+src/app/core/data-access/medical-organization/medical-organization.types.ts:101:  readonly isPrimary: boolean | null;
+src/app/core/data-access/practice-sites/practice-sites.client.ts:183:  readonly isPrimary: boolean;
+src/app/core/data-access/practice-sites/practice-sites.types.ts:147:  readonly isPrimary: boolean;
+src/app/core/data-access/profiles/profiles.client.ts:709:   * autoservicio. Hasta el 13/09/2026 `isPrimary` sólo podía fijarse al
+src/app/core/data-access/profiles/profiles.client.ts:809:   * `isPrimary` **no viaja acá**: cuál es la principal ya tiene su propia
+src/app/core/data-access/profiles/profiles.types.ts:101:  readonly isPrimary?: boolean;
+src/app/core/data-access/profiles/profiles.types.ts:168:  readonly isPrimary: boolean;
+src/app/core/data-access/profiles/profiles.types.ts:995:  readonly isPrimary: boolean;
+src/app/core/mock/fixtures/personas.ts:473:    isPrimary: i === 0,
+src/app/core/mock/handlers/admin-portal.handlers.ts:359:        isPrimaryKey: Boolean(c.pk),
+src/app/core/mock/handlers/practice.handlers.ts:170:  readonly isPrimary: boolean;
+src/app/core/mock/handlers/practice.handlers.ts:205:  { id: uuid('ra-olivos'), practiceId: PRACTICE_OLIVOS, practiceName: 'Clínica Los Olivos', practiceType: 'Clínica', practiceSiteId: SITIO_OLIVOS.id, roleConceptId: CARGO['ROLE-JEFE']!, specialtyConceptId: ESPECIALIDAD['CARDIOLOGIA']!, status: 'ACTIVE', isPrimary: true, validFrom: isoDia(-900), validTo: null, createdAt: iso(-900), avatarUrl: avatarSvg('Clínica Los Olivos', '#0f766e'), practitionerProfileId: MEDICA.id },
+src/app/core/mock/handlers/practice.handlers.ts:206:  { id: uuid('ra-sanlucas'), practiceId: PRACTICE_SANLUCAS, practiceName: 'Hospital San Lucas', practiceType: 'Hospital', practiceSiteId: SITIO_SANLUCAS.id, roleConceptId: CARGO['ROLE-MEDICO']!, specialtyConceptId: ESPECIALIDAD['CARDIOLOGIA']!, status: 'PENDING', isPrimary: false, validFrom: null, validTo: null, createdAt: iso(-4), avatarUrl: avatarSvg('Hospital San Lucas', '#7c3aed'), practitionerProfileId: MEDICA.id },
+src/app/core/mock/handlers/practice.handlers.ts:207:  { id: uuid('ra-japones'), practiceId: uuid('practice-japones'), practiceName: 'Hospital Japonés', practiceType: 'Hospital', practiceSiteId: null, roleConceptId: CARGO['ROLE-RESIDENTE']!, specialtyConceptId: null, status: 'ENDED', isPrimary: false, validFrom: isoDia(-3000), validTo: isoDia(-1500), createdAt: iso(-3000), avatarUrl: null, practitionerProfileId: MEDICA.id },
+src/app/core/mock/handlers/practice.handlers.ts:208:  { id: uuid('ra-foianini'), practiceId: uuid('practice-foianini'), practiceName: 'Clínica Foianini', practiceType: 'Clínica', practiceSiteId: null, roleConceptId: CARGO['ROLE-MEDICO']!, specialtyConceptId: ESPECIALIDAD['MEDICINA_INTERNA']!, status: 'REJECTED', isPrimary: false, validFrom: null, validTo: null, createdAt: iso(-40), avatarUrl: avatarSvg('Clínica Foianini', '#b45309'), practitionerProfileId: MEDICA.id },
+src/app/core/mock/handlers/practice.handlers.ts:369:      isPrimary: false,
+src/app/core/mock/handlers/practice.handlers.ts:502:      isPrimary: i === 0,
+src/app/core/mock/handlers/profiles.handlers.ts:53:  readonly isPrimary: boolean;
+src/app/core/mock/handlers/profiles.handlers.ts:166:function conElegidaAlFrente<T extends { readonly id: string; readonly isPrimary?: boolean }>(
+src/app/core/mock/handlers/profiles.handlers.ts:172:  return especialidades.map((e) => ({ ...e, isPrimary: e.id === elegida.specialtyId }));
+src/app/core/mock/handlers/profiles.handlers.ts:475:    specialties: p.especialidades.map((specialtyConceptId, i) => ({ specialtyConceptId, isPrimary: i === 0 })),
+src/app/core/mock/handlers/profiles.handlers.ts:1114:    const datos = cuerpo<{ specialtyConceptId: string; isPrimary?: boolean; boardCertified?: boolean }>(request);
+src/app/core/mock/handlers/profiles.handlers.ts:1119:      isPrimary: datos.isPrimary ?? false,
+src/app/core/mock/handlers/profiles.handlers.ts:1136:    return { status: 200, body: { id: specialtyId, isPrimary: true } };
+src/app/features/account/my-profile/practitioner-profile-edit/practitioner-profile-edit.ts:573:  private readonly ESPECIALIDAD_ADICIONAL = { isPrimary: false, boardCertified: false } as const;
+src/app/features/account/my-profile/practitioner-profile-edit/practitioner-profile-edit.ts:1209:          isPrimary: this.ESPECIALIDAD_ADICIONAL.isPrimary,
+src/app/features/admin/data-catalog/object-detail/catalog-object-detail.html:102:                              @if (c.isPrimaryKey) { <app-badge variant="primary">PK</app-badge> }
+src/app/features/admin/data-catalog/object-detail/catalog-object-detail.html:103:                              @if (c.isUnique && !c.isPrimaryKey) { <app-badge variant="info">Única</app-badge> }
+src/app/features/admin/medical-organization/medical-organization.html:358:    @if (integrante.isPrimary) {
+src/app/features/clinical-record/patient-chart/specialty-form-block/specialty-form-block.ts:1076:  const principal = vigentes.find((especialidad) => especialidad.isPrimary);
+src/app/features/organizations/my-organizations.html:120:  @if (fila.isPrimary) {
+src/app/features/organizations/my-organizations.ts:165:    { key: 'isPrimary', header: 'Principal', priority: 3, cell: this.celdaPrincipal() },
+src/app/shared/components/organisms/specialty-badge/specialty-badge.ts:33: * `isPrimary` sigue en el contrato: sólo dejó de mostrarse.
