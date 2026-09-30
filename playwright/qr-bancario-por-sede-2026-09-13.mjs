@@ -2,10 +2,11 @@
  * Evidencia del pedido del cliente del 13/09/2026 sobre «Dónde atiendo»
  * (`/my-account/edit`, pestaña 3):
  *
- *   1. Editar y retirar **se leen con su texto**. Nacieron como íconos con
- *      globo; ADR-0012 (20/09/2026) invirtió la regla, porque el globo era el
- *      parche de un botón mudo. Lo que se comprueba ahora es que el texto
- *      esté a la vista, y que el disparador diga de qué sede son.
+ *   1. Las acciones **se leen con su texto** (ADR-0012, 20/09/2026: el globo
+ *      era el parche de un botón mudo). El consultorio propio no se puede
+ *      quitar: su fila ofrece **un único botón, «Editar QR»**, sin
+ *      desplegable ni «Retirar»; la sede ajena ofrece el QR y «Dejar de
+ *      atender».
  *   2. Cada sede ofrece la acción del **QR bancario** con el que el
  *      profesional cobra ahí. Sin uno cargado, el modal **es** la zona de
  *      soltar; con uno cargado, el lápiz de la esquina pide el reemplazo.
@@ -36,6 +37,9 @@ const QR_DE_PRUEBA = Buffer.from(
   'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
   'base64',
 );
+
+/** Las filas de la tabla «Dónde atiendo», en el orden en que se dibujan. */
+const FILAS = '[data-testid="sedes-propias"] tbody tr';
 
 const veredictos = [];
 const ok = (nombre, cond, detalle = '') => {
@@ -75,7 +79,7 @@ async function abrirDondeAtiendo(pagina) {
     timeout: 180_000,
   });
   await pagina.getByRole('tab', { name: 'Dónde atiendo' }).click();
-  await pagina.locator('[data-testid="sede-propia"]').first().waitFor({ timeout: 60_000 });
+  await pagina.locator(FILAS).first().waitFor({ timeout: 60_000 });
 }
 
 /**
@@ -90,7 +94,7 @@ async function abrirDondeAtiendo(pagina) {
  * (WCAG 1.4.3) y no un objeto gráfico.
  */
 function medirAvisosDeQr(pagina) {
-  return pagina.locator('[data-testid="sede-propia"]').evaluateAll((filas) => {
+  return pagina.locator(FILAS).evaluateAll((filas) => {
     const canal = (v) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4);
     const luminancia = (rgb) => {
       const [r, g, b] = rgb.map((v) => canal(v / 255));
@@ -128,11 +132,12 @@ function medirAvisosDeQr(pagina) {
  * El texto de una acción de esa sede, abriendo el desplegable si hace falta.
  *
  * La forma sale de cuántas acciones tiene la sede, no de una decisión de esta
- * pantalla: la propia son tres y se pliegan, la ajena son dos y quedan en la
- * fila. El recorrido pregunta por la acción, no por la forma.
+ * pantalla: con una o dos quedan en la fila (la propia una, la ajena dos); si
+ * alguna vuelve a plegarse en un desplegable, esto lo abre. El recorrido
+ * pregunta por la acción, no por la forma.
  */
 async function textoDeAccion(pagina, indice, code) {
-  const fila = pagina.locator('[data-testid="sede-propia"]').nth(indice);
+  const fila = pagina.locator(FILAS).nth(indice);
   const disparador = fila.locator('[data-testid="row-actions-trigger"]');
   if ((await disparador.count()) === 0) {
     return (
@@ -154,7 +159,7 @@ async function textoDeAccion(pagina, indice, code) {
 
 /** Ejecuta esa acción en la fila n de la lista de sedes. */
 async function accionarSede(pagina, indice, code) {
-  const fila = pagina.locator('[data-testid="sede-propia"]').nth(indice);
+  const fila = pagina.locator(FILAS).nth(indice);
   const disparador = fila.locator('[data-testid="row-actions-trigger"]');
   if ((await disparador.count()) > 0) {
     await disparador.click();
@@ -200,13 +205,28 @@ async function recorrer(pagina, tema) {
   const textoSinQr = await textoDeAccion(pagina, indiceSinQr, 'qr');
   ok(
     `[${tema}] el que ya está se nombra distinto del que falta`,
-    textoPropio === 'Ver QR bancario' && textoSinQr === 'Configurar QR bancario',
+    textoPropio === 'Editar QR' && textoSinQr === 'Configurar QR bancario',
     `${textoPropio} · ${textoSinQr}`,
   );
 
-  /* ---- Editar se lee sin apuntar: ya no hay globo que esperar ------------ */
-  const textoEditar = await textoDeAccion(pagina, 0, 'editar');
-  ok(`[${tema}] editar se lee con su texto`, textoEditar === 'Editar', textoEditar);
+  /* ---- El consultorio propio no se quita: sólo el QR --------------------- */
+  const propia = pagina.locator(FILAS).nth(0);
+  const accionesPropia = await propia.locator('app-row-actions [data-action]').evaluateAll(
+    (els) => els.map((el) => el.getAttribute('data-action')),
+  );
+  ok(
+    `[${tema}] el consultorio propio ofrece sólo el QR, en la fila y sin desplegable`,
+    accionesPropia.length === 1 &&
+      accionesPropia[0] === 'qr' &&
+      (await propia.locator('[data-testid="row-actions-trigger"]').count()) === 0,
+    accionesPropia.join(','),
+  );
+  const textoRetiro = await textoDeAccion(pagina, indiceSinQr, 'retirar');
+  ok(
+    `[${tema}] la sede ajena conserva «Dejar de atender»`,
+    textoRetiro === 'Dejar de atender',
+    textoRetiro,
+  );
 
   /* ---- El modal del QR que YA está cargado ------------------------------- */
   await accionarSede(pagina, 0, 'qr');
@@ -303,16 +323,34 @@ async function principal() {
       await contexto.close();
     }
 
-    /* ---- Móvil: la fila de tres íconos no rompe el ancho ------------------ */
+    /* ---- Móvil: las acciones de la fila no rompen el ancho ---------------- */
     const movil = await navegador.newContext({ viewport: { width: 375, height: 780 } });
     const pagina = await movil.newPage();
     await entrar(pagina, 'medica@mantra.health');
     await abrirDondeAtiendo(pagina);
     await pagina.screenshot({ path: `${SALIDA}/sedes-375.png`, fullPage: true });
-    const desborde = await pagina.evaluate(
-      () => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
+    /* Se mide el contenedor de la lista de sedes y no el documento: en 375 la
+       página entera ya desborda por el encabezado de `/my-account/edit`
+       (medido igual sobre `mockup` sin este cambio: scrollWidth 413), y eso
+       es ajeno a las acciones de la fila. Lo que sí es de esta pantalla es
+       que la tabla se quede dentro de su contenedor (con su propio scroll) y
+       que el botón de la sede propia se pueda alcanzar. */
+    const medidas = await pagina.evaluate((sel) => {
+      const cont = document.querySelector('[data-testid="sedes-propias"]');
+      const boton = cont?.querySelector('tbody tr app-row-actions [data-action="qr"]');
+      return {
+        contenedorDerecha: cont ? Math.round(cont.getBoundingClientRect().right) : null,
+        ancho: document.documentElement.clientWidth,
+        botonAlcanzable: boton !== null && boton !== undefined,
+      };
+    });
+    ok(
+      '[375] la lista de sedes no se sale de su contenedor y el botón de QR existe',
+      medidas.contenedorDerecha !== null &&
+        medidas.contenedorDerecha <= medidas.ancho &&
+        medidas.botonAlcanzable,
+      `derecha=${medidas.contenedorDerecha} · ancho=${medidas.ancho}`,
     );
-    ok('[375] sin scroll horizontal con los tres íconos', !desborde);
     await movil.close();
   } finally {
     await cerrarNavegador();

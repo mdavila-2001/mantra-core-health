@@ -1352,66 +1352,60 @@ export class WorkHistory implements OnInit {
   /**
    * Qué dice la acción del QR de esa sede.
    *
-   * Dos textos y no uno porque son dos cosas distintas: mirar el que ya está y
-   * cargar el que falta. Antes el botón era sólo un ícono y se pintaba en
-   * ámbar cuando faltaba; el color solo no alcanza para decirlo (WCAG 1.4.1),
-   * así que el aviso siempre vivió en el texto. Ahora el texto está a la
-   * vista, y el aviso además sigue escrito en la fila (`sede-sin-qr`).
+   * Tres textos porque son tres cosas distintas: cargar el que falta
+   * («Configurar QR bancario»), corregir el propio («Editar QR») y mirar el de
+   * una organización ajena («Ver QR bancario»). El aviso de que falta sigue
+   * escrito en la fila (`sede-sin-qr`); el color solo no alcanza (WCAG 1.4.1).
    *
    * No lleva ícono: el set cerrado del sistema no tiene uno de QR, y `scan` es
    * imagenología clínica —su propia ficha lo aclara—, no un código de cobro.
    * Una acción sin ícono se dibuja con su texto, que es lo que pide ADR-0012.
    */
   protected etiquetaDelQr(sede: PracticeSite): string {
-    return this.tieneQrBancario(sede) ? 'Ver QR bancario' : 'Configurar QR bancario';
+    if (!this.tieneQrBancario(sede)) {
+      return 'Configurar QR bancario';
+    }
+    return sede.isOwnSite === true ? 'Editar QR' : 'Ver QR bancario';
   }
 
   /**
-   * Qué dice la acción de retirar, que no es el mismo acto en las dos sedes.
-   *
-   * En la propia se deja de ofrecer un consultorio que es suyo; en la ajena se
-   * corta un vínculo con una organización. Esa distinción es del negocio y se
-   * conserva. De qué sede se trata ya no lo repite cada etiqueta: lo pone
-   * `app-row-actions` en el nombre accesible, a partir de `fila`.
+   * Qué dice la acción de retirar. Sólo existe en la sede ajena: el consultorio
+   * propio no se puede quitar, así que no la ofrece.
    */
-  protected etiquetaDeRetiro(sede: PracticeSite): string {
-    return sede.isOwnSite === true ? 'Retirar' : 'Dejar de atender';
+  protected etiquetaDeRetiro(_sede: PracticeSite): string {
+    return 'Dejar de atender';
   }
 
   /**
    * Las acciones de una sede, como datos (ADR-0012).
    *
-   * Son dos o tres según de quién sea la sede, y de eso —no de una decisión de
-   * esta pantalla— sale la forma: en la propia son tres y se colapsan en un
-   * desplegable; en la ajena son dos y quedan en la fila con su texto.
+   * En el consultorio propio hay una sola —el QR—: no se retira ni se corrige
+   * desde esta tabla. En la ajena son dos y quedan en la fila con su texto.
+   * Ninguna colapsa en un desplegable.
    *
    * El orden no es casual: el QR va primero porque es el único que avisa de
-   * algo pendiente, y retirar va último porque es el que no se deshace.
+   * algo pendiente, y dejar de atender va último porque es el que no se deshace.
    */
   protected accionesDeSede(sede: PracticeSite): readonly RowAction[] {
-    const acciones: RowAction[] = [
-      { code: 'qr', label: this.etiquetaDelQr(sede), icon: 'qr' },
-    ];
-    if (sede.isOwnSite) {
-      acciones.push({ code: 'editar', label: 'Editar', icon: 'edit' });
+    const qr: RowAction = { code: 'qr', label: this.etiquetaDelQr(sede), icon: 'qr' };
+    if (sede.isOwnSite === true) {
+      return [qr];
     }
-    acciones.push({
-      code: 'retirar',
-      label: this.etiquetaDeRetiro(sede),
-      icon: 'remove',
-      destructive: true,
-    });
-    return acciones;
+    return [
+      qr,
+      {
+        code: 'retirar',
+        label: this.etiquetaDeRetiro(sede),
+        icon: 'remove',
+        destructive: true,
+      },
+    ];
   }
 
   /** Despacha el `code` que emitió `app-row-actions` sobre esa sede. */
   protected ejecutarAccionDeSede(code: string, sede: PracticeSite): void {
     if (code === 'qr') {
       this.abrirQrDeSede(sede);
-      return;
-    }
-    if (code === 'editar') {
-      this.abrirEdicionDeSede(sede);
       return;
     }
     if (code === 'retirar') {

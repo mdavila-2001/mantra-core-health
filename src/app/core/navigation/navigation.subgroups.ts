@@ -143,7 +143,7 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
     // Lo que se le pide o se le hace al paciente fuera de la consulta.
     // La recepción de muestras va con ellas: es la puerta del laboratorio por
     // la que entra lo que después aparece en «Laboratorio e imagen».
-    paths: ['diagnostics', 'laboratorio/recepcion', 'laboratorio/cola', 'interventions'],
+    paths: ['diagnostics', 'interventions'],
   },
   {
     label: 'Visitas',
@@ -276,6 +276,21 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
       'administration/pharmacy-orders',
       'administration/pharmacy-campaigns',
       'administration/pharmacy-profile',
+    ],
+  },
+  {
+    label: 'Laboratorio',
+    // `General` (30/09/2026), por lo mismo que «Farmacia»: la cuenta de
+    // laboratorio ve su menú plano, sin encabezado. La recepción de muestras y
+    // la cola de trabajo salieron de «Estudios y procedimientos»: sólo las ve
+    // esta cuenta, y ahí quedaban bajo un encabezado que su menú ya no tiene.
+    group: 'General',
+    icon: 'flask',
+    paths: [
+      'administration/laboratory',
+      'laboratorio/recepcion',
+      'laboratorio/cola',
+      'administration/laboratory-results',
     ],
   },
 

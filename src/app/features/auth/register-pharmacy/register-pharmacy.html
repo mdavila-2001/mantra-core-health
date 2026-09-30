@@ -68,6 +68,7 @@
             [iconOnlyNav]="true"
             [pending]="isSubmitting()"
             (pasoVisible)="recordarPaso($event)"
+            (rechazada)="alRechazarPagina($event)"
             (enviado)="submit()"
           >
             @for (clave of clavesDeDocumento; track clave) {
@@ -75,6 +76,32 @@
                 <ng-container [ngTemplateOutlet]="bloqueDocumento" [ngTemplateOutletContext]="{ $implicit: clave }" />
               </ng-template>
             }
+
+            <ng-template appCampoPersonalizado="legalRepName">
+              <app-campos-de-nombre
+                [grupo]="form.controls.legalRepName"
+                [obligatorio]="true"
+                prefijoTestId="registro-farmacia-representante"
+              />
+            </ng-template>
+            <ng-template appCampoPersonalizado="generalManagerName">
+              <app-campos-de-nombre
+                [grupo]="form.controls.generalManagerName"
+                prefijoTestId="registro-farmacia-gerente-general"
+              />
+            </ng-template>
+            <ng-template appCampoPersonalizado="commercialManagerName">
+              <app-campos-de-nombre
+                [grupo]="form.controls.commercialManagerName"
+                prefijoTestId="registro-farmacia-gerente-comercial"
+              />
+            </ng-template>
+            <ng-template appCampoPersonalizado="marketingManagerName">
+              <app-campos-de-nombre
+                [grupo]="form.controls.marketingManagerName"
+                prefijoTestId="registro-farmacia-gerente-marketing"
+              />
+            </ng-template>
 
             <ng-template appCampoPersonalizado="gpsCentral">
               @if (direccionPorReescribir()) {

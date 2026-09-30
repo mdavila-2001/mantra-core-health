@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, output, signal } from '@angular/core';
 
 import { ResultCard } from '../../molecules/result-card/result-card';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
@@ -37,6 +37,20 @@ import type { GrupoDeDirectorio, SustantivoDelDirectorio } from './directory-pag
  * memoria sobre la guía completa (médicos), y eso no se puede unificar sin
  * empeorar a alguno de los dos.
  */
+/** Dónde se recuerda la forma elegida: una sola para los cuatro directorios. */
+const CLAVE_DE_VISTA = 'alovida.directorio.vista';
+
+type Vista = 'grilla' | 'lista';
+
+function vistaGuardada(): Vista {
+  try {
+    return globalThis.localStorage?.getItem(CLAVE_DE_VISTA) === 'lista' ? 'lista' : 'grilla';
+  } catch {
+    // Almacenamiento bloqueado (modo privado, SSR): se ve la grilla y listo.
+    return 'grilla';
+  }
+}
+
 @Component({
   selector: 'app-directory-page',
   imports: [FilterBar, PageHeader, ResultCard, ViewStateHost],
@@ -97,6 +111,22 @@ export class DirectoryPage {
 
   /** Activa el bloqueo opt-in de navegaciones repetidas en sus tarjetas. */
   readonly preventDuplicateNavigation = input(false);
+
+  /**
+   * Grilla o lista. Es un gusto de quien mira y no del directorio, así que se
+   * recuerda entre visitas y vale para los cuatro: quien prefiere la lista en
+   * farmacias la quiere también en laboratorios.
+   */
+  protected readonly vista = signal<Vista>(vistaGuardada());
+
+  protected elegirVista(vista: Vista): void {
+    this.vista.set(vista);
+    try {
+      globalThis.localStorage?.setItem(CLAVE_DE_VISTA, vista);
+    } catch {
+      // Sin almacenamiento la elección vale sólo para esta pantalla.
+    }
+  }
 
   readonly filtrosCambiaron = output<Readonly<Record<string, string>>>();
   readonly reintentar = output<void>();

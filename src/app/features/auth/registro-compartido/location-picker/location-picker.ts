@@ -5,6 +5,7 @@ import { Select as AppSelect } from '../../../../shared/components/atoms/select/
 import type { SelectOption } from '../../../../shared/components/atoms/select/select.types';
 import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
 import { DepartmentMap, type DepartamentoElegible } from '@shared/components/organisms/department-map/department-map';
+import type { PuntoGeo } from '@shared/components/organisms/map/pin-mapa.types';
 
 /**
  * «¿En qué localidad?»: el mapa de departamentos y el select de municipio.
@@ -94,6 +95,13 @@ export class LocationPicker {
   readonly testId = input('location');
 
   /**
+   * El lugar exacto, si quien monta el control lo tiene (el punto que se
+   * marcó en el mapa de la dirección). El mapa lo dibuja como un punto rojo;
+   * sin él, el punto cae en el centro del municipio.
+   */
+  readonly punto = input<PuntoGeo | null>(null);
+
+  /**
    * El departamento elegido a mano, cuando todavía no hay municipio.
    *
    * Es un estado propio y no derivado porque hay un momento —entre pulsar el
@@ -130,6 +138,24 @@ export class LocationPicker {
       nombre: rama.nombre,
     })),
   );
+
+  /**
+   * El municipio elegido, como lo quiere el mapa para sombrearlo: el código
+   * del INE si el catálogo lo trae (`030101`), y si no —la maqueta siembra
+   * códigos legados como `SC-SCZ`— el nombre, que el mapa busca dentro del
+   * departamento.
+   */
+  protected readonly municipioEnMapa = computed<string | null>(() => {
+    const elegido = this.value();
+    if (elegido === null) return null;
+    for (const rama of this.ramas()) {
+      const municipio = rama.municipios.find((m) => m.conceptId === elegido);
+      if (municipio !== undefined) {
+        return /^\d{6}$/.test(municipio.ine) ? municipio.ine : municipio.nombre;
+      }
+    }
+    return null;
+  });
 
   /**
    * Los municipios **del departamento elegido**, y ninguno más (AC-03-7).

@@ -437,6 +437,51 @@ describe('Resumen contable', () => {
     });
   });
 
+  describe('tableros y registros, en pestañas separadas', () => {
+    const rotulos = (fixture: { nativeElement: HTMLElement }): string[] =>
+      Array.from(fixture.nativeElement.querySelectorAll('[role="tab"]')).map((t) =>
+        (t as HTMLElement).textContent?.trim() ?? '',
+      );
+
+    it('son dos pestañas —Resumen y Registros— y abre en Resumen', () => {
+      const { fixture, http } = montar();
+      responderPracticas(http, fixture);
+      responderTablero(http, Array.from({ length: 6 }, () => resultado('0.00', '0.00', '0.00')));
+      fixture.detectChanges();
+
+      expect(rotulos(fixture)).toEqual(['Resumen', 'Registros']);
+      const texto = (fixture.nativeElement as HTMLElement).textContent ?? '';
+      expect(texto).toContain('¿Cuánto hiciste?');
+      expect(texto).toContain('Lo que está pendiente');
+    });
+
+    it('el Resumen no trae la tarjeta de registros', () => {
+      const { fixture, http } = montar();
+      responderPracticas(http, fixture);
+      responderTablero(http, Array.from({ length: 6 }, () => resultado('0.00', '0.00', '0.00')));
+      fixture.detectChanges();
+
+      const raiz = fixture.nativeElement as HTMLElement;
+      expect(raiz.querySelector('[data-testid="contabilidad-registros"]')).toBeNull();
+    });
+
+    it('en Registros no hay tableros ni se pide el dinero del tablero de nuevo', () => {
+      const { fixture, http } = montar();
+      responderPracticas(http, fixture);
+      responderTablero(http, Array.from({ length: 6 }, () => resultado('0.00', '0.00', '0.00')));
+      fixture.detectChanges();
+
+      fixture.componentInstance.pestana.set(1);
+      fixture.detectChanges();
+
+      const raiz = fixture.nativeElement as HTMLElement;
+      expect(raiz.querySelector('[data-testid="contabilidad-registros"]')).not.toBeNull();
+      expect(raiz.textContent).not.toContain('¿Cuánto hiciste?');
+      expect(raiz.textContent).not.toContain('Lo que está pendiente');
+      http.verify();
+    });
+  });
+
   it('no pide nada que no conteste, ni deja nada colgando', () => {
     // `verify()` falla si quedó una petición sin responder: es la red de la
     // que cuelga todo lo de arriba, porque un `forkJoin` al que le falta una

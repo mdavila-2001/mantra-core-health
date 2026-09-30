@@ -367,12 +367,23 @@ export function perfilPropioDe(p: PacienteSimulado) {
  */
 const ENCUENTROS_POR_MES = [18, 21, 24, 19, 26, 28, 23, 27, 31, 29, 30, 36] as const;
 
+/**
+ * De esas consultas, las de personas con seguro (194 de 312: cerca del 62 %).
+ * Cada valor queda por debajo de su mes en `ENCUENTROS_POR_MES`; el resto son
+ * consultas sin seguro.
+ */
+const ENCUENTROS_CON_SEGURO_POR_MES = [11, 13, 15, 12, 16, 18, 14, 17, 19, 18, 19, 22] as const;
+
 /** La serie, anclada al mes en curso: el último punto es siempre «hoy». */
-function serieMensualDemo(): readonly { month: string; count: number }[] {
+function serieMensualDemo(): readonly { month: string; count: number; insuredCount: number }[] {
   const hoy = new Date();
   return ENCUENTROS_POR_MES.map((count, indice) => {
     const mes = new Date(hoy.getFullYear(), hoy.getMonth() - (ENCUENTROS_POR_MES.length - 1 - indice), 1);
-    return { month: `${mes.getFullYear()}-${String(mes.getMonth() + 1).padStart(2, '0')}`, count };
+    return {
+      month: `${mes.getFullYear()}-${String(mes.getMonth() + 1).padStart(2, '0')}`,
+      count,
+      insuredCount: ENCUENTROS_CON_SEGURO_POR_MES[indice] ?? 0,
+    };
   });
 }
 

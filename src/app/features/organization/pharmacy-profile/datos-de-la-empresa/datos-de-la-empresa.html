@@ -11,15 +11,18 @@
         }
 
         @if (sampleData() && !editando()) {
+          <!-- «Editar perfil» con el lápiz, igual en todos los perfiles
+               (pedido del 30/09/2026). -->
           <button
             app-button
-            variant="secondary"
+            variant="outline"
             size="sm"
             type="button"
             data-testid="ficha-editar-empresa"
             (clicked)="editar()"
           >
-            Editar
+            <app-nav-icon name="edit" />
+            Editar perfil
           </button>
         }
       </div>

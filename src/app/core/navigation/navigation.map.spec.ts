@@ -378,10 +378,9 @@ describe('isVisibleTo con `onlyForTenantTypes`', () => {
   it('las secciones reales son las del laboratorio y las ocho de la farmacia, y nada más la usa', () => {
     const flagged = APP_SECTIONS.filter((s) => s.onlyForTenantTypes !== undefined);
     // Desde el 29/09/2026 el menú de la cuenta de farmacia es plano y cerrado:
-    // sus ocho pantallas sólo existen para una organización `PHARMACY`.
+    // sus ocho pantallas sólo existen para una organización `PHARMACY`. Desde
+    // el 30/09/2026 el de laboratorio también, y va después de la farmacia.
     expect(flagged.map((s) => s.path)).toEqual([
-      'laboratorio/recepcion',
-      'laboratorio/cola',
       'administration/pharmacy',
       'administration/pharmacy-catalog',
       'administration/pharmacy-categories',
@@ -390,10 +389,14 @@ describe('isVisibleTo con `onlyForTenantTypes`', () => {
       'administration/pharmacy-orders',
       'administration/pharmacy-campaigns',
       'administration/pharmacy-profile',
+      'administration/laboratory',
+      'laboratorio/recepcion',
+      'laboratorio/cola',
+      'administration/laboratory-results',
     ]);
     for (const section of flagged) {
       expect(section.onlyForTenantTypes, section.path).toEqual(
-        section.path.startsWith('laboratorio/') ? ['DIAGNOSTIC_CENTER'] : ['PHARMACY'],
+        section.path.includes('pharmacy') ? ['PHARMACY'] : ['DIAGNOSTIC_CENTER'],
       );
     }
   });
@@ -439,13 +442,16 @@ describe('lo que `hiddenForTenantTypes` le cierra a la aseguradora', () => {
       'my-account/questionnaires',
     ]);
     for (const seccion of conMarca) {
-      // `PAYER` solo, o junto con `PHARMACY` (menú de la cuenta de farmacia):
-      // ningún otro tipo se cuela en esta lista sin que alguien lo decida.
+      // `PAYER` solo, o junto con `PHARMACY` y `DIAGNOSTIC_CENTER` (los menús
+      // planos de farmacia y laboratorio): ningún otro tipo se cuela en esta
+      // lista sin que alguien lo decida.
       expect(['PAYER'], seccion.path).toEqual(
         seccion.hiddenForTenantTypes!.filter((tipo) => tipo === 'PAYER'),
       );
       expect(
-        seccion.hiddenForTenantTypes!.filter((tipo) => tipo !== 'PAYER' && tipo !== 'PHARMACY'),
+        seccion.hiddenForTenantTypes!.filter(
+          (tipo) => tipo !== 'PAYER' && tipo !== 'PHARMACY' && tipo !== 'DIAGNOSTIC_CENTER',
+        ),
         seccion.path,
       ).toEqual([]);
     }

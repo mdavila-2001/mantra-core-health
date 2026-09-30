@@ -22,7 +22,6 @@ import { AppButton } from '../../../../../shared/components/atoms/button/button'
 import { AppButtonLink } from '../../../../../shared/components/atoms/button/button-link';
 import { Chip } from '../../../../../shared/components/atoms/chip/chip';
 import { NavIcon } from '../../../../../shared/components/atoms/nav-icon/nav-icon';
-import { Tooltip } from '../../../../../shared/components/atoms/tooltip/tooltip';
 import { Card } from '../../../../../shared/components/molecules/card/card';
 import { TabHelpBlock } from '../../../../../shared/components/molecules/tab-help-block/tab-help-block';
 import { Tabs } from '../../../../../shared/components/molecules/tabs/tabs';
@@ -99,7 +98,6 @@ interface FilaCredencial {
     Chip,
     DatePipe,
     NavIcon,
-    Tooltip,
     RouterLink,
     SpecialtyBadge,
     SpecialtyBadgeGrid,

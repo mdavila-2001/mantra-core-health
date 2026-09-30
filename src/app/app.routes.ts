@@ -289,6 +289,12 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/organization/pharmacy-profile/pharmacy-profile').then(
       (m) => m.PharmacyProfile,
     ),
+  // El portal de la cuenta de laboratorio (30/09/2026): el espejo del de la
+  // farmacia, para quien vende servicios. Todo en `features/laboratory/`.
+  'administration/laboratory': () =>
+    import('./features/laboratory/summary/laboratory-summary').then((m) => m.LaboratorySummaryPage),
+  'administration/laboratory-results': () =>
+    import('./features/laboratory/results/laboratory-results').then((m) => m.LaboratoryResults),
   'my-account/identity/cases': () =>
     import('./features/identity-assurance/verification-cases/verification-cases').then(
       (m) => m.VerificationCases,

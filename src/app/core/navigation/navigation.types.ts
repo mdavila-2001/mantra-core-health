@@ -372,8 +372,12 @@ export interface AppSection {
    * si la sección existe para esta sesión). Un tipo de organización
    * desconocido o sin organización activa (`activeTenantType === null`) **no
    * oculta nada**: es el menú de hoy, no una restricción nueva.
+   *
+   * Admite también `DIAGNOSTIC_CENTER` (30/09/2026, cuenta de laboratorio), que
+   * viaja en el claim pero no está en `TENANT_TYPE_CODES`: ver
+   * {@link onlyForTenantTypes} para el porqué.
    */
-  readonly hiddenForTenantTypes?: readonly TenantTypeCode[];
+  readonly hiddenForTenantTypes?: readonly (TenantTypeCode | 'DIAGNOSTIC_CENTER')[];
 
   /**
    * Tipos de organización **fuera de los cuales** la sección no existe: la

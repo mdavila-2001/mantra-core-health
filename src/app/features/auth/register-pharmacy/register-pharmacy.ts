@@ -43,6 +43,8 @@ import {
   DOCUMENTOS_LEGALES_DEL_REGISTRO,
   type ClaveDeDocumentoDelAlta,
 } from '../registro-compartido/documentos-legales';
+import { CamposDeNombre } from '../registro-compartido/campos-de-nombre/campos-de-nombre';
+import { grupoDeNombre, nombreCompleto } from '../registro-compartido/campos-de-nombre/nombre-de-persona';
 import {
   MENSAJE_CONTRASENA_CORTA,
   validadoresDeContrasena,
@@ -250,6 +252,7 @@ const AYUDA: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
     RegistroAyuda,
     UbicacionPicker,
     DropzonePdf,
+    CamposDeNombre,
   ],
   templateUrl: './register-pharmacy.html',
   styleUrls: ['../registro-compartido/registro.css', './register-pharmacy.css'],
@@ -284,29 +287,27 @@ export class RegisterPharmacy {
       validators: [Validators.required, Validators.maxLength(MAX_DIRECCION)],
     }),
     // --- 1.8, 1.8.2 · representante legal -------------------------------------
-    legalRepName: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.maxLength(MAX_NOMBRE)],
-    }),
+    // Un grupo con las partes del nombre (primer nombre y apellido paterno obligatorios).
+    legalRepName: grupoDeNombre(true),
     legalRepEmail: new FormControl('', {
       nonNullable: true,
       validators: [Validators.required, Validators.email, Validators.maxLength(MAX_CORREO)],
     }),
     // --- 1.9 a 1.17 · las tres gerencias, todas opcionales (nueve controles
     // planos: ver el JSDoc sobre `controlesDeGerencia` más arriba en el archivo) ---
-    generalManagerName: new FormControl('', { nonNullable: true }),
+    generalManagerName: grupoDeNombre(false),
     generalManagerPhone: new FormControl('', { nonNullable: true, validators: [telefonoCompleto] }),
     generalManagerEmail: new FormControl('', {
       nonNullable: true,
       validators: [Validators.email, Validators.maxLength(MAX_CORREO)],
     }),
-    commercialManagerName: new FormControl('', { nonNullable: true }),
+    commercialManagerName: grupoDeNombre(false),
     commercialManagerPhone: new FormControl('', { nonNullable: true, validators: [telefonoCompleto] }),
     commercialManagerEmail: new FormControl('', {
       nonNullable: true,
       validators: [Validators.email, Validators.maxLength(MAX_CORREO)],
     }),
-    marketingManagerName: new FormControl('', { nonNullable: true }),
+    marketingManagerName: grupoDeNombre(false),
     marketingManagerPhone: new FormControl('', { nonNullable: true, validators: [telefonoCompleto] }),
     marketingManagerEmail: new FormControl('', {
       nonNullable: true,
@@ -422,14 +423,12 @@ export class RegisterPharmacy {
         icon: 'shield' as const,
         campos: [
           {
+            // Sin rótulo ni error propios: `app-campos-de-nombre` pinta cada casilla
+            // con el suyo, y un `<label for>` externo apuntaría a un control que no existe.
             key: 'legalRepName',
-            label: 'Nombre del representante legal',
-            control: 'text' as const,
-            required: true,
-            icono: 'people' as const,
-            autocomplete: 'name',
-            testId: 'registro-farmacia-representante',
-            mensajeDeError: 'Escribí el nombre del representante legal.',
+            label: '',
+            control: 'custom' as const,
+            mensajeDeError: '',
           },
           {
             key: 'legalRepEmail',
@@ -476,7 +475,7 @@ export class RegisterPharmacy {
     readonly campos: readonly {
       readonly key: string;
       readonly label: string;
-      readonly control: 'text' | 'tel' | 'email';
+      readonly control: 'custom' | 'tel' | 'email';
       readonly icono?: 'people' | 'mail';
       readonly testId: string;
       readonly mensajeDeError?: string;
@@ -526,9 +525,9 @@ export class RegisterPharmacy {
           // Controles planos (`${key}Name`, no `${key}.name`): ver el JSDoc
           // sobre `controlesDeGerencia`, más arriba en el archivo.
           key: `${gerencia.key}Name`,
-          label: `Nombre del ${gerencia.titulo.toLowerCase()}`,
-          control: 'text' as const,
-          icono: 'people' as const,
+          label: '',
+          control: 'custom' as const,
+          mensajeDeError: '',
           testId: gerencia.prefijoTestId,
         },
         {
@@ -679,6 +678,14 @@ export class RegisterPharmacy {
   private readonly claveVisible = signal('empresa');
   readonly ayudaVisible = computed<readonly TarjetaDeAyuda[]>(() => AYUDA[this.claveVisible()] ?? []);
 
+  /**
+   * Al bloquear «Siguiente», el motor sólo marca al grupo del nombre, no a sus
+   * casillas: se marcan acá para que cada una muestre su error.
+   */
+  alRechazarPagina(pagina: PaginaDeFormulario): void {
+    for (const campo of pagina.campos) this.form.get(campo.key)?.markAllAsTouched();
+  }
+
   protected recordarPaso(pagina: PaginaDeFormulario): void {
     this.claveVisible.set(pagina.clave ?? '');
   }
@@ -716,12 +723,13 @@ export class RegisterPharmacy {
 
   /** Una gerencia sólo viaja si las tres partes están completas (nombre, celular y correo). */
   private gerenciaCompleta(g: { name: string; phone: string; email: string }): boolean {
-    return g.name.trim() !== '' && g.phone.trim() !== '' && g.email.trim() !== '';
+    return g.name !== '' && g.phone.trim() !== '' && g.email.trim() !== '';
   }
 
   private datos(): PharmacyOrganizationRegistration {
     const raw = this.form.getRawValue();
     const central = this.gpsCentral();
+    const nombreDelRepresentante = nombreCompleto(raw.legalRepName);
 
     const sucursales: readonly PharmacyBranchRegistration[] = this.sucursales()
       .filter((s) => s.nombre.trim() !== '' && s.gps !== null)
@@ -729,17 +737,17 @@ export class RegisterPharmacy {
 
     const gerencias = {
       generalManager: {
-        name: raw.generalManagerName,
+        name: nombreCompleto(raw.generalManagerName),
         phone: raw.generalManagerPhone,
         email: raw.generalManagerEmail,
       },
       commercialManager: {
-        name: raw.commercialManagerName,
+        name: nombreCompleto(raw.commercialManagerName),
         phone: raw.commercialManagerPhone,
         email: raw.commercialManagerEmail,
       },
       marketingManager: {
-        name: raw.marketingManagerName,
+        name: nombreCompleto(raw.marketingManagerName),
         phone: raw.marketingManagerPhone,
         email: raw.marketingManagerEmail,
       },
@@ -766,10 +774,10 @@ export class RegisterPharmacy {
       owner: {
         email: raw.legalRepEmail.trim(),
         password: raw.password,
-        displayName: raw.legalRepName.trim(),
+        displayName: nombreDelRepresentante,
       },
       legalRepresentative: {
-        fullName: raw.legalRepName.trim(),
+        fullName: nombreDelRepresentante,
         email: raw.legalRepEmail.trim(),
         ...(raw.powerOfAttorneyFileId === '' ? {} : { powerOfAttorneyFileId: raw.powerOfAttorneyFileId }),
       },
@@ -778,17 +786,17 @@ export class RegisterPharmacy {
         ? {
             executives: {
               generalManager: {
-                fullName: gerencias.generalManager.name.trim(),
+                fullName: gerencias.generalManager.name,
                 phone: gerencias.generalManager.phone.trim(),
                 email: gerencias.generalManager.email.trim(),
               },
               commercialManager: {
-                fullName: gerencias.commercialManager.name.trim(),
+                fullName: gerencias.commercialManager.name,
                 phone: gerencias.commercialManager.phone.trim(),
                 email: gerencias.commercialManager.email.trim(),
               },
               marketingManager: {
-                fullName: gerencias.marketingManager.name.trim(),
+                fullName: gerencias.marketingManager.name,
                 phone: gerencias.marketingManager.phone.trim(),
                 email: gerencias.marketingManager.email.trim(),
               },

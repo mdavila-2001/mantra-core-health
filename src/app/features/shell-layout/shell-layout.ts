@@ -479,11 +479,13 @@ export class ShellLayout {
     // registro de procesos pide cerrar.
     //
     // Ni la farmacia (2026-09-29): su menú es el del mostrador y nada más.
+    // Ni el laboratorio (2026-09-30), por lo mismo.
     if (
       esPaciente(roles) ||
       roles.includes('PRACTITIONER') ||
       this.auth.activeTenantType() === 'PAYER' ||
-      this.auth.activeTenantType() === 'PHARMACY'
+      this.auth.activeTenantType() === 'PHARMACY' ||
+      this.auth.activeTenantType() === 'DIAGNOSTIC_CENTER'
     ) {
       return menu;
     }

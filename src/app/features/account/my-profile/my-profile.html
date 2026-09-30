@@ -96,7 +96,9 @@
             </div>
           </div>
 
-          <!-- FT-11-R04 · el lápiz habilita los campos ACÁ, no manda a otra
+          <!-- «Editar perfil» con el lápiz, igual en todos los perfiles (pedido
+               del 30/09/2026).
+               FT-11-R04 · el lápiz habilita los campos ACÁ, no manda a otra
                pantalla. Lápiz y nombre (D-05, 22/09): el lápiz del 09/09 solo
                no alcanza, porque puede ser editar, firmar o anotar
                (ADR-0012). El botón desaparece mientras se edita: sus acciones
@@ -111,7 +113,7 @@
               (clicked)="editar()"
             >
               <app-nav-icon name="edit" />
-              Editar
+              Editar perfil
             </button>
           }
         </div>
@@ -381,6 +383,15 @@
                       </dd>
                     </div>
                   </dl>
+
+                  <!-- El mismo mapa de residencia que la ficha del médico: el
+                       departamento marcado, el municipio más oscuro y el punto
+                       rojo en el domicilio si trae coordenadas. -->
+                  @if (p.residenceMunicipalityConceptId; as municipio) {
+                    <section class="mi-perfil__residencia" data-testid="mi-perfil-residencia">
+                      <app-residence-readonly [municipioId]="municipio" [punto]="puntoDe(p.homeAddress)" />
+                    </section>
+                  }
                 } @else {
                   <p class="mi-perfil__nota">Todavía no pudimos traer estos datos.</p>
                 }
