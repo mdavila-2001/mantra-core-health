@@ -2196,3 +2196,20 @@ en PDF (`nota-de-venta.ts`) y la prueba de navegador `pagos-plan-nota-venta-fact
 > imagenología, que son maquetas locales sin red —, así que en cuanto la API declare el bloque
 > `pharmacy` y cree `directory.pharmacies`, conectar el resto es sacar la relajación del punto 3
 > y sumar las claves reales que el DTO termine declarando.
+
+## P51 · «Mis facturas»: las facturas emitidas de cada cuenta — 30/09/2026
+
+> **Qué pide el front.** Un ícono de la barra superior abre `/my-account/invoices` para **toda**
+> cuenta. El paciente ve las facturas que le emitieron (consultas y farmacia); el médico, las de
+> sus consultas; la farmacia, las de sus pedidos; facturación de la organización, todas. Cada
+> fila baja el PDF y el XML.
+>
+> **Hoy.** Lo responde el SIAT **simulado** del front (FACT-SIAT-MOCK):
+> `GET /billing/simulated/my-invoices` → `{ view: 'RECEIVED' | 'ISSUED', items, count }` y
+> `GET /billing/simulated/my-invoices/:invoiceId` → la factura completa, con 404 fuera del
+> alcance. El lado (`view`) lo decide el backend por la sesión, no la pantalla.
+>
+> **Falta en la API.** Facturación real (M26): un listado de facturas por comprador (el perfil de
+> paciente de la sesión) y por emisor (la organización o el profesional), con el mismo contrato,
+> para reemplazar el cliente simulado sin tocar la pantalla. Laboratorio, imagenología y
+> aseguradora todavía no emiten facturas: la pantalla lo dice en su estado vacío.

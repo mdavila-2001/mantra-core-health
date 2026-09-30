@@ -1590,6 +1590,25 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M17 billing',
   },
   {
+    // «Mis facturas» (pedido del propietario, 30/09/2026): las facturas
+    // emitidas, para **todo** tipo de cuenta, desde un ícono de la barra
+    // superior —como «Mis gastos»—. El paciente ve las que le emitieron; el
+    // médico, la farmacia y facturación, las que emitieron. El lado lo decide
+    // el backend por la sesión.
+    //
+    // Hoy la lee del SIAT **simulado** (FACT-SIAT-MOCK): la API todavía no
+    // publica facturas — P51 en `PENDIENTES-BACKEND.md`.
+    fueraDelMenuPara: [ANY_ROLE],
+    path: 'my-account/invoices',
+    label: 'Mis facturas',
+    group: 'Mi cuenta',
+    icon: 'receipt',
+    roles: [ANY_ROLE],
+    availability: 'disponible',
+    summary: 'Las facturas emitidas: las que te hicieron o las que hiciste, con su PDF y su XML.',
+    module: 'M26 billing',
+  },
+  {
     // **«Mis organizaciones»** (propietario, 2026-09-10), en el lugar que
     // ocupaba «Tu organización». Aquélla mostraba la organización del tenant
     // activo —la clínica donde el médico está afiliado—, que no es suya: junto

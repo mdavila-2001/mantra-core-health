@@ -304,3 +304,36 @@ export interface AnnulInvoiceInput {
 export interface EmailInvoiceInput {
   readonly to: string;
 }
+
+/**
+ * **Mis facturas**: de qué lado de la factura está quien la mira.
+ *
+ * - `RECEIVED`: el paciente, a quien se las emitieron (consultas y farmacia).
+ * - `ISSUED`: quien factura —el médico sus consultas, la farmacia sus pedidos,
+ *   facturación de la organización todo—.
+ *
+ * Lo decide el backend por la sesión, no la pantalla: una cuenta no elige qué
+ * facturas ajenas ver.
+ */
+export type MyInvoicesView = 'RECEIVED' | 'ISSUED';
+
+/** Una fila de «Mis facturas»: la factura con lo justo de su cobro para leerla. */
+export interface MyInvoiceItem {
+  readonly invoice: SimulatedInvoiceSummary;
+  readonly chargeId: string;
+  readonly source: ChargeSource;
+  readonly description: string;
+  /** Razón social del emisor (sintética, CA-4). */
+  readonly issuerName: string;
+  readonly issuerNit: string;
+  /** A quién se le cobró: el paciente del cobro. */
+  readonly patientName: string;
+  readonly simulated: true;
+}
+
+export interface MyInvoicesPage {
+  readonly view: MyInvoicesView;
+  readonly items: readonly MyInvoiceItem[];
+  readonly count: number;
+  readonly simulated: true;
+}

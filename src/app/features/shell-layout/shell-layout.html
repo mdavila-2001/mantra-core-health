@@ -450,6 +450,23 @@
           }
         </a>
 
+        <!-- Mis facturas (propietario, 30/09/2026): las facturas emitidas, para
+             TODAS las cuentas —paciente, médico y organizaciones—, por eso va
+             fuera del bloque del paciente. Qué facturas ve cada una (las que
+             le emitieron o las que emitió) lo decide la pantalla con la
+             sesión; el ícono es el mismo. Comprobante con borde dentado y no
+             la billetera de «Mis gastos»: una es un papel, la otra dinero. -->
+        <a
+          class="app-header__ajustes"
+          routerLink="/my-account/invoices"
+          data-testid="header-facturas"
+          appTooltip="Mis facturas"
+          appTooltipPosition="bottom"
+          aria-label="Mis facturas"
+        >
+          <app-nav-icon name="receipt" />
+        </a>
+
         <!-- El carrito de farmacia (H4.S1, carril 41/46). Es la compra del
              paciente, no una herramienta de la médica ni de otro rol: sólo se
              ofrece con `esPacienteDelCarrito()`. Mismo bloque que Chats, con

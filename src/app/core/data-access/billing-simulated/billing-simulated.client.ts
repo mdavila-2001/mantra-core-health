@@ -10,6 +10,7 @@ import type {
   SimulatedCatalogs,
   SimulatedCharge,
   SimulatedChargesPage,
+  MyInvoicesPage,
   SimulatedFiscalStatus,
   SimulatedInvoice,
   SimulatedOutboxEntry,
@@ -102,6 +103,19 @@ export class BillingSimulatedClient {
 
   outbox(): Observable<SimulatedOutboxPage> {
     return this.http.get<SimulatedOutboxPage>(this.url('/billing/simulated/outbox'));
+  }
+
+  /**
+   * «Mis facturas»: las que le emitieron (paciente) o las que emitió (quien
+   * factura). Cualquier sesión puede pedirla; el lado lo decide el backend.
+   */
+  myInvoices(): Observable<MyInvoicesPage> {
+    return this.http.get<MyInvoicesPage>(this.url('/billing/simulated/my-invoices'));
+  }
+
+  /** Una factura de «Mis facturas», con el mismo alcance que la lista. */
+  myInvoice(invoiceId: string): Observable<SimulatedInvoice> {
+    return this.http.get<SimulatedInvoice>(this.url(`/billing/simulated/my-invoices/${encodeURIComponent(invoiceId)}`));
   }
 
   private url(path: string): string {

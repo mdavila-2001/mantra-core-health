@@ -21,10 +21,13 @@ import type {
   EmailInvoiceInput,
   IssueInvoiceInput,
   RegisterInstancePaymentInput,
+  MyInvoiceItem,
+  MyInvoicesView,
   RegisterPaymentInput,
   SimulatedCharge,
 } from '../../data-access/billing-simulated/billing-simulated.types';
 import { cobrosIniciales, EMISORES_SIMULADOS, PADRON_SIMULADO } from '../billing-sim/datos-simulados';
+import { PACIENTE } from '../fixtures/personas';
 import { FacturacionSimulada, type ErrorDeFacturacion, type Resultado } from '../billing-sim/facturacion-simulada';
 import {
   conflict,
@@ -39,6 +42,7 @@ import {
   type MockRequest,
   type MockRouter,
 } from '../mock-router';
+import { TENANT_FARMACIA, type MockUser } from '../mock-session';
 import { cuerpo } from '../mock-store';
 import { SiatSimuladoAdapter } from '../siat-sim/siat-simulado.adapter';
 
@@ -54,11 +58,79 @@ function dentroDelAlcance(cobro: SimulatedCharge, alcance: Alcance): boolean {
   return alcance.todo || (cobro.source === 'CONSULTATION' && cobro.practitionerProfileId === alcance.profesional);
 }
 
+/**
+ * **Mis facturas**: qué cobros entran en la lista de una sesión, y de qué lado.
+ *
+ * - Quien factura (roles de facturación, el médico, la farmacia) ve las que
+ *   **emitió**: facturación todo, el médico las de sus consultas, la farmacia
+ *   las de sus pedidos.
+ * - El paciente ve las que **le emitieron**.
+ * - Cualquier otra cuenta (laboratorio, aseguradora…) ve «emitidas», vacía:
+ *   su organización todavía no factura en la maqueta, y lo dice.
+ */
+interface AlcanceDeMisFacturas {
+  readonly vista: MyInvoicesView;
+  readonly incluye: (cobro: SimulatedCharge) => boolean;
+}
+
+export function alcanceDeMisFacturas(usuario: MockUser): AlcanceDeMisFacturas {
+  const roles = usuario.roles;
+  if (roles.some((rol) => ROLES_DE_FACTURACION.includes(rol))) {
+    return { vista: 'ISSUED', incluye: () => true };
+  }
+  const profesional = usuario.practitionerProfileId;
+  if (profesional !== undefined && roles.some((rol) => ROLES_DEL_CONSULTORIO.includes(rol))) {
+    return { vista: 'ISSUED', incluye: (c) => dentroDelAlcance(c, { todo: false, profesional }) };
+  }
+  // La farmacia es `USER` con la membresía del tenant, como en la API. El
+  // visitador también cuelga de ese tenant y no factura nada.
+  if (usuario.tenants.includes(TENANT_FARMACIA) && !roles.includes('MEDICAL_VISITOR')) {
+    return { vista: 'ISSUED', incluye: (c) => c.source === 'PHARMACY' };
+  }
+  const paciente = usuario.patientProfileId;
+  if (paciente !== undefined && roles.includes('PATIENT')) {
+    return { vista: 'RECEIVED', incluye: (c) => c.patientProfileId === paciente };
+  }
+  return { vista: 'ISSUED', incluye: () => false };
+}
+
+/**
+ * Cuántas facturas de otros pacientes se siembran, además de todas las de la
+ * paciente de la demo. Sin semilla, «Mis facturas» abría vacía hasta que
+ * alguien emitiera una a mano desde Facturación.
+ */
+const FACTURAS_SEMBRADAS_DE_OTROS = 6;
+
+/**
+ * Emite, una sola vez, las facturas de la demo: la primera vez que se arma el
+ * motor persistido y todavía no hay ninguna. Son facturas como cualquier otra
+ * —mismo SIAT simulado, mismo correlativo—, así que Facturación las muestra
+ * emitidas y se pueden anular.
+ */
+function sembrarFacturas(motor: FacturacionSimulada, pacienteDeLaDemo: string | undefined): void {
+  const cobros = motor.listarCobros();
+  if (cobros.some((c) => c.latestInvoice !== null)) return;
+  const facturables = cobros
+    .filter((c) => c.payment !== null && c.suggestedBuyer.documentNumber !== '')
+    .reverse(); // de la más vieja a la más nueva: el correlativo sube con la fecha.
+  const deLaDemo = facturables.filter((c) => c.patientProfileId === pacienteDeLaDemo);
+  const deOtros = facturables.filter((c) => c.patientProfileId !== pacienteDeLaDemo).slice(-FACTURAS_SEMBRADAS_DE_OTROS);
+  const elegidos = new Set([...deLaDemo, ...deOtros].map((c) => c.id));
+  for (const cobro of facturables.filter((c) => elegidos.has(c.id))) {
+    const { name, documentTypeCode, documentNumber, email } = cobro.suggestedBuyer;
+    motor.emitirFactura(cobro.id, { buyer: { name, documentTypeCode, documentNumber, complement: null, email } }, 'semilla-demo');
+  }
+}
+
 /** Las opciones con las que se arma el motor; las pruebas lo arman con las suyas. */
 export interface OpcionesDeFacturacionSimulada {
   readonly activa?: () => boolean;
   readonly reloj?: () => Date;
   readonly persistir?: boolean;
+  /** Emitir las facturas de la demo al armar el motor. Por omisión, lo mismo que `persistir`. */
+  readonly sembrarFacturas?: boolean;
+  /** La paciente cuyas facturas se siembran todas. */
+  readonly pacienteDeLaDemo?: string;
 }
 
 function crearMotor(opciones: OpcionesDeFacturacionSimulada): FacturacionSimulada {
@@ -106,7 +178,15 @@ export function registrarFacturacionSimulada(router: MockRouter, opciones: Opcio
   let motor: FacturacionSimulada | null = null;
   // Perezoso: los cobros salen de fixtures de agenda y farmacia; no se arman
   // hasta que alguien entra a facturación.
-  const facturacion = (): FacturacionSimulada => (motor ??= crearMotor(opciones));
+  const facturacion = (): FacturacionSimulada => {
+    if (motor === null) {
+      motor = crearMotor(opciones);
+      if (opciones.sembrarFacturas ?? opciones.persistir ?? true) {
+        sembrarFacturas(motor, opciones.pacienteDeLaDemo ?? PACIENTE.id);
+      }
+    }
+    return motor;
+  };
 
   /**
    * Apagada → 404; sin sesión → 401; sin rol → 403. Con `consultorio`, quien
@@ -257,6 +337,45 @@ export function registrarFacturacionSimulada(router: MockRouter, opciones: Opcio
       return aRespuesta(m.encolarCorreo(request.params['invoiceId']!, String(datos.to ?? '')), 201);
     }),
   );
+
+  // «Mis facturas» (propietario, 30/09/2026): el ícono de la barra superior,
+  // para toda cuenta. No pasa por `con()`: el paciente y la farmacia no tienen
+  // rol de facturación y **sí** tienen facturas que mirar. El alcance lo da
+  // `alcanceDeMisFacturas`; fuera de él, 404 como en el resto.
+  router.get('/billing/simulated/my-invoices', (request: MockRequest) => {
+    if (!activa()) return notFound('La facturación simulada está apagada (billingSiatDemo = false)');
+    if (request.user === null) return unauthorized('Sin sesión');
+    const alcance = alcanceDeMisFacturas(request.user);
+    const m = facturacion();
+    const emisores = new Map(EMISORES_SIMULADOS.map((e) => [e.issuer.id, e.issuer]));
+    const items: MyInvoiceItem[] = m
+      .listarCobros()
+      .filter((c) => c.latestInvoice !== null && alcance.incluye(c))
+      .map((c) => ({
+        invoice: c.latestInvoice!,
+        chargeId: c.id,
+        source: c.source,
+        description: c.description,
+        issuerName: emisores.get(c.issuerId)?.legalName ?? 'Emisor simulado',
+        issuerNit: emisores.get(c.issuerId)?.nit ?? '',
+        patientName: c.patientName,
+        simulated: true as const,
+      }))
+      .sort((a, b) => b.invoice.issuedAt.localeCompare(a.invoice.issuedAt));
+    return { view: alcance.vista, items, count: items.length, simulated: true };
+  });
+
+  router.get('/billing/simulated/my-invoices/:invoiceId', (request: MockRequest) => {
+    if (!activa()) return notFound('La facturación simulada está apagada (billingSiatDemo = false)');
+    if (request.user === null) return unauthorized('Sin sesión');
+    const m = facturacion();
+    const factura = m.factura(request.params['invoiceId']!);
+    const cobro = factura === null ? null : m.cobro(factura.chargeId);
+    if (factura === null || cobro === null || !alcanceDeMisFacturas(request.user).incluye(cobro)) {
+      return notFound('La factura no existe');
+    }
+    return factura;
+  });
 
   router.get(
     '/billing/simulated/outbox',

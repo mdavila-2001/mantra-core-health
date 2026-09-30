@@ -1269,6 +1269,32 @@ describe('ShellLayout', () => {
       });
     });
 
+    /**
+     * «Mis facturas» (propietario, 30/09/2026): las facturas emitidas, para
+     * todas las cuentas —paciente, médico y organizaciones (la farmacia y el
+     * laboratorio son `USER`)—, fuera del menú lateral.
+     */
+    it.each([
+      ['paciente', ['PATIENT']],
+      ['profesional', ['PRACTITIONER']],
+      ['facturación', ['BILLING']],
+      ['organización (farmacia, laboratorio)', ['USER']],
+    ])('el encabezado ofrece «Mis facturas» a %s, como enlace con ícono', (_quien, roles) => {
+      abrirSesion({ sub: 'u-1', roles, tenants: ['t-1'] });
+      fixture.detectChanges();
+
+      const facturas = raiz().querySelector<HTMLAnchorElement>('[data-testid="header-facturas"]');
+      expect(facturas?.tagName).toBe('A');
+      expect(facturas?.getAttribute('href')).toBe('/my-account/invoices');
+      expect(facturas?.getAttribute('aria-label')).toBe('Mis facturas');
+      expect(facturas?.querySelector('app-nav-icon')).not.toBeNull();
+
+      const rutas = [...raiz().querySelectorAll('[data-testid="nav-enlace"]')].map((a) =>
+        a.getAttribute('data-route'),
+      );
+      expect(rutas).not.toContain('/my-account/invoices');
+    });
+
     it.each([
       ['paciente', ['USER', 'PATIENT']],
       ['profesional', ['PRACTITIONER']],
