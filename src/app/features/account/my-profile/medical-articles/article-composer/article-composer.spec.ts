@@ -230,6 +230,20 @@ describe('ArticleComposer', () => {
       expect(otro.componentInstance.draft().bodyText).toBe('## Recuperado\n\ntexto');
     });
 
+    it('con la clave llegando tarde (la vitrina carga después), ofrece el borrador y no lo pisa', async () => {
+      localStorage.setItem(CLAVE, JSON.stringify({ html: '<p>tarde</p>', savedAt: '2026-09-30T20:00:00.000Z' }));
+      vi.useFakeTimers();
+      const otro = TestBed.createComponent(ArticleComposer);
+      otro.detectChanges(); // sin clave todavía
+      await otro.whenStable();
+      otro.componentRef.setInput('draftKey', CLAVE);
+      otro.detectChanges();
+      vi.advanceTimersByTime(2000);
+      otro.detectChanges();
+      expect((otro.nativeElement as HTMLElement).querySelector('[data-testid="article-draft-offer"]')).not.toBeNull();
+      expect(localStorage.getItem(CLAVE)).toContain('tarde');
+    });
+
     it('descartar borra el borrador guardado', async () => {
       localStorage.setItem(CLAVE, JSON.stringify({ html: '<p>viejo</p>', savedAt: '2026-09-30T20:00:00.000Z' }));
       const otro = TestBed.createComponent(ArticleComposer);

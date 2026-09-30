@@ -11,6 +11,7 @@ import {
   Injector,
   input,
   signal,
+  untracked,
   viewChild,
 } from '@angular/core';
 
@@ -163,6 +164,8 @@ export class ArticleComposer {
 
   /** Un borrador guardado que todavía no se recuperó ni se descartó. */
   protected readonly borradorPendiente = signal<BorradorGuardado | null>(null);
+  /** La clave cuyo borrador ya se buscó. */
+  private readonly claveRevisada = signal<string | null>(null);
   /** Cuándo se guardó por última vez lo que se está escribiendo. */
   protected readonly guardadoA = signal<Date | null>(null);
 
@@ -224,13 +227,22 @@ export class ArticleComposer {
       for (const imagen of this.elegidas().values()) URL.revokeObjectURL(imagen.url);
     });
 
-    afterNextRender(() => this.ofrecerBorrador());
+    // El borrador se busca cuando llega la clave, no al montar: la clave sale
+    // de la vitrina, que carga después. Buscarlo al montar no lo encontraba, y
+    // el guardado automático —con la hoja vacía— lo borraba (medido 30/09/2026).
+    effect(() => {
+      const clave = this.draftKey();
+      if (clave === null || clave === untracked(this.claveRevisada)) return;
+      untracked(() => this.ofrecerBorrador(clave));
+      this.claveRevisada.set(clave);
+    });
 
-    // Guardado del borrador: con una pausa, para no escribir en cada tecla.
+    // Guardado del borrador: con una pausa, para no escribir en cada tecla. Nada
+    // se guarda antes de haber revisado si había uno, ni mientras se ofrece.
     effect((onCleanup) => {
       const html = this.html();
       const clave = this.draftKey();
-      if (clave === null || this.borradorPendiente() !== null) return;
+      if (clave === null || this.claveRevisada() !== clave || this.borradorPendiente() !== null) return;
       const temporizador = setTimeout(() => this.guardarBorrador(clave, html), PAUSA_DE_GUARDADO_MS);
       onCleanup(() => clearTimeout(temporizador));
     });
@@ -384,9 +396,7 @@ export class ArticleComposer {
     this.olvidarBorrador();
   }
 
-  private ofrecerBorrador(): void {
-    const clave = this.draftKey();
-    if (clave === null) return;
+  private ofrecerBorrador(clave: string): void {
     try {
       const crudo = localStorage.getItem(clave);
       if (crudo === null) return;
