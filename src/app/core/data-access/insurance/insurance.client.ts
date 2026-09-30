@@ -46,6 +46,9 @@ import type {
   MarketplaceBroker,
   PatientCampaign,
   ReceivedClaim,
+  ReceivedClaimDecision,
+  ReceivedClaimDecisionInput,
+  ReceivedClaimInvoice,
   ReceivedClaimList,
 } from './insurance.types';
 
@@ -115,10 +118,18 @@ type WireClaimListItem = Omit<ClaimListItem, 'submittedAt'> & {
   readonly submittedAt: string | null;
 };
 
-type WireReceivedClaim = Omit<ReceivedClaim, 'submittedAt' | 'serviceDate'> & {
+type WireReceivedClaimInvoice = Omit<ReceivedClaimInvoice, 'issuedAt' | 'annulledAt' | 'previous'> & {
+  readonly issuedAt: string;
+  readonly annulledAt: string | null;
+  readonly previous: readonly WireReceivedClaimInvoice[];
+};
+
+type WireReceivedClaim = Omit<ReceivedClaim, 'submittedAt' | 'serviceDate' | 'decision' | 'invoice'> & {
   readonly submittedAt: string | null;
   /** `format: 'date'`: se convierte con `maybeDateOnly`, no con `new Date()`. */
   readonly serviceDate: string | null;
+  readonly decision: (Omit<ReceivedClaimDecision, 'decidedAt'> & { readonly decidedAt: string }) | null;
+  readonly invoice: WireReceivedClaimInvoice | null;
 };
 
 type WireClaimAdjudication = Omit<ClaimAdjudication, 'adjudicatedAt'> & {
@@ -462,6 +473,49 @@ export class InsuranceClient {
   }
 
   /**
+   * `POST /insurance/received-claims/:id/decision` — el dictamen de la
+   * aseguradora. **Definitivo**: la API responde `409` si la solicitud ya tiene
+   * uno. Aprobar (total o parcial) emite en el mismo acto la factura del
+   * prestador a la aseguradora por el monto aprobado.
+   *
+   * @returns La solicitud como quedó, con su dictamen y su factura.
+   */
+  decideReceivedClaim(claimId: string, body: ReceivedClaimDecisionInput): Observable<ReceivedClaim> {
+    return this.http
+      .post<WireReceivedClaim>(
+        this.url(`/insurance/received-claims/${encodeURIComponent(claimId)}/decision`),
+        body,
+      )
+      .pipe(map(toReceivedClaim));
+  }
+
+  /**
+   * `POST /insurance/received-claims/:id/invoice/annulment` — anula la factura
+   * vigente, con motivo. El dictamen no cambia.
+   */
+  annulReceivedClaimInvoice(claimId: string, reason: string): Observable<ReceivedClaim> {
+    return this.http
+      .post<WireReceivedClaim>(
+        this.url(`/insurance/received-claims/${encodeURIComponent(claimId)}/invoice/annulment`),
+        { reason },
+      )
+      .pipe(map(toReceivedClaim));
+  }
+
+  /**
+   * `POST /insurance/received-claims/:id/invoice` — emite la factura corregida
+   * de una solicitud aprobada cuya factura se anuló. `409` si ya hay una vigente.
+   */
+  reissueReceivedClaimInvoice(claimId: string): Observable<ReceivedClaim> {
+    return this.http
+      .post<WireReceivedClaim>(
+        this.url(`/insurance/received-claims/${encodeURIComponent(claimId)}/invoice`),
+        {},
+      )
+      .pipe(map(toReceivedClaim));
+  }
+
+  /**
    * `GET /insurance-claims/:id` — cabecera, ítems, dictámenes y disputas.
    *
    * @param id - Solicitud consultada.
@@ -597,6 +651,17 @@ function toReceivedClaim(body: WireReceivedClaim): ReceivedClaim {
     ...body,
     submittedAt: maybeDate(body.submittedAt) ?? null,
     serviceDate: maybeDateOnly(body.serviceDate) ?? null,
+    decision: body.decision === null ? null : { ...body.decision, decidedAt: new Date(body.decision.decidedAt) },
+    invoice: body.invoice === null ? null : toReceivedClaimInvoice(body.invoice),
+  };
+}
+
+function toReceivedClaimInvoice(body: WireReceivedClaimInvoice): ReceivedClaimInvoice {
+  return {
+    ...body,
+    issuedAt: new Date(body.issuedAt),
+    annulledAt: maybeDate(body.annulledAt) ?? null,
+    previous: body.previous.map(toReceivedClaimInvoice),
   };
 }
 

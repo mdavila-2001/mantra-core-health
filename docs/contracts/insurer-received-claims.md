@@ -25,6 +25,9 @@ La cara de **quien paga** del mismo `insurance.insurance_claims` que el prestado
 | `approvedTotal` | última `claim_adjudication_versions.total_approved_amount`, `null` sin dictamen |
 | `submittedAt` / `status` | `insurance_claims.submitted_at` / `status_concept_id` |
 | `policyIdentifier` / `planName` | póliza y plan de la cobertura |
+| `lines` | `insurance_claim_lines` (código del catálogo, cantidad, precio, importe), de mayor a menor importe |
+| `decision` | última `claim_adjudication_versions`: resultado, fecha, quién y motivo; `null` sin dictamen |
+| `invoice` | la factura que emitió el dictamen favorable, con las anuladas en `previous` — **ver «Pendiente en el modelo»** |
 
 Una solicitud sin `encounter_id` viaja con `practitioner: null` y `serviceDate: null`; la pantalla
 lo dice con palabras («Sin atención asociada»), no con un guion.
@@ -54,7 +57,16 @@ Respuesta `200`:
       "serviceDate": "2026-09-17",
       "policyIdentifier": "POL-…",
       "planName": "… · Plan Oro",
-      "status": { "code": "IN_REVIEW", "display": "En revisión" }
+      "status": { "code": "IN_REVIEW", "display": "En revisión" },
+      "lines": [
+        {
+          "sequence": 1, "code": "SVC_ECOGRAFIA", "display": "Ecografía", "quantity": 1,
+          "unitPrice": { "amount": "400.25", "currency": { "code": "BOB", "display": "Boliviano" } },
+          "billedAmount": { "amount": "400.25", "currency": { "code": "BOB", "display": "Boliviano" } }
+        }
+      ],
+      "decision": null,
+      "invoice": null
     }
   ],
   "truncated": false
@@ -75,3 +87,44 @@ Respuesta `200`:
 la maqueta y `DEMO` (nunca `RED_ASEGURADORA` ni `USUARIO_PROPIETARIO`) y pacientes escritos o
 generados (nunca los de `USUARIO_PACIENTES_1.md`). Lo verifica
 `insurer-received-claims.handlers.spec.ts`.
+
+## Dictamen y factura (2026-09-30)
+
+La pantalla ya no sólo lee: la aseguradora **dictamina** desde la fila o desde el detalle, y
+puede **anular la factura** que produjo el dictamen. Hoy lo sirve el simulador.
+
+### `POST /insurance/received-claims/:id/decision`
+
+```json
+{ "outcome": "APPROVED" | "PARTIAL" | "REJECTED", "approvedAmount": "200.00", "reason": "…" }
+```
+
+- **Definitivo.** `409 { reason: "ALREADY_DECIDED" }` si la solicitud ya no está en `SUBMITTED` o
+  `IN_REVIEW`. No existe ruta para revertirlo; la pantalla lo advierte antes de mandar.
+- `APPROVED`: aprueba el monto solicitado; `reason` opcional.
+- `PARTIAL`: `approvedAmount` obligatorio, cadena decimal, mayor que cero y **menor** que lo
+  solicitado; `reason` obligatorio (≥ 5 caracteres). `422` si no.
+- `REJECTED`: `reason` obligatorio. No se emite factura.
+- Un dictamen favorable **produce el evento de facturación en el mismo acto**: la factura del
+  prestador a la aseguradora por el monto aprobado. Responde `200` con la solicitud completa.
+
+### `POST /insurance/received-claims/:id/invoice/annulment`
+
+`{ "reason": "…" }` (≥ 5 caracteres). Anula la factura vigente; **el dictamen no cambia**.
+`409 NO_ACTIVE_INVOICE` si no hay factura vigente; `409 ALREADY_PAID` si la solicitud ya está
+pagada (eso se corrige con nota de crédito, otro circuito).
+
+### `POST /insurance/received-claims/:id/invoice`
+
+Emite la factura corregida de una solicitud aprobada cuya factura se anuló. La anulada pasa a
+`invoice.previous`. `409 NOTHING_TO_REISSUE` si no corresponde.
+
+### Pendiente en el modelo
+
+`insurance_claims` no tiene hoy vínculo con una factura. Para que la API cumpla esto hace falta
+decidir **dónde vive la factura del prestador a la aseguradora** — reusar la facturación
+(`/billing`, SIAT) con la aseguradora como compradora, o una tabla propia — y el evento que la
+emite al dictaminar. La anulación en la API real tiene que pasar por la anulación del SIAT
+(`anulacionFactura`, con código de motivo del catálogo), que el simulador de facturación del
+front ya modela en `core/mock/siat-sim/`. Mientras tanto el simulador de este contrato guarda la
+factura dentro de la solicitud, en `sessionStorage` (`mock.insurerReceivedClaims`).

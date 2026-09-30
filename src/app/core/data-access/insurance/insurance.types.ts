@@ -587,6 +587,62 @@ export interface ReceivedClaim {
   readonly policyIdentifier: string | null;
   readonly planName: string | null;
   readonly status: InsuranceConcept | null;
+  /** Los renglones facturados, de mayor a menor importe: `service` es el primero. */
+  readonly lines: readonly ReceivedClaimLine[];
+  /** El dictamen de la aseguradora; `null` mientras la solicitud sigue abierta. */
+  readonly decision: ReceivedClaimDecision | null;
+  /** La factura que produjo el dictamen favorable; `null` sin dictamen o rechazada. */
+  readonly invoice: ReceivedClaimInvoice | null;
+}
+
+/** Un renglón de la solicitud: lo que se ve al pasar el puntero por el servicio. */
+export interface ReceivedClaimLine {
+  readonly sequence: number;
+  /** Código del catálogo de servicios del prestador. */
+  readonly code: string;
+  readonly display: string;
+  readonly quantity: number;
+  readonly unitPrice: Money;
+  readonly billedAmount: Money;
+}
+
+/** Qué decidió la aseguradora. Es definitivo: no hay ruta para deshacerlo. */
+export interface ReceivedClaimDecision {
+  readonly outcome: ReceivedClaimOutcome;
+  readonly decidedAt: Date;
+  readonly decidedBy: string;
+  /** Obligatorio al rechazar o aprobar parcialmente; opcional al aprobar. */
+  readonly reason: string | null;
+}
+
+export type ReceivedClaimOutcome = 'APPROVED' | 'PARTIAL' | 'REJECTED';
+
+export type ReceivedClaimInvoiceStatus = 'ISSUED' | 'ANNULLED';
+
+/**
+ * El evento de facturación que dispara un dictamen favorable: la factura del
+ * prestador a la aseguradora por el monto aprobado. Anularla no reabre el
+ * dictamen; deja la solicitud aprobada y **sin factura vigente** hasta que se
+ * emita la corregida.
+ */
+export interface ReceivedClaimInvoice {
+  readonly id: string;
+  readonly invoiceNumber: string;
+  readonly amount: Money;
+  readonly status: ReceivedClaimInvoiceStatus;
+  readonly issuedAt: Date;
+  readonly annulledAt: Date | null;
+  readonly annulmentReason: string | null;
+  /** Las facturas anuladas antes de ésta, de la más reciente a la más vieja. */
+  readonly previous: readonly ReceivedClaimInvoice[];
+}
+
+/** Lo que manda la pantalla al decidir. */
+export interface ReceivedClaimDecisionInput {
+  readonly outcome: ReceivedClaimOutcome;
+  /** Cadena decimal. Sólo en `PARTIAL`; en `APPROVED` es el monto solicitado y en `REJECTED`, cero. */
+  readonly approvedAmount?: string;
+  readonly reason?: string;
 }
 
 /** Listado completo de solicitudes recibidas en la ventana consultada. */
