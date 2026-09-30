@@ -3,6 +3,8 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 
+import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
+
 import type { ReceivedClaim } from '../../../core/data-access/insurance/insurance.types';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { ReceivedClaims } from './received-claims';
@@ -35,6 +37,18 @@ function claimWire(index: number, overrides: Record<string, unknown> = {}) {
     policyIdentifier: `POL-${index}`,
     planName: 'Seguros Andina · Plan Oro',
     status: { code: 'SUBMITTED', display: 'Enviada' },
+    lines: [
+      {
+        sequence: 1,
+        code: 'SVC_ECG',
+        display: 'Electrocardiograma',
+        quantity: 1,
+        unitPrice: { amount: '120.00', currency: BOB },
+        billedAmount: { amount: '120.00', currency: BOB },
+      },
+    ],
+    decision: null,
+    invoice: null,
     ...overrides,
   };
 }
@@ -49,10 +63,32 @@ describe('ReceivedClaims', () => {
   let component: ReceivedClaims;
   let http: HttpTestingController;
   let router: Router;
+  /** Lo que responde la próxima confirmación: `true`/`false`, o el motivo escrito. */
+  let answer: boolean | string | null;
+  let asked: { title: string; message: string }[];
 
   beforeEach(() => {
+    answer = true;
+    asked = [];
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        {
+          provide: DialogService,
+          useValue: {
+            confirm: async (config: { title: string; message: string }) => {
+              asked.push(config);
+              return answer === true;
+            },
+            confirmWithReason: async (config: { title: string; message: string }) => {
+              asked.push(config);
+              return typeof answer === 'string' ? answer : null;
+            },
+          },
+        },
+      ],
     });
     http = TestBed.inject(HttpTestingController);
     router = TestBed.inject(Router);
@@ -94,7 +130,7 @@ describe('ReceivedClaims', () => {
     await fixture.whenStable();
   }
 
-  it('pinta las columnas del pedido, todas ordenables, y la moneda una sola vez en el conteo', async () => {
+  it('pinta las columnas del pedido más la de acciones, y la moneda una sola vez en el conteo', async () => {
     await mount([claimWire(1)]);
     expect(
       (fixture.nativeElement.querySelector('[data-testid="received-claims-count"]') as HTMLElement).textContent,
@@ -105,11 +141,11 @@ describe('ReceivedClaims', () => {
       'Médico',
       'Servicio prestado',
       'Monto solicitado',
-      'Fecha de solicitud',
-      'Fecha de prestación',
+      'Fechas',
       'Estado',
+      'Acciones',
     ]);
-    expect(columns.every((c) => c.sortable)).toBe(true);
+    expect(columns.filter((c) => c.header !== 'Acciones').every((c) => c.sortable)).toBe(true);
   });
 
   it('ofrece un filtro por cada encabezado filtrable, con sólo los valores que existen', async () => {
@@ -124,7 +160,6 @@ describe('ReceivedClaims', () => {
       'Monto solicitado',
       'Fecha de solicitud',
       'Fecha de prestación',
-      'Estado',
       'Prestador',
     ]);
     expect(filters.find((f) => f.label === 'Servicio')!.options.map((o) => o.value)).toEqual([
@@ -149,20 +184,32 @@ describe('ReceivedClaims', () => {
     expect(rows().map((r) => r.id)).toEqual(['claim-1']);
   });
 
-  it('filtra por servicio, estado, tramo de monto y período de prestación leídos de la URL', async () => {
+  it('filtra por tramo de monto y período de prestación leídos de la URL', async () => {
     await mount([
       claimWire(1, { billedTotal: { amount: '1500.00', currency: BOB } }),
-      claimWire(2, { status: { code: 'PAID', display: 'Pagada' } }),
+      claimWire(2),
       claimWire(40, { serviceDate: daysAgo(41).slice(0, 10) }),
     ]);
     await filterBy({ amount: 'gt1000' });
     expect(rows().map((r) => r.id)).toEqual(['claim-1']);
 
-    await filterBy({ status: 'PAID' });
-    expect(rows().map((r) => r.id)).toEqual(['claim-2']);
-
     await filterBy({ serviceDate: '30' });
     expect(rows().map((r) => r.id)).toEqual(['claim-1', 'claim-2']);
+  });
+
+  it('arranca en «Por dictaminar» y cada bandeja cuenta lo que tiene', async () => {
+    await mount([
+      claimWire(1),
+      claimWire(2, { status: { code: 'IN_REVIEW', display: 'En revisión' } }),
+      claimWire(3, { status: { code: 'PAID', display: 'Pagada' } }),
+      claimWire(4, { status: { code: 'REJECTED', display: 'Rechazada' } }),
+    ]);
+    expect(rows().map((r) => r.id)).toEqual(['claim-1', 'claim-2']);
+    const labels = internal<() => { label: string }[]>('queueOptions')().map((o) => o.label);
+    expect(labels).toEqual(['Por dictaminar · 2', 'Aprobadas · 0', 'Pagadas · 1', 'Rechazadas · 1', 'Todas · 4']);
+
+    writable<string>('queue').set('paid');
+    expect(rows().map((r) => r.id)).toEqual(['claim-3']);
   });
 
   it('ordena por el encabezado elegido, en las dos direcciones', async () => {
@@ -233,5 +280,103 @@ describe('ReceivedClaims', () => {
     expect(dialog.textContent).toContain('POL-1');
     expect(dialog.textContent).toContain('CLM-2026-1001');
     expect(dialog.textContent).toContain('Sin dictaminar');
+    expect(dialog.textContent).toContain('SVC_ECG');
+  });
+
+  /* ---- dictamen y factura ------------------------------------------------- */
+
+  const invoice = (status: 'ISSUED' | 'ANNULLED') => ({
+    id: 'inv-1',
+    invoiceNumber: 'FAC-004101',
+    amount: { amount: '120.00', currency: BOB },
+    status,
+    issuedAt: daysAgo(2),
+    annulledAt: status === 'ANNULLED' ? daysAgo(1) : null,
+    annulmentReason: status === 'ANNULLED' ? 'NIT equivocado' : null,
+    previous: [],
+  });
+  const approved = { code: 'APPROVED', display: 'Aprobada' };
+  const decision = { outcome: 'APPROVED', decidedAt: daysAgo(2), decidedBy: 'Patricia Suárez', reason: null };
+
+  function actionsOf(claim: ReceivedClaim): string[] {
+    return internal<(c: ReceivedClaim) => { code: string }[]>('actionsOf')(claim).map((a) => a.code);
+  }
+
+  it('ofrece decidir sólo lo abierto, anular la factura vigente y volver a facturar la anulada', async () => {
+    await mount([
+      claimWire(1),
+      claimWire(2, { status: approved, decision, invoice: invoice('ISSUED') }),
+      claimWire(3, { status: approved, decision, invoice: invoice('ANNULLED') }),
+      claimWire(4, { status: { code: 'REJECTED', display: 'Rechazada' }, decision: { ...decision, outcome: 'REJECTED' } }),
+      claimWire(5, { status: { code: 'PAID', display: 'Pagada' }, decision, invoice: invoice('ISSUED') }),
+    ]);
+    writable<string>('queue').set('all');
+    const byId = new Map(rows().map((r) => [r.id, r]));
+    expect(actionsOf(byId.get('claim-1')!)).toEqual(['approve', 'partial', 'reject']);
+    expect(actionsOf(byId.get('claim-2')!)).toEqual(['annul-invoice']);
+    expect(actionsOf(byId.get('claim-3')!)).toEqual(['reissue-invoice']);
+    expect(actionsOf(byId.get('claim-4')!)).toEqual([]);
+    expect(actionsOf(byId.get('claim-5')!)).toEqual([]);
+  });
+
+  it('cada fila tiene su botón «Ver detalle»', async () => {
+    await mount([claimWire(1), claimWire(2)]);
+    expect(fixture.nativeElement.querySelectorAll('[data-testid="received-claim-view"]').length).toBe(2);
+  });
+
+  it('aprobar avisa que no se revierte y que factura, y sólo manda el dictamen si se confirma', async () => {
+    await mount([claimWire(1)]);
+    const claim = rows()[0]!;
+
+    answer = false;
+    await internal<(code: string, c: ReceivedClaim) => Promise<void>>('run')('approve', claim);
+    http.expectNone('/insurance/received-claims/claim-1/decision');
+    expect(asked[0]!.message).toContain('no se puede revertir');
+    expect(asked[0]!.message).toContain('evento de facturación');
+
+    answer = true;
+    await internal<(code: string, c: ReceivedClaim) => Promise<void>>('run')('approve', claim);
+    const request = http.expectOne('/insurance/received-claims/claim-1/decision');
+    expect(request.request.body).toEqual({ outcome: 'APPROVED' });
+    request.flush(claimWire(1, { status: approved, decision, invoice: invoice('ISSUED') }));
+    expect(internal<() => { label: string }[]>('queueOptions')()[1]!.label).toBe('Aprobadas · 1');
+  });
+
+  it('rechazar exige motivo y lo manda', async () => {
+    await mount([claimWire(1)]);
+    answer = 'El plan no cubre este estudio';
+    await internal<(code: string, c: ReceivedClaim) => Promise<void>>('run')('reject', rows()[0]!);
+    const request = http.expectOne('/insurance/received-claims/claim-1/decision');
+    expect(request.request.body).toEqual({ outcome: 'REJECTED', reason: 'El plan no cubre este estudio' });
+    request.flush(claimWire(1, { status: { code: 'REJECTED', display: 'Rechazada' } }));
+  });
+
+  it('aprobar en parte no deja pasar un monto igual o mayor que lo solicitado', async () => {
+    await mount([claimWire(1)]);
+    const claim = rows()[0]!;
+    internal<(c: ReceivedClaim) => void>('openPartial')(claim);
+    const amount = internal<{ setValue(v: string): void }>('partialAmount');
+    const reason = internal<{ setValue(v: string): void }>('partialReason');
+    amount.setValue('120.00');
+    reason.setValue('Cobertura al 50 %');
+    await internal<(c: ReceivedClaim) => Promise<void>>('submitPartial')(claim);
+    http.expectNone('/insurance/received-claims/claim-1/decision');
+
+    amount.setValue('60');
+    await internal<(c: ReceivedClaim) => Promise<void>>('submitPartial')(claim);
+    const request = http.expectOne('/insurance/received-claims/claim-1/decision');
+    expect(request.request.body).toEqual({ outcome: 'PARTIAL', approvedAmount: '60.00', reason: 'Cobertura al 50 %' });
+    request.flush(claimWire(1, { status: { code: 'PARTIAL', display: 'Aprobada parcialmente' } }));
+  });
+
+  it('anular la factura pide motivo y lo manda', async () => {
+    await mount([claimWire(1, { status: approved, decision, invoice: invoice('ISSUED') })]);
+    writable<string>('queue').set('approved');
+    answer = 'El NIT salió equivocado';
+    await internal<(code: string, c: ReceivedClaim) => Promise<void>>('run')('annul-invoice', rows()[0]!);
+    const request = http.expectOne('/insurance/received-claims/claim-1/invoice/annulment');
+    expect(request.request.body).toEqual({ reason: 'El NIT salió equivocado' });
+    request.flush(claimWire(1, { status: approved, decision, invoice: invoice('ANNULLED') }));
+    expect(rows()[0]!.invoice?.status).toBe('ANNULLED');
   });
 });

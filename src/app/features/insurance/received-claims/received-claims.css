@@ -93,3 +93,176 @@
   margin: 0;
   color: var(--text-primary);
 }
+
+/* ---- bandejas, fechas, factura y acciones -------------------------------- */
+
+.received__queues {
+  display: block;
+  margin-block-end: var(--sp-4);
+}
+
+.received__date {
+  display: flex;
+  gap: var(--sp-2);
+  align-items: baseline;
+  white-space: nowrap;
+}
+
+.received__date-label {
+  min-width: 5.5em;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.received__invoice {
+  margin-block-start: var(--sp-1);
+  white-space: nowrap;
+}
+
+/* Sólo el número se tacha: el motivo de la anulación se tiene que poder leer. */
+.received__invoice--annulled {
+  color: var(--text-secondary);
+}
+
+.received__invoices .received__invoice--annulled strong {
+  text-decoration: line-through;
+}
+
+.received__actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-1);
+}
+
+/* Lo que tiene ficha al pasar el puntero se subraya con puntos: avisa sin
+   parecer un enlace. */
+.received__peekable {
+  width: fit-content;
+  text-decoration: underline dotted;
+  text-decoration-color: var(--text-muted);
+  text-underline-offset: 0.25em;
+  cursor: help;
+}
+
+/* ---- fichas del globo (superficie invertida del tooltip) ------------------ */
+
+.received__peek {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--sp-1) var(--sp-3);
+  margin: 0;
+}
+
+.received__peek dt {
+  opacity: 0.75;
+}
+
+.received__peek dd {
+  margin: 0;
+  font-weight: 600;
+}
+
+.received__peek-title {
+  margin: 0 0 var(--sp-2);
+  font-weight: 600;
+}
+
+.received__peek-lines table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+.received__peek-lines th,
+.received__peek-lines td {
+  padding: var(--sp-1) var(--sp-2) var(--sp-1) 0;
+  text-align: start;
+  vertical-align: top;
+}
+
+.received__peek-lines thead th {
+  opacity: 0.75;
+  font-weight: 500;
+}
+
+.received__peek-lines td:last-child,
+.received__peek-lines th:last-child {
+  padding-inline-end: 0;
+  text-align: end;
+}
+
+.received__peek-lines tfoot th,
+.received__peek-lines tfoot td {
+  border-block-start: 1px solid currentColor;
+  font-weight: 600;
+}
+
+/* ---- detalle ------------------------------------------------------------- */
+
+.received__section {
+  margin: var(--sp-6) 0 var(--sp-3);
+  font-size: var(--fs-body);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.received__lines {
+  overflow-x: auto;
+}
+
+.received__lines table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-caption);
+}
+
+.received__lines th,
+.received__lines td {
+  padding: var(--sp-2);
+  border-block-end: 1px solid var(--border-subtle);
+  text-align: start;
+}
+
+.received__lines thead th {
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.received__lines tfoot th,
+.received__lines tfoot td {
+  border-block-end: 0;
+  font-weight: 600;
+}
+
+.received__num {
+  text-align: end !important;
+}
+
+.received__note {
+  margin: var(--sp-2) 0 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.received__invoices {
+  margin: 0;
+  padding-inline-start: var(--sp-5);
+  color: var(--text-primary);
+}
+
+.received__invoices li + li {
+  margin-block-start: var(--sp-1);
+}
+
+.received__partial {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.received__dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--sp-2);
+}
