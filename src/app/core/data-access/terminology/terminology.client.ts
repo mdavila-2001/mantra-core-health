@@ -15,6 +15,7 @@ import type {
   ConceptLabels,
   ConceptSearchPage,
   ConceptSearchQuery,
+  GlossaryFacets,
   GlossaryQuery,
   GlossaryTagPage,
   GlossaryTagQuery,
@@ -355,13 +356,34 @@ export class TerminologyClient {
     if (query.valueSetId !== undefined) {
       params = params.set('valueSetId', query.valueSetId);
     }
+    if (query.tagValueSetId !== undefined) {
+      params = params.set('tagValueSetId', query.tagValueSetId);
+    }
     if (query.limit !== undefined) {
       params = params.set('limit', String(query.limit));
+    }
+    if (query.offset !== undefined) {
+      params = params.set('offset', String(query.offset));
     }
 
     return this.http.get<GlossaryTermPage>(this.url('/terminology/concepts'), {
       params,
     });
+  }
+
+  /**
+   * `GET /terminology/value-sets/$glossary-facets` — cuántos términos tiene cada
+   * categoría y cada etiqueta, y qué etiquetas aparecen dentro de cada categoría.
+   *
+   * Es una consulta agregada del servidor: la rejilla se pinta sin traer un solo
+   * término, que es lo que permite un glosario de cientos de miles.
+   *
+   * @returns Las facetas del glosario.
+   */
+  readGlossaryFacets(): Observable<GlossaryFacets> {
+    // El `$` va literal, como en `$expand`: el ruteo de la API compara la ruta
+    // sin decodificar, y `%24glossary-facets` no casaría.
+    return this.http.get<GlossaryFacets>(this.url('/terminology/value-sets/$glossary-facets'));
   }
 
   /**

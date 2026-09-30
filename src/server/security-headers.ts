@@ -235,7 +235,16 @@ export function contentSecurityPolicy(options: SecurityHeadersOptions = {}): str
     // `blob:` (30/09/2026): las miniaturas y el visor de «Resultados» del
     // laboratorio muestran el archivo que la pantalla acaba de bajar, como URL
     // de objeto local. No abre ningún origen ajeno.
-    "img-src 'self' data: blob: https://tile.openstreetmap.org",
+    //
+    // `upload.wikimedia.org`, `thumb.wikimedia.org` (miniaturas) y `cima.aemps.es` (30/09/2026): las imágenes del
+    // glosario en castellano. Wikimedia Commons sirve las ilustraciones con su
+    // licencia (atribución visible en la ficha) y CIMA las fotos de envase y
+    // forma farmacéutica de los medicamentos autorizados (AEMPS, reproducción
+    // citando la fuente). Tres hosts exactos, sin comodín, y sólo `img-src`:
+    // ni scripts ni conexiones se abren con ellos. Se piden directo del
+    // navegador, como los mosaicos del mapa; copiarlas al propio almacén sería
+    // redistribuirlas, que es otra decisión (de licencia) y no de esta política.
+    "img-src 'self' data: blob: https://tile.openstreetmap.org https://upload.wikimedia.org https://thumb.wikimedia.org https://cima.aemps.es",
     `connect-src 'self'${apiOrigin === null ? '' : ` ${apiOrigin}`}`,
     "frame-ancestors 'none'",
     "object-src 'none'",

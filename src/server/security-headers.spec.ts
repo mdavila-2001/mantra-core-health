@@ -139,7 +139,21 @@ describe('security-headers', () => {
       expect(contentSecurityPolicy()).not.toContain('fonts.googleapis.com');
     });
 
-    it('abre imágenes SOLO a los tiles del proveedor del mapa, y nada más sale a terceros', () => {
+    it('abre imágenes del glosario SOLO a Wikimedia (original y miniatura) y CIMA, host exacto y sólo como imagen', () => {
+      const csp = contentSecurityPolicy();
+      const directiva = csp.split('; ').find((d) => d.startsWith('img-src '));
+
+      expect(directiva).toBe(
+        "img-src 'self' data: blob: https://tile.openstreetmap.org https://upload.wikimedia.org https://thumb.wikimedia.org https://cima.aemps.es",
+      );
+      for (const host of ['https://upload.wikimedia.org', 'https://thumb.wikimedia.org', 'https://cima.aemps.es']) {
+        const otras = csp.split('; ').filter((d) => !d.startsWith('img-src '));
+        expect(otras.some((d) => d.includes(host))).toBe(false);
+      }
+      expect(csp).not.toMatch(/\*\.wikimedia\.org|\*\.aemps\.es/);
+    });
+
+    it('abre imágenes a los tiles del proveedor del mapa (y a nada más que no esté declarado)', () => {
       const csp = contentSecurityPolicy();
 
       // El mapa (Leaflet sin clave de API) pide sus tiles directo del

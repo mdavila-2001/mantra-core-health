@@ -2,7 +2,7 @@
 
 Este directorio es **la fuente de verdad del glosario ampliado** que consumen tres cosas:
 
-1. el simulador del front (`scripts/gen-glossary-fixture.mjs` → `src/app/core/mock/fixtures/glosario.generated.ts`, `yarn mock:glossary`);
+1. el simulador del front, **indirectamente** (desde el 2026-09-30): `yarn mock:glossary` sigue generando `src/app/core/mock/fixtures/glosario.generated.ts`, pero el simulador ya no lo importa — lee shards bajo demanda desde `public/glossary-data/` (el glosario completo de `glossary-data-build/`, `yarn mock:glossary:shards`, fuera de git) o, si no está, desde `public/glossary-seed/` (esta capa + los curados + el atlas anatómico, convertidos con `yarn mock:glossary:seed`, commiteado). **Después de regenerar el fixture, regenerá la semilla**;
 2. el servicio de IA (`AlovidaAIService`, `yarn catalog:sync <front>` lo copia pinneado a SHA — no se edita allá);
 3. la API real, cuando se quiera: cada archivo es **NDJSON compatible con el perfil `conceptos`** del motor de carga masiva (`code`, `display`, `definition`; el resto de columnas las ignora).
 

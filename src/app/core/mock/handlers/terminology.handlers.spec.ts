@@ -24,10 +24,16 @@ describe('handlers de terminología: propiedades de concepto (frecuencia por def
   const router = new MockRouter();
   registrarTerminologia(router);
 
-  function call<T>(method: MockMethod, path: string, query = new URLSearchParams()): T {
+  // Los manejadores de conceptos contestan con una promesa desde que el
+  // glosario se lee bajo demanda (`glossary-shards.ts`): se espera siempre.
+  async function call<T>(
+    method: MockMethod,
+    path: string,
+    query = new URLSearchParams(),
+  ): Promise<T> {
     const match = router.match(method, path);
     if (match === null) throw new Error(`No existe ${method} ${path}`);
-    return match.handler({
+    return (await match.handler({
       method,
       path,
       params: match.params,
@@ -35,11 +41,11 @@ describe('handlers de terminología: propiedades de concepto (frecuencia por def
       body: null,
       headers: new HttpHeaders(),
       user: null,
-    }) as T;
+    })) as T;
   }
 
-  it('la ficha de un medicamento CON la propiedad la trae, legible con valorDeTexto', () => {
-    const ficha = call<{ properties: Readonly<Record<string, unknown>> }>(
+  it('la ficha de un medicamento CON la propiedad la trae, legible con valorDeTexto', async () => {
+    const ficha = await call<{ properties: Readonly<Record<string, unknown>> }>(
       'GET',
       `/terminology/concepts/${MEDICAMENTO['MED-PARACETAMOL']}`,
     );
@@ -48,8 +54,8 @@ describe('handlers de terminología: propiedades de concepto (frecuencia por def
     );
   });
 
-  it('la ficha de un medicamento SIN la propiedad no la trae, y la lectura defensiva no rompe', () => {
-    const ficha = call<{ properties: Readonly<Record<string, unknown>> }>(
+  it('la ficha de un medicamento SIN la propiedad no la trae, y la lectura defensiva no rompe', async () => {
+    const ficha = await call<{ properties: Readonly<Record<string, unknown>> }>(
       'GET',
       `/terminology/concepts/${MEDICAMENTO['MED-LOSARTAN']}`,
     );
@@ -57,8 +63,8 @@ describe('handlers de terminología: propiedades de concepto (frecuencia por def
     expect(valorDeTexto(ficha.properties, 'default_frequency')).toBeUndefined();
   });
 
-  it('inválido — un value_json mal formado (número) se lee como ausente, sin lanzar', () => {
-    const ficha = call<{ properties: Readonly<Record<string, unknown>> }>(
+  it('inválido — un value_json mal formado (número) se lee como ausente, sin lanzar', async () => {
+    const ficha = await call<{ properties: Readonly<Record<string, unknown>> }>(
       'GET',
       `/terminology/concepts/${MEDICAMENTO['MED-INSULINA-NPH']}`,
     );
@@ -67,8 +73,8 @@ describe('handlers de terminología: propiedades de concepto (frecuencia por def
     expect(valorDeTexto(ficha.properties, 'default_frequency')).toBeUndefined();
   });
 
-  it('la lista/búsqueda de conceptos NO trae `properties` — sólo la ficha, como en el contrato real', () => {
-    const { items } = call<{ items: readonly Record<string, unknown>[] }>(
+  it('la lista/búsqueda de conceptos NO trae `properties` — sólo la ficha, como en el contrato real', async () => {
+    const { items } = await call<{ items: readonly Record<string, unknown>[] }>(
       'GET',
       '/terminology/concepts',
       new URLSearchParams({ ids: MEDICAMENTO['MED-PARACETAMOL']! }),
@@ -394,13 +400,15 @@ describe('contrato C0: expansión de conceptos clínicos', () => {
   const router = new MockRouter();
   registrarTerminologia(router);
 
-  function expand(code: string): readonly { conceptId: string; code: string; display: string }[] {
+  async function expand(
+    code: string,
+  ): Promise<readonly { conceptId: string; code: string; display: string }[]> {
     const valueSet = conjuntoPorCodigo(code);
     if (valueSet === undefined) throw new Error('No existe el conjunto ' + code);
     const path = '/terminology/value-sets/' + valueSet.id + '/$expand';
     const match = router.match('GET', path);
     if (match === null) throw new Error('No existe GET ' + path);
-    const result = match.handler({
+    const result = (await match.handler({
       method: 'GET',
       path,
       params: match.params,
@@ -408,7 +416,7 @@ describe('contrato C0: expansión de conceptos clínicos', () => {
       body: null,
       headers: new HttpHeaders(),
       user: null,
-    }) as { items: readonly { conceptId: string; code: string; display: string }[] };
+    })) as { items: readonly { conceptId: string; code: string; display: string }[] };
     return result.items;
   }
 
@@ -416,17 +424,17 @@ describe('contrato C0: expansión de conceptos clínicos', () => {
     ['VS_ACTIVITY_TYPE', 'ACT-FOLLOW-UP', 'Reconsulta', ACTIVIDAD['ACT-FOLLOW-UP']],
     ['VS_APPOINTMENT_TYPE', 'APT-RECONSULTA', 'Reconsulta', TIPO_CITA['APT-RECONSULTA']],
     ['VS_SERVICE_REQUEST_CATEGORY', 'SRQ-OTHER', 'Otro', CATEGORIA_ORDEN['SRQ-OTHER']],
-  ])('expande %s con un único %s, su etiqueta y su ID estable', (valueSet, code, display, id) => {
-    const items = expand(valueSet!);
+  ])('expande %s con un único %s, su etiqueta y su ID estable', async (valueSet, code, display, id) => {
+    const items = await expand(valueSet!);
     expect(id).toEqual(expect.any(String));
     expect(items.filter((item) => item.code === code)).toEqual([
       expect.objectContaining({ conceptId: id, code, display }),
     ]);
-    expect(expand(valueSet!)).toEqual(items);
+    expect(await expand(valueSet!)).toEqual(items);
   });
 
-  it('conserva todos los estados de verificación diagnóstica publicados', () => {
-    const items = expand('VS_CONDITION_VERIFICATION');
+  it('conserva todos los estados de verificación diagnóstica publicados', async () => {
+    const items = await expand('VS_CONDITION_VERIFICATION');
     for (const [code, conceptId] of Object.entries(VERIFICACION_DX)) {
       expect(items).toContainEqual(expect.objectContaining({ code, conceptId }));
     }

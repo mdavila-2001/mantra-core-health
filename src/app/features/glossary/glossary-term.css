@@ -1,5 +1,8 @@
-/* Ficha de un término. Una columna estrecha: es texto para leer, no una tabla
-   para escanear. Sólo distribución. */
+/* Ficha de un término. UNA tarjeta a lo ancho del área y centrada
+   (composition-rules §5, regla del cliente): arriba la foto y lo que
+   identifica al término, abajo las pestañas. Lo que evita las líneas
+   kilométricas no es acotar la tarjeta sino la medida de lectura de cada
+   párrafo. Sólo distribución. */
 
 :host {
   display: block;
@@ -7,12 +10,63 @@
 
 .termino {
   display: grid;
+  /* `minmax(0, 1fr)` y no la columna implícita: ésta se estira al ancho
+     mínimo de su contenido más ancho (la fila de pestañas, una URL), y en el
+     teléfono eso abría un desplazamiento lateral de 44 px. */
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--sp-4);
+  inline-size: 100%;
   margin-block-start: var(--sp-6);
-  max-inline-size: 68ch;
-  /* Texto para leer: conserva su medida, pero centrado. Pegado a la izquierda
-     dejaba una columna vacía al lado (regla del cliente §5). */
   margin-inline: auto;
+}
+
+.termino__tarjeta {
+  display: block;
+  inline-size: 100%;
+  min-inline-size: 0;
+}
+
+/* Foto a la izquierda y presentación a la derecha desde tablet; una columna
+   en el teléfono. Sin foto, el marcador ocupa el mismo lugar: la columna
+   nunca queda vacía. */
+.termino__cabecera {
+  display: grid;
+  gap: var(--sp-5);
+  margin-block-end: var(--sp-5);
+}
+
+@media (min-width: 48rem) {
+  .termino__cabecera {
+    grid-template-columns: minmax(10rem, 16rem) minmax(0, 1fr);
+    align-items: start;
+  }
+
+  .termino__cabecera--con-foto {
+    grid-template-columns: minmax(14rem, 26rem) minmax(0, 1fr);
+  }
+}
+
+.termino__intro {
+  display: grid;
+  align-content: start;
+  gap: var(--sp-2);
+  min-inline-size: 0;
+}
+
+.termino__cabecera > *,
+.termino__imagen-atribucion {
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
+}
+
+.termino__definicion,
+.termino__verbatim,
+.termino__fuente {
+  max-inline-size: 80ch;
+}
+
+.termino__pestanas {
+  display: block;
 }
 
 .termino__volver {
@@ -24,7 +78,7 @@
   flex-wrap: wrap;
   align-items: center;
   gap: var(--sp-3);
-  margin: 0 0 var(--sp-4);
+  margin: 0 0 var(--sp-2);
 }
 
 .termino__categoria {
@@ -60,12 +114,150 @@
 }
 
 .termino__imagen {
+  display: grid;
+  gap: var(--sp-2);
+  margin: 0;
+}
+
+/* La miniatura es el botón que amplía: toda la foto es el blanco del clic. */
+.termino__imagen-boton {
+  position: relative;
+  display: block;
+  padding: 0;
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  overflow: hidden;
+  background: var(--bg-hover);
+  cursor: zoom-in;
+}
+
+.termino__imagen-boton:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
+}
+
+.termino__imagen-boton img {
+  display: block;
+  inline-size: 100%;
+  block-size: auto;
+  aspect-ratio: 4 / 3;
+  object-fit: contain;
+}
+
+.termino__imagen-ampliar {
+  position: absolute;
+  inset-block-end: var(--sp-2);
+  inset-inline-end: var(--sp-2);
+  padding: var(--sp-1) var(--sp-2);
+  border-radius: var(--r-sm);
+  background: var(--bg-surface);
+  color: var(--text-link);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  box-shadow: var(--shadow-sm);
+}
+
+.termino__ampliada {
+  display: grid;
+  gap: var(--sp-2);
+  margin: 0;
+}
+
+.termino__ampliada img {
+  display: block;
+  max-inline-size: 100%;
+  max-block-size: 70vh;
+  margin-inline: auto;
+  object-fit: contain;
+}
+
+.termino__fotos {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 12rem), 1fr));
+  gap: var(--sp-3);
+  margin: 0 0 var(--sp-4);
+  padding: 0;
+  list-style: none;
+}
+
+.termino__foto {
+  display: grid;
+  gap: var(--sp-1);
+  margin: 0;
+}
+
+.termino__foto img {
+  display: block;
+  inline-size: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: contain;
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-sm);
+  background: var(--bg-surface);
+}
+
+.termino__foto a {
+  display: block;
+}
+
+.termino__foto figcaption {
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+}
+
+/* Los datos del medicamento: pares rótulo-valor que se reparten en columnas
+   según el ancho, en vez de una lista larga de renglones. */
+.termino__datos {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr));
+  gap: var(--sp-3) var(--sp-5);
   margin: 0 0 var(--sp-4);
 }
 
-.termino__imagen img {
-  max-inline-size: 100%;
-  border-radius: var(--r-md);
+.termino__datos dt {
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+}
+
+.termino__datos dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.termino__productos {
+  display: grid;
+  gap: var(--sp-3);
+  margin: 0 0 var(--sp-4);
+  padding: 0;
+  list-style: none;
+}
+
+.termino__producto {
+  margin: 0;
+  font-weight: 600;
+}
+
+.termino__presentaciones {
+  margin: var(--sp-1) 0 0;
+  padding-inline-start: var(--sp-5);
+  color: var(--text-secondary);
+}
+
+.termino__referencia {
+  margin: var(--sp-4) 0 0;
+  color: var(--text-secondary);
+}
+
+/* Texto de la ficha técnica tal como lo publica CIMA: se respetan sus saltos
+   de línea, que separan subapartados y listas. */
+.termino__verbatim {
+  margin: 0;
+  white-space: pre-line;
+}
+
+.termino__seccion {
+  margin-block-start: var(--sp-4);
 }
 
 .termino__imagen-atribucion {
@@ -81,8 +273,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  block-size: 6rem;
-  margin: 0 0 var(--sp-4);
+  block-size: 8rem;
+  margin: 0;
   border: 1px solid var(--border-default);
   border-radius: var(--r-md);
   background: var(--bg-inset);

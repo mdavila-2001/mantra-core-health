@@ -9,25 +9,19 @@ import {
   type ConceptoSimulado,
 } from '../fixtures/conceptos';
 import {
-  coincideAnatomia,
-  entradaEnLinea,
-  entradaPorId,
-  esConjuntoConAnatomia,
-  fichaAnatomicaEnLinea,
-  ENTRADAS as ENTRADAS_ANATOMICAS,
-} from '../fixtures/anatomia';
-import {
-  CATEGORIAS,
-  ETIQUETAS,
-  PARAGUAS,
-  conjuntoDeGlosarioPorId,
-  conjuntoEnLinea,
+  conjuntosEnLinea,
+  facetasEnLinea,
   fichaEnLinea,
-  miembrosDeConjunto,
   terminoEnLinea,
-  terminoPorId,
-  type ConceptoDeGlosario,
-} from '../fixtures/glosario';
+} from '../glossary-en-linea';
+import {
+  AlmacenDeGlosario,
+  idDeConjunto,
+  idDeVersion,
+  leerConFetch,
+  PARAGUAS_DEL_GLOSARIO,
+  type ManifiestoDelGlosario,
+} from '../glossary-shards';
 import {
   forbidden,
   notFound,
@@ -42,26 +36,44 @@ import { contiene, iso, paginar, texto, uuid } from '../mock-store';
 /* ============================================================================
     Terminología: conjuntos de valores, conceptos, etiquetas y el glosario.
 
-    El glosario NO se arma acá: lo sirve `fixtures/glosario.ts`, que indexa el
-    catálogo curado del backend (12 categorías `glossary-category-*`, 15
-    etiquetas `glossary-tag-*` y 69 términos con definición clínica, resumen
-    llano, sinónimos y relaciones tipadas). Hasta el 2026-09-11 este archivo
-    inventaba siete categorías propias —`glossary-diseases`, `glossary-symptoms`…—
-    con códigos que el backend no tiene: la pantalla filtra por el prefijo
-    canónico y las descartaba todas, así que la maqueta nunca mostró una sola
-    definición.
+    El glosario NO se arma acá ni se importa: lo lee `glossary-shards.ts` bajo
+    demanda, con `fetch`, desde `public/glossary-data/` (el completo, fuera de
+    git) o `public/glossary-seed/` (la semilla commiteada). Este archivo sólo
+    traduce cada pedido a una lectura de shards y le da la forma de la API.
+    Hasta el 2026-09-30 importaba `fixtures/glosario.ts` y `fixtures/anatomia.ts`
+    —casi 3 MB de fixtures en el trozo de los manejadores—.
     ========================================================================== */
 
-/** Un término del glosario coincide por nombre, sinónimo, definición o código. */
-function coincide(termino: ConceptoDeGlosario, q: string | null): boolean {
-  return (
-    contiene(termino.esName, q) ||
-    contiene(termino.enDisplay, q) ||
-    contiene(termino.code, q) ||
-    contiene(termino.clinicalDefinitionEs, q) ||
-    contiene(termino.plainSummaryEs, q) ||
-    (termino.esSynonyms ?? []).some((sinonimo) => contiene(sinonimo, q))
-  );
+/**
+ * Un value set del glosario, por su uuid o el de su versión: la clave con la
+ * que se busca en los shards (`categoryKey`/`tagKey`) y de qué tipo es.
+ */
+function conjuntoDelGlosario(
+  manifiesto: ManifiestoDelGlosario,
+  id: string,
+): { readonly tipo: 'paraguas' | 'categoria' | 'etiqueta'; readonly key: string } | null {
+  const coincide = (internalCode: string) =>
+    idDeConjunto(internalCode) === id || idDeVersion(internalCode) === id;
+  if (coincide(PARAGUAS_DEL_GLOSARIO.internalCode)) {
+    return { tipo: 'paraguas', key: PARAGUAS_DEL_GLOSARIO.key };
+  }
+  const categoria = manifiesto.categories.find((c) => coincide(c.internalCode));
+  if (categoria !== undefined) return { tipo: 'categoria', key: categoria.key };
+  const etiqueta = manifiesto.tags.find((t) => coincide(t.internalCode));
+  if (etiqueta !== undefined) return { tipo: 'etiqueta', key: etiqueta.key };
+  return null;
+}
+
+/** El fallo de lectura del glosario, con el sobre de error del repo. */
+function glosarioNoDisponible(error: unknown): MockReply {
+  console.error('[mock] no se pudo leer el glosario', error);
+  return reply(503, {
+    statusCode: 503,
+    code: 'DEPENDENCY_UNAVAILABLE',
+    message: 'El glosario de la maqueta no está disponible.',
+    error: 'Service Unavailable',
+    correlationId: 'mock-glossary-shards',
+  });
 }
 
 /**
@@ -216,21 +228,30 @@ function campoDelFormulario(body: unknown, clave: string): string | null {
   return typeof valor === 'string' ? valor : null;
 }
 
-export function registrarTerminologia(router: MockRouter): void {
-  router.get('/terminology/value-sets', ({ query }) => {
+export function registrarTerminologia(
+  router: MockRouter,
+  glosario: AlmacenDeGlosario = new AlmacenDeGlosario(leerConFetch),
+): void {
+  router.get('/terminology/value-sets/$glossary-facets', async () => {
+    try {
+      return facetasEnLinea(await glosario.manifiesto());
+    } catch (error: unknown) {
+      return glosarioNoDisponible(error);
+    }
+  });
+
+  router.get('/terminology/value-sets', async ({ query }) => {
     const code = texto(query, 'code');
     const q = texto(query, 'query') ?? texto(query, 'q');
-    // Los del glosario van primero y en el orden de la grilla; el resto del
-    // catálogo de la plataforma va detrás, como hasta ahora.
-    const delGlosario = [PARAGUAS, ...CATEGORIAS, ...ETIQUETAS].map((conjunto) => {
-      const enLinea = conjuntoEnLinea(conjunto);
-      // `conjuntoEnLinea` sólo cuenta el catálogo curado. Sin esto la tarjeta
-      // «Anatomía» diría 3 y la categoría tendría 3 164: la grilla esconde las
-      // que declaran cero, así que el conteo decide qué se ve.
-      return esConjuntoConAnatomia(conjunto)
-        ? { ...enLinea, memberCount: enLinea.memberCount + ENTRADAS_ANATOMICAS.length }
-        : enLinea;
-    });
+    // Los del glosario van primero; el resto del catálogo de la plataforma va
+    // detrás, como hasta ahora. Si el glosario no se puede leer, el resto del
+    // catálogo sigue sirviendo: un formulario de alta no depende de él.
+    let delGlosario: ReturnType<typeof conjuntosEnLinea> = [];
+    try {
+      delGlosario = conjuntosEnLinea(await glosario.manifiesto());
+    } catch (error: unknown) {
+      console.error('[mock] el glosario no se pudo leer para el listado de conjuntos', error);
+    }
     const delCatalogo = todosLosConjuntos().map((c) => ({
       id: c.id,
       internalCode: c.internalCode,
@@ -245,42 +266,50 @@ export function registrarTerminologia(router: MockRouter): void {
     return paginar(todos, query, 50);
   });
 
-  router.get('/terminology/value-sets/:id/$expand', ({ params, query }) => {
-    const delGlosario = conjuntoDeGlosarioPorId(params['id']!);
-    if (delGlosario !== undefined) {
-      const curados = miembrosDeConjunto(delGlosario).map((t) => ({
-        conceptId: t.id,
-        code: t.code,
-        display: t.esName,
-        definition: t.plainSummaryEs,
-      }));
-      const anatomicos = esConjuntoConAnatomia(delGlosario)
-        ? ENTRADAS_ANATOMICAS.map((e) => {
-            const enLinea = entradaEnLinea(e);
-            return {
-              conceptId: enLinea.conceptId,
-              code: enLinea.code,
-              display: enLinea.display,
-              definition: enLinea.shortDefinition,
-            };
-          })
-        : [];
-      const pagina = paginar(
-        [...curados, ...anatomicos].map((miembro, indice) => ({
-          ...miembro,
-          selectable: true,
-          codeSystemVersionId: CODE_SYSTEM_VERSION_ID,
-          ordinal: indice + 1,
-        })),
-        query,
-        200,
-      );
-      return {
-        valueSetId: delGlosario.id,
-        valueSetVersionId: delGlosario.defaultVersionId,
-        version: '1.0.0',
-        ...pagina,
-      };
+  router.get('/terminology/value-sets/:id/$expand', async ({ params, query }) => {
+    const id = params['id']!;
+    // Un id del glosario sólo se reconoce leyendo el manifiesto; para el resto
+    // del catálogo no hace falta, así que se prueba primero lo local.
+    if (conjuntoPorId(id) === undefined) {
+      try {
+        const manifiesto = await glosario.manifiesto();
+        const delGlosario = conjuntoDelGlosario(manifiesto, id);
+        if (delGlosario !== null) {
+          const limit = Math.max(1, Number(query.get('limit') ?? 200) || 200);
+          const offset = Math.max(0, Number(query.get('cursor') ?? 0) || 0);
+          const { filas, total } = await glosario.pagina({
+            ...(delGlosario.tipo === 'categoria' ? { categoryKey: delGlosario.key } : {}),
+            ...(delGlosario.tipo === 'etiqueta' ? { tagKey: delGlosario.key } : {}),
+            offset,
+            limit,
+          });
+          const internalCode =
+            delGlosario.tipo === 'paraguas'
+              ? PARAGUAS_DEL_GLOSARIO.internalCode
+              : delGlosario.tipo === 'categoria'
+                ? `glossary-category-${delGlosario.key}`
+                : `glossary-tag-${delGlosario.key}`;
+          return {
+            valueSetId: idDeConjunto(internalCode),
+            valueSetVersionId: idDeVersion(internalCode),
+            version: '1.0.0',
+            items: filas.map((fila, indice) => ({
+              conceptId: fila.id,
+              code: fila.code ?? '',
+              display: fila.esName,
+              definition: fila.plainSummaryEs,
+              selectable: true,
+              codeSystemVersionId: CODE_SYSTEM_VERSION_ID,
+              ordinal: offset + indice + 1,
+            })),
+            count: total,
+            limit,
+            nextCursor: offset + limit < total ? String(offset + limit) : null,
+          };
+        }
+      } catch (error: unknown) {
+        return glosarioNoDisponible(error);
+      }
     }
 
     const conjunto = conjuntoPorId(params['id']!);
@@ -294,7 +323,7 @@ export function registrarTerminologia(router: MockRouter): void {
     };
   });
 
-  router.get('/terminology/concepts', ({ query }) => {
+  router.get('/terminology/concepts', async ({ query }) => {
     const ids = texto(query, 'ids');
     const q = texto(query, 'q');
     const valueSetId = texto(query, 'valueSetId');
@@ -310,30 +339,40 @@ export function registrarTerminologia(router: MockRouter): void {
       return { items: encontrados, count: encontrados.length, limit };
     }
 
-    // El glosario: `includeValueSets` sin `valueSetId` acota al paraguas.
+    // El glosario: `includeValueSets` sin `valueSetId` acota al paraguas. La
+    // página sale de los shards —orden alfabético, `offset` y `total`—, igual
+    // que la API desde que pagina en la base.
     if (includeValueSets) {
-      const conjunto = valueSetId === null ? PARAGUAS : conjuntoDeGlosarioPorId(valueSetId);
-      if (conjunto === undefined) return { items: [], count: 0, limit };
+      try {
+        const manifiesto = await glosario.manifiesto();
+        const conjunto =
+          valueSetId === null
+            ? ({ tipo: 'paraguas', key: PARAGUAS_DEL_GLOSARIO.key } as const)
+            : conjuntoDelGlosario(manifiesto, valueSetId);
+        if (conjunto === null) return notFound('El conjunto de valores no existe');
 
-      const curados = miembrosDeConjunto(conjunto)
-        .filter((t) => coincide(t, q))
-        .map(terminoEnLinea);
-      // La taxonomía de Netter vive aparte del catálogo curado (ver
-      // `fixtures/anatomia.ts`) y entra por la misma categoría «Anatomía».
-      const anatomicos = esConjuntoConAnatomia(conjunto)
-        ? ENTRADAS_ANATOMICAS.filter((e) => coincideAnatomia(e, q)).map(entradaEnLinea)
-        : [];
-      // Los curados van primero: están escritos por alguien, con definición
-      // clínica y resumen llano. Las 3 161 entradas del índice son el fondo.
-      const coincidentes = [...curados, ...anatomicos];
+        const tagValueSetId = texto(query, 'tagValueSetId');
+        const etiqueta =
+          tagValueSetId === null ? null : conjuntoDelGlosario(manifiesto, tagValueSetId);
+        if (tagValueSetId !== null && etiqueta?.tipo !== 'etiqueta') {
+          return notFound('La etiqueta no existe');
+        }
 
-      // `count` es el total que coincide, no el recortado: es lo que la
-      // pantalla lee para avisar que se mostró sólo una parte.
-      return {
-        items: coincidentes.slice(0, limit),
-        count: coincidentes.length,
-        limit,
-      };
+        const offset = Math.max(0, Number(query.get('offset') ?? 0) || 0);
+        const tagKey =
+          conjunto.tipo === 'etiqueta' ? conjunto.key : (etiqueta?.key ?? undefined);
+        const { filas, total } = await glosario.pagina({
+          ...(conjunto.tipo === 'categoria' ? { categoryKey: conjunto.key } : {}),
+          ...(tagKey === undefined ? {} : { tagKey }),
+          ...(q === null ? {} : { query: q }),
+          offset,
+          limit,
+        });
+        const items = filas.map((fila) => terminoEnLinea(fila, manifiesto));
+        return { items, count: items.length, limit, offset, total };
+      } catch (error: unknown) {
+        return glosarioNoDisponible(error);
+      }
     }
 
     const items = conceptos()
@@ -343,15 +382,17 @@ export function registrarTerminologia(router: MockRouter): void {
     return { items, count: items.length, limit };
   });
 
-  router.get('/terminology/concepts/:id', ({ params }) => {
-    const delGlosario = terminoPorId(params['id']!);
-    if (delGlosario !== undefined) return fichaEnLinea(delGlosario);
-
-    const anatomico = entradaPorId(params['id']!);
-    if (anatomico !== undefined) return fichaAnatomicaEnLinea(anatomico);
-
+  router.get('/terminology/concepts/:id', async ({ params }) => {
     const c = conceptoPorId(params['id']!);
-    if (c === undefined) return notFound('Concepto no encontrado');
+    if (c === undefined) {
+      try {
+        const fila = await glosario.porId(params['id']!);
+        if (fila !== null) return fichaEnLinea(fila, await glosario.manifiesto());
+      } catch (error: unknown) {
+        return glosarioNoDisponible(error);
+      }
+      return notFound('Concepto no encontrado');
+    }
     // `properties` va sólo en la ficha, no en la búsqueda/lista (`opcion()`):
     // mismo contrato que `ConceptDetailDto.properties` en la API real
     // (search-concepts.dto.ts) — son varias filas por concepto y traerlas en
