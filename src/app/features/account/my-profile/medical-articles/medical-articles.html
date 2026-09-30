@@ -51,7 +51,12 @@
              Títulos y subtítulos (que el lector despliega), listas, negrita,
              cursiva, emojis e imágenes intercaladas. El compositor arma el
              borrador; publicar —subir imágenes y mandar el post— es de acá. -->
-        <app-article-composer #compositor [maxLength]="cuerpoMaximo" [disabled]="publicando()" />
+        <app-article-composer
+          #compositor
+          [maxLength]="cuerpoMaximo"
+          [disabled]="publicando()"
+          [draftKey]="claveDelBorrador()"
+        />
 
         <!-- ── Pie ────────────────────────────────────────────────────────
              La acción a la derecha, separada por una línea tenue. -->

@@ -40,8 +40,8 @@
 }
 
 .compositor-articulo__extra svg {
-  inline-size: 1.1em;
-  block-size: 1.1em;
+  inline-size: 1.1rem;
+  block-size: 1.1rem;
 }
 
 .compositor-articulo__extra:hover:not(:disabled) {
@@ -66,11 +66,98 @@
 
 /* Justo debajo de la barra, dentro de la hoja: se ve al lado del botón que lo
    abrió y no tapa lo escrito (lo corre hacia abajo mientras está abierto). */
-.compositor-articulo__emojis {
+.compositor-articulo__panel {
   display: block;
-  max-inline-size: 26rem;
   border-block-end: 1px solid var(--border-default);
   background: var(--bg-surface);
+}
+
+.compositor-articulo__panel--emojis {
+  max-inline-size: 26rem;
+}
+
+.compositor-articulo__enlace {
+  display: grid;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+}
+
+.compositor-articulo__enlace-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+/* ---- Escribir / Vista previa ---------------------------------------------- */
+
+.compositor-articulo__modos {
+  display: inline-flex;
+  justify-self: start;
+  padding: 3px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-full);
+  background: var(--bg-inset);
+}
+
+.compositor-articulo__modo {
+  min-block-size: 2.25rem;
+  padding: var(--sp-1) var(--sp-4);
+  border: 0;
+  border-radius: var(--r-full);
+  background: transparent;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.compositor-articulo__modo[aria-pressed='true'] {
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-sm);
+}
+
+.compositor-articulo__modo:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
+}
+
+.compositor-articulo__vista {
+  min-block-size: 22rem;
+  padding: var(--sp-4);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+}
+
+.compositor-articulo__vista-vacia {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+/* ---- Borrador ------------------------------------------------------------- */
+
+.compositor-articulo__borrador {
+  display: grid;
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--st-info-bd);
+  border-radius: var(--r-md);
+  background: var(--st-info-bg);
+  color: var(--st-info-fg);
+}
+
+.compositor-articulo__borrador-texto {
+  margin: 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+.compositor-articulo__borrador-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
 }
 
 .compositor-articulo__cargando {
@@ -144,9 +231,24 @@
   grid-area: quitar;
 }
 
+/* ---- Barra de estado ------------------------------------------------------ */
+
+.compositor-articulo__estado {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--sp-1) var(--sp-3);
+}
+
+.compositor-articulo__guardado {
+  margin: 0;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
 .compositor-articulo__contador {
   margin: 0;
-  justify-self: end;
+  margin-inline-start: auto;
   font-size: var(--fs-caption);
   color: var(--text-secondary);
 }

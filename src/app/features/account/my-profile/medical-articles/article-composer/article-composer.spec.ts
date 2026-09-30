@@ -1,5 +1,6 @@
 import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
+import { vi } from 'vitest';
 
 import { ArticleComposer, ARTICLE_IMAGE_MAX_BYTES } from './article-composer';
 
@@ -136,6 +137,109 @@ describe('ArticleComposer', () => {
     fixture.componentRef.setInput('maxLength', 10);
     escribir('<p>un texto bastante más largo</p>');
     expect(composer.ready()).toBe(false);
-    expect(html.textContent).toContain('Te pasaste por');
+    expect(html.querySelector('.compositor-articulo__contador--excedido')?.textContent).toContain('te pasaste por');
+  });
+
+  it('ofrece la barra completa: historial, tachado, tres niveles de título, cita y separador', () => {
+    for (const id of ['undo', 'redo', 'strikeThrough', 'h2', 'h3', 'h4', 'blockquote', 'insertHorizontalRule']) {
+      expect(html.querySelector(`[data-testid="herramienta-${id}"]`)).not.toBeNull();
+    }
+  });
+
+  it('Ctrl+K abre el enlace, valida la dirección e inserta el enlace con su texto', async () => {
+    escribir('<p>Ver </p>');
+    const area = html.querySelector('[data-testid="editor-area"]') as HTMLElement;
+    area.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', ctrlKey: true, bubbles: true }));
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect(html.querySelector('#article-link-panel')).not.toBeNull();
+
+    const url = html.querySelector('[data-testid="article-link-url"]') as HTMLInputElement;
+    url.value = 'javascript:alert(1)';
+    url.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    (html.querySelector('[data-testid="article-link-insert"]') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(html.textContent).toContain('Escribí una dirección web');
+
+    url.value = 'www.who.int/guia';
+    url.dispatchEvent(new Event('input'));
+    const texto = html.querySelector('[data-testid="article-link-text"]') as HTMLInputElement;
+    texto.value = 'la guía';
+    texto.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    (html.querySelector('[data-testid="article-link-insert"]') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(html.querySelector('#article-link-panel')).toBeNull();
+    expect(composer.draft().bodyText).toContain('[la guía](https://www.who.int/guia)');
+  });
+
+  it('la vista previa muestra el artículo como lo verá el lector, sin perder lo escrito', () => {
+    escribir('<p>Intro</p><h2>Uno</h2><p>texto</p>');
+    (html.querySelector('[data-testid="article-mode-preview"]') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    const vista = html.querySelector('[data-testid="article-preview"]')!;
+    expect(vista.querySelector('[data-testid="article-body"]')).not.toBeNull();
+    expect(vista.textContent).toContain('Uno');
+
+    (html.querySelector('[data-testid="article-mode-write"]') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(html.querySelector('[data-testid="article-preview"]')).toBeNull();
+    expect(composer.draft().bodyText).toContain('## Uno');
+  });
+
+  it('cuenta palabras y minutos de lectura', () => {
+    escribir('<p>una dos tres</p>');
+    expect(html.querySelector('.compositor-articulo__contador')?.textContent).toContain('3 palabras');
+    expect(html.querySelector('.compositor-articulo__contador')?.textContent).toContain('1 min de lectura');
+  });
+
+  describe('borrador en el navegador', () => {
+    const CLAVE = 'articulo-borrador:prueba';
+
+    afterEach(() => {
+      localStorage.removeItem(CLAVE);
+      vi.useRealTimers();
+    });
+
+    it('guarda lo escrito tras una pausa, sin imágenes', async () => {
+      vi.useFakeTimers();
+      fixture.componentRef.setInput('draftKey', CLAVE);
+      escribir('<h2>Borrador</h2><p>hola<img src="blob:x" alt="" data-image-key="k"></p>');
+      vi.advanceTimersByTime(1000);
+      const guardado = JSON.parse(localStorage.getItem(CLAVE) ?? '{}') as { html?: string };
+      expect(guardado.html).toContain('<h2>Borrador</h2>');
+      expect(guardado.html).not.toContain('<img');
+      fixture.detectChanges();
+      expect(html.textContent).toContain('Borrador guardado a las');
+    });
+
+    it('ofrece recuperar un borrador guardado y lo carga al aceptar', async () => {
+      localStorage.setItem(CLAVE, JSON.stringify({ html: '<h2>Recuperado</h2><p>texto</p>', savedAt: '2026-09-30T20:00:00.000Z' }));
+      const otro = TestBed.createComponent(ArticleComposer);
+      otro.componentRef.setInput('draftKey', CLAVE);
+      otro.detectChanges();
+      await otro.whenStable();
+      otro.detectChanges();
+      const raiz = otro.nativeElement as HTMLElement;
+      expect(raiz.querySelector('[data-testid="article-draft-offer"]')).not.toBeNull();
+
+      (raiz.querySelector('[data-testid="article-draft-restore"]') as HTMLButtonElement).click();
+      otro.detectChanges();
+      expect(raiz.querySelector('[data-testid="article-draft-offer"]')).toBeNull();
+      expect(otro.componentInstance.draft().bodyText).toBe('## Recuperado\n\ntexto');
+    });
+
+    it('descartar borra el borrador guardado', async () => {
+      localStorage.setItem(CLAVE, JSON.stringify({ html: '<p>viejo</p>', savedAt: '2026-09-30T20:00:00.000Z' }));
+      const otro = TestBed.createComponent(ArticleComposer);
+      otro.componentRef.setInput('draftKey', CLAVE);
+      otro.detectChanges();
+      await otro.whenStable();
+      otro.detectChanges();
+      (otro.nativeElement.querySelector('[data-testid="article-draft-discard"]') as HTMLButtonElement).click();
+      otro.detectChanges();
+      expect(localStorage.getItem(CLAVE)).toBeNull();
+    });
   });
 });

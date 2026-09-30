@@ -161,6 +161,12 @@ export class MedicalArticles {
   /* -- Publicar --------------------------------------------------------------- */
 
   private readonly compositor = viewChild(ArticleComposer);
+
+  /** Dónde guarda el compositor el borrador en este navegador: uno por vitrina. */
+  protected readonly claveDelBorrador = computed(() => {
+    const id = this.profileId();
+    return id === null ? null : `mch.article-draft.${id}`;
+  });
   protected readonly publicando = signal(false);
 
   protected readonly puedePublicar = computed(() => this.compositor()?.ready() ?? false);
