@@ -655,23 +655,28 @@
         </app-tabs>
 
         <!-- ─── El guardar de lo que se corrige ──────────────────────────────
-             Datos personales y Contacto son UN formulario repartido en dos
-             pestañas y se guardan juntos, así que el botón vive fuera de las
-             pestañas y no se duplica. En «Trayectoria» y «Credenciales» no
-             aparece: ahí no se corrige nada, se agrega, y cada bloque tiene su
-             propio «Agregar». Un «Guardar cambios» presente mientras se carga
-             una matrícula prometería guardar algo que no guarda. -->
-        @if (editandoPresentacion()) {
-          <app-form-actions
-            class="edicion__guardar"
-            data-testid="presentacion-acciones"
-            submitLabel="Guardar cambios"
-            cancelLabel="Cancelar edición"
-            [pending]="guardandoPresentacion()"
-            (submitted)="guardarPresentacion()"
-            (cancelled)="cancelarEdicion()"
-          />
-        }
+             Datos personales, Contacto y Facturación son UN formulario
+             repartido en tres pestañas y se guardan juntos, así que el botón
+             vive fuera de las pestañas y no se duplica. En «Dónde atiendo»,
+             «Trayectoria» y «Credenciales» no hay «Guardar cambios»: ahí no se
+             corrige nada, se agrega, y cada bloque tiene su propio «Agregar».
+             Un «Guardar cambios» presente mientras se carga una matrícula
+             prometería guardar algo que no guarda.
+
+             «Cancelar edición», en cambio, está en TODAS (pedido del
+             propietario, 30/09/2026): mientras se edita, cancelar tiene que
+             estar a mano estés en la pestaña que estés, y `Escape` hace lo
+             mismo (lo resuelve `app-form-actions`). -->
+        <app-form-actions
+          class="edicion__guardar"
+          data-testid="presentacion-acciones"
+          submitLabel="Guardar cambios"
+          cancelLabel="Cancelar edición"
+          [showSubmit]="editandoPresentacion()"
+          [pending]="guardandoPresentacion()"
+          (submitted)="guardarPresentacion()"
+          (cancelled)="cancelarEdicion()"
+        />
       </app-card>
 
       <p class="edicion__volver">
