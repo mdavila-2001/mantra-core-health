@@ -37,13 +37,13 @@ import {
   type MockReply,
   type MockRouter,
 } from '../mock-router';
-import { contiene, iso, paginar, texto, uuid } from '../mock-store';
+import { contiene, contieneSinTildes, iso, paginar, texto, uuid } from '../mock-store';
 
 /* ============================================================================
     Terminología: conjuntos de valores, conceptos, etiquetas y el glosario.
 
     El glosario NO se arma acá: lo sirve `fixtures/glosario.ts`, que indexa el
-    catálogo curado del backend (12 categorías `glossary-category-*`, 15
+    catálogo curado del backend (12 categorías `glossary-category-*`, 16
     etiquetas `glossary-tag-*` y 69 términos con definición clínica, resumen
     llano, sinónimos y relaciones tipadas). Hasta el 2026-09-11 este archivo
     inventaba siete categorías propias —`glossary-diseases`, `glossary-symptoms`…—
@@ -52,15 +52,20 @@ import { contiene, iso, paginar, texto, uuid } from '../mock-store';
     definición.
     ========================================================================== */
 
-/** Un término del glosario coincide por nombre, sinónimo, definición o código. */
+/**
+ * Un término del glosario coincide por nombre, sinónimo, definición o código.
+ *
+ * Sin distinguir tildes ni la ñ: los sinónimos se escriben con su ortografía
+ * correcta («tiña», «riñón») y «tina» o «rinon» los tienen que encontrar igual.
+ */
 function coincide(termino: ConceptoDeGlosario, q: string | null): boolean {
   return (
-    contiene(termino.esName, q) ||
-    contiene(termino.enDisplay, q) ||
-    contiene(termino.code, q) ||
-    contiene(termino.clinicalDefinitionEs, q) ||
-    contiene(termino.plainSummaryEs, q) ||
-    (termino.esSynonyms ?? []).some((sinonimo) => contiene(sinonimo, q))
+    contieneSinTildes(termino.esName, q) ||
+    contieneSinTildes(termino.enDisplay, q) ||
+    contieneSinTildes(termino.code, q) ||
+    contieneSinTildes(termino.clinicalDefinitionEs, q) ||
+    contieneSinTildes(termino.plainSummaryEs, q) ||
+    (termino.esSynonyms ?? []).some((sinonimo) => contieneSinTildes(sinonimo, q))
   );
 }
 
@@ -227,8 +232,13 @@ export function registrarTerminologia(router: MockRouter): void {
       // `conjuntoEnLinea` sólo cuenta el catálogo curado. Sin esto la tarjeta
       // «Anatomía» diría 3 y la categoría tendría 3 164: la grilla esconde las
       // que declaran cero, así que el conteo decide qué se ve.
+      // Las entradas del atlas están en castellano: suman a los dos conteos.
       return esConjuntoConAnatomia(conjunto)
-        ? { ...enLinea, memberCount: enLinea.memberCount + ENTRADAS_ANATOMICAS.length }
+        ? {
+            ...enLinea,
+            memberCount: enLinea.memberCount + ENTRADAS_ANATOMICAS.length,
+            translatedMemberCount: enLinea.translatedMemberCount + ENTRADAS_ANATOMICAS.length,
+          }
         : enLinea;
     });
     const delCatalogo = todosLosConjuntos().map((c) => ({
@@ -325,7 +335,13 @@ export function registrarTerminologia(router: MockRouter): void {
         : [];
       // Los curados van primero: están escritos por alguien, con definición
       // clínica y resumen llano. Las 3 161 entradas del índice son el fondo.
-      const coincidentes = [...curados, ...anatomicos];
+      // Lo que sólo tiene el título en inglés (la capa ICD-10-CM) va al final,
+      // detrás del atlas: primero se lee lo que está en castellano.
+      const coincidentes = [
+        ...curados.filter((t) => t.translated),
+        ...anatomicos,
+        ...curados.filter((t) => !t.translated),
+      ];
 
       // `count` es el total que coincide, no el recortado: es lo que la
       // pantalla lee para avisar que se mostró sólo una parte.

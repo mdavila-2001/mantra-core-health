@@ -64,6 +64,8 @@ export interface TarjetaDeCategoria {
   readonly name: string;
   readonly description?: string;
   readonly cantidad: number;
+  /** Cuántos de sus términos están en castellano, cuando la API lo dice. */
+  readonly enCastellano?: number;
   /** Las etiquetas clínicas presentes en los términos de esta categoría. */
   readonly etiquetas: readonly string[];
 }
@@ -268,6 +270,9 @@ export class Glossary {
         name: categoria.name,
         ...(categoria.description === undefined ? {} : { description: categoria.description }),
         cantidad: categoria.memberCount ?? 0,
+        ...(categoria.translatedMemberCount === undefined
+          ? {}
+          : { enCastellano: categoria.translatedMemberCount }),
         etiquetas: etiquetas.get(categoria.internalCode) ?? [],
       }));
   });

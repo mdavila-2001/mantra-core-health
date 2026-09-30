@@ -60,9 +60,9 @@ function codigoDe(slug: string): string {
 /** Las 12 categorías, en el orden de la grilla (el del catálogo, no alfabético). */
 export const CATEGORIAS: readonly ConjuntoDeGlosario[] = CATEGORIAS_DE_GLOSARIO.map(conConjunto);
 
-/** Las 15 etiquetas clínicas. */
+/** Las 16 etiquetas clínicas. */
 /**
- * Las 15 etiquetas clínicas del catálogo, más las 8 regiones del atlas.
+ * Las 16 etiquetas clínicas del catálogo, más las 8 regiones del atlas.
  *
  * Las regiones se suman acá y no en el generador del glosario porque no son
  * del mismo catálogo: salen de `data/anatomy-atlas/` y tienen su propio
@@ -97,6 +97,12 @@ export const TERMINOS: readonly ConceptoDeGlosario[] = [
     code: codigoDe(termino.slug),
   }))
   .sort((a, b) => a.esName.localeCompare(b.esName, 'es'));
+
+/** {@link TERMINOS} con los traducidos adelante; el orden alfabético se conserva dentro de cada grupo. */
+const TERMINOS_EN_CASTELLANO_PRIMERO: readonly ConceptoDeGlosario[] = [
+  ...TERMINOS.filter((t) => t.lang !== 'en'),
+  ...TERMINOS.filter((t) => t.lang === 'en'),
+];
 
 const porId = new Map(TERMINOS.map((t) => [t.id, t]));
 const porSlug = new Map(TERMINOS.map((t) => [t.slug, t]));
@@ -148,13 +154,20 @@ export function etiquetasDeTermino(termino: ConceptoDeGlosario): readonly Conjun
     .filter((etiqueta): etiqueta is ConjuntoDeGlosario => etiqueta !== undefined);
 }
 
-/** Los términos que pertenecen a un value set del glosario. */
+/**
+ * Los términos que pertenecen a un value set del glosario.
+ *
+ * Primero los que están en castellano y después los que sólo tienen su nombre
+ * original en inglés, cada grupo en orden alfabético. La capa ICD-10-CM suma
+ * casi dos mil categorías en inglés a «Enfermedades»: en orden alfabético puro
+ * tapaban a las doscientas traducidas, que son las que se leen.
+ */
 export function miembrosDeConjunto(conjunto: ConjuntoDeGlosario): readonly ConceptoDeGlosario[] {
-  if (conjunto.internalCode === PARAGUAS.internalCode) return TERMINOS;
+  if (conjunto.internalCode === PARAGUAS.internalCode) return TERMINOS_EN_CASTELLANO_PRIMERO;
   if (conjunto.internalCode.startsWith('glossary-category-')) {
-    return TERMINOS.filter((t) => t.categoryKey === conjunto.key);
+    return TERMINOS_EN_CASTELLANO_PRIMERO.filter((t) => t.categoryKey === conjunto.key);
   }
-  return TERMINOS.filter((t) => t.tagKeys.includes(conjunto.key));
+  return TERMINOS_EN_CASTELLANO_PRIMERO.filter((t) => t.tagKeys.includes(conjunto.key));
 }
 
 /**
@@ -164,7 +177,7 @@ export function miembrosDeConjunto(conjunto: ConjuntoDeGlosario): readonly Conce
  * capa ancha de ICD-10-CM llega en inglés (`en`) y la pantalla lo dice en vez
  * de disimularlo.
  */
-function estaTraducido(termino: ConceptoDeGlosario): boolean {
+export function estaTraducido(termino: Pick<ConceptoDeGlosario, 'lang'>): boolean {
   return termino.lang !== 'en';
 }
 
@@ -245,14 +258,22 @@ function propiedadesDe(termino: ConceptoDeGlosario): Record<string, unknown> {
 
 /* ---- las tres formas con las que el glosario viaja por la API ------------- */
 
-/** Un value set del glosario como lo devuelve `GET /terminology/value-sets`. */
+/**
+ * Un value set del glosario como lo devuelve `GET /terminology/value-sets`.
+ *
+ * `translatedMemberCount` dice cuántos de sus términos están en castellano:
+ * sin él, la tarjeta de «Enfermedades» anunciaba más de dos mil términos
+ * cuando casi todos son categorías ICD-10-CM con el título en inglés.
+ */
 export function conjuntoEnLinea(conjunto: ConjuntoDeGlosario) {
+  const miembros = miembrosDeConjunto(conjunto);
   return {
     id: conjunto.id,
     internalCode: conjunto.internalCode,
     name: conjunto.name,
     defaultVersionId: conjunto.defaultVersionId,
-    memberCount: miembrosDeConjunto(conjunto).length,
+    memberCount: miembros.length,
+    translatedMemberCount: miembros.filter(estaTraducido).length,
   };
 }
 
