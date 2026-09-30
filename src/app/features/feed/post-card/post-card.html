@@ -11,7 +11,11 @@
     }
   </header>
 
-  <p class="publicacion__cuerpo">{{ post().bodyText }}</p>
+  @if (esArticulo()) {
+    <app-article-body [body]="post().bodyText" [headingLevel]="3" />
+  } @else {
+    <p class="publicacion__cuerpo">{{ post().bodyText }}</p>
+  }
 
   <!-- Punto de extensión P5: los medios de la publicación se pintan acá cuando
        el carril de medios los habilite. `PostListItem` no los trae todavía y no

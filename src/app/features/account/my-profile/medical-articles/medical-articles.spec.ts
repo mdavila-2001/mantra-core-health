@@ -143,30 +143,117 @@ describe('MedicalArticles', () => {
     expect(articulo.resumen.length).toBeLessThan(400);
   });
 
-  /** Es la única diferencia entre publicar un artículo y cualquier otra publicación. */
-  it('publicar manda siempre el hashtag de artículo médico', () => {
-    montarConVitrina([]);
-    señal<string>('nuevoCuerpo').set('Un artículo nuevo');
-
-    interno<() => void>('publicar')();
-
-    const req = http.expectOne('/community/profiles/pp-1/posts');
-    expect(req.request.body.hashtags).toEqual(['articulo-medico']);
-    req.flush({ id: 'post-nuevo' });
-
-    // Recarga completa tras publicar.
+  /** Recarga completa tras publicar. */
+  function recargaTrasPublicar(): void {
     http.expectOne('/community/profiles/me').flush(PERFIL);
     http
       .expectOne((r) => r.url === '/community/profiles/pp-1/posts')
       .flush({ items: [], count: 0, limit: 50, nextCursor: null });
+  }
+
+  function imagen(nombre: string): File {
+    return new File([new Uint8Array(4)], nombre, { type: 'image/png' });
+  }
+
+  /** Es la única diferencia entre publicar un artículo y cualquier otra publicación. */
+  it('publicar manda siempre el hashtag de artículo médico', () => {
+    montarConVitrina([]);
+
+    interno<(b: unknown) => void>('publicar')({ bodyText: 'Un artículo nuevo', images: [] });
+
+    const req = http.expectOne('/community/profiles/pp-1/posts');
+    expect(req.request.body.hashtags).toEqual(['articulo-medico']);
+    expect(req.request.body.bodyText).toBe('Un artículo nuevo');
+    expect(req.request.body.media).toEqual([]);
+    req.flush({ id: 'post-nuevo' });
+    recargaTrasPublicar();
+  });
+
+  it('sube las imágenes en orden y publica con su posición y descripción', () => {
+    montarConVitrina([]);
+
+    interno<(b: unknown) => void>('publicar')({
+      bodyText: '## Uno\n\n![A](imagen:0)\n\n![B](imagen:1)',
+      images: [
+        { file: imagen('a.png'), alt: 'A' },
+        { file: imagen('b.png'), alt: 'B' },
+      ],
+    });
+
+    // En serie: la segunda no sale hasta que la primera volvió.
+    const primera = http.expectOne('/common/files/upload');
+    expect((primera.request.body as FormData).get('category')).toBe('IMAGE');
+    primera.flush({ id: 'f-a' });
+    http.expectOne('/common/files/upload').flush({ id: 'f-b' });
+
+    const req = http.expectOne('/community/profiles/pp-1/posts');
+    expect(req.request.body.media).toEqual([
+      { fileId: 'f-a', mediaRole: 'IMAGE', altText: 'A', ordinal: 0 },
+      { fileId: 'f-b', mediaRole: 'IMAGE', altText: 'B', ordinal: 1 },
+    ]);
+    req.flush({ id: 'post-nuevo' });
+    recargaTrasPublicar();
+  });
+
+  it('si una imagen no sube, no publica nada', () => {
+    montarConVitrina([]);
+
+    interno<(b: unknown) => void>('publicar')({
+      bodyText: '![A](imagen:0)',
+      images: [{ file: imagen('a.png'), alt: 'A' }],
+    });
+    http.expectOne('/common/files/upload').flush('falla', { status: 500, statusText: 'Error' });
+
+    http.expectNone((r) => r.url === '/community/profiles/pp-1/posts' && r.method === 'POST');
+    expect(señal<boolean>('publicando')()).toBe(false);
   });
 
   it('sin texto, publicar no manda nada', () => {
     montarConVitrina([]);
 
-    interno<() => void>('publicar')();
+    interno<(b: unknown) => void>('publicar')({ bodyText: '   ', images: [] });
 
     http.expectNone((r) => r.url === '/community/profiles/pp-1/posts' && r.method === 'POST');
+  });
+
+  it('el resumen de la tarjeta sale sin marcas del formato', () => {
+    montar();
+    http.expectOne('/community/profiles/me').flush(PERFIL);
+    http
+      .expectOne((r) => r.url === '/community/profiles/pp-1/posts')
+      .flush({ items: [postItem('post-1')], count: 1, limit: 50, nextCursor: null });
+    http
+      .expectOne('/community/posts/post-1')
+      .flush(postDetail('post-1', true, '## Síntomas\n- **fiebre**\n![Foto](imagen:0)'));
+
+    const [articulo] = interno<() => { data: readonly { resumen: string }[] }>('articulos')().data;
+    expect(articulo!.resumen).toBe('Síntomas fiebre');
+  });
+
+  it('leer un artículo pide sus imágenes propias, en el orden del texto', () => {
+    montar();
+    http.expectOne('/community/profiles/me').flush(PERFIL);
+    http
+      .expectOne((r) => r.url === '/community/profiles/pp-1/posts')
+      .flush({ items: [postItem('post-1')], count: 1, limit: 50, nextCursor: null });
+    http.expectOne('/community/posts/post-1').flush({
+      ...postDetail('post-1', true, '![B](imagen:1)'),
+      media: [
+        { id: 'm-2', fileId: 'f-b', mediaRoleConceptId: 'c', ordinal: 1 },
+        { id: 'm-1', fileId: 'f-a', mediaRoleConceptId: 'c', ordinal: 0 },
+      ],
+    });
+
+    const [articulo] = interno<() => { data: readonly unknown[] }>('articulos')().data;
+    interno<(a: unknown) => void>('alternarLectura')(articulo);
+
+    const pedidos = http.match((r) => r.url.startsWith('/common/files/'));
+    expect(pedidos.map((r) => r.request.url)).toEqual([
+      expect.stringContaining('f-a'),
+      expect.stringContaining('f-b'),
+    ]);
+    pedidos.forEach((r, i) => r.flush(new Blob(['x'], { type: 'image/png' }), { headers: { 'Content-Type': `image/png` } }));
+    expect(señal<string | null>('leyendo')()).toBe('post-1');
   });
 
   /* ---- comentarios: al abrir, no al listar --------------------------------- */

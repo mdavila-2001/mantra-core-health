@@ -102,6 +102,8 @@
   font: inherit;
   font-size: var(--fs-caption);
   font-weight: 600;
+  /* También es un enlace (el de artículos): sin subrayado, igual que el botón. */
+  text-decoration: none;
   cursor: pointer;
 }
 

@@ -188,6 +188,33 @@ export function fileContent(fileId: string): unknown {
   };
 }
 
+/** URLs `blob:` ya creadas, para no fabricar una nueva por cada lectura. */
+const urlsDeArchivos = new Map<string, string>();
+
+/**
+ * Una URL que el navegador puede pintar directo en un `<img>` para un archivo
+ * de la maqueta.
+ *
+ * Existe por las imágenes de un artículo: la API real las sirve por
+ * `/public/media/:id`, que en la maqueta es un dibujo fijo (`mock-media.svg`,
+ * fuera del simulador). Para que quien publica vea SU foto, un archivo subido en
+ * esta sesión se entrega como `blob:` de sus bytes reales (la CSP los admite).
+ * Vive lo que vive la pestaña, igual que todo lo que se crea en la maqueta.
+ *
+ * @returns La URL, o `null` si el archivo no existe.
+ */
+export function urlDeArchivoSimulado(fileId: string): string | null {
+  const archivo = archivos.get(fileId);
+  if (archivo === undefined) return null;
+  if (archivo.bytes === undefined || typeof URL.createObjectURL !== 'function') return archivo.dataUrl;
+  let url = urlsDeArchivos.get(fileId);
+  if (url === undefined) {
+    url = URL.createObjectURL(archivo.bytes);
+    urlsDeArchivos.set(fileId, url);
+  }
+  return url;
+}
+
 export function registrarArchivos(router: MockRouter): void {
   router.post('/common/files/upload', (request) => {
     const form = request.body;

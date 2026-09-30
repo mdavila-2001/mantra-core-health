@@ -378,6 +378,12 @@ export interface PublicacionSimulada {
   readonly publishedAt: string;
   readonly editedAt: string | null;
   readonly mediaUrls: readonly string[];
+  /**
+   * Los archivos de las imágenes, cuando la publicación la hizo alguien en esta
+   * sesión (en el orden de `mediaUrls`). Las semillas no los llevan: sus
+   * imágenes son dibujos sin archivo detrás.
+   */
+  readonly media?: readonly { readonly fileId: string; readonly altText?: string }[];
   readonly hashtags: readonly string[];
   readonly reacciones: Record<'LIKE' | 'LOVE' | 'INSIGHTFUL' | 'CELEBRATE' | 'SUPPORT', number>;
   readonly reaccionDelActor: Record<string, 'LIKE' | 'LOVE' | 'INSIGHTFUL' | 'CELEBRATE' | 'SUPPORT'>;
