@@ -97,6 +97,15 @@
   padding-inline-start: var(--sp-6);
 }
 
+/* Las imágenes del artículo: a lo ancho de la hoja como máximo, nunca más. */
+.editor__area img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: var(--sp-3) 0;
+  border-radius: var(--r-md);
+}
+
 .editor__marcador {
   position: absolute;
   inset-block-start: var(--sp-4);

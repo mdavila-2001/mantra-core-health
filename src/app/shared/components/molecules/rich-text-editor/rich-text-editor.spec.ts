@@ -109,4 +109,68 @@ describe('RichTextEditor', () => {
     expect(area.getAttribute('aria-multiline')).toBe('true');
     expect(area.getAttribute('aria-label')).toBe('Nota de evolución');
   });
+
+  describe('imágenes (opt-in)', () => {
+    it('por omisión no admite imágenes: la nota clínica no cambia', () => {
+      const limpio = saneadoDe('<p>hola<img src="blob:http://x/1" alt="a"></p>');
+      expect(limpio).not.toContain('<img');
+    });
+
+    it('con allowImages conserva sólo la vista previa local, el alt y la clave', () => {
+      fixture.componentRef.setInput('allowImages', true);
+      fixture.detectChanges();
+      const limpio = saneadoDe(
+        '<p><img src="blob:http://x/1" alt="Foto" data-image-key="k1" onerror="robar()" class="x"></p>',
+      );
+      expect(limpio).toContain('src="blob:http://x/1"');
+      expect(limpio).toContain('alt="Foto"');
+      expect(limpio).toContain('data-image-key="k1"');
+      expect(limpio).not.toContain('onerror');
+      expect(limpio).not.toContain('class');
+    });
+
+    it('descarta una imagen de origen remoto aunque las imágenes estén permitidas', () => {
+      fixture.componentRef.setInput('allowImages', true);
+      fixture.detectChanges();
+      expect(saneadoDe('<p><img src="https://evil.example/x.png" alt="x"></p>')).not.toContain('<img');
+    });
+
+    it('inserta, renombra y quita una imagen por su clave', () => {
+      fixture.componentRef.setInput('allowImages', true);
+      fixture.detectChanges();
+      const editor = fixture.componentInstance;
+      editor.insertImage({ key: 'k1', src: 'data:image/png;base64,AA==', alt: '' });
+      expect(editor.html()).toContain('data-image-key="k1"');
+
+      editor.setImageAlt('k1', 'Radiografía');
+      expect(editor.html()).toContain('alt="Radiografía"');
+
+      editor.removeImage('k1');
+      expect(editor.html()).not.toContain('<img');
+    });
+
+    it('una hoja con sólo una imagen no se da por vacía', () => {
+      fixture.componentRef.setInput('allowImages', true);
+      fixture.detectChanges();
+      fixture.componentInstance.insertImage({ key: 'k1', src: 'data:image/png;base64,AA==', alt: 'x' });
+      fixture.detectChanges();
+      expect((fixture.nativeElement as HTMLElement).querySelector('.editor__marcador')).toBeNull();
+    });
+  });
+
+  it('ofrece sólo las herramientas que se le piden', () => {
+    fixture.componentRef.setInput('tools', HERRAMIENTAS.filter((h) => h.comando !== 'underline'));
+    fixture.detectChanges();
+    const html = fixture.nativeElement as HTMLElement;
+    expect(html.querySelector('[data-testid="herramienta-underline"]')).toBeNull();
+    expect(html.querySelector('[data-testid="herramienta-bold"]')).not.toBeNull();
+  });
+
+  it('clear() deja la hoja en blanco', () => {
+    saneadoDe('<p>algo</p>');
+    fixture.componentInstance.clear();
+    fixture.detectChanges();
+    expect(fixture.componentInstance.html()).toBe('');
+    expect((fixture.nativeElement as HTMLElement).querySelector('.editor__marcador')).not.toBeNull();
+  });
 });

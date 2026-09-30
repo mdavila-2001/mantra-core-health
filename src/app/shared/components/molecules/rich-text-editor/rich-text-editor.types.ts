@@ -69,3 +69,13 @@ export const HERRAMIENTAS: readonly HerramientaDeEditor[] = [
   { comando: 'insertUnorderedList', tipo: 'marca', etiqueta: 'Lista' },
   { comando: 'insertOrderedList', tipo: 'marca', etiqueta: 'Lista numerada' },
 ];
+
+/** Una imagen que quien monta el editor inserta en la hoja. */
+export interface ImagenDeEditor {
+  /** Clave con la que quien llama la reconoce (para su archivo, su texto alternativo). */
+  readonly key: string;
+  /** Vista previa local: `blob:` o `data:image/…`. Cualquier otro origen se descarta. */
+  readonly src: string;
+  /** Texto alternativo. */
+  readonly alt: string;
+}
