@@ -109,7 +109,15 @@ export interface PuntoDeSerie {
   readonly etiqueta: string;
   /** Lo que se dice en palabras: «septiembre de 2026». */
   readonly etiquetaLarga: string;
+  /** Todas las consultas del mes: con seguro más sin seguro. */
   readonly valor: number;
+  /**
+   * Las del mes atendidas con seguro. Ausente —junto con `sinSeguro`— cuando el
+   * origen sólo trae el total: el gráfico dibuja entonces una sola serie.
+   */
+  readonly conSeguro?: number;
+  /** Las del mes atendidas sin seguro. */
+  readonly sinSeguro?: number;
 }
 
 /**
