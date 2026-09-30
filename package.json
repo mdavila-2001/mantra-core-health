@@ -22,7 +22,7 @@
     "test": "node scripts/generate-component-index.mjs && node scripts/generate-env.mjs && ng test",
     "test:coverage": "node scripts/generate-env.mjs && ng test --coverage --watch=false",
     "serve:ssr:mantra-core-health": "node dist/mantra-core-health/server/server.mjs",
-    "lint": "eslint .",
+    "lint": "eslint . --cache",
     "typecheck": "node scripts/generate-component-index.mjs && tsc -p tsconfig.app.json --noEmit && tsc -p cypress/tsconfig.json --noEmit && tsc -p playwright/tsconfig.json --noEmit",
     "e2e": "cypress run --e2e --browser chrome",
     "e2e:open": "cypress open --e2e --browser chrome",
