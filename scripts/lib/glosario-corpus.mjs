@@ -9,12 +9,22 @@
  */
 import { mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 import { transformSync } from 'esbuild';
 
-export const SEED = join(process.cwd(), '..', 'mantra-core-health-api', 'src', 'common', 'seed');
+/**
+ * Dónde está el seed del backend. Por defecto, el clon hermano
+ * `../mantra-core-health-api`; con `GLOSSARY_SEED_DIR` se apunta a otro —hace
+ * falta desde un worktree, cuyo hermano es el checkout principal de la API y
+ * puede estar en cualquier rama—:
+ *
+ *   GLOSSARY_SEED_DIR=../wt-mi-api/src/common/seed corepack yarn mock:glossary
+ */
+export const SEED = process.env.GLOSSARY_SEED_DIR
+  ? resolve(process.env.GLOSSARY_SEED_DIR)
+  : join(process.cwd(), '..', 'mantra-core-health-api', 'src', 'common', 'seed');
 export const CORPUS = join(process.cwd(), 'data', 'glossary');
 export const TABLA_DE_SINTOMAS = join(
   process.cwd(),
@@ -124,4 +134,40 @@ export function leerCapas() {
 export function idsDeSintomas() {
   const fuente = readFileSync(TABLA_DE_SINTOMAS, 'utf8');
   return new Set([...fuente.matchAll(/^\s*id: '([^']+)'/gm)].map((m) => m[1]));
+}
+
+/**
+ * Las filas en inglés que repiten un concepto que ya está en castellano.
+ *
+ * La capa ICD-10-CM trae las 1 918 categorías en inglés, y la capa de
+ * enfermedades escribe en castellano algunas de esas mismas categorías con su
+ * código exacto (`I10` «Hipertensión arterial» e `I10` «Essential (primary)
+ * hypertension»). Sin este filtro la grilla muestra el mismo concepto dos
+ * veces, una traducida y otra no. Gana siempre la fila en castellano: tiene
+ * definición, resumen y sinónimos, y la otra sólo el título oficial.
+ *
+ * La igualdad es por sistema y código exactos (`icd10cm:R55`): una fila ES con
+ * `R50.9` no descarta la categoría `R50`, que es un concepto más amplio.
+ *
+ * @param capas - Las capas leídas con {@link leerCapas}.
+ * @returns Los slugs de las filas `lang: "en"` a descartar, con su código.
+ */
+export function duplicadosEnIngles(capas) {
+  const enCastellano = new Set();
+  for (const capa of capas) {
+    for (const fila of capa.filas) {
+      if (fila.lang !== 'en' && typeof fila.code === 'string') {
+        enCastellano.add(`${fila.codeSystem}:${fila.code}`);
+      }
+    }
+  }
+  const descartados = new Map();
+  for (const capa of capas) {
+    for (const fila of capa.filas) {
+      if (fila.lang === 'en' && enCastellano.has(`${fila.codeSystem}:${fila.code}`)) {
+        descartados.set(fila.slug, fila.code);
+      }
+    }
+  }
+  return descartados;
 }
