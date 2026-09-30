@@ -175,7 +175,7 @@ export class Promotions {
   }
 
   protected readonly departamentoElegido = computed(() => this.parametro(PARAM_DEPARTAMENTO));
-  private readonly ciudad = computed(() => this.parametro(PARAM_CIUDAD));
+  protected readonly ciudad = computed(() => this.parametro(PARAM_CIUDAD));
   private readonly categoria = computed(() => this.parametro(PARAM_CATEGORIA));
   private readonly soloVigentes = computed(() => this.parametro(PARAM_VIGENTES) === 'true');
   private readonly termino = computed(() => normalizarLugar(this.parametro(SEARCH_PARAM) ?? ''));
