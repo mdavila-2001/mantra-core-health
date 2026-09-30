@@ -28,6 +28,7 @@ import {
   CATEGORIAS_DE_ORDEN,
   ESTADOS_DE_REVISION,
   TIPOS_DE_RELACION,
+  duplicadosEnIngles,
   idsDeSintomas,
   leerCapas,
   leerSeed,
@@ -207,6 +208,12 @@ console.log(`[glosario] curados: ${seed.terminos.length} · síntomas del motor:
 for (const [nombre, c] of Object.entries(conteos)) {
   console.log(
     `[glosario] ${nombre}: ${c.filas} filas${c.enriquecen > 0 ? ` (${c.enriquecen} enriquecen un curado)` : ''}`,
+  );
+}
+const duplicados = duplicadosEnIngles(capas);
+if (duplicados.size > 0) {
+  console.log(
+    `[glosario] ${duplicados.size} fila(s) en inglés repiten un código ya traducido y el generador las descarta: ${[...duplicados.values()].join(', ')}`,
   );
 }
 console.log('[glosario] 0 problemas');

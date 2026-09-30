@@ -59,6 +59,12 @@
                     <span class="glosario__dato">
                       {{ tarjeta.cantidad }}
                       {{ tarjeta.cantidad === 1 ? 'término' : 'términos' }}
+                      <!-- Si hay términos que sólo tienen su nombre en inglés, el
+                           total solo engaña: «Enfermedades» sumaba 1 918
+                           categorías ICD-10-CM sin traducir. -->
+                      @if (tarjeta.enCastellano !== undefined && tarjeta.enCastellano < tarjeta.cantidad) {
+                        · {{ tarjeta.enCastellano }} en castellano
+                      }
                     </span>
                   </span>
                 </span>

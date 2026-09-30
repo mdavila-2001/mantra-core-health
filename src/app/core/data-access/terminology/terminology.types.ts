@@ -198,6 +198,11 @@ export interface GlossaryTag {
   readonly defaultVersionId: string | null;
   /** Cuántos términos tiene. Es el conteo que se muestra junto a la etiqueta. */
   readonly memberCount?: number;
+  /**
+   * Cuántos de esos términos están en castellano. Lo publica el simulador; la
+   * API real todavía no, y sin él la tarjeta muestra sólo el total.
+   */
+  readonly translatedMemberCount?: number;
 }
 
 /** Una página del listado de etiquetas. */

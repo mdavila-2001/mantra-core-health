@@ -432,3 +432,90 @@ describe('contrato C0: expansión de conceptos clínicos', () => {
     }
   });
 });
+
+/**
+ * Auditoría del glosario (2026-09-30): los sinónimos se escriben con su
+ * ortografía correcta («tiña», «uñas», «riñón») y la búsqueda no distingue
+ * tildes ni la ñ; y lo que está en castellano va antes que las categorías
+ * ICD-10-CM que sólo tienen el título en inglés.
+ */
+describe('búsqueda del glosario: tildes y castellano primero', () => {
+  const router = new MockRouter();
+  registrarTerminologia(router);
+
+  function get<T>(path: string, query: Record<string, string> = {}): T {
+    const match = router.match('GET', path);
+    if (match === null) throw new Error(`No existe GET ${path}`);
+    return match.handler({
+      method: 'GET',
+      path,
+      params: match.params,
+      query: new URLSearchParams(query),
+      body: null,
+      headers: new HttpHeaders(),
+      user: null,
+    }) as T;
+  }
+
+  interface Entrada {
+    readonly slug: string;
+    readonly translated: boolean;
+  }
+  interface Conjunto {
+    readonly id: string;
+    readonly internalCode: string;
+    readonly memberCount: number;
+    readonly translatedMemberCount?: number;
+  }
+
+  const buscar = (q: string, extra: Record<string, string> = {}) =>
+    get<{ items: readonly Entrada[]; count: number }>('/terminology/concepts', {
+      includeValueSets: 'true',
+      limit: '500',
+      q,
+      ...extra,
+    }).items.map((item) => item.slug);
+
+  it.each([
+    ['tina', 'tina-corporal'],
+    ['tiña', 'tina-corporal'],
+    ['unas con hongos', 'onicomicosis'],
+    ['uñas con hongos', 'onicomicosis'],
+    ['infeccion de rinon', 'pielonefritis-aguda'],
+    ['INFECCIÓN DE RIÑÓN', 'pielonefritis-aguda'],
+  ])('«%s» encuentra %s', (q, slug) => {
+    expect(buscar(q)).toContain(slug);
+  });
+
+  it('la categoría Enfermedades dice cuántos de sus términos están en castellano', () => {
+    const { items } = get<{ items: readonly Conjunto[] }>('/terminology/value-sets');
+    const enfermedades = items.find((c) => c.internalCode === 'glossary-category-disease');
+
+    expect(enfermedades).toBeDefined();
+    const enCastellano = enfermedades?.translatedMemberCount ?? -1;
+    // Casi todas son categorías ICD-10-CM en inglés; las traducidas son la minoría.
+    expect(enCastellano).toBeGreaterThan(100);
+    expect(enCastellano).toBeLessThan(enfermedades?.memberCount ?? 0);
+
+    const todas = get<{ items: readonly Entrada[] }>('/terminology/concepts', {
+      includeValueSets: 'true',
+      valueSetId: enfermedades?.id ?? '',
+      limit: '5000',
+    }).items;
+    expect(todas.filter((t) => t.translated)).toHaveLength(enCastellano);
+  });
+
+  it('los términos en castellano van antes que los que sólo están en inglés', () => {
+    const { items } = get<{ items: readonly Conjunto[] }>('/terminology/value-sets');
+    const enfermedades = items.find((c) => c.internalCode === 'glossary-category-disease');
+    const lista = get<{ items: readonly Entrada[] }>('/terminology/concepts', {
+      includeValueSets: 'true',
+      valueSetId: enfermedades?.id ?? '',
+      limit: '5000',
+    }).items;
+
+    const primeroEnIngles = lista.findIndex((t) => !t.translated);
+    expect(primeroEnIngles).toBeGreaterThan(0);
+    expect(lista.slice(primeroEnIngles).every((t) => !t.translated)).toBe(true);
+  });
+});

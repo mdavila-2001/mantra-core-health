@@ -192,6 +192,25 @@ describe('Glossary', () => {
     expect(tarjetas[0].textContent).toContain('12');
   });
 
+  it('si la API dice cuántos están en castellano y no son todos, la tarjeta lo muestra', async () => {
+    responderLanding([{ ...CATEGORIA, memberCount: 2113, translatedMemberCount: 209 }]);
+    await harness.fixture.whenStable();
+
+    const tarjeta = html().querySelector('.glosario__tarjeta');
+    expect(tarjeta?.textContent).toContain('2113');
+    expect(tarjeta?.textContent).toContain('209 en castellano');
+  });
+
+  it('si todos están en castellano, o la API no lo dice, la tarjeta muestra sólo el total', async () => {
+    responderLanding([
+      { ...CATEGORIA, translatedMemberCount: 12 },
+      { ...CATEGORIA, id: 'vs-2', internalCode: 'glossary-category-lab', memberCount: 7 },
+    ]);
+    await harness.fixture.whenStable();
+
+    expect(html().textContent).not.toContain('en castellano');
+  });
+
   it('los chips de la tarjeta salen del corpus, no de una lista fija', async () => {
     // Es la diferencia con la ronda anterior: la tarjeta dice de qué habla la
     // categoría **antes** de entrar, y lo dice con las etiquetas que sus

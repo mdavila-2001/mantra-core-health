@@ -5,7 +5,7 @@
  * ## Por qué existe
  *
  * El backend siembra el glosario desde dos archivos: la taxonomía
- * (`glossary-taxonomy.ts` — 12 categorías `glossary-category-*`, 15 etiquetas
+ * (`glossary-taxonomy.ts` — 12 categorías `glossary-category-*`, 16 etiquetas
  * `glossary-tag-*` y el value set paraguas) y el catálogo curado
  * (`glossary-terms.catalog.ts` — 69 términos con definición clínica, resumen
  * llano, sinónimos, relaciones tipadas y ficha de medicamento del NDC).
@@ -49,6 +49,7 @@ import { join } from 'node:path';
 import {
   CAPAS,
   TIPOS_DE_RELACION,
+  duplicadosEnIngles,
   idsDeSintomas,
   leerCapas,
   leerSeed,
@@ -154,9 +155,15 @@ const conteoDeCapas = { curados: terminos.length };
 const nuevos = [];
 let enriquecidos = 0;
 
+/* Una fila en inglés cuyo código ya existe en castellano es el mismo concepto
+   dos veces (`I10`, `R55`, `C61`…): se descarta y queda la traducida. Ver
+   `duplicadosEnIngles` en `lib/glosario-corpus.mjs`. */
+const duplicados = duplicadosEnIngles(capas);
+
 for (const capa of capas) {
   let filasNuevas = 0;
   for (const fila of capa.filas) {
+    if (duplicados.has(fila.slug)) continue;
     const curado = curadosPorSlug.get(fila.slug);
     if (curado !== undefined) {
       // Enriquecimiento: sólo lo estructural. El texto revisado no se toca.
@@ -288,7 +295,8 @@ const archivo = `/* ============================================================
     \`glossary-terms.catalog.ts\` (${curados.length} términos curados) de
     \`mantra-core-health-api/src/common/seed/\`, más ${nuevos.length} términos de las
     capas NDJSON (${resumenDeCapas}); ${enriquecidos} fila(s) de las capas
-    enriquecen un curado sin pisar su texto.
+    enriquecen un curado sin pisar su texto, y ${duplicados.size} fila(s) en inglés se
+    descartan porque su código ya está en castellano.
 
     Los términos con \`lang: "en"\` no traen definición: la fuente no la publica
     y no se fabrica. Su \`clinicalDefinitionEs\` y \`plainSummaryEs\` quedan vacíos.
@@ -383,9 +391,16 @@ export const GLOSARIO_TODOS_LOS_TERMINOS: EntradaDeTaxonomia = ${literal(
 
 /**
  * Cuántos términos aportó cada fuente: \`curados\` y cada archivo NDJSON. Una
- * fila que enriquece a un curado no cuenta como término nuevo.
+ * fila que enriquece a un curado no cuenta como término nuevo, y una fila en
+ * inglés descartada por duplicada (ver \`DUPLICADOS_EN_INGLES\`) tampoco.
  */
 export const CONTEO_DE_CAPAS: Readonly<Record<string, number>> = ${literal(conteoDeCapas, '')};
+
+/**
+ * Los códigos cuya fila en inglés se descartó porque el mismo concepto ya está
+ * en castellano, con el mismo sistema y el mismo código.
+ */
+export const DUPLICADOS_EN_INGLES: readonly string[] = ${literal([...duplicados.values()], '')};
 
 /** Los ${conRelaciones.length} términos: primero los ${curados.length} curados, en el orden del catálogo; después las capas. */
 export const TERMINOS_DE_GLOSARIO: readonly TerminoDeGlosario[] = [
@@ -397,7 +412,8 @@ writeFileSync(DESTINO, archivo);
 
 console.log(
   `[glosario] ${categorias.length} categorías · ${etiquetas.length} etiquetas · ${conRelaciones.length} términos ` +
-    `(${curados.length} curados + ${nuevos.length} de las capas: ${resumenDeCapas}; ${enriquecidos} enriquecen un curado)` +
+    `(${curados.length} curados + ${nuevos.length} de las capas: ${resumenDeCapas}; ${enriquecidos} enriquecen un curado; ` +
+    `${duplicados.size} en inglés descartadas por duplicadas)` +
     (huerfanas > 0 ? ` · ${huerfanas} relación(es) huérfana(s) omitida(s)` : ''),
 );
 console.log(`[glosario] escrito ${DESTINO}`);
