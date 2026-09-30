@@ -32,6 +32,8 @@ import { Select } from '../../../shared/components/atoms/select/select';
 import { Card } from '../../../shared/components/molecules/card/card';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 import { SectionHeading } from '../../../shared/components/molecules/section-heading/section-heading';
+import { Tab } from '../../../shared/components/molecules/tabs/tab/tab';
+import { Tabs } from '../../../shared/components/molecules/tabs/tabs';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
@@ -214,6 +216,8 @@ interface Dinero {
     RouterLink,
     SectionHeading,
     Select,
+    Tab,
+    Tabs,
     ViewStateHost,
   ],
   templateUrl: './resumen.html',
@@ -235,6 +239,8 @@ export class Resumen {
   private readonly hoy = new Date();
 
   private readonly recarga = signal(0);
+  /** 0 = Resumen (tableros) · 1 = Registros (tablas con su alta). */
+  readonly pestana = signal(0);
   readonly practicaElegida = signal<string | null>(null);
   private readonly practicas = signal<ViewState<readonly Practice[]>>(loading());
   private readonly dinero = signal<ViewState<Dinero>>(loading());
