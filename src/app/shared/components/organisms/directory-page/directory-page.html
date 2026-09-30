@@ -39,7 +39,42 @@
          `textoSinCoincidencias`. -->
       <p class="directorio__vacio" role="status">{{ textoSinCoincidencias() }}</p>
     } @else {
-      <p class="directorio__cuenta" role="status">{{ contador() }}</p>
+      <div class="directorio__barra">
+        <p class="directorio__cuenta" role="status">{{ contador() }}</p>
+
+        <!-- Grilla o lista, a elección de quien mira. Dos botones con
+             `aria-pressed` y no un radio: es un interruptor de presentación,
+             no un dato del formulario, y así cada uno lleva su ícono. -->
+        <div class="directorio__vistas" role="group" aria-label="Forma de ver el directorio">
+          <button
+            type="button"
+            class="directorio__vista"
+            [attr.aria-pressed]="vista() === 'grilla'"
+            (click)="elegirVista('grilla')"
+          >
+            <svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" focusable="false">
+              <rect x="2.5" y="2.5" width="6" height="6" rx="1.2" />
+              <rect x="11.5" y="2.5" width="6" height="6" rx="1.2" />
+              <rect x="2.5" y="11.5" width="6" height="6" rx="1.2" />
+              <rect x="11.5" y="11.5" width="6" height="6" rx="1.2" />
+            </svg>
+            <span>Grilla</span>
+          </button>
+          <button
+            type="button"
+            class="directorio__vista"
+            [attr.aria-pressed]="vista() === 'lista'"
+            (click)="elegirVista('lista')"
+          >
+            <svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" focusable="false">
+              <rect x="2.5" y="3" width="15" height="3.4" rx="1.2" />
+              <rect x="2.5" y="8.3" width="15" height="3.4" rx="1.2" />
+              <rect x="2.5" y="13.6" width="15" height="3.4" rx="1.2" />
+            </svg>
+            <span>Lista</span>
+          </button>
+        </div>
+      </div>
 
       @for (grupo of grupos(); track grupo.id) {
         <section class="directorio__grupo" [attr.aria-labelledby]="'grupo-' + grupo.id">
@@ -53,11 +88,12 @@
           <!-- `app-result-card` es un selector de atributo sobre el `<li>`: la
              tarjeta ES el ítem de la lista, así que un lector de pantalla
              anuncia cuántos hay antes de leer el primero. -->
-          <ul class="directorio__grilla">
+          <ul class="directorio__grilla" [class.directorio__grilla--lista]="vista() === 'lista'">
             @for (resultado of grupo.resultados; track resultado.id) {
               <li
                 app-result-card
                 [resultado]="resultado"
+                [vista]="vista()"
                 [preventDuplicateNavigation]="preventDuplicateNavigation()"
               ></li>
             }

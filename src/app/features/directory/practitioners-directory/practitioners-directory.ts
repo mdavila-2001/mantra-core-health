@@ -33,6 +33,7 @@ import { SpecialtyIcon } from '../../../shared/components/atoms/specialty-icon/s
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { inicialesDe } from '../../../shared/text/iniciales';
+import { fotoDeDirectorio, fotoDeEspecialidad } from '../../../shared/utils/foto-de-directorio';
 import { subtituloProfesional } from '../subtitulo-profesional';
 
 /** Una especialidad en la portada: su nombre y cuánta gente hay detrás. */
@@ -154,6 +155,8 @@ const SIN_ESPECIALIDAD = 'Sin especialidad registrada';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PractitionersDirectory {
+  protected readonly fotoDe = fotoDeEspecialidad;
+
   private readonly profiles = inject(ProfilesClient);
   private readonly terminology = inject(TerminologyClient);
   private readonly route = inject(ActivatedRoute);
@@ -668,6 +671,7 @@ function toResultado(
       fragment: ANCLA_HORARIOS,
     },
     figureText: inicialesDe(nombre),
+    photoUrl: fotoDeDirectorio('medico', fila.profileId),
     ...(subtitulo === undefined ? {} : { subtitle: subtitulo }),
     meta,
     seals: sellos,

@@ -27,6 +27,7 @@
       @for (nodo of nodosVisibles(); track nodo.path) {
         <li class="mapa__item">
           <a class="rejilla__tarjeta" [routerLink]="routeOf(nodo)">
+            <img class="rejilla__foto" [src]="fotoDe(nodo.path)" alt="" loading="lazy" />
             <app-nav-icon class="rejilla__icono" [name]="nodo.icon" />
             <span class="rejilla__nombre">{{ nodo.label }}</span>
             <span class="rejilla__resumen">{{ nodo.summary }}</span>
