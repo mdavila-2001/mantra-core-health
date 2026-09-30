@@ -2320,3 +2320,21 @@ están en el menú.
 IndexedDB para sobrevivir a un F5; por eso el interceptor del simulador acepta ahora manejadores
 que devuelven una promesa), `features/laboratory/results/` (cola con pausa, reanudación y
 reintento; visor) y `features/laboratory/summary/`.
+
+## P53 · «Mis facturas»: las facturas emitidas de cada cuenta — 30/09/2026
+
+> **Qué pide el front.** Un ícono de la barra superior abre `/my-account/invoices` para **toda**
+> cuenta. El paciente ve las facturas que le emitieron (consultas y farmacia); el médico, las de
+> sus consultas; la farmacia, las de sus pedidos; facturación de la organización, todas. Cada
+> fila baja el PDF y el XML.
+>
+> **Hoy.** Lo responde el SIAT **simulado** del front (FACT-SIAT-MOCK):
+> `GET /billing/simulated/my-invoices` → `{ view: 'RECEIVED' | 'ISSUED', items, count }` y
+> `GET /billing/simulated/my-invoices/:invoiceId` → la factura completa, con 404 fuera del
+> alcance. El lado (`view`) lo decide el backend por la sesión, no la pantalla.
+>
+> **Falta en la API.** Facturación real (M26): un listado de facturas por comprador (el perfil de
+> paciente de la sesión) y por emisor (la organización o el profesional), con el mismo contrato,
+> para reemplazar el cliente simulado sin tocar la pantalla. Laboratorio, imagenología y
+> aseguradora todavía no emiten facturas: la pantalla lo dice en su estado vacío.
+||||||| e71e6dfa
