@@ -35,7 +35,7 @@ import { environment } from '../../../environments/environment';
       </div>
       @if (!plegado()) {
         <p class="mock__texto">
-          <strong>Rama mockup:</strong> sin backend. Todo lo que ves sale de datos de prueba en memoria y
+          <strong>Modo demo:</strong> sin backend. Todo lo que ves sale de datos de prueba en memoria y
           los cambios duran mientras dure la pestaña. Cualquier contraseña sirve.
         </p>
         <p class="mock__texto">

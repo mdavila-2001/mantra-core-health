@@ -14,6 +14,7 @@
     "dev": "node scripts/generate-env.mjs && node scripts/generate-component-index.mjs && ng serve",
     "start:dev": "node scripts/generate-env.mjs && node scripts/generate-component-index.mjs && ng serve",
     "start": "node dist/mantra-core-health/server/server.mjs",
+    "start:demo": "node scripts/generate-env.mjs && node scripts/generate-component-index.mjs && ng serve --configuration development,demo",
     "start:real-api": "node scripts/generate-env.mjs && node scripts/generate-component-index.mjs && ng serve --configuration real-api",
     "start:lan": "node scripts/generate-env.mjs && ng serve --configuration lan --host 0.0.0.0",
     "build": "node scripts/generate-env.mjs && node scripts/generate-component-index.mjs && ng build",

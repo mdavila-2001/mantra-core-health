@@ -20,6 +20,9 @@ import { catchError, forkJoin, of, type Observable } from 'rxjs';
 import { FilesClient } from '../../../../core/data-access/files/files.client';
 import { FileDownloader } from '../../../../core/data-access/files/file-downloader';
 import { ProfilesClient } from '../../../../core/data-access/profiles/profiles.client';
+import { BIRTH_SEX_OPTIONS } from '../../../../core/data-access/iam/birth-sex.options';
+import type { BirthSexCode } from '../../../../core/data-access/iam/iam.types';
+import { BoDepartmentsCatalog } from '../../../../core/data-access/terminology/bo-departments.service';
 import { BoMunicipalitiesCatalog } from '../../../../core/data-access/terminology/bo-municipalities.service';
 import type { RamaDepartamento } from '../../../../core/data-access/terminology/bo-municipalities.service';
 import { LocationPicker } from '../../../auth/registro-compartido/location-picker/location-picker';
@@ -401,6 +404,16 @@ export class PractitionerProfileEdit {
   );
 
   private readonly municipios = inject(BoMunicipalitiesCatalog);
+  private readonly departamentos = inject(BoDepartmentsCatalog);
+
+  /* -- P28 (ID-13): lo que del documento SÍ se corrige --------------------
+     El sexo al nacer y el departamento que emitió el documento. El número del
+     documento sigue de solo lectura: tiene su propio circuito de verificación
+     y la API no lo acepta en este `PATCH`. */
+  protected readonly opcionesSexoAlNacer = BIRTH_SEX_OPTIONS;
+  protected readonly sexoAlNacer = signal<BirthSexCode | null>(null);
+  protected readonly opcionesDepartamento = signal<readonly SelectOption<string>[]>([]);
+  protected readonly departamentoEmisor = signal<string | null>(null);
 
   /* -- ALV-003: los dos datos del contrato que no tenían control ---------- */
 
@@ -1351,6 +1364,11 @@ export class PractitionerProfileEdit {
     // ofrecía. Se siembran desde el perfil, igual que el resto.
     this.fechaNacimiento.set(perfil.birthDate ?? null);
     this.municipioResidencia.set(perfil.residenceMunicipalityConceptId ?? null);
+    this.sexoAlNacer.set(perfil.sexAtBirth ?? null);
+    this.departamentoEmisor.set(perfil.issuerAdministrativeAreaConceptId ?? null);
+    if (this.opcionesDepartamento().length === 0) {
+      this.cargarDepartamentos();
+    }
     // ALV-009: la calle, si la declaró.
     this.direccion.set(perfil.homeAddress?.lines ?? '');
     // Y su punto en el mapa. Las dos mitades tienen que estar: una latitud sin
@@ -1387,6 +1405,17 @@ export class PractitionerProfileEdit {
         this.ramasMunicipios.set([]);
         this.catalogoMunicipiosCaido.set(true);
       },
+    });
+  }
+
+  /** Trae los departamentos para «departamento que emitió tu documento». Un fallo no rompe el resto. */
+  protected cargarDepartamentos(): void {
+    this.departamentos.listar().subscribe({
+      next: (opciones) =>
+        this.opcionesDepartamento.set(
+          opciones.map((opcion) => ({ value: opcion.conceptId, label: opcion.display })),
+        ),
+      error: () => this.opcionesDepartamento.set([]),
     });
   }
 
@@ -1481,6 +1510,8 @@ export class PractitionerProfileEdit {
       personalEmail: string;
       workEmail: string;
       birthDate: string;
+      sexAtBirth: BirthSexCode;
+      issuerAdministrativeAreaConceptId: string;
       residenceMunicipalityConceptId: string;
       homeAddressLines: string;
       homeLatitude: number | null;
@@ -1499,6 +1530,18 @@ export class PractitionerProfileEdit {
     const fechaNueva = fechaEditada === null ? '' : soloFecha(fechaEditada);
     if (fechaNueva !== '' && fechaNueva !== fechaOriginal) {
       cambios.birthDate = fechaNueva;
+    }
+    // P28: sólo viajan si cambiaron, y nunca vacíos (la API no los acepta vacíos).
+    const sexo = this.sexoAlNacer();
+    if (sexo !== null && sexo !== original.sexAtBirth) {
+      cambios.sexAtBirth = sexo;
+    }
+    const departamento = this.departamentoEmisor();
+    if (
+      departamento !== null &&
+      departamento !== (original.issuerAdministrativeAreaConceptId ?? null)
+    ) {
+      cambios.issuerAdministrativeAreaConceptId = departamento;
     }
     const municipio = this.municipioResidencia();
     if (municipio !== null && municipio !== (original.residenceMunicipalityConceptId ?? null)) {

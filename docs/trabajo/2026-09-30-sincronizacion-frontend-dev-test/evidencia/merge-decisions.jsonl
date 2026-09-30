@@ -69,3 +69,28 @@
 {"file": "docs/trabajo/2026-09-28-contabilidad-simple/REPORTE.md", "blocks": ["theirs"], "reason": "Retain original mockup report and preserve dev-specific historical snapshot separately."}
 {"file": "docs/trabajo/2026-09-28-mercado-de-seguros/REPORTE.md", "blocks": ["theirs"], "reason": "Retain original mockup report and preserve dev-specific historical snapshot separately."}
 {"file": "playwright/catalogo-farmacia.mjs", "blocks": ["ours"], "reason": "Keep original CSV/withdrawal/overflow assertions; incoming portal evidence retained in pharmacy-portal-evidence.mjs."}
+{"merge": "test", "file": "src/app/core/data-access/diagnostics/diagnostics-lab.client.ts", "reason": "Incoming is identical subset; keep lab inbox and complete specimen tests."}
+{"merge": "test", "file": "src/app/core/data-access/diagnostics/diagnostics-lab.types.ts", "reason": "Incoming is identical subset; keep lab inbox and complete specimen tests."}
+{"merge": "test", "file": "src/app/core/data-access/diagnostics/diagnostics-lab.client.spec.ts", "reason": "Incoming is identical subset; keep lab inbox and complete specimen tests."}
+{"merge": "test", "file": "src/app/core/data-access/diagnostics/diagnostics.client.spec.ts", "reason": "Incoming includes existing block plus sharing contract tests."}
+{"merge": "test", "file": "src/app/core/data-access/insurance/insurance.types.ts", "reason": "Keep incoming adjudication contract plus new received-claims/invoice types."}
+{"merge": "test", "file": "src/app/core/mock/handlers/index.ts", "reason": "Keep new received-claims registration with auto-merged handlers."}
+{"merge": "test", "file": "src/app/core/mock/handlers/files.handlers.ts", "reason": "Preserve test ownership authorization and extracted fileContent used by context-authorized downloads."}
+{"merge": "test", "file": "src/app/core/mock/handlers/profiles.handlers.ts", "reason": "Union dependent-action helpers and added validation; preserve monthly demo metrics."}
+{"merge": "test", "file": "src/app/core/mock/handlers/diagnostics.handlers.ts", "reason": "Union lab specimen/custody/inbox and canonical report version/release lifecycle."}
+{"merge": "test", "file": "src/app/core/mock/mock-banner.ts", "reason": "Keep explicit demo banner, real modes do not mount it."}
+{"merge": "test", "file": "src/app/core/navigation/navigation.map.spec.ts", "reason": "Keep tenant-only lab coverage in addition to payer filtering."}
+{"merge": "test", "file": "src/app/core/navigation/navigation.map.ts", "reason": "Preserve tenant-filtered quotations route from latest owner requirements."}
+{"merge": "test", "file": "src/app/core/navigation/navigation.service.spec.ts", "reason": "Both campaigns and received claims remain in payer menu."}
+{"merge": "test", "file": "src/app/core/notifications/notifications.store.spec.ts", "reason": "Keep notification action tests and hidden-tab polling regression."}
+{"merge": "test", "file": "src/app/features/dashboard/patient-home/patient-home.spec.ts", "reason": "Preserve explicit deferred profile HTTP drain."}
+{"merge": "test", "file": "src/app/features/organization/pharmacy-inbox/inbox-order/inbox-order.spec.ts", "reason": "Same userId stub with explanatory asynchronous CartStore contract."}
+{"merge": "test", "file": "src/app/features/shell-layout/shell-layout.spec.ts", "reason": "Keep expanded payer menu tests plus nonconflicting accessibility improvements."}
+{"merge": "test", "file": "scripts/generate-env.mjs", "reason": "Union billing/design demo fields and refresh cookie option."}
+{"merge": "test", "file": "src/environments/environment.types.ts", "reason": "Union demo flags and refresh cookie contract."}
+{"merge": "test", "file": "PENDIENTES-BACKEND.md", "reason": "Keep full P43-P53 contract inventory; preserve incoming original separately."}
+{"merge": "test", "file": "src/app/core/mock/handlers/auth.handlers.ts", "reason": "Union pharmacy/laboratory coordinates and CL-43 legal validation."}
+{"merge": "test", "file": "src/app/core/mock/handlers/clinical.handlers.spec.ts", "reason": "Keep test validation400 behavior and use current COND_PROVISIONAL catalog key. H1 does not enforce confirmation status; P41 remains demo-only. Do not attribute this rejection to real API."}
+{"merge": "test", "file": "src/app/features/auth/register-laboratory/*", "reason": "Later owner D2 explicitly permits optional documents and preupload. Retain current implementation; port valid test transport/retry cases; historical mandatory-doc contract superseded."}
+{"merge": "test", "file": "src/app/features/clinical-record/*", "reason": "Preserve current tabs, free text, forms and close errors; carry test document styles. Keep owner removal of obsolete progress-notes screen."}
+{"merge": "test", "file": "src/app/features/account/my-profile/*", "reason": "Union P28 sex/department editing and current profile content."}

@@ -296,11 +296,11 @@ export function registerInsurerReceivedClaims(
     const datos = cuerpo<{ outcome: string; approvedAmount: string; reason: string }>(request);
     const outcome = datos.outcome as Resultado;
     if (!(outcome in DICTAMEN)) {
-      return validation('Dictamen inválido', [{ field: 'outcome', problem: 'APPROVED, PARTIAL o REJECTED' }]);
+      return validation('Dictamen inválido', [{ field: 'outcome', message: 'APPROVED, PARTIAL o REJECTED' }]);
     }
     const motivo = (datos.reason ?? '').trim();
     if (outcome !== 'APPROVED' && motivo.length < 5) {
-      return validation('Falta el motivo', [{ field: 'reason', problem: 'Al menos 5 caracteres' }]);
+      return validation('Falta el motivo', [{ field: 'reason', message: 'Al menos 5 caracteres' }]);
     }
 
     const solicitado = centavos(actual.billedTotal.amount);
@@ -309,7 +309,7 @@ export function registerInsurerReceivedClaims(
       const pedido = String(datos.approvedAmount ?? '');
       if (!DECIMAL.test(pedido) || centavos(pedido) <= 0 || centavos(pedido) >= solicitado) {
         return validation('Monto aprobado inválido', [
-          { field: 'approvedAmount', problem: 'Mayor que cero y menor que el monto solicitado' },
+          { field: 'approvedAmount', message: 'Mayor que cero y menor que el monto solicitado' },
         ]);
       }
       aprobado = centavos(pedido);
@@ -338,7 +338,7 @@ export function registerInsurerReceivedClaims(
     }
     const motivo = (cuerpo<{ reason: string }>(request).reason ?? '').trim();
     if (motivo.length < 5) {
-      return validation('Falta el motivo', [{ field: 'reason', problem: 'Al menos 5 caracteres' }]);
+      return validation('Falta el motivo', [{ field: 'reason', message: 'Al menos 5 caracteres' }]);
     }
     return solicitudes().actualizar(actual.id, {
       invoice: { ...actual.invoice, status: 'ANNULLED', annulledAt: ahora(), annulmentReason: motivo },

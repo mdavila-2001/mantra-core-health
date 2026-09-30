@@ -167,7 +167,7 @@ function errorHttp(error: ErrorDeFacturacion): MockReply {
     case 'NOT_A_PLAN':
       return conflict(error.message, { reason: error.code });
     case 'INVALID_INPUT':
-      return validation(error.message, error.issues ?? []);
+      return validation(error.message, (error.issues ?? []).map(({ field, problem }) => ({ field, message: problem })));
     case 'FISCAL_CREDENTIALS':
       return preconditionFailed(error.message, { reason: error.code });
   }

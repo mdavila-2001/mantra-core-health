@@ -56,12 +56,29 @@ export const OPCIONES_DE_ESTADO: readonly SelectOption<EstadoDeVerificacion>[] =
 const CODIGOS_DE_MATRICULA_PENDIENTE: ReadonlySet<string> = new Set(['AUTH_PENDING', 'ST-PENDING']);
 
 /**
+ * El código tal como lo publica la terminología de la API lleva el prefijo del
+ * módulo: `profiles:AUTH_PENDING`, no `AUTH_PENDING` a secas. Comparado entero
+ * contra la lista, toda matrícula pendiente caía en «ya revisada»: la fila decía
+ * «Habilitación pendiente» y en la columna de acciones aparecía el sello de
+ * verificada en vez de Editar/Retirar (visto contra la API real el 26/09/2026,
+ * recorrido de navegador de H2). Se compara sin el prefijo; el simulador, que
+ * manda `ST-PENDING` sin prefijo, sigue igual.
+ */
+function sinPrefijoDeModulo(codigo: string): string {
+  const corte = codigo.lastIndexOf(':');
+  return corte === -1 ? codigo : codigo.slice(corte + 1);
+}
+
+/**
  * Si una matrícula todavía se puede corregir. Sin el código a la vista —las
  * etiquetas llegan después que el perfil, o no llegan— cuenta como pendiente,
  * que es lo que la fila dice mientras tanto.
  */
 export function matriculaPendiente(codigoDelEstado: string | undefined): boolean {
-  return codigoDelEstado === undefined || CODIGOS_DE_MATRICULA_PENDIENTE.has(codigoDelEstado);
+  return (
+    codigoDelEstado === undefined ||
+    CODIGOS_DE_MATRICULA_PENDIENTE.has(sinPrefijoDeModulo(codigoDelEstado))
+  );
 }
 
 /** Las mismas dos, en femenino: la tabla de especialidades dice «Verificada». */

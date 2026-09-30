@@ -285,6 +285,10 @@ describe('WorkHistory', () => {
     const req = http.expectOne((r) => r.url === AFILIACIONES && r.method === 'POST');
     expect(req.request.body).toEqual({
       organizationName: 'Clínica del Sur',
+      // El id del establecimiento elegido del padrón viaja con el nombre (ID-16):
+      // sin él la API no puede validarlo contra `VS_BO_HEALTH_FACILITY` ni
+      // protegerlo del duplicado.
+      healthFacilityConceptId: 'fac-Clínica del Sur',
       roleTitle: 'Jefe de guardia',
       startDate: '2021-03-01',
     });
@@ -972,6 +976,7 @@ describe('WorkHistory — dónde atiendo (ALV-005/006/010) y cargo opcional (ALV
     const req = http.expectOne((r) => r.url === AFILIACIONES && r.method === 'POST');
     expect(req.request.body).toEqual({
       organizationName: 'Mi consultorio',
+      healthFacilityConceptId: 'fac-Mi consultorio',
       startDate: '2021-03-01',
     });
     req.flush(enCable({ id: 'af-3', roleTitle: null }));

@@ -1,8 +1,14 @@
+import { TestBed } from '@angular/core/testing';
+import { environment } from '../../../environments/environment';
 import { HttpRequest } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 
 import { mockBackendInterceptor } from './mock-backend.interceptor';
 import { buscarUsuario, emitirAccessToken } from './mock-session';
+
+const originalMockBackend = environment.mockBackend;
+beforeAll(() => Object.assign(environment, { mockBackend: true }));
+afterAll(() => Object.assign(environment, { mockBackend: originalMockBackend }));
 
 /**
  * H1.S2.M1 del carril de Ender (2026-09-22) — la mitad «observada» de la
@@ -29,7 +35,7 @@ describe('latencia observada — GET /scheduling/slots × 10', () => {
 
       const inicio = performance.now();
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await firstValueFrom(mockBackendInterceptor(request, siguiente as any));
+      await firstValueFrom(TestBed.runInInjectionContext(() => mockBackendInterceptor(request, siguiente as any)));
       tiempos.push(performance.now() - inicio);
     }
 

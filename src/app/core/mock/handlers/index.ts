@@ -4,6 +4,7 @@ import { registrarArchivos } from './files.handlers';
 import { registrarAuth } from './auth.handlers';
 import { registrarClinica } from './clinical.handlers';
 import { registrarComunidad } from './community.handlers';
+import { registrarConsentimientos } from './consent.handlers';
 import { registrarDiagnostico } from './diagnostics.handlers';
 import { registerDiagnosisVerification } from './diagnosis-verification.handlers';
 import { registerMedicalNotes } from './medical-notes.handlers';
@@ -74,6 +75,7 @@ export function crearRouterSimulado(): MockRouter {
   registrarLaboratorioFarmaceutico(router);
   registerLoyalty(router);
   registrarVarios(router);
+  registrarConsentimientos(router);
   registrarPortalAdministrativo(router);
   registerPromotions(router);
   registerPatientSpending(router);

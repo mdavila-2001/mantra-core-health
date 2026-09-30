@@ -761,6 +761,15 @@ export interface DirectMessage {
   readonly attachmentFileId?: string;
   readonly isEdited?: boolean;
   readonly sentAt?: Date;
+  /**
+   * Cuándo se borró (F4.5/AG-20), o `undefined` si sigue vivo.
+   *
+   * La API ya lo declara (`dto/read-messaging.dto.ts`) y el gateway emite
+   * `conversation:message:deleted`; sin este campo el front no podía saber
+   * que un mensaje se borró y la burbuja quedaba vacía en vez de decir «Se
+   * eliminó este mensaje».
+   */
+  readonly deletedAt?: Date;
 }
 
 /** Una página de mensajes de una conversación. */
@@ -1134,6 +1143,32 @@ export interface ModerationDecisionItem {
 /** Una página de decisiones. */
 export interface ModerationDecisionPage {
   readonly items: readonly ModerationDecisionItem[];
+  readonly count: number;
+  readonly limit: number;
+  readonly nextCursor: string | null;
+}
+
+/**
+ * Una decisión propia, vista por quien la sufrió (AG-18, «Mis sanciones»).
+ *
+ * Deliberadamente más chica que {@link ModerationDecisionItem}: no trae
+ * `decidedByUserId` (el moderador) porque `GET .../decisions/mine` no lo
+ * expone — el autor tiene derecho a saber qué política se le aplicó y con qué
+ * motivo, no a leer el expediente de moderación entero.
+ */
+export interface MyModerationDecisionItem {
+  readonly decisionId: string;
+  readonly policyConceptId: string;
+  readonly decisionConceptId: string;
+  readonly rationaleText?: string;
+  readonly decidedAt?: Date;
+  /** `false` si ya hay una apelación abierta para esta decisión. */
+  readonly appealable: boolean;
+}
+
+/** Una página de decisiones propias. */
+export interface MyModerationDecisionPage {
+  readonly items: readonly MyModerationDecisionItem[];
   readonly count: number;
   readonly limit: number;
   readonly nextCursor: string | null;

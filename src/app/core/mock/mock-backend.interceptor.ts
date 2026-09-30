@@ -6,6 +6,7 @@ import {
   type HttpInterceptorFn,
   type HttpRequest,
 } from '@angular/common/http';
+import { inject, InjectionToken } from '@angular/core';
 import { from, Observable, of, throwError, timer } from 'rxjs';
 import { mergeMap } from 'rxjs/operators';
 
@@ -41,6 +42,12 @@ function routerSimulado(): Promise<MockRouter> {
   return router;
 }
 
+/** Carga diferida; el modo real no resuelve ni invoca este proveedor. */
+export const MOCK_ROUTER_LOADER = new InjectionToken<() => Promise<MockRouter>>('MOCK_ROUTER_LOADER', {
+  providedIn: 'root',
+  factory: () => routerSimulado,
+});
+
 export const mockBackendInterceptor: HttpInterceptorFn = (request, next) => {
   // `apiRealForzada` es el interruptor del stock de componentes: deja pasar la
   // petición a la red para poder comparar una pantalla con datos simulados y
@@ -54,7 +61,7 @@ export const mockBackendInterceptor: HttpInterceptorFn = (request, next) => {
     return next(request);
   }
 
-  return from(routerSimulado()).pipe(mergeMap((tabla) => atender(tabla, request, path)));
+  return from(inject(MOCK_ROUTER_LOADER)()).pipe(mergeMap((tabla) => atender(tabla, request, path)));
 };
 
 function atender(router: MockRouter, request: HttpRequest<unknown>, path: string): Observable<HttpEvent<unknown>> {
@@ -305,32 +312,36 @@ function latencia(path: string): number {
 }
 
 /**
- * Para lo que ninguna ruta cubre. Adivina la forma por el método y la
- * consulta: una lectura con `limit`/`cursor` es una página vacía; una
- * lectura suelta, un objeto vacío; una escritura, un eco con id.
+ * Para lo que ninguna ruta cubre (H2.S1.M1, 2026-09-26).
+ *
+ * **Ya no inventa un éxito.** Hasta acá, una lectura sin manejador devolvía
+ * una página vacía y una escritura devolvía un eco con `status: 'ACTIVE'`:
+ * cualquier recorrido de la maqueta salía verde aunque la API real rechazara
+ * esa misma ruta con un 404. El 501 es la forma honesta — «esto no está
+ * implementado en el simulador», no «esto funcionó» — y trae el mismo `code`
+ * que ramifica `errorToViewState` (S9, con el path como identificador de
+ * petición) en vez de uno que la aplicación no sepa interpretar.
+ *
+ * La ruta faltante queda anotada en `window.__mockGaps` (cuando existe
+ * `window`, es decir, en el navegador) para poder recorrer la maqueta y juntar
+ * de una sola vez todo lo que el simulador todavía no cubre.
  */
 function respuestaGenerica(peticion: MockRequest): MockReply {
-  console.warn(`[mock] sin manejador para ${peticion.method} ${peticion.path} — respuesta genérica`);
-  if (peticion.method === 'GET') {
-    const paginada = peticion.query.has('limit') || peticion.query.has('cursor');
-    return {
-      status: 200,
-      body: paginada
-        ? { items: [], count: 0, limit: Number(peticion.query.get('limit') ?? 20), nextCursor: null }
-        : { items: [], count: 0 },
-    };
+  const ruta = `${peticion.method} ${peticion.path}`;
+  console.warn(`[mock] sin manejador para ${ruta} — 501`);
+  if (typeof window !== 'undefined') {
+    const global = window as unknown as { __mockGaps?: Set<string> };
+    global.__mockGaps ??= new Set();
+    global.__mockGaps.add(ruta);
   }
-  if (peticion.method === 'DELETE') {
-    return { status: 204, body: null };
-  }
-  const base = typeof peticion.body === 'object' && peticion.body !== null ? peticion.body : {};
   return {
-    status: peticion.method === 'POST' ? 201 : 200,
+    status: 501,
     body: {
-      id: `mock-${Date.now().toString(36)}`,
-      ...base,
-      createdAt: new Date().toISOString(),
-      status: 'ACTIVE',
+      statusCode: 501,
+      code: 'NOT_IMPLEMENTED_IN_MOCK',
+      message: `El simulador todavía no cubre ${ruta}.`,
+      error: 'Not Implemented',
+      path: peticion.path,
     },
   };
 }

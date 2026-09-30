@@ -111,6 +111,10 @@ describe('practitioner-profile-edit.logic', () => {
     it('pendiente con el código de la API o del simulador', () => {
       expect(matriculaPendiente('AUTH_PENDING')).toBe(true);
       expect(matriculaPendiente('ST-PENDING')).toBe(true);
+      // La API publica el código con el prefijo del módulo (visto contra la API
+      // real el 26/09/2026): sin esto la matrícula pendiente mostraba el sello.
+      expect(matriculaPendiente('profiles:AUTH_PENDING')).toBe(true);
+      expect(matriculaPendiente('profiles:AUTH_ACTIVE')).toBe(false);
     });
 
     it('activa o vencida ya no se corrige', () => {

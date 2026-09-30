@@ -21,6 +21,7 @@ import type {
   OwnPatientProfile,
   OwnPatientProfileChanges,
 } from '../../../../core/data-access/profiles/profiles.types';
+import { BoDepartmentsCatalog } from '../../../../core/data-access/terminology/bo-departments.service';
 import {
   BoMunicipalitiesCatalog,
   type RamaDepartamento,
@@ -167,6 +168,22 @@ function mismoDia(una: Date, otra: Date): boolean {
 export class PatientProfileEdit {
   private readonly profiles = inject(ProfilesClient);
   private readonly municipios = inject(BoMunicipalitiesCatalog);
+  private readonly departamentos = inject(BoDepartmentsCatalog);
+
+  /* -- ID-22: el departamento que emitió el documento se corrige ----------
+     El número no (es el usuario de acceso y tiene su circuito). */
+  protected readonly opcionesDepartamento = signal<readonly SelectOption<string>[]>([]);
+  protected readonly departamentoEmisor = signal<string | null>(null);
+
+  private cargarDepartamentos(): void {
+    this.departamentos.listar().subscribe({
+      next: (opciones) =>
+        this.opcionesDepartamento.set(
+          opciones.map((opcion) => ({ value: opcion.conceptId, label: opcion.display })),
+        ),
+      error: () => this.opcionesDepartamento.set([]),
+    });
+  }
   private readonly ocupaciones = inject(BoOccupationsCatalog);
   private readonly toasts = inject(ToastService);
   private readonly navigation = inject(NavigationService);
@@ -501,6 +518,7 @@ export class PatientProfileEdit {
 
     this.cargar();
     this.cargarMunicipios();
+    this.cargarDepartamentos();
     this.cargarOcupaciones();
   }
 
@@ -541,6 +559,7 @@ export class PatientProfileEdit {
     this.sexoAlNacer.set(perfil.sexAtBirth ?? null);
     this.ocupacionConceptId.set(perfil.occupationConceptId ?? null);
     this.municipio.set(perfil.residenceMunicipalityConceptId ?? null);
+    this.departamentoEmisor.set(perfil.issuerAdministrativeAreaConceptId ?? null);
     this.nit.set(perfil.taxId ?? '');
     this.razonSocial.set(perfil.taxHolderName ?? '');
     this.correo.set(perfil.email ?? '');
@@ -832,6 +851,11 @@ export class PatientProfileEdit {
     const sexo = this.sexoAlNacer();
     if (sexo !== null && sexo !== original.sexAtBirth) {
       cambios.sexAtBirth = sexo;
+    }
+
+    const departamento = this.departamentoEmisor();
+    if (departamento !== null && departamento !== original.issuerAdministrativeAreaConceptId) {
+      cambios.issuerAdministrativeAreaConceptId = departamento;
     }
 
     const municipio = this.municipio();

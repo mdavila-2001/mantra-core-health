@@ -173,14 +173,6 @@
   font-weight: 600;
 }
 
-/* El buscador va ARRIBA de la tabla, no al lado: en el teléfono un renglón
-   con los dos no entra sin apretar el campo de texto a un ancho inútil. */
-.edicion__buscador {
-  display: block;
-  max-width: 28rem;
-  margin-block-start: var(--sp-3);
-}
-
 .edicion__tabla {
   display: block;
   margin-block-start: var(--sp-3);

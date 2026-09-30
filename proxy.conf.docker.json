@@ -13,6 +13,7 @@
       "/surveys",
       "/clinical",
       "/authz",
+      "/consent",
       "/practitioners",
       "/practitioner-delegates",
       "/access-requests",
@@ -58,6 +59,10 @@
       "/billing/service-catalog",
       "/diagnostics/patients",
       "/diagnostics/work-orders",
+      "/diagnostics/accessions",
+      "/diagnostics/specimens",
+      "/diagnostics/containers",
+      "/diagnostics/reports",
       "/quotations",
       "/prescription-favorites",
       "/insurance-carrier-catalog",
@@ -66,9 +71,26 @@
       "/insurance-plans",
       "/insurance-products",
       "/insurance/analytics",
-      "/insurance/portability"
+      "/insurance/portability",
+      "/loyalty",
+      "/patients/me/reviews"
     ],
     "target": "__BACKEND_ORIGIN__",
+    "secure": false,
+    "changeOrigin": true
+  },
+  {
+    "_comentario": [
+      "`/ai` va al servicio de triage, no a la API. Declarado acá SOLO para que",
+      "check-api-prefixes.mjs vea el mismo prefijo en las tres fuentes (H3.S1); D-C",
+      "(qué servicio, con qué base legal y dónde corre) sigue sin resolver: ver",
+      "docs/progress/DECISIONS.md. `__AI_ORIGIN__` la reemplaza el script que",
+      "genera este archivo para el contenedor de desarrollo, igual que las otras."
+    ],
+    "context": [
+      "/ai"
+    ],
+    "target": "__AI_ORIGIN__",
     "secure": false,
     "changeOrigin": true
   },

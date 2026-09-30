@@ -64,6 +64,26 @@ export class MessageTemplates {
     ...this.leer(),
   ]);
 
+  /**
+   * Olvida las plantillas propias, en memoria y en el navegador (TX-31).
+   *
+   * Lo corre `AuthService.logout` vía `SESSION_CLEANERS`: en un dispositivo
+   * compartido, las frases que escribió un médico no deben quedar para el
+   * siguiente. Las de fábrica no se tocan.
+   */
+  olvidar(): void {
+    this.propias.set([]);
+    this.todas.set([...PLANTILLAS_POR_DEFECTO]);
+    if (!this.isBrowser) {
+      return;
+    }
+    try {
+      this.document.defaultView?.localStorage.removeItem(CLAVE);
+    } catch {
+      // Bloqueado: no hay nada que borrar ni forma de hacerlo.
+    }
+  }
+
   /** Sólo las propias, para la pantalla que las administra. */
   readonly mias = this.propias.asReadonly();
 

@@ -40,14 +40,30 @@ export class CartStore {
     // el de quien estuvo antes en el mismo navegador — un mostrador
     // compartido es el caso normal en una clínica.
     effect(() => {
-      const usuario = this.auth.userId();
-      this.estado.set(this.storage.read(claveDe(usuario)));
+      this.estado.set(this.storage.read(claveDe(this.idDeUsuario())));
     });
+  }
+
+  /**
+   * `auth.userId()`, tolerando un doble de prueba incompleto.
+   *
+   * En producción `AuthService.userId` siempre es la señal real. Pero un
+   * test que reemplaza `AuthService`/`SessionStore` por un `useValue`
+   * parcial —hay decenas así, ninguno pensado para el carrito— deja
+   * `userId` en `undefined`, y llamarlo revienta **de forma asíncrona**
+   * dentro del `effect()` de arriba: no en el test que tiene el doble
+   * incompleto, sino en el que esté corriendo cuando el scheduler lo
+   * flushee, que puede ser cualquier otro archivo del mismo worker. Ver
+   * H2 del carril M6 (2026-09-26): así se destapó, con
+   * `pharmacy-inbox.spec.ts`.
+   */
+  private idDeUsuario(): string | null {
+    return typeof this.auth.userId === 'function' ? this.auth.userId() : null;
   }
 
   /** Escribe (o borra) el carrito bajo la clave de la cuenta vigente, ahora mismo. */
   private persistir(carrito: CartState | null): void {
-    const clave = claveDe(this.auth.userId());
+    const clave = claveDe(this.idDeUsuario());
     if (carrito === null) {
       this.storage.clear(clave);
     } else {

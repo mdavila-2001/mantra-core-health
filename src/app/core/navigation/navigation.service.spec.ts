@@ -282,8 +282,11 @@ describe('NavigationService', () => {
       // y se sigue llegando por la ruta —lo fija la prueba de abajo—.
       //
       // **«Activos y pasivos» SALIÓ el 19/09/2026, y la lista bajó a diez —
-      // y a nueve el 22/09/2026, cuando «Chats» pasó a la cabecera (N-01,
-      // ver la nota de más abajo).**
+      // a nueve el 22/09/2026, cuando «Chats» pasó a la cabecera (N-01,
+      // ver la nota de más abajo), y a ocho entre el 19/09 y el 25/09/2026,
+      // cuando «Notas médicas» se retiró del menú y del producto a pedido
+      // del propietario: la nota médica se escribe y se lee desde la
+      // consulta y el expediente de cada persona (ver `navigation.map.ts`).**
       // Lo pidió el propietario con esas palabras: «esto debe estar integrado
       // en contabilidad (lo de activos y pasivos)». Es la dirección que §4.H
       // persigue —el panel no crece—, y además arregla un defecto propio de

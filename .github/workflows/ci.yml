@@ -156,6 +156,22 @@ jobs:
       - name: Contraste del sistema de diseño
         run: node scripts/check-contrast.mjs
 
+      # Regla 29 (transversal a los 36 carriles): toda ruta, identificador,
+      # variable, clase y archivo NUEVO o TOCADO va en inglés. El checkout de
+      # arriba es superficial (`fetch-depth: 1`): sólo trae el commit de la
+      # punta, así que hace falta un fetch acotado del commit base antes de
+      # poder diffear contra él.
+      - name: Fetch de la base para el diff de identificadores
+        run: |
+          BASE_SHA="${{ github.event.pull_request.base.sha || github.event.before }}"
+          if [ -n "$BASE_SHA" ] && [ "$BASE_SHA" != "0000000000000000000000000000000000000000" ]; then
+            git fetch --no-tags --depth=50 origin "$BASE_SHA" || true
+            echo "CHECK_ENGLISH_BASE=$BASE_SHA" >> "$GITHUB_ENV"
+          fi
+
+      - name: Identificadores nuevos en inglés
+        run: node scripts/check-english-identifiers.mjs
+
       # Inventarios al día, enlaces, cobertura documental y deriva de contrato.
       - name: Documentación
         run: node scripts/generate-doc-report.mjs

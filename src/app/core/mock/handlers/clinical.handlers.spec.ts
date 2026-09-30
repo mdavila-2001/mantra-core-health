@@ -71,7 +71,9 @@ describe('POST /clinical/service-requests · antiduplicación de estudios', () =
       encounterId: 'enc-1',
     });
 
-    expect(respuesta.status).toBe(412);
+    // 422, no 412 (H2.S1.M2, 2026-09-26): la API responde las precondiciones
+    // de negocio con `PreconditionFailedException`, que es 422.
+    expect(respuesta.status).toBe(422);
     const body = respuesta.body as {
       code: string;
       details: { reason: string; previousStudy: { studyName: string } };
@@ -176,14 +178,14 @@ describe('POST /clinical/medication-requests · sólo diagnóstico confirmado o 
 
   const CUERPO_BASE = { patientProfileId: PACIENTE.id, medicationConceptId: 'med-amoxi' };
 
-  it('sin indicationConditionId ni indicationText: 422', () => {
+  it('sin indicationConditionId ni indicationText: 400', () => {
     const respuesta = call<MockReply>('POST', '/clinical/medication-requests', CUERPO_BASE);
 
-    expect(respuesta.status).toBe(422);
+    expect(respuesta.status).toBe(400);
     expect((respuesta.body as { code: string }).code).toBe('VALIDATION_FAILED');
   });
 
-  it('indicationConditionId de un diagnóstico presuntivo/provisional: 422', () => {
+  it('indicationConditionId de un diagnóstico presuntivo/provisional: 400', () => {
     const presuntivo = condicion({ verificationStatusConceptId: VERIFICACION_DX['COND_PROVISIONAL']! });
     condiciones.agregar(presuntivo);
 
@@ -192,7 +194,7 @@ describe('POST /clinical/medication-requests · sólo diagnóstico confirmado o 
       indicationConditionId: presuntivo.id,
     });
 
-    expect(respuesta.status).toBe(422);
+    expect(respuesta.status).toBe(400);
   });
 
   it('indicationConditionId de un diagnóstico confirmado: 201', () => {
@@ -333,10 +335,10 @@ describe('/charts/notes · contrato tras mudar el handler', () => {
 
   // C1: una nota vacía ya no se guarda. Sin paciente, o sin ninguna fila ni
   // texto, el simulador responde 422 —lo mismo que va a responder el backend—.
-  it('un cuerpo vacío es 422: sin paciente, o sin filas ni texto, no hay nota', () => {
-    expect(createNote({}).status).toBe(422);
+  it('un cuerpo vacío es 400: sin paciente, o sin filas ni texto, no hay nota', () => {
+    expect(createNote({}).status).toBe(400);
     const sinContenido = call<MockReply>('POST', '/charts/notes', { patientProfileId: PACIENTE.id });
-    expect(sinContenido.status).toBe(422);
+    expect(sinContenido.status).toBe(400);
     expect((sinContenido.body as { message: string }).message).toContain('al menos una fila o un texto');
   });
 
@@ -365,14 +367,16 @@ describe('/charts/notes · contrato tras mudar el handler', () => {
         { label: 'presion ARTERIAL', value: '130/85' },
       ],
     });
-    expect(repetido.status).toBe(422);
-    expect((repetido.body as { issues: readonly { index: number }[] }).issues[0]).toMatchObject({ index: 1, field: 'label' });
+    expect(repetido.status).toBe(400);
+    expect(
+      (repetido.body as { details: { violations: readonly string[] } }).details.violations[0],
+    ).toMatch(/^label\b/);
 
     const sinValor = call<MockReply>('POST', '/charts/notes', {
       patientProfileId: PACIENTE.id,
       entries: [{ label: 'Peso', value: '   ' }],
     });
-    expect(sinValor.status).toBe(422);
+    expect(sinValor.status).toBe(400);
 
     const bien = createNote({
       patientProfileId: PACIENTE.id,
@@ -442,6 +446,44 @@ describe('/charts/notes · contrato tras mudar el handler', () => {
       });
     });
   }
+});
+
+/**
+ * `POST /clinical/diagnostic-reports/:id/release` (D-E, BR-17/CL-46).
+ *
+ * Este camino ya no libera nada: no alimenta `informes` de
+ * `diagnostics.handlers.ts`, así que "liberar" por acá nunca hacía aparecer
+ * el resultado en «Mis resultados». El mock imita ahora el mismo contrato que
+ * el backend real desde D-E: 422 siempre, con el endpoint canónico en el
+ * mensaje.
+ */
+describe('POST /clinical/diagnostic-reports/:id/release (D-E, deprecado)', () => {
+  const router = new MockRouter();
+  const medica = buscarUsuario('medica')!;
+  registrarClinica(router);
+
+  function call<T>(): T {
+    const match = router.match('POST', '/clinical/diagnostic-reports/report-1/release');
+    if (match === null) throw new Error('No existe la ruta de liberación clínica');
+    return match.handler({
+      method: 'POST',
+      path: '/clinical/diagnostic-reports/report-1/release',
+      params: { id: 'report-1' },
+      query: new URLSearchParams(),
+      body: {},
+      headers: new HttpHeaders(),
+      user: medica,
+    }) as T;
+  }
+
+  it('inválido: cualquier intento de liberar por acá da 422, nunca 200', () => {
+    const respuesta = call<MockReply>();
+    expect(respuesta.status).toBe(422);
+    expect((respuesta.body as { code: string }).code).toBe('PRECONDITION_FAILED');
+    expect((respuesta.body as { details: { canonicalEndpoint: string } }).details.canonicalEndpoint).toContain(
+      'versions/:versionId/release',
+    );
+  });
 });
 
 /**

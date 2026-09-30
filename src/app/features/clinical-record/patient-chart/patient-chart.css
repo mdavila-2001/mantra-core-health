@@ -190,3 +190,12 @@
     grid-template-columns: repeat(2, 1fr);
   }
 }
+
+/* Los archivos de un documento, uno por renglón, debajo del detalle. */
+.expediente__archivos {
+  display: grid;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}

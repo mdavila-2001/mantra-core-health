@@ -31,9 +31,9 @@
             Recibimos la solicitud de tu centro
           </h1>
           <p class="registro__subtitle">
-            Vamos a revisar los papeles que adjuntaste y te escribimos al correo del representante
-            legal. Hasta que la solicitud se apruebe, el centro no aparece en las búsquedas de
-            pacientes.
+            Creamos la cuenta con el correo del representante legal y ya podés iniciar sesión. Vamos
+            a revisar los papeles que adjuntaste; hasta que la solicitud se apruebe, el centro no
+            aparece en las búsquedas de pacientes.
           </p>
         </div>
         <button
@@ -58,6 +58,12 @@
           </p>
         </div>
 
+        @if (mensajeDeError(); as mensaje) {
+          <app-alert appAnuncio tone="error" class="registro__alert" data-testid="registro-error">{{
+            mensaje
+          }}</app-alert>
+        }
+
         <div class="registro__body">
           <app-paginated-form
             data-testid="registro-form-imagenologia"
@@ -65,6 +71,7 @@
             [form]="form"
             label="Registrar centro de imagenología"
             submitLabel="Enviar solicitud"
+            [pending]="enviando()"
             [iconOnlyNav]="true"
             (pasoVisible)="recordarPaso($event)"
             (enviado)="submit()"
@@ -110,14 +117,6 @@
                 [ngTemplateOutletContext]="{ $implicit: 'poderFile' }"
               />
             </ng-template>
-
-            <ng-template appCampoPersonalizado="radioproteccionFile">
-              <ng-container
-                [ngTemplateOutlet]="bloqueAdjunto"
-                [ngTemplateOutletContext]="{ $implicit: 'radioproteccionFile' }"
-              />
-            </ng-template>
-
             <ng-template appCampoPersonalizado="gpsCentral">
               @if (direccionPorReescribir()) {
                 <!-- D-06: tocar el mapa vació lo escrito; se dice junto al campo y se

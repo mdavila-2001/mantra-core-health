@@ -46,6 +46,23 @@ describe('rutaDeNotificacion', () => {
     );
   });
 
+  it('AG-06/AG-07: lleva el aviso de la agenda (confirmación o cupo liberado) a mis turnos', () => {
+    // Lo que scheduling emite de verdad (`RECURSO_CITA`/`RECURSO_CUPO`), no el
+    // `APPOINTMENT` que ningún módulo manda hoy.
+    expect(
+      rutaDeNotificacion({ type: 'scheduling.appointment_bookings', id: 'b-1' }),
+    ).toBe('/my-account/appointments');
+    expect(
+      rutaDeNotificacion({ type: 'scheduling.bookable_slots', id: 'slot-1' }),
+    ).toBe('/my-account/appointments');
+  });
+
+  it('AG-06: lleva la orden de estudios a la lista de órdenes del paciente (MCH-027)', () => {
+    expect(rutaDeNotificacion({ type: 'SERVICE_REQUEST', id: 'sr-1' })).toBe(
+      '/my-account/diagnostic-orders',
+    );
+  });
+
   it('devuelve null cuando el tipo todavía no tiene pantalla', () => {
     expect(rutaDeNotificacion({ type: 'POST', id: 'p-1' })).toBeNull();
   });

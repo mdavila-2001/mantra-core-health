@@ -66,11 +66,6 @@ async function screenshotWithoutOverflow(page: Page, info: TestInfo, name: strin
   await page.screenshot({ path: info.outputPath(`${name}.png`), fullPage: true });
 }
 
-/** El ruido de CSP que `ng serve` inyecta en cualquier ruta (recarga en vivo). */
-function esRuidoDelServidorDeDesarrollo(texto: string): boolean {
-  return texto.includes('Content Security Policy') && texto.includes('inline script');
-}
-
 /**
  * Intercepta `wa.me` para no salir a Internet durante el E2E: la aserción es
  * sobre la URL con la que Chromium abrió el popup, no sobre lo que WhatsApp

@@ -5,6 +5,9 @@ import { map, type Observable } from 'rxjs';
 import { API_BASE_URL, apiUrl } from '../api';
 import { sendIdempotent, SubmissionKeys } from '../idempotency';
 import { normalizePatientSettlement } from '../insurance/patient-insurance-settlement.types';
+import { parseBlobError } from '../files/blob-error';
+import { nombreDeContentDisposition } from '../files/content-disposition';
+import type { DownloadedFile } from '../files/files.types';
 import { sinNulos, type ConNulos } from '../wire';
 import type {
   DiagnosticOrder,
@@ -57,11 +60,11 @@ import type {
  * una decisión de alcance: se ofrece la escritura que **esta misma pantalla
  * vuelve a leer**. La orden aparece en el circuito del paciente apenas se crea.
  *
- * Acesionar un espécimen, abrir una corrida de analizador, ingerir un mensaje
- * del LIS o liberar una versión del informe tienen endpoint y no están acá: son
- * actos del laboratorio sobre su propio instrumental, sin lectura que los
- * refleje del lado de quien pide el estudio. Construirlos sería ofrecer un
- * formulario que traga el dato y no lo muestra.
+ * Acesionar un espécimen, cargar una versión del informe o liberarla son actos
+ * del laboratorio sobre su propio instrumental: viven en {@link
+ * DiagnosticsLabClient} (BR-17, CV-02/CL-47), no acá. Abrir una corrida de
+ * analizador o ingerir un mensaje del LIS siguen sin cliente: son del
+ * instrumento, no de una persona con un formulario delante.
  */
 @Injectable({
   providedIn: 'root',
@@ -239,6 +242,39 @@ export class DiagnosticsClient {
   }
 
   /**
+   * `GET /diagnostic-results/me/:reportId/files/:fileId/content` — un archivo de
+   * un resultado **propio** (CL-40).
+   *
+   * Baja los bytes por `HttpClient` (con `Authorization`) y **no** pide una URL
+   * firmada para abrirla en otra pestaña: esa pestaña sale sin credencial. La
+   * ruta autoriza por titularidad y versión liberada —no por quién subió el
+   * archivo, que fue el laboratorio— y todo lo que no cumpla responde 404, sin
+   * revelar si el archivo existe.
+   *
+   * @param reportId - Informe del titular.
+   * @param fileId - Archivo que cuelga de ese informe.
+   */
+  downloadOwnResultFile(reportId: string, fileId: string): Observable<DownloadedFile> {
+    return this.http
+      .get(
+        this.url(
+          `/diagnostic-results/me/${encodeURIComponent(reportId)}/files/${encodeURIComponent(fileId)}/content`,
+        ),
+        { responseType: 'blob', observe: 'response' },
+      )
+      .pipe(
+        map((respuesta) => {
+          const fileName = nombreDeContentDisposition(respuesta.headers.get('Content-Disposition'));
+          return {
+            blob: respuesta.body ?? new Blob([]),
+            ...(fileName === undefined ? {} : { fileName }),
+          };
+        }),
+        parseBlobError(),
+      );
+  }
+
+  /**
    * `GET /diagnostic-results/me/:reportId/shares` — con quién está
    * compartido, vigentes y vencidos.
    *
@@ -271,9 +307,8 @@ export class DiagnosticsClient {
       .post<WireShare>(
         this.url(`/diagnostic-results/me/${encodeURIComponent(reportId)}/shares`),
         {
-          practitionerUserId: compartir.practitionerUserId,
+          practitionerProfileId: compartir.practitionerProfileId,
           validUntil: compartir.validUntil.toISOString(),
-          ...(compartir.reason === undefined ? {} : { reason: compartir.reason }),
         },
       )
       .pipe(map(toShare));

@@ -4,6 +4,17 @@ import { isPlatformBrowser } from '@angular/common';
 export const REFRESH_TOKEN_STORAGE_KEY = 'mantra.refresh-token';
 
 /**
+ * Marca de que hay una sesión abierta **en modo cookie** (TX-10).
+ *
+ * Con la cookie `httpOnly` el refresh token no pasa por JavaScript, así que no
+ * hay nada que guardar. La marca **no es un secreto** —vale `1`— y sirve para
+ * dos cosas: (1) no pedir un refresco a cada visitante anónimo al abrir la
+ * aplicación, y (2) que las otras pestañas se enteren cuando esta cierra sesión
+ * (el evento `storage` de su borrado). Se borra con la sesión.
+ */
+export const SESSION_HINT_STORAGE_KEY = 'mantra.session';
+
+/**
  * Organización elegida, para no volver a preguntarla en cada recarga.
  *
  * Se persiste **el identificador y nada más**: no es un dato clínico, es la
@@ -13,6 +24,11 @@ export const REFRESH_TOKEN_STORAGE_KEY = 'mantra.refresh-token';
  * Y se valida al leerla: `SessionStore.selectTenant` ignora un identificador
  * que no esté en el token, así que una clave manipulada no cambia de
  * organización — solo se descarta.
+ *
+ * **Sobrevive al cierre de sesión, atada a la persona** (TX-11): se guarda como
+ * `<userId>|<tenantId>` y sólo se aplica si la persona que entra es la misma.
+ * Así la médica con dos organizaciones vuelve a la última que eligió sin pasar
+ * por el selector, y otra persona en el mismo dispositivo no hereda su contexto.
  */
 export const SELECTED_TENANT_STORAGE_KEY = 'mantra.selected-tenant';
 
@@ -62,46 +78,68 @@ export class RefreshTokenStorage {
     }
   }
 
+  /**
+   * Borra lo que es de la sesión: el refresh token y la marca de modo cookie.
+   *
+   * **No** borra la organización elegida: está atada a la persona y es lo que
+   * evita el selector en el segundo inicio de sesión (TX-11).
+   */
   clear(): void {
-    const storage = this.storage();
-    if (storage === null) {
-      return;
-    }
-
     try {
-      storage.removeItem(REFRESH_TOKEN_STORAGE_KEY);
-      // La organización elegida se va con la sesión. Dejarla haría que la
-      // siguiente persona que entre en este dispositivo arrancara con el
-      // contexto de la anterior.
-      storage.removeItem(SELECTED_TENANT_STORAGE_KEY);
+      this.storage()?.removeItem(REFRESH_TOKEN_STORAGE_KEY);
+      this.storage()?.removeItem(SESSION_HINT_STORAGE_KEY);
     } catch {
       // Ídem: que no se pueda borrar no debe impedir cerrar sesión.
     }
   }
 
-  /** La organización elegida en una sesión anterior, si la hay. */
-  readSelectedTenant(): string | null {
-    const storage = this.storage();
-    if (storage === null) {
-      return null;
-    }
-
+  /** Anota que hay una sesión abierta en modo cookie. No es un secreto. */
+  writeSessionHint(): void {
     try {
-      const value = storage.getItem(SELECTED_TENANT_STORAGE_KEY);
-      return value === null || value === '' ? null : value;
+      this.storage()?.setItem(SESSION_HINT_STORAGE_KEY, '1');
+      // Un refresh token que quedó de antes de encender la cookie ya no
+      // corresponde: en este modo no puede haber ninguno al alcance de scripts.
+      this.storage()?.removeItem(REFRESH_TOKEN_STORAGE_KEY);
+    } catch {
+      // Degradar: sin la marca la sesión vive en la pestaña y se pide de nuevo.
+    }
+  }
+
+  /** Si esta sesión quedó abierta en modo cookie. */
+  hasSessionHint(): boolean {
+    try {
+      return this.storage()?.getItem(SESSION_HINT_STORAGE_KEY) === '1';
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * La organización elegida en una sesión anterior, si la hay.
+   *
+   * @param userId - Quién entra. Si la elección guardada es de otra persona se
+   *   ignora. Sin él, se devuelve lo guardado (compatibilidad).
+   */
+  readSelectedTenant(userId?: string | null): string | null {
+    try {
+      const value = this.storage()?.getItem(SELECTED_TENANT_STORAGE_KEY) ?? '';
+      // `<persona>|<organización>`; sin barra es el formato anterior, sin dueño.
+      const [owner, tenantId = ''] = value.includes('|') ? value.split('|') : ['', value];
+      return tenantId !== '' && (!userId || owner === '' || owner === userId) ? tenantId : null;
     } catch {
       return null;
     }
   }
 
-  writeSelectedTenant(tenantId: string): void {
-    const storage = this.storage();
-    if (storage === null) {
-      return;
-    }
-
+  /**
+   * Guarda la organización elegida, atada a la persona cuando se la conoce.
+   *
+   * @param tenantId - Organización elegida.
+   * @param userId - Quién la eligió.
+   */
+  writeSelectedTenant(tenantId: string, userId?: string | null): void {
     try {
-      storage.setItem(SELECTED_TENANT_STORAGE_KEY, tenantId);
+      this.storage()?.setItem(SELECTED_TENANT_STORAGE_KEY, userId ? `${userId}|${tenantId}` : tenantId);
     } catch {
       // Degradar: se vuelve a preguntar en la próxima recarga, nada más.
     }
@@ -126,7 +164,10 @@ export class RefreshTokenStorage {
     const listener = (event: StorageEvent): void => {
       // `newValue === null` es un borrado. Se ignora el `key === null` que
       // emite un `localStorage.clear()` ajeno: no es nuestro cierre de sesión.
-      if (event.key === REFRESH_TOKEN_STORAGE_KEY && event.newValue === null) {
+      const esDeSesion = [REFRESH_TOKEN_STORAGE_KEY, SESSION_HINT_STORAGE_KEY].includes(
+        event.key ?? '',
+      );
+      if (esDeSesion && event.newValue === null) {
         onCleared();
       }
     };

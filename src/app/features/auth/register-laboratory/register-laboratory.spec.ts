@@ -6,6 +6,12 @@ import { By } from '@angular/platform-browser';
 
 import { MAX_CAMPOS_POR_PAGINA } from '../../../shared/forms/paginated/paginated-form.types';
 import { UbicacionPicker } from '../registro-compartido/ubicacion-picker/ubicacion-picker';
+import { lastValueFrom } from 'rxjs';
+import type {
+  PdfUploader,
+  UploadedDocument,
+} from '../../../shared/components/molecules/dropzone-pdf/dropzone-pdf.types';
+import type { ClaveDeDocumentoDelAlta } from '../registro-compartido/documentos-legales';
 import { RegisterLaboratory, TIPOS_DE_SOCIEDAD } from './register-laboratory';
 
 /* ============================================================================
@@ -418,6 +424,7 @@ describe('RegisterLaboratory', () => {
     enviarConExito();
     fixture.detectChanges();
     await fixture.whenStable();
+    fixture.detectChanges();
 
     const exito = fixture.debugElement.query(By.css('[data-testid="registro-lab-exito"]'));
     expect(exito).not.toBeNull();
@@ -513,4 +520,111 @@ describe('RegisterLaboratory', () => {
       expect(errorDe(campo)).toBe('Escribí la dirección legal de la central.');
     });
   });
+
+  // D2 replaces mandatory papers in the older test branch. Upload and retry
+  // remain covered through the shared pre-upload contract used by this screen.
+  describe('document uploads with optional D2 registration', () => {
+    const documentKeys: readonly ClaveDeDocumentoDelAlta[] = [
+      'constitutionFileId',
+      'taxIdentifierFileId',
+      'commerceRegistryFileId',
+      'operatingLicenseFileId',
+      'healthAuthorityCertificateFileId',
+      'powerOfAttorneyFileId',
+    ];
+
+    function uploads() {
+      return component as unknown as {
+        subirDocumento: PdfUploader;
+        recordarDocumento(key: ClaveDeDocumentoDelAlta, document: UploadedDocument): void;
+        documentoInicialDe(key: ClaveDeDocumentoDelAlta): UploadedDocument | null;
+      };
+    }
+
+    const uploaded: UploadedDocument = {
+      fileId: 'file-nit',
+      originalName: 'nit.pdf',
+      sizeBytes: 3,
+      mimeType: 'application/pdf',
+    };
+
+    it.each(['SRL', 'UNIPERSONAL'])('keeps all six papers optional for %s', (companyType) => {
+      completarLoObligatorio();
+      component.form.controls.companyType.setValue(companyType);
+      for (const key of documentKeys) {
+        expect(component.form.controls[key].value).toBe('');
+        expect(component.form.controls[key].valid).toBe(true);
+      }
+      expect(component.form.valid).toBe(true);
+      const body = enviarConExito();
+      expect(body.organization).not.toHaveProperty('legalDocuments');
+      expect(body.organization['legalRepresentative']).not.toHaveProperty('powerOfAttorneyFileId');
+      expect(body.organization['legalRepresentative']).not.toHaveProperty('idNumber');
+    });
+
+    it('uploads the PDF before registration and preserves its response', async () => {
+      const file = new File(['pdf'], 'nit.pdf', { type: 'application/pdf' });
+      const result = lastValueFrom(uploads().subirDocumento(file));
+      const request = http.expectOne('/iam/auth/upload-registration-document');
+      expect(request.request.method).toBe('POST');
+      expect((request.request.body as FormData).get('file')).toBe(file);
+      request.flush(uploaded);
+      expect(await result).toMatchObject({ body: uploaded });
+      http.expectNone(RUTA_ALTA);
+      expect(component.registered()).toBe(false);
+    });
+
+    it('keeps confirmed metadata when another upload fails and is retried', async () => {
+      uploads().recordarDocumento('taxIdentifierFileId', uploaded);
+      component.registrarDocumento('taxIdentifierFileId', uploaded.fileId);
+      const file = new File(['pdf'], 'sedes.pdf', { type: 'application/pdf' });
+      const first = lastValueFrom(uploads().subirDocumento(file));
+      const failure = expect(first).rejects.toMatchObject({ status: 422 });
+      http.expectOne('/iam/auth/upload-registration-document').flush(null, {
+        status: 422,
+        statusText: 'Unprocessable Entity',
+      });
+      await failure;
+      expect(component.form.controls.taxIdentifierFileId.value).toBe(uploaded.fileId);
+      expect(uploads().documentoInicialDe('taxIdentifierFileId')).toEqual(uploaded);
+      expect(component.form.controls.healthAuthorityCertificateFileId.value).toBe('');
+      http.expectNone(RUTA_ALTA);
+      const retry = lastValueFrom(uploads().subirDocumento(file));
+      const request = http.expectOne('/iam/auth/upload-registration-document');
+      expect((request.request.body as FormData).get('file')).toBe(file);
+      request.flush({ ...uploaded, fileId: 'file-sedes', originalName: file.name });
+      await retry;
+      expect(uploads().documentoInicialDe('taxIdentifierFileId')).toEqual(uploaded);
+    });
+
+    it('remembers name and size and clears only the removed paper', () => {
+      uploads().recordarDocumento('taxIdentifierFileId', uploaded);
+      component.registrarDocumento('taxIdentifierFileId', uploaded.fileId);
+      const other = { ...uploaded, fileId: 'file-sedes', originalName: 'sedes.pdf' };
+      uploads().recordarDocumento('healthAuthorityCertificateFileId', other);
+      component.registrarDocumento('healthAuthorityCertificateFileId', other.fileId);
+      expect(uploads().documentoInicialDe('taxIdentifierFileId')).toEqual(uploaded);
+      component.registrarDocumento('taxIdentifierFileId', null);
+      expect(component.form.controls.taxIdentifierFileId.value).toBe('');
+      expect(uploads().documentoInicialDe('taxIdentifierFileId')).toBeNull();
+      expect(uploads().documentoInicialDe('healthAuthorityCertificateFileId')).toEqual(other);
+    });
+
+    it('allows registration to be retried after a rejection without re-uploading papers', () => {
+      completarLoObligatorio();
+      uploads().recordarDocumento('taxIdentifierFileId', uploaded);
+      component.registrarDocumento('taxIdentifierFileId', uploaded.fileId);
+      enviarYCapturar().flush({ message: 'Rejected', requestId: 'test-retry' }, {
+        status: 409,
+        statusText: 'Conflict',
+      });
+      expect(component.registered()).toBe(false);
+      expect(component.isSubmitting()).toBe(false);
+      enviarConExito();
+      expect(component.registered()).toBe(true);
+      expect(uploads().documentoInicialDe('taxIdentifierFileId')).toEqual(uploaded);
+      http.expectNone('/iam/auth/upload-registration-document');
+    });
+  });
+
 });

@@ -143,14 +143,14 @@ describe('handlers de bloqueos de agenda (excepciones)', () => {
     );
   });
 
-  it('inválido — OTHER sin reason se rechaza con 422 (precondición de negocio, no de forma)', () => {
+  it('inválido — OTHER sin reason se rechaza con 400 (precondición de negocio, no de forma)', () => {
     const path = `/scheduling/resources/${RECURSO_MEDICA}/exceptions`;
     expect(estado('POST', path, { exceptionType: 'OTHER', startAt: '2026-10-04T08:00:00.000Z', endAt: '2026-10-04T09:00:00.000Z' })).toBe(
-      422,
+      400,
     );
     expect(
       estado('POST', path, { exceptionType: 'OTHER', reason: '   ', startAt: '2026-10-04T08:00:00.000Z', endAt: '2026-10-04T09:00:00.000Z' }),
-    ).toBe(422);
+    ).toBe(400);
   });
 
   it('correcto — ABSENCE, CONFERENCE y ERRAND NO exigen reason (requiresText sólo en OTHER)', () => {
@@ -167,14 +167,14 @@ describe('handlers de bloqueos de agenda (excepciones)', () => {
     const path = `/scheduling/resources/${RECURSO_MEDICA}/exceptions`;
     expect(
       estado('POST', path, { exceptionType: 'ABSENCE', startAt: '2026-10-05T10:00:00.000Z', endAt: '2026-10-05T09:00:00.000Z' }),
-    ).toBe(422);
+    ).toBe(400);
   });
 
   it('inválido — una franja de cero minutos se rechaza', () => {
     const path = `/scheduling/resources/${RECURSO_MEDICA}/exceptions`;
     expect(
       estado('POST', path, { exceptionType: 'ABSENCE', startAt: '2026-10-06T10:00:00.000Z', endAt: '2026-10-06T10:00:00.000Z' }),
-    ).toBe(422);
+    ).toBe(400);
   });
 
   it('PATCH también rechaza un exceptionType inválido, sin dejarlo pasar en silencio', () => {
@@ -331,25 +331,25 @@ describe('handlers de reconsulta (cita directa con followUpOf)', () => {
     expect(status).toBe(404);
   });
 
-  it('422 — el paciente no es el de la cita de origen', () => {
+  it('400 — el paciente no es el de la cita de origen', () => {
     const origen = origenLibre();
     const otro = reservas.todos().find((r) => r.patientProfileId !== origen.patientProfileId)!;
 
     const { status } = agendarReconsulta(origen, { patientProfileId: otro.patientProfileId });
 
-    expect(status).toBe(422);
+    expect(status).toBe(400);
   });
 
-  it('422 — el horario no es futuro, y el límite es AHORA y no el día de hoy', () => {
+  it('400 — el horario no es futuro, y el límite es AHORA y no el día de hoy', () => {
     const origen = origenLibre();
 
     expect(
       agendarReconsulta(origen, { startAt: new Date(Date.now() - 60_000).toISOString() }).status,
-    ).toBe(422);
+    ).toBe(400);
     // El límite exacto: un instante que pasó por un segundo tampoco entra.
     expect(
       agendarReconsulta(origen, { startAt: new Date(Date.now() - 1_000).toISOString() }).status,
-    ).toBe(422);
+    ).toBe(400);
   });
 
   it('403 — la agenda no es del profesional de la sesión', () => {

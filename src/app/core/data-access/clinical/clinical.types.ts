@@ -377,6 +377,17 @@ export interface CarePlan {
   readonly createdAt: Date;
 }
 
+/**
+ * Un archivo gobernado de un documento del expediente (`ChartDocumentFileItemDto`
+ * de la API). Se descarga por `GET /charts/documents/:id/files/:fileId/content`.
+ */
+export interface ChartDocumentFile {
+  readonly fileId: string;
+  /** El documento en sí (`PRIMARY`) o lo que lo acompaña (`ATTACHMENT`). */
+  readonly contentRole: 'PRIMARY' | 'ATTACHMENT';
+  readonly ordinal?: number;
+}
+
 /** Un documento del expediente. */
 export interface ChartDocument {
   readonly id: string;
@@ -386,6 +397,12 @@ export interface ChartDocument {
   readonly authorText?: string;
   readonly isExternal?: boolean;
   readonly documentDate?: Date;
+  /**
+   * Los archivos del documento, ordenados por `ordinal` (CL-27). Antes
+   * `toDocument` los descartaba y el expediente no podía volver a abrir lo que se
+   * había subido.
+   */
+  readonly files?: readonly ChartDocumentFile[];
   readonly createdAt: Date;
 }
 

@@ -145,3 +145,14 @@ export interface StoredFileContent {
    */
   readonly originalName?: string;
 }
+
+/**
+ * Los bytes de un archivo bajado por una ruta de **contexto** (resultado del
+ * paciente, documento del expediente) con el nombre que la API declaró, si lo
+ * declaró. Sin nombre, quien lo guarda pone el suyo: inventar uno en una
+ * pantalla clínica es peor que no tener ninguno.
+ */
+export interface DownloadedFile {
+  readonly blob: Blob;
+  readonly fileName?: string;
+}

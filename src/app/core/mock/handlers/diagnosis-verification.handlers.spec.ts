@@ -37,7 +37,7 @@ interface CondicionWire {
 interface Fallo {
   readonly code: string;
   readonly message: string;
-  readonly issues?: readonly { readonly field?: string }[];
+  readonly details?: { readonly violations?: readonly string[] };
 }
 
 /**
@@ -115,47 +115,47 @@ describe('POST /clinical/conditions/:id/verification · C3', () => {
     expect(estado(verificar('no-existe', { outcome: 'REFUTED', reasonText: 'x' }))).toBe(404);
   });
 
-  it('sin motivo y sin evidencia no hay decisión: 422 sobre el motivo', () => {
+  it('sin motivo y sin evidencia no hay decisión: 400 sobre el motivo', () => {
     const respuesta = verificar(presuntivo().id, { outcome: 'REFUTED' });
 
-    expect(estado(respuesta)).toBe(422);
+    expect(estado(respuesta)).toBe(400);
     expect(fallo(respuesta).code).toBe('VALIDATION_FAILED');
-    expect(fallo(respuesta).issues?.[0]?.field).toBe('reasonText');
+    expect(fallo(respuesta).details?.violations?.[0]).toMatch(/^reasonText\b/);
   });
 
-  it('un resultado que no es CONFIRMED ni REFUTED es 422', () => {
-    expect(estado(verificar(presuntivo().id, { outcome: 'MAYBE', reasonText: 'x' }))).toBe(422);
+  it('un resultado que no es CONFIRMED ni REFUTED es 400', () => {
+    expect(estado(verificar(presuntivo().id, { outcome: 'MAYBE', reasonText: 'x' }))).toBe(400);
   });
 
-  it('la evidencia ajena o inexistente es 422: una orden de otra persona, una nota que no existe', () => {
+  it('la evidencia ajena o inexistente es 400: una orden de otra persona, una nota que no existe', () => {
     const ajena = verificar(presuntivo().id, {
       outcome: 'REFUTED',
       basedOn: { kind: 'ANALYSIS', serviceRequestId: ordenDe(otroPaciente.id).id },
     });
-    expect(estado(ajena)).toBe(422);
-    expect(fallo(ajena).issues?.[0]?.field).toBe('basedOn');
+    expect(estado(ajena)).toBe(400);
+    expect(fallo(ajena).details?.violations?.[0]).toMatch(/^basedOn\b/);
 
     const fantasma = verificar(presuntivo().id, {
       outcome: 'REFUTED',
       basedOn: { kind: 'NOTE', noteId: 'nota-que-no-existe' },
     });
-    expect(estado(fantasma)).toBe(422);
+    expect(estado(fantasma)).toBe(400);
 
     const rara = verificar(presuntivo().id, {
       outcome: 'REFUTED',
       basedOn: { kind: 'OTRA', noteId: notaDe(PACIENTE.id).noteId },
     });
-    expect(estado(rara)).toBe(422);
+    expect(estado(rara)).toBe(400);
   });
 
-  it('confirmar sin fin esperado ni curso crónico es 422', () => {
+  it('confirmar sin fin esperado ni curso crónico es 400', () => {
     const respuesta = verificar(presuntivo().id, {
       outcome: 'CONFIRMED',
       reasonText: 'Cuadro compatible',
     });
 
-    expect(estado(respuesta)).toBe(422);
-    expect(fallo(respuesta).issues?.[0]?.field).toBe('expectedResolutionAt');
+    expect(estado(respuesta)).toBe(400);
+    expect(fallo(respuesta).details?.violations?.[0]).toMatch(/^expectedResolutionAt\b/);
   });
 
   it('confirmar con motivo y fin esperado deja la condición activa y confirmada, y una segunda decisión es 409', () => {
@@ -224,7 +224,7 @@ describe('POST /clinical/conditions/:id/verification · C3', () => {
   it('el motivo tiene tope de 500 caracteres', () => {
     expect(
       estado(verificar(presuntivo().id, { outcome: 'REFUTED', reasonText: 'x'.repeat(501) })),
-    ).toBe(422);
+    ).toBe(400);
     expect(
       estado(verificar(presuntivo().id, { outcome: 'REFUTED', reasonText: 'x'.repeat(500) })),
     ).toBe(200);

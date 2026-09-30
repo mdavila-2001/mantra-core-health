@@ -37,12 +37,6 @@ class AgendaDoble {
   readonly sinAgenda = input('');
 }
 
-/**
- * «Cotizaciones» del paciente — H3.S2.
- *
- * La fuente es un doble ({@link CotizacionesFuentes} tiene su propio spec con
- * las peticiones HTTP): acá se fijan la pantalla y sus estados.
- */
 describe('Cotizaciones', () => {
   let fixture: ComponentFixture<Cotizaciones>;
   let buscar: ReturnType<

@@ -20,12 +20,13 @@ import {
 } from '../fixtures/clinica';
 import { CLASE_ENCUENTRO, ESPECIALIDAD, ESTADO, ESTADO_CONDICION, ESTADO_ENCUENTRO, ESTADO_RECETA, INTENCION_DEL_PLAN, SEVERIDAD, VERIFICACION_DX } from '../fixtures/conceptos';
 import { MEDICA, PACIENTE, pacientePorId, profesionalPorId } from '../fixtures/personas';
-import { conflict, forbidden, notFound, validation, type MockReply, type MockRequest, type MockRouter } from '../mock-router';
+import { conflict, forbidden, notFound, preconditionFailed, validation, type MockReply, type MockRequest, type MockRouter } from '../mock-router';
 import { ahora, Coleccion, cuerpo, isoDia, nuevoId, uuid } from '../mock-store';
 import { emitirNotificacion } from './notifications.handlers';
 import { enlazarArchivo, pdfMinimo } from './files.handlers';
 import { FICHAS_ESTANDAR } from '../fixtures/fichas-estandar.generated';
 import { representaA } from './profiles.handlers';
+import { accesoDeEmergenciaVigente, relacionDelProfesional } from './misc.handlers';
 
 /* ============================================================================
     Expediente clínico: resumen, gráfico (notas, planes, documentos), y las
@@ -39,7 +40,16 @@ function puedeLeer(request: MockRequest, patientProfileId: string): boolean {
   if (user.patientProfileId === patientProfileId) return true;
   // Y quien lo representa (B.1): la historia de un menor la lee su tutor.
   if (representaA(user.patientProfileId, patientProfileId)) return true;
-  return user.practitionerProfileId !== undefined || user.roles.includes('SECURITY_ADMIN');
+  // BR-20: el titular revocó el vínculo de este profesional. Sin turno de hoy ni
+  // un acceso de emergencia vigente, la historia responde 403.
+  if (
+    user.practitionerProfileId !== undefined &&
+    relacionDelProfesional(user.practitionerProfileId, patientProfileId) === 'REVOCADA' &&
+    !accesoDeEmergenciaVigente(user.id, patientProfileId)
+  ) {
+    return false;
+  }
+  return user.practitionerProfileId !== undefined || user.roles.includes('SECURITY_ADMIN') || accesoDeEmergenciaVigente(user.id, patientProfileId);
 }
 
 /* ---- el aviso de la ficha (proceso 2.6) ---------------------------------- */
@@ -536,7 +546,19 @@ export function registrarClinica(router: MockRouter): void {
     return { status: 201, body: { id: nuevoId('report'), patientProfileId: datos.patientProfileId ?? '', lifecycleStatus: 'PRELIMINARY', resultReleaseStatus: null, serviceRequestId: datos.serviceRequestId ?? null, createdAt: ahora() } };
   });
 
-  router.post('/clinical/diagnostic-reports/:id/release', ({ params }) => ({ id: params['id'], patientProfileId: '', lifecycleStatus: 'FINAL', resultReleaseStatus: 'RELEASED', serviceRequestId: null, createdAt: ahora() }));
+  /**
+   * D-E (BR-17/CL-46): este camino **no** alimenta `informes` de
+   * `diagnostics.handlers.ts` — lo liberado por acá nunca aparecía en «Mis
+   * resultados», exactamente el bug que D-E cierra del lado real. El mock
+   * imita ahora el mismo contrato: 422 con el endpoint canónico, en vez de
+   * simular una liberación que no existe.
+   */
+  router.post('/clinical/diagnostic-reports/:id/release', () =>
+    preconditionFailed(
+      'Esta ruta ya no libera informes. Usá diagnostics/reports/:reportId/versions/:versionId/release.',
+      { canonicalEndpoint: 'diagnostics/reports/:reportId/versions/:versionId/release' },
+    ),
+  );
 
   router.post('/cds/check-interactions', (request) => {
     const datos = cuerpo<{ substanceConceptIds?: string[] }>(request);
@@ -584,7 +606,7 @@ export function registrarClinica(router: MockRouter): void {
   });
 
   router.post('/charts/documents', (request) => {
-    const datos = cuerpo<{ patientProfileId: string; tenantId: string; title: string; categoryConceptId?: string; authorText?: string; isExternal?: boolean; encounterId?: string; files?: { fileId: string }[] }>(request);
+    const datos = cuerpo<{ patientProfileId: string; tenantId: string; title: string; categoryConceptId?: string; authorText?: string; isExternal?: boolean; encounterId?: string; files?: { fileId: string; contentRole?: string; ordinal?: number }[] }>(request);
     const nuevo = documentos.agregar({
       id: nuevoId('doc'),
       patientProfileId: datos.patientProfileId ?? '',
@@ -595,9 +617,43 @@ export function registrarClinica(router: MockRouter): void {
       isExternal: datos.isExternal ?? false,
       documentDate: ahora(),
       ...(datos.encounterId === undefined ? {} : { encounterId: datos.encounterId }),
+      // Los archivos se guardan con el documento: la lectura del expediente los
+      // devuelve y la ruta de contenido los valida.
+      ...((datos.files ?? []).length === 0
+        ? {}
+        : {
+            files: (datos.files ?? []).map((f, indice) => ({
+              fileId: f.fileId,
+              contentRole: (f.contentRole === 'ATTACHMENT' ? 'ATTACHMENT' : 'PRIMARY') as 'PRIMARY' | 'ATTACHMENT',
+              ordinal: f.ordinal ?? indice,
+            })),
+          }),
       createdAt: ahora(),
     });
     return { status: 201, body: { id: nuevo.id, statusConceptId: nuevo.statusConceptId, fileCount: (datos.files ?? []).length, createdAt: nuevo.createdAt } };
+  });
+
+  /**
+   * `GET /charts/documents/:documentId/files/:fileId/content` (CL-27).
+   *
+   * Autoriza por **lectura de la historia del paciente dueño**, no por autoría
+   * (`assertPuedeLeerHistoria` de la API): sin lectura, 403; documento
+   * inexistente o archivo que no cuelga de él, 404; si no, los bytes (un PDF).
+   */
+  router.get('/charts/documents/:documentId/files/:fileId/content', (request) => {
+    const documento = documentos.get(request.params['documentId']!);
+    if (documento === undefined) return notFound('Documento no encontrado');
+    if (!documento.files?.some((f) => f.fileId === request.params['fileId'])) {
+      return notFound('Documento no encontrado');
+    }
+    if (!puedeLeer(request, documento.patientProfileId)) return forbidden('No tiene acceso a la historia de este paciente');
+    return {
+      body: new Blob([pdfMinimo(documento.title)], { type: 'application/pdf' }),
+      headers: {
+        'Cache-Control': 'private, no-store',
+        'Content-Disposition': `attachment; filename*=UTF-8''${encodeURIComponent(`${documento.title}.pdf`)}`,
+      },
+    };
   });
 
   /* ---- plantillas de expediente ------------------------------------------- */

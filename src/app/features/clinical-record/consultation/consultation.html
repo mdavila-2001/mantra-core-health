@@ -273,6 +273,11 @@
           [encounterId]="encuentroActual()"
           (cambio)="recargar()"
         />
+        <!-- CL-77: el consentimiento informado se registra donde el modelo lo
+             espera (`consent.treatment_informed_consents`), ligado al encuentro.
+             Vive acá y no en una casilla nueva: la rejilla tiene diez posibilidades
+             por pedido del propietario. -->
+        <app-informed-consent-block [encounterId]="encuentroActual()" />
       }
       @case ('pagos') {
         <!-- No emite `cambio`: lo que registra —pagos, notas de venta y la

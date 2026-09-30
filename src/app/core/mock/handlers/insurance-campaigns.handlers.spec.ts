@@ -196,11 +196,14 @@ describe('handlers de campañas preventivas de seguros (Tarea 4)', () => {
       expect((reply.body as CampaignView).status).toBe('DRAFT');
     });
 
+    // Las reglas de forma y de alta responden 400, como el `ValidationPipe` y
+    // los `BadRequestException` del servicio de la API; 422 queda para las
+    // transiciones de estado (`PreconditionFailedException`).
     it('rechaza fechas invertidas', () => {
       const reply = create(
         validBody('CMP-FECHAS-1', { validFrom: isoDia(10), validTo: isoDia(1) }),
       );
-      expect(reply.status).toBe(422);
+      expect(reply.status).toBe(400);
     });
 
     it('rechaza un porcentaje fuera de 0..100 y con más de dos decimales', () => {
@@ -208,7 +211,7 @@ describe('handlers de campañas preventivas de seguros (Tarea 4)', () => {
         expect(
           create(validBody('CMP-PCT-1', { copayBonusPercentage })).status,
           String(copayBonusPercentage),
-        ).toBe(422);
+        ).toBe(400);
       }
       for (const copayBonusPercentage of [0, 100, 33.5]) {
         expect(
@@ -229,16 +232,16 @@ describe('handlers de campañas preventivas de seguros (Tarea 4)', () => {
     });
 
     it('rechaza un código con formato inválido, sin aliados y un CIE-10 desconocido', () => {
-      expect(create(validBody('cmp-minusculas')).status).toBe(422);
-      expect(create(validBody('CMP-SIN-ALIADOS', { partners: [] })).status).toBe(422);
-      expect(create(validBody('CMP-CIE-1', { targetConditionCode: 'ZZZ9' })).status).toBe(422);
+      expect(create(validBody('cmp-minusculas')).status).toBe(400);
+      expect(create(validBody('CMP-SIN-ALIADOS', { partners: [] })).status).toBe(400);
+      expect(create(validBody('CMP-CIE-1', { targetConditionCode: 'ZZZ9' })).status).toBe(400);
     });
 
     it('rechaza activar una campaña cuya vigencia ya terminó', () => {
       const reply = create(
         validBody('CMP-VENCIDA-1', { validFrom: isoDia(-30), validTo: isoDia(-1), activate: true }),
       );
-      expect(reply.status).toBe(422);
+      expect(reply.status).toBe(400);
     });
   });
 
@@ -286,8 +289,8 @@ describe('handlers de campañas preventivas de seguros (Tarea 4)', () => {
     it('rechaza un estado destino que no es de operador (DRAFT o inventado)', () => {
       const id = (create(validBody('CMP-CICLO-4')).body as CampaignView).id;
 
-      expect((changeStatus(id, 'DRAFT') as MockReply).status).toBe(422);
-      expect((changeStatus(id, 'INVENTADO') as MockReply).status).toBe(422);
+      expect((changeStatus(id, 'DRAFT') as MockReply).status).toBe(400);
+      expect((changeStatus(id, 'INVENTADO') as MockReply).status).toBe(400);
     });
 
     it('la aseguradora no alcanza la campaña de otra: responde 404', () => {

@@ -1,6 +1,7 @@
 import { ESTADO, TIPO_SOCIETARIO } from '../fixtures/conceptos';
 import { pacientes, type PacienteSimulado } from '../fixtures/personas';
-import { conflict, notFound, reply, unauthorized, type MockRouter } from '../mock-router';
+import { conflict, notFound, preconditionFailed, reply, unauthorized, type MockRouter } from '../mock-router';
+import type { MockUser as CuentaSimulada } from '../mock-session';
 import {
   buscarUsuario,
   emitirAccessToken,
@@ -135,7 +136,87 @@ resolverCuentasDePacientes(({ identificador, id, key }) => {
   return p === undefined ? undefined : cuentaDe(p);
 });
 
+/* ---- seguridad de la propia cuenta (ID-24) --------------------------------- */
+
+interface SesionSimulada {
+  readonly id: string;
+  readonly createdAt: string;
+  readonly expiresAt: string;
+  readonly ip: string;
+  current: boolean;
+}
+
+/**
+ * Con qué contraseña entró cada cuenta en esta sesión del simulador: el login
+ * acepta cualquiera, así que «la actual» es la última con la que se entró. Sin
+ * registro (sesión restaurada por refresh) se acepta la que se escriba.
+ */
+const contrasenaVigente = new Map<string, string>();
+
+const sesionesPorUsuario = new Map<string, SesionSimulada[]>();
+
+/** Las sesiones abiertas de una cuenta: la actual y otra desde otro equipo. */
+function sesionesDe(user: CuentaSimulada): SesionSimulada[] {
+  const existentes = sesionesPorUsuario.get(user.id);
+  if (existentes !== undefined) return existentes;
+  const nuevas: SesionSimulada[] = [
+    { id: uuid(`sesion-${user.key}-actual`), createdAt: iso(0, 9), expiresAt: iso(30, 9), ip: '190.129.10.4', current: true },
+    { id: uuid(`sesion-${user.key}-otra`), createdAt: iso(-2, 18), expiresAt: iso(28, 18), ip: '181.115.22.87', current: false },
+  ];
+  sesionesPorUsuario.set(user.id, nuevas);
+  return nuevas;
+}
+
+function unprocessable(message: string, reason: string) {
+  return reply(422, {
+    statusCode: 422,
+    code: 'PRECONDITION_FAILED',
+    message,
+    error: 'Unprocessable Entity',
+    details: { reason },
+  });
+}
+
 export function registrarAuth(router: MockRouter): void {
+  router.post('/iam/auth/change-password', ({ body, user }) => {
+    if (user === null) return unauthorized('Sesión vencida');
+    const datos = cuerpo<{ currentPassword?: string; newPassword?: string }>({ body });
+    const vigente = contrasenaVigente.get(user.id);
+    if ((datos.currentPassword ?? '') === '' || (vigente !== undefined && datos.currentPassword !== vigente)) {
+      return unprocessable('La contraseña actual no coincide', 'CURRENT_PASSWORD_INVALID');
+    }
+    if (datos.currentPassword === datos.newPassword) {
+      return unprocessable('La contraseña nueva tiene que ser distinta de la actual', 'PASSWORD_UNCHANGED');
+    }
+    const sesiones = sesionesDe(user);
+    const otras = sesiones.filter((s) => !s.current);
+    sesionesPorUsuario.set(user.id, sesiones.filter((s) => s.current));
+    contrasenaVigente.set(user.id, datos.newPassword ?? '');
+    return { revokedSessions: otras.length };
+  });
+
+  router.get('/iam/me/sessions', ({ user }) => {
+    if (user === null) return unauthorized('Sesión vencida');
+    return sesionesDe(user);
+  });
+
+  router.post('/iam/me/sessions/:id/revoke', ({ params, user }) => {
+    if (user === null) return unauthorized('Sesión vencida');
+    const sesiones = sesionesDe(user);
+    if (!sesiones.some((s) => s.id === params['id'])) {
+      return notFound('Sesión no encontrada');
+    }
+    sesionesPorUsuario.set(user.id, sesiones.filter((s) => s.id !== params['id']));
+    return { revoked: true };
+  });
+
+  router.post('/iam/auth/logout-all', ({ user }) => {
+    if (user === null) return unauthorized('Sesión vencida');
+    const cantidad = sesionesDe(user).length;
+    sesionesPorUsuario.set(user.id, []);
+    return { revokedSessions: cantidad };
+  });
+
   router.post('/iam/auth/login', ({ body }) => {
     const datos = cuerpo<LoginBody>({ body });
     const identificador = datos.email ?? datos.nationalId ?? '';
@@ -143,6 +224,7 @@ export function registrarAuth(router: MockRouter): void {
     if (user === undefined || (datos.password ?? '') === '') {
       return unauthorized('Credenciales inválidas. Probá con una de las cuentas de prueba.');
     }
+    contrasenaVigente.set(user.id, datos.password ?? '');
     return sesionDe(user);
   });
 
@@ -191,13 +273,10 @@ export function registrarAuth(router: MockRouter): void {
       organization?: {
         code?: string;
         legalEntityType?: string;
-        // `tenantType` (carril de farmacia, 2026-09-29): el mock aceptaba
-        // cualquier valor en silencio porque no lo leía. Se valida contra
-        // `TENANT_TYPE_CODES` recién cuando hace falta distinguir el bloque
-        // `pharmacy`, más abajo — los demás tipos (`PAYER` incluido) siguen
-        // sin exigir nada nuevo acá.
         tenantType?: string;
-        legalDocuments?: Record<(typeof LEGAL_DOCUMENT_FIELDS)[number], string | undefined>;
+        countryConceptId?: string;
+        jurisdictionConceptId?: string;
+        legalDocuments?: Partial<Record<(typeof LEGAL_DOCUMENT_FIELDS)[number], string | undefined>>;
         payer?: { latitude?: number; longitude?: number };
         // Bloque de farmacia (carril de farmacia, 2026-09-29): clave que el
         // DTO real todavía no declara (ver `PENDIENTES-BACKEND.md`, P49). El
@@ -215,6 +294,8 @@ export function registrarAuth(router: MockRouter): void {
         // `branches` es lo único que el cliente le suma y el DTO no tiene
         // (ver `PENDIENTES-BACKEND.md`, P51).
         diagnosticUnit?: {
+          diagnosticUnitTypeConceptId?: string;
+          modalityConceptIds?: readonly string[];
           name?: string;
           primarySite?: {
             name?: string;
@@ -381,9 +462,42 @@ export function registrarAuth(router: MockRouter): void {
       }
     }
 
+    // La constitución y el poder del representante son opcionales en el DTO y
+    // la regla vive en el servicio: sólo una UNIPERSONAL puede omitirlos, y
+    // el resto responde 422 nombrando el documento (CL-43). Es lo que hace la
+    // API, y el simulador no puede exigir más ni menos que ella.
+    const esUnipersonal = legalEntityType === 'UNIPERSONAL';
     const legalDocuments = datos.organization?.legalDocuments;
-    if (legalDocuments !== undefined) {
-      const faltantes = LEGAL_DOCUMENT_FIELDS.filter((campo) => !legalDocuments[campo]);
+    const tipoDeOrganizacion = datos.organization?.tenantType ?? 'PAYER';
+    // Compatibilidad declarada del simulador con D2/P50/P51. El alta anterior
+    // CL43 conserva sus catalogos y validaciones; esto no certifica la API real.
+    const demoPortalRegistration =
+      datos.organization?.countryConceptId === undefined &&
+      datos.organization?.jurisdictionConceptId === undefined &&
+      (tipoDeOrganizacion === 'PHARMACY' ||
+        (tipoDeOrganizacion === 'DIAGNOSTIC_CENTER' &&
+          diagnosticUnit?.diagnosticUnitTypeConceptId === undefined &&
+          diagnosticUnit?.modalityConceptIds === undefined));
+    if (tipoDeOrganizacion !== 'PAYER' && tipoDeOrganizacion !== 'PHARMACY' && tipoDeOrganizacion !== 'DIAGNOSTIC_CENTER' && tipoDeOrganizacion !== 'HOSPITAL') {
+      return preconditionFailed('El tipo de organización no admite alta pública', {
+        tenantType: tipoDeOrganizacion,
+      });
+    }
+    if (tipoDeOrganizacion !== 'PAYER' && !demoPortalRegistration) {
+      // Los tipos territoriales exigen país y jurisdicción: 422 `missing`.
+      const faltantesTerritoriales = [
+        ...(datos.organization?.countryConceptId ? [] : ['countryConceptId']),
+        ...(datos.organization?.jurisdictionConceptId ? [] : ['jurisdictionConceptId']),
+      ];
+      if (faltantesTerritoriales.length > 0) {
+        return preconditionFailed('Faltan datos territoriales de la organización', {
+          missing: faltantesTerritoriales,
+        });
+      }
+    }
+    if (legalDocuments !== undefined && !demoPortalRegistration) {
+      const obligatorios = LEGAL_DOCUMENT_FIELDS.filter((campo) => campo !== 'constitutionFileId');
+      const faltantes = obligatorios.filter((campo) => !legalDocuments[campo]);
       if (faltantes.length > 0) {
         // Mismo contrato que el `ValidationPipe` real: el bloque es todo o
         // nada (subtarea 1.2).
@@ -409,16 +523,31 @@ export function registrarAuth(router: MockRouter): void {
     const mensajesRepresentacion: string[] = [];
     const legalRepresentative = datos.organization?.legalRepresentative;
     if (legalRepresentative !== undefined) {
+      if (!demoPortalRegistration && !legalRepresentative.idNumber) {
+        mensajesRepresentacion.push('organization.legalRepresentative.idNumber should not be empty');
+      }
       if (!legalRepresentative.fullName) {
         mensajesRepresentacion.push('organization.legalRepresentative.fullName should not be empty');
       }
       if (!legalRepresentative.email || !legalRepresentative.email.includes('@')) {
         mensajesRepresentacion.push('organization.legalRepresentative.email must be an email');
       }
-      // `idNumber` y `powerOfAttorneyFileId`: ver el comentario del tipo de
-      // `legalRepresentative` más arriba — deliberadamente no obligatorios.
     }
     const executives = datos.organization?.executives;
+    if (!esUnipersonal && !demoPortalRegistration) {
+      if (legalDocuments !== undefined && !legalDocuments.constitutionFileId) {
+        return preconditionFailed(
+          'Falta la escritura de constitución: sólo una empresa unipersonal puede omitirla',
+          { document: 'constitutionFileId' },
+        );
+      }
+      if (legalRepresentative !== undefined && !legalRepresentative.powerOfAttorneyFileId) {
+        return preconditionFailed(
+          'Falta el poder notariado del representante legal: sólo una empresa unipersonal puede omitirlo',
+          { document: 'powerOfAttorneyFileId' },
+        );
+      }
+    }
     if (executives !== undefined) {
       for (const rol of ['generalManager', 'commercialManager', 'marketingManager'] as const) {
         const gerencia = executives[rol];
@@ -460,7 +589,9 @@ export function registrarAuth(router: MockRouter): void {
       status: 'PENDING_VERIFICATION',
       verificationStatus: 'PENDING',
       emailVerificationSent: true,
-      ...(legalDocuments === undefined ? {} : { legalDocumentsRegistered: 5 }),
+      ...(legalDocuments === undefined
+        ? {}
+        : { legalDocumentsRegistered: Object.values(legalDocuments).filter(Boolean).length }),
       ...(representativesRegistered === undefined ? {} : { representativesRegistered }),
       // Como la API: la unidad sólo nace si el alta declaró el bloque.
       ...(diagnosticUnit === undefined ? {} : { diagnosticUnitId: nuevoId('unidad-diagnostica') }),
