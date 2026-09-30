@@ -7,6 +7,12 @@
   @case (4) {
     <h4 class="accordion-panel__heading"><ng-container [ngTemplateOutlet]="disparador" /></h4>
   }
+  @case (5) {
+    <h5 class="accordion-panel__heading"><ng-container [ngTemplateOutlet]="disparador" /></h5>
+  }
+  @case (6) {
+    <h6 class="accordion-panel__heading"><ng-container [ngTemplateOutlet]="disparador" /></h6>
+  }
   @default {
     <h3 class="accordion-panel__heading"><ng-container [ngTemplateOutlet]="disparador" /></h3>
   }

@@ -1,5 +1,7 @@
 import {
   articlePlainText,
+  articleStats,
+  flattenSections,
   hasArticleStructure,
   htmlToArticle,
   outlineArticle,
@@ -69,19 +71,63 @@ describe('parseArticle', () => {
 });
 
 describe('outlineArticle', () => {
-  it('agrupa por título y anida los subtítulos', () => {
+  it('arma el árbol: títulos, subtítulos y apartados anidados', () => {
     const outline = outlineArticle(
-      parseArticle('Intro\n\n## Uno\ntexto\n### Uno.a\nmás\n## Dos\nfin'),
+      parseArticle('Intro\n\n## Uno\ntexto\n### Uno.a\nmás\n#### Uno.a.i\nfondo\n### Uno.b\n## Dos\nfin'),
     );
     expect(outline.intro).toHaveLength(1);
     expect(outline.sections.map((s) => s.heading)).toEqual(['Uno', 'Dos']);
-    expect(outline.sections[0]!.blocks).toHaveLength(1);
-    expect(outline.sections[0]!.subsections.map((s) => s.heading)).toEqual(['Uno.a']);
+    const uno = outline.sections[0]!;
+    expect(uno.blocks).toHaveLength(1);
+    expect(uno.children.map((s) => s.heading)).toEqual(['Uno.a', 'Uno.b']);
+    expect(uno.children[0]!.children.map((s) => [s.heading, s.depth])).toEqual([['Uno.a.i', 2]]);
+    expect(flattenSections(outline.sections).map((s) => s.id)).toHaveLength(5);
   });
 
-  it('promueve a título un subtítulo que no tiene sección', () => {
+  it('promueve a la raíz un subtítulo que no tiene título que lo contenga', () => {
     const outline = outlineArticle(parseArticle('### Suelto\ntexto'));
-    expect(outline.sections.map((s) => s.heading)).toEqual(['Suelto']);
+    expect(outline.sections.map((s) => [s.heading, s.depth])).toEqual([['Suelto', 0]]);
+  });
+});
+
+describe('marcas completas', () => {
+  it('reconoce citas, separadores, tachado y enlaces con texto', () => {
+    const blocks = parseArticle('> Primum non nocere\n> — Hipócrates\n\n---\n\nEsto ~~ya no~~ se usa. Ver [la guía](https://who.int/guia).');
+    expect(blocks.map((b) => b.kind)).toEqual(['quote', 'rule', 'paragraph']);
+    expect(blocks[0]!.kind === 'quote' && blocks[0]!.lines).toHaveLength(2);
+    const runs = blocks[2]!.kind === 'paragraph' ? blocks[2]!.lines[0]! : [];
+    expect(runs.find((r) => r.strike)?.text).toBe('ya no');
+    expect(runs.find((r) => r.href)).toMatchObject({ text: 'la guía', href: 'https://who.int/guia' });
+  });
+
+  it('un enlace con esquema peligroso no es enlace', () => {
+    const block = parseArticle('[clic](javascript:alert(1))')[0]!;
+    if (block.kind !== 'paragraph') throw new Error('se esperaba un párrafo');
+    expect(block.lines[0]!.every((r) => r.href === null)).toBe(true);
+  });
+
+  it('cuenta palabras y minutos de lectura', () => {
+    expect(articleStats('')).toEqual({ words: 0, minutes: 0 });
+    expect(articleStats('## Hola\nuna dos tres 🙂')).toEqual({ words: 4, minutes: 1 });
+    expect(articleStats(Array.from({ length: 401 }, () => 'palabra').join(' ')).minutes).toBe(3);
+  });
+
+  it('el editor produce citas, separadores, tachado, enlaces y apartados, y se relee igual', () => {
+    const root = dom(
+      '<h4>Detalle</h4><blockquote>Primum non nocere<br>— Hipócrates</blockquote><hr>' +
+        '<p>Esto <s>ya no</s> va. Ver <a href="https://who.int/guia">la guía</a> y <a href="javascript:x()">esto</a>.</p>',
+    );
+    const body = htmlToArticle(root, inOrder(root));
+    expect(body).toBe(
+      '#### Detalle\n\n> Primum non nocere\n> — Hipócrates\n\n---\n\nEsto ~~ya no~~ va. Ver [la guía](https://who.int/guia) y esto.',
+    );
+    expect(parseArticle(body).map((b) => b.kind)).toEqual(['heading', 'quote', 'rule', 'paragraph']);
+  });
+
+  it('un párrafo que empieza como una marca sigue siendo párrafo', () => {
+    const root = dom('<p>- 5 mg no es una lista</p><p>1. tampoco esto</p>');
+    const blocks = parseArticle(htmlToArticle(root, inOrder(root)));
+    expect(blocks.map((b) => b.kind)).toEqual(['paragraph', 'paragraph']);
   });
 });
 

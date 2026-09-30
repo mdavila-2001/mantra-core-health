@@ -92,4 +92,74 @@ describe('ArticleBody', () => {
     expect(a?.getAttribute('href')).toBe('https://www.who.int/es');
     expect(a?.getAttribute('rel')).toBe('noopener noreferrer');
   });
+
+  const COMPLETO = [
+    'Intro',
+    '## Uno',
+    'a',
+    '### Uno.a',
+    '#### Uno.a.i',
+    'fondo',
+    '## Dos',
+    '> Primum non nocere',
+    '---',
+    'Esto ~~ya no~~ va. [Guía](https://who.int/guia)',
+  ].join('\n');
+
+  it('pinta tres niveles de encabezado anidados (h3 › h4 › h5 por omisión)', () => {
+    pintar(COMPLETO);
+    (html.querySelector('[data-testid="article-expand-all"]') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(html.querySelector('h4')?.textContent).toContain('Uno.a');
+    expect(html.querySelector('h5')?.textContent).toContain('Uno.a.i');
+    expect(html.querySelector('h5')?.closest('app-accordion-panel')?.getAttribute('data-depth')).toBe('2');
+  });
+
+  it('expandir todo y contraer todo', () => {
+    pintar(COMPLETO);
+    const botones = (): HTMLButtonElement[] => Array.from(html.querySelectorAll('button[aria-expanded]'));
+    (html.querySelector('[data-testid="article-expand-all"]') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(botones().every((b) => b.getAttribute('aria-expanded') === 'true')).toBe(true);
+    expect(botones()).toHaveLength(4);
+
+    (html.querySelector('[data-testid="article-collapse-all"]') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(botones().every((b) => b.getAttribute('aria-expanded') === 'false')).toBe(true);
+  });
+
+  it('el índice abre la sección elegida con toda su cadena y le da el foco', async () => {
+    pintar(COMPLETO);
+    const indice = html.querySelector('[data-testid="article-toc"]')!;
+    expect(Array.from(indice.querySelectorAll('button')).map((b) => b.textContent?.trim())).toEqual([
+      'Uno', 'Uno.a', 'Uno.a.i', 'Dos',
+    ]);
+    (html.querySelector('[data-testid="article-collapse-all"]') as HTMLButtonElement).click();
+    fixture.detectChanges();
+
+    (indice.querySelectorAll('button')[2] as HTMLButtonElement).click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect(html.textContent).toContain('fondo');
+    expect(document.activeElement?.textContent).toContain('Uno.a.i');
+  });
+
+  it('muestra tiempo de lectura y pinta cita, separador, tachado y enlace con texto', () => {
+    pintar(COMPLETO);
+    expect(html.querySelector('.articulo__lectura')?.textContent).toContain('min de lectura');
+    (html.querySelector('[data-testid="article-expand-all"]') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(html.querySelector('blockquote')?.textContent).toContain('Primum non nocere');
+    expect(html.querySelector('hr')).not.toBeNull();
+    expect(html.querySelector('s')?.textContent).toBe('ya no');
+    const enlace = html.querySelector('a[href="https://who.int/guia"]');
+    expect(enlace?.textContent).toBe('Guía');
+  });
+
+  it('un artículo de dos secciones no muestra índice (con tres, sí)', () => {
+    pintar(ARTICULO);
+    expect(html.querySelector('[data-testid="article-toc"]')).not.toBeNull();
+    pintar('## A\nuno\n## B\ndos');
+    expect(html.querySelector('[data-testid="article-toc"]')).toBeNull();
+  });
 });

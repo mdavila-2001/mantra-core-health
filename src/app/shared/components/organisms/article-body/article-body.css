@@ -1,5 +1,5 @@
-/* Un artículo para leer: medida de lectura cómoda, secciones desplegables
-   (las pinta el acordeón) y las marcas del cuerpo. Mobile-first. */
+/* Un artículo para leer: meta de lectura, índice, secciones desplegables (las
+   pinta el acordeón) y las marcas del cuerpo. Mobile-first. */
 
 :host {
   display: block;
@@ -13,6 +13,109 @@
   display: grid;
   gap: var(--sp-3);
 }
+
+/* ---- Meta: tiempo de lectura y expandir/contraer ------------------------- */
+
+.articulo__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}
+
+.articulo__lectura {
+  margin: 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}
+
+.articulo__acciones {
+  display: flex;
+  gap: var(--sp-1);
+}
+
+.articulo__accion {
+  min-block-size: 2.25rem;
+  padding: var(--sp-1) var(--sp-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-full);
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--fs-caption);
+  cursor: pointer;
+}
+
+.articulo__accion:hover:not(:disabled) {
+  background: var(--bg-hover);
+}
+
+.articulo__accion:disabled {
+  color: var(--text-muted);
+  cursor: default;
+}
+
+.articulo__accion:focus-visible,
+.articulo__indice-enlace:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
+}
+
+/* ---- Índice -------------------------------------------------------------- */
+
+.articulo__indice {
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--bg-inset);
+}
+
+.articulo__indice-titulo {
+  margin: 0 0 var(--sp-2);
+  font-size: var(--fs-caption);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.articulo__indice-lista {
+  display: grid;
+  gap: var(--sp-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.articulo__indice-item[data-depth='1'] {
+  padding-inline-start: var(--sp-4);
+}
+
+.articulo__indice-item[data-depth='2'] {
+  padding-inline-start: var(--sp-8);
+}
+
+.articulo__indice-enlace {
+  display: inline-block;
+  min-block-size: 1.75rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text-link);
+  font: inherit;
+  text-align: start;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.articulo__indice-item[data-depth='0'] > .articulo__indice-enlace {
+  font-weight: 600;
+}
+
+/* ---- Cuerpo -------------------------------------------------------------- */
 
 .articulo__intro {
   display: grid;
@@ -38,6 +141,22 @@ ol.articulo__lista {
 
 .articulo__lista li + li {
   margin-block-start: var(--sp-1);
+}
+
+.articulo__cita {
+  margin: 0 0 var(--sp-3);
+  padding: var(--sp-2) var(--sp-4);
+  border-inline-start: 4px solid var(--brand-primary);
+  border-radius: 0 var(--r-sm) var(--r-sm) 0;
+  background: var(--bg-inset);
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+.articulo__separador {
+  margin: var(--sp-4) 0;
+  border: 0;
+  border-block-start: 1px solid var(--border-default);
 }
 
 .articulo__enlace {
@@ -81,28 +200,36 @@ ol.articulo__lista {
   color: var(--text-secondary);
 }
 
-/* Los títulos del artículo pesan más que los de un formulario: son la
-   estructura de lo que se lee. Los subtítulos, un escalón abajo y sangrados. */
-.articulo__secciones ::ng-deep > .accordion-panel > .accordion-panel__heading .accordion-panel__trigger {
-  font-family: var(--font-display);
-  font-size: var(--fs-h3);
-  line-height: 1.3;
-  padding-inline: 0;
-}
-
-.articulo__subsecciones {
-  display: block;
-  margin-inline-start: var(--sp-2);
-  border-inline-start: 2px solid var(--border-default);
-  padding-inline-start: var(--sp-3);
-}
-
-.articulo__subsecciones ::ng-deep .accordion-panel__trigger {
-  font-size: var(--fs-body);
-  padding-block: var(--sp-3);
-  padding-inline: 0;
-}
+/* ---- Secciones ------------------------------------------------------------
+   Los títulos del artículo pesan más que los de un formulario: son la
+   estructura de lo que se lee. Cada nivel, un escalón abajo y sangrado con
+   una línea que dice de quién cuelga. */
 
 .articulo__secciones ::ng-deep .accordion-panel__region {
   padding-inline: 0;
+}
+
+.articulo__secciones ::ng-deep app-accordion-panel[data-depth='0'] > .accordion-panel__heading .accordion-panel__trigger {
+  padding-inline: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-h3);
+  line-height: 1.3;
+}
+
+.articulo__secciones ::ng-deep app-accordion-panel:not([data-depth='0']) > .accordion-panel__heading .accordion-panel__trigger {
+  padding-block: var(--sp-3);
+  padding-inline: 0;
+  font-size: var(--fs-body);
+}
+
+.articulo__secciones ::ng-deep app-accordion-panel[data-depth='2'] > .accordion-panel__heading .accordion-panel__trigger {
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.articulo__hijas {
+  display: block;
+  margin-inline-start: var(--sp-2);
+  padding-inline-start: var(--sp-3);
+  border-inline-start: 2px solid var(--border-default);
 }

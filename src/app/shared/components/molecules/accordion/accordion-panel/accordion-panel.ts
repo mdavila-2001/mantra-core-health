@@ -49,7 +49,7 @@ export class AccordionPanel {
    * formularios usaban; un artículo necesita `h2` para sus títulos y `h3` para
    * los subtítulos, y la jerarquía tiene que llegar al lector de pantalla.
    */
-  readonly level = input<2 | 3 | 4>(3);
+  readonly level = input<2 | 3 | 4 | 5 | 6>(3);
   readonly expanded = model<boolean>(false);
   readonly disabled = input(false, { transform: booleanAttribute });
 

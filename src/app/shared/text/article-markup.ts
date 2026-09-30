@@ -12,8 +12,9 @@
 
     Lo que se reconoce —y NADA más—:
 
-        ## Título                ### Subtítulo
-        - ítem   /   1. ítem     **negrita**   *cursiva*   URLs → enlace
+        ## Título    ### Subtítulo    #### Apartado
+        - ítem   /   1. ítem          > cita           ---  (separador)
+        **negrita**  *cursiva*  ~~tachado~~  [texto](https://…)  URLs sueltas
         ![texto alternativo](imagen:N)   ← N = posición en `media[]` del post
 
     Los emojis son Unicode: no necesitan marca.
@@ -24,6 +25,7 @@ export interface ArticleRun {
   readonly text: string;
   readonly bold: boolean;
   readonly italic: boolean;
+  readonly strike: boolean;
   /** Destino si el tramo es un enlace; siempre `http(s)`. */
   readonly href: string | null;
 }
@@ -31,24 +33,29 @@ export interface ArticleRun {
 /** Un renglón: una sucesión de tramos. */
 export type ArticleLine = readonly ArticleRun[];
 
+/** Nivel de un encabezado del artículo: título, subtítulo, apartado. */
+export type ArticleHeadingLevel = 2 | 3 | 4;
+
 /** Un bloque del artículo, en el orden en que aparece. */
 export type ArticleBlock =
-  | { readonly kind: 'heading'; readonly level: 2 | 3; readonly text: string }
+  | { readonly kind: 'heading'; readonly level: ArticleHeadingLevel; readonly text: string }
   | { readonly kind: 'paragraph'; readonly lines: readonly ArticleLine[] }
   | { readonly kind: 'list'; readonly ordered: boolean; readonly items: readonly ArticleLine[] }
+  | { readonly kind: 'quote'; readonly lines: readonly ArticleLine[] }
+  | { readonly kind: 'rule' }
   | { readonly kind: 'image'; readonly index: number; readonly alt: string };
 
-/** Un subtítulo con lo que cuelga de él. */
-export interface ArticleSubsection {
-  readonly heading: string;
-  readonly blocks: readonly ArticleBlock[];
-}
-
-/** Un título con lo que cuelga de él, subtítulos incluidos. */
+/**
+ * Una sección: un encabezado con lo que cuelga de él, secciones hijas
+ * incluidas. `depth` es la profundidad en el árbol (0 = título de primer
+ * nivel), que es lo que decide el nivel HTML con el que se pinta.
+ */
 export interface ArticleSection {
+  readonly id: string;
+  readonly depth: number;
   readonly heading: string;
   readonly blocks: readonly ArticleBlock[];
-  readonly subsections: readonly ArticleSubsection[];
+  readonly children: readonly ArticleSection[];
 }
 
 /** El artículo agrupado para leer: lo que va antes del primer título, y las secciones. */
@@ -57,8 +64,20 @@ export interface ArticleOutline {
   readonly sections: readonly ArticleSection[];
 }
 
+/** Cuánto hay para leer. */
+export interface ArticleStats {
+  readonly words: number;
+  /** Minutos de lectura, redondeando hacia arriba; 0 si no hay texto. */
+  readonly minutes: number;
+}
+
+/** Palabras por minuto de una lectura atenta de texto técnico en castellano. */
+const WORDS_PER_MINUTE = 200;
+
 /** Etiquetas que abren un bloque propio al convertir desde el editor. */
-const BLOCK_TAGS: ReadonlySet<string> = new Set(['P', 'DIV', 'H1', 'H2', 'H3', 'UL', 'OL']);
+const BLOCK_TAGS: ReadonlySet<string> = new Set([
+  'P', 'DIV', 'H1', 'H2', 'H3', 'H4', 'UL', 'OL', 'BLOCKQUOTE', 'HR',
+]);
 
 /** Marca interna de `htmlToArticle`: no puede aparecer en texto escrito. */
 const SEPARATOR = '\u0000';
@@ -66,11 +85,17 @@ const SEPARATOR = '\u0000';
 /** El esquema de la referencia a una imagen del propio post. */
 const IMAGE_SCHEME = 'imagen';
 
-const HEADING = /^(#{1,3})\s+(.+)$/;
+/** Un enlace sólo puede ir a la web: nada de `javascript:`, `data:` ni `mailto:`. */
+const SAFE_HREF = /^https?:\/\/[^\s<>"]+$/i;
+
+const HEADING = /^(#{1,4})\s+(.+)$/;
 const UNORDERED_ITEM = /^[-*]\s+(.*)$/;
 const ORDERED_ITEM = /^\d+[.)]\s+(.*)$/;
+const QUOTE = /^>\s?(.*)$/;
+const RULE = /^(-{3,}|\*{3,}|_{3,})$/;
 const IMAGE = /^!\[([^\]]*)\]\(imagen:(\d+)\)$/;
-const INLINE = /(\*\*[^*\n]+?\*\*)|(\*[^*\s][^*\n]*?\*)|(https?:\/\/[^\s]+|www\.[^\s]+)/g;
+const INLINE =
+  /(\[([^\]\n]+)\]\((https?:\/\/[^\s)]+)\))|(\*\*[^*\n]+?\*\*)|(~~[^~\n]+?~~)|(\*[^*\s][^*\n]*?\*)|(https?:\/\/[^\s]+|www\.[^\s]+)/g;
 
 /**
  * Parte el cuerpo de un artículo en bloques.
@@ -85,12 +110,15 @@ const INLINE = /(\*\*[^*\n]+?\*\*)|(\*[^*\s][^*\n]*?\*)|(https?:\/\/[^\s]+|www\.
 export function parseArticle(body: string): readonly ArticleBlock[] {
   const blocks: ArticleBlock[] = [];
   let paragraph: ArticleLine[] = [];
+  let quote: ArticleLine[] = [];
   let list: { ordered: boolean; items: ArticleLine[] } | null = null;
 
   const flush = (): void => {
     if (paragraph.length > 0) blocks.push({ kind: 'paragraph', lines: paragraph });
+    if (quote.length > 0) blocks.push({ kind: 'quote', lines: quote });
     if (list !== null) blocks.push({ kind: 'list', ordered: list.ordered, items: list.items });
     paragraph = [];
+    quote = [];
     list = null;
   };
 
@@ -106,7 +134,15 @@ export function parseArticle(body: string): readonly ArticleBlock[] {
       flush();
       // `#` a secas se lee como título: el artículo no tiene otro nivel más
       // alto que ofrecer, y la página ya tiene su propio encabezado principal.
-      blocks.push({ kind: 'heading', level: heading[1] === '###' ? 3 : 2, text: heading[2]!.trim() });
+      const hashes = heading[1]!.length;
+      const level: ArticleHeadingLevel = hashes <= 2 ? 2 : hashes === 3 ? 3 : 4;
+      blocks.push({ kind: 'heading', level, text: heading[2]!.trim() });
+      continue;
+    }
+
+    if (RULE.test(line)) {
+      flush();
+      blocks.push({ kind: 'rule' });
       continue;
     }
 
@@ -117,18 +153,25 @@ export function parseArticle(body: string): readonly ArticleBlock[] {
       continue;
     }
 
+    const quoted = QUOTE.exec(line);
+    if (quoted) {
+      if (paragraph.length > 0 || list !== null) flush();
+      if (quoted[1]!.trim() !== '') quote.push(parseInline(quoted[1]!.trim()));
+      continue;
+    }
+
     const unordered = UNORDERED_ITEM.exec(line);
     const ordered = unordered ? null : ORDERED_ITEM.exec(line);
     const item = unordered ?? ordered;
     if (item) {
       const isOrdered = ordered !== null;
-      if (paragraph.length > 0 || (list !== null && list.ordered !== isOrdered)) flush();
+      if (paragraph.length > 0 || quote.length > 0 || (list !== null && list.ordered !== isOrdered)) flush();
       list ??= { ordered: isOrdered, items: [] };
       list.items.push(parseInline(item[1]!));
       continue;
     }
 
-    if (list !== null) flush();
+    if (list !== null || quote.length > 0) flush();
     paragraph.push(parseInline(line));
   }
   flush();
@@ -136,35 +179,61 @@ export function parseArticle(body: string): readonly ArticleBlock[] {
 }
 
 /**
- * Agrupa los bloques por título, para pintar secciones desplegables.
+ * Agrupa los bloques en un árbol de secciones, para pintarlas desplegables.
  *
- * Un subtítulo que aparece antes de cualquier título se promueve a título: no
- * hay sección que lo contenga, y dejarlo suelto en la introducción lo volvería
- * un encabezado que no se puede plegar.
+ * Cada encabezado cuelga del último encabezado de nivel MÁS ALTO que tenga
+ * antes. Un subtítulo sin título que lo contenga sube a la raíz: no hay
+ * sección que lo contenga, y dejarlo suelto en la introducción lo volvería un
+ * encabezado que no se puede plegar.
  *
  * @param blocks - Lo que devolvió {@link parseArticle}.
  */
 export function outlineArticle(blocks: readonly ArticleBlock[]): ArticleOutline {
+  interface Nodo {
+    id: string;
+    depth: number;
+    level: ArticleHeadingLevel;
+    heading: string;
+    blocks: ArticleBlock[];
+    children: Nodo[];
+  }
   const intro: ArticleBlock[] = [];
-  const sections: { heading: string; blocks: ArticleBlock[]; subsections: { heading: string; blocks: ArticleBlock[] }[] }[] = [];
+  const raiz: Nodo[] = [];
+  const pila: Nodo[] = [];
+  let contador = 0;
 
   for (const block of blocks) {
-    const current = sections.at(-1);
-    if (block.kind === 'heading') {
-      if (block.level === 2 || current === undefined) {
-        sections.push({ heading: block.text, blocks: [], subsections: [] });
-      } else {
-        current.subsections.push({ heading: block.text, blocks: [] });
-      }
+    if (block.kind !== 'heading') {
+      (pila.at(-1)?.blocks ?? intro).push(block);
       continue;
     }
-    if (current === undefined) {
-      intro.push(block);
-    } else {
-      (current.subsections.at(-1)?.blocks ?? current.blocks).push(block);
-    }
+    while (pila.length > 0 && pila.at(-1)!.level >= block.level) pila.pop();
+    const padre = pila.at(-1);
+    const nodo: Nodo = {
+      id: `seccion-${++contador}`,
+      depth: pila.length,
+      level: block.level,
+      heading: block.text,
+      blocks: [],
+      children: [],
+    };
+    (padre?.children ?? raiz).push(nodo);
+    pila.push(nodo);
   }
-  return { intro, sections };
+
+  const congelar = (nodo: Nodo): ArticleSection => ({
+    id: nodo.id,
+    depth: nodo.depth,
+    heading: nodo.heading,
+    blocks: nodo.blocks,
+    children: nodo.children.map(congelar),
+  });
+  return { intro, sections: raiz.map(congelar) };
+}
+
+/** Todas las secciones del árbol, en orden de lectura. */
+export function flattenSections(sections: readonly ArticleSection[]): readonly ArticleSection[] {
+  return sections.flatMap((section) => [section, ...flattenSections(section.children)]);
 }
 
 /**
@@ -180,9 +249,11 @@ export function articlePlainText(body: string): string {
         case 'heading':
           return [block.text];
         case 'paragraph':
+        case 'quote':
           return [block.lines.map(lineText).join(' ')];
         case 'list':
           return block.items.map(lineText);
+        case 'rule':
         case 'image':
           return [];
       }
@@ -192,7 +263,14 @@ export function articlePlainText(body: string): string {
     .trim();
 }
 
-/** Si el cuerpo trae alguna marca de artículo (títulos, listas o imágenes). */
+/** Palabras y minutos de lectura del artículo. */
+export function articleStats(body: string): ArticleStats {
+  const texto = articlePlainText(body);
+  const words = texto === '' ? 0 : texto.split(' ').filter((w) => /[\p{L}\p{N}]/u.test(w)).length;
+  return { words, minutes: words === 0 ? 0 : Math.max(1, Math.ceil(words / WORDS_PER_MINUTE)) };
+}
+
+/** Si el cuerpo trae alguna marca de artículo (títulos, listas, citas o imágenes). */
 export function hasArticleStructure(body: string): boolean {
   return parseArticle(body).some((block) => block.kind !== 'paragraph');
 }
@@ -224,6 +302,7 @@ export function htmlToArticle(root: ParentNode, imageIndex: (image: HTMLImageEle
         .split('\n')
         .map((line) => line.trim())
         .filter((line) => line !== '')
+        .map(escapeLineStart)
         .join('\n');
       if (text !== '') blocks.push(text);
     });
@@ -245,6 +324,12 @@ export function htmlToArticle(root: ParentNode, imageIndex: (image: HTMLImageEle
     if (inner.trim() === '' || inner.includes(SEPARATOR)) return inner;
     if (tag === 'STRONG' || tag === 'B') return wrap(inner, '**');
     if (tag === 'EM' || tag === 'I') return wrap(inner, '*');
+    if (tag === 'S' || tag === 'STRIKE' || tag === 'DEL') return wrap(inner, '~~');
+    if (tag === 'A') {
+      const href = (node.getAttribute('href') ?? '').trim();
+      const texto = oneLine(inner).replace(/[[\]]/g, '');
+      return SAFE_HREF.test(href) ? `[${texto}](${href})` : inner;
+    }
     return inner;
   };
 
@@ -256,10 +341,12 @@ export function htmlToArticle(root: ParentNode, imageIndex: (image: HTMLImageEle
     switch (node.tagName) {
       case 'H1':
       case 'H2':
-      case 'H3': {
+      case 'H3':
+      case 'H4': {
         flushText();
         const { text, images } = splitImages(inline(node));
-        if (text !== '') blocks.push(`${node.tagName === 'H3' ? '###' : '##'} ${text}`);
+        const marca = node.tagName === 'H4' ? '####' : node.tagName === 'H3' ? '###' : '##';
+        if (text !== '') blocks.push(`${marca} ${text}`);
         blocks.push(...images);
         return;
       }
@@ -280,6 +367,30 @@ export function htmlToArticle(root: ParentNode, imageIndex: (image: HTMLImageEle
         blocks.push(...parts.flatMap((part) => part.images));
         return;
       }
+      case 'BLOCKQUOTE': {
+        flushText();
+        // Cada renglón de la cita lleva su `>`: un `<p>` o un `<br>` adentro
+        // es un renglón nuevo, no un párrafo aparte fuera de la cita.
+        const partes = Array.from(node.childNodes).map((hijo) =>
+          hijo instanceof Element && BLOCK_TAGS.has(hijo.tagName) ? `\n${inline(hijo)}\n` : inline(hijo),
+        );
+        const { images } = splitImages(partes.join(''));
+        const renglones = partes
+          .join('')
+          .split(SEPARATOR)
+          .filter((_, i) => i % 2 === 0)
+          .join('\n')
+          .split('\n')
+          .map(oneLine)
+          .filter((renglon) => renglon !== '');
+        if (renglones.length > 0) blocks.push(renglones.map((renglon) => `> ${renglon}`).join('\n'));
+        blocks.push(...images);
+        return;
+      }
+      case 'HR':
+        flushText();
+        blocks.push('---');
+        return;
       case 'P':
       case 'DIV': {
         flushText();
@@ -315,8 +426,11 @@ function parseInline(line: string): ArticleLine {
   for (const match of line.matchAll(INLINE)) {
     const start = match.index ?? 0;
     if (start > last) runs.push(run(line.slice(last, start)));
-    const [whole, bold, italic, url] = match;
-    if (bold) runs.push(run(bold.slice(2, -2), { bold: true }));
+    const [whole, link, linkText, linkHref, bold, strike, italic, url] = match;
+    if (link && SAFE_HREF.test(linkHref!)) runs.push(run(linkText!, { href: linkHref! }));
+    else if (link) runs.push(run(whole));
+    else if (bold) runs.push(run(bold.slice(2, -2), { bold: true }));
+    else if (strike) runs.push(run(strike.slice(2, -2), { strike: true }));
     else if (italic) runs.push(run(italic.slice(1, -1), { italic: true }));
     else if (url) {
       const clean = url.replace(/[.,;:)\]]+$/, '');
@@ -330,11 +444,26 @@ function parseInline(line: string): ArticleLine {
 }
 
 function run(text: string, marks: Partial<Omit<ArticleRun, 'text'>> = {}): ArticleRun {
-  return { text, bold: marks.bold ?? false, italic: marks.italic ?? false, href: marks.href ?? null };
+  return {
+    text,
+    bold: marks.bold ?? false,
+    italic: marks.italic ?? false,
+    strike: marks.strike ?? false,
+    href: marks.href ?? null,
+  };
 }
 
 function lineText(line: ArticleLine): string {
   return line.map((r) => r.text).join('');
+}
+
+/**
+ * Un párrafo cuyo texto empieza como una marca de bloque (`- `, `1. `, `> `,
+ * `## `, `---`) se leería como lista, cita o título. Se le antepone un espacio
+ * duro invisible para que siga siendo el párrafo que se escribió.
+ */
+function escapeLineStart(line: string): string {
+  return /^(#{1,4}\s|[-*]\s|\d+[.)]\s|>|-{3,}$|\*{3,}$|_{3,}$|!\[)/.test(line) ? `​${line}` : line;
 }
 
 /** Envuelve respetando los espacios de los bordes: `** hola**` no es negrita. */
