@@ -819,9 +819,9 @@ describe('MyProfile · el enlace a editar los datos propios', () => {
 
     const boton = enlaceDeEdicion();
     // Lápiz y nombre a la vista (D-05, 22/09/2026): el glifo `edit` del set y
-    // «Editar» escrito, que es también su nombre accesible. Ya no es un botón
-    // de sólo ícono.
-    expect(boton?.textContent?.trim()).toBe('Editar');
+    // «Editar perfil» escrito (30/09/2026), que es también su nombre
+    // accesible. Ya no es un botón de sólo ícono.
+    expect(boton?.textContent?.trim()).toBe('Editar perfil');
     expect(boton?.querySelector('svg')).not.toBeNull();
     expect(boton?.classList.contains('btn--icon-only')).toBe(false);
     // Un botón, no un enlace: no lleva a ninguna parte.

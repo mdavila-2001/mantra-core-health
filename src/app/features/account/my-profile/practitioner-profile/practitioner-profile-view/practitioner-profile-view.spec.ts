@@ -435,7 +435,10 @@ describe('PractitionerProfileView', () => {
 
     expect(host.querySelector('.mi-perfil__cabecera')?.textContent).toContain('Tus datos');
     const lapiz = host.querySelector('[data-testid="mi-perfil-editar"]');
-    expect(lapiz?.getAttribute('aria-label')).toBe('Editar');
+    // «Editar perfil» con el lápiz, escrito: ya no es un botón de sólo ícono.
+    expect(lapiz?.textContent?.trim()).toBe('Editar perfil');
+    expect(lapiz?.querySelector('svg')).not.toBeNull();
+    expect(lapiz?.classList.contains('btn--icon-only')).toBe(false);
   });
 
   it('el dueño ve «Sin registrar» en lo que no cargó: es su ficha, no la de un colega', () => {
