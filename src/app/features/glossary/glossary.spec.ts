@@ -1,62 +1,62 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { provideRouter, Router } from '@angular/router';
+import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 
-import { Glossary } from './glossary';
+import { CHIPS_POR_TARJETA, Glossary, MAX_PAGINAS_EN_SELECT } from './glossary';
 
 /**
- * El glosario, reconstruido por cuarta vez: **enciclopedia**.
+ * El glosario, **con carga bajo demanda** (2026-09-30).
  *
- * La ronda anterior lo dejaba en grilla de categorías y tabla al buscar. El
- * propietario volvió a corregir el rumbo y pidió una enciclopedia al estilo
- * Wikipedia: buscador arriba, una fila de categorías que es el mapa, y el
- * cuerpo con las definiciones legibles —todas, agrupadas por inicial, cuando
- * no hay filtro—. La instrucción nueva es más reciente y más específica, así
- * que manda, y este spec fija ese contrato.
+ * La enciclopedia sigue siendo la misma —buscador y filtros arriba, rejilla de
+ * categorías que es el mapa, cuerpo de definiciones agrupadas por inicial—,
+ * pero ya no carga el corpus entero: con cientos de miles de términos eso deja
+ * de existir. Lo que cambió, y por qué se prueba distinto:
  *
- * Lo que cambió respecto de la ronda anterior, y por qué se prueba distinto:
+ * - **La rejilla sale de las facetas** (`$glossary-facets`), una consulta
+ *   agregada: conteos y chips sin traer un término.
+ * - **El cuerpo es una página del servidor**: `limit` y `offset` viajan, y el
+ *   `total` que vuelve arma el paginador.
+ * - **La etiqueta filtra en el servidor** (`tagValueSetId`), no sobre lo ya
+ *   traído.
+ * - **El abecedario que saltaba entre páginas se retiró**: saber en qué página
+ *   empieza la «M» exige el corpus entero. Las iniciales siguen encabezando los
+ *   tramos de la página.
  *
- * - **La landing pide dos cosas, no una.** Sin filtro el cuerpo *son* todos
- *   los términos, así que la lectura del corpus no es un extra; además es la
- *   única forma de saber qué etiquetas lleva cada categoría de verdad.
- * - **No hay tabla.** Las celdas se fueron; se prueban las entradas del
- *   índice (`.glosario__entrada`) y los tramos por inicial.
- * - **Entrar a una categoría es un enlace**, no un método: viaja por la URL,
- *   así que acá se navega con el router y no se llama a nada del componente.
- *
- * Lo que se conserva de las rondas anteriores porque nunca fue lo objetado:
- * el filtro publicado en la URL, el aviso de recorte, los vacíos distintos
- * según qué se estaba mirando y el cinturón contra el concepto parcial.
- *
- * Se monta con `RouterTestingHarness` y no con `TestBed.createComponent`
- * porque los filtros viven en la URL: los publica `app-filter-bar` navegando, y
- * sin un router de verdad el efecto que recarga no se enteraría nunca.
+ * Lo que se conserva porque nunca fue lo objetado: el filtro publicado en la
+ * URL, los vacíos que nombran qué se buscó, el cinturón contra el concepto
+ * parcial, el aviso de términos sin traducir y la rejilla visible con un filtro
+ * puesto.
  */
 const RUTA = '/glossary';
+
+const ETIQUETA_CARDIO = {
+  id: 'vs-t1',
+  internalCode: 'glossary-tag-cardiovascular',
+  name: 'Cardiovascular',
+  count: 40,
+};
+const ETIQUETA_CRONICO = {
+  id: 'vs-t2',
+  internalCode: 'glossary-tag-chronic',
+  name: 'Crónico',
+  count: 30,
+};
 
 const CATEGORIA = {
   id: 'vs-1',
   internalCode: 'glossary-category-disease',
   name: 'Enfermedades',
   description: 'Diagnósticos y condiciones clínicas.',
-  defaultVersionId: 'ver-1',
-  memberCount: 12,
+  count: 1200,
+  tags: [ETIQUETA_CARDIO, ETIQUETA_CRONICO],
 };
 
-/**
- * `listValueSets()` lee **todo** el catálogo de la plataforma, no sólo el
- * glosario. Este value set representa un enum cualquiera —género, estado
- * administrativo— que no debe aparecer en la fila aunque tenga miembros.
- */
-const VALUE_SET_AJENO_AL_GLOSARIO = {
-  id: 'vs-9',
-  internalCode: 'condition-code',
-  name: 'Diagnóstico (catálogo de plataforma)',
-  description: undefined,
-  defaultVersionId: 'ver-9',
-  memberCount: 400,
+const FACETAS = {
+  categories: [CATEGORIA],
+  tags: [ETIQUETA_CARDIO, ETIQUETA_CRONICO],
+  total: 1200,
 };
 
 const TERMINO = {
@@ -73,14 +73,13 @@ const TERMINO = {
   status: 'active',
 };
 
-/** Otro término de la misma categoría, con una etiqueta que el primero no tiene. */
 const TERMINO_B = {
   ...TERMINO,
   conceptId: '33333333-3333-4333-8333-333333333333',
-  code: 'I48',
+  code: 'R00.1',
   display: 'Bradicardia',
   slug: 'bradicardia',
-  tags: ['Cardiovascular', 'Arritmia'],
+  tags: ['Cardiovascular'],
 };
 
 describe('Glossary', () => {
@@ -113,36 +112,29 @@ describe('Glossary', () => {
     return harness.fixture.nativeElement as HTMLElement;
   }
 
-  /** La lectura de las categorías. Sale al construir. */
-  function pedidoDeCategorias() {
-    return http.expectOne((r) => r.url.endsWith('/terminology/value-sets'));
+  function pedidoDeFacetas() {
+    return http.expectOne((r) => r.url.endsWith('/terminology/value-sets/$glossary-facets'));
   }
 
-  /** La lectura de los términos: el corpus al construir, los filtrados después. */
   function pedidoDeTerminos() {
     return http.expectOne((r) => r.url.endsWith('/terminology/concepts'));
   }
 
-  function responderCategorias(items: unknown[] = [CATEGORIA]) {
-    pedidoDeCategorias().flush({
-      items,
-      count: items.length,
-      limit: 200,
-      nextCursor: null,
-    });
+  function responderFacetas(facetas: object = FACETAS) {
+    pedidoDeFacetas().flush(facetas);
   }
 
-  function responderTerminos(items: unknown[] = [TERMINO], count = items.length) {
-    pedidoDeTerminos().flush({ items, count, limit: 200 });
+  function responderPagina(items: unknown[] = [TERMINO], total = items.length, offset = 0) {
+    pedidoDeTerminos().flush({ items, count: items.length, limit: 12, offset, total });
   }
 
-  /** Las dos lecturas que salen al abrir la pantalla, en un solo gesto. */
-  function responderLanding(categorias: unknown[] = [CATEGORIA], terminos: unknown[] = [TERMINO]) {
-    responderCategorias(categorias);
-    responderTerminos(terminos);
+  /** Las dos lecturas que salen al abrir la pantalla. */
+  async function responderLanding(items: unknown[] = [TERMINO], total = items.length) {
+    responderFacetas();
+    responderPagina(items, total);
+    await harness.fixture.whenStable();
   }
 
-  /** Navega publicando los filtros en la URL, que es como se entra de verdad. */
   async function irA(filtros: Record<string, string>): Promise<void> {
     const query = new URLSearchParams(filtros).toString();
     componente = await harness.navigateByUrl(query === '' ? RUTA : `${RUTA}?${query}`, Glossary);
@@ -157,464 +149,334 @@ describe('Glossary', () => {
     return [...html().querySelectorAll(selector)].map((n) => (n.textContent ?? '').trim());
   }
 
-  // --- La landing: fila de categorías + cuerpo ------------------------------
+  // --- La landing ------------------------------------------------------------
 
-  it('al abrir pide las categorías y el corpus: la enciclopedia se lee sin escribir nada', () => {
-    // Las dos lecturas son deliberadas: sin filtro el cuerpo *son* todos los
-    // términos, y sin ellos no se puede decir qué etiquetas lleva cada
-    // categoría. `http.verify()` del afterEach falla si sale alguna de más.
-    responderLanding();
+  it('al abrir pide las facetas y UNA página: nunca el corpus entero', async () => {
+    responderFacetas();
+    const req = pedidoDeTerminos();
+    expect(req.request.params.get('limit')).toBe('12');
+    expect(req.request.params.get('offset')).toBe('0');
+    expect(req.request.params.get('q')).toBeNull();
+    expect(req.request.params.get('valueSetId')).toBeNull();
+    expect(req.request.params.get('lang')).toBe('ES');
+    expect(req.request.params.get('includeValueSets')).toBe('true');
+    req.flush({ items: [TERMINO], count: 1, limit: 12, offset: 0, total: 1 });
+    await harness.fixture.whenStable();
 
-    expect(interno<() => boolean>('hayFiltro')()).toBe(false);
     expect(estadoDelCuerpo().status).toBe('ready');
   });
 
-  it('el corpus se pide sin filtros: es el catálogo entero, acotado sólo por el tope', () => {
-    responderCategorias();
-
-    const req = pedidoDeTerminos();
-    expect(req.request.params.get('q')).toBeNull();
-    expect(req.request.params.get('valueSetId')).toBeNull();
-    expect(req.request.params.get('limit')).toBe('200');
-    expect(req.request.params.get('lang')).toBe('ES');
-    expect(req.request.params.get('includeValueSets')).toBe('true');
-    req.flush({ items: [TERMINO], count: 1, limit: 200 });
+  it('la llegada de las facetas no vuelve a pedir la misma página', async () => {
+    // Sin filtro, la página no depende de las facetas: pedirla de nuevo al
+    // llegar sería el doble de tráfico en la pantalla que más se abre.
+    responderPagina();
+    responderFacetas();
+    await harness.fixture.whenStable();
+    http.expectNone((r) => r.url.endsWith('/terminology/concepts'));
   });
 
-  it('la fila ofrece una tarjeta por categoría, con su ícono y su conteo', async () => {
-    responderLanding();
-    await harness.fixture.whenStable();
+  it('la rejilla ofrece una tarjeta por categoría con el conteo real del servidor', async () => {
+    await responderLanding();
 
     const tarjetas = html().querySelectorAll('.glosario__tarjeta');
     expect(tarjetas.length).toBe(1);
     expect(tarjetas[0].querySelector('app-glossary-category-icon')).not.toBeNull();
     expect(tarjetas[0].textContent).toContain('Enfermedades');
-    expect(tarjetas[0].textContent).toContain('12');
+    expect(tarjetas[0].textContent).toContain((1200).toLocaleString('es'));
   });
 
-  it('si la API dice cuántos están en castellano y no son todos, la tarjeta lo muestra', async () => {
-    responderLanding([{ ...CATEGORIA, memberCount: 2113, translatedMemberCount: 209 }]);
+  it('los chips de la tarjeta son las etiquetas de las facetas, las más frecuentes, y cuenta el resto', async () => {
+    const muchas = Array.from({ length: CHIPS_POR_TARJETA + 2 }, (_, i) => ({
+      id: `t-${i}`,
+      internalCode: `glossary-tag-t${i}`,
+      name: `Etiqueta ${i}`,
+      count: 100 - i,
+    }));
+    responderFacetas({ ...FACETAS, categories: [{ ...CATEGORIA, tags: muchas }] });
+    responderPagina();
     await harness.fixture.whenStable();
 
-    const tarjeta = html().querySelector('.glosario__tarjeta');
-    expect(tarjeta?.textContent).toContain('2113');
-    expect(tarjeta?.textContent).toContain('209 en castellano');
+    const tarjeta = interno<() => readonly { etiquetas: readonly string[]; etiquetasDeMas: number }[]>(
+      'tarjetas',
+    )()[0];
+    expect(tarjeta.etiquetas).toHaveLength(CHIPS_POR_TARJETA);
+    expect(tarjeta.etiquetasDeMas).toBe(2);
+    expect(html().querySelector('.glosario__chips-mas')?.textContent?.trim()).toBe('+2');
   });
 
-  it('si todos están en castellano, o la API no lo dice, la tarjeta muestra sólo el total', async () => {
-    responderLanding([
-      { ...CATEGORIA, translatedMemberCount: 12 },
-      { ...CATEGORIA, id: 'vs-2', internalCode: 'glossary-category-lab', memberCount: 7 },
-    ]);
+  it('si no todos están en castellano, la tarjeta lo dice junto al total', async () => {
+    responderFacetas({ ...FACETAS, categories: [{ ...CATEGORIA, translatedCount: 201 }] });
+    responderPagina();
     await harness.fixture.whenStable();
 
-    expect(html().textContent).not.toContain('en castellano');
+    expect(html().querySelector('.glosario__dato')?.textContent).toContain('201 en castellano');
   });
 
-  it('los chips de la tarjeta salen del corpus, no de una lista fija', async () => {
-    // Es la diferencia con la ronda anterior: la tarjeta dice de qué habla la
-    // categoría **antes** de entrar, y lo dice con las etiquetas que sus
-    // términos llevan de verdad. Una lista declarada quedaría vieja en cuanto
-    // el catálogo sume un término.
-    responderLanding([CATEGORIA], [TERMINO, TERMINO_B]);
-    await harness.fixture.whenStable();
-
-    const tarjeta = interno<() => readonly { etiquetas: readonly string[] }[]>('tarjetas')()[0];
-    expect([...tarjeta.etiquetas]).toEqual(['Arritmia', 'Cardiovascular', 'Crónico']);
-  });
-
-  it('no ofrece una categoría vacía: sería un clic a una pantalla en blanco', () => {
-    responderLanding([
-      CATEGORIA,
-      { ...CATEGORIA, id: 'vs-2', internalCode: 'glossary-category-lab', memberCount: 0 },
-    ]);
+  it('no ofrece una categoría vacía ni un conjunto que no sea del glosario', async () => {
+    responderFacetas({
+      ...FACETAS,
+      categories: [
+        CATEGORIA,
+        { ...CATEGORIA, id: 'vs-2', internalCode: 'glossary-category-lab', count: 0 },
+        { ...CATEGORIA, id: 'vs-9', internalCode: 'condition-code', count: 400 },
+      ],
+    });
+    responderPagina();
 
     const tarjetas = interno<() => readonly { id: string }[]>('tarjetas')();
     expect(tarjetas.map((c) => c.id)).toEqual(['vs-1']);
   });
 
-  it('no ofrece un conjunto de valores que no es una categoría del glosario', () => {
-    // `listValueSets()` lee el catálogo entero de la plataforma. Sin este
-    // filtro, la fila mostraría enums de sistema como si fueran medicina.
-    responderLanding([CATEGORIA, VALUE_SET_AJENO_AL_GLOSARIO]);
-
-    const tarjetas = interno<() => readonly { internalCode: string }[]>('tarjetas')();
-    expect(tarjetas.map((c) => c.internalCode)).toEqual(['glossary-category-disease']);
-  });
-
-  it('con categorías pero todas vacías, lo dice y no dibuja una fila en blanco', async () => {
-    // Distinto del caso «no hay categorías»: acá `listValueSets()` sí
-    // respondió, sólo que ninguna tiene un término adentro todavía.
-    responderLanding([{ ...CATEGORIA, memberCount: 0 }]);
+  it('con facetas pero sin categorías con términos, lo dice y no dibuja una rejilla en blanco', async () => {
+    responderFacetas({ ...FACETAS, categories: [{ ...CATEGORIA, count: 0 }] });
+    responderPagina();
     await harness.fixture.whenStable();
 
     expect(html().querySelectorAll('.glosario__tarjeta').length).toBe(0);
     expect(html().textContent).toContain('todavía no tiene categorías con términos');
   });
 
-  // --- El cuerpo: índice alfabético ----------------------------------------
+  // --- El cuerpo ---------------------------------------------------------------
 
-  it('sin filtro el cuerpo son todas las definiciones, agrupadas por inicial', async () => {
-    responderLanding([CATEGORIA], [TERMINO, TERMINO_B]);
-    await harness.fixture.whenStable();
+  it('la página se agrupa por inicial, y los diacríticos no abren tramo propio', async () => {
+    await responderLanding([TERMINO_B, TERMINO, { ...TERMINO, conceptId: 'c-o', display: 'Órgano' }]);
 
-    expect(textos('.glosario__letra')).toEqual(['B', 'H']);
-    expect(html().querySelectorAll('.glosario__entrada').length).toBe(2);
+    expect(textos('.glosario__letra')).toEqual(['B', 'H', 'O']);
+    expect(html().querySelectorAll('.glosario__entrada').length).toBe(3);
     expect(html().textContent).toContain('Presión arterial persistentemente alta.');
   });
 
-  it('los diacríticos no abren un tramo propio: «Órgano» va bajo la O', async () => {
-    responderLanding([CATEGORIA], [{ ...TERMINO, display: 'Órgano' }]);
-    await harness.fixture.whenStable();
-
-    expect(textos('.glosario__letra')).toEqual(['O']);
-  });
-
-  it('lo que no empieza con letra cae en «#», y «#» va al final', async () => {
-    responderLanding([CATEGORIA], [
-      { ...TERMINO, conceptId: 'c-num', display: '5-hidroxitriptamina' },
-      TERMINO_B,
-    ]);
-    await harness.fixture.whenStable();
-
-    expect(textos('.glosario__letra')).toEqual(['B', '#']);
-  });
-
-  it('con un solo tramo no se dibuja el abecedario: no tendría dónde saltar', async () => {
-    responderLanding([CATEGORIA], [TERMINO]);
-    await harness.fixture.whenStable();
-
+  it('ya no hay abecedario que salte de página en página', async () => {
+    await responderLanding([TERMINO, TERMINO_B]);
     expect(html().querySelector('.glosario__abecedario')).toBeNull();
   });
 
-  it('con varios tramos el abecedario ofrece cada inicial, y cada tramo tiene su ancla', async () => {
-    responderLanding([CATEGORIA], [TERMINO, TERMINO_B]);
-    await harness.fixture.whenStable();
-
-    expect(textos('.glosario__abecedario button')).toEqual(['B', 'H']);
-    expect(html().querySelector('#glosario-letra-B')).not.toBeNull();
-    expect(html().querySelector('#glosario-letra-H')).not.toBeNull();
+  it('la lista se desplaza sólo en vertical, en su propia caja (ADR-0015, regla 6)', async () => {
+    await responderLanding();
+    const lista = html().querySelector('#glosario-lista');
+    expect(lista).not.toBeNull();
+    expect(lista?.getAttribute('role')).toBe('region');
   });
 
-  // --- Paginación ------------------------------------------------------------
-
-  /** `n` términos distintos, uno por inicial en orden (A, B, C…, y vuelta a empezar). */
-  function terminos(n: number) {
-    return Array.from({ length: n }, (_, i) => ({
-      ...TERMINO,
-      conceptId: `c-${String(i).padStart(3, '0')}`,
-      display: `${String.fromCharCode(65 + (i % 26))}término ${String(i).padStart(3, '0')}`,
-    }));
-  }
-
-  it('el cuerpo se pagina: con 30 términos la primera página muestra 12 y hay paginador', async () => {
-    responderLanding([CATEGORIA], terminos(30));
-    await harness.fixture.whenStable();
-
-    expect(html().querySelectorAll('.glosario__entrada').length).toBe(12);
-    expect(html().querySelector('app-pagination')).not.toBeNull();
-    expect(html().querySelector('app-pagination')?.textContent).toContain('1–12 de 30');
+  it('con miniatura, la tarjeta la muestra decorativa; el crédito vive en la ficha', async () => {
+    await responderLanding([{ ...TERMINO, imageThumbnailUrl: 'https://ejemplo.org/t.jpg' }]);
+    const foto = html().querySelector<HTMLImageElement>('.glosario__entrada-foto');
+    expect(foto?.getAttribute('src')).toBe('https://ejemplo.org/t.jpg');
+    expect(foto?.getAttribute('alt')).toBe('');
+    expect(foto?.getAttribute('loading')).toBe('lazy');
   });
 
-  it('ir a la última página muestra el resto, no una página llena de más', async () => {
-    responderLanding([CATEGORIA], terminos(30));
-    await harness.fixture.whenStable();
+  // --- Paginación del servidor ------------------------------------------------
+
+  it('el paginador sale del total del servidor, no de lo que vino en la página', async () => {
+    await responderLanding([TERMINO, TERMINO_B], 1200);
+
+    expect(html().querySelector('app-pagination')?.textContent).toContain('1–12 de 1200');
+    expect(html().querySelector('[data-testid="glosario-conteo"]')?.textContent).toContain(
+      (1200).toLocaleString('es'),
+    );
+  });
+
+  it('cambiar de página pide el offset que corresponde', async () => {
+    await responderLanding([TERMINO], 1200);
 
     interno<(p: number) => void>('irAPagina')(3);
     await harness.fixture.whenStable();
 
-    expect(html().querySelectorAll('.glosario__entrada').length).toBe(6);
-    expect(html().querySelector('app-pagination')?.textContent).toContain('25–30 de 30');
+    const req = pedidoDeTerminos();
+    expect(req.request.params.get('offset')).toBe('24');
+    expect(req.request.params.get('limit')).toBe('12');
+    req.flush({ items: [TERMINO_B], count: 1, limit: 12, offset: 24, total: 1200 });
   });
 
-  it('el abecedario lleva a la página donde empieza la letra, aunque no sea la actual', async () => {
-    responderLanding([CATEGORIA], terminos(30));
-    await harness.fixture.whenStable();
-
-    // Uno por inicial: la «P» es el término 15, que cae en la página 2.
-    expect(html().querySelector('#glosario-letra-P')).toBeNull();
-    const botonP = [...html().querySelectorAll<HTMLButtonElement>('.glosario__abecedario button')]
-      .find((b) => b.textContent?.trim() === 'P');
-    botonP?.click();
-    await harness.fixture.whenStable();
-
-    expect(interno<() => number>('paginaActual')()).toBe(2);
-    expect(html().querySelector('#glosario-letra-P')).not.toBeNull();
+  it('con decenas de miles de páginas no ofrece el select «ir a la página»', async () => {
+    await responderLanding([TERMINO], 12 * (MAX_PAGINAS_EN_SELECT + 1));
+    expect(interno<() => boolean>('permiteSaltar')()).toBe(false);
   });
 
   it('un filtro nuevo vuelve a la primera página', async () => {
-    responderLanding([CATEGORIA], terminos(30));
-    await harness.fixture.whenStable();
+    await responderLanding([TERMINO], 1200);
     interno<(p: number) => void>('irAPagina')(3);
     await harness.fixture.whenStable();
+    responderPagina([TERMINO], 1200, 24);
 
-    await irA({ q: 'término' });
-    responderTerminos(terminos(30));
-    await harness.fixture.whenStable();
-
-    expect(interno<() => number>('paginaActual')()).toBe(1);
-    expect(html().querySelectorAll('.glosario__entrada').length).toBe(12);
+    await irA({ q: 'hiper' });
+    const req = pedidoDeTerminos();
+    expect(req.request.params.get('offset')).toBe('0');
+    req.flush({ items: [TERMINO], count: 1, limit: 12, offset: 0, total: 1 });
+    expect(interno<() => number>('pagina')()).toBe(1);
   });
 
-  // --- Filtrar: por texto o por categoría ----------------------------------
+  // --- Filtrar ---------------------------------------------------------------
 
-  it('escribir una búsqueda pide los términos filtrados y no vuelve a pedir el corpus', async () => {
-    responderLanding();
+  it('buscar manda el texto al servidor, que lo compara sin tildes', async () => {
+    await responderLanding();
 
     await irA({ q: 'hipertensión' });
 
-    expect(interno<() => boolean>('hayFiltro')()).toBe(true);
-
     const req = pedidoDeTerminos();
     expect(req.request.params.get('q')).toBe('hipertensión');
-    expect(req.request.params.get('lang')).toBe('ES');
-    expect(req.request.params.get('includeValueSets')).toBe('true');
-    req.flush({ items: [TERMINO], count: 1, limit: 200 });
+    req.flush({ items: [TERMINO], count: 1, limit: 12, offset: 0, total: 1 });
   });
 
   it('entrar a una categoría la publica en la URL y filtra por su uuid', async () => {
-    responderLanding();
+    await responderLanding();
 
     await irA({ category: 'glossary-category-disease' });
 
     const req = pedidoDeTerminos();
-    // En la URL viaja el código —legible y compartible—; a la API va el uuid.
     expect(req.request.params.get('valueSetId')).toBe('vs-1');
-    expect(TestBed.inject(Router).url).toContain('category=glossary-category-disease');
-    req.flush({ items: [TERMINO], count: 1, limit: 200 });
-  });
-
-  it('la fila de categorías sigue visible con un filtro puesto: es el mapa', async () => {
-    // Esconderla al entrar a una categoría obligaría a volver atrás para
-    // cambiar de tema, que es lo que una enciclopedia no hace.
-    responderLanding();
-    await irA({ category: 'glossary-category-disease' });
-    responderTerminos();
+    req.flush({ items: [TERMINO], count: 1, limit: 12, offset: 0, total: 1 });
     await harness.fixture.whenStable();
 
-    const tarjetas = html().querySelectorAll('.glosario__tarjeta');
-    expect(tarjetas.length).toBe(1);
-    expect(tarjetas[0].getAttribute('aria-current')).toBe('true');
+    expect(html().querySelector('#glosario-cuerpo-titulo')?.textContent).toContain('Enfermedades');
+    expect(html().querySelector('.glosario__tarjeta--activa')).not.toBeNull();
   });
 
-  it('el texto y la categoría conviven: elegir una no borra lo que se escribió', async () => {
-    responderLanding();
+  it('con la categoría en la URL espera las facetas antes de pedir: no parpadea el glosario entero', async () => {
+    // Recarga directa sobre un enlace compartido: la categoría llega por la URL
+    // antes que su uuid.
+    responderFacetas();
+    responderPagina();
+    await irA({ category: 'glossary-category-disease' });
+    const req = pedidoDeTerminos();
+    expect(req.request.params.get('valueSetId')).toBe('vs-1');
+    req.flush({ items: [TERMINO], count: 1, limit: 12, offset: 0, total: 1 });
+  });
 
-    await irA({ q: 'hiper' });
-    responderTerminos([]);
+  it('la etiqueta filtra en el servidor, intersectada con la categoría', async () => {
+    await responderLanding();
 
-    await irA({ q: 'hiper', category: 'glossary-category-disease' });
+    await irA({ category: 'glossary-category-disease', tag: 'glossary-tag-chronic' });
 
     const req = pedidoDeTerminos();
-    expect(req.request.params.get('q')).toBe('hiper');
     expect(req.request.params.get('valueSetId')).toBe('vs-1');
-    req.flush({ items: [], count: 0, limit: 200 });
+    expect(req.request.params.get('tagValueSetId')).toBe('vs-t2');
+    req.flush({ items: [TERMINO], count: 1, limit: 12, offset: 0, total: 1 });
+  });
+
+  it('con una categoría elegida, «Etiqueta» ofrece sólo las que aparecen en ella', async () => {
+    responderFacetas({
+      ...FACETAS,
+      tags: [...FACETAS.tags, { id: 'vs-t9', internalCode: 'glossary-tag-otra', name: 'Otra', count: 5 }],
+    });
+    responderPagina();
+    await irA({ category: 'glossary-category-disease' });
+    responderPagina();
+
+    const filtros = interno<() => readonly { key: string; options: readonly { value: string }[] }[]>(
+      'filtros',
+    )();
+    const etiqueta = filtros.find((f) => f.key === 'tag')!;
+    expect(etiqueta.options.map((o) => o.value)).toEqual([
+      'glossary-tag-cardiovascular',
+      'glossary-tag-chronic',
+    ]);
+  });
+
+  it('la rejilla sigue visible con un filtro puesto: es el mapa', async () => {
+    await responderLanding();
+    await irA({ q: 'hiper' });
+    responderPagina();
+    await harness.fixture.whenStable();
+
+    expect(html().querySelectorAll('.glosario__tarjeta').length).toBe(1);
   });
 
   it('un enlace con una categoría que no existe lo dice, y no pide nada', async () => {
-    responderLanding();
+    await responderLanding();
+    await irA({ category: 'glossary-category-inventada' });
 
-    await irA({ category: 'inventada' });
-
-    // No sale ninguna petición: sin uuid no hay nada que pedir.
-    const actual = estadoDelCuerpo();
-    expect(actual.status).toBe('empty');
-    expect(actual.message).toContain('inventada');
+    expect(estadoDelCuerpo().status).toBe('empty');
+    expect(estadoDelCuerpo().message).toContain('glossary-category-inventada');
   });
 
-  it('«Ver todo el glosario» limpia categoría y texto, y no vuelve a pedir el corpus', async () => {
-    responderLanding();
-
+  it('si fallan las facetas y hay una categoría en la URL, muestra el fallo, no «no existe»', async () => {
+    pedidoDeFacetas().flush(null, { status: 503, statusText: 'Service Unavailable' });
+    responderPagina();
     await irA({ category: 'glossary-category-disease' });
-    responderTerminos();
+
+    expect(estadoDelCuerpo().status).not.toBe('empty');
+    expect(estadoDelCuerpo().status).not.toBe('ready');
+  });
+
+  it('si fallan las facetas, buscar por texto igual funciona', async () => {
+    pedidoDeFacetas().flush(null, { status: 503, statusText: 'Service Unavailable' });
+    responderPagina();
+    await irA({ q: 'hiper' });
+
+    responderPagina([TERMINO]);
+    await harness.fixture.whenStable();
+    expect(estadoDelCuerpo().status).toBe('ready');
+  });
+
+  it('«Ver todo el glosario» limpia categoría, etiqueta y texto', async () => {
+    await responderLanding();
+    await irA({ category: 'glossary-category-disease', tag: 'glossary-tag-chronic', q: 'x' });
+    responderPagina();
+    await harness.fixture.whenStable();
 
     interno<() => void>('verTodo')();
     await harness.fixture.whenStable();
+    responderPagina();
 
-    expect(interno<() => boolean>('hayFiltro')()).toBe(false);
-    const url = TestBed.inject(Router).url;
-    expect(url).not.toContain('category=');
-    expect(url).not.toContain('q=');
-    // El corpus ya está leído: volver al índice no es una lectura nueva.
-    expect(estadoDelCuerpo().status).toBe('ready');
+    expect(interno<() => boolean>('hayAlgoPuesto')()).toBe(false);
+  });
+
+  // --- Vacíos, fallos y datos parciales ---------------------------------------
+
+  it('con texto y sin resultados, el vacío nombra el texto que no encontró', async () => {
+    await responderLanding();
+    await irA({ q: 'zzz' });
+    responderPagina([], 0);
+
+    expect(estadoDelCuerpo().status).toBe('empty');
+    expect(estadoDelCuerpo().message).toContain('«zzz»');
+  });
+
+  it('una categoría con etiqueta y sin términos lo dice con los dos nombres', async () => {
+    await responderLanding();
+    await irA({ category: 'glossary-category-disease', tag: 'glossary-tag-chronic' });
+    responderPagina([], 0);
+
+    expect(estadoDelCuerpo().message).toContain('Enfermedades');
+    expect(estadoDelCuerpo().message).toContain('Crónico');
+  });
+
+  it('un glosario sin un solo término lo dice, y ofrece por dónde salir', async () => {
+    responderFacetas();
+    responderPagina([], 0);
+
+    expect(estadoDelCuerpo().status).toBe('empty');
+    expect(estadoDelCuerpo().message).toContain('todavía no tiene términos');
+  });
+
+  it('un fallo de red al leer la página se traduce a S8, no a una excepción', async () => {
+    responderFacetas();
+    pedidoDeTerminos().error(new ProgressEvent('error'));
+
+    expect(estadoDelCuerpo().status).toBe('offline');
+  });
+
+  it('una API sin `total` se lee como «lo que vino es todo lo que hay»', async () => {
+    responderFacetas();
+    pedidoDeTerminos().flush({ items: [TERMINO, TERMINO_B], count: 2, limit: 12 });
+    await harness.fixture.whenStable();
+
+    expect(interno<() => number>('total')()).toBe(2);
+  });
+
+  it('cuenta los términos sin traducir de la página y no los disimula', async () => {
+    await responderLanding([TERMINO, { ...TERMINO_B, translated: false }]);
+
+    expect(interno<() => number>('sinTraduccion')()).toBe(1);
+    expect(html().textContent).toContain('En esta página');
   });
 
   it('un término sin tags ni categoría no revienta el render (regresión del bug de búsqueda)', async () => {
-    // Reproduce el defecto real: antes del arreglo del backend, una búsqueda
-    // por texto sin `valueSetId` devolvía el concepto pelado —sin `category`,
-    // `tags`, `shortDefinition` ni `relationsCount`— y recorrer `termino.tags`
-    // tiraba `TypeError` al renderizar la entrada, dejando el cuerpo sin
-    // dibujar. El cinturón (`?? []`, en el template y en el derivado de los
-    // chips) tiene que sobrevivir a esa forma parcial aunque el backend vuelva
-    // a fallar.
-    const terminoPelado = {
-      conceptId: '22222222-2222-4222-8222-222222222222',
-      code: 'N02BE01',
-      display: 'Paracetamol',
-      slug: 'paracetamol',
-      translated: true,
-      valueSets: [],
-      category: undefined,
-      shortDefinition: undefined,
-      tags: undefined,
-      relationsCount: undefined,
-      status: 'active',
-    };
-
-    responderLanding([CATEGORIA], [terminoPelado]);
-    await harness.fixture.whenStable();
+    const parcial = { ...TERMINO, tags: undefined, category: undefined };
+    await responderLanding([parcial]);
 
     expect(html().querySelectorAll('.glosario__entrada').length).toBe(1);
-    expect(html().textContent).toContain('Paracetamol');
-    expect(html().textContent).toContain('Sin definición breve cargada.');
-  });
-
-  // --- Recorte y traducción, conservado de las rondas anteriores -----------
-
-  it('avisa cuando el corpus vino recortado por el tope', async () => {
-    responderCategorias();
-    responderTerminos([TERMINO], 201);
-    await harness.fixture.whenStable();
-
-    expect(interno<() => boolean>('recortado')()).toBe(true);
-    expect(html().textContent).toContain('Se muestran los primeros 200');
-  });
-
-  it('no avisa de recorte cuando entraron todos, ni cuando entraron justo el tope', async () => {
-    responderCategorias();
-    responderTerminos([TERMINO], 200);
-
-    expect(interno<() => boolean>('recortado')()).toBe(false);
-  });
-
-  it('cuenta los términos sin traducir y no los disimula', async () => {
-    responderLanding([CATEGORIA], [
-      TERMINO,
-      { ...TERMINO, conceptId: 'c-2', display: 'Mild', translated: false },
-    ]);
-    await harness.fixture.whenStable();
-
-    expect(interno<() => number>('sinTraduccion')()).toBe(1);
-    expect(html().textContent).toContain('traducción al castellano cargada');
-  });
-
-  // --- Vacíos, distintos según qué se estaba mirando ------------------------
-
-  it('con texto y sin resultados, el vacío nombra el texto que no encontró', async () => {
-    responderLanding();
-    await irA({ q: 'inexistente' });
-    responderTerminos([]);
-
-    const actual = estadoDelCuerpo();
-    expect(actual.status).toBe('empty');
-    expect(actual.message).toContain('inexistente');
-  });
-
-  it('una categoría sin términos lo dice por su nombre', async () => {
-    responderLanding();
-    await irA({ category: 'glossary-category-disease' });
-    responderTerminos([]);
-
-    const actual = estadoDelCuerpo();
-    expect(actual.status).toBe('empty');
-    expect(actual.message).toContain('Enfermedades');
-  });
-
-  it('un glosario sin un solo término lo dice, y ofrece por dónde salir', () => {
-    responderCategorias();
-    responderTerminos([]);
-
-    const actual = estadoDelCuerpo();
-    expect(actual.status).toBe('empty');
-    expect(actual.message).toContain('todavía no tiene términos cargados');
-  });
-
-  // --- Errores ---------------------------------------------------------------
-
-  it('un fallo de red al buscar se traduce a S8, no a una excepción', async () => {
-    responderLanding();
-    await irA({ q: 'hiper' });
-    pedidoDeTerminos().error(new ProgressEvent('error'), { status: 0, statusText: 'Unknown Error' });
-
-    expect(estadoDelCuerpo().status).toBe('offline');
-  });
-
-  it('si fallan las categorías, buscar por texto igual funciona', async () => {
-    pedidoDeCategorias().error(new ProgressEvent('error'), { status: 0, statusText: 'Unknown Error' });
-    responderTerminos();
-
-    // Las categorías son la puerta principal, pero no la única forma de llegar
-    // a un término: quedarse sin ellas no puede impedir buscar por texto.
-    await irA({ q: 'hiper' });
-    responderTerminos();
-
-    expect(estadoDelCuerpo().status).toBe('ready');
-    expect(interno<() => { status: string }>('categorias')().status).toBe('offline');
-  });
-
-  it('si falla el corpus, la fila de categorías se dibuja igual', async () => {
-    responderCategorias();
-    pedidoDeTerminos().error(new ProgressEvent('error'), { status: 0, statusText: 'Unknown Error' });
-    await harness.fixture.whenStable();
-
-    expect(estadoDelCuerpo().status).toBe('offline');
-    // El conteo de la tarjeta lo trae `listValueSets()`, no el corpus: la fila
-    // sigue siendo navegable aunque el cuerpo no haya podido leerse.
-    expect(html().querySelectorAll('.glosario__tarjeta').length).toBe(1);
-  });
-  /* ---- el filtro de etiqueta ---------------------------------------------- */
-
-  describe('filtro de etiqueta', () => {
-    it('ofrece las etiquetas del corpus, sin repetir y en orden', async () => {
-      responderLanding([CATEGORIA], [TERMINO, TERMINO_B]);
-      await harness.fixture.whenStable();
-
-      const filtros = interno<
-        () => readonly { key: string; options: readonly { value: string }[] }[]
-      >('filtros')();
-      expect(filtros.find((f) => f.key === 'tag')?.options.map((o) => o.value)).toEqual([
-        'Arritmia',
-        'Cardiovascular',
-        'Crónico',
-      ]);
-    });
-
-    it('acota lo que ya se está mostrando y no pide nada al servidor', async () => {
-      responderLanding([CATEGORIA], [TERMINO, TERMINO_B]);
-      await harness.fixture.whenStable();
-
-      await irA({ tag: 'Arritmia' });
-
-      // Sólo el segundo la lleva. Y no sale ninguna petición: `searchGlossary`
-      // no acepta etiqueta, así que el recorte lo hace la pantalla —lo
-      // comprueba `http.verify()` del afterEach—.
-      expect(interno<() => number>('cantidadVisible')()).toBe(1);
-      expect(textos('.glosario__entrada-enlace')).toEqual(['Bradicardia']);
-    });
-
-    it('si la etiqueta no deja nada, lo dice en vez de quedarse en blanco', async () => {
-      responderLanding([CATEGORIA], [TERMINO, TERMINO_B]);
-      await harness.fixture.whenStable();
-
-      await irA({ tag: 'Renal' });
-
-      // El servidor respondió bien y la lista quedó vacía por el recorte de
-      // acá: `app-view-state-host` sigue en «listo» y no dibuja ningún cartel.
-      expect(interno<() => boolean>('sinCoincidencias')()).toBe(true);
-      expect(html().textContent).toContain('Ningún término');
-    });
-
-    it('«Ver todo el glosario» también limpia la etiqueta', async () => {
-      responderLanding([CATEGORIA], [TERMINO, TERMINO_B]);
-      await irA({ tag: 'Arritmia' });
-
-      expect(interno<() => boolean>('hayAlgoPuesto')()).toBe(true);
-
-      interno<() => void>('verTodo')();
-      await harness.fixture.whenStable();
-
-      expect(interno<() => string>('etiquetaElegida')()).toBe('');
-      expect(interno<() => boolean>('hayAlgoPuesto')()).toBe(false);
-    });
   });
 });

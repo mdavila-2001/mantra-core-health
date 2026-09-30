@@ -12,13 +12,14 @@ import {
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { map } from 'rxjs';
+import { map, type Subscription } from 'rxjs';
 
 import { TerminologyClient } from '../../core/data-access/terminology/terminology.client';
 import type {
-  GlossaryTag,
+  GlossaryFacetCategory,
+  GlossaryFacets,
+  GlossaryFacetTag,
   GlossaryTerm,
-  GlossaryTermPage,
 } from '../../core/data-access/terminology/terminology.types';
 import { errorToViewState } from '../../core/http/error-to-view-state';
 import { NavigationService } from '../../core/navigation/navigation.service';
@@ -38,18 +39,7 @@ import {
   isGlossaryCategoryCode,
   GlossaryCategoryIcon,
 } from './glossary-category-icon';
-import { inicialDe, porInicial, type GrupoAlfabetico } from './glossary-index';
-
-/**
- * Tope de términos por lectura.
- *
- * La API acota a 500; 200 cubre con holgura el catálogo curado (69 términos) y
- * sigue avisando cuando algo quedó afuera — ver {@link recortado}.
- */
-const TOPE = 200;
-
-/** Tope de conjuntos de valores al leer las categorías. El catálogo tiene un puñado. */
-const TOPE_CATEGORIAS = 200;
+import { porInicial, type GrupoAlfabetico } from './glossary-index';
 
 /**
  * Tamaños de página del cuerpo. Múltiplos de 12 para que la rejilla cierre
@@ -57,7 +47,19 @@ const TOPE_CATEGORIAS = 200;
  */
 export const TAMANOS_DE_PAGINA: readonly number[] = Object.freeze([12, 24, 48]);
 
-/** Una categoría de la fila de tarjetas, con las etiquetas que de verdad usa. */
+/**
+ * Cuántas etiquetas se muestran como chips en la tarjeta de una categoría.
+ *
+ * Con el glosario ampliado una categoría puede llevar todas las etiquetas: una
+ * tarjeta con quince chips deja de ser una tarjeta. Se muestran las más
+ * frecuentes y el resto se cuenta.
+ */
+export const CHIPS_POR_TARJETA = 4;
+
+/** Tope de páginas para ofrecer el select «ir a la página»; ver `permiteSaltar`. */
+export const MAX_PAGINAS_EN_SELECT = 200;
+
+/** Una categoría de la rejilla, con las etiquetas que de verdad usan sus términos. */
 export interface TarjetaDeCategoria {
   readonly id: string;
   readonly internalCode: string;
@@ -66,50 +68,50 @@ export interface TarjetaDeCategoria {
   readonly cantidad: number;
   /** Cuántos de sus términos están en castellano, cuando la API lo dice. */
   readonly enCastellano?: number;
-  /** Las etiquetas clínicas presentes en los términos de esta categoría. */
+  /** Las etiquetas más frecuentes de la categoría, para los chips. */
   readonly etiquetas: readonly string[];
+  /** Cuántas etiquetas más lleva y no entran como chip. */
+  readonly etiquetasDeMas: number;
 }
 
 /**
- * Glosario médico — enciclopedia.
+ * Glosario médico — enciclopedia, **con carga bajo demanda**.
  *
  * ## Qué es esta pantalla
  *
  * Un diccionario médico que se **lee**, no un buscador que hay que interrogar.
  * Las tres piezas, en el orden en que se leen:
  *
- * 1. **El buscador**, arriba y ancho, como en cualquier enciclopedia.
- * 2. **La rejilla de categorías**: una tarjeta por categoría clínica, con su
- *    ícono, su conteo y **chips con las etiquetas que sus términos realmente
- *    llevan** — no una lista fija, sino las que salen del propio corpus. Antes
- *    era una fila con desplazamiento lateral que recortaba tarjetas contra el
- *    borde; el propietario pidió una rejilla (2026-09-13).
- * 3. **El cuerpo**: las definiciones, en tarjetas y **paginadas** en el
- *    cliente. Sin filtro son **todas**; con filtro, las que coinciden. Cada
- *    página se agrupa por inicial, y el abecedario salta a la página donde
- *    empieza cada letra.
+ * 1. **La barra**, arriba: buscador (con la espera de 300 ms del propio
+ *    `app-filter-bar`) y los filtros «Categoría» y «Etiqueta».
+ * 2. **La rejilla de categorías**: una tarjeta por categoría, con su ícono,
+ *    su conteo y chips con las etiquetas que sus términos realmente llevan.
+ * 3. **El cuerpo**: las definiciones, en tarjetas, agrupadas por inicial y
+ *    **paginadas por el servidor**, con desplazamiento sólo vertical y el
+ *    paginador abajo a la derecha (ADR-0015, reglas 5–7).
  *
- * La tabla de resultados que traía la ronda anterior se retiró: el propietario
- * pidió una enciclopedia al estilo Wikipedia, y un artículo no se hojea en una
- * grilla de celdas. La ficha de cada término (`glossary-term.ts`) es el
- * artículo; esto es el índice.
+ * ## Por qué ya no carga el corpus entero (2026-09-30)
  *
- * ## Por qué carga el corpus entero
+ * Hasta acá la pantalla pedía hasta 200 términos de una vez y derivaba de ahí
+ * los chips de cada categoría y el filtro por etiqueta. Con el glosario en
+ * castellano de cientos de miles de términos (CIMA/AEMPS, CIE-10-ES,
+ * MedlinePlus) eso deja de existir:
  *
- * Sin filtro, el cuerpo **son** todos los términos, así que la lectura que
- * los trae no es un extra. Y esa misma lectura es la que permite decir qué
- * etiquetas tiene cada categoría: `listValueSets()` da el conteo, pero no de
- * qué habla lo que hay adentro. Con filtro se pide aparte, porque el filtro lo
- * resuelve el backend (`q` y `valueSetId`) y no este componente.
+ * - **Los conteos y los chips** salen de `readGlossaryFacets()`, una consulta
+ *   agregada del servidor. La rejilla se pinta sin traer un solo término.
+ * - **El cuerpo** es una página: `limit` y `offset` viajan al servidor, que
+ *   devuelve también el `total` con el que se arma el paginador.
+ * - **La etiqueta** también filtra en el servidor (`tagValueSetId`): filtrar
+ *   en el navegador la página 3 dejaba páginas medio vacías.
+ * - **El abecedario que saltaba de página en página se retiró**: saber en qué
+ *   página empieza la «M» exige conocer el corpus entero. Las iniciales siguen
+ *   encabezando los tramos de la página.
  *
  * ## El ruteo: query param, no ruta hija
  *
- * «Entrar a una categoría» viaja como `?category=<internalCode>` en la misma
- * ruta `/glossary`, igual que `?q=`. Es el patrón ya establecido acá y en
- * `terminology-catalog.ts`: un único componente que lee sus filtros de la URL
- * con `queryParamMap` y `queryParamsHandling: 'merge'`. El código y no el uuid
- * porque un enlace compartido tiene que seguir sirviendo cuando el uuid del
- * value set ya no sea el mismo.
+ * Categoría, etiqueta y texto viajan como `?category=`, `?tag=` y `?q=` en la
+ * misma ruta `/glossary`, por su código interno y no por uuid: un enlace
+ * compartido tiene que seguir sirviendo cuando el uuid del value set cambie.
  */
 @Component({
   selector: 'app-glossary',
@@ -137,13 +139,14 @@ export class Glossary {
 
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
 
-  protected readonly categorias = signal<ViewState<readonly GlossaryTag[]>>(loading());
+  /** Las facetas: categorías con su conteo, sus etiquetas, y las etiquetas del glosario. */
+  protected readonly facetas = signal<ViewState<GlossaryFacets>>(loading());
 
-  /** El corpus entero, que es a la vez el cuerpo sin filtro y la fuente de los chips. */
-  private readonly corpus = signal<ViewState<readonly GlossaryTerm[]>>(loading());
+  /** La página de términos que se está mirando. */
+  protected readonly cuerpo = signal<ViewState<readonly GlossaryTerm[]>>(loading());
 
-  /** Los términos que coinciden con el filtro. Sin filtro no se pide: es el corpus. */
-  private readonly filtrados = signal<ViewState<readonly GlossaryTerm[]>>(loading());
+  /** Cuántos términos coinciden en total con lo que se está mirando, no sólo en la página. */
+  protected readonly total = signal(0);
 
   /** El texto buscado, leído de la URL. Vacío es «sin filtro», no «buscar nada». */
   protected readonly busqueda = toSignal(
@@ -157,110 +160,36 @@ export class Glossary {
     { initialValue: '' },
   );
 
-  /**
-   * La etiqueta clínica por la que se está acotando, si hay alguna.
-   *
-   * Es el segundo filtro de la barra. Se resuelve **acá y no en el servidor**
-   * porque `searchGlossary` no acepta etiqueta: acota lo que ya se está
-   * mostrando, que es exactamente lo que los chips de la tarjeta prometen al
-   * decir de qué habla una categoría.
-   */
-  protected readonly etiquetaElegida = toSignal(
+  /** La etiqueta por la que se está acotando, por su código interno. */
+  protected readonly etiquetaCodigo = toSignal(
     this.route.queryParamMap.pipe(map((params) => params.get('tag') ?? '')),
     { initialValue: '' },
   );
 
-  /** Si hay algo que **el servidor** tenga que filtrar. */
-  protected readonly hayFiltro = computed(
-    () => this.busqueda() !== '' || this.categoriaCodigo() !== '',
-  );
-
-  /** Si hay algo puesto, incluida la etiqueta, que se resuelve en el cliente. */
+  /** Si hay algo puesto: texto, categoría o etiqueta. */
   protected readonly hayAlgoPuesto = computed(
-    () => this.hayFiltro() || this.etiquetaElegida() !== '',
-  );
-
-  /**
-   * Cuántos términos declaró la API, que puede ser más de los que caben en el
-   * tope. Van separados —y no en una sola señal— por el mismo motivo que
-   * `corpus` y `filtrados`: el efecto que limpia el filtro corre **después**
-   * de que el corpus respondió, y con una sola señal le borraba el contero
-   * recién traído. El resultado era un recorte silencioso en la landing, que
-   * es exactamente lo que el aviso existe para impedir.
-   */
-  private readonly totalDelCorpus = signal<number | null>(null);
-  private readonly totalFiltrado = signal<number | null>(null);
-
-  /** El conteo que manda: el del filtro si lo hay, el del corpus si no. */
-  private readonly total = computed<number | null>(() =>
-    this.hayFiltro() ? this.totalFiltrado() : this.totalDelCorpus(),
-  );
-
-  protected readonly recortado = computed(() => {
-    const total = this.total();
-    return total !== null && total > TOPE;
-  });
-
-  protected readonly tope = TOPE;
-
-  /** El estado que pinta el cuerpo: el corpus sin filtro, los resultados con él. */
-  protected readonly cuerpo = computed<ViewState<readonly GlossaryTerm[]>>(() =>
-    this.hayFiltro() ? this.filtrados() : this.corpus(),
+    () => this.busqueda() !== '' || this.categoriaCodigo() !== '' || this.etiquetaCodigo() !== '',
   );
 
   protected readonly cargando = computed(() => this.cuerpo().status === 'loading');
 
-  /** Las categorías ya leídas, o vacío mientras no lo estén. */
-  private readonly listaDeCategorias = computed<readonly GlossaryTag[]>(() => {
-    const estado = this.categorias();
-    return estado.status === 'ready' ? estado.data : [];
-  });
-
-  /** El corpus ya leído, o vacío mientras no lo esté. */
-  private readonly listaDelCorpus = computed<readonly GlossaryTerm[]>(() => {
-    const estado = this.corpus();
-    return estado.status === 'ready' ? estado.data : [];
+  /** Las facetas ya leídas, o `null` mientras no lo estén (o si fallaron). */
+  private readonly facetasLeidas = computed<GlossaryFacets | null>(() => {
+    const estado = this.facetas();
+    return estado.status === 'ready' ? estado.data : null;
   });
 
   /**
-   * Las etiquetas clínicas presentes en cada categoría, sacadas del corpus.
+   * Las categorías del glosario con algo adentro, en el orden de la rejilla.
    *
-   * Son los chips de la tarjeta. Se derivan y no se declaran: una lista fija
-   * quedaría desactualizada en cuanto el catálogo sume un término, y mostraría
-   * una etiqueta que no lleva ninguno.
-   */
-  private readonly etiquetasPorCategoria = computed<ReadonlyMap<string, readonly string[]>>(() => {
-    const porCategoria = new Map<string, Set<string>>();
-    for (const termino of this.listaDelCorpus()) {
-      const codigo = termino.category?.internalCode;
-      if (codigo === undefined) continue;
-      const acumulado = porCategoria.get(codigo) ?? new Set<string>();
-      // `?? []` no es defensa por las dudas: antes del arreglo del backend del
-      // 2026-09-02 una búsqueda sin `valueSetId` devolvía el concepto pelado,
-      // sin `tags`, y recorrerlo tiraba `TypeError`. Ver el spec.
-      for (const etiqueta of termino.tags ?? []) acumulado.add(etiqueta);
-      porCategoria.set(codigo, acumulado);
-    }
-    return new Map([...porCategoria].map(([codigo, etiquetas]) => [codigo, [...etiquetas].sort()]));
-  });
-
-  /**
-   * Las categorías del glosario con algo adentro, en el orden de la fila.
-   *
-   * `listValueSets()` lee **todo** el catálogo de conjuntos de valores de la
-   * plataforma —género, estados administrativos, lo que sea—, no sólo el
-   * glosario: sin el filtro por `glossary-category-*` la fila mostraría enums
-   * que no tienen nada de médico. Y una categoría con cero términos es un clic
+   * El filtro por `glossary-category-*` es la segunda barrera: las facetas ya
+   * vienen acotadas al glosario, pero un código que la pantalla no conoce no
+   * tiene ícono ni lugar en el orden. Una categoría con cero términos es un clic
    * a una pantalla vacía.
    */
-  protected readonly tarjetas = computed<readonly TarjetaDeCategoria[]>(() => {
-    const etiquetas = this.etiquetasPorCategoria();
-    return [
-      ...this.listaDeCategorias().filter(
-        (categoria) =>
-          isGlossaryCategoryCode(categoria.internalCode) && (categoria.memberCount ?? 0) > 0,
-      ),
-    ]
+  protected readonly tarjetas = computed<readonly TarjetaDeCategoria[]>(() =>
+    [...(this.facetasLeidas()?.categories ?? [])]
+      .filter((categoria) => isGlossaryCategoryCode(categoria.internalCode) && categoria.count > 0)
       .sort(
         (a, b) => glossaryCategoryOrder(a.internalCode) - glossaryCategoryOrder(b.internalCode),
       )
@@ -269,27 +198,39 @@ export class Glossary {
         internalCode: categoria.internalCode,
         name: categoria.name,
         ...(categoria.description === undefined ? {} : { description: categoria.description }),
-        cantidad: categoria.memberCount ?? 0,
-        ...(categoria.translatedMemberCount === undefined
+        cantidad: categoria.count,
+        ...(categoria.translatedCount === undefined
           ? {}
-          : { enCastellano: categoria.translatedMemberCount }),
-        etiquetas: etiquetas.get(categoria.internalCode) ?? [],
-      }));
+          : { enCastellano: categoria.translatedCount }),
+        etiquetas: categoria.tags.slice(0, CHIPS_POR_TARJETA).map((etiqueta) => etiqueta.name),
+        etiquetasDeMas: Math.max(0, categoria.tags.length - CHIPS_POR_TARJETA),
+      })),
+  );
+
+  /** La categoría activa resuelta contra las facetas, o `null` si no hay (o no existe). */
+  protected readonly categoriaActiva = computed<GlossaryFacetCategory | null>(() => {
+    const codigo = this.categoriaCodigo();
+    if (codigo === '') return null;
+    return this.facetasLeidas()?.categories.find((c) => c.internalCode === codigo) ?? null;
+  });
+
+  /** La etiqueta activa resuelta contra las facetas, o `null`. */
+  protected readonly etiquetaActiva = computed<GlossaryFacetTag | null>(() => {
+    const codigo = this.etiquetaCodigo();
+    if (codigo === '') return null;
+    return this.facetasLeidas()?.tags.find((t) => t.internalCode === codigo) ?? null;
   });
 
   /**
    * Los dos filtros de la barra: la categoría y la etiqueta clínica.
    *
-   * Las opciones salen del corpus y no de una lista escrita acá: una etiqueta
-   * fija quedaría desactualizada en cuanto el catálogo sume un término, y
-   * ofrecer una que ningún término lleva es prometer un filtro vacío.
+   * Las opciones salen de las facetas y no de una lista escrita acá: ofrecer
+   * una etiqueta que ningún término lleva es prometer un filtro vacío. Con una
+   * categoría elegida, «Etiqueta» ofrece sólo las que aparecen en ella.
    */
   protected readonly filtros = computed<readonly FilterDef[]>(() => {
-    const etiquetas = new Set<string>();
-    for (const termino of this.listaDelCorpus()) {
-      for (const etiqueta of termino.tags ?? []) etiquetas.add(etiqueta);
-    }
-
+    const categoria = this.categoriaActiva();
+    const etiquetas = categoria?.tags ?? this.facetasLeidas()?.tags ?? [];
     return [
       {
         key: 'category',
@@ -304,63 +245,37 @@ export class Glossary {
         key: 'tag',
         label: 'Etiqueta',
         options: [...etiquetas]
-          .sort((a, b) => a.localeCompare(b, 'es'))
-          .map((etiqueta) => ({ value: etiqueta, label: etiqueta })),
-        unavailableReason: 'Los términos cargados no traen etiquetas.',
+          .sort((a, b) => a.name.localeCompare(b.name, 'es'))
+          .map((etiqueta) => ({ value: etiqueta.internalCode, label: etiqueta.name })),
+        unavailableReason: 'No hay etiquetas cargadas en el glosario.',
       },
     ];
   });
-
-  /** La categoría activa resuelta contra el catálogo, o `null` si no hay filtro. */
-  protected readonly categoriaActiva = computed<GlossaryTag | null>(() => {
-    const codigo = this.categoriaCodigo();
-    if (codigo === '') return null;
-    return this.listaDeCategorias().find((c) => c.internalCode === codigo) ?? null;
-  });
-
-  /** Los términos que se están mostrando, ya leídos y ya acotados por etiqueta. */
-  private readonly visibles = computed<readonly GlossaryTerm[]>(() => {
-    const estado = this.cuerpo();
-    const lista = estado.status === 'ready' ? estado.data : [];
-    const etiqueta = this.etiquetaElegida();
-    if (etiqueta === '') return lista;
-    // `?? []` por lo mismo que en `etiquetasPorCategoria`: hubo una época en la
-    // que el backend devolvía el concepto pelado, sin `tags`.
-    return lista.filter((termino) => (termino.tags ?? []).includes(etiqueta));
-  });
-
-  /** Todos los tramos por inicial, antes de paginar: de acá sale el abecedario. */
-  private readonly tramos = computed<readonly GrupoAlfabetico[]>(() =>
-    porInicial(this.visibles()),
-  );
-
-  /** Los términos en orden de índice —por tramo y dentro de él—, listos para cortar en páginas. */
-  private readonly ordenados = computed<readonly GlossaryTerm[]>(() =>
-    this.tramos().flatMap((tramo) => tramo.terminos),
-  );
-
-  /** Las iniciales con términos en **todo** el resultado, no sólo en la página. */
-  protected readonly iniciales = computed<readonly string[]>(() =>
-    this.tramos().map((tramo) => tramo.letra),
-  );
 
   protected readonly tamanosDePagina = TAMANOS_DE_PAGINA;
 
   /** Términos por página. */
   protected readonly porPagina = signal(TAMANOS_DE_PAGINA[0]);
 
-  /** La página pedida, 1-based. Puede quedar fuera de rango: manda {@link paginaActual}. */
-  private readonly paginaPedida = signal(1);
+  /** La página que se está mirando, 1-based. */
+  protected readonly pagina = signal(1);
 
-  protected readonly paginaActual = computed(() => {
-    const paginas = Math.max(1, Math.ceil(this.ordenados().length / this.porPagina()));
-    return Math.min(paginas, Math.max(1, this.paginaPedida()));
-  });
+  /**
+   * Si el paginador ofrece el select «ir a la página».
+   *
+   * Con el glosario entero son decenas de miles de páginas: un `<select>` con
+   * 25 000 opciones es una pantalla trabada, no un atajo. Hasta
+   * {@link MAX_PAGINAS_EN_SELECT} se ofrece; por encima quedan los botones
+   * numerados, y lo que acorta el camino es buscar o elegir una categoría.
+   */
+  protected readonly permiteSaltar = computed(
+    () => Math.ceil(this.total() / this.porPagina()) <= MAX_PAGINAS_EN_SELECT,
+  );
 
-  /** Los términos de la página que se está mirando. */
+  /** Los términos de la página, ya leídos. */
   private readonly enPagina = computed<readonly GlossaryTerm[]>(() => {
-    const desde = (this.paginaActual() - 1) * this.porPagina();
-    return this.ordenados().slice(desde, desde + this.porPagina());
+    const estado = this.cuerpo();
+    return estado.status === 'ready' ? estado.data : [];
   });
 
   /** El cuerpo de la enciclopedia: los términos de la página, agrupados por inicial. */
@@ -368,71 +283,52 @@ export class Glossary {
     porInicial(this.enPagina()),
   );
 
-  /** Las iniciales que caen en la página actual, para marcarlas en el abecedario. */
-  protected readonly inicialesEnPagina = computed<ReadonlySet<string>>(
-    () => new Set(this.grupos().map((grupo) => grupo.letra)),
-  );
-
-  protected readonly cantidadVisible = computed(() => this.visibles().length);
+  /** Desde qué número de término va la página, para el aviso «del 25 al 48 de 1 200». */
+  protected readonly desde = computed(() => (this.pagina() - 1) * this.porPagina() + 1);
+  protected readonly hasta = computed(() => this.desde() + this.enPagina().length - 1);
 
   /**
-   * La etiqueta dejó la lista en cero.
+   * Cuántos términos de **esta página** se muestran sin traducir.
    *
-   * Es un vacío que **no existe del lado del servidor**: la lectura trajo
-   * términos y el recorte lo hizo esta pantalla, así que `app-view-state-host`
-   * sigue en «listo» y no dibuja ningún cartel. Sin esto, combinar «Anatomía»
-   * con «Crónico» dejaba el cuerpo literalmente en blanco, sin una línea que
-   * dijera por qué.
-   */
-  protected readonly sinCoincidencias = computed(
-    () =>
-      this.cuerpo().status === 'ready' &&
-      this.etiquetaElegida() !== '' &&
-      this.cantidadVisible() === 0,
-  );
-
-  /**
-   * Cuántas de las entradas visibles se muestran sin traducir.
-   *
-   * Se cuenta y se dice en pantalla en vez de disimularlo. Un término sin
-   * designación en castellano se muestra igual —con su nombre original— porque
-   * dejarlo en blanco o inventarle uno es peor; lo que no puede pasar es que se
-   * confunda con uno traducido.
+   * Se dice en pantalla en vez de disimularlo. Un término sin designación en
+   * castellano se muestra igual —con su nombre original— porque dejarlo en
+   * blanco o inventarle uno es peor; lo que no puede pasar es que se confunda
+   * con uno traducido. Es de la página y no del total: el total no lo sabe el
+   * servidor sin contarlo, y decir «en esta página» es exacto.
    */
   protected readonly sinTraduccion = computed(
-    () => this.visibles().filter((termino) => termino.translated === false).length,
+    () => this.enPagina().filter((termino) => termino.translated === false).length,
   );
 
+  /** La lectura en curso, para cancelarla si llega otro pedido antes. */
+  private lectura: Subscription | null = null;
+
   constructor() {
-    this.cargarCategorias();
-    this.cargarCorpus();
+    this.cargarFacetas();
 
     // Un filtro nuevo es otro resultado: quedarse en la página 4 de la búsqueda
     // anterior deja a la persona en un lugar que no eligió, o en ninguno.
     effect(() => {
       this.busqueda();
       this.categoriaCodigo();
-      this.etiquetaElegida();
-      untracked(() => this.paginaPedida.set(1));
+      this.etiquetaCodigo();
+      this.porPagina();
+      untracked(() => this.pagina.set(1));
     });
 
     effect(() => {
       const texto = this.busqueda();
-      const codigo = this.categoriaCodigo();
-      // Se declaran las dependencias para que el efecto vuelva a correr cuando
-      // las categorías terminan de llegar: con `category=` en la URL, no se
-      // puede resolver a su uuid antes de tenerlas.
-      const categorias = this.listaDeCategorias();
-      const categoriasCargando = this.categorias().status === 'loading';
+      const categoria = this.categoriaCodigo();
+      const etiqueta = this.etiquetaCodigo();
+      const pagina = this.pagina();
+      const porPagina = this.porPagina();
+      // Con una categoría o etiqueta en la URL no se puede pedir nada hasta
+      // tener su uuid, así que el efecto depende de las facetas **sólo
+      // entonces**: sin filtro, la llegada de las facetas no es motivo para
+      // volver a pedir la misma página.
+      const facetas = categoria !== '' || etiqueta !== '' ? this.facetas() : null;
 
-      untracked(() => {
-        if (texto === '' && codigo === '') {
-          // Sin filtro el cuerpo es el corpus, con su propio conteo.
-          this.totalFiltrado.set(null);
-          return;
-        }
-        this.cargarFiltrados(texto, codigo, categorias, categoriasCargando);
-      });
+      untracked(() => this.cargarPagina({ texto, categoria, etiqueta, pagina, porPagina, facetas }));
     });
   }
 
@@ -443,45 +339,31 @@ export class Glossary {
 
   /** Cambia de página y lleva la lectura al principio del cuerpo, no al pie donde quedó. */
   protected irAPagina(pagina: number): void {
-    this.paginaPedida.set(pagina);
-    this.desplazarA('glosario-cuerpo-titulo');
-  }
-
-  /**
-   * Salta a una inicial. Con paginación el tramo puede estar en otra página,
-   * así que primero se va a la página donde empieza y, ya dibujada, se
-   * desplaza hasta él. Un `href="#…"` no alcanza: el ancla no existe hasta
-   * cambiar de página, y con `<base href>` navegaría fuera de la ruta.
-   */
-  protected irALetra(letra: string): void {
-    const indice = this.ordenados().findIndex((termino) => inicialDe(termino.display) === letra);
-    if (indice < 0) return;
-    this.paginaPedida.set(Math.floor(indice / this.porPagina()) + 1);
-    this.desplazarA(`glosario-letra-${letra}`);
-  }
-
-  private desplazarA(id: string): void {
+    this.pagina.set(pagina);
     afterNextRender(
-      () => this.document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' }),
+      () => {
+        this.document.getElementById('glosario-lista')?.scrollTo({ top: 0 });
+        this.document
+          .getElementById('glosario-cuerpo-titulo')
+          ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      },
       { injector: this.injector },
     );
   }
 
   protected recargar(): void {
-    if (this.hayFiltro()) {
-      this.cargarFiltrados(
-        this.busqueda(),
-        this.categoriaCodigo(),
-        this.listaDeCategorias(),
-        this.categorias().status === 'loading',
-      );
-      return;
-    }
-    this.cargarCorpus();
+    this.cargarPagina({
+      texto: this.busqueda(),
+      categoria: this.categoriaCodigo(),
+      etiqueta: this.etiquetaCodigo(),
+      pagina: this.pagina(),
+      porPagina: this.porPagina(),
+      facetas: this.facetas(),
+    });
   }
 
-  protected recargarCategorias(): void {
-    this.cargarCategorias();
+  protected recargarFacetas(): void {
+    this.cargarFacetas();
   }
 
   /**
@@ -500,133 +382,147 @@ export class Glossary {
     });
   }
 
-  private cargarCategorias(): void {
-    this.categorias.set(loading());
+  private cargarFacetas(): void {
+    this.facetas.set(loading());
 
-    this.terminology.listValueSets({ limit: TOPE_CATEGORIAS }).subscribe({
-      next: (pagina) => {
-        this.categorias.set(
-          pagina.items.length > 0
-            ? ready(pagina.items)
+    this.terminology.readGlossaryFacets().subscribe({
+      next: (facetas) => {
+        this.facetas.set(
+          facetas.categories.length > 0
+            ? ready(facetas)
             : empty(
                 { label: 'Volver al panel', route: '/dashboard' },
-                'Todavía no hay categorías cargadas en esta organización.',
+                'Todavía no hay categorías cargadas en el glosario.',
               ),
         );
       },
       error: (error: unknown) => {
-        this.categorias.set(errorToViewState<readonly GlossaryTag[]>(error));
+        this.facetas.set(errorToViewState<GlossaryFacets>(error));
       },
     });
   }
 
-  private cargarCorpus(): void {
-    this.corpus.set(loading());
+  private cargarPagina(pedido: {
+    readonly texto: string;
+    readonly categoria: string;
+    readonly etiqueta: string;
+    readonly pagina: number;
+    readonly porPagina: number;
+    readonly facetas: ViewState<GlossaryFacets> | null;
+  }): void {
+    const { texto, categoria, etiqueta, pagina, porPagina, facetas } = pedido;
+    const necesitaFacetas = categoria !== '' || etiqueta !== '';
 
-    this.terminology.searchGlossary({ limit: TOPE }).subscribe({
-      next: (pagina) => {
-        this.totalDelCorpus.set(pagina.count);
-        this.corpus.set(
-          pagina.items.length > 0
-            ? ready(pagina.items)
-            : empty(
-                { label: 'Volver al panel', route: '/dashboard' },
-                'El glosario todavía no tiene términos cargados en esta organización.',
-              ),
-        );
-      },
-      error: (error: unknown) => {
-        this.corpus.set(errorToViewState<readonly GlossaryTerm[]>(error));
-      },
-    });
-  }
-
-  private cargarFiltrados(
-    texto: string,
-    codigoDeCategoria: string,
-    categorias: readonly GlossaryTag[],
-    categoriasCargando: boolean,
-  ): void {
-    // Con una categoría en la URL no se puede pedir nada hasta saber su uuid.
-    // Se espera en `loading` en vez de pedir sin filtro: mostrar el catálogo
-    // entero y después recortarlo haría parpadear resultados que nadie pidió.
-    if (codigoDeCategoria !== '' && categoriasCargando) {
-      this.filtrados.set(loading());
+    // Con una categoría o etiqueta en la URL no se puede pedir nada hasta saber
+    // su uuid. Se espera en `loading` en vez de pedir sin filtro: mostrar el
+    // glosario entero y después recortarlo haría parpadear resultados que nadie
+    // pidió.
+    if (necesitaFacetas && facetas?.status === 'loading') {
+      this.cuerpo.set(loading());
       return;
     }
 
-    const categoria =
-      codigoDeCategoria === ''
-        ? undefined
-        : categorias.find((c) => c.internalCode === codigoDeCategoria);
+    // Si las facetas fallaron, la categoría pedida no se puede resolver: se
+    // muestra el mismo fallo (con su reintento) en vez de afirmar que la
+    // categoría no existe.
+    if (
+      necesitaFacetas &&
+      facetas !== null &&
+      facetas.status !== 'ready' &&
+      facetas.status !== 'stale' &&
+      facetas.status !== 'empty'
+    ) {
+      this.total.set(0);
+      this.cuerpo.set(facetas);
+      return;
+    }
 
-    if (codigoDeCategoria !== '' && categoria === undefined) {
-      // El enlace nombra una categoría que el catálogo no tiene. Se dice cuál,
+    const leidas = facetas?.status === 'ready' ? facetas.data : null;
+    const conjuntoCategoria =
+      categoria === '' ? undefined : leidas?.categories.find((c) => c.internalCode === categoria);
+    const conjuntoEtiqueta =
+      etiqueta === '' ? undefined : leidas?.tags.find((t) => t.internalCode === etiqueta);
+
+    if (categoria !== '' && conjuntoCategoria === undefined) {
+      // El enlace nombra una categoría que el glosario no tiene. Se dice cuál,
       // que es lo único útil que se puede decir.
-      this.totalFiltrado.set(null);
-      this.filtrados.set(
+      this.total.set(0);
+      this.cuerpo.set(
         empty(
           { label: 'Ver todo el glosario', route: '/glossary' },
-          `No hay ninguna categoría llamada «${codigoDeCategoria}».`,
+          `No hay ninguna categoría llamada «${categoria}».`,
+        ),
+      );
+      return;
+    }
+    if (etiqueta !== '' && conjuntoEtiqueta === undefined) {
+      this.total.set(0);
+      this.cuerpo.set(
+        empty(
+          { label: 'Ver todo el glosario', route: '/glossary' },
+          `No hay ninguna etiqueta llamada «${etiqueta}».`,
         ),
       );
       return;
     }
 
-    this.filtrados.set(loading());
-
-    this.terminology
+    this.cuerpo.set(loading());
+    this.lectura?.unsubscribe();
+    this.lectura = this.terminology
       .searchGlossary({
-        limit: TOPE,
+        limit: porPagina,
+        offset: (pagina - 1) * porPagina,
         ...(texto === '' ? {} : { query: texto }),
-        ...(categoria === undefined ? {} : { valueSetId: categoria.id }),
+        ...(conjuntoCategoria === undefined ? {} : { valueSetId: conjuntoCategoria.id }),
+        ...(conjuntoEtiqueta === undefined ? {} : { tagValueSetId: conjuntoEtiqueta.id }),
       })
       .subscribe({
-        next: (pagina) => {
-          this.totalFiltrado.set(pagina.count);
-          this.filtrados.set(this.estadoDe(pagina, texto, categoria));
+        next: (respuesta) => {
+          // Una API anterior no publica `total`: lo que vino es todo lo que hay.
+          this.total.set(respuesta.total ?? respuesta.items.length);
+          this.cuerpo.set(
+            respuesta.items.length > 0
+              ? ready(respuesta.items)
+              : this.vacio(texto, conjuntoCategoria, conjuntoEtiqueta),
+          );
         },
         error: (error: unknown) => {
-          this.totalFiltrado.set(null);
-          this.filtrados.set(errorToViewState<readonly GlossaryTerm[]>(error));
+          this.total.set(0);
+          this.cuerpo.set(errorToViewState<readonly GlossaryTerm[]>(error));
         },
       });
   }
 
-  /** De la página al estado. Los vacíos nombran qué se buscó y por dónde salir. */
-  private estadoDe(
-    pagina: GlossaryTermPage,
+  /** El vacío nombra qué se buscó y por dónde salir. */
+  private vacio(
     texto: string,
-    categoria: GlossaryTag | undefined,
+    categoria: GlossaryFacetCategory | undefined,
+    etiqueta: GlossaryFacetTag | undefined,
   ): ViewState<readonly GlossaryTerm[]> {
-    if (pagina.items.length > 0) {
-      return ready(pagina.items);
-    }
-
     const salida = { label: 'Ver todo el glosario', route: '/glossary' };
+    const donde = [categoria?.name, etiqueta?.name].filter((n): n is string => n !== undefined);
+    const lugar = donde.length === 0 ? '' : ` de «${donde.join('» con la etiqueta «')}»`;
 
-    if (texto !== '' && categoria !== undefined) {
-      return empty(salida, `Ningún término de «${categoria.name}» coincide con «${texto}».`);
+    if (texto !== '') {
+      return empty(salida, `Ningún término${lugar} coincide con «${texto}».`);
     }
-    if (categoria !== undefined) {
-      return empty(salida, `La categoría «${categoria.name}» todavía no tiene términos.`);
+    if (donde.length > 0) {
+      return empty(salida, `Todavía no hay términos${lugar}.`);
     }
-    return empty(salida, `Ningún término coincide con «${texto}».`);
+    return empty(
+      { label: 'Volver al panel', route: '/dashboard' },
+      'El glosario todavía no tiene términos cargados.',
+    );
   }
-
-  /** La inicial de un término, para el ancla del índice alfabético. */
-  protected readonly inicial = inicialDe;
 
   /**
    * Las etiquetas de un término, siempre recorribles.
    *
-   * El tipo declara `tags` obligatorio y el template, por eso, marcaría un
-   * `?? []` como removible (NG8102). Pero el tipo describe la respuesta
-   * **arreglada**: antes del arreglo del backend del 2026-09-02 una búsqueda
-   * por texto sin `valueSetId` devolvía el concepto pelado, y recorrer
-   * `tags` tiraba `TypeError` dejando el cuerpo sin dibujar. El cinturón vive
-   * acá —donde es una afirmación sobre el dato real y no ruido del compilador—
-   * y el template llama a esto. Ver el spec, que reproduce esa forma parcial.
+   * El tipo declara `tags` obligatorio, pero antes del arreglo del backend del
+   * 2026-09-02 una búsqueda por texto sin `valueSetId` devolvía el concepto
+   * pelado, y recorrer `tags` tiraba `TypeError` dejando el cuerpo sin dibujar.
+   * El cinturón vive acá —donde es una afirmación sobre el dato real— y el
+   * template llama a esto.
    */
   protected etiquetasDe(termino: GlossaryTerm): readonly string[] {
     return termino.tags ?? [];

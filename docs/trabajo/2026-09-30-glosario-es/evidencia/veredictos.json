@@ -1,0 +1,172 @@
+[
+  {
+    "nombre": "[1440] la rejilla muestra conteos",
+    "cond": true,
+    "detalle": " 2106 términos | 976 términos | 86.797 términos "
+  },
+  {
+    "nombre": "[1440] el paginador conoce el total del servidor",
+    "cond": true,
+    "detalle": "1–12 de 184508"
+  },
+  {
+    "nombre": "[1440] glosario: ocupa ≥ 85 % del área",
+    "cond": true,
+    "detalle": "93.3 %"
+  },
+  {
+    "nombre": "[1440] glosario: centrado (holguras ≤ 2 px de diferencia)",
+    "cond": true,
+    "detalle": "40.0 / 40.0 px"
+  },
+  {
+    "nombre": "[1440] glosario: el bloque no se sale de la pantalla",
+    "cond": true,
+    "detalle": "0 px (página: 0 px)"
+  },
+  {
+    "nombre": "[1440] glosario: fondo blanco",
+    "cond": true,
+    "detalle": "rgb(255, 255, 255)"
+  },
+  {
+    "nombre": "[1440] la página 2 viene del servidor",
+    "cond": true,
+    "detalle": "13–24 de 86797"
+  },
+  {
+    "nombre": "[1440] la lista se desplaza sólo en vertical",
+    "cond": true,
+    "detalle": "{\"overflowY\":\"auto\",\"overflowX\":\"hidden\",\"lateral\":0}"
+  },
+  {
+    "nombre": "[1440] la ficha muestra la foto",
+    "cond": true,
+    "detalle": ""
+  },
+  {
+    "nombre": "[1440] con atribución y licencia visibles",
+    "cond": true,
+    "detalle": "AEMPS · CIMA — MERCAPTOPURINA ASPEN 50 MG COMPRIMIDOS (nº reg. 34565), foto de forma farmacéutica — licencia AEMPS/CIMA — reproducción autorizada citando la fuente · ver en la fuente"
+  },
+  {
+    "nombre": "[1440] ficha: ocupa ≥ 85 % del área",
+    "cond": true,
+    "detalle": "93.3 %"
+  },
+  {
+    "nombre": "[1440] ficha: centrado (holguras ≤ 2 px de diferencia)",
+    "cond": true,
+    "detalle": "40.0 / 40.0 px"
+  },
+  {
+    "nombre": "[1440] ficha: el bloque no se sale de la pantalla",
+    "cond": true,
+    "detalle": "0 px (página: 0 px)"
+  },
+  {
+    "nombre": "[1440] ficha: fondo blanco",
+    "cond": true,
+    "detalle": "rgb(255, 255, 255)"
+  },
+  {
+    "nombre": "[1440] la ficha técnica se cita",
+    "cond": true,
+    "detalle": "Fuente: CIMA (AEMPS), ficha técnica nº 34565, consultado el 30/09/2026. Ver la ficha técnica"
+  },
+  {
+    "nombre": "[1440] sin errores de página",
+    "cond": true,
+    "detalle": ""
+  },
+  {
+    "nombre": "[1440] no baja el glosario entero",
+    "cond": true,
+    "detalle": "10 archivos de shards pedidos"
+  },
+  {
+    "nombre": "[390] la rejilla muestra conteos",
+    "cond": true,
+    "detalle": " 2106 términos | 976 términos | 86.797 términos "
+  },
+  {
+    "nombre": "[390] el paginador conoce el total del servidor",
+    "cond": true,
+    "detalle": "1–12 de 184508"
+  },
+  {
+    "nombre": "[390] glosario: ocupa ≥ 85 % del área",
+    "cond": true,
+    "detalle": "93.8 %"
+  },
+  {
+    "nombre": "[390] glosario: centrado (holguras ≤ 2 px de diferencia)",
+    "cond": true,
+    "detalle": "12.0 / 12.0 px"
+  },
+  {
+    "nombre": "[390] glosario: el bloque no se sale de la pantalla",
+    "cond": true,
+    "detalle": "0 px (página: 23 px)"
+  },
+  {
+    "nombre": "[390] glosario: fondo blanco",
+    "cond": true,
+    "detalle": "rgb(255, 255, 255)"
+  },
+  {
+    "nombre": "[390] la página 2 viene del servidor",
+    "cond": true,
+    "detalle": "13–24 de 86797"
+  },
+  {
+    "nombre": "[390] la lista se desplaza sólo en vertical",
+    "cond": true,
+    "detalle": "{\"overflowY\":\"auto\",\"overflowX\":\"hidden\",\"lateral\":0}"
+  },
+  {
+    "nombre": "[390] la ficha muestra la foto",
+    "cond": true,
+    "detalle": ""
+  },
+  {
+    "nombre": "[390] con atribución y licencia visibles",
+    "cond": true,
+    "detalle": "AEMPS · CIMA — MERCAPTOPURINA ASPEN 50 MG COMPRIMIDOS (nº reg. 34565), foto de forma farmacéutica — licencia AEMPS/CIMA — reproducción autorizada citando la fuente · ver en la fuente"
+  },
+  {
+    "nombre": "[390] ficha: ocupa ≥ 85 % del área",
+    "cond": true,
+    "detalle": "93.8 %"
+  },
+  {
+    "nombre": "[390] ficha: centrado (holguras ≤ 2 px de diferencia)",
+    "cond": true,
+    "detalle": "12.0 / 12.0 px"
+  },
+  {
+    "nombre": "[390] ficha: el bloque no se sale de la pantalla",
+    "cond": true,
+    "detalle": "0 px (página: 23 px)"
+  },
+  {
+    "nombre": "[390] ficha: fondo blanco",
+    "cond": true,
+    "detalle": "rgb(255, 255, 255)"
+  },
+  {
+    "nombre": "[390] la ficha técnica se cita",
+    "cond": true,
+    "detalle": "Fuente: CIMA (AEMPS), ficha técnica nº 34565, consultado el 30/09/2026. Ver la ficha técnica"
+  },
+  {
+    "nombre": "[390] sin errores de página",
+    "cond": true,
+    "detalle": ""
+  },
+  {
+    "nombre": "[390] no baja el glosario entero",
+    "cond": true,
+    "detalle": "10 archivos de shards pedidos"
+  }
+]

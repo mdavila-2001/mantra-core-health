@@ -6,12 +6,10 @@
 
 <div class="glosario">
   <!-- Buscador y filtros en el MISMO renglón, que es la disciplina compartida
-       de los listados: el texto a la izquierda y, al lado, «Categoría» y
-       «Etiqueta». La rejilla de abajo sigue siendo el mapa de la enciclopedia
-       —se entra a una categoría tocando su tarjeta—, pero eso no es un filtro
-       a la vista: quien llega buscando «lo de cardiología entre las
-       enfermedades» no tenía dónde decirlo. El estado vive en la URL, así que
-       el desplegable y la tarjeta son dos caminos al mismo `?category=`. -->
+       de los listados (ADR-0015, regla 5): el texto a la izquierda —con la
+       espera de 300 ms del propio `app-filter-bar`— y, al lado, «Categoría» y
+       «Etiqueta». El estado vive en la URL, así que el desplegable y la tarjeta
+       son dos caminos al mismo `?category=`. -->
   <app-filter-bar
     class="glosario__buscador"
     [filters]="filtros()"
@@ -23,12 +21,12 @@
 
   <!-- ── Rejilla de categorías ────────────────────────────────────────────
        Arriba de todo y siempre visible, también con un filtro puesto: es el
-       mapa de la enciclopedia, y esconderlo al entrar a una categoría obliga a
-       volver atrás para cambiar de tema. -->
+       mapa de la enciclopedia. Conteos y chips salen de las facetas, una
+       consulta agregada del servidor: la rejilla no trae un solo término. -->
   <section class="glosario__categorias" aria-labelledby="glosario-categorias-titulo">
     <h2 class="glosario__titulo" id="glosario-categorias-titulo">Categorías</h2>
 
-    <app-view-state-host [state]="categorias()" (retry)="recargarCategorias()">
+    <app-view-state-host [state]="facetas()" (retry)="recargarFacetas()">
       @if (tarjetas().length === 0) {
         <p class="glosario__aviso" role="status">
           El glosario todavía no tiene categorías con términos cargados.
@@ -40,11 +38,10 @@
               <a
                 class="glosario__tarjeta"
                 [class.glosario__tarjeta--activa]="tarjeta.internalCode === categoriaCodigo()"
-                [attr.aria-current]="
-                  tarjeta.internalCode === categoriaCodigo() ? 'true' : null
-                "
+                [attr.aria-current]="tarjeta.internalCode === categoriaCodigo() ? 'true' : null"
                 [routerLink]="['/glossary']"
-                [queryParams]="{ category: tarjeta.internalCode }"
+                [queryParams]="{ category: tarjeta.internalCode, tag: null }"
+                queryParamsHandling="merge"
                 [attr.title]="tarjeta.description ?? null"
               >
                 <span class="glosario__tarjeta-cabeza">
@@ -57,26 +54,28 @@
                   <span class="glosario__tarjeta-texto">
                     <span class="glosario__nombre">{{ tarjeta.name }}</span>
                     <span class="glosario__dato">
-                      {{ tarjeta.cantidad }}
+                      {{ tarjeta.cantidad.toLocaleString('es') }}
                       {{ tarjeta.cantidad === 1 ? 'término' : 'términos' }}
                       <!-- Si hay términos que sólo tienen su nombre en inglés, el
-                           total solo engaña: «Enfermedades» sumaba 1 918
-                           categorías ICD-10-CM sin traducir. -->
+                           total solo engaña: «Enfermedades» suma las categorías
+                           ICD-10-CM sin traducir. -->
                       @if (tarjeta.enCastellano !== undefined && tarjeta.enCastellano < tarjeta.cantidad) {
-                        · {{ tarjeta.enCastellano }} en castellano
+                        · {{ tarjeta.enCastellano.toLocaleString('es') }} en castellano
                       }
                     </span>
                   </span>
                 </span>
 
-                <!-- Los chips no son decoración: son las etiquetas clínicas
-                     que de verdad llevan los términos de esta categoría,
-                     derivadas del corpus. Dicen de qué habla la categoría
-                     antes de entrar. -->
+                <!-- Los chips no son decoración: son las etiquetas que de
+                     verdad llevan los términos de esta categoría, las más
+                     frecuentes primero, contadas por el servidor. -->
                 @if (tarjeta.etiquetas.length > 0) {
                   <span class="glosario__chips">
                     @for (etiqueta of tarjeta.etiquetas; track etiqueta) {
                       <app-chip size="sm" [label]="etiqueta">{{ etiqueta }}</app-chip>
+                    }
+                    @if (tarjeta.etiquetasDeMas > 0) {
+                      <span class="glosario__chips-mas">+{{ tarjeta.etiquetasDeMas }}</span>
                     }
                   </span>
                 }
@@ -88,7 +87,7 @@
     </app-view-state-host>
   </section>
 
-  <!-- ── Cuerpo: las definiciones ─────────────────────────────────────────── -->
+  <!-- ── Cuerpo: las definiciones, una página del servidor ──────────────── -->
   <section class="glosario__cuerpo" aria-labelledby="glosario-cuerpo-titulo">
     <div class="glosario__encabezado">
       <h2 class="glosario__titulo-cuerpo" id="glosario-cuerpo-titulo">
@@ -98,6 +97,9 @@
           Resultados de «{{ busqueda() }}»
         } @else {
           Todos los términos
+        }
+        @if (etiquetaActiva(); as etiqueta) {
+          <span class="glosario__titulo-etiqueta">· {{ etiqueta.name }}</span>
         }
       </h2>
 
@@ -112,24 +114,17 @@
       <p class="glosario__filtro">{{ descripcion }}</p>
     }
 
-    @if (cantidadVisible() > 0) {
-      <p class="glosario__aviso" role="status">
-        {{ cantidadVisible() }}
-        {{ cantidadVisible() === 1 ? 'definición' : 'definiciones' }}
-      </p>
-    }
-
-    <!-- Un recorte silencioso haría creer que la categoría o la búsqueda tiene
-         exactamente estos términos. La lectura no publica cursor, así que lo
-         único honesto es decirlo y sugerir acotar el texto. -->
-    @if (recortado()) {
-      <p class="glosario__aviso" role="status">
-        Se muestran los primeros {{ tope }} términos. Afiná el texto para ver el resto.
+    @if (cuerpo().status === 'ready' && total() > 0) {
+      <p class="glosario__aviso" role="status" data-testid="glosario-conteo">
+        {{ desde().toLocaleString('es') }}–{{ hasta().toLocaleString('es') }} de
+        {{ total().toLocaleString('es') }}
+        {{ total() === 1 ? 'definición' : 'definiciones' }}
       </p>
     }
 
     @if (sinTraduccion() > 0) {
       <p class="glosario__aviso" role="status">
+        En esta página,
         {{ sinTraduccion() }}
         {{ sinTraduccion() === 1 ? 'término todavía no tiene' : 'términos todavía no tienen' }}
         traducción al castellano cargada. Se
@@ -138,130 +133,137 @@
     }
 
     <app-view-state-host [state]="cuerpo()" (retry)="recargar()">
-      <!-- Índice alfabético: lo que hace hojeable una lista larga. Con pocos
-           términos no aporta nada y no se dibuja. Son botones y no anclas: el
-           tramo puede estar en otra página, y hay que ir a ella antes de
-           desplazarse. -->
-      @if (iniciales().length > 1) {
-        <nav class="glosario__abecedario" aria-label="Índice alfabético">
-          @for (letra of iniciales(); track letra) {
-            <button
-              type="button"
-              class="glosario__letra-enlace"
-              [class.glosario__letra-enlace--en-pagina]="inicialesEnPagina().has(letra)"
-              [attr.aria-label]="'Ir a la letra ' + letra"
-              (click)="irALetra(letra)"
-            >
-              {{ letra }}
-            </button>
-          }
-        </nav>
-      }
+      <!-- Desplazamiento sólo vertical (ADR-0015, regla 6): la lista tiene su
+           propio alto y el paginador queda siempre a la vista debajo. -->
+      <div
+        class="glosario__lista"
+        id="glosario-lista"
+        tabindex="0"
+        role="region"
+        aria-labelledby="glosario-cuerpo-titulo"
+      >
+        @for (grupo of grupos(); track grupo.letra) {
+          <section
+            class="glosario__tramo"
+            [attr.aria-labelledby]="'glosario-letra-' + grupo.letra"
+          >
+            <h3 class="glosario__letra" [id]="'glosario-letra-' + grupo.letra">
+              {{ grupo.letra }}
+            </h3>
 
-      @if (sinCoincidencias()) {
-        <p class="glosario__aviso" role="status" data-testid="glosario-sin-coincidencias">
-          Ningún término de lo que estás mirando lleva la etiqueta «{{ etiquetaElegida() }}».
-          Probá con otra o quitá el filtro.
-        </p>
-      }
+            <ul class="glosario__entradas">
+              @for (termino of grupo.terminos; track termino.conceptId) {
+                <li class="glosario__entrada-celda">
+                  <!-- Toda la tarjeta abre la ficha, pero el control sigue
+                       siendo el enlace del título (se estira con ::after). -->
+                  <app-card class="glosario__entrada">
+                    <div card-header class="glosario__entrada-cabeza">
+                      @if (termino.imageThumbnailUrl; as miniatura) {
+                        <!-- La miniatura es decorativa en la lista (el nombre
+                             ya está escrito al lado): alt vacío. El crédito y
+                             la licencia se muestran en la ficha, junto a la
+                             imagen entera. -->
+                        <img
+                          class="glosario__entrada-foto"
+                          [src]="miniatura"
+                          alt=""
+                          loading="lazy"
+                          decoding="async"
+                          width="320"
+                          height="180"
+                        />
+                      }
 
-      @for (grupo of grupos(); track grupo.letra) {
-        <section class="glosario__tramo" [attr.aria-labelledby]="'glosario-letra-' + grupo.letra">
-          <h3 class="glosario__letra" [id]="'glosario-letra-' + grupo.letra">{{ grupo.letra }}</h3>
+                      @if (termino.category; as categoria) {
+                        <p class="glosario__entrada-categoria">
+                          <span class="glosario__insignia glosario__insignia--chica">
+                            <app-glossary-category-icon
+                              class="glosario__icono"
+                              [category]="categoria.internalCode"
+                            />
+                          </span>
+                          {{ categoria.name }}
+                        </p>
+                      }
 
-          <ul class="glosario__entradas">
-            @for (termino of grupo.terminos; track termino.conceptId) {
-              <li class="glosario__entrada-celda">
-                <!-- Toda la tarjeta abre la ficha, pero el control sigue siendo
-                     el enlace del título (se estira con ::after): así el lector
-                     de pantalla oye un enlace con nombre y no un «botón» mudo. -->
-                <app-card class="glosario__entrada">
-                  <div card-header class="glosario__entrada-cabeza">
-                    @if (termino.category; as categoria) {
-                      <p class="glosario__entrada-categoria">
-                        <span class="glosario__insignia glosario__insignia--chica">
-                          <app-glossary-category-icon
-                            class="glosario__icono"
-                            [category]="categoria.internalCode"
-                          />
-                        </span>
-                        {{ categoria.name }}
-                      </p>
-                    }
-
-                    <h4 class="glosario__entrada-titulo">
-                      <a
-                        class="glosario__entrada-enlace"
-                        [routerLink]="['/glossary', termino.conceptId]"
-                        >{{ termino.display }}</a
-                      >
-                    </h4>
-
-                    @if (termino.translated === false) {
-                      <app-chip size="sm" variant="warning" label="Sin traducción al castellano">
-                        Nombre original
-                      </app-chip>
-                    }
-                  </div>
-
-                  @if (termino.shortDefinition) {
-                    <p class="glosario__entrada-definicion">{{ termino.shortDefinition }}</p>
-                  } @else {
-                    <p class="glosario__sin-datos">Sin definición breve cargada.</p>
-                  }
-
-                  <div card-footer class="glosario__entrada-pie">
-                    @if (etiquetasDe(termino).length > 0) {
-                      <p class="glosario__entrada-clasificacion">
-                        @for (etiqueta of etiquetasDe(termino); track etiqueta) {
-                          <app-chip size="sm" [label]="etiqueta">{{ etiqueta }}</app-chip>
-                        }
-                      </p>
-                    }
-
-                    <p class="glosario__entrada-meta">
-                      <span class="glosario__entrada-relaciones">
-                        @if (termino.relationsCount > 0) {
-                          {{ termino.relationsCount }}
-                          {{
-                            termino.relationsCount === 1
-                              ? 'término relacionado'
-                              : 'términos relacionados'
-                          }}
-                        }
-                      </span>
-                      <span class="glosario__entrada-leer" aria-hidden="true">
-                        Ver ficha
-                        <svg
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          stroke-width="2"
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
+                      <h4 class="glosario__entrada-titulo">
+                        <a
+                          class="glosario__entrada-enlace"
+                          [routerLink]="['/glossary', termino.conceptId]"
+                          >{{ termino.display }}</a
                         >
-                          <polyline points="9 18 15 12 9 6" />
-                        </svg>
-                      </span>
-                    </p>
-                  </div>
-                </app-card>
-              </li>
-            }
-          </ul>
-        </section>
-      }
+                      </h4>
 
-      @if (cantidadVisible() > 0) {
-        <app-pagination
-          class="glosario__paginacion"
-          [totalItems]="cantidadVisible()"
-          [page]="paginaActual()"
-          (pageChange)="irAPagina($event)"
-          [(pageSize)]="porPagina"
-          [pageSizeOptions]="tamanosDePagina"
-        />
-      }
+                      @if (termino.translated === false) {
+                        <app-chip size="sm" variant="warning" label="Sin traducción al castellano">
+                          Nombre original
+                        </app-chip>
+                      }
+                    </div>
+
+                    @if (termino.shortDefinition) {
+                      <p class="glosario__entrada-definicion">{{ termino.shortDefinition }}</p>
+                    } @else {
+                      <p class="glosario__sin-datos">Sin definición breve cargada.</p>
+                    }
+
+                    <div card-footer class="glosario__entrada-pie">
+                      @if (etiquetasDe(termino).length > 0) {
+                        <p class="glosario__entrada-clasificacion">
+                          @for (etiqueta of etiquetasDe(termino); track etiqueta) {
+                            <app-chip size="sm" [label]="etiqueta">{{ etiqueta }}</app-chip>
+                          }
+                        </p>
+                      }
+
+                      <p class="glosario__entrada-meta">
+                        <span class="glosario__entrada-relaciones">
+                          @if (termino.relationsCount > 0) {
+                            {{ termino.relationsCount }}
+                            {{
+                              termino.relationsCount === 1
+                                ? 'término relacionado'
+                                : 'términos relacionados'
+                            }}
+                          }
+                        </span>
+                        <span class="glosario__entrada-leer" aria-hidden="true">
+                          Ver ficha
+                          <svg
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                          >
+                            <polyline points="9 18 15 12 9 6" />
+                          </svg>
+                        </span>
+                      </p>
+                    </div>
+                  </app-card>
+                </li>
+              }
+            </ul>
+          </section>
+        }
+      </div>
     </app-view-state-host>
+
+    <!-- Abajo a la derecha, con números y selects (ADR-0015, regla 7). Fuera
+         del host a propósito: mientras llega la página siguiente el paginador
+         no desaparece ni salta de lugar. -->
+    @if (total() > 0) {
+      <app-pagination
+        class="glosario__paginacion"
+        [totalItems]="total()"
+        [page]="pagina()"
+        (pageChange)="irAPagina($event)"
+        [(pageSize)]="porPagina"
+        [pageSizeOptions]="tamanosDePagina"
+        [showPageJump]="permiteSaltar()"
+      />
+    }
   </section>
 </div>

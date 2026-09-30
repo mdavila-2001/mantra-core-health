@@ -198,10 +198,7 @@ export interface GlossaryTag {
   readonly defaultVersionId: string | null;
   /** Cuántos términos tiene. Es el conteo que se muestra junto a la etiqueta. */
   readonly memberCount?: number;
-  /**
-   * Cuántos de esos términos están en castellano. Lo publica el simulador; la
-   * API real todavía no, y sin él la tarjeta muestra sólo el total.
-   */
+  /** Cuántos de sus términos están en castellano, cuando la API lo dice. */
   readonly translatedMemberCount?: number;
 }
 
@@ -327,6 +324,10 @@ export interface GlossaryImage {
   readonly attribution: string;
   readonly alt: string;
   readonly status: string;
+  /** Miniatura del mismo activo, para no bajar el original de entrada. */
+  readonly thumbnailSource?: string;
+  /** Página de la fuente donde la imagen se publica con su licencia (Wikimedia Commons, CIMA…). */
+  readonly sourcePage?: string;
 }
 
 /** Identidad compartida entre el resultado de búsqueda y la ficha completa. */
@@ -358,23 +359,77 @@ export interface GlossaryTerm extends GlossaryTermBase {
   /** Cuántas relaciones clínicas tiene. La lista completa vive en la ficha. */
   readonly relationsCount: number;
   readonly status: GlossaryTermStatus;
+  /** Miniatura de la imagen del término, si tiene una. El crédito viaja en la ficha. */
+  readonly imageThumbnailUrl?: string;
 }
 
-/** Una página de términos del glosario. */
+/**
+ * Una página de términos del glosario.
+ *
+ * `count` es lo que vino en la página, como en el resto de las búsquedas;
+ * `total` es cuántos coinciden en todo el glosario. La API lo publica desde que
+ * el glosario pagina en el servidor (2026-09-30); una respuesta sin `total`
+ * —una API anterior— se lee como «lo que vino es todo lo que hay».
+ */
 export interface GlossaryTermPage {
   readonly items: readonly GlossaryTerm[];
   readonly count: number;
   readonly limit: number;
+  readonly offset?: number;
+  readonly total?: number;
 }
 
-/** Qué se le pide al glosario: texto, categoría o las dos cosas. */
+/** Qué se le pide al glosario: texto, categoría, etiqueta y qué página. */
 export interface GlossaryQuery {
-  /** Texto a buscar. */
+  /** Texto a buscar. El servidor lo compara sin tildes ni mayúsculas. */
   readonly query?: string;
-  /** Categoría por la que se está navegando. */
+  /** Categoría (o conjunto del glosario) por la que se está navegando. */
   readonly valueSetId?: string;
-  /** Tope de términos. */
+  /** Una etiqueta que el término también tiene que llevar. */
+  readonly tagValueSetId?: string;
+  /** Tope de términos: el tamaño de la página. */
   readonly limit?: number;
+  /** Cuántos saltear: `(página − 1) × tamaño`. */
+  readonly offset?: number;
+}
+
+/** Una etiqueta del glosario con cuántos términos publicados la llevan. */
+export interface GlossaryFacetTag {
+  readonly id: string;
+  readonly internalCode: string;
+  readonly name: string;
+  readonly count: number;
+}
+
+/** Una categoría con su conteo y las etiquetas que de verdad aparecen adentro. */
+export interface GlossaryFacetCategory {
+  readonly id: string;
+  readonly internalCode: string;
+  readonly name: string;
+  readonly description?: string;
+  readonly count: number;
+  /**
+   * Cuántos de sus términos están en castellano. Una categoría puede sumar
+   * miles de nombres oficiales en inglés (las categorías ICD-10-CM): el total
+   * solo engaña.
+   */
+  readonly translatedCount?: number;
+  /** De la más frecuente a la menos. */
+  readonly tags: readonly GlossaryFacetTag[];
+}
+
+/**
+ * Las facetas del glosario: lo que pinta la rejilla sin traer un término.
+ *
+ * Sale de `GET /terminology/value-sets/$glossary-facets`, una consulta
+ * agregada. Antes la rejilla derivaba conteos y chips recorriendo el corpus
+ * entero que la pantalla cargaba; con cientos de miles de términos eso ya no
+ * se carga.
+ */
+export interface GlossaryFacets {
+  readonly categories: readonly GlossaryFacetCategory[];
+  readonly tags: readonly GlossaryFacetTag[];
+  readonly total: number;
 }
 
 /** Otra forma de nombrar el mismo término. */
@@ -401,8 +456,14 @@ export interface GlossaryTermDetail extends GlossaryTermBase {
   readonly synonyms: readonly GlossarySynonym[];
   readonly category: GlossaryCategoryDetailRef | null;
   readonly tags: readonly GlossaryCategoryDetailRef[];
-  readonly clinicalDefinition: GlossaryLocalizedText;
-  readonly plainSummary: GlossaryLocalizedText;
+  /**
+   * Opcionales porque la API los omite cuando el término no los tiene cargados
+   * (`ConceptDetailDto`, `@ApiPropertyOptional`): una categoría CIE-10-ES trae
+   * código y nombre oficial, y ningún texto se escribe sin fuente. La ficha lo
+   * dice en pantalla; ver `GlossaryTerm.motivoSinDefinicion`.
+   */
+  readonly clinicalDefinition?: GlossaryLocalizedText;
+  readonly plainSummary?: GlossaryLocalizedText;
   readonly relations: readonly GlossaryRelation[];
   /** Ausente en todos los términos sembrados hoy — ver {@link GlossaryImage}. */
   readonly image?: GlossaryImage;

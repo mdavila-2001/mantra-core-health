@@ -422,8 +422,8 @@ describe('TerminologyClient', () => {
 
     expect(ficha?.category?.valueSetId).toBe('vs-1');
     expect(ficha?.tags[0]?.name).toBe('Cardiovascular');
-    expect(ficha?.clinicalDefinition.text).toBe('Presión arterial persistentemente alta.');
-    expect(ficha?.plainSummary.translated).toBe(true);
+    expect(ficha?.clinicalDefinition?.text).toBe('Presión arterial persistentemente alta.');
+    expect(ficha?.plainSummary?.translated).toBe(true);
     expect(ficha?.relations).toEqual([
       {
         type: 'DISEASE',

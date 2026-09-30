@@ -1,4 +1,6 @@
 import { HttpHeaders } from '@angular/common/http';
+import { existsSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 
 import { registrarTerminologia } from './terminology.handlers';
 import {
@@ -10,6 +12,7 @@ import {
   VERIFICACION_DX,
 } from '../fixtures/conceptos';
 import { valorDeTexto } from '../../data-access/terminology/terminology.types';
+import { AlmacenDeGlosario, ArchivoAusente, type LectorDeArchivos } from '../glossary-shards';
 import { MockRouter, type MockMethod } from '../mock-router';
 import { buscarUsuario } from '../mock-session';
 
@@ -24,10 +27,16 @@ describe('handlers de terminología: propiedades de concepto (frecuencia por def
   const router = new MockRouter();
   registrarTerminologia(router);
 
-  function call<T>(method: MockMethod, path: string, query = new URLSearchParams()): T {
+  // Los manejadores de conceptos contestan con una promesa desde que el
+  // glosario se lee bajo demanda (`glossary-shards.ts`): se espera siempre.
+  async function call<T>(
+    method: MockMethod,
+    path: string,
+    query = new URLSearchParams(),
+  ): Promise<T> {
     const match = router.match(method, path);
     if (match === null) throw new Error(`No existe ${method} ${path}`);
-    return match.handler({
+    return (await match.handler({
       method,
       path,
       params: match.params,
@@ -35,11 +44,11 @@ describe('handlers de terminología: propiedades de concepto (frecuencia por def
       body: null,
       headers: new HttpHeaders(),
       user: null,
-    }) as T;
+    })) as T;
   }
 
-  it('la ficha de un medicamento CON la propiedad la trae, legible con valorDeTexto', () => {
-    const ficha = call<{ properties: Readonly<Record<string, unknown>> }>(
+  it('la ficha de un medicamento CON la propiedad la trae, legible con valorDeTexto', async () => {
+    const ficha = await call<{ properties: Readonly<Record<string, unknown>> }>(
       'GET',
       `/terminology/concepts/${MEDICAMENTO['MED-PARACETAMOL']}`,
     );
@@ -48,8 +57,8 @@ describe('handlers de terminología: propiedades de concepto (frecuencia por def
     );
   });
 
-  it('la ficha de un medicamento SIN la propiedad no la trae, y la lectura defensiva no rompe', () => {
-    const ficha = call<{ properties: Readonly<Record<string, unknown>> }>(
+  it('la ficha de un medicamento SIN la propiedad no la trae, y la lectura defensiva no rompe', async () => {
+    const ficha = await call<{ properties: Readonly<Record<string, unknown>> }>(
       'GET',
       `/terminology/concepts/${MEDICAMENTO['MED-LOSARTAN']}`,
     );
@@ -57,8 +66,8 @@ describe('handlers de terminología: propiedades de concepto (frecuencia por def
     expect(valorDeTexto(ficha.properties, 'default_frequency')).toBeUndefined();
   });
 
-  it('inválido — un value_json mal formado (número) se lee como ausente, sin lanzar', () => {
-    const ficha = call<{ properties: Readonly<Record<string, unknown>> }>(
+  it('inválido — un value_json mal formado (número) se lee como ausente, sin lanzar', async () => {
+    const ficha = await call<{ properties: Readonly<Record<string, unknown>> }>(
       'GET',
       `/terminology/concepts/${MEDICAMENTO['MED-INSULINA-NPH']}`,
     );
@@ -67,8 +76,8 @@ describe('handlers de terminología: propiedades de concepto (frecuencia por def
     expect(valorDeTexto(ficha.properties, 'default_frequency')).toBeUndefined();
   });
 
-  it('la lista/búsqueda de conceptos NO trae `properties` — sólo la ficha, como en el contrato real', () => {
-    const { items } = call<{ items: readonly Record<string, unknown>[] }>(
+  it('la lista/búsqueda de conceptos NO trae `properties` — sólo la ficha, como en el contrato real', async () => {
+    const { items } = await call<{ items: readonly Record<string, unknown>[] }>(
       'GET',
       '/terminology/concepts',
       new URLSearchParams({ ids: MEDICAMENTO['MED-PARACETAMOL']! }),
@@ -394,13 +403,15 @@ describe('contrato C0: expansión de conceptos clínicos', () => {
   const router = new MockRouter();
   registrarTerminologia(router);
 
-  function expand(code: string): readonly { conceptId: string; code: string; display: string }[] {
+  async function expand(
+    code: string,
+  ): Promise<readonly { conceptId: string; code: string; display: string }[]> {
     const valueSet = conjuntoPorCodigo(code);
     if (valueSet === undefined) throw new Error('No existe el conjunto ' + code);
     const path = '/terminology/value-sets/' + valueSet.id + '/$expand';
     const match = router.match('GET', path);
     if (match === null) throw new Error('No existe GET ' + path);
-    const result = match.handler({
+    const result = (await match.handler({
       method: 'GET',
       path,
       params: match.params,
@@ -408,7 +419,7 @@ describe('contrato C0: expansión de conceptos clínicos', () => {
       body: null,
       headers: new HttpHeaders(),
       user: null,
-    }) as { items: readonly { conceptId: string; code: string; display: string }[] };
+    })) as { items: readonly { conceptId: string; code: string; display: string }[] };
     return result.items;
   }
 
@@ -416,17 +427,17 @@ describe('contrato C0: expansión de conceptos clínicos', () => {
     ['VS_ACTIVITY_TYPE', 'ACT-FOLLOW-UP', 'Reconsulta', ACTIVIDAD['ACT-FOLLOW-UP']],
     ['VS_APPOINTMENT_TYPE', 'APT-RECONSULTA', 'Reconsulta', TIPO_CITA['APT-RECONSULTA']],
     ['VS_SERVICE_REQUEST_CATEGORY', 'SRQ-OTHER', 'Otro', CATEGORIA_ORDEN['SRQ-OTHER']],
-  ])('expande %s con un único %s, su etiqueta y su ID estable', (valueSet, code, display, id) => {
-    const items = expand(valueSet!);
+  ])('expande %s con un único %s, su etiqueta y su ID estable', async (valueSet, code, display, id) => {
+    const items = await expand(valueSet!);
     expect(id).toEqual(expect.any(String));
     expect(items.filter((item) => item.code === code)).toEqual([
       expect.objectContaining({ conceptId: id, code, display }),
     ]);
-    expect(expand(valueSet!)).toEqual(items);
+    expect(await expand(valueSet!)).toEqual(items);
   });
 
-  it('conserva todos los estados de verificación diagnóstica publicados', () => {
-    const items = expand('VS_CONDITION_VERIFICATION');
+  it('conserva todos los estados de verificación diagnóstica publicados', async () => {
+    const items = await expand('VS_CONDITION_VERIFICATION');
     for (const [code, conceptId] of Object.entries(VERIFICACION_DX)) {
       expect(items).toContainEqual(expect.objectContaining({ code, conceptId }));
     }
@@ -438,15 +449,27 @@ describe('contrato C0: expansión de conceptos clínicos', () => {
  * ortografía correcta («tiña», «uñas», «riñón») y la búsqueda no distingue
  * tildes ni la ñ; y lo que está en castellano va antes que las categorías
  * ICD-10-CM que sólo tienen el título en inglés.
+ *
+ * Desde la carga bajo demanda el glosario sale de los shards: estas pruebas
+ * leen la semilla commiteada (`public/glossary-seed/`) con un lector de disco,
+ * igual que `glossary-shards.spec.ts`, y buscan cada término por su id estable.
  */
 describe('búsqueda del glosario: tildes y castellano primero', () => {
+  const PUBLICO = join(process.cwd(), 'public');
+  const leerSemilla: LectorDeArchivos = (ruta) => {
+    const archivo = join(PUBLICO, ruta);
+    if (ruta.startsWith('glossary-data/') || !existsSync(archivo)) {
+      return Promise.reject(new ArchivoAusente(ruta));
+    }
+    return Promise.resolve(JSON.parse(readFileSync(archivo, 'utf8')) as unknown);
+  };
   const router = new MockRouter();
-  registrarTerminologia(router);
+  registrarTerminologia(router, new AlmacenDeGlosario(leerSemilla));
 
-  function get<T>(path: string, query: Record<string, string> = {}): T {
+  async function get<T>(path: string, query: Record<string, string> = {}): Promise<T> {
     const match = router.match('GET', path);
     if (match === null) throw new Error(`No existe GET ${path}`);
-    return match.handler({
+    return (await match.handler({
       method: 'GET',
       path,
       params: match.params,
@@ -454,11 +477,11 @@ describe('búsqueda del glosario: tildes y castellano primero', () => {
       body: null,
       headers: new HttpHeaders(),
       user: null,
-    }) as T;
+    })) as T;
   }
 
   interface Entrada {
-    readonly slug: string;
+    readonly conceptId: string;
     readonly translated: boolean;
   }
   interface Conjunto {
@@ -468,54 +491,57 @@ describe('búsqueda del glosario: tildes y castellano primero', () => {
     readonly translatedMemberCount?: number;
   }
 
-  const buscar = (q: string, extra: Record<string, string> = {}) =>
-    get<{ items: readonly Entrada[]; count: number }>('/terminology/concepts', {
-      includeValueSets: 'true',
-      limit: '500',
-      q,
-      ...extra,
-    }).items.map((item) => item.slug);
+  const TINA_CORPORAL = '46fe0752-651f-408c-ade2-d37afe1d009e';
+  const ONICOMICOSIS = '4e0b6652-f0f5-4db0-a456-819e4e525f02';
+  const PIELONEFRITIS_AGUDA = 'ee652cb9-a81f-4f25-a660-498c1882fe2e';
+
+  const buscar = async (q: string) =>
+    (
+      await get<{ items: readonly Entrada[] }>('/terminology/concepts', {
+        includeValueSets: 'true',
+        limit: '500',
+        q,
+      })
+    ).items.map((item) => item.conceptId);
 
   it.each([
-    ['tina', 'tina-corporal'],
-    ['tiña', 'tina-corporal'],
-    ['unas con hongos', 'onicomicosis'],
-    ['uñas con hongos', 'onicomicosis'],
-    ['infeccion de rinon', 'pielonefritis-aguda'],
-    ['INFECCIÓN DE RIÑÓN', 'pielonefritis-aguda'],
-  ])('«%s» encuentra %s', (q, slug) => {
-    expect(buscar(q)).toContain(slug);
+    ['tina', TINA_CORPORAL],
+    ['tiña', TINA_CORPORAL],
+    ['unas con hongos', ONICOMICOSIS],
+    ['uñas con hongos', ONICOMICOSIS],
+    ['infeccion de rinon', PIELONEFRITIS_AGUDA],
+    ['INFECCIÓN DE RIÑÓN', PIELONEFRITIS_AGUDA],
+  ])('«%s» encuentra su término', async (q, id) => {
+    expect(await buscar(q)).toContain(id);
   });
 
-  it('la categoría Enfermedades dice cuántos de sus términos están en castellano', () => {
-    const { items } = get<{ items: readonly Conjunto[] }>('/terminology/value-sets');
-    const enfermedades = items.find((c) => c.internalCode === 'glossary-category-disease');
+  async function enfermedades(): Promise<Conjunto> {
+    const { items } = await get<{ items: readonly Conjunto[] }>('/terminology/value-sets', {
+      limit: '200',
+    });
+    const conjunto = items.find((c) => c.internalCode === 'glossary-category-disease');
+    if (conjunto === undefined) throw new Error('No está la categoría Enfermedades');
+    return conjunto;
+  }
 
-    expect(enfermedades).toBeDefined();
-    const enCastellano = enfermedades?.translatedMemberCount ?? -1;
+  it('la categoría Enfermedades dice cuántos de sus términos están en castellano', async () => {
+    const categoria = await enfermedades();
+    const enCastellano = categoria.translatedMemberCount ?? -1;
     // Casi todas son categorías ICD-10-CM en inglés; las traducidas son la minoría.
-    expect(enCastellano).toBeGreaterThan(100);
-    expect(enCastellano).toBeLessThan(enfermedades?.memberCount ?? 0);
-
-    const todas = get<{ items: readonly Entrada[] }>('/terminology/concepts', {
-      includeValueSets: 'true',
-      valueSetId: enfermedades?.id ?? '',
-      limit: '5000',
-    }).items;
-    expect(todas.filter((t) => t.translated)).toHaveLength(enCastellano);
+    expect(enCastellano).toBeGreaterThan(0);
+    expect(enCastellano).toBeLessThan(categoria.memberCount);
   });
 
-  it('los términos en castellano van antes que los que sólo están en inglés', () => {
-    const { items } = get<{ items: readonly Conjunto[] }>('/terminology/value-sets');
-    const enfermedades = items.find((c) => c.internalCode === 'glossary-category-disease');
-    const lista = get<{ items: readonly Entrada[] }>('/terminology/concepts', {
+  it('los términos en castellano van antes que los que sólo están en inglés', async () => {
+    const categoria = await enfermedades();
+    const { items } = await get<{ items: readonly Entrada[] }>('/terminology/concepts', {
       includeValueSets: 'true',
-      valueSetId: enfermedades?.id ?? '',
+      valueSetId: categoria.id,
       limit: '5000',
-    }).items;
+    });
 
-    const primeroEnIngles = lista.findIndex((t) => !t.translated);
+    const primeroEnIngles = items.findIndex((t) => !t.translated);
     expect(primeroEnIngles).toBeGreaterThan(0);
-    expect(lista.slice(primeroEnIngles).every((t) => !t.translated)).toBe(true);
+    expect(items.slice(primeroEnIngles).every((t) => !t.translated)).toBe(true);
   });
 });
