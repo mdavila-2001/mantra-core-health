@@ -1,0 +1,118 @@
+<div class="compositor-articulo" [class.compositor-articulo--inerte]="disabled()" [attr.inert]="disabled() ? '' : null">
+  <app-rich-text-editor
+    [(html)]="html"
+    [tools]="herramientas"
+    [allowImages]="true"
+    label="Contenido del artículo"
+    placeholder="Escribí tu artículo médico… Usá «Título» y «Subtítulo» para armar secciones que el lector podrá desplegar."
+  >
+    <span editorTools class="compositor-articulo__extras">
+      <button
+        #botonEmojis
+        type="button"
+        class="compositor-articulo__extra"
+        data-testid="article-emoji"
+        aria-haspopup="true"
+        [attr.aria-expanded]="emojisAbiertos()"
+        aria-controls="article-emoji-panel"
+        (click)="alternarEmojis()"
+      >
+        <span aria-hidden="true">🙂</span> Emoji
+      </button>
+      <button
+        type="button"
+        class="compositor-articulo__extra"
+        data-testid="article-image"
+        [disabled]="imagenes().length >= maximoDeImagenes"
+        (click)="elegirImagenes()"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="m21 16-5-5-8 8"/></svg>
+        Imagen
+      </button>
+    </span>
+  </app-rich-text-editor>
+
+  <input
+    #archivos
+    type="file"
+    class="sr-only"
+    tabindex="-1"
+    aria-hidden="true"
+    multiple
+    [accept]="formatos"
+    data-testid="article-image-input"
+    (change)="alElegir($event)"
+  />
+
+  @if (emojisAbiertos()) {
+    <div
+      id="article-emoji-panel"
+      class="compositor-articulo__emojis"
+      role="dialog"
+      aria-label="Elegir un emoji"
+      (keydown.escape)="cerrarEmojis()"
+    >
+      <!-- Diferido como en el chat: el catálogo son 1 946 emojis y quien nunca
+           abre el panel no tiene por qué descargarlo. -->
+      @defer (on immediate) {
+        <app-selector-emojis (elegido)="insertarEmoji($event)" />
+      } @placeholder {
+        <p class="compositor-articulo__cargando" role="status">Cargando emojis…</p>
+      }
+    </div>
+  }
+
+  @if (aviso(); as mensaje) {
+    <p class="compositor-articulo__aviso" role="alert">{{ mensaje }}</p>
+  }
+
+  @if (imagenes().length > 0) {
+    <section class="compositor-articulo__imagenes" aria-labelledby="article-images-title">
+      <h3 id="article-images-title" class="compositor-articulo__subtitulo">
+        Imágenes del artículo ({{ imagenes().length }}/{{ maximoDeImagenes }})
+      </h3>
+      <p class="compositor-articulo__ayuda">
+        Cada imagen necesita una descripción: es lo que escucha quien lee con lector de pantalla.
+      </p>
+      <ol class="compositor-articulo__lista">
+        @for (imagen of imagenes(); track imagen.key; let i = $index) {
+          <li class="compositor-articulo__imagen" data-testid="article-image-item">
+            <img class="compositor-articulo__miniatura" [src]="imagen.url" alt="" width="96" height="72" />
+            <app-form-field
+              class="compositor-articulo__descripcion"
+              [label]="'Descripción de la imagen ' + (i + 1)"
+              [required]="true"
+              [errorMessage]="imagen.alt.trim() === '' ? 'Falta la descripción.' : ''"
+            >
+              <app-input
+                [value]="imagen.alt"
+                (valueChange)="describir(imagen.key, $event)"
+                [hasError]="imagen.alt.trim() === ''"
+                placeholder="Ej.: Radiografía de tórax con infiltrado en base derecha"
+                [testId]="'article-image-alt-' + (i + 1)"
+              />
+            </app-form-field>
+            <button
+              app-button
+              type="button"
+              variant="ghost"
+              size="sm"
+              [attr.aria-label]="'Quitar la imagen ' + (i + 1)"
+              (clicked)="quitar(imagen.key)"
+            >
+              Quitar
+            </button>
+          </li>
+        }
+      </ol>
+    </section>
+  }
+
+  <p class="compositor-articulo__contador" [class.compositor-articulo__contador--excedido]="excedido()" aria-live="polite">
+    @if (excedido()) {
+      Te pasaste por {{ largo() - maxLength() }} caracteres.
+    } @else {
+      {{ maxLength() - largo() }} caracteres disponibles
+    }
+  </p>
+</div>

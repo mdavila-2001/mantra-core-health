@@ -1,0 +1,100 @@
+/* Un artículo para leer: medida de lectura cómoda, secciones desplegables
+   (las pinta el acordeón) y las marcas del cuerpo. Mobile-first. */
+
+:host {
+  display: block;
+  color: var(--text-primary);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  overflow-wrap: break-word;
+}
+
+.articulo {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.articulo__intro {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.articulo__parrafo {
+  margin: 0 0 var(--sp-3);
+}
+
+.articulo__lista {
+  margin: 0 0 var(--sp-3);
+  padding-inline-start: var(--sp-6);
+}
+
+.articulo__lista li + li {
+  margin-block-start: var(--sp-1);
+}
+
+.articulo__enlace {
+  color: var(--text-link);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.articulo__figura {
+  margin: var(--sp-3) 0;
+}
+
+/* Dimensiones estables: el `width`/`height` del HTML da la proporción y esto
+   la deja fluir al ancho disponible sin saltos al cargar. */
+.articulo__imagen {
+  display: block;
+  inline-size: 100%;
+  max-inline-size: 100%;
+  block-size: auto;
+  border-radius: var(--r-md);
+  background: var(--bg-inset);
+}
+
+.articulo__imagen-fallida {
+  display: grid;
+  place-items: center;
+  min-block-size: 8rem;
+  padding: var(--sp-4);
+  border: 1px dashed var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--bg-inset);
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  text-align: center;
+}
+
+.articulo__pie {
+  margin-block-start: var(--sp-1);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}
+
+/* Los títulos del artículo pesan más que los de un formulario: son la
+   estructura de lo que se lee. Los subtítulos, un escalón abajo y sangrados. */
+.articulo__secciones ::ng-deep > .accordion-panel > .accordion-panel__heading .accordion-panel__trigger {
+  font-family: var(--font-display);
+  font-size: var(--fs-h3);
+  line-height: 1.3;
+  padding-inline: 0;
+}
+
+.articulo__subsecciones {
+  display: block;
+  margin-inline-start: var(--sp-2);
+  border-inline-start: 2px solid var(--border-default);
+  padding-inline-start: var(--sp-3);
+}
+
+.articulo__subsecciones ::ng-deep .accordion-panel__trigger {
+  font-size: var(--fs-body);
+  padding-block: var(--sp-3);
+  padding-inline: 0;
+}
+
+.articulo__secciones ::ng-deep .accordion-panel__region {
+  padding-inline: 0;
+}

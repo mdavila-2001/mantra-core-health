@@ -1,6 +1,18 @@
 <!-- Encabezado real: un <button> dentro de un <h3>. Un `div role="button"`
      obligaría a reimplementar teclado y foco, y siempre queda a medias. -->
-<h3 class="accordion-panel__heading">
+@switch (level()) {
+  @case (2) {
+    <h2 class="accordion-panel__heading"><ng-container [ngTemplateOutlet]="disparador" /></h2>
+  }
+  @case (4) {
+    <h4 class="accordion-panel__heading"><ng-container [ngTemplateOutlet]="disparador" /></h4>
+  }
+  @default {
+    <h3 class="accordion-panel__heading"><ng-container [ngTemplateOutlet]="disparador" /></h3>
+  }
+}
+
+<ng-template #disparador>
   <button
     type="button"
     class="accordion-panel__trigger"
@@ -15,7 +27,7 @@
       <polyline points="6 9 12 15 18 9" />
     </svg>
   </button>
-</h3>
+</ng-template>
 
 <!-- Plegado = ausente, no escondido. -->
 @if (expanded()) {
