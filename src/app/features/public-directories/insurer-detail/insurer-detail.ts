@@ -1,6 +1,14 @@
 import { NgTemplateOutlet } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  linkedSignal,
+  signal,
+} from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { map, tap, type Observable } from 'rxjs';
 
 import { InsuranceClient } from '@core/data-access/insurance/insurance.client';
@@ -20,16 +28,28 @@ import { AppButtonLink } from '@shared/components/atoms/button/button-link';
 import { Skeleton } from '@shared/components/atoms/skeleton/skeleton';
 import { Card } from '@shared/components/molecules/card/card';
 import { FactList } from '@shared/components/molecules/fact-list/fact-list';
+import { Pagination } from '@shared/components/molecules/pagination/pagination';
 import { SectionHeading } from '@shared/components/molecules/section-heading/section-heading';
 import { Tab } from '@shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '@shared/components/molecules/tabs/tabs';
 import { DataTable } from '@shared/components/organisms/data-table/data-table';
 import type { ColumnDef } from '@shared/components/organisms/data-table/data-table.types';
+import { FilterBar, SEARCH_PARAM } from '@shared/components/organisms/filter-bar/filter-bar';
 import { PageHeader } from '@shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '@shared/components/organisms/view-state-host/view-state-host';
 
 import { formatKpiAmount } from '../../insurance/money-format';
 import { PublicCatalogDetail } from '../public-catalog-detail';
+import {
+  CLAVE_COBERTURA,
+  CLAVE_SEGMENTO,
+  CLAVE_TIPO,
+  criterioDe,
+  filtrarPlanes,
+  filtrosDelCatalogo,
+  hayCriterio,
+  type PlanFiltrado,
+} from './insurer-detail.filtros';
 
 /** Los documentos que una cláusula puede exigir, dichos para el paciente. */
 const DOCUMENTOS: Readonly<Record<ApprovalDocumentCode, string>> = {
@@ -42,6 +62,8 @@ const DOCUMENTOS: Readonly<Record<ApprovalDocumentCode, string>> = {
 /** Una cláusula, lista para la tabla: todo en palabras, nada que calcular. */
 export interface FilaDeClausula {
   readonly id: string;
+  /** La categoría sola («Maternidad»): es el value set del filtro «Que cubra». */
+  readonly categoria: string;
   readonly cobertura: string;
   readonly cubre: string;
   readonly copago: string;
@@ -63,6 +85,8 @@ export interface PlanDelMercado {
   readonly id: string;
   readonly nombre: string;
   readonly producto: string;
+  /** El tipo de producto («Salud», «Accidentes personales»): filtro «Tipo de seguro». */
+  readonly tipo: string;
   readonly segmento: string | null;
   /**
    * Qué es y para quién, en una línea: «Salud · Individual y familiar». Es el
@@ -103,6 +127,7 @@ function aFila(beneficio: PlanBenefit, moneda: InsuranceConcept | null): FilaDeC
   ];
   return {
     id: beneficio.id,
+    categoria: beneficio.category.display,
     cobertura:
       beneficio.service === null
         ? beneficio.category.display
@@ -126,7 +151,10 @@ function aFila(beneficio: PlanBenefit, moneda: InsuranceConcept | null): FilaDeC
  * El plan en una frase: «4 coberturas · tope anual de hasta 150.000,00 Bs ·
  * 1 pide autorización previa». Lo que no se publicó no se dice.
  */
-function resumenDelPlan(beneficios: readonly PlanBenefit[], moneda: InsuranceConcept | null): string {
+function resumenDelPlan(
+  beneficios: readonly PlanBenefit[],
+  moneda: InsuranceConcept | null,
+): string {
   const partes = [`${beneficios.length} ${beneficios.length === 1 ? 'cobertura' : 'coberturas'}`];
   // `Number` sólo para comparar: el importe que se muestra es la cadena exacta.
   const topes = beneficios
@@ -155,6 +183,7 @@ export function planesDelMercado(carrier: CarrierDetail | null): readonly PlanDe
       id: plan.id,
       nombre: plan.name,
       producto: producto.name,
+      tipo: producto.productType.display,
       segmento: producto.marketSegment?.display ?? null,
       rotulo: [producto.productType.display, producto.marketSegment?.display]
         .filter((parte): parte is string => parte !== undefined)
@@ -168,15 +197,28 @@ export function planesDelMercado(carrier: CarrierDetail | null): readonly PlanDe
         id: beneficio.id,
         cobertura: beneficio.category.display,
         cubre:
-          beneficio.coveragePercent === null
-            ? SIN_DATO
-            : `${beneficio.coveragePercent}\u00a0%`,
+          beneficio.coveragePercent === null ? SIN_DATO : `${beneficio.coveragePercent}\u00a0%`,
       })),
       resumen: resumenDelPlan(plan.benefits, plan.currency),
       clausulas: plan.benefits.map((beneficio) => aFila(beneficio, plan.currency)),
     })),
   );
 }
+
+/**
+ * La paginación de la tabla de cláusulas (ADR-0015, regla 7). Por debajo del
+ * tamaño menor no se dibuja: un paginador de una sola página con «Anterior» y
+ * «Siguiente» deshabilitados, debajo de tres cláusulas, es ruido.
+ */
+const TAMANOS_DE_PAGINA: readonly number[] = [5, 10, 20];
+const POR_PAGINA = 10;
+
+/**
+ * El alto máximo de la tabla (regla 6): pasado ese alto se desplaza en
+ * vertical, y lo que no entra a lo ancho se pliega al detalle de la fila por
+ * prioridad en vez de abrir un scroll lateral.
+ */
+const ALTO_DE_LA_TABLA = '32rem';
 
 const COLUMNAS: readonly ColumnDef<FilaDeClausula>[] = [
   { key: 'cobertura', header: 'Cobertura', priority: 1 },
@@ -224,8 +266,10 @@ const COLUMNAS: readonly ColumnDef<FilaDeClausula>[] = [
     Card,
     DataTable,
     FactList,
+    FilterBar,
     NgTemplateOutlet,
     PageHeader,
+    Pagination,
     RouterLink,
     SectionHeading,
     Skeleton,
@@ -248,14 +292,101 @@ export class InsurerDetail extends PublicCatalogDetail<PlanDelMercado> {
   protected readonly rutaDelDirectorio = '/insurers-directory';
   protected readonly rotuloDelDirectorio = 'Directorio de aseguradoras';
 
+  private readonly rutaActual = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+
   protected readonly columnas = COLUMNAS;
   protected readonly porId = (fila: FilaDeClausula): string => fila.id;
+  protected readonly altoDeLaTabla = ALTO_DE_LA_TABLA;
+  protected readonly tamanosDePagina = TAMANOS_DE_PAGINA;
 
   /** Los brokers de la aseguradora. Llegan con el catálogo, en la misma lectura. */
   protected readonly brokers = signal<readonly MarketplaceBroker[]>([]);
 
-  /** El plan abierto en las pestañas. */
-  protected readonly pestana = signal(0);
+  // ── Buscador y filtros (ADR-0015, regla 5) ─────────────────────────────
+  // La URL es la fuente de verdad, como en `app-filter-bar`: la barra escribe
+  // los query params y acá se leen. Recargar o compartir el enlace reproduce
+  // la búsqueda.
+
+  private readonly params = toSignal(this.rutaActual.queryParams, {
+    initialValue: {} as Readonly<Record<string, string | undefined>>,
+  });
+
+  /** Sólo los filtros con algo que elegir en el catálogo de esta aseguradora. */
+  protected readonly filtros = computed(() => filtrosDelCatalogo(this.items()));
+
+  private readonly criterio = computed(() => criterioDe(this.params(), this.filtros()));
+
+  protected readonly filtrando = computed(() => hayCriterio(this.criterio()));
+
+  /** Los planes que pasaron el filtro, cada uno con las cláusulas a la vista. */
+  protected readonly visibles = computed<readonly PlanFiltrado[]>(() =>
+    filtrarPlanes(this.items(), this.criterio()),
+  );
+
+  /**
+   * El plan abierto en las pestañas. Vuelve a la primera cada vez que cambia
+   * lo que se ve: con otro filtro, el índice de antes apunta a otro plan.
+   */
+  protected readonly pestana = linkedSignal({ source: this.visibles, computation: () => 0 });
+
+  /** Saca buscador y filtros de la URL, que es lo mismo que «Limpiar» de la barra. */
+  protected limpiarFiltros(): void {
+    void this.router.navigate([], {
+      relativeTo: this.rutaActual,
+      queryParams: {
+        [SEARCH_PARAM]: null,
+        [CLAVE_TIPO]: null,
+        [CLAVE_SEGMENTO]: null,
+        [CLAVE_COBERTURA]: null,
+      },
+      queryParamsHandling: 'merge',
+    });
+  }
+
+  // ── Paginación de las cláusulas (regla 7) ──────────────────────────────
+
+  /** Página y tamaño de la tabla de cada plan, por id; sin entrada, los de omisión. */
+  private readonly paginas = linkedSignal<
+    readonly PlanFiltrado[],
+    Readonly<Record<string, { readonly pagina: number; readonly porPagina: number }>>
+  >({
+    source: this.visibles,
+    // Con otro filtro cambian las filas: la página 3 de antes puede no existir.
+    computation: (_visibles, anterior) =>
+      Object.fromEntries(
+        Object.entries(anterior?.value ?? {}).map(([id, { porPagina }]) => [
+          id,
+          { pagina: 1, porPagina },
+        ]),
+      ),
+  });
+
+  protected paginaDe(plan: PlanFiltrado): number {
+    const porPagina = this.porPaginaDe(plan);
+    const ultima = Math.max(1, Math.ceil(plan.clausulas.length / porPagina));
+    return Math.min(ultima, this.paginas()[plan.plan.id]?.pagina ?? 1);
+  }
+
+  protected porPaginaDe(plan: PlanFiltrado): number {
+    return this.paginas()[plan.plan.id]?.porPagina ?? POR_PAGINA;
+  }
+
+  protected irAPagina(plan: PlanFiltrado, pagina: number): void {
+    this.paginas.update((actual) => ({
+      ...actual,
+      [plan.plan.id]: { pagina, porPagina: this.porPaginaDe(plan) },
+    }));
+  }
+
+  protected cambiarPorPagina(plan: PlanFiltrado, porPagina: number): void {
+    this.paginas.update((actual) => ({ ...actual, [plan.plan.id]: { pagina: 1, porPagina } }));
+  }
+
+  /** Si la tabla de un plan lleva paginador: sólo si no entra en la página menor. */
+  protected paginada(plan: PlanFiltrado): boolean {
+    return plan.clausulas.length > (TAMANOS_DE_PAGINA[0] ?? POR_PAGINA);
+  }
 
   /** El broker que se ofrece arriba: el primero al que se le puede escribir. */
   protected readonly brokerPrincipal = computed(
@@ -266,7 +397,6 @@ export class InsurerDetail extends PublicCatalogDetail<PlanDelMercado> {
     return this.seguros.getMarketplace(slug).pipe(
       tap((mercado) => {
         this.brokers.set(mercado.brokers);
-        this.pestana.set(0);
       }),
       map((mercado) => ({
         items: planesDelMercado(mercado.carrier),
@@ -277,16 +407,28 @@ export class InsurerDetail extends PublicCatalogDetail<PlanDelMercado> {
     );
   }
 
-  /** Si la primera pestaña compara los planes: sólo con dos o más. */
-  protected readonly hayComparacion = computed(() => this.items().length > 1);
+  /** Si la primera pestaña compara los planes: sólo con dos o más a la vista. */
+  protected readonly hayComparacion = computed(() => this.visibles().length > 1);
 
   /** «Ver cláusulas» de la tarjeta de un plan: abre la pestaña de ese plan. */
   protected verClausulas(indice: number): void {
     this.pestana.set(indice + (this.hayComparacion() ? 1 : 0));
   }
 
-  protected estadoDeClausulas(plan: PlanDelMercado): ViewState<readonly FilaDeClausula[]> {
-    return ready(plan.clausulas);
+  /** La página a la vista de las cláusulas del plan, ya filtradas. */
+  protected estadoDeClausulas(plan: PlanFiltrado): ViewState<readonly FilaDeClausula[]> {
+    if (!this.paginada(plan)) return ready(plan.clausulas);
+    const porPagina = this.porPaginaDe(plan);
+    const desde = (this.paginaDe(plan) - 1) * porPagina;
+    return ready(plan.clausulas.slice(desde, desde + porPagina));
+  }
+
+  /** «Se ven 2 de 12 coberturas», cuando el filtro acotó la tabla del plan. */
+  protected acotadas(plan: PlanFiltrado): string | null {
+    const total = plan.plan.clausulas.length;
+    return plan.clausulas.length === total
+      ? null
+      : `Se ven ${plan.clausulas.length} de ${total} coberturas: las que coinciden con tu búsqueda.`;
   }
 
   /**
