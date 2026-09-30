@@ -444,6 +444,27 @@ export function qrSvg(semilla: string, rotulo = 'QR bancario'): string {
   return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
 }
 
+/**
+ * Un logo de consultorio de mentira: un isotipo (cruz sobre círculo) y el
+ * nombre en dos renglones, apaisado 3:1.
+ *
+ * Es apaisado a propósito. Es la proporción más incómoda para una ranura de
+ * membrete —la que se sale por los costados si nadie la contiene—, así que la
+ * maqueta arranca con el caso difícil y no con uno cuadrado que oculta el
+ * problema.
+ */
+export function logoSvg(nombre: string, bajada: string): string {
+  const svg =
+    `<svg xmlns="http://www.w3.org/2000/svg" width="360" height="120" viewBox="0 0 360 120">` +
+    `<rect width="360" height="120" fill="#ffffff"/>` +
+    `<circle cx="60" cy="60" r="44" fill="#0f766e"/>` +
+    `<path d="M52 36h16v16h16v16H68v16H52V68H36V52h16z" fill="#ffffff"/>` +
+    `<text x="122" y="56" font-family="Inter, Arial, sans-serif" font-size="26" font-weight="700" fill="#0f172a">${nombre}</text>` +
+    `<text x="122" y="84" font-family="Inter, Arial, sans-serif" font-size="17" fill="#475569">${bajada}</text>` +
+    `</svg>`;
+  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+}
+
 export function imagenSvg(rotulo: string, fondo = '#e8f1f5', tinta = '#1f6f8b'): string {
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="960" height="540" viewBox="0 0 960 540"><rect width="960" height="540" fill="${fondo}"/><circle cx="820" cy="120" r="70" fill="${tinta}" opacity="0.15"/><circle cx="140" cy="440" r="110" fill="${tinta}" opacity="0.12"/><text x="480" y="285" font-family="Inter, Arial, sans-serif" font-size="40" font-weight="600" fill="${tinta}" text-anchor="middle">${rotulo}</text></svg>`;
   return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;

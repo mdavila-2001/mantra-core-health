@@ -129,3 +129,72 @@ sigue recibiendo lo mismo que recibía. El día que exista el catálogo del lado
 servidor, el frontend pasa a ser un mapeo y no cambia dónde se guarda la
 respuesta. Mismo criterio, y mismo archivo vecino, que
 `titulos-profesionales.ts`.
+
+## El logo del consultorio (2026-09-30)
+
+Justin pidió que el logo del consultorio del doctor salga en la pestaña
+«Facturación» del perfil —al mirar y al editar— y en el membrete de los PDF. El
+frontend está entregado contra el simulador de `mockup`; **el backend no tiene
+dónde guardarlo**, y esta sección deja escrito qué hace falta y cuál es el
+contrato que el frontend ya usa, para construir la API contra él.
+
+### Lo que hay hoy
+
+- `directory.tenants` **no tiene columna de logo**, y `practice.practices` tampoco.
+  `practice.practice_sites` sólo tiene `bank_qr_file_id` (parche v4215).
+- El logo de una organización que sí existe en el modelo es
+  `community.public_profiles.avatar_file_id` (con `target_type` de organización).
+  Se escribe con `PUT /admin/tenants/:tenantId/public-profile`, que exige
+  `SUPERADMIN` o `SECURITY_ADMIN`: **un doctor no puede cambiar el de su propio
+  consultorio.**
+
+### Decisión pendiente (una de las dos)
+
+1. **Columna `logo_file_id` en `practice.practice_sites`**, con el mismo molde que
+   `bank_qr_file_id`: `SQL/patches/…_practice_sites_logo_file_id.sql` + FK a
+   `common.files` + índice, empezando por el `.puml` del módulo 14 (ADR-0021: el
+   DDL no se escribe a mano).
+2. **Permitir que el dueño de un consultorio propio escriba el
+   `avatar_file_id` de su perfil público de organización**, y leerlo de ahí.
+   Evita un segundo logo que se contradiga con el de la vitrina, pero mezcla dos
+   conceptos: el logo del papel y la foto pública.
+
+### Contrato que el frontend ya espera
+
+Va todo detrás de `LogoDelConsultorioClient`
+(`core/data-access/practice-sites/logo-del-consultorio.client.ts`); el día que
+exista el backend se cambia **ese archivo** y las pantallas y el PDF no se
+tocan.
+
+```http
+PUT /practitioners/me/sites/:siteId/logo
+{ "fileId": "<uuid de un archivo ya subido>" | null }
+→ 200  la sede con el logo aplicado (mismo formato que la lista)
+```
+
+- `null` quita el logo. **Sólo el consultorio propio** (`isOwnSite`): en una
+  clínica ajena responde `404`, indistinguible entre «no existe» y «no es tuyo».
+- La lectura es `GET /practitioners/:profileId/sites`, que ya devuelve las sedes:
+  sólo falta el campo `logoFileId` (opcional; ausente = «sin logo»).
+- El archivo se sube antes con `POST /common/files/upload` como `IMAGE` de
+  sensibilidad `NORMAL` (`upload-policy.ts` ya cita «el logo de una
+  organización»). PNG, JPG o WEBP, hasta 2 MB.
+
+### Lo que sigue abierto aunque llegue la ruta
+
+- **Quién puede verlo.** `GET /common/files/:id/content` sólo entrega a quien
+  subió el archivo, así que hoy el logo lo ve **su dueño**. Para que un paciente
+  lo vea en un documento o en el directorio hace falta servirlo por
+  `/public/media/<fileId>`.
+- **El PDF oficial de la receta** sale de la API (`prescription-pdf.service.ts`,
+  pdfkit) y **no lleva logo**; los otros dos generadores pdfkit
+  (`encounter-pdf.service.ts`, `insurance-portability-pdf.service.ts`) tampoco.
+  Los 12 documentos que arma el frontend (`buildBlocksPdf`) sí. pdfkit necesita un
+  paso previo que baje el archivo y lo dibuje en la misma caja de 120×34 pt que
+  usa el frontend (`LOGO_DEL_CONSULTORIO` en `pdf-theme.ts`).
+- **El selector «Mi consultorio» del encabezado** no muestra logo
+  (`TenantOption` no tiene imagen).
+- **Simulador:** `PUT /practitioners/me/sites/:id/logo` y la semilla
+  `file-logo-consultorio` (`practice.handlers.ts`, `files.handlers.ts`) son sólo
+  maqueta y se borran cuando exista la ruta real. Los bytes de un logo recién
+  subido viven en memoria: un F5 los pierde (limitación conocida del simulador).

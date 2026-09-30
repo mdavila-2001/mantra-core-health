@@ -26,6 +26,9 @@ import { PractitionerProfileEdit } from './practitioner-profile-edit';
  * 3. **Sin nada que agregar, el botón queda deshabilitado.**
  */
 
+/** Dónde se pregunta por las sedes del perfil de `PERFIL_BASE`. */
+const SEDES = '/practitioners/per-1/sites';
+
 const PERFIL_BASE = {
   profileId: 'per-1',
   personId: 'per-1',
@@ -100,6 +103,14 @@ describe('PractitionerProfileEdit', () => {
       // se cancela al desmontar: una petición cancelada no se puede flushear.
       if (!pendiente.cancelled) {
         pendiente.flush({ items: [], count: 0, limit: 50, nextCursor: null });
+      }
+    }
+    // El logo del consultorio se pide al cargar (`LogoDelConsultorioClient`) y
+    // sólo las pruebas del logo hablan de él: las demás lo dan por atendido acá,
+    // igual que el catálogo de arriba.
+    for (const pendiente of http.match((r) => r.method === 'GET' && r.url === SEDES)) {
+      if (!pendiente.cancelled) {
+        pendiente.flush({ items: [], count: 0 });
       }
     }
     http.verify();
@@ -3017,6 +3028,136 @@ describe('PractitionerProfileEdit', () => {
       // valor que la respuesta, todavía en vuelo, podría pisar igual.
       expect(señal<string>('titulo')()).toBe('Un título a medio escribir');
       señal<boolean>('guardandoPresentacion').set(false);
+    });
+  });
+
+  /* ---- el logo del consultorio (pestaña «Facturación») ---------------------- */
+
+  describe('el logo del consultorio', () => {
+    const PROPIA = { id: 'site-1', isOwnSite: true, logoFileId: null };
+    const PNG = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGP4z8DwHwAFAAH/iZk9HQAAAABJRU5ErkJggg==';
+
+    const archivo = (): File =>
+      new File([Uint8Array.from(atob(PNG), (c) => c.charCodeAt(0))], 'logo.png', {
+        type: 'image/png',
+      });
+
+    /** Deja que corra la lectura del archivo (`FileReader` es asíncrono). */
+    const esperarVista = async (): Promise<void> => {
+      for (let i = 0; i < 50 && interno<() => string | null>('logoVisible')() === null; i += 1) {
+        await new Promise((resolver) => setTimeout(resolver, 5));
+      }
+    };
+
+    /** Monta y responde la lectura del logo con la sede propia dada. */
+    function montarConSede(sede: object = PROPIA): void {
+      montarYCargar();
+      http.expectOne(SEDES).flush({ items: [sede], count: 1 });
+    }
+
+    it('trae el logo guardado y lo muestra en la caja', async () => {
+      montarConSede({ ...PROPIA, logoFileId: 'file-logo' });
+      const contenido = http.expectOne('/common/files/file-logo/content');
+      contenido.flush(new Blob([Uint8Array.from(atob(PNG), (c) => c.charCodeAt(0))], { type: 'image/png' }));
+      await esperarVista();
+
+      expect(interno<() => string | null>('logoVisible')()).toMatch(/^data:image\/png/);
+    });
+
+    it('sin logo ni consultorio propio la caja queda vacía y no falla', () => {
+      montarYCargar();
+      http.expectOne(SEDES).flush({ items: [], count: 0 });
+
+      expect(interno<() => string | null>('logoVisible')()).toBeNull();
+    });
+
+    it('si la lectura del logo falla, la pantalla sigue entera', () => {
+      montarYCargar();
+      http.expectOne(SEDES).flush('boom', { status: 500, statusText: 'Server Error' });
+
+      expect(interno<() => string | null>('logoVisible')()).toBeNull();
+    });
+
+    it('elegir un logo lo sube y lo deja pendiente: no se guarda hasta «Guardar cambios»', async () => {
+      montarConSede();
+
+      interno<(archivos: File[]) => void>('alElegirLogo')([archivo()]);
+      http.expectOne('/common/files/upload').flush({ id: 'file-nuevo' });
+      await esperarVista();
+
+      expect(interno<() => string | null>('logoVisible')()).toMatch(/^data:image\/png/);
+      // Ni el PUT del logo ni el PATCH del perfil salieron todavía.
+      http.expectNone((r) => r.method === 'PUT');
+      http.expectNone('/profiles/practitioners/me');
+    });
+
+    it('guardar sólo el logo no manda el PATCH del perfil y sí el PUT del logo', async () => {
+      montarConSede();
+      interno<(archivos: File[]) => void>('alElegirLogo')([archivo()]);
+      http.expectOne('/common/files/upload').flush({ id: 'file-nuevo' });
+      await esperarVista();
+
+      interno<() => void>('guardarPresentacion')();
+
+      http.expectNone('/profiles/practitioners/me');
+      http.expectOne(SEDES).flush({ items: [PROPIA], count: 1 });
+      const put = http.expectOne('/practitioners/me/sites/site-1/logo');
+      expect(put.request.method).toBe('PUT');
+      expect(put.request.body).toEqual({ fileId: 'file-nuevo' });
+      put.flush({ ...PROPIA, logoFileId: 'file-nuevo' });
+    });
+
+    it('quitar el logo guardado manda fileId nulo', async () => {
+      montarConSede({ ...PROPIA, logoFileId: 'file-logo' });
+      http
+        .expectOne('/common/files/file-logo/content')
+        .flush(new Blob(['x'], { type: 'image/png' }));
+      await esperarVista();
+
+      interno<() => void>('quitarLogo')();
+      expect(interno<() => string | null>('logoVisible')()).toBeNull();
+
+      interno<() => void>('guardarPresentacion')();
+      http.expectOne(SEDES).flush({ items: [{ ...PROPIA, logoFileId: 'file-logo' }], count: 1 });
+      const put = http.expectOne('/practitioners/me/sites/site-1/logo');
+      expect(put.request.body).toEqual({ fileId: null });
+      put.flush({ ...PROPIA, logoFileId: null });
+    });
+
+    it('cancelar descarta el logo elegido y vuelve al guardado', async () => {
+      montarConSede();
+      interno<(archivos: File[]) => void>('alElegirLogo')([archivo()]);
+      http.expectOne('/common/files/upload').flush({ id: 'file-nuevo' });
+      await esperarVista();
+
+      interno<() => void>('cancelarEdicion')();
+
+      expect(interno<() => string | null>('logoVisible')()).toBeNull();
+      // Nada que guardar: no hay ninguna petición.
+      interno<() => void>('guardarPresentacion')();
+      http.expectNone((r) => r.method === 'PUT' || r.method === 'PATCH');
+    });
+
+    it('un archivo demasiado pesado se explica y no toca el logo', () => {
+      montarConSede();
+
+      interno<(r: { file: File; reason: string }[]) => void>('alRechazarLogo')([
+        { file: archivo(), reason: 'tamaño' },
+      ]);
+
+      expect(interno<() => string>('errorDelLogo')()).toContain('2 MB');
+      expect(interno<() => string | null>('logoVisible')()).toBeNull();
+    });
+
+    it('si la subida falla lo dice y no deja nada pendiente', () => {
+      montarConSede();
+
+      interno<(archivos: File[]) => void>('alElegirLogo')([archivo()]);
+      http.expectOne('/common/files/upload').flush('boom', { status: 500, statusText: 'x' });
+
+      expect(interno<() => string>('errorDelLogo')()).toContain('No se pudo subir');
+      interno<() => void>('guardarPresentacion')();
+      http.expectNone((r) => r.method === 'PUT' || r.method === 'PATCH');
     });
   });
 });

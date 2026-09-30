@@ -2,7 +2,7 @@ import { vitrinas } from '../fixtures/comunidad';
 import { ESTADO } from '../fixtures/conceptos';
 import { PACIENTES, PROFESIONALES } from '../fixtures/personas';
 import { noContent, type MockRouter } from '../mock-router';
-import { ahora, avatarSvg, Coleccion, imagenSvg, iso, nuevoId, qrSvg, texto, uuid } from '../mock-store';
+import { ahora, avatarSvg, Coleccion, imagenSvg, iso, logoSvg, nuevoId, qrSvg, texto, uuid } from '../mock-store';
 
 /* ============================================================================
     Archivos: subida, vínculos, descarga y el contenido de las imágenes.
@@ -83,6 +83,10 @@ const archivos = new Coleccion<ArchivoSimulado>([
   // solo y no cuatro: con todas las sedes configuradas no se vería el aviso en
   // ámbar, que es el estado que la pantalla tiene que saber contar.
   { id: uuid('file-qr-consultorio'), currentVersionId: uuid('v-file-qr-consultorio'), originalName: 'qr-banco-union.png', category: 'IMAGE', sensitivity: 'NORMAL', lifecycleStatusConceptId: ESTADO['ST-ACTIVE']!, createdAt: iso(-30), dataUrl: qrSvg('site-consultorio-rojas', 'Banco Unión · Cta. 1000-4477') },
+  /* SIMULADOR del logo del consultorio propio. Cuando exista el campo real en
+     el backend, esta fila y su gemela en `practice.handlers.ts` se borran: las
+     pantallas y el PDF sólo hablan con `LogoDelConsultorioClient`. */
+  { id: uuid('file-logo-consultorio'), currentVersionId: uuid('v-file-logo-consultorio'), originalName: 'logo-consultorio-rojas.svg', category: 'IMAGE', sensitivity: 'NORMAL', lifecycleStatusConceptId: ESTADO['ST-ACTIVE']!, createdAt: iso(-30), dataUrl: logoSvg('Consultorio Rojas', 'Cardiología · Santa Cruz') },
 ]);
 
 /**
@@ -250,7 +254,14 @@ export function registrarArchivos(router: MockRouter): void {
   router.get('/common/files/:id/content', ({ params }) => {
     const a = archivos.get(params['id']!);
     if (a === undefined) return avatarSvg('?', '#94a3b8');
-    return fileContent(a.id);
+    const contenido = fileContent(a.id);
+    // `{ body, headers }` sin `status` no es una respuesta para el interceptor
+    // (`isMockReply` exige el estado): la trataba como el cuerpo mismo y el
+    // `Blob` que recibía el front era el JSON `{"body":"data:…"}`, no la imagen.
+    // Los bytes subidos (`Blob`) ya salen bien.
+    return contenido instanceof Blob || contenido === undefined
+      ? contenido
+      : { status: 200, ...(contenido as { body: unknown; headers: Record<string, string> }) };
   });
 
   router.delete('/common/files/:id', ({ params }) => {

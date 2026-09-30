@@ -14,6 +14,7 @@ import { NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router
 import { filter } from 'rxjs';
 
 import { AuthService } from '../../core/auth/auth.service';
+import { PdfBrandingService } from '../../core/pdf-branding/pdf-branding.service';
 import { esPaciente, etiquetasDeRoles } from '../../core/auth/role-labels';
 import { CartStore } from '../../core/data-access/pharmacy-cart/cart.store';
 import { LOGIN_ROUTE } from '../../core/http/auth.interceptor';
@@ -95,6 +96,8 @@ const PANEL = '/dashboard';
 })
 export class ShellLayout {
   private readonly auth = inject(AuthService);
+  // Sólo se instancia: mantiene listo el logo del consultorio para los PDF.
+  private readonly membretePdf = inject(PdfBrandingService);
   private readonly router = inject(Router);
   private readonly breakpoints = inject(Breakpoints);
   private readonly navigation = inject(NavigationService);
