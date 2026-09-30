@@ -1,3 +1,4 @@
+import { environment } from '../../../../environments/environment';
 import {
   ESTABLECIMIENTO,
   ESTADO,
@@ -502,9 +503,11 @@ function perfilProfesionalBase(p: ProfesionalSimulado) {
             medicationRequests: 208,
             clinicalNotes: 275,
             documents: 41,
-            // Sin `monthlyEncounters` ni `quality`: la API real no los envía, y el
-            // simulador no fabrica métricas que ella no calcula (ID-14). La
-            // ficha muestra entonces su estado vacío explícito.
+            // Datos sinteticos solo en demo explicita. ID-14 conserva el
+            // estado vacio cuando se inspecciona el contrato de API real.
+            ...(environment.mockBackend
+              ? { monthlyEncounters: serieMensualDemo(), quality: CALIDAD_DEMO }
+              : {}),
           },
     createdAt: iso(-500),
   };

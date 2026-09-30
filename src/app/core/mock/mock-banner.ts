@@ -2,7 +2,6 @@ import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 import { MOCK_USERS } from './mock-session';
-import { environment } from '../../../environments/environment';
 
 /**
  * El aviso de la rama `mockup`: recuerda que no hay API detrás y muestra las

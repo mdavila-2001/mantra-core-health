@@ -7,10 +7,10 @@ import { signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 
-import { AuthService } from '../../../../core/auth/auth.service';
-import { provideDependentLinkNotificationActions } from '../../../../features/account/dependents/dependent-link-notification-actions';
-import { ToastService } from '../../molecules/toast/toast.service';
-import { NotificationBell } from './notification-bell';
+import { AuthService } from '../../../core/auth/auth.service';
+import { provideDependentLinkNotificationActions } from './dependent-link-notification-actions';
+import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
+import { NotificationBell } from '../../../shared/components/organisms/notification-bell/notification-bell';
 
 /**
  * «Aceptar» desde la campana, de punta a punta: con el manejador REAL de

@@ -18,7 +18,9 @@ import { test, expect, type Page } from '@playwright/test';
 import { farmacia, type Actor } from './support/actores';
 import { entrar, irA } from './support/sesion';
 
-const EVIDENCIA = join('docs', 'trabajo', '2026-09-29-farmacia-cuenta', 'evidencia', 'B');
+const EVIDENCIA = process.env['E2E_EVIDENCE_DIR']
+  ? join(process.env['E2E_EVIDENCE_DIR'], 'pharmacy')
+  : join('docs', 'trabajo', '2026-09-29-farmacia-cuenta', 'evidencia', 'B');
 
 /** Los ocho renglones del menú de la farmacia, en el orden que pidió el propietario. */
 const MENU = [

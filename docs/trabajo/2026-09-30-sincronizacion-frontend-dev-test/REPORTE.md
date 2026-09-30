@@ -53,3 +53,11 @@ Ningun flujo de navegador ni persistencia en API real ha sido certificado todavi
 La revision independiente encontro y se corrigio tambien el escenario de enmienda que enviaba patientProfileId (no pertenece al DTO de versiones), y la emision doble de diagnosticUnitId en el mock. La identificacion del representante sigue exigida en contratos antiguos, con excepcion declarada para formas demo posteriores.
 
 Instalacion: los tres SHA ya usaban node-modules. El diagnostico PnP del plan era incorrecto; preferencia consultada, ver PLAN. No se presenta la instalacion inicial aprobada como validacion PnP.
+
+## Checkpoint de compilacion preliminar
+
+- Lint: `corepack yarn lint`, exit 0, evidencia/21-lint.txt (sin errores ni warnings).
+- Instalacion del arbol integrado: `corepack yarn install --immutable`, exit 0, evidencia/22-install-integrated.txt. Peer warnings previos permanecen; sin upgrades.
+- Produccion: `corepack yarn build --configuration=production`, exit 0, evidencia/23-build-production.txt. Angular informa initial 1.35 MB, inferior a maximumError 1.5 MB; supera aviso de 620 kB. Avisos CSS de 4 kB/CommonJS/imports no usados no se ocultaron.
+- `node scripts/check-bundle-budget.mjs`, exit 0, evidencia/24-bundle-budget.txt, contra dist recien generado. Limitacion del script existente: suma referencias directas del HTML (275.46 kB), menos que el grafo inicial de Angular (1.35 MB). El limite real tambien fue aplicado por Angular; no se usa 275.46 kB para afirmar el peso inicial completo.
+- Fuente del build preliminar: evidencia/23-source-snapshot.json y diff guardado. Se volvera a vincular el artefacto final a commit tras reparaciones de runtime si las hubiera.

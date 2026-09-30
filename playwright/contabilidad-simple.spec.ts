@@ -19,7 +19,9 @@ import { entrar, irA } from './support/sesion';
  * 5. Cuentas: tabla y modal; las generales no se borran, las propias sí.
  * 6. Lo guardado sigue ahí después de recargar.
  */
-const SALIDA = join('docs', 'trabajo', '2026-09-28-contabilidad-simple', 'evidencia');
+const SALIDA = process.env['E2E_EVIDENCE_DIR']
+  ? join(process.env['E2E_EVIDENCE_DIR'], 'accounting')
+  : join('docs', 'trabajo', '2026-09-28-contabilidad-simple', 'evidencia');
 const DOCTORA: Actor = {
   rol: 'doctora',
   identificador: 'medica@alovida.mock',

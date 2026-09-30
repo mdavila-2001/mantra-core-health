@@ -25,7 +25,9 @@ import { entrar, irA } from './support/sesion';
  *    unitaria del bloque: el simulador vive en el navegador y no hay red que
  *    mirar desde acá.
  */
-const SALIDA = join('docs', 'trabajo', '2026-09-26-formulario-medico', 'evidencia');
+const SALIDA = process.env['E2E_EVIDENCE_DIR']
+  ? join(process.env['E2E_EVIDENCE_DIR'], 'clinical-form')
+  : join('docs', 'trabajo', '2026-09-26-formulario-medico', 'evidencia');
 const DOCTORA: Actor = {
   rol: 'doctora',
   identificador: 'medica@alovida.mock',

@@ -1,5 +1,6 @@
 import { HttpHeaders } from '@angular/common/http';
 
+import { environment } from '../../../../environments/environment';
 import { registrarPerfiles } from './profiles.handlers';
 import { registrarAuth } from './auth.handlers';
 import { MockRouter, isMockReply, type MockMethod } from '../mock-router';
@@ -49,6 +50,23 @@ describe('handlers del perfil propio y del alta de organización', () => {
   it('sin métricas inventadas: el simulador no fabrica la serie ni la calidad (ID-14)', () => {
     expect(perfil().activity.monthlyEncounters).toBeUndefined();
     expect(perfil().activity.quality).toBeUndefined();
+  });
+
+  it('explicit demo preserves the monthly series and quality indicators', () => {
+    const originalMockBackend = environment.mockBackend;
+    try {
+      Object.assign(environment, { mockBackend: true });
+      const activity = perfil().activity as {
+        monthlyEncounters: { count: number; insuredCount: number }[];
+        quality: { notesWithin24h: number };
+      };
+      expect(activity.monthlyEncounters).toHaveLength(12);
+      expect(activity.monthlyEncounters.reduce((total, month) => total + month.count, 0)).toBe(312);
+      expect(activity.monthlyEncounters.reduce((total, month) => total + month.insuredCount, 0)).toBe(194);
+      expect(activity.quality.notesWithin24h).toBe(275);
+    } finally {
+      Object.assign(environment, { mockBackend: originalMockBackend });
+    }
   });
 
   it('PATCH de una especialidad con `isPrimary` responde 400: tiene su propia ruta', () => {

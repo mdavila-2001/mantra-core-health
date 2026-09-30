@@ -94,7 +94,7 @@ Las rutas representan plantillas, sin identificadores ni datos de personas. Una 
 [claims-e2e]: ../../../playwright/carril-adjudicacion-clausulas.spec.ts
 [campaigns-e2e]: ../../../playwright/carril-insurance-campaigns.spec.ts
 [notification-test]: ../../../src/app/core/notifications/notification-actions.spec.ts
-[bell-test]: ../../../src/app/shared/components/organisms/notification-bell/notification-bell.acciones.spec.ts
+[bell-test]: ../../../src/app/features/account/dependents/notification-bell-actions.spec.ts
 [dependent-test]: ../../../src/app/features/account/dependents/dependent-form-dialog.spec.ts
 [dependents-e2e]: ../../../playwright/b1-dependientes.spec.ts
 [glossary-test]: ../../../src/app/features/glossary/glossary.spec.ts
