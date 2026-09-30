@@ -39,6 +39,36 @@ const ATAJOS: readonly { readonly marca: string; readonly bloque?: BloqueDeTexto
 /** Etiquetas cuyo contenido no es prosa: se van enteras, no se aplanan. */
 const DESCARTAR_CON_CONTENIDO = new Set(['SCRIPT', 'STYLE', 'TEMPLATE', 'NOSCRIPT', 'IFRAME', 'OBJECT']);
 
+/** Renglones donde un atajo aplica: texto normal (o suelto en la hoja). */
+const RENGLON_COMUN = new Set(['P', 'DIV']);
+
+/** Un rango que cubre los primeros `n` caracteres de texto de un nodo. */
+function rangoDeLosPrimeros(nodo: Node, n: number): Range | null {
+  const rango = document.createRange();
+  if (nodo.nodeType === Node.TEXT_NODE) {
+    if ((nodo.textContent ?? '').length < n) return null;
+    rango.setStart(nodo, 0);
+    rango.setEnd(nodo, n);
+    return rango;
+  }
+  const caminante = document.createTreeWalker(nodo, NodeFilter.SHOW_TEXT);
+  let restante = n;
+  let primero = true;
+  for (let actual = caminante.nextNode(); actual; actual = caminante.nextNode()) {
+    const largo = (actual.textContent ?? '').length;
+    if (primero) {
+      rango.setStart(actual, 0);
+      primero = false;
+    }
+    if (largo >= restante) {
+      rango.setEnd(actual, restante);
+      return rango;
+    }
+    restante -= largo;
+  }
+  return null;
+}
+
 /** Etiquetas de bloque dentro de la hoja. */
 const BLOQUES = new Set(['P', 'DIV', 'H1', 'H2', 'H3', 'H4', 'LI', 'BLOCKQUOTE']);
 
@@ -278,29 +308,36 @@ export class RichTextEditor {
   }
 
   /**
-   * Atajos tipo Markdown: al escribir el espacio que cierra `## `, `- `,
-   * `1. `, `> `… al principio de un renglón, se quita la marca y se aplica el
-   * formato. Si el renglón ya tiene ese formato, no hace nada.
+   * Atajos tipo Markdown: cuando un renglón de texto normal EMPIEZA con `## `,
+   * `### `, `#### `, `> `, `- `, `* ` o `1. `, se quita la marca y se aplica
+   * el formato.
+   *
+   * No se mira sólo la tecla espacio: al pegar «## Síntomas», o con un teclado
+   * que inserta palabras enteras (dictado, autocompletado del móvil), el
+   * `input` trae el texto de una vez —medido el 30/09/2026—. Lo que decide es
+   * cómo empieza el renglón. Un renglón que ya es título, lista o cita no se
+   * toca.
    *
    * @param evento - El `input` del área.
    */
   protected alEscribir(evento: Event): void {
-    if (!this.markdownShortcuts() || !(evento instanceof InputEvent) || evento.data !== ' ') return;
+    if (!this.markdownShortcuts() || !(evento instanceof InputEvent)) return;
+    if (evento.inputType !== 'insertText' || !(evento.data ?? '').includes(' ')) return;
     const area = this.area()?.nativeElement;
     const seleccion = document.getSelection();
     if (!area || !seleccion?.rangeCount || !seleccion.isCollapsed) return;
-    const cursor = seleccion.getRangeAt(0);
-    const bloque = bloqueDe(cursor.startContainer, area);
-    const antes = document.createRange();
-    antes.setStart(bloque, 0);
-    antes.setEnd(cursor.startContainer, cursor.startOffset);
-    const prefijo = antes.toString().replace(/\u00a0/g, ' ');
-    const atajo = ATAJOS.find((a) => a.marca === prefijo);
+    const bloque = bloqueDe(seleccion.getRangeAt(0).startContainer, area);
+    if (bloque instanceof Element && !RENGLON_COMUN.has(bloque.tagName)) return;
+    const texto = (bloque.textContent ?? '').replace(/\u00a0/g, ' ');
+    const atajo = ATAJOS.find((a) => texto.startsWith(a.marca));
     if (!atajo) return;
-    antes.deleteContents();
+    const marca = rangoDeLosPrimeros(bloque, atajo.marca.length);
+    if (!marca) return;
+    marca.deleteContents();
     if (atajo.bloque) document.execCommand('formatBlock', false, `<${atajo.bloque}>`);
     else if (atajo.comando) document.execCommand(atajo.comando, false);
   }
+
 
   /**
    * Inserta texto donde estaba el cursor (o al final si nunca estuvo).

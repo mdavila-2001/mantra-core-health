@@ -226,6 +226,68 @@ describe('RichTextEditor', () => {
       expect(editor.html()).toContain('<a href="https://who.int/guia">la guía</a>');
     });
 
+    describe('atajos tipo Markdown', () => {
+      let llamadas: unknown[][];
+      const original = document.execCommand;
+
+      beforeEach(() => {
+        llamadas = [];
+        document.execCommand = ((...args: unknown[]) => {
+          llamadas.push(args);
+          return true;
+        }) as typeof document.execCommand;
+        fixture.componentRef.setInput('markdownShortcuts', true);
+        fixture.detectChanges();
+      });
+
+      afterEach(() => {
+        document.execCommand = original;
+      });
+
+      /** Deja `html` en la hoja con el cursor al final del último texto, y dispara el input. */
+      function teclear(contenido: string, data: string): HTMLElement {
+        const area = (fixture.nativeElement as HTMLElement).querySelector('[data-testid="editor-area"]') as HTMLElement;
+        area.innerHTML = contenido;
+        const walker = document.createTreeWalker(area, NodeFilter.SHOW_TEXT);
+        let ultimo: Node | null = null;
+        for (let n = walker.nextNode(); n; n = walker.nextNode()) ultimo = n;
+        const rango = document.createRange();
+        rango.setStart(ultimo!, ultimo!.textContent!.length);
+        rango.collapse(true);
+        getSelection()!.removeAllRanges();
+        getSelection()!.addRange(rango);
+        area.dispatchEvent(new InputEvent('input', { inputType: 'insertText', data, bubbles: true }));
+        return area;
+      }
+
+      it('«## » al empezar un renglón lo vuelve título, también si llega todo junto (pegado, dictado)', () => {
+        const area = teclear('<p>## Factores de riesgo</p>', '## Factores de riesgo');
+        expect(area.textContent).toBe('Factores de riesgo');
+        expect(llamadas).toContainEqual(['formatBlock', false, '<h2>']);
+      });
+
+      it('«- » arma una lista y «> » una cita', () => {
+        teclear('<p>- Sobrepeso</p>', ' ');
+        expect(llamadas).toContainEqual(['insertUnorderedList', false]);
+        teclear('<p>> Primum non nocere</p>', ' ');
+        expect(llamadas).toContainEqual(['formatBlock', false, '<blockquote>']);
+      });
+
+      it('no toca un renglón que ya es título, ni texto que no empieza con la marca', () => {
+        teclear('<h2>## ya es título</h2>', ' ');
+        teclear('<p>dosis de 5 - 10 mg</p>', ' ');
+        expect(llamadas).toEqual([]);
+      });
+
+      it('apagado (nota clínica), no hace nada', () => {
+        fixture.componentRef.setInput('markdownShortcuts', false);
+        fixture.detectChanges();
+        const area = teclear('<p>## Título</p>', ' ');
+        expect(area.textContent).toBe('## Título');
+        expect(llamadas).toEqual([]);
+      });
+    });
+
     it('load() carga un borrador saneado', () => {
       fixture.componentInstance.load('<h2>Borrador</h2><script>x()</script><p>texto</p>');
       expect(fixture.componentInstance.html()).toBe('<h2>Borrador</h2><p>texto</p>');
