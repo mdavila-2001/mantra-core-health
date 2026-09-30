@@ -618,6 +618,10 @@ export interface MensajeSimulado {
   readonly attachmentFileId: string | null;
   readonly isEdited: boolean;
   readonly sentAt: string;
+  /** `STICKER` si lo mandó como sticker propio; ausente = texto o adjunto. */
+  readonly contentType?: 'TEXT' | 'MEDIA' | 'STICKER';
+  /** Reacciones por emoji. Un perfil aparece en una sola. */
+  readonly reactions?: readonly { readonly emoji: string; readonly profileIds: readonly string[] }[];
 }
 
 export const SOPORTE_ID = uuid('public-profile-support-admin');
