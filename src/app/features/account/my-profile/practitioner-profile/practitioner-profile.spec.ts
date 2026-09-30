@@ -308,6 +308,9 @@ describe('PractitionerProfile', () => {
       expect(visible().facturacion).toEqual({
         nit: '5414404011',
         razonSocial: 'Consultorio Dra. Rojas S.R.L.',
+        // Sin sesión de profesional no hay a quién preguntarle por el logo.
+        logoUrl: null,
+        nombreDelConsultorio: '',
       });
     });
 
@@ -317,7 +320,12 @@ describe('PractitionerProfile', () => {
       montar();
       responder({});
 
-      expect(visible().facturacion).toEqual({ nit: '', razonSocial: '' });
+      expect(visible().facturacion).toEqual({
+        nit: '',
+        razonSocial: '',
+        logoUrl: null,
+        nombreDelConsultorio: '',
+      });
     });
 
     it('un perfil sin departamento declarado no mete «undefined» en la petición', () => {
@@ -610,6 +618,7 @@ describe('PractitionerProfile · las operaciones que la vista pide', () => {
   function montar(
     profileId: string | null = 'prac-1',
     redes: RespuestaDeRedes = { items: [], count: 0 },
+    sedes: readonly object[] = [],
   ): void {
     // El módulo se arma DENTRO de cada prueba, porque la sesión cambia entre
     // ellas y un proveedor no se puede reemplazar una vez instanciado. El reset
@@ -629,20 +638,23 @@ describe('PractitionerProfile · las operaciones que la vista pide', () => {
     });
     http = TestBed.inject(HttpTestingController);
     componente = TestBed.createComponent(PractitionerProfile).componentInstance;
-    responderLaCarga(profileId, redes);
+    responderLaCarga(profileId, redes, sedes);
   }
 
   /** La lectura que dispara el constructor. Acá se prueban las operaciones. */
   function responderLaCarga(
     profileId: string | null,
     redes: RespuestaDeRedes = { items: [], count: 0 },
+    sedes: readonly object[] = [],
   ): void {
     http.expectOne((r) => r.url === '/profiles/practitioners/me/summary').flush(PERFIL);
     http.expectOne((r) => r.url === '/terminology/concepts').flush(CONCEPTOS);
     if (profileId !== null) {
-      http
-        .expectOne((r) => r.url === `/practitioners/${profileId}/sites`)
-        .flush({ items: [], count: 0 });
+      // Dos lecturas de las sedes: la de «Dónde atiendo» y la del logo del
+      // consultorio (`LogoDelConsultorioClient`, que pregunta por su cuenta).
+      const lecturas = http.match((r) => r.url === `/practitioners/${profileId}/sites`);
+      expect(lecturas).toHaveLength(2);
+      lecturas.forEach((lectura) => lectura.flush({ items: sedes, count: sedes.length }));
       const seguros = http.expectOne(
         (r) => r.url === `/practitioners/${profileId}/insurance-networks`,
       );
@@ -929,5 +941,83 @@ describe('PractitionerProfile · las operaciones que la vista pide', () => {
     expect(avisos()).toHaveLength(2);
     expect(avisos()[0]?.title).toBe('Trayectoria');
     expect(TestBed.inject(ToastService).toasts()[0]?.durationMs).toBe(3000);
+  });
+});
+
+/**
+ * El logo del consultorio en «Facturación».
+ *
+ * Lo resuelve `LogoDelConsultorioClient` —la única puerta—, así que estas
+ * pruebas hablan de lo que la ficha recibe y no de dónde vive el logo.
+ */
+describe('PractitionerProfile · el logo del consultorio', () => {
+  let http: HttpTestingController;
+  let componente: PractitionerProfile;
+
+  const PNG = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGP4z8DwHwAFAAH/iZk9HQAAAABJRU5ErkJggg==';
+  const PROPIA = { id: 'site-1', name: 'Consultorio Dra. Rojas', isOwnSite: true };
+
+  function montarConSedes(sedes: readonly object[]): void {
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        { provide: AuthService, useValue: { practitionerProfileId: signal('prac-1'), userId: signal('u-1') } },
+        { provide: DialogService, useValue: { confirm: vi.fn() } },
+      ],
+    });
+    http = TestBed.inject(HttpTestingController);
+    componente = TestBed.createComponent(PractitionerProfile).componentInstance;
+    http.expectOne((r) => r.url === '/profiles/practitioners/me/summary').flush(PERFIL);
+    http.expectOne((r) => r.url === '/terminology/concepts').flush(CONCEPTOS);
+    http
+      .match((r) => r.url === '/practitioners/prac-1/sites')
+      .forEach((lectura) => lectura.flush({ items: sedes, count: sedes.length }));
+    http.expectOne((r) => r.url === '/practitioners/prac-1/insurance-networks').flush({ items: [], count: 0 });
+  }
+
+  const facturacion = () =>
+    (componente as unknown as { visible: () => PerfilProfesionalVisible | null }).visible()
+      ?.facturacion;
+
+  afterEach(() => {
+    // Mientras se espera al `FileReader` el componente alcanza a dibujarse, y
+    // sus hijos (mapa de sedes, trayectoria) hacen sus propias lecturas: no son
+    // de esta prueba, así que se dan por atendidas para que `verify()` siga
+    // vigilando lo que sí afirma.
+    http.match((r) => r.url === '/practitioners/prac-1/sites' || r.url.endsWith('/affiliations'));
+    http.verify();
+  });
+
+  it('con logo cargado en el consultorio propio, la ficha lo recibe junto al nombre', async () => {
+    montarConSedes([{ ...PROPIA, logoFileId: 'file-logo' }]);
+    http
+      .expectOne('/common/files/file-logo/content')
+      .flush(new Blob([Uint8Array.from(atob(PNG), (c) => c.charCodeAt(0))], { type: 'image/png' }));
+    for (let i = 0; i < 50 && !facturacion()?.logoUrl; i += 1) {
+      await new Promise((resolver) => setTimeout(resolver, 5));
+    }
+
+    expect(facturacion()?.logoUrl).toMatch(/^data:image\/png/);
+    expect(facturacion()?.nombreDelConsultorio).toBe('Consultorio Dra. Rojas');
+  });
+
+  it('sin logo cargado, la ficha recibe null y el nombre del consultorio igual', () => {
+    montarConSedes([{ ...PROPIA, logoFileId: null }]);
+
+    expect(facturacion()?.logoUrl).toBeNull();
+    expect(facturacion()?.nombreDelConsultorio).toBe('Consultorio Dra. Rojas');
+  });
+
+  it('un logo que no se puede leer no rompe la ficha', () => {
+    montarConSedes([{ ...PROPIA, logoFileId: 'file-logo' }]);
+    http
+      .expectOne('/common/files/file-logo/content')
+      .flush(new Blob(['prohibido']), { status: 403, statusText: 'Forbidden' });
+
+    expect(facturacion()?.logoUrl).toBeNull();
+    expect(facturacion()?.nit).toBe('');
   });
 });

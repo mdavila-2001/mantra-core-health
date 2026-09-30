@@ -466,6 +466,63 @@
                 />
               </app-form-field>
             </form>
+
+            <!-- El logo del consultorio. La misma caja que ve la ficha: lo que se
+                 ve acá es lo que después se ve en Facturación y en el membrete de
+                 cada PDF que emitís. Sin logo el PDF sale igual, con el espacio
+                 vacío. -->
+            <section class="edicion__logo" data-testid="edicion-logo">
+              <h3 class="edicion__logo-titulo">Logo del consultorio</h3>
+              <p class="edicion__logo-nota">
+                Sale en tus PDF y en tus comprobantes. PNG, JPG o WEBP, hasta 2 MB. Si no cargás
+                ninguno, el espacio queda vacío y el documento se ve igual.
+              </p>
+
+              <div class="edicion__logo-cuerpo">
+                <app-logo-consultorio
+                  data-testid="edicion-logo-vista"
+                  [src]="logoVisible()"
+                />
+
+                <div class="edicion__logo-acciones">
+                  <app-file-input
+                    data-testid="edicion-logo-archivo"
+                    testId="edicion-logo-archivo"
+                    [files]="archivosDelLogo()"
+                    (filesChange)="alElegirLogo($event)"
+                    (rejected)="alRechazarLogo($event)"
+                    [accept]="formatosDelLogo"
+                    [maxSizeBytes]="maxBytesDelLogo"
+                    [maxFiles]="1"
+                    [disabled]="subiendoLogo()"
+                    [showList]="false"
+                    [showFeedback]="false"
+                    [label]="logoVisible() ? 'Cambiar logo' : 'Subir logo'"
+                    accessibleLabel="Logo del consultorio"
+                  />
+                  @if (logoVisible()) {
+                    <button
+                      app-button
+                      type="button"
+                      variant="neutral"
+                      size="sm"
+                      data-testid="edicion-logo-quitar"
+                      (clicked)="quitarLogo()"
+                    >
+                      Quitar logo
+                    </button>
+                  }
+                  @if (subiendoLogo()) {
+                    <p class="edicion__logo-estado" role="status">Subiendo el logo…</p>
+                  }
+                  @if (errorDelLogo()) {
+                    <p class="edicion__logo-error" role="alert" data-testid="edicion-logo-error">
+                      {{ errorDelLogo() }}
+                    </p>
+                  }
+                </div>
+              </div>
+            </section>
           </app-tab>
 
           <!-- ─── Dónde atiendo ─────────────────────────────────────────────

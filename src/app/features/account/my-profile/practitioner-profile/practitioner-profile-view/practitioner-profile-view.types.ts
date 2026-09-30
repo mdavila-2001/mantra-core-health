@@ -152,6 +152,13 @@ export interface FacturacionVisible {
   readonly nit: string;
   /** A nombre de quién sale el comprobante. Vacío si no lo cargó. */
   readonly razonSocial: string;
+  /**
+   * El logo del consultorio como `data:` URL, o `null` si no cargó ninguno o
+   * no se pudo leer. Es el mismo que sale en el membrete de sus PDF.
+   */
+  readonly logoUrl: string | null;
+  /** Cómo se llama el consultorio, para el texto alternativo del logo. */
+  readonly nombreDelConsultorio: string;
 }
 
 /**

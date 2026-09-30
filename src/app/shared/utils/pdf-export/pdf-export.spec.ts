@@ -38,6 +38,8 @@ const { DocumentoFalso } = vi.hoisted(() => {
       gState: { opacity?: number }[];
       charSpace: number[];
       setPage: number[];
+      /** Una imagen: qué formato y en qué caja se dibujó. */
+      addImage: { formato: string; x: number; y: number; ancho: number; alto: number }[];
     } = {
       setFont: [],
       setFontSize: [],
@@ -51,6 +53,7 @@ const { DocumentoFalso } = vi.hoisted(() => {
       gState: [],
       charSpace: [],
       setPage: [],
+      addImage: [],
     };
 
     readonly internal = {
@@ -150,6 +153,17 @@ const { DocumentoFalso } = vi.hoisted(() => {
       return this;
     }
 
+    /** `fallar` simula una imagen que `jsPDF` no acepta: lanza igual que el real. */
+    static fallarAlDibujarImagenes = false;
+
+    addImage(_datos: string, formato: string, x: number, y: number, ancho: number, alto: number): this {
+      if (DocumentoFalso.fallarAlDibujarImagenes) {
+        throw new Error('imagen no soportada');
+      }
+      this.llamadas.addImage.push({ formato, x, y, ancho, alto });
+      return this;
+    }
+
     setTextColor(): this {
       return this;
     }
@@ -215,6 +229,7 @@ vi.mock('jspdf', () => ({ jsPDF: DocumentoFalso }));
 let buildPdfDocument: typeof import('./pdf-export').buildPdfDocument;
 let buildBlocksPdf: typeof import('./pdf-export').buildBlocksPdf;
 let exportElementToPdf: typeof import('./pdf-export').exportElementToPdf;
+let establecerLogoDeDocumentos: typeof import('./pdf-logo').establecerLogoDeDocumentos;
 
 /** Un elemento con encabezado, párrafo y una tabla de dos filas. */
 function elementoDeEjemplo(): HTMLElement {
@@ -271,6 +286,9 @@ beforeEach(async () => {
   // lo que corra antes en este trabajador.
   vi.resetModules();
   ({ buildPdfDocument, buildBlocksPdf, exportElementToPdf } = await import('./pdf-export'));
+  ({ establecerLogoDeDocumentos } = await import('./pdf-logo'));
+  DocumentoFalso.fallarAlDibujarImagenes = false;
+  establecerLogoDeDocumentos(null);
 });
 
 describe('buildPdfDocument', () => {
@@ -391,6 +409,126 @@ describe('el membrete de marca', () => {
     expect(ultimoDocumento().llamadas.text.map(([linea]) => linea)).toContain(
       'No válido como factura',
     );
+  });
+});
+
+describe('el logo del consultorio en el membrete', () => {
+  const DERECHA = 595 - 54;
+  const PNG = 'data:image/png;base64,AAAA';
+  const logo = (ancho: number, alto: number) => ({
+    dataUrl: PNG,
+    formato: 'PNG' as const,
+    ancho,
+    alto,
+  });
+
+  /** Dónde se escribió una línea del cuerpo: es lo que no puede moverse. */
+  const yDe = (texto: string): number =>
+    ultimoDocumento().llamadas.text.find(([linea]) => linea === texto)![2];
+  const xDe = (texto: string): number =>
+    ultimoDocumento().llamadas.text.find(([linea]) => linea === texto)![1];
+
+  const CUERPO = [{ kind: 'paragraph' as const, text: 'Una línea' }];
+  const OPCIONES = { title: 'Receta médica', kind: 'Receta médica', reference: 'N.º 0042' };
+
+  it('sin logo no dibuja ninguna imagen y la clase queda pegada al margen derecho', () => {
+    buildBlocksPdf(CUERPO, OPCIONES);
+
+    expect(ultimoDocumento().llamadas.addImage).toHaveLength(0);
+    expect(xDe('RECETA MÉDICA')).toBe(DERECHA);
+  });
+
+  it('con logo lo dibuja una vez, dentro de su caja y pegado al margen derecho', () => {
+    buildBlocksPdf(CUERPO, { ...OPCIONES, logo: logo(360, 120) });
+
+    const [imagen, ...resto] = ultimoDocumento().llamadas.addImage;
+    expect(resto).toHaveLength(0);
+    expect(imagen!.formato).toBe('PNG');
+    expect(imagen!.ancho).toBeLessThanOrEqual(120);
+    expect(imagen!.alto).toBeLessThanOrEqual(34);
+    expect(imagen!.x + imagen!.ancho).toBeCloseTo(DERECHA, 5);
+    expect(imagen!.y).toBeGreaterThanOrEqual(44);
+    expect(imagen!.y + imagen!.alto).toBeLessThanOrEqual(78);
+  });
+
+  it('con logo, la clase y el folio se corren a la izquierda de la ranura y no la pisan', () => {
+    buildBlocksPdf(CUERPO, { ...OPCIONES, logo: logo(360, 120) });
+
+    // El borde visual del texto (ancla + lo que suma el espaciado) queda a la
+    // izquierda de la ranura, sin pisarla.
+    const bordeVisual = xDe('RECETA MÉDICA') + 'RECETA MÉDICA'.length * 1.5;
+    expect(bordeVisual).toBeLessThanOrEqual(DERECHA - 120 - 14 + 1e-9);
+    expect(xDe('N.º 0042') + 'N.º 0042'.length * 0.4).toBeCloseTo(bordeVisual, 5);
+  });
+
+  it.each([
+    ['cuadrado', logo(300, 300)],
+    ['apaisado 3:1', logo(360, 120)],
+    ['muy apaisado 10:1', logo(1000, 100)],
+    ['muy alto 1:3', logo(100, 300)],
+    ['diminuto', logo(4, 4)],
+  ])(
+    'un logo %s no mueve el título ni el arranque del contenido, y cabe en la caja',
+    (_nombre, forma) => {
+      buildBlocksPdf(CUERPO, { ...OPCIONES, subtitle: 'Bajada' });
+      const sinLogo = { titulo: yDe('Receta médica'), bajada: yDe('Bajada'), cuerpo: yDe('Una línea') };
+
+      buildBlocksPdf(CUERPO, { ...OPCIONES, subtitle: 'Bajada', logo: forma });
+      const conLogo = { titulo: yDe('Receta médica'), bajada: yDe('Bajada'), cuerpo: yDe('Una línea') };
+      const [imagen] = ultimoDocumento().llamadas.addImage;
+
+      expect(conLogo).toEqual(sinLogo);
+      expect(imagen!.ancho).toBeLessThanOrEqual(120 + 1e-9);
+      expect(imagen!.alto).toBeLessThanOrEqual(34 + 1e-9);
+      // Conserva la proporción: no se estira.
+      expect(imagen!.ancho / imagen!.alto).toBeCloseTo(forma.ancho / forma.alto, 5);
+    },
+  );
+
+  it('sólo la primera página lleva el logo', () => {
+    buildBlocksPdf(
+      Array.from({ length: 80 }, (_, i) => ({ kind: 'paragraph' as const, text: `Línea ${i}` })),
+      { ...OPCIONES, logo: logo(360, 120) },
+    );
+
+    expect(ultimoDocumento().llamadas.addPage).toBeGreaterThan(0);
+    expect(ultimoDocumento().llamadas.addImage).toHaveLength(1);
+  });
+
+  it('si la imagen no se puede dibujar, el documento sale igual y sin correr la clase', () => {
+    DocumentoFalso.fallarAlDibujarImagenes = true;
+
+    expect(() => buildBlocksPdf(CUERPO, { ...OPCIONES, logo: logo(360, 120) })).not.toThrow();
+
+    expect(xDe('RECETA MÉDICA')).toBe(DERECHA);
+    expect(yDe('Una línea')).toBeGreaterThan(0);
+  });
+
+  it('un logo de proporciones imposibles se omite en vez de romper', () => {
+    expect(() => buildBlocksPdf(CUERPO, { ...OPCIONES, logo: logo(0, 0) })).not.toThrow();
+
+    expect(ultimoDocumento().llamadas.addImage).toHaveLength(0);
+    expect(xDe('RECETA MÉDICA')).toBe(DERECHA);
+  });
+
+  it('usa el logo de la sesión por omisión, y `null` lo apaga para ese documento', () => {
+    establecerLogoDeDocumentos(logo(360, 120));
+
+    buildBlocksPdf(CUERPO, OPCIONES);
+    expect(ultimoDocumento().llamadas.addImage).toHaveLength(1);
+
+    buildBlocksPdf(CUERPO, { ...OPCIONES, logo: null });
+    expect(ultimoDocumento().llamadas.addImage).toHaveLength(0);
+  });
+
+  it('sin `kind` ni referencia el logo entra igual y el contenido no se mueve', () => {
+    buildBlocksPdf(CUERPO, { title: 'Sin clase' });
+    const sinLogo = yDe('Una línea');
+
+    buildBlocksPdf(CUERPO, { title: 'Sin clase', logo: logo(360, 120) });
+
+    expect(ultimoDocumento().llamadas.addImage).toHaveLength(1);
+    expect(yDe('Una línea')).toBe(sinLogo);
   });
 });
 

@@ -15,12 +15,14 @@ import {
   FILIGRANA,
   INICIO_DE_CONTENIDO_CONTINUACION_PT,
   INICIO_DE_CONTENIDO_PT,
+  LOGO_DEL_CONSULTORIO,
   MARGEN_INFERIOR_PT,
   MARGEN_LATERAL_PT,
   MARGEN_SUPERIOR_PT,
   RITMO,
   TIPOGRAFIA,
 } from './pdf-theme';
+import { contenerLogo, logoDeDocumentos, type PdfLogo } from './pdf-logo';
 
 /**
  * El maquetador de PDF de AloVida, sobre `jsPDF` puro.
@@ -70,6 +72,14 @@ export interface PdfExportOptions {
   readonly reference?: string;
   /** La línea legal del pie. Por omisión, la de confidencialidad. */
   readonly footerNote?: string;
+  /**
+   * El logo del consultorio, arriba a la derecha de la primera página.
+   *
+   * Ausente, se usa el de la sesión (ver `establecerLogoDeDocumentos`);
+   * `null`, el documento sale **sin logo** aunque la sesión tenga uno. Con o
+   * sin él el membrete mide lo mismo: la ranura es de tamaño fijo.
+   */
+  readonly logo?: PdfLogo | null;
 }
 
 /**
@@ -254,6 +264,8 @@ interface Hoja {
    * leía como escrita.
    */
   inicio: number;
+  /** El logo del consultorio ya resuelto, o `null`. Se decide una vez por documento. */
+  readonly logo: PdfLogo | null;
   /** Dónde va la próxima línea. Lo único que se mueve. */
   y: number;
 }
@@ -274,6 +286,7 @@ function abrirHoja(doc: jsPDF, opciones: PdfExportOptions): Hoja {
     util,
     fondo: alto - MARGEN_INFERIOR_PT,
     inicio: INICIO_DE_CONTENIDO_PT,
+    logo: opciones.logo === undefined ? logoDeDocumentos() : opciones.logo,
     y: 0,
   };
 
@@ -331,6 +344,41 @@ function dibujarFiligrana(hoja: Hoja): void {
 }
 
 /**
+ * Dibuja el logo del consultorio dentro de su caja, o no dibuja nada.
+ *
+ * Contenido (`contenerLogo`) y pegado al margen derecho. Si el logo no se puede
+ * dibujar —formato que `jsPDF` no acepta, datos rotos, proporciones absurdas—
+ * se **omite** y el documento sigue: un logo defectuoso nunca puede impedir una
+ * receta.
+ *
+ * @returns `true` si quedó dibujado. Sólo entonces la clase de documento se
+ *   corre a la izquierda.
+ */
+function dibujarLogoDelConsultorio(hoja: Hoja, arriba: number, derecha: number): boolean {
+  const { logo } = hoja;
+  if (logo === null) {
+    return false;
+  }
+  const caja = contenerLogo(logo, LOGO_DEL_CONSULTORIO);
+  if (caja === null) {
+    return false;
+  }
+  try {
+    hoja.doc.addImage(
+      logo.dataUrl,
+      logo.formato,
+      derecha - caja.ancho,
+      arriba + caja.arriba,
+      caja.ancho,
+      caja.alto,
+    );
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * El membrete. Devuelve la altura donde puede empezar el contenido.
  *
  * @param primera - La primera página lleva título y bajada; las siguientes,
@@ -370,10 +418,26 @@ function dibujarMembrete(hoja: Hoja, primera: boolean): number {
   // repetido compite con la numeración del pie sin decir nada nuevo.
   const hayReferencia = primera && referencia !== undefined && referencia.trim() !== '';
 
+  // El logo del consultorio vive en una caja de tamaño fijo a la derecha de la
+  // primera página. Es lo único que se mueve por su culpa: la clase y el folio
+  // se corren a su izquierda **sólo si hay logo**, y en vertical no cambia
+  // nada —ni el filete, ni el título, ni dónde arranca el contenido—. Sin logo,
+  // el membrete es idéntico al de siempre.
+  const hayLogo = primera && dibujarLogoDelConsultorio(hoja, topeMarca, derecha);
+  const bordeDerecho = hayLogo
+    ? derecha - LOGO_DEL_CONSULTORIO.ancho - LOGO_DEL_CONSULTORIO.separacion
+    : derecha;
+  // Un texto alineado a la derecha con letras espaciadas sobresale de su ancla
+  // por lo que suma el espaciado (un espacio por letra): ~19 pt en «RECETA
+  // MÉDICA». Pegado al margen no molesta; pegado a un logo, lo pisaría. Sólo
+  // con logo se descuenta, y sin logo la clase queda donde siempre estuvo.
+  const sobresale = (texto: string, espaciado: number): number =>
+    hayLogo ? texto.length * espaciado : 0;
+
   if (hayClase) {
     escribirEspaciado(hoja, {
       texto: clase.toLocaleUpperCase('es'),
-      x: derecha,
+      x: bordeDerecho - sobresale(clase, ESPACIADO.clase),
       // Con folio debajo, la clase sube para que el par quede centrado sobre
       // la misma línea que el logotipo.
       y: baseLogotipo - (hayReferencia ? 6 : 0),
@@ -387,7 +451,7 @@ function dibujarMembrete(hoja: Hoja, primera: boolean): number {
   if (hayReferencia) {
     escribirEspaciado(hoja, {
       texto: referencia,
-      x: derecha,
+      x: bordeDerecho - sobresale(referencia, 0.4),
       y: baseLogotipo + (hayClase ? 8 : 0),
       tamano: TIPOGRAFIA.clase,
       espaciado: 0.4,

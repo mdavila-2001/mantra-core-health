@@ -15,9 +15,12 @@ import {
   type AbstractControl,
   type ValidationErrors,
 } from '@angular/forms';
-import { catchError, forkJoin, of, type Observable } from 'rxjs';
+import { catchError, forkJoin, map, of, switchMap, type Observable } from 'rxjs';
 
+import { blobToDataUrl } from '../../../../core/data-access/files/blob-to-data-url';
 import { FilesClient } from '../../../../core/data-access/files/files.client';
+import { PdfBrandingService } from '../../../../core/pdf-branding/pdf-branding.service';
+import { LogoDelConsultorioClient } from '../../../../core/data-access/practice-sites/logo-del-consultorio.client';
 import { FileDownloader } from '../../../../core/data-access/files/file-downloader';
 import { ProfilesClient } from '../../../../core/data-access/profiles/profiles.client';
 import { BoMunicipalitiesCatalog } from '../../../../core/data-access/terminology/bo-municipalities.service';
@@ -49,7 +52,8 @@ import {
   telefonoCompleto,
 } from '../../../../shared/components/molecules/phone-input/phone-input';
 import { ConceptSelect } from '../../../../shared/components/molecules/concept-select/concept-select';
-import { FileInput } from '../../../../shared/components/molecules/file-input/file-input';
+import { FileInput, type RejectedFile } from '../../../../shared/components/molecules/file-input/file-input';
+import { LogoConsultorio } from '../../../../shared/components/molecules/logo-consultorio/logo-consultorio';
 import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
 import { Pagination } from '../../../../shared/components/molecules/pagination/pagination';
 import { RowActions } from '../../../../shared/components/molecules/row-actions/row-actions';
@@ -325,6 +329,7 @@ function soloFecha(fecha: Date): string {
     FilterBar,
     FormActions,
     FileInput,
+    LogoConsultorio,
     FormField,
     Input,
     LocationPicker,
@@ -352,6 +357,8 @@ function soloFecha(fecha: Date): string {
 export class PractitionerProfileEdit {
   private readonly profiles = inject(ProfilesClient);
   private readonly files = inject(FilesClient);
+  private readonly logo = inject(LogoDelConsultorioClient);
+  private readonly membretePdf = inject(PdfBrandingService);
   private readonly descargas = inject(FileDownloader);
   private readonly dialogs = inject(DialogService);
   private readonly toasts = inject(ToastService);
@@ -480,6 +487,26 @@ export class PractitionerProfileEdit {
   protected readonly nit = signal('');
   /** A nombre de quién sale el comprobante. */
   protected readonly razonSocial = signal('');
+
+  /* -- El logo del consultorio ------------------------------------------------
+     No viaja en el `PATCH` del perfil: va por `LogoDelConsultorioClient`, que es
+     el único que sabe dónde se guarda. Acá sólo hay tres estados:
+
+     - `logoGuardado`: lo que hay en el servidor, para poder descartar.
+     - `logoVisible`: lo que la tile muestra ahora (puede ser una imagen recién
+       elegida y todavía no guardada).
+     - `logoPendiente`: `null` si nada cambió; si no, el id del archivo ya
+       subido —o `null` dentro, si lo que se quiere es quitarlo—. */
+  private readonly logoGuardado = signal<string | null>(null);
+  protected readonly logoVisible = signal<string | null>(null);
+  private readonly logoPendiente = signal<{ readonly fileId: string | null } | null>(null);
+  protected readonly subiendoLogo = signal(false);
+  protected readonly errorDelLogo = signal('');
+  /** Vacío siempre: el selector sólo dispara; la imagen vive en `logoVisible`. */
+  protected readonly archivosDelLogo = signal<readonly File[]>([]);
+  protected readonly formatosDelLogo = 'image/png,image/jpeg,image/webp';
+  /** 2 MiB: sobra para un logo y evita que un membrete pese como una foto. */
+  protected readonly maxBytesDelLogo = 2 * 1024 * 1024;
   /**
    * La calle, ALV-009.
    *
@@ -1316,9 +1343,71 @@ export class PractitionerProfileEdit {
         this.sembrarFormulario(perfil);
         this.perfil.set(ready(perfil));
         this.cargarEtiquetas(perfil);
+        this.cargarLogo(perfil.profileId);
       },
       error: (error: unknown) => this.perfil.set(errorToViewState<OwnPractitionerProfile>(error)),
     });
+  }
+
+  /** Trae el logo guardado. Sin logo o con un error, la tile muestra «Sin logo». */
+  private cargarLogo(profileId: string): void {
+    this.logo.obtenerUrl(profileId).subscribe((url) => {
+      this.logoGuardado.set(url);
+      // Si la persona ya eligió otro mientras cargaba, no se lo pisa.
+      if (this.logoPendiente() === null) {
+        this.logoVisible.set(url);
+      }
+    });
+  }
+
+  /**
+   * Sube el logo elegido y lo deja pendiente de guardar.
+   *
+   * Sube al elegir, no al guardar: así un archivo que el servidor rechaza se
+   * dice en el momento y no después de haber escrito el resto del formulario.
+   * Lo que **no** hace es asociarlo al consultorio: eso es «Guardar cambios».
+   */
+  protected alElegirLogo(archivos: readonly File[]): void {
+    const archivo = archivos[0];
+    if (archivo === undefined || this.subiendoLogo()) {
+      return;
+    }
+    this.errorDelLogo.set('');
+    this.subiendoLogo.set(true);
+    this.logo
+      .subir(archivo)
+      .pipe(
+        switchMap((fileId) =>
+          blobToDataUrl(archivo).pipe(map((vista) => ({ fileId, vista }))),
+        ),
+      )
+      .subscribe({
+        next: ({ fileId, vista }) => {
+          this.subiendoLogo.set(false);
+          this.logoPendiente.set({ fileId });
+          this.logoVisible.set(vista);
+        },
+        error: () => {
+          this.subiendoLogo.set(false);
+          this.errorDelLogo.set('No se pudo subir el logo. Probá de nuevo.');
+        },
+      });
+  }
+
+  /** El selector descartó un archivo: se dice por qué, sin tocar el logo actual. */
+  protected alRechazarLogo(rechazados: readonly RejectedFile[]): void {
+    const motivo = rechazados[0]?.reason;
+    this.errorDelLogo.set(
+      motivo === 'tamaño'
+        ? 'El logo pesa más de 2 MB. Elegí una imagen más liviana.'
+        : 'El logo tiene que ser una imagen PNG, JPG o WEBP.',
+    );
+  }
+
+  protected quitarLogo(): void {
+    this.errorDelLogo.set('');
+    this.logoPendiente.set(this.logoGuardado() === null ? null : { fileId: null });
+    this.logoVisible.set(null);
   }
 
   /**
@@ -1415,6 +1504,9 @@ export class PractitionerProfileEdit {
     }
     this.erroresDelServidor.set(new Map());
     this.sembrarFormulario(original);
+    this.logoPendiente.set(null);
+    this.logoVisible.set(this.logoGuardado());
+    this.errorDelLogo.set('');
     this.toasts.success('Descartamos los cambios sin guardar.', 'Edición cancelada');
   }
 
@@ -1578,15 +1670,37 @@ export class PractitionerProfileEdit {
       cambios.taxHolderName = this.razonSocial();
     }
 
-    if (Object.keys(cambios).length === 0) {
+    const logoPendiente = this.logoPendiente();
+    if (Object.keys(cambios).length === 0 && logoPendiente === null) {
       this.toasts.success('No había ningún cambio para guardar.', 'Perfil');
+      return;
+    }
+    if (this.subiendoLogo()) {
+      this.toasts.error('Esperá a que termine de subir el logo.', 'Perfil');
       return;
     }
 
     this.guardandoPresentacion.set(true);
-    this.profiles.updateOwnPractitionerProfile(cambios).subscribe({
+    // El logo no viaja en el PATCH del perfil: es otra escritura. Si sólo
+    // cambió el logo no hay PATCH que mandar, y el perfil que se re-siembra es
+    // el que ya estaba.
+    const perfil$ =
+      Object.keys(cambios).length === 0
+        ? of(original)
+        : this.profiles.updateOwnPractitionerProfile(cambios);
+    const logo$ =
+      logoPendiente === null
+        ? of(undefined)
+        : this.logo.guardar(original.profileId, logoPendiente.fileId);
+    forkJoin([perfil$, logo$]).pipe(map(([perfil]) => perfil)).subscribe({
       next: (perfil) => {
         this.guardandoPresentacion.set(false);
+        if (logoPendiente !== null) {
+          this.logoGuardado.set(this.logoVisible());
+          this.logoPendiente.set(null);
+          // Los PDF que se emitan desde ahora llevan el logo nuevo.
+          this.membretePdf.recargar();
+        }
         this.sembrarFormulario(perfil);
         this.perfil.set(ready(perfil));
         this.toasts.success('Tu perfil quedó actualizado.', 'Perfil');

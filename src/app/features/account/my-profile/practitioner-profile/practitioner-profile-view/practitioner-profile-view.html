@@ -437,24 +437,36 @@
                  profesional, son lo que hay que copiar en una factura, y se
                  consultan juntos. El NIT es la cifra que se busca, así que va
                  primero y en grande; la razón social lo completa. -->
-            <div class="mi-perfil__factura" data-testid="perfil-factura-recuadro">
-              <p class="mi-perfil__factura-rotulo">NIT</p>
-              <p class="mi-perfil__factura-nit" data-testid="perfil-factura-nit">
-                @if (facturacion.nit) {
-                  {{ facturacion.nit }}
-                } @else {
-                  <span class="mi-perfil__ausente">Sin registrar</span>
-                }
-              </p>
+            <!-- El logo del consultorio va a la izquierda de los dos datos, en su
+                 caja de tamaño fijo: con o sin logo el recuadro mide lo mismo, y
+                 es el mismo que sale en el membrete de cada PDF. -->
+            <div class="mi-perfil__factura factura--con-logo" data-testid="perfil-factura-recuadro">
+              <app-logo-consultorio
+                class="factura__logo"
+                data-testid="perfil-factura-logo"
+                [src]="facturacion.logoUrl"
+                [nombre]="facturacion.nombreDelConsultorio"
+              />
 
-              <p class="mi-perfil__factura-rotulo">A nombre de</p>
-              <p class="mi-perfil__factura-titular" data-testid="perfil-factura-titular">
-                @if (facturacion.razonSocial) {
-                  {{ facturacion.razonSocial }}
-                } @else {
-                  <span class="mi-perfil__ausente">Sin registrar</span>
-                }
-              </p>
+              <div class="factura__datos">
+                <p class="mi-perfil__factura-rotulo">NIT</p>
+                <p class="mi-perfil__factura-nit" data-testid="perfil-factura-nit">
+                  @if (facturacion.nit) {
+                    {{ facturacion.nit }}
+                  } @else {
+                    <span class="mi-perfil__ausente">Sin registrar</span>
+                  }
+                </p>
+
+                <p class="mi-perfil__factura-rotulo">A nombre de</p>
+                <p class="mi-perfil__factura-titular" data-testid="perfil-factura-titular">
+                  @if (facturacion.razonSocial) {
+                    {{ facturacion.razonSocial }}
+                  } @else {
+                    <span class="mi-perfil__ausente">Sin registrar</span>
+                  }
+                </p>
+              </div>
             </div>
 
             <!-- Sin NIT no hay comprobante que emitir, así que el renglón dice

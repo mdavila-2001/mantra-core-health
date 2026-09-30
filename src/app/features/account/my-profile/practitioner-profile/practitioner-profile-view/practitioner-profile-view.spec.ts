@@ -48,6 +48,9 @@ function afiliacion(over: Partial<AfiliacionVisible> = {}): AfiliacionVisible {
   };
 }
 
+/** Facturación sin ningún dato cargado, ni logo. */
+const FACTURA_VACIA = { nit: '', razonSocial: '', logoUrl: null, nombreDelConsultorio: '' };
+
 const PERFIL: PerfilProfesionalVisible = {
   nombre: 'Dra. Lucía Salas',
   titulo: 'Médica cardióloga',
@@ -421,7 +424,7 @@ describe('PractitionerProfileView', () => {
     // Con `facturacion` declarada: es la ficha PROPIA, y esa pestaña sólo
     // existe ahí. El fixture base la deja en `null` porque casi todas estas
     // pruebas miran la ficha de un colega.
-    const host = montar({ ...PERFIL, facturacion: { nit: '', razonSocial: '' } }, true);
+    const host = montar({ ...PERFIL, facturacion: { ...FACTURA_VACIA } }, true);
 
     const pestanas = Array.from(host.querySelectorAll('[role="tab"]')).map(
       (boton) => boton.textContent?.trim() ?? '',
@@ -961,7 +964,7 @@ describe('PractitionerProfileView', () => {
 
     it('y no se repite: una sola lista de matrículas, sin sub-pestañas', () => {
       const host = montar(
-        { ...PERFIL, datosPersonales: DATOS, facturacion: { nit: '', razonSocial: '' } },
+        { ...PERFIL, datosPersonales: DATOS, facturacion: { ...FACTURA_VACIA } },
         true,
       );
       // Sin abrirla no probaría nada: el panel de una pestaña inactiva no se
@@ -1158,7 +1161,7 @@ describe('PractitionerProfileView', () => {
    * que se copia en una factura, y se consulta junto.
    */
   describe('el recuadro de facturación', () => {
-    const FACTURA = { nit: '8812345011', razonSocial: 'Consultorio Dra. Rojas S.R.L.' };
+    const FACTURA = { ...FACTURA_VACIA, nit: '8812345011', razonSocial: 'Consultorio Dra. Rojas S.R.L.' };
 
     it('en la ficha propia muestra el NIT y a nombre de quién factura', () => {
       const host = montar({ ...PERFIL, facturacion: FACTURA }, true);
@@ -1170,6 +1173,36 @@ describe('PractitionerProfileView', () => {
       expect(
         host.querySelector('[data-testid="perfil-factura-titular"]')?.textContent?.trim(),
       ).toBe('Consultorio Dra. Rojas S.R.L.');
+    });
+
+    it('con logo cargado, lo muestra dentro del recuadro de facturación', () => {
+      const logoUrl = 'data:image/png;base64,iVBORw0KGgo=';
+      const host = montar(
+        {
+          ...PERFIL,
+          facturacion: { ...FACTURA, logoUrl, nombreDelConsultorio: 'Consultorio Rojas' },
+        },
+        true,
+      );
+      seleccionarPestana(host, 'Facturación');
+
+      const recuadro = host.querySelector('[data-testid="perfil-factura-recuadro"]');
+      const imagen = recuadro?.querySelector('[data-testid="perfil-factura-logo"] img');
+      expect(imagen?.getAttribute('alt')).toBe('Logo de Consultorio Rojas');
+      expect(imagen?.getAttribute('src')).toBe(logoUrl);
+    });
+
+    it('sin logo deja el mismo hueco con «Sin logo» y el NIT sigue visible', () => {
+      const host = montar({ ...PERFIL, facturacion: FACTURA }, true);
+      seleccionarPestana(host, 'Facturación');
+
+      const logo = host.querySelector('[data-testid="perfil-factura-logo"]');
+      expect(logo).not.toBeNull();
+      expect(logo?.querySelector('img')).toBeNull();
+      expect(logo?.textContent).toContain('Sin logo');
+      expect(host.querySelector('[data-testid="perfil-factura-nit"]')?.textContent?.trim()).toBe(
+        '8812345011',
+      );
     });
 
     it('los dos datos van en un recuadro propio, separado de la lista de datos', () => {
@@ -1186,7 +1219,7 @@ describe('PractitionerProfileView', () => {
     });
 
     it('sin NIT dice dónde cargarlo, en vez de dejar el hueco', () => {
-      const host = montar({ ...PERFIL, facturacion: { nit: '', razonSocial: '' } }, true);
+      const host = montar({ ...PERFIL, facturacion: { ...FACTURA_VACIA } }, true);
       seleccionarPestana(host, 'Facturación');
 
       expect(host.querySelector('[data-testid="perfil-factura-nit"]')?.textContent).toContain(

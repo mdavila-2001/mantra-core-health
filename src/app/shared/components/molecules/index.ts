@@ -66,6 +66,8 @@ export { StoredFilePreview } from './stored-file-preview/stored-file-preview';
 
 export { FormField } from './form-field/form-field';
 
+export { LogoConsultorio } from './logo-consultorio/logo-consultorio';
+
 /* `MenuItem` y `MenuTrigger` solo tienen sentido dentro de un `Menu`. */
 export { Menu } from './menu/menu';
 export { MenuItem } from './menu/menu-item/menu-item';
