@@ -327,6 +327,15 @@ export interface PractitionerActivity {
 export interface MonthlyCount {
   readonly month: string;
   readonly count: number;
+  /**
+   * De las `count` consultas, cuántas fueron de personas atendidas **con
+   * seguro**. Las demás —`count - insuredCount`— fueron sin seguro.
+   *
+   * Opcional: una instalación que todavía no cruza la consulta con la
+   * cobertura de la persona manda sólo el total, y el gráfico dibuja una serie
+   * en lugar de dos.
+   */
+  readonly insuredCount?: number;
 }
 
 /**
