@@ -50,6 +50,7 @@
       class="editor__area"
       [attr.contenteditable]="interactivo() && !readOnly() ? 'true' : null"
       role="textbox"
+      tabindex="0"
       aria-multiline="true"
       [attr.aria-label]="label()"
       [attr.aria-readonly]="readOnly() ? 'true' : null"

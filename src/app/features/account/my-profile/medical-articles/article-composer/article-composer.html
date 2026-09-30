@@ -2,7 +2,6 @@
   class="compositor-articulo"
   [class.compositor-articulo--inerte]="disabled()"
   [attr.inert]="disabled() ? '' : null"
-  (keydown)="alTeclear($event)"
 >
   @if (borradorPendiente(); as borrador) {
     <div class="compositor-articulo__borrador" role="status" data-testid="article-draft-offer">

@@ -252,7 +252,7 @@ describe('MedicalArticles', () => {
       expect.stringContaining('f-a'),
       expect.stringContaining('f-b'),
     ]);
-    pedidos.forEach((r, i) => r.flush(new Blob(['x'], { type: 'image/png' }), { headers: { 'Content-Type': `image/png` } }));
+    pedidos.forEach((r) => r.flush(new Blob(['x'], { type: 'image/png' }), { headers: { 'Content-Type': 'image/png' } }));
     expect(señal<string | null>('leyendo')()).toBe('post-1');
   });
 

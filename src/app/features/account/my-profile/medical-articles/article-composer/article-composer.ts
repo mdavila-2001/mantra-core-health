@@ -114,6 +114,9 @@ interface BorradorGuardado {
   templateUrl: './article-composer.html',
   styleUrl: './article-composer.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  // En el host y no en un div: los atajos (Ctrl/Cmd+K, Escape) valen para todo
+  // el compositor, que no es en sí un control enfocable.
+  host: { '(keydown)': 'alTeclear($event)' },
 })
 export class ArticleComposer {
   /** Tope del cuerpo ya convertido, el que valida el servidor. */

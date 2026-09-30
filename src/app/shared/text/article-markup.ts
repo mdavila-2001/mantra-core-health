@@ -79,6 +79,9 @@ const BLOCK_TAGS: ReadonlySet<string> = new Set([
   'P', 'DIV', 'H1', 'H2', 'H3', 'H4', 'UL', 'OL', 'BLOCKQUOTE', 'HR',
 ]);
 
+/** Espacio invisible que evita que un párrafo se relea como marca de bloque. */
+const ZERO_WIDTH_SPACE = '\u200b';
+
 /** Marca interna de `htmlToArticle`: no puede aparecer en texto escrito. */
 const SEPARATOR = '\u0000';
 
@@ -463,7 +466,7 @@ function lineText(line: ArticleLine): string {
  * duro invisible para que siga siendo el párrafo que se escribió.
  */
 function escapeLineStart(line: string): string {
-  return /^(#{1,4}\s|[-*]\s|\d+[.)]\s|>|-{3,}$|\*{3,}$|_{3,}$|!\[)/.test(line) ? `​${line}` : line;
+  return /^(#{1,4}\s|[-*]\s|\d+[.)]\s|>|-{3,}$|\*{3,}$|_{3,}$|!\[)/.test(line) ? `${ZERO_WIDTH_SPACE}${line}` : line;
 }
 
 /** Envuelve respetando los espacios de los bordes: `** hola**` no es negrita. */
