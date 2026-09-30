@@ -1,0 +1,16 @@
+/* Los botones de una notificación, en su propia línea bajo el texto: dentro de
+   una campana de 22rem, al lado del título no hay ancho.
+
+   Quien la aloja fija la sangría con `--notificacion-acciones-inicio` para que
+   los botones queden alineados con el texto y no con el borde de la fila. */
+:host {
+  display: block;
+}
+
+.notificacion-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  padding-block: var(--sp-1) var(--sp-3);
+  padding-inline: var(--notificacion-acciones-inicio, 0) var(--sp-3);
+}

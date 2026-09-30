@@ -325,6 +325,7 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
       'my-account/loyalty',
       'my-account/promotions',
       'my-account/spending',
+      'my-account/invoices',
     ],
   },
   {

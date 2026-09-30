@@ -91,3 +91,66 @@
   justify-content: flex-end;
   gap: var(--sp-3);
 }
+
+/* ------------------------------------------------ búsqueda por nombre -- */
+
+.dependents-form__busqueda {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.dependents-form__pista {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.dependents-form__candidatos {
+  display: grid;
+  gap: var(--sp-2);
+  max-block-size: 14rem;
+  overflow-y: auto;
+}
+
+/* Cada cuenta es una opción de un radiogroup, no un enlace: elegir una
+   deselecciona la anterior. El elegido se marca con borde y fondo, no sólo con
+   color. */
+.dependents-form__candidato {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-1) var(--sp-3);
+  inline-size: 100%;
+  padding: var(--sp-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.dependents-form__candidato:hover,
+.dependents-form__candidato:focus-visible {
+  background: var(--bg-hover);
+}
+
+.dependents-form__candidato.is-elegido {
+  border-color: var(--brand-primary);
+  border-width: 2px;
+  padding: calc(var(--sp-3) - 1px);
+  background: var(--bg-hover);
+  font-weight: 600;
+}
+
+.dependents-form__candidato-nombre {
+  overflow-wrap: anywhere;
+}
+
+.dependents-form__candidato-doc {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  font-weight: 400;
+}

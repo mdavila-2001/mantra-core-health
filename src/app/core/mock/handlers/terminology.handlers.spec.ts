@@ -1,4 +1,6 @@
 import { HttpHeaders } from '@angular/common/http';
+import { existsSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 
 import { registrarTerminologia } from './terminology.handlers';
 import {
@@ -10,6 +12,7 @@ import {
   VERIFICACION_DX,
 } from '../fixtures/conceptos';
 import { valorDeTexto } from '../../data-access/terminology/terminology.types';
+import { AlmacenDeGlosario, ArchivoAusente, type LectorDeArchivos } from '../glossary-shards';
 import { MockRouter, type MockMethod } from '../mock-router';
 import { buscarUsuario } from '../mock-session';
 
@@ -438,5 +441,107 @@ describe('contrato C0: expansión de conceptos clínicos', () => {
     for (const [code, conceptId] of Object.entries(VERIFICACION_DX)) {
       expect(items).toContainEqual(expect.objectContaining({ code, conceptId }));
     }
+  });
+});
+
+/**
+ * Auditoría del glosario (2026-09-30): los sinónimos se escriben con su
+ * ortografía correcta («tiña», «uñas», «riñón») y la búsqueda no distingue
+ * tildes ni la ñ; y lo que está en castellano va antes que las categorías
+ * ICD-10-CM que sólo tienen el título en inglés.
+ *
+ * Desde la carga bajo demanda el glosario sale de los shards: estas pruebas
+ * leen la semilla commiteada (`public/glossary-seed/`) con un lector de disco,
+ * igual que `glossary-shards.spec.ts`, y buscan cada término por su id estable.
+ */
+describe('búsqueda del glosario: tildes y castellano primero', () => {
+  const PUBLICO = join(process.cwd(), 'public');
+  const leerSemilla: LectorDeArchivos = (ruta) => {
+    const archivo = join(PUBLICO, ruta);
+    if (ruta.startsWith('glossary-data/') || !existsSync(archivo)) {
+      return Promise.reject(new ArchivoAusente(ruta));
+    }
+    return Promise.resolve(JSON.parse(readFileSync(archivo, 'utf8')) as unknown);
+  };
+  const router = new MockRouter();
+  registrarTerminologia(router, new AlmacenDeGlosario(leerSemilla));
+
+  async function get<T>(path: string, query: Record<string, string> = {}): Promise<T> {
+    const match = router.match('GET', path);
+    if (match === null) throw new Error(`No existe GET ${path}`);
+    return (await match.handler({
+      method: 'GET',
+      path,
+      params: match.params,
+      query: new URLSearchParams(query),
+      body: null,
+      headers: new HttpHeaders(),
+      user: null,
+    })) as T;
+  }
+
+  interface Entrada {
+    readonly conceptId: string;
+    readonly translated: boolean;
+  }
+  interface Conjunto {
+    readonly id: string;
+    readonly internalCode: string;
+    readonly memberCount: number;
+    readonly translatedMemberCount?: number;
+  }
+
+  const TINA_CORPORAL = '46fe0752-651f-408c-ade2-d37afe1d009e';
+  const ONICOMICOSIS = '4e0b6652-f0f5-4db0-a456-819e4e525f02';
+  const PIELONEFRITIS_AGUDA = 'ee652cb9-a81f-4f25-a660-498c1882fe2e';
+
+  const buscar = async (q: string) =>
+    (
+      await get<{ items: readonly Entrada[] }>('/terminology/concepts', {
+        includeValueSets: 'true',
+        limit: '500',
+        q,
+      })
+    ).items.map((item) => item.conceptId);
+
+  it.each([
+    ['tina', TINA_CORPORAL],
+    ['tiña', TINA_CORPORAL],
+    ['unas con hongos', ONICOMICOSIS],
+    ['uñas con hongos', ONICOMICOSIS],
+    ['infeccion de rinon', PIELONEFRITIS_AGUDA],
+    ['INFECCIÓN DE RIÑÓN', PIELONEFRITIS_AGUDA],
+  ])('«%s» encuentra su término', async (q, id) => {
+    expect(await buscar(q)).toContain(id);
+  });
+
+  async function enfermedades(): Promise<Conjunto> {
+    const { items } = await get<{ items: readonly Conjunto[] }>('/terminology/value-sets', {
+      limit: '200',
+    });
+    const conjunto = items.find((c) => c.internalCode === 'glossary-category-disease');
+    if (conjunto === undefined) throw new Error('No está la categoría Enfermedades');
+    return conjunto;
+  }
+
+  it('la categoría Enfermedades dice cuántos de sus términos están en castellano', async () => {
+    const categoria = await enfermedades();
+    const enCastellano = categoria.translatedMemberCount ?? -1;
+    // Casi todas son categorías ICD-10-CM en inglés; las traducidas son la minoría.
+    expect(enCastellano).toBeGreaterThan(0);
+    expect(enCastellano).toBeLessThan(categoria.memberCount);
+  });
+
+  it('los términos en castellano van antes que los que sólo están en inglés', async () => {
+    const categoria = await enfermedades();
+    const { items } = await get<{ items: readonly Entrada[] }>('/terminology/concepts', {
+      includeValueSets: 'true',
+      valueSetId: categoria.id,
+      limit: '5000',
+    });
+
+    const primeroEnIngles = items.findIndex((t) => !t.translated);
+    expect(primeroEnIngles).toBeGreaterThan(0);
+    expect(items.slice(primeroEnIngles).every((t) => !t.translated)).toBe(true);
   });
 });

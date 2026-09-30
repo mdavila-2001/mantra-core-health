@@ -24,9 +24,17 @@ interface NotificacionSimulada {
   readonly bodyText: string;
   readonly destination: { type: string; id: string } | null;
   readonly payloadJson: unknown;
+  /** Los botones que ofrece mientras la decisión siga pendiente. */
+  readonly actions?: readonly AccionSimulada[];
   readonly unread: boolean;
   readonly availableAt: string;
   readonly readAt: string | null;
+}
+
+interface AccionSimulada {
+  readonly key: string;
+  readonly label: string;
+  readonly tone?: 'primary' | 'neutral' | 'danger';
 }
 
 function paraPaciente(): NotificacionSimulada[] {
@@ -81,6 +89,8 @@ export function emitirNotificacion(datos: {
   readonly bodyText: string;
   readonly destination?: { type: string; id: string } | null;
   readonly payloadJson?: unknown;
+  /** Botones que la notificación ofrece hasta que {@link cerrarAcciones} los retire. */
+  readonly actions?: readonly AccionSimulada[];
 }): void {
   notificaciones.agregar({
     id: uuid(`notif-${datos.userId}-${Date.now()}-${Math.random()}`),
@@ -90,10 +100,36 @@ export function emitirNotificacion(datos: {
     bodyText: datos.bodyText,
     destination: datos.destination ?? null,
     payloadJson: datos.payloadJson ?? null,
+    ...(datos.actions === undefined ? {} : { actions: datos.actions }),
     unread: true,
     availableAt: ahora(),
     readAt: null,
   });
+}
+
+/**
+ * Retira los botones de las notificaciones de una decisión que ya se tomó, y
+ * las da por leídas.
+ *
+ * Es lo que hace el servidor real cuando una solicitud se responde: la
+ * notificación queda como registro de lo que pasó pero deja de ofrecer la
+ * decisión. Se busca por destino y no por id de notificación porque quien
+ * responde puede hacerlo desde otra pantalla, sin haber tocado el aviso.
+ */
+export function cerrarAcciones(destino: { readonly type: string; readonly id: string }): void {
+  const pendientes = notificaciones.filtrar(
+    (n) =>
+      n.destination?.type === destino.type &&
+      n.destination.id === destino.id &&
+      (n.actions?.length ?? 0) > 0,
+  );
+  for (const n of pendientes) {
+    notificaciones.actualizar(n.id, {
+      actions: [],
+      unread: false,
+      readAt: n.readAt ?? ahora(),
+    });
+  }
 }
 
 const preferencias = new Map<string, { categories: { category: Categoria; optedIn: boolean }[]; quietHours: { start: string; end: string } | null }>();

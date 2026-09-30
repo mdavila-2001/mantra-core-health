@@ -1066,7 +1066,7 @@ export const ESTADO_SOLICITUD = definir('VS_CLAIM_STATUS', [
    códigos que el backend no tiene: la pantalla filtra por el prefijo canónico
    `glossary-category-*` y las descartaba todas, así que la maqueta nunca
    mostró una definición. Ahora lo sirve `fixtures/glosario.ts`, que indexa el
-   catálogo curado del backend — 12 categorías, 15 etiquetas y 69 términos. */
+   catálogo curado del backend — 12 categorías, 16 etiquetas y 69 términos. */
 
 /* ---- Estados de un caso de verificación de identidad ---------------------- *
    Los nueve que `identity_assurance` emite, con el código **tal como llega al

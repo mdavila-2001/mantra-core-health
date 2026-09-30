@@ -111,6 +111,15 @@
                   <span class="campana__item-fecha">{{ aviso.fecha | date: 'short' }}</span>
                 </p>
               }
+
+              <!-- Fuera del botón de la fila: un botón dentro de otro no es HTML
+                   válido, y el clic de «Aceptar» no debe además abrir la pantalla. -->
+              <app-notification-actions
+                class="campana__acciones"
+                [actions]="aviso.acciones"
+                [destination]="aviso.destino"
+                (executed)="alEjecutarAccion(aviso)"
+              />
             </li>
           }
         </ul>
