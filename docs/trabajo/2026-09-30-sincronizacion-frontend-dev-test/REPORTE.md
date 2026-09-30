@@ -14,14 +14,17 @@ Estado de ejecucion: EN CURSO. Este reporte se actualiza con cada gate; no certi
 
 ## A medias
 
-- H2.S2.M2-M9: resoluciones y adaptaciones escritas, segundo merge aun no registrado. Compila la aplicacion; faltan pruebas unitarias/plantillas/regresion y revision de validaciones de alta. Codigo en la rama aislada y decisiones en evidencia/merge-decisions.jsonl.
-- H2.S3.M7: las tres suites solicitadas estan en ejecucion. No hay resultado aprobado todavia. Salida en evidencia/12-directed-requested.txt.
+| ID | Que anda | Que no esta verificado | Que falta exactamente | Donde quedo |
+|---|---|---|---|---|
+| H2.S2.M5 | Instalacion immutable exit 0, sin upgrades | PnP no existia en ninguna entrada | Resolver discrepancia documental; se conserva node-modules existente | PLAN.md, 22-install-integrated.txt |
+| H2.S3.M7-M8 | 13 suites dirigidas, 178 tests aprobados | Regresion completa y ultimos casos agregados | Ejecutar test:coverage sin bajar umbrales | 14-directed-integrated.txt; rama actual |
+| H2.S3.M10 | Suites nuevas de laboratorio, aseguradora y accesibilidad escritas | Navegador y persistencia real | Chromium serial, capturas y revision independiente; API disponible | playwright/hito2-*.spec.ts; MATRIZ.md |
 
 ## Pendiente
 
-- Completar builds, presupuestos, lint, cobertura y gates individualmente.
-- Ejecutar Chromium serial con capturas 390/1440 y revision independiente.
-- Ejercitar SSR construido y API real disponible; los contratos ausentes de H1 bloquean su certificacion real.
+- Cobertura, gates individuales y validacion final de tipos/lint.
+- Chromium serial con capturas 390/1440 y revision independiente.
+- Integracion real de los contratos ausentes de H1: bloquea certificacion completa, no el trabajo independiente demo.
 - Reporte final, commits, publicacion y PR hacia dev con ambos reviewers, mergeabilidad y checks remotos.
 
 ## Evidencia
@@ -61,3 +64,14 @@ Instalacion: los tres SHA ya usaban node-modules. El diagnostico PnP del plan er
 - Produccion: `corepack yarn build --configuration=production`, exit 0, evidencia/23-build-production.txt. Angular informa initial 1.35 MB, inferior a maximumError 1.5 MB; supera aviso de 620 kB. Avisos CSS de 4 kB/CommonJS/imports no usados no se ocultaron.
 - `node scripts/check-bundle-budget.mjs`, exit 0, evidencia/24-bundle-budget.txt, contra dist recien generado. Limitacion del script existente: suma referencias directas del HTML (275.46 kB), menos que el grafo inicial de Angular (1.35 MB). El limite real tambien fue aplicado por Angular; no se usa 275.46 kB para afirmar el peso inicial completo.
 - Fuente del build preliminar: evidencia/23-source-snapshot.json y diff guardado. Se volvera a vincular el artefacto final a commit tras reparaciones de runtime si las hubiera.
+
+## Checkpoint SSR
+
+- Segundo merge registrado: `78982619`, con los tres SHA de entrada como ancestros. Incorporado dev posterior `1b1bcaaf` mediante `8b83ada3` (cache lint).
+- Reparaciones posteriores registradas en `da161f8b1ee03cc97c2646d6db581e7559522b98`.
+- `corepack yarn build --configuration=production-api`: exit 0, initial 1.35 MB, evidencia/26-build-production-api.txt.
+- Artefacto del commit da161f8b ejecutado con Node, PORT=4102. `/auth`: status 200, `ng-server-context` presente, `login-identifier` renderizado, sin banner demo, Cache-Control no-cache y nosniff. `/chunk-hito2-missing.js`: 404. Resultado literal PASS en evidencia/27-production-api-runtime.json; servidor sin errores en 27-production-api-server.txt. Esto comprueba SSR de login; no certifica backend ni persistencia real.
+
+La primera invocacion demo (28-build-demo.txt) fallo antes de compilar: PowerShell interpreto la coma sin comillas como separador y Angular recibio `production demo`. Repeticion con `corepack yarn build "--configuration=production,demo"` en 29-build-demo.txt, sin cambio de configuracion ni codigo.
+
+Demo compilada: `corepack yarn build "--configuration=production,demo"`, exit 0, initial 1.35 MB, evidencia/29-build-demo.txt. Compilacion no implica validacion de los recorridos.

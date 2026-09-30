@@ -37,9 +37,9 @@ Decisiones del usuario: API real predeterminada; demo explícita; presupuesto in
 |---|---|---|---|---|
 | H2.S2.M1 | Merge mockup | Dadas dev/mockup, cuando se integren, entonces se preservan sus capacidades y ancestry. | `git merge-base --is-ancestor d0d240ed876f1e01d22ffe5cbdcfe68798b8fb1f HEAD` → 0 | HECHO |
 | H2.S2.M2 | Merge test | Dada test, cuando se integre, entonces se preservan a11y, QA y production-api SSR. | `git merge-base --is-ancestor b0e864f5c0dac052ede570c5cccb0e1a7793a971 HEAD` → 0 | HECHO |
-| H2.S2.M3 | Demo explícita | Dados entornos reales, cuando se compilen, entonces mocks/demos están apagados; demo los activa explícitamente. | Suites de entornos/interceptor → verde | EN CURSO |
+| H2.S2.M3 | Demo explícita | Dados entornos reales, cuando se compilen, entonces mocks/demos están apagados; demo los activa explícitamente. | Suites de entornos/interceptor → verde | HECHO |
 | H2.S2.M4 | Verificador de entornos | Dada la configuración elegida, cuando se inspeccione automáticamente, entonces el gate asegura ambos modos. | `node scripts/check-real-api-config.mjs` → 0 | HECHO |
-| H2.S2.M5 | Artefactos/dependencias | Dados manifiesto y lockfile fusionados, cuando se instalen, entonces se conserva instalación reproducible PnP. | `corepack yarn install --immutable` → 0 | TODO |
+| H2.S2.M5 | Artefactos/dependencias | Dados manifiesto y lockfile fusionados, cuando se instalen, entonces se conserva instalación reproducible PnP. | `corepack yarn install --immutable` → 0 | A MEDIAS |
 
 Resolver por comportamiento, nunca elegir globalmente ours/theirs. Preservar /pharmacies/, CSV, rutas, formularios, navegación, nuevos portales, campañas, a11y y determinismo de pruebas. Documentación histórica conserva procedencia; no inventar evidencia retrospectiva.
 Demo: environment.demo.ts; serve development,demo; build production,demo; start:demo. Conservar real-api/e2e-real/production-api; los modos reales apagan todos los flags que fabrican datos. Presupuesto 1.5MB en production y production-api.
@@ -54,10 +54,10 @@ Demo: environment.demo.ts; serve development,demo; build production,demo; start:
 |---|---|---|---|---|
 | H2.S3.M1 | Tipos | Dado el árbol, cuando se comprueben tipos, entonces no hay errores. | `corepack yarn typecheck` → 0 | HECHO |
 | H2.S3.M2 | Lint | Dado el árbol, cuando se analice, entonces no hay errores de lint. | `corepack yarn lint` → 0 | HECHO |
-| H2.S3.M3 | Producción | Dada production, cuando se construya, entonces genera artefacto válido. | `corepack yarn build --configuration=production` → 0 | EN CURSO |
-| H2.S3.M4 | Bundle | Dado el artefacto nuevo, cuando se mida, entonces respeta presupuestos. | `node scripts/check-bundle-budget.mjs` → aprobación; sin artefacto no cuenta | TODO |
-| H2.S3.M5 | SSR real | Dada production-api, cuando se construya/arranque, entonces sirve rutas reales. | `corepack yarn build --configuration=production-api` → 0; observación SSR documentada | TODO |
-| H2.S3.M6 | Demo compilada | Dada demo, cuando se construya, entonces conserva pantallas simuladas. | `corepack yarn build --configuration=production,demo` → 0 | TODO |
+| H2.S3.M3 | Producción | Dada production, cuando se construya, entonces genera artefacto válido. | `corepack yarn build --configuration=production` → 0 | HECHO |
+| H2.S3.M4 | Bundle | Dado el artefacto nuevo, cuando se mida, entonces respeta presupuestos. | `node scripts/check-bundle-budget.mjs` → aprobación; sin artefacto no cuenta | HECHO |
+| H2.S3.M5 | SSR real | Dada production-api, cuando se construya/arranque, entonces sirve rutas reales. | `corepack yarn build --configuration=production-api` → 0; observación SSR documentada | HECHO |
+| H2.S3.M6 | Demo compilada | Dada demo, cuando se construya, entonces conserva pantallas simuladas. | `corepack yarn build --configuration=production,demo` → 0 | HECHO |
 | H2.S3.M7 | Unitarias dirigidas | Dados componentes afectados, cuando se prueben, entonces pasan sus contratos. | `corepack yarn test --include='**/patient-chart.spec.ts' --include='**/menu.spec.ts' --include='**/mock-backend.spec.ts' --watch=false` → 0; ampliar afectados | EN CURSO |
 | H2.S3.M8 | Regresión unitaria | Dado el árbol final, cuando se ejecute cobertura, entonces pasan pruebas y umbrales. | `corepack yarn test:coverage` → 0 | TODO |
 | H2.S3.M9 | Gates locales | Dados contratos arquitectónicos, cuando se validen, entonces pasan arquitectura/prefijos/rutas/formularios/tokens/contraste. | Cada `node scripts/check-*.mjs` aplicable → 0, individual | TODO |
@@ -95,8 +95,8 @@ Pertenecen a H2.S2. Se agregan antes de reparar.
 | ID | Microtarea | CA | DoD | Estado |
 |---|---|---|---|---|
 | H2.S2.M6 | Duplicados de automerge | Dados TS2300/TS2451 del primer typecheck, cuando se consoliden miembros identicos, entonces queda una definicion por simbolo. | corepack yarn typecheck -> 0 | HECHO |
-| H2.S2.M7 | Compatibilidad notas reales | Dado P39 pendiente, cuando se escriban filas en API real, entonces se serializan como objectiveText sin claves rechazadas; demo conserva entries. | Suite ChartNotesClient alta/enmienda, texto+filas y modo demo en verde | EN CURSO |
-| H2.S2.M8 | Rutas y evidencia farmacia | Dados catalogo real y portal demo, cuando se navegue al catalogo, entonces cada modo usa su contrato y se conservan ambos recorridos. | Prueba del destino por configuracion en verde | EN CURSO |
+| H2.S2.M7 | Compatibilidad notas reales | Dado P39 pendiente, cuando se escriban filas en API real, entonces se serializan como objectiveText sin claves rechazadas; demo conserva entries. | Suite ChartNotesClient alta/enmienda, texto+filas y modo demo en verde | HECHO |
+| H2.S2.M8 | Rutas y evidencia farmacia | Dados catalogo real y portal demo, cuando se navegue al catalogo, entonces cada modo usa su contrato y se conservan ambos recorridos. | Prueba del destino por configuracion en verde | HECHO |
 
 Correccion factual: progress-notes fue retirado por C1 (26698990) y absorbido por la nota de consulta; no recrear pantalla obsoleta ni importar modulo eliminado. Conservar capacidad en expediente conforme a navegacion vigente.
 
