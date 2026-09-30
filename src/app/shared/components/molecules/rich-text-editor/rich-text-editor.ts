@@ -334,6 +334,14 @@ export class RichTextEditor {
     const marca = rangoDeLosPrimeros(bloque, atajo.marca.length);
     if (!marca) return;
     marca.deleteContents();
+    // El cursor al final del renglón, explícito: si se deja al navegador, la
+    // lista nueva lo pone ANTES del texto y lo que se escribe después queda
+    // delante («Sobrepeso» terminaba al final del artículo, 30/09/2026).
+    const final = document.createRange();
+    final.selectNodeContents(bloque);
+    final.collapse(false);
+    seleccion.removeAllRanges();
+    seleccion.addRange(final);
     if (atajo.bloque) document.execCommand('formatBlock', false, `<${atajo.bloque}>`);
     else if (atajo.comando) document.execCommand(atajo.comando, false);
   }

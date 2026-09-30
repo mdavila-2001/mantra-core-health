@@ -266,6 +266,15 @@ describe('RichTextEditor', () => {
         expect(llamadas).toContainEqual(['formatBlock', false, '<h2>']);
       });
 
+      it('deja el cursor al final del renglón, no antes del texto', () => {
+        const area = teclear('<p>- Sobrepeso</p>', '- Sobrepeso');
+        const rango = getSelection()!.getRangeAt(0);
+        const antes = document.createRange();
+        antes.selectNodeContents(area);
+        antes.setEnd(rango.endContainer, rango.endOffset);
+        expect(antes.toString()).toBe('Sobrepeso');
+      });
+
       it('«- » arma una lista y «> » una cita', () => {
         teclear('<p>- Sobrepeso</p>', ' ');
         expect(llamadas).toContainEqual(['insertUnorderedList', false]);
