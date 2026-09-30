@@ -54,6 +54,8 @@ backend.
 | **P45** | `GET /practitioners/:id/insurance-carriers`: con qué aseguradoras trabaja un médico, para su ficha pública. **El modelo ya lo declara** (`network_provider_memberships`); falta la lectura y la carga de las redes reales |
 | **P47** | El catálogo de la farmacia: la empresa no puede **editar** un producto ni cargarle precio, stock, categoría, descripción o imágenes, y el alta exige `SECURITY_ADMIN` |
 | **P50** | Registro de farmacia: la API acepta `tenantType: PHARMACY` pero no crea la fila de `directory.pharmacies`, no tiene bloque `pharmacy.branches` y no enlaza la sede central; lo obligatorio para operar (los 6 PDF, SEDES) hoy no se exige en ninguna capa |
+| **P51** | Registro de laboratorio: la API acepta `tenantType: DIAGNOSTIC_CENTER` con `diagnosticUnit`, pero exige país, jurisdicción, cédula y poder del representante que el alta no pide, no conoce `diagnosticUnit.branches` y, sin `diagnosticUnitTypeConceptId`, crea una unidad **de imágenes** |
+| **P52** | Portal de la cuenta de laboratorio: resumen y **resultados** (subida por partes sin tope de tamaño, listado de todo lo subido, contenido, retiro con motivo y aviso al médico y al paciente). Ninguna ruta `/diagnostics/lab/*` existe en la API |
 
 ---
 
@@ -2196,3 +2198,125 @@ en PDF (`nota-de-venta.ts`) y la prueba de navegador `pagos-plan-nota-venta-fact
 > imagenología, que son maquetas locales sin red —, así que en cuanto la API declare el bloque
 > `pharmacy` y cree `directory.pharmacies`, conectar el resto es sacar la relajación del punto 3
 > y sumar las claves reales que el DTO termine declarando.
+
+---
+
+## P51 · El registro público de laboratorio — 30/09/2026
+
+> **P51 · Lo que el alta pública de laboratorio (`/auth/register/laboratory`) necesita y la API
+> todavía no da.** Origen: carril A de la cuenta de laboratorio, espejo del P50 de farmacia.
+> Hasta el 29/09 esta pantalla era una maqueta que cerraba sin red; desde el 30/09 sale de verdad
+> contra el simulador.
+>
+> La pantalla usa **el mismo endpoint que la aseguradora y la farmacia**,
+> `POST /iam/auth/register-organization`, con `organization.tenantType: 'DIAGNOSTIC_CENTER'` —el
+> código que la API emite para un laboratorio—. A diferencia de la farmacia, el DTO real **sí**
+> tiene bloque propio para este tipo: `diagnosticUnit` (`DiagnosticUnitProfileDto`, en
+> `directory/dto/tenant-type-profile.dto.ts`). El cliente lo usa tal cual: `name` (la razón
+> social) y `primarySite: { name: 'Casa central', address: { lines, latitude?, longitude? } }`.
+> Mismo criterio de obligatoriedad que la farmacia (D2): sólo lo básico frena el alta; los seis
+> PDF, el punto de la central, las sucursales y las tres gerencias son opcionales y viajan
+> «todo o nada» cuando se completan. Aun así, **contra la API real este cuerpo hoy no pasa**:
+>
+> **1. País y jurisdicción.** El servicio exige `countryConceptId` y `jurisdictionConceptId`
+> para todo tipo territorial, `DIAGNOSTIC_CENTER` incluido (422 `missing`). El proceso 4.1 no
+> pregunta ninguno de los dos y el cliente no los manda. O la API los deriva para el alta
+> pública (Bolivia, jurisdicción nacional), o el cliente los resuelve por código contra
+> `dynamic-enums` (`BO`, `JURISDICTION_NATIONAL`), como hacía la rama `test` en cbfce9ee (BR-09).
+>
+> **2. El tipo de unidad.** Sin `diagnosticUnit.diagnosticUnitTypeConceptId` la API crea una
+> unidad **de imágenes** (es su valor por omisión). El cliente no lo manda porque es un
+> concepto, no un código, y leerlo exige el catálogo `diagnostic-unit-type` (`DU_TYPE_LAB`).
+> Esa es también la marca que distinguiría laboratorio de imagenología en el mismo
+> `DIAGNOSTIC_CENTER`: hoy el alta de imagenología (`RegisterImagingCenter`, componente propio
+> en `/auth/register/imaging-center`, no un `?kind=IMAGING` de éste) **sigue siendo maqueta sin
+> red**.
+>
+> **3. Las sucursales.** `diagnosticUnit.branches: [{ name, addressLines, latitude?,
+> longitude? }]` es una clave que **inventa este cliente** (ver el JSDoc de
+> `LaboratoryOrganizationRegistration` en `iam.types.ts`); el DTO sólo conoce una sede
+> primaria, y `forbidNonWhitelisted` rechaza el cuerpo entero con 400. Falta que el alta acepte
+> sedes adicionales de la unidad (el módulo 23 ya sabe crearlas después del alta).
+>
+> **4. El representante sin cédula.** Igual que el punto 3 del P50:
+> `legalRepresentative.idNumber` y `.powerOfAttorneyFileId` son obligatorios en el DTO siempre
+> que viaja el bloque, y el proceso 4.1 sólo pide nombre y correo (4.1.8, 4.1.8.2). El
+> simulador ya relajaba los dos para farmacia; el laboratorio usa esa misma relajación.
+>
+> **5. El NIT y la dirección legal.** El DTO no tiene `taxIdentifier`: el NIT viaja sólo dentro
+> del `code` del tenant (`LAB-<nit>`). La dirección legal viaja como la dirección de la sede
+> primaria, que es lo más parecido que el contrato declara.
+>
+> **6. Lo obligatorio para operar no se exige en ninguna capa.** El SEPREC, la licencia de
+> funcionamiento y el certificado del SEDES son lo que habilita a un laboratorio de sangre a
+> atender, y hasta el 29/09 la maqueta los exigía. Con D2 el alta puede terminar sin ellos, así
+> que falta la regla del lado del servidor que impida operar (recibir órdenes, publicarse en el
+> directorio) sin esos papeles verificados — mismo punto 4 del P50.
+>
+> **7. Lo que el frontend ya tiene.** `RegisterLaboratory` (`features/auth/register-laboratory/`)
+> con `submit()` real, `IamClient.registerLaboratoryOrganization`,
+> `LaboratoryOrganizationRegistration` y `RegisteredOrganization.diagnosticUnitId` en
+> `iam.types.ts`, la rama `DIAGNOSTIC_CENTER` del simulador (`auth.handlers.ts`: coordenadas de
+> la central y de cada sucursal, nombre de sucursal, 422 si `diagnosticUnit` llega con otro
+> tipo, `diagnosticUnitId` en la respuesta) y su spec
+> `core/mock/handlers/auth.handlers.laboratory.spec.ts`.
+
+## P52 · El portal de la cuenta de laboratorio y sus resultados — 30/09/2026
+
+> **P52 · Lo que el portal del laboratorio (`/administration/laboratory*`) necesita y la API no
+> tiene.** Origen: pedido del propietario del 30/09/2026 — «lo mismo que farmacia, para
+> laboratorio», con dos ajustes por ser servicios: **un lugar para subir los resultados en
+> cualquier formato y sin límite de espacio**, y **ver todo lo subido**. Hoy vive sólo en el
+> simulador (`core/mock/handlers/lab-portal.handlers.ts`, con su spec).
+
+Todas las rutas se acotan al tenant del contexto (`X-Tenant-Id`) y las abre el mismo criterio que
+`LabStaffGuard`: miembro activo de un tenant `DIAGNOSTIC_CENTER`. Ninguna lleva el id del
+laboratorio en la ruta.
+
+### Resultados — subida por partes (lo central)
+
+| Método y ruta | Qué hace |
+|---|---|
+| `POST /diagnostics/lab/result-uploads` | Abre una subida: `{ fileName, contentType, sizeBytes, orderId?, note?, notify? }` → `{ uploadId, chunkSizeBytes, totalParts, receivedParts[] }`. **Sin tope de `sizeBytes`.** `orderId` debe ser una orden cuyo ejecutante es este laboratorio (422 si no). |
+| `PUT /diagnostics/lab/result-uploads/:uploadId/parts/:index` | Cuerpo `application/octet-stream` con la parte. 422 si el tamaño no es el esperado o el índice está fuera de rango; 404 si la subida no existe. Idempotente: reenviar una parte la pisa. |
+| `POST /diagnostics/lab/result-uploads/:uploadId/complete` | Cierra y crea el archivo. 409 con `details.missingParts` si faltan partes. |
+| `DELETE /diagnostics/lab/result-uploads/:uploadId` | Aborta y libera las partes. |
+| `GET /diagnostics/lab/result-files?q&kind&orderId&includeWithdrawn` | Todo lo subido, más nuevo primero, con `count` y `totalBytes`. |
+| `GET /diagnostics/lab/result-files/:id/content` | Los bytes, con `Content-Disposition`. **Debe aceptar `Range`** (o devolver una URL firmada de vida corta): el front real no puede traer un video de varios gigas entero a memoria. |
+| `POST /diagnostics/lab/result-files/:id/withdrawal` | `{ reason }` obligatorio. No borra: marca retirado y lo deja en el historial. |
+| `GET /diagnostics/lab/result-targets` | Las órdenes de la bandeja (`service-requests/inbox`) a las que se les puede atar un resultado, con cuántos archivos tienen. |
+
+Cómo se sugiere implementarlo en la API: **multipart upload de MinIO/S3** (ya está en el stack,
+puerto 9002) — cada `PUT` de parte es un `UploadPart`, `complete` es `CompleteMultipartUpload` —
+y la fila en `common.files` + el vínculo a la orden (`service_request`) por el pipeline de
+archivos existente (regla 60 §12). Con eso el límite de 12 MB de `client_max_body_size` de nginx
+**no se toca**: cada parte es de 8 MiB. La clasificación `kind` (`PDF · IMAGE · VIDEO · AUDIO ·
+TEXT · DICOM · OTHER`) la decide el servidor por extensión y MIME (`tipoDeResultado` del
+simulador es la referencia). Con `notify: true` y orden, al cerrar se emite la notificación al
+médico solicitante y al paciente (registro de procesos, Módulo Laboratorio §2.1.9); falta el
+correo (hoy el simulador sólo deja el aviso en la campana).
+
+**Seguridad pendiente de decidir en la API:** escaneo antivirus de lo subido (cualquier formato
+es cualquier formato), cuota por tenant si algún día se quiere, y la retención de lo retirado.
+
+### Resumen
+
+`GET /diagnostics/lab/summary` → servicios publicados, borradores, retirados y no disponibles;
+órdenes de la bandeja sin ningún resultado; cantidad y bytes de lo subido; servicios por
+categoría; actividad reciente.
+
+### Lo que queda para la próxima tanda (el simulador ya lo tiene)
+
+Catálogo de servicios (`/diagnostics/lab/services`, alta, edición, retiro, «se hace hoy / no se
+hace»), categorías (`/diagnostics/lab/categories`, 409 si tienen servicios) e importación CSV
+(`POST /diagnostics/lab/services/import`, modos `CREATE_OR_UPDATE` / `UPDATE_ONLY`). Las
+pantallas de Servicios, Categorías, Importación, Promociones y Ficha del laboratorio todavía no
+están en el menú.
+
+### Qué hay en el front (sólo simulador)
+
+`core/data-access/lab-portal/` (cliente y tipos), `core/mock/handlers/lab-portal.handlers.ts`
+(los bytes subidos se guardan como referencia a las partes del `File` —no se copian— y en
+IndexedDB para sobrevivir a un F5; por eso el interceptor del simulador acepta ahora manejadores
+que devuelven una promesa), `features/laboratory/results/` (cola con pausa, reanudación y
+reintento; visor) y `features/laboratory/summary/`.

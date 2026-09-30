@@ -2,12 +2,6 @@
    `../registro-compartido/registro.css`, que esta pantalla declara junto a esta
    hoja en sus `styleUrls`, igual que las altas de paciente y de profesional. */
 
-.lab-adjunto__error {
-  font-size: var(--fs-caption);
-  color: var(--text-danger);
-  margin: var(--sp-3) 0 0;
-}
-
 /* ---------------------------------------------------------------- sucursales
    Una tarjeta por local, con su nombre, su calle y su mapa. */
 

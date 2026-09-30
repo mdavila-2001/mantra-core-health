@@ -15,6 +15,7 @@ import { registrarFacturacionSimulada } from './billing-simulated.handlers';
 import { registrarContabilidadSimple } from './simple-accounting.handlers';
 import { registrarIdentidad } from './identity.handlers';
 import { registrarLaboratorioFarmaceutico } from './pharma-lab.handlers';
+import { registrarPortalDeLaboratorio } from './lab-portal.handlers';
 import { registerLoyalty } from './loyalty.handlers';
 import { registrarModulosAdministrativos } from './admin-modules.handlers';
 import { registrarNotificaciones } from './notifications.handlers';
@@ -68,6 +69,7 @@ export function crearRouterSimulado(): MockRouter {
   registrarModulosAdministrativos(router);
   registrarFarmacia(router);
   registrarDiagnostico(router);
+  registrarPortalDeLaboratorio(router);
   registrarProcedimientos(router);
   registrarLaboratorioFarmaceutico(router);
   registerLoyalty(router);

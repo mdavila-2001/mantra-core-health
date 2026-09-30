@@ -35,6 +35,30 @@ const LEGAL_DOCUMENT_FIELDS = [
 /** Espejo de `FILE_STORAGE_MAX_SIZE_BYTES` de la API (10 MiB por archivo). */
 const MAX_REGISTRATION_DOCUMENT_BYTES = 10 * 1024 * 1024;
 
+/**
+ * Los mensajes del `ValidationPipe` para un punto georreferenciado: ambas
+ * coordenadas o ninguna, cada una en su rango. Vacío si el punto es válido o
+ * no trae ninguna de las dos.
+ */
+function mensajesDeCoordenadas(
+  prefijo: string,
+  punto: { latitude?: number; longitude?: number },
+): string[] {
+  if (punto.latitude === undefined && punto.longitude === undefined) return [];
+  const mensajes: string[] = [];
+  if (punto.latitude === undefined) {
+    mensajes.push(`${prefijo}.latitude must be a number`);
+  } else if (punto.latitude < -90 || punto.latitude > 90) {
+    mensajes.push(`${prefijo}.latitude must not be greater than 90`);
+  }
+  if (punto.longitude === undefined) {
+    mensajes.push(`${prefijo}.longitude must be a number`);
+  } else if (punto.longitude < -180 || punto.longitude > 180) {
+    mensajes.push(`${prefijo}.longitude must not be greater than 180`);
+  }
+  return mensajes;
+}
+
 interface LoginBody {
   email?: string;
   nationalId?: string;
@@ -185,6 +209,24 @@ export function registrarAuth(router: MockRouter): void {
           longitude?: number;
           branches?: readonly { name?: string; latitude?: number; longitude?: number }[];
         };
+        // Bloque del centro de diagnóstico (carril A de la cuenta de
+        // laboratorio, 2026-09-30): éste SÍ lo declara el DTO real
+        // (`DiagnosticUnitProfileDto`), con la sede primaria y su dirección.
+        // `branches` es lo único que el cliente le suma y el DTO no tiene
+        // (ver `PENDIENTES-BACKEND.md`, P51).
+        diagnosticUnit?: {
+          name?: string;
+          primarySite?: {
+            name?: string;
+            address?: { lines?: readonly string[]; latitude?: number; longitude?: number };
+          };
+          branches?: readonly {
+            name?: string;
+            addressLines?: readonly string[];
+            latitude?: number;
+            longitude?: number;
+          }[];
+        };
         // Representante legal y gerencias (subtarea 1.4). El mock NO prueba
         // que la API real acepte estas claves: eso lo hace el int-spec de la
         // API. Esto sólo espeja el `ValidationPipe` para que el formulario
@@ -300,6 +342,45 @@ export function registrarAuth(router: MockRouter): void {
       }
     }
 
+    const diagnosticUnit = datos.organization?.diagnosticUnit;
+    if (diagnosticUnit !== undefined) {
+      // Mismo contrato que la API real: `diagnosticUnit` sólo corresponde a
+      // `DIAGNOSTIC_CENTER`, y con cualquier otro tipo es un 422 de negocio,
+      // no un 400 de forma.
+      if (datos.organization?.tenantType !== 'DIAGNOSTIC_CENTER') {
+        // 422 y no el 412 de `preconditionFailed`: la `PreconditionFailedException`
+        // de la API responde 422.
+        return reply(422, {
+          statusCode: 422,
+          code: 'PRECONDITION_FAILED',
+          message: 'El bloque diagnosticUnit sólo corresponde a DIAGNOSTIC_CENTER',
+          error: 'Unprocessable Entity',
+          details: { tenantType: datos.organization?.tenantType ?? null },
+        });
+      }
+      // La forma, como el `ValidationPipe`: coordenadas ambas o ninguna y en
+      // rango, en la central (4.1.7) y en cada sucursal (4.1.18), y cada
+      // sucursal con nombre.
+      const mensajes = mensajesDeCoordenadas(
+        'organization.diagnosticUnit.primarySite.address',
+        diagnosticUnit.primarySite?.address ?? {},
+      );
+      diagnosticUnit.branches?.forEach((sucursal, indice) => {
+        const prefijo = `organization.diagnosticUnit.branches.${indice}`;
+        if (!sucursal.name) mensajes.push(`${prefijo}.name should not be empty`);
+        mensajes.push(...mensajesDeCoordenadas(prefijo, sucursal));
+      });
+      if (mensajes.length > 0) {
+        return reply(400, {
+          statusCode: 400,
+          code: 'VALIDATION_FAILED',
+          message: 'Validation failed',
+          error: 'Bad Request',
+          details: { messages: mensajes },
+        });
+      }
+    }
+
     const legalDocuments = datos.organization?.legalDocuments;
     if (legalDocuments !== undefined) {
       const faltantes = LEGAL_DOCUMENT_FIELDS.filter((campo) => !legalDocuments[campo]);
@@ -381,6 +462,8 @@ export function registrarAuth(router: MockRouter): void {
       emailVerificationSent: true,
       ...(legalDocuments === undefined ? {} : { legalDocumentsRegistered: 5 }),
       ...(representativesRegistered === undefined ? {} : { representativesRegistered }),
+      // Como la API: la unidad sólo nace si el alta declaró el bloque.
+      ...(diagnosticUnit === undefined ? {} : { diagnosticUnitId: nuevoId('unidad-diagnostica') }),
     };
   });
 
