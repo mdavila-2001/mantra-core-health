@@ -9,8 +9,9 @@ import { entrar, irA } from './support/sesion';
 /**
  * La contabilidad simple del doctor (28/09/2026).
  *
- * 1. Arriba, tres números: pacientes atendidos, cuánto cobró y cuánto espera
- *    de las aseguradoras.
+ * 1. En la pestaña «Resumen», tres números: pacientes atendidos, cuánto cobró
+ *    y cuánto espera de las aseguradoras. Los registros están aparte, en la
+ *    pestaña «Registros» (30/09/2026): tableros y tablas ya no se mezclan.
  * 2. Gasto con su tipo: el tipo que falta se crea «ahí mismo» con «Nueva
  *    cuenta», el gasto se edita y se borra.
  * 3. Activo y deuda con su tipo.
@@ -58,6 +59,12 @@ test('el doctor ve sus tres números y lleva gastos, activos, deudas, transaccio
   );
   await page.screenshot({ path: join(SALIDA, '1-tres-numeros.png') });
 
+  // Tableros y registros son dos pestañas: en «Resumen» no hay tablas…
+  await expect(page.getByTestId('contabilidad-registros')).toHaveCount(0);
+  // …y en «Registros» no hay tableros.
+  await page.getByRole('tab', { name: 'Registros', exact: true }).click();
+  await expect(page.getByTestId('contabilidad-numeros')).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: '¿Cuánto hiciste?' })).toHaveCount(0);
   const registros = page.getByTestId('contabilidad-registros');
   await registros.scrollIntoViewIfNeeded();
   await expect(registros.getByTestId('tabla-EXPENSE')).toContainText('Alquiler de septiembre');
@@ -171,6 +178,7 @@ test('el doctor ve sus tres números y lleva gastos, activos, deudas, transaccio
 
   /* ---- 6 · recarga: lo guardado sigue ahí ------------------------------ */
   await page.reload();
+  await page.getByRole('tab', { name: 'Registros', exact: true }).click();
   const tras = page.getByTestId('contabilidad-registros');
   await expect(tras.getByTestId('tabla-EXPENSE')).toContainText('Perfil lipídico derivado', {
     timeout: 30_000,

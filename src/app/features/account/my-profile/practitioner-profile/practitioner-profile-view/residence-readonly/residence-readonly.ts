@@ -6,6 +6,7 @@ import {
   BoMunicipalitiesCatalog,
   type RamaDepartamento,
 } from '../../../../../../core/data-access/terminology/bo-municipalities.service';
+import type { PuntoGeo } from '../../../../../../shared/components/organisms/map/pin-mapa.types';
 import { LocationPicker } from '../../../../../auth/registro-compartido/location-picker/location-picker';
 
 /**
@@ -18,6 +19,10 @@ import { LocationPicker } from '../../../../../auth/registro-compartido/location
  *
  * Vive aparte porque es lo único de la ficha que pide un catálogo: la vista
  * sigue recibiendo todo por `input` y sin saber de dónde sale.
+ *
+ * La usan las dos fichas —la del médico y la del paciente—: el mapa marca el
+ * departamento, sombrea más oscuro el municipio y pone un punto rojo en el
+ * domicilio cuando se conocen sus coordenadas.
  */
 @Component({
   selector: 'app-residence-readonly',
@@ -29,7 +34,8 @@ import { LocationPicker } from '../../../../../auth/registro-compartido/location
         testId="perfil-residencia"
         [ramas]="ramas()"
         [value]="municipioId()"
-        mapLabel="Mapa de Bolivia con el departamento donde vivís"
+        [punto]="punto()"
+        mapLabel="Mapa de Bolivia con el departamento y el municipio donde vivís"
         municipalityLabel="Localidad de residencia"
         municipalityHint="Para cambiarla, entrá a «Editar perfil»."
       />
@@ -40,6 +46,9 @@ import { LocationPicker } from '../../../../../auth/registro-compartido/location
 export class ResidenceReadonly {
   /** El `conceptId` del municipio guardado. */
   readonly municipioId = input.required<string>();
+
+  /** El domicilio exacto, si la dirección trae coordenadas. */
+  readonly punto = input<PuntoGeo | null>(null);
 
   /**
    * El catálogo. Si no llega, no se dibuja nada: el nombre del municipio ya

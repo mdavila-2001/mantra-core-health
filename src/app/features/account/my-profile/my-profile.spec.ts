@@ -1207,6 +1207,15 @@ describe('MyProfile · las etiquetas del perfil sobreviven a las del resumen', (
     expect(raiz.querySelector('[data-testid="mi-perfil-municipio"]')?.textContent?.trim()).toBe(
       'Santa Cruz de la Sierra',
     );
+
+    // Y debajo, el mapa de residencia (30/09/2026): el mismo del médico, que
+    // pide su catálogo de departamentos y municipios al montarse.
+    expect(raiz.querySelector('[data-testid="mi-perfil-residencia"]')).not.toBeNull();
+    // Las dos lecturas van juntas: la primera que falla cancela la otra, y el
+    // mapa se queda sin dibujar —el municipio ya está escrito arriba—.
+    const municipios = http.expectOne('/terminology/value-sets?code=VS_BO_MUNICIPALITY');
+    http.expectOne('/terminology/value-sets?code=VS_BO_DEPARTMENT').flush([]);
+    if (!municipios.cancelled) municipios.flush([]);
   });
 });
 

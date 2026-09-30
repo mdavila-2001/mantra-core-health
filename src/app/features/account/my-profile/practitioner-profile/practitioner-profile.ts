@@ -747,14 +747,19 @@ function serieMensual(serie: readonly MonthlyCount[] | undefined): readonly Punt
   if (serie === undefined) {
     return [];
   }
-  return serie.map(({ month, count }) => {
+  return serie.map(({ month, count, insuredCount }) => {
     const [anio, mes] = month.split('-').map(Number);
     const fecha = new Date(anio ?? 1970, (mes ?? 1) - 1, 1);
+    // Con seguro no puede pasar del total del mes: un dato inconsistente se
+    // recorta en vez de dibujar un «sin seguro» negativo.
+    const conSeguro =
+      insuredCount === undefined ? undefined : Math.min(Math.max(insuredCount, 0), count);
     return {
       clave: month,
       etiqueta: MES_CORTO.format(fecha).replace('.', ''),
       etiquetaLarga: MES_LARGO.format(fecha),
       valor: count,
+      ...(conSeguro === undefined ? {} : { conSeguro, sinSeguro: count - conSeguro }),
     };
   });
 }

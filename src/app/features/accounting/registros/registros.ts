@@ -83,6 +83,9 @@ type Modal =
   | { readonly tipo: 'transaccion'; readonly transaccion: SimpleTransaction | null }
   | { readonly tipo: 'cuenta'; readonly cuenta: SimpleAccount | null };
 
+/** Ver {@link ContabilidadSimple.parte}. */
+export type ParteDeLaContabilidad = 'todo' | 'numeros' | 'registros';
+
 const PERIODOS: readonly SegmentedOption<SummaryPeriod>[] = [
   { value: 'month', label: 'Este mes' },
   { value: 'year', label: 'Este año' },
@@ -139,6 +142,17 @@ const KINDS: readonly RecordKind[] = ['EXPENSE', 'ASSET', 'DEBT'];
 export class ContabilidadSimple {
   /** La práctica cuyos números y registros se muestran. */
   readonly practiceId = input.required<string>();
+
+  /**
+   * Qué parte de la contabilidad simple se pinta.
+   *
+   * La pantalla de Contabilidad separa **tableros** de **registros** en dos
+   * pestañas (30/09/2026): los tres números son un tablero y van con el resto
+   * del resumen; las tablas con su alta, edición y baja van en «Registros».
+   * Cada instancia sólo lee lo que pinta. `todo` es el comportamiento de
+   * antes de la separación.
+   */
+  readonly parte = input<ParteDeLaContabilidad>('todo');
 
   private readonly contabilidad = inject(SimpleAccountingClient);
   private readonly dialogos = inject(DialogService);
@@ -270,7 +284,9 @@ export class ContabilidadSimple {
   /* ---- lecturas ---------------------------------------------------------- */
 
   private cargarTodo(): void {
-    this.cargarResumen();
+    const parte = this.parte();
+    if (parte !== 'registros') this.cargarResumen();
+    if (parte === 'numeros') return;
     this.cargarCuentas();
     for (const kind of KINDS) this.cargarRegistros(kind);
     this.cargarTransacciones();

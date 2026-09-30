@@ -390,7 +390,7 @@
           @if (datos.municipioResidenciaId; as municipio) {
             <section class="mi-perfil__domicilio" data-testid="perfil-residencia">
               <h2 class="mi-perfil__titulo">Municipio de residencia</h2>
-              <app-residence-readonly [municipioId]="municipio" />
+              <app-residence-readonly [municipioId]="municipio" [punto]="datos.ubicacionDomicilio ?? null" />
             </section>
           }
 
