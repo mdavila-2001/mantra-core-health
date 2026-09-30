@@ -2337,4 +2337,27 @@ reintento; visor) y `features/laboratory/summary/`.
 > paciente de la sesión) y por emisor (la organización o el profesional), con el mismo contrato,
 > para reemplazar el cliente simulado sin tocar la pantalla. Laboratorio, imagenología y
 > aseguradora todavía no emiten facturas: la pantalla lo dice en su estado vacío.
-||||||| e71e6dfa
+
+## P54 · Artículos médicos completos (formato, imágenes intercaladas) — 30/09/2026
+
+> **Qué pide el front.** «Artículos médicos» (`/my-account/articles`) es ahora un editor
+> completo: Título › Subtítulo › Apartado (desplegables al leer), listas, citas, separadores,
+> negrita/cursiva/tachado, enlaces, emojis e imágenes intercaladas. El formato viaja como
+> **markdown acotado dentro de `bodyText`** (`shared/text/article-markup.ts`), y cada imagen es
+> un `media[]` del post (`fileId`, `mediaRole: IMAGE`, `altText`, `ordinal`) al que el texto
+> apunta con `![alt](imagen:N)`. **No hay tabla ni columna nueva**: `CreatePostDto` ya aceptaba
+> `media[]` con control de propiedad (`assertMediaFileUsableBy`).
+>
+> **Falta en la API.**
+>
+> 1. **Tope de 20 000 caracteres** en `CreatePostDto.bodyText` (hoy 5 000 → 400 para un
+>    artículo largo). **Resuelto en `mdavila-2001/mantra-core-health-api#522`** (sin DDL:
+>    `body_text` es `text`).
+> 2. **Imágenes de posts no públicos.** `GET /public/media/:id` sirve las fotos de un post
+>    PÚBLICO de una vitrina publicada (`isPublicPostMedia`). Un artículo de una vitrina en
+>    privado, o con visibilidad `FOLLOWERS`/`PRIVATE`, no tiene ruta autenticada para sus
+>    imágenes (los comentarios sí: `GET /community/comments/media/:fileId/content`). El autor las
+>    ve igual porque la pantalla las pide con `FilesClient.imageDataUrl` (archivo propio).
+> 3. **Archivos huérfanos.** Si una imagen sube y la siguiente falla, el artículo no se publica
+>    (todo o nada) y lo ya subido queda en `common.files` sin vínculo. No hay contrato para
+>    borrarlo desde el front.
