@@ -761,6 +761,45 @@ export interface DirectMessage {
   readonly attachmentFileId?: string;
   readonly isEdited?: boolean;
   readonly sentAt?: Date;
+  /**
+   * Cómo se muestra el mensaje: texto, adjunto o **sticker** propio.
+   *
+   * Un sticker del pack se reconoce por su `fileId` (el pack viaja con la
+   * aplicación); uno que subió la persona no tiene de dónde salir, así que
+   * viaja marcado. Ausente = el servidor todavía no lo publica: el mensaje se
+   * ve como una imagen cualquiera, que es una degradación honesta.
+   */
+  readonly contentType?: 'TEXT' | 'MEDIA' | 'STICKER';
+  /**
+   * Las reacciones, agrupadas por emoji. Ausente o vacío = nadie reaccionó.
+   *
+   * **Pendiente de backend** (`PLAN-CHAT-WHATSAPP.md` (§ «Retoques del 30/09»)): `community.reactions` sólo
+   * admite `POST`/`COMMENT`/`REVIEW`; reaccionar a un mensaje pide agregar
+   * `MESSAGE` al modelo. La maqueta lo simula con el mismo contrato.
+   */
+  readonly reactions?: readonly MessageReaction[];
+  /**
+   * Los recibos del mensaje, uno por cada otro participante.
+   *
+   * Sólo llegan en los mensajes **propios**. Sin ellos la pantalla usa lo único
+   * que la API publica hoy —`peerReadUpTo`— y dice «Leído» sin poder decir
+   * cuándo. **Pendiente de backend**: `message_receipts` ya guarda las dos
+   * horas; falta exponerlas.
+   */
+  readonly receipts?: readonly MessageReceipt[];
+}
+
+/** Quiénes reaccionaron con un emoji a un mensaje. */
+export interface MessageReaction {
+  readonly emoji: string;
+  readonly profileIds: readonly string[];
+}
+
+/** Cuándo llegó y cuándo leyó un mensaje una persona. */
+export interface MessageReceipt {
+  readonly profileId: string;
+  readonly deliveredAt?: Date;
+  readonly readAt?: Date;
 }
 
 /** Una página de mensajes de una conversación. */
@@ -798,6 +837,18 @@ export interface NewDirectMessage {
   readonly senderProfileId: string;
   readonly bodyText: string;
   readonly replyToMessageId?: string;
+  /** `MEDIA` con adjunto; `STICKER` si es uno propio (ver `DirectMessage`). */
+  readonly contentType?: 'TEXT' | 'MEDIA' | 'STICKER';
+  readonly attachmentFileId?: string;
+}
+
+/**
+ * Reaccionar a un mensaje. Un perfil tiene **una** reacción por mensaje:
+ * elegir otro emoji reemplaza la anterior y `emoji: null` la quita.
+ */
+export interface NewMessageReaction {
+  readonly profileId: string;
+  readonly emoji: string | null;
 }
 
 /**
