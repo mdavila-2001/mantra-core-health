@@ -1,3 +1,4 @@
+import type { EstadoResuelto } from '../calendar-view.types';
 import {
   afterRenderEffect,
   ChangeDetectionStrategy,
@@ -26,13 +27,9 @@ import {
   type StatusSealVariant,
 } from '../../../../shared/components/organisms/status-seal/status-seal.types';
 import { statusVariantOf } from '../../booking-status';
-import type { BloqueoDelMes } from '../month-view/month-view';
+import type { BloqueoDelMes } from '../calendar-view.types';
 
-/** Un estado del catálogo, ya resuelto: su código y cómo se lee. */
-export interface EstadoResuelto {
-  readonly code: string;
-  readonly display: string;
-}
+export type { EstadoResuelto } from '../calendar-view.types';
 
 /** Qué se puede hacer sobre un bloque con cita. */
 export type AccionDeCita = 'llegó' | 'demora' | 'cancelar';

@@ -5,6 +5,8 @@ import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { NEVER, of, throwError } from 'rxjs';
 
+import { environment } from '../../../../../environments/environment';
+
 import { PharmacyCampaignsClient } from '../../../../core/data-access/pharmacy-campaigns/pharmacy-campaigns.client';
 import { PharmacyOrdersClient } from '../../../../core/data-access/pharmacy-orders/pharmacy-orders.client';
 import { pharmacyOrderDtoFixture } from '../../../../core/data-access/pharmacy-orders/pharmacy-orders.spec-fixtures';
@@ -98,10 +100,21 @@ describe('NewOrder', () => {
   let fixture: ComponentFixture<NewOrder>;
   let client: PharmacyOrdersClient;
   let http: HttpTestingController;
+  const originalCampaignsDemo = environment.campaignsDemo;
+
+  afterEach(() => {
+    Object.assign(environment, { campaignsDemo: originalCampaignsDemo });
+  });
 
   function configurar(extra: Provider[] = []): void {
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([]), ...extra],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        { provide: SAMPLE_DATA_ENABLED, useValue: true },
+        ...extra,
+      ],
     });
     client = TestBed.inject(PharmacyOrdersClient);
     http = TestBed.inject(HttpTestingController);
@@ -282,6 +295,7 @@ describe('NewOrder', () => {
   /* ── Las promociones del pedido (FAR-I7) ───────────────────────────────── */
 
   it('pone los dos precios con el mismo formato y dice en voz alta cuál es cuál', () => {
+    Object.assign(environment, { campaignsDemo: true });
     configurar();
     // `GET /pharmacy-inventory/availability` devuelve el numeric crudo: el
     // precio de este renglón llega como "22.5". Junto al promocional, que sale

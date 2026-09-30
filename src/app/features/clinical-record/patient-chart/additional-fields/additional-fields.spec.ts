@@ -137,10 +137,7 @@ describe('AdditionalFields', () => {
       patientProfileId: 'pac-1',
       authorProfileId: 'hp-1',
       encounterId: 'enc-1',
-      entries: [
-        { label: 'Presión', value: '120/80' },
-        { label: 'Análisis con el que vino', value: 'Adjunto: hemo.jpg, orina.pdf' },
-      ],
+      objectiveText: "Presión: 120/80\nAnálisis con el que vino: Adjunto: hemo.jpg, orina.pdf",
       subjectiveText: 'Refiere mareos.',
     });
     nota.flush({ noteId: 'n-1', versionId: 'v-1' });

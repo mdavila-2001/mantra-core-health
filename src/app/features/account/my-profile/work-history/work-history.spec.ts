@@ -1670,11 +1670,16 @@ describe('WorkHistory — el consultorio en modal, guardar por cambios y confirm
     http.verify();
   });
 
-  it('al cerrar el modal de una edición, el foco vuelve al «Acciones» de esa fila', async () => {
+  it('al cerrar el modal de una edición, el foco vuelve a la acción visible de esa fila', async () => {
     const { fixture, http } = await montarConSedes(true);
-    http.expectOne(SITIOS).flush({ items: [PROPIA], count: 1 });
+    const sameNameSite = { ...PROPIA, id: 'site-other', isOwnSite: false };
+    http.expectOne(SITIOS).flush({ items: [sameNameSite, PROPIA], count: 2 });
     fixture.detectChanges();
     const componente = api(fixture);
+    const qrAction = (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>(
+      'app-row-actions[data-site-id="site-propia"] [data-action="qr"]',
+    );
+    expect(qrAction).not.toBeNull();
 
     (componente['abrirEdicionDeSede'] as unknown as (s: unknown) => void)(PROPIA);
     fixture.detectChanges();
@@ -1682,8 +1687,8 @@ describe('WorkHistory — el consultorio en modal, guardar por cambios y confirm
     fixture.detectChanges();
     await fixture.whenStable();
 
-    const activo = document.activeElement;
-    expect(activo?.getAttribute('aria-label')).toBe(`Acciones de ${PROPIA.name}`);
+    expect(document.activeElement).toBe(qrAction);
+    expect(qrAction?.getAttribute('aria-label')).toBe(`Configurar QR bancario — ${PROPIA.name}`);
     http.verify();
   });
 

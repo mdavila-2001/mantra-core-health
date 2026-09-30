@@ -1,0 +1,4 @@
+node scripts/check-english-identifiers.mjs
+check-english-identifiers: no se pudo diffear contra "1b1bcaaf5a04339cc37e3764aa3d2a6cf39de41f"; se omite.
+
+EXIT_CODE=0

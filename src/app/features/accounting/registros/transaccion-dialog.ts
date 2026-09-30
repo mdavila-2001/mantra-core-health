@@ -1,3 +1,6 @@
+import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
+import { CampoPersonalizado } from '../../../shared/components/organisms/paginated-form/campo-personalizado';
+import type { PaginaDeFormulario } from '../../../shared/forms/paginated/paginated-form.types';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -17,7 +20,6 @@ import type {
   SimpleTransaction,
 } from '../../../core/data-access/simple-accounting/simple-accounting.types';
 import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
-import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Input } from '../../../shared/components/atoms/input/input';
 import { Select } from '../../../shared/components/atoms/select/select';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
@@ -40,10 +42,9 @@ import {
  */
 @Component({
   selector: 'app-transaccion-dialog',
-  imports: [
+  imports: [PaginatedForm, CampoPersonalizado,
     ReactiveFormsModule,
     AnnounceOnAppear,
-    AppButton,
     Alert,
     ContentDialog,
     DatePicker,
@@ -56,6 +57,11 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TransaccionDialog implements OnInit {
+  protected readonly transactionPages: readonly PaginaDeFormulario[] = [
+    { titulo: 'Descripción y cuentas', campos: ['description', 'debitAccountId', 'creditAccountId'].map((key) => ({ key, label: '', control: 'custom' })) },
+    { titulo: 'Fecha y monto', campos: ['date', 'amount'].map((key) => ({ key, label: '', control: 'custom' })) },
+  ];
+
   readonly practiceId = input.required<string>();
   readonly cuentas = input.required<readonly SimpleAccount[]>();
   readonly transaccion = input<SimpleTransaction | null>(null);

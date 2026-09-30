@@ -1708,13 +1708,7 @@ describe('SpecialtyFormBlock', () => {
         patientProfileId: 'pac-1',
         authorProfileId: 'hp-1',
         encounterId: 'enc-1',
-        entries: [
-          { label: 'Presión arterial', value: '128/84 mmHg' },
-          {
-            label: 'Análisis con el que vino',
-            value: 'Adjunto: hemograma.jpg, orina.jpg, perfil.jpg',
-          },
-        ],
+        objectiveText: "Presión arterial: 128/84 mmHg\nAnálisis con el que vino: Adjunto: hemograma.jpg, orina.jpg, perfil.jpg",
       });
       nota.flush({ noteId: 'n-1', versionId: 'v-1' });
 

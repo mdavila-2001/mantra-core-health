@@ -84,7 +84,7 @@ const PATRONES_IDENTIFICADOR = [
 
 function ejecutar(comando, args) {
   try {
-    return execFileSync(comando, args, { cwd: REPO_ROOT, encoding: 'utf8' });
+    return execFileSync(comando, args, { cwd: REPO_ROOT, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
   } catch (error) {
     return { error };
   }
@@ -183,8 +183,8 @@ function main() {
   ]);
 
   if (typeof diff !== 'string') {
-    console.log(`check-english-identifiers: no se pudo diffear contra "${base}"; se omite.`);
-    process.exit(0);
+    console.error(`check-english-identifiers: no se pudo diffear contra "${base}"; no se pudo verificar.`);
+    process.exit(1);
   }
 
   const porArchivo = lineasAgregadasPorArchivo(diff);

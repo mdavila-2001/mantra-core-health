@@ -1,6 +1,6 @@
 import type { FilterDef } from '@shared/components/organisms/filter-bar/filter-bar';
 
-import type { FilaDeClausula, PlanDelMercado } from './insurer-detail';
+import type { FilaDeClausula, PlanDelMercado } from './insurer-detail.types';
 
 /**
  * **El buscador y los filtros de «Productos y planes»** (30/09/2026).

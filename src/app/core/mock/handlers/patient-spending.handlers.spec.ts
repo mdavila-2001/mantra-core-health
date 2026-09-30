@@ -69,25 +69,31 @@ describe('handlers de gastos del paciente: GET /patient-spending/me', () => {
     expect(mia.map((m) => m.paidAmount)).not.toEqual(suya.map((m) => m.paidAmount));
   });
 
-  it('error — sin rango, o con un rango al revés, es 422', () => {
-    const invalidos: readonly Record<string, string>[] = [
-      {},
-      { from: '2026-01-01' },
-      { from: '2026-09-01', to: '2026-01-01' },
+  it('error — sin rango, o con un rango al revés, es 400', () => {
+    const invalidos: readonly { query: Record<string, string>; violation: string }[] = [
+      { query: {}, violation: '`from` y `to` son obligatorios, con formato YYYY-MM-DD' },
+      { query: { from: '2026-01-01' }, violation: '`from` y `to` son obligatorios, con formato YYYY-MM-DD' },
+      { query: { from: '2026-09-01', to: '2026-01-01' }, violation: '`from` no puede ser posterior a `to`' },
     ];
-    for (const query of invalidos) {
+    for (const { query, violation } of invalidos) {
       const reply = pedir(paciente, query);
-      expect(isMockReply(reply) && reply.status).toBe(422);
+      expect(isMockReply(reply) && reply.status).toBe(400);
+      expect(reply).toMatchObject({
+        body: { statusCode: 400, code: 'VALIDATION_FAILED', details: { violations: [violation] } },
+      });
     }
   });
 
-  it('error — una cuenta sin perfil de paciente recibe la precondición (412)', () => {
+  it('error — una cuenta sin perfil de paciente recibe la precondición (422)', () => {
     const medico = buscarUsuario('medica')!;
     const reply = pedir({ ...medico, patientProfileId: undefined }, {
       from: '2026-01-01',
       to: '2026-09-27',
     });
 
-    expect(isMockReply(reply) && reply.status).toBe(412);
+    expect(isMockReply(reply) && reply.status).toBe(422);
+    expect(reply).toMatchObject({
+      body: { statusCode: 422, code: 'PRECONDITION_FAILED', message: 'La cuenta no tiene perfil de paciente' },
+    });
   });
 });

@@ -1,13 +1,10 @@
 import { facturaDePrueba } from './billing.spec-fixtures';
 import {
-  agregarQr,
   bloquesDeRepresentacionGrafica,
-  construirRepresentacionGrafica,
   contenidoDelQr,
   LEYENDA_DEL_SIN,
   LEYENDA_EN_LINEA,
   MARCA_SIMULADO,
-  marcarComoSimulado,
   nombreDeArchivo,
 } from './representacion-grafica';
 
@@ -69,7 +66,11 @@ describe('representación gráfica de la factura SIMULADA', () => {
     expect(todo).not.toMatch(/impuestos\.gob\.bo/);
   });
 
-  it('el PDF se arma, lleva la marca de agua en cada hoja y el QR si se lo dan', () => {
+  it('el PDF se arma, lleva la marca de agua en cada hoja y el QR si se lo dan', async () => {
+    // Another suite mocks jspdf; load the real library for this artifact assertion.
+    vi.doUnmock('jspdf');
+    vi.resetModules();
+    const { construirRepresentacionGrafica, marcarComoSimulado, agregarQr } = await import('./representacion-grafica');
     const documento = construirRepresentacionGrafica(factura, null);
     expect(documento.getNumberOfPages()).toBeGreaterThanOrEqual(1);
     const texto = vi.spyOn(documento, 'text');
@@ -79,6 +80,7 @@ describe('representación gráfica de la factura SIMULADA', () => {
     const imagen = vi.spyOn(documento, 'addImage');
     agregarQr(documento, PNG_MINIMO);
     expect(imagen).toHaveBeenCalledTimes(1);
+    expect(documento.output()).toContain('%PDF-');
   });
 
   it('los archivos se llaman como lo que son', () => {

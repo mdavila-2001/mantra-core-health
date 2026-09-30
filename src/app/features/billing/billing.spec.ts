@@ -1,3 +1,4 @@
+import { environment } from '../../../environments/environment';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
@@ -66,9 +67,18 @@ describe('Billing · facturación contra el SIAT SIMULADO', () => {
   afterEach(() => http.verify());
 
   describe('la puerta por omisión', () => {
-    afterEach(() => apiRealForzada.set(false));
+    const originalEnvironment = {
+      mockBackend: environment.mockBackend,
+      billingSiatDemo: environment.billingSiatDemo,
+    };
+
+    afterEach(() => {
+      apiRealForzada.set(false);
+      Object.assign(environment, originalEnvironment);
+    });
 
     it('se abre en la maqueta y se cierra si se fuerza la API real', () => {
+      Object.assign(environment, { mockBackend: true, billingSiatDemo: true });
       TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting()] });
       http = TestBed.inject(HttpTestingController);
       const disponible = TestBed.inject(FACTURACION_SIMULADA_DISPONIBLE);

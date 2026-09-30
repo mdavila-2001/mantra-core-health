@@ -95,14 +95,40 @@ describe('handlers del portal de laboratorio', () => {
     const sesion = cuerpo<{ uploadId: string }>(
       pedir('POST', '/diagnostics/lab/result-uploads', { fileName: 'a.txt', contentType: 'text/plain', sizeBytes: 10 }),
     );
-    expect(estado(pedir('PUT', `/diagnostics/lab/result-uploads/${sesion.uploadId}/parts/0`, new Blob(['corto'])))).toBe(422);
-    expect(estado(pedir('PUT', `/diagnostics/lab/result-uploads/${sesion.uploadId}/parts/1`, new Blob(['0123456789'])))).toBe(422);
+    expect(pedir('PUT', `/diagnostics/lab/result-uploads/${sesion.uploadId}/parts/0`, new Blob(['corto'])))
+      .toMatchObject({
+        status: 400,
+        body: {
+          statusCode: 400,
+          code: 'VALIDATION_FAILED',
+          details: { violations: ['La parte 0 trae 5 bytes y se esperaban 10.'] },
+        },
+      });
+    expect(pedir('PUT', `/diagnostics/lab/result-uploads/${sesion.uploadId}/parts/1`, new Blob(['0123456789'])))
+      .toMatchObject({
+        status: 400,
+        body: {
+          statusCode: 400,
+          code: 'VALIDATION_FAILED',
+          details: { violations: ['La parte 1 está fuera de rango.'] },
+        },
+      });
+    expect(estado(pedir('POST', `/diagnostics/lab/result-uploads/${sesion.uploadId}/complete`))).toBe(409);
   });
 
   it('retirar exige motivo, y el retirado sale de la lista salvo que se pida', () => {
     const [primero] = cuerpo<{ items: { id: string }[] }>(pedir('GET', '/diagnostics/lab/result-files')).items;
     const ruta = `/diagnostics/lab/result-files/${primero!.id}/withdrawal`;
-    expect(estado(pedir('POST', ruta, { reason: '' }))).toBe(422);
+    const before = pedir('GET', '/diagnostics/lab/result-files');
+    expect(pedir('POST', ruta, { reason: '' })).toMatchObject({
+      status: 400,
+      body: {
+        statusCode: 400,
+        code: 'VALIDATION_FAILED',
+        details: { violations: ['Contá por qué retirás el archivo.'] },
+      },
+    });
+    expect(pedir('GET', '/diagnostics/lab/result-files')).toEqual(before);
     expect(estado(pedir('POST', ruta, { reason: 'Era de otro paciente' }))).toBe(200);
     const sinRetirados = cuerpo<{ items: { id: string }[] }>(pedir('GET', '/diagnostics/lab/result-files'));
     expect(sinRetirados.items.some((i) => i.id === primero!.id)).toBe(false);

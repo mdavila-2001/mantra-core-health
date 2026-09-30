@@ -881,6 +881,7 @@ describe('ShellLayout', () => {
         '/my-account',
         '/notification-center',
         '/administration/insurance',
+        '/administration/insurance-claims', // Adjudicacion real conservada de dev.
         '/administration/insurance-analytics',
         // 2026-09-27: «Solicitudes recibidas», pedida por la propietaria.
         '/administration/received-claims',

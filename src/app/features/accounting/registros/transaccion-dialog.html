@@ -9,8 +9,19 @@
   @if (error(); as mensaje) {
     <app-alert appAnuncio tone="error">{{ mensaje }}</app-alert>
   }
-  <form class="registros-form" [formGroup]="form" (ngSubmit)="guardar()" novalidate>
-    <app-form-field
+  <app-paginated-form
+    [form]="form"
+    [paginas]="transactionPages"
+    label="Transacción contable"
+    submitLabel="Guardar"
+    submitTestId="transaccion-guardar"
+    cancelLabel="Cancelar"
+    [pending]="guardando()"
+    (cancelado)="dialog().close()"
+    (enviado)="guardar()"
+  >
+    <ng-template appCampoPersonalizado="description">
+<app-form-field
       label="Descripción"
       [required]="true"
       [errorMessage]="
@@ -20,15 +31,15 @@
       "
     >
       <app-input
-        formControlName="description"
+        [formControl]="form.controls.description"
         autocomplete="off"
         placeholder="Depósito de la caja al banco"
         testId="transaccion-descripcion"
       />
     </app-form-field>
-
-    <div class="registros-form__par">
-      <app-form-field
+    </ng-template>
+    <ng-template appCampoPersonalizado="debitAccountId">
+<app-form-field
         label="Debe"
         hint="La cuenta que recibe."
         [required]="true"
@@ -39,14 +50,16 @@
         "
       >
         <app-select
-          formControlName="debitAccountId"
+          [formControl]="form.controls.debitAccountId"
           [options]="opciones()"
           placeholder="Elegí la cuenta"
           ariaLabel="Cuenta del debe"
           data-testid="transaccion-debe"
         />
       </app-form-field>
-      <app-form-field
+    </ng-template>
+    <ng-template appCampoPersonalizado="creditAccountId">
+<app-form-field
         label="Haber"
         hint="La cuenta que entrega."
         [required]="true"
@@ -59,17 +72,16 @@
         "
       >
         <app-select
-          formControlName="creditAccountId"
+          [formControl]="form.controls.creditAccountId"
           [options]="opciones()"
           placeholder="Elegí la cuenta"
           ariaLabel="Cuenta del haber"
           data-testid="transaccion-haber"
         />
       </app-form-field>
-    </div>
-
-    <div class="registros-form__par">
-      <app-form-field
+    </ng-template>
+    <ng-template appCampoPersonalizado="date">
+<app-form-field
         label="Fecha"
         [required]="true"
         [errorMessage]="fechaTocada() && fecha() === null ? 'Elegí la fecha.' : ''"
@@ -80,7 +92,9 @@
           data-testid="transaccion-fecha"
         />
       </app-form-field>
-      <app-form-field
+    </ng-template>
+    <ng-template appCampoPersonalizado="amount">
+<app-form-field
         label="Monto"
         [required]="true"
         hint="En bolivianos."
@@ -89,34 +103,12 @@
         "
       >
         <app-input
-          formControlName="amount"
+          [formControl]="form.controls.amount"
           inputMode="decimal"
           placeholder="1250,00"
           testId="transaccion-monto"
         />
       </app-form-field>
-    </div>
-  </form>
-
-  <button
-    dialog-actions
-    app-button
-    type="button"
-    variant="ghost"
-    [disabled]="guardando()"
-    (clicked)="dialog().close()"
-  >
-    Cancelar
-  </button>
-  <button
-    dialog-actions
-    app-button
-    type="button"
-    [isLoading]="guardando()"
-    [disabled]="guardando()"
-    data-testid="transaccion-guardar"
-    (clicked)="guardar()"
-  >
-    Guardar
-  </button>
+    </ng-template>
+  </app-paginated-form>
 </app-content-dialog>

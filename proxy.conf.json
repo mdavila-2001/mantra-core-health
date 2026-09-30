@@ -116,6 +116,12 @@
       "/insurance-products",
       "/insurance/analytics",
       "/insurance/portability",
+      "/billing/simulated",
+      "/diagnostics/service-requests",
+      "/insurance/received-claims",
+      "/diagnostics/lab",
+      "/patient-spending",
+      "/promotions/me",
       "/patients/me/reviews"
     ],
     "target": "http://localhost:3000",

@@ -1,6 +1,10 @@
+import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
+import { CampoPersonalizado } from '../../../shared/components/organisms/paginated-form/campo-personalizado';
+import type { PaginaDeFormulario } from '../../../shared/forms/paginated/paginated-form.types';
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   effect,
   inject,
   input,
@@ -13,7 +17,6 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { InsuranceClient } from '../../../core/data-access/insurance/insurance.client';
 import type { Plan } from '../../../core/data-access/insurance/insurance.types';
 import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
-import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Input } from '../../../shared/components/atoms/input/input';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { ConceptSelect } from '../../../shared/components/molecules/concept-select/concept-select';
@@ -37,10 +40,9 @@ const MONEY = /^\d+(?:\.\d{1,2})?$/;
  */
 @Component({
   selector: 'app-plan-form-dialog',
-  imports: [
+  imports: [PaginatedForm, CampoPersonalizado,
     ReactiveFormsModule,
     AnnounceOnAppear,
-    AppButton,
     Input,
     Alert,
     ConceptSelect,
@@ -52,6 +54,15 @@ const MONEY = /^\d+(?:\.\d{1,2})?$/;
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PlanFormDialog {
+  protected readonly planPages = computed<readonly PaginaDeFormulario[]>(() => [
+    { titulo: 'Identificación', campos: ['planCode', 'name'].map((key) => ({ key, label: '', control: 'custom' })) },
+    {
+      titulo: 'Vigencia e importes',
+      campos: ['effectiveFrom', 'effectiveTo', ...(this.mode() === 'create' ? ['currencyConceptId', 'monthlyPremiumAmount'] : [])]
+        .map((key) => ({ key, label: '', control: 'custom' })),
+    },
+  ]);
+
   readonly mode = input<'create' | 'edit'>('create');
   readonly productId = input.required<string>();
   readonly productName = input.required<string>();

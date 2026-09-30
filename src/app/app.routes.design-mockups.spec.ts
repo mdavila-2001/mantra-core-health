@@ -10,18 +10,9 @@ import {
   REAL_EQUIVALENTS,
 } from './features/alovida/design-mockup-gate';
 
-/**
- * El árbol de rutas tal como lo arma `production-api`.
- *
- * Las pruebas corren con el entorno de desarrollo (`designMockups: true`), así
- * que `routes` trae las maquetas montadas. Acá se sacan esas mismas entradas
- * —por identidad, son los objetos de `ALOVIDA_ROUTES`— y se ponen en su lugar
- * las que devuelve el gate apagado. Los guards se vacían, como en
- * `app.routes.spec.ts`: se prueba adónde lleva cada dirección, no la sesión.
- */
+/** El router por defecto ya usa API real. La demo se comprueba con su gate explicito. */
 function apiTree(): Routes {
-  const withoutMockups = routes.filter((route) => !ALOVIDA_ROUTES.includes(route));
-  return withoutGuards([...designMockupRoutes(false), ...withoutMockups]);
+  return withoutGuards(routes);
 }
 
 function withoutGuards(tree: Routes): Routes {
@@ -87,10 +78,10 @@ describe('el gate de maquetas con la API real (production-api)', () => {
   });
 });
 
-describe('el gate de maquetas en la maqueta (mockup / desarrollo)', () => {
+describe('el gate de maquetas en la maqueta (configuracion demo)', () => {
   it('las pantallas de la bóveda siguen montadas', () => {
     for (const route of ALOVIDA_ROUTES) {
-      expect(routes).toContain(route);
+      expect(designMockupRoutes(true)).toContain(route);
     }
   });
 });

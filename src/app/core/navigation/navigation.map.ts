@@ -773,6 +773,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // ciclo del reclamo no se ofrecen acá: adjudicar o revertir son actos de
     // quien paga, y ésta es la pantalla de quien reclama.
     path: 'administration/insurance-claims',
+    hiddenForTenantTypes: ['PHARMACY', 'DIAGNOSTIC_CENTER'],
     label: 'Solicitudes de seguro',
     group: 'Administración',
     icon: 'clipboard',

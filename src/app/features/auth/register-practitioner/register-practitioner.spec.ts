@@ -1,3 +1,4 @@
+import { environment } from '../../../../environments/environment';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
@@ -2152,6 +2153,9 @@ describe('RegisterPractitioner', () => {
 });
 
 describe('RegisterPractitioner con mockBackend', () => {
+  const originalMockBackend = environment.mockBackend;
+  beforeEach(() => Object.assign(environment, { mockBackend: true }));
+  afterEach(() => Object.assign(environment, { mockBackend: originalMockBackend }));
   it('resuelve los cinco tipos canónicos de credencial desde el backend simulado', async () => {
     TestBed.resetTestingModule();
     await TestBed.configureTestingModule({

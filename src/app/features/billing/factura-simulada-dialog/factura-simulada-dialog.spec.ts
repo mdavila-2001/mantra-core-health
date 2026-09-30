@@ -41,8 +41,16 @@ describe('FacturaSimuladaDialog', () => {
   }
 
   function confirmar(): void {
-    const formulario: HTMLFormElement = fixture.nativeElement.querySelector('[data-testid="factura-formulario"]');
-    formulario.dispatchEvent(new Event('submit'));
+    const pager = el('factura-formulario')!;
+    const next = pager.querySelector<HTMLButtonElement>('[data-testid="paginated-form-continuar"]');
+    if (next !== null) {
+      expect(pager.querySelectorAll('app-input, app-select').length).toBeLessThanOrEqual(4);
+      next.click();
+      fixture.detectChanges();
+    }
+    expect(pager.querySelectorAll('app-input, app-select').length).toBeLessThanOrEqual(4);
+    const formulario = pager.querySelector('form')!;
+    formulario.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
     fixture.detectChanges();
   }
 

@@ -987,24 +987,18 @@ export class WorkHistory implements OnInit {
   }
 
   /**
-   * Al cerrar el modal de una edición, el foco vuelve al «Acciones» de esa fila.
+   * Al cerrar una edición, el foco vuelve a la acción visible de esa sede.
    *
-   * `app-content-dialog` restaura el foco al elemento que lo abrió, pero lo
-   * abrió el ítem «Editar» del menú, que ya no existe cuando el menú se cierra:
-   * sin esto el foco caía al `<body>` (medido en `evidencia/h4/teclado.md`).
+   * La fila propia ahora sólo ofrece el QR. Se identifica por ID para no
+   * confundir dos sedes con el mismo nombre ni depender de un menú retirado.
    */
   private devolverFocoALaFila(sedeId: string): void {
     afterNextRender(
       () => {
-        const sede = this.sedes().find((s) => s.id === sedeId);
-        if (sede === undefined) {
-          return;
-        }
-        const etiqueta = `Acciones de ${sede.name}`;
-        const boton = Array.from(this.host.nativeElement.querySelectorAll('button')).find(
-          (b) => b.getAttribute('aria-label') === etiqueta,
-        );
-        boton?.focus();
+        const rowActions = Array.from(
+          this.host.nativeElement.querySelectorAll<HTMLElement>('app-row-actions[data-site-id]'),
+        ).find((row) => row.dataset['siteId'] === sedeId);
+        rowActions?.querySelector<HTMLButtonElement>('button')?.focus();
       },
       { injector: this.injector },
     );

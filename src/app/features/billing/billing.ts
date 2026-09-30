@@ -1,3 +1,6 @@
+import { PaginatedForm } from '../../shared/components/organisms/paginated-form/paginated-form';
+import { CampoPersonalizado } from '../../shared/components/organisms/paginated-form/campo-personalizado';
+import type { PaginaDeFormulario } from '../../shared/forms/paginated/paginated-form.types';
 import { HttpErrorResponse } from '@angular/common/http';
 import { DOCUMENT } from '@angular/common';
 import {
@@ -90,12 +93,17 @@ function centavos(importe: string): number {
  */
 @Component({
   selector: 'app-billing',
-  imports: [ReactiveFormsModule, AppButton, Card, Chip, FormField, Input, PageHeader, PlanDePagos, Select, ViewStateHost],
+  imports: [PaginatedForm, CampoPersonalizado, ReactiveFormsModule, AppButton, Card, Chip, FormField, Input, PageHeader, PlanDePagos, Select, ViewStateHost],
   templateUrl: './billing.html',
   styleUrl: './billing.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Billing {
+  protected readonly invoicePages: readonly PaginaDeFormulario[] = [
+    { titulo: 'Comprador', campos: ['name', 'documentTypeCode', 'documentNumber', 'complement'].map((key) => ({ key, label: '', control: 'custom' })) },
+    { titulo: 'Entrega y simulación', campos: ['email', 'additionalDiscount', 'forceMessageCode'].map((key) => ({ key, label: '', control: 'custom' })) },
+  ];
+
   private readonly client = inject(BillingSimulatedClient);
   private readonly toast = inject(ToastService);
   private readonly destroyRef = inject(DestroyRef);

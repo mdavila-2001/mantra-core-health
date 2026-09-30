@@ -1,3 +1,7 @@
+import { PaginatedForm } from '../../../../shared/components/organisms/paginated-form/paginated-form';
+import { CampoPersonalizado } from '../../../../shared/components/organisms/paginated-form/campo-personalizado';
+import { paginarCampos } from '../../../../shared/forms/paginated/paginar-campos';
+import type { CampoDeFormulario } from '../../../../shared/forms/paginated/paginated-form.types';
 import { ChangeDetectionStrategy, Component, computed, input, signal } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
 
@@ -19,7 +23,7 @@ import { controlDeNombreExtra, type GrupoDeNombre } from './nombre-de-persona';
  */
 @Component({
   selector: 'app-campos-de-nombre',
-  imports: [ReactiveFormsModule, AppButton, AppInput, NavIcon, Tooltip, FormField],
+  imports: [PaginatedForm, CampoPersonalizado, ReactiveFormsModule, AppButton, AppInput, NavIcon, Tooltip, FormField],
   templateUrl: './campos-de-nombre.html',
   styleUrl: './campos-de-nombre.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -40,6 +44,14 @@ export class CamposDeNombre {
   protected readonly extras = computed(() => {
     this.version();
     return this.grupo().controls.extraNames.controls;
+  });
+
+  protected readonly namePages = computed(() => {
+    const field = (key: string): CampoDeFormulario => ({ key, label: '', control: 'custom' });
+    return paginarCampos([
+      { titulo: 'Nombres', campos: ['name', 'middleName', 'thirdName', ...this.extras().map((_, index) => `extraNames.${index}`)].map(field) },
+      { titulo: 'Apellidos', campos: ['lastName', 'motherLastName'].map(field) },
+    ]);
   });
 
   protected agregarNombre(): void {

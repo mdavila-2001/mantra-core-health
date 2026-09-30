@@ -1,3 +1,6 @@
+import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
+import { CampoPersonalizado } from '../../../shared/components/organisms/paginated-form/campo-personalizado';
+import type { PaginaDeFormulario } from '../../../shared/forms/paginated/paginated-form.types';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, input, output, signal, type OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -49,12 +52,17 @@ import { descargarRepresentacionGrafica, descargarXml } from '../representacion-
  */
 @Component({
   selector: 'app-factura-simulada-dialog',
-  imports: [ReactiveFormsModule, Alert, AppButton, Chip, ContentDialog, FormField, Input, Select],
+  imports: [PaginatedForm, CampoPersonalizado, ReactiveFormsModule, Alert, AppButton, Chip, ContentDialog, FormField, Input, Select],
   templateUrl: './factura-simulada-dialog.html',
   styleUrl: './factura-simulada-dialog.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FacturaSimuladaDialog implements OnInit {
+  protected readonly invoicePages = computed<readonly PaginaDeFormulario[]>(() => [
+    { titulo: 'Comprador', campos: ['name', 'documentTypeCode', 'documentNumber', 'complement'].map((key) => ({ key, label: '', control: 'custom' })) },
+    { titulo: 'Entrega y pago', campos: ['email', ...(this.pideMedioDePago() ? ['methodCode'] : [])].map((key) => ({ key, label: '', control: 'custom' })) },
+  ]);
+
   private readonly client = inject(BillingSimulatedClient);
   private readonly destroyRef = inject(DestroyRef);
 

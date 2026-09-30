@@ -62,7 +62,6 @@
       </section>
     } @else {
       <!-- ── Los datos para emitirla ────────────────────────────────────── -->
-      <form class="factura__formulario" [formGroup]="formulario" (ngSubmit)="confirmar()" data-testid="factura-formulario" id="factura-formulario">
         <div class="factura__resumen">
           <p class="factura__rotulo">Total a facturar</p>
           <p class="factura__total" data-testid="factura-total">{{ bs(cobro().total) }}</p>
@@ -75,50 +74,65 @@
           }
         </div>
 
-        @if (pideMedioDePago()) {
-          <app-form-field
+      <app-paginated-form
+        class="factura__formulario"
+        [form]="formulario"
+        [paginas]="invoicePages()"
+        label="Factura simulada"
+        [submitLabel]="pideMedioDePago() ? 'Cobrar y emitir factura' : 'Emitir factura'"
+        submitTestId="factura-confirmar"
+        [pending]="enviando()"
+        (enviado)="confirmar()"
+        data-testid="factura-formulario"
+      >
+      <ng-template appCampoPersonalizado="methodCode">
+<app-form-field
             label="Medio de pago"
             [required]="true"
             hint="Catálogo simulado · se registra el pago y se emite la factura"
             [errorMessage]="formulario.controls.methodCode.touched && formulario.controls.methodCode.invalid ? 'Elegí cómo pagó.' : ''"
           >
-            <app-select formControlName="methodCode" [options]="opcionesDeMetodo()" placeholder="Elegí un medio" />
+            <app-select [formControl]="formulario.controls.methodCode" [options]="opcionesDeMetodo()" placeholder="Elegí un medio" />
           </app-form-field>
-        }
-
-        <fieldset class="factura__comprador">
-          <legend>Comprador</legend>
-          <div class="factura__campos">
-            <app-form-field
+      </ng-template>
+      <ng-template appCampoPersonalizado="name">
+<app-form-field
               label="Nombre o razón social"
               [required]="true"
               [errorMessage]="formulario.controls.name.touched && formulario.controls.name.invalid ? 'Escribí a nombre de quién va la factura.' : ''"
             >
-              <app-input formControlName="name" autocomplete="off" />
+              <app-input [formControl]="formulario.controls.name" autocomplete="off" />
             </app-form-field>
-            <app-form-field label="Tipo de documento" [required]="true" hint="Catálogo simulado">
-              <app-select formControlName="documentTypeCode" [options]="opcionesDeDocumento()" />
+      </ng-template>
+      <ng-template appCampoPersonalizado="documentTypeCode">
+<app-form-field label="Tipo de documento" [required]="true" hint="Catálogo simulado">
+              <app-select [formControl]="formulario.controls.documentTypeCode" [options]="opcionesDeDocumento()" />
             </app-form-field>
-            <app-form-field
+      </ng-template>
+      <ng-template appCampoPersonalizado="documentNumber">
+<app-form-field
               label="Número de documento"
               [required]="true"
               [errorMessage]="formulario.controls.documentNumber.touched && formulario.controls.documentNumber.invalid ? 'Hasta 20 caracteres, obligatorio.' : ''"
             >
-              <app-input formControlName="documentNumber" autocomplete="off" />
+              <app-input [formControl]="formulario.controls.documentNumber" autocomplete="off" />
             </app-form-field>
-            <app-form-field label="Complemento" [errorMessage]="formulario.controls.complement.invalid ? 'Hasta 5 caracteres.' : ''">
-              <app-input formControlName="complement" autocomplete="off" />
+      </ng-template>
+      <ng-template appCampoPersonalizado="complement">
+<app-form-field label="Complemento" [errorMessage]="formulario.controls.complement.invalid ? 'Hasta 5 caracteres.' : ''">
+              <app-input [formControl]="formulario.controls.complement" autocomplete="off" />
             </app-form-field>
-            <app-form-field
+      </ng-template>
+      <ng-template appCampoPersonalizado="email">
+<app-form-field
               label="Correo para la entrega"
               hint="Sólo queda en la bandeja simulada"
               [errorMessage]="formulario.controls.email.touched && formulario.controls.email.invalid ? 'No parece un correo.' : ''"
             >
-              <app-input formControlName="email" type="email" autocomplete="off" />
+              <app-input [formControl]="formulario.controls.email" type="email" autocomplete="off" />
             </app-form-field>
-          </div>
-        </fieldset>
-      </form>
+      </ng-template>
+      </app-paginated-form>
     }
 
     @if (error(); as mensaje) {
@@ -130,17 +144,6 @@
     @if (factura(); as f) {
       <button app-button variant="outline" (clicked)="descargarPdf(f)">Descargar PDF (SIMULADO)</button>
       <button app-button variant="outline" (clicked)="descargarXml(f)">Descargar XML (SIMULADO)</button>
-    } @else if (!cargandoFactura()) {
-      <button
-        app-button
-        type="submit"
-        form="factura-formulario"
-        [isLoading]="enviando()"
-        [disabled]="enviando()"
-        data-testid="factura-confirmar"
-      >
-        {{ enviando() ? 'Enviando al SIAT simulado…' : pideMedioDePago() ? 'Cobrar y emitir factura' : 'Emitir factura' }}
-      </button>
     }
   </ng-container>
 </app-content-dialog>

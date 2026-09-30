@@ -274,7 +274,6 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
       'administration/pharmacy-import',
       'administration/pharmacy-inventory',
       'administration/pharmacy-orders',
-      'administration/pharmacy-catalog',
       'administration/pharmacy-campaigns',
       'administration/pharmacy-profile',
     ],

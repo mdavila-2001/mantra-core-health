@@ -3,7 +3,7 @@ import {
   INSURER_NETWORK_PRACTITIONERS,
   type InsurerNetworkPractitioner,
 } from './insurer-network.generated';
-import type { ProfesionalSimulado } from './personas';
+import type { ProfesionalSimulado } from './people.types';
 import { uuid } from '../mock-store';
 
 /* ============================================================================

@@ -16,7 +16,7 @@
 
 .tienda__titulo {
   margin: 0;
-  font-size: var(--fs-title);
+  font-size: var(--fs-h2);
 }
 
 .tienda__subtitulo {

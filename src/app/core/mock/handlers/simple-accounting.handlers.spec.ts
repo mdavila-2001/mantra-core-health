@@ -41,6 +41,13 @@ describe('handlers de la contabilidad simple', () => {
     return (isMockReply(respuesta) ? (respuesta as MockReply).body : respuesta) as T;
   }
 
+  function expectValidation(response: unknown, violation: string): void {
+    expect(response).toMatchObject({
+      status: 400,
+      body: { statusCode: 400, code: 'VALIDATION_FAILED', details: { violations: [violation] } },
+    });
+  }
+
   interface Cuenta {
     id: string;
     code: string;
@@ -76,7 +83,7 @@ describe('handlers de la contabilidad simple', () => {
       description: 'Mal clasificado',
       amount: '10',
     });
-    expect(estado(conActivo)).toBe(422);
+    expectValidation(conActivo, 'Ese tipo no corresponde.');
 
     const creado = call('POST', '/accounting/practitioner/simple/records', {
       kind: 'EXPENSE',
@@ -91,24 +98,20 @@ describe('handlers de la contabilidad simple', () => {
 
   it('un monto en cero o una fecha vacía se rechazan', () => {
     const base = { kind: 'DEBT', accountId: cuenta('2.1').id, description: 'Préstamo' };
-    expect(
-      estado(
-        call('POST', '/accounting/practitioner/simple/records', {
-          ...base,
-          date: '2026-09-28',
-          amount: '0',
-        }),
-      ),
-    ).toBe(422);
-    expect(
-      estado(
-        call('POST', '/accounting/practitioner/simple/records', {
-          ...base,
-          date: '',
-          amount: '100',
-        }),
-      ),
-    ).toBe(422);
+    const before = call('GET', '/accounting/practitioner/simple/records');
+    expectValidation(
+      call('POST', '/accounting/practitioner/simple/records', {
+        ...base, date: '2026-09-28', amount: '0',
+      }),
+      'El monto tiene que ser mayor a cero.',
+    );
+    expectValidation(
+      call('POST', '/accounting/practitioner/simple/records', {
+        ...base, date: '', amount: '100',
+      }),
+      'Elegí la fecha.',
+    );
+    expect(call('GET', '/accounting/practitioner/simple/records')).toEqual(before);
   });
 
   it('la transacción exige debe y haber distintos', () => {
@@ -119,7 +122,7 @@ describe('handlers de la contabilidad simple', () => {
       creditAccountId: cuenta('1.1').id,
       amount: '100',
     });
-    expect(estado(misma)).toBe(422);
+    expectValidation(misma, 'El debe y el haber tienen que ser cuentas distintas.');
 
     const bien = call('POST', '/accounting/practitioner/simple/transactions', {
       date: '2026-09-28',

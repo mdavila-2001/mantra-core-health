@@ -205,6 +205,12 @@ export class PaginatedForm {
 
   readonly submitLabel = input<string>('Enviar');
 
+  /** Un grupo paginado dentro de otro formulario: el padre conserva el envio. */
+  readonly embedded = input(false, { transform: booleanAttribute });
+
+  /** Conserva el selector del envio al migrar un formulario existente. */
+  readonly submitTestId = input('paginated-form-continuar');
+
   readonly pending = input(false, { transform: booleanAttribute });
 
   /**
@@ -635,8 +641,20 @@ export class PaginatedForm {
     this.enviado.emit();
   }
 
+  protected onEmbeddedEnter(event: Event): void {
+    if (!(event instanceof KeyboardEvent)) return;
+    if ((event.target as HTMLElement | null)?.tagName !== 'INPUT') return;
+    event.preventDefault();
+    event.stopPropagation();
+    if (!this.pending()) this.avanzar();
+  }
+
   /** El submit del `<form>`: en la última página envía, en el resto avanza. */
   protected continuar(): void {
+    if (this.embedded()) {
+      if (!this.pending()) this.avanzar();
+      return;
+    }
     if (this.esUltima()) {
       void this.enviar();
       return;

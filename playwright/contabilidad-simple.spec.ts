@@ -143,6 +143,7 @@ test('el doctor ve sus tres números y lleva gastos, activos, deudas, transaccio
   await dialogo
     .locator('[data-testid="transaccion-haber"] select')
     .selectOption({ label: '1.2 · Banco' });
+  await dialogo.getByRole('button', { name: 'Siguiente', exact: true }).click();
   await dialogo.getByTestId('transaccion-monto').fill('800');
   await page.screenshot({ path: join(SALIDA, '5-transaccion-nueva.png') });
   await dialogo.getByTestId('transaccion-guardar').click();

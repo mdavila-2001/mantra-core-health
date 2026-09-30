@@ -75,3 +75,32 @@ Instalacion: los tres SHA ya usaban node-modules. El diagnostico PnP del plan er
 La primera invocacion demo (28-build-demo.txt) fallo antes de compilar: PowerShell interpreto la coma sin comillas como separador y Angular recibio `production demo`. Repeticion con `corepack yarn build "--configuration=production,demo"` en 29-build-demo.txt, sin cambio de configuracion ni codigo.
 
 Demo compilada: `corepack yarn build "--configuration=production,demo"`, exit 0, initial 1.35 MB, evidencia/29-build-demo.txt. Compilacion no implica validacion de los recorridos.
+
+## Regresion completa inicial y reparaciones
+
+Commit comprobado: 4247bb0a. `corepack yarn test:coverage` termino con exit 1: **45 archivos fallidos, 662 aprobados; 137 pruebas fallidas, 9366 aprobadas (9503)**. Salida literal: evidencia/31-coverage.txt. No se acredita cobertura aprobada con esta corrida.
+
+Causas reproducidas y reparaciones escritas, pendientes de repetir:
+
+- Configuraciones demo antes implicitas ahora deben declararse por fixture; escenarios reales conservan flags apagados.
+- HTTP: ValidationPipe real usa 400/VALIDATION_FAILED/details.violations; precondicion de dominio usa 422/PRECONDITION_FAILED. Fuente API: src/common/errors/domain.exception.ts:106-124 y src/common/filters/all-exceptions.filter.ts:393-407. Los endpoints demo nuevos no se presentan como implementados por esta compatibilidad.
+- Capas duplicadas del mapa y de seguros del perfil; helper de pruebas que hacia bind sobre signals y perdia set; foco buscando boton de acciones retirado por una rama.
+- Navegacion conserva adjudicacion real del pagador y oculta la seccion ajena a farmacia/laboratorio; quita un duplicado exacto de subgroup.
+- El barrido de escrituras simulado contaminaba sesiones/reclamos de otras suites; se aislaron modulos y almacenamiento sin cambiar expectativas de 14 reclamos/Bs12450.
+- Calendario probaba un supuesto falso el ultimo dia del mes: ese dia aun aparece en la grilla del mes siguiente. Fixture ahora fija mitad de mes; limite de dias adyacentes productivo intacto.
+- Notas reales serializadas en objectiveText: pruebas de los tres consumidores ahora exigen todo el texto/campos, conservando archivos y recarga; suite del cliente mantiene comparacion real/demo.
+- Prueba PDF cargaba el doble global de otra suite; reinicia import para ejercitar jsPDF real y exigir cabecera PDF.
+- Coste del reconocimiento: memoizacion dentro de cada analisis reduce trabajo repetido, sin retener texto entre consultas; limite 16 ms y corpus intactos. Ver evidencia/35-motor-profile.md cuando se registre.
+
+## Gates y bloqueos encontrados
+
+- 32-check-architecture: cuatro ciclos, un import contra capas y tres detectores de fetch. Tipos/lectores reubicados sin excluir reglas; gate posterior del agente exit 0, pendiente captura final root.
+- Seis formularios paginados mediante el componente existente; modo embebido impide anidar form en campos compuestos. Gate posterior del agente exit 0; pruebas nuevas padre/hijo aun pendientes.
+- 33-check-css-tokens: exit 0 tras usar tokens existentes y reservas para variables de animacion enlazadas por plantilla.
+- 34-check-client-prefixes, check-api-prefixes, check-route-prefixes y check-api-contract-drift: exit 0. Agregados seis prefijos especificos y documentadas 605 operaciones unicas; no implica que backend implemente las demo.
+- Gate de ingles: el primer exit 0 NO es aprobacion. Git superaba maxBuffer y el script omitio el analisis; reproduccion ENOBUFS con 1077248 bytes. Lector ampliado y error ahora bloqueante. 33-check-english-identifiers registra 1548 hallazgos heredados frente a dev. Migracion extensa consultada al usuario; mientras no se acuerde esa ampliacion, bloqueo explicito, sin renombres masivos ni bajar el gate.
+- Documentacion: evidencia historica con 14 enlaces rotos y regla que prohibe TODO incluso en planes que deben usar ese estado. MATRIZ.md distingue artefactos disponibles fuera de Git, enlaces dependientes del workspace y plan de farmacia no localizado. No se reescribe evidencia pasada para presentar verde.
+
+## Disponibilidad real actual
+
+Revision de solo lectura: no hay API en puertos3000/3001; Postgres18 nativo escucha5432, sin base SALUD/configuracion local identificada. Docker no responde (pipe LinuxEngine ausente); Redis/MongoDB/OpenSearch no escuchan. El .env API apunta fuera de loopback, y SEED_ON_BOOT ausente equivale a true. No se arranco esa configuracion ni se aplico DDL/semillas. Artefacto backend local27/09 anterior a H1 no demuestra codigo30/09. Falta runtime local aislado con conexiones correctas, esquema/catalogos y artefacto H1 actualizado. La prueba HTTP futura usa doble declarado de transporte y no elimina este bloqueo de persistencia real.

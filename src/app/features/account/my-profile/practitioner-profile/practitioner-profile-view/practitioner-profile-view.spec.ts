@@ -1220,6 +1220,7 @@ describe('PractitionerProfileView', () => {
       const renglon = host.querySelector('[data-testid="perfil-seguros"]');
       const chips = [...host.querySelectorAll<HTMLElement>('[data-testid="perfil-seguro"]')];
 
+      expect(host.querySelectorAll('[data-testid="perfil-seguros"]')).toHaveLength(1);
       expect(renglon?.querySelector('dt')?.textContent?.trim()).toBe('Seguros con los que trabaja');
       expect(chips.map((chip) => chip.textContent?.trim())).toEqual([
         'Alianza Seguros',

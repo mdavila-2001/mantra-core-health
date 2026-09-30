@@ -92,7 +92,7 @@ describe('latencia del interceptor — tabla por prefijo, sin azar', () => {
   it('no queda ningún Math.random en el archivo (H2.S1.M1)', () => {
     // Duplica el comando del DoD (`git grep -c Math.random`) como aserción,
     // para que un regreso al azar rompa la suite y no sólo el grep manual.
-    const fuente = readFileSync(join(__dirname, 'mock-backend.interceptor.ts'), 'utf-8');
+    const fuente = readFileSync(join(process.cwd(), 'src/app/core/mock/mock-backend.interceptor.ts'), 'utf-8');
     expect(fuente).not.toContain('Math.random');
   });
 });

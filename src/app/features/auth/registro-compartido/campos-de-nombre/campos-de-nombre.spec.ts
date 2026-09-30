@@ -25,13 +25,20 @@ describe('CamposDeNombre', () => {
     (raiz.querySelector(`[data-testid="${testId}"]`) as HTMLElement).click();
 
   it('pide primer, segundo y tercer nombre, apellido paterno y materno', () => {
-    const { raiz } = montar();
+    const { raiz, fixture, grupo } = montar();
     const rotulos = Array.from(raiz.querySelectorAll('label')).map((l) => l.textContent!.trim());
     expect(rotulos.join('|')).toContain('Primer nombre');
     expect(rotulos.join('|')).toContain('Segundo nombre (opcional)');
     expect(rotulos.join('|')).toContain('Tercer nombre (opcional)');
-    expect(rotulos.join('|')).toContain('Apellido paterno');
-    expect(rotulos.join('|')).toContain('Apellido materno (opcional)');
+    expect(raiz.querySelectorAll('input')).toHaveLength(3);
+    grupo.controls.name.setValue('Ana');
+    clic(raiz, 'paginated-form-continuar');
+    fixture.detectChanges();
+    const apellidos = Array.from(raiz.querySelectorAll('label')).map((label) => label.textContent!.trim());
+    expect(apellidos.join('|')).toContain('Apellido paterno');
+    expect(apellidos.join('|')).toContain('Apellido materno (opcional)');
+    expect(raiz.querySelectorAll('input')).toHaveLength(2);
+    expect(raiz.querySelector('form')).toBeNull();
   });
 
   it('«Agregar otro nombre» suma una casilla y el botón de quitar la retira', () => {

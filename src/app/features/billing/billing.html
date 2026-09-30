@@ -183,42 +183,60 @@
 
           <!-- 2 · Confirmar facturación -->
           @if (cobro.payment !== null && puedeFacturar(cobro)) {
-            <form class="bloque" [formGroup]="formularioDeFactura" (ngSubmit)="confirmarFacturacion(cobro)" data-testid="formulario-de-factura">
+            <section class="bloque" data-testid="formulario-de-factura">
               <h3>Confirmar facturación</h3>
               <p class="nota">
                 Factura de Compra y Venta (sector 1), modalidad Computarizada en Línea, enviada al SIAT SIMULADO.
               </p>
-              <div class="campos">
-                <app-form-field label="Nombre o razón social" [required]="true">
-                  <app-input formControlName="name" />
+              <app-paginated-form
+                [form]="formularioDeFactura"
+                [paginas]="invoicePages"
+                label="Confirmar facturación"
+                [submitLabel]="operando() === 'factura' ? 'Enviando al SIAT simulado…' : 'Confirmar facturación'"
+                [pending]="operando() !== null"
+                (enviado)="confirmarFacturacion(cobro)"
+              >
+      <ng-template appCampoPersonalizado="name">
+<app-form-field label="Nombre o razón social" [required]="true">
+                  <app-input [formControl]="formularioDeFactura.controls.name" />
                 </app-form-field>
-                <app-form-field label="Tipo de documento" [required]="true" hint="Catálogo simulado">
-                  <app-select formControlName="documentTypeCode" [options]="opcionesDeDocumento()" />
+      </ng-template>
+      <ng-template appCampoPersonalizado="documentTypeCode">
+<app-form-field label="Tipo de documento" [required]="true" hint="Catálogo simulado">
+                  <app-select [formControl]="formularioDeFactura.controls.documentTypeCode" [options]="opcionesDeDocumento()" />
                 </app-form-field>
-                <app-form-field label="Número de documento" [required]="true">
-                  <app-input formControlName="documentNumber" />
+      </ng-template>
+      <ng-template appCampoPersonalizado="documentNumber">
+<app-form-field label="Número de documento" [required]="true">
+                  <app-input [formControl]="formularioDeFactura.controls.documentNumber" />
                 </app-form-field>
-                <app-form-field label="Complemento">
-                  <app-input formControlName="complement" />
+      </ng-template>
+      <ng-template appCampoPersonalizado="complement">
+<app-form-field label="Complemento">
+                  <app-input [formControl]="formularioDeFactura.controls.complement" />
                 </app-form-field>
-                <app-form-field label="Correo para la entrega" hint="Sólo queda en la bandeja simulada">
-                  <app-input formControlName="email" type="email" />
+      </ng-template>
+      <ng-template appCampoPersonalizado="email">
+<app-form-field label="Correo para la entrega" hint="Sólo queda en la bandeja simulada">
+                  <app-input [formControl]="formularioDeFactura.controls.email" type="email" />
                 </app-form-field>
-                <app-form-field label="Descuento adicional (Bs)">
-                  <app-input formControlName="additionalDiscount" inputMode="decimal" />
+      </ng-template>
+      <ng-template appCampoPersonalizado="additionalDiscount">
+<app-form-field label="Descuento adicional (Bs)">
+                  <app-input [formControl]="formularioDeFactura.controls.additionalDiscount" inputMode="decimal" />
                 </app-form-field>
-                <app-form-field label="Simulación" hint="Forzar una respuesta del catálogo oficial para ver cada rama">
-                  <app-select formControlName="forceMessageCode" [options]="opcionesDeSimulacion()" />
+      </ng-template>
+      <ng-template appCampoPersonalizado="forceMessageCode">
+<app-form-field label="Simulación" hint="Forzar una respuesta del catálogo oficial para ver cada rama">
+                  <app-select [formControl]="formularioDeFactura.controls.forceMessageCode" [options]="opcionesDeSimulacion()" />
                 </app-form-field>
-              </div>
+      </ng-template>
+              </app-paginated-form>
               <p class="vista-previa" data-testid="vista-previa">
                 Total a facturar: <strong>Bs {{ totalConDescuento(cobro) ?? '—' }}</strong>
                 <span class="nota">{{ literal(totalConDescuento(cobro)) }}</span>
               </p>
-              <button app-button type="submit" [isLoading]="operando() === 'factura'" [disabled]="operando() !== null">
-                {{ operando() === 'factura' ? 'Enviando al SIAT simulado…' : 'Confirmar facturación' }}
-              </button>
-            </form>
+            </section>
           }
 
           <!-- 3 · La factura y su recorrido -->

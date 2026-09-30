@@ -7,8 +7,18 @@
   @if (errorMessage(); as message) {
     <app-alert appAnuncio tone="error">{{ message }}</app-alert>
   }
-  <form class="insurance-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
-    <app-form-field
+  <app-paginated-form
+    [form]="form"
+    [paginas]="planPages()"
+    label="Producto seguro"
+    [submitLabel]="mode() === 'create' ? 'Añadir producto seguro' : 'Guardar cambios'"
+    cancelLabel="Cancelar"
+    [pending]="saving()"
+    (cancelado)="dialog().close()"
+    (enviado)="submit()"
+  >
+    <ng-template appCampoPersonalizado="planCode">
+<app-form-field
       label="Código del producto seguro"
       [required]="true"
       [errorMessage]="
@@ -17,9 +27,11 @@
           : ''
       "
     >
-      <app-input formControlName="planCode" autocomplete="off" testId="plan-code" />
+      <app-input [formControl]="form.controls.planCode" autocomplete="off" testId="plan-code" />
     </app-form-field>
-    <app-form-field
+    </ng-template>
+    <ng-template appCampoPersonalizado="name">
+<app-form-field
       label="Nombre"
       [required]="true"
       [errorMessage]="
@@ -28,13 +40,16 @@
           : ''
       "
     >
-      <app-input formControlName="name" autocomplete="off" testId="plan-name" />
+      <app-input [formControl]="form.controls.name" autocomplete="off" testId="plan-name" />
     </app-form-field>
-    <div class="insurance-form__columns">
-      <app-form-field label="Vigente desde">
-        <app-input formControlName="effectiveFrom" type="date" testId="plan-effective-from" />
+    </ng-template>
+    <ng-template appCampoPersonalizado="effectiveFrom">
+<app-form-field label="Vigente desde">
+        <app-input [formControl]="form.controls.effectiveFrom" type="date" testId="plan-effective-from" />
       </app-form-field>
-      <app-form-field
+    </ng-template>
+    <ng-template appCampoPersonalizado="effectiveTo">
+<app-form-field
         label="Vigente hasta"
         [errorMessage]="
           form.hasError('dateRange') && form.controls.effectiveTo.touched
@@ -42,18 +57,20 @@
             : ''
         "
       >
-        <app-input formControlName="effectiveTo" type="date" testId="plan-effective-to" />
+        <app-input [formControl]="form.controls.effectiveTo" type="date" testId="plan-effective-to" />
       </app-form-field>
-    </div>
-    @if (mode() === 'create') {
-      <app-form-field label="Moneda" hint="Moneda de copagos, deducibles y topes del plan.">
+    </ng-template>
+    <ng-template appCampoPersonalizado="currencyConceptId">
+<app-form-field label="Moneda" hint="Moneda de copagos, deducibles y topes del plan.">
         <app-concept-select
           target="insurance.insurance_plans.currency_concept_id"
           [(value)]="currencyConceptId"
           placeholder="Seleccioná una moneda"
         />
       </app-form-field>
-      <app-form-field
+    </ng-template>
+    <ng-template appCampoPersonalizado="monthlyPremiumAmount">
+<app-form-field
         label="Prima mensual"
         hint="Prima de lista mensual, en la moneda del plan. Es el denominador del loss ratio del tablero de siniestralidad."
         [errorMessage]="
@@ -63,32 +80,11 @@
         "
       >
         <app-input
-          formControlName="monthlyPremiumAmount"
+          [formControl]="form.controls.monthlyPremiumAmount"
           inputMode="decimal"
           testId="plan-monthly-premium"
         />
       </app-form-field>
-    }
-  </form>
-
-  <button
-    dialog-actions
-    app-button
-    type="button"
-    variant="ghost"
-    [disabled]="saving()"
-    (clicked)="dialog().close()"
-  >
-    Cancelar
-  </button>
-  <button
-    dialog-actions
-    app-button
-    type="button"
-    [isLoading]="saving()"
-    [disabled]="saving()"
-    (clicked)="submit()"
-  >
-    {{ mode() === 'create' ? 'Añadir producto seguro' : 'Guardar cambios' }}
-  </button>
+    </ng-template>
+  </app-paginated-form>
 </app-content-dialog>

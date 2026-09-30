@@ -1,3 +1,4 @@
+import { environment } from '../../../../environments/environment';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
@@ -20,7 +21,7 @@ import { CampaignDetail } from './campaign-detail';
  * promoción que se cumplió, y lo que se pinta son los dos precios que la
  * farmacia puso —nunca un descuento derivado por la pantalla—.
  *
- * Corren con la demo encendida, que es el default de desarrollo.
+ * Activan la demo de campañas explícitamente y restauran el entorno tras cada caso.
  */
 const FARMACIA = '7f1c9a52-6d3e-4b18-9c47-2a5e8f0b1d63';
 
@@ -49,6 +50,11 @@ const CATALOGO: readonly ProductoDeCatalogo[] = [
 ];
 
 describe('CampaignDetail', () => {
+  const originalCampaignsDemo = environment.campaignsDemo;
+
+  beforeEach(() => Object.assign(environment, { campaignsDemo: true }));
+  afterEach(() => Object.assign(environment, { campaignsDemo: originalCampaignsDemo }));
+
   let harness: RouterTestingHarness;
   let client: PharmacyCampaignsClient;
 

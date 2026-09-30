@@ -289,6 +289,8 @@ describe('AccessTree', () => {
       '/administration/insurance-campaigns',
       '/administration/my-organization',
       '/administration/insurance',
+      '/administration/insurance-claims',
+      '/administration/received-claims',
     ]);
   });
 });

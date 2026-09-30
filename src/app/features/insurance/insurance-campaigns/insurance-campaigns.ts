@@ -1,3 +1,6 @@
+import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
+import { CampoPersonalizado } from '../../../shared/components/organisms/paginated-form/campo-personalizado';
+import type { CampoDeFormulario, PaginaDeFormulario } from '../../../shared/forms/paginated/paginated-form.types';
 import { DatePipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
@@ -63,8 +66,6 @@ import { ToastService } from '../../../shared/components/molecules/toast/toast.s
 import { historialDeCursor } from '../../../shared/components/organisms/data-table/cursor-history';
 import { DataTable } from '../../../shared/components/organisms/data-table/data-table';
 import type { ColumnDef } from '../../../shared/components/organisms/data-table/data-table.types';
-import { FormActions } from '../../../shared/components/organisms/form-actions/form-actions';
-import { FormSection } from '../../../shared/components/organisms/form-section/form-section';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 
 const PAGE_SIZE = 25;
@@ -145,7 +146,7 @@ function twoDecimalsValidator(control: AbstractControl): ValidationErrors | null
  */
 @Component({
   selector: 'app-insurance-campaigns',
-  imports: [
+  imports: [PaginatedForm, CampoPersonalizado,
     Alert,
     AnnounceOnAppear,
     AppButton,
@@ -154,9 +155,7 @@ function twoDecimalsValidator(control: AbstractControl): ValidationErrors | null
     Checkbox,
     DataTable,
     DatePipe,
-    FormActions,
     FormField,
-    FormSection,
     Input,
     PageHeader,
     ReactiveFormsModule,
@@ -465,17 +464,44 @@ export class InsuranceCampaigns {
     { validators: [dateOrderValidator] },
   );
 
+  private readonly partnerRevision = signal(0);
+
+  protected readonly campaignPages = computed<readonly PaginaDeFormulario[]>(() => {
+    this.partnerRevision();
+    const field = (key: string): CampoDeFormulario => ({ key, label: '', control: 'custom' });
+    return [
+      {
+        titulo: 'Nueva campaña preventiva',
+        hint: 'Aparece en el panel de todos tus afiliados con cobertura vigente. La patología que elijas describe la campaña: no filtra afiliados por su historia clínica.',
+        campos: ['code', 'title', 'description', 'campaignType'].map(field),
+      },
+      { titulo: 'Prevención y vigencia', campos: ['targetConditionCode', 'copayBonusPercentage', 'validFrom', 'validTo'].map(field) },
+      ...this.partners.controls.map((_, index) => ({
+        titulo: `Aliado ${index + 1}`,
+        hint: 'Quién financia la campaña (importadora o fabricante) y dónde se atiende el afiliado (laboratorio, farmacia o centro).',
+        campos: [field(`partners.${index}`)],
+      })),
+      { titulo: 'Publicación', campos: [field('activate')] },
+    ];
+  });
+
+  protected markPageFields(page: PaginaDeFormulario): void {
+    for (const field of page.campos) this.form.get(field.key)?.markAllAsTouched();
+  }
+
   protected get partners(): FormArray<ReturnType<InsuranceCampaigns['newPartnerGroup']>> {
     return this.form.controls.partners;
   }
 
   protected addPartner(): void {
     this.partners.push(this.newPartnerGroup());
+    this.partnerRevision.update((version) => version + 1);
   }
 
   protected removePartner(index: number): void {
     if (this.partners.length > 1) {
       this.partners.removeAt(index);
+      this.partnerRevision.update((version) => version + 1);
     }
   }
 
@@ -543,6 +569,7 @@ export class InsuranceCampaigns {
       this.partners.removeAt(this.partners.length - 1);
     }
     this.partners.at(0).reset({ role: 'PROVIDER', type: 'LABORATORY', name: '' });
+    this.partnerRevision.update((version) => version + 1);
     this.formState.set(ready(null));
   }
 

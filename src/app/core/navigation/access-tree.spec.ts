@@ -326,6 +326,7 @@ describe('buildAccessTree', () => {
       'administration/insurance-campaigns',
       'administration/my-organization',
       'administration/insurance',
+      'administration/insurance-claims',
       // 2026-09-27: «Solicitudes recibidas», pedida por la propietaria.
       'administration/received-claims',
     ]);

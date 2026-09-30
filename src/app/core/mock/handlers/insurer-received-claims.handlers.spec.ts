@@ -147,14 +147,29 @@ describe('handler de solicitudes recibidas por la aseguradora', () => {
       expect((call('POST', path, user, { outcome: 'REJECTED', reason: 'Cambio de idea' }) as MockReply).status).toBe(409);
     });
 
-    it('rechazar sin motivo es 422, y aprobar en parte exige un monto menor al solicitado', () => {
+    it('rechazar sin motivo es 400, y aprobar en parte exige un monto menor al solicitado', () => {
       const open = all().find((c) => c['status'].code === 'IN_REVIEW')!;
       const path = `/insurance/received-claims/${open['id']}/decision`;
-      expect((call('POST', path, user, { outcome: 'REJECTED' }) as MockReply).status).toBe(422);
-      expect(
-        (call('POST', path, user, { outcome: 'PARTIAL', approvedAmount: open['billedTotal'].amount, reason: 'Tope' }) as MockReply)
-          .status,
-      ).toBe(422);
+      expect(call('POST', path, user, { outcome: 'REJECTED' })).toMatchObject({
+        status: 400,
+        body: {
+          statusCode: 400,
+          code: 'VALIDATION_FAILED',
+          details: { violations: ['reason Al menos 5 caracteres'] },
+        },
+      });
+      expect(all().find((claim) => claim.id === open.id)).toEqual(open);
+      expect(call('POST', path, user, {
+        outcome: 'PARTIAL', approvedAmount: open['billedTotal'].amount, reason: 'Tope del plan',
+      })).toMatchObject({
+        status: 400,
+        body: {
+          statusCode: 400,
+          code: 'VALIDATION_FAILED',
+          details: { violations: ['approvedAmount Mayor que cero y menor que el monto solicitado'] },
+        },
+      });
+      expect(all().find((claim) => claim.id === open.id)).toEqual(open);
       const partial = call('POST', path, user, { outcome: 'PARTIAL', approvedAmount: '10.00', reason: 'Tope del plan' }) as Fila;
       expect(partial['invoice']!.amount.amount).toBe('10.00');
     });

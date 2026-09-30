@@ -421,12 +421,16 @@ describe('handlers de farmacia: portal de la farmacia (P47)', () => {
       expect(estado(pedir('PATCH', `/pharmacies/${PHARMACY_ID}/products/${id}`, { description: 'x' }))).toBe(404);
     });
 
-    it('un estado que no existe es un 422 con su campo', () => {
+    it('un estado que no existe es un 400 con su campo', () => {
       const id = crear('B-ESTADO-1');
 
       const resultado = pedir('PATCH', `/pharmacies/${PHARMACY_ID}/products/${id}`, { status: 'EN_REVISION' });
 
-      expect(estado(resultado)).toBe(422);
+      expect(estado(resultado)).toBe(400);
+      expect(cuerpoDe(resultado)).toMatchObject({
+        code: 'VALIDATION_FAILED',
+        details: { violations: ['status El estado es publicado, borrador o retirado.'] },
+      });
     });
   });
 
@@ -459,7 +463,7 @@ describe('handlers de farmacia: portal de la farmacia (P47)', () => {
         ],
       });
 
-      expect(estado(resultado)).toBe(422);
+      expect(estado(resultado)).toBe(400);
       expect(gestion().find((p) => p.id === a)!.stock).toBe(antes);
     });
 
@@ -489,23 +493,23 @@ describe('handlers de farmacia: portal de la farmacia (P47)', () => {
       expect(ahora.stock).toBeGreaterThan(0);
     });
 
-    it('mezclar cantidades y booleano en una misma línea es un 422: diría dos cosas a la vez', () => {
+    it('mezclar cantidades y booleano en una misma línea es un 400: diría dos cosas a la vez', () => {
       const a = crear('B-INV-BOOL-C');
 
       const resultado = pedir('PATCH', `/pharmacies/${PHARMACY_ID}/inventory`, {
         lines: [{ productId: a, stock: 4, inStock: true }],
       });
 
-      expect(estado(resultado)).toBe(422);
+      expect(estado(resultado)).toBe(400);
     });
 
-    it('una línea que no dice qué cambiar es un 422, y un booleano que no lo es también', () => {
+    it('una línea que no dice qué cambiar es un 400, y un booleano que no lo es también', () => {
       const a = crear('B-INV-BOOL-D');
 
-      expect(estado(pedir('PATCH', `/pharmacies/${PHARMACY_ID}/inventory`, { lines: [{ productId: a }] }))).toBe(422);
+      expect(estado(pedir('PATCH', `/pharmacies/${PHARMACY_ID}/inventory`, { lines: [{ productId: a }] }))).toBe(400);
       expect(
         estado(pedir('PATCH', `/pharmacies/${PHARMACY_ID}/inventory`, { lines: [{ productId: a, inStock: 'quizás' }] })),
-      ).toBe(422);
+      ).toBe(400);
     });
 
     it('el booleano y las cantidades conviven en la misma petición, todo o nada', () => {
@@ -518,7 +522,7 @@ describe('handlers de farmacia: portal de la farmacia (P47)', () => {
           { productId: b, stock: -1 },
         ],
       });
-      expect(estado(roto)).toBe(422);
+      expect(estado(roto)).toBe(400);
       expect(gestion().find((p) => p.id === a)!.inStock).toBe(true);
 
       pedir('PATCH', `/pharmacies/${PHARMACY_ID}/inventory`, {
@@ -536,7 +540,7 @@ describe('handlers de farmacia: portal de la farmacia (P47)', () => {
         lines: [{ productId: 'no-existe', stock: 1, minStock: 1 }],
       });
 
-      expect(estado(resultado)).toBe(422);
+      expect(estado(resultado)).toBe(400);
     });
   });
 
@@ -561,7 +565,7 @@ describe('handlers de farmacia: portal de la farmacia (P47)', () => {
     it('crea, no repite (sin importar mayúsculas ni tildes) y valida el nombre', () => {
       expect(estado(pedir('POST', `/pharmacies/${PHARMACY_ID}/categories`, { name: 'Vitaminas B' }))).toBe(201);
       expect(estado(pedir('POST', `/pharmacies/${PHARMACY_ID}/categories`, { name: 'vitaminas b' }))).toBe(409);
-      expect(estado(pedir('POST', `/pharmacies/${PHARMACY_ID}/categories`, { name: '   ' }))).toBe(422);
+      expect(estado(pedir('POST', `/pharmacies/${PHARMACY_ID}/categories`, { name: '   ' }))).toBe(400);
     });
 
     it('renombrar arrastra a los productos que la usan', () => {

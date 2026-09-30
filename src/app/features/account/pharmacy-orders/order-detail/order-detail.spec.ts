@@ -4,6 +4,8 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 
+import { environment } from '../../../../../environments/environment';
+
 import {
   PHARMACY_ORDER_TEST_IDS,
   pharmacyOrderDtoFixture,
@@ -17,6 +19,7 @@ describe('OrderDetail with the real pharmacy-orders contract', () => {
   let harness: RouterTestingHarness;
   let http: HttpTestingController;
   let confirmDialog: ReturnType<typeof vi.fn>;
+  const originalMockBackend = environment.mockBackend;
 
   beforeEach(() => {
     confirmDialog = vi.fn().mockResolvedValue(true);
@@ -31,7 +34,10 @@ describe('OrderDetail with the real pharmacy-orders contract', () => {
     http = TestBed.inject(HttpTestingController);
   });
 
-  afterEach(() => http.verify());
+  afterEach(() => {
+    Object.assign(environment, { mockBackend: originalMockBackend });
+    http.verify();
+  });
 
   /** La lectura de avisos que el detalle hace una sola vez por pedido. */
   const AVISOS_URL = '/notifications/me?limit=50';
@@ -294,6 +300,7 @@ describe('OrderDetail with the real pharmacy-orders contract', () => {
     });
 
     it('demo order picked up: «Retirado», its invoice and the internal receipt apart', async () => {
+      Object.assign(environment, { mockBackend: true });
       const id = uuid('pharmacy-order-3');
       await mount(
         pharmacyOrderDtoFixture({ id, status: { code: 'PINV_ORDER_RETIRADO', display: 'Retirado' } }),

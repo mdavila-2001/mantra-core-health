@@ -94,7 +94,7 @@ export function nombreDelTipo(mimeType: string): string {
 /**
  * El `File` que entiende `app-file-preview`, armado desde el `data:` URL.
  *
- * Se decodifica acá y no con `fetch(dataUrl)`: la CSP deja `connect-src` en
+ * Se decodifica acá sin pedir el URL con `fetch`: la CSP deja `connect-src` en
  * `'self'`, y un `fetch` a un `data:` URL quedaría bloqueado en silencio.
  *
  * @param url - El `data:` URL del adjunto.

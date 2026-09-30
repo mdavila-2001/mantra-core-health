@@ -1,19 +1,16 @@
 import { HttpHeaders } from '@angular/common/http';
 
-import { PACIENTES } from '../fixtures/personas';
+import type { PacienteSimulado } from '../fixtures/personas';
 import { MockRouter, type MockMethod, type MockReply } from '../mock-router';
-import { buscarUsuario, type MockUser } from '../mock-session';
-import { registerInsurancePortability } from './insurance-portability.handlers';
-import { registrarSeguros } from './insurance.handlers';
-import { registrarPerfiles } from './profiles.handlers';
+import type { MockUser } from '../mock-session';
 
-const PACIENTE = PACIENTES[0]!;
+let PACIENTE: PacienteSimulado;
 /**
  * `p-mamani` (índice fijo — `personas.ts` preserva el orden de los pacientes
  * escritos «para no mover los índices»): no declara `aseguradora`, es la
  * persona sin coberturas del fixture.
  */
-const PACIENTE_SIN_COBERTURAS = PACIENTES[1]!;
+let PACIENTE_SIN_COBERTURAS: PacienteSimulado;
 
 interface ExportWire {
   readonly certificateId: string;
@@ -30,22 +27,39 @@ interface VerifyWire {
 
 describe('handlers de portabilidad de póliza y siniestralidad (subtarea 3.3)', () => {
   const router = new MockRouter();
-  const paciente = buscarUsuario('paciente')!;
-  const medica = buscarUsuario('medica')!;
-  const superadmin = buscarUsuario('superadmin')!;
-  /** Mismo molde que `paciente`, pero apuntando a la persona sin coberturas. */
-  const pacienteSinCoberturas: MockUser = {
-    ...paciente,
-    key: 'paciente-sin-coberturas',
-    id: PACIENTE_SIN_COBERTURAS.userId,
-    displayName: PACIENTE_SIN_COBERTURAS.displayName,
-    patientProfileId: PACIENTE_SIN_COBERTURAS.id,
-    personId: PACIENTE_SIN_COBERTURAS.personId,
-  };
+  let paciente: MockUser;
+  let medica: MockUser;
+  let superadmin: MockUser;
+  let pacienteSinCoberturas: MockUser;
 
-  registrarPerfiles(router);
-  registrarSeguros(router);
-  registerInsurancePortability(router);
+  beforeAll(async () => {
+    // El barrido de mock-backend agrega reclamos. Este certificado parte del seed,
+    // sin borrar los reclamos de los módulos que ejercitan las otras suites.
+    vi.resetModules();
+    const { PACIENTES } = await import('../fixtures/personas');
+    const { buscarUsuario } = await import('../mock-session');
+    const { registrarPerfiles } = await import('./profiles.handlers');
+    const { registrarSeguros } = await import('./insurance.handlers');
+    const { registerInsurancePortability } = await import('./insurance-portability.handlers');
+    PACIENTE = PACIENTES[0]!;
+    PACIENTE_SIN_COBERTURAS = PACIENTES[1]!;
+    paciente = buscarUsuario('paciente')!;
+    medica = buscarUsuario('medica')!;
+    superadmin = buscarUsuario('superadmin')!;
+    pacienteSinCoberturas = {
+      ...paciente,
+      key: 'paciente-sin-coberturas',
+      id: PACIENTE_SIN_COBERTURAS.userId,
+      displayName: PACIENTE_SIN_COBERTURAS.displayName,
+      patientProfileId: PACIENTE_SIN_COBERTURAS.id,
+      personId: PACIENTE_SIN_COBERTURAS.personId,
+    };
+    registrarPerfiles(router);
+    registrarSeguros(router);
+    registerInsurancePortability(router);
+  });
+
+  afterAll(() => vi.resetModules());
 
   function call<T>(
     method: MockMethod,

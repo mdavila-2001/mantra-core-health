@@ -223,6 +223,8 @@ describe('InsuranceClaims', () => {
     });
 
     it('omite la columna redundante de aseguradora en la tabla', () => {
+      http.expectOne((req) => req.url === '/insurance-claims').flush({ items: [claimWire()], nextCursor: null });
+      carrierFixture.detectChanges();
       const componentInstance = carrierFixture.componentInstance;
       const columns = (componentInstance as unknown as { columns: () => readonly { key: string }[] }).columns();
       expect(columns.some((c) => c.key === 'carrierName')).toBe(false);

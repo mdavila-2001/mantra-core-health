@@ -475,9 +475,11 @@ describe('rutas públicas del buscador', () => {
    * que retroceder al `buscar` generado para encontrarlo. Es el supuesto del
    * que depende que las dos formas convivan.
    */
-  it('las URL de la bóveda siguen abriendo, por retroceso al bloque generado', async () => {
-    expect(await resuelve('/buscar/buscador-listado')).toBe(true);
-    expect(await resuelve('/buscar/perfil-profesional-detalle')).toBe(true);
+  it('las URL de la bóveda conservan su destino en API real', async () => {
+    expect(await router.navigateByUrl('/buscar/buscador-listado')).toBe(true);
+    expect(location.path()).toBe('/search');
+    expect(await router.navigateByUrl('/buscar/perfil-profesional-detalle')).toBe(true);
+    expect(location.path()).toBe('/search/practitioners');
   });
 
   // ─── TAREA-29: las direcciones viejas siguen abriendo ──────────────────────

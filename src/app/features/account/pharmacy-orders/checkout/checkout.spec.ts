@@ -12,6 +12,7 @@ import { PharmacyOrdersClient } from '../../../../core/data-access/pharmacy-orde
 import { pharmacyOrderDtoFixture } from '../../../../core/data-access/pharmacy-orders/pharmacy-orders.spec-fixtures';
 import type { BorradorDePedido } from '../../../../core/data-access/pharmacy-orders/pharmacy-orders.types';
 import { seccionRolesGuard } from '../../../../core/navigation/section-roles.guard';
+import { SAMPLE_DATA_ENABLED } from '../../../../core/mock/sample-data';
 import { NewOrder } from '../new-order/new-order';
 import {
   CLAVE_DEL_TRASPASO,
@@ -541,6 +542,7 @@ describe('Checkout', () => {
         providers: [
           provideHttpClient(),
           provideHttpClientTesting(),
+          { provide: SAMPLE_DATA_ENABLED, useValue: true },
           provideRouter([
             { path: 'my-account/pharmacy-orders/new', component: NewOrder },
             { path: 'my-account/pharmacy-orders/checkout', component: Checkout },
