@@ -28,6 +28,14 @@
   padding-inline-start: var(--sp-6);
 }
 
+ul.articulo__lista {
+  list-style: disc;
+}
+
+ol.articulo__lista {
+  list-style: decimal;
+}
+
 .articulo__lista li + li {
   margin-block-start: var(--sp-1);
 }

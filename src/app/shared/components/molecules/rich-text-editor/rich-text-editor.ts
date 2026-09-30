@@ -155,8 +155,7 @@ export class RichTextEditor {
    * @param herramienta - Qué se pulsó.
    */
   protected aplicar(herramienta: HerramientaDeEditor): void {
-    if (!this.esNavegador || this.readOnly()) return;
-    this.area()?.nativeElement.focus();
+    if (!this.esNavegador || this.readOnly() || !this.volverAlCursor()) return;
     if (herramienta.tipo === 'bloque') {
       document.execCommand(
         'formatBlock',
@@ -167,6 +166,7 @@ export class RichTextEditor {
       document.execCommand(herramienta.comando, false);
     }
     this.recoger();
+    this.guardarCursor();
   }
 
   /**

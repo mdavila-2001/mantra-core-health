@@ -180,10 +180,19 @@ export class ArticleComposer {
     this.emojisAbiertos.update((abierto) => !abierto);
   }
 
-  /** Escape cierra el panel y devuelve el foco al botón que lo abrió. */
+  private readonly panelEmojis = viewChild<ElementRef<HTMLElement>>('panelEmojis');
+
+  /**
+   * Escape cierra el panel desde cualquier lugar del compositor: después de
+   * elegir un emoji el foco vuelve a la hoja, y ahí también tiene que cerrarlo.
+   * El foco vuelve al botón sólo si estaba dentro del panel —si se estaba
+   * escribiendo, se sigue escribiendo—.
+   */
   protected cerrarEmojis(): void {
+    if (!this.emojisAbiertos()) return;
+    const estabaEnElPanel = this.panelEmojis()?.nativeElement.contains(document.activeElement) ?? false;
     this.emojisAbiertos.set(false);
-    this.botonEmojis()?.nativeElement.focus();
+    if (estabaEnElPanel) this.botonEmojis()?.nativeElement.focus();
   }
 
   protected insertarEmoji(emoji: string): void {

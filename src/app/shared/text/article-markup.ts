@@ -57,6 +57,9 @@ export interface ArticleOutline {
   readonly sections: readonly ArticleSection[];
 }
 
+/** Etiquetas que abren un bloque propio al convertir desde el editor. */
+const BLOCK_TAGS: ReadonlySet<string> = new Set(['P', 'DIV', 'H1', 'H2', 'H3', 'UL', 'OL']);
+
 /** Marca interna de `htmlToArticle`: no puede aparecer en texto escrito. */
 const SEPARATOR = '\u0000';
 
@@ -280,7 +283,14 @@ export function htmlToArticle(root: ParentNode, imageIndex: (image: HTMLImageEle
       case 'P':
       case 'DIV': {
         flushText();
-        pending = inline(node);
+        // El editor del navegador anida bloques dentro de un párrafo
+        // (`<p><ul>…</ul><h3>…</h3></p>`) al aplicar formato; el parser de HTML
+        // no lo haría, pero el DOM editado sí. Un párrafo así es un contenedor.
+        if (Array.from(node.children).some((child) => BLOCK_TAGS.has(child.tagName))) {
+          node.childNodes.forEach(block);
+        } else {
+          pending = inline(node);
+        }
         flushText();
         return;
       }

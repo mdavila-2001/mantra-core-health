@@ -119,6 +119,29 @@ describe('htmlToArticle', () => {
     expect(htmlToArticle(root, inOrder(root))).toBe('primera\n\nsegunda\ntercera');
   });
 
+  it('desarma los bloques que el navegador anida dentro de un párrafo (HTML real de Chrome)', () => {
+    // Observado en el editor el 30/09/2026 escribiendo título → lista → subtítulo.
+    // Se arma con DOM y no con `innerHTML`: el parser de HTML cerraría el `<p>`
+    // antes del `<ul>`, y el editor (que construye por DOM) no lo cierra.
+    const root = dom('La hipertensión no suele dar síntomas.<h2>Señales de alarma</h2>');
+    const parrafo = document.createElement('p');
+    const lista = document.createElement('ul');
+    for (const texto of ['Dolor de cabeza intenso', 'Visión borrosa']) {
+      lista.appendChild(document.createElement('li')).textContent = texto;
+    }
+    const subtitulo = document.createElement('h3');
+    subtitulo.textContent = 'Cuándo ir a urgencias';
+    const interno = document.createElement('p');
+    interno.textContent = 'Si supera 180/120 \u00a0';
+    parrafo.append(lista, subtitulo, interno);
+    root.appendChild(parrafo);
+    expect(root.innerHTML).toContain('<p><ul>');
+    expect(htmlToArticle(root, inOrder(root))).toBe(
+      'La hipertensión no suele dar síntomas.\n\n## Señales de alarma\n\n- Dolor de cabeza intenso\n- Visión borrosa' +
+        '\n\n### Cuándo ir a urgencias\n\nSi supera 180/120',
+    );
+  });
+
   it('omite las imágenes que quien llama descarta', () => {
     const root = dom('<p>texto</p><img alt="a" src="blob:x">');
     expect(htmlToArticle(root, () => null)).toBe('texto');

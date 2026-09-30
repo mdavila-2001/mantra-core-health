@@ -1,5 +1,9 @@
 <div class="editor" [class.editor--solo-lectura]="readOnly()">
   @if (interactivo() && !readOnly()) {
+    <!-- Los botones no toman el foco al presionarse (`mousedown` sin acción por
+         defecto): si lo tomaran, la hoja perdería la selección antes del clic
+         y el formato caería en ningún lado —medido el 30/09/2026 en móvil, donde
+         además se cierra el teclado—. Con teclado siguen funcionando igual. -->
     <div class="editor__barra" role="toolbar" [attr.aria-label]="'Formato de ' + label()">
       @for (herramienta of herramientas(); track herramienta.comando) {
         <button
@@ -10,6 +14,7 @@
             herramienta.atajo ? herramienta.etiqueta + ' (' + herramienta.atajo + ')' : herramienta.etiqueta
           "
           [title]="herramienta.etiqueta"
+          (mousedown)="$event.preventDefault()"
           (click)="aplicar(herramienta)"
           [attr.data-testid]="'herramienta-' + herramienta.comando"
         >
@@ -19,6 +24,8 @@
       <!-- Botones de quien monta el editor (emoji, imagen…), en la misma barra. -->
       <ng-content select="[editorTools]" />
     </div>
+    <!-- Paneles de esos botones (el de emojis), pegados a la barra que los abre. -->
+    <ng-content select="[editorPanel]" />
   }
 
   <div class="editor__hoja">

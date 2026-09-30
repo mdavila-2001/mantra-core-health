@@ -158,6 +158,13 @@ describe('RichTextEditor', () => {
     });
   });
 
+  it('presionar un botón de la barra no le saca el foco (ni la selección) a la hoja', () => {
+    const boton = (fixture.nativeElement as HTMLElement).querySelector('[data-testid="herramienta-h2"]')!;
+    const presion = new MouseEvent('mousedown', { bubbles: true, cancelable: true });
+    boton.dispatchEvent(presion);
+    expect(presion.defaultPrevented).toBe(true);
+  });
+
   it('ofrece sólo las herramientas que se le piden', () => {
     fixture.componentRef.setInput('tools', HERRAMIENTAS.filter((h) => h.comando !== 'underline'));
     fixture.detectChanges();

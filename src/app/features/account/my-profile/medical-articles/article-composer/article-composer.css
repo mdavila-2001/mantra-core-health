@@ -64,13 +64,13 @@
   opacity: 0.5;
 }
 
+/* Justo debajo de la barra, dentro de la hoja: se ve al lado del botón que lo
+   abrió y no tapa lo escrito (lo corre hacia abajo mientras está abierto). */
 .compositor-articulo__emojis {
+  display: block;
   max-inline-size: 26rem;
-  border: 1px solid var(--border-default);
-  border-radius: var(--r-md);
+  border-block-end: 1px solid var(--border-default);
   background: var(--bg-surface);
-  box-shadow: var(--shadow-md);
-  overflow: hidden;
 }
 
 .compositor-articulo__cargando {

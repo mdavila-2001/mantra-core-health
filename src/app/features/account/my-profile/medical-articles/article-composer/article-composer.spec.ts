@@ -104,10 +104,24 @@ describe('ArticleComposer', () => {
     expect(panel).not.toBeNull();
     expect(boton.getAttribute('aria-expanded')).toBe('true');
 
-    panel.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    const dentro = document.createElement('button');
+    panel.appendChild(dentro);
+    dentro.focus();
+    dentro.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
     fixture.detectChanges();
     expect(html.querySelector('#article-emoji-panel')).toBeNull();
     expect(document.activeElement).toBe(boton);
+  });
+
+  it('Escape también cierra el panel con el foco en la hoja, sin sacarlo de ahí', () => {
+    (html.querySelector('[data-testid="article-emoji"]') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    const area = html.querySelector('[data-testid="editor-area"]') as HTMLElement;
+    area.focus();
+    area.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    fixture.detectChanges();
+    expect(html.querySelector('#article-emoji-panel')).toBeNull();
+    expect(document.activeElement).toBe(area);
   });
 
   it('reset() deja todo en blanco', () => {

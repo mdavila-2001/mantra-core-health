@@ -30,7 +30,23 @@ interface ArchivoSimulado {
    * lo llevan —no hay archivo detrás— y siguen con su `dataUrl` dibujado.
    */
   readonly bytes?: Blob;
+  /**
+   * La imagen subida como `data:`, cuando ya terminó de leerse (ver
+   * {@link urlDeArchivoSimulado}). Asíncrona: `FileReader` no tiene versión
+   * síncrona, y la subida simulada responde sin esperarla.
+   */
+  readonly dataUrlReal?: string;
 }
+
+/**
+ * Tope para guardar una imagen como `data:` dentro de una publicación.
+ *
+ * Las publicaciones de la maqueta sobreviven a F5 en `sessionStorage`, que
+ * ronda los 5 MB **en total**: una foto de cámara entera haría fallar el
+ * guardado de todas. Por encima de esto se usa `blob:`, que se ve en la
+ * pestaña pero no sobrevive a la recarga.
+ */
+const MAX_BYTES_EN_DATA_URL = 400 * 1024;
 
 const archivos = new Coleccion<ArchivoSimulado>([
   ...PROFESIONALES.map((p, i) => ({
@@ -197,15 +213,19 @@ const urlsDeArchivos = new Map<string, string>();
  *
  * Existe por las imágenes de un artículo: la API real las sirve por
  * `/public/media/:id`, que en la maqueta es un dibujo fijo (`mock-media.svg`,
- * fuera del simulador). Para que quien publica vea SU foto, un archivo subido en
- * esta sesión se entrega como `blob:` de sus bytes reales (la CSP los admite).
- * Vive lo que vive la pestaña, igual que todo lo que se crea en la maqueta.
+ * fuera del simulador). Para que quien publica vea SU foto:
+ *
+ * - si ya se leyó y es chica, como `data:` — sobrevive a F5 junto con la
+ *   publicación que la guarda;
+ * - si no, como `blob:` de sus bytes reales (la CSP lo admite), que se ve
+ *   mientras dure la pestaña.
  *
  * @returns La URL, o `null` si el archivo no existe.
  */
 export function urlDeArchivoSimulado(fileId: string): string | null {
   const archivo = archivos.get(fileId);
   if (archivo === undefined) return null;
+  if (archivo.dataUrlReal !== undefined) return archivo.dataUrlReal;
   if (archivo.bytes === undefined || typeof URL.createObjectURL !== 'function') return archivo.dataUrl;
   let url = urlsDeArchivos.get(fileId);
   if (url === undefined) {
@@ -248,6 +268,11 @@ export function registrarArchivos(router: MockRouter): void {
       // respaldo para el navegador que no trae `File` en el `FormData`.
       ...(subido === null ? {} : { bytes: subido }),
     });
+    if (subido !== null && categoria === 'IMAGE' && subido.size <= MAX_BYTES_EN_DATA_URL && typeof FileReader !== 'undefined') {
+      const lector = new FileReader();
+      lector.onload = () => archivos.actualizar(nuevo.id, { dataUrlReal: String(lector.result) });
+      lector.readAsDataURL(subido);
+    }
     const tipo = subido?.type ?? (categoria === 'IMAGE' ? 'image/svg+xml' : 'application/pdf');
     return { status: 201, body: { ...metadatos(nuevo), fileId: nuevo.id, versionId: nuevo.currentVersionId, size: subido?.size ?? 24_576, mimeType: tipo } };
   });
