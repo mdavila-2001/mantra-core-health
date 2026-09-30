@@ -5,20 +5,33 @@
          y el formato caería en ningún lado —medido el 30/09/2026 en móvil, donde
          además se cierra el teclado—. Con teclado siguen funcionando igual. -->
     <div class="editor__barra" role="toolbar" [attr.aria-label]="'Formato de ' + label()">
-      @for (herramienta of herramientas(); track herramienta.comando) {
+      @for (herramienta of herramientas(); track herramienta.comando; let i = $index) {
+        @if (empiezaGrupo(i)) {
+          <span class="editor__separador" aria-hidden="true"></span>
+        }
         <button
           type="button"
           class="editor__herramienta"
           [class]="'editor__herramienta--' + herramienta.comando"
+          [class.editor__herramienta--icono]="!!herramienta.icono"
           [attr.aria-label]="
             herramienta.atajo ? herramienta.etiqueta + ' (' + herramienta.atajo + ')' : herramienta.etiqueta
           "
-          [title]="herramienta.etiqueta"
+          [attr.aria-pressed]="presionada(herramienta)"
+          [title]="herramienta.atajo ? herramienta.etiqueta + ' (' + herramienta.atajo + ')' : herramienta.etiqueta"
           (mousedown)="$event.preventDefault()"
           (click)="aplicar(herramienta)"
           [attr.data-testid]="'herramienta-' + herramienta.comando"
         >
-          {{ herramienta.etiqueta }}
+          @if (herramienta.icono; as trazos) {
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+              @for (d of trazos; track $index) {
+                <path [attr.d]="d" />
+              }
+            </svg>
+          } @else {
+            {{ herramienta.etiqueta }}
+          }
         </button>
       }
       <!-- Botones de quien monta el editor (emoji, imagen…), en la misma barra. -->
@@ -40,7 +53,7 @@
       aria-multiline="true"
       [attr.aria-label]="label()"
       [attr.aria-readonly]="readOnly() ? 'true' : null"
-      (input)="recoger(); guardarCursor()"
+      (input)="alEscribir($event); recoger(); guardarCursor()"
       (keyup)="guardarCursor()"
       (mouseup)="guardarCursor()"
       (blur)="guardarCursor(); recoger()"

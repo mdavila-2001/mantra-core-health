@@ -22,6 +22,38 @@ import {
   type ImagenDeEditor,
 } from './rich-text-editor.types';
 
+/** Un enlace sólo puede ir a la web: nada de `javascript:`, `data:` ni `mailto:`. */
+const ENLACE_SEGURO = /^https?:\/\/[^\s<>"]+$/i;
+
+/** Los atajos tipo Markdown, en el orden en que se prueban. */
+const ATAJOS: readonly { readonly marca: string; readonly bloque?: BloqueDeTexto; readonly comando?: string }[] = [
+  { marca: '## ', bloque: 'h2' },
+  { marca: '### ', bloque: 'h3' },
+  { marca: '#### ', bloque: 'h4' },
+  { marca: '> ', bloque: 'blockquote' },
+  { marca: '- ', comando: 'insertUnorderedList' },
+  { marca: '* ', comando: 'insertUnorderedList' },
+  { marca: '1. ', comando: 'insertOrderedList' },
+];
+
+/** Etiquetas cuyo contenido no es prosa: se van enteras, no se aplanan. */
+const DESCARTAR_CON_CONTENIDO = new Set(['SCRIPT', 'STYLE', 'TEMPLATE', 'NOSCRIPT', 'IFRAME', 'OBJECT']);
+
+/** Etiquetas de bloque dentro de la hoja. */
+const BLOQUES = new Set(['P', 'DIV', 'H1', 'H2', 'H3', 'H4', 'LI', 'BLOCKQUOTE']);
+
+/** El bloque que contiene un nodo, o la hoja misma si el texto está suelto. */
+function bloqueDe(nodo: Node, area: HTMLElement): Node {
+  for (let actual: Node | null = nodo; actual && actual !== area; actual = actual.parentNode) {
+    if (actual instanceof Element && BLOQUES.has(actual.tagName)) return actual;
+  }
+  // Texto suelto en la hoja: el «renglón» empieza en el primer nodo de la hoja
+  // o después del último bloque/salto que lo precede.
+  let inicio: Node = nodo;
+  while (inicio.parentNode && inicio.parentNode !== area) inicio = inicio.parentNode;
+  return inicio;
+}
+
 /** Los orígenes de imagen que se aceptan: sólo vistas previas locales. */
 const ORIGEN_DE_IMAGEN = /^(blob:|data:image\/(png|jpeg|webp|gif);)/;
 
@@ -112,6 +144,23 @@ export class RichTextEditor {
    */
   readonly allowImages = input(false, { transform: booleanAttribute });
 
+  /**
+   * Etiquetas que, además de {@link ETIQUETAS_PERMITIDAS}, sobreviven al
+   * saneado (por ejemplo `ETIQUETAS_DE_ARTICULO`). Un `A` conserva sólo un
+   * `href` `http(s)`; cualquier otro enlace se aplana a su texto.
+   */
+  readonly extraTags = input<readonly string[]>([]);
+
+  /**
+   * Atajos tipo Markdown al escribir: `## ` título, `### ` subtítulo,
+   * `#### ` apartado, `- ` lista, `1. ` numerada, `> ` cita. Apagado por
+   * omisión: la nota clínica no los ofrece.
+   */
+  readonly markdownShortcuts = input(false, { transform: booleanAttribute });
+
+  /** Qué herramientas están activas donde está el cursor (para `aria-pressed`). */
+  protected readonly activas = signal<ReadonlySet<string>>(new Set());
+
   /** Se emite cuando el contenido cambió por acción de la persona. */
   readonly edited = output<string>();
 
@@ -157,16 +206,100 @@ export class RichTextEditor {
   protected aplicar(herramienta: HerramientaDeEditor): void {
     if (!this.esNavegador || this.readOnly() || !this.volverAlCursor()) return;
     if (herramienta.tipo === 'bloque') {
-      document.execCommand(
-        'formatBlock',
-        false,
-        `<${herramienta.comando as BloqueDeTexto}>`,
-      );
+      // Un bloque que ya está aplicado se quita: pulsar «Título» sobre un
+      // título lo vuelve texto normal, como en cualquier procesador de textos.
+      const bloque = herramienta.comando as BloqueDeTexto;
+      const destino = bloque !== 'p' && this.activas().has(bloque) ? 'p' : bloque;
+      document.execCommand('formatBlock', false, `<${destino}>`);
     } else {
       document.execCommand(herramienta.comando, false);
     }
     this.recoger();
     this.guardarCursor();
+  }
+
+  /** Si hay que dibujar un separador antes de la herramienta `i` (cambia el grupo). */
+  protected empiezaGrupo(i: number): boolean {
+    const lista = this.herramientas();
+    return i > 0 && lista[i]!.grupo !== undefined && lista[i]!.grupo !== lista[i - 1]!.grupo;
+  }
+
+  /** `aria-pressed` de un botón: sólo los interruptores lo llevan. */
+  protected presionada(herramienta: HerramientaDeEditor): 'true' | 'false' | null {
+    if (herramienta.sinEstado) return null;
+    return this.activas().has(herramienta.comando) ? 'true' : 'false';
+  }
+
+  /**
+   * Convierte en enlace lo seleccionado, o inserta el enlace donde está el
+   * cursor si no hay selección. Sólo `http(s)`: cualquier otra cosa se ignora.
+   *
+   * @param url - El destino.
+   * @param texto - Lo que se lee, si no hay selección. Sin él, la propia URL.
+   * @returns Si se insertó.
+   */
+  insertLink(url: string, texto = ''): boolean {
+    const destino = url.trim();
+    if (!this.esNavegador || this.readOnly() || !ENLACE_SEGURO.test(destino) || !this.volverAlCursor()) return false;
+    const seleccion = document.getSelection();
+    const rango = seleccion?.rangeCount ? seleccion.getRangeAt(0) : null;
+    if (!rango) return false;
+    if (rango.collapsed) {
+      const enlace = document.createElement('a');
+      enlace.href = destino;
+      enlace.textContent = texto.trim() || destino;
+      rango.insertNode(enlace);
+      rango.setStartAfter(enlace);
+      rango.collapse(true);
+      seleccion?.removeAllRanges();
+      seleccion?.addRange(rango);
+    } else {
+      document.execCommand('createLink', false, destino);
+    }
+    this.recoger();
+    this.guardarCursor();
+    return true;
+  }
+
+  /** El texto seleccionado en la hoja, si hay (para proponerlo como texto del enlace). */
+  selectedText(): string {
+    const rango = this.cursor;
+    return rango && !rango.collapsed ? rango.toString() : '';
+  }
+
+  /**
+   * Carga un contenido (un borrador recuperado, por ejemplo). Se sanea igual
+   * que lo pegado.
+   */
+  load(contenido: string): void {
+    this.cursor = null;
+    this.volcar(contenido);
+    this.recoger();
+  }
+
+  /**
+   * Atajos tipo Markdown: al escribir el espacio que cierra `## `, `- `,
+   * `1. `, `> `… al principio de un renglón, se quita la marca y se aplica el
+   * formato. Si el renglón ya tiene ese formato, no hace nada.
+   *
+   * @param evento - El `input` del área.
+   */
+  protected alEscribir(evento: Event): void {
+    if (!this.markdownShortcuts() || !(evento instanceof InputEvent) || evento.data !== ' ') return;
+    const area = this.area()?.nativeElement;
+    const seleccion = document.getSelection();
+    if (!area || !seleccion?.rangeCount || !seleccion.isCollapsed) return;
+    const cursor = seleccion.getRangeAt(0);
+    const bloque = bloqueDe(cursor.startContainer, area);
+    const antes = document.createRange();
+    antes.setStart(bloque, 0);
+    antes.setEnd(cursor.startContainer, cursor.startOffset);
+    const prefijo = antes.toString().replace(/\u00a0/g, ' ');
+    const atajo = ATAJOS.find((a) => a.marca === prefijo);
+    if (!atajo) return;
+    antes.deleteContents();
+    if (atajo.bloque) document.execCommand('formatBlock', false, `<${atajo.bloque}>`);
+    else if (atajo.comando) document.execCommand(atajo.comando, false);
   }
 
   /**
@@ -256,7 +389,26 @@ export class RichTextEditor {
     const seleccion = this.esNavegador ? document.getSelection() : null;
     if (!elemento || !seleccion?.rangeCount) return;
     const rango = seleccion.getRangeAt(0);
-    if (elemento.contains(rango.commonAncestorContainer)) this.cursor = rango.cloneRange();
+    if (!elemento.contains(rango.commonAncestorContainer)) return;
+    this.cursor = rango.cloneRange();
+    this.actualizarActivas();
+  }
+
+  /** Lee del navegador qué marcas y qué bloque hay donde está el cursor. */
+  private actualizarActivas(): void {
+    if (typeof document.queryCommandState !== 'function') return;
+    const activas = new Set<string>();
+    for (const herramienta of this.herramientas()) {
+      if (herramienta.sinEstado || herramienta.tipo !== 'marca') continue;
+      try {
+        if (document.queryCommandState(herramienta.comando)) activas.add(herramienta.comando);
+      } catch {
+        // Un navegador que no conoce el comando: sin estado, no es un error.
+      }
+    }
+    const bloque = String(document.queryCommandValue?.('formatBlock') ?? '').toLowerCase().replace(/[<>]/g, '');
+    if (bloque !== '') activas.add(bloque === 'div' ? 'p' : bloque);
+    this.activas.set(activas);
   }
 
   /** Devuelve el foco a la hoja con el cursor donde estaba; si no hay, al final. */
@@ -339,11 +491,26 @@ export class RichTextEditor {
     const limpiar = (nodo: Element): void => {
       for (const hijo of Array.from(nodo.children)) {
         limpiar(hijo);
+        if (DESCARTAR_CON_CONTENIDO.has(hijo.tagName)) {
+          // Su contenido no es texto de nadie: aplanarlo dejaba código a la vista.
+          hijo.remove();
+          continue;
+        }
         if (hijo.tagName === 'IMG' && this.allowImages()) {
           conservarImagen(hijo as HTMLImageElement);
           continue;
         }
-        if (ETIQUETAS_PERMITIDAS.includes(hijo.tagName)) {
+        if (hijo.tagName === 'A' && this.extraTags().includes('A')) {
+          const href = (hijo.getAttribute('href') ?? '').trim();
+          for (const atributo of Array.from(hijo.attributes)) hijo.removeAttribute(atributo.name);
+          if (ENLACE_SEGURO.test(href)) {
+            hijo.setAttribute('href', href);
+            continue;
+          }
+          hijo.replaceWith(...Array.from(hijo.childNodes));
+          continue;
+        }
+        if (ETIQUETAS_PERMITIDAS.includes(hijo.tagName) || this.extraTags().includes(hijo.tagName)) {
           for (const atributo of Array.from(hijo.attributes)) {
             hijo.removeAttribute(atributo.name);
           }

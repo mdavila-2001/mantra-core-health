@@ -35,6 +35,34 @@
   border-color: var(--border-strong);
 }
 
+.editor__herramienta--icono {
+  display: inline-grid;
+  place-items: center;
+  min-inline-size: 2rem;
+  min-block-size: 2rem;
+  padding: var(--sp-1);
+}
+
+.editor__herramienta--icono svg {
+  inline-size: 1.1rem;
+  block-size: 1.1rem;
+}
+
+/* El estado dice dónde está el cursor: negrita encendida, «Título» aplicado. */
+.editor__herramienta[aria-pressed='true'] {
+  background: var(--bg-surface);
+  border-color: var(--border-strong);
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.editor__separador {
+  align-self: stretch;
+  inline-size: 1px;
+  margin-inline: var(--sp-1);
+  background: var(--border-default);
+}
+
 .editor__herramienta:focus-visible {
   outline: 2px solid var(--brand-primary);
   outline-offset: 1px;
@@ -85,6 +113,32 @@
 
 .editor__area ::ng-deep h2 {
   font-size: var(--fs-h3);
+}
+
+.editor__area ::ng-deep h4 {
+  margin: var(--sp-3) 0 var(--sp-1);
+  font-size: var(--fs-body);
+  color: var(--text-secondary);
+}
+
+.editor__area ::ng-deep blockquote {
+  margin: 0 0 var(--sp-3);
+  padding: var(--sp-2) var(--sp-4);
+  border-inline-start: 4px solid var(--brand-primary);
+  background: var(--bg-inset);
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+.editor__area ::ng-deep hr {
+  margin: var(--sp-4) 0;
+  border: 0;
+  border-block-start: 1px solid var(--border-default);
+}
+
+.editor__area ::ng-deep a {
+  color: var(--text-link);
+  text-decoration: underline;
 }
 
 .editor__area ::ng-deep h3 {

@@ -2,7 +2,12 @@ import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 
 import { RichTextEditor } from './rich-text-editor';
-import { ETIQUETAS_PERMITIDAS, HERRAMIENTAS } from './rich-text-editor.types';
+import {
+  ETIQUETAS_DE_ARTICULO,
+  ETIQUETAS_PERMITIDAS,
+  HERRAMIENTAS,
+  HERRAMIENTAS_DE_ARTICULO,
+} from './rich-text-editor.types';
 
 /**
  * La hoja en blanco de la historia clínica. Lo que estas pruebas fijan:
@@ -179,5 +184,51 @@ describe('RichTextEditor', () => {
     fixture.detectChanges();
     expect(fixture.componentInstance.html()).toBe('');
     expect((fixture.nativeElement as HTMLElement).querySelector('.editor__marcador')).not.toBeNull();
+  });
+
+  describe('barra completa del artículo', () => {
+    beforeEach(() => {
+      fixture.componentRef.setInput('tools', HERRAMIENTAS_DE_ARTICULO);
+      fixture.componentRef.setInput('extraTags', ETIQUETAS_DE_ARTICULO);
+      fixture.detectChanges();
+    });
+
+    it('agrupa con separadores y dibuja íconos con nombre accesible', () => {
+      const html = fixture.nativeElement as HTMLElement;
+      expect(html.querySelectorAll('.editor__separador').length).toBe(3);
+      const negrita = html.querySelector('[data-testid="herramienta-bold"]')!;
+      expect(negrita.querySelector('svg')).not.toBeNull();
+      expect(negrita.getAttribute('aria-label')).toBe('Negrita (Ctrl+B)');
+      expect(negrita.getAttribute('aria-pressed')).toBe('false');
+      // Deshacer no es un interruptor: no lleva aria-pressed.
+      expect(html.querySelector('[data-testid="herramienta-undo"]')!.hasAttribute('aria-pressed')).toBe(false);
+      expect(html.querySelector('[data-testid="herramienta-h4"]')?.textContent?.trim()).toBe('Apartado');
+    });
+
+    it('conserva citas, apartados, separadores, tachado y enlaces seguros', () => {
+      const limpio = saneadoDe(
+        '<h4>Apartado</h4><blockquote>cita</blockquote><hr><p><s>viejo</s> ' +
+          '<a href="https://who.int" onclick="x()" target="_blank">ok</a> <a href="javascript:x()">malo</a></p>',
+      );
+      expect(limpio).toContain('<h4>Apartado</h4>');
+      expect(limpio).toContain('<blockquote>cita</blockquote>');
+      expect(limpio).toContain('<hr>');
+      expect(limpio).toContain('<s>viejo</s>');
+      expect(limpio).toContain('<a href="https://who.int">ok</a>');
+      expect(limpio).not.toContain('javascript');
+      expect(limpio).toContain('malo');
+    });
+
+    it('insertLink inserta un enlace con texto y rechaza esquemas peligrosos', () => {
+      const editor = fixture.componentInstance;
+      expect(editor.insertLink('javascript:alert(1)', 'x')).toBe(false);
+      expect(editor.insertLink('https://who.int/guia', 'la guía')).toBe(true);
+      expect(editor.html()).toContain('<a href="https://who.int/guia">la guía</a>');
+    });
+
+    it('load() carga un borrador saneado', () => {
+      fixture.componentInstance.load('<h2>Borrador</h2><script>x()</script><p>texto</p>');
+      expect(fixture.componentInstance.html()).toBe('<h2>Borrador</h2><p>texto</p>');
+    });
   });
 });
