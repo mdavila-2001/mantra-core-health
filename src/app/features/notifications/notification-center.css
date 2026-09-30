@@ -89,6 +89,12 @@ button.avisos__item:focus-visible {
   background: var(--sup-hover, var(--sup-inset));
 }
 
+/* Alineados con el texto de la fila, no con el dibujo: sangría del padding, el
+   glifo (2.25rem) y el hueco entre los dos. */
+.avisos__acciones {
+  --notificacion-acciones-inicio: calc(var(--e4) + 2.25rem + var(--e3));
+}
+
 /* El dibujo de la familia: dice de qué se trata antes de leer el título, que
    es lo que permite barrer treinta filas sin leerlas todas. */
 .avisos__glifo {
