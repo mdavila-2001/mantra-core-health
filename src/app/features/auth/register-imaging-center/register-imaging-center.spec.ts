@@ -275,6 +275,8 @@ describe('RegisterImagingCenter', () => {
       {
         id: primera!.id,
         nombre: 'Equipetrol',
+        descripcion: '',
+        urlUbicacion: '',
         direccion: 'Av. San Martín 456',
         gps: { lat: -17.78, lng: -63.18 },
       },

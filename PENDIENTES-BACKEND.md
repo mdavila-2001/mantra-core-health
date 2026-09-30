@@ -56,6 +56,7 @@ backend.
 | **P50** | Registro de farmacia: la API acepta `tenantType: PHARMACY` pero no crea la fila de `directory.pharmacies`, no tiene bloque `pharmacy.branches` y no enlaza la sede central; lo obligatorio para operar (los 6 PDF, SEDES) hoy no se exige en ninguna capa |
 | **P51** | Registro de laboratorio: la API acepta `tenantType: DIAGNOSTIC_CENTER` con `diagnosticUnit`, pero exige país, jurisdicción, cédula y poder del representante que el alta no pide, no conoce `diagnosticUnit.branches` y, sin `diagnosticUnitTypeConceptId`, crea una unidad **de imágenes** |
 | **P52** | Portal de la cuenta de laboratorio: resumen y **resultados** (subida por partes sin tope de tamaño, listado de todo lo subido, contenido, retiro con motivo y aviso al médico y al paciente). Ninguna ruta `/diagnostics/lab/*` existe en la API |
+| **P54** | Carga masiva de sucursales: `directory.branches` no tiene **descripción** ni **enlace de ubicación**, y `POST /tenants/{id}/branches` es de a una. **El front ya las manda** (altas de laboratorio y farmacia, ficha de organización) y el simulador las guarda |
 
 ---
 
@@ -2337,4 +2338,39 @@ reintento; visor) y `features/laboratory/summary/`.
 > paciente de la sesión) y por emisor (la organización o el profesional), con el mismo contrato,
 > para reemplazar el cliente simulado sin tocar la pantalla. Laboratorio, imagenología y
 > aseguradora todavía no emiten facturas: la pantalla lo dice en su estado vacío.
-||||||| e71e6dfa
+
+## P54 · La carga masiva de sucursales — 30/09/2026
+
+> **Qué pide el front.** Pedido del propietario del 30/09/2026: que **toda** organización pueda
+> subir sus sucursales en lote, con tres campos —**nombre**, **descripción** y **URL de
+> ubicación**— más los que hagan falta. La pieza es una sola (`app-branch-bulk-import`, reglas
+> en `shared/utils/branch-import/`) y está en las cuatro puertas: el paso «Tus sucursales» de
+> las altas de laboratorio, farmacia e imagenología, y la pestaña Sucursales de la ficha de
+> cualquier organización (`/administration/organizations/:tenantId`). Un CSV con `nombre`
+> (obligatoria), `descripcion`, `url_ubicacion`, `direccion` y `codigo`; se revisa sin mandar
+> nada, se avisan las filas malas con su línea, y de la URL de Google Maps/OSM se sacan las
+> coordenadas cuando las trae escritas (un enlace acortado se guarda tal cual).
+>
+> **Hoy.** En la ficha se crean **de a una, en serie**, con `POST /tenants/{id}/branches` —el
+> código, si falta, se deriva del nombre sin chocar con los existentes—; una que la API rechaza
+> (409 por código repetido) no frena a las demás y se muestra con su motivo. El cuerpo lleva
+> dos claves que el `CreateBranchDto` **no declara**: `description` y `locationUrl`. Con el
+> `ValidationPipe` en `whitelist` + `forbidNonWhitelisted` la API real respondería **400**; el
+> simulador las acepta y las devuelve en `GET /tenants/{id}/branches`. En las altas viajan
+> dentro de `diagnosticUnit.branches[]` y `pharmacy.branches[]`, que ya eran claves del
+> cliente (P50, P51).
+>
+> **Falta en la API.** Empieza en el **modelo**, no en el backend (ADR-0021):
+>
+> 1. `directory.branches` en su `.puml`: `description` (texto, opcional) y `location_url`
+>    (varchar ~2000, opcional) → `gen_ddl.py` → `SQL/` → patch en `SQL/patches/` para bases
+>    vivas → entidad. Hoy la tabla tiene `latitude`/`longitude` pero ni dirección ni
+>    descripción.
+> 2. `CreateBranchDto` y la respuesta del listado con esas dos claves (la URL, validada como
+>    `http(s)` en el servidor: el front ya rechaza `javascript:` pero **la UI no es una
+>    barrera**).
+> 3. Opcional, si el volumen lo pide: un `POST /tenants/{id}/branches/bulk` todo-o-nada por
+>    fila con reporte, para no hacer N viajes. El front hoy no lo necesita (tope de 300 filas).
+>
+> Mientras tanto, **no cruzar esto a `dev`**: contra la API real la ficha daría 400 en cada fila
+> que traiga descripción o enlace.
