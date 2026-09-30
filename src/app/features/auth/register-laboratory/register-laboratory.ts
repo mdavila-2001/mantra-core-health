@@ -1,10 +1,18 @@
-import { FileInput } from '../../../shared/components/molecules/file-input/file-input';
 import { NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 
+import { IamClient } from '../../../core/data-access/iam/iam.client';
+import type {
+  DiagnosticUnitBranchRegistration,
+  LaboratoryOrganizationRegistration,
+} from '../../../core/data-access/iam/iam.types';
+import { errorToViewState } from '../../../core/http/error-to-view-state';
+import { uiLanguage } from '../../../core/i18n/ui-language';
+import { loading, ready } from '../../../core/view-state/view-state';
+import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Input as AppInput } from '../../../shared/components/atoms/input/input';
@@ -12,6 +20,11 @@ import { Link } from '../../../shared/components/atoms/link/link';
 import { NavIcon } from '../../../shared/components/atoms/nav-icon/nav-icon';
 import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
 import { Tooltip } from '../../../shared/components/atoms/tooltip/tooltip';
+import { DropzonePdf } from '../../../shared/components/molecules/dropzone-pdf/dropzone-pdf';
+import type {
+  PdfUploader,
+  UploadedDocument,
+} from '../../../shared/components/molecules/dropzone-pdf/dropzone-pdf.types';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 import { telefonoCompleto } from '../../../shared/components/molecules/phone-input/phone-input';
 import { AuthSplit } from '../../../shared/components/organisms/auth-split/auth-split';
@@ -22,9 +35,11 @@ import {
   type TarjetaDeAyuda,
 } from '../../../shared/components/organisms/registro-ayuda/registro-ayuda';
 import {
-  MAX_ATTACHMENT_BYTES,
-  SUPPORT_FILE_FORMATS,
-} from '../registro-compartido/credenciales-del-medico';
+  campoDelPoderNotariado,
+  camposDeDocumentosLegales,
+  DOCUMENTOS_LEGALES_DEL_REGISTRO,
+  type ClaveDeDocumentoDelAlta,
+} from '../registro-compartido/documentos-legales';
 import {
   MENSAJE_CONTRASENA_CORTA,
   validadoresDeContrasena,
@@ -48,7 +63,10 @@ import { Alert } from '../../../shared/components/molecules/alert/alert';
     se agregó ninguna pregunta que la fuente no haga —salvo la contraseña, ver
     el JSDoc de la clase— ni se sacó ninguna que sí haga.
 
-    Es la MAQUETA: nada sale a la red. Ver `submit()`.
+    Sale a la red igual que el alta de farmacia (carril A de la cuenta de
+    laboratorio, 30/09/2026): `POST /iam/auth/register-organization` con
+    `tenantType: 'DIAGNOSTIC_CENTER'` y el bloque `diagnosticUnit`. Ver
+    `submit()` y `PENDIENTES-BACKEND.md`, P51.
     ========================================================================== */
 
 /**
@@ -73,19 +91,15 @@ export const TIPOS_DE_SOCIEDAD: readonly SelectOption<string>[] = [
   { value: 'SA', label: 'S.A.' },
   { value: 'SOCIEDAD_COLECTIVA', label: 'Sociedad colectiva' },
   { value: 'COMANDITA_SIMPLE', label: 'Sociedad en comandita simple' },
-  // Corregido a `COMANDITA_ACCIONES` (subtarea 1.1): es el código real del
-  // diccionario compartido (`legal-entity-types.dictionary.ts`); esta pantalla
-  // es una maqueta que no sale a la red, pero el código debe coincidir para
-  // el día que se conecte.
+  // `COMANDITA_ACCIONES` (subtarea 1.1): el código real del diccionario
+  // compartido (`legal-entity-types.dictionary.ts`). Viaja tal cual en
+  // `legalEntityType`, y el simulador lo contrasta con `TIPO_SOCIETARIO` (B6).
   { value: 'COMANDITA_ACCIONES', label: 'Sociedad en comandita por acciones' },
   { value: 'SUCURSAL_EXTRANJERA', label: 'Sucursal de sociedad extranjera' },
 ];
 
-/** Un papel adjunto: con qué nombre llegó y cuánto pesa. */
-export interface AdjuntoDeclarado {
-  readonly archivo: string;
-  readonly pesoBytes: number;
-}
+/** Bolivia es el único país que contempla el registro de procesos del laboratorio. */
+const PAIS = 'BO';
 
 /** Una sucursal declarada en el alta (punto 4.1.18). */
 export interface SucursalDeclarada {
@@ -95,31 +109,13 @@ export interface SucursalDeclarada {
   readonly gps: Coordenadas | null;
 }
 
-/**
- * Los seis papeles del proceso, por la clave del control que los guarda.
- *
- * Que vivan en el formulario es lo que hace que los tres obligatorios los haga
- * cumplir el motor —una página con un control inválido no avanza, y eso ya está
- * escrito y probado— en vez de una comprobación aparte que hay que acordarse de
- * llamar.
- */
-export type ClaveDeAdjunto =
-  | 'constitucionFile'
-  | 'nitFile'
-  | 'seprecFile'
-  | 'licenciaFile'
-  | 'sedesFile'
-  | 'poderFile';
-
-/** Formatos que se aceptan. El proceso pide PDF; se acepta la foto del papel. */
-const FORMATOS_DE_RESPALDO = SUPPORT_FILE_FORMATS;
-
-/** Cinco megas, el mismo tope que el alta de profesional: la misma constante. */
-const MAX_BYTES_ADJUNTO = MAX_ATTACHMENT_BYTES;
-
 const MAX_NOMBRE = 300;
 const MAX_DIRECCION = 300;
 const MAX_NIT = 100;
+const MAX_CORREO = 320;
+
+/** El nombre de la sede primaria de la unidad: la central que declara 4.1.6. */
+const NOMBRE_DE_LA_CENTRAL = 'Casa central';
 
 /** Dígitos, con o sin guiones: el NIT boliviano es numérico. */
 const NIT_VALIDO = /^[0-9][0-9-]{3,19}$/;
@@ -148,9 +144,9 @@ const AYUDA: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
   documentos: [
     {
       icono: 'folder',
-      titulo: 'Tres papeles frenan, tres no',
+      titulo: 'Ningún papel frena tu alta',
       texto:
-        'Sin SEPREC, licencia de funcionamiento y certificado del SEDES no podemos publicar un laboratorio: son los que prueban que está registrado y habilitado para operar. Los otros tres los podés traer después.',
+        'Podés adjuntarlos ahora o más adelante. Sí van a hacer falta para que tu laboratorio quede habilitado a atender: el SEPREC, la licencia y el certificado del SEDES prueban que está registrado y habilitado para operar.',
     },
     {
       icono: 'shield',
@@ -220,59 +216,44 @@ const AYUDA: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
  * **Registro del laboratorio de sangre** — los datos legales de la empresa
  * (proceso 4.1).
  *
- * ## Qué es y qué no es
+ * ## A dónde va
  *
- * Es la maqueta visual del alta: **no hay endpoint detrás y no se llama a
- * ninguno**. La API tiene tres altas públicas —paciente, profesional y
- * aseguradora— y el laboratorio no es una de ellas todavía. Mandar esto a
- * `register-organization` daría de alta una aseguradora, que es otra cosa;
- * apuntar a una ruta inventada dejaría un 404 esperando al primero que lo
- * pruebe contra la API de verdad. Así que el envío se resuelve acá y la
- * pantalla lo dice: queda una solicitud.
+ * A `POST /iam/auth/register-organization` con `tenantType: 'DIAGNOSTIC_CENTER'`
+ * —el código que la API emite para un laboratorio— y el bloque
+ * `diagnosticUnit` que su DTO ya declara para ese tipo: la central como sede
+ * primaria, con su dirección y, si se confirmó, su punto en el mapa. Mismo
+ * mecanismo que el alta de farmacia (`RegisterPharmacy`): `IamClient`,
+ * `ViewState` y los PDF subidos antes por la pre-carga pública. Lo que la API
+ * real todavía no acepta de este cuerpo está en `PENDIENTES-BACKEND.md`, P51.
  *
  * ## De dónde sale cada pregunta
  *
  * De los dieciocho puntos de 4.1, en su orden. La única que la fuente **no**
  * hace es la **contraseña**: sin ella no hay cuenta con la que volver a entrar,
- * y las otras tres altas de la plataforma la piden igual. El usuario es el
- * correo del representante legal, que sí está en la fuente (4.1.8.2), así que
- * no se inventó ninguna identidad nueva.
+ * y las otras altas de la plataforma la piden igual. El usuario es el correo
+ * del representante legal, que sí está en la fuente (4.1.8.2), así que no se
+ * inventó ninguna identidad nueva.
  *
  * Lo que la fuente **no** pide y por eso no está, anotado para que no pase por
  * olvido: 4.1 no menciona departamento ni municipio. El directorio los va a
  * necesitar para ordenar por cercanía, pero eso es una pregunta al propietario,
  * no algo que esta pantalla deba inventar.
  *
- * ## Qué es obligatorio, y por qué
+ * ## Qué es obligatorio, y por qué (misma regla que la farmacia, D2)
  *
- * Frena el alta lo que sin ello no hay laboratorio publicable:
+ * Frena el alta sólo lo más básico para nacer: **razón social, tipo de
+ * sociedad (de la lista cerrada), NIT, dirección legal de la central, nombre y
+ * correo del representante legal —que es el correo de acceso— y contraseña**.
  *
- * - **Razón social, tipo de sociedad y NIT**: la identidad tributaria de quien
- *   va a facturar. El tipo, además, es el conteo que pide 4.1.1.1.
- * - **SEPREC, licencia de funcionamiento y certificado del SEDES**: los tres
- *   que prueban que la empresa está registrada y **habilitada para operar**. Un
- *   laboratorio de sangre sin certificado del SEDES no puede atender.
- * - **Dirección legal de la central**: sin dirección no hay a dónde ir.
- * - **Representante legal y su correo**: es quien firma, y el correo es el
- *   usuario de la cuenta.
- *
- * No frena, y cada uno por su motivo:
- *
- * - **Constitución de la empresa y poder del representante**: una
- *   **unipersonal** no tiene ninguno de los dos —no constituye sociedad y el
- *   titular se representa a sí mismo—. Exigirlos dejaría afuera a un tipo
- *   societario que la propia lista ofrece.
- * - **NIT en PDF**: el número ya se pide escrito; el papel es respaldo.
- * - **Punto en el mapa y sucursales**: el GPS depende de un permiso del
- *   navegador que se puede negar, y hay laboratorios de un solo local. Se
- *   explica lo que se pierde sin ellos en vez de frenar el alta.
- * - **Los tres cargos** (general, comercial y marketing): nueve campos de
- *   contacto que no cambian nada de lo que la plataforma puede hacer hoy.
+ * El resto —los seis papeles en PDF, el punto de la central, las sucursales y
+ * los tres cargos— se puede completar después. Los papeles siguen siendo lo
+ * que habilita a un laboratorio a **atender** (sin certificado del SEDES no
+ * puede), pero esa regla es de habilitación, no de alta, y hoy no la hace
+ * cumplir ninguna capa (P51).
  */
 @Component({
   selector: 'app-register-laboratory',
   imports: [
-    FileInput,
     NgTemplateOutlet,
     RouterLink,
     Link,
@@ -288,15 +269,15 @@ const AYUDA: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
     CampoPersonalizado,
     RegistroAyuda,
     UbicacionPicker,
+    DropzonePdf,
   ],
   templateUrl: './register-laboratory.html',
   styleUrls: ['../registro-compartido/registro.css', './register-laboratory.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RegisterLaboratory {
+  private readonly iam = inject(IamClient);
   private readonly router = inject(Router);
-
-  protected readonly formatosDeRespaldo = FORMATOS_DE_RESPALDO;
 
   readonly form = new FormGroup({
     // --- 4.1.1 · la empresa ------------------------------------------------
@@ -316,18 +297,14 @@ export class RegisterLaboratory {
         Validators.pattern(NIT_VALIDO),
       ],
     }),
-    // --- 4.1.1.2, 4.1.2.1, 4.1.3, 4.1.4, 4.1.5 · los papeles ---------------
-    constitucionFile: new FormControl<AdjuntoDeclarado | null>(null),
-    nitFile: new FormControl<AdjuntoDeclarado | null>(null),
-    seprecFile: new FormControl<AdjuntoDeclarado | null>(null, {
-      validators: [Validators.required],
-    }),
-    licenciaFile: new FormControl<AdjuntoDeclarado | null>(null, {
-      validators: [Validators.required],
-    }),
-    sedesFile: new FormControl<AdjuntoDeclarado | null>(null, {
-      validators: [Validators.required],
-    }),
+    // --- 4.1.1.2, 4.1.2.1, 4.1.3, 4.1.4, 4.1.5, 4.1.8.1 · los seis papeles,
+    // todos opcionales: cada control guarda el `fileId` de la pre-carga ------
+    constitutionFileId: new FormControl('', { nonNullable: true }),
+    taxIdentifierFileId: new FormControl('', { nonNullable: true }),
+    commerceRegistryFileId: new FormControl('', { nonNullable: true }),
+    operatingLicenseFileId: new FormControl('', { nonNullable: true }),
+    healthAuthorityCertificateFileId: new FormControl('', { nonNullable: true }),
+    powerOfAttorneyFileId: new FormControl('', { nonNullable: true }),
     // --- 4.1.6 · dirección legal de la central -----------------------------
     addressLines: new FormControl('', {
       nonNullable: true,
@@ -340,9 +317,8 @@ export class RegisterLaboratory {
     }),
     legalRepEmail: new FormControl('', {
       nonNullable: true,
-      validators: [Validators.required, Validators.email],
+      validators: [Validators.required, Validators.email, Validators.maxLength(MAX_CORREO)],
     }),
-    poderFile: new FormControl<AdjuntoDeclarado | null>(null),
     // --- 4.1.9 a 4.1.17 · los tres cargos, todos opcionales ----------------
     generalManagerName: new FormControl('', { nonNullable: true }),
     generalManagerPhone: new FormControl('', {
@@ -430,65 +406,12 @@ export class RegisterLaboratory {
       titulo: 'Los papeles de la empresa',
       clave: 'documentos',
       icon: 'folder' as const,
-      hint: 'PDF, JPG o PNG. Hasta 5 MB por archivo.',
+      hint: 'Opcionales: podés adjuntarlos ahora o más adelante. PDF, hasta 10 MB por archivo.',
+      // Los seis, en el orden del registro de procesos: el motor parte la
+      // página sola en «(1 de 2)» y «(2 de 2)».
       campos: [
-        {
-          key: 'seprecFile',
-          ancho: 'mitad' as const,
-          label: 'SEPREC',
-          hint: 'La matrícula de comercio vigente.',
-          control: 'custom' as const,
-          required: true,
-          mensajeDeError: 'Adjuntá el SEPREC: sin la matrícula no podemos publicar el laboratorio.',
-        },
-        {
-          key: 'licenciaFile',
-          ancho: 'mitad' as const,
-          label: 'Licencia de funcionamiento',
-          hint: 'La que emite tu municipio.',
-          control: 'custom' as const,
-          required: true,
-          mensajeDeError: 'Adjuntá la licencia de funcionamiento.',
-        },
-        {
-          key: 'sedesFile',
-          ancho: 'mitad' as const,
-          label: 'Certificado del SEDES',
-          hint: 'El que habilita al laboratorio a operar.',
-          control: 'custom' as const,
-          required: true,
-          mensajeDeError:
-            'Adjuntá el certificado del SEDES: es lo que habilita a un laboratorio a atender.',
-        },
-        {
-          key: 'nitFile',
-          ancho: 'mitad' as const,
-          label: 'NIT en PDF (opcional)',
-          hint: 'El respaldo del número que escribiste antes.',
-          control: 'custom' as const,
-        },
-      ],
-    },
-    {
-      titulo: 'Constitución y poder',
-      clave: 'documentos',
-      icon: 'folder' as const,
-      hint: 'Los dos son opcionales: una empresa unipersonal no tiene ninguno de los dos.',
-      campos: [
-        {
-          key: 'constitucionFile',
-          ancho: 'mitad' as const,
-          label: 'Constitución de la empresa (opcional)',
-          hint: 'La escritura con la que se constituyó la sociedad.',
-          control: 'custom' as const,
-        },
-        {
-          key: 'poderFile',
-          ancho: 'mitad' as const,
-          label: 'Poder del representante legal (opcional)',
-          hint: 'No hace falta si el titular se representa a sí mismo.',
-          control: 'custom' as const,
-        },
+        ...camposDeDocumentosLegales(PAIS, uiLanguage(), false),
+        campoDelPoderNotariado(PAIS, uiLanguage(), false),
       ],
     },
     {
@@ -667,43 +590,43 @@ export class RegisterLaboratory {
     },
   ]);
 
-  readonly attachmentFiles = signal<Partial<Record<ClaveDeAdjunto, readonly File[]>>>({});
-  protected readonly maxAttachmentBytes = MAX_BYTES_ADJUNTO;
+  /* --- documentos legales (dropzone real, con `fileId`) ------------------ */
 
-  attachmentLabel(key: ClaveDeAdjunto): string {
-    return this.paginas.flatMap(page => page.campos).find(field => field.key === key)?.label ?? 'Documento';
+  /** Cómo sube cada `app-dropzone-pdf`: la misma pre-carga pública que la farmacia y la aseguradora. */
+  protected readonly subirDocumento: PdfUploader = (file) => this.iam.uploadRegistrationDocument(file);
+
+  /** Lo ya subido por cada dropzone, para sobrevivir a que el asistente destruya y recree la página. */
+  protected readonly documentosSubidos = signal<
+    Partial<Record<ClaveDeDocumentoDelAlta, UploadedDocument>>
+  >({});
+
+  protected readonly clavesDeDocumento: readonly ClaveDeDocumentoDelAlta[] = [
+    ...DOCUMENTOS_LEGALES_DEL_REGISTRO.map((d) => d.key),
+    'powerOfAttorneyFileId',
+  ];
+
+  registrarDocumento(clave: ClaveDeDocumentoDelAlta, fileId: string | null): void {
+    this.form.controls[clave].setValue(fileId ?? '');
+    if (fileId === null) {
+      this.documentosSubidos.update((actual) => {
+        const { [clave]: _omitido, ...resto } = actual;
+        return resto;
+      });
+    }
   }
 
-  isAttachmentRequired(key: ClaveDeAdjunto): boolean {
-    return this.form.controls[key].hasValidator(Validators.required);
+  protected recordarDocumento(clave: ClaveDeDocumentoDelAlta, documento: UploadedDocument): void {
+    this.documentosSubidos.update((actual) => ({ ...actual, [clave]: documento }));
   }
 
-  isAttachmentInvalid(key: ClaveDeAdjunto): boolean {
-    const control = this.form.controls[key];
-    return control.touched && control.invalid;
+  protected documentoInicialDe(clave: ClaveDeDocumentoDelAlta): UploadedDocument | null {
+    return this.documentosSubidos()[clave] ?? null;
   }
 
-  filesForAttachment(key: ClaveDeAdjunto): readonly File[] {
-    return this.attachmentFiles()[key] ?? [];
-  }
-
-  updateAttachment(key: ClaveDeAdjunto, files: readonly File[]): void {
-    this.attachmentFiles.update(current => ({ ...current, [key]: files }));
-    const file = files[0];
-    const control = this.form.controls[key];
-    control.setValue(file ? { archivo: file.name, pesoBytes: file.size } : null);
-    control.markAsTouched();
-    this.errorAdjunto.set(null);
-  }
-
-  /* --- adjuntos ---------------------------------------------------------- */
-
-  /** El motivo del último archivo rechazado, si hubo. */
-  readonly errorAdjunto = signal<string | null>(null);
-
-  /** El adjunto guardado en un control, para que la plantilla lo muestre. */
-  adjuntoDe(clave: ClaveDeAdjunto): AdjuntoDeclarado | null {
-    return this.form.controls[clave].value;
+  /** El rótulo ya resuelto del documento, sin el sufijo «(opcional)» que lleva el campo. */
+  protected etiquetaDeDocumento(clave: ClaveDeDocumentoDelAlta): string {
+    const campo = this.paginas.flatMap((pagina) => pagina.campos).find((c) => c.key === clave);
+    return campo?.label.replace(' (opcional)', '') ?? 'Documento';
   }
 
   /* --- la ubicación de la central ---------------------------------------- */
@@ -841,26 +764,137 @@ export class RegisterLaboratory {
 
   /* --- envío ------------------------------------------------------------- */
 
-  /** Si la solicitud ya se dio por enviada. */
-  readonly enviada = signal(false);
+  readonly state = signal<ViewState<null>>(ready(null));
+  readonly isSubmitting = computed(() => this.state().status === 'loading');
+  /** Si la API ya creó la cuenta (201). */
+  readonly registered = signal(false);
+  readonly verificationSent = signal(false);
 
-  /**
-   * Cierra el alta **sin salir a la red**.
-   *
-   * No es un atajo de la maqueta que después haya que acordarse de cambiar: hoy
-   * **no existe** un endpoint de alta de laboratorio, y las alternativas eran
-   * peores. Cuando el backend tenga el alta, lo que cambia es este método — el
-   * formulario, sus reglas y sus papeles ya están.
-   */
+  readonly errorMessage = computed<string | null>(() => {
+    const state = this.state();
+    if (state.status === 'validation') return state.issues[0]?.message ?? null;
+    if (state.status === 'offline') return 'No pudimos conectarnos. Revisá tu conexión y reintentá.';
+    if (state.status === 'error') return `${state.message || 'Ocurrió un error inesperado.'} (${state.requestId})`;
+    return null;
+  });
+
   submit(): void {
+    if (this.isSubmitting()) return;
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
     }
-    this.enviada.set(true);
+
+    this.state.set(loading());
+
+    this.iam.registerLaboratoryOrganization(this.datos()).subscribe({
+      next: (resultado) => {
+        this.state.set(ready(null));
+        this.verificationSent.set(resultado.emailVerificationSent);
+        this.registered.set(true);
+      },
+      error: (error: unknown) => this.state.set(errorToViewState<null>(error)),
+    });
   }
 
   goToLogin(): void {
     void this.router.navigateByUrl('/auth');
+  }
+
+  /** El código único de tenant: derivado del NIT, que es el dato estable que el alta ya exige. */
+  private codigoDesdeNit(nit: string): string {
+    return `LAB-${nit.trim().replace(/[^A-Za-z0-9]/g, '')}`;
+  }
+
+  /** Un cargo sólo viaja si las tres partes están completas (nombre, celular y correo). */
+  private cargoCompleto(cargo: { name: string; phone: string; email: string }): boolean {
+    return cargo.name.trim() !== '' && cargo.phone.trim() !== '' && cargo.email.trim() !== '';
+  }
+
+  private datos(): LaboratoryOrganizationRegistration {
+    const raw = this.form.getRawValue();
+    const central = this.gpsCentral();
+
+    // Una sucursal sin nombre no es una sucursal todavía: no viaja.
+    const sucursales: readonly DiagnosticUnitBranchRegistration[] = this.sucursales()
+      .filter((s) => s.nombre.trim() !== '')
+      .map((s) => ({
+        name: s.nombre.trim(),
+        addressLines: s.direccion.trim() === '' ? [] : [s.direccion.trim()],
+        ...(s.gps === null ? {} : { location: { latitude: s.gps.lat, longitude: s.gps.lng } }),
+      }));
+
+    const cargos = {
+      generalManager: {
+        name: raw.generalManagerName,
+        phone: raw.generalManagerPhone,
+        email: raw.generalManagerEmail,
+      },
+      commercialManager: {
+        name: raw.salesManagerName,
+        phone: raw.salesManagerPhone,
+        email: raw.salesManagerEmail,
+      },
+      marketingManager: {
+        name: raw.marketingManagerName,
+        phone: raw.marketingManagerPhone,
+        email: raw.marketingManagerEmail,
+      },
+    };
+    const contacto = (cargo: { name: string; phone: string; email: string }) => ({
+      fullName: cargo.name.trim(),
+      phone: cargo.phone.trim(),
+      email: cargo.email.trim(),
+    });
+    // Todo o nada, como el DTO: las tres gerencias o ninguna.
+    const cargosCompletos = Object.values(cargos).every((cargo) => this.cargoCompleto(cargo));
+
+    const documentos = {
+      constitutionFileId: raw.constitutionFileId,
+      taxIdentifierFileId: raw.taxIdentifierFileId,
+      commerceRegistryFileId: raw.commerceRegistryFileId,
+      operatingLicenseFileId: raw.operatingLicenseFileId,
+      healthAuthorityCertificateFileId: raw.healthAuthorityCertificateFileId,
+    };
+    // Todo o nada, como el DTO: los cinco papeles de la empresa o ninguno.
+    const documentosCompletos = Object.values(documentos).every((v) => v !== '');
+
+    const razonSocial = raw.legalName.trim();
+    return {
+      code: this.codigoDesdeNit(raw.taxId),
+      legalName: razonSocial,
+      legalEntityType: raw.companyType ?? '',
+      diagnosticUnit: {
+        name: razonSocial,
+        primarySite: {
+          name: NOMBRE_DE_LA_CENTRAL,
+          address: {
+            lines: [raw.addressLines.trim()],
+            ...(central === null ? {} : { latitude: central.lat, longitude: central.lng }),
+          },
+        },
+        ...(sucursales.length === 0 ? {} : { branches: sucursales }),
+      },
+      owner: {
+        email: raw.legalRepEmail.trim(),
+        password: raw.password,
+        displayName: raw.legalRepName.trim(),
+      },
+      legalRepresentative: {
+        fullName: raw.legalRepName.trim(),
+        email: raw.legalRepEmail.trim(),
+        ...(raw.powerOfAttorneyFileId === '' ? {} : { powerOfAttorneyFileId: raw.powerOfAttorneyFileId }),
+      },
+      ...(documentosCompletos ? { legalDocuments: documentos } : {}),
+      ...(cargosCompletos
+        ? {
+            executives: {
+              generalManager: contacto(cargos.generalManager),
+              commercialManager: contacto(cargos.commercialManager),
+              marketingManager: contacto(cargos.marketingManager),
+            },
+          }
+        : {}),
+    };
   }
 }

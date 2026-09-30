@@ -231,10 +231,18 @@ export function contentSecurityPolicy(options: SecurityHeadersOptions = {}): str
     // subdominios. Estuvo abierto a `*.basemaps.cartocdn.com` hasta el
     // 19/09/2026, cuando CARTO empezó a estampar «API KEY REQUIRED» sobre
     // cada mosaico.
-    "img-src 'self' data: https://tile.openstreetmap.org",
+    //
+    // `blob:` (30/09/2026): las miniaturas y el visor de «Resultados» del
+    // laboratorio muestran el archivo que la pantalla acaba de bajar, como URL
+    // de objeto local. No abre ningún origen ajeno.
+    "img-src 'self' data: blob: https://tile.openstreetmap.org",
     `connect-src 'self'${apiOrigin === null ? '' : ` ${apiOrigin}`}`,
     "frame-ancestors 'none'",
     "object-src 'none'",
+    // El visor de resultados muestra el PDF en un `<iframe>` con la URL de
+    // objeto que armó la misma pantalla. Sólo eso: ningún origen de terceros
+    // puede enmarcarse (y `frame-ancestors` sigue impidiendo que nos enmarquen).
+    "frame-src 'self' blob:",
     // Vista previa local de audio/video; sin proveedores externos ni iframes.
     "media-src 'self' blob:",
     "base-uri 'self'",

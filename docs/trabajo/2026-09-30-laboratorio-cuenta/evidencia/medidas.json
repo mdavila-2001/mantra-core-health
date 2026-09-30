@@ -1,0 +1,58 @@
+[
+ {
+  "file": "resumen-375-claro.png",
+  "scrollHorizontal": true,
+  "anchoMain": 375,
+  "ventana": 375,
+  "fondo": "rgba(0, 0, 0, 0)"
+ },
+ {
+  "file": "resultados-375-claro.png",
+  "scrollHorizontal": true,
+  "anchoMain": 375,
+  "ventana": 375,
+  "fondo": "rgba(0, 0, 0, 0)"
+ },
+ {
+  "file": "resumen-768-claro.png",
+  "scrollHorizontal": false,
+  "anchoMain": 768,
+  "ventana": 768,
+  "fondo": "rgba(0, 0, 0, 0)"
+ },
+ {
+  "file": "resultados-768-claro.png",
+  "scrollHorizontal": false,
+  "anchoMain": 768,
+  "ventana": 768,
+  "fondo": "rgba(0, 0, 0, 0)"
+ },
+ {
+  "file": "resumen-1440-claro.png",
+  "scrollHorizontal": false,
+  "anchoMain": 1200,
+  "ventana": 1440,
+  "fondo": "rgba(0, 0, 0, 0)"
+ },
+ {
+  "file": "resultados-1440-claro.png",
+  "scrollHorizontal": false,
+  "anchoMain": 1200,
+  "ventana": 1440,
+  "fondo": "rgba(0, 0, 0, 0)"
+ },
+ {
+  "file": "resumen-1440-oscuro.png",
+  "scrollHorizontal": false,
+  "anchoMain": 1200,
+  "ventana": 1440,
+  "fondo": "rgba(0, 0, 0, 0)"
+ },
+ {
+  "file": "resultados-1440-oscuro.png",
+  "scrollHorizontal": false,
+  "anchoMain": 1200,
+  "ventana": 1440,
+  "fondo": "rgba(0, 0, 0, 0)"
+ }
+]

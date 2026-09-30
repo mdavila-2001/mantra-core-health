@@ -26,6 +26,13 @@ describe('security-headers', () => {
     expect(policy).toContain("frame-ancestors 'none'");
   });
 
+  it('el visor de resultados enmarca sólo URL de objeto locales, nunca un tercero', () => {
+    const policy = contentSecurityPolicy();
+    expect(policy).toContain("frame-src 'self' blob:");
+    expect(policy).toContain("img-src 'self' data: blob: https://tile.openstreetmap.org");
+    expect(policy).not.toMatch(/frame-src[^;]*https?:/);
+  });
+
   describe('hashes de scripts en línea', () => {
     it('el hash es el sha256 del contenido exacto, en formato CSP', () => {
       // Vector conocido: sha256 de la cadena vacía.
@@ -137,7 +144,7 @@ describe('security-headers', () => {
 
       // El mapa (Leaflet sin clave de API) pide sus tiles directo del
       // navegador; sin este origen queda un rectángulo gris.
-      expect(csp).toContain("img-src 'self' data: https://tile.openstreetmap.org");
+      expect(csp).toContain("img-src 'self' data: blob: https://tile.openstreetmap.org");
       // El permiso es de imágenes: scripts y conexiones no se abren con él.
       expect(csp).not.toContain('script-src \'self\' https://tile.openstreetmap.org');
       expect(csp).not.toContain('connect-src \'self\' https://tile.openstreetmap.org');
