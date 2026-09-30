@@ -381,6 +381,15 @@
                       </dd>
                     </div>
                   </dl>
+
+                  <!-- El mismo mapa de residencia que la ficha del médico: el
+                       departamento marcado, el municipio más oscuro y el punto
+                       rojo en el domicilio si trae coordenadas. -->
+                  @if (p.residenceMunicipalityConceptId; as municipio) {
+                    <section class="mi-perfil__residencia" data-testid="mi-perfil-residencia">
+                      <app-residence-readonly [municipioId]="municipio" [punto]="puntoDe(p.homeAddress)" />
+                    </section>
+                  }
                 } @else {
                   <p class="mi-perfil__nota">Todavía no pudimos traer estos datos.</p>
                 }

@@ -21,6 +21,7 @@
       <section class="mapa-directorio" aria-label="Filtrar por departamento">
         <app-department-map
           testId="aseguradoras-mapa"
+          [municipio]="lugar.ciudad()"
           [departamentos]="lugar.departamentos()"
           [value]="lugar.departamentoElegido()"
           (valueChange)="lugar.elegirDepartamento($event)"
