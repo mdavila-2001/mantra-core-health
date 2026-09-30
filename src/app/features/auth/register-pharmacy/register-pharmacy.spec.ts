@@ -1,6 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
+import { FormControl } from '@angular/forms';
 import { provideRouter, Router } from '@angular/router';
 
 import { CARGADOR_DE_LEAFLET } from '../../../shared/components/organisms/map/map';
@@ -83,7 +84,7 @@ describe('RegisterPharmacy', () => {
     component.form.controls.companyType.setValue('SRL');
     component.form.controls.taxId.setValue('1023456789');
     component.form.controls.addressLines.setValue('Av. Cañoto esq. Ballivián 234');
-    component.form.controls.legalRepName.setValue('Mariana Siles');
+    component.form.controls.legalRepName.patchValue({ name: 'Mariana', lastName: 'Siles' });
     component.form.controls.legalRepEmail.setValue('legal@farmacia-sanmartin.test');
     component.form.controls.password.setValue('secreto12');
   }
@@ -227,7 +228,7 @@ describe('RegisterPharmacy', () => {
 
   it('una gerencia a medias no viaja: las tres o ninguna', () => {
     completarObligatorio();
-    component.form.controls.generalManagerName.setValue('Carlos Mendoza');
+    component.form.controls.generalManagerName.patchValue({ name: 'Carlos', lastName: 'Mendoza' });
     // Falta celular y correo: la gerencia general queda incompleta.
     component.submit();
 
@@ -238,13 +239,13 @@ describe('RegisterPharmacy', () => {
 
   it('con las tres gerencias completas, executives viaja entero', () => {
     completarObligatorio();
-    component.form.controls.generalManagerName.setValue('Carlos Mendoza');
+    component.form.controls.generalManagerName.patchValue({ name: 'Carlos', lastName: 'Mendoza' });
     component.form.controls.generalManagerPhone.setValue('+591 70000001');
     component.form.controls.generalManagerEmail.setValue('gm@farmacia.test');
-    component.form.controls.commercialManagerName.setValue('Ana Paz');
+    component.form.controls.commercialManagerName.patchValue({ name: 'Ana', lastName: 'Paz' });
     component.form.controls.commercialManagerPhone.setValue('+591 70000002');
     component.form.controls.commercialManagerEmail.setValue('cm@farmacia.test');
-    component.form.controls.marketingManagerName.setValue('Luis Rojas');
+    component.form.controls.marketingManagerName.patchValue({ name: 'Luis', lastName: 'Rojas' });
     component.form.controls.marketingManagerPhone.setValue('+591 70000003');
     component.form.controls.marketingManagerEmail.setValue('mm@farmacia.test');
     component.submit();
@@ -256,6 +257,54 @@ describe('RegisterPharmacy', () => {
       marketingManager: { fullName: 'Luis Rojas', phone: '+591 70000003', email: 'mm@farmacia.test' },
     });
     req.flush(RESPUESTA_201);
+  });
+
+  it('los cinco nombres y los agregados viajan compuestos, en orden, en fullName y displayName', () => {
+    completarObligatorio();
+    const nombre = component.form.controls.legalRepName;
+    nombre.patchValue({
+      name: 'Mariana',
+      middleName: 'Isabel',
+      thirdName: 'Lucía',
+      lastName: 'Siles',
+      motherLastName: 'Paz',
+    });
+    nombre.controls.extraNames.push(new FormControl('Carola', { nonNullable: true }));
+    component.submit();
+
+    const req = http.expectOne(RUTA_ALTA);
+    const cuerpo = req.request.body as CuerpoDelAlta;
+    expect(cuerpo.organization.legalRepresentative.fullName).toBe(
+      'Mariana Isabel Lucía Carola Siles Paz',
+    );
+    expect(cuerpo.owner.displayName).toBe('Mariana Isabel Lucía Carola Siles Paz');
+    req.flush(RESPUESTA_201);
+  });
+
+  it('el apellido paterno del representante es obligatorio: sin él no sale a la red', () => {
+    completarObligatorio();
+    component.form.controls.legalRepName.patchValue({ lastName: '' });
+    component.submit();
+
+    http.expectNone(RUTA_ALTA);
+    expect(component.form.controls.legalRepName.controls.lastName.touched).toBe(true);
+  });
+
+  it('el segundo y tercer nombre y el apellido materno son opcionales', () => {
+    completarObligatorio();
+    const nombre = component.form.controls.legalRepName.controls;
+    expect(nombre.middleName.valid && nombre.thirdName.valid && nombre.motherLastName.valid).toBe(true);
+  });
+
+  it('«Siguiente» bloqueado en el representante marca cada casilla para que muestre su error', () => {
+    component.alRechazarPagina({
+      titulo: 'Representante legal',
+      clave: 'representante',
+      campos: [{ key: 'legalRepName', label: '', control: 'custom' }],
+    });
+
+    const nombre = component.form.controls.legalRepName.controls;
+    expect(nombre.name.touched && nombre.lastName.touched).toBe(true);
   });
 
   it('201: pasa a la pantalla de "revisá tu correo" y el botón vuelve a /auth', () => {
