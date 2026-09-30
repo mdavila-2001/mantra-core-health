@@ -199,6 +199,11 @@ button.campana__item:focus-visible {
   font-weight: 600;
 }
 
+/* Alineados con el texto de la fila: su padding más la barra de «sin leer». */
+.campana__acciones {
+  --notificacion-acciones-inicio: calc(var(--sp-3) + 3px);
+}
+
 .campana__item-titulo {
   /* Dos líneas como mucho: un título largo empujaba la fecha fuera del panel y
      dejaba tres avisos ocupando el alto de ocho. */

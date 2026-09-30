@@ -27,7 +27,7 @@ import {
   type ProfesionalSimulado,
 } from '../fixtures/personas';
 import { conflict, forbidden, noContent, notFound, reply, type MockRequest, type MockRouter } from '../mock-router';
-import { emitirNotificacion } from './notifications.handlers';
+import { cerrarAcciones, emitirNotificacion } from './notifications.handlers';
 import {
   ahora,
   bodyAsQuery,
@@ -545,6 +545,25 @@ function cuentaConDocumento(documento: string): PacienteSimulado | undefined {
   return pacientes.todos().find((p) => p.nationalId === documento && p.email !== '');
 }
 
+/** Minúsculas y sin tildes, para que «maria» encuentre a «María». */
+function sinTildes(valor: string): string {
+  return valor.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('es');
+}
+
+/** Cuántas letras hacen falta para buscar personas por nombre. */
+const MINIMO_BUSQUEDA_POR_NOMBRE = 3;
+const TOPE_CANDIDATOS = 8;
+
+/**
+ * El CI con sólo las últimas cifras a la vista.
+ *
+ * Alcanza para distinguir a dos homónimos y no sirve para averiguar el
+ * documento de nadie.
+ */
+function documentoEnmascarado(documento: string): string {
+  return documento.length <= 3 ? '•••' : `••••${documento.slice(-3)}`;
+}
+
 /** Los apoderamientos de un titular. */
 function dependientesDe(titularId: string): readonly ApoderamientoSimulado[] {
   return apoderamientos.filtrar(
@@ -897,17 +916,26 @@ export function registrarPerfiles(router: MockRouter): void {
     if (titular === undefined) {
       return forbidden('Esta cuenta no tiene perfil de paciente');
     }
-    const documento = (cuerpo<{ nationalId?: string }>(request).nationalId ?? '').trim();
-    if (documento === '') {
+    const datos = cuerpo<{ nationalId?: string; patientProfileId?: string }>(request);
+    const documento = (datos.nationalId ?? '').trim();
+    const perfilElegido = (datos.patientProfileId ?? '').trim();
+    if (documento === '' && perfilElegido === '') {
       return reply(400, {
         statusCode: 400,
         code: 'VALIDATION_FAILED',
-        message: 'Escribí el CI de la persona.',
+        message: 'Escribí el CI de la persona o elegila de la búsqueda.',
         error: 'Bad Request',
       });
     }
-    const destinatario = cuentaConDocumento(documento);
-    const esElPropio = documento === request.user?.nationalId || destinatario?.id === titular.id;
+    // Se señala a la persona por su CI o por el perfil que devolvió la búsqueda
+    // por nombre; las dos formas caen en la misma regla de abajo.
+    const destinatario =
+      perfilElegido === ''
+        ? cuentaConDocumento(documento)
+        : pacientes.todos().find((p) => p.id === perfilElegido && p.email !== '');
+    const esElPropio =
+      (documento !== '' && documento === request.user?.nationalId) ||
+      destinatario?.id === titular.id;
     if (esElPropio) {
       return reply(422, {
         statusCode: 422,
@@ -917,7 +945,11 @@ export function registrarPerfiles(router: MockRouter): void {
       });
     }
     if (destinatario === undefined) {
-      return notFound('No hay ninguna cuenta registrada con ese CI.');
+      return notFound(
+        perfilElegido === ''
+          ? 'No hay ninguna cuenta registrada con ese CI.'
+          : 'Esa persona ya no tiene una cuenta registrada.',
+      );
     }
     if (representaA(titular.id, destinatario.id)) {
       return conflict('Esa persona ya es tu dependiente.');
@@ -942,8 +974,44 @@ export function registrarPerfiles(router: MockRouter): void {
       subject: 'Te quieren registrar como dependiente',
       bodyText: `${titular.displayName} pide registrarte como su dependiente. Si aceptás, va a poder pedirte turnos y ver tu historia clínica.`,
       destination: { type: 'DEPENDENT_LINK_REQUEST', id: solicitud.id },
+      // Decidir desde la campana, sin abrir la pantalla de Dependientes.
+      actions: [
+        { key: 'ACCEPT', label: 'Aceptar', tone: 'primary' },
+        { key: 'REJECT', label: 'Rechazar', tone: 'neutral' },
+      ],
     });
     return { status: 201, body: { id: solicitud.id, status: 'PENDING' } };
+  });
+
+  /**
+   * Cuentas cuyo nombre coincide con lo escrito, para elegir a quién pedirle
+   * que sea dependiente.
+   *
+   * Poco expuesta a propósito: nada por debajo de tres letras, pocas filas, el
+   * CI enmascarado, y sin la propia cuenta ni las personas que ya son
+   * dependientes. Todas las palabras escritas deben aparecer (en cualquier
+   * orden) al comienzo de alguna palabra del nombre.
+   */
+  router.get('/profiles/patients/me/dependent-candidates', (request) => {
+    const titular = pacienteDeSesion(request);
+    if (titular === undefined) return forbidden('Esta cuenta no tiene perfil de paciente');
+    const palabras = sinTildes(request.query.get('q') ?? '')
+      .split(/\s+/)
+      .filter((p) => p !== '');
+    if (palabras.join('').length < MINIMO_BUSQUEDA_POR_NOMBRE) return [];
+    return pacientes
+      .todos()
+      .filter((p) => p.email !== '' && p.id !== titular.id && !representaA(titular.id, p.id))
+      .filter((p) => {
+        const nombre = sinTildes(p.displayName).split(/\s+/);
+        return palabras.every((palabra) => nombre.some((n) => n.startsWith(palabra)));
+      })
+      .slice(0, TOPE_CANDIDATOS)
+      .map((p) => ({
+        patientProfileId: p.id,
+        displayName: p.displayName,
+        ...(p.nationalId === '' ? {} : { maskedNationalId: documentoEnmascarado(p.nationalId) }),
+      }));
   });
 
   router.get('/profiles/patients/me/dependent-requests/incoming', (request) => {
@@ -969,6 +1037,8 @@ export function registrarPerfiles(router: MockRouter): void {
       return conflict('Esa solicitud ya fue respondida.');
     }
     solicitudes.actualizar(solicitud.id, { estado });
+    // La decisión ya está tomada: el aviso que la pedía deja de ofrecerla.
+    cerrarAcciones({ type: 'DEPENDENT_LINK_REQUEST', id: solicitud.id });
     const titular = pacientePorId(solicitud.titularId);
     if (estado === 'ACCEPTED') {
       apoderamientos.agregar({

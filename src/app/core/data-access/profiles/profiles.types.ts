@@ -1233,6 +1233,32 @@ export interface DependentLinkRequestSent {
   readonly status: 'PENDING';
 }
 
+/**
+ * A quién se le pide ser dependiente: por su CI, o por el perfil que devolvió
+ * la búsqueda por nombre.
+ *
+ * Son dos formas de señalar a la misma persona; el servidor resuelve las dos
+ * contra la misma regla (una cuenta registrada que no sea la propia).
+ */
+export type DependentLinkTarget =
+  | { readonly nationalId: string }
+  | { readonly patientProfileId: string };
+
+/**
+ * Una cuenta que coincide con el nombre buscado, para elegir a quién enviarle
+ * la solicitud.
+ *
+ * Trae lo mínimo para distinguir homónimos: el nombre y las últimas cifras del
+ * documento, nunca el documento entero. Una búsqueda por nombre no puede
+ * servir para sacar el CI de nadie.
+ */
+export interface DependentCandidate {
+  readonly patientProfileId: string;
+  readonly displayName: string;
+  /** El CI enmascarado, p. ej. `••••4521`. */
+  readonly maskedNationalId?: string;
+}
+
 /** Una solicitud que otra persona le hizo a esta cuenta, pendiente de respuesta. */
 export interface IncomingDependentLinkRequest {
   readonly id: string;
