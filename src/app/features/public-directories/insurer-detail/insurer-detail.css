@@ -189,3 +189,20 @@
 .ficha-publica > section {
   min-inline-size: 0;
 }
+
+/* ---- Buscador, filtros y paginación (ADR-0015, reglas 5 y 7) ----------- */
+
+.aseguradora__filtros {
+  margin-block-end: var(--sp-4);
+}
+
+.aseguradora__sin-resultados {
+  display: grid;
+  justify-items: start;
+  gap: var(--sp-3);
+}
+
+/* Abajo a la derecha de la tabla, como en el resto de los listados. */
+.aseguradora__paginacion {
+  justify-self: end;
+}

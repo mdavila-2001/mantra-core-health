@@ -49,140 +49,201 @@
           Esta aseguradora todavía no publicó sus productos. Su broker te puede contar qué ofrece.
         </p>
       } @else {
-        <!-- Una tarjeta con pestañas (regla 6). Con dos planes o más, la
+        <!-- Buscador y filtros arriba (ADR-0015, regla 5). Sólo lectura: sin
+             botón de alta. El buscador mira el plan y sus cláusulas; los
+             filtros salen del propio catálogo y sólo aparecen los que tienen
+             algo que elegir. -->
+        <app-filter-bar
+          class="aseguradora__filtros"
+          [filters]="filtros()"
+          searchLabel="Buscar un plan o una cobertura"
+          searchPlaceholder="Por ejemplo «Integral», «maternidad» u «odontología»"
+          data-testid="aseguradora-filtros"
+        />
+
+        @if (visibles().length === 0) {
+          <div
+            class="ficha-publica__vacio aseguradora__sin-resultados"
+            role="status"
+            data-testid="aseguradora-sin-coincidencias"
+          >
+            <p>Ningún plan coincide con tu búsqueda. Probá con otra palabra o sacá algún filtro.</p>
+            <button app-button variant="outline" size="sm" (click)="limpiarFiltros()">
+              Ver todos los planes
+            </button>
+          </div>
+        } @else {
+          @if (filtrando()) {
+            <p class="ficha-publica__nota" role="status" data-testid="aseguradora-cuantos">
+              {{
+                visibles().length === 1
+                  ? '1 plan coincide'
+                  : visibles().length + ' planes coinciden'
+              }}
+              de {{ items().length }}.
+            </p>
+          }
+          <!-- Una tarjeta con pestañas (regla 6). Con dos planes o más, la
              primera los compara lado a lado —que es como se elige un
              seguro—; después, una pestaña por plan con sus cláusulas. -->
-        <app-card variant="outlined" padding="lg" data-testid="aseguradora-planes">
-          <app-tabs [selectedIndex]="pestana()" (selectedIndexChange)="pestana.set($event)">
-            @if (hayComparacion()) {
-              <app-tab label="Comparar planes">
-                <ul class="aseguradora__ofertas" data-testid="aseguradora-comparar">
-                  @for (plan of items(); track plan.id; let indice = $index) {
-                    <li>
-                      <article
-                        class="aseguradora__oferta"
-                        [class.aseguradora__oferta--destacada]="plan.mayorCobertura"
-                        [attr.aria-labelledby]="'oferta-' + plan.id"
-                        data-testid="aseguradora-oferta"
-                      >
-                        <div class="aseguradora__oferta-cabeza">
-                          <p class="aseguradora__producto">{{ plan.rotulo }}</p>
-                          <div class="aseguradora__oferta-titular">
-                            <h3 class="aseguradora__nombre" [id]="'oferta-' + plan.id">
-                              {{ plan.nombre }}
-                            </h3>
-                            @if (plan.mayorCobertura) {
-                              <app-badge variant="primary" size="sm" value="Mayor cobertura" />
-                            }
+          <app-card variant="outlined" padding="lg" data-testid="aseguradora-planes">
+            <app-tabs [selectedIndex]="pestana()" (selectedIndexChange)="pestana.set($event)">
+              @if (hayComparacion()) {
+                <app-tab label="Comparar planes">
+                  <ul class="aseguradora__ofertas" data-testid="aseguradora-comparar">
+                    @for (visible of visibles(); track visible.plan.id; let indice = $index) {
+                      @let plan = visible.plan;
+                      <li>
+                        <article
+                          class="aseguradora__oferta"
+                          [class.aseguradora__oferta--destacada]="plan.mayorCobertura"
+                          [attr.aria-labelledby]="'oferta-' + plan.id"
+                          data-testid="aseguradora-oferta"
+                        >
+                          <div class="aseguradora__oferta-cabeza">
+                            <p class="aseguradora__producto">{{ plan.rotulo }}</p>
+                            <div class="aseguradora__oferta-titular">
+                              <h3 class="aseguradora__nombre" [id]="'oferta-' + plan.id">
+                                {{ plan.nombre }}
+                              </h3>
+                              @if (plan.mayorCobertura) {
+                                <app-badge variant="primary" size="sm" value="Mayor cobertura" />
+                              }
+                            </div>
                           </div>
-                        </div>
 
+                          <ng-container
+                            [ngTemplateOutlet]="precio"
+                            [ngTemplateOutletContext]="{ $implicit: plan }"
+                          />
+
+                          @if (plan.destacadas.length > 0) {
+                            <dl class="aseguradora__coberturas">
+                              @for (cobertura of plan.destacadas; track cobertura.id) {
+                                <div>
+                                  <dt>{{ cobertura.cobertura }}</dt>
+                                  <dd class="tabular-nums">{{ cobertura.cubre }}</dd>
+                                </div>
+                              }
+                            </dl>
+                          }
+                          <p class="aseguradora__resumen">{{ plan.resumen }}</p>
+
+                          <div class="aseguradora__oferta-acciones">
+                            @if (brokerPrincipal(); as broker) {
+                              <a
+                                app-button
+                                variant="primary"
+                                size="sm"
+                                routerLink="/messaging"
+                                [queryParams]="{ escribirA: broker.chatSlug }"
+                                data-testid="oferta-hablar-con-broker"
+                              >
+                                Hablar con el broker
+                              </a>
+                            }
+                            <button
+                              app-button
+                              variant="outline"
+                              size="sm"
+                              (click)="verClausulas(indice)"
+                              data-testid="oferta-ver-clausulas"
+                            >
+                              Ver cláusulas
+                            </button>
+                          </div>
+                        </article>
+                      </li>
+                    }
+                  </ul>
+                </app-tab>
+              }
+
+              @for (visible of visibles(); track visible.plan.id) {
+                @let plan = visible.plan;
+                <app-tab [label]="plan.nombre">
+                  <div class="aseguradora__plan" data-testid="aseguradora-plan">
+                    <div class="aseguradora__cabecera">
+                      <div class="aseguradora__cabecera-texto">
+                        <p class="aseguradora__producto">
+                          {{ plan.producto }}
+                          @if (plan.segmento) {
+                            · {{ plan.segmento }}
+                          }
+                        </p>
+                        <div class="aseguradora__oferta-titular">
+                          <h3 class="aseguradora__nombre">{{ plan.nombre }}</h3>
+                          @if (plan.mayorCobertura) {
+                            <app-badge variant="primary" size="sm" value="Mayor cobertura" />
+                          }
+                        </div>
+                        <p class="aseguradora__resumen">{{ plan.resumen }}</p>
+                      </div>
+
+                      <div class="aseguradora__cabecera-precio">
                         <ng-container
                           [ngTemplateOutlet]="precio"
                           [ngTemplateOutletContext]="{ $implicit: plan }"
                         />
-
-                        @if (plan.destacadas.length > 0) {
-                          <dl class="aseguradora__coberturas">
-                            @for (cobertura of plan.destacadas; track cobertura.id) {
-                              <div>
-                                <dt>{{ cobertura.cobertura }}</dt>
-                                <dd class="tabular-nums">{{ cobertura.cubre }}</dd>
-                              </div>
-                            }
-                          </dl>
-                        }
-                        <p class="aseguradora__resumen">{{ plan.resumen }}</p>
-
-                        <div class="aseguradora__oferta-acciones">
-                          @if (brokerPrincipal(); as broker) {
-                            <a
-                              app-button
-                              variant="primary"
-                              size="sm"
-                              routerLink="/messaging"
-                              [queryParams]="{ escribirA: broker.chatSlug }"
-                              data-testid="oferta-hablar-con-broker"
-                            >
-                              Hablar con el broker
-                            </a>
-                          }
-                          <button
+                        @if (brokerPrincipal(); as broker) {
+                          <a
                             app-button
-                            variant="outline"
+                            variant="primary"
                             size="sm"
-                            (click)="verClausulas(indice)"
-                            data-testid="oferta-ver-clausulas"
+                            routerLink="/messaging"
+                            [queryParams]="{ escribirA: broker.chatSlug }"
+                            data-testid="plan-hablar-con-broker"
                           >
-                            Ver cláusulas
-                          </button>
-                        </div>
-                      </article>
-                    </li>
-                  }
-                </ul>
-              </app-tab>
-            }
-
-            @for (plan of items(); track plan.id) {
-              <app-tab [label]="plan.nombre">
-                <div class="aseguradora__plan" data-testid="aseguradora-plan">
-                  <div class="aseguradora__cabecera">
-                    <div class="aseguradora__cabecera-texto">
-                      <p class="aseguradora__producto">
-                        {{ plan.producto }}
-                        @if (plan.segmento) {
-                          · {{ plan.segmento }}
-                        }
-                      </p>
-                      <div class="aseguradora__oferta-titular">
-                        <h3 class="aseguradora__nombre">{{ plan.nombre }}</h3>
-                        @if (plan.mayorCobertura) {
-                          <app-badge variant="primary" size="sm" value="Mayor cobertura" />
+                            Hablar con el broker
+                          </a>
                         }
                       </div>
-                      <p class="aseguradora__resumen">{{ plan.resumen }}</p>
                     </div>
 
-                    <div class="aseguradora__cabecera-precio">
-                      <ng-container
-                        [ngTemplateOutlet]="precio"
-                        [ngTemplateOutletContext]="{ $implicit: plan }"
-                      />
-                      @if (brokerPrincipal(); as broker) {
-                        <a
-                          app-button
-                          variant="primary"
-                          size="sm"
-                          routerLink="/messaging"
-                          [queryParams]="{ escribirA: broker.chatSlug }"
-                          data-testid="plan-hablar-con-broker"
+                    @if (visible.clausulas.length === 0) {
+                      <p class="ficha-publica__vacio" role="status">
+                        Este plan todavía no tiene cláusulas publicadas.
+                      </p>
+                    } @else {
+                      @if (acotadas(visible); as aviso) {
+                        <p
+                          class="ficha-publica__nota"
+                          role="status"
+                          data-testid="aseguradora-acotadas"
                         >
-                          Hablar con el broker
-                        </a>
+                          {{ aviso }}
+                        </p>
                       }
-                    </div>
+                      <!-- Scroll sólo vertical (regla 6) y paginación abajo a la
+                         derecha (regla 7), cuando no entra en la página menor. -->
+                      <app-data-table
+                        [state]="estadoDeClausulas(visible)"
+                        [columns]="columnas"
+                        [trackBy]="porId"
+                        [caption]="'Cláusulas y coberturas de ' + plan.nombre"
+                        [maxHeight]="altoDeLaTabla"
+                        wrapHeaders
+                        data-testid="aseguradora-clausulas"
+                      />
+                      @if (paginada(visible)) {
+                        <app-pagination
+                          class="aseguradora__paginacion"
+                          [totalItems]="visible.clausulas.length"
+                          [page]="paginaDe(visible)"
+                          (pageChange)="irAPagina(visible, $event)"
+                          [pageSize]="porPaginaDe(visible)"
+                          (pageSizeChange)="cambiarPorPagina(visible, $event)"
+                          [pageSizeOptions]="tamanosDePagina"
+                          data-testid="aseguradora-paginacion"
+                        />
+                      }
+                    }
                   </div>
-
-                  @if (plan.clausulas.length === 0) {
-                    <p class="ficha-publica__vacio" role="status">
-                      Este plan todavía no tiene cláusulas publicadas.
-                    </p>
-                  } @else {
-                    <app-data-table
-                      [state]="estadoDeClausulas(plan)"
-                      [columns]="columnas"
-                      [trackBy]="porId"
-                      [caption]="'Cláusulas y coberturas de ' + plan.nombre"
-                      wrapHeaders
-                      data-testid="aseguradora-clausulas"
-                    />
-                  }
-                </div>
-              </app-tab>
-            }
-          </app-tabs>
-        </app-card>
+                </app-tab>
+              }
+            </app-tabs>
+          </app-card>
+        }
 
         <!-- La prima de un plan, igual en su tarjeta y en su pestaña: el
              importe al frente y «por mes» detrás; sin prima publicada, lo

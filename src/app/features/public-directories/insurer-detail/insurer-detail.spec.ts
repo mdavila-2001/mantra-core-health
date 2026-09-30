@@ -2,7 +2,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
-import { of } from 'rxjs';
+import { BehaviorSubject, of } from 'rxjs';
 
 import type { CarrierDetail } from '@core/data-access/insurance/insurance.types';
 
@@ -16,6 +16,8 @@ import { InsurerDetail, planesDelMercado } from './insurer-detail';
  * 2. **Sin catálogo publicado se dice**, no es un error ni una tabla vacía.
  * 3. **«Hablar con el broker» abre el chat** con `?escribirA=<slug>`; un
  *    broker sin perfil no ofrece el botón.
+ * 4. **Buscador y filtros** (ADR-0015, regla 5), leídos de la URL: acotan los
+ *    planes y, si el término está sólo en algunas cláusulas, la tabla.
  */
 
 const BOB = { code: 'BOB', display: 'Boliviano' };
@@ -168,8 +170,10 @@ describe('planesDelMercado', () => {
 describe('InsurerDetail', () => {
   let fixture: ComponentFixture<InsurerDetail>;
   let http: HttpTestingController;
+  let queryParams: BehaviorSubject<Record<string, string>>;
 
   beforeEach(() => {
+    queryParams = new BehaviorSubject<Record<string, string>>({});
     TestBed.configureTestingModule({
       providers: [
         provideHttpClient(),
@@ -177,7 +181,10 @@ describe('InsurerDetail', () => {
         provideRouter([]),
         {
           provide: ActivatedRoute,
-          useValue: { paramMap: of(convertToParamMap({ slug: 'seguros-andina' })) },
+          useValue: {
+            paramMap: of(convertToParamMap({ slug: 'seguros-andina' })),
+            queryParams,
+          },
         },
       ],
     });
@@ -205,6 +212,9 @@ describe('InsurerDetail', () => {
     const tabla = root().querySelector('[data-testid="aseguradora-clausulas"]');
     expect(tabla?.textContent).toContain('Internación');
     expect(tabla?.textContent).toContain('No cubre: Cirugía estética');
+    // Una cláusula: ni paginador ni filtros sin nada que elegir.
+    expect(root().querySelector('[data-testid="aseguradora-paginacion"]')).toBeNull();
+    expect(root().querySelector('[data-testid="aseguradora-filtros"] select')).toBeNull();
   });
 
   it('«Hablar con el broker» abre el chat con el slug; sin perfil no hay botón', () => {
@@ -262,6 +272,114 @@ describe('InsurerDetail', () => {
     expect(root().querySelector('[role="tab"][aria-selected="true"]')?.textContent).toContain(
       'Plan Familiar',
     );
+  });
+
+  /** Dos planes de dos productos: salud con dos coberturas, accidentes con una. */
+  function dosProductos(): Record<string, unknown> {
+    const [salud] = CARRIER.products;
+    const [integral] = salud!.plans;
+    const dental = {
+      ...integral!.benefits[0]!,
+      id: 'b-2',
+      category: c('DENTAL', 'Odontología'),
+      requiresPriorAuthorization: false,
+      approvalRules: { requiredDocuments: [], exclusionNotes: null },
+    };
+    const accidentes = {
+      ...salud!,
+      id: 'prod-2',
+      name: 'Seguros Andina · Accidentes',
+      productType: c('ACCIDENT', 'Accidentes personales'),
+      marketSegment: c('CORPORATE', 'Empresas'),
+      plans: [{ ...integral!, id: 'plan-3', name: 'Plan Accidentes' }],
+    };
+    return {
+      carrier: {
+        ...CARRIER,
+        products: [
+          { ...salud!, plans: [{ ...integral!, benefits: [...integral!.benefits, dental] }] },
+          accidentes,
+        ],
+      },
+      brokers: BROKERS,
+    };
+  }
+
+  const ofertas = (): string[] =>
+    [...root().querySelectorAll('[data-testid="aseguradora-oferta"] h3')].map(
+      (h) => h.textContent?.trim() ?? '',
+    );
+
+  it('arriba de los planes hay buscador y los filtros que tienen algo que elegir', () => {
+    responderMercado(dosProductos());
+
+    const barra = root().querySelector('[data-testid="aseguradora-filtros"]');
+    expect(barra).not.toBeNull();
+    expect(barra!.querySelector('input[type="search"], input')).not.toBeNull();
+    const texto = barra!.textContent ?? '';
+    expect(texto).toContain('Todos los tipos');
+    expect(texto).toContain('Todos los segmentos');
+    expect(texto).toContain('Cualquier cobertura');
+    expect(ofertas()).toEqual(['Plan Integral', 'Plan Accidentes']);
+  });
+
+  it('un filtro de la URL acota los planes y deja de comparar con uno solo', () => {
+    responderMercado(dosProductos());
+    queryParams.next({ tipo: 'Accidentes personales' });
+    fixture.detectChanges();
+
+    const pestanas = [...root().querySelectorAll('[role="tab"]')].map((t) => t.textContent?.trim());
+    expect(pestanas).toEqual(['Plan Accidentes']);
+    expect(root().querySelector('[data-testid="aseguradora-cuantos"]')?.textContent).toContain(
+      '1 plan coincide de 2',
+    );
+  });
+
+  it('buscar una cobertura deja el plan que la tiene y su tabla sólo con ésa', () => {
+    responderMercado(dosProductos());
+    queryParams.next({ q: 'odontologia' });
+    fixture.detectChanges();
+
+    expect(root().querySelectorAll('[role="tab"]')).toHaveLength(1);
+    const tabla = root().querySelector('[data-testid="aseguradora-clausulas"]');
+    expect(tabla?.textContent).toContain('Odontología');
+    expect(tabla?.textContent).not.toContain('Internación');
+    expect(root().querySelector('[data-testid="aseguradora-acotadas"]')?.textContent).toContain(
+      'Se ven 1 de 2 coberturas',
+    );
+  });
+
+  it('sin coincidencias lo dice y ofrece volver a ver todos', () => {
+    responderMercado(dosProductos());
+    queryParams.next({ q: 'veterinaria' });
+    fixture.detectChanges();
+
+    expect(root().querySelector('[data-testid="aseguradora-sin-coincidencias"]')).not.toBeNull();
+    expect(root().querySelector('[data-testid="aseguradora-planes"]')).toBeNull();
+  });
+
+  it('una tabla que no entra en la página menor se pagina abajo; una corta, no', () => {
+    const [producto] = CARRIER.products;
+    const [integral] = producto!.plans;
+    const muchas = Array.from({ length: 12 }, (_, i) => ({
+      ...integral!.benefits[0]!,
+      id: `b-${i}`,
+      category: c(`CAT${i}`, `Cobertura ${String(i + 1).padStart(2, '0')}`),
+    }));
+    responderMercado({
+      carrier: {
+        ...CARRIER,
+        products: [{ ...producto!, plans: [{ ...integral!, benefits: muchas }] }],
+      },
+      brokers: BROKERS,
+    });
+
+    expect(root().querySelector('[data-testid="aseguradora-paginacion"]')).not.toBeNull();
+    const filas = root().querySelectorAll('[data-testid="aseguradora-clausulas"] tbody tr');
+    expect(filas.length).toBeLessThanOrEqual(10);
+    expect(
+      root().querySelector('[data-testid="aseguradora-clausulas"]')?.textContent,
+    ).not.toContain('Cobertura 12');
   });
 
   it('sin catálogo publicado lo dice, y no dibuja una tabla vacía', () => {
