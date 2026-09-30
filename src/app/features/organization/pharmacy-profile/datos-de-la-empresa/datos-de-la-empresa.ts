@@ -12,6 +12,7 @@ import {
 import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { Chip } from '../../../../shared/components/atoms/chip/chip';
 import { Input } from '../../../../shared/components/atoms/input/input';
+import { NavIcon } from '../../../../shared/components/atoms/nav-icon/nav-icon';
 import { Select } from '../../../../shared/components/atoms/select/select';
 import type { SelectOption } from '../../../../shared/components/atoms/select/select.types';
 import { Skeleton } from '../../../../shared/components/atoms/skeleton/skeleton';
@@ -69,6 +70,7 @@ const PIN_DE_LA_CENTRAL = 'central';
     DecimalPipe,
     FormField,
     Input,
+    NavIcon,
     Select,
     Skeleton,
     ViewStateHost,

@@ -93,20 +93,22 @@
            suprime «Facturación» cuando no la tiene y a partir de ahí las dos
            numeraciones dejan de coincidir (`pestanaDeEdicion`).
 
-           En «Actividad» no hay lápiz: son estadísticas, no se editan. -->
+           En «Actividad» no hay lápiz: son estadísticas, no se editan.
+
+           Lápiz y nombre, no sólo el ícono: «Editar perfil» es igual en todos
+           los perfiles (pedido del 30/09/2026) y el texto es su nombre
+           accesible. -->
       @if (pestanaDeEdicion() !== null) {
         <a
           app-button
           variant="outline"
           size="sm"
-          [iconOnly]="true"
-          aria-label="Editar"
-          appTooltip="Editar"
           data-testid="mi-perfil-editar"
           routerLink="/my-account/edit"
           [queryParams]="{ pestana: pestanaDeEdicion() }"
         >
           <app-nav-icon name="edit" />
+          Editar perfil
         </a>
       }
     </div>

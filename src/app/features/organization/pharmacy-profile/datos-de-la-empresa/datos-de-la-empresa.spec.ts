@@ -85,6 +85,21 @@ describe('DatosDeLaEmpresa', () => {
     expect(montar().textContent ?? '').toContain('la plataforma cuenta cuántos proveedores');
   });
 
+  /**
+   * El mismo control en todos los perfiles (pedido del 30/09/2026).
+   *
+   * La ficha del paciente y la del médico dicen «Editar perfil» con el lápiz;
+   * la de la institución decía «Editar», sin icono. Un nombre distinto por
+   * pantalla obliga a volver a aprender el mismo botón en cada una.
+   */
+  it('el botón de edición dice «Editar perfil» y lleva el lápiz', () => {
+    const boton = montar().querySelector<HTMLButtonElement>('[data-testid="ficha-editar-empresa"]');
+
+    expect(boton?.textContent?.trim()).toBe('Editar perfil');
+    expect(boton?.querySelector('svg')).not.toBeNull();
+    expect(boton?.classList.contains('btn--icon-only')).toBe(false);
+  });
+
   it('el formulario se abre en la misma pestaña, con lo que ya había cargado', () => {
     const root = montar();
 
