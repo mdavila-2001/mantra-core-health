@@ -139,6 +139,17 @@ export interface IndicadorDeCalidad {
   readonly proporcion: number | null;
 }
 
+/** El consultorio propio del profesional, tal como lo dibuja su ficha. */
+export interface ConsultorioVisible {
+  /**
+   * El logo del consultorio como `data:` URL, o `null` si no cargó ninguno o
+   * no se pudo leer. Es el mismo que sale en el membrete de sus PDF.
+   */
+  readonly logoUrl: string | null;
+  /** Cómo se llama el consultorio, para el texto alternativo del logo. */
+  readonly nombre: string;
+}
+
 /**
  * A nombre de quién factura el profesional.
  *
@@ -152,13 +163,6 @@ export interface FacturacionVisible {
   readonly nit: string;
   /** A nombre de quién sale el comprobante. Vacío si no lo cargó. */
   readonly razonSocial: string;
-  /**
-   * El logo del consultorio como `data:` URL, o `null` si no cargó ninguno o
-   * no se pudo leer. Es el mismo que sale en el membrete de sus PDF.
-   */
-  readonly logoUrl: string | null;
-  /** Cómo se llama el consultorio, para el texto alternativo del logo. */
-  readonly nombreDelConsultorio: string;
 }
 
 /**
@@ -238,6 +242,13 @@ export interface PerfilProfesionalVisible {
    * mostrando lo que siempre mostró.
    */
   readonly datosPersonales: DatosPersonalesVisibles | null;
+  /**
+   * Su consultorio propio —hoy, sólo el logo—, **sólo en la ficha propia**.
+   *
+   * Se carga y se corrige desde «Datos personales»; «Facturación» lo muestra
+   * como vista previa de lectura. Ausente o `null` en la ficha de otro.
+   */
+  readonly consultorio?: ConsultorioVisible | null;
   /**
    * Sus datos de facturación, **sólo en la ficha propia**.
    *

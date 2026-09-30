@@ -293,6 +293,21 @@
         <!-- La contraseña NO es un campo más: cambiarla revoca sesiones y exige
              la actual, así que va por su propio flujo y con su propio botón —
              igual que en la ficha del paciente. -->
+        <!-- El logo del consultorio. Es lo que sale en el membrete de cada PDF
+             que emite; se dibuja siempre, con su marcador «Sin logo», por lo
+             mismo que el resto de los renglones de la ficha propia. -->
+        @if (perfil().consultorio; as consultorio) {
+          <section class="mi-perfil__logo" data-testid="perfil-logo-consultorio">
+            <h3 class="mi-perfil__subtitulo">Logo del consultorio</h3>
+            <app-logo-consultorio
+              data-testid="perfil-logo-consultorio-vista"
+              [src]="consultorio.logoUrl"
+              [nombre]="consultorio.nombre"
+            />
+            <p class="mi-perfil__nota">Sale en el membrete de tus PDF. Se cambia desde «Editar».</p>
+          </section>
+        }
+
         <p class="mi-perfil__accion">
           <a
             app-button
@@ -437,15 +452,15 @@
                  profesional, son lo que hay que copiar en una factura, y se
                  consultan juntos. El NIT es la cifra que se busca, así que va
                  primero y en grande; la razón social lo completa. -->
-            <!-- El logo del consultorio va a la izquierda de los dos datos, en su
-                 caja de tamaño fijo: con o sin logo el recuadro mide lo mismo, y
-                 es el mismo que sale en el membrete de cada PDF. -->
+            <!-- Vista previa de lectura del logo del consultorio, en su caja de
+                 tamaño fijo: con o sin logo el recuadro mide lo mismo. **No se
+                 corrige acá**: se carga y se cambia desde «Datos personales». -->
             <div class="mi-perfil__factura factura--con-logo" data-testid="perfil-factura-recuadro">
               <app-logo-consultorio
                 class="factura__logo"
                 data-testid="perfil-factura-logo"
-                [src]="facturacion.logoUrl"
-                [nombre]="facturacion.nombreDelConsultorio"
+                [src]="perfil().consultorio?.logoUrl ?? null"
+                [nombre]="perfil().consultorio?.nombre ?? ''"
               />
 
               <div class="factura__datos">
