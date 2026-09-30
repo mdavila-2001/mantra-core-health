@@ -66,6 +66,9 @@ export { StoredFilePreview } from './stored-file-preview/stored-file-preview';
 
 export { FormField } from './form-field/form-field';
 
+export { FirmaOSello } from './firma-o-sello/firma-o-sello';
+export type { TipoDeFirmaOSello } from './firma-o-sello/firma-o-sello';
+
 export { LogoConsultorio } from './logo-consultorio/logo-consultorio';
 
 /* `MenuItem` y `MenuTrigger` solo tienen sentido dentro de un `Menu`. */

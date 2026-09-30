@@ -1,7 +1,11 @@
 import { effect, inject, Injectable, InjectionToken, untracked } from '@angular/core';
+import { catchError, forkJoin, of } from 'rxjs';
 
 import { AuthService } from '../auth/auth.service';
+import { FirmaYSelloClient } from '../data-access/profiles/firma-y-sello.client';
+import { ProfilesClient } from '../data-access/profiles/profiles.client';
 import { LogoDelConsultorioClient } from '../data-access/practice-sites/logo-del-consultorio.client';
+import { establecerFirmaDeDocumentos } from '../../shared/utils/pdf-export/pdf-firma';
 import {
   establecerLogoDeDocumentos,
   prepararLogo,
@@ -19,7 +23,8 @@ export const PREPARAR_LOGO = new InjectionToken<(dataUrl: string) => Promise<Pdf
 );
 
 /**
- * Mantiene listo el logo del consultorio para el membrete de los PDF.
+ * Mantiene listos el logo del consultorio y la firma y el sello del médico para
+ * el membrete y el pie de los PDF.
  *
  * ## Por qué existe
  *
@@ -45,6 +50,8 @@ export const PREPARAR_LOGO = new InjectionToken<(dataUrl: string) => Promise<Pdf
 export class PdfBrandingService {
   private readonly auth = inject(AuthService);
   private readonly logo = inject(LogoDelConsultorioClient);
+  private readonly firmaYSello = inject(FirmaYSelloClient);
+  private readonly perfiles = inject(ProfilesClient);
   private readonly preparar = inject(PREPARAR_LOGO);
 
   /** Para descartar respuestas de un pedido que ya no es el vigente. */
@@ -57,7 +64,10 @@ export class PdfBrandingService {
     });
   }
 
-  /** Vuelve a leer el logo: se llama después de guardar uno nuevo o de quitarlo. */
+  /**
+   * Vuelve a leer el logo, la firma y el sello: se llama después de guardar uno
+   * nuevo o de quitarlo.
+   */
   recargar(): void {
     this.cargar(this.auth.practitionerProfileId());
   }
@@ -66,8 +76,10 @@ export class PdfBrandingService {
     const pedido = ++this.pedido;
     if (profileId === null) {
       establecerLogoDeDocumentos(null);
+      establecerFirmaDeDocumentos(null);
       return;
     }
+    this.cargarFirma(pedido);
     this.logo.obtenerUrl(profileId).subscribe((url) => {
       if (url === null) {
         if (pedido === this.pedido) establecerLogoDeDocumentos(null);
@@ -76,6 +88,34 @@ export class PdfBrandingService {
       void this.preparar(url).then((listo) => {
         // Una respuesta lenta del pedido anterior no pisa a la del vigente.
         if (pedido === this.pedido) establecerLogoDeDocumentos(listo);
+      });
+    });
+  }
+
+  /**
+   * La firma y el sello del profesional, más el nombre y la matrícula que se
+   * imprimen bajo la línea. Son **imágenes**, no una firma electrónica.
+   *
+   * Si el perfil no se puede leer el bloque sale igual, con la línea de firma y
+   * sin nombre: un documento firmado a mano después no necesita más.
+   */
+  private cargarFirma(pedido: number): void {
+    forkJoin([
+      this.firmaYSello.obtener(),
+      this.perfiles.getOwnPractitionerProfile().pipe(catchError(() => of(null))),
+    ]).subscribe(([imagenes, perfil]) => {
+      void Promise.all([
+        imagenes.firmaUrl === null ? null : this.preparar(imagenes.firmaUrl),
+        imagenes.selloUrl === null ? null : this.preparar(imagenes.selloUrl),
+      ]).then(([firma, sello]) => {
+        // Una respuesta lenta del pedido anterior no pisa a la del vigente.
+        if (pedido !== this.pedido) return;
+        establecerFirmaDeDocumentos({
+          nombre: perfil?.displayName ?? '',
+          matricula: perfil?.licenses[0]?.licenseNumber ?? null,
+          firma,
+          sello,
+        });
       });
     });
   }

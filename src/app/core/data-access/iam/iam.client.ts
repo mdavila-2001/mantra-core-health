@@ -275,6 +275,12 @@ export class IamClient {
       ...(registration.profilePhotoBase64 === undefined
         ? {}
         : { profilePhotoBase64: registration.profilePhotoBase64 }),
+      ...(registration.signatureImageBase64 === undefined
+        ? {}
+        : { signatureImageBase64: registration.signatureImageBase64 }),
+      ...(registration.sealImageBase64 === undefined
+        ? {}
+        : { sealImageBase64: registration.sealImageBase64 }),
       ...(registration.occupationConceptId === undefined
         ? {}
         : { occupationConceptId: registration.occupationConceptId }),

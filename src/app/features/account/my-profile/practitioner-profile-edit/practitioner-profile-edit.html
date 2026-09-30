@@ -165,6 +165,113 @@
               <app-switch [(checked)]="telemedicina" label="Atiendo por telemedicina" />
             </form>
 
+            <!-- ─── Firma y sello médico ───────────────────────────────────
+                 Dos **imágenes** —la firma manuscrita escaneada y el sello—, no
+                 una firma electrónica: nada de certificado ni criptografía.
+                 Salen al pie de cada documento que emitís, con tu nombre y tu
+                 matrícula debajo. Sin ellas el documento sale igual, con la
+                 línea de firma vacía. Se suben y se cambian SÓLO desde acá.
+                 Reusa las clases del bloque del logo: es el mismo gesto. -->
+            <section class="edicion__logo" data-testid="edicion-firma-y-sello">
+              <h3 class="edicion__logo-titulo">Firma y sello médico</h3>
+              <p class="edicion__logo-nota">
+                Salen al pie de tus recetas y documentos. PNG, JPG o WEBP, hasta 2 MB cada una. Si
+                no cargás ninguna, el documento sale igual, con la línea de firma vacía.
+              </p>
+
+              <div class="edicion__logo-cuerpo" data-testid="edicion-firma">
+                <app-firma-o-sello
+                  tipo="firma"
+                  data-testid="edicion-firma-vista"
+                  [src]="firma.visible()"
+                />
+
+                <div class="edicion__logo-acciones">
+                  <app-file-input
+                    data-testid="edicion-firma-archivo"
+                    testId="edicion-firma-archivo"
+                    [files]="firma.archivos()"
+                    (filesChange)="alElegirFirma($event)"
+                    (rejected)="firma.rechazar($event)"
+                    [accept]="formatosDeFirma"
+                    [maxSizeBytes]="maxBytesDeFirma"
+                    [maxFiles]="1"
+                    [disabled]="firma.subiendo()"
+                    [showList]="false"
+                    [showFeedback]="false"
+                    [label]="firma.visible() ? 'Cambiar firma' : 'Subir firma'"
+                    accessibleLabel="Firma del médico"
+                  />
+                  @if (firma.visible()) {
+                    <button
+                      app-button
+                      type="button"
+                      variant="neutral"
+                      size="sm"
+                      data-testid="edicion-firma-quitar"
+                      (clicked)="firma.quitar()"
+                    >
+                      Quitar firma
+                    </button>
+                  }
+                  @if (firma.subiendo()) {
+                    <p class="edicion__logo-estado" role="status">Subiendo firma…</p>
+                  }
+                  @if (firma.error()) {
+                    <p class="edicion__logo-error" role="alert" data-testid="edicion-firma-error">
+                      {{ firma.error() }}
+                    </p>
+                  }
+                </div>
+              </div>
+
+              <div class="edicion__logo-cuerpo" data-testid="edicion-sello">
+                <app-firma-o-sello
+                  tipo="sello"
+                  data-testid="edicion-sello-vista"
+                  [src]="sello.visible()"
+                />
+
+                <div class="edicion__logo-acciones">
+                  <app-file-input
+                    data-testid="edicion-sello-archivo"
+                    testId="edicion-sello-archivo"
+                    [files]="sello.archivos()"
+                    (filesChange)="alElegirSello($event)"
+                    (rejected)="sello.rechazar($event)"
+                    [accept]="formatosDeFirma"
+                    [maxSizeBytes]="maxBytesDeFirma"
+                    [maxFiles]="1"
+                    [disabled]="sello.subiendo()"
+                    [showList]="false"
+                    [showFeedback]="false"
+                    [label]="sello.visible() ? 'Cambiar sello' : 'Subir sello'"
+                    accessibleLabel="Sello del médico"
+                  />
+                  @if (sello.visible()) {
+                    <button
+                      app-button
+                      type="button"
+                      variant="neutral"
+                      size="sm"
+                      data-testid="edicion-sello-quitar"
+                      (clicked)="sello.quitar()"
+                    >
+                      Quitar sello
+                    </button>
+                  }
+                  @if (sello.subiendo()) {
+                    <p class="edicion__logo-estado" role="status">Subiendo sello…</p>
+                  }
+                  @if (sello.error()) {
+                    <p class="edicion__logo-error" role="alert" data-testid="edicion-sello-error">
+                      {{ sello.error() }}
+                    </p>
+                  }
+                </div>
+              </div>
+            </section>
+
             <!-- ─── Lo que se muestra y no se corrige acá ──────────────────
                  «Editar muestre TODOS los campos» (C-05). El documento y el
                  departamento que lo emitió son del alta, y el contrato de

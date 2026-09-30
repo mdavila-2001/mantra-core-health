@@ -293,6 +293,29 @@
         <!-- La contraseña NO es un campo más: cambiarla revoca sesiones y exige
              la actual, así que va por su propio flujo y con su propio botón —
              igual que en la ficha del paciente. -->
+        <!-- La firma y el sello médicos: dos imágenes —no una firma electrónica—
+             que salen al pie de cada documento que emite. Se dibujan siempre, con
+             su marcador «Sin firma» / «Sin sello», por lo mismo que el resto de
+             los renglones de la ficha propia. -->
+        @if (perfil().firmaYSello; as firmaYSello) {
+          <section class="mi-perfil__firma" data-testid="perfil-firma-y-sello">
+            <h3 class="mi-perfil__subtitulo">Firma y sello médico</h3>
+            <div class="mi-perfil__firma-cajas">
+              <app-firma-o-sello
+                tipo="firma"
+                data-testid="perfil-firma-vista"
+                [src]="firmaYSello.firmaUrl"
+              />
+              <app-firma-o-sello
+                tipo="sello"
+                data-testid="perfil-sello-vista"
+                [src]="firmaYSello.selloUrl"
+              />
+            </div>
+            <p class="mi-perfil__nota">Salen al pie de tus recetas y documentos. Se cambian desde «Editar».</p>
+          </section>
+        }
+
         <p class="mi-perfil__accion">
           <a
             app-button

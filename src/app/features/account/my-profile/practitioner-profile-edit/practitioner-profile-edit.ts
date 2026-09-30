@@ -20,6 +20,7 @@ import { catchError, forkJoin, map, of, switchMap, type Observable } from 'rxjs'
 import { blobToDataUrl } from '../../../../core/data-access/files/blob-to-data-url';
 import { FilesClient } from '../../../../core/data-access/files/files.client';
 import { PdfBrandingService } from '../../../../core/pdf-branding/pdf-branding.service';
+import { FirmaYSelloClient } from '../../../../core/data-access/profiles/firma-y-sello.client';
 import { LogoDelConsultorioClient } from '../../../../core/data-access/practice-sites/logo-del-consultorio.client';
 import { FileDownloader } from '../../../../core/data-access/files/file-downloader';
 import { ProfilesClient } from '../../../../core/data-access/profiles/profiles.client';
@@ -53,6 +54,7 @@ import {
 } from '../../../../shared/components/molecules/phone-input/phone-input';
 import { ConceptSelect } from '../../../../shared/components/molecules/concept-select/concept-select';
 import { FileInput, type RejectedFile } from '../../../../shared/components/molecules/file-input/file-input';
+import { FirmaOSello } from '../../../../shared/components/molecules/firma-o-sello/firma-o-sello';
 import { LogoConsultorio } from '../../../../shared/components/molecules/logo-consultorio/logo-consultorio';
 import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
 import { Pagination } from '../../../../shared/components/molecules/pagination/pagination';
@@ -89,6 +91,11 @@ import { DatePicker } from '../../../../shared/components/organisms/date-picker/
 import { FormActions } from '../../../../shared/components/organisms/form-actions/form-actions';
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
+import {
+  EstadoDeImagen,
+  FORMATOS_DE_IMAGEN_DE_FIRMA,
+  MAX_BYTES_DE_IMAGEN_DE_FIRMA,
+} from './estado-de-imagen';
 import { PESTANA_EDITOR, PESTANAS_DEL_EDITOR_MEDICO } from '../pestanas-del-perfil-medico';
 import { WorkHistory } from '../work-history/work-history';
 import {
@@ -330,6 +337,7 @@ function soloFecha(fecha: Date): string {
     FormActions,
     FileInput,
     LogoConsultorio,
+    FirmaOSello,
     FormField,
     Input,
     LocationPicker,
@@ -358,6 +366,7 @@ export class PractitionerProfileEdit {
   private readonly profiles = inject(ProfilesClient);
   private readonly files = inject(FilesClient);
   private readonly logo = inject(LogoDelConsultorioClient);
+  private readonly firmaYSello = inject(FirmaYSelloClient);
   private readonly membretePdf = inject(PdfBrandingService);
   private readonly descargas = inject(FileDownloader);
   private readonly dialogs = inject(DialogService);
@@ -507,6 +516,15 @@ export class PractitionerProfileEdit {
   protected readonly formatosDelLogo = 'image/png,image/jpeg,image/webp';
   /** 2 MiB: sobra para un logo y evita que un membrete pese como una foto. */
   protected readonly maxBytesDelLogo = 2 * 1024 * 1024;
+
+  /* -- La firma y el sello médicos -------------------------------------------
+     Dos imágenes —**no** una firma electrónica— que salen al pie de los PDF.
+     Misma vida que el logo: se suben al elegir y se escriben con «Guardar
+     cambios». Ver `EstadoDeImagen` y `FirmaYSelloClient`. */
+  protected readonly firma = new EstadoDeImagen('la firma');
+  protected readonly sello = new EstadoDeImagen('el sello');
+  protected readonly formatosDeFirma = FORMATOS_DE_IMAGEN_DE_FIRMA;
+  protected readonly maxBytesDeFirma = MAX_BYTES_DE_IMAGEN_DE_FIRMA;
   /**
    * La calle, ALV-009.
    *
@@ -1344,9 +1362,26 @@ export class PractitionerProfileEdit {
         this.perfil.set(ready(perfil));
         this.cargarEtiquetas(perfil);
         this.cargarLogo(perfil.profileId);
+        this.cargarFirmaYSello();
       },
       error: (error: unknown) => this.perfil.set(errorToViewState<OwnPractitionerProfile>(error)),
     });
+  }
+
+  /** Trae la firma y el sello guardados. Sin ellos o con un error, las cajas dicen «Sin …». */
+  private cargarFirmaYSello(): void {
+    this.firmaYSello.obtener().subscribe((guardados) => {
+      this.firma.cargar(guardados.firmaUrl);
+      this.sello.cargar(guardados.selloUrl);
+    });
+  }
+
+  protected alElegirFirma(archivos: readonly File[]): void {
+    this.firma.elegir(archivos, (archivo) => this.firmaYSello.subir(archivo));
+  }
+
+  protected alElegirSello(archivos: readonly File[]): void {
+    this.sello.elegir(archivos, (archivo) => this.firmaYSello.subir(archivo));
   }
 
   /** Trae el logo guardado. Sin logo o con un error, la tile muestra «Sin logo». */
@@ -1507,6 +1542,8 @@ export class PractitionerProfileEdit {
     this.logoPendiente.set(null);
     this.logoVisible.set(this.logoGuardado());
     this.errorDelLogo.set('');
+    this.firma.descartar();
+    this.sello.descartar();
     this.toasts.success('Descartamos los cambios sin guardar.', 'Edición cancelada');
   }
 
@@ -1671,12 +1708,18 @@ export class PractitionerProfileEdit {
     }
 
     const logoPendiente = this.logoPendiente();
-    if (Object.keys(cambios).length === 0 && logoPendiente === null) {
+    // La firma y el sello tampoco viajan en el PATCH del perfil: otra escritura.
+    const cambiosDeFirma = {
+      ...(this.firma.cambio === undefined ? {} : { firmaFileId: this.firma.cambio }),
+      ...(this.sello.cambio === undefined ? {} : { selloFileId: this.sello.cambio }),
+    };
+    const hayCambiosDeFirma = Object.keys(cambiosDeFirma).length > 0;
+    if (Object.keys(cambios).length === 0 && logoPendiente === null && !hayCambiosDeFirma) {
       this.toasts.success('No había ningún cambio para guardar.', 'Perfil');
       return;
     }
-    if (this.subiendoLogo()) {
-      this.toasts.error('Esperá a que termine de subir el logo.', 'Perfil');
+    if (this.subiendoLogo() || this.firma.subiendo() || this.sello.subiendo()) {
+      this.toasts.error('Esperá a que termine de subir la imagen.', 'Perfil');
       return;
     }
 
@@ -1692,13 +1735,20 @@ export class PractitionerProfileEdit {
       logoPendiente === null
         ? of(undefined)
         : this.logo.guardar(original.profileId, logoPendiente.fileId);
-    forkJoin([perfil$, logo$]).pipe(map(([perfil]) => perfil)).subscribe({
+    const firmaYSello$ = hayCambiosDeFirma
+      ? this.firmaYSello.guardar(cambiosDeFirma)
+      : of(undefined);
+    forkJoin([perfil$, logo$, firmaYSello$]).pipe(map(([perfil]) => perfil)).subscribe({
       next: (perfil) => {
         this.guardandoPresentacion.set(false);
         if (logoPendiente !== null) {
           this.logoGuardado.set(this.logoVisible());
           this.logoPendiente.set(null);
-          // Los PDF que se emitan desde ahora llevan el logo nuevo.
+        }
+        this.firma.confirmar();
+        this.sello.confirmar();
+        if (logoPendiente !== null || hayCambiosDeFirma) {
+          // Los PDF que se emitan desde ahora llevan lo nuevo.
           this.membretePdf.recargar();
         }
         this.sembrarFormulario(perfil);
