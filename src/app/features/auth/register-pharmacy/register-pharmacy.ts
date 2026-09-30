@@ -174,6 +174,12 @@ const AYUDA: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
       texto:
         'El correo del representante legal es el usuario de la cuenta. Después se suman los usuarios que hagan falta, cada uno con el suyo.',
     },
+    {
+      icono: 'folder',
+      titulo: 'El poder va con quien lo firma',
+      texto:
+        'Adjuntalo acá, junto a los datos del representante. Es opcional: si el dueño se representa a sí mismo, no hace falta.',
+    },
   ],
   'gerencia-general': [
     {
@@ -330,11 +336,14 @@ export class RegisterPharmacy {
     return null;
   });
 
-  /** Los seis papeles, en el orden del registro de procesos: página que auto-parte «(1 de 2)/(2 de 2)». */
-  private readonly camposDeDocumentos = [
-    ...camposDeDocumentosLegales(PAIS, uiLanguage(), false),
-    campoDelPoderNotariado(PAIS, uiLanguage(), false),
-  ];
+  /** Los cinco papeles de la empresa, en el orden del registro de procesos. */
+  private readonly camposDeDocumentos = camposDeDocumentosLegales(PAIS, uiLanguage(), false);
+
+  /**
+   * El poder del representante (1.8.1) no va con los papeles de la empresa:
+   * se pide en la misma página que el representante, junto a quien lo firma.
+   */
+  private readonly campoDelPoder = campoDelPoderNotariado(PAIS, uiLanguage(), false);
 
   readonly paginas = computed<readonly PaginaDeFormulario[]>(() =>
     paginarCampos([
@@ -441,6 +450,7 @@ export class RegisterPharmacy {
             testId: 'registro-farmacia-representante-correo',
             mensajeDeError: 'Escribí un correo válido: es el usuario de la cuenta.',
           },
+          this.campoDelPoder,
         ],
       },
       ...this.paginasDeGerencia(),
@@ -579,7 +589,7 @@ export class RegisterPharmacy {
 
   /** El rótulo ya resuelto del documento (sin el sufijo «(opcional)», acá es siempre opcional). */
   protected etiquetaDeDocumento(clave: ClaveDeDocumentoDelAlta): string {
-    const campo = this.camposDeDocumentos.find((c) => c.key === clave);
+    const campo = [...this.camposDeDocumentos, this.campoDelPoder].find((c) => c.key === clave);
     return campo?.label.replace(' (opcional)', '') ?? 'Documento';
   }
 

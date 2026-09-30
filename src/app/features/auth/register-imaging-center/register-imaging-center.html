@@ -118,6 +118,23 @@
               />
             </ng-template>
 
+            <ng-template appCampoPersonalizado="legalRepName">
+              <app-campos-de-nombre
+                [grupo]="form.controls.legalRepName"
+                [obligatorio]="true"
+                prefijoTestId="registro-imagen-representante"
+              />
+            </ng-template>
+            <ng-template appCampoPersonalizado="generalManagerName">
+              <app-campos-de-nombre [grupo]="form.controls.generalManagerName" prefijoTestId="registro-imagen-gerente-general" />
+            </ng-template>
+            <ng-template appCampoPersonalizado="salesManagerName">
+              <app-campos-de-nombre [grupo]="form.controls.salesManagerName" prefijoTestId="registro-imagen-gerente-comercial" />
+            </ng-template>
+            <ng-template appCampoPersonalizado="marketingManagerName">
+              <app-campos-de-nombre [grupo]="form.controls.marketingManagerName" prefijoTestId="registro-imagen-gerente-marketing" />
+            </ng-template>
+
             <ng-template appCampoPersonalizado="gpsCentral">
               @if (direccionPorReescribir()) {
                 <!-- D-06: tocar el mapa vació lo escrito; se dice junto al campo y se

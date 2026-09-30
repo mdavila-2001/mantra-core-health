@@ -53,6 +53,8 @@ import {
   type IdsDePrueba,
 } from '../registro-compartido/ubicacion-picker/ubicacion-picker';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
+import { CamposDeNombre } from '../registro-compartido/campos-de-nombre/campos-de-nombre';
+import { grupoDeNombre, nombreCompleto } from '../registro-compartido/campos-de-nombre/nombre-de-persona';
 
 /* ============================================================================
     Alta del laboratorio de sangre — proceso 4.1 del registro del stakeholder.
@@ -178,6 +180,12 @@ const AYUDA: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
       texto:
         'El correo del representante legal es el usuario de la cuenta. Después se suman los usuarios que hagan falta, cada uno con el suyo.',
     },
+    {
+      icono: 'folder',
+      titulo: 'El poder va con quien lo firma',
+      texto:
+        'Adjuntalo acá, junto a los datos del representante. Es opcional: si el dueño se representa a sí mismo, no hace falta.',
+    },
   ],
   'gerencia-general': [
     {
@@ -270,6 +278,7 @@ const AYUDA: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
     RegistroAyuda,
     UbicacionPicker,
     DropzonePdf,
+    CamposDeNombre,
   ],
   templateUrl: './register-laboratory.html',
   styleUrls: ['../registro-compartido/registro.css', './register-laboratory.css'],
@@ -311,16 +320,14 @@ export class RegisterLaboratory {
       validators: [Validators.required, Validators.maxLength(MAX_DIRECCION)],
     }),
     // --- 4.1.8 · representante legal ---------------------------------------
-    legalRepName: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.maxLength(MAX_NOMBRE)],
-    }),
+    // Un grupo con las partes del nombre (primer nombre y apellido paterno obligatorios).
+    legalRepName: grupoDeNombre(true),
     legalRepEmail: new FormControl('', {
       nonNullable: true,
       validators: [Validators.required, Validators.email, Validators.maxLength(MAX_CORREO)],
     }),
     // --- 4.1.9 a 4.1.17 · los tres cargos, todos opcionales ----------------
-    generalManagerName: new FormControl('', { nonNullable: true }),
+    generalManagerName: grupoDeNombre(false),
     generalManagerPhone: new FormControl('', {
       nonNullable: true,
       validators: [telefonoCompleto],
@@ -329,7 +336,7 @@ export class RegisterLaboratory {
       nonNullable: true,
       validators: [Validators.email],
     }),
-    salesManagerName: new FormControl('', { nonNullable: true }),
+    salesManagerName: grupoDeNombre(false),
     salesManagerPhone: new FormControl('', {
       nonNullable: true,
       validators: [telefonoCompleto],
@@ -338,7 +345,7 @@ export class RegisterLaboratory {
       nonNullable: true,
       validators: [Validators.email],
     }),
-    marketingManagerName: new FormControl('', { nonNullable: true }),
+    marketingManagerName: grupoDeNombre(false),
     marketingManagerPhone: new FormControl('', {
       nonNullable: true,
       validators: [telefonoCompleto],
@@ -409,10 +416,7 @@ export class RegisterLaboratory {
       hint: 'Opcionales: podés adjuntarlos ahora o más adelante. PDF, hasta 10 MB por archivo.',
       // Los seis, en el orden del registro de procesos: el motor parte la
       // página sola en «(1 de 2)» y «(2 de 2)».
-      campos: [
-        ...camposDeDocumentosLegales(PAIS, uiLanguage(), false),
-        campoDelPoderNotariado(PAIS, uiLanguage(), false),
-      ],
+      campos: camposDeDocumentosLegales(PAIS, uiLanguage(), false),
     },
     {
       titulo: 'Dónde está la central',
@@ -457,14 +461,12 @@ export class RegisterLaboratory {
       icon: 'shield' as const,
       campos: [
         {
+          // Sin rótulo ni error propios: `app-campos-de-nombre` pinta cada casilla
+          // con el suyo, y un `<label for>` externo apuntaría a un control que no existe.
           key: 'legalRepName',
-          label: 'Nombre del representante legal',
-          control: 'text' as const,
-          required: true,
-          icono: 'people' as const,
-          autocomplete: 'name',
-          testId: 'registro-lab-representante',
-          mensajeDeError: 'Escribí el nombre del representante legal.',
+          label: '',
+          control: 'custom' as const,
+          mensajeDeError: '',
         },
         {
           key: 'legalRepEmail',
@@ -477,6 +479,8 @@ export class RegisterLaboratory {
           testId: 'registro-lab-representante-correo',
           mensajeDeError: 'Escribí un correo válido: es el usuario de la cuenta.',
         },
+        // El poder (4.1.8.1) se pide junto a quien lo firma, no con los papeles de la empresa.
+        campoDelPoderNotariado(PAIS, uiLanguage(), false),
       ],
     },
     {
@@ -487,9 +491,9 @@ export class RegisterLaboratory {
       campos: [
         {
           key: 'generalManagerName',
-          label: 'Nombre del gerente general',
-          control: 'text' as const,
-          icono: 'people' as const,
+          label: '',
+          control: 'custom' as const,
+          mensajeDeError: '',
           testId: 'registro-lab-gerente-general',
         },
         {
@@ -517,9 +521,9 @@ export class RegisterLaboratory {
       campos: [
         {
           key: 'salesManagerName',
-          label: 'Nombre del gerente comercial',
-          control: 'text' as const,
-          icono: 'people' as const,
+          label: '',
+          control: 'custom' as const,
+          mensajeDeError: '',
           testId: 'registro-lab-gerente-comercial',
         },
         {
@@ -547,9 +551,9 @@ export class RegisterLaboratory {
       campos: [
         {
           key: 'marketingManagerName',
-          label: 'Nombre del gerente de marketing',
-          control: 'text' as const,
-          icono: 'people' as const,
+          label: '',
+          control: 'custom' as const,
+          mensajeDeError: '',
           testId: 'registro-lab-gerente-marketing',
         },
         {
@@ -826,17 +830,17 @@ export class RegisterLaboratory {
 
     const cargos = {
       generalManager: {
-        name: raw.generalManagerName,
+        name: nombreCompleto(raw.generalManagerName),
         phone: raw.generalManagerPhone,
         email: raw.generalManagerEmail,
       },
       commercialManager: {
-        name: raw.salesManagerName,
+        name: nombreCompleto(raw.salesManagerName),
         phone: raw.salesManagerPhone,
         email: raw.salesManagerEmail,
       },
       marketingManager: {
-        name: raw.marketingManagerName,
+        name: nombreCompleto(raw.marketingManagerName),
         phone: raw.marketingManagerPhone,
         email: raw.marketingManagerEmail,
       },
@@ -860,6 +864,7 @@ export class RegisterLaboratory {
     const documentosCompletos = Object.values(documentos).every((v) => v !== '');
 
     const razonSocial = raw.legalName.trim();
+    const nombreDelRepresentante = nombreCompleto(raw.legalRepName);
     return {
       code: this.codigoDesdeNit(raw.taxId),
       legalName: razonSocial,
@@ -878,10 +883,10 @@ export class RegisterLaboratory {
       owner: {
         email: raw.legalRepEmail.trim(),
         password: raw.password,
-        displayName: raw.legalRepName.trim(),
+        displayName: nombreDelRepresentante,
       },
       legalRepresentative: {
-        fullName: raw.legalRepName.trim(),
+        fullName: nombreDelRepresentante,
         email: raw.legalRepEmail.trim(),
         ...(raw.powerOfAttorneyFileId === '' ? {} : { powerOfAttorneyFileId: raw.powerOfAttorneyFileId }),
       },

@@ -212,6 +212,18 @@ describe('RegisterPharmacy', () => {
     req.flush(RESPUESTA_201);
   });
 
+  it('el poder se pide en la página del representante, no con los papeles de la farmacia', () => {
+    // `paginarCampos` puede partir una sección en «(1 de 2)»; los dos trozos llevan la misma clave.
+    const camposDe = (clave: string) =>
+      component
+        .paginas()
+        .filter((p) => p.clave === clave)
+        .flatMap((p) => p.campos.map((c) => c.key));
+
+    expect(camposDe('representante')).toEqual(['legalRepName', 'legalRepEmail', 'powerOfAttorneyFileId']);
+    expect(camposDe('documentos')).not.toContain('powerOfAttorneyFileId');
+  });
+
   it('el poder del representante viaja aparte, dentro de legalRepresentative', () => {
     completarObligatorio();
     component.form.controls.powerOfAttorneyFileId.setValue('file-poder');
