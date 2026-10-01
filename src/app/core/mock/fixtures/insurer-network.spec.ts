@@ -59,10 +59,13 @@ describe('el arancel real en el nomenclador', () => {
     expect(dental.items.every((i) => i.priceUnit === 'USD')).toBe(true);
   });
 
-  it('lo que la planilla no cotiza viaja en null, no en cero', () => {
-    const sinPrecio = DENTAL_FEE_SCHEDULE.filter((i) => i.referencePrice === null);
-    expect(sinPrecio.length).toBeGreaterThan(0);
-    expect(sinPrecio.every((i) => i.priceUnit === null)).toBe(true);
+  it('lo que la planilla no cotiza no entra al nomenclador, y nada viaja en cero', () => {
+    // Desde 2026-10-01 las filas sin importe (encabezados, notas, líneas pegadas
+    // por el OCR) quedan en `data/fee-schedules/` y no en el nomenclador: «no
+    // publicado» sigue sin ser «gratis», ahora porque ni siquiera se ofrece.
+    const todas = [...MEDICAL_FEE_SCHEDULE, ...DENTAL_FEE_SCHEDULE];
+    expect(todas.every((i) => i.referencePrice !== null && i.priceUnit !== null)).toBe(true);
+    expect(todas.some((i) => Number(i.referencePrice) === 0)).toBe(false);
   });
 });
 

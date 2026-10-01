@@ -112,7 +112,7 @@ describe('cada dato de markdown_convertidos sale por el endpoint de su pantalla'
     }
   });
 
-  it('el nomenclador trae las 4887 prestaciones de los dos aranceles', () => {
+  it('el nomenclador trae todas las prestaciones con importe de los dos aranceles', () => {
     const todas = todo<{ code: string }>('/billing/service-catalog/procedures');
     expect(todas).toHaveLength(MEDICAL_FEE_SCHEDULE.length + DENTAL_FEE_SCHEDULE.length);
     expect(new Set(todas.map((i) => i.code)).size).toBe(todas.length);
