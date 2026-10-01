@@ -185,6 +185,21 @@ describe('handlers de servicios con duración dinámica', () => {
     it('un servicio corto ofrece más inicios que uno largo en la misma franja', () => {
       expect(horarios(ECG).body.items.length).toBeGreaterThan(horarios(ECO).body.items.length);
     });
+
+    it('un inicio sólo se ofrece si cabe CON su limpieza dentro de la ventana pedida', () => {
+      // El ECG dura 20 min como máximo y pide 5 de limpieza: ocupa 25. Con la ventana justa del
+      // turno (20 min) no cabe; con un margen sí. Por eso la pantalla de reserva relee con margen.
+      const item = horarios(ECG).body.items.find((i) => new Date(i.startAt).getTime() - Date.now() > 3 * 3_600_000)!;
+      const inicio = new Date(item.startAt).getTime();
+      const fin = new Date(item.endAtMax).getTime();
+      const leer = (desde: number, hasta: number) =>
+        llamar<Horarios>('GET', '/scheduling/service-availability', paciente, {}, new URLSearchParams({
+          offeringId: ECG, resourceId: item.resourceId, from: new Date(desde).toISOString(), to: new Date(hasta).toISOString(),
+        })).body.items;
+
+      expect(leer(inicio, fin).some((i) => i.startAt === item.startAt)).toBe(false);
+      expect(leer(inicio - 2 * 3_600_000, fin + 2 * 3_600_000).some((i) => i.startAt === item.startAt)).toBe(true);
+    });
   });
 
   describe('retener, confirmar y cancelar', () => {

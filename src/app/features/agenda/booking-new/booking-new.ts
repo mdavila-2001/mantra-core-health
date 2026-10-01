@@ -41,6 +41,15 @@ const MAX_MOTIVO = 500;
 const CANDIDATOS_POR_BUSQUEDA = 10;
 
 /**
+ * Cuánto se ensancha, por lado, la ventana con que se relee la disponibilidad de un
+ * servicio. El motor sólo ofrece un inicio si cabe **con su preparación y su limpieza**
+ * dentro de la ventana pedida: con la ventana justa del turno (inicio → fin máximo) un
+ * servicio con colchones nunca cabe y el horario se daría por perdido sin estarlo.
+ * Preparación y limpieza son de minutos; dos horas sobran.
+ */
+const MARGEN_DE_RELECTURA_MS = 2 * 60 * 60 * 1000;
+
+/**
  * Por dónde entró quien está reservando. Coincide con el `channel` que declara
  * `ConfirmBookingDto`, que es el dato que el backend guarda en la cita.
  *
@@ -542,7 +551,12 @@ export class BookingNew {
     hasta: Date,
   ): void {
     this.scheduling
-      .getServiceAvailability({ offeringId: ofertaId, resourceId, from: desde, to: hasta })
+      .getServiceAvailability({
+        offeringId: ofertaId,
+        resourceId,
+        from: new Date(desde.getTime() - MARGEN_DE_RELECTURA_MS),
+        to: new Date(hasta.getTime() + MARGEN_DE_RELECTURA_MS),
+      })
       .subscribe({
         next: (disponibilidad) => {
           const horario = disponibilidad.items.find(

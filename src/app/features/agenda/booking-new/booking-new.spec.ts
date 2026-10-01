@@ -453,7 +453,11 @@ describe('BookingNew', () => {
       const lectura = http.expectOne((r) => r.url === '/scheduling/service-availability');
       expect(lectura.request.params.get('offeringId')).toBe(OFERTA);
       expect(lectura.request.params.get('resourceId')).toBe('r-1');
-      expect(lectura.request.params.get('from')).toBe(INICIO);
+      // La ventana rodea el turno con un margen: el motor sólo ofrece un inicio si cabe con su
+      // preparación y su limpieza dentro de ella, así que la ventana justa lo perdería.
+      const DOS_HORAS = 2 * 60 * 60 * 1000;
+      expect(lectura.request.params.get('from')).toBe(new Date(Date.parse(INICIO) - DOS_HORAS).toISOString());
+      expect(lectura.request.params.get('to')).toBe(new Date(Date.parse(FIN_MAXIMO) + DOS_HORAS).toISOString());
       // Un servicio no tiene cupo en la grilla: no se pide la lista de cupos.
       http.expectNone((r) => r.url === '/scheduling/slots');
       lectura.flush(disponibilidad());
