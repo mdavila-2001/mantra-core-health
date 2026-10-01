@@ -123,10 +123,9 @@ export function toBandejaStatusPresentation(
 }
 
 /**
- * Los grupos de la bandeja, en el orden de la tarjeta: los cuatro primeros
- * a la vista —los nuevos arriba y destacados— y el resto plegado. «En
- * preparación» va al pliegue porque su siguiente paso no corre contra el
- * reloj de nadie; las cuatro colas visibles sí.
+ * Los grupos de la bandeja, en el orden de la tarjeta: una columna del tablero
+ * cada uno, de lo que corre contra el reloj (los nuevos arriba y destacados) a
+ * lo que ya terminó.
  */
 export const GRUPOS_DE_BANDEJA = [
   'NUEVOS',
@@ -138,9 +137,6 @@ export const GRUPOS_DE_BANDEJA = [
 ] as const;
 
 export type GrupoDeBandeja = (typeof GRUPOS_DE_BANDEJA)[number];
-
-/** Cuántos grupos del orden anterior se muestran desplegados. */
-export const GRUPOS_A_LA_VISTA = 4;
 
 const ETIQUETA_DE_GRUPO: Readonly<Record<GrupoDeBandeja, string>> = Object.freeze({
   NUEVOS: 'Nuevos',

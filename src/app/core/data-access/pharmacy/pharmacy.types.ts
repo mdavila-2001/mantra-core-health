@@ -377,6 +377,13 @@ export interface PharmacySiteRead {
   readonly addressText: string | null;
   readonly latitude: number | null;
   readonly longitude: number | null;
+  /**
+   * Si es la casa matriz de su farmacia. Opcional: el backend real todavía no
+   * lo publica (TODO(model): concepto `PHARM_SITE_TYPE_HEAD_OFFICE` en el tipo
+   * de sede + el campo en `PharmacySiteReadDto`). Ausente se lee como «no
+   * marcada», nunca como «no es la matriz».
+   */
+  readonly isHeadOffice?: boolean;
 }
 
 /**
