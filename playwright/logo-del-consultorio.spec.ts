@@ -4,8 +4,9 @@ import { join } from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
 
 /**
- * El logo del consultorio: en la ficha (Facturación), en el editor y en el
- * membrete del PDF. Contra el simulador de `mockup` (cuenta `medica@alovida.mock`).
+ * El logo del consultorio: se carga y se edita desde el perfil (pestaña «Datos
+ * personales» de la ficha y del editor), «Facturación» lo muestra de lectura, y
+ * sale en el membrete del PDF. Contra el simulador de `mockup` (cuenta `medica@alovida.mock`).
  *
  * Deja evidencia en `docs/trabajo/2026-09-30-logo-del-consultorio/`:
  * capturas de la ficha y del editor y los PDF descargados con y sin logo.
@@ -60,6 +61,12 @@ async function irA(page: Page, ruta: string): Promise<void> {
   await page.waitForURL(`**${ruta.split('?')[0]}**`);
 }
 
+async function abrirDatosPersonales(page: Page): Promise<void> {
+  await irA(page, '/my-account');
+  await page.getByRole('tab', { name: 'Datos personales' }).click();
+  await expect(page.getByTestId('perfil-logo-consultorio')).toBeVisible();
+}
+
 async function abrirFacturacion(page: Page): Promise<void> {
   await irA(page, '/my-account');
   await page.getByRole('tab', { name: 'Facturación' }).click();
@@ -80,7 +87,12 @@ test('el logo del consultorio se ve, se cambia, se quita y sale en el PDF', asyn
   test.setTimeout(300_000);
   await entrarComoMedica(page);
 
-  // 1 · Ficha, Facturación: el logo sembrado, dentro del recuadro y en su caja 2:1.
+  // 0 · Ficha, «Datos personales»: el logo sembrado, con su bloque propio.
+  await abrirDatosPersonales(page);
+  await expect(page.getByTestId('perfil-logo-consultorio-vista').locator('img')).toBeVisible();
+  await page.getByTestId('perfil-logo-consultorio').screenshot({ path: join(EVIDENCIA, 'ficha-datos-personales-con-logo-1440.png') });
+
+  // 1 · Ficha, Facturación: la misma imagen como vista previa de lectura, en su caja 2:1.
   await abrirFacturacion(page);
   const logo = page.getByTestId('perfil-factura-logo');
   await expect(logo.locator('img')).toBeVisible();
@@ -92,10 +104,15 @@ test('el logo del consultorio se ve, se cambia, se quita y sale en el PDF', asyn
   // 2 · PDF con el logo en la ranura.
   await descargarPdf(page, join(EVIDENCIA, 'pdf-con-logo.pdf'));
 
-  // 3 · Editor: la misma caja, con su logo.
+  // 3 · Editor: el logo se cambia SÓLO desde «Datos personales»; «Facturación» no lo ofrece.
   await irA(page, '/my-account/edit?pestana=2');
+  await expect(page.getByTestId('edicion-nit')).toBeVisible();
+  await expect(page.getByTestId('edicion-logo')).toHaveCount(0);
+  // …y en «Datos personales» está la misma caja, con su logo. (La pestaña inicial se lee
+  // al entrar al editor, así que se cambia con un clic y no con la URL.)
+  await page.getByRole('tab', { name: 'Datos personales' }).click();
   await expect(page.getByTestId('edicion-logo-vista').locator('img')).toBeVisible();
-  await page.screenshot({ path: join(EVIDENCIA, 'editor-facturacion-con-logo-1440.png') });
+  await page.getByTestId('edicion-logo').screenshot({ path: join(EVIDENCIA, 'editor-datos-personales-con-logo-1440.png') });
 
   // 4 · Subir uno nuevo (cuadrado) y guardar.
   const nuevo = join(EVIDENCIA, 'logo-nuevo-cuadrado.png');
@@ -105,20 +122,26 @@ test('el logo del consultorio se ve, se cambia, se quita y sale en el PDF', asyn
   await expect(page.getByTestId('edicion-logo-vista').locator('img')).toHaveAttribute('src', /^data:image\/png/);
   await page.getByRole('button', { name: 'Guardar cambios' }).click();
   await expect(page.getByText('Tu perfil quedó actualizado.')).toBeVisible();
-  await page.screenshot({ path: join(EVIDENCIA, 'editor-facturacion-logo-cuadrado-1440.png') });
+  await page.getByTestId('edicion-logo').screenshot({ path: join(EVIDENCIA, 'editor-datos-personales-logo-cuadrado-1440.png') });
 
+  await abrirDatosPersonales(page);
+  await expect(page.getByTestId('perfil-logo-consultorio-vista').locator('img')).toHaveAttribute('src', /^data:image\/png/);
+  await page.getByTestId('perfil-logo-consultorio').screenshot({ path: join(EVIDENCIA, 'ficha-datos-personales-logo-cuadrado-1440.png') });
   await abrirFacturacion(page);
   await expect(logo.locator('img')).toBeVisible();
   await page.screenshot({ path: join(EVIDENCIA, 'ficha-facturacion-logo-cuadrado-1440.png') });
   await descargarPdf(page, join(EVIDENCIA, 'pdf-con-logo-cuadrado.pdf'));
 
   // 5 · Quitarlo: la caja sigue, con «Sin logo», y el recuadro no cambia de alto.
-  await irA(page, '/my-account/edit?pestana=2');
+  await irA(page, '/my-account/edit?pestana=0');
   await page.getByTestId('edicion-logo-quitar').click();
   await page.getByRole('button', { name: 'Guardar cambios' }).click();
   await expect(page.getByText('Tu perfil quedó actualizado.')).toBeVisible();
-  await page.screenshot({ path: join(EVIDENCIA, 'editor-facturacion-sin-logo-1440.png') });
+  await page.getByTestId('edicion-logo').screenshot({ path: join(EVIDENCIA, 'editor-datos-personales-sin-logo-1440.png') });
 
+  await abrirDatosPersonales(page);
+  await expect(page.getByTestId('perfil-logo-consultorio').getByTestId('logo-consultorio-vacio')).toBeVisible();
+  await page.getByTestId('perfil-logo-consultorio').screenshot({ path: join(EVIDENCIA, 'ficha-datos-personales-sin-logo-1440.png') });
   await abrirFacturacion(page);
   await expect(page.getByTestId('logo-consultorio-vacio')).toBeVisible();
   const alturaSinLogo = (await page.getByTestId('perfil-factura-recuadro').boundingBox())!.height;

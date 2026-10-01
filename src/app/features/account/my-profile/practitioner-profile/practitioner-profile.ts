@@ -531,8 +531,10 @@ export class PractitionerProfile {
       facturacion: {
         nit: perfil.taxId ?? '',
         razonSocial: perfil.taxHolderName ?? '',
+      },
+      consultorio: {
         logoUrl,
-        nombreDelConsultorio: sedes.find((sede) => sede.isOwnSite === true)?.name ?? '',
+        nombre: sedes.find((sede) => sede.isOwnSite === true)?.name ?? '',
       },
       actividadActual: afiliaciones.actual,
       experienciaHistorica: afiliaciones.historica,
