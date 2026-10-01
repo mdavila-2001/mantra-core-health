@@ -284,3 +284,6 @@ La rama se rebasa sobre `origin/dev=310b92cf` sin conflictos. La regresion detec
 | H2.S3.M2 | Lint aprobado sobre la base actual. | `140-lint-after-815.txt`: `EXIT_CODE=0`. |
 
 La rama esta lista para publicar en PR hacia `dev`, con solicitudes de revision a `jsaldias39` y `PabloArauzCaballero`. Falta registrar el resultado remoto de checks y mergeabilidad despues del push. El merge sigue siendo revision humana; contratos faltantes del backend Hito 1 siguen pendientes segun la matriz previa.
+## Publicacion del PR de cobertura
+
+PR #823: https://github.com/mdavila-2001/mantra-core-health/pull/823, hacia `dev`, con `Jsaldias39` y `PabloArauzCaballero` solicitados. `gh pr view 823` indica `isDraft=false` y `mergeable=MERGEABLE`; al consultar, `verificar`, `e2e` y `dependencias` estaban `QUEUED`, por lo que `mergeStateStatus=UNSTABLE`. Evidencia literal: `141-pr-823-initial.txt`. No se mergea automaticamente; falta que GitHub termine checks y la revision humana.

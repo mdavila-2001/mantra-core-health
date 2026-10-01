@@ -75,8 +75,8 @@ Matriz: laboratorio; C3; dictamen/anulación/refacturación; notificación→acc
 |---|---|---|---|---|
 | H2.S4.M1 | Reporte | Dado el trabajo, cuando se reporte, entonces cada CA enlaza evidencia o pendiente. | Inspección REPORTE.md: completado/a medias/pendiente/evidencia/no cubierto/desvíos | TODO |
 | H2.S4.M2 | Integridad Git | Dados commits finales, cuando se inspeccionen, entonces tres ancestros presentes y árbol limpio. | `git status --porcelain` vacío; ancestry individual → 0 | TODO |
-| H2.S4.M3 | Publicar PR | Dada rama verificada, cuando se publique, entonces PR a dev con reviewers solicitados. | `gh pr view --json url,baseRefName,headRefName,reviewRequests` | TODO |
-| H2.S4.M4 | Gate final PR | Dado último push, cuando GitHub recalcule, entonces estado y checks están documentados. | `gh pr view --json number,url,isDraft,mergeable,mergeStateStatus,reviewRequests,statusCheckRollup` | TODO |
+| H2.S4.M3 | Publicar PR | Dada rama verificada, cuando se publique, entonces PR a dev con reviewers solicitados. | `gh pr view --json url,baseRefName,headRefName,reviewRequests` -> PR #823, reviewers jsaldias39 y PabloArauzCaballero | HECHO |
+| H2.S4.M4 | Gate final PR | Dado último push, cuando GitHub recalcule, entonces estado y checks están documentados. | `gh pr view --json number,url,isDraft,mergeable,mergeStateStatus,reviewRequests,statusCheckRollup` -> MERGEABLE, fuera de draft, checks aún QUEUED | A MEDIAS |
 
 ## Riesgos y límites
 
