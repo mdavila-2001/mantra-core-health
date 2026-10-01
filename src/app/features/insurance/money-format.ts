@@ -27,7 +27,7 @@ export const SIN_IMPORTE = 'Sin dictaminar';
  */
 export function formatMoney(money: Money | null): string {
   if (money === null) return SIN_IMPORTE;
-  const codigo = money.currency?.display ?? null;
+  const codigo = money.currency?.code ?? null;
   return codigo === null ? money.amount : `${money.amount} ${codigo}`;
 }
 
@@ -35,7 +35,7 @@ export function formatMoney(money: Money | null): string {
  * Sólo el importe, sin la moneda.
  *
  * Para tablas donde la moneda es la misma en toda la columna: repetirla en
- * cada celda son seis «Boliviano» por fila que no aportan nada y empujan la
+ * cada celda son seis «BOB» por fila que no aportan nada y empujan la
  * tabla fuera de la pantalla. La moneda se declara **una vez**, en el
  * encabezado de la columna, con {@link currencySuffix}.
  *
@@ -53,18 +53,18 @@ export function formatAmount(money: Money | null): string {
  * importe es peor que mostrarlo sin unidad.
  *
  * @param money - Un importe de la columna, del que se toma la moneda.
- * @returns `' · Boliviano'`, o cadena vacía.
+ * @returns `' · BOB'`, o cadena vacía.
  */
 export function currencySuffix(money: Money | null): string {
-  const display = money?.currency?.display;
-  return display ? ` · ${display}` : '';
+  const code = money?.currency?.code;
+  return code ? ` · ${code}` : '';
 }
 
 /**
  * Formato del tablero de siniestralidad (subtarea 3.1): separador de miles con
  * punto y decimal con coma — `280.000,00 Bs` —, el formato oficial boliviano
  * (AC-03-01). Distinto adrede de {@link formatMoney}: ese formato es el de las
- * solicitudes individuales (sin separador de miles, moneda por `display`); acá
+ * solicitudes individuales (sin separador de miles, moneda por su código); acá
  * el tablero agrega miles de bolivianos y necesita legibilidad, no un eco
  * literal de la base.
  *
