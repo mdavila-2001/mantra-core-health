@@ -48,8 +48,8 @@ function afiliacion(over: Partial<AfiliacionVisible> = {}): AfiliacionVisible {
   };
 }
 
-/** Facturación sin ningún dato cargado, ni logo. */
-const FACTURA_VACIA = { nit: '', razonSocial: '', logoUrl: null, nombreDelConsultorio: '' };
+/** Facturación sin ningún dato cargado. */
+const FACTURA_VACIA = { nit: '', razonSocial: '' };
 
 const PERFIL: PerfilProfesionalVisible = {
   nombre: 'Dra. Lucía Salas',
@@ -1175,12 +1175,13 @@ describe('PractitionerProfileView', () => {
       ).toBe('Consultorio Dra. Rojas S.R.L.');
     });
 
-    it('con logo cargado, lo muestra dentro del recuadro de facturación', () => {
+    it('con logo cargado, lo muestra como vista previa dentro del recuadro de facturación', () => {
       const logoUrl = 'data:image/png;base64,iVBORw0KGgo=';
       const host = montar(
         {
           ...PERFIL,
-          facturacion: { ...FACTURA, logoUrl, nombreDelConsultorio: 'Consultorio Rojas' },
+          facturacion: FACTURA,
+          consultorio: { logoUrl, nombre: 'Consultorio Rojas' },
         },
         true,
       );
@@ -1190,6 +1191,8 @@ describe('PractitionerProfileView', () => {
       const imagen = recuadro?.querySelector('[data-testid="perfil-factura-logo"] img');
       expect(imagen?.getAttribute('alt')).toBe('Logo de Consultorio Rojas');
       expect(imagen?.getAttribute('src')).toBe(logoUrl);
+      // Es de lectura: acá no hay cómo cambiarlo.
+      expect(recuadro?.querySelector('input[type="file"]')).toBeNull();
     });
 
     it('sin logo deja el mismo hueco con «Sin logo» y el NIT sigue visible', () => {
@@ -1352,6 +1355,38 @@ describe('PractitionerProfileView', () => {
       const host = montar(PERFIL, true, true);
 
       expect(host.querySelector('[data-testid="perfil-consultorio"]')).toBeNull();
+    });
+  });
+
+  describe('PractitionerProfileView · el logo del consultorio en «Datos personales»', () => {
+    const LOGO = 'data:image/png;base64,iVBORw0KGgo=';
+
+    it('en la ficha propia lo muestra en «Datos personales», con su nombre', () => {
+      const host = montar(
+        { ...PERFIL, consultorio: { logoUrl: LOGO, nombre: 'Consultorio Rojas' } },
+        true,
+      );
+
+      const bloque = host.querySelector('[data-testid="perfil-logo-consultorio"]');
+      const imagen = bloque?.querySelector('img');
+      expect(bloque?.textContent).toContain('Logo del consultorio');
+      expect(imagen?.getAttribute('alt')).toBe('Logo de Consultorio Rojas');
+      expect(imagen?.getAttribute('src')).toBe(LOGO);
+    });
+
+    it('sin logo dibuja el bloque igual, con «Sin logo»', () => {
+      const host = montar({ ...PERFIL, consultorio: { logoUrl: null, nombre: '' } }, true);
+
+      const bloque = host.querySelector('[data-testid="perfil-logo-consultorio"]');
+      expect(bloque).not.toBeNull();
+      expect(bloque?.querySelector('img')).toBeNull();
+      expect(bloque?.textContent).toContain('Sin logo');
+    });
+
+    it('la ficha de otro profesional no lo dibuja', () => {
+      const host = montar({ ...PERFIL, consultorio: null }, false);
+
+      expect(host.querySelector('[data-testid="perfil-logo-consultorio"]')).toBeNull();
     });
   });
 

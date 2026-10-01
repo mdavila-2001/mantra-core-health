@@ -15,6 +15,8 @@ import { Tooltip } from '../../../shared/components/atoms/tooltip/tooltip';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 import { telefonoCompleto } from '../../../shared/components/molecules/phone-input/phone-input';
 import { AuthSplit } from '../../../shared/components/organisms/auth-split/auth-split';
+import { BranchBulkImport } from '../../../shared/components/organisms/branch-bulk-import/branch-bulk-import';
+import type { BranchDraft } from '../../../shared/utils/branch-import/branch-import';
 import { CampoPersonalizado } from '../../../shared/components/organisms/paginated-form/campo-personalizado';
 import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
 import {
@@ -38,6 +40,8 @@ import {
   type IdsDePrueba,
 } from '../registro-compartido/ubicacion-picker/ubicacion-picker';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
+import { CamposDeNombre } from '../registro-compartido/campos-de-nombre/campos-de-nombre';
+import { grupoDeNombre } from '../registro-compartido/campos-de-nombre/nombre-de-persona';
 
 /* ============================================================================
     Alta del centro de imagenología — «MODULO ANALISIS MEDICOS (RAYOS X,
@@ -135,6 +139,9 @@ export interface SucursalDeclarada {
   readonly id: string;
   readonly nombre: string;
   readonly direccion: string;
+  readonly descripcion: string;
+  /** El enlace de mapa que pegó la persona o que trajo la carga en lote. */
+  readonly urlUbicacion: string;
   readonly gps: Coordenadas | null;
 }
 
@@ -252,6 +259,12 @@ const AYUDA: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
       texto:
         'El correo del representante legal es el usuario de la cuenta. Después se suman los usuarios que hagan falta, cada uno con el suyo.',
     },
+    {
+      icono: 'folder',
+      titulo: 'El poder va con quien lo firma',
+      texto:
+        'Adjuntalo acá, junto a los datos del representante. Es opcional: si el dueño se representa a sí mismo, no hace falta.',
+    },
   ],
   'gerencia-general': [
     {
@@ -365,6 +378,7 @@ const AYUDA: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
 @Component({
   selector: 'app-register-imaging-center',
   imports: [
+    BranchBulkImport,
     FileInput,
     NgTemplateOutlet,
     RouterLink,
@@ -381,6 +395,7 @@ const AYUDA: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
     CampoPersonalizado,
     RegistroAyuda,
     UbicacionPicker,
+    CamposDeNombre,
   ],
   templateUrl: './register-imaging-center.html',
   styleUrls: ['../registro-compartido/registro.css', './register-imaging-center.css'],
@@ -449,17 +464,15 @@ export class RegisterImagingCenter {
       validators: [Validators.required, Validators.maxLength(MAX_DIRECCION)],
     }),
     // --- 1.8 · representante legal -----------------------------------------
-    legalRepName: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.maxLength(MAX_NOMBRE)],
-    }),
+    // Un grupo con las partes del nombre (primer nombre y apellido paterno obligatorios).
+    legalRepName: grupoDeNombre(true),
     legalRepEmail: new FormControl('', {
       nonNullable: true,
       validators: [Validators.required, Validators.email],
     }),
     poderFile: new FormControl<AdjuntoDeclarado | null>(null),
     // --- 1.9 a 1.17 · los tres cargos, todos opcionales --------------------
-    generalManagerName: new FormControl('', { nonNullable: true }),
+    generalManagerName: grupoDeNombre(false),
     generalManagerPhone: new FormControl('', {
       nonNullable: true,
       validators: [telefonoCompleto],
@@ -468,7 +481,7 @@ export class RegisterImagingCenter {
       nonNullable: true,
       validators: [Validators.email],
     }),
-    salesManagerName: new FormControl('', { nonNullable: true }),
+    salesManagerName: grupoDeNombre(false),
     salesManagerPhone: new FormControl('', {
       nonNullable: true,
       validators: [telefonoCompleto],
@@ -477,7 +490,7 @@ export class RegisterImagingCenter {
       nonNullable: true,
       validators: [Validators.email],
     }),
-    marketingManagerName: new FormControl('', { nonNullable: true }),
+    marketingManagerName: grupoDeNombre(false),
     marketingManagerPhone: new FormControl('', {
       nonNullable: true,
       validators: [telefonoCompleto],
@@ -609,23 +622,16 @@ export class RegisterImagingCenter {
       ],
     },
     {
-      titulo: 'Constitución, poder y radioprotección',
+      titulo: 'Constitución y radioprotección',
       clave: 'radioproteccion',
       icon: 'shield' as const,
-      hint: 'Los tres son opcionales: una unipersonal no tiene los dos primeros, y el tercero depende de qué equipos uses.',
+      hint: 'Los dos son opcionales: una unipersonal no tiene constitución, y la radioprotección depende de qué equipos uses.',
       campos: [
         {
           key: 'constitucionFile',
           ancho: 'mitad' as const,
           label: 'Constitución de la empresa (opcional)',
           hint: 'La escritura con la que se constituyó la sociedad.',
-          control: 'custom' as const,
-        },
-        {
-          key: 'poderFile',
-          ancho: 'mitad' as const,
-          label: 'Poder del representante legal (opcional)',
-          hint: 'No hace falta si el titular se representa a sí mismo.',
           control: 'custom' as const,
         },
         {
@@ -680,14 +686,12 @@ export class RegisterImagingCenter {
       icon: 'shield' as const,
       campos: [
         {
+          // Sin rótulo ni error propios: `app-campos-de-nombre` pinta cada casilla
+          // con el suyo, y un `<label for>` externo apuntaría a un control que no existe.
           key: 'legalRepName',
-          label: 'Nombre del representante legal',
-          control: 'text' as const,
-          required: true,
-          icono: 'people' as const,
-          autocomplete: 'name',
-          testId: 'registro-imagen-representante',
-          mensajeDeError: 'Escribí el nombre del representante legal.',
+          label: '',
+          control: 'custom' as const,
+          mensajeDeError: '',
         },
         {
           key: 'legalRepEmail',
@@ -700,6 +704,13 @@ export class RegisterImagingCenter {
           testId: 'registro-imagen-representante-correo',
           mensajeDeError: 'Escribí un correo válido: es el usuario de la cuenta.',
         },
+        // El poder (1.8.1) se pide junto a quien lo firma, no con los papeles de la empresa.
+        {
+          key: 'poderFile',
+          label: 'Poder del representante legal (opcional)',
+          hint: 'No hace falta si el titular se representa a sí mismo.',
+          control: 'custom' as const,
+        },
       ],
     },
     {
@@ -710,9 +721,9 @@ export class RegisterImagingCenter {
       campos: [
         {
           key: 'generalManagerName',
-          label: 'Nombre del gerente general',
-          control: 'text' as const,
-          icono: 'people' as const,
+          label: '',
+          control: 'custom' as const,
+          mensajeDeError: '',
           testId: 'registro-imagen-gerente-general',
         },
         {
@@ -740,9 +751,9 @@ export class RegisterImagingCenter {
       campos: [
         {
           key: 'salesManagerName',
-          label: 'Nombre del gerente comercial',
-          control: 'text' as const,
-          icono: 'people' as const,
+          label: '',
+          control: 'custom' as const,
+          mensajeDeError: '',
           testId: 'registro-imagen-gerente-comercial',
         },
         {
@@ -770,9 +781,9 @@ export class RegisterImagingCenter {
       campos: [
         {
           key: 'marketingManagerName',
-          label: 'Nombre del gerente de marketing',
-          control: 'text' as const,
-          icono: 'people' as const,
+          label: '',
+          control: 'custom' as const,
+          mensajeDeError: '',
           testId: 'registro-imagen-gerente-marketing',
         },
         {
@@ -927,7 +938,7 @@ export class RegisterImagingCenter {
   agregarSucursal(): void {
     const id = `sucursal-${this.proximaSucursal}`;
     this.proximaSucursal += 1;
-    this.sucursales.update((lista) => [...lista, { id, nombre: '', direccion: '', gps: null }]);
+    this.sucursales.update((lista) => [...lista, { id, nombre: '', direccion: '', descripcion: '', urlUbicacion: '', gps: null }]);
   }
 
   quitarSucursal(id: string): void {
@@ -947,6 +958,49 @@ export class RegisterImagingCenter {
 
   escribirDireccionDeSucursal(id: string, direccion: string | number | null): void {
     this.actualizarSucursal(id, { direccion: direccion === null ? '' : String(direccion) });
+  }
+
+  escribirDescripcionDeSucursal(id: string, descripcion: string | number | null): void {
+    this.actualizarSucursal(id, { descripcion: descripcion === null ? '' : String(descripcion) });
+  }
+
+  escribirUrlDeSucursal(id: string, url: string | number | null): void {
+    this.actualizarSucursal(id, { urlUbicacion: url === null ? '' : String(url).trim() });
+  }
+
+  /* --- carga en lote ------------------------------------------------------ */
+
+  /** Si está abierto el diálogo «Subir sucursales en lote». */
+  readonly cargaEnLoteAbierta = signal(false);
+
+  /** Los nombres ya escritos: el archivo no puede repetirlos. */
+  readonly nombresDeSucursales = computed(() =>
+    this.sucursales()
+      .map((sucursal) => sucursal.nombre)
+      .filter((nombre) => nombre.trim() !== ''),
+  );
+
+  /**
+   * Suma al final las sucursales del archivo. Cada una nace con su pin si el
+   * enlace traía el punto escrito; si no, se marca a mano como cualquier otra.
+   */
+  agregarSucursalesEnLote(lote: readonly BranchDraft[]): void {
+    const nuevas = lote.map((borrador): SucursalDeclarada => {
+      const id = `sucursal-${this.proximaSucursal}`;
+      this.proximaSucursal += 1;
+      return {
+        id,
+        nombre: borrador.name,
+        direccion: borrador.address,
+        descripcion: borrador.description,
+        urlUbicacion: borrador.locationUrl,
+        gps:
+          borrador.coordinates === null
+            ? null
+            : { lat: borrador.coordinates.latitude, lng: borrador.coordinates.longitude },
+      };
+    });
+    this.sucursales.update((lista) => [...lista, ...nuevas]);
   }
 
   fijarGpsDeSucursal(id: string, gps: Coordenadas | null): void {

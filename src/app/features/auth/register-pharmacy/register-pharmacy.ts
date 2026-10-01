@@ -29,6 +29,8 @@ import type {
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 import { telefonoCompleto } from '../../../shared/components/molecules/phone-input/phone-input';
 import { AuthSplit } from '../../../shared/components/organisms/auth-split/auth-split';
+import { BranchBulkImport } from '../../../shared/components/organisms/branch-bulk-import/branch-bulk-import';
+import type { BranchDraft } from '../../../shared/utils/branch-import/branch-import';
 import { CampoPersonalizado } from '../../../shared/components/organisms/paginated-form/campo-personalizado';
 import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
 import {
@@ -96,6 +98,9 @@ export interface SucursalDeFarmacia {
   readonly id: string;
   readonly nombre: string;
   readonly direccion: string;
+  readonly descripcion: string;
+  /** El enlace de mapa que pegó la persona o que trajo la carga en lote. */
+  readonly urlUbicacion: string;
   readonly gps: Coordenadas | null;
 }
 
@@ -174,6 +179,12 @@ const AYUDA: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
       texto:
         'El correo del representante legal es el usuario de la cuenta. Después se suman los usuarios que hagan falta, cada uno con el suyo.',
     },
+    {
+      icono: 'folder',
+      titulo: 'El poder va con quien lo firma',
+      texto:
+        'Adjuntalo acá, junto a los datos del representante. Es opcional: si el dueño se representa a sí mismo, no hace falta.',
+    },
   ],
   'gerencia-general': [
     {
@@ -236,6 +247,7 @@ const AYUDA: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
 @Component({
   selector: 'app-register-pharmacy',
   imports: [
+    BranchBulkImport,
     NgTemplateOutlet,
     RouterLink,
     Link,
@@ -330,11 +342,14 @@ export class RegisterPharmacy {
     return null;
   });
 
-  /** Los seis papeles, en el orden del registro de procesos: página que auto-parte «(1 de 2)/(2 de 2)». */
-  private readonly camposDeDocumentos = [
-    ...camposDeDocumentosLegales(PAIS, uiLanguage(), false),
-    campoDelPoderNotariado(PAIS, uiLanguage(), false),
-  ];
+  /** Los cinco papeles de la empresa, en el orden del registro de procesos. */
+  private readonly camposDeDocumentos = camposDeDocumentosLegales(PAIS, uiLanguage(), false);
+
+  /**
+   * El poder del representante (1.8.1) no va con los papeles de la empresa:
+   * se pide en la misma página que el representante, junto a quien lo firma.
+   */
+  private readonly campoDelPoder = campoDelPoderNotariado(PAIS, uiLanguage(), false);
 
   readonly paginas = computed<readonly PaginaDeFormulario[]>(() =>
     paginarCampos([
@@ -441,6 +456,7 @@ export class RegisterPharmacy {
             testId: 'registro-farmacia-representante-correo',
             mensajeDeError: 'Escribí un correo válido: es el usuario de la cuenta.',
           },
+          this.campoDelPoder,
         ],
       },
       ...this.paginasDeGerencia(),
@@ -579,7 +595,7 @@ export class RegisterPharmacy {
 
   /** El rótulo ya resuelto del documento (sin el sufijo «(opcional)», acá es siempre opcional). */
   protected etiquetaDeDocumento(clave: ClaveDeDocumentoDelAlta): string {
-    const campo = this.camposDeDocumentos.find((c) => c.key === clave);
+    const campo = [...this.camposDeDocumentos, this.campoDelPoder].find((c) => c.key === clave);
     return campo?.label.replace(' (opcional)', '') ?? 'Documento';
   }
 
@@ -636,7 +652,7 @@ export class RegisterPharmacy {
   agregarSucursal(): void {
     const id = `sucursal-${this.proximaSucursal}`;
     this.proximaSucursal += 1;
-    this.sucursales.update((lista) => [...lista, { id, nombre: '', direccion: '', gps: null }]);
+    this.sucursales.update((lista) => [...lista, { id, nombre: '', direccion: '', descripcion: '', urlUbicacion: '', gps: null }]);
   }
 
   quitarSucursal(id: string): void {
@@ -649,6 +665,49 @@ export class RegisterPharmacy {
 
   escribirDireccionDeSucursal(id: string, direccion: string | number | null): void {
     this.actualizarSucursal(id, { direccion: direccion === null ? '' : String(direccion) });
+  }
+
+  escribirDescripcionDeSucursal(id: string, descripcion: string | number | null): void {
+    this.actualizarSucursal(id, { descripcion: descripcion === null ? '' : String(descripcion) });
+  }
+
+  escribirUrlDeSucursal(id: string, url: string | number | null): void {
+    this.actualizarSucursal(id, { urlUbicacion: url === null ? '' : String(url).trim() });
+  }
+
+  /* --- carga en lote ------------------------------------------------------ */
+
+  /** Si está abierto el diálogo «Subir sucursales en lote». */
+  readonly cargaEnLoteAbierta = signal(false);
+
+  /** Los nombres ya escritos: el archivo no puede repetirlos. */
+  readonly nombresDeSucursales = computed(() =>
+    this.sucursales()
+      .map((sucursal) => sucursal.nombre)
+      .filter((nombre) => nombre.trim() !== ''),
+  );
+
+  /**
+   * Suma al final las sucursales del archivo. Cada una nace con su pin si el
+   * enlace traía el punto escrito; si no, se marca a mano como cualquier otra.
+   */
+  agregarSucursalesEnLote(lote: readonly BranchDraft[]): void {
+    const nuevas = lote.map((borrador): SucursalDeFarmacia => {
+      const id = `sucursal-${this.proximaSucursal}`;
+      this.proximaSucursal += 1;
+      return {
+        id,
+        nombre: borrador.name,
+        direccion: borrador.address,
+        descripcion: borrador.description,
+        urlUbicacion: borrador.locationUrl,
+        gps:
+          borrador.coordinates === null
+            ? null
+            : { lat: borrador.coordinates.latitude, lng: borrador.coordinates.longitude },
+      };
+    });
+    this.sucursales.update((lista) => [...lista, ...nuevas]);
   }
 
   fijarGpsDeSucursal(id: string, gps: Coordenadas | null): void {
@@ -733,7 +792,13 @@ export class RegisterPharmacy {
 
     const sucursales: readonly PharmacyBranchRegistration[] = this.sucursales()
       .filter((s) => s.nombre.trim() !== '' && s.gps !== null)
-      .map((s) => ({ name: s.nombre.trim(), latitude: s.gps!.lat, longitude: s.gps!.lng }));
+      .map((s) => ({
+        name: s.nombre.trim(),
+        latitude: s.gps!.lat,
+        longitude: s.gps!.lng,
+        ...(s.descripcion.trim() === '' ? {} : { description: s.descripcion.trim() }),
+        ...(s.urlUbicacion === '' ? {} : { locationUrl: s.urlUbicacion }),
+      }));
 
     const gerencias = {
       generalManager: {

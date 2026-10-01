@@ -308,9 +308,6 @@ describe('PractitionerProfile', () => {
       expect(visible().facturacion).toEqual({
         nit: '5414404011',
         razonSocial: 'Consultorio Dra. Rojas S.R.L.',
-        // Sin sesión de profesional no hay a quién preguntarle por el logo.
-        logoUrl: null,
-        nombreDelConsultorio: '',
       });
     });
 
@@ -320,12 +317,7 @@ describe('PractitionerProfile', () => {
       montar();
       responder({});
 
-      expect(visible().facturacion).toEqual({
-        nit: '',
-        razonSocial: '',
-        logoUrl: null,
-        nombreDelConsultorio: '',
-      });
+      expect(visible().facturacion).toEqual({ nit: '', razonSocial: '' });
     });
 
     it('un perfil sin departamento declarado no mete «undefined» en la petición', () => {
@@ -985,9 +977,9 @@ describe('PractitionerProfile · el logo del consultorio', () => {
     http.expectOne((r) => r.url === '/practitioners/prac-1/insurance-networks').flush({ items: [], count: 0 });
   }
 
-  const facturacion = () =>
+  const consultorio = () =>
     (componente as unknown as { visible: () => PerfilProfesionalVisible | null }).visible()
-      ?.facturacion;
+      ?.consultorio;
 
   afterEach(() => {
     // Mientras se espera al `FileReader` el componente alcanza a dibujarse, y
@@ -998,24 +990,24 @@ describe('PractitionerProfile · el logo del consultorio', () => {
     http.verify();
   });
 
-  it('con logo cargado en el consultorio propio, la ficha lo recibe junto al nombre', async () => {
+  it('con logo cargado en el consultorio propio, la ficha lo recibe junto al nombre del consultorio', async () => {
     montarConSedes([{ ...PROPIA, logoFileId: 'file-logo' }]);
     http
       .expectOne('/common/files/file-logo/content')
       .flush(new Blob([Uint8Array.from(atob(PNG), (c) => c.charCodeAt(0))], { type: 'image/png' }));
-    for (let i = 0; i < 50 && !facturacion()?.logoUrl; i += 1) {
+    for (let i = 0; i < 50 && !consultorio()?.logoUrl; i += 1) {
       await new Promise((resolver) => setTimeout(resolver, 5));
     }
 
-    expect(facturacion()?.logoUrl).toMatch(/^data:image\/png/);
-    expect(facturacion()?.nombreDelConsultorio).toBe('Consultorio Dra. Rojas');
+    expect(consultorio()?.logoUrl).toMatch(/^data:image\/png/);
+    expect(consultorio()?.nombre).toBe('Consultorio Dra. Rojas');
   });
 
   it('sin logo cargado, la ficha recibe null y el nombre del consultorio igual', () => {
     montarConSedes([{ ...PROPIA, logoFileId: null }]);
 
-    expect(facturacion()?.logoUrl).toBeNull();
-    expect(facturacion()?.nombreDelConsultorio).toBe('Consultorio Dra. Rojas');
+    expect(consultorio()?.logoUrl).toBeNull();
+    expect(consultorio()?.nombre).toBe('Consultorio Dra. Rojas');
   });
 
   it('un logo que no se puede leer no rompe la ficha', () => {
@@ -1024,8 +1016,8 @@ describe('PractitionerProfile · el logo del consultorio', () => {
       .expectOne('/common/files/file-logo/content')
       .flush(new Blob(['prohibido']), { status: 403, statusText: 'Forbidden' });
 
-    expect(facturacion()?.logoUrl).toBeNull();
-    expect(facturacion()?.nit).toBe('');
+    expect(consultorio()?.logoUrl).toBeNull();
+    expect(consultorio()?.nombre).toBe('Consultorio Dra. Rojas');
   });
 });
 

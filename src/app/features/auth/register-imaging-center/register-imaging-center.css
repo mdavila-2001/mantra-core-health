@@ -20,6 +20,13 @@
   width: 100%;
 }
 
+/* «Agregar» y «Subir en lote» juntos; en pantalla chica bajan uno bajo otro. */
+.imagen-sucursales__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
 .imagen-sucursal {
   display: flex;
   flex-direction: column;

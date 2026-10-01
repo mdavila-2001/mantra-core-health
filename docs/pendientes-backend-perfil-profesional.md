@@ -132,8 +132,9 @@ respuesta. Mismo criterio, y mismo archivo vecino, que
 
 ## El logo del consultorio (2026-09-30)
 
-Justin pidió que el logo del consultorio del doctor salga en la pestaña
-«Facturación» del perfil —al mirar y al editar— y en el membrete de los PDF. El
+Justin pidió que el logo del consultorio del doctor se cargue y se edite desde
+su perfil («Datos personales», al mirar y al editar; «Facturación» lo muestra
+de lectura) y salga en el membrete de los PDF. El
 frontend está entregado contra el simulador de `mockup`; **el backend no tiene
 dónde guardarlo**, y esta sección deja escrito qué hace falta y cuál es el
 contrato que el frontend ya usa, para construir la API contra él.
