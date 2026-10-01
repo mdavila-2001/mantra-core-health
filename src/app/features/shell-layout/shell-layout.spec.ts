@@ -900,7 +900,7 @@ describe('ShellLayout', () => {
       expect(destinos).toContain('/design-system');
     });
 
-    it('la barra de la aseguradora: seis renglones, un solo dominio plegable (2026-09-25, +1 el 2026-09-27)', () => {
+    it('la barra de la aseguradora: siete renglones sueltos, ningún plegable (2026-09-25, +1 el 2026-09-27; aplanada el 2026-10-01)', () => {
       abrirSesion({
         sub: 'u-3',
         roles: ['USER'],
@@ -922,8 +922,10 @@ describe('ShellLayout', () => {
         '/administration/insurance-campaigns',
         '/administration/my-organization',
       ]);
-      expect(raiz().querySelectorAll('.app-side-nav__group').length).toBe(1);
-      expect(raiz().querySelectorAll('[data-testid="nav-sueltos"]').length).toBe(0);
+      // Pedido del propietario, 2026-10-01: «Administración» no se dibuja como
+      // desplegable para esta cuenta; sus opciones van a nivel 0, sin `<details>`.
+      expect(raiz().querySelectorAll('.app-side-nav__group').length).toBe(0);
+      expect(raiz().querySelectorAll('[data-testid="nav-sueltos"]').length).toBe(1);
     });
 
     /**

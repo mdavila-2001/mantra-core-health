@@ -2439,3 +2439,26 @@ reintento; visor) y `features/laboratory/summary/`.
 > **Ojo:** la demo todavía no tiene cuenta de centro de imagenología (su alta cierra con una
 > solicitud, no con una cuenta); la regla del simulador ya lo cubre y está probada con un centro
 > sintético.
+
+## P57 · Siniestralidad por persona: el agregado en el servidor — 01/10/2026
+
+> **Qué pide el front.** La pestaña «Por persona» del tablero de «Siniestralidad y analítica»
+> (`/administration/insurance-analytics?tab=by-person`) tiene un botón «Generar informe» que
+> muestra, por cada afiliado con solicitudes en el período: reclamos (y cuántos siguen
+> pendientes), facturado, aprobado, denegado, tasa de aprobación, prima del período y
+> siniestralidad (aprobado ÷ prima). Se puede exportar a CSV.
+>
+> **Hoy.** Lo calcula el navegador a partir de `GET /insurance/received-claims`, el mismo
+> listado de «Solicitudes recibidas» (`docs/contracts/insurer-received-claims.md`), agrupando por
+> `patient.id` con aritmética decimal en enteros (sin `float`). La prima de cada persona es la
+> prima mensual de lista de su plan (la de su solicitud más reciente) × los meses del período.
+> **Límite que la pantalla declara:** ese listado viene con tope (`truncated`); si llega
+> recortado, el informe se rotula «parcial». Las solicitudes en otra moneda no se suman: se
+> cuentan y se avisa.
+>
+> **Falta en la API.** `GET /insurance/analytics/loss-ratio/by-member?startDate&endDate&planId`
+> con el mismo alcance que `loss-ratio` (la aseguradora del tenant activo), agregando en
+> Postgres sobre `insurance.insurance_claims` + `claim_adjudication_versions`, sin tope y con la
+> prima por afiliado tomada de la **cobertura vigente** de cada uno (no de la del plan de su última
+> solicitud). Sin tabla nueva. Es dato personal de salud: el endpoint no debe devolver
+> diagnósticos ni detalle clínico, sólo identificación, plan e importes.

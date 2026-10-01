@@ -1,0 +1,112 @@
+<section
+  class="person-report"
+  data-testid="person-loss-report"
+  aria-labelledby="person-report-title"
+>
+  <header class="person-report__head">
+    <div class="person-report__intro">
+      <h2 id="person-report-title" class="person-report__title">Siniestralidad por persona</h2>
+      <p class="person-report__note">
+        Lo aprobado a cada persona frente a la prima del período, con el plan, el periodo y el
+        filtro que elegiste arriba. La prima es estimada: prima mensual de lista × meses.
+      </p>
+    </div>
+    <div class="person-report__actions">
+      <button
+        app-button
+        type="button"
+        variant="primary"
+        data-testid="btn-generate-person-report"
+        [isLoading]="isGenerating()"
+        (clicked)="generate()"
+      >
+        {{ report() === null ? 'Generar informe' : 'Volver a generar' }}
+      </button>
+      <button
+        app-button
+        type="button"
+        variant="outline"
+        data-testid="btn-export-person-report"
+        [disabled]="report() === null"
+        (clicked)="exportCsv()"
+      >
+        Exportar CSV
+      </button>
+    </div>
+  </header>
+
+  @if (state() === null) {
+    <app-empty-state
+      title="Todavía no generaste el informe"
+      description="Elegí el período y el plan, y apretá «Generar informe» para ver la siniestralidad de cada persona."
+    />
+  } @else {
+    <app-view-state-host [state]="state()!" (retry)="retry()">
+      @if (report(); as informe) {
+        @if (isStale()) {
+          <p
+            class="person-report__alert person-report__alert--stale"
+            role="status"
+            data-testid="person-report-stale"
+          >
+            Cambiaste el período o el plan: este informe es del filtro anterior. Apretá «Volver a
+            generar» para actualizarlo.
+          </p>
+        }
+        @if (isPartial()) {
+          <p class="person-report__alert" role="status" data-testid="person-report-partial">
+            Informe parcial: hay más solicitudes que las que el servidor entrega de una vez, así que
+            las cifras pueden estar por debajo de las reales.
+          </p>
+        }
+        @if (informe.excludedOtherCurrencyCount > 0) {
+          <p class="person-report__alert" role="status">
+            {{ informe.excludedOtherCurrencyCount }} solicitud(es) en otra moneda no se suman: el
+            informe está en {{ informe.currencyCode ?? 'la moneda sin declarar' }}.
+          </p>
+        }
+
+        <p class="person-report__period">
+          Período: {{ informe.startDate }} a {{ informe.endDate }} ·
+          {{ informe.claimsConsidered }} solicitud(es) · {{ informe.rows.length }} persona(s)
+        </p>
+
+        @if (informe.rows.length === 0) {
+          <app-empty-state
+            title="Sin solicitudes en el período"
+            description="Ninguna persona presentó solicitudes en el período y el plan elegidos."
+          />
+        } @else {
+          <div class="person-report__search">
+            <app-search-field
+              label="Buscar persona"
+              placeholder="Nombre o código de afiliado"
+              [value]="search()"
+              (valueChange)="search.set($event)"
+            />
+          </div>
+          <div data-testid="table-person-loss">
+            <app-data-table
+              [state]="tableState()"
+              [columns]="columns()"
+              [trackBy]="trackBy"
+              [rowLabel]="rowLabel"
+              caption="Siniestralidad por persona"
+            />
+          </div>
+        }
+      }
+    </app-view-state-host>
+  }
+</section>
+
+<ng-template #ratioCell let-row>
+  @if (row.lossRatio === null) {
+    <app-badge [variant]="tone(row)">{{ toneLabel(row) }}</app-badge>
+  } @else {
+    <span class="person-report__ratio">
+      {{ row.lossRatio }} %
+      <app-badge [variant]="tone(row)">{{ toneLabel(row) }}</app-badge>
+    </span>
+  }
+</ng-template>
