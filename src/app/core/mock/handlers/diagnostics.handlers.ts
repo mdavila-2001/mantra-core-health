@@ -9,6 +9,8 @@ import { abrirAgendaDeCentro, ZONA_HORARIA_POR_OMISION } from '../fixtures/agend
 import { patientSettlementFixture } from '../fixtures/patient-settlements';
 import { PHARMACIES_AND_LABS } from '../fixtures/markdown-institutions.generated';
 import { ordenes } from '../fixtures/clinica';
+import { analisisInlasaDe, TARIFA_INLASA } from '../fixtures/inlasa';
+import { ANALISIS_INLASA } from '../fixtures/inlasa-aranceles.generated';
 import { vitrinas } from '../fixtures/comunidad';
 import {
   ACCESSION_STATUS,
@@ -527,10 +529,9 @@ function sitioDe(u: UnidadSimulada) {
 function estudiosDelCorpus(u: UnidadSimulada) {
   const laboratorio = corpusDe(u)!;
   const sitio = sitioDe(u);
-  return laboratorio.testIds.flatMap((testId, i) => {
+  return laboratorio.testIds.flatMap((testId) => {
     const prueba = pruebaDelCorpus(testId);
     if (prueba === undefined) return [];
-    const precio = 45 + (i % 12) * 30;
     return [
       {
         id: uuid(`offering-${u.id}-${testId}`),
@@ -548,7 +549,9 @@ function estudiosDelCorpus(u: UnidadSimulada) {
         // El corpus no declara qué exige orden médica. `null` lo dice; `false`
         // sería afirmar que cualquiera se la puede hacer sin receta.
         requiresMedicalOrder: null,
-        prices: [{ amount: precio.toFixed(2), currency: c('BOB', 'Boliviano'), scheduleCode: 'MAQUETA', siteId: sitio.id }],
+        // El corpus no publica precios: el estudio viaja sin tarifa en vez de con
+        // una fórmula (antes `45 + (i % 12) × 30`, presentada como precio).
+        prices: [],
         conceptId: uuid(`corpus-test-${testId}`),
         specimens: prueba.specimens,
         methods: prueba.methods,
@@ -577,23 +580,86 @@ function estudiosDe(u: UnidadSimulada) {
   return calculado;
 }
 
+/**
+ * Modalidad de cada estudio de imagen, por código (DICOM: CR radiografía,
+ * US ecografía, MR resonancia, CT tomografía, MG mamografía, BMD densitometría,
+ * ECG electrocardiografía). Antes salía de la POSICIÓN del estudio en la lista y
+ * la mamografía o la densitometría quedaban sin modalidad.
+ */
+const MODALIDAD_DE_ESTUDIO: Readonly<Record<string, readonly [code: string, display: string]>> = {
+  'STUDY-RX-TORAX': ['CR', 'Radiografía'],
+  'STUDY-RX-COLUMNA': ['CR', 'Radiografía'],
+  'STUDY-ECO-ABD': ['US', 'Ecografía'],
+  'STUDY-ECO-OBSTETRICA': ['US', 'Ecografía'],
+  'STUDY-ECG': ['ECG', 'Electrocardiografía'],
+  'STUDY-RMN-RODILLA': ['MR', 'Resonancia magnética'],
+  'STUDY-RMN-CEREBRO': ['MR', 'Resonancia magnética'],
+  'STUDY-TAC-CRANEO': ['CT', 'Tomografía computarizada'],
+  'STUDY-TAC-ABDOMEN': ['CT', 'Tomografía computarizada'],
+  'STUDY-MAMOGRAFIA': ['MG', 'Mamografía'],
+  'STUDY-DENSITOMETRIA': ['BMD', 'Densitometría ósea'],
+};
+
+/**
+ * El menor precio publicado entre los estudios del centro, o `null` si ninguno
+ * tiene tarifa (los laboratorios del corpus no publican precios). Con `null` el
+ * filtro por importe máximo deja pasar al centro: no hay precio que lo excluya.
+ */
+function precioMinimoDe(u: UnidadSimulada): number | null {
+  const precios = estudiosDe(u).flatMap((e) => (e.prices[0] === undefined ? [] : [Number(e.prices[0].amount)]));
+  return precios.length === 0 ? null : Math.min(...precios);
+}
+
+/** Id del INLASA en el corpus del eje central (`bolivia-eje-central.generated.ts`). */
+const CORPUS_INLASA = 'lab_inlasa';
+
+/**
+ * El catálogo del propio INLASA: sus 287 análisis a pacientes con el precio que
+ * publica (`PUBLICO`: es su tarifa, no una referencia ajena).
+ */
+function estudiosDeInlasa(u: UnidadSimulada) {
+  const sitio = sitioDe(u);
+  return ANALISIS_INLASA.map((a) => ({
+    id: uuid(`offering-${u.id}-${a.code}`),
+    code: a.code,
+    name: a.name,
+    description: a.area,
+    siteId: sitio.id,
+    modality: null,
+    preparationInstructions: null,
+    expectedDurationMinutes: null,
+    expectedTurnaroundMinutes: null,
+    requiresMedicalOrder: null,
+    prices: a.priceBs === null ? [] : [{ amount: a.priceBs, currency: c('BOB', 'Boliviano'), scheduleCode: 'PUBLICO', siteId: sitio.id }],
+    conceptId: uuid(`inlasa-${a.code}`),
+  }));
+}
+
 function construirEstudios(u: UnidadSimulada) {
+  if (u.corpusId === CORPUS_INLASA) return estudiosDeInlasa(u);
   if (u.corpusId !== undefined) return estudiosDelCorpus(u);
-  return ESTUDIOS_POR_TIPO[u.kind].map((code, i) => {
+  return ESTUDIOS_POR_TIPO[u.kind].map((code) => {
     const conceptId = ESTUDIO[code]!;
-    const precio = u.kind === 'LABORATORY' ? 40 + i * 25 : 120 + i * 180;
+    const inlasa = analisisInlasaDe(code);
+    const modalidad = MODALIDAD_DE_ESTUDIO[code];
     return {
       id: uuid(`offering-${u.id}-${code}`),
-      code: code.replace('STUDY-', ''),
+      code: inlasa?.code ?? code.replace('STUDY-', ''),
       name: displayDe(conceptId),
       description: `${displayDe(conceptId)} realizado en ${u.name}.`,
       siteId: sitioDe(u).id,
-      modality: u.kind === 'IMAGING' ? c(['XR', 'US', 'ECG', 'MR', 'CT'][i]!, ['Radiografía', 'Ecografía', 'Electrocardiografía', 'Resonancia', 'Tomografía'][i]!) : null,
-      preparationInstructions: i === 1 ? 'Ayuno de 8 horas.' : i === 4 && u.kind === 'IMAGING' ? 'Retirar objetos metálicos.' : null,
-      expectedDurationMinutes: u.kind === 'LABORATORY' ? 10 : 20 + i * 10,
+      modality: modalidad === undefined ? null : c(modalidad[0], modalidad[1]),
+      // Las indicaciones al paciente las publica el centro: la maqueta no las redacta.
+      preparationInstructions: null,
+      expectedDurationMinutes: u.kind === 'LABORATORY' ? 10 : null,
       expectedTurnaroundMinutes: u.kind === 'LABORATORY' ? 240 : 60 * 24,
-      requiresMedicalOrder: i > 1,
-      prices: [{ amount: precio.toFixed(2), currency: c('BOB', 'Boliviano'), scheduleCode: 'PUBLICO', siteId: sitioDe(u).id }],
+      requiresMedicalOrder: null,
+      // Laboratorio: el precio de referencia de INLASA 2026. Imagen: sin precio
+      // hasta tener un arancel oficial; no se inventa uno.
+      prices:
+        inlasa?.priceBs == null
+          ? []
+          : [{ amount: inlasa.priceBs, currency: c('BOB', 'Boliviano'), scheduleCode: TARIFA_INLASA, siteId: sitioDe(u).id }],
       conceptId,
     };
   });
@@ -1357,7 +1423,7 @@ export function registrarDiagnostico(router: MockRouter): void {
       .filter((u) => studyCode === null || estudiosDe(u).some((e) => e.code === studyCode || contiene(e.name, studyCode)))
       .filter((u) => (!home || u.home) && (!walkIn || u.walkIn) && (!external || u.external))
       .filter((u) => u.rating >= minRating)
-      .map((u) => ({ ...itemDeDirectorio(u), tenantId: u.tenantId, rating: u.ratingCount === 0 ? null : u.rating, ratingCount: u.ratingCount, minAmount: Math.min(...estudiosDe(u).map((e) => Number(e.prices[0]!.amount))), cities: ciudadesDe(u) }))
+      .map((u) => ({ ...itemDeDirectorio(u), tenantId: u.tenantId, rating: u.ratingCount === 0 ? null : u.rating, ratingCount: u.ratingCount, minAmount: precioMinimoDe(u), cities: ciudadesDe(u) }))
       .filter((u) => u.minAmount === null || u.minAmount <= maxAmount);
     return { items: todos.slice(offset, offset + limit), total: todos.length, limit, offset };
   });

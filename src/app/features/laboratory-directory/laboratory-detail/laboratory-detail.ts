@@ -35,6 +35,8 @@ import { withDisplayCurrency } from '../../../core/money/display-currency';
  * haría pasar por dato verificado.
  */
 const TARIFA_DE_MAQUETA = 'MAQUETA';
+/** Tarifa de referencia del Instituto Nacional de Laboratorios de Salud (INLASA, Bolivia). */
+const TARIFA_INLASA = 'REFERENCIA_INLASA_2026';
 
 /**
  * Desde cuántos estudios aparece el buscador.
@@ -222,11 +224,15 @@ export class LaboratoryDetail {
       : `${study.code} · ${modalidad}`;
   }
 
-  /** El rótulo del importe: sólo es «público» el que el centro publicó. */
+  /**
+   * El rótulo del importe: sólo es «público» el que el centro publicó. El de
+   * INLASA es el arancel del laboratorio estatal de referencia, no el del centro.
+   */
   protected rotuloDelPrecio(study: DiagnosticStudy): string {
-    return study.prices[0]?.scheduleCode === TARIFA_DE_MAQUETA
-      ? 'Precio de demostración'
-      : 'Precio público';
+    const tarifa = study.prices[0]?.scheduleCode;
+    if (tarifa === TARIFA_DE_MAQUETA) return 'Precio de demostración';
+    if (tarifa === TARIFA_INLASA) return 'Precio de referencia INLASA 2026';
+    return 'Precio público';
   }
 
   /**
