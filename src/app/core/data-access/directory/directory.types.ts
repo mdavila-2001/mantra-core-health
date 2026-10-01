@@ -377,7 +377,25 @@ export interface BranchListItem {
    */
   readonly description?: string;
   readonly locationUrl?: string;
+  /** El punto en el mapa, si se conoce. Van juntas o no van. */
+  readonly latitude?: number;
+  readonly longitude?: number;
   readonly createdAt: Date;
+}
+
+/**
+ * Los cambios a una sucursal (`PATCH /tenants/{id}/branches/{branchId}`).
+ *
+ * **Sólo existe en el simulador** (P54): la API real no publica edición de
+ * sucursales. `null` borra el dato; una clave ausente lo deja como está. El
+ * código no se edita: es la identidad de la sucursal.
+ */
+export interface BranchChanges {
+  readonly name?: string;
+  readonly description?: string | null;
+  readonly locationUrl?: string | null;
+  readonly latitude?: number | null;
+  readonly longitude?: number | null;
 }
 
 /** Respuesta plana de sucursales: sin cursor, con recuento. */

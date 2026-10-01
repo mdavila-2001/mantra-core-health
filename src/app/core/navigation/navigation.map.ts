@@ -1758,6 +1758,22 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M24 pharmacy',
   },
   {
+    // Los precios de la farmacia (01/10/2026): el de cada producto, editable en
+    // una tabla y guardado junto. El alta y la edición completa siguen en «Productos».
+    path: 'administration/pharmacy-prices',
+    onlyForTenantTypes: ['PHARMACY'],
+    roles: [ANY_ROLE],
+    fueraDelMenuPara: ['PRACTITIONER'],
+    hiddenFor: ['PATIENT'],
+    label: 'Precios',
+    group: 'General',
+    icon: 'tag',
+    requiresTenant: true,
+    availability: 'disponible',
+    summary: 'El precio de venta de cada producto, tal como lo ven los pacientes.',
+    module: 'M24 pharmacy',
+  },
+  {
     // La bandeja del mostrador de farmacia (carril FAR-I3). La membresía manda
     // (claim `tenants`), no un rol del token: no existe un rol de farmacia minorista.
     path: 'administration/pharmacy-orders',
@@ -1823,7 +1839,23 @@ export const APP_SECTIONS: readonly AppSection[] = [
     availability: 'disponible',
     summary: 'Los datos legales de tu farmacia, su carpeta de documentos y sus responsables.',
     module: 'M24 pharmacy',
+  },  {
+    // Las sucursales de la farmacia (01/10/2026): verlas, editarlas y subirlas en
+    // lote con un CSV. La pantalla es la misma que la del laboratorio.
+    path: 'administration/pharmacy-branches',
+    onlyForTenantTypes: ['PHARMACY'],
+    roles: [ANY_ROLE],
+    fueraDelMenuPara: ['PRACTITIONER'],
+    hiddenFor: ['PATIENT'],
+    label: 'Sucursales',
+    group: 'General',
+    icon: 'pin',
+    requiresTenant: true,
+    availability: 'disponible',
+    summary: 'Editá tus sucursales o subí varias de una vez con un CSV.',
+    module: 'M04 directory',
   },
+
   {
     // El portal de la cuenta de laboratorio (30/09/2026): el mismo menú plano que
     // tiene la farmacia desde el 29/09, adaptado a quien vende servicios y no
@@ -1913,5 +1945,37 @@ export const APP_SECTIONS: readonly AppSection[] = [
     availability: 'disponible',
     summary: 'Subí los resultados en cualquier formato y mirá todo lo que ya subiste.',
     module: 'M20 diagnostics',
+  },
+  {
+    // Los precios del laboratorio (01/10/2026): precio de lista y descuento
+    // AloVida de cada servicio, editables en una tabla y guardados juntos.
+    path: 'administration/laboratory-prices',
+    onlyForTenantTypes: ['DIAGNOSTIC_CENTER'],
+    roles: [ANY_ROLE],
+    fueraDelMenuPara: ['PRACTITIONER'],
+    hiddenFor: ['PATIENT'],
+    label: 'Precios',
+    group: 'General',
+    icon: 'tag',
+    requiresTenant: true,
+    availability: 'disponible',
+    summary: 'El precio de lista y el descuento AloVida de cada servicio.',
+    module: 'M20 diagnostics',
+  },
+  {
+    // Las sucursales del laboratorio (01/10/2026): la misma pantalla que la de la
+    // farmacia, sobre la organización activa.
+    path: 'administration/laboratory-branches',
+    onlyForTenantTypes: ['DIAGNOSTIC_CENTER'],
+    roles: [ANY_ROLE],
+    fueraDelMenuPara: ['PRACTITIONER'],
+    hiddenFor: ['PATIENT'],
+    label: 'Sucursales',
+    group: 'General',
+    icon: 'pin',
+    requiresTenant: true,
+    availability: 'disponible',
+    summary: 'Editá tus sucursales o subí varias de una vez con un CSV.',
+    module: 'M04 directory',
   },
 ];

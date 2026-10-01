@@ -178,7 +178,7 @@ export function revisarProducto(
     );
   }
 
-  const precio = precioDe(campos.precio);
+  const precio = parsePrice(campos.precio);
   if (precio === 'invalido') {
     errores.push(
       `El precio va en bolivianos, mayor que 0 y hasta ${PRECIO_MAXIMO.toLocaleString('es-BO')}, con punto o coma y hasta dos decimales (sin separador de miles).`,
@@ -259,8 +259,8 @@ export function cambiosDelBorrador(
   ) as PharmacyProductChanges;
 }
 
-/** `null` = no se puso precio. */
-function precioDe(texto: string): number | null | 'invalido' {
+/** El precio escrito, en bolivianos: `null` = no se puso precio. Lo comparte la pestaña «Precios». */
+export function parsePrice(texto: string): number | null | 'invalido' {
   const limpio = texto.trim().replace(/^bs\.?\s*/i, '');
   if (limpio === '') {
     return null;

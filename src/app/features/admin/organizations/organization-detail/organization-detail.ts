@@ -12,13 +12,12 @@ import {
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { catchError, concatMap, forkJoin, from, map, of, toArray } from 'rxjs';
+import { catchError, forkJoin, map, of } from 'rxjs';
 
 import { DirectoryClient } from '../../../../core/data-access/directory/directory.client';
 import type {
   BranchListItem,
   MembershipListItem,
-  NewBranch,
   TenantListItem,
 } from '../../../../core/data-access/directory/directory.types';
 import { TerminologyClient } from '../../../../core/data-access/terminology/terminology.client';
@@ -41,10 +40,8 @@ import { Link } from '../../../../shared/components/atoms/link/link';
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import { BranchBulkImport } from '../../../../shared/components/organisms/branch-bulk-import/branch-bulk-import';
-import {
-  branchCodeFromName,
-  type BranchDraft,
-} from '../../../../shared/utils/branch-import/branch-import';
+import type { BranchDraft } from '../../../../shared/utils/branch-import/branch-import';
+import { createBranchesInSeries } from '../../../organization/organization-branches/create-branches-in-series';
 import { Tab } from '../../../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../../../shared/components/molecules/tabs/tabs';
 import { DataTable } from '../../../../shared/components/organisms/data-table/data-table';
@@ -276,34 +273,13 @@ export class OrganizationDetail {
       return;
     }
     const estado = this.sucursales();
-    const codigosTomados = new Set(
-      estado.status === 'ready' ? estado.data.map((sucursal) => sucursal.code) : [],
-    );
-    const pedidos = lote.map((borrador) => {
-      const code =
-        borrador.code === '' ? branchCodeFromName(borrador.name, codigosTomados) : borrador.code;
-      codigosTomados.add(code);
-      return { nombre: borrador.name, sucursal: nuevaSucursalDesde(borrador, code) };
-    });
+    const codigosTomados = estado.status === 'ready' ? estado.data.map((sucursal) => sucursal.code) : [];
 
     this.creandoLote.set(true);
     this.rechazosDelLote.set([]);
-    from(pedidos)
-      .pipe(
-        concatMap(({ nombre, sucursal }) =>
-          this.directory.createBranch(tenantId, sucursal).pipe(
-            map(() => ({ nombre, motivo: null })),
-            catchError((error: unknown) => of({ nombre, motivo: motivoDeRechazo(error) })),
-          ),
-        ),
-        toArray(),
-      )
-      .subscribe((resultados) => {
+    createBranchesInSeries(this.directory, tenantId, lote, codigosTomados).subscribe(
+      ({ created: creadas, rejected }) => {
         this.creandoLote.set(false);
-        const rechazos = resultados.flatMap(({ nombre, motivo }) =>
-          motivo === null ? [] : [{ nombre, motivo }],
-        );
-        const creadas = resultados.length - rechazos.length;
         if (creadas > 0) {
           this.toasts.success(
             creadas === 1
@@ -312,10 +288,11 @@ export class OrganizationDetail {
             'Sucursales cargadas',
           );
         }
-        this.rechazosDelLote.set(rechazos);
+        this.rechazosDelLote.set(rejected.map(({ name, reason }) => ({ nombre: name, motivo: reason })));
         this.cargaEnLote()?.close();
         this.cargar();
-      });
+      },
+    );
   }
 
   constructor() {
@@ -452,36 +429,6 @@ export class OrganizationDetail {
   }
 }
 
-/** El cuerpo de `POST /tenants/{id}/branches` para una fila del archivo. */
-function nuevaSucursalDesde(borrador: BranchDraft, code: string): NewBranch {
-  return {
-    code,
-    name: borrador.name,
-    ...(borrador.coordinates === null
-      ? {}
-      : { latitude: borrador.coordinates.latitude, longitude: borrador.coordinates.longitude }),
-    ...(borrador.description === '' ? {} : { description: borrador.description }),
-    ...(borrador.locationUrl === '' ? {} : { locationUrl: borrador.locationUrl }),
-  };
-}
-
-/**
- * El mensaje de la API para una sucursal rechazada, o uno genérico. Un 409
- * (código repetido) y un 400 llegan como `validation` con sus `issues`; el
- * resto de los fallos, con `message`.
- */
-function motivoDeRechazo(error: unknown): string {
-  const estado = errorToViewState<null>(error);
-  if (estado.status === 'validation') {
-    const mensajes = estado.issues.map((issue) => issue.message).filter((m) => m !== '');
-    if (mensajes.length > 0) {
-      return mensajes.join(' ');
-    }
-  }
-  return 'message' in estado && typeof estado.message === 'string' && estado.message !== ''
-    ? estado.message
-    : 'No se pudo crear.';
-}
 
 /** Una rama del `forkJoin` que se resolvió con fallo en vez de con datos. */
 interface Fallo {

@@ -2374,6 +2374,25 @@ reintento; visor) y `features/laboratory/summary/`.
 >
 > Mientras tanto, **no cruzar esto a `dev`**: contra la API real la ficha daría 400 en cada fila
 > que traiga descripción o enlace.
+>
+> **Ampliación 01/10/2026 — la pestaña «Sucursales» de la farmacia y del laboratorio**
+> (`/administration/pharmacy-branches` y `/administration/laboratory-branches`, una sola pantalla
+> en `features/organization/organization-branches/`). Lista, crea, sube en lote **y edita**. La
+> edición es un endpoint que la API **no tiene**:
+>
+> | Método y ruta | Qué hace |
+> |---|---|
+> | `PATCH /tenants/{id}/branches/{branchId}` | `{ name?, description?, locationUrl?, latitude?, longitude? }`. `null` borra el dato, clave ausente lo deja. El código **no** se edita. 404 si la sucursal no es de ese tenant; 422 con nombre vacío. Devuelve la sucursal como el listado. |
+>
+> Al cambiar el enlace, el front manda también el punto: el que trae el enlace, o `null` si no
+> trae (el pin viejo era de otro lugar). La API debe validar `locationUrl` como `http(s)` y las
+> coordenadas en rango, igual que en el alta, y acotar por membresía del tenant (la UI no es una
+> barrera). Hoy lo responde sólo el simulador (`directory.handlers.ts`).
+>
+> Las pestañas **«Precios»** que salieron el mismo día no piden contrato nuevo: guardan con los
+> `PATCH` que ya usan el diálogo del producto (`/pharmacies/:id/products/:productId`, P47) y el
+> catálogo del laboratorio (`/diagnostics/lab/services/:id`, P52), de a uno y en serie. Si el
+> volumen lo pide, un `PATCH` de precios en lote todo-o-nada sería la mejora natural.
 
 ## P55 · Artículos médicos completos (formato, imágenes intercaladas) — 30/09/2026
 

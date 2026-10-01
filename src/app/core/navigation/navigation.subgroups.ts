@@ -273,9 +273,11 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
       'administration/pharmacy-categories',
       'administration/pharmacy-import',
       'administration/pharmacy-inventory',
+      'administration/pharmacy-prices',
       'administration/pharmacy-orders',
       'administration/pharmacy-campaigns',
       'administration/pharmacy-profile',
+      'administration/pharmacy-branches',
     ],
   },
   {
@@ -291,6 +293,8 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
       'laboratorio/recepcion',
       'laboratorio/cola',
       'administration/laboratory-results',
+      'administration/laboratory-prices',
+      'administration/laboratory-branches',
     ],
   },
 

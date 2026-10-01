@@ -14,6 +14,7 @@ import type {
   TenantAgendaQuery,
   BranchAssignmentList,
   BranchAssignmentListItem,
+  BranchChanges,
   BranchList,
   BranchListItem,
   MembershipListItem,
@@ -139,6 +140,27 @@ export class DirectoryClient {
       .post<ConNulos<WireBranchListItem>>(
         this.url(`/tenants/${tenantId}/branches`),
         stripUndefined(branch),
+        { headers: deLaOrganizacion(tenantId) },
+      )
+      .pipe(map(toBranchListItem));
+  }
+
+  /**
+   * `PATCH /tenants/{id}/branches/{branchId}` — edita el nombre, la
+   * descripción y la ubicación de una sucursal.
+   *
+   * **Sólo existe en el simulador** (P54): la API real no publica edición de
+   * sucursales. `null` borra el dato; una clave ausente lo deja como está.
+   */
+  updateBranch(
+    tenantId: string,
+    branchId: string,
+    changes: BranchChanges,
+  ): Observable<BranchListItem> {
+    return this.http
+      .patch<ConNulos<WireBranchListItem>>(
+        this.url(`/tenants/${tenantId}/branches/${encodeURIComponent(branchId)}`),
+        stripUndefined(changes),
         { headers: deLaOrganizacion(tenantId) },
       )
       .pipe(map(toBranchListItem));

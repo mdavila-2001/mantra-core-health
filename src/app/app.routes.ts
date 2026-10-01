@@ -282,6 +282,14 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/pharmacy/import/pharmacy-import').then((m) => m.PharmacyImport),
   'administration/pharmacy-inventory': () =>
     import('./features/pharmacy/inventory/pharmacy-inventory').then((m) => m.PharmacyInventory),
+  'administration/pharmacy-prices': () =>
+    import('./features/pharmacy/prices/pharmacy-prices').then((m) => m.PharmacyPrices),
+  // Las sucursales de la organización activa (01/10/2026): una sola pantalla
+  // para la farmacia y el laboratorio, cada una en su menú.
+  'administration/pharmacy-branches': () =>
+    import('./features/organization/organization-branches/organization-branches').then(
+      (m) => m.OrganizationBranches,
+    ),
   // La ficha legal de la farmacia. Ruta hermana de las dos de arriba y no una
   // sección del panel de organización, por el mismo motivo: el panel es de
   // TP-1 y así no se le toca una línea. Diferida: arrastra el mapa.
@@ -295,6 +303,12 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/laboratory/summary/laboratory-summary').then((m) => m.LaboratorySummaryPage),
   'administration/laboratory-results': () =>
     import('./features/laboratory/results/laboratory-results').then((m) => m.LaboratoryResults),
+  'administration/laboratory-prices': () =>
+    import('./features/laboratory/prices/laboratory-prices').then((m) => m.LaboratoryPrices),
+  'administration/laboratory-branches': () =>
+    import('./features/organization/organization-branches/organization-branches').then(
+      (m) => m.OrganizationBranches,
+    ),
   'my-account/identity/cases': () =>
     import('./features/identity-assurance/verification-cases/verification-cases').then(
       (m) => m.VerificationCases,
