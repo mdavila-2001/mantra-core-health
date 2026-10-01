@@ -20,7 +20,8 @@ import { REGISTERED_PATIENTS, REGISTERED_PRACTITIONERS } from './registered-peop
 
 const router = crearRouterSimulado();
 
-function get(path: string, query: Record<string, string>): Record<string, unknown> {
+/** Los manejadores pueden ser asíncronos (el directorio oficial se lee bajo demanda). */
+async function get(path: string, query: Record<string, string>): Promise<Record<string, unknown>> {
   const coincidencia = router.match('GET', path);
   expect(coincidencia, `sin ruta para ${path}`).not.toBeNull();
   const peticion: MockRequest = {
@@ -32,15 +33,15 @@ function get(path: string, query: Record<string, string>): Record<string, unknow
     headers: new HttpHeaders(),
     user: null,
   };
-  return coincidencia!.handler(peticion) as Record<string, unknown>;
+  return (await coincidencia!.handler(peticion)) as Record<string, unknown>;
 }
 
 /** Todas las páginas de un listado por cursor, juntas. */
-function todo<T>(path: string, query: Record<string, string> = {}): T[] {
+async function todo<T>(path: string, query: Record<string, string> = {}): Promise<T[]> {
   const items: T[] = [];
   let cursor: string | null = null;
   do {
-    const pagina = get(path, { ...query, limit: '200', ...(cursor === null ? {} : { cursor }) }) as {
+    const pagina = (await get(path, { ...query, limit: '200', ...(cursor === null ? {} : { cursor }) })) as {
       items: T[];
       nextCursor: string | null;
     };
@@ -53,8 +54,8 @@ function todo<T>(path: string, query: Record<string, string> = {}): T[] {
 const nombres = (items: readonly { displayName: string }[]) => new Set(items.map((i) => i.displayName));
 
 describe('cada dato de markdown_convertidos sale por el endpoint de su pantalla', () => {
-  it('la guía de profesionales lista a los 763 de la red y a los 13 usuarios médicos', () => {
-    const guia = todo<{ profileId: string; displayName: string; professionalTitle: string }>('/profiles/practitioners');
+  it('la guía de profesionales lista a los 763 de la red y a los 13 usuarios médicos', async () => {
+    const guia = await todo<{ profileId: string; displayName: string; professionalTitle: string }>('/profiles/practitioners');
     // Más los 13 de demostración con agenda simulada (D-H3-PROV-01, 23/09/2026).
     expect(guia.length).toBe(
       15 + INSURER_NETWORK_PRACTITIONERS.length + REGISTERED_PRACTITIONERS.length + PROFESIONALES_DEMO_REGISTRADOS.length,
@@ -67,34 +68,34 @@ describe('cada dato de markdown_convertidos sale por el endpoint de su pantalla'
     }
   });
 
-  it('el directorio público devuelve la vitrina de cada médico', () => {
-    const publicos = todo<{ displayName: string }>('/public/search/practitioners');
+  it('el directorio público devuelve la vitrina de cada médico', async () => {
+    const publicos = await todo<{ displayName: string }>('/public/search/practitioners');
     expect(publicos.length).toBeGreaterThanOrEqual(15 + INSURER_NETWORK_PRACTITIONERS.length + REGISTERED_PRACTITIONERS.length);
   });
 
-  it('el directorio de clínicas trae las 22 clínicas, los 17 hospitales y los 464 centros de primer nivel', () => {
-    const vistas = nombres(todo('/public/search/organizations'));
+  it('el directorio de clínicas trae las 22 clínicas, los 17 hospitales y los 464 centros de primer nivel', async () => {
+    const vistas = nombres(await todo('/public/search/organizations'));
     for (const c of [...CLINICAS_REALES, ...HOSPITALES_REALES]) expect(vistas.has(c.name), c.name).toBe(true);
-    const primerNivel = todo<{ displayName: string; headline: string }>('/public/search/organizations').filter((o) =>
+    const primerNivel = (await todo<{ displayName: string; headline: string }>('/public/search/organizations')).filter((o) =>
       o.headline.startsWith('Centro de salud de primer nivel'),
     );
     expect(primerNivel).toHaveLength(PRIMARY_CARE_CENTERS.length);
   });
 
-  it('el directorio de aseguradoras trae las 19, sin que una tape a otra', () => {
-    const vistas = todo<{ slug: string }>('/public/search/insurers');
+  it('el directorio de aseguradoras trae las 19, sin que una tape a otra', async () => {
+    const vistas = await todo<{ slug: string }>('/public/search/insurers');
     const reales = vistas.filter((v) => !['seguros-andina'].includes(v.slug));
     expect(new Set(reales.map((v) => v.slug)).size).toBe(reales.length);
     expect(reales.length).toBeGreaterThanOrEqual(ASEGURADORAS_REALES.length);
   });
 
-  it('el directorio de farmacias trae las 7 de la planilla', () => {
-    const vistas = nombres(todo('/public/search/pharmacies'));
+  it('el directorio de farmacias trae las 7 de la planilla', async () => {
+    const vistas = nombres(await todo('/public/search/pharmacies'));
     for (const f of PHARMACIES_AND_LABS.filter((x) => x.kind === 'PHARMACY')) expect(vistas.has(f.name), f.name).toBe(true);
   });
 
-  it('el directorio de laboratorios trae los laboratorios y centros de la planilla', () => {
-    const pagina = get('/diagnostic-units/search', { limit: '1000' }) as { items: { name: string }[] };
+  it('el directorio de laboratorios trae los laboratorios y centros de la planilla', async () => {
+    const pagina = (await get('/diagnostic-units/search', { limit: '1000' })) as { items: { name: string }[] };
     const vistos = pagina.items.map((u) => u.name.toUpperCase());
     for (const u of PHARMACIES_AND_LABS.filter((x) => x.kind !== 'PHARMACY')) {
       // Plexus y Zuna vienen del corpus con su nombre de cadena.
@@ -103,8 +104,8 @@ describe('cada dato de markdown_convertidos sale por el endpoint de su pantalla'
     }
   });
 
-  it('el padrón de pacientes trae a las 92 personas de USUARIO_PACIENTES', () => {
-    const lista = todo<{ displayName: string }>('/profiles/patients');
+  it('el padrón de pacientes trae a las 92 personas de USUARIO_PACIENTES', async () => {
+    const lista = await todo<{ displayName: string }>('/profiles/patients');
     const vistos = new Set(lista.map((p) => p.displayName.toUpperCase()));
     for (const p of REGISTERED_PATIENTS) {
       const nombre = [p.givenName, p.middleName, p.surname, p.motherSurname].filter(Boolean).join(' ').toUpperCase();
@@ -112,8 +113,8 @@ describe('cada dato de markdown_convertidos sale por el endpoint de su pantalla'
     }
   });
 
-  it('el nomenclador trae todas las prestaciones con importe de los dos aranceles', () => {
-    const todas = todo<{ code: string }>('/billing/service-catalog/procedures');
+  it('el nomenclador trae todas las prestaciones con importe de los dos aranceles', async () => {
+    const todas = await todo<{ code: string }>('/billing/service-catalog/procedures');
     expect(todas).toHaveLength(MEDICAL_FEE_SCHEDULE.length + DENTAL_FEE_SCHEDULE.length);
     expect(new Set(todas.map((i) => i.code)).size).toBe(todas.length);
   });
