@@ -29,7 +29,6 @@ const MENU = [
   ['/administration/pharmacy-inventory', 'Inventario'],
   ['/administration/pharmacy-orders', 'Solicitudes de retiro'],
   ['/administration/pharmacy-campaigns', 'Promociones'],
-  ['/administration/pharmacy-profile', 'Ficha de la farmacia'],
 ] as const;
 
 const FIJOS = ['/my-account', '/notification-center'];

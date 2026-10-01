@@ -1846,9 +1846,12 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // organización. La autoridad sigue siendo la API (`@Roles` del controller).
     onlyForTenantTypes: ['PHARMACY'],
     roles: [ANY_ROLE],
-    // §4.H · fuera del menú del médico. El paciente compra del catálogo, no lo
-    // administra.
-    fueraDelMenuPara: ['PRACTITIONER'],
+    // La ficha dejó de ser un renglón del menú (01/10/2026, pedido del
+    // propietario): la cuenta de farmacia ES la organización, y su ficha es su
+    // «Mi perfil». La ruta vieja redirige a `/my-account` en `app.routes.ts`
+    // (`SECCIONES_REDIRIGIDAS`); la sección se conserva registrada para que esa
+    // dirección guardada siga resolviendo.
+    fueraDelMenuPara: [ANY_ROLE],
     hiddenFor: ['PATIENT'],
     label: 'Ficha de la farmacia',
     // `General` y no `Administración`: es un dominio aplanado, así que los

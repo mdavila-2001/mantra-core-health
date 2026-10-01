@@ -9,6 +9,9 @@
  * Por eso no hay `/me`: el propio token trae `sub`, `roles[]` y `tenants[]`.
  */
 
+/** Clase de cuenta que declara el token. */
+export type AccountKind = 'PERSON' | 'ORGANIZATION';
+
 /**
  * Claims que emite `TokenService.signAccessToken` de la API.
  *
@@ -76,6 +79,16 @@ export interface AccessTokenClaims {
    * exigiendo que la elija.
    */
   readonly ownTenantId?: string;
+  /**
+   * Qué clase de cuenta es: una persona o una organización.
+   *
+   * La cuenta de organización **es** la organización (farmacia, laboratorio,
+   * aseguradora): se muestra con su nombre y su «Mi perfil» es su ficha, no un
+   * perfil de persona. Es dato de presentación, no autoriza nada. Ausente = el
+   * emisor no lo declara (API anterior): `SessionStore.isOrganizationAccount`
+   * lo deduce de la organización activa.
+   */
+  readonly accountKind?: AccountKind;
   /** Expiración en segundos desde epoch, si el token la declara. */
   readonly exp?: number;
 }
@@ -167,6 +180,7 @@ function toClaims(payload: unknown): AccessTokenClaims | null {
   const hpid = source['hpid'];
   const ownTenantId = source['ownTenantId'];
   const exp = source['exp'];
+  const accountKind = source['accountKind'];
 
   return {
     sub,
@@ -177,6 +191,7 @@ function toClaims(payload: unknown): AccessTokenClaims | null {
     ...(typeof pid === 'string' && pid !== '' ? { pid } : {}),
     ...(typeof hpid === 'string' && hpid !== '' ? { hpid } : {}),
     ...(typeof ownTenantId === 'string' && ownTenantId !== '' ? { ownTenantId } : {}),
+    ...(accountKind === 'PERSON' || accountKind === 'ORGANIZATION' ? { accountKind } : {}),
     ...(typeof exp === 'number' ? { exp } : {}),
     ...(toStringMapClaim('tenantNames', source['tenantNames']) ?? {}),
     ...(toStringMapClaim('tenantTypes', source['tenantTypes']) ?? {}),

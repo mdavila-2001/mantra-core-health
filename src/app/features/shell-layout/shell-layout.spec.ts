@@ -113,6 +113,40 @@ describe('ShellLayout', () => {
     expect(user?.roles).toEqual(['PATIENT']);
   });
 
+  it('la cuenta de una organización se muestra como la organización, no como quien la registró', () => {
+    abrirSesion({
+      sub: 'u-1',
+      name: 'Mariela Céspedes',
+      roles: ['USER'],
+      tenants: ['t-1'],
+      tenantNames: { 't-1': 'Farmacia Vida' },
+      tenantTypes: { 't-1': 'PHARMACY' },
+      accountKind: 'ORGANIZATION',
+    });
+
+    expect(interno<() => { displayName: string } | null>('user')()?.displayName).toBe(
+      'Farmacia Vida',
+    );
+    expect(interno<() => string>('iniciales')()).toBe('FV');
+    expect(interno<() => string>('rolesLegibles')()).toBe('Farmacia');
+  });
+
+  it('una persona que trabaja en una farmacia sigue viéndose con su nombre', () => {
+    abrirSesion({
+      sub: 'u-2',
+      name: 'Luis Mercado',
+      roles: ['USER'],
+      tenants: ['t-1'],
+      tenantNames: { 't-1': 'Farmacia Vida' },
+      tenantTypes: { 't-1': 'PHARMACY' },
+      accountKind: 'PERSON',
+    });
+
+    expect(interno<() => { displayName: string } | null>('user')()?.displayName).toBe(
+      'Luis Mercado',
+    );
+  });
+
   it('sin nombre en el token cae al identificador, para que el encabezado no quede vacío', () => {
     abrirSesion({ sub: 'u-1', roles: [], tenants: ['t-1'] });
 

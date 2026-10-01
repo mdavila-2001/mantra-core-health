@@ -1,0 +1,39 @@
+@if (esFarmacia()) {
+  <app-pharmacy-profile />
+} @else {
+  <app-page-header
+    [title]="titulo()"
+    subtitle="Lo que tu organización es en los papeles: sus datos y cómo se la encuentra."
+    [breadcrumbs]="breadcrumbs()"
+  />
+
+  <app-view-state-host [state]="organizaciones()" (retry)="cargar()">
+    @if (organizacion(); as org) {
+      <div class="perfil-organizacion">
+        <app-card variant="outlined" padding="lg">
+          <h2 class="perfil-organizacion__titulo">Datos de la organización</h2>
+          <dl class="perfil-organizacion__datos" data-testid="perfil-organizacion-datos">
+            <dt>Razón social</dt>
+            <dd>{{ org.legalName }}</dd>
+            <dt>Nombre comercial</dt>
+            <dd>{{ org.tradeName || '—' }}</dd>
+            <dt>Zona horaria</dt>
+            <dd>{{ org.timeZone || '—' }}</dd>
+            @if (org.payer; as payer) {
+              <dt>Sigla</dt>
+              <dd>{{ payer.sigla || '—' }}</dd>
+              <dt>NIT</dt>
+              <dd>{{ payer.regulatorIdentifier || '—' }}</dd>
+              <dt>Dirección</dt>
+              <dd>{{ payer.address || '—' }}</dd>
+            }
+          </dl>
+        </app-card>
+
+        @if (org.payer?.carrierCode; as carrierCode) {
+          <app-insurer-profile-card [carrierCode]="carrierCode" />
+        }
+      </div>
+    }
+  </app-view-state-host>
+}

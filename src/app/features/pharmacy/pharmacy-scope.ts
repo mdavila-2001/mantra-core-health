@@ -60,7 +60,7 @@ export class PharmacyScope {
         this.options.set(
           options.length === 0
             ? empty(
-                { label: 'Ir a la ficha de la farmacia', route: '/administration/pharmacy-profile' },
+                { label: 'Ir a la ficha de la farmacia', route: '/my-account' },
                 'Tu organización todavía no tiene una farmacia publicada.',
               )
             : ready(options),
