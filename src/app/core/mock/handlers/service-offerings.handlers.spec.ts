@@ -1,5 +1,5 @@
 import { HttpHeaders } from '@angular/common/http';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { registrarAgenda } from './scheduling.handlers';
 import { registrarServiciosDeAgenda } from './service-offerings.handlers';
@@ -63,14 +63,38 @@ describe('handlers de servicios con duración dinámica', () => {
   /** El primer horario de un miércoles: la mañana MIXTA, donde conviven consultas y servicios. */
   const unMiercoles = (items: Horarios['items']) => items.find((i) => new Date(i.startAt).getDay() === 3);
 
-  beforeEach(() => {
-    // Lo que un test deja (reservas, cupos de servicio, ofertas editadas) no puede
-    // contaminar al siguiente.
-    for (const c of cupos.todos()) if (c.serviceOfferingId) cupos.borrar(c.id);
-    for (const r of reservas.todos()) if (r.serviceOfferingId) reservas.borrar(r.id);
-    for (const c of cupos.todos()) if (c.retractedByService) cupos.actualizar(c.id, { statusConceptId: ESTADO['ST-ACTIVE']!, retractedByService: false });
-    for (const o of ofertas.todos()) ofertas.actualizar(o.id, { isActive: true, isPatientBookable: o.id !== uuid('x') });
-  });
+  /**
+   * Las tablas del simulador son singletons de módulo: lo que un test escribe lo ve
+   * el siguiente **y también los otros archivos** que corran en el mismo proceso
+   * (el conteo de reclamos de portabilidad, por ejemplo, se alimenta de las
+   * reservas). Por eso se guarda una foto al empezar y se restaura **al terminar**,
+   * no sólo antes de cada prueba: limpiar al entrar protege a este archivo, limpiar
+   * al salir protege a los demás.
+   */
+  const fotoDeCupos = cupos.todos();
+  const fotoDeReservas = reservas.todos();
+  const fotoDeOfertas = ofertas.todos();
+
+  function restaurar<T extends { readonly id: string }>(
+    tabla: { todos(): T[]; has(id: string): boolean; borrar(id: string): boolean; agregar(f: T): T; actualizar(id: string, c: Partial<T>): T | undefined },
+    foto: readonly T[],
+  ): void {
+    const ids = new Set(foto.map((f) => f.id));
+    for (const fila of tabla.todos()) if (!ids.has(fila.id)) tabla.borrar(fila.id);
+    for (const fila of foto) {
+      if (tabla.has(fila.id)) tabla.actualizar(fila.id, fila);
+      else tabla.agregar(fila);
+    }
+  }
+
+  function restaurarTodo(): void {
+    restaurar(cupos, fotoDeCupos);
+    restaurar(reservas, fotoDeReservas);
+    restaurar(ofertas, fotoDeOfertas);
+  }
+
+  beforeEach(restaurarTodo);
+  afterEach(restaurarTodo);
 
   describe('la oferta del profesional', () => {
     it('el dueño ve todas las suyas, con el nombre y el precio del catálogo', () => {
