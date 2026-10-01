@@ -483,6 +483,8 @@ export class IamClient {
                   ...(branch.location === undefined
                     ? {}
                     : { latitude: branch.location.latitude, longitude: branch.location.longitude }),
+                  ...(branch.description === undefined ? {} : { description: branch.description }),
+                  ...(branch.locationUrl === undefined ? {} : { locationUrl: branch.locationUrl }),
                 })),
               }),
         },

@@ -4,16 +4,14 @@ Cuenta `medica@alovida.mock` contra el simulador de `mockup`.
 
 | Archivo | Qué prueba |
 |---|---|
-| `ficha-facturacion-con-logo-1440.png` | Logo sembrado dentro del recuadro de Facturación, en su caja 2:1 |
-| `ficha-facturacion-logo-cuadrado-1440.png` | Tras subir un PNG cuadrado desde el editor y guardar |
-| `ficha-facturacion-sin-logo-1440.png` | Tras «Quitar logo»: «Sin logo» en la misma caja, el recuadro no cambia de alto |
-| `ficha-facturacion-sin-logo-390.png` | Móvil: el logo pasa arriba de los datos |
-| `editor-facturacion-*-1440.png` | El editor muestra la misma caja, con logo, con uno nuevo y sin logo |
+| `ficha-datos-personales-{con-logo,logo-cuadrado,sin-logo}-1440.png` | El bloque «Logo del consultorio» de la ficha, en «Datos personales» (lectura) |
+| `editor-datos-personales-{con-logo,logo-cuadrado,sin-logo}-1440.png` | El editor: el logo **se carga, cambia y quita SÓLO acá** (arriba de «Datos personales») |
+| `ficha-facturacion-*-1440.png`, `-390.png` | «Facturación» lo muestra sólo como vista previa de lectura, en la misma caja 2:1; el recuadro no cambia de alto sin logo. En móvil el logo pasa arriba |
 | `pdf-con-logo(-cuadrado).pdf` / `pdf-sin-logo.pdf` (+ `-p1.png`) | PDF real descargado desde Contabilidad en los tres estados |
 | `matriz-de-logos-membrete.png` | Membrete con jsPDF real: sin logo, cuadrado, 3:1, 10:1, 1:3, 4×4 y dato roto. El título y el contenido no se mueven en ningún caso |
 
 `playwright/logo-del-consultorio.spec.ts` genera las capturas y los PDF
-(`E2E_BASE_URL=… yarn pw playwright/logo-del-consultorio.spec.ts`).
+(`E2E_BASE_URL=… yarn pw --workers=1 playwright/logo-del-consultorio.spec.ts`; el test también comprueba que el editor de «Facturación» NO ofrece el logo).
 
 Límites honestos:
 - Los PDF `pdf-*.pdf` se bajaron **antes** del último ajuste del membrete (la
