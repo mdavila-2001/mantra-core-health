@@ -1,0 +1,42 @@
+$ git push -u origin marcelo/fix-homologacion-metodos-http   (el gancho pre-push corre yarn build y el presupuesto de bundle)
+
+▲ [WARNING] Module 'xmlhttprequest-ssl' used by 'node_modules/engine.io-client/build/esm-debug/transports/polling-xhr.node.js' is not ESM
+
+  CommonJS or AMD dependencies can cause optimization bailouts.
+  For more information see: https://angular.dev/tools/cli/build#configuring-commonjs-dependencies
+
+
+Output location: D:\Trabajos Secundarios\Mantra Core Technologies\mantra-core-health\dist\mantra-core-health
+
+
+✓ check-bundle-budget
+  inicial: 275.46 kB en 12 archivos
+     137.70 kB  styles-ZNX5SMOT.css
+      84.05 kB  main-J7KJYQN4.js
+      19.25 kB  chunk-VB7Z72S2.js
+       7.22 kB  chunk-TSKDFEM6.js
+       6.03 kB  chunk-37W6OOFW.js
+       5.73 kB  chunk-5QNSRI7H.js
+       5.47 kB  chunk-W25WQJSF.js
+       5.21 kB  chunk-FZAW544E.js
+       2.13 kB  chunk-OLPUAJUT.js
+       1.93 kB  chunk-3DO7Q6U3.js
+       0.67 kB  chunk-3YP2YVSU.js
+       0.07 kB  chunk-BT32HGJC.js
+  diferidos: 1053 fragmentos
+    2636.76 kB  chunk-ASBIADO5.js
+     785.62 kB  chunk-SWUJIHEQ.js
+     594.55 kB  chunk-VMQYV22Y.js
+     507.18 kB  chunk-TAYKKNCO.js
+     432.96 kB  chunk-FWMMDP6O.js
+
+pre-push: la construcción pasó. Empujando.
+
+remote: 
+remote: Create a pull request for 'marcelo/fix-homologacion-metodos-http' on GitHub by visiting:        
+remote:      https://github.com/mdavila-2001/mantra-core-health/pull/new/marcelo/fix-homologacion-metodos-http        
+remote: 
+To https://github.com/mdavila-2001/mantra-core-health.git
+ * [new branch]        marcelo/fix-homologacion-metodos-http -> marcelo/fix-homologacion-metodos-http
+branch 'marcelo/fix-homologacion-metodos-http' set up to track 'origin/marcelo/fix-homologacion-metodos-http'.
+exit=0

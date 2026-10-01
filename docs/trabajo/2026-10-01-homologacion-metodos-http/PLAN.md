@@ -90,9 +90,9 @@
 | H4.S1.M4 | Checks del CI a mano (el CI del front está caído) | exit 0 | `node scripts/check-architecture.mjs` · `check-api-prefixes.mjs` · `check-route-prefixes.mjs` · `check-english-identifiers.mjs` · `check-mock-vs-client.mjs --json` → `check-architecture`, `check-api-prefixes`, `check-route-prefixes` y `check-mock-vs-client` exit 0 (`13`); falta `check-english-identifiers` contra `origin/dev`, que sólo mira lo ya commiteado → los cinco exit 0; `check-english-identifiers` con `CHECK_ENGLISH_BASE=origin/dev`: «sin identificadores nuevos en castellano» (`13`, `13c`) | HECHO |
 | H4.S1.M5 | Auditoría externa con las dos ramas del hito en disco | `Method Mismatch: 0` | `python …\compare_mock_api.py` → `Method Mismatch: 0`, 643 rutas del simulador y 1438 de la API (`12-auditoria-final.txt`) | HECHO |
 | H4.S2.M1 | `REPORTE.md` | tres secciones y «No cubierto» | archivo en disco → `REPORTE.md` en disco, con avance en la primera línea y «No cubierto» | HECHO |
-| H4.S2.M2 | Commit con rutas explícitas (nunca `git add -A`) y push | rama en `origin` | `git push -u origin marcelo/fix-homologacion-metodos-http` | TODO |
-| H4.S2.M3 | PR a `dev` con `jsaldias39` y `PabloArauzCaballero` | PR abierto | `gh pr create …` | TODO |
-| H4.S2.M4 | Gate mergeable | `mergeable` = `MERGEABLE`; `BLOCKED` sólo por la revisión humana | `gh pr view <n> --json number,url,isDraft,mergeable,mergeStateStatus,reviewDecision,baseRefName,headRefName` y `gh pr checks <n>` | TODO |
+| H4.S2.M2 | Commit con rutas explícitas (nunca `git add -A`) y push | rama en `origin` | `git push -u origin marcelo/fix-homologacion-metodos-http` → commit `fd75a606` con rutas explícitas; `git push -u`: el gancho pre-push compiló producción y pasó el presupuesto (`evidencia/16`); `origin/dev` sin cambios antes y después | HECHO |
+| H4.S2.M3 | PR a `dev` con `jsaldias39` y `PabloArauzCaballero` | PR abierto | `gh pr create …` → PR #815 hacia `dev`, no es draft, con `Jsaldias39` y `PabloArauzCaballero` | HECHO |
+| H4.S2.M4 | Gate mergeable | `mergeable` = `MERGEABLE`; `BLOCKED` sólo por la revisión humana | `gh pr view <n> --json number,url,isDraft,mergeable,mergeStateStatus,reviewDecision,baseRefName,headRefName` y `gh pr checks <n>` → `MERGEABLE`, `UNSTABLE`: `verificar` (Tipos) y `e2e` (Suite crítica) fallan igual que en el push a `dev`; clasificados con evidencia: `17`, `18`, `19` | A MEDIAS |
 
 ## Riesgos y bloqueos previstos
 

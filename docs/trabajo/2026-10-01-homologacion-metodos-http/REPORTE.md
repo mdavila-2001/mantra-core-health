@@ -1,6 +1,6 @@
 # Reporte — Hito 3 (frontend): homologación de métodos HTTP
 
-> **AVANCE: 23 / 26 — 88,5 %.** Código, pruebas y auditoría listos; faltan el push, el PR y la consulta de mergeable (H4.S2.M2 a M4).
+> **AVANCE: 25 / 26 — 96,2 %.** Código, pruebas, auditoría y PR (#815) listos; el gate de entrega queda A MEDIAS porque dos checks del CI fallan igual que en `dev` (ver A medias).
 
 - Fecha: 2026-10-01 · Plan: PLAN.md · Rama: `marcelo/fix-homologacion-metodos-http`, desde `origin/dev` (`2439b79f`) · PR gemelo en `mantra-core-health-api` (PR #527, mismo nombre de rama)
 - Peldaño de evidencia alcanzado: **TESTED**. No hay VERIFIED: no se ejercitó la aplicación en un navegador, ni en modo demo ni contra la API real. El cambio no toca UI, así que la prueba visual no aplica.
@@ -39,18 +39,20 @@ En los seis primeros casos el cliente real (`core/data-access`) ya usaba el verb
 | H4.S1.M4 | Checks que el CI del front correría | `check-architecture`, `check-api-prefixes`, `check-route-prefixes`, `check-mock-vs-client` y `check-english-identifiers` con `CHECK_ENGLISH_BASE=origin/dev` | exit 0 los cinco; sin identificadores nuevos en castellano (`13`, `13c`) |
 | H4.S1.M5 | Auditoría externa con las dos ramas del hito en disco | `python compare_mock_api.py` | `Method Mismatch: 0` (`12`) |
 | H4.S2.M1 | Este reporte | — | en disco |
+| H4.S2.M2 | Commit `fd75a606` con rutas explícitas y push | `git push -u origin marcelo/fix-homologacion-metodos-http` | rama en `origin`; el gancho pre-push compiló producción y pasó el presupuesto de bundle (`evidencia/16`); `origin/dev` sin cambios antes y después |
+| H4.S2.M3 | PR a `dev` con los dos revisores | `gh pr create --reviewer jsaldias39,PabloArauzCaballero` | PR #815, no es draft |
 
 ## A medias
 
-Ninguna.
+### H4.S2.M4 — Gate mergeable
+- **Qué anda:** PR #815 abierto hacia `dev`, no es draft, `mergeable: MERGEABLE` y sin conflictos (merge de prueba contra `origin/dev` limpio: `dev` avanzó un commit sin solape con mis archivos); `Jsaldias39` y `PabloArauzCaballero` figuran como revisores solicitados. `dependencias` pasa. El gancho pre-push compiló la aplicación de producción.
+- **Qué no anda:** `mergeStateStatus: UNSTABLE`. `verificar` falla en «Tipos» porque el CI no genera `component-index.generated.ts` antes de `tsc` (error visto en las anotaciones del CI y reproducido en local, `evidencia/18`), y `e2e` falla en «Suite crítica» con exit 9, sin causa raíz investigada. Los dos fallos son idénticos en el push a `dev` (corrida 36880592217), que no contiene este cambio (`evidencia/19`).
+- **Qué falta exactamente:** agregar `yarn stock:generate` antes del paso «Tipos» de `.github/workflows/ci.yml` e investigar la «Suite crítica». No se tocó el workflow: es infraestructura compartida y queda fuera del alcance de este hito.
+- **Dónde quedó:** rama `marcelo/fix-homologacion-metodos-http` en `origin`, PR #815; el estado se vuelve a consultar tras cada push.
 
 ## Pendiente
 
-| ID | Estado | Qué lo destraba |
-|---|---|---|
-| H4.S2.M2 | TODO | commit con rutas explícitas y `git push -u origin marcelo/fix-homologacion-metodos-http` (el gancho pre-push corre `yarn build` y el presupuesto de bundle) |
-| H4.S2.M3 | TODO | `gh pr create` hacia `dev` con `jsaldias39` y `PabloArauzCaballero` |
-| H4.S2.M4 | TODO | `gh pr view` y `gh pr checks` tras el push |
+Ninguna.
 
 ## Evidencia
 
@@ -73,15 +75,15 @@ AssertionError: expected 201 to be 200
 Tests  2 failed | 36 passed (38)
 ```
 
-Índice de `evidencia/`: `01` rama · `02` instalación · `03` typecheck base · `04` checker de rutas base · `05` auditoría base · `06` specs dirigidos · `07` kill-test del guard · `08` typecheck · `09` lint · `10` compilación de los specs tocados · `11` spec del cliente de farmacia · `12` auditoría final · `13` y `13c` checks del CI a mano · `14` suite completa · `15` verbos por rama.
+Índice de `evidencia/`: `01` rama · `02` instalación · `03` typecheck base · `04` checker de rutas base · `05` auditoría base · `06` specs dirigidos · `07` kill-test del guard · `08` typecheck · `09` lint · `10` compilación de los specs tocados · `11` spec del cliente de farmacia · `12` auditoría final · `13` y `13c` checks del CI a mano · `14` suite completa · `15` verbos por rama · `16` push y compilación · `17` estado del PR · `18` reproducción del fallo de «Tipos» · `19` clasificación de los checks.
 
 ## No cubierto
 
 1. **Aplicación en ejecución.** No se abrió la app en un navegador, ni con el simulador ni contra la API real, y no se corrió Playwright. «Rendericen sin excepciones» se cubre con los specs de los componentes de reacciones, notas, sedes y preferencias en vitest con jsdom, no con una captura.
 2. **Modo real contra la API.** Verificado por contrato (decisión del usuario): `openapi.json` de la API, los controladores y los clientes. Con el PR #527 sin desplegar, el `PATCH` de productos sigue sin existir en una API real.
 3. **Edición de productos en modo real.** La pantalla con `PATCH` sólo se monta con `mockBackend` activo (`app.routes.ts:283-286`). En modo real, la única llamada alcanzable es la importación CSV con filas «actualizar», que manda `inStock` en cada fila y recibirá 400 hasta que P47 §3-5 se cierre (antes recibía 404).
-4. **CI del front.** Está caído; los `check-*.mjs` se corrieron a mano.
-5. **Build de producción.** Lo correrá el gancho pre-push al empujar; su salida se agrega a la evidencia.
+4. **CI del front.** Corrió sobre el PR: `dependencias` pasa; `verificar` falla en «Tipos» y `e2e` en «Suite crítica», los dos igual que en el push a `dev` (`evidencia/19`). Los `check-*.mjs` se corrieron además a mano.
+5. **Build de producción.** Lo corrió el gancho pre-push y pasó, con el presupuesto de bundle (`evidencia/16`); no se inspeccionó el resultado en un navegador.
 6. **Herramienta de auditoría.** `compare_mock_api.py` vive fuera de los repos (`C:\Users\Usuario\.gemini\…\scratch\`). El guard versionado es el spec nuevo de `mock-backend.spec.ts`.
 
 ## Desvíos del plan
