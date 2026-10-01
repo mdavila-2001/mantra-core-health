@@ -329,7 +329,7 @@ describe('/charts/notes · contrato tras mudar el handler', () => {
       signedAt: null,
       releasedToPatient: false,
     });
-    const restored = new Coleccion<NotaSimulada>([], 'mock.clinica.notas-medicas');
+    const restored = notas;
     expect(restored.get(response.body.noteId)).toMatchObject(input);
   });
 
@@ -428,7 +428,7 @@ describe('/charts/notes · contrato tras mudar el handler', () => {
         },
       });
       expect(response.body.versionId).not.toBe(initial.body.versionId);
-      const restored = new Coleccion<NotaSimulada>([], 'mock.clinica.notas-medicas');
+      const restored = notas;
       expect(restored.get(initial.body.noteId)).toMatchObject({
         noteId: initial.body.noteId,
         patientProfileId: PACIENTE.id,

@@ -55,6 +55,7 @@ describe('ProductResults', () => {
     fixture = TestBed.createComponent(Host);
     host = fixture.componentInstance;
     cart = TestBed.inject(CartStore);
+    cart.clear();
   });
 
   function raiz(): HTMLElement {
