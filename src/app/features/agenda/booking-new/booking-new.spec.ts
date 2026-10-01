@@ -388,4 +388,207 @@ describe('BookingNew', () => {
     expect(ayuda).toContain('Lo que cuenta el paciente');
     expect(ayuda).not.toContain('Acompaña a la cita');
   });
+
+  /* ==========================================================================
+     v4.2.40 — reservar un servicio de duración dinámica
+     ========================================================================== */
+
+  /**
+   * Un servicio no tiene un cupo en la grilla que reencontrar: sus horarios se
+   * calculan al leer y el cupo nace al retener. Con `oferta` en la URL, esta
+   * pantalla relee la disponibilidad calculada y retiene con el endpoint del
+   * servicio; el resto del ciclo (vencimiento, confirmar, solicitar) es el mismo.
+   */
+  describe('cuando se reserva un servicio', () => {
+    const OFERTA = 'of-1';
+    const INICIO = '2026-08-12T13:00:00.000Z';
+    const FIN_MAXIMO = '2026-08-12T13:45:00.000Z';
+    const FIN_MINIMO = '2026-08-12T13:30:00.000Z';
+
+    // Entrada de mostrador: la sesión de estas pruebas es de agenda. El modo servicio no
+    // depende de por dónde se entra —eso sólo decide `confirm` o `request`—.
+    const RUTA_SERVICIO = `/schedule/book/servicio?recurso=r-1&desde=${INICIO}&hasta=${FIN_MAXIMO}&oferta=${OFERTA}`;
+
+    const OFERTA_DEL_PROFESIONAL = {
+      id: OFERTA,
+      practitionerProfileId: 'prac-1',
+      serviceCatalogId: 's1',
+      serviceCode: 'ECO',
+      serviceName: 'Ecocardiograma Doppler',
+      price: '480.00',
+      minDurationMinutes: 30,
+      maxDurationMinutes: 45,
+      prepMinutes: 0,
+      cleanupMinutes: 0,
+      isPatientBookable: true,
+      requiresApproval: false,
+      isActive: true,
+    };
+
+    /** El horario que la lectura calculada ofrece. */
+    function disponibilidad(inicio: string = INICIO) {
+      return {
+        offeringId: OFERTA,
+        minDurationMinutes: 30,
+        maxDurationMinutes: 45,
+        items: [{ resourceId: 'r-1', startAt: inicio, endAtMax: FIN_MAXIMO, endAtMin: FIN_MINIMO }],
+      };
+    }
+
+    /** Monta la pantalla y responde lo que pide al entrar: disponibilidad y oferta. */
+    async function montarServicio(horarios = disponibilidad()): Promise<void> {
+      await montar(RUTA_SERVICIO);
+      http
+        .expectOne((r) => r.url === '/scheduling/service-availability')
+        .flush(horarios);
+      http
+        .expectOne((r) => r.url === '/scheduling/service-offerings')
+        .flush({ items: [OFERTA_DEL_PROFESIONAL] });
+      harness.detectChanges();
+    }
+
+    it('relee la DISPONIBILIDAD calculada y no la lista de cupos', async () => {
+      await montar(RUTA_SERVICIO);
+
+      const lectura = http.expectOne((r) => r.url === '/scheduling/service-availability');
+      expect(lectura.request.params.get('offeringId')).toBe(OFERTA);
+      expect(lectura.request.params.get('resourceId')).toBe('r-1');
+      expect(lectura.request.params.get('from')).toBe(INICIO);
+      // Un servicio no tiene cupo en la grilla: no se pide la lista de cupos.
+      http.expectNone((r) => r.url === '/scheduling/slots');
+      lectura.flush(disponibilidad());
+      http.expectOne((r) => r.url === '/scheduling/service-offerings').flush({ items: [] });
+    });
+
+    it('el resumen dice qué servicio es, cuánto dura y cuánto sale', async () => {
+      await montarServicio();
+
+      const resumen: HTMLElement = harness.routeNativeElement!.querySelector('[data-testid="reserva-resumen"]')!;
+      expect(resumen.querySelector('[data-testid="reserva-servicio"]')?.textContent).toContain(
+        'Ecocardiograma Doppler',
+      );
+      // La duración es un rango: depende de cada paciente. El horario reserva el máximo.
+      expect(resumen.querySelector('[data-testid="reserva-duracion"]')?.textContent).toContain('30–45 min');
+      expect(resumen.querySelector('[data-testid="reserva-precio"]')?.textContent).toContain('480.00');
+      expect(resumen.querySelector('[data-testid="reserva-precio"]')?.textContent).toContain('Bs');
+      // «Disponibilidad: 1 de 1 sin ocupar» no significa nada para un turno que se calcula.
+      expect(resumen.textContent).not.toContain('sin ocupar');
+    });
+
+    it('la hora de fin que se muestra es el MÁXIMO, que es lo que se reserva', async () => {
+      await montarServicio();
+
+      const cupo = interno<() => { endAt: Date } | null>('cupoListo')();
+      expect(cupo?.endAt.toISOString()).toBe(FIN_MAXIMO);
+    });
+
+    it('si el horario ya no está en la disponibilidad, sale como vacío con salida', async () => {
+      await montarServicio(disponibilidad('2026-08-12T15:00:00.000Z'));
+
+      expect(interno<() => { status: string }>('cupo')().status).toBe('empty');
+      expect(harness.routeNativeElement!.textContent).toContain('otro turno lo ocupó');
+    });
+
+    it('retener crea el cupo con el endpoint del servicio y manda sede, inicio y paciente', async () => {
+      await montarServicio();
+      crudo<{ set: (v: ReferenceOption) => void }>('paciente').set(PACIENTE);
+
+      interno<() => void>('retener')();
+
+      // NO es `POST /scheduling/slots/:id/holds`: ese cupo todavía no existe.
+      http.expectNone((r) => r.url.startsWith('/scheduling/slots/'));
+      const req = http.expectOne(`/scheduling/service-offerings/${OFERTA}/holds`);
+      expect(req.request.body).toEqual({
+        resourceId: 'r-1',
+        startAt: INICIO,
+        patientProfileId: 'pp-1',
+      });
+
+      req.flush({
+        id: 'h-1',
+        holdToken: 'tok-s',
+        expiresAt: '2026-08-12T13:05:00.000Z',
+        bookableSlotId: 'slot-nuevo',
+        startAt: INICIO,
+        endAt: FIN_MAXIMO,
+        retractedSlots: 2,
+      });
+
+      const retencion = interno<() => { holdToken: string; remainingCapacity: number } | null>('retencion')();
+      expect(retencion?.holdToken).toBe('tok-s');
+      // El cupo del servicio nace ya tomado.
+      expect(retencion?.remainingCapacity).toBe(0);
+    });
+
+    it('un 409 al retener dice que el horario ya no cabe y relee la disponibilidad', async () => {
+      await montarServicio();
+      crudo<{ set: (v: ReferenceOption) => void }>('paciente').set(PACIENTE);
+      interno<() => void>('retener')();
+
+      http.expectOne(`/scheduling/service-offerings/${OFERTA}/holds`).flush(
+        {
+          code: 'CONFLICT',
+          message: 'Ese horario ya no está disponible para este servicio. Elegí otro.',
+          timestamp: '2026-08-12T12:00:00.000Z',
+          path: `/scheduling/service-offerings/${OFERTA}/holds`,
+        },
+        { status: 409, statusText: 'Conflict' },
+      );
+      harness.detectChanges();
+
+      expect(interno<() => string | null>('errorMessage')()).toContain('ya no está disponible');
+      // El paso a repetir es elegir otro: se vuelve a leer lo que queda libre.
+      http.expectOne((r) => r.url === '/scheduling/service-availability').flush({
+        offeringId: OFERTA,
+        minDurationMinutes: 30,
+        maxDurationMinutes: 45,
+        items: [],
+      });
+      expect(interno<() => unknown>('retencion')()).toBeNull();
+    });
+
+    it('confirmar usa el MISMO endpoint que una consulta, con el token del servicio', async () => {
+      await montarServicio();
+      crudo<{ set: (v: ReferenceOption) => void }>('paciente').set(PACIENTE);
+      interno<() => void>('retener')();
+      http.expectOne(`/scheduling/service-offerings/${OFERTA}/holds`).flush({
+        id: 'h-1',
+        holdToken: 'tok-s',
+        expiresAt: '2026-08-12T13:05:00.000Z',
+        bookableSlotId: 'slot-nuevo',
+        startAt: INICIO,
+        endAt: FIN_MAXIMO,
+        retractedSlots: 0,
+      });
+
+      const router = TestBed.inject(Router);
+      vi.spyOn(router, 'navigate').mockImplementation(() => Promise.resolve(true));
+      interno<() => void>('confirmar')();
+
+      const req = http.expectOne('/scheduling/holds/tok-s/confirm');
+      expect(req.request.body).toMatchObject({ tenantId: 't-1', patientProfileId: 'pp-1' });
+      req.flush({ id: 'b-1', bookableSlotId: 'slot-nuevo', statusConceptId: 'c', remindersScheduled: 2 });
+    });
+
+    it('una consulta no cambia: no pide disponibilidad ni oferta', async () => {
+      await montar();
+      responderCupo();
+
+      http.expectNone((r) => r.url === '/scheduling/service-availability');
+      http.expectNone((r) => r.url === '/scheduling/service-offerings');
+      expect(harness.routeNativeElement!.querySelector('[data-testid="reserva-servicio"]')).toBeNull();
+    });
+
+    it('si no se pudo leer el nombre y el precio, igual se puede reservar', async () => {
+      await montar(RUTA_SERVICIO);
+      http.expectOne((r) => r.url === '/scheduling/service-availability').flush(disponibilidad());
+      http
+        .expectOne((r) => r.url === '/scheduling/service-offerings')
+        .flush({ message: 'caído' }, { status: 500, statusText: 'Server Error' });
+      harness.detectChanges();
+
+      expect(interno<() => { status: string }>('cupo')().status).toBe('ready');
+      expect(harness.routeNativeElement!.querySelector('[data-testid="reserva-servicio"]')).toBeNull();
+    });
+  });
 });

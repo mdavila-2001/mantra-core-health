@@ -10,9 +10,11 @@ import { SchedulingClient } from '../../../core/data-access/scheduling/schedulin
 import type {
   AgendaResourceSite,
   AgendaSlot,
+  ServiceOffering,
   SlotHold,
 } from '../../../core/data-access/scheduling/scheduling.types';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
+import { withDisplayCurrency } from '../../../core/money/display-currency';
 import { NavigationService } from '../../../core/navigation/navigation.service';
 import { empty, loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
@@ -163,6 +165,47 @@ export class BookingNew {
 
   private readonly slotId = this.route.snapshot.paramMap.get('slotId') ?? '';
   private readonly resourceId = this.route.snapshot.queryParamMap.get('recurso');
+
+  /**
+   * La oferta de servicio que se está reservando (v4.2.40), o `null` si es una
+   * consulta.
+   *
+   * Un servicio no tiene un cupo en la grilla que reencontrar: sus horarios se
+   * **calculan** al leer y el cupo nace al retener. Por eso, con `oferta` en la
+   * URL, esta pantalla relee la disponibilidad calculada en vez de la lista de
+   * cupos, y retiene con el endpoint del servicio. Todo lo demás —el vencimiento,
+   * el confirmar, el solicitar— es el mismo ciclo que una consulta.
+   */
+  private readonly ofertaId = this.route.snapshot.queryParamMap.get('oferta');
+
+  /** Se reserva un servicio y no una consulta. */
+  protected readonly esServicio = this.ofertaId !== null;
+
+  /**
+   * Lo que el catálogo y el profesional dicen del servicio: nombre, precio y
+   * cuánto dura. `null` mientras se pide y para una consulta; su ausencia no
+   * impide reservar, sólo deja el resumen sin ese renglón.
+   */
+  protected readonly servicio = signal<ServiceOffering | null>(null);
+
+  /**
+   * El precio de referencia con la moneda del producto. La API sirve el concepto de
+   * moneda y no su código, y el helper asume el boliviano cuando no hay código: es
+   * la moneda del producto y la única que declara hoy el catálogo.
+   */
+  protected readonly precio = computed(() => {
+    const s = this.servicio();
+    return s === null ? '' : withDisplayCurrency(s.price);
+  });
+
+  /** «30–45 min», o «20 min» cuando el mínimo y el máximo coinciden. */
+  protected readonly duracion = computed(() => {
+    const s = this.servicio();
+    if (s === null) return '';
+    return s.minDurationMinutes === s.maxDurationMinutes
+      ? `${s.maxDurationMinutes} min`
+      : `${s.minDurationMinutes}–${s.maxDurationMinutes} min`;
+  });
   private readonly desde = instante(this.route.snapshot.queryParamMap.get('desde'));
   private readonly hasta = instante(this.route.snapshot.queryParamMap.get('hasta'));
 
@@ -338,6 +381,9 @@ export class BookingNew {
         const recurso = pagina.items.find((item) => item.id === this.resourceId);
         this.sede.set(recurso?.site ?? null);
         this.profesional.set(recurso?.practitionerName ?? '');
+        if (this.esServicio && recurso?.resourceRefId !== undefined) {
+          this.cargarServicio(recurso.resourceRefId);
+        }
       },
       error: () => {
         this.sede.set(null);
@@ -363,6 +409,11 @@ export class BookingNew {
     }
 
     this.cupo.set(loading());
+
+    if (this.ofertaId !== null) {
+      this.cargarHorarioDeServicio(this.ofertaId, this.resourceId, this.desde, this.hasta);
+      return;
+    }
 
     this.scheduling
       .listSlots({ resourceId: this.resourceId, from: this.desde, to: this.hasta })
@@ -429,12 +480,110 @@ export class BookingNew {
     this.retencionVencida.set(false);
     this.state.set(loading());
 
+    if (this.ofertaId !== null && this.resourceId !== null && this.desde !== null) {
+      this.retenerServicio(this.ofertaId, this.resourceId, this.desde, paciente.value);
+      return;
+    }
+
     this.scheduling.placeHold(this.slotId, { patientProfileId: paciente.value }).subscribe({
       next: (retencion) => {
         this.state.set(ready(null));
         this.retencion.set(retencion);
       },
       error: (error: unknown) => this.state.set(errorToViewState<null>(error)),
+    });
+  }
+
+  /**
+   * Retiene el turno de un servicio: crea su cupo con la duración máxima.
+   *
+   * Un 409 dice que el horario ya no cabe —otro paciente lo tomó entre la
+   * lectura y ahora—. Se muestra el mensaje y se relee la disponibilidad: el
+   * paso a repetir es elegir otro, no insistir con el mismo.
+   */
+  private retenerServicio(
+    ofertaId: string,
+    resourceId: string,
+    inicio: Date,
+    pacienteId: string,
+  ): void {
+    this.scheduling
+      .placeServiceHold(ofertaId, { resourceId, startAt: inicio, patientProfileId: pacienteId })
+      .subscribe({
+        next: (retencion) => {
+          this.state.set(ready(null));
+          this.retencion.set({
+            id: retencion.id,
+            holdToken: retencion.holdToken,
+            expiresAt: retencion.expiresAt,
+            // El cupo del servicio es de un solo lugar y nace ya tomado.
+            remainingCapacity: 0,
+          });
+        },
+        error: (error: unknown) => {
+          this.state.set(errorToViewState<null>(error));
+          this.cargarCupo();
+        },
+      });
+  }
+
+  /**
+   * Reencuentra el horario de un servicio en la disponibilidad calculada.
+   *
+   * Que venga en la respuesta es la única prueba de que todavía cabe: no hay un
+   * cupo que revalidar porque el cupo todavía no existe. Se sintetiza uno con la
+   * forma de {@link AgendaSlot} para que el resumen sea el mismo que el de una
+   * consulta.
+   */
+  private cargarHorarioDeServicio(
+    ofertaId: string,
+    resourceId: string,
+    desde: Date,
+    hasta: Date,
+  ): void {
+    this.scheduling
+      .getServiceAvailability({ offeringId: ofertaId, resourceId, from: desde, to: hasta })
+      .subscribe({
+        next: (disponibilidad) => {
+          const horario = disponibilidad.items.find(
+            (item) => item.startAt.getTime() === desde.getTime(),
+          );
+          if (horario === undefined) {
+            this.cupo.set(
+              empty(
+                this.esAutoservicio
+                  ? { label: 'Elegir otro horario', route: MIS_TURNOS_ROUTE }
+                  : { label: 'Volver a la agenda', route: AGENDA_ROUTE },
+                'Ese horario ya no está disponible: otro turno lo ocupó. Elegí otro de la lista.',
+              ),
+            );
+            return;
+          }
+          this.cupo.set(
+            ready({
+              id: this.slotId,
+              resourceId,
+              scheduleTemplateId: null,
+              startAt: horario.startAt,
+              endAt: horario.endAtMax,
+              capacity: 1,
+              remainingCapacity: 1,
+              statusConceptId: '',
+              serviceConceptId: null,
+            }),
+          );
+        },
+        error: (error: unknown) => this.cupo.set(errorToViewState<AgendaSlot>(error)),
+      });
+  }
+
+  /** El nombre, el precio y la duración del servicio, de las ofertas del profesional. */
+  private cargarServicio(practitionerProfileId: string): void {
+    this.scheduling.listServiceOfferings(practitionerProfileId).subscribe({
+      next: (lista) => this.servicio.set(lista.find((o) => o.id === this.ofertaId) ?? null),
+      // Es contexto: perder la reserva por no poder leer el precio sería cambiar
+      // una comodidad por una funcionalidad.
+      error: () => this.servicio.set(null),
     });
   }
 
