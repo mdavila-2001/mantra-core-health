@@ -259,7 +259,9 @@ export function spendingMovementsFor(
       draftsForMonth(patientProfileId, year, monthIndex, baseYear).forEach((draft, index) => {
         const dateKey = localDate(year, monthIndex, draft.day);
         if (dateKey < from || dateKey > upper) return;
-        movements.push(toMovement(patientProfileId, year, monthIndex, draft, index));
+        const movement = toMovement(patientProfileId, year, monthIndex, draft, index);
+        if (new Date(movement.occurredAt).getTime() > today.getTime()) return;
+        movements.push(movement);
       });
     }
   }

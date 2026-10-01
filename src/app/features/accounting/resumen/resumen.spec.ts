@@ -4,7 +4,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideRouter } from '@angular/router';
 import { NEVER } from 'rxjs';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { API_BASE_URL } from '../../../core/data-access/api';
 import { SimpleAccountingClient } from '../../../core/data-access/simple-accounting/simple-accounting.client';
@@ -147,10 +147,18 @@ function responderTablero(
 describe('Resumen contable', () => {
   describe('los tres tramos', () => {
     it('pide el estado de resultados SEIS veces, cada una con su ventana', () => {
+      vi.useFakeTimers({ toFake: ['Date'] });
+      vi.setSystemTime(new Date(2026, 8, 17, 12));
       // Tres tramos y sus tres comparables. Si alguien "optimiza" esto a una
       // sola lectura filtrada en el navegador, «hoy» vuelve a dar el total del
       // ejercicio, que es el defecto que la pantalla vino a corregir.
-      const { fixture, http } = montar();
+      let montaje: ReturnType<typeof montar>;
+      try {
+        montaje = montar();
+      } finally {
+        vi.useRealTimers();
+      }
+      const { fixture, http } = montaje;
       responderPracticas(http, fixture);
 
       const pedidos = http.match((r) => r.url === `${BASE}/accounting/income-statement`);

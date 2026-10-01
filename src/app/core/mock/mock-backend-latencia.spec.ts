@@ -31,7 +31,7 @@ describe('latencia del interceptor — tabla por prefijo, sin azar', () => {
   // ese costo único y no la latencia decidida.
   beforeAll(async () => {
     const token = emitirAccessToken(buscarUsuario('paciente')!);
-    const request = new HttpRequest('GET', '/terminology/calentar', undefined).clone({
+    const request = new HttpRequest('GET', '/terminology/code-systems', undefined).clone({
       setHeaders: { Authorization: `Bearer ${token}` },
     });
     try {
@@ -63,7 +63,7 @@ describe('latencia del interceptor — tabla por prefijo, sin azar', () => {
   }
 
   it('prefijo conocido (/terminology) responde cerca del valor de la tabla (40ms)', async () => {
-    const ms = await medir('GET', '/terminology/value-sets/VS_MEDICAL_SPECIALTY');
+    const ms = await medir('GET', '/terminology/code-systems');
     expect(ms).toBeGreaterThanOrEqual(35);
     expect(ms).toBeLessThan(80);
   });
@@ -81,8 +81,8 @@ describe('latencia del interceptor — tabla por prefijo, sin azar', () => {
   }, 2000);
 
   it('dos corridas de la misma ruta tardan lo mismo (sin Math.random)', async () => {
-    const a = await medir('GET', '/scheduling/slots');
-    const b = await medir('GET', '/scheduling/slots');
+    const a = await medir('GET', '/terminology/code-systems');
+    const b = await medir('GET', '/terminology/code-systems');
     // El azar viejo (120 + random*180) podía diferir hasta 179ms entre dos
     // corridas cualquiera; con la tabla fija sólo queda el jitter real del
     // event loop, muy por debajo de eso.

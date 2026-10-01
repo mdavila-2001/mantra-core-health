@@ -158,6 +158,13 @@ function nuevaFactura(semilla: string, monto: string, emitidaEn: string, previas
   };
 }
 
+function ultimoNumeroDeFactura(factura: FacturaSimulada): number {
+  return Math.max(
+    Number(factura.invoiceNumber.slice(4)) || 0,
+    ...factura.previous.map(ultimoNumeroDeFactura),
+  );
+}
+
 /** Generador congruencial: la misma semilla da siempre la misma sala. */
 function azar(semilla: number): () => number {
   let estado = semilla >>> 0;
@@ -271,6 +278,20 @@ export function registerInsurerReceivedClaims(
   const solicitudes = (): Coleccion<SolicitudSimulada> =>
     (tabla ??= new Coleccion(sembrar(), persistir ? 'mock.insurerReceivedClaims' : undefined));
 
+  const emitirFactura = (
+    semilla: string,
+    monto: string,
+    emitidaEn: string,
+    previas: readonly FacturaSimulada[] = [],
+  ): FacturaSimulada => {
+    const ultimoPersistido = solicitudes().todos().reduce(
+      (maximo, solicitud) => Math.max(maximo, solicitud.invoice === null ? 0 : ultimoNumeroDeFactura(solicitud.invoice)),
+      4_100,
+    );
+    correlativoDeFactura = Math.max(correlativoDeFactura, ultimoPersistido - 4_100);
+    return nuevaFactura(semilla, monto, emitidaEn, previas);
+  };
+
   const ordenadas = () =>
     solicitudes()
       .todos()
@@ -322,7 +343,7 @@ export function registerInsurerReceivedClaims(
       status: { code, display },
       approvedTotal: money(monto),
       decision: { outcome, decidedAt: decididaEn, decidedBy: quienDictamina(request), reason: motivo === '' ? null : motivo },
-      invoice: outcome === 'REJECTED' ? null : nuevaFactura(actual.id, monto, decididaEn),
+      invoice: outcome === 'REJECTED' ? null : emitirFactura(actual.id, monto, decididaEn),
     });
   });
 
@@ -356,7 +377,7 @@ export function registerInsurerReceivedClaims(
     }
     const { previous, ...anulada } = actual.invoice;
     return solicitudes().actualizar(actual.id, {
-      invoice: nuevaFactura(actual.id, actual.approvedTotal.amount, ahora(), [{ ...anulada, previous: [] }, ...previous]),
+      invoice: emitirFactura(actual.id, actual.approvedTotal.amount, ahora(), [{ ...anulada, previous: [] }, ...previous]),
     });
   });
 }

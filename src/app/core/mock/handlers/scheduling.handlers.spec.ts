@@ -281,18 +281,29 @@ describe('handlers de reconsulta (cita directa con followUpOf)', () => {
     });
   }
 
-  it('la seed trae una reconsulta futura colgada de una consulta atendida', () => {
-    const sembrada = reservas.todos().find((r) => r.typeConceptId === TIPO_CITA_RECONSULTA);
-    expect(sembrada, 'el fixture tiene que sembrar una reconsulta').toBeDefined();
-    expect(sembrada!.followUpOf).not.toBeNull();
-    expect(new Date(sembrada!.startAt).getTime()).toBeGreaterThan(Date.now());
-    expect(sembrada!.reasonText.startsWith('Reconsulta: ')).toBe(true);
+  it('la seed trae una reconsulta futura colgada de una consulta atendida', async () => {
+    const guardadas = sessionStorage.getItem('mock.agenda.reservas');
+    sessionStorage.removeItem('mock.agenda.reservas');
+    vi.resetModules();
+    try {
+      const fixture = await import('../fixtures/agenda');
+      const sembrada = fixture.reservas.todos().find(
+        (r) => r.typeConceptId === TIPO_CITA_RECONSULTA && new Date(r.startAt).getTime() > Date.now(),
+      );
+      expect(sembrada, 'el fixture tiene que sembrar una reconsulta').toBeDefined();
+      expect(sembrada!.followUpOf).not.toBeNull();
+      expect(new Date(sembrada!.startAt).getTime()).toBeGreaterThan(Date.now());
+      expect(sembrada!.reasonText.startsWith('Reconsulta: ')).toBe(true);
 
-    const origen = reservas.get(sembrada!.followUpOf!.bookingId);
-    expect(origen, 'la cita de origen tiene que existir').toBeDefined();
-    expect(origen!.patientProfileId).toBe(sembrada!.patientProfileId);
-    expect(origen!.statusConceptId).toBe(ESTADO_RESERVA['BK-COMPLETED']);
-    expect(new Date(origen!.startAt).getTime()).toBeLessThan(Date.now());
+      const origen = fixture.reservas.get(sembrada!.followUpOf!.bookingId);
+      expect(origen, 'la cita de origen tiene que existir').toBeDefined();
+      expect(origen!.patientProfileId).toBe(sembrada!.patientProfileId);
+      expect(origen!.statusConceptId).toBe(ESTADO_RESERVA['BK-COMPLETED']);
+      expect(new Date(origen!.startAt).getTime()).toBeLessThan(Date.now());
+    } finally {
+      if (guardadas === null) sessionStorage.removeItem('mock.agenda.reservas');
+      else sessionStorage.setItem('mock.agenda.reservas', guardadas);
+    }
   });
 
   it('correcto — crea la reconsulta confirmada, con su tipo y su motivo heredado', () => {

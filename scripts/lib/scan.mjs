@@ -186,7 +186,7 @@ export function scanEndpoints() {
     // Los `\s*` no son decorativos: los clientes encadenan `this.http` y el
     // verbo en líneas distintas para que quepa el `.pipe(map(...))` de abajo.
     const call =
-      /this\.http\s*\.\s*(get|post|put|patch|delete)\s*(?:<[\s\S]*?>)?\(\s*(?:\/\*[\s\S]*?\*\/\s*|\/\/[^\n]*\n\s*)*(?:this\.url|apiUrl)\(\s*(?:this\.baseUrl,\s*)?[`']([^`']+)[`']/g;
+      /this\.http\s*\.\s*(get|post|put|patch|delete)\s*(?:<(?:(?!this\.http)[\s\S])*?>)?\(\s*(?:\/\*[\s\S]*?\*\/\s*|\/\/[^\n]*\n\s*)*(?:this\.url|apiUrl)\(\s*(?:this\.baseUrl,\s*)?[`']([^`']+)[`']/g;
     // Un método puede armar la ruta en dos tramos: `const base = \u0060/community/…\u0060`
     // y después `this.url(\u0060${base}/reviews/…\u0060)`. Leído solo el segundo, el
     // endpoint sale sin su prefijo real —`:base/reviews/…`— y parece no estar

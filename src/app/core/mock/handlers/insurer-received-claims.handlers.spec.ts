@@ -187,6 +187,37 @@ describe('handler de solicitudes recibidas por la aseguradora', () => {
       expect(reissued['invoice']!.previous[0]!.invoiceNumber).toBe(claim['invoice']!.invoiceNumber);
     });
 
+    it('despues de recargar toma la numeracion persistida para no repetir una factura', () => {
+      const key = 'mock.insurerReceivedClaims';
+      const saved = sessionStorage.getItem(key);
+      try {
+        sessionStorage.removeItem(key);
+        local = new MockRouter();
+        registerInsurerReceivedClaims(local);
+        const claim = all().find((row) => row.status.code === 'APPROVED')!;
+        const base = `/insurance/received-claims/${claim.id}`;
+        call('POST', `${base}/invoice/annulment`, user, { reason: 'Numero incorrecto' });
+
+        const stored = JSON.parse(sessionStorage.getItem(key)!) as { build: string; filas: Fila[] };
+        const previousNumber = 'FAC-900000';
+        sessionStorage.setItem(key, JSON.stringify({
+          build: stored.build,
+          filas: stored.filas.map((row) => row.id === claim.id
+            ? { ...row, invoice: { ...row.invoice!, invoiceNumber: previousNumber } }
+            : row),
+        }));
+
+        local = new MockRouter();
+        registerInsurerReceivedClaims(local);
+        const reissued = call('POST', `${base}/invoice`, user, {}) as Fila;
+        expect(Number(reissued.invoice!.invoiceNumber.slice(4))).toBeGreaterThan(900_000);
+        expect(reissued.invoice!.previous[0]!.invoiceNumber).toBe(previousNumber);
+      } finally {
+        if (saved === null) sessionStorage.removeItem(key);
+        else sessionStorage.setItem(key, saved);
+      }
+    });
+
     it('una factura pagada no se anula, y quien no es de la aseguradora no decide', () => {
       const paid = all().find((c) => c['status'].code === 'PAID')!;
       expect(
