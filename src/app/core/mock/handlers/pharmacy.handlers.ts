@@ -487,6 +487,11 @@ interface PedidoSimulado {
   readonly patientName: string;
   readonly pickupCode: string;
   readonly rejectionReasonText: string | null;
+  /**
+   * La sede del pedido. Ausente = la sede de la farmacia (`FarmaciaSimulada`);
+   * sólo los pedidos de las sedes adicionales de la bandeja lo declaran.
+   */
+  readonly siteId?: string;
   readonly lineas: readonly LineaSimulada[];
   readonly sustituciones: readonly { id: string; originalProductId: string; proposedProductId: string; status: 'PROPOSED' | 'ACCEPTED' | 'DECLINED'; decidedAt: string | null }[];
   /** Sin declarar, el pedido se retira en la farmacia (`PINV_DELIVERY_RETIRO`). */
@@ -497,6 +502,98 @@ interface PedidoSimulado {
 
 function productoDe(pharmacyId: string, code: keyof typeof MEDICAMENTO): ProductoSimulado {
   return productos.get(uuid(`product-${pharmacyId}-${code}`))!;
+}
+
+/**
+ * Las sedes adicionales de la primera farmacia, la del mostrador de la maqueta.
+ *
+ * Existen para que la bandeja tenga algo que elegir: con una sola sede el
+ * selector no aparece y el tablero por sede no se puede ver. La sede original
+ * (`Sucursal Central`) es la casa matriz; éstas no. Las direcciones son zonas
+ * de Santa Cruz, no domicilios de un negocio real.
+ */
+interface SedeAdicional {
+  readonly siteId: string;
+  readonly code: string;
+  readonly name: string;
+  readonly addressText: string;
+  readonly lat: number;
+  readonly lng: number;
+}
+
+const SEDES_ADICIONALES: readonly SedeAdicional[] = (() => {
+  const f0 = FARMACIAS[0]!;
+  return [
+    { siteId: uuid(`pharmacy-site-${f0.code}-equipetrol`), code: `${f0.code}_EQ`, name: 'Sucursal Equipetrol', addressText: 'Av. San Martín, Equipetrol', lat: -17.76, lng: -63.199 },
+    { siteId: uuid(`pharmacy-site-${f0.code}-plan3000`), code: `${f0.code}_P3`, name: 'Sucursal Plan 3000', addressText: 'Av. Paraguá, Plan 3000', lat: -17.814, lng: -63.137 },
+  ];
+})();
+
+const SEDE_CENTRAL_ID = FARMACIAS[0]!.siteId;
+
+/** La sede de un pedido: la declarada, o la de su farmacia. */
+function sedeDelPedido(p: PedidoSimulado, farmacia: FarmaciaSimulada) {
+  const adicional = SEDES_ADICIONALES.find((sede) => sede.siteId === p.siteId);
+  return adicional === undefined
+    ? { siteId: farmacia.siteId, siteName: farmacia.siteName }
+    : { siteId: adicional.siteId, siteName: adicional.name };
+}
+
+const NOMBRES_DE_EJEMPLO = ['Lucía', 'Marco', 'Elena', 'Rubén', 'Camila', 'Iván', 'Noemí', 'Álvaro', 'Paola', 'Sergio', 'Daniela', 'Gonzalo', 'Mariela', 'Esteban', 'Ximena', 'Julio'];
+const APELLIDOS_DE_EJEMPLO = ['Rojas Camacho', 'Vaca Suárez', 'Justiniano Roca', 'Cuéllar Parada', 'Menacho Soliz', 'Egüez Barba', 'Pedraza Ribera', 'Añez Moreno', 'Saucedo Ortiz', 'Terceros Landívar'];
+
+function pedidoDelTablero(clave: string, estado: EstadoPedido, n: number, createdAt: string, siteId?: string): PedidoSimulado {
+  const f0 = FARMACIAS[0]!;
+  const medicamentos = ['MED-IBUPROFENO', 'MED-OMEPRAZOL', 'MED-METFORMINA', 'MED-LOSARTAN', 'MED-SALBUTAMOL'] as const;
+  const med = medicamentos[n % medicamentos.length]!;
+  const terminado = ['RETIRADO', 'RECHAZADO', 'VENCIDO', 'CANCELADO'].includes(estado);
+  return {
+    id: uuid(`pharmacy-order-tablero-${clave}-${n}`),
+    estado,
+    createdAt,
+    expiresAt: createdAt,
+    pharmacyId: f0.id,
+    ...(siteId === undefined ? {} : { siteId }),
+    medicationRequestId: null,
+    patientProfileId: uuid(`pid-tablero-${clave}-${n}`),
+    patientName: `${NOMBRES_DE_EJEMPLO[n % NOMBRES_DE_EJEMPLO.length]} ${APELLIDOS_DE_EJEMPLO[(n * 3) % APELLIDOS_DE_EJEMPLO.length]}`,
+    pickupCode: `AV-${7000 + n}`,
+    rejectionReasonText: estado === 'RECHAZADO' ? 'La receta adjunta está vencida. Pedí una nueva a tu médico.' : null,
+    lineas: [{ productId: productoDe(f0.id, med).id, requestedQuantity: 1 + (n % 3), reservedQuantity: terminado ? 0 : 1, fulfilledQuantity: estado === 'RETIRADO' ? 1 : 0, status: estado === 'RETIRADO' ? ('FULFILLED' as const) : terminado ? ('RELEASED' as const) : ('RESERVED' as const) }],
+    sustituciones: [],
+  };
+}
+
+/**
+ * Los pedidos de relleno del tablero de la bandeja: lo suficiente en cada
+ * cola, en las tres sedes y en varias fechas, para ver el desplazamiento
+ * interno de una columna llena y el recorte de «Cerrados» por fecha. Los
+ * pendientes de días atrás están a propósito: la fecha no los esconde.
+ */
+function pedidosDelTablero(): PedidoSimulado[] {
+  const [equipetrol, plan3000] = SEDES_ADICIONALES.map((sede) => sede.siteId);
+  return [
+    // Sucursal Central (la casa matriz): lo cerrado de hoy, ayer y la semana.
+    pedidoDelTablero('central', 'RETIRADO', 1, iso(0, 8)),
+    pedidoDelTablero('central', 'RECHAZADO', 2, iso(0, 7, 30)),
+    pedidoDelTablero('central', 'RETIRADO', 3, iso(-1, 16)),
+    pedidoDelTablero('central', 'VENCIDO', 4, iso(-1, 9)),
+    pedidoDelTablero('central', 'CANCELADO', 5, iso(-3, 11)),
+    pedidoDelTablero('central', 'RETIRADO', 6, iso(-6, 15)),
+    pedidoDelTablero('central', 'ACEPTACION_PENDIENTE', 7, iso(-2, 10)),
+    pedidoDelTablero('central', 'LISTO_PARA_RETIRO', 8, iso(-1, 14)),
+    pedidoDelTablero('central', 'CONFIRMADO', 9, iso(0, 12)),
+    // Equipetrol: una columna de revisión llena, para que haga scroll.
+    ...Array.from({ length: 3 }, (_, i) => pedidoDelTablero('eq-nuevos', 'ENVIADO', i, iso(0, 13, i * 4), equipetrol)),
+    ...Array.from({ length: 14 }, (_, i) => pedidoDelTablero('eq-revision', 'EN_REVISION', i, iso(0, 9, i * 3), equipetrol)),
+    ...Array.from({ length: 2 }, (_, i) => pedidoDelTablero('eq-espera', 'ACEPTACION_PENDIENTE', i, iso(-1, 11, i * 9), equipetrol)),
+    ...Array.from({ length: 2 }, (_, i) => pedidoDelTablero('eq-listos', 'LISTO_PARA_RETIRO', i, iso(-1, 15, i * 7), equipetrol)),
+    ...Array.from({ length: 3 }, (_, i) => pedidoDelTablero('eq-cerrados', 'RETIRADO', i, iso(0, 8, i * 11), equipetrol)),
+    // Plan 3000: poco movimiento.
+    pedidoDelTablero('p3-nuevo', 'ENVIADO', 1, iso(0, 10, 20), plan3000),
+    pedidoDelTablero('p3-revision', 'EN_REVISION', 2, iso(0, 9, 40), plan3000),
+    pedidoDelTablero('p3-cerrado', 'RETIRADO', 3, iso(-2, 12), plan3000),
+  ];
 }
 
 const pedidos = new Coleccion<PedidoSimulado>(
@@ -520,6 +617,7 @@ const pedidos = new Coleccion<PedidoSimulado>(
       // contrato (`deliveryMode`, `deliveryAddressText`), así que los declara el backend simulado
       // y la pantalla los lee de la respuesta, igual que con la API real.
       { id: ID_PEDIDO_CON_DELIVERY, deliveryMode: 'DOMICILIO' as const, deliveryAddressText: DELIVERY_ORDER_ADDRESS, estado: 'EN_REVISION' as const, createdAt: iso(0, 11, 40), expiresAt: iso(3, 11), pharmacyId: f0.id, medicationRequestId: null, patientProfileId: uuid('pid-p-gutierrez'), patientName: 'Vania Gutiérrez Peña', pickupCode: 'AV-6004', rejectionReasonText: null, lineas: [{ productId: productoDe(f0.id, 'MED-IBUPROFENO').id, requestedQuantity: 1, reservedQuantity: 1, fulfilledQuantity: 0, status: 'RESERVED' as const }, { productId: productoDe(f0.id, 'MED-OMEPRAZOL').id, requestedQuantity: 2, reservedQuantity: 2, fulfilledQuantity: 0, status: 'RESERVED' as const }], sustituciones: [] },
+      ...pedidosDelTablero(),
     ];
   })(),
 );
@@ -629,8 +727,7 @@ function dto(p: PedidoSimulado, owner = false) {
     status: c(`PINV_ORDER_${p.estado}`, ETIQUETA[p.estado]),
     createdAt: p.createdAt,
     expiresAt: p.expiresAt,
-    siteId: farmacia.siteId,
-    siteName: farmacia.siteName,
+    ...sedeDelPedido(p, farmacia),
     pharmacyId: farmacia.id,
     pharmacyName: farmacia.name,
     medicationRequestId: p.medicationRequestId,
@@ -673,7 +770,7 @@ export function registrarFarmacia(router: MockRouter): void {
     const propias = tenant !== null && TENANT_TYPES[tenant] === 'PHARMACY' ? FARMACIAS.filter((f) => f.id === tenant) : [];
     const visibles = propias.length > 0 ? propias : FARMACIAS;
     return {
-      items: visibles.map((f) => ({ id: f.id, code: f.code, name: f.name, siteCount: 1, productCount: activos().filter((p) => p.pharmacyId === f.id).length })),
+      items: visibles.map((f) => ({ id: f.id, code: f.code, name: f.name, siteCount: f === FARMACIAS[0] ? 1 + SEDES_ADICIONALES.length : 1, productCount: activos().filter((p) => p.pharmacyId === f.id).length })),
       count: visibles.length,
     };
   });
@@ -696,18 +793,34 @@ export function registrarFarmacia(router: MockRouter): void {
       // el nombre comercial también como `legalName`.
       legalName: f0.name,
       type: null,
-      siteCount: sedes.length,
+      siteCount: sedes.length + (id === FARMACIAS[0]!.id ? SEDES_ADICIONALES.length : 0),
       productCount: productos.filtrar((p) => p.pharmacyId === id).length,
       homeDeliveryAvailable: sedes.some((f) => f.homeDelivery),
       pickupAvailable: true,
-      sites: sedes.map((f) => ({
-        id: f.siteId,
-        code: f.code,
-        name: f.siteName,
-        addressText: f.addressText,
-        latitude: f.lat,
-        longitude: f.lng,
-      })),
+      sites: [
+        ...sedes.map((f) => ({
+          id: f.siteId,
+          code: f.code,
+          name: f.siteName,
+          addressText: f.addressText,
+          latitude: f.lat,
+          longitude: f.lng,
+          // Sólo la sede original del mostrador de la maqueta es la matriz; en
+          // el resto el backend real todavía no publica la marca.
+          ...(f.siteId === SEDE_CENTRAL_ID ? { isHeadOffice: true } : {}),
+        })),
+        ...(id === FARMACIAS[0]!.id
+          ? SEDES_ADICIONALES.map((sede) => ({
+              id: sede.siteId,
+              code: sede.code,
+              name: sede.name,
+              addressText: sede.addressText,
+              latitude: sede.lat,
+              longitude: sede.lng,
+              isHeadOffice: false,
+            }))
+          : []),
+      ],
       ...legalProfileOf(f0),
     };
   });
@@ -1165,10 +1278,19 @@ export function registrarFarmacia(router: MockRouter): void {
 
   router.get('/pharmacy/orders', ({ query }) => {
     const status = texto(query, 'status');
+    const siteId = texto(query, 'siteId');
+    const desde = texto(query, 'from');
+    const hasta = texto(query, 'to');
+    const tope = Number(texto(query, 'limit') ?? 100);
     const items = pedidos
       .todos()
       .filter((p) => status === null || p.estado === status || `PINV_ORDER_${p.estado}` === status)
+      .filter((p) => siteId === null || dto(p).siteId === siteId)
+      // Como la API: `from` inclusive y `to` exclusivo, sobre la creación.
+      .filter((p) => desde === null || Date.parse(p.createdAt) >= Date.parse(desde))
+      .filter((p) => hasta === null || Date.parse(p.createdAt) < Date.parse(hasta))
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+      .slice(0, Number.isFinite(tope) && tope > 0 ? tope : 100)
       .map((order) => dto(order));
     return { items, count: items.length };
   });
