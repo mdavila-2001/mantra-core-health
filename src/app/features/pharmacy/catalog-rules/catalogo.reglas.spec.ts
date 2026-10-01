@@ -72,6 +72,65 @@ describe('revisarProducto', () => {
   });
 });
 
+describe('revisarProducto · vinculado al catálogo oficial', () => {
+  const vinculo = { catalogProductId: 'cat-1', presentationCode: '650047' };
+
+  it('manda el id del catálogo y la presentación, y ningún dato oficial aunque esté escrito', () => {
+    const resultado = revisarProducto(
+      campos({ codigo: 'SKU-1', marca: 'Otra', generico: 'Otro', concentracion: '1 mg', receta: 'sí', precio: '12,50' }),
+      undefined,
+      vinculo,
+    );
+    expect(resultado).toEqual({
+      valido: true,
+      borrador: {
+        productCode: 'SKU-1',
+        catalogProductId: 'cat-1',
+        catalogPresentationCode: '650047',
+        unitPrice: 12.5,
+        inStock: true,
+      },
+    });
+  });
+
+  it('no exige marca ni genérico, pero sigue exigiendo el SKU', () => {
+    const resultado = revisarProducto(campos({}), undefined, vinculo);
+    expect(resultado).toEqual({ valido: false, errores: ['Falta el código del producto.'] });
+  });
+
+  it('lo propio se sigue validando: precio y código de barras', () => {
+    const resultado = revisarProducto(
+      campos({ codigo: 'SKU-1', precio: 'mucho', codigoDeBarras: '123' }),
+      undefined,
+      vinculo,
+    );
+    expect(resultado.valido).toBe(false);
+    if (!resultado.valido) expect(resultado.errores).toHaveLength(2);
+  });
+
+  it('sin vínculo se comporta como siempre: el nombre es obligatorio', () => {
+    const resultado = revisarProducto(campos({ codigo: 'SKU-1' }));
+    expect(resultado.valido).toBe(false);
+  });
+
+  it('al editar un producto del catálogo no se vacían ni se mandan los datos oficiales', () => {
+    const resultado = revisarProducto(campos({ codigo: 'SKU-1', precio: '20' }), undefined, vinculo);
+    if (!resultado.valido) throw new Error('debía ser válido');
+    const cambios = cambiosDelBorrador(resultado.borrador, true, true);
+    expect(cambios).toEqual({ unitPrice: 20, category: null, description: null, inStock: true });
+    for (const oficial of ['brandName', 'genericName', 'strengthText', 'packageSizeText', 'requiresPrescription']) {
+      expect(cambios).not.toHaveProperty(oficial);
+    }
+  });
+
+  it('al editar uno cargado a mano, vaciar el nombre sí lo borra (comportamiento de siempre)', () => {
+    const resultado = revisarProducto(campos({ codigo: 'SKU-1', generico: 'X' }));
+    if (!resultado.valido) throw new Error('debía ser válido');
+    const cambios = cambiosDelBorrador(resultado.borrador, true);
+    expect(cambios).toHaveProperty('brandName', null);
+  });
+});
+
 describe('esGtinValido', () => {
   it.each(['7501031311309', '96385074', '036000291452', '10012345678902'])(
     'acepta %s',

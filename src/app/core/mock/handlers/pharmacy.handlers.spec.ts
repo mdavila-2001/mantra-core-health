@@ -626,4 +626,89 @@ describe('handlers de farmacia: portal de la farmacia (P47)', () => {
       expect(estado(pedir('GET', '/pharmacy/pharmacies/no-existe/summary'))).toBe(404);
     });
   });
+  describe('catálogo universal de medicamentos', () => {
+    function buscar(parametros: Record<string, string>) {
+      return cuerpoDe<{ items: { id: string; display: string; source: string; selectable: boolean; presentations: { code: string | null }[]; atc: string[]; medicationCode?: string }[]; truncated: boolean }>(
+        pedir('GET', '/pharmacy/catalog-products', {}, new URLSearchParams(parametros)),
+      );
+    }
+
+    function alta(cuerpo: Record<string, unknown>) {
+      return pedir('POST', `/pharmacies/${PHARMACY_ID}/products`, cuerpo);
+    }
+
+    it('busca por principio activo y sólo trae registros de fuentes oficiales con su procedencia', () => {
+      const { items } = buscar({ search: 'ibuprofeno', limit: '50' });
+      expect(items.length).toBeGreaterThan(0);
+      expect(items.every((i) => ['cima', 'invima', 'anvisa', 'agemed'].includes(i.source))).toBe(true);
+      expect(items.every((i) => i.atc.length > 0)).toBe(true);
+    });
+
+    it('busca sin importar tildes y acepta el ATC exacto', () => {
+      const porAtc = buscar({ atc: 'N02BE01', limit: '50' });
+      expect(porAtc.items.length).toBeGreaterThan(0);
+      expect(porAtc.items.every((i) => i.atc.includes('N02BE01'))).toBe(true);
+    });
+
+    it('no expone el campo interno que une el catálogo con el vademécum del simulador', () => {
+      const { items } = buscar({ search: 'paracetamol' });
+      expect(items.length).toBeGreaterThan(0);
+      expect(items.every((i) => !('medicationCode' in i))).toBe(true);
+    });
+
+    it('el alta con catalogProductId deriva nombre, concentración y receta, y queda atada al vademécum por el ATC', () => {
+      const elegido = buscar({ atc: 'M01AE01', limit: '50' }).items.find((i) => i.selectable && i.presentations.some((p) => p.code !== null))!;
+      const presentacion = elegido.presentations.find((p) => p.code !== null)!.code!;
+      const respuesta = alta({ productCode: 'CAT-IBU-1', catalogProductId: elegido.id, catalogPresentationCode: presentacion });
+      expect(estado(respuesta)).toBe(201);
+
+      const gestionados = cuerpoDe<{ items: { productCode: string; brandName: string | null; catalog: { catalogProductId: string; source: string } | null; medication: { code: string } | null }[] }>(
+        pedir('GET', '/pharmacy/products', {}, new URLSearchParams({ pharmacyId: PHARMACY_ID, managed: 'true', search: 'CAT-IBU-1' })),
+      );
+      const creado = gestionados.items.find((p) => p.productCode === 'CAT-IBU-1')!;
+      expect(creado.brandName).toBe(elegido.display);
+      expect(creado.catalog?.catalogProductId).toBe(elegido.id);
+      expect(creado.medication?.code).toBe('MED-IBUPROFENO');
+    });
+
+    it('mandar a la vez el id del catálogo y los datos del producto es un 422', () => {
+      const elegido = buscar({ atc: 'N02BE01', limit: '5' }).items.find((i) => i.selectable)!;
+      expect(estado(alta({ productCode: 'CAT-MIX-1', catalogProductId: elegido.id, brandName: 'Inventada' }))).toBe(422);
+    });
+
+    it('un id que no existe en el catálogo es un 422', () => {
+      expect(estado(alta({ productCode: 'CAT-NO-1', catalogProductId: 'no-existe' }))).toBe(422);
+    });
+
+    it('el mismo producto y presentación dos veces es un 409', () => {
+      const elegido = buscar({ atc: 'A10BA02', limit: '5' }).items.find((i) => i.selectable && i.presentations.some((p) => p.code !== null))!;
+      const presentacion = elegido.presentations.find((p) => p.code !== null)!.code!;
+      expect(estado(alta({ productCode: 'CAT-DUP-1', catalogProductId: elegido.id, catalogPresentationCode: presentacion }))).toBe(201);
+      expect(estado(alta({ productCode: 'CAT-DUP-2', catalogProductId: elegido.id, catalogPresentationCode: presentacion }))).toBe(409);
+    });
+
+    it('un registro no vigente no se puede dar de alta (412)', () => {
+      const revocado = buscar({ limit: '200', search: 'a' }).items.find((i) => !i.selectable);
+      if (revocado === undefined) return; // el subconjunto sin ningún no vigente no ejercita esta regla
+      expect(estado(alta({ productCode: 'CAT-REV-1', catalogProductId: revocado.id }))).toBe(412);
+    });
+
+    it('editar un producto del catálogo: lo oficial se rechaza y lo propio pasa', () => {
+      const elegido = buscar({ atc: 'C09CA01', limit: '5' }).items.find((i) => i.selectable && i.presentations.some((p) => p.code !== null))!;
+      const presentacion = elegido.presentations.find((p) => p.code !== null)!.code!;
+      alta({ productCode: 'CAT-EDIT-1', catalogProductId: elegido.id, catalogPresentationCode: presentacion });
+      const lista = cuerpoDe<{ items: { id: string; productCode: string }[] }>(
+        pedir('GET', '/pharmacy/products', {}, new URLSearchParams({ pharmacyId: PHARMACY_ID, managed: 'true', search: 'CAT-EDIT-1' })),
+      );
+      const id = lista.items.find((p) => p.productCode === 'CAT-EDIT-1')!.id;
+
+      expect(estado(pedir('PATCH', `/pharmacies/${PHARMACY_ID}/products/${id}`, { brandName: 'Otro' }, new URLSearchParams()))).toBe(422);
+      expect(estado(pedir('PATCH', `/pharmacies/${PHARMACY_ID}/products/${id}`, { unitPrice: 33.5, description: 'Mi descripción' }, new URLSearchParams()))).toBe(200);
+    });
+
+    it('«no encuentro mi medicamento» registra una solicitud; sin nombre es un 422', () => {
+      expect(estado(pedir('POST', `/pharmacies/${PHARMACY_ID}/catalog-requests`, { name: 'Medicamento Local 10 mg' }, new URLSearchParams()))).toBe(201);
+      expect(estado(pedir('POST', `/pharmacies/${PHARMACY_ID}/catalog-requests`, { name: '' }, new URLSearchParams()))).toBe(422);
+    });
+  });
 });

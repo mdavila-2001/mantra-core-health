@@ -6,6 +6,10 @@ import { API_BASE_URL, apiUrl } from '../api';
 import type {
   AvailabilityQuery,
   AvailabilityResult,
+  CatalogProductPage,
+  CatalogProductQuery,
+  CatalogRequestCreated,
+  CatalogRequestDraft,
   PharmacyCategory,
   PharmacyCategoryPage,
   PharmacyContacts,
@@ -36,8 +40,12 @@ import type {
  * agrega cuando alguna pantalla lo pida, no antes.
  *
  * Del lado de la escritura sólo el catálogo de la propia farmacia
- * (`/pharmacies/:pharmacyId/products`): el alta y el retiro que usa la pantalla
- * «Catálogo de productos». No hay edición: el backend no publica un `PATCH`.
+ * (`/pharmacies/:pharmacyId/products`): el alta, la edición y el retiro que usa
+ * la pantalla «Catálogo de productos». La edición (`PATCH`) sólo existe en el
+ * simulador por ahora (P47).
+ *
+ * Los productos no se tipean: se buscan en el **catálogo universal de
+ * medicamentos** ({@link searchCatalog}) y se dan de alta por su id.
  */
 @Injectable({ providedIn: 'root' })
 export class PharmacyClient {
@@ -75,6 +83,40 @@ export class PharmacyClient {
       params = params.set(clave, String(valor));
     }
     return this.http.get<PharmacyProductSearchPage>(this.url('/pharmacy/products'), { params });
+  }
+
+  /**
+   * `GET /pharmacy/catalog-products` — busca en el catálogo universal de
+   * medicamentos (registros sanitarios oficiales).
+   *
+   * Es de lectura y no depende de la farmacia: el mismo registro lo ven todas.
+   * Lo que no tiene registro vigente llega con `selectable: false` y no se puede
+   * elegir. Parámetro a parámetro: el backend valida con `forbidNonWhitelisted`.
+   */
+  searchCatalog(query: CatalogProductQuery = {}): Observable<CatalogProductPage> {
+    let params = new HttpParams();
+    for (const [clave, valor] of Object.entries(query)) {
+      if (valor === undefined || valor === '') {
+        continue;
+      }
+      params = params.set(clave, String(valor));
+    }
+    return this.http.get<CatalogProductPage>(this.url('/pharmacy/catalog-products'), { params });
+  }
+
+  /**
+   * `POST /pharmacies/:pharmacyId/catalog-requests` — «no encuentro mi
+   * medicamento»: pide que un administrador lo incorpore al catálogo. La
+   * farmacia no publica un producto libre.
+   */
+  requestCatalogEntry(
+    pharmacyId: string,
+    draft: CatalogRequestDraft,
+  ): Observable<CatalogRequestCreated> {
+    return this.http.post<CatalogRequestCreated>(
+      this.url(`/pharmacies/${encodeURIComponent(pharmacyId)}/catalog-requests`),
+      sinVaciosDeSolicitud(draft),
+    );
   }
 
   /**
@@ -297,4 +339,11 @@ function sinVacios(draft: PharmacyProductDraft): PharmacyProductDraft {
     limpio[clave] = valor;
   }
   return limpio as unknown as PharmacyProductDraft;
+}
+
+/** La solicitud sin los textos vacíos: `IsOptional` deja pasar un `''` y se guardaría vacío. */
+function sinVaciosDeSolicitud(draft: CatalogRequestDraft): CatalogRequestDraft {
+  return Object.fromEntries(
+    Object.entries(draft).filter(([, valor]) => valor !== undefined && valor !== ''),
+  ) as unknown as CatalogRequestDraft;
 }

@@ -1,3 +1,4 @@
+import { CATALOGO_MEDICAMENTOS, type CatalogFixtureRow } from '../fixtures/catalogo-medicamentos.generated';
 import { FARMACIAS_DEL_CORPUS } from '../fixtures/bolivia-eje-central';
 import { patientSettlementForItems } from '../fixtures/patient-settlements';
 import { vitrinas } from '../fixtures/comunidad';
@@ -13,7 +14,7 @@ import {
 } from '../fixtures/pedidos-de-farmacia';
 import { conflict, notFound, preconditionFailed, validation, type MockRequest, type MockRouter } from '../mock-router';
 import { TENANT_TYPES } from '../mock-session';
-import { ahora, Coleccion, contiene, cuerpo, iso, isoDia, masMinutos, nuevoId, texto, uuid } from '../mock-store';
+import { ahora, Coleccion, contiene, contieneSinTildes, cuerpo, iso, isoDia, masMinutos, nuevoId, texto, uuid } from '../mock-store';
 
 /* ============================================================================
     Farmacias: el directorio, los productos publicados, la disponibilidad
@@ -206,6 +207,14 @@ interface ProductoSimulado {
   readonly minStock?: number;
   /** Archivos de `common.files`, hasta {@link MAX_IMAGENES} (P47). */
   readonly imageFileIds?: readonly string[];
+  /**
+   * El producto del catálogo universal del que viene. Con él, nombre,
+   * concentración, presentación y receta son del registro oficial y no se
+   * editan; sin él es un producto cargado a mano antes del catálogo.
+   */
+  readonly catalogProductId?: string;
+  /** Código de la presentación elegida (CN, CUM…). */
+  readonly catalogPresentationCode?: string | null;
 }
 
 /** Umbral de alerta que se asume mientras la farmacia no fije el suyo. */
@@ -251,15 +260,68 @@ const CATEGORIA_DE_FORMA: Readonly<Record<string, string>> = {
  * campos son una **extensión del simulador** (P47): la API real no los tiene.
  */
 function productoPublico(p: ProductoSimulado) {
-  const { medicationConceptId: _m, price, stock: _s, retirado: _r, sinStock: _x, category: _c, description, estado: _e, minStock: _n, imageFileIds: _i, ...resto } = p;
+  const { medicationConceptId: _m, price, stock: _s, retirado: _r, sinStock: _x, category: _c, description, estado: _e, minStock: _n, imageFileIds: _i, catalogProductId, catalogPresentationCode, ...resto } = p;
   return {
     ...resto,
+    catalog: vinculoConElCatalogo(catalogProductId, catalogPresentationCode),
     unitPrice: price,
     inStock: hayStock(p),
     category: categoriaDe(p),
     description: description ?? null,
   };
 }
+
+/* ---- catálogo universal de medicamentos --------------------------------- */
+
+/** El catálogo del simulador: un subconjunto REAL de CIMA e INVIMA (ver el script que lo genera). */
+const CATALOGO_POR_ID = new Map<string, CatalogFixtureRow>(CATALOGO_MEDICAMENTOS.map((c0) => [c0.id, c0]));
+
+/** Medicamento del vademécum del simulador por su código (`MED-…`). */
+function medicamentoPorCodigo(code: string | null): { conceptId: string; code: string; display: string } | null {
+  if (code === null || !(code in MEDICAMENTO)) return null;
+  const conceptId = MEDICAMENTO[code as keyof typeof MEDICAMENTO];
+  return { conceptId, code, display: displayDe(conceptId) };
+}
+
+/** Lo que el servidor lee del catálogo cuando la farmacia sólo mandó el id. */
+function derivadosDelCatalogo(entrada: CatalogFixtureRow, presentationCode: string | undefined) {
+  const presentacion = entrada.presentations.find((p) => p.code === presentationCode) ?? null;
+  return {
+    brandName: entrada.display,
+    genericName: entrada.activeIngredients.map((i) => i.name).join(' + ') || null,
+    strengthText: entrada.strengthText,
+    packageSizeText: presentacion?.name ?? null,
+    requiresPrescription: entrada.requiresPrescription,
+    dosageForm: entrada.dosageForm === null ? null : c(entrada.dosageForm.toUpperCase().replace(/\s+/g, '_'), entrada.dosageForm),
+    medication: medicamentoPorCodigo(entrada.medicationCode),
+  };
+}
+
+function vinculoConElCatalogo(catalogProductId: string | undefined, presentationCode: string | null | undefined) {
+  if (catalogProductId === undefined) return null;
+  const entrada = CATALOGO_POR_ID.get(catalogProductId);
+  if (entrada === undefined) return null;
+  return {
+    catalogProductId,
+    source: entrada.source,
+    sourceName: entrada.sourceName,
+    code: entrada.code,
+    presentationCode: presentationCode ?? null,
+    officialPhoto: entrada.photo,
+  };
+}
+
+/** Lo que la API entrega de una entrada del catálogo (sin el campo interno del simulador). */
+function productoDelCatalogo(entrada: CatalogFixtureRow) {
+  const { medicationCode: _medicationCode, ...publico } = entrada;
+  return publico;
+}
+
+/** Campos que, en un producto vinculado al catálogo, son del registro oficial. */
+const CAMPOS_DEL_CATALOGO = ['brandName', 'genericName', 'strengthText', 'packageSizeText', 'requiresPrescription'] as const;
+
+/** Solicitudes de alta al catálogo que la farmacia mandó (la revisa un administrador). */
+const solicitudesDeAlta = new Coleccion<{ readonly id: string; readonly pharmacyId: string; readonly name: string; readonly creadaEn: string }>([]);
 
 /** La categoría que la farmacia le puso o, si no, la que sale de la forma. */
 function categoriaDe(p: ProductoSimulado): string | null {
@@ -858,6 +920,44 @@ export function registrarFarmacia(router: MockRouter): void {
     return { items, limit, truncated: coinciden.length > limit };
   });
 
+  // Catálogo universal: la farmacia busca el medicamento en el registro oficial
+  // y lo elige por su id. Sólo lectura; lo no vigente se lista pero no se elige.
+  router.get('/pharmacy/catalog-products', ({ query }) => {
+    const q = texto(query, 'search');
+    const source = texto(query, 'source');
+    const atc = texto(query, 'atc');
+    const limit = Number(query.get('limit') ?? 20) || 20;
+    const coinciden = CATALOGO_MEDICAMENTOS.filter(
+      (e) =>
+        (source === null || e.source === source) &&
+        (atc === null || e.atc.includes(atc)) &&
+        (q === null ||
+          contieneSinTildes(e.display, q) ||
+          contieneSinTildes(e.holder, q) ||
+          contieneSinTildes(e.code, q) ||
+          e.activeIngredients.some((i) => contieneSinTildes(i.name, q)) ||
+          e.atc.some((a) => contieneSinTildes(a, q))),
+    );
+    return { items: coinciden.slice(0, limit).map(productoDelCatalogo), limit, truncated: coinciden.length > limit };
+  });
+
+  // «No encuentro mi medicamento»: la farmacia no publica un producto libre,
+  // pide el alta y la revisa un administrador.
+  router.post('/pharmacies/:pharmacyId/catalog-requests', (request) => {
+    const pharmacyId = request.params['pharmacyId']!;
+    if (FARMACIAS.find((f) => f.id === pharmacyId) === undefined) return notFound('Farmacia no encontrada');
+    const datos = cuerpo<{ name: string; holder: string; strengthText: string; presentation: string; registrationNumber: string; notes: string }>(request);
+    const nombre = typeof datos.name === 'string' ? datos.name.trim() : '';
+    if (nombre.length < 2 || nombre.length > 300) {
+      return validation('name must be between 2 and 300 characters', [
+        { field: 'name', message: 'El nombre del medicamento es obligatorio (2 a 300 caracteres).' },
+      ]);
+    }
+    const nueva = solicitudesDeAlta.agregar({ id: nuevoId('catalog-request'), pharmacyId, name: nombre, creadaEn: ahora() });
+    registrarActividad(pharmacyId, 'ALTA', `Pediste incorporar «${nombre}» al catálogo.`);
+    return { status: 201, body: { id: nueva.id, status: 'PENDING', createdAt: nueva.creadaEn } };
+  });
+
   // UC-24-04 · el alta de un producto en el catálogo de la farmacia. Nace
   // activo y sin precio ni stock: esos viven en listas de precios y en el
   // inventario, que el alta no toca.
@@ -882,6 +982,8 @@ export function registrarFarmacia(router: MockRouter): void {
       stock: number;
       minStock: number;
       imageFileIds: string[];
+      catalogProductId: string;
+      catalogPresentationCode: string;
     }>(request);
     const codigo = typeof datos.productCode === 'string' ? datos.productCode : '';
     if (codigo.length < 1 || codigo.length > 100) {
@@ -893,6 +995,34 @@ export function registrarFarmacia(router: MockRouter): void {
     // (`findByPharmacyAndCode` no mira el estado).
     if (productos.filtrar((p) => p.pharmacyId === pharmacyId && p.productCode === codigo).length > 0) {
       return conflict('Ya existe un producto con ese código en la farmacia', { productCode: codigo });
+    }
+    // Vinculado al catálogo: nombre, concentración, presentación y receta los
+    // deriva el servidor, y mandarlos es un 400 (como `forbidNonWhitelisted`).
+    const entrada = datos.catalogProductId === undefined ? undefined : CATALOGO_POR_ID.get(datos.catalogProductId);
+    if (datos.catalogProductId !== undefined) {
+      if (entrada === undefined) {
+        return validation('catalogProductId does not exist', [
+          { field: 'catalogProductId', message: 'Ese producto no está en el catálogo oficial.' },
+        ]);
+      }
+      if (!entrada.selectable) {
+        return preconditionFailed('El registro sanitario de ese producto no está vigente', { catalogProductId: entrada.id });
+      }
+      const propios = CAMPOS_DEL_CATALOGO.filter((campo) => campo in datos);
+      if (propios.length > 0) {
+        return validation(`property ${propios[0]} should not exist`, propios.map((field) => ({ field, message: 'Este dato viene del catálogo oficial.' })));
+      }
+      if (datos.catalogPresentationCode !== undefined && !entrada.presentations.some((p) => p.code === datos.catalogPresentationCode)) {
+        return validation('catalogPresentationCode does not belong to the product', [
+          { field: 'catalogPresentationCode', message: 'Esa presentación no es de este producto.' },
+        ]);
+      }
+      const repetido = productos.filtrar(
+        (p) => p.pharmacyId === pharmacyId && p.catalogProductId === entrada.id && (p.catalogPresentationCode ?? null) === (datos.catalogPresentationCode ?? null),
+      );
+      if (repetido.length > 0) {
+        return conflict('Ya cargaste ese producto y presentación', { catalogProductId: entrada.id });
+      }
     }
     // Los topes del DTO (`MaxLength`): el simulador no deja pasar lo que la
     // API rechazaría, para que la maqueta no muestre un alta imposible.
@@ -913,20 +1043,22 @@ export function registrarFarmacia(router: MockRouter): void {
     }
     const invalido = validarGestion(datos);
     if (invalido !== null) return invalido;
-    const medicamento = medicamentoDe(datos.genericName);
+    const derivados = entrada === undefined ? null : derivadosDelCatalogo(entrada, datos.catalogPresentationCode);
+    const medicamento = derivados === null ? medicamentoDe(datos.genericName) : derivados.medication;
     const nuevo = productos.agregar({
       id: nuevoId('pharmacy-product'),
       pharmacyId,
       pharmacyName: farmacia.name,
       productCode: codigo,
-      brandName: datos.brandName ?? null,
-      genericName: datos.genericName ?? null,
-      strengthText: datos.strengthText ?? null,
-      packageSizeText: datos.packageSizeText ?? null,
-      dosageForm: null,
+      brandName: derivados?.brandName ?? datos.brandName ?? null,
+      genericName: derivados?.genericName ?? datos.genericName ?? null,
+      strengthText: derivados?.strengthText ?? datos.strengthText ?? null,
+      packageSizeText: derivados?.packageSizeText ?? datos.packageSizeText ?? null,
+      dosageForm: derivados?.dosageForm ?? null,
       medication: medicamento === null ? null : c(medicamento.code, medicamento.display),
       medicationConceptId: medicamento?.conceptId ?? null,
-      requiresPrescription: datos.requiresPrescription ?? null,
+      requiresPrescription: derivados === null ? (datos.requiresPrescription ?? null) : derivados.requiresPrescription,
+      ...(entrada === undefined ? {} : { catalogProductId: entrada.id, catalogPresentationCode: datos.catalogPresentationCode ?? null }),
       // Extensión del simulador (P47): precio, categoría, descripción y el
       // «no tengo». Un producto que se sube disponible entra a la vitrina.
       price: importeDe(datos.unitPrice),
@@ -978,6 +1110,14 @@ export function registrarFarmacia(router: MockRouter): void {
     // sobre él es el mismo 404 de siempre.
     if (producto.retirado === true && datos.status === undefined) {
       return notFound('Producto no encontrado');
+    }
+    // Vinculado al catálogo: lo oficial no se edita (precio, fotos, descripción,
+    // existencias, categoría y publicación sí).
+    if (producto.catalogProductId !== undefined) {
+      const bloqueados = CAMPOS_DEL_CATALOGO.filter((campo) => campo in datos);
+      if (bloqueados.length > 0) {
+        return validation(`property ${bloqueados[0]} should not exist`, bloqueados.map((field) => ({ field, message: 'Este dato viene del catálogo oficial y no se edita.' })));
+      }
     }
     const invalido = validarGestion(datos);
     if (invalido !== null) return invalido;
