@@ -1,6 +1,8 @@
 import { Location } from '@angular/common';
 import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter, type ActivatedRouteSnapshot, type Routes } from '@angular/router';
+import { of } from 'rxjs';
+import { PublicDirectoryClient } from './core/data-access/public-directory/public-directory.client';
 
 import { routes } from './app.routes';
 import { ALOVIDA_ROUTES } from './features/alovida/alovida.routes';
@@ -28,7 +30,12 @@ describe('el gate de maquetas con la API real (production-api)', () => {
   let location: Location;
 
   beforeEach(() => {
-    TestBed.configureTestingModule({ providers: [provideRouter(apiTree())] });
+    TestBed.configureTestingModule({
+      providers: [
+        provideRouter(apiTree()),
+        { provide: PublicDirectoryClient, useValue: { getProfile: () => of(null) } },
+      ],
+    });
     router = TestBed.inject(Router);
     location = TestBed.inject(Location);
   });

@@ -2,6 +2,8 @@ import { Location } from '@angular/common';
 import type { Type } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
+import { of } from 'rxjs';
+import { PublicDirectoryClient } from './core/data-access/public-directory/public-directory.client';
 import { APP_SECTIONS } from './core/navigation/navigation.map';
 import { seccionRolesGuard } from './core/navigation/section-roles.guard';
 import {
@@ -431,7 +433,12 @@ describe('rutas públicas del buscador', () => {
   let location: Location;
 
   beforeEach(() => {
-    TestBed.configureTestingModule({ providers: [provideRouter(routes)] });
+    TestBed.configureTestingModule({
+      providers: [
+        provideRouter(routes),
+        { provide: PublicDirectoryClient, useValue: { getProfile: () => of(null) } },
+      ],
+    });
     router = TestBed.inject(Router);
     location = TestBed.inject(Location);
   });

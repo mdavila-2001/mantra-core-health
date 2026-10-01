@@ -152,3 +152,39 @@ Revision de solo lectura: no hay API en puertos3000/3001; Postgres18 nativo escu
 ### Regresion del arbol posterior y proxima reparacion
 
 `92-coverage-final-current.txt`: `EXIT_CODE=1`, 703/709 archivos y 9500/9511 pruebas aprobaron; fallaron 11 pruebas en seis archivos. No se obtuvo un resumen de cobertura final en esta corrida porque Vitest detuvo la certificacion al fallar pruebas. Dos causas de fecha fueron reparadas y `93-dates-directed.txt` registra 22/22, `EXIT_CODE=0`: los gastos de hoy no incluyen horas futuras y la prueba de seis ventanas contables usa una fecha en la que esas ventanas no coinciden. La regresion global sigue pendiente. `94-timeouts-directed-serial.txt` documenta que `ng test` rechaza `--maxWorkers`; no se uso como prueba. `95-timeouts-directed.txt` reproduce nueve timeouts en cuatro archivos incluso en corrida dirigida. H2.S3.M25 registra su investigacion y reparacion pendiente. Ningun timeout se amplio y ninguna asercion se retiro.
+
+## Correcciones posteriores al merge del PR #812
+
+El PR #812 se integro a `dev` como `2439b79f`; `git merge-base --is-ancestor 15ebcc9f origin/dev` termino en 0 y ambos arboles coincidian antes de estas correcciones. La rama correctiva `marcelo/fix-hito2-postmerge-regression` parte de ese `origin/dev`. Estas modificaciones se publicaran en un PR separado.
+
+### Completado
+
+| ID | Que se logro | Comando y resultado |
+|---|---|---|
+| H2.S3.M25 | Cuatro suites de rutas y formularios esperan el dato o efecto concreto; el resolver recibe un doble declarado. No se ampliaron timeouts ni se quitaron aserciones. | `corepack yarn test` con cuatro `--include`, evidencia `96-timeouts-after-contract-fix.txt`: 4/4 archivos y 212/212 pruebas, `EXIT_CODE=0`. |
+| H2.S3.M26 | Portabilidad carga la seed sin reclamos persistidos por otras suites y restaura la clave al terminar. Conserva la expectativa de 14 reclamos. | `corepack yarn test --include='**/insurance-portability.handlers.spec.ts' --watch=false`, evidencia `98-portability-storage-directed.txt`: 13/13 pruebas, `EXIT_CODE=0`; regresion `99-coverage-after-portability-isolation.txt`: 9512/9512 pruebas sin fallo de conteo. |
+| H2.S3.M1-M2 correctivo | El arbol postmerge conserva tipos y lint validos despues de los cambios en pruebas. | `corepack yarn typecheck` y `corepack yarn lint`, evidencias `100-postmerge-typecheck.txt` y `101-postmerge-lint.txt`: ambos `EXIT_CODE=0`. |
+
+### A medias y pendiente
+
+| ID | Que anda | Que no anda | Que falta exactamente | Donde quedo |
+|---|---|---|---|---|
+| H2.S3.M8/M15 | La corrida `99-coverage-after-portability-isolation.txt` aprobo 709/709 archivos y 9512/9512 pruebas. | `test:coverage` termina en 1: core branches 76,15 % frente al umbral de 80 %. | Cubrir al menos 501 ramas core adicionales con pruebas funcionales, repetir cobertura y conservar el umbral. | `coverage/mantra-core-health/coverage-summary.json`, rama correctiva, PLAN M15. |
+| H2.S4.M3-M4 correctivo | `dev` contiene #812 y se creo la rama local desde el merge. | El PR correctivo aun no se publico. | Commit, push, PR a `dev`, reviewers y estado de checks. | `marcelo/fix-hito2-postmerge-regression`. |
+
+### Evidencia literal recortada
+
+```text
+96-timeouts-after-contract-fix.txt: Test Files 4 passed (4); Tests 212 passed (212); EXIT_CODE=0
+97-coverage-after-timeout-fix.txt: Test Files 1 failed | 708 passed (709); Tests 1 failed | 9511 passed (9512); EXIT_CODE=1
+98-portability-storage-directed.txt: Test Files 1 passed (1); Tests 13 passed (13); EXIT_CODE=0
+99-coverage-after-portability-isolation.txt: Test Files 709 passed (709); Tests 9512 passed (9512); ERROR: Coverage for branches (76.15%) does not meet "src/app/core/**" threshold (80%); EXIT_CODE=1
+100-postmerge-typecheck.txt: EXIT_CODE=0
+101-postmerge-lint.txt: EXIT_CODE=0
+git log -1 origin/dev: 2439b79f Merge pull request #812
+git merge-base --is-ancestor 15ebcc9f origin/dev: exit 0
+```
+
+### No cubierto, desvios y riesgos
+
+La regresion completa aprobo las pruebas pero no el umbral de ramas core: el resumen contiene 9914/13018 ramas core y requiere al menos 501 mas. La integracion con backend real, los gates historicos de documentos/identificadores y la revision visual independiente conservan los limites ya registrados arriba. El PR correctivo no implica merge automatico.

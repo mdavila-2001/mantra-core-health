@@ -27,6 +27,8 @@ interface VerifyWire {
 
 describe('handlers de portabilidad de póliza y siniestralidad (subtarea 3.3)', () => {
   const router = new MockRouter();
+  const claimsStorageKey = 'mock.insurance.solicitudes';
+  let previousClaims: string | null = null;
   let paciente: MockUser;
   let medica: MockUser;
   let superadmin: MockUser;
@@ -35,6 +37,8 @@ describe('handlers de portabilidad de póliza y siniestralidad (subtarea 3.3)', 
   beforeAll(async () => {
     // El barrido de mock-backend agrega reclamos. Este certificado parte del seed,
     // sin borrar los reclamos de los módulos que ejercitan las otras suites.
+    previousClaims = sessionStorage.getItem(claimsStorageKey);
+    sessionStorage.removeItem(claimsStorageKey);
     vi.resetModules();
     const { PACIENTES } = await import('../fixtures/personas');
     const { buscarUsuario } = await import('../mock-session');
@@ -59,7 +63,14 @@ describe('handlers de portabilidad de póliza y siniestralidad (subtarea 3.3)', 
     registerInsurancePortability(router);
   });
 
-  afterAll(() => vi.resetModules());
+  afterAll(() => {
+    if (previousClaims === null) {
+      sessionStorage.removeItem(claimsStorageKey);
+    } else {
+      sessionStorage.setItem(claimsStorageKey, previousClaims);
+    }
+    vi.resetModules();
+  });
 
   function call<T>(
     method: MockMethod,

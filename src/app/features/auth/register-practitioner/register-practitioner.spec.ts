@@ -4,6 +4,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
+import { vi } from 'vitest';
 
 import { NAV_ICON_NAMES } from '../../../shared/components/atoms/nav-icon/nav-icon.types';
 import { ESPECIALIDADES_ODONTOLOGICAS, RegisterPractitioner } from './register-practitioner';
@@ -2173,12 +2174,6 @@ describe('RegisterPractitioner con mockBackend', () => {
     );
     const fixture = TestBed.createComponent(RegisterPractitioner);
     const component = fixture.componentInstance;
-    await fixture.whenStable();
-    const conceptos = (
-      component as unknown as {
-        conceptoPorCodigo: () => ReadonlyMap<string, string>;
-      }
-    ).conceptoPorCodigo();
     const codigosCanonicos = [
       'CREDENTIAL_TYPE_DEGREE',
       'CREDENTIAL_TYPE_DIPLOMA',
@@ -2187,9 +2182,17 @@ describe('RegisterPractitioner con mockBackend', () => {
       'CREDENTIAL_TYPE_SPECIALTY',
     ];
 
-    expect(codigosCanonicos.map((code) => conceptos.get(code))).toEqual(
-      enumeracion.options.map((option) => option.conceptId),
-    );
+    await vi.waitFor(() => {
+      fixture.detectChanges();
+      const conceptos = (
+        component as unknown as {
+          conceptoPorCodigo: () => ReadonlyMap<string, string>;
+        }
+      ).conceptoPorCodigo();
+      expect(codigosCanonicos.map((code) => conceptos.get(code))).toEqual(
+        enumeracion.options.map((option) => option.conceptId),
+      );
+    }, { timeout: 18_000 });
 
     fixture.destroy();
     // Tope propio, medido y no a ojo: esta prueba monta el alta entera contra el
