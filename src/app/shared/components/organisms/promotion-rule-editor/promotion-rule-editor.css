@@ -8,6 +8,16 @@
   min-width: 0;
 }
 
+/* Una sola presentación de las familias a la vez: el desplegable en pantalla
+   angosta, el control segmentado donde entran las cinco palabras. */
+.regla__familias-segmentos {
+  display: none;
+}
+
+.regla__familias-select {
+  display: block;
+}
+
 .regla__ayuda,
 .regla__nota {
   margin: 0;
@@ -78,6 +88,14 @@
 }
 
 @media (min-width: 40rem) {
+  .regla__familias-segmentos {
+    display: inline-block;
+  }
+
+  .regla__familias-select {
+    display: none;
+  }
+
   .regla__fila {
     flex-direction: row;
     align-items: flex-start;

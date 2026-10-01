@@ -103,6 +103,22 @@ describe('PromotionRuleEditor', () => {
       expect(text()).toContain('Llevá X, pagá Y');
     });
 
+    it('el desplegable de pantalla angosta elige la misma familia, con su nombre completo', () => {
+      const select = root().querySelector('[data-testid="regla-familias-select"] select') as HTMLSelectElement;
+      // La opción oculta del placeholder no cuenta: los valores son índices de las reales.
+      const nombres = Array.from(select.options)
+        .filter((opcion) => opcion.value !== '')
+        .map((opcion) => opcion.textContent?.trim());
+
+      expect(nombres).toContain('Total de la compra');
+      expect(nombres).toContain('Combos y regalos');
+      select.value = String(nombres.indexOf('Cantidad'));
+      select.dispatchEvent(new Event('change', { bubbles: true }));
+      render();
+
+      expect(host.fields()).toMatchObject({ family: 'QUANTITY', kind: 'BUY_X_PAY_Y' });
+    });
+
     it('elegir una mecánica de la familia la deja elegida', () => {
       elegirFamilia('ORDER_TOTAL');
       elegirMecanica('Descuento escalonado por monto');
@@ -152,6 +168,21 @@ describe('PromotionRuleEditor', () => {
       elegirFamilia('LOYALTY');
 
       expect(text()).toContain('Multiplicador de puntos');
+    });
+
+    it('los campos de dinero aceptan centavos y los de unidades no', () => {
+      elegirFamilia('ORDER_TOTAL');
+      elegirMecanica('Monto fijo por compra mínima');
+      const pasos = Array.from(root().querySelectorAll('[data-testid="regla-editor"] input[type="number"]'))
+        .slice(0, 2)
+        .map((input) => input.getAttribute('step'));
+
+      // Compra mínima y monto: dinero, con paso de un centavo.
+      expect(pasos).toEqual(['0.01', '0.01']);
+
+      elegirFamilia('QUANTITY');
+      const unidades = root().querySelector('[data-testid="regla-editor"] input[type="number"]');
+      expect(unidades?.getAttribute('step')).not.toBe('0.01');
     });
 
     it('un precio de campaña manda a escribirlos en la lista de productos', () => {
@@ -260,6 +291,28 @@ describe('PromotionRuleEditor', () => {
     it('lee la mecánica con la misma prosa que ve el paciente', () => {
       expect(byId('regla-vista-badge')?.textContent?.trim()).toBe('20 % menos');
       expect(byId('regla-vista-frase')?.textContent).toContain('20 % de descuento en cada producto');
+    });
+
+    it('con un campo a medias calla y pide lo que falta, en vez de decir un disparate', () => {
+      host.items.set(ITEMS);
+      elegirFamilia('COMBO');
+      // El combo recién elegido no tiene precio escrito todavía.
+      expect(byId('regla-vista-badge')).toBeNull();
+      expect(byId('regla-vista-pendiente')?.textContent).toContain('Completá los datos de arriba');
+      expect(text()).not.toContain('Combo a Bs :');
+      expect(text()).not.toContain('NaN');
+
+      escribir('[data-testid="regla-editor"] input[type="number"]', '30');
+
+      expect(byId('regla-vista-pendiente')).toBeNull();
+      expect(byId('regla-vista-frase')?.textContent).toContain('Combo a Bs 30');
+    });
+
+    it('un porcentaje vacío no se lee «NaN % menos»', () => {
+      escribir('[data-testid="regla-porcentaje"] input', '');
+
+      expect(text()).not.toContain('NaN');
+      expect(byId('regla-vista-pendiente')).not.toBeNull();
     });
 
     it('sin productos no inventa un ejemplo', () => {

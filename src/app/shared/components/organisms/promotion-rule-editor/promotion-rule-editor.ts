@@ -3,7 +3,7 @@ import { ChangeDetectionStrategy, Component, computed, input, output } from '@an
 
 import { describeDraftFailure } from '../../../../core/promotions-engine/describe-failure';
 import { exampleFor } from '../../../../core/promotions-engine/describe-example';
-import { describeMechanic } from '../../../../core/promotions-engine/describe-mechanic';
+import { describeMechanic, isDescribable } from '../../../../core/promotions-engine/describe-mechanic';
 import {
   MECHANIC_FAMILIES,
   infoOf,
@@ -132,6 +132,11 @@ export class PromotionRuleEditor {
     (family) => ({ value: family.family, label: family.short }),
   );
 
+  /** Las mismas familias, con el nombre completo, para el desplegable de pantalla angosta. */
+  protected readonly familySelectOptions: readonly SelectOption<MechanicFamily>[] = MECHANIC_FAMILIES.map(
+    (family) => ({ value: family.family, label: family.label }),
+  );
+
   protected readonly kindsOfFamily = computed(() => mechanicsOf(this.fields().family));
   protected readonly info = computed(() => infoOf(this.fields().kind));
   protected readonly rule = computed(() => ruleFromFields(this.fields()));
@@ -154,6 +159,11 @@ export class PromotionRuleEditor {
   /** La vista previa: cómo lo lee quien compra, con un caso calculado. */
   protected readonly preview = computed(() => {
     const { mechanic, conditions, allItems } = this.rule();
+    // Con un campo a medias la vista previa calla y pide lo que falta: decir
+    // «NaN % menos» o «Combo a Bs : …» es peor que no decir nada.
+    if (!isDescribable(mechanic)) {
+      return null;
+    }
     const items = this.items();
     const currency = this.currency();
     const labelOf = (itemId: string): string | null =>
@@ -172,6 +182,13 @@ export class PromotionRuleEditor {
 
   protected chooseFamily(family: MechanicFamily): void {
     this.fieldsChange.emit(withFamily(this.fields(), family));
+  }
+
+  /** El desplegable puede quedar sin valor; sin familia no hay mecánicas que ofrecer. */
+  protected chooseFamilyFromSelect(family: MechanicFamily | null): void {
+    if (family !== null) {
+      this.chooseFamily(family);
+    }
   }
 
   /** El grupo de radios puede devolver `null`; sin mecánica no hay con qué calcular. */

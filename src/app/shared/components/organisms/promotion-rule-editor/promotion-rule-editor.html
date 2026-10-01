@@ -3,13 +3,25 @@
     label="Tipo de campaña"
     hint="Elegí cómo se promociona: con el precio, con las unidades, con el total de la compra, con combos o con puntos."
   >
+    <!-- Dos presentaciones del mismo control: cinco segmentos no entran en una
+         pantalla angosta sin recortar sus nombres («Canti…»), así que debajo de
+         40 rem se ofrece un desplegable con los nombres completos. Una sola está
+         visible a la vez (CSS), y las dos leen y escriben el mismo estado. -->
     <app-segmented-control
+      class="regla__familias-segmentos"
       ariaLabel="Tipo de campaña"
       size="md"
       data-testid="regla-familias"
       [options]="familyOptions"
       [value]="fields().family"
       (valueChange)="chooseFamily($event)"
+    />
+    <app-select
+      class="regla__familias-select"
+      data-testid="regla-familias-select"
+      [options]="familySelectOptions"
+      [value]="fields().family"
+      (valueChange)="chooseFamilyFromSelect($event)"
     />
   </app-form-field>
 
@@ -48,6 +60,7 @@
         <app-input
           type="number"
           inputMode="decimal"
+            [step]="0.01"
           placeholder="0.00"
           [hasError]="hasErrorIn('amount')"
           [value]="fields().amount"
@@ -123,6 +136,7 @@
           <app-input
             type="number"
             inputMode="decimal"
+            [step]="0.01"
             placeholder="0.00"
             [hasError]="hasErrorIn('amount')"
             [value]="fields().amount"
@@ -148,6 +162,7 @@
         <app-input
           type="number"
           inputMode="decimal"
+            [step]="0.01"
           placeholder="0.00"
           [hasError]="hasErrorIn('bundle')"
           [value]="fields().bundlePrice"
@@ -202,6 +217,7 @@
           <app-input
             type="number"
             inputMode="decimal"
+            [step]="0.01"
             placeholder="Sin tope"
             [hasError]="hasErrorIn('cap')"
             [value]="fields().maxDiscount"
@@ -286,6 +302,7 @@
             <app-input
               type="number"
               inputMode="decimal"
+            [step]="0.01"
               placeholder="Sin presupuesto"
               [hasError]="hasErrorIn('cap')"
               [value]="fields().budget"
@@ -299,10 +316,16 @@
 
   <section class="regla__vista" aria-labelledby="regla-vista-titulo" data-testid="regla-vista">
     <h3 id="regla-vista-titulo" class="regla__vista-titulo">Así lo ve quien compra</h3>
-    <app-badge variant="primary" data-testid="regla-vista-badge">{{ preview().badge }}</app-badge>
-    <p class="regla__vista-frase" data-testid="regla-vista-frase">{{ preview().sentence }}</p>
-    @if (preview().example; as example) {
-      <p class="regla__vista-ejemplo" data-testid="regla-vista-ejemplo">{{ example }}</p>
+    @if (preview(); as vista) {
+      <app-badge variant="primary" data-testid="regla-vista-badge">{{ vista.badge }}</app-badge>
+      <p class="regla__vista-frase" data-testid="regla-vista-frase">{{ vista.sentence }}</p>
+      @if (vista.example; as example) {
+        <p class="regla__vista-ejemplo" data-testid="regla-vista-ejemplo">{{ example }}</p>
+      }
+    } @else {
+      <p class="regla__vista-ejemplo" data-testid="regla-vista-pendiente">
+        Completá los datos de arriba para ver cómo lo lee quien compra.
+      </p>
     }
   </section>
 </div>
@@ -336,6 +359,7 @@
     <app-input
       type="number"
       inputMode="decimal"
+            [step]="0.01"
       placeholder="0.00"
       [hasError]="hasErrorIn('minSpend')"
       [value]="fields().minSpend"
@@ -384,6 +408,7 @@
         >
           <app-input
             type="number"
+            [step]="list === 'spendTiers' ? 0.01 : 1"
             [hasError]="hasErrorIn('tiers') || hasErrorIn('minSpend')"
             [value]="tier.threshold"
             (valueChange)="patchTier(list, position, { threshold: text($event) })"

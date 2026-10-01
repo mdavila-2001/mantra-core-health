@@ -1,4 +1,4 @@
-import { toCents } from './promotion-money';
+import { isValidPercent, toCents } from './promotion-money';
 import type { Mechanic, Nudge } from './promotion-mechanics.types';
 
 /**
@@ -107,6 +107,56 @@ export function describeMechanic(mechanic: Mechanic, context: DescribeContext): 
         badge: `Puntos ×${mechanic.multiplier}`,
         sentence: `Sumás ${mechanic.multiplier} veces más puntos en esta compra.`,
       };
+  }
+}
+
+/**
+ * ¿Se puede decir esta mecánica sin escribir un disparate? Con un campo a medias
+ * (`NaN % menos`, «Combo a Bs : …») la vista previa tiene que callar y pedir lo
+ * que falta, no inventar una frase.
+ *
+ * Sólo mira que lo escrito se **lea**: si el combo cuesta más que la suma de sus
+ * productos es un error, pero la oración sigue siendo una oración, y de eso se
+ * ocupa `validateDraft()`.
+ */
+export function isDescribable(mechanic: Mechanic): boolean {
+  const isAmount = (amount: string): boolean => (toCents(amount) ?? 0) > 0;
+  const isCount = (count: number, minimum: number): boolean => Number.isInteger(count) && count >= minimum;
+
+  switch (mechanic.kind) {
+    case 'PERCENT_OFF':
+    case 'CLEARANCE':
+      return isValidPercent(mechanic.percent);
+    case 'AMOUNT_OFF_PER_UNIT':
+      return isAmount(mechanic.amount);
+    case 'CAMPAIGN_PRICE':
+      return true;
+    case 'BUY_X_PAY_Y':
+      return isCount(mechanic.take, 2) && isCount(mechanic.pay, 1) && mechanic.pay < mechanic.take;
+    case 'NTH_UNIT_PERCENT':
+      return isCount(mechanic.nth, 2) && isValidPercent(mechanic.percent);
+    case 'VOLUME_TIERS':
+      return (
+        mechanic.tiers.length > 0 &&
+        mechanic.tiers.every((tier) => isCount(tier.minQuantity, 2) && isValidPercent(tier.percent))
+      );
+    case 'ORDER_PERCENT_OVER':
+      return isAmount(mechanic.minSpend) && isValidPercent(mechanic.percent);
+    case 'ORDER_AMOUNT_OVER':
+      return isAmount(mechanic.minSpend) && isAmount(mechanic.amount);
+    case 'SPEND_TIERS':
+      return (
+        mechanic.tiers.length > 0 &&
+        mechanic.tiers.every((tier) => isAmount(tier.minSpend) && isValidPercent(tier.percent))
+      );
+    case 'BUNDLE_PRICE':
+      return isAmount(mechanic.bundlePrice);
+    case 'GIFT_WITH_PURCHASE':
+      return mechanic.triggerItemId !== '' && mechanic.rewardItemId !== '';
+    case 'BUY_A_GET_B_PERCENT':
+      return mechanic.triggerItemId !== '' && mechanic.rewardItemId !== '' && isValidPercent(mechanic.percent);
+    case 'POINTS_MULTIPLIER':
+      return isCount(mechanic.multiplier, 2);
   }
 }
 

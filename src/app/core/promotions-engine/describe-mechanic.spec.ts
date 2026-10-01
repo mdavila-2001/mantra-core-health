@@ -1,4 +1,4 @@
-import { describeMechanic, describeNudge, formatMoney } from './describe-mechanic';
+import { describeMechanic, describeNudge, formatMoney, isDescribable } from './describe-mechanic';
 import type { DescribeContext } from './describe-mechanic';
 import type { Mechanic, Nudge } from './promotion-mechanics.types';
 
@@ -197,5 +197,50 @@ describe('describeNudge', () => {
         CONTEXT,
       ),
     ).toBe('Agregá 2 unidades más y mejorás tu descuento por cantidad.');
+  });
+});
+
+describe('isDescribable', () => {
+  const READABLE: readonly Mechanic[] = [
+    { kind: 'PERCENT_OFF', percent: 20 },
+    { kind: 'CLEARANCE', percent: 35 },
+    { kind: 'AMOUNT_OFF_PER_UNIT', amount: '3.50' },
+    { kind: 'CAMPAIGN_PRICE', prices: {} },
+    { kind: 'BUY_X_PAY_Y', take: 3, pay: 2 },
+    { kind: 'NTH_UNIT_PERCENT', nth: 2, percent: 50 },
+    { kind: 'VOLUME_TIERS', tiers: [{ minQuantity: 2, percent: 10 }] },
+    { kind: 'ORDER_PERCENT_OVER', minSpend: '100', percent: 10 },
+    { kind: 'ORDER_AMOUNT_OVER', minSpend: '100', amount: '10' },
+    { kind: 'SPEND_TIERS', tiers: [{ minSpend: '100', percent: 5 }] },
+    { kind: 'BUNDLE_PRICE', bundlePrice: '60' },
+    { kind: 'GIFT_WITH_PURCHASE', triggerItemId: 'a', rewardItemId: 'b' },
+    { kind: 'BUY_A_GET_B_PERCENT', triggerItemId: 'a', rewardItemId: 'b', percent: 30 },
+    { kind: 'POINTS_MULTIPLIER', multiplier: 2 },
+  ];
+
+  it.each(READABLE.map((mechanic) => [mechanic.kind, mechanic] as const))('%s completa se puede decir', (_kind, mechanic) => {
+    expect(isDescribable(mechanic)).toBe(true);
+  });
+
+  const HALF_WRITTEN: readonly (readonly [string, Mechanic])[] = [
+    ['un porcentaje vacío', { kind: 'PERCENT_OFF', percent: Number.NaN }],
+    ['un porcentaje fuera de rango', { kind: 'CLEARANCE', percent: 100 }],
+    ['un monto vacío', { kind: 'AMOUNT_OFF_PER_UNIT', amount: '' }],
+    ['un 3x3', { kind: 'BUY_X_PAY_Y', take: 3, pay: 3 }],
+    ['un lleva ilegible', { kind: 'BUY_X_PAY_Y', take: Number.NaN, pay: 1 }],
+    ['una unidad N menor a 2', { kind: 'NTH_UNIT_PERCENT', nth: 1, percent: 50 }],
+    ['tramos de cantidad sin tramos', { kind: 'VOLUME_TIERS', tiers: [] }],
+    ['un tramo de cantidad a medias', { kind: 'VOLUME_TIERS', tiers: [{ minQuantity: Number.NaN, percent: 10 }] }],
+    ['una compra mínima vacía', { kind: 'ORDER_PERCENT_OVER', minSpend: '', percent: 10 }],
+    ['un monto de total vacío', { kind: 'ORDER_AMOUNT_OVER', minSpend: '100', amount: '' }],
+    ['tramos de gasto a medias', { kind: 'SPEND_TIERS', tiers: [{ minSpend: '', percent: 5 }] }],
+    ['un combo sin precio', { kind: 'BUNDLE_PRICE', bundlePrice: '' }],
+    ['un regalo sin elegir', { kind: 'GIFT_WITH_PURCHASE', triggerItemId: '', rewardItemId: 'b' }],
+    ['un descuento en otro sin porcentaje', { kind: 'BUY_A_GET_B_PERCENT', triggerItemId: 'a', rewardItemId: 'b', percent: Number.NaN }],
+    ['un multiplicador de 1', { kind: 'POINTS_MULTIPLIER', multiplier: 1 }],
+  ];
+
+  it.each(HALF_WRITTEN)('no se puede decir %s', (_name, mechanic) => {
+    expect(isDescribable(mechanic)).toBe(false);
   });
 });
