@@ -107,6 +107,17 @@ export const CAMPOS_VACIOS: CamposDelProducto = {
   disponible: '',
 };
 
+/**
+ * El producto del catálogo universal al que se vincula el alta. Con él,
+ * nombre, concentración, presentación y receta son del registro oficial: el
+ * formulario no los pide y la revisión no los exige ni los manda.
+ */
+export interface VinculoConElCatalogo {
+  readonly catalogProductId: string;
+  /** Código de la presentación elegida (CN, CUM…), si el producto tiene varias. */
+  readonly presentationCode?: string;
+}
+
 /** El resultado de revisar un producto: el alta lista, o por qué no. */
 export type RevisionDelProducto =
   | { readonly valido: true; readonly borrador: PharmacyProductDraft }
@@ -127,6 +138,7 @@ const NO = new Set(['no', 'n', 'false', '0']);
 export function revisarProducto(
   campos: CamposDelProducto,
   categoriasPermitidas: readonly string[] = CATEGORIAS,
+  vinculo?: VinculoConElCatalogo,
 ): RevisionDelProducto {
   const errores: string[] = [];
   const codigo = campos.codigo.trim();
@@ -147,25 +159,27 @@ export function revisarProducto(
     );
   }
 
-  if (marca === '' && generico === '') {
-    errores.push('Poné la marca, el nombre genérico o los dos: sin nombre nadie lo encuentra.');
-  }
-  if (marca.length > LARGO_MAXIMO_DEL_NOMBRE) {
-    errores.push(`La marca no puede pasar de ${LARGO_MAXIMO_DEL_NOMBRE} caracteres.`);
-  }
-  if (generico.length > LARGO_MAXIMO_DEL_NOMBRE) {
-    errores.push(`El nombre genérico no puede pasar de ${LARGO_MAXIMO_DEL_NOMBRE} caracteres.`);
-  }
-  if (concentracion.length > LARGO_MAXIMO_DEL_DETALLE) {
-    errores.push(`La concentración no puede pasar de ${LARGO_MAXIMO_DEL_DETALLE} caracteres.`);
-  }
-  if (presentacion.length > LARGO_MAXIMO_DEL_DETALLE) {
-    errores.push(`La presentación no puede pasar de ${LARGO_MAXIMO_DEL_DETALLE} caracteres.`);
-  }
-
-  const receta = siONo(campos.receta);
-  if (receta === 'invalido') {
-    errores.push('«Receta» se responde con sí o no.');
+  // Con vínculo al catálogo esto lo trae el registro oficial: ni se pide ni se revisa.
+  const receta = vinculo === undefined ? siONo(campos.receta) : null;
+  if (vinculo === undefined) {
+    if (marca === '' && generico === '') {
+      errores.push('Poné la marca, el nombre genérico o los dos: sin nombre nadie lo encuentra.');
+    }
+    if (marca.length > LARGO_MAXIMO_DEL_NOMBRE) {
+      errores.push(`La marca no puede pasar de ${LARGO_MAXIMO_DEL_NOMBRE} caracteres.`);
+    }
+    if (generico.length > LARGO_MAXIMO_DEL_NOMBRE) {
+      errores.push(`El nombre genérico no puede pasar de ${LARGO_MAXIMO_DEL_NOMBRE} caracteres.`);
+    }
+    if (concentracion.length > LARGO_MAXIMO_DEL_DETALLE) {
+      errores.push(`La concentración no puede pasar de ${LARGO_MAXIMO_DEL_DETALLE} caracteres.`);
+    }
+    if (presentacion.length > LARGO_MAXIMO_DEL_DETALLE) {
+      errores.push(`La presentación no puede pasar de ${LARGO_MAXIMO_DEL_DETALLE} caracteres.`);
+    }
+    if (receta === 'invalido') {
+      errores.push('«Receta» se responde con sí o no.');
+    }
   }
   const cadenaDeFrio = siONo(campos.cadenaDeFrio);
   if (cadenaDeFrio === 'invalido') {
@@ -207,15 +221,27 @@ export function revisarProducto(
   const identificadores: PharmacyProductIdentifier[] =
     codigoDeBarras === '' ? [] : [{ identifierType: 'GTIN', identifierValue: codigoDeBarras }];
 
+  const nombrado =
+    vinculo !== undefined
+      ? {
+          catalogProductId: vinculo.catalogProductId,
+          ...(vinculo.presentationCode === undefined
+            ? {}
+            : { catalogPresentationCode: vinculo.presentationCode }),
+        }
+      : {
+          ...(marca === '' ? {} : { brandName: marca }),
+          ...(generico === '' ? {} : { genericName: generico }),
+          ...(concentracion === '' ? {} : { strengthText: concentracion }),
+          ...(presentacion === '' ? {} : { packageSizeText: presentacion }),
+          ...(receta === null || receta === 'invalido' ? {} : { requiresPrescription: receta }),
+        };
+
   return {
     valido: true,
     borrador: {
       productCode: codigo,
-      ...(marca === '' ? {} : { brandName: marca }),
-      ...(generico === '' ? {} : { genericName: generico }),
-      ...(concentracion === '' ? {} : { strengthText: concentracion }),
-      ...(presentacion === '' ? {} : { packageSizeText: presentacion }),
-      ...(receta === null || receta === 'invalido' ? {} : { requiresPrescription: receta }),
+      ...nombrado,
       ...(cadenaDeFrio === null || cadenaDeFrio === 'invalido'
         ? {}
         : { coldChainRequired: cadenaDeFrio }),
@@ -240,15 +266,23 @@ export function revisarProducto(
 export function cambiosDelBorrador(
   borrador: PharmacyProductDraft,
   completo: boolean,
+  delCatalogo = false,
 ): PharmacyProductChanges {
   const valor = <T>(dato: T | undefined): T | null | undefined =>
     dato !== undefined ? dato : completo ? null : undefined;
+  // Un producto del catálogo no manda lo oficial: el servidor lo rechazaría, y
+  // vaciarlo («completo») sería borrarle el nombre a un registro sanitario.
+  const oficiales: Record<string, unknown> = delCatalogo
+    ? {}
+    : {
+        brandName: valor(borrador.brandName),
+        genericName: valor(borrador.genericName),
+        strengthText: valor(borrador.strengthText),
+        packageSizeText: valor(borrador.packageSizeText),
+        requiresPrescription: valor(borrador.requiresPrescription),
+      };
   const cambios: Record<string, unknown> = {
-    brandName: valor(borrador.brandName),
-    genericName: valor(borrador.genericName),
-    strengthText: valor(borrador.strengthText),
-    packageSizeText: valor(borrador.packageSizeText),
-    requiresPrescription: valor(borrador.requiresPrescription),
+    ...oficiales,
     unitPrice: valor(borrador.unitPrice),
     category: valor(borrador.category),
     description: valor(borrador.description),

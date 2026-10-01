@@ -36,7 +36,6 @@ const FIJOS = ['/my-account', '/notification-center'];
 /** Cada corrida usa un código nuevo: el simulador guarda lo creado durante la pestaña. */
 const SUFIJO = String(Date.now()).slice(-6);
 const CODIGO = `E2E-${SUFIJO}`;
-const NOMBRE = `Producto E2E ${SUFIJO}`;
 
 async function rutasDelMenu(page: Page): Promise<string[]> {
   return page.locator('nav a[data-route], header a[data-route]').evaluateAll((enlaces) =>
@@ -76,21 +75,37 @@ test.describe('portal de la cuenta de farmacia', () => {
   });
 
   test('el recorrido: crear un producto, dejarlo sin stock, darle existencias, una categoría y una importación', async ({ page }) => {
+    /** El nombre oficial del producto elegido del catálogo (lo lee de la lista de resultados). */
+    let NOMBRE = '';
     // 1 · Resumen: los números de partida.
     await irPorMenu(page, '/administration/pharmacy');
     const publicados = page.getByTestId('summary-published');
     await expect(publicados).toBeVisible();
     const antes = Number((await publicados.innerText()).trim());
 
-    // 2 · Productos: alta en el modal con pestañas.
+    // 2 · Productos: el alta se hace ELIGIENDO del catálogo oficial, no tipeando.
     await irPorMenu(page, '/administration/pharmacy-catalog');
     await page.getByTestId('products-new').click();
     // El host `app-content-dialog` no mide nada: lo visible es el `<dialog>`.
     const modal = page.getByRole('dialog');
     await expect(modal).toBeVisible();
+    // Antes de elegir nada no hay datos de producto que escribir: ni marca ni concentración.
+    await expect(modal.getByTestId('product-field-brand')).toHaveCount(0);
+    await modal.getByRole('combobox', { name: 'Medicamento del catálogo oficial' }).fill('ibuprofeno');
+    const opcion = page.locator('[role="option"]:not([aria-disabled="true"])').first();
+    await expect(opcion).toBeVisible();
+    NOMBRE = (await opcion.locator('.reference-combobox__label').innerText()).trim();
+    await opcion.click();
+    // La tarjeta del registro oficial: sus datos se ven y no se editan.
+    const oficial = modal.getByTestId('product-official');
+    await expect(oficial).toContainText(NOMBRE);
+    await expect(oficial).toContainText('Estos datos vienen del registro oficial');
+    const presentacion = modal.getByLabel('Presentación que vendés');
+    if (await presentacion.isVisible()) {
+      await presentacion.selectOption({ index: 1 });
+    }
     await modal.getByTestId('product-field-code').fill(CODIGO);
-    await modal.getByTestId('product-field-brand').fill(NOMBRE);
-    await modal.getByTestId('product-field-package').fill('Caja x 10');
+    await page.screenshot({ path: join(EVIDENCIA, 'modal-producto-catalogo-1440-claro.png') });
     await modal.getByRole('tab', { name: 'Publicación' }).click();
     await modal.getByTestId('product-field-price').fill('12,50');
     await page.screenshot({ path: join(EVIDENCIA, 'modal-producto-publicacion-1440-claro.png') });

@@ -42,6 +42,19 @@ export interface PharmacyDirectoryPage {
   readonly count: number;
 }
 
+/** El vínculo de un producto de farmacia con el catálogo universal. */
+export interface PharmacyProductCatalogLink {
+  readonly catalogProductId: string;
+  readonly source: CatalogSource;
+  readonly sourceName: string;
+  /** Id de origen en la fuente (nº de registro sanitario). */
+  readonly code: string;
+  /** Código de la presentación elegida (CN, CUM…), si la hay. */
+  readonly presentationCode: string | null;
+  /** Foto oficial: se muestra mientras la farmacia no suba la suya. */
+  readonly officialPhoto: CatalogPhoto | null;
+}
+
 /** Un producto publicado del directorio, tal como lo lista la búsqueda. */
 export interface PharmacyProduct {
   readonly id: string;
@@ -53,6 +66,11 @@ export interface PharmacyProduct {
   readonly strengthText: string | null;
   readonly packageSizeText: string | null;
   readonly dosageForm: PharmacyConcept | null;
+  /**
+   * De qué producto del catálogo universal viene. `null`/ausente = producto
+   * cargado a mano antes del catálogo: sus datos se siguen editando.
+   */
+  readonly catalog?: PharmacyProductCatalogLink | null;
   /** El medicamento del vademécum al que responde, resuelto. */
   readonly medication: PharmacyConcept | null;
   readonly requiresPrescription: boolean | null;
@@ -119,6 +137,108 @@ export interface PharmacyProductSearchQuery {
   readonly limit?: number;
 }
 
+/* ============================================================================
+    Catálogo universal de medicamentos.
+
+    Los productos NO se tipean: vienen de un registro sanitario oficial (CIMA,
+    INVIMA, ANVISA…) y la farmacia elige uno por su id y carga sólo lo suyo
+    —precio, existencias, fotos propias, descripción, publicación—. Cada fuente
+    conserva su propio id de origen; el ancla común con la receta es el ATC.
+    ========================================================================== */
+
+/** De qué registro oficial viene un producto del catálogo. */
+export type CatalogSource = 'agemed' | 'cima' | 'invima' | 'anvisa';
+
+/** Estado del registro sanitario en la fuente; sólo `ACTIVE` se puede elegir. */
+export type CatalogRegulatoryStatus = 'ACTIVE' | 'INACTIVE' | 'SUSPENDED' | 'REVOKED';
+
+/** Un principio activo tal como la fuente lo declara. */
+export interface CatalogIngredient {
+  readonly name: string;
+  readonly amount: string | null;
+  readonly unit: string | null;
+}
+
+/** Una presentación comercial del producto (la que se compra en el mostrador). */
+export interface CatalogPresentation {
+  /** Código de la fuente (CN, CUM…). **No** es un GTIN. */
+  readonly code: string | null;
+  readonly name: string;
+  /** Sólo si la fuente publica el código de barras; nunca se deduce. */
+  readonly gtin: string | null;
+  readonly active: boolean | null;
+}
+
+/** Foto oficial del envase, con la atribución que exige la fuente. */
+export interface CatalogPhoto {
+  readonly url: string;
+  readonly thumbUrl: string | null;
+  readonly attribution: string;
+}
+
+/** Un producto del catálogo universal, tal como lo lista `GET /pharmacy/catalog-products`. */
+export interface CatalogProduct {
+  /** Id del concepto en la terminología; es lo que viaja en el alta. */
+  readonly id: string;
+  readonly source: CatalogSource;
+  readonly sourceName: string;
+  /** Id de origen en la fuente (nº de registro sanitario). */
+  readonly code: string;
+  readonly display: string;
+  readonly holder: string | null;
+  readonly strengthText: string | null;
+  readonly dosageForm: string | null;
+  /** `null` = la fuente no lo declara. */
+  readonly requiresPrescription: boolean | null;
+  readonly generic: boolean | null;
+  readonly activeIngredients: readonly CatalogIngredient[];
+  readonly atc: readonly string[];
+  readonly presentations: readonly CatalogPresentation[];
+  readonly regulatoryStatus: CatalogRegulatoryStatus;
+  readonly selectable: boolean;
+  readonly photo: CatalogPhoto | null;
+  readonly sourceUrl: string | null;
+}
+
+/** La página de la búsqueda en el catálogo. */
+export interface CatalogProductPage {
+  readonly items: readonly CatalogProduct[];
+  readonly limit: number;
+  readonly truncated: boolean;
+}
+
+/** Filtros de la búsqueda en el catálogo. */
+export interface CatalogProductQuery {
+  /** Nombre, principio activo, ATC, titular o nº de registro. */
+  readonly search?: string;
+  readonly source?: CatalogSource;
+  /** ATC nivel 5 exacto. */
+  readonly atc?: string;
+  readonly limit?: number;
+}
+
+/**
+ * Lo que la farmacia pide cuando su medicamento no está en el catálogo: un
+ * administrador lo revisa y lo incorpora al registro. La farmacia no publica
+ * un producto libre.
+ */
+export interface CatalogRequestDraft {
+  readonly name: string;
+  readonly holder?: string;
+  readonly strengthText?: string;
+  readonly presentation?: string;
+  /** Nº de registro sanitario, si lo tiene a mano. */
+  readonly registrationNumber?: string;
+  readonly notes?: string;
+}
+
+/** Lo que devuelve el envío de una solicitud de alta al catálogo. */
+export interface CatalogRequestCreated {
+  readonly id: string;
+  readonly status: 'PENDING';
+  readonly createdAt: string;
+}
+
 /**
  * Una sede publicada, con su ubicación — a diferencia de
  * {@link AvailabilitySite}, que sólo existe evaluada contra productos
@@ -179,6 +299,13 @@ export interface PharmacyProductIdentifier {
 export interface PharmacyProductDraft {
   /** Código único del producto dentro de la farmacia (el SKU). 1 a 100. */
   readonly productCode: string;
+  /**
+   * El producto del catálogo universal. Con él, marca, genérico, concentración,
+   * presentación y receta **los deriva el servidor** y mandarlos es un 400.
+   */
+  readonly catalogProductId?: string;
+  /** Presentación elegida del catálogo (su `code`). */
+  readonly catalogPresentationCode?: string;
   readonly brandName?: string;
   readonly genericName?: string;
   readonly strengthText?: string;
