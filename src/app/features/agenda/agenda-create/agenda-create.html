@@ -175,6 +175,7 @@
               <th scope="col">Día</th>
               <th scope="col">Desde</th>
               <th scope="col">Hasta</th>
+              <th scope="col">Atiendo</th>
               @if (!flexible()) {
                 <th scope="col">Dura</th>
                 <th scope="col">Descanso</th>
@@ -223,6 +224,18 @@
                       (valueChange)="fijarDeLaFila(dia.indice, 'hasta', $event)"
                     />
                   </td>
+                  <td>
+                    <!-- Qué admite esta franja: consultas (la grilla de siempre),
+                         servicios (turnos de largo variable que nacen al reservar)
+                         o ambos, que comparten el tiempo del médico. -->
+                    <app-select
+                      [options]="opcionesDeModo"
+                      [value]="grupoDe(dia.indice).controls['modo'].value"
+                      [ariaLabel]="'Qué atendés, ' + dia.largo"
+                      [attr.data-testid]="'agenda-create-modo-' + dia.indice"
+                      (valueChange)="fijarDeLaFila(dia.indice, 'modo', $event)"
+                    />
+                  </td>
                   @if (!flexible()) {
                   <td>
                     <app-select
@@ -243,11 +256,17 @@
                   <!-- El costo, en la misma fila: elegir descanso sobre una
                        franja corta quita turnos, y ese número no se deduce. -->
                   <td class="agenda-create__fila-turnos" aria-live="polite">
-                    <strong>{{ turnosDelDia(dia.indice) }}</strong>
+                    @if (soloServicios(dia.indice)) {
+                      <!-- Sin turnos fijos: cada servicio dura lo que declaró su
+                           profesional y el turno nace al reservarlo. -->
+                      <span title="Los turnos de servicios nacen al reservar">—</span>
+                    } @else {
+                      <strong>{{ turnosDelDia(dia.indice) }}</strong>
+                    }
                   </td>
                   }
                 } @else {
-                  <td [attr.colspan]="flexible() ? 2 : 5" class="agenda-create__fila-apagada">
+                  <td [attr.colspan]="flexible() ? 3 : 6" class="agenda-create__fila-apagada">
                     No atendés
                   </td>
                 }
