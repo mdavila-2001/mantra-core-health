@@ -1,7 +1,7 @@
 import { reservas, recursos } from '../fixtures/agenda';
 import { CARGO, ESTADO, TIPO_ORGANIZACION } from '../fixtures/conceptos';
 import { afiliaciones, MEDICA, PROFESIONALES, profesionalPorId } from '../fixtures/personas';
-import { conflict, notFound, type MockRequest, type MockRouter } from '../mock-router';
+import { conflict, notFound, validation, type MockRequest, type MockRouter } from '../mock-router';
 import {
   IDS,
   MOCK_USERS,
@@ -566,6 +566,39 @@ export function registrarDirectorio(router: MockRouter): void {
     });
     const { tenantId: _t, ...resto } = nueva;
     return { status: 201, body: resto };
+  });
+
+  // La edición de una sucursal desde el portal de la farmacia y del
+  // laboratorio (01/10/2026). La API real no la tiene (P54): `null` borra el
+  // dato, una clave ausente lo deja como está. El código no se edita: es la
+  // identidad de la sucursal dentro de la organización.
+  router.patch('/tenants/:id/branches/:branchId', (request) => {
+    const tenantId = request.params['id']!;
+    const sucursal = sucursales.get(request.params['branchId']!);
+    if (sucursal === undefined || sucursal.tenantId !== tenantId) {
+      return notFound('Sucursal no encontrada');
+    }
+    const datos = cuerpo<{
+      name?: string;
+      description?: string | null;
+      locationUrl?: string | null;
+      latitude?: number | null;
+      longitude?: number | null;
+    }>(request);
+    if (datos.name !== undefined && datos.name.trim() === '') {
+      return validation('La sucursal necesita un nombre', [
+        { field: 'name', message: 'El nombre no puede quedar vacío.' },
+      ]);
+    }
+    const actualizada = sucursales.actualizar(sucursal.id, {
+      ...(datos.name === undefined ? {} : { name: datos.name.trim() }),
+      ...(datos.description === undefined ? {} : { description: datos.description ?? undefined }),
+      ...(datos.locationUrl === undefined ? {} : { locationUrl: datos.locationUrl ?? undefined }),
+      ...(datos.latitude === undefined ? {} : { latitude: datos.latitude ?? undefined }),
+      ...(datos.longitude === undefined ? {} : { longitude: datos.longitude ?? undefined }),
+    })!;
+    const { tenantId: _t, ...resto } = actualizada;
+    return resto;
   });
 
   router.get('/tenants/:id/memberships', ({ params, query }) => {

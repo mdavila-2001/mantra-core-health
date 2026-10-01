@@ -9,8 +9,9 @@ import { SessionStore } from '../auth/session.store';
 import { NavigationService } from './navigation.service';
 
 /**
- * El menú de la cuenta de farmacia (tenant `PHARMACY`): ocho renglones planos,
- * en este orden y nada más, más los dos fijos de toda cuenta.
+ * El menú de la cuenta de farmacia (tenant `PHARMACY`): diez renglones planos,
+ * en este orden y nada más, más los dos fijos de toda cuenta. «Precios» y
+ * «Sucursales» entraron el 01/10/2026 (pedido del propietario).
  *
  * Y, del otro lado, que **ninguna otra cuenta cambió de menú**: la regla 3 del
  * propietario. Las listas de abajo son el menú de cada una antes de este
@@ -36,9 +37,11 @@ const MENU_DE_LA_FARMACIA = [
   '/administration/pharmacy-categories',
   '/administration/pharmacy-import',
   '/administration/pharmacy-inventory',
+  '/administration/pharmacy-prices',
   '/administration/pharmacy-orders',
   '/administration/pharmacy-campaigns',
   '/administration/pharmacy-profile',
+  '/administration/pharmacy-branches',
 ];
 
 const FIJOS_DE_TODA_CUENTA = ['/my-account', '/notification-center'];
@@ -82,7 +85,7 @@ describe('Menú de la cuenta de farmacia', () => {
     ];
   }
 
-  it('ofrece los ocho renglones de la farmacia, en orden, y nada de otra cuenta', () => {
+  it('ofrece los diez renglones de la farmacia, en orden, y nada de otra cuenta', () => {
     abrirSesion(['USER'], ['t-f'], { 't-f': 'PHARMACY' });
 
     const rutas = rutasDelMenu();
@@ -95,7 +98,7 @@ describe('Menú de la cuenta de farmacia', () => {
     );
   });
 
-  it('los ocho van planos: en un dominio aplanado, sin encabezado ni desplegable', () => {
+  it('los diez van planos: en un dominio aplanado, sin encabezado ni desplegable', () => {
     abrirSesion(['USER'], ['t-f'], { 't-f': 'PHARMACY' });
 
     const grupos = service
@@ -110,9 +113,11 @@ describe('Menú de la cuenta de farmacia', () => {
       'Categorías',
       'Importación masiva',
       'Inventario',
+      'Precios',
       'Solicitudes de retiro',
       'Promociones',
       'Ficha de la farmacia',
+      'Sucursales',
     ]);
   });
 

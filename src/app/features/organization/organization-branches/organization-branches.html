@@ -1,0 +1,184 @@
+<app-page-header
+  title="Sucursales"
+  subtitle="Las sedes de tu organización: nombre, descripción y ubicación. Editá cada una o subí varias de una vez con un CSV."
+/>
+
+<app-card class="branches" padding="lg" data-testid="branches-card">
+  <div class="branches__panel">
+    <div class="branches__bar">
+      <p class="branches__note">
+        El código de cada sucursal no se edita: es cómo la reconoce el sistema.
+      </p>
+      <div class="branches__actions">
+        <button
+          app-button
+          type="button"
+          variant="outline"
+          size="sm"
+          [disabled]="!listReady() || bulkSaving()"
+          data-testid="branches-bulk-open"
+          (clicked)="openBulk()"
+        >
+          Subir sucursales (CSV)
+        </button>
+        <button
+          app-button
+          type="button"
+          size="sm"
+          [disabled]="!listReady()"
+          data-testid="branches-create"
+          (clicked)="openCreate()"
+        >
+          Agregar sucursal
+        </button>
+      </div>
+    </div>
+
+    @if (rejected().length > 0) {
+      <app-alert tone="warning" title="Estas sucursales no se crearon" data-testid="branches-rejected">
+        <ul class="branches__list">
+          @for (rejection of rejected(); track rejection.name) {
+            <li><strong>{{ rejection.name }}:</strong> {{ rejection.reason }}</li>
+          }
+        </ul>
+      </app-alert>
+    }
+
+    <app-data-table
+      caption="Sucursales de tu organización"
+      [state]="branches()"
+      [columns]="columns()"
+      [trackBy]="rowId"
+      [rowLabel]="rowLabel"
+      (retry)="reload()"
+      (refresh)="reload()"
+      data-testid="branches-table"
+    />
+  </div>
+</app-card>
+
+<ng-template #nameCell let-branch>
+  <span class="branches__main">{{ branch.name }}</span>
+  <code class="branches__code">{{ branch.code }}</code>
+</ng-template>
+
+<ng-template #descriptionCell let-branch>
+  @if (branch.description) {
+    <span class="branches__description">{{ branch.description }}</span>
+  } @else {
+    <span class="branches__muted">Sin descripción</span>
+  }
+</ng-template>
+
+<ng-template #locationCell let-branch>
+  @if (branch.locationUrl) {
+    <a app-link [href]="branch.locationUrl">Ver en el mapa</a>
+  } @else {
+    <span class="branches__muted">Sin ubicación</span>
+  }
+</ng-template>
+
+<ng-template #actionsCell let-branch>
+  <button
+    app-button
+    type="button"
+    variant="ghost"
+    size="sm"
+    [attr.aria-label]="'Editar ' + branch.name"
+    [attr.data-testid]="'branches-edit-' + branch.code"
+    (clicked)="openEdit(branch)"
+  >
+    Editar
+  </button>
+</ng-template>
+
+@if (bulkOpen()) {
+  <app-branch-bulk-import
+    testIdPrefix="branches-bulk"
+    confirmVerb="Crear"
+    [closeOnConfirm]="false"
+    [pending]="bulkSaving()"
+    [existingNames]="existingNames()"
+    contextNote="Cada fila se crea como una sucursal activa de tu organización."
+    (imported)="createBatch($event)"
+    (closed)="bulkOpen.set(false)"
+  />
+}
+
+@if (editing(); as current) {
+  <app-content-dialog
+    [heading]="dialogHeading()"
+    [description]="current.mode === 'edit' ? 'Código ' + current.branch.code : null"
+    [dismissible]="!saving()"
+    data-testid="branches-dialog"
+    (closed)="closeDialog()"
+  >
+    <div class="branches__form">
+      @if (saveError(); as error) {
+        <app-alert tone="error" data-testid="branches-save-error">{{ error }}</app-alert>
+      }
+
+      <app-form-field
+        label="Nombre"
+        [required]="true"
+        [errorMessage]="submitted() ? nameError() : ''"
+      >
+        <app-input
+          [value]="form().name"
+          (valueChange)="setField('name', $event)"
+          [hasError]="submitted() && nameError() !== ''"
+          testId="branches-name"
+        />
+      </app-form-field>
+
+      @if (current.mode === 'create') {
+        <app-form-field
+          label="Código"
+          hint="Opcional. Si lo dejás vacío, lo armamos a partir del nombre."
+        >
+          <app-input
+            [value]="form().code"
+            (valueChange)="setField('code', $event)"
+            testId="branches-code"
+          />
+        </app-form-field>
+      }
+
+      <app-form-field label="Descripción" hint="Lo que el paciente ve de esta sede: horario, referencias, piso.">
+        <app-textarea
+          [value]="form().description"
+          (valueChange)="setField('description', $event)"
+          [maxLength]="descriptionMax"
+          [rows]="3"
+          data-testid="branches-description"
+        />
+      </app-form-field>
+
+      <app-form-field
+        label="Enlace de ubicación"
+        [hint]="urlHasPoint() ? 'El enlace trae el punto: la sucursal queda marcada en el mapa.' : 'Pegá el enlace de Google Maps u OpenStreetMap.'"
+        [errorMessage]="urlError()"
+      >
+        <app-input
+          type="url"
+          inputMode="url"
+          placeholder="https://maps.google.com/…"
+          [value]="form().locationUrl"
+          (valueChange)="setField('locationUrl', $event)"
+          [hasError]="urlError() !== ''"
+          testId="branches-location-url"
+        />
+      </app-form-field>
+    </div>
+
+    <app-form-actions
+      dialog-actions
+      [submitLabel]="current.mode === 'edit' ? 'Guardar cambios' : 'Agregar sucursal'"
+      cancelLabel="Cancelar"
+      [pending]="saving()"
+      [disabled]="!hasChanges()"
+      (submitted)="save()"
+      (cancelled)="cancel()"
+    />
+  </app-content-dialog>
+}

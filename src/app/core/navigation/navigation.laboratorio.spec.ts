@@ -32,6 +32,8 @@ const MENU_DEL_LABORATORIO = [
   '/laboratorio/recepcion',
   '/laboratorio/cola',
   '/administration/laboratory-results',
+  '/administration/laboratory-prices',
+  '/administration/laboratory-branches',
 ];
 
 const FIJOS_DE_TODA_CUENTA = ['/my-account', '/notification-center'];
@@ -99,6 +101,8 @@ describe('Menú de la cuenta de laboratorio', () => {
       'Recepción de muestras',
       'Cola de trabajo',
       'Resultados',
+      'Precios',
+      'Sucursales',
     ]);
   });
 
@@ -127,8 +131,8 @@ describe('Menú de la cuenta de laboratorio', () => {
     }
   });
 
-  it('la farmacia conserva sus ocho renglones', () => {
+  it('la farmacia conserva sus diez renglones', () => {
     abrirSesion(['USER'], ['t-f'], { 't-f': 'PHARMACY' });
-    expect(rutasDelMenu().filter((r) => r.includes('administration/pharmacy'))).toHaveLength(8);
+    expect(rutasDelMenu().filter((r) => r.includes('administration/pharmacy'))).toHaveLength(10);
   });
 });
