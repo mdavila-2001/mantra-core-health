@@ -467,6 +467,22 @@
           <app-nav-icon name="receipt" />
         </a>
 
+        <!-- Mis solicitudes (propietario, 01/10/2026): lo que decidió la
+             aseguradora, para TODAS las cuentas —paciente, médico,
+             laboratorio e imagenología—, como «Mis facturas». Qué
+             solicitudes ve cada una lo decide el backend con la sesión.
+             Paraguas: el mismo ícono que dice «seguro» en el resto del menú. -->
+        <a
+          class="app-header__ajustes"
+          routerLink="/my-account/requests"
+          data-testid="header-solicitudes"
+          appTooltip="Mis solicitudes"
+          appTooltipPosition="bottom"
+          aria-label="Mis solicitudes"
+        >
+          <app-nav-icon name="umbrella" />
+        </a>
+
         <!-- El carrito de farmacia (H4.S1, carril 41/46). Es la compra del
              paciente, no una herramienta de la médica ni de otro rol: sólo se
              ofrece con `esPacienteDelCarrito()`. Mismo bloque que Chats, con
