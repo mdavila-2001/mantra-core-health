@@ -28,8 +28,13 @@ import { ChangeDetectionStrategy, Component, input, linkedSignal } from '@angula
 export class LogoConsultorio {
   /** La imagen como `data:` URL (la CSP no admite otra), o `null` si no hay. */
   readonly src = input<string | null>(null);
-  /** Nombre del consultorio, para el texto alternativo. Puede venir vacío. */
+  /** Nombre del consultorio o de la organización, para el texto alternativo. Puede venir vacío. */
   readonly nombre = input<string>('');
+  /**
+   * Texto alternativo cuando no hay nombre. La caja es la misma para el consultorio
+   * y para cualquier organización: cambia lo que se dice, no lo que se dibuja.
+   */
+  readonly etiqueta = input<string>('Logo del consultorio');
 
   /**
    * Una imagen rota no puede dejar un hueco: cae al marcador. `linkedSignal`
@@ -42,7 +47,7 @@ export class LogoConsultorio {
 
   protected alt(): string {
     const nombre = this.nombre().trim();
-    return nombre === '' ? 'Logo del consultorio' : `Logo de ${nombre}`;
+    return nombre === '' ? this.etiqueta() : `Logo de ${nombre}`;
   }
 
   protected alFallar(): void {

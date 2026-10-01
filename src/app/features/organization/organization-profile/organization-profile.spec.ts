@@ -6,6 +6,7 @@ import { of } from 'rxjs';
 
 import { AuthService } from '../../../core/auth/auth.service';
 import { DirectoryClient } from '../../../core/data-access/directory/directory.client';
+import { LogoDeOrganizacionClient } from '../../../core/data-access/directory/logo-de-organizacion.client';
 import { PharmacyProfile } from '../pharmacy-profile/pharmacy-profile';
 import { OrganizationProfile } from './organization-profile';
 
@@ -31,6 +32,8 @@ describe('OrganizationProfile', () => {
           useValue: { activeTenantType: tipo, activeTenantId: signal('t-1') },
         },
         { provide: DirectoryClient, useValue: { listMyOrganizations: () => of([ORGANIZACION]) } },
+        // El logo tiene su propia prueba (`organization-logo.spec.ts`): acá no es lo que se mira.
+        { provide: LogoDeOrganizacionClient, useValue: { obtenerUrl: () => of(null) } },
       ],
     })
       // La ficha de farmacia tiene sus propios specs: acá sólo se prueba que se elige.
