@@ -13,3 +13,5 @@ export * from './describe-failure';
 export * from './mechanic-level';
 export * from './describe-example';
 export * from './rule-fields';
+export * from './describe-conditions';
+export * from './nearest-nudges';

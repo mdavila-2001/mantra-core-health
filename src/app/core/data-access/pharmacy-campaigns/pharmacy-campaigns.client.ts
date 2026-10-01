@@ -4,6 +4,9 @@ import { Observable, of } from 'rxjs';
 
 import { environment } from '../../../../environments/environment';
 import { isInsideSchedule, windowStatus } from '../../promotions-engine/campaign-window';
+import { displayCurrency } from '../../money/display-currency';
+import { describeMechanic } from '../../promotions-engine/describe-mechanic';
+import type { MechanicDescription } from '../../promotions-engine/describe-mechanic';
 import { evaluateOrder } from '../../promotions-engine/evaluate-order';
 import { MECHANIC_CATALOG } from '../../promotions-engine/mechanic-catalog';
 import { hasUnitPrice, isOrderLevel } from '../../promotions-engine/mechanic-level';
@@ -259,6 +262,11 @@ export class PharmacyCampaignsClient {
 
   /* ─── El lado de la farmacia ──────────────────────────────────────────── */
 
+  /** Una campaña por su id, sea cual sea su estado; `null` si no existe. */
+  campanaPorId(id: string): CampanaDeFarmacia | null {
+    return this.campanas().find((campana) => campana.id === id) ?? null;
+  }
+
   /** Las campañas de una farmacia, en cualquier estado, para su panel. */
   campanasDeFarmacia(pharmacyId: string): Observable<readonly CampanaDeFarmacia[]> {
     if (!this.activo) {
@@ -431,6 +439,24 @@ export function alcanceDe(campana: CampanaDeFarmacia): CampaignScope {
 
 function alcanceDeProductos(productos: readonly { readonly productId: string }[]): CampaignScope {
   return { itemIds: productos.map((producto) => producto.productId), categoryIds: [], allItems: false };
+}
+
+/**
+ * Cómo se resume una campaña en una línea: la etiqueta que lee el paciente
+ * («2x1», «20 % menos», «Combo»). Sale del motor, así que panel, ficha, «dónde
+ * comprar» y pedido dicen lo mismo.
+ */
+export function etiquetaDeCampana(campana: CampanaDeFarmacia): string {
+  return describirCampana(campana).badge;
+}
+
+/** La etiqueta y la oración completa de una campaña, con los nombres de sus productos. */
+export function describirCampana(campana: CampanaDeFarmacia): MechanicDescription {
+  return describeMechanic(mecanicaDe(campana), {
+    labelOf: (itemId) =>
+      campana.productos.find((producto) => producto.productId === itemId)?.nombre ?? null,
+    currency: displayCurrency(campana.productos[0]?.moneda),
+  });
 }
 
 /** La campaña tal como la lee el motor. */

@@ -18,7 +18,6 @@ import { PromotionRuleEditor } from '../../../shared/components/organisms/promot
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 
 import { displayCurrency } from '../../../core/money/display-currency';
-import { describeMechanic } from '../../../core/promotions-engine/describe-mechanic';
 import { describeDraftFailure } from '../../../core/promotions-engine/describe-failure';
 import { isOrderLevel } from '../../../core/promotions-engine/mechanic-level';
 import type {
@@ -33,8 +32,8 @@ import type { PharmacyProduct } from '../../../core/data-access/pharmacy/pharmac
 import {
   PharmacyCampaignsClient,
   estadoDe,
+  etiquetaDeCampana,
   fallosDelMotor,
-  mecanicaDe,
 } from '../../../core/data-access/pharmacy-campaigns/pharmacy-campaigns.client';
 import type {
   BorradorDeCampana,
@@ -464,17 +463,9 @@ export class PharmacyCampaigns {
     return estado === 'PROGRAMADA' ? 'info' : 'secondary';
   }
 
-  /**
-   * Cómo se resume una campaña ya publicada en su fila: la misma etiqueta que
-   * lee el paciente («2x1», «20 % menos», «Combo»). Sale del motor, así que no
-   * hay un segundo texto que mantener.
-   */
+  /** Cómo se resume una campaña ya publicada en su fila: la etiqueta que lee el paciente. */
   protected etiquetaDe(campana: CampanaDeFarmacia): string {
-    return describeMechanic(mecanicaDe(campana), {
-      labelOf: (itemId) =>
-        campana.productos.find((producto) => producto.productId === itemId)?.nombre ?? null,
-      currency: displayCurrency(campana.productos[0]?.moneda),
-    }).badge;
+    return etiquetaDeCampana(campana);
   }
 
   /** La moneda con que el editor rotula los importes. */
