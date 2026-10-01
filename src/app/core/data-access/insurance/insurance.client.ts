@@ -45,6 +45,9 @@ import type {
   InsurerMarketplace,
   MarketplaceBroker,
   PatientCampaign,
+  MyClaim,
+  MyClaimList,
+  MyClaimsView,
   ReceivedClaim,
   ReceivedClaimDecision,
   ReceivedClaimDecisionInput,
@@ -130,6 +133,13 @@ type WireReceivedClaim = Omit<ReceivedClaim, 'submittedAt' | 'serviceDate' | 'de
   readonly serviceDate: string | null;
   readonly decision: (Omit<ReceivedClaimDecision, 'decidedAt'> & { readonly decidedAt: string }) | null;
   readonly invoice: WireReceivedClaimInvoice | null;
+};
+
+type WireMyClaim = Omit<MyClaim, 'submittedAt' | 'serviceDate' | 'decision'> & {
+  readonly submittedAt: string | null;
+  /** `format: 'date'`: se convierte con `maybeDateOnly`, no con `new Date()`. */
+  readonly serviceDate: string | null;
+  readonly decision: (Omit<NonNullable<MyClaim['decision']>, 'decidedAt'> & { readonly decidedAt: string }) | null;
 };
 
 type WireClaimAdjudication = Omit<ClaimAdjudication, 'adjudicatedAt'> & {
@@ -473,6 +483,24 @@ export class InsuranceClient {
   }
 
   /**
+   * `GET /insurance/my-claims` — «Mis solicitudes»: las solicitudes de seguro
+   * de quien mira y lo que decidió la aseguradora. Cualquier sesión puede
+   * pedirla; el lado (paciente, médico, laboratorio, imagenología) lo resuelve
+   * el servidor por la sesión — el cliente no manda ningún id.
+   *
+   * @returns Las solicitudes, de la más reciente a la más antigua.
+   */
+  listMyClaims(): Observable<MyClaimList> {
+    return this.http
+      .get<{
+        readonly view: MyClaimsView;
+        readonly items: readonly WireMyClaim[];
+        readonly truncated: boolean;
+      }>(this.url('/insurance/my-claims'))
+      .pipe(map((body) => ({ view: body.view, items: body.items.map(toMyClaim), truncated: body.truncated })));
+  }
+
+  /**
    * `POST /insurance/received-claims/:id/decision` — el dictamen de la
    * aseguradora. **Definitivo**: la API responde `409` si la solicitud ya tiene
    * uno. Aprobar (total o parcial) emite en el mismo acto la factura del
@@ -653,6 +681,15 @@ function toReceivedClaim(body: WireReceivedClaim): ReceivedClaim {
     serviceDate: maybeDateOnly(body.serviceDate) ?? null,
     decision: body.decision === null ? null : { ...body.decision, decidedAt: new Date(body.decision.decidedAt) },
     invoice: body.invoice === null ? null : toReceivedClaimInvoice(body.invoice),
+  };
+}
+
+function toMyClaim(body: WireMyClaim): MyClaim {
+  return {
+    ...body,
+    submittedAt: maybeDate(body.submittedAt) ?? null,
+    serviceDate: maybeDateOnly(body.serviceDate) ?? null,
+    decision: body.decision === null ? null : { ...body.decision, decidedAt: new Date(body.decision.decidedAt) },
   };
 }
 

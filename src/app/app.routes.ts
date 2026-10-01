@@ -240,6 +240,8 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/account/spending/spending').then((m) => m.Spending),
   'my-account/invoices': () =>
     import('./features/account/my-invoices/my-invoices').then((m) => m.MyInvoices),
+  'my-account/requests': () =>
+    import('./features/account/my-requests/my-requests').then((m) => m.MyRequests),
   'administration/pharmacy-orders': () =>
     import('./features/organization/pharmacy-inbox/pharmacy-inbox').then(
       (m) => m.PharmacyInbox,

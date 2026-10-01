@@ -2398,3 +2398,25 @@ reintento; visor) y `features/laboratory/summary/`.
 > 3. **Archivos huérfanos.** Si una imagen sube y la siguiente falla, el artículo no se publica
 >    (todo o nada) y lo ya subido queda en `common.files` sin vínculo. No hay contrato para
 >    borrarlo desde el front.
+
+## P56 · «Mis solicitudes»: lo que decidió la aseguradora, para cada cuenta — 01/10/2026
+
+> **Qué pide el front.** Un ícono de la barra superior (paraguas) abre `/my-account/requests`
+> para **toda** cuenta: una tarjeta con dos pestañas, «Decisiones de la aseguradora» y «En espera
+> de decisión». El paciente ve sus solicitudes; el médico, las atenciones que presentó; el
+> laboratorio y el centro de imagenología, las de los estudios que hicieron. Cada decisión trae su
+> resultado (aprobada, aprobada en parte, rechazada), el monto aprobado, la fecha y el motivo.
+>
+> **Hoy.** Lo sirve el simulador **sobre la misma tabla** que la aseguradora dictamina en
+> «Solicitudes recibidas» (`docs/contracts/insurer-received-claims.md`):
+> `GET /insurance/my-claims` → `{ view: 'PATIENT' | 'PRACTITIONER' | 'LABORATORY' | 'IMAGING' |
+> 'NONE', items, truncated }`. Un dictamen tomado por la aseguradora aparece en la próxima lectura
+> de las otras cuentas, sin sincronización aparte. Contrato completo:
+> `docs/contracts/my-insurance-claims.md`.
+>
+> **Falta en la API.** El mismo endpoint sobre `insurance.insurance_claims` +
+> `claim_adjudication_versions`, con el alcance resuelto por la sesión (perfil de paciente,
+> perfil profesional del `encounter`, o unidad diagnóstica ejecutora de la orden). Sin tabla nueva.
+> **Ojo:** la demo todavía no tiene cuenta de centro de imagenología (su alta cierra con una
+> solicitud, no con una cuenta); la regla del simulador ya lo cubre y está probada con un centro
+> sintético.

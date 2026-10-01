@@ -1,6 +1,7 @@
 import { conceptoPorId } from '../fixtures/conceptos';
-import { PACIENTES, PROFESIONALES, type ProfesionalSimulado } from '../fixtures/personas';
-import { conflict, forbidden, notFound, validation, type MockRequest, type MockRouter } from '../mock-router';
+import { MEDICA, PACIENTE, PACIENTES, PROFESIONALES, type ProfesionalSimulado } from '../fixtures/personas';
+import { conflict, forbidden, notFound, unauthorized, validation, type MockRequest, type MockRouter } from '../mock-router';
+import { TENANT_LABORATORIO, type MockUser } from '../mock-session';
 import { ahora, Coleccion, cuerpo, iso, isoDia, uuid } from '../mock-store';
 import { nombreDeAseguradora, perteneceALaAseguradora } from './insurance.handlers';
 
@@ -185,7 +186,7 @@ function sembrar() {
   const medicos = medicosElegibles();
   const aseguradora = nombreDeAseguradora(0);
 
-  return Array.from({ length: SOLICITUDES_SEMBRADAS }, (_, i) => {
+  const sembradas = Array.from({ length: SOLICITUDES_SEMBRADAS }, (_, i) => {
     const paciente = elegir(PACIENTES_ELEGIBLES, r);
     const medico = elegir(medicos, r);
     const [code, display, precioBase] = elegir(SERVICIOS, r);
@@ -243,7 +244,52 @@ function sembrar() {
         : null,
       invoice: decidida && estadoCode !== 'REJECTED' ? nuevaFactura(String(i), aprobado!, decididaEn) : null,
     };
-  }).sort((a, b) => b.submittedAt.localeCompare(a.submittedAt));
+  });
+
+  return [...sembradas, ...solicitudesDeLaDemo(aseguradora)].sort((a, b) => b.submittedAt.localeCompare(a.submittedAt));
+}
+
+/**
+ * Tres solicitudes **abiertas** de la paciente de la demo, atendida por la
+ * médica de la demo: una consulta, un análisis y una ecografía. Sin ellas, la
+ * siembra al azar le dejaba a las dos sólo solicitudes ya dictaminadas, y
+ * «Mis solicitudes» no tenía nada que la aseguradora pudiera decidir para ver
+ * cómo llega la decisión (pedido del propietario, 01/10/2026). Van aparte y
+ * después de las 180 para no mover ningún dato de los que ya existían.
+ */
+function solicitudesDeLaDemo(aseguradora: string) {
+  const casos = [
+    { code: 'SVC_CONSULTA_ESPECIALIDAD', display: 'Consulta de especialidad', total: '250.00', dias: 1, estado: ESTADOS[1]! },
+    { code: 'SVC_HEMOGRAMA', display: 'Hemograma completo', total: '80.00', dias: 2, estado: ESTADOS[0]! },
+    { code: 'SVC_ECOGRAFIA', display: 'Ecografía', total: '320.00', dias: 3, estado: ESTADOS[0]! },
+  ] as const;
+  return casos.map((caso, k) => {
+    const i = SOLICITUDES_SEMBRADAS + k;
+    return {
+      id: uuid(`received-claim-demo-${k}`),
+      claimIdentifier: `CLM-2026-${String(1000 + i).padStart(4, '0')}`,
+      patient: {
+        id: PACIENTE.id,
+        displayName: PACIENTE.displayName,
+        patientCode: PACIENTE.patientCode,
+        memberIdentifier: `AF-${PACIENTE.patientCode.slice(4)}`,
+      },
+      practitioner: { id: MEDICA.id, displayName: MEDICA.displayName, specialty: especialidadDe(MEDICA) },
+      providerName: MEDICA.organizacion,
+      service: { code: caso.code, display: caso.display },
+      additionalServiceCount: 0,
+      billedTotal: money(caso.total),
+      approvedTotal: null as ReturnType<typeof money> | null,
+      submittedAt: iso(-caso.dias, 9 + k, 15),
+      serviceDate: isoDia(-caso.dias - 1),
+      policyIdentifier: `POL-${200300 + i * 13}`,
+      planName: `${aseguradora} · Plan Integral`,
+      status: { code: caso.estado[0] as string, display: caso.estado[1] as string },
+      lines: [renglon(1, [caso.code, caso.display], centavos(caso.total))],
+      decision: null as { outcome: string; decidedAt: string; decidedBy: string; reason: string | null } | null,
+      invoice: null as FacturaSimulada | null,
+    };
+  });
 }
 
 type SolicitudSimulada = ReturnType<typeof sembrar>[number];
@@ -254,6 +300,113 @@ function puedeVer(request: MockRequest): boolean {
 
 function quienDictamina(request: MockRequest): string {
   return request.user?.displayName.split(' · ')[0] ?? 'Aseguradora';
+}
+
+/* ---- «Mis solicitudes»: la otra cara del mismo dictamen --------------------
+
+   Pedido del propietario (01/10/2026): el paciente, el médico, el laboratorio
+   y el centro de imagenología ven qué decidió la aseguradora. Lo leen de **la
+   misma tabla** que dictamina la aseguradora —no de una copia—, así que un
+   dictamen tomado en «Solicitudes recibidas» aparece acá en la próxima
+   lectura, sin sincronización aparte. Contrato:
+   `docs/contracts/my-insurance-claims.md` (P56 en `PENDIENTES-BACKEND.md`).
+
+   Cada cuenta ve sólo lo suyo, y sólo lo que necesita para entender la
+   decisión: ni la factura entre prestador y aseguradora, ni los renglones, ni
+   quién de la aseguradora firmó el dictamen. */
+
+/** De qué lado mira la sesión. `NONE`: la cuenta no presenta solicitudes. */
+export type VistaDeMisSolicitudes = 'PATIENT' | 'PRACTITIONER' | 'LABORATORY' | 'IMAGING' | 'NONE';
+
+type Disciplina = 'LABORATORY' | 'IMAGING';
+
+/**
+ * Qué hace cada centro diagnóstico de la demo. Laboratorio Central es de
+ * análisis clínicos (su catálogo son trece estudios de sangre, orina y
+ * heces); la demo todavía no tiene un centro de imagenología con cuenta —su
+ * alta cierra con una solicitud, no con una cuenta—, pero la regla ya lo
+ * cubre: cuando exista, entra en este mapa.
+ */
+export const DISCIPLINA_DEL_CENTRO: Readonly<Record<string, Disciplina>> = {
+  [TENANT_LABORATORIO]: 'LABORATORY',
+};
+
+/**
+ * Qué servicio de la siembra es de qué disciplina. El estudio lo hace el
+ * centro diagnóstico aunque lo haya facturado el consultorio que lo pidió:
+ * por eso el centro ve la decisión. El resto (consultas, ECG, cirugía…) no es
+ * de ninguno de los dos.
+ */
+const DISCIPLINA_DEL_SERVICIO: Readonly<Record<string, Disciplina>> = {
+  SVC_HEMOGRAMA: 'LABORATORY',
+  SVC_PERFIL_LIPIDICO: 'LABORATORY',
+  SVC_ECOGRAFIA: 'IMAGING',
+  SVC_RX_TORAX: 'IMAGING',
+};
+
+export interface AlcanceDeMisSolicitudes {
+  readonly vista: VistaDeMisSolicitudes;
+  readonly incluye: (solicitud: SolicitudSimulada) => boolean;
+}
+
+/**
+ * De qué lado mira la sesión y qué solicitudes le tocan. El orden importa: la
+ * médica también es paciente, y en «Mis solicitudes» manda lo que presentó
+ * como prestadora.
+ */
+export function alcanceDeMisSolicitudes(
+  usuario: MockUser,
+  tenantActivo: string | null,
+  disciplinas: Readonly<Record<string, Disciplina>> = DISCIPLINA_DEL_CENTRO,
+): AlcanceDeMisSolicitudes {
+  const profesional = usuario.practitionerProfileId;
+  if (profesional !== undefined) {
+    return { vista: 'PRACTITIONER', incluye: (s) => s.practitioner.id === profesional };
+  }
+  const disciplina = disciplinaDelCentro(usuario, tenantActivo, disciplinas);
+  if (disciplina !== null) {
+    return { vista: disciplina, incluye: (s) => DISCIPLINA_DEL_SERVICIO[s.service.code] === disciplina };
+  }
+  const paciente = usuario.patientProfileId;
+  if (paciente !== undefined && usuario.roles.includes('PATIENT')) {
+    return { vista: 'PATIENT', incluye: (s) => s.patient.id === paciente };
+  }
+  return { vista: 'NONE', incluye: () => false };
+}
+
+function disciplinaDelCentro(
+  usuario: MockUser,
+  tenantActivo: string | null,
+  disciplinas: Readonly<Record<string, Disciplina>>,
+): Disciplina | null {
+  const tenant = tenantActivo ?? usuario.tenants[0] ?? null;
+  if (tenant === null || !usuario.tenants.includes(tenant)) return null;
+  return disciplinas[tenant] ?? null;
+}
+
+/** Lo que ve cada cuenta de una solicitud: lo justo para entender la decisión. */
+function comoMiSolicitud(s: SolicitudSimulada, vista: VistaDeMisSolicitudes) {
+  return {
+    id: s.id,
+    claimIdentifier: s.claimIdentifier,
+    // El paciente es quien mira: repetirle su propio nombre no le dice nada.
+    patientName: vista === 'PATIENT' ? null : s.patient.displayName,
+    practitioner: { displayName: s.practitioner.displayName, specialty: s.practitioner.specialty },
+    providerName: s.providerName,
+    service: s.service,
+    additionalServiceCount: s.additionalServiceCount,
+    billedTotal: s.billedTotal,
+    approvedTotal: s.approvedTotal,
+    submittedAt: s.submittedAt,
+    serviceDate: s.serviceDate,
+    insurerName: s.planName.split(' · ')[0] ?? s.planName,
+    planName: s.planName,
+    status: s.status,
+    decision:
+      s.decision === null
+        ? null
+        : { outcome: s.decision.outcome, decidedAt: s.decision.decidedAt, reason: s.decision.reason },
+  };
 }
 
 export interface OpcionesDeSolicitudesRecibidas {
@@ -282,6 +435,19 @@ export function registerInsurerReceivedClaims(
     return {
       items: todas.slice(0, TOPE_DE_SOLICITUDES),
       truncated: todas.length > TOPE_DE_SOLICITUDES,
+    };
+  });
+
+  // «Mis solicitudes»: cualquier sesión puede pedirla; el lado lo decide la
+  // sesión, nunca un parámetro que mande la pantalla.
+  router.get('/insurance/my-claims', (request) => {
+    if (request.user === null) return unauthorized('Sin sesión');
+    const alcance = alcanceDeMisSolicitudes(request.user, request.headers.get('X-Tenant-Id'));
+    const mias = ordenadas().filter(alcance.incluye);
+    return {
+      view: alcance.vista,
+      items: mias.slice(0, TOPE_DE_SOLICITUDES).map((s) => comoMiSolicitud(s, alcance.vista)),
+      truncated: mias.length > TOPE_DE_SOLICITUDES,
     };
   });
 

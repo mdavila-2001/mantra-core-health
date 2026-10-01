@@ -1561,6 +1561,26 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M26 billing',
   },
   {
+    // «Mis solicitudes» (pedido del propietario, 01/10/2026): lo que decidió
+    // la aseguradora sobre cada solicitud de seguro, para el paciente, el
+    // médico, el laboratorio y el centro de imagenología. Mismo criterio que
+    // «Mis facturas»: ícono de la barra superior para toda cuenta y fuera del
+    // menú, que tiene listas cerradas fijadas por specs. Qué solicitudes ve
+    // cada cuenta lo decide el backend por la sesión.
+    //
+    // Hoy la sirve el simulador sobre la misma tabla que dictamina la
+    // aseguradora en «Solicitudes recibidas» — P56 en `PENDIENTES-BACKEND.md`.
+    fueraDelMenuPara: [ANY_ROLE],
+    path: 'my-account/requests',
+    label: 'Mis solicitudes',
+    group: 'Mi cuenta',
+    icon: 'umbrella',
+    roles: [ANY_ROLE],
+    availability: 'disponible',
+    summary: 'Tus solicitudes de seguro y lo que decidió la aseguradora: si cubre, cuánto y por qué.',
+    module: 'M26 insurance',
+  },
+  {
     // **«Mis organizaciones»** (propietario, 2026-09-10), en el lugar que
     // ocupaba «Tu organización». Aquélla mostraba la organización del tenant
     // activo —la clínica donde el médico está afiliado—, que no es suya: junto
