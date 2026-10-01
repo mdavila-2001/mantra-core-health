@@ -368,7 +368,7 @@ export class ReceivedClaims {
 
   protected readonly totalFiltered = computed(() => this.filteredClaims().length);
 
-  /** La moneda de los importes, dicha una sola vez: `' · Boliviano'` o nada. */
+  /** La moneda de los importes, dicha una sola vez: `' · BOB'` o nada. */
   protected readonly currencyNote = computed(() =>
     currencySuffix(this.allClaims()[0]?.billedTotal ?? null),
   );
@@ -551,7 +551,7 @@ export class ReceivedClaims {
     this.partialTouched.set(true);
     if (this.partialAmountError(claim) !== '' || this.partialReasonError() !== '') return;
     const approvedAmount = Number(this.partialAmount.value.trim().replace(',', '.')).toFixed(2);
-    const currency = claim.billedTotal.currency?.display;
+    const currency = claim.billedTotal.currency?.code;
     const approvedLabel = currency ? `${approvedAmount} ${currency}` : approvedAmount;
     const confirmed = await this.dialogs.confirm({
       title: `Aprobar ${approvedLabel} de ${formatMoney(claim.billedTotal)}`,

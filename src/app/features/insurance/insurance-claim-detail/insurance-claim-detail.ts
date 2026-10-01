@@ -146,7 +146,7 @@ export class InsuranceClaimDetail {
    * Sólo el importe, para la tabla de ítems.
    *
    * La moneda va **una vez** en el encabezado de cada columna: repetirla en
-   * cada celda son seis «Boliviano» por fila que no aportan nada y empujaban
+   * cada celda son seis «BOB» por fila que no aportan nada y empujaban
    * la tabla fuera de la pantalla —medido a 1440 px: la última columna quedaba
    * cortada a media palabra—.
    */
