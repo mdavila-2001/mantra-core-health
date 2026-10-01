@@ -188,3 +188,87 @@ git merge-base --is-ancestor 15ebcc9f origin/dev: exit 0
 ### No cubierto, desvios y riesgos
 
 La regresion completa aprobo las pruebas pero no el umbral de ramas core: el resumen contiene 9914/13018 ramas core y requiere al menos 501 mas. La integracion con backend real, los gates historicos de documentos/identificadores y la revision visual independiente conservan los limites ya registrados arriba. El PR correctivo no implica merge automatico.
+
+## Continuacion de cobertura despues del PR #814
+
+`gh pr view 814` informo `state: MERGED` el 01/10/2026. `git fetch origin dev` dejo `origin/dev` en `78c8ac1f`; `git merge-base --is-ancestor 78c8ac1f origin/dev` termino en 0 y no habia diferencia de arbol entre el PR y `dev`. Este merge externo no acredita el gate local de cobertura: la ultima medicion completa sigue en 76,15 % de ramas core. Los checks del PR aparecian en cola o en progreso al consultar; no se les atribuye aprobacion.
+
+### Completado
+
+| ID | Que se logro | Comando y resultado |
+|---|---|---|
+| H2.S4.M3 correctivo | PR #814 publicado hacia `dev`, con `Jsaldias39` y `PabloArauzCaballero` solicitados; el repositorio informa luego que fue mergeado. | `gh pr view 814 --json state,reviewRequests`: `MERGED`, ambos reviewers; `origin/dev=78c8ac1f`. |
+| H2.S3.M27 | Nuevos recorridos de catalogo, filtros, categorias, validaciones e importacion del portal de laboratorio. | `corepack yarn test --include='**/lab-portal.handlers.spec.ts' --watch=false`: 10/10, `EXIT_CODE=0`, evidencia `102-lab-catalog-directed.txt`. La medicion dirigida `103-lab-catalog-coverage.txt` subio el handler de 210/416 a 323/416 ramas; el comando dirigido sale en 1 por aplicar umbrales globales con una sola suite. |
+| H2.S3.M28 (dirigida) | Ciclo de encuesta y formularios con edicion, publicacion, invitaciones e instancias sinteticas. | `105-surveys-forms-directed-rerun.txt`: 3/3, `EXIT_CODE=0`; `corepack yarn typecheck`: exit 0. |
+| H2.S3.M27-M28 (regresion) | Las nuevas suites no rompen la regresion: laboratorio y encuestas/formularios elevan ramas core sin cambiar umbrales. | `106-coverage-lab-surveys.txt`: 710/710 archivos y 9518/9518 pruebas; lab 353/416, surveys-forms 172/242; core 10146/13018 = 77,93 %, `EXIT_CODE=1` por umbral de 80 %. |
+| H2.S3.M29 (dirigida) | Catalogo y planes QA validan concurrencia, envio, evidencia, segregacion de revision y cancelacion. | `108-admin-portal-directed-rerun.txt`: 3/3, `EXIT_CODE=0`; `corepack yarn typecheck`: exit 0. |
+| H2.S3.M29 (medicion aislada) | Las rutas administrativas ganan ramas cubiertas sin alterar el umbral. | `109-admin-portal-coverage.txt`: admin-portal.handlers.ts 180/246 ramas frente a 102/246 en la base 106; 3/3 pruebas. `EXIT_CODE=1` porque el umbral global no corresponde a una sola suite. |
+| H2.S3.M30 (dirigida) | Publicaciones, reacciones, grupos privados, membresias y mensajes de comunidad con datos sinteticos; almacenamiento previo restaurado. | `110-community-directed.txt`: 3/3, `EXIT_CODE=0`; `corepack yarn typecheck`: exit 0. |
+| H2.S3.M31 (dirigida) | La latencia de 40/120/600 ms se comprueba con reloj virtual sobre el interceptor real, justo antes y en el instante de respuesta. | `113-latency-virtual-clock-directed.txt`: 5/5, `EXIT_CODE=0`; no se amplio timeout. |
+| H2.S3.M29-M31 (regresion) | Las pruebas nuevas de administracion y comunidad conviven con la suite completa; la latencia pasa bajo concurrencia con reloj virtual. | `114-coverage-virtual-clock.txt`: 712/712 archivos y 9524/9524 pruebas, core 10301/13018 = 79,12 %, `EXIT_CODE=1` solo por umbral de 80 %. Admin 206/246 y comunidad 333/459 ramas. |
+
+### A medias y pendiente
+
+| ID | Que anda | Que no anda | Que falta exactamente | Donde quedo |
+|---|---|---|---|---|
+| H2.S3.M15/M32 | Las 9524 pruebas globales pasan; core alcanzo 79,12 % tras M27-M31. | `test:coverage` sigue en 1 por el umbral de ramas: faltan 114 de 13018. | Validar el nuevo flujo de campos propios de formularios y cubrir las ramas restantes con pruebas funcionales; repetir regresion. | Rama `marcelo/test-hito2-core-coverage`, evidencia 102-115. |
+| H2.S4.M3 cobertura | Rama local creada desde `origin/dev` actualizado. | Su PR aun no existe. | Completar y verificar las pruebas de cobertura, confirmar, subir y publicar el PR. | `marcelo/test-hito2-core-coverage`. |
+
+### Evidencia literal recortada
+
+```text
+102-lab-catalog-directed.txt: Test Files 1 passed (1); Tests 10 passed (10); EXIT_CODE=0
+103-lab-catalog-coverage.txt: Tests 10 passed; lab-portal.handlers.ts 323/416 ramas frente a 210/416 antes; EXIT_CODE=1 por umbrales globales en una sola suite
+104-surveys-forms-directed.txt: TS1005 por parentesis faltante en la nueva asercion; EXIT_CODE=1
+105-surveys-forms-directed-rerun.txt: Test Files 1 passed (1); Tests 3 passed (3); EXIT_CODE=0
+106-coverage-lab-surveys.txt: Test Files 710 passed (710); Tests 9518 passed (9518); core branches 77.93 % < 80 %; EXIT_CODE=1
+107-admin-portal-directed.txt: una asercion nueva de arrayContaining comparo el nodo completo y fallo; EXIT_CODE=1
+108-admin-portal-directed-rerun.txt: Test Files 1 passed (1); Tests 3 passed (3); EXIT_CODE=0
+109-admin-portal-coverage.txt: Tests 3 passed; admin-portal.handlers.ts 180/246 ramas frente a 102/246 antes; EXIT_CODE=1 por umbrales globales en una sola suite
+110-community-directed.txt: Test Files 1 passed (1); Tests 3 passed (3); EXIT_CODE=0
+111-community-coverage.txt: Tests 3 passed; community.handlers.ts 149/459 ramas en aislamiento; EXIT_CODE=1 por umbrales globales en una sola suite
+112-coverage-admin-community.txt: Test Files 1 failed | 711 passed (712); Tests 1 failed | 9523 passed (9524); latencia /tenants/me 217.595 ms > 170 ms; EXIT_CODE=1
+113-latency-virtual-clock-directed.txt: Test Files 1 passed (1); Tests 5 passed (5); EXIT_CODE=0
+114-coverage-virtual-clock.txt: Test Files 712 passed (712); Tests 9524 passed (9524); core branches 79.12 % < 80 %; EXIT_CODE=1
+gh pr view 814: state MERGED; reviewers Jsaldias39, PabloArauzCaballero
+git log -1 origin/dev: 78c8ac1f test(frontend): stabilize postmerge Hito 2 regression
+```
+
+### No cubierto, desvios y riesgos
+
+El merge externo del PR #814 ocurrio antes de que los checks informaran un resultado final en nuestra consulta. No convierte la cobertura roja ni la API Hito 1 pendiente en verificadas. Las nuevas pruebas de laboratorio siguen locales hasta que su incremento se mida y se publiquen en un PR independiente.
+
+## Continuacion de cobertura despues del PR #814 — gate local corregido
+
+El trabajo de cobertura continuo en `marcelo/test-hito2-core-coverage`. Las pruebas dirigidas incorporaron recorridos de laboratorio, encuestas y formularios, administracion, comunidad y contabilidad. `app.routes.spec.ts` ahora resuelve en paralelo las mismas cargas dinamicas; se conservaron las aserciones y el timeout original de 30 segundos. No se cambio ningun umbral ni se omitieron suites.
+
+### Completado
+
+| ID | Que se logro | Comando y resultado |
+|---|---|---|
+| H2.S3.M15/M27-M31 | Suites funcionales nuevas para laboratorio, encuestas, admin, comunidad y latencia aumentan cobertura sin cambiar el presupuesto. | `102`-`115` y `114-coverage-virtual-clock.txt`; luego `134-coverage-80pct.txt`: 9530/9530 pruebas, `EXIT_CODE=0`. |
+| H2.S3.M32 | Campos propios de formularios se crean, editan, ordenan y eliminan; los campos estandar publicados siguen protegidos. | `115-form-fields-directed.txt`: 4/4, `EXIT_CODE=0`; incluido en cobertura global aprobada. |
+| H2.S3.M33 | Asientos, balances, reversiones, partidas, periodos, depreciacion, devengos, cotizaciones, mayor y obligaciones se probaron con datos sinteticos y casos invalidos. | `133-finance-appointment-directed.txt`: 5/5, `EXIT_CODE=0`; cobertura global core: 10418/13018 ramas = 80,0277 %. |
+| H2.S3.M34 | La carga dinamica de todas las secciones disponibles conserva las aserciones y evita el timeout observado en la regresion completa. | `127-directed-route-finance.txt`: 58/58; `134-coverage-80pct.txt`: 9530/9530; ambos `EXIT_CODE=0`. |
+| H2.S3.M1-M2 | Tipos y lint pasan despues de las reparaciones. | `129-typecheck-final-cases.txt` y `135-lint-final.txt`: `EXIT_CODE=0`. |
+
+### A medias y pendiente
+
+| ID | Que anda | Que no anda | Que falta exactamente | Donde quedo |
+|---|---|---|---|---|
+| H2.S4.M3-M4 cobertura | Cobertura global, typecheck, lint y pruebas dirigidas estan aprobadas localmente. | Los cambios aun no estan publicados; `origin/dev` avanzo a `310b92cf` despues de que se creo esta rama. | Rebasear sobre el `dev` actual, repetir los gates afectados, commit/push y abrir PR con revisores `jsaldias39` y `PabloArauzCaballero`; revisar CI y mergeabilidad. | Rama `marcelo/test-hito2-core-coverage`, worktree frontend-hito-2. |
+| H2.S3.M10 / contratos H1 | Demo y aislamiento HTTP se comprobaron con el doble declarado, segun la evidencia anterior. | No se verificaron contratos ausentes ni persistencia contra el backend Hito 1 real. | Levantar el backend con DDL y catalogos aplicados y repetir la matriz real. | `MATRIZ.md`, evidencia previa `73-*`. |
+
+### Evidencia literal recortada
+
+```text
+134-coverage-80pct.txt: Test Files 713 passed (713); Tests 9530 passed (9530); core branches 10418/13018 = 80,0277 %; EXIT_CODE=0
+127-directed-route-finance.txt: Test Files 2 passed (2); Tests 58 passed (58); EXIT_CODE=0
+133-finance-appointment-directed.txt: Test Files 1 passed (1); Tests 5 passed (5); EXIT_CODE=0
+129-typecheck-final-cases.txt: EXIT_CODE=0
+135-lint-final.txt: EXIT_CODE=0
+```
+
+### No cubierto, desvios y riesgos
+
+La cobertura aprobada acredita las ramas core del frontend en esta revision; no certifica contratos de negocio que no existan en Hito 1. El desvio correctivo de verificacion fue resolver imports dinamicos en paralelo tras reproducir un timeout de 30 segundos bajo la suite instrumentada. No se amplio ese limite. La rama debe actualizarse con los tres commits nuevos de `origin/dev` antes de publicar el PR y repetir cobertura en el arbol rebasado.

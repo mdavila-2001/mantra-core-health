@@ -16,9 +16,9 @@ afterAll(() => Object.assign(environment, { mockBackend: originalMockBackend }))
 /**
  * H2.S1.M3 (2026-09-22) — los tres niveles del contrato de `latencia()`:
  * prefijo conocido (valor de la tabla), desconocido (valor por omisión) y
- * subida (600, sin cambios). H2.S1.M2 confirma que dos corridas de la misma
- * ruta tardan lo mismo, dentro del margen de jitter real de un `timer()` —ya
- * no hay `Math.random` que pueda hacerlas divergir hasta 179 ms como antes.
+ * subida (600, sin cambios). El reloj virtual comprueba el instante exacto
+ * de emision sin atribuir al interceptor el retraso del event loop cuando
+ * Vitest ejecuta otras suites en paralelo.
  */
 describe('latencia del interceptor — tabla por prefijo, sin azar', () => {
   const siguiente = () => {
@@ -45,48 +45,45 @@ describe('latencia del interceptor — tabla por prefijo, sin azar', () => {
     }
   });
 
-  async function medir(method: 'GET' | 'POST', path: string): Promise<number> {
+  async function verificarLatencia(method: 'GET' | 'POST', path: string, delayMs: number): Promise<void> {
     const token = emitirAccessToken(buscarUsuario('paciente')!);
     const request = new HttpRequest(method, path, method === 'POST' ? {} : undefined).clone({
       setHeaders: { Authorization: `Bearer ${token}` },
     });
-    const inicio = performance.now();
+    vi.useFakeTimers();
     try {
+      let completed = false;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await firstValueFrom(TestBed.runInInjectionContext(() => mockBackendInterceptor(request, siguiente as any)));
-    } catch {
-      // Lo que importa acá es cuánto tardó en responder, no si la respuesta
-      // fue un éxito: un cuerpo vacío en la subida de documentos es un 422
-      // válido del manejador real, y también pasó por `timer(latencia(path))`.
+      const response = firstValueFrom(TestBed.runInInjectionContext(() => mockBackendInterceptor(request, siguiente as any)))
+        .then(() => { completed = true; }, () => { completed = true; });
+      // `from(routerSimulado())` entrega el router en una microtarea antes de
+      // que `atender()` programe el timer. El avance de 0 ms la resuelve.
+      await vi.advanceTimersByTimeAsync(0);
+      await vi.advanceTimersByTimeAsync(delayMs - 1);
+      expect(completed).toBe(false);
+      await vi.advanceTimersByTimeAsync(1);
+      await response;
+      expect(completed).toBe(true);
+    } finally {
+      vi.useRealTimers();
     }
-    return performance.now() - inicio;
   }
 
-  it('prefijo conocido (/terminology) responde cerca del valor de la tabla (40ms)', async () => {
-    const ms = await medir('GET', '/terminology/code-systems');
-    expect(ms).toBeGreaterThanOrEqual(35);
-    expect(ms).toBeLessThan(80);
+  it('prefijo conocido (/terminology) responde a los 40ms de la tabla', async () => {
+    await verificarLatencia('GET', '/terminology/code-systems', 40);
   });
 
-  it('prefijo desconocido cae en el valor por omisión (120ms), no en el azar viejo', async () => {
-    const ms = await medir('GET', '/tenants/me');
-    expect(ms).toBeGreaterThanOrEqual(110);
-    expect(ms).toBeLessThan(170);
+  it('prefijo desconocido cae en el valor por omisión de 120ms', async () => {
+    await verificarLatencia('GET', '/tenants/me', 120);
   });
 
   it('la subida de documentos sigue en 600ms, sin cambios', async () => {
-    const ms = await medir('POST', '/iam/auth/upload-registration-document');
-    expect(ms).toBeGreaterThanOrEqual(590);
-    expect(ms).toBeLessThan(650);
-  }, 2000);
+    await verificarLatencia('POST', '/iam/auth/upload-registration-document', 600);
+  });
 
   it('dos corridas de la misma ruta tardan lo mismo (sin Math.random)', async () => {
-    const a = await medir('GET', '/terminology/code-systems');
-    const b = await medir('GET', '/terminology/code-systems');
-    // El azar viejo (120 + random*180) podía diferir hasta 179ms entre dos
-    // corridas cualquiera; con la tabla fija sólo queda el jitter real del
-    // event loop, muy por debajo de eso.
-    expect(Math.abs(a - b)).toBeLessThan(30);
+    await verificarLatencia('GET', '/terminology/code-systems', 40);
+    await verificarLatencia('GET', '/terminology/code-systems', 40);
   });
 
   it('no queda ningún Math.random en el archivo (H2.S1.M1)', () => {

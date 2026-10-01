@@ -380,9 +380,10 @@ describe('rutas del armazón', () => {
    * ningún defecto: no hay aserción que dependa de cuánto tarde.
    */
   it('una sección disponible NO cae en el placeholder', async () => {
-    for (const section of APP_SECTIONS.filter(
+    const sections = APP_SECTIONS.filter(
       (s) => s.availability === 'disponible' && SECCIONES_REDIRIGIDAS[s.path] === undefined,
-    )) {
+    );
+    await Promise.all(sections.map(async (section) => {
       const ruta = hijas.find((route) => route.path === section.path);
       const componente = ruta?.component ?? (await ruta?.loadComponent?.());
 
@@ -391,7 +392,7 @@ describe('rutas del armazón', () => {
       // renombra la clase (`_SectionPlaceholder`) y una prueba por texto se
       // rompería sin que nada esté mal.
       expect(componente, section.path).not.toBe(SectionPlaceholder);
-    }
+    }));
   }, 30_000);
 
   it('una sección planificada cae en el placeholder, y diferido', async () => {

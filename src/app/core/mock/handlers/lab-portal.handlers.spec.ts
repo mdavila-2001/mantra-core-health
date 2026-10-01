@@ -146,6 +146,129 @@ describe('handlers del portal de laboratorio', () => {
     expect(TENANT_LABORATORIO).toBe(laboratorio.tenants[0]);
   });
 
+  it('administra categorías y servicios con filtros, descuentos y retiro', () => {
+    const categoryPath = '/diagnostics/lab/categories';
+    const servicePath = '/diagnostics/lab/services';
+    const category = cuerpo<{ id: string; name: string }>(
+      pedir('POST', categoryPath, { name: '  Categoría de prueba  ' }),
+    );
+    expect(category.name).toBe('Categoría de prueba');
+    expect(estado(pedir('POST', categoryPath, { name: 'categoría de prueba' }))).toBe(409);
+
+    const draft = {
+      code: 'QA-LAB-SERVICE',
+      name: '  Estudio de prueba  ',
+      categoryId: category.id,
+      price: 120,
+      alovidaDiscountPercent: 25,
+      available: true,
+    };
+    const created = cuerpo<{ id: string; code: string; name: string; price: string; alovidaPrice: string; categoryName: string }>(
+      pedir('POST', servicePath, draft),
+    );
+    expect(created).toMatchObject({
+      code: draft.code,
+      name: 'Estudio de prueba',
+      price: '120.00',
+      alovidaPrice: '90.00',
+      categoryName: category.name,
+    });
+    expect(estado(pedir('POST', servicePath, { ...draft, code: draft.code.toLowerCase() }))).toBe(400);
+    expect(estado(pedir('DELETE', `${categoryPath}/${category.id}`))).toBe(409);
+
+    const filtered = cuerpo<{ items: { id: string }[]; count: number }>(
+      pedir('GET', servicePath, {}, laboratorio, new URLSearchParams({
+        q: 'estudio de prueba', categoryId: category.id, status: 'PUBLISHED', available: 'true',
+      })),
+    );
+    expect(filtered).toMatchObject({ count: 1, items: [{ id: created.id }] });
+    expect(cuerpo<{ count: number }>(
+      pedir('GET', servicePath, {}, laboratorio, new URLSearchParams({ q: 'no existe' })),
+    ).count).toBe(0);
+
+    const updated = cuerpo<{ name: string; price: string; available: boolean; categoryName: string | null }>(
+      pedir('PATCH', `${servicePath}/${created.id}`, {
+        name: '  Estudio actualizado ', price: 100, available: false, categoryId: null,
+        sampleType: ' Sangre ', preparation: '', description: ' Descripción ',
+        turnaroundHours: 6, requiresMedicalOrder: true, homeCollection: true,
+        alovidaDiscountPercent: null, status: 'DRAFT',
+      }),
+    );
+    expect(updated).toMatchObject({ name: 'Estudio actualizado', price: '100.00', available: false, categoryName: null });
+    expect(estado(pedir('DELETE', `${servicePath}/${created.id}`))).toBe(200);
+    expect(cuerpo<{ items: { id: string }[] }>(pedir('GET', servicePath)).items.some((item) => item.id === created.id)).toBe(false);
+    expect(cuerpo<{ items: { id: string }[] }>(
+      pedir('GET', servicePath, {}, laboratorio, new URLSearchParams({ status: 'WITHDRAWN' })),
+    ).items.some((item) => item.id === created.id)).toBe(true);
+    expect(estado(pedir('DELETE', `${categoryPath}/${category.id}`))).toBe(200);
+  });
+
+  it('rechaza datos inválidos y acceso ajeno sin mutar el catálogo', () => {
+    const path = '/diagnostics/lab/services';
+    const draft = { code: 'QA-LAB-INVALID', name: 'Estudio sintético', price: 10 };
+    const invalid = [
+      { ...draft, code: '' },
+      { ...draft, code: 'X'.repeat(41) },
+      { ...draft, name: ' ' },
+      { ...draft, price: 'no-price' },
+      { ...draft, price: -1 },
+      { ...draft, alovidaDiscountPercent: -1 },
+      { ...draft, alovidaDiscountPercent: 101 },
+      { ...draft, turnaroundHours: 1.5 },
+      { ...draft, turnaroundHours: -1 },
+      { ...draft, categoryId: 'missing-category' },
+      { ...draft, status: 'UNKNOWN' },
+    ];
+    for (const body of invalid) {
+      expect(estado(pedir('POST', path, body))).toBe(400);
+    }
+    expect(estado(pedir('POST', path, draft, farmacia))).toBe(403);
+    expect(estado(pedir('GET', '/diagnostics/lab/categories', {}, farmacia))).toBe(403);
+    expect(estado(pedir('PATCH', `${path}/missing`, draft))).toBe(404);
+    expect(estado(pedir('DELETE', `${path}/missing`))).toBe(404);
+    expect(estado(pedir('PATCH', '/diagnostics/lab/categories/missing', { name: 'No existe' }))).toBe(404);
+    expect(estado(pedir('DELETE', '/diagnostics/lab/categories/missing'))).toBe(404);
+    expect(cuerpo<{ items: { code: string }[] }>(pedir('GET', path)).items.some((item) => item.code === draft.code)).toBe(false);
+  });
+
+  it('importa CSV con filas creadas, actualizadas, iguales y rechazadas', () => {
+    const path = '/diagnostics/lab/services';
+    const importPath = `${path}/import`;
+    const draft = { code: 'QA-LAB-CSV', name: 'Servicio CSV', price: 42 };
+    expect(estado(pedir('POST', importPath, { rows: [] }))).toBe(400);
+    expect(estado(pedir('POST', importPath, { rows: Array(2001).fill({ line: 1, service: draft }) }))).toBe(400);
+    expect(estado(pedir('POST', importPath, { mode: 'UPDATE_ONLY', rows: [{ line: 2, service: draft }] }))).toBe(200);
+
+    const first = cuerpo<{ created: number; rejected: number; rows: { outcome: string }[] }>(
+      pedir('POST', importPath, { rows: [
+        { line: 2, service: draft },
+        { line: 3, service: { ...draft, code: draft.code.toLowerCase() } },
+        { line: 4, service: { code: 'QA-LAB-BAD', name: '', price: 5 } },
+      ] }),
+    );
+    expect(first).toMatchObject({ created: 1, rejected: 2 });
+    expect(first.rows.map((row) => row.outcome)).toEqual(['CREATED', 'REJECTED', 'REJECTED']);
+
+    const unchanged = cuerpo<{ unchanged: number }>(
+      pedir('POST', importPath, { rows: [{ line: 2, service: { code: draft.code } }] }),
+    );
+    expect(unchanged.unchanged).toBe(1);
+    const updated = cuerpo<{ updated: number }>(
+      pedir('POST', importPath, { rows: [{ line: 2, service: { code: draft.code, price: 55 } }] }),
+    );
+    expect(updated.updated).toBe(1);
+    const created = cuerpo<{ items: { id: string; code: string; price: string }[] }>(
+      pedir('GET', path, {}, laboratorio, new URLSearchParams({ q: draft.code })),
+    ).items[0]!;
+    expect(created.price).toBe('55.00');
+    expect(estado(pedir('DELETE', `${path}/${created.id}`))).toBe(200);
+    const restored = cuerpo<{ updated: number }>(
+      pedir('POST', importPath, { rows: [{ line: 2, service: { code: draft.code } }] }),
+    );
+    expect(restored.updated).toBe(1);
+    expect(cuerpo<{ items: { id: string }[] }>(pedir('GET', path)).items.some((item) => item.id === created.id)).toBe(true);
+  });
+
   it('decide cómo mirar un archivo por extensión y, si no, por tipo', () => {
     expect(tipoDeResultado('informe.PDF', '')).toBe('PDF');
     expect(tipoDeResultado('rx.dcm', 'application/octet-stream')).toBe('DICOM');
