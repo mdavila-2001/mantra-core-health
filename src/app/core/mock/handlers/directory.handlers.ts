@@ -1,7 +1,7 @@
 import { reservas, recursos } from '../fixtures/agenda';
 import { CARGO, ESTADO, TIPO_ORGANIZACION } from '../fixtures/conceptos';
 import { afiliaciones, MEDICA, PROFESIONALES, profesionalPorId } from '../fixtures/personas';
-import { notFound, type MockRequest, type MockRouter } from '../mock-router';
+import { conflict, notFound, type MockRequest, type MockRouter } from '../mock-router';
 import {
   IDS,
   MOCK_USERS,
@@ -180,6 +180,12 @@ const sucursales = new Coleccion<{
   statusConceptId: string;
   timeZone: string;
   createdAt: string;
+  // Lo que la carga masiva de sucursales suma y la API todavía no guarda
+  // (`PENDIENTES-BACKEND.md`, P54). Opcionales: las sembradas no los traen.
+  latitude?: number;
+  longitude?: number;
+  description?: string;
+  locationUrl?: string;
 }>([
   {
     id: uuid('branch-olivos-central'),
@@ -531,7 +537,19 @@ export function registrarDirectorio(router: MockRouter): void {
       name: string;
       branchType?: 'CLINIC' | 'OFFICE';
       timeZone?: string;
+      latitude?: number;
+      longitude?: number;
+      description?: string;
+      locationUrl?: string;
     }>(request);
+    // Mismo 409 que `DirectoryBranchesService`: el código es único por tenant.
+    const tenantId = request.params['id']!;
+    if (sucursales.filtrar((s) => s.tenantId === tenantId && s.code === datos.code).length > 0) {
+      return conflict('Ya existe una branch con ese código en el tenant', {
+        tenantId,
+        code: datos.code,
+      });
+    }
     const nueva = sucursales.agregar({
       id: nuevoId('branch'),
       tenantId: request.params['id']!,
@@ -541,6 +559,10 @@ export function registrarDirectorio(router: MockRouter): void {
       statusConceptId: ESTADO['ST-ACTIVE']!,
       timeZone: datos.timeZone ?? 'America/La_Paz',
       createdAt: ahora(),
+      ...(datos.latitude === undefined ? {} : { latitude: datos.latitude }),
+      ...(datos.longitude === undefined ? {} : { longitude: datos.longitude }),
+      ...(datos.description === undefined ? {} : { description: datos.description }),
+      ...(datos.locationUrl === undefined ? {} : { locationUrl: datos.locationUrl }),
     });
     const { tenantId: _t, ...resto } = nueva;
     return { status: 201, body: resto };

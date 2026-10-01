@@ -371,6 +371,12 @@ export interface BranchListItem {
   readonly branchTypeConceptId?: string;
   readonly statusConceptId: string;
   readonly timeZone?: string;
+  /**
+   * Lo que suma la carga masiva de sucursales (2026-09-30). `directory.branches`
+   * no tiene todavía dónde guardarlo (P54): hoy sólo lo devuelve el simulador.
+   */
+  readonly description?: string;
+  readonly locationUrl?: string;
   readonly createdAt: Date;
 }
 
@@ -401,6 +407,10 @@ export interface NewBranch {
   readonly timeZone?: string;
   readonly latitude?: number;
   readonly longitude?: number;
+  /** Suma de la carga masiva; la API todavía no la declara (P54). */
+  readonly description?: string;
+  /** El enlace de mapa tal como lo pegaron; ídem. */
+  readonly locationUrl?: string;
 }
 
 /**

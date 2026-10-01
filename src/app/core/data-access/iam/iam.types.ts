@@ -558,11 +558,20 @@ export interface RegisteredOrganization {
   readonly diagnosticUnitId?: string;
 }
 
-/** Una sucursal declarada en el alta pública de farmacia (1.18): sólo lo que el mapa confirma. */
+/**
+ * Una sucursal declarada en el alta pública de farmacia (1.18).
+ *
+ * Sólo lo que el mapa confirma: una sucursal sin punto no viaja (la del
+ * enlace de ubicación cuenta como punto cuando lo trae escrito).
+ * `description` y `locationUrl` los suma la carga masiva de sucursales
+ * (2026-09-30); la API todavía no los conoce (P54).
+ */
 export interface PharmacyBranchRegistration {
   readonly name: string;
   readonly latitude: number;
   readonly longitude: number;
+  readonly description?: string;
+  readonly locationUrl?: string;
 }
 
 /**
@@ -642,6 +651,10 @@ export interface DiagnosticUnitBranchRegistration {
   readonly name: string;
   readonly addressLines: readonly string[];
   readonly location?: RegistrationCoordinates;
+  /** Suma de la carga masiva de sucursales (2026-09-30); la API todavía no la conoce (P54). */
+  readonly description?: string;
+  /** El enlace de mapa tal como lo pegaron; ídem. */
+  readonly locationUrl?: string;
 }
 
 /**

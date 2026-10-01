@@ -193,6 +193,15 @@
                       />
                     </app-form-field>
 
+                    <app-form-field [label]="'Descripción de la sucursal ' + (i + 1)" hint="Opcional. Horario, piso o qué se atiende ahí.">
+                      <app-input
+                        [testId]="'registro-imagen-' + sucursal.id + '-descripcion'"
+                        placeholder="Planta baja, lunes a sábado"
+                        [value]="sucursal.descripcion"
+                        (valueChange)="escribirDescripcionDeSucursal(sucursal.id, $event)"
+                      />
+                    </app-form-field>
+
                     <app-form-field [label]="'Dirección de la sucursal ' + (i + 1)">
                       <app-input
                         [testId]="'registro-imagen-' + sucursal.id + '-direccion'"
@@ -215,8 +224,19 @@
                       </app-alert>
                     }
 
+                    <app-form-field [label]="'Enlace de ubicación de la sucursal ' + (i + 1)" hint="Opcional. El enlace de Google Maps u OpenStreetMap.">
+                      <app-input
+                        type="url"
+                        [testId]="'registro-imagen-' + sucursal.id + '-url-ubicacion'"
+                        placeholder="https://maps.google.com/…"
+                        [value]="sucursal.urlUbicacion"
+                        (valueChange)="escribirUrlDeSucursal(sucursal.id, $event)"
+                      />
+                    </app-form-field>
+
                     <app-ubicacion-picker
                       [pinId]="sucursal.id"
+                      [inicial]="sucursal.gps"
                       etiquetaConfirmada="Esta sucursal"
                       etiquetaQuitar="Quitar la ubicación de esta sucursal"
                       etiquetaMapa="La ubicación de esta sucursal en el mapa"
@@ -231,16 +251,37 @@
                   </p>
                 }
 
-                <button
-                  app-button
-                  type="button"
-                  variant="secondary"
-                  size="sm"
-                  data-testid="registro-imagen-agregar-sucursal"
-                  (clicked)="agregarSucursal()"
-                >
-                  + Agregar sucursal
-                </button>
+                <div class="imagen-sucursales__acciones">
+                  <button
+                    app-button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    data-testid="registro-imagen-agregar-sucursal"
+                    (clicked)="agregarSucursal()"
+                  >
+                    + Agregar sucursal
+                  </button>
+                  <button
+                    app-button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    data-testid="registro-imagen-subir-sucursales"
+                    (clicked)="cargaEnLoteAbierta.set(true)"
+                  >
+                    Subir sucursales en lote (CSV)
+                  </button>
+                </div>
+
+                @if (cargaEnLoteAbierta()) {
+                  <app-branch-bulk-import
+                    testIdPrefix="registro-imagen-lote"
+                    [existingNames]="nombresDeSucursales()"
+                    (imported)="agregarSucursalesEnLote($event)"
+                    (closed)="cargaEnLoteAbierta.set(false)"
+                  />
+                }
               </div>
             </ng-template>
           </app-paginated-form>

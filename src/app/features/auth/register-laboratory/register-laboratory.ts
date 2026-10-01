@@ -28,6 +28,8 @@ import type {
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 import { telefonoCompleto } from '../../../shared/components/molecules/phone-input/phone-input';
 import { AuthSplit } from '../../../shared/components/organisms/auth-split/auth-split';
+import { BranchBulkImport } from '../../../shared/components/organisms/branch-bulk-import/branch-bulk-import';
+import type { BranchDraft } from '../../../shared/utils/branch-import/branch-import';
 import { CampoPersonalizado } from '../../../shared/components/organisms/paginated-form/campo-personalizado';
 import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
 import {
@@ -108,6 +110,9 @@ export interface SucursalDeclarada {
   readonly id: string;
   readonly nombre: string;
   readonly direccion: string;
+  readonly descripcion: string;
+  /** El enlace de mapa que pegó la persona o que trajo la carga en lote. */
+  readonly urlUbicacion: string;
   readonly gps: Coordenadas | null;
 }
 
@@ -262,6 +267,7 @@ const AYUDA: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
 @Component({
   selector: 'app-register-laboratory',
   imports: [
+    BranchBulkImport,
     NgTemplateOutlet,
     RouterLink,
     Link,
@@ -708,7 +714,7 @@ export class RegisterLaboratory {
   agregarSucursal(): void {
     const id = `sucursal-${this.proximaSucursal}`;
     this.proximaSucursal += 1;
-    this.sucursales.update((lista) => [...lista, { id, nombre: '', direccion: '', gps: null }]);
+    this.sucursales.update((lista) => [...lista, { id, nombre: '', direccion: '', descripcion: '', urlUbicacion: '', gps: null }]);
   }
 
   quitarSucursal(id: string): void {
@@ -729,6 +735,49 @@ export class RegisterLaboratory {
 
   escribirDireccionDeSucursal(id: string, direccion: string | number | null): void {
     this.actualizarSucursal(id, { direccion: direccion === null ? '' : String(direccion) });
+  }
+
+  escribirDescripcionDeSucursal(id: string, descripcion: string | number | null): void {
+    this.actualizarSucursal(id, { descripcion: descripcion === null ? '' : String(descripcion) });
+  }
+
+  escribirUrlDeSucursal(id: string, url: string | number | null): void {
+    this.actualizarSucursal(id, { urlUbicacion: url === null ? '' : String(url).trim() });
+  }
+
+  /* --- carga en lote ------------------------------------------------------ */
+
+  /** Si está abierto el diálogo «Subir sucursales en lote». */
+  readonly cargaEnLoteAbierta = signal(false);
+
+  /** Los nombres ya escritos: el archivo no puede repetirlos. */
+  readonly nombresDeSucursales = computed(() =>
+    this.sucursales()
+      .map((sucursal) => sucursal.nombre)
+      .filter((nombre) => nombre.trim() !== ''),
+  );
+
+  /**
+   * Suma al final las sucursales del archivo. Cada una nace con su pin si el
+   * enlace traía el punto escrito; si no, se marca a mano como cualquier otra.
+   */
+  agregarSucursalesEnLote(lote: readonly BranchDraft[]): void {
+    const nuevas = lote.map((borrador): SucursalDeclarada => {
+      const id = `sucursal-${this.proximaSucursal}`;
+      this.proximaSucursal += 1;
+      return {
+        id,
+        nombre: borrador.name,
+        direccion: borrador.address,
+        descripcion: borrador.description,
+        urlUbicacion: borrador.locationUrl,
+        gps:
+          borrador.coordinates === null
+            ? null
+            : { lat: borrador.coordinates.latitude, lng: borrador.coordinates.longitude },
+      };
+    });
+    this.sucursales.update((lista) => [...lista, ...nuevas]);
   }
 
   fijarGpsDeSucursal(id: string, gps: Coordenadas | null): void {
@@ -826,6 +875,8 @@ export class RegisterLaboratory {
         name: s.nombre.trim(),
         addressLines: s.direccion.trim() === '' ? [] : [s.direccion.trim()],
         ...(s.gps === null ? {} : { location: { latitude: s.gps.lat, longitude: s.gps.lng } }),
+        ...(s.descripcion.trim() === '' ? {} : { description: s.descripcion.trim() }),
+        ...(s.urlUbicacion === '' ? {} : { locationUrl: s.urlUbicacion }),
       }));
 
     const cargos = {

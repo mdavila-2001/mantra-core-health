@@ -8,6 +8,8 @@ export { AttachmentUploader } from './attachment-uploader/attachment-uploader';
 
 export { AuthLayout } from './auth-layout/auth-layout';
 
+export { BranchBulkImport } from './branch-bulk-import/branch-bulk-import';
+
 export { DataTable } from './data-table/data-table';
 export {
   COLUMN_ALIGNMENTS,

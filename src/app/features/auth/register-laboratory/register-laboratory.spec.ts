@@ -344,6 +344,43 @@ describe('RegisterLaboratory', () => {
     ]);
   });
 
+  it('las sucursales subidas en lote viajan con descripción, enlace y el punto que traía el enlace', () => {
+    completarLoObligatorio();
+    component.agregarSucursalesEnLote([
+      {
+        name: 'Norte',
+        description: 'Planta baja',
+        locationUrl: 'https://www.google.com/maps?q=-17.76,-63.19',
+        address: 'Av. Banzer 100',
+        code: '',
+        coordinates: { latitude: -17.76, longitude: -63.19 },
+      },
+      {
+        name: 'Sur',
+        description: '',
+        locationUrl: 'https://maps.app.goo.gl/abc',
+        address: '',
+        code: '',
+        coordinates: null,
+      },
+    ]);
+
+    expect(component.nombresDeSucursales()).toEqual(['Norte', 'Sur']);
+    const cuerpo = enviarConExito();
+
+    expect(cuerpo.organization.diagnosticUnit.branches).toEqual([
+      {
+        name: 'Norte',
+        addressLines: ['Av. Banzer 100'],
+        latitude: -17.76,
+        longitude: -63.19,
+        description: 'Planta baja',
+        locationUrl: 'https://www.google.com/maps?q=-17.76,-63.19',
+      },
+      { name: 'Sur', addressLines: [], locationUrl: 'https://maps.app.goo.gl/abc' },
+    ]);
+  });
+
   it('mientras se envía, un segundo clic no duplica el alta', () => {
     completarLoObligatorio();
 
@@ -392,6 +429,8 @@ describe('RegisterLaboratory', () => {
       {
         id: primera!.id,
         nombre: 'Equipetrol',
+        descripcion: '',
+        urlUbicacion: '',
         direccion: 'Av. San Martín 456',
         gps: { lat: -17.78, lng: -63.18 },
       },
