@@ -919,6 +919,74 @@ describe('Appointments', () => {
       expect(fixture.nativeElement.querySelector('[data-testid="turnos-servicio"]')).not.toBeNull();
     });
 
+    /* -- el enlace de la ficha del profesional: ?profesional=…&servicio=… -- */
+
+    /** Monta con el enlace puesto y responde el arranque con las agendas de Ana. */
+    async function montarConEnlace(query: string): Promise<void> {
+      await TestBed.inject(Router).navigateByUrl(`/?seccion=pedir&${query}`);
+      montar();
+      http
+        .expectOne((r) => r.url === '/scheduling/bookings')
+        .flush({ items: [], count: 0, limit: 50, truncated: false });
+      http
+        .expectOne((r) => r.url === '/scheduling/resources')
+        .flush({ items: DOS_CONSULTORIOS, count: 2 });
+      fixture.detectChanges();
+    }
+
+    it('con ?profesional llega con ese profesional ya elegido', async () => {
+      await montarConEnlace('profesional=perfil-ana');
+
+      expect(interno<() => string | null>('agendaElegida')()).toBe(AGENDA_DE_ANA);
+      http.expectOne((r) => r.url === '/scheduling/service-offerings').flush({ items: [OFERTA_ECO] });
+      for (const cupos of cuposPorRecurso().values()) cupos.flush(paginaDeCupos([]));
+      // Sin ?servicio se pide lo de siempre: una consulta.
+      expect(interno<() => string>('queQuiere')()).toBe('CONSULTA');
+    });
+
+    it('con ?profesional y ?servicio llega con el servicio elegido y sus horarios pedidos', async () => {
+      await montarConEnlace('profesional=perfil-ana&servicio=of-eco');
+
+      http.expectOne((r) => r.url === '/scheduling/service-offerings').flush({ items: [OFERTA_ECO] });
+      // Los horarios de la consulta salieron a la vez que se leían los servicios...
+      for (const cupos of cuposPorRecurso().values()) cupos.flush(paginaDeCupos([]));
+
+      // ...y al llegar los servicios queda elegido el del enlace, que pide los suyos.
+      expect(interno<() => string>('queQuiere')()).toBe('of-eco');
+      const pedidos = disponibilidadPorRecurso();
+      expect([...pedidos.keys()].sort()).toEqual(['r-centro', 'r-norte']);
+      for (const p of pedidos.values()) {
+        p.flush({ offeringId: 'of-eco', minDurationMinutes: 30, maxDurationMinutes: 45, items: [] });
+      }
+    });
+
+    it('un ?servicio que el profesional ya no ofrece no se elige: queda la consulta', async () => {
+      await montarConEnlace('profesional=perfil-ana&servicio=of-que-no-existe');
+
+      http.expectOne((r) => r.url === '/scheduling/service-offerings').flush({ items: [OFERTA_ECO] });
+      for (const cupos of cuposPorRecurso().values()) cupos.flush(paginaDeCupos([]));
+
+      expect(interno<() => string>('queQuiere')()).toBe('CONSULTA');
+      http.expectNone((r) => r.url === '/scheduling/service-availability');
+    });
+
+    it('un ?profesional sin agenda en esta organización no elige a nadie', async () => {
+      await montarConEnlace('profesional=perfil-desconocido');
+
+      expect(interno<() => string | null>('agendaElegida')()).toBeNull();
+      http.expectNone((r) => r.url === '/scheduling/service-offerings');
+    });
+
+    it('el enlace se aplica una sola vez: elegir a mano después no lo pisa', async () => {
+      await montarConEnlace('profesional=perfil-ana');
+      http.expectOne((r) => r.url === '/scheduling/service-offerings').flush({ items: [] });
+      for (const cupos of cuposPorRecurso().values()) cupos.flush(paginaDeCupos([]));
+
+      interno<(clave: string | null) => void>('elegirAgenda')(null);
+
+      expect(interno<() => string | null>('agendaElegida')()).toBeNull();
+    });
+
     it('un profesional sin servicios no recibe la pregunta', async () => {
       conServicios([]);
       await abrirPedir();

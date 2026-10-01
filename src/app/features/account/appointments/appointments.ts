@@ -57,7 +57,13 @@ import { PageHeader } from '../../../shared/components/organisms/page-header/pag
 import { AGENDA_ROUTE } from '../../agenda/agenda.routes';
 import { AppointmentCalendar } from './appointment-calendar/appointment-calendar';
 import type { CalendarAppointment } from './appointment-calendar/appointment-calendar.types';
-import { CAMPAIGN_PARAM, CAMPAIGN_TITLE_PARAM, reservaDelPortalRoute } from './appointments.routes';
+import {
+  CAMPAIGN_PARAM,
+  CAMPAIGN_TITLE_PARAM,
+  PROFESSIONAL_PARAM,
+  SERVICE_PARAM,
+  reservaDelPortalRoute,
+} from './appointments.routes';
 import { sufijoDeCodigo, toBookingStatusPresentation } from './booking-status';
 import { splitUpcomingAndPast } from './upcoming-and-past';
 
@@ -967,9 +973,42 @@ export class Appointments {
     const perfil = this.recursosEnFoco()[0]?.resourceRefId;
     if (this.esLaboratorio() || perfil === undefined) return;
     this.scheduling.listServiceOfferings(perfil).subscribe({
-      next: (lista) => this.ofertasDelProfesional.set(lista),
+      next: (lista) => {
+        this.ofertasDelProfesional.set(lista);
+        this.aplicarEnlaceDelServicio(lista);
+      },
       error: () => this.ofertasDelProfesional.set([]),
     });
+  }
+
+  /** El enlace sólo se aplica una vez: después manda lo que la persona elija a mano. */
+  private enlaceAplicado = false;
+
+  /**
+   * Con `?profesional=<perfil>` se llega con quién ya elegido.
+   *
+   * Lo trae la ficha del profesional —«Pedir turno» en uno de sus servicios—. Se
+   * aplica cuando llegan las agendas, que es cuando se sabe a cuál corresponde. Si
+   * ese profesional no tiene agenda en esta organización no se elige nada: mejor la
+   * pantalla de siempre que una elección inventada.
+   */
+  private aplicarEnlaceDelProfesional(): void {
+    if (this.enlaceAplicado) return;
+    const perfil = this.route.snapshot.queryParamMap.get(PROFESSIONAL_PARAM);
+    if (perfil === null) return;
+    const agenda = this.agendas().find((candidata) =>
+      candidata.recursos.some((recurso) => recurso.resourceRefId === perfil),
+    );
+    if (agenda === undefined) return;
+    this.enlaceAplicado = true;
+    this.elegirAgenda(agenda.clave);
+  }
+
+  /** Con `?servicio=<oferta>` queda elegido el servicio, si el profesional todavía lo ofrece. */
+  private aplicarEnlaceDelServicio(ofertas: readonly ServiceOffering[]): void {
+    const pedido = this.route.snapshot.queryParamMap.get(SERVICE_PARAM);
+    if (pedido === null || !ofertas.some((oferta) => oferta.id === pedido)) return;
+    this.elegirQueQuiere(pedido);
   }
 
   /**
@@ -1276,6 +1315,7 @@ export class Appointments {
           return mezcla;
         });
         this.sinRecursos.set(pagina.items.length === 0);
+        this.aplicarEnlaceDelProfesional();
         // Los turnos pueden haberse pintado antes que esto: las dos lecturas
         // del arranque salen a la vez. Se rehacen para que tomen el nombre de
         // su agenda, igual que con las etiquetas de estado.
