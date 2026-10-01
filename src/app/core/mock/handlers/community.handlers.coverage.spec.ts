@@ -69,11 +69,11 @@ describe('comunidad demo: publicaciones, grupos y conversación', () => {
     const reaction = {
       actorProfileId: patientProfileId, reactableType: 'POST', reactableRefId: post.id, reactionType: 'LIKE',
     };
-    expect(status(request('PUT', '/community/reactions', reaction))).toBe(201);
+    expect(status(request('PUT', '/community/reactions', reaction))).toBe(200);
     expect(data<{ total: number; actorReactionType: string }>(request(
       'GET', `/community/posts/${post.id}/reactions`, {}, new URLSearchParams({ actorProfileId: patientProfileId }),
     ))).toMatchObject({ total: 1, actorReactionType: 'LIKE' });
-    expect(status(request('PUT', '/community/reactions', reaction))).toBe(201);
+    expect(status(request('PUT', '/community/reactions', reaction))).toBe(200);
     expect(data<{ total: number }>(request('GET', `/community/posts/${post.id}/reactions`)).total).toBe(0);
 
     const comment = data<{ id: string }>(request('POST', '/community/comments', {

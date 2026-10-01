@@ -272,3 +272,15 @@ El trabajo de cobertura continuo en `marcelo/test-hito2-core-coverage`. Las prue
 ### No cubierto, desvios y riesgos
 
 La cobertura aprobada acredita las ramas core del frontend en esta revision; no certifica contratos de negocio que no existan en Hito 1. El desvio correctivo de verificacion fue resolver imports dinamicos en paralelo tras reproducir un timeout de 30 segundos bajo la suite instrumentada. No se amplio ese limite. La rama debe actualizarse con los tres commits nuevos de `origin/dev` antes de publicar el PR y repetir cobertura en el arbol rebasado.
+## Resultado validado sobre origin/dev actual (incluye PR #815)
+
+La rama se rebasa sobre `origin/dev=310b92cf` sin conflictos. La regresion detecto que #815 cambio el estado de `PUT /community/reactions` de 201 a 200; el caso de cobertura se alineo con el contrato publicado y mantuvo las aserciones de toggle y resumen.
+
+| ID | Resultado | Evidencia |
+|---|---|---|
+| H2.S3.M35 | Reaccion de comunidad usa HTTP 200 como API/mock actualizado. | `137-community-after-815.txt`: 3/3, `EXIT_CODE=0`. |
+| H2.S3.M8/M15 | Regresion y coverage aprobadas sobre la base actual. | `138-coverage-after-815-fix.txt`: 713/713 archivos, 9532/9532 pruebas, `EXIT_CODE=0`; core 10405/13006 ramas = 80,0015 %. |
+| H2.S3.M1 | Typecheck aprobado sobre la base actual. | `139-typecheck-after-815.txt`: `EXIT_CODE=0`. |
+| H2.S3.M2 | Lint aprobado sobre la base actual. | `140-lint-after-815.txt`: `EXIT_CODE=0`. |
+
+La rama esta lista para publicar en PR hacia `dev`, con solicitudes de revision a `jsaldias39` y `PabloArauzCaballero`. Falta registrar el resultado remoto de checks y mergeabilidad despues del push. El merge sigue siendo revision humana; contratos faltantes del backend Hito 1 siguen pendientes segun la matriz previa.
