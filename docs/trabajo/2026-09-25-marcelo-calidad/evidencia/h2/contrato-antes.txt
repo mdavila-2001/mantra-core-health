@@ -1,0 +1,21 @@
+Evidencia del "antes": el spec del contrato (carga-masiva.spec.ts) corrido contra la pantalla
+DE HOY (worktree propio, sin el contrato §3 de Justin), test 1 de 11 como muestra representativa
+(los 11 fallarían igual, cada uno agotando el timeout de 180s de playwright.config.ts esperando un
+testid que no existe todavía -- correrlos los 11 hasta el timeout llevaría ~33 min sin agregar
+evidencia nueva a la ya obtenida en el primero).
+
+$ E2E_BASE_URL=http://localhost:4200 yarn pw playwright/carga-masiva.spec.ts --workers=1 -g "flujo feliz: valida e importa"
+
+  ✘  1 [chromium] › carga masiva — contrato §3/§7 [backend simulado] › 1 · flujo feliz: valida e importa ok-50.csv
+
+    Error: locator.selectOption: Test timeout of 180000ms exceeded.
+    Call log:
+      - waiting for getByTestId('carga-sistema').locator('select')
+        at elegirDestino (playwright/carga-masiva.spec.ts:20:61)
+
+  1 failed
+
+Causa: `data-testid="carga-sistema"` (y el resto de los `carga-*` de la ficha §3) no existen en
+`version-import.html` de esta rama -- son los que Justin agrega en la suya
+(`justin/carga-masiva-pantalla-2026-09-25`). Confirma exactamente lo que el H2.S2.M13 pide
+documentar: la lista de qué falla hoy porque el testid no está.
