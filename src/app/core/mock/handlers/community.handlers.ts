@@ -29,7 +29,7 @@ import { conflict, forbidden, notFound, validation, type MockRequest, type MockR
 // constante que la pantalla, para que no puedan separarse.
 import { VENTANA_DE_EDICION_MS } from '../../messaging/chat.store';
 import { ahora, contiene, cuerpo, iso, nuevoId, paginar, texto, uuid } from '../mock-store';
-import { fileContent } from './files.handlers';
+import { fileContent, urlDeArchivoSimulado } from './files.handlers';
 
 /* ============================================================================
     Red social con sesión: vitrina propia, perfiles, publicaciones,
@@ -168,7 +168,13 @@ function publicacion(p: PublicacionSimulada, actor: string | null) {
 function detalleDePublicacion(p: PublicacionSimulada, actor: string | null) {
   return {
     ...publicacion(p, actor),
-    media: p.mediaUrls.map((_url, i) => ({ id: uuid(`media-${p.id}-${i}`), fileId: uuid(`file-media-${p.id}-${i}`), mediaRoleConceptId: CONCEPTO.mediaImage, altText: 'Imagen de la publicación', ordinal: i + 1 })),
+    media: p.mediaUrls.map((_url, i) => ({
+      id: uuid(`media-${p.id}-${i}`),
+      fileId: p.media?.[i]?.fileId ?? uuid(`file-media-${p.id}-${i}`),
+      mediaRoleConceptId: CONCEPTO.mediaImage,
+      altText: p.media?.[i]?.altText ?? 'Imagen de la publicación',
+      ordinal: p.media === undefined ? i + 1 : i,
+    })),
     hashtags: p.hashtags.map((tag) => ({ id: uuid(`hashtag-${p.id}-${tag}`), tag })),
     mentions: [],
   };
@@ -333,7 +339,20 @@ export function registrarComunidad(router: MockRouter): void {
   });
 
   router.post('/community/profiles/:id/posts', (request) => {
-    const datos = cuerpo<{ bodyText: string; visibility?: string; commentsEnabled?: boolean; hashtags?: string[] }>(request);
+    const datos = cuerpo<{
+      bodyText: string;
+      visibility?: string;
+      commentsEnabled?: boolean;
+      hashtags?: string[];
+      media?: { fileId: string; altText?: string; ordinal?: number }[];
+    }>(request);
+    // Mismos topes que el DTO real: sin ellos la maqueta aceptaría un artículo
+    // que la API rechaza, y la pantalla parecería funcionar cuando no.
+    if ((datos.bodyText ?? '').length > 20000) return validation('bodyText no puede superar 20000 caracteres');
+    if ((datos.media ?? []).length > 20) return validation('media admite hasta 20 elementos');
+    const media = [...(datos.media ?? [])]
+      .map((m, i) => ({ ...m, ordinal: m.ordinal ?? i }))
+      .sort((a, b) => a.ordinal - b.ordinal);
     const nueva: PublicacionSimulada = {
       id: nuevoId('post'),
       authorPublicProfileId: request.params['id']!,
@@ -343,7 +362,8 @@ export function registrarComunidad(router: MockRouter): void {
       commentsEnabled: datos.commentsEnabled ?? true,
       publishedAt: ahora(),
       editedAt: null,
-      mediaUrls: [],
+      mediaUrls: media.map((m) => urlDeArchivoSimulado(m.fileId) ?? `/public/media/${m.fileId}`),
+      media: media.map((m) => ({ fileId: m.fileId, ...(m.altText === undefined ? {} : { altText: m.altText }) })),
       hashtags: datos.hashtags ?? [],
       reacciones: { LIKE: 0, LOVE: 0, INSIGHTFUL: 0, CELEBRATE: 0, SUPPORT: 0 },
       reaccionDelActor: {},

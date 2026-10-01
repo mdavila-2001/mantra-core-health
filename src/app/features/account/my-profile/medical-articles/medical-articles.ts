@@ -1,12 +1,14 @@
 import { DatePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal, viewChild } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { forkJoin, of } from 'rxjs';
-import { catchError, switchMap } from 'rxjs/operators';
+import { forkJoin, of, throwError } from 'rxjs';
+import { catchError, concatMap, map, switchMap, toArray } from 'rxjs/operators';
 
 import { CommunityClient } from '../../../../core/data-access/community/community.client';
+import { FilesClient } from '../../../../core/data-access/files/files.client';
 import type {
   CommentThreadItem,
+  NewPostMedia,
   OwnPublicProfile,
   PostDetail,
 } from '../../../../core/data-access/community/community.types';
@@ -24,11 +26,20 @@ import { Card } from '../../../../shared/components/molecules/card/card';
 import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import { FormActions } from '../../../../shared/components/organisms/form-actions/form-actions';
+import { ArticleBody } from '../../../../shared/components/organisms/article-body/article-body';
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
+import { articlePlainText } from '../../../../shared/text/article-markup';
 import { VitrinaMinima } from '../../../communities/vitrina-minima/vitrina-minima';
+import { ArticleComposer, type ArticleDraft } from './article-composer/article-composer';
 
-/** Largo máximo de un artículo. El backend no lo acota más de lo que la prosa pide. */
+/**
+ * Largo máximo de un artículo, ya convertido a su formato (marcas incluidas).
+ *
+ * Es el tope de `CreatePostDto.bodyText` desde que se subió de 5 000 a 20 000
+ * para los artículos (30/09/2026): antes la pantalla prometía 20 000 y el
+ * servidor rechazaba todo lo que pasara de 5 000.
+ */
 const CUERPO_MAXIMO = 20000;
 
 /** Cuántos caracteres del cuerpo se muestran en la tarjeta antes de «ver más». */
@@ -39,6 +50,13 @@ export interface ArticuloVisible {
   readonly post: PostDetail;
   readonly resumen: string;
   readonly recortado: boolean;
+}
+
+/** Una imagen que no se pudo subir: qué número era, para decírselo a quien publica. */
+class SubidaFallida extends Error {
+  constructor(readonly numero: number) {
+    super(`No se pudo subir la imagen ${numero}`);
+  }
 }
 
 /**
@@ -74,6 +92,8 @@ export interface ArticuloVisible {
   imports: [
     Alert,
     AppButton,
+    ArticleBody,
+    ArticleComposer,
     Avatar,
     BackLink,
     Card,
@@ -93,6 +113,7 @@ export interface ArticuloVisible {
 })
 export class MedicalArticles {
   private readonly community = inject(CommunityClient);
+  private readonly files = inject(FilesClient);
   private readonly toasts = inject(ToastService);
   private readonly navigation = inject(NavigationService);
 
@@ -139,10 +160,24 @@ export class MedicalArticles {
 
   /* -- Publicar --------------------------------------------------------------- */
 
-  protected readonly nuevoCuerpo = signal('');
+  private readonly compositor = viewChild(ArticleComposer);
+
+  /** Dónde guarda el compositor el borrador en este navegador: uno por vitrina. */
+  protected readonly claveDelBorrador = computed(() => {
+    const id = this.profileId();
+    return id === null ? null : `mch.article-draft.${id}`;
+  });
   protected readonly publicando = signal(false);
 
-  protected readonly puedePublicar = computed(() => this.nuevoCuerpo().trim() !== '');
+  protected readonly puedePublicar = computed(() => this.compositor()?.ready() ?? false);
+
+  /* -- Leer un artículo entero -------------------------------------------------
+     La tarjeta muestra el resumen; «Leer artículo» lo despliega con sus
+     secciones. Las imágenes se piden al abrir, no al listar: son las propias,
+     y bajarlas para cincuenta tarjetas que nadie abrió sería pagar de más. */
+
+  protected readonly leyendo = signal<string | null>(null);
+  protected readonly imagenesDelArticulo = signal<readonly (string | null)[]>([]);
 
   /* -- Comentarios, por artículo ------------------------------------------------
      Un solo hilo abierto a la vez: dos hilos abiertos y dos formularios de
@@ -218,25 +253,77 @@ export class MedicalArticles {
       });
   }
 
-  protected publicar(): void {
+  /**
+   * Sube las imágenes, en orden, y publica el artículo con ellas.
+   *
+   * **En serie y todo o nada.** Si una imagen no sube, no se publica nada: un
+   * artículo con un hueco donde iba la radiografía es peor que uno que todavía
+   * no salió, y lo escrito queda intacto en el compositor para reintentar.
+   * Los archivos que sí subieron quedan huérfanos en `common.files`; no hay
+   * contrato para borrarlos desde acá (anotado en PENDIENTES-BACKEND).
+   *
+   * @param borrador - Lo que armó el compositor.
+   */
+  protected publicar(borrador: ArticleDraft): void {
     const profileId = this.profileId();
-    const cuerpo = this.nuevoCuerpo().trim();
+    const cuerpo = borrador.bodyText.trim();
     if (profileId === null || cuerpo === '' || this.publicando()) {
       return;
     }
 
     this.publicando.set(true);
-    this.community.publishPost(profileId, { bodyText: cuerpo }, true).subscribe({
-      next: () => {
-        this.publicando.set(false);
-        this.nuevoCuerpo.set('');
-        this.toasts.success('Tu artículo quedó publicado.', 'Artículos médicos');
-        this.cargar();
-      },
-      error: () => {
-        this.publicando.set(false);
-        this.toasts.error('No se pudo publicar el artículo. Probá de nuevo.', 'Artículos médicos');
-      },
+    const subidas = borrador.images.length === 0
+      ? of([] as readonly NewPostMedia[])
+      : of(...borrador.images.map((imagen, ordinal) => ({ imagen, ordinal }))).pipe(
+          concatMap(({ imagen, ordinal }) =>
+            this.files.upload(imagen.file, 'IMAGE', 'NORMAL').pipe(
+              map((subido): NewPostMedia => ({ fileId: subido.id, mediaRole: 'IMAGE', altText: imagen.alt, ordinal })),
+              catchError(() => throwError(() => new SubidaFallida(ordinal + 1))),
+            ),
+          ),
+          toArray(),
+        );
+
+    subidas
+      .pipe(switchMap((media) => this.community.publishPost(profileId, { bodyText: cuerpo, media }, true)))
+      .subscribe({
+        next: () => {
+          this.publicando.set(false);
+          this.compositor()?.reset();
+          this.toasts.success('Tu artículo quedó publicado.', 'Artículos médicos');
+          this.cargar();
+        },
+        error: (error: unknown) => {
+          this.publicando.set(false);
+          this.toasts.error(
+            error instanceof SubidaFallida
+              ? `No se pudo subir la imagen ${error.numero}. Tu artículo no se publicó y sigue acá: probá de nuevo.`
+              : 'No se pudo publicar el artículo. Tu texto sigue acá: probá de nuevo.',
+            'Artículos médicos',
+          );
+        },
+      });
+  }
+
+  /** Despliega un artículo entero, o vuelve al resumen si ya estaba abierto. */
+  protected alternarLectura(articulo: ArticuloVisible): void {
+    if (this.leyendo() === articulo.post.id) {
+      this.leyendo.set(null);
+      return;
+    }
+    this.leyendo.set(articulo.post.id);
+    const medios = [...articulo.post.media].sort((a, b) => (a.ordinal ?? 0) - (b.ordinal ?? 0));
+    this.imagenesDelArticulo.set(medios.map(() => null));
+    if (medios.length === 0) return;
+    // Son archivos propios: el contenido lo entrega `FilesClient` a quien los
+    // subió. Si falla, se cae a la URL pública, que sirve las fotos de un post
+    // público de una vitrina publicada.
+    forkJoin(
+      medios.map((medio) =>
+        this.files.imageDataUrl(medio.fileId).pipe(catchError(() => of(`/public/media/${medio.fileId}`))),
+      ),
+    ).subscribe((urls) => {
+      if (this.leyendo() === articulo.post.id) this.imagenesDelArticulo.set(urls);
     });
   }
 
@@ -291,10 +378,13 @@ export class MedicalArticles {
 
 /** Recorta el cuerpo para la tarjeta; el detalle completo se ve al abrir. */
 function aVisible(post: PostDetail): ArticuloVisible {
-  const recortado = post.bodyText.length > RESUMEN_MAXIMO;
+  // El resumen se arma sin marcas: una tarjeta que empieza con «## Síntomas»
+  // o con «![](imagen:0)» se lee como un error, no como un artículo.
+  const plano = articlePlainText(post.bodyText);
+  const recortado = plano.length > RESUMEN_MAXIMO;
   return {
     post,
-    resumen: recortado ? `${post.bodyText.slice(0, RESUMEN_MAXIMO).trimEnd()}…` : post.bodyText,
+    resumen: recortado ? `${plano.slice(0, RESUMEN_MAXIMO).trimEnd()}…` : plano,
     recortado,
   };
 }

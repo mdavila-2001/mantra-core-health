@@ -274,11 +274,28 @@ export interface PostPage {
 export type PostVisibility = 'PUBLIC' | 'FOLLOWERS' | 'PRIVATE';
 
 /** Lo que se manda a `POST /community/profiles/:profileId/posts` para publicar. */
+/**
+ * Una imagen adjunta al publicar (`CreatePostDto.media[]`).
+ *
+ * El archivo ya tiene que estar subido (`FilesClient.upload`): el servidor
+ * comprueba que quien publica pueda usarlo. `ordinal` es la posición a la que
+ * apunta la referencia `imagen:N` del cuerpo de un artículo.
+ */
+export interface NewPostMedia {
+  readonly fileId: string;
+  readonly mediaRole?: 'IMAGE';
+  /** Hasta 300 caracteres (`@MaxLength(300)`). */
+  readonly altText?: string;
+  readonly ordinal?: number;
+}
+
 export interface NewPost {
   readonly bodyText: string;
   readonly visibility?: PostVisibility;
   readonly commentsEnabled?: boolean;
   readonly hashtags?: readonly string[];
+  /** Hasta 20 (`@ArrayMaxSize(20)`). */
+  readonly media?: readonly NewPostMedia[];
 }
 
 // ─── Comentarios ─────────────────────────────────────────────────────────────

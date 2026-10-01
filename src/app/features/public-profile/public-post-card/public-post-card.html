@@ -76,6 +76,9 @@
       />
     </header>
 
+    @if (esArticulo()) {
+      <app-article-body class="publicacion__articulo" [body]="p.bodyText" [images]="p.mediaUrls" [headingLevel]="3" />
+    } @else {
     <p class="publicacion__cuerpo" [class.publicacion__cuerpo--recortado]="recortado()">@for (
         trozo of segmentos();
         track $index
@@ -91,9 +94,10 @@
         {{ recortado() ? 'Ver más' : 'Ver menos' }}
       </button>
     }
+    }
   </div>
 
-  @if (p.mediaUrls.length > 0) {
+  @if (p.mediaUrls.length > 0 && !esArticulo()) {
     <!-- AC-01-7 — Esto era `overflow-x: auto` con `scroll-snap`, sin un solo
          control: el `aria-label` decía «Deslizá para ver las N imágenes», que
          con teclado o con lector de pantalla no es una instrucción que se
