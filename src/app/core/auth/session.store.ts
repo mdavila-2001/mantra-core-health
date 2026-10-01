@@ -2,6 +2,20 @@ import { computed, Injectable, signal } from '@angular/core';
 
 import { decodeAccessToken, type AccessTokenClaims } from './access-token';
 
+/**
+ * Tipos de organización que tienen cuenta propia en el portal. Sin el claim
+ * `accountKind`, una sesión sin perfil de paciente ni profesional cuya
+ * organización activa es de estos tipos se trata como cuenta de organización.
+ *
+ * `PROVIDER`/`HOSPITAL` no están: una clínica o «Mi consultorio» la usan
+ * personas (quien atiende), así que ahí la cuenta sigue siendo la persona.
+ */
+const ORGANIZATION_ACCOUNT_TENANT_TYPES: readonly string[] = [
+  'PHARMACY',
+  'DIAGNOSTIC_CENTER',
+  'PAYER',
+];
+
 /** Sesión abierta, tal como la necesita el interceptor. */
 export interface SessionTokens {
   readonly accessToken: string;
@@ -129,6 +143,31 @@ export class SessionStore {
   readonly activeTenantType = computed<string | null>(() => {
     const id = this.activeTenantId();
     return id === null ? null : (this.claims()?.tenantTypes?.[id] ?? null);
+  });
+
+  /**
+   * Si la cuenta **es** una organización (farmacia, laboratorio, aseguradora)
+   * y no una persona que la administra.
+   *
+   * Manda el claim `accountKind`; sin él (API anterior) se deduce: organización
+   * activa de un tipo con cuenta propia y ningún perfil de paciente ni
+   * profesional. La regla vive solo acá. Es presentación, no autoriza nada.
+   */
+  readonly isOrganizationAccount = computed<boolean>(() => {
+    const claims = this.claims();
+    if (claims === null) {
+      return false;
+    }
+    if (claims.accountKind !== undefined) {
+      return claims.accountKind === 'ORGANIZATION';
+    }
+    const type = this.activeTenantType();
+    return (
+      type !== null &&
+      ORGANIZATION_ACCOUNT_TENANT_TYPES.includes(type) &&
+      claims.pid === undefined &&
+      claims.hpid === undefined
+    );
   });
 
   /** Si hay que pedirle a la persona que elija organización. */

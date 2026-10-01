@@ -40,7 +40,6 @@ const MENU_DE_LA_FARMACIA = [
   '/administration/pharmacy-prices',
   '/administration/pharmacy-orders',
   '/administration/pharmacy-campaigns',
-  '/administration/pharmacy-profile',
   '/administration/pharmacy-branches',
 ];
 
@@ -85,7 +84,7 @@ describe('Menú de la cuenta de farmacia', () => {
     ];
   }
 
-  it('ofrece los diez renglones de la farmacia, en orden, y nada de otra cuenta', () => {
+  it('ofrece los nueve renglones de la farmacia, en orden, y nada de otra cuenta', () => {
     abrirSesion(['USER'], ['t-f'], { 't-f': 'PHARMACY' });
 
     const rutas = rutasDelMenu();
@@ -98,7 +97,7 @@ describe('Menú de la cuenta de farmacia', () => {
     );
   });
 
-  it('los diez van planos: en un dominio aplanado, sin encabezado ni desplegable', () => {
+  it('los nueve van planos: en un dominio aplanado, sin encabezado ni desplegable', () => {
     abrirSesion(['USER'], ['t-f'], { 't-f': 'PHARMACY' });
 
     const grupos = service
@@ -116,9 +115,15 @@ describe('Menú de la cuenta de farmacia', () => {
       'Precios',
       'Solicitudes de retiro',
       'Promociones',
-      'Ficha de la farmacia',
       'Sucursales',
     ]);
+  });
+
+  it('la ficha de la farmacia no es un renglón: es su «Mi perfil»', () => {
+    abrirSesion(['USER'], ['t-f'], { 't-f': 'PHARMACY' });
+
+    expect(rutasDelMenu()).not.toContain('/administration/pharmacy-profile');
+    expect(rutasDelMenu()).toContain('/my-account');
   });
 
   it('el rol de la farmacia no le abre el menú de aseguradora ni de clínica', () => {

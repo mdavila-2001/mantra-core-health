@@ -131,8 +131,8 @@ describe('Menú de la cuenta de laboratorio', () => {
     }
   });
 
-  it('la farmacia conserva sus diez renglones', () => {
+  it('la farmacia conserva sus nueve renglones', () => {
     abrirSesion(['USER'], ['t-f'], { 't-f': 'PHARMACY' });
-    expect(rutasDelMenu().filter((r) => r.includes('administration/pharmacy'))).toHaveLength(10);
+    expect(rutasDelMenu().filter((r) => r.includes('administration/pharmacy'))).toHaveLength(9);
   });
 });
