@@ -1389,4 +1389,55 @@ describe('PractitionerProfileView', () => {
       expect(host.querySelector('[data-testid="perfil-logo-consultorio"]')).toBeNull();
     });
   });
+
+  describe('la firma y el sello en «Datos personales»', () => {
+    const FIRMA = 'data:image/png;base64,iVBORw0KGgo=';
+    const SELLO = 'data:image/png;base64,iVBORw0KGgp=';
+
+    it('en la ficha propia muestra las dos imágenes', () => {
+      const host = montar({ ...PERFIL, firmaYSello: { firmaUrl: FIRMA, selloUrl: SELLO } }, true);
+
+      const bloque = host.querySelector('[data-testid="perfil-firma-y-sello"]');
+      expect(bloque?.textContent).toContain('Firma y sello médico');
+      expect(host.querySelector('[data-testid="perfil-firma-vista"] img')?.getAttribute('src')).toBe(
+        FIRMA,
+      );
+      expect(host.querySelector('[data-testid="perfil-sello-vista"] img')?.getAttribute('src')).toBe(
+        SELLO,
+      );
+    });
+
+    it('sin nada cargado dibuja el bloque igual, con «Sin firma» y «Sin sello»', () => {
+      const host = montar({ ...PERFIL, firmaYSello: { firmaUrl: null, selloUrl: null } }, true);
+
+      const bloque = host.querySelector('[data-testid="perfil-firma-y-sello"]');
+      expect(bloque).not.toBeNull();
+      expect(bloque?.querySelector('img')).toBeNull();
+      expect(bloque?.textContent).toContain('Sin firma');
+      expect(bloque?.textContent).toContain('Sin sello');
+    });
+
+    it('con sólo una de las dos, la otra queda con su marcador', () => {
+      const host = montar({ ...PERFIL, firmaYSello: { firmaUrl: FIRMA, selloUrl: null } }, true);
+
+      expect(host.querySelector('[data-testid="perfil-firma-vista"] img')).not.toBeNull();
+      expect(host.querySelector('[data-testid="perfil-sello-vista"]')?.textContent).toContain(
+        'Sin sello',
+      );
+    });
+
+    it('es de lectura: la ficha no ofrece subir nada', () => {
+      const host = montar({ ...PERFIL, firmaYSello: { firmaUrl: FIRMA, selloUrl: SELLO } }, true);
+
+      expect(
+        host.querySelector('[data-testid="perfil-firma-y-sello"] input[type="file"]'),
+      ).toBeNull();
+    });
+
+    it('la ficha de otro profesional no lo dibuja', () => {
+      const host = montar({ ...PERFIL, firmaYSello: null }, false);
+
+      expect(host.querySelector('[data-testid="perfil-firma-y-sello"]')).toBeNull();
+    });
+  });
 });

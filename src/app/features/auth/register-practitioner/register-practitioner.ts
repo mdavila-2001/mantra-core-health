@@ -1,6 +1,14 @@
 import { FileDropTarget } from '../../../shared/forms/file-drop-target';
 import { FileInput } from '../../../shared/components/molecules/file-input/file-input';
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { FirmaOSello } from '../../../shared/components/molecules/firma-o-sello/firma-o-sello';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  signal,
+  type WritableSignal,
+} from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
@@ -490,6 +498,14 @@ const AYUDA_PROFESIONAL: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
         'Hay médicos con dos carreras, y con varios diplomados o maestrías. Cada título lleva su propio archivo, así se verifica de a uno.',
     },
   ],
+  'signature-seal': [
+    {
+      icono: 'shield',
+      titulo: 'Son imágenes, no una firma electrónica',
+      texto:
+        'Subí la foto o el escaneo de tu firma de puño y letra y de tu sello. Se imprimen al pie de tus documentos junto a tu nombre y matrícula. Podés saltear este paso y cargarlos después.',
+    },
+  ],
   password: [
     {
       icono: 'lock',
@@ -534,6 +550,7 @@ const AYUDA_PROFESIONAL: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
   imports: [
     FileDropTarget,
     FileInput,
+    FirmaOSello,
     RouterLink,
     AppButton,
     NavIcon,
@@ -862,6 +879,9 @@ export class RegisterPractitioner {
     officeName: new FormControl('', { nonNullable: true }),
     officeAddressLines: new FormControl('', { nonNullable: true }),
     profilePhotoBase64: new FormControl<string | null>(null),
+    // La firma y el sello: **imágenes**, no una firma electrónica. Opcionales.
+    signatureImageBase64: new FormControl<string | null>(null),
+    sealImageBase64: new FormControl<string | null>(null),
   });
 
   /** Los cuatro tipos de título, para que la plantilla los recorra. */
@@ -1089,6 +1109,79 @@ export class RegisterPractitioner {
       entrada.value = '';
     };
     lector.readAsDataURL(archivo);
+  }
+
+  /**
+   * La firma y el sello médicos del alta, como imágenes para previsualizar y
+   * enviar. Opcionales: se saltan y se cargan después desde el perfil.
+   */
+  readonly firmaBase64 = signal<string | null>(null);
+  readonly selloBase64 = signal<string | null>(null);
+  readonly errorFirma = signal<string | null>(null);
+  readonly errorSello = signal<string | null>(null);
+
+  alSeleccionarFirma(evento: Event): void {
+    this.leerImagenDeFirma(evento, 'signatureImageBase64', this.firmaBase64, this.errorFirma);
+  }
+
+  alSeleccionarSello(evento: Event): void {
+    this.leerImagenDeFirma(evento, 'sealImageBase64', this.selloBase64, this.errorSello);
+  }
+
+  quitarFirma(entrada?: HTMLInputElement): void {
+    this.quitarImagenDeFirma('signatureImageBase64', this.firmaBase64, this.errorFirma, entrada);
+  }
+
+  quitarSello(entrada?: HTMLInputElement): void {
+    this.quitarImagenDeFirma('sealImageBase64', this.selloBase64, this.errorSello, entrada);
+  }
+
+  /** Valida formato y peso (2 MB) y deja la imagen como Data URL en el formulario. */
+  private leerImagenDeFirma(
+    evento: Event,
+    control: 'signatureImageBase64' | 'sealImageBase64',
+    vista: WritableSignal<string | null>,
+    error: WritableSignal<string | null>,
+  ): void {
+    const entrada = evento.target as HTMLInputElement;
+    const archivo = entrada.files?.[0];
+    error.set(null);
+    if (!archivo) return;
+
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(archivo.type)) {
+      error.set('El formato de la imagen debe ser JPG, PNG o WebP.');
+      entrada.value = '';
+      return;
+    }
+    if (archivo.size > 2 * 1024 * 1024) {
+      error.set('La imagen supera el límite de 2 MB.');
+      entrada.value = '';
+      return;
+    }
+    const lector = new FileReader();
+    lector.onload = () => {
+      const resultado = lector.result as string;
+      vista.set(resultado);
+      this.formProfesional.controls[control].setValue(resultado);
+      entrada.value = '';
+    };
+    lector.onerror = () => {
+      error.set('No se pudo leer la imagen seleccionada.');
+      entrada.value = '';
+    };
+    lector.readAsDataURL(archivo);
+  }
+
+  private quitarImagenDeFirma(
+    control: 'signatureImageBase64' | 'sealImageBase64',
+    vista: WritableSignal<string | null>,
+    error: WritableSignal<string | null>,
+    entrada?: HTMLInputElement,
+  ): void {
+    vista.set(null);
+    this.formProfesional.controls[control].setValue(null);
+    error.set(null);
+    if (entrada) entrada.value = '';
   }
 
   /** Quita la foto seleccionada y restablece el control. */
@@ -1923,6 +2016,26 @@ export class RegisterPractitioner {
           },
         ],
       },
+      // La firma y el sello: **imágenes** escaneadas, no una firma electrónica.
+      // Opcional y saltable, como la foto: se cargan después desde el perfil.
+      {
+        titulo: 'Tu firma y tu sello',
+        clave: 'signature-seal',
+        icon: 'shield',
+        hint: 'Opcional. Salen al pie de tus recetas y documentos; podés cargarlos después desde tu perfil.',
+        campos: [
+          {
+            key: 'signatureImageBase64',
+            label: '',
+            control: 'custom',
+          },
+          {
+            key: 'sealImageBase64',
+            label: '',
+            control: 'custom',
+          },
+        ],
+      },
       // La contraseña cierra el alta, sola. Estaba en el paso del correo de
       // trabajo, mezclada con los teléfonos del consultorio: el mismo paso
       // pedía datos de contacto —que son del trabajo y opcionales— y la clave
@@ -2394,6 +2507,8 @@ export class RegisterPractitioner {
     const consultorio = this.consultorioPropio();
     const sexoAlNacer = raw.sexAtBirth;
     const foto = raw.profilePhotoBase64;
+    const firmaImagen = raw.signatureImageBase64;
+    const selloImagen = raw.sealImageBase64;
 
     return {
       // `email` del DTO es el campo de LOGIN de la API, y desde este cambio el
@@ -2408,6 +2523,8 @@ export class RegisterPractitioner {
       ...(fechaNacimiento === null ? {} : { birthDate: fechaIso(fechaNacimiento) }),
       ...(sexoAlNacer === null ? {} : { sexAtBirth: sexoAlNacer }),
       ...(foto ? { profilePhotoBase64: foto } : {}),
+      ...(firmaImagen ? { signatureImageBase64: firmaImagen } : {}),
+      ...(selloImagen ? { sealImageBase64: selloImagen } : {}),
       ...(documento === '' ? {} : { nationalId: documento }),
       // Sólo tiene sentido con documento: sin CI no hay identificador al que
       // atarle un departamento de emisión.

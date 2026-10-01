@@ -202,6 +202,11 @@ export const CAMPO_DEL_ALTA_EN_PESTANA: Readonly<Record<string, number>> = {
 
   /* 8 · Tu título profesional y foto */
   profilePhotoBase64: PESTANA_MEDICO.personales,
+  /* 13 · Tu firma y tu sello (opcional). Imágenes —no una firma electrónica—
+     que el médico carga, cambia y quita desde «Datos personales», en la ficha y
+     en el editor. */
+  signatureImageBase64: PESTANA_MEDICO.personales,
+  sealImageBase64: PESTANA_MEDICO.personales,
   professionalTitle: PESTANA_MEDICO.personales,
   /* Dónde estudió y sus títulos (paso 11) viven en «Credenciales» desde el
      24/09/2026: son estudios, y «Trayectoria» son los cargos. El editor de

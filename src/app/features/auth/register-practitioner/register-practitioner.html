@@ -252,6 +252,92 @@
               </div>
             </ng-template>
 
+            <ng-template appCampoPersonalizado="signatureImageBase64">
+              <div class="registro-foto">
+                <div class="registro-foto__avatar">
+                  <app-firma-o-sello tipo="firma" [src]="firmaBase64()" />
+                </div>
+                <div class="registro-foto__acciones">
+                  <label
+                    [appFileDropTarget]="inputFirma"
+                    (fileDropRejected)="errorFirma.set($event)"
+                    class="registro-foto__boton-subir"
+                  >
+                    <input
+                      #inputFirma
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      class="sr-only"
+                      data-testid="registro-pro-firma-input"
+                      (change)="alSeleccionarFirma($event)"
+                    />
+                    <span class="registro-foto__label-btn">
+                      {{ firmaBase64() ? 'Cambiar firma' : 'Subir firma' }}
+                    </span>
+                  </label>
+                  @if (firmaBase64()) {
+                    <button
+                      type="button"
+                      app-button
+                      variant="ghost"
+                      size="sm"
+                      data-testid="registro-pro-firma-quitar"
+                      (clicked)="quitarFirma(inputFirma)"
+                    >
+                      Quitar firma
+                    </button>
+                  }
+                  <p class="registro-foto__ayuda">Tu firma de puño y letra, escaneada o fotografiada. JPG, PNG o WebP, máximo 2 MB.</p>
+                  @if (errorFirma(); as error) {
+                    <p class="registro-foto__error" role="alert">{{ error }}</p>
+                  }
+                </div>
+              </div>
+            </ng-template>
+
+            <ng-template appCampoPersonalizado="sealImageBase64">
+              <div class="registro-foto">
+                <div class="registro-foto__avatar">
+                  <app-firma-o-sello tipo="sello" [src]="selloBase64()" />
+                </div>
+                <div class="registro-foto__acciones">
+                  <label
+                    [appFileDropTarget]="inputSello"
+                    (fileDropRejected)="errorSello.set($event)"
+                    class="registro-foto__boton-subir"
+                  >
+                    <input
+                      #inputSello
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      class="sr-only"
+                      data-testid="registro-pro-sello-input"
+                      (change)="alSeleccionarSello($event)"
+                    />
+                    <span class="registro-foto__label-btn">
+                      {{ selloBase64() ? 'Cambiar sello' : 'Subir sello' }}
+                    </span>
+                  </label>
+                  @if (selloBase64()) {
+                    <button
+                      type="button"
+                      app-button
+                      variant="ghost"
+                      size="sm"
+                      data-testid="registro-pro-sello-quitar"
+                      (clicked)="quitarSello(inputSello)"
+                    >
+                      Quitar sello
+                    </button>
+                  }
+                  <p class="registro-foto__ayuda">Tu sello médico. JPG, PNG o WebP, máximo 2 MB.</p>
+                  @if (errorSello(); as error) {
+                    <p class="registro-foto__error" role="alert">{{ error }}</p>
+                  }
+                </div>
+              </div>
+            </ng-template>
+
             <!--
               Respaldos de la habilitación. Cada archivo va pegado al número
               que respalda, no en una bolsa común de adjuntos: quien verifica
