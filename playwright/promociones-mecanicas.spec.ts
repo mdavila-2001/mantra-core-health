@@ -93,6 +93,16 @@ async function desbordes(page: Page, seccion: string): Promise<string[]> {
   }, seccion);
 }
 
+/**
+ * El ruido conocido de `ng serve`: la CSP bloquea dos scripts en línea que el
+ * servidor de desarrollo inyecta. Sale igual en `/auth`, que estas pantallas no
+ * tocan, y otras suites lo filtran igual (`ficha-medico-seguros`). Se filtra
+ * **sólo** esa combinación: otra violación de CSP sí haría fallar la prueba.
+ */
+function esRuidoDelServidorDeDesarrollo(texto: string): boolean {
+  return texto.includes('Content Security Policy') && texto.includes('inline script');
+}
+
 test.describe('promociones: formulario con todas las mecánicas', () => {
   const errores: string[] = [];
 
@@ -100,7 +110,9 @@ test.describe('promociones: formulario con todas las mecánicas', () => {
     mkdirSync(EVIDENCIA, { recursive: true });
     errores.length = 0;
     page.on('console', (mensaje) => {
-      if (mensaje.type() === 'error') errores.push(mensaje.text());
+      if (mensaje.type() === 'error' && !esRuidoDelServidorDeDesarrollo(mensaje.text())) {
+        errores.push(mensaje.text());
+      }
     });
     await entrar(page, farmacia() as Actor);
     await irA(page, RUTA);
