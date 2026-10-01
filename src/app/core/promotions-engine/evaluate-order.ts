@@ -1,4 +1,5 @@
 import { isInsideSchedule, windowStatus } from './campaign-window';
+import { isOrderLevel } from './mechanic-level';
 import { fromCents, percentOffCents, toCents } from './promotion-money';
 import type {
   CampaignScope,
@@ -144,16 +145,6 @@ function inScope(scope: CampaignScope, line: PricedLine): boolean {
 }
 
 /* ─── Candidatas de ítem ──────────────────────────────────────────────────── */
-
-/** Las mecánicas que descuentan sobre el total, no sobre ítems. */
-function isOrderLevel(mechanic: Mechanic): boolean {
-  return (
-    mechanic.kind === 'ORDER_PERCENT_OVER' ||
-    mechanic.kind === 'ORDER_AMOUNT_OVER' ||
-    mechanic.kind === 'SPEND_TIERS' ||
-    mechanic.kind === 'POINTS_MULTIPLIER'
-  );
-}
 
 function itemCandidatesOf(
   campaign: PromotionCampaign,

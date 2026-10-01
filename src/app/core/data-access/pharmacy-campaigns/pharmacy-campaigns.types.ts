@@ -7,7 +7,18 @@
     enteros.
     ========================================================================== */
 
-/** Cómo la farmacia expresó el descuento al armar la campaña. */
+import type {
+  CampaignConditions,
+  CampaignScope,
+  DraftFailure,
+  Mechanic,
+} from '../../promotions-engine/promotion-mechanics.types';
+
+/**
+ * Cómo la farmacia expresó el descuento en las dos mecánicas **originales** del
+ * carril. Es el camino heredado: un borrador sin `mecanica` se interpreta con
+ * este campo. Lo nuevo declara su `Mechanic` y no pasa por acá.
+ */
 export type TipoDeDescuento = 'PORCENTAJE' | 'PRECIO';
 
 /**
@@ -34,10 +45,19 @@ export interface ProductoEnCampana {
   readonly presentacion: string | null;
   /** Precio de lista, texto exacto. */
   readonly precioNormal: string;
-  /** Precio de campaña, texto exacto. Siempre menor que el normal. */
-  readonly precioPromocional: string;
+  /**
+   * Precio de campaña por unidad, texto exacto, siempre menor que el normal; o
+   * `null` si la mecánica no es de precio por unidad (2x1, combo, compra
+   * mínima…): ahí lo que vale se calcula sobre el pedido, no sobre el producto.
+   */
+  readonly precioPromocional: string | null;
   readonly moneda: string;
 }
+
+/** Un producto cuya campaña le deja un precio por unidad: el que se tacha y se cobra. */
+export type ProductoConPrecioPromocional = ProductoEnCampana & {
+  readonly precioPromocional: string;
+};
 
 /** Una campaña de una farmacia, tal como la ve cualquier pantalla. */
 export interface CampanaDeFarmacia {
@@ -51,6 +71,16 @@ export interface CampanaDeFarmacia {
   readonly desde: Date;
   readonly hasta: Date;
   readonly productos: readonly ProductoEnCampana[];
+  /**
+   * La mecánica del descuento. **Ausente = precio de campaña por producto**: así
+   * se guardaban las campañas antes del motor, y los precios ya están en
+   * `productos`. Usá `mecanicaDe()` en vez de leer este campo.
+   */
+  readonly mecanica?: Mechanic;
+  /** Tope, cupón, calendario, combinabilidad… Ausente = sin condiciones. */
+  readonly condiciones?: CampaignConditions;
+  /** Sobre qué actúa. Ausente = exactamente los `productos`. */
+  readonly alcance?: CampaignScope;
   /**
    * `true` si vino del paquete sembrado; `false` si la creó la farmacia en
    * esta sesión.
@@ -100,14 +130,20 @@ export interface BorradorDeCampana {
    */
   readonly desde: Date | null;
   readonly hasta: Date | null;
-  readonly tipoDeDescuento: TipoDeDescuento;
-  /** Sólo con `PORCENTAJE`: el número entero que la farmacia escribió. */
-  readonly porcentaje: number | null;
+  /** Camino heredado (ver `TipoDeDescuento`). Se ignora si viene `mecanica`. */
+  readonly tipoDeDescuento?: TipoDeDescuento;
+  /** Camino heredado: sólo con `PORCENTAJE`, el entero que la farmacia escribió. */
+  readonly porcentaje?: number | null;
+  /** La mecánica elegida. Manda sobre `tipoDeDescuento` y `porcentaje`. */
+  readonly mecanica?: Mechanic;
+  readonly condiciones?: CampaignConditions;
+  readonly alcance?: CampaignScope;
   readonly renglones: readonly RenglonDeBorrador[];
 }
 
 /** Por qué un borrador no se puede publicar. Se dicen todas juntas. */
 export type FalloDeBorrador =
+  | DraftFailure
   | 'SIN_TITULO'
   | 'SIN_PRODUCTOS'
   | 'FALTA_FECHA'

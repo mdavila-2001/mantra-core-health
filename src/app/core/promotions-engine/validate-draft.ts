@@ -1,5 +1,6 @@
+import { isOrderLevel } from './mechanic-level';
 import { isValidPercent, toCents } from './promotion-money';
-import type { CampaignConditions, CampaignDraft, DraftFailure, Mechanic } from './promotion-mechanics.types';
+import type { CampaignConditions, CampaignDraft, DraftFailure } from './promotion-mechanics.types';
 
 /** Cuántas unidades admite un «llevá X» razonable: más es un error de tipeo. */
 export const MAX_TAKE = 20;
@@ -40,25 +41,27 @@ function validateDates(draft: CampaignDraft): readonly DraftFailure[] {
   return draft.to.getTime() < draft.from.getTime() ? ['DATES_INVERTED'] : [];
 }
 
-/** Las mecánicas de total del pedido no actúan sobre ítems: no piden alcance. */
-const ORDER_LEVEL: ReadonlySet<Mechanic['kind']> = new Set([
-  'ORDER_PERCENT_OVER',
-  'ORDER_AMOUNT_OVER',
-  'SPEND_TIERS',
-  'POINTS_MULTIPLIER',
-]);
-
 function validateScope(draft: CampaignDraft): readonly DraftFailure[] {
   const failures: DraftFailure[] = [];
   const { scope, mechanic, items } = draft;
   const targetsSomething = scope.allItems || scope.itemIds.length > 0 || scope.categoryIds.length > 0;
-  if (!ORDER_LEVEL.has(mechanic.kind) && !targetsSomething && items.length === 0) {
+  if (!isOrderLevel(mechanic) && !targetsSomething && items.length === 0) {
     failures.push('NO_ITEMS');
   }
   if (new Set(items.map((item) => item.currency)).size > 1) {
     failures.push('MIXED_CURRENCIES');
   }
+  if (!isOrderLevel(mechanic) && items.some((item) => !hasListPrice(item.unitPrice))) {
+    // Sin precio de lista no hay con qué comparar ni qué mostrar: un renglón así
+    // se perdía en silencio al publicar y la campaña salía con menos productos.
+    failures.push('LIST_PRICE_INVALID');
+  }
   return failures;
+}
+
+function hasListPrice(unitPrice: string): boolean {
+  const cents = toCents(unitPrice);
+  return cents !== null && cents > 0;
 }
 
 function validateMechanic(draft: CampaignDraft): readonly DraftFailure[] {
@@ -68,7 +71,7 @@ function validateMechanic(draft: CampaignDraft): readonly DraftFailure[] {
     case 'CLEARANCE':
       return isValidPercent(mechanic.percent) ? [] : ['PERCENT_OUT_OF_RANGE'];
     case 'AMOUNT_OFF_PER_UNIT':
-      return isPositiveAmount(mechanic.amount) ? [] : ['AMOUNT_INVALID'];
+      return validateAmountOff(draft, mechanic.amount);
     case 'CAMPAIGN_PRICE':
       return validateCampaignPrices(draft, mechanic.prices);
     case 'BUY_X_PAY_Y':
@@ -123,6 +126,19 @@ function isPositiveAmount(amount: string): boolean {
   return cents !== null && cents > 0;
 }
 
+/** Un monto fijo por unidad tiene que ser menor que el precio de cada ítem. */
+function validateAmountOff(draft: CampaignDraft, amount: string): readonly DraftFailure[] {
+  const cents = toCents(amount);
+  if (cents === null || cents <= 0) {
+    return ['AMOUNT_INVALID'];
+  }
+  const exceeds = draft.items.some((item) => {
+    const list = toCents(item.unitPrice);
+    return list !== null && list > 0 && cents >= list;
+  });
+  return exceeds ? ['AMOUNT_EXCEEDS_PRICE'] : [];
+}
+
 /**
  * La única definición de «promoción» que el motor acepta para un precio de
  * campaña: más barato que el de lista. Sin esto, un cero mal tipeado se
@@ -135,7 +151,12 @@ function validateCampaignPrices(
   const bad = draft.items.some((item) => {
     const promo = toCents(prices[item.itemId] ?? '');
     const list = toCents(item.unitPrice);
-    return promo === null || list === null || promo <= 0 || promo >= list;
+    // Un precio de lista ilegible ya lo dice `LIST_PRICE_INVALID`: repetirlo acá
+    // mandaría a corregir dos veces el mismo campo.
+    if (list === null || list <= 0) {
+      return false;
+    }
+    return promo === null || promo <= 0 || promo >= list;
   });
   return bad ? ['PRICE_NOT_A_DISCOUNT'] : [];
 }

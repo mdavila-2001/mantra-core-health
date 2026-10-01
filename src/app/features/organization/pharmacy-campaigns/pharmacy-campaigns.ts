@@ -16,6 +16,8 @@ import { DatePicker } from '../../../shared/components/organisms/date-picker/dat
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 
+import { describeDraftFailure } from '../../../core/promotions-engine/describe-failure';
+import type { DraftFailure } from '../../../core/promotions-engine/promotion-mechanics.types';
 import { PharmacyClient } from '../../../core/data-access/pharmacy/pharmacy.client';
 import type { PharmacyProduct } from '../../../core/data-access/pharmacy/pharmacy.types';
 import {
@@ -39,8 +41,11 @@ import type { ViewState } from '../../../core/view-state/view-state.types';
 /** Cuánto dura, por defecto, una campaña nueva. Un mes de mostrador. */
 const DIAS_DE_VIGENCIA_POR_DEFECTO = 30;
 
-/** El texto de cada fallo del borrador. Uno por causa, accionable. */
-const TEXTO_DEL_FALLO: Readonly<Record<FalloDeBorrador, string>> = {
+/**
+ * El texto de los fallos que este carril ya nombraba en castellano. Los del
+ * motor (`DraftFailure`) los dice `describeDraftFailure()`, su única fuente.
+ */
+const TEXTO_DEL_FALLO_HEREDADO = {
   SIN_TITULO: 'Poné un título: es lo primero que va a leer la gente.',
   SIN_PRODUCTOS: 'Agregá al menos un producto de tu catálogo.',
   FALTA_FECHA: 'Elegí desde qué día y hasta qué día vale la campaña.',
@@ -49,7 +54,13 @@ const TEXTO_DEL_FALLO: Readonly<Record<FalloDeBorrador, string>> = {
   PRECIO_NO_ES_DESCUENTO:
     'Cada precio de campaña tiene que ser menor que el precio normal del producto.',
   MONEDAS_MEZCLADAS: 'Todos los productos de una campaña tienen que estar en la misma moneda.',
-};
+} as const;
+
+function textoDelFallo(fallo: FalloDeBorrador): string {
+  return fallo in TEXTO_DEL_FALLO_HEREDADO
+    ? TEXTO_DEL_FALLO_HEREDADO[fallo as keyof typeof TEXTO_DEL_FALLO_HEREDADO]
+    : describeDraftFailure(fallo as DraftFailure);
+}
 
 /** Cómo se dice cada estado de vigencia en el panel. */
 const TEXTO_DEL_ESTADO: Readonly<Record<EstadoDeCampana, string>> = {
@@ -170,7 +181,7 @@ export class PharmacyCampaigns {
   protected readonly porPorcentaje = computed(() => this.tipoDeDescuento() === 'PORCENTAJE');
 
   protected readonly mensajesDeFallo = computed(() =>
-    this.fallos().map((fallo) => TEXTO_DEL_FALLO[fallo]),
+    this.fallos().map(textoDelFallo),
   );
 
   /* ─── El buscador del catálogo ────────────────────────────────────────── */

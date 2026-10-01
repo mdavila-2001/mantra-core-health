@@ -9,3 +9,5 @@ export * from './mechanic-catalog';
 export * from './promotion-mechanics.types';
 export * from './promotion-money';
 export * from './validate-draft';
+export * from './describe-failure';
+export * from './mechanic-level';

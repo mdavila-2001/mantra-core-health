@@ -89,6 +89,36 @@ describe('validateDraft — mecánicas', () => {
     expect(failures({ kind: 'AMOUNT_OFF_PER_UNIT', amount })).toEqual(['AMOUNT_INVALID']);
   });
 
+  it('AMOUNT_OFF_PER_UNIT no puede igualar o superar el precio de un ítem', () => {
+    expect(failures({ kind: 'AMOUNT_OFF_PER_UNIT', amount: '9.99' })).toEqual([]);
+    expect(failures({ kind: 'AMOUNT_OFF_PER_UNIT', amount: '10.00' })).toEqual(['AMOUNT_EXCEEDS_PRICE']);
+    expect(failures({ kind: 'AMOUNT_OFF_PER_UNIT', amount: '25.00' })).toEqual(['AMOUNT_EXCEEDS_PRICE']);
+  });
+
+  it('exige el precio de lista de cada ítem en las mecánicas sobre ítems', () => {
+    const noPrice = { ...ITEM_A, unitPrice: '' };
+    expect(failures({ kind: 'PERCENT_OFF', percent: 20 }, { items: [noPrice, ITEM_B] })).toEqual([
+      'LIST_PRICE_INVALID',
+    ]);
+    expect(failures({ kind: 'PERCENT_OFF', percent: 20 }, { items: [{ ...ITEM_A, unitPrice: '0' }] })).toEqual([
+      'LIST_PRICE_INVALID',
+    ]);
+  });
+
+  it('no repite el precio de lista ilegible como «precio no es un descuento»', () => {
+    const noPrice = { ...ITEM_A, unitPrice: 'x' };
+    expect(
+      failures({ kind: 'CAMPAIGN_PRICE', prices: { a: '8.00', b: '15.00' } }, { items: [noPrice, ITEM_B] }),
+    ).toEqual(['LIST_PRICE_INVALID']);
+  });
+
+  it('las mecánicas de total no piden precio de lista', () => {
+    const noPrice = { ...ITEM_A, unitPrice: '' };
+    expect(
+      failures({ kind: 'ORDER_PERCENT_OVER', minSpend: '100.00', percent: 10 }, { items: [noPrice] }),
+    ).toEqual([]);
+  });
+
   it('CAMPAIGN_PRICE exige un precio menor que el de lista para cada ítem', () => {
     expect(failures({ kind: 'CAMPAIGN_PRICE', prices: { a: '8.00', b: '15.00' } })).toEqual([]);
     expect(failures({ kind: 'CAMPAIGN_PRICE', prices: { a: '8.00', b: '20.00' } })).toEqual([
