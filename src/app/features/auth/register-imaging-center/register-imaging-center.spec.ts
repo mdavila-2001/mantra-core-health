@@ -68,7 +68,7 @@ describe('RegisterImagingCenter', () => {
       taxId: '1023456789',
       modalidades: ['Rayos X', 'Ecografía'],
       addressLines: 'Av. Cañoto esq. Ballivián 234',
-      legalRepName: 'Ana Paz Rojas',
+      legalRepName: { name: 'Ana', lastName: 'Paz', motherLastName: 'Rojas' },
       legalRepEmail: 'ana.paz@imagenoriente.test',
       password: 'secreto12',
     });
@@ -190,6 +190,17 @@ describe('RegisterImagingCenter', () => {
     },
   );
 
+  it('el poder se pide en la página del representante, no con la constitución', () => {
+    const pagina = (clave: string) => component.paginas.find((p) => p.clave === clave);
+
+    expect(pagina('representante')?.campos.map((c) => c.key)).toEqual([
+      'legalRepName',
+      'legalRepEmail',
+      'poderFile',
+    ]);
+    expect(pagina('radioproteccion')?.campos.map((c) => c.key)).not.toContain('poderFile');
+  });
+
   it('la radioprotección no frena: un centro de ecografía y resonancia no irradia', () => {
     // Y además es un agregado: no sale de los dieciocho puntos de la fuente, y
     // un agregado no puede frenar un alta hasta que el propietario lo decida.
@@ -208,7 +219,7 @@ describe('RegisterImagingCenter', () => {
     component.submit();
 
     // Ninguno de los nueve campos de gerencia se tocó, y el alta sale igual.
-    expect(component.form.controls.generalManagerName.value).toBe('');
+    expect(component.form.controls.generalManagerName.value.name).toBe('');
     expect(component.form.controls.salesManagerEmail.value).toBe('');
     expect(component.form.controls.marketingManagerPhone.value).toBe('');
     expect(component.enviada()).toBe(true);
