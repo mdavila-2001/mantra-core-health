@@ -125,6 +125,20 @@ import { MOCK_USERS } from './mock-session';
         display: none;
       }
     }
+    @media (max-width: 640px) {
+      /* Las acciones del header ocupan dos filas; el aviso queda debajo. */
+      .mock,
+      .mock--plegado {
+        inset-block-start: calc(var(--h-header, 56px) + 48px);
+      }
+    }
+    @media (max-width: 360px) {
+      /* En el ancho minimo el header puede necesitar una tercera fila. */
+      .mock,
+      .mock--plegado {
+        inset-block-start: calc(var(--h-header, 56px) + 88px);
+      }
+    }
     .mock--plegado {
       padding: 0;
       background: transparent;

@@ -89,7 +89,7 @@ function syntheticPdf(): Buffer {
 }
 
 async function openUploadedPdf(page: Page, fileName: string): Promise<Locator> {
-  await page.getByPlaceholder('Nombre del archivo, paciente u orden').fill(fileName);
+  await page.getByTestId('results-search').getByRole('textbox', { name: 'Buscar' }).fill(fileName);
   await expect(page.getByTestId('results-count')).toContainText('1 archivo ·');
   await page.getByTestId('results-archive').getByRole('button', { name: `Ver ${fileName}`, exact: true }).click();
   const dialog = page.getByRole('dialog', { name: fileName, exact: true });
@@ -104,12 +104,12 @@ async function reopenApprovedClaim(page: Page, claimIdentifier: string): Promise
   await esperarAplicacionLista(page);
   await expect(page.getByTestId('received-claims-queue')).toBeVisible();
   await page.getByTestId('received-claims-queue').getByRole('radio', { name: /^Aprobadas/ }).click();
-  await page.getByPlaceholder('Solicitud, paciente, CI o afiliado, médico, servicio o póliza').fill(claimIdentifier);
+  await page.getByRole('textbox', { name: 'Buscar en las solicitudes' }).fill(claimIdentifier);
   const opener = page.getByTestId('received-claim-open');
   await expect(opener).toHaveCount(1);
   await expect(opener).toHaveAttribute('aria-label', new RegExp(claimIdentifier));
   await opener.click();
-  const detail = page.getByTestId('received-claim-detail');
+  const detail = page.getByRole('dialog', { name: 'Detalle de la solicitud' });
   await expect(detail).toBeVisible();
   await expect(detail).toContainText(claimIdentifier);
   return detail;
@@ -179,7 +179,7 @@ test.describe('Hito 2 · laboratorio y aseguradora · solo demo', () => {
       await expect(page.getByTestId('received-claims-table')).toBeVisible();
       await expect(page.getByTestId('received-claims-queue').getByRole('radio', { name: /^Por dictaminar/ })).toBeChecked();
       await page.getByTestId('received-claim-open').first().click();
-      let detail = page.getByTestId('received-claim-detail');
+      let detail = page.getByRole('dialog', { name: 'Detalle de la solicitud' });
       await expect(detail).toBeVisible();
       const claimIdentifier = (await detail.locator('dl').first().locator('dd').first().innerText()).trim();
       expect(claimIdentifier).toMatch(/^CLM-2026-\d{4}$/);
@@ -200,7 +200,8 @@ test.describe('Hito 2 · laboratorio y aseguradora · solo demo', () => {
       await expect(page.getByTestId('dialogo-confirmar')).toHaveText('Aprobar y facturar');
       await page.getByTestId('dialogo-confirmar').click();
       await expect(detail.getByTestId('received-claim-decision')).toContainText('Aprobada');
-      const decision = await detail.getByTestId('received-claim-decision').innerText();
+      const decision = (await detail.getByTestId('received-claim-decision').textContent()) ?? '';
+      expect(decision).not.toBe('');
       await expect(detail.getByTestId('received-claim-decision').getByText('Monto aprobado', { exact: true })
         .locator('..').locator('dd')).toHaveText(billedAmount);
       let invoices = detail.getByTestId('received-claim-invoices').locator('li');

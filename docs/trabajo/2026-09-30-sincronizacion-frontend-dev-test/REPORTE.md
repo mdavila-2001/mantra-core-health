@@ -37,7 +37,7 @@ Los archivos bajo evidencia/ son salidas del comando indicado en su nombre o dec
 
 ## No cubierto
 
-Ningun flujo de navegador ni persistencia en API real ha sido certificado todavia en esta integracion. H1 PR #520 sigue siendo la fuente de codigo; su DDL/runtime no cuentan con evidencia completada. Ver MATRIZ.md por endpoint.
+Los flujos demo de navegador se verificaron posteriormente en el checkpoint final de este reporte. Ninguna persistencia en API real ha sido certificada todavia en esta integracion. H1 PR #520 sigue siendo la fuente de codigo; su DDL/runtime no cuentan con evidencia completada. Ver MATRIZ.md por endpoint.
 
 ## Desvios y riesgos residuales
 
@@ -104,3 +104,51 @@ Causas reproducidas y reparaciones escritas, pendientes de repetir:
 ## Disponibilidad real actual
 
 Revision de solo lectura: no hay API en puertos3000/3001; Postgres18 nativo escucha5432, sin base SALUD/configuracion local identificada. Docker no responde (pipe LinuxEngine ausente); Redis/MongoDB/OpenSearch no escuchan. El .env API apunta fuera de loopback, y SEED_ON_BOOT ausente equivale a true. No se arranco esa configuracion ni se aplico DDL/semillas. Artefacto backend local27/09 anterior a H1 no demuestra codigo30/09. Falta runtime local aislado con conexiones correctas, esquema/catalogos y artefacto H1 actualizado. La prueba HTTP futura usa doble declarado de transporte y no elimina este bloqueo de persistencia real.
+
+## Aislamiento de regresion posterior
+
+- `56-coverage-after-clinical-fix.txt`: `EXIT_CODE=1`; 9505/9507 pruebas pasaron. Fallaron un refresh token heredado (`r-2` en vez de `r-1`) y la seed de reconsulta tras mutaciones/fechas de otras suites.
+- `57-auth-scheduling-directed.txt`: `EXIT_CODE=1`; la prueba nueva de renovar una reconsulta al vencer no tenia un segundo origen completado elegible. `58-reconsulta-diagnostic.txt` y `59-reconsulta-origin-diagnostic.txt` acotaron la causa: 103 cupos de la medica libres, pero un solo origen completado para esa paciente, ya usado. Se retiro ese cambio de producto; no se fabrica una segunda reconsulta desde un origen sin completar.
+- `60-auth-agenda-directed.txt`: `EXIT_CODE=0`, 44/44 pruebas. `61-coverage-after-storage-isolation.txt`: `EXIT_CODE=1`, 9506/9507; otra suite habia alterado el estado del origen usado por la seed. La prueba de la seed ahora importa un fixture fresco tras aislar `mock.agenda.reservas`, y restaura el almacenamiento anterior al terminar. `agenda-ids-estables.spec.ts` limpia su clave al entrar y salir. `62-auth-agenda-fresh-seed-directed.txt`: `EXIT_CODE=0`, 44/44.
+- `63-coverage-fresh-seed.txt`: 708/708 archivos y 9507/9507 pruebas pasaron, pero `EXIT_CODE=1`: core branches 76,11 % frente al umbral 80 %. El detalle generado mide 9842/12930 ramas core cubiertas; faltan al menos 502. El umbral permanece intacto. H2.S3.M8 y H2.S3.M15 siguen A MEDIAS.
+
+## Checkpoint final de la correccion de la prueba 75
+
+### Completado
+
+| ID | Resultado | Comando y salida |
+|---|---|---|
+| H2.S3.M17-M18 | Scanner HTTP corregido; dictamen y EOB demo con validacion de entradas. | `node scripts/check-mock-vs-client.mjs`: exit 0; `68-insurance-adjudication-directed.txt`: 86/86. |
+| H2.S3.M19-M21 | Encabezado movil sin desborde, aviso demo fuera de los controles y panel de campana dentro del viewport. Glosario parte consultas largas; selectores E2E apuntan a controles nativos. | `84-playwright-demo-matrix-final.txt`: 9/9, `EXIT_CODE=0`, Chromium serial sin reintentos. Capturas sinteticas a 390 y 1440 px. |
+| H2.S3.M22 | Refacturacion demo toma el maximo numero persistido, incluidos historicos, tras recarga. | `83-insurer-received-claims-unit.txt`: 12/12, `EXIT_CODE=0`; `82-playwright-insurance-after-number-fix.txt`: 2/2, `EXIT_CODE=0`. |
+| H2.S3.M1-M6 | Tipos, lint y builds optimizados finales, con artefacto SSR ejercitado. | `85-typecheck-final.txt`, `86-lint-final.txt`, `87-build-production-final.txt`, `88-bundle-budget-final.txt`, `89-build-production-api-final.txt`, `91-build-demo-final.txt`: todos `EXIT_CODE=0`; `90-production-api-runtime-final.json`: `/auth` 200, SSR y login presentes, banner demo ausente, recurso inexistente 404. |
+
+### A medias y pendiente
+
+| ID | Que anda | Que no anda | Que falta exactamente | Donde quedo |
+|---|---|---|---|---|
+| H2.S3.M8/M13-M15 | La corrida completa anterior aprobo 9507/9507 pruebas y se aislaron los estados mutables de auth/agenda. | Cobertura core branches 76,11 % menor al 80 %; `test:coverage` termina en 1. | Cubrir al menos 502 ramas core adicionales con pruebas funcionales y repetir cobertura despues de los cambios actuales. | `63-coverage-fresh-seed.txt`, `coverage/mantra-core-health/coverage-summary.json`, PLAN M15. |
+| H2.S3.M10 | Demo y transporte HTTP con doble declarado fueron ejercitados en navegador. | No se comprobo persistencia ni contratos faltantes contra el backend H1 real. | Levantar H1 con DDL/catalogos y repetir matriz API real. | MATRIZ.md y `73-playwright-real-http-after-insurance.txt`. |
+| H2.S4.M3-M4 | Rama y evidencia preparadas para publicar. | Estado remoto del PR aun sin registrar en este checkpoint. | Push, PR a dev, reviewers, checks y mergeabilidad. | Rama `marcelo/feat-sincronizacion-mockup-dev-test`. |
+
+### Evidencia literal recortada
+
+```text
+84-playwright-demo-matrix-final.txt: 9 passed (3.0m); EXIT_CODE=0
+83-insurer-received-claims-unit.txt: Test Files 1 passed (1); Tests 12 passed (12); EXIT_CODE=0
+87-build-production-final.txt: Initial total 1.35 MB; EXIT_CODE=0
+89-build-production-api-final.txt: Initial total 1.35 MB; EXIT_CODE=0
+91-build-demo-final.txt: EXIT_CODE=0
+63-coverage-fresh-seed.txt: 9507/9507 pruebas pasan; core branches 76,11 % < 80 %; EXIT_CODE=1
+```
+
+### No cubierto y riesgos residuales
+
+- La evidencia 84 corresponde a demo con datos sinteticos; no acredita API ni persistencia real.
+- El build de produccion supera el umbral de aviso de 620 kB y permanece bajo el maximo de 1,5 MB; no se rebajo ningun presupuesto.
+- Los gates historicos de enlaces, cobertura documental e identificadores en ingles siguen en rojo conforme a `67-gate-*.txt`; no se alteraron reglas ni evidencia pasada para presentarlos como aprobados.
+- `90-production-api-runtime-final.json` comprueba SSR de login y 404, no contratos de negocio ni backend H1.
+
+### Regresion del arbol posterior y proxima reparacion
+
+`92-coverage-final-current.txt`: `EXIT_CODE=1`, 703/709 archivos y 9500/9511 pruebas aprobaron; fallaron 11 pruebas en seis archivos. No se obtuvo un resumen de cobertura final en esta corrida porque Vitest detuvo la certificacion al fallar pruebas. Dos causas de fecha fueron reparadas y `93-dates-directed.txt` registra 22/22, `EXIT_CODE=0`: los gastos de hoy no incluyen horas futuras y la prueba de seis ventanas contables usa una fecha en la que esas ventanas no coinciden. La regresion global sigue pendiente. `94-timeouts-directed-serial.txt` documenta que `ng test` rechaza `--maxWorkers`; no se uso como prueba. `95-timeouts-directed.txt` reproduce nueve timeouts en cuatro archivos incluso en corrida dirigida. H2.S3.M25 registra su investigacion y reparacion pendiente. Ningun timeout se amplio y ninguna asercion se retiro.

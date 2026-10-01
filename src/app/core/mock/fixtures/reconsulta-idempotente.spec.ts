@@ -31,13 +31,7 @@ describe('agenda: la reconsulta sembrada no se duplica al recargar', () => {
   it('cuatro cargas seguidas dejan el mismo número de reconsultas que la primera', async () => {
     const primera = await import('./agenda');
     const trasPrimeraCarga = contarReconsultas(primera.reservas.todos());
-    // Si el fixture de esta corrida no genera un origen elegible (sin turno
-    // completado en el pasado o sin cupo libre futuro), no hay nada que
-    // duplicar y el caso no prueba lo que declara: se salta con una razón
-    // explícita en vez de dar un falso verde.
-    if (trasPrimeraCarga === 0) {
-      return;
-    }
+    expect(trasPrimeraCarga).toBeGreaterThan(0);
 
     for (let carga = 0; carga < 3; carga++) {
       vi.resetModules();
@@ -46,5 +40,5 @@ describe('agenda: la reconsulta sembrada no se duplica al recargar', () => {
         trasPrimeraCarga,
       );
     }
-  });
+  }, 15_000);
 });

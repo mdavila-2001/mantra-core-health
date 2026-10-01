@@ -3,9 +3,10 @@ import { ASEGURADORAS_REALES, type AseguradoraReal } from '../fixtures/instituci
 import { conceptoPorId } from '../fixtures/conceptos';
 import { INSURER_NETWORK_PRACTITIONERS } from '../fixtures/insurer-network.generated';
 import { MEDICA, PACIENTES, PACIENTE, profesionalPorId } from '../fixtures/personas';
-import { forbidden, noContent, notFound, type MockRequest, type MockRouter } from '../mock-router';
+import { conflict, forbidden, noContent, notFound, preconditionFailed, validation, type MockRequest, type MockRouter } from '../mock-router';
 import { TENANT_ASEGURADORA } from '../mock-session';
 import { procedimientoPorConceptId } from './practice.handlers';
+import type { CreateAdjudicationInput } from '../../data-access/insurance/insurance.types';
 import {
   ahora,
   Coleccion,
@@ -29,6 +30,16 @@ function c(code: string, display: string) {
 
 const BOB = c('BOB', 'Boliviano');
 const money = (amount: string) => ({ amount, currency: BOB });
+
+function cents(amount: string | undefined): number | null {
+  if (amount === undefined) return 0;
+  if (!/^\d+(?:\.\d{1,2})?$/.test(amount)) return null;
+  const [units, fraction = ''] = amount.split('.');
+  const value = Number(units) * 100 + Number(fraction.padEnd(2, '0'));
+  return Number.isSafeInteger(value) ? value : null;
+}
+
+const asAmount = (value: number): string => `${Math.floor(value / 100)}.${String(value % 100).padStart(2, '0')}`;
 
 interface BeneficioSimulado {
   readonly id: string;
@@ -550,6 +561,11 @@ export interface SolicitudSimulada {
   readonly submittedAt: string;
   readonly status: { code: string; display: string };
   readonly hasOpenDispute: boolean;
+  readonly adjudicationVersion?: number;
+  readonly dispositionText?: string;
+  readonly adjudicatedAt?: string;
+  /** undefined conserva las EOB historicas; null significa dictamen aun no publicado. */
+  readonly eobPublishedAt?: string | null;
   readonly lineas: readonly {
     service: string;
     billed: string;
@@ -1456,7 +1472,7 @@ export function registrarSeguros(router: MockRouter): void {
     const exclusionSinClausula = s.lineas.some(
       (l) => l.decision === 'DENIED' && (l.clause === null || l.clause.trim() === ''),
     );
-    const settlementAvailability = !adjudicada
+    const settlementAvailability = !adjudicada || s.eobPublishedAt === null
       ? 'PENDING_PUBLICATION'
       : exclusionSinClausula
         ? 'UNDER_REVIEW'
@@ -1484,18 +1500,18 @@ export function registrarSeguros(router: MockRouter): void {
     const adjudicacion = adjudicada
       ? {
           id: uuid(`adj-${s.id}`),
-          adjudicationVersion: 1,
+          adjudicationVersion: s.adjudicationVersion ?? 1,
           outcome: s.status,
-          dispositionText:
+          dispositionText: s.dispositionText ?? (
             s.status.code === 'REJECTED'
               ? 'Prestación no cubierta por el plan contratado.'
               : s.status.code === 'PARTIAL'
                 ? 'El electrocardiograma requiere autorización previa.'
-                : 'Aprobada según tarifario vigente.',
+                : 'Aprobada según tarifario vigente.'),
           totalApprovedAmount: money(s.approved!),
           totalPatientAmount: money(totalPatientAmount),
           totalDeniedAmount: money(totalDeniedAmount),
-          adjudicatedAt: iso(-1),
+          adjudicatedAt: s.adjudicatedAt ?? iso(-1),
         }
       : null;
     return {
@@ -1506,7 +1522,7 @@ export function registrarSeguros(router: MockRouter): void {
         service: c(`SVC-${i}`, l.service),
         billedAmount: money(l.billed),
         patientResponsibilityAmount:
-          l.approved === null ? null : money((Number(l.billed) - Number(l.approved)).toFixed(2)),
+          l.approved === null ? null : money(l.decision === 'DENIED' ? '0.00' : (Number(l.billed) - Number(l.approved)).toFixed(2)),
         approvedAmount: l.approved === null ? null : money(l.approved),
         deniedAmount: l.decision === 'DENIED' ? money(l.billed) : null,
         decision: c(
@@ -1527,7 +1543,7 @@ export function registrarSeguros(router: MockRouter): void {
       lineBilledTotal: money(s.billed),
       lineApprovedTotal: s.approved === null ? null : money(s.approved),
       settlement,
-      eob: adjudicada ? { id: uuid(`eob-${s.id}`), publishedAt: iso(-1) } : null,
+      eob: adjudicada && s.eobPublishedAt !== null ? { id: uuid(`eob-${s.id}`), publishedAt: s.eobPublishedAt ?? iso(-1) } : null,
       adjudication: adjudicacion,
       adjudicationHistory: adjudicacion === null ? [] : [adjudicacion],
       disputes: s.hasOpenDispute
@@ -1543,6 +1559,85 @@ export function registrarSeguros(router: MockRouter): void {
           ]
         : [],
     };
+  });
+
+  router.post('/insurance-claims/:id/adjudications', (request) => {
+    const claim = solicitudes.get(request.params['id']!);
+    if (claim === undefined) return notFound('Solicitud no encontrada');
+    const input = cuerpo<CreateAdjudicationInput>(request);
+    if (input.outcome !== 'APPROVED' && input.outcome !== 'DENIED') {
+      return validation('Dictamen inválido', [{ field: 'outcome', message: 'debe ser APPROVED o DENIED' }]);
+    }
+    if (!Array.isArray(input.lineAdjudications) || input.lineAdjudications.length !== claim.lineas.length) {
+      return validation('Cada línea requiere dictamen', [{ field: 'lineAdjudications', message: 'cantidad incorrecta' }]);
+    }
+
+    const byId = new Map(input.lineAdjudications.map((line) => [line.insuranceClaimLineId, line]));
+    if (byId.size !== claim.lineas.length) {
+      return validation('Cada línea requiere un dictamen único', [{ field: 'lineAdjudications', message: 'línea duplicada' }]);
+    }
+
+    let approvedTotal = 0;
+    let patientTotal = 0;
+    let deniedTotal = 0;
+    const lines: SolicitudSimulada['lineas'][number][] = [];
+    for (const [index, current] of claim.lineas.entries()) {
+      const line = byId.get(uuid(`line-${claim.id}-${index}`));
+      if (line === undefined || (line.decision !== 'APPROVED' && line.decision !== 'DENIED')) {
+        return validation('Línea de dictamen inválida', [{ field: 'lineAdjudications', message: 'id o decisión inválida' }]);
+      }
+      const approved = cents(line.approvedAmount);
+      const patient = cents(line.patientAmount);
+      const denied = cents(line.deniedAmount);
+      const billed = cents(current.billed)!;
+      if (approved === null || patient === null || denied === null || approved + patient + denied !== billed ||
+        (line.decision === 'DENIED' && (approved !== 0 || patient !== 0)) ||
+        (line.decision === 'APPROVED' && denied !== 0)) {
+        return validation('Importes de línea inválidos', [{ field: 'lineAdjudications', message: 'los importes deben conciliar con lo facturado' }]);
+      }
+      approvedTotal += approved;
+      patientTotal += patient;
+      deniedTotal += denied;
+      lines.push({
+        ...current,
+        approved: asAmount(approved),
+        decision: line.decision,
+        clause: line.decision === 'DENIED' ? line.policyClauseReference?.trim() || null : null,
+        rationale: line.decision === 'DENIED' ? line.denialRationale?.trim() || null : null,
+      });
+    }
+    if ((input.outcome === 'DENIED' && approvedTotal > 0) || (input.outcome === 'APPROVED' && approvedTotal === 0)) {
+      return validation('Resultado incongruente con las líneas', [{ field: 'outcome', message: 'no coincide con los importes' }]);
+    }
+    const totals = [
+      [input.totalApprovedAmount, approvedTotal],
+      [input.totalPatientAmount, patientTotal],
+      [input.totalDeniedAmount, deniedTotal],
+    ] as const;
+    if (totals.some(([declared, calculated]) => declared !== undefined && cents(declared) !== calculated)) {
+      return validation('Totales incongruentes', [{ field: 'totalApprovedAmount', message: 'no coincide con las líneas' }]);
+    }
+
+    const nextVersion = (claim.adjudicationVersion ?? (claim.approved === null ? 0 : 1)) + 1;
+    solicitudes.actualizar(claim.id, {
+      approved: asAmount(approvedTotal),
+      status: deniedTotal === 0 ? c('APPROVED', 'Aprobada') : approvedTotal === 0 ? c('REJECTED', 'Rechazada') : c('PARTIAL', 'Aprobada parcialmente'),
+      lineas: lines,
+      adjudicationVersion: nextVersion,
+      dispositionText: input.dispositionText,
+      adjudicatedAt: ahora(),
+      eobPublishedAt: null,
+    });
+    return { status: 201, body: { id: uuid(`adj-${claim.id}-${nextVersion}`) } };
+  });
+
+  router.post('/insurance-claims/:id/eob', (request) => {
+    const claim = solicitudes.get(request.params['id']!);
+    if (claim === undefined) return notFound('Solicitud no encontrada');
+    if (claim.approved === null) return preconditionFailed('Adjudicá la solicitud antes de publicar la EOB');
+    if (claim.eobPublishedAt !== null) return conflict('La EOB ya fue publicada');
+    solicitudes.actualizar(claim.id, { eobPublishedAt: ahora() });
+    return { status: 201, body: { id: uuid(`eob-${claim.id}`) } };
   });
 
   router.post('/insurance-claims/:id/disputes', (request) => {

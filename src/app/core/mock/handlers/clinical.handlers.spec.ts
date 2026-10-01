@@ -6,7 +6,6 @@ import { ESTADO, ESTUDIO, VERIFICACION_DX } from '../fixtures/conceptos';
 import { PACIENTE, PACIENTES } from '../fixtures/personas';
 import { MockRouter, type MockMethod, type MockReply } from '../mock-router';
 import { buscarUsuario, type MockUser } from '../mock-session';
-import { Coleccion } from '../mock-store';
 import { registrarClinica } from './clinical.handlers';
 import { registrarDiagnostico } from './diagnostics.handlers';
 import { registerMedicalNotes } from './medical-notes.handlers';

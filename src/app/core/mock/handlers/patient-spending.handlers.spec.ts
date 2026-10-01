@@ -51,6 +51,22 @@ describe('handlers de gastos del paciente: GET /patient-spending/me', () => {
     }
   });
 
+  it('no muestra un gasto de hoy hasta que llega su hora', () => {
+    const id = paciente.patientProfileId!;
+    const from = '2026-10-01';
+    const to = '2026-10-01';
+    const early = new Date(2026, 9, 1, 0, 0);
+    const late = new Date(2026, 9, 1, 23, 59);
+    const before = spendingMovementsFor(id, from, to, early);
+    const after = spendingMovementsFor(id, from, to, late);
+
+    expect(before).toEqual([]);
+    expect(after.length).toBeGreaterThan(0);
+    for (const item of after) {
+      expect(new Date(item.occurredAt).getTime()).toBeLessThanOrEqual(late.getTime());
+    }
+  });
+
   it('determinista — el mes no cambia según el rango que se pida', () => {
     const id = paciente.patientProfileId!;
     const soloMarzo = spendingMovementsFor(id, '2026-03-01', '2026-03-31', TODAY);

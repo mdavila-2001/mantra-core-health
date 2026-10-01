@@ -104,7 +104,7 @@ async function requestSyntheticDependent(page: Page): Promise<void> {
   const dialog = page.getByRole('dialog', { name: 'Registrar dependiente', exact: true });
   await dialog.getByRole('radio', { name: 'Por nombre', exact: true }).click();
   await expect(dialog.getByTestId('dependent-submit')).toBeDisabled();
-  await dialog.getByPlaceholder('Nombre y apellido').fill(SYNTHETIC_DEPENDENT.name);
+  await dialog.getByRole('textbox', { name: 'Buscar por nombre' }).fill(SYNTHETIC_DEPENDENT.name);
   const candidate = dialog.getByTestId('dependent-candidate').filter({ hasText: SYNTHETIC_DEPENDENT.name });
   await expect(candidate).toHaveCount(1);
   await expect(dialog.getByRole('status')).toContainText('1 cuenta encontrada');
