@@ -247,4 +247,38 @@ describe('PharmacyClient', () => {
     expect(requierePrescripcion).toBe(true);
     expect(unitAmount).toBe('68.00');
   });
+
+  it('edita un producto con PATCH y manda el cuerpo tal cual, `null` incluido (P47 §2)', () => {
+    const changes = { brandName: 'Amoxil', genericName: null, requiresPrescription: true };
+    let returned: string | null = null;
+    client
+      .updateProduct(FIXTURE_IDS.farmaciaAndina, FIXTURE_IDS.productoAmoxicilina, changes)
+      .subscribe((product) => (returned = product.id));
+
+    const req = http.expectOne(
+      (r) => r.url === `/pharmacies/${FIXTURE_IDS.farmaciaAndina}/products/${FIXTURE_IDS.productoAmoxicilina}`,
+    );
+    // El verbo es el que publica la API: con `POST` o `PUT` respondería 404 o 405.
+    expect(req.request.method).toBe('PATCH');
+    // `null` borra el dato y una clave ausente lo deja como está: el cliente no decide nada.
+    expect(req.request.body).toEqual(changes);
+    req.flush({ id: FIXTURE_IDS.productoAmoxicilina });
+
+    expect(returned).toBe(FIXTURE_IDS.productoAmoxicilina);
+  });
+
+  it('retira un producto con DELETE sobre la misma ruta que la edición (UC-24-09)', () => {
+    let outcome: boolean | null = null;
+    client
+      .retireProduct(FIXTURE_IDS.farmaciaAndina, FIXTURE_IDS.productoAmoxicilina)
+      .subscribe((reply) => (outcome = reply.ok));
+
+    const req = http.expectOne(
+      (r) => r.url === `/pharmacies/${FIXTURE_IDS.farmaciaAndina}/products/${FIXTURE_IDS.productoAmoxicilina}`,
+    );
+    expect(req.request.method).toBe('DELETE');
+    req.flush({ ok: true });
+
+    expect(outcome).toBe(true);
+  });
 });

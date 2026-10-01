@@ -188,11 +188,14 @@ export class PharmacyClient {
 
   /**
    * `PATCH /pharmacies/:pharmacyId/products/:productId` — edita un producto
-   * del catálogo: nombre, presentación, precio, categoría, descripción y si
-   * hoy lo tiene o no (`inStock`).
+   * del catálogo (P47).
    *
-   * **Sólo existe en el simulador** (P47): la API real no publica edición de
-   * productos. Devuelve el producto como lo lista la búsqueda.
+   * **La API real sólo persiste marca, genérico, concentración, empaque y
+   * receta** (P47 §2, desde el Hito 3) y devuelve el producto como lo lista la
+   * búsqueda. Precio, categoría, descripción, `inStock`, `status`, existencias
+   * e imágenes son extensión del simulador (P47 §3-5): contra la API real
+   * viajan igual y vuelven con un 400 (`forbidNonWhitelisted`), como ya pasa
+   * con `publishProduct`.
    */
   updateProduct(
     pharmacyId: string,

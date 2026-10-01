@@ -277,15 +277,15 @@ describe('/charts/notes · contrato tras mudar el handler', () => {
     return call<{ status: number; body: ClinicalNoteVersionRef }>('POST', '/charts/notes', body);
   }
 
-  it('las cinco rutas pertenecen a notas; clínica deja de registrar notas y órdenes', () => {
+  it('las cuatro rutas pertenecen a notas; clínica deja de registrar notas y órdenes', () => {
     const notesRouter = new MockRouter();
     registerMedicalNotes(notesRouter);
-    // C1 sumó la lista y la firma a las tres de C0.
+    // C1 sumó la lista y la firma a las dos de C0. El `POST …/versions` legado se
+    // retiró (Hito 3): la API sólo publica `PUT` para agregar una versión.
     expect(notesRouter.rutas()).toEqual([
       { method: 'GET', pattern: '/charts/notes' },
       { method: 'POST', pattern: '/charts/notes' },
       { method: 'PUT', pattern: '/charts/notes/:id/versions' },
-      { method: 'POST', pattern: '/charts/notes/:id/versions' },
       { method: 'POST', pattern: '/charts/notes/:id/versions/:versionId/sign' },
     ]);
 
@@ -413,7 +413,8 @@ describe('/charts/notes · contrato tras mudar el handler', () => {
     expect(enmendada.status).toBe(201);
   });
 
-  for (const method of ['PUT', 'POST'] as const) {
+  // La API sólo publica `PUT` para agregar una versión; el `POST` legado se retiró (Hito 3).
+  for (const method of ['PUT'] as const) {
     it(`${method} agrega una versión, conserva la nota y persiste el cambio`, () => {
       const initial = createNote({ patientProfileId: PACIENTE.id, subjectiveText: 'Texto inicial sintético' });
       const response = call<{ status: number; body: ClinicalNoteVersionRef }>(
