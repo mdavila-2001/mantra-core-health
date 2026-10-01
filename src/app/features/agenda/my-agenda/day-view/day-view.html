@@ -293,6 +293,19 @@
                 <p class="dia__estado">
                   <app-status-seal [variant]="bloque.statusVariant" [label]="bloque.estado" />
                 </p>
+                <!-- v4.2.40 · el servicio, si la cita no es una consulta: qué es y
+                     cuánto puede durar. El bloque ya mide lo que se reservó (el
+                     máximo); el mínimo dice cuándo podría quedar libre antes. -->
+                @if (bloque.cita?.service; as servicio) {
+                  <p class="dia__motivo" data-testid="dia-servicio">
+                    {{ servicio.name }} · dura
+                    {{
+                      servicio.minDurationMinutes === servicio.maxDurationMinutes
+                        ? servicio.maxDurationMinutes + ' min'
+                        : servicio.minDurationMinutes + '–' + servicio.maxDurationMinutes + ' min'
+                    }}
+                  </p>
+                }
                 <!-- El motivo se muestra acá y NO en la agenda de la
                      organización: para quien va a recibir a esa persona en diez
                      minutos, saber por qué viene es el trabajo. -->

@@ -315,7 +315,9 @@ export function registrarAgenda(router: MockRouter): void {
       resourceId: cupo.resourceId,
       bookableSlotId: cupo.id,
       appointmentId: estadoFinal === 'BK-CONFIRMED' ? nuevoId('appointment') : null,
-      typeConceptId: TIPO_CITA['APT-PRIMERA']!,
+      // Un servicio es un procedimiento para la agenda (la API lo clasifica así): es lo
+      // que la pinta con su tipología y no como una consulta más.
+      typeConceptId: delServicio === undefined ? TIPO_CITA['APT-PRIMERA']! : ACTIVIDAD['ACT-PROCEDIMIENTO']!,
       startAt: cupo.startAt,
       endAt: cupo.endAt,
       statusConceptId: ESTADO_RESERVA[estadoFinal]!,

@@ -214,6 +214,9 @@
                     }
                   </p>
                 }
+                @if (turno.servicio !== '') {
+                  <p class="turnos__motivo" data-testid="mis-citas-servicio">{{ turno.servicio }}</p>
+                }
                 @if (turno.motivo !== '') {
                   <p class="turnos__motivo">Motivo de consulta: {{ turno.motivo }}</p>
                 }
@@ -343,6 +346,9 @@
                               Tu médico te citó de nuevo por una consulta anterior.
                             }
                           </p>
+                        }
+                        @if (turno.servicio !== '') {
+                          <p class="turnos__motivo" data-testid="mis-citas-servicio">{{ turno.servicio }}</p>
                         }
                         @if (turno.motivo !== '') {
                           <p class="turnos__motivo">{{ turno.motivo }}</p>

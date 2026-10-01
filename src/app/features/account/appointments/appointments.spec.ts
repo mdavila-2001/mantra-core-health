@@ -1286,6 +1286,73 @@ describe('Appointments', () => {
    * como el turno de otro—, y la salida natural es cancelarlo. El sello y la
    * frase son lo que evita eso.
    */
+  describe('el servicio reservado en «Mis citas» (v4.2.40)', () => {
+    /** Una cita futura de un servicio, con lo que el paciente aceptó al reservar. */
+    function deServicio(extra: Record<string, unknown> = {}): Record<string, unknown> {
+      return {
+        ...cita('b-servicio', CONFIRMADO),
+        startAt: '2099-03-01T13:00:00.000Z',
+        endAt: '2099-03-01T13:45:00.000Z',
+        service: {
+          offeringId: 'of-1',
+          name: 'Ecocardiograma Doppler',
+          price: '480.00',
+          minDurationMinutes: 30,
+          maxDurationMinutes: 45,
+          requiresApproval: false,
+        },
+        ...extra,
+      };
+    }
+
+    function arrancarCon(citas: unknown[]): void {
+      montar();
+      responderArranque(citas);
+      responderTerminologia([
+        { conceptId: CONFIRMADO, code: 'BOOKING_CONFIRMED', display: 'Booking confirmed' },
+      ]);
+    }
+
+    const linea = (): HTMLElement | null =>
+      (fixture.nativeElement as HTMLElement).querySelector('[data-testid="mis-citas-servicio"]');
+
+    it('la fila de un servicio dice cuál es y cuánto puede durar', () => {
+      arrancarCon([deServicio()]);
+
+      expect(linea()?.textContent?.trim()).toBe('Ecocardiograma Doppler · 30–45 min');
+    });
+
+    it('con mínimo y máximo iguales dice un solo número', () => {
+      arrancarCon([
+        deServicio({
+          service: {
+            offeringId: 'of-1',
+            name: 'Electrocardiograma',
+            price: '120.00',
+            minDurationMinutes: 20,
+            maxDurationMinutes: 20,
+            requiresApproval: false,
+          },
+        }),
+      ]);
+
+      expect(linea()?.textContent?.trim()).toBe('Electrocardiograma · 20 min');
+    });
+
+    it('una consulta no lleva esa línea', () => {
+      arrancarCon([{ ...cita('b-consulta', CONFIRMADO), startAt: '2099-03-01T13:00:00.000Z', endAt: '2099-03-01T13:30:00.000Z' }]);
+
+      expect(linea()).toBeNull();
+    });
+
+    it('se guarda en el turno, para poder buscarlo y mostrarlo igual en el calendario', () => {
+      arrancarCon([deServicio()]);
+
+      const turnos = interno<() => readonly { servicio: string }[]>('todosLosTurnos')();
+      expect(turnos[0].servicio).toBe('Ecocardiograma Doppler · 30–45 min');
+    });
+  });
+
   describe('el sello de reconsulta (C4)', () => {
     /** Una cita futura que salió de una consulta del 12 de septiembre. */
     function reconsulta(extra: Record<string, unknown> = {}): Record<string, unknown> {

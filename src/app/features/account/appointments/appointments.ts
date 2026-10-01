@@ -209,6 +209,11 @@ interface TurnoVisible {
   readonly sede: string;
   readonly motivo: string;
   /**
+   * El servicio que se pidió y cuánto dura, en una línea (v4.2.40). Vacío para una
+   * consulta. Sale de lo que se aceptó al reservar, no de la oferta de hoy.
+   */
+  readonly servicio: string;
+  /**
    * Por qué te cambiaron el turno, ya redactado (corrección #14).
    *
    * Vacío cuando el último cambio no exigía motivo —o cuando el turno es
@@ -289,6 +294,22 @@ interface HorarioVisible {
    * con la oferta, la sede y el inicio.
    */
   readonly ofertaId?: string;
+}
+
+/**
+ * «Ecocardiograma Doppler · 30–45 min», o `''` si la cita es una consulta.
+ *
+ * Con mínimo y máximo iguales dice un solo número. El rango es honesto: cuánto
+ * tarda depende de cada paciente, y el horario ya reservó el máximo.
+ */
+function servicioEnUnaLinea(cita: Booking): string {
+  const servicio = cita.service;
+  if (servicio === undefined) return '';
+  const duracion =
+    servicio.minDurationMinutes === servicio.maxDurationMinutes
+      ? `${servicio.maxDurationMinutes} min`
+      : `${servicio.minDurationMinutes}–${servicio.maxDurationMinutes} min`;
+  return `${servicio.name} · ${duracion}`;
 }
 
 /** El valor de «¿Qué querés pedir?» que significa consulta: lo de siempre. */
@@ -1811,6 +1832,7 @@ export class Appointments {
       agenda: this.nombreDeLaAgenda(resourceId),
       sede: this.nombreDeLaSede(resourceId),
       motivo: cita.reasonText ?? '',
+      servicio: servicioEnUnaLinea(cita),
       reprogramadoDesde: cita.rescheduledFrom ?? null,
       avisoDelCambio: avisoDelCambio(cita),
       cambioCuando: cita.statusReason?.changedAt ?? null,

@@ -331,7 +331,29 @@ export interface Booking {
   readonly followUpOf?: FollowUpOriginRef | null;
   /** La reconsulta que salió de ésta, si ya se agendó una (C4). */
   readonly followUpBookingId?: string | null;
+  /**
+   * El servicio que se reservó, si la cita no es una consulta (v4.2.40).
+   *
+   * Sale de la copia **congelada al reservar** —lo que el paciente aceptó—, no de
+   * la oferta de hoy. Ausente es «es una consulta» o «no te corresponde verlo»: el
+   * nombre de un servicio puede revelar un dato de salud, así que la API lo
+   * entrega con la misma compuerta que el motivo de consulta.
+   */
+  readonly service?: BookingService;
   readonly createdAt: Date;
+}
+
+/** Lo que el paciente aceptó al reservar un servicio, congelado (`BookingServiceDto`). */
+export interface BookingService {
+  readonly offeringId: string;
+  readonly name: string;
+  readonly price: string;
+  readonly currencyConceptId?: string;
+  /** Lo mínimo que podía tardar. Sólo informa. */
+  readonly minDurationMinutes: number;
+  /** Lo que se reservó en la agenda. */
+  readonly maxDurationMinutes: number;
+  readonly requiresApproval: boolean;
 }
 
 /**

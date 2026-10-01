@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { registrarAgenda } from './scheduling.handlers';
 import { registrarServiciosDeAgenda } from './service-offerings.handlers';
 import { cupos, reservas } from '../fixtures/agenda';
-import { ESTADO, ESTADO_RESERVA } from '../fixtures/conceptos';
+import { ACTIVIDAD, ESTADO, ESTADO_RESERVA } from '../fixtures/conceptos';
 import { MEDICA } from '../fixtures/personas';
 import { ofertas } from '../fixtures/servicios-ofrecidos';
 import { MockRouter, type MockMethod } from '../mock-router';
@@ -251,6 +251,9 @@ describe('handlers de servicios con duración dinámica', () => {
       expect(reserva.body.statusConceptId).toBe(ESTADO_RESERVA['BK-CONFIRMED']);
       const guardada = reservas.todos().find((r) => r.bookableSlotId === body.bookableSlotId)!;
       expect(guardada.service).toMatchObject({ name: 'Ecocardiograma Doppler', price: '480.00', minDurationMinutes: 30, maxDurationMinutes: 45 });
+      // Un servicio es un procedimiento para la agenda, como lo clasifica la API: es lo que
+      // la pinta con su tipología y no como una consulta más.
+      expect(guardada.typeConceptId).toBe(ACTIVIDAD['ACT-PROCEDIMIENTO']);
     });
 
     it('un servicio CON aprobación requerida queda pendiente de aceptación', () => {
