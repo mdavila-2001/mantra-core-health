@@ -5,14 +5,18 @@
   display: block;
 }
 
+/* `minmax(0, 1fr)`: una columna `auto` crece hasta el ancho mínimo de la
+   tabla y empuja el informe fuera de su tarjeta. */
 .person-report {
   display: grid;
   gap: var(--sp-4);
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .person-report__head {
   display: grid;
   gap: var(--sp-3);
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .person-report__title {

@@ -81,8 +81,8 @@ for (const ancho of [1440, 390]) {
 
     await page.getByRole('button', { name: 'Página 2' }).click();
     await expect(page.locator('.catalog__plan-title')).toHaveCount(1);
-    const segundo = (await page.locator('.catalog__plan-title').first().innerText()).trim();
-    expect(segundo).not.toBe(primero);
+    // Con reintento: el título se repinta un instante después del clic.
+    await expect(page.locator('.catalog__plan-title').first()).not.toHaveText(primero);
     await expect(page.locator('.pagination__range')).toContainText('2–2 de');
     await page.screenshot({ path: join(SALIDA, `${ancho}-3-catalogo-pagina-2.png`), animations: 'disabled' });
     await sinScrollLateral(page, '.catalog');
