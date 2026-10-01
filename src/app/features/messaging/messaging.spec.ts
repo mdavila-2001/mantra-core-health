@@ -240,6 +240,24 @@ describe('Messaging', () => {
     abierta.flush({ id: 'c-7' });
   });
 
+  it('?escribirA= abre el hilo reemplazando la entrada, para que «Volver» salga del chat', async () => {
+    const router = TestBed.inject(Router);
+    const navegar = vi.spyOn(router, 'navigate');
+    await router.navigateByUrl('/messaging?escribirA=broker-oriente');
+    montar();
+
+    http.expectOne('/community/profiles/me').flush(perfilPropio);
+    fixture.detectChanges();
+    http
+      .expectOne('/community/profiles/by-slug/broker-oriente')
+      .flush(ficha('pp-7', 'broker-oriente'));
+    http
+      .expectOne((r) => r.url === '/community/conversations' && r.method === 'POST')
+      .flush({ id: 'c-7' });
+
+    expect(navegar).toHaveBeenCalledWith(['/messaging', 'c-7'], { replaceUrl: true });
+  });
+
   it('el filtro «No leídos» deja sólo las que tienen pendientes', () => {
     conBandeja([
       conversacion('c-1', [{ profileId: 'pp-2', displayName: 'Con pendientes' }], 3),

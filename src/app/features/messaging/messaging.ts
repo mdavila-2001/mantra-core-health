@@ -205,7 +205,7 @@ export class Messaging {
       if (slug === null || this.store.perfil() === null) return;
       untracked(() => {
         this.slugPendiente.set(null);
-        this.abrirConSlug(slug);
+        this.abrirDesdeEnlace(slug);
       });
     });
 
@@ -336,6 +336,22 @@ export class Messaging {
     this.store.escribirA(slug, (conversationId) => {
       this.limpiarBusqueda();
       void this.router.navigate(['/messaging', conversationId]);
+    });
+  }
+
+  /**
+   * Abre el hilo pedido por `?escribirA=` **reemplazando** esa entrada del
+   * historial.
+   *
+   * Con un `navigate` común quedaban dos entradas de chat apiladas —
+   * `/messaging?escribirA=…` y `/messaging/<id>`—, y la flecha «Volver» caía en
+   * la primera, que reabría el hilo: quien tocaba «Hablar con el broker» no
+   * podía salir del chat. Reemplazando, atrás vuelve a la ficha de donde vino.
+   */
+  private abrirDesdeEnlace(slug: string): void {
+    this.store.escribirA(slug, (conversationId) => {
+      this.limpiarBusqueda();
+      void this.router.navigate(['/messaging', conversationId], { replaceUrl: true });
     });
   }
 }
