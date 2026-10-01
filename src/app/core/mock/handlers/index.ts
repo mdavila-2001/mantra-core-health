@@ -1,5 +1,6 @@
 import { MockRouter } from '../mock-router';
 import { registrarAgenda } from './scheduling.handlers';
+import { registrarServiciosDeAgenda } from './service-offerings.handlers';
 import { registrarArchivos } from './files.handlers';
 import { registrarAuth } from './auth.handlers';
 import { registrarClinica } from './clinical.handlers';
@@ -47,6 +48,7 @@ export function crearRouterSimulado(): MockRouter {
   registrarPerfiles(router);
   registrarFirmaYSello(router);
   registrarAgenda(router);
+  registrarServiciosDeAgenda(router);
   registrarPracticas(router);
   registrarClinica(router);
   registerMedicalNotes(router);

@@ -36,3 +36,37 @@ export const CAMPAIGN_PARAM = 'campaign';
 
 /** El título de esa campaña, sólo para mostrarlo: el código solo no le dice nada a quien agenda. */
 export const CAMPAIGN_TITLE_PARAM = 'campaignTitle';
+
+/**
+ * Query param con el perfil del profesional con quien se quiere pedir (v4.2.40).
+ *
+ * Lo pone la ficha del profesional —«Pedir turno» en uno de sus servicios— y lo lee
+ * «Agendar una cita» para dejar elegido con quién, sin que el paciente tenga que
+ * buscarlo de nuevo. Vive acá, en el archivo chico, por la misma razón que
+ * {@link CAMPAIGN_PARAM}: la ficha no puede importar el componente entero.
+ */
+export const PROFESSIONAL_PARAM = 'profesional';
+
+/** Query param con la oferta de servicio que se quiere pedir, junto con {@link PROFESSIONAL_PARAM}. */
+export const SERVICE_PARAM = 'servicio';
+
+/**
+ * La ruta de «Agendar una cita» con el profesional —y, si se quiere, el servicio—
+ * ya elegidos.
+ *
+ * @param practitionerProfileId - Con quién se pide.
+ * @param offeringId - Qué servicio; ausente ≡ una consulta.
+ */
+export function pedirConProfesionalRoute(practitionerProfileId: string, offeringId?: string): {
+  readonly path: string;
+  readonly queryParams: Record<string, string>;
+} {
+  return {
+    path: MIS_TURNOS_ROUTE,
+    queryParams: {
+      seccion: 'pedir',
+      [PROFESSIONAL_PARAM]: practitionerProfileId,
+      ...(offeringId === undefined ? {} : { [SERVICE_PARAM]: offeringId }),
+    },
+  };
+}
