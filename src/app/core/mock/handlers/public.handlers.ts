@@ -1,6 +1,7 @@
 import { DirectorioOficial, NOMBRE_DE_FUENTE, type ClaseOficial, type FichaOficial } from '../directorio-oficial';
 import { ETIQUETA_DE_PRECISION, FARMACIAS_DEL_CORPUS } from '../fixtures/bolivia-eje-central';
 import { categoriaPorCodigo } from '../fixtures/categorias-publicas';
+import { CATALOGO_MEDICAMENTOS } from '../fixtures/catalogo-medicamentos.generated';
 import { comentarios, CONCEPTO, publicaciones, resenas, vitrinaPorSlug, vitrinas, type VitrinaSimulada } from '../fixtures/comunidad';
 import { MEDICAMENTO, displayDe } from '../fixtures/conceptos';
 import { afiliaciones, PROFESIONALES, profesionalPorId } from '../fixtures/personas';
@@ -127,19 +128,55 @@ function distanciaKm(aLat: number, aLng: number, bLat: number, bLng: number): nu
   return Math.round(2 * r * Math.asin(Math.sqrt(h)) * 10) / 10;
 }
 
-const GRUPOS_TERAPEUTICOS = ['Cardiovascular', 'Antidiabéticos', 'Antibióticos', 'Analgésicos', 'Digestivo', 'Respiratorio', 'Hormonas', 'Sistema nervioso', 'Antialérgicos', 'Suplementos'];
+/**
+ * Grupo anatómico principal de la clasificación ATC de la OMS (primer nivel),
+ * en castellano. Es el grupo terapéutico de la vitrina: sale del código, no se
+ * asigna a mano.
+ */
+const GRUPO_ATC: Readonly<Record<string, string>> = {
+  A: 'Tracto alimentario y metabolismo',
+  B: 'Sangre y órganos hematopoyéticos',
+  C: 'Sistema cardiovascular',
+  H: 'Preparados hormonales sistémicos',
+  J: 'Antiinfecciosos para uso sistémico',
+  M: 'Sistema musculoesquelético',
+  N: 'Sistema nervioso',
+  R: 'Sistema respiratorio',
+};
 
+/**
+ * El ATC nivel 5 de cada medicamento del vademécum, tal como lo traen sus
+ * registros sanitarios en el catálogo universal (CIMA/INVIMA,
+ * `catalogo-medicamentos.generated.ts`). Antes era un prefijo con el índice
+ * pegado («C0900», «A1002»): códigos que no existen.
+ */
+function atcDe(code: string): string {
+  const atc = CATALOGO_MEDICAMENTOS.find((p) => p.medicationCode === code)?.atc[0];
+  if (atc === undefined) throw new Error(`El catálogo universal no trae el ATC de ${code}`);
+  return atc;
+}
+
+/*
+ * Sin marcas: las marcas que se venden en Bolivia salen del registro de AGEMED,
+ * que todavía no se pudo descargar. Antes se inventaban «<genérico> Bagó» e
+ * «<genérico> Inti» — laboratorios reales con productos que no fabrican. La
+ * vitrina se busca por principio activo (DCI), que es lo que dice la receta.
+ *
+ * Los precios son la oferta SIMULADA de las farmacias de demostración de la
+ * maqueta: no hay precio oficial de medicamentos en Bolivia, cada farmacia
+ * publica el suyo.
+ */
 const MEDICAMENTOS_VITRINA = Object.entries(MEDICAMENTO).map(([code, conceptId], i) => {
   const display = displayDe(conceptId);
   const generico = display.split(' ')[0]!;
-  const grupo = GRUPOS_TERAPEUTICOS[[0, 0, 1, 0, 2, 3, 3, 4, 5, 6, 7, 8, 9, 2, 1][i] ?? 0]!;
+  const atcCode = atcDe(code);
   const precio = 8 + i * 4.5;
   return {
     conceptId,
-    atcCode: `${['C09', 'C09', 'A10', 'C10', 'J01', 'M01', 'N02', 'A02', 'R03', 'H03', 'N06', 'R06', 'B03', 'J01', 'A10'][i]}${String(i).padStart(2, '0')}`,
+    atcCode,
     genericName: generico,
-    therapeuticGroup: grupo,
-    brands: [`${generico} Bagó`, `${generico} Inti`, ...(i % 2 === 0 ? [`${generico} Genérico`] : [])],
+    therapeuticGroup: GRUPO_ATC[atcCode[0]!] ?? 'Otros',
+    brands: [] as string[],
     presentations: [display.replace(`${generico} `, '')],
     requiresPrescription: ![5, 6, 11, 12].includes(i),
     priceFrom: precio.toFixed(2),
@@ -181,7 +218,7 @@ function productosDeFarmacia(slug: string) {
     return {
       id: uuid(`public-product-${slug}-${m.code}`),
       genericName: m.genericName,
-      brandName: m.brands[(base + i) % m.brands.length]!,
+      brandName: null,
       presentation: m.presentations[0] ?? null,
       therapeuticGroup: m.therapeuticGroup,
       price: (desde + ((hasta - desde) * paso) / 4).toFixed(2),
@@ -703,7 +740,7 @@ export function registrarPublico(router: MockRouter, directorio: DirectorioOfici
         latitude: f.lat,
         longitude: f.lng,
         distanceKm: distanciaKm(lat, lng, f.lat, f.lng),
-        brandName: m.brands[i % m.brands.length]!,
+        brandName: null,
         presentation: m.presentations[0]!,
         price: (Number(m.priceFrom) * (1 + i * 0.2)).toFixed(2),
         currency: 'BOB',

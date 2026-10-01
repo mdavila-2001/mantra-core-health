@@ -91,6 +91,18 @@ describe('directorio oficial en el buscador de la maqueta', () => {
     expect(productos.items).toEqual([]);
   });
 
+  it('la vitrina de medicamentos lleva el ATC real del catálogo universal y no inventa marcas', async () => {
+    const get = montar();
+    const { items } = await get<{ items: readonly { genericName: string; atcCode: string; brands: readonly string[]; therapeuticGroup: string }[] }>(
+      '/public/medications',
+    );
+    expect(items.length).toBe(15);
+    expect(items.every((m) => /^[A-Z]\d{2}[A-Z]{2}\d{2}$/.test(m.atcCode))).toBe(true);
+    expect(items.find((m) => m.genericName === 'Enalapril')?.atcCode).toBe('C09AA02');
+    expect(items.find((m) => m.genericName === 'Enalapril')?.therapeuticGroup).toBe('Sistema cardiovascular');
+    expect(items.every((m) => m.brands.length === 0)).toBe(true);
+  });
+
   it('«cercanos» encuentra farmacias reales con coordenada alrededor de la Plaza Murillo', async () => {
     const get = montar();
     const cerca = await get<{ items: readonly Resultado[] }>('/public/nearby', {
