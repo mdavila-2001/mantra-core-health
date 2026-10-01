@@ -24,6 +24,7 @@ import { FormActions } from '../../shared/components/organisms/form-actions/form
 import { PageHeader } from '../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../shared/components/organisms/view-state-host/view-state-host';
 import { InsurerProfileCard } from '../insurance/insurer-profile-card/insurer-profile-card';
+import { OrganizationLogo } from './organization-logo/organization-logo';
 
 /**
  * El panel de la organización (TP-1).
@@ -74,6 +75,7 @@ import { InsurerProfileCard } from '../insurance/insurer-profile-card/insurer-pr
     FormField,
     Input,
     InsurerProfileCard,
+    OrganizationLogo,
     PageHeader,
     ViewStateHost,
   ],

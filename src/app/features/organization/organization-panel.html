@@ -131,6 +131,14 @@
         }
       </app-card>
 
+      <!-- ─── Logo ──────────────────────────────────────────────────────────
+           El mismo para todos los tipos: farmacia, laboratorio, clínica, aseguradora. -->
+      <app-organization-logo
+        [tenantId]="org.id"
+        [nombre]="org.tradeName || org.legalName"
+        [puedeEditar]="puedeAdministrar()"
+      />
+
       <!-- ─── Ficha de la aseguradora ─────────────────────────────────────
            Regulador, canales de contacto y verificación. Vivía como cabecera
            del catálogo de seguros; su lugar es el perfil de la organización. -->

@@ -337,6 +337,35 @@ export class DirectoryClient {
   }
 
   /**
+   * `GET /tenants/{id}/logo` — el archivo que es el logo de la organización.
+   *
+   * **Contrato de la maqueta, todavía sin API** (PENDIENTES-BACKEND P58): hoy la imagen
+   * vive en el perfil público de la organización y sólo la escribe un administrador de
+   * plataforma. Ningún componente lo llama: pasan por `LogoDeOrganizacionClient`.
+   */
+  getOrganizationLogo(tenantId: string): Observable<{ readonly fileId: string | null }> {
+    return this.http.get<{ readonly fileId: string | null }>(this.url(`/tenants/${tenantId}/logo`), {
+      headers: deLaOrganizacion(tenantId),
+    });
+  }
+
+  /**
+   * `PUT /tenants/{id}/logo` — deja el archivo ya subido como logo, o lo quita con `null`.
+   *
+   * Sólo owner o admin de esa organización. Mismo estado que {@link getOrganizationLogo}.
+   */
+  setOrganizationLogo(
+    tenantId: string,
+    fileId: string | null,
+  ): Observable<{ readonly fileId: string | null }> {
+    return this.http.put<{ readonly fileId: string | null }>(
+      this.url(`/tenants/${tenantId}/logo`),
+      { fileId },
+      { headers: deLaOrganizacion(tenantId) },
+    );
+  }
+
+  /**
    * `GET /tenants/{id}/practitioner-requests` — quiénes piden atender acá (TP-2).
    *
    * Sólo para quien administra la organización; al resto la API responde 403.

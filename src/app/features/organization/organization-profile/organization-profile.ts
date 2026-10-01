@@ -11,6 +11,7 @@ import { Card } from '../../../shared/components/molecules/card/card';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { InsurerProfileCard } from '../../insurance/insurer-profile-card/insurer-profile-card';
+import { OrganizationLogo } from '../organization-logo/organization-logo';
 import { PharmacyProfile } from '../pharmacy-profile/pharmacy-profile';
 
 /** Tipo de organización con ficha propia en «Mi perfil». */
@@ -39,7 +40,7 @@ const PROFILE_TITLE_BY_TENANT_TYPE: Readonly<Record<string, string>> = {
  */
 @Component({
   selector: 'app-organization-profile',
-  imports: [Card, InsurerProfileCard, PageHeader, PharmacyProfile, ViewStateHost],
+  imports: [Card, InsurerProfileCard, OrganizationLogo, PageHeader, PharmacyProfile, ViewStateHost],
   templateUrl: './organization-profile.html',
   styleUrl: './organization-profile.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -74,10 +75,9 @@ export class OrganizationProfile {
   });
 
   constructor() {
-    // La farmacia trae su propia carga; los demás tipos leen el directorio.
-    if (!this.esFarmacia()) {
-      this.cargar();
-    }
+    // La ficha de la farmacia trae su propia carga, pero su logo, como el de todos los tipos,
+    // sale de la organización que devuelve el directorio.
+    this.cargar();
   }
 
   protected cargar(): void {
