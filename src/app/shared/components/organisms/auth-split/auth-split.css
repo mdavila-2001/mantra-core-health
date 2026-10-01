@@ -871,6 +871,34 @@
   }
 }
 
+/* Las altas públicas usan una superficie tranquila en claro. El acceso y el
+   resto de escenas conservan su identidad visual; la variante se activa solo
+   donde la vista enlaza plainSurface. En oscuro no hay reglas para esta clase,
+   así que conserva el escenario que ya tenía. */
+:host-context(:root[data-tema='claro']) .auth-split--plain {
+  grid-template-columns: minmax(0, 1fr);
+  background: var(--bg-surface);
+}
+
+:host-context(:root[data-tema='claro']) .auth-split--plain .auth-split__stage,
+:host-context(:root[data-tema='claro']) .auth-split--plain .auth-split__brand,
+:host-context(:root[data-tema='claro']) .auth-split--plain .auth-split__aurora {
+  display: none;
+}
+
+:host-context(:root[data-tema='claro']) .auth-split--plain .auth-split__panel {
+  grid-area: 1 / 1 / 2 / 2;
+}
+
+:host-context(:root[data-tema='claro']) .auth-split--plain .auth-split__slot--wide {
+  max-width: none;
+}
+
+:host-context(:root[data-tema='claro']) .auth-split--plain .auth-split__slot::before {
+  display: none;
+  content: none;
+}
+
 /* Con «reducir movimiento» se apagan también las dos piezas de esta plantilla
    que laten con el monitor. El escenario apaga lo suyo en su propia hoja. */
 @media (prefers-reduced-motion: reduce) {
