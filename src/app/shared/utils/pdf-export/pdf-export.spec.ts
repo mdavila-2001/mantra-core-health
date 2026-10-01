@@ -230,6 +230,7 @@ let buildPdfDocument: typeof import('./pdf-export').buildPdfDocument;
 let buildBlocksPdf: typeof import('./pdf-export').buildBlocksPdf;
 let exportElementToPdf: typeof import('./pdf-export').exportElementToPdf;
 let establecerLogoDeDocumentos: typeof import('./pdf-logo').establecerLogoDeDocumentos;
+let establecerFirmaDeDocumentos: typeof import('./pdf-firma').establecerFirmaDeDocumentos;
 
 /** Un elemento con encabezado, párrafo y una tabla de dos filas. */
 function elementoDeEjemplo(): HTMLElement {
@@ -287,6 +288,8 @@ beforeEach(async () => {
   vi.resetModules();
   ({ buildPdfDocument, buildBlocksPdf, exportElementToPdf } = await import('./pdf-export'));
   ({ establecerLogoDeDocumentos } = await import('./pdf-logo'));
+  ({ establecerFirmaDeDocumentos } = await import('./pdf-firma'));
+  establecerFirmaDeDocumentos(null);
   DocumentoFalso.fallarAlDibujarImagenes = false;
   establecerLogoDeDocumentos(null);
 });
@@ -529,6 +532,147 @@ describe('el logo del consultorio en el membrete', () => {
 
     expect(ultimoDocumento().llamadas.addImage).toHaveLength(1);
     expect(yDe('Una línea')).toBe(sinLogo);
+  });
+});
+
+describe('el bloque de firma y sello del pie', () => {
+  const PNG = 'data:image/png;base64,AAAA';
+  const imagen = (ancho: number, alto: number) => ({
+    dataUrl: PNG,
+    formato: 'PNG' as const,
+    ancho,
+    alto,
+  });
+  const FIRMA_COMPLETA = {
+    nombre: 'Dra. Valeria Rojas',
+    matricula: 'M-1234',
+    firma: imagen(300, 100),
+    sello: imagen(160, 160),
+  };
+  const SIN_IMAGENES = { nombre: 'Dra. Valeria Rojas', matricula: 'M-1234', firma: null, sello: null };
+
+  const CUERPO = [{ kind: 'paragraph' as const, text: 'Una línea' }];
+  const yDe = (texto: string): number =>
+    ultimoDocumento().llamadas.text.find(([linea]) => linea === texto)![2];
+  const hay = (texto: string): boolean =>
+    ultimoDocumento().llamadas.text.some(([linea]) => linea === texto);
+
+  it('sin firma en la sesión ni en el documento no dibuja ningún bloque', () => {
+    buildBlocksPdf(CUERPO, { title: 'Receta' });
+
+    expect(hay('Matrícula M-1234')).toBe(false);
+    expect(ultimoDocumento().llamadas.addImage).toHaveLength(0);
+  });
+
+  it('con firma e imagen dibuja las dos cajas, la línea, el nombre y la matrícula', () => {
+    buildBlocksPdf(CUERPO, { title: 'Receta', firma: FIRMA_COMPLETA });
+
+    const imagenes = ultimoDocumento().llamadas.addImage;
+    expect(imagenes).toHaveLength(2);
+    const [firma, sello] = imagenes;
+    // La firma y el sello caben en sus cajas fijas (150×56 y 56×56) sin estirarse.
+    expect(firma!.ancho).toBeLessThanOrEqual(150 + 1e-9);
+    expect(firma!.alto).toBeLessThanOrEqual(56 + 1e-9);
+    expect(sello!.ancho).toBeLessThanOrEqual(56 + 1e-9);
+    expect(sello!.alto).toBeLessThanOrEqual(56 + 1e-9);
+    expect(firma!.ancho / firma!.alto).toBeCloseTo(3, 5);
+    // El sello va al lado de la firma, a la derecha.
+    expect(sello!.x).toBeGreaterThan(firma!.x + 150 - 1e-9);
+    expect(hay('Dra. Valeria Rojas')).toBe(true);
+    expect(hay('Matrícula M-1234')).toBe(true);
+    // Nombre y matrícula van debajo de las imágenes.
+    expect(yDe('Dra. Valeria Rojas')).toBeGreaterThan(firma!.y + firma!.alto);
+    expect(yDe('Matrícula M-1234')).toBeGreaterThan(yDe('Dra. Valeria Rojas'));
+  });
+
+  it('sin imágenes el bloque sale igual, con la línea de firma y sin ninguna imagen', () => {
+    buildBlocksPdf(CUERPO, { title: 'Receta', firma: SIN_IMAGENES });
+
+    expect(ultimoDocumento().llamadas.addImage).toHaveLength(0);
+    expect(hay('Matrícula M-1234')).toBe(true);
+    // Una línea corta (la de la firma), no un filete de lado a lado.
+    const corta = ultimoDocumento().llamadas.line.filter(([x1, , x2]) => x2 - x1 === 150);
+    expect(corta).toHaveLength(1);
+  });
+
+  it('sin matrícula cargada imprime el nombre y no inventa un número', () => {
+    buildBlocksPdf(CUERPO, { title: 'Receta', firma: { ...SIN_IMAGENES, matricula: null } });
+
+    expect(hay('Dra. Valeria Rojas')).toBe(true);
+    expect(
+      ultimoDocumento().llamadas.text.some(([linea]) => linea.startsWith('Matrícula')),
+    ).toBe(false);
+  });
+
+  it('no mueve nada de lo escrito antes: el contenido queda donde estaba', () => {
+    buildBlocksPdf(CUERPO, { title: 'Receta', subtitle: 'Bajada' });
+    const antes = { titulo: yDe('Receta'), bajada: yDe('Bajada'), cuerpo: yDe('Una línea') };
+
+    buildBlocksPdf(CUERPO, { title: 'Receta', subtitle: 'Bajada', firma: FIRMA_COMPLETA });
+    const despues = { titulo: yDe('Receta'), bajada: yDe('Bajada'), cuerpo: yDe('Una línea') };
+
+    expect(despues).toEqual(antes);
+  });
+
+  it('va al pie de la página: a la misma altura sin importar cuánto contenido haya', () => {
+    buildBlocksPdf(CUERPO, { title: 'Receta', firma: FIRMA_COMPLETA });
+    const conPoco = yDe('Matrícula M-1234');
+
+    buildBlocksPdf(
+      Array.from({ length: 30 }, (_, i) => ({ kind: 'paragraph' as const, text: `Línea ${i}` })),
+      { title: 'Receta', firma: FIRMA_COMPLETA },
+    );
+
+    expect(yDe('Matrícula M-1234')).toBe(conPoco);
+  });
+
+  it('si el contenido llega hasta el pie, el bloque pasa a una página nueva sin pisarlo', () => {
+    const lineas = (n: number) =>
+      Array.from({ length: n }, (_, i) => ({ kind: 'paragraph' as const, text: `Línea ${i}` }));
+    const paginas = (n: number, firma: typeof FIRMA_COMPLETA | null): number => {
+      buildBlocksPdf(lineas(n), { title: 'Receta', firma });
+      return ultimoDocumento().llamadas.addPage;
+    };
+
+    // La cantidad de líneas más chica con la que el bloque ya no entra en la hoja.
+    const limite = Array.from({ length: 40 }, (_, i) => i + 10).find(
+      (n) => paginas(n, FIRMA_COMPLETA) > paginas(n, null),
+    );
+    expect(limite, 'ningún largo de contenido obligó a abrir una página').toBeDefined();
+
+    buildBlocksPdf(lineas(limite!), { title: 'Receta' });
+    const yUltimaSinFirma = yDe(`Línea ${limite! - 1}`);
+
+    const paginasSinFirma = paginas(limite!, null);
+    // Con una línea menos, en cambio, entra sin abrir página.
+    const entraConUnaMenos = paginas(limite! - 1, FIRMA_COMPLETA) === paginas(limite! - 1, null);
+
+    buildBlocksPdf(lineas(limite!), { title: 'Receta', firma: FIRMA_COMPLETA });
+
+    // El contenido no se movió, y el bloque se dibujó en la página nueva.
+    expect(yDe(`Línea ${limite! - 1}`)).toBe(yUltimaSinFirma);
+    expect(ultimoDocumento().llamadas.addPage).toBe(paginasSinFirma + 1);
+    expect(hay('Matrícula M-1234')).toBe(true);
+    expect(entraConUnaMenos).toBe(true);
+  });
+
+  it('una imagen que no se puede dibujar deja el hueco y el documento sale igual', () => {
+    DocumentoFalso.fallarAlDibujarImagenes = true;
+
+    expect(() => buildBlocksPdf(CUERPO, { title: 'Receta', firma: FIRMA_COMPLETA })).not.toThrow();
+
+    expect(ultimoDocumento().llamadas.addImage).toHaveLength(0);
+    expect(hay('Matrícula M-1234')).toBe(true);
+  });
+
+  it('usa la firma de la sesión por omisión, y `null` la apaga para ese documento', () => {
+    establecerFirmaDeDocumentos(SIN_IMAGENES);
+
+    buildBlocksPdf(CUERPO, { title: 'Receta' });
+    expect(hay('Matrícula M-1234')).toBe(true);
+
+    buildBlocksPdf(CUERPO, { title: 'Receta', firma: null });
+    expect(hay('Matrícula M-1234')).toBe(false);
   });
 });
 

@@ -647,6 +647,10 @@ describe('PractitionerProfile · las operaciones que la vista pide', () => {
       const lecturas = http.match((r) => r.url === `/practitioners/${profileId}/sites`);
       expect(lecturas).toHaveLength(2);
       lecturas.forEach((lectura) => lectura.flush({ items: sedes, count: sedes.length }));
+      // Y la firma y el sello, que la ficha propia pide aparte.
+      http
+        .expectOne((r) => r.url === '/profiles/practitioners/me/signature-assets')
+        .flush({ signatureFileId: null, sealFileId: null });
       const seguros = http.expectOne(
         (r) => r.url === `/practitioners/${profileId}/insurance-networks`,
       );
@@ -967,6 +971,9 @@ describe('PractitionerProfile · el logo del consultorio', () => {
     http
       .match((r) => r.url === '/practitioners/prac-1/sites')
       .forEach((lectura) => lectura.flush({ items: sedes, count: sedes.length }));
+    http
+      .expectOne((r) => r.url === '/profiles/practitioners/me/signature-assets')
+      .flush({ signatureFileId: null, sealFileId: null });
     http.expectOne((r) => r.url === '/practitioners/prac-1/insurance-networks').flush({ items: [], count: 0 });
   }
 
@@ -1011,5 +1018,79 @@ describe('PractitionerProfile · el logo del consultorio', () => {
 
     expect(consultorio()?.logoUrl).toBeNull();
     expect(consultorio()?.nombre).toBe('Consultorio Dra. Rojas');
+  });
+});
+
+/**
+ * La firma y el sello médicos en la ficha propia. Los resuelve `FirmaYSelloClient`
+ * —la única puerta—, así que estas pruebas hablan de lo que la ficha recibe.
+ */
+describe('PractitionerProfile · la firma y el sello', () => {
+  let http: HttpTestingController;
+  let componente: PractitionerProfile;
+  const PNG = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGP4z8DwHwAFAAH/iZk9HQAAAABJRU5ErkJggg==';
+  const blob = (): Blob =>
+    new Blob([Uint8Array.from(atob(PNG), (c) => c.charCodeAt(0))], { type: 'image/png' });
+
+  function montarConFirma(activos: object | 'falla'): void {
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        { provide: AuthService, useValue: { practitionerProfileId: signal('prac-1'), userId: signal('u-1') } },
+        { provide: DialogService, useValue: { confirm: vi.fn() } },
+      ],
+    });
+    http = TestBed.inject(HttpTestingController);
+    componente = TestBed.createComponent(PractitionerProfile).componentInstance;
+    http.expectOne((r) => r.url === '/profiles/practitioners/me/summary').flush(PERFIL);
+    http.expectOne((r) => r.url === '/terminology/concepts').flush(CONCEPTOS);
+    http
+      .match((r) => r.url === '/practitioners/prac-1/sites')
+      .forEach((lectura) => lectura.flush({ items: [], count: 0 }));
+    const lectura = http.expectOne((r) => r.url === '/profiles/practitioners/me/signature-assets');
+    if (activos === 'falla') {
+      lectura.flush('boom', { status: 500, statusText: 'x' });
+    } else {
+      lectura.flush(activos);
+    }
+    http.expectOne((r) => r.url === '/practitioners/prac-1/insurance-networks').flush({ items: [], count: 0 });
+  }
+
+  const visibles = () =>
+    (componente as unknown as { visible: () => PerfilProfesionalVisible | null }).visible()
+      ?.firmaYSello;
+
+  afterEach(() => {
+    http.match(
+      (r) => r.url === '/practitioners/prac-1/sites' || r.url.endsWith('/affiliations'),
+    );
+    http.verify();
+  });
+
+  it('la ficha propia recibe las dos imágenes ya listas para pintar', async () => {
+    montarConFirma({ signatureFileId: 'f1', sealFileId: 's1' });
+    http.expectOne('/common/files/f1/content').flush(blob());
+    http.expectOne('/common/files/s1/content').flush(blob());
+    for (let i = 0; i < 50 && !visibles()?.selloUrl; i += 1) {
+      await new Promise((resolver) => setTimeout(resolver, 5));
+    }
+
+    expect(visibles()?.firmaUrl).toMatch(/^data:image\/png/);
+    expect(visibles()?.selloUrl).toMatch(/^data:image\/png/);
+  });
+
+  it('sin nada cargado la ficha recibe las dos en null', () => {
+    montarConFirma({ signatureFileId: null, sealFileId: null });
+
+    expect(visibles()).toEqual({ firmaUrl: null, selloUrl: null });
+  });
+
+  it('si la lectura falla la ficha sigue entera, con las dos en null', () => {
+    montarConFirma('falla');
+
+    expect(visibles()).toEqual({ firmaUrl: null, selloUrl: null });
   });
 });

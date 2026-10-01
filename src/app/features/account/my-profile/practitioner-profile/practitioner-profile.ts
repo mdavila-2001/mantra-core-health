@@ -6,6 +6,7 @@ import { CommunityClient } from '../../../../core/data-access/community/communit
 import { FilesClient } from '../../../../core/data-access/files/files.client';
 import { InsuranceClient } from '../../../../core/data-access/insurance/insurance.client';
 import type { PractitionerInsuranceNetwork } from '../../../../core/data-access/insurance/insurance.types';
+import { FirmaYSelloClient, type FirmaYSello } from '../../../../core/data-access/profiles/firma-y-sello.client';
 import { LogoDelConsultorioClient } from '../../../../core/data-access/practice-sites/logo-del-consultorio.client';
 import { PracticeSitesClient } from '../../../../core/data-access/practice-sites/practice-sites.client';
 import type { PracticeSite } from '../../../../core/data-access/practice-sites/practice-sites.types';
@@ -112,6 +113,8 @@ interface PerfilResuelto {
   readonly fotoUrl: string | null;
   /** El logo de su consultorio, o `null` si no cargó ninguno o no se pudo leer. */
   readonly logoUrl: string | null;
+  /** Su firma y su sello (imágenes), o `null` si la cuenta no es de un profesional. */
+  readonly firmaYSello: FirmaYSello | null;
   /** Dónde atiende hoy (ALV-005). Vacío si no tiene sedes o si la lectura falló. */
   readonly sedes: readonly PracticeSite[];
   /** Con qué aseguradoras trabaja; `null` si la lectura falló. */
@@ -175,6 +178,7 @@ export class PractitionerProfile {
   private readonly files = inject(FilesClient);
   private readonly sites = inject(PracticeSitesClient);
   private readonly logo = inject(LogoDelConsultorioClient);
+  private readonly firmaYSello = inject(FirmaYSelloClient);
   private readonly insurance = inject(InsuranceClient);
   private readonly auth = inject(AuthService);
   private readonly community = inject(CommunityClient);
@@ -406,6 +410,8 @@ export class PractitionerProfile {
             // El logo del consultorio: mismo criterio que la foto. La fachada
             // ya devuelve `null` si falla, así que no rompe la ficha.
             logoUrl: this.logoPropio(),
+            // Su firma y su sello: mismo criterio que el logo, nunca rompen la ficha.
+            firmaYSello: this.firmaYSelloPropios(),
             // ALV-005: dónde atiende. Mismo criterio que la foto: es una
             // sección más de la ficha, no la ficha; si no se puede leer, la
             // sección no se dibuja y el resto sigue.
@@ -424,6 +430,13 @@ export class PractitionerProfile {
   }
 
   /* -- Del perfil crudo al contrato de la vista --------------------------- */
+
+  /** Su firma y su sello, o `null` sin perfil profesional en la sesión. */
+  private firmaYSelloPropios(): Observable<FirmaYSello | null> {
+    return this.auth.practitionerProfileId() === null
+      ? of<FirmaYSello | null>(null)
+      : this.firmaYSello.obtener();
+  }
 
   /** El logo de su consultorio, o `null` sin perfil profesional en la sesión. */
   private logoPropio(): Observable<string | null> {
@@ -464,7 +477,7 @@ export class PractitionerProfile {
   }
 
   private convertir(resuelto: PerfilResuelto): PerfilProfesionalVisible {
-    const { perfil, etiquetas, fotoUrl, logoUrl, sedes, seguros } = resuelto;
+    const { perfil, etiquetas, fotoUrl, logoUrl, firmaYSello, sedes, seguros } = resuelto;
     const especialidades = this.especialidades(perfil, etiquetas);
     const afiliaciones = afiliacionesDe(perfil);
     return {
@@ -536,6 +549,7 @@ export class PractitionerProfile {
         logoUrl,
         nombre: sedes.find((sede) => sede.isOwnSite === true)?.name ?? '',
       },
+      firmaYSello,
       actividadActual: afiliaciones.actual,
       experienciaHistorica: afiliaciones.historica,
       desde: perfil.createdAt ?? null,

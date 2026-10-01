@@ -2,7 +2,7 @@ import { vitrinas } from '../fixtures/comunidad';
 import { ESTADO } from '../fixtures/conceptos';
 import { PACIENTES, PROFESIONALES } from '../fixtures/personas';
 import { noContent, type MockRouter } from '../mock-router';
-import { ahora, avatarSvg, Coleccion, imagenSvg, iso, logoSvg, nuevoId, qrSvg, texto, uuid } from '../mock-store';
+import { ahora, avatarSvg, Coleccion, firmaSvg, imagenSvg, iso, logoSvg, nuevoId, qrSvg, selloSvg, texto, uuid } from '../mock-store';
 
 /* ============================================================================
     Archivos: subida, vínculos, descarga y el contenido de las imágenes.
@@ -86,6 +86,10 @@ const archivos = new Coleccion<ArchivoSimulado>([
   /* SIMULADOR del logo del consultorio propio. Cuando exista el campo real en
      el backend, esta fila y su gemela en `practice.handlers.ts` se borran: las
      pantallas y el PDF sólo hablan con `LogoDelConsultorioClient`. */
+  /* SIMULADOR de la firma y el sello de la médica (imágenes, no firma
+     electrónica). Ver `firma-y-sello.handlers.ts`. */
+  { id: uuid('file-firma-medica'), currentVersionId: uuid('v-file-firma-medica'), originalName: 'firma-rojas.svg', category: 'IMAGE', sensitivity: 'NORMAL', lifecycleStatusConceptId: ESTADO['ST-ACTIVE']!, createdAt: iso(-30), dataUrl: firmaSvg() },
+  { id: uuid('file-sello-medica'), currentVersionId: uuid('v-file-sello-medica'), originalName: 'sello-rojas.svg', category: 'IMAGE', sensitivity: 'NORMAL', lifecycleStatusConceptId: ESTADO['ST-ACTIVE']!, createdAt: iso(-30), dataUrl: selloSvg('Dra. V. Rojas', '1000') },
   { id: uuid('file-logo-consultorio'), currentVersionId: uuid('v-file-logo-consultorio'), originalName: 'logo-consultorio-rojas.svg', category: 'IMAGE', sensitivity: 'NORMAL', lifecycleStatusConceptId: ESTADO['ST-ACTIVE']!, createdAt: iso(-30), dataUrl: logoSvg('Consultorio Rojas', 'Cardiología · Santa Cruz') },
 ]);
 
@@ -186,6 +190,26 @@ export function fileContent(fileId: string): unknown {
       'Content-Disposition': `attachment; filename*=UTF-8''${encodeURIComponent(a.originalName)}`,
     },
   };
+}
+
+/**
+ * Guarda una imagen que llegó como `data:` URL —la foto, la firma o el sello de
+ * un alta, que viajan en el cuerpo y no por `upload`— y devuelve su id.
+ *
+ * Sólo simulador: es lo que hace el backend real con `profilePhotoBase64`.
+ */
+export function guardarImagenDeDataUrl(dataUrl: string, nombre: string): string {
+  const nuevo = archivos.agregar({
+    id: nuevoId('file'),
+    currentVersionId: nuevoId('file-version'),
+    originalName: nombre,
+    category: 'IMAGE',
+    sensitivity: 'NORMAL',
+    lifecycleStatusConceptId: ESTADO['ST-ACTIVE']!,
+    createdAt: ahora(),
+    dataUrl,
+  });
+  return nuevo.id;
 }
 
 export function registrarArchivos(router: MockRouter): void {

@@ -158,6 +158,12 @@ export interface ConsultorioVisible {
  * NIT no sirve para emitirlo. Vacío es «no lo declaró», y la ficha lo dice con
  * palabras en vez de dejar el hueco.
  */
+/** La firma y el sello de la ficha propia, como `data:` URL. */
+export interface FirmaYSelloVisible {
+  readonly firmaUrl: string | null;
+  readonly selloUrl: string | null;
+}
+
 export interface FacturacionVisible {
   /** El NIT, tal como lo declaró. Vacío si no lo cargó. */
   readonly nit: string;
@@ -249,6 +255,14 @@ export interface PerfilProfesionalVisible {
    * como vista previa de lectura. Ausente o `null` en la ficha de otro.
    */
   readonly consultorio?: ConsultorioVisible | null;
+  /**
+   * Su firma y su sello médicos —**imágenes**, no una firma electrónica—, **sólo
+   * en la ficha propia**. `null` en la de otro profesional.
+   *
+   * Se cargan y se cambian desde «Datos personales» del editor; salen al pie de
+   * los documentos que emite. Cada una es `null` si no cargó ninguna.
+   */
+  readonly firmaYSello?: FirmaYSelloVisible | null;
   /**
    * Sus datos de facturación, **sólo en la ficha propia**.
    *
