@@ -37,6 +37,8 @@ import { withDisplayCurrency } from '../../../core/money/display-currency';
 const TARIFA_DE_MAQUETA = 'MAQUETA';
 /** Tarifa de referencia del Instituto Nacional de Laboratorios de Salud (INLASA, Bolivia). */
 const TARIFA_INLASA = 'REFERENCIA_INLASA_2026';
+/** Arancel FONASA 2026 (Chile) convertido a bolivianos: la referencia donde Bolivia no publica una. */
+const TARIFA_FONASA = 'REFERENCIA_FONASA_2026_BOB';
 
 /**
  * Desde cuántos estudios aparece el buscador.
@@ -226,12 +228,14 @@ export class LaboratoryDetail {
 
   /**
    * El rótulo del importe: sólo es «público» el que el centro publicó. El de
-   * INLASA es el arancel del laboratorio estatal de referencia, no el del centro.
+   * INLASA es el arancel del laboratorio estatal de referencia, no el del centro;
+   * FONASA, el arancel chileno convertido a Bs donde no hay uno boliviano.
    */
   protected rotuloDelPrecio(study: DiagnosticStudy): string {
     const tarifa = study.prices[0]?.scheduleCode;
     if (tarifa === TARIFA_DE_MAQUETA) return 'Precio de demostración';
     if (tarifa === TARIFA_INLASA) return 'Precio de referencia INLASA 2026';
+    if (tarifa === TARIFA_FONASA) return 'Referencia FONASA 2026 (Chile), en Bs';
     return 'Precio público';
   }
 

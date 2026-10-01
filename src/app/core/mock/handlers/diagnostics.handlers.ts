@@ -11,6 +11,7 @@ import { PHARMACIES_AND_LABS } from '../fixtures/markdown-institutions.generated
 import { ordenes } from '../fixtures/clinica';
 import { analisisInlasaDe, TARIFA_INLASA } from '../fixtures/inlasa';
 import { ANALISIS_INLASA } from '../fixtures/inlasa-aranceles.generated';
+import { precioDeImagen, precioDePrueba, prestacionDeImagen, type PrecioDeReferencia } from '../fixtures/precios-de-referencia';
 import { vitrinas } from '../fixtures/comunidad';
 import {
   ACCESSION_STATUS,
@@ -549,9 +550,10 @@ function estudiosDelCorpus(u: UnidadSimulada) {
         // El corpus no declara qué exige orden médica. `null` lo dice; `false`
         // sería afirmar que cualquiera se la puede hacer sin receta.
         requiresMedicalOrder: null,
-        // El corpus no publica precios: el estudio viaja sin tarifa en vez de con
-        // una fórmula (antes `45 + (i % 12) × 30`, presentada como precio).
-        prices: [],
+        // El corpus no publica precios: el estudio lleva el de referencia de
+        // INLASA o, si INLASA no la hace, el de FONASA convertido a Bs
+        // (`precios-de-referencia.ts`); sin equivalente, viaja sin tarifa.
+        prices: preciosDeReferencia(precioDePrueba(testId), sitio.id),
         conceptId: uuid(`corpus-test-${testId}`),
         specimens: prueba.specimens,
         methods: prueba.methods,
@@ -635,6 +637,11 @@ function estudiosDeInlasa(u: UnidadSimulada) {
   }));
 }
 
+/** Un precio de referencia como la lista `prices` de la oferta (vacía si no hay). */
+function preciosDeReferencia(precio: PrecioDeReferencia | null, siteId: string) {
+  return precio === null ? [] : [{ amount: precio.amount, currency: c('BOB', 'Boliviano'), scheduleCode: precio.scheduleCode, siteId }];
+}
+
 function construirEstudios(u: UnidadSimulada) {
   if (u.corpusId === CORPUS_INLASA) return estudiosDeInlasa(u);
   if (u.corpusId !== undefined) return estudiosDelCorpus(u);
@@ -642,9 +649,11 @@ function construirEstudios(u: UnidadSimulada) {
     const conceptId = ESTUDIO[code]!;
     const inlasa = analisisInlasaDe(code);
     const modalidad = MODALIDAD_DE_ESTUDIO[code];
+    const referencia: PrecioDeReferencia | null =
+      inlasa?.priceBs == null ? precioDeImagen(code) : { amount: inlasa.priceBs, scheduleCode: TARIFA_INLASA };
     return {
       id: uuid(`offering-${u.id}-${code}`),
-      code: inlasa?.code ?? code.replace('STUDY-', ''),
+      code: inlasa?.code ?? prestacionDeImagen(code)?.code ?? code.replace('STUDY-', ''),
       name: displayDe(conceptId),
       description: `${displayDe(conceptId)} realizado en ${u.name}.`,
       siteId: sitioDe(u).id,
@@ -654,12 +663,10 @@ function construirEstudios(u: UnidadSimulada) {
       expectedDurationMinutes: u.kind === 'LABORATORY' ? 10 : null,
       expectedTurnaroundMinutes: u.kind === 'LABORATORY' ? 240 : 60 * 24,
       requiresMedicalOrder: null,
-      // Laboratorio: el precio de referencia de INLASA 2026. Imagen: sin precio
-      // hasta tener un arancel oficial; no se inventa uno.
-      prices:
-        inlasa?.priceBs == null
-          ? []
-          : [{ amount: inlasa.priceBs, currency: c('BOB', 'Boliviano'), scheduleCode: TARIFA_INLASA, siteId: sitioDe(u).id }],
+      // Laboratorio: el precio de referencia de INLASA 2026. Imagen: FONASA 2026
+      // convertido a Bs (Bolivia no publica arancel de imagen); sin equivalente
+      // (densitometría, ECG), sin precio.
+      prices: preciosDeReferencia(referencia, sitioDe(u).id),
       conceptId,
     };
   });

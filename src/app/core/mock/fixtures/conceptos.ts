@@ -1,5 +1,6 @@
 import { uuid } from '../mock-store';
 import { analisisInlasaDe } from './inlasa';
+import { prestacionDeImagen } from './precios-de-referencia';
 
 /* ============================================================================
     El catálogo de terminología del backend simulado.
@@ -839,17 +840,19 @@ const conNombreInlasa = (code: string, rotuloDeImagen?: string): readonly [strin
   code,
   analisisInlasaDe(code)?.name ?? rotuloDeImagen ?? code,
 ];
+/** Un estudio de imagen con equivalente en FONASA lleva su nombre oficial (`precios-de-referencia.ts`). */
+const conNombreFonasa = (code: string): readonly [string, string] => [code, prestacionDeImagen(code)?.name ?? code];
 export const ESTUDIO = definir('VS_DIAGNOSTIC_STUDY', [
   conNombreInlasa('STUDY-HEMOGRAMA'),
   conNombreInlasa('STUDY-GLUCOSA'),
   conNombreInlasa('STUDY-PERFIL-LIPIDICO'),
   conNombreInlasa('STUDY-TSH'),
   conNombreInlasa('STUDY-ORINA'),
-  ['STUDY-RX-TORAX', 'Radiografía de tórax'],
-  ['STUDY-ECO-ABD', 'Ecografía abdominal'],
+  conNombreFonasa('STUDY-RX-TORAX'),
+  conNombreFonasa('STUDY-ECO-ABD'),
   ['STUDY-ECG', 'Electrocardiograma'],
-  ['STUDY-RMN-RODILLA', 'Resonancia de rodilla'],
-  ['STUDY-TAC-CRANEO', 'Tomografía de cráneo'],
+  conNombreFonasa('STUDY-RMN-RODILLA'),
+  conNombreFonasa('STUDY-TAC-CRANEO'),
   /* Un catálogo de diez estudios dejaba a cada centro con cinco, o sea siempre
      por debajo del umbral con el que la ficha muestra su buscador y su
      paginador: la sección se veía entera y sus controles no aparecían nunca.
@@ -862,11 +865,11 @@ export const ESTUDIO = definir('VS_DIAGNOSTIC_STUDY', [
   conNombreInlasa('STUDY-COPROLOGICO'),
   conNombreInlasa('STUDY-CULTIVO'),
   conNombreInlasa('STUDY-VITAMINA-D'),
-  ['STUDY-MAMOGRAFIA', 'Mamografía bilateral'],
-  ['STUDY-ECO-OBSTETRICA', 'Ecografía obstétrica'],
-  ['STUDY-RX-COLUMNA', 'Radiografía de columna'],
-  ['STUDY-TAC-ABDOMEN', 'Tomografía de abdomen'],
-  ['STUDY-RMN-CEREBRO', 'Resonancia de cerebro'],
+  conNombreFonasa('STUDY-MAMOGRAFIA'),
+  conNombreFonasa('STUDY-ECO-OBSTETRICA'),
+  conNombreFonasa('STUDY-RX-COLUMNA'),
+  conNombreFonasa('STUDY-TAC-ABDOMEN'),
+  conNombreFonasa('STUDY-RMN-CEREBRO'),
   ['STUDY-DENSITOMETRIA', 'Densitometría ósea'],
 ]);
 
