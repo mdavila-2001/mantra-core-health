@@ -6,6 +6,7 @@ import {
   TIPO_VINCULO,
   displayDe,
 } from '../fixtures/conceptos';
+import { contactChannelsOfCarrier } from './insurance.handlers';
 import {
   afiliaciones,
   CATEGORIA_MEDICO,
@@ -25,8 +26,21 @@ import {
   type PacienteSimulado,
   type ProfesionalSimulado,
 } from '../fixtures/personas';
-import { conflict, forbidden, noContent, notFound, type MockRequest, type MockRouter } from '../mock-router';
-import { ahora, Coleccion, contiene, cuerpo, iso, isoDia, nuevoId, paginar, texto, uuid } from '../mock-store';
+import { conflict, forbidden, noContent, notFound, reply, type MockRequest, type MockRouter } from '../mock-router';
+import { cerrarAcciones, emitirNotificacion } from './notifications.handlers';
+import {
+  ahora,
+  bodyAsQuery,
+  Coleccion,
+  contiene,
+  cuerpo,
+  iso,
+  isoDia,
+  nuevoId,
+  paginar,
+  texto,
+  uuid,
+} from '../mock-store';
 
 /* ============================================================================
     Perfiles: pacientes, profesionales, guía y afiliaciones.
@@ -245,6 +259,14 @@ function fichaDe(p: PacienteSimulado) {
  * segundo juego de coberturas de maqueta que se desalinee del primero.
  */
 export function perfilPropioDe(p: PacienteSimulado) {
+  // Canales reales de la aseguradora ficticia de `p` (Tarea 2), no
+  // literales fijos: antes esta tarjeta usaba el mismo WhatsApp y call
+  // center para cualquier aseguradora, y ese call center era, sin
+  // marcarlo, el real de BISA.
+  const canales =
+    p.aseguradora === undefined
+      ? { whatsapp: null, callCenter: null }
+      : contactChannelsOfCarrier(p.aseguradora);
   return {
     personId: p.personId,
     patientProfileId: p.id,
@@ -312,8 +334,8 @@ export function perfilPropioDe(p: PacienteSimulado) {
             effectiveFrom: '2026-01-01',
             effectiveTo: '2026-12-31',
             currencyCode: 'BOB',
-            carrierWhatsappNumber: '+59170011223',
-            carrierCallCenterPhone: '800-10-6060',
+            carrierWhatsappNumber: canales.whatsapp,
+            carrierCallCenterPhone: canales.callCenter,
             benefits: [
               { id: `benefit-general-${p.id}`, categoryName: 'Atención ambulatoria', coveragePercent: '80.50', copayAmount: '20.00', deductibleAmount: null, effectiveFrom: '2026-01-01', effectiveTo: '2026-12-31', validityStatus: 'CURRENT' },
               { id: `benefit-service-${p.id}`, categoryName: 'Atención ambulatoria', serviceConceptId: uuid('benefit-consultation'), serviceName: 'Consulta de seguimiento', coveragePercent: '100', copayAmount: '0.00', deductibleAmount: '150.00', effectiveFrom: '2026-01-01', effectiveTo: '2026-12-31', validityStatus: 'CURRENT' },
@@ -321,12 +343,12 @@ export function perfilPropioDe(p: PacienteSimulado) {
             { id: `coverage-expired-${p.id}`, carrierName: p.aseguradora, planName: 'Plan anterior', isPublic: false,
               policyIdentifier: `POL-ANT-${p.patientCode.slice(4)}`, verified: true, status: 'Cobertura activa',
               statusCode: 'COVERAGE_ACTIVE', validityStatus: 'EXPIRED', effectiveFrom: '2025-01-01', effectiveTo: '2025-12-31',
-              carrierWhatsappNumber: '+59170011223', benefits: [],
+              carrierWhatsappNumber: canales.whatsapp, benefits: [],
             },
             { id: `coverage-future-${p.id}`, carrierName: p.aseguradora, planName: 'Plan próxima renovación', isPublic: false,
               memberIdentifier: `DECL-${p.patientCode.slice(4)}`, verified: false, status: 'Cobertura activa',
               statusCode: 'COVERAGE_ACTIVE', validityStatus: 'UPCOMING', effectiveFrom: '2027-01-01', effectiveTo: '2027-12-31',
-              currencyCode: 'USD', carrierCallCenterPhone: '800-10-6060', benefits: [],
+              currencyCode: 'USD', carrierCallCenterPhone: canales.callCenter, benefits: [],
             }],
     guardians: personasRelacionadasDe(p).map((r) => ({
       displayName: r.displayName,
@@ -345,12 +367,23 @@ export function perfilPropioDe(p: PacienteSimulado) {
  */
 const ENCUENTROS_POR_MES = [18, 21, 24, 19, 26, 28, 23, 27, 31, 29, 30, 36] as const;
 
+/**
+ * De esas consultas, las de personas con seguro (194 de 312: cerca del 62 %).
+ * Cada valor queda por debajo de su mes en `ENCUENTROS_POR_MES`; el resto son
+ * consultas sin seguro.
+ */
+const ENCUENTROS_CON_SEGURO_POR_MES = [11, 13, 15, 12, 16, 18, 14, 17, 19, 18, 19, 22] as const;
+
 /** La serie, anclada al mes en curso: el último punto es siempre «hoy». */
-function serieMensualDemo(): readonly { month: string; count: number }[] {
+function serieMensualDemo(): readonly { month: string; count: number; insuredCount: number }[] {
   const hoy = new Date();
   return ENCUENTROS_POR_MES.map((count, indice) => {
     const mes = new Date(hoy.getFullYear(), hoy.getMonth() - (ENCUENTROS_POR_MES.length - 1 - indice), 1);
-    return { month: `${mes.getFullYear()}-${String(mes.getMonth() + 1).padStart(2, '0')}`, count };
+    return {
+      month: `${mes.getFullYear()}-${String(mes.getMonth() + 1).padStart(2, '0')}`,
+      count,
+      insuredCount: ENCUENTROS_CON_SEGURO_POR_MES[indice] ?? 0,
+    };
   });
 }
 
@@ -492,11 +525,61 @@ interface ApoderamientoSimulado {
   readonly relationshipConceptId: string;
 }
 
-const apoderamientos: ApoderamientoSimulado[] = [];
+/*
+ * Persistido para que aceptar una solicitud sobreviva al cambio de cuenta, que
+ * recarga la aplicación. Un apoderamiento cuyo dependiente ya no existe —el
+ * alta sin cuenta crea pacientes que no se persisten— se ignora al leer.
+ */
+const apoderamientos = new Coleccion<ApoderamientoSimulado>([]).persistirEn(
+  'mock.profiles.apoderamientos',
+);
+
+/**
+ * Un pedido de representar a alguien que ya tiene cuenta.
+ *
+ * Se persiste como las notificaciones: el aviso sobrevive a F5 y, si la
+ * solicitud no, tocarlo llevaría a una bandeja vacía.
+ */
+interface SolicitudDeVinculo {
+  readonly id: string;
+  readonly titularId: string;
+  readonly dependienteId: string;
+  readonly estado: 'PENDING' | 'ACCEPTED' | 'REJECTED';
+  readonly createdAt: string;
+}
+
+const solicitudes = new Coleccion<SolicitudDeVinculo>([]);
+solicitudes.persistirEn('mock.profiles.solicitudes-de-dependiente');
+
+/** Una cuenta registrada: el alta de un dependiente sin cuenta deja el correo vacío. */
+function cuentaConDocumento(documento: string): PacienteSimulado | undefined {
+  return pacientes.todos().find((p) => p.nationalId === documento && p.email !== '');
+}
+
+/** Minúsculas y sin tildes, para que «maria» encuentre a «María». */
+function sinTildes(valor: string): string {
+  return valor.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('es');
+}
+
+/** Cuántas letras hacen falta para buscar personas por nombre. */
+const MINIMO_BUSQUEDA_POR_NOMBRE = 3;
+const TOPE_CANDIDATOS = 8;
+
+/**
+ * El CI con sólo las últimas cifras a la vista.
+ *
+ * Alcanza para distinguir a dos homónimos y no sirve para averiguar el
+ * documento de nadie.
+ */
+function documentoEnmascarado(documento: string): string {
+  return documento.length <= 3 ? '•••' : `••••${documento.slice(-3)}`;
+}
 
 /** Los apoderamientos de un titular. */
 function dependientesDe(titularId: string): readonly ApoderamientoSimulado[] {
-  return apoderamientos.filter((a) => a.titularId === titularId);
+  return apoderamientos.filtrar(
+    (a) => a.titularId === titularId && pacientePorId(a.dependienteId) !== undefined,
+  );
 }
 
 /**
@@ -508,9 +591,9 @@ function dependientesDe(titularId: string): readonly ApoderamientoSimulado[] {
  */
 export function representaA(titularId: string | undefined, pacienteId: string): boolean {
   if (titularId === undefined) return false;
-  return apoderamientos.some(
-    (a) => a.titularId === titularId && a.dependienteId === pacienteId,
-  );
+  return apoderamientos
+    .todos()
+    .some((a) => a.titularId === titularId && a.dependienteId === pacienteId);
 }
 
 /**
@@ -567,7 +650,12 @@ function edadEnAnios(fecha: string): number {
 export function registrarPerfiles(router: MockRouter): void {
   /* ---- pacientes ---------------------------------------------------------- */
 
-  router.get('/profiles/patients', ({ query }) => {
+  /**
+   * La búsqueda de pacientes, común al `GET` obsoleto (filtros en la query) y
+   * al `POST …/search` que usa `ProfilesClient.searchPatients` (filtros en el
+   * cuerpo, para que el nombre y el documento no queden en la URL).
+   */
+  function searchPatients(query: URLSearchParams) {
     // `q`, no `query`: es como lo manda `ProfilesClient.searchPatients`. Leyendo
     // la clave equivocada el filtro nunca se aplicaba —`contiene(x, null)` es
     // `true`— y el buscador de pacientes devolvía la lista entera escribiera lo
@@ -586,7 +674,10 @@ export function registrarPerfiles(router: MockRouter): void {
       .filter((p) => idiomaClinico === null || p.idiomaClinicoId === idiomaClinico)
       .map(itemDeLista);
     return paginar(todos, query, 25);
-  });
+  }
+
+  router.get('/profiles/patients', ({ query }) => searchPatients(query));
+  router.post('/profiles/patients/search', (request) => searchPatients(bodyAsQuery(request)));
 
   router.get('/profiles/patients/me/summary', (request) => {
     const p = pacienteDeSesion(request);
@@ -813,15 +904,185 @@ export function registrarPerfiles(router: MockRouter): void {
       identityVerified: false,
     };
     pacientes.agregar(nuevo);
-    apoderamientos.push({
+    const apoderamiento = apoderamientos.agregar({
       id: nuevoId('proxy'),
       titularId: titular.id,
       dependienteId: id,
       relationshipConceptId: datos.relationshipConceptId ?? '',
     });
 
-    return { status: 201, body: resumenDeDependiente(apoderamientos.at(-1)!) };
+    return { status: 201, body: resumenDeDependiente(apoderamiento) };
   });
+
+  /* ---- dependientes que ya tienen cuenta: solicitud y aceptación ---------- */
+
+  /**
+   * Pide representar a quien ya tiene cuenta con ese CI.
+   *
+   * No crea el vínculo: le avisa a esa cuenta, que decide. La respuesta no dice
+   * de quién es el CI para no servir de buscador de personas por documento.
+   */
+  router.post('/profiles/patients/me/dependent-requests', (request) => {
+    const titular = pacienteDeSesion(request);
+    if (titular === undefined) {
+      return forbidden('Esta cuenta no tiene perfil de paciente');
+    }
+    const datos = cuerpo<{ nationalId?: string; patientProfileId?: string }>(request);
+    const documento = (datos.nationalId ?? '').trim();
+    const perfilElegido = (datos.patientProfileId ?? '').trim();
+    if (documento === '' && perfilElegido === '') {
+      return reply(400, {
+        statusCode: 400,
+        code: 'VALIDATION_FAILED',
+        message: 'Escribí el CI de la persona o elegila de la búsqueda.',
+        error: 'Bad Request',
+      });
+    }
+    // Se señala a la persona por su CI o por el perfil que devolvió la búsqueda
+    // por nombre; las dos formas caen en la misma regla de abajo.
+    const destinatario =
+      perfilElegido === ''
+        ? cuentaConDocumento(documento)
+        : pacientes.todos().find((p) => p.id === perfilElegido && p.email !== '');
+    const esElPropio =
+      (documento !== '' && documento === request.user?.nationalId) ||
+      destinatario?.id === titular.id;
+    if (esElPropio) {
+      return reply(422, {
+        statusCode: 422,
+        code: 'VALIDATION_FAILED',
+        message: 'Ese CI es el tuyo: no podés registrarte como tu propio dependiente.',
+        error: 'Unprocessable Entity',
+      });
+    }
+    if (destinatario === undefined) {
+      return notFound(
+        perfilElegido === ''
+          ? 'No hay ninguna cuenta registrada con ese CI.'
+          : 'Esa persona ya no tiene una cuenta registrada.',
+      );
+    }
+    if (representaA(titular.id, destinatario.id)) {
+      return conflict('Esa persona ya es tu dependiente.');
+    }
+    const pendiente = solicitudes.filtrar(
+      (s) => s.titularId === titular.id && s.dependienteId === destinatario.id && s.estado === 'PENDING',
+    )[0];
+    if (pendiente !== undefined) {
+      return conflict('Ya le enviaste una solicitud a esa persona. Falta que la acepte.');
+    }
+
+    const solicitud = solicitudes.agregar({
+      id: nuevoId('solicitud-dependiente'),
+      titularId: titular.id,
+      dependienteId: destinatario.id,
+      estado: 'PENDING',
+      createdAt: ahora(),
+    });
+    emitirNotificacion({
+      userId: destinatario.userId,
+      category: 'CLINICAL',
+      subject: 'Te quieren registrar como dependiente',
+      bodyText: `${titular.displayName} pide registrarte como su dependiente. Si aceptás, va a poder pedirte turnos y ver tu historia clínica.`,
+      destination: { type: 'DEPENDENT_LINK_REQUEST', id: solicitud.id },
+      // Decidir desde la campana, sin abrir la pantalla de Dependientes.
+      actions: [
+        { key: 'ACCEPT', label: 'Aceptar', tone: 'primary' },
+        { key: 'REJECT', label: 'Rechazar', tone: 'neutral' },
+      ],
+    });
+    return { status: 201, body: { id: solicitud.id, status: 'PENDING' } };
+  });
+
+  /**
+   * Cuentas cuyo nombre coincide con lo escrito, para elegir a quién pedirle
+   * que sea dependiente.
+   *
+   * Poco expuesta a propósito: nada por debajo de tres letras, pocas filas, el
+   * CI enmascarado, y sin la propia cuenta ni las personas que ya son
+   * dependientes. Todas las palabras escritas deben aparecer (en cualquier
+   * orden) al comienzo de alguna palabra del nombre.
+   */
+  router.get('/profiles/patients/me/dependent-candidates', (request) => {
+    const titular = pacienteDeSesion(request);
+    if (titular === undefined) return forbidden('Esta cuenta no tiene perfil de paciente');
+    const palabras = sinTildes(request.query.get('q') ?? '')
+      .split(/\s+/)
+      .filter((p) => p !== '');
+    if (palabras.join('').length < MINIMO_BUSQUEDA_POR_NOMBRE) return [];
+    return pacientes
+      .todos()
+      .filter((p) => p.email !== '' && p.id !== titular.id && !representaA(titular.id, p.id))
+      .filter((p) => {
+        const nombre = sinTildes(p.displayName).split(/\s+/);
+        return palabras.every((palabra) => nombre.some((n) => n.startsWith(palabra)));
+      })
+      .slice(0, TOPE_CANDIDATOS)
+      .map((p) => ({
+        patientProfileId: p.id,
+        displayName: p.displayName,
+        ...(p.nationalId === '' ? {} : { maskedNationalId: documentoEnmascarado(p.nationalId) }),
+      }));
+  });
+
+  router.get('/profiles/patients/me/dependent-requests/incoming', (request) => {
+    const yo = pacienteDeSesion(request);
+    if (yo === undefined) return [];
+    return solicitudes
+      .filtrar((s) => s.dependienteId === yo.id && s.estado === 'PENDING')
+      .map((s) => ({
+        id: s.id,
+        requesterDisplayName: pacientePorId(s.titularId)?.displayName ?? '',
+        createdAt: s.createdAt,
+      }));
+  });
+
+  /** Sólo la persona a la que se le pidió puede responder, y una sola vez. */
+  function responderSolicitud(request: MockRequest, estado: 'ACCEPTED' | 'REJECTED') {
+    const yo = pacienteDeSesion(request);
+    const solicitud = solicitudes.get(request.params['id']!);
+    if (yo === undefined || solicitud === undefined || solicitud.dependienteId !== yo.id) {
+      return notFound('Solicitud no encontrada');
+    }
+    if (solicitud.estado !== 'PENDING') {
+      return conflict('Esa solicitud ya fue respondida.');
+    }
+    solicitudes.actualizar(solicitud.id, { estado });
+    // La decisión ya está tomada: el aviso que la pedía deja de ofrecerla.
+    cerrarAcciones({ type: 'DEPENDENT_LINK_REQUEST', id: solicitud.id });
+    const titular = pacientePorId(solicitud.titularId);
+    if (estado === 'ACCEPTED') {
+      apoderamientos.agregar({
+        id: nuevoId('proxy'),
+        titularId: solicitud.titularId,
+        dependienteId: yo.id,
+        relationshipConceptId: '',
+      });
+    }
+    if (titular !== undefined) {
+      emitirNotificacion({
+        userId: titular.userId,
+        category: 'CLINICAL',
+        subject:
+          estado === 'ACCEPTED'
+            ? `${yo.displayName} aceptó ser tu dependiente`
+            : `${yo.displayName} rechazó ser tu dependiente`,
+        bodyText:
+          estado === 'ACCEPTED'
+            ? 'Ya aparece en tu lista de dependientes.'
+            : 'No se creó ningún vínculo.',
+        destination: { type: 'DEPENDENT_LINK_REQUEST', id: solicitud.id },
+      });
+    }
+    return { id: solicitud.id, status: estado };
+  }
+
+  router.post('/profiles/patients/me/dependent-requests/:id/accept', (request) =>
+    responderSolicitud(request, 'ACCEPTED'),
+  );
+  router.post('/profiles/patients/me/dependent-requests/:id/reject', (request) =>
+    responderSolicitud(request, 'REJECTED'),
+  );
 
   router.post('/profiles/patients/:id/related-persons', ({ params }) => ({
     status: 201,

@@ -5,12 +5,12 @@
      de la sección sigue siendo el de la lista del cliente. -->
 <app-page-header
   title="Contabilidad · vista contable"
-  subtitle="Cómo va el ejercicio, qué documentos están frenados y qué falta cobrar."
+  subtitle="Resultado del período, documentos pendientes y cartera de la práctica."
 >
   <a
     app-button
     page-actions
-    variant="outline"
+    variant="ghost"
     routerLink="/administration/accounting"
     data-testid="volver-al-resumen"
   >
@@ -28,13 +28,12 @@
 </app-page-header>
 
 <!-- ─── Barra de contexto ───────────────────────────────────────────────────
-     Sociedad, ejercicio y período, siempre a la vista. En una contabilidad el
-     período no es un filtro: es el que decide si un asiento se puede postear o
-     no, así que decirlo al pasar —o esconderlo en un desplegable— es cómo
-     alguien termina posteando en el mes equivocado. -->
+     Práctica, ejercicio y período en una sola fila, con el estado del período
+     al final. En una contabilidad el período no es un filtro: decide si un
+     asiento se puede postear, así que va siempre a la vista. -->
 <app-card variant="outlined" padding="md" class="contexto">
-  <div class="contexto__campos">
-    <app-form-field label="Práctica" hint="Los libros que se leen son los de esta práctica">
+  <div class="contexto__fila">
+    <app-form-field label="Práctica" class="contexto__practica">
       <app-select
         testId="cockpit-practica"
         [options]="opcionesDePractica()"
@@ -45,12 +44,15 @@
 
     @if (datos(); as tablero) {
       @if (tablero.ejercicio; as ejercicio) {
-        <app-form-field label="Ejercicio">
-          <p class="contexto__dato" data-testid="cockpit-ejercicio">
+        <div class="contexto__dato">
+          <span class="contexto__rotulo">Ejercicio</span>
+          <p class="contexto__valor" data-testid="cockpit-ejercicio">
             {{ ejercicio.name }}
-            <span class="contexto__rango">{{ ejercicio.startsOn }} → {{ ejercicio.endsOn }}</span>
+            <span class="contexto__rango">
+              {{ fecha(ejercicio.startsOn) }} – {{ fecha(ejercicio.endsOn) }}
+            </span>
           </p>
-        </app-form-field>
+        </div>
 
         <app-form-field label="Período contable">
           <app-select
@@ -60,6 +62,27 @@
             placeholder="Período corriente"
           />
         </app-form-field>
+
+        @if (periodoActivo(); as periodo) {
+          <div class="contexto__dato contexto__estado">
+            <span class="contexto__rotulo">Estado del período</span>
+            <div class="contexto__valor">
+              <app-badge
+                [variant]="periodo.status === 'OPEN' ? 'success' : periodo.status === 'CLOSED' ? 'secondary' : 'info'"
+                data-testid="cockpit-estado-periodo"
+              >
+                @switch (periodo.status) {
+                  @case ('OPEN') { Abierto }
+                  @case ('CLOSED') { Cerrado }
+                  @default { Sin abrir }
+                }
+              </app-badge>
+              <span class="contexto__rango">
+                {{ fecha(periodo.startsOn) }} – {{ fecha(periodo.endsOn) }}
+              </span>
+            </div>
+          </div>
+        }
       } @else {
         <!-- S3: la práctica no rompió el tablero (las otras ocho lecturas
              siguen abajo), sólo le falta abrir su primer ejercicio fiscal.
@@ -67,6 +90,7 @@
              acá no hay pantalla que lo dé de alta, así que la acción es
              volver a consultar, no un enlace a algo que no existe. -->
         <app-empty-state
+          class="contexto__vacio"
           title="Esta práctica todavía no tiene un ejercicio fiscal"
           description="Lo abre la administración de tu organización; cuando exista, el tablero lo muestra acá."
           data-testid="fiscal-year-empty"
@@ -85,42 +109,6 @@
       }
     }
   </div>
-
-  @if (periodoActivo(); as periodo) {
-    <div class="contexto__estado">
-      <app-badge
-        [variant]="periodo.status === 'OPEN' ? 'success' : periodo.status === 'CLOSED' ? 'secondary' : 'info'"
-        data-testid="cockpit-estado-periodo"
-      >
-        @switch (periodo.status) {
-          @case ('OPEN') { Período abierto }
-          @case ('CLOSED') { Período cerrado }
-          @default { Período no abierto }
-        }
-      </app-badge>
-      <span class="contexto__ayuda">
-        @if (periodo.status === 'OPEN') {
-          Admite asientos. Cerrarlo exige que no quede ninguno sin postear.
-        } @else if (periodo.status === 'CLOSED') {
-          No admite asientos nuevos. Lo que falte se corrige en el período abierto.
-        } @else {
-          Todavía no empezó.
-        }
-      </span>
-      @if (periodo.status === 'OPEN') {
-        <button
-          app-button
-          type="button"
-          variant="outline"
-          size="sm"
-          data-testid="cockpit-cerrar-periodo"
-          (clicked)="cerrarPeriodo()"
-        >
-          Cerrar el período
-        </button>
-      }
-    </div>
-  }
 </app-card>
 
 <app-view-state-host [state]="estadoDelTablero()" (retry)="recargar()">
@@ -145,367 +133,656 @@
 
   @if (datos(); as tablero) {
     <!-- ─── Indicadores ──────────────────────────────────────────────────────
-         Cada uno dice si algo está bien o mal, no sólo cuánto. Un número sin
-         umbral obliga a quien mira a saber de memoria cuál era el bueno. -->
-    <section class="tiles" aria-label="Indicadores del ejercicio">
-      <app-card variant="outlined" padding="md" class="tile" data-testid="tile-resultado">
-        <p class="tile__rotulo">Resultado del período</p>
-        <p class="tile__cifra" [class.tile__cifra--negativa]="esNegativo(tablero.resultado.netIncome)">
+         Cuatro cifras de gestión. El resultado manda —es la pregunta con la que
+         se entra— y ocupa el doble; las otras tres dicen además si hay algo
+         que atender, no sólo cuánto. -->
+    <section class="kpis" aria-label="Indicadores del período">
+      <app-card variant="outlined" padding="lg" class="kpi kpi--principal" data-testid="tile-resultado">
+        <h2 class="kpi__rotulo">Resultado del período</h2>
+        <p class="kpi__cifra kpi__cifra--grande" [class.kpi__cifra--negativa]="esNegativo(tablero.resultado.netIncome)">
           {{ importe(tablero.resultado.netIncome) }}
         </p>
-        <p class="tile__pie">
-          Ingresos {{ importe(tablero.resultado.totalRevenue) }} · Gastos
-          {{ importe(tablero.resultado.totalExpense) }}
-        </p>
+        <dl class="kpi__desglose">
+          <div>
+            <dt>Ingresos</dt>
+            <dd>{{ importe(tablero.resultado.totalRevenue) }}</dd>
+          </div>
+          <div>
+            <dt>Gastos</dt>
+            <dd>{{ importe(tablero.resultado.totalExpense) }}</dd>
+          </div>
+          @if (margen(); as m) {
+            <div>
+              <dt>Margen</dt>
+              <dd>{{ m }}</dd>
+            </div>
+          }
+        </dl>
       </app-card>
 
-      <app-card variant="outlined" padding="md" class="tile" data-testid="tile-balance">
-        <p class="tile__rotulo">Debe y haber</p>
-        <p class="tile__cifra tile__cifra--chica">
-          {{ importe(tablero.balance.totalDebit) }}
-        </p>
-        <p class="tile__pie">
-          <app-badge [variant]="tablero.balance.balanced ? 'success' : 'error'">
-            {{ tablero.balance.balanced ? 'Cuadra' : 'Descuadrado' }}
-          </app-badge>
-          {{ tablero.balance.transactionsIncluded }} asientos posteados
-        </p>
-      </app-card>
-
-      <app-card variant="outlined" padding="md" class="tile" data-testid="tile-ecuacion">
-        <p class="tile__rotulo">Activo = Pasivo + Patrimonio</p>
-        <p class="tile__cifra tile__cifra--chica">{{ importe(tablero.situacion.totalAssets) }}</p>
-        <p class="tile__pie">
-          <app-badge [variant]="tablero.situacion.balanced ? 'success' : 'error'">
-            {{ tablero.situacion.balanced ? 'Cierra' : 'No cierra' }}
-          </app-badge>
-          Pasivo + patrimonio {{ importe(tablero.situacion.totalLiabilitiesAndEquity) }}
-        </p>
-      </app-card>
-
-      <app-card variant="outlined" padding="md" class="tile" data-testid="tile-cobrar">
-        <p class="tile__rotulo">Por cobrar</p>
-        <p class="tile__cifra tile__cifra--chica">{{ importe(tablero.partidas.totalReceivable) }}</p>
-        <p class="tile__pie">
-          @if (carteraVencida(); as vencido) {
-            <app-badge [variant]="vencido.count > 0 ? 'warning' : 'success'">
-              {{ vencido.count > 0 ? vencido.count + ' con más de 90 días' : 'Nada vencido a 90 días' }}
+      <app-card variant="outlined" padding="lg" class="kpi" data-testid="tile-cobrar">
+        <h2 class="kpi__rotulo">Por cobrar</h2>
+        <p class="kpi__cifra">{{ importe(tablero.partidas.totalReceivable) }}</p>
+        <p class="kpi__pie">
+          @if (vencidas().cobrar > 0) {
+            <app-badge variant="warning">
+              {{ vencidas().cobrar }} {{ vencidas().cobrar === 1 ? 'vencida' : 'vencidas' }}
             </app-badge>
+          } @else {
+            <app-badge variant="success">Al día</app-badge>
+          }
+          @if (carteraVencida(); as vencido) {
+            <span>{{ vencido.count > 0 ? vencido.count + ' a más de 90 días' : 'Nada a más de 90 días' }}</span>
           }
         </p>
       </app-card>
 
-      <app-card variant="outlined" padding="md" class="tile" data-testid="tile-pagar">
-        <p class="tile__rotulo">Por pagar</p>
-        <p class="tile__cifra tile__cifra--chica">{{ importe(tablero.partidas.totalPayable) }}</p>
-        <p class="tile__pie">{{ tablero.partidas.items.length }} partidas abiertas en total</p>
+      <app-card variant="outlined" padding="lg" class="kpi" data-testid="tile-pagar">
+        <h2 class="kpi__rotulo">Por pagar</h2>
+        <p class="kpi__cifra">{{ importe(tablero.partidas.totalPayable) }}</p>
+        <p class="kpi__pie">
+          @if (vencidas().pagar > 0) {
+            <app-badge variant="warning">
+              {{ vencidas().pagar }} {{ vencidas().pagar === 1 ? 'vencida' : 'vencidas' }}
+            </app-badge>
+          } @else {
+            <app-badge variant="success">Al día</app-badge>
+          }
+          <span>{{ tablero.partidas.items.length }} partidas abiertas</span>
+        </p>
       </app-card>
 
-      <app-card variant="outlined" padding="md" class="tile" data-testid="tile-en-curso">
-        <p class="tile__rotulo">Documentos sin postear</p>
-        <p class="tile__cifra tile__cifra--chica">{{ documentosEnCurso() }}</p>
-        <p class="tile__pie">
-          Hasta que se postean no existen para el mayor: no están en las cifras de
-          arriba.
+      <app-card variant="outlined" padding="lg" class="kpi" data-testid="tile-en-curso">
+        <h2 class="kpi__rotulo">Documentos pendientes</h2>
+        <p class="kpi__cifra">{{ documentosEnCurso() }}</p>
+        <p class="kpi__pie">
+          @if (listosParaPostear() > 0) {
+            <app-badge variant="info">{{ listosParaPostear() }} listo para postear</app-badge>
+          } @else if (documentosEnCurso() === 0) {
+            <app-badge variant="success">Todo posteado</app-badge>
+          }
+          <span>Aún no impactan en los saldos</span>
         </p>
       </app-card>
     </section>
 
-    <app-tabs [(selectedIndex)]="pestana" data-testid="cockpit-pestanas">
-      <!-- ─── Bandeja del flujo ───────────────────────────────────────────── -->
-      <app-tab label="Documentos">
-        <p class="seccion__nota">
-          Un asiento recorre seis estados y sólo el posteo lo mete en los libros. Un
-          documento posteado no se edita: se revierte, y quedan los dos a la vista.
-        </p>
+    <!-- ─── Controles de cuadre ──────────────────────────────────────────────
+         No son indicadores de gestión sino controles de integridad: o cuadran o
+         hay un problema. Por eso van en una franja propia, con el veredicto
+         adelante y la cifra que lo respalda al lado. -->
+    <section class="controles" aria-label="Controles de cuadre">
+      <div
+        class="control"
+        [class.control--error]="!tablero.balance.balanced"
+        data-testid="tile-balance"
+      >
+        <app-badge [variant]="tablero.balance.balanced ? 'success' : 'error'">
+          {{ tablero.balance.balanced ? 'Cuadra' : 'Descuadrado' }}
+        </app-badge>
+        <div class="control__texto">
+          <span class="control__titulo">Sumas y saldos · Debe = Haber</span>
+          <span class="control__detalle">
+            {{ importe(tablero.balance.totalDebit) }} ·
+            {{ tablero.balance.transactionsIncluded }} asientos posteados
+          </span>
+        </div>
+      </div>
 
-        @for (grupo of bandeja(); track grupo.estado) {
-          @if (grupo.documentos.length > 0) {
-            <section class="grupo" [attr.data-testid]="'grupo-' + grupo.estado">
-              <header class="grupo__cabecera">
-                <app-badge [variant]="grupo.tono">{{ grupo.etiqueta }}</app-badge>
-                <span class="grupo__cuenta">{{ grupo.total }}</span>
-              </header>
+      <div
+        class="control"
+        [class.control--error]="!tablero.situacion.balanced"
+        data-testid="tile-ecuacion"
+      >
+        <app-badge [variant]="tablero.situacion.balanced ? 'success' : 'error'">
+          {{ tablero.situacion.balanced ? 'Cierra' : 'No cierra' }}
+        </app-badge>
+        <div class="control__texto">
+          <span class="control__titulo">Activo = Pasivo + Patrimonio</span>
+          <span class="control__detalle">
+            Activo {{ importe(tablero.situacion.totalAssets) }} · Pasivo + patrimonio
+            {{ importe(tablero.situacion.totalLiabilitiesAndEquity) }}
+          </span>
+        </div>
+      </div>
+    </section>
 
-              <ul class="documentos">
-                @for (doc of grupo.documentos; track doc.id) {
-                  <li class="documento">
-                    <button
-                      type="button"
-                      class="documento__numero documento__numero--abrible"
-                      [attr.aria-expanded]="flujoAbierto() === doc.id"
-                      [attr.data-testid]="'flujo-' + doc.id"
-                      (click)="verFlujo(doc.id)"
-                    >
-                      {{ doc.transactionNumber }}
-                    </button>
-                    <span class="documento__fecha">{{ doc.transactionDate | date: 'dd/MM/yyyy' }}</span>
-                    <span class="documento__importe">{{ importe(doc.totalAmount ?? '0.00') }}</span>
-                    @if (grupo.accion; as accion) {
+    <!-- ─── Detalle ─────────────────────────────────────────────────────────
+         Una sola tarjeta con pestañas (CLAUDE.md, regla 6). -->
+    <app-card variant="outlined" padding="lg" class="detalle">
+      <app-tabs [(selectedIndex)]="pestana" data-testid="cockpit-pestanas">
+        <!-- ─── Bandeja del flujo ─────────────────────────────────────────── -->
+        <app-tab label="Documentos">
+          <header class="panel__cabecera">
+            <div>
+              <h2 class="panel__titulo">Bandeja de documentos</h2>
+              <p class="panel__nota">
+                Sólo al postear un documento impacta en el mayor. Uno posteado no se edita: se revierte.
+              </p>
+            </div>
+          </header>
+
+          <!-- Las etapas del flujo son a la vez el resumen y el filtro. -->
+          <div class="etapas" role="group" aria-label="Filtrar por estado del documento">
+            <button
+              type="button"
+              class="etapa etapa--pendientes"
+              [class.etapa--activa]="filtroDeDocumentos() === 'PENDIENTES'"
+              [attr.aria-pressed]="filtroDeDocumentos() === 'PENDIENTES'"
+              data-testid="filtro-PENDIENTES"
+              (click)="filtroDeDocumentos.set('PENDIENTES')"
+            >
+              <span class="etapa__cuenta">{{ documentosEnCurso() }}</span>
+              <span class="etapa__rotulo">Pendientes</span>
+            </button>
+            <ol class="etapas__flujo">
+              @for (etapa of etapas(); track etapa.estado) {
+                <li>
+                  <button
+                    type="button"
+                    class="etapa"
+                    [class.etapa--activa]="filtroDeDocumentos() === etapa.estado"
+                    [class.etapa--vacia]="etapa.total === 0"
+                    [attr.aria-pressed]="filtroDeDocumentos() === etapa.estado"
+                    [attr.data-testid]="'filtro-' + etapa.estado"
+                    (click)="filtroDeDocumentos.set(etapa.estado)"
+                  >
+                    <span class="etapa__cuenta">{{ etapa.total }}</span>
+                    <span class="etapa__rotulo">{{ etapa.etiqueta }}</span>
+                  </button>
+                </li>
+              }
+            </ol>
+          </div>
+
+          @if (bandeja().filas.length > 0) {
+            <table class="tabla tabla--apilable" data-testid="tabla-documentos">
+              <caption class="sr-only">Documentos contables</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Documento</th>
+                  <th scope="col" class="col-opcional">Fecha</th>
+                  <th scope="col">Estado</th>
+                  <th scope="col" class="num">Importe</th>
+                  <th scope="col" class="accion"><span class="sr-only">Acción</span></th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (fila of bandeja().filas; track fila.doc.id) {
+                  <tr [class.tabla__fila--abierta]="flujoAbierto() === fila.doc.id">
+                    <td>
+                      <button
+                        type="button"
+                        class="documento__numero"
+                        [attr.aria-expanded]="flujoAbierto() === fila.doc.id"
+                        [attr.aria-controls]="'cadena-' + fila.doc.id"
+                        [attr.data-testid]="'flujo-' + fila.doc.id"
+                        (click)="verFlujo(fila.doc.id)"
+                      >
+                        <span class="documento__chevron" aria-hidden="true"></span>
+                        {{ fila.doc.transactionNumber }}
+                      </button>
+                      <span class="solo-movil tabla__sub">
+                        {{ fila.doc.transactionDate | date: 'dd/MM/yyyy' }}
+                      </span>
+                    </td>
+                    <td class="col-opcional tabla__sub">{{ fila.doc.transactionDate | date: 'dd/MM/yyyy' }}</td>
+                    <td><app-badge [variant]="fila.tono">{{ fila.etiqueta }}</app-badge></td>
+                    <td class="num tabla__importe">{{ importe(fila.doc.totalAmount ?? '0.00') }}</td>
+                    <td class="accion">
+                      @if (fila.accion; as accion) {
+                        <button
+                          app-button
+                          type="button"
+                          [variant]="accion.principal ? 'primary' : accion.action === 'reverse' ? 'ghost' : 'outline'"
+                          size="sm"
+                          [attr.data-testid]="'accion-' + accion.action"
+                          [attr.aria-label]="accion.rotulo + ': ' + fila.doc.transactionNumber"
+                          (clicked)="avanzar(fila.doc.id, fila.doc.transactionNumber ?? '', accion)"
+                        >
+                          {{ accion.rotulo }}
+                        </button>
+                      } @else {
+                        <span class="tabla__sub">Sin acciones</span>
+                      }
+                    </td>
+                  </tr>
+                  @if (flujoAbierto() === fila.doc.id) {
+                    <tr class="tabla__detalle">
+                      <td colspan="5">
+                        <p class="flujo__titulo">Flujo del documento</p>
+                        <ol class="flujo" [id]="'cadena-' + fila.doc.id" [attr.data-testid]="'cadena-' + fila.doc.id">
+                          @for (nodo of cadenaDelFlujo(); track nodo.id) {
+                            <li class="flujo__nodo" [class.flujo__nodo--actual]="nodo.role === 'ACTUAL'">
+                              <span class="flujo__papel">
+                                {{
+                                  nodo.role === 'ORIGEN'
+                                    ? 'Origen'
+                                    : nodo.role === 'ACTUAL'
+                                      ? 'Este documento'
+                                      : 'Reversión'
+                                }}
+                              </span>
+                              <span class="flujo__numero">{{ nodo.transactionNumber }}</span>
+                              <span class="flujo__fecha">{{ fecha(nodo.transactionDate) }}</span>
+                              <span class="flujo__importe">{{ importe(nodo.totalAmount) }}</span>
+                            </li>
+                          } @empty {
+                            <li class="flujo__nodo">Leyendo el flujo…</li>
+                          }
+                        </ol>
+                      </td>
+                    </tr>
+                  }
+                }
+              </tbody>
+            </table>
+
+            @if (bandeja().ocultos > 0) {
+              <p class="tabla__pie">
+                Se muestran los {{ bandeja().filas.length }} más recientes de {{ bandeja().total }}.
+                <a app-link routerLink="/administration/accounting/libros">Ver todos en el libro diario</a>
+              </p>
+            }
+          } @else {
+            <app-empty-state
+              [title]="filtroDeDocumentos() === 'PENDIENTES' ? 'No hay documentos pendientes' : 'No hay documentos en este estado'"
+              [description]="filtroDeDocumentos() === 'PENDIENTES' ? 'Todo lo registrado ya está posteado en el mayor.' : 'Elegí otra etapa del flujo para ver sus documentos.'"
+              data-testid="bandeja-vacia"
+            />
+          }
+        </app-tab>
+
+        <!-- ─── Partidas abiertas ─────────────────────────────────────────── -->
+        <app-tab label="Partidas abiertas">
+          <header class="panel__cabecera">
+            <div>
+              <h2 class="panel__titulo">Antigüedad de la cartera</h2>
+              <p class="panel__nota">Saldos pendientes de cobro y de pago, por tramo de vencimiento.</p>
+            </div>
+          </header>
+
+          <table class="tabla tabla--compacta" data-testid="tabla-antiguedad">
+            <caption class="sr-only">Antigüedad de la cartera</caption>
+            <thead>
+              <tr>
+                <th scope="col">Tramo</th>
+                <th scope="col" class="num">Por cobrar</th>
+                <th scope="col" class="num">Por pagar</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (tramo of tablero.partidas.aging; track tramo.bucket) {
+                <tr [attr.data-testid]="'tramo-' + tramo.bucket">
+                  <th scope="row" class="tabla__tramo">{{ tramo.label }}</th>
+                  <td class="num tabla__importe" [class.tabla__cero]="esCero(tramo.receivable)">{{ importe(tramo.receivable) }}</td>
+                  <td class="num tabla__importe" [class.tabla__cero]="esCero(tramo.payable)">{{ importe(tramo.payable) }}</td>
+                </tr>
+              }
+            </tbody>
+            <tfoot>
+              <tr>
+                <th scope="row">Total</th>
+                <td class="num tabla__importe">{{ importe(tablero.partidas.totalReceivable) }}</td>
+                <td class="num tabla__importe">{{ importe(tablero.partidas.totalPayable) }}</td>
+              </tr>
+            </tfoot>
+          </table>
+
+          <header class="panel__cabecera panel__cabecera--seccion">
+            <div>
+              <h2 class="panel__titulo">Partidas</h2>
+              <p class="panel__nota">Las más vencidas primero.</p>
+            </div>
+            <app-segmented-control
+              ariaLabel="Qué partidas mostrar"
+              [options]="opcionesDeLado"
+              [value]="ladoDePartidas()"
+              (valueChange)="ladoDePartidas.set($event)"
+            />
+          </header>
+
+          @if (partidasVisibles().length > 0) {
+            <table class="tabla tabla--apilable" data-testid="tabla-partidas">
+              <caption class="sr-only">Partidas abiertas</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Tercero</th>
+                  <th scope="col" class="col-opcional">Tipo</th>
+                  <th scope="col">Vencimiento</th>
+                  <th scope="col" class="num">Saldo</th>
+                  <th scope="col" class="accion"><span class="sr-only">Acción</span></th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (partida of partidasVisibles(); track partida.id) {
+                  <tr>
+                    <td>
+                      <span class="tabla__principal">{{ partida.partnerName }}</span>
+                      <span class="tabla__sub">{{ partida.documentNumber }} · {{ partida.accountName }}</span>
+                    </td>
+                    <td class="col-opcional">
+                      <app-badge [variant]="partida.side === 'RECEIVABLE' ? 'info' : 'secondary'">
+                        {{ partida.side === 'RECEIVABLE' ? 'Por cobrar' : 'Por pagar' }}
+                      </app-badge>
+                    </td>
+                    <td>
+                      <span class="tabla__principal tabla__fecha">{{ fecha(partida.dueDate) }}</span>
+                      @if (partida.overdueDays > 0) {
+                        <span class="tabla__sub partida__vencida">
+                          Vencida hace {{ partida.overdueDays }} {{ partida.overdueDays === 1 ? 'día' : 'días' }}
+                        </span>
+                      } @else {
+                        <span class="tabla__sub">Por vencer</span>
+                      }
+                    </td>
+                    <td class="num tabla__importe">{{ importe(partida.openAmount) }}</td>
+                    <td class="accion">
                       <button
                         app-button
                         type="button"
-                        [variant]="accion.principal ? 'primary' : 'outline'"
+                        variant="outline"
                         size="sm"
-                        [attr.data-testid]="'accion-' + accion.action"
-                        [attr.aria-label]="accion.rotulo + ': ' + doc.transactionNumber"
-                        (clicked)="avanzar(doc.id, accion)"
+                        [attr.data-testid]="'compensar-' + partida.id"
+                        [attr.aria-label]="'Compensar ' + partida.documentNumber"
+                        (clicked)="compensar(partida)"
                       >
-                        {{ accion.rotulo }}
+                        Compensar
+                      </button>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          } @else {
+            <app-empty-state
+              title="No hay partidas abiertas"
+              description="No queda nada pendiente de cobro ni de pago de este lado."
+            />
+          }
+        </app-tab>
+
+        <!-- ─── Controlling ───────────────────────────────────────────────── -->
+        <app-tab label="Centros y segmentos">
+          <header class="panel__cabecera">
+            <div>
+              <h2 class="panel__titulo">Resultado por objeto de controlling</h2>
+              <p class="panel__nota">Centros de coste, centros de beneficio y segmentos del período.</p>
+            </div>
+          </header>
+
+          <div class="dimensiones">
+            @for (tipo of dimensiones(); track tipo.kind) {
+              <section class="dimensiones__grupo" [attr.aria-label]="tipo.titulo">
+                <h3 class="dimensiones__titulo">{{ tipo.titulo }}</h3>
+                <p class="dimensiones__ayuda">{{ tipo.ayuda }}</p>
+                @if (tipo.items.length > 0) {
+                  <table class="tabla tabla--compacta">
+                    <caption class="sr-only">{{ tipo.titulo }}</caption>
+                    <thead>
+                      <tr>
+                        <th scope="col">Código</th>
+                        <th scope="col">Nombre</th>
+                        <th scope="col" class="num">Resultado</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (dim of tipo.items; track dim.id) {
+                        <tr [attr.data-testid]="'dimension-' + dim.code">
+                          <td class="tabla__codigo">{{ dim.code }}</td>
+                          <td>{{ dim.name }}</td>
+                          <td
+                            class="num tabla__importe"
+                            [class.tabla__negativo]="esNegativo(dim.result)"
+                          >
+                            {{ importe(dim.result) }}
+                          </td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                } @else {
+                  <p class="tabla__sub">Sin objetos definidos.</p>
+                }
+              </section>
+            }
+          </div>
+        </app-tab>
+
+        <!-- ─── Cierre: lista de pasos ────────────────────────────────────── -->
+        <app-tab label="Cierre del período">
+          <header class="panel__cabecera">
+            <div>
+              <h2 class="panel__titulo">Cierre del período</h2>
+              <p class="panel__nota">
+                Los pasos en orden. Las dos corridas registran asientos, así que sólo funcionan con el período abierto.
+              </p>
+            </div>
+          </header>
+
+          <ol class="cierre">
+            <!-- 1 · documentos -->
+            <li class="paso">
+              <span class="paso__numero" aria-hidden="true">1</span>
+              <div class="paso__cuerpo">
+                <div class="paso__cabecera">
+                  <div>
+                    <h3 class="paso__titulo">Postear los documentos pendientes</h3>
+                    <p class="paso__nota">Un período no se cierra con documentos sin postear.</p>
+                  </div>
+                  @if (documentosEnCurso() > 0) {
+                    <div class="paso__accion">
+                      <app-badge variant="warning">{{ documentosEnCurso() }} sin postear</app-badge>
+                      <button app-button type="button" variant="outline" size="sm" (clicked)="irABandeja('PENDIENTES')">
+                        Ir a la bandeja
+                      </button>
+                    </div>
+                  } @else {
+                    <app-badge variant="success">Todo posteado</app-badge>
+                  }
+                </div>
+              </div>
+            </li>
+
+            <!-- 2 · amortización -->
+            <li class="paso">
+              <span class="paso__numero" aria-hidden="true">2</span>
+              <div class="paso__cuerpo">
+                <div class="paso__cabecera">
+                  <div>
+                    <h3 class="paso__titulo">Amortización de activos fijos</h3>
+                    <p class="paso__nota">{{ tablero.activos.items.length }} activos registrados.</p>
+                  </div>
+                  <button
+                    app-button
+                    type="button"
+                    variant="primary"
+                    size="sm"
+                    [isLoading]="corriendo() === 'amortizacion'"
+                    data-testid="correr-amortizacion"
+                    (clicked)="amortizar()"
+                  >
+                    Correr la amortización
+                  </button>
+                </div>
+
+                <dl class="cifras">
+                  <div>
+                    <dt>Cargo del próximo mes</dt>
+                    <dd>{{ importe(tablero.activos.monthlyCharge) }}</dd>
+                  </div>
+                  <div>
+                    <dt>Valor neto en libros</dt>
+                    <dd>{{ importe(tablero.activos.totalNetBookValue) }}</dd>
+                  </div>
+                  <div>
+                    <dt>Amortización acumulada</dt>
+                    <dd>{{ importe(tablero.activos.totalAccumulated) }}</dd>
+                  </div>
+                </dl>
+
+                <table class="tabla tabla--compacta" data-testid="tabla-activos">
+                  <caption class="sr-only">Activos fijos</caption>
+                  <thead>
+                    <tr>
+                      <th scope="col">Activo</th>
+                      <th scope="col" class="col-opcional">Vida útil</th>
+                      <th scope="col" class="num">Cuota mensual</th>
+                      <th scope="col" class="num">Valor neto</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (activo of tablero.activos.items; track activo.id) {
+                      <tr [attr.data-testid]="'activo-' + activo.code">
+                        <td>
+                          <span class="tabla__principal">
+                            <span class="tabla__codigo">{{ activo.code }}</span> {{ activo.name }}
+                          </span>
+                          <span class="tabla__sub">{{ activo.className }}</span>
+                        </td>
+                        <td class="col-opcional tabla__sub">{{ activo.usefulLifeMonths }} meses</td>
+                        <td class="num">
+                          @if (activo.depreciable) {
+                            <span class="tabla__importe">{{ importe(activo.monthlyDepreciation) }}</span>
+                          } @else {
+                            <span class="tabla__sub">
+                              {{ activo.status === 'RETIRED' ? 'dado de baja' : 'amortizado del todo' }}, no entra en la corrida
+                            </span>
+                          }
+                        </td>
+                        <td class="num tabla__importe">{{ importe(activo.netBookValue) }}</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            </li>
+
+            <!-- 3 · devengos -->
+            <li class="paso">
+              <span class="paso__numero" aria-hidden="true">3</span>
+              <div class="paso__cuerpo">
+                <div class="paso__cabecera">
+                  <div>
+                    <h3 class="paso__titulo">Devengos</h3>
+                    <p class="paso__nota">Ingresos diferidos y gastos anticipados que se reconocen por período.</p>
+                  </div>
+                  <button
+                    app-button
+                    type="button"
+                    variant="primary"
+                    size="sm"
+                    [isLoading]="corriendo() === 'devengo'"
+                    data-testid="correr-devengo"
+                    (clicked)="devengar()"
+                  >
+                    Correr el devengo
+                  </button>
+                </div>
+
+                <dl class="cifras">
+                  <div>
+                    <dt>Reconoce este período</dt>
+                    <dd>{{ importe(tablero.devengos.periodCharge) }}</dd>
+                  </div>
+                  <div>
+                    <dt>Queda por reconocer</dt>
+                    <dd>{{ importe(tablero.devengos.pendingTotal) }}</dd>
+                  </div>
+                </dl>
+
+                <table class="tabla tabla--compacta" data-testid="tabla-devengos">
+                  <caption class="sr-only">Devengos</caption>
+                  <thead>
+                    <tr>
+                      <th scope="col">Concepto</th>
+                      <th scope="col" class="col-opcional">Avance</th>
+                      <th scope="col" class="num col-opcional">Por período</th>
+                      <th scope="col" class="num">Pendiente</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (devengo of tablero.devengos.items; track devengo.id) {
+                      <tr [attr.data-testid]="'devengo-' + devengo.code">
+                        <td>
+                          <span class="tabla__principal">
+                            <span class="tabla__codigo">{{ devengo.code }}</span> {{ devengo.name }}
+                          </span>
+                          <span class="tabla__sub">
+                            {{ devengo.kind === 'REVENUE' ? 'Ingreso diferido' : 'Gasto anticipado' }}
+                          </span>
+                        </td>
+                        <td class="col-opcional">
+                          @if (devengo.completed) {
+                            <app-badge variant="success">Reconocido entero</app-badge>
+                          } @else {
+                            <div class="avance">
+                              <span
+                                class="avance__barra"
+                                role="progressbar"
+                                [attr.aria-valuenow]="devengo.postedPeriods"
+                                aria-valuemin="0"
+                                [attr.aria-valuemax]="devengo.periods"
+                                [attr.aria-label]="'Períodos reconocidos de ' + devengo.name"
+                              >
+                                <span class="avance__relleno" [style.inline-size.%]="avance(devengo.postedPeriods, devengo.periods)"></span>
+                              </span>
+                              <span class="tabla__sub">{{ devengo.postedPeriods }} de {{ devengo.periods }}</span>
+                            </div>
+                          }
+                        </td>
+                        <td class="num col-opcional tabla__importe">{{ importe(devengo.periodAmount) }}</td>
+                        <td class="num tabla__importe">{{ importe(devengo.pendingAmount) }}</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            </li>
+
+            <!-- 4 · cierre -->
+            <li class="paso">
+              <span class="paso__numero" aria-hidden="true">4</span>
+              <div class="paso__cuerpo">
+                <div class="paso__cabecera">
+                  @if (periodoActivo(); as periodo) {
+                    <div>
+                      <h3 class="paso__titulo">Cerrar {{ periodo.name }}</h3>
+                      <p class="paso__nota">
+                        @switch (periodo.status) {
+                          @case ('OPEN') { Después de cerrarlo no admite asientos nuevos. }
+                          @case ('CLOSED') { Ya está cerrado. Las correcciones van en el período abierto. }
+                          @default { Todavía no empezó. }
+                        }
+                      </p>
+                    </div>
+                    @if (periodo.status === 'OPEN') {
+                      <button
+                        app-button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        data-testid="cockpit-cerrar-periodo"
+                        (clicked)="cerrarPeriodo()"
+                      >
+                        Cerrar el período
                       </button>
                     } @else {
-                      <span class="documento__final">Cerrado</span>
+                      <app-badge [variant]="periodo.status === 'CLOSED' ? 'secondary' : 'info'">
+                        {{ periodo.status === 'CLOSED' ? 'Cerrado' : 'Sin abrir' }}
+                      </app-badge>
                     }
-
-                    @if (flujoAbierto() === doc.id) {
-                      <ol class="flujo" [attr.data-testid]="'cadena-' + doc.id">
-                        @for (nodo of cadenaDelFlujo(); track nodo.id) {
-                          <li class="flujo__nodo" [class.flujo__nodo--actual]="nodo.role === 'ACTUAL'">
-                            <span class="flujo__papel">
-                              {{
-                                nodo.role === 'ORIGEN'
-                                  ? 'Origen'
-                                  : nodo.role === 'ACTUAL'
-                                    ? 'Este documento'
-                                    : 'Reversión'
-                              }}
-                            </span>
-                            <span class="flujo__numero">{{ nodo.transactionNumber }}</span>
-                            <span class="flujo__fecha">{{ nodo.transactionDate }}</span>
-                            <span class="flujo__importe">{{ importe(nodo.totalAmount) }}</span>
-                          </li>
-                        } @empty {
-                          <li class="flujo__nodo">Leyendo el flujo…</li>
-                        }
-                      </ol>
-                    }
-                  </li>
-                }
-              </ul>
-
-              @if (grupo.ocultos > 0) {
-                <p class="grupo__resto">
-                  y {{ grupo.ocultos }} más.
-                  <a app-link routerLink="/administration/accounting/libros">Verlos en el libro diario</a>
-                </p>
-              }
-            </section>
-          }
-        }
-      </app-tab>
-
-      <!-- ─── Partidas abiertas ───────────────────────────────────────────── -->
-      <app-tab label="Partidas abiertas">
-        <p class="seccion__nota">
-          Lo que falta cobrar y pagar, por antigüedad. La pregunta de una cartera no
-          es cuánto, es desde cuándo.
-        </p>
-
-        <div class="antiguedad" role="table" aria-label="Antigüedad de la cartera">
-          <div class="antiguedad__fila antiguedad__fila--cabecera" role="row">
-            <span role="columnheader">Tramo</span>
-            <span role="columnheader" class="antiguedad__cifra">Por cobrar</span>
-            <span role="columnheader" class="antiguedad__cifra">Por pagar</span>
-          </div>
-          @for (tramo of tablero.partidas.aging; track tramo.bucket) {
-            <div class="antiguedad__fila" role="row" [attr.data-testid]="'tramo-' + tramo.bucket">
-              <span role="cell">{{ tramo.label }}</span>
-              <span role="cell" class="antiguedad__cifra">{{ importe(tramo.receivable) }}</span>
-              <span role="cell" class="antiguedad__cifra">{{ importe(tramo.payable) }}</span>
-            </div>
-          }
-        </div>
-
-        <ul class="partidas">
-          @for (partida of tablero.partidas.items; track partida.id) {
-            <li class="partida">
-              <div class="partida__quien">
-                <span class="partida__socio">{{ partida.partnerName }}</span>
-                <span class="partida__doc">
-                  {{ partida.documentNumber }} · {{ partida.accountName }}
-                </span>
+                  } @else {
+                    <div>
+                      <h3 class="paso__titulo">Cerrar el período</h3>
+                      <p class="paso__nota">Hace falta un ejercicio fiscal abierto.</p>
+                    </div>
+                  }
+                </div>
               </div>
-              <app-badge [variant]="partida.side === 'RECEIVABLE' ? 'info' : 'secondary'">
-                {{ partida.side === 'RECEIVABLE' ? 'Por cobrar' : 'Por pagar' }}
-              </app-badge>
-              <span class="partida__vencimiento">
-                @if (partida.overdueDays > 0) {
-                  <span class="partida__vencida">
-                    {{ partida.overdueDays }} {{ partida.overdueDays === 1 ? 'día' : 'días' }} vencida
-                  </span>
-                } @else {
-                  vence {{ partida.dueDate }}
-                }
-              </span>
-              <span class="partida__importe">{{ importe(partida.openAmount) }}</span>
-              <button
-                app-button
-                type="button"
-                variant="outline"
-                size="sm"
-                [attr.data-testid]="'compensar-' + partida.id"
-                (clicked)="compensar(partida.id)"
-              >
-                Compensar
-              </button>
             </li>
-          }
-        </ul>
-      </app-tab>
-
-      <!-- ─── Controlling ─────────────────────────────────────────────────── -->
-      <app-tab label="Centros y segmentos">
-        <p class="seccion__nota">
-          Dónde se gasta y qué línea deja margen. Son los objetos de controlling del
-          modelo: centros de coste, centros de beneficio y segmentos.
-        </p>
-
-        @for (tipo of ['COST_CENTER', 'PROFIT_CENTER', 'SEGMENT']; track tipo) {
-          <section class="grupo">
-            <header class="grupo__cabecera">
-              <h3 class="grupo__titulo">
-                {{
-                  tipo === 'COST_CENTER'
-                    ? 'Centros de coste'
-                    : tipo === 'PROFIT_CENTER'
-                      ? 'Centros de beneficio'
-                      : 'Segmentos'
-                }}
-              </h3>
-            </header>
-            <ul class="dimensiones">
-              @for (dim of tablero.controlling; track dim.id) {
-                @if (dim.kind === tipo) {
-                  <li class="dimension" [attr.data-testid]="'dimension-' + dim.code">
-                    <span class="dimension__codigo">{{ dim.code }}</span>
-                    <span class="dimension__nombre">{{ dim.name }}</span>
-                    <span
-                      class="dimension__resultado"
-                      [class.dimension__resultado--negativo]="esNegativo(dim.result)"
-                    >
-                      {{ importe(dim.result) }}
-                    </span>
-                  </li>
-                }
-              }
-            </ul>
-          </section>
-        }
-      </app-tab>
-
-      <!-- ─── Cierre: activos y devengos ──────────────────────────────────── -->
-      <app-tab label="Cierre del período">
-        <p class="seccion__nota">
-          Lo que hay que correr antes de cerrar el mes. Ninguna de las dos es un
-          informe: cada corrida crea su asiento y mueve los saldos, y por eso las dos
-          fallan si el período está cerrado.
-        </p>
-
-        <section class="grupo">
-          <header class="grupo__cabecera">
-            <h3 class="grupo__titulo">Activos fijos</h3>
-            <span class="grupo__cuenta">{{ tablero.activos.items.length }}</span>
-          </header>
-
-          <div class="corrida">
-            <p class="corrida__cifra">
-              <span class="corrida__rotulo">Cargo del próximo mes</span>
-              {{ importe(tablero.activos.monthlyCharge) }}
-            </p>
-            <p class="corrida__cifra">
-              <span class="corrida__rotulo">Valor neto en libros</span>
-              {{ importe(tablero.activos.totalNetBookValue) }}
-            </p>
-            <p class="corrida__cifra">
-              <span class="corrida__rotulo">Amortización acumulada</span>
-              {{ importe(tablero.activos.totalAccumulated) }}
-            </p>
-            <button
-              app-button
-              type="button"
-              variant="primary"
-              [isLoading]="corriendo() === 'amortizacion'"
-              data-testid="correr-amortizacion"
-              (clicked)="amortizar()"
-            >
-              Correr la amortización
-            </button>
-          </div>
-
-          <ul class="dimensiones">
-            @for (activo of tablero.activos.items; track activo.id) {
-              <li class="dimension" [attr.data-testid]="'activo-' + activo.code">
-                <span class="dimension__codigo">{{ activo.code }}</span>
-                <span class="dimension__nombre">
-                  {{ activo.name }}
-                  <span class="dimension__detalle">
-                    {{ activo.className }} · {{ activo.usefulLifeMonths }} meses
-                    @if (activo.depreciable) {
-                      · {{ importe(activo.monthlyDepreciation) }}/mes
-                    } @else {
-                      ·
-                      <strong>
-                        {{ activo.status === 'RETIRED' ? 'dado de baja' : 'amortizado del todo' }}, no
-                        entra en la corrida
-                      </strong>
-                    }
-                  </span>
-                </span>
-                <span class="dimension__resultado">{{ importe(activo.netBookValue) }}</span>
-              </li>
-            }
-          </ul>
-        </section>
-
-        <section class="grupo">
-          <header class="grupo__cabecera">
-            <h3 class="grupo__titulo">Devengos</h3>
-            <span class="grupo__cuenta">{{ tablero.devengos.items.length }}</span>
-          </header>
-
-          <div class="corrida">
-            <p class="corrida__cifra">
-              <span class="corrida__rotulo">Reconoce este período</span>
-              {{ importe(tablero.devengos.periodCharge) }}
-            </p>
-            <p class="corrida__cifra">
-              <span class="corrida__rotulo">Queda por reconocer</span>
-              {{ importe(tablero.devengos.pendingTotal) }}
-            </p>
-            <button
-              app-button
-              type="button"
-              variant="primary"
-              [isLoading]="corriendo() === 'devengo'"
-              data-testid="correr-devengo"
-              (clicked)="devengar()"
-            >
-              Correr el devengo
-            </button>
-          </div>
-
-          <ul class="dimensiones">
-            @for (devengo of tablero.devengos.items; track devengo.id) {
-              <li class="dimension" [attr.data-testid]="'devengo-' + devengo.code">
-                <span class="dimension__codigo">{{ devengo.code }}</span>
-                <span class="dimension__nombre">
-                  {{ devengo.name }}
-                  <span class="dimension__detalle">
-                    {{ devengo.kind === 'REVENUE' ? 'Ingreso diferido' : 'Gasto anticipado' }} ·
-                    {{ devengo.postedPeriods }}/{{ devengo.periods }} períodos ·
-                    {{ importe(devengo.periodAmount) }} por período
-                  </span>
-                </span>
-                @if (devengo.completed) {
-                  <app-badge variant="success">Reconocido entero</app-badge>
-                }
-                <span class="dimension__resultado">{{ importe(devengo.pendingAmount) }}</span>
-              </li>
-            }
-          </ul>
-        </section>
-      </app-tab>
-
-    </app-tabs>
+          </ol>
+        </app-tab>
+      </app-tabs>
+    </app-card>
   }
 </app-view-state-host>

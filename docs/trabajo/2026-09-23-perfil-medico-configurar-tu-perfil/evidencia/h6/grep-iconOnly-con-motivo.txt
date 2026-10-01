@@ -1,0 +1,85 @@
+$ git grep -n -B7 'iconOnly' -- <los siete archivos de este tramo>  (cada botón con su justificación arriba; desde el 24/09 ningún mapa tiene botones de sólo ícono)
+src/app/features/account/my-profile/patient-profile-edit/patient-profile-edit.html-80-                         puntero y con el foco del teclado. -->
+src/app/features/account/my-profile/patient-profile-edit/patient-profile-edit.html-81-                    <!-- Excepción ADR-0012 §3 (D-05, 23/09): quitar un elemento de la lista, con aria-label y globo. -->
+src/app/features/account/my-profile/patient-profile-edit/patient-profile-edit.html-82-                    <button
+src/app/features/account/my-profile/patient-profile-edit/patient-profile-edit.html-83-                      app-button
+src/app/features/account/my-profile/patient-profile-edit/patient-profile-edit.html-84-                      type="button"
+src/app/features/account/my-profile/patient-profile-edit/patient-profile-edit.html-85-                      variant="ghost"
+src/app/features/account/my-profile/patient-profile-edit/patient-profile-edit.html-86-                      size="sm"
+src/app/features/account/my-profile/patient-profile-edit/patient-profile-edit.html:87:                      [iconOnly]="true"
+--
+src/app/features/auth/register-patient/register-patient.html-54-           sólo cuando su lectura falló, que es cuando el campo deja de ser
+src/app/features/auth/register-patient/register-patient.html-55-           un `select`.
+src/app/features/auth/register-patient/register-patient.html-56-
+src/app/features/auth/register-patient/register-patient.html-57-           La ubicación del domicilio también se proyecta, y es un mapa: el
+src/app/features/auth/register-patient/register-patient.html-58-           motor no tiene por qué saber de Leaflet ni de permisos del
+src/app/features/auth/register-patient/register-patient.html-59-           navegador. -->
+src/app/features/auth/register-patient/register-patient.html-60-        <div class="registro__body">
+src/app/features/auth/register-patient/register-patient.html:61:          <!-- `iconOnlyNav`: excepción ADR-0012 §3 (D-05, 23/09), pasar de página; el motor pone aria-label y globo, y la última página dice «Crear cuenta». -->
+src/app/features/auth/register-patient/register-patient.html-62-          <app-paginated-form
+src/app/features/auth/register-patient/register-patient.html-63-            data-testid="registro-form-paciente"
+src/app/features/auth/register-patient/register-patient.html-64-            [paginas]="paginasPaciente()"
+src/app/features/auth/register-patient/register-patient.html-65-            [form]="formPaciente"
+src/app/features/auth/register-patient/register-patient.html-66-            label="Crear cuenta"
+src/app/features/auth/register-patient/register-patient.html-67-            submitLabel="Crear cuenta"
+src/app/features/auth/register-patient/register-patient.html:68:            [iconOnlyNav]="true"
+--
+src/app/features/auth/register-patient/register-patient.html-170-                           hace; el dibujo tiene que acompañar, no contradecir. -->
+src/app/features/auth/register-patient/register-patient.html-171-                      <!-- Excepción ADR-0012 §3 (D-05, 23/09): quitar un elemento de la lista, con aria-label y globo. -->
+src/app/features/auth/register-patient/register-patient.html-172-                      <button
+src/app/features/auth/register-patient/register-patient.html-173-                        app-button
+src/app/features/auth/register-patient/register-patient.html-174-                        type="button"
+src/app/features/auth/register-patient/register-patient.html-175-                        variant="ghost"
+src/app/features/auth/register-patient/register-patient.html-176-                        size="sm"
+src/app/features/auth/register-patient/register-patient.html:177:                        [iconOnly]="true"
+--
+src/app/shared/components/atoms/back-link/back-link.html-1-<!-- En modo ícono el texto se va al nombre accesible y al tooltip: la flecha
+src/app/shared/components/atoms/back-link/back-link.html-2-     sola no dice a dónde se vuelve. -->
+src/app/shared/components/atoms/back-link/back-link.html-3-<!-- Excepción ADR-0012 §3 (D-05, 23/09): volver, con aria-label y globo; sólo si la pantalla la enciende. -->
+src/app/shared/components/atoms/back-link/back-link.html-4-<a
+src/app/shared/components/atoms/back-link/back-link.html-5-  app-button
+src/app/shared/components/atoms/back-link/back-link.html-6-  variant="secondary"
+src/app/shared/components/atoms/back-link/back-link.html-7-  data-testid="volver"
+src/app/shared/components/atoms/back-link/back-link.html:8:  [iconOnly]="iconOnly()"
+src/app/shared/components/atoms/back-link/back-link.html:9:  [attr.aria-label]="iconOnly() ? label() : null"
+src/app/shared/components/atoms/back-link/back-link.html:10:  [appTooltip]="iconOnly() ? label() : ''"
+src/app/shared/components/atoms/back-link/back-link.html-11-  [href]="href()"
+src/app/shared/components/atoms/back-link/back-link.html-12-  (click)="handleClick($event)"
+src/app/shared/components/atoms/back-link/back-link.html-13->
+src/app/shared/components/atoms/back-link/back-link.html-14-  <app-nav-icon name="arrow-left" />
+src/app/shared/components/atoms/back-link/back-link.html:15:  @if (!iconOnly()) {
+--
+src/app/shared/components/organisms/paginated-form/paginated-form.html-243-  <nav class="paginated-form__acciones" aria-label="Avance del formulario">
+src/app/shared/components/organisms/paginated-form/paginated-form.html-244-    @if (cancelLabel()) {
+src/app/shared/components/organisms/paginated-form/paginated-form.html-245-      <button app-button variant="ghost" type="button" (clicked)="cancelado.emit()">
+src/app/shared/components/organisms/paginated-form/paginated-form.html-246-        {{ cancelLabel() }}
+src/app/shared/components/organisms/paginated-form/paginated-form.html-247-      </button>
+src/app/shared/components/organisms/paginated-form/paginated-form.html-248-    }
+src/app/shared/components/organisms/paginated-form/paginated-form.html-249-
+src/app/shared/components/organisms/paginated-form/paginated-form.html:250:    <!-- Con `iconOnlyNav` el botón cambia de dibujo pero no de nombre: el
+--
+src/app/shared/components/organisms/paginated-form/paginated-form.html-257-           leen como dos cosas de distinta jerarquía cuando son la ida y la
+src/app/shared/components/organisms/paginated-form/paginated-form.html-258-           vuelta del mismo paso. Con texto se mantiene la diferencia: ahí
+src/app/shared/components/organisms/paginated-form/paginated-form.html-259-           «Siguiente» sí es la acción primaria y «Atrás» la de escape. -->
+src/app/shared/components/organisms/paginated-form/paginated-form.html-260-      <!-- Excepción ADR-0012 §3 (D-05, 23/09): pasar de página, con aria-label y globo; sólo si la pantalla la enciende. -->
+src/app/shared/components/organisms/paginated-form/paginated-form.html-261-      <button
+src/app/shared/components/organisms/paginated-form/paginated-form.html-262-        app-button
+src/app/shared/components/organisms/paginated-form/paginated-form.html-263-        type="button"
+src/app/shared/components/organisms/paginated-form/paginated-form.html:264:        [variant]="iconOnlyNav() ? 'primary' : 'ghost'"
+src/app/shared/components/organisms/paginated-form/paginated-form.html:265:        [iconOnly]="iconOnlyNav()"
+src/app/shared/components/organisms/paginated-form/paginated-form.html:266:        [attr.aria-label]="iconOnlyNav() ? 'Atrás' : null"
+src/app/shared/components/organisms/paginated-form/paginated-form.html:267:        [appTooltip]="iconOnlyNav() ? 'Atrás' : ''"
+src/app/shared/components/organisms/paginated-form/paginated-form.html-268-        (clicked)="retroceder()"
+src/app/shared/components/organisms/paginated-form/paginated-form.html-269-        data-testid="paginated-form-atras"
+src/app/shared/components/organisms/paginated-form/paginated-form.html-270-      >
+src/app/shared/components/organisms/paginated-form/paginated-form.html:271:        @if (iconOnlyNav()) {
+--
+src/app/shared/components/organisms/paginated-form/paginated-form.html-283-    <!-- Excepción ADR-0012 §3 (D-05, 23/09): pasar de página, con aria-label y globo; nunca en la última, que dice qué envía. -->
+src/app/shared/components/organisms/paginated-form/paginated-form.html-284-    <button
+src/app/shared/components/organisms/paginated-form/paginated-form.html-285-      app-button
+src/app/shared/components/organisms/paginated-form/paginated-form.html-286-      type="submit"
+src/app/shared/components/organisms/paginated-form/paginated-form.html-287-      [variant]="esUltima() && destructive() ? 'danger' : 'primary'"
+src/app/shared/components/organisms/paginated-form/paginated-form.html-288-      [isLoading]="pending()"
+src/app/shared/components/organisms/paginated-form/paginated-form.html-289-      [disabled]="pending()"
+src/app/shared/components/organisms/paginated-form/paginated-form.html:290:      [iconOnly]="nextAsIcon()"
+exit=0

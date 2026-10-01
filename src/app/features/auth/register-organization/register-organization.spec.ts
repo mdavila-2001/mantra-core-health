@@ -7,6 +7,7 @@ import { provideRouter, Router } from '@angular/router';
 import { CAMPO_TIPO_SOCIETARIO } from '../../../core/data-access/system-context/legal-entity-types.service';
 import { DropzonePdf } from '../../../shared/components/molecules/dropzone-pdf/dropzone-pdf';
 import { CARGADOR_DE_LEAFLET } from '../../../shared/components/organisms/map/map';
+import { UbicacionPicker } from '../registro-compartido/ubicacion-picker/ubicacion-picker';
 import { RegisterOrganization } from './register-organization';
 
 const RESPUESTA = {
@@ -612,6 +613,97 @@ describe('RegisterOrganization', () => {
           '[data-testid="registro-organizacion-casa-matriz-location-confirmed"]',
         ),
       ).not.toBeNull();
+    });
+  });
+
+  describe('el mapa vacía la dirección de la casa matriz (D-06)', () => {
+    /** La dirección escrita y dejada: tocada, como la deja quien la escribió. */
+    function direccionEscritaYDejada(): HTMLInputElement {
+      fixture.detectChanges();
+      completar();
+      fixture.detectChanges();
+      avanzarHasta('Datos de la aseguradora');
+      const campo: HTMLInputElement = fixture.nativeElement.querySelector(
+        '[data-testid="registro-organizacion-direccion"]',
+      );
+      campo.dispatchEvent(new FocusEvent('blur'));
+      fixture.detectChanges();
+      return campo;
+    }
+
+    function tocarElMapa(): void {
+      const mapa = fixture.debugElement.query(By.directive(UbicacionPicker));
+      (mapa.componentInstance as UbicacionPicker).puntoElegido.emit({ lat: -17.7833, lng: -63.1821 });
+      fixture.detectChanges();
+    }
+
+    function errorDe(campo: HTMLElement): string {
+      return campo.closest('app-form-field')?.querySelector('.form-field-error')?.textContent?.trim() ?? '';
+    }
+
+    const AVISO = '[data-testid="registro-organizacion-direccion-reescribir"]';
+
+    it('la deja vacía sin marcarla en rojo, aunque la persona ya la hubiera tocado', () => {
+      const campo = direccionEscritaYDejada();
+      expect(component.form.controls.address.touched).toBe(true);
+
+      tocarElMapa();
+
+      expect(campo.value).toBe('');
+      expect(errorDe(campo)).toBe('');
+      expect(fixture.nativeElement.querySelector(AVISO)).not.toBeNull();
+    });
+
+    it('el aviso queda junto a «Dirección»: el mapa es el campo siguiente', () => {
+      const campo = direccionEscritaYDejada();
+      tocarElMapa();
+
+      const siguiente = campo.closest('app-form-field')?.nextElementSibling;
+      expect(siguiente?.querySelector(AVISO)).not.toBeNull();
+    });
+
+    it('en un país con varias zonas horarias, el mapa también queda pegado a «Dirección»', () => {
+      // Con la zona horaria son cinco campos y el motor parte la sección en dos
+      // páginas: el mapa tiene que caer en la de «Dirección», justo después.
+      fixture.detectChanges();
+      completar({ incorporationCountry: 'US', legalEntityType: 'US_LLC' });
+      component.form.controls.incorporationCountry.setValue('US');
+      fixture.detectChanges();
+      avanzarHasta('Datos de la aseguradora');
+      // Es el caso de varias zonas: la zona horaria está en esta página.
+      expect(
+        fixture.nativeElement.querySelector('[data-testid="registro-organizacion-zona"]'),
+      ).not.toBeNull();
+
+      const campo: HTMLElement = fixture.nativeElement.querySelector(
+        '[data-testid="registro-organizacion-direccion"]',
+      );
+      const siguiente = campo.closest('app-form-field')?.nextElementSibling;
+      expect(siguiente?.querySelector('app-ubicacion-picker')).not.toBeNull();
+    });
+
+    it('tocarla después sí la marca, y el aviso sigue a su lado', () => {
+      const campo = direccionEscritaYDejada();
+      tocarElMapa();
+
+      campo.dispatchEvent(new FocusEvent('blur'));
+      fixture.detectChanges();
+
+      expect(errorDe(campo)).toBe('Escribí la dirección (hasta 300 caracteres).');
+      expect(fixture.nativeElement.querySelector(AVISO)).not.toBeNull();
+    });
+
+    it('intentar avanzar sin reescribirla la marca y no deja pasar', () => {
+      const campo = direccionEscritaYDejada();
+      tocarElMapa();
+
+      fixture.nativeElement.querySelector('[data-testid="paginated-form-continuar"]').click();
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelector('.paginated-form__titulo').textContent).toContain(
+        'Datos de la aseguradora',
+      );
+      expect(errorDe(campo)).toBe('Escribí la dirección (hasta 300 caracteres).');
     });
   });
 

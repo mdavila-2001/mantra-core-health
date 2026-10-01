@@ -18,6 +18,8 @@ import { stickerDe, type Sticker } from './sticker-pack.generated';
 import type {
   ConversationListItem,
   DirectMessage,
+  MessageReaction,
+  MessageReceipt,
   PublicDirectoryResult,
 } from '../data-access/community/community.types';
 
@@ -26,6 +28,9 @@ const SONDEO_BANDEJA_MS = 60_000;
 
 /** Cada cuánto se relee el hilo abierto. */
 const SONDEO_HILO_MS = 30_000;
+
+/** Cuánto se espera, tras enviar, para releer los recibos del mensaje. */
+const ESPERA_DE_RECIBOS_MS = 2_000;
 
 /** Cuántos mensajes trae cada página del hilo. */
 export const PAGINA_DE_MENSAJES = 30;
@@ -98,6 +103,8 @@ export interface MensajePendiente {
   };
   readonly creadoEn: Date;
   readonly estado: 'enviando' | 'fallado';
+  /** Un sticker que subió la persona: viaja marcado (`contentType: 'STICKER'`). */
+  readonly comoSticker?: boolean;
 }
 
 /**
@@ -116,6 +123,10 @@ export interface MensajeDelHilo {
   readonly estado: 'enviando' | 'fallado' | 'enviado';
   /** Si su texto se cambió después de mandarlo — se dice en la burbuja. */
   readonly isEdited?: boolean;
+  /** `STICKER` si es uno propio de quien lo mandó; ver `DirectMessage`. */
+  readonly contentType?: 'TEXT' | 'MEDIA' | 'STICKER';
+  readonly reactions?: readonly MessageReaction[];
+  readonly receipts?: readonly MessageReceipt[];
   /** Sólo en los pendientes: con qué reintentar. */
   readonly pendiente?: MensajePendiente;
 }
@@ -141,6 +152,11 @@ export interface MensajeDelHilo {
  * sondea desde que arranca la aplicación: `Messaging` lo enciende al entrar y
  * lo apaga al salir. Quien está en la agenda no tiene por qué estar pidiendo
  * conversaciones cada minuto.
+ *
+ * El armazón sí necesita saber cuántos chats hay sin leer desde cualquier
+ * pantalla (N-01, 23/09/2026): para eso está `prepararContador()`, que lee la
+ * bandeja una vez y se une al socket, **sin** sondear y **sin** contar como
+ * «estar en Chats». El número sigue siendo uno solo: `sinLeer`.
  *
  * ## El socket empuja, el sondeo confirma
  *
@@ -220,6 +236,32 @@ export class ChatStore {
    */
   readonly noLeidosAlAbrir = signal(0);
 
+  /* --- Bloqueados ---------------------------------------------------------- */
+
+  /**
+   * A quién bloqueó la persona, con su nombre.
+   *
+   * La API sólo dice el `profileId` bloqueado; el nombre se le pregunta a la
+   * ficha pública, y si no se puede leer se cae al de la conversación —o a
+   * «Perfil bloqueado»—: una lista de identificadores no le sirve a nadie.
+   */
+  readonly bloqueados = signal<readonly PerfilBloqueado[]>([]);
+  readonly bloqueadosCargados = signal(false);
+
+  private readonly idsBloqueados = computed(
+    () => new Set(this.bloqueados().map((b) => b.profileId)),
+  );
+
+  /**
+   * `true` si la conversación abierta es directa con alguien bloqueado.
+   *
+   * En un grupo no hay «el otro»: bloquear a un integrante no cierra el grupo.
+   */
+  readonly hiloBloqueado = computed(() => {
+    const peers = this.conversacionActiva()?.peers ?? [];
+    return peers.length === 1 && this.idsBloqueados().has(peers[0].profileId);
+  });
+
   /* --- Buscador de gente nueva -------------------------------------------- */
 
   readonly resultados = signal<readonly PublicDirectoryResult[]>([]);
@@ -229,6 +271,9 @@ export class ChatStore {
   private temporizadorBandeja: ReturnType<typeof setTimeout> | null = null;
   private temporizadorHilo: ReturnType<typeof setTimeout> | null = null;
   private encendido = false;
+  private contadorPreparado = false;
+  /** Quién espera a que se resuelva el perfil propio, pedido una sola vez. */
+  private esperandoPerfil: (() => void)[] | null = null;
   private hiloMarcado = new Set<string>();
 
   /**
@@ -265,6 +310,9 @@ export class ChatStore {
         sentAt: mensaje.sentAt,
         estado: 'enviado',
         isEdited: mensaje.isEdited,
+        contentType: mensaje.contentType,
+        reactions: mensaje.reactions,
+        receipts: mensaje.receipts,
       }));
 
     const enVuelo = this.pendientes()
@@ -278,6 +326,7 @@ export class ChatStore {
         attachmentFileId: pendiente.adjunto?.fileId,
         sentAt: pendiente.creadoEn,
         estado: pendiente.estado,
+        contentType: pendiente.comoSticker ? 'STICKER' : undefined,
         pendiente,
       }));
 
@@ -358,22 +407,64 @@ export class ChatStore {
       return;
     }
     this.encendido = true;
+    this.conPerfil(() => this.arrancarConPerfil());
+  }
 
-    if (this.perfilResuelto()) {
-      this.arrancarConPerfil();
+  /**
+   * Deja `sinLeer` al día **sin entrar a Chats**: resuelve el perfil, lee la
+   * bandeja una vez y se une al socket, que desde ahí la mantiene (cada mensaje
+   * nuevo se aplica sobre su fila y relee). Lo llama el armazón para el número
+   * del ícono de Chats (N-01).
+   *
+   * No es `iniciar()` a medias, y la diferencia es el motivo de que exista:
+   * **no** marca actividad —quien está en la agenda no está leyendo chats, y
+   * marcarlo apagaría la respuesta automática— y **no** sondea cada minuto.
+   * Idempotente. Si `Messaging` ya encendió el store, no hace nada: la bandeja
+   * y el socket ya están.
+   */
+  prepararContador(): void {
+    if (this.contadorPreparado) {
       return;
     }
+    this.contadorPreparado = true;
+    this.conPerfil(() => {
+      const propio = this.perfil();
+      if (propio === null || this.encendido) {
+        return;
+      }
+      this.socket.joinInbox(propio);
+      this.recargarBandeja();
+    });
+  }
 
+  /**
+   * Corre `despues` con el perfil propio resuelto, pidiéndolo **una sola vez**
+   * aunque lo necesiten dos a la vez —el armazón con `prepararContador()` y
+   * `Messaging` con `iniciar()`, que montan casi juntos—: el segundo espera la
+   * respuesta del primero en vez de preguntar de nuevo.
+   */
+  private conPerfil(despues: () => void): void {
+    if (this.perfilResuelto()) {
+      despues();
+      return;
+    }
+    if (this.esperandoPerfil !== null) {
+      this.esperandoPerfil.push(despues);
+      return;
+    }
+    this.esperandoPerfil = [despues];
     this.community.getOwnProfile().subscribe({
       next: (propio) => {
         this.perfil.set(propio?.id ?? null);
         this.perfilResuelto.set(true);
-        if (propio) {
-          this.arrancarConPerfil();
-        }
+        const esperan = this.esperandoPerfil ?? [];
+        this.esperandoPerfil = null;
+        // Sin perfil no hay bandeja que leer: cada espera lo comprueba.
+        esperan.forEach((correr) => correr());
       },
       error: () => {
         this.perfilResuelto.set(true);
+        this.esperandoPerfil = null;
         this.error.set('No pudimos saber si tenés perfil público.');
       },
     });
@@ -392,6 +483,7 @@ export class ChatStore {
     }
     this.socket.joinInbox(propio);
     this.recargarBandeja();
+    this.cargarBloqueos();
     this.agendarBandeja();
     // Si el hilo ya estaba elegido —se entró por `/messaging/<id>` directo— hay
     // que cargarlo ahora, que es cuando recién se sabe con qué perfil leerlo.
@@ -438,6 +530,116 @@ export class ChatStore {
           this.error.set('No pudimos crear tu perfil. Probá de nuevo.');
         },
       });
+  }
+
+  /* --- Bloquear ------------------------------------------------------------ */
+
+  /** `true` si ese perfil está bloqueado. */
+  estaBloqueado(profileId: string): boolean {
+    return this.idsBloqueados().has(profileId);
+  }
+
+  /** Lee los bloqueos propios y les busca el nombre. */
+  cargarBloqueos(): void {
+    const propio = this.perfil();
+    if (propio === null) {
+      return;
+    }
+    this.community.listBlocks({ profileId: propio, limit: 100 }).subscribe({
+      next: (pagina) => {
+        const conocidos = new Map(this.bloqueados().map((b) => [b.profileId, b]));
+        this.bloqueados.set(
+          pagina.items.map((item) => ({
+            profileId: item.blockedProfileId,
+            displayName:
+              conocidos.get(item.blockedProfileId)?.displayName ??
+              this.nombreConocido(item.blockedProfileId),
+            desde: item.createdAt,
+          })),
+        );
+        this.bloqueadosCargados.set(true);
+        // Los que aún no tienen nombre se le piden a su ficha, uno por uno: es
+        // una lista corta y cada ficha se pide una sola vez.
+        for (const bloqueado of this.bloqueados()) {
+          if (bloqueado.displayName === SIN_NOMBRE) {
+            this.resolverNombre(bloqueado.profileId);
+          }
+        }
+      },
+      error: () => {
+        this.bloqueadosCargados.set(true);
+      },
+    });
+  }
+
+  /**
+   * Bloquea a alguien. Se refleja en el acto y se revierte si el servidor dice
+   * que no: mostrar bloqueado a quien no lo está sería una promesa falsa de
+   * que no te va a poder escribir.
+   */
+  bloquear(profileId: string, nombre?: string): void {
+    const propio = this.perfil();
+    if (propio === null || this.estaBloqueado(profileId)) {
+      return;
+    }
+    const entrada: PerfilBloqueado = {
+      profileId,
+      displayName: nombre ?? this.nombreConocido(profileId),
+      desde: new Date(),
+    };
+    this.bloqueados.update((lista) => [entrada, ...lista]);
+    this.community
+      .block({ blockerProfileId: propio, blockedProfileId: profileId })
+      .subscribe({
+        next: () => undefined,
+        error: () => {
+          this.bloqueados.update((lista) => lista.filter((b) => b.profileId !== profileId));
+          this.error.set('No pudimos bloquear a esa persona. Probá de nuevo.');
+        },
+      });
+  }
+
+  /** Levanta un bloqueo. Mismo criterio que {@link bloquear}: primero se ve. */
+  desbloquear(profileId: string): void {
+    const propio = this.perfil();
+    const previo = this.bloqueados().find((b) => b.profileId === profileId);
+    if (propio === null || previo === undefined) {
+      return;
+    }
+    this.bloqueados.update((lista) => lista.filter((b) => b.profileId !== profileId));
+    this.community
+      .unblock({ blockerProfileId: propio, blockedProfileId: profileId })
+      .subscribe({
+        next: () => undefined,
+        error: () => {
+          this.bloqueados.update((lista) => [previo, ...lista]);
+          this.error.set('No pudimos desbloquear a esa persona. Probá de nuevo.');
+        },
+      });
+  }
+
+  /** El nombre que ya se sabe de un perfil, por sus conversaciones. */
+  private nombreConocido(profileId: string): string {
+    for (const conversacion of this.conversaciones()) {
+      const peer = conversacion.peers.find((p) => p.profileId === profileId);
+      if (peer?.displayName) {
+        return peer.displayName;
+      }
+    }
+    return SIN_NOMBRE;
+  }
+
+  private resolverNombre(profileId: string): void {
+    this.community.readProfile(profileId).subscribe({
+      next: (ficha) =>
+        this.bloqueados.update((lista) =>
+          lista.map((b) =>
+            b.profileId === profileId ? { ...b, displayName: ficha.displayName } : b,
+          ),
+        ),
+      // Sin ficha se queda «Perfil bloqueado»: no vale un cartel por un nombre.
+      error: () => undefined,
+    });
   }
 
   /* --- Bandeja ------------------------------------------------------------ */
@@ -671,11 +873,35 @@ export class ChatStore {
    * propios que ya estaban en vuelo: el `POST` devuelve el id y el socket
    * empuja el mismo mensaje, y sin esto la burbuja aparecería dos veces.
    */
-  private absorber(items: readonly DirectMessage[]): void {
-    const conocidos = new Set(this.mensajes().map((m) => m.id));
+  private absorber(items: readonly DirectMessage[], delServidor = false): void {
+    const conocidos = new Map(this.mensajes().map((m) => [m.id, m]));
     const nuevos = items.filter((m) => !conocidos.has(m.id));
-    if (nuevos.length > 0) {
-      this.mensajes.update((lista) => [...nuevos, ...lista]);
+    // Lo que ya estaba también cambia con el tiempo —reacciones, recibos—, y el
+    // sondeo es quien se entera si el socket no llegó. Sólo una página **leída
+    // del servidor** es autoritativa: un mensaje armado del acuse de envío no
+    // trae recibos, y no por eso los tiene que borrar.
+    const cambios = new Map<string, DirectMessage>();
+    if (delServidor) {
+      for (const entrante of items) {
+        const previo = conocidos.get(entrante.id);
+        if (previo === undefined) {
+          continue;
+        }
+        const reactions = entrante.reactions ?? [];
+        const receipts = entrante.receipts ?? previo.receipts;
+        if (
+          JSON.stringify(reactions) !== JSON.stringify(previo.reactions ?? []) ||
+          JSON.stringify(receipts) !== JSON.stringify(previo.receipts)
+        ) {
+          cambios.set(entrante.id, { ...previo, reactions, receipts });
+        }
+      }
+    }
+    if (nuevos.length > 0 || cambios.size > 0) {
+      this.mensajes.update((lista) => [
+        ...nuevos,
+        ...lista.map((m) => cambios.get(m.id) ?? m),
+      ]);
     }
   }
 
@@ -808,6 +1034,44 @@ export class ChatStore {
     );
   }
 
+  /* --- Reaccionar ---------------------------------------------------------- */
+
+  /**
+   * Reacciona a un mensaje con un emoji; volver a tocar el mismo lo quita.
+   *
+   * Un perfil tiene **una** reacción por mensaje —elegir otra reemplaza la
+   * anterior—. Se pinta antes de que el servidor conteste y se revierte si
+   * falla.
+   */
+  reaccionar(mensaje: MensajeDelHilo, emoji: string): void {
+    const propio = this.perfil();
+    const conversationId = this.activaId();
+    if (propio === null || conversationId === null || mensaje.id === null) {
+      return;
+    }
+    const messageId = mensaje.id;
+    const anteriores = mensaje.reactions;
+    const yaReaccioné = (anteriores ?? []).find((r) => r.profileIds.includes(propio))?.emoji;
+    const elegido = yaReaccioné === emoji ? null : emoji;
+
+    this.aplicarReacciones(messageId, reaccionesConMia(anteriores, propio, elegido));
+    this.community
+      .reactToMessage(conversationId, messageId, { profileId: propio, emoji: elegido })
+      .subscribe({
+        next: (actualizado) => this.aplicarReacciones(messageId, actualizado.reactions ?? []),
+        error: () => {
+          this.aplicarReacciones(messageId, anteriores ?? []);
+          this.error.set('No pudimos guardar tu reacción.');
+        },
+      });
+  }
+
+  private aplicarReacciones(messageId: string, reactions: readonly MessageReaction[]): void {
+    this.mensajes.update((lista) =>
+      lista.map((m) => (m.id === messageId ? { ...m, reactions } : m)),
+    );
+  }
+
   /**
    * Manda un mensaje y lo pinta antes de que el servidor conteste.
    *
@@ -819,7 +1083,7 @@ export class ChatStore {
     const propio = this.perfil();
     const conversationId = this.activaId();
     const cuerpo = texto.trim();
-    if (propio === null || conversationId === null || cuerpo === '') {
+    if (propio === null || conversationId === null || cuerpo === '' || this.hiloBloqueado()) {
       return;
     }
     this.autoReply.marcarActividad();
@@ -878,7 +1142,7 @@ export class ChatStore {
    */
   enviarSticker(sticker: Sticker): void {
     const conversationId = this.activaId();
-    if (this.perfil() === null || conversationId === null) {
+    if (this.perfil() === null || conversationId === null || this.hiloBloqueado()) {
       return;
     }
     const pendiente: MensajePendiente = {
@@ -933,7 +1197,7 @@ export class ChatStore {
           : {}),
         ...(pendiente.adjunto?.fileId
           ? {
-              contentType: 'MEDIA' as const,
+              contentType: pendiente.comoSticker ? ('STICKER' as const) : ('MEDIA' as const),
               attachmentFileId: pendiente.adjunto.fileId,
             }
           : {}),
@@ -957,6 +1221,7 @@ export class ChatStore {
                 ...(pendiente.adjunto?.fileId
                   ? { attachmentFileId: pendiente.adjunto.fileId }
                   : {}),
+                ...(pendiente.comoSticker ? { contentType: 'STICKER' as const } : {}),
                 sentAt: acuse.sentAt ?? pendiente.creadoEn,
               },
             ]);
@@ -965,6 +1230,11 @@ export class ChatStore {
             lista.filter((p) => p.claveTemporal !== pendiente.claveTemporal),
           );
           this.recargarBandeja();
+          // El acuse no trae recibos: se relee poco después para que el ✓ pase
+          // a ✓✓ cuando llegue, sin esperar al sondeo de treinta segundos.
+          if (this.isBrowser && pendiente.conversationId === this.activaId()) {
+            setTimeout(() => this.refrescarHilo(), ESPERA_DE_RECIBOS_MS);
+          }
         },
         error: () => {
           this.enviando.set(false);
@@ -986,9 +1256,9 @@ export class ChatStore {
    * (`blob:`) si es una imagen: esperar a que termine la subida para recién
    * mostrar algo es lo que hace que mandar una foto se sienta lento.
    */
-  enviarAdjunto(archivo: File, leyenda: string): void {
+  enviarAdjunto(archivo: File, leyenda: string, comoSticker = false): void {
     const conversationId = this.activaId();
-    if (conversationId === null) {
+    if (conversationId === null || this.hiloBloqueado()) {
       return;
     }
 
@@ -999,15 +1269,35 @@ export class ChatStore {
       bodyText: leyenda.trim(),
       creadoEn: new Date(),
       estado: 'enviando',
+      ...(comoSticker ? { comoSticker: true } : {}),
       adjunto: {
         nombre: archivo.name,
         tipo: archivo.type,
-        ...(esImagen && this.isBrowser
-          ? { vistaPrevia: URL.createObjectURL(archivo) }
-          : {}),
       },
     };
     this.pendientes.update((lista) => [...lista, pendiente]);
+
+    // La miniatura local es un `data:` URL y no un `blob:`: la CSP del producto
+    // (`img-src 'self' data:`) no admite `blob:`, y la imagen salía rota hasta
+    // que terminaba la subida. Ampliar la CSP es una decisión de arquitectura
+    // que no se toma acá; `data:` ya está permitido.
+    if (esImagen && this.isBrowser) {
+      const lector = new FileReader();
+      lector.onload = () => {
+        const vistaPrevia = lector.result;
+        if (typeof vistaPrevia !== 'string') {
+          return;
+        }
+        this.pendientes.update((lista) =>
+          lista.map((p) =>
+            p.claveTemporal === pendiente.claveTemporal && p.adjunto
+              ? { ...p, adjunto: { ...p.adjunto, vistaPrevia } }
+              : p,
+          ),
+        );
+      };
+      lector.readAsDataURL(archivo);
+    }
 
     // `PHI` y no `NORMAL`: lo que se adjunta en un chat entre paciente y
     // profesional es, con toda probabilidad, la foto de un análisis o de una
@@ -1017,9 +1307,15 @@ export class ChatStore {
       .upload(archivo, esImagen ? 'IMAGE' : 'DOCUMENT', 'PHI')
       .subscribe({
       next: (subido) => {
+        // Se parte del pendiente **actual** de la lista y no del capturado al
+        // empezar: en el medio pudo llegar la miniatura, y volver a la copia
+        // vieja la borraría.
+        const actual =
+          this.pendientes().find((p) => p.claveTemporal === pendiente.claveTemporal) ??
+          pendiente;
         const conFileId: MensajePendiente = {
-          ...pendiente,
-          adjunto: { ...pendiente.adjunto!, fileId: subido.id },
+          ...actual,
+          adjunto: { ...actual.adjunto!, fileId: subido.id },
         };
         this.pendientes.update((lista) =>
           lista.map((p) =>
@@ -1316,27 +1612,38 @@ export class ChatStore {
     }
     this.temporizadorHilo = setTimeout(() => {
       this.temporizadorHilo = null;
-      const propio = this.perfil();
-      const conversationId = this.activaId();
-      if (!this.encendido || propio === null || conversationId === null) {
+      if (!this.encendido || this.perfil() === null || this.activaId() === null) {
         return;
       }
-      this.community
-        .listMessages(conversationId, {
-          profileId: propio,
-          limit: PAGINA_DE_MENSAJES,
-        })
-        .subscribe({
-          next: (pagina) => {
-            if (this.activaId() === conversationId) {
-              this.absorber(pagina.items);
-              this.peerReadUpTo.set(pagina.peerReadUpTo ?? null);
-            }
-          },
-          error: () => undefined,
-        });
+      this.refrescarHilo();
       this.agendarHilo();
     }, SONDEO_HILO_MS);
+  }
+
+  /**
+   * Relee la primera página del hilo abierto y aplica lo que cambió: mensajes
+   * nuevos, reacciones, recibos y hasta dónde leyó el otro lado.
+   */
+  private refrescarHilo(): void {
+    const propio = this.perfil();
+    const conversationId = this.activaId();
+    if (propio === null || conversationId === null) {
+      return;
+    }
+    this.community
+      .listMessages(conversationId, {
+        profileId: propio,
+        limit: PAGINA_DE_MENSAJES,
+      })
+      .subscribe({
+        next: (pagina) => {
+          if (this.activaId() === conversationId) {
+            this.absorber(pagina.items, true);
+            this.peerReadUpTo.set(pagina.peerReadUpTo ?? null);
+          }
+        },
+        error: () => undefined,
+      });
   }
 
   private pararTemporizadores(): void {
@@ -1464,4 +1771,36 @@ function slugDe(nombre: string): string {
     .slice(0, 40);
   const cola = Math.random().toString(36).slice(2, 8);
   return `${base === '' ? 'perfil' : base}-${cola}`;
+}
+
+/** Lo que dice la lista de bloqueados mientras no se sabe el nombre. */
+export const SIN_NOMBRE = 'Perfil bloqueado';
+
+/** Alguien que la persona bloqueó, con lo que la pantalla necesita. */
+export interface PerfilBloqueado {
+  readonly profileId: string;
+  readonly displayName: string;
+  readonly desde: Date;
+}
+
+/**
+ * Las reacciones de un mensaje después de que `propio` elija `emoji`.
+ *
+ * `null` quita la suya. Una persona aparece en un solo emoji, y un emoji sin
+ * nadie desaparece del listado.
+ */
+export function reaccionesConMia(
+  actuales: readonly MessageReaction[] | undefined,
+  propio: string,
+  emoji: string | null,
+): readonly MessageReaction[] {
+  const sinMia = (actuales ?? [])
+    .map((r) => ({ emoji: r.emoji, profileIds: r.profileIds.filter((p) => p !== propio) }))
+    .filter((r) => r.profileIds.length > 0);
+  if (emoji === null) {
+    return sinMia;
+  }
+  return sinMia.some((r) => r.emoji === emoji)
+    ? sinMia.map((r) => (r.emoji === emoji ? { ...r, profileIds: [...r.profileIds, propio] } : r))
+    : [...sinMia, { emoji, profileIds: [propio] }];
 }

@@ -1,0 +1,6 @@
+
+Running 1 test using 1 worker
+
+  ok 1 [chromium] › playwright\justin-cierre-tanda.spec.ts:592:7 › Hallazgo · «Agregar» desde la receta y el carrito › qué pasa de verdad al agregar una línea de la receta (13.3s)
+
+  1 passed (14.4s)

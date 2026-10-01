@@ -75,3 +75,79 @@
   color: var(--text-secondary);
   text-transform: uppercase;
 }
+
+/* ---- dos series: con seguro y sin seguro ---------------------------------
+   Mismo par que `spending-year-chart`, ya medido contra el 3:1 de WCAG 1.4.11:
+   petróleo 500 y 300 en claro, aguamarina 400 y 600 en oscuro. La leyenda
+   nombra cada serie y la tabla oculta trae los números, así que el color no es
+   lo único que las distingue. */
+.grafico {
+  --serie-con-seguro: var(--brand-primary);
+  --serie-sin-seguro: var(--c-petrol-300);
+}
+
+.grafico__leyenda {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1) var(--sp-4);
+  margin: 0 0 var(--sp-3);
+  padding: 0;
+  list-style: none;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.grafico__leyenda-item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+}
+
+.grafico__muestra {
+  inline-size: 0.75rem;
+  block-size: 0.75rem;
+  border-radius: var(--r-sm);
+}
+
+.grafico__muestra--con,
+.grafico__barra--con {
+  background: var(--serie-con-seguro);
+}
+
+.grafico__muestra--sin,
+.grafico__barra--sin {
+  background: var(--serie-sin-seguro);
+}
+
+/* Las dos barras del mes, una junto a la otra y pegadas al eje. */
+.grafico__pista--par {
+  flex-direction: row;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.grafico__celda {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: stretch;
+  min-inline-size: 0;
+  block-size: 100%;
+}
+
+.grafico__cifra--par {
+  font-size: var(--fs-overline);
+}
+
+/* `:host-context(html…)` y no `:root …`: el encapsulado de Angular reescribe
+   `:root` y la regla quedaría muerta (mismo motivo que en `spending-year-chart`). */
+@media (prefers-color-scheme: dark) {
+  :host-context(html:not([data-theme='light'])) .grafico {
+    --serie-sin-seguro: var(--c-aqua-600);
+  }
+}
+
+:host-context(html[data-theme='dark']) .grafico {
+  --serie-sin-seguro: var(--c-aqua-600);
+}

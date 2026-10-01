@@ -1,0 +1,66 @@
+✔ la ficha tiene cinco pestañas, en su orden — Datos personales | Contacto | Facturación | Seguros y tutores | Mis puntos
+✔ se entra por «Datos personales»
+✔ 1440-claro · ficha sin desborde horizontal
+✔ 1440-claro · «Mis puntos» queda seleccionada
+✔ la billetera no trae cabecera propia
+✔ una sola cabecera en la pantalla — 1 cabeceras
+✔ la billetera dice algo del programa (saldo, vacío o error, nunca en blanco) — Todavía no hay nada acá Todavía no hay un programa de Puntos AloVida activo par
+✔ 1440-claro · la billetera queda dentro de la tarjeta
+✔ 1440-claro · billetera sin desborde horizontal
+✔ 1440-oscuro · ficha sin desborde horizontal
+✔ 1440-oscuro · «Mis puntos» queda seleccionada
+✔ 1440-oscuro · la billetera queda dentro de la tarjeta
+✔ 1440-oscuro · billetera sin desborde horizontal
+✔ 1920-claro · ficha sin desborde horizontal
+✔ 1920-claro · «Mis puntos» queda seleccionada
+✔ 1920-claro · la billetera queda dentro de la tarjeta
+✔ 1920-claro · billetera sin desborde horizontal
+✔ 1024-claro · ficha sin desborde horizontal
+✔ 1024-claro · «Mis puntos» queda seleccionada
+✔ 1024-claro · la billetera queda dentro de la tarjeta
+✔ 1024-claro · billetera sin desborde horizontal
+✔ 768-claro · ficha sin desborde horizontal
+✔ 768-claro · «Mis puntos» queda seleccionada
+✔ 768-claro · la billetera queda dentro de la tarjeta
+✔ 768-claro · billetera sin desborde horizontal
+✔ 390-claro · ficha sin desborde horizontal
+✔ 390-claro · «Mis puntos» queda seleccionada
+✔ 390-claro · la billetera queda dentro de la tarjeta
+✔ 390-claro · billetera sin desborde horizontal
+✔ 390-oscuro · ficha sin desborde horizontal
+✔ 390-oscuro · «Mis puntos» queda seleccionada
+✔ 390-oscuro · la billetera queda dentro de la tarjeta
+✔ 390-oscuro · billetera sin desborde horizontal
+✔ 1440-claro · /my-account?pestana=puntos entra en la billetera
+✔ 390-claro · /my-account?pestana=puntos entra en la billetera
+ℹ 390-claro · la pestaña activa, a la vista en la tira al entrar por la URL — no: queda fuera de la parte visible de la tira
+✔ una clave desconocida cae en la primera pestaña
+✔ /my-account/loyalty ya no pinta una pantalla aparte: termina en la ficha — /my-account
+ℹ /my-account/loyalty abre la ficha en la pestaña — «Datos personales» (la billetera es «Mis puntos»)
+✔ 1440-claro · editor · «Mis puntos» sigue en la tira
+✔ 1440-claro · editor · pero apagada
+✔ editor · pulsarla no abre nada
+✔ 1440-claro · editor sin desborde horizontal
+✔ 1440-oscuro · editor · «Mis puntos» sigue en la tira
+✔ 1440-oscuro · editor · pero apagada
+✔ 1440-oscuro · editor sin desborde horizontal
+✔ 1920-claro · editor · «Mis puntos» sigue en la tira
+✔ 1920-claro · editor · pero apagada
+✔ 1920-claro · editor sin desborde horizontal
+✔ 1024-claro · editor · «Mis puntos» sigue en la tira
+✔ 1024-claro · editor · pero apagada
+✔ 1024-claro · editor sin desborde horizontal
+✔ 768-claro · editor · «Mis puntos» sigue en la tira
+✔ 768-claro · editor · pero apagada
+✔ 768-claro · editor sin desborde horizontal
+✔ 390-claro · editor · «Mis puntos» sigue en la tira
+✔ 390-claro · editor · pero apagada
+✔ 390-claro · editor sin desborde horizontal
+✔ 390-oscuro · editor · «Mis puntos» sigue en la tira
+✔ 390-oscuro · editor · pero apagada
+✔ 390-oscuro · editor sin desborde horizontal
+✔ sin errores de página ni de consola
+✔ sin respuestas 4xx/5xx
+
+61/61 comprobaciones en verde
+capturas en docs/frontend/evidence/mis-puntos-quinta-pestana-2026-09-23

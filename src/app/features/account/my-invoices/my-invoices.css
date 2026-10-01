@@ -1,0 +1,83 @@
+:host {
+  display: block;
+}
+
+.mis-facturas {
+  display: block;
+  inline-size: 100%;
+}
+
+.mis-facturas__aviso {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: 0 0 var(--sp-4);
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.mis-facturas__resumen {
+  margin: var(--sp-4) 0 var(--sp-2);
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.mis-facturas__vacio {
+  margin: var(--sp-6) 0;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+.mis-facturas__numero,
+.mis-facturas__codigo {
+  font-variant-numeric: tabular-nums;
+}
+
+.mis-facturas__principal {
+  display: block;
+}
+
+.mis-facturas__secundario {
+  display: block;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.mis-facturas__total {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.mis-facturas__datos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: var(--sp-4);
+  margin: 0;
+}
+
+.mis-facturas__datos dt {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.mis-facturas__datos dd {
+  margin: var(--sp-1) 0 0;
+}
+
+.mis-facturas__dato-ancho {
+  grid-column: 1 / -1;
+}
+
+.mis-facturas__codigo {
+  overflow-wrap: anywhere;
+  font-family: var(--font-mono);
+  font-size: var(--fs-caption);
+}
+
+.mis-facturas__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--sp-2);
+}

@@ -20,6 +20,9 @@ import { envFromProcess } from './env.generated';
 export const environment: Environment = {
   apiBaseUrl: envFromProcess.apiBaseUrl ?? '',
 
+  /** Mismo origen: ver `aiBaseUrl` en `environment.types.ts`. */
+  aiBaseUrl: envFromProcess.aiBaseUrl ?? '/ai',
+
   /**
    * Encendida por defecto en desarrollo: quien levanta la app local ve la
    * barra de casos de demostración sin configurar nada. Se apaga con
@@ -49,6 +52,22 @@ export const environment: Environment = {
    * de quedar vacías.
    */
   campaignsDemo: envFromProcess.campaignsDemo ?? true,
+
+  /**
+   * Encendida por defecto: sin ella no hay motor fiscal simulado que recorrer.
+   * Se apaga con `PUBLIC_BILLING_SIAT_DEMO=false` — y ese apagado es la prueba
+   * de que la pantalla dice que la facturación no está conectada, sin pedir
+   * nada.
+   */
+  billingSiatDemo: envFromProcess.billingSiatDemo ?? true,
+
+  /**
+   * Encendidas por defecto: en desarrollo se trabaja contra la maqueta y las
+   * pantallas de la bóveda son la referencia. Se apagan con
+   * `PUBLIC_DESIGN_MOCKUPS=false` — y ese apagado es la prueba de que ningún
+   * enlace visible lleva a una de ellas.
+   */
+  designMockups: envFromProcess.designMockups ?? true,
 
   /**
    * Siempre encendido en la rama `mockup`: es lo que la define. No lee el

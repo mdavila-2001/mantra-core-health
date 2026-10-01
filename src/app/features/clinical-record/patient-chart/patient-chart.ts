@@ -12,14 +12,17 @@ import {
 } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { forkJoin, map, of } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
 
 import { AuthService } from '../../../core/auth/auth.service';
 import { ClinicalClient } from '../../../core/data-access/clinical/clinical.client';
 import type {
+  CarePlan,
   ClinicalSummary,
+  Condition,
+  DiagnosisOutcome,
   PatientChart as ExpedienteDePaciente,
 } from '../../../core/data-access/clinical/clinical.types';
 import { ProfilesClient } from '../../../core/data-access/profiles/profiles.client';
@@ -33,10 +36,24 @@ import { dataOf, empty, loading, notFound, ready } from '../../../core/view-stat
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { Badge } from '../../../shared/components/atoms/badge/badge';
 import { AppButton } from '../../../shared/components/atoms/button/button';
+import { FactList } from '../../../shared/components/molecules/fact-list/fact-list';
+import type { Hecho } from '../../../shared/components/molecules/fact-list/fact-list.types';
+import { Progress } from '../../../shared/components/atoms/progress/progress';
+import { Card } from '../../../shared/components/molecules/card/card';
+import type { Tone } from '../../../shared/components/tone/tone.types';
+import {
+  CODIGO_ACTIVA,
+  CODIGO_CONFIRMADO,
+  CODIGO_DESCARTADO,
+  DIAGNOSIS_STATE_LABELS,
+  diagnosisStateOf,
+  type DiagnosisState,
+} from '../../../shared/clinical/diagnosis-state';
+import { DiagnosisVerifyDialog } from './diagnosis-verify-dialog/diagnosis-verify-dialog';
 import type { BreadcrumbItem } from '../../../shared/components/molecules/breadcrumb/breadcrumb.types';
-import { Link } from '../../../shared/components/atoms/link/link';
 import { Menu } from '../../../shared/components/molecules/menu/menu';
 import { MenuItem } from '../../../shared/components/molecules/menu/menu-item/menu-item';
+import { NavIcon } from '../../../shared/components/atoms/nav-icon/nav-icon';
 import { MenuTrigger } from '../../../shared/components/molecules/menu/menu-trigger/menu-trigger';
 import { AttachmentDialog } from '../../../shared/components/organisms/attachment-dialog/attachment-dialog';
 import { ContentDialog } from '../../../shared/components/organisms/content-dialog/content-dialog';
@@ -62,7 +79,7 @@ import { PageHeader } from '../../../shared/components/organisms/page-header/pag
 import { TutorialTarget } from '../../../shared/components/organisms/tutorial-overlay/tutorial-target.directive';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { mensajeDeFalloDeEscritura } from '../mensaje-de-escritura';
-import { CLINICAL_RECORD_ROUTE, consultationRoute } from '../clinical-record.routes';
+import { CLINICAL_RECORD_ROUTE } from '../clinical-record.routes';
 import { AllergyBlock } from './allergy-block/allergy-block';
 import { CarePlanBlock } from './care-plan-block/care-plan-block';
 import type { DiagnosticoDelPlan } from './care-plan-block/care-plan-block';
@@ -72,10 +89,7 @@ import { DocumentBlock } from './document-block/document-block';
 import { DRAFT_BLOCK } from './draft-block';
 import { FreeNoteBlock } from './free-note-block/free-note-block';
 import { MedicationBlock } from './medication-block/medication-block';
-import type {
-  DiagnosticoEnFicha,
-  RecetaEnFicha,
-} from './medication-block/medication-block';
+import type { DiagnosticoEnFicha, RecetaEnFicha } from './medication-block/medication-block';
 import { ObservationBlock } from './observation-block/observation-block';
 import { PdfExportButton } from '../../../shared/components/molecules/pdf-export-button/pdf-export-button';
 
@@ -201,6 +215,18 @@ export interface FilaClinica {
   readonly cuando: Date | null;
   readonly detalle: string;
 
+  /** El tono del sello de estado (C3, sólo Diagnósticos) — ausente, `celdaEstado` usa `info`. */
+  readonly estadoTono?: Tone;
+
+  /** Por qué se confirmó o rechazó (C3) — ausente o vacío fuera de Diagnósticos. */
+  readonly decision?: string;
+
+  /** Si sigue `COND_PROVISIONAL` (C3) — sólo entonces el menú ofrece confirmar/rechazar. */
+  readonly presuntivo?: boolean;
+
+  /** La condición cruda (C3), para pasársela a `app-diagnosis-verify-dialog`. */
+  readonly condicionOriginal?: Condition;
+
   /**
    * Los vínculos clínicos del registro, en pares rótulo/valor y ya en palabras.
    *
@@ -311,23 +337,26 @@ interface Expediente {
     AllergyBlock,
     AttachmentDialog,
     Badge,
+    Card,
     CarePlanBlock,
     ConceptSelect,
     ContentDialog,
     DiagnosisBlock,
+    DiagnosisVerifyDialog,
     DataTable,
     DatePipe,
     DocumentBlock,
+    FactList,
     FreeNoteBlock,
-    Link,
     MedicationBlock,
     Menu,
     MenuItem,
     MenuTrigger,
+    NavIcon,
     ObservationBlock,
     PdfExportButton,
     PageHeader,
-    RouterLink,
+    Progress,
     Tab,
     Tabs,
     TutorialTarget,
@@ -438,9 +467,6 @@ export class PatientChart {
     (this.datos()?.resumen.encounters ?? []).some((fila) => fila.endAt === undefined),
   );
 
-  /** A dónde vuelve «Volver a la consulta». */
-  protected readonly rutaDeLaAtencion = computed(() => consultationRoute(this.profileId()));
-
   /**
    * La ruta de navegación, con el paciente como último escalón.
    *
@@ -462,17 +488,115 @@ export class PatientChart {
 
   /* -- Los bloques, ya traducidos ----------------------------------------- */
 
-  protected readonly diagnosticos = computed<readonly FilaClinica[]>(() =>
-    (this.datos()?.resumen.conditions ?? []).map((fila) => ({
-      id: fila.id,
-      principal: this.label(fila.codeConceptId),
-      secundario: this.label(fila.categoryConceptId),
-      estado: this.label(fila.clinicalStatusConceptId),
-      cuando: fila.onsetAt ?? fila.createdAt,
-      detalle: fila.resolvedAt === undefined ? '' : 'Resuelto',
-      vinculos: [{ rotulo: 'Encuentro', valor: this.describirEncuentro(fila.encounterId) }],
-    })),
-  );
+  /**
+   * Los diagnósticos, con el estado de C3 ya resuelto y ordenados en los tres
+   * grupos del carril (en estudio, activas, históricas — rechazadas junto a
+   * las históricas). El estado se deriva con `diagnosisStateOf`, el ayudante
+   * compartido de C0: no se reimplementa acá.
+   */
+  private readonly ORDEN_DEL_GRUPO: Readonly<Record<DiagnosisState, number>> = {
+    IN_STUDY: 0,
+    ACTIVE: 1,
+    HISTORIC: 2,
+    REFUTED: 2,
+  };
+
+  /**
+   * El tono del sello de «Diagnósticos» (C3), por estado.
+   *
+   * `celdaEstado` es la columna «Estado» compartida por TODOS los bloques
+   * (`columnasPara()`), y su `<app-badge variant="info">` fijo no distinguía
+   * En estudio, Activa, Rechazado e Histórico — los cuatro se veían del mismo
+   * color, pese a ser estados clínicos opuestos (hallazgo de una revisión
+   * visual adversarial). El resto de bloques no fija `estadoTono` y sigue con
+   * el `info` de siempre; sólo diagnósticos lo diferencia.
+   */
+  private readonly TONO_POR_ESTADO: Readonly<Record<DiagnosisState, Tone>> = {
+    IN_STUDY: 'warning',
+    ACTIVE: 'success',
+    REFUTED: 'error',
+    HISTORIC: 'secondary',
+  };
+
+  protected readonly diagnosticos = computed<readonly FilaClinica[]>(() => {
+    const conEstado = (this.datos()?.resumen.conditions ?? []).map((fila) => ({
+      fila,
+      estadoDx: diagnosisStateOf(
+        {
+          ...fila,
+          verificationStatusConceptId: this.codigo(fila.verificationStatusConceptId),
+          clinicalStatusConceptId: this.codigo(fila.clinicalStatusConceptId),
+        },
+        { confirmed: CODIGO_CONFIRMADO, refuted: CODIGO_DESCARTADO, active: CODIGO_ACTIVA },
+      ),
+    }));
+    return [...conEstado]
+      .sort(
+        (a, b) =>
+          this.ORDEN_DEL_GRUPO[a.estadoDx] - this.ORDEN_DEL_GRUPO[b.estadoDx] ||
+          (b.fila.onsetAt ?? b.fila.createdAt).getTime() -
+            (a.fila.onsetAt ?? a.fila.createdAt).getTime(),
+      )
+      .map(({ fila, estadoDx }) => ({
+        id: fila.id,
+        principal: this.label(fila.codeConceptId),
+        secundario: this.label(fila.categoryConceptId),
+        estado: DIAGNOSIS_STATE_LABELS[estadoDx],
+        estadoTono: this.TONO_POR_ESTADO[estadoDx],
+        cuando: fila.onsetAt ?? fila.createdAt,
+        detalle: fila.resolvedAt === undefined ? '' : 'Resuelto',
+        vinculos: [{ rotulo: 'Encuentro', valor: this.describirEncuentro(fila.encounterId) }],
+        decision: fila.verification?.reasonText ?? '',
+        presuntivo: estadoDx === 'IN_STUDY',
+        condicionOriginal: fila,
+      }));
+  });
+
+  /**
+   * Las enfermedades activas (C3): lo primero que se lee del historial
+   * estructurado. `expectedResolutionAt` da el progreso; sin él, la condición
+   * es crónica y no se promete una fecha de cierre.
+   */
+  protected readonly enfermedadesActivas = computed(() => {
+    const hoy = Date.now();
+    return this.diagnosticos()
+      .filter((fila) => fila.condicionOriginal !== undefined && fila.estadoTono === 'success')
+      .map((fila) => {
+        const condicion = fila.condicionOriginal!;
+        const desde = condicion.onsetAt ?? condicion.createdAt;
+        const cronica = condicion.expectedResolutionAt === undefined;
+        const hechos: Hecho[] = [
+          { etiqueta: 'Desde', valor: this.formateador.format(desde) },
+          {
+            etiqueta: cronica ? 'Duración' : 'Hasta',
+            valor: cronica
+              ? 'Crónica · seguimiento continuo'
+              : this.formateador.format(condicion.expectedResolutionAt!),
+          },
+        ];
+        let progreso: number | null = null;
+        if (!cronica) {
+          const fin = condicion.expectedResolutionAt!.getTime();
+          const total = fin - desde.getTime();
+          progreso =
+            total <= 0 ? 100 : Math.min(100, Math.max(0, Math.round(((hoy - desde.getTime()) / total) * 100)));
+          hechos.push({ etiqueta: 'Días restantes', valor: this.diasRestantes(fin, hoy) });
+        }
+        return { id: fila.id, nombre: fila.principal, hechos, cronica, progreso };
+      });
+  });
+
+  private diasRestantes(finMs: number, hoyMs: number): string {
+    const dias = Math.ceil((finMs - hoyMs) / 86_400_000);
+    if (dias <= 0) return 'Venció';
+    return dias === 1 ? '1 día' : `${dias} días`;
+  }
+
+  private readonly formateador = new Intl.DateTimeFormat('es-BO', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
 
   protected readonly alergias = computed<readonly FilaClinica[]>(() =>
     (this.datos()?.resumen.allergies ?? []).map((fila) => ({
@@ -602,15 +726,9 @@ export class PatientChart {
       secundario: `${fila.activities.length} actividad${fila.activities.length === 1 ? '' : 'es'}`,
       estado: this.label(fila.statusConceptId),
       cuando: fila.startDate ?? fila.createdAt,
-      detalle: this.label(fila.intentConceptId),
-      // `CarePlan` no trae encuentro ni condición en la lectura de `chart`, y
-      // tampoco hay alta: el plan de cuidados es hoy sólo de lectura.
-      vinculos: [
-        {
-          rotulo: 'Vínculos clínicos',
-          valor: 'El plan de cuidados no guarda encuentro ni diagnóstico.',
-        },
-      ],
+      detalle: this.motivoDelPlan(fila),
+      // `CarePlan` no trae encuentro en la lectura de `chart`.
+      vinculos: [{ rotulo: 'Motivo', valor: this.motivoDelPlan(fila) }],
     })),
   );
 
@@ -805,9 +923,22 @@ export class PatientChart {
     }),
   );
 
+  /**
+   * El motivo del plan: el diagnóstico del que cuelga, o lo que se escribió a
+   * mano cuando no había uno. Siempre hay uno de los dos en lo que se abre
+   * desde acá; los planes viejos de la semilla pueden no tener ninguno.
+   */
+  private motivoDelPlan(fila: CarePlan): string {
+    const dx = this.diagnosticosParaElPlan().find((d) => d.id === fila.conditionId);
+    if (dx !== undefined) {
+      return dx.etiqueta;
+    }
+    return fila.reasonText ?? 'Sin motivo registrado';
+  }
+
   /** Los mismos diagnósticos, para colgar de uno el plan de cuidados. */
-  protected readonly diagnosticosParaElPlan = computed<readonly DiagnosticoDelPlan[]>(
-    () => this.diagnosticosParaReceta(),
+  protected readonly diagnosticosParaElPlan = computed<readonly DiagnosticoDelPlan[]>(() =>
+    this.diagnosticosParaReceta(),
   );
 
   /**
@@ -914,7 +1045,9 @@ export class PatientChart {
     const codigos = (this.datos()?.resumen.conditions ?? [])
       .filter((fila) => fila.encounterId === encounterId)
       .map((fila) => this.label(fila.codeConceptId));
-    return codigos.length === 0 ? 'Sin diagnósticos documentados en este encuentro' : codigos.join(', ');
+    return codigos.length === 0
+      ? 'Sin diagnósticos documentados en este encuentro'
+      : codigos.join(', ');
   }
 
   /** Una fecha corta, sin depender del `DatePipe` de la plantilla. */
@@ -922,9 +1055,11 @@ export class PatientChart {
     if (fecha === undefined) {
       return '';
     }
-    return new Intl.DateTimeFormat('es', { day: 'numeric', month: 'short', year: 'numeric' }).format(
-      fecha,
-    );
+    return new Intl.DateTimeFormat('es', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    }).format(fecha);
   }
 
   /* -- El detalle de una fila, en modal ------------------------------------
@@ -987,44 +1122,45 @@ export class PatientChart {
     this.nombre() === '' ? `Paciente ${this.profileId()}` : this.nombre(),
   );
 
-  /* -- La banda de contexto ------------------------------------------------
-     Lo que hay que saber ANTES de abrir una pestaña. Antes esto no existía y la
-     pantalla abría en «Diagnósticos (2)»: para enterarse de que la persona es
-     alérgica a algo había que acordarse de ir a mirar. */
+  /* -- El aviso de apertura ------------------------------------------------
+     Lo que hay que saber ANTES de abrir una pestaña. Vivía en una banda fija
+     arriba de la página, y una banda que está siempre se deja de leer: ocupaba
+     media pantalla en cada visita y empujaba las pestañas abajo del pliegue.
+     Un modal tampoco: un cuadro que hay que cerrar con un clic para poder
+     seguir es la misma interrupción con otra forma. Ahora se dice una vez, por
+     toast, al abrir el expediente (2026-09-25). El toast es sólo texto: el
+     link «Volver a la consulta» que el modal tenía no tiene dónde ir en un
+     toast y se sacó — quien tiene una consulta en curso lo sabe por el aviso,
+     y navega por su cuenta. */
 
   /**
-   * Las alergias, arriba y a la vista, no en la segunda pestaña.
+   * Las alergias, de frente al entrar, no en la segunda pestaña.
    *
    * Es el único bloque del expediente que cambia una conducta **antes** de
-   * leerlo: recetar sin haberlas visto es el error que esta banda existe para
+   * leerlo: recetar sin haberlas visto es el error que este aviso existe para
    * evitar. No se filtra por criticidad —la criticidad llega como concepto y
    * deducirla del texto sería adivinar—: se muestran todas, que son pocas.
    */
   protected readonly alergiasDestacadas = this.alergias;
 
-  /** Las cifras del expediente, para dimensionarlo sin abrir pestaña por pestaña. */
-  protected readonly cifras = computed(() => [
-    { clave: 'diagnosticos', rotulo: 'Diagnósticos', valor: this.diagnosticos().length },
-    { clave: 'medicacion', rotulo: 'Medicación', valor: this.medicacion().length },
-    { clave: 'encuentros', rotulo: 'Encuentros', valor: this.encuentros().length },
-    { clave: 'observaciones', rotulo: 'Observaciones', valor: this.observaciones().length },
-  ]);
+  /** Ya se avisó una vez en esta visita del expediente: no se repite. */
+  private readonly avisosMostrados = signal(false);
 
-  /**
-   * Cuándo fue la última vez que se la atendió.
-   *
-   * De los encuentros, que es donde consta. `null` mientras no haya ninguno con
-   * fecha: inventar «sin atención previa» a partir de un bloque vacío diría algo
-   * que el expediente no dice.
-   */
-  protected readonly ultimaAtencion = computed<Date | null>(() => {
-    const fechas = this.encuentros()
-      .map((fila) => fila.cuando)
-      .filter((fecha): fecha is Date => fecha !== null);
-    return fechas.length === 0
-      ? null
-      : fechas.reduce((mayor, fecha) => (fecha > mayor ? fecha : mayor));
-  });
+  /** Junta alergias y consulta en curso en, como mucho, dos toasts. */
+  private avisarAlAbrir(alergias: readonly FilaClinica[], enCurso: boolean): void {
+    this.avisosMostrados.set(true);
+    if (alergias.length > 0) {
+      this.toasts.warning(
+        alergias
+          .map((alergia) => (alergia.detalle === '' ? alergia.principal : `${alergia.principal} (${alergia.detalle})`))
+          .join(' · '),
+        'Alergias',
+      );
+    }
+    if (enCurso) {
+      this.toasts.info('Tenés una consulta en curso con esta persona.', 'Consulta en curso');
+    }
+  }
 
   /**
    * Aviso de recorte, en palabras.
@@ -1098,6 +1234,27 @@ export class PatientChart {
 
   protected abrirCambioDeEstado(fila: FilaClinica): void {
     this.cambiandoEstadoDe.set(fila);
+  }
+
+  /** La condición que se está confirmando o rechazando (C3), o `null`. */
+  protected readonly verificando = signal<{
+    readonly condicion: Condition;
+    readonly nombre: string;
+    readonly outcome: DiagnosisOutcome;
+  } | null>(null);
+
+  /** Abre `app-diagnosis-verify-dialog` sobre una fila presuntiva. */
+  protected abrirVerificacion(fila: FilaClinica, outcome: DiagnosisOutcome): void {
+    if (fila.condicionOriginal === undefined) {
+      return;
+    }
+    this.verificando.set({ condicion: fila.condicionOriginal, nombre: fila.principal, outcome });
+  }
+
+  /** El servidor ya decidió: se cierra el diálogo y se relee el expediente. */
+  protected verificacionCompletada(): void {
+    this.verificando.set(null);
+    this.recargar();
   }
 
   protected cerrarCambioDeEstado(): void {
@@ -1282,10 +1439,21 @@ export class PatientChart {
       // se dibujan si alguna fila las llena: una columna vacía se lee como un
       // dato que no cargó, no como una columna que ese bloque no tiene.
       ...(clave === 'medicacion' && filas.some((fila) => (fila.diagnostico ?? '') !== '')
-        ? [{ key: 'diagnostico', header: 'Diagnóstico', priority: 2 } satisfies ColumnDef<FilaClinica>]
+        ? [
+            {
+              key: 'diagnostico',
+              header: 'Diagnóstico',
+              priority: 2,
+            } satisfies ColumnDef<FilaClinica>,
+          ]
         : []),
       ...(clave === 'medicacion' && filas.some((fila) => (fila.cita ?? '') !== '')
         ? [{ key: 'cita', header: 'Receta de', priority: 3 } satisfies ColumnDef<FilaClinica>]
+        : []),
+      // C3: por qué se confirmó o rechazó. Sólo se dibuja si alguna fila la
+      // llena — la mayoría de los diagnósticos siguen presuntivos.
+      ...(clave === 'diagnosticos' && filas.some((fila) => (fila.decision ?? '') !== '')
+        ? [{ key: 'decision', header: 'Decisión', priority: 3 } satisfies ColumnDef<FilaClinica>]
         : []),
       // Patch v4.0.8: sólo `diagnosticos` transiciona de estado. Antes del
       // patch ninguna fila clínica tenía una acción de escritura propia —el
@@ -1366,6 +1534,17 @@ export class PatientChart {
     effect(() => {
       const perfilId = this.auth.practitionerProfileId();
       untracked(() => this.resolverPerfilPropio(perfilId));
+    });
+
+    // El aviso de apertura: alergias y consulta en curso, por toast, una sola
+    // vez por visita. Ver el comentario de `avisosMostrados` arriba.
+    effect(() => {
+      const alergias = this.alergiasDestacadas();
+      const enCurso = this.atencionEnCurso();
+      if (this.avisosMostrados() || (alergias.length === 0 && !enCurso)) {
+        return;
+      }
+      untracked(() => this.avisarAlAbrir(alergias, enCurso));
     });
   }
 
@@ -1605,6 +1784,14 @@ export class PatientChart {
   }
 
   /**
+   * El código estable de un concepto (C3): `diagnosisStateOf` compara contra
+   * códigos como `COND_CONFIRMED`, nunca contra el uuid del concepto.
+   */
+  private codigo(conceptId: string | undefined): string | undefined {
+    return conceptId === undefined ? undefined : this.etiquetas().get(conceptId)?.code;
+  }
+
+  /**
    * El valor de una observación.
    *
    * Cinco caminos excluyentes, en el orden en que el contrato los declara. Se
@@ -1640,7 +1827,6 @@ export class PatientChart {
     return SIN_DATO;
   }
 }
-
 
 /**
  * Los identificadores de concepto del expediente, sin los ausentes.

@@ -1,0 +1,11 @@
+ruta                       scrollW innerW desborde  culpable más ancho
+----------------------------------------------------------------------------------------------------
+control · panel                375    375    false  (ninguno sin recortar) (llega a 375px, 0 sin recortar)
+A · mis recetas                403    375     true  div.app-header__derecha (llega a 403px, 3 sin recortar)
+                                                   dentro de: header.app-header ← div.app-main ← div.app-shell ← app-shell-layout
+A · tienda                     403    375     true  div.app-header__derecha (llega a 403px, 3 sin recortar)
+                                                   dentro de: header.app-header ← div.app-main ← div.app-shell ← app-shell-layout
+C6 · mi historia               403    375     true  div.app-header__derecha (llega a 403px, 3 sin recortar)
+                                                   dentro de: header.app-header ← div.app-main ← div.app-shell ← app-shell-layout
+C4 · mis citas                 403    375     true  div.app-header__derecha (llega a 403px, 3 sin recortar)
+                                                   dentro de: header.app-header ← div.app-main ← div.app-shell ← app-shell-layout

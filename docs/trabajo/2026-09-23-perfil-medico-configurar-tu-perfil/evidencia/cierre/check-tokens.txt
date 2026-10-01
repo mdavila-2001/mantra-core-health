@@ -1,0 +1,4 @@
+$ node scripts/check-tokens.mjs   # 2026-09-24, rama en bc245a02
+✓ check-tokens
+  212 tokens, iguales en styles.css y en el catálogo tipado
+exit=0

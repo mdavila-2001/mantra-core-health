@@ -1,10 +1,16 @@
-import { Component, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { provideRouter, Router } from '@angular/router';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 
+import { SearchField } from '../../molecules/search-field/search-field';
 import { FilterBar, SEARCH_PARAM, type FilterDef } from './filter-bar';
 
-@Component({ selector: 'app-listado-prueba', template: '' })
+@Component({
+  selector: 'app-listado-prueba',
+  template: '',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
 class VistaListado {}
 
 const FILTROS: readonly FilterDef[] = [
@@ -33,6 +39,7 @@ const FILTRO_SIN_VALUE_SET: FilterDef = {
 
 @Component({
   imports: [FilterBar],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <app-filter-bar [filters]="filtros()" (filtersChanged)="emisiones.push($event)" />
   `,
@@ -44,6 +51,7 @@ class HostComponent {
 
 @Component({
   imports: [FilterBar],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <app-filter-bar [filters]="filtros()">
       <button filter-bar-action type="button">Agregar</button>
@@ -56,6 +64,7 @@ class HostComponentConProyeccion {
 
 @Component({
   imports: [FilterBar],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <app-filter-bar [filters]="filtros()">
       <button filter-bar-action type="button">Primero</button>
@@ -65,6 +74,46 @@ class HostComponentConProyeccion {
 })
 class HostComponentConDosProyecciones {
   readonly filtros = signal<readonly FilterDef[]>(FILTROS);
+}
+
+/** Dos tablas en la misma pantalla, cada una con su barra y su clave de búsqueda. */
+@Component({
+  imports: [FilterBar],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  template: `
+    <app-filter-bar searchParam="qTitulos" (filtersChanged)="titulos.push($event)" />
+    <app-filter-bar searchParam="qMatriculas" (filtersChanged)="matriculas.push($event)" />
+  `,
+})
+class HostComponentConDosBarras {
+  readonly titulos: Readonly<Record<string, string>>[] = [];
+  readonly matriculas: Readonly<Record<string, string>>[] = [];
+}
+
+/** Búsqueda fuera de la URL: el término lo guarda quien consume. */
+@Component({
+  imports: [FilterBar],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  template: `
+    <app-filter-bar
+      [filters]="filtros()"
+      [searchInUrl]="false"
+      [searchValue]="termino()"
+      (searchChanged)="alBuscar($event)"
+      (filtersChanged)="emisiones.push($event)"
+    />
+  `,
+})
+class HostComponentWithoutUrl {
+  readonly filtros = signal<readonly FilterDef[]>(FILTROS);
+  readonly termino = signal('');
+  readonly avisos: string[] = [];
+  readonly emisiones: Readonly<Record<string, string>>[] = [];
+
+  alBuscar(term: string): void {
+    this.avisos.push(term);
+    this.termino.set(term);
+  }
 }
 
 describe('FilterBar', () => {
@@ -91,7 +140,13 @@ describe('FilterBar', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [HostComponent, HostComponentConProyeccion, HostComponentConDosProyecciones],
+      imports: [
+        HostComponent,
+        HostComponentConProyeccion,
+        HostComponentConDosProyecciones,
+        HostComponentConDosBarras,
+        HostComponentWithoutUrl,
+      ],
       providers: [provideRouter([{ path: 'listado', component: VistaListado }])],
     }).compileComponents();
     fixture = TestBed.createComponent(HostComponent);
@@ -231,5 +286,170 @@ describe('FilterBar', () => {
       const botones = [...(hueco?.querySelectorAll('button') ?? [])];
       expect(botones.map((boton) => boton.textContent?.trim())).toEqual(['Primero', 'Segundo']);
     });
+  });
+
+  describe('clave de búsqueda propia (searchParam)', () => {
+    function buscadores(de: ComponentFixture<unknown>): SearchField[] {
+      return de.debugElement
+        .queryAll(By.directive(SearchField))
+        .map((nodo) => nodo.componentInstance as SearchField);
+    }
+
+    function parametros() {
+      return router.parseUrl(router.url).queryParamMap;
+    }
+
+    async function montarDosBarras(): Promise<ComponentFixture<HostComponentConDosBarras>> {
+      const dos = TestBed.createComponent(HostComponentConDosBarras);
+      await dos.whenStable();
+      return dos;
+    }
+
+    it('sin la entrada, escribe y emite bajo `q`, como siempre', async () => {
+      buscadores(fixture)[0].searched.emit('peña');
+      await fixture.whenStable();
+
+      expect(parametros().get(SEARCH_PARAM)).toBe('peña');
+      expect(host.emisiones.at(-1)).toEqual({ [SEARCH_PARAM]: 'peña' });
+    });
+
+    it('buscar en una barra no toca la clave ni el campo de la otra', async () => {
+      const dos = await montarDosBarras();
+
+      buscadores(dos)[0].searched.emit('umsa');
+      await dos.whenStable();
+
+      expect(parametros().get('qTitulos')).toBe('umsa');
+      expect(parametros().has('qMatriculas')).toBe(false);
+      expect(parametros().has(SEARCH_PARAM)).toBe(false);
+      expect(dos.componentInstance.titulos.at(-1)).toEqual({ qTitulos: 'umsa' });
+      expect(dos.componentInstance.matriculas).toHaveLength(0);
+      expect(buscadores(dos)[1].value()).toBe('');
+      dos.destroy();
+    });
+
+    it('al entrar, cada barra muestra el término de su clave', async () => {
+      await irA({ qTitulos: 'umsa', qMatriculas: 'lp-12' });
+      const dos = await montarDosBarras();
+
+      expect(buscadores(dos).map((buscador) => buscador.value())).toEqual(['umsa', 'lp-12']);
+      dos.destroy();
+    });
+
+    it('«limpiar todo» de una barra deja la búsqueda de la otra', async () => {
+      await irA({ qTitulos: 'umsa', qMatriculas: 'lp-12' });
+      const dos = await montarDosBarras();
+      const primera = (dos.nativeElement as HTMLElement).querySelector('app-filter-bar');
+
+      [...(primera?.querySelectorAll('button') ?? [])]
+        .find((boton) => boton.textContent?.trim() === 'Limpiar todo')
+        ?.click();
+      await dos.whenStable();
+
+      expect(parametros().has('qTitulos')).toBe(false);
+      expect(parametros().get('qMatriculas')).toBe('lp-12');
+      dos.destroy();
+    });
+  });
+
+  /**
+   * `searchInUrl=false`: lo tecleado es el nombre o el documento de una
+   * persona, y la URL lo dejaría en el historial y en los logs del servidor.
+   */
+  describe('búsqueda fuera de la URL (searchInUrl=false)', () => {
+    function buscador(de: ComponentFixture<unknown>): SearchField {
+      return de.debugElement.query(By.directive(SearchField)).componentInstance as SearchField;
+    }
+
+    async function montar(): Promise<ComponentFixture<HostComponentWithoutUrl>> {
+      const withoutUrl = TestBed.createComponent(HostComponentWithoutUrl);
+      await withoutUrl.whenStable();
+      return withoutUrl;
+    }
+
+    it('correcto — buscar avisa el término y no lo escribe en la URL', async () => {
+      const withoutUrl = await montar();
+
+      buscador(withoutUrl).searched.emit('Ana Quispe');
+      await withoutUrl.whenStable();
+
+      expect(withoutUrl.componentInstance.avisos).toEqual(['Ana Quispe']);
+      expect(router.url).toBe('/listado');
+      expect(withoutUrl.componentInstance.emisiones.at(-1)).toEqual({ [SEARCH_PARAM]: 'Ana Quispe' });
+      withoutUrl.destroy();
+    });
+
+    it('correcto — el campo muestra `searchValue`, no lo que diga la URL', async () => {
+      await irA({ [SEARCH_PARAM]: 'de-la-url' });
+      const withoutUrl = await montar();
+      withoutUrl.componentInstance.termino.set('guardado');
+      await withoutUrl.whenStable();
+
+      expect(buscador(withoutUrl).value()).toBe('guardado');
+      withoutUrl.destroy();
+    });
+
+    it('límite — los filtros de catálogo siguen en la URL, junto al término guardado', async () => {
+      const withoutUrl = await montar();
+      withoutUrl.componentInstance.termino.set('Ana');
+      await withoutUrl.whenStable();
+
+      const select = (withoutUrl.nativeElement as HTMLElement).querySelector('select')!;
+      select.value = '0';
+      select.dispatchEvent(new Event('change'));
+      await withoutUrl.whenStable();
+
+      expect(router.url).toContain('servicio=card');
+      expect(router.url).not.toContain('Ana');
+      expect(withoutUrl.componentInstance.emisiones.at(-1)?.[SEARCH_PARAM]).toBe('Ana');
+      withoutUrl.destroy();
+    });
+
+    it('inválido — «limpiar todo» avisa un término vacío y además saca una `q` vieja de la URL', async () => {
+      await irA({ [SEARCH_PARAM]: 'enlace-viejo', servicio: 'card' });
+      const withoutUrl = await montar();
+      withoutUrl.componentInstance.termino.set('Ana');
+      await withoutUrl.whenStable();
+
+      [...(withoutUrl.nativeElement as HTMLElement).querySelectorAll('button')]
+        .find((boton) => boton.textContent?.trim() === 'Limpiar todo')
+        ?.click();
+      await withoutUrl.whenStable();
+
+      expect(withoutUrl.componentInstance.avisos.at(-1)).toBe('');
+      expect(router.url).toBe('/listado');
+      withoutUrl.destroy();
+    });
+  });
+});
+
+@Component({
+  imports: [FilterBar],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  template: `<app-filter-bar [filters]="filtros" [wrap]="envolver()" />`,
+})
+class HostConWrap {
+  readonly filtros = FILTROS;
+  readonly envolver = signal(false);
+}
+
+describe('FilterBar · wrap (opt-in)', () => {
+  beforeEach(() => {
+    TestBed.configureTestingModule({ providers: [provideRouter([])] });
+  });
+
+  it('por omisión no cambia nada: los consumidores existentes siguen en una fila', () => {
+    const fixture = TestBed.createComponent(HostConWrap);
+    fixture.detectChanges();
+    const barra = fixture.debugElement.query(By.directive(FilterBar)).nativeElement as HTMLElement;
+    expect(barra.classList.contains('filter-bar--wrap')).toBe(false);
+  });
+
+  it('con `wrap` el host lleva la clase que deja bajar los controles de renglón', () => {
+    const fixture = TestBed.createComponent(HostConWrap);
+    fixture.componentInstance.envolver.set(true);
+    fixture.detectChanges();
+    const barra = fixture.debugElement.query(By.directive(FilterBar)).nativeElement as HTMLElement;
+    expect(barra.classList.contains('filter-bar--wrap')).toBe(true);
   });
 });

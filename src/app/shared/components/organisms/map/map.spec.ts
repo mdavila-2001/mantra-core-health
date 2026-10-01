@@ -11,6 +11,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AppMap, CARGADOR_DE_LEAFLET, construirPopup } from './map';
 import type { CargadorDeLeaflet } from './map';
 import type { PinMapa } from './pin-mapa.types';
+import { CARGADOR_DE_PROVINCIAS, type ProvinciasDeBolivia } from './provincias';
 
 /* ---- el doble de Leaflet -------------------------------------------------- */
 
@@ -20,7 +21,7 @@ interface IconoFalso {
 
 class MarcadorFalso {
   popup: HTMLElement | null = null;
-  private readonly manejadores = new Map<string, () => void>();
+  private readonly manejadores = new Map<string, (dato?: unknown) => void>();
   private readonly elemento = document.createElement('div');
 
   constructor(
@@ -35,7 +36,7 @@ class MarcadorFalso {
     return this;
   }
 
-  on(evento: string, manejador: () => void): this {
+  on(evento: string, manejador: (dato?: unknown) => void): this {
     this.manejadores.set(evento, manejador);
     return this;
   }
@@ -48,8 +49,15 @@ class MarcadorFalso {
     return this.elemento;
   }
 
-  simular(evento: string): void {
-    this.manejadores.get(evento)?.();
+  simular(evento: string, dato?: unknown): void {
+    this.manejadores.get(evento)?.(dato);
+  }
+
+  popupsAbiertos = 0;
+
+  openPopup(): this {
+    this.popupsAbiertos += 1;
+    return this;
   }
 }
 
@@ -186,8 +194,49 @@ describe('AppMap', () => {
     expect(primero.opciones.icon.html.textContent).toBe('A');
     expect(primero.opciones.icon.html.className).toContain('mapa__pin--success');
     expect(segundo.opciones.icon.html.className).toContain('mapa__pin--warning');
-    // El camino por teclado es la lista: el pin no entra al orden de tabulación.
-    expect(primero.opciones.keyboard).toBe(false);
+    // Un pin es un botón: entra al orden de tabulación (WCAG 2.1.1).
+    expect(primero.opciones.keyboard).toBe(true);
+  });
+
+  it('el pin se nombra con su título, su estado y su detalle; la letra es un dibujo', async () => {
+    const { registro } = await crearMontado();
+    const [primero, segundo] = registro.marcadores;
+
+    expect(primero.getElement().getAttribute('aria-label')).toBe(
+      'Farmacia Central · Sede Centro, Tiene todo, 1,2 km en línea recta',
+    );
+    expect(segundo.getElement().getAttribute('aria-label')).toBe(
+      'Farmacia Sur · Sede Parque, Le falta algo',
+    );
+    expect(primero.opciones.icon.html.getAttribute('aria-hidden')).toBe('true');
+  });
+
+  it('Enter sobre un pin lo elige, igual que el clic; Espacio además abre su popup', async () => {
+    const { fixture, registro } = await crearMontado();
+    const tecla = (key: string) => ({
+      originalEvent: new KeyboardEvent('keydown', { key, cancelable: true }),
+    });
+
+    registro.marcadores[1].simular('keydown', tecla('Enter'));
+    expect(fixture.componentInstance.seleccionado()).toBe('B');
+
+    registro.marcadores[0].simular('keydown', tecla(' '));
+    expect(fixture.componentInstance.seleccionado()).toBe('A');
+    expect(registro.marcadores[0].popupsAbiertos).toBe(1);
+
+    // Otra tecla no elige nada.
+    registro.marcadores[1].simular('keydown', tecla('a'));
+    expect(fixture.componentInstance.seleccionado()).toBe('A');
+  });
+
+  it('el plano se nombra y describe qué hacen las teclas', async () => {
+    const { fixture } = await crearMontado();
+    const lienzo = fixture.nativeElement.querySelector('.mapa__lienzo') as HTMLElement;
+
+    expect(lienzo.getAttribute('role')).toBe('application');
+    expect(lienzo.getAttribute('aria-label')).toBe('Sucursales en el mapa; la lista está debajo.');
+    const ayuda = document.getElementById(lienzo.getAttribute('aria-describedby') ?? '');
+    expect(ayuda?.textContent).toContain('+ y − acercan o alejan');
   });
 
   it('pide los mosaicos a OpenStreetMap, sin clave y sin marca de agua', async () => {
@@ -310,5 +359,237 @@ describe('construirPopup', () => {
     expect(contenido.querySelector('.mapa__popup-cta')).toBeNull();
     expect(contenido.querySelector('.mapa__popup-estado')).toBeNull();
     expect(contenido.querySelector('.mapa__popup-detalle')).toBeNull();
+  });
+});
+
+/* ---- marcar un punto sin puntero --------------------------------------------- */
+
+/**
+ * Un plano de juguete: un grado son mil píxeles, y el eje `y` crece hacia el
+ * sur como en la pantalla. Alcanza para comprobar hacia dónde corre el pin.
+ */
+async function mountForPicking(
+  seleccionable: boolean,
+  centro: { lat: number; lng: number } | null,
+): Promise<{ fixture: ComponentFixture<AppMap>; lienzo: HTMLElement; puntos: { lat: number; lng: number }[] }> {
+  const base = leafletFalso(new RegistroLeaflet()) as Record<string, (...args: never[]) => unknown>;
+  const leaflet = {
+    ...base,
+    map: () => ({
+      ...(base['map']() as object),
+      getCenter: () => ({ lat: -17, lng: -63 }),
+      latLngToContainerPoint: ([lat, lng]: [number, number]) => ({ x: lng * 1000, y: -lat * 1000 }),
+      containerPointToLatLng: (p: { x: number; y: number }) => ({ lat: -p.y / 1000, lng: p.x / 1000 }),
+    }),
+    point: (x: number, y: number) => ({ x, y }),
+  };
+  TestBed.configureTestingModule({
+    imports: [AppMap],
+    providers: [{ provide: CARGADOR_DE_LEAFLET, useValue: () => Promise.resolve(leaflet) }],
+  });
+  const fixture = TestBed.createComponent(AppMap);
+  fixture.componentRef.setInput('pines', []);
+  fixture.componentRef.setInput('etiqueta', 'Tu ubicación en el mapa');
+  fixture.componentRef.setInput('seleccionable', seleccionable);
+  fixture.componentRef.setInput('centro', centro);
+  const puntos: { lat: number; lng: number }[] = [];
+  fixture.componentInstance.pointPicked.subscribe((p) => puntos.push(p));
+  await fixture.whenStable();
+  await Promise.resolve();
+  await Promise.resolve();
+  fixture.detectChanges();
+  const lienzo = fixture.nativeElement.querySelector('.mapa__lienzo') as HTMLElement;
+  return { fixture, lienzo, puntos };
+}
+
+function pressOn(lienzo: HTMLElement, key: string, shiftKey = false): KeyboardEvent {
+  const evento = new KeyboardEvent('keydown', { key, shiftKey, bubbles: true, cancelable: true });
+  lienzo.dispatchEvent(evento);
+  return evento;
+}
+
+describe('AppMap · marcar con el teclado', () => {
+  it('las flechas corren el pin desde donde está, y no mueven el plano', async () => {
+    const { lienzo, puntos } = await mountForPicking(true, { lat: -17.5, lng: -63.5 });
+
+    const evento = pressOn(lienzo, 'ArrowRight');
+    // Consumida: si no, Leaflet además arrastraría el plano.
+    expect(evento.defaultPrevented).toBe(true);
+    expect(puntos).toHaveLength(1);
+    expect(puntos[0].lat).toBeCloseTo(-17.5, 6);
+    expect(puntos[0].lng).toBeCloseTo(-63.49, 6);
+
+    pressOn(lienzo, 'ArrowUp');
+    // Arriba es al norte: la latitud crece.
+    expect(puntos[1].lat).toBeCloseTo(-17.49, 6);
+  });
+
+  it('con Mayúsculas el paso es cinco veces más largo', async () => {
+    const { lienzo, puntos } = await mountForPicking(true, { lat: -17.5, lng: -63.5 });
+
+    pressOn(lienzo, 'ArrowLeft', true);
+    expect(puntos[0].lng).toBeCloseTo(-63.55, 6);
+  });
+
+  it('sin pin todavía, Enter lo pone en el centro del plano', async () => {
+    const { lienzo, puntos } = await mountForPicking(true, null);
+
+    pressOn(lienzo, 'Enter');
+    expect(puntos).toEqual([{ lat: -17, lng: -63 }]);
+  });
+
+  it('en un mapa que no espera un punto, las flechas son del plano: no se emite nada', async () => {
+    const { lienzo, puntos } = await mountForPicking(false, { lat: -17.5, lng: -63.5 });
+
+    const evento = pressOn(lienzo, 'ArrowRight');
+    expect(evento.defaultPrevented).toBe(false);
+    expect(puntos).toHaveLength(0);
+  });
+
+  it('la ayuda cambia: dice que las flechas mueven el pin', async () => {
+    const { lienzo } = await mountForPicking(true, null);
+    const ayuda = document.getElementById(lienzo.getAttribute('aria-describedby') ?? '');
+    expect(ayuda?.textContent).toContain('las flechas mueven el pin');
+  });
+});
+
+/* ---- provincias ------------------------------------------------------------ */
+
+/** Un cuadrado de un grado por lado alrededor de Santa Cruz de la Sierra. */
+const PROVINCIAS: ProvinciasDeBolivia = {
+  type: 'FeatureCollection',
+  features: [
+    {
+      type: 'Feature',
+      properties: { nombre: 'Andrés Ibáñez', departamento: 'Santa Cruz', rotulo: [-63.2, -17.8] },
+      geometry: {
+        type: 'Polygon',
+        coordinates: [
+          [
+            [-63.7, -18.3],
+            [-62.7, -18.3],
+            [-62.7, -17.3],
+            [-63.7, -17.3],
+            [-63.7, -18.3],
+          ],
+        ],
+      },
+    },
+  ],
+};
+
+interface RegistroDeProvincias {
+  capas: { datos: unknown; opciones: { pane?: string; interactive?: boolean } }[];
+  rotulos: { coordenadas: unknown; opciones: { pane?: string; interactive?: boolean; icon: IconoFalso } }[];
+  paneles: Record<string, HTMLElement>;
+  alMoverse: (() => void) | null;
+  centro: { lat: number; lng: number };
+  zoom: number;
+}
+
+async function crearConProvincias(
+  provincias: ProvinciasDeBolivia | null,
+): Promise<{ fixture: ComponentFixture<AppMap>; provincias: RegistroDeProvincias }> {
+  const registro: RegistroDeProvincias = {
+    capas: [],
+    rotulos: [],
+    paneles: {},
+    alMoverse: null,
+    centro: { lat: -17.7833, lng: -63.1821 },
+    zoom: 12,
+  };
+  const base = leafletFalso(new RegistroLeaflet()) as Record<string, (...args: never[]) => unknown>;
+  const leaflet = {
+    ...base,
+    map: () => ({
+      ...(base['map']() as object),
+      on: (evento: string, manejador: () => void) => {
+        if (evento === 'moveend') registro.alMoverse = manejador;
+      },
+      createPane: (nombre: string) => (registro.paneles[nombre] = document.createElement('div')),
+      getZoom: () => registro.zoom,
+      getCenter: () => registro.centro,
+    }),
+    geoJSON: (datos: unknown, opciones: RegistroDeProvincias['capas'][number]['opciones']) => {
+      registro.capas.push({ datos, opciones });
+      return { addTo: () => undefined };
+    },
+    marker: (coordenadas: unknown, opciones: RegistroDeProvincias['rotulos'][number]['opciones']) => {
+      registro.rotulos.push({ coordenadas, opciones });
+      return { addTo: () => undefined, bindPopup: () => undefined, on: () => undefined };
+    },
+  };
+  TestBed.configureTestingModule({
+    imports: [AppMap],
+    providers: [
+      { provide: CARGADOR_DE_LEAFLET, useValue: () => Promise.resolve(leaflet) },
+      { provide: CARGADOR_DE_PROVINCIAS, useValue: () => Promise.resolve(provincias) },
+    ],
+  });
+  const fixture = TestBed.createComponent(AppMap);
+  fixture.componentRef.setInput('pines', []);
+  fixture.componentRef.setInput('etiqueta', 'Mapa');
+  await fixture.whenStable();
+  for (let i = 0; i < 6; i += 1) await Promise.resolve();
+  fixture.detectChanges();
+  return { fixture, provincias: registro };
+}
+
+describe('AppMap · provincias', () => {
+  it('dibuja los límites en su panel, por debajo de los pines y sin atajar clics', async () => {
+    const { provincias } = await crearConProvincias(PROVINCIAS);
+
+    expect(provincias.capas).toHaveLength(1);
+    expect(provincias.capas[0].datos).toBe(PROVINCIAS);
+    expect(provincias.capas[0].opciones).toMatchObject({ pane: 'provincias', interactive: false });
+    // Los mosaicos van en 200 y los pines en 600.
+    expect(provincias.paneles['provincias'].style.zIndex).toBe('350');
+    expect(provincias.paneles['provincias'].style.pointerEvents).toBe('none');
+  });
+
+  it('escribe el nombre de cada provincia en su punto interior, como texto', async () => {
+    const { provincias } = await crearConProvincias(PROVINCIAS);
+
+    expect(provincias.rotulos).toHaveLength(1);
+    const [rotulo] = provincias.rotulos;
+    expect(rotulo.coordenadas).toEqual([-17.8, -63.2]);
+    expect(rotulo.opciones).toMatchObject({ pane: 'provincias', interactive: false });
+    expect(rotulo.opciones.icon.html.textContent).toBe('Andrés Ibáñez');
+  });
+
+  it('dice en palabras en qué provincia está el centro, y lo actualiza al moverse', async () => {
+    const { fixture, provincias } = await crearConProvincias(PROVINCIAS);
+    const rotulo = (): string | null =>
+      (fixture.nativeElement as HTMLElement).querySelector('[data-testid="mapa-provincia"]')
+        ?.textContent ?? null;
+
+    expect(rotulo()).toBe('Provincia Andrés Ibáñez · Santa Cruz');
+
+    provincias.centro = { lat: -34.6, lng: -58.38 };
+    provincias.alMoverse?.();
+    fixture.detectChanges();
+    expect(rotulo()).toBeNull();
+  });
+
+  it('los nombres se ven de cerca y se esconden de lejos', async () => {
+    const { fixture, provincias } = await crearConProvincias(PROVINCIAS);
+    const lienzo = (fixture.nativeElement as HTMLElement).querySelector('.mapa__lienzo');
+
+    expect(lienzo?.classList).toContain('mapa__lienzo--con-nombres');
+    // En 8 ya se encima el valle de Cochabamba: los nombres empiezan en 9.
+    provincias.zoom = 8;
+    provincias.alMoverse?.();
+    expect(lienzo?.classList).not.toContain('mapa__lienzo--con-nombres');
+    provincias.zoom = 9;
+    provincias.alMoverse?.();
+    expect(lienzo?.classList).toContain('mapa__lienzo--con-nombres');
+  });
+
+  it('sin el archivo, el mapa queda como era', async () => {
+    const { fixture, provincias } = await crearConProvincias(null);
+
+    expect(provincias.capas).toHaveLength(0);
+    expect(fixture.nativeElement.querySelector('[data-testid="mapa-provincia"]')).toBeNull();
+    expect(fixture.nativeElement.textContent).not.toContain('Cargando el mapa');
   });
 });

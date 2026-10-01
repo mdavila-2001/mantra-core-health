@@ -151,7 +151,9 @@ async function llegarALosTitulos(page: Page): Promise<void> {
 
 /** Las casillas de texto de una fila de título, en orden: nombre, universidad, país, ciudad. */
 function casillasDeLaFila(fila: Locator): Locator {
-  return fila.locator('input[type="text"]');
+  return fila.locator(
+    'input.registro-titulo__nombre, .registro-titulo__estudio input[type="text"]',
+  );
 }
 
 /**
@@ -298,8 +300,19 @@ test.describe('alta de doctor · universidad, lugar de estudio y segunda profesi
     const agregar = page.getByTestId('registro-pro-agregar-UNIVERSITARIO');
     await agregar.click();
 
-    const casillas = casillasDeLaFila(page.getByTestId('registro-pro-fila-UNIVERSITARIO').first());
+    const fila = page.getByTestId('registro-pro-fila-UNIVERSITARIO').first();
+    const casillas = casillasDeLaFila(fila);
     await expect(casillas).toHaveCount(4);
+    await expect(page.getByTestId('registro-pro-titulos-alcance')).toContainText(
+      'la universidad y el PDF de cada título',
+    );
+    await expect(page.getByTestId('registro-pro-titulos-alcance')).toContainText(
+      'podés reintentar y se conservan las que ya subieron',
+    );
+    await expect(fila.locator('input[type="file"]')).toHaveAttribute(
+      'accept',
+      '.pdf',
+    );
 
     // Apiladas: cada casilla empieza más abajo que la anterior, y ninguna
     // comparte renglón. En 390 px cuatro campos en línea son ilegibles.

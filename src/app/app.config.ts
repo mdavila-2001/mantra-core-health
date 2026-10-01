@@ -19,9 +19,11 @@ import { authInterceptor } from './core/http/auth.interceptor';
 import { timeoutInterceptor } from './core/http/timeout.interceptor';
 import { AuthService } from './core/auth/auth.service';
 import { IdleLogout } from './core/auth/idle-logout';
+import { SessionEndedRedirect } from './core/auth/session-ended-redirect';
 import { AppErrorHandler } from './core/errors/app-error-handler';
 import { tracingInterceptor } from './core/observability/http/tracing.interceptor';
 import { provideObservability } from './core/observability/observability.providers';
+import { provideDependentLinkNotificationActions } from './features/account/dependents/dependent-link-notification-actions';
 import { mockBackendInterceptor } from './core/mock/mock-backend.interceptor';
 
 /**
@@ -90,6 +92,8 @@ export const appConfig: ApplicationConfig = {
     // Trazas del Router y de la estabilidad de la aplicación. No bloquea el
     // arranque y, con la telemetría apagada, no engancha nada.
     provideObservability(),
+    // Qué hacen los botones de las notificaciones (`core/notifications/notification-actions.ts`).
+    provideDependentLinkNotificationActions(),
     // El tema no depende de que exista un componente: se instancia al arrancar.
     provideAppInitializer(() => {
       inject(ThemeService);
@@ -114,6 +118,12 @@ export const appConfig: ApplicationConfig = {
     // vacío queda con la historia clínica de alguien en pantalla.
     provideAppInitializer(() => {
       inject(IdleLogout);
+    }),
+    // Quien pierde la sesión dentro del área privada —por inactividad, desde
+    // otra pestaña o por un refresco rechazado— va al login. Sin esto la
+    // pantalla quedaba en pie sin token y ninguna acción funcionaba.
+    provideAppInitializer(() => {
+      inject(SessionEndedRedirect);
     }),
   ],
 };

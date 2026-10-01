@@ -1,296 +1,649 @@
-/* Cockpit contable. Sólo distribución: ni un color ni una tipografía propios —
-   todo sale de los 188 tokens del sistema.
+/* Cockpit contable. Ni un color ni una tipografía propios: todo sale de los
+   tokens del sistema.
 
-   La forma es la de un cockpit de verdad: una barra de contexto arriba que no
-   se pierde, una rejilla de indicadores que se lee de un vistazo, y el detalle
-   debajo en pestañas. Centrado y a lo ancho del área, como pide
-   `composition-rules.md` §5: sin topes propios de ancho. */
+   La forma es la de un cockpit de verdad: una barra de contexto arriba, cuatro
+   indicadores de gestión con uno que manda, una franja de controles de cuadre
+   y el detalle en UNA tarjeta con pestañas (CLAUDE.md, regla 6). Centrado y a
+   lo ancho del área, sin topes propios (`composition-rules.md` §5). */
 
 :host {
   display: block;
 }
 
-/* ---- barra de contexto ----------------------------------------------------
-   Qué sociedad, qué ejercicio, qué período. Va primero porque decide si un
-   asiento se puede postear: enterarse después es enterarse tarde. */
+/* ---- barra de contexto ---------------------------------------------------- */
 .contexto {
   display: block;
   inline-size: 100%;
   margin-block-start: var(--sp-5);
 }
 
-.contexto__campos {
+.contexto__fila {
+  align-items: start;
   display: grid;
-  gap: var(--sp-4);
+  gap: var(--sp-4) var(--sp-5);
   grid-template-columns: minmax(0, 1fr);
 }
 
-@media (min-width: 780px) {
-  .contexto__campos {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-}
-
-.contexto__dato {
-  margin: 0;
-  font-size: var(--fs-body);
-  line-height: var(--lh-body);
-  font-weight: 600;
-}
-
-.contexto__rango {
-  display: block;
-  color: var(--text-secondary);
-  font-size: var(--fs-caption);
-  font-weight: 400;
-}
-
-.contexto__estado {
-  align-items: center;
-  border-block-start: 1px solid var(--border-subtle);
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--sp-3);
-  margin-block-start: var(--sp-4);
-  padding-block-start: var(--sp-3);
-}
-
-.contexto__ayuda {
-  color: var(--text-secondary);
-  font-size: var(--fs-caption);
-  line-height: var(--lh-caption);
-  flex: 1 1 16rem;
-}
-
-/* ---- indicadores ----------------------------------------------------------
-   Son siempre seis: tres por fila en escritorio, dos en tableta, uno en
-   teléfono, así la rejilla cierra sin huecos (con cuatro por fila quedaban dos
-   celdas vacías). */
-.tiles {
-  display: grid;
-  gap: var(--sp-4);
-  grid-template-columns: 1fr;
-  margin-block: var(--sp-5);
-}
-
-@media (min-width: 40rem) {
-  .tiles {
+@media (min-width: 48rem) {
+  .contexto__fila {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
-@media (min-width: 64rem) {
-  .tiles {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+@media (min-width: 72rem) {
+  .contexto__fila {
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 0.8fr);
   }
 }
 
-.tile {
+.contexto__vacio {
+  grid-column: 1 / -1;
+}
+
+.contexto__dato {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.contexto__rotulo {
+  color: var(--text-primary);
+  font-size: var(--fs-body);
+  font-weight: 500;
+  line-height: var(--lh-body);
+}
+
+.contexto__valor {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1) var(--sp-3);
+  margin: 0;
+  /* Mismo alto que un select, para que las cuatro columnas compartan base. */
+  min-block-size: 2.75rem;
+  font-weight: 600;
+}
+
+.contexto__rango {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  font-variant-numeric: tabular-nums;
+  font-weight: 400;
+}
+
+/* ---- indicadores ----------------------------------------------------------
+   El resultado ocupa dos columnas en escritorio: es la cifra que se viene a
+   mirar. Las otras tres, una cada una — la fila cierra en cinco columnas. */
+.kpis {
+  display: grid;
+  gap: var(--sp-4);
+  grid-template-columns: minmax(0, 1fr);
+  margin-block-start: var(--sp-5);
+}
+
+@media (min-width: 40rem) {
+  .kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .kpi--principal {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (min-width: 72rem) {
+  .kpis {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
+  .kpi--principal {
+    grid-column: span 2;
+  }
+}
+
+.kpi {
   display: block;
 }
 
-.tile__rotulo {
-  margin: 0;
+.kpi__rotulo {
   color: var(--text-secondary);
+  font-family: var(--font-body);
   font-size: var(--fs-overline);
   font-weight: 700;
   letter-spacing: 0.08em;
+  line-height: var(--lh-caption);
+  margin: 0;
   text-transform: uppercase;
 }
 
-.tile__cifra {
-  margin: var(--sp-2) 0 0;
+.kpi__cifra {
   font-family: var(--font-body);
-  font-size: var(--fs-h2);
-  line-height: var(--lh-h2);
-  font-weight: 600;
-  /* Cifras tabulares: en una columna de importes, los dígitos tienen que caer
-     en la misma vertical o compararlos exige leerlos. */
+  font-size: var(--fs-h3);
   font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  line-height: var(--lh-h3);
+  margin: var(--sp-2) 0 0;
+  white-space: nowrap;
 }
 
-.tile__cifra--chica {
-  font-size: var(--fs-h3);
-  line-height: var(--lh-h3);
+.kpi__cifra--grande {
+  font-size: var(--fs-h1);
+  line-height: 1.15;
 }
 
 /* Un resultado negativo no se dice sólo con color —quien no distingue rojo lo
    perdería—: el signo menos viaja en el propio texto. El color acompaña. */
-.tile__cifra--negativa {
+.kpi__cifra--negativa {
   color: var(--st-error-fg);
 }
 
-.tile__pie {
+.kpi__pie {
   align-items: center;
   color: var(--text-secondary);
   display: flex;
   flex-wrap: wrap;
+  font-size: var(--fs-caption);
   gap: var(--sp-2);
-  margin: var(--sp-2) 0 0;
-  font-size: var(--fs-caption);
   line-height: var(--lh-caption);
+  margin: var(--sp-3) 0 0;
 }
 
-/* ---- secciones del detalle ------------------------------------------------ */
-.seccion__nota {
-  color: var(--text-secondary);
-  font-size: var(--fs-caption);
-  line-height: var(--lh-caption);
-  margin: 0 0 var(--sp-4);
-}
-
-.grupo + .grupo {
-  margin-block-start: var(--sp-5);
-}
-
-.grupo__cabecera {
-  align-items: center;
+.kpi__desglose {
+  border-block-start: 1px solid var(--border-subtle);
   display: flex;
-  gap: var(--sp-2);
-  margin-block-end: var(--sp-2);
+  flex-wrap: wrap;
+  gap: var(--sp-3) var(--sp-6);
+  margin: var(--sp-4) 0 0;
+  padding-block-start: var(--sp-3);
 }
 
-.grupo__titulo {
-  margin: 0;
-  font-size: var(--fs-body);
-  line-height: var(--lh-body);
-  font-weight: 600;
-}
-
-.grupo__cuenta {
+.kpi__desglose dt {
   color: var(--text-secondary);
   font-size: var(--fs-caption);
+}
+
+.kpi__desglose dd {
+  font-size: var(--fs-data);
   font-variant-numeric: tabular-nums;
-}
-
-/* ---- documentos del flujo -------------------------------------------------
-   Una fila por documento: número, fecha, importe y la única acción que su
-   estado admite. Sin menú de acciones porque no hay dónde elegir: el backend
-   acepta una sola transición por estado. */
-.documentos,
-.partidas,
-.dimensiones {
-  list-style: none;
+  font-weight: 600;
   margin: 0;
-  padding: 0;
 }
 
-.documento,
-.partida,
-.dimension {
-  align-items: center;
-  border-block-end: 1px solid var(--border-subtle);
-  display: flex;
-  flex-wrap: wrap;
+/* ---- controles de cuadre -------------------------------------------------- */
+.controles {
+  display: grid;
   gap: var(--sp-3);
-  padding-block: var(--sp-3);
+  grid-template-columns: minmax(0, 1fr);
+  margin-block: var(--sp-4) var(--sp-5);
 }
 
-.documento__numero,
-.dimension__codigo {
-  font-variant-numeric: tabular-nums;
-  font-weight: 600;
-  min-inline-size: 9rem;
+@media (min-width: 48rem) {
+  .controles {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
-.documento__fecha,
-.partida__vencimiento {
-  color: var(--text-secondary);
-  font-size: var(--fs-caption);
-}
-
-.documento__importe,
-.partida__importe,
-.dimension__resultado {
-  font-variant-numeric: tabular-nums;
-  font-weight: 600;
-  /* Los importes se empujan a la derecha para poder compararlos de un vistazo. */
-  margin-inline-start: auto;
-}
-
-/* La cabecera de una corrida: sus cifras y el botón que la dispara, juntos.
-   El botón vive al lado del número que va a mover, no al final de la lista. */
-.corrida {
-  align-items: end;
+.control {
+  align-items: center;
   background: var(--bg-inset);
-  border-radius: var(--r-sm);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--sp-4);
-  margin-block-end: var(--sp-4);
+  gap: var(--sp-3);
   padding: var(--sp-3) var(--sp-4);
 }
 
-.corrida__cifra {
+.control--error {
+  background: var(--st-error-bg);
+  border-color: var(--st-error-bd);
+}
+
+.control__texto {
   display: flex;
   flex-direction: column;
+  min-inline-size: 0;
+}
+
+.control__titulo {
   font-size: var(--fs-body);
-  font-variant-numeric: tabular-nums;
   font-weight: 600;
+  line-height: var(--lh-body);
+}
+
+.control__detalle {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  font-variant-numeric: tabular-nums;
+  line-height: var(--lh-caption);
+}
+
+/* ---- tarjeta de detalle --------------------------------------------------- */
+.detalle {
+  display: block;
+  inline-size: 100%;
+}
+
+.panel__cabecera {
+  align-items: end;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3) var(--sp-4);
+  justify-content: space-between;
+  margin-block: var(--sp-5) var(--sp-4);
+}
+
+.panel__cabecera--seccion {
+  margin-block-start: var(--sp-8);
+}
+
+.panel__titulo {
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
   margin: 0;
 }
 
-.corrida__rotulo {
+.panel__nota {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  margin: var(--sp-1) 0 0;
+}
+
+/* ---- etapas del flujo ------------------------------------------------------
+   Resumen y filtro a la vez: «Pendientes» a la izquierda, separado, y las seis
+   etapas en el orden del recorrido, unidas como un solo control. */
+.etapas {
+  align-items: stretch;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  margin-block-end: var(--sp-4);
+}
+
+.etapas__flujo {
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  display: flex;
+  flex: 1 1 36rem;
+  list-style: none;
+  margin: 0;
+  overflow: hidden;
+  padding: 0;
+}
+
+.etapas__flujo li {
+  display: flex;
+  flex: 1 1 0;
+  min-inline-size: 0;
+}
+
+.etapas__flujo li + li {
+  border-inline-start: 1px solid var(--border-default);
+}
+
+.etapa {
+  align-items: flex-start;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  font: inherit;
+  gap: 2px;
+  min-inline-size: 0;
+  padding: var(--sp-2) var(--sp-3);
+  text-align: start;
+  transition: background-color var(--dur-fast) var(--ease-standard);
+}
+
+.etapa:hover {
+  background: var(--bg-hover);
+}
+
+.etapa:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: -2px;
+}
+
+.etapa--pendientes {
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  flex: 0 0 auto;
+  min-inline-size: 8rem;
+}
+
+.etapa--activa,
+.etapa--activa:hover {
+  background: var(--st-primary-bg);
+  color: var(--text-primary);
+  box-shadow: inset 0 -2px 0 var(--brand-primary);
+}
+
+.etapa--pendientes.etapa--activa {
+  border-color: var(--brand-primary);
+}
+
+.etapa__cuenta {
+  color: var(--text-primary);
+  font-size: var(--fs-h3);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  line-height: var(--lh-h3);
+}
+
+.etapa--vacia .etapa__cuenta {
+  color: var(--text-muted);
+}
+
+.etapa__rotulo {
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-inline-size: 100%;
+}
+
+/* En teléfono las seis etapas no caben en fila: pasan a una rejilla de tres. */
+@media (max-width: 40rem) {
+  .etapas__flujo {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .etapas__flujo li + li {
+    border-inline-start: none;
+  }
+
+  .etapas__flujo li {
+    border-block-end: 1px solid var(--border-subtle);
+  }
+
+  .etapas__flujo li:not(:nth-child(3n + 1)) {
+    border-inline-start: 1px solid var(--border-default);
+  }
+
+  .etapa--pendientes {
+    flex: 1 1 100%;
+  }
+}
+
+/* ---- tablas ----------------------------------------------------------------
+   Una sola receta para las seis tablas: cabecera en versalitas sobre fondo
+   hundido, cifras tabulares a la derecha, filas separadas por una línea
+   tenue. En teléfono las columnas opcionales se pliegan: nunca hay scroll
+   lateral (ADR-0015, regla 6). */
+.tabla {
+  border-collapse: separate;
+  border-spacing: 0;
+  inline-size: 100%;
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+}
+
+.tabla th,
+.tabla td {
+  border-block-end: 1px solid var(--border-subtle);
+  padding: var(--sp-3);
+  text-align: start;
+  vertical-align: middle;
+}
+
+.tabla thead th {
+  background: var(--bg-inset);
+  border-block-end: 1px solid var(--border-default);
   color: var(--text-secondary);
   font-size: var(--fs-overline);
   font-weight: 700;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.06em;
+  padding-block: var(--sp-2);
   text-transform: uppercase;
+  white-space: nowrap;
 }
 
-.corrida button {
-  margin-inline-start: auto;
+.tabla thead th:first-child {
+  border-start-start-radius: var(--r-sm);
 }
 
-.dimension__nombre {
-  display: flex;
-  flex-direction: column;
+.tabla thead th:last-child {
+  border-start-end-radius: var(--r-sm);
 }
 
-.dimension__detalle {
-  color: var(--text-secondary);
-  font-size: var(--fs-caption);
+.tabla tbody tr:not(.tabla__detalle):hover > * {
+  background: var(--bg-hover);
+}
+
+.tabla--compacta th,
+.tabla--compacta td {
+  padding-block: var(--sp-2);
+}
+
+.tabla tfoot th,
+.tabla tfoot td {
+  border-block-end: none;
+  border-block-start: 1px solid var(--border-strong);
+  font-weight: 700;
+}
+
+.tabla .num {
+  text-align: end;
+  white-space: nowrap;
+}
+
+.tabla .accion {
+  inline-size: 1%;
+  text-align: end;
+  white-space: nowrap;
+}
+
+.tabla__importe {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.tabla__cero {
+  color: var(--text-muted);
   font-weight: 400;
 }
 
-.grupo__resto {
+.tabla__negativo {
+  color: var(--st-error-fg);
+}
+
+.tabla__tramo {
+  font-weight: 500;
+}
+
+.tabla__principal {
+  display: block;
+  font-weight: 600;
+}
+
+.tabla__fecha {
+  font-variant-numeric: tabular-nums;
+}
+
+.tabla__sub {
+  color: var(--text-secondary);
+  display: block;
+  font-size: var(--fs-caption);
+  font-weight: 400;
+  line-height: var(--lh-caption);
+}
+
+td.tabla__sub {
+  display: table-cell;
+}
+
+.tabla__codigo {
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: var(--fs-caption);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.tabla__pie {
   color: var(--text-secondary);
   font-size: var(--fs-caption);
   margin: var(--sp-3) 0 0;
 }
 
-.documento__final {
-  color: var(--text-muted);
-  font-size: var(--fs-caption);
+.solo-movil {
+  display: none;
 }
 
-/* El número de documento abre su flujo. Es un botón y no un enlace porque no
-   navega: despliega acá mismo. Se pinta como el texto que era. */
-.documento__numero--abrible {
-  /* Mínimo táctil WCAG 2.5.8: con el alto de la línea medía 23 px. */
-  min-block-size: 24px;
+@media (max-width: 40rem) {
+  /* `.tabla` delante: `td.tabla__sub` pesa más que una clase sola, y la
+     columna opcional seguía a la vista. */
+  .tabla .col-opcional {
+    display: none;
+  }
+
+  .solo-movil {
+    display: block;
+  }
+
+  .tabla th,
+  .tabla td {
+    padding-inline: var(--sp-2);
+  }
+
+  /* Las tablas con acción por fila no entran en 390 px ni con dos columnas
+     plegadas. En teléfono cada fila pasa a ser un bloque de dos renglones:
+     identificación y estado arriba, importe y acción abajo. */
+  .tabla--apilable thead {
+    block-size: 1px;
+    clip-path: inset(50%);
+    inline-size: 1px;
+    overflow: hidden;
+    position: absolute;
+    white-space: nowrap;
+  }
+
+  .tabla--apilable tr {
+    align-items: center;
+    border-block-end: 1px solid var(--border-subtle);
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-2) var(--sp-3);
+    padding: var(--sp-3) var(--sp-2);
+  }
+
+  .tabla--apilable td {
+    border-block-end: none;
+    padding: 0;
+  }
+
+  .tabla--apilable td:first-child {
+    flex: 1 1 60%;
+    min-inline-size: 0;
+  }
+
+  .tabla--apilable td.num {
+    flex: 1 1 auto;
+    text-align: start;
+  }
+
+  .tabla--apilable td.accion {
+    inline-size: auto;
+  }
+
+  .tabla--apilable .tabla__detalle td {
+    flex: 1 1 100%;
+  }
+
+  /* Con las celdas en flex, pintar el fondo por celda deja cajas sueltas: en
+     teléfono el fondo va en la fila entera. */
+  .tabla--apilable tbody tr:not(.tabla__detalle):hover > *,
+  .tabla--apilable .tabla__fila--abierta > *,
+  .tabla--apilable .tabla__detalle > td {
+    background: transparent;
+  }
+
+  .tabla--apilable tr.tabla__fila--abierta {
+    background: var(--bg-inset);
+    border-block-end-color: transparent;
+  }
+
+  .tabla--apilable tr.tabla__detalle {
+    background: var(--bg-inset);
+  }
+}
+
+.partida__vencida {
+  color: var(--st-warning-fg);
+  font-weight: 600;
+}
+
+/* ---- número de documento y su flujo ---------------------------------------
+   El número abre la cadena del documento. Es un botón y no un enlace porque no
+   navega: despliega acá mismo, en una fila debajo. */
+.documento__numero {
+  align-items: center;
   background: none;
   border: none;
-  color: var(--brand-primary);
+  color: var(--text-link);
   cursor: pointer;
+  display: inline-flex;
   font: inherit;
   font-variant-numeric: tabular-nums;
   font-weight: 600;
+  gap: var(--sp-2);
+  /* Mínimo táctil WCAG 2.5.8. */
+  min-block-size: 24px;
   padding: 0;
-  text-align: start;
+  white-space: nowrap;
 }
 
-.documento__numero--abrible:hover {
+.documento__numero:hover {
   text-decoration: underline;
 }
 
-/* La cadena del documento: de dónde salió y qué se hizo con él. Sangrada
-   debajo de su fila, en el orden en que ocurrió. */
+.documento__numero:focus-visible {
+  border-radius: var(--r-xs);
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.documento__chevron {
+  block-size: 0.45rem;
+  border-block-end: 2px solid currentColor;
+  border-inline-end: 2px solid currentColor;
+  inline-size: 0.45rem;
+  transform: rotate(-45deg);
+  transition: transform var(--dur-fast) var(--ease-standard);
+}
+
+.documento__numero[aria-expanded='true'] .documento__chevron {
+  transform: rotate(45deg);
+}
+
+.tabla__fila--abierta > * {
+  background: var(--bg-inset);
+  border-block-end-color: transparent;
+}
+
+.tabla__detalle > td {
+  background: var(--bg-inset);
+  padding-block-start: 0;
+}
+
+.flujo__titulo {
+  color: var(--text-secondary);
+  font-size: var(--fs-overline);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  margin: 0 0 var(--sp-2);
+  text-transform: uppercase;
+}
+
 .flujo {
   border-inline-start: 2px solid var(--border-default);
-  flex-basis: 100%;
   list-style: none;
-  margin: var(--sp-2) 0 var(--sp-2) var(--sp-4);
+  margin: 0 0 var(--sp-2) var(--sp-2);
   padding: 0 0 0 var(--sp-4);
 }
 
@@ -314,6 +667,7 @@
 }
 
 .flujo__numero,
+.flujo__fecha,
 .flujo__importe {
   font-variant-numeric: tabular-nums;
 }
@@ -322,58 +676,157 @@
   margin-inline-start: auto;
 }
 
-/* ---- antigüedad de la cartera --------------------------------------------- */
-.antiguedad {
-  border: 1px solid var(--border-default);
-  border-radius: var(--r-sm);
-  margin-block-end: var(--sp-5);
-  overflow: hidden;
-}
-
-.antiguedad__fila {
+/* ---- controlling: tres tablas lado a lado --------------------------------- */
+.dimensiones {
   display: grid;
-  gap: var(--sp-3);
-  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr);
-  padding: var(--sp-2) var(--sp-3);
+  gap: var(--sp-5);
+  grid-template-columns: minmax(0, 1fr);
 }
 
-.antiguedad__fila + .antiguedad__fila {
-  border-block-start: 1px solid var(--border-subtle);
+@media (min-width: 64rem) {
+  .dimensiones {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }
 
-.antiguedad__fila--cabecera {
-  background: var(--bg-inset);
+.dimensiones__grupo {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  padding: var(--sp-4);
+}
+
+.dimensiones__titulo {
+  font-size: var(--fs-body);
+  font-weight: 600;
+  line-height: var(--lh-body);
+  margin: 0;
+}
+
+.dimensiones__ayuda {
+  color: var(--text-secondary);
   font-size: var(--fs-caption);
-  font-weight: 700;
+  margin: 0 0 var(--sp-3);
 }
 
-.antiguedad__cifra {
-  font-variant-numeric: tabular-nums;
-  text-align: end;
-}
-
-/* ---- partidas y dimensiones ----------------------------------------------- */
-.partida__quien {
+/* ---- cierre: lista de pasos numerados ------------------------------------- */
+.cierre {
   display: flex;
   flex-direction: column;
-  min-inline-size: 12rem;
+  gap: var(--sp-4);
+  list-style: none;
+  margin: 0;
+  padding: 0;
 }
 
-.partida__socio,
-.dimension__nombre {
+.paso {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  display: flex;
+  gap: var(--sp-4);
+  padding: var(--sp-4);
+}
+
+.paso__numero {
+  align-items: center;
+  background: var(--st-primary-bg);
+  border-radius: 50%;
+  color: var(--text-primary);
+  display: inline-flex;
+  flex: 0 0 auto;
+  font-size: var(--fs-caption);
+  font-weight: 700;
+  block-size: 1.75rem;
+  inline-size: 1.75rem;
+  justify-content: center;
+}
+
+.paso__cuerpo {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+}
+
+.paso__cabecera {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  justify-content: space-between;
+}
+
+.paso__titulo {
+  font-size: var(--fs-body);
   font-weight: 600;
+  line-height: var(--lh-body);
+  margin: 0;
 }
 
-.partida__doc {
+.paso__nota {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  margin: 2px 0 0;
+}
+
+.paso__accion {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.cifras {
+  background: var(--bg-inset);
+  border-radius: var(--r-sm);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3) var(--sp-6);
+  margin: var(--sp-4) 0;
+  padding: var(--sp-3) var(--sp-4);
+}
+
+.cifras dt {
   color: var(--text-secondary);
   font-size: var(--fs-caption);
 }
 
-.partida__vencida {
-  color: var(--st-warning-fg);
+.cifras dd {
+  font-size: var(--fs-data);
+  font-variant-numeric: tabular-nums;
   font-weight: 600;
+  margin: 0;
 }
 
-.dimension__resultado--negativo {
-  color: var(--st-error-fg);
+/* ---- avance de un devengo ------------------------------------------------- */
+.avance {
+  align-items: center;
+  display: flex;
+  gap: var(--sp-2);
+}
+
+.avance__barra {
+  background: var(--bg-inset);
+  border: 1px solid var(--border-subtle);
+  border-radius: 999px;
+  block-size: 0.5rem;
+  display: block;
+  flex: 0 0 5rem;
+  overflow: hidden;
+}
+
+.avance__relleno {
+  background: var(--brand-primary);
+  block-size: 100%;
+  display: block;
+}
+
+.avance .tabla__sub {
+  display: inline;
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .etapa,
+  .documento__chevron {
+    transition: none;
+  }
 }

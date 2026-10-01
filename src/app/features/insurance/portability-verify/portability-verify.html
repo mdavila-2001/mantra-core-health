@@ -9,9 +9,9 @@
       @if (result(); as certificado) {
         <app-alert tone="success" title="Certificado válido" data-testid="portability-verify-valid">
           <p>
-            Este es un certificado oficial de portabilidad de póliza y siniestralidad.
+            Esta es una exportación de portabilidad de póliza y siniestralidad, verificada por su sello.
           </p>
-          <dl class="verify__datos">
+          <dl class="verify__data">
             <!-- El emisor lo dice el servidor, no la plantilla: quien verifica
                  necesita saber QUIÉN selló este certificado, y darlo por
                  sentado sería afirmar algo que la respuesta no confirmó. -->
@@ -24,7 +24,7 @@
             <dt>Algoritmo de sello</dt>
             <dd>{{ certificado.algorithm }}</dd>
           </dl>
-          <p class="verify__rotulo">Sello digital</p>
+          <p class="verify__label">Sello digital</p>
           <code class="verify__hash" data-testid="portability-verify-hash">{{ certificado.manifestHash }}</code>
         </app-alert>
       }
@@ -47,7 +47,7 @@
     }
   }
 
-  <p class="verify__volver">
+  <p class="verify__back">
     <a app-button variant="ghost" routerLink="/">Ir a AloVida</a>
   </p>
 </div>

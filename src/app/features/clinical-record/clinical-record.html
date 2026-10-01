@@ -6,15 +6,15 @@
 
 <div class="archivo">
   <!-- ─── Cómo encontrar a la persona ───────────────────────────────────────
-       Los tres campos responden UNA pregunta —«¿a quién buscás?»— y por eso
+       Los dos campos responden UNA pregunta —«¿a quién buscás?»— y por eso
        van en una sola rejilla, con el ícono de cada uno a su izquierda. Antes
        el buscador flotaba solo sobre una fila suelta de dos campos y un botón
-       descolgado contra el borde derecho: tres bloques sin relación visible
-       para una sola pregunta.
+       descolgado contra el borde derecho: bloques sin relación visible para
+       una sola pregunta.
 
        El nombre filtra al teclear (AC del M34); el documento se ENVÍA, porque
-       un carnet a medio escribir no debe buscar (AC-07-1 / AC-07-2). Por eso
-       el bloque es un `<form>` y el Enter del buscador no lo envía. -->
+       un carnet a medio escribir no debe buscar (AC-07-1). Por eso el bloque
+       es un `<form>` y el Enter del buscador no lo envía. -->
   <form
     class="archivo__filtros"
     aria-label="Buscar a la persona"
@@ -53,30 +53,15 @@
           (valueChange)="fijarDocumento($event)"
         />
       </app-form-field>
-
-      <!-- AC-07-2: el departamento sólo desempata — dos personas pueden
-           compartir número expedido en departamentos distintos. -->
-      <app-form-field
-        icon="pin"
-        label="Departamento de expedición"
-        hint="Opcional. Desempata cuando el número se repite en otro departamento."
-      >
-        <app-select
-          [(value)]="departamentoElegido"
-          [options]="opcionesDeDepartamento()"
-          placeholder="Cualquier departamento"
-        />
-      </app-form-field>
     </div>
 
     <!-- El botón, en su propio renglón y fuera de la rejilla.
 
          Fuera, y no como un hijo suyo a lo ancho, porque un hijo que ocupa
-         todas las columnas le impide a `auto-fit` plegar la que sobra: los
-         tres campos se quedaban en tres cuartos del bloque con un canalón
-         vacío a la derecha. Y en su propio renglón porque, como una cuarta
-         columna de la fila, había que empujarle un margen superior calculado
-         a mano para que su borde cuadrara con el de los controles. -->
+         todas las columnas le impide a `auto-fit` plegar la que sobra. Y en
+         su propio renglón porque, como una columna más de la fila, había
+         que empujarle un margen superior calculado a mano para que su borde
+         cuadrara con el de los controles. -->
     <div class="archivo__acciones">
       <button
         app-button

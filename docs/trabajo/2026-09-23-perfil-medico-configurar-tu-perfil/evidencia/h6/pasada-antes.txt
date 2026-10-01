@@ -1,0 +1,7 @@
+✔ formulario por páginas: las 6 pantallas lo dibujan — /auth/register/practitioner · sin sesión | /auth/register/organization · sin sesión | /auth/register/laboratory · sin sesión | /auth/register/imaging-center · sin sesión | /design-system · sin sesión | /auth/register/patient · sin sesión
+  DOM de referencia guardado en docs\frontend\evidence\d05-iconos-2026-09-23\dom-formulario-por-paginas-antes.json
+  desborde de «Mi perfil» por celda (px): {"1440-claro":0,"1440-oscuro":0,"1920-claro":0,"1024-claro":0,"768-claro":0,"390-claro":0,"390-oscuro":0,"360-claro":4}
+✔ sin errores de página ni de consola — avisos de CSP por scripts en línea, excluidos: 0
+✔ sin respuestas 4xx/5xx
+
+3/3 comprobaciones en verde (antes)

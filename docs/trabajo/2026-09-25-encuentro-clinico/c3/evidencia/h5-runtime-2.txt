@@ -1,0 +1,3 @@
+[pw-guard] Iniciando yarn dev en :4213; log D:\Trabajos Secundarios\Mantra Core Technologies\mantra-core-health\artifacts\pw-guard\serve-4213.log
+[pw-guard] servidor caído en :4213
+RESUMEN: outcome=UNAVAILABLE intentos=0 duracion=180.74s

@@ -3,6 +3,8 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  DestroyRef,
+  ElementRef,
   inject,
   input,
   output,
@@ -34,6 +36,24 @@ export const CORRECTION_LABEL = 'Registrar corrección';
  *   una orden médica eso es un duplicado real.
  *
  * Con `destructive`, la confirmación es obligatoria: sin ella no se emite nada.
+ *
+ * ## `Escape` es «Cancelar»
+ *
+ * Pedido del propietario (30/09/2026): en TODA pantalla de edición, `Escape`
+ * descarta lo tipeado igual que el botón. Vive acá y no en cada formulario
+ * porque así lo heredan los cuarenta y tantos que ya usan esta barra, y el
+ * próximo no depende de que alguien se acuerde. Sólo actúa si la barra tiene
+ * «Cancelar» (`cancelLabel`) y no está enviando. Se hace a un lado:
+ *
+ * - si alguien más ya atendió la tecla (`defaultPrevented`): un desplegable,
+ *   un combobox, el calendario o el menú cierran primero su capa, y ese
+ *   Escape no debe además tirar el formulario entero;
+ * - si hay un `<dialog>` abierto, o si la barra misma vive en uno: el diálogo
+ *   tiene su propio Escape, que pasa por su `closeGuard`;
+ * - si el foco está en OTRO formulario de la página. Con el foco suelto (en el
+ *   `body`, que es donde lo deja Safari al hacer clic en un botón) actúa sólo
+ *   si es la única barra con «Cancelar» a la vista: con dos, adivinar cuál
+ *   descartar sería perder lo tipeado en el formulario equivocado.
  */
 @Component({
   selector: 'app-form-actions',
@@ -43,10 +63,15 @@ export const CORRECTION_LABEL = 'Registrar corrección';
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
     class: 'form-actions',
+    '(document:keydown.escape)': 'handleEscape($event)',
   },
 })
 export class FormActions {
+  /** Las barras montadas, para saber si con el foco suelto hay una sola candidata. */
+  private static readonly montadas = new Set<FormActions>();
+
   private readonly dialogs = inject(DialogService);
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
 
   readonly submitLabel = input<string>('Guardar');
   readonly cancelLabel = input<string>('');
@@ -54,6 +79,12 @@ export class FormActions {
   readonly disabled = input(false, { transform: booleanAttribute });
   readonly destructive = input(false, { transform: booleanAttribute });
   readonly correctionOnly = input(false, { transform: booleanAttribute });
+  /**
+   * Sin el botón primario: sólo «Cancelar». Para las pantallas donde hay algo
+   * que descartar pero nada que ESTA barra guarde —p. ej. las pestañas del
+   * editor del médico donde cada bloque tiene su propio «Agregar»—.
+   */
+  readonly showSubmit = input(true, { transform: booleanAttribute });
 
   /** Texto y mensaje del diálogo cuando la acción es destructiva. */
   readonly confirmTitle = input<string>('¿Confirmás la acción?');
@@ -79,6 +110,11 @@ export class FormActions {
   protected readonly isBlocked = computed(() => this.disabled() || this.isBusy());
 
   protected readonly primaryVariant = computed(() => (this.destructive() ? 'danger' : 'primary'));
+
+  constructor() {
+    FormActions.montadas.add(this);
+    inject(DestroyRef).onDestroy(() => FormActions.montadas.delete(this));
+  }
 
   protected async handleSubmit(): Promise<void> {
     if (this.isBlocked()) {
@@ -115,5 +151,46 @@ export class FormActions {
 
   protected handleCancel(): void {
     this.cancelled.emit();
+  }
+
+  /** `Escape` en la página: cancela si esta barra es la que corresponde. */
+  protected handleEscape(event: Event): void {
+    const tecla = event as KeyboardEvent;
+    if (tecla.defaultPrevented || tecla.isComposing || !this.cancelaConEscape()) {
+      return;
+    }
+    const documento = this.host.nativeElement.ownerDocument;
+    if (documento.querySelector('dialog[open]') !== null) {
+      return;
+    }
+    if (!this.tieneElFoco(documento)) {
+      return;
+    }
+    tecla.preventDefault();
+    this.handleCancel();
+  }
+
+  /** Tiene «Cancelar», no está enviando y no vive dentro de un diálogo. */
+  private cancelaConEscape(): boolean {
+    return (
+      this.cancelLabel() !== '' &&
+      !this.isBusy() &&
+      this.host.nativeElement.closest('dialog') === null
+    );
+  }
+
+  /**
+   * El foco está en el formulario de esta barra, o está suelto y esta es la
+   * única barra que podría cancelar.
+   */
+  private tieneElFoco(documento: Document): boolean {
+    const enfocado = documento.activeElement;
+    if (enfocado === null || enfocado === documento.body) {
+      const candidatas = [...FormActions.montadas].filter((barra) => barra.cancelaConEscape());
+      return candidatas.length === 1 && candidatas[0] === this;
+    }
+    const alcance =
+      this.host.nativeElement.closest('form, app-card') ?? this.host.nativeElement.parentElement;
+    return alcance?.contains(enfocado) ?? false;
   }
 }

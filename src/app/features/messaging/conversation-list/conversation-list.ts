@@ -18,7 +18,7 @@ import { Avatar } from '../../../shared/components/atoms/avatar/avatar';
 
 /** Lo que la fila le pide a la pantalla que haga. */
 export interface AccionDeFila {
-  readonly tipo: 'favorito' | 'archivar' | 'leer' | 'perfil';
+  readonly tipo: 'favorito' | 'archivar' | 'leer' | 'perfil' | 'bloquear' | 'desbloquear';
   readonly conversationId: string;
 }
 
@@ -55,6 +55,9 @@ export class ConversationList {
 
   /** El perfil propio: sin él no se puede decir «Tú:» ni pintar el tilde. */
   readonly perfilPropio = input<string | null>(null);
+
+  /** A quiénes bloqueó la persona: sus filas lo dicen y el menú ofrece desbloquear. */
+  readonly bloqueados = input<ReadonlySet<string>>(new Set());
 
   /** Lo que se escribió en el buscador, para resaltarlo en el nombre. */
   readonly resaltar = input('');
@@ -149,6 +152,14 @@ export class ConversationList {
   /** `true` si es una conversación de grupo. */
   protected esGrupo(conversacion: ConversationListItem): boolean {
     return conversacion.groupId !== undefined || conversacion.peers.length > 1;
+  }
+
+  /** `true` si es una conversación directa con alguien que se bloqueó. */
+  protected estaBloqueada(conversacion: ConversationListItem): boolean {
+    return (
+      conversacion.peers.length === 1 &&
+      this.bloqueados().has(conversacion.peers[0].profileId)
+    );
   }
 
   protected alternarMenu(id: string, evento: Event): void {

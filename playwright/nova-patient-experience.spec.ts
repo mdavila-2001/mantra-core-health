@@ -335,14 +335,16 @@ test.describe('NOVA · experiencia del paciente', () => {
     await esperarCarga(page);
 
     const pestañas = page.locator('[data-testid="historia-tabs"] [role="tab"]');
-    await expect(pestañas).toHaveCount(4);
+    // Cinco desde C6: se sumó «Diagnósticos», al final para no mover los
+    // enlaces `?seccion=` que ya circulan.
+    await expect(pestañas).toHaveCount(5);
     await expect(pestañas.first()).toHaveAttribute('aria-selected', 'true');
 
     const descargar = page.getByTestId('historia-descargar-todo');
     await expect(descargar).toBeVisible();
 
-    // Recorrer las cuatro: cada una pinta lo suyo y la descarga sigue a la vista.
-    for (let i = 0; i < 4; i++) {
+    // Recorrerlas todas: cada una pinta lo suyo y la descarga sigue a la vista.
+    for (let i = 0; i < 5; i++) {
       await pestañas.nth(i).click();
       await esperarCarga(page);
       await expect(pestañas.nth(i)).toHaveAttribute('aria-selected', 'true');

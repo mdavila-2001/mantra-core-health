@@ -48,6 +48,9 @@ function afiliacion(over: Partial<AfiliacionVisible> = {}): AfiliacionVisible {
   };
 }
 
+/** Facturación sin ningún dato cargado. */
+const FACTURA_VACIA = { nit: '', razonSocial: '' };
+
 const PERFIL: PerfilProfesionalVisible = {
   nombre: 'Dra. Lucía Salas',
   titulo: 'Médica cardióloga',
@@ -67,7 +70,6 @@ const PERFIL: PerfilProfesionalVisible = {
     {
       id: 'sp-1',
       nombre: 'Cardiología',
-      principal: true,
       certificada: true,
       alcance: '',
       desde: new Date('2015-03-01'),
@@ -78,7 +80,6 @@ const PERFIL: PerfilProfesionalVisible = {
     {
       id: 'sp-2',
       nombre: 'Medicina interna',
-      principal: false,
       certificada: false,
       alcance: '',
       desde: new Date('2015-03-01'),
@@ -362,9 +363,7 @@ describe('PractitionerProfileView', () => {
     // Las formas que la insignia reemplazó: el chip con tono propio y los dos
     // `app-badge` sueltos que decían «Principal» y «Certificada».
     const sueltos = [...host.querySelectorAll('app-chip, app-badge')].filter((e) =>
-      /Cardiología|Medicina interna|^Principal$|^Certificada$/.test(
-        (e.textContent ?? '').trim(),
-      ),
+      /Cardiología|Medicina interna|^Principal$|^Certificada$/.test((e.textContent ?? '').trim()),
     );
     expect(sueltos).toHaveLength(0);
   });
@@ -389,6 +388,32 @@ describe('PractitionerProfileView', () => {
     expect(tonos(true)).toEqual(tonos(false));
   });
 
+  it('ninguna especialidad se distingue como principal, en ninguna pestaña ni en ninguna de las dos fichas (D-01)', () => {
+    // El modelo de vista ya no trae «principal» (el contrato sí, en
+    // `isPrimary`). Esto fija que la ficha no lo vuelva a decir por otro
+    // camino: ni la palabra, ni un tono de marca propio.
+    for (const esPropio of [true, false]) {
+      TestBed.resetTestingModule();
+      const host = montar(PERFIL, esPropio);
+      const pestanas = [...host.querySelectorAll('[role="tab"]')].map((t) =>
+        (t.textContent ?? '').trim(),
+      );
+      expect(pestanas.length).toBeGreaterThan(0);
+
+      for (const pestana of pestanas) {
+        seleccionarPestana(host, pestana);
+        const quien = `${esPropio ? 'propia' : 'ajena'} · ${pestana}`;
+        const marcas = [...host.querySelectorAll('*')].filter(
+          (e) => e.children.length === 0 && /^principal$/i.test((e.textContent ?? '').trim()),
+        );
+        expect(marcas, quien).toHaveLength(0);
+        for (const insignia of host.querySelectorAll('app-specialty-badge')) {
+          expect([...insignia.classList], quien).not.toContain('tone--primary');
+        }
+      }
+    }
+  });
+
   /* -- Las 3 pestañas superiores (carril 05) -------------------------------- */
 
   it('el dueño ve las seis pestañas del alta de médico, y ninguna vista previa', () => {
@@ -399,7 +424,7 @@ describe('PractitionerProfileView', () => {
     // Con `facturacion` declarada: es la ficha PROPIA, y esa pestaña sólo
     // existe ahí. El fixture base la deja en `null` porque casi todas estas
     // pruebas miran la ficha de un colega.
-    const host = montar({ ...PERFIL, facturacion: { nit: '', razonSocial: '' } }, true);
+    const host = montar({ ...PERFIL, facturacion: { ...FACTURA_VACIA } }, true);
 
     const pestanas = Array.from(host.querySelectorAll('[role="tab"]')).map(
       (boton) => boton.textContent?.trim() ?? '',
@@ -413,7 +438,10 @@ describe('PractitionerProfileView', () => {
 
     expect(host.querySelector('.mi-perfil__cabecera')?.textContent).toContain('Tus datos');
     const lapiz = host.querySelector('[data-testid="mi-perfil-editar"]');
-    expect(lapiz?.getAttribute('aria-label')).toBe('Editar');
+    // «Editar perfil» con el lápiz, escrito: ya no es un botón de sólo ícono.
+    expect(lapiz?.textContent?.trim()).toBe('Editar perfil');
+    expect(lapiz?.querySelector('svg')).not.toBeNull();
+    expect(lapiz?.classList.contains('btn--icon-only')).toBe(false);
   });
 
   it('el dueño ve «Sin registrar» en lo que no cargó: es su ficha, no la de un colega', () => {
@@ -474,9 +502,11 @@ describe('PractitionerProfileView', () => {
     vencida: false,
   };
 
+  /* Desde el 24/09/2026 los títulos viven en «Credenciales» y el botón vino
+     con ellos: «Trayectoria» son los cargos. */
   it('el dueño ve «Retirar» sólo en un título pendiente, no en uno verificado', () => {
     const host = montar({ ...PERFIL, formacion: [...PERFIL.formacion, FORMACION_PENDIENTE] }, true);
-    seleccionarPestana(host, 'Trayectoria');
+    seleccionarPestana(host, 'Credenciales');
 
     expect(host.querySelector('[data-testid="formacion-retirar-cr-1"]')).toBeNull();
     expect(host.querySelector('[data-testid="formacion-retirar-cr-2"]')).not.toBeNull();
@@ -497,7 +527,7 @@ describe('PractitionerProfileView', () => {
     const host = montar({ ...PERFIL, formacion: [FORMACION_PENDIENTE] }, true, false, (vista) =>
       vista.credencialARetirar.subscribe((estudio) => pedidos.push(estudio)),
     );
-    seleccionarPestana(host, 'Trayectoria');
+    seleccionarPestana(host, 'Credenciales');
 
     host.querySelector<HTMLButtonElement>('[data-testid="formacion-retirar-cr-2"]')?.click();
     fixture.detectChanges();
@@ -512,9 +542,9 @@ describe('PractitionerProfileView', () => {
       vista.credencialARetirar.subscribe((estudio) => pedidos.push(estudio)),
     );
 
-    (
-      fixture.componentInstance as unknown as { alPedirRetiro: (e: unknown) => void }
-    ).alPedirRetiro(FORMACION_PENDIENTE);
+    (fixture.componentInstance as unknown as { alPedirRetiro: (e: unknown) => void }).alPedirRetiro(
+      FORMACION_PENDIENTE,
+    );
 
     expect(pedidos).toEqual([]);
   });
@@ -538,11 +568,12 @@ describe('PractitionerProfileView', () => {
 
   /* -- I-D (F-31): la ayuda es de quien arma su perfil, no de quien lo mira -- */
 
-  it('el dueño ve la ayuda de cada pestaña', () => {
+  it('el dueño ya no ve la ayuda como bloque: salió a un toast', () => {
     const host = montar(PERFIL, true);
 
+    // «Trayectoria» pasó a toast el 24/09/2026 (lo lanza practitioner-profile).
     seleccionarPestana(host, 'Trayectoria');
-    expect(host.querySelector('app-tab-help-block')).not.toBeNull();
+    expect(host.querySelector('app-tab-help-block')).toBeNull();
     // En «Credenciales» la explicación dejó de ser una caja arriba de todo y
     // pasó a un toast (19/09/2026): lo que se comprueba acá es que la pestaña
     // ya no la dibuja como bloque.
@@ -721,6 +752,24 @@ describe('PractitionerProfileView', () => {
     expect(host.textContent).toContain('Son los registros que dejaste asentados con esta cuenta');
   });
 
+  /**
+   * «En el perfil del doctor no debe poder editarse actividad, porque es solo
+   * estadísticas» —cliente, 24/09/2026—. Hasta ese día el lápiz de esta
+   * pestaña abría el editor en una pestaña «Actividad» sin campos.
+   */
+  it('en «Actividad» no hay lápiz: son estadísticas, no se editan', () => {
+    const host = montar(PERFIL, true);
+    expect(host.querySelector('[data-testid="mi-perfil-editar"]')).not.toBeNull();
+
+    seleccionarPestana(host, 'Actividad');
+    expect(host.querySelector('[data-testid="mi-perfil-editar"]')).toBeNull();
+
+    // Y vuelve en cuanto se sale de ahí, apuntando a la pestaña que se mira.
+    seleccionarPestana(host, 'Credenciales');
+    const lapiz = host.querySelector('[data-testid="mi-perfil-editar"]');
+    expect(lapiz?.getAttribute('href')).toContain('pestana=5');
+  });
+
   it('un visitante ve la actividad en tercera persona', () => {
     const host = montar(PERFIL, false);
     expect(host.textContent).toContain('Actividad en la plataforma');
@@ -762,24 +811,26 @@ describe('PractitionerProfileView', () => {
       // Los cuatro contactos que el registro pregunta por separado y la calle.
       // La ficha mostraba UN teléfono y UN correo con los cinco ya disponibles.
       celularPersonal: '+591 70099999',
-      celularTrabajo: '+591 70088888',
-      fijoTrabajo: '+591 3 3000000',
       correoPersonal: 'elena.personal@example.test',
       direccion: 'Av. Banzer 3er anillo',
       mapaDomicilio: null,
     };
 
-    it('la ficha propia muestra los cinco contactos del registro, no uno de cada clase', () => {
+    it('la ficha muestra los contactos personales y el correo de trabajo, y ningún teléfono del trabajo (D-03)', () => {
       // Pedido del propietario: la ficha del médico tiene que mostrar los
-      // mismos campos que su registro. Éstos faltaban aunque el dato viniera.
+      // mismos campos que su registro. Desde el 23/09/2026, sin los teléfonos
+      // del trabajo: el médico pidió que «Contacto» no los tuviera. El correo
+      // de trabajo es un contacto y se corrige en el editor (#645, 24/09/2026).
       const host = montar({ ...PERFIL, datosPersonales: DATOS });
-      const texto = host.textContent ?? '';
+      const texto = (host.textContent ?? '').replace(/\s+/g, ' ');
 
       expect(texto).toContain('+591 70099999');
-      expect(texto).toContain('+591 70088888');
-      expect(texto).toContain('+591 3 3000000');
       expect(texto).toContain('elena.personal@example.test');
       expect(texto).toContain('Av. Banzer 3er anillo');
+      expect(texto).toContain('Correo de trabajo');
+      expect(texto).not.toContain('Correo de acceso');
+      // Los rótulos exactos: `textContent` pega los renglones sin espacio.
+      expect(texto).not.toMatch(/(Celular|Fijo|Teléfono) del trabajo/i);
     });
 
     it('un contacto no declarado no dibuja su renglón', () => {
@@ -787,12 +838,10 @@ describe('PractitionerProfileView', () => {
       // faltan.
       const host = montar({
         ...PERFIL,
-        datosPersonales: { ...DATOS, celularTrabajo: '', fijoTrabajo: '', correoPersonal: '' },
+        datosPersonales: { ...DATOS, correoPersonal: '' },
       });
       const texto = host.textContent ?? '';
 
-      expect(texto).not.toContain('Celular del trabajo');
-      expect(texto).not.toContain('Fijo del trabajo');
       expect(texto).not.toContain('Correo personal');
       expect(texto).toContain('Celular personal');
     });
@@ -828,8 +877,6 @@ describe('PractitionerProfileView', () => {
           correo: '',
           domicilio: '',
           celularPersonal: '',
-          celularTrabajo: '',
-          fijoTrabajo: '',
           correoPersonal: '',
           direccion: '',
           mapaDomicilio: null,
@@ -864,8 +911,6 @@ describe('PractitionerProfileView', () => {
       correo: 'elena@example.test',
       domicilio: 'Santa Cruz de la Sierra',
       celularPersonal: '',
-      celularTrabajo: '',
-      fijoTrabajo: '',
       correoPersonal: '',
       direccion: '',
       mapaDomicilio: null,
@@ -876,6 +921,20 @@ describe('PractitionerProfileView', () => {
 
       expect(host.textContent).toContain('Tus datos');
       expect(host.textContent).toContain('8812345');
+    });
+
+    it('«Contacto» lleva el correo de trabajo (#645) y ningún teléfono del trabajo (D-03)', () => {
+      const host = montar({ ...PERFIL, datosPersonales: DATOS }, true);
+
+      const personales = (host.textContent ?? '').replace(/\s+/g, ' ');
+      expect(personales).not.toContain('Correo de acceso');
+      expect(personales).not.toContain('Se cambia por su propio trámite');
+
+      seleccionarPestana(host, 'Contacto');
+      const contacto = (host.textContent ?? '').replace(/\s+/g, ' ');
+      expect(contacto).toContain('Celular personal');
+      expect(contacto).toContain('Correo de trabajo elena@example.test');
+      expect(contacto).not.toMatch(/(celular|fijo|tel[eé]fono)[^.]{0,20}\b(del|de) trabajo/i);
     });
 
     it('todo cuelga de UNA tarjeta: ni portada ni bloques sueltos alrededor', () => {
@@ -905,7 +964,7 @@ describe('PractitionerProfileView', () => {
 
     it('y no se repite: una sola lista de matrículas, sin sub-pestañas', () => {
       const host = montar(
-        { ...PERFIL, datosPersonales: DATOS, facturacion: { nit: '', razonSocial: '' } },
+        { ...PERFIL, datosPersonales: DATOS, facturacion: { ...FACTURA_VACIA } },
         true,
       );
       // Sin abrirla no probaría nada: el panel de una pestaña inactiva no se
@@ -923,6 +982,23 @@ describe('PractitionerProfileView', () => {
       expect(texto.match(/Matrícula N\.º LIC-3/g) ?? []).toHaveLength(1);
     });
 
+    /**
+     * Hasta el 24/09/2026 la especialidad aparecía ACÁ ADEMÁS de en «Datos
+     * personales», con su vigencia y su sello. El propietario pidió sacarla
+     * de «Credenciales»: un solo lugar, no dos con distinto detalle.
+     */
+    it('las especialidades ya no aparecen en «Credenciales»: viven sólo en «Datos personales»', () => {
+      const host = montar({ ...PERFIL, datosPersonales: DATOS }, true);
+
+      seleccionarPestana(host, 'Credenciales');
+      const rejilla = host.querySelector('[data-testid="credenciales-rejilla"]');
+      expect(rejilla?.querySelector('[data-kind="specialty"]')).toBeNull();
+
+      seleccionarPestana(host, 'Datos personales');
+      expect(host.querySelector('[data-testid="perfil-especialidades-chips"]')).not.toBeNull();
+      expect(host.textContent).toContain('Cardiología');
+    });
+
     /* ---- la trayectoria como nodos (propietario, 13/09/2026) ------------- */
 
     it('la trayectoria propia son nodos, no las tarjetas de la ficha del paciente', () => {
@@ -936,7 +1012,8 @@ describe('PractitionerProfileView', () => {
       const fases = Array.from(host.querySelectorAll('.trayecto')).map((s) =>
         s.querySelector('.trayecto__titulo')?.textContent?.trim(),
       );
-      expect(fases).toEqual(['Actividad actual', 'Experiencia histórica', 'Formación y títulos']);
+      // Los títulos NO: son estudios y viven en «Credenciales» (24/09/2026).
+      expect(fases).toEqual(['Actividad actual', 'Experiencia histórica']);
 
       // Un nodo por hito, cada uno con su marca.
       const enCurso = host.querySelector('.trayecto--curso');
@@ -949,10 +1026,10 @@ describe('PractitionerProfileView', () => {
       expect(enCurso?.textContent).toContain('Sede Central Sopocachi');
     });
 
-    it('el nodo de un título toma el color de su sello', () => {
-      // El anillo y el sello hablan del MISMO trámite: si el anillo fuera
-      // siempre del color de la fase, un título rechazado se vería igual que
-      // uno verificado hasta leer la etiqueta.
+    it('un título se lee en «Credenciales», en su bloque y con su sello, no en «Trayectoria»', () => {
+      // «En trayectoria aparecen los cargos ... en contraposición aparecen los
+      // que deberían aparecer en credenciales, es decir registros de Estudios»
+      // — propietario, 24/09/2026.
       const host = montar(
         {
           ...PERFIL,
@@ -963,10 +1040,16 @@ describe('PractitionerProfileView', () => {
         },
         true,
       );
-      seleccionarPestana(host, 'Trayectoria');
 
-      const nodo = host.querySelector('.trayecto--formacion .trayecto__nodo');
-      expect(nodo?.classList.contains('trayecto__nodo--rejected')).toBe(true);
+      seleccionarPestana(host, 'Trayectoria');
+      expect(host.querySelector('.trayecto--formacion')).toBeNull();
+
+      seleccionarPestana(host, 'Credenciales');
+      const bloque = host.querySelector(
+        '[data-testid="credenciales-grupo"][data-kind="education"]',
+      );
+      expect(bloque?.querySelector('h3')?.textContent).toContain('Títulos y formación');
+      expect(bloque?.querySelector('app-status-seal')?.textContent).toContain('Rechazado');
     });
 
     it('quien visita conserva su ficha de siempre, con sus sub-pestañas', () => {
@@ -1078,7 +1161,7 @@ describe('PractitionerProfileView', () => {
    * que se copia en una factura, y se consulta junto.
    */
   describe('el recuadro de facturación', () => {
-    const FACTURA = { nit: '8812345011', razonSocial: 'Consultorio Dra. Rojas S.R.L.' };
+    const FACTURA = { ...FACTURA_VACIA, nit: '8812345011', razonSocial: 'Consultorio Dra. Rojas S.R.L.' };
 
     it('en la ficha propia muestra el NIT y a nombre de quién factura', () => {
       const host = montar({ ...PERFIL, facturacion: FACTURA }, true);
@@ -1090,6 +1173,39 @@ describe('PractitionerProfileView', () => {
       expect(
         host.querySelector('[data-testid="perfil-factura-titular"]')?.textContent?.trim(),
       ).toBe('Consultorio Dra. Rojas S.R.L.');
+    });
+
+    it('con logo cargado, lo muestra como vista previa dentro del recuadro de facturación', () => {
+      const logoUrl = 'data:image/png;base64,iVBORw0KGgo=';
+      const host = montar(
+        {
+          ...PERFIL,
+          facturacion: FACTURA,
+          consultorio: { logoUrl, nombre: 'Consultorio Rojas' },
+        },
+        true,
+      );
+      seleccionarPestana(host, 'Facturación');
+
+      const recuadro = host.querySelector('[data-testid="perfil-factura-recuadro"]');
+      const imagen = recuadro?.querySelector('[data-testid="perfil-factura-logo"] img');
+      expect(imagen?.getAttribute('alt')).toBe('Logo de Consultorio Rojas');
+      expect(imagen?.getAttribute('src')).toBe(logoUrl);
+      // Es de lectura: acá no hay cómo cambiarlo.
+      expect(recuadro?.querySelector('input[type="file"]')).toBeNull();
+    });
+
+    it('sin logo deja el mismo hueco con «Sin logo» y el NIT sigue visible', () => {
+      const host = montar({ ...PERFIL, facturacion: FACTURA }, true);
+      seleccionarPestana(host, 'Facturación');
+
+      const logo = host.querySelector('[data-testid="perfil-factura-logo"]');
+      expect(logo).not.toBeNull();
+      expect(logo?.querySelector('img')).toBeNull();
+      expect(logo?.textContent).toContain('Sin logo');
+      expect(host.querySelector('[data-testid="perfil-factura-nit"]')?.textContent?.trim()).toBe(
+        '8812345011',
+      );
     });
 
     it('los dos datos van en un recuadro propio, separado de la lista de datos', () => {
@@ -1106,7 +1222,7 @@ describe('PractitionerProfileView', () => {
     });
 
     it('sin NIT dice dónde cargarlo, en vez de dejar el hueco', () => {
-      const host = montar({ ...PERFIL, facturacion: { nit: '', razonSocial: '' } }, true);
+      const host = montar({ ...PERFIL, facturacion: { ...FACTURA_VACIA } }, true);
       seleccionarPestana(host, 'Facturación');
 
       expect(host.querySelector('[data-testid="perfil-factura-nit"]')?.textContent).toContain(
@@ -1124,6 +1240,52 @@ describe('PractitionerProfileView', () => {
       expect(rotulos).not.toContain('Facturación');
       expect(host.querySelector('[data-testid="perfil-facturacion"]')).toBeNull();
       expect(host.textContent).not.toContain('8812345011');
+    });
+  });
+
+  /* -- Con qué seguros trabaja (28/09/2026) ------------------------------- */
+
+  describe('los seguros con los que trabaja', () => {
+    const SEGUROS = [
+      { id: 'c-1', aseguradora: 'Alianza Seguros', red: 'Red médica Alianza Seguros' },
+      { id: 'c-2', aseguradora: 'Seguros Andina', red: 'Red Preferente · Red Oro' },
+    ];
+
+    it('los muestra en «Datos personales», uno por aseguradora, con la red en el título', () => {
+      const host = montar({ ...PERFIL, seguros: SEGUROS }, true);
+      const renglon = host.querySelector('[data-testid="perfil-seguros"]');
+      const chips = [...host.querySelectorAll<HTMLElement>('[data-testid="perfil-seguro"]')];
+
+      expect(renglon?.querySelector('dt')?.textContent?.trim()).toBe('Seguros con los que trabaja');
+      expect(chips.map((chip) => chip.textContent?.trim())).toEqual([
+        'Alianza Seguros',
+        'Seguros Andina',
+      ]);
+      expect(chips[1]?.getAttribute('title')).toBe('Red Preferente · Red Oro');
+      expect(renglon?.querySelector('[role="list"]')).not.toBeNull();
+    });
+
+    it('sin ninguna aseguradora lo dice, en vez de dejar el renglón vacío', () => {
+      const host = montar({ ...PERFIL, seguros: [] }, true);
+
+      expect(host.querySelector('[data-testid="perfil-seguros"]')?.textContent).toContain(
+        'Ninguna aseguradora te tiene en su red todavía',
+      );
+      expect(host.querySelector('[data-testid="perfil-seguro"]')).toBeNull();
+    });
+
+    it('con la lectura caída dice que no se pudo traer, no que no hay ninguna', () => {
+      const host = montar({ ...PERFIL, seguros: null }, true);
+      const renglon = host.querySelector('[data-testid="perfil-seguros"]');
+
+      expect(renglon?.querySelector('[data-testid="perfil-seguros-error"]')).not.toBeNull();
+      expect(renglon?.textContent).not.toContain('Ninguna aseguradora');
+    });
+
+    it('una ficha que no los pregunta no dibuja el renglón', () => {
+      const host = montar(PERFIL, true);
+
+      expect(host.querySelector('[data-testid="perfil-seguros"]')).toBeNull();
     });
   });
 
@@ -1161,9 +1323,7 @@ describe('PractitionerProfileView', () => {
       // ficha diciendo lo contrario de la verdad.
       const host = montar({ ...PERFIL, telemedicina: false }, true);
 
-      expect(host.querySelector('.mi-perfil__cabecera')?.textContent).not.toContain(
-        'telemedicina',
-      );
+      expect(host.querySelector('.mi-perfil__cabecera')?.textContent).not.toContain('telemedicina');
     });
 
     it('el consultorio se administra dentro del perfil, con el mismo bloque de «Mis organizaciones»', () => {
@@ -1195,6 +1355,89 @@ describe('PractitionerProfileView', () => {
       const host = montar(PERFIL, true, true);
 
       expect(host.querySelector('[data-testid="perfil-consultorio"]')).toBeNull();
+    });
+  });
+
+  describe('PractitionerProfileView · el logo del consultorio en «Datos personales»', () => {
+    const LOGO = 'data:image/png;base64,iVBORw0KGgo=';
+
+    it('en la ficha propia lo muestra en «Datos personales», con su nombre', () => {
+      const host = montar(
+        { ...PERFIL, consultorio: { logoUrl: LOGO, nombre: 'Consultorio Rojas' } },
+        true,
+      );
+
+      const bloque = host.querySelector('[data-testid="perfil-logo-consultorio"]');
+      const imagen = bloque?.querySelector('img');
+      expect(bloque?.textContent).toContain('Logo del consultorio');
+      expect(imagen?.getAttribute('alt')).toBe('Logo de Consultorio Rojas');
+      expect(imagen?.getAttribute('src')).toBe(LOGO);
+    });
+
+    it('sin logo dibuja el bloque igual, con «Sin logo»', () => {
+      const host = montar({ ...PERFIL, consultorio: { logoUrl: null, nombre: '' } }, true);
+
+      const bloque = host.querySelector('[data-testid="perfil-logo-consultorio"]');
+      expect(bloque).not.toBeNull();
+      expect(bloque?.querySelector('img')).toBeNull();
+      expect(bloque?.textContent).toContain('Sin logo');
+    });
+
+    it('la ficha de otro profesional no lo dibuja', () => {
+      const host = montar({ ...PERFIL, consultorio: null }, false);
+
+      expect(host.querySelector('[data-testid="perfil-logo-consultorio"]')).toBeNull();
+    });
+  });
+
+  describe('la firma y el sello en «Datos personales»', () => {
+    const FIRMA = 'data:image/png;base64,iVBORw0KGgo=';
+    const SELLO = 'data:image/png;base64,iVBORw0KGgp=';
+
+    it('en la ficha propia muestra las dos imágenes', () => {
+      const host = montar({ ...PERFIL, firmaYSello: { firmaUrl: FIRMA, selloUrl: SELLO } }, true);
+
+      const bloque = host.querySelector('[data-testid="perfil-firma-y-sello"]');
+      expect(bloque?.textContent).toContain('Firma y sello médico');
+      expect(host.querySelector('[data-testid="perfil-firma-vista"] img')?.getAttribute('src')).toBe(
+        FIRMA,
+      );
+      expect(host.querySelector('[data-testid="perfil-sello-vista"] img')?.getAttribute('src')).toBe(
+        SELLO,
+      );
+    });
+
+    it('sin nada cargado dibuja el bloque igual, con «Sin firma» y «Sin sello»', () => {
+      const host = montar({ ...PERFIL, firmaYSello: { firmaUrl: null, selloUrl: null } }, true);
+
+      const bloque = host.querySelector('[data-testid="perfil-firma-y-sello"]');
+      expect(bloque).not.toBeNull();
+      expect(bloque?.querySelector('img')).toBeNull();
+      expect(bloque?.textContent).toContain('Sin firma');
+      expect(bloque?.textContent).toContain('Sin sello');
+    });
+
+    it('con sólo una de las dos, la otra queda con su marcador', () => {
+      const host = montar({ ...PERFIL, firmaYSello: { firmaUrl: FIRMA, selloUrl: null } }, true);
+
+      expect(host.querySelector('[data-testid="perfil-firma-vista"] img')).not.toBeNull();
+      expect(host.querySelector('[data-testid="perfil-sello-vista"]')?.textContent).toContain(
+        'Sin sello',
+      );
+    });
+
+    it('es de lectura: la ficha no ofrece subir nada', () => {
+      const host = montar({ ...PERFIL, firmaYSello: { firmaUrl: FIRMA, selloUrl: SELLO } }, true);
+
+      expect(
+        host.querySelector('[data-testid="perfil-firma-y-sello"] input[type="file"]'),
+      ).toBeNull();
+    });
+
+    it('la ficha de otro profesional no lo dibuja', () => {
+      const host = montar({ ...PERFIL, firmaYSello: null }, false);
+
+      expect(host.querySelector('[data-testid="perfil-firma-y-sello"]')).toBeNull();
     });
   });
 });

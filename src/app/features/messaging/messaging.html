@@ -65,8 +65,8 @@
             class="mensajeria__chip"
             type="button"
             [attr.data-testid]="'mensajeria-filtro-' + opcion"
-            [class.is-activo]="filtro() === opcion && !verArchivados()"
-            [attr.aria-pressed]="filtro() === opcion && !verArchivados()"
+            [class.is-activo]="filtro() === opcion && !verArchivados() && !verBloqueados()"
+            [attr.aria-pressed]="filtro() === opcion && !verArchivados() && !verBloqueados()"
             (click)="elegirFiltro(opcion)"
           >
             {{ rotulo(opcion) }}
@@ -78,7 +78,10 @@
       </div>
 
       <div class="mensajeria__lista">
-        @if (archivadas().length > 0 || verArchivados()) {
+        <!-- «Archivados» y «Bloqueados» se ofrecen **siempre**, aunque estén
+             vacíos: escondidos hasta que hubiera algo, quien buscaba dónde ver
+             lo archivado o a quién bloqueó concluía que no existían. -->
+        @if (!verBloqueados()) {
           <button
             class="mensajeria__archivados"
             type="button"
@@ -93,7 +96,26 @@
               {{ verArchivados() ? 'Volver a los chats' : 'Archivados' }}
             </span>
             @if (!verArchivados()) {
-              <span class="mensajeria__archivados-cuenta">{{ archivadas().length }}</span>
+              <span class="mensajeria__archivados-cuenta" data-testid="mensajeria-archivados-cuenta">{{ archivadas().length }}</span>
+            }
+          </button>
+        }
+        @if (!verArchivados()) {
+          <button
+            class="mensajeria__archivados"
+            type="button"
+            data-testid="mensajeria-bloqueados"
+            [class.is-activo]="verBloqueados()"
+            (click)="alternarBloqueados()"
+          >
+            <span class="mensajeria__archivados-icono" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" focusable="false"><circle cx="12" cy="12" r="8.5" /><path d="m6 6 12 12" /></svg>
+            </span>
+            <span class="mensajeria__archivados-texto">
+              {{ verBloqueados() ? 'Volver a los chats' : 'Bloqueados' }}
+            </span>
+            @if (!verBloqueados()) {
+              <span class="mensajeria__archivados-cuenta" data-testid="mensajeria-bloqueados-cuenta">{{ store.bloqueados().length }}</span>
             }
           </button>
         }
@@ -124,7 +146,36 @@
           <p class="mensajeria__rotulo">Chats</p>
         }
 
-        @if (vacio()) {
+        @if (verBloqueados()) {
+          <!-- A quiénes bloqueaste. Desbloquear los devuelve a la conversación:
+               el chat nunca se borró. -->
+          @if (store.bloqueados().length === 0) {
+            <p class="mensajeria__sin-nada" data-testid="mensajeria-sin-bloqueados">
+              No bloqueaste a nadie. Podés bloquear a alguien desde el menú de su conversación.
+            </p>
+          } @else {
+            <ul class="mensajeria__bloqueados" data-testid="mensajeria-lista-bloqueados">
+              @for (bloqueado of store.bloqueados(); track bloqueado.profileId) {
+                <li class="mensajeria__bloqueado" data-testid="mensajeria-bloqueado">
+                  <app-avatar [name]="bloqueado.displayName" size="md" />
+                  <span class="mensajeria__bloqueado-texto">
+                    <span class="mensajeria__bloqueado-nombre">{{ bloqueado.displayName }}</span>
+                    <span class="mensajeria__bloqueado-detalle">Bloqueado</span>
+                  </span>
+                  <button
+                    class="mensajeria__desbloquear"
+                    type="button"
+                    data-testid="mensajeria-desbloquear"
+                    [attr.aria-label]="'Desbloquear a ' + bloqueado.displayName"
+                    (click)="desbloquear(bloqueado.profileId)"
+                  >
+                    Desbloquear
+                  </button>
+                </li>
+              }
+            </ul>
+          }
+        } @else if (vacio()) {
           @if (sinCoincidencias()) {
             <p class="mensajeria__sin-nada" role="status">
               @if (store.buscandoAhora()) {
@@ -147,6 +198,7 @@
             [conversaciones]="visibles()"
             [activaId]="store.activaId()"
             [perfilPropio]="store.perfil()"
+            [bloqueados]="idsBloqueados()"
             [resaltar]="consulta()"
             (accion)="atender($event)"
           />

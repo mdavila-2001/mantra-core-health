@@ -1,0 +1,12 @@
+
+✗ check-form-pages — 2 formulario(s) sin paginar
+
+  'app/features/account/dependents/dependent-form-dialog.html' pide 8 campos de una vez en su formulario y no usa <app-paginated-form>
+  'app/features/insurance/insurance-catalog/plan-form-dialog.html' pide 5 campos de una vez en su formulario y no usa <app-paginated-form>
+
+  Un formulario de este sistema se sirve de a una página, con un tope de
+  cuatro campos y una barra de avance. Eso lo da <app-paginated-form>:
+  se le pasan las páginas (paginarCampos() las arma) y el FormGroup de la
+  pantalla. Si de verdad no es un formulario, agregalo a EXCEPCIONES con
+  su motivo escrito.
+

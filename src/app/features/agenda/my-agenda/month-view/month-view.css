@@ -128,6 +128,8 @@
 .mes__cuenta {
   font-size: var(--fs-caption);
   font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+  text-align: center;
 }
 
 .mes__motivo {
@@ -260,11 +262,20 @@
   list-style: none;
 }
 
+/* Dos renglones: hora y estado arriba, la persona abajo a todo el ancho. En
+   uno solo, la hora y el sello se comían dos tercios de los 320 px del globo y
+   el nombre quedaba en una columna de ~80 px, partido palabra por palabra
+   («Germán / Agustín / Vargas / Ulibarri») o cortado a mitad de palabra. */
 .mes__globo-fila {
-  display: flex;
-  align-items: baseline;
-  gap: var(--sp-2);
-  padding: var(--sp-1) var(--sp-1);
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-areas:
+    'hora . chip'
+    'texto texto texto';
+  align-items: center;
+  column-gap: var(--sp-2);
+  row-gap: 2px;
+  padding: var(--sp-2) var(--sp-1);
   border-radius: var(--r-sm);
 }
 
@@ -276,25 +287,26 @@
    que no lo apriete un nombre largo: «No asistió» cortado a «No asis…» pierde
    exactamente la información que el chip existe para dar. */
 .mes__globo-chip {
-  flex: none;
-  margin-inline-start: auto;
+  grid-area: chip;
+  justify-self: end;
 }
 
 .mes__globo-hora {
-  flex: none;
-  min-inline-size: 6.5em;
+  grid-area: hora;
   font-variant-numeric: tabular-nums;
   font-weight: 600;
 }
 
 .mes__globo-texto {
+  grid-area: texto;
   display: flex;
   flex-direction: column;
   min-inline-size: 0;
 }
 
 .mes__globo-primario {
-  overflow-wrap: anywhere;
+  /* Sólo parte una palabra que no entra entera; nunca un nombre corriente. */
+  overflow-wrap: break-word;
 }
 
 .mes__globo-secundario {

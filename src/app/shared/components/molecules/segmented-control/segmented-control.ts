@@ -120,7 +120,11 @@ export class SegmentedControl<T extends string = string> {
     }
     event.preventDefault();
     const opcion = this.options()[destino];
-    this.botones()[destino]?.nativeElement.focus();
+    // `preventScroll: true`: sin él, el navegador reencuadra el contenedor
+    // scrolleable (el control suele vivir dentro de un modal) cada vez que una
+    // flecha mueve el foco entre «Sí» y «No», y la pantalla salta aunque el
+    // control ya estuviera a la vista.
+    this.botones()[destino]?.nativeElement.focus({ preventScroll: true });
     this.elegir(opcion);
   }
 

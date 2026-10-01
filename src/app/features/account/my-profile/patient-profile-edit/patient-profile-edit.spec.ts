@@ -3,10 +3,12 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import type { WritableSignal } from '@angular/core';
 import type { FormControl } from '@angular/forms';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { provideRouter, Router } from '@angular/router';
 
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import { PatientProfileEdit } from './patient-profile-edit';
+import { UbicacionPicker } from '../../../auth/registro-compartido/ubicacion-picker/ubicacion-picker';
 
 /**
  * Editar los datos propios del paciente.
@@ -300,6 +302,50 @@ describe('PatientProfileEdit', () => {
     return http.expectOne('/profiles/patients/me');
   }
 
+  /**
+   * N-03: «Mis puntos» es la billetera del programa de fidelidad, no un dato
+   * declarado, y no hay nada que editar ahí. Desde el 25/09/2026 (pedido del
+   * propietario) el editor ya no la muestra apagada: la saca de la tira.
+   */
+  it('no lleva «Mis puntos» en la tira: no hay nada que editar ahí', () => {
+    montarPintadoYCargado();
+
+    const pestanas = (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLButtonElement>(
+      '[role="tab"]',
+    );
+    expect([...pestanas].map((p) => p.textContent?.trim())).not.toContain('Mis puntos');
+  });
+
+  /**
+   * Pedido del propietario del 25/09/2026: una cobertura es el resultado de
+   * una integración posterior —la aseguradora la declara, no la persona—, así
+   * que nunca se corrige desde este formulario. No es el caso de «Tutores»,
+   * que sí puede cambiar y por eso sigue siendo una pestaña utilizable. El
+   * mismo día se corrigió: en vez de apagada, «Seguros» se saca de la tira
+   * del editor, igual que «Mis puntos».
+   */
+  it('«Seguros» no está en la tira del editor; «Tutores» sigue abierta', () => {
+    montarPintadoYCargado({
+      coverages: [{ carrierName: 'Alianza Vida Seguros', planName: 'AFI Gold' }],
+      guardians: [{ displayName: 'Carlos Mamani', phone: '+591 70055443' }],
+    });
+
+    const pestanas = [
+      ...(fixture.nativeElement as HTMLElement).querySelectorAll<HTMLButtonElement>('[role="tab"]'),
+    ];
+    expect(pestanas.map((p) => p.textContent?.trim())).toEqual([
+      'Datos personales',
+      'Contacto',
+      'Facturación',
+      'Tutores',
+    ]);
+    expect((fixture.nativeElement as HTMLElement).textContent).not.toContain('Alianza Vida Seguros');
+
+    expect(pestanas[3].disabled).toBe(false);
+    abrirPestana(3);
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain('Carlos Mamani');
+  });
+
   it('siembra el formulario con lo ya guardado, en las cuatro partes del nombre', () => {
     montarYCargar();
 
@@ -485,6 +531,42 @@ describe('PatientProfileEdit', () => {
       const req = pedidoDeGuardado();
       expect(req.request.body).toEqual({ workLatitude: -17.8, workLongitude: -63.2 });
       req.flush({ ...PERFIL_BASE, ...CON_DIRECCIONES });
+    });
+
+    /**
+     * D-06: tocar el mapa deja la dirección escrita en blanco y lo dice al
+     * lado del campo, porque el punto nuevo ya no es esa calle.
+     */
+    it('tocar el mapa vacía la dirección escrita y lo dice junto al campo', () => {
+      montarPintadoYCargado(CON_DIRECCIONES);
+      abrirPestana(pestanaDe('perfil-domicilio'));
+      fixture.detectChanges();
+      const raiz = fixture.nativeElement as HTMLElement;
+      const [domicilio, trabajo] = fixture.debugElement
+        .queryAll(By.directive(UbicacionPicker))
+        .map((el) => el.componentInstance as UbicacionPicker);
+      expect(señal<string>('domicilio')()).toBe('Av. Banzer 3er anillo');
+
+      domicilio.fijarPunto({ lat: -17.79, lng: -63.19 });
+      fixture.detectChanges();
+
+      expect(señal<string>('domicilio')()).toBe('');
+      expect(raiz.querySelector('[data-testid="perfil-domicilio-reescribir"]')?.textContent).toContain(
+        'Volvé a escribir la dirección para este punto',
+      );
+      // El trabajo no se entera: cada mapa vacía sólo su campo.
+      expect(señal<string>('direccionTrabajo')()).toBe('Calle Ayacucho 241');
+      expect(raiz.querySelector('[data-testid="perfil-trabajo-reescribir"]')).toBeNull();
+
+      // Volver a escribir se lleva el aviso: acompaña al campo vacío.
+      señal<string>('domicilio').set('Av. Banzer, 4to anillo');
+      fixture.detectChanges();
+      expect(raiz.querySelector('[data-testid="perfil-domicilio-reescribir"]')).toBeNull();
+
+      trabajo.fijarPunto({ lat: -17.8, lng: -63.2 });
+      fixture.detectChanges();
+      expect(señal<string>('direccionTrabajo')()).toBe('');
+      expect(raiz.querySelector('[data-testid="perfil-trabajo-reescribir"]')).not.toBeNull();
     });
 
     it('los dos mapas se dibujan en la pestaña de ubicación', () => {

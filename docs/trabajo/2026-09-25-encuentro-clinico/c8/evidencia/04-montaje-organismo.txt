@@ -1,0 +1,32 @@
+# C8.H1.M3 — dónde se montó el organismo y dónde NO
+
+## Montado: la consulta del profesional
+$ grep -n "encounter-timeline\|consulta-lo-registrado" src/app/features/clinical-record/consultation/consultation.html
+180:        data-testid="consulta-lo-registrado"
+186:        <app-encounter-timeline
+
+$ corepack yarn test --include=consultation.spec.ts
+ Test Files  1 passed (1)
+      Tests  10 passed (10)      # baseline: 5
+
+$ corepack yarn test --include=patient-chart.spec.ts --include=clinical-record.spec.ts
+ Test Files  2 passed (2)
+      Tests  65 passed (65)      # sin regresión
+
+## NO montado: la pestaña «Encuentros» del expediente
+
+La pestaña EXISTE (patient-chart.ts:651 la declara), pero su contenido es un
+`app-data-table`, que NO tiene ranura de proyección para una fila de detalle:
+
+$ grep -n "expand" src/app/shared/components/organisms/data-table/data-table.ts
+178:  private readonly expandedRows = signal<ReadonlySet<string>>(new Set());
+258:    return this.expandedRows().has(this.rowKey(row));
+263:    this.expandedRows.update((abiertas) => {
+
+$ grep -c "ng-content" src/app/shared/components/organisms/data-table/data-table.html
+0
+
+Las `expandedRows` son el plegado MÓVIL de las columnas secundarias (línea 177),
+no un lugar donde montar contenido arbitrario. Montar la línea del encuentro ahí
+exigiría extender un organismo compartido que usan decenas de pantallas: fuera
+del cambio mínimo de esta microtarea. Se declara, no se fuerza.

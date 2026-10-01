@@ -111,29 +111,17 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
     // «porque ya no hay desplegable» dejaría esa pantalla sin nodos, que es
     // justo la que ahora hace todo el trabajo.
     //
-    // `nearby-places` (FT-19) NO entra acá aunque sea "a dónde ir": esta
-    // lista la lee tal cual `DirectoriesOverview` para dibujar los nodos de
-    // «los cuatro directorios» (ver el comentario de esa pantalla), y
-    // `nearby-places` no es un directorio —sale de tu receta y tu ubicación,
-    // no de un catálogo—. Metida acá rompía esa pantalla: mostraba 5 nodos
-    // en vez de 4 (`directories-overview.spec.ts`). Tiene su propio bloque,
-    // más abajo.
+    // Esta lista la lee tal cual `DirectoriesOverview` para dibujar los nodos
+    // de «los cuatro directorios» (ver el comentario de esa pantalla): son
+    // exactamente los cuatro de abajo, ni uno más.
     paths: [
       'directories',
       'directory',
       'laboratory-directory',
       'clinics-directory',
       'pharmacies-directory',
+      'insurers-directory',
     ],
-  },
-  {
-    label: 'Lugares cercanos',
-    group: 'General',
-    icon: 'pin',
-    // Un solo destino: el armazón lo dibuja suelto (ver la nota de arriba,
-    // «un bloque de uno no es un desplegable»). Va en su propio bloque y no
-    // en «Directorios» para no ensuciar la lista que lee `DirectoriesOverview`.
-    paths: ['nearby-places'],
   },
 
   /* -- Atención -----------------------------------------------------------
@@ -144,18 +132,17 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
 
      Ahora «Consultas médicas» cuelga directo de Atención. Un subgrupo se
      justifica cuando ordena varias secciones, no cuando envuelve una. */
-  {
-    label: 'Historia clínica',
-    group: 'Atención',
-    icon: 'folder',
-    // Lo que queda escrito del paciente: el archivo y lo que se le agrega hoy.
-    paths: ['medical-records', 'progress-notes'],
-  },
+  /* «Historia clínica» agrupaba el archivo clínico con «Notas médicas». Al
+     retirarse la segunda (25/09/2026) quedaba un subgrupo envolviendo una sola
+     sección, que es exactamente lo que el párrafo de arriba dice que no se
+     hace: «Archivo clínico» cuelga directo de Atención. */
   {
     label: 'Estudios y procedimientos',
     group: 'Atención',
     icon: 'scan',
     // Lo que se le pide o se le hace al paciente fuera de la consulta.
+    // La recepción de muestras va con ellas: es la puerta del laboratorio por
+    // la que entra lo que después aparece en «Laboratorio e imagen».
     paths: ['diagnostics', 'interventions'],
   },
   {
@@ -207,7 +194,9 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
       'administration/insurance',
       'administration/brokers',
       'administration/insurance-claims',
+      'administration/received-claims',
       'administration/insurance-analytics',
+      'administration/insurance-campaigns',
     ],
   },
   {
@@ -270,14 +259,42 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
   },
   {
     label: 'Farmacia',
-    group: 'Administración',
+    // `General` y no `Administración` (29/09/2026): la cuenta de farmacia ve su
+    // menú plano —ocho renglones sin encabezado—, y un dominio aplanado dibuja
+    // sus bloques sueltos. El bloque sigue existiendo porque el reparto cubre
+    // el registro entero.
+    group: 'General',
     icon: 'bag',
-    // El mostrador: lo que se despacha, lo que se promociona y la empresa que
-    // está detrás.
+    // El mostrador: lo que se vende, lo que se guarda, lo que se despacha, lo
+    // que se promociona y la empresa que está detrás.
     paths: [
+      'administration/pharmacy',
+      'administration/pharmacy-catalog',
+      'administration/pharmacy-categories',
+      'administration/pharmacy-import',
+      'administration/pharmacy-inventory',
+      'administration/pharmacy-prices',
       'administration/pharmacy-orders',
       'administration/pharmacy-campaigns',
       'administration/pharmacy-profile',
+      'administration/pharmacy-branches',
+    ],
+  },
+  {
+    label: 'Laboratorio',
+    // `General` (30/09/2026), por lo mismo que «Farmacia»: la cuenta de
+    // laboratorio ve su menú plano, sin encabezado. La recepción de muestras y
+    // la cola de trabajo salieron de «Estudios y procedimientos»: sólo las ve
+    // esta cuenta, y ahí quedaban bajo un encabezado que su menú ya no tiene.
+    group: 'General',
+    icon: 'flask',
+    paths: [
+      'administration/laboratory',
+      'laboratorio/recepcion',
+      'laboratorio/cola',
+      'administration/laboratory-results',
+      'administration/laboratory-prices',
+      'administration/laboratory-branches',
     ],
   },
 
@@ -304,12 +321,16 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
     label: 'Mis gestiones',
     group: 'Mi cuenta',
     icon: 'calendar',
-    // Lo que tengo en curso: un turno, un pedido, mis puntos.
+    // Lo que tengo en curso: un turno, un pedido, mis puntos, lo que gasté.
     paths: [
       'my-account/appointments',
+      'my-account/pharmacy',
       'my-account/pharmacy-orders',
       'my-account/loyalty',
       'my-account/promotions',
+      'my-account/spending',
+      'my-account/invoices',
+      'my-account/requests',
     ],
   },
   {

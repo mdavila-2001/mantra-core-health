@@ -108,88 +108,20 @@
   justify-content: flex-end;
 }
 
-/* Cada acción del horario en su propio recuadro de color (pedido del
-   propietario, 19/09): antes eran cinco íconos grises de 32 px pegados, donde
-   distinguir «bloqueos» de «agendar» exigía mirar dos veces.
+/* El aviso de agotamiento lleva la tinta de advertencia; las demás acciones
+   del horario viven en el desplegable de `app-row-actions` y usan su estilo.
+   Ambos quedan en talle `sm`, con ícono y texto: los recuadros de 44 px con
+   íconos de 24 se comían el renglón.
 
-   El color NO carga el significado solo —eso sería depender del color, y la
-   regla 50-frontend §6 pide nombre accesible—: el ícono, el `aria-label` y el
-   tooltip siguen ahí y el fondo sólo los separa de un vistazo. Los tonos son
-   los tríos `--st-*` de styles.css, que ya traen su versión oscura, así que el
-   recuadro no se toca al cambiar de tema.
-
-   Se estiliza por variable y no por CSS propio: `--_btn-bg`, `--_btn-fg` y
-   `--_btn-side` son el contrato interno del átomo (ver button.css), y `:host`
-   los declara con menos peso que estos selectores de tres clases. Por eso los
-   botones siguen siendo `variant="ghost"`: la variante sólo pone las
-   variables, y acá se reemplazan. */
-.mi-agenda__estados .mi-agenda__barra-acciones .mi-agenda__accion {
-  /* 44 px: el talle `sm` daba 32 y el propietario los pidió más grandes; 44 es
-     además el área táctil que el propio sistema le da a `md` en móvil. */
-  --_btn-side: 44px;
-  /* El SVG se dimensiona en `em` dentro del átomo: 1,25rem × 1,2 = 24 px. */
-  font-size: 1.25rem;
-  /* «Bordes redondos», no el círculo que el modo ícono trae por defecto. */
-  border-radius: var(--r-md);
-  box-shadow: inset 0 0 0 1.5px var(--_accion-bd);
-}
-
-/* El átomo levanta el botón 1 px y le pone sombra al pasar el puntero; su regla
-   pesa menos que ésta, así que la sombra se repite acá para no perderla junto
-   con el borde del recuadro. */
-.mi-agenda__estados .mi-agenda__barra-acciones .mi-agenda__accion:hover {
-  box-shadow:
-    inset 0 0 0 1.5px var(--_accion-bd),
-    var(--shadow-sm);
-}
-
-/* Un tono por acción, en este orden: avisar, cambiar, retirar, ver lo cerrado,
-   agendar. `--_btn-fg-hover` va explícito porque `ghost` lo lleva a
-   `--text-primary` y se comería la tinta del tono. */
+   Se estiliza por variable: `--_btn-bg` y `--_btn-fg` son el contrato interno
+   del átomo (ver button.css). `--_btn-fg-hover` va explícito porque `ghost` lo
+   lleva a `--text-primary` y se comería la tinta del tono. */
 .mi-agenda__estados .mi-agenda__barra-acciones .mi-agenda__accion--aviso {
-  --_accion-bd: var(--st-warning-bd);
   --_btn-bg: var(--st-warning-bg);
   --_btn-fg: var(--st-warning-fg);
   --_btn-bg-hover: var(--st-warning-bd);
   --_btn-fg-hover: var(--st-warning-fg);
-}
-
-.mi-agenda__estados .mi-agenda__barra-acciones .mi-agenda__accion--editar {
-  --_accion-bd: var(--st-primary-bd);
-  --_btn-bg: var(--st-primary-bg);
-  --_btn-fg: var(--st-primary-fg);
-  --_btn-bg-hover: var(--st-primary-bd);
-  --_btn-fg-hover: var(--st-primary-fg);
-}
-
-/* Retirar un horario es destructivo y detrás sigue habiendo una confirmación;
-   el rojo lo dice antes de llegar a ella. */
-.mi-agenda__estados .mi-agenda__barra-acciones .mi-agenda__accion--retirar {
-  --_accion-bd: var(--st-error-bd);
-  --_btn-bg: var(--st-error-bg);
-  --_btn-fg: var(--st-error-fg);
-  --_btn-bg-hover: var(--st-error-bd);
-  --_btn-fg-hover: var(--st-error-fg);
-}
-
-/* Gris y no un color de la escala: medido en pantalla, el aqua de `info` y el
-   verde de `success` son dos pasteles casi iguales, y «bloqueos» y «agendar»
-   son justo los dos que ya se confundían por llevar el mismo calendario. El
-   gris —la receta de `btn--neutral` del sistema— además dice «cerrado». */
-.mi-agenda__estados .mi-agenda__barra-acciones .mi-agenda__accion--bloqueos {
-  --_accion-bd: var(--border-default);
-  --_btn-bg: var(--bg-inset);
-  --_btn-fg: var(--text-secondary);
-  --_btn-bg-hover: var(--border-default);
-  --_btn-fg-hover: var(--text-primary);
-}
-
-.mi-agenda__estados .mi-agenda__barra-acciones .mi-agenda__accion--agendar {
-  --_accion-bd: var(--st-success-bd);
-  --_btn-bg: var(--st-success-bg);
-  --_btn-fg: var(--st-success-fg);
-  --_btn-bg-hover: var(--st-success-bd);
-  --_btn-fg-hover: var(--st-success-fg);
+  box-shadow: inset 0 0 0 1px var(--st-warning-bd);
 }
 
 /* El aviso de agotamiento, detrás del triángulo: el globo cuelga del botón,
@@ -423,4 +355,22 @@
   flex-wrap: wrap;
   gap: var(--sp-2);
   margin-block-end: var(--sp-3);
+}
+
+/* Las acciones del detalle de una cita de la semana: envuelven en pantalla
+   chica y «Abrir expediente» queda al final, como acción principal. */
+.mi-agenda__detalle-acciones {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--sp-2);
+    inline-size: 100%;
+}
+
+/* Las operaciones de la cita ocupan su propia fila y envuelven: son hasta
+   seis, y cortadas en el borde del modal se pierde la primera. */
+.mi-agenda__detalle-operaciones {
+    flex: 1 1 100%;
+    min-inline-size: 0;
 }

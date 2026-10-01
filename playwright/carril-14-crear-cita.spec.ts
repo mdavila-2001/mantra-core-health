@@ -116,16 +116,12 @@ test('AC-14-4 · pide paciente, día, hora, duración, modalidad y motivo', asyn
   await expect(page.getByTestId('cita-duracion')).toBeVisible();
   await expect(page.getByTestId('cita-motivo')).toBeVisible();
 
-  // Las tres modalidades del value set, y sólo esas tres.
-  const modalidades = page.locator('input[name="modalidad"]');
+  // Las tres modalidades del value set, y sólo esas tres: van en un select.
+  const modalidades = page.getByTestId('cita-modalidad').locator('option:not([disabled])');
   await expect(modalidades).toHaveCount(3);
 
-  // La duración es libre: hay un campo numérico además de los atajos, porque
-  // «la cirugía de tres horas y la consulta de cuarenta y cinco conviven».
-  const libre = campo(page, 'cita-duracion-libre');
-  await expect(libre).toBeVisible();
-  await libre.fill('180');
-  await expect(libre).toHaveValue('180');
+  // La duración se elige de los atajos: ya no hay campo de minutos libres.
+  await expect(page.getByTestId('cita-duracion-libre')).toHaveCount(0);
 });
 
 test('AC-14-5 · con una sola agenda no pregunta cuál', async ({ page }) => {
@@ -360,7 +356,7 @@ test('AC-14-7 y AC-14-9 · el choque del profesional y la retracción de cupos, 
   const pacienteA = await elegirPaciente(page, 'a');
   await elegirFecha(page, cupo.startAt);
   await campo(page, 'cita-hora').fill(hora);
-  await campo(page, 'cita-duracion-libre').fill(String(cupo.durationMinutes));
+  await page.getByTestId('cita-duracion').locator('select').selectOption(String(cupo.durationMinutes));
 
   const [respuestaA] = await Promise.all([
     page.waitForResponse(
@@ -395,7 +391,7 @@ test('AC-14-7 y AC-14-9 · el choque del profesional y la retracción de cupos, 
   await elegirPaciente(page, 'e', pacienteA);
   await elegirFecha(page, cupo.startAt);
   await campo(page, 'cita-hora').fill(hora);
-  await campo(page, 'cita-duracion-libre').fill(String(cupo.durationMinutes));
+  await page.getByTestId('cita-duracion').locator('select').selectOption(String(cupo.durationMinutes));
 
   const [respuestaB] = await Promise.all([
     page.waitForResponse(

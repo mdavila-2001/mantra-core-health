@@ -1,9 +1,10 @@
+import { PatientCampaignsWidget } from '../../insurance/patient-campaigns/patient-campaigns-widget';
 import { InsurancePortabilityCard } from './insurance-portability-card/insurance-portability-card';
 import { PatientCoverageCard } from '../../../shared/components/molecules/patient-coverage-card/patient-coverage-card';
 import { FileDropTarget } from '../../../shared/forms/file-drop-target';
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { catchError, forkJoin, of, switchMap } from 'rxjs';
 
 import { AuthService } from '../../../core/auth/auth.service';
@@ -32,7 +33,6 @@ import { AppButtonLink } from '../../../shared/components/atoms/button/button-li
 import { Badge } from '../../../shared/components/atoms/badge/badge';
 import { Link } from '../../../shared/components/atoms/link/link';
 import { NavIcon } from '../../../shared/components/atoms/nav-icon/nav-icon';
-import { Tooltip } from '../../../shared/components/atoms/tooltip/tooltip';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { Card } from '../../../shared/components/molecules/card/card';
 import { Tab } from '../../../shared/components/molecules/tabs/tab/tab';
@@ -44,9 +44,12 @@ import {
   CaseStatusCatalog,
   toCaseStatusPresentation,
 } from '../../identity-verification/case-status';
+import { Loyalty } from '../loyalty/loyalty';
 import { PatientProfileEdit } from './patient-profile-edit/patient-profile-edit';
-import { PESTANAS_DEL_PERFIL } from './pestanas-del-perfil';
+import { indiceDePestana, PESTANAS_DEL_PERFIL } from './pestanas-del-perfil';
 import { PractitionerProfile } from './practitioner-profile/practitioner-profile';
+import { ResidenceReadonly } from './practitioner-profile/practitioner-profile-view/residence-readonly/residence-readonly';
+import type { PuntoGeo } from '../../../shared/components/organisms/map/pin-mapa.types';
 
 /**
  * Resumen propio — vista **V05-03** de `SALUD/Vistas/V05 profiles`
@@ -108,6 +111,7 @@ import { PractitionerProfile } from './practitioner-profile/practitioner-profile
   selector: 'app-my-profile',
   imports: [
     PatientCoverageCard,
+    ResidenceReadonly,
     FileDropTarget,
     Alert,
     AppButton,
@@ -117,7 +121,9 @@ import { PractitionerProfile } from './practitioner-profile/practitioner-profile
     Card,
     DatePipe,
     InsurancePortabilityCard,
+    PatientCampaignsWidget,
     Link,
+    Loyalty,
     NavIcon,
     PageHeader,
     PatientProfileEdit,
@@ -126,7 +132,6 @@ import { PractitionerProfile } from './practitioner-profile/practitioner-profile
     StatusSeal,
     Tab,
     Tabs,
-    Tooltip,
     ViewStateHost,
   ],
   templateUrl: './my-profile.html',
@@ -144,6 +149,9 @@ export class MyProfile {
   private readonly estadosDeCaso = inject(CaseStatusCatalog);
   private readonly navigation = inject(NavigationService);
   private readonly auth = inject(AuthService);
+
+  /** Perfil de paciente en sesión (claim `pid`): lo necesita el widget de beneficios del seguro. */
+  protected readonly patientProfileId = this.auth.patientProfileId;
 
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
 
@@ -220,9 +228,17 @@ export class MyProfile {
    * del 09/09/2026). El índice se comparte con el editor embebido: pulsar el
    * lápiz estando en «Contacto» abre el formulario en «Contacto», y al volver
    * a sólo lectura se sigue en la misma.
+   *
+   * La URL puede pedir una al entrar (`?pestana=puntos`): es lo que permite
+   * que la vieja ruta de «Mis puntos» siga llegando a la billetera ahora que
+   * vive acá (N-03). Se lee una vez, al construir: editar y cambiar de pestaña
+   * son estados momentáneos de la pantalla, no lugares, y no se escriben de
+   * vuelta en la URL.
    */
   protected readonly pestanas = PESTANAS_DEL_PERFIL;
-  protected readonly pestana = signal(0);
+  protected readonly pestana = signal(
+    indiceDePestana(inject(ActivatedRoute).snapshot.queryParamMap.get('pestana')) ?? 0,
+  );
 
   /**
    * Adónde va «Cambiar contraseña» (FT-11-R08).
@@ -436,13 +452,23 @@ export class MyProfile {
    * necesita. El enlace resuelve lo mismo —«llevame ahí»— con una etiqueta.
    */
   protected enlaceAlMapa(dir: OwnAddress): string | null {
+    const punto = this.puntoDe(dir);
+    if (punto === null) return null;
+    return `https://www.google.com/maps/search/?api=1&query=${punto.lat},${punto.lng}`;
+  }
+
+  /**
+   * Las coordenadas de una dirección, o `null` si no las tiene. Las usan el
+   * enlace «Ver en el mapa» y el punto rojo del mapa de residencia.
+   */
+  protected puntoDe(dir: OwnAddress | undefined): PuntoGeo | null {
     // `== null` cubre `null` y `undefined` de una. La API emitía además un `0`
     // por una comparación estricta contra `undefined` —ya corregida—, y el 0 se
     // sigue rechazando acá: una dirección de Santa Cruz no está en el meridiano
     // de Greenwich, y un enlace al golfo de Guinea es peor que ningún enlace.
-    if (dir.latitude == null || dir.longitude == null) return null;
+    if (dir?.latitude == null || dir.longitude == null) return null;
     if (dir.latitude === 0 && dir.longitude === 0) return null;
-    return `https://www.google.com/maps/search/?api=1&query=${dir.latitude},${dir.longitude}`;
+    return { lat: dir.latitude, lng: dir.longitude };
   }
 
   protected recargar(): void {

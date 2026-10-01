@@ -25,9 +25,7 @@
         [destructive]="action.destructive ?? false"
         (selected)="select(action)"
       >
-        @if (action.icon) {
-          <app-nav-icon slot="icon" [name]="action.icon" />
-        }
+        <app-nav-icon slot="icon" [name]="action.icon" />
         {{ action.label }}
       </app-menu-item>
     }
@@ -54,9 +52,7 @@
       [disabled]="action.disabled ?? false"
       (click)="select(action)"
     >
-      @if (action.icon) {
-        <app-nav-icon [name]="action.icon" />
-      }
+      <app-nav-icon [name]="action.icon" />
       {{ action.label }}
     </button>
   }

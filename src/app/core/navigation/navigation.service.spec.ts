@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
@@ -13,7 +13,7 @@ import { NavigationService } from './navigation.service';
  * del mismo registro, así que una prueba que las viera divergir es la señal de
  * que alguien duplicó la lista.
  */
-@Component({ template: '' })
+@Component({ template: '', changeDetection: ChangeDetectionStrategy.OnPush })
 class Vacio {}
 
 function jwt(payload: Record<string, unknown>): string {
@@ -56,8 +56,20 @@ describe('NavigationService', () => {
    * este claim. Vacío = alguien que no pertenece a ninguna organización, que es
    * el caso del paciente.
    */
-  function abrirSesion(roles: readonly string[], tenants: readonly string[] = ['t-1']) {
-    session.start({ accessToken: jwt({ sub: 'u-1', roles, tenants }), refreshToken: 'r' });
+  function abrirSesion(
+    roles: readonly string[],
+    tenants: readonly string[] = ['t-1'],
+    tenantTypes?: Readonly<Record<string, string>>,
+  ) {
+    session.start({
+      accessToken: jwt({
+        sub: 'u-1',
+        roles,
+        tenants,
+        ...(tenantTypes === undefined ? {} : { tenantTypes }),
+      }),
+      refreshToken: 'r',
+    });
   }
 
   /**
@@ -112,7 +124,7 @@ describe('NavigationService', () => {
       // pide rol pero sí membresía (F-31), así que sin `tenants` no aparece.
       abrirSesion([], []);
 
-      // Panel y autoservicio: lo que cualquiera puede hacer con su propia cuenta.
+      // Autoservicio: lo que cualquiera puede hacer con su propia cuenta.
       // «Mis turnos» entra acá porque su filtro real es tener perfil de
       // paciente —un dato de la cuenta, no un rol—, y eso lo resuelve la
       // pantalla, no el menú.
@@ -127,7 +139,13 @@ describe('NavigationService', () => {
         // Los dos fijos, arriba de todo y fuera de su grupo.
         '/my-account',
         '/notification-center',
-        '/dashboard',
+        // El Panel ya NO entra (2026-09-25): la marca del armazón ya es un
+        // enlace a `/dashboard` para cualquier sesión (`shell-layout.html`),
+        // así que ofrecerlo también acá era la pantalla en la que ya estás.
+        // Pasa a `fueraDelMenuPara: [ANY_ROLE]`, generalizando el §4.H que
+        // antes sólo lo sacaba del menú del médico. Sigue sin exigir rol y se
+        // sigue alcanzando por su ruta — ver la prueba dedicada más abajo.
+        //
         // Tutoriales y Chats YA NO entran acá (N-01, 2026-09-22): los dos
         // pasan a `fueraDelMenuPara: [ANY_ROLE]` — son un ícono con globo en
         // la cabecera para cualquier sesión, calcado de «Ajustes». Siguen sin
@@ -170,9 +188,11 @@ describe('NavigationService', () => {
         // es tener perfil de paciente, que la pantalla resuelve.
         '/my-account/diagnostic-orders',
         '/my-account/cotizaciones',
-        // Los cuestionarios propios tampoco exigen rol: el filtro real es tener
-        // perfil de paciente, que es un dato de la cuenta y no un rol.
-        '/my-account/questionnaires',
+        // «Mis cuestionarios» ya NO entra (2026-09-25): pedido del propietario
+        // mientras se decide qué hacer con la sección — declara
+        // `fueraDelMenuPara: [ANY_ROLE]`, no una restricción de rol. Sigue sin
+        // exigir rol y se sigue alcanzando por su ruta y por «Tus accesos»;
+        // ver `docs/pendiente-decision-cuestionarios.md`.
         // «Notificaciones» tampoco: es el otro destino fijo, y encabeza la
         // lista junto a «Mi perfil». La bandeja sigue sin exigir rol —es de la
         // persona y el backend sólo devuelve la propia—; lo que cambió es
@@ -275,6 +295,11 @@ describe('NavigationService', () => {
       //
       // Bajar un renglón no afloja la regla: quien quiera agregar la
       // undécima la sigue teniendo que discutir.
+      //
+      // **«Chats» SALIÓ el 23/09/2026 (N-01), y la lista baja a nueve.** El
+      // doctor pidió Chats y Tutoriales en la cabecera: Chats es ahora un
+      // ícono con globo y no leídos al lado de la campana, y el renglón sobra.
+      // La ruta sigue abierta (ver la prueba de N-01 más abajo).
       abrirSesion(['PRACTITIONER']);
 
       const fueraDeMiCuenta = service
@@ -289,7 +314,9 @@ describe('NavigationService', () => {
         'Directorios',
         'Consultas médicas',
         'Archivo clínico',
-        'Evoluciones',
+        // «Notas médicas» (antes «Evoluciones») YA NO entra: salió del menú y
+        // del producto el 25/09/2026 a pedido del propietario (e000f8ce). La
+        // nota se escribe y se lee desde la consulta y el expediente.
         'Glosario',
         'Formularios',
         'Mis servicios',
@@ -298,7 +325,7 @@ describe('NavigationService', () => {
       ]);
     });
 
-    it('las dos guías que el médico recupera son las suyas, no la de médicos', () => {
+    it('el médico alcanza los directorios de lugares y, desde el 24/09, el de médicos', () => {
       // FT-09-R01. El pedido decía «Directorio» a secas y hay cuatro. Esta
       // prueba fija cuáles entraron y cuál no: si alguien lee la funcionalidad
       // 9 como «devolverle la Guía de profesionales», falla acá y no en
@@ -314,7 +341,8 @@ describe('NavigationService', () => {
       const alcanzables = service.visibleSections().map((seccion) => `/${seccion.path}`);
       expect(alcanzables).toContain('/clinics-directory');
       expect(alcanzables).toContain('/pharmacies-directory');
-      expect(alcanzables).not.toContain('/directory');
+      // Pedido del cliente del 24/09/2026: el médico también busca médicos.
+      expect(alcanzables).toContain('/directory');
     });
 
     it('lo que sale del menú del médico NO le cierra la puerta', () => {
@@ -331,15 +359,64 @@ describe('NavigationService', () => {
       expect(alcanzables).toContain('/lab-visits');
       expect(alcanzables).toContain('/dashboard');
 
-      expect(alcanzables).toContain('/administration/pharmacy-campaigns');
-
       expect(rutasDelMenu()).not.toContain('/administration/medical-organization');
-      expect(rutasDelMenu()).not.toContain('/administration/pharmacy-campaigns');
       expect(rutasDelMenu()).not.toContain('/questionnaires');
       expect(rutasDelMenu()).not.toContain('/lab-visits');
     });
 
-    it('la Guía de profesionales solo la alcanza el paciente', () => {
+    it('el médico que atiende una farmacia alcanza sus pantallas y no le ocupan un renglón', () => {
+      // Las de farmacia sólo existen en una organización `PHARMACY`
+      // (29/09/2026): con esa organización activa el registro las alcanza —la
+      // ruta abre—, y `fueraDelMenuPara` las sigue sacando de su menú de ocho.
+      abrirSesion(['PRACTITIONER'], ['t-1'], { 't-1': 'PHARMACY' });
+
+      const alcanzables = service.visibleSections().map((seccion) => `/${seccion.path}`);
+      expect(alcanzables).toContain('/administration/pharmacy-campaigns');
+      expect(rutasDelMenu()).not.toContain('/administration/pharmacy-campaigns');
+    });
+
+    it('el Panel sale del menú de todos, y la puerta sigue abierta', () => {
+      // 2026-09-25: la marca del armazón ya lleva a `/dashboard` para
+      // cualquier sesión (login, cambio de organización, o clic en el
+      // logotipo), así que un renglón «Panel» debajo era ofrecer la pantalla
+      // en la que uno ya está. Generaliza el §4.H que antes sólo lo sacaba
+      // del menú del médico.
+      const sesiones: [readonly string[], readonly string[]][] = [
+        [[], []],
+        [['PATIENT'], []],
+        [['PRACTITIONER'], ['t-1']],
+        [['SECURITY_ADMIN', 'CLINICIAN', 'BILLING', 'PATIENT'], ['t-1']],
+      ];
+      for (const [roles, tenants] of sesiones) {
+        abrirSesion([...roles], [...tenants]);
+        const alcanzables = service.visibleSections().map((seccion) => `/${seccion.path}`);
+        expect(alcanzables, roles.join(',')).toContain('/dashboard');
+        expect(rutasDelMenu(), roles.join(',')).not.toContain('/dashboard');
+      }
+    });
+
+    it('Tutoriales y Chats salen del menú de todos, y la puerta sigue abierta', () => {
+      // N-01 · 2026-09-23 · acceso desde cabecera. Los dos pasaron al
+      // encabezado (íconos con globo y nombre accesible, Chats con no leídos),
+      // así que ningún rol tiene su renglón. Lo que no puede pasar es que la
+      // limpieza del menú les cierre la ruta: los dos siguen sin exigir rol.
+      const sesiones: [readonly string[], readonly string[]][] = [
+        [[], []],
+        [['PATIENT'], []],
+        [['PRACTITIONER'], ['t-1']],
+        [['SECURITY_ADMIN', 'CLINICIAN', 'BILLING', 'PATIENT'], ['t-1']],
+      ];
+      for (const [roles, tenants] of sesiones) {
+        abrirSesion([...roles], [...tenants]);
+        const alcanzables = service.visibleSections().map((seccion) => `/${seccion.path}`);
+        expect(alcanzables, roles.join(',')).toContain('/tutorials');
+        expect(alcanzables, roles.join(',')).toContain('/messaging');
+        expect(rutasDelMenu(), roles.join(',')).not.toContain('/tutorials');
+        expect(rutasDelMenu(), roles.join(',')).not.toContain('/messaging');
+      }
+    });
+
+    it('el Directorio de médicos lo alcanzan el paciente y el médico, no quien administra', () => {
       // Corrección #2. La medición del carril 01 la encontró en el menú de la
       // doctora, que es exactamente lo que el cliente pidió sacar.
       //
@@ -353,8 +430,9 @@ describe('NavigationService', () => {
       const delPaciente = service.visibleSections().map((seccion) => `/${seccion.path}`);
       expect(delPaciente).toContain('/directory');
 
+      // Ampliada el 24/09/2026: el médico también (pedido del cliente).
       abrirSesion(['PRACTITIONER', 'CLINICIAN']);
-      expect(service.visibleSections().map((seccion) => `/${seccion.path}`)).not.toContain('/directory');
+      expect(service.visibleSections().map((seccion) => `/${seccion.path}`)).toContain('/directory');
 
       abrirSesion(['SECURITY_ADMIN']);
       expect(service.visibleSections().map((seccion) => `/${seccion.path}`)).not.toContain('/directory');
@@ -373,6 +451,7 @@ describe('NavigationService', () => {
         '/laboratory-directory',
         '/clinics-directory',
         '/pharmacies-directory',
+        '/insurers-directory',
       ]) {
         expect(alcanzables, ruta).toContain(ruta);
         expect(rutasDelMenu(), ruta).not.toContain(ruta);
@@ -381,17 +460,28 @@ describe('NavigationService', () => {
       expect(rutasDelMenu()).toContain('/directories');
     });
 
-    it('«Mis pedidos» sólo aparece en el menú del paciente', () => {
-      // FAR-I2: la única sección de «Mi cuenta» con roles declarados — el
-      // pedido nace de una receta propia, y la guardia lo exige en la sección.
+    it('«Farmacia» sólo aparece en el menú del paciente, y «Mis pedidos» sigue alcanzable sin renglón propio', () => {
+      // FAR-I2 + 24/09/2026: «Mis pedidos» y «Cotizaciones» del paciente se
+      // absorbieron dentro de «Farmacia» (pestañas de `PharmacyHub`), así que
+      // el renglón propio de «Mis pedidos» sale del menú (`fueraDelMenuPara`)
+      // y lo reemplaza «Farmacia», que hereda su rol declarado — el pedido
+      // nace de una receta propia, y la guardia lo exige en la sección.
       abrirSesion(['PATIENT']);
-      expect(rutasDelMenu()).toContain('/my-account/pharmacy-orders');
+      expect(rutasDelMenu()).toContain('/my-account/pharmacy');
+      expect(rutasDelMenu()).not.toContain('/my-account/pharmacy-orders');
+
+      // La ruta sigue viva: el detalle, el checkout, el recibo y las
+      // notificaciones vuelven a `/my-account/pharmacy-orders` sin pasar por
+      // el menú.
+      expect(service.visibleSections().map((s) => `/${s.path}`)).toContain(
+        '/my-account/pharmacy-orders',
+      );
 
       abrirSesion([]);
-      expect(rutasDelMenu()).not.toContain('/my-account/pharmacy-orders');
+      expect(rutasDelMenu()).not.toContain('/my-account/pharmacy');
 
       abrirSesion(['PRACTITIONER', 'CLINICIAN']);
-      expect(rutasDelMenu()).not.toContain('/my-account/pharmacy-orders');
+      expect(rutasDelMenu()).not.toContain('/my-account/pharmacy');
     });
 
     it('un rol clínico no ve administración, y un administrador no ve el archivo clínico', () => {
@@ -639,6 +729,75 @@ describe('NavigationService', () => {
       // «Consultas» desde ALV-016 (antes «Turnos», §4.H del plan de UX):
       // la ruta sigue siendo `schedule`.
       expect(service.currentSection()?.label).toBe('Consultas médicas');
+    });
+  });
+
+  describe('la aseguradora', () => {
+    // Pedido del propietario, 2026-09-25: el módulo «Aseguradora de salud»
+    // del registro de procesos del cliente pide tres pantallas —datos
+    // legales, qué aprueba/no aprueba, y siniestralidad—, y nada más. La
+    // señal es el tipo de la organización activa (`tenantTypes` del token,
+    // claim nuevo de este mismo carril), no un rol: la cuenta sigue siendo
+    // `USER` a secas.
+    it('sólo ve lo que el registro de procesos le pide: dos renglones fijos y cinco de Administración', () => {
+      abrirSesion(['USER'], ['t-1'], { 't-1': 'PAYER' });
+
+      expect(rutasDelMenu()).toEqual([
+        '/my-account',
+        '/notification-center',
+        '/administration/insurance',
+        '/administration/insurance-analytics',
+        // 2026-09-27: «Solicitudes recibidas», pedida por la propietaria.
+        '/administration/received-claims',
+        // Tarea 4 · M-06: el «Módulo de promociones» del registro de procesos.
+        '/administration/insurance-campaigns',
+        '/administration/my-organization',
+      ]);
+      // Un solo dominio: sin «General» (Directorios, Chats) ni «Mi cuenta»
+      // (el autoservicio del paciente), que es justo lo que la captura del
+      // pedido mostraba de más.
+      expect(service.menu().map((grupo) => grupo.label)).toEqual(['Administración']);
+      expect(service.menu()[0]?.blocks.map((bloque) => bloque.label)).toEqual([
+        'Seguros',
+        'Organizaciones',
+      ]);
+    });
+
+    it('no alcanza a entrar a lo que le cerraron: sigue existiendo el guard, no sólo el menú', () => {
+      abrirSesion(['USER'], ['t-1'], { 't-1': 'PAYER' });
+
+      const alcanzables = service.visibleSections().map((seccion) => `/${seccion.path}`);
+      for (const ruta of [
+        '/directories',
+        '/directory',
+        '/my-account/appointments',
+        '/my-account/medical-record',
+        '/administration/pharmacy-orders',
+      ]) {
+        expect(alcanzables, ruta).not.toContain(ruta);
+      }
+      // Lo que el registro le pide sigue alcanzable, aunque no todo ocupe
+      // renglón (dashboard, tutorials y messaging son íconos de cabecera).
+      for (const ruta of [
+        '/dashboard',
+        '/tutorials',
+        '/messaging',
+        '/administration/insurance',
+        '/administration/insurance-analytics',
+        '/administration/received-claims',
+        '/administration/my-organization',
+      ]) {
+        expect(alcanzables, ruta).toContain(ruta);
+      }
+    });
+
+    it('sin el claim de tipo, nada cambia: es el menú de hoy', () => {
+      // Una API que todavía no emite `tenantTypes`, o un token viejo: la
+      // degradación es no ocultar nada, no romper el menú de esta cuenta.
+      abrirSesion(['USER'], ['t-1']);
+
+      expect(rutasDelMenu()).toContain('/directories');
+      expect(rutasDelMenu()).toContain('/my-account/appointments');
     });
   });
 });

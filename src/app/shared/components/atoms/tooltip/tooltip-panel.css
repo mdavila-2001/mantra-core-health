@@ -27,6 +27,12 @@
     overflow-wrap: break-word;
 }
 
+/* Una ficha (código, cantidades, importes) necesita más aire que una frase. */
+:host(.tooltip--rich) {
+    max-width: 360px;
+    padding: var(--sp-3);
+}
+
 /* La entrada acompaña al lado desde el que aparece. La regla global de
    prefers-reduced-motion la reduce a nada, que para una aparición —a
    diferencia de un spinner— es exactamente lo deseado. */

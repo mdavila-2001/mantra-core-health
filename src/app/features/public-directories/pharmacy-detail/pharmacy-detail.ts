@@ -171,7 +171,9 @@ export class PharmacyDetail extends PublicCatalogDetail<PublicPharmacyProduct> {
       return sucursales
         .filter((sucursal) => sucursal.location !== null)
         .map((sucursal) => ({
-          id: sucursal.slug,
+          // La sede, no el slug: dos sedes del mismo tenant comparten ficha y
+          // por eso slug, y con él como clave el mapa pisaría un pin con otro.
+          id: sucursal.id,
           lat: sucursal.location!.lat,
           lng: sucursal.location!.lng,
           titulo: sucursal.name,
@@ -353,15 +355,18 @@ export class PharmacyDetail extends PublicCatalogDetail<PublicPharmacyProduct> {
   });
 
   /**
-   * El slug de la más cercana, o `null` si nadie entregó su ubicación.
+   * La sede más cercana, o `null` si nadie entregó su ubicación.
+   *
+   * Por `id` y no por slug: con dos sedes del mismo tenant —mismo slug— el
+   * distintivo caería en las dos.
    *
    * `null` **no es** «ninguna está cerca»: es que no hay con qué medir, y
    * ponerle el distintivo a la primera de la lista sería afirmarlo sin saberlo.
    */
-  protected readonly slugMasCercano = computed<string | null>(() => {
+  protected readonly closestBranchId = computed<string | null>(() => {
     if (this.ubicacion() === null) return null;
     const primera = this.sucursalesOrdenadas().find((sucursal) => sucursal.location !== null);
-    return primera?.slug ?? null;
+    return primera?.id ?? null;
   });
 
   /** Dónde está quien mira, si lo entregó. `null` es lo normal, no un error. */

@@ -6,72 +6,14 @@
 <app-view-state-host [state]="state()" (retry)="retry()">
   @if (carrier(); as aseguradora) {
     <div class="catalog">
-      <app-card variant="outlined" padding="lg" class="catalog__card catalog__card--wide">
-        <h2 card-header>{{ aseguradora.legalName }}</h2>
-        <dl class="catalog__facts">
-          <div>
-            <dt>Código</dt>
-            <dd>{{ aseguradora.carrierCode }}</dd>
-          </div>
-          <div>
-            <dt>Registro ante el regulador</dt>
-            <dd>{{ aseguradora.regulatorIdentifier ?? 'Sin registrar' }}</dd>
-          </div>
-          <div>
-            <dt>Jurisdicción</dt>
-            <dd>{{ aseguradora.jurisdiction?.display ?? 'Sin registrar' }}</dd>
-          </div>
-          <div>
-            <dt>Estado</dt>
-            <dd>{{ aseguradora.status.display }}</dd>
-          </div>
-          <div>
-            <dt>WhatsApp</dt>
-            <dd>
-              @if (aseguradora.whatsappNumber; as whatsapp) {
-                <a app-link [href]="whatsappHref(whatsapp)" [external]="true">{{ whatsapp }}</a>
-              } @else {
-                Sin registrar
-              }
-            </dd>
-          </div>
-          <div>
-            <dt>Call center</dt>
-            <dd>
-              @if (aseguradora.callCenterPhone; as telefono) {
-                <a app-link [href]="'tel:' + dialable(telefono)">{{ telefono }}</a>
-              } @else {
-                Sin registrar
-              }
-            </dd>
-          </div>
-          <div>
-            <dt>Correo de siniestros</dt>
-            <dd>
-              @if (aseguradora.supportEmail; as correo) {
-                <a app-link [href]="'mailto:' + correo">{{ correo }}</a>
-              } @else {
-                Sin registrar
-              }
-            </dd>
-          </div>
-        </dl>
-        <!-- Declarado y verificado se muestran por separado a propósito: que una
-             aseguradora diga tener un registro no es que la plataforma lo haya
-             contrastado. -->
-        <p class="catalog__verification">
-          <app-status-seal
-            [variant]="verificationVariant(aseguradora.verification.code)"
-            [label]="aseguradora.verification.display"
-          />
+      <!-- La ficha de la aseguradora (código, regulador, canales, verificación)
+           vive en el perfil de la organización: acá sólo el catálogo. -->
+      @if (!aseguradora.canAdminister) {
+        <p class="catalog__readonly" role="status">
+          Vista de solo lectura. Un owner o administrador de la organización puede modificar
+          planes y coberturas.
         </p>
-        @if (!aseguradora.canAdminister) {
-          <p class="catalog__readonly" role="status">
-            Vista de solo lectura. Un owner o administrador de la organización puede modificar
-            planes y coberturas.
-          </p>
-        }
-      </app-card>
+      }
 
       @if (aseguradora.products.length === 0) {
         <app-card variant="outlined" padding="lg" class="catalog__card catalog__card--wide">
@@ -91,10 +33,10 @@
                   type="button"
                   size="sm"
                   variant="secondary"
-                  [attr.aria-label]="'Crear un plan en ' + producto.name"
-                  (clicked)="productForNewPlan.set(producto)"
+                  [attr.aria-label]="'Añadir un producto seguro en ' + producto.name"
+                  (clicked)="planEditor.set({ product: producto, plan: null })"
                 >
-                  + Nuevo plan
+                  + Añadir producto seguro
                 </button>
               }
             </div>
@@ -109,7 +51,7 @@
             </p>
 
             @if (producto.plans.length === 0) {
-              <p class="catalog__hollow">Este producto todavía no tiene planes activos.</p>
+              <p class="catalog__hollow">Este ramo todavía no tiene productos seguros activos.</p>
             } @else {
               @for (plan of producto.plans; track plan.id) {
                 <section class="catalog__plan" [attr.aria-labelledby]="'plan-' + plan.id">
@@ -119,16 +61,42 @@
                       <span class="catalog__plan-code">{{ plan.planCode }}</span>
                     </h3>
                     @if (aseguradora.canAdminister) {
-                      <button
-                        app-button
-                        type="button"
-                        size="sm"
-                        variant="secondary"
-                        [attr.aria-label]="'Crear una cobertura en ' + plan.name"
-                        (clicked)="benefitEditor.set({ plan: plan, benefit: null })"
+                      <div
+                        class="catalog__actions"
+                        role="group"
+                        [attr.aria-label]="'Acciones de ' + plan.name"
                       >
-                        + Nueva cobertura
-                      </button>
+                        <button
+                          app-button
+                          type="button"
+                          size="sm"
+                          variant="secondary"
+                          [attr.aria-label]="'Añadir cláusula a ' + plan.name"
+                          (clicked)="benefitEditor.set({ plan: plan, benefit: null })"
+                        >
+                          Añadir cláusula
+                        </button>
+                        <button
+                          app-button
+                          type="button"
+                          size="sm"
+                          variant="secondary"
+                          [attr.aria-label]="'Editar datos del producto seguro ' + plan.name"
+                          (clicked)="planEditor.set({ product: producto, plan: plan })"
+                        >
+                          Editar datos del producto seguro
+                        </button>
+                        <button
+                          app-button
+                          type="button"
+                          size="sm"
+                          variant="danger"
+                          [attr.aria-label]="'Eliminar producto seguro ' + plan.name"
+                          (clicked)="deletePlan(plan)"
+                        >
+                          Eliminar producto seguro
+                        </button>
+                      </div>
                     }
                   </div>
                   <p class="catalog__plan-validity">
@@ -159,24 +127,24 @@
                   </p>
 
                   @if (plan.benefits.length === 0) {
-                    <p class="catalog__hollow">Sin coberturas cargadas.</p>
+                    <p class="catalog__hollow">Sin cláusulas cargadas.</p>
                   } @else {
                     <div
                       class="catalog__table-scroll"
                       tabindex="0"
-                      [attr.aria-label]="'Tabla desplazable de coberturas de ' + plan.name"
+                      [attr.aria-label]="'Tabla desplazable de cláusulas de ' + plan.name"
                     >
                       <table class="catalog__benefits">
                         <caption class="catalog__benefits-caption">
-                          Coberturas de
+                          Cláusulas de
                           {{
                             plan.name
                           }}
                         </caption>
                         <thead>
                           <tr>
-                            <th scope="col">Prestación</th>
-                            <th scope="col">Cobertura</th>
+                            <th scope="col">Servicio</th>
+                            <th scope="col">% de pago</th>
                             <th scope="col">Copago</th>
                             <th scope="col">Deducible</th>
                             <th scope="col">Tope anual</th>
@@ -225,7 +193,7 @@
                                       size="sm"
                                       variant="ghost"
                                       [attr.aria-label]="
-                                        'Editar cobertura de ' +
+                                        'Editar cláusula de ' +
                                         (beneficio.service?.display ?? beneficio.category.display) +
                                         ' en ' +
                                         plan.name
@@ -234,7 +202,7 @@
                                         benefitEditor.set({ plan: plan, benefit: beneficio })
                                       "
                                     >
-                                      Editar cobertura
+                                      Editar cláusula
                                     </button>
                                     <button
                                       app-button
@@ -295,12 +263,14 @@
   }
 </app-view-state-host>
 
-@if (productForNewPlan(); as product) {
+@if (planEditor(); as editor) {
   <app-plan-form-dialog
-    [productId]="product.id"
-    [productName]="product.name"
-    (saved)="planCreated()"
-    (closed)="productForNewPlan.set(null)"
+    [mode]="editor.plan === null ? 'create' : 'edit'"
+    [productId]="editor.product.id"
+    [productName]="editor.product.name"
+    [plan]="editor.plan"
+    (saved)="planSaved()"
+    (closed)="planEditor.set(null)"
   />
 }
 

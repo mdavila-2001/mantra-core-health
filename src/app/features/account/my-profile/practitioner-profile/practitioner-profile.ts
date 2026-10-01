@@ -4,6 +4,10 @@ import { catchError, forkJoin, map, of, switchMap, type Observable } from 'rxjs'
 import { AuthService } from '../../../../core/auth/auth.service';
 import { CommunityClient } from '../../../../core/data-access/community/community.client';
 import { FilesClient } from '../../../../core/data-access/files/files.client';
+import { InsuranceClient } from '../../../../core/data-access/insurance/insurance.client';
+import type { PractitionerInsuranceNetwork } from '../../../../core/data-access/insurance/insurance.types';
+import { FirmaYSelloClient, type FirmaYSello } from '../../../../core/data-access/profiles/firma-y-sello.client';
+import { LogoDelConsultorioClient } from '../../../../core/data-access/practice-sites/logo-del-consultorio.client';
 import { PracticeSitesClient } from '../../../../core/data-access/practice-sites/practice-sites.client';
 import type { PracticeSite } from '../../../../core/data-access/practice-sites/practice-sites.types';
 import { ProfilesClient } from '../../../../core/data-access/profiles/profiles.client';
@@ -41,6 +45,7 @@ import type {
   PerfilProfesionalVisible,
   PuntoDeSerie,
   SedeVisible,
+  SeguroVisible,
 } from './practitioner-profile-view/practitioner-profile-view.types';
 
 /** Lo que se muestra cuando el registro no trae ese dato. */
@@ -84,6 +89,18 @@ const AVISO_DE_CREDENCIALES =
   'Acá se separa lo que declaraste de lo que ya fue verificado contra una fuente ' +
   '—el colegio médico, el registro de matrículas—. Declarar no exige verificación previa.';
 
+/**
+ * «Trayectoria» también dejó de ser una caja arriba de la pestaña (24/09/2026),
+ * pero su aviso sale **cada vez** que se abre y dura 3 s: orienta sin tapar la
+ * línea de tiempo. No reusa la clave del bloque cerrado, porque quien lo había
+ * cerrado no lo vería nunca.
+ */
+const ETIQUETA_DE_TRAYECTORIA = PESTANAS_DEL_PERFIL_MEDICO[PESTANA_MEDICO.trayectoria];
+
+const AVISO_DE_TRAYECTORIA =
+  'Dónde ejerciste antes y dónde ejercés hoy. Es lo que un paciente ve en el ' +
+  'Directorio de médicos antes de pedir una cita. Tus títulos están en «Credenciales».';
+
 /** Lo que se dice cuando la cuenta no tiene dónde guardar la foto. */
 const SIN_PERFIL_PARA_LA_FOTO =
   'Tu cuenta todavía no está asociada a un perfil profesional, así que no hay ' +
@@ -94,8 +111,14 @@ interface PerfilResuelto {
   readonly perfil: OwnPractitionerProfile;
   readonly etiquetas: ConceptLabels;
   readonly fotoUrl: string | null;
+  /** El logo de su consultorio, o `null` si no cargó ninguno o no se pudo leer. */
+  readonly logoUrl: string | null;
+  /** Su firma y su sello (imágenes), o `null` si la cuenta no es de un profesional. */
+  readonly firmaYSello: FirmaYSello | null;
   /** Dónde atiende hoy (ALV-005). Vacío si no tiene sedes o si la lectura falló. */
   readonly sedes: readonly PracticeSite[];
+  /** Con qué aseguradoras trabaja; `null` si la lectura falló. */
+  readonly seguros: readonly PractitionerInsuranceNetwork[] | null;
 }
 
 /**
@@ -154,6 +177,9 @@ export class PractitionerProfile {
   private readonly terminology = inject(TerminologyClient);
   private readonly files = inject(FilesClient);
   private readonly sites = inject(PracticeSitesClient);
+  private readonly logo = inject(LogoDelConsultorioClient);
+  private readonly firmaYSello = inject(FirmaYSelloClient);
+  private readonly insurance = inject(InsuranceClient);
   private readonly auth = inject(AuthService);
   private readonly community = inject(CommunityClient);
   private readonly dialogs = inject(DialogService);
@@ -337,6 +363,15 @@ export class PractitionerProfile {
    * nada que evitar.
    */
   protected alVerPestana(etiqueta: string): void {
+    if (etiqueta === ETIQUETA_DE_TRAYECTORIA) {
+      this.toasts.show({
+        type: 'info',
+        title: 'Trayectoria',
+        message: AVISO_DE_TRAYECTORIA,
+        durationMs: 3000,
+      });
+      return;
+    }
     if (etiqueta !== ETIQUETA_DE_CREDENCIALES) {
       return;
     }
@@ -372,10 +407,19 @@ export class PractitionerProfile {
                   this.files
                     .imageDataUrl(perfil.photoFileId)
                     .pipe(catchError(() => of<string | null>(null))),
+            // El logo del consultorio: mismo criterio que la foto. La fachada
+            // ya devuelve `null` si falla, así que no rompe la ficha.
+            logoUrl: this.logoPropio(),
+            // Su firma y su sello: mismo criterio que el logo, nunca rompen la ficha.
+            firmaYSello: this.firmaYSelloPropios(),
             // ALV-005: dónde atiende. Mismo criterio que la foto: es una
             // sección más de la ficha, no la ficha; si no se puede leer, la
             // sección no se dibuja y el resto sigue.
             sedes: this.sedesPropias(),
+            // Los seguros, con el mismo criterio, salvo en una cosa: el fallo
+            // queda como `null` y no como vacío, porque «ninguna aseguradora»
+            // dicho de quien trabaja con tres es un dato falso, no un hueco.
+            seguros: this.segurosPropios(),
           }),
         ),
       )
@@ -386,6 +430,19 @@ export class PractitionerProfile {
   }
 
   /* -- Del perfil crudo al contrato de la vista --------------------------- */
+
+  /** Su firma y su sello, o `null` sin perfil profesional en la sesión. */
+  private firmaYSelloPropios(): Observable<FirmaYSello | null> {
+    return this.auth.practitionerProfileId() === null
+      ? of<FirmaYSello | null>(null)
+      : this.firmaYSello.obtener();
+  }
+
+  /** El logo de su consultorio, o `null` sin perfil profesional en la sesión. */
+  private logoPropio(): Observable<string | null> {
+    const profileId = this.auth.practitionerProfileId();
+    return profileId === null ? of<string | null>(null) : this.logo.obtenerUrl(profileId);
+  }
 
   /**
    * Las sedes donde atiende hoy, o vacío si la sesión no tiene perfil
@@ -402,12 +459,30 @@ export class PractitionerProfile {
     );
   }
 
+  /**
+   * Con qué aseguradoras trabaja, o `null` si no se pudo saber.
+   *
+   * Sin perfil profesional en la sesión no hay a quién preguntarle, y eso es
+   * «no se pudo saber», no «ninguna».
+   */
+  private segurosPropios(): Observable<readonly PractitionerInsuranceNetwork[] | null> {
+    const profileId = this.auth.practitionerProfileId();
+    if (profileId === null) {
+      return of(null);
+    }
+    return this.insurance.listNetworksOfPractitioner(profileId).pipe(
+      map((pagina): readonly PractitionerInsuranceNetwork[] | null => pagina.items),
+      catchError(() => of(null)),
+    );
+  }
+
   private convertir(resuelto: PerfilResuelto): PerfilProfesionalVisible {
-    const { perfil, etiquetas, fotoUrl, sedes } = resuelto;
+    const { perfil, etiquetas, fotoUrl, logoUrl, firmaYSello, sedes, seguros } = resuelto;
     const especialidades = this.especialidades(perfil, etiquetas);
     const afiliaciones = afiliacionesDe(perfil);
     return {
       sedes: sedes.map(sedeVisible),
+      seguros: seguros === null ? null : segurosVisibles(seguros),
       nombre: perfil.displayName || SIN_DATO,
       titulo: perfil.professionalTitle ?? '',
       especialidadPrincipal: especialidadPrincipal(especialidades),
@@ -457,11 +532,11 @@ export class PractitionerProfile {
         // Los cuatro contactos del alta y la calle: la API ya los devolvía y la
         // ficha mostraba sólo uno de cada clase.
         celularPersonal: perfil.mobilePhone ?? '',
-        celularTrabajo: perfil.workMobilePhone ?? '',
-        fijoTrabajo: perfil.workLandline ?? '',
         correoPersonal: perfil.personalEmail ?? '',
         direccion: perfil.homeAddress?.lines ?? '',
         mapaDomicilio: enlaceAlMapa(perfil.homeAddress),
+        ubicacionDomicilio: puntoDelDomicilio(perfil.homeAddress),
+        municipioResidenciaId: perfil.residenceMunicipalityConceptId ?? null,
       },
       // A nombre de quién factura. Va sólo en la ficha propia: el contenedor
       // de la guía lo deja en `null` porque el NIT de un colega no es de quien
@@ -470,6 +545,11 @@ export class PractitionerProfile {
         nit: perfil.taxId ?? '',
         razonSocial: perfil.taxHolderName ?? '',
       },
+      consultorio: {
+        logoUrl,
+        nombre: sedes.find((sede) => sede.isOwnSite === true)?.name ?? '',
+      },
+      firmaYSello,
       actividadActual: afiliaciones.actual,
       experienciaHistorica: afiliaciones.historica,
       desde: perfil.createdAt ?? null,
@@ -483,7 +563,6 @@ export class PractitionerProfile {
     return perfil.specialties.map((especialidad: PractitionerSpecialty) => ({
       id: especialidad.id,
       nombre: label(etiquetas, especialidad.specialtyConceptId),
-      principal: especialidad.isPrimary,
       certificada: especialidad.boardCertified,
       alcance: especialidad.practiceScopeText ?? '',
       desde: especialidad.validFrom ?? null,
@@ -608,17 +687,13 @@ function sello(etiquetas: ConceptLabels, conceptId: string | undefined): StatusS
 /**
  * La especialidad con la que se presenta.
  *
- * La marcada como principal; si ninguna lo está, la primera vigente. Sin
- * ninguna vigente no se cae a una pasada: presentar a alguien con una
+ * La primera vigente, en el orden en que llegan. Hasta el 23/09/2026 era la
+ * marcada como principal; el médico pidió que ninguna se distinguiera (D-01).
+ * Sin ninguna vigente no se cae a una pasada: presentar a alguien con una
  * especialidad que dejó de ejercer es decir algo falso.
  */
 function especialidadPrincipal(especialidades: readonly EspecialidadVisible[]): string {
-  return (
-    especialidades.find((especialidad) => especialidad.principal && especialidad.hasta === null)
-      ?.nombre ??
-    especialidades.find((especialidad) => especialidad.hasta === null)?.nombre ??
-    ''
-  );
+  return especialidades.find((especialidad) => especialidad.hasta === null)?.nombre ?? '';
 }
 
 /** Milisegundos de una fecha opcional; las ausentes van al fondo del orden. */
@@ -662,6 +737,15 @@ function afiliacionesDe(perfil: OwnPractitionerProfile): {
  * meridiano de Greenwich, y un enlace al golfo de Guinea es peor que ningún
  * enlace.
  */
+/** Las coordenadas del domicilio, con el mismo criterio que {@link enlaceAlMapa}. */
+function puntoDelDomicilio(direccion: OwnAddress | undefined): { lat: number; lng: number } | null {
+  if (direccion === undefined) return null;
+  const { latitude, longitude } = direccion;
+  if (latitude == null || longitude == null) return null;
+  if (latitude === 0 && longitude === 0) return null;
+  return { lat: latitude, lng: longitude };
+}
+
 function enlaceAlMapa(direccion: OwnAddress | undefined): string | null {
   if (direccion === undefined) return null;
   const { latitude, longitude } = direccion;
@@ -694,14 +778,19 @@ function serieMensual(serie: readonly MonthlyCount[] | undefined): readonly Punt
   if (serie === undefined) {
     return [];
   }
-  return serie.map(({ month, count }) => {
+  return serie.map(({ month, count, insuredCount }) => {
     const [anio, mes] = month.split('-').map(Number);
     const fecha = new Date(anio ?? 1970, (mes ?? 1) - 1, 1);
+    // Con seguro no puede pasar del total del mes: un dato inconsistente se
+    // recorta en vez de dibujar un «sin seguro» negativo.
+    const conSeguro =
+      insuredCount === undefined ? undefined : Math.min(Math.max(insuredCount, 0), count);
     return {
       clave: month,
       etiqueta: MES_CORTO.format(fecha).replace('.', ''),
       etiquetaLarga: MES_LARGO.format(fecha),
       valor: count,
+      ...(conSeguro === undefined ? {} : { conSeguro, sinSeguro: count - conSeguro }),
     };
   });
 }
@@ -806,6 +895,30 @@ function sedeVisible(sede: PracticeSite): SedeVisible {
         ? null
         : { lat: sede.latitude, lng: sede.longitude },
   };
+}
+
+/**
+ * Una fila por aseguradora, en orden alfabético.
+ *
+ * La API devuelve una fila por **red**, y una aseguradora puede tener al
+ * profesional en dos redes: sin juntarlas, la ficha diría dos veces el mismo
+ * seguro. Las redes quedan juntas en `red`.
+ */
+export function segurosVisibles(
+  redes: readonly PractitionerInsuranceNetwork[],
+): readonly SeguroVisible[] {
+  const porAseguradora = new Map<string, SeguroVisible>();
+  for (const red of redes) {
+    const previa = porAseguradora.get(red.carrierId);
+    porAseguradora.set(red.carrierId, {
+      id: red.carrierId,
+      aseguradora: red.carrierName,
+      red: previa ? `${previa.red} · ${red.networkName}` : red.networkName,
+    });
+  }
+  return [...porAseguradora.values()].sort((a, b) =>
+    a.aseguradora.localeCompare(b.aseguradora, 'es'),
+  );
 }
 
 /**

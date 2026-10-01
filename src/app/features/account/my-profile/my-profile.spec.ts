@@ -1,9 +1,11 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
+import { of } from 'rxjs';
 
 import { SessionStore } from '../../../core/auth/session.store';
+import { LoyaltyClient } from '../../../core/data-access/loyalty/loyalty.client';
 import { resolverEstadosDeCaso } from '../../../../testing/case-status';
 import { MyProfile } from './my-profile';
 
@@ -47,6 +49,22 @@ const RESUMEN_SIN_VERIFICAR = {
   personStatus: ESTADO,
   identityVerified: false,
 };
+
+/**
+ * Doble de la billetera: la última pestaña la monta y pediría `/loyalty/me`.
+ *
+ * Sin membresía, que es el estado más común y no llama a nada más. Lo que la
+ * billetera hace con sus datos lo prueba su propio spec.
+ */
+function billeteraSinPrograma(): { provide: typeof LoyaltyClient; useValue: unknown } {
+  return {
+    provide: LoyaltyClient,
+    useValue: {
+      miMembresia: () => of(null),
+      misMovimientos: () => of({ movimientos: [], nextCursor: null }),
+    },
+  };
+}
 
 /**
  * Atiende la lectura del perfil completo, que la tarjeta pide junto al resumen.
@@ -226,6 +244,52 @@ describe('MyProfile', () => {
       expect(texto).toContain('Carlos Mamani');
       expect(texto).toContain('+591 70055443');
       expect(texto).toContain('Tutor legal');
+    });
+
+    /**
+     * Pedido del propietario del 24/09/2026: separar el seguro del tutor en
+     * dos categorías. Antes eran una sola pestaña «Seguros y tutores» con dos
+     * listas adentro; ahora son dos pestañas, y cada una sólo dibuja lo suyo
+     * — no basta con que el texto junto de todas las pestañas contenga los dos
+     * datos, como prueban los dos casos de arriba.
+     */
+    it('«Seguros» y «Tutores» son pestañas separadas: cada una sólo muestra lo suyo', () => {
+      http.expectOne('/profiles/patients/me/summary').flush(RESUMEN);
+      http
+        .expectOne((r) => r.url === '/terminology/concepts')
+        .flush({ items: [], count: 0 });
+      const señal = (
+        fixture.componentInstance as unknown as Record<string, { set: (v: unknown) => void }>
+      )['perfil'];
+      señal.set({
+        personId: 'per-1',
+        patientProfileId: 'pp-1',
+        identityVerified: false,
+        coverages: [{ carrierName: 'Alianza Vida Seguros', isPublic: false, verified: false }],
+        guardians: [{ displayName: 'Carlos Mamani', isEmergencyContact: true, isLegalGuardian: true }],
+      });
+      fixture.detectChanges();
+
+      const raiz = fixture.nativeElement as HTMLElement;
+      const pestanas = [...raiz.querySelectorAll<HTMLButtonElement>('[role="tab"]')];
+      expect(pestanas.map((p) => p.textContent?.trim())).toEqual([
+        'Datos personales',
+        'Contacto',
+        'Facturación',
+        'Seguros',
+        'Tutores',
+        'Mis puntos',
+      ]);
+
+      pestanas[3].click();
+      fixture.detectChanges();
+      expect(raiz.textContent).toContain('Alianza Vida Seguros');
+      expect(raiz.textContent).not.toContain('Carlos Mamani');
+
+      pestanas[4].click();
+      fixture.detectChanges();
+      expect(raiz.textContent).toContain('Carlos Mamani');
+      expect(raiz.textContent).not.toContain('Alianza Vida Seguros');
     });
 
     /**
@@ -698,7 +762,12 @@ describe('MyProfile · el enlace a editar los datos propios', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [MyProfile],
-      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        billeteraSinPrograma(),
+      ],
     }).compileComponents();
 
     http = TestBed.inject(HttpTestingController);
@@ -749,13 +818,92 @@ describe('MyProfile · el enlace a editar los datos propios', () => {
     expect(raiz.querySelector('[data-testid="mi-perfil-editor"]')).toBeNull();
 
     const boton = enlaceDeEdicion();
-    // Es un botón de lápiz (pedido del 09/09/2026): el nombre va en
-    // `aria-label`, no en el texto, y el dibujo es el glifo `edit` del set.
-    expect(boton?.getAttribute('aria-label')).toBe('Editar');
+    // Lápiz y nombre a la vista (D-05, 22/09/2026): el glifo `edit` del set y
+    // «Editar perfil» escrito (30/09/2026), que es también su nombre
+    // accesible. Ya no es un botón de sólo ícono.
+    expect(boton?.textContent?.trim()).toBe('Editar perfil');
     expect(boton?.querySelector('svg')).not.toBeNull();
+    expect(boton?.classList.contains('btn--icon-only')).toBe(false);
     // Un botón, no un enlace: no lleva a ninguna parte.
     expect(boton?.tagName).toBe('BUTTON');
     expect(boton?.getAttribute('href')).toBeNull();
+  });
+
+  /** Responde lo que la ficha pide al entrar, y la deja pintada. */
+  function pintarLaFicha(): void {
+    http.expectOne('/profiles/patients/me/summary').flush(RESUMEN);
+    http
+      .expectOne((r) => r.url === '/terminology/concepts')
+      .flush({ items: [], count: 0, limit: 50 });
+    fixture.detectChanges();
+  }
+
+  function pestanasDeLaFicha(): HTMLButtonElement[] {
+    return [
+      ...(fixture.nativeElement as HTMLElement).querySelectorAll<HTMLButtonElement>('[role="tab"]'),
+    ];
+  }
+
+  /**
+   * N-03. «Mis puntos» deja de ser una pantalla aparte con su propia cabecera
+   * y pasa a ser una pestaña más de la tarjeta: la misma billetera, sin el
+   * título repetido. Desde el 24/09/2026, con «Seguros» y «Tutores» separadas,
+   * es la SEXTA y última.
+   */
+  describe('«Mis puntos» como sexta pestaña', () => {
+    const PACIENTE = { sub: 'u-1', roles: ['USER', 'PATIENT'], tenants: ['t-1'], pid: 'pp-1' };
+
+    it('la ficha tiene seis pestañas y la última es «Mis puntos»', () => {
+      montar(PACIENTE);
+      pintarLaFicha();
+
+      const pestanas = pestanasDeLaFicha();
+      expect(pestanas.map((p) => p.textContent?.trim())).toEqual([
+        'Datos personales',
+        'Contacto',
+        'Facturación',
+        'Seguros',
+        'Tutores',
+        'Mis puntos',
+      ]);
+      // Se entra por «Datos personales», como siempre.
+      expect(pestanas[0].getAttribute('aria-selected')).toBe('true');
+    });
+
+    it('abrirla muestra la billetera dentro de la tarjeta, sin cabecera duplicada', () => {
+      montar(PACIENTE);
+      pintarLaFicha();
+
+      pestanasDeLaFicha()[5].click();
+      fixture.detectChanges();
+
+      const raiz = fixture.nativeElement as HTMLElement;
+      const billetera = raiz.querySelector('[data-testid="mi-perfil-puntos"]');
+      expect(billetera).not.toBeNull();
+      expect(billetera?.querySelector('app-page-header')).toBeNull();
+      // Una sola cabecera en la pantalla: la de «Mi perfil».
+      expect(raiz.querySelectorAll('app-page-header').length).toBe(1);
+      expect(billetera?.textContent).toContain('Todavía no hay un programa');
+    });
+
+    it('«?pestana=puntos» abre la billetera al entrar: la ruta vieja sigue llegando', async () => {
+      await TestBed.inject(Router).navigate(['/'], { queryParams: { pestana: 'puntos' } });
+      montar(PACIENTE);
+      pintarLaFicha();
+
+      expect(pestanasDeLaFicha()[5].getAttribute('aria-selected')).toBe('true');
+      expect(
+        (fixture.nativeElement as HTMLElement).querySelector('[data-testid="mi-perfil-puntos"]'),
+      ).not.toBeNull();
+    });
+
+    it('una pestaña que no existe en la URL no rompe nada: se entra por la primera', async () => {
+      await TestBed.inject(Router).navigate(['/'], { queryParams: { pestana: 'zzz' } });
+      montar(PACIENTE);
+      pintarLaFicha();
+
+      expect(pestanasDeLaFicha()[0].getAttribute('aria-selected')).toBe('true');
+    });
   });
 
   /**
@@ -1059,6 +1207,15 @@ describe('MyProfile · las etiquetas del perfil sobreviven a las del resumen', (
     expect(raiz.querySelector('[data-testid="mi-perfil-municipio"]')?.textContent?.trim()).toBe(
       'Santa Cruz de la Sierra',
     );
+
+    // Y debajo, el mapa de residencia (30/09/2026): el mismo del médico, que
+    // pide su catálogo de departamentos y municipios al montarse.
+    expect(raiz.querySelector('[data-testid="mi-perfil-residencia"]')).not.toBeNull();
+    // Las dos lecturas van juntas: la primera que falla cancela la otra, y el
+    // mapa se queda sin dibujar —el municipio ya está escrito arriba—.
+    const municipios = http.expectOne('/terminology/value-sets?code=VS_BO_MUNICIPALITY');
+    http.expectOne('/terminology/value-sets?code=VS_BO_DEPARTMENT').flush([]);
+    if (!municipios.cancelled) municipios.flush([]);
   });
 });
 

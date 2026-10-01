@@ -1,0 +1,218 @@
+✔ formulario por páginas: las 6 pantallas lo dibujan — /auth/register/practitioner · sin sesión | /auth/register/organization · sin sesión | /auth/register/laboratory · sin sesión | /auth/register/imaging-center · sin sesión | /design-system · sin sesión | /auth/register/patient · sin sesión
+✔ formulario por páginas, /auth/register/practitioner · sin sesión: la botonera es idéntica a la de antes
+✔ formulario por páginas, /auth/register/practitioner · sin sesión: ningún comentario de la justificación llega a la página
+✔ formulario por páginas, /auth/register/organization · sin sesión: la botonera es idéntica a la de antes
+✔ formulario por páginas, /auth/register/organization · sin sesión: ningún comentario de la justificación llega a la página
+✔ formulario por páginas, /auth/register/laboratory · sin sesión: la botonera es idéntica a la de antes
+✔ formulario por páginas, /auth/register/laboratory · sin sesión: ningún comentario de la justificación llega a la página
+✔ formulario por páginas, /auth/register/imaging-center · sin sesión: la botonera es idéntica a la de antes
+✔ formulario por páginas, /auth/register/imaging-center · sin sesión: ningún comentario de la justificación llega a la página
+✔ formulario por páginas, /design-system · sin sesión: la botonera es idéntica a la de antes
+✔ formulario por páginas, /design-system · sin sesión: ningún comentario de la justificación llega a la página
+✔ formulario por páginas, /auth/register/patient · sin sesión: la botonera es idéntica a la de antes
+✔ formulario por páginas, /auth/register/patient · sin sesión: ningún comentario de la justificación llega a la página
+✔ Editar 1440-claro: dice «Editar»
+✔ Editar 1440-claro: conserva el lápiz
+✔ Editar 1440-claro: ya no es botón de sólo ícono
+✔ Editar 1440-claro: entra entero en la pantalla
+✔ Editar 1440-claro: la página no desborda más que antes — antes 0 px, después 0 px
+✔ Editar: sigue abriendo el formulario acá mismo
+✔ Editar 1440-oscuro: dice «Editar»
+✔ Editar 1440-oscuro: conserva el lápiz
+✔ Editar 1440-oscuro: ya no es botón de sólo ícono
+✔ Editar 1440-oscuro: entra entero en la pantalla
+✔ Editar 1440-oscuro: la página no desborda más que antes — antes 0 px, después 0 px
+✔ Editar 1920-claro: dice «Editar»
+✔ Editar 1920-claro: conserva el lápiz
+✔ Editar 1920-claro: ya no es botón de sólo ícono
+✔ Editar 1920-claro: entra entero en la pantalla
+✔ Editar 1920-claro: la página no desborda más que antes — antes 0 px, después 0 px
+✔ Editar 1024-claro: dice «Editar»
+✔ Editar 1024-claro: conserva el lápiz
+✔ Editar 1024-claro: ya no es botón de sólo ícono
+✔ Editar 1024-claro: entra entero en la pantalla
+✔ Editar 1024-claro: la página no desborda más que antes — antes 0 px, después 0 px
+✔ Editar 768-claro: dice «Editar»
+✔ Editar 768-claro: conserva el lápiz
+✔ Editar 768-claro: ya no es botón de sólo ícono
+✔ Editar 768-claro: entra entero en la pantalla
+✔ Editar 768-claro: la página no desborda más que antes — antes 0 px, después 0 px
+✔ Editar 390-claro: dice «Editar»
+✔ Editar 390-claro: conserva el lápiz
+✔ Editar 390-claro: ya no es botón de sólo ícono
+✔ Editar 390-claro: entra entero en la pantalla
+✔ Editar 390-claro: la página no desborda más que antes — antes 0 px, después 0 px
+✔ Editar 390-oscuro: dice «Editar»
+✔ Editar 390-oscuro: conserva el lápiz
+✔ Editar 390-oscuro: ya no es botón de sólo ícono
+✔ Editar 390-oscuro: entra entero en la pantalla
+✔ Editar 390-oscuro: la página no desborda más que antes — antes 0 px, después 0 px
+✔ Editar 360-claro: dice «Editar»
+✔ Editar 360-claro: conserva el lápiz
+✔ Editar 360-claro: ya no es botón de sólo ícono
+✔ Editar 360-claro: entra entero en la pantalla
+✔ Editar 360-claro: la página no desborda más que antes — antes 4 px, después 4 px
+✔ calendario 1440-claro: «Cerrar» dice su nombre
+✔ calendario 1440-claro: «Cerrar» conserva la cruz
+✔ calendario 1440-claro: las flechas del mes dicen Año, Mes, Mes, Año — Año,Mes,Mes,Año
+✔ calendario 1440-claro: conservan sus nombres completos — Año anterior,Mes anterior,Mes siguiente,Año siguiente
+✔ calendario 1440-claro: ningún botón del calendario queda de sólo ícono
+✔ calendario 1440-claro: el panel no desborda a lo ancho
+✔ calendario 1440-claro: «anterior» a la izquierda y «siguiente» a la derecha
+✔ calendario 1440-claro: las cuatro flechas van en un renglón — 1 renglones
+✔ calendario 1440-claro: las flechas de los años dicen «30 años» — 30 años,30 años
+✔ calendario 1440-claro: el panel de años no desborda a lo ancho
+✔ calendario 1440-claro: en los años, «anterior» a la izquierda y «siguiente» a la derecha
+✔ calendario 1440-claro: las dos flechas de los años van en un renglón — 1 renglones
+✔ hallazgo: un elemento colgado del <body> queda debajo del calendario modal
+✔ calendario 1440-oscuro: «Cerrar» dice su nombre
+✔ calendario 1440-oscuro: «Cerrar» conserva la cruz
+✔ calendario 1440-oscuro: las flechas del mes dicen Año, Mes, Mes, Año — Año,Mes,Mes,Año
+✔ calendario 1440-oscuro: conservan sus nombres completos — Año anterior,Mes anterior,Mes siguiente,Año siguiente
+✔ calendario 1440-oscuro: ningún botón del calendario queda de sólo ícono
+✔ calendario 1440-oscuro: el panel no desborda a lo ancho
+✔ calendario 1440-oscuro: «anterior» a la izquierda y «siguiente» a la derecha
+✔ calendario 1440-oscuro: las cuatro flechas van en un renglón — 1 renglones
+✔ calendario 1440-oscuro: las flechas de los años dicen «30 años» — 30 años,30 años
+✔ calendario 1440-oscuro: el panel de años no desborda a lo ancho
+✔ calendario 1440-oscuro: en los años, «anterior» a la izquierda y «siguiente» a la derecha
+✔ calendario 1440-oscuro: las dos flechas de los años van en un renglón — 1 renglones
+✔ calendario 1920-claro: «Cerrar» dice su nombre
+✔ calendario 1920-claro: «Cerrar» conserva la cruz
+✔ calendario 1920-claro: las flechas del mes dicen Año, Mes, Mes, Año — Año,Mes,Mes,Año
+✔ calendario 1920-claro: conservan sus nombres completos — Año anterior,Mes anterior,Mes siguiente,Año siguiente
+✔ calendario 1920-claro: ningún botón del calendario queda de sólo ícono
+✔ calendario 1920-claro: el panel no desborda a lo ancho
+✔ calendario 1920-claro: «anterior» a la izquierda y «siguiente» a la derecha
+✔ calendario 1920-claro: las cuatro flechas van en un renglón — 1 renglones
+✔ calendario 1920-claro: las flechas de los años dicen «30 años» — 30 años,30 años
+✔ calendario 1920-claro: el panel de años no desborda a lo ancho
+✔ calendario 1920-claro: en los años, «anterior» a la izquierda y «siguiente» a la derecha
+✔ calendario 1920-claro: las dos flechas de los años van en un renglón — 1 renglones
+✔ calendario 1024-claro: «Cerrar» dice su nombre
+✔ calendario 1024-claro: «Cerrar» conserva la cruz
+✔ calendario 1024-claro: las flechas del mes dicen Año, Mes, Mes, Año — Año,Mes,Mes,Año
+✔ calendario 1024-claro: conservan sus nombres completos — Año anterior,Mes anterior,Mes siguiente,Año siguiente
+✔ calendario 1024-claro: ningún botón del calendario queda de sólo ícono
+✔ calendario 1024-claro: el panel no desborda a lo ancho
+✔ calendario 1024-claro: «anterior» a la izquierda y «siguiente» a la derecha
+✔ calendario 1024-claro: las cuatro flechas van en un renglón — 1 renglones
+✔ calendario 1024-claro: las flechas de los años dicen «30 años» — 30 años,30 años
+✔ calendario 1024-claro: el panel de años no desborda a lo ancho
+✔ calendario 1024-claro: en los años, «anterior» a la izquierda y «siguiente» a la derecha
+✔ calendario 1024-claro: las dos flechas de los años van en un renglón — 1 renglones
+✔ calendario 768-claro: «Cerrar» dice su nombre
+✔ calendario 768-claro: «Cerrar» conserva la cruz
+✔ calendario 768-claro: las flechas del mes dicen Año, Mes, Mes, Año — Año,Mes,Mes,Año
+✔ calendario 768-claro: conservan sus nombres completos — Año anterior,Mes anterior,Mes siguiente,Año siguiente
+✔ calendario 768-claro: ningún botón del calendario queda de sólo ícono
+✔ calendario 768-claro: el panel no desborda a lo ancho
+✔ calendario 768-claro: «anterior» a la izquierda y «siguiente» a la derecha
+✔ calendario 768-claro: las cuatro flechas van en un renglón — 1 renglones
+✔ calendario 768-claro: las flechas de los años dicen «30 años» — 30 años,30 años
+✔ calendario 768-claro: el panel de años no desborda a lo ancho
+✔ calendario 768-claro: en los años, «anterior» a la izquierda y «siguiente» a la derecha
+✔ calendario 768-claro: las dos flechas de los años van en un renglón — 1 renglones
+✔ calendario 390-claro: «Cerrar» dice su nombre
+✔ calendario 390-claro: «Cerrar» conserva la cruz
+✔ calendario 390-claro: las flechas del mes dicen Año, Mes, Mes, Año — Año,Mes,Mes,Año
+✔ calendario 390-claro: conservan sus nombres completos — Año anterior,Mes anterior,Mes siguiente,Año siguiente
+✔ calendario 390-claro: ningún botón del calendario queda de sólo ícono
+✔ calendario 390-claro: el panel no desborda a lo ancho
+✔ calendario 390-claro: «anterior» a la izquierda y «siguiente» a la derecha
+✔ calendario 390-claro: las cuatro flechas van en un renglón — 1 renglones
+✔ calendario 390-claro: las flechas de los años dicen «30 años» — 30 años,30 años
+✔ calendario 390-claro: el panel de años no desborda a lo ancho
+✔ calendario 390-claro: en los años, «anterior» a la izquierda y «siguiente» a la derecha
+✔ calendario 390-claro: las dos flechas de los años van en un renglón — 1 renglones
+✔ calendario 390-oscuro: «Cerrar» dice su nombre
+✔ calendario 390-oscuro: «Cerrar» conserva la cruz
+✔ calendario 390-oscuro: las flechas del mes dicen Año, Mes, Mes, Año — Año,Mes,Mes,Año
+✔ calendario 390-oscuro: conservan sus nombres completos — Año anterior,Mes anterior,Mes siguiente,Año siguiente
+✔ calendario 390-oscuro: ningún botón del calendario queda de sólo ícono
+✔ calendario 390-oscuro: el panel no desborda a lo ancho
+✔ calendario 390-oscuro: «anterior» a la izquierda y «siguiente» a la derecha
+✔ calendario 390-oscuro: las cuatro flechas van en un renglón — 1 renglones
+✔ calendario 390-oscuro: las flechas de los años dicen «30 años» — 30 años,30 años
+✔ calendario 390-oscuro: el panel de años no desborda a lo ancho
+✔ calendario 390-oscuro: en los años, «anterior» a la izquierda y «siguiente» a la derecha
+✔ calendario 390-oscuro: las dos flechas de los años van en un renglón — 1 renglones
+✔ calendario 360-claro: «Cerrar» dice su nombre
+✔ calendario 360-claro: «Cerrar» conserva la cruz
+✔ calendario 360-claro: las flechas del mes dicen Año, Mes, Mes, Año — Año,Mes,Mes,Año
+✔ calendario 360-claro: conservan sus nombres completos — Año anterior,Mes anterior,Mes siguiente,Año siguiente
+✔ calendario 360-claro: ningún botón del calendario queda de sólo ícono
+✔ calendario 360-claro: el panel no desborda a lo ancho
+✔ calendario 360-claro: «anterior» a la izquierda y «siguiente» a la derecha
+✔ calendario 360-claro: las cuatro flechas van en un renglón — 1 renglones
+✔ calendario 360-claro: las flechas de los años dicen «30 años» — 30 años,30 años
+✔ calendario 360-claro: el panel de años no desborda a lo ancho
+✔ calendario 360-claro: en los años, «anterior» a la izquierda y «siguiente» a la derecha
+✔ calendario 360-claro: las dos flechas de los años van en un renglón — 1 renglones
+✔ vitrina, fecha y hora 1440-claro: «Cerrar» dice su nombre
+✔ vitrina, fecha y hora 1440-claro: las flechas dicen Año, Mes, Mes, Año — Año,Mes,Mes,Año
+✔ vitrina, fecha y hora 1440-claro: ningún botón queda de sólo ícono
+✔ vitrina, fecha y hora 1440-claro: las cuatro flechas van en un renglón — 1 renglones
+✔ vitrina, fecha y hora 1440-claro: el panel no desborda a lo ancho
+✔ vitrina, fecha y hora 390-claro: «Cerrar» dice su nombre
+✔ vitrina, fecha y hora 390-claro: las flechas dicen Año, Mes, Mes, Año — Año,Mes,Mes,Año
+✔ vitrina, fecha y hora 390-claro: ningún botón queda de sólo ícono
+✔ vitrina, fecha y hora 390-claro: las cuatro flechas van en un renglón — 1 renglones
+✔ vitrina, fecha y hora 390-claro: el panel no desborda a lo ancho
+✔ vitrina, fecha y hora 360-claro: «Cerrar» dice su nombre
+✔ vitrina, fecha y hora 360-claro: las flechas dicen Año, Mes, Mes, Año — Año,Mes,Mes,Año
+✔ vitrina, fecha y hora 360-claro: ningún botón queda de sólo ícono
+✔ vitrina, fecha y hora 360-claro: las cuatro flechas van en un renglón — 1 renglones
+✔ vitrina, fecha y hora 360-claro: el panel no desborda a lo ancho
+✔ mapa del editor, punto guardado 1440-claro: el botón dice «Quitar la ubicación»
+✔ mapa del editor, punto guardado 1440-claro: lleva su ícono
+✔ mapa del editor, punto guardado 1440-claro: ya no es botón de sólo ícono
+✔ mapa del editor, punto guardado 1440-claro: el nombre accesible empieza por el texto visible — Quitar la ubicación de tu casa
+✔ mapa del editor, sin confirmar 1440-claro: el botón dice «Quitar la ubicación»
+✔ mapa del editor, sin confirmar 1440-claro: lleva su ícono
+✔ mapa del editor, sin confirmar 1440-claro: ya no es botón de sólo ícono
+✔ mapa del editor, sin confirmar 1440-claro: el nombre accesible empieza por el texto visible — Quitar la ubicación de tu casa
+✔ mapa del editor, sin punto 1440-claro: el botón dice «Cerrar el mapa»
+✔ mapa del editor, sin punto 1440-claro: lleva su ícono
+✔ mapa del editor, sin punto 1440-claro: ya no es botón de sólo ícono
+✔ mapa del editor, sin punto 1440-claro: el nombre accesible empieza por el texto visible — el del texto
+✔ mapa del editor, punto guardado 390-claro: el botón dice «Quitar la ubicación»
+✔ mapa del editor, punto guardado 390-claro: lleva su ícono
+✔ mapa del editor, punto guardado 390-claro: ya no es botón de sólo ícono
+✔ mapa del editor, punto guardado 390-claro: el nombre accesible empieza por el texto visible — Quitar la ubicación de tu casa
+✔ mapa del editor, sin confirmar 390-claro: el botón dice «Quitar la ubicación»
+✔ mapa del editor, sin confirmar 390-claro: lleva su ícono
+✔ mapa del editor, sin confirmar 390-claro: ya no es botón de sólo ícono
+✔ mapa del editor, sin confirmar 390-claro: el nombre accesible empieza por el texto visible — Quitar la ubicación de tu casa
+✔ mapa del editor, sin punto 390-claro: el botón dice «Cerrar el mapa»
+✔ mapa del editor, sin punto 390-claro: lleva su ícono
+✔ mapa del editor, sin punto 390-claro: ya no es botón de sólo ícono
+✔ mapa del editor, sin punto 390-claro: el nombre accesible empieza por el texto visible — el del texto
+✔ alta del paciente, sin punto 1440-claro: el botón dice «Cerrar el mapa»
+✔ alta del paciente, sin punto 1440-claro: lleva su ícono
+✔ alta del paciente, sin punto 1440-claro: ya no es botón de sólo ícono
+✔ alta del paciente, sin punto 1440-claro: el nombre accesible empieza por el texto visible — Cerrar el mapa de tu domicilio
+✔ alta del paciente, sin confirmar 1440-claro: el botón dice «Quitar la ubicación»
+✔ alta del paciente, sin confirmar 1440-claro: lleva su ícono
+✔ alta del paciente, sin confirmar 1440-claro: ya no es botón de sólo ícono
+✔ alta del paciente, sin confirmar 1440-claro: el nombre accesible empieza por el texto visible — Quitar la ubicación de tu domicilio
+✔ alta del paciente, confirmada 1440-claro: el botón dice «Quitar la ubicación»
+✔ alta del paciente, confirmada 1440-claro: lleva su ícono
+✔ alta del paciente, confirmada 1440-claro: ya no es botón de sólo ícono
+✔ alta del paciente, confirmada 1440-claro: el nombre accesible empieza por el texto visible — Quitar la ubicación de tu domicilio
+✔ alta del paciente, sin punto 390-claro: el botón dice «Cerrar el mapa»
+✔ alta del paciente, sin punto 390-claro: lleva su ícono
+✔ alta del paciente, sin punto 390-claro: ya no es botón de sólo ícono
+✔ alta del paciente, sin punto 390-claro: el nombre accesible empieza por el texto visible — Cerrar el mapa de tu domicilio
+✔ alta del paciente, sin confirmar 390-claro: el botón dice «Quitar la ubicación»
+✔ alta del paciente, sin confirmar 390-claro: lleva su ícono
+✔ alta del paciente, sin confirmar 390-claro: ya no es botón de sólo ícono
+✔ alta del paciente, sin confirmar 390-claro: el nombre accesible empieza por el texto visible — Quitar la ubicación de tu domicilio
+✔ alta del paciente, confirmada 390-claro: el botón dice «Quitar la ubicación»
+✔ alta del paciente, confirmada 390-claro: lleva su ícono
+✔ alta del paciente, confirmada 390-claro: ya no es botón de sólo ícono
+✔ alta del paciente, confirmada 390-claro: el nombre accesible empieza por el texto visible — Quitar la ubicación de tu domicilio
+✔ sin errores de página ni de consola — avisos de CSP por scripts en línea, excluidos: 0
+✔ sin respuestas 4xx/5xx
+
+216/216 comprobaciones en verde (despues)

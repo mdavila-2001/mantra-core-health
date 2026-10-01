@@ -90,43 +90,23 @@
         <h3 class="dialog-title">
           {{ mode() === 'date-time' ? 'Seleccionar fecha y hora' : 'Seleccionar fecha' }}
         </h3>
-        <button app-button iconOnly variant="ghost" size="sm" (clicked)="close()" aria-label="Cerrar">
+        <!-- D-05: ícono y nombre. «Cerrar un diálogo» sería excepción del
+             ADR-0012 §3, pero el globo que exige se cuelga del <body> y queda
+             debajo de este <dialog> modal. -->
+        <button app-button variant="ghost" size="sm" (clicked)="close()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <line x1="18" y1="6" x2="6" y2="18" />
             <line x1="6" y1="6" x2="18" y2="18" />
           </svg>
+          Cerrar
         </button>
       </div>
 
+      <!-- D-05: las flechas llevan nombre por lo mismo que «Cerrar». Con el
+           nombre no entran en un renglón junto al mes: el mes va arriba —y
+           primero en el orden del teclado— y las flechas abajo. Cada una
+           conserva su nombre completo, que contiene el texto visible. -->
       <div class="calendar-nav">
-        @switch (panel()) {
-          @case ('days') {
-            <div class="nav-controls">
-              <button app-button iconOnly variant="ghost" size="sm" [disabled]="!canShiftYear(-1)" (clicked)="shiftYear(-1)" aria-label="Año anterior">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                  <polyline points="11 17 6 12 11 7" />
-                  <polyline points="18 17 13 12 18 7" />
-                </svg>
-              </button>
-              <button app-button iconOnly variant="ghost" size="sm" [disabled]="!canShiftMonth(-1)" (clicked)="shiftMonth(-1)" aria-label="Mes anterior">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                  <polyline points="15 18 9 12 15 6" />
-                </svg>
-              </button>
-            </div>
-          }
-          @case ('years') {
-            <div class="nav-controls">
-              <button app-button iconOnly variant="ghost" size="sm" [disabled]="!canShiftYearPage(-1)" (clicked)="shiftYearPage(-1)" aria-label="30 años anteriores">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                  <polyline points="11 17 6 12 11 7" />
-                  <polyline points="18 17 13 12 18 7" />
-                </svg>
-              </button>
-            </div>
-          }
-        }
-
         <div class="nav-selectors">
           <button
             #viewSwitch
@@ -146,12 +126,29 @@
         @switch (panel()) {
           @case ('days') {
             <div class="nav-controls">
-              <button app-button iconOnly variant="ghost" size="sm" [disabled]="!canShiftMonth(1)" (clicked)="shiftMonth(1)" aria-label="Mes siguiente">
+              <button app-button variant="ghost" size="sm" [disabled]="!canShiftYear(-1)" (clicked)="shiftYear(-1)" aria-label="Año anterior">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <polyline points="11 17 6 12 11 7" />
+                  <polyline points="18 17 13 12 18 7" />
+                </svg>
+                Año
+              </button>
+              <button app-button variant="ghost" size="sm" [disabled]="!canShiftMonth(-1)" (clicked)="shiftMonth(-1)" aria-label="Mes anterior">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <polyline points="15 18 9 12 15 6" />
+                </svg>
+                Mes
+              </button>
+            </div>
+            <div class="nav-controls">
+              <button app-button variant="ghost" size="sm" [disabled]="!canShiftMonth(1)" (clicked)="shiftMonth(1)" aria-label="Mes siguiente">
+                Mes
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                   <polyline points="9 18 15 12 9 6" />
                 </svg>
               </button>
-              <button app-button iconOnly variant="ghost" size="sm" [disabled]="!canShiftYear(1)" (clicked)="shiftYear(1)" aria-label="Año siguiente">
+              <button app-button variant="ghost" size="sm" [disabled]="!canShiftYear(1)" (clicked)="shiftYear(1)" aria-label="Año siguiente">
+                Año
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                   <polyline points="13 17 18 12 13 7" />
                   <polyline points="6 17 11 12 6 7" />
@@ -161,7 +158,17 @@
           }
           @case ('years') {
             <div class="nav-controls">
-              <button app-button iconOnly variant="ghost" size="sm" [disabled]="!canShiftYearPage(1)" (clicked)="shiftYearPage(1)" aria-label="30 años siguientes">
+              <button app-button variant="ghost" size="sm" [disabled]="!canShiftYearPage(-1)" (clicked)="shiftYearPage(-1)" aria-label="30 años anteriores">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <polyline points="11 17 6 12 11 7" />
+                  <polyline points="18 17 13 12 18 7" />
+                </svg>
+                30 años
+              </button>
+            </div>
+            <div class="nav-controls">
+              <button app-button variant="ghost" size="sm" [disabled]="!canShiftYearPage(1)" (clicked)="shiftYearPage(1)" aria-label="30 años siguientes">
+                30 años
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                   <polyline points="13 17 18 12 13 7" />
                   <polyline points="6 17 11 12 6 7" />

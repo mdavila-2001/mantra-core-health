@@ -19,12 +19,12 @@
  *
  * | Pasos del alta | Pestaña |
  * |---|---|
- * | nombre · documento · sexo y nacimiento · título profesional | Datos personales |
+ * | nombre · documento · sexo y nacimiento · título profesional · tus especialidades | Datos personales |
  * | contacto privado · contacto del trabajo · dónde vivís | Contacto |
  * | — (a nombre de quién factura) | Facturación |
  * | tu consultorio propio | Dónde atiendo |
- * | dónde estudió el título · tus títulos | Trayectoria |
- * | habilitación · respaldos · especialidades | Credenciales |
+ * | — (los cargos: dónde ejerció y dónde ejerce) | Trayectoria |
+ * | dónde estudió el título · habilitación · respaldos · tus títulos | Credenciales |
  * | — (lo que registró con la cuenta) | Actividad |
  *
  * Las dos últimas filas no salen del alta y tampoco se podían tirar: la
@@ -68,28 +68,29 @@ export const PESTANA_MEDICO = {
 } as const;
 
 /**
- * Las pestañas del **editor** del perfil médico: **las mismas de la ficha**.
+ * Las pestañas del **editor** del perfil médico: **las de la ficha menos
+ * «Actividad»**.
  *
  * Pedido del cliente, repetido el 2026-09-11: editar el perfil tiene que ser
  * «en varias pestañas». Hasta hoy el editor eran cuatro tarjetas apiladas con
  * cuatro botones de guardar, que es justo lo que prohíbe
  * `docs/components/composition-rules.md` §5.
  *
- * Son las de {@link PESTANAS_DEL_PERFIL_MEDICO}, las siete, en el mismo orden.
+ * Son las de {@link PESTANAS_DEL_PERFIL_MEDICO} en el mismo orden, salvo la
+ * última.
  *
- * ## «Actividad» está, y no tiene ni un campo
+ * ## «Actividad» no está, y en la ficha no tiene lápiz
  *
- * El doctor pidió el 20/09/2026 que «TODAS las pestañas sean editables, o sea
- * su información» (C-05). «Actividad» son cuatro contadores de lo que la
- * persona ya hizo, y un contador que se escribe a mano deja de contar: pasa a
- * ser una afirmación sin respaldo sobre actos clínicos. Así que no se hizo
- * editable **ni se dejó afuera**: la pestaña existe, enumera los cuatro con lo
- * que cuenta cada uno y dice qué hay que hacer para que el número se mueva
- * ({@link CONTADORES_DE_ACTIVIDAD}).
+ * Son cuatro contadores de lo que la persona ya hizo —encuentros, recetas,
+ * notas, documentos—, y un contador que se escribe a mano deja de contar.
  *
- * El desvío es deliberado y esta es la diferencia que importa: antes faltaba
- * la pestaña y quien la buscaba no encontraba nada ni sabía por qué; ahora la
- * encuentra y lee el motivo en la pantalla, no en un informe.
+ * Entre el 20/09/2026 y el 24/09/2026 el editor la tuvo, sin un solo campo y
+ * explicando por qué, porque el doctor había pedido que «TODAS las pestañas
+ * sean editables» (C-05). El cliente pidió el 24/09/2026 sacarla: «en el
+ * perfil del doctor no debe poder editarse actividad, porque es solo
+ * estadísticas». Una pestaña de edición donde no se edita nada seguía
+ * prometiendo que ahí algo se cambia. Ahora la ficha no ofrece el lápiz en
+ * «Actividad» (`pestanaDeEdicion` da `null`) y el editor no la tiene.
  *
  * ## «Dónde atiendo» volvió, y por qué
  *
@@ -128,13 +129,12 @@ export const PESTANAS_DEL_EDITOR_MEDICO = [
   PESTANAS_DEL_PERFIL_MEDICO[PESTANA_MEDICO.dondeAtiendo],
   PESTANAS_DEL_PERFIL_MEDICO[PESTANA_MEDICO.trayectoria],
   PESTANAS_DEL_PERFIL_MEDICO[PESTANA_MEDICO.credenciales],
-  PESTANAS_DEL_PERFIL_MEDICO[PESTANA_MEDICO.actividad],
 ] as const;
 
 /**
  * Los índices con nombre del editor. Desde el 20/09/2026 **son los mismos que
- * los de la ficha**: quien pulsa el lápiz en una pestaña llega a esa pestaña, y
- * el índice no hay que traducirlo. Se conservan como constante propia porque
+ * los de la ficha** para las seis que tiene: quien pulsa el lápiz en una
+ * pestaña llega a esa pestaña, y el índice no hay que traducirlo. Se conservan como constante propia porque
  * eso puede volver a dejar de ser cierto, y entonces el lugar donde arreglarlo
  * es uno solo.
  */
@@ -145,7 +145,6 @@ export const PESTANA_EDITOR = {
   dondeAtiendo: 3,
   trayectoria: 4,
   credenciales: 5,
-  actividad: 6,
 } as const;
 
 /**
@@ -180,9 +179,9 @@ export const CAMPO_DEL_ALTA_EN_PESTANA: Readonly<Record<string, number>> = {
   mobilePhone: PESTANA_MEDICO.contacto,
   personalEmail: PESTANA_MEDICO.contacto,
 
-  /* 5 · El contacto de tu trabajo */
-  workMobilePhone: PESTANA_MEDICO.contacto,
-  workLandline: PESTANA_MEDICO.contacto,
+  /* 5 · El contacto de tu trabajo.
+     El celular y el fijo pasaron a `CAMPOS_DEL_ALTA_SIN_PESTANA` el 23/09/2026
+     (D-03). El correo de trabajo se corrige en «Contacto» desde el 24/09/2026. */
   email: PESTANA_MEDICO.contacto,
 
   /* 6 · ¿Dónde vivís? */
@@ -203,12 +202,21 @@ export const CAMPO_DEL_ALTA_EN_PESTANA: Readonly<Record<string, number>> = {
 
   /* 8 · Tu título profesional y foto */
   profilePhotoBase64: PESTANA_MEDICO.personales,
+  /* 13 · Tu firma y tu sello (opcional). Imágenes —no una firma electrónica—
+     que el médico carga, cambia y quita desde «Datos personales», en la ficha y
+     en el editor. */
+  signatureImageBase64: PESTANA_MEDICO.personales,
+  sealImageBase64: PESTANA_MEDICO.personales,
   professionalTitle: PESTANA_MEDICO.personales,
-  professionalTitleEducation: PESTANA_MEDICO.trayectoria,
-  professionalTitleUniversity: PESTANA_MEDICO.trayectoria,
-  professionalTitleCountry: PESTANA_MEDICO.trayectoria,
-  professionalTitleCity: PESTANA_MEDICO.trayectoria,
-  professionalTitleFile: PESTANA_MEDICO.trayectoria,
+  /* Dónde estudió y sus títulos (paso 11) viven en «Credenciales» desde el
+     24/09/2026: son estudios, y «Trayectoria» son los cargos. El editor de
+     Trayectoria ofrecía el formulario de un título a quien venía a corregir
+     un cargo. */
+  professionalTitleEducation: PESTANA_MEDICO.credenciales,
+  professionalTitleUniversity: PESTANA_MEDICO.credenciales,
+  professionalTitleCountry: PESTANA_MEDICO.credenciales,
+  professionalTitleCity: PESTANA_MEDICO.credenciales,
+  professionalTitleFile: PESTANA_MEDICO.credenciales,
 
   /* 9 · Tu habilitación para ejercer */
   licenseNumber: PESTANA_MEDICO.credenciales,
@@ -220,11 +228,19 @@ export const CAMPO_DEL_ALTA_EN_PESTANA: Readonly<Record<string, number>> = {
   credentialAttachments: PESTANA_MEDICO.credenciales,
 
   /* 11 · Tus títulos */
-  academicTitles: PESTANA_MEDICO.trayectoria,
+  academicTitles: PESTANA_MEDICO.credenciales,
 
-  /* 12 · Tus especialidades */
-  specialtyPrimary: PESTANA_MEDICO.credenciales,
-  especialidadesExtra: PESTANA_MEDICO.credenciales,
+  /*
+   * 12 · Tus especialidades
+   *
+   * Se mudó de «Credenciales» a «Datos personales» (pedido del propietario,
+   * 24/09/2026): contestan «¿de qué es médico?», la misma pregunta que el
+   * título profesional, y no «¿con qué habilitación ejerce?», que es lo que
+   * queda en Credenciales junto con matrículas y respaldos. La ficha de
+   * lectura ya las mostraba junto a la identidad desde el 19/09/2026 (C-09);
+   * el editor era el único lugar donde seguían separadas de eso mismo.
+   */
+  especialidadesExtra: PESTANA_MEDICO.personales,
 };
 
 /**
@@ -244,4 +260,18 @@ export const CAMPOS_DEL_ALTA_SIN_PESTANA: Readonly<Record<string, string>> = {
     'ofrecer. Estuvo declarado como si viviera en «Datos personales» hasta el 21/09/2026, ' +
     'y ahí no estaba. Que la persona no pueda ver ni corregir lo que declaró en el alta es ' +
     'un hueco del contrato, no una decisión de diseño: queda registrado como Q-I5.',
+  workMobilePhone:
+    'Celular del trabajo. El médico pidió el 23/09/2026 que «Contacto» no tuviera datos ' +
+    'del trabajo (D-03): la ficha no lo muestra y el editor no lo ofrece. El alta lo sigue ' +
+    'preguntando y el dato se guarda; guardar el perfil no lo borra.',
+  workLandline:
+    'Fijo del trabajo. Mismo pedido del médico del 23/09/2026 (D-03): fuera de «Contacto», ' +
+    'en la ficha y en el editor. El alta lo sigue preguntando y el dato se guarda; guardar ' +
+    'el perfil no lo borra.',
+  workAddressLines:
+    'El alta la guarda como dirección laboral, separada del domicilio y del consultorio ' +
+    'propio, pero la ficha del médico todavía no la lee ni la muestra en ninguna pestaña.',
+  gpsTrabajo:
+    'El punto de mapa del lugar de trabajo se guarda con el alta; la ficha todavía no ' +
+    'lo devuelve ni lo dibuja en ninguna pestaña.',
 };

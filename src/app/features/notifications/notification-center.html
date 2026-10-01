@@ -86,6 +86,15 @@
                   />
                 </div>
               }
+
+              <!-- Las acciones que la notificación ofrece, sin salir de la
+                   bandeja. Van fuera del botón de la fila para no navegar. -->
+              <app-notification-actions
+                class="avisos__acciones"
+                [actions]="aviso.actions ?? []"
+                [destination]="aviso.destination"
+                (executed)="alEjecutarAccion(aviso)"
+              />
             </li>
           }
         </ul>

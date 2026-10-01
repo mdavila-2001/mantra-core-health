@@ -1,0 +1,105 @@
+/* Mobile-first: una columna; el carrito va debajo del catálogo, nunca al costado. */
+
+.tienda__busqueda,
+.tienda__origen {
+  margin-block-end: var(--sp-4);
+}
+
+.tienda__cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  margin-block-end: var(--sp-4);
+}
+
+.tienda__titulo {
+  margin: 0;
+  font-size: var(--fs-title);
+}
+
+.tienda__subtitulo {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.tienda__lista,
+.tienda__lista-farmacias {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  margin: 0 0 var(--sp-5) 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tienda__producto,
+.tienda__farmacia {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+}
+
+.tienda__producto-datos,
+.tienda__farmacia-datos {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  min-width: 0;
+}
+
+.tienda__producto-nombre,
+.tienda__farmacia-nombre {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.tienda__producto-secundario,
+.tienda__farmacia-secundario {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.tienda__cantidad {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.tienda__cantidad-valor {
+  min-inline-size: 1.5em;
+  text-align: center;
+}
+
+.tienda__pedir-con-receta {
+  color: var(--link-color, var(--text-primary));
+  font-size: var(--fs-caption);
+}
+
+.tienda__carrito {
+  padding: var(--sp-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--bg-subtle, var(--bg-surface));
+}
+
+.tienda__carrito-resumen,
+.tienda__carrito-vacio {
+  margin: 0 0 var(--sp-3) 0;
+  color: var(--text-secondary);
+}
+
+@media (min-width: 768px) {
+  .tienda__lista,
+  .tienda__lista-farmacias {
+    gap: var(--sp-4);
+  }
+}

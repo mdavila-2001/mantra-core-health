@@ -1,5 +1,5 @@
 <app-page-header
-  title="Pedidos de farmacia"
+  title="Solicitudes de retiro"
   subtitle="La bandeja del mostrador: lo que llega, lo que espera y lo que sale."
   [breadcrumbs]="breadcrumbs()"
 />
@@ -84,15 +84,13 @@
                     </app-badge>
                   </span>
                   <span class="bandeja__renglones">{{ resumenDe(pedido) }}</span>
+                  <!-- El medio sale del contrato. La dirección de ejemplo de la
+                       maqueta no se pinta en la tarjeta: se ve en el detalle. -->
                   @if (entregaDe(pedido); as entrega) {
                     <span class="bandeja__entrega">
                       <app-chip size="sm" [variant]="entrega.presentacion.tone">
                         {{ entrega.presentacion.label }}
                       </app-chip>
-                      <!-- El medio lo puso la maqueta: se dice, no se disimula. -->
-                      @if (entrega.esEjemplo) {
-                        <app-chip size="sm" variant="neutral">{{ notaDeEjemplo }}</app-chip>
-                      }
                     </span>
                   }
                   <span class="bandeja__fila bandeja__pie">
@@ -137,15 +135,13 @@
                     </app-badge>
                   </span>
                   <span class="bandeja__renglones">{{ resumenDe(pedido) }}</span>
+                  <!-- El medio sale del contrato. La dirección de ejemplo de la
+                       maqueta no se pinta en la tarjeta: se ve en el detalle. -->
                   @if (entregaDe(pedido); as entrega) {
                     <span class="bandeja__entrega">
                       <app-chip size="sm" [variant]="entrega.presentacion.tone">
                         {{ entrega.presentacion.label }}
                       </app-chip>
-                      <!-- El medio lo puso la maqueta: se dice, no se disimula. -->
-                      @if (entrega.esEjemplo) {
-                        <app-chip size="sm" variant="neutral">{{ notaDeEjemplo }}</app-chip>
-                      }
                     </span>
                   }
                   <span class="bandeja__fila bandeja__pie">

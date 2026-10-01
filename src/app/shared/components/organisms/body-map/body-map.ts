@@ -1,6 +1,23 @@
-import { ChangeDetectionStrategy, Component, computed, input, model } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, model, signal } from '@angular/core';
 
-import { CUERPO_VIEW_BOX, SILUETAS_DEL_CUERPO } from './body-zones.geometry';
+import { SegmentedControl } from '../../molecules/segmented-control/segmented-control';
+import type { SegmentedOption } from '../../molecules/segmented-control/segmented-control.types';
+import {
+  VISTAS_DEL_CUERPO,
+  VISTAS_DEL_CUERPO_FEMENINA,
+  VISTAS_DEL_CUERPO_MASCULINA,
+  type IdDeVista,
+  type VistaDelCuerpo,
+} from './body-zones.geometry';
+
+/**
+ * El sexo con el que se dibuja la silueta, o `undefined` para la neutra.
+ *
+ * No es un dato clínico: es sólo qué proporción de cuerpo dibujar. Quien
+ * monta el organismo decide de dónde sale —el sexo asignado al nacer del
+ * propio perfil, típicamente— y con qué hacer si no lo sabe (acá, la neutra).
+ */
+export type SexoDeLaSilueta = 'MALE' | 'FEMALE';
 
 /**
  * Una zona del cuerpo que se puede elegir, tal como la trae quien monta el
@@ -15,7 +32,23 @@ export interface ZonaElegible {
 /** Una zona ya lista para pintar: su dato y su contorno, juntos. */
 interface ZonaDibujable extends ZonaElegible {
   readonly d: string;
+  readonly centros: readonly (readonly [number, number])[];
+  readonly acercaA?: IdDeVista;
 }
+
+/** Una vista con las zonas recibidas que tienen forma en ella. */
+interface VistaDibujable {
+  readonly vista: VistaDelCuerpo;
+  readonly zonas: readonly ZonaDibujable[];
+}
+
+/** Para que cada silueta tenga su propio degradado aunque haya dos en la página. */
+let siguienteSilueta = 0;
+
+/** Los `id` de zona que tienen forma en alguna vista. El resto va como pastilla. */
+export const ZONAS_CON_SILUETA: ReadonlySet<string> = new Set(
+  VISTAS_DEL_CUERPO.flatMap((vista) => vista.zonas.map((zona) => zona.id)),
+);
 
 /**
  * La silueta del cuerpo para señalar dónde duele (P-01, doctor 22/09/2026).
@@ -27,13 +60,36 @@ interface ZonaDibujable extends ZonaElegible {
  * pidió «como el mapa de Bolivia que se tiene»: este organismo es ese molde
  * (`organisms/department-map`) aplicado a una figura humana.
  *
+ * ## Tres vistas
+ *
+ * De frente, de espaldas y la cara de cerca (`body-zones.geometry.ts`). La
+ * espalda existe porque la nuca, la cintura y los glúteos no se ven de frente,
+ * y son justo las zonas que llevan a traumatología, urología o proctología. La
+ * cara existe porque a escala de cuerpo entero los ojos, la nariz y la boca
+ * miden menos que un dedo.
+ *
+ * **Tocar la cabeza de frente acerca la cara**, además de elegirla: es lo que
+ * uno espera de un dibujo que se puede tocar, y deja a mano ojos, oídos, nariz
+ * y boca sin buscar el selector. El selector sigue estando para volver.
+ *
+ * Si la zona elegida desde afuera (una pastilla, un síntoma) no está en la
+ * vista puesta, la figura se da vuelta sola a la primera vista que la tenga:
+ * lo elegido siempre está a la vista.
+ *
+ * ## Sexo de la silueta (P-04, 2026-09-25)
+ *
+ * Las tres vistas existen además en proporción masculina y femenina —hombro,
+ * cintura y cadera, nada más—: quien monta el organismo pasa `sexo` con el
+ * del propio perfil, y sin ese dato se ve la neutra de siempre. Ver
+ * {@link SexoDeLaSilueta}.
+ *
  * ## El equivalente por teclado no es un añadido, es la mitad del control
  *
  * Cada zona es un `<path>` con `role="button"`, su `tabindex`, su `aria-label`
  * con el nombre completo y su `aria-pressed`. Se recorre con el tabulador de
- * arriba abajo —el orden de `SILUETAS_DEL_CUERPO`— y se activa con Enter o con
- * la barra. No hay una «versión accesible» aparte: es el mismo control, operado
- * de dos maneras.
+ * arriba abajo y se activa con Enter o con la barra. El selector de vista es un
+ * `radiogroup` (`app-segmented-control`). No hay una «versión accesible»
+ * aparte: es el mismo control, operado de dos maneras.
  *
  * **La elección no se comunica sólo por color.** Quien no distingue el relleno
  * ve el trazo grueso de la zona elegida, y quien no ve nada de eso lee el
@@ -49,6 +105,7 @@ interface ZonaDibujable extends ZonaElegible {
  */
 @Component({
   selector: 'app-body-map',
+  imports: [SegmentedControl],
   templateUrl: './body-map.html',
   styleUrl: './body-map.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -66,25 +123,144 @@ export class BodyMap {
   /** Prefijo del `data-testid` de cada zona; el sufijo es su `id`. */
   readonly testId = input('body-map');
 
-  protected readonly viewBox = CUERPO_VIEW_BOX;
+  /**
+   * Zonas que nombra lo que la persona escribió o dictó.
+   *
+   * Se iluminan **sin quedar elegidas**: elegir es tocar, y esto es la figura
+   * devolviendo «te entendí esto» mientras se habla. Quien lo monta decide qué
+   * zonas son (ver `symptom-check`); acá sólo se pintan y se nombran.
+   */
+  readonly marcadas = input<readonly string[]>([]);
 
   /**
-   * Las zonas que se dibujan: las recibidas que además tienen silueta, en el
-   * orden de las siluetas.
+   * El sexo con el que se dibuja la figura (P-04, 2026-09-25).
    *
-   * El recorrido es sobre las **siluetas** y no sobre `zonas` para que el
-   * orden del tabulador sea siempre el mismo —de arriba abajo— venga como
-   * venga la lista. Una zona sin silueta («piel», «ánimo», «general») no se
-   * dibuja: sigue ofreciéndola quien monta el organismo, como pastilla.
+   * `'MALE'` y `'FEMALE'` cambian la proporción de hombro, cintura y cadera
+   * (`body-zones.geometry.ts`); sin ese dato —perfil `INTERSEX`/`UNKNOWN`,
+   * sin sesión, o todavía sin resolver— se dibuja la neutra de siempre. La
+   * cabeza, los brazos, las piernas y la cara son la misma figura en las
+   * tres: no es lo que distingue una silueta de otra en este dibujo
+   * esquemático.
    */
-  protected readonly dibujables = computed<readonly ZonaDibujable[]>(() => {
+  readonly sexo = input<SexoDeLaSilueta | undefined>(undefined);
+
+  /** Las vistas de la proporción que corresponde a {@link sexo}. */
+  private readonly vistasDelSexo = computed<readonly VistaDelCuerpo[]>(() => {
+    switch (this.sexo()) {
+      case 'MALE':
+        return VISTAS_DEL_CUERPO_MASCULINA;
+      case 'FEMALE':
+        return VISTAS_DEL_CUERPO_FEMENINA;
+      default:
+        return VISTAS_DEL_CUERPO;
+    }
+  });
+
+  /**
+   * Los `id` de los degradados de esta instancia: el volumen (costados más
+   * oscuros), la luz (de arriba a la izquierda) y el relleno de la elegida.
+   * Por instancia, para que dos siluetas en la misma página no se los pisen.
+   */
+  private readonly numero = siguienteSilueta++;
+  protected readonly idDelVolumen = `body-map-volumen-${this.numero}`;
+  protected readonly idDeLaLuz = `body-map-luz-${this.numero}`;
+  protected readonly idDeLaElegida = `body-map-elegida-${this.numero}`;
+
+  /** La zona bajo el puntero o con el foco, para nombrarla antes de tocarla. */
+  private readonly apuntada = signal<string | null>(null);
+
+  /** La vista que eligió la persona con el selector (o con el acercamiento). */
+  private readonly vistaPedida = signal<IdDeVista>('frente');
+
+  /**
+   * La zona que estaba elegida cuando se pidió la vista.
+   *
+   * Mientras siga siendo la misma, **manda la vista pedida**: quien está en la
+   * cara con los ojos elegidos y toca «Frente» quiere ver el frente, aunque los
+   * ojos no estén ahí. Sin esto la figura volvía sola a la cara y el selector
+   * parecía roto (reporte del cliente, 24/09/2026). Si la elegida cambia
+   * después —una pastilla, un chip—, vuelve a regir «lo elegido a la vista».
+   */
+  private readonly elegidaAlPedirVista = signal<string | null | undefined>(undefined);
+
+  /**
+   * Las vistas que tienen algo que pulsar, cada una con sus zonas en el orden
+   * de la geometría (el del tabulador, de arriba abajo). Una zona sin forma
+   * («piel», «ánimo», «general») no se dibuja: la ofrece quien monta el
+   * organismo, como pastilla.
+   */
+  protected readonly vistas = computed<readonly VistaDibujable[]>(() => {
     const porId = new Map(this.zonas().map((zona) => [zona.id, zona]));
-    return SILUETAS_DEL_CUERPO.flatMap((silueta) => {
-      const zona = porId.get(silueta.id);
-      if (zona === undefined) return [];
-      return [{ ...zona, d: silueta.d }];
+    return this.vistasDelSexo().flatMap((vista) => {
+      const zonas = vista.zonas.flatMap((silueta) => {
+        const zona = porId.get(silueta.id);
+        if (zona === undefined) return [];
+        return [{ ...zona, d: silueta.d, centros: silueta.centros, acercaA: silueta.acercaA }];
+      });
+      return zonas.length > 0 ? [{ vista, zonas }] : [];
     });
   });
+
+  /**
+   * La vista que se muestra: la pedida, salvo que lo elegido **cambie** y no
+   * esté en ella; entonces, la primera que lo tenga.
+   */
+  protected readonly vista = computed<VistaDibujable | null>(() => {
+    const vistas = this.vistas();
+    const pedida = vistas.find((v) => v.vista.id === this.vistaPedida()) ?? vistas[0] ?? null;
+    const elegida = this.value();
+    if (pedida === null || elegida === null) return pedida;
+    if (elegida === this.elegidaAlPedirVista()) return pedida;
+    if (pedida.zonas.some((zona) => zona.id === elegida)) return pedida;
+    return vistas.find((v) => v.zonas.some((zona) => zona.id === elegida)) ?? pedida;
+  });
+
+  /**
+   * Dónde va el marcador de la elegida: un punto por cada parte de la zona en
+   * la vista puesta (las dos manos llevan dos). Vacío si no hay elegida o si
+   * no está en esta vista.
+   */
+  protected readonly centrosDeLaElegida = computed<readonly (readonly [number, number])[]>(() => {
+    const elegida = this.value();
+    if (elegida === null) return [];
+    return this.vista()?.zonas.find((zona) => zona.id === elegida)?.centros ?? [];
+  });
+
+  protected readonly opcionesDeVista = computed<readonly SegmentedOption<IdDeVista>[]>(() =>
+    this.vistas().map(({ vista }) => ({ value: vista.id, label: vista.nombre })),
+  );
+
+  private readonly marcadasPorId = computed(() => new Set(this.marcadas()));
+
+  /** Las marcadas, en palabras y en el orden de la tabla: «Espalda y Piel y pelo». */
+  protected readonly nombresMarcados = computed<string | null>(() => {
+    const marcadas = this.marcadasPorId();
+    const nombres = this.zonas()
+      .filter((zona) => marcadas.has(zona.id))
+      .map((zona) => zona.nombre);
+    if (nombres.length === 0) return null;
+    return nombres.length === 1 ? nombres[0] : `${nombres.slice(0, -1).join(', ')} y ${nombres.at(-1)}`;
+  });
+
+  /** El nombre de la zona apuntada, salvo que ya sea la elegida (eso ya se dice abajo). */
+  protected readonly nombreApuntado = computed<string | null>(() => {
+    const apuntada = this.apuntada();
+    if (apuntada === null || apuntada === this.value()) return null;
+    return this.zonas().find((zona) => zona.id === apuntada)?.nombre ?? null;
+  });
+
+  protected estaMarcada(id: string): boolean {
+    return this.marcadasPorId().has(id);
+  }
+
+  /** El nombre que se anuncia: el de la zona y, si lo contado la nombra, eso también. */
+  protected nombreAccesible(zona: ZonaDibujable): string {
+    return this.estaMarcada(zona.id) ? `${zona.nombre} (por lo que contaste)` : zona.nombre;
+  }
+
+  protected apuntar(id: string | null): void {
+    this.apuntada.set(id);
+  }
 
   /** El nombre de la elegida, para decirlo con palabras además de con el dibujo. */
   protected readonly nombreElegido = computed<string | null>(() => {
@@ -93,15 +269,33 @@ export class BodyMap {
     return this.zonas().find((zona) => zona.id === elegida)?.nombre ?? null;
   });
 
+  protected cambiarVista(id: IdDeVista): void {
+    // La zona apuntada desaparece con la vista y nunca avisa que el puntero se
+    // fue: sin esto su nombre quedaba flotando sobre la vista nueva.
+    this.apuntada.set(null);
+    this.vistaPedida.set(id);
+    this.elegidaAlPedirVista.set(this.value());
+  }
+
   /**
    * Elige una zona, o la suelta si ya estaba elegida.
    *
    * Suelta a propósito, igual que las pastillas de `symptom-check`: es un
    * botón de dos estados, no un radio, y sin la vuelta atrás no habría forma
    * de decir «no era acá» sin elegir otra parte.
+   *
+   * La zona que acerca otra vista (la cabeza de frente) no suelta: acerca y
+   * queda elegida, que es lo que se quiso al tocarla.
    */
-  protected elegir(id: string): void {
-    this.value.set(this.value() === id ? null : id);
+  protected elegir(zona: ZonaDibujable): void {
+    if (zona.acercaA !== undefined && this.vistas().some((v) => v.vista.id === zona.acercaA)) {
+      this.apuntada.set(null);
+      this.vistaPedida.set(zona.acercaA);
+      this.value.set(zona.id);
+      this.elegidaAlPedirVista.set(zona.id);
+      return;
+    }
+    this.value.set(this.value() === zona.id ? null : zona.id);
   }
 
   /**
@@ -111,8 +305,8 @@ export class BodyMap {
    * nativo: sin este `preventDefault`, la barra haría scroll y la figura se
    * iría de la vista en el momento exacto en que alguien la usa con el teclado.
    */
-  protected elegirConBarra(evento: Event, id: string): void {
+  protected elegirConBarra(evento: Event, zona: ZonaDibujable): void {
     evento.preventDefault();
-    this.elegir(id);
+    this.elegir(zona);
   }
 }

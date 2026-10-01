@@ -11,7 +11,10 @@ import { SessionStore } from '../auth/session.store';
 import { ROLES_ROUTE_DATA } from './navigation.types';
 import { seccionRolesGuard, SECCION_DENEGADA_ROUTE } from './section-roles.guard';
 
-function token(roles: readonly string[]): string {
+function token(
+  roles: readonly string[],
+  tenantTypes?: Readonly<Record<string, string>>,
+): string {
   const encode = (value: object): string => {
     const bytes = new TextEncoder().encode(JSON.stringify(value));
     const binary = Array.from(bytes, (byte) => String.fromCharCode(byte)).join('');
@@ -22,6 +25,7 @@ function token(roles: readonly string[]): string {
     sid: 's-1',
     roles,
     tenants: ['t-1'],
+    ...(tenantTypes === undefined ? {} : { tenantTypes }),
   })}.firma`;
 }
 
@@ -54,8 +58,9 @@ describe('seccionRolesGuard', () => {
     url: string,
     roles: readonly string[],
     ruta: ActivatedRouteSnapshot = RUTA,
+    tenantTypes?: Readonly<Record<string, string>>,
   ): boolean | UrlTree {
-    session.start({ accessToken: token(roles), refreshToken: 'r-1' });
+    session.start({ accessToken: token(roles, tenantTypes), refreshToken: 'r-1' });
     return TestBed.runInInjectionContext(
       () => seccionRolesGuard(ruta, estadoDe(url)),
     ) as boolean | UrlTree;
@@ -76,18 +81,19 @@ describe('seccionRolesGuard', () => {
     expect(ejecutar('/directory', ['USER', 'PATIENT'])).toBe(true);
   });
 
-  it('la doctora escribiendo la dirección a mano no entra', () => {
+  it('la doctora entra a la Guía y a la ficha (pedido del 24/09/2026)', () => {
+    expect(ejecutar('/directory', ['USER', 'PRACTITIONER', 'CLINICIAN'])).toBe(true);
+    expect(ejecutar('/directory/abc-123', ['PRACTITIONER'])).toBe(true);
+  });
+
+  it('quien no es paciente ni médico, escribiendo la dirección a mano, no entra', () => {
     // Es el caso que el filtrado del menú no cubría: el enlace guardado, el
     // correo con la dirección, el historial del navegador.
-    expect(destino(ejecutar('/directory', ['USER', 'PRACTITIONER', 'CLINICIAN']))).toBe(
-      SECCION_DENEGADA_ROUTE,
-    );
+    expect(destino(ejecutar('/directory', ['USER', 'CLINICIAN']))).toBe(SECCION_DENEGADA_ROUTE);
   });
 
   it('la ficha de un profesional tampoco: es parte de la Guía', () => {
-    expect(destino(ejecutar('/directory/abc-123', ['PRACTITIONER']))).toBe(
-      SECCION_DENEGADA_ROUTE,
-    );
+    expect(destino(ejecutar('/directory/abc-123', ['CLINICIAN']))).toBe(SECCION_DENEGADA_ROUTE);
   });
 
   it('rebota al panel y no al login: la sesión es válida, el rol no alcanza', () => {
@@ -177,7 +183,7 @@ describe('seccionRolesGuard', () => {
   });
 
   it('los parámetros de consulta no confunden la resolución', () => {
-    expect(destino(ejecutar('/directory?especialidad=cardiologia', ['PRACTITIONER']))).toBe(
+    expect(destino(ejecutar('/directory?especialidad=cardiologia', ['CLINICIAN']))).toBe(
       SECCION_DENEGADA_ROUTE,
     );
   });
@@ -215,5 +221,46 @@ describe('seccionRolesGuard', () => {
     expect(destino(ejecutar('/schedule', ['PATIENT'], rutaConRoles(undefined)))).toBe(
       SECCION_DENEGADA_ROUTE,
     );
+  });
+
+  /* -- la aseguradora (2026-09-25) ------------------------------------------
+     `hiddenForTenantTypes` no es sólo cortesía de menú: cierra también la
+     ruta, como el resto del registro. Escribir la dirección a mano tiene que
+     rebotar igual que lo haría para el médico con la Guía de profesionales. */
+
+  it('una sesión PAYER rebota en lo que el registro de procesos no le pide', () => {
+    const tenantTypes = { 't-1': 'PAYER' };
+    for (const url of [
+      '/my-account/appointments',
+      '/directories',
+      '/laboratory-directory',
+      '/administration/pharmacy-orders',
+    ]) {
+      expect(destino(ejecutar(url, ['USER'], RUTA, tenantTypes)), url).toBe(
+        SECCION_DENEGADA_ROUTE,
+      );
+      // Ni el comodín la salva: mismo contrato que la Guía de profesionales.
+      expect(destino(ejecutar(url, ['SUPERADMIN'], RUTA, tenantTypes)), url).toBe(
+        SECCION_DENEGADA_ROUTE,
+      );
+    }
+  });
+
+  it('una sesión PAYER entra a lo que el registro de procesos sí le pide', () => {
+    const tenantTypes = { 't-1': 'PAYER' };
+    for (const url of [
+      '/administration/insurance',
+      '/administration/insurance-analytics',
+      '/administration/my-organization',
+      '/my-account',
+      '/settings',
+      '/messaging',
+    ]) {
+      expect(ejecutar(url, ['USER'], RUTA, tenantTypes), url).toBe(true);
+    }
+  });
+
+  it('sin el claim de tipo, la puerta sigue abierta: es el guard de hoy', () => {
+    expect(ejecutar('/my-account/appointments', ['USER'])).toBe(true);
   });
 });

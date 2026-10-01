@@ -139,7 +139,18 @@ export const SECCIONES_FUERA_DEL_ARBOL: readonly string[] = [
   'administration/my-practice',
   'administration/pharmacy-orders',
   'administration/pharmacy-campaigns',
+  'administration/pharmacy-catalog',
   'administration/pharmacy-profile',
+  'administration/pharmacy',
+  'administration/pharmacy-categories',
+  'administration/pharmacy-import',
+  'administration/pharmacy-inventory',
+  'administration/pharmacy-prices',
+  'administration/pharmacy-branches',
+  'administration/laboratory',
+  'administration/laboratory-results',
+  'administration/laboratory-prices',
+  'administration/laboratory-branches',
   'tutorials',
 ];
 
@@ -189,6 +200,7 @@ export const ACCESO_EN_MODAL: Readonly<Record<string, string>> = {
   'clinics-directory': 'directorio-clinicas',
   'laboratory-directory': 'directorio-laboratorios',
   'pharmacies-directory': 'directorio-farmacias',
+  'insurers-directory': 'directorio-aseguradoras',
 };
 
 /**
@@ -206,12 +218,13 @@ export const ACCESS_AREAS: readonly AccessArea[] = [
     tagline: 'Tu agenda, lo que escribís y el expediente de cada paciente.',
     icon: 'stethoscope',
     tone: 'info',
-    // Tres y no diez (19/09/2026): lo que se abre con un paciente delante. El
-    // resto de «Atención» está en SECCIONES_FUERA_DEL_ARBOL, que explica por
-    // dónde se sigue llegando a cada una. `interventions` sale de `paths` pero
-    // no del árbol: no la ve el médico —es de los cinco roles perioperatorios—
-    // y le llega por el cajón, igual que «Mis visitas médicas» al visitador.
-    paths: ['schedule', 'progress-notes', 'medical-records'],
+    // Dos y no diez (19/09/2026, y sin «Notas médicas» desde el 25/09): lo que
+    // se abre con un paciente delante. El resto de «Atención» está en
+    // SECCIONES_FUERA_DEL_ARBOL, que explica por dónde se sigue llegando a cada
+    // una. `interventions` sale de `paths` pero no del árbol: no la ve el
+    // médico —es de los cinco roles perioperatorios— y le llega por el cajón,
+    // igual que «Mis visitas médicas» al visitador.
+    paths: ['schedule', 'medical-records'],
     catchAllGroups: ['Atención'],
   },
   {
@@ -231,7 +244,13 @@ export const ACCESS_AREAS: readonly AccessArea[] = [
     tagline: 'A dónde derivar y a quién: clínicas, laboratorios y farmacias de la plataforma.',
     icon: 'globe',
     tone: 'primary',
-    paths: ['directory', 'clinics-directory', 'laboratory-directory', 'pharmacies-directory'],
+    paths: [
+      'directory',
+      'clinics-directory',
+      'laboratory-directory',
+      'pharmacies-directory',
+      'insurers-directory',
+    ],
     catchAllGroups: ['General'],
   },
   {
@@ -247,6 +266,7 @@ export const ACCESS_AREAS: readonly AccessArea[] = [
       // la aparta `hiddenFor: ['PATIENT', 'PRACTITIONER']` en el registro de
       // navegación, no este archivo.
       'administration/insurance-analytics',
+      'administration/insurance-campaigns',
       'administration/my-organization',
       'administration/medical-organization',
       'administration/accounting',

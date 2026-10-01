@@ -1,0 +1,351 @@
+<app-page-header
+  title="Recepción de muestras"
+  subtitle="Las órdenes que te derivaron y todavía no tienen accesión: recibí la muestra y registrala."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<div class="recepcion">
+  <!-- La búsqueda viaja en el cuerpo del pedido, no en la URL: es un nombre o
+       un código de historia clínica. -->
+  <div class="recepcion__buscar">
+    <app-search-field
+      label="Buscar por paciente"
+      placeholder="Nombre o código de historia clínica"
+      data-testid="lab-reception-search"
+      [loading]="inbox().status === 'loading'"
+      (searched)="search($event)"
+    />
+  </div>
+
+  <app-data-table
+    [state]="inbox()"
+    [columns]="columns()"
+    [trackBy]="trackByOrder"
+    [rowLabel]="rowName"
+    caption="Órdenes de laboratorio pendientes de recepción"
+    (retry)="reload()"
+    (refresh)="reload()"
+  />
+
+  @if (inbox().status === 'ready') {
+    <div class="recepcion__mas">
+      @if (loadMoreError(); as message) {
+        <app-alert tone="error" data-testid="lab-reception-more-error">{{ message }}</app-alert>
+      }
+      @if (nextCursor() !== null) {
+        <button
+          app-button
+          type="button"
+          variant="outline"
+          data-testid="lab-reception-more"
+          [isLoading]="loadingMore()"
+          (clicked)="loadMore()"
+        >
+          Cargar más órdenes
+        </button>
+      }
+    </div>
+  }
+
+  <!-- La cadena de custodia de la orden elegida: qué muestra se recibió, en
+       qué contenedor y quién la tuvo, en orden. Va fuera de la tabla porque
+       una fila no tiene lugar para una lista, y abajo porque se consulta
+       después de mirar la bandeja. -->
+  @if (custodyOrder(); as order) {
+    <app-card
+      variant="outlined"
+      padding="lg"
+      class="recepcion__custodia"
+      data-testid="lab-reception-custody"
+    >
+      <h2 class="recepcion__custodia-titulo">
+        Cadena de custodia · {{ patientName(order) }}
+      </h2>
+      <p class="recepcion__custodia-bajada">
+        {{ order.codeDisplay ?? 'Estudio sin nombre en el catálogo' }}
+        @if (order.requestingTenantName) {
+          · pedido por {{ order.requestingTenantName }}
+        }
+      </p>
+
+      @if (order.specimens.length === 0) {
+        <p class="recepcion__custodia-vacia">
+          Todavía no se recibió ninguna muestra de esta orden.
+        </p>
+      } @else {
+        <ol class="recepcion__muestras">
+          @for (specimen of order.specimens; track specimen.id) {
+            <li class="recepcion__muestra">
+              <p class="recepcion__muestra-titulo">
+                {{ label(specimen.specimenTypeConceptId) }}
+                <app-badge
+                  size="sm"
+                  [variant]="isRejected(specimen) ? 'error' : 'success'"
+                  [value]="label(specimen.statusConceptId)"
+                />
+              </p>
+              @if (specimen.containers.length > 0) {
+                <ul class="recepcion__contenedores" aria-label="Contenedores">
+                  @for (container of specimen.containers; track container.id) {
+                    <li>
+                      {{ label(container.containerTypeConceptId) }} ·
+                      <span class="recepcion__etiqueta">{{ container.containerIdentifier }}</span>
+                      · {{ label(container.statusConceptId) }}
+                    </li>
+                  }
+                </ul>
+              }
+              @if (specimen.custodyEvents.length > 0) {
+                <ol class="recepcion__eventos" aria-label="Eventos de custodia">
+                  @for (event of specimen.custodyEvents; track event.id) {
+                    <li>
+                      <time [attr.datetime]="event.occurredAt.toISOString()">
+                        {{ event.occurredAt | date: 'short' }}
+                      </time>
+                      — {{ label(event.custodyEventTypeConceptId) }}
+                      @if (event.sealIdentifier) {
+                        · precinto {{ event.sealIdentifier }}
+                      }
+                    </li>
+                  }
+                </ol>
+              } @else {
+                <p class="recepcion__custodia-vacia">
+                  Sin eventos de custodia todavía: la recepción se firma al registrar la accesión.
+                </p>
+              }
+            </li>
+          }
+        </ol>
+      }
+    </app-card>
+  }
+</div>
+
+<!-- ─── Recibir muestra ─────────────────────────────────────────────────── -->
+@if (receiveOrder(); as order) {
+  <app-content-dialog
+    [heading]="'Recibir muestra de ' + patientName(order)"
+    [description]="order.codeDisplay ?? 'Estudio sin nombre en el catálogo'"
+    size="md"
+    [dismissible]="!receiving()"
+    (closed)="closeReceive()"
+  >
+    <form
+      class="recepcion__formulario"
+      data-testid="lab-reception-receive-form"
+      (submit)="$event.preventDefault(); submitReceive()"
+    >
+      @if (receiveError(); as message) {
+        <app-alert tone="error" data-testid="lab-reception-receive-error">{{ message }}</app-alert>
+      }
+      @if (catalogsError(); as message) {
+        <app-alert tone="warning" data-testid="lab-reception-catalogs-error">
+          {{ message }}
+          <div alert-actions>
+            <button app-button type="button" variant="outline" size="sm" (clicked)="retryCatalogs()">
+              Reintentar
+            </button>
+          </div>
+        </app-alert>
+      }
+
+      <app-form-field
+        label="Tipo de muestra"
+        [required]="true"
+        [hint]="catalogsLoading() ? 'Cargando el catálogo…' : ''"
+        [errorMessage]="specimenTypeError()"
+      >
+        <app-select
+          data-testid="lab-reception-specimen-type"
+          [value]="specimenType()"
+          (valueChange)="specimenType.set($event)"
+          [options]="specimenTypeOptions()"
+          [disabled]="catalogsLoading()"
+          [hasError]="specimenTypeError() !== ''"
+          placeholder="Elegí el tipo de muestra"
+        />
+      </app-form-field>
+
+      <app-form-field
+        label="Contenedor"
+        hint="En los tubos, el color de la tapa dice el aditivo."
+        [required]="true"
+        [errorMessage]="containerTypeError()"
+      >
+        <app-select
+          data-testid="lab-reception-container-type"
+          [value]="containerType()"
+          (valueChange)="containerType.set($event)"
+          [options]="containerTypeOptions()"
+          [disabled]="catalogsLoading()"
+          [hasError]="containerTypeError() !== ''"
+          placeholder="Elegí el tubo o frasco"
+        />
+      </app-form-field>
+
+      <app-form-field
+        label="Etiqueta del contenedor"
+        hint="El código que lleva pegado el tubo o frasco."
+        [required]="true"
+        [errorMessage]="containerLabelError()"
+      >
+        <app-input
+          data-testid="lab-reception-container-label"
+          [(value)]="containerLabel"
+          [hasError]="containerLabelError() !== ''"
+          placeholder="Por ejemplo, TUBO-5012"
+        />
+      </app-form-field>
+    </form>
+
+    <ng-container dialog-actions>
+      <button
+        app-button
+        type="button"
+        variant="ghost"
+        data-testid="lab-reception-receive-cancel"
+        [disabled]="receiving()"
+        (clicked)="closeReceive()"
+      >
+        Cancelar
+      </button>
+      <button
+        app-button
+        type="button"
+        data-testid="lab-reception-receive-submit"
+        [isLoading]="receiving()"
+        (clicked)="submitReceive()"
+      >
+        Recibir muestra
+      </button>
+    </ng-container>
+  </app-content-dialog>
+}
+
+<!-- ─── Registrar accesión ──────────────────────────────────────────────── -->
+@if (accessionOrder(); as order) {
+  <app-content-dialog
+    [heading]="'Registrar accesión de ' + patientName(order)"
+    description="Se acesionan las muestras recibidas que no fueron rechazadas. La orden sale de la bandeja y pasa a la cola del laboratorio."
+    size="md"
+    [dismissible]="!accessioning()"
+    (closed)="closeAccession()"
+  >
+    @if (accessionError(); as message) {
+      <app-alert tone="error" data-testid="lab-reception-accession-error">{{ message }}</app-alert>
+    }
+    <ul class="recepcion__confirmar" data-testid="lab-reception-accession-specimens">
+      @for (specimen of acceptedSpecimens(order); track specimen.id) {
+        <li>
+          {{ label(specimen.specimenTypeConceptId) }}
+          @for (container of specimen.containers; track container.id) {
+            · <span class="recepcion__etiqueta">{{ container.containerIdentifier }}</span>
+          }
+        </li>
+      }
+    </ul>
+
+    <ng-container dialog-actions>
+      <button
+        app-button
+        type="button"
+        variant="ghost"
+        data-testid="lab-reception-accession-cancel"
+        [disabled]="accessioning()"
+        (clicked)="closeAccession()"
+      >
+        Cancelar
+      </button>
+      <button
+        app-button
+        type="button"
+        data-testid="lab-reception-accession-submit"
+        [isLoading]="accessioning()"
+        (clicked)="submitAccession()"
+      >
+        Registrar accesión
+      </button>
+    </ng-container>
+  </app-content-dialog>
+}
+
+<!-- Plantillas de celda: el organismo las recibe por `ColumnDef.cell`. -->
+<ng-template #patientCell let-order>
+  <span class="recepcion__paciente">{{ patientName(order) }}</span>
+  @if (order.patientCode) {
+    <span class="recepcion__secundario">HC {{ order.patientCode }}</span>
+  }
+</ng-template>
+
+<ng-template #studyCell let-order>
+  <span class="recepcion__estudio">{{ order.codeDisplay ?? 'Estudio sin nombre' }}</span>
+  <span class="recepcion__secundario">
+    {{ order.requestingTenantName ?? 'Organización sin nombre' }}
+    @if (order.priorityConceptId) {
+      · {{ label(order.priorityConceptId) }}
+    }
+  </span>
+</ng-template>
+
+<ng-template #requestedCell let-order>
+  <time [attr.datetime]="order.requestedAt.toISOString()">
+    {{ order.requestedAt | date: 'short' }}
+  </time>
+</ng-template>
+
+<ng-template #stageCell let-order>
+  <app-badge
+    size="sm"
+    [variant]="stageBadge(order).variant"
+    [value]="stageBadge(order).label"
+    data-testid="lab-reception-stage"
+  />
+  @if (order.specimens.length > 0) {
+    <span class="recepcion__secundario">
+      {{ order.specimens.length === 1 ? '1 muestra' : order.specimens.length + ' muestras' }}
+    </span>
+  }
+</ng-template>
+
+<ng-template #actionsCell let-order>
+  <div class="recepcion__acciones">
+    <button
+      app-button
+      type="button"
+      size="sm"
+      variant="outline"
+      data-testid="lab-reception-receive"
+      [attr.aria-label]="'Recibir muestra de ' + patientName(order)"
+      (clicked)="openReceive(order)"
+    >
+      Recibir muestra
+    </button>
+    <button
+      app-button
+      type="button"
+      size="sm"
+      data-testid="lab-reception-accession"
+      [disabled]="acceptedSpecimens(order).length === 0"
+      [attr.aria-label]="'Registrar accesión de ' + patientName(order)"
+      (clicked)="openAccession(order)"
+    >
+      Registrar accesión
+    </button>
+    <button
+      app-button
+      type="button"
+      size="sm"
+      variant="ghost"
+      data-testid="lab-reception-custody-toggle"
+      [attr.aria-expanded]="custodyOrderId() === order.serviceRequestId"
+      [attr.aria-label]="
+        (custodyOrderId() === order.serviceRequestId ? 'Ocultar custodia de ' : 'Ver custodia de ') +
+        patientName(order)
+      "
+      (clicked)="toggleCustody(order)"
+    >
+      {{ custodyOrderId() === order.serviceRequestId ? 'Ocultar custodia' : 'Ver custodia' }}
+    </button>
+  </div>
+</ng-template>

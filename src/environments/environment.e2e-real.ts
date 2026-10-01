@@ -11,4 +11,10 @@ import { environment as developmentEnvironment } from './environment.development
 export const environment: Environment = {
   ...developmentEnvironment,
   mockBackend: false,
+  // Sin backend simulado no hay motor fiscal simulado: la facturación
+  // SIMULADA (FACT-SIAT-MOCK) no puede pintar nada ni pedir sus rutas acá.
+  billingSiatDemo: false,
+  // Contra la API real las pantallas de la bóveda (datos de ejemplo) no se
+  // registran, igual que en `real-api` y `production-api`.
+  designMockups: false,
 };

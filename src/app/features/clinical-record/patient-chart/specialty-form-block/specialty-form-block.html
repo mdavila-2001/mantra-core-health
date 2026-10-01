@@ -15,6 +15,21 @@
     <app-alert tone="error" data-testid="formulario-especialidad-error">{{ mensaje }}</app-alert>
   }
 
+  <!-- Lo que el cierre no pudo registrar después de guardar la ficha. En ámbar
+       y no en rojo: la ficha sí quedó guardada, y lo que faltó se registra
+       desde su casilla. Persiste más que el toast a propósito. -->
+  @if (fallosDelCierre().length > 0) {
+    <app-alert
+      tone="warning"
+      title="La ficha quedó guardada, pero no todo el cierre"
+      data-testid="formulario-cierre-fallos"
+    >
+      @for (fallo of fallosDelCierre(); track fallo) {
+        <p class="formulario-especialidad__fallo">{{ fallo }}</p>
+      }
+    </app-alert>
+  }
+
   <!-- El selector, arriba de todo y siempre.
 
        Estaba dentro del `<form>`, es decir, detrás de la cadena de estados del
@@ -59,10 +74,64 @@
         modo="odontologia"
       />
     } @else if (esLaboratorio()) {
-      <app-diagnostics-block
+      <app-analysis-order-block
         [patientProfileId]="patientProfileId()"
         [encounterId]="encounterId()"
       />
+    }
+  } @else if (formularioLibre()) {
+    <!-- El formulario libre tampoco pasa por `forms`: son las filas «campo:
+         valor» de los campos adicionales, solas. Va antes de la cadena de
+         estados por lo mismo que los bloques propios: una ficha ya respondida
+         en este encuentro no lo tapa, se puede registrar cuantas veces haga
+         falta. -->
+    @if (!hayEncuentro()) {
+      <app-alert tone="info" title="Abrí el encuentro para completar">
+        El formulario libre se registra dentro de la consulta que lo motivó. Registrá el encuentro
+        acá arriba y el formulario aparece.
+      </app-alert>
+    } @else {
+      @if (fallosDelLibre().length > 0) {
+        <app-alert
+          tone="warning"
+          title="El formulario libre no quedó completo"
+          data-testid="formulario-libre-fallos"
+        >
+          @for (fallo of fallosDelLibre(); track fallo) {
+            <p class="formulario-especialidad__fallo">{{ fallo }}</p>
+          }
+        </app-alert>
+      }
+      <form
+        class="formulario-especialidad__formulario formulario-especialidad__libre"
+        data-testid="formulario-libre"
+        (submit)="$event.preventDefault()"
+      >
+        <app-additional-fields
+          [patientProfileId]="patientProfileId()"
+          [disabled]="enviando()"
+          [libre]="true"
+        />
+        <app-form-actions
+          submitLabel="Guardar formulario"
+          [pending]="enviando()"
+          [disabled]="!puedeGuardarLibre()"
+          (submitted)="guardarLibre()"
+        />
+      </form>
+      @if (adicionalesGuardados().length > 0) {
+        <div class="formulario-especialidad__respondido formulario-especialidad__ya-registrado">
+          <p class="formulario-especialidad__completado">Ya registrado en esta consulta</p>
+          <dl class="formulario-especialidad__respuestas" data-testid="formulario-libre-guardado">
+            @for (fila of adicionalesGuardados(); track $index) {
+              <div class="formulario-especialidad__respuesta">
+                <dt>{{ fila.label }}</dt>
+                <dd>{{ fila.value }}</dd>
+              </div>
+            }
+          </dl>
+        </div>
+      }
     }
   } @else if (!hayEncuentro()) {
     <app-alert tone="info" title="Abrí el encuentro para completar">
@@ -96,25 +165,75 @@
           — completado el {{ fecha }}
         }
       </p>
-      <dl class="formulario-especialidad__respuestas">
-        @for (respuesta of respuestasVisibles(); track respuesta.id) {
-          <div class="formulario-especialidad__respuesta">
-            <dt>{{ respuesta.etiqueta }}</dt>
-            <dd>
-              @if (respuesta.masked) {
-                <em
-                  class="formulario-especialidad__enmascarado"
-                  data-testid="respuesta-enmascarada"
-                >
-                  {{ marcadorEnmascarado }}
-                </em>
-              } @else {
-                {{ respuesta.texto }}
-              }
-            </dd>
-          </div>
-        }
-      </dl>
+      <!-- Las mismas dos pestañas que en la captura, en el mismo orden. -->
+      <app-tabs [(selectedIndex)]="pestana" data-testid="formulario-pestanas">
+        <app-tab label="Plantilla" data-testid="vista-plantilla">
+          <dl class="formulario-especialidad__respuestas" data-testid="respuestas-plantilla">
+            @for (respuesta of respuestasVisibles(); track respuesta.id) {
+              <div class="formulario-especialidad__respuesta">
+                <dt>{{ respuesta.etiqueta }}</dt>
+                <dd>
+                  @if (respuesta.masked) {
+                    <em
+                      class="formulario-especialidad__enmascarado"
+                      data-testid="respuesta-enmascarada"
+                    >
+                      {{ marcadorEnmascarado }}
+                    </em>
+                  } @else {
+                    {{ respuesta.texto }}
+                  }
+                </dd>
+              </div>
+            }
+          </dl>
+        </app-tab>
+        <app-tab [label]="rotuloFlexibleEnLectura()" data-testid="vista-flexible">
+          <section
+            class="formulario-especialidad__vista"
+            aria-labelledby="adicionales-guardados-titulo"
+          >
+            <h3 id="adicionales-guardados-titulo" class="formulario-especialidad__completado">
+              Campos adicionales del doctor
+            </h3>
+            @if (buscandoAdicionales()) {
+              <p class="formulario-especialidad__estado" role="status">
+                Buscando los campos adicionales de esta consulta…
+              </p>
+            } @else if (errorDeAdicionales(); as mensaje) {
+              <app-alert
+                tone="error"
+                title="No pudimos leer los campos adicionales"
+                data-testid="adicionales-error"
+              >
+                {{ mensaje }}
+              </app-alert>
+              <button
+                app-button
+                variant="outline"
+                size="sm"
+                class="formulario-especialidad__pdf"
+                (clicked)="reconsultarAdicionales()"
+              >
+                Reintentar
+              </button>
+            } @else if (adicionalesGuardados().length > 0) {
+              <dl class="formulario-especialidad__respuestas" data-testid="adicionales-guardados">
+                @for (fila of adicionalesGuardados(); track $index) {
+                  <div class="formulario-especialidad__respuesta">
+                    <dt>{{ fila.label }}</dt>
+                    <dd>{{ fila.value }}</dd>
+                  </div>
+                }
+              </dl>
+            } @else {
+              <p class="formulario-especialidad__estado" data-testid="adicionales-vacio">
+                En esta consulta no se agregaron campos adicionales.
+              </p>
+            }
+          </section>
+        </app-tab>
+      </app-tabs>
       <button
         app-button
         variant="outline"
@@ -168,100 +287,146 @@
       }
 
       @if (plantillaElegida(); as plantilla) {
-        @for (campo of plantilla.fields; track campo.fieldId) {
-          <!-- El odontograma no entra en un `app-form-field`: no es un control
-               con etiqueta al lado sino una boca entera, con su propio panel de
-               estados debajo. -->
-          @if (esOdontograma(campo)) {
-            <fieldset class="formulario-especialidad__odontograma" data-testid="campo-odontograma">
-              <legend class="formulario-especialidad__subtitulo">{{ campo.name }}</legend>
-              <app-odontogram
-                [estados]="mapaDental(campo.fieldId)"
-                [seleccionada]="piezaAbierta()"
-                (pieza)="abrirPieza($event)"
-              />
-              @if (piezaAbierta(); as fdi) {
-                <div class="formulario-especialidad__estados">
-                  <p class="formulario-especialidad__ayuda" id="ayuda-estado-dental">
-                    Pieza {{ fdi }} — elegí su estado. Volver a elegir el mismo lo borra.
-                  </p>
-                  @for (estado of estadosDentales; track estado.codigo) {
-                    <button
-                      app-button
-                      variant="outline"
-                      size="sm"
-                      type="button"
-                      aria-describedby="ayuda-estado-dental"
-                      (clicked)="fijarEstado(campo.fieldId, estado.codigo)"
-                    >
-                      {{ estado.codigo }} · {{ estado.etiqueta }}
-                    </button>
-                  }
-                </div>
-              } @else {
-                <p class="formulario-especialidad__ayuda">
-                  Elegí una pieza para registrar su estado.
-                </p>
+        <!-- Dos pestañas: los campos fijos de la plantilla y las filas «campo:
+             valor» con archivos. `app-tab` no dibuja el panel cerrado, pero lo
+             proyectado vive en este componente: lo escrito en la otra pestaña
+             no se pierde, y un solo botón completa las dos. -->
+        <app-tabs [(selectedIndex)]="pestana" data-testid="formulario-pestanas">
+          <app-tab label="Plantilla" data-testid="vista-plantilla">
+            <div class="formulario-especialidad__vista">
+              @for (campo of plantilla.fields; track campo.fieldId) {
+                <!-- El odontograma no entra en un `app-form-field`: no es un control
+                     con etiqueta al lado sino una boca entera, con su propio panel de
+                     estados debajo. -->
+                @if (esOdontograma(campo)) {
+                  <fieldset
+                    class="formulario-especialidad__odontograma"
+                    data-testid="campo-odontograma"
+                  >
+                    <legend class="formulario-especialidad__subtitulo">{{ campo.name }}</legend>
+                    <app-odontogram
+                      [estados]="mapaDental(campo.fieldId)"
+                      [seleccionada]="piezaAbierta()"
+                      (pieza)="abrirPieza($event)"
+                    />
+                    @if (piezaAbierta(); as fdi) {
+                      <div class="formulario-especialidad__estados">
+                        <p class="formulario-especialidad__ayuda" id="ayuda-estado-dental">
+                          Pieza {{ fdi }} — elegí su estado. Volver a elegir el mismo lo borra.
+                        </p>
+                        @for (estado of estadosDentales; track estado.codigo) {
+                          <button
+                            app-button
+                            variant="outline"
+                            size="sm"
+                            type="button"
+                            aria-describedby="ayuda-estado-dental"
+                            (clicked)="fijarEstado(campo.fieldId, estado.codigo)"
+                          >
+                            {{ estado.codigo }} · {{ estado.etiqueta }}
+                          </button>
+                        }
+                      </div>
+                    } @else {
+                      <p class="formulario-especialidad__ayuda">
+                        Elegí una pieza para registrar su estado.
+                      </p>
+                    }
+                  </fieldset>
+                } @else {
+                  <app-form-field
+                    [label]="campo.name"
+                    [required]="campo.required"
+                    data-testid="campo-especialidad"
+                  >
+                    @switch (tipoDibujable(campo.dataType)) {
+                      @case ('boolean') {
+                        <!-- Dos botones y no una casilla: en una ficha clínica
+                             «contestó que no» y «no se preguntó» no pueden guardarse
+                             igual, y una casilla desmarcada es las dos cosas. -->
+                        <app-segmented-control
+                          [options]="siNo"
+                          [value]="valorSiNo(campo.fieldId)"
+                          [ariaLabel]="campo.name"
+                          size="md"
+                          (valueChange)="responderSiNo(campo.fieldId, $event)"
+                        />
+                      }
+                      @case ('integer') {
+                        <app-input
+                          type="number"
+                          [value]="valorNumero(campo.fieldId)"
+                          (valueChange)="actualizarValor(campo.fieldId, $event)"
+                        />
+                      }
+                      @case ('decimal') {
+                        <app-input
+                          type="number"
+                          [value]="valorNumero(campo.fieldId)"
+                          (valueChange)="actualizarValor(campo.fieldId, $event)"
+                        />
+                      }
+                      @case ('date') {
+                        <app-date-picker
+                          [value]="valorFecha(campo.fieldId)"
+                          (valueChange)="actualizarValor(campo.fieldId, $event)"
+                        />
+                      }
+                      @default {
+                        <app-input
+                          [value]="valorTexto(campo.fieldId)"
+                          (valueChange)="actualizarValor(campo.fieldId, $event)"
+                        />
+                      }
+                    }
+                  </app-form-field>
+                }
               }
-            </fieldset>
-          } @else {
-            <app-form-field
-              [label]="campo.name"
-              [required]="campo.required"
-              data-testid="campo-especialidad"
-            >
-              @switch (tipoDibujable(campo.dataType)) {
-                @case ('boolean') {
-                  <!-- Dos botones y no una casilla: en una ficha clínica
-                       «contestó que no» y «no se preguntó» no pueden guardarse
-                       igual, y una casilla desmarcada es las dos cosas. -->
-                  <app-segmented-control
-                    [options]="siNo"
-                    [value]="valorSiNo(campo.fieldId)"
-                    [ariaLabel]="campo.name"
-                    size="md"
-                    (valueChange)="responderSiNo(campo.fieldId, $event)"
-                  />
-                }
-                @case ('integer') {
-                  <app-input
-                    type="number"
-                    [value]="valorNumero(campo.fieldId)"
-                    (valueChange)="actualizarValor(campo.fieldId, $event)"
-                  />
-                }
-                @case ('decimal') {
-                  <app-input
-                    type="number"
-                    [value]="valorNumero(campo.fieldId)"
-                    (valueChange)="actualizarValor(campo.fieldId, $event)"
-                  />
-                }
-                @case ('date') {
-                  <app-date-picker
-                    [value]="valorFecha(campo.fieldId)"
-                    (valueChange)="actualizarValor(campo.fieldId, $event)"
-                  />
-                }
-                @default {
-                  <app-input
-                    [value]="valorTexto(campo.fieldId)"
-                    (valueChange)="actualizarValor(campo.fieldId, $event)"
-                  />
-                }
-              }
-            </app-form-field>
-          }
-        }
+            </div>
+          </app-tab>
+
+          <!-- La nota médica y los documentos: filas propias del doctor con
+               texto, archivos o las dos cosas. Opcionales; se registran al
+               completar, contra el mismo encuentro. -->
+          <app-tab [label]="rotuloFlexibleEnCaptura()" data-testid="vista-flexible">
+            <app-additional-fields
+              [patientProfileId]="patientProfileId()"
+              [disabled]="enviando()"
+            />
+          </app-tab>
+        </app-tabs>
+
+        <!-- D4: la ficha termina en el cierre, fuera de las pestañas porque es
+             de la ficha entera. Sólo con una plantilla de `forms` elegida —los
+             bloques propios y la hoja libre no pasan por acá—. Lo que se elija
+             se registra al completar, en orden, después de cerrar la
+             instancia. -->
+        <app-form-conclusion-block
+          [respuestas]="respuestasParaLaIa()"
+          [nombreDeFicha]="plantilla.name"
+          (cierre)="cierre.set($event)"
+        />
       }
 
       @if (!hojaLibre()) {
+        <!-- El motivo del botón gris, junto al botón: dentro de la barra, que
+             en pantallas angostas queda fija abajo. -->
         <app-form-actions
+          class="formulario-especialidad__acciones"
           submitLabel="Completar formulario"
           [pending]="enviando()"
           [disabled]="!puedeCompletar()"
           (submitted)="completar()"
-        />
+        >
+          <p
+            form-actions-extra
+            class="formulario-especialidad__pendiente"
+            role="status"
+            data-testid="pendiente-en-la-otra-pestana"
+          >
+            {{ pendienteEnLaOtraPestana() }}
+          </p>
+        </app-form-actions>
       }
     </form>
 

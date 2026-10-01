@@ -6,6 +6,9 @@ import { RouterLink } from '@angular/router';
 import { WorkHistory } from '../../work-history/work-history';
 import { PractitionerActivity } from './practitioner-activity/practitioner-activity';
 import { PracticeSitesMap } from './practice-sites-map/practice-sites-map';
+import { ResidenceReadonly } from './residence-readonly/residence-readonly';
+import { AppMap } from '../../../../../shared/components/organisms/map/map';
+import type { PinMapa } from '../../../../../shared/components/organisms/map/pin-mapa.types';
 import { CredentialsPanel } from './credentials-panel/credentials-panel';
 import {
   PESTANAS_DEL_EDITOR_MEDICO,
@@ -19,8 +22,9 @@ import { AppButton } from '../../../../../shared/components/atoms/button/button'
 import { AppButtonLink } from '../../../../../shared/components/atoms/button/button-link';
 import { Chip } from '../../../../../shared/components/atoms/chip/chip';
 import { NavIcon } from '../../../../../shared/components/atoms/nav-icon/nav-icon';
-import { Tooltip } from '../../../../../shared/components/atoms/tooltip/tooltip';
 import { Card } from '../../../../../shared/components/molecules/card/card';
+import { FirmaOSello } from '../../../../../shared/components/molecules/firma-o-sello/firma-o-sello';
+import { LogoConsultorio } from '../../../../../shared/components/molecules/logo-consultorio/logo-consultorio';
 import { TabHelpBlock } from '../../../../../shared/components/molecules/tab-help-block/tab-help-block';
 import { Tabs } from '../../../../../shared/components/molecules/tabs/tabs';
 import { Tab } from '../../../../../shared/components/molecules/tabs/tab/tab';
@@ -28,10 +32,7 @@ import { SpecialtyBadge } from '../../../../../shared/components/organisms/speci
 import { SpecialtyBadgeGrid } from '../../../../../shared/components/organisms/specialty-badge-grid/specialty-badge-grid';
 import { StatusSeal } from '../../../../../shared/components/organisms/status-seal/status-seal';
 import { TutorialTarget } from '../../../../../shared/components/organisms/tutorial-overlay/tutorial-target.directive';
-import type {
-  FormacionVisible,
-  PerfilProfesionalVisible,
-} from './practitioner-profile-view.types';
+import type { FormacionVisible, PerfilProfesionalVisible } from './practitioner-profile-view.types';
 
 /** Con qué pestaña abre la ficha: la primera, sea cuál sea el dibujo. */
 const PRIMERA_PESTANA = 0;
@@ -88,6 +89,8 @@ interface FilaCredencial {
 @Component({
   selector: 'app-practitioner-profile-view',
   imports: [
+    AppMap,
+    ResidenceReadonly,
     FileDropTarget,
     Avatar,
     Badge,
@@ -96,8 +99,9 @@ interface FilaCredencial {
     Card,
     Chip,
     DatePipe,
+    LogoConsultorio,
+    FirmaOSello,
     NavIcon,
-    Tooltip,
     RouterLink,
     SpecialtyBadge,
     SpecialtyBadgeGrid,
@@ -118,6 +122,27 @@ interface FilaCredencial {
 export class PractitionerProfileView {
   /** El perfil, ya resuelto por el contenedor. */
   readonly perfil = input.required<PerfilProfesionalVisible>();
+
+  /**
+   * El pin del domicilio en «Contacto», o ninguno si no declaró coordenadas.
+   * Es un `computed` y no un arreglo literal en la plantilla: uno nuevo en
+   * cada detección de cambios haría redibujar el mapa.
+   */
+  protected readonly pinesDomicilio = computed<readonly PinMapa[]>(() => {
+    const datos = this.perfil().datosPersonales;
+    const punto = datos?.ubicacionDomicilio;
+    if (!datos || !punto) return [];
+    return [
+      {
+        id: 'domicilio',
+        codigo: 'D',
+        titulo: 'Domicilio',
+        ...(datos.direccion ? { subtitulo: datos.direccion } : {}),
+        lat: punto.lat,
+        lng: punto.lng,
+      },
+    ];
+  });
 
   /** Si es el perfil de quien mira: habilita las acciones de dueño. */
   readonly esPropio = input(false);
@@ -283,13 +308,20 @@ export class PractitionerProfileView {
    * Se traduce por ETIQUETA y no pasando el índice tal cual, por la misma razón
    * que existe {@link pestanasVisibles}: la ficha suprime «Facturación» cuando
    * no la tiene, así que a partir de ahí sus índices y los del editor no son
-   * los mismos. Una etiqueta que el editor no tenga cae en la primera, que es
-   * el comportamiento de siempre.
+   * los mismos.
+   *
+   * `null` es «esta pestaña no se edita» y el lápiz no se dibuja: es el caso
+   * de «Actividad», que son estadísticas (pedido del cliente del 24/09/2026).
+   * Antes una etiqueta que el editor no tuviera caía en «Datos personales», y
+   * el lápiz de «Actividad» llevaba a editar otra cosa.
    */
-  protected readonly pestanaDeEdicion = computed<number>(() => {
+  protected readonly pestanaDeEdicion = computed<number | null>(() => {
     const abierta = this.pestanaVisibleSeleccionada();
-    const indice = abierta ? PESTANAS_DEL_EDITOR_MEDICO.findIndex((p) => p === abierta) : -1;
-    return indice >= 0 ? indice : PESTANA_EDITOR.personales;
+    if (abierta === undefined) {
+      return PESTANA_EDITOR.personales;
+    }
+    const indice = PESTANAS_DEL_EDITOR_MEDICO.findIndex((p) => p === abierta);
+    return indice >= 0 ? indice : null;
   });
 
   /**
@@ -302,8 +334,9 @@ export class PractitionerProfileView {
 
   /* Las especialidades ya no se preparan aca: `app-specialty-badge-grid`
      recibe `perfil().especialidades` tal cual —`EspecialidadVisible` tiene los
-     campos que la insignia pide—, ordena la principal primero y dice en
-     palabras lo que antes iba en el `aria-label` del chip. Suben de
+     campos que la insignia pide—, las deja en el orden en que llegaron (sin
+     principal desde el 23/09/2026, D-01) y dice en palabras lo que antes iba
+     en el `aria-label` del chip. Suben de
      «Credenciales» a la primera pestania por pedido del cliente (19/09/2026);
      en «Credenciales» siguen, con su vigencia y su sello, que es otra
      pregunta. */
@@ -391,6 +424,21 @@ export class PractitionerProfileView {
   protected sePuedeRetirar(estudio: FormacionVisible): boolean {
     return this.esPropio() && estudio.sello === 'in-review';
   }
+
+  /**
+   * Los títulos que el panel de «Credenciales» puede ofrecer retirar. El panel
+   * no sabe de dueños: recibe los ids ya decididos acá. La vista previa la
+   * sigue frenando {@link alPedirRetiro}, igual que cuando el botón vivía en
+   * «Trayectoria».
+   */
+  protected readonly formacionRetirable = computed<ReadonlySet<string>>(
+    () =>
+      new Set(
+        this.perfil()
+          .formacion.filter((estudio) => this.sePuedeRetirar(estudio))
+          .map((estudio) => estudio.id),
+      ),
+  );
 
   /** «Quiero retirar este título». Confirmarlo y retirarlo es de quien escucha. */
   readonly credencialARetirar = output<FormacionVisible>();

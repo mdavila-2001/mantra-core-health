@@ -1,0 +1,358 @@
+<app-page-header
+  title="Resultados"
+  subtitle="Subí los resultados en cualquier formato y sin límite de tamaño. Todo lo que subiste queda abajo, para verlo o descargarlo."
+/>
+
+<div class="results">
+  <!-- ================= Subir ================= -->
+  <app-card padding="lg" class="results__card" data-testid="results-upload">
+    <section class="results__section" aria-labelledby="results-upload-title">
+      <h2 class="results__heading" id="results-upload-title">Subir resultados</h2>
+
+      <div class="results__target">
+        <app-form-field
+          label="¿De qué orden es?"
+          hint="Si elegís una orden, el archivo queda en la ficha del paciente y en la del médico que lo pidió."
+        >
+          <app-select
+            [options]="targetOptions()"
+            [value]="uploadOrder()"
+            (valueChange)="uploadOrder.set($event ?? noOrder)"
+            ariaLabel="Orden a la que pertenecen los archivos"
+            data-testid="results-order"
+          />
+        </app-form-field>
+        <app-form-field label="Nota para el médico (opcional)">
+          <app-textarea
+            [value]="uploadNote()"
+            (valueChange)="uploadNote.set($event)"
+            [rows]="2"
+            [maxLength]="500"
+            placeholder="Por ejemplo: repetir en 3 meses; muestra hemolizada"
+            data-testid="results-note"
+          />
+        </app-form-field>
+        <app-checkbox
+          [checked]="uploadNotify() && hasOrder()"
+          (checkedChange)="uploadNotify.set($event)"
+          [disabled]="!hasOrder()"
+          label="Avisar al médico y al paciente cuando termine de subir"
+          data-testid="results-notify"
+        />
+      </div>
+
+      <div
+        class="results__drop"
+        [class.results__drop--active]="dragging()"
+        (dragover)="onDragOver($event)"
+        (dragleave)="onDragLeave($event)"
+        (drop)="onDrop($event)"
+        data-testid="results-dropzone"
+      >
+        <svg class="results__drop-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M12 16V4" />
+          <polyline points="7 9 12 4 17 9" />
+          <path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3" />
+        </svg>
+        <p class="results__drop-title">Arrastrá archivos o carpetas enteras acá</p>
+        <p class="results__drop-hint">
+          Cualquier formato —PDF, imágenes, DICOM, video, audio, planillas, HL7, ZIP…— y
+          <strong>sin límite de tamaño</strong>. Los archivos grandes se suben por partes: podés pausar y
+          seguir después.
+        </p>
+        <div class="results__drop-actions">
+          <button app-button (clicked)="chooseFiles()" data-testid="results-choose-files">Elegir archivos</button>
+          <button app-button variant="secondary" (clicked)="chooseFolder()" data-testid="results-choose-folder">
+            Elegir una carpeta
+          </button>
+        </div>
+        <input
+          #fileInput
+          class="results__hidden-input"
+          type="file"
+          multiple
+          tabindex="-1"
+          aria-hidden="true"
+          (change)="onPicked($event)"
+          data-testid="results-file-input"
+        />
+        <input
+          #folderInput
+          class="results__hidden-input"
+          type="file"
+          multiple
+          webkitdirectory
+          tabindex="-1"
+          aria-hidden="true"
+          (change)="onPicked($event)"
+          data-testid="results-folder-input"
+        />
+      </div>
+
+      @if (queue.items().length > 0) {
+        @let totals = queue.totals();
+        <div class="results__queue" data-testid="results-queue">
+          <div class="results__queue-head">
+            <p class="results__queue-summary" aria-live="polite">
+              {{ totals.done }} de {{ totals.files }} archivos subidos ·
+              {{ formatBytes(totals.sentBytes) }} de {{ formatBytes(totals.totalBytes) }}
+            </p>
+            @if (queue.active()) {
+              <p class="results__note">No cierres esta pestaña mientras sube.</p>
+            } @else {
+              <button app-button variant="ghost" size="sm" (clicked)="queue.clearFinished()">Limpiar la lista</button>
+            }
+          </div>
+          <app-progress [value]="totals.percent" label="Progreso total de la subida" />
+
+          <ul class="results__queue-list">
+            @for (item of queue.items(); track item.localId) {
+              <li class="results__queue-item" [attr.data-status]="item.status" data-testid="results-queue-item">
+                <div class="results__queue-main">
+                  <span class="results__queue-name" [title]="item.displayName">{{ item.displayName }}</span>
+                  <span class="results__note">
+                    {{ formatBytes(item.sentBytes) }} de {{ formatBytes(item.file.size) }} · {{ percentOf(item) }} %
+                  </span>
+                </div>
+                <app-progress
+                  [value]="percentOf(item)"
+                  [tone]="item.status === 'error' ? 'error' : item.status === 'done' ? 'success' : 'primary'"
+                  [label]="'Progreso de ' + item.displayName"
+                  size="sm"
+                />
+                <div class="results__queue-foot">
+                  <span
+                    class="results__queue-status"
+                    [class.results__queue-status--error]="item.status === 'error'"
+                    data-testid="results-queue-status"
+                  >{{ statusLabel(item) }}</span>
+                  <span class="results__queue-actions">
+                    @switch (item.status) {
+                      @case ('uploading') {
+                        <button app-button variant="ghost" size="sm" (clicked)="queue.pause(item.localId)">Pausar</button>
+                        <button app-button variant="ghost" size="sm" (clicked)="queue.cancel(item.localId)">Cancelar</button>
+                      }
+                      @case ('queued') {
+                        <button app-button variant="ghost" size="sm" (clicked)="queue.pause(item.localId)">Pausar</button>
+                        <button app-button variant="ghost" size="sm" (clicked)="queue.cancel(item.localId)">Cancelar</button>
+                      }
+                      @case ('paused') {
+                        <button app-button variant="secondary" size="sm" (clicked)="queue.resume(item.localId)">Seguir</button>
+                        <button app-button variant="ghost" size="sm" (clicked)="queue.cancel(item.localId)">Cancelar</button>
+                      }
+                      @case ('error') {
+                        <button app-button variant="secondary" size="sm" (clicked)="queue.resume(item.localId)">Reintentar</button>
+                        <button app-button variant="ghost" size="sm" (clicked)="queue.cancel(item.localId)">Cancelar</button>
+                      }
+                      @case ('done') {
+                        @if (item.result; as result) {
+                          <button app-button variant="secondary" size="sm" (clicked)="open(result)">Ver</button>
+                        }
+                      }
+                    }
+                  </span>
+                </div>
+              </li>
+            }
+          </ul>
+        </div>
+      }
+    </section>
+  </app-card>
+
+  <!-- ================= Todo lo subido ================= -->
+  <app-card padding="lg" class="results__card" data-testid="results-archive">
+    <section class="results__section" aria-labelledby="results-archive-title">
+      <div class="results__archive-head">
+        <h2 class="results__heading" id="results-archive-title">
+          Todo lo subido
+          @if (page(); as p) {
+            <span class="results__count" data-testid="results-count">
+              {{ p.count }} {{ p.count === 1 ? 'archivo' : 'archivos' }} · {{ formatBytes(p.totalBytes) }}
+            </span>
+          }
+        </h2>
+        <app-segmented-control
+          [options]="viewOptions"
+          [value]="view()"
+          (valueChange)="setView($event)"
+          ariaLabel="Cómo ver los archivos"
+        />
+      </div>
+
+      <div class="results__filters">
+        <app-search-field
+          label="Buscar"
+          placeholder="Nombre del archivo, paciente u orden"
+          [value]="query()"
+          (searched)="query.set($event)"
+          data-testid="results-search"
+        />
+        <app-form-field label="Formato">
+          <app-select [options]="kindOptions" [value]="kind()" (valueChange)="kind.set($event ?? 'ALL')" />
+        </app-form-field>
+        <app-form-field label="Orden">
+          <app-select [options]="orderFilterOptions()" [value]="orderFilter()" (valueChange)="orderFilter.set($event ?? '')" />
+        </app-form-field>
+        <app-switch
+          class="results__withdrawn-switch"
+          [checked]="includeWithdrawn()"
+          (checkedChange)="includeWithdrawn.set($event)"
+          label="Mostrar retirados"
+        />
+      </div>
+
+      <app-view-state-host [state]="files()" (retry)="loadFiles()">
+        @if (view() === 'grid') {
+          <ul class="results__grid" data-testid="results-grid">
+            @for (file of items(); track file.id) {
+              <li class="results__tile" [class.results__tile--withdrawn]="file.status === 'WITHDRAWN'">
+                <button type="button" class="results__tile-open" (click)="open(file)" [attr.aria-label]="'Ver ' + file.fileName">
+                  <span class="results__thumb" [attr.data-kind]="file.kind">
+                    @if (thumbnailOf(file); as src) {
+                      <img [src]="src" alt="" loading="lazy" />
+                    } @else {
+                      <span class="results__thumb-ext">{{ extensionOf(file) }}</span>
+                    }
+                  </span>
+                  <span class="results__tile-name" [title]="file.fileName">{{ file.fileName }}</span>
+                </button>
+                <span class="results__note">
+                  {{ kindLabel(file.kind) }} · {{ formatBytes(file.sizeBytes) }} · {{ file.uploadedAt | date: "d MMM yyyy, HH:mm" }}
+                </span>
+                @if (file.patientName) {
+                  <span class="results__tile-patient">{{ file.patientName }}</span>
+                }
+                @if (file.orderLabel) {
+                  <span class="results__note">{{ file.orderLabel }}</span>
+                }
+                <span class="results__badges">
+                  @if (file.status === 'WITHDRAWN') {
+                    <app-badge variant="error" size="sm" value="Retirado" />
+                  } @else if (file.notified) {
+                    <app-badge variant="success" size="sm" value="Avisado" />
+                  }
+                </span>
+              </li>
+            }
+          </ul>
+        } @else {
+          <div class="results__table-wrap">
+            <table class="results__table" data-testid="results-table">
+              <thead>
+                <tr>
+                  <th scope="col">Archivo</th>
+                  <th scope="col">Formato</th>
+                  <th scope="col" class="results__num">Tamaño</th>
+                  <th scope="col">Paciente y orden</th>
+                  <th scope="col">Subido</th>
+                  <th scope="col"><span class="results__sr">Acciones</span></th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (file of items(); track file.id) {
+                  <tr [class.results__row--withdrawn]="file.status === 'WITHDRAWN'">
+                    <td>
+                      <button type="button" class="results__link" (click)="open(file)">{{ file.fileName }}</button>
+                      @if (file.status === 'WITHDRAWN') {
+                        <span class="results__note"> · retirado: {{ file.withdrawnReason }}</span>
+                      }
+                    </td>
+                    <td>{{ kindLabel(file.kind) }}</td>
+                    <td class="results__num">{{ formatBytes(file.sizeBytes) }}</td>
+                    <td>
+                      {{ file.patientName ?? '—' }}
+                      @if (file.orderLabel) {
+                        <span class="results__note results__block">{{ file.orderLabel }}</span>
+                      }
+                    </td>
+                    <td>
+                      {{ file.uploadedAt | date: "d MMM yyyy, HH:mm" }}
+                      <span class="results__note results__block">{{ file.uploadedBy }}</span>
+                    </td>
+                    <td class="results__row-actions">
+                      <button app-button variant="ghost" size="sm" (clicked)="open(file)">Ver</button>
+                      <button app-button variant="ghost" size="sm" (clicked)="download(file)">Descargar</button>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </app-view-state-host>
+    </section>
+  </app-card>
+</div>
+
+@if (viewerFile(); as file) {
+  <app-content-dialog
+    [heading]="file.fileName"
+    [description]="kindLabel(file.kind) + ' · ' + formatBytes(file.sizeBytes) + (file.patientName ? ' · ' + file.patientName : '')"
+    size="xl"
+    (closed)="closeViewer()"
+  >
+    <div class="viewer" data-testid="results-viewer">
+      <dl class="viewer__facts">
+        <div><dt>Subido</dt><dd>{{ file.uploadedAt | date: "d MMM yyyy, HH:mm" }} por {{ file.uploadedBy }}</dd></div>
+        @if (file.orderLabel) {
+          <div><dt>Orden</dt><dd>{{ file.orderLabel }}</dd></div>
+        }
+        @if (file.note) {
+          <div><dt>Nota</dt><dd>{{ file.note }}</dd></div>
+        }
+        @if (file.status === 'WITHDRAWN') {
+          <div><dt>Retirado</dt><dd>{{ file.withdrawnReason }}</dd></div>
+        }
+      </dl>
+
+      <app-view-state-host [state]="viewer()" (retry)="open(file)">
+        @if (viewerData(); as content) {
+          <div class="viewer__stage" [attr.data-kind]="file.kind">
+            @switch (file.kind) {
+              @case ('IMAGE') {
+                <img class="viewer__image" [src]="content.url" [alt]="'Resultado: ' + file.fileName" />
+              }
+              @case ('PDF') {
+                <iframe class="viewer__frame" [src]="content.safeUrl" [title]="file.fileName"></iframe>
+              }
+              @case ('VIDEO') {
+                <video class="viewer__media" [src]="content.url" controls preload="metadata"></video>
+              }
+              @case ('AUDIO') {
+                <audio class="viewer__audio" [src]="content.url" controls preload="metadata"></audio>
+              }
+              @case ('TEXT') {
+                @if (content.truncated) {
+                  <p class="results__note">Se muestran los primeros 2 MB. Descargalo para verlo completo.</p>
+                }
+                <pre class="viewer__text" tabindex="0">{{ content.text }}</pre>
+              }
+              @default {
+                <div class="viewer__unsupported">
+                  <p class="viewer__unsupported-title">
+                    {{ file.kind === 'DICOM' ? 'Es un estudio DICOM.' : 'El navegador no puede mostrar este formato.' }}
+                  </p>
+                  <p class="results__note">
+                    {{
+                      file.kind === 'DICOM'
+                        ? 'Descargalo para abrirlo con un visor DICOM (OsiriX, Horos, RadiAnt…).'
+                        : 'Descargalo para abrirlo con el programa que corresponda.'
+                    }}
+                  </p>
+                </div>
+              }
+            }
+          </div>
+        }
+      </app-view-state-host>
+    </div>
+
+    <button dialog-actions app-button variant="ghost" [disabled]="viewerIndex() <= 0" (clicked)="step(-1)">Anterior</button>
+    <button dialog-actions app-button variant="ghost" [disabled]="viewerIndex() >= items().length - 1" (clicked)="step(1)">Siguiente</button>
+    @if (file.status === 'AVAILABLE') {
+      <button dialog-actions app-button variant="danger" (clicked)="withdraw(file)">Retirar</button>
+    }
+    <button dialog-actions app-button (clicked)="download(file)" data-testid="results-download">Descargar</button>
+  </app-content-dialog>
+}

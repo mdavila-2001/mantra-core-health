@@ -1,29 +1,28 @@
 <app-content-dialog
   data-testid="portability-export-dialog"
-  heading="Exportar certificado de portabilidad"
-  description="El certificado incluye tus pólizas registradas, los siniestros cubiertos y una certificación con código QR de verificación."
+  heading="Solicitar exportación de portabilidad"
+  description="Se exporta la información disponible de tus pólizas y siniestros. Al terminar, vas a poder descargar el archivo, consultar la huella SHA-256 del manifiesto y abrir el enlace de verificación."
   [dismissible]="state() !== 'loading'"
-  (dismissAttempt)="close()"
+  (dismissAttempt)="attemptClose()"
   (closed)="close()"
 >
   @switch (state()) {
     @case ('ready') {
       @if (result(); as certificado) {
-        <p class="portability-dialog__estado">
-          Certificado emitido — {{ certificado.recordCount }} registro(s) de {{ certificado.policiesCount }} póliza(s).
+        <p class="portability-dialog__status">
+          Exportación generada — {{ certificado.recordCount }} registro(s) de {{ certificado.policiesCount }} póliza(s).
         </p>
 
-        <p class="portability-dialog__rotulo" id="portability-hash-rotulo">Sello digital (SHA-256)</p>
+        <p class="portability-dialog__label" id="portability-hash-label">Huella SHA-256 del manifiesto</p>
         <code
           class="portability-dialog__hash"
           data-testid="portability-manifest-hash"
-          aria-describedby="portability-hash-rotulo"
+          aria-describedby="portability-hash-label"
         >{{ certificado.manifestHash }}</code>
         <button
           app-button
           type="button"
           variant="outline"
-          size="sm"
           data-testid="btn-copy-portability-hash"
           (clicked)="copyHash()"
         >
@@ -32,8 +31,8 @@
         <span
           role="status"
           aria-live="polite"
-          class="portability-dialog__copiado"
-          data-testid="portability-hash-copiado"
+          class="portability-dialog__copied"
+          data-testid="portability-hash-copied"
           >@if (copied()) {
             Sello copiado al portapapeles
           }</span
@@ -41,11 +40,11 @@
 
         <p>
           <a app-link [href]="certificado.verificationUrl" data-testid="portability-verification-link">
-            Verificar este certificado en línea
+            Consultar los datos de verificación en línea
           </a>
         </p>
 
-        <div class="portability-dialog__descargas">
+        <div class="portability-dialog__downloads">
           <button
             app-button
             type="button"
@@ -69,8 +68,9 @@
     }
     @default {
       <p>
-        Vas a exportar tus pólizas registradas, los siniestros cubiertos y una certificación con
-        código QR de verificación.
+        Vas a exportar la información disponible de tus pólizas y siniestros. Al terminar, vas a
+        poder descargar el archivo, consultar la huella SHA-256 del manifiesto y abrir el enlace de
+        verificación.
       </p>
 
       @if (state() === 'error' && errorMessage(); as mensaje) {
@@ -85,7 +85,7 @@
       <app-form-field label="Formato">
         <app-select
           data-testid="portability-format"
-          [options]="formatos"
+          [options]="formatOptions"
           [value]="format()"
           (valueChange)="setFormat($event)"
         />
@@ -114,17 +114,17 @@
       [disabled]="state() === 'loading'"
       (clicked)="generate()"
     >
-      Descargar archivo certificado
+      Solicitar exportación
     </button>
   } @else {
     <button
       dialog-actions
       app-button
       type="button"
-      data-testid="btn-generate-portability-download"
+      data-testid="btn-redownload-portability"
       (clicked)="redownload()"
     >
-      Volver a descargar
+      Volver a descargar archivo de portabilidad
     </button>
   }
 </app-content-dialog>

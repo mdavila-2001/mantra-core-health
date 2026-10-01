@@ -1,0 +1,102 @@
+<app-page-header
+  title="Farmacia"
+  subtitle="Buscá un medicamento y compará precio y distancia entre las farmacias de la red. Si una sede no publica el precio, te lo decimos: no lo inventamos."
+/>
+
+<main class="tienda" aria-label="Tienda de farmacia">
+  <app-card class="tienda__tarjeta" padding="lg">
+    <section class="tienda__controles" aria-label="Qué buscar y cómo ordenar">
+      <app-form-field label="Qué estás buscando" class="tienda__busqueda">
+        <app-search-field
+          [attr.data-testid]="testids.searchTerm"
+          placeholder="Paracetamol, ibuprofeno, Farmacorp…"
+          [value]="termino()"
+          [loading]="buscando()"
+          (searched)="buscar($event)"
+        />
+      </app-form-field>
+
+      <app-form-field label="Buscar en" class="tienda__campo">
+        <app-segmented-control
+          [attr.data-testid]="testids.searchMode"
+          ariaLabel="Buscar productos o farmacias"
+          [options]="opcionesDeModo"
+          [value]="modo()"
+          (valueChange)="cambiarModo($event)"
+        />
+      </app-form-field>
+
+      <app-form-field label="Ordenar por" class="tienda__campo">
+        <app-segmented-control
+          [attr.data-testid]="testids.searchSort"
+          ariaLabel="Ordenar por precio o por cercanía"
+          [options]="opcionesDeOrden"
+          [value]="orden()"
+          (valueChange)="cambiarOrden($event)"
+        />
+      </app-form-field>
+
+      <!-- El origen de la distancia: el mismo selector que «Lugares cercanos»
+           (casa / trabajo / ubicación actual). Cambiarlo recalcula. -->
+      <div class="tienda__origen" [attr.data-testid]="testids.searchOrigin">
+        <app-search-origin-picker
+          [places]="lugaresGuardados()"
+          [origin]="origen()"
+          (originChange)="origen.set($event)"
+        />
+      </div>
+
+      <div class="tienda__atajos">
+        <a
+          app-button
+          variant="secondary"
+          [attr.data-testid]="testids.prescriptionButton"
+          [routerLink]="rutaDeRecetas"
+        >
+          Buscar toda una receta
+        </a>
+        <a app-link [routerLink]="rutaDePedidos">Mis pedidos</a>
+      </div>
+    </section>
+
+    @if (sinPerfilDePaciente) {
+      <p class="tienda__sin-perfil" data-testid="pharmacy-sin-perfil">
+        Esta tienda es de la cuenta del paciente. Entrá con tu cuenta de paciente para buscar
+        medicamentos y armar un pedido.
+      </p>
+    } @else {
+      <!-- Va antes del «escribí qué buscás» a propósito: pedir «Más cerca» es
+           una intención que ya se declaró, y esconder el aviso hasta que haya
+           término dejaría el orden elegido sin explicación. -->
+      @if (faltaOrigen()) {
+        <p class="tienda__sin-origen" data-testid="pharmacy-sin-origen" role="status">
+          Para ordenar por cercanía necesitamos un punto de partida. Elegí desde dónde medir, acá
+          arriba, o
+          <button type="button" class="tienda__enlace-accion" (click)="ordenarPorPrecio()">
+            ordená por precio
+          </button>
+          .
+        </p>
+      }
+
+      @if (esperandoTermino()) {
+        <p class="tienda__sin-termino" data-testid="pharmacy-sin-termino">
+          Escribí qué buscás. Con dos letras ya empezamos a buscar en las farmacias de la red.
+        </p>
+      } @else {
+        <app-view-state-host [state]="estado()" (retry)="reintentar()">
+          @if (modo() === 'products') {
+            <app-product-results
+              [items]="filasDeProducto()"
+              [sinOrigen]="sinOrigenEnResultados()"
+            />
+          } @else {
+            <app-store-results [items]="filasDeSede()" [sinOrigen]="sinOrigenEnResultados()" />
+          }
+        </app-view-state-host>
+      }
+    }
+
+    <app-recent-orders />
+  </app-card>
+</main>

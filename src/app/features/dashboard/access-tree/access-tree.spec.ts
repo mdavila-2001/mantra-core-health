@@ -23,14 +23,17 @@ import { AccessTree } from './access-tree';
 describe('AccessTree', () => {
   let fixture: ComponentFixture<AccessTree>;
 
-  /** Las secciones que un rol alcanza, tal como se las pasa el panel. */
-  function seccionesDe(roles: readonly string[]): readonly AppSection[] {
-    return APP_SECTIONS.filter((seccion) => isVisibleTo(seccion, roles, ['t-1']));
+  /** Las secciones que un rol (y, opcionalmente, un tipo de organización) alcanza, tal como se las pasa el panel. */
+  function seccionesDe(
+    roles: readonly string[],
+    tipo: string | null = null,
+  ): readonly AppSection[] {
+    return APP_SECTIONS.filter((seccion) => isVisibleTo(seccion, roles, ['t-1'], tipo));
   }
 
-  function crear(roles: readonly string[] = ['PRACTITIONER']): void {
+  function crear(roles: readonly string[] = ['PRACTITIONER'], tipo: string | null = null): void {
     fixture = TestBed.createComponent(AccessTree);
-    fixture.componentRef.setInput('sections', seccionesDe(roles));
+    fixture.componentRef.setInput('sections', seccionesDe(roles, tipo));
     fixture.detectChanges();
   }
 
@@ -202,7 +205,9 @@ describe('AccessTree', () => {
     abrir('consulta');
 
     const rotulos = accesos().map((a) => a.querySelector('.arbol__acceso-nombre')?.textContent);
-    expect(rotulos).toContain('Evoluciones');
+    // «Archivo clínico» y no «Evoluciones»: ésa pasó a «Notas médicas»
+    // (8c7d7721) y salió de la zona y del producto el 25/09/2026 (e000f8ce).
+    expect(rotulos).toContain('Archivo clínico');
     // «Consultas médicas» desde ALV-016; era «Turnos».
     expect(rotulos).toContain('Consultas médicas');
   });
@@ -232,17 +237,21 @@ describe('AccessTree', () => {
     }
   });
 
-  it('la Guía de profesionales no está en ninguna zona de la doctora', () => {
-    // Corrección #2 del 15/08/2026. El árbol sale de `NavigationService`, el
-    // mismo origen que el menú, así que esto también fija que no se puedan
-    // desincronizar — ahora a través de un escalón más.
+  it('la doctora encuentra el Directorio de médicos en sus zonas (24/09/2026)', () => {
+    // La corrección #2 del 15/08/2026 se lo había quitado; el cliente pidió
+    // devolvérselo. El árbol sale de `NavigationService`, el mismo origen que
+    // el guard, así que esto también fija que no se puedan desincronizar.
     crear(['PRACTITIONER', 'CLINICIAN']);
 
-    for (const zona of zonas().map((z) => z.dataset['zona'] ?? '')) {
-      abrir(zona);
-      expect(accesos().map((a) => a.dataset['ruta'])).not.toContain('/directory');
-      volver();
-    }
+    const rutas = zonas()
+      .map((z) => z.dataset['zona'] ?? '')
+      .flatMap((zona) => {
+        abrir(zona);
+        const deLaZona = accesos().map((a) => a.dataset['ruta']);
+        volver();
+        return deLaZona;
+      });
+    expect(rutas).toContain('/directory');
   });
 
   it('no ofrece el panel dentro del panel', () => {
@@ -261,5 +270,25 @@ describe('AccessTree', () => {
     fixture.detectChanges();
 
     expect(zonas()).toHaveLength(0);
+  });
+
+  it('la aseguradora ve exactamente dos zonas: Chats, y las cuatro de seguros (2026-09-25)', () => {
+    crear(['USER'], 'PAYER');
+
+    const ids = zonas().map((z) => z.dataset['zona']);
+    expect(ids).toEqual(['gente', 'organizacion']);
+
+    abrir('gente');
+    expect(accesos().map((a) => a.dataset['ruta'])).toEqual(['/messaging']);
+    volver();
+
+    abrir('organizacion');
+    expect(accesos().map((a) => a.dataset['ruta'])).toEqual([
+      '/administration/insurance-analytics',
+      // Tarea 4 · M-06: el «Módulo de promociones» del registro de procesos.
+      '/administration/insurance-campaigns',
+      '/administration/my-organization',
+      '/administration/insurance',
+    ]);
   });
 });

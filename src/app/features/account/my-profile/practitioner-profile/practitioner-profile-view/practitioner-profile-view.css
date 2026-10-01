@@ -159,6 +159,10 @@
 .profesional__disponibilidad {
   display: flex;
   flex-wrap: wrap;
+  /* Cada pieza con su alto: estiradas a la altura de la rejilla de
+     especialidades, las pastillas de telemedicina e idiomas quedaban como
+     óvalos de más de 100 px. */
+  align-items: flex-start;
   gap: var(--sp-2);
   margin-block-start: var(--sp-4);
   padding-block-start: var(--sp-4);
@@ -552,10 +556,6 @@
   --trayecto-color: var(--border-strong);
 }
 
-.trayecto--formacion {
-  --trayecto-color: var(--brand-primary);
-}
-
 /* El rótulo de la fase. Se aparta del `mi-perfil__subtitulo` —versalitas
    grises de pie de página— porque acá encabeza un tramo de la historia y tiene
    que pesar como un encabezado, no como una etiqueta. */
@@ -648,42 +648,27 @@
    Es un dato del hito, no otro hito. */
 .trayecto__cargo {
   color: var(--text-secondary);
+  /* En «Actividad actual» va dentro de las fechas, que capitalizan los meses;
+     el cargo es texto libre y no. */
+  text-transform: none;
 }
 
-/* «Retirar» va debajo y a la izquierda del cuerpo, no al lado del sello:
-   pegada al sello parecía una acción SOBRE el veredicto. */
-.trayecto__acciones {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--sp-2);
-  margin: var(--sp-1) 0 0;
-  /* El botón fantasma trae su propio relleno; esto lo devuelve al filo de la
-     columna para que se alinee con el nombre de arriba. */
-  margin-inline-start: calc(var(--sp-3) * -1);
+/* ── Actividad actual: el tramo vivo ──────────────────────────────────────
+   Nombre arriba y más grande, cargo · fecha debajo, el estado al filo
+   derecho: nombre y fechas van en un `trayecto__cuerpo` anidado, que es la
+   primera columna, y el sello la segunda. El anillo va lleno y con halo: es lo único de la
+   historia que todavía está pasando. Este archivo y `ficha-de-perfil.css`
+   rozan el presupuesto de 12 kB del build: cada selector nuevo cuenta. */
+.trayecto__cuerpo--curso {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  /* Lo hereda el nombre; las fechas y el sello traen su propio tamaño. */
+  font-size: var(--fs-body-lg);
 }
 
-/* El nodo de un título toma el color de su sello. Mismo mapa variante → tono
-   que usa `app-status-seal`, para que el anillo y el sello no digan cosas
-   distintas de un mismo trámite. */
-.trayecto__nodo--pending,
-.trayecto__nodo--in-review {
-  --trayecto-color: var(--st-warning-fg);
-}
-
-.trayecto__nodo--approved {
-  --trayecto-color: var(--st-success-fg);
-}
-
-.trayecto__nodo--rejected {
-  --trayecto-color: var(--st-error-fg);
-}
-
-.trayecto__nodo--expired {
-  --trayecto-color: var(--st-info-fg);
-}
-
-.trayecto__nodo--unknown {
-  --trayecto-color: var(--border-strong);
+.trayecto--curso .trayecto__marca {
+  background: var(--trayecto-color);
+  box-shadow: 0 0 0 4px var(--st-success-bg);
 }
 
 /* ─── El chip de telemedicina en la cabecera de la ficha propia ────────────
@@ -696,4 +681,53 @@
    etiqueta. */
 .mi-perfil__modalidad {
   justify-self: start;
+}
+
+/* El mapa del domicilio, debajo de los datos de contacto. */
+.mi-perfil__domicilio {
+  display: grid;
+  gap: var(--sp-2);
+  margin-block-start: var(--sp-4);
+}
+
+/* ─── El logo del consultorio dentro del recuadro de Facturación ───────────
+   Va acá y no en `ficha-de-perfil.css`: el paciente no factura. El logo ocupa
+   una columna de tamaño fijo y los datos la otra; en móvil se apilan con el
+   logo arriba. La caja del logo mide lo mismo con o sin imagen. */
+.factura--con-logo {
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  column-gap: var(--sp-5);
+}
+
+.factura__datos {
+  display: grid;
+  gap: var(--sp-1);
+}
+
+@media (max-width: 599px) {
+  .factura--con-logo {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: var(--sp-3);
+  }
+}
+
+/* ─── El logo del consultorio en «Datos personales» ────────────────────────
+   Va acá y no en `ficha-de-perfil.css`: el paciente no tiene consultorio. El
+   título es `.mi-perfil__subtitulo`, que ya existe. Este archivo y aquél están
+   pegados al presupuesto de 12 kB: cada selector nuevo cuenta. */
+.mi-perfil__logo {
+  display: grid;
+  justify-items: start;
+  gap: var(--sp-2);
+}
+
+/* ─── Firma y sello en «Datos personales» ──────────────────────────────────
+   El título es `.mi-perfil__subtitulo`, que ya existe. Este archivo y
+   `ficha-de-perfil.css` están pegados al presupuesto de 12 kB del build. */
+.mi-perfil__firma-cajas {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--sp-3);
 }

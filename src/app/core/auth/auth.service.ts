@@ -40,6 +40,8 @@ export class AuthService {
   readonly roles = this.session.roles;
   readonly tenants = this.session.tenants;
   readonly activeTenantId = this.session.activeTenantId;
+  /** El tipo (`TenantTypeCode`) de la organización activa; ver `SessionStore.activeTenantType`. */
+  readonly activeTenantType = this.session.activeTenantType;
   readonly needsTenantSelection = this.session.needsTenantSelection;
 
   /** Nombre para mostrar y nombre de la organización, ambos del token. */

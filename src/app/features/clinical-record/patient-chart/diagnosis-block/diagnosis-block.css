@@ -1,7 +1,6 @@
-/* Bloque de diagnóstico: el formulario de alta y, tras guardar, el panel para
-   adjuntarle un archivo (ALV-033) — la lista ya la pinta la pestaña
-   «Diagnósticos». Mismo reparto que el bloque de medicación, porque son la
-   misma clase de tarjeta: un alta que vive junto al encuentro. */
+/* Bloque de diagnóstico: sólo la tabla de presuntivos (C3) y el diálogo de
+   verificación que sus acciones abren. El formulario de alta que este bloque
+   tenía se sacó entero (ver el comentario de la clase en diagnosis-block.ts). */
 
 :host {
   display: block;
@@ -11,9 +10,6 @@
   /* Layout del contenido vía el cuerpo de app-card (ver card.css). */
   --card-body-display: grid;
   --card-body-gap: var(--sp-4);
-  /* Cinco campos cortos: a lo ancho de la tabla, la línea del selector quedaría
-     del largo de la pantalla y sería ilegible. */
-  max-inline-size: 68ch;
 }
 
 .diagnostico__titulo {
@@ -23,48 +19,31 @@
   font-weight: 600;
 }
 
-.diagnostico__formulario {
+/* ---- la tabla de presuntivos (C3) ----------------------------------------- */
+
+.diagnostico__tabla {
   display: grid;
-  gap: var(--sp-4);
+  gap: var(--sp-3);
 }
 
-
-/* Borde discontinuo a propósito: la barra es utilería de demostración, no un
-   control clínico, y tiene que leerse distinta del formulario de al lado. */
-.diagnostico__presets {
-  display: grid;
-  gap: var(--sp-2);
-  padding: var(--sp-3);
-  background-color: var(--bg-surface-alt);
-  border: 1px dashed var(--border-default);
-  border-radius: var(--r-md);
-}
-
-.diagnostico__presets-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--sp-2);
-}
-
-.diagnostico__presets-titulo {
-  font-size: var(--fs-caption);
+.diagnostico__subtitulo {
+  margin: 0;
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
   font-weight: 600;
+}
+
+.diagnostico__nombre {
+  font-weight: 600;
+}
+
+.diagnostico__evidencia,
+.diagnostico__sin-accion {
   color: var(--text-muted);
 }
 
-.diagnostico__presets-items {
+.diagnostico__acciones {
   display: flex;
   flex-wrap: wrap;
   gap: var(--sp-2);
-}
-
-
-/* Los chips de duración estimada, en fila. Mismo tratamiento que la pauta de la
-   receta: son atajos de una sola decisión y se leen de un vistazo. */
-.diagnostico__chips-duracion {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--sp-2);
-  margin-top: var(--sp-1);
 }

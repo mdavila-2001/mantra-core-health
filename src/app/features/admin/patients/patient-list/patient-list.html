@@ -20,16 +20,20 @@
   </a>
 </app-page-header>
 
-<!-- La URL es la fuente de verdad: `app-filter-bar` la lee y la escribe, así
-     que compartir el enlace o volver con el navegador reproduce el filtrado
-     exacto. Documento y teléfono no tienen filtro propio porque ya se buscan
-     por texto libre (`nationalId` viaja dentro de `q`, ver `ProfilesClient`). -->
+<!-- Los filtros de catálogo viven en la URL (`app-filter-bar` la lee y la
+     escribe); el texto buscado NO: es el nombre o el código de un paciente, y
+     la URL lo dejaría en el historial y en los logs. Lo guarda la pantalla
+     (`busqueda` + `SearchMemoryService`). Documento y teléfono no tienen filtro
+     propio porque ya se buscan por texto libre. -->
 <app-filter-bar
   class="pacientes__buscador"
   searchLabel="Buscar pacientes"
   searchPlaceholder="Código de paciente o nombre"
   [searchLoading]="cargando()"
   [filters]="filtros()"
+  [searchInUrl]="false"
+  [searchValue]="busqueda()"
+  (searchChanged)="buscar($event)"
 />
 
 <app-data-table

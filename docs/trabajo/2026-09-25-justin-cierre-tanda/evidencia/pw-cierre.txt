@@ -1,0 +1,16 @@
+
+Running 10 tests using 1 worker
+
+  ok  1 [chromium] › playwright\justin-cierre-tanda.spec.ts:216:7 › Carril A — Farmacia › H3.S1.M6 · la tienda con resultados, en tres anchos y en oscuro (1.1m)
+  ok  2 [chromium] › playwright\justin-cierre-tanda.spec.ts:255:7 › Carril A — Farmacia › H4.S1.M5 · mis recetas, 375 y 1440 (14.8s)
+  ok  3 [chromium] › playwright\justin-cierre-tanda.spec.ts:273:7 › Carril A — Farmacia › H5.S2.M2 · de la receta al carrito, y de ahí a continuar (15.3s)
+  ok  4 [chromium] › playwright\justin-cierre-tanda.spec.ts:332:7 › Carril B — Carga masiva › H5.S1.M4 · el contraste del tema oscuro, medido (8.8s)
+  ok  5 [chromium] › playwright\justin-cierre-tanda.spec.ts:357:7 › Carril B — Carga masiva › H4.S3.M3 · el recorrido de teclado, recorrido de verdad (8.8s)
+  ok  6 [chromium] › playwright\justin-cierre-tanda.spec.ts:394:7 › Carril B — Carga masiva › H1.S2.M4 · un NDJSON de tres líneas, ofrecido a la pantalla (14.2s)
+  ok  7 [chromium] › playwright\justin-cierre-tanda.spec.ts:446:7 › Carril C — historia del paciente y reconsulta › C6.H4.M2 · la historia: Regla 8 medida y capturas en los dos temas (24.3s)
+  ok  8 [chromium] › playwright\justin-cierre-tanda.spec.ts:480:7 › Carril C — historia del paciente y reconsulta › C6.H3.M4 · el PDF de la historia se descarga de verdad (8.1s)
+  ok  9 [chromium] › playwright\justin-cierre-tanda.spec.ts:507:7 › Carril C — historia del paciente y reconsulta › C4.H4.M2 · los sellos de reconsulta, en tres anchos y dos temas (25.0s)
+  ok 10 [chromium] › playwright\justin-cierre-tanda.spec.ts:553:7 › Hallazgos de la corrida › los sellos de reconsulta suben solos al recargar (16.5s)
+
+  10 passed (3.4m)
+EXIT=0

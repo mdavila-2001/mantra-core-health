@@ -281,16 +281,20 @@
   "38": [
     {
       "ruta": "/my-account/edit",
-      "nombre": "editar-perfil-medico"
+      "nombre": "practitioner-profile-editor"
+    },
+    {
+      "ruta": "/my-account/edit?pestana=5",
+      "nombre": "edit-specialties-no-switches"
     }
   ],
   "39": [
     {
-      "ruta": "/my-account/edit",
+      "ruta": "/my-account/edit?pestana=5",
       "nombre": "credenciales-edicion"
     },
     {
-      "ruta": "/my-account/edit?with-file=1",
+      "ruta": "/my-account/edit?pestana=5&with-file=1",
       "nombre": "credenciales-con-adjunto"
     }
   ],

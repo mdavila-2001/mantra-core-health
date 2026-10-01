@@ -1,4 +1,3 @@
-import { writeFileSync } from 'node:fs';
 import { PROFESIONALES } from './personas';
 import { recursos, cupos } from './agenda';
 
@@ -44,11 +43,6 @@ describe('cobertura de agendas — foto antes de R-03', () => {
       `[H1.S2.M2] directorio=${enDirectorio} conRecurso=${conRecurso} conCuposEn14dias=${conCupos} ` +
       `registrados=${registrados.length} registradosConEspecialidad=${registradosConEspecialidad.length}\n`;
     console.log(resumen);
-    try {
-      writeFileSync('docs/trabajo/2026-09-22-ender-simulador-cabecera/evidencia/antes/agendas-raw.txt', resumen);
-    } catch {
-      /* si el cwd no es la raiz del repo, el resumen sigue en la consola */
-    }
 
     expect(enDirectorio).toBeGreaterThan(0);
     expect(registrados.length).toBe(13);

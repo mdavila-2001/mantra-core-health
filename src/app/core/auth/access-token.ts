@@ -31,6 +31,19 @@ export interface AccessTokenClaims {
   /** Nombre de cada tenant por su identificador, para no mostrar uuid crudos. */
   readonly tenantNames?: Readonly<Record<string, string>>;
   /**
+   * Código de tipo de cada tenant por su identificador (`'PAYER'`,
+   * `'PROVIDER'`, `'PHARMACY'`…), tal como lo declara `TenantTypeCode` de
+   * `core/data-access/directory/directory.types`.
+   *
+   * Es dato de presentación, igual que `tenantNames`: no participa de ninguna
+   * decisión de autorización. Existe para que el registro de navegación pueda
+   * ocultarle a una organización una sección que no es suya —p. ej. el
+   * autoservicio del paciente, a una aseguradora— sin que la API tenga que
+   * exponer una ruta `/me`. Ausente = tipo desconocido para ese tenant: no
+   * oculta nada.
+   */
+  readonly tenantTypes?: Readonly<Record<string, string>>;
+  /**
    * Perfil de paciente del titular, si la cuenta es la de un paciente.
    *
    * Es lo que el autoservicio necesita para reservar un turno: `confirm` exige
@@ -165,12 +178,22 @@ function toClaims(payload: unknown): AccessTokenClaims | null {
     ...(typeof hpid === 'string' && hpid !== '' ? { hpid } : {}),
     ...(typeof ownTenantId === 'string' && ownTenantId !== '' ? { ownTenantId } : {}),
     ...(typeof exp === 'number' ? { exp } : {}),
-    ...(toNameMap(source['tenantNames']) ?? {}),
+    ...(toStringMapClaim('tenantNames', source['tenantNames']) ?? {}),
+    ...(toStringMapClaim('tenantTypes', source['tenantTypes']) ?? {}),
   };
 }
 
-/** `tenantNames` solo se acepta si es un mapa de texto a texto. */
-function toNameMap(value: unknown): { tenantNames: Record<string, string> } | null {
+/**
+ * Lee un claim que es un mapa de texto a texto (`tenantNames`, `tenantTypes`).
+ *
+ * Se descarta entero si no es un mapa, o si queda vacío tras filtrar las
+ * entradas que no son texto: un claim vacío es lo mismo que ausente, y así lo
+ * trata quien lo consuma después.
+ */
+function toStringMapClaim<K extends string>(
+  key: K,
+  value: unknown,
+): Record<K, Record<string, string>> | null {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) {
     return null;
   }
@@ -179,7 +202,7 @@ function toNameMap(value: unknown): { tenantNames: Record<string, string> } | nu
     (entry): entry is [string, string] => typeof entry[1] === 'string',
   );
 
-  return entries.length === 0 ? null : { tenantNames: Object.fromEntries(entries) };
+  return entries.length === 0 ? null : ({ [key]: Object.fromEntries(entries) } as Record<K, Record<string, string>>);
 }
 
 /** Un claim de lista ausente equivale a lista vacía, no a error. */

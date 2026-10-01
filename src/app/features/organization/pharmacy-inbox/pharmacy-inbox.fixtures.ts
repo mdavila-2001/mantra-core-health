@@ -1,10 +1,10 @@
 import {
+  DELIVERY_ORDER_ADDRESS,
   ID_PEDIDO_CON_DELIVERY,
   ID_PEDIDO_CON_SEGURO,
 } from '../../../core/mock/fixtures/pedidos-de-farmacia';
 import type {
   LineaDePedido,
-  ModalidadDeEntrega,
   PedidoFarmacia,
 } from '../../../core/data-access/pharmacy-orders/pharmacy-orders.types';
 
@@ -18,15 +18,17 @@ import type {
  * inventa un campo en `core/`**: se declara acá, junto a la pantalla que lo
  * dibuja, y la pantalla lo rotula como lo que es.
  *
- * El medio de entrega es un tercer caso, distinto: el campo `modalidad` SÍ
- * existe en el contrato y la pantalla lo lee de ahí siempre. Lo que falta es
- * un pedido a domicilio que mirar, porque el backend simulado responde
- * `RETIRO` para todos en una línea que se comparte con otra persona
- * (`core/mock/handlers/pharmacy.handlers.ts:195`). Así que un único pedido de
- * ejemplo trae su medio de acá, por identificador, y sale rotulado.
+ * El medio de entrega ya no es de este archivo: la modalidad y la dirección
+ * (`deliveryMode`, `deliveryAddressText`) son del contrato, así que el pedido
+ * a domicilio de la maqueta las trae del backend simulado
+ * (`core/mock/handlers/pharmacy.handlers.ts`), como con la API real.
  *
  * Reglas que este archivo respeta y conviene no perder de vista:
  *
+ * - **Sólo con el backend simulado.** Quien consulta estos ejemplos es la
+ *   pantalla, y lo hace sólo si `SAMPLE_DATA_ENABLED` está encendido (rama
+ *   `mockup`). Contra la API real (`production-api`) la cobertura y la factura
+ *   no se dibujan.
  * - **Nada se persiste.** Ni `localStorage` ni un servicio con estado: cada
  *   render vuelve a derivar lo mismo del pedido que la API devolvió.
  * - **Los importes son texto**, como en todo el contrato de farmacia: el
@@ -159,37 +161,6 @@ function sumar(importes: readonly string[]): string {
   return importes.reduce((total, importe) => total + Number(importe), 0).toFixed(2);
 }
 
-/* ─── El medio de entrega del pedido de ejemplo ──────────────────────────── */
-
-/** El medio de entrega que la maqueta le pone a un pedido concreto. */
-export interface EntregaDeEjemplo {
-  readonly modalidad: ModalidadDeEntrega;
-  readonly direccion: string;
-}
-
-/**
- * Qué pedido de ejemplo sale a domicilio, por identificador. Es un mapa de un
- * solo par a propósito: el resto de la bandeja usa la `modalidad` que devuelve
- * la API, sin pasar por acá.
- */
-const ENTREGAS_DE_EJEMPLO: ReadonlyMap<string, EntregaDeEjemplo> = new Map([
-  [
-    ID_PEDIDO_CON_DELIVERY,
-    {
-      modalidad: 'DOMICILIO',
-      direccion: 'Av. Cristo Redentor km 4 · Edificio Aurora, dpto. 3B',
-    },
-  ],
-]);
-
-/**
- * El medio de entrega que la maqueta aporta para este pedido, o `null` —lo
- * normal— para que la pantalla se quede con el del contrato.
- */
-export function entregaDeEjemplo(pedido: PedidoFarmacia): EntregaDeEjemplo | null {
-  return ENTREGAS_DE_EJEMPLO.get(pedido.id) ?? null;
-}
-
 /* ─── La factura que emite la farmacia (F2.1.12) ─────────────────────────── */
 
 /** La factura del pedido, tal como el mostrador la ve al pie del detalle. */
@@ -317,13 +288,14 @@ function pedidoDeEjemplo(extra: Partial<PedidoFarmacia> = {}): PedidoFarmacia {
 export const PEDIDO_NUEVO: PedidoFarmacia = pedidoDeEjemplo();
 
 /**
- * Sale de la farmacia. Se declara **como lo devuelve la API** —`RETIRO`, sin
- * dirección—: el chip cambia porque `entregaDeEjemplo` lo reconoce por su
- * identificador, que es exactamente lo que pasa en la pantalla corriendo.
+ * Sale de la farmacia. Se declara **como lo devuelve el backend simulado**:
+ * `DOMICILIO`, con la dirección guardada en `deliveryAddressText`.
  */
 export const PEDIDO_CON_DELIVERY: PedidoFarmacia = pedidoDeEjemplo({
   id: IDS.delivery,
   estado: 'EN_REVISION',
+  modalidad: 'DOMICILIO',
+  direccionDeEntrega: DELIVERY_ORDER_ADDRESS,
   paciente: 'Vania Gutiérrez Peña',
 });
 

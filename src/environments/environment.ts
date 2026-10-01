@@ -25,6 +25,9 @@ import { envFromProcess } from './env.generated';
 export const environment: Environment = {
   apiBaseUrl: envFromProcess.apiBaseUrl ?? '',
 
+  /** Mismo origen: ver `aiBaseUrl` en `environment.types.ts`. */
+  aiBaseUrl: envFromProcess.aiBaseUrl ?? '/ai',
+
   /**
    * Apagada por defecto: en producción la barra de demostración no existe
    * salvo que el despliegue la pida (`PUBLIC_DEMO_PRESETS=true`, pensado para
@@ -53,6 +56,21 @@ export const environment: Environment = {
    * staging de una demo la enciende con `PUBLIC_CAMPAIGNS_DEMO=true`.
    */
   campaignsDemo: envFromProcess.campaignsDemo ?? true,
+
+  /**
+   * La facturación SIMULADA (FACT-SIAT-MOCK). Encendida en la maqueta, como
+   * las demás demos; todo lo que produce va marcado como simulado y sin validez
+   * fiscal. Se apaga con `PUBLIC_BILLING_SIAT_DEMO=false`.
+   */
+  billingSiatDemo: envFromProcess.billingSiatDemo ?? true,
+
+  /**
+   * Encendidas por defecto: la rama `mockup` existe para recorrer las
+   * pantallas de la bóveda. Un despliegue que no las quiera las apaga con
+   * `PUBLIC_DESIGN_MOCKUPS=false`; contra la API real ya vienen apagadas
+   * (`environment.real-api.ts`).
+   */
+  designMockups: envFromProcess.designMockups ?? true,
 
   /**
    * Siempre encendido en la rama `mockup`: es lo que la define. No lee el

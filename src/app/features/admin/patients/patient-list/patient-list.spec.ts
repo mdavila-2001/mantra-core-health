@@ -1,22 +1,28 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 
+import { SearchMemoryService } from '../../../../core/navigation/search-memory.service';
 import { PatientList } from './patient-list';
 
 /**
  * El listado es la primera vista de Fase 0 que se puede cerrar completa: el
- * backend ya expone `GET /profiles/patients`. Estas pruebas fijan lo que
+ * backend ya expone la búsqueda (`POST /profiles/patients/search`). Estas pruebas fijan lo que
  * distingue a esta pantalla de una tabla cualquiera.
  *
  * Se monta con `RouterTestingHarness` y no con `TestBed.createComponent`
- * porque **el filtro vive en la URL**: sin un router de verdad, `buscar()`
+ * porque **los filtros de catálogo viven en la URL**: sin un router de verdad, `buscar()`
  * navegaría al vacío y el efecto que recarga no se enteraría nunca. Es la
  * diferencia entre probar la pantalla y probar una maqueta suya.
  */
 const RUTA = '/administration/patients';
+
+/** Otra pantalla cualquiera, para salir del listado y volver (p. ej. la ficha). */
+@Component({ template: '', changeDetection: ChangeDetectionStrategy.OnPush })
+class OtherScreen {}
 
 const FILA = {
   profileId: 'pp-1',
@@ -41,7 +47,10 @@ describe('PatientList', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        provideRouter([{ path: 'administration/patients', component: PatientList }]),
+        provideRouter([
+          { path: 'administration/patients', component: PatientList },
+          { path: 'other', component: OtherScreen },
+        ]),
       ],
     });
 
@@ -92,7 +101,7 @@ describe('PatientList', () => {
 
   /** La petición en vuelo, sea la del arranque o la de un cambio de filtro. */
   function peticion() {
-    return http.expectOne((r) => r.url === '/profiles/patients');
+    return http.expectOne((r) => r.url === '/profiles/patients/search');
   }
 
   function responder(items: unknown[], nextCursor: string | null = null) {
@@ -111,8 +120,9 @@ describe('PatientList', () => {
   it('pide la primera página al entrar, con el tope de la pantalla', () => {
     const req = peticion();
 
-    expect(req.request.params.get('limit')).toBe('25');
-    expect(req.request.params.has('cursor')).toBe(false);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body.limit).toBe(25);
+    expect(req.request.body).not.toHaveProperty('cursor');
 
     req.flush(pagina([FILA], null));
   });
@@ -163,10 +173,11 @@ describe('PatientList', () => {
     expect(vacio.nextAction.route).toBe('/administration/patients/new');
   });
 
-  it('sin resultados pero con filtro, el vacío ofrece volver a la lista completa', async () => {
+  it('sin resultados pero con filtro, el vacío ofrece volver a la lista completa', () => {
     responder([]);
 
-    await harness.navigateByUrl(`${RUTA}?q=salas`);
+    interno<(t: string) => void>('buscar')('salas');
+    harness.detectChanges();
     responder([]);
 
     const vacio = estado() as { status: string; nextAction: { route?: string }; message?: string };
@@ -178,20 +189,72 @@ describe('PatientList', () => {
   });
 
   /**
-   * La búsqueda la publica `app-filter-bar` en la URL — el componente no tiene
-   * un método propio para eso desde que dejó de tener su propio campo. Se
-   * prueba navegando, igual que el test de «sin resultados… con filtro».
+   * La búsqueda la publica `app-filter-bar` por `searchChanged` y la guarda
+   * la pantalla: el nombre o el código de un paciente no van a la URL, que
+   * los dejaría en el historial y en los logs del servidor.
    */
-  it('un cambio de `q` en la URL vuelve a pedir la primera página', async () => {
-    responder([FILA]);
+  describe('el texto buscado no va a la URL', () => {
+    it('correcto — buscar pide la primera página con `q` en el cuerpo y la URL queda igual', () => {
+      responder([FILA]);
 
-    await harness.navigateByUrl(`${RUTA}?q=salas`);
+      interno<(t: string) => void>('buscar')('salas');
+      harness.detectChanges();
 
-    const req = peticion();
-    expect(req.request.params.get('q')).toBe('salas');
-    expect(req.request.params.has('cursor')).toBe(false);
+      const req = peticion();
+      expect(req.request.body.q).toBe('salas');
+      expect(req.request.body).not.toHaveProperty('cursor');
+      expect(TestBed.inject(Router).url).toBe(RUTA);
 
-    req.flush(pagina([FILA], null));
+      req.flush(pagina([FILA], null));
+    });
+
+    it('correcto — volver a la pantalla (desde la ficha) encuentra la búsqueda como estaba', async () => {
+      responder([FILA]);
+      interno<(t: string) => void>('buscar')('salas');
+      harness.detectChanges();
+      responder([FILA]);
+
+      await harness.navigateByUrl('/other');
+      // Los catálogos quedaron en la caché del cliente: no se vuelven a pedir.
+      componente = await harness.navigateByUrl(RUTA, PatientList);
+
+      const req = peticion();
+      expect(req.request.body.q).toBe('salas');
+      expect(TestBed.inject(Router).url).toBe(RUTA);
+      req.flush(pagina([FILA], null));
+    });
+
+    it('límite — «Ver todos los pacientes» (misma ruta) empieza de nuevo', async () => {
+      responder([FILA]);
+      interno<(t: string) => void>('buscar')('salas');
+      harness.detectChanges();
+      responder([]);
+
+      // El enlace del vacío apunta a esta misma URL: el router la descarta.
+      await TestBed.inject(Router).navigateByUrl(RUTA);
+      harness.detectChanges();
+
+      const req = peticion();
+      expect(req.request.body).not.toHaveProperty('q');
+      expect(TestBed.inject(SearchMemoryService).read('admin-patients')).toEqual({});
+      req.flush(pagina([FILA], null));
+    });
+
+    it('inválido — un enlace viejo con `?q=` busca lo que traía y lo saca de la URL', async () => {
+      responder([FILA]);
+      await harness.navigateByUrl('/other');
+
+      componente = await harness.navigateByUrl(`${RUTA}?q=salas&aboGroupConceptId=abo-o`, PatientList);
+      await harness.fixture.whenStable();
+
+      expect(TestBed.inject(Router).url).not.toContain('q=');
+      // El filtro de catálogo sí se queda: un código ABO no identifica a nadie.
+      expect(TestBed.inject(Router).url).toContain('aboGroupConceptId=abo-o');
+      const req = peticion();
+      expect(req.request.body.q).toBe('salas');
+      expect(req.request.body.aboGroupConceptId).toBe('abo-o');
+      req.flush(pagina([FILA], null));
+    });
   });
 
   /**
@@ -229,9 +292,9 @@ describe('PatientList', () => {
     await harness.navigateByUrl(`${RUTA}?aboGroupConceptId=abo-o&rhFactorConceptId=rh-pos&clinicalLanguageConceptId=lang-ay`);
 
     const req = peticion();
-    expect(req.request.params.get('aboGroupConceptId')).toBe('abo-o');
-    expect(req.request.params.get('rhFactorConceptId')).toBe('rh-pos');
-    expect(req.request.params.get('clinicalLanguageConceptId')).toBe('lang-ay');
+    expect(req.request.body.aboGroupConceptId).toBe('abo-o');
+    expect(req.request.body.rhFactorConceptId).toBe('rh-pos');
+    expect(req.request.body.clinicalLanguageConceptId).toBe('lang-ay');
 
     req.flush(pagina([FILA], null));
   });
@@ -242,7 +305,7 @@ describe('PatientList', () => {
     interno<(c: string) => void>('mover')('cur-2');
 
     const req = peticion();
-    expect(req.request.params.get('cursor')).toBe('cur-2');
+    expect(req.request.body.cursor).toBe('cur-2');
 
     req.flush(pagina([FILA], null));
   });
@@ -268,7 +331,7 @@ describe('PatientList', () => {
     interno<(c: string) => void>('mover')('anterior');
 
     const req = peticion();
-    expect(req.request.params.has('cursor')).toBe(false);
+    expect(req.request.body).not.toHaveProperty('cursor');
 
     req.flush(pagina([FILA], 'cur-2'));
   });
@@ -288,7 +351,7 @@ describe('PatientList', () => {
     interno<() => void>('recargar')();
 
     const req = peticion();
-    expect(req.request.params.get('cursor')).toBe('cur-2');
+    expect(req.request.body.cursor).toBe('cur-2');
 
     req.flush(pagina([FILA], null));
   });

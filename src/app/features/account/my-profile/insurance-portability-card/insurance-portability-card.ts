@@ -13,9 +13,9 @@ import { PortabilityExportDialog } from './portability-export-dialog/portability
  * procesos 6.3 · ítem 5): la tarjeta que ofrece al titular exportar su
  * historial de seguros para llevarlo a otra aseguradora.
  *
- * Va al pie de la pestaña «Seguros y tutores» de `/my-account`, **siempre
- * visible** — el derecho de portabilidad existe aunque el titular no haya
- * declarado ninguna cobertura todavía.
+ * Va al pie de la pestaña «Seguros» de `/my-account` (separada de «Tutores»
+ * el 24/09/2026), **siempre visible** — el derecho de portabilidad existe
+ * aunque el titular no haya declarado ninguna cobertura todavía.
  *
  * Dice de entrada **en qué estado están las coberturas** de quien mira: es
  * la primera pregunta de alguien que está por llevarse su historial a otra
@@ -63,19 +63,19 @@ export class InsurancePortabilityCard {
     const total = this.coverages().length;
     if (total === 0) return 'No tenés coberturas declaradas.';
 
-    const vigentes = this.coverages().filter(
+    const currentCount = this.coverages().filter(
       (coverage) => coverage.validityStatus === 'CURRENT',
     ).length;
 
-    if (vigentes === total) {
+    if (currentCount === total) {
       return total === 1 ? '1 cobertura vigente.' : `${total} coberturas vigentes.`;
     }
-    if (vigentes === 0) {
+    if (currentCount === 0) {
       return total === 1
         ? '1 cobertura declarada, ninguna vigente.'
         : `${total} coberturas declaradas, ninguna vigente.`;
     }
-    return `${vigentes} de ${total} coberturas vigentes.`;
+    return `${currentCount} de ${total} coberturas vigentes.`;
   });
 
   protected readonly dialogOpen = signal(false);

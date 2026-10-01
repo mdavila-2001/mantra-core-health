@@ -1,4 +1,5 @@
 import {
+  conceptIdDe,
   explicar,
   normalizar,
   reconocer,
@@ -10,6 +11,7 @@ import {
   SINTOMAS_DE_ALARMA,
   TODOS_LOS_SINTOMAS,
 } from './sintomas';
+import { ZONAS_CON_SILUETA } from '@shared/components/organisms/body-map/body-map';
 import { ZONAS_DEL_CUERPO } from './zonas.datos';
 import { ultimaFrase } from './texto';
 
@@ -165,6 +167,28 @@ describe('recomendar', () => {
   });
 });
 
+describe('conceptIdDe', () => {
+  it('resuelve el mismo par que hizo que la especialidad se recomendara', () => {
+    // Este es el bug reportado: «me duele la pantorrilla» recomienda
+    // Traumatología, pero el directorio la tiene escrita distinto
+    // («Traumatología y Ortopedia»). `recomendar` la ofrece igual porque
+    // `estaDisponible` es tolerante; antes, `verProfesionales` buscaba el
+    // `conceptId` con igualdad exacta, no lo encontraba, y la navegación caía
+    // al buscador por texto — que nunca pone `especialidad` en la URL y deja
+    // a la persona en el directorio agrupado por categoría en vez de en la
+    // lista de traumatólogos.
+    const disponibles = new Map([['traumatologia y ortopedia', 'con-trauma']]);
+
+    expect(conceptIdDe('Traumatología', disponibles)).toBe('con-trauma');
+  });
+
+  it('sin coincidencia ni siquiera difusa, no resuelve nada', () => {
+    const disponibles = new Map([['cardiologia', 'con-cardio']]);
+
+    expect(conceptIdDe('Reumatología', disponibles)).toBeUndefined();
+  });
+});
+
 describe('explicar', () => {
   it('con un síntoma dice «Por X»', () => {
     expect(explicar({ nombre: 'Neurología', peso: 3, porque: ['dolor de cabeza'] })).toBe(
@@ -267,5 +291,46 @@ describe('la tabla', () => {
         expect(conocidos.has(id), `${zona.id} ofrece «${id}»`).toBe(true);
       }
     }
+  });
+
+  /**
+   * La figura y la tabla hablan de las mismas zonas: una forma sin fila sería
+   * un botón que no abre nada, y una fila de cuerpo sin forma, una parte que no
+   * se puede señalar ni elegir (ya no hay pastilla que la ofrezca).
+   */
+  it('cada forma de la figura tiene su zona, y cada zona sin forma es de las que no se señalan', () => {
+    const enLaTabla = new Set(ZONAS_DEL_CUERPO.map((zona) => zona.id));
+    for (const id of ZONAS_CON_SILUETA) {
+      expect(enLaTabla.has(id), `la figura dibuja «${id}» y la tabla no la tiene`).toBe(true);
+    }
+    const sinForma = ZONAS_DEL_CUERPO.filter((zona) => !ZONAS_CON_SILUETA.has(zona.id));
+    expect(sinForma.map((zona) => zona.id)).toEqual(['piel', 'animo', 'general']);
+  });
+
+  /**
+   * Los síntomas de «Salud íntima» que sólo corresponden a un sexo (P-04,
+   * 2026-09-25): `symptom-check` los filtra por el sexo del propio perfil.
+   * Este test fija la lista, para que agregar una fila nueva a la zona no la
+   * deje sin marcar por descuido.
+   */
+  it('«soloParaSexo» marca sólo lo que es exclusivo de un sexo', () => {
+    const porSexo = (sexo: 'MALE' | 'FEMALE') =>
+      SINTOMAS.filter((s) => s.soloParaSexo === sexo)
+        .map((s) => s.id)
+        .sort();
+
+    expect(porSexo('MALE')).toEqual(
+      ['dolor-de-testiculos', 'problemas-de-ereccion', 'prostata'].sort(),
+    );
+    expect(porSexo('FEMALE')).toEqual(
+      [
+        'atraso-menstrual',
+        'control-embarazo',
+        'dolor-menstrual',
+        'flujo-vaginal',
+        'menopausia',
+        'sangrado-menstrual-abundante',
+      ].sort(),
+    );
   });
 });

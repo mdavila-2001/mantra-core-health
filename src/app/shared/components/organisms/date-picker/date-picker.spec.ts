@@ -645,6 +645,54 @@ describe('DatePicker', () => {
       expect(encabezado().textContent).toContain(nombreDeMes(6));
       expect(encabezado().textContent).toContain('2026');
     });
+
+    /*
+     * D-05 (22/09/2026): cada botón de acción lleva ícono y nombre. En este
+     * diálogo modal no cabe la excepción del ADR-0012 §3, porque el globo que
+     * exige se cuelga del <body> y queda debajo del modal. El nombre accesible
+     * completo se conserva y contiene lo que se ve.
+     */
+    it('D-05: «Cerrar» y las flechas llevan ícono y nombre a la vista', async () => {
+      await abrir();
+      const calendario = dialog()!;
+      expect(calendario.querySelectorAll('.btn--icon-only')).toHaveLength(0);
+
+      const cerrar = calendario.querySelector<HTMLButtonElement>('.dialog-header button')!;
+      expect(cerrar.textContent?.trim()).toBe('Cerrar');
+      expect(cerrar.querySelector('svg')).not.toBeNull();
+
+      const esperadas: readonly (readonly [string, string])[] = [
+        ['Año anterior', 'Año'],
+        ['Mes anterior', 'Mes'],
+        ['Mes siguiente', 'Mes'],
+        ['Año siguiente', 'Año'],
+      ];
+      for (const [nombre, visible] of esperadas) {
+        const boton = flecha(nombre);
+        expect(boton.textContent?.trim()).toBe(visible);
+        expect(boton.querySelector('svg')).not.toBeNull();
+        expect(boton.getAttribute('aria-label')?.toLowerCase()).toContain(visible.toLowerCase());
+      }
+
+      encabezado().click();
+      await fixture.whenStable();
+      for (const nombre of ['30 años anteriores', '30 años siguientes']) {
+        expect(flecha(nombre).textContent?.trim()).toBe('30 años');
+        expect(flecha(nombre).querySelector('svg')).not.toBeNull();
+      }
+    });
+
+    it('D-05: el mes va antes que las flechas en el orden del teclado', async () => {
+      await abrir();
+      const botones = Array.from(dialog()!.querySelectorAll('.calendar-nav button'));
+      expect(botones[0]).toBe(encabezado());
+      expect(botones.slice(1).map((b) => b.getAttribute('aria-label'))).toEqual([
+        'Año anterior',
+        'Mes anterior',
+        'Mes siguiente',
+        'Año siguiente',
+      ]);
+    });
   });
 
   describe('límites de fecha (maxDate / minDate)', () => {

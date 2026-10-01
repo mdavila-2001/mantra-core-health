@@ -1,3 +1,20 @@
-@for (toast of toasts(); track toast.id) {
-  <app-toast [toast]="toast" (dismissed)="dismiss($event)" />
-}
+<!-- Dos regiones vivas FIJAS, presentes desde el primer render aunque no haya
+     ningún aviso. Un lector de pantalla sólo anuncia los cambios de una región
+     que ya conocía: cuando la región llegaba junto con el aviso —el `role` iba
+     en cada `app-toast`—, el anuncio dependía de la suerte y a veces se perdía.
+     Los avisos se insertan adentro; ellos no llevan rol propio, que sería una
+     región anidada en otra y un anuncio doble.
+
+     Los errores van aparte porque interrumpen la lectura; los demás esperan su
+     turno. Van al final: la pila se ancla abajo, y lo último es lo que queda
+     más cerca de la esquina. -->
+<div class="toast-region" role="status" aria-live="polite" data-testid="avisos-region">
+  @for (toast of notices(); track toast.id) {
+    <app-toast [toast]="toast" (dismissed)="dismiss($event)" />
+  }
+</div>
+<div class="toast-region" role="alert" aria-live="assertive" data-testid="avisos-region-errores">
+  @for (toast of errors(); track toast.id) {
+    <app-toast [toast]="toast" (dismissed)="dismiss($event)" />
+  }
+</div>

@@ -1,0 +1,6 @@
+inicio=17:29:14 memoria_libre_MB=2763
+  202 con algo que mirar
+  relaciones: 2143 template-instantiates · 6 imports-available sin instanciar · 69 type-only · 208 dynamic-loads
+  nivel: 0 declarado · 547 por-ruta · 5 unresolvedEvidence en 5 componentes
+  acreditación: descubiertos 547/547 · con escenario 3/547 · verificados visualmente 3/547 · bloqueados 70/547 · montó e interactuó: se miden en el banco (runtime)
+exit=0

@@ -61,14 +61,17 @@ describe('el registro de zonas', () => {
 });
 
 describe('buildAccessTree', () => {
-  /** Las secciones que un rol alcanza, tal como se las pasa el panel. */
-  function seccionesDe(roles: readonly string[]): readonly AppSection[] {
-    return APP_SECTIONS.filter((seccion) => isVisibleTo(seccion, roles, ['t-1']));
+  /** Las secciones que un rol (y, opcionalmente, un tipo de organización) alcanza, tal como se las pasa el panel. */
+  function seccionesDe(
+    roles: readonly string[],
+    tipo: string | null = null,
+  ): readonly AppSection[] {
+    return APP_SECTIONS.filter((seccion) => isVisibleTo(seccion, roles, ['t-1'], tipo));
   }
 
   /** Todas las rutas repartidas, sin importar en qué zona cayeron. */
-  function rutasRepartidas(roles: readonly string[]): readonly string[] {
-    return buildAccessTree(seccionesDe(roles)).flatMap((zona) =>
+  function rutasRepartidas(roles: readonly string[], tipo: string | null = null): readonly string[] {
+    return buildAccessTree(seccionesDe(roles, tipo)).flatMap((zona) =>
       zona.sections.map((seccion) => seccion.path),
     );
   }
@@ -114,13 +117,21 @@ describe('buildAccessTree', () => {
    * llega desde «Mi perfil»—.
    */
   it.each([
-    ['administration/my-practice'],
-    ['administration/pharmacy-orders'],
-    ['administration/pharmacy-campaigns'],
-    ['administration/pharmacy-profile'],
-  ])('no ofrece %s en «Tus accesos» aunque la sesión lo alcance', (ruta) => {
-    expect(seccionesDe(['PRACTITIONER']).map((s) => s.path)).toContain(ruta);
-    expect(rutasRepartidas(['PRACTITIONER'])).not.toContain(ruta);
+    ['administration/my-practice', null],
+    // Las de farmacia sólo existen en una organización `PHARMACY`
+    // (29/09/2026): el médico que además atiende un mostrador las alcanza al
+    // activar esa organización, y aun así no ocupan un renglón de su árbol.
+    ['administration/pharmacy-orders', 'PHARMACY'],
+    ['administration/pharmacy-campaigns', 'PHARMACY'],
+    ['administration/pharmacy-catalog', 'PHARMACY'],
+    ['administration/pharmacy-profile', 'PHARMACY'],
+    ['administration/pharmacy', 'PHARMACY'],
+    ['administration/pharmacy-categories', 'PHARMACY'],
+    ['administration/pharmacy-import', 'PHARMACY'],
+    ['administration/pharmacy-inventory', 'PHARMACY'],
+  ])('no ofrece %s en «Tus accesos» aunque la sesión lo alcance', (ruta, tipo) => {
+    expect(seccionesDe(['PRACTITIONER'], tipo).map((s) => s.path)).toContain(ruta);
+    expect(rutasRepartidas(['PRACTITIONER'], tipo)).not.toContain(ruta);
   });
 
   /**
@@ -225,16 +236,12 @@ describe('buildAccessTree', () => {
    * zona por el cajón sin que nada se queje, que es exactamente lo que este
    * archivo existe para impedir.
    */
-  it('la zona de Consultas le abre tres tarjetas al médico', () => {
+  it('la zona de Consultas le abre dos tarjetas al médico', () => {
     const consulta = buildAccessTree(seccionesDe(['PRACTITIONER'])).find(
       (zona) => zona.area.id === 'consulta',
     );
 
-    expect(consulta?.sections.map((s) => s.path)).toEqual([
-      'schedule',
-      'progress-notes',
-      'medical-records',
-    ]);
+    expect(consulta?.sections.map((s) => s.path)).toEqual(['schedule', 'medical-records']);
   });
 
   /**
@@ -296,5 +303,31 @@ describe('buildAccessTree', () => {
 
   it('sin secciones no hay zonas, y no una fila de tarjetas vacías', () => {
     expect(buildAccessTree([])).toEqual([]);
+  });
+
+  /**
+   * La aseguradora (2026-09-25). Con `hiddenForTenantTypes` cerrando los
+   * directorios y el autoservicio del paciente, a una sesión `USER` con tenant
+   * `PAYER` sólo le queda «Chats» (zona «Pacientes y equipo») y las tres
+   * pantallas de seguros (zona «Administración») — dos zonas, no una.
+   */
+  it('la aseguradora ve dos zonas: Pacientes y equipo (Chats), y Administración', () => {
+    const arbol = buildAccessTree(seccionesDe(['USER'], 'PAYER'));
+
+    expect(arbol.map((zona) => zona.area.id)).toEqual(['gente', 'organizacion']);
+
+    const gente = arbol.find((zona) => zona.area.id === 'gente');
+    expect(gente?.sections.map((s) => s.path)).toEqual(['messaging']);
+
+    const organizacion = arbol.find((zona) => zona.area.id === 'organizacion');
+    expect(organizacion?.sections.map((s) => s.path)).toEqual([
+      'administration/insurance-analytics',
+      // Tarea 4 · M-06: el «Módulo de promociones» del registro de procesos.
+      'administration/insurance-campaigns',
+      'administration/my-organization',
+      'administration/insurance',
+      // 2026-09-27: «Solicitudes recibidas», pedida por la propietaria.
+      'administration/received-claims',
+    ]);
   });
 });

@@ -92,6 +92,54 @@ describe('SessionStore', () => {
     });
   });
 
+  describe('tipo de la organización activa', () => {
+    it('con un tenant y su tipo en el token, lo resuelve solo', () => {
+      const conTipo = makeToken({
+        sub: 'u-1',
+        tenants: ['t-1'],
+        tenantTypes: { 't-1': 'PAYER' },
+      });
+      store.start({ accessToken: conTipo, refreshToken: 'r-1' });
+
+      expect(store.activeTenantType()).toBe('PAYER');
+    });
+
+    it('con varios tenants sin elegir, es null: no hay organización activa', () => {
+      const varios = makeToken({
+        sub: 'u-1',
+        tenants: ['t-1', 't-2'],
+        tenantTypes: { 't-1': 'PAYER', 't-2': 'PROVIDER' },
+      });
+      store.start({ accessToken: varios, refreshToken: 'r-1' });
+
+      expect(store.activeTenantType()).toBeNull();
+
+      store.selectTenant('t-2');
+      expect(store.activeTenantType()).toBe('PROVIDER');
+    });
+
+    it('sin el claim `tenantTypes` en el token, es null: el menú de hoy', () => {
+      store.start({ accessToken: UNO, refreshToken: 'r-1' });
+
+      expect(store.activeTenantType()).toBeNull();
+    });
+
+    it('un tipo declarado para un tenant que no está en `tenants` no cuenta', () => {
+      const conTipoAjeno = makeToken({
+        sub: 'u-1',
+        tenants: ['t-1'],
+        tenantTypes: { 't-9': 'PAYER' },
+      });
+      store.start({ accessToken: conTipoAjeno, refreshToken: 'r-1' });
+
+      expect(store.activeTenantType()).toBeNull();
+    });
+
+    it('sin sesión, es null', () => {
+      expect(store.activeTenantType()).toBeNull();
+    });
+  });
+
   it('renovar conserva la organización elegida', () => {
     store.start({ accessToken: VARIOS, refreshToken: 'r-1' });
     store.selectTenant('t-2');

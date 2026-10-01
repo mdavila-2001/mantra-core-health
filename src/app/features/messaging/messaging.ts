@@ -6,6 +6,7 @@ import {
   effect,
   inject,
   signal,
+  untracked,
 } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
@@ -13,11 +14,12 @@ import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { debounceTime, filter, map, Subject } from 'rxjs';
 
-import { ChatStore } from '../../core/messaging/chat.store';
+import { ChatStore, SIN_NOMBRE } from '../../core/messaging/chat.store';
 import { ChatPreferencias } from '../../core/messaging/chat-preferencias';
 import { conQuien } from '../../core/messaging/con-quien';
 import type { ConversationListItem } from '../../core/data-access/community/community.types';
 import { AppButton } from '../../shared/components/atoms/button/button';
+import { Avatar } from '../../shared/components/atoms/avatar/avatar';
 import { Alert } from '../../shared/components/molecules/alert/alert';
 import { EmptyState } from '../../shared/components/molecules/empty-state/empty-state';
 import { ConversationList, type AccionDeFila } from './conversation-list/conversation-list';
@@ -58,6 +60,7 @@ const ESPERA_DE_BUSQUEDA_MS = 300;
   imports: [
     Alert,
     AppButton,
+    Avatar,
     ConversationList,
     EmptyState,
     FormsModule,
@@ -85,6 +88,12 @@ export class Messaging {
   protected readonly consulta = signal('');
   protected readonly filtro = signal<Filtro>('todos');
   protected readonly verArchivados = signal(false);
+  protected readonly verBloqueados = signal(false);
+
+  /** Los perfiles bloqueados, para marcar sus filas. */
+  protected readonly idsBloqueados = computed<ReadonlySet<string>>(
+    () => new Set(this.store.bloqueados().map((b) => b.profileId)),
+  );
 
   private readonly tecleado = new Subject<string>();
 
@@ -157,10 +166,16 @@ export class Messaging {
     () => this.store.bandejaCargada() && this.visibles().length === 0,
   );
 
+  /** Para el nombre de quien se muestra en «Bloqueados» sin ficha resuelta. */
+  protected readonly sinNombre = SIN_NOMBRE;
+
   /** `true` si hay algo escrito pero ninguna conversación propia casa. */
   protected readonly sinCoincidencias = computed(
     () => this.consulta().trim() !== '' && this.visibles().length === 0,
   );
+
+  /** El `?escribirA=` que espera al perfil propio para abrir su hilo. */
+  private readonly slugPendiente = signal<string | null>(null);
 
   constructor() {
     this.store.iniciar();
@@ -173,14 +188,25 @@ export class Messaging {
       .pipe(debounceTime(ESPERA_DE_BUSQUEDA_MS), takeUntilDestroyed())
       .subscribe((texto) => this.store.buscarGente(texto));
 
-    // El `?escribirA=<slug>` con el que llega el botón «Enviar mensaje» de una
-    // ficha pública. Se atiende cuando el perfil propio ya está resuelto: sin
-    // eso no hay con qué abrir el hilo.
+    // El `?escribirA=<slug>` con el que llegan el botón «Enviar mensaje» de una
+    // ficha pública y «Hablar con el broker» del directorio de aseguradoras. Se
+    // atiende cuando el perfil propio ya está resuelto: sin eso no hay con qué
+    // abrir el hilo. Por eso el slug queda **pendiente** y lo abre el efecto de
+    // abajo: la ruta llega antes que el perfil, y atenderlo en el acto lo
+    // descartaba en silencio —la bandeja quedaba abierta sin hilo—.
     this.ruta.queryParamMap.pipe(takeUntilDestroyed()).subscribe((query) => {
       const slug = query.get('escribirA');
       if (slug !== null && slug !== '') {
-        this.abrirConSlug(slug);
+        this.slugPendiente.set(slug);
       }
+    });
+    effect(() => {
+      const slug = this.slugPendiente();
+      if (slug === null || this.store.perfil() === null) return;
+      untracked(() => {
+        this.slugPendiente.set(null);
+        this.abrirConSlug(slug);
+      });
     });
 
     // «(3) AloVida - Chats» en la pestaña mientras haya sin leer, como
@@ -214,6 +240,7 @@ export class Messaging {
   protected elegirFiltro(filtro: Filtro): void {
     this.filtro.set(filtro);
     this.verArchivados.set(false);
+    this.verBloqueados.set(false);
   }
 
   protected rotulo(filtro: Filtro): string {
@@ -231,7 +258,19 @@ export class Messaging {
 
   protected alternarArchivados(): void {
     this.verArchivados.set(!this.verArchivados());
+    this.verBloqueados.set(false);
     this.filtro.set('todos');
+  }
+
+  /** La lista de a quiénes bloqueaste, con el botón para desbloquear. */
+  protected alternarBloqueados(): void {
+    this.verBloqueados.set(!this.verBloqueados());
+    this.verArchivados.set(false);
+    this.filtro.set('todos');
+  }
+
+  protected desbloquear(profileId: string): void {
+    this.store.desbloquear(profileId);
   }
 
   private estamparTitulo(): void {
@@ -255,6 +294,21 @@ export class Messaging {
       case 'perfil':
         this.verPerfil(accion.conversationId);
         break;
+      case 'bloquear':
+      case 'desbloquear': {
+        const peer = this.store
+          .conversaciones()
+          .find((c) => c.id === accion.conversationId)?.peers[0];
+        if (peer === undefined) {
+          break;
+        }
+        if (accion.tipo === 'bloquear') {
+          this.store.bloquear(peer.profileId, peer.displayName);
+        } else {
+          this.store.desbloquear(peer.profileId);
+        }
+        break;
+      }
     }
   }
 

@@ -26,7 +26,22 @@ import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
 const base = require('./proxy.conf.json');
 
+/**
+ * `/ai` va al servicio de triage (AlovidaAIService), que no es la API: en el
+ * despliegue lo enruta Traefik al mismo origen, y acá se reproduce lo mismo
+ * contra el servicio publicado. `ALOVIDA_AI_TARGET` lo apunta a uno local
+ * (`http://localhost:3106`).
+ */
+const aiTarget = process.env.ALOVIDA_AI_TARGET ?? 'https://ai.173.249.39.237.sslip.io';
+
 export default [
+  {
+    context: ['/ai/'],
+    target: aiTarget,
+    changeOrigin: true,
+    secure: true,
+    pathRewrite: { '^/ai': '' },
+  },
   {
     context: ['/public/media'],
     target: 'http://localhost:3125',

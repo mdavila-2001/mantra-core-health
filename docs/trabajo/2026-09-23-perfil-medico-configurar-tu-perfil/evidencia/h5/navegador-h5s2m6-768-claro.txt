@@ -1,0 +1,28 @@
+celda: 768×1024 · tema claro · recorridos aseguradora
+✔ aseguradora: la dirección está escrita
+✔ aseguradora: sin tocar el mapa no hay aviso
+✔ aseguradora: tocar el mapa vacía la dirección
+✔ aseguradora: el aviso está junto al campo
+✔ aseguradora: el aviso es una región viva, sin robar el foco
+✔ aseguradora: el vaciado no pone el campo en rojo
+✔ aseguradora: el aviso va pegado al campo, sin otro control en medio — 0 controles en medio, 41 px
+✔ aseguradora: la confirmación no se ve
+✔ aseguradora: pero está para el lector, con su anuncio
+✔ aseguradora: «Listo, guardamos» no se pinta en ningún lugar de la vista
+✔ aseguradora: confirmar el punto tampoco lo pone en rojo
+✔ aseguradora: volver a escribir se lleva el aviso
+✔ aseguradora: mover el pin vuelve a vaciar
+✔ aseguradora: tampoco en rojo tras escribir y volver a tocar el mapa
+✔ aseguradora: entrar y salir del campo vacío lo marca
+✔ aseguradora: con su mensaje
+✔ aseguradora: y el aviso sigue a su lado
+✔ aseguradora: un vaciado nuevo vuelve a dejarlo sin rojo
+ℹ aseguradora: tras «Siguiente», el campo en rojo queda a la vista; el foco queda en paginated-form-continuar
+✔ aseguradora: intentar avanzar lo marca
+✔ aseguradora: y es el único rojo de la página
+✔ aseguradora: y no deja pasar de página
+✔ sin errores de página ni de consola — excluidos por la CSP del servidor de desarrollo: 0
+✔ sin respuestas 4xx/5xx
+
+23/23 comprobaciones en verde
+capturas en docs\frontend\evidence\mapa-vacia-direccion-2026-09-23

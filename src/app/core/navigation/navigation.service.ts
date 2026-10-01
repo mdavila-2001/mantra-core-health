@@ -62,7 +62,10 @@ export class NavigationService {
   readonly visibleSections = computed<readonly AppSection[]>(() => {
     const roles = this.auth.roles();
     const tenants = this.auth.tenants();
-    return APP_SECTIONS.filter((section) => isVisibleTo(section, roles, tenants));
+    const activeTenantType = this.auth.activeTenantType();
+    return APP_SECTIONS.filter((section) =>
+      isVisibleTo(section, roles, tenants, activeTenantType),
+    );
   });
 
   /**
@@ -84,11 +87,13 @@ export class NavigationService {
     // «Tus accesos» la lista— y no ocupa un renglón acá.
     const roles = this.auth.roles();
     const tenants = this.auth.tenants();
+    const activeTenantType = this.auth.activeTenantType();
     // Las fijas salen **antes** de repartir, no después: si se descontaran al
     // final, `items` y la suma de los `blocks` dejarían de coincidir, que es
     // justo el invariante que fija la prueba de este servicio.
     const enElMenu = APP_SECTIONS.filter(
-      (section) => apareceEnElMenu(section, roles, tenants) && section.pinnedTop !== true,
+      (section) =>
+        apareceEnElMenu(section, roles, tenants, activeTenantType) && section.pinnedTop !== true,
     );
 
     return NAV_GROUPS.map((group) => {
@@ -117,8 +122,10 @@ export class NavigationService {
   readonly pinnedItems = computed<readonly NavMenuItem[]>(() => {
     const roles = this.auth.roles();
     const tenants = this.auth.tenants();
+    const activeTenantType = this.auth.activeTenantType();
     return APP_SECTIONS.filter(
-      (section) => section.pinnedTop === true && apareceEnElMenu(section, roles, tenants),
+      (section) =>
+        section.pinnedTop === true && apareceEnElMenu(section, roles, tenants, activeTenantType),
     ).map(menuItemOf);
   });
 

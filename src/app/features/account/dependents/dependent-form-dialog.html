@@ -1,117 +1,89 @@
 <app-content-dialog
   heading="Registrar dependiente"
-  description="Una persona a tu cargo: un hijo o hija, tu madre o tu padre, alguien a quien representás. No necesita cuenta propia."
+  [description]="
+    modo() === 'ci'
+      ? 'Escribí su CI. Si tiene una cuenta registrada, le vamos a enviar una notificación para que acepte ser tu dependiente.'
+      : 'Buscala por nombre y elegí su cuenta. Le vamos a enviar una notificación para que acepte ser tu dependiente.'
+  "
   [dismissible]="!saving()"
   (closed)="closed.emit()"
 >
   @if (errorMessage(); as mensaje) {
     <app-alert appAnuncio tone="error">{{ mensaje }}</app-alert>
   }
-  @if (opcionesParentesco().length === 0) {
-    <app-alert tone="warning">
-      No pudimos cargar los parentescos. Recargá la página para volver a intentarlo.
-    </app-alert>
-  }
 
   <form class="dependents-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
-    <div class="dependents-form__columns">
-      <app-form-field
-        label="Primer nombre"
-        [required]="true"
-        [errorMessage]="
-          form.controls.name.touched && form.controls.name.invalid
-            ? 'Escribí su primer nombre.'
-            : ''
-        "
-      >
-        <app-input formControlName="name" autocomplete="off" testId="dependent-name" />
-      </app-form-field>
-      <app-form-field label="Segundo nombre">
-        <app-input
-          formControlName="middleName"
-          autocomplete="off"
-          testId="dependent-middle-name"
-        />
-      </app-form-field>
-      <app-form-field
-        label="Apellido paterno"
-        [required]="true"
-        [errorMessage]="
-          form.controls.lastName.touched && form.controls.lastName.invalid
-            ? 'Escribí su apellido paterno.'
-            : ''
-        "
-      >
-        <app-input formControlName="lastName" autocomplete="off" testId="dependent-last-name" />
-      </app-form-field>
-      <app-form-field label="Apellido materno">
-        <app-input
-          formControlName="motherLastName"
-          autocomplete="off"
-          testId="dependent-mother-last-name"
-        />
-      </app-form-field>
-    </div>
+    <app-segmented-control
+      [options]="modos"
+      [value]="modo()"
+      ariaLabel="Cómo encontrar a la persona"
+      (valueChange)="cambiarModo($event)"
+    />
 
-    <app-form-field
-      label="Fecha de nacimiento"
-      [required]="true"
-      [hint]="edadDeclarada() ?? ''"
-      [errorMessage]="faltaLaFecha() ? 'Elegí su fecha de nacimiento.' : ''"
-    >
-      <app-date-picker
-        [(value)]="fechaDeNacimiento"
-        [hasError]="faltaLaFecha()"
-        maxDate="today"
-        placeholder="DD/MM/AAAA"
-        data-testid="dependent-birth-date"
-      />
-    </app-form-field>
-
-    <app-form-field
-      label="Tu relación con esta persona"
-      [required]="true"
-      hint="Lo que vos sos para ella."
-      [errorMessage]="
-        form.controls.relationshipConceptId.touched &&
-        form.controls.relationshipConceptId.invalid
-          ? 'Elegí qué sos para esta persona.'
-          : ''
-      "
-    >
-      <app-select
-        formControlName="relationshipConceptId"
-        [options]="opcionesParentesco()"
-        placeholder="Elegí una opción"
-        data-testid="dependent-relationship"
-      />
-    </app-form-field>
-
-    <div class="dependents-form__columns">
-      <app-form-field
-        label="Documento de identidad"
-        hint="Opcional: dejalo vacío si todavía no tiene."
-        [errorMessage]="
-          form.controls.nationalId.touched && form.controls.nationalId.invalid
-            ? 'El documento sólo admite letras, dígitos, punto y guion.'
-            : ''
-        "
-      >
+    @if (modo() === 'ci') {
+      <app-form-field label="CI" [required]="true" [errorMessage]="mensajeDelCampo()">
         <app-input
           formControlName="nationalId"
           autocomplete="off"
+          [hasError]="mensajeDelCampo() !== ''"
           testId="dependent-national-id"
         />
       </app-form-field>
-      <app-form-field label="Departamento que lo expidió">
-        <app-select
-          formControlName="issuerAdministrativeAreaConceptId"
-          [options]="opcionesDepartamento()"
-          placeholder="Elegí un departamento"
-          data-testid="dependent-issuer"
+    } @else {
+      <!-- Enter en el buscador busca; no debe además enviar el formulario. -->
+      <div class="dependents-form__busqueda" (keydown.enter)="$event.preventDefault()">
+        <app-search-field
+          label="Buscar por nombre"
+          placeholder="Nombre y apellido"
+          [(value)]="consulta"
+          [loading]="buscando()"
+          data-testid="dependent-name-search"
+          (searched)="buscar($event)"
         />
-      </app-form-field>
-    </div>
+
+        @if (errorBusqueda(); as mensaje) {
+          <app-alert appAnuncio tone="error">{{ mensaje }}</app-alert>
+        }
+
+        <!-- Lo que ve quien todavía no escribió lo suficiente: sin esto el
+             cuadro vacío no dice por qué no pasa nada. -->
+        @if (candidatos() === null && !buscando() && errorBusqueda() === null) {
+          <p class="dependents-form__pista">Escribí al menos 3 letras del nombre.</p>
+        }
+
+        @if (candidatos(); as filas) {
+          <p class="dependents-form__pista" role="status">
+            @if (filas.length === 0) {
+              No encontramos ninguna cuenta con ese nombre. Probá con el CI.
+            } @else {
+              {{ filas.length === 1 ? '1 cuenta encontrada' : filas.length + ' cuentas encontradas' }}.
+              Elegí la correcta.
+            }
+          </p>
+
+          @if (filas.length > 0) {
+            <div class="dependents-form__candidatos" role="radiogroup" aria-label="Cuentas encontradas">
+              @for (fila of filas; track fila.patientProfileId) {
+                <button
+                  type="button"
+                  class="dependents-form__candidato"
+                  role="radio"
+                  data-testid="dependent-candidate"
+                  [class.is-elegido]="elegido()?.patientProfileId === fila.patientProfileId"
+                  [attr.aria-checked]="elegido()?.patientProfileId === fila.patientProfileId"
+                  (click)="elegir(fila)"
+                >
+                  <span class="dependents-form__candidato-nombre">{{ fila.displayName }}</span>
+                  @if (fila.maskedNationalId; as documento) {
+                    <span class="dependents-form__candidato-doc">CI {{ documento }}</span>
+                  }
+                </button>
+              }
+            </div>
+          }
+        }
+      </div>
+    }
 
     <div class="dependents-form__acciones">
       <button
@@ -128,9 +100,10 @@
         type="submit"
         variant="primary"
         [isLoading]="saving()"
+        [disabled]="modo() === 'nombre' && elegido() === null"
         data-testid="dependent-submit"
       >
-        Registrar
+        Enviar solicitud
       </button>
     </div>
   </form>

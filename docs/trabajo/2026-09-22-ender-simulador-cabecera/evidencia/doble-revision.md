@@ -9,9 +9,9 @@ en «No cubierto»).
 | # | Archivo | Viewport | Tema | Estado / pantalla |
 |---|---|---|---|---|
 | 1 | `antes/capturas/directorio-paciente-desktop.png` | 1440 | claro | Directorio, antes de N-01 |
-| 2 | `antes/capturas/romel-rivero-sin-agenda-desktop.png` | 1440 | claro | Ficha de registrado, antes de R-03 |
-| 3 | `antes/capturas/romel-rivero-sin-agenda-mobile.png` | 375 | claro | Ficha de registrado, antes de R-03 |
-| 4 | `h3/capturas/romel-rivero-con-agenda-desktop.png` | 1440 | oscuro | Ficha de registrado, después de R-03 |
+| 2 | `antes/capturas/ficha-registrado-sin-agenda-desktop.png` | 1440 | claro | Ficha de profesional real del fixture — identidad redactada, antes de R-03 |
+| 3 | `antes/capturas/ficha-registrado-sin-agenda-mobile.png` | 375 | claro | Ficha de profesional real del fixture — identidad redactada, antes de R-03 |
+| 4 | `h3/capturas/ficha-registrado-con-agenda-desktop.png` | 1440 | oscuro | Ficha de profesional real del fixture — identidad redactada, después de R-03 |
 | 5 | `h4/capturas/medica-dashboard-desktop-claro.png` | 1440 | claro | Panel médica, después de N-01 |
 | 6 | `h4/capturas/medica-dashboard-desktop-oscuro.png` | 1440 | oscuro | Panel médica, después de N-01, tema |
 | 7 | `h4/capturas/paciente-dashboard-mobile.png` | 375 | oscuro | Panel paciente, ANTES del arreglo del cartel |
@@ -25,10 +25,10 @@ en «No cubierto»).
 
 1. `directorio-paciente-desktop.png` — OK. Sidebar con «Tutoriales» y «Chats» como renglones: es
    exactamente el estado «antes» que la captura tiene que mostrar.
-2. `romel-rivero-sin-agenda-desktop.png` — OK. «Todavía no publicó horarios», el kill-test de R-03
+2. `ficha-registrado-sin-agenda-desktop.png` — OK. «Todavía no publicó horarios», el kill-test de R-03
    antes del arreglo.
-3. `romel-rivero-sin-agenda-mobile.png` — OK. Mismo estado, 375 px.
-4. `romel-rivero-con-agenda-desktop.png` — OK. Cupos reales (mié/jue/vie, 14:00–18:00) reemplazan el
+3. `ficha-registrado-sin-agenda-mobile.png` — OK. Mismo estado, 375 px.
+4. `ficha-registrado-con-agenda-desktop.png` — OK. Cupos reales (mié/jue/vie, 14:00–18:00) reemplazan el
    vacío.
 5. `medica-dashboard-desktop-claro.png` — OK. Cabecera con campana, selector, tema, Tutoriales, Chats,
    Ajustes, cuenta — los seis, y ninguno en el menú lateral.
@@ -43,7 +43,7 @@ en «No cubierto»).
     con el motivo sintético.
 11. `escenario-a-04-medica-ve-la-cita.png` — OK. La médica ve a «Ana Lucía Pérez Quiroga» en su agenda
     del jueves 24, mismo motivo.
-12. `escenario-b-03-paciente-confirmada.png` — OK. La cita con Romel Rivero Saavedra aparece «Pedido»,
+12. `escenario-b-03-paciente-confirmada.png` — OK. La cita con persona real proveniente de la planilla — REDACTADA aparece «Pedido»,
     junto a la de la médica.
 
 ## Pasada 2 — adversarial

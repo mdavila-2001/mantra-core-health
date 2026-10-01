@@ -174,7 +174,7 @@
 }
 
 .claim__reference:focus-visible {
-    outline: var(--focus-ring);
+    outline: 2px solid var(--focus-ring);
     outline-offset: 2px;
 }
 

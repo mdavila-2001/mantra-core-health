@@ -1,0 +1,9 @@
+✗ desactualizado: docs/reports/generated/route-inventory.md
+✗ desactualizado: docs/reports/generated/component-inventory.md
+✗ desactualizado: docs/reports/generated/api-inventory.md
+✗ desactualizado: docs/reports/generated/module-graph.md
+✗ desactualizado: docs/reports/generated/e2e-inventory.md
+
+5 inventario(s) no reflejan el código. Ejecutá: node scripts/generate-inventory.mjs
+
+EXIT_CODE: 1

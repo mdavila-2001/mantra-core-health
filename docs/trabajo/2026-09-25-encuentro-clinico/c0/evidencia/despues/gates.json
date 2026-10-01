@@ -1,0 +1,38 @@
+[
+  {
+    "command": "node scripts/check-architecture.mjs",
+    "exitCode": 1
+  },
+  {
+    "command": "node scripts/check-api-prefixes.mjs",
+    "exitCode": 1
+  },
+  {
+    "command": "node scripts/check-route-prefixes.mjs",
+    "exitCode": 0
+  },
+  {
+    "command": "node scripts/check-form-pages.mjs",
+    "exitCode": 1
+  },
+  {
+    "command": "node scripts/check-tokens.mjs",
+    "exitCode": 0
+  },
+  {
+    "command": "node scripts/check-css-tokens.mjs",
+    "exitCode": 1
+  },
+  {
+    "command": "node scripts/check-contrast.mjs",
+    "exitCode": 0
+  },
+  {
+    "command": "node scripts/check-doc-links.mjs",
+    "exitCode": 1
+  },
+  {
+    "command": "node scripts/generate-inventory.mjs --check",
+    "exitCode": 1
+  }
+]

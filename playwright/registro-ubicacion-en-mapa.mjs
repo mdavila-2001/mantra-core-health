@@ -158,7 +158,7 @@ async function recorrerSelector(pagina, capturar, prefijo, ids) {
   ok(`${prefijo}: tocar el mapa pone el pin`, true, `pin en ${pin1.x},${pin1.y}`);
   await pagina.waitForTimeout(600);
   const plano1 = await desplazamientoDelPlano(mapa);
-  ok(`${prefijo}: el pin queda sin confirmar`, await pagina.getByTestId(ids.sinConfirmar).isVisible());
+  ok(`${prefijo}: el pin queda sin confirmar`, await pagina.getByTestId(ids.confirmar).isVisible());
   ok(`${prefijo}: aparece «Confirmar»`, await pagina.getByTestId(ids.confirmar).isVisible());
   await capturar(`${prefijo}-3-pin-marcado`);
 
@@ -187,7 +187,7 @@ async function recorrerSelector(pagina, capturar, prefijo, ids) {
   ok(
     `${prefijo}: tocar con el punto confirmado lo desconfirma`,
     (await pagina.getByTestId(ids.confirmada).count()) === 0 &&
-      (await pagina.getByTestId(ids.sinConfirmar).isVisible()),
+      (await pagina.getByTestId(ids.confirmar).isVisible()),
   );
   await pagina.getByTestId(ids.confirmar).click();
   await pagina.getByTestId(ids.confirmada).waitFor();
@@ -249,7 +249,6 @@ async function main() {
     marcar: 'registration-home-location-pick',
     indicacion: 'registration-home-location-pick-hint',
     confirmar: 'registro-confirmar-direccion',
-    sinConfirmar: 'registration-home-location-unconfirmed',
     confirmada: 'registro-direccion-confirmada',
   });
 
@@ -266,7 +265,6 @@ async function main() {
     marcar: 'registration-work-location-pick',
     indicacion: 'registration-work-location-pick-hint',
     confirmar: 'registration-work-location-confirm',
-    sinConfirmar: 'registration-work-location-unconfirmed',
     confirmada: 'registration-work-location-confirmed',
   });
 
@@ -277,7 +275,6 @@ async function main() {
     marcar: "registration-practitioner-home-location-pick",
     indicacion: "registration-practitioner-home-location-pick-indicacion",
     confirmar: "registration-practitioner-home-location-confirm",
-    sinConfirmar: "registration-practitioner-home-location-unconfirmed",
     confirmada: "registration-practitioner-home-location-confirmed",
   });
 
@@ -289,7 +286,6 @@ async function main() {
     marcar: "registration-practitioner-office-location-pick",
     indicacion: "registration-practitioner-office-location-pick-indicacion",
     confirmar: "registration-practitioner-office-location-confirm",
-    sinConfirmar: "registration-practitioner-office-location-unconfirmed",
     confirmada: "registration-practitioner-office-location-confirmed",
   });
 

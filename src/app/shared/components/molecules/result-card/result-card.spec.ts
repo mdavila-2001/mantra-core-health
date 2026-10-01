@@ -178,4 +178,24 @@ describe('ResultCard', () => {
     expect(navegar).toHaveBeenCalledTimes(1);
     expect(navegar).toHaveBeenCalledWith('/buscar/perfil-profesional-detalle#horarios');
   });
+
+  it('con `photoUrl` pinta la foto de cabecera en vez de la figura', () => {
+    anfitrion.dato.update((d) => ({ ...d, figureText: 'MQ', photoUrl: '/alovida/directorio/medico-01.jpg' }));
+    fixture.detectChanges();
+
+    expect(elemento('.tarjeta-resultado__foto img')?.getAttribute('src')).toBe(
+      '/alovida/directorio/medico-01.jpg',
+    );
+    expect(elemento('.tarjeta-resultado__figura')).toBeNull();
+  });
+
+  it('si la foto falla vuelve a la figura', () => {
+    anfitrion.dato.update((d) => ({ ...d, figureText: 'MQ', photoUrl: '/rota.jpg' }));
+    fixture.detectChanges();
+    elemento('.tarjeta-resultado__foto img')!.dispatchEvent(new Event('error'));
+    fixture.detectChanges();
+
+    expect(elemento('.tarjeta-resultado__foto')).toBeNull();
+    expect(elemento('.tarjeta-resultado__figura')?.textContent?.trim()).toBe('MQ');
+  });
 });

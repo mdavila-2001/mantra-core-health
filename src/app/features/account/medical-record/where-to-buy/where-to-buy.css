@@ -208,3 +208,11 @@
   justify-self: start;
   align-self: flex-start;
 }
+
+/* Lo que no se pudo agregar al carrito (carril 43 · H5): va arriba de la
+   lista, no dentro de la tarjeta de la sede — habla del volcado entero. */
+.compra__aviso-carrito {
+  margin: 0 0 var(--sp-3);
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}

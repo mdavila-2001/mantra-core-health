@@ -1,0 +1,89 @@
+/* Cierre del formulario: las sugerencias de la IA arriba, lo que se registra
+   abajo. Va dentro del formulario de la ficha, a lo ancho, como un bloque más
+   —no como una tarjeta aparte que compita con la ficha. */
+
+:host {
+  display: block;
+}
+
+.cierre {
+  --card-body-display: grid;
+  --card-body-gap: var(--sp-4);
+}
+
+.cierre__titulo {
+  margin: 0;
+  font-size: var(--fs-h4);
+  line-height: var(--lh-h4);
+  font-weight: 600;
+}
+
+.cierre__subtitulo {
+  margin: 0;
+  font-size: var(--fs-body);
+  font-weight: 600;
+}
+
+.cierre__intro,
+.cierre__estado,
+.cierre__porque,
+.cierre__pruebas,
+.cierre__aviso {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+.cierre__tentativos,
+.cierre__ordenes {
+  display: grid;
+  gap: var(--sp-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cierre__tentativo {
+  display: grid;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background-color: var(--bg-surface-alt);
+}
+
+.cierre__tentativo-cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.cierre__orden {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.cierre__categoria {
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+}
+
+/* El descargo va con las palabras del servicio y se lee como nota, no como
+   error: no hay nada que corregir, hay algo que saber. */
+.cierre__disclaimer {
+  margin: 0;
+  padding: var(--sp-2) var(--sp-3);
+  border-left: 3px solid var(--border-default);
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+.cierre__eleccion {
+  display: grid;
+  gap: var(--sp-4);
+}

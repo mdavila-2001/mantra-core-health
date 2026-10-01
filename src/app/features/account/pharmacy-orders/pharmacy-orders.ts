@@ -1,5 +1,13 @@
 import { DatePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import {
+  booleanAttribute,
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  input,
+  signal,
+} from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 import { AuthService } from '../../../core/auth/auth.service';
@@ -39,6 +47,16 @@ import { displayCurrency } from '../../../core/money/display-currency';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PharmacyOrders {
+  /**
+   * `true` cuando esta pantalla vive **dentro** de «Farmacia», como una de
+   * sus pestañas (`PharmacyHub`).
+   *
+   * Lo único que cambia es el membrete: adentro lo pone el contenedor. La
+   * ruta propia (`/my-account/pharmacy-orders`) sigue existiendo tal cual —
+   * el detalle, el checkout y las notificaciones vuelven ahí—, y ahí el
+   * membrete se dibuja como siempre.
+   */
+  readonly embedded = input(false, { transform: booleanAttribute });
 
   /**
    * La moneda visible de un importe: «Bs» para el boliviano y la UMA del

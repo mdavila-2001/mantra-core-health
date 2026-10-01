@@ -61,7 +61,17 @@ describe('PatientHome', () => {
     session = TestBed.inject(SessionStore);
   });
 
-  afterEach(() => http.verify());
+  afterEach(async () => {
+    // Tarea 4 · M-06: el widget de beneficios del seguro pide sus campañas desde
+    // un `@defer`. Las pruebas que no van de eso lo responden vacío acá, para que
+    // el panel quede exactamente como estaba y `verify` siga exigiendo que no haya
+    // ninguna otra petición suelta.
+    await fixture?.whenStable();
+    for (const pending of http.match((r) => r.url.startsWith('/insurance-campaigns/patient/'))) {
+      pending.flush([]);
+    }
+    http.verify();
+  });
 
   /**
    * Abre sesión de paciente y monta. `pid` ausente = cuenta sin ficha.
@@ -83,6 +93,29 @@ describe('PatientHome', () => {
     });
     await TestBed.compileComponents();
     fixture = TestBed.createComponent(PatientHome);
+    fixture.detectChanges();
+    await answerOwnProfile(pid === undefined ? 'without-record' : 'with-record');
+  }
+
+  /**
+   * Responde el `GET /profiles/patients/me` que pide el chequeo de síntomas.
+   *
+   * No es una lectura del panel sino de `SymptomCheck`, que va en su `@defer`:
+   * desde P-04 (2975b45f, 25/09/2026) lee el sexo al nacer del propio perfil
+   * al abrir, para elegir la silueta y qué síntomas de «Salud íntima» ofrece.
+   * Se espera a que el bloque diferido se resuelva antes de contestarla —si no,
+   * la petición aparece o no según cuánto tarde la carga— y se contesta sin
+   * `sexAtBirth`, que no filtra nada: estas pruebas no son sobre la silueta.
+   * Sin ficha de paciente el servidor responde 404, y el chequeo lo tolera.
+   */
+  async function answerOwnProfile(profile: 'with-record' | 'without-record'): Promise<void> {
+    await fixture.whenStable();
+    const request = http.expectOne((r) => r.url === '/profiles/patients/me');
+    if (profile === 'without-record') {
+      request.flush('not found', { status: 404, statusText: 'Not Found' });
+    } else {
+      request.flush({});
+    }
     fixture.detectChanges();
   }
 
@@ -115,6 +148,77 @@ describe('PatientHome', () => {
   function texto(): string {
     return (fixture.nativeElement as HTMLElement).textContent ?? '';
   }
+
+  /**
+   * Tarea 4 · M-06: los beneficios preventivos de la aseguradora del paciente van
+   * en su panel. Sin campañas vigentes no se dibuja ni un renglón.
+   */
+  describe('beneficios preventivos del seguro', () => {
+    const CAMPANA = {
+      id: 'camp-1',
+      code: 'CMP-CARDIO-2026',
+      title: 'Chequeo Preventivo Cardiovascular y Perfil Lipídico',
+      description: null,
+      campaignType: 'LABORATORY',
+      targetCondition: null,
+      copayBonusPercentage: 100,
+      validFrom: '2026-01-01',
+      validTo: '2099-12-31',
+      carrierName: 'Seguros Andina',
+      partners: [{ role: 'PROVIDER', type: 'LABORATORY', name: 'Laboratorio Central AloVida' }],
+    };
+
+    it('muestra la tarjeta con el sello y el botón cuando hay una campaña vigente', async () => {
+      await montar();
+      responder([], null);
+      await fixture.whenStable();
+
+      http.expectOne(`/insurance-campaigns/patient/${PERFIL}`).flush([CAMPANA]);
+      fixture.detectChanges();
+      await fixture.whenStable();
+      fixture.detectChanges();
+
+      const raiz = fixture.nativeElement as HTMLElement;
+      expect(texto()).toContain('Beneficios preventivos de tu seguro');
+      expect(texto()).toContain('100% Cubierto por tu Seguro');
+      expect(raiz.querySelector('[data-testid="btn-campaign-action"]')?.textContent).toContain(
+        'Agendar chequeo preventivo',
+      );
+    });
+
+    it('sin campañas vigentes el panel no suma ni un renglón', async () => {
+      await montar();
+      responder([], null);
+      await fixture.whenStable();
+
+      http.expectOne(`/insurance-campaigns/patient/${PERFIL}`).flush([]);
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      expect(texto()).not.toContain('Beneficios preventivos');
+      expect(
+        (fixture.nativeElement as HTMLElement).querySelector('[data-testid="campaigns-widget"]'),
+      ).toBeNull();
+    });
+
+    it('si la consulta de campañas falla, el resto del panel sigue igual', async () => {
+      await montar();
+      responder([], null);
+      await fixture.whenStable();
+
+      http
+        .expectOne(`/insurance-campaigns/patient/${PERFIL}`)
+        .flush(
+          { statusCode: 403, code: 'FORBIDDEN', message: 'no', timestamp: 'x', path: '/x' },
+          { status: 403, statusText: 'Forbidden' },
+        );
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      expect(texto()).toContain('Ana Quispe');
+      expect(texto()).not.toContain('Beneficios preventivos');
+    });
+  });
 
   it('saluda por el nombre y habla de lo suyo, no de la organización', async () => {
     await montar();
@@ -308,10 +412,15 @@ describe('PatientHome', () => {
     expect(texto()).toContain('Ver y descargar');
   });
 
-  it('sin ficha de paciente no sale a la red', async () => {
+  it('sin ficha de paciente no pide turnos ni historia', async () => {
     await montar({ pid: undefined });
 
-    // El `http.verify()` del afterEach falla si algo salió a la red.
+    // El panel no sale a la red por lo suyo: sin ficha no hay turnos ni
+    // historia que leer. La única petición es la del chequeo de síntomas
+    // (`/profiles/patients/me`, ver `answerOwnProfile`), que ya se
+    // contestó; el `http.verify()` del afterEach falla si salió otra.
+    http.expectNone((r) => r.url === '/scheduling/bookings');
+    http.expectNone((r) => r.url === `/clinical/patients/${PERFIL}/summary`);
     expect(texto()).toContain('ficha de paciente');
     expect(
       (fixture.nativeElement as HTMLElement).querySelector('[data-testid="mi-salud-sin-ficha"]'),

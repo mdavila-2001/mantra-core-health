@@ -53,14 +53,14 @@ export class PortabilityVerify {
   protected readonly result = signal<PortabilityVerification | null>(null);
 
   constructor() {
-    const enLaDireccion = this.route.snapshot.paramMap.get('manifestHash') ?? '';
+    const hashFromRoute = this.route.snapshot.paramMap.get('manifestHash') ?? '';
 
-    if (!SHA256_HEX_PATTERN.test(enLaDireccion)) {
+    if (!SHA256_HEX_PATTERN.test(hashFromRoute)) {
       this.state.set('invalid');
       return;
     }
 
-    const manifestHash = enLaDireccion.toLowerCase();
+    const manifestHash = hashFromRoute.toLowerCase();
     const subscription = this.portability.verifyCertificate(manifestHash).subscribe({
       next: (result) => {
         this.result.set(result);

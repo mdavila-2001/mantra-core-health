@@ -1,0 +1,461 @@
+===== node scripts/check-bundle-budget.mjs
+✓ check-bundle-budget
+  inicial: 257.58 kB en 12 archivos
+     137.59 kB  styles-PHCVGGOR.css
+      77.22 kB  main-4GFVWSCJ.js
+      18.37 kB  chunk-VY2YXDG6.js
+       5.55 kB  chunk-P5SBZAH2.js
+       5.27 kB  chunk-BRVLZO6G.js
+       4.54 kB  chunk-NANAVFUN.js
+       3.72 kB  chunk-KSCR67NP.js
+       2.04 kB  chunk-BVSFJ4MO.js
+       1.38 kB  chunk-U5OKE7CE.js
+       1.17 kB  chunk-Y5EQ22Z7.js
+       0.67 kB  chunk-3YP2YVSU.js
+       0.07 kB  chunk-RTMQLGKS.js
+  diferidos: 947 fragmentos
+    3813.18 kB  chunk-Y3V4JVBN.js
+     725.62 kB  chunk-I6WNK73W.js
+     594.55 kB  chunk-VMQYV22Y.js
+     503.45 kB  chunk-VD7F4XXH.js
+     432.96 kB  chunk-FWMMDP6O.js
+exit=0
+===== node scripts/check-architecture.mjs
+
+✗ check-architecture
+
+  3 dependencia(s) circular(es):
+      src/app/core/mock/fixtures/personas.ts
+      → src/app/core/mock/fixtures/insurer-network.ts
+      src/app/core/mock/fixtures/personas.ts
+      → src/app/core/mock/fixtures/registered-people.ts
+      src/app/features/agenda/my-agenda/month-view/month-view.ts
+      → src/app/features/agenda/my-agenda/day-view/day-view.ts
+  1 import(s) contra la dirección de las capas:
+      src/app/core/mock/mock-backend.spec.ts
+      → src/app/shared/components/molecules/phone-input/phone-input.paises.ts
+  1 archivo(s) hacen peticiones fuera de core/data-access/:
+      src/app/core/messaging/adjunto-metadata.ts
+
+exit=1
+===== node scripts/check-api-prefixes.mjs
+
+✗ check-api-prefixes
+
+  proxy.conf.docker.json no declara «/loyalty» (sí está en proxy.conf.json)
+  deploy/api-locations.conf + nginx.conf no declara «/loyalty» (sí está en proxy.conf.json)
+
+exit=1
+===== node scripts/check-route-prefixes.mjs
+✓ check-route-prefixes
+  240 rutas del router, ninguna colisiona con los 63 prefijos de la API
+  excepción declarada: 'practitioners' — cuelga de 'search': la URL real es /search/practitioners
+exit=0
+===== node scripts/check-form-pages.mjs
+
+✗ check-form-pages — 2 formulario(s) sin paginar
+
+  'app/features/account/dependents/dependent-form-dialog.html' pide 8 campos de una vez en su formulario y no usa <app-paginated-form>
+  'app/features/insurance/insurance-catalog/plan-form-dialog.html' pide 5 campos de una vez en su formulario y no usa <app-paginated-form>
+
+  Un formulario de este sistema se sirve de a una página, con un tope de
+  cuatro campos y una barra de avance. Eso lo da <app-paginated-form>:
+  se le pasan las páginas (paginarCampos() las arma) y el FormGroup de la
+  pantalla. Si de verdad no es un formulario, agregalo a EXCEPCIONES con
+  su motivo escrito.
+
+exit=1
+===== node scripts/check-tokens.mjs
+✓ check-tokens
+  212 tokens, iguales en styles.css y en el catálogo tipado
+exit=0
+===== node scripts/check-css-tokens.mjs
+
+✗ check-css-tokens — 4 token(s) sin declarar, 6 uso(s) sin valor de reserva
+
+  --c-border  (2 uso(s))
+      src\app\features\account\cotizaciones\cotizaciones.css
+  --s  (2 uso(s))
+      src\app\shared\components\organisms\auth-stage\auth-stage.css
+  --x  (1 uso(s))
+      src\app\shared\components\organisms\auth-stage\auth-stage.css
+  --dur  (1 uso(s))
+      src\app\shared\components\organisms\auth-stage\auth-stage.css
+
+  Un token que no existe no rompe la compilación: la declaración se descarta y
+  la propiedad cae a su valor inicial. La pantalla se ve mal y las pruebas
+  pasan.
+
+  Dos salidas, y las dos son válidas:
+    · usar el token real  — mirá los declarados en 'src/styles.css' y
+      'src/styles/alovida.css', que son espacios de nombres distintos;
+    · dar valor de reserva — 'var(--x, 12px)', para lo que se fija en tiempo
+      de ejecución o pertenece a un tema opcional.
+
+exit=1
+===== node scripts/check-contrast.mjs
+✓ check-contrast
+
+  ── src/styles.css · ALOVIDA v1.0
+  ✓ claro              --text-primary       sobre --bg-surface          14.90:1  (mín. 4.5)
+  ✓ claro              --text-secondary     sobre --bg-surface           8.02:1  (mín. 4.5)
+  · claro              --text-muted         sobre --bg-surface           4.27:1  (mín. 4.5)  ← E1
+  ✓ claro              --brand-primary      sobre --bg-surface           8.03:1  (mín. 4.5)
+  ✓ claro              --border-strong      sobre --bg-surface           3.70:1  (mín. 3)
+  ✓ claro              --st-success-fg      sobre --st-success-bg        6.75:1  (mín. 4.5)
+  ✓ claro              --st-warning-fg      sobre --st-warning-bg        7.49:1  (mín. 4.5)
+  ✓ claro              --st-error-fg        sobre --st-error-bg          7.53:1  (mín. 4.5)
+  ✓ claro              --st-info-fg         sobre --st-info-bg           5.01:1  (mín. 4.5)
+  ✓ claro              --st-primary-fg      sobre --st-primary-bg        9.49:1  (mín. 4.5)
+  ✓ claro              --st-secondary-fg    sobre --st-secondary-bg      6.63:1  (mín. 4.5)
+  ✓ oscuro · sistema   --text-primary       sobre --bg-surface          13.30:1  (mín. 4.5)
+  ✓ oscuro · sistema   --text-secondary     sobre --bg-surface          12.57:1  (mín. 4.5)
+  ✓ oscuro · sistema   --text-muted         sobre --bg-surface           6.60:1  (mín. 4.5)
+  ✓ oscuro · sistema   --brand-primary      sobre --bg-surface           7.03:1  (mín. 4.5)
+  · oscuro · sistema   --border-strong      sobre --bg-surface           2.15:1  (mín. 3)  ← E3
+  ✓ oscuro · sistema   --st-success-fg      sobre --st-success-bg        6.64:1  (mín. 4.5)
+  ✓ oscuro · sistema   --st-warning-fg      sobre --st-warning-bg        6.15:1  (mín. 4.5)
+  ✓ oscuro · sistema   --st-error-fg        sobre --st-error-bg          6.76:1  (mín. 4.5)
+  ✓ oscuro · sistema   --st-info-fg         sobre --st-info-bg           6.23:1  (mín. 4.5)
+  ✓ oscuro · sistema   --st-primary-fg      sobre --st-primary-bg        6.56:1  (mín. 4.5)
+  ✓ oscuro · sistema   --st-secondary-fg    sobre --st-secondary-bg      5.83:1  (mín. 4.5)
+  ✓ oscuro · manual    --text-primary       sobre --bg-surface          13.30:1  (mín. 4.5)
+  ✓ oscuro · manual    --text-secondary     sobre --bg-surface          12.57:1  (mín. 4.5)
+  ✓ oscuro · manual    --text-muted         sobre --bg-surface           6.60:1  (mín. 4.5)
+  ✓ oscuro · manual    --brand-primary      sobre --bg-surface           7.03:1  (mín. 4.5)
+  · oscuro · manual    --border-strong      sobre --bg-surface           2.15:1  (mín. 3)  ← E3
+  ✓ oscuro · manual    --st-success-fg      sobre --st-success-bg        6.64:1  (mín. 4.5)
+  ✓ oscuro · manual    --st-warning-fg      sobre --st-warning-bg        6.15:1  (mín. 4.5)
+  ✓ oscuro · manual    --st-error-fg        sobre --st-error-bg          6.76:1  (mín. 4.5)
+  ✓ oscuro · manual    --st-info-fg         sobre --st-info-bg           6.23:1  (mín. 4.5)
+  ✓ oscuro · manual    --st-primary-fg      sobre --st-primary-bg        6.56:1  (mín. 4.5)
+  ✓ oscuro · manual    --st-secondary-fg    sobre --st-secondary-bg      5.83:1  (mín. 4.5)
+
+  ── src/styles/alovida.css · ALOVIDA v1.1 (bóveda)
+  ✓ claro              --tinta              sobre --sup-tarjeta         14.90:1  (mín. 4.5)
+  ✓ claro              --tinta              sobre --sup-pagina          14.90:1  (mín. 4.5)
+  ✓ claro              --tinta              sobre --sup-inset           14.02:1  (mín. 4.5)
+  ✓ claro              --tinta-2            sobre --sup-tarjeta          8.02:1  (mín. 4.5)
+  ✓ claro              --tinta-2            sobre --sup-pagina           8.02:1  (mín. 4.5)
+  · claro              --tinta-3            sobre --sup-tarjeta          4.27:1  (mín. 4.5)  ← R1
+  · claro              --tinta-3            sobre --sup-pagina           4.27:1  (mín. 4.5)  ← R1
+  ✓ claro              --tinta-marca        sobre --sup-tarjeta         11.31:1  (mín. 4.5)
+  ✓ claro              --petroleo           sobre --sup-pagina           8.03:1  (mín. 4.5)
+  ✓ claro              --petroleo           sobre --sup-tarjeta          8.03:1  (mín. 4.5)
+  ✓ claro              --borde-ctrl         sobre --sup-tarjeta          3.70:1  (mín. 3)
+  ✓ claro              --borde-ctrl         sobre --sup-inset            3.48:1  (mín. 3)
+  ✓ claro              --ok-tinta           sobre --ok-bg                4.78:1  (mín. 4.5)
+  ✓ claro              --aviso-tinta        sobre --aviso-bg             7.49:1  (mín. 4.5)
+  ✓ claro              --error-tinta        sobre --error-bg             5.49:1  (mín. 4.5)
+  ✓ claro              --info-tinta         sobre --info-bg              5.01:1  (mín. 4.5)
+  ✓ claro              --neutro-tinta       sobre --neutro-bg            7.37:1  (mín. 4.5)
+  ✓ oscuro             --tinta              sobre --sup-tarjeta         13.01:1  (mín. 4.5)
+  ✓ oscuro             --tinta              sobre --sup-pagina          14.33:1  (mín. 4.5)
+  ✓ oscuro             --tinta              sobre --sup-inset           13.69:1  (mín. 4.5)
+  ✓ oscuro             --tinta-2            sobre --sup-tarjeta          9.07:1  (mín. 4.5)
+  ✓ oscuro             --tinta-2            sobre --sup-pagina           9.99:1  (mín. 4.5)
+  ✓ oscuro             --tinta-3            sobre --sup-tarjeta          5.43:1  (mín. 4.5)
+  ✓ oscuro             --tinta-3            sobre --sup-pagina           5.98:1  (mín. 4.5)
+  ✓ oscuro             --tinta-marca        sobre --sup-tarjeta         12.43:1  (mín. 4.5)
+  · oscuro             --petroleo           sobre --sup-pagina           3.41:1  (mín. 4.5)  ← R3
+  · oscuro             --petroleo           sobre --sup-tarjeta          3.09:1  (mín. 4.5)  ← R3
+  · oscuro             --borde-ctrl         sobre --sup-tarjeta          2.47:1  (mín. 3)  ← R2
+  · oscuro             --borde-ctrl         sobre --sup-inset            2.60:1  (mín. 3)  ← R2
+  ✓ oscuro             --ok-tinta           sobre --ok-bg                7.89:1  (mín. 4.5)
+  ✓ oscuro             --aviso-tinta        sobre --aviso-bg             7.83:1  (mín. 4.5)
+  ✓ oscuro             --error-tinta        sobre --error-bg             7.40:1  (mín. 4.5)
+  ✓ oscuro             --info-tinta         sobre --info-bg              8.19:1  (mín. 4.5)
+  ✓ oscuro             --neutro-tinta       sobre --neutro-bg            8.72:1  (mín. 4.5)
+
+  67 combinaciones medidas en 2 hojas · las excepciones E1–E3 (v1.0) y R1–R2 (bóveda) se esperan, no se ignoran
+  R3 NO es un límite aceptado: --petroleo en oscuro está sobrecargado (enlace y relleno de botón) y hay que partirlo en dos. Es tarea abierta del diseñador.
+exit=0
+===== node scripts/generate-doc-report.mjs
+
+  Informe documental
+  ══════════════════
+
+  ✗ inventarios al día
+      los inventarios generados reflejan el código
+      ✗ desactualizado: docs/reports/generated/route-inventory.md
+      ✗ desactualizado: docs/reports/generated/component-inventory.md
+      ✗ desactualizado: docs/reports/generated/api-inventory.md
+      ✗ desactualizado: docs/reports/generated/module-graph.md
+      ✗ desactualizado: docs/reports/generated/e2e-inventory.md
+      5 inventario(s) no reflejan el código. Ejecutá: node scripts/generate-inventory.mjs
+
+  ✗ arquitectura
+      sin ciclos, capas en una dirección, red confinada
+      ✗ check-architecture
+      3 dependencia(s) circular(es):
+      src/app/core/mock/fixtures/personas.ts
+      → src/app/core/mock/fixtures/insurer-network.ts
+      src/app/core/mock/fixtures/personas.ts
+      → src/app/core/mock/fixtures/registered-people.ts
+      src/app/features/agenda/my-agenda/month-view/month-view.ts
+      → src/app/features/agenda/my-agenda/day-view/day-view.ts
+      1 import(s) contra la dirección de las capas:
+      src/app/core/mock/mock-backend.spec.ts
+      → src/app/shared/components/molecules/phone-input/phone-input.paises.ts
+      1 archivo(s) hacen peticiones fuera de core/data-access/:
+      src/app/core/messaging/adjunto-metadata.ts
+
+  ✗ enlaces documentales
+      ningún enlace ni ancla interna rota
+      ✗ check-doc-links — 10 enlace(s) roto(s) de 740
+      docs/tareas/subtarea-2.4-transparencia-copagos/verification.md → destino inexistente: ../../../artifacts/patient-coverage-copays/final-mocks/coverage-1440.png
+      docs/tareas/subtarea-2.4-transparencia-copagos/verification.md → destino inexistente: ../../../artifacts/patient-coverage-copays/final-mocks/coverage-390.png
+      docs/tareas/subtarea-2.4-transparencia-copagos/verification.md → destino inexistente: ../../../artifacts/patient-coverage-copays/final-mocks/pharmacy-partial-1440.png
+      docs/tareas/subtarea-2.4-transparencia-copagos/verification.md → destino inexistente: ../../../artifacts/patient-coverage-copays/final-mocks/pharmacy-partial-390.png
+      docs/tareas/subtarea-2.4-transparencia-copagos/verification.md → destino inexistente: ../../../artifacts/patient-coverage-copays/final-mocks/diagnostics-1440.png
+      docs/tareas/subtarea-2.4-transparencia-copagos/verification.md → destino inexistente: ../../../artifacts/patient-coverage-copays/final-mocks/diagnostics-390.png
+      docs/tareas/subtarea-2.4-transparencia-copagos/verification.md → destino inexistente: ../../../artifacts/patient-coverage-copays/final-real-profile/coverage-1440.png
+      docs/tareas/subtarea-2.4-transparencia-copagos/verification.md → destino inexistente: ../../../artifacts/patient-coverage-copays/final-real-profile/coverage-390.png
+      docs/tareas/subtarea-2.4-transparencia-copagos/verification.md → destino inexistente: ../../../artifacts/patient-coverage-copays/final-real-profile/traffic-1440.json
+      docs/tareas/subtarea-2.4-transparencia-copagos/verification.md → destino inexistente: ../../../artifacts/patient-coverage-copays/final-real-profile/traffic-390.json
+
+  ✗ cobertura documental
+      rutas, organismos y servicios documentados; sin marcadores
+      ✗ check-doc-coverage — 15 hallazgo(s)
+      organismo sin mencionar: app-auth-stage (AuthStage)
+      organismo sin mencionar: app-body-map (BodyMap)
+      organismo sin mencionar: app-specialty-badge-grid (SpecialtyBadgeGrid)
+      servicio sin mencionar: DataCatalogClient
+      servicio sin mencionar: WebAnalyticsClient
+      servicio sin mencionar: CrossTabLock
+      servicio sin mencionar: SessionBroadcast
+      servicio sin mencionar: PatientContextService
+      servicio sin mencionar: Dictado
+      marcador provisional «TODO» en docs/trabajo/2026-09-22-ender-simulador-cabecera/PLAN.md
+      marcador provisional «TODO» en docs/trabajo/2026-09-22-pablo-disciplina-tablas/PLAN.md
+      marcador provisional «TODO» en docs/trabajo/2026-09-23-continuacion-reserva-cotizaciones/PLAN.md
+      marcador provisional «TODO» en docs/trabajo/2026-09-23-continuacion-reserva-cotizaciones/REPORTE.md
+      marcador provisional «TODO» en docs/trabajo/2026-09-23-perfil-medico-configurar-tu-perfil/PLAN.md
+      marcador provisional «TODO» en docs/trabajo/2026-09-23-perfil-medico-configurar-tu-perfil/REPORTE.md
+
+  ✗ deriva de contrato de API
+      los endpoints del código coinciden con los declarados
+      ✗ check-api-contract-drift
+      78 operación(es) que el código llama y la documentación no declara:
+      DELETE /profiles/practitioners/me/affiliations/:affiliationId
+      DELETE /profiles/practitioners/me/jurisdiction-authorizations/:licenseId
+      DELETE /profiles/practitioners/me/specialties/:specialtyId
+      GET /accounting/accrual-objects
+      GET /accounting/assets
+      GET /accounting/dimensions
+      GET /accounting/fiscal-years
+      GET /accounting/journal-transactions/:transactionId/document-flow
+      GET /accounting/open-items
+      GET /admin/analytics/funnels
+      GET /admin/analytics/funnels/:funnelId/report
+      GET /admin/analytics/overview
+      GET /admin/analytics/pipeline-health
+      GET /admin/analytics/sessions
+      GET /admin/analytics/sessions/:id
+      GET /admin/analytics/timeseries
+      GET /admin/analytics/web-vitals
+      GET /admin/catalog/coverage
+      GET /admin/catalog/objects
+      GET /admin/catalog/objects/:id
+      GET /admin/catalog/objects/:objectId/changes
+      GET /admin/catalog/objects/:objectId/columns
+      GET /admin/catalog/objects/:objectId/evidence
+      GET /admin/catalog/objects/:objectId/history
+      GET /admin/catalog/objects/:objectId/impact
+      GET /admin/catalog/scans
+      GET /admin/catalog/schemas
+      GET /admin/ops/backups
+      GET /admin/ops/deployments
+      GET /admin/ops/incidents
+      GET /admin/ops/readiness
+      GET /admin/ops/slos
+      GET /admin/qa/defects
+      GET /admin/qa/environments
+      GET /admin/qa/plans
+      GET /admin/qa/plans/:id
+      GET /admin/qa/runs
+      GET /admin/qa/runs/:id
+      GET /admin/qa/suites
+      GET /admin/qa/suites/:id
+      GET /admin/qa/targets
+      GET /clinical/prescriptions/:medicationRequestId/pdf
+      GET /community/conversations/:conversationId
+      GET /community/profiles/:profileId/auto-reply
+      GET /loyalty/me
+      GET /loyalty/me/points
+      GET /profiles/patients/me/dependents
+      GET /public/profiles/:prefijo/:slug/reviews
+      GET /public/profiles/f/:slug/branch-availability
+      PATCH /community/conversations/:conversationId/messages/:messageId
+      PATCH /practitioners/me/sites/:siteId
+      PATCH /profiles/practitioners/me/affiliations/:affiliationId
+      PATCH /profiles/practitioners/me/credentials/:credentialId
+      PATCH /profiles/practitioners/me/jurisdiction-authorizations/:licenseId
+      PATCH /profiles/practitioners/me/specialties/:specialtyId
+      PATCH /profiles/practitioners/me/specialties/:specialtyId/primary
+      POST /accounting/accruals/run
+      POST /accounting/clearing-documents
+      POST /accounting/depreciation/run
+      POST /accounting/fiscal-periods/:periodId/lock
+      POST /accounting/journal-transactions/:transactionId/:action
+      POST /admin/catalog/annotations/:annotationId/review
+      POST /admin/catalog/objects/:objectId/evidence
+      POST /admin/catalog/scans
+      POST /admin/qa/plans
+      POST /admin/qa/plans/:planId/approvals
+      POST /admin/qa/plans/:planId/cancel
+      POST /admin/qa/plans/preflight
+      POST /charts/care-plans
+      POST /charts/documents
+      POST /iam/auth/upload-registration-document
+      POST /loyalty/me/points/redeem
+      POST /patients/me/reviews
+      POST /profiles/patients/me/dependents
+      POST /scheduling/appointments/walk-in
+      PUT /admin/catalog/objects/:objectId/annotation
+      PUT /community/profiles/:profileId/auto-reply
+      PUT /practitioners/me/sites/:siteId/bank-qr
+      10 operación(es) declarada(s) que el código no llama:
+      DELETE /prescription-favorites/:id
+      GET /prescription-favorites
+      GET /public/search
+      GET /public/search/diagnostic-units
+      GET /public/search/insurers
+      GET /public/search/medications
+      GET /public/search/organizations
+      GET /public/search/pharmacies
+      POST /prescription-favorites
+      POST /quotations/simulate
+      Actualizá docs/integrations/backend-api.md.
+
+  ✗ prefijos de la API
+      las tres declaraciones de la superficie de red dicen lo mismo
+      ✗ check-api-prefixes
+      proxy.conf.docker.json no declara «/loyalty» (sí está en proxy.conf.json)
+      deploy/api-locations.conf + nginx.conf no declara «/loyalty» (sí está en proxy.conf.json)
+
+  ✓ rutas contra prefijos
+      ninguna ruta del router empieza con un prefijo de la API
+      ✓ check-route-prefixes
+      240 rutas del router, ninguna colisiona con los 63 prefijos de la API
+      excepción declarada: 'practitioners' — cuelga de 'search': la URL real es /search/practitioners
+
+  ✗ clientes contra prefijos
+      toda llamada de core/data-access cae en un prefijo que el proxy enruta
+      ✗ check-client-prefixes — 1 operación(es) sin rutear
+      CommunityClient (1)
+      POST /patients/me/reviews
+      El servidor de desarrollo responde estas rutas con el index.html de
+      Angular y un 200: el cliente recibe HTML donde espera JSON. Agregá el
+      prefijo a las TRES declaraciones (proxy.conf.json, proxy.conf.docker.json
+      y deploy/nginx.conf) y comprobá que no se coma una ruta del router.
+
+  ✓ tokens del sistema de diseño
+      el catálogo tipado y styles.css declaran lo mismo, en ambos sentidos
+      ✓ check-tokens
+      212 tokens, iguales en styles.css y en el catálogo tipado
+
+  ✓ contrastes del sistema de diseño
+      los tokens cumplen WCAG AA, salvo las excepciones declaradas
+      ✓ check-contrast
+      ── src/styles.css · ALOVIDA v1.0
+      ✓ claro              --text-primary       sobre --bg-surface          14.90:1  (mín. 4.5)
+      ✓ claro              --text-secondary     sobre --bg-surface           8.02:1  (mín. 4.5)
+      · claro              --text-muted         sobre --bg-surface           4.27:1  (mín. 4.5)  ← E1
+      ✓ claro              --brand-primary      sobre --bg-surface           8.03:1  (mín. 4.5)
+      ✓ claro              --border-strong      sobre --bg-surface           3.70:1  (mín. 3)
+      ✓ claro              --st-success-fg      sobre --st-success-bg        6.75:1  (mín. 4.5)
+      ✓ claro              --st-warning-fg      sobre --st-warning-bg        7.49:1  (mín. 4.5)
+      ✓ claro              --st-error-fg        sobre --st-error-bg          7.53:1  (mín. 4.5)
+      ✓ claro              --st-info-fg         sobre --st-info-bg           5.01:1  (mín. 4.5)
+      ✓ claro              --st-primary-fg      sobre --st-primary-bg        9.49:1  (mín. 4.5)
+      ✓ claro              --st-secondary-fg    sobre --st-secondary-bg      6.63:1  (mín. 4.5)
+      ✓ oscuro · sistema   --text-primary       sobre --bg-surface          13.30:1  (mín. 4.5)
+      ✓ oscuro · sistema   --text-secondary     sobre --bg-surface          12.57:1  (mín. 4.5)
+      ✓ oscuro · sistema   --text-muted         sobre --bg-surface           6.60:1  (mín. 4.5)
+      ✓ oscuro · sistema   --brand-primary      sobre --bg-surface           7.03:1  (mín. 4.5)
+      · oscuro · sistema   --border-strong      sobre --bg-surface           2.15:1  (mín. 3)  ← E3
+      ✓ oscuro · sistema   --st-success-fg      sobre --st-success-bg        6.64:1  (mín. 4.5)
+      ✓ oscuro · sistema   --st-warning-fg      sobre --st-warning-bg        6.15:1  (mín. 4.5)
+      ✓ oscuro · sistema   --st-error-fg        sobre --st-error-bg          6.76:1  (mín. 4.5)
+      ✓ oscuro · sistema   --st-info-fg         sobre --st-info-bg           6.23:1  (mín. 4.5)
+      ✓ oscuro · sistema   --st-primary-fg      sobre --st-primary-bg        6.56:1  (mín. 4.5)
+      ✓ oscuro · sistema   --st-secondary-fg    sobre --st-secondary-bg      5.83:1  (mín. 4.5)
+      ✓ oscuro · manual    --text-primary       sobre --bg-surface          13.30:1  (mín. 4.5)
+      ✓ oscuro · manual    --text-secondary     sobre --bg-surface          12.57:1  (mín. 4.5)
+      ✓ oscuro · manual    --text-muted         sobre --bg-surface           6.60:1  (mín. 4.5)
+      ✓ oscuro · manual    --brand-primary      sobre --bg-surface           7.03:1  (mín. 4.5)
+      · oscuro · manual    --border-strong      sobre --bg-surface           2.15:1  (mín. 3)  ← E3
+      ✓ oscuro · manual    --st-success-fg      sobre --st-success-bg        6.64:1  (mín. 4.5)
+      ✓ oscuro · manual    --st-warning-fg      sobre --st-warning-bg        6.15:1  (mín. 4.5)
+      ✓ oscuro · manual    --st-error-fg        sobre --st-error-bg          6.76:1  (mín. 4.5)
+      ✓ oscuro · manual    --st-info-fg         sobre --st-info-bg           6.23:1  (mín. 4.5)
+      ✓ oscuro · manual    --st-primary-fg      sobre --st-primary-bg        6.56:1  (mín. 4.5)
+      ✓ oscuro · manual    --st-secondary-fg    sobre --st-secondary-bg      5.83:1  (mín. 4.5)
+      ── src/styles/alovida.css · ALOVIDA v1.1 (bóveda)
+      ✓ claro              --tinta              sobre --sup-tarjeta         14.90:1  (mín. 4.5)
+      ✓ claro              --tinta              sobre --sup-pagina          14.90:1  (mín. 4.5)
+      ✓ claro              --tinta              sobre --sup-inset           14.02:1  (mín. 4.5)
+      ✓ claro              --tinta-2            sobre --sup-tarjeta          8.02:1  (mín. 4.5)
+      ✓ claro              --tinta-2            sobre --sup-pagina           8.02:1  (mín. 4.5)
+      · claro              --tinta-3            sobre --sup-tarjeta          4.27:1  (mín. 4.5)  ← R1
+      · claro              --tinta-3            sobre --sup-pagina           4.27:1  (mín. 4.5)  ← R1
+      ✓ claro              --tinta-marca        sobre --sup-tarjeta         11.31:1  (mín. 4.5)
+      ✓ claro              --petroleo           sobre --sup-pagina           8.03:1  (mín. 4.5)
+      ✓ claro              --petroleo           sobre --sup-tarjeta          8.03:1  (mín. 4.5)
+      ✓ claro              --borde-ctrl         sobre --sup-tarjeta          3.70:1  (mín. 3)
+      ✓ claro              --borde-ctrl         sobre --sup-inset            3.48:1  (mín. 3)
+      ✓ claro              --ok-tinta           sobre --ok-bg                4.78:1  (mín. 4.5)
+      ✓ claro              --aviso-tinta        sobre --aviso-bg             7.49:1  (mín. 4.5)
+      ✓ claro              --error-tinta        sobre --error-bg             5.49:1  (mín. 4.5)
+      ✓ claro              --info-tinta         sobre --info-bg              5.01:1  (mín. 4.5)
+      ✓ claro              --neutro-tinta       sobre --neutro-bg            7.37:1  (mín. 4.5)
+      ✓ oscuro             --tinta              sobre --sup-tarjeta         13.01:1  (mín. 4.5)
+      ✓ oscuro             --tinta              sobre --sup-pagina          14.33:1  (mín. 4.5)
+      ✓ oscuro             --tinta              sobre --sup-inset           13.69:1  (mín. 4.5)
+      ✓ oscuro             --tinta-2            sobre --sup-tarjeta          9.07:1  (mín. 4.5)
+      ✓ oscuro             --tinta-2            sobre --sup-pagina           9.99:1  (mín. 4.5)
+      ✓ oscuro             --tinta-3            sobre --sup-tarjeta          5.43:1  (mín. 4.5)
+      ✓ oscuro             --tinta-3            sobre --sup-pagina           5.98:1  (mín. 4.5)
+      ✓ oscuro             --tinta-marca        sobre --sup-tarjeta         12.43:1  (mín. 4.5)
+      · oscuro             --petroleo           sobre --sup-pagina           3.41:1  (mín. 4.5)  ← R3
+      · oscuro             --petroleo           sobre --sup-tarjeta          3.09:1  (mín. 4.5)  ← R3
+      · oscuro             --borde-ctrl         sobre --sup-tarjeta          2.47:1  (mín. 3)  ← R2
+      · oscuro             --borde-ctrl         sobre --sup-inset            2.60:1  (mín. 3)  ← R2
+      ✓ oscuro             --ok-tinta           sobre --ok-bg                7.89:1  (mín. 4.5)
+      ✓ oscuro             --aviso-tinta        sobre --aviso-bg             7.83:1  (mín. 4.5)
+      ✓ oscuro             --error-tinta        sobre --error-bg             7.40:1  (mín. 4.5)
+      ✓ oscuro             --info-tinta         sobre --info-bg              8.19:1  (mín. 4.5)
+      ✓ oscuro             --neutro-tinta       sobre --neutro-bg            8.72:1  (mín. 4.5)
+      67 combinaciones medidas en 2 hojas · las excepciones E1–E3 (v1.0) y R1–R2 (bóveda) se esperan, no se ignoran
+      R3 NO es un límite aceptado: --petroleo en oscuro está sobrecargado (enlace y relleno de botón) y hay que partirlo en dos. Es tarea abierta del diseñador.
+
+  ✓ presupuesto de bundle
+      el artefacto no supera el umbral de error
+      ✓ check-bundle-budget
+      inicial: 257.58 kB en 12 archivos
+      137.59 kB  styles-PHCVGGOR.css
+      77.22 kB  main-4GFVWSCJ.js
+      18.37 kB  chunk-VY2YXDG6.js
+      5.55 kB  chunk-P5SBZAH2.js
+      5.27 kB  chunk-BRVLZO6G.js
+      4.54 kB  chunk-NANAVFUN.js
+      3.72 kB  chunk-KSCR67NP.js
+      2.04 kB  chunk-BVSFJ4MO.js
+      1.38 kB  chunk-U5OKE7CE.js
+      1.17 kB  chunk-Y5EQ22Z7.js
+      0.67 kB  chunk-3YP2YVSU.js
+      0.07 kB  chunk-RTMQLGKS.js
+      diferidos: 947 fragmentos
+      3813.18 kB  chunk-Y3V4JVBN.js
+      725.62 kB  chunk-I6WNK73W.js
+      594.55 kB  chunk-VMQYV22Y.js
+      503.45 kB  chunk-VD7F4XXH.js
+      432.96 kB  chunk-FWMMDP6O.js
+
+  ──────────────────
+  354 páginas · ~365k palabras · 6 generadas
+
+  ✗ 7 de 11 verificaciones fallaron.
+
+exit=1

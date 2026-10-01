@@ -24,7 +24,7 @@ Las capturas actuales muestran `Demo` debajo del encabezado en pantallas angosta
 
 La auditoría global anterior de 54 rutas y 216 celdas se hizo sobre la base antigua `b7785e362a7ccfbbd0665b1863eab92b65ea4137`; es histórica, no se repitió sobre el `HEAD` actual y sus fotos globales no se declaran revisadas.
 
-La regresión y su evidencia quedaron en el PR [#607](https://github.com/mdavila-2001/mantra-core-health/pull/607), abierto contra `mockup` y sin merge.
+La regresión y su evidencia quedaron en el PR [#607](https://github.com/mdavila-2001/mantra-core-health/pull/607), mergeado a `mockup`.
 
 ## Alcance funcional pendiente
 

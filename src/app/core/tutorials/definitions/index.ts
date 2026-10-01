@@ -156,39 +156,25 @@ const AGENDA_DEL_DIA: TutorialDefinition = {
 /**
  * Leer una historia clínica.
  *
- * Versión 2.0: sube la **mayor** porque el recorrido cambió de verdad —lo que
- * se escribe se mudó a su propia pantalla y este tutorial perdió sus dos
- * últimos pasos, que ahora son `atencion-clinica`—. Quien completó la versión
- * anterior lo vuelve a ver, y corresponde: lo que aprendió ya no es lo que la
- * pantalla hace.
+ * Versión 3.0: sube la **mayor** cada vez que el recorrido cambia de verdad.
+ * En la 2.0 lo que se escribe se mudó a su propia pantalla (`atencion-clinica`).
+ * En la 3.0 la banda de contexto se fue: las alergias y la consulta abierta se
+ * dicen en un modal al entrar —no hay nada fijo en la página que señalar— y las
+ * cifras se sacaron. Quien completó una versión anterior lo vuelve a ver, y
+ * corresponde: lo que aprendió ya no es lo que la pantalla hace.
  */
 const EXPEDIENTE: TutorialDefinition = {
   id: 'expediente-clinico',
-  version: '2.0',
+  version: '3.0',
   title: 'Leer el expediente',
-  description:
-    'Cómo está organizada la historia clínica y dónde miran las alergias antes de recetar.',
+  description: 'Cómo está organizada la historia clínica, bloque por bloque.',
   category: 'Atención',
   roles: ['PRACTITIONER', 'CLINICIAN'],
-  estimatedMinutes: 3,
+  estimatedMinutes: 1,
   level: 'intermedio',
   prerequisites: ['agenda-del-dia'],
   next: 'atencion-clinica',
   steps: [
-    {
-      id: 'alergias',
-      title: 'Las alergias, primero',
-      body: 'Están arriba y fuera de las pestañas a propósito: son lo único que tenés que ver antes de recetar.',
-      target: 'expediente-alergias',
-      placement: 'bottom',
-    },
-    {
-      id: 'contexto',
-      title: 'Cuánto expediente hay',
-      body: 'Las cifras te dicen el tamaño de la historia sin abrir pestaña por pestaña, y cuándo fue la última atención.',
-      target: 'expediente-contexto',
-      placement: 'bottom',
-    },
     {
       id: 'bloques',
       title: 'La historia, por bloques',

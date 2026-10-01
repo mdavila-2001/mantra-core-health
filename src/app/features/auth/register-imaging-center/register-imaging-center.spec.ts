@@ -5,6 +5,7 @@ import { provideRouter } from '@angular/router';
 import { By } from '@angular/platform-browser';
 
 import { MAX_CAMPOS_POR_PAGINA } from '../../../shared/forms/paginated/paginated-form.types';
+import { UbicacionPicker } from '../registro-compartido/ubicacion-picker/ubicacion-picker';
 import {
   MODALIDADES,
   RegisterImagingCenter,
@@ -67,7 +68,7 @@ describe('RegisterImagingCenter', () => {
       taxId: '1023456789',
       modalidades: ['Rayos X', 'Ecografía'],
       addressLines: 'Av. Cañoto esq. Ballivián 234',
-      legalRepName: 'Ana Paz Rojas',
+      legalRepName: { name: 'Ana', lastName: 'Paz', motherLastName: 'Rojas' },
       legalRepEmail: 'ana.paz@imagenoriente.test',
       password: 'secreto12',
     });
@@ -189,6 +190,17 @@ describe('RegisterImagingCenter', () => {
     },
   );
 
+  it('el poder se pide en la página del representante, no con la constitución', () => {
+    const pagina = (clave: string) => component.paginas.find((p) => p.clave === clave);
+
+    expect(pagina('representante')?.campos.map((c) => c.key)).toEqual([
+      'legalRepName',
+      'legalRepEmail',
+      'poderFile',
+    ]);
+    expect(pagina('radioproteccion')?.campos.map((c) => c.key)).not.toContain('poderFile');
+  });
+
   it('la radioprotección no frena: un centro de ecografía y resonancia no irradia', () => {
     // Y además es un agregado: no sale de los dieciocho puntos de la fuente, y
     // un agregado no puede frenar un alta hasta que el propietario lo decida.
@@ -207,7 +219,7 @@ describe('RegisterImagingCenter', () => {
     component.submit();
 
     // Ninguno de los nueve campos de gerencia se tocó, y el alta sale igual.
-    expect(component.form.controls.generalManagerName.value).toBe('');
+    expect(component.form.controls.generalManagerName.value.name).toBe('');
     expect(component.form.controls.salesManagerEmail.value).toBe('');
     expect(component.form.controls.marketingManagerPhone.value).toBe('');
     expect(component.enviada()).toBe(true);
@@ -274,6 +286,8 @@ describe('RegisterImagingCenter', () => {
       {
         id: primera!.id,
         nombre: 'Equipetrol',
+        descripcion: '',
+        urlUbicacion: '',
         direccion: 'Av. San Martín 456',
         gps: { lat: -17.78, lng: -63.18 },
       },
@@ -323,5 +337,84 @@ describe('RegisterImagingCenter', () => {
     const form = fixture.debugElement.query(By.css('[data-testid="registro-form-imagenologia"]'));
 
     expect(form).not.toBeNull();
+  });
+
+  /* --- el mapa vacía la dirección de la central (D-06) ------------------- */
+
+  describe('el mapa vacía la dirección de la central', () => {
+    /** Avanza el asistente hasta la página cuyo título contiene `fragmento`. */
+    function avanzarHasta(fragmento: string): void {
+      for (let paso = 0; paso < 12; paso += 1) {
+        const titulo =
+          fixture.nativeElement.querySelector('.paginated-form__titulo')?.textContent ?? '';
+        if (titulo.includes(fragmento)) return;
+        fixture.nativeElement.querySelector('[data-testid="paginated-form-continuar"]')?.click();
+        fixture.detectChanges();
+      }
+      throw new Error(`No se alcanzó una página con título que contenga «${fragmento}»`);
+    }
+
+    /** La dirección escrita y dejada: tocada, como la deja quien la escribió. */
+    function direccionEscritaYDejada(): HTMLInputElement {
+      fixture.detectChanges();
+      completarLoObligatorio();
+      fixture.detectChanges();
+      avanzarHasta('Dónde está la central');
+      const campo: HTMLInputElement = fixture.nativeElement.querySelector(
+        '[data-testid="registro-imagen-direccion"]',
+      );
+      campo.dispatchEvent(new FocusEvent('blur'));
+      fixture.detectChanges();
+      return campo;
+    }
+
+    function tocarElMapa(): void {
+      const mapa = fixture.debugElement.query(By.directive(UbicacionPicker));
+      (mapa.componentInstance as UbicacionPicker).puntoElegido.emit({ lat: -17.7833, lng: -63.1821 });
+      fixture.detectChanges();
+    }
+
+    function errorDe(campo: HTMLElement): string {
+      return campo.closest('app-form-field')?.querySelector('.form-field-error')?.textContent?.trim() ?? '';
+    }
+
+    it('la deja vacía sin marcarla en rojo, aunque la persona ya la hubiera tocado', () => {
+      const campo = direccionEscritaYDejada();
+      expect(component.form.controls.addressLines.touched).toBe(true);
+
+      tocarElMapa();
+
+      expect(campo.value).toBe('');
+      expect(errorDe(campo)).toBe('');
+      expect(
+        fixture.nativeElement.querySelector('[data-testid="registro-imagen-direccion-reescribir"]'),
+      ).not.toBeNull();
+    });
+
+    it('tocarla después sí la marca, y el aviso sigue a su lado', () => {
+      const campo = direccionEscritaYDejada();
+      tocarElMapa();
+
+      campo.dispatchEvent(new FocusEvent('blur'));
+      fixture.detectChanges();
+
+      expect(errorDe(campo)).toBe('Escribí la dirección legal de la central.');
+      expect(
+        fixture.nativeElement.querySelector('[data-testid="registro-imagen-direccion-reescribir"]'),
+      ).not.toBeNull();
+    });
+
+    it('intentar avanzar sin reescribirla la marca y no deja pasar', () => {
+      const campo = direccionEscritaYDejada();
+      tocarElMapa();
+
+      fixture.nativeElement.querySelector('[data-testid="paginated-form-continuar"]').click();
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelector('.paginated-form__titulo').textContent).toContain(
+        'Dónde está la central',
+      );
+      expect(errorDe(campo)).toBe('Escribí la dirección legal de la central.');
+    });
   });
 });

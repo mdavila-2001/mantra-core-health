@@ -20,17 +20,27 @@
        porque las dos lecturas que lo contestan piden el paciente en la ruta.
        Decirlo es lo que evita que alguien busque en esta cola un pedido que
        nunca va a estar acá con nombre y apellido. -->
-  <app-card variant="outlined" padding="lg" class="laboratorio__nota">
-    <h2 class="laboratorio__nota-titulo">¿Buscás los estudios de un paciente?</h2>
-    <p class="laboratorio__nota-texto">
-      Esta cola es la del laboratorio y se recorre por número de orden: las órdenes de trabajo
-      cuelgan de una acesión de especímenes, no de una persona.
-    </p>
-    <app-alert tone="info" title="El pedido y su resultado están en la ficha">
-      Se pide un laboratorio o una imagen desde el expediente de la persona, dentro de la consulta
-      que lo motivó, y el resultado aparece en ese mismo lugar cuando se libera.
-    </app-alert>
-  </app-card>
+  @if (isLabSession()) {
+    <app-card variant="outlined" padding="lg" class="laboratorio__nota">
+      <h2 class="laboratorio__nota-titulo">¿De dónde salen estas órdenes?</h2>
+      <p class="laboratorio__nota-texto">
+        Cada orden de trabajo nace cuando registrás la accesión de una muestra en la
+        <a routerLink="/laboratorio/recepcion">recepción de muestras</a>.
+      </p>
+    </app-card>
+  } @else {
+    <app-card variant="outlined" padding="lg" class="laboratorio__nota">
+      <h2 class="laboratorio__nota-titulo">¿Buscás los estudios de un paciente?</h2>
+      <p class="laboratorio__nota-texto">
+        Esta cola es la del laboratorio y se recorre por número de orden: las órdenes de trabajo
+        cuelgan de una acesión de especímenes, no de una persona.
+      </p>
+      <app-alert tone="info" title="El pedido y su resultado están en la ficha">
+        Se pide un laboratorio o una imagen desde el expediente de la persona, dentro de la consulta
+        que lo motivó, y el resultado aparece en ese mismo lugar cuando se libera.
+      </app-alert>
+    </app-card>
+  }
 </div>
 
 <!-- Plantillas de celda: el organismo las recibe por `ColumnDef.cell`. -->

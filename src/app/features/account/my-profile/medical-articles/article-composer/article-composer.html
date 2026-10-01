@@ -1,0 +1,228 @@
+<div
+  class="compositor-articulo"
+  [class.compositor-articulo--inerte]="disabled()"
+  [attr.inert]="disabled() ? '' : null"
+>
+  @if (borradorPendiente(); as borrador) {
+    <div class="compositor-articulo__borrador" role="status" data-testid="article-draft-offer">
+      <p class="compositor-articulo__borrador-texto">
+        Tenés un borrador sin publicar guardado el {{ borrador.savedAt | date: 'dd/MM/yyyy' }} a las
+        {{ borrador.savedAt | date: 'HH:mm' }}. Las imágenes no se guardan: si tenía, hay que volver a agregarlas.
+      </p>
+      <div class="compositor-articulo__borrador-acciones">
+        <button app-button type="button" variant="primary" size="sm" data-testid="article-draft-restore" (clicked)="recuperarBorrador()">
+          Recuperar borrador
+        </button>
+        <button app-button type="button" variant="ghost" size="sm" data-testid="article-draft-discard" (clicked)="descartarBorrador()">
+          Descartar
+        </button>
+      </div>
+    </div>
+  }
+
+  <div class="compositor-articulo__modos" role="group" aria-label="Modo del editor">
+    <button
+      type="button"
+      class="compositor-articulo__modo"
+      [attr.aria-pressed]="modo() === 'escribir'"
+      data-testid="article-mode-write"
+      (click)="modo.set('escribir')"
+    >
+      Escribir
+    </button>
+    <button
+      type="button"
+      class="compositor-articulo__modo"
+      [attr.aria-pressed]="modo() === 'vista'"
+      data-testid="article-mode-preview"
+      (click)="modo.set('vista')"
+    >
+      Vista previa
+    </button>
+  </div>
+
+  <!-- El editor se oculta en vista previa pero NO se desmonta: lo escrito vive
+       en su DOM, y desmontarlo lo perdería. -->
+  <div [hidden]="modo() !== 'escribir'">
+    <app-rich-text-editor
+      [(html)]="html"
+      [tools]="herramientas"
+      [extraTags]="etiquetasExtra"
+      [allowImages]="true"
+      [markdownShortcuts]="true"
+      label="Contenido del artículo"
+      placeholder="Escribí tu artículo médico… Usá Título, Subtítulo y Apartado para armar secciones que el lector podrá desplegar. También podés escribir ## al empezar un renglón."
+    >
+      <span editorTools class="compositor-articulo__extras">
+        <button
+          #botonEnlace
+          type="button"
+          class="compositor-articulo__extra"
+          data-testid="article-link"
+          aria-label="Enlace (Ctrl+K)"
+          title="Enlace (Ctrl+K)"
+          aria-haspopup="true"
+          [attr.aria-expanded]="panel() === 'enlace'"
+          (mousedown)="$event.preventDefault()"
+          (click)="abrirEnlace()"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        </button>
+        <button
+          #botonEmojis
+          type="button"
+          class="compositor-articulo__extra"
+          data-testid="article-emoji"
+          aria-haspopup="true"
+          [attr.aria-expanded]="panel() === 'emojis'"
+          (mousedown)="$event.preventDefault()"
+          (click)="alternarEmojis()"
+        >
+          <span aria-hidden="true">🙂</span> Emoji
+        </button>
+        <button
+          type="button"
+          class="compositor-articulo__extra"
+          data-testid="article-image"
+          [disabled]="imagenes().length >= maximoDeImagenes"
+          (mousedown)="$event.preventDefault()"
+          (click)="elegirImagenes()"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="m21 16-5-5-8 8"/></svg>
+          Imagen
+        </button>
+      </span>
+
+      @if (panel() === 'emojis') {
+        <div #panelActivo editorPanel id="article-emoji-panel" class="compositor-articulo__panel compositor-articulo__panel--emojis" role="dialog" aria-label="Elegir un emoji">
+          <!-- Diferido como en el chat: el catálogo son 1 946 emojis y quien
+               nunca abre el panel no tiene por qué descargarlo. -->
+          @defer (on immediate) {
+            <app-selector-emojis (elegido)="insertarEmoji($event)" />
+          } @placeholder {
+            <p class="compositor-articulo__cargando" role="status">Cargando emojis…</p>
+          }
+        </div>
+      } @else if (panel() === 'enlace') {
+        <!-- Un div y no un <form>: el compositor ya vive dentro del formulario de
+             la pantalla, y un formulario anidado no es HTML válido. Enter en
+             cualquiera de los dos campos inserta. -->
+        <div
+          #panelActivo
+          editorPanel
+          id="article-link-panel"
+          class="compositor-articulo__panel compositor-articulo__enlace"
+          role="dialog"
+          aria-label="Agregar un enlace"
+          (keydown.enter)="$event.preventDefault(); insertarEnlace()"
+        >
+          <app-form-field #campoUrl label="Dirección" [errorMessage]="enlaceError()" class="compositor-articulo__enlace-url">
+            <app-input
+              type="url"
+              [value]="enlaceUrl()"
+              (valueChange)="alCambiarUrl($event)"
+              placeholder="https://www.who.int/…"
+              testId="article-link-url"
+            />
+          </app-form-field>
+          <app-form-field label="Texto que se lee" hint="Si lo dejás vacío, se muestra la dirección." class="compositor-articulo__enlace-texto">
+            <app-input
+              [value]="enlaceTexto()"
+              (valueChange)="alCambiarTextoDelEnlace($event)"
+              placeholder="Guía de la OMS"
+              testId="article-link-text"
+            />
+          </app-form-field>
+          <div class="compositor-articulo__enlace-acciones">
+            <button app-button type="button" variant="primary" size="sm" data-testid="article-link-insert" (clicked)="insertarEnlace()">Insertar enlace</button>
+            <button app-button type="button" variant="ghost" size="sm" (clicked)="cerrarPanel()">Cancelar</button>
+          </div>
+        </div>
+      }
+    </app-rich-text-editor>
+  </div>
+
+  @if (modo() === 'vista') {
+    <div class="compositor-articulo__vista" data-testid="article-preview">
+      @if (draft().bodyText.trim() === '') {
+        <p class="compositor-articulo__vista-vacia">Todavía no hay nada para mostrar. Volvé a «Escribir» para empezar.</p>
+      } @else {
+        <app-article-body [body]="draft().bodyText" [images]="urlsDeVista()" [headingLevel]="3" />
+      }
+    </div>
+  }
+
+  <input
+    #archivos
+    type="file"
+    class="sr-only"
+    tabindex="-1"
+    aria-hidden="true"
+    multiple
+    [accept]="formatos"
+    data-testid="article-image-input"
+    (change)="alElegir($event)"
+  />
+
+  @if (aviso(); as mensaje) {
+    <p class="compositor-articulo__aviso" role="alert">{{ mensaje }}</p>
+  }
+
+  @if (imagenes().length > 0) {
+    <section class="compositor-articulo__imagenes" aria-labelledby="article-images-title">
+      <h3 id="article-images-title" class="compositor-articulo__subtitulo">
+        Imágenes del artículo ({{ imagenes().length }}/{{ maximoDeImagenes }})
+      </h3>
+      <p class="compositor-articulo__ayuda">
+        Cada imagen necesita una descripción: es lo que escucha quien lee con lector de pantalla, y se muestra como pie de foto.
+      </p>
+      <ol class="compositor-articulo__lista">
+        @for (imagen of imagenes(); track imagen.key; let i = $index) {
+          <li class="compositor-articulo__imagen" data-testid="article-image-item">
+            <img class="compositor-articulo__miniatura" [src]="imagen.url" alt="" width="96" height="72" />
+            <app-form-field
+              class="compositor-articulo__descripcion"
+              [label]="'Descripción de la imagen ' + (i + 1)"
+              [required]="true"
+              [errorMessage]="imagen.alt.trim() === '' ? 'Falta la descripción.' : ''"
+            >
+              <app-input
+                [value]="imagen.alt"
+                (valueChange)="describir(imagen.key, $event)"
+                [hasError]="imagen.alt.trim() === ''"
+                placeholder="Ej.: Radiografía de tórax con infiltrado en base derecha"
+                [testId]="'article-image-alt-' + (i + 1)"
+              />
+            </app-form-field>
+            <button
+              app-button
+              type="button"
+              variant="ghost"
+              size="sm"
+              [attr.aria-label]="'Quitar la imagen ' + (i + 1)"
+              (clicked)="quitar(imagen.key)"
+            >
+              Quitar
+            </button>
+          </li>
+        }
+      </ol>
+    </section>
+  }
+
+  <div class="compositor-articulo__estado">
+    <p class="compositor-articulo__guardado" aria-live="polite">
+      @if (guardadoA(); as cuando) {
+        Borrador guardado a las {{ cuando | date: 'HH:mm' }}
+      }
+    </p>
+    <p class="compositor-articulo__contador" [class.compositor-articulo__contador--excedido]="excedido()" aria-live="polite">
+      {{ stats().words }} palabras · {{ stats().minutes }} min de lectura ·
+      @if (excedido()) {
+        te pasaste por {{ largo() - maxLength() }} caracteres
+      } @else {
+        {{ maxLength() - largo() }} caracteres disponibles
+      }
+    </p>
+  </div>
+</div>

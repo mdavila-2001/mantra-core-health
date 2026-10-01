@@ -1,5 +1,13 @@
 import { DatePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import {
+  booleanAttribute,
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  input,
+  signal,
+} from '@angular/core';
 
 import { AuthService } from '../../../core/auth/auth.service';
 import {
@@ -62,6 +70,14 @@ type PasoDeLaBilletera = 'saldo' | 'canjear' | 'comprobante';
  * normal y no un error. No hay datos de ejemplo ni «Simular compra».
  *
  * Cero identificadores visibles: lo que se lee es el saldo, el nivel y qué pasó.
+ *
+ * ## Pantalla propia o pestaña de la ficha
+ *
+ * Es la misma billetera en dos lugares: en su ruta `/my-account/loyalty`,
+ * con cabecera y migas, y como quinta pestaña de «Mi perfil» (N-03), donde
+ * la tarjeta ya tiene cabecera y una segunda sería un título dentro de un
+ * título. `embebido` apaga sólo eso; lo que se ve y lo que se puede hacer es
+ * idéntico en los dos.
  */
 @Component({
   selector: 'app-loyalty',
@@ -84,6 +100,9 @@ export class Loyalty {
   private readonly loyalty = inject(LoyaltyClient);
   private readonly auth = inject(AuthService);
   private readonly navigation = inject(NavigationService);
+
+  /** Montada dentro de otra pantalla: sin cabecera ni migas propias. */
+  readonly embebido = input(false, { transform: booleanAttribute });
 
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
   protected readonly nombreDelPrograma = NOMBRE_PROGRAMA_PUNTOS;

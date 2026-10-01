@@ -2,11 +2,11 @@
   display: contents;
 }
 
-.portability-dialog__estado {
+.portability-dialog__status {
   margin: 0 0 var(--sp-3);
 }
 
-.portability-dialog__rotulo {
+.portability-dialog__label {
   margin: 0 0 var(--sp-1);
   font-weight: 600;
 }
@@ -23,12 +23,12 @@
   border-radius: var(--r-sm);
 }
 
-.portability-dialog__copiado {
+.portability-dialog__copied {
   margin-left: var(--sp-2);
   color: var(--st-success-fg);
 }
 
-.portability-dialog__descargas {
+.portability-dialog__downloads {
   display: flex;
   flex-wrap: wrap;
   gap: var(--sp-2);

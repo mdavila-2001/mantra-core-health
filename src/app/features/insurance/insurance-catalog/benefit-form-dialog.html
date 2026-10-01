@@ -1,6 +1,6 @@
 <app-content-dialog
-  [heading]="mode() === 'create' ? 'Nueva cobertura' : 'Editar cobertura'"
-  [description]="'Plan: ' + planName()"
+  [heading]="mode() === 'create' ? 'Añadir cláusula' : 'Editar cláusula'"
+  [description]="'Producto seguro: ' + planName()"
   [dismissible]="!saving()"
   (closed)="closed.emit()"
 >
@@ -9,6 +9,25 @@
   }
   <form class="insurance-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
     @if (mode() === 'create') {
+      <app-form-field
+        label="Servicio cubierto"
+        hint="Del arancel: es el mismo servicio que el médico importa a su catálogo."
+        [required]="true"
+        [errorMessage]="
+          serviceConceptId() === null && form.touched
+            ? 'Elegí el servicio que cubre la cláusula.'
+            : ''
+        "
+      >
+        <app-reference-combobox
+          [(value)]="serviceConceptId"
+          [options]="serviceOptions()"
+          [loading]="searchingServices()"
+          placeholder="Buscá por nombre o código"
+          emptyMessage="Ningún servicio del arancel coincide"
+          (searched)="searchServices($event)"
+        />
+      </app-form-field>
       <app-form-field
         label="Categoría"
         [required]="true"
@@ -38,13 +57,17 @@
         </app-form-field>
       </div>
     } @else if (benefit(); as current) {
-      <p class="insurance-form__context">Categoría: {{ current.category.display }}</p>
+      <p class="insurance-form__context">
+        Servicio: {{ current.service?.display ?? 'Sin servicio declarado' }} · Categoría:
+        {{ current.category.display }}
+      </p>
     }
 
     <div class="insurance-form__columns">
       <app-form-field
-        label="Cobertura (%)"
-        hint="Entre 0 y 100, con hasta dos decimales."
+        label="Porcentaje de pago (%)"
+        hint="Lo que paga el seguro del servicio: entre 0 y 100, con hasta dos decimales."
+        [required]="true"
         [errorMessage]="
           form.controls.coveragePercent.touched && form.controls.coveragePercent.invalid
             ? 'Ingresá un porcentaje entre 0 y 100.'
@@ -116,6 +139,6 @@
     [disabled]="saving()"
     (clicked)="submit()"
   >
-    {{ mode() === 'create' ? 'Crear cobertura' : 'Guardar cambios' }}
+    {{ mode() === 'create' ? 'Añadir cláusula' : 'Guardar cambios' }}
   </button>
 </app-content-dialog>

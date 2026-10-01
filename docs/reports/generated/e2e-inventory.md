@@ -2,7 +2,7 @@
 
 # Inventario de la suite de extremo a extremo (Cypress)
 
-Leído de `cypress/`. 37 archivos de prueba, 177 pruebas, 11 Page Objects y 12 escenarios de API.
+Leído de `cypress/`. 37 archivos de prueba, 174 pruebas, 11 Page Objects y 12 escenarios de API.
 
 La guía de uso —cómo correrla, cómo agregar una prueba, qué variables acepta—
 está en [`cypress/README.md`](../../../cypress/README.md).
@@ -33,6 +33,7 @@ está en [`cypress/README.md`](../../../cypress/README.md).
 | `real` | Recorrido real · el camino del consumidor | 1 | `cypress/e2e/real/09-camino-consumidor.cy.ts` |
 | `real` | Recorrido real · el camino del médico | 2 | `cypress/e2e/real/10-camino-medico.cy.ts` |
 | `real` | Directorio público · sin sesión | 6 | `cypress/e2e/real/11-directorio-publico.cy.ts` |
+| `real` | 2.2 · foto del perfil profesional contra API real | 1 | `cypress/e2e/real/12-foto-profesional.cy.ts` |
 | `recorrido` | Recorrido · pantallas públicas | 11 | `cypress/e2e/recorrido/01-publico.cy.ts` |
 | `recorrido` | Recorrido · área con sesión · Recorrido · armazón | 10 | `cypress/e2e/recorrido/02-sesion.cy.ts` |
 | `recorrido` | Recorrido · administración | 10 | `cypress/e2e/recorrido/03-administracion.cy.ts` |
@@ -43,7 +44,6 @@ está en [`cypress/README.md`](../../../cypress/README.md).
 | `regression` | Regresión · glosario médico | 2 | `cypress/e2e/regression/glosario.cy.ts` |
 | `regression` | Regresión · modales | 6 | `cypress/e2e/regression/modales.cy.ts` |
 | `regression` | Regresión · notificaciones | 5 | `cypress/e2e/regression/notificaciones.cy.ts` |
-| `regression` | Regresión · directorio del panel | 4 | `cypress/e2e/regression/panel-directorio.cy.ts` |
 | `regression` | Regresión · tabla de datos | 6 | `cypress/e2e/regression/tabla.cy.ts` |
 | `responsive` | Responsive · escritorio · Responsive · tableta · Responsive · móvil | 6 | `cypress/e2e/responsive/responsive.cy.ts` |
 | `smoke` | Humo | 10 | `cypress/e2e/smoke/aplicacion.cy.ts` |
@@ -54,7 +54,7 @@ está en [`cypress/README.md`](../../../cypress/README.md).
 | Objeto | Ruta | Métodos | Archivo |
 | --- | --- | --- | --- |
 | `ActivateAccountPage` | `/auth/activate` | 13 | `cypress/support/pages/activate-account.page.ts` |
-| `DashboardPage` | `/dashboard` | 12 | `cypress/support/pages/dashboard.page.ts` |
+| `DashboardPage` | `/dashboard` | 8 | `cypress/support/pages/dashboard.page.ts` |
 | `DesignSystemPage` | `/design-system` | 7 | `cypress/support/pages/design-system.page.ts` |
 | `ForgotPasswordPage` | `/auth/forgot-password` | 9 | `cypress/support/pages/forgot-password.page.ts` |
 | `LoginPage` | `/auth` | 17 | `cypress/support/pages/login.page.ts` |

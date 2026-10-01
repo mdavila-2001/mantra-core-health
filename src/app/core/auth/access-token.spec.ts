@@ -90,6 +90,26 @@ describe('decodeAccessToken', () => {
     expect(claims?.tenantNames?.['t-1']).toBe('Hospital Central');
   });
 
+  it('lee `tenantTypes` cuando el token lo trae, junto con `tenantNames`', () => {
+    const claims = decodeAccessToken(
+      makeToken({
+        sub: 'u-1',
+        tenants: ['t-1'],
+        tenantNames: { 't-1': 'Seguros Andina' },
+        tenantTypes: { 't-1': 'PAYER' },
+      }),
+    );
+
+    expect(claims?.tenantNames?.['t-1']).toBe('Seguros Andina');
+    expect(claims?.tenantTypes?.['t-1']).toBe('PAYER');
+  });
+
+  it('sin `tenantTypes` en el token, el claim queda ausente', () => {
+    const claims = decodeAccessToken(makeToken({ sub: 'u-1', tenants: ['t-1'] }));
+
+    expect(claims?.tenantTypes).toBeUndefined();
+  });
+
   /**
    * El perfil profesional de la sesión. Es lo que identifica su agenda entre
    * las de la organización: sin él, la agenda cae en la del primer recurso.
@@ -136,6 +156,20 @@ describe('decodeAccessToken', () => {
     );
 
     expect(claims?.tenantNames).toBeUndefined();
+  });
+
+  it('descarta un `tenantTypes` que no sea un mapa de textos', () => {
+    const claims = decodeAccessToken(
+      makeToken({ sub: 'u-1', tenantTypes: ['no', 'es', 'un', 'mapa'] }),
+    );
+
+    expect(claims?.tenantTypes).toBeUndefined();
+  });
+
+  it('un `tenantTypes` vacío es lo mismo que ausente', () => {
+    const claims = decodeAccessToken(makeToken({ sub: 'u-1', tenantTypes: {} }));
+
+    expect(claims?.tenantTypes).toBeUndefined();
   });
 
   describe('devuelve null en vez de lanzar', () => {

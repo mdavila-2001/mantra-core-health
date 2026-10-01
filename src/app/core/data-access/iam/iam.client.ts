@@ -1,4 +1,4 @@
-import { HttpClient, HttpEvent, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpEvent } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { map, type Observable } from 'rxjs';
 
@@ -10,10 +10,12 @@ import type {
   AssistedPatientRegistration,
   AssistedRegistrationResult,
   CreatedUser,
+  LaboratoryOrganizationRegistration,
   LoginCredentials,
   NewUser,
   OrganizationRegistration,
   PasswordReset,
+  PharmacyOrganizationRegistration,
   PasswordResetRequested,
   VerificationResent,
   PasswordResetResult,
@@ -242,6 +244,14 @@ export class IamClient {
       ...(registration.homeLatitude === undefined || registration.homeLongitude === undefined
         ? {}
         : { homeLatitude: registration.homeLatitude, homeLongitude: registration.homeLongitude }),
+      // La dirección laboral se declara por separado del domicilio y del
+      // consultorio propio. Las coordenadas viajan juntas o no viajan.
+      ...(registration.workAddressLines === undefined
+        ? {}
+        : { workAddressLines: registration.workAddressLines }),
+      ...(registration.workLatitude === undefined || registration.workLongitude === undefined
+        ? {}
+        : { workLatitude: registration.workLatitude, workLongitude: registration.workLongitude }),
       // El consultorio propio. Va acá por lo mismo que los tres de arriba: lo
       // que el contrato declara y esta lista no repita se descarta en silencio.
       ...(registration.ownSite === undefined ? {} : { ownSite: registration.ownSite }),
@@ -265,6 +275,12 @@ export class IamClient {
       ...(registration.profilePhotoBase64 === undefined
         ? {}
         : { profilePhotoBase64: registration.profilePhotoBase64 }),
+      ...(registration.signatureImageBase64 === undefined
+        ? {}
+        : { signatureImageBase64: registration.signatureImageBase64 }),
+      ...(registration.sealImageBase64 === undefined
+        ? {}
+        : { sealImageBase64: registration.sealImageBase64 }),
       ...(registration.occupationConceptId === undefined
         ? {}
         : { occupationConceptId: registration.occupationConceptId }),
@@ -372,9 +388,136 @@ export class IamClient {
   }
 
   /**
+   * `POST /iam/auth/register-organization` con `tenantType: 'PHARMACY'`.
+   * Auto-registro de una farmacia: crea el tenant y su usuario owner en la
+   * misma operación. Ver el JSDoc de {@link PharmacyOrganizationRegistration}
+   * para por qué es un método aparte de {@link IamClient.registerOrganization}
+   * en vez de generalizarlo: el bloque específico del tipo de tenant no
+   * coincide (`payer` siempre obligatorio para la aseguradora; la farmacia no
+   * tiene bloque propio en el DTO real).
+   */
+  registerPharmacyOrganization(
+    registration: PharmacyOrganizationRegistration,
+  ): Observable<RegisteredOrganization> {
+    return this.http.post<RegisteredOrganization>(this.url('/iam/auth/register-organization'), {
+      organization: {
+        code: registration.code,
+        legalName: registration.legalName,
+        legalEntityType: registration.legalEntityType,
+        tenantType: 'PHARMACY',
+        legalRepresentative: {
+          fullName: registration.legalRepresentative.fullName,
+          email: registration.legalRepresentative.email,
+          ...(registration.legalRepresentative.idNumber === undefined
+            ? {}
+            : { idNumber: registration.legalRepresentative.idNumber }),
+          ...(registration.legalRepresentative.powerOfAttorneyFileId === undefined
+            ? {}
+            : { powerOfAttorneyFileId: registration.legalRepresentative.powerOfAttorneyFileId }),
+        },
+        ...(registration.legalDocuments === undefined
+          ? {}
+          : { legalDocuments: registration.legalDocuments }),
+        ...(registration.executives === undefined ? {} : { executives: registration.executives }),
+        // `pharmacy.branches`: clave que el backend real todavía no declara
+        // (ver el JSDoc de `PharmacyOrganizationRegistration`, P49). Se manda
+        // igual para que el simulador —que sí la valida— la ejercite.
+        ...(registration.headquarters === undefined && registration.branches === undefined
+          ? {}
+          : {
+              pharmacy: {
+                ...(registration.headquarters === undefined
+                  ? {}
+                  : {
+                      latitude: registration.headquarters.latitude,
+                      longitude: registration.headquarters.longitude,
+                    }),
+                ...(registration.branches === undefined || registration.branches.length === 0
+                  ? {}
+                  : { branches: registration.branches.map((branch) => ({ ...branch })) }),
+              },
+            }),
+      },
+      owner: {
+        email: registration.owner.email,
+        password: registration.owner.password,
+        displayName: registration.owner.displayName,
+      },
+    });
+  }
+
+  /**
+   * `POST /iam/auth/register-organization` con `tenantType: 'DIAGNOSTIC_CENTER'`.
+   * Auto-registro de un laboratorio de sangre: crea el tenant, su owner y la
+   * unidad diagnóstica en la misma operación.
+   *
+   * Método aparte, como el de farmacia, porque el bloque del tipo no coincide:
+   * acá viaja `diagnosticUnit` —el bloque que el DTO real ya declara para este
+   * tipo— y no `payer` ni `pharmacy`. Campo por campo y no con un spread del
+   * registro, por lo mismo que el resto del cliente: `forbidNonWhitelisted`
+   * rechaza toda clave que el DTO no declare. La única que el DTO no tiene es
+   * `diagnosticUnit.branches` (ver `PENDIENTES-BACKEND.md`, P51).
+   */
+  registerLaboratoryOrganization(
+    registration: LaboratoryOrganizationRegistration,
+  ): Observable<RegisteredOrganization> {
+    const { diagnosticUnit } = registration;
+    const { address } = diagnosticUnit.primarySite;
+    return this.http.post<RegisteredOrganization>(this.url('/iam/auth/register-organization'), {
+      organization: {
+        code: registration.code,
+        legalName: registration.legalName,
+        legalEntityType: registration.legalEntityType,
+        tenantType: 'DIAGNOSTIC_CENTER',
+        diagnosticUnit: {
+          name: diagnosticUnit.name,
+          primarySite: {
+            name: diagnosticUnit.primarySite.name,
+            address: {
+              lines: [...address.lines],
+              ...(address.latitude === undefined || address.longitude === undefined
+                ? {}
+                : { latitude: address.latitude, longitude: address.longitude }),
+            },
+          },
+          ...(diagnosticUnit.branches === undefined || diagnosticUnit.branches.length === 0
+            ? {}
+            : {
+                branches: diagnosticUnit.branches.map((branch) => ({
+                  name: branch.name,
+                  addressLines: [...branch.addressLines],
+                  ...(branch.location === undefined
+                    ? {}
+                    : { latitude: branch.location.latitude, longitude: branch.location.longitude }),
+                  ...(branch.description === undefined ? {} : { description: branch.description }),
+                  ...(branch.locationUrl === undefined ? {} : { locationUrl: branch.locationUrl }),
+                })),
+              }),
+        },
+        legalRepresentative: {
+          fullName: registration.legalRepresentative.fullName,
+          email: registration.legalRepresentative.email,
+          ...(registration.legalRepresentative.powerOfAttorneyFileId === undefined
+            ? {}
+            : { powerOfAttorneyFileId: registration.legalRepresentative.powerOfAttorneyFileId }),
+        },
+        ...(registration.legalDocuments === undefined
+          ? {}
+          : { legalDocuments: registration.legalDocuments }),
+        ...(registration.executives === undefined ? {} : { executives: registration.executives }),
+      },
+      owner: {
+        email: registration.owner.email,
+        password: registration.owner.password,
+        displayName: registration.owner.displayName,
+      },
+    });
+  }
+
+  /**
    * `POST /iam/auth/upload-registration-document`. Pre-carga pública de un
-   * documento legal en PDF (subtarea 1.2): quien todavía no tiene cuenta
-   * sube el archivo antes del alta y reenvía el `fileId` que devuelve.
+   * PDF para un alta que todavía no tiene sesión: el `fileId` devuelto se
+   * reenvía en el alta de organización o en su fila de credencial profesional.
    *
    * Multipart sin fijar `Content-Type` a mano: el navegador pone el
    * `boundary`. `observe: 'events'` + `reportProgress: true` para que la
@@ -502,30 +645,25 @@ export class IamClient {
   }
 
   /**
-   * `GET /iam/users` — una página del listado (UC-01-01, cara de lectura).
+   * `POST /iam/users/search` — una página del listado (UC-01-01, cara de lectura).
    *
-   * Busca con `?q=` sobre el nombre visible o el correo de acceso; pagina por
-   * cursor, sin total. Exige `SECURITY_ADMIN`.
+   * Busca por `q` sobre el nombre visible o el correo de acceso; pagina por
+   * cursor, sin total. Exige `SECURITY_ADMIN`. El texto viaja en el cuerpo y
+   * no en la URL: un nombre o un correo en la query string queda en los logs
+   * de acceso de cualquier proxy. El `GET /iam/users?q=` de antes sigue vivo
+   * en la API pero obsoleto.
    */
   searchUsers(query: UserSearchQuery = {}): Observable<UserPage> {
-    // Parámetro a parámetro: el backend valida con `forbidNonWhitelisted` y un
-    // opcional en `undefined` viaja como clave declarada, que vuelve 400.
-    let params = new HttpParams();
-    if (query.query !== undefined && query.query !== '') {
-      params = params.set('q', query.query);
-    }
-    if (query.statusConceptId !== undefined) {
-      params = params.set('status', query.statusConceptId);
-    }
-    if (query.cursor !== undefined) {
-      params = params.set('cursor', query.cursor);
-    }
-    if (query.limit !== undefined) {
-      params = params.set('limit', String(query.limit));
-    }
+    // Clave a clave: el backend valida con `forbidNonWhitelisted` y un
+    // opcional en `undefined` o un texto vacío no deben viajar.
+    const filters: Record<string, string | number> = {};
+    if (query.query !== undefined && query.query !== '') filters['q'] = query.query;
+    if (query.statusConceptId !== undefined) filters['status'] = query.statusConceptId;
+    if (query.cursor !== undefined) filters['cursor'] = query.cursor;
+    if (query.limit !== undefined) filters['limit'] = query.limit;
 
     return this.http
-      .get<RespuestaPaginaUsuarios>(this.url('/iam/users'), { params })
+      .post<RespuestaPaginaUsuarios>(this.url('/iam/users/search'), filters)
       .pipe(
         map((body) => ({
           ...body,

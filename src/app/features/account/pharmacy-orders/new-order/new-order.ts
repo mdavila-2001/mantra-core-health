@@ -24,6 +24,7 @@ import {
   type ModalidadDeEntrega,
 } from '../../../../core/data-access/pharmacy-orders/pharmacy-orders.types';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
+import { SAMPLE_DATA_ENABLED } from '../../../../core/mock/sample-data';
 import { NavigationService } from '../../../../core/navigation/navigation.service';
 import { empty, loading, notFound, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
@@ -163,6 +164,14 @@ export class NewOrder {
   private readonly documento = inject(DOCUMENT);
   private readonly esBrowser = isPlatformBrowser(inject(PLATFORM_ID));
   private readonly fuenteDeEjemplo = inject(DATOS_DE_EJEMPLO_DE_LA_RECETA);
+
+  /**
+   * Maqueta (`true`) o API real (`false`). Contra la API real no se ofrece la
+   * variante con seguro ni se rotula nada como ejemplo: la fuente de arriba
+   * ya no inventa cabecera, alternativas ni aprobación. Ver
+   * `core/mock/sample-data.ts`.
+   */
+  protected readonly sampleData = inject(SAMPLE_DATA_ENABLED);
 
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
   protected readonly notaDeEjemplo = NOTA_DE_DATOS_DE_EJEMPLO;

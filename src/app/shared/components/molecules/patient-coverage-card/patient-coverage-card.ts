@@ -65,4 +65,13 @@ export class PatientCoverageCard {
     if (code === null || code === undefined) return `${value} (moneda no informada)`;
     return withDisplayCurrency(value, code);
   }
+
+  /**
+   * Activa el enlace de WhatsApp con la tecla Espacio (CA-2.1, Tarea 2): un
+   * `<a>` nativo sólo responde a Enter.
+   */
+  protected onWhatsappKeydownSpace(event: Event): void {
+    event.preventDefault();
+    (event.currentTarget as HTMLAnchorElement).click();
+  }
 }

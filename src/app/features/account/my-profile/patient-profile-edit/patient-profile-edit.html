@@ -78,6 +78,7 @@
                          pantalla con botones idénticos y ninguna forma de saber cuál
                          es cuál. El mismo texto va en el globo, que aparece con el
                          puntero y con el foco del teclado. -->
+                    <!-- Excepción ADR-0012 §3 (D-05, 23/09): quitar un elemento de la lista, con aria-label y globo. -->
                     <button
                       app-button
                       type="button"
@@ -95,16 +96,18 @@
                 </app-form-field>
               }
 
-              <button
-                app-button
-                type="button"
-                variant="ghost"
-                size="sm"
-                data-testid="perfil-agregar-nombre"
-                (clicked)="agregarNombre()"
-              >
-                + Agregar otro nombre
-              </button>
+              <p class="datos__sumar">
+                <button
+                  app-button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  data-testid="perfil-agregar-nombre"
+                  (clicked)="agregarNombre()"
+                >
+                  + Agregar otro nombre
+                </button>
+              </p>
 
               <app-form-field
                 label="Apellido paterno"
@@ -272,6 +275,19 @@
                     placeholder="Av. Prolongación Beni #5100, esq. 6to anillo"
                   />
                 </app-form-field>
+                @if (domicilioPorReescribir()) {
+                  <!-- D-06: tocar el mapa vació lo escrito; se dice junto al campo y se
+                       anuncia sin robar el foco, que sigue en el mapa. -->
+                  <app-alert
+                    appAnuncio
+                    [asertivo]="false"
+                    [enfocar]="false"
+                    tone="info"
+                    data-testid="perfil-domicilio-reescribir"
+                  >
+                    {{ avisoReescribir }}
+                  </app-alert>
+                }
 
                 <!-- El punto en el mapa, como en una app de pedidos: se pide la
                      ubicación o se marca el pin a mano, y se confirma mirándolo.
@@ -279,7 +295,6 @@
                 <app-ubicacion-picker
                 pinId="perfil-domicilio"
                 etiquetaConfirmada="Tu casa"
-                pregunta="¿Es acá donde vivís? Movete por el mapa para comprobarlo."
                 etiquetaQuitar="Quitar la ubicación de tu casa"
                 etiquetaMapa="La ubicación de tu casa en el mapa"
                 etiquetaMarcar="Marcar mi casa en el mapa"
@@ -287,6 +302,7 @@
                   [ids]="idsGpsDomicilio"
                   [inicial]="gpsDomicilioGuardado()"
                   (confirmado)="gpsDomicilio.set($event)"
+                  (puntoElegido)="vaciarDomicilioPorElMapa()"
                 />
               </div>
 
@@ -301,11 +317,23 @@
                     placeholder="Calle Ayacucho #241, Casco Viejo"
                   />
                 </app-form-field>
+                @if (trabajoPorReescribir()) {
+                  <!-- D-06: tocar el mapa vació lo escrito; se dice junto al campo y se
+                       anuncia sin robar el foco, que sigue en el mapa. -->
+                  <app-alert
+                    appAnuncio
+                    [asertivo]="false"
+                    [enfocar]="false"
+                    tone="info"
+                    data-testid="perfil-trabajo-reescribir"
+                  >
+                    {{ avisoReescribir }}
+                  </app-alert>
+                }
 
                 <app-ubicacion-picker
                 pinId="perfil-trabajo"
                 etiquetaConfirmada="Tu trabajo"
-                pregunta="¿Es acá donde trabajás? Movete por el mapa para comprobarlo."
                 etiquetaQuitar="Quitar la ubicación de tu trabajo"
                 etiquetaMapa="La ubicación de tu trabajo en el mapa"
                 etiquetaMarcar="Marcar mi trabajo en el mapa"
@@ -313,6 +341,7 @@
                   [ids]="idsGpsTrabajo"
                   [inicial]="gpsTrabajoGuardado()"
                   (confirmado)="gpsTrabajo.set($event)"
+                  (puntoElegido)="vaciarTrabajoPorElMapa()"
                 />
               </div>
 
@@ -368,31 +397,24 @@
           </section>
         </app-tab>
 
-        <!-- ─── Seguros y tutores ───────────────────────────────────────── -->
-        <app-tab [label]="pestanas[3]">
-          <!-- Se leen, no se escriben: el `PATCH` de datos propios no los acepta
-               —cada seguro y cada tutor tiene su propio circuito—. La pestaña
-               está igual para que el formulario tenga las mismas cuatro que la
-               ficha, y para que quien las busque no crea que se perdieron. -->
+        <!-- ─── Seguros ─────────────────────────────────────────────────── -->
+        <!-- Fuera del editor desde el 25/09/2026 (pedido del propietario): no
+             se leen ni se escriben acá. No es que el `PATCH` no las acepte hoy
+             y algún día las acepte —como pasa con «Tutores», que sí puede
+             cambiar—; una cobertura es el resultado de una integración
+             posterior (la aseguradora, no la persona, la declara), así que
+             nunca se corrige desde este formulario. Antes iba apagada en la
+             tira; el mismo día se pidió sacarla directamente, igual que «Mis
+             puntos». La ficha de lectura (`my-profile.html`) sigue mostrando
+             el detalle completo. -->
+
+        <!-- ─── Tutores ─────────────────────────────────────────────────── -->
+        <app-tab [label]="pestanas[4]">
           <section class="datos__seccion">
-            <h3 class="datos__titulo">Seguros y tutores</h3>
+            <h3 class="datos__titulo">Tutores</h3>
             <p class="datos__nota">Lo que declaraste al registrarte. Todavía no se corrige desde acá.</p>
 
             @if (datos(); as p) {
-              @if (p.coverages.length > 0) {
-                <ul class="datos__lista" data-testid="perfil-seguros">
-                  @for (seguro of p.coverages; track seguro.carrierName + (seguro.planName ?? '')) {
-                    <li class="datos__item">
-                      <span class="datos__item-nombre">{{ seguro.carrierName }}</span>
-                      @if (seguro.planName) {
-                        <span class="datos__item-detalle">{{ seguro.planName }}</span>
-                      }
-                    </li>
-                  }
-                </ul>
-              } @else {
-                <p class="datos__nota">No declaraste ningún seguro.</p>
-              }
               @if (p.guardians.length > 0) {
                 <ul class="datos__lista" data-testid="perfil-tutores">
                   @for (tutor of p.guardians; track tutor.displayName ?? '') {
@@ -410,6 +432,10 @@
             }
           </section>
         </app-tab>
+
+        <!-- «Mis puntos» no se edita: es la billetera del programa de
+             fidelidad, no un dato declarado, y desde el 25/09/2026 (pedido del
+             propietario) se saca de la tira del editor en vez de apagarla. -->
       </app-tabs>
     </ng-template>
 

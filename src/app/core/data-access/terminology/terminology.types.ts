@@ -198,6 +198,8 @@ export interface GlossaryTag {
   readonly defaultVersionId: string | null;
   /** Cuántos términos tiene. Es el conteo que se muestra junto a la etiqueta. */
   readonly memberCount?: number;
+  /** Cuántos de sus términos están en castellano, cuando la API lo dice. */
+  readonly translatedMemberCount?: number;
 }
 
 /** Una página del listado de etiquetas. */
@@ -322,6 +324,10 @@ export interface GlossaryImage {
   readonly attribution: string;
   readonly alt: string;
   readonly status: string;
+  /** Miniatura del mismo activo, para no bajar el original de entrada. */
+  readonly thumbnailSource?: string;
+  /** Página de la fuente donde la imagen se publica con su licencia (Wikimedia Commons, CIMA…). */
+  readonly sourcePage?: string;
 }
 
 /** Identidad compartida entre el resultado de búsqueda y la ficha completa. */
@@ -353,23 +359,77 @@ export interface GlossaryTerm extends GlossaryTermBase {
   /** Cuántas relaciones clínicas tiene. La lista completa vive en la ficha. */
   readonly relationsCount: number;
   readonly status: GlossaryTermStatus;
+  /** Miniatura de la imagen del término, si tiene una. El crédito viaja en la ficha. */
+  readonly imageThumbnailUrl?: string;
 }
 
-/** Una página de términos del glosario. */
+/**
+ * Una página de términos del glosario.
+ *
+ * `count` es lo que vino en la página, como en el resto de las búsquedas;
+ * `total` es cuántos coinciden en todo el glosario. La API lo publica desde que
+ * el glosario pagina en el servidor (2026-09-30); una respuesta sin `total`
+ * —una API anterior— se lee como «lo que vino es todo lo que hay».
+ */
 export interface GlossaryTermPage {
   readonly items: readonly GlossaryTerm[];
   readonly count: number;
   readonly limit: number;
+  readonly offset?: number;
+  readonly total?: number;
 }
 
-/** Qué se le pide al glosario: texto, categoría o las dos cosas. */
+/** Qué se le pide al glosario: texto, categoría, etiqueta y qué página. */
 export interface GlossaryQuery {
-  /** Texto a buscar. */
+  /** Texto a buscar. El servidor lo compara sin tildes ni mayúsculas. */
   readonly query?: string;
-  /** Categoría por la que se está navegando. */
+  /** Categoría (o conjunto del glosario) por la que se está navegando. */
   readonly valueSetId?: string;
-  /** Tope de términos. */
+  /** Una etiqueta que el término también tiene que llevar. */
+  readonly tagValueSetId?: string;
+  /** Tope de términos: el tamaño de la página. */
   readonly limit?: number;
+  /** Cuántos saltear: `(página − 1) × tamaño`. */
+  readonly offset?: number;
+}
+
+/** Una etiqueta del glosario con cuántos términos publicados la llevan. */
+export interface GlossaryFacetTag {
+  readonly id: string;
+  readonly internalCode: string;
+  readonly name: string;
+  readonly count: number;
+}
+
+/** Una categoría con su conteo y las etiquetas que de verdad aparecen adentro. */
+export interface GlossaryFacetCategory {
+  readonly id: string;
+  readonly internalCode: string;
+  readonly name: string;
+  readonly description?: string;
+  readonly count: number;
+  /**
+   * Cuántos de sus términos están en castellano. Una categoría puede sumar
+   * miles de nombres oficiales en inglés (las categorías ICD-10-CM): el total
+   * solo engaña.
+   */
+  readonly translatedCount?: number;
+  /** De la más frecuente a la menos. */
+  readonly tags: readonly GlossaryFacetTag[];
+}
+
+/**
+ * Las facetas del glosario: lo que pinta la rejilla sin traer un término.
+ *
+ * Sale de `GET /terminology/value-sets/$glossary-facets`, una consulta
+ * agregada. Antes la rejilla derivaba conteos y chips recorriendo el corpus
+ * entero que la pantalla cargaba; con cientos de miles de términos eso ya no
+ * se carga.
+ */
+export interface GlossaryFacets {
+  readonly categories: readonly GlossaryFacetCategory[];
+  readonly tags: readonly GlossaryFacetTag[];
+  readonly total: number;
 }
 
 /** Otra forma de nombrar el mismo término. */
@@ -396,8 +456,14 @@ export interface GlossaryTermDetail extends GlossaryTermBase {
   readonly synonyms: readonly GlossarySynonym[];
   readonly category: GlossaryCategoryDetailRef | null;
   readonly tags: readonly GlossaryCategoryDetailRef[];
-  readonly clinicalDefinition: GlossaryLocalizedText;
-  readonly plainSummary: GlossaryLocalizedText;
+  /**
+   * Opcionales porque la API los omite cuando el término no los tiene cargados
+   * (`ConceptDetailDto`, `@ApiPropertyOptional`): una categoría CIE-10-ES trae
+   * código y nombre oficial, y ningún texto se escribe sin fuente. La ficha lo
+   * dice en pantalla; ver `GlossaryTerm.motivoSinDefinicion`.
+   */
+  readonly clinicalDefinition?: GlossaryLocalizedText;
+  readonly plainSummary?: GlossaryLocalizedText;
   readonly relations: readonly GlossaryRelation[];
   /** Ausente en todos los términos sembrados hoy — ver {@link GlossaryImage}. */
   readonly image?: GlossaryImage;
@@ -457,20 +523,106 @@ export interface CodeSystemVersionListItem {
 
 /** Una línea del archivo que el importador no pudo usar. */
 export interface ImportFileIssue {
-  /** Línea del archivo, empezando en 1. */
+  /** Línea del archivo, empezando en 1. El encabezado es la línea 1. */
   readonly line: number;
+  /**
+   * La columna del problema, cuando el problema es de una columna.
+   *
+   * Ausente cuando el problema es de la fila entera o del encabezado —una
+   * columna desconocida, un archivo sin encabezado reconocible—, que es la
+   * distinción que hace `ProblemaDeFila` en §1 del contrato. Sin esto, «fila 5:
+   * está vacía» no dice **qué** está vacío, y corregir el archivo es adivinar.
+   */
+  readonly column?: string;
   readonly message: string;
 }
 
-/** Lo que dejó importar un archivo de conceptos. */
+/**
+ * Una fila válida de la vista previa que devuelve el dry-run.
+ *
+ * La arma el servidor, no el navegador (Q-5): el front no parsea CSV ni XLSX —
+ * hacerlo exigiría una dependencia y, peor, daría una vista previa que puede no
+ * coincidir con lo que el importador va a leer de verdad.
+ */
+export interface ImportPreviewRow {
+  readonly line: number;
+  readonly code: string;
+  readonly display: string;
+  readonly definition?: string;
+}
+
+/**
+ * Qué se está cargando. Es lo que fija qué columnas se esperan en el archivo.
+ *
+ * `designaciones` está en el contrato (§1) pero todavía no se ofrece en la
+ * pantalla: depende de que existan su entidad, su DTO y su repositorio (Q-9).
+ */
+export const IMPORT_PROFILES = ['conceptos', 'designaciones'] as const;
+export type ImportProfile = (typeof IMPORT_PROFILES)[number];
+
+/** En qué formato se baja la plantilla del perfil. */
+export type ImportTemplateFormat = 'csv' | 'xlsx';
+
+/**
+ * La plantilla descargada, con el nombre que sugirió el servidor si vino.
+ *
+ * Misma forma que `BinaryDownload` de `insurance-portability.types`, y a
+ * propósito **no** se importa de allá: es el tipo de otro dominio y traerlo
+ * ataría terminología a seguros por una coincidencia de dos campos. El día que
+ * alguien lo suba a un lugar común, los dos se reemplazan por ese.
+ */
+export interface ImportTemplateDownload {
+  readonly blob: Blob;
+  /** Ausente cuando la respuesta no trae `Content-Disposition`. */
+  readonly fileName?: string;
+}
+
+/** El formato que el servidor detectó en el archivo, por su contenido. */
+export type ImportedFileFormat = 'ndjson' | 'csv' | 'xlsx';
+
+/** Opciones de una llamada al importador. */
+export interface ConceptImportOptions {
+  /**
+   * `true` lee y valida el archivo **sin escribir nada**. Es el único modo con
+   * el que la pantalla arranca: desde la interfaz no se importa sin validar
+   * antes (Q-8).
+   */
+  readonly dryRun?: boolean;
+  readonly profile?: ImportProfile;
+}
+
+/**
+ * Lo que dejó importar un archivo de conceptos.
+ *
+ * Los campos que ya existían —`batchId`, `totalRead`, `inserted`, `skipped`,
+ * `errors` y `errorSamples`— **no cambiaron de nombre ni de tipo**: el contrato
+ * (§2) lo exige y hay un consumidor vivo. Los seis que agrega la carga masiva
+ * van **opcionales** por la misma razón: una respuesta del importador viejo, que
+ * no los trae, sigue tipando.
+ */
 export interface ConceptImportResult {
-  /** El lote registrado, para poder auditarlo después. */
-  readonly batchId: string;
+  /**
+   * El lote registrado, para poder auditarlo después.
+   *
+   * `null` en dry-run —no se registra lote (Q-4)— y cuando la carga abortó.
+   */
+  readonly batchId: string | null;
   readonly totalRead: number;
   readonly inserted: number;
-  /** Códigos que ya estaban en la versión y se dejaron como estaban. */
+  /** Códigos que ya estaban en la versión y se dejaron como estaban (Q-7). */
   readonly skipped: number;
   readonly errors: number;
-  /** Una muestra de los errores, no todos. */
+  /** Una muestra de los errores, no todos: los **primeros 20**. */
   readonly errorSamples: readonly ImportFileIssue[];
+  /** El formato que el servidor detectó. Ausente en el importador viejo. */
+  readonly format?: ImportedFileFormat;
+  readonly profile?: ImportProfile;
+  readonly dryRun?: boolean;
+  /**
+   * La carga se deshizo entera. `aborted: true ⇔ errors > 0 ⇔ inserted = 0`
+   * (Q-2, todo o nada): no hay importación parcial que dejar a medias.
+   */
+  readonly aborted?: boolean;
+  /** Las **primeras 20** filas válidas, para mirarlas antes de confirmar. */
+  readonly preview?: readonly ImportPreviewRow[];
 }

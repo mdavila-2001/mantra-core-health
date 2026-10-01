@@ -1,0 +1,67 @@
+:host {
+  display: contents;
+}
+
+.product-dialog__panel {
+  display: grid;
+  gap: var(--sp-4);
+  padding-block: var(--sp-4);
+}
+
+.product-dialog__errors {
+  margin: 0;
+  padding-left: var(--sp-5);
+}
+
+.product-dialog__note {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+.product-dialog__images {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.product-dialog__image {
+  display: grid;
+  justify-items: center;
+  gap: var(--sp-2);
+}
+
+.product-dialog__image img,
+.product-dialog__image-placeholder {
+  inline-size: 6rem;
+  block-size: 6rem;
+  border-radius: var(--r-md);
+  border: 1px solid var(--border-default);
+  object-fit: cover;
+}
+
+.product-dialog__image-placeholder {
+  display: grid;
+  place-items: center;
+  padding: var(--sp-2);
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  background: var(--bg-surface-alt);
+}
+
+@media (min-width: 780px) {
+  .product-dialog__panel {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  /* Lo largo ocupa el ancho entero: descripción, imágenes y avisos. */
+  .product-dialog__panel > :only-child,
+  .product-dialog__note {
+    grid-column: 1 / -1;
+  }
+}

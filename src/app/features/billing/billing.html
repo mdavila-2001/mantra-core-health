@@ -1,0 +1,322 @@
+<app-page-header title="Facturación" subtitle="Cobros, pagos y facturas de consultas y farmacia" />
+
+<p class="aviso-simulado" role="note" data-testid="aviso-simulado">
+  <app-chip variant="warning">SIMULADO</app-chip>
+  <span>
+    Esta pantalla usa un <strong>motor fiscal simulado</strong>: no emite facturas reales ni se comunica con el SIN
+    ni con el SIAT. CUF, CUFD, CUIS, números, códigos de respuesta y QR son sintéticos y no tienen validez fiscal.
+  </span>
+</p>
+
+@if (!disponible) {
+  <app-card>
+    <p class="vacio-honesto" data-testid="facturacion-no-conectada">
+      La facturación todavía no está conectada. Emití comprobantes y seguí los cobros de la organización cuando el
+      backend de facturación esté disponible.
+    </p>
+  </app-card>
+} @else {
+  <app-view-state-host [state]="estado()" (retry)="cargar()" (refresh)="cargar()">
+    @if (datos(); as d) {
+      <!-- Estado del emisor frente al SIAT simulado -->
+      <section class="estado-fiscal" aria-label="Estado fiscal simulado" data-testid="estado-fiscal">
+        <span>Ambiente: <strong>{{ d.estadoFiscal.environment }}</strong></span>
+        <span>Modalidad: Computarizada en Línea</span>
+        <span>Hora del SIAT simulado: {{ d.estadoFiscal.serverTime }}</span>
+        @for (c of d.estadoFiscal.credentials; track c.issuerId) {
+          @if (c.cufd !== null) {
+            <span>CUFD simulado vigente hasta {{ c.cufdValidUntil }}</span>
+          }
+        }
+      </section>
+
+      <!-- Las dos cifras de la pizarra -->
+      <section class="cifras" aria-label="Resumen">
+        <app-card>
+          <p class="cifra__rotulo">Monto cobrado</p>
+          <p class="cifra__valor" data-testid="monto-cobrado">Bs {{ resumen().montoCobrado }}</p>
+        </app-card>
+        <app-card>
+          <p class="cifra__rotulo">Pacientes con pago</p>
+          <p class="cifra__valor" data-testid="pacientes-con-pago">{{ resumen().pacientesConPago }}</p>
+        </app-card>
+        <app-card>
+          <p class="cifra__rotulo">Cobros pendientes de pago</p>
+          <p class="cifra__valor" data-testid="cobros-pendientes">{{ resumen().cobrosPendientes }}</p>
+        </app-card>
+      </section>
+
+      <section class="filtros" aria-label="Filtros">
+        <app-form-field label="Origen">
+          <app-select
+            ariaLabel="Filtrar por origen"
+            [options]="opcionesDeOrigen"
+            [value]="origen()"
+            (valueChange)="origen.set($event ?? 'TODOS')"
+          />
+        </app-form-field>
+        <app-form-field label="Estado">
+          <app-select
+            ariaLabel="Filtrar por estado"
+            [options]="opcionesDeEstado"
+            [value]="filtroDeEstado()"
+            (valueChange)="filtroDeEstado.set($event ?? 'TODOS')"
+          />
+        </app-form-field>
+      </section>
+
+      <div class="tabla-contenedor">
+        <table class="tabla" data-testid="tabla-de-cobros">
+          <caption>Cobros y pagos ({{ visibles().length }})</caption>
+          <thead>
+            <tr>
+              <th scope="col">Fecha</th>
+              <th scope="col">Origen</th>
+              <th scope="col">Paciente</th>
+              <th scope="col">Concepto</th>
+              <th scope="col">Medio</th>
+              <th scope="col" class="numero">Monto</th>
+              <th scope="col">Facturación</th>
+              <th scope="col"><span class="sr-only">Acción</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (cobro of visibles(); track cobro.id) {
+              <tr [class.seleccionado]="cobro.id === seleccionadoId()" data-testid="fila-de-cobro">
+                <td class="fecha">{{ (cobro.payment?.paidAt ?? cobro.createdAt).slice(0, 10) }}</td>
+                <td><app-chip size="sm">{{ rotuloDeOrigen[cobro.source] }}</app-chip></td>
+                <td>{{ cobro.patientName }}</td>
+                <td>{{ cobro.description }}</td>
+                <td>{{ cobro.payment?.methodLabel ?? '—' }}</td>
+                <td class="numero">Bs {{ cobro.total }}</td>
+                <td>
+                  <app-chip size="sm" [variant]="tonoDeEstado[estadoDe(cobro)]">{{ rotuloDeEstado[estadoDe(cobro)] }}</app-chip>
+                </td>
+                <td>
+                  <button
+                    app-button
+                    variant="outline"
+                    size="sm"
+                    [attr.data-charge-id]="cobro.id"
+                    [attr.aria-label]="'Ver ' + cobro.description + ' de ' + cobro.patientName"
+                    (clicked)="seleccionar(cobro)"
+                  >
+                    Ver
+                  </button>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="8" class="vacio-honesto">No hay cobros con esos filtros.</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      @if (seleccionado(); as cobro) {
+        <section class="detalle" aria-labelledby="titulo-detalle" data-testid="detalle-de-cobro">
+          <header class="detalle__encabezado">
+            <!-- tabindex -1: recibe el foco al abrir el detalle, sin entrar en el orden de tabulación. -->
+            <h2 id="titulo-detalle" tabindex="-1">{{ cobro.description }} · {{ cobro.patientName }}</h2>
+            <button app-button variant="ghost" size="sm" (clicked)="cerrarDetalle()">Cerrar</button>
+          </header>
+
+          <table class="tabla tabla--compacta">
+            <caption>Detalle del cobro</caption>
+            <thead>
+              <tr>
+                <th scope="col">Descripción</th>
+                <th scope="col" class="numero">Cantidad</th>
+                <th scope="col" class="numero">Precio unitario</th>
+                <th scope="col" class="numero">Subtotal</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (l of cobro.lines; track $index) {
+                <tr>
+                  <td>{{ l.description }}</td>
+                  <td class="numero">{{ l.quantity }}</td>
+                  <td class="numero">Bs {{ l.unitPrice }}</td>
+                  <td class="numero">Bs {{ l.subtotal }}</td>
+                </tr>
+              }
+            </tbody>
+            <tfoot>
+              <tr>
+                <th scope="row" colspan="3">Total</th>
+                <td class="numero">Bs {{ cobro.total }}</td>
+              </tr>
+            </tfoot>
+          </table>
+
+          <!-- 1 · Pago simulado. Con plan (consulta + reconsultas), se paga por
+               instancia y cada pago lleva nota de venta hasta saldarlo. -->
+          @if (cobro.plan !== null) {
+            <app-plan-de-pagos
+              class="bloque"
+              [cobro]="cobro"
+              [metodos]="opcionesDeMetodo()"
+              [emisor]="emisorDe(cobro)"
+              [ofrecerFactura]="false"
+              (actualizado)="reemplazarCobro($event)"
+            />
+          }
+          <!-- Sin plan se cobra de una vez; con plan, cobra el plan de arriba. -->
+          @if (cobro.plan === null && cobro.payment === null) {
+            <form class="bloque" [formGroup]="formularioDePago" (ngSubmit)="registrarPago(cobro)" data-testid="formulario-de-pago">
+              <h3>Registrar pago (SIMULADO)</h3>
+              <p class="nota">Simula el cobro al paciente. No mueve dinero ni usa ninguna pasarela real.</p>
+              <app-form-field label="Medio de pago" [required]="true">
+                <app-select formControlName="methodCode" [options]="opcionesDeMetodo()" placeholder="Elegí un medio" />
+              </app-form-field>
+              <button app-button type="submit" [isLoading]="operando() === 'pago'" [disabled]="operando() !== null">
+                Registrar pago (SIMULADO)
+              </button>
+            </form>
+          } @else if (cobro.payment !== null) {
+            <p class="nota" data-testid="pago-registrado">
+              Pagado el {{ cobro.payment.paidAt.slice(0, 10) }} · {{ cobro.payment.methodLabel }} · Bs {{ cobro.payment.amount }}
+              <app-chip size="sm" variant="warning">SIMULADO</app-chip>
+            </p>
+          }
+
+          <!-- 2 · Confirmar facturación -->
+          @if (cobro.payment !== null && puedeFacturar(cobro)) {
+            <form class="bloque" [formGroup]="formularioDeFactura" (ngSubmit)="confirmarFacturacion(cobro)" data-testid="formulario-de-factura">
+              <h3>Confirmar facturación</h3>
+              <p class="nota">
+                Factura de Compra y Venta (sector 1), modalidad Computarizada en Línea, enviada al SIAT SIMULADO.
+              </p>
+              <div class="campos">
+                <app-form-field label="Nombre o razón social" [required]="true">
+                  <app-input formControlName="name" />
+                </app-form-field>
+                <app-form-field label="Tipo de documento" [required]="true" hint="Catálogo simulado">
+                  <app-select formControlName="documentTypeCode" [options]="opcionesDeDocumento()" />
+                </app-form-field>
+                <app-form-field label="Número de documento" [required]="true">
+                  <app-input formControlName="documentNumber" />
+                </app-form-field>
+                <app-form-field label="Complemento">
+                  <app-input formControlName="complement" />
+                </app-form-field>
+                <app-form-field label="Correo para la entrega" hint="Sólo queda en la bandeja simulada">
+                  <app-input formControlName="email" type="email" />
+                </app-form-field>
+                <app-form-field label="Descuento adicional (Bs)">
+                  <app-input formControlName="additionalDiscount" inputMode="decimal" />
+                </app-form-field>
+                <app-form-field label="Simulación" hint="Forzar una respuesta del catálogo oficial para ver cada rama">
+                  <app-select formControlName="forceMessageCode" [options]="opcionesDeSimulacion()" />
+                </app-form-field>
+              </div>
+              <p class="vista-previa" data-testid="vista-previa">
+                Total a facturar: <strong>Bs {{ totalConDescuento(cobro) ?? '—' }}</strong>
+                <span class="nota">{{ literal(totalConDescuento(cobro)) }}</span>
+              </p>
+              <button app-button type="submit" [isLoading]="operando() === 'factura'" [disabled]="operando() !== null">
+                {{ operando() === 'factura' ? 'Enviando al SIAT simulado…' : 'Confirmar facturación' }}
+              </button>
+            </form>
+          }
+
+          <!-- 3 · La factura y su recorrido -->
+          @if (factura(); as f) {
+            <section class="bloque factura" data-testid="factura">
+              <h3>
+                Factura N.º {{ f.invoiceNumber }}
+                <app-chip [variant]="tonoDeEstado[f.status]">{{ rotuloDeEstado[f.status] }}</app-chip>
+              </h3>
+              <dl class="datos">
+                <dt>Emisor</dt>
+                <dd>{{ f.issuer.legalName }} · NIT {{ f.issuer.nit }} (SIMULADO)</dd>
+                <dt>CUF (SIMULADO)</dt>
+                <dd class="codigo" data-testid="cuf">{{ f.cuf }}</dd>
+                <dt>CUFD (SIMULADO)</dt>
+                <dd class="codigo">{{ f.cufd }}</dd>
+                <dt>Fecha de emisión</dt>
+                <dd>{{ f.issuedAt }}</dd>
+                <dt>Total</dt>
+                <dd>Bs {{ f.cabecera['montoTotal'] }} · {{ literal('' + f.cabecera['montoTotal']) }}</dd>
+                <dt>Respuesta del SIAT (SIMULADO)</dt>
+                <dd data-testid="respuesta-siat">
+                  {{ f.siatResponse.codigoEstado }} · {{ f.siatResponse.codigoDescripcion }}
+                  @if (f.siatResponse.codigoRecepcion !== null) {
+                    · recepción {{ f.siatResponse.codigoRecepcion }}
+                  }
+                </dd>
+              </dl>
+              @if (f.siatResponse.mensajesList.length > 0) {
+                <ul class="mensajes" data-testid="mensajes-siat">
+                  @for (m of f.siatResponse.mensajesList; track $index) {
+                    <li>
+                      <strong>{{ m.codigo }}</strong> · {{ m.descripcion }}
+                      @if (m.advertencia) { (advertencia) }
+                      @if (m.forzadoPorSimulacion) { (forzado por la simulación) }
+                    </li>
+                  }
+                </ul>
+              }
+
+              <ol class="linea-de-tiempo" aria-label="Recorrido de la factura" data-testid="linea-de-tiempo">
+                @for (e of f.events; track $index) {
+                  <li>
+                    <span class="linea-de-tiempo__rotulo">{{ rotuloDeEvento[e.kind] }}</span>
+                    <span class="nota">{{ e.at }} · {{ e.detail }}</span>
+                  </li>
+                }
+              </ol>
+
+              @if (f.status !== 'REJECTED') {
+                <div class="acciones">
+                  <button app-button variant="secondary" size="sm" [isLoading]="operando() === 'pdf'" (clicked)="descargarPdf(f)">
+                    Descargar PDF (SIMULADO)
+                  </button>
+                  <button app-button variant="secondary" size="sm" (clicked)="descargarXml(f)">Descargar XML (SIMULADO)</button>
+                </div>
+
+                <form class="acciones" [formGroup]="formularioDeCorreo" (ngSubmit)="enviarPorCorreo(f)">
+                  <app-form-field label="Enviar XML y PDF a" hint="Bandeja simulada: no se envía ningún correo">
+                    <app-input formControlName="to" type="email" />
+                  </app-form-field>
+                  <button app-button variant="outline" size="sm" type="submit" [disabled]="operando() !== null">
+                    Enviar (SIMULADO)
+                  </button>
+                </form>
+              }
+
+              @if (f.status === 'VALIDATED' || f.status === 'OBSERVED') {
+                <form class="acciones" [formGroup]="formularioDeAnulacion" (ngSubmit)="anular(f)" data-testid="formulario-de-anulacion">
+                  <app-form-field label="Motivo de anulación" hint="Catálogo simulado · plazo: día 9 del mes siguiente">
+                    <app-select formControlName="reasonCode" [options]="opcionesDeMotivo()" placeholder="Elegí un motivo" />
+                  </app-form-field>
+                  <button app-button variant="danger" size="sm" type="submit" [disabled]="operando() !== null">
+                    Anular (SIMULADO)
+                  </button>
+                </form>
+              }
+              @if (f.status === 'ANNULLED') {
+                <button app-button variant="outline" size="sm" [disabled]="operando() !== null" (clicked)="revertirAnulacion(f)">
+                  Revertir anulación (SIMULADO)
+                </button>
+              }
+            </section>
+          }
+        </section>
+      }
+
+      <section class="bloque" aria-labelledby="titulo-bandeja">
+        <h2 id="titulo-bandeja">Bandeja de correo simulada</h2>
+        <p class="nota">Lo que se «enviaría» al comprador: XML y representación gráfica. Nada sale de esta pantalla.</p>
+        @for (e of bandeja(); track e.id) {
+          <p class="nota" data-testid="entrada-de-bandeja">
+            {{ e.queuedAt.slice(0, 16) }} · {{ e.to }} · {{ e.attachments.join(', ') }} · No enviado (SIMULADO)
+          </p>
+        } @empty {
+          <p class="nota">Todavía no hay envíos simulados.</p>
+        }
+      </section>
+    }
+  </app-view-state-host>
+}

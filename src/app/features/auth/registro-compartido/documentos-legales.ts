@@ -55,24 +55,28 @@ export const DOCUMENTOS_LEGALES_DEL_REGISTRO: readonly {
  *
  * @param countryIso - País de constitución elegido en el formulario.
  * @param lang - Idioma activo de la interfaz.
+ * @param required - Si el bloque frena el alta (aseguradora, laboratorio) o
+ * es opcional y se completa después (farmacia, decisión D2 del carril de
+ * farmacia — «lo obligatorio es lo más básico»). Por defecto `true`, la
+ * forma en la que ya lo exigía el alta de aseguradora.
  * @returns Los cinco campos, en el orden del registro de procesos.
  */
 export function camposDeDocumentosLegales(
   countryIso: string,
   lang: UiLanguage = uiLanguage(),
+  required = true,
 ): readonly CampoDeFormulario[] {
   return DOCUMENTOS_LEGALES_DEL_REGISTRO.map(({ role, key }, indice) => {
     const texto = legalDocumentText(role, countryIso, lang);
     return {
       key,
-      label: texto.label,
+      label: required ? texto.label : `${texto.label} (opcional)`,
       hint: texto.hint,
       control: 'custom' as const,
-      required: true,
+      ...(required ? { required: true, mensajeDeError: MENSAJE_DOCUMENTO_OBLIGATORIO } : {}),
       // El último va a ancho completo: con 5 campos en grilla de a 2, uno
       // solo a media fila quedaría sin par.
       ancho: indice === DOCUMENTOS_LEGALES_DEL_REGISTRO.length - 1 ? 'completo' : 'mitad',
-      mensajeDeError: MENSAJE_DOCUMENTO_OBLIGATORIO,
     };
   });
 }
@@ -91,19 +95,22 @@ export const CLAVE_PODER_NOTARIADO = 'powerOfAttorneyFileId' as const;
 /** Las claves de documento que puede manejar un `<app-dropzone-pdf>` en este alta. */
 export type ClaveDeDocumentoDelAlta = ClaveDeDocumentoLegal | typeof CLAVE_PODER_NOTARIADO;
 
-/** El campo `custom` del poder notariado, mismo patrón que los cinco de la empresa. */
+/**
+ * El campo `custom` del poder notariado, mismo patrón que los cinco de la
+ * empresa. `required` con el mismo criterio que {@link camposDeDocumentosLegales}.
+ */
 export function campoDelPoderNotariado(
   countryIso: string,
   lang: UiLanguage = uiLanguage(),
+  required = true,
 ): CampoDeFormulario {
   const texto = legalDocumentText('POWER_OF_ATTORNEY_DOC', countryIso, lang);
   return {
     key: CLAVE_PODER_NOTARIADO,
-    label: texto.label,
+    label: required ? texto.label : `${texto.label} (opcional)`,
     hint: texto.hint,
     control: 'custom' as const,
-    required: true,
     ancho: 'completo' as const,
-    mensajeDeError: MENSAJE_DOCUMENTO_OBLIGATORIO,
+    ...(required ? { required: true, mensajeDeError: MENSAJE_DOCUMENTO_OBLIGATORIO } : {}),
   };
 }

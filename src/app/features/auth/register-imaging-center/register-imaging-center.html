@@ -118,15 +118,45 @@
               />
             </ng-template>
 
+            <ng-template appCampoPersonalizado="legalRepName">
+              <app-campos-de-nombre
+                [grupo]="form.controls.legalRepName"
+                [obligatorio]="true"
+                prefijoTestId="registro-imagen-representante"
+              />
+            </ng-template>
+            <ng-template appCampoPersonalizado="generalManagerName">
+              <app-campos-de-nombre [grupo]="form.controls.generalManagerName" prefijoTestId="registro-imagen-gerente-general" />
+            </ng-template>
+            <ng-template appCampoPersonalizado="salesManagerName">
+              <app-campos-de-nombre [grupo]="form.controls.salesManagerName" prefijoTestId="registro-imagen-gerente-comercial" />
+            </ng-template>
+            <ng-template appCampoPersonalizado="marketingManagerName">
+              <app-campos-de-nombre [grupo]="form.controls.marketingManagerName" prefijoTestId="registro-imagen-gerente-marketing" />
+            </ng-template>
+
             <ng-template appCampoPersonalizado="gpsCentral">
+              @if (direccionPorReescribir()) {
+                <!-- D-06: tocar el mapa vació lo escrito; se dice junto al campo y se
+                     anuncia sin robar el foco, que sigue en el mapa. -->
+                <app-alert
+                  appAnuncio
+                  [asertivo]="false"
+                  [enfocar]="false"
+                  tone="info"
+                  data-testid="registro-imagen-direccion-reescribir"
+                >
+                  {{ avisoReescribir }}
+                </app-alert>
+              }
               <app-ubicacion-picker
                 pinId="imagenologia-central"
                 etiquetaConfirmada="Tu centro"
-                pregunta="¿Es acá donde está la central? Movete por el mapa para comprobarlo."
                 etiquetaQuitar="Quitar la ubicación de la central"
                 etiquetaMapa="La ubicación de tu centro en el mapa"
                 [ids]="idsUbicacionCentral"
                 (confirmado)="gpsCentral.set($event)"
+                (puntoElegido)="vaciarDireccionPorElMapa()"
               />
             </ng-template>
 
@@ -163,6 +193,15 @@
                       />
                     </app-form-field>
 
+                    <app-form-field [label]="'Descripción de la sucursal ' + (i + 1)" hint="Opcional. Horario, piso o qué se atiende ahí.">
+                      <app-input
+                        [testId]="'registro-imagen-' + sucursal.id + '-descripcion'"
+                        placeholder="Planta baja, lunes a sábado"
+                        [value]="sucursal.descripcion"
+                        (valueChange)="escribirDescripcionDeSucursal(sucursal.id, $event)"
+                      />
+                    </app-form-field>
+
                     <app-form-field [label]="'Dirección de la sucursal ' + (i + 1)">
                       <app-input
                         [testId]="'registro-imagen-' + sucursal.id + '-direccion'"
@@ -171,15 +210,39 @@
                         (valueChange)="escribirDireccionDeSucursal(sucursal.id, $event)"
                       />
                     </app-form-field>
+                    @if (sucursalPorReescribir(sucursal)) {
+                      <!-- D-06: tocar el mapa vació lo escrito; se dice junto al campo y se
+                           anuncia sin robar el foco, que sigue en el mapa. -->
+                      <app-alert
+                        appAnuncio
+                        [asertivo]="false"
+                        [enfocar]="false"
+                        tone="info"
+                        [attr.data-testid]="'registro-imagen-' + sucursal.id + '-direccion-reescribir'"
+                      >
+                        {{ avisoReescribir }}
+                      </app-alert>
+                    }
+
+                    <app-form-field [label]="'Enlace de ubicación de la sucursal ' + (i + 1)" hint="Opcional. El enlace de Google Maps u OpenStreetMap.">
+                      <app-input
+                        type="url"
+                        [testId]="'registro-imagen-' + sucursal.id + '-url-ubicacion'"
+                        placeholder="https://maps.google.com/…"
+                        [value]="sucursal.urlUbicacion"
+                        (valueChange)="escribirUrlDeSucursal(sucursal.id, $event)"
+                      />
+                    </app-form-field>
 
                     <app-ubicacion-picker
                       [pinId]="sucursal.id"
+                      [inicial]="sucursal.gps"
                       etiquetaConfirmada="Esta sucursal"
-                      pregunta="¿Es acá donde está esta sucursal? Movete por el mapa para comprobarlo."
                       etiquetaQuitar="Quitar la ubicación de esta sucursal"
                       etiquetaMapa="La ubicación de esta sucursal en el mapa"
                       [ids]="idsDeSucursal(sucursal.id)"
                       (confirmado)="fijarGpsDeSucursal(sucursal.id, $event)"
+                      (puntoElegido)="vaciarDireccionDeSucursalPorElMapa(sucursal.id)"
                     />
                   </section>
                 } @empty {
@@ -188,16 +251,37 @@
                   </p>
                 }
 
-                <button
-                  app-button
-                  type="button"
-                  variant="secondary"
-                  size="sm"
-                  data-testid="registro-imagen-agregar-sucursal"
-                  (clicked)="agregarSucursal()"
-                >
-                  + Agregar sucursal
-                </button>
+                <div class="imagen-sucursales__acciones">
+                  <button
+                    app-button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    data-testid="registro-imagen-agregar-sucursal"
+                    (clicked)="agregarSucursal()"
+                  >
+                    + Agregar sucursal
+                  </button>
+                  <button
+                    app-button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    data-testid="registro-imagen-subir-sucursales"
+                    (clicked)="cargaEnLoteAbierta.set(true)"
+                  >
+                    Subir sucursales en lote (CSV)
+                  </button>
+                </div>
+
+                @if (cargaEnLoteAbierta()) {
+                  <app-branch-bulk-import
+                    testIdPrefix="registro-imagen-lote"
+                    [existingNames]="nombresDeSucursales()"
+                    (imported)="agregarSucursalesEnLote($event)"
+                    (closed)="cargaEnLoteAbierta.set(false)"
+                  />
+                }
               </div>
             </ng-template>
           </app-paginated-form>

@@ -154,9 +154,7 @@
               @if (casilla.cantidad !== null) {
                 <span class="consulta__casilla-cantidad">
                   {{ casilla.cantidad }}
-                  <span class="consulta__casilla-cantidad-rotulo">
-                    en la historia
-                  </span>
+                  <span class="consulta__casilla-cantidad-rotulo"> en la historia </span>
                 </span>
               }
             </button>
@@ -164,13 +162,39 @@
         }
       </ul>
     </section>
+
+    <!-- ─── Lo registrado en este encuentro (C8) ───────────────────────────
+         La misma línea que el paciente lee en su historia, montada del lado
+         de quien la escribe. Va DEBAJO de la rejilla a propósito: primero
+         está lo que se puede registrar, después lo que ya quedó registrado.
+
+         Sin encuentro abierto no se dibuja: no habría «este encuentro» del
+         que hablar, y una línea vacía se leería como una consulta sin nada
+         anotado. -->
+    @if (loRegistrado(); as registrado) {
+      <section
+        class="consulta__registro"
+        aria-labelledby="consulta-linea-titulo"
+        data-testid="consulta-lo-registrado"
+      >
+        <h2 id="consulta-linea-titulo" class="consulta__titulo">Lo registrado en este encuentro</h2>
+
+        <app-encounter-timeline
+          data-testid="consulta-linea-encuentro"
+          [encounter]="registrado.encabezado"
+          [notes]="registrado.notas"
+          [conditions]="registrado.diagnosticos"
+          [prescriptions]="registrado.recetas"
+        />
+      </section>
+    }
   </div>
 </app-view-state-host>
 
 <!-- ─── El formulario de la casilla elegida ──────────────────────────────
-     Un solo modal para las diez, con el bloque elegido adentro. Cada bloque
+     Un solo modal para las ocho, con el bloque elegido adentro. Cada bloque
      es EL MISMO que usa el expediente, atado al encuentro en curso cuando lo
-     hay y a una cita ya existente cuando no. La décima —Pagos— no escribe:
+     hay y a una cita ya existente cuando no. La última —Pagos— no escribe:
      muestra lo cobrado. -->
 @if (casillaAbierta(); as casilla) {
   <app-content-dialog
@@ -179,6 +203,8 @@
     size="lg"
     closeLabel="Cerrar"
     data-testid="consulta-modal"
+    (keydown.tab)="keepModalFocus($event)"
+    (keydown.shift.tab)="keepModalFocus($event)"
     (closed)="cerrarCasilla()"
   >
     @switch (casilla) {
@@ -205,6 +231,7 @@
         <app-medication-block
           [patientProfileId]="pacienteDeLaFicha()"
           [encounterId]="encuentroActual()"
+          [exigeRespuesta]="true"
           [exigeEncuentro]="false"
           [citas]="citas()"
           [recetas]="recetas()"
@@ -214,38 +241,29 @@
           (descargar)="descargarReceta($event)"
         />
       }
-      @case ('observaciones') {
-        <app-observation-block
+      @case ('ordenes') {
+        <app-analysis-order-block
           [patientProfileId]="pacienteDeLaFicha()"
           [encounterId]="encuentroActual()"
-          [citas]="citas()"
+          [exigeRespuesta]="true"
           (cambio)="altaRegistrada()"
         />
       }
-      @case ('notas') {
-        <!-- La hoja en blanco no cierra el modal al guardar: cada guardado
-             crea una versión y quien escribe suele seguir escribiendo. -->
-        <app-free-note-block
+      @case ('reconsulta') {
+        <app-follow-up-block
           [patientProfileId]="pacienteDeLaFicha()"
           [encounterId]="encuentroActual()"
-          [citas]="citas()"
-          (guardada)="recargar()"
+          [exigeRespuesta]="true"
+          [bookingId]="originBookingId()"
+          (cambio)="altaRegistrada()"
         />
       }
       @case ('planes') {
         <app-care-plan-block
           [patientProfileId]="pacienteDeLaFicha()"
           [encounterId]="encuentroActual()"
-          [citas]="citas()"
+          [exigeRespuesta]="true"
           [diagnosticos]="diagnosticosParaElPlan()"
-          (cambio)="altaRegistrada()"
-        />
-      }
-      @case ('documentos') {
-        <app-document-block
-          [patientProfileId]="pacienteDeLaFicha()"
-          [encounterId]="encuentroActual()"
-          [citas]="citas()"
           (cambio)="altaRegistrada()"
         />
       }
@@ -256,17 +274,10 @@
           (cambio)="recargar()"
         />
       }
-      @case ('internacion') {
-        <app-admission-block
-          [patientProfileId]="pacienteDeLaFicha()"
-          [encounterId]="encuentroActual()"
-          [internaciones]="internaciones()"
-          (cambio)="recargar()"
-        />
-      }
       @case ('pagos') {
-        <!-- La única casilla que no registra: muestra lo que la persona ya
-             pagó. No emite `cambio` porque no hay nada que releer. -->
+        <!-- No emite `cambio`: lo que registra —pagos, notas de venta y la
+             factura simulada— es de facturación y no toca nada que la
+             consulta tenga que releer. El bloque relee lo suyo. -->
         <app-payments-block [patientProfileId]="pacienteDeLaFicha()" />
       }
     }

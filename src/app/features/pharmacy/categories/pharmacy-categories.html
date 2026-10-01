@@ -1,0 +1,113 @@
+<app-page-header
+  title="Categorías"
+  subtitle="Con qué categorías ordenás tus productos. Al renombrar una, los productos que la usan la siguen."
+/>
+
+<app-view-state-host [state]="scope.options()" (retry)="scope.retry()">
+  @if (scope.hasSeveral()) {
+    <div class="categories__pharmacy">
+      <app-form-field label="Farmacia">
+        <app-select
+          [options]="scope.selectOptions()"
+          [value]="scope.pharmacyId()"
+          (valueChange)="scope.choose($event)"
+          placeholder="Elegí tu farmacia"
+        />
+      </app-form-field>
+    </div>
+  }
+
+  @if (scope.pharmacyId() !== null) {
+    <app-card class="categories" padding="lg" data-testid="categories-card">
+      <div class="categories__panel">
+        <div class="categories__bar">
+          <button app-button type="button" (clicked)="openNew()" data-testid="categories-new">
+            Nueva categoría
+          </button>
+        </div>
+
+        @if (notice(); as message) {
+          <app-alert tone="warning" title="No se pudo eliminar" data-testid="categories-notice">
+            {{ message }}
+          </app-alert>
+        }
+
+        <app-data-table
+          caption="Categorías de tu farmacia"
+          [state]="categories()"
+          [columns]="columns()"
+          [trackBy]="rowId"
+          [rowLabel]="rowLabel"
+          (retry)="reload()"
+          (refresh)="reload()"
+          data-testid="categories-table"
+        />
+      </div>
+    </app-card>
+  }
+</app-view-state-host>
+
+@if (dialogTarget() !== undefined) {
+  <app-content-dialog
+    [heading]="dialogHeading()"
+    size="sm"
+    [dismissible]="!saving()"
+    data-testid="category-dialog"
+    (closed)="closeDialog()"
+  >
+    @if (dialogError(); as message) {
+      <app-alert tone="error">{{ message }}</app-alert>
+    }
+    <app-form-field label="Nombre" [required]="true" [hint]="'Hasta ' + nameMaxLength + ' caracteres.'">
+      <app-input
+        [value]="nameDraft()"
+        (valueChange)="nameDraft.set($event === null ? '' : '' + $event)"
+        autocomplete="off"
+        placeholder="Vitaminas"
+        testId="category-name"
+      />
+    </app-form-field>
+
+    <button dialog-actions app-button type="button" variant="ghost" [disabled]="saving()" (clicked)="closeDialog()">
+      Cancelar
+    </button>
+    <button
+      dialog-actions
+      app-button
+      type="button"
+      [isLoading]="saving()"
+      [disabled]="saving()"
+      data-testid="category-save"
+      (clicked)="save()"
+    >
+      Guardar categoría
+    </button>
+  </app-content-dialog>
+}
+
+<ng-template #nameCell let-category>
+  <span class="categories__name">{{ category.name }}</span>
+</ng-template>
+
+<ng-template #countCell let-category>
+  @if (category.productCount > 0) {
+    <a
+      class="categories__count"
+      routerLink="/administration/pharmacy-catalog"
+      [queryParams]="{ category: category.name }"
+      [attr.aria-label]="category.productCount + ' productos en ' + category.name"
+    >
+      {{ category.productCount }}
+    </a>
+  } @else {
+    <span class="categories__none">0</span>
+  }
+</ng-template>
+
+<ng-template #actionsCell let-category>
+  <app-row-actions
+    [actions]="rowActions"
+    [fila]="category.name"
+    (actionSelected)="onRowAction($event, category)"
+  />
+</ng-template>

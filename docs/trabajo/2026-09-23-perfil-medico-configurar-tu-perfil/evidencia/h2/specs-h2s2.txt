@@ -1,0 +1,70 @@
+inicio=17:24:13 memoria_libre_MB=3301
+Using Vitest configuration file: <repo>\vitest.config.ts
+[33m❯[39m Building...
+[32m✔[39m Building...
+Application bundle generation failed. [103.894 seconds] - 2026-09-23T21:26:29.780Z
+
+[1m[33m[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: Alert is not used within the template of MedicalArticles[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/account/my-profile/medical-articles/medical-articles.ts:75:4:
+[37m      75 │     [32mAlert[37m,
+         ╵     [32m~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: RouterLink is not used within the template of MedicalArticles[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/account/my-profile/medical-articles/medical-articles.ts:85:4:
+[37m      85 │     [32mRouterLink[37m,
+         ╵     [32m~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: AppButtonLink is not used within the template of Questionnaires[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/account/questionnaires/questionnaires.ts:88:4:
+[37m      88 │     [32mAppButtonLink[37m,
+         ╵     [32m~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: Link is not used within the template of Groups[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/groups/groups.ts:59:4:
+[37m      59 │     [32mLink[37m,
+         ╵     [32m~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: AppButton is not used within the template of NearbyPlaces[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/nearby-places/nearby-places.ts:103:4:
+[37m      103 │     [32mAppButton[37m,
+          ╵     [32m~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: AppButtonLink is not used within the template of SurveysHome[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/questionnaires/questionnaires.ts:72:4:
+[37m      72 │     [32mAppButtonLink[37m,
+         ╵     [32m~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: Card is not used within the template of SymptomCheck[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/symptom-check/symptom-check.ts:99:39:
+[37m      99 │ ...: [Alert, AppButton, BodyMap, [32mCard[37m, Chip, FormField, RouterLink...
+         ╵                                  [32m~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: RouterLink is not used within the template of SymptomCheck[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/symptom-check/symptom-check.ts:99:62:
+[37m      99 │ ... AppButton, BodyMap, Card, Chip, FormField, [32mRouterLink[37m, Textarea],
+         ╵                                                [32m~~~~~~~~~~[0m
+
+[39m[22m
+[1m[31m[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS4111: Property 'id' comes from an index signature, so it must be accessed with ['id'].[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/account/my-profile/practitioner-profile-edit/practitioner-profile-edit.spec.ts:770:36:
+[37m      770 │     expect(filas.map((fila) => fila.[32mid[37m)).toEqual(['e-2', 'e-1']);
+          ╵                                     [32m~~[0m
+
+[39m[22m
+exit=1
