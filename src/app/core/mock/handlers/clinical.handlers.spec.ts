@@ -3,7 +3,7 @@ import { HttpHeaders } from '@angular/common/http';
 import type { ClinicalNoteVersionRef } from '../../data-access/chart-notes/chart-notes.types';
 import { condiciones, notas, NOTA_TIPO_EVOLUCION, type CondicionSimulada, type NotaSimulada } from '../fixtures/clinica';
 import { ESTADO, ESTUDIO, VERIFICACION_DX } from '../fixtures/conceptos';
-import { PACIENTE } from '../fixtures/personas';
+import { PACIENTE, PACIENTES } from '../fixtures/personas';
 import { MockRouter, type MockMethod, type MockReply } from '../mock-router';
 import { buscarUsuario, type MockUser } from '../mock-session';
 import { Coleccion } from '../mock-store';
@@ -251,6 +251,7 @@ describe('POST /clinical/medication-requests · sólo diagnóstico confirmado o 
 });
 
 describe('/charts/notes · contrato tras mudar el handler', () => {
+  const patientWithIndependentAccess = PACIENTES[1]!;
   const router = new MockRouter();
   const doctor = buscarUsuario('medica')!;
 
@@ -297,7 +298,7 @@ describe('/charts/notes · contrato tras mudar el handler', () => {
 
   it('conserva el 201, los campos de la nota, la lectura del expediente y la persistencia', () => {
     const input = {
-      patientProfileId: PACIENTE.id,
+      patientProfileId: patientWithIndependentAccess.id,
       authorProfileId: doctor.practitionerProfileId!,
       encounterId: 'c0-note-contract-encounter',
       noteTypeConceptId: 'c0-note-type',
@@ -320,7 +321,7 @@ describe('/charts/notes · contrato tras mudar el handler', () => {
     });
     const { patientProfileId: _patientId, ...chartInput } = input;
     const chart = call<{ notes: readonly Omit<NotaSimulada, 'patientProfileId' | 'id'>[] }>(
-      'GET', `/charts/patients/${PACIENTE.id}/chart`, null,
+      'GET', `/charts/patients/${patientWithIndependentAccess.id}/chart`, null,
     );
     expect(chart.notes.find((note) => note.noteId === response.body.noteId)).toMatchObject({
       ...chartInput,
