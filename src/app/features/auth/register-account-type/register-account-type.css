@@ -208,3 +208,22 @@
     line-height: var(--lh-caption);
     color: var(--text-secondary);
 }
+
+/* Las altas públicas en claro aprovechan el área disponible con la grilla del
+   sistema: una columna, dos desde 780 px y tres desde 1120 px. El tema oscuro
+   conserva la composición compacta de la escena del latido. */
+:host-context(:root[data-tema='claro']) .tipos__grid {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+@media (min-width: 780px) {
+  :host-context(:root[data-tema='claro']) .tipos__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1120px) {
+  :host-context(:root[data-tema='claro']) .tipos__grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
