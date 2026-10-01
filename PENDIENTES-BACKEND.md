@@ -52,7 +52,7 @@ backend.
 | **P42** | La **reconsulta**: `follow_up_of_booking_id` en la reserva, `ACT_FOLLOW_UP`, «una reconsulta futura por cita» y el vínculo en `BookingItemDto`. **Esto sí tiene frontend detrás y funcionando contra el simulador** |
 | **P44** | `GET /patient-spending/me?from=&to=` — los gastos de salud del paciente, movimiento por movimiento. **«Mis gastos» ya está construido contra el simulador** |
 | **P45** | `GET /practitioners/:id/insurance-carriers`: con qué aseguradoras trabaja un médico, para su ficha pública. **El modelo ya lo declara** (`network_provider_memberships`); falta la lectura y la carga de las redes reales |
-| **P47** | El catálogo de la farmacia: la empresa no puede **editar** un producto ni cargarle precio, stock, categoría, descripción o imágenes, y el alta exige `SECURITY_ADMIN` |
+| **P47** | El catálogo de la farmacia: la empresa no puede cargarle **precio, stock, categoría, descripción o imágenes** a un producto (la edición de marca, genérico, concentración, empaque y receta se publicó en el Hito 3), y el alta exige `SECURITY_ADMIN` |
 | **P50** | Registro de farmacia: la API acepta `tenantType: PHARMACY` pero no crea la fila de `directory.pharmacies`, no tiene bloque `pharmacy.branches` y no enlaza la sede central; lo obligatorio para operar (los 6 PDF, SEDES) hoy no se exige en ninguna capa |
 | **P51** | Registro de laboratorio: la API acepta `tenantType: DIAGNOSTIC_CENTER` con `diagnosticUnit`, pero exige país, jurisdicción, cédula y poder del representante que el alta no pide, no conoce `diagnosticUnit.branches` y, sin `diagnosticUnitTypeConceptId`, crea una unidad **de imágenes** |
 | **P52** | Portal de la cuenta de laboratorio: resumen y **resultados** (subida por partes sin tope de tamaño, listado de todo lo subido, contenido, retiro con motivo y aviso al médico y al paciente). Ninguna ruta `/diagnostics/lab/*` existe en la API |
@@ -1965,11 +1965,13 @@ en PDF (`nota-de-venta.ts`) y la prueba de navegador `pagos-plan-nota-venta-fact
 > tal cual («Tu usuario no tiene permiso…»), pero para que la empresa suba su catálogo la
 > autorización tiene que ser «miembro activo del tenant dueño de esa farmacia», no un rol global.
 >
-> **2. Edición.** No hay `PATCH /pharmacies/:pharmacyId/products/:productId`. Hoy corregir una
-> marca o una presentación es retirar y volver a cargar, y el código queda tomado para siempre
-> (`findByPharmacyAndCode` no mira el estado). Con edición, la importación también podría
-> **actualizar** los códigos existentes, que es el modo «crear y actualizar» del mockup; hoy esas
-> filas se rechazan antes de mandarlas.
+> **2. Edición — CERRADO para los datos descriptivos (Hito 3, 01/10/2026).** La API publica
+> `PATCH /pharmacies/:pharmacyId/products/:productId` (`PharmacyUpdateProductDto`): marca,
+> genérico, concentración, empaque y receta, cada uno opcional y `null` para borrarlo. Responde el
+> producto como lo lista `GET /pharmacy/products` y sigue bajo `@Roles('SECURITY_ADMIN')` (§1). Lo
+> demás que manda el simulador —precio, categoría, descripción, `inStock`, estado, existencias e
+> imágenes— lo rechaza con 400 hasta que §3-5 se cierren: las filas «actualizar» de la
+> importación mandan `inStock` y todavía no sirven contra la API real.
 >
 > **3. Precio.** `POST …/price-lists` y `POST …/price-lists/:id/prices` existen, pero no hay
 > **lectura** de las listas de una farmacia: la pantalla no puede saber a qué lista pública

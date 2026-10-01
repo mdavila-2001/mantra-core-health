@@ -1,0 +1,2 @@
+$ yarn tsc -p tsconfig.hito3-check.tmp.json   (tsconfig temporal sobre los 3 specs tocados; yarn typecheck no revisa specs)
+exit=0

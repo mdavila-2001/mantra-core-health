@@ -387,11 +387,6 @@ export function registrarPracticas(router: MockRouter): void {
     return { status: 201, body: { id: nueva.id, practiceId: nueva.practiceId, practitionerProfileId: nueva.practitionerProfileId, status: nueva.status, createdAt: nueva.createdAt } };
   });
 
-  router.get('/practitioners/me/sites', (request) => {
-    const items = sedesDe(request.user?.practitionerProfileId ?? MEDICA.id);
-    return { items, count: items.length };
-  });
-
   /* `isOwnSite` viaja: es lo que separa «mi consultorio» de «un hospital donde
      me aceptaron», y sin él las dos cosas se dibujaban idénticas, con el mismo
      botón «Retirar» al lado — cuando retirar lo propio y desvincularse de un

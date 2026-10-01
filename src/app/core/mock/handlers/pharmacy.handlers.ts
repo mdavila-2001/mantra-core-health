@@ -839,8 +839,11 @@ export function registrarFarmacia(router: MockRouter): void {
     };
   });
 
-  // P47 · la edición del producto, que la API todavía no publica. Acepta los
-  // mismos campos del alta menos el código, más el «no tengo» (`inStock`).
+  // P47 · la edición del producto. La API real la publica desde el Hito 3, pero
+  // sólo persiste marca, genérico, concentración, empaque y receta (P47 §2):
+  // precio, categoría, descripción, estado, existencias e imágenes son del
+  // simulador y la API los rechaza con 400 hasta que P47 §3-5 se cierre. Acepta
+  // los mismos campos del alta menos el código, más el «no tengo» (`inStock`).
   router.patch('/pharmacies/:pharmacyId/products/:productId', (request) => {
     const producto = productos.get(request.params['productId']!);
     if (producto === undefined || producto.pharmacyId !== request.params['pharmacyId']) {

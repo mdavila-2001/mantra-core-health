@@ -363,6 +363,7 @@ export function registrarComunidad(router: MockRouter): void {
 
   // `CommunityClient.react` manda `PUT` (es un upsert sobre `(actor, objeto)`);
   // el muro con sesión y la red social pública comparten este mismo handler.
+  // Responde 200, como la API (`@HttpCode(OK)`): un upsert no es un alta.
   const reaccionar = (request: MockRequest) => {
     const datos = cuerpo<{ actorProfileId: string; reactableType: string; reactableRefId: string; reactionType: Reaccion }>(request);
     const p = publicaciones.get(datos.reactableRefId ?? '');
@@ -379,9 +380,8 @@ export function registrarComunidad(router: MockRouter): void {
       }
       publicaciones.actualizar(p.id, { reacciones, reaccionDelActor });
     }
-    return { status: 201, body: { id: nuevoId('reaction') } };
+    return { id: nuevoId('reaction') };
   };
-  router.post('/community/reactions', reaccionar);
   router.put('/community/reactions', reaccionar);
 
   router.post('/community/comments', (request) => {

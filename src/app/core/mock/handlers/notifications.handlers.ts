@@ -206,13 +206,6 @@ export function registrarNotificaciones(router: MockRouter): void {
     preferencias.set(request.user?.id ?? '', siguiente);
     return siguiente;
   });
-  router.patch('/notifications/preferences/me', (request) => {
-    const actuales = preferenciasDe(request.user?.id ?? '');
-    const datos = cuerpo<{ categories?: { category: Categoria; optedIn: boolean }[]; quietHours?: { start: string; end: string } | null }>(request);
-    const siguiente = { categories: datos.categories ?? actuales.categories, quietHours: datos.quietHours === undefined ? actuales.quietHours : datos.quietHours };
-    preferencias.set(request.user?.id ?? '', siguiente);
-    return siguiente;
-  });
 }
 
 /* Sobreviven a F5 dentro de la pestaña: ver `Coleccion.persistirEn`. */

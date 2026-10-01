@@ -168,10 +168,6 @@ export function registrarModulosAdministrativos(router: MockRouter): void {
     const datos = cuerpo<{ code: string; isGlobal?: boolean }>(request);
     return { status: 201, body: { id: nuevoId('idp'), code: datos.code ?? 'IDP', stateConceptId: ESTADO['ST-ACTIVE']!, isGlobal: datos.isGlobal ?? false } };
   });
-  router.put('/auth-providers/identity-providers/:id/protocol-configs', (request) => {
-    const datos = cuerpo<{ discoveredKeys?: unknown[] }>(request);
-    return { id: nuevoId('protocol-config'), providerId: request.params['id'], environmentConceptId: uuid('concept-env-production'), replaced: true, importedKeyIds: (datos.discoveredKeys ?? []).map(() => nuevoId('key')) };
-  });
   router.post('/auth-providers/identity-providers/:id/protocol-configs', (request) => {
     const datos = cuerpo<{ discoveredKeys?: unknown[] }>(request);
     return { status: 201, body: { id: nuevoId('protocol-config'), providerId: request.params['id'], environmentConceptId: uuid('concept-env-production'), replaced: false, importedKeyIds: (datos.discoveredKeys ?? []).map(() => nuevoId('key')) } };

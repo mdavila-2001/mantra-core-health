@@ -98,7 +98,6 @@ describe('backend simulado', () => {
     const routes = [
       { method: 'POST', pattern: '/charts/notes' },
       { method: 'PUT', pattern: '/charts/notes/:id/versions' },
-      { method: 'POST', pattern: '/charts/notes/:id/versions' },
       { method: 'POST', pattern: '/clinical/service-requests' },
       { method: 'POST', pattern: '/clinical/conditions/:id/verification' },
     ];
@@ -107,6 +106,36 @@ describe('backend simulado', () => {
         candidate.method === route.method && candidate.pattern === route.pattern,
       )).toEqual([route]);
     }
+  });
+
+  it('registra sólo el verbo que la API publica en las rutas homologadas (Hito 3)', () => {
+    // Por cada ruta: el verbo canónico —el del controlador de la API— una sola
+    // vez, y el verbo legado, que el simulador aceptaba de más y la API responde
+    // con 404 o 405, ausente. Se comparan los patrones registrados y no las
+    // coincidencias: el comodín `:id` hace que `GET /practitioners/me/sites`
+    // responda igual por `/practitioners/:id/sites`.
+    const aligned = [
+      { canonical: { method: 'PUT', pattern: '/community/reactions' }, legacy: { method: 'POST', pattern: '/community/reactions' } },
+      { canonical: { method: 'PUT', pattern: '/charts/notes/:id/versions' }, legacy: { method: 'POST', pattern: '/charts/notes/:id/versions' } },
+      { canonical: { method: 'PUT', pattern: '/notifications/preferences/me' }, legacy: { method: 'PATCH', pattern: '/notifications/preferences/me' } },
+      { canonical: { method: 'PUT', pattern: '/scheduling/bookings/:id/payment-state' }, legacy: { method: 'POST', pattern: '/scheduling/bookings/:id/payment-state' } },
+      { canonical: { method: 'POST', pattern: '/auth-providers/identity-providers/:id/protocol-configs' }, legacy: { method: 'PUT', pattern: '/auth-providers/identity-providers/:id/protocol-configs' } },
+      { canonical: { method: 'GET', pattern: '/practitioners/:id/sites' }, legacy: { method: 'GET', pattern: '/practitioners/me/sites' } },
+    ];
+    const registered = router.rutas();
+    const countOf = (route: { method: string; pattern: string }): number =>
+      registered.filter((r) => r.method === route.method && r.pattern === route.pattern).length;
+    for (const { canonical, legacy } of aligned) {
+      expect(countOf(canonical), `${canonical.method} ${canonical.pattern}`).toBe(1);
+      expect(countOf(legacy), `${legacy.method} ${legacy.pattern} (verbo legado)`).toBe(0);
+    }
+  });
+
+  it('la reacción responde 200, como la API: es un PUT idempotente y no un alta', () => {
+    const found = router.match('PUT', '/community/reactions');
+    expect(found).not.toBeNull();
+    const reply = found!.handler(peticion('PUT', '/community/reactions', buscarUsuario('medica')!));
+    expect(estadoDe(reply)).toBe(200);
   });
 
   it('la verificación de un diagnóstico que no existe responde 404', () => {

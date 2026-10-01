@@ -206,7 +206,8 @@ export interface PharmacyProductDraft {
 /**
  * Los cambios a un producto ya publicado (`PATCH`, P47). El código no se
  * edita: es la identidad del producto dentro de la farmacia. `null` borra el
- * dato; una clave ausente lo deja como está.
+ * dato; una clave ausente lo deja como está. La API real persiste las cinco
+ * primeras claves (P47 §2).
  */
 export interface PharmacyProductChanges {
   readonly brandName?: string | null;
@@ -214,6 +215,10 @@ export interface PharmacyProductChanges {
   readonly strengthText?: string | null;
   readonly packageSizeText?: string | null;
   readonly requiresPrescription?: boolean | null;
+  /*
+   * Extensión del simulador (P47 §3-5): la API real rechaza estas claves con un
+   * 400 (`forbidNonWhitelisted`) hasta que el DTO las declare.
+   */
   readonly unitPrice?: number | null;
   readonly category?: string | null;
   readonly description?: string | null;

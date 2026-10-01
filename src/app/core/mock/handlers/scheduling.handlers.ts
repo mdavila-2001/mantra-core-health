@@ -388,7 +388,6 @@ export function registrarAgenda(router: MockRouter): void {
     return actualizada?.paymentState ?? notFound();
   };
   router.put('/scheduling/bookings/:id/payment-state', marcarPago);
-  router.post('/scheduling/bookings/:id/payment-state', marcarPago);
 
   router.post('/scheduling/bookings/:id/cancel', (request) => {
     const r = reservas.get(request.params['id']!);
