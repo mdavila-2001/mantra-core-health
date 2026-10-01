@@ -596,6 +596,13 @@ export interface ScheduleRule {
    * respiro: «no lo dijo» y «dijo que no hay» se guardan distinto.
    */
   readonly gapMinutes?: number;
+  /**
+   * Qué admite la franja: consultas, servicios o ambos (v4.2.40).
+   *
+   * **Ausente ≡ `CONSULTATIONS`**: es lo que toda franja era antes. No se manda
+   * cuando el médico no lo cambió, para no escribir un valor que nadie eligió.
+   */
+  readonly bookingMode?: FranjaModo;
 }
 
 /** Cuerpo de `POST /scheduling/resources/:id/templates` (UC-41-02). */
@@ -877,6 +884,8 @@ export interface PublishedRule {
    * «no declarado» y «cero» sigan siendo distinguibles.
    */
   readonly gapMinutes?: number;
+  /** Qué admite la franja. Ausente ≡ `CONSULTATIONS`. */
+  readonly bookingMode?: FranjaModo;
 }
 
 /** Lo que deja retirar un horario (`DELETE /scheduling/templates/:id`). */
@@ -1110,5 +1119,122 @@ export interface WalkInAppointmentCreated {
   readonly encounterId: string;
   readonly statusConceptId: string;
   /** Cupos ofrecidos que este turno retiró. Se informa, no se pregunta. */
+  readonly retractedSlots: number;
+}
+
+/* ---- servicios con duración dinámica (v4.2.40) ---------------------------
+   Las consultas salen de una grilla pre-generada; un servicio no: dura entre un
+   mínimo y un máximo que declara el profesional. Los horarios se CALCULAN en
+   lectura y el turno nace al retener, con el máximo como tiempo reservado. */
+
+/** Qué admite una franja del horario. Del contrato (`RuleBookingMode`). */
+export type FranjaModo = 'CONSULTATIONS' | 'SERVICES' | 'MIXED';
+
+/**
+ * Cómo ofrece un profesional un servicio del catálogo de su práctica.
+ *
+ * El catálogo fija nombre y precio y es **por práctica**; la duración vive acá
+ * porque en una misma organización dos médicos hacen el mismo servicio con
+ * tiempos distintos.
+ */
+export interface ServiceOffering {
+  readonly id: string;
+  readonly practitionerProfileId: string;
+  readonly serviceCatalogId: string;
+  readonly serviceCode: string;
+  readonly serviceName: string;
+  /** Precio de catálogo, con dos decimales. */
+  readonly price: string;
+  readonly currencyConceptId?: string;
+  /** Lo mínimo que puede tardar. Sólo informa: «30–45 min». */
+  readonly minDurationMinutes: number;
+  /** Lo máximo que puede tardar. Es el tiempo que se reserva en la agenda. */
+  readonly maxDurationMinutes: number;
+  /** Aire del profesional antes de atender; el paciente no lo ve ni lo reserva. */
+  readonly prepMinutes: number;
+  /** Aire del profesional después de atender; el paciente no lo ve ni lo reserva. */
+  readonly cleanupMinutes: number;
+  /** Si el paciente puede pedirlo por su cuenta desde el portal. */
+  readonly isPatientBookable: boolean;
+  /** Si cada pedido espera la aceptación del profesional en vez de confirmarse solo. */
+  readonly requiresApproval: boolean;
+  readonly channel?: ModalidadDeAtencion;
+  readonly isActive: boolean;
+}
+
+/** Cuerpo de `POST /scheduling/service-offerings`. */
+export interface NewServiceOffering {
+  readonly serviceCatalogId: string;
+  readonly minDurationMinutes: number;
+  readonly maxDurationMinutes: number;
+  readonly prepMinutes?: number;
+  readonly cleanupMinutes?: number;
+  readonly isPatientBookable?: boolean;
+  readonly requiresApproval?: boolean;
+  readonly channel?: ModalidadDeAtencion;
+}
+
+/** Cuerpo de `PATCH /scheduling/service-offerings/:id`: los ausentes se conservan. */
+export interface ServiceOfferingChanges {
+  readonly minDurationMinutes?: number;
+  readonly maxDurationMinutes?: number;
+  readonly prepMinutes?: number;
+  readonly cleanupMinutes?: number;
+  readonly isPatientBookable?: boolean;
+  readonly requiresApproval?: boolean;
+  readonly channel?: ModalidadDeAtencion;
+  readonly isActive?: boolean;
+}
+
+/** Query de `GET /scheduling/service-availability`. */
+export interface ServiceAvailabilityQuery {
+  readonly offeringId: string;
+  /** Una sede en particular; sin ella se buscan en todas las del profesional. */
+  readonly resourceId?: string;
+  readonly from: Date;
+  readonly to: Date;
+}
+
+/** Un inicio posible para el servicio, en una sede. */
+export interface ServiceStart {
+  readonly resourceId: string;
+  readonly startAt: Date;
+  /** Hasta cuándo se reserva: inicio más la duración máxima. */
+  readonly endAtMax: Date;
+  /** Cuándo podría terminar como pronto: inicio más la duración mínima. */
+  readonly endAtMin: Date;
+}
+
+/** Los horarios donde cabe un servicio. */
+export interface ServiceAvailability {
+  readonly offeringId: string;
+  readonly minDurationMinutes: number;
+  readonly maxDurationMinutes: number;
+  readonly items: readonly ServiceStart[];
+}
+
+/** Lo que pide retener el turno de un servicio. */
+export interface NewServiceHold {
+  readonly resourceId: string;
+  readonly startAt: Date;
+  readonly patientProfileId?: string;
+}
+
+/**
+ * La retención del turno de un servicio.
+ *
+ * Se confirma con las mismas rutas que una consulta (`confirmHold` /
+ * `requestHold`): el cupo que nace al retener es una reserva más.
+ */
+export interface ServiceHold {
+  readonly id: string;
+  /** Token de un solo uso. Se entrega una sola vez. */
+  readonly holdToken: string;
+  readonly expiresAt: Date;
+  /** El cupo que nació para este turno. */
+  readonly bookableSlotId: string;
+  readonly startAt: Date;
+  readonly endAt: Date;
+  /** Cupos de consulta que este turno retiró de la agenda del profesional. */
   readonly retractedSlots: number;
 }
