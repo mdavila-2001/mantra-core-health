@@ -1,0 +1,98 @@
+/* Editor de la regla de una campaña. Mobile-first: la única media query sube a
+   varias columnas donde entran, nunca al revés. Sólo tokens del sistema. */
+
+.regla {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  min-width: 0;
+}
+
+.regla__ayuda,
+.regla__nota {
+  margin: 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}
+
+.regla__ejemplo {
+  display: block;
+  margin-block-start: var(--sp-1);
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.regla__fila,
+.regla__condiciones,
+.regla__tramos {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.regla__campo {
+  min-width: 0;
+}
+
+.regla__tramo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+}
+
+/* La vista previa es lo que lee quien compra: se distingue del formulario sin
+   gritar, y no depende sólo del color (lleva su propio título). */
+.regla__vista {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  padding: var(--sp-4);
+  border: 1px dashed var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+}
+
+.regla__vista-titulo {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-body);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.regla__vista-frase {
+  margin: 0;
+  color: var(--text-primary);
+}
+
+.regla__vista-ejemplo {
+  margin: 0;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+@media (min-width: 40rem) {
+  .regla__fila {
+    flex-direction: row;
+    align-items: flex-start;
+  }
+
+  .regla__fila > * {
+    flex: 1 1 0;
+  }
+
+  .regla__tramo {
+    flex-direction: row;
+    align-items: flex-end;
+  }
+
+  .regla__tramo > app-form-field {
+    flex: 1 1 0;
+  }
+}

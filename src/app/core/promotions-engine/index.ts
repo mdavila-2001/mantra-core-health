@@ -11,3 +11,5 @@ export * from './promotion-money';
 export * from './validate-draft';
 export * from './describe-failure';
 export * from './mechanic-level';
+export * from './describe-example';
+export * from './rule-fields';

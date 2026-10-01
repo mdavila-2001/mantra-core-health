@@ -486,6 +486,17 @@ const FALLO_HEREDADO: Readonly<Partial<Record<DraftFailure, FalloDeBorrador>>> =
   MIXED_CURRENCIES: 'MONEDAS_MEZCLADAS',
 };
 
+/**
+ * Los fallos de un borrador en el idioma del motor, para marcar cada campo del
+ * editor: el camino inverso de `FALLO_HEREDADO`.
+ */
+export function fallosDelMotor(fallos: readonly FalloDeBorrador[]): readonly DraftFailure[] {
+  const delMotor = new Map<FalloDeBorrador, DraftFailure>(
+    Object.entries(FALLO_HEREDADO).map(([motor, heredado]) => [heredado, motor as DraftFailure]),
+  );
+  return fallos.map((fallo) => delMotor.get(fallo) ?? (fallo as DraftFailure));
+}
+
 /** Todo lo que le impide a un borrador convertirse en campaña. */
 export function revisar(borrador: BorradorDeCampana): readonly FalloDeBorrador[] {
   const fallos = validateDraft({

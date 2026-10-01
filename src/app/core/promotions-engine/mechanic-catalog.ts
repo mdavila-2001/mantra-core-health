@@ -27,13 +27,20 @@ export interface MechanicInfo {
   readonly modelSupport: ModelSupport;
 }
 
-/** Las familias, en el orden en que el formulario las ofrece. */
-export const MECHANIC_FAMILIES: readonly { readonly family: MechanicFamily; readonly label: string }[] = [
-  { family: 'PRICE', label: 'Precio' },
-  { family: 'QUANTITY', label: 'Cantidad' },
-  { family: 'ORDER_TOTAL', label: 'Total de la compra' },
-  { family: 'COMBO', label: 'Combos y regalos' },
-  { family: 'LOYALTY', label: 'Fidelización' },
+/**
+ * Las familias, en el orden en que el formulario las ofrece. `short` es el
+ * rótulo de una sola palabra para un control segmentado en pantalla angosta.
+ */
+export const MECHANIC_FAMILIES: readonly {
+  readonly family: MechanicFamily;
+  readonly label: string;
+  readonly short: string;
+}[] = [
+  { family: 'PRICE', label: 'Precio', short: 'Precio' },
+  { family: 'QUANTITY', label: 'Cantidad', short: 'Cantidad' },
+  { family: 'ORDER_TOTAL', label: 'Total de la compra', short: 'Total' },
+  { family: 'COMBO', label: 'Combos y regalos', short: 'Combos' },
+  { family: 'LOYALTY', label: 'Fidelización', short: 'Puntos' },
 ];
 
 export const MECHANIC_CATALOG: readonly MechanicInfo[] = [

@@ -1,0 +1,424 @@
+<div class="regla" data-testid="regla-editor">
+  <app-form-field
+    label="Tipo de campaña"
+    hint="Elegí cómo se promociona: con el precio, con las unidades, con el total de la compra, con combos o con puntos."
+  >
+    <app-segmented-control
+      ariaLabel="Tipo de campaña"
+      size="md"
+      data-testid="regla-familias"
+      [options]="familyOptions"
+      [value]="fields().family"
+      (valueChange)="chooseFamily($event)"
+    />
+  </app-form-field>
+
+  <app-form-field label="Cómo se descuenta">
+    <app-radio-group
+      data-testid="regla-mecanicas"
+      [value]="fields().kind"
+      (valueChange)="chooseKind($event)"
+    >
+      @for (kind of kindsOfFamily(); track kind.kind) {
+        <app-radio [value]="kind.kind" [label]="kind.label" />
+      }
+    </app-radio-group>
+  </app-form-field>
+
+  <p class="regla__ayuda" data-testid="regla-ayuda">
+    {{ info().help }}
+    <span class="regla__ejemplo">Ejemplo: {{ info().example }}</span>
+  </p>
+
+  <!-- Los campos de la mecánica elegida, y sólo ésos. -->
+  @switch (fields().kind) {
+    @case ('PERCENT_OFF') {
+      <ng-container *ngTemplateOutlet="percentField" />
+    }
+    @case ('CLEARANCE') {
+      <ng-container *ngTemplateOutlet="percentField" />
+    }
+    @case ('AMOUNT_OFF_PER_UNIT') {
+      <app-form-field
+        class="regla__campo"
+        label="Monto que se descuenta en cada unidad"
+        [hint]="'En ' + currency() + '. Tiene que ser menor que el precio de cada producto.'"
+        [errorMessage]="errorOf('amount')"
+      >
+        <app-input
+          type="number"
+          inputMode="decimal"
+          placeholder="0.00"
+          [hasError]="hasErrorIn('amount')"
+          [value]="fields().amount"
+          (valueChange)="patch({ amount: text($event) })"
+        />
+      </app-form-field>
+    }
+    @case ('CAMPAIGN_PRICE') {
+      <p class="regla__nota">
+        El precio de campaña de cada producto lo escribís abajo, en la lista de productos.
+      </p>
+    }
+    @case ('BUY_X_PAY_Y') {
+      <div class="regla__fila">
+        <app-form-field class="regla__campo" label="Unidades que lleva" [errorMessage]="errorOf('quantities')">
+          <app-input
+            type="number"
+            [hasError]="hasErrorIn('quantities')"
+            [value]="fields().take"
+            (valueChange)="patch({ take: text($event) })"
+          />
+        </app-form-field>
+        <app-form-field
+          class="regla__campo"
+          label="Unidades que paga"
+          hint="Menos de las que lleva: 2 y 1 es un 2x1; 3 y 2, un 3x2."
+        >
+          <app-input
+            type="number"
+            [hasError]="hasErrorIn('quantities')"
+            [value]="fields().pay"
+            (valueChange)="patch({ pay: text($event) })"
+          />
+        </app-form-field>
+      </div>
+    }
+    @case ('NTH_UNIT_PERCENT') {
+      <div class="regla__fila">
+        <app-form-field
+          class="regla__campo"
+          label="Número de la unidad con descuento"
+          hint="2 es la segunda, 3 la tercera…"
+          [errorMessage]="errorOf('nth')"
+        >
+          <app-input
+            type="number"
+            [hasError]="hasErrorIn('nth')"
+            [value]="fields().nth"
+            (valueChange)="patch({ nth: text($event) })"
+          />
+        </app-form-field>
+        <ng-container *ngTemplateOutlet="percentField" />
+      </div>
+    }
+    @case ('VOLUME_TIERS') {
+      <ng-container *ngTemplateOutlet="tiersEditor; context: { list: 'quantityTiers', unit: 'unidades' }" />
+    }
+    @case ('ORDER_PERCENT_OVER') {
+      <div class="regla__fila">
+        <ng-container *ngTemplateOutlet="minSpendField" />
+        <ng-container *ngTemplateOutlet="percentField" />
+      </div>
+    }
+    @case ('ORDER_AMOUNT_OVER') {
+      <div class="regla__fila">
+        <ng-container *ngTemplateOutlet="minSpendField" />
+        <app-form-field
+          class="regla__campo"
+          label="Monto que se descuenta"
+          [hint]="'En ' + currency() + '.'"
+          [errorMessage]="errorOf('amount')"
+        >
+          <app-input
+            type="number"
+            inputMode="decimal"
+            placeholder="0.00"
+            [hasError]="hasErrorIn('amount')"
+            [value]="fields().amount"
+            (valueChange)="patch({ amount: text($event) })"
+          />
+        </app-form-field>
+      </div>
+    }
+    @case ('SPEND_TIERS') {
+      <ng-container *ngTemplateOutlet="tiersEditor; context: { list: 'spendTiers', unit: currency() }" />
+    }
+    @case ('BUNDLE_PRICE') {
+      <app-form-field
+        class="regla__campo"
+        label="Precio del combo"
+        [hint]="
+          bundleListTotal() === null || items().length < 2
+            ? 'Elegí al menos dos productos abajo.'
+            : 'Por separado suman ' + currency() + ' ' + bundleListTotal() + '. El combo tiene que costar menos.'
+        "
+        [errorMessage]="errorOf('bundle')"
+      >
+        <app-input
+          type="number"
+          inputMode="decimal"
+          placeholder="0.00"
+          [hasError]="hasErrorIn('bundle')"
+          [value]="fields().bundlePrice"
+          (valueChange)="patch({ bundlePrice: text($event) })"
+        />
+      </app-form-field>
+    }
+    @case ('GIFT_WITH_PURCHASE') {
+      <ng-container *ngTemplateOutlet="pairFields" />
+    }
+    @case ('BUY_A_GET_B_PERCENT') {
+      <div class="regla__fila">
+        <ng-container *ngTemplateOutlet="pairFields" />
+        <ng-container *ngTemplateOutlet="percentField" />
+      </div>
+    }
+    @case ('POINTS_MULTIPLIER') {
+      <app-form-field
+        class="regla__campo"
+        label="Multiplicador de puntos"
+        hint="Un entero entre 2 y 10: 2 suma el doble."
+        [errorMessage]="errorOf('multiplier')"
+      >
+        <app-input
+          type="number"
+          [hasError]="hasErrorIn('multiplier')"
+          [value]="fields().multiplier"
+          (valueChange)="patch({ multiplier: text($event) })"
+        />
+      </app-form-field>
+    }
+  }
+
+  @if (canApplyToAllItems()) {
+    <app-switch
+      data-testid="regla-toda-la-tienda"
+      label="Aplicar a todos los productos de la farmacia, sin elegirlos uno por uno"
+      [checked]="fields().allItems"
+      (checkedChange)="patch({ allItems: $event })"
+    />
+  }
+
+  <app-accordion>
+    <app-accordion-panel heading="Condiciones opcionales" data-testid="regla-condiciones">
+      <div class="regla__condiciones">
+        <app-form-field
+          class="regla__campo"
+          label="Tope de descuento por pedido"
+          [hint]="'En ' + currency() + '. Sin tope, el descuento no tiene límite.'"
+          [errorMessage]="errorOf('cap')"
+        >
+          <app-input
+            type="number"
+            inputMode="decimal"
+            placeholder="Sin tope"
+            [hasError]="hasErrorIn('cap')"
+            [value]="fields().maxDiscount"
+            (valueChange)="patch({ maxDiscount: text($event) })"
+          />
+        </app-form-field>
+
+        <app-form-field
+          class="regla__campo"
+          label="Código de cupón"
+          hint="Si lo ponés, la campaña sólo vale cuando el pedido trae este código."
+          [errorMessage]="errorOf('coupon')"
+        >
+          <app-input
+            placeholder="Sin cupón"
+            [hasError]="hasErrorIn('coupon')"
+            [value]="fields().couponCode"
+            (valueChange)="patch({ couponCode: text($event) })"
+          />
+        </app-form-field>
+
+        <app-form-field
+          label="Días de la semana"
+          hint="Sin marcar ninguno, vale todos los días."
+        >
+          <app-checkbox-group
+            [options]="weekdays"
+            [value]="fields().weekdays"
+            (valueChange)="patch({ weekdays: $event })"
+          />
+        </app-form-field>
+
+        <div class="regla__fila">
+          <app-form-field class="regla__campo" label="Desde las" [errorMessage]="errorOf('time')">
+            <app-input
+              type="time"
+              [hasError]="hasErrorIn('time')"
+              [value]="fields().fromTime"
+              (valueChange)="patch({ fromTime: text($event) })"
+            />
+          </app-form-field>
+          <app-form-field class="regla__campo" label="Hasta las" hint="Sin pasar de la medianoche.">
+            <app-input
+              type="time"
+              [hasError]="hasErrorIn('time')"
+              [value]="fields().toTime"
+              (valueChange)="patch({ toTime: text($event) })"
+            />
+          </app-form-field>
+        </div>
+
+        <app-switch
+          label="Se puede sumar con otras campañas"
+          [checked]="fields().stackable"
+          (checkedChange)="patch({ stackable: $event })"
+        />
+
+        <p class="regla__nota">
+          Los tres límites de abajo se guardan con la campaña, pero todavía no se hacen cumplir en
+          esta demostración.
+        </p>
+        <div class="regla__fila">
+          <app-form-field class="regla__campo" label="Usos por persona" [errorMessage]="errorOf('limit')">
+            <app-input
+              type="number"
+              placeholder="Sin límite"
+              [hasError]="hasErrorIn('limit')"
+              [value]="fields().perPersonLimit"
+              (valueChange)="patch({ perPersonLimit: text($event) })"
+            />
+          </app-form-field>
+          <app-form-field class="regla__campo" label="Unidades disponibles" hint="«Hasta agotar stock».">
+            <app-input
+              type="number"
+              placeholder="Sin límite"
+              [hasError]="hasErrorIn('limit')"
+              [value]="fields().availableUnits"
+              (valueChange)="patch({ availableUnits: text($event) })"
+            />
+          </app-form-field>
+          <app-form-field class="regla__campo" label="Presupuesto de la campaña" [hint]="'En ' + currency() + '.'">
+            <app-input
+              type="number"
+              inputMode="decimal"
+              placeholder="Sin presupuesto"
+              [hasError]="hasErrorIn('cap')"
+              [value]="fields().budget"
+              (valueChange)="patch({ budget: text($event) })"
+            />
+          </app-form-field>
+        </div>
+      </div>
+    </app-accordion-panel>
+  </app-accordion>
+
+  <section class="regla__vista" aria-labelledby="regla-vista-titulo" data-testid="regla-vista">
+    <h3 id="regla-vista-titulo" class="regla__vista-titulo">Así lo ve quien compra</h3>
+    <app-badge variant="primary" data-testid="regla-vista-badge">{{ preview().badge }}</app-badge>
+    <p class="regla__vista-frase" data-testid="regla-vista-frase">{{ preview().sentence }}</p>
+    @if (preview().example; as example) {
+      <p class="regla__vista-ejemplo" data-testid="regla-vista-ejemplo">{{ example }}</p>
+    }
+  </section>
+</div>
+
+<!-- Piezas que se repiten entre mecánicas. -->
+
+<ng-template #percentField>
+  <app-form-field
+    class="regla__campo"
+    label="Porcentaje de descuento"
+    hint="Un entero entre 1 % y 99 %."
+    [errorMessage]="errorOf('percent')"
+  >
+    <app-input
+      type="number"
+      data-testid="regla-porcentaje"
+      [hasError]="hasErrorIn('percent')"
+      [value]="fields().percent"
+      (valueChange)="patch({ percent: text($event) })"
+    />
+  </app-form-field>
+</ng-template>
+
+<ng-template #minSpendField>
+  <app-form-field
+    class="regla__campo"
+    label="Compra mínima"
+    [hint]="'En ' + currency() + '. El descuento vale desde este monto.'"
+    [errorMessage]="errorOf('minSpend')"
+  >
+    <app-input
+      type="number"
+      inputMode="decimal"
+      placeholder="0.00"
+      [hasError]="hasErrorIn('minSpend')"
+      [value]="fields().minSpend"
+      (valueChange)="patch({ minSpend: text($event) })"
+    />
+  </app-form-field>
+</ng-template>
+
+<ng-template #pairFields>
+  <app-form-field
+    class="regla__campo"
+    label="Producto que se compra"
+    [hint]="items().length < 2 ? 'Elegí al menos dos productos abajo.' : ''"
+    [errorMessage]="errorOf('pair')"
+  >
+    <app-select
+      placeholder="Elegí el producto"
+      [options]="itemOptions()"
+      [hasError]="hasErrorIn('pair')"
+      [value]="fields().triggerItemId"
+      (valueChange)="patch({ triggerItemId: $event })"
+    />
+  </app-form-field>
+  <app-form-field
+    class="regla__campo"
+    [label]="fields().kind === 'GIFT_WITH_PURCHASE' ? 'Producto de regalo' : 'Producto con descuento'"
+  >
+    <app-select
+      placeholder="Elegí el producto"
+      [options]="itemOptions()"
+      [hasError]="hasErrorIn('pair')"
+      [value]="fields().rewardItemId"
+      (valueChange)="patch({ rewardItemId: $event })"
+    />
+  </app-form-field>
+</ng-template>
+
+<ng-template #tiersEditor let-list="list" let-unit="unit">
+  <div class="regla__tramos" [attr.data-testid]="'regla-tramos-' + list">
+    @for (tier of tiersOf(list); track $index; let position = $index) {
+      <div class="regla__tramo">
+        <app-form-field
+          class="regla__campo"
+          [label]="'Tramo ' + (position + 1) + ' · desde (' + unit + ')'"
+          [errorMessage]="position === 0 ? errorOf('tiers') || errorOf('minSpend') : ''"
+        >
+          <app-input
+            type="number"
+            [hasError]="hasErrorIn('tiers') || hasErrorIn('minSpend')"
+            [value]="tier.threshold"
+            (valueChange)="patchTier(list, position, { threshold: text($event) })"
+          />
+        </app-form-field>
+        <app-form-field class="regla__campo" [label]="'Tramo ' + (position + 1) + ' · descuento (%)'">
+          <app-input
+            type="number"
+            [hasError]="hasErrorIn('percent')"
+            [value]="tier.percent"
+            (valueChange)="patchTier(list, position, { percent: text($event) })"
+          />
+        </app-form-field>
+        <button
+          app-button
+          variant="ghost"
+          size="sm"
+          type="button"
+          [attr.aria-label]="'Quitar el tramo ' + (position + 1)"
+          [disabled]="tiersOf(list).length <= minTiers"
+          (clicked)="removeTier(list, position)"
+        >
+          Quitar
+        </button>
+      </div>
+    }
+    <button
+      app-button
+      variant="secondary"
+      size="sm"
+      type="button"
+      [disabled]="tiersOf(list).length >= maxTiers"
+      (clicked)="addTier(list)"
+    >
+      Agregar tramo
+    </button>
+  </div>
+</ng-template>
