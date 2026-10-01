@@ -14,6 +14,8 @@ export interface RenglonDelResumen {
   readonly cantidad: number;
   /** `null` si falta el precio o la farmacia no lo tiene. */
   readonly subtotal: string | null;
+  /** La campaña que alcanzó este renglón («2x1», «20 % menos»), o `null`. */
+  readonly promocion?: string | null;
   /** Se eligió una alternativa de demostración en la orden médica. */
   readonly esAlternativa: boolean;
   readonly disponible: boolean;
@@ -28,6 +30,8 @@ export interface ResumenDelPedido {
   /** Sin seguro, todos los renglones. */
   readonly noAprobados: readonly RenglonDelResumen[];
   readonly subtotal: string | null;
+  /** Lo que las campañas descuentan sobre el total del pedido, o `null`. */
+  readonly descuentoDeCampana?: string | null;
   readonly descuentoDeRed: string | null;
   /** Sólo con seguro y algún renglón aprobado. */
   readonly coaseguro: string | null;
