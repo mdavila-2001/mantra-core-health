@@ -540,6 +540,35 @@
           </app-form-field>
         }
 
+        <!-- v4.2.40 · ¿qué se pide? La consulta de siempre, o uno de los servicios
+             que este profesional deja pedir desde el portal. La pregunta sólo
+             aparece si hay algo que elegir: con un profesional que no ofrece
+             servicios la pantalla no cambia. Cada opción dice cuánto dura, porque
+             elegir un estudio sin saber cuánto tarda es elegir a ciegas. -->
+        @if (ofertasDelProfesional().length > 0) {
+          <app-form-field
+            label="¿Qué querés pedir?"
+            hint="Una consulta o uno de sus servicios. Cada servicio tiene su propia duración."
+            class="turnos__filtro"
+          >
+            <app-select
+              data-testid="turnos-servicio"
+              [options]="opcionesDeServicio()"
+              [value]="queQuiere()"
+              (valueChange)="elegirQueQuiere($event)"
+            />
+          </app-form-field>
+          @if (servicioElegido(); as servicio) {
+            <p class="turnos__estado" data-testid="turnos-servicio-detalle">
+              <strong>{{ servicio.serviceName }}</strong> · dura {{ duracionDe(servicio) }} ·
+              {{ precioDe(servicio) }}
+              @if (servicio.requiresApproval) {
+                · el profesional tiene que confirmarlo
+              }
+            </p>
+          }
+        }
+
         <!-- Cuando se llegó acá señalando un día en el calendario, se dice cuál
              es y se ofrece volver a verlos todos: si no, la lista parece corta
              sin explicación (F-10). -->
@@ -558,7 +587,9 @@
              una notificación de que un paciente desconfirmó». La salida del
              callejón sin salida: antes, sin cupos, la pantalla sólo decía
              «probá con otra agenda». -->
-        @if (recursoParaEspera() !== null) {
+        <!-- La lista de espera es de la grilla de consultas: un servicio se calcula
+             al leer y no tiene cupo al que anotarse. -->
+        @if (recursoParaEspera() !== null && !enServicio()) {
           <div class="turnos__espera-accion">
             @if (yaEnEspera()) {
               <p class="turnos__estado" data-testid="turnos-ya-en-espera">
