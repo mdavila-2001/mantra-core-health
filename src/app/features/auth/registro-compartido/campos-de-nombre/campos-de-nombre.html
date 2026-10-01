@@ -20,7 +20,14 @@
       [testId]="prefijoTestId() + '-nombre'"
     />
   </app-form-field>
-    </ng-template>
+    @for (extra of extras(); track extra; let i = $index) {
+      <app-form-field class="nombres__campo nombres__campo--tercio" [label]="'Nombre ' + (i + 4)">
+        <div class="nombres__extra">
+          <app-input type="text" placeholder="Otro nombre" [formControl]="extra" [testId]="prefijoTestId() + '-nombre-extra-' + i" />
+          <button app-button type="button" variant="ghost" size="sm" [iconOnly]="true" [attr.aria-label]="'Quitar el nombre ' + (i + 4)" [appTooltip]="'Quitar el nombre ' + (i + 4)" [attr.data-testid]="prefijoTestId() + '-quitar-nombre-' + i" (clicked)="quitarNombre(i)"><app-nav-icon name="remove" /></button>
+        </div>
+      </app-form-field>
+    }    </ng-template>
     <ng-template appCampoPersonalizado="middleName">
 <app-form-field class="nombres__campo nombres__campo--tercio" label="Segundo nombre (opcional)">
     <app-input
@@ -40,33 +47,7 @@
     />
   </app-form-field>
     </ng-template>
-    @for (extra of extras(); track extra; let i = $index) {
-      <ng-template [appCampoPersonalizado]="'extraNames.' + i">
-<app-form-field class="nombres__campo nombres__campo--tercio" [label]="'Nombre ' + (i + 4)">
-      <div class="nombres__extra">
-        <app-input
-          type="text"
-          placeholder="Otro nombre"
-          [formControl]="extra"
-          [testId]="prefijoTestId() + '-nombre-extra-' + i"
-        />
-        <button
-          app-button
-          type="button"
-          variant="ghost"
-          size="sm"
-          [iconOnly]="true"
-          [attr.aria-label]="'Quitar el nombre ' + (i + 4)"
-          [appTooltip]="'Quitar el nombre ' + (i + 4)"
-          [attr.data-testid]="prefijoTestId() + '-quitar-nombre-' + i"
-          (clicked)="quitarNombre(i)"
-        >
-          <app-nav-icon name="remove" />
-        </button>
-      </div>
-    </app-form-field>
-      </ng-template>
-    }
+
     <ng-template appCampoPersonalizado="lastName">
 <app-form-field
     class="nombres__campo nombres__campo--mitad"

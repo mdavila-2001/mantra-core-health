@@ -49,7 +49,7 @@ export class CamposDeNombre {
   protected readonly namePages = computed(() => {
     const field = (key: string): CampoDeFormulario => ({ key, label: '', control: 'custom' });
     return paginarCampos([
-      { titulo: 'Nombres', campos: ['name', 'middleName', 'thirdName', ...this.extras().map((_, index) => `extraNames.${index}`)].map(field) },
+      { titulo: 'Nombres', campos: ['name', 'middleName', 'thirdName'].map(field) },
       { titulo: 'Apellidos', campos: ['lastName', 'motherLastName'].map(field) },
     ]);
   });
