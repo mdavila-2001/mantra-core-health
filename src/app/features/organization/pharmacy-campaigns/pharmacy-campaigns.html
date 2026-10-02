@@ -57,9 +57,7 @@
                     {{ fila.cuantosProductos === 1 ? 'producto' : 'productos' }}
                     · del {{ fila.campana.desde | date: 'd MMM' }}
                     al {{ fila.campana.hasta | date: 'd MMM y' }}
-                    @if (ahorroMayor(fila.campana); as ahorro) {
-                      · hasta {{ ahorro }} % menos
-                    }
+                    · {{ etiquetaDe(fila.campana) }}
                   </span>
                 </div>
                 <app-badge [variant]="tonoDelEstado(fila.estado)">
@@ -106,91 +104,98 @@
           </app-form-field>
         </div>
 
-        <app-form-field label="Cómo se calcula el descuento">
-          <app-select
-            [options]="opcionesDeDescuento"
-            [value]="tipoDeDescuento()"
-            (valueChange)="fijarTipoDeDescuento($event)"
-          />
-        </app-form-field>
-
-        @if (porPorcentaje()) {
-          <app-form-field label="Descuento" hint="Entre 1 % y 99 %. Se aplica a todos los productos de la campaña.">
-            <app-input type="number" [value]="porcentaje()" (valueChange)="fijarPorcentaje($event)" />
-          </app-form-field>
-        }
-
-        <h3 class="campanas__subtitulo">Productos incluidos</h3>
-
-        <app-search-field
-          label="Buscar en tu catálogo"
-          placeholder="Nombre del medicamento o código"
-          [value]="termino()"
-          (valueChange)="termino.set($event)"
-          [loading]="buscando()"
-          (searched)="buscarEnElCatalogo($event)"
+        <!-- La regla: qué descuenta, sobre qué y con qué condiciones. Reemplaza
+             al selector de dos opciones («un porcentaje» / «un precio por
+             producto»), que dejaba afuera todo lo demás. -->
+        <app-promotion-rule-editor
+          [fields]="campos()"
+          [items]="itemsParaElEditor()"
+          [currency]="moneda()"
+          [failures]="fallosParaElEditor()"
+          (fieldsChange)="cambiarCampos($event)"
         />
 
-        @if (seBusco()) {
-          @if (candidatos().length > 0) {
-            <ul class="campanas__candidatos" data-testid="campanas-candidatos">
-              @for (producto of candidatos(); track producto.id) {
-                <li class="campanas__candidato">
+        @if (pideProductos()) {
+          <h3 class="campanas__subtitulo">Productos incluidos</h3>
+
+          <app-search-field
+            label="Buscar en tu catálogo"
+            placeholder="Nombre del medicamento o código"
+            [value]="termino()"
+            (valueChange)="termino.set($event)"
+            [loading]="buscando()"
+            (searched)="buscarEnElCatalogo($event)"
+          />
+
+          @if (seBusco()) {
+            @if (candidatos().length > 0) {
+              <ul class="campanas__candidatos" data-testid="campanas-candidatos">
+                @for (producto of candidatos(); track producto.id) {
+                  <li class="campanas__candidato">
+                    <div class="campanas__fila-datos">
+                      <span class="campanas__principal">{{ producto.brandName ?? producto.genericName ?? producto.productCode }}</span>
+                      @if (producto.strengthText !== null || producto.packageSizeText !== null) {
+                        <span class="campanas__secundario">
+                          {{ producto.strengthText }} {{ producto.packageSizeText }}
+                        </span>
+                      }
+                    </div>
+                    <button app-button variant="secondary" size="sm" type="button" (clicked)="agregar(producto)">
+                      Agregar
+                    </button>
+                  </li>
+                }
+              </ul>
+            } @else {
+              <p class="campanas__secundario" role="status">
+                No hay productos de tu catálogo con ese nombre que no estén ya en la campaña.
+              </p>
+            }
+          }
+
+          @if (renglones().length > 0) {
+            <ul class="campanas__renglones" data-testid="campanas-renglones">
+              @for (renglon of renglones(); track renglon.productId) {
+                <li class="campanas__renglon">
                   <div class="campanas__fila-datos">
-                    <span class="campanas__principal">{{ producto.brandName ?? producto.genericName ?? producto.productCode }}</span>
-                    @if (producto.strengthText !== null || producto.packageSizeText !== null) {
-                      <span class="campanas__secundario">
-                        {{ producto.strengthText }} {{ producto.packageSizeText }}
-                      </span>
+                    <span class="campanas__principal">{{ renglon.nombre }}</span>
+                    @if (renglon.presentacion !== null) {
+                      <span class="campanas__secundario">{{ renglon.presentacion }}</span>
                     }
                   </div>
-                  <button app-button variant="secondary" size="sm" type="button" (clicked)="agregar(producto)">
-                    Agregar
+                  <div class="campanas__precios">
+                    <app-form-field label="Precio normal">
+                      <app-input
+                        [value]="renglon.precioNormal"
+                        (valueChange)="fijarPrecioNormal(renglon.productId, $event)"
+                        placeholder="0.00"
+                      />
+                    </app-form-field>
+                    @if (esPrecioPorProducto()) {
+                      <app-form-field label="Precio de campaña">
+                        <app-input
+                          [value]="renglon.precioPromocional ?? ''"
+                          (valueChange)="fijarPrecioPromocional(renglon.productId, $event)"
+                          placeholder="0.00"
+                        />
+                      </app-form-field>
+                    }
+                  </div>
+                  <button app-button variant="ghost" size="sm" type="button" (clicked)="quitar(renglon.productId)">
+                    Quitar
                   </button>
                 </li>
               }
             </ul>
-          } @else {
-            <p class="campanas__secundario" role="status">
-              No hay productos de tu catálogo con ese nombre que no estén ya en la campaña.
-            </p>
           }
-        }
-
-        @if (renglones().length > 0) {
-          <ul class="campanas__renglones" data-testid="campanas-renglones">
-            @for (renglon of renglones(); track renglon.productId) {
-              <li class="campanas__renglon">
-                <div class="campanas__fila-datos">
-                  <span class="campanas__principal">{{ renglon.nombre }}</span>
-                  @if (renglon.presentacion !== null) {
-                    <span class="campanas__secundario">{{ renglon.presentacion }}</span>
-                  }
-                </div>
-                <div class="campanas__precios">
-                  <app-form-field label="Precio normal">
-                    <app-input
-                      [value]="renglon.precioNormal"
-                      (valueChange)="fijarPrecioNormal(renglon.productId, $event)"
-                      placeholder="0.00"
-                    />
-                  </app-form-field>
-                  @if (!porPorcentaje()) {
-                    <app-form-field label="Precio de campaña">
-                      <app-input
-                        [value]="renglon.precioPromocional ?? ''"
-                        (valueChange)="fijarPrecioPromocional(renglon.productId, $event)"
-                        placeholder="0.00"
-                      />
-                    </app-form-field>
-                  }
-                </div>
-                <button app-button variant="ghost" size="sm" type="button" (clicked)="quitar(renglon.productId)">
-                  Quitar
-                </button>
-              </li>
+        } @else {
+          <p class="campanas__secundario" data-testid="campanas-sin-productos">
+            @if (regla().allItems) {
+              Esta campaña vale para todos los productos de tu farmacia: no hace falta elegirlos.
+            } @else {
+              Esta campaña se calcula sobre el total de la compra: no apunta a productos.
             }
-          </ul>
+          </p>
         }
 
         <div class="campanas__acciones">

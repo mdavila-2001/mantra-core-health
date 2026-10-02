@@ -15,7 +15,7 @@ import { Card } from '../../../shared/components/molecules/card/card';
 import { EmptyState } from '../../../shared/components/molecules/empty-state/empty-state';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
-import { DependentFormDialog } from './dependent-form-dialog';
+import { DependentFormDialog, type SolicitudEnviada } from './dependent-form-dialog';
 
 /**
  * Las personas a cargo del titular, y el alta de una nueva.
@@ -93,11 +93,11 @@ export class Dependents {
   }
 
   /** Se envió la solicitud; el vínculo nace cuando la otra persona acepte. */
-  protected enviada(documento: string): void {
+  protected enviada(envio: SolicitudEnviada): void {
     this.registrando.set(false);
     this.toast.show({
       type: 'success',
-      message: `Enviamos la solicitud a la cuenta con CI ${documento}. Cuando la acepte, va a aparecer en tu lista.`,
+      message: `Enviamos la solicitud a ${envio.destinatario}. Cuando la acepte, va a aparecer en tu lista.`,
     });
   }
 

@@ -91,6 +91,26 @@
   background: var(--bg-surface);
 }
 
+@media (max-width: 640px) {
+  .campana__panel {
+    position: fixed;
+    inset-block-start: calc(var(--h-header, 56px) + 88px);
+    inset-inline: var(--sp-2);
+    inline-size: auto;
+    max-block-size: calc(100dvh - var(--h-header, 56px) - 96px);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .campana__panel::before {
+    display: none;
+  }
+
+  .campana__lista {
+    min-block-size: 0;
+  }
+}
+
 .campana__encabezado {
   border-start-start-radius: var(--r-md);
   border-start-end-radius: var(--r-md);
@@ -197,6 +217,11 @@ button.campana__item:focus-visible {
 .campana__item.is-sin-leer {
   border-inline-start-color: var(--brand-primary);
   font-weight: 600;
+}
+
+/* Alineados con el texto de la fila: su padding más la barra de «sin leer». */
+.campana__acciones {
+  --notificacion-acciones-inicio: calc(var(--sp-3) + 3px);
 }
 
 .campana__item-titulo {

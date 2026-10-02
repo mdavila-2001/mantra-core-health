@@ -2,6 +2,8 @@ import { Location } from '@angular/common';
 import type { Type } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
+import { of } from 'rxjs';
+import { PublicDirectoryClient } from './core/data-access/public-directory/public-directory.client';
 import { APP_SECTIONS } from './core/navigation/navigation.map';
 import { seccionRolesGuard } from './core/navigation/section-roles.guard';
 import {
@@ -378,9 +380,10 @@ describe('rutas del armazón', () => {
    * ningún defecto: no hay aserción que dependa de cuánto tarde.
    */
   it('una sección disponible NO cae en el placeholder', async () => {
-    for (const section of APP_SECTIONS.filter(
+    const sections = APP_SECTIONS.filter(
       (s) => s.availability === 'disponible' && SECCIONES_REDIRIGIDAS[s.path] === undefined,
-    )) {
+    );
+    await Promise.all(sections.map(async (section) => {
       const ruta = hijas.find((route) => route.path === section.path);
       const componente = ruta?.component ?? (await ruta?.loadComponent?.());
 
@@ -389,7 +392,7 @@ describe('rutas del armazón', () => {
       // renombra la clase (`_SectionPlaceholder`) y una prueba por texto se
       // rompería sin que nada esté mal.
       expect(componente, section.path).not.toBe(SectionPlaceholder);
-    }
+    }));
   }, 30_000);
 
   it('una sección planificada cae en el placeholder, y diferido', async () => {
@@ -431,7 +434,12 @@ describe('rutas públicas del buscador', () => {
   let location: Location;
 
   beforeEach(() => {
-    TestBed.configureTestingModule({ providers: [provideRouter(routes)] });
+    TestBed.configureTestingModule({
+      providers: [
+        provideRouter(routes),
+        { provide: PublicDirectoryClient, useValue: { getProfile: () => of(null) } },
+      ],
+    });
     router = TestBed.inject(Router);
     location = TestBed.inject(Location);
   });
@@ -475,9 +483,11 @@ describe('rutas públicas del buscador', () => {
    * que retroceder al `buscar` generado para encontrarlo. Es el supuesto del
    * que depende que las dos formas convivan.
    */
-  it('las URL de la bóveda siguen abriendo, por retroceso al bloque generado', async () => {
-    expect(await resuelve('/buscar/buscador-listado')).toBe(true);
-    expect(await resuelve('/buscar/perfil-profesional-detalle')).toBe(true);
+  it('las URL de la bóveda conservan su destino en API real', async () => {
+    expect(await router.navigateByUrl('/buscar/buscador-listado')).toBe(true);
+    expect(location.path()).toBe('/search');
+    expect(await router.navigateByUrl('/buscar/perfil-profesional-detalle')).toBe(true);
+    expect(location.path()).toBe('/search/practitioners');
   });
 
   // ─── TAREA-29: las direcciones viejas siguen abriendo ──────────────────────

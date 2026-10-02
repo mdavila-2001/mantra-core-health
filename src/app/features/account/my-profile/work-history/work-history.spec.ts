@@ -1046,7 +1046,7 @@ describe('WorkHistory — las dos puertas de «Dónde atiendo» (13/09/2026)', (
     expect(texto).toContain('Trabajás acá');
   });
 
-  it('el propio se puede editar; el ajeno, sólo retirar', async () => {
+  it('el propio sólo ofrece el QR; el ajeno, el QR y dejar de atender', async () => {
     const { fixture, http } = await montarConSedes();
     http.expectOne(SITIOS).flush({ items: [propia(), ajena()], count: 2 });
     fixture.detectChanges();
@@ -1058,12 +1058,10 @@ describe('WorkHistory — las dos puertas de «Dónde atiendo» (13/09/2026)', (
     const propiaOfrece = codigosDeSede(fixture, filas[0]!);
     const ajenaOfrece = codigosDeSede(fixture, filas[1]!);
 
-    expect(propiaOfrece).toContain('editar');
-    expect(ajenaOfrece).not.toContain('editar');
-    // Retirar sigue estando en los dos: dejar de atender en un lugar vale para
-    // el propio y para el ajeno.
-    expect(propiaOfrece).toContain('retirar');
-    expect(ajenaOfrece).toContain('retirar');
+    // El consultorio propio no se puede quitar ni se corrige desde la tabla:
+    // sólo queda el QR. Dejar de atender es un vínculo, y vale sólo en la ajena.
+    expect(propiaOfrece).toEqual(['qr']);
+    expect(ajenaOfrece).toEqual(['qr', 'retirar']);
     cerrarAcciones(fixture);
   });
 
@@ -1200,44 +1198,32 @@ describe('WorkHistory — las acciones de cada sede (13/09/2026)', () => {
    * No se debilitó: cambió de exigencia junto con la decisión, y sigue
    * midiendo lo mismo, que es si se entiende qué hace cada acción.
    */
-  it('editar y retirar se leen con su texto, y el disparador dice de qué sede', async () => {
+  it('el consultorio propio muestra un único botón «Editar QR», sin desplegable', async () => {
     const { fixture, http } = await montarConSedes();
     http.expectOne(SITIOS).flush({ items: [conQr()], count: 1 });
     fixture.detectChanges();
 
     const fila = filas(fixture)[0]!;
 
-    // Tres acciones: la sede propia colapsa. El disparador nombra la sede,
-    // porque «Acciones» repetido cuatro veces no le sirve a quien navega por
-    // lista de botones.
-    const disparador = fila.querySelector('[data-testid="row-actions-trigger"]')!;
-    expect(disparador.getAttribute('aria-label')).toBe('Acciones de Consultorio Dra. Pérez');
-
+    // Una sola acción: se dibuja en la fila con su texto, no en un menú.
+    expect(fila.querySelector('[data-testid="row-actions-trigger"]')).toBeNull();
     const acciones = accionesDeSede(fixture, fila);
-    const editar = acciones.find((el) => el.dataset['action'] === 'editar')!;
-    const retirar = acciones.find((el) => el.dataset['action'] === 'retirar')!;
-
-    expect(editar.textContent?.trim()).toBe('Editar');
-    expect(retirar.textContent?.trim()).toBe('Retirar');
-
-    // El ícono sigue estando: acompaña al texto, no lo sustituye.
-    expect(editar.querySelector('svg')).not.toBeNull();
-    expect(retirar.querySelector('svg')).not.toBeNull();
-
-    cerrarAcciones(fixture);
+    expect(acciones).toHaveLength(1);
+    expect(acciones[0]!.dataset['action']).toBe('qr');
+    expect(acciones[0]!.textContent?.trim()).toBe('Editar QR');
+    expect(acciones[0]!.getAttribute('aria-label')).toBe('Editar QR — Consultorio Dra. Pérez');
   });
 
   /**
-   * El glifo dice «borrar» porque es el que se reconoce; el texto dice lo que
-   * de verdad pasa, que no es lo mismo en las dos sedes.
+   * Retirar existe sólo en la sede ajena: el consultorio propio no se quita.
    */
-  it('retirar se nombra distinto en la propia y en la ajena', async () => {
+  it('dejar de atender existe sólo en la ajena', async () => {
     const { fixture, http } = await montarConSedes();
     http.expectOne(SITIOS).flush({ items: [conQr(), sinQr()], count: 2 });
     fixture.detectChanges();
 
     const [propiaFila, ajenaFila] = filas(fixture);
-    expect(accionDeSede(fixture, propiaFila!, 'retirar')!.textContent?.trim()).toBe('Retirar');
+    expect(accionDeSede(fixture, propiaFila!, 'retirar')).toBeNull();
     expect(accionDeSede(fixture, ajenaFila!, 'retirar')!.textContent?.trim()).toBe(
       'Dejar de atender',
     );
@@ -1278,7 +1264,8 @@ describe('WorkHistory — las acciones de cada sede (13/09/2026)', () => {
     expect(accionDeSede(fixture, sinImagen!, 'qr')!.textContent?.trim()).toBe(
       'Configurar QR bancario',
     );
-    expect(accionDeSede(fixture, conImagen!, 'qr')!.textContent?.trim()).toBe('Ver QR bancario');
+    // La propia con QR lo edita; la ajena con QR sólo lo mira.
+    expect(accionDeSede(fixture, conImagen!, 'qr')!.textContent?.trim()).toBe('Editar QR');
 
     // Y el aviso de la fila, que no depende de abrir nada, sigue apareciendo
     // sólo en la que no lo tiene.
@@ -1363,19 +1350,21 @@ describe('WorkHistory — consultorio propio vs. ajeno y QR bancario (P32 / P33)
     bankQrFileId: 'file-qr',
   });
 
-  it('distingue el consultorio propio del hospital, y sólo ofrece corregir el propio', async () => {
+  it('distingue el consultorio propio del hospital, y sólo el hospital ofrece dejar de atender', async () => {
     const { fixture, http } = await montarConSedes();
     http.expectOne(SITIOS).flush({ items: [PROPIA, AJENA], count: 2 });
     fixture.detectChanges();
 
     const marcas = fixture.nativeElement.querySelectorAll('[data-testid="sede-propia-marca"]');
     expect(marcas.length).toBe(1);
-    // Corregir alcanza sólo al propio: la sede del hospital es de él.
+    // Dejar de atender alcanza sólo a la sede del hospital: el consultorio
+    // propio no se quita.
     const sedes = [
       ...fixture.nativeElement.querySelectorAll('[data-testid="sedes-propias"] tbody tr'),
     ] as HTMLElement[];
     const ofrecen = sedes.map((fila) => codigosDeSede(fixture, fila));
-    expect(ofrecen.filter((codigos) => codigos.includes('editar'))).toHaveLength(1);
+    expect(ofrecen.filter((codigos) => codigos.includes('retirar'))).toHaveLength(1);
+    expect(ofrecen.every((codigos) => !codigos.includes('editar'))).toBe(true);
     // El QR, en cambio, va en las dos: también se cobra donde no sos dueño.
     expect(ofrecen.filter((codigos) => codigos.includes('qr'))).toHaveLength(2);
     cerrarAcciones(fixture);
@@ -1413,7 +1402,7 @@ describe('WorkHistory — consultorio propio vs. ajeno y QR bancario (P32 / P33)
     const fila = fixture.nativeElement.querySelector(
       '[data-testid="sedes-propias"] tbody tr',
     ) as HTMLElement;
-    expect(codigosDeSede(fixture, fila)).not.toContain('editar');
+    expect(codigosDeSede(fixture, fila)).toContain('retirar');
     expect(fixture.nativeElement.querySelector('[data-testid="sede-agregar"]')).not.toBeNull();
     cerrarAcciones(fixture);
     http.verify();
@@ -1509,12 +1498,10 @@ describe('WorkHistory — consultorio propio vs. ajeno y QR bancario (P32 / P33)
     fixture.detectChanges();
     const componente = api(fixture);
 
-    // La distinción es del negocio y se conserva: en la propia se deja de
-    // ofrecer un consultorio que es suyo, en la ajena se corta un vínculo con
-    // una organización. Lo que ya no hace la etiqueta es repetir el nombre de
-    // la sede: eso lo pone el nombre accesible, a partir de `fila`.
+    // Retirar sólo se ofrece en la ajena (se corta un vínculo con una
+    // organización); el consultorio propio no se quita. La etiqueta no repite
+    // el nombre de la sede: eso lo pone el nombre accesible, a partir de `fila`.
     const etiqueta = componente['etiquetaDeRetiro'] as unknown as (s: unknown) => string;
-    expect(etiqueta(PROPIA)).toBe('Retirar');
     expect(etiqueta(AJENA)).toBe('Dejar de atender');
     http.verify();
   });
@@ -1683,11 +1670,16 @@ describe('WorkHistory — el consultorio en modal, guardar por cambios y confirm
     http.verify();
   });
 
-  it('al cerrar el modal de una edición, el foco vuelve al «Acciones» de esa fila', async () => {
+  it('al cerrar el modal de una edición, el foco vuelve a la acción visible de esa fila', async () => {
     const { fixture, http } = await montarConSedes(true);
-    http.expectOne(SITIOS).flush({ items: [PROPIA], count: 1 });
+    const sameNameSite = { ...PROPIA, id: 'site-other', isOwnSite: false };
+    http.expectOne(SITIOS).flush({ items: [sameNameSite, PROPIA], count: 2 });
     fixture.detectChanges();
     const componente = api(fixture);
+    const qrAction = (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>(
+      'app-row-actions[data-site-id="site-propia"] [data-action="qr"]',
+    );
+    expect(qrAction).not.toBeNull();
 
     (componente['abrirEdicionDeSede'] as unknown as (s: unknown) => void)(PROPIA);
     fixture.detectChanges();
@@ -1695,8 +1687,8 @@ describe('WorkHistory — el consultorio en modal, guardar por cambios y confirm
     fixture.detectChanges();
     await fixture.whenStable();
 
-    const activo = document.activeElement;
-    expect(activo?.getAttribute('aria-label')).toBe(`Acciones de ${PROPIA.name}`);
+    expect(document.activeElement).toBe(qrAction);
+    expect(qrAction?.getAttribute('aria-label')).toBe(`Configurar QR bancario — ${PROPIA.name}`);
     http.verify();
   });
 

@@ -8,6 +8,7 @@ import {
   linkedSignal,
   signal,
   untracked,
+  type WritableSignal,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
@@ -16,15 +17,11 @@ import { map } from 'rxjs';
 import { ServicesCatalogClient } from '../../core/data-access/services-catalog/services-catalog.client';
 import { SchedulingClient } from '../../core/data-access/scheduling/scheduling.client';
 import type {
-  AgendaResource,
-  PublishedRule,
+  ModalidadDeAtencion,
+  ServiceOffering,
 } from '../../core/data-access/scheduling/scheduling.types';
 import { AuthService } from '../../core/auth/auth.service';
-import { ScheduleGrid } from '../agenda/my-agenda/schedule-grid/schedule-grid';
-import type { BloqueoDelMes } from '../agenda/my-agenda/month-view/month-view';
 import { ContentDialog } from '../../shared/components/organisms/content-dialog/content-dialog';
-import { SegmentedControl } from '../../shared/components/molecules/segmented-control/segmented-control';
-import type { SegmentedOption } from '../../shared/components/molecules/segmented-control/segmented-control.types';
 import type {
   Practice,
   ServiceCatalogItem,
@@ -45,6 +42,7 @@ import type {
 import { Badge } from '../../shared/components/atoms/badge/badge';
 import { AppButton } from '../../shared/components/atoms/button/button';
 import { Select } from '../../shared/components/atoms/select/select';
+import { Switch } from '../../shared/components/atoms/switch/switch';
 import type { SelectOption } from '../../shared/components/atoms/select/select.types';
 import { ServiceIcon } from '../../shared/components/atoms/service-icon/service-icon';
 import { Skeleton } from '../../shared/components/atoms/skeleton/skeleton';
@@ -137,32 +135,27 @@ const SIN_PRACTICA_ELEGIDA = empty(
  * acumulado, porque ese cursor sólo sabe seguir la lista de la que salió.
  */
 /**
- * El texto con que se etiqueta el bloqueo que deja un servicio propio — C-12.
- *
- * ## Por qué `OTHER` y no un tipo propio
- *
- * «OTROS SERVICIOS» **no existe** en la lista cerrada de motivos de
- * `GET /scheduling/exception-types`: son siete —`ABSENCE`, `HOLIDAY`,
- * `VACATION`, `CONFERENCE`, `ERRAND`, `EXTRA`, `OTHER`— y ninguno es éste.
- * Ampliar el enum es una decisión de negocio (ambigüedad `Q-D6` del reparto),
- * no una decisión de esta pantalla, así que se usa la salida que el propio
- * contrato documenta: `OTHER` es el único que **exige texto**
- * (`requiresText: true`), y el texto es exactamente para esto.
- *
- * El día que negocio decida el tipo propio, lo que cambia es una constante.
+ * Lo que se acepta al declarar cuánto dura un servicio. Los mismos topes del
+ * contrato (`MAX_SERVICE_DURATION_MINUTES` y `MAX_SERVICE_BUFFER_MINUTES` de la
+ * API): se repiten acá para avisar mientras se escribe, **no** para decidir — la
+ * autoridad es el servidor.
  */
-const MOTIVO_DE_OTROS_SERVICIOS = 'Otros servicios';
+const MAX_DURACION_MINUTOS = 720;
+const MAX_COLCHON_MINUTOS = 240;
 
-/** Los siete días, como los numera `PublishedRule.dayOfWeek` (0 = domingo). */
-const DIAS_DE_LA_SEMANA: readonly SegmentedOption<string>[] = [
-  { value: '1', label: 'Lun' },
-  { value: '2', label: 'Mar' },
-  { value: '3', label: 'Mié' },
-  { value: '4', label: 'Jue' },
-  { value: '5', label: 'Vie' },
-  { value: '6', label: 'Sáb' },
-  { value: '0', label: 'Dom' },
+/** Cómo se atiende un servicio. «Sin declarar» no viaja: ausente ≡ lo de siempre. */
+const MODALIDADES: readonly SelectOption<string>[] = [
+  { value: '', label: 'Sin declarar' },
+  { value: 'PRESENCIAL', label: 'Presencial' },
+  { value: 'TELECONSULTA', label: 'Teleconsulta' },
+  { value: 'DOMICILIO', label: 'A domicilio' },
 ];
+
+/** Un entero no negativo escrito en un campo, o `null` si no lo es. */
+function entero(texto: string): number | null {
+  const limpio = texto.trim();
+  return /^\d+$/.test(limpio) ? Number(limpio) : null;
+}
 
 @Component({
   selector: 'app-my-services',
@@ -171,14 +164,13 @@ const DIAS_DE_LA_SEMANA: readonly SegmentedOption<string>[] = [
     Badge,
     Alert,
     ContentDialog,
-    ScheduleGrid,
-    SegmentedControl,
     FilterBar,
     FormField,
     Input,
     PageHeader,
     Select,
     ServiceIcon,
+    Switch,
     Skeleton,
     ViewStateHost,
   ],
@@ -195,178 +187,159 @@ const DIAS_DE_LA_SEMANA: readonly SegmentedOption<string>[] = [
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MyServices {
-  /* -- Programar el horario de un servicio propio (C-12) -------------------- */
+  /* -- Cómo ofrezco cada servicio (v4.2.40) --------------------------------
 
-  /** El servicio cuyo horario se está programando, o `null`. */
-  protected readonly programando = signal<ServiceCatalogItem | null>(null);
+     El catálogo es POR PRÁCTICA y fija nombre y precio; lo que cada profesional
+     declara es cuánto tarda **él**. Eso reemplaza al «Programar horario» (C-12),
+     que sólo bloqueaba la agenda con el motivo «Otros servicios»: un servicio
+     que el paciente no puede reservar no se ofrece, se esconde. Ahora el médico
+     dice mínimo y máximo, y el horario donde se atiende lo marca cada franja de
+     «Mis horarios» (consultas, servicios o ambos). */
 
-  /** La agenda del profesional: es sobre ella que se bloquea el rato. */
-  private readonly recursoPropio = signal<AgendaResource | null>(null);
+  /** Las ofertas del profesional, por servicio del catálogo. */
+  private readonly ofertas = signal<ReadonlyMap<string, ServiceOffering>>(new Map());
 
-  /** El horario publicado, para dibujar la MISMA grilla que «Mis horarios». */
-  protected readonly reglasDelHorario = signal<readonly PublishedRule[]>([]);
+  /** El servicio cuya oferta se está declarando, o `null`. */
+  protected readonly ofreciendo = signal<ServiceCatalogItem | null>(null);
 
-  /** Lo ya bloqueado de la semana, para que la grilla lo pinte igual que allá. */
-  protected readonly bloqueosDeLaSemana = signal<readonly BloqueoDelMes[]>([]);
+  protected readonly minimo = signal('');
+  protected readonly maximo = signal('');
+  protected readonly preparacion = signal('');
+  protected readonly limpieza = signal('');
+  protected readonly reservable = signal(true);
+  protected readonly requiereAprobacion = signal(false);
+  protected readonly modalidad = signal('');
+  protected readonly guardandoOferta = signal(false);
+  protected readonly errorDeLaOferta = signal<string | null>(null);
 
-  protected readonly diasDeLaSemana = DIAS_DE_LA_SEMANA;
-  protected readonly diaElegido = signal('1');
-  protected readonly desdeElegido = signal('14:00');
-  protected readonly hastaElegido = signal('16:00');
-  protected readonly guardandoHorario = signal(false);
-  protected readonly errorDelHorario = signal<string | null>(null);
+  protected readonly modalidades = MODALIDADES;
 
-  /** Sin agenda propia no hay dónde bloquear: se dice, no se ofrece a medias. */
-  protected readonly sinAgendaPropia = computed(() => this.recursoPropio() === null);
+  /** La oferta declarada de un servicio, si la hay. */
+  protected ofertaDe(servicio: ServiceCatalogItem): ServiceOffering | undefined {
+    return this.ofertas().get(servicio.id);
+  }
 
-  /**
-   * Abre la programación del horario de un servicio.
-   *
-   * **Recicla las vistas del horario, no crea unas nuevas** (C-12 lo pide con
-   * esas palabras): el modal monta `app-schedule-grid` —el mismo organismo que
-   * dibuja «Mis horarios de atención»— con las reglas publicadas y los bloqueos
-   * ya creados, para que el rato del servicio se elija mirando el horario real
-   * y no una grilla inventada al lado.
-   */
-  protected programarHorario(servicio: ServiceCatalogItem): void {
-    this.errorDelHorario.set(null);
-    this.programando.set(servicio);
-    this.leerAgendaDelProfesional();
+  /** «30–45 min», o «20 min» cuando el mínimo y el máximo coinciden. */
+  protected duracionDe(oferta: ServiceOffering): string {
+    return oferta.minDurationMinutes === oferta.maxDurationMinutes
+      ? `${oferta.maxDurationMinutes} min`
+      : `${oferta.minDurationMinutes}–${oferta.maxDurationMinutes} min`;
+  }
+
+  /** Abre el diálogo con lo ya declarado, o en blanco si todavía no. */
+  protected abrirOferta(servicio: ServiceCatalogItem): void {
+    const oferta = this.ofertaDe(servicio);
+    this.errorDeLaOferta.set(null);
+    this.minimo.set(oferta === undefined ? '' : String(oferta.minDurationMinutes));
+    this.maximo.set(oferta === undefined ? '' : String(oferta.maxDurationMinutes));
+    this.preparacion.set(oferta === undefined || oferta.prepMinutes === 0 ? '' : String(oferta.prepMinutes));
+    this.limpieza.set(oferta === undefined || oferta.cleanupMinutes === 0 ? '' : String(oferta.cleanupMinutes));
+    this.reservable.set(oferta?.isPatientBookable ?? true);
+    this.requiereAprobacion.set(oferta?.requiresApproval ?? false);
+    this.modalidad.set(oferta?.channel ?? '');
+    this.ofreciendo.set(servicio);
+  }
+
+  protected cerrarOferta(): void {
+    this.ofreciendo.set(null);
+  }
+
+  /** `app-input` emite `string | number | null`; acá siempre es texto. */
+  protected escribir(campo: WritableSignal<string>, valor: string | number | null): void {
+    campo.set(valor === null ? '' : String(valor));
+  }
+
+  protected fijarModalidad(valor: string | null): void {
+    this.modalidad.set(valor ?? '');
   }
 
   /**
-   * Las horas del rango, desde el campo de texto.
+   * Guarda cómo se ofrece el servicio: crea la oferta o edita la que ya había.
    *
-   * `app-input` emite `string | number | null` —sirve también para campos
-   * numéricos—, y acá siempre es texto: se normaliza en un solo lugar en vez de
-   * castear en la plantilla, donde el error no se ve.
+   * La validación de acá avisa mientras se escribe; **decide el servidor**, y su
+   * mensaje se muestra tal cual cuando rechaza.
    */
-  protected fijarDesde(valor: string | number | null): void {
-    this.desdeElegido.set(valor === null ? '' : String(valor));
-  }
+  protected guardarOferta(): void {
+    const servicio = this.ofreciendo();
+    if (servicio === null || this.guardandoOferta()) return;
 
-  protected fijarHasta(valor: string | number | null): void {
-    this.hastaElegido.set(valor === null ? '' : String(valor));
-  }
-
-  protected cerrarProgramacion(): void {
-    this.programando.set(null);
-  }
-
-  /**
-   * Guarda el rato del servicio como una **excepción de disponibilidad** sobre
-   * la agenda del profesional.
-   *
-   * Es lo que produce el bloqueo que el pedido exige: el mismo mecanismo con
-   * que se bloquea un día, aplicado a un rato. No es una agenda propia del
-   * servicio —eso sería un segundo calendario que nadie cruza con el clínico—,
-   * y el supuesto está declarado como `Q-P5`.
-   */
-  protected guardarHorarioDelServicio(): void {
-    const servicio = this.programando();
-    const recurso = this.recursoPropio();
-    if (servicio === null || recurso === null || this.guardandoHorario()) return;
-
-    const rango = this.rangoElegido();
-    if (rango === null) {
-      this.errorDelHorario.set('El horario tiene que empezar antes de terminar.');
+    const min = entero(this.minimo());
+    const max = entero(this.maximo());
+    if (min === null || max === null || min < 1 || max < 1) {
+      this.errorDeLaOferta.set('Escribí cuántos minutos dura como mínimo y como máximo.');
+      return;
+    }
+    if (min > max) {
+      this.errorDeLaOferta.set('El mínimo no puede ser mayor que el máximo.');
+      return;
+    }
+    if (max > MAX_DURACION_MINUTOS) {
+      this.errorDeLaOferta.set(`Un servicio no puede reservar más de ${MAX_DURACION_MINUTOS} minutos.`);
+      return;
+    }
+    const prep = this.preparacion().trim() === '' ? 0 : entero(this.preparacion());
+    const limpieza = this.limpieza().trim() === '' ? 0 : entero(this.limpieza());
+    if (prep === null || limpieza === null || prep > MAX_COLCHON_MINUTOS || limpieza > MAX_COLCHON_MINUTOS) {
+      this.errorDeLaOferta.set(`La preparación y la limpieza van de 0 a ${MAX_COLCHON_MINUTOS} minutos.`);
       return;
     }
 
-    this.guardandoHorario.set(true);
-    this.errorDelHorario.set(null);
-    this.scheduling
-      .createException(recurso.id, {
-        exceptionType: 'OTHER',
-        startAt: rango.desde.toISOString(),
-        endAt: rango.hasta.toISOString(),
-        reason: `${MOTIVO_DE_OTROS_SERVICIOS} · ${servicio.name}`,
-      })
-      .subscribe({
-        next: (creada) => {
-          this.guardandoHorario.set(false);
-          this.programando.set(null);
-          this.toasts.success(
-            creada.blockedSlots === 0
-              ? `Ese rato queda bloqueado en tu agenda como «${MOTIVO_DE_OTROS_SERVICIOS}».`
-              : `Ese rato queda bloqueado como «${MOTIVO_DE_OTROS_SERVICIOS}» y dejaron de ofrecerse ${creada.blockedSlots} turnos.`,
-            servicio.name,
-          );
-        },
-        error: (error: unknown) => {
-          this.guardandoHorario.set(false);
-          this.errorDelHorario.set(
-            (error instanceof HttpErrorResponse ? readApiError(error)?.message : null) ??
-              'No se pudo bloquear ese rato. Probá de nuevo.',
-          );
-        },
-      });
-  }
+    const canal = this.modalidad() === '' ? undefined : (this.modalidad() as ModalidadDeAtencion);
+    const existente = this.ofertaDe(servicio);
+    this.guardandoOferta.set(true);
+    this.errorDeLaOferta.set(null);
 
-  /** El rato elegido, sobre la próxima fecha de ese día de la semana. */
-  private rangoElegido(): { desde: Date; hasta: Date } | null {
-    const dia = Number(this.diaElegido());
-    const base = new Date();
-    base.setHours(0, 0, 0, 0);
-    // El próximo día de la semana elegido, hoy incluido: programar «los martes»
-    // desde un martes tiene que empezar hoy, no dentro de siete días.
-    base.setDate(base.getDate() + ((dia - base.getDay() + 7) % 7));
+    const peticion =
+      existente === undefined
+        ? this.scheduling.createServiceOffering({
+            serviceCatalogId: servicio.id,
+            minDurationMinutes: min,
+            maxDurationMinutes: max,
+            prepMinutes: prep,
+            cleanupMinutes: limpieza,
+            isPatientBookable: this.reservable(),
+            requiresApproval: this.requiereAprobacion(),
+            ...(canal === undefined ? {} : { channel: canal }),
+          })
+        : this.scheduling.updateServiceOffering(existente.id, {
+            minDurationMinutes: min,
+            maxDurationMinutes: max,
+            prepMinutes: prep,
+            cleanupMinutes: limpieza,
+            isPatientBookable: this.reservable(),
+            requiresApproval: this.requiereAprobacion(),
+            ...(canal === undefined ? {} : { channel: canal }),
+          });
 
-    const desde = this.conHora(base, this.desdeElegido());
-    const hasta = this.conHora(base, this.hastaElegido());
-    if (desde === null || hasta === null || desde.getTime() >= hasta.getTime()) return null;
-    return { desde, hasta };
-  }
-
-  private conHora(dia: Date, hhmm: string): Date | null {
-    const match = /^([01]?\d|2[0-3]):([0-5]\d)$/.exec(hhmm.trim());
-    if (match === null) return null;
-    const fecha = new Date(dia.getFullYear(), dia.getMonth(), dia.getDate());
-    fecha.setHours(Number(match[1]), Number(match[2]), 0, 0);
-    return fecha;
-  }
-
-  /** La agenda del profesional y su horario, para la grilla reciclada. */
-  private leerAgendaDelProfesional(): void {
-    const tenantId = this.auth.activeTenantId();
-    const perfil = this.auth.practitionerProfileId();
-    if (tenantId === null || perfil === null) {
-      this.recursoPropio.set(null);
-      return;
-    }
-    this.scheduling.listResources({ tenantId }).subscribe({
-      next: (pagina) => {
-        const propio = pagina.items.find((r) => r.resourceRefId === perfil) ?? null;
-        this.recursoPropio.set(propio);
-        if (propio === null) return;
-        this.scheduling.listTemplates(propio.id).subscribe({
-          next: (plantillas) =>
-            this.reglasDelHorario.set(
-              plantillas.items.find((t) => !t.retired)?.rules ?? [],
-            ),
-          error: () => this.reglasDelHorario.set([]),
-        });
-        const lunes = new Date();
-        lunes.setHours(0, 0, 0, 0);
-        lunes.setDate(lunes.getDate() - ((lunes.getDay() + 6) % 7));
-        const siguiente = new Date(lunes);
-        siguiente.setDate(siguiente.getDate() + 7);
-        this.scheduling.listExceptions(propio.id, { from: lunes, to: siguiente }).subscribe({
-          next: (pagina2) =>
-            this.bloqueosDeLaSemana.set(
-              pagina2.items
-                .filter((e) => e.isAvailable !== true)
-                .map((e) => ({
-                  id: e.id,
-                  desde: new Date(e.startAt),
-                  hasta: new Date(e.endAt),
-                  motivo: e.reason ?? null,
-                })),
-            ),
-          error: () => this.bloqueosDeLaSemana.set([]),
-        });
+    peticion.subscribe({
+      next: (guardada) => {
+        this.guardandoOferta.set(false);
+        this.ofreciendo.set(null);
+        this.ofertas.update((actuales) => new Map(actuales).set(servicio.id, guardada));
+        this.toasts.success(
+          this.reservable()
+            ? `Los pacientes ya pueden pedirlo: dura ${this.duracionDe(guardada)}.`
+            : 'Quedó guardado, pero los pacientes todavía no pueden pedirlo.',
+          servicio.name,
+        );
       },
-      error: () => this.recursoPropio.set(null),
+      error: (error: unknown) => {
+        this.guardandoOferta.set(false);
+        this.errorDeLaOferta.set(
+          (error instanceof HttpErrorResponse ? readApiError(error)?.message : null) ??
+            'No se pudo guardar. Probá de nuevo.',
+        );
+      },
+    });
+  }
+
+  /** Las ofertas del profesional que mira, para decir en cada tarjeta cuánto dura. */
+  private leerOfertas(): void {
+    if (this.auth.practitionerProfileId() === null) return;
+    this.scheduling.listServiceOfferings().subscribe({
+      next: (lista) => this.ofertas.set(new Map(lista.map((oferta) => [oferta.serviceCatalogId, oferta]))),
+      // Sin ofertas la pantalla sigue siendo el catálogo: no es motivo para romperla.
+      error: () => this.ofertas.set(new Map()),
     });
   }
 
@@ -602,6 +575,7 @@ export class MyServices {
 
   constructor() {
     this.cargarPracticas();
+    this.leerOfertas();
 
     // Elegir otra práctica, escribir en el buscador o tocar el filtro son, los
     // tres, otra lista: se vuelve a la primera página y lo acumulado se

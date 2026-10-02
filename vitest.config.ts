@@ -22,12 +22,7 @@ export default defineConfig({
      * sin crashear en esta máquina.
      */
     pool: 'threads',
-    poolOptions: {
-      threads: {
-        maxThreads: 4,
-        minThreads: 1,
-      },
-    },
+    maxWorkers: 4,
     coverage: {
       provider: 'v8',
       reporter: ['text-summary', 'json-summary', 'lcov'],

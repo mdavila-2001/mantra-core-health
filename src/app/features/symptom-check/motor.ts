@@ -453,9 +453,12 @@ function buscarCandidatas(
     }
   }
 
+  // Los patrones comparten lemas: cada uno se compara con el texto una vez.
+  // La memoria vive sólo en este análisis; posiciones y negaciones cambian al escribir.
+  const matchesByLemma = new Map<string, ReturnType<typeof matchingTokens>>();
   const candidatas: Candidata[] = [];
   for (const cual of aMirar) {
-    const candidata = evaluar(indice.patrones[cual], tokens, contenido, negados);
+    const candidata = evaluar(indice.patrones[cual], tokens, contenido, negados, matchesByLemma);
     if (candidata !== null) {
       candidatas.push(candidata);
     }
@@ -472,6 +475,13 @@ function sumar(destino: Set<number>, cuales: readonly number[] | undefined): voi
   }
 }
 
+/** Coincidencias de un lema, independientes del patrón que lo contiene. */
+function matchingTokens(word: string, phoneticKey: string, tokens: readonly Token[]) {
+  return tokens
+    .map((token, position) => ({ donde: position, puntaje: parecido(word, phoneticKey, token) }))
+    .filter((match) => match.puntaje > 0);
+}
+
 /**
  * Si un patrón entra en el texto, y con cuánta confianza.
  *
@@ -484,12 +494,17 @@ function evaluar(
   tokens: readonly Token[],
   contenido: readonly Token[],
   negados: readonly (readonly [number, number])[],
+  matchesByLemma: Map<string, ReturnType<typeof matchingTokens>>,
 ): Candidata | null {
-  const apariciones = patron.lemas.map((palabra, cual) =>
-    contenido
-      .map((token, donde) => ({ donde, puntaje: parecido(palabra, patron.claves[cual], token) }))
-      .filter((intento) => intento.puntaje > 0),
-  );
+  const apariciones = patron.lemas.map((palabra, cual) => {
+    const cached = matchesByLemma.get(palabra);
+    if (cached !== undefined) {
+      return cached;
+    }
+    const matches = matchingTokens(palabra, patron.claves[cual], contenido);
+    matchesByLemma.set(palabra, matches);
+    return matches;
+  });
   if (apariciones.some((lista) => lista.length === 0)) {
     return null;
   }

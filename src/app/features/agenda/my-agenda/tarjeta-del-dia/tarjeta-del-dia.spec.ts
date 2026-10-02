@@ -484,7 +484,7 @@ describe('TarjetaDelDia', () => {
     api().buscarPaciente('ana');
 
     http
-      .expectOne((r) => r.url === '/profiles/patients')
+      .expectOne((r) => r.url === '/profiles/patients/search')
       .flush({
         items: [
           { profileId: 'pp-1', personId: 'p-1', patientCode: 'PAC-001', displayName: 'Ana Quispe' },

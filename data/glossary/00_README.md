@@ -2,7 +2,7 @@
 
 Este directorio es **la fuente de verdad del glosario ampliado** que consumen tres cosas:
 
-1. el simulador del front (`scripts/gen-glossary-fixture.mjs` → `src/app/core/mock/fixtures/glosario.generated.ts`, `yarn mock:glossary`);
+1. el simulador del front, **indirectamente** (desde el 2026-09-30): `yarn mock:glossary` sigue generando `src/app/core/mock/fixtures/glosario.generated.ts`, pero el simulador ya no lo importa — lee shards bajo demanda desde `public/glossary-data/` (el glosario completo de `glossary-data-build/`, `yarn mock:glossary:shards`, fuera de git) o, si no está, desde `public/glossary-seed/` (esta capa + los curados + el atlas anatómico, convertidos con `yarn mock:glossary:seed`, commiteado). **Después de regenerar el fixture, regenerá la semilla**;
 2. el servicio de IA (`AlovidaAIService`, `yarn catalog:sync <front>` lo copia pinneado a SHA — no se edita allá);
 3. la API real, cuando se quiera: cada archivo es **NDJSON compatible con el perfil `conceptos`** del motor de carga masiva (`code`, `display`, `definition`; el resto de columnas las ignora).
 
@@ -53,10 +53,10 @@ Una fila por línea, JSON válido, sin comentarios. Las tres primeras columnas s
 | `slug`             | sí           | Identificador estable kebab-case, único en **todo** el corpus (curados incluidos). Si coincide con un curado, la fila es enriquecimiento. La capa ICD usa `icd10cm-<código>`.                                     |
 | `codeSystem`       | sí           | `icd10cm` o `loinc`.                                                                                                                                                                                              |
 | `categoryKey`      | sí           | Una de las 12 claves de `glossary-taxonomy.ts` (`disease`, `lab`, `imaging`, `diagnostic-test`, …).                                                                                                               |
-| `tagKeys`          | no           | Claves de las 15 etiquetas clínicas (`respiratory`, `chronic`, …).                                                                                                                                                |
+| `tagKeys`          | no           | Claves de las 16 etiquetas clínicas (`respiratory`, `urologic`, …).                                                                                                                                                |
 | `lang`             | sí           | `es` o `en`. Con `en`, el término viaja como `translated: false`.                                                                                                                                                 |
 | `enDisplay`        | sí           | Título oficial en inglés de la fuente. Lo escribe/verifica `verify-external-codes.mjs`.                                                                                                                           |
-| `esSynonyms`       | no           | Otras formas de nombrarlo en castellano, sin tildes ni variantes gramaticales (mismo criterio que la tabla de síntomas).                                                                                          |
+| `esSynonyms`       | no           | Otras formas de nombrarlo en castellano, **con su ortografía correcta** (tildes y ñ: «tiña», «uñas», «riñón») y sin variantes gramaticales. La búsqueda del glosario no distingue tildes ni la ñ, así que «rinon» encuentra «riñón». |
 | `plainSummaryEs`   | ES: sí       | Resumen en lenguaje llano.                                                                                                                                                                                        |
 | `symptomIds`       | no           | Ids de `sintomas.datos.ts` que orientan a esta enfermedad. El checker falla si uno no existe.                                                                                                                     |
 | `relations`        | no           | `[{ "type": "DIAGNOSTIC_TEST" \| "TREATMENT" \| "PROCEDURE" \| "ANATOMY" \| "RELATED_TERM" \| "DISEASE", "targetSlug": "…" }]`. El destino debe existir en el corpus completo; las huérfanas se omiten con aviso. |
@@ -72,3 +72,14 @@ node scripts/verify-external-codes.mjs           # verifica ICD y LOINC de las c
 node scripts/check-glossary-corpus.mjs           # validación estructural sin red: slugs, taxonomía, síntomas, relaciones
 corepack yarn mock:glossary                      # regenera el fixture del simulador
 ```
+
+El generador y el validador leen el seed del backend del clon hermano `../mantra-core-health-api`.
+Desde un worktree ese hermano es el checkout principal de la API, en la rama que tenga puesta;
+para leer otro, `GLOSSARY_SEED_DIR=../wt-<api>/src/common/seed corepack yarn mock:glossary`.
+
+**Duplicados entre capas.** Cuando una fila en castellano usa exactamente el código de una
+categoría de la capa ICD (`I10`, `R55`, `C61`…), el generador descarta la fila en inglés y
+queda sólo la traducida. Los códigos descartados viajan en `DUPLICADOS_EN_INGLES` del
+fixture; la regla vive en `duplicadosEnIngles()` de `scripts/lib/glosario-corpus.mjs` y la
+prueba `scripts/lib/glosario-corpus.test.mjs` la fija
+(`corepack yarn node --test scripts/lib/glosario-corpus.test.mjs`).

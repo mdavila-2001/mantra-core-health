@@ -9,6 +9,7 @@
   [grupos]="tramos()"
   [sustantivo]="sustantivo"
   [textoSinCoincidencias]="sinCoincidencias()"
+  (reintentar)="reloadPromotions()"
 >
   <div slot="antes-de-filtros">
     @if (catalogoGeoCaido()) {
@@ -23,6 +24,7 @@
       <section class="mapa-directorio" aria-label="Filtrar por departamento">
         <app-department-map
           testId="promociones-mapa"
+          [municipio]="ciudad()"
           [departamentos]="departamentos()"
           [value]="departamentoElegido()"
           (valueChange)="elegirDepartamento($event)"

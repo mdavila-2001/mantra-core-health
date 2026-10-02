@@ -41,6 +41,7 @@ import {
   type FilterDef,
 } from '../../shared/components/organisms/filter-bar/filter-bar';
 import { aTarjeta, rutaDeFicha } from '../alovida/buscar/public-result.mapper';
+import { fotoDeVertical } from '../../shared/utils/foto-de-directorio';
 import { groupUnits } from '../laboratory-directory/laboratory-directory';
 
 /** Rótulo del bloque de `navigation.subgroups.ts` del que salen los nodos. */
@@ -161,6 +162,7 @@ export class DirectoriesOverview {
   });
 
   protected readonly routeOf = routeOf;
+  protected readonly fotoDe = fotoDeVertical;
 
   /** Los nodos que se dibujan: todos, o sólo el elegido en el desplegable. */
   protected readonly nodosVisibles = computed<readonly AppSection[]>(() => {
@@ -168,7 +170,7 @@ export class DirectoriesOverview {
     return elegido === null ? this.nodos() : this.nodos().filter((nodo) => nodo.path === elegido);
   });
 
-  /* ---- la búsqueda en los tres directorios de lugares --------------------- */
+  /* ---- la búsqueda en los directorios ------------------------------------ */
 
   private readonly laboratorios = inject(DiagnosticUnitsClient);
   private readonly publico = inject(PublicDirectoryClient);
@@ -183,6 +185,11 @@ export class DirectoriesOverview {
    * la ficha pública del profesional —el buscador público no expone el
    * `profileId` que pide `/directory/:profileId`—. Un nodo que no tiene
    * buscador acá simplemente no suma resultados.
+   *
+   * El de aseguradoras entró el 29/09/2026: el nodo se dibujaba desde el
+   * 28/09, pero sin buscador acá un término como «vitalicia» no encontraba
+   * nada. Busca con la misma lectura que su directorio y la tarjeta abre la
+   * ficha con los planes.
    */
   private readonly buscadores: Readonly<Record<string, Buscador>> = {
     directory: (q) =>
@@ -201,6 +208,10 @@ export class DirectoriesOverview {
       this.publico
         .searchPharmacies({ q, limit: POR_DIRECTORIO })
         .pipe(map((pagina) => tarjetas(pagina.items, fichaEn('/pharmacies-directory')))),
+    'insurers-directory': (q) =>
+      this.publico
+        .searchInsurers({ q, limit: POR_DIRECTORIO })
+        .pipe(map((pagina) => tarjetas(pagina.items, fichaEn('/insurers-directory')))),
   };
 
   /** El término, de la URL: la barra lo escribe ahí bajo `q`. */

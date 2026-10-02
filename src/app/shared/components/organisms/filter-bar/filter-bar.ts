@@ -127,6 +127,7 @@ export interface ActiveFilter {
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
     class: 'filter-bar',
+    '[class.filter-bar--wrap]': 'wrap()',
   },
 })
 export class FilterBar {
@@ -135,6 +136,16 @@ export class FilterBar {
   private readonly destroyRef = inject(DestroyRef);
 
   readonly filters = input<readonly FilterDef[]>([]);
+
+  /**
+   * Deja que los controles bajen de renglón en vez de encogerse.
+   *
+   * Opt-in: con cinco o más filtros por encabezado («Solicitudes recibidas»)
+   * la fila única dejaba el buscador en un puñado de píxeles y cortaba los
+   * rótulos de los desplegables. Los consumidores con pocos filtros no lo
+   * necesitan y siguen exactamente igual.
+   */
+  readonly wrap = input(false, { transform: booleanAttribute });
   readonly searchLabel = input<string>('Buscar en el listado');
 
   /**
@@ -166,6 +177,27 @@ export class FilterBar {
    */
   readonly searchParam = input<string>(SEARCH_PARAM);
 
+  /**
+   * `false` saca el término de búsqueda de la URL: la barra lo muestra desde
+   * {@link searchValue} y lo avisa por {@link searchChanged}, sin navegar.
+   *
+   * Existe para las pantallas donde lo que se tipea es un dato de una persona
+   * —el nombre o el documento de un paciente—: en la URL queda en el
+   * historial del navegador, en los logs del servidor que la sirve y en el
+   * `Referer`. Los filtros de catálogo (`FilterDef`) siguen en la URL: un
+   * código de catálogo no identifica a nadie.
+   */
+  readonly searchInUrl = input(true, { transform: booleanAttribute });
+
+  /** El término vigente cuando {@link searchInUrl} es `false`; lo guarda quien consume. */
+  readonly searchValue = input<string>('');
+
+  /**
+   * El término nuevo cuando {@link searchInUrl} es `false` (incluido `''` al
+   * limpiar). Con la búsqueda en la URL no se emite: la URL ya es el aviso.
+   */
+  readonly searchChanged = output<string>();
+
   /** Los códigos activos, incluido el término de búsqueda bajo {@link searchParam}. */
   readonly filtersChanged = output<Readonly<Record<string, string>>>();
 
@@ -178,7 +210,9 @@ export class FilterBar {
     { initialValue: {} as Record<string, string> },
   );
 
-  protected readonly searchTerm = computed(() => this.params()[this.searchParam()] ?? '');
+  protected readonly searchTerm = computed(() =>
+    this.searchInUrl() ? (this.params()[this.searchParam()] ?? '') : this.searchValue(),
+  );
 
   /** Los filtros con opciones; sin ellas el value set no llegó. */
   protected isAvailable(filter: FilterDef): boolean {
@@ -267,6 +301,11 @@ export class FilterBar {
 
   /** Mientras se tipea se reemplaza la entrada del historial: no se ensucia. */
   protected onSearch(term: string): void {
+    if (!this.searchInUrl()) {
+      this.searchChanged.emit(term);
+      this.emitCurrent(term);
+      return;
+    }
     this.applyParams({ [this.searchParam()]: term || null }, true);
   }
 
@@ -282,14 +321,23 @@ export class FilterBar {
   }
 
   protected clearAll(): void {
+    // La clave de búsqueda se limpia de la URL también fuera de ella: si un
+    // enlace viejo la trajo, «limpiar» tiene que sacarla.
     const vacios: Record<string, null> = { [this.searchParam()]: null };
     for (const filter of this.filters()) {
       vacios[filter.key] = null;
     }
-    this.applyParams(vacios, false);
+    if (!this.searchInUrl()) {
+      this.searchChanged.emit('');
+    }
+    this.applyParams(vacios, false, this.searchInUrl() ? undefined : '');
   }
 
-  private applyParams(changes: Record<string, string | null>, replaceUrl: boolean): void {
+  private applyParams(
+    changes: Record<string, string | null>,
+    replaceUrl: boolean,
+    termOverride?: string,
+  ): void {
     void this.router
       .navigate([], {
         relativeTo: this.route,
@@ -297,12 +345,17 @@ export class FilterBar {
         queryParamsHandling: 'merge',
         replaceUrl,
       })
-      .then(() => this.emitCurrent());
+      .then(() => this.emitCurrent(termOverride));
   }
 
-  private emitCurrent(): void {
+  /**
+   * @param termOverride - El término recién elegido cuando no vive en la URL:
+   *   {@link searchValue} todavía trae el anterior hasta que quien consume lo
+   *   actualice.
+   */
+  private emitCurrent(termOverride?: string): void {
     const activos: Record<string, string> = {};
-    const term = this.searchTerm();
+    const term = termOverride ?? this.searchTerm();
     if (term) {
       activos[this.searchParam()] = term;
     }

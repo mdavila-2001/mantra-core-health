@@ -1,10 +1,12 @@
 <app-page-header
-  title="Ficha de la farmacia"
+  title="Perfil de la farmacia"
   subtitle="Lo que tu empresa es en los papeles: sus datos, su carpeta legal y quién responde por ella."
   [breadcrumbs]="breadcrumbs()"
 >
-  <!-- Toda la ficha es maqueta todavía: el cartel va arriba de todo. -->
-  <app-chip page-meta variant="neutral" size="sm">{{ notaDeEjemplo }}</app-chip>
+  <!-- Sobre la maqueta toda la ficha es de ejemplo: el cartel va arriba de todo. -->
+  @if (sampleData) {
+    <app-chip page-meta variant="neutral" size="sm">{{ notaDeEjemplo }}</app-chip>
+  }
 </app-page-header>
 
 <!-- El aviso vive fuera de las pestañas a propósito: un papel vencido no es
@@ -39,19 +41,28 @@
 
 <app-tabs [(selectedIndex)]="pestana">
   <app-tab label="Empresa">
-    <app-datos-de-la-empresa [state]="empresa()" (retry)="recargar()" />
+    <app-datos-de-la-empresa [state]="empresa()" [sampleData]="sampleData" (retry)="recargar()" />
   </app-tab>
 
   <!-- La referencia no se llama «documentos» a propósito: en una plantilla la
        referencia gana sobre la propiedad del componente, y taparía la señal
        `documentos()` que alimenta a esta misma pestaña. -->
+  <!-- Contra la API real las dos pestañas son de lectura: la carpeta son las
+       licencias de la farmacia y la gente, su representante y sus gerencias.
+       Todavía no hay dónde subir un papel ni guardar un cambio, así que no se
+       ofrece. -->
   <app-tab label="Documentos" #panelDeDocumentos>
-    <app-documentos-legales [state]="documentos()" (retry)="recargar()" />
+    <app-documentos-legales
+      [state]="documentos()"
+      [readOnly]="!sampleData"
+      (retry)="recargar()"
+    />
   </app-tab>
 
   <app-tab label="Representante y gerentes">
     <app-representante-y-gerentes
       [state]="gente()"
+      [readOnly]="!sampleData"
       (retry)="recargar()"
       (poderPedido)="verDocumentos()"
     />

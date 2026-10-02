@@ -198,7 +198,7 @@ export const CATEGORIA_DOCUMENTO = CATEGORIA_DOCUMENTAL['DOC-CAT-REPORT']!;
 const PERFILES_CLINICOS: readonly {
   readonly dx: readonly (readonly [
     keyof typeof DIAGNOSTICO,
-    'COND-ACTIVE' | 'COND-RESOLVED' | 'COND-REMISSION',
+    'COND_ACTIVE' | 'COND_RESOLVED' | 'COND_REMISSION',
     string,
   ])[];
   readonly alergias: readonly (readonly [
@@ -214,9 +214,9 @@ const PERFILES_CLINICOS: readonly {
 }[] = [
   {
     dx: [
-      ['I10', 'COND-ACTIVE', 'Diagnosticada hace 3 años. Buen control con enalapril.'],
-      ['E78.5', 'COND-ACTIVE', 'LDL 165 en el último control.'],
-      ['J06.9', 'COND-RESOLVED', 'Cuadro viral autolimitado.'],
+      ['I10', 'COND_ACTIVE', 'Diagnosticada hace 3 años. Buen control con enalapril.'],
+      ['E78.5', 'COND_ACTIVE', 'LDL 165 en el último control.'],
+      ['J06.9', 'COND_RESOLVED', 'Cuadro viral autolimitado.'],
     ],
     alergias: [
       ['MED-AMOXICILINA', 'CRIT-HIGH'],
@@ -230,9 +230,9 @@ const PERFILES_CLINICOS: readonly {
   },
   {
     dx: [
-      ['E11', 'COND-ACTIVE', 'HbA1c 7,8 %. Se ajusta metformina.'],
-      ['I10', 'COND-ACTIVE', 'Asociada a la diabetes.'],
-      ['E66', 'COND-ACTIVE', 'IMC 31.'],
+      ['E11', 'COND_ACTIVE', 'HbA1c 7,8 %. Se ajusta metformina.'],
+      ['I10', 'COND_ACTIVE', 'Asociada a la diabetes.'],
+      ['E66', 'COND_ACTIVE', 'IMC 31.'],
     ],
     alergias: [],
     recetas: [
@@ -242,8 +242,8 @@ const PERFILES_CLINICOS: readonly {
   },
   {
     dx: [
-      ['J45', 'COND-ACTIVE', 'Asma leve persistente, controlada.'],
-      ['L20', 'COND-REMISSION', 'Brotes en invierno.'],
+      ['J45', 'COND_ACTIVE', 'Asma leve persistente, controlada.'],
+      ['L20', 'COND_REMISSION', 'Brotes en invierno.'],
     ],
     alergias: [['ALIMENTO-MANI', 'CRIT-HIGH']],
     recetas: [
@@ -252,14 +252,14 @@ const PERFILES_CLINICOS: readonly {
     ],
   },
   {
-    dx: [['J06.9', 'COND-RESOLVED', 'Resfrío común.']],
+    dx: [['J06.9', 'COND_RESOLVED', 'Resfrío común.']],
     alergias: [],
     recetas: [['MED-PARACETAMOL', '250 mg', 'Cada 8 horas por 3 días', 'RX-COMPLETED']],
   },
   {
     dx: [
-      ['E03.9', 'COND-ACTIVE', 'TSH 8,2. Inicia levotiroxina.'],
-      ['D50', 'COND-ACTIVE', 'Hemoglobina 10,4.'],
+      ['E03.9', 'COND_ACTIVE', 'TSH 8,2. Inicia levotiroxina.'],
+      ['D50', 'COND_ACTIVE', 'Hemoglobina 10,4.'],
     ],
     alergias: [['MED-IBUPROFENO', 'CRIT-LOW']],
     recetas: [
@@ -269,22 +269,22 @@ const PERFILES_CLINICOS: readonly {
   },
   {
     dx: [
-      ['M54.5', 'COND-ACTIVE', 'Lumbalgia mecánica por postura laboral.'],
-      ['G43', 'COND-ACTIVE', 'Migraña sin aura, 2 episodios al mes.'],
+      ['M54.5', 'COND_ACTIVE', 'Lumbalgia mecánica por postura laboral.'],
+      ['G43', 'COND_ACTIVE', 'Migraña sin aura, 2 episodios al mes.'],
     ],
     alergias: [],
     recetas: [['MED-IBUPROFENO', '400 mg', 'Cada 8 horas con comida, 5 días', 'RX-ACTIVE']],
   },
   {
-    dx: [['F41.1', 'COND-ACTIVE', 'En tratamiento con sertralina y psicoterapia.']],
+    dx: [['F41.1', 'COND_ACTIVE', 'En tratamiento con sertralina y psicoterapia.']],
     alergias: [],
     recetas: [['MED-SERTRALINA', '50 mg', 'Una vez al día por la mañana', 'RX-ACTIVE']],
   },
   {
     dx: [
-      ['I10', 'COND-ACTIVE', 'Hipertensión de larga data.'],
-      ['M17', 'COND-ACTIVE', 'Gonartrosis bilateral, grado II.'],
-      ['E11', 'COND-ACTIVE', 'Diabetes tipo 2 con buen control.'],
+      ['I10', 'COND_ACTIVE', 'Hipertensión de larga data.'],
+      ['M17', 'COND_ACTIVE', 'Gonartrosis bilateral, grado II.'],
+      ['E11', 'COND_ACTIVE', 'Diabetes tipo 2 con buen control.'],
     ],
     alergias: [['MED-CIPROFLOXACINO', 'CRIT-HIGH']],
     recetas: [
@@ -294,12 +294,12 @@ const PERFILES_CLINICOS: readonly {
     ],
   },
   {
-    dx: [['K21.0', 'COND-ACTIVE', 'Reflujo con pirosis nocturna.']],
+    dx: [['K21.0', 'COND_ACTIVE', 'Reflujo con pirosis nocturna.']],
     alergias: [],
     recetas: [['MED-OMEPRAZOL', '20 mg', 'En ayunas por 8 semanas', 'RX-ACTIVE']],
   },
   {
-    dx: [['N39.0', 'COND-RESOLVED', 'Tratada con ciprofloxacino.']],
+    dx: [['N39.0', 'COND_RESOLVED', 'Tratada con ciprofloxacino.']],
     alergias: [],
     recetas: [['MED-CIPROFLOXACINO', '500 mg', 'Cada 12 horas por 7 días', 'RX-COMPLETED']],
   },
@@ -322,11 +322,11 @@ export const condiciones = new Coleccion<CondicionSimulada>(
       categoryConceptId: CATEGORIA_DX,
       clinicalStatusConceptId: ESTADO_CONDICION[estado]!,
       verificationStatusConceptId:
-        i === 0 ? VERIFICACION_DX['DXV-CONFIRMED']! : VERIFICACION_DX['DXV-PROVISIONAL']!,
+        i === 0 ? VERIFICACION_DX['COND_CONFIRMED']! : VERIFICACION_DX['COND_PROVISIONAL']!,
       severityConceptId: i === 0 ? SEVERIDAD['SEV-MODERATE']! : SEVERIDAD['SEV-MILD']!,
       encounterId: uuid(`encounter-${p.id}-0`),
       onsetAt: iso(-400 + i * 90),
-      ...(estado === 'COND-RESOLVED' ? { resolvedAt: iso(-30 - i * 10) } : {}),
+      ...(estado === 'COND_RESOLVED' ? { resolvedAt: iso(-30 - i * 10) } : {}),
       noteText: nota,
       createdAt: iso(-400 + i * 90),
     })),
@@ -352,7 +352,7 @@ export const alergias = new Coleccion<AlergiaSimulada>(
             ? CATEGORIA_ALERGIA['ALG-ENVIRONMENT']!
             : CATEGORIA_ALERGIA['ALG-MEDICATION']!,
       criticalityConceptId: CRITICIDAD[criticidad]!,
-      clinicalStatusConceptId: ESTADO_CONDICION['COND-ACTIVE']!,
+      clinicalStatusConceptId: ESTADO_CONDICION['COND_ACTIVE']!,
       createdAt: iso(-500),
     })),
   ),

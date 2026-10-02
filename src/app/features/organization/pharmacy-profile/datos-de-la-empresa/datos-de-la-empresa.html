@@ -5,19 +5,24 @@
     <section class="empresa" aria-labelledby="ficha-empresa-titulo">
       <div class="empresa__encabezado">
         <h2 id="ficha-empresa-titulo" class="empresa__titulo">Datos de la empresa</h2>
-        <!-- Nada de esto sale de la API todavía: se dice, no se disimula. -->
-        <app-chip variant="neutral" size="sm">{{ notaDeEjemplo }}</app-chip>
+        <!-- Sobre la maqueta nada de esto sale de la API: se dice, no se disimula. -->
+        @if (sampleData()) {
+          <app-chip variant="neutral" size="sm">{{ notaDeEjemplo }}</app-chip>
+        }
 
-        @if (!editando()) {
+        @if (sampleData() && !editando()) {
+          <!-- «Editar perfil» con el lápiz, igual en todos los perfiles
+               (pedido del 30/09/2026). -->
           <button
             app-button
-            variant="secondary"
+            variant="outline"
             size="sm"
             type="button"
             data-testid="ficha-editar-empresa"
             (clicked)="editar()"
           >
-            Editar
+            <app-nav-icon name="edit" />
+            Editar perfil
           </button>
         }
       </div>
@@ -101,19 +106,21 @@
 
           <div class="empresa__campo">
             <dt class="empresa__etiqueta">Tipo de sociedad</dt>
-            <dd class="empresa__valor">{{ datos.tipoDeSociedad ?? 'Sin declarar' }}</dd>
+            <dd class="empresa__valor">
+              {{ datos.tipoDeSociedad ?? (sampleData() ? 'Sin declarar' : 'Sin registrar') }}
+            </dd>
             <!-- El porqué de la lista cerrada, también para quien sólo lee. -->
             <dd class="empresa__nota">{{ notaDelTipo }}</dd>
           </div>
 
           <div class="empresa__campo">
             <dt class="empresa__etiqueta">NIT</dt>
-            <dd class="empresa__valor tabular-nums">{{ datos.nit }}</dd>
+            <dd class="empresa__valor tabular-nums">{{ datos.nit ?? 'Sin registrar' }}</dd>
           </div>
 
           <div class="empresa__campo">
             <dt class="empresa__etiqueta">Dirección legal de la central</dt>
-            <dd class="empresa__valor">{{ datos.direccionLegal }}</dd>
+            <dd class="empresa__valor">{{ datos.direccionLegal ?? 'Sin registrar' }}</dd>
           </div>
         </dl>
       }
@@ -125,12 +132,19 @@
              forma de saber dónde queda la central. -->
         @if (punto(); as marcado) {
           <p class="empresa__punto" data-testid="ficha-punto">
-            {{ datos.direccionLegal }} · {{ marcado.lat | number: '1.4-4' }},
+            @if (datos.direccionLegal !== null) {
+              {{ datos.direccionLegal }} ·
+            }
+            {{ marcado.lat | number: '1.4-4' }},
             {{ marcado.lng | number: '1.4-4' }}
           </p>
         } @else {
           <p class="empresa__punto" data-testid="ficha-punto">
-            Todavía no está marcado el punto de la central.
+            {{
+              sampleData()
+                ? 'Todavía no está marcado el punto de la central.'
+                : 'Tu organización todavía no registró el punto de la central.'
+            }}
           </p>
         }
 

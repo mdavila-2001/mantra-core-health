@@ -2,6 +2,7 @@
   claim="Tu salud, en un solo lugar"
   tagline="Llevá tu historia clínica, tus turnos y tus estudios siempre con vos."
   contentWidth="full"
+  [plainSurface]="true"
 >
   <!-- El alta y la columna que la explica son una sola cosa en pantalla ancha:
        la pregunta a la izquierda y por qué se hace a la derecha. En teléfono la
@@ -513,6 +514,7 @@
                   testId="registration-residence"
                   [ramas]="ramasMunicipios()"
                   [value]="municipioPaciente()"
+                  [punto]="gpsDomicilio()"
                   (valueChange)="elegirMunicipio($event)"
                   mapLabel="Mapa de Bolivia: elegí el departamento donde vivís"
                   municipalityLabel="Localidad de residencia"
@@ -540,6 +542,7 @@
                   testId="registration-work"
                   [ramas]="ramasMunicipios()"
                   [value]="municipioTrabajo()"
+                  [punto]="gpsTrabajo()"
                   (valueChange)="elegirMunicipioDeTrabajo($event)"
                   mapLabel="Mapa de Bolivia: elegí el departamento donde trabajás"
                   municipalityLabel="Localidad de trabajo (opcional)"

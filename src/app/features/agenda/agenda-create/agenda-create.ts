@@ -21,7 +21,7 @@ import type {
 } from '../../../core/data-access/scheduling/scheduling.types';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { AGENDA_ROUTE } from '../agenda.routes';
-import type { AgendaResource } from '@core/data-access/scheduling/scheduling.types';
+import type { AgendaResource, FranjaModo } from '@core/data-access/scheduling/scheduling.types';
 import { misRecursosDeAgenda } from '../mi-recurso';
 import { ScheduleGrid } from '../my-agenda/schedule-grid/schedule-grid';
 import { calcularTurnos, type Calculo, type DiaCalculado } from './agenda-turnos';
@@ -140,6 +140,8 @@ type DiaGroup = FormGroup<{
   hasta: FormControl<string>;
   duracion: FormControl<number>;
   respiro: FormControl<number>;
+  /** Qué admite la franja (v4.2.40). Por omisión, sólo consultas: lo de siempre. */
+  modo: FormControl<FranjaModo>;
 }>;
 
 /** Lo que se muestra de un día en la semana visual. */
@@ -246,6 +248,17 @@ export class AgendaCreate {
     value: m,
     label: m === 0 ? 'Sin respiro' : `${m} min`,
   }));
+
+  /**
+   * Qué se atiende en cada franja (v4.2.40). «Ambos» comparte el tiempo: el que
+   * reserva primero se lo lleva, y una consulta que un servicio pisa deja de
+   * ofrecerse hasta que ese servicio se cancele.
+   */
+  protected readonly opcionesDeModo: readonly SelectOption<FranjaModo>[] = [
+    { value: 'CONSULTATIONS', label: 'Consultas' },
+    { value: 'SERVICES', label: 'Servicios' },
+    { value: 'MIXED', label: 'Ambos' },
+  ];
 
   /** Fija un valor de la fila sin que la plantilla tenga que saber de formularios. */
   protected fijarDeLaFila(indice: number, campo: string, valor: unknown): void {
@@ -496,6 +509,9 @@ export class AgendaCreate {
   /** Un día calculado a partir de sus franjas, sumando lo de cada una. */
   private calcularDia(indice: number, nombre: string): DiaCalculado {
     const v = this.semana.at(indice).getRawValue();
+    // Una franja sólo de servicios no se corta en turnos: cada servicio dura lo que
+    // declaró su profesional y el turno nace al reservarlo.
+    if (v.modo === 'SERVICES') return { dia: nombre, turnos: [], resto: 0, restoDesde: null };
     const partes = calcularTurnos(
       this.franjasDe(indice).map((franja) => ({
         dia: nombre,
@@ -741,6 +757,7 @@ export class AgendaCreate {
         // `?? 0` acá y no en el envío: leyendo, ausente ES cero; escribiendo,
         // ausente y cero son cosas distintas.
         respiro: primera.gapMinutes ?? 0,
+        modo: primera.bookingMode ?? 'CONSULTATIONS',
       });
       if (reglas.length > 1 && !this.conAlmuerzo()) {
         this.conAlmuerzo.set(true);
@@ -817,6 +834,11 @@ export class AgendaCreate {
     return this.calcularDia(indice, DIAS[indice].largo).turnos.length;
   }
 
+  /** Si la franja del día es sólo de servicios: no tiene turnos fijos que contar. */
+  protected soloServicios(indice: number): boolean {
+    return this.semana.at(indice).getRawValue().modo === 'SERVICES';
+  }
+
   /**
    * Copia el horario del primer día encendido a todos los demás.
    *
@@ -834,6 +856,7 @@ export class AgendaCreate {
         desde: modelo.desde,
         hasta: modelo.hasta,
         duracion: modelo.duracion,
+        modo: modelo.modo,
       });
     }
   }
@@ -864,6 +887,7 @@ export class AgendaCreate {
         endTime: franja.hasta.trim(),
         ...(flexible ? {} : { slotMinutes: v.duracion }),
         ...(!flexible && v.respiro > 0 ? { gapMinutes: v.respiro } : {}),
+        ...(v.modo === 'CONSULTATIONS' ? {} : { bookingMode: v.modo }),
         ...(Number.isFinite(capacidad) && capacidad > 0 ? { capacityPerSlot: capacidad } : {}),
       }));
     });
@@ -1109,6 +1133,9 @@ export class AgendaCreate {
             // Sólo si eligió alguno: mandar `0` escribiría un cero que nadie
             // declaró, y borraría la diferencia el día que el default cambie.
             ...(!flexible && v.respiro > 0 ? { gapMinutes: v.respiro } : {}),
+            // Sólo si no es lo de siempre: ausente ≡ consultas, y escribir un valor
+            // que nadie eligió borraría la diferencia entre «no lo dijo» y «dijo consultas».
+            ...(v.modo === 'CONSULTATIONS' ? {} : { bookingMode: v.modo }),
             ...opcEntero('capacityPerSlot', capacidad),
           }) as ScheduleRule,
       );
@@ -1290,6 +1317,10 @@ export class AgendaCreate {
         ? `, almuerzo de ${enHoras(this.almuerzoDesde())} a ${enHoras(this.almuerzoHasta())}`
         : '';
     if (this.flexible()) return `${dias}${horario}${almuerzo}, horario flexible sin turnos fijos`;
+    // Con franjas de servicios la frase no puede decir «consultas de 30 minutos» de
+    // todo el horario: ni todo es consulta, ni los servicios tienen un largo único.
+    const hayServicios = activos.some((dia) => this.semana.at(dia.indice).getRawValue().modo !== 'CONSULTATIONS');
+    if (hayServicios) return `${dias}${horario}${almuerzo}, con franjas de servicios`;
     return `${dias}${horario}${almuerzo}, consultas de ${primero.duracion} minutos${respiro}`;
   });
 }
@@ -1310,6 +1341,9 @@ function nuevoDia(_dayOfWeek: number): DiaGroup {
     // Sin respiro por omisión: es lo que la agenda hacía antes de que el campo
     // existiera, así que abrir el formulario no cambia nada de lo que ya había.
     respiro: new FormControl(0, { nonNullable: true, validators: [Validators.required] }),
+    // Sólo consultas por omisión: es lo que toda franja era antes, así que abrir el
+    // formulario no cambia el significado de ningún horario ya publicado.
+    modo: new FormControl<FranjaModo>('CONSULTATIONS', { nonNullable: true }),
   });
 }
 

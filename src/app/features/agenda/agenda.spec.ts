@@ -1859,6 +1859,10 @@ describe('Agenda', () => {
     expect(boton('agenda-mover-aca')).not.toBeNull();
     // El mismo hueco no puede significar dos cosas a la vez.
     expect(boton('agenda-reservar')).toBeNull();
+    // El destino dice dónde, no sólo cuándo: la sede del recurso va en su nombre.
+    expect(boton('agenda-mover-aca')?.getAttribute('aria-label')).toMatch(
+      /^Mover acá: .+, Consultorio Central$/,
+    );
   });
 
   it('sin motivo no se mueve nada', async () => {

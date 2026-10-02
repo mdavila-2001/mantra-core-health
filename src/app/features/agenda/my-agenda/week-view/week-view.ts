@@ -1,10 +1,20 @@
 import { DatePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  ElementRef,
+  inject,
+  input,
+  output,
+  signal,
+} from '@angular/core';
 
 import type {
   AgendaSlot,
   Booking,
 } from '../../../../core/data-access/scheduling/scheduling.types';
+import { nextControlId } from '@shared/forms/form-control.context';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { sufijoDeCodigo } from '../../booking-status';
 import type { EstadoResuelto } from '../day-view/day-view';
@@ -44,6 +54,23 @@ export interface DiaDeLaSemana {
 }
 
 const UN_DIA = 24 * 60 * 60 * 1000;
+
+/** Para las etiquetas del lector: fijas en castellano, no dependen del `LOCALE_ID`. */
+const WEEKDAY_NAMES = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+const MONTH_NAMES = [
+  'enero',
+  'febrero',
+  'marzo',
+  'abril',
+  'mayo',
+  'junio',
+  'julio',
+  'agosto',
+  'septiembre',
+  'octubre',
+  'noviembre',
+  'diciembre',
+];
 
 /**
  * Cuántos nombres entran en una celda de siete columnas.
@@ -88,6 +115,15 @@ const ESTADOS_QUE_NO_VIENEN: ReadonlySet<string> = new Set([
  * `sin-agenda`, `bloqueado`, `libre`, `con-reservas` y `lleno` son los mismos
  * cinco, y se calculan igual. Dos pantallas que pintan la misma agenda no
  * pueden discrepar sobre si un día está lleno.
+ *
+ * ## Con el teclado se recorre como una grilla (WCAG 2.1.1)
+ *
+ * Siete días con sus citas eran treinta paradas de `Tab` seguidas. Ahora hay
+ * una sola (*roving tabindex*): ←/→ cambian de día, ↑/↓ bajan del día a sus
+ * citas en orden de hora, Inicio/Fin van al lunes y al domingo, y con Ctrl al
+ * primero y al último de todo. El ratón no cambia: cada botón sigue siendo un
+ * botón. Cada día dice su fecha completa y la sede, y cada cita su día, para
+ * que moverse de lado no deje al lector sin saber dónde está.
  */
 @Component({
   selector: 'app-week-view',
@@ -147,6 +183,32 @@ export class WeekView {
    */
   readonly idioma = input<string>('en-US');
 
+  /** Dónde se atiende, para la etiqueta de cada día. `null` si no hay sede. */
+  readonly sede = input<string | null>(null);
+
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+
+  /** El id de la ayuda de teclado que describe la lista de días. */
+  protected readonly ayudaId = nextControlId('week-view-keys');
+
+  /** La parada de `Tab` que el teclado movió: `col` es el día, `fila` 0 el día y 1… sus citas. */
+  private readonly foco = signal<{ readonly col: number; readonly fila: number } | null>(null);
+
+  /**
+   * Qué botón lleva `tabindex="0"`. Hasta que el teclado la mueva, el día de
+   * hoy si está en la semana; si no, el lunes.
+   */
+  protected readonly parada = computed(() => {
+    const dias = this.dias();
+    const movida = this.foco();
+    if (movida !== null) {
+      const col = Math.min(movida.col, dias.length - 1);
+      return { col, fila: Math.min(movida.fila, this.filasDe(dias[col]) - 1) };
+    }
+    const hoy = dias.findIndex((d) => d.fecha.getTime() === this.hoy());
+    return { col: Math.max(0, hoy), fila: 0 };
+  });
+
   /** El lunes de la semana mirada. */
   protected readonly lunes = computed(() => lunesDe(this.semana()));
 
@@ -185,6 +247,74 @@ export class WeekView {
   protected ocupacion(dia: DiaDeLaSemana): number | null {
     const total = dia.libres + dia.tomados;
     return total === 0 ? null : Math.round((dia.tomados / total) * 100);
+  }
+
+  protected tabindexDe(col: number, fila: number): 0 | -1 {
+    const parada = this.parada();
+    return parada.col === col && parada.fila === fila ? 0 : -1;
+  }
+
+  /** Enfocar un botón —con el teclado o con un clic— lo vuelve la parada. */
+  protected alEnfocar(col: number, fila: number): void {
+    this.foco.set({ col, fila });
+  }
+
+  /**
+   * Las flechas de la semana. En los bordes se queda quieta; al cambiar de día
+   * conserva la fila si el otro día la tiene, y si no, va a su última.
+   */
+  protected alTeclear(evento: KeyboardEvent, col: number, fila: number): void {
+    const dias = this.dias();
+    let destino: { col: number; fila: number };
+    switch (evento.key) {
+      case 'ArrowLeft':
+        destino = { col: Math.max(0, col - 1), fila };
+        break;
+      case 'ArrowRight':
+        destino = { col: Math.min(dias.length - 1, col + 1), fila };
+        break;
+      case 'ArrowUp':
+        destino = { col, fila: Math.max(0, fila - 1) };
+        break;
+      case 'ArrowDown':
+        destino = { col, fila: Math.min(this.filasDe(dias[col]) - 1, fila + 1) };
+        break;
+      case 'Home':
+        destino = { col: 0, fila: evento.ctrlKey ? 0 : fila };
+        break;
+      case 'End': {
+        const ultimo = dias.length - 1;
+        destino = { col: ultimo, fila: evento.ctrlKey ? this.filasDe(dias[ultimo]) - 1 : fila };
+        break;
+      }
+      default:
+        return;
+    }
+    evento.preventDefault();
+    destino = {
+      col: destino.col,
+      fila: Math.min(destino.fila, this.filasDe(dias[destino.col]) - 1),
+    };
+    this.foco.set(destino);
+    this.host.nativeElement
+      .querySelector<HTMLElement>(`[data-semana="${destino.col}-${destino.fila}"]`)
+      ?.focus();
+  }
+
+  /** «lunes 7 de septiembre», para el lector: el botón visible dice «lun 7». */
+  protected fechaEnPalabras(fecha: Date): string {
+    return `${WEEKDAY_NAMES[fecha.getDay()]} ${fecha.getDate()} de ${MONTH_NAMES[fecha.getMonth()]}`;
+  }
+
+  /** «de septiembre», lo que le falta al número del día para leerse entero. */
+  protected mesEnPalabras(fecha: Date): string {
+    return `de ${MONTH_NAMES[fecha.getMonth()]}`;
+  }
+
+  /** Cuántas paradas tiene un día: su botón, sus citas y el «+N» si lo hay. */
+  private filasDe(dia: DiaDeLaSemana | undefined): number {
+    if (dia === undefined) return 1;
+    return 1 + dia.citas.length + (dia.masCitas > 0 ? 1 : 0);
   }
 
   protected anterior(): void {

@@ -1,9 +1,7 @@
 import { HttpHeaders } from '@angular/common/http';
 
 import { MockRouter, type MockMethod, type MockReply } from '../mock-router';
-import { buscarUsuario, type MockUser } from '../mock-session';
-import { registrarAnaliticaDeSeguros } from './insurance-analytics.handlers';
-import { registrarSeguros } from './insurance.handlers';
+import type { MockUser } from '../mock-session';
 
 interface DashboardWire {
   readonly kpis: {
@@ -20,12 +18,32 @@ interface DashboardWire {
  * los KPIs se deriven de ese recorte, no de los doce meses completos.
  */
 describe('handlers de analítica de seguros', () => {
-  const router = new MockRouter();
-  const owner = buscarUsuario('aseguradora')!;
-  const medica = buscarUsuario('medica')!;
+  let router: MockRouter;
+  let owner: MockUser;
+  let medica: MockUser;
+  let storedCatalog: string | null;
+  const catalogStorageKey = 'mock-insurance-administration';
 
-  registrarSeguros(router);
-  registrarAnaliticaDeSeguros(router);
+  beforeEach(async () => {
+    // MOCK-PERSISTE y la prueba de prima nula no deben cambiar el seed de otro caso.
+    storedCatalog = sessionStorage.getItem(catalogStorageKey);
+    sessionStorage.removeItem(catalogStorageKey);
+    vi.resetModules();
+    const { buscarUsuario } = await import('../mock-session');
+    const { registrarSeguros } = await import('./insurance.handlers');
+    const { registrarAnaliticaDeSeguros } = await import('./insurance-analytics.handlers');
+    router = new MockRouter();
+    owner = buscarUsuario('aseguradora')!;
+    medica = buscarUsuario('medica')!;
+    registrarSeguros(router);
+    registrarAnaliticaDeSeguros(router);
+  });
+
+  afterEach(() => {
+    if (storedCatalog === null) sessionStorage.removeItem(catalogStorageKey);
+    else sessionStorage.setItem(catalogStorageKey, storedCatalog);
+    vi.resetModules();
+  });
 
   function call<T>(
     method: MockMethod,

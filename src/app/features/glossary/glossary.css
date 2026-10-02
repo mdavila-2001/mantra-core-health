@@ -16,6 +16,7 @@
 
 .glosario {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--sp-6);
   margin-block-start: var(--sp-6);
 }
@@ -58,6 +59,8 @@
 
 .glosario__titulo-cuerpo {
   margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
   font-family: var(--font-display);
   font-size: var(--fs-h2);
   line-height: var(--lh-h2);
@@ -206,7 +209,10 @@
 
 .glosario__cuerpo {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--sp-4);
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .glosario__filtro {
@@ -226,39 +232,50 @@
   font-style: italic;
 }
 
-/* Índice alfabético. Las letras son el atajo de una lista larga; se leen como
-   una fila de teclas. Las que caen en la página actual se rellenan. */
-.glosario__abecedario {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--sp-1);
-  margin-block-end: var(--sp-5);
-  padding-block-end: var(--sp-3);
-  border-block-end: 1px solid var(--border-default);
+/* La lista de la página: desplazamiento sólo vertical (ADR-0015, regla 6).
+   Tiene su propio alto para que el paginador de abajo quede siempre a la
+   vista; `overflow-x: hidden` porque una tarjeta nunca debe abrir un
+   desplazamiento lateral. El borde de arriba y abajo marca que es una caja
+   que se recorre, no el final de la página. */
+.glosario__lista {
+  max-block-size: min(75vh, 60rem);
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-block: var(--sp-4);
+  padding-inline: var(--sp-1);
+  border-block: 1px solid var(--border-subtle);
+  scroll-padding-block-start: var(--sp-4);
 }
 
-.glosario__letra-enlace {
-  min-inline-size: 2.25rem;
-  padding: var(--sp-1) var(--sp-2);
-  border: 1px solid var(--border-default);
-  border-radius: var(--r-sm);
-  background: var(--bg-surface);
-  color: var(--text-link);
-  font: inherit;
+.glosario__lista:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
+}
+
+.glosario__titulo-etiqueta {
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.glosario__chips-mas {
+  align-self: center;
+  color: var(--text-muted);
   font-size: var(--fs-caption);
-  font-weight: 600;
-  text-align: center;
-  cursor: pointer;
+  font-variant-numeric: tabular-nums;
 }
 
-.glosario__letra-enlace:hover {
-  border-color: var(--border-strong);
+/* La miniatura del término: ocupa el ancho de la tarjeta, recortada a una
+   proporción fija para que las tarjetas de una fila no salten de alto según
+   la foto. El fondo neutro cubre el instante antes de que llegue. */
+.glosario__entrada-foto {
+  display: block;
+  inline-size: 100%;
+  block-size: auto;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: var(--r-sm);
   background: var(--bg-hover);
-}
-
-.glosario__letra-enlace--en-pagina {
-  border-color: var(--brand-primary);
-  background: color-mix(in srgb, var(--brand-primary) 10%, transparent);
 }
 
 .glosario__tramo {

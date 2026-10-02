@@ -40,6 +40,11 @@ interface TipoDeCuenta {
  * papeles distintos y equipos distintos. Una sola tarjeta «Laboratorio o centro
  * de estudios» obligaría a preguntar cuál de las dos es adentro del formulario,
  * que es la misma decisión movida a un peor lugar.
+ *
+ * **«Farmacia» es la sexta, y la primera que sí sale a la red** después de la
+ * aseguradora: `POST /iam/auth/register-organization` con
+ * `tenantType: 'PHARMACY'` — ver el JSDoc de `RegisterPharmacy`. Va última
+ * porque es la más nueva; no hay otro criterio de orden entre las seis.
  */
 const TIPOS: readonly TipoDeCuenta[] = [
   {
@@ -76,6 +81,13 @@ const TIPOS: readonly TipoDeCuenta[] = [
     detalle: 'Rayos X, ecografía, tomografía y resonancia. Recibí las órdenes de la red.',
     ruta: '/auth/register/imaging-center',
     testId: 'tipo-imagenologia',
+  },
+  {
+    icono: 'pharmacy',
+    titulo: 'Farmacia',
+    detalle: 'Publicá tu catálogo, recibí pedidos con receta y atendé desde un solo lugar.',
+    ruta: '/auth/register/pharmacy',
+    testId: 'tipo-farmacia',
   },
 ];
 

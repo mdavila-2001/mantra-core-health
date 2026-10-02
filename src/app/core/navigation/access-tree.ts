@@ -139,7 +139,18 @@ export const SECCIONES_FUERA_DEL_ARBOL: readonly string[] = [
   'administration/my-practice',
   'administration/pharmacy-orders',
   'administration/pharmacy-campaigns',
+  'administration/pharmacy-catalog',
   'administration/pharmacy-profile',
+  'administration/pharmacy',
+  'administration/pharmacy-categories',
+  'administration/pharmacy-import',
+  'administration/pharmacy-inventory',
+  'administration/pharmacy-prices',
+  'administration/pharmacy-branches',
+  'administration/laboratory',
+  'administration/laboratory-results',
+  'administration/laboratory-prices',
+  'administration/laboratory-branches',
   'tutorials',
 ];
 
@@ -189,6 +200,7 @@ export const ACCESO_EN_MODAL: Readonly<Record<string, string>> = {
   'clinics-directory': 'directorio-clinicas',
   'laboratory-directory': 'directorio-laboratorios',
   'pharmacies-directory': 'directorio-farmacias',
+  'insurers-directory': 'directorio-aseguradoras',
 };
 
 /**
@@ -232,7 +244,13 @@ export const ACCESS_AREAS: readonly AccessArea[] = [
     tagline: 'A dónde derivar y a quién: clínicas, laboratorios y farmacias de la plataforma.',
     icon: 'globe',
     tone: 'primary',
-    paths: ['directory', 'clinics-directory', 'laboratory-directory', 'pharmacies-directory'],
+    paths: [
+      'directory',
+      'clinics-directory',
+      'laboratory-directory',
+      'pharmacies-directory',
+      'insurers-directory',
+    ],
     catchAllGroups: ['General'],
   },
   {

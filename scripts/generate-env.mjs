@@ -167,6 +167,27 @@ const MANIFEST = [
     validate: validateBoolean,
   },
 
+  // Enciende la facturación SIMULADA (FACT-SIAT-MOCK): el motor fiscal del
+  // backend simulado. No es un secreto ni una credencial —el simulador no usa
+  // ninguna—: decide si las rutas `/billing/simulated/*` responden.
+  {
+    key: 'PUBLIC_BILLING_SIAT_DEMO',
+    field: 'billingSiatDemo',
+    literal: true,
+    validate: validateBoolean,
+  },
+
+  // Registra las pantallas portadas de la bóveda, que pintan datos de ejemplo.
+  // Apagada, esas rutas no existen: las que tienen pantalla real redirigen a
+  // ella y el resto da 404. Contra la API real se fija en `false` en el propio
+  // archivo de entorno, sin leer esta variable.
+  {
+    key: 'PUBLIC_DESIGN_MOCKUPS',
+    field: 'designMockups',
+    literal: true,
+    validate: validateBoolean,
+  },
+
   // Cómo se pide el refresco de sesión: con la cookie `httpOnly` de la API
   // (`true`) o con el token en el cuerpo (`false`, por defecto). Es un booleano
   // de despliegue, no un secreto: el nombre lleva «COOKIE» y por eso figura en

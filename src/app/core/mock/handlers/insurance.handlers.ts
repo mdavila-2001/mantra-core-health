@@ -1,7 +1,12 @@
+import { CORREDORES_CON_PERFIL, vitrinas, type VitrinaSimulada } from '../fixtures/comunidad';
+import { ASEGURADORAS_REALES, type AseguradoraReal } from '../fixtures/instituciones.generated';
 import { conceptoPorId } from '../fixtures/conceptos';
-import { PACIENTES, PACIENTE } from '../fixtures/personas';
-import { forbidden, notFound, type MockRequest, type MockRouter } from '../mock-router';
+import { INSURER_NETWORK_PRACTITIONERS } from '../fixtures/insurer-network.generated';
+import { MEDICA, PACIENTES, PACIENTE, profesionalPorId } from '../fixtures/personas';
+import { conflict, forbidden, noContent, notFound, preconditionFailed, validation, type MockRequest, type MockRouter } from '../mock-router';
 import { TENANT_ASEGURADORA } from '../mock-session';
+import { procedimientoPorConceptId } from './practice.handlers';
+import type { CreateAdjudicationInput } from '../../data-access/insurance/insurance.types';
 import {
   ahora,
   Coleccion,
@@ -25,6 +30,16 @@ function c(code: string, display: string) {
 
 const BOB = c('BOB', 'Boliviano');
 const money = (amount: string) => ({ amount, currency: BOB });
+
+function cents(amount: string | undefined): number | null {
+  if (amount === undefined) return 0;
+  if (!/^\d+(?:\.\d{1,2})?$/.test(amount)) return null;
+  const [units, fraction = ''] = amount.split('.');
+  const value = Number(units) * 100 + Number(fraction.padEnd(2, '0'));
+  return Number.isSafeInteger(value) ? value : null;
+}
+
+const asAmount = (value: number): string => `${Math.floor(value / 100)}.${String(value % 100).padStart(2, '0')}`;
 
 interface BeneficioSimulado {
   readonly id: string;
@@ -98,7 +113,40 @@ interface DetalleAseguradoraSimulado {
   }[];
 }
 
-const ASEGURADORAS = [
+/**
+ * Una aseguradora con catálogo en el simulador: las cinco sembradas a mano en
+ * {@link ASEGURADORAS} o una armada para la ficha de un directorio que no
+ * tiene catálogo propio (ver {@link aseguradoraDeLaFicha}).
+ */
+interface AseguradoraDelCatalogo {
+  readonly id: string;
+  readonly carrierCode: string;
+  readonly legalName: string;
+  readonly name: string;
+  readonly regulatorIdentifier: string | null;
+  readonly isPublic: boolean;
+  readonly whatsapp: string | null;
+  readonly callCenter: string | null;
+  readonly supportEmail: string | null;
+  /** `[código, nombre]` de cada plan. El primero es el de mayor cobertura. */
+  readonly planes: readonly (readonly string[])[];
+  /**
+   * Los slugs de sus fichas en el directorio de aseguradoras. Van escritos y no
+   * se deducen del nombre: «Alianza Vida S.A.» no se llama como «Alianza
+   * Seguros», y es la misma compañía de personas.
+   */
+  readonly fichas?: readonly string[];
+  /**
+   * Qué vende: salud (el valor por omisión) o, en una aseguradora de seguros
+   * generales, accidentes personales —que no es un seguro de salud, pero es lo
+   * que esas compañías le ofrecen a una persona—.
+   */
+  readonly ramo?: 'SALUD' | 'ACCIDENTES';
+  /** Primas propias por código de plan; si no, se buscan en {@link PRIMAS}. */
+  readonly primas?: Readonly<Record<string, string>>;
+}
+
+const ASEGURADORAS: readonly AseguradoraDelCatalogo[] = [
   {
     id: uuid('carrier-andina'),
     carrierCode: 'ANDINA',
@@ -110,6 +158,7 @@ const ASEGURADORAS = [
     whatsapp: '+59170000101',
     callCenter: '800-10-0101',
     supportEmail: 'siniestros@andina.mock.bo',
+    fichas: ['seguros-andina'],
     planes: [
       ['ANDINA-INT', 'Plan Integral'],
       ['ANDINA-FAM', 'Plan Familiar'],
@@ -127,6 +176,9 @@ const ASEGURADORAS = [
     whatsapp: null,
     callCenter: '800-10-0102',
     supportEmail: 'siniestros@vitalicia.mock.bo',
+    // La ficha inventada de siempre y la real de la planilla del propietario:
+    // las dos son la misma compañía y abren el mismo catálogo.
+    fichas: ['la-vitalicia', 'la-vitalicia-seguros-y-reaseguros-de-vida-s-a'],
     planes: [
       ['VIT-SALUD', 'Salud Total'],
       ['VIT-BASICO', 'Salud Básica'],
@@ -142,6 +194,9 @@ const ASEGURADORAS = [
     whatsapp: '+59170000103',
     callCenter: '800-10-0103',
     supportEmail: 'siniestros@alianza.mock.bo',
+    // Sus planes son de salud, así que su ficha es la de la compañía de
+    // personas —Alianza Vida— y no la de generales, que tiene la suya.
+    fichas: ['alianza-vida-seguros-y-reaseguros-s-a'],
     planes: [
       ['ALZ-ORO', 'Plan Oro'],
       ['ALZ-PLATA', 'Plan Plata'],
@@ -217,7 +272,7 @@ export function contactChannelsOfCarrier(
   };
 }
 
-function resumenDeAseguradora(a: (typeof ASEGURADORAS)[number], i: number, canAdminister = false) {
+function resumenDeAseguradora(a: AseguradoraDelCatalogo, i: number, canAdminister = false) {
   return {
     id: a.id,
     carrierCode: a.carrierCode,
@@ -237,18 +292,100 @@ function resumenDeAseguradora(a: (typeof ASEGURADORAS)[number], i: number, canAd
   };
 }
 
+/** Una cláusula del simulador: lo que cambia de una a otra; el resto es fijo. */
+function beneficio(
+  id: string,
+  category: ReturnType<typeof c>,
+  datos: Partial<Omit<BeneficioSimulado, 'id' | 'category'>>,
+): BeneficioSimulado {
+  return {
+    id: uuid(id),
+    category,
+    service: null,
+    coveragePercent: null,
+    copayAmount: null,
+    deductibleAmount: null,
+    annualLimitAmount: null,
+    requiresPriorAuthorization: false,
+    approvalRules: { requiredDocuments: [], exclusionNotes: null },
+    effectiveFrom: isoDia(-365),
+    effectiveTo: null,
+    ...datos,
+  };
+}
+
+/** Las cláusulas de un plan de salud. `k === 0` es el plan de mayor cobertura. */
+function beneficiosDeSalud(code: string, k: number): readonly BeneficioSimulado[] {
+  return [
+    beneficio(`benefit-${code}-1`, c('CONSULTATION', 'Consulta médica'), {
+      service: c('CONS', 'Consulta ambulatoria'),
+      coveragePercent: k === 0 ? '100' : '80',
+      copayAmount: k === 0 ? '0.00' : '30.00',
+    }),
+    beneficio(`benefit-${code}-2`, c('HOSPITALIZATION', 'Internación'), {
+      coveragePercent: k === 0 ? '90' : '70',
+      deductibleAmount: '500.00',
+      annualLimitAmount: '150000.00',
+      requiresPriorAuthorization: true,
+      approvalRules: { requiredDocuments: ['ORDEN_MEDICA'], exclusionNotes: null },
+    }),
+    beneficio(`benefit-${code}-3`, c('LAB', 'Laboratorio e imagen'), {
+      coveragePercent: '80',
+      annualLimitAmount: '20000.00',
+    }),
+    beneficio(`benefit-${code}-4`, c('PHARMACY', 'Medicamentos'), {
+      coveragePercent: '60',
+      annualLimitAmount: '8000.00',
+    }),
+  ];
+}
+
+/**
+ * Las cláusulas de un plan de accidentes personales. El capital asegurado va
+ * como tope anual: es lo que paga la póliza, una vez, si pasa lo que cubre.
+ */
+function beneficiosDeAccidentes(code: string, k: number): readonly BeneficioSimulado[] {
+  const capital = k === 0 ? '100000.00' : '50000.00';
+  return [
+    beneficio(`benefit-${code}-1`, c('ACCIDENTAL_DEATH', 'Muerte accidental'), {
+      coveragePercent: '100',
+      annualLimitAmount: capital,
+    }),
+    beneficio(`benefit-${code}-2`, c('PERMANENT_DISABILITY', 'Invalidez total y permanente'), {
+      coveragePercent: '100',
+      annualLimitAmount: capital,
+      approvalRules: { requiredDocuments: ['INFORME_CLINICO'], exclusionNotes: null },
+    }),
+    beneficio(`benefit-${code}-3`, c('ACCIDENT_MEDICAL', 'Gastos médicos por accidente'), {
+      coveragePercent: k === 0 ? '100' : '80',
+      annualLimitAmount: k === 0 ? '15000.00' : '8000.00',
+      approvalRules: {
+        requiredDocuments: ['INFORME_CLINICO'],
+        exclusionNotes: 'Enfermedades que no vengan de un accidente',
+      },
+    }),
+    beneficio(`benefit-${code}-4`, c('FUNERAL', 'Gastos de sepelio'), {
+      coveragePercent: '100',
+      annualLimitAmount: k === 0 ? '5000.00' : '3000.00',
+    }),
+  ];
+}
+
 function detalleDeAseguradora(
-  a: (typeof ASEGURADORAS)[number],
+  a: AseguradoraDelCatalogo,
   i: number,
 ): DetalleAseguradoraSimulado {
+  const accidentes = a.ramo === 'ACCIDENTES';
   return {
     ...resumenDeAseguradora(a, i),
     products: [
       {
         id: uuid(`product-${a.id}`),
-        productCode: `${a.carrierCode}-SALUD`,
-        name: `${a.name} · Salud`,
-        productType: c('HEALTH', 'Salud'),
+        productCode: `${a.carrierCode}-${accidentes ? 'AP' : 'SALUD'}`,
+        name: `${a.name} · ${accidentes ? 'Accidentes personales' : 'Salud'}`,
+        productType: accidentes
+          ? c('PERSONAL_ACCIDENT', 'Accidentes personales')
+          : c('HEALTH', 'Salud'),
         marketSegment: c(
           a.isPublic ? 'PUBLIC' : 'INDIVIDUAL',
           a.isPublic ? 'Seguro social' : 'Individual y familiar',
@@ -260,65 +397,12 @@ function detalleDeAseguradora(
           name: name!,
           planType: c(k === 0 ? 'PREMIUM' : 'STANDARD', k === 0 ? 'Premium' : 'Estándar'),
           currency: BOB,
-          monthlyPremiumAmount: PRIMAS[code!] ?? null,
+          monthlyPremiumAmount: a.primas?.[code!] ?? PRIMAS[code!] ?? null,
           effectiveFrom: isoDia(-365),
           effectiveTo: null,
           status: c('ACTIVE', 'Vigente'),
           policyDocumentFileId: null,
-          benefits: [
-            {
-              id: uuid(`benefit-${code}-1`),
-              category: c('CONSULTATION', 'Consulta médica'),
-              service: c('CONS', 'Consulta ambulatoria'),
-              coveragePercent: k === 0 ? '100' : '80',
-              copayAmount: k === 0 ? '0.00' : '30.00',
-              deductibleAmount: null,
-              annualLimitAmount: null,
-              requiresPriorAuthorization: false,
-              approvalRules: { requiredDocuments: [], exclusionNotes: null },
-              effectiveFrom: isoDia(-365),
-              effectiveTo: null,
-            },
-            {
-              id: uuid(`benefit-${code}-2`),
-              category: c('HOSPITALIZATION', 'Internación'),
-              service: null,
-              coveragePercent: k === 0 ? '90' : '70',
-              copayAmount: null,
-              deductibleAmount: '500.00',
-              annualLimitAmount: '150000.00',
-              requiresPriorAuthorization: true,
-              approvalRules: { requiredDocuments: ['ORDEN_MEDICA'], exclusionNotes: null },
-              effectiveFrom: isoDia(-365),
-              effectiveTo: null,
-            },
-            {
-              id: uuid(`benefit-${code}-3`),
-              category: c('LAB', 'Laboratorio e imagen'),
-              service: null,
-              coveragePercent: '80',
-              copayAmount: null,
-              deductibleAmount: null,
-              annualLimitAmount: '20000.00',
-              requiresPriorAuthorization: false,
-              approvalRules: { requiredDocuments: [], exclusionNotes: null },
-              effectiveFrom: isoDia(-365),
-              effectiveTo: null,
-            },
-            {
-              id: uuid(`benefit-${code}-4`),
-              category: c('PHARMACY', 'Medicamentos'),
-              service: null,
-              coveragePercent: '60',
-              copayAmount: null,
-              deductibleAmount: null,
-              annualLimitAmount: '8000.00',
-              requiresPriorAuthorization: false,
-              approvalRules: { requiredDocuments: [], exclusionNotes: null },
-              effectiveFrom: isoDia(-365),
-              effectiveTo: null,
-            },
-          ],
+          benefits: accidentes ? beneficiosDeAccidentes(code!, k) : beneficiosDeSalud(code!, k),
         })),
       },
     ],
@@ -413,6 +497,17 @@ function concepto(id: string) {
   return c(item?.code ?? id, item?.display ?? id);
 }
 
+/**
+ * El servicio de una cláusula. Se busca primero en el arancel —de ahí salen
+ * los servicios que ofrece el médico— y después en el registro general.
+ */
+function servicioDeClausula(id: string) {
+  const procedimiento = procedimientoPorConceptId(id);
+  return procedimiento === undefined
+    ? concepto(id)
+    : c(procedimiento.code, procedimiento.display);
+}
+
 const CORREDORES = [
   {
     id: uuid('broker-1'),
@@ -466,6 +561,11 @@ export interface SolicitudSimulada {
   readonly submittedAt: string;
   readonly status: { code: string; display: string };
   readonly hasOpenDispute: boolean;
+  readonly adjudicationVersion?: number;
+  readonly dispositionText?: string;
+  readonly adjudicatedAt?: string;
+  /** undefined conserva las EOB historicas; null significa dictamen aun no publicado. */
+  readonly eobPublishedAt?: string | null;
   readonly lineas: readonly {
     service: string;
     billed: string;
@@ -696,6 +796,279 @@ function itemDeSolicitud(s: SolicitudSimulada) {
   };
 }
 
+/**
+ * Las redes que publica cada aseguradora, con la forma de
+ * `GET /practitioners/:id/insurance-carriers`.
+ *
+ * La aseguradora que ya está en el catálogo del simulador conserva su id —así
+ * el mismo seguro no aparece con dos identidades—; la que no, recibe uno
+ * estable derivado de su nombre. Cada plan publicado es una red: es como la
+ * aseguradora arma su listado.
+ */
+export function carriersOfPractitioner(
+  networks: readonly { readonly insurer: string; readonly plans: readonly string[] }[],
+) {
+  return networks
+    .map((network) => {
+      const carrierId =
+        ASEGURADORAS.find((a) => a.name === network.insurer)?.id ??
+        uuid(`carrier-network-${network.insurer}`);
+      return {
+        carrierId,
+        carrierName: network.insurer,
+        networks: network.plans.map((plan) => ({
+          id: uuid(`network-${network.insurer}-${plan}`),
+          name: plan,
+        })),
+      };
+    })
+    .sort((a, b) => a.carrierName.localeCompare(b.carrierName, 'es'));
+}
+
+/**
+ * Lo que la práctica espera cobrarles a las aseguradoras, a hoy.
+ *
+ * Enviadas sin dictamen cuentan por lo facturado; aprobadas —total o
+ * parcialmente— y todavía sin pagar, por lo aprobado. Pagadas y rechazadas no
+ * se esperan. Exportado para la contabilidad simple del doctor, que lo
+ * muestra como uno de sus tres números.
+ */
+export function pendienteDeAseguradoras(): { monto: string; solicitudes: number } {
+  let centavos = 0;
+  let cuantas = 0;
+  for (const s of solicitudes.todos()) {
+    const codigo = s.status.code;
+    const importe =
+      codigo === 'SUBMITTED'
+        ? s.billed
+        : codigo === 'APPROVED' || codigo === 'PARTIAL'
+          ? s.approved
+          : null;
+    if (importe === null) continue;
+    centavos += Math.round(Number(importe) * 100);
+    cuantas += 1;
+  }
+  return { monto: (centavos / 100).toFixed(2), solicitudes: cuantas };
+}
+
+/* ---- con qué aseguradoras trabaja un profesional ----------------------------
+   `GET /practitioners/:id/insurance-networks`. La API real todavía no la sirve
+   (`docs/pendientes-backend-seguros-del-medico.md`); la forma es la que pide
+   ahí el contrato.
+
+   Dos fuentes, y ninguna inventa nada sobre alguien real:
+
+   - La médica escrita a mano (`MEDICA`) es ficticia: se le dan tres redes del
+     catálogo del simulador, con la red y el id que ya sirve
+     `GET /insurance-carriers/:id`, para que la misma red se lea igual desde
+     las dos puntas.
+   - Los médicos de la red importada (`insurer-network.generated.ts`) traen lo
+     que su aseguradora publica: en qué red figuran. La fuente no publica desde
+     cuándo, así que la vigencia viaja nula en vez de fabricarse. */
+
+interface RedDelProfesional {
+  readonly membershipId: string;
+  readonly carrierId: string;
+  readonly carrierName: string;
+  readonly networkName: string;
+  readonly effectiveFrom: string | null;
+  readonly effectiveTo: string | null;
+}
+
+function redDelCatalogo(
+  profesionalId: string,
+  aseguradora: (typeof ASEGURADORAS)[number],
+  desde: string,
+): RedDelProfesional {
+  return {
+    membershipId: uuid(`membership-${profesionalId}-${aseguradora.id}`),
+    carrierId: aseguradora.id,
+    carrierName: aseguradora.name,
+    networkName: `Red de prestadores ${aseguradora.name}`,
+    effectiveFrom: desde,
+    effectiveTo: null,
+  };
+}
+
+let redesDeLaRedImportada: ReadonlyMap<string, readonly RedDelProfesional[]> | null = null;
+
+/** Se arma la primera vez que se pide: son más de mil médicos. */
+function redesImportadas(): ReadonlyMap<string, readonly RedDelProfesional[]> {
+  if (redesDeLaRedImportada !== null) return redesDeLaRedImportada;
+  const mapa = new Map<string, readonly RedDelProfesional[]>();
+  for (const medico of INSURER_NETWORK_PRACTITIONERS) {
+    const id = uuid(`hpid-${medico.id}`);
+    mapa.set(
+      id,
+      medico.networks.map((red) => {
+        const delCatalogo = ASEGURADORAS.find((a) => a.name === red.insurer);
+        const carrierId = delCatalogo?.id ?? uuid(`carrier-${red.insurer}`);
+        return {
+          membershipId: uuid(`membership-${id}-${carrierId}`),
+          carrierId,
+          carrierName: red.insurer,
+          networkName: `Red médica ${red.insurer}`,
+          effectiveFrom: null,
+          effectiveTo: null,
+        };
+      }),
+    );
+  }
+  redesDeLaRedImportada = mapa;
+  return mapa;
+}
+
+/** Las redes en las que figura un profesional; vacío si no figura en ninguna. */
+export function redesDelProfesional(practitionerProfileId: string): readonly RedDelProfesional[] {
+  if (practitionerProfileId === MEDICA.id) {
+    return [
+      redDelCatalogo(MEDICA.id, ASEGURADORAS[0]!, isoDia(-480)),
+      redDelCatalogo(MEDICA.id, ASEGURADORAS[2]!, isoDia(-300)),
+      redDelCatalogo(MEDICA.id, ASEGURADORAS[3]!, isoDia(-120)),
+    ];
+  }
+  return redesImportadas().get(practitionerProfileId) ?? [];
+}
+
+/* ---- de la ficha del directorio al catálogo --------------------------- */
+
+/**
+ * Un nombre para comparar: sin tildes, sin mayúsculas y sin puntuación.
+ * «LA VITALICIA SEGUROS Y REASEGUROS DE VIDA S.A.» y «La Vitalicia Seguros y
+ * Reaseguros de Vida S.A.» son el mismo nombre escrito por dos planillas.
+ */
+function nombreComparable(nombre: string): string {
+  return nombre
+    .normalize('NFD')
+    .replace(/\p{M}/gu, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+}
+
+/** La aseguradora real de la planilla del propietario detrás de una ficha, si la hay. */
+function aseguradoraRealDe(ficha: VitrinaSimulada): AseguradoraReal | undefined {
+  return ASEGURADORAS_REALES.find((real) => uuid(`insurer-${real.id}`) === ficha.targetId);
+}
+
+/**
+ * El índice en {@link ASEGURADORAS} del catálogo sembrado de una ficha, o -1.
+ *
+ * Primero por los slugs que cada aseguradora declara —es lo único que no
+ * depende de cómo escribió el nombre cada planilla— y después por nombre:
+ * el que muestra la ficha o la razón social de la planilla contra el nombre o
+ * la razón social del catálogo, sin distinguir tildes ni mayúsculas. Antes se
+ * comparaba `displayName === name` al pie de la letra, y ninguna de las 19
+ * aseguradoras reales calzaba: todas abrían «todavía no publicó sus productos».
+ */
+function indiceDelCatalogo(ficha: VitrinaSimulada): number {
+  const porSlug = ASEGURADORAS.findIndex((a) => a.fichas?.includes(ficha.slug) ?? false);
+  if (porSlug >= 0) return porSlug;
+  const nombres = new Set(
+    [ficha.displayName, aseguradoraRealDe(ficha)?.name]
+      .filter((nombre): nombre is string => nombre !== undefined)
+      .map(nombreComparable),
+  );
+  return ASEGURADORAS.findIndex(
+    (a) => nombres.has(nombreComparable(a.name)) || nombres.has(nombreComparable(a.legalName)),
+  );
+}
+
+/** Un número estable a partir de un texto: el mismo slug da siempre el mismo. */
+function semilla(texto: string): number {
+  return Number.parseInt(uuid(texto).slice(0, 8), 16);
+}
+
+/** Palabras que no distinguen a una aseguradora de otra en su código. */
+const PALABRAS_GENERICAS = new Set([
+  's', 'a', 'y', 'de', 'la', 'del', 'seguros', 'reaseguros', 'compania', 'empresa',
+  'generales', 'fianzas', 'personales',
+]);
+
+/** «bisa-seguros-y-reaseguros-s-a» → «BISA»; «seguros-illimani-s-a-…» → «ILLIMANI». */
+function codigoDeAseguradora(slug: string): string {
+  const palabras = slug.split('-').filter((palabra) => !PALABRAS_GENERICAS.has(palabra));
+  return (palabras.slice(0, 2).join('-') || 'ASEG').toUpperCase();
+}
+
+/** Un importe redondeado a la decena, con dos decimales, como lo escribe la base. */
+function aDecena(monto: number): string {
+  return (Math.round(monto / 10) * 10).toFixed(2);
+}
+
+/**
+ * **El catálogo de ejemplo de una aseguradora del directorio sin catálogo
+ * sembrado** (29/09/2026).
+ *
+ * «En el directorio al ir a una aseguradora no cargan sus productos»: de las
+ * 21 fichas del directorio, sólo Seguros Andina y La Vitalicia tenían planes;
+ * las otras 19 —las reales de la planilla del propietario— abrían vacías, y el
+ * mercado de seguros parecía no existir.
+ *
+ * Se arma de la ficha, siempre igual para el mismo slug: ids con `uuid()`,
+ * código de la aseguradora sacado del slug y primas que dependen de él. Quien
+ * cubre salud ofrece tres planes de salud; una compañía de seguros generales y
+ * fianzas —que según la planilla no cubre salud— ofrece accidentes personales,
+ * que es lo que esas compañías le venden a una persona. **Son planes de ejemplo**, como el resto de la maqueta:
+ * los nombres son genéricos a propósito para no atribuirle a una compañía real
+ * un producto que no tiene, y no lleva canales de contacto ni matrícula del
+ * regulador por lo mismo.
+ */
+function aseguradoraDeLaFicha(ficha: VitrinaSimulada): AseguradoraDelCatalogo {
+  const real = aseguradoraRealDe(ficha);
+  const cubreSalud = real?.coversHealth ?? ficha.categoria?.code !== 'seguros-generales';
+  const codigo = codigoDeAseguradora(ficha.slug);
+  // La prima base se mueve de a 15 Bs entre compañías: comparar dos
+  // aseguradoras con los mismos precios al centavo no enseñaría nada.
+  const paso = semilla(`prima-${ficha.slug}`) % 7;
+  const planes: readonly (readonly [string, string, number])[] = cubreSalud
+    ? [
+        [`${codigo}-SALUD-PLUS`, 'Plan Salud Plus', (240 + paso * 15) * 1.8],
+        [`${codigo}-SALUD-ESENCIAL`, 'Plan Salud Esencial', 240 + paso * 15],
+        [`${codigo}-SALUD-FAMILIAR`, 'Plan Familiar', (240 + paso * 15) * 2.6],
+      ]
+    : [
+        [`${codigo}-AP-PLUS`, 'Accidentes Personales Plus', 90 + paso * 5],
+        [`${codigo}-AP-INDIVIDUAL`, 'Accidentes Personales Individual', 50 + paso * 5],
+      ];
+  return {
+    id: uuid(`carrier-${ficha.slug}`),
+    carrierCode: codigo,
+    legalName: real?.name ?? ficha.displayName,
+    name: ficha.displayName,
+    regulatorIdentifier: null,
+    isPublic: false,
+    whatsapp: null,
+    callCenter: null,
+    supportEmail: null,
+    fichas: [ficha.slug],
+    ramo: cubreSalud ? 'SALUD' : 'ACCIDENTES',
+    planes: planes.map(([code, name]) => [code, name]),
+    primas: Object.fromEntries(planes.map(([code, , prima]) => [code, aDecena(prima)])),
+  };
+}
+
+/**
+ * Los brokers de una aseguradora del catálogo, con el slug de su chat.
+ *
+ * Una armada para su ficha no figura en `carriers` de ningún corredor, así
+ * que se le asigna uno, siempre el mismo para el mismo slug. Sólo entre los
+ * independientes: «Andina Corredores» trabaja sólo con Seguros Andina, y
+ * ofrecerlo en la ficha de otra aseguradora sería contradecir su tarjeta.
+ */
+function brokersDelMercado(indice: number, slug: string) {
+  const conChat = (corredor: (typeof CORREDORES)[number]) => ({
+    ...resumenDeCorredor(corredor, CORREDORES.indexOf(corredor)),
+    chatSlug:
+      CORREDORES_CON_PERFIL.find((p) => p.brokerCode === corredor.brokerCode)?.slug ?? null,
+  });
+  if (indice >= 0) {
+    return CORREDORES.filter((corredor) => corredor.carriers.includes(indice)).map(conChat);
+  }
+  const independientes = CORREDORES.filter((corredor) => corredor.independent);
+  return [conChat(independientes[semilla(`broker-${slug}`) % independientes.length]!)];
+}
+
 export function registrarSeguros(router: MockRouter): void {
   // El sobre `{ carriers }` no es decorativo: `InsuranceClient.listCarrierCatalog`
   // mapea `body.carriers`, y devolver el array pelado le dejaba `undefined`.
@@ -712,6 +1085,18 @@ export function registrarSeguros(router: MockRouter): void {
     })),
   }));
 
+  // La ficha del profesional: con qué aseguradoras trabaja (su red y planes).
+  router.get('/practitioners/:id/insurance-carriers', ({ params }) => {
+    const practitioner = profesionalPorId(params['id']!);
+    if (practitioner === undefined) return notFound('Profesional no encontrado');
+    return { items: carriersOfPractitioner(practitioner.insurerNetworks ?? []) };
+  });
+
+  router.get('/practitioners/:id/insurance-networks', ({ params }) => {
+    const items = redesDelProfesional(params['id']!);
+    return { items, count: items.length };
+  });
+
   router.get('/insurance-carriers', (request) => {
     if (!perteneceALaAseguradora(request)) return { items: [], count: 0 };
     const items = catalogoAdministrable
@@ -726,6 +1111,32 @@ export function registrarSeguros(router: MockRouter): void {
     return carrier === undefined
       ? notFound('Aseguradora no encontrada')
       : conPermiso(carrier, request);
+  });
+
+  // La vitrina de una aseguradora para el paciente (P48): se busca por el slug
+  // de su ficha pública, que es lo que trae el directorio. Lee el MISMO
+  // catálogo que administra la aseguradora —lo que ella corrige en su consola
+  // es lo que ve el paciente— y, si no lo administró todavía, el sembrado.
+  // Una ficha sin catálogo sembrado recibe el de ejemplo: ninguna tarjeta del
+  // directorio abre una página sin productos.
+  router.get('/insurance-marketplace/insurers/:slug', ({ params }) => {
+    const ficha = vitrinas
+      .todos()
+      .find((vitrina) => vitrina.slug === params['slug'] && vitrina.kind === 'INSURER');
+    if (ficha === undefined) return notFound('Aseguradora no encontrada');
+    const indice = indiceDelCatalogo(ficha);
+    const brokers = brokersDelMercado(indice, ficha.slug);
+    if (indice < 0) {
+      // Sin catálogo sembrado: el de ejemplo, armado de la ficha. El índice
+      // sólo mueve la fecha de alta y el tamaño de la red.
+      const sintetica = aseguradoraDeLaFicha(ficha);
+      const carrier = detalleDeAseguradora(sintetica, semilla(ficha.slug) % 10);
+      return { carrier: { ...carrier, canAdminister: false }, brokers };
+    }
+    const aseguradora = ASEGURADORAS[indice]!;
+    const carrier =
+      catalogoAdministrable.get(aseguradora.id) ?? detalleDeAseguradora(aseguradora, indice);
+    return { carrier: { ...carrier, canAdminister: false }, brokers };
   });
 
   router.post('/insurance-products/:productId/plans', (request) => {
@@ -777,7 +1188,8 @@ export function registrarSeguros(router: MockRouter): void {
     const benefit = {
       id,
       category: concepto(datos.benefitCategoryConceptId ?? ''),
-      service: datos.serviceConceptId === undefined ? null : concepto(datos.serviceConceptId),
+      service:
+        datos.serviceConceptId === undefined ? null : servicioDeClausula(datos.serviceConceptId),
       coveragePercent: datos.coveragePercent ?? null,
       copayAmount: datos.copayAmount ?? null,
       deductibleAmount: datos.deductibleAmount ?? null,
@@ -869,6 +1281,43 @@ export function registrarSeguros(router: MockRouter): void {
    * plan. Reemplazo completo de un solo valor, como el resto de las
    * mutaciones económicas del catálogo.
    */
+  /* Editar y dar de baja un producto seguro: **sólo maqueta**. La API real no
+     tiene todavía `PUT` ni `DELETE /insurance-plans/:planId`. */
+  router.put('/insurance-plans/:planId', (request) => {
+    if (!administraCatalogo(request)) return forbidden();
+    const match = localizarPlan(request.params['planId']!);
+    if (match === undefined) return notFound('Plan no encontrado');
+    const datos = cuerpo<{
+      planCode: string;
+      name: string;
+      effectiveFrom: string | null;
+      effectiveTo: string | null;
+    }>(request);
+    const plans = match.product.plans.map((plan) =>
+      plan.id === match.plan.id
+        ? {
+            ...plan,
+            planCode: datos.planCode ?? plan.planCode,
+            name: datos.name ?? plan.name,
+            effectiveFrom: datos.effectiveFrom ?? null,
+            effectiveTo: datos.effectiveTo ?? null,
+          }
+        : plan,
+    );
+    actualizarProducto(match.carrier, match.product, { plans });
+    return { ok: true };
+  });
+
+  router.delete('/insurance-plans/:planId', (request) => {
+    if (!administraCatalogo(request)) return forbidden();
+    const match = localizarPlan(request.params['planId']!);
+    if (match === undefined) return notFound('Plan no encontrado');
+    actualizarProducto(match.carrier, match.product, {
+      plans: match.product.plans.filter((plan) => plan.id !== match.plan.id),
+    });
+    return noContent();
+  });
+
   router.put('/insurance-plans/:planId/premium', (request) => {
     if (!administraCatalogo(request)) return forbidden();
     const match = localizarPlan(request.params['planId']!);
@@ -1023,7 +1472,7 @@ export function registrarSeguros(router: MockRouter): void {
     const exclusionSinClausula = s.lineas.some(
       (l) => l.decision === 'DENIED' && (l.clause === null || l.clause.trim() === ''),
     );
-    const settlementAvailability = !adjudicada
+    const settlementAvailability = !adjudicada || s.eobPublishedAt === null
       ? 'PENDING_PUBLICATION'
       : exclusionSinClausula
         ? 'UNDER_REVIEW'
@@ -1051,18 +1500,18 @@ export function registrarSeguros(router: MockRouter): void {
     const adjudicacion = adjudicada
       ? {
           id: uuid(`adj-${s.id}`),
-          adjudicationVersion: 1,
+          adjudicationVersion: s.adjudicationVersion ?? 1,
           outcome: s.status,
-          dispositionText:
+          dispositionText: s.dispositionText ?? (
             s.status.code === 'REJECTED'
               ? 'Prestación no cubierta por el plan contratado.'
               : s.status.code === 'PARTIAL'
                 ? 'El electrocardiograma requiere autorización previa.'
-                : 'Aprobada según tarifario vigente.',
+                : 'Aprobada según tarifario vigente.'),
           totalApprovedAmount: money(s.approved!),
           totalPatientAmount: money(totalPatientAmount),
           totalDeniedAmount: money(totalDeniedAmount),
-          adjudicatedAt: iso(-1),
+          adjudicatedAt: s.adjudicatedAt ?? iso(-1),
         }
       : null;
     return {
@@ -1073,7 +1522,7 @@ export function registrarSeguros(router: MockRouter): void {
         service: c(`SVC-${i}`, l.service),
         billedAmount: money(l.billed),
         patientResponsibilityAmount:
-          l.approved === null ? null : money((Number(l.billed) - Number(l.approved)).toFixed(2)),
+          l.approved === null ? null : money(l.decision === 'DENIED' ? '0.00' : (Number(l.billed) - Number(l.approved)).toFixed(2)),
         approvedAmount: l.approved === null ? null : money(l.approved),
         deniedAmount: l.decision === 'DENIED' ? money(l.billed) : null,
         decision: c(
@@ -1094,7 +1543,7 @@ export function registrarSeguros(router: MockRouter): void {
       lineBilledTotal: money(s.billed),
       lineApprovedTotal: s.approved === null ? null : money(s.approved),
       settlement,
-      eob: adjudicada ? { id: uuid(`eob-${s.id}`), publishedAt: iso(-1) } : null,
+      eob: adjudicada && s.eobPublishedAt !== null ? { id: uuid(`eob-${s.id}`), publishedAt: s.eobPublishedAt ?? iso(-1) } : null,
       adjudication: adjudicacion,
       adjudicationHistory: adjudicacion === null ? [] : [adjudicacion],
       disputes: s.hasOpenDispute
@@ -1110,6 +1559,85 @@ export function registrarSeguros(router: MockRouter): void {
           ]
         : [],
     };
+  });
+
+  router.post('/insurance-claims/:id/adjudications', (request) => {
+    const claim = solicitudes.get(request.params['id']!);
+    if (claim === undefined) return notFound('Solicitud no encontrada');
+    const input = cuerpo<CreateAdjudicationInput>(request);
+    if (input.outcome !== 'APPROVED' && input.outcome !== 'DENIED') {
+      return validation('Dictamen inválido', [{ field: 'outcome', message: 'debe ser APPROVED o DENIED' }]);
+    }
+    if (!Array.isArray(input.lineAdjudications) || input.lineAdjudications.length !== claim.lineas.length) {
+      return validation('Cada línea requiere dictamen', [{ field: 'lineAdjudications', message: 'cantidad incorrecta' }]);
+    }
+
+    const byId = new Map(input.lineAdjudications.map((line) => [line.insuranceClaimLineId, line]));
+    if (byId.size !== claim.lineas.length) {
+      return validation('Cada línea requiere un dictamen único', [{ field: 'lineAdjudications', message: 'línea duplicada' }]);
+    }
+
+    let approvedTotal = 0;
+    let patientTotal = 0;
+    let deniedTotal = 0;
+    const lines: SolicitudSimulada['lineas'][number][] = [];
+    for (const [index, current] of claim.lineas.entries()) {
+      const line = byId.get(uuid(`line-${claim.id}-${index}`));
+      if (line === undefined || (line.decision !== 'APPROVED' && line.decision !== 'DENIED')) {
+        return validation('Línea de dictamen inválida', [{ field: 'lineAdjudications', message: 'id o decisión inválida' }]);
+      }
+      const approved = cents(line.approvedAmount);
+      const patient = cents(line.patientAmount);
+      const denied = cents(line.deniedAmount);
+      const billed = cents(current.billed)!;
+      if (approved === null || patient === null || denied === null || approved + patient + denied !== billed ||
+        (line.decision === 'DENIED' && (approved !== 0 || patient !== 0)) ||
+        (line.decision === 'APPROVED' && denied !== 0)) {
+        return validation('Importes de línea inválidos', [{ field: 'lineAdjudications', message: 'los importes deben conciliar con lo facturado' }]);
+      }
+      approvedTotal += approved;
+      patientTotal += patient;
+      deniedTotal += denied;
+      lines.push({
+        ...current,
+        approved: asAmount(approved),
+        decision: line.decision,
+        clause: line.decision === 'DENIED' ? line.policyClauseReference?.trim() || null : null,
+        rationale: line.decision === 'DENIED' ? line.denialRationale?.trim() || null : null,
+      });
+    }
+    if ((input.outcome === 'DENIED' && approvedTotal > 0) || (input.outcome === 'APPROVED' && approvedTotal === 0)) {
+      return validation('Resultado incongruente con las líneas', [{ field: 'outcome', message: 'no coincide con los importes' }]);
+    }
+    const totals = [
+      [input.totalApprovedAmount, approvedTotal],
+      [input.totalPatientAmount, patientTotal],
+      [input.totalDeniedAmount, deniedTotal],
+    ] as const;
+    if (totals.some(([declared, calculated]) => declared !== undefined && cents(declared) !== calculated)) {
+      return validation('Totales incongruentes', [{ field: 'totalApprovedAmount', message: 'no coincide con las líneas' }]);
+    }
+
+    const nextVersion = (claim.adjudicationVersion ?? (claim.approved === null ? 0 : 1)) + 1;
+    solicitudes.actualizar(claim.id, {
+      approved: asAmount(approvedTotal),
+      status: deniedTotal === 0 ? c('APPROVED', 'Aprobada') : approvedTotal === 0 ? c('REJECTED', 'Rechazada') : c('PARTIAL', 'Aprobada parcialmente'),
+      lineas: lines,
+      adjudicationVersion: nextVersion,
+      dispositionText: input.dispositionText,
+      adjudicatedAt: ahora(),
+      eobPublishedAt: null,
+    });
+    return { status: 201, body: { id: uuid(`adj-${claim.id}-${nextVersion}`) } };
+  });
+
+  router.post('/insurance-claims/:id/eob', (request) => {
+    const claim = solicitudes.get(request.params['id']!);
+    if (claim === undefined) return notFound('Solicitud no encontrada');
+    if (claim.approved === null) return preconditionFailed('Adjudicá la solicitud antes de publicar la EOB');
+    if (claim.eobPublishedAt !== null) return conflict('La EOB ya fue publicada');
+    solicitudes.actualizar(claim.id, { eobPublishedAt: ahora() });
+    return { status: 201, body: { id: uuid(`eob-${claim.id}`) } };
   });
 
   router.post('/insurance-claims/:id/disputes', (request) => {

@@ -3,7 +3,6 @@ import {
   MODALIDADES_DE_ENTREGA,
 } from '../../../core/data-access/pharmacy-orders/pharmacy-orders.types';
 import {
-  GRUPOS_A_LA_VISTA,
   GRUPOS_DE_BANDEJA,
   etiquetaDeGrupo,
   grupoDeBandeja,
@@ -13,7 +12,7 @@ import {
 /**
  * El catálogo del mostrador (FAR-I3): cada estado del contrato tiene palabra
  * y frase del lado de quien atiende, y cada pedido cae en exactamente un
- * grupo de la bandeja — las cuatro colas a la vista y el resto plegado.
+ * grupo de la bandeja — las seis colas del tablero.
  */
 describe('bandeja-status', () => {
   it('cubre el contrato entero, en palabras y sin códigos sueltos', () => {
@@ -27,11 +26,11 @@ describe('bandeja-status', () => {
 
   it('le habla al mostrador, no al paciente', () => {
     // La misma situación, dicha desde el otro lado del mostrador.
-    expect(toBandejaStatusPresentation('ENVIADO').label).toBe('Nuevo');
+    expect(toBandejaStatusPresentation('ENVIADO').label).toBe('Pendiente');
     expect(toBandejaStatusPresentation('ACEPTACION_PENDIENTE').label).toBe(
       'Esperando al paciente',
     );
-    expect(toBandejaStatusPresentation('LISTO_PARA_RETIRO').label).toBe('Esperando el retiro');
+    expect(toBandejaStatusPresentation('LISTO_PARA_RETIRO').label).toBe('Listo para retiro');
   });
 
   it('cada estado cae en un grupo, y los grupos son los de la tarjeta', () => {
@@ -77,9 +76,15 @@ describe('bandeja-status', () => {
     }
   });
 
-  it('las colas con reloj van a la vista; la preparación y lo cerrado, al pliegue', () => {
-    const visibles = GRUPOS_DE_BANDEJA.slice(0, GRUPOS_A_LA_VISTA);
-    expect(visibles).toEqual(['NUEVOS', 'EN_REVISION', 'ESPERANDO_PACIENTE', 'LISTOS']);
+  it('el tablero tiene las seis colas, de lo que corre contra el reloj a lo cerrado', () => {
+    expect(GRUPOS_DE_BANDEJA).toEqual([
+      'NUEVOS',
+      'EN_REVISION',
+      'ESPERANDO_PACIENTE',
+      'LISTOS',
+      'EN_PREPARACION',
+      'CERRADOS',
+    ]);
     for (const grupo of GRUPOS_DE_BANDEJA) {
       expect(etiquetaDeGrupo(grupo)).not.toContain('_');
     }

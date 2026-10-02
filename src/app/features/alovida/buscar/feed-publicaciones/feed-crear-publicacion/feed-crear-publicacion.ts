@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, input, output, si
 import { RouterLink } from '@angular/router';
 
 import { SessionStore } from '@core/auth/session.store';
+import { ROLES_DE_QUIEN_ATIENDE } from '@core/navigation/navigation.map';
 import type { OwnPublicProfile } from '@core/data-access/community/community.types';
 import { inicialesDe } from '@shared/text/iniciales';
 import { Composer } from '../../../../feed/composer/composer';
@@ -51,6 +52,18 @@ export class FeedCrearPublicacion {
   );
 
   protected readonly iniciales = computed(() => inicialesDe(this.nombre()));
+
+  /**
+   * Si «Escribir artículo» lleva al compositor de artículos médicos.
+   *
+   * Esa pantalla —títulos desplegables, listas, imágenes intercaladas— es de
+   * quien atiende, y la ruta lo exige. Para el resto el atajo sigue abriendo el
+   * compositor del muro, como antes: mandar a un paciente a una ruta que lo va
+   * a rebotar sería peor que no ofrecérsela.
+   */
+  protected readonly escribeArticulos = computed(() =>
+    this.sesion.roles().some((rol) => ROLES_DE_QUIEN_ATIENDE.includes(rol)),
+  );
 
   protected abrir(): void {
     this.abierto.set(true);

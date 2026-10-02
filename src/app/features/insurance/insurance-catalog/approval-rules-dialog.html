@@ -17,15 +17,7 @@
       label="Documentos requeridos"
       hint="Seleccioná todos los que debe presentar el prestador."
     >
-      <div class="insurance-form__checks">
-        <app-checkbox formControlName="firmaMedico" label="Firma del médico tratante" />
-        <app-checkbox formControlName="selloMedico" label="Sello profesional y matrícula" />
-        <app-checkbox formControlName="ordenMedica" label="Orden médica justificativa" />
-        <app-checkbox
-          formControlName="informeClinico"
-          label="Informe clínico o resumen de historia"
-        />
-      </div>
+      <app-checkbox-group formControlName="requiredDocuments" [options]="documentOptions" />
     </app-form-field>
 
     <app-form-field

@@ -1,0 +1,64 @@
+:host {
+  display: block;
+}
+
+.prices__pharmacy {
+  margin-block-end: var(--sp-4);
+}
+
+.prices__panel {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+.prices__list {
+  margin: 0;
+  padding-left: var(--sp-5);
+}
+
+.prices__bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+
+.prices__hint {
+  margin: 0;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.prices__save {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.prices__dirty {
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.prices__main {
+  display: block;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.prices__code {
+  font-family: var(--font-mono);
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.prices__amount {
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+}
+
+.prices__muted {
+  color: var(--text-secondary);
+}

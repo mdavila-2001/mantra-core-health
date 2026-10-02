@@ -1,3 +1,4 @@
+import type { BloqueoDelMes } from '../calendar-view.types';
 import {
   afterRenderEffect,
   ChangeDetectionStrategy,
@@ -20,7 +21,7 @@ import type {
 } from '../../../../core/data-access/scheduling/scheduling.types';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { nextControlId } from '@shared/forms/form-control.context';
-import type { EstadoResuelto } from '../day-view/day-view';
+import type { EstadoResuelto } from '../calendar-view.types';
 import {
   toBookingStatusPresentation,
   type BookingStatusPresentation,
@@ -36,15 +37,7 @@ import {
   medianoche,
 } from '../../../../shared/date/calendario-mes';
 
-/** Un bloqueo declarado por el profesional, ya resuelto para el calendario. */
-export interface BloqueoDelMes {
-  /** El id de la excepción, para poder quitarla desde el día. */
-  readonly id?: string;
-  readonly desde: Date;
-  readonly hasta: Date;
-  /** Por qué, si se declaró. Es lo que distingue «bloqueado» de «sin agenda». */
-  readonly motivo: string | null;
-}
+export type { BloqueoDelMes } from '../calendar-view.types';
 
 /** El estado de un día, decidido una sola vez. */
 export type EstadoDelDia = 'sin-agenda' | 'bloqueado' | 'libre' | 'con-reservas' | 'lleno';

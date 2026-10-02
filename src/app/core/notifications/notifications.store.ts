@@ -13,7 +13,9 @@ import { CommunityClient } from '../data-access/community/community.client';
 import { NotificationsClient } from '../data-access/notifications/notifications.client';
 import type {
   InAppNotification,
+  NotificationAction,
   NotificationCategory,
+  NotificationDestination,
 } from '../data-access/notifications/notifications.types';
 import { rutaDeNotificacion } from './notification-routes';
 
@@ -42,6 +44,10 @@ export interface AvisoUnificado {
   readonly detalle?: string;
   /** Ruta a la que navega, o `null` si no navega a ninguna. */
   readonly ruta: string | null;
+  /** A qué cosa se refiere el aviso: lo que necesitan sus acciones para actuar. */
+  readonly destino?: NotificationDestination;
+  /** Los botones que ofrece y siguen vigentes; vacío si no ofrece ninguno. */
+  readonly acciones: readonly NotificationAction[];
   /** `true` mientras siga sin leer. */
   readonly sinLeer: boolean;
   /** Cuándo llegó. */
@@ -218,6 +224,25 @@ export class NotificationsStore {
     });
   }
 
+  /**
+   * Cierra el ciclo de un aviso cuya acción se ejecutó: lo da por leído
+   * (responder ES haberlo leído) y vuelve a leer las bandejas, que ya no
+   * deberían ofrecer esos botones.
+   *
+   * Refresca aunque marcar falle: la acción ya ocurrió, y mostrar los botones
+   * de una decisión tomada invitaría a tomarla dos veces.
+   */
+  trasAccion(aviso: AvisoUnificado): void {
+    if (aviso.fuente !== 'messaging' || !aviso.sinLeer) {
+      this.refrescar();
+      return;
+    }
+    this.notifications.markRead(aviso.id).subscribe({
+      next: () => this.refrescar(),
+      error: () => this.refrescar(),
+    });
+  }
+
   /** Marca toda la bandeja de `messaging` y refresca. */
   marcarTodasLeidas(): void {
     this.notifications.markAllRead().subscribe({
@@ -280,6 +305,8 @@ function deMessaging(aviso: InAppNotification): AvisoUnificado {
     titulo: aviso.subject ?? 'Novedad',
     ...(aviso.bodyText === undefined ? {} : { detalle: aviso.bodyText }),
     ruta: rutaDeNotificacion(aviso.destination),
+    ...(aviso.destination === undefined ? {} : { destino: aviso.destination }),
+    acciones: aviso.actions ?? [],
     sinLeer: aviso.unread,
     fecha: aviso.availableAt,
   };
@@ -309,6 +336,7 @@ function deCommunity(aviso: {
     // trae `sourceRefId` con el id de una publicación o un comentario, y el
     // muro no tiene todavía pantalla de publicación suelta.
     ruta: '/feed',
+    acciones: [],
     sinLeer: !aviso.isRead,
     fecha: aviso.createdAt,
   };

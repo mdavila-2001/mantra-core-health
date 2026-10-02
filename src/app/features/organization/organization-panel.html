@@ -131,6 +131,21 @@
         }
       </app-card>
 
+      <!-- ─── Logo ──────────────────────────────────────────────────────────
+           El mismo para todos los tipos: farmacia, laboratorio, clínica, aseguradora. -->
+      <app-organization-logo
+        [tenantId]="org.id"
+        [nombre]="org.tradeName || org.legalName"
+        [puedeEditar]="puedeAdministrar()"
+      />
+
+      <!-- ─── Ficha de la aseguradora ─────────────────────────────────────
+           Regulador, canales de contacto y verificación. Vivía como cabecera
+           del catálogo de seguros; su lugar es el perfil de la organización. -->
+      @if (org.payer?.carrierCode; as carrierCode) {
+        <app-insurer-profile-card class="organizacion__bloque" [carrierCode]="carrierCode" />
+      }
+
       <!-- ─── Su gente ──────────────────────────────────────────────────── -->
       <app-card variant="outlined" padding="lg" class="organizacion__bloque">
         <h2 class="organizacion__titulo">Su gente</h2>

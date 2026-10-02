@@ -84,14 +84,13 @@ describe('ChatPreferences', () => {
     expect(consultar('chat-prefs-espera-15')?.getAttribute('aria-pressed')).toBe('true');
   });
 
-  it('guardar el texto lo persiste', async () => {
+  it('guardar el texto lo persiste', () => {
     encender();
 
     const area = consultar('chat-prefs-texto') as HTMLTextAreaElement;
     area.value = 'Estoy en consulta, respondo más tarde.';
     area.dispatchEvent(new Event('input'));
     fixture.detectChanges();
-    await fixture.whenStable();
 
     (consultar('chat-prefs-guardar') as HTMLElement).click();
     fixture.detectChanges();
@@ -113,12 +112,11 @@ describe('ChatPreferences', () => {
     expect(autoReply.configuracion().soloFueraDeHorario).toBe(true);
   });
 
-  it('las frases propias se agregan y se quitan', async () => {
+  it('las frases propias se agregan y se quitan', () => {
     const campo = consultar('chat-prefs-plantilla-nueva') as HTMLInputElement;
     campo.value = 'Traé tu carnet de la obra social.';
     campo.dispatchEvent(new Event('input'));
     fixture.detectChanges();
-    await fixture.whenStable();
 
     (consultar('chat-prefs-plantilla-guardar') as HTMLElement).click();
     fixture.detectChanges();

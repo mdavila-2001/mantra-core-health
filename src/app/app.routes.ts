@@ -12,7 +12,7 @@ import { ActivateAccount } from './features/auth/activate-account/activate-accou
 import { ResendVerification } from './features/auth/resend-verification/resend-verification';
 import { ErrorRecovery } from './features/error-recovery/error-recovery';
 import { NotFound } from './features/not-found/not-found';
-import { ALOVIDA_ROUTES } from './features/alovida/alovida.routes';
+import { designMockupRoutes, profileSlugRedirects } from './features/alovida/design-mockup-gate';
 import { perfilPublicoResolver } from './features/public-profile/public-profile.resolver';
 import { environment } from '../environments/environment';
 import { authGuard, homeGuard } from './core/auth/auth.guard';
@@ -104,12 +104,25 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/public-directories/pharmacies-directory').then(
       (m) => m.PharmaciesDirectory,
     ),
-  // §4.H del plan de UX · la agenda del médico. Diferida como el resto: sólo
-  // la alcanza quien atiende, y el presupuesto del bundle inicial está al
-  // límite —cargarla de entrada lo pasaba por 4 kB y le costaba la descarga a
-  // todo el mundo, paciente incluido—.
+  // El mercado de seguros del paciente (28/09/2026). Ver su fila del registro.
+  'insurers-directory': () =>
+    import('./features/public-directories/insurers-directory').then(
+      (m) => m.InsurersDirectory,
+    ),
+  // §4.H del plan de UX · las dos pantallas nuevas del panel del médico.
+  // Diferidas como el resto: sólo las alcanza quien atiende, y el presupuesto
+  // del bundle inicial está al límite —cargarlas de entrada lo pasaba por 4 kB
+  // y le costaba la descarga a todo el mundo, paciente incluido—.
   schedule: () => import('./features/agenda/agenda').then((m) => m.Agenda),
   diagnostics: () => import('./features/diagnostics/diagnostics').then((m) => m.Diagnostics),
+  // La recepción de muestras del laboratorio. Diferida: sólo la alcanza el
+  // personal de un centro de diagnóstico.
+  'laboratorio/recepcion': () =>
+    import('./features/lab-reception/lab-reception').then((m) => m.LabReception),
+  // La cola de trabajo del laboratorio para su propio personal: la misma
+  // pantalla que «Laboratorio e imagen», bajo la sección que ve un centro de
+  // diagnóstico (ver `navigation.map.ts`).
+  'laboratorio/cola': () => import('./features/diagnostics/diagnostics').then((m) => m.Diagnostics),
   interventions: () =>
     import('./features/interventions/interventions').then((m) => m.Interventions),
   'medical-records': () =>
@@ -159,6 +172,10 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/insurance/insurance-campaigns/insurance-campaigns').then(
       (m) => m.InsuranceCampaigns,
     ),
+  'administration/received-claims': () =>
+    import('./features/insurance/received-claims/received-claims').then(
+      (m) => m.ReceivedClaims,
+    ),
   // Contabilidad abre en el **resumen llano**: cuánto entró hoy, esta semana y
   // este mes; en qué se va la plata; quién te debe y a quién le debés. Es lo
   // que el propietario pidió el 2026-09-19 —«se supone que es contabilidad
@@ -186,7 +203,7 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
   'administration/operations': () =>
     import('./features/admin/operations/operations').then((m) => m.Operations),
   tutorials: () => import('./features/tutorials/tutorials-center').then((m) => m.TutorialsCenter),
-  'my-account': () => import('./features/account/my-profile/my-profile').then((m) => m.MyProfile),
+  'my-account': () => import('./features/account/my-account/my-account').then((m) => m.MyAccount),
   'my-account/dependents': () =>
     import('./features/account/dependents/dependents').then((m) => m.Dependents),
   'my-account/security': () =>
@@ -227,6 +244,12 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
   // que `componenteDe()` consulta antes que esta tabla.
   'my-account/promotions': () =>
     import('./features/account/promotions/promotions').then((m) => m.Promotions),
+  'my-account/spending': () =>
+    import('./features/account/spending/spending').then((m) => m.Spending),
+  'my-account/invoices': () =>
+    import('./features/account/my-invoices/my-invoices').then((m) => m.MyInvoices),
+  'my-account/requests': () =>
+    import('./features/account/my-requests/my-requests').then((m) => m.MyRequests),
   'administration/pharmacy-orders': () =>
     import('./features/organization/pharmacy-inbox/pharmacy-inbox').then(
       (m) => m.PharmacyInbox,
@@ -255,12 +278,41 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/organization/pharmacy-campaigns/pharmacy-campaigns').then(
       (m) => m.PharmacyCampaigns,
     ),
-  // La ficha legal de la farmacia. Ruta hermana de las dos de arriba y no una
-  // sección del panel de organización, por el mismo motivo: el panel es de
-  // TP-1 y así no se le toca una línea. Diferida: arrastra el mapa.
-  'administration/pharmacy-profile': () =>
-    import('./features/organization/pharmacy-profile/pharmacy-profile').then(
-      (m) => m.PharmacyProfile,
+  // Productos de la farmacia: el listado con filtros y, en un modal con
+  // pestañas, el alta y la edición. Ruta hermana por el mismo motivo que las
+  // promociones. La carga masiva y las demás pantallas del portal de la farmacia
+  // (resumen, categorías, importación, inventario) son de `features/pharmacy/`.
+  'administration/pharmacy-catalog': () =>
+    environment.mockBackend
+      ? import('./features/pharmacy/products/pharmacy-products').then((m) => m.PharmacyProducts)
+      : import('./features/organization/pharmacy-catalog/pharmacy-catalog').then((m) => m.PharmacyCatalog),
+  'administration/pharmacy': () =>
+    import('./features/pharmacy/summary/pharmacy-summary').then((m) => m.PharmacySummaryPage),
+  'administration/pharmacy-categories': () =>
+    import('./features/pharmacy/categories/pharmacy-categories').then((m) => m.PharmacyCategories),
+  'administration/pharmacy-import': () =>
+    import('./features/pharmacy/import/pharmacy-import').then((m) => m.PharmacyImport),
+  'administration/pharmacy-inventory': () =>
+    import('./features/pharmacy/inventory/pharmacy-inventory').then((m) => m.PharmacyInventory),
+  'administration/pharmacy-prices': () =>
+    import('./features/pharmacy/prices/pharmacy-prices').then((m) => m.PharmacyPrices),
+  // Las sucursales de la organización activa (01/10/2026): una sola pantalla
+  // para la farmacia y el laboratorio, cada una en su menú.
+  'administration/pharmacy-branches': () =>
+    import('./features/organization/organization-branches/organization-branches').then(
+      (m) => m.OrganizationBranches,
+    ),
+  // El portal de la cuenta de laboratorio (30/09/2026): el espejo del de la
+  // farmacia, para quien vende servicios. Todo en `features/laboratory/`.
+  'administration/laboratory': () =>
+    import('./features/laboratory/summary/laboratory-summary').then((m) => m.LaboratorySummaryPage),
+  'administration/laboratory-results': () =>
+    import('./features/laboratory/results/laboratory-results').then((m) => m.LaboratoryResults),
+  'administration/laboratory-prices': () =>
+    import('./features/laboratory/prices/laboratory-prices').then((m) => m.LaboratoryPrices),
+  'administration/laboratory-branches': () =>
+    import('./features/organization/organization-branches/organization-branches').then(
+      (m) => m.OrganizationBranches,
     ),
   'my-account/identity/cases': () =>
     import('./features/identity-assurance/verification-cases/verification-cases').then(
@@ -315,6 +367,9 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/pharma-lab/visitor-visits/visitor-visits').then((m) => m.VisitorVisits),
   'lab-visits': () =>
     import('./features/pharma-lab/doctor-visits/doctor-visits').then((m) => m.DoctorVisits),
+  // FACT-SIAT-MOCK · facturación contra el SIAT SIMULADO. Diferida: sólo la
+  // alcanzan los roles de facturación y arrastra el motor fiscal simulado.
+  billing: () => import('./features/billing/billing').then((m) => m.Billing),
 };
 
 /**
@@ -701,6 +756,16 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/public-directories/clinic-detail/clinic-detail')
         .then((m) => m.ClinicDetail)
+        .catch(() => chunkFallido()),
+  },
+  {
+    // La ficha de una aseguradora: productos, planes y cláusulas, y sus
+    // brokers con el botón que abre el chat.
+    path: 'insurers-directory/:slug',
+    title: `${APP_TITLE} - Aseguradora`,
+    loadComponent: () =>
+      import('./features/public-directories/insurer-detail/insurer-detail')
+        .then((m) => m.InsurerDetail)
         .catch(() => chunkFallido()),
   },
   {
@@ -1116,6 +1181,9 @@ function rutasDeSecciones(): Routes {
  */
 export const SECCIONES_REDIRIGIDAS: Readonly<Record<string, DestinoRedirigido>> = {
   'my-account/loyalty': { ruta: '/my-account', query: { pestana: 'puntos' } },
+  // La ficha de la farmacia es el «Mi perfil» de la cuenta de farmacia
+  // (01/10/2026): la cuenta es la organización, no una persona que la administra.
+  'administration/pharmacy-profile': { ruta: '/my-account' },
 };
 
 /** A dónde manda una sección redirigida: la ruta y el query que le suma. */
@@ -1527,7 +1595,12 @@ export const routes: Routes = [
   // primero y con segmento propio: no compiten con el armazón de abajo, que
   // vive en `path: ''`, así que ninguna de las dos depende de que el router
   // retroceda para encontrar a la otra.
-  ...ALOVIDA_ROUTES,
+  //
+  // Pasan por el gate `designMockups`: contra la API real (`production-api`,
+  // `real-api`) las maquetas con datos de ejemplo no se registran y sólo
+  // quedan redirecciones a la pantalla real equivalente. Ver
+  // `features/alovida/design-mockup-gate.ts`.
+  ...designMockupRoutes(environment.designMockups),
   // Las fichas públicas por slug. Van con el marco público y **sin guard**:
   // son la superficie anónima, y el enlace que alguien pega en un mensaje.
   //
@@ -2080,6 +2153,20 @@ export const routes: Routes = [
     title: 'AloVida - Registrar centro de imagenología',
   },
   {
+    // El alta pública de una farmacia: Módulo Farmacia §1 del registro de
+    // procesos. A diferencia del laboratorio y de imagenología, ésta SÍ sale a
+    // la red — `POST /iam/auth/register-organization` con
+    // `tenantType: 'PHARMACY'` — ver el JSDoc de `RegisterPharmacy`.
+    // Diferida por lo mismo que las otras altas largas: arrastra el mapa y el
+    // subidor de PDF.
+    path: 'auth/register/pharmacy',
+    loadComponent: () =>
+      import('./features/auth/register-pharmacy/register-pharmacy').then(
+        (m) => m.RegisterPharmacy,
+      ),
+    title: 'AloVida - Registrar farmacia',
+  },
+  {
     // El enlace del correo trae el token por query string: /auth/verificar?token=…
     path: 'auth/verify-email',
     component: VerifyEmail,
@@ -2128,6 +2215,9 @@ export const routes: Routes = [
   // secas existe en las dos partes, y acá gana la que redirige sólo cuando
   // ninguna pantalla real coincidió.
   ...rutasHeredadas(RUTAS_HEREDADAS_DEL_BUSCADOR),
+  // Las fichas de la bóveda con slug abren la ficha pública real, con o sin
+  // maquetas. Ver `features/alovida/design-mockup-gate.ts`.
+  ...profileSlugRedirects(),
   {
     // Antes esto redirigía a `/`, que mandaba al panel —o al login, vía el
     // guard— a quien escribiera mal una dirección, sin decirle que se había

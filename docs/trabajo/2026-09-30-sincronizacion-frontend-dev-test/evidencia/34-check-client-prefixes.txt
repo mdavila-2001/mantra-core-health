@@ -1,0 +1,4 @@
+✓ check-client-prefixes
+  617 operaciones de core/data-access, todas cubiertas por los 80 prefijos
+
+EXIT_CODE=0

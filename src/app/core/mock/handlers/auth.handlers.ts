@@ -1,5 +1,7 @@
 import { ESTADO, TIPO_SOCIETARIO } from '../fixtures/conceptos';
 import { pacientes, type PacienteSimulado } from '../fixtures/personas';
+import { guardarImagenDeDataUrl } from './files.handlers';
+import { guardarActivosDeFirma } from './firma-y-sello.handlers';
 import { conflict, notFound, preconditionFailed, reply, unauthorized, type MockRouter } from '../mock-router';
 import type { MockUser as CuentaSimulada } from '../mock-session';
 import {
@@ -14,7 +16,7 @@ import {
   usuarioDeRefreshToken,
   type MockUser,
 } from '../mock-session';
-import { ahora, contiene, cuerpo, iso, nuevoId, paginar, texto, uuid } from '../mock-store';
+import { ahora, bodyAsQuery, contiene, cuerpo, iso, nuevoId, paginar, texto, uuid } from '../mock-store';
 
 /* ============================================================================
     IAM: sesión, altas y usuarios.
@@ -35,6 +37,30 @@ const LEGAL_DOCUMENT_FIELDS = [
 
 /** Espejo de `FILE_STORAGE_MAX_SIZE_BYTES` de la API (10 MiB por archivo). */
 const MAX_REGISTRATION_DOCUMENT_BYTES = 10 * 1024 * 1024;
+
+/**
+ * Los mensajes del `ValidationPipe` para un punto georreferenciado: ambas
+ * coordenadas o ninguna, cada una en su rango. Vacío si el punto es válido o
+ * no trae ninguna de las dos.
+ */
+function mensajesDeCoordenadas(
+  prefijo: string,
+  punto: { latitude?: number; longitude?: number },
+): string[] {
+  if (punto.latitude === undefined && punto.longitude === undefined) return [];
+  const mensajes: string[] = [];
+  if (punto.latitude === undefined) {
+    mensajes.push(`${prefijo}.latitude must be a number`);
+  } else if (punto.latitude < -90 || punto.latitude > 90) {
+    mensajes.push(`${prefijo}.latitude must not be greater than 90`);
+  }
+  if (punto.longitude === undefined) {
+    mensajes.push(`${prefijo}.longitude must be a number`);
+  } else if (punto.longitude < -180 || punto.longitude > 180) {
+    mensajes.push(`${prefijo}.longitude must not be greater than 180`);
+  }
+  return mensajes;
+}
 
 interface LoginBody {
   email?: string;
@@ -230,15 +256,33 @@ export function registrarAuth(router: MockRouter): void {
   });
 
   router.post('/iam/auth/register-practitioner', ({ body }) => {
-    const datos = cuerpo<{ email?: string; photoFileId?: string }>({ body });
+    const datos = cuerpo<{
+      email?: string;
+      photoFileId?: string;
+      // Sólo simulador (el DTO real no los declara): la firma y el sello del alta,
+      // como imágenes en base64 igual que `profilePhotoBase64`.
+      signatureImageBase64?: string;
+      sealImageBase64?: string;
+    }>({ body });
     if (datos.email !== undefined && MOCK_USERS.some((u) => u.email === datos.email)) {
       return conflict('Ya existe una cuenta con ese correo', { email: datos.email });
     }
     const id = nuevoId('profesional-nuevo');
+    const practitionerProfileId = uuid(`hpid-${id}`);
+    if (datos.signatureImageBase64 !== undefined || datos.sealImageBase64 !== undefined) {
+      guardarActivosDeFirma(practitionerProfileId, {
+        ...(datos.signatureImageBase64 === undefined
+          ? {}
+          : { signatureFileId: guardarImagenDeDataUrl(datos.signatureImageBase64, 'firma.png') }),
+        ...(datos.sealImageBase64 === undefined
+          ? {}
+          : { sealFileId: guardarImagenDeDataUrl(datos.sealImageBase64, 'sello.png') }),
+      });
+    }
     return {
       userId: id,
       personId: uuid(`person-${id}`),
-      practitionerProfileId: uuid(`hpid-${id}`),
+      practitionerProfileId,
       practitionerCode: `MED-${Math.floor(Math.random() * 9000 + 1000)}`,
       ...(datos.photoFileId === undefined ? {} : { photoFileId: datos.photoFileId }),
     };
@@ -252,13 +296,50 @@ export function registrarAuth(router: MockRouter): void {
         tenantType?: string;
         countryConceptId?: string;
         jurisdictionConceptId?: string;
-        diagnosticUnit?: { diagnosticUnitTypeConceptId?: string; modalityConceptIds?: readonly string[] };
         legalDocuments?: Partial<Record<(typeof LEGAL_DOCUMENT_FIELDS)[number], string | undefined>>;
         payer?: { latitude?: number; longitude?: number };
+        // Bloque de farmacia (carril de farmacia, 2026-09-29): clave que el
+        // DTO real todavía no declara (ver `PENDIENTES-BACKEND.md`, P49). El
+        // simulador la valida igual, con la misma forma que `payer` —ambas
+        // coordenadas o ninguna, cada una en rango—, para que el alta
+        // pública de farmacia tenga contra qué ejercitarse.
+        pharmacy?: {
+          latitude?: number;
+          longitude?: number;
+          branches?: readonly { name?: string; latitude?: number; longitude?: number }[];
+        };
+        // Bloque del centro de diagnóstico (carril A de la cuenta de
+        // laboratorio, 2026-09-30): éste SÍ lo declara el DTO real
+        // (`DiagnosticUnitProfileDto`), con la sede primaria y su dirección.
+        // `branches` es lo único que el cliente le suma y el DTO no tiene
+        // (ver `PENDIENTES-BACKEND.md`, P51).
+        diagnosticUnit?: {
+          diagnosticUnitTypeConceptId?: string;
+          modalityConceptIds?: readonly string[];
+          name?: string;
+          primarySite?: {
+            name?: string;
+            address?: { lines?: readonly string[]; latitude?: number; longitude?: number };
+          };
+          branches?: readonly {
+            name?: string;
+            addressLines?: readonly string[];
+            latitude?: number;
+            longitude?: number;
+          }[];
+        };
         // Representante legal y gerencias (subtarea 1.4). El mock NO prueba
         // que la API real acepte estas claves: eso lo hace el int-spec de la
         // API. Esto sólo espeja el `ValidationPipe` para que el formulario
         // no pase en falso contra un backend simulado.
+        //
+        // `idNumber` y `powerOfAttorneyFileId` NO son obligatorios acá —a
+        // diferencia de `RegisterOrganizationLegalRepresentativeDto` del
+        // backend real, que los exige siempre que el bloque viaja—: el
+        // registro de procesos de farmacia (Módulo Farmacia §1) no pide la
+        // cédula del representante como dato de alta, y esta relajación es
+        // deliberada del simulador (ver P49). No afecta al alta de
+        // aseguradora: su formulario siempre completa los dos.
         legalRepresentative?: {
           fullName?: string;
           idNumber?: string;
@@ -271,7 +352,14 @@ export function registrarAuth(router: MockRouter): void {
           { fullName?: string; phone?: string; email?: string } | undefined
         >;
       };
+      owner?: { email?: string };
     }>({ body });
+    if (
+      datos.owner?.email !== undefined &&
+      MOCK_USERS.some((u) => u.email === datos.owner?.email)
+    ) {
+      return conflict('Ya existe una cuenta con ese correo', { email: datos.owner.email });
+    }
     const legalEntityType = datos.organization?.legalEntityType;
     // Mismo contrato que el `ValidationPipe` real: un código fuera del
     // diccionario es 400, no un 422 de negocio (subtarea 1.1).
@@ -315,6 +403,85 @@ export function registrarAuth(router: MockRouter): void {
       }
     }
 
+    const pharmacy = datos.organization?.pharmacy;
+    if (pharmacy !== undefined) {
+      // Mismo contrato que `payer` arriba: coordenadas ambas o ninguna, cada
+      // una en rango. Se valida la central y cada sucursal declarada (1.7 y
+      // 1.18 del registro de procesos).
+      const mensajes: string[] = [];
+      const coordenadas = (
+        prefijo: string,
+        punto: { latitude?: number; longitude?: number },
+      ): void => {
+        if (punto.latitude === undefined && punto.longitude === undefined) return;
+        if (punto.latitude === undefined) {
+          mensajes.push(`${prefijo}.latitude must be a number`);
+        } else if (punto.latitude < -90 || punto.latitude > 90) {
+          mensajes.push(`${prefijo}.latitude must not be greater than 90`);
+        }
+        if (punto.longitude === undefined) {
+          mensajes.push(`${prefijo}.longitude must be a number`);
+        } else if (punto.longitude < -180 || punto.longitude > 180) {
+          mensajes.push(`${prefijo}.longitude must not be greater than 180`);
+        }
+      };
+      coordenadas('organization.pharmacy', pharmacy);
+      pharmacy.branches?.forEach((sucursal, indice) => {
+        if (!sucursal.name) {
+          mensajes.push(`organization.pharmacy.branches.${indice}.name should not be empty`);
+        }
+        coordenadas(`organization.pharmacy.branches.${indice}`, sucursal);
+      });
+      if (mensajes.length > 0) {
+        return reply(400, {
+          statusCode: 400,
+          code: 'VALIDATION_FAILED',
+          message: 'Validation failed',
+          error: 'Bad Request',
+          details: { messages: mensajes },
+        });
+      }
+    }
+
+    const diagnosticUnit = datos.organization?.diagnosticUnit;
+    if (diagnosticUnit !== undefined) {
+      // Mismo contrato que la API real: `diagnosticUnit` sólo corresponde a
+      // `DIAGNOSTIC_CENTER`, y con cualquier otro tipo es un 422 de negocio,
+      // no un 400 de forma.
+      if (datos.organization?.tenantType !== 'DIAGNOSTIC_CENTER') {
+        // 422 y no el 412 de `preconditionFailed`: la `PreconditionFailedException`
+        // de la API responde 422.
+        return reply(422, {
+          statusCode: 422,
+          code: 'PRECONDITION_FAILED',
+          message: 'El bloque diagnosticUnit sólo corresponde a DIAGNOSTIC_CENTER',
+          error: 'Unprocessable Entity',
+          details: { tenantType: datos.organization?.tenantType ?? null },
+        });
+      }
+      // La forma, como el `ValidationPipe`: coordenadas ambas o ninguna y en
+      // rango, en la central (4.1.7) y en cada sucursal (4.1.18), y cada
+      // sucursal con nombre.
+      const mensajes = mensajesDeCoordenadas(
+        'organization.diagnosticUnit.primarySite.address',
+        diagnosticUnit.primarySite?.address ?? {},
+      );
+      diagnosticUnit.branches?.forEach((sucursal, indice) => {
+        const prefijo = `organization.diagnosticUnit.branches.${indice}`;
+        if (!sucursal.name) mensajes.push(`${prefijo}.name should not be empty`);
+        mensajes.push(...mensajesDeCoordenadas(prefijo, sucursal));
+      });
+      if (mensajes.length > 0) {
+        return reply(400, {
+          statusCode: 400,
+          code: 'VALIDATION_FAILED',
+          message: 'Validation failed',
+          error: 'Bad Request',
+          details: { messages: mensajes },
+        });
+      }
+    }
+
     // La constitución y el poder del representante son opcionales en el DTO y
     // la regla vive en el servicio: sólo una UNIPERSONAL puede omitirlos, y
     // el resto responde 422 nombrando el documento (CL-43). Es lo que hace la
@@ -322,12 +489,21 @@ export function registrarAuth(router: MockRouter): void {
     const esUnipersonal = legalEntityType === 'UNIPERSONAL';
     const legalDocuments = datos.organization?.legalDocuments;
     const tipoDeOrganizacion = datos.organization?.tenantType ?? 'PAYER';
-    if (tipoDeOrganizacion !== 'PAYER' && tipoDeOrganizacion !== 'DIAGNOSTIC_CENTER' && tipoDeOrganizacion !== 'HOSPITAL') {
+    // Compatibilidad declarada del simulador con D2/P50/P51. El alta anterior
+    // CL43 conserva sus catalogos y validaciones; esto no certifica la API real.
+    const demoPortalRegistration =
+      datos.organization?.countryConceptId === undefined &&
+      datos.organization?.jurisdictionConceptId === undefined &&
+      (tipoDeOrganizacion === 'PHARMACY' ||
+        (tipoDeOrganizacion === 'DIAGNOSTIC_CENTER' &&
+          diagnosticUnit?.diagnosticUnitTypeConceptId === undefined &&
+          diagnosticUnit?.modalityConceptIds === undefined));
+    if (tipoDeOrganizacion !== 'PAYER' && tipoDeOrganizacion !== 'PHARMACY' && tipoDeOrganizacion !== 'DIAGNOSTIC_CENTER' && tipoDeOrganizacion !== 'HOSPITAL') {
       return preconditionFailed('El tipo de organización no admite alta pública', {
         tenantType: tipoDeOrganizacion,
       });
     }
-    if (tipoDeOrganizacion !== 'PAYER') {
+    if (tipoDeOrganizacion !== 'PAYER' && !demoPortalRegistration) {
       // Los tipos territoriales exigen país y jurisdicción: 422 `missing`.
       const faltantesTerritoriales = [
         ...(datos.organization?.countryConceptId ? [] : ['countryConceptId']),
@@ -339,7 +515,7 @@ export function registrarAuth(router: MockRouter): void {
         });
       }
     }
-    if (legalDocuments !== undefined) {
+    if (legalDocuments !== undefined && !demoPortalRegistration) {
       const obligatorios = LEGAL_DOCUMENT_FIELDS.filter((campo) => campo !== 'constitutionFileId');
       const faltantes = obligatorios.filter((campo) => !legalDocuments[campo]);
       if (faltantes.length > 0) {
@@ -367,18 +543,18 @@ export function registrarAuth(router: MockRouter): void {
     const mensajesRepresentacion: string[] = [];
     const legalRepresentative = datos.organization?.legalRepresentative;
     if (legalRepresentative !== undefined) {
+      if (!demoPortalRegistration && !legalRepresentative.idNumber) {
+        mensajesRepresentacion.push('organization.legalRepresentative.idNumber should not be empty');
+      }
       if (!legalRepresentative.fullName) {
         mensajesRepresentacion.push('organization.legalRepresentative.fullName should not be empty');
-      }
-      if (!legalRepresentative.idNumber) {
-        mensajesRepresentacion.push('organization.legalRepresentative.idNumber should not be empty');
       }
       if (!legalRepresentative.email || !legalRepresentative.email.includes('@')) {
         mensajesRepresentacion.push('organization.legalRepresentative.email must be an email');
       }
     }
     const executives = datos.organization?.executives;
-    if (!esUnipersonal) {
+    if (!esUnipersonal && !demoPortalRegistration) {
       if (legalDocuments !== undefined && !legalDocuments.constitutionFileId) {
         return preconditionFailed(
           'Falta la escritura de constitución: sólo una empresa unipersonal puede omitirla',
@@ -433,11 +609,12 @@ export function registrarAuth(router: MockRouter): void {
       status: 'PENDING_VERIFICATION',
       verificationStatus: 'PENDING',
       emailVerificationSent: true,
-      ...(tipoDeOrganizacion === 'DIAGNOSTIC_CENTER' ? { diagnosticUnitId: nuevoId('unidad-diagnostica') } : {}),
       ...(legalDocuments === undefined
         ? {}
         : { legalDocumentsRegistered: Object.values(legalDocuments).filter(Boolean).length }),
       ...(representativesRegistered === undefined ? {} : { representativesRegistered }),
+      // Como la API: la unidad sólo nace si el alta declaró el bloque.
+      ...(diagnosticUnit === undefined ? {} : { diagnosticUnitId: nuevoId('unidad-diagnostica') }),
     };
   });
 
@@ -517,9 +694,15 @@ export function registrarAuth(router: MockRouter): void {
 
   /* ---- usuarios (administración) ---------------------------------------- */
 
-  router.get('/iam/users', ({ query }) => {
-    const q = texto(query, 'query');
-    const status = texto(query, 'statusConceptId');
+  /**
+   * La búsqueda de usuarios, común al `GET` obsoleto y al `POST …/search` que
+   * usa `IamClient.searchUsers`. Lee `q` y `status`, que son las claves del
+   * contrato: antes leía `query` y `statusConceptId`, que el cliente nunca
+   * mandó, así que el filtro no filtraba.
+   */
+  function searchUsers(query: URLSearchParams) {
+    const q = texto(query, 'q');
+    const status = texto(query, 'status');
     const base: UsuarioListado[] = MOCK_USERS.map((u, i) => ({
       id: u.id,
       displayName: u.displayName,
@@ -532,7 +715,10 @@ export function registrarAuth(router: MockRouter): void {
       .filter((u) => contiene(u.displayName, q))
       .filter((u) => status === null || u.statusConceptId === status);
     return paginar(todos, query, 25);
-  });
+  }
+
+  router.get('/iam/users', ({ query }) => searchUsers(query));
+  router.post('/iam/users/search', (request) => searchUsers(bodyAsQuery(request)));
 
   router.post('/iam/users', ({ body }) => {
     const datos = cuerpo<{ displayName?: string; email?: string }>({ body });

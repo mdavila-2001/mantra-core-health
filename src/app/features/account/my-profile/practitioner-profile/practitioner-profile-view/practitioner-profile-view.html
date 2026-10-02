@@ -93,20 +93,22 @@
            suprime «Facturación» cuando no la tiene y a partir de ahí las dos
            numeraciones dejan de coincidir (`pestanaDeEdicion`).
 
-           En «Actividad» no hay lápiz: son estadísticas, no se editan. -->
+           En «Actividad» no hay lápiz: son estadísticas, no se editan.
+
+           Lápiz y nombre, no sólo el ícono: «Editar perfil» es igual en todos
+           los perfiles (pedido del 30/09/2026) y el texto es su nombre
+           accesible. -->
       @if (pestanaDeEdicion() !== null) {
         <a
           app-button
           variant="outline"
           size="sm"
-          [iconOnly]="true"
-          aria-label="Editar"
-          appTooltip="Editar"
           data-testid="mi-perfil-editar"
           routerLink="/my-account/edit"
           [queryParams]="{ pestana: pestanaDeEdicion() }"
         >
           <app-nav-icon name="edit" />
+          Editar perfil
         </a>
       }
     </div>
@@ -236,6 +238,46 @@
              a pedido del médico (D-02). El dato sigue en el contrato y en el pie del
              sello de la portada. -->
 
+          <!-- Con qué seguros trabaja (pedido del 28/09/2026). Va con la
+               identidad porque es lo que un paciente pregunta antes de pedir
+               la cita. Lo carga cada aseguradora al sumarlo a su red, así que
+               no hay lápiz ni camino de edición que ofrecer.
+
+               Ausente, el renglón no se dibuja: esa ficha no lo pregunta.
+               `null` es que la lectura falló, y no se dice «ninguna» de
+               alguien que quizá trabaja con tres. -->
+          @if (perfil().seguros !== undefined) {
+            <div class="mi-perfil__dato mi-perfil__dato--ancho" data-testid="perfil-seguros">
+              <dt>Seguros con los que trabaja</dt>
+              <dd>
+                @if (perfil().seguros; as seguros) {
+                  @if (seguros.length > 0) {
+                    <div class="app-chip-lista" role="list">
+                      @for (seguro of seguros; track seguro.id) {
+                        <app-chip
+                          role="listitem"
+                          variant="neutral"
+                          data-testid="perfil-seguro"
+                          [attr.title]="seguro.red"
+                        >
+                          {{ seguro.aseguradora }}
+                        </app-chip>
+                      }
+                    </div>
+                  } @else {
+                    <span class="mi-perfil__ausente">
+                      Ninguna aseguradora te tiene en su red todavía
+                    </span>
+                  }
+                } @else {
+                  <span class="mi-perfil__ausente" data-testid="perfil-seguros-error">
+                    No pudimos traer tus seguros. Recargá la página para reintentar.
+                  </span>
+                }
+              </dd>
+            </div>
+          }
+
           <div class="mi-perfil__dato mi-perfil__dato--ancho">
             <dt>Presentación</dt>
             <dd>
@@ -251,6 +293,44 @@
         <!-- La contraseña NO es un campo más: cambiarla revoca sesiones y exige
              la actual, así que va por su propio flujo y con su propio botón —
              igual que en la ficha del paciente. -->
+        <!-- El logo del consultorio. Es lo que sale en el membrete de cada PDF
+             que emite; se dibuja siempre, con su marcador «Sin logo», por lo
+             mismo que el resto de los renglones de la ficha propia. -->
+        @if (perfil().consultorio; as consultorio) {
+          <section class="mi-perfil__logo" data-testid="perfil-logo-consultorio">
+            <h3 class="mi-perfil__subtitulo">Logo del consultorio</h3>
+            <app-logo-consultorio
+              data-testid="perfil-logo-consultorio-vista"
+              [src]="consultorio.logoUrl"
+              [nombre]="consultorio.nombre"
+            />
+            <p class="mi-perfil__nota">Sale en el membrete de tus PDF. Se cambia desde «Editar».</p>
+          </section>
+        }
+
+        <!-- La firma y el sello médicos: dos imágenes —no una firma electrónica—
+             que salen al pie de cada documento que emite. Se dibujan siempre, con
+             su marcador «Sin firma» / «Sin sello», por lo mismo que el resto de
+             los renglones de la ficha propia. -->
+        @if (perfil().firmaYSello; as firmaYSello) {
+          <section class="mi-perfil__firma" data-testid="perfil-firma-y-sello">
+            <h3 class="mi-perfil__subtitulo">Firma y sello médico</h3>
+            <div class="mi-perfil__firma-cajas">
+              <app-firma-o-sello
+                tipo="firma"
+                data-testid="perfil-firma-vista"
+                [src]="firmaYSello.firmaUrl"
+              />
+              <app-firma-o-sello
+                tipo="sello"
+                data-testid="perfil-sello-vista"
+                [src]="firmaYSello.selloUrl"
+              />
+            </div>
+            <p class="mi-perfil__nota">Salen al pie de tus recetas y documentos. Se cambian desde «Editar».</p>
+          </section>
+        }
+
         <p class="mi-perfil__accion">
           <a
             app-button
@@ -350,7 +430,7 @@
           @if (datos.municipioResidenciaId; as municipio) {
             <section class="mi-perfil__domicilio" data-testid="perfil-residencia">
               <h2 class="mi-perfil__titulo">Municipio de residencia</h2>
-              <app-residence-readonly [municipioId]="municipio" />
+              <app-residence-readonly [municipioId]="municipio" [punto]="datos.ubicacionDomicilio ?? null" />
             </section>
           }
 
@@ -395,24 +475,45 @@
                  profesional, son lo que hay que copiar en una factura, y se
                  consultan juntos. El NIT es la cifra que se busca, así que va
                  primero y en grande; la razón social lo completa. -->
-            <div class="mi-perfil__factura" data-testid="perfil-factura-recuadro">
-              <p class="mi-perfil__factura-rotulo">NIT</p>
-              <p class="mi-perfil__factura-nit" data-testid="perfil-factura-nit">
-                @if (facturacion.nit) {
-                  {{ facturacion.nit }}
-                } @else {
-                  <span class="mi-perfil__ausente">Sin registrar</span>
-                }
-              </p>
+            <!-- Vista previa de lectura del logo del consultorio, en su caja de
+                 tamaño fijo: con o sin logo el recuadro mide lo mismo. **No se
+                 corrige acá**: se carga y se cambia desde «Datos personales». -->
+            <div class="mi-perfil__factura factura--con-logo" data-testid="perfil-factura-recuadro">
+              <app-logo-consultorio
+                class="factura__logo"
+                data-testid="perfil-factura-logo"
+                [src]="perfil().consultorio?.logoUrl ?? null"
+                [nombre]="perfil().consultorio?.nombre ?? ''"
+              />
 
-              <p class="mi-perfil__factura-rotulo">A nombre de</p>
-              <p class="mi-perfil__factura-titular" data-testid="perfil-factura-titular">
-                @if (facturacion.razonSocial) {
-                  {{ facturacion.razonSocial }}
-                } @else {
-                  <span class="mi-perfil__ausente">Sin registrar</span>
-                }
-              </p>
+              <div class="factura__datos">
+                <p class="mi-perfil__factura-rotulo">NIT</p>
+                <p class="mi-perfil__factura-nit" data-testid="perfil-factura-nit">
+                  @if (facturacion.nit) {
+                    {{ facturacion.nit }}
+                  } @else {
+                    <span class="mi-perfil__ausente">Sin registrar</span>
+                  }
+                </p>
+
+                <p class="mi-perfil__factura-rotulo">A nombre de</p>
+                <p class="mi-perfil__factura-titular" data-testid="perfil-factura-titular">
+                  @if (facturacion.razonSocial) {
+                    {{ facturacion.razonSocial }}
+                  } @else {
+                    <span class="mi-perfil__ausente">Sin registrar</span>
+                  }
+                </p>
+
+                <p class="mi-perfil__factura-rotulo">Facturación al seguro</p>
+                <p class="mi-perfil__factura-titular" data-testid="perfil-factura-frecuencia-seguro">
+                  @if (facturacion.frecuenciaSeguro) {
+                    {{ facturacion.frecuenciaSeguro }}
+                  } @else {
+                    <span class="mi-perfil__ausente">Sin registrar</span>
+                  }
+                </p>
+              </div>
             </div>
 
             <!-- Sin NIT no hay comprobante que emitir, así que el renglón dice
@@ -925,6 +1026,13 @@
         </div>
       </app-card>
     }
+
+    <!-- ─── Con qué seguros trabaja ───────────────────────────────────────
+       Hueco para quien arma la ficha: la vista no inyecta clientes, así que
+       la sección que se carga sola (`app-practitioner-insurers`) llega
+       proyectada. Va pegada a la identidad porque es la pregunta con la que
+       el paciente abre la ficha: «¿mi seguro lo cubre?». -->
+    <ng-content select="[profileInsurers]" />
 
     <!-- ─── Dónde atiende ─────────────────────────────────────────────────
        ALV-005/006/010. Es la pregunta que la ficha no sabía contestar: la

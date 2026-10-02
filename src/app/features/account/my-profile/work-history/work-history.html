@@ -211,6 +211,7 @@
                   testId="sede-municipio"
                   [ramas]="ramasMunicipios()"
                   [value]="municipioDeSede()"
+                  [punto]="puntoDeSede()"
                   (valueChange)="municipioDeSede.set($event)"
                   mapLabel="Mapa de Bolivia: elegí el departamento del consultorio"
                   municipalityLabel="Municipio (opcional)"
@@ -321,12 +322,12 @@
     </ng-template>
 
     <ng-template #celdaAccionesSede let-sede>
-      <!-- Las acciones de la sede, por ADR-0012: hasta dos en la fila con su
-           texto; con tres —la propia, que suma Editar— van en un desplegable
-           con un único disparador, para que la fila no crezca. -->
+      <!-- El consultorio propio sólo ofrece QR; la sede ajena también permite
+           dejar de atender. Ambas muestran las acciones en la fila. -->
       <app-row-actions
         [actions]="accionesDeSede(sede)"
         [fila]="sede.name"
+        [attr.data-site-id]="sede.id"
         data-testid="sede-acciones"
         (actionSelected)="ejecutarAccionDeSede($event, sede)"
       />

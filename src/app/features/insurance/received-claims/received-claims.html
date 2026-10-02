@@ -1,0 +1,518 @@
+<app-page-header
+  title="Solicitudes recibidas"
+  subtitle="Lo que cada prestador le pidió a tu aseguradora: quién se atendió, con qué médico, qué servicio y cuánto."
+/>
+
+<!-- ADR-0015: una tarjeta a lo ancho con barra arriba, tabla sin scroll lateral
+     y paginación abajo a la derecha. -->
+<app-card class="received" variant="outlined" padding="lg" data-testid="received-claims-card">
+  <app-view-state-host [state]="state()" (retry)="load()">
+    <div vsh-skeleton class="received__skeleton" data-testid="received-claims-loading">
+      <app-skeleton variant="rect" height="var(--sp-10)" />
+      <app-skeleton variant="rect" height="var(--sp-20)" />
+      <app-skeleton variant="rect" height="var(--sp-20)" />
+    </div>
+
+    @if (state().status === 'ready') {
+      @if (truncated()) {
+        <app-alert tone="info" data-testid="received-claims-truncated">
+          Mostramos las solicitudes más recientes. Si buscás una más antigua, acotá por fecha.
+        </app-alert>
+      }
+
+      <!-- La bandeja va primero: lo que falta dictaminar es el trabajo del día. -->
+      <app-segmented-control
+        class="received__queues"
+        ariaLabel="Bandeja de solicitudes"
+        [options]="queueOptions()"
+        [value]="queue()"
+        data-testid="received-claims-queue"
+        (valueChange)="queue.set($event)"
+      />
+
+      <!-- El buscador no escribe en la URL: ahí se tipean nombres y CI de pacientes. -->
+      <app-filter-bar
+        searchLabel="Buscar en las solicitudes"
+        searchPlaceholder="Solicitud, paciente, CI o afiliado, médico, servicio o póliza"
+        [searchInUrl]="false"
+        [searchValue]="searchTerm()"
+        [filters]="filters()"
+        wrap
+        (searchChanged)="searchTerm.set($event)"
+      />
+
+      <p class="received__summary" aria-live="polite" data-testid="received-claims-count">
+        {{ totalFiltered() }} {{ totalFiltered() === 1 ? 'solicitud' : 'solicitudes' }}
+        @if (currencyNote()) {
+          · importes en {{ currencyNote().slice(3) }}
+        }
+      </p>
+
+      @if (totalFiltered() === 0) {
+        <p class="received__none" data-testid="received-claims-no-match">
+          @if (queue() === 'open') {
+            No queda ninguna solicitud por dictaminar con esta búsqueda y estos filtros.
+          } @else {
+            Ninguna solicitud de esta bandeja coincide con la búsqueda o los filtros.
+          }
+        </p>
+      } @else {
+        <app-data-table
+          [state]="tableState()"
+          [columns]="columns()"
+          [trackBy]="byId"
+          [rowLabel]="claimLabel"
+          [sort]="sort()"
+          rowNavigable
+          wrapHeaders
+          caption="Solicitudes recibidas por la aseguradora"
+          maxHeight="560px"
+          data-testid="received-claims-table"
+          (sortChanged)="sort.set($event)"
+          (rowActivated)="openDetail($event)"
+        />
+
+        <app-pagination
+          [totalItems]="totalFiltered()"
+          [(page)]="page"
+          [(pageSize)]="pageSize"
+          data-testid="received-claims-pagination"
+        />
+      }
+    }
+  </app-view-state-host>
+</app-card>
+
+<!-- ---- celdas ------------------------------------------------------------ -->
+
+<!-- El nombre es un botón: la fila entera abre el detalle con el puntero,
+     pero eso es comodidad; el camino por teclado es éste. -->
+<ng-template #patientCell let-claim>
+  <button
+    type="button"
+    class="received__open"
+    data-testid="received-claim-open"
+    [appTooltip]="claim.patient.displayName ?? 'Paciente sin nombre registrado'"
+    [appTooltipTemplate]="patientCard"
+    appTooltipPosition="right"
+    [attr.aria-label]="
+      'Ver el detalle de la solicitud ' +
+      claim.claimIdentifier +
+      ' de ' +
+      (claim.patient.displayName ?? 'un paciente sin nombre registrado')
+    "
+    (click)="openDetail(claim)"
+  >
+    {{ claim.patient.displayName ?? 'Paciente sin nombre registrado' }}
+  </button>
+  <span class="received__secondary received__code">{{ claim.claimIdentifier }}</span>
+  @if (claim.patient.memberIdentifier) {
+    <span class="received__secondary">Afiliado {{ claim.patient.memberIdentifier }}</span>
+  }
+
+  <ng-template #patientCard>
+    <dl class="received__peek" data-testid="received-claim-peek-patient">
+      <dt>Código de paciente</dt>
+      <dd>{{ claim.patient.patientCode ?? 'Sin registrar' }}</dd>
+      <dt>Afiliado</dt>
+      <dd>{{ claim.patient.memberIdentifier ?? 'Sin registrar' }}</dd>
+      <dt>Póliza</dt>
+      <dd>{{ claim.policyIdentifier ?? 'Sin póliza registrada' }}</dd>
+      <dt>Plan</dt>
+      <dd>{{ claim.planName ?? 'Sin plan registrado' }}</dd>
+    </dl>
+  </ng-template>
+</ng-template>
+
+<ng-template #practitionerCell let-claim>
+  @if (claim.practitioner; as practitioner) {
+    <span
+      class="received__primary received__peekable"
+      [appTooltip]="practitioner.displayName"
+      [appTooltipTemplate]="practitionerCard"
+      >{{ practitioner.displayName }}</span
+    >
+    @if (practitioner.specialty) {
+      <span class="received__secondary">{{ practitioner.specialty }}</span>
+    }
+
+    <ng-template #practitionerCard>
+      <dl class="received__peek" data-testid="received-claim-peek-practitioner">
+        <dt>Médico</dt>
+        <dd>{{ practitioner.displayName }}</dd>
+        <dt>Especialidad</dt>
+        <dd>{{ practitioner.specialty ?? 'Sin especialidad registrada' }}</dd>
+        <dt>Prestador</dt>
+        <dd>{{ claim.providerName }}</dd>
+      </dl>
+    </ng-template>
+  } @else {
+    <span class="received__absent">Sin atención asociada</span>
+  }
+</ng-template>
+
+<!-- Al pasar el puntero, la ficha de lo facturado: código, cantidad e importe
+     de cada renglón. Es la pregunta que se hace antes de aprobar. -->
+<ng-template #serviceCell let-claim>
+  <span
+    class="received__primary received__peekable"
+    data-testid="received-claim-service"
+    [appTooltip]="claim.service?.display ?? 'Sin servicio declarado'"
+    [appTooltipTemplate]="claim.lines.length > 0 ? serviceCard : null"
+    >{{ claim.service?.display ?? 'Sin servicio declarado' }}</span
+  >
+  @if (claim.service?.code; as code) {
+    <span class="received__secondary received__code">{{ code }}</span>
+  }
+  @if (claim.additionalServiceCount > 0) {
+    <span class="received__secondary">
+      y {{ claim.additionalServiceCount }}
+      {{ claim.additionalServiceCount === 1 ? 'servicio más' : 'servicios más' }}
+    </span>
+  }
+
+  <ng-template #serviceCard>
+    <div class="received__peek-lines" data-testid="received-claim-peek-service">
+      <p class="received__peek-title">Lo facturado en {{ claim.claimIdentifier }}</p>
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">Código</th>
+            <th scope="col">Servicio</th>
+            <th scope="col">Cant.</th>
+            <th scope="col">Importe</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (line of claim.lines; track line.sequence) {
+            <tr>
+              <td class="received__code">{{ line.code }}</td>
+              <td>{{ line.display }}</td>
+              <td>{{ line.quantity }}</td>
+              <td class="received__money">{{ amount(line.billedAmount) }}</td>
+            </tr>
+          }
+        </tbody>
+        <tfoot>
+          <tr>
+            <th scope="row" colspan="3">Total</th>
+            <td class="received__money">{{ money(claim.billedTotal) }}</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </ng-template>
+</ng-template>
+
+<ng-template #amountCell let-claim>
+  <span class="received__money">{{ amount(claim.billedTotal) }}</span>
+</ng-template>
+
+<!-- Las dos fechas en una columna, cada una con su rótulo: así entra la de
+     acciones sin scroll lateral. -->
+<ng-template #datesCell let-claim>
+  <span class="received__date">
+    <span class="received__date-label">Solicitud</span>
+    @if (claim.submittedAt) {
+      <time [attr.datetime]="claim.submittedAt.toISOString()">
+        {{ claim.submittedAt.toLocaleDateString('es-BO') }}
+      </time>
+    } @else {
+      <span class="received__absent">Sin enviar</span>
+    }
+  </span>
+  <span class="received__date">
+    <span class="received__date-label">Prestación</span>
+    @if (claim.serviceDate) {
+      <time [attr.datetime]="claim.serviceDate.toISOString().slice(0, 10)">
+        {{ claim.serviceDate.toLocaleDateString('es-BO') }}
+      </time>
+    } @else {
+      <span class="received__absent">Sin fecha</span>
+    }
+  </span>
+</ng-template>
+
+<ng-template #statusCell let-claim>
+  @if (claim.status) {
+    <app-status-seal [variant]="sealOf(claim)" [label]="claim.status.display" />
+  } @else {
+    <span class="received__absent">Sin estado</span>
+  }
+  @if (claim.invoice; as invoice) {
+    <span
+      class="received__secondary received__invoice"
+      [class.received__invoice--annulled]="invoice.status === 'ANNULLED'"
+      data-testid="received-claim-invoice"
+    >
+      {{ invoice.status === 'ISSUED' ? 'Factura' : 'Factura anulada' }} {{ invoice.invoiceNumber }}
+    </span>
+  }
+</ng-template>
+
+<!-- «Ver detalle» siempre a la vista; debajo, lo que se puede decidir. Con
+     tres decisiones `app-row-actions` las junta en un desplegable. -->
+<ng-template #actionsCell let-claim>
+  <div class="received__actions">
+    <button
+      app-button
+      type="button"
+      size="sm"
+      variant="secondary"
+      data-testid="received-claim-view"
+      [attr.aria-label]="'Ver el detalle de la solicitud ' + claim.claimIdentifier"
+      (click)="openDetail(claim)"
+    >
+      <app-nav-icon name="eye" />
+      Ver detalle
+    </button>
+    @if (actionsOf(claim); as actions) {
+      @if (actions.length > 0) {
+        <app-row-actions
+          label="Decidir"
+          data-testid="received-claim-actions"
+          [actions]="actions"
+          [fila]="'la solicitud ' + claim.claimIdentifier"
+          (actionSelected)="run($event, claim)"
+        />
+      }
+    }
+  </div>
+</ng-template>
+
+
+<!-- ---- detalle ------------------------------------------------------------ -->
+
+@if (claimOnView(); as claim) {
+  <app-content-dialog
+    heading="Detalle de la solicitud"
+    [description]="claim.claimIdentifier"
+    size="lg"
+    data-testid="received-claim-detail"
+    (dismissAttempt)="claimOnView.set(null)"
+    (closed)="claimOnView.set(null)"
+  >
+    <dl class="received__facts">
+      <div>
+        <dt>Solicitud</dt>
+        <dd>{{ claim.claimIdentifier }}</dd>
+      </div>
+      <div>
+        <dt>Paciente</dt>
+        <dd>{{ claim.patient.displayName ?? 'Sin nombre registrado' }}</dd>
+      </div>
+      <div>
+        <dt>Código de paciente</dt>
+        <dd>{{ claim.patient.patientCode ?? 'Sin registrar' }}</dd>
+      </div>
+      <div>
+        <dt>Afiliado</dt>
+        <dd>{{ claim.patient.memberIdentifier ?? 'Sin registrar' }}</dd>
+      </div>
+      <div>
+        <dt>Médico</dt>
+        <dd>
+          {{ claim.practitioner?.displayName ?? 'Sin atención asociada' }}
+          @if (claim.practitioner?.specialty; as specialty) {
+            · {{ specialty }}
+          }
+        </dd>
+      </div>
+      <div>
+        <dt>Prestador</dt>
+        <dd>{{ claim.providerName }}</dd>
+      </div>
+      <div>
+        <dt>Servicio prestado</dt>
+        <dd>
+          {{ claim.service?.display ?? 'Sin servicio declarado' }}
+          @if (claim.additionalServiceCount > 0) {
+            (+{{ claim.additionalServiceCount }})
+          }
+        </dd>
+      </div>
+      <div>
+        <dt>Monto solicitado</dt>
+        <dd>{{ money(claim.billedTotal) }}</dd>
+      </div>
+      <div>
+        <dt>Monto aprobado</dt>
+        <dd>{{ money(claim.approvedTotal) }}</dd>
+      </div>
+      <div>
+        <dt>Fecha de solicitud</dt>
+        <dd>{{ claim.submittedAt?.toLocaleDateString('es-BO') ?? 'Sin enviar' }}</dd>
+      </div>
+      <div>
+        <dt>Fecha de prestación</dt>
+        <dd>{{ claim.serviceDate?.toLocaleDateString('es-BO') ?? 'Sin fecha' }}</dd>
+      </div>
+      <div>
+        <dt>Plan</dt>
+        <dd>{{ claim.planName ?? 'Sin plan registrado' }}</dd>
+      </div>
+      <div>
+        <dt>Póliza</dt>
+        <dd>{{ claim.policyIdentifier ?? 'Sin póliza registrada' }}</dd>
+      </div>
+      <div>
+        <dt>Estado</dt>
+        <dd>{{ claim.status?.display ?? 'Sin estado' }}</dd>
+      </div>
+    </dl>
+
+    <h3 class="received__section">Lo facturado</h3>
+    <div class="received__lines">
+      <table data-testid="received-claim-lines">
+        <thead>
+          <tr>
+            <th scope="col">#</th>
+            <th scope="col">Código</th>
+            <th scope="col">Servicio</th>
+            <th scope="col" class="received__num">Cantidad</th>
+            <th scope="col" class="received__num">Precio unitario</th>
+            <th scope="col" class="received__num">Importe</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (line of claim.lines; track line.sequence) {
+            <tr>
+              <td>{{ line.sequence }}</td>
+              <td class="received__code">{{ line.code }}</td>
+              <td>{{ line.display }}</td>
+              <td class="received__num">{{ line.quantity }}</td>
+              <td class="received__num received__money">{{ amount(line.unitPrice) }}</td>
+              <td class="received__num received__money">{{ amount(line.billedAmount) }}</td>
+            </tr>
+          }
+        </tbody>
+        <tfoot>
+          <tr>
+            <th scope="row" colspan="5">Total solicitado</th>
+            <td class="received__num received__money">{{ money(claim.billedTotal) }}</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+
+    <h3 class="received__section">Dictamen</h3>
+    @if (claim.decision; as decision) {
+      <dl class="received__facts" data-testid="received-claim-decision">
+        <div>
+          <dt>Resultado</dt>
+          <dd>{{ claim.status?.display ?? decision.outcome }}</dd>
+        </div>
+        <div>
+          <dt>Monto aprobado</dt>
+          <dd>{{ money(claim.approvedTotal) }}</dd>
+        </div>
+        <div>
+          <dt>Decidido por</dt>
+          <dd>{{ decision.decidedBy }} · {{ decision.decidedAt.toLocaleString('es-BO') }}</dd>
+        </div>
+        @if (decision.reason) {
+          <div>
+            <dt>Motivo</dt>
+            <dd>{{ decision.reason }}</dd>
+          </div>
+        }
+      </dl>
+      <p class="received__note">El dictamen es definitivo: no se puede revertir.</p>
+    } @else {
+      <p class="received__note">Todavía sin dictamen.</p>
+    }
+
+    <h3 class="received__section">Factura</h3>
+    @if (claim.invoice; as invoice) {
+      <ul class="received__invoices" data-testid="received-claim-invoices">
+        <li [class.received__invoice--annulled]="invoice.status === 'ANNULLED'">
+          <strong>{{ invoice.invoiceNumber }}</strong> · {{ money(invoice.amount) }} · emitida el
+          {{ invoice.issuedAt.toLocaleDateString('es-BO') }}
+          @if (invoice.status === 'ANNULLED') {
+            — <strong>anulada</strong> el {{ invoice.annulledAt?.toLocaleDateString('es-BO') }}:
+            {{ invoice.annulmentReason }}
+          } @else {
+            — vigente
+          }
+        </li>
+        @for (previous of invoice.previous; track previous.id) {
+          <li class="received__invoice--annulled">
+            <strong>{{ previous.invoiceNumber }}</strong> · {{ money(previous.amount) }} — anulada el
+            {{ previous.annulledAt?.toLocaleDateString('es-BO') }}: {{ previous.annulmentReason }}
+          </li>
+        }
+      </ul>
+    } @else if (claim.decision?.outcome === 'REJECTED') {
+      <p class="received__note">Rechazada: no se emite factura.</p>
+    } @else {
+      <p class="received__note">Se emite al aprobar.</p>
+    }
+
+    @if (actionsOf(claim); as actions) {
+      @if (actions.length > 0) {
+        <div dialog-actions>
+          <app-row-actions
+            [inline]="true"
+            data-testid="received-claim-detail-actions"
+            [actions]="actions"
+            [fila]="'la solicitud ' + claim.claimIdentifier"
+            (actionSelected)="run($event, claim)"
+          />
+        </div>
+      }
+    }
+  </app-content-dialog>
+}
+
+<!-- ---- aprobar en parte ---------------------------------------------------- -->
+
+@if (partialFor(); as claim) {
+  <app-content-dialog
+    heading="Aprobar parcialmente"
+    [description]="claim.claimIdentifier + ' · solicitado ' + money(claim.billedTotal)"
+    data-testid="received-claim-partial"
+    (dismissAttempt)="partialFor.set(null)"
+    (closed)="partialFor.set(null)"
+  >
+    <form class="received__partial" (ngSubmit)="submitPartial(claim)">
+      <app-form-field
+        label="Monto que aprobás"
+        [hint]="'Menor que ' + claim.billedTotal.amount + '. La factura sale por este monto.'"
+        [required]="true"
+        [errorMessage]="partialTouched() ? partialAmountError(claim) : ''"
+      >
+        <app-input
+          [formControl]="partialAmount"
+          inputMode="decimal"
+          placeholder="0.00"
+          testId="received-claim-partial-amount"
+          [hasError]="partialTouched() && partialAmountError(claim) !== ''"
+        />
+      </app-form-field>
+      <app-form-field
+        label="Motivo"
+        hint="El prestador lo va a leer."
+        [required]="true"
+        [errorMessage]="partialTouched() ? partialReasonError() : ''"
+      >
+        <app-textarea
+          [formControl]="partialReason"
+          [rows]="3"
+          [hasError]="partialTouched() && partialReasonError() !== ''"
+        />
+      </app-form-field>
+    </form>
+    <div dialog-actions class="received__dialog-actions">
+      <button app-button type="button" variant="ghost" (click)="partialFor.set(null)">Volver</button>
+      <button
+        app-button
+        type="button"
+        variant="primary"
+        data-testid="received-claim-partial-submit"
+        (click)="submitPartial(claim)"
+      >
+        Continuar
+      </button>
+    </div>
+  </app-content-dialog>
+}

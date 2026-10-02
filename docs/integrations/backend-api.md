@@ -1,6 +1,6 @@
 # API de backend
 
-Las 184 operaciones que el frontend consume, su contrato y su modelo de error.
+Las 605 operaciones que el frontend consume, su contrato y su modelo de error.
 
 > **Esta página es el contrato declarado.** `scripts/check-api-contract-drift.mjs`
 > compara la lista de abajo con lo que el código realmente llama, y falla si
@@ -48,7 +48,6 @@ inyección»*.
 | `POST` | `/iam/auth/forgot-password` | `ForgotPassword` | No declarada |
 | `POST` | `/iam/auth/reset-password` | `ResetPassword` | No declarada |
 | `POST` | `/iam/auth/logout` | `ShellLayout` | No |
-| `GET` | `/iam/users` | `OrganizationNew` (buscador de owner, V04-01·F) | No |
 | `POST` | `/iam/users` | `UserRegistration` | No |
 | `POST` | `/iam/users/assisted-registration` | `AssistedRegistration` | No |
 | `POST` | `/iam/auth/register-organization` | `ActivateAccount` y 13 pantallas más | Sí |
@@ -146,7 +145,6 @@ el segmento escapado (`checks\:plan`), al revés que el `rotate` del M40.
 
 | Método | Ruta | Consumidor |
 |---|---|---|
-| `GET` | `/profiles/patients` | `PatientList` (V05-01·L) · `PatientMerge` (candidatos) |
 | `GET` | `/profiles/patients/:profileId` | `PatientDetail` (ficha F-01) |
 | `GET` | `/profiles/patients/me/summary` | `MyProfile` (V05-03) |
 | `POST` | `/profiles/patients` | `PatientNew` (V05-01·F) |
@@ -856,13 +854,7 @@ ataría una respuesta cacheada `public, max-age=60` a una sesión.
 
 | Método | Ruta | Consumidor |
 |---|---|---|
-| `GET` | `/public/search` | `BuscarBuscadorListado` (`/buscar`) |
 | `GET` | `/public/search/practitioners` | `BuscarProfesionalesListado` |
-| `GET` | `/public/search/medications` | — (devuelve vacío por construcción, ver abajo) |
-| `GET` | `/public/search/organizations` | `BuscarHospitalesListado` |
-| `GET` | `/public/search/diagnostic-units` | `BuscarLaboratoriosListado` |
-| `GET` | `/public/search/insurers` | `BuscarAseguradorasListado` |
-| `GET` | `/public/search/pharmacies` | — (sin pantalla propia todavía) |
 | `GET` | `/public/nearby` | `BuscarCercaniaDetalle` (`/buscar/mapa`) |
 | `GET` | `/public/profiles/:prefijo/:slug` | `perfilPublicoResolver` (`/p/:slug`…) |
 | `GET` | `/public/comments/:commentId/replies` | `BuscarAseguradorasListado` y 12 pantallas más | Sí |
@@ -1397,13 +1389,15 @@ alcanzable desde este repositorio.
 | `GET` | `/notifications/preferences/me` | `AvisoDeHuecoLibre` y 3 pantallas más | No |
 | `PUT` | `/notifications/preferences/me` | `AvisoDeHuecoLibre` y 3 pantallas más | No |
 
-### `PharmacyClient` — 3 operaciones
+### `PharmacyClient` — 5 operaciones
 
 | Método | Ruta | Consumidor | Pública |
 |---|---|---|---|
+| `DELETE` | `/pharmacies/:pharmacyId/products/:productId` | `PharmacyCatalog` | No |
 | `GET` | `/pharmacy-inventory/availability` | `InboxOrder` y 2 pantallas más | No |
-| `GET` | `/pharmacy/pharmacies` | `InboxOrder` y 2 pantallas más | No |
-| `GET` | `/pharmacy/products` | `InboxOrder` y 2 pantallas más | No |
+| `GET` | `/pharmacy/pharmacies` | `InboxOrder` y 3 pantallas más | No |
+| `GET` | `/pharmacy/products` | `InboxOrder` y 3 pantallas más | No |
+| `POST` | `/pharmacies/:pharmacyId/products` | `PharmacyCatalog` | No |
 
 ### `PharmacyOrdersClient` — 4 operaciones
 
@@ -1427,9 +1421,6 @@ alcanzable desde este repositorio.
 
 | Método | Ruta | Consumidor | Pública |
 |---|---|---|---|
-| `GET` | `/prescription-favorites` | `MedicationBlock` | No |
-| `POST` | `/prescription-favorites` | `MedicationBlock` | No |
-| `DELETE` | `/prescription-favorites/:id` | `MedicationBlock` | No |
 
 ### `QuotationsClient` — 4 operaciones
 
@@ -1438,7 +1429,6 @@ alcanzable desde este repositorio.
 | `GET` | `/quotations` | `QuotationForm` + `QuotationList` | No |
 | `POST` | `/quotations` | `QuotationForm` + `QuotationList` | No |
 | `GET` | `/quotations/:id` | `QuotationForm` + `QuotationList` | No |
-| `POST` | `/quotations/simulate` | `QuotationForm` + `QuotationList` | No |
 
 ### `SurveysClient` — 17 operaciones
 
@@ -1461,3 +1451,205 @@ alcanzable desde este repositorio.
 | `GET` | `/surveys/templates/:surveyId/responses` | `QuestionnaireAnswer` y 3 pantallas más | No |
 | `POST` | `/surveys/templates/:surveyId/versions` | `QuestionnaireAnswer` y 3 pantallas más | No |
 | `POST` | `/surveys/templates/:surveyId/versions/:versionNumber/publish` | `QuestionnaireAnswer` y 3 pantallas más | No |
+
+
+## Consumos incorporados en Hito 2
+
+Inventario extraido del codigo integrado. Cada fila acredita un consumidor, no una API implementada ni un flujo real verificado. Para disponibilidad y divergencias con H1, consultar [la matriz contractual](../trabajo/2026-09-30-sincronizacion-frontend-dev-test/MATRIZ.md). Contabilidad simple, portal laboratorio, acciones received-claims y facturacion simulated siguen siendo contratos demo pendientes de backend. Los restantes consumidores requieren validar su implementacion y runtime por separado.
+
+| Metodo | Ruta | Cliente y fuente | Evidencia |
+|---|---|---|---|
+| `GET` | `/accounting/accrual-objects` | [`AccountingClient`](../../src/app/core/data-access/accounting/accounting.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/accounting/accruals/run` | [`AccountingClient`](../../src/app/core/data-access/accounting/accounting.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/accounting/assets` | [`AccountingClient`](../../src/app/core/data-access/accounting/accounting.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/accounting/clearing-documents` | [`AccountingClient`](../../src/app/core/data-access/accounting/accounting.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/accounting/depreciation/run` | [`AccountingClient`](../../src/app/core/data-access/accounting/accounting.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/accounting/dimensions` | [`AccountingClient`](../../src/app/core/data-access/accounting/accounting.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/accounting/fiscal-periods/:periodId/lock` | [`AccountingClient`](../../src/app/core/data-access/accounting/accounting.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/accounting/fiscal-years` | [`AccountingClient`](../../src/app/core/data-access/accounting/accounting.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/accounting/journal-transactions/:transactionId/:action` | [`AccountingClient`](../../src/app/core/data-access/accounting/accounting.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/accounting/journal-transactions/:transactionId/document-flow` | [`AccountingClient`](../../src/app/core/data-access/accounting/accounting.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/accounting/open-items` | [`AccountingClient`](../../src/app/core/data-access/accounting/accounting.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/accounting/practitioner/simple/accounts` | [`SimpleAccountingClient`](../../src/app/core/data-access/simple-accounting/simple-accounting.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/accounting/practitioner/simple/accounts` | [`SimpleAccountingClient`](../../src/app/core/data-access/simple-accounting/simple-accounting.client.ts) | Fuente frontend; no certifica API real |
+| `DELETE` | `/accounting/practitioner/simple/accounts/:id` | [`SimpleAccountingClient`](../../src/app/core/data-access/simple-accounting/simple-accounting.client.ts) | Fuente frontend; no certifica API real |
+| `PUT` | `/accounting/practitioner/simple/accounts/:id` | [`SimpleAccountingClient`](../../src/app/core/data-access/simple-accounting/simple-accounting.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/accounting/practitioner/simple/records` | [`SimpleAccountingClient`](../../src/app/core/data-access/simple-accounting/simple-accounting.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/accounting/practitioner/simple/records` | [`SimpleAccountingClient`](../../src/app/core/data-access/simple-accounting/simple-accounting.client.ts) | Fuente frontend; no certifica API real |
+| `DELETE` | `/accounting/practitioner/simple/records/:id` | [`SimpleAccountingClient`](../../src/app/core/data-access/simple-accounting/simple-accounting.client.ts) | Fuente frontend; no certifica API real |
+| `PUT` | `/accounting/practitioner/simple/records/:id` | [`SimpleAccountingClient`](../../src/app/core/data-access/simple-accounting/simple-accounting.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/accounting/practitioner/simple/summary` | [`SimpleAccountingClient`](../../src/app/core/data-access/simple-accounting/simple-accounting.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/accounting/practitioner/simple/transactions` | [`SimpleAccountingClient`](../../src/app/core/data-access/simple-accounting/simple-accounting.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/accounting/practitioner/simple/transactions` | [`SimpleAccountingClient`](../../src/app/core/data-access/simple-accounting/simple-accounting.client.ts) | Fuente frontend; no certifica API real |
+| `DELETE` | `/accounting/practitioner/simple/transactions/:id` | [`SimpleAccountingClient`](../../src/app/core/data-access/simple-accounting/simple-accounting.client.ts) | Fuente frontend; no certifica API real |
+| `PUT` | `/accounting/practitioner/simple/transactions/:id` | [`SimpleAccountingClient`](../../src/app/core/data-access/simple-accounting/simple-accounting.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/admin/analytics/funnels` | [`WebAnalyticsClient`](../../src/app/core/data-access/admin-portal/platform.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/admin/analytics/funnels/:funnelId/report` | [`WebAnalyticsClient`](../../src/app/core/data-access/admin-portal/platform.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/admin/analytics/overview` | [`WebAnalyticsClient`](../../src/app/core/data-access/admin-portal/platform.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/admin/analytics/pipeline-health` | [`WebAnalyticsClient`](../../src/app/core/data-access/admin-portal/platform.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/admin/analytics/sessions` | [`WebAnalyticsClient`](../../src/app/core/data-access/admin-portal/platform.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/admin/analytics/sessions/:id` | [`WebAnalyticsClient`](../../src/app/core/data-access/admin-portal/platform.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/admin/analytics/timeseries` | [`WebAnalyticsClient`](../../src/app/core/data-access/admin-portal/platform.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/admin/analytics/web-vitals` | [`WebAnalyticsClient`](../../src/app/core/data-access/admin-portal/platform.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/admin/catalog/annotations/:annotationId/review` | [`DataCatalogClient`](../../src/app/core/data-access/admin-portal/data-catalog.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/admin/catalog/coverage` | [`DataCatalogClient`](../../src/app/core/data-access/admin-portal/data-catalog.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/admin/catalog/objects` | [`DataCatalogClient`](../../src/app/core/data-access/admin-portal/data-catalog.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/admin/catalog/objects/:id` | [`DataCatalogClient`](../../src/app/core/data-access/admin-portal/data-catalog.client.ts) | Fuente frontend; no certifica API real |
+| `PUT` | `/admin/catalog/objects/:objectId/annotation` | [`DataCatalogClient`](../../src/app/core/data-access/admin-portal/data-catalog.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/admin/catalog/objects/:objectId/changes` | [`DataCatalogClient`](../../src/app/core/data-access/admin-portal/data-catalog.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/admin/catalog/objects/:objectId/columns` | [`DataCatalogClient`](../../src/app/core/data-access/admin-portal/data-catalog.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/admin/catalog/objects/:objectId/evidence` | [`DataCatalogClient`](../../src/app/core/data-access/admin-portal/data-catalog.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/admin/catalog/objects/:objectId/evidence` | [`DataCatalogClient`](../../src/app/core/data-access/admin-portal/data-catalog.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/admin/catalog/objects/:objectId/history` | [`DataCatalogClient`](../../src/app/core/data-access/admin-portal/data-catalog.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/admin/catalog/objects/:objectId/impact` | [`DataCatalogClient`](../../src/app/core/data-access/admin-portal/data-catalog.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/admin/catalog/scans` | [`DataCatalogClient`](../../src/app/core/data-access/admin-portal/data-catalog.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/admin/catalog/scans` | [`DataCatalogClient`](../../src/app/core/data-access/admin-portal/data-catalog.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/admin/catalog/schemas` | [`DataCatalogClient`](../../src/app/core/data-access/admin-portal/data-catalog.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/admin/ops/backups` | [`WebAnalyticsClient`](../../src/app/core/data-access/admin-portal/platform.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/admin/ops/deployments` | [`WebAnalyticsClient`](../../src/app/core/data-access/admin-portal/platform.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/admin/ops/incidents` | [`WebAnalyticsClient`](../../src/app/core/data-access/admin-portal/platform.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/admin/ops/readiness` | [`WebAnalyticsClient`](../../src/app/core/data-access/admin-portal/platform.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/admin/ops/slos` | [`WebAnalyticsClient`](../../src/app/core/data-access/admin-portal/platform.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/admin/qa/defects` | [`WebAnalyticsClient`](../../src/app/core/data-access/admin-portal/platform.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/admin/qa/environments` | [`WebAnalyticsClient`](../../src/app/core/data-access/admin-portal/platform.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/admin/qa/plans` | [`WebAnalyticsClient`](../../src/app/core/data-access/admin-portal/platform.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/admin/qa/plans` | [`WebAnalyticsClient`](../../src/app/core/data-access/admin-portal/platform.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/admin/qa/plans/:id` | [`WebAnalyticsClient`](../../src/app/core/data-access/admin-portal/platform.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/admin/qa/plans/:planId/approvals` | [`WebAnalyticsClient`](../../src/app/core/data-access/admin-portal/platform.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/admin/qa/plans/:planId/cancel` | [`WebAnalyticsClient`](../../src/app/core/data-access/admin-portal/platform.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/admin/qa/plans/preflight` | [`WebAnalyticsClient`](../../src/app/core/data-access/admin-portal/platform.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/admin/qa/runs` | [`WebAnalyticsClient`](../../src/app/core/data-access/admin-portal/platform.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/admin/qa/runs/:id` | [`WebAnalyticsClient`](../../src/app/core/data-access/admin-portal/platform.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/admin/qa/suites` | [`WebAnalyticsClient`](../../src/app/core/data-access/admin-portal/platform.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/admin/qa/suites/:id` | [`WebAnalyticsClient`](../../src/app/core/data-access/admin-portal/platform.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/admin/qa/targets` | [`WebAnalyticsClient`](../../src/app/core/data-access/admin-portal/platform.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/authz/me/access` | [`AuthzClient`](../../src/app/core/data-access/authz/authz.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/authz/me/care-relationships/:id/revoke` | [`AuthzClient`](../../src/app/core/data-access/authz/authz.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/authz/me/clinical-access-grants/:grantId/revoke` | [`AuthzClient`](../../src/app/core/data-access/authz/authz.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/authz/patients/:patientProfileId/break-the-glass` | [`AuthzClient`](../../src/app/core/data-access/authz/authz.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/billing/simulated/catalogs` | [`BillingSimulatedClient`](../../src/app/core/data-access/billing-simulated/billing-simulated.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/billing/simulated/charges` | [`BillingSimulatedClient`](../../src/app/core/data-access/billing-simulated/billing-simulated.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/billing/simulated/charges/:chargeId/instances/:instanceId/payments` | [`BillingSimulatedClient`](../../src/app/core/data-access/billing-simulated/billing-simulated.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/billing/simulated/charges/:chargeId/invoices` | [`BillingSimulatedClient`](../../src/app/core/data-access/billing-simulated/billing-simulated.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/billing/simulated/charges/:chargeId/payment` | [`BillingSimulatedClient`](../../src/app/core/data-access/billing-simulated/billing-simulated.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/billing/simulated/invoices/:invoiceId` | [`BillingSimulatedClient`](../../src/app/core/data-access/billing-simulated/billing-simulated.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/billing/simulated/invoices/:invoiceId/annulment` | [`BillingSimulatedClient`](../../src/app/core/data-access/billing-simulated/billing-simulated.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/billing/simulated/invoices/:invoiceId/annulment-reversal` | [`BillingSimulatedClient`](../../src/app/core/data-access/billing-simulated/billing-simulated.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/billing/simulated/invoices/:invoiceId/email` | [`BillingSimulatedClient`](../../src/app/core/data-access/billing-simulated/billing-simulated.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/billing/simulated/my-invoices` | [`BillingSimulatedClient`](../../src/app/core/data-access/billing-simulated/billing-simulated.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/billing/simulated/my-invoices/:invoiceId` | [`BillingSimulatedClient`](../../src/app/core/data-access/billing-simulated/billing-simulated.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/billing/simulated/outbox` | [`BillingSimulatedClient`](../../src/app/core/data-access/billing-simulated/billing-simulated.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/billing/simulated/status` | [`BillingSimulatedClient`](../../src/app/core/data-access/billing-simulated/billing-simulated.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/charts/care-plans` | [`ChartCarePlansClient`](../../src/app/core/data-access/chart-care-plans/chart-care-plans.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/charts/documents` | [`ChartDocumentsClient`](../../src/app/core/data-access/chart-documents/chart-documents.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/charts/documents/:documentId/files/:fileId/content` | [`ChartDocumentsClient`](../../src/app/core/data-access/chart-documents/chart-documents.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/charts/notes` | [`ChartNotesClient`](../../src/app/core/data-access/chart-notes/chart-notes.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/charts/notes/:noteId/versions/:versionId/sign` | [`ChartNotesClient`](../../src/app/core/data-access/chart-notes/chart-notes.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/clinical/conditions/:conditionId/verification` | [`ClinicalClient`](../../src/app/core/data-access/clinical/clinical.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/clinical/medication-requests/:medicationRequestId/edit` | [`ClinicalClient`](../../src/app/core/data-access/clinical/clinical.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/clinical/prescriptions/:medicationRequestId/pdf` | [`ClinicalClient`](../../src/app/core/data-access/clinical/clinical.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/community/conversations/:conversationId` | [`CommunityClient`](../../src/app/core/data-access/community/community.client.ts) | Fuente frontend; no certifica API real |
+| `PATCH` | `/community/conversations/:conversationId/messages/:messageId` | [`CommunityClient`](../../src/app/core/data-access/community/community.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/community/moderation/decisions/mine` | [`CommunityClient`](../../src/app/core/data-access/community/community.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/community/profiles/:profileId/auto-reply` | [`CommunityClient`](../../src/app/core/data-access/community/community.client.ts) | Fuente frontend; no certifica API real |
+| `PUT` | `/community/profiles/:profileId/auto-reply` | [`CommunityClient`](../../src/app/core/data-access/community/community.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/consent/encounters/:encounterId/informed-consent` | [`ConsentClient`](../../src/app/core/data-access/consent/consent.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/consent/encounters/:encounterId/informed-consent` | [`ConsentClient`](../../src/app/core/data-access/consent/consent.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/consent/me/consents` | [`ConsentClient`](../../src/app/core/data-access/consent/consent.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/consent/me/consents/:consentId/withdraw` | [`ConsentClient`](../../src/app/core/data-access/consent/consent.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/consent/me/hipaa-authorizations` | [`ConsentClient`](../../src/app/core/data-access/consent/consent.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/consent/me/objections` | [`ConsentClient`](../../src/app/core/data-access/consent/consent.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/consent/me/treatment-informed-consents` | [`ConsentClient`](../../src/app/core/data-access/consent/consent.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/diagnostic-results/me/:reportId/files/:fileId/content` | [`DiagnosticsClient`](../../src/app/core/data-access/diagnostics/diagnostics.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/diagnostics/lab/categories` | [`LabPortalClient`](../../src/app/core/data-access/lab-portal/lab-portal.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/diagnostics/lab/categories` | [`LabPortalClient`](../../src/app/core/data-access/lab-portal/lab-portal.client.ts) | Fuente frontend; no certifica API real |
+| `DELETE` | `/diagnostics/lab/categories/:id` | [`LabPortalClient`](../../src/app/core/data-access/lab-portal/lab-portal.client.ts) | Fuente frontend; no certifica API real |
+| `PATCH` | `/diagnostics/lab/categories/:id` | [`LabPortalClient`](../../src/app/core/data-access/lab-portal/lab-portal.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/diagnostics/lab/result-files` | [`LabPortalClient`](../../src/app/core/data-access/lab-portal/lab-portal.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/diagnostics/lab/result-files/:id/content` | [`LabPortalClient`](../../src/app/core/data-access/lab-portal/lab-portal.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/diagnostics/lab/result-files/:id/withdrawal` | [`LabPortalClient`](../../src/app/core/data-access/lab-portal/lab-portal.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/diagnostics/lab/result-targets` | [`LabPortalClient`](../../src/app/core/data-access/lab-portal/lab-portal.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/diagnostics/lab/result-uploads` | [`LabPortalClient`](../../src/app/core/data-access/lab-portal/lab-portal.client.ts) | Fuente frontend; no certifica API real |
+| `DELETE` | `/diagnostics/lab/result-uploads/:uploadId` | [`LabPortalClient`](../../src/app/core/data-access/lab-portal/lab-portal.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/diagnostics/lab/result-uploads/:uploadId/complete` | [`LabPortalClient`](../../src/app/core/data-access/lab-portal/lab-portal.client.ts) | Fuente frontend; no certifica API real |
+| `PUT` | `/diagnostics/lab/result-uploads/:uploadId/parts/:index` | [`LabPortalClient`](../../src/app/core/data-access/lab-portal/lab-portal.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/diagnostics/lab/services` | [`LabPortalClient`](../../src/app/core/data-access/lab-portal/lab-portal.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/diagnostics/lab/services` | [`LabPortalClient`](../../src/app/core/data-access/lab-portal/lab-portal.client.ts) | Fuente frontend; no certifica API real |
+| `DELETE` | `/diagnostics/lab/services/:id` | [`LabPortalClient`](../../src/app/core/data-access/lab-portal/lab-portal.client.ts) | Fuente frontend; no certifica API real |
+| `PATCH` | `/diagnostics/lab/services/:id` | [`LabPortalClient`](../../src/app/core/data-access/lab-portal/lab-portal.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/diagnostics/lab/services/import` | [`LabPortalClient`](../../src/app/core/data-access/lab-portal/lab-portal.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/diagnostics/lab/summary` | [`LabPortalClient`](../../src/app/core/data-access/lab-portal/lab-portal.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/diagnostics/service-requests/inbox` | [`DiagnosticsLabClient`](../../src/app/core/data-access/diagnostics/diagnostics-lab.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/iam/auth/change-password` | [`AccountSecurityClient`](../../src/app/core/data-access/iam/account-security.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/iam/auth/logout-all` | [`AccountSecurityClient`](../../src/app/core/data-access/iam/account-security.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/iam/auth/upload-registration-document` | [`IamClient`](../../src/app/core/data-access/iam/iam.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/iam/me/sessions` | [`AccountSecurityClient`](../../src/app/core/data-access/iam/account-security.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/iam/me/sessions/:sessionId/revoke` | [`AccountSecurityClient`](../../src/app/core/data-access/iam/account-security.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/iam/users/search` | [`IamClient`](../../src/app/core/data-access/iam/iam.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/insurance-campaigns` | [`InsuranceClient`](../../src/app/core/data-access/insurance/insurance.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/insurance-campaigns` | [`InsuranceClient`](../../src/app/core/data-access/insurance/insurance.client.ts) | Fuente frontend; no certifica API real |
+| `PATCH` | `/insurance-campaigns/:id/status` | [`InsuranceClient`](../../src/app/core/data-access/insurance/insurance.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/insurance-campaigns/patient/:patientProfileId` | [`InsuranceClient`](../../src/app/core/data-access/insurance/insurance.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/insurance-claims/:claimId/adjudications` | [`InsuranceClient`](../../src/app/core/data-access/insurance/insurance.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/insurance-claims/:claimId/eob` | [`InsuranceClient`](../../src/app/core/data-access/insurance/insurance.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/insurance-marketplace/insurers/:slug` | [`InsuranceClient`](../../src/app/core/data-access/insurance/insurance.client.ts) | Fuente frontend; no certifica API real |
+| `DELETE` | `/insurance-plans/:planId` | [`InsuranceClient`](../../src/app/core/data-access/insurance/insurance.client.ts) | Fuente frontend; no certifica API real |
+| `PUT` | `/insurance-plans/:planId` | [`InsuranceClient`](../../src/app/core/data-access/insurance/insurance.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/insurance/received-claims` | [`InsuranceClient`](../../src/app/core/data-access/insurance/insurance.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/insurance/received-claims/:claimId/decision` | [`InsuranceClient`](../../src/app/core/data-access/insurance/insurance.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/insurance/received-claims/:claimId/invoice` | [`InsuranceClient`](../../src/app/core/data-access/insurance/insurance.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/insurance/received-claims/:claimId/invoice/annulment` | [`InsuranceClient`](../../src/app/core/data-access/insurance/insurance.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/loyalty/me` | [`SaldoInsuficienteError`](../../src/app/core/data-access/loyalty/loyalty.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/loyalty/me/points` | [`SaldoInsuficienteError`](../../src/app/core/data-access/loyalty/loyalty.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/loyalty/me/points/redeem` | [`SaldoInsuficienteError`](../../src/app/core/data-access/loyalty/loyalty.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/patient-spending/me` | [`PatientSpendingClient`](../../src/app/core/data-access/patient-spending/patient-spending.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/patients/me/reviews` | [`CommunityClient`](../../src/app/core/data-access/community/community.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/pharmacies/:pharmacyId/inventory` | [`PharmacyClient`](../../src/app/core/data-access/pharmacy/pharmacy.client.ts) | Fuente frontend; no certifica API real |
+| `PATCH` | `/pharmacies/:pharmacyId/products/:productId` | [`PharmacyClient`](../../src/app/core/data-access/pharmacy/pharmacy.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/pharmacy/pharmacies/:id` | [`PharmacyClient`](../../src/app/core/data-access/pharmacy/pharmacy.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/pharmacy/pharmacies/:id/contacts` | [`PharmacyClient`](../../src/app/core/data-access/pharmacy/pharmacy.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/pharmacy/pharmacies/:id/licenses` | [`PharmacyClient`](../../src/app/core/data-access/pharmacy/pharmacy.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/pharmacy/pharmacies/:pharmacyId/summary` | [`PharmacyClient`](../../src/app/core/data-access/pharmacy/pharmacy.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/pharmacy/sites` | [`PharmacyClient`](../../src/app/core/data-access/pharmacy/pharmacy.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/pharmacy/sites/:siteId/prices` | [`PharmacyClient`](../../src/app/core/data-access/pharmacy/pharmacy.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/practitioners/:practitionerProfileId/insurance-carriers` | [`InsuranceClient`](../../src/app/core/data-access/insurance/insurance.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/practitioners/:practitionerProfileId/insurance-networks` | [`InsuranceClient`](../../src/app/core/data-access/insurance/insurance.client.ts) | Fuente frontend; no certifica API real |
+| `PATCH` | `/practitioners/me/sites/:siteId` | [`PracticeSitesClient`](../../src/app/core/data-access/practice-sites/practice-sites.client.ts) | Fuente frontend; no certifica API real |
+| `PUT` | `/practitioners/me/sites/:siteId/bank-qr` | [`PracticeSitesClient`](../../src/app/core/data-access/practice-sites/practice-sites.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/profiles/patients/me/dependent-candidates` | [`ProfilesClient`](../../src/app/core/data-access/profiles/profiles.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/profiles/patients/me/dependent-requests` | [`ProfilesClient`](../../src/app/core/data-access/profiles/profiles.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/profiles/patients/me/dependent-requests/:requestId/accept` | [`ProfilesClient`](../../src/app/core/data-access/profiles/profiles.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/profiles/patients/me/dependent-requests/:requestId/reject` | [`ProfilesClient`](../../src/app/core/data-access/profiles/profiles.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/profiles/patients/me/dependent-requests/incoming` | [`ProfilesClient`](../../src/app/core/data-access/profiles/profiles.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/profiles/patients/me/dependents` | [`ProfilesClient`](../../src/app/core/data-access/profiles/profiles.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/profiles/patients/me/dependents` | [`ProfilesClient`](../../src/app/core/data-access/profiles/profiles.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/profiles/patients/search` | [`ProfilesClient`](../../src/app/core/data-access/profiles/profiles.client.ts) | Fuente frontend; no certifica API real |
+| `DELETE` | `/profiles/practitioners/me/affiliations/:affiliationId` | [`ProfilesClient`](../../src/app/core/data-access/profiles/profiles.client.ts) | Fuente frontend; no certifica API real |
+| `PATCH` | `/profiles/practitioners/me/affiliations/:affiliationId` | [`ProfilesClient`](../../src/app/core/data-access/profiles/profiles.client.ts) | Fuente frontend; no certifica API real |
+| `PATCH` | `/profiles/practitioners/me/credentials/:credentialId` | [`ProfilesClient`](../../src/app/core/data-access/profiles/profiles.client.ts) | Fuente frontend; no certifica API real |
+| `DELETE` | `/profiles/practitioners/me/jurisdiction-authorizations/:licenseId` | [`ProfilesClient`](../../src/app/core/data-access/profiles/profiles.client.ts) | Fuente frontend; no certifica API real |
+| `PATCH` | `/profiles/practitioners/me/jurisdiction-authorizations/:licenseId` | [`ProfilesClient`](../../src/app/core/data-access/profiles/profiles.client.ts) | Fuente frontend; no certifica API real |
+| `DELETE` | `/profiles/practitioners/me/specialties/:specialtyId` | [`ProfilesClient`](../../src/app/core/data-access/profiles/profiles.client.ts) | Fuente frontend; no certifica API real |
+| `PATCH` | `/profiles/practitioners/me/specialties/:specialtyId` | [`ProfilesClient`](../../src/app/core/data-access/profiles/profiles.client.ts) | Fuente frontend; no certifica API real |
+| `PATCH` | `/profiles/practitioners/me/specialties/:specialtyId/primary` | [`ProfilesClient`](../../src/app/core/data-access/profiles/profiles.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/promotions/me` | [`PromotionsClient`](../../src/app/core/data-access/promotions/promotions.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/public/profiles/:prefijo/:slug/reviews` | [`PublicDirectoryClient`](../../src/app/core/data-access/public-directory/public-directory.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/public/profiles/f/:slug/branch-availability` | [`PublicCatalogClient`](../../src/app/core/data-access/public-catalog/public-catalog.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/scheduling/appointments/walk-in` | [`SchedulingClient`](../../src/app/core/data-access/scheduling/scheduling.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/terminology/import-template` | [`TerminologyClient`](../../src/app/core/data-access/terminology/terminology.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/terminology/value-sets/$glossary-facets` | [`TerminologyClient`](../../src/app/core/data-access/terminology/terminology.client.ts) | Fuente frontend; no certifica API real |
+
+Operaciones de la lista anterior que ya no consume el codigo integrado (se conserva referencia historica):
+
+- `GET /iam/users`
+- `GET /profiles/patients`
+- `GET /public/search`
+- `GET /public/search/medications`
+- `GET /public/search/organizations`
+- `GET /public/search/diagnostic-units`
+- `GET /public/search/insurers`
+- `GET /public/search/pharmacies`
+- `GET /prescription-favorites`
+- `POST /prescription-favorites`
+- `DELETE /prescription-favorites/:id`
+- `POST /quotations/simulate`

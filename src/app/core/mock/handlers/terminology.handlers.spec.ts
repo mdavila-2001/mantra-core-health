@@ -1,4 +1,6 @@
 import { HttpHeaders } from '@angular/common/http';
+import { existsSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 
 import { registrarTerminologia } from './terminology.handlers';
 import {
@@ -10,6 +12,7 @@ import {
   VERIFICACION_DX,
 } from '../fixtures/conceptos';
 import { valorDeTexto } from '../../data-access/terminology/terminology.types';
+import { AlmacenDeGlosario, ArchivoAusente, type LectorDeArchivos } from '../glossary-shards';
 import { MockRouter, type MockMethod } from '../mock-router';
 import { buscarUsuario } from '../mock-session';
 
@@ -24,10 +27,16 @@ describe('handlers de terminología: propiedades de concepto (frecuencia por def
   const router = new MockRouter();
   registrarTerminologia(router);
 
-  function call<T>(method: MockMethod, path: string, query = new URLSearchParams()): T {
+  // Los manejadores de conceptos contestan con una promesa desde que el
+  // glosario se lee bajo demanda (`glossary-shards.ts`): se espera siempre.
+  async function call<T>(
+    method: MockMethod,
+    path: string,
+    query = new URLSearchParams(),
+  ): Promise<T> {
     const match = router.match(method, path);
     if (match === null) throw new Error(`No existe ${method} ${path}`);
-    return match.handler({
+    return (await match.handler({
       method,
       path,
       params: match.params,
@@ -35,11 +44,11 @@ describe('handlers de terminología: propiedades de concepto (frecuencia por def
       body: null,
       headers: new HttpHeaders(),
       user: null,
-    }) as T;
+    })) as T;
   }
 
-  it('la ficha de un medicamento CON la propiedad la trae, legible con valorDeTexto', () => {
-    const ficha = call<{ properties: Readonly<Record<string, unknown>> }>(
+  it('la ficha de un medicamento CON la propiedad la trae, legible con valorDeTexto', async () => {
+    const ficha = await call<{ properties: Readonly<Record<string, unknown>> }>(
       'GET',
       `/terminology/concepts/${MEDICAMENTO['MED-PARACETAMOL']}`,
     );
@@ -48,8 +57,8 @@ describe('handlers de terminología: propiedades de concepto (frecuencia por def
     );
   });
 
-  it('la ficha de un medicamento SIN la propiedad no la trae, y la lectura defensiva no rompe', () => {
-    const ficha = call<{ properties: Readonly<Record<string, unknown>> }>(
+  it('la ficha de un medicamento SIN la propiedad no la trae, y la lectura defensiva no rompe', async () => {
+    const ficha = await call<{ properties: Readonly<Record<string, unknown>> }>(
       'GET',
       `/terminology/concepts/${MEDICAMENTO['MED-LOSARTAN']}`,
     );
@@ -57,8 +66,8 @@ describe('handlers de terminología: propiedades de concepto (frecuencia por def
     expect(valorDeTexto(ficha.properties, 'default_frequency')).toBeUndefined();
   });
 
-  it('inválido — un value_json mal formado (número) se lee como ausente, sin lanzar', () => {
-    const ficha = call<{ properties: Readonly<Record<string, unknown>> }>(
+  it('inválido — un value_json mal formado (número) se lee como ausente, sin lanzar', async () => {
+    const ficha = await call<{ properties: Readonly<Record<string, unknown>> }>(
       'GET',
       `/terminology/concepts/${MEDICAMENTO['MED-INSULINA-NPH']}`,
     );
@@ -67,8 +76,8 @@ describe('handlers de terminología: propiedades de concepto (frecuencia por def
     expect(valorDeTexto(ficha.properties, 'default_frequency')).toBeUndefined();
   });
 
-  it('la lista/búsqueda de conceptos NO trae `properties` — sólo la ficha, como en el contrato real', () => {
-    const { items } = call<{ items: readonly Record<string, unknown>[] }>(
+  it('la lista/búsqueda de conceptos NO trae `properties` — sólo la ficha, como en el contrato real', async () => {
+    const { items } = await call<{ items: readonly Record<string, unknown>[] }>(
       'GET',
       '/terminology/concepts',
       new URLSearchParams({ ids: MEDICAMENTO['MED-PARACETAMOL']! }),
@@ -396,13 +405,15 @@ describe('contrato C0: expansión de conceptos clínicos', () => {
   const router = new MockRouter();
   registrarTerminologia(router);
 
-  function expand(code: string): readonly { conceptId: string; code: string; display: string }[] {
+  async function expand(
+    code: string,
+  ): Promise<readonly { conceptId: string; code: string; display: string }[]> {
     const valueSet = conjuntoPorCodigo(code);
     if (valueSet === undefined) throw new Error('No existe el conjunto ' + code);
     const path = '/terminology/value-sets/' + valueSet.id + '/$expand';
     const match = router.match('GET', path);
     if (match === null) throw new Error('No existe GET ' + path);
-    const result = match.handler({
+    const result = (await match.handler({
       method: 'GET',
       path,
       params: match.params,
@@ -410,7 +421,7 @@ describe('contrato C0: expansión de conceptos clínicos', () => {
       body: null,
       headers: new HttpHeaders(),
       user: null,
-    }) as { items: readonly { conceptId: string; code: string; display: string }[] };
+    })) as { items: readonly { conceptId: string; code: string; display: string }[] };
     return result.items;
   }
 
@@ -418,19 +429,122 @@ describe('contrato C0: expansión de conceptos clínicos', () => {
     ['VS_ACTIVITY_TYPE', 'ACT-FOLLOW-UP', 'Reconsulta', ACTIVIDAD['ACT-FOLLOW-UP']],
     ['VS_APPOINTMENT_TYPE', 'APT-RECONSULTA', 'Reconsulta', TIPO_CITA['APT-RECONSULTA']],
     ['VS_SERVICE_REQUEST_CATEGORY', 'SRQ-OTHER', 'Otro', CATEGORIA_ORDEN['SRQ-OTHER']],
-  ])('expande %s con un único %s, su etiqueta y su ID estable', (valueSet, code, display, id) => {
-    const items = expand(valueSet!);
+  ])('expande %s con un único %s, su etiqueta y su ID estable', async (valueSet, code, display, id) => {
+    const items = await expand(valueSet!);
     expect(id).toEqual(expect.any(String));
     expect(items.filter((item) => item.code === code)).toEqual([
       expect.objectContaining({ conceptId: id, code, display }),
     ]);
-    expect(expand(valueSet!)).toEqual(items);
+    expect(await expand(valueSet!)).toEqual(items);
   });
 
-  it('conserva todos los estados de verificación diagnóstica publicados', () => {
-    const items = expand('VS_CONDITION_VERIFICATION');
+  it('conserva todos los estados de verificación diagnóstica publicados', async () => {
+    const items = await expand('VS_CONDITION_VERIFICATION');
     for (const [code, conceptId] of Object.entries(VERIFICACION_DX)) {
       expect(items).toContainEqual(expect.objectContaining({ code, conceptId }));
     }
+  });
+});
+
+/**
+ * Auditoría del glosario (2026-09-30): los sinónimos se escriben con su
+ * ortografía correcta («tiña», «uñas», «riñón») y la búsqueda no distingue
+ * tildes ni la ñ; y lo que está en castellano va antes que las categorías
+ * ICD-10-CM que sólo tienen el título en inglés.
+ *
+ * Desde la carga bajo demanda el glosario sale de los shards: estas pruebas
+ * leen la semilla commiteada (`public/glossary-seed/`) con un lector de disco,
+ * igual que `glossary-shards.spec.ts`, y buscan cada término por su id estable.
+ */
+describe('búsqueda del glosario: tildes y castellano primero', () => {
+  const PUBLICO = join(process.cwd(), 'public');
+  const leerSemilla: LectorDeArchivos = (ruta) => {
+    const archivo = join(PUBLICO, ruta);
+    if (ruta.startsWith('glossary-data/') || !existsSync(archivo)) {
+      return Promise.reject(new ArchivoAusente(ruta));
+    }
+    return Promise.resolve(JSON.parse(readFileSync(archivo, 'utf8')) as unknown);
+  };
+  const router = new MockRouter();
+  registrarTerminologia(router, new AlmacenDeGlosario(leerSemilla));
+
+  async function get<T>(path: string, query: Record<string, string> = {}): Promise<T> {
+    const match = router.match('GET', path);
+    if (match === null) throw new Error(`No existe GET ${path}`);
+    return (await match.handler({
+      method: 'GET',
+      path,
+      params: match.params,
+      query: new URLSearchParams(query),
+      body: null,
+      headers: new HttpHeaders(),
+      user: null,
+    })) as T;
+  }
+
+  interface Entrada {
+    readonly conceptId: string;
+    readonly translated: boolean;
+  }
+  interface Conjunto {
+    readonly id: string;
+    readonly internalCode: string;
+    readonly memberCount: number;
+    readonly translatedMemberCount?: number;
+  }
+
+  // Términos oficiales de la semilla (2026-10-01): CIE-10-ES B35.4 y B35.1, y el
+  // riñón de la anatomía TA98 (Wikidata Q9377). Antes eran filas de una capa
+  // redactada por desarrollo, que se retiró del glosario.
+  const TINA_CORPORAL = 'c08c4776-c531-484c-a62e-7f96d8dba482';
+  const TINA_DE_LAS_UNAS = 'c58c4f55-41db-4efd-add9-9a4825283e22';
+  const RINON = '0d827ff8-ed60-404a-a02d-9f52d0e4a4e2';
+
+  const buscar = async (q: string) =>
+    (
+      await get<{ items: readonly Entrada[] }>('/terminology/concepts', {
+        includeValueSets: 'true',
+        limit: '500',
+        q,
+      })
+    ).items.map((item) => item.conceptId);
+
+  it.each([
+    ['tina', TINA_CORPORAL],
+    ['tiña', TINA_CORPORAL],
+    ['tina de las unas', TINA_DE_LAS_UNAS],
+    ['tiña de las uñas', TINA_DE_LAS_UNAS],
+    ['rinon', RINON],
+    ['RIÑÓN', RINON],
+  ])('«%s» encuentra su término', async (q, id) => {
+    expect(await buscar(q)).toContain(id);
+  });
+
+  async function enfermedades(): Promise<Conjunto> {
+    const { items } = await get<{ items: readonly Conjunto[] }>('/terminology/value-sets', {
+      limit: '200',
+    });
+    const conjunto = items.find((c) => c.internalCode === 'glossary-category-disease');
+    if (conjunto === undefined) throw new Error('No está la categoría Enfermedades');
+    return conjunto;
+  }
+
+  it('la categoría Enfermedades dice cuántos de sus términos están en castellano: todos', async () => {
+    const categoria = await enfermedades();
+    // Desde el 2026-10-01 la semilla no trae las 1 918 categorías ICD-10-CM con
+    // el título en inglés: CIE-10-ES da el nombre oficial en castellano.
+    expect(categoria.translatedMemberCount).toBe(categoria.memberCount);
+  });
+
+  it('ningún término de Enfermedades está sólo en inglés', async () => {
+    const categoria = await enfermedades();
+    const { items } = await get<{ items: readonly Entrada[] }>('/terminology/concepts', {
+      includeValueSets: 'true',
+      valueSetId: categoria.id,
+      limit: '5000',
+    });
+
+    expect(items.length).toBeGreaterThan(1000);
+    expect(items.filter((t) => !t.translated)).toEqual([]);
   });
 });

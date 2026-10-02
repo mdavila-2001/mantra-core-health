@@ -167,6 +167,65 @@ describe('TutorialOverlay', () => {
     expect(engine.activeStep()?.step.id).toBe('p-1');
   });
 
+  /* ---- el Tab no se escapa (WCAG 2.4.3) ---------------------------------- */
+
+  function tab(from: HTMLElement, shiftKey = false): void {
+    from.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'Tab', shiftKey, bubbles: true, cancelable: true }),
+    );
+  }
+
+  function bubbleButtons(): HTMLButtonElement[] {
+    fixture.detectChanges();
+    return Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLButtonElement>('.tutorial-globo button'),
+    );
+  }
+
+  it('Tab da la vuelta dentro del globo en vez de irse a la pantalla de atrás', async () => {
+    registry.register([tutorial()]);
+    await engine.start('t-1');
+    const buttons = bubbleButtons();
+    const first = buttons[0];
+    const last = buttons[buttons.length - 1];
+
+    last.focus();
+    tab(last);
+    expect(document.activeElement).toBe(first);
+
+    tab(first, true);
+    expect(document.activeElement).toBe(last);
+  });
+
+  it('en un paso de clic, Tab también pasa por el elemento resaltado', async () => {
+    document.querySelectorAll('[data-tutorial-id="boton"]').forEach((viejo) => viejo.remove());
+    const highlighted = document.createElement('button');
+    highlighted.setAttribute('data-tutorial-id', 'boton');
+    highlighted.textContent = 'Publicar';
+    highlighted.scrollIntoView = () => undefined;
+    document.body.appendChild(highlighted);
+    try {
+      registry.register([
+        tutorial({
+          steps: [{ id: 'p-1', title: 'Uno', body: 'a', target: 'boton', advanceOn: 'click' }],
+        }),
+      ]);
+      await engine.start('t-1');
+      const buttons = bubbleButtons();
+      const last = buttons[buttons.length - 1];
+
+      // El resaltado va primero en la vuelta: es lo que el paso pide tocar.
+      last.focus();
+      tab(last);
+      expect(document.activeElement).toBe(highlighted);
+
+      tab(highlighted, true);
+      expect(document.activeElement).toBe(last);
+    } finally {
+      highlighted.remove();
+    }
+  });
+
   /* ---- el hueco ----------------------------------------------------------- */
 
   /** No se puede pedir que toquen algo y a la vez taparlo. */

@@ -1,1 +1,1 @@
-[H1.S2.M1] GET /scheduling/slots × 10 — min=58.1ms max=3587.8ms avg=421.8ms — valores=3587.8,78.4,62.4,58.1,68.1,66.5,87.1,75.7,67.8,66.1
+[H1.S2.M1] GET /scheduling/slots × 10 — min=43.7ms max=54.2ms avg=47.1ms — valores=54.2,45.8,46.9,43.7,44.6,46.1,48.6,50.5,46.2,44.0

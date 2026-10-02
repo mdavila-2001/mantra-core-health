@@ -102,8 +102,20 @@ ${compacto('INSURER_NETWORK_PRACTITIONERS', 'readonly InsurerNetworkPractitioner
 
 /* ---- los aranceles -------------------------------------------------------- */
 
-const medico = leer('fee-schedules/medical-santa-cruz-2025.json');
-const odontologico = leer('fee-schedules/dental-2026.json');
+// Sólo las filas con importe son prestaciones. Las demás son encabezados de
+// sección («DUODENO Y PÁNCREAS»), notas del pliego («se adicionará el 30 %») o
+// líneas que el OCR pegó con el importe metido en el texto: quedan en
+// `data/fee-schedules/` para revisarlas contra el PDF, no en el nomenclador.
+// Es el mismo criterio que la API (`tools/bolivia-datasets/extract_datasets.py`).
+// Un importe 0 tampoco es precio: las cuatro filas del médico que lo traen son el
+// «o» de «o artrodesis» leído como número o una nota («se añade 50 %»).
+const conPrecio = (fila) => fila.referencePrice !== null && fila.referencePrice !== '' && Number(fila.referencePrice) > 0;
+// `originalDisplay` (el texto antes de corregir el OCR) no viaja a la maqueta.
+const sinOriginal = ({ originalDisplay: _original, ...fila }) => fila;
+const medicoCompleto = leer('fee-schedules/medical-santa-cruz-2025.json');
+const odontologicoCompleto = leer('fee-schedules/dental-2026.json');
+const medico = medicoCompleto.filter(conPrecio).map(sinOriginal);
+const odontologico = odontologicoCompleto.filter(conPrecio).map(sinOriginal);
 const aranceles = leer('fee-schedules/manifest.json');
 const [fuenteMedica, fuenteDental] = aranceles.sources;
 
@@ -117,14 +129,18 @@ writeFileSync(
     La fuente es \`data/fee-schedules/\`, que destila
     \`tools/extract-markdown-catalogs.py\` de \`markdown_convertidos/\`.
 
-    ${fuenteMedica.items} prestaciones médicas —todas las filas de la hoja «Base de datos»—
-    (${fuenteMedica.ocrSuspect} marcadas \`ocrSuspect\`) ·
-    ${fuenteDental.items} odontológicas (${fuenteDental.withoutPrice} sin precio publicado).
+    ${medico.length} prestaciones médicas con importe, de ${medicoCompleto.length} filas de la hoja
+    (${medico.filter((f) => f.ocrSuspect).length} siguen marcadas \`ocrSuspect\`) ·
+    ${odontologico.length} odontológicas con precio, de ${odontologicoCompleto.length}.
 
     ## Lo que hay que saber antes de usarlos
 
-    · **El médico es OCR de un PDF escaneado.** El texto no se corrigió: una
-      fila dañada viaja como está y marcada, para que la pantalla lo diga.
+    · **El médico es OCR de un PDF escaneado.** Las LETRAS se corrigieron con el
+      corrector de la API (\`scripts/fix-fee-schedule-ocr.py\`, léxico oficial en
+      castellano); los importes y los códigos, no. Lo que todavía tiene daño
+      evidente viaja marcado, para que la pantalla lo diga.
+    · **Sólo filas con importe.** Encabezados, notas y líneas pegadas quedan en
+      \`data/fee-schedules/\` para revisarlas contra el PDF.
     · **\`UMA\` no es una moneda.** Es la unidad de cuenta del Colegio, y su
       conversión a bolivianos no está declarada en ningún lado.
     · **Los códigos no son del Colegio.** La planilla de tres columnas no los

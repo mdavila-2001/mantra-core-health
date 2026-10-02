@@ -1,0 +1,4 @@
+node scripts/check-real-api-config.mjs
+[check-real-api-config] PASS: API real por defecto, demo explicita y production-api con SSR.
+
+EXIT_CODE=0

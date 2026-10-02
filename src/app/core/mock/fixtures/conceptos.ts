@@ -1,4 +1,8 @@
 import { uuid } from '../mock-store';
+import { analisisInlasaDe } from './inlasa';
+import { prestacionDeImagen } from './precios-de-referencia';
+import { CATALOGO_MEDICAMENTOS } from './catalogo-medicamentos.generated';
+import { MEDICAMENTOS_LINAME, type MedicamentoLiname } from './liname.generated';
 
 /* ============================================================================
     El catálogo de terminología del backend simulado.
@@ -559,10 +563,10 @@ export const ESTADO_RESERVA = definir('VS_BOOKING_STATUS', [
 
 conjunto('VS_CONDITION_CLINICAL_STATUS', 'Estado clínico', 'Estado clínico de una condición.');
 export const ESTADO_CONDICION = definir('VS_CONDITION_CLINICAL_STATUS', [
-  ['COND-ACTIVE', 'Activa'],
-  ['COND-REMISSION', 'En remisión'],
-  ['COND-RESOLVED', 'Resuelta'],
-  ['COND-RECURRENCE', 'Recurrente'],
+  ['COND_ACTIVE', 'Activa'],
+  ['COND_REMISSION', 'En remisión'],
+  ['COND_RESOLVED', 'Resuelta'],
+  ['COND_RECURRENCE', 'Recurrente'],
 ]);
 
 /* Los tres catálogos del diagnóstico que faltaban, con **los códigos del
@@ -602,12 +606,17 @@ export const LATERALIDAD = definir('VS_CONDITION_LATERALITY', [
   ['COND_LAT_BILATERAL', 'Bilateral'],
 ]);
 
+/* Estado clínico y certeza con **los códigos del backend**
+   (`CLIN.CONDITION_*` de `clinical.concepts.ts`), por lo mismo que los
+   catálogos de arriba: `diagnosisStateOf` compara códigos, y con unos
+   inventados (`DXV-CONFIRMED`, `COND-ACTIVE`) el simulador daba la razón a un
+   front que contra la API real mostraba todo «En estudio». La API no siembra
+   el diferencial de HL7, así que el simulador tampoco. */
 conjunto('VS_CONDITION_VERIFICATION', 'Verificación diagnóstica', 'Certeza del diagnóstico.');
 export const VERIFICACION_DX = definir('VS_CONDITION_VERIFICATION', [
-  ['DXV-CONFIRMED', 'Confirmado'],
-  ['DXV-PROVISIONAL', 'Provisional'],
-  ['DXV-DIFFERENTIAL', 'Diferencial'],
-  ['DXV-REFUTED', 'Descartado'],
+  ['COND_CONFIRMED', 'Confirmado'],
+  ['COND_PROVISIONAL', 'Provisional'],
+  ['COND_REFUTED', 'Descartado'],
 ]);
 
 conjunto('VS_SEVERITY', 'Severidad', 'Gravedad de una condición o reacción.');
@@ -828,34 +837,41 @@ export const PRIORIDAD = definir('VS_PRIORITY', [
 ]);
 
 conjunto('VS_DIAGNOSTIC_STUDY', 'Estudios diagnósticos', 'Estudios de laboratorio e imagen.');
+/** Nombre oficial de INLASA para un estudio de laboratorio (ver `fixtures/inlasa.ts`). */
+const conNombreInlasa = (code: string, rotuloDeImagen?: string): readonly [string, string] => [
+  code,
+  analisisInlasaDe(code)?.name ?? rotuloDeImagen ?? code,
+];
+/** Un estudio de imagen con equivalente en FONASA lleva su nombre oficial (`precios-de-referencia.ts`). */
+const conNombreFonasa = (code: string): readonly [string, string] => [code, prestacionDeImagen(code)?.name ?? code];
 export const ESTUDIO = definir('VS_DIAGNOSTIC_STUDY', [
-  ['STUDY-HEMOGRAMA', 'Hemograma completo'],
-  ['STUDY-GLUCOSA', 'Glucosa en ayunas'],
-  ['STUDY-PERFIL-LIPIDICO', 'Perfil lipídico'],
-  ['STUDY-TSH', 'TSH'],
-  ['STUDY-ORINA', 'Examen general de orina'],
-  ['STUDY-RX-TORAX', 'Radiografía de tórax'],
-  ['STUDY-ECO-ABD', 'Ecografía abdominal'],
+  conNombreInlasa('STUDY-HEMOGRAMA'),
+  conNombreInlasa('STUDY-GLUCOSA'),
+  conNombreInlasa('STUDY-PERFIL-LIPIDICO'),
+  conNombreInlasa('STUDY-TSH'),
+  conNombreInlasa('STUDY-ORINA'),
+  conNombreFonasa('STUDY-RX-TORAX'),
+  conNombreFonasa('STUDY-ECO-ABD'),
   ['STUDY-ECG', 'Electrocardiograma'],
-  ['STUDY-RMN-RODILLA', 'Resonancia de rodilla'],
-  ['STUDY-TAC-CRANEO', 'Tomografía de cráneo'],
+  conNombreFonasa('STUDY-RMN-RODILLA'),
+  conNombreFonasa('STUDY-TAC-CRANEO'),
   /* Un catálogo de diez estudios dejaba a cada centro con cinco, o sea siempre
      por debajo del umbral con el que la ficha muestra su buscador y su
      paginador: la sección se veía entera y sus controles no aparecían nunca.
      Un laboratorio real ofrece decenas. */
-  ['STUDY-CREATININA', 'Creatinina en sangre'],
-  ['STUDY-UREA', 'Urea en sangre'],
-  ['STUDY-HBA1C', 'Hemoglobina glicosilada'],
-  ['STUDY-COAGULACION', 'Tiempo de coagulación'],
-  ['STUDY-HEPATICO', 'Perfil hepático'],
-  ['STUDY-COPROLOGICO', 'Coproparasitológico'],
-  ['STUDY-CULTIVO', 'Urocultivo con antibiograma'],
-  ['STUDY-VITAMINA-D', 'Vitamina D'],
-  ['STUDY-MAMOGRAFIA', 'Mamografía bilateral'],
-  ['STUDY-ECO-OBSTETRICA', 'Ecografía obstétrica'],
-  ['STUDY-RX-COLUMNA', 'Radiografía de columna'],
-  ['STUDY-TAC-ABDOMEN', 'Tomografía de abdomen'],
-  ['STUDY-RMN-CEREBRO', 'Resonancia de cerebro'],
+  conNombreInlasa('STUDY-CREATININA'),
+  conNombreInlasa('STUDY-UREA'),
+  conNombreInlasa('STUDY-HBA1C'),
+  conNombreInlasa('STUDY-COAGULACION'),
+  conNombreInlasa('STUDY-HEPATICO'),
+  conNombreInlasa('STUDY-COPROLOGICO'),
+  conNombreInlasa('STUDY-CULTIVO'),
+  conNombreInlasa('STUDY-VITAMINA-D'),
+  conNombreFonasa('STUDY-MAMOGRAFIA'),
+  conNombreFonasa('STUDY-ECO-OBSTETRICA'),
+  conNombreFonasa('STUDY-RX-COLUMNA'),
+  conNombreFonasa('STUDY-TAC-ABDOMEN'),
+  conNombreFonasa('STUDY-RMN-CEREBRO'),
   ['STUDY-DENSITOMETRIA', 'Densitometría ósea'],
 ]);
 
@@ -978,6 +994,36 @@ declararPropiedades('MED-METFORMINA', {
 // `value_json` mal formado a propósito (número, no texto): ver el comentario de arriba.
 declararPropiedades('MED-INSULINA-NPH', { default_frequency: 42 });
 
+/**
+ * La LINAME 2022-2024 (Lista Nacional de Medicamentos Esenciales de Bolivia) en
+ * el vademécum de la receta, como en la API: un concepto por ATC nivel 5, con el
+ * nombre oficial en castellano y sus formas, concentraciones y presentaciones
+ * (`liname.generated.ts`). Los 15 de demostración siguen con sus códigos
+ * `MED-*` —las recetas de ejemplo los usan—; si la LINAME tiene su ATC, toman
+ * de ahí `dose_forms` y `strengths` en vez de duplicarse.
+ */
+const ATC_DE_DEMOSTRACION = new Map(
+  CATALOGO_MEDICAMENTOS.flatMap((p) =>
+    p.medicationCode === null || p.atc[0] === undefined ? [] : [[p.atc[0], p.medicationCode] as const],
+  ),
+);
+const propiedadesLiname = (m: MedicamentoLiname) => ({
+  dose_forms: m.doseForms,
+  strengths: m.strengths,
+  liname_presentations: m.presentations,
+});
+for (const m of MEDICAMENTOS_LINAME) {
+  const demostracion = ATC_DE_DEMOSTRACION.get(m.atc);
+  if (demostracion !== undefined) declararPropiedades(demostracion, propiedadesLiname(m));
+}
+export const MEDICAMENTO_LINAME = definir(
+  'VS_MEDICATION',
+  MEDICAMENTOS_LINAME.filter((m) => !ATC_DE_DEMOSTRACION.has(m.atc)).map((m) => [m.atc, m.name] as const),
+);
+for (const m of MEDICAMENTOS_LINAME) {
+  if (!ATC_DE_DEMOSTRACION.has(m.atc)) declararPropiedades(m.atc, propiedadesLiname(m));
+}
+
 /* ---- organizaciones ------------------------------------------------------ */
 
 conjunto('VS_ORGANIZATION_TYPE', 'Tipos de organización', 'Clínica, hospital, laboratorio…');
@@ -1061,7 +1107,7 @@ export const ESTADO_SOLICITUD = definir('VS_CLAIM_STATUS', [
    códigos que el backend no tiene: la pantalla filtra por el prefijo canónico
    `glossary-category-*` y las descartaba todas, así que la maqueta nunca
    mostró una definición. Ahora lo sirve `fixtures/glosario.ts`, que indexa el
-   catálogo curado del backend — 12 categorías, 15 etiquetas y 69 términos. */
+   catálogo curado del backend — 12 categorías, 16 etiquetas y 69 términos. */
 
 /* ---- Estados de un caso de verificación de identidad ---------------------- *
    Los nueve que `identity_assurance` emite, con el código **tal como llega al
@@ -1089,6 +1135,119 @@ export const ESTADO_DE_CASO = definir('VS_IDENTITY_CASE_STATUS', [
   ['identity_assurance:CASE_REJECTED', 'Case rejected'],
   ['identity_assurance:CASE_REVOKED', 'Case revoked'],
   ['identity_assurance:CASE_EXPIRED', 'Case expired'],
+]);
+
+/* ---- alta pública de laboratorio y centro de imagenología (BR-09) --------
+   Los cuatro catálogos que el alta lee por `dynamic-enums` y resuelve **por
+   código** (`registro-compartido/alta-de-centro-diagnostico.ts`). Los códigos
+   son los que publica la API —`diagnostic_units.concepts.ts`,
+   `CONCEPTS.COUNTRY_BO` y `PROF.JURISDICTION_*`—: con cualquier otro, el alta
+   de la maqueta frenaba en «No pudimos cargar los catálogos del alta» antes de
+   subir un solo PDF. */
+
+conjunto('VS_DIAGNOSTIC_UNIT_TYPE', 'Tipo de unidad diagnóstica', 'Laboratorio clínico o centro de imagenología.');
+export const DIAGNOSTIC_UNIT_TYPE = definir('VS_DIAGNOSTIC_UNIT_TYPE', [
+  ['DU_TYPE_LAB', 'Laboratorio clínico'],
+  ['DU_TYPE_IMAGING', 'Centro de imagenología'],
+]);
+
+conjunto('VS_DIAGNOSTIC_MODALITY', 'Modalidad diagnóstica', 'Las modalidades que un alta puede declarar.');
+export const DIAGNOSTIC_MODALITY = definir('VS_DIAGNOSTIC_MODALITY', [
+  ['DU_MODALITY_LAB', 'Laboratorio'],
+  ['DU_MODALITY_XRAY', 'Rayos X'],
+  ['DU_MODALITY_ULTRASOUND', 'Ecografía'],
+  ['DU_MODALITY_CT', 'Tomografía computarizada'],
+  ['DU_MODALITY_MRI', 'Resonancia magnética'],
+  ['DU_MODALITY_MAMMOGRAPHY', 'Mamografía'],
+  ['DU_MODALITY_BONE_DENSITOMETRY', 'Densitometría ósea'],
+]);
+
+// Hoy sólo Bolivia, igual que `tenant-country` en la API: no es el
+// `VS_COUNTRY` universal, que allá sigue sin miembros.
+conjunto('VS_TENANT_COUNTRY', 'País de la organización', 'País donde está constituida la organización.');
+export const TENANT_COUNTRY = definir('VS_TENANT_COUNTRY', [['BO', 'Bolivia']]);
+
+// El catálogo `jurisdiction` de la API, con sus dos códigos. No reemplaza a
+// `VS_JURISDICTION` (`JUR-*`), que siguen usando las matrículas sembradas de
+// la maqueta: sólo lo lee el alta de centros de diagnóstico.
+conjunto('VS_LICENSE_JURISDICTION', 'Jurisdicción', 'Ámbito territorial de la licencia para operar.');
+export const LICENSE_JURISDICTION = definir('VS_LICENSE_JURISDICTION', [
+  ['JURISDICTION_NATIONAL', 'Nacional'],
+  ['JURISDICTION_SEDES_SANTA_CRUZ', 'SEDES Santa Cruz'],
+]);
+
+/* ---- circuito de especímenes del laboratorio (BR-17, CL-47) --------------
+   Estados, custodia y rechazo con los códigos de `diagnostics.concepts.ts` de
+   la API. */
+
+conjunto('VS_SPECIMEN_STATUS', 'Estado del espécimen', 'Ciclo de vida de un espécimen.');
+export const SPECIMEN_STATUS = definir('VS_SPECIMEN_STATUS', [
+  ['SPEC_COLLECTED', 'Recolectado'],
+  ['SPEC_RECEIVED', 'Recibido en el laboratorio'],
+  ['SPEC_REJECTED', 'Rechazado'],
+]);
+
+conjunto('VS_ACCESSION_STATUS', 'Estado de la acesión', 'Ciclo de vida de una acesión de laboratorio.');
+export const ACCESSION_STATUS = definir('VS_ACCESSION_STATUS', [
+  ['ACC_RECEIVED', 'Recibida'],
+  ['ACC_IN_PROCESS', 'En proceso'],
+  ['ACC_ITEM_RECEIVED', 'Espécimen recibido'],
+  ['ACC_ITEM_REJECTED', 'Espécimen rechazado'],
+]);
+
+conjunto('VS_CUSTODY_EVENT_TYPE', 'Evento de custodia', 'Qué pasó con el espécimen en la cadena de custodia.');
+export const CUSTODY_EVENT_TYPE = definir('VS_CUSTODY_EVENT_TYPE', [
+  ['CUSTODY_RECEPTION', 'Recepción'],
+  ['CUSTODY_TRANSFER', 'Traslado'],
+  ['CONTAINER_EVT_TRANSFER', 'Traslado del contenedor'],
+]);
+
+conjunto('VS_CONTAINER_STATUS', 'Estado del contenedor', 'Dónde está el contenedor del espécimen.');
+export const CONTAINER_STATUS = definir('VS_CONTAINER_STATUS', [
+  ['CONTAINER_ACTIVE', 'En uso'],
+  ['CONTAINER_IN_TRANSIT', 'En tránsito'],
+  ['CONTAINER_STORED', 'Almacenado'],
+]);
+
+conjunto('VS_SPECIMEN_REJECTION_REASON', 'Motivo de rechazo', 'Por qué el laboratorio rechaza un espécimen.');
+export const SPECIMEN_REJECTION_REASON = definir('VS_SPECIMEN_REJECTION_REASON', [
+  ['REJECTION_QUALITY', 'Calidad insuficiente (hemólisis o volumen)'],
+]);
+
+/* El tipo de espécimen y el de contenedor son los catálogos que la API publica
+   por `dynamic-enums` (`specimen-type`, `specimen-container-type`), con sus
+   mismos códigos: HL7 v2-0487 para la muestra y el color de tapa (ISO 6710)
+   para el tubo. El orden es el de la API. */
+
+conjunto('VS_SPECIMEN_TYPE', 'Tipo de espécimen', 'Qué muestra se tomó al paciente.');
+export const SPECIMEN_TYPE = definir('VS_SPECIMEN_TYPE', [
+  ['BLDV', 'Sangre venosa'],
+  ['SER', 'Suero'],
+  ['PLAS', 'Plasma'],
+  ['UR', 'Orina'],
+  ['UR24', 'Orina de 24 horas'],
+  ['BLDA', 'Sangre arterial'],
+  ['BLDC', 'Sangre capilar'],
+  ['STL', 'Heces'],
+  ['CSF', 'Líquido cefalorraquídeo'],
+  ['SPT', 'Esputo'],
+  ['THRT', 'Hisopado de garganta'],
+]);
+
+conjunto('VS_SPECIMEN_CONTAINER_TYPE', 'Tipo de contenedor', 'Tubo o frasco en el que viaja la muestra.');
+export const SPECIMEN_CONTAINER_TYPE = definir('VS_SPECIMEN_CONTAINER_TYPE', [
+  ['TUBE_LAVENDER_EDTA', 'Tubo tapa lila (EDTA)'],
+  ['TUBE_GOLD_SST', 'Tubo tapa amarilla (gel separador)'],
+  ['TUBE_RED_PLAIN', 'Tubo tapa roja'],
+  ['TUBE_LIGHT_BLUE_CITRATE', 'Tubo tapa celeste (citrato)'],
+  ['TUBE_GREEN_HEPARIN', 'Tubo tapa verde (heparina)'],
+  ['TUBE_GRAY_FLUORIDE', 'Tubo tapa gris (fluoruro)'],
+  ['SYRINGE_BLOOD_GAS', 'Jeringa de gasometría'],
+  ['CUP_URINE_STERILE', 'Frasco estéril de orina'],
+  ['JUG_URINE_24H', 'Bidón de orina de 24 horas'],
+  ['CUP_STOOL', 'Frasco para heces'],
+  ['TUBE_STERILE', 'Tubo estéril con tapa a rosca'],
+  ['SWAB_TRANSPORT', 'Hisopo con medio de transporte'],
 ]);
 
 /* ---- Catálogos administrativos de seguros -------------------------------- */

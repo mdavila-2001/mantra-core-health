@@ -5,7 +5,18 @@
        próxima acción tiene que llevar a algún lado: el mismo formulario de
        alta que usa la carpeta con papeles, sin una segunda copia. -->
   <div vsh-empty class="papeles__sin-papeles">
-    @if (vacio(); as sinPapeles) {
+    @if (readOnly()) {
+      <!-- De lectura no hay próxima acción que ofrecer acá: cargar un papel
+           todavía no se guarda en ningún lado. -->
+      @if (vacio(); as noLicenses) {
+        <app-empty-state
+          variant="empty"
+          data-testid="profile-licenses-empty"
+          title="Todavía no hay licencias en la carpeta"
+          [description]="noLicenses.message ?? ''"
+        />
+      }
+    } @else if (vacio(); as sinPapeles) {
       <app-empty-state
         variant="empty"
         title="Todavía no hay papeles en la carpeta"
@@ -30,12 +41,14 @@
   <section class="papeles" aria-labelledby="ficha-papeles-titulo">
     <div class="papeles__encabezado">
       <h2 id="ficha-papeles-titulo" class="papeles__titulo">Carpeta legal</h2>
-      <!-- Nada de esto sale de la API todavía: se dice, no se disimula. -->
-      <app-chip variant="neutral" size="sm">{{ notaDeEjemplo }}</app-chip>
+      <!-- Sobre la maqueta nada de esto sale de la API: se dice, no se disimula. -->
+      @if (!readOnly()) {
+        <app-chip variant="neutral" size="sm">{{ notaDeEjemplo }}</app-chip>
+      }
 
       <!-- Con los seis papeles cargados no hay nada que agregar: el botón no
-           se ofrece en vez de ofrecerse y no hacer nada. -->
-      @if (puedeAgregar()) {
+           se ofrece en vez de ofrecerse y no hacer nada. De lectura, tampoco. -->
+      @if (!readOnly() && puedeAgregar()) {
         <button
           app-button
           variant="secondary"
@@ -51,11 +64,13 @@
 
     <!-- Los dos estados de revisión se declaran provisionales en la propia
          pantalla: quién revisa cada papel y con qué criterio está sin definir. -->
-    <p class="papeles__nota" data-testid="ficha-nota-verificacion">
-      «Pendiente de verificación» y «verificado» son estados provisionales: todavía está por
-      definirse quién revisa cada documento y con qué criterio. El plazo es otra cosa y lo dice
-      el distintivo de al lado.
-    </p>
+    @if (!readOnly()) {
+      <p class="papeles__nota" data-testid="ficha-nota-verificacion">
+        «Pendiente de verificación» y «verificado» son estados provisionales: todavía está por
+        definirse quién revisa cada documento y con qué criterio. El plazo es otra cosa y lo dice
+        el distintivo de al lado.
+      </p>
+    }
 
     <ng-container [ngTemplateOutlet]="formularioDeAlta" />
 
@@ -108,34 +123,36 @@
           <!-- Los seis papeles repiten los mismos dos botones, así que cada uno
                dice de qué documento es: seis «Descargar» seguidos no se
                distinguen escuchándolos de a uno. -->
-          <div class="papeles__acciones">
-            <button
-              app-button
-              variant="ghost"
-              size="sm"
-              type="button"
-              [attr.data-testid]="'ficha-descargar-' + fila.documento.clave"
-              [attr.aria-label]="'Descargar ' + fila.documento.nombre"
-              (clicked)="avisarDescarga(fila)"
-            >
-              Descargar
-            </button>
-            <button
-              app-button
-              variant="secondary"
-              size="sm"
-              type="button"
-              [attr.data-testid]="'ficha-reemplazar-' + fila.documento.clave"
-              [attr.aria-label]="
-                (filaEnReemplazo() === fila.documento.clave
-                  ? 'Cancelar el reemplazo de '
-                  : 'Reemplazar ') + fila.documento.nombre
-              "
-              (clicked)="alternarReemplazo(fila.documento.clave)"
-            >
-              {{ filaEnReemplazo() === fila.documento.clave ? 'Cancelar' : 'Reemplazar' }}
-            </button>
-          </div>
+          @if (!readOnly()) {
+            <div class="papeles__acciones">
+              <button
+                app-button
+                variant="ghost"
+                size="sm"
+                type="button"
+                [attr.data-testid]="'ficha-descargar-' + fila.documento.clave"
+                [attr.aria-label]="'Descargar ' + fila.documento.nombre"
+                (clicked)="avisarDescarga(fila)"
+              >
+                Descargar
+              </button>
+              <button
+                app-button
+                variant="secondary"
+                size="sm"
+                type="button"
+                [attr.data-testid]="'ficha-reemplazar-' + fila.documento.clave"
+                [attr.aria-label]="
+                  (filaEnReemplazo() === fila.documento.clave
+                    ? 'Cancelar el reemplazo de '
+                    : 'Reemplazar ') + fila.documento.nombre
+                "
+                (clicked)="alternarReemplazo(fila.documento.clave)"
+              >
+                {{ filaEnReemplazo() === fila.documento.clave ? 'Cancelar' : 'Reemplazar' }}
+              </button>
+            </div>
+          }
 
           @if (filaEnReemplazo() === fila.documento.clave) {
             <app-form-field

@@ -1,0 +1,114 @@
+<app-content-dialog
+  [heading]="titulo()"
+  description="Una cuenta recibe (debe) y otra entrega (haber), por el mismo monto."
+  size="md"
+  [dismissible]="!guardando()"
+  data-testid="transaccion-dialog"
+  (closed)="closed.emit()"
+>
+  @if (error(); as mensaje) {
+    <app-alert appAnuncio tone="error">{{ mensaje }}</app-alert>
+  }
+  <app-paginated-form
+    [form]="form"
+    [paginas]="transactionPages"
+    label="Transacción contable"
+    submitLabel="Guardar"
+    submitTestId="transaccion-guardar"
+    cancelLabel="Cancelar"
+    [pending]="guardando()"
+    (cancelado)="dialog().close()"
+    (enviado)="guardar()"
+  >
+    <ng-template appCampoPersonalizado="description">
+<app-form-field
+      label="Descripción"
+      [required]="true"
+      [errorMessage]="
+        form.controls.description.touched && form.controls.description.invalid
+          ? 'Escribí una descripción de hasta 160 caracteres.'
+          : ''
+      "
+    >
+      <app-input
+        [formControl]="form.controls.description"
+        autocomplete="off"
+        placeholder="Depósito de la caja al banco"
+        testId="transaccion-descripcion"
+      />
+    </app-form-field>
+    </ng-template>
+    <ng-template appCampoPersonalizado="debitAccountId">
+<app-form-field
+        label="Debe"
+        hint="La cuenta que recibe."
+        [required]="true"
+        [errorMessage]="
+          form.controls.debitAccountId.touched && form.controls.debitAccountId.invalid
+            ? 'Elegí la cuenta del debe.'
+            : ''
+        "
+      >
+        <app-select
+          [formControl]="form.controls.debitAccountId"
+          [options]="opciones()"
+          placeholder="Elegí la cuenta"
+          ariaLabel="Cuenta del debe"
+          data-testid="transaccion-debe"
+        />
+      </app-form-field>
+    </ng-template>
+    <ng-template appCampoPersonalizado="creditAccountId">
+<app-form-field
+        label="Haber"
+        hint="La cuenta que entrega."
+        [required]="true"
+        [errorMessage]="
+          form.controls.creditAccountId.touched && form.controls.creditAccountId.invalid
+            ? 'Elegí la cuenta del haber.'
+            : mismaCuenta()
+              ? 'El debe y el haber tienen que ser cuentas distintas.'
+              : ''
+        "
+      >
+        <app-select
+          [formControl]="form.controls.creditAccountId"
+          [options]="opciones()"
+          placeholder="Elegí la cuenta"
+          ariaLabel="Cuenta del haber"
+          data-testid="transaccion-haber"
+        />
+      </app-form-field>
+    </ng-template>
+    <ng-template appCampoPersonalizado="date">
+<app-form-field
+        label="Fecha"
+        [required]="true"
+        [errorMessage]="fechaTocada() && fecha() === null ? 'Elegí la fecha.' : ''"
+      >
+        <app-date-picker
+          [value]="fecha()"
+          (valueChange)="fecha.set($event)"
+          data-testid="transaccion-fecha"
+        />
+      </app-form-field>
+    </ng-template>
+    <ng-template appCampoPersonalizado="amount">
+<app-form-field
+        label="Monto"
+        [required]="true"
+        hint="En bolivianos."
+        [errorMessage]="
+          montoInvalido() ? 'Escribí un monto mayor a cero, con hasta dos decimales.' : ''
+        "
+      >
+        <app-input
+          [formControl]="form.controls.amount"
+          inputMode="decimal"
+          placeholder="1250,00"
+          testId="transaccion-monto"
+        />
+      </app-form-field>
+    </ng-template>
+  </app-paginated-form>
+</app-content-dialog>

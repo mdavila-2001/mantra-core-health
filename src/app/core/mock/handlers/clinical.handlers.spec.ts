@@ -3,10 +3,9 @@ import { HttpHeaders } from '@angular/common/http';
 import type { ClinicalNoteVersionRef } from '../../data-access/chart-notes/chart-notes.types';
 import { condiciones, notas, NOTA_TIPO_EVOLUCION, type CondicionSimulada, type NotaSimulada } from '../fixtures/clinica';
 import { ESTADO, ESTUDIO, VERIFICACION_DX } from '../fixtures/conceptos';
-import { PACIENTE } from '../fixtures/personas';
+import { PACIENTE, PACIENTES } from '../fixtures/personas';
 import { MockRouter, type MockMethod, type MockReply } from '../mock-router';
 import { buscarUsuario, type MockUser } from '../mock-session';
-import { Coleccion } from '../mock-store';
 import { registrarClinica } from './clinical.handlers';
 import { registrarDiagnostico } from './diagnostics.handlers';
 import { registerMedicalNotes } from './medical-notes.handlers';
@@ -167,7 +166,7 @@ describe('POST /clinical/medication-requests · sólo diagnóstico confirmado o 
       codeConceptId: 'concept-faringitis',
       categoryConceptId: 'cat-dx',
       clinicalStatusConceptId: 'active',
-      verificationStatusConceptId: VERIFICACION_DX['DXV-CONFIRMED']!,
+      verificationStatusConceptId: VERIFICACION_DX['COND_CONFIRMED']!,
       severityConceptId: 'sev-mild',
       onsetAt: '2026-01-01T00:00:00.000Z',
       noteText: '',
@@ -186,7 +185,7 @@ describe('POST /clinical/medication-requests · sólo diagnóstico confirmado o 
   });
 
   it('indicationConditionId de un diagnóstico presuntivo/provisional: 400', () => {
-    const presuntivo = condicion({ verificationStatusConceptId: VERIFICACION_DX['DXV-PROVISIONAL']! });
+    const presuntivo = condicion({ verificationStatusConceptId: VERIFICACION_DX['COND_PROVISIONAL']! });
     condiciones.agregar(presuntivo);
 
     const respuesta = call<MockReply>('POST', '/clinical/medication-requests', {
@@ -251,6 +250,7 @@ describe('POST /clinical/medication-requests · sólo diagnóstico confirmado o 
 });
 
 describe('/charts/notes · contrato tras mudar el handler', () => {
+  const patientWithIndependentAccess = PACIENTES[1]!;
   const router = new MockRouter();
   const doctor = buscarUsuario('medica')!;
 
@@ -277,15 +277,15 @@ describe('/charts/notes · contrato tras mudar el handler', () => {
     return call<{ status: number; body: ClinicalNoteVersionRef }>('POST', '/charts/notes', body);
   }
 
-  it('las cinco rutas pertenecen a notas; clínica deja de registrar notas y órdenes', () => {
+  it('las cuatro rutas pertenecen a notas; clínica deja de registrar notas y órdenes', () => {
     const notesRouter = new MockRouter();
     registerMedicalNotes(notesRouter);
-    // C1 sumó la lista y la firma a las tres de C0.
+    // C1 sumó la lista y la firma a las dos de C0. El `POST …/versions` legado se
+    // retiró (Hito 3): la API sólo publica `PUT` para agregar una versión.
     expect(notesRouter.rutas()).toEqual([
       { method: 'GET', pattern: '/charts/notes' },
       { method: 'POST', pattern: '/charts/notes' },
       { method: 'PUT', pattern: '/charts/notes/:id/versions' },
-      { method: 'POST', pattern: '/charts/notes/:id/versions' },
       { method: 'POST', pattern: '/charts/notes/:id/versions/:versionId/sign' },
     ]);
 
@@ -297,7 +297,7 @@ describe('/charts/notes · contrato tras mudar el handler', () => {
 
   it('conserva el 201, los campos de la nota, la lectura del expediente y la persistencia', () => {
     const input = {
-      patientProfileId: PACIENTE.id,
+      patientProfileId: patientWithIndependentAccess.id,
       authorProfileId: doctor.practitionerProfileId!,
       encounterId: 'c0-note-contract-encounter',
       noteTypeConceptId: 'c0-note-type',
@@ -320,7 +320,7 @@ describe('/charts/notes · contrato tras mudar el handler', () => {
     });
     const { patientProfileId: _patientId, ...chartInput } = input;
     const chart = call<{ notes: readonly Omit<NotaSimulada, 'patientProfileId' | 'id'>[] }>(
-      'GET', `/charts/patients/${PACIENTE.id}/chart`, null,
+      'GET', `/charts/patients/${patientWithIndependentAccess.id}/chart`, null,
     );
     expect(chart.notes.find((note) => note.noteId === response.body.noteId)).toMatchObject({
       ...chartInput,
@@ -329,7 +329,7 @@ describe('/charts/notes · contrato tras mudar el handler', () => {
       signedAt: null,
       releasedToPatient: false,
     });
-    const restored = new Coleccion<NotaSimulada>([], 'mock.clinica.notas-medicas');
+    const restored = notas;
     expect(restored.get(response.body.noteId)).toMatchObject(input);
   });
 
@@ -413,7 +413,8 @@ describe('/charts/notes · contrato tras mudar el handler', () => {
     expect(enmendada.status).toBe(201);
   });
 
-  for (const method of ['PUT', 'POST'] as const) {
+  // La API sólo publica `PUT` para agregar una versión; el `POST` legado se retiró (Hito 3).
+  for (const method of ['PUT'] as const) {
     it(`${method} agrega una versión, conserva la nota y persiste el cambio`, () => {
       const initial = createNote({ patientProfileId: PACIENTE.id, subjectiveText: 'Texto inicial sintético' });
       const response = call<{ status: number; body: ClinicalNoteVersionRef }>(
@@ -428,7 +429,7 @@ describe('/charts/notes · contrato tras mudar el handler', () => {
         },
       });
       expect(response.body.versionId).not.toBe(initial.body.versionId);
-      const restored = new Coleccion<NotaSimulada>([], 'mock.clinica.notas-medicas');
+      const restored = notas;
       expect(restored.get(initial.body.noteId)).toMatchObject({
         noteId: initial.body.noteId,
         patientProfileId: PACIENTE.id,

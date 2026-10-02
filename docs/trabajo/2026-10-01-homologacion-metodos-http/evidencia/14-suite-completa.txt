@@ -1,0 +1,5 @@
+$ yarn test --watch=false
+ Test Files  709 passed (709)
+      Tests  9514 passed (9514)
+   Duration  240.51s (transform 77.99s, setup 22.80s, import 117.70s, tests 780.13s, environment 2649.76s)
+(el código de salida de yarn no se capturó en esta corrida: el resumen de vitest informa 709 de 709 archivos y 9514 de 9514 pruebas aprobados, sin fallos)

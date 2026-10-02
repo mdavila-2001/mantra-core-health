@@ -179,6 +179,39 @@ export interface Environment {
   readonly campaignsDemo: boolean;
 
   /**
+   * Enciende la facturación SIMULADA (FACT-SIAT-MOCK): el motor fiscal del
+   * backend simulado que imita el flujo del SIAT —CUIS, CUFD, CUF, XML del
+   * documento sector, recepción con respuestas 908/904/902— sin hablar con el
+   * SIN ni con ninguna red.
+   *
+   * Mismo carácter que `loyaltyDemo`: **no decide si la pantalla existe**,
+   * decide si hay algo simulado que mostrar. Apagada, las rutas
+   * `/billing/simulated/*` no responden y la pantalla dice la verdad: que la
+   * facturación todavía no está conectada. Nada de lo que produce tiene
+   * validez fiscal, y cada objeto lo declara (`simulated: true`).
+   */
+  readonly billingSiatDemo: boolean;
+
+  /**
+   * Registra las pantallas portadas de la bóveda que pintan **datos de
+   * ejemplo** (`features/alovida/`: filas escritas a mano, una identidad de
+   * mentira en el marco, botones que no llaman a nadie).
+   *
+   * Encendido, las 126 rutas del archivo generado `alovida.routes.ts` existen
+   * tal cual: es la rama `mockup`, donde la maqueta es el entregable. Apagado,
+   * **no se registran**: las que ya tienen una pantalla real equivalente
+   * redirigen a ella y el resto cae en el comodín —404, como cualquier
+   * dirección inventada—. Nadie puede llegar por enlace, historial o URL
+   * escrita a mano a una pantalla con datos falsos presentados como propios.
+   * El detalle vive en `features/alovida/design-mockup-gate.ts`.
+   *
+   * Mismo carácter que `campaignsDemo`: interruptor de despliegue
+   * (`PUBLIC_DESIGN_MOCKUPS`), fijado en `false` en las configuraciones que
+   * hablan con la API real.
+   */
+  readonly designMockups: boolean;
+
+  /**
    * El refresh token viaja en una cookie `httpOnly` que pone y lee la API, y no
    * en el cuerpo de las respuestas ni en `localStorage` (TX-10, decisión D-I).
    *
@@ -214,6 +247,8 @@ export interface EnvironmentOverrides {
   readonly paymentDemo?: boolean;
   readonly loyaltyDemo?: boolean;
   readonly campaignsDemo?: boolean;
+  readonly billingSiatDemo?: boolean;
+  readonly designMockups?: boolean;
   readonly refreshCookie?: boolean;
   readonly mockBackend?: boolean;
 }

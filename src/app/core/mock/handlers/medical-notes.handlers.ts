@@ -230,8 +230,9 @@ export function registerMedicalNotes(router: MockRouter): void {
 
   /* ---- agregarle una versión ------------------------------------------------ */
 
-  // `ChartNotesClient.appendVersion` hace `PUT` (UC-15-02); se acepta también
-  // `POST` por si alguna pantalla vieja lo usa.
+  // `ChartNotesClient.appendVersion` hace `PUT` (UC-15-02), el único verbo que
+  // publica la API. El `POST` que se aceptaba «por si alguna pantalla vieja lo
+  // usa» se retiró (Hito 3): ninguna pantalla lo llamaba.
   const agregarVersion = (request: MockRequest) => {
     const n = notas.get(request.params['id']!);
     if (n === undefined) return notFound('Nota no encontrada');
@@ -273,7 +274,6 @@ export function registerMedicalNotes(router: MockRouter): void {
     };
   };
   router.put('/charts/notes/:id/versions', agregarVersion);
-  router.post('/charts/notes/:id/versions', agregarVersion);
 
   /* ---- firmar --------------------------------------------------------------- */
 

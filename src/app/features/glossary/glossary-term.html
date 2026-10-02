@@ -7,7 +7,10 @@
 
   <app-view-state-host [state]="termino()" (retry)="recargar()">
     @if (ficha(); as termino) {
-      <app-card variant="outlined" padding="lg">
+      <!-- UNA tarjeta, a lo ancho y centrada, con pestañas (composition-rules
+           §5): arriba lo que identifica al término —foto, categoría, qué es—
+           y abajo, en pestañas, lo que se consulta por partes. -->
+      <app-card variant="outlined" padding="lg" class="termino__tarjeta">
         @if (termino.translated === false) {
           <p class="termino__sin-traducir" role="status">
             Este término todavía no tiene traducción al castellano cargada. Se muestra su nombre
@@ -15,141 +18,375 @@
           </p>
         }
 
-        <!-- Categoría y etiquetas: la categoría es navegable —vuelve a la
-             grilla filtrada—, las etiquetas son informativas. La búsqueda por
-             etiqueta ya no es una puerta de entrada del glosario (ver
-             `glossary.ts`), así que acá no llevan enlace. -->
-        <div class="termino__clasificacion">
-          @if (termino.category; as categoria) {
-            <a
-              class="termino__categoria"
-              [routerLink]="['/glossary']"
-              [queryParams]="{ category: categoria.internalCode }"
-            >
-              <app-glossary-category-icon [category]="categoria.internalCode" />
-              {{ categoria.name }}
-            </a>
+        <div class="termino__cabecera" [class.termino__cabecera--con-foto]="!!termino.image">
+          <!-- Imagen médica con su atribución y licencia SIEMPRE visibles
+               —nunca sin crédito—. La miniatura abre la imagen entera en un
+               modal. Sin imagen, el ícono de la categoría hace de marcador:
+               ninguna foto de stock la reemplaza. -->
+          @if (termino.image; as imagen) {
+            <figure class="termino__imagen">
+              <button
+                type="button"
+                class="termino__imagen-boton"
+                (click)="ampliada.set(true)"
+                [attr.aria-label]="'Ampliar la imagen: ' + imagen.alt"
+              >
+                <img
+                  [src]="imagen.thumbnailSource ?? imagen.source"
+                  [alt]="imagen.alt"
+                  loading="lazy"
+                  decoding="async"
+                />
+                <span class="termino__imagen-ampliar" aria-hidden="true">Ampliar</span>
+              </button>
+              <figcaption class="termino__imagen-atribucion">
+                {{ imagen.attribution }} — licencia {{ imagen.license }}
+                @if (imagen.sourcePage; as pagina) {
+                  ·
+                  <a [href]="pagina" target="_blank" rel="noopener noreferrer">ver en la fuente</a>
+                }
+              </figcaption>
+            </figure>
+
+            @if (ampliada()) {
+              <app-content-dialog
+                [heading]="termino.display"
+                size="xl"
+                closeLabel="Cerrar"
+                (closed)="ampliada.set(false)"
+              >
+                <figure class="termino__ampliada">
+                  <img [src]="imagen.source" [alt]="imagen.alt" />
+                  <figcaption class="termino__imagen-atribucion">
+                    {{ imagen.attribution }} — licencia {{ imagen.license }}
+                    @if (imagen.sourcePage; as pagina) {
+                      ·
+                      <a [href]="pagina" target="_blank" rel="noopener noreferrer"
+                        >ver en la fuente</a
+                      >
+                    }
+                  </figcaption>
+                </figure>
+              </app-content-dialog>
+            }
+          } @else {
+            <div class="termino__imagen-marcador" aria-hidden="true">
+              <app-glossary-category-icon [category]="termino.category?.internalCode ?? ''" />
+            </div>
           }
 
-          @if (termino.tags.length > 0) {
-            <ul class="termino__chips" aria-label="Etiquetas clínicas de este término">
-              @for (etiqueta of termino.tags; track etiqueta.valueSetId) {
-                <li>
-                  <app-chip size="sm" [label]="etiqueta.name">{{ etiqueta.name }}</app-chip>
-                </li>
+          <div class="termino__intro">
+            <!-- La categoría es navegable —vuelve a la rejilla filtrada—, las
+                 etiquetas son informativas. -->
+            <div class="termino__clasificacion">
+              @if (termino.category; as categoria) {
+                <a
+                  class="termino__categoria"
+                  [routerLink]="['/glossary']"
+                  [queryParams]="{ category: categoria.internalCode }"
+                >
+                  <app-glossary-category-icon [category]="categoria.internalCode" />
+                  {{ categoria.name }}
+                </a>
               }
-            </ul>
-          }
+
+              @if (termino.tags.length > 0) {
+                <ul class="termino__chips" aria-label="Etiquetas clínicas de este término">
+                  @for (etiqueta of termino.tags; track etiqueta.valueSetId) {
+                    <li>
+                      <app-chip size="sm" [label]="etiqueta.name">{{ etiqueta.name }}</app-chip>
+                    </li>
+                  }
+                </ul>
+              }
+            </div>
+
+            <h2 class="termino__subtitulo">Explicado simple</h2>
+            @if (resumen() !== '') {
+              <p class="termino__definicion">{{ resumen() }}</p>
+              @if (termino.plainSummary?.translated === false) {
+                <p class="termino__sin-traducir-parcial">
+                  Explicación en su idioma original: todavía no tiene traducción al castellano
+                  cargada.
+                </p>
+              }
+            } @else {
+              <p class="termino__definicion termino__definicion--ausente">
+                Todavía no hay una explicación en palabras simples cargada para este término.
+              </p>
+            }
+          </div>
         </div>
 
-        <!-- Imagen médica, si la tiene, con su fuente y licencia visibles —
-             nunca sin atribución. Ningún término la trae hoy: el backend no
-             siembra imágenes sin una política de licencias verificada, así que
-             el ícono de la categoría hace de marcador visual permanente y no
-             de relleno temporal. -->
-        @if (termino.image; as imagen) {
-          <figure class="termino__imagen">
-            <img [src]="imagen.source" [alt]="imagen.alt" />
-            <figcaption class="termino__imagen-atribucion">
-              {{ imagen.attribution }} — licencia {{ imagen.license }}
-            </figcaption>
-          </figure>
-        } @else {
-          <div class="termino__imagen-marcador" aria-hidden="true">
-            <app-glossary-category-icon [category]="termino.category?.internalCode ?? ''" />
-          </div>
-        }
+        <app-tabs class="termino__pestanas" [(selectedIndex)]="pestana">
+          <app-tab label="Definición">
+            <h2 class="termino__subtitulo">Qué significa</h2>
+            @if (definicion() !== '') {
+              <p class="termino__definicion termino__verbatim">{{ definicion() }}</p>
+              @if (esDescripcionDeWikidata()) {
+                <p class="termino__sin-traducir-parcial">
+                  Descripción breve de la comunidad de Wikidata (CC0): no es una definición clínica
+                  revisada.
+                </p>
+              }
+              @if (fuenteDeDefinicion(); as origen) {
+                <p class="termino__medicamento-fuente" data-testid="termino-fuente-definicion">
+                  Fuente de la definición:
+                  @if (origen.url; as url) {
+                    <a [href]="url" target="_blank" rel="noopener noreferrer">{{ origen.nombre }}</a>
+                  } @else {
+                    {{ origen.nombre }}
+                  }
+                  @if (origen.consultado; as fecha) {
+                    · consultado el {{ fechaLegible(fecha) }}
+                  }
+                </p>
+              }
+              @if (termino.clinicalDefinition?.translated === false) {
+                <p class="termino__sin-traducir-parcial">
+                  Definición en su idioma original: todavía no tiene traducción al castellano
+                  cargada.
+                </p>
+              }
+            } @else {
+              <!-- Nunca un párrafo inventado: se dice que falta y por qué. -->
+              <p
+                class="termino__definicion termino__definicion--ausente"
+                data-testid="termino-sin-definicion"
+              >
+                {{ motivoSinDefinicion() }}
+              </p>
+            }
 
-        <h2 class="termino__subtitulo">Qué significa</h2>
-        <p class="termino__definicion">{{ termino.clinicalDefinition.text }}</p>
-        @if (termino.clinicalDefinition.translated === false) {
-          <p class="termino__sin-traducir-parcial">
-            Definición en su idioma original: todavía no tiene traducción al castellano cargada.
-          </p>
-        }
+            @for (seccion of seccionesDeLaFuente(); track $index) {
+              <section class="termino__seccion">
+                <h2 class="termino__subtitulo">{{ seccion.titulo }}</h2>
+                <p class="termino__verbatim">{{ seccion.texto }}</p>
+              </section>
+            }
 
-        <h2 class="termino__subtitulo">Explicado simple</h2>
-        <p class="termino__definicion">{{ termino.plainSummary.text }}</p>
-        @if (termino.plainSummary.translated === false) {
-          <p class="termino__sin-traducir-parcial">
-            Explicación en su idioma original: todavía no tiene traducción al castellano cargada.
-          </p>
-        }
-
-        @if (termino.synonyms.length > 0) {
-          <h2 class="termino__subtitulo">También se le dice</h2>
-          <ul class="termino__sinonimos">
-            @for (sinonimo of termino.synonyms; track sinonimo.value) {
-              <li>
-                {{ sinonimo.value }}
-                @if (sinonimo.language) {
-                  <span class="termino__idioma">({{ sinonimo.language }})</span>
+            @if (termino.synonyms.length > 0) {
+              <h2 class="termino__subtitulo">También se le dice</h2>
+              <ul class="termino__sinonimos">
+                @for (sinonimo of termino.synonyms; track sinonimo.value) {
+                  <li>
+                    {{ sinonimo.value }}
+                    @if (sinonimo.language) {
+                      <span class="termino__idioma">({{ sinonimo.language }})</span>
+                    }
+                  </li>
                 }
-              </li>
+              </ul>
             }
-          </ul>
-        }
+          </app-tab>
 
-        <!-- Ficha de medicamento (TAREA-25, «lo más importante» según el
-             propietario). Se omite entero si no hay ningún dato — hoy es el
-             caso de los 64 términos curados, porque la base no tiene filas
-             del catálogo NDC. Posología, dosis y contraindicaciones NO
-             aparecen acá a propósito: sin fuente importada y con procedencia
-             declarada, un campo ausente es correcto y uno inventado es un
-             daño clínico (regla 00 §7/§8). -->
-        @if (medicamento(); as ficha) {
-          <h2 class="termino__subtitulo">Medicamento</h2>
-          @if (ficha.activeIngredients.length > 0) {
-            <p class="termino__medicamento-campo">
-              <strong>Principios activos:</strong> {{ ficha.activeIngredients.join(', ') }}
-            </p>
-          }
-          @if (ficha.dosageForm) {
-            <p class="termino__medicamento-campo">
-              <strong>Forma farmacéutica:</strong> {{ ficha.dosageForm }}
-            </p>
-          }
-          @if (ficha.route.length > 0) {
-            <p class="termino__medicamento-campo">
-              <strong>Vía:</strong> {{ ficha.route.join(', ') }}
-            </p>
-          }
-          @if (ficha.manufacturer) {
-            <p class="termino__medicamento-campo">
-              <strong>Fabricante:</strong> {{ ficha.manufacturer }}
-              <!-- AC-25-5: texto de la fuente externa, nunca un perfil de la
-                   plataforma — acá no hay dónde enlazarlo a uno. -->
-            </p>
-          }
-          <p class="termino__medicamento-fuente">
-            Fuente: FDA National Drug Code (NDC) Directory, openFDA (dominio público, EE. UU.).
-          </p>
-        }
+          @if (cima(); as ficha) {
+            <!-- Ficha técnica de CIMA (AEMPS). Las secciones se muestran
+                 VERBATIM y siempre con su cita: número de registro y fecha de
+                 consulta. Sin número de registro, `cimaFactsFrom` devuelve
+                 `null` y nada de esto se dibuja. -->
+            <app-tab label="Medicamento">
+              @if (ficha.photos.length > 0) {
+                <ul class="termino__fotos" aria-label="Fotos del medicamento publicadas por CIMA">
+                  @for (foto of ficha.photos; track foto.url) {
+                    <li>
+                      <figure class="termino__foto">
+                        <a [href]="foto.url" target="_blank" rel="noopener noreferrer">
+                          <img
+                            [src]="foto.thumbUrl"
+                            [alt]="foto.caption + ' de ' + (foto.productName ?? termino.display)"
+                            loading="lazy"
+                            decoding="async"
+                          />
+                        </a>
+                        <figcaption>
+                          {{ foto.caption }}
+                          @if (foto.productName; as producto) {
+                            · {{ producto }}
+                          }
+                          · Foto: CIMA (AEMPS)
+                        </figcaption>
+                      </figure>
+                    </li>
+                  }
+                </ul>
+              }
 
-        <!-- Relaciones clínicas tipadas, agrupadas por tipo. Cada una enlaza a
-             la ficha del término relacionado por su propio conceptId: es la
-             misma pantalla, así que seguir la relación es sólo navegar. -->
-        @for (grupo of gruposDeRelaciones(); track grupo.label) {
-          <h2 class="termino__subtitulo">{{ grupo.label }}</h2>
-          <ul class="termino__relaciones">
-            @for (relacion of grupo.relaciones; track relacion.conceptId) {
-              <li>
-                <a [routerLink]="['/glossary', relacion.conceptId]">{{ relacion.display }}</a>
-              </li>
+              <dl class="termino__datos">
+                @if (ficha.activeIngredients.length > 0) {
+                  <div>
+                    <dt>Principios activos</dt>
+                    <dd>{{ ficha.activeIngredients.join(', ') }}</dd>
+                  </div>
+                }
+                @if (ficha.dosageForms.length > 0) {
+                  <div>
+                    <dt>Forma farmacéutica</dt>
+                    <dd>{{ ficha.dosageForms.join(', ') }}</dd>
+                  </div>
+                }
+                @if (ficha.routes.length > 0) {
+                  <div>
+                    <dt>Vía de administración</dt>
+                    <dd>{{ ficha.routes.join(', ') }}</dd>
+                  </div>
+                }
+                @if (ficha.atc.length > 0) {
+                  <div>
+                    <dt>Código ATC</dt>
+                    <dd>
+                      @for (atc of ficha.atc; track atc.code; let ultimo = $last) {
+                        <code class="tabular-nums">{{ atc.code }}</code>
+                        @if (atc.name) {
+                          {{ atc.name }}
+                        }
+                        @if (!ultimo) {
+                          ·
+                        }
+                      }
+                    </dd>
+                  </div>
+                }
+              </dl>
+
+              @if (ficha.products.length > 0) {
+                <h2 class="termino__subtitulo">
+                  Medicamentos autorizados y presentaciones ({{ ficha.products.length }})
+                </h2>
+                <ul class="termino__productos">
+                  @for (producto of ficha.products; track $index) {
+                    <li>
+                      <p class="termino__producto">
+                        @if (producto.url; as url) {
+                          <a [href]="url" target="_blank" rel="noopener noreferrer">{{
+                            producto.name
+                          }}</a>
+                        } @else {
+                          {{ producto.name }}
+                        }
+                        @if (producto.holder; as titular) {
+                          <span class="termino__idioma">&nbsp;· {{ titular }}</span>
+                        }
+                        @if (producto.registrationNumber; as nregistro) {
+                          <span class="termino__idioma">&nbsp;· nº reg. {{ nregistro }}</span>
+                        }
+                      </p>
+                      @if (producto.presentations.length > 0) {
+                        <ul class="termino__presentaciones">
+                          @for (presentacion of producto.presentations; track $index) {
+                            <li>
+                              {{ presentacion.name }}
+                              @if (presentacion.nationalCode; as cn) {
+                                <span class="termino__idioma">(CN {{ cn }})</span>
+                              }
+                            </li>
+                          }
+                        </ul>
+                      }
+                    </li>
+                  }
+                </ul>
+              }
+
+              @if (ficha.sections.length > 0) {
+                <!-- Las secciones son la ficha técnica de UN medicamento concreto
+                     (el de referencia), no del principio activo en abstracto:
+                     se dice cuál antes de citarlas. -->
+                <p class="termino__referencia">{{ referenciaCima(ficha) }}</p>
+              }
+
+              @for (seccion of ficha.sections; track seccion.number) {
+                <section class="termino__seccion">
+                  <h2 class="termino__subtitulo">{{ seccion.number }}. {{ seccion.title }}</h2>
+                  <p class="termino__verbatim">{{ seccion.text }}</p>
+                </section>
+              }
+
+              <p class="termino__medicamento-fuente" data-testid="termino-cita-cima">
+                {{ citaCima(ficha) }}
+                @if (ficha.sourceUrl; as url) {
+                  <a [href]="url" target="_blank" rel="noopener noreferrer">Ver la ficha técnica</a>
+                }
+              </p>
+            </app-tab>
+          } @else if (medicamento(); as ficha) {
+            <!-- Ficha del NDC (término curado de farmacología). Posología, dosis
+                 y contraindicaciones NO aparecen acá: el NDC no las publica y
+                 no se infieren (regla 00 §7/§8). -->
+            <app-tab label="Medicamento">
+              @if (ficha.activeIngredients.length > 0) {
+                <p class="termino__medicamento-campo">
+                  <strong>Principios activos:</strong> {{ ficha.activeIngredients.join(', ') }}
+                </p>
+              }
+              @if (ficha.dosageForm) {
+                <p class="termino__medicamento-campo">
+                  <strong>Forma farmacéutica:</strong> {{ ficha.dosageForm }}
+                </p>
+              }
+              @if (ficha.route.length > 0) {
+                <p class="termino__medicamento-campo">
+                  <strong>Vía:</strong> {{ ficha.route.join(', ') }}
+                </p>
+              }
+              @if (ficha.manufacturer) {
+                <p class="termino__medicamento-campo">
+                  <strong>Fabricante:</strong> {{ ficha.manufacturer }}
+                </p>
+              }
+              <p class="termino__medicamento-fuente">
+                Fuente: FDA National Drug Code (NDC) Directory, openFDA (dominio público, EE. UU.).
+              </p>
+            </app-tab>
+          }
+
+          @if (gruposDeRelaciones().length > 0) {
+            <app-tab label="Relacionados">
+              @for (grupo of gruposDeRelaciones(); track grupo.label) {
+                <h2 class="termino__subtitulo">{{ grupo.label }}</h2>
+                <ul class="termino__relaciones">
+                  @for (relacion of grupo.relaciones; track relacion.conceptId) {
+                    <li>
+                      <a [routerLink]="['/glossary', relacion.conceptId]">{{ relacion.display }}</a>
+                    </li>
+                  }
+                </ul>
+              }
+            </app-tab>
+          }
+
+          <app-tab label="Fuente y código">
+            <h2 class="termino__subtitulo">Fuente</h2>
+            @if (fuente(); as origen) {
+              <p class="termino__fuente" data-testid="termino-fuente">
+                {{ origen.nombre }}
+                @if (origen.consultado; as fecha) {
+                  · consultado el {{ fechaLegible(fecha) }}
+                }
+                @if (origen.url; as url) {
+                  ·
+                  <a [href]="url" target="_blank" rel="noopener noreferrer">ir a la fuente</a>
+                }
+              </p>
+              @if (origen.licencia; as licencia) {
+                <p class="termino__medicamento-fuente">Condición de uso: {{ licencia }}</p>
+              }
+            } @else {
+              <p class="termino__definicion termino__definicion--ausente">
+                Este término no declara su fuente.
+              </p>
             }
-          </ul>
-        }
 
-        <!-- El código se muestra sólo cuando sirve afuera: `I10` identifica el
-             término en CIE-10 y con él se lo busca en la literatura. La clave
-             interna de un concepto de la plataforma, no — es configuración, del
-             mismo orden que el `conceptId`, que esta pantalla tampoco muestra. -->
-        @if (codigoPublicable(); as codigo) {
-          <h2 class="termino__subtitulo">Código</h2>
-          <p class="termino__codigo">
-            <code class="tabular-nums">{{ codigo }}</code>
-          </p>
-        }
+            <!-- El código se muestra sólo cuando sirve afuera: `I10` identifica
+                 el término en CIE-10. La clave interna de la plataforma, no. -->
+            @if (codigoPublicable(); as codigo) {
+              <h2 class="termino__subtitulo">Código</h2>
+              <p class="termino__codigo">
+                <code class="tabular-nums">{{ codigo }}</code>
+              </p>
+            }
+          </app-tab>
+        </app-tabs>
       </app-card>
     }
   </app-view-state-host>

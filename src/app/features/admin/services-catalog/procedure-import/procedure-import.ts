@@ -301,6 +301,11 @@ export class ProcedureImport {
         // después de dónde salió este servicio y no volver a importarlo.
         code: item.code,
         name: item.display,
+        // El concepto del arancel es el id que el servicio comparte con el
+        // resto del producto: las cláusulas de los seguros y las solicitudes
+        // de reembolso cruzan por él, no por el id del servicio, que es
+        // propio de cada práctica. Sin él, ningún seguro lo reconoce.
+        serviceConceptId: item.conceptId,
         defaultPrice: item.referencePrice ?? '0',
         isActive: true,
       })

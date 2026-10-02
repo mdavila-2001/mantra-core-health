@@ -16,18 +16,22 @@ import { dataOf, empty, loading, ready } from '../../../core/view-state/view-sta
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { Chip } from '../../../shared/components/atoms/chip/chip';
 import { AppButton } from '../../../shared/components/atoms/button/button';
-import { Link } from '../../../shared/components/atoms/link/link';
 import { Card } from '../../../shared/components/molecules/card/card';
+import { Pagination } from '../../../shared/components/molecules/pagination/pagination';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
-import { StatusSeal } from '../../../shared/components/organisms/status-seal/status-seal';
-import type { StatusSealVariant } from '../../../shared/components/organisms/status-seal/status-seal.types';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
-import { dialable, whatsappDigits } from '../../../shared/utils/telephone/telephone';
+import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
 import { ApprovalRulesDialog } from './approval-rules-dialog';
 import { BenefitFormDialog } from './benefit-form-dialog';
 import { PlanFormDialog } from './plan-form-dialog';
 import { PlanPremiumDialog } from './plan-premium-dialog';
+
+/** Una página del catálogo: un producto seguro y el ramo al que pertenece. */
+interface CatalogEntry {
+  readonly product: Product;
+  readonly plan: Plan | null;
+}
 
 /**
  * Catálogo de la aseguradora del tenant activo: productos, planes, coberturas y
@@ -38,6 +42,12 @@ import { PlanPremiumDialog } from './plan-premium-dialog';
  * organización, y sólo la ficha (`/:id`) trae el catálogo. Pedir la ficha
  * primero exigiría que la pantalla adivinara un identificador.
  *
+ * Vocabulario de la pantalla: cada **plan** se presenta como un «producto
+ * seguro» —datos generales más sus líneas de **cláusulas**— y el producto del
+ * modelo queda como el ramo que los agrupa. Una cláusula es una cobertura del
+ * plan (`insurance_plan_benefits`): declara el servicio, por su
+ * `service_concept_id`, y el porcentaje que paga.
+ *
  * Si la organización no tiene aseguradora —porque no es de tipo `PAYER`— la
  * pantalla lo dice y ofrece la salida, en vez de mostrar una tabla vacía que
  * parezca un catálogo sin cargar.
@@ -47,11 +57,10 @@ import { PlanPremiumDialog } from './plan-premium-dialog';
   imports: [
     Card,
     Chip,
+    Pagination,
     DatePipe,
     AppButton,
-    Link,
     PageHeader,
-    StatusSeal,
     ViewStateHost,
     ApprovalRulesDialog,
     BenefitFormDialog,
@@ -65,20 +74,38 @@ import { PlanPremiumDialog } from './plan-premium-dialog';
 export class InsuranceCatalog {
   private readonly insurance = inject(InsuranceClient);
   private readonly toasts = inject(ToastService);
-
-  /** Teléfono listo para `tel:` (subtarea 2.3): sólo dígitos y el signo `+`. */
-  protected dialable(raw: string): string {
-    return dialable(raw);
-  }
-
-  /** El enlace de WhatsApp de la propia aseguradora, sin mensaje precargado. */
-  protected whatsappHref(raw: string): string {
-    return `https://wa.me/${whatsappDigits(raw)}`;
-  }
+  private readonly dialogs = inject(DialogService);
 
   protected readonly state = signal<ViewState<CarrierDetail>>(loading());
   protected readonly carrier = computed(() => dataOf(this.state()));
-  protected readonly productForNewPlan = signal<Product | null>(null);
+
+  /** Página pedida (1-based). Un producto seguro por página. */
+  protected readonly pagina = signal(1);
+
+  /**
+   * Lo que se pagina: cada producto seguro (plan) con el ramo que lo agrupa. Un
+   * ramo sin planes ocupa su propia página, para que «Añadir producto seguro»
+   * siga al alcance en él.
+   */
+  protected readonly entradas = computed<readonly CatalogEntry[]>(() =>
+    (this.carrier()?.products ?? []).flatMap((product): CatalogEntry[] =>
+      product.plans.length === 0
+        ? [{ product, plan: null }]
+        : product.plans.map((plan) => ({ product, plan })),
+    ),
+  );
+
+  /** La página pedida recortada al rango real: borrar el último plan no deja una página vacía. */
+  protected readonly paginaActual = computed(() =>
+    Math.min(Math.max(1, this.pagina()), Math.max(1, this.entradas().length)),
+  );
+  protected readonly entradaActual = computed(
+    () => this.entradas()[this.paginaActual() - 1] ?? null,
+  );
+  protected readonly planEditor = signal<{
+    readonly product: Product;
+    readonly plan: Plan | null;
+  } | null>(null);
   protected readonly benefitEditor = signal<{
     readonly plan: Plan;
     readonly benefit: PlanBenefit | null;
@@ -97,21 +124,46 @@ export class InsuranceCatalog {
     this.load();
   }
 
-  protected planCreated(): void {
-    this.toasts.success('El plan se creó correctamente.');
+  protected planSaved(): void {
+    const editor = this.planEditor();
+    this.toasts.success(
+      editor?.plan === null
+        ? 'El producto seguro se creó correctamente.'
+        : 'Los datos del producto seguro se actualizaron.',
+    );
     this.reloadCarrier();
+  }
+
+  protected async deletePlan(plan: Plan): Promise<void> {
+    const confirmed = await this.dialogs.confirm({
+      title: `Eliminar ${plan.name}`,
+      message:
+        plan.benefits.length === 0
+          ? 'El producto seguro deja de ofrecerse.'
+          : `El producto seguro deja de ofrecerse junto con sus ${plan.benefits.length} cláusulas.`,
+      confirmLabel: 'Eliminar',
+      destructive: true,
+    });
+    if (!confirmed) return;
+    this.insurance.deletePlan(plan.id).subscribe({
+      next: () => {
+        this.toasts.success('El producto seguro se eliminó.');
+        this.reloadCarrier();
+      },
+      error: () => this.toasts.error('No se pudo eliminar el producto seguro. Intentá de nuevo.'),
+    });
   }
 
   protected benefitSaved(update: UpdatePlanBenefitInput | null): void {
     const editor = this.benefitEditor();
     if (editor === null) return;
     if (update === null || editor.benefit === null) {
-      this.toasts.success('La cobertura se creó correctamente.');
+      this.toasts.success('La cláusula se añadió correctamente.');
       this.reloadCarrier();
       return;
     }
     this.patchBenefit(editor.plan.id, editor.benefit.id, update);
-    this.toasts.success('La cobertura se actualizó correctamente.');
+    this.toasts.success('La cláusula se actualizó correctamente.');
   }
 
   protected premiumSaved(monthlyPremiumAmount: string | null): void {
@@ -132,20 +184,6 @@ export class InsuranceCatalog {
       },
     });
     this.toasts.success('Las reglas de aprobación se actualizaron.');
-  }
-
-  /**
-   * Cómo se lee el estado de verificación.
-   *
-   * Se traduce el código del catálogo, no el texto: el `display` puede cambiar
-   * de redacción sin que cambie el significado. Un código desconocido cae en
-   * `unknown` y se muestra con su etiqueta, que es lo que el sello hace en vez
-   * de inventar un veredicto.
-   */
-  protected verificationVariant(code: string): StatusSealVariant {
-    if (code === 'VERIFICATION_VERIFIED') return 'approved';
-    if (code === 'VERIFICATION_PENDING') return 'pending';
-    return 'unknown';
   }
 
   private load(): void {
@@ -192,9 +230,7 @@ export class InsuranceCatalog {
         ...current,
         products: current.products.map((product) => ({
           ...product,
-          plans: product.plans.map((plan) =>
-            plan.id === planId ? { ...plan, ...patch } : plan,
-          ),
+          plans: product.plans.map((plan) => (plan.id === planId ? { ...plan, ...patch } : plan)),
         })),
       }),
     );

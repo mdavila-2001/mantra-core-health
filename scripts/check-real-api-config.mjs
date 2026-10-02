@@ -1,34 +1,5 @@
 #!/usr/bin/env node
-/**
- * Verifica el modo `real-api` del front: el único arranque soportado con el
- * backend simulado apagado (B-24).
- *
- * ## Qué defecto impide
- *
- * La rama `mockup` fija `mockBackend: true` en `environment.ts` y en
- * `environment.development.ts`, y ninguno lee el entorno del proceso. Sin una
- * configuración explícita no había forma de correr el front contra la API real
- * sin editar archivos versionados antes de cada corrida; y el interruptor
- * `apiRealForzada` no alcanza para certificar, porque la maqueta sigue encendida.
- *
- * ## Qué comprueba
- *
- *   - `build.configurations.real-api` reemplaza `environment.ts` por
- *     `environment.real-api.ts`, y `serve.configurations.real-api` la usa;
- *   - `real-api` apaga SSR y prerender (`server: false`, `ssr: false`,
- *     `outputMode: static`), igual que `e2e-real`: con la maqueta apagada el
- *     prerender pide datos a una API que en el build no existe, la app no
- *     estabiliza y el build queda colgado;
- *   - `development` sigue reemplazándolo por `environment.development.ts`,
- *     `production` no lo reemplaza, y los defaults no cambiaron;
- *   - el servidor de desarrollo sigue teniendo `proxyConfig`;
- *   - `yarn start:real-api` arranca esa configuración;
- *   - `real-api` declara `mockBackend: false` y los otros dos entornos `true`;
- *   - `real-api` declara `campaignsDemo: false` y `paymentDemo: false`: con la
- *     API real ninguna demo fabrica campañas ni pagos (MOCKS OFF).
- *
- * Uso: node scripts/check-real-api-config.mjs
- */
+/** Verifica API real predeterminada, demo explicita y production-api con SSR. */
 
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -78,18 +49,41 @@ exigir(
   '«yarn start:real-api» tiene que arrancar ng serve --configuration real-api',
 );
 
-exigir(
-  /mockBackend:\s*false/.test(leer('src/environments/environment.real-api.ts')),
-  'environment.real-api.ts tiene que declarar mockBackend: false',
-);
-for (const demo of ['campaignsDemo', 'paymentDemo']) {
-  exigir(
-    new RegExp(`\\b${demo}:\\s*false\\b`).test(leer('src/environments/environment.real-api.ts')),
-    `environment.real-api.ts tiene que declarar ${demo}: false`,
-  );
+const simulatedFlags = [
+  'mockBackend', 'demoPresets', 'paymentDemo', 'loyaltyDemo',
+  'campaignsDemo', 'billingSiatDemo', 'designMockups',
+];
+for (const filename of [
+  ENTORNO,
+  ...['development', 'real-api', 'e2e-real', 'production-api'].map(
+    (mode) => `src/environments/environment.${mode}.ts`,
+  ),
+]) {
+  for (const flag of simulatedFlags) {
+    exigir(new RegExp(`\\b${flag}:\\s*false\\b`).test(leer(filename)), `${filename}: ${flag} debe estar apagado`);
+  }
 }
-for (const archivo of [ENTORNO, 'src/environments/environment.development.ts']) {
-  exigir(/mockBackend:\s*true/.test(leer(archivo)), `${archivo} tiene que seguir con mockBackend: true`);
+const demoEnvironment = leer('src/environments/environment.demo.ts');
+for (const flag of simulatedFlags) {
+  exigir(new RegExp(`\\b${flag}:\\s*true\\b`).test(demoEnvironment), `demo: ${flag} debe estar encendido`);
+}
+exigir(reemplazoDe('demo') === 'src/environments/environment.demo.ts', 'demo debe reemplazar el entorno');
+exigir(serve.configurations?.demo?.buildTarget === `${nombre}:build:development,demo`, 'serve demo debe combinar development,demo');
+exigir(/ng serve --configuration development,demo\b/.test(scripts['start:demo'] ?? ''), 'start:demo debe usar development,demo');
+exigir(serve.configurations?.demo?.proxyConfig === 'proxy.demo.conf.mjs', 'solo demo usa medios simulados');
+exigir(serve.options?.proxyConfig === 'proxy.conf.mjs', 'el proxy por defecto es real');
+const { default: realProxy } = await import('../proxy.conf.mjs');
+const { default: demoProxy } = await import('../proxy.demo.conf.mjs');
+exigir(!realProxy.some((entry) => entry.bypass !== undefined), 'API real no permite sustituciones de medios');
+exigir(demoProxy[0]?.context?.includes('/public/media'), 'demo conserva medios sinteticos');
+for (const mode of ['real-api', 'e2e-real']) {
+  const config = build.configurations?.[mode] ?? {};
+  exigir(reemplazoDe(mode) === `src/environments/environment.${mode}.ts`, `${mode}: reemplazo de entorno`);
+  exigir(config.server === false && config.ssr === false && config.outputMode === 'static', `${mode}: conservar CSR`);
+}
+for (const mode of ['production', 'production-api']) {
+  const initial = build.configurations?.[mode]?.budgets?.find((budget) => budget.type === 'initial');
+  exigir(initial?.maximumError === '1.5MB', `${mode}: presupuesto inicial 1.5MB`);
 }
 
 /**
@@ -136,6 +130,4 @@ if (errores.length > 0) {
   for (const error of errores) console.error(`  ✗ ${error}`);
   process.exit(1);
 }
-console.log(
-  '[check-real-api-config] ✓ real-api apaga la maqueta, las demos de campañas y pago, y el SSR; development y production intactos.',
-);
+console.log('[check-real-api-config] PASS: API real por defecto, demo explicita y production-api con SSR.');

@@ -25,6 +25,8 @@ import { ViewStateHost } from '../../../shared/components/organisms/view-state-h
 import { conceptosDe } from '../../account/my-profile/practitioner-profile/practitioner-profile';
 import { PractitionerProfileView } from '../../account/my-profile/practitioner-profile/practitioner-profile-view/practitioner-profile-view';
 import { PractitionerAvailability } from '../practitioner-availability/practitioner-availability';
+import { PractitionerInsurers } from '../practitioner-insurers/practitioner-insurers';
+import { PractitionerServices } from '../practitioner-services/practitioner-services';
 import type {
   AfiliacionVisible,
   EspecialidadVisible,
@@ -76,7 +78,14 @@ interface PerfilResuelto {
  */
 @Component({
   selector: 'app-practitioner-detail',
-  imports: [PageHeader, PractitionerAvailability, PractitionerProfileView, ViewStateHost],
+  imports: [
+    PageHeader,
+    PractitionerAvailability,
+    PractitionerInsurers,
+    PractitionerProfileView,
+    PractitionerServices,
+    ViewStateHost,
+  ],
   templateUrl: './practitioner-detail.html',
   styleUrl: './practitioner-detail.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

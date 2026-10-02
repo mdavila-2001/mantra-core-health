@@ -77,6 +77,10 @@ export const NAV_ICON_NAMES = [
 
   // Dinero.
   'chart',
+  /** Billetera: lo que el paciente gastó en su salud («Mis gastos»). */
+  'wallet',
+  /** Comprobante con el borde dentado: las facturas emitidas («Mis facturas»). */
+  'receipt',
   'star',
 
   // Confianza y llaves.

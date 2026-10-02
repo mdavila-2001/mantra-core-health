@@ -5,12 +5,21 @@ import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { NEVER, of, throwError } from 'rxjs';
 
+import { environment } from '../../../../../environments/environment';
+
 import { PharmacyCampaignsClient } from '../../../../core/data-access/pharmacy-campaigns/pharmacy-campaigns.client';
 import { PharmacyOrdersClient } from '../../../../core/data-access/pharmacy-orders/pharmacy-orders.client';
 import { pharmacyOrderDtoFixture } from '../../../../core/data-access/pharmacy-orders/pharmacy-orders.spec-fixtures';
 import type { BorradorDePedido } from '../../../../core/data-access/pharmacy-orders/pharmacy-orders.types';
+import { NO_CONDITIONS } from '../../../../core/promotions-engine/promotion-mechanics.types';
+import type { Mechanic } from '../../../../core/promotions-engine/promotion-mechanics.types';
 import { NewOrder } from './new-order';
-import { DATOS_DE_EJEMPLO_DE_LA_RECETA, datosDeEjemploPara } from './new-order.fixtures';
+import { SAMPLE_DATA_ENABLED } from '../../../../core/mock/sample-data';
+import {
+  DATOS_DE_EJEMPLO_DE_LA_RECETA,
+  datosDeEjemploPara,
+  sampleFreeDataFor,
+} from './new-order.fixtures';
 import {
   CLAVE_DEL_TRASPASO,
   RUTA_DEL_CHECKOUT,
@@ -90,13 +99,31 @@ const BORRADOR_COMPLETO: BorradorDePedido = {
 const RUTA_DE_PRUEBA = '/checkout-de-prueba';
 
 describe('NewOrder', () => {
+  // Las campañas de demostración sólo existen con el interruptor encendido
+  // (`environment.campaignsDemo`, apagado fuera de `demo`): estas pruebas miden
+  // el motor de mecánicas sobre ese paquete sembrado.
+  const campanasDemoOriginal = environment.campaignsDemo;
+  beforeEach(() => Object.assign(environment, { campaignsDemo: true }));
+  afterEach(() => Object.assign(environment, { campaignsDemo: campanasDemoOriginal }));
+
   let fixture: ComponentFixture<NewOrder>;
   let client: PharmacyOrdersClient;
   let http: HttpTestingController;
+  const originalCampaignsDemo = environment.campaignsDemo;
+
+  afterEach(() => {
+    Object.assign(environment, { campaignsDemo: originalCampaignsDemo });
+  });
 
   function configurar(extra: Provider[] = []): void {
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([]), ...extra],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        { provide: SAMPLE_DATA_ENABLED, useValue: true },
+        ...extra,
+      ],
     });
     client = TestBed.inject(PharmacyOrdersClient);
     http = TestBed.inject(HttpTestingController);
@@ -277,6 +304,7 @@ describe('NewOrder', () => {
   /* ── Las promociones del pedido (FAR-I7) ───────────────────────────────── */
 
   it('pone los dos precios con el mismo formato y dice en voz alta cuál es cuál', () => {
+    Object.assign(environment, { campaignsDemo: true });
     configurar();
     // `GET /pharmacy-inventory/availability` devuelve el numeric crudo: el
     // precio de este renglón llega como "22.5". Junto al promocional, que sale
@@ -311,6 +339,126 @@ describe('NewOrder', () => {
 
     expect(uno('pedido-total-promo')?.textContent).toContain('14.62');
     expect(raiz().querySelector('.confirmacion__total s .sr-only')?.textContent).toContain('Antes');
+  });
+
+  /* ── Las campañas del motor sobre el pedido ───────────────────────────── */
+
+  describe('las campañas del motor (2x1, compra mínima, puntos…)', () => {
+    const PRODUCTO = 'f0e1d2c3-0000-4000-8000-000000000002';
+
+    async function campanaDe(
+      mecanica: Mechanic,
+      opciones: { pharmacyId?: string; renglones?: boolean } = {},
+    ): Promise<void> {
+      const { firstValueFrom } = await import('rxjs');
+      await firstValueFrom(
+        TestBed.inject(PharmacyCampaignsClient).crear(
+          {
+            titulo: 'Campaña de prueba',
+            descripcion: '',
+            desde: new Date(Date.now() - 24 * 60 * 60 * 1000),
+            hasta: new Date(Date.now() + 24 * 60 * 60 * 1000),
+            mecanica,
+            condiciones: NO_CONDITIONS,
+            renglones:
+              opciones.renglones === false
+                ? []
+                : [
+                    {
+                      productId: PRODUCTO,
+                      nombre: 'Amoxicilina',
+                      presentacion: null,
+                      precioNormal: '68.00',
+                      moneda: 'BOB',
+                      precioPromocional: null,
+                    },
+                  ],
+          },
+          opciones.pharmacyId ?? BORRADOR.pharmacyId,
+          BORRADOR.farmacia,
+        ),
+      );
+    }
+
+    beforeEach(() => {
+      configurar();
+      client.prepararBorrador(BORRADOR);
+    });
+
+    it('un 2x1 descuenta una unidad cuando la persona sube la cantidad, y lo dice', async () => {
+      await campanaDe({ kind: 'BUY_X_PAY_Y', take: 2, pay: 1 });
+      montar();
+      clic(uno('pedido-cantidad-mas', renglon(0)));
+
+      const descuento = uno('pedido-linea-descuento', renglon(0));
+      expect(descuento?.textContent).toContain('2x1');
+      expect(descuento?.textContent).toContain('−68.00');
+      // 2 × 68.00 = 136.00; una gratis: 68.00.
+      expect(uno('pedido-total-con-cambios')?.textContent).toContain('68.00');
+      // No inventa un precio por unidad que el 2x1 no tiene.
+      expect(raiz().querySelector('[data-testid="pedido-lineas"] s')).toBeNull();
+    });
+
+    it('con una sola unidad no descuenta y dice cuántas faltan', async () => {
+      await campanaDe({ kind: 'BUY_X_PAY_Y', take: 2, pay: 1 });
+      montar();
+
+      expect(uno('pedido-linea-descuento', renglon(0))).toBeNull();
+      expect(uno('pedido-aviso-promocion')?.textContent).toContain('Agregá 1 unidad más y llevás 2 pagando 1.');
+    });
+
+    it('una compra mínima descuenta sobre el total y lo muestra aparte', async () => {
+      await campanaDe({ kind: 'ORDER_AMOUNT_OVER', minSpend: '50.00', amount: '10.00' }, { renglones: false });
+      montar();
+
+      const descuento = uno('pedido-descuento-total');
+      expect(descuento?.textContent).toContain('−10.00');
+      expect(uno('pedido-banner-promo')).not.toBeNull();
+      // 68.00 − 10.00.
+      expect(uno('pedido-total-promo')?.textContent).toContain('58.00');
+    });
+
+    it('una compra mínima que no se alcanza no descuenta y avisa cuánto falta', async () => {
+      await campanaDe({ kind: 'ORDER_AMOUNT_OVER', minSpend: '100.00', amount: '10.00' }, { renglones: false });
+      montar();
+
+      expect(uno('pedido-descuento-total')).toBeNull();
+      expect(uno('pedido-banner-promo')).toBeNull();
+      expect(uno('pedido-aviso-promocion')?.textContent).toContain('Te faltan Bs 32 para que te descontemos Bs 10.');
+    });
+
+    it('los puntos multiplicados se dicen sin tocar el precio', async () => {
+      await campanaDe({ kind: 'POINTS_MULTIPLIER', multiplier: 2 }, { renglones: false });
+      montar();
+
+      expect(uno('pedido-puntos')?.textContent).toContain('Puntos ×2');
+      expect(uno('pedido-banner-promo')).toBeNull();
+    });
+
+    it('sin campañas la sección no existe en vez de existir vacía', () => {
+      montar();
+
+      expect(uno('pedido-promociones')).toBeNull();
+    });
+
+    it('las campañas de otra farmacia no se aplican', async () => {
+      await campanaDe({ kind: 'BUY_X_PAY_Y', take: 2, pay: 1 }, { pharmacyId: 'otra-farmacia' });
+      montar();
+      clic(uno('pedido-cantidad-mas', renglon(0)));
+
+      expect(uno('pedido-linea-descuento', renglon(0))).toBeNull();
+    });
+
+    it('un precio por unidad sigue mostrándose tachado, como siempre', async () => {
+      await campanaDe({ kind: 'PERCENT_OFF', percent: 25 });
+      montar();
+
+      const precio = raiz().querySelector('[data-testid="pedido-lineas"] .confirmacion__linea-precio');
+      expect(precio?.querySelector('s')?.textContent).toContain('68.00');
+      // 25 % de 68.00 = 17.00 → 51.00.
+      expect(precio?.querySelector('strong')?.textContent).toContain('51.00');
+      expect(uno('pedido-linea-descuento', renglon(0))).toBeNull();
+    });
   });
 
   /* ── T-E1 · la receta como pedido ──────────────────────────────────────── */
@@ -585,6 +733,61 @@ describe('NewOrder', () => {
       fixture.destroy();
 
       expect(client.borradorPreparado()).toBeNull();
+    });
+  });
+
+  /* ── Contra la API real: nada de ejemplo ───────────────────────────────── */
+
+  describe('contra la API real (sin datos de ejemplo)', () => {
+    function configureAgainstRealApi(): void {
+      configurar([{ provide: SAMPLE_DATA_ENABLED, useValue: false }]);
+      client.prepararBorrador(BORRADOR_COMPLETO);
+      montar();
+    }
+
+    it('la receta no tiene cabecera inventada ni rótulo de ejemplo', () => {
+      configureAgainstRealApi();
+
+      const prescription = uno('pedido-receta');
+      expect(prescription?.textContent).not.toContain('Dra. Mariana Suárez Rivero');
+      expect(uno('order-prescription-without-header')).not.toBeNull();
+      expect(texto()).not.toContain('Datos de ejemplo');
+    });
+
+    it('no ofrece la variante con seguro ni alternativas', () => {
+      configureAgainstRealApi();
+
+      expect(uno('pedido-variante-seguro')).toBeNull();
+      expect(uno('pedido-seguro')).toBeNull();
+      expect(todos('pedido-ver-alternativas')).toHaveLength(0);
+      expect(texto()).not.toContain('Demostración');
+    });
+
+    it('la cantidad no pasa de la del borrador y se dice por qué', () => {
+      configureAgainstRealApi();
+      const primero = renglon(0);
+
+      expect(uno('pedido-cantidad-mas', primero)?.getAttribute('aria-disabled')).toBe('true');
+      expect(primero.textContent).toContain('la receta no declara cantidades');
+      expect(primero.textContent).not.toContain('Recetado: hasta');
+    });
+
+    it('los renglones, el total y los precios siguen siendo los del borrador', () => {
+      configureAgainstRealApi();
+
+      expect(texto()).toContain('Amoxicilina 500 mg');
+      expect(texto()).toContain('Losartán 50 mg');
+      expect(uno('pedido-total')?.textContent).toContain('108.00 Bs');
+    });
+
+    it('sampleFreeDataFor: un renglón por línea, sin alternativas ni seguro', () => {
+      const datos = sampleFreeDataFor(BORRADOR_COMPLETO);
+
+      expect(datos.cabecera).toBeNull();
+      expect(datos.renglones).toEqual([
+        { cantidadRecetada: 1, aprobadoPorSeguro: false, alternativas: [] },
+        { cantidadRecetada: 1, aprobadoPorSeguro: false, alternativas: [] },
+      ]);
     });
   });
 

@@ -1,5 +1,6 @@
-import { readdirSync } from 'node:fs';
-import { join } from 'node:path';
+import { existsSync, readdirSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
+import { dirname, join, resolve } from 'node:path';
 
 import { FICHAS_ESTANDAR } from './fichas-estandar.generated';
 import { PLANTILLAS_DE_EXPEDIENTE } from '../handlers/clinical.handlers';
@@ -22,7 +23,7 @@ import { PLANTILLAS_DE_EXPEDIENTE } from '../handlers/clinical.handlers';
 describe('las fichas clínicas estándar del simulador', () => {
   /** Los JSON del backend, contados desde el disco. */
   function fichasDelBackend(): readonly string[] {
-    const raiz = join(
+    let raiz = join(
       process.cwd(),
       '..',
       'mantra-core-health-api',
@@ -32,6 +33,10 @@ describe('las fichas clínicas estándar del simulador', () => {
       'data',
       'clinical-forms',
     );
+    if (!existsSync(raiz)) {
+      const commonGitDirectory = execFileSync('git', ['rev-parse', '--git-common-dir'], { encoding: 'utf8' }).trim();
+      raiz = resolve(dirname(resolve(commonGitDirectory)), '..', 'mantra-core-health-api', 'src/common/seed/data/clinical-forms');
+    }
     return readdirSync(raiz, { withFileTypes: true })
       .filter((entrada) => entrada.isDirectory())
       .flatMap((carpeta) =>

@@ -179,7 +179,7 @@ describe('MembershipNew', () => {
   it('la búsqueda de personas marca las cuentas sin verificar', () => {
     interno<(t: string) => void>('buscarPersona')('maria');
 
-    http.expectOne((r) => r.url === '/iam/users').flush({
+    http.expectOne((r) => r.url === '/iam/users/search').flush({
       items: [
         { id: 'u-1', displayName: 'María Condori', emailVerified: true },
         { id: 'u-2', displayName: 'Juan Pérez', emailVerified: false },

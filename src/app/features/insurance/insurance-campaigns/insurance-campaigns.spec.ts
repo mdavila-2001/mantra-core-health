@@ -316,6 +316,11 @@ describe('InsuranceCampaigns', () => {
       await settle();
     }
 
+    async function nextPage(): Promise<void> {
+      byTestId('campaign-form')!.querySelector<HTMLButtonElement>('[data-testid="paginated-form-continuar"]')!.click();
+      await settle();
+    }
+
     /** Llena lo mínimo para que el formulario sea válido. */
     function fillValid(overrides: Record<string, unknown> = {}): void {
       control('code').setValue('CMP-CARDIO-2026');
@@ -378,7 +383,7 @@ describe('InsuranceCampaigns', () => {
         await openForm();
         fillValid({ validFrom: civil(10), validTo: civil(1) });
         control('validTo').markAsDirty();
-        await settle();
+        await nextPage();
 
         expect(form().invalid).toBe(true);
         expect(form().hasError('dateOrder')).toBe(true);
@@ -434,10 +439,14 @@ describe('InsuranceCampaigns', () => {
       it('arranca con uno, se pueden sumar y quitar, pero nunca queda sin aliados', async () => {
         await openForm();
         expect(count()).toBe(1);
+        fillValid();
+        await nextPage();
+        await nextPage();
 
         byTestId('campaign-form-add-partner')!.click();
         await settle();
         expect(count()).toBe(2);
+        await nextPage();
 
         byTestId('campaign-form-partner-remove-1')!.click();
         await settle();
@@ -445,6 +454,8 @@ describe('InsuranceCampaigns', () => {
 
         // El último no se puede quitar: el botón se anuncia deshabilitado
         // (`aria-disabled`, como todo `app-button`) y un clic no hace nada.
+        byTestId('campaign-form')!.querySelector<HTMLButtonElement>('[data-testid="paginated-form-atras"]')!.click();
+        await settle();
         const last = byTestId('campaign-form-partner-remove-0')!;
         expect(last.getAttribute('aria-disabled')).toBe('true');
         last.click();

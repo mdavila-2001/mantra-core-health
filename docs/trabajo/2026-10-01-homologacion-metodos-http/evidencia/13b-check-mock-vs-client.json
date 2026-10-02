@@ -1,0 +1,14 @@
+{
+  "operaciones": 617,
+  "manejadores": 654,
+  "sinManejador": [
+    {
+      "client": "CommunityClient",
+      "path": "src/app/core/data-access/community/community.client.ts",
+      "method": "GET",
+      "endpoint": "/community/conversations/:conversationId"
+    }
+  ],
+  "nuevasSinManejador": [],
+  "yaCubiertas": []
+}

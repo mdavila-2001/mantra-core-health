@@ -6,35 +6,54 @@ import { By } from '@angular/platform-browser';
 
 import { MAX_CAMPOS_POR_PAGINA } from '../../../shared/forms/paginated/paginated-form.types';
 import { UbicacionPicker } from '../registro-compartido/ubicacion-picker/ubicacion-picker';
-import { CODIGOS_DE_DIAGNOSTICO } from '../registro-compartido/alta-de-centro-diagnostico';
-import {
-  altaPendiente,
-  atenderSubida,
-  idDeConcepto,
-  responderCatalogos,
-} from '../../../../testing/alta-de-centro-diagnostico';
+import { lastValueFrom } from 'rxjs';
+import type {
+  PdfUploader,
+  UploadedDocument,
+} from '../../../shared/components/molecules/dropzone-pdf/dropzone-pdf.types';
+import type { ClaveDeDocumentoDelAlta } from '../registro-compartido/documentos-legales';
 import { RegisterLaboratory, TIPOS_DE_SOCIEDAD } from './register-laboratory';
 
 /* ============================================================================
     Lo que esta pantalla promete, y por lo tanto lo que se prueba:
 
     1. Que pregunta los dieciocho puntos del proceso 4.1 y ninguno inventado.
-    2. Que frena lo que sin ello no hay laboratorio publicable, y NO frena el
-       resto — sobre todo los cargos, que el propietario pidió opcionales.
-    3. Que el envío es real: lee el catálogo, sube los PDF en serie y llama a
-       `register-organization` con `tenantType: 'DIAGNOSTIC_CENTER'`, y que
-       una subida fallida no manda el alta ni pierde las que ya salieron.
+    2. Que frena sólo lo básico para nacer (D2, igual que la farmacia) y NO
+       frena el resto: los seis papeles, el mapa, las sucursales y los cargos.
+    3. Que el alta sale a `POST /iam/auth/register-organization` con
+       `tenantType: 'DIAGNOSTIC_CENTER'` y el bloque `diagnosticUnit`, y que
+       ninguna otra petición sale sin que la prueba la espere.
 
     Los tres son afirmaciones que se rompen solas si alguien cambia una regla
     sin darse cuenta, que es para lo que sirve una prueba.
     ========================================================================== */
 
-/** Un archivo de verdad: la subida lo mete en un `FormData`, que no acepta un doble. */
-function archivo(nombre: string, tipo: string, bytes: number): File {
-  return new File([new Uint8Array(bytes)], nombre, { type: tipo });
-}
+const RUTA_ALTA = '/iam/auth/register-organization';
 
-const PDF = () => archivo('sedes.pdf', 'application/pdf', 120_000);
+/** Lo que la API responde a un alta aceptada (201). */
+const ALTA_ACEPTADA = {
+  tenantId: 'tenant-1',
+  code: 'LAB-1023456789',
+  ownerUserId: 'owner-1',
+  status: 'PENDING_VERIFICATION',
+  emailVerificationSent: true,
+  diagnosticUnitId: 'unidad-1',
+};
+
+/** El cuerpo de lo que salió, con la forma que el cliente le dio. */
+interface CuerpoDelAlta {
+  readonly organization: Record<string, unknown> & {
+    readonly diagnosticUnit: {
+      readonly name: string;
+      readonly primarySite: {
+        readonly name: string;
+        readonly address: { readonly lines: string[]; readonly latitude?: number; readonly longitude?: number };
+      };
+      readonly branches?: readonly Record<string, unknown>[];
+    };
+  };
+  readonly owner: Record<string, unknown>;
+}
 
 describe('RegisterLaboratory', () => {
   let fixture: ComponentFixture<RegisterLaboratory>;
@@ -59,41 +78,38 @@ describe('RegisterLaboratory', () => {
   });
 
   afterEach(() => {
-    // Ninguna petición queda sin atender. Está en el `afterEach` a propósito, así
-    // vale para todas las pruebas de este archivo y no sólo para la que se
-    // acuerde de escribirla: un alta que sale sin que la prueba la mire es un
-    // alta que nadie verificó.
+    // Ninguna petición sin esperar: está en el `afterEach` a propósito, así
+    // vale para todas las pruebas y no sólo para la que se acuerde.
     http.verify();
   });
 
-  /** Deja el formulario en el mínimo con el que se puede enviar. */
-  function completarLoObligatorio(tipo = 'UNIPERSONAL'): void {
-    component.form.patchValue({
-      legalName: 'Laboratorio Clínico del Sur S.R.L.',
-      companyType: tipo,
-      taxId: '1023456789',
-      addressLines: 'Av. Cañoto esq. Ballivián 234',
-      legalRepName: 'Ana Paz Rojas',
-      legalRepEmail: 'ana.paz@labsur.test',
-      legalRepIdNumber: '4872190',
-      password: 'secreto12',
-    });
-    component.updateAttachment('nitFile', [archivo('nit.pdf', 'application/pdf', 10)]);
-    component.updateAttachment('seprecFile', [archivo('seprec.pdf', 'application/pdf', 10)]);
-    component.updateAttachment('licenciaFile', [archivo('licencia.pdf', 'application/pdf', 10)]);
-    component.updateAttachment('sedesFile', [archivo('sedes.pdf', 'application/pdf', 10)]);
+  /** Envía y devuelve la petición del alta, todavía sin responder. */
+  function enviarYCapturar() {
+    component.submit();
+    const peticion = http.expectOne(RUTA_ALTA);
+    expect(peticion.request.method).toBe('POST');
+    return peticion;
   }
 
-  /** Atiende el envío completo: catálogo, una subida por papel y el alta. */
-  function atenderElEnvio(papeles: number, respuesta: object = { tenantId: 't', code: 'c' }) {
-    responderCatalogos(http);
-    const subidos: string[] = [];
-    for (let i = 0; i < papeles; i += 1) {
-      subidos.push(atenderSubida(http));
-    }
-    const alta = altaPendiente(http);
-    alta.flush({ ownerUserId: 'u', status: 's', emailVerificationSent: true, ...respuesta });
-    return { subidos, cuerpo: alta.request.body };
+  /** Envía, responde 201 y devuelve el cuerpo que salió. */
+  function enviarConExito(): CuerpoDelAlta {
+    const peticion = enviarYCapturar();
+    const cuerpo = peticion.request.body as CuerpoDelAlta;
+    peticion.flush(ALTA_ACEPTADA, { status: 201, statusText: 'Created' });
+    return cuerpo;
+  }
+
+  /** Deja el formulario en el mínimo con el que se puede enviar. */
+  function completarLoObligatorio(): void {
+    component.form.patchValue({
+      legalName: 'Laboratorio Clínico del Sur S.R.L.',
+      companyType: 'SRL',
+      taxId: '1023456789',
+      addressLines: 'Av. Cañoto esq. Ballivián 234',
+      legalRepName: { name: 'Ana', lastName: 'Paz', motherLastName: 'Rojas' },
+      legalRepEmail: 'ana.paz@labsur.test',
+      password: 'secreto12',
+    });
   }
 
   /* --- lo que pregunta --------------------------------------------------- */
@@ -115,16 +131,16 @@ describe('RegisterLaboratory', () => {
 
   it('pregunta los seis papeles del proceso, ni uno más', () => {
     const papeles = Object.keys(component.form.controls).filter((clave) =>
-      clave.endsWith('File'),
+      clave.endsWith('FileId'),
     );
 
     expect(papeles.sort()).toEqual([
-      'constitucionFile',
-      'licenciaFile',
-      'nitFile',
-      'poderFile',
-      'sedesFile',
-      'seprecFile',
+      'commerceRegistryFileId',
+      'constitutionFileId',
+      'healthAuthorityCertificateFileId',
+      'operatingLicenseFileId',
+      'powerOfAttorneyFileId',
+      'taxIdentifierFileId',
     ]);
   });
 
@@ -139,262 +155,157 @@ describe('RegisterLaboratory', () => {
 
   /* --- qué frena y qué no ------------------------------------------------ */
 
-  it('no se envía vacío', () => {
+  it('no se envía vacío: no sale ninguna petición', () => {
     component.submit();
 
-    expect(component.enviada()).toBe(false);
+    // `http.verify()` del `afterEach` prueba que no salió nada.
+    expect(component.registered()).toBe(false);
+    expect(component.form.touched).toBe(true);
   });
 
-  it('se envía con lo obligatorio y nada más', () => {
+  it('se envía con lo básico y nada más, como DIAGNOSTIC_CENTER', () => {
     completarLoObligatorio();
-
-    component.submit();
-    atenderElEnvio(4);
-
     expect(component.form.valid).toBe(true);
-    expect(component.enviada()).toBe(true);
-  });
 
-  /* --- el envío real ----------------------------------------------------- */
+    const cuerpo = enviarConExito();
 
-  it('sube los PDF en serie, antes del alta, y manda DIAGNOSTIC_CENTER sin `payer`', () => {
-    completarLoObligatorio();
-
-    component.submit();
-    const { subidos, cuerpo } = atenderElEnvio(4);
-
-    expect(subidos).toEqual(['nit.pdf', 'seprec.pdf', 'licencia.pdf', 'sedes.pdf']);
     expect(cuerpo.organization).toMatchObject({
-      tenantType: 'DIAGNOSTIC_CENTER',
+      code: 'LAB-1023456789',
       legalName: 'Laboratorio Clínico del Sur S.R.L.',
-      legalEntityType: 'UNIPERSONAL',
-      countryConceptId: idDeConcepto(CODIGOS_DE_DIAGNOSTICO.pais),
-      jurisdictionConceptId: idDeConcepto(CODIGOS_DE_DIAGNOSTICO.jurisdiccionNacional),
-      diagnosticUnit: {
-        diagnosticUnitTypeConceptId: idDeConcepto(CODIGOS_DE_DIAGNOSTICO.laboratorio),
-        modalityConceptIds: [idDeConcepto(CODIGOS_DE_DIAGNOSTICO.modalidades.laboratorio)],
-        primarySite: { name: 'Central', address: { lines: ['Av. Cañoto esq. Ballivián 234'] } },
-      },
-      legalDocuments: {
-        taxIdentifierFileId: 'file-nit.pdf',
-        commerceRegistryFileId: 'file-seprec.pdf',
-        operatingLicenseFileId: 'file-licencia.pdf',
-        healthAuthorityCertificateFileId: 'file-sedes.pdf',
-      },
-      legalRepresentative: { fullName: 'Ana Paz Rojas', idNumber: '4872190' },
+      legalEntityType: 'SRL',
+      tenantType: 'DIAGNOSTIC_CENTER',
+      legalRepresentative: { fullName: 'Ana Paz Rojas', email: 'ana.paz@labsur.test' },
     });
-    // Una unipersonal no manda constitución ni poder, y una aseguradora no es esto.
-    expect(cuerpo.organization.legalDocuments.constitutionFileId).toBeUndefined();
-    expect(cuerpo.organization.legalRepresentative.powerOfAttorneyFileId).toBeUndefined();
-    expect(cuerpo.organization.payer).toBeUndefined();
+    expect(cuerpo.organization.diagnosticUnit).toEqual({
+      name: 'Laboratorio Clínico del Sur S.R.L.',
+      primarySite: { name: 'Casa central', address: { lines: ['Av. Cañoto esq. Ballivián 234'] } },
+    });
     expect(cuerpo.owner).toEqual({
       email: 'ana.paz@labsur.test',
       password: 'secreto12',
       displayName: 'Ana Paz Rojas',
     });
+    // Lo opcional que no se completó no viaja: ni papeles, ni cargos, ni poder.
+    expect(cuerpo.organization).not.toHaveProperty('legalDocuments');
+    expect(cuerpo.organization).not.toHaveProperty('executives');
+    expect(cuerpo.organization['legalRepresentative']).not.toHaveProperty('powerOfAttorneyFileId');
+    expect(component.registered()).toBe(true);
   });
 
-  it('el punto del mapa viaja sólo si se confirmó', () => {
+  it('el tipo de sociedad viaja como código de la lista, nunca como rótulo (B6)', () => {
     completarLoObligatorio();
-    component.gpsCentral.set({ lat: -17.78, lng: -63.18 });
+    component.form.controls.companyType.setValue('COMANDITA_ACCIONES');
+
+    const cuerpo = enviarConExito();
+
+    expect(cuerpo.organization['legalEntityType']).toBe('COMANDITA_ACCIONES');
+  });
+
+  it.each([
+    'legalName',
+    'companyType',
+    'taxId',
+    'addressLines',
+    'legalRepName',
+    'legalRepEmail',
+    'password',
+  ] as const)('sin %s no se envía', (clave) => {
+    completarLoObligatorio();
+    // `patchValue` y no `controls[clave].setValue`: el tipo de sociedad se
+    // vacía con `null`, el nombre del representante vaciando su primer nombre,
+    // y los demás con la cadena vacía.
+    const vacio = clave === 'companyType' ? null : clave === 'legalRepName' ? { name: '' } : '';
+    component.form.patchValue({ [clave]: vacio });
 
     component.submit();
-    const { cuerpo } = atenderElEnvio(4);
 
-    expect(cuerpo.organization.diagnosticUnit.primarySite.address).toEqual({
-      lines: ['Av. Cañoto esq. Ballivián 234'],
-      latitude: -17.78,
-      longitude: -63.18,
+    expect(component.registered()).toBe(false);
+  });
+
+  it('los seis papeles viajan cuando están todos: cinco de la empresa y el poder', () => {
+    completarLoObligatorio();
+    component.registrarDocumento('constitutionFileId', 'f-const');
+    component.registrarDocumento('taxIdentifierFileId', 'f-nit');
+    component.registrarDocumento('commerceRegistryFileId', 'f-seprec');
+    component.registrarDocumento('operatingLicenseFileId', 'f-licencia');
+    component.registrarDocumento('healthAuthorityCertificateFileId', 'f-sedes');
+    component.registrarDocumento('powerOfAttorneyFileId', 'f-poder');
+
+    const cuerpo = enviarConExito();
+
+    expect(cuerpo.organization['legalDocuments']).toEqual({
+      constitutionFileId: 'f-const',
+      taxIdentifierFileId: 'f-nit',
+      commerceRegistryFileId: 'f-seprec',
+      operatingLicenseFileId: 'f-licencia',
+      healthAuthorityCertificateFileId: 'f-sedes',
+    });
+    expect(cuerpo.organization['legalRepresentative']).toMatchObject({
+      powerOfAttorneyFileId: 'f-poder',
     });
   });
 
-  it('una SRL sin constitución ni poder no sale: la API lo rechazaría', () => {
-    completarLoObligatorio('SRL');
+  it('el poder se pide en la página del representante, no con los papeles de la empresa', () => {
+    const pagina = (clave: string) => component.paginas.find((p) => p.clave === clave);
 
-    component.submit();
-
-    expect(component.form.controls.constitucionFile.invalid).toBe(true);
-    expect(component.form.controls.poderFile.invalid).toBe(true);
-    expect(component.enviada()).toBe(false);
-  });
-
-  it('una SRL con los seis papeles manda la constitución y el poder', () => {
-    completarLoObligatorio('SRL');
-    component.updateAttachment('constitucionFile', [archivo('constitucion.pdf', 'application/pdf', 10)]);
-    component.updateAttachment('poderFile', [archivo('poder.pdf', 'application/pdf', 10)]);
-
-    component.submit();
-    const { cuerpo } = atenderElEnvio(6);
-
-    expect(cuerpo.organization.legalDocuments.constitutionFileId).toBe('file-constitucion.pdf');
-    expect(cuerpo.organization.legalRepresentative.powerOfAttorneyFileId).toBe('file-poder.pdf');
-    expect(component.enviada()).toBe(true);
-  });
-
-  it('elegir «Unipersonal» después de una SRL vuelve opcionales la constitución y el poder', () => {
-    completarLoObligatorio('SRL');
-    expect(component.form.controls.constitucionFile.invalid).toBe(true);
-
-    component.form.controls.companyType.setValue('UNIPERSONAL');
-
-    expect(component.form.controls.constitucionFile.valid).toBe(true);
-    expect(component.form.controls.poderFile.valid).toBe(true);
-  });
-
-  it('si una subida no se confirma, el alta no sale y dice por qué', () => {
-    completarLoObligatorio();
-
-    component.submit();
-    responderCatalogos(http);
-    atenderSubida(http, true);
-
-    http.expectNone((p) => p.url.endsWith('/iam/auth/register-organization'));
-    expect(component.enviada()).toBe(false);
-    expect(component.mensajeDeError()).toContain('No pudimos confirmar la carga del PDF');
-  });
-
-  it('en el reintento no repite las subidas que ya salieron', () => {
-    completarLoObligatorio();
-    component.submit();
-    responderCatalogos(http);
-    atenderSubida(http); // nit.pdf, confirmada
-    atenderSubida(http, true); // seprec.pdf, sin confirmar: corta acá
-
-    // El catálogo ya quedó memoizado: el reintento no lo vuelve a pedir.
-    component.submit();
-    // Sólo las tres que faltan: `nit.pdf` ya tiene su `fileId`.
-    expect([atenderSubida(http), atenderSubida(http), atenderSubida(http)]).toEqual([
-      'seprec.pdf',
-      'licencia.pdf',
-      'sedes.pdf',
+    expect(pagina('representante')?.campos.map((c) => c.key)).toEqual([
+      'legalRepName',
+      'legalRepEmail',
+      'powerOfAttorneyFileId',
     ]);
-    altaPendiente(http).flush({ ownerUserId: 'u', status: 's', emailVerificationSent: true });
-
-    expect(component.enviada()).toBe(true);
+    expect(pagina('documentos')?.campos.map((c) => c.key)).not.toContain('powerOfAttorneyFileId');
   });
 
-  it('si el catálogo no trae un código que el alta necesita, no sube ni manda nada', () => {
+  it('con papeles a medias no viaja el bloque: el DTO lo pide todo o nada', () => {
     completarLoObligatorio();
+    component.registrarDocumento('healthAuthorityCertificateFileId', 'f-sedes');
 
-    component.submit();
-    responderCatalogos(http, [CODIGOS_DE_DIAGNOSTICO.modalidades.laboratorio]);
+    const cuerpo = enviarConExito();
 
-    http.expectNone((p) => p.url.endsWith('/iam/auth/upload-registration-document'));
-    http.expectNone((p) => p.url.endsWith('/iam/auth/register-organization'));
-    expect(component.enviada()).toBe(false);
-    expect(component.mensajeDeError()).toContain('No pudimos cargar los catálogos');
+    expect(cuerpo.organization).not.toHaveProperty('legalDocuments');
   });
-
-  it('un rechazo de la API se muestra y deja reintentar', () => {
-    completarLoObligatorio();
-
-    component.submit();
-    responderCatalogos(http);
-    for (let i = 0; i < 4; i += 1) {
-      atenderSubida(http);
-    }
-    altaPendiente(http).flush(
-      { statusCode: 422, code: 'PRECONDITION_FAILED', message: 'Falta la escritura de constitución' },
-      { status: 422, statusText: 'Unprocessable Entity' },
-    );
-
-    expect(component.enviada()).toBe(false);
-    expect(component.mensajeDeError()).not.toBeNull();
-    expect(component.enviando()).toBe(false);
-  });
-
-  it('las gerencias viajan sólo si están las tres completas', () => {
-    completarLoObligatorio();
-    component.form.patchValue({
-      generalManagerName: 'Luis Vaca',
-      generalManagerPhone: '+591 70011111',
-      generalManagerEmail: 'luis@labsur.test',
-    });
-
-    component.submit();
-    const { cuerpo } = atenderElEnvio(4);
-
-    expect(cuerpo.organization.executives).toBeUndefined();
-  });
-
-  it('con las tres gerencias completas viajan en el alta', () => {
-    completarLoObligatorio();
-    component.form.patchValue({
-      generalManagerName: 'Luis Vaca',
-      generalManagerPhone: '+591 70011111',
-      generalManagerEmail: 'luis@labsur.test',
-      salesManagerName: 'Rosa Cruz',
-      salesManagerPhone: '+591 70022222',
-      salesManagerEmail: 'rosa@labsur.test',
-      marketingManagerName: 'Pedro Roca',
-      marketingManagerPhone: '+591 70033333',
-      marketingManagerEmail: 'pedro@labsur.test',
-    });
-
-    component.submit();
-    const { cuerpo } = atenderElEnvio(4);
-
-    expect(Object.keys(cuerpo.organization.executives)).toEqual([
-      'generalManager',
-      'commercialManager',
-      'marketingManager',
-    ]);
-  });
-
-  it('el documento del representante es obligatorio: la API lo exige', () => {
-    completarLoObligatorio();
-    component.form.controls.legalRepIdNumber.setValue('');
-
-    component.submit();
-
-    expect(component.enviada()).toBe(false);
-  });
-
-  it('el NIT en PDF frena el alta: viaja junto con los otros papeles', () => {
-    completarLoObligatorio();
-    component.updateAttachment('nitFile', []);
-
-    component.submit();
-
-    expect(component.enviada()).toBe(false);
-  });
-
-  it.each(['seprecFile', 'licenciaFile', 'sedesFile'] as const)(
-    'sin %s no hay laboratorio publicable: frena el alta',
-    (clave) => {
-      completarLoObligatorio();
-      component.form.controls[clave].setValue(null);
-
-      component.submit();
-
-      expect(component.enviada()).toBe(false);
-    },
-  );
-
-  it.each(['constitucionFile', 'poderFile'] as const)(
-    '%s no frena: una unipersonal no tiene constitución ni poder',
-    (clave) => {
-      completarLoObligatorio();
-      component.form.controls[clave].setValue(null);
-
-      component.submit();
-      atenderElEnvio(4);
-
-      expect(component.enviada()).toBe(true);
-    },
-  );
 
   it('los datos de los tres cargos son opcionales', () => {
     completarLoObligatorio();
 
-    component.submit();
-    atenderElEnvio(4);
+    enviarConExito();
 
     // Ninguno de los nueve campos de gerencia se tocó, y el alta sale igual.
-    expect(component.form.controls.generalManagerName.value).toBe('');
+    expect(component.form.controls.generalManagerName.value.name).toBe('');
     expect(component.form.controls.salesManagerEmail.value).toBe('');
     expect(component.form.controls.marketingManagerPhone.value).toBe('');
-    expect(component.enviada()).toBe(true);
+    expect(component.registered()).toBe(true);
+  });
+
+  it('los tres cargos completos viajan como executives, con la comercial en commercialManager', () => {
+    completarLoObligatorio();
+    component.form.patchValue({
+      generalManagerName: { name: 'Luis', lastName: 'Vaca' },
+      generalManagerPhone: '+591 70000001',
+      generalManagerEmail: 'general@labsur.test',
+      salesManagerName: { name: 'Rosa', lastName: 'Justiniano' },
+      salesManagerPhone: '+591 70000002',
+      salesManagerEmail: 'ventas@labsur.test',
+      marketingManagerName: { name: 'Iván', lastName: 'Suárez' },
+      marketingManagerPhone: '+591 70000003',
+      marketingManagerEmail: 'marketing@labsur.test',
+    });
+
+    const cuerpo = enviarConExito();
+
+    expect(cuerpo.organization['executives']).toEqual({
+      generalManager: { fullName: 'Luis Vaca', phone: '+591 70000001', email: 'general@labsur.test' },
+      commercialManager: {
+        fullName: 'Rosa Justiniano',
+        phone: '+591 70000002',
+        email: 'ventas@labsur.test',
+      },
+      marketingManager: {
+        fullName: 'Iván Suárez',
+        phone: '+591 70000003',
+        email: 'marketing@labsur.test',
+      },
+    });
   });
 
   it('opcional no es «cualquier cosa»: un correo de gerente mal escrito frena', () => {
@@ -403,7 +314,7 @@ describe('RegisterLaboratory', () => {
 
     component.submit();
 
-    expect(component.enviada()).toBe(false);
+    expect(component.registered()).toBe(false);
   });
 
   it('el NIT sólo acepta números', () => {
@@ -412,35 +323,101 @@ describe('RegisterLaboratory', () => {
 
     component.submit();
 
-    expect(component.enviada()).toBe(false);
+    expect(component.registered()).toBe(false);
   });
 
-  /* --- los adjuntos ------------------------------------------------------ */
+  it('el punto de la central y las sucursales con nombre viajan en diagnosticUnit', () => {
+    completarLoObligatorio();
+    component.gpsCentral.set({ lat: -17.7833, lng: -63.1821 });
+    component.agregarSucursal();
+    component.agregarSucursal();
+    const [conMapa, sinNombre] = component.sucursales();
+    component.escribirNombreDeSucursal(conMapa!.id, 'Equipetrol');
+    component.escribirDireccionDeSucursal(conMapa!.id, 'Av. San Martín 456');
+    component.fijarGpsDeSucursal(conMapa!.id, { lat: -17.76, lng: -63.19 });
+    component.escribirDireccionDeSucursal(sinNombre!.id, 'Calle sin nombre de sucursal');
 
-  it('guarda el archivo elegido con su nombre y su peso', () => {
-    component.updateAttachment('sedesFile', [PDF()]);
+    const cuerpo = enviarConExito();
 
-    expect(component.adjuntoDe('sedesFile')).toEqual({
-      archivo: 'sedes.pdf',
-      pesoBytes: 120_000,
+    expect(cuerpo.organization.diagnosticUnit.primarySite.address).toEqual({
+      lines: ['Av. Cañoto esq. Ballivián 234'],
+      latitude: -17.7833,
+      longitude: -63.1821,
     });
-    expect(component.errorAdjunto()).toBeNull();
+    // La fila sin nombre todavía no es una sucursal: no viaja.
+    expect(cuerpo.organization.diagnosticUnit.branches).toEqual([
+      { name: 'Equipetrol', addressLines: ['Av. San Martín 456'], latitude: -17.76, longitude: -63.19 },
+    ]);
   });
 
-  it('quitar un adjunto lo saca', () => {
-    component.updateAttachment('sedesFile', [PDF()]);
+  it('las sucursales subidas en lote viajan con descripción, enlace y el punto que traía el enlace', () => {
+    completarLoObligatorio();
+    component.agregarSucursalesEnLote([
+      {
+        name: 'Norte',
+        description: 'Planta baja',
+        locationUrl: 'https://www.google.com/maps?q=-17.76,-63.19',
+        address: 'Av. Banzer 100',
+        code: '',
+        coordinates: { latitude: -17.76, longitude: -63.19 },
+      },
+      {
+        name: 'Sur',
+        description: '',
+        locationUrl: 'https://maps.app.goo.gl/abc',
+        address: '',
+        code: '',
+        coordinates: null,
+      },
+    ]);
 
-    component.updateAttachment('sedesFile', []);
+    expect(component.nombresDeSucursales()).toEqual(['Norte', 'Sur']);
+    const cuerpo = enviarConExito();
 
-    expect(component.adjuntoDe('sedesFile')).toBeNull();
-    expect(component.errorAdjunto()).toBeNull();
+    expect(cuerpo.organization.diagnosticUnit.branches).toEqual([
+      {
+        name: 'Norte',
+        addressLines: ['Av. Banzer 100'],
+        latitude: -17.76,
+        longitude: -63.19,
+        description: 'Planta baja',
+        locationUrl: 'https://www.google.com/maps?q=-17.76,-63.19',
+      },
+      { name: 'Sur', addressLines: [], locationUrl: 'https://maps.app.goo.gl/abc' },
+    ]);
   });
 
-  // El rechazo por formato y por peso, el vaciado del `<input>` y el peso
-  // legible se probaban acá sobre métodos que ninguna plantilla llamaba desde
-  // que los adjuntos pasaron a `app-file-input`. Esas pruebas se retiraron con
-  // ese código: quien rechaza y quien formatea el peso es la molécula, y lo
-  // prueba su propio spec.
+  it('mientras se envía, un segundo clic no duplica el alta', () => {
+    completarLoObligatorio();
+
+    const peticion = enviarYCapturar();
+    component.submit();
+
+    expect(component.isSubmitting()).toBe(true);
+    peticion.flush(ALTA_ACEPTADA, { status: 201, statusText: 'Created' });
+    expect(component.isSubmitting()).toBe(false);
+  });
+
+  it('un 409 por correo repetido se muestra y no da la cuenta por creada', async () => {
+    completarLoObligatorio();
+
+    enviarYCapturar().flush(
+      {
+        statusCode: 409,
+        code: 'CONFLICT',
+        message: 'Ya existe una cuenta con ese correo',
+        requestId: 'req-409',
+      },
+      { status: 409, statusText: 'Conflict' },
+    );
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(component.registered()).toBe(false);
+    expect(component.errorMessage()).toContain('Ya existe una cuenta con ese correo');
+    const alerta = fixture.debugElement.query(By.css('[data-testid="registro-lab-error"]'));
+    expect(alerta).not.toBeNull();
+  });
 
   /* --- sucursales -------------------------------------------------------- */
 
@@ -458,6 +435,8 @@ describe('RegisterLaboratory', () => {
       {
         id: primera!.id,
         nombre: 'Equipetrol',
+        descripcion: '',
+        urlUbicacion: '',
         direccion: 'Av. San Martín 456',
         gps: { lat: -17.78, lng: -63.18 },
       },
@@ -491,19 +470,20 @@ describe('RegisterLaboratory', () => {
 
   /* --- la pantalla ------------------------------------------------------- */
 
-  it('al enviarse muestra que quedó una solicitud pendiente de aprobación', async () => {
+  it('con el 201 muestra la cuenta creada y pide revisar el correo', async () => {
     completarLoObligatorio();
 
-    component.submit();
-    atenderElEnvio(4);
+    enviarConExito();
+    fixture.detectChanges();
     await fixture.whenStable();
     fixture.detectChanges();
 
     const exito = fixture.debugElement.query(By.css('[data-testid="registro-lab-exito"]'));
     expect(exito).not.toBeNull();
-    // Dice «solicitud» porque la cuenta queda pendiente de verificación: ya existe
-    // —el dueño puede entrar— pero el laboratorio no se publica hasta aprobarla.
-    expect((exito.nativeElement as HTMLElement).textContent).toContain('solicitud');
+    expect((exito.nativeElement as HTMLElement).textContent).toContain('Tu cuenta está lista');
+    const texto = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(texto).toContain('revisá tu bandeja de entrada');
+    expect(texto).toContain('pendiente de aprobación');
   });
 
   it('mientras no se envía, el formulario está a la vista', () => {
@@ -592,4 +572,111 @@ describe('RegisterLaboratory', () => {
       expect(errorDe(campo)).toBe('Escribí la dirección legal de la central.');
     });
   });
+
+  // D2 replaces mandatory papers in the older test branch. Upload and retry
+  // remain covered through the shared pre-upload contract used by this screen.
+  describe('document uploads with optional D2 registration', () => {
+    const documentKeys: readonly ClaveDeDocumentoDelAlta[] = [
+      'constitutionFileId',
+      'taxIdentifierFileId',
+      'commerceRegistryFileId',
+      'operatingLicenseFileId',
+      'healthAuthorityCertificateFileId',
+      'powerOfAttorneyFileId',
+    ];
+
+    function uploads() {
+      return component as unknown as {
+        subirDocumento: PdfUploader;
+        recordarDocumento(key: ClaveDeDocumentoDelAlta, document: UploadedDocument): void;
+        documentoInicialDe(key: ClaveDeDocumentoDelAlta): UploadedDocument | null;
+      };
+    }
+
+    const uploaded: UploadedDocument = {
+      fileId: 'file-nit',
+      originalName: 'nit.pdf',
+      sizeBytes: 3,
+      mimeType: 'application/pdf',
+    };
+
+    it.each(['SRL', 'UNIPERSONAL'])('keeps all six papers optional for %s', (companyType) => {
+      completarLoObligatorio();
+      component.form.controls.companyType.setValue(companyType);
+      for (const key of documentKeys) {
+        expect(component.form.controls[key].value).toBe('');
+        expect(component.form.controls[key].valid).toBe(true);
+      }
+      expect(component.form.valid).toBe(true);
+      const body = enviarConExito();
+      expect(body.organization).not.toHaveProperty('legalDocuments');
+      expect(body.organization['legalRepresentative']).not.toHaveProperty('powerOfAttorneyFileId');
+      expect(body.organization['legalRepresentative']).not.toHaveProperty('idNumber');
+    });
+
+    it('uploads the PDF before registration and preserves its response', async () => {
+      const file = new File(['pdf'], 'nit.pdf', { type: 'application/pdf' });
+      const result = lastValueFrom(uploads().subirDocumento(file));
+      const request = http.expectOne('/iam/auth/upload-registration-document');
+      expect(request.request.method).toBe('POST');
+      expect((request.request.body as FormData).get('file')).toBe(file);
+      request.flush(uploaded);
+      expect(await result).toMatchObject({ body: uploaded });
+      http.expectNone(RUTA_ALTA);
+      expect(component.registered()).toBe(false);
+    });
+
+    it('keeps confirmed metadata when another upload fails and is retried', async () => {
+      uploads().recordarDocumento('taxIdentifierFileId', uploaded);
+      component.registrarDocumento('taxIdentifierFileId', uploaded.fileId);
+      const file = new File(['pdf'], 'sedes.pdf', { type: 'application/pdf' });
+      const first = lastValueFrom(uploads().subirDocumento(file));
+      const failure = expect(first).rejects.toMatchObject({ status: 422 });
+      http.expectOne('/iam/auth/upload-registration-document').flush(null, {
+        status: 422,
+        statusText: 'Unprocessable Entity',
+      });
+      await failure;
+      expect(component.form.controls.taxIdentifierFileId.value).toBe(uploaded.fileId);
+      expect(uploads().documentoInicialDe('taxIdentifierFileId')).toEqual(uploaded);
+      expect(component.form.controls.healthAuthorityCertificateFileId.value).toBe('');
+      http.expectNone(RUTA_ALTA);
+      const retry = lastValueFrom(uploads().subirDocumento(file));
+      const request = http.expectOne('/iam/auth/upload-registration-document');
+      expect((request.request.body as FormData).get('file')).toBe(file);
+      request.flush({ ...uploaded, fileId: 'file-sedes', originalName: file.name });
+      await retry;
+      expect(uploads().documentoInicialDe('taxIdentifierFileId')).toEqual(uploaded);
+    });
+
+    it('remembers name and size and clears only the removed paper', () => {
+      uploads().recordarDocumento('taxIdentifierFileId', uploaded);
+      component.registrarDocumento('taxIdentifierFileId', uploaded.fileId);
+      const other = { ...uploaded, fileId: 'file-sedes', originalName: 'sedes.pdf' };
+      uploads().recordarDocumento('healthAuthorityCertificateFileId', other);
+      component.registrarDocumento('healthAuthorityCertificateFileId', other.fileId);
+      expect(uploads().documentoInicialDe('taxIdentifierFileId')).toEqual(uploaded);
+      component.registrarDocumento('taxIdentifierFileId', null);
+      expect(component.form.controls.taxIdentifierFileId.value).toBe('');
+      expect(uploads().documentoInicialDe('taxIdentifierFileId')).toBeNull();
+      expect(uploads().documentoInicialDe('healthAuthorityCertificateFileId')).toEqual(other);
+    });
+
+    it('allows registration to be retried after a rejection without re-uploading papers', () => {
+      completarLoObligatorio();
+      uploads().recordarDocumento('taxIdentifierFileId', uploaded);
+      component.registrarDocumento('taxIdentifierFileId', uploaded.fileId);
+      enviarYCapturar().flush({ message: 'Rejected', requestId: 'test-retry' }, {
+        status: 409,
+        statusText: 'Conflict',
+      });
+      expect(component.registered()).toBe(false);
+      expect(component.isSubmitting()).toBe(false);
+      enviarConExito();
+      expect(component.registered()).toBe(true);
+      expect(uploads().documentoInicialDe('taxIdentifierFileId')).toEqual(uploaded);
+      http.expectNone('/iam/auth/upload-registration-document');
+    });
+  });
+
 });

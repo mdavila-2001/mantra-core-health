@@ -1,3 +1,4 @@
+import { environment } from '../../../../../environments/environment';
 import { readFileSync } from 'node:fs';
 
 import { provideHttpClient } from '@angular/common/http';
@@ -20,6 +21,7 @@ import type { CartState } from '../../../../core/data-access/pharmacy-cart/pharm
 import { CartStore } from '../../../../core/data-access/pharmacy-cart/cart.store';
 import { PharmacyOrdersClient } from '../../../../core/data-access/pharmacy-orders/pharmacy-orders.client';
 import { SessionStore } from '../../../../core/auth/session.store';
+import { SAMPLE_DATA_ENABLED } from '../../../../core/mock/sample-data';
 import { DialogService } from '../../../../shared/components/molecules/dialog/dialog-service';
 import { CARGADOR_DE_LEAFLET } from '../../../../shared/components/organisms/map/map';
 import type { CargadorDeLeaflet } from '../../../../shared/components/organisms/map/map';
@@ -250,11 +252,21 @@ class MemoriaCartStorage implements CartStorage {
 }
 
 describe('WhereToBuy', () => {
+  // Las campañas de demostración sólo existen con el interruptor encendido
+  // (`environment.campaignsDemo`, apagado fuera de `demo`): estas pruebas miden
+  // el motor de mecánicas sobre ese paquete sembrado.
+  const campanasDemoOriginal = environment.campaignsDemo;
+  beforeEach(() => Object.assign(environment, { campaignsDemo: true }));
+  afterEach(() => Object.assign(environment, { campaignsDemo: campanasDemoOriginal }));
+
   let harness: RouterTestingHarness;
   let http: HttpTestingController;
   let getCurrentPosition: ReturnType<typeof vi.fn>;
+  /** Maqueta (`true`) o API real (`false`); se lee al crear la pantalla. */
+  let sampleData: boolean;
 
   beforeEach(() => {
+    sampleData = true;
     // jsdom no trae geolocalización: se cuelga una espía para poder afirmar
     // que NADIE la llama hasta que se aprieta el botón.
     getCurrentPosition = vi.fn();
@@ -276,6 +288,7 @@ describe('WhereToBuy', () => {
           provide: CARGADOR_DE_LEAFLET,
           useValue: (() => Promise.resolve(leafletDoblado())) as CargadorDeLeaflet,
         },
+        { provide: SAMPLE_DATA_ENABLED, useFactory: () => sampleData },
       ],
     });
     http = TestBed.inject(HttpTestingController);
@@ -349,6 +362,26 @@ describe('WhereToBuy', () => {
     expect(pestanas[0]?.getAttribute('aria-selected')).toBe('true');
     // Y el panel activo es el de farmacias, no una promesa.
     expect(texto()).toContain('Sucursal Centro');
+  });
+
+  it('muestra las campañas de la farmacia con su etiqueta y pliega las que sobran', async () => {
+    await montar();
+    responderHastaProductos();
+    http.expectOne((r) => r.url === '/pharmacy-inventory/availability').flush(DISPONIBILIDAD_FIXTURE);
+    harness.detectChanges();
+
+    const sede = harness.routeNativeElement?.querySelector('.compra__sede');
+    const visibles = sede?.querySelectorAll('[data-testid="compra-promos"] > li') ?? [];
+    // Tres a la vista, cada una con su etiqueta de mecánica y un enlace a su ficha.
+    expect(visibles).toHaveLength(3);
+    for (const fila of Array.from(visibles)) {
+      expect(fila.querySelector('app-badge')?.textContent?.trim()).not.toBe('');
+      expect(fila.querySelector('a[href^="/promotions/"]')).not.toBeNull();
+    }
+    // El resto queda a un toque y no se pierde ningún enlace.
+    const mas = sede?.querySelector('[data-testid="compra-mas-promos"]');
+    expect(mas?.querySelector('summary')?.textContent).toMatch(/Ver \d+ promociones? más/);
+    expect(mas?.querySelectorAll('a[href^="/promotions/"]').length).toBeGreaterThan(0);
   });
 
   it('recorre el contrato E2 entero y pinta completas primero, sin coordenadas', async () => {
@@ -850,6 +883,23 @@ describe('WhereToBuy', () => {
     harness.detectChanges();
   }
 
+  it('contra la API real no ofrece la variante con seguro: la lista es la de la consulta', async () => {
+    sampleData = false;
+    await montarConTresSedes();
+
+    expect(consultar(byTestId('compra-variante-seguro'))).toBeNull();
+    expect(consultar(byTestId('compra-seguro'))).toBeNull();
+    expect(texto()).not.toContain('Demostración');
+    expect(todas(byTestId('compra-item-seguro'))).toHaveLength(0);
+    // Lo que sí es de la API sigue igual: las tres sedes y el orden.
+    expect(sedesEnPantalla()).toEqual([
+      'Farmacia Andina · Sucursal Centro',
+      'Farmacia del Sur · Sucursal Plan Tres Mil',
+      'Farmacia del Sur · Sucursal Norte',
+    ]);
+    expect(consultar('[data-testid="compra-orden"]')).not.toBeNull();
+  });
+
   it('sin seguro: abre con el orden del backend y la tarjeta no habla del seguro', async () => {
     await montarConTresSedes();
 
@@ -968,7 +1018,9 @@ describe('WhereToBuy', () => {
       const cobertura =
         tarjeta?.querySelector('[data-testid="compra-cobertura-seguro"]')?.textContent?.trim() ??
         '';
-      expect(tarjeta?.querySelector('app-badge')?.textContent?.trim()).toBe(estado);
+      // El badge de estado vive en las acciones de la tarjeta: las campañas de la
+      // farmacia también llevan su `app-badge` y ya no es el primero del DOM.
+      expect(tarjeta?.querySelector('.compra__acciones app-badge')?.textContent?.trim()).toBe(estado);
       expect(detalle.startsWith(cobertura)).toBe(true);
     }
     expect(pines[0].popup?.querySelector('.mapa__popup-estado')?.textContent).toBe(
@@ -1413,3 +1465,8 @@ describe('el pedido lleva la receta (carril 43 · H5.S2)', () => {
     expect(cuerpo.medicationRequestId).toBeUndefined();
   });
 });
+
+/** El selector de un `data-testid` ya existente en la plantilla. */
+function byTestId(id: string): string {
+  return `[data-testid="${id}"]`;
+}

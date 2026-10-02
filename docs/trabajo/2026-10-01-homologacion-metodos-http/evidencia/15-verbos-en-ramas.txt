@@ -1,0 +1,23 @@
+Verbo y URL de cada cliente real, leídos de `git show <rama>:<archivo>` (sin la subruta /sign)
+== origin/mockup
+  reacciones             PUT /community/reactions
+  versiones de nota      PUT /charts/notes/:noteId/versions
+  preferencias           GET /notifications/preferences/me; PUT /notifications/preferences/me
+  estado de pago         PUT /scheduling/bookings/:bookingId/payment-state
+  protocol-configs       POST /auth-providers/identity-providers/:providerId/protocol-configs
+  sedes del profesional  DELETE /practitioners/me/sites/:siteId; GET /practitioners/:practitionerProfileId/sites; PATCH /practitioners/me/sites/:siteId; POST /practitioners/me/sites; PUT /practitioners/me/sites/:siteId/bank-qr; PUT /practitioners/me/sites/:siteId/logo
+== origin/test
+  reacciones             PUT /community/reactions
+  versiones de nota      PUT /charts/notes/:noteId/versions
+  preferencias           GET /notifications/preferences/me; PUT /notifications/preferences/me
+  estado de pago         PUT /scheduling/bookings/:bookingId/payment-state
+  protocol-configs       POST /auth-providers/identity-providers/:providerId/protocol-configs
+  sedes del profesional  DELETE /practitioners/me/sites/:siteId; GET /practitioners/:practitionerProfileId/sites; PATCH /practitioners/me/sites/:siteId; POST /practitioners/me/sites; PUT /practitioners/me/sites/:siteId/bank-qr
+== origin/dev
+  reacciones             PUT /community/reactions
+  versiones de nota      PUT /charts/notes/:noteId/versions
+  preferencias           GET /notifications/preferences/me; PUT /notifications/preferences/me
+  estado de pago         PUT /scheduling/bookings/:bookingId/payment-state
+  protocol-configs       POST /auth-providers/identity-providers/:providerId/protocol-configs
+  sedes del profesional  DELETE /practitioners/me/sites/:siteId; GET /practitioners/:practitionerProfileId/sites; PATCH /practitioners/me/sites/:siteId; POST /practitioners/me/sites; PUT /practitioners/me/sites/:siteId/bank-qr
+Verbos legados buscados (ninguno aparece): POST /community/reactions; POST …/versions; PATCH /notifications/preferences/me; POST …/payment-state; PUT …/protocol-configs; GET /practitioners/me/sites

@@ -297,6 +297,15 @@ export interface PractitionerActivity {
 export interface MonthlyCount {
   readonly month: string;
   readonly count: number;
+  /**
+   * De las `count` consultas, cuántas fueron de personas atendidas **con
+   * seguro**. Las demás —`count - insuredCount`— fueron sin seguro.
+   *
+   * Opcional: una instalación que todavía no cruza la consulta con la
+   * cobertura de la persona manda sólo el total, y el gráfico dibuja una serie
+   * en lugar de dos.
+   */
+  readonly insuredCount?: number;
 }
 
 /**
@@ -390,6 +399,13 @@ export interface OwnPractitionerProfile {
   /** A nombre de quién sale el comprobante — la razón social del NIT. */
   readonly taxHolderName?: string;
   /**
+   * Cada cuánto le factura a las aseguradoras. Ausente si no lo declaró.
+   *
+   * Sólo en la maqueta: el modelo todavía no tiene dónde guardarlo (no hay
+   * columna ni value set), así que no se inventa un concepto.
+   */
+  readonly insuranceBillingFrequency?: InsuranceBillingFrequency;
+  /**
    * Su domicilio, si lo declaró (ALV-009). Ausente y no un objeto vacío
    * cuando no hay fila vigente — mismo contrato que {@link OwnPatientProfile}.
    */
@@ -411,6 +427,9 @@ export interface OwnPractitionerProfile {
   readonly activity: PractitionerActivity;
   readonly createdAt: Date;
 }
+
+/** Cada cuánto el profesional presenta su facturación a las aseguradoras. */
+export type InsuranceBillingFrequency = 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY';
 
 /** Vínculo entre una persona del directorio y una cuenta de acceso. */
 export interface AccountLink {
@@ -1231,6 +1250,32 @@ export interface NewDependent {
 export interface DependentLinkRequestSent {
   readonly id: string;
   readonly status: 'PENDING';
+}
+
+/**
+ * A quién se le pide ser dependiente: por su CI, o por el perfil que devolvió
+ * la búsqueda por nombre.
+ *
+ * Son dos formas de señalar a la misma persona; el servidor resuelve las dos
+ * contra la misma regla (una cuenta registrada que no sea la propia).
+ */
+export type DependentLinkTarget =
+  | { readonly nationalId: string }
+  | { readonly patientProfileId: string };
+
+/**
+ * Una cuenta que coincide con el nombre buscado, para elegir a quién enviarle
+ * la solicitud.
+ *
+ * Trae lo mínimo para distinguir homónimos: el nombre y las últimas cifras del
+ * documento, nunca el documento entero. Una búsqueda por nombre no puede
+ * servir para sacar el CI de nadie.
+ */
+export interface DependentCandidate {
+  readonly patientProfileId: string;
+  readonly displayName: string;
+  /** El CI enmascarado, p. ej. `••••4521`. */
+  readonly maskedNationalId?: string;
 }
 
 /** Una solicitud que otra persona le hizo a esta cuenta, pendiente de respuesta. */

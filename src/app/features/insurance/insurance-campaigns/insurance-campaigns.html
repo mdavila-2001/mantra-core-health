@@ -19,22 +19,25 @@
   @if (showForm()) {
     <!-- Un solo formulario, en una tarjeta centrada y de ancho completo. -->
     <app-card variant="outlined" padding="lg" class="campaigns__form">
-    <form
+    @if (formError(); as message) {
+      <app-alert appAnuncio tone="error" data-testid="campaign-form-error">{{ message }}</app-alert>
+    }
+    <div data-testid="campaign-form-actions">
+    <app-paginated-form
       class="campaigns__form-body"
-      [formGroup]="form"
-      (ngSubmit)="submit()"
-      novalidate
+      [form]="form"
+      [paginas]="campaignPages()"
+      label="Nueva campaña preventiva"
+      submitLabel="Guardar campaña"
+      cancelLabel="Cancelar"
+      [pending]="submitting()"
+      (cancelado)="cancelForm()"
+      (rechazada)="markPageFields($event)"
+      (enviado)="submit()"
       data-testid="campaign-form"
     >
-      @if (formError(); as message) {
-        <app-alert appAnuncio tone="error" data-testid="campaign-form-error">{{ message }}</app-alert>
-      }
-
-      <app-form-section
-        legend="Nueva campaña preventiva"
-        description="Aparece en el panel de todos tus afiliados con cobertura vigente. La patología que elijas describe la campaña: no filtra afiliados por su historia clínica."
-      >
-        <app-form-field
+      <ng-template appCampoPersonalizado="code">
+<app-form-field
           label="Código"
           hint="Único en tu aseguradora. Mayúsculas, números y guiones, por ejemplo CMP-CARDIO-2026."
           [required]="true"
@@ -46,39 +49,43 @@
                 : ''
           "
         >
-          <app-input formControlName="code" type="text" testId="campaign-form-code" />
+          <app-input [formControl]="form.controls.code" type="text" testId="campaign-form-code" />
         </app-form-field>
-
-        <app-form-field
+      </ng-template>
+      <ng-template appCampoPersonalizado="title">
+<app-form-field
           label="Título"
           [required]="true"
           [errorMessage]="
             showError(form.controls.title) ? 'Escribí el título, de 3 a 200 caracteres.' : ''
           "
         >
-          <app-input formControlName="title" type="text" testId="campaign-form-title" />
+          <app-input [formControl]="form.controls.title" type="text" testId="campaign-form-title" />
         </app-form-field>
-
-        <app-form-field
+      </ng-template>
+      <ng-template appCampoPersonalizado="description">
+<app-form-field
           label="Descripción"
           hint="Qué incluye el chequeo y a quién le conviene. Opcional."
           [errorMessage]="
             showError(form.controls.description) ? 'La descripción admite hasta 2000 caracteres.' : ''
           "
         >
-          <app-input formControlName="description" type="text" testId="campaign-form-description" />
+          <app-input [formControl]="form.controls.description" type="text" testId="campaign-form-description" />
         </app-form-field>
-
-        <app-form-field label="Tipo de campaña" [required]="true">
+      </ng-template>
+      <ng-template appCampoPersonalizado="campaignType">
+<app-form-field label="Tipo de campaña" [required]="true">
           <app-select
-            formControlName="campaignType"
+            [formControl]="form.controls.campaignType"
             [options]="formTypeOptions"
             ariaLabel="Tipo de campaña"
             data-testid="campaign-form-type"
           />
         </app-form-field>
-
-        <app-form-field
+      </ng-template>
+      <ng-template appCampoPersonalizado="targetConditionCode">
+<app-form-field
           label="Patología que previene (CIE-10)"
           hint="Opcional, por ejemplo I10 para hipertensión. Sólo describe la campaña."
           [errorMessage]="
@@ -86,13 +93,14 @@
           "
         >
           <app-input
-            formControlName="targetConditionCode"
+            [formControl]="form.controls.targetConditionCode"
             type="text"
             testId="campaign-form-icd10"
           />
         </app-form-field>
-
-        <app-form-field
+      </ng-template>
+      <ng-template appCampoPersonalizado="copayBonusPercentage">
+<app-form-field
           label="Copago bonificado (%)"
           hint="100 significa copago Bs. 0: el afiliado no paga nada."
           [required]="true"
@@ -103,17 +111,19 @@
           "
         >
           <app-input
-            formControlName="copayBonusPercentage"
+            [formControl]="form.controls.copayBonusPercentage"
             type="number"
             testId="campaign-form-bonus"
           />
         </app-form-field>
-
-        <app-form-field label="Vigente desde" [required]="true">
-          <app-input formControlName="validFrom" type="date" testId="campaign-form-valid-from" />
+      </ng-template>
+      <ng-template appCampoPersonalizado="validFrom">
+<app-form-field label="Vigente desde" [required]="true">
+          <app-input [formControl]="form.controls.validFrom" type="date" testId="campaign-form-valid-from" />
         </app-form-field>
-
-        <app-form-field
+      </ng-template>
+      <ng-template appCampoPersonalizado="validTo">
+<app-form-field
           label="Vigente hasta"
           [required]="true"
           [errorMessage]="
@@ -124,17 +134,12 @@
               : ''
           "
         >
-          <app-input formControlName="validTo" type="date" testId="campaign-form-valid-to" />
+          <app-input [formControl]="form.controls.validTo" type="date" testId="campaign-form-valid-to" />
         </app-form-field>
-      </app-form-section>
-
-      <app-form-section
-        legend="Aliados"
-        description="Quién financia la campaña (importadora o fabricante) y dónde se atiende el afiliado (laboratorio, farmacia o centro)."
-      >
-        <div formArrayName="partners" class="campaigns__partners">
-          @for (group of partners.controls; track group; let i = $index) {
-            <div class="campaigns__partner" [formGroupName]="i" data-testid="campaign-form-partner">
+      </ng-template>
+      @for (group of partners.controls; track group; let i = $index) {
+        <ng-template [appCampoPersonalizado]="'partners.' + i">
+            <div class="campaigns__partner" [formGroup]="group" data-testid="campaign-form-partner">
               <app-form-field label="Rol">
                 <app-select
                   formControlName="role"
@@ -179,9 +184,6 @@
                 Quitar
               </button>
             </div>
-          }
-        </div>
-
         <button
           app-button
           type="button"
@@ -191,23 +193,17 @@
         >
           Sumar otro aliado
         </button>
-      </app-form-section>
-
+        </ng-template>
+      }
+      <ng-template appCampoPersonalizado="activate">
       <app-checkbox
-        formControlName="activate"
+        [formControl]="form.controls.activate"
         label="Activar al crear: tus afiliados la ven desde ya"
         data-testid="campaign-form-activate"
       />
-
-      <app-form-actions
-        data-testid="campaign-form-actions"
-        submitLabel="Guardar campaña"
-        cancelLabel="Cancelar"
-        [pending]="submitting()"
-        (submitted)="submit()"
-        (cancelled)="cancelForm()"
-      />
-    </form>
+      </ng-template>
+    </app-paginated-form>
+    </div>
     </app-card>
   }
 

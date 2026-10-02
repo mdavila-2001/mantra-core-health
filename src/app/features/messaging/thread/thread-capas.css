@@ -25,36 +25,11 @@
   box-shadow: var(--sombra-2);
 }
 
-.hilo__reenvio {
-  cursor: default;
-}
-
-.hilo__reenvio-caja {
-  inline-size: min(24rem, 100%);
-  max-block-size: 80vh;
-  display: flex;
-  flex-direction: column;
-  border-radius: var(--r-menu);
-  background: var(--sup-tarjeta);
-  box-shadow: var(--sombra);
-  overflow: hidden;
-}
-
-.hilo__reenvio-titulo {
-  margin: 0;
-  padding: var(--e4) var(--e4) var(--e2);
-  font-family: var(--f-titulo);
-  font-size: var(--fs-body-lg);
-  font-weight: 700;
-  color: var(--tinta-marca);
-}
-
+/* La lista va dentro de `app-content-dialog`, que ya pone el título, el
+   padding y el botón de salida: acá sólo queda la fila de cada destino. */
 .hilo__reenvio-lista {
-  flex: 1 1 auto;
-  min-block-size: 0;
-  overflow-y: auto;
   margin: 0;
-  padding: 0 var(--e2);
+  padding: 0;
   list-style: none;
 }
 
@@ -78,18 +53,6 @@
   background: var(--sup-inset);
 }
 
-.hilo__reenvio-cancelar {
-  margin: var(--e2) var(--e4) var(--e4);
-  align-self: flex-end;
-  padding: var(--e2) var(--e4);
-  border: 1px solid var(--filete);
-  border-radius: var(--r-pill);
-  background: none;
-  color: var(--tinta-2);
-  font: inherit;
-  font-weight: 600;
-  cursor: pointer;
-}
 /* --- El menú del mensaje ------------------------------------------------- */
 
 .hilo__mas-mensaje {
@@ -200,42 +163,205 @@
 
 /* --- El visor de imágenes ------------------------------------------------ */
 
-.hilo__visor {
-  position: fixed;
-  inset: 0;
-  z-index: 60;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: var(--e6);
-  background: var(--velo);
-  cursor: zoom-out;
-}
-
-.hilo__visor img {
+/* La imagen entera dentro del modal del sistema: nunca más ancha que el panel
+   ni más alta que la pantalla, sin deformarse. */
+.hilo__visor-imagen {
+  display: block;
   max-inline-size: 100%;
-  max-block-size: 100%;
+  max-block-size: 70dvh;
+  margin-inline: auto;
   border-radius: var(--r-menu);
-  box-shadow: var(--sombra);
+  object-fit: contain;
 }
 
-.hilo__visor-cerrar {
+/* --- Reacciones ----------------------------------------------------------- */
+
+/* La burbuja que las lleva se hace lugar abajo: las reacciones cuelgan del
+   borde y, sin este margen, pisarían el mensaje de más abajo. */
+.hilo__burbuja.tiene-reacciones {
+  margin-block-end: 14px;
+}
+
+.hilo__reacciones {
   position: absolute;
-  inset-block-start: var(--e4);
-  inset-inline-end: var(--e4);
+  inset-block-end: -13px;
+  inset-inline-start: 8px;
+  display: flex;
+  gap: 3px;
+  z-index: 1;
+}
+
+.hilo__burbuja.is-propio .hilo__reacciones {
+  inset-inline-start: auto;
+  inset-inline-end: 8px;
+}
+
+.hilo__reaccion {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  inline-size: 40px;
-  block-size: 40px;
-  border: 0;
+  gap: 3px;
+  min-block-size: 24px;
+  padding: 0 7px;
+  border: 1px solid var(--filete);
   border-radius: var(--r-pill);
-  background: rgba(255, 255, 255, .16);
-  color: #fff;
+  background: var(--sup-tarjeta);
+  box-shadow: var(--sombra-1);
+  color: var(--tinta-2);
+  font: inherit;
+  font-size: var(--fs-caption);
+  line-height: 1;
   cursor: pointer;
 }
 
-.hilo__visor-cerrar svg {
-  inline-size: 20px;
-  block-size: 20px;
+.hilo__reaccion.is-mia {
+  border-color: var(--chat-no-leido);
+}
+
+.hilo__reaccion:focus-visible {
+  outline: 2px solid var(--anillo-foco);
+  outline-offset: 1px;
+}
+
+.hilo__reaccion-cuenta {
+  font-size: var(--fs-overline);
+  font-variant-numeric: tabular-nums;
+}
+
+/* La barra de reacciones dentro del menú del mensaje. */
+.hilo__menu--mensaje {
+  min-inline-size: 15.5rem;
+}
+
+/* Cerca del pie del hilo el menú se abre hacia arriba: hacia abajo lo cortaba
+   el borde de la pantalla. */
+.hilo__menu--arriba {
+  inset-block-start: auto;
+  inset-block-end: 20px;
+}
+
+.hilo__menu-reacciones {
+  display: flex;
+  gap: 2px;
+  padding: 2px 2px var(--e2);
+  margin-block-end: var(--e1);
+  border-block-end: 1px solid var(--filete);
+}
+
+.hilo__menu .hilo__menu-emoji {
+  inline-size: 2.1rem;
+  block-size: 2.1rem;
+  padding: 0;
+  border-radius: var(--r-pill);
+  font-size: 1.25rem;
+  line-height: 1;
+  text-align: center;
+}
+
+.hilo__menu .hilo__menu-emoji.is-mia {
+  background: var(--sup-inset);
+  box-shadow: inset 0 0 0 1.5px var(--chat-no-leido);
+}
+
+.hilo__menu .hilo__menu-emoji--mas {
+  color: var(--tinta-3);
+  font-size: 1.15rem;
+}
+
+/* «Editar» apagado, con su motivo en letra chica al lado. */
+.hilo__menu button:disabled {
+  color: var(--tinta-3);
+  cursor: not-allowed;
+}
+
+.hilo__menu button:disabled:hover {
+  background: none;
+}
+
+.hilo__menu-nota {
+  display: block;
+  font-size: var(--fs-overline);
+}
+
+/* --- Info. del mensaje ---------------------------------------------------- */
+
+.hilo__info-mensaje {
+  margin: 0 0 var(--e4);
+  padding: var(--e3);
+  border-inline-start: 3px solid var(--chat-no-leido);
+  border-radius: var(--r-ctrl);
+  background: var(--chat-cita);
+  color: var(--tinta);
+  font-size: var(--fs-caption);
+  overflow-wrap: anywhere;
+}
+
+.hilo__info {
+  display: grid;
+  gap: var(--e3);
+  margin: 0;
+}
+
+.hilo__info-persona {
+  display: grid;
+  gap: var(--e2);
+  padding-block-start: var(--e3);
+  border-block-start: 1px solid var(--filete);
+}
+
+.hilo__info-nombre {
+  margin: 0;
+  font-family: var(--f-titulo);
+  font-weight: 700;
+}
+
+.hilo__info-fila {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--e3);
+}
+
+.hilo__info-fila dt {
+  color: var(--tinta-3);
+}
+
+.hilo__info-fila dd {
+  margin: 0;
+  color: var(--tinta);
+  font-variant-numeric: tabular-nums;
+  text-align: end;
+}
+
+.hilo__info-nota {
+  color: var(--tinta-3);
+  font-size: var(--fs-overline);
+}
+
+/* --- Persona bloqueada ---------------------------------------------------- */
+
+.hilo__bloqueado {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--e4);
+  flex-wrap: wrap;
+  padding: var(--e4) var(--e5);
+  border-block-start: 1px solid var(--filete);
+  background: var(--sup-tarjeta);
+  color: var(--tinta-2);
+  font-size: var(--fs-caption);
+}
+
+.hilo__bloqueado p {
+  margin: 0;
+}
+
+.hilo__bloqueado button {
+  padding: var(--e2) var(--e4);
+  border: 1px solid var(--filete);
+  border-radius: var(--r-pill);
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
 }

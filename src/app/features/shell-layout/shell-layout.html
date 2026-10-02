@@ -355,6 +355,32 @@
           </div>
         }
 
+        <!-- Red social (pedido del cliente, 28/09/2026): arriba y para TODOS
+             los tipos de cuenta. Hasta ahora `/posts` sólo se alcanzaba sin
+             sesión —es donde `homeGuard` manda a quien no entró—, así que
+             para leer la red había que cerrar sesión. El marco público ya
+             reconoce la sesión viva (ofrece «Volver a mi panel», no «Entrar»),
+             así que basta con un enlace: no se toca la sesión.
+
+             Enlace y no botón porque navega. Lleva texto visible (ADR-0012
+             §1: «red social» no es un ícono de significado universal); en
+             pantallas angostas queda sólo el ícono y el nombre viaja en el
+             `aria-label` y el globo. -->
+        <a
+          app-button
+          data-variante="secundario"
+          data-tam="sm"
+          class="app-header__red-social"
+          routerLink="/posts"
+          data-testid="header-red-social"
+          appTooltip="Red social"
+          appTooltipPosition="bottom"
+          aria-label="Red social"
+        >
+          <app-nav-icon name="people" />
+          <span class="app-header__red-social-texto">Red social</span>
+        </a>
+
         <!-- Interruptor de tema. Volvió al encabezado a pedido del cliente
              (2026-09-18): claro/oscuro se cambia seguido y no debe exigir ir a
              Ajustes. Es el mismo `switch` sol/luna del marco público y de
@@ -424,11 +450,58 @@
           }
         </a>
 
+        <!-- Mis facturas (propietario, 30/09/2026): las facturas emitidas, para
+             TODAS las cuentas —paciente, médico y organizaciones—, por eso va
+             fuera del bloque del paciente. Qué facturas ve cada una (las que
+             le emitieron o las que emitió) lo decide la pantalla con la
+             sesión; el ícono es el mismo. Comprobante con borde dentado y no
+             la billetera de «Mis gastos»: una es un papel, la otra dinero. -->
+        <a
+          class="app-header__ajustes"
+          routerLink="/my-account/invoices"
+          data-testid="header-facturas"
+          appTooltip="Mis facturas"
+          appTooltipPosition="bottom"
+          aria-label="Mis facturas"
+        >
+          <app-nav-icon name="receipt" />
+        </a>
+
+        <!-- Mis solicitudes (propietario, 01/10/2026): lo que decidió la
+             aseguradora, para TODAS las cuentas —paciente, médico,
+             laboratorio e imagenología—, como «Mis facturas». Qué
+             solicitudes ve cada una lo decide el backend con la sesión.
+             Paraguas: el mismo ícono que dice «seguro» en el resto del menú. -->
+        <a
+          class="app-header__ajustes"
+          routerLink="/my-account/requests"
+          data-testid="header-solicitudes"
+          appTooltip="Mis solicitudes"
+          appTooltipPosition="bottom"
+          aria-label="Mis solicitudes"
+        >
+          <app-nav-icon name="umbrella" />
+        </a>
+
         <!-- El carrito de farmacia (H4.S1, carril 41/46). Es la compra del
              paciente, no una herramienta de la médica ni de otro rol: sólo se
              ofrece con `esPacienteDelCarrito()`. Mismo bloque que Chats, con
              `name="bag"` y el contador del `CartStore`. -->
         @if (esPacienteDelCarrito()) {
+          <!-- Mis gastos: la billetera abre el tablero de lo que el paciente
+               gastó en su salud (propietario, 27/09/2026). Primera de las tres
+               porque es la única que no es una compra. -->
+          <a
+            class="app-header__ajustes"
+            routerLink="/my-account/spending"
+            data-testid="header-gastos"
+            appTooltip="Mis gastos"
+            appTooltipPosition="bottom"
+            aria-label="Mis gastos"
+          >
+            <app-nav-icon name="wallet" />
+          </a>
+
           <!-- Promociones: arriba y no en el menú lateral (cliente, 25/09/2026). -->
           <a
             class="app-header__ajustes"

@@ -4,7 +4,6 @@ import { PACIENTE } from '../fixtures/personas';
 import { MockRouter, type MockMethod, type MockReply } from '../mock-router';
 import { buscarUsuario, type MockUser } from '../mock-session';
 import { registrarArchivos } from './files.handlers';
-import { registrarAuth } from './auth.handlers';
 import { registrarClinica } from './clinical.handlers';
 import { registrarConsentimientos } from './consent.handlers';
 import { registrarDiagnostico } from './diagnostics.handlers';
@@ -16,7 +15,13 @@ import { registrarVarios } from './misc.handlers';
  */
 describe('simulador · H1 sesión, cuenta y archivos', () => {
   const router = new MockRouter();
-  registrarAuth(router);
+  beforeAll(async () => {
+    // El barrido de escrituras de mock-backend cierra sesiones de todas las cuentas.
+    // Un módulo propio conserva la precondición de partida sin tocar ese barrido.
+    vi.resetModules();
+    const { registrarAuth } = await import('./auth.handlers');
+    registrarAuth(router);
+  });
   registrarArchivos(router);
   registrarClinica(router);
   registrarConsentimientos(router);
@@ -74,7 +79,14 @@ describe('simulador · H1 sesión, cuenta y archivos', () => {
       expect(despues.items.find((c) => c.id === activo.id)).toMatchObject({ state: 'WITHDRAWN' });
       expect(despues.items.find((c) => c.id === activo.id)?.withdrawnAt).toBeTruthy();
       // Retirar dos veces no es posible: ya no está activo.
-      expect(estado(call('POST', `/consent/me/consents/${activo.id}/withdraw`, {}, paciente))).toBe(412);
+      expect(call('POST', `/consent/me/consents/${activo.id}/withdraw`, {}, paciente)).toMatchObject({
+        status: 422,
+        body: {
+          statusCode: 422,
+          code: 'PRECONDITION_FAILED',
+          message: 'El consentimiento no está activo',
+        },
+      });
     });
   });
 
@@ -171,15 +183,15 @@ describe('simulador · H1 sesión, cuenta y archivos', () => {
 
   describe('cuenta propia (ID-24)', () => {
     it('cambiar la contraseña: la actual tiene que ser la vigente (422) y cierra las otras sesiones', () => {
-      // Una cuenta que ningún otro spec toca: el estado del simulador es del módulo.
+      // Cuenta sintética dentro del módulo de autenticación aislado de esta suite.
       const cuenta = buscarUsuario('visitador')!;
       call('POST', '/iam/auth/login', { email: cuenta.email, password: 'clave-original' }, null);
       const sesiones = call<{ id: string; current: boolean }[]>('GET', '/iam/me/sessions', null, cuenta) as {
         id: string;
         current: boolean;
       }[];
-      // (Otro spec del mismo módulo pudo haber cerrado las otras sesiones: no se asume cuántas hay.)
-      expect(sesiones.some((s) => s.current)).toBe(true);
+      expect(sesiones.filter((session) => session.current)).toHaveLength(1);
+      expect(sesiones.filter((session) => !session.current)).toHaveLength(1);
 
       const mala = call('POST', '/iam/auth/change-password', { currentPassword: 'otra', newPassword: 'nueva-1234' }, cuenta);
       expect(estado(mala)).toBe(422);

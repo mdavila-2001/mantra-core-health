@@ -7,9 +7,14 @@ import { ESTADO_RESERVA } from './conceptos';
  * día, y el día entero saldría «No disponible · Sin lugar».
  */
 describe('agenda de la maqueta — ids de cupo estables entre días', () => {
+  beforeEach(() => {
+    sessionStorage.removeItem('mock.agenda.reservas');
+  });
+
   afterEach(() => {
     vi.useRealTimers();
     vi.resetModules();
+    sessionStorage.removeItem('mock.agenda.reservas');
   });
 
   async function cuposCargadosEl(dia: Date): Promise<Map<string, string>> {

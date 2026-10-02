@@ -1,3 +1,4 @@
+import { environment } from '../../../../../environments/environment';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
@@ -16,6 +17,7 @@ describe('OrderInvoice over the real pharmacy-orders contract', () => {
   const ENTREGADO = uuid('pharmacy-order-3');
   let harness: RouterTestingHarness;
   let http: HttpTestingController;
+  const originalMockBackend = environment.mockBackend;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
@@ -30,7 +32,10 @@ describe('OrderInvoice over the real pharmacy-orders contract', () => {
     http = TestBed.inject(HttpTestingController);
   });
 
-  afterEach(() => http.verify());
+  afterEach(() => {
+    Object.assign(environment, { mockBackend: originalMockBackend });
+    http.verify();
+  });
 
   async function navigate(orderId: string = PHARMACY_ORDER_TEST_IDS.order): Promise<void> {
     harness = await RouterTestingHarness.create();
@@ -65,6 +70,7 @@ describe('OrderInvoice over the real pharmacy-orders contract', () => {
   });
 
   it('does not issue the demo invoice before delivery', async () => {
+    Object.assign(environment, { mockBackend: true });
     await navigate(ENTREGADO);
     http.expectOne(`/pharmacy/orders/${ENTREGADO}`).flush(
       pharmacyOrderDtoFixture({ id: ENTREGADO, status: { code: 'PINV_ORDER_LISTO_PARA_RETIRO', display: 'Listo' } }),
@@ -75,6 +81,7 @@ describe('OrderInvoice over the real pharmacy-orders contract', () => {
   });
 
   it('renders the demo invoice of a delivered order, labeled, with the internal receipt apart', async () => {
+    Object.assign(environment, { mockBackend: true });
     await navigate(ENTREGADO);
     http.expectOne(`/pharmacy/orders/${ENTREGADO}`).flush(
       pharmacyOrderDtoFixture({

@@ -113,6 +113,40 @@ describe('ShellLayout', () => {
     expect(user?.roles).toEqual(['PATIENT']);
   });
 
+  it('la cuenta de una organización se muestra como la organización, no como quien la registró', () => {
+    abrirSesion({
+      sub: 'u-1',
+      name: 'Mariela Céspedes',
+      roles: ['USER'],
+      tenants: ['t-1'],
+      tenantNames: { 't-1': 'Farmacia Vida' },
+      tenantTypes: { 't-1': 'PHARMACY' },
+      accountKind: 'ORGANIZATION',
+    });
+
+    expect(interno<() => { displayName: string } | null>('user')()?.displayName).toBe(
+      'Farmacia Vida',
+    );
+    expect(interno<() => string>('iniciales')()).toBe('FV');
+    expect(interno<() => string>('rolesLegibles')()).toBe('Farmacia');
+  });
+
+  it('una persona que trabaja en una farmacia sigue viéndose con su nombre', () => {
+    abrirSesion({
+      sub: 'u-2',
+      name: 'Luis Mercado',
+      roles: ['USER'],
+      tenants: ['t-1'],
+      tenantNames: { 't-1': 'Farmacia Vida' },
+      tenantTypes: { 't-1': 'PHARMACY' },
+      accountKind: 'PERSON',
+    });
+
+    expect(interno<() => { displayName: string } | null>('user')()?.displayName).toBe(
+      'Luis Mercado',
+    );
+  });
+
   it('sin nombre en el token cae al identificador, para que el encabezado no quede vacío', () => {
     abrirSesion({ sub: 'u-1', roles: [], tenants: ['t-1'] });
 
@@ -866,7 +900,7 @@ describe('ShellLayout', () => {
       expect(destinos).toContain('/design-system');
     });
 
-    it('la barra de la aseguradora: cinco renglones, un solo dominio plegable (2026-09-25)', () => {
+    it('la barra de la aseguradora: siete renglones sueltos, ningún plegable (2026-09-25, +1 el 2026-09-27; aplanada el 2026-10-01)', () => {
       abrirSesion({
         sub: 'u-3',
         roles: ['USER'],
@@ -881,13 +915,18 @@ describe('ShellLayout', () => {
         '/my-account',
         '/notification-center',
         '/administration/insurance',
+        '/administration/insurance-claims', // Adjudicacion real conservada de dev.
         '/administration/insurance-analytics',
+        // 2026-09-27: «Solicitudes recibidas», pedida por la propietaria.
+        '/administration/received-claims',
         // Tarea 4 · M-06: el «Módulo de promociones» del registro de procesos.
         '/administration/insurance-campaigns',
         '/administration/my-organization',
       ]);
-      expect(raiz().querySelectorAll('.app-side-nav__group').length).toBe(1);
-      expect(raiz().querySelectorAll('[data-testid="nav-sueltos"]').length).toBe(0);
+      // Pedido del propietario, 2026-10-01: «Administración» no se dibuja como
+      // desplegable para esta cuenta; sus opciones van a nivel 0, sin `<details>`.
+      expect(raiz().querySelectorAll('.app-side-nav__group').length).toBe(0);
+      expect(raiz().querySelectorAll('[data-testid="nav-sueltos"]').length).toBe(1);
     });
 
     /**
@@ -1227,6 +1266,91 @@ describe('ShellLayout', () => {
           'Carrito, 3 unidades en Farmacia Uno',
         );
       });
+    });
+
+    /**
+     * 2026-09-27 · La billetera de la cabecera abre «Mis gastos». Mismo
+     * criterio que el carrito: es del paciente, no de la médica.
+     */
+    describe('Billetera en la cabecera', () => {
+      function billetera(): HTMLAnchorElement | null {
+        return raiz().querySelector<HTMLAnchorElement>('[data-testid="header-gastos"]');
+      }
+
+      it('el paciente ve la billetera; la médica, no', () => {
+        abrirSesion({ sub: 'u-1', roles: ['PATIENT'], tenants: ['t-1'] });
+        expect(billetera()).not.toBeNull();
+
+        abrirSesion({ sub: 'u-2', roles: ['PRACTITIONER'], tenants: ['t-1'] });
+        expect(billetera()).toBeNull();
+      });
+
+      it('es un enlace a /my-account/spending con nombre accesible e ícono', () => {
+        abrirSesion({ sub: 'u-1', roles: ['PATIENT'], tenants: ['t-1'] });
+
+        expect(billetera()?.tagName).toBe('A');
+        expect(billetera()?.getAttribute('href')).toBe('/my-account/spending');
+        expect(billetera()?.getAttribute('aria-label')).toBe('Mis gastos');
+        expect(billetera()?.querySelector('app-nav-icon')).not.toBeNull();
+      });
+
+      it('no ocupa un renglón del menú lateral', () => {
+        abrirSesion({ sub: 'u-1', roles: ['PATIENT'], tenants: ['t-1'] });
+        fixture.detectChanges();
+
+        const rutas = [...raiz().querySelectorAll('[data-testid="nav-enlace"]')].map((a) =>
+          a.getAttribute('data-route'),
+        );
+        expect(rutas.length).toBeGreaterThan(0);
+        expect(rutas).not.toContain('/my-account/spending');
+      });
+    });
+
+    /**
+     * «Mis facturas» (propietario, 30/09/2026): las facturas emitidas, para
+     * todas las cuentas —paciente, médico y organizaciones (la farmacia y el
+     * laboratorio son `USER`)—, fuera del menú lateral.
+     */
+    it.each([
+      ['paciente', ['PATIENT']],
+      ['profesional', ['PRACTITIONER']],
+      ['facturación', ['BILLING']],
+      ['organización (farmacia, laboratorio)', ['USER']],
+    ])('el encabezado ofrece «Mis facturas» a %s, como enlace con ícono', (_quien, roles) => {
+      abrirSesion({ sub: 'u-1', roles, tenants: ['t-1'] });
+      fixture.detectChanges();
+
+      const facturas = raiz().querySelector<HTMLAnchorElement>('[data-testid="header-facturas"]');
+      expect(facturas?.tagName).toBe('A');
+      expect(facturas?.getAttribute('href')).toBe('/my-account/invoices');
+      expect(facturas?.getAttribute('aria-label')).toBe('Mis facturas');
+      expect(facturas?.querySelector('app-nav-icon')).not.toBeNull();
+
+      const rutas = [...raiz().querySelectorAll('[data-testid="nav-enlace"]')].map((a) =>
+        a.getAttribute('data-route'),
+      );
+      expect(rutas).not.toContain('/my-account/invoices');
+    });
+
+    it.each([
+      ['paciente', ['USER', 'PATIENT']],
+      ['profesional', ['PRACTITIONER']],
+      ['administración de plataforma', ['PLATFORM_ADMIN']],
+      ['seguridad', ['SECURITY_ADMIN']],
+      ['sin rol', []],
+    ])('el encabezado ofrece la red social a %s, como enlace a /posts', (_quien, roles) => {
+      // Pedido del cliente (28/09/2026): arriba y para todos. Enlace y no
+      // botón, y sin cerrar la sesión en el camino: `/posts` es la misma
+      // pantalla a la que `homeGuard` manda a quien no entró.
+      abrirSesion({ sub: 'u-1', name: 'Ana Salas', roles, tenants: ['t-1'] });
+
+      const red = raiz().querySelector<HTMLAnchorElement>('[data-testid="header-red-social"]');
+
+      expect(red?.tagName).toBe('A');
+      expect(red?.getAttribute('href')).toBe('/posts');
+      expect(red?.getAttribute('aria-label')).toBe('Red social');
+      expect(red?.textContent?.trim()).toBe('Red social');
+      expect(session.isAuthenticated()).toBe(true);
     });
 
     it('el encabezado ofrece el interruptor de tema junto a Ajustes', () => {

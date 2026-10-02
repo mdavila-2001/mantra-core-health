@@ -1,0 +1,1 @@
+[marcelo/feat-sincronizacion-mockup-dev-test 78982619] merge: incorporar accesibilidad y estabilizacion de origin/test (Hito 2)

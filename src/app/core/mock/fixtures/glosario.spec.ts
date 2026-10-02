@@ -11,7 +11,11 @@ import {
   terminoPorSlug,
   type ConceptoDeGlosario,
 } from './glosario';
-import { CONTEO_DE_CAPAS, TERMINOS_DE_GLOSARIO } from './glosario.generated';
+import {
+  CONTEO_DE_CAPAS,
+  DUPLICADOS_EN_INGLES,
+  TERMINOS_DE_GLOSARIO,
+} from './glosario.generated';
 
 /* ============================================================================
     El glosario generado sale del seed del backend y de `data/glossary/`, y
@@ -63,15 +67,39 @@ describe('el glosario generado desde el seed y las capas', () => {
     expect(CONTEO_DE_CAPAS['curados']).toBeGreaterThanOrEqual(69);
     expect(CONTEO_DE_CAPAS['enfermedades-atencion-primaria.ndjson']).toBeGreaterThanOrEqual(120);
     expect(CONTEO_DE_CAPAS['analisis-frecuentes.ndjson']).toBeGreaterThanOrEqual(80);
-    expect(CONTEO_DE_CAPAS['cie10cm-categorias.generated.ndjson']).toBe(1918);
+    // Las 1 918 categorías menos las que ya están escritas en castellano.
+    expect(slugsDelArchivo('cie10cm-categorias.generated.ndjson')).toHaveLength(1918);
+    expect(CONTEO_DE_CAPAS['cie10cm-categorias.generated.ndjson']).toBe(
+      1918 - DUPLICADOS_EN_INGLES.length,
+    );
 
-    // Una fila que enriquece a un curado no es un término nuevo.
+    // Una fila que enriquece a un curado no es un término nuevo, y una fila en
+    // inglés duplicada de una en castellano tampoco.
+    const descartados = new Set(DUPLICADOS_EN_INGLES.map((codigo) => `icd10cm-${codigo.toLowerCase()}`));
     for (const archivo of CAPAS) {
-      const nuevas = slugsDelArchivo(archivo).filter((slug) => !CURADOS.has(slug)).length;
+      const nuevas = slugsDelArchivo(archivo).filter(
+        (slug) => !CURADOS.has(slug) && !descartados.has(slug),
+      ).length;
       expect(CONTEO_DE_CAPAS[archivo]).toBe(nuevas);
     }
     const total = Object.values(CONTEO_DE_CAPAS).reduce((suma, n) => suma + n, 0);
     expect(TERMINOS_DE_GLOSARIO).toHaveLength(total);
+  });
+
+  it('un concepto escrito en castellano no aparece otra vez en inglés con el mismo código', () => {
+    // Auditoría del 2026-09-30: estos 14 salían dos veces en la grilla.
+    expect([...DUPLICADOS_EN_INGLES].sort()).toEqual(
+      ['A09', 'A90', 'B20', 'B86', 'C61', 'C73', 'E46', 'I10', 'J00', 'J90', 'L22', 'N10', 'R32', 'R55'],
+    );
+    const codigosEnIngles = new Set(
+      TERMINOS_DE_GLOSARIO.filter((t) => t.lang === 'en').map((t) => t.externalCode?.code),
+    );
+    const codigosEnCastellano = TERMINOS_DE_GLOSARIO.filter(
+      (t) => t.lang !== 'en' && t.externalCode?.system === 'icd10cm',
+    ).map((t) => t.externalCode?.code);
+    for (const codigo of codigosEnCastellano) {
+      expect(codigosEnIngles.has(codigo)).toBe(false);
+    }
   });
 
   it('ningún slug se repite, ni entre capas ni con el atlas', () => {

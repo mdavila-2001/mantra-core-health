@@ -1,3 +1,4 @@
+import { environment } from '../../../../../environments/environment';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 
 import type { PedidoFarmacia } from '../../../../core/data-access/pharmacy-orders/pharmacy-orders.types';
@@ -10,9 +11,8 @@ import { OrderPayment } from './order-payment';
  * y `ocupado`, y esta prueba lo demuestra usándolos todos —, y el resumen
  * del pago una vez registrado.
  *
- * Las pruebas corren con `environment.development` → `paymentDemo` encendido:
- * la pestaña QR está presente; su ausencia sin el gate vive en la plantilla
- * y se verifica en runtime, no acá.
+ * La demo de pago se activa expresamente; el caso sin demo verifica que el
+ * QR y la acción de simular no se ofrecen con la API real.
  */
 
 const PAGADO_EL = new Date('2026-08-21T18:30:00');
@@ -63,6 +63,11 @@ const PAGO_QR = {
 } as const;
 
 describe('OrderPayment', () => {
+  const originalPaymentDemo = environment.paymentDemo;
+
+  beforeEach(() => Object.assign(environment, { paymentDemo: true }));
+  afterEach(() => Object.assign(environment, { paymentDemo: originalPaymentDemo }));
+
   let fixture: ComponentFixture<OrderPayment>;
 
   function montar(abierto: PedidoFarmacia, ocupado = false): void {
@@ -95,12 +100,22 @@ describe('OrderPayment', () => {
     expect(texto()).toContain('A pagar:');
     expect(texto()).toContain('60.00 Bs');
     expect(texto()).toContain('Pagás al retirar, en la farmacia.');
-    // Las DOS pestañas existen (gate encendido en dev) y la abierta es la
+    // Las DOS pestañas existen (gate de demo activado por esta suite) y la abierta es la
     // del mostrador: sin esta aserción, un gate roto pasaría en silencio.
     const pestanas = [...elemento().querySelectorAll('[role="tab"]')].map((boton) =>
       boton.textContent?.trim(),
     );
     expect(pestanas).toEqual(['En mostrador', 'QR']);
+    expect(elemento().querySelector('[data-testid="pago-chip-demo"]')).toBeNull();
+  });
+
+  it('sin demo ofrece el pago en mostrador y no permite simular un pago', () => {
+    Object.assign(environment, { paymentDemo: false });
+    montar(pedido());
+
+    expect(texto()).toContain('Pagás al retirar, en la farmacia.');
+    expect(elemento().querySelector('[role="tab"]')).toBeNull();
+    expect(elemento().querySelector('[data-testid="pago-simular"]')).toBeNull();
     expect(elemento().querySelector('[data-testid="pago-chip-demo"]')).toBeNull();
   });
 

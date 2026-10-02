@@ -63,6 +63,13 @@ import type {
   NewWalkInAppointment,
   WalkInAppointmentCreated,
   FollowUpOrigin,
+  NewServiceHold,
+  NewServiceOffering,
+  ServiceAvailability,
+  ServiceAvailabilityQuery,
+  ServiceHold,
+  ServiceOffering,
+  ServiceOfferingChanges,
 } from './scheduling.types';
 
 /**
@@ -296,6 +303,8 @@ export class SchedulingClient {
           // campo a propósito —para no filtrar nada que el DTO no acepte— y
           // por eso agregar uno al tipo NO alcanza: hay que nombrarlo acá.
           ...(rule.gapMinutes === undefined ? {} : { gapMinutes: rule.gapMinutes }),
+          // Ídem: sólo si el médico lo cambió. Ausente ≡ solo consultas.
+          ...(rule.bookingMode === undefined ? {} : { bookingMode: rule.bookingMode }),
         })),
         ...(template.slotMinutes === undefined ? {} : { slotMinutes: template.slotMinutes }),
         ...(template.bookingPolicyId === undefined
@@ -865,12 +874,155 @@ export class SchedulingClient {
     );
   }
 
+  /* ---- servicios con duración dinámica (v4.2.40) ------------------------ */
+
+  /**
+   * `GET /scheduling/service-offerings` — los servicios que ofrece un profesional.
+   *
+   * Un paciente ve sólo lo activo y reservable; el profesional dueño ve todo lo
+   * suyo, apagado incluido. Sin `practitionerProfileId` la API devuelve las del
+   * propio profesional que pregunta.
+   */
+  listServiceOfferings(practitionerProfileId?: string): Observable<readonly ServiceOffering[]> {
+    // Un parámetro y nunca un objeto: `forbidNonWhitelisted` convierte una clave
+    // en `undefined` en un 400.
+    const params =
+      practitionerProfileId === undefined
+        ? new HttpParams()
+        : new HttpParams().set('practitionerProfileId', practitionerProfileId);
+    return this.http
+      .get<{ readonly items: readonly ServiceOffering[] }>(this.url('/scheduling/service-offerings'), {
+        params,
+      })
+      .pipe(map((body) => body.items));
+  }
+
+  /**
+   * `POST /scheduling/service-offerings` — declara cómo ofrezco un servicio.
+   *
+   * El cuerpo se arma campo a campo: un opcional en `undefined` viaja como clave
+   * declarada y el backend lo rechaza.
+   */
+  createServiceOffering(offering: NewServiceOffering): Observable<ServiceOffering> {
+    return this.http.post<ServiceOffering>(this.url('/scheduling/service-offerings'), {
+      serviceCatalogId: offering.serviceCatalogId,
+      minDurationMinutes: offering.minDurationMinutes,
+      maxDurationMinutes: offering.maxDurationMinutes,
+      ...(offering.prepMinutes === undefined ? {} : { prepMinutes: offering.prepMinutes }),
+      ...(offering.cleanupMinutes === undefined ? {} : { cleanupMinutes: offering.cleanupMinutes }),
+      ...(offering.isPatientBookable === undefined
+        ? {}
+        : { isPatientBookable: offering.isPatientBookable }),
+      ...(offering.requiresApproval === undefined
+        ? {}
+        : { requiresApproval: offering.requiresApproval }),
+      ...(offering.channel === undefined ? {} : { channel: offering.channel }),
+    });
+  }
+
+  /** `PATCH /scheduling/service-offerings/:id` — edita o apaga la oferta; los ausentes se conservan. */
+  updateServiceOffering(id: string, changes: ServiceOfferingChanges): Observable<ServiceOffering> {
+    return this.http.patch<ServiceOffering>(
+      this.url(`/scheduling/service-offerings/${encodeURIComponent(id)}`),
+      {
+        ...(changes.minDurationMinutes === undefined
+          ? {}
+          : { minDurationMinutes: changes.minDurationMinutes }),
+        ...(changes.maxDurationMinutes === undefined
+          ? {}
+          : { maxDurationMinutes: changes.maxDurationMinutes }),
+        ...(changes.prepMinutes === undefined ? {} : { prepMinutes: changes.prepMinutes }),
+        ...(changes.cleanupMinutes === undefined ? {} : { cleanupMinutes: changes.cleanupMinutes }),
+        ...(changes.isPatientBookable === undefined
+          ? {}
+          : { isPatientBookable: changes.isPatientBookable }),
+        ...(changes.requiresApproval === undefined
+          ? {}
+          : { requiresApproval: changes.requiresApproval }),
+        ...(changes.channel === undefined ? {} : { channel: changes.channel }),
+        ...(changes.isActive === undefined ? {} : { isActive: changes.isActive }),
+      },
+    );
+  }
+
+  /**
+   * `GET /scheduling/service-availability` — los horarios donde cabe el servicio.
+   *
+   * Es una lectura: no reserva nada. Un horario que se ofrece acá puede dejar de
+   * estar libre un segundo después; por eso retener ({@link placeServiceHold})
+   * lo vuelve a decidir en el servidor.
+   */
+  getServiceAvailability(query: ServiceAvailabilityQuery): Observable<ServiceAvailability> {
+    let params = new HttpParams()
+      .set('offeringId', query.offeringId)
+      .set('from', query.from.toISOString())
+      .set('to', query.to.toISOString());
+    if (query.resourceId !== undefined) {
+      params = params.set('resourceId', query.resourceId);
+    }
+    return this.http
+      .get<WireServiceAvailability>(this.url('/scheduling/service-availability'), { params })
+      .pipe(
+        map((body) => ({
+          ...body,
+          items: body.items.map((item) => ({
+            resourceId: item.resourceId,
+            startAt: new Date(item.startAt),
+            endAtMax: new Date(item.endAtMax),
+            endAtMin: new Date(item.endAtMin),
+          })),
+        })),
+      );
+  }
+
+  /**
+   * `POST /scheduling/service-offerings/:id/holds` — retiene el turno de un servicio.
+   *
+   * Crea el cupo con la duración máxima de la oferta. Se confirma con
+   * {@link confirmHold} o {@link requestHold}, igual que una consulta. Un 409
+   * dice que el horario ya no cabe: se vuelve a leer la disponibilidad.
+   */
+  placeServiceHold(offeringId: string, hold: NewServiceHold): Observable<ServiceHold> {
+    return this.http
+      .post<WireServiceHold>(
+        this.url(`/scheduling/service-offerings/${encodeURIComponent(offeringId)}/holds`),
+        {
+          resourceId: hold.resourceId,
+          startAt: hold.startAt.toISOString(),
+          ...(hold.patientProfileId === undefined ? {} : { patientProfileId: hold.patientProfileId }),
+        },
+      )
+      .pipe(
+        map((body) => ({
+          ...body,
+          expiresAt: new Date(body.expiresAt),
+          startAt: new Date(body.startAt),
+          endAt: new Date(body.endAt),
+        })),
+      );
+  }
+
   private url(path: string): string {
     return apiUrl(this.baseUrl, path);
   }
 }
 
 type WireHold = Omit<SlotHold, 'expiresAt'> & { readonly expiresAt: string };
+
+type WireServiceHold = Omit<ServiceHold, 'expiresAt' | 'startAt' | 'endAt'> & {
+  readonly expiresAt: string;
+  readonly startAt: string;
+  readonly endAt: string;
+};
+
+interface WireServiceAvailability extends Omit<ServiceAvailability, 'items'> {
+  readonly items: readonly {
+    readonly resourceId: string;
+    readonly startAt: string;
+    readonly endAtMax: string;
+    readonly endAtMin: string;
+  }[];
+}
 
 type WireCheckedIn = Omit<BookingCheckedIn, 'checkedInAt'> & { readonly checkedInAt: string };
 

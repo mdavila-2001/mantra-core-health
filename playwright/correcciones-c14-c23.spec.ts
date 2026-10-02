@@ -74,8 +74,11 @@ async function abrirCasilla(page: Page, clave: string): Promise<void> {
  * nadie la veía—. Lo destapó mirar la captura, no el test.
  */
 async function abrirLaCuadricula(page: Page): Promise<void> {
-  await abrirCasilla(page, 'notas');
+  // La nota clínica ya no es casilla: vive dentro del formulario médico, como
+  // su «Hoja en blanco» (26/09/2026).
+  await abrirCasilla(page, 'formulario');
   const modal = page.getByRole('dialog');
+  await modal.getByLabel('Qué vas a completar').selectOption({ label: 'Hoja en blanco — escribir sin campos' });
   await expect(modal.getByRole('tab', { name: 'Escribir' })).toBeVisible({ timeout: 30_000 });
   await modal.getByRole('tab', { name: 'Cuadrícula' }).click();
   await estable(page);

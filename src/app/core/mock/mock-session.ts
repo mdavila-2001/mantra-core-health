@@ -30,6 +30,11 @@ export interface MockUser {
   readonly patientProfileId?: string;
   readonly practitionerProfileId?: string;
   readonly personId: string;
+  /**
+   * Clase de cuenta que firmaría la API. Sin valor, el token no trae el claim y
+   * la sesión lo deduce (cuentas de paciente, que no pasan por esta lista).
+   */
+  readonly accountKind?: 'PERSON' | 'ORGANIZATION';
 }
 
 export const TENANT_CLINICA = uuid('tenant-clinica-los-olivos');
@@ -68,15 +73,17 @@ export const TENANT_NAMES: Readonly<Record<string, string>> = {
  * según quién entra, así que basta una tabla y `emitirAccessToken` la
  * consulta por cada tenant de la cuenta.
  */
-export const TENANT_TYPES: Readonly<Record<string, TenantTypeCode>> = {
+export const TENANT_TYPES: Readonly<Record<string, TenantTypeCode | 'DIAGNOSTIC_CENTER'>> = {
   [TENANT_CONSULTORIO]: 'PROVIDER',
   [TENANT_CLINICA]: 'PROVIDER',
   [TENANT_HOSPITAL]: 'HOSPITAL',
   [TENANT_PLATAFORMA]: 'PROVIDER',
   [TENANT_FARMACIA]: 'PHARMACY',
-  // La API real emitiría 'DIAGNOSTIC_CENTER' (directory.concepts.ts:169 de la
-  // API); el front todavía no lo tiene en TENANT_TYPE_CODES.
-  [TENANT_LABORATORIO]: 'PROVIDER',
+  // Lo que emite la API para un laboratorio dado de alta por
+  // `register-organization` (directory.concepts.ts:169 de la API). No está en
+  // `TENANT_TYPE_CODES` —esa lista es la del alta administrativa— pero sí en el
+  // claim, y es lo que abre «Recepción de muestras» en el menú.
+  [TENANT_LABORATORIO]: 'DIAGNOSTIC_CENTER',
   [TENANT_ASEGURADORA]: 'PAYER',
 };
 
@@ -112,6 +119,14 @@ export const IDS = {
   aseguradoraStaff: {
     userId: uuid('user-aseguradora-staff'),
     personId: uuid('person-aseguradora-staff'),
+  },
+  laboratorio: {
+    userId: uuid('user-laboratorio-staff'),
+    personId: uuid('person-laboratorio-staff'),
+  },
+  farmacia: {
+    userId: uuid('user-farmacia-vida'),
+    personId: uuid('person-farmacia-vida'),
   },
 } as const;
 
@@ -194,17 +209,19 @@ export const MOCK_USERS: readonly MockUser[] = [
     tenants: [TENANT_FARMACIA],
     tenantNames: TENANT_NAMES,
     personId: IDS.visitador.personId,
+    accountKind: 'PERSON',
   },
   {
     key: 'aseguradora',
     id: IDS.aseguradora.userId,
     email: 'aseguradora@alovida.mock',
     nationalId: '7001001',
-    displayName: 'Patricia Suárez · Seguros Andina',
+    displayName: 'Seguros Andina',
     roles: ['USER'],
     tenants: [TENANT_ASEGURADORA],
     tenantNames: TENANT_NAMES,
     personId: IDS.aseguradora.personId,
+    accountKind: 'ORGANIZATION',
   },
   {
     key: 'aseguradora_staff',
@@ -216,6 +233,38 @@ export const MOCK_USERS: readonly MockUser[] = [
     tenants: [TENANT_ASEGURADORA],
     tenantNames: TENANT_NAMES,
     personId: IDS.aseguradoraStaff.personId,
+    accountKind: 'PERSON',
+  },
+  {
+    // El personal del laboratorio: `USER` y nada más, como el dueño de un
+    // centro de diagnóstico que se registró solo. Su autoridad es la membresía
+    // del tenant `DIAGNOSTIC_CENTER` —la API la mira en `LabStaffGuard`—, y
+    // es la cuenta con la que la maqueta recorre la recepción de muestras.
+    key: 'laboratorio',
+    id: IDS.laboratorio.userId,
+    email: 'laboratorio@alovida.mock',
+    nationalId: '7002001',
+    displayName: 'Laboratorio Central',
+    roles: ['USER'],
+    tenants: [TENANT_LABORATORIO],
+    tenantNames: TENANT_NAMES,
+    personId: IDS.laboratorio.personId,
+    accountKind: 'ORGANIZATION',
+  },
+  {
+    // La encargada de Farmacia Vida: `USER` y la membresía del tenant
+    // `PHARMACY`, igual que la API. Es la cuenta con la que la maqueta recorre
+    // lo que hace una farmacia: su catálogo, sus pedidos y sus promociones.
+    key: 'farmacia',
+    id: IDS.farmacia.userId,
+    email: 'farmacia@alovida.mock',
+    nationalId: '7003001',
+    displayName: 'Farmacia Vida',
+    roles: ['USER'],
+    tenants: [TENANT_FARMACIA],
+    tenantNames: TENANT_NAMES,
+    personId: IDS.farmacia.personId,
+    accountKind: 'ORGANIZATION',
   },
 ];
 
@@ -280,6 +329,7 @@ export function emitirAccessToken(user: MockUser, ahora = Date.now()): string {
       tenantNames: user.tenantNames,
       ...(Object.keys(tenantTypes).length === 0 ? {} : { tenantTypes }),
       ...(user.scopedRoles === undefined ? {} : { scopedRoles: user.scopedRoles }),
+      ...(user.accountKind === undefined ? {} : { accountKind: user.accountKind }),
       ...(user.patientProfileId === undefined ? {} : { pid: user.patientProfileId }),
       ...(user.practitionerProfileId === undefined ? {} : { hpid: user.practitionerProfileId }),
       iat: Math.floor(ahora / 1000),

@@ -906,6 +906,9 @@ app-shell-layout { display: block; }
 }
 .app-header__ajustes:hover, .app-header__ajustes:focus-visible { background: var(--sup-hover, var(--sup-tarjeta)); }
 @media (prefers-reduced-motion: reduce) { .app-header__ajustes { transition: none; } }
+/* Red social: el único acceso con texto de la cabecera, porque su ícono no se
+   entiende solo. En angosto se queda en ícono (ver 21.4). */
+.app-header__red-social { flex: none; white-space: nowrap; }
 
 /* Badge de no leídos sobre el ícono de Chats (N-01, 2026-09-22), mismo
    tratamiento que `.campana__badge` de la campana: sobre el borde del
@@ -2403,6 +2406,9 @@ h1, h2, h3, .titulo-h1, .app-dialog__titulo { overflow-wrap: break-word; }
   .app-main__inner { --app-main-inline-padding: var(--e4); padding: var(--e4) var(--e4) var(--e8); }
   .app-header { padding: 0 var(--e4); }
   .pagina-indice { padding: var(--e7) var(--e4); gap: var(--e6); }
+
+  /* Red social: sólo el ícono, con el nombre en `aria-label` y globo. */
+  .app-header__red-social-texto { display: none; }
 
   /* El selector de organización se muda al cajón. En un header de 320 px no
      entra —quedaban 33 px de desborde con la hamburguesa, el buscador, el

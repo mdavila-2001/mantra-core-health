@@ -28,6 +28,63 @@
           <app-tab [label]="pestanas[0]">
             <p class="edicion__nota">Cómo te ven las personas que consultan tu perfil.</p>
 
+            <!-- El logo del consultorio: se carga y se cambia SÓLO desde acá. La misma
+                 caja que ve la ficha (en «Datos personales» y, de lectura, en
+                 «Facturación»); es lo que sale en el membrete de cada PDF. Sin
+                 logo el PDF sale igual, con el espacio vacío. -->
+            <section class="edicion__logo" data-testid="edicion-logo">
+              <h3 class="edicion__logo-titulo">Logo del consultorio</h3>
+              <p class="edicion__logo-nota">
+                Sale en el membrete de tus PDF. PNG, JPG o WEBP, hasta 2 MB. Si no cargás
+                ninguno, el espacio queda vacío y el documento se ve igual.
+              </p>
+
+              <div class="edicion__logo-cuerpo">
+                <app-logo-consultorio
+                  data-testid="edicion-logo-vista"
+                  [src]="logoVisible()"
+                />
+
+                <div class="edicion__logo-acciones">
+                  <app-file-input
+                    data-testid="edicion-logo-archivo"
+                    testId="edicion-logo-archivo"
+                    [files]="archivosDelLogo()"
+                    (filesChange)="alElegirLogo($event)"
+                    (rejected)="alRechazarLogo($event)"
+                    [accept]="formatosDelLogo"
+                    [maxSizeBytes]="maxBytesDelLogo"
+                    [maxFiles]="1"
+                    [disabled]="subiendoLogo()"
+                    [showList]="false"
+                    [showFeedback]="false"
+                    [label]="logoVisible() ? 'Cambiar logo' : 'Subir logo'"
+                    accessibleLabel="Logo del consultorio"
+                  />
+                  @if (logoVisible()) {
+                    <button
+                      app-button
+                      type="button"
+                      variant="neutral"
+                      size="sm"
+                      data-testid="edicion-logo-quitar"
+                      (clicked)="quitarLogo()"
+                    >
+                      Quitar logo
+                    </button>
+                  }
+                  @if (subiendoLogo()) {
+                    <p class="edicion__logo-estado" role="status">Subiendo el logo…</p>
+                  }
+                  @if (errorDelLogo()) {
+                    <p class="edicion__logo-error" role="alert" data-testid="edicion-logo-error">
+                      {{ errorDelLogo() }}
+                    </p>
+                  }
+                </div>
+              </div>
+            </section>
+
             <form class="edicion__formulario" (submit)="$event.preventDefault()">
               <!-- Vacío BORRA el dato opcional, que es cómo se quita un segundo
                    nombre que no se lleva. -->
@@ -164,6 +221,113 @@
                    pregunta; ver `guardarPresentacion`. -->
               <app-switch [(checked)]="telemedicina" label="Atiendo por telemedicina" />
             </form>
+
+            <!-- ─── Firma y sello médico ───────────────────────────────────
+                 Dos **imágenes** —la firma manuscrita escaneada y el sello—, no
+                 una firma electrónica: nada de certificado ni criptografía.
+                 Salen al pie de cada documento que emitís, con tu nombre y tu
+                 matrícula debajo. Sin ellas el documento sale igual, con la
+                 línea de firma vacía. Se suben y se cambian SÓLO desde acá.
+                 Reusa las clases del bloque del logo: es el mismo gesto. -->
+            <section class="edicion__logo" data-testid="edicion-firma-y-sello">
+              <h3 class="edicion__logo-titulo">Firma y sello médico</h3>
+              <p class="edicion__logo-nota">
+                Salen al pie de tus recetas y documentos. PNG, JPG o WEBP, hasta 2 MB cada una. Si
+                no cargás ninguna, el documento sale igual, con la línea de firma vacía.
+              </p>
+
+              <div class="edicion__logo-cuerpo" data-testid="edicion-firma">
+                <app-firma-o-sello
+                  tipo="firma"
+                  data-testid="edicion-firma-vista"
+                  [src]="firma.visible()"
+                />
+
+                <div class="edicion__logo-acciones">
+                  <app-file-input
+                    data-testid="edicion-firma-archivo"
+                    testId="edicion-firma-archivo"
+                    [files]="firma.archivos()"
+                    (filesChange)="alElegirFirma($event)"
+                    (rejected)="firma.rechazar($event)"
+                    [accept]="formatosDeFirma"
+                    [maxSizeBytes]="maxBytesDeFirma"
+                    [maxFiles]="1"
+                    [disabled]="firma.subiendo()"
+                    [showList]="false"
+                    [showFeedback]="false"
+                    [label]="firma.visible() ? 'Cambiar firma' : 'Subir firma'"
+                    accessibleLabel="Firma del médico"
+                  />
+                  @if (firma.visible()) {
+                    <button
+                      app-button
+                      type="button"
+                      variant="neutral"
+                      size="sm"
+                      data-testid="edicion-firma-quitar"
+                      (clicked)="firma.quitar()"
+                    >
+                      Quitar firma
+                    </button>
+                  }
+                  @if (firma.subiendo()) {
+                    <p class="edicion__logo-estado" role="status">Subiendo firma…</p>
+                  }
+                  @if (firma.error()) {
+                    <p class="edicion__logo-error" role="alert" data-testid="edicion-firma-error">
+                      {{ firma.error() }}
+                    </p>
+                  }
+                </div>
+              </div>
+
+              <div class="edicion__logo-cuerpo" data-testid="edicion-sello">
+                <app-firma-o-sello
+                  tipo="sello"
+                  data-testid="edicion-sello-vista"
+                  [src]="sello.visible()"
+                />
+
+                <div class="edicion__logo-acciones">
+                  <app-file-input
+                    data-testid="edicion-sello-archivo"
+                    testId="edicion-sello-archivo"
+                    [files]="sello.archivos()"
+                    (filesChange)="alElegirSello($event)"
+                    (rejected)="sello.rechazar($event)"
+                    [accept]="formatosDeFirma"
+                    [maxSizeBytes]="maxBytesDeFirma"
+                    [maxFiles]="1"
+                    [disabled]="sello.subiendo()"
+                    [showList]="false"
+                    [showFeedback]="false"
+                    [label]="sello.visible() ? 'Cambiar sello' : 'Subir sello'"
+                    accessibleLabel="Sello del médico"
+                  />
+                  @if (sello.visible()) {
+                    <button
+                      app-button
+                      type="button"
+                      variant="neutral"
+                      size="sm"
+                      data-testid="edicion-sello-quitar"
+                      (clicked)="sello.quitar()"
+                    >
+                      Quitar sello
+                    </button>
+                  }
+                  @if (sello.subiendo()) {
+                    <p class="edicion__logo-estado" role="status">Subiendo sello…</p>
+                  }
+                  @if (sello.error()) {
+                    <p class="edicion__logo-error" role="alert" data-testid="edicion-sello-error">
+                      {{ sello.error() }}
+                    </p>
+                  }
+                </div>
+              </div>
+            </section>
 
             <!-- ─── Lo que se muestra y no se corrige acá ──────────────────
                  «Editar muestre TODOS los campos» (C-05). El documento y el
@@ -491,6 +655,18 @@
                   placeholder="Consultorio Dra. Rojas S.R.L."
                 />
               </app-form-field>
+
+              <app-form-field
+                label="Frecuencia de facturación al seguro"
+                hint="Cada cuánto presentás tu facturación a las aseguradoras."
+              >
+                <app-select
+                  data-testid="edicion-frecuencia-facturacion-seguro"
+                  [options]="opcionesFrecuenciaFacturacion"
+                  [(value)]="frecuenciaFacturacionSeguro"
+                  placeholder="Elegí la frecuencia"
+                />
+              </app-form-field>
             </form>
           </app-tab>
 
@@ -681,23 +857,28 @@
         </app-tabs>
 
         <!-- ─── El guardar de lo que se corrige ──────────────────────────────
-             Datos personales y Contacto son UN formulario repartido en dos
-             pestañas y se guardan juntos, así que el botón vive fuera de las
-             pestañas y no se duplica. En «Trayectoria» y «Credenciales» no
-             aparece: ahí no se corrige nada, se agrega, y cada bloque tiene su
-             propio «Agregar». Un «Guardar cambios» presente mientras se carga
-             una matrícula prometería guardar algo que no guarda. -->
-        @if (editandoPresentacion()) {
-          <app-form-actions
-            class="edicion__guardar"
-            data-testid="presentacion-acciones"
-            submitLabel="Guardar cambios"
-            cancelLabel="Cancelar edición"
-            [pending]="guardandoPresentacion()"
-            (submitted)="guardarPresentacion()"
-            (cancelled)="cancelarEdicion()"
-          />
-        }
+             Datos personales, Contacto y Facturación son UN formulario
+             repartido en tres pestañas y se guardan juntos, así que el botón
+             vive fuera de las pestañas y no se duplica. En «Dónde atiendo»,
+             «Trayectoria» y «Credenciales» no hay «Guardar cambios»: ahí no se
+             corrige nada, se agrega, y cada bloque tiene su propio «Agregar».
+             Un «Guardar cambios» presente mientras se carga una matrícula
+             prometería guardar algo que no guarda.
+
+             «Cancelar edición», en cambio, está en TODAS (pedido del
+             propietario, 30/09/2026): mientras se edita, cancelar tiene que
+             estar a mano estés en la pestaña que estés, y `Escape` hace lo
+             mismo (lo resuelve `app-form-actions`). -->
+        <app-form-actions
+          class="edicion__guardar"
+          data-testid="presentacion-acciones"
+          submitLabel="Guardar cambios"
+          cancelLabel="Cancelar edición"
+          [showSubmit]="editandoPresentacion()"
+          [pending]="guardandoPresentacion()"
+          (submitted)="guardarPresentacion()"
+          (cancelled)="cancelarEdicion()"
+        />
       </app-card>
 
       <p class="edicion__volver">

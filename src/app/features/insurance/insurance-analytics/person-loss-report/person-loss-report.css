@@ -1,0 +1,73 @@
+/* Informe de siniestralidad por persona. Sólo distribución: color y
+   tipografía salen de los tokens del sistema. Mobile-first. */
+
+:host {
+  display: block;
+}
+
+/* `minmax(0, 1fr)`: una columna `auto` crece hasta el ancho mínimo de la
+   tabla y empuja el informe fuera de su tarjeta. */
+.person-report {
+  display: grid;
+  gap: var(--sp-4);
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.person-report__head {
+  display: grid;
+  gap: var(--sp-3);
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.person-report__title {
+  font-size: var(--fs-h3);
+  font-weight: 600;
+  line-height: var(--lh-h3);
+  margin: 0;
+}
+
+.person-report__note,
+.person-report__period {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  margin: var(--sp-1) 0 0;
+}
+
+.person-report__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.person-report__alert {
+  background: var(--bg-inset);
+  border-radius: var(--r-md);
+  color: var(--text-secondary);
+  margin: 0;
+  padding: var(--sp-3);
+}
+
+.person-report__alert--stale {
+  border-inline-start: 4px solid var(--st-warning-bd);
+}
+
+.person-report__search {
+  max-inline-size: 28rem;
+}
+
+.person-report__ratio {
+  align-items: center;
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  justify-content: flex-end;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (min-width: 780px) {
+  .person-report__head {
+    align-items: start;
+    grid-template-columns: 1fr auto;
+  }
+}

@@ -6,6 +6,7 @@ import {
   type HttpInterceptorFn,
   type HttpRequest,
 } from '@angular/common/http';
+import { inject, InjectionToken } from '@angular/core';
 import { from, Observable, of, throwError, timer } from 'rxjs';
 import { mergeMap } from 'rxjs/operators';
 
@@ -41,6 +42,12 @@ function routerSimulado(): Promise<MockRouter> {
   return router;
 }
 
+/** Carga diferida; el modo real no resuelve ni invoca este proveedor. */
+export const MOCK_ROUTER_LOADER = new InjectionToken<() => Promise<MockRouter>>('MOCK_ROUTER_LOADER', {
+  providedIn: 'root',
+  factory: () => routerSimulado,
+});
+
 export const mockBackendInterceptor: HttpInterceptorFn = (request, next) => {
   // `apiRealForzada` es el interruptor del stock de componentes: deja pasar la
   // petición a la red para poder comparar una pantalla con datos simulados y
@@ -54,7 +61,7 @@ export const mockBackendInterceptor: HttpInterceptorFn = (request, next) => {
     return next(request);
   }
 
-  return from(routerSimulado()).pipe(mergeMap((tabla) => atender(tabla, request, path)));
+  return from(inject(MOCK_ROUTER_LOADER)()).pipe(mergeMap((tabla) => atender(tabla, request, path)));
 };
 
 function atender(router: MockRouter, request: HttpRequest<unknown>, path: string): Observable<HttpEvent<unknown>> {
@@ -88,7 +95,15 @@ function atender(router: MockRouter, request: HttpRequest<unknown>, path: string
       respuesta = respuestaGenerica(peticion);
     } else {
       const resultado = coincidencia.handler(peticion);
-      respuesta = isMockReply(resultado) ? resultado : { status: 200, body: resultado };
+      // Un manejador puede contestar más tarde —leer bytes guardados en
+      // IndexedDB, por ejemplo—: la promesa se espera y se trata igual.
+      if (resultado instanceof Promise) {
+        return timer(latencia(path)).pipe(
+          mergeMap(() => from(resultado as Promise<unknown>)),
+          mergeMap((valor) => emitir(request, comoRespuesta(valor))),
+        );
+      }
+      respuesta = comoRespuesta(resultado);
     }
   } catch (error: unknown) {
     console.error('[mock] el manejador falló', method, path, error);
@@ -96,6 +111,10 @@ function atender(router: MockRouter, request: HttpRequest<unknown>, path: string
   }
 
   return timer(latencia(path)).pipe(mergeMap(() => emitir(request, respuesta)));
+}
+
+function comoRespuesta(resultado: unknown): MockReply {
+  return isMockReply(resultado) ? resultado : { status: 200, body: resultado };
 }
 
 /**
@@ -271,6 +290,9 @@ const LATENCIA_POR_PREFIJO: readonly (readonly [string, number])[] = [
   ['/terminology', 40],
   ['/scheduling/slots', 40],
   ['/profiles', 90],
+  // Cada parte de una subida de resultados: con la latencia por omisión, un
+  // archivo de un giga (128 partes) tardaría 15 s sólo en esperas simuladas.
+  ['/diagnostics/lab/result-uploads', 25],
 ];
 
 /** La subida de documentos legales necesita quedarse el tiempo suficiente en

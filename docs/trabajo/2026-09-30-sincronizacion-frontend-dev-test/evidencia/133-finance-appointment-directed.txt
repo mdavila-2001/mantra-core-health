@@ -1,0 +1,93 @@
+✓ src/app/features/component-stock/component-index.generated.ts
+  596 componentes · 3 otros · 351 pantallas · 138 maquetas · 23 atomos · 46 moleculas · 35 organismos
+  208 con algo que mirar
+  relaciones: 2596 template-instantiates · 5 imports-available sin instanciar · 69 type-only · 229 dynamic-loads
+  nivel: 0 declarado · 596 por-ruta · 5 unresolvedEvidence en 5 componentes
+  acreditación: descubiertos 596/596 · con escenario 3/596 · verificados visualmente 3/596 · bloqueados 80/596 · montó e interactuó: se miden en el banco (runtime)
+[generate-env] src/environments/env.generated.ts · sin variables definidas (se usan los valores por defecto)
+Using Vitest configuration file: D:\Trabajos Secundarios\Mantra Core Technologies\.worktrees\frontend-hito-2\vitest.config.ts
+> Building...
+√ Building...
+Initial chunk files                                      | Names                                                 |  Raw size
+styles.css                                               | styles                                                | 166.42 kB | 
+chunk-V3CZKMVT.js                                        | -                                                     |  17.52 kB | 
+spec-app-core-mock-handlers-finance.handlers.coverage.js | spec-app-core-mock-handlers-finance.handlers.coverage |  15.38 kB | 
+chunk-JBWBLPNK.js                                        | -                                                     |   5.19 kB | 
+init-testbed.js                                          | init-testbed                                          |   1.21 kB | 
+vitest-mock-patch.js                                     | vitest-mock-patch                                     | 974 bytes | 
+setup-test-setup.js                                      | setup-test-setup                                      | 911 bytes | 
+
+                                                         | Initial total                                         | 207.61 kB
+
+Lazy chunk files                                         | Names                                                 |  Raw size
+chunk-76WKULS5.js                                        | finance-handlers                                      |   1.76 MB | 
+
+Application bundle generation complete. [175.207 seconds] - 2026-10-01T19:01:47.048Z
+
+node.exe : ▲ [WARNING] NG8113: Alert is not used within the template of MedicalArticles [plugin angular-compiler]
+En C:\Users\Usuario\AppData\Roaming\npm\corepack.ps1: 24 Carácter: 5
++     & "node$exe"  "$basedir/node_modules/corepack/dist/corepack.js" $ ...
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (▲ [WARNING] NG8...gular-compiler]:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+    src/app/features/account/my-profile/medical-articles/medical-articles.ts:75:4:
+      75 │     Alert,
+         ╵     ~~~~~
+
+
+▲ [WARNING] NG8113: RouterLink is not used within the template of MedicalArticles [plugin angular-compiler]
+
+    src/app/features/account/my-profile/medical-articles/medical-articles.ts:85:4:
+      85 │     RouterLink,
+         ╵     ~~~~~~~~~~
+
+
+▲ [WARNING] NG8113: AppButtonLink is not used within the template of Questionnaires [plugin angular-compiler]
+
+    src/app/features/account/questionnaires/questionnaires.ts:88:4:
+      88 │     AppButtonLink,
+         ╵     ~~~~~~~~~~~~~
+
+
+▲ [WARNING] NG8113: Link is not used within the template of Groups [plugin angular-compiler]
+
+    src/app/features/groups/groups.ts:59:4:
+      59 │     Link,
+         ╵     ~~~~
+
+
+▲ [WARNING] NG8113: AppButtonLink is not used within the template of SurveysHome [plugin angular-compiler]
+
+    src/app/features/questionnaires/questionnaires.ts:132:4:
+      132 │     AppButtonLink,
+          ╵     ~~~~~~~~~~~~~
+
+
+▲ [WARNING] NG8113: Card is not used within the template of SymptomCheck [plugin angular-compiler]
+
+    src/app/features/symptom-check/symptom-check.ts:120:39:
+      120 │ ... [Alert, AppButton, BodyMap, Card, Chip, FormField, RouterLink...
+          ╵                                 ~~~~
+
+
+▲ [WARNING] NG8113: RouterLink is not used within the template of SymptomCheck [plugin angular-compiler]
+
+    src/app/features/symptom-check/symptom-check.ts:120:62:
+      120 │ ...AppButton, BodyMap, Card, Chip, FormField, RouterLink, Textarea],
+          ╵                                               ~~~~~~~~~~
+
+
+
+ RUN  v4.1.10 D:/Trabajos Secundarios/Mantra Core Technologies/.worktrees/frontend-hito-2
+
+(node:36088) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ Test Files  1 passed (1)
+      Tests  5 passed (5)
+   Start at  15:01:54
+   Duration  41.63s (transform 1.58s, setup 2.42s, import 169ms, tests 4.71s, environment 32.86s)
+
+EXIT_CODE=0

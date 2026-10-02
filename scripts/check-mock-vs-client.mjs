@@ -57,31 +57,6 @@ const CONOCIDAS = [
   // `community.client.ts` pide el detalle de una conversación; el mock sólo
   // tiene la lista, la creación y sus mensajes — AG-26 del informe de brechas.
   { method: 'GET', endpoint: '/community/conversations/:conversationId', prompt: 'AG-26 (sin asignar)' },
-  // Ninguna handler de `/loyalty/*`: no existe `loyalty.handlers.ts`. La
-  // billetera de puntos sigue mostrando su estado vacío (`loyaltyDemo`).
-  { method: 'GET', endpoint: '/loyalty/me', prompt: 'sin asignar' },
-  { method: 'GET', endpoint: '/loyalty/me/points', prompt: 'sin asignar' },
-  { method: 'POST', endpoint: '/loyalty/me/points/redeem', prompt: 'sin asignar' },
-  // Alias muerto documentado por BR-02: el cliente llama la ruta corta, el
-  // mock sólo tiene la anidada bajo el post (`/public/posts/:id/comments/…`).
-  { method: 'GET', endpoint: '/public/comments/:commentId/replies', prompt: 'AG-26 (sin asignar)' },
-  // D-G del informe de brechas: «mostrador del médico» — ¿vía hold sumando
-  // PRACTITIONER, o `appointments/direct`? Hoy ninguno de los dos cierra el
-  // camino de `walk-in` que el cliente ya llama.
-  { method: 'POST', endpoint: '/scheduling/appointments/walk-in', prompt: 'D-G (decisión del propietario)' },
-  // BR-17 (CV-02, CL-47): `DiagnosticsLabClient` trae el contrato completo del
-  // circuito de especímenes (acesionar, rechazar, contenedor, custodia y sus
-  // dos lecturas nuevas), pero todavía no hay ninguna pantalla que lo llame
-  // —la consola del laboratorio queda para un carril propio, con el rol de
-  // BR-06 ya definido—. `createReportVersion`/`releaseReportVersion`, que sí
-  // tienen consumidor real (D-E), ya tienen manejador.
-  { method: 'POST', endpoint: '/diagnostics/accessions', prompt: 'BR-17 (consola del laboratorio, sin pantalla todavía)' },
-  { method: 'GET', endpoint: '/diagnostics/accessions/:accessionId', prompt: 'BR-17 (consola del laboratorio, sin pantalla todavía)' },
-  { method: 'POST', endpoint: '/diagnostics/containers/:containerId/custody-events', prompt: 'BR-17 (consola del laboratorio, sin pantalla todavía)' },
-  { method: 'POST', endpoint: '/diagnostics/specimens', prompt: 'BR-17 (consola del laboratorio, sin pantalla todavía)' },
-  { method: 'GET', endpoint: '/diagnostics/specimens/:specimenId', prompt: 'BR-17 (consola del laboratorio, sin pantalla todavía)' },
-  { method: 'POST', endpoint: '/diagnostics/specimens/:specimenId/containers', prompt: 'BR-17 (consola del laboratorio, sin pantalla todavía)' },
-  { method: 'POST', endpoint: '/diagnostics/specimens/:specimenId/rejection', prompt: 'BR-17 (consola del laboratorio, sin pantalla todavía)' },
 ];
 
 /** Los manejadores del simulador: método y patrón, leídos de `router.<verbo>('/…'`. */

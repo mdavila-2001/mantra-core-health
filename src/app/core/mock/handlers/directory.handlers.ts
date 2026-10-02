@@ -1,7 +1,14 @@
 import { reservas, recursos } from '../fixtures/agenda';
 import { CARGO, ESTADO, TIPO_ORGANIZACION } from '../fixtures/conceptos';
 import { afiliaciones, MEDICA, PROFESIONALES, profesionalPorId } from '../fixtures/personas';
-import { notFound, type MockRequest, type MockRouter } from '../mock-router';
+import {
+  conflict,
+  forbidden,
+  notFound,
+  validation,
+  type MockRequest,
+  type MockRouter,
+} from '../mock-router';
 import {
   IDS,
   MOCK_USERS,
@@ -180,6 +187,12 @@ const sucursales = new Coleccion<{
   statusConceptId: string;
   timeZone: string;
   createdAt: string;
+  // Lo que la carga masiva de sucursales suma y la API todavía no guarda
+  // (`PENDIENTES-BACKEND.md`, P54). Opcionales: las sembradas no los traen.
+  latitude?: number;
+  longitude?: number;
+  description?: string;
+  locationUrl?: string;
 }>([
   {
     id: uuid('branch-olivos-central'),
@@ -310,6 +323,32 @@ const membresias = new Coleccion<{
     endDate: null,
     createdAt: iso(-120),
   },
+  // La cuenta de una farmacia o de un laboratorio **es** la organización: su titular es el
+  // dueño. Sin esta membresía `canAdminister` daba falso y nadie podía cargar el logo.
+  {
+    id: uuid('membership-farmacia-owner'),
+    tenantId: TENANT_FARMACIA,
+    userId: IDS.farmacia.userId,
+    tenantRoleConceptId: ROL_TENANT.OWNER,
+    statusConceptId: ESTADO['ST-ACTIVE']!,
+    accessScopeConceptId: ALCANCE_ACCESO.ALL_TENANT,
+    primaryBranchId: null,
+    startDate: isoDia(-200),
+    endDate: null,
+    createdAt: iso(-200),
+  },
+  {
+    id: uuid('membership-laboratorio-owner'),
+    tenantId: TENANT_LABORATORIO,
+    userId: IDS.laboratorio.userId,
+    tenantRoleConceptId: ROL_TENANT.OWNER,
+    statusConceptId: ESTADO['ST-ACTIVE']!,
+    accessScopeConceptId: ALCANCE_ACCESO.ALL_TENANT,
+    primaryBranchId: null,
+    startDate: isoDia(-200),
+    endDate: null,
+    createdAt: iso(-200),
+  },
 ]);
 
 const asignaciones = new Coleccion<{
@@ -337,6 +376,9 @@ const asignaciones = new Coleccion<{
     createdAt: iso(-400),
   },
 ]);
+
+/** El archivo que es el logo de cada organización, por id de tenant. Sin entrada = sin logo. */
+const logosDeOrganizaciones = new Map<string, string | null>();
 
 function organizacionPropia(t: TenantSimulado, request: MockRequest) {
   const user = request.user;
@@ -480,6 +522,23 @@ export function registrarDirectorio(router: MockRouter): void {
     return { ...actualizado, parentTenantId: actualizado.parentTenantId ?? undefined };
   });
 
+  // El logo de una organización (PENDIENTES-BACKEND P58): la API real todavía no deja que el
+  // dueño lo cambie. Sólo owner/admin escribe; leerlo lo puede hacer cualquiera que vea la ficha.
+  router.get('/tenants/:id/logo', ({ params }) =>
+    tenants.get(params['id']!) === undefined
+      ? notFound('Organización no encontrada')
+      : { fileId: logosDeOrganizaciones.get(params['id']!) ?? null },
+  );
+
+  router.put('/tenants/:id/logo', (request) => {
+    const t = tenants.get(request.params['id']!);
+    if (t === undefined) return notFound('Organización no encontrada');
+    if (!organizacionPropia(t, request).canAdminister) return forbidden();
+    const fileId = cuerpo<{ fileId?: string | null }>(request).fileId ?? null;
+    logosDeOrganizaciones.set(t.id, fileId);
+    return { fileId };
+  });
+
   router.get('/tenants/:id/child-tenants', ({ params, query }) =>
     paginar(
       tenants
@@ -531,7 +590,19 @@ export function registrarDirectorio(router: MockRouter): void {
       name: string;
       branchType?: 'CLINIC' | 'OFFICE';
       timeZone?: string;
+      latitude?: number;
+      longitude?: number;
+      description?: string;
+      locationUrl?: string;
     }>(request);
+    // Mismo 409 que `DirectoryBranchesService`: el código es único por tenant.
+    const tenantId = request.params['id']!;
+    if (sucursales.filtrar((s) => s.tenantId === tenantId && s.code === datos.code).length > 0) {
+      return conflict('Ya existe una branch con ese código en el tenant', {
+        tenantId,
+        code: datos.code,
+      });
+    }
     const nueva = sucursales.agregar({
       id: nuevoId('branch'),
       tenantId: request.params['id']!,
@@ -541,9 +612,46 @@ export function registrarDirectorio(router: MockRouter): void {
       statusConceptId: ESTADO['ST-ACTIVE']!,
       timeZone: datos.timeZone ?? 'America/La_Paz',
       createdAt: ahora(),
+      ...(datos.latitude === undefined ? {} : { latitude: datos.latitude }),
+      ...(datos.longitude === undefined ? {} : { longitude: datos.longitude }),
+      ...(datos.description === undefined ? {} : { description: datos.description }),
+      ...(datos.locationUrl === undefined ? {} : { locationUrl: datos.locationUrl }),
     });
     const { tenantId: _t, ...resto } = nueva;
     return { status: 201, body: resto };
+  });
+
+  // La edición de una sucursal desde el portal de la farmacia y del
+  // laboratorio (01/10/2026). La API real no la tiene (P54): `null` borra el
+  // dato, una clave ausente lo deja como está. El código no se edita: es la
+  // identidad de la sucursal dentro de la organización.
+  router.patch('/tenants/:id/branches/:branchId', (request) => {
+    const tenantId = request.params['id']!;
+    const sucursal = sucursales.get(request.params['branchId']!);
+    if (sucursal === undefined || sucursal.tenantId !== tenantId) {
+      return notFound('Sucursal no encontrada');
+    }
+    const datos = cuerpo<{
+      name?: string;
+      description?: string | null;
+      locationUrl?: string | null;
+      latitude?: number | null;
+      longitude?: number | null;
+    }>(request);
+    if (datos.name !== undefined && datos.name.trim() === '') {
+      return validation('La sucursal necesita un nombre', [
+        { field: 'name', message: 'El nombre no puede quedar vacío.' },
+      ]);
+    }
+    const actualizada = sucursales.actualizar(sucursal.id, {
+      ...(datos.name === undefined ? {} : { name: datos.name.trim() }),
+      ...(datos.description === undefined ? {} : { description: datos.description ?? undefined }),
+      ...(datos.locationUrl === undefined ? {} : { locationUrl: datos.locationUrl ?? undefined }),
+      ...(datos.latitude === undefined ? {} : { latitude: datos.latitude ?? undefined }),
+      ...(datos.longitude === undefined ? {} : { longitude: datos.longitude ?? undefined }),
+    })!;
+    const { tenantId: _t, ...resto } = actualizada;
+    return resto;
   });
 
   router.get('/tenants/:id/memberships', ({ params, query }) => {

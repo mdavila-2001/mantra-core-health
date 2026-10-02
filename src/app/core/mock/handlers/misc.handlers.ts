@@ -29,6 +29,31 @@ import { ahora, Coleccion, cuerpo, iso, nuevoId, uuid } from '../mock-store';
 
 /** De `esquema.tabla.columna` al conjunto de valores que la gobierna. */
 const ENUMS: readonly (readonly [patron: RegExp, valueSet: string, name: string])[] = [
+  /*
+   * La recepción de muestras del laboratorio: `specimen-type` y
+   * `specimen-container-type` de la API, que gobiernan estos tres campos. Van
+   * primero y con esquema y tabla en el patrón: `*_type_concept_id` casaría con
+   * cualquier genérico de abajo, y un catálogo equivocado se ve como un
+   * catálogo, no como un error.
+   */
+  [/diagnostics\.specimens\.specimen_type_concept_id/, 'VS_SPECIMEN_TYPE', 'Tipo de espécimen'],
+  [
+    /diagnostics\.(specimen_containers|specimens)\.container_type_concept_id/,
+    'VS_SPECIMEN_CONTAINER_TYPE',
+    'Tipo de contenedor de la muestra',
+  ],
+  /*
+   * Los cuatro del alta pública de laboratorio y centro de imagenología
+   * (BR-09). Van PRIMERO y con la tabla en el patrón: sin ellos, el tipo de
+   * unidad y la modalidad casaban con `/unit/` —las unidades de dosis— y el
+   * país con nada, así que el alta no encontraba `DU_TYPE_LAB` ni `BO` y
+   * frenaba con «No pudimos cargar los catálogos del alta». La jurisdicción
+   * casaba con `/jurisdiction/`, cuyos códigos (`JUR-*`) no son los de la API.
+   */
+  [/diagnostic_units\.diagnostic_unit_type_concept_id/, 'VS_DIAGNOSTIC_UNIT_TYPE', 'Tipo de unidad diagnóstica'],
+  [/diagnostic_study_offerings\.modality_concept_id/, 'VS_DIAGNOSTIC_MODALITY', 'Modalidad diagnóstica'],
+  [/directory\.tenants\.country_concept_id/, 'VS_TENANT_COUNTRY', 'País de la organización'],
+  [/jurisdiction_authorizations\.jurisdiction_concept_id/, 'VS_LICENSE_JURISDICTION', 'Jurisdicción'],
   [/insurance_plans\.currency_concept_id/, 'VS_INSURANCE_PLAN_CURRENCY', 'Moneda'],
   [
     /insurance_plan_benefits\.benefit_category_concept_id/,
@@ -99,6 +124,10 @@ const ENUMS: readonly (readonly [patron: RegExp, valueSet: string, name: string]
    * `service_requests.category_concept_id` pero con el conjunto equivocado.
    */
   [/service_requests\.code_concept_id/, 'VS_DIAGNOSTIC_STUDY', 'Estudio'],
+  /* El buscador de la receta (`medication-block`) pide este catálogo y no estaba
+     mapeado: caía al `VS_RECORD_STATUS` de respaldo y ofrecía «Activo»,
+     «Inactivo»… como medicamentos, así que ninguna búsqueda encontraba nada. */
+  [/medication_requests\.medication_concept_id/, 'VS_MEDICATION', 'Medicamento'],
   [/service_requests\.category_concept_id/, 'VS_SERVICE_REQUEST_CATEGORY', 'Tipo'],
   [/service_requests\.priority_concept_id/, 'VS_PRIORITY', 'Prioridad'],
 

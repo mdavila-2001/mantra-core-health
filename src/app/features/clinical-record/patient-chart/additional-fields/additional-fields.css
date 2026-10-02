@@ -1,10 +1,17 @@
+/* Sin filete arriba: vive en su propia pestaña de la ficha y la tira de
+   pestañas ya la separa. Con el filete se veían dos líneas seguidas. */
 .adicionales {
   display: flex;
   flex-direction: column;
   gap: var(--sp-4);
-  padding-block-start: var(--sp-5);
-  border-block-start: 1px solid var(--border-default);
   container-type: inline-size;
+}
+
+/* Sola, como «Formulario libre», no sigue a ninguna plantilla: el filete que
+   la separaba de los campos de arriba no tiene de qué separarla. */
+.adicionales--libre {
+  padding-block-start: 0;
+  border-block-start: 0;
 }
 
 .adicionales__encabezado {

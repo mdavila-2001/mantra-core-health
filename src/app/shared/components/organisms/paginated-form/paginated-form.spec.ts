@@ -1,6 +1,6 @@
 import { Component, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
-import { FormControl, FormGroup, Validators } from '@angular/forms';
+import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { By } from '@angular/platform-browser';
 
 import { PaginatedForm } from './paginated-form';
@@ -908,5 +908,84 @@ describe('PaginatedForm · sí/no en botones y cuadrículas', () => {
     expect(fixture.componentInstance.form.controls.frecuencia.value).toEqual({
       Tos: 'A veces',
     });
+  });
+});
+
+
+@Component({
+  imports: [PaginatedForm, ReactiveFormsModule],
+  template: `
+    <form [formGroup]="form" (ngSubmit)="save()">
+      <app-paginated-form
+        [form]="identity"
+        [paginas]="pages"
+        [embedded]="true"
+        label="Identidad"
+        (enviado)="childSubmissions = childSubmissions + 1"
+      />
+      <button type="submit" data-testid="parent-submit">Guardar identidad</button>
+    </form>
+  `,
+})
+class EmbeddedHost {
+  readonly identity = new FormGroup({
+    firstName: new FormControl('', { nonNullable: true, validators: Validators.required }),
+    lastName: new FormControl('', { nonNullable: true, validators: Validators.required }),
+  });
+  readonly form = new FormGroup({ identity: this.identity });
+  readonly pages: readonly PaginaDeFormulario[] = [
+    { titulo: 'Nombre', campos: [{ key: 'firstName', label: 'Nombre', control: 'text' }] },
+    { titulo: 'Apellido', campos: [{ key: 'lastName', label: 'Apellido', control: 'text' }] },
+  ];
+  submissions = 0;
+  childSubmissions = 0;
+
+  save(): void {
+    if (this.form.valid) this.submissions += 1;
+  }
+}
+
+describe('PaginatedForm dentro de un formulario padre', () => {
+  it('no anida formularios ni envia al navegar; el padre conserva validacion y envio', () => {
+    const fixture = TestBed.createComponent(EmbeddedHost);
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+    const host = fixture.componentInstance;
+    expect(root.querySelectorAll('form')).toHaveLength(1);
+    const next = root.querySelector<HTMLButtonElement>('[data-testid="paginated-form-continuar"]')!;
+    expect(next.type).toBe('button');
+    next.click();
+    fixture.detectChanges();
+    expect(root.querySelector('h2')?.textContent).toContain('Nombre');
+    expect(host.identity.controls.firstName.touched).toBe(true);
+
+    host.identity.controls.firstName.setValue('Ana');
+    next.click();
+    fixture.detectChanges();
+    expect(root.querySelector('h2')?.textContent).toContain('Apellido');
+    expect(root.querySelector('app-paginated-form button[type="submit"]')).toBeNull();
+    expect(host.submissions).toBe(0);
+    expect(host.childSubmissions).toBe(0);
+
+    root.querySelector<HTMLButtonElement>('[data-testid="parent-submit"]')!.click();
+    expect(host.submissions).toBe(0);
+    host.identity.controls.lastName.setValue('Rojas');
+    root.querySelector<HTMLButtonElement>('[data-testid="parent-submit"]')!.click();
+    expect(host.submissions).toBe(1);
+    expect(host.form.getRawValue()).toEqual({ identity: { firstName: 'Ana', lastName: 'Rojas' } });
+  });
+
+  it('Enter en un campo embebido avanza dentro del grupo sin enviar al padre', () => {
+    const fixture = TestBed.createComponent(EmbeddedHost);
+    fixture.detectChanges();
+    fixture.componentInstance.identity.controls.firstName.setValue('Ana');
+    const root = fixture.nativeElement as HTMLElement;
+    const enter = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true });
+    root.querySelector('input')!.dispatchEvent(enter);
+    fixture.detectChanges();
+    expect(enter.defaultPrevented).toBe(true);
+    expect(root.querySelector('h2')?.textContent).toContain('Apellido');
+    expect(fixture.componentInstance.submissions).toBe(0);
+    expect(fixture.componentInstance.childSubmissions).toBe(0);
   });
 });

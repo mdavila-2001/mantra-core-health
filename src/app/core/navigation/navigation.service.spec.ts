@@ -362,12 +362,20 @@ describe('NavigationService', () => {
       expect(alcanzables).toContain('/lab-visits');
       expect(alcanzables).toContain('/dashboard');
 
-      expect(alcanzables).toContain('/administration/pharmacy-campaigns');
-
       expect(rutasDelMenu()).not.toContain('/administration/medical-organization');
-      expect(rutasDelMenu()).not.toContain('/administration/pharmacy-campaigns');
       expect(rutasDelMenu()).not.toContain('/questionnaires');
       expect(rutasDelMenu()).not.toContain('/lab-visits');
+    });
+
+    it('el médico que atiende una farmacia alcanza sus pantallas y no le ocupan un renglón', () => {
+      // Las de farmacia sólo existen en una organización `PHARMACY`
+      // (29/09/2026): con esa organización activa el registro las alcanza —la
+      // ruta abre—, y `fueraDelMenuPara` las sigue sacando de su menú de ocho.
+      abrirSesion(['PRACTITIONER'], ['t-1'], { 't-1': 'PHARMACY' });
+
+      const alcanzables = service.visibleSections().map((seccion) => `/${seccion.path}`);
+      expect(alcanzables).toContain('/administration/pharmacy-campaigns');
+      expect(rutasDelMenu()).not.toContain('/administration/pharmacy-campaigns');
     });
 
     it('el Panel sale del menú de todos, y la puerta sigue abierta', () => {
@@ -446,6 +454,7 @@ describe('NavigationService', () => {
         '/laboratory-directory',
         '/clinics-directory',
         '/pharmacies-directory',
+        '/insurers-directory',
       ]) {
         expect(alcanzables, ruta).toContain(ruta);
         expect(rutasDelMenu(), ruta).not.toContain(ruta);
@@ -733,14 +742,17 @@ describe('NavigationService', () => {
     // señal es el tipo de la organización activa (`tenantTypes` del token,
     // claim nuevo de este mismo carril), no un rol: la cuenta sigue siendo
     // `USER` a secas.
-    it('sólo ve lo que el registro de procesos le pide: dos renglones fijos y cuatro de Administración', () => {
+    it('sólo ve lo que el registro de procesos le pide: dos renglones fijos y cinco de Administración', () => {
       abrirSesion(['USER'], ['t-1'], { 't-1': 'PAYER' });
 
       expect(rutasDelMenu()).toEqual([
         '/my-account',
         '/notification-center',
         '/administration/insurance',
+        '/administration/insurance-claims', // Adjudicacion real conservada de dev.
         '/administration/insurance-analytics',
+        // 2026-09-27: «Solicitudes recibidas», pedida por la propietaria.
+        '/administration/received-claims',
         // Tarea 4 · M-06: el «Módulo de promociones» del registro de procesos.
         '/administration/insurance-campaigns',
         '/administration/my-organization',
@@ -753,6 +765,29 @@ describe('NavigationService', () => {
         'Seguros',
         'Organizaciones',
       ]);
+    });
+
+    it('sus cinco opciones van sueltas, a nivel 0: «Administración» no se dibuja como desplegable', () => {
+      abrirSesion(['USER'], ['t-1'], { 't-1': 'PAYER' });
+
+      // El armazón dibuja sin `<details>` todo grupo con `aplanado`.
+      expect(service.menu().map((grupo) => [grupo.label, grupo.aplanado])).toEqual([
+        ['Administración', true],
+      ]);
+    });
+
+    it('el aplanado es de la aseguradora: quien administra la plataforma sigue viendo el desplegable', () => {
+      abrirSesion(['SUPERADMIN'], ['t-1'], { 't-1': 'PROVIDER' });
+
+      const administracion = service.menu().find((grupo) => grupo.label === 'Administración');
+      expect(administracion?.aplanado).toBe(false);
+    });
+
+    it('sin el claim de tipo, «Administración» sigue plegada', () => {
+      abrirSesion(['SUPERADMIN'], ['t-1']);
+
+      const administracion = service.menu().find((grupo) => grupo.label === 'Administración');
+      expect(administracion?.aplanado).toBe(false);
     });
 
     it('no alcanza a entrar a lo que le cerraron: sigue existiendo el guard, no sólo el menú', () => {
@@ -776,6 +811,7 @@ describe('NavigationService', () => {
         '/messaging',
         '/administration/insurance',
         '/administration/insurance-analytics',
+        '/administration/received-claims',
         '/administration/my-organization',
       ]) {
         expect(alcanzables, ruta).toContain(ruta);

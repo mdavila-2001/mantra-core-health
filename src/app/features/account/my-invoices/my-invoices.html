@@ -1,0 +1,156 @@
+<app-page-header title="Mis facturas" [subtitle]="subtitulo()" [breadcrumbs]="breadcrumbs()" />
+
+@if (!disponible) {
+  <app-alert tone="info" title="La facturación no está conectada" data-testid="mis-facturas-no-disponible">
+    Las facturas se leen de la facturación de AloVida, que todavía no está conectada en este entorno.
+  </app-alert>
+} @else {
+  <!-- Una sola tarjeta a lo ancho, con buscador, tabla y paginación (ADR-0015). -->
+  <app-card class="mis-facturas" variant="outlined" padding="lg" data-testid="mis-facturas-card">
+    <p class="mis-facturas__aviso" role="note">
+      <app-chip size="sm" variant="warning">SIMULADO</app-chip>
+      <span>Emitidas contra un SIAT simulado: CUF, códigos y QR son sintéticos y no tienen validez fiscal.</span>
+    </p>
+
+    <app-view-state-host [state]="estado()" (retry)="cargar()">
+      @if (estado().status === 'ready') {
+        <app-filter-bar
+          searchLabel="Buscar en tus facturas"
+          searchPlaceholder="Número, concepto, emisor o paciente"
+          [filters]="filtros()"
+          [wrap]="true"
+          (filtersChanged)="onFiltrosCambiaron($event)"
+        />
+
+        <p class="mis-facturas__resumen" aria-live="polite">
+          {{ totalFiltrado() }} {{ totalFiltrado() === 1 ? 'factura' : 'facturas' }}
+        </p>
+
+        @if (totalFiltrado() === 0) {
+          <p class="mis-facturas__vacio" data-testid="mis-facturas-sin-resultados">
+            Ninguna factura coincide con la búsqueda o el filtro.
+          </p>
+        } @else {
+          <app-data-table
+            caption="Tus facturas emitidas"
+            [state]="filasDeTabla()"
+            [columns]="columnas()"
+            [trackBy]="porId"
+            [rowLabel]="nombreDeFila"
+            maxHeight="560px"
+            (retry)="cargar()"
+            data-testid="mis-facturas-tabla"
+          />
+
+          <app-pagination
+            [totalItems]="totalFiltrado()"
+            [(page)]="pagina"
+            [(pageSize)]="tamano"
+            data-testid="mis-facturas-paginacion"
+          />
+        }
+      }
+    </app-view-state-host>
+  </app-card>
+}
+
+<!-- ─── Plantillas de celda ──────────────────────────────────────────────── -->
+
+<ng-template #celdaNumero let-fila>
+  <span class="mis-facturas__numero">{{ fila.invoice.invoiceNumber }}</span>
+</ng-template>
+
+<ng-template #celdaFecha let-fila>{{ fechaYHora(fila.invoice.issuedAt) }}</ng-template>
+
+<ng-template #celdaConcepto let-fila>
+  <span class="mis-facturas__principal">{{ fila.description }}</span>
+  <span class="mis-facturas__secundario">{{ origenDe(fila) }}</span>
+</ng-template>
+
+<ng-template #celdaContraparte let-fila>
+  @if (vista() === 'RECEIVED') {
+    <span class="mis-facturas__principal">{{ fila.issuerName }}</span>
+    <span class="mis-facturas__secundario">NIT {{ fila.issuerNit }}</span>
+  } @else {
+    {{ fila.patientName }}
+  }
+</ng-template>
+
+<ng-template #celdaTotal let-fila>
+  <span class="mis-facturas__total">{{ bs(fila.invoice.total) }}</span>
+</ng-template>
+
+<ng-template #celdaEstado let-fila>
+  <app-chip size="sm" [variant]="tonoDeEstado[estadoDe(fila)]">{{ rotuloDeEstado[estadoDe(fila)] }}</app-chip>
+</ng-template>
+
+<ng-template #celdaAcciones let-fila>
+  <app-row-actions
+    [actions]="accionesDe(fila)"
+    [fila]="'Factura ' + fila.invoice.invoiceNumber"
+    (actionSelected)="ejecutarAccion($event, fila)"
+  />
+</ng-template>
+
+<!-- ─── El detalle ───────────────────────────────────────────────────────── -->
+
+@if (abierta(); as fila) {
+  <app-content-dialog
+    [heading]="'Factura N.º ' + fila.invoice.invoiceNumber"
+    [description]="fila.description"
+    size="md"
+    data-testid="mis-facturas-detalle"
+    (dismissAttempt)="cerrar()"
+    (closed)="cerrar()"
+  >
+    @if (cargandoFactura()) {
+      <p class="mis-facturas__secundario">Leyendo la factura…</p>
+    } @else if (errorDeFactura(); as error) {
+      <app-alert tone="error" title="No pudimos abrir la factura">{{ error }}</app-alert>
+    } @else if (factura(); as f) {
+      <dl class="mis-facturas__datos">
+        <div>
+          <dt>Estado</dt>
+          <dd><app-chip size="sm" [variant]="tonoDeEstado[f.status]">{{ rotuloDeEstado[f.status] }}</app-chip></dd>
+        </div>
+        <div>
+          <dt>Fecha de emisión</dt>
+          <dd>{{ fechaYHora(f.issuedAt) }}</dd>
+        </div>
+        <div>
+          <dt>Emisor</dt>
+          <dd>{{ f.issuer.legalName }}<br />NIT {{ f.issuer.nit }}</dd>
+        </div>
+        <div>
+          <dt>Comprador</dt>
+          <dd>{{ f.cabecera['nombreRazonSocial'] }}<br />Documento {{ f.cabecera['numeroDocumento'] }}</dd>
+        </div>
+        <div>
+          <dt>Total</dt>
+          <dd class="mis-facturas__total">{{ bs('' + f.cabecera['montoTotal']) }}</dd>
+        </div>
+        <div>
+          <dt>Renglones</dt>
+          <dd>{{ f.detalle.length }}</dd>
+        </div>
+        <div class="mis-facturas__dato-ancho">
+          <dt>CUF (SIMULADO)</dt>
+          <dd class="mis-facturas__codigo">{{ f.cuf }}</dd>
+        </div>
+      </dl>
+    }
+
+    @if (factura(); as f) {
+      <div dialog-actions class="mis-facturas__acciones">
+        <button app-button variant="outline" type="button" (clicked)="descargarXml(f)" data-testid="mis-facturas-xml">
+          Descargar XML
+        </button>
+        @if (f.status !== 'REJECTED') {
+          <button app-button type="button" (clicked)="descargarPdf(f)" data-testid="mis-facturas-pdf">
+            Descargar PDF
+          </button>
+        }
+      </div>
+    }
+  </app-content-dialog>
+}

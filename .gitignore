@@ -8,6 +8,7 @@
 
 # Node
 /node_modules
+.eslintcache
 npm-debug.log
 yarn-error.log
 
@@ -166,6 +167,7 @@ src/app/features/component-stock/component-index.generated.ts
 /*.mjs
 # El proxy de `yarn start` sí se versiona: angular.json lo exige.
 !/proxy.conf.mjs
+!/proxy.demo.conf.mjs
 /scripts/run_audit*.mjs
 /scripts/run_medica_audit*.mjs
 /scripts/visual_qa_audit*.mjs
@@ -175,3 +177,8 @@ src/app/features/component-stock/component-index.generated.ts
 # Las fuentes de Unicode/CLDR que baja `yarn emoji:catalog`. El catálogo
 # generado SÍ se versiona; estas son el insumo, pesan y se vuelven a bajar.
 /.cache/
+
+# El glosario completo de la maqueta (cientos de miles de términos con sus
+# índices), copiado de `glossary-data-build/` con `yarn mock:glossary:shards`.
+# Pesa demasiado para git; sin él, la maqueta sirve `public/glossary-seed/`.
+/public/glossary-data/

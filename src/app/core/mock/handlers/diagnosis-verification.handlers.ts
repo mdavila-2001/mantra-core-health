@@ -103,7 +103,7 @@ export function registerDiagnosisVerification(router: MockRouter): void {
   router.post('/clinical/conditions/:id/verification', (request) => {
     const condicion = condiciones.get(request.params['id']!);
     if (condicion === undefined) return notFound('Diagnóstico no encontrado');
-    if (condicion.verificationStatusConceptId !== VERIFICACION_DX['DXV-PROVISIONAL']) {
+    if (condicion.verificationStatusConceptId !== VERIFICACION_DX['COND_PROVISIONAL']) {
       return conflict(
         'Este diagnóstico ya no está en estudio: sólo un presuntivo se confirma o se rechaza.',
       );
@@ -148,7 +148,7 @@ export function registerDiagnosisVerification(router: MockRouter): void {
     if (outcome === 'REFUTED') {
       // Rechazado es terminal y cierra la condición: no hay enfermedad que seguir.
       cambios = {
-        verificationStatusConceptId: VERIFICACION_DX['DXV-REFUTED']!,
+        verificationStatusConceptId: VERIFICACION_DX['COND_REFUTED']!,
         resolvedAt: decidedAt,
         verification,
       };
@@ -163,8 +163,8 @@ export function registerDiagnosisVerification(router: MockRouter): void {
         );
       }
       cambios = {
-        verificationStatusConceptId: VERIFICACION_DX['DXV-CONFIRMED']!,
-        clinicalStatusConceptId: ESTADO_CONDICION['COND-ACTIVE']!,
+        verificationStatusConceptId: VERIFICACION_DX['COND_CONFIRMED']!,
+        clinicalStatusConceptId: ESTADO_CONDICION['COND_ACTIVE']!,
         onsetAt: texto(datos.onsetAt) ?? condicion.onsetAt,
         ...(curso === undefined ? {} : { clinicalCourseConceptId: curso }),
         // Una crónica no resuelve: el fin esperado se va aunque el alta lo trajera.

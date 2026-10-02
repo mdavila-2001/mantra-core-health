@@ -48,6 +48,8 @@ import { Loyalty } from '../loyalty/loyalty';
 import { PatientProfileEdit } from './patient-profile-edit/patient-profile-edit';
 import { indiceDePestana, PESTANAS_DEL_PERFIL } from './pestanas-del-perfil';
 import { PractitionerProfile } from './practitioner-profile/practitioner-profile';
+import { ResidenceReadonly } from './practitioner-profile/practitioner-profile-view/residence-readonly/residence-readonly';
+import type { PuntoGeo } from '../../../shared/components/organisms/map/pin-mapa.types';
 
 /**
  * Resumen propio — vista **V05-03** de `SALUD/Vistas/V05 profiles`
@@ -109,6 +111,7 @@ import { PractitionerProfile } from './practitioner-profile/practitioner-profile
   selector: 'app-my-profile',
   imports: [
     PatientCoverageCard,
+    ResidenceReadonly,
     FileDropTarget,
     Alert,
     AppButton,
@@ -449,13 +452,23 @@ export class MyProfile {
    * necesita. El enlace resuelve lo mismo —«llevame ahí»— con una etiqueta.
    */
   protected enlaceAlMapa(dir: OwnAddress): string | null {
+    const punto = this.puntoDe(dir);
+    if (punto === null) return null;
+    return `https://www.google.com/maps/search/?api=1&query=${punto.lat},${punto.lng}`;
+  }
+
+  /**
+   * Las coordenadas de una dirección, o `null` si no las tiene. Las usan el
+   * enlace «Ver en el mapa» y el punto rojo del mapa de residencia.
+   */
+  protected puntoDe(dir: OwnAddress | undefined): PuntoGeo | null {
     // `== null` cubre `null` y `undefined` de una. La API emitía además un `0`
     // por una comparación estricta contra `undefined` —ya corregida—, y el 0 se
     // sigue rechazando acá: una dirección de Santa Cruz no está en el meridiano
     // de Greenwich, y un enlace al golfo de Guinea es peor que ningún enlace.
-    if (dir.latitude == null || dir.longitude == null) return null;
+    if (dir?.latitude == null || dir.longitude == null) return null;
     if (dir.latitude === 0 && dir.longitude === 0) return null;
-    return `https://www.google.com/maps/search/?api=1&query=${dir.latitude},${dir.longitude}`;
+    return { lat: dir.latitude, lng: dir.longitude };
   }
 
   protected recargar(): void {

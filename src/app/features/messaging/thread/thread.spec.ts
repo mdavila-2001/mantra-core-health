@@ -367,6 +367,11 @@ describe('Thread', () => {
     consultar('hilo-reenviar')?.click();
     fixture.detectChanges();
 
+    // Un `<dialog>` nativo (`app-content-dialog`) y no un `div` con
+    // `aria-modal`: la trampa de foco y el fondo inerte los da `showModal()`.
+    const modal = consultar('thread-forward-dialog');
+    expect(modal?.querySelector('dialog')).not.toBeNull();
+
     const destinos = Array.from(
       fixture.nativeElement.querySelectorAll('[data-testid="hilo-reenviar-destino"]'),
     ) as HTMLElement[];
@@ -388,6 +393,36 @@ describe('Thread', () => {
     expect(consultar('hilo-aviso')?.textContent).toContain('Reenviado a Dr. Ortega');
     // El hilo abierto no cambió: el mensaje fue a otra conversación.
     expect(burbujas().length).toBe(1);
+    expect(consultar('thread-forward-dialog')).toBeNull();
+  });
+
+  it('el foco vuelve a «Opciones del mensaje» al cancelar el reenvío', async () => {
+    abrir([mensaje('m-1', 'pp-2', 'Te dejo la orden en la historia clínica')]);
+    store.conversaciones.update((lista) => [
+      ...lista,
+      {
+        id: 'c-2',
+        conversationTypeConceptId: 'c-direct',
+        unreadCount: 0,
+        peers: [{ profileId: 'pp-3', displayName: 'Dr. Ortega' }],
+      },
+    ]);
+    fixture.detectChanges();
+
+    const opciones = consultar('hilo-menu-mensaje') as HTMLElement;
+    opciones.click();
+    fixture.detectChanges();
+    consultar('hilo-reenviar')?.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    // El ítem «Reenviar» ya no existe: sin el paso previo, el foco caería en
+    // `<body>` y el teclado arrancaría desde el principio de la página.
+    (consultar('content-dialog-close') as HTMLElement).click();
+    fixture.detectChanges();
+
+    expect(consultar('thread-forward-dialog')).toBeNull();
+    expect(document.activeElement).toBe(opciones);
   });
 
   /* --- Stickers ----------------------------------------------------------- */
@@ -479,11 +514,16 @@ describe('Thread', () => {
       expect(consultar('hilo-editar')).not.toBeNull();
     });
 
-    it('no lo ofrece pasados los cinco minutos', () => {
+    it('pasados los cinco minutos queda visible pero apagado, con su motivo', () => {
       abrir([propioReciente('m-1', 6 * 60_000, 'Viejo')]);
       abrirMenu();
 
-      expect(consultar('hilo-editar')).toBeNull();
+      // Esconderlo hacía creer que la función no existía: se ve, y dice por qué
+      // no se puede usar.
+      const editar = consultar('hilo-editar') as HTMLButtonElement;
+      expect(editar).not.toBeNull();
+      expect(editar.disabled).toBe(true);
+      expect(editar.textContent).toContain('Pasaron más de 5 min');
     });
 
     it('no lo ofrece en el mensaje de otro', () => {
@@ -613,6 +653,27 @@ describe('Thread', () => {
       expect(consultar('hilo-documento-ver')).toBeNull();
     });
 
+    it('la imagen a tamaño completo se abre en el modal del sistema y devuelve el foco', async () => {
+      abrir([conAdjunto('m-1', 'f-img')]);
+      await servir('f-img', bytes('image/png', 16));
+
+      const miniatura = consultar('hilo-imagen') as HTMLButtonElement;
+      miniatura.focus();
+      miniatura.click();
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      const visor = consultar('thread-image-viewer');
+      expect(visor?.querySelector('dialog')).not.toBeNull();
+      expect(visor?.querySelector('img')?.getAttribute('src')).toMatch(/^data:image\/png/);
+
+      (consultar('content-dialog-close') as HTMLElement).click();
+      fixture.detectChanges();
+
+      expect(consultar('thread-image-viewer')).toBeNull();
+      expect(document.activeElement).toBe(miniatura);
+    });
+
     it('un PDF muestra su tipo y su tamaño reales y conserva la descarga', async () => {
       abrir([conAdjunto('m-1', 'f-pdf')]);
       await servir('f-pdf', bytes('application/pdf', 8));
@@ -683,6 +744,175 @@ describe('Thread', () => {
         expect(html).not.toContain(interno);
       }
       expect(http.match((r) => r.url.includes('download-url') || r.url.includes('/common/files'))).toHaveLength(0);
+    });
+  });
+
+  /* --- Reacciones, recibos, info del mensaje y bloqueo ------------------- */
+
+  describe('reacciones, recibos y bloqueo', () => {
+    const propio = (id: string, extra: Record<string, unknown> = {}) => ({
+      ...mensaje(id, 'pp-1', 'Hola doctora'),
+      sentAt: new Date(Date.now() - 3_600_000).toISOString(),
+      ...extra,
+    });
+
+    const abrirMenu = (): void => {
+      (consultar('hilo-menu-mensaje') as HTMLElement).click();
+      fixture.detectChanges();
+    };
+
+    it('la barra del menú ofrece las seis reacciones rápidas y «+»', () => {
+      abrir([propio('m-1')]);
+      abrirMenu();
+
+      const rapidas = fixture.nativeElement.querySelectorAll('[data-testid="hilo-reaccion-rapida"]');
+      expect(rapidas.length).toBe(6);
+      expect(consultar('hilo-reaccion-mas')).not.toBeNull();
+    });
+
+    it('reaccionar pinta la reacción antes de que conteste el servidor y manda el emoji', () => {
+      abrir([propio('m-1')]);
+      abrirMenu();
+
+      (fixture.nativeElement.querySelector('[data-testid="hilo-reaccion-rapida"]') as HTMLElement).click();
+      fixture.detectChanges();
+
+      // Optimista: la burbuja ya la lleva.
+      expect(consultar('hilo-reaccion')?.textContent).toContain('👍');
+      const pedido = http.expectOne(
+        (r) => r.method === 'PUT' && r.url === '/community/conversations/c-1/messages/m-1/reaction',
+      );
+      expect(pedido.request.body).toEqual({ profileId: 'pp-1', emoji: '👍' });
+      pedido.flush({
+        ...propio('m-1'),
+        reactions: [{ emoji: '👍', profileIds: ['pp-1'] }],
+      });
+    });
+
+    it('si el servidor rechaza la reacción, se revierte', () => {
+      abrir([propio('m-1')]);
+      abrirMenu();
+      (fixture.nativeElement.querySelector('[data-testid="hilo-reaccion-rapida"]') as HTMLElement).click();
+      fixture.detectChanges();
+
+      http
+        .expectOne((r) => r.method === 'PUT')
+        .flush(null, { status: 500, statusText: 'Error' });
+      fixture.detectChanges();
+
+      expect(consultar('hilo-reaccion')).toBeNull();
+    });
+
+    it('tocar la reacción propia en la burbuja la quita (emoji null)', () => {
+      abrir([
+        propio('m-1', { reactions: [{ emoji: '❤️', profileIds: ['pp-1', 'pp-2'] }] }),
+      ]);
+      expect(consultar('hilo-reaccion')?.textContent).toContain('2');
+
+      (consultar('hilo-reaccion') as HTMLElement).click();
+      fixture.detectChanges();
+
+      const pedido = http.expectOne((r) => r.method === 'PUT');
+      expect(pedido.request.body).toEqual({ profileId: 'pp-1', emoji: null });
+      pedido.flush({ ...propio('m-1'), reactions: [{ emoji: '❤️', profileIds: ['pp-2'] }] });
+    });
+
+    it('sin recibos un mensaje propio sólo puede estar enviado: no se inventa «entregado»', () => {
+      abrir([propio('m-1')]);
+
+      expect(consultar('hilo-ticks')?.getAttribute('data-estado')).toBe('enviado');
+    });
+
+    it('con recibos de entrega pasa a «entregado»; con lectura, a «leído»', () => {
+      abrir([
+        propio('m-1', {
+          receipts: [{ profileId: 'pp-2', deliveredAt: '2026-08-18T10:00:01.000Z', readAt: null }],
+        }),
+        propio('m-2', {
+          receipts: [
+            {
+              profileId: 'pp-2',
+              deliveredAt: '2026-08-18T10:00:01.000Z',
+              readAt: '2026-08-18T10:02:00.000Z',
+            },
+          ],
+        }),
+      ]);
+
+      const estados = Array.from(
+        fixture.nativeElement.querySelectorAll('[data-testid="hilo-ticks"]'),
+      ).map((n) => (n as HTMLElement).getAttribute('data-estado'));
+      // El contrato entrega del más reciente al más antiguo y el hilo se lee al
+      // revés: m-2 (leído) queda arriba de m-1 (entregado).
+      expect(estados).toEqual(['leido', 'entregado']);
+    });
+
+    it('«Info. del mensaje» muestra cuándo se envió, se entregó y se leyó', () => {
+      abrir([
+        propio('m-1', {
+          receipts: [
+            {
+              profileId: 'pp-2',
+              deliveredAt: '2026-08-18T10:00:01.000Z',
+              readAt: '2026-08-18T10:02:00.000Z',
+            },
+          ],
+        }),
+      ]);
+      abrirMenu();
+
+      (consultar('hilo-info') as HTMLElement).click();
+      fixture.detectChanges();
+
+      expect(consultar('info-enviado')?.textContent?.trim()).not.toBe('');
+      expect(consultar('info-entregado')?.textContent?.trim()).not.toBe('—');
+      expect(consultar('info-leido')?.textContent?.trim()).not.toBe('—');
+    });
+
+    it('«Info. del mensaje» no se ofrece en el mensaje de otro', () => {
+      abrir([{ ...mensaje('m-1', 'pp-2', 'Suyo'), sentAt: new Date().toISOString() }]);
+      abrirMenu();
+
+      expect(consultar('hilo-info')).toBeNull();
+    });
+
+    it('un sticker propio marcado como STICKER se dibuja sin burbuja', () => {
+      abrir([
+        {
+          ...propio('m-1', { bodyText: '', attachmentFileId: 'f-9', contentType: 'STICKER' }),
+        },
+      ]);
+
+      expect(burbujas()[0].classList.contains('is-sticker')).toBe(true);
+    });
+
+    it('con la persona bloqueada el campo de escribir se cambia por el aviso y no se puede enviar', () => {
+      abrir([propio('m-1')]);
+      store.bloqueados.set([{ profileId: 'pp-2', displayName: 'Dra. Quispe', desde: new Date() }]);
+      fixture.detectChanges();
+
+      expect(consultar('hilo-bloqueado')).not.toBeNull();
+      expect(consultar('hilo-texto')).toBeNull();
+
+      store.enviar('hola');
+      http.expectNone((r) => r.method === 'POST' && r.url.endsWith('/messages'));
+    });
+
+    it('bloquear pide confirmación y manda POST /community/blocks', () => {
+      abrir([propio('m-1')]);
+      (consultar('hilo-menu') as HTMLElement).click();
+      fixture.detectChanges();
+      (consultar('hilo-bloquear') as HTMLElement).click();
+      fixture.detectChanges();
+
+      expect(document.querySelector('[data-testid="thread-block-dialog"]')).not.toBeNull();
+      (document.querySelector('[data-testid="hilo-bloquear-confirmar"]') as HTMLElement).click();
+      fixture.detectChanges();
+
+      const pedido = http.expectOne((r) => r.method === 'POST' && r.url === '/community/blocks');
+      expect(pedido.request.body).toEqual({ blockerProfileId: 'pp-1', blockedProfileId: 'pp-2' });
+      pedido.flush({ id: 'b-1' });
+      expect(store.estaBloqueado('pp-2')).toBe(true);
     });
   });
 });

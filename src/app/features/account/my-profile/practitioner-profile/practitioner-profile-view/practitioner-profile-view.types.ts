@@ -109,7 +109,15 @@ export interface PuntoDeSerie {
   readonly etiqueta: string;
   /** Lo que se dice en palabras: «septiembre de 2026». */
   readonly etiquetaLarga: string;
+  /** Todas las consultas del mes: con seguro más sin seguro. */
   readonly valor: number;
+  /**
+   * Las del mes atendidas con seguro. Ausente —junto con `sinSeguro`— cuando el
+   * origen sólo trae el total: el gráfico dibuja entonces una sola serie.
+   */
+  readonly conSeguro?: number;
+  /** Las del mes atendidas sin seguro. */
+  readonly sinSeguro?: number;
 }
 
 /**
@@ -131,6 +139,17 @@ export interface IndicadorDeCalidad {
   readonly proporcion: number | null;
 }
 
+/** El consultorio propio del profesional, tal como lo dibuja su ficha. */
+export interface ConsultorioVisible {
+  /**
+   * El logo del consultorio como `data:` URL, o `null` si no cargó ninguno o
+   * no se pudo leer. Es el mismo que sale en el membrete de sus PDF.
+   */
+  readonly logoUrl: string | null;
+  /** Cómo se llama el consultorio, para el texto alternativo del logo. */
+  readonly nombre: string;
+}
+
 /**
  * A nombre de quién factura el profesional.
  *
@@ -139,11 +158,32 @@ export interface IndicadorDeCalidad {
  * NIT no sirve para emitirlo. Vacío es «no lo declaró», y la ficha lo dice con
  * palabras en vez de dejar el hueco.
  */
+/** La firma y el sello de la ficha propia, como `data:` URL. */
+export interface FirmaYSelloVisible {
+  readonly firmaUrl: string | null;
+  readonly selloUrl: string | null;
+}
+
 export interface FacturacionVisible {
   /** El NIT, tal como lo declaró. Vacío si no lo cargó. */
   readonly nit: string;
   /** A nombre de quién sale el comprobante. Vacío si no lo cargó. */
   readonly razonSocial: string;
+  /** Cada cuánto factura a las aseguradoras, en palabras. Vacío si no lo declaró. */
+  readonly frecuenciaSeguro: string;
+}
+
+/**
+ * Una aseguradora con la que trabaja el profesional, lista para pintar.
+ *
+ * La carga la aseguradora al sumarlo a su red, no el profesional: es de sólo
+ * lectura en la ficha y en el editor.
+ */
+export interface SeguroVisible {
+  readonly id: string;
+  readonly aseguradora: string;
+  /** La red o las redes donde figura, para el `title` del chip. */
+  readonly red: string;
 }
 
 /** El estado de habilitación, con su sello ya decidido. */
@@ -194,6 +234,15 @@ export interface PerfilProfesionalVisible {
    */
   readonly sedes?: readonly SedeVisible[];
   /**
+   * Con qué aseguradoras trabaja. Tres valores con tres significados:
+   *
+   * - ausente: esta ficha no lo pregunta (la de la Guía, los fixtures viejos),
+   *   y el renglón no se dibuja;
+   * - `null`: se preguntó y la lectura falló — no es «ninguna»;
+   * - vacío: se preguntó y ninguna aseguradora lo tiene en su red.
+   */
+  readonly seguros?: readonly SeguroVisible[] | null;
+  /**
    * Los datos personales, **sólo en la ficha propia**.
    *
    * `null` cuando se mira la ficha de otro profesional: su documento y su
@@ -201,6 +250,21 @@ export interface PerfilProfesionalVisible {
    * mostrando lo que siempre mostró.
    */
   readonly datosPersonales: DatosPersonalesVisibles | null;
+  /**
+   * Su consultorio propio —hoy, sólo el logo—, **sólo en la ficha propia**.
+   *
+   * Se carga y se corrige desde «Datos personales»; «Facturación» lo muestra
+   * como vista previa de lectura. Ausente o `null` en la ficha de otro.
+   */
+  readonly consultorio?: ConsultorioVisible | null;
+  /**
+   * Su firma y su sello médicos —**imágenes**, no una firma electrónica—, **sólo
+   * en la ficha propia**. `null` en la de otro profesional.
+   *
+   * Se cargan y se cambian desde «Datos personales» del editor; salen al pie de
+   * los documentos que emite. Cada una es `null` si no cargó ninguna.
+   */
+  readonly firmaYSello?: FirmaYSelloVisible | null;
   /**
    * Sus datos de facturación, **sólo en la ficha propia**.
    *

@@ -1,0 +1,5 @@
+✓ check-api-contract-drift
+  605 operaciones HTTP, todas declaradas en docs/integrations/backend-api.md
+  (no verifica el contrato del backend: su OpenAPI no es alcanzable desde acá)
+
+EXIT_CODE=0

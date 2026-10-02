@@ -3,6 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 
+import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
 import type {
   CarrierDetail,
   UpdatePlanBenefitInput,
@@ -89,10 +90,17 @@ describe('InsuranceCatalog', () => {
   let fixture: ComponentFixture<InsuranceCatalog>;
   let component: InsuranceCatalog;
   let http: HttpTestingController;
+  let confirm: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
+    confirm = vi.fn();
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        { provide: DialogService, useValue: { confirm } },
+      ],
     });
     http = TestBed.inject(HttpTestingController);
   });
@@ -154,22 +162,16 @@ describe('InsuranceCatalog', () => {
     expect(texto).toContain('25.00');
   });
 
-  it('muestra los canales de contacto de la aseguradora (subtarea 2.3)', () => {
+  it('no repite la ficha de la aseguradora: vive en el perfil de la organización', () => {
     mount();
     http.expectOne('/insurance-carriers').flush({ items: [RESUMEN], count: 1 });
     http.expectOne(`/insurance-carriers/${CARRIER_ID}`).flush(FICHA);
     fixture.detectChanges();
 
     const texto: string = fixture.nativeElement.textContent;
-    expect(texto).toContain('+59171548278');
-    expect(texto).toContain('800-10-6060');
-    expect(texto).toContain('siniestros@aseguradoradelsur.com.bo');
-
-    const enlaces: NodeListOf<HTMLAnchorElement> =
-      fixture.nativeElement.querySelectorAll('a[href^="tel:"]');
-    expect(Array.from(enlaces).some((a) => a.getAttribute('href') === 'tel:800106060')).toBe(
-      true,
-    );
+    expect(texto).not.toContain('Correo de siniestros');
+    expect(texto).not.toContain('Registro ante el regulador');
+    expect(fixture.nativeElement.querySelector('app-status-seal')).toBeNull();
   });
 
   it('no imprime identificadores técnicos', () => {
@@ -179,23 +181,8 @@ describe('InsuranceCatalog', () => {
     fixture.detectChanges();
 
     const texto: string = fixture.nativeElement.textContent;
-    expect(texto).toContain('Aseguradora del Sur S.A.');
+    expect(texto).toContain('Salud Integral');
     expect(texto).not.toContain(CARRIER_ID);
-  });
-
-  /**
-   * Que una aseguradora declare un registro no es que la plataforma lo haya
-   * contrastado. El sello traduce el código, no el texto del catálogo.
-   */
-  it('distingue lo declarado de lo verificado', () => {
-    mount();
-    const verificationVariant = internal<(code: string) => string>('verificationVariant');
-
-    expect(verificationVariant('VERIFICATION_VERIFIED')).toBe('approved');
-    expect(verificationVariant('VERIFICATION_PENDING')).toBe('pending');
-    expect(verificationVariant('UN_CODIGO_QUE_NO_CONOCEMOS')).toBe('unknown');
-
-    http.expectOne('/insurance-carriers').flush({ items: [], count: 0 });
   });
 
   it('mantiene la vista de staff en solo lectura y oculta todas las acciones', () => {
@@ -206,9 +193,11 @@ describe('InsuranceCatalog', () => {
 
     const element: HTMLElement = fixture.nativeElement;
     expect(element.textContent).toContain('Vista de solo lectura');
-    expect(element.querySelector('[aria-label^="Crear un plan"]')).toBeNull();
-    expect(element.querySelector('[aria-label^="Crear una cobertura"]')).toBeNull();
-    expect(element.querySelector('[aria-label^="Editar cobertura"]')).toBeNull();
+    expect(element.querySelector('[aria-label^="Añadir un producto seguro"]')).toBeNull();
+    expect(element.querySelector('[aria-label^="Añadir cláusula"]')).toBeNull();
+    expect(element.querySelector('[aria-label^="Editar datos del producto seguro"]')).toBeNull();
+    expect(element.querySelector('[aria-label^="Eliminar producto seguro"]')).toBeNull();
+    expect(element.querySelector('[aria-label^="Editar cláusula"]')).toBeNull();
     expect(element.querySelector('[aria-label^="Editar reglas"]')).toBeNull();
   });
 
@@ -221,14 +210,80 @@ describe('InsuranceCatalog', () => {
     fixture.detectChanges();
 
     const button: HTMLButtonElement = fixture.nativeElement.querySelector(
-      '[aria-label="Crear un plan en Salud Integral"]',
+      '[aria-label="Añadir un producto seguro en Salud Integral"]',
     );
     expect(button).toBeTruthy();
     button.click();
 
-    const selected = internal<() => { id: string } | null>('productForNewPlan')();
-    expect(selected?.id).toBe('p-1');
+    const selected = internal<() => { product: { id: string }; plan: unknown } | null>(
+      'planEditor',
+    )();
+    expect(selected?.product.id).toBe('p-1');
+    expect(selected?.plan).toBeNull();
   });
+
+  it('pone las tres acciones del producto seguro en la línea de su título', () => {
+    mountAsAdmin();
+
+    const heading: HTMLElement = fixture.nativeElement.querySelector('#plan-pl-1')!.parentElement;
+    const labels = [...heading.querySelectorAll('button')].map((b) => b.textContent!.trim());
+    expect(labels).toEqual([
+      'Añadir cláusula',
+      'Editar datos del producto seguro',
+      'Eliminar producto seguro',
+    ]);
+
+    (
+      heading.querySelector(
+        '[aria-label="Editar datos del producto seguro Plan Oro"]',
+      ) as HTMLButtonElement
+    ).click();
+    const editor = internal<() => { product: { id: string }; plan: { id: string } } | null>(
+      'planEditor',
+    )();
+    expect(editor?.product.id).toBe('p-1');
+    expect(editor?.plan.id).toBe('pl-1');
+
+    (heading.querySelector('[aria-label="Añadir cláusula a Plan Oro"]') as HTMLButtonElement).click();
+    const clause = internal<() => { plan: { id: string }; benefit: unknown } | null>(
+      'benefitEditor',
+    )();
+    expect(clause?.plan.id).toBe('pl-1');
+    expect(clause?.benefit).toBeNull();
+  });
+
+  it('elimina el producto seguro sólo después de confirmar, y recarga la ficha', async () => {
+    mountAsAdmin();
+    confirm.mockResolvedValue(true);
+    const plan = internal<() => CarrierDetail | null>('carrier')()!.products[0]!.plans[0]!;
+
+    await internal<(plan: unknown) => Promise<void>>('deletePlan')(plan);
+
+    expect(confirm).toHaveBeenCalledWith(expect.objectContaining({ destructive: true }));
+    const request = http.expectOne('/insurance-plans/pl-1');
+    expect(request.request.method).toBe('DELETE');
+    request.flush(null);
+    http.expectOne(`/insurance-carriers/${CARRIER_ID}`).flush({ ...FICHA, canAdminister: true });
+  });
+
+  it('no elimina nada si se cancela la confirmación', async () => {
+    mountAsAdmin();
+    confirm.mockResolvedValue(false);
+    const plan = internal<() => CarrierDetail | null>('carrier')()!.products[0]!.plans[0]!;
+
+    await internal<(plan: unknown) => Promise<void>>('deletePlan')(plan);
+
+    http.expectNone('/insurance-plans/pl-1');
+  });
+
+  function mountAsAdmin(): void {
+    mount();
+    http
+      .expectOne('/insurance-carriers')
+      .flush({ items: [{ ...RESUMEN, canAdminister: true }], count: 1 });
+    http.expectOne(`/insurance-carriers/${CARRIER_ID}`).flush({ ...FICHA, canAdminister: true });
+    fixture.detectChanges();
+  }
 
   it('actualiza importes y reglas en memoria sin recargar la ficha', () => {
     mount();
@@ -272,5 +327,91 @@ describe('InsuranceCatalog', () => {
       );
 
     expect(status()).toBe('error');
+  });
+
+  describe('un producto seguro por página', () => {
+    /** Dos productos seguros en un ramo y un segundo ramo sin planes: tres páginas. */
+    const FICHA_CON_TRES_PAGINAS = {
+      ...FICHA,
+      products: [
+        {
+          ...FICHA.products[0]!,
+          plans: [
+            FICHA.products[0]!.plans[0]!,
+            { ...FICHA.products[0]!.plans[0]!, id: 'pl-2', planCode: 'PLAN-2', name: 'Plan Plata' },
+          ],
+        },
+        { ...FICHA.products[0]!, id: 'p-2', productCode: 'PROD-2', name: 'Vida', plans: [] },
+      ],
+    };
+
+    function mountPaginado(): void {
+      mount();
+      http.expectOne('/insurance-carriers').flush({ items: [RESUMEN], count: 1 });
+      http.expectOne(`/insurance-carriers/${CARRIER_ID}`).flush(FICHA_CON_TRES_PAGINAS);
+      fixture.detectChanges();
+    }
+
+    function irAPagina(numero: number): void {
+      const boton: HTMLButtonElement = fixture.nativeElement.querySelector(
+        `[aria-label="Página ${numero}"]`,
+      );
+      expect(boton, `botón de la página ${numero}`).toBeTruthy();
+      boton.click();
+      fixture.detectChanges();
+    }
+
+    it('dibuja sólo un producto seguro a la vez, no toda la lista apilada', () => {
+      mountPaginado();
+
+      const element: HTMLElement = fixture.nativeElement;
+      expect(element.querySelector('#plan-pl-1')).not.toBeNull();
+      expect(element.querySelector('#plan-pl-2')).toBeNull();
+      expect(element.textContent).toContain('1–1 de 3');
+    });
+
+    it('deja elegir el número de página: botones numerados y selector «Ir a la página»', () => {
+      mountPaginado();
+
+      const element: HTMLElement = fixture.nativeElement;
+      for (const numero of [1, 2, 3]) {
+        expect(element.querySelector(`[aria-label="Página ${numero}"]`)).not.toBeNull();
+      }
+      expect(element.querySelector('.pagination__jump')).not.toBeNull();
+      // Un producto por página: no hay selector de «resultados por página».
+      expect(element.querySelector('.pagination__size')).toBeNull();
+    });
+
+    it('al elegir la página 2 se ve el otro producto seguro y deja de verse el primero', () => {
+      mountPaginado();
+
+      irAPagina(2);
+
+      const element: HTMLElement = fixture.nativeElement;
+      expect(element.querySelector('#plan-pl-2')).not.toBeNull();
+      expect(element.querySelector('#plan-pl-1')).toBeNull();
+      expect(element.textContent).toContain('Plan Plata');
+    });
+
+    it('un ramo sin productos seguros ocupa su propia página', () => {
+      mountPaginado();
+
+      irAPagina(3);
+
+      expect(fixture.nativeElement.textContent).toContain(
+        'Este ramo todavía no tiene productos seguros activos.',
+      );
+    });
+
+    it('una página fuera de rango se recorta a la última: nunca queda la pantalla vacía', () => {
+      mountPaginado();
+
+      member<{ set(value: number): void }>('pagina').set(99);
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.textContent).toContain(
+        'Este ramo todavía no tiene productos seguros activos.',
+      );
+    });
   });
 });

@@ -1,3 +1,4 @@
+import { environment } from '../../../../environments/environment';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
@@ -10,6 +11,9 @@ import {
   type ProductoDeCatalogo,
   estadoDe,
 } from '../../../core/data-access/pharmacy-campaigns/pharmacy-campaigns.client';
+import { idSembrado } from '../../../core/data-access/pharmacy-campaigns/pharmacy-campaigns.fixtures';
+import { NO_CONDITIONS } from '../../../core/promotions-engine/promotion-mechanics.types';
+import type { Mechanic } from '../../../core/promotions-engine/promotion-mechanics.types';
 import { CampaignDetail } from './campaign-detail';
 
 /**
@@ -20,7 +24,7 @@ import { CampaignDetail } from './campaign-detail';
  * promoción que se cumplió, y lo que se pinta son los dos precios que la
  * farmacia puso —nunca un descuento derivado por la pantalla—.
  *
- * Corren con la demo encendida, que es el default de desarrollo.
+ * Activan la demo de campañas explícitamente y restauran el entorno tras cada caso.
  */
 const FARMACIA = '7f1c9a52-6d3e-4b18-9c47-2a5e8f0b1d63';
 
@@ -49,6 +53,11 @@ const CATALOGO: readonly ProductoDeCatalogo[] = [
 ];
 
 describe('CampaignDetail', () => {
+  const originalCampaignsDemo = environment.campaignsDemo;
+
+  beforeEach(() => Object.assign(environment, { campaignsDemo: true }));
+  afterEach(() => Object.assign(environment, { campaignsDemo: originalCampaignsDemo }));
+
   let harness: RouterTestingHarness;
   let client: PharmacyCampaignsClient;
 
@@ -159,5 +168,98 @@ describe('CampaignDetail', () => {
     expect(elemento('[data-testid="promo-productos"]')).toBeNull();
     // El descuento del 25 % sobre 48.00 no puede haberse filtrado.
     expect(texto()).not.toContain('36.00');
+  });
+  describe('las mecánicas del motor', () => {
+    const sembrada = (slug: string) => idSembrado(slug, FARMACIA);
+
+    async function publicar(mecanica: Mechanic, extras: { condiciones?: typeof NO_CONDITIONS } = {}) {
+      const creada = await firstValueFrom(
+        client.crear(
+          {
+            titulo: 'Campaña propia',
+            descripcion: '',
+            desde: new Date(Date.now() - 24 * 60 * 60 * 1000),
+            hasta: new Date(Date.now() + 24 * 60 * 60 * 1000),
+            mecanica,
+            condiciones: extras.condiciones,
+            renglones:
+              mecanica.kind === 'ORDER_PERCENT_OVER'
+                ? []
+                : [
+                    { productId: 'p-1', nombre: 'Metformina 850 mg', presentacion: 'caja x 30', precioNormal: '48.00', moneda: 'BOB', precioPromocional: null },
+                  ],
+          },
+          FARMACIA,
+          'Farmacia del Centro',
+        ),
+      );
+      return 'id' in creada ? creada.id : '';
+    }
+
+    it('un 2x1 dice «2x1», la oración y un caso calculado, sin precio tachado', async () => {
+      await montar(sembrada('dos-por-uno'));
+
+      expect(elemento('[data-testid="promo-mecanica-etiqueta"]')?.textContent?.trim()).toBe('2x1');
+      expect(elemento('[data-testid="promo-mecanica-frase"]')?.textContent).toContain('Llevá 2 y pagá 1.');
+      // 2 × 48.00 = 96.00; pagando 1: 48.00.
+      expect(elemento('[data-testid="promo-ejemplo"]')?.textContent).toContain('pagás Bs 48 en vez de Bs 96');
+      // No inventa un precio por unidad que la mecánica no tiene.
+      expect(elemento('.promo__precios s')).toBeNull();
+      expect(elemento('.promo__precios')?.textContent).toContain('48.00');
+    });
+
+    it('una de precio sigue mostrando los dos precios y no repite un ejemplo', async () => {
+      await montar(sembrada('cuidado-diario'));
+
+      expect(elemento('[data-testid="promo-mecanica-etiqueta"]')?.textContent?.trim()).toBe('20 % menos');
+      expect(elemento('.promo__precios s')).not.toBeNull();
+      expect(elemento('[data-testid="promo-ejemplo"]')).toBeNull();
+    });
+
+    it('una sobre el total no apunta a productos y lo dice', async () => {
+      await montar(sembrada('compra-minima'));
+
+      expect(elemento('[data-testid="promo-productos"]')).toBeNull();
+      expect(elemento('[data-testid="promo-sin-productos"]')?.textContent).toContain('vale sobre toda tu compra');
+      expect(elemento('[data-testid="promo-ejemplo"]')?.textContent).toContain('En una compra justo en el mínimo');
+    });
+
+    it('un combo muestra el precio normal de cada producto y el ejemplo del conjunto', async () => {
+      await montar(sembrada('combo-cuidado'));
+
+      expect(elemento('[data-testid="promo-mecanica-etiqueta"]')?.textContent?.trim()).toBe('Combo');
+      // 48.00 + 22.50 = 70.50; el combo cuesta 63.45.
+      expect(elemento('[data-testid="promo-ejemplo"]')?.textContent).toContain('pagás Bs 63.45 en vez de Bs 70.50');
+    });
+
+    it('dice las condiciones y NUNCA el código del cupón', async () => {
+      const id = await publicar(
+        { kind: 'BUY_X_PAY_Y', take: 2, pay: 1 },
+        { condiciones: { ...NO_CONDITIONS, couponCode: 'SECRETO50', maxDiscount: '30.00', weekdays: [6, 0] } },
+      );
+
+      await montar(id);
+
+      const condiciones = elemento('[data-testid="promo-condiciones"]')?.textContent ?? '';
+      expect(condiciones).toContain('Vale los sábados y domingos.');
+      expect(condiciones).toContain('Descuento máximo de Bs 30 por pedido.');
+      expect(condiciones).toContain('Se necesita un cupón');
+      expect(texto()).not.toContain('SECRETO50');
+    });
+
+    it('sin condiciones no pinta una lista vacía', async () => {
+      await montar(sembrada('dos-por-uno'));
+
+      expect(elemento('[data-testid="promo-condiciones"]')).toBeNull();
+    });
+
+    it('una vencida sigue sin mostrar mecánica, ejemplo ni precios', async () => {
+      await montar(sembrada('invierno-pasado'));
+
+      expect(elemento('[data-testid="promo-terminada"]')).not.toBeNull();
+      expect(elemento('[data-testid="promo-mecanica"]')).toBeNull();
+      expect(elemento('[data-testid="promo-ejemplo"]')).toBeNull();
+      expect(elemento('[data-testid="promo-productos"]')).toBeNull();
+    });
   });
 });

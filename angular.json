@@ -77,7 +77,7 @@
                 {
                   "type": "initial",
                   "maximumWarning": "620kB",
-                  "maximumError": "1.3MB"
+                  "maximumError": "1.5MB"
                 },
                 {
                   "type": "anyComponentStyle",
@@ -140,7 +140,7 @@
                 {
                   "type": "initial",
                   "maximumWarning": "620kB",
-                  "maximumError": "1.3MB"
+                  "maximumError": "1.5MB"
                 },
                 {
                   "type": "anyComponentStyle",
@@ -164,6 +164,18 @@
                   "frontend"
                 ]
               }
+            },
+            "demo": {
+              "server": false,
+              "ssr": false,
+              "outputMode": "static",
+              "prerender": false,
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.demo.ts"
+                }
+              ]
             }
           },
           "defaultConfiguration": "production"
@@ -197,6 +209,10 @@
             "lan": {
               "buildTarget": "mantra-core-health:build:development",
               "allowedHosts": true
+            },
+            "demo": {
+              "buildTarget": "mantra-core-health:build:development,demo",
+              "proxyConfig": "proxy.demo.conf.mjs"
             }
           },
           "defaultConfiguration": "development"

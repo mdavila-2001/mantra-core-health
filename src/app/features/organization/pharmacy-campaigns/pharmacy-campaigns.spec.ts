@@ -1,3 +1,4 @@
+import { environment } from '../../../../environments/environment';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
@@ -17,7 +18,7 @@ import { PharmacyCampaigns } from './pharmacy-campaigns';
  * del formulario vuelven **todos juntos**; y una campaña publicada queda
  * visible para el paciente en el mismo instante.
  *
- * Corren con la demo encendida, que es el default de desarrollo.
+ * Activan la demo de campañas explícitamente y restauran el entorno tras cada caso.
  */
 const FARMACIA = { id: '7f1c9a52-6d3e-4b18-9c47-2a5e8f0b1d63', name: 'Farmacia del Centro' };
 
@@ -27,6 +28,11 @@ const DIRECTORIO: PharmacyDirectoryPage = {
 };
 
 describe('PharmacyCampaigns', () => {
+  const originalCampaignsDemo = environment.campaignsDemo;
+
+  beforeEach(() => Object.assign(environment, { campaignsDemo: true }));
+  afterEach(() => Object.assign(environment, { campaignsDemo: originalCampaignsDemo }));
+
   let fixture: ComponentFixture<PharmacyCampaigns>;
   let http: HttpTestingController;
   let client: PharmacyCampaignsClient;

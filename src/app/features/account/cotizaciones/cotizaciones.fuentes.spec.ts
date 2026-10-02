@@ -99,7 +99,7 @@ describe('CotizacionesFuentes', () => {
       price: {
         amount: 12.5,
         currency: 'BOB',
-        source: 'Precio de ejemplo de la maqueta: Farmacia s1 no lo publicó',
+        source: 'Precio publicado por Farmacia s1',
       },
       distanceKm: 1.2,
     });
@@ -222,7 +222,7 @@ describe('CotizacionesFuentes', () => {
       price: {
         amount: 80,
         currency: 'BOB',
-        source: 'Tarifario de ejemplo de la maqueta: Laboratorio Central no lo publicó',
+        source: 'Tarifario publicado por Laboratorio Central',
       },
       distanceKm: null,
       // Se reserva un horario en el centro, no se manda a su ficha.

@@ -143,6 +143,9 @@
                 ariaLabel="Cómo ordenar las sucursales"
                 (valueChange)="orden.set($event)"
               />
+              <!-- Contra la API real no se ofrece: ver `sampleData`. El bloque
+                   conserva su sangría para no reescribir sus identificadores. -->
+              @if (sampleData) {
               <div class="compra__seguro" data-testid="compra-variante-seguro">
                 <app-switch
                   label="Ver la variante con seguro"
@@ -156,6 +159,7 @@
                   Las sucursales, existencias y precios son los de la consulta.
                 </span>
               </div>
+              }
             </div>
 
             <app-view-state-host [state]="estadoDeSedes()" (retry)="consultar()">
@@ -251,8 +255,9 @@
                         @if (promocionesDe(sede); as promociones) {
                           @if (promociones.length > 0) {
                             <ul class="compra__promos" data-testid="compra-promos">
-                              @for (promo of promociones; track promo.id) {
-                                <li>
+                              @for (promo of primerasPromociones(promociones); track promo.id) {
+                                <li class="compra__promo-fila">
+                                  <app-badge variant="success">{{ etiquetaDe(promo) }}</app-badge>
                                   <a
                                     app-link
                                     [routerLink]="['/promotions', promo.id]"
@@ -263,6 +268,34 @@
                                 </li>
                               }
                             </ul>
+                            <!-- Con muchas campañas, la lista no se come la tarjeta de
+                                 la sede: el resto queda a un toque, sin perder ningún
+                                 enlace. `<details>` nativo: teclado y lector de pantalla
+                                 sin código. -->
+                            @if (restoDePromociones(promociones); as resto) {
+                              @if (resto.length > 0) {
+                                <details class="compra__mas-promos" data-testid="compra-mas-promos">
+                                  <summary>
+                                    Ver {{ resto.length }}
+                                    {{ resto.length === 1 ? 'promoción más' : 'promociones más' }}
+                                  </summary>
+                                  <ul class="compra__promos">
+                                    @for (promo of resto; track promo.id) {
+                                      <li class="compra__promo-fila">
+                                        <app-badge variant="success">{{ etiquetaDe(promo) }}</app-badge>
+                                        <a
+                                          app-link
+                                          [routerLink]="['/promotions', promo.id]"
+                                          class="compra__promo"
+                                        >
+                                          {{ promo.titulo }}
+                                        </a>
+                                      </li>
+                                    }
+                                  </ul>
+                                </details>
+                              }
+                            }
                           }
                         }
                       </div>

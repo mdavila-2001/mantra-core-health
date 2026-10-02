@@ -3,9 +3,11 @@ import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideRouter } from '@angular/router';
-import { describe, expect, it } from 'vitest';
+import { NEVER } from 'rxjs';
+import { describe, expect, it, vi } from 'vitest';
 
 import { API_BASE_URL } from '../../../core/data-access/api';
+import { SimpleAccountingClient } from '../../../core/data-access/simple-accounting/simple-accounting.client';
 import { Resumen } from './resumen';
 
 /* ============================================================================
@@ -43,6 +45,18 @@ function montar(): {
       // `routerLink`, y esa directiva pide `ActivatedRoute`.
       provideRouter([]),
       { provide: API_BASE_URL, useValue: BASE },
+      // La contabilidad simple que el resumen monta arriba tiene su propio
+      // cliente y sus propias pruebas. Acá se la deja sin red para que estas
+      // sigan contando, pedido por pedido, sólo lo que pide el resumen.
+      {
+        provide: SimpleAccountingClient,
+        useValue: {
+          summary: () => NEVER,
+          listAccounts: () => NEVER,
+          listRecords: () => NEVER,
+          listTransactions: () => NEVER,
+        },
+      },
     ],
   });
   const fixture = TestBed.createComponent(Resumen);
@@ -133,10 +147,18 @@ function responderTablero(
 describe('Resumen contable', () => {
   describe('los tres tramos', () => {
     it('pide el estado de resultados SEIS veces, cada una con su ventana', () => {
+      vi.useFakeTimers({ toFake: ['Date'] });
+      vi.setSystemTime(new Date(2026, 8, 17, 12));
       // Tres tramos y sus tres comparables. Si alguien "optimiza" esto a una
       // sola lectura filtrada en el navegador, «hoy» vuelve a dar el total del
       // ejercicio, que es el defecto que la pantalla vino a corregir.
-      const { fixture, http } = montar();
+      let montaje: ReturnType<typeof montar>;
+      try {
+        montaje = montar();
+      } finally {
+        vi.useRealTimers();
+      }
+      const { fixture, http } = montaje;
       responderPracticas(http, fixture);
 
       const pedidos = http.match((r) => r.url === `${BASE}/accounting/income-statement`);
@@ -420,6 +442,51 @@ describe('Resumen contable', () => {
         (fixture.componentInstance as unknown as { hayVariasPracticas: () => boolean })
           .hayVariasPracticas(),
       ).toBe(false);
+    });
+  });
+
+  describe('tableros y registros, en pestañas separadas', () => {
+    const rotulos = (fixture: { nativeElement: HTMLElement }): string[] =>
+      Array.from(fixture.nativeElement.querySelectorAll('[role="tab"]')).map((t) =>
+        (t as HTMLElement).textContent?.trim() ?? '',
+      );
+
+    it('son dos pestañas —Resumen y Registros— y abre en Resumen', () => {
+      const { fixture, http } = montar();
+      responderPracticas(http, fixture);
+      responderTablero(http, Array.from({ length: 6 }, () => resultado('0.00', '0.00', '0.00')));
+      fixture.detectChanges();
+
+      expect(rotulos(fixture)).toEqual(['Resumen', 'Registros']);
+      const texto = (fixture.nativeElement as HTMLElement).textContent ?? '';
+      expect(texto).toContain('¿Cuánto hiciste?');
+      expect(texto).toContain('Lo que está pendiente');
+    });
+
+    it('el Resumen no trae la tarjeta de registros', () => {
+      const { fixture, http } = montar();
+      responderPracticas(http, fixture);
+      responderTablero(http, Array.from({ length: 6 }, () => resultado('0.00', '0.00', '0.00')));
+      fixture.detectChanges();
+
+      const raiz = fixture.nativeElement as HTMLElement;
+      expect(raiz.querySelector('[data-testid="contabilidad-registros"]')).toBeNull();
+    });
+
+    it('en Registros no hay tableros ni se pide el dinero del tablero de nuevo', () => {
+      const { fixture, http } = montar();
+      responderPracticas(http, fixture);
+      responderTablero(http, Array.from({ length: 6 }, () => resultado('0.00', '0.00', '0.00')));
+      fixture.detectChanges();
+
+      fixture.componentInstance.pestana.set(1);
+      fixture.detectChanges();
+
+      const raiz = fixture.nativeElement as HTMLElement;
+      expect(raiz.querySelector('[data-testid="contabilidad-registros"]')).not.toBeNull();
+      expect(raiz.textContent).not.toContain('¿Cuánto hiciste?');
+      expect(raiz.textContent).not.toContain('Lo que está pendiente');
+      http.verify();
     });
   });
 

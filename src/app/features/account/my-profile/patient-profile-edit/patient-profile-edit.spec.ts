@@ -359,6 +359,41 @@ describe('PatientProfileEdit', () => {
     expect(señal<string | null>('sexoAlNacer')()).toBe('FEMALE');
   });
 
+  it('muestra el correo guardado y aclara que cambiarlo requiere verificación', () => {
+    montarPintadoYCargado({ email: 'ana@example.test' });
+
+    expect(notaDelCampo('perfil-correo', '.form-field-hint')).toContain(
+      'verificar el nuevo antes de soltar el viejo',
+    );
+    const email = (fixture.nativeElement as HTMLElement).querySelector<HTMLInputElement>(
+      '[data-testid="perfil-correo"] input',
+    );
+    expect(email?.value).toBe('ana@example.test');
+    expect(email?.disabled).toBe(true);
+  });
+
+  it('recupera y guarda NIT y razón social con los campos fiscales del perfil', () => {
+    montarYCargar({ taxId: '1020304056', taxHolderName: 'Consultorio Ejemplo' });
+
+    expect(señal<string>('nit')()).toBe('1020304056');
+    expect(señal<string>('razonSocial')()).toBe('Consultorio Ejemplo');
+
+    señal<string>('nit').set('9988776655');
+    señal<string>('razonSocial').set('Centro Médico Ejemplo S.R.L.');
+    interno<() => void>('guardar')();
+
+    const req = pedidoDeGuardado();
+    expect(req.request.body).toEqual({
+      taxId: '9988776655',
+      taxHolderName: 'Centro Médico Ejemplo S.R.L.',
+    });
+    req.flush({
+      ...PERFIL_BASE,
+      taxId: '9988776655',
+      taxHolderName: 'Centro Médico Ejemplo S.R.L.',
+    });
+  });
+
   /**
    * Quien tiene cuatro o cinco nombres los declaró en casillas separadas al
    * registrarse, y la base los guarda en una sola columna separados por
@@ -569,6 +604,25 @@ describe('PatientProfileEdit', () => {
       expect(raiz.querySelector('[data-testid="perfil-trabajo-reescribir"]')).not.toBeNull();
     });
 
+    it('manda domicilio y trabajo en campos separados', () => {
+      montarYCargar(CON_DIRECCIONES);
+
+      señal<string>('domicilio').set('Av. Busch 100');
+      señal<string>('direccionTrabajo').set('Calle Ayacucho 241, La Paz');
+      interno<() => void>('guardar')();
+
+      const req = pedidoDeGuardado();
+      expect(req.request.body).toEqual({
+        homeAddressLines: 'Av. Busch 100',
+        workAddressLines: 'Calle Ayacucho 241, La Paz',
+      });
+      req.flush({
+        ...PERFIL_BASE,
+        homeAddress: { lines: 'Av. Busch 100' },
+        workAddress: { lines: 'Calle Ayacucho 241, La Paz' },
+      });
+    });
+
     it('los dos mapas se dibujan en la pestaña de ubicación', () => {
       montarPintadoYCargado(CON_DIRECCIONES);
       // Los mapas viven con las direcciones, en «Ubicación y contacto».
@@ -579,6 +633,14 @@ describe('PatientProfileEdit', () => {
         'app-ubicacion-picker',
       );
       expect(mapas).toHaveLength(2);
+    });
+
+    it('pide ciudad y país cuando el trabajo queda fuera de Bolivia', () => {
+      montarPintadoYCargado(CON_DIRECCIONES);
+
+      expect(notaDelCampo('perfil-trabajo', '.form-field-hint')).toBe(
+        'Si trabajás fuera de Bolivia, sumá ciudad y país a la dirección.',
+      );
     });
   });
 

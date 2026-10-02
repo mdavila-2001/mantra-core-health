@@ -1,0 +1,8 @@
+$ yarn typecheck
+✓ src/app/features/component-stock/component-index.generated.ts
+  596 componentes · 3 otros · 351 pantallas · 138 maquetas · 23 atomos · 46 moleculas · 35 organismos
+  208 con algo que mirar
+  relaciones: 2596 template-instantiates · 5 imports-available sin instanciar · 69 type-only · 229 dynamic-loads
+  nivel: 0 declarado · 596 por-ruta · 5 unresolvedEvidence en 5 componentes
+  acreditación: descubiertos 596/596 · con escenario 3/596 · verificados visualmente 3/596 · bloqueados 80/596 · montó e interactuó: se miden en el banco (runtime)
+exit=0

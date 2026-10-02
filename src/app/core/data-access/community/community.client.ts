@@ -67,6 +67,7 @@ import type {
   NewReview,
   NewReviewResponse,
   ResolveAppeal,
+  NewMessageReaction,
   NewReaction,
   NewPost,
   SocialRemoval,
@@ -1227,6 +1228,33 @@ export class CommunityClient {
   }
 
   /**
+   * `PUT /community/conversations/:id/messages/:messageId/reaction` —
+   * reacciona a un mensaje.
+   *
+   * **Pendiente de backend**: la API real todavía no tiene este endpoint (ver
+   * `PLAN-CHAT-WHATSAPP.md` (§ «Retoques del 30/09»)); la maqueta lo responde con el contrato de acá.
+   *
+   * @param conversationId - El hilo.
+   * @param messageId - Qué mensaje.
+   * @param datos - Quién reacciona y con qué; `emoji: null` quita la reacción.
+   * @returns El mensaje con sus reacciones ya al día.
+   */
+  reactToMessage(
+    conversationId: string,
+    messageId: string,
+    datos: NewMessageReaction,
+  ): Observable<DirectMessage> {
+    return this.http
+      .put<WireMessage>(
+        this.url(
+          `/community/conversations/${encodeURIComponent(conversationId)}/messages/${encodeURIComponent(messageId)}/reaction`,
+        ),
+        datos,
+      )
+      .pipe(map(toMessage));
+  }
+
+  /**
    * `POST /community/conversations/:id/read` — marca leído hasta el último.
    *
    * Sin `upToMessageId` el backend usa el mensaje más reciente, que es lo que
@@ -1496,9 +1524,14 @@ interface WireConversationPage extends Omit<ConversationPage, 'items'> {
   readonly items: readonly WireConversation[];
 }
 
-type WireMessage = Omit<ConNulos<DirectMessage>, 'sentAt' | 'deletedAt'> & {
+type WireMessage = Omit<ConNulos<DirectMessage>, 'sentAt' | 'deletedAt' | 'receipts'> & {
   readonly sentAt: string | null;
   readonly deletedAt?: string | null;
+  readonly receipts?: readonly {
+    readonly profileId: string;
+    readonly deliveredAt?: string | null;
+    readonly readAt?: string | null;
+  }[] | null;
 };
 
 interface WireMessagePage extends Omit<DirectMessagePage, 'items' | 'peerReadUpTo'> {
@@ -1896,11 +1929,20 @@ function toConversationPage(body: WireConversationPage): ConversationPage {
   return { ...body, items: body.items.map(toConversation) };
 }
 
-function toMessage({ sentAt, deletedAt, ...resto }: WireMessage): DirectMessage {
+function toMessage({ sentAt, deletedAt, receipts, ...resto }: WireMessage): DirectMessage {
   return {
     ...sinNulos(resto),
     ...fecha('sentAt', sentAt),
     ...fecha('deletedAt', deletedAt ?? null),
+    ...(receipts == null
+      ? {}
+      : {
+          receipts: receipts.map((r) => ({
+            profileId: r.profileId,
+            ...fecha('deliveredAt', r.deliveredAt ?? null),
+            ...fecha('readAt', r.readAt ?? null),
+          })),
+        }),
   };
 }
 

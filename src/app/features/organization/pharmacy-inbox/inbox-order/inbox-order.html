@@ -25,10 +25,6 @@
               >
                 {{ modo.presentacion.label }}
               </app-chip>
-              <!-- El medio lo puso la maqueta: se dice, no se disimula. -->
-              @if (modo.esEjemplo) {
-                <app-chip size="sm" variant="neutral">{{ notaDeEjemplo }}</app-chip>
-              }
             }
             <span class="mostrador__secundario">{{ estado.descripcion }}</span>
           </p>

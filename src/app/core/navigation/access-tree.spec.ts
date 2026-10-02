@@ -117,13 +117,21 @@ describe('buildAccessTree', () => {
    * llega desde «Mi perfil»—.
    */
   it.each([
-    ['administration/my-practice'],
-    ['administration/pharmacy-orders'],
-    ['administration/pharmacy-campaigns'],
-    ['administration/pharmacy-profile'],
-  ])('no ofrece %s en «Tus accesos» aunque la sesión lo alcance', (ruta) => {
-    expect(seccionesDe(['PRACTITIONER']).map((s) => s.path)).toContain(ruta);
-    expect(rutasRepartidas(['PRACTITIONER'])).not.toContain(ruta);
+    ['administration/my-practice', null],
+    // Las de farmacia sólo existen en una organización `PHARMACY`
+    // (29/09/2026): el médico que además atiende un mostrador las alcanza al
+    // activar esa organización, y aun así no ocupan un renglón de su árbol.
+    ['administration/pharmacy-orders', 'PHARMACY'],
+    ['administration/pharmacy-campaigns', 'PHARMACY'],
+    ['administration/pharmacy-catalog', 'PHARMACY'],
+    ['administration/pharmacy-profile', 'PHARMACY'],
+    ['administration/pharmacy', 'PHARMACY'],
+    ['administration/pharmacy-categories', 'PHARMACY'],
+    ['administration/pharmacy-import', 'PHARMACY'],
+    ['administration/pharmacy-inventory', 'PHARMACY'],
+  ])('no ofrece %s en «Tus accesos» aunque la sesión lo alcance', (ruta, tipo) => {
+    expect(seccionesDe(['PRACTITIONER'], tipo).map((s) => s.path)).toContain(ruta);
+    expect(rutasRepartidas(['PRACTITIONER'], tipo)).not.toContain(ruta);
   });
 
   /**
@@ -318,6 +326,9 @@ describe('buildAccessTree', () => {
       'administration/insurance-campaigns',
       'administration/my-organization',
       'administration/insurance',
+      'administration/insurance-claims',
+      // 2026-09-27: «Solicitudes recibidas», pedida por la propietaria.
+      'administration/received-claims',
     ]);
   });
 });

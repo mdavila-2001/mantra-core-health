@@ -17,20 +17,27 @@
       <!-- ─── La receta (T-E1): de ejemplo y rotulada ─────────────────────── -->
       <section class="confirmacion__bloque" aria-labelledby="confirmacion-receta" data-testid="pedido-receta">
         <h2 id="confirmacion-receta" class="confirmacion__titulo">Tu receta</h2>
-        @if (datos(); as ejemplo) {
-          <p class="confirmacion__principal">Emitida por {{ ejemplo.cabecera.emitidaPor }}</p>
+        @if (datos()?.cabecera; as cabecera) {
+          <p class="confirmacion__principal">Emitida por {{ cabecera.emitidaPor }}</p>
           <p class="confirmacion__secundario">
-            {{ ejemplo.cabecera.especialidad }} · el
-            {{ ejemplo.cabecera.emitidaEl | date: 'dd/MM/yyyy' }}
+            {{ cabecera.especialidad }} · el
+            {{ cabecera.emitidaEl | date: 'dd/MM/yyyy' }}
+          </p>
+        } @else {
+          <!-- Contra la API real: el borrador no trae quién firmó ni cuándo. -->
+          <p class="confirmacion__secundario" data-testid="order-prescription-without-header">
+            Receta electrónica. Quién la emitió y cuándo todavía no se muestra acá.
           </p>
         }
-        <p class="confirmacion__etiquetas">
-          <app-badge variant="info">{{ notaDeEjemplo }}</app-badge>
-          <span class="confirmacion__secundario">
-            Quién la emitió y cuándo, las cantidades recetadas, las alternativas y la variante con
-            seguro son de ejemplo.
-          </span>
-        </p>
+        @if (sampleData) {
+          <p class="confirmacion__etiquetas">
+            <app-badge variant="info">{{ notaDeEjemplo }}</app-badge>
+            <span class="confirmacion__secundario">
+              Quién la emitió y cuándo, las cantidades recetadas, las alternativas y la variante con
+              seguro son de ejemplo.
+            </span>
+          </p>
+        }
       </section>
 
       <!-- ─── La sede elegida ────────────────────────────────────────────── -->
@@ -46,7 +53,11 @@
       <section class="confirmacion__bloque" aria-labelledby="confirmacion-renglones">
         <h2 id="confirmacion-renglones" class="confirmacion__titulo">Qué pedís</h2>
 
-        <!-- T-E1 · F2.2.4: el conmutador es de demostración y lo dice. -->
+        <!-- T-E1 · F2.2.4: el conmutador es de demostración y lo dice. Contra la
+             API real no se ofrece: ningún contrato dice qué aprueba el seguro
+             antes de que el pedido exista. El bloque conserva su sangría para
+             no reescribir sus identificadores. -->
+        @if (sampleData) {
         <div class="confirmacion__seguro" data-testid="pedido-variante-seguro">
           <app-switch
             label="Ver la variante con seguro"
@@ -59,16 +70,16 @@
             Qué aprueba el seguro es un criterio de ejemplo, no la respuesta de tu aseguradora.
           </span>
         </div>
+        }
 
         <!-- FAR-I7: discreto y sólo si algo del pedido está en campaña. Sin
              promoción no aparece nada. -->
-        @if (hayPromocion) {
+        @if (hayPromocion()) {
           <p class="confirmacion__promo" role="status" data-testid="pedido-banner-promo">
             <app-badge variant="success">En promoción</app-badge>
             <span class="confirmacion__secundario">
-              La farmacia tiene una promoción vigente sobre
-              {{ renglonesEnPromocion.size === 1 ? 'un producto' : 'productos' }}
-              de este pedido. El precio de campaña se muestra en cada renglón.
+              La farmacia tiene una promoción vigente sobre este pedido. El detalle está en cada
+              renglón y en el total.
             </span>
           </p>
         }
@@ -133,6 +144,17 @@
                     } @else {
                       <span class="confirmacion__secundario">Sin precio publicado</span>
                     }
+                    @if (renglon.descuento; as descuento) {
+                      <!-- Una campaña que no es de precio por unidad (2x1, combo,
+                           escalonado…): se dice cuál y cuánto descuenta. -->
+                      <span class="confirmacion__descuento" data-testid="pedido-linea-descuento">
+                        <app-badge variant="success">{{ renglon.etiquetaDeCampana }}</app-badge>
+                        <span class="cifras-tabulares">
+                          <span class="sr-only">Descuento:</span>
+                          −{{ descuento }} {{ moneda(renglon.linea.moneda) }}
+                        </span>
+                      </span>
+                    }
                     @if (renglon.subtotal !== null) {
                       <span class="confirmacion__subtotal cifras-tabulares" data-testid="pedido-linea-subtotal">
                         Subtotal: {{ renglon.subtotal }} {{ moneda(renglon.linea.moneda) }}
@@ -181,7 +203,11 @@
                     +
                   </button>
                   <span class="confirmacion__secundario">
-                    Recetado: hasta {{ renglon.cantidadRecetada }}
+                    @if (sampleData) {
+                      Recetado: hasta {{ renglon.cantidadRecetada }}
+                    } @else {
+                      Hasta {{ renglon.cantidadRecetada }}: la receta no declara cantidades
+                    }
                   </span>
                 </div>
                 @if (renglon.ofreceAlternativas) {
@@ -216,9 +242,36 @@
           }
         </ul>
 
+        <!-- Lo que el pedido gana con las campañas que no son de un solo renglón, y
+             lo que le falta para alcanzar la próxima. Sin nada que decir, no existe. -->
+        @if (descuentosDelTotal().length > 0 || avisosDePromocion().length > 0 || multiplicadorDePuntos() !== null) {
+          <ul class="confirmacion__promos" data-testid="pedido-promociones">
+            @for (descuento of descuentosDelTotal(); track descuento.campaignId) {
+              <li class="confirmacion__promo-fila" data-testid="pedido-descuento-total">
+                <app-badge variant="success">{{ descuento.etiqueta }}</app-badge>
+                <span class="cifras-tabulares">
+                  <span class="sr-only">Descuento sobre el total:</span>
+                  −{{ descuento.monto }} {{ moneda(pedido.moneda) }}
+                </span>
+              </li>
+            }
+            @if (multiplicadorDePuntos(); as multiplicador) {
+              <li class="confirmacion__promo-fila" data-testid="pedido-puntos">
+                <app-badge variant="info">Puntos ×{{ multiplicador }}</app-badge>
+                <span class="confirmacion__secundario">Esta compra suma {{ multiplicador }} veces más puntos.</span>
+              </li>
+            }
+            @for (aviso of avisosDePromocion(); track aviso) {
+              <li class="confirmacion__promo-fila" data-testid="pedido-aviso-promocion">
+                <span class="confirmacion__secundario">{{ aviso }}</span>
+              </li>
+            }
+          </ul>
+        }
+
         <p class="confirmacion__total" data-testid="pedido-total">
           @if (!hayCambiosDeDemostracion()) {
-            @if (totalConPromocion; as conPromocion) {
+            @if (totalConPromocion(); as conPromocion) {
               Total estimado:
               <s class="confirmacion__secundario cifras-tabulares">
                 <span class="sr-only">Antes:</span>
@@ -256,7 +309,7 @@
             detalla en el checkout.
           </p>
         }
-        @if (totalConPromocion !== null) {
+        @if (totalConPromocion() !== null) {
           <!-- Quién manda sobre el total: hoy el precio congelado es del
                borrador y el promocional se muestra al lado. Cuando FAR-E1
                exista, el congelado ya toma el promocional y esta aclaración

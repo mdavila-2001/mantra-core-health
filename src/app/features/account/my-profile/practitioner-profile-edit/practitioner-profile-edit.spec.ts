@@ -1,6 +1,6 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import type { WritableSignal } from '@angular/core';
+import { isSignal, type WritableSignal } from '@angular/core';
 import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
@@ -25,6 +25,12 @@ import { PractitionerProfileEdit } from './practitioner-profile-edit';
  *    `POST` independiente del `PATCH` de presentación.
  * 3. **Sin nada que agregar, el botón queda deshabilitado.**
  */
+
+/** Dónde se pregunta por las sedes del perfil de `PERFIL_BASE`. */
+const SEDES = '/practitioners/per-1/sites';
+
+/** Dónde se pregunta por la firma y el sello del profesional de la sesión. */
+const ACTIVOS_DE_FIRMA = '/profiles/practitioners/me/signature-assets';
 
 const PERFIL_BASE = {
   profileId: 'per-1',
@@ -100,6 +106,20 @@ describe('PractitionerProfileEdit', () => {
       // se cancela al desmontar: una petición cancelada no se puede flushear.
       if (!pendiente.cancelled) {
         pendiente.flush({ items: [], count: 0, limit: 50, nextCursor: null });
+      }
+    }
+    // El logo del consultorio se pide al cargar (`LogoDelConsultorioClient`) y
+    // sólo las pruebas del logo hablan de él: las demás lo dan por atendido acá,
+    // igual que el catálogo de arriba.
+    for (const pendiente of http.match((r) => r.method === 'GET' && r.url === SEDES)) {
+      if (!pendiente.cancelled) {
+        pendiente.flush({ items: [], count: 0 });
+      }
+    }
+    // Igual con la firma y el sello: sólo las pruebas de abajo hablan de ellos.
+    for (const pendiente of http.match((r) => r.method === 'GET' && r.url === ACTIVOS_DE_FIRMA)) {
+      if (!pendiente.cancelled) {
+        pendiente.flush({ signatureFileId: null, sealFileId: null });
       }
     }
     http.verify();
@@ -224,7 +244,7 @@ describe('PractitionerProfileEdit', () => {
 
   function interno<T>(nombre: string): T {
     const valor = (componente as unknown as Record<string, unknown>)[nombre];
-    return (typeof valor === 'function' ? valor.bind(componente) : valor) as T;
+    return (typeof valor === 'function' && !isSignal(valor) ? valor.bind(componente) : valor) as T;
   }
 
   /**
@@ -514,6 +534,29 @@ describe('PractitionerProfileEdit', () => {
     const req = http.expectOne('/profiles/practitioners/me');
     expect(req.request.body).toEqual({ taxId: '' });
     req.flush({ ...PERFIL_BASE, taxId: '' });
+  });
+
+  it('siembra la frecuencia de facturación al seguro y manda sólo la que cambió', () => {
+    montarYCargar({ insuranceBillingFrequency: 'MONTHLY' });
+    expect(interno<() => string | null>('frecuenciaFacturacionSeguro')()).toBe('MONTHLY');
+
+    señal<string>('frecuenciaFacturacionSeguro').set('BIWEEKLY');
+    interno<() => void>('guardarPresentacion')();
+
+    const req = http.expectOne('/profiles/practitioners/me');
+    expect(req.request.body).toEqual({ insuranceBillingFrequency: 'BIWEEKLY' });
+    req.flush({ ...PERFIL_BASE, insuranceBillingFrequency: 'BIWEEKLY' });
+  });
+
+  it('sin tocar la frecuencia no la manda', () => {
+    montarYCargar({ insuranceBillingFrequency: 'WEEKLY', taxId: '1' });
+
+    señal<string>('nit').set('2');
+    interno<() => void>('guardarPresentacion')();
+
+    const req = http.expectOne('/profiles/practitioners/me');
+    expect(req.request.body).toEqual({ taxId: '2' });
+    req.flush({ ...PERFIL_BASE, taxId: '2' });
   });
 
   it('el botón de guardar también se ofrece en la pestaña «Facturación»', () => {
@@ -2615,6 +2658,138 @@ describe('PractitionerProfileEdit', () => {
   });
 
   /**
+   * Disciplina de tablas: buscador y paginación (pedido del propietario,
+   * 24/09/2026). Las tres tablas —Formación, Especialidades y Matrículas—
+   * comparten la misma implementación, así que se prueba a fondo en una y se
+   * repite el filtro en las otras dos.
+   */
+  describe('buscador y paginación de las tres tablas', () => {
+    /** Siete títulos: más que una página (5), para poder probar el corte. */
+    const SIETE_TITULOS = Array.from({ length: 7 }, (_, i) => ({
+      id: `cred-${i}`,
+      credentialTypeConceptId: 'cred-titulo',
+      number: `TIT-${i}`,
+      issuingInstitutionText:
+        i === 0 ? 'Universidad Mayor de San Andrés' : 'Universidad Católica Boliviana',
+      issueDate: `2016-0${(i % 9) + 1}-01T12:00:00.000Z`,
+      stateConceptId: 'st-pending',
+    }));
+
+    it('arranca mostrando la primera página, sin recortar por búsqueda', () => {
+      montarYCargar({ credentials: SIETE_TITULOS });
+      interno<WritableSignal<number>>('tamanoPaginaFormacion').set(5);
+
+      expect(interno<() => readonly unknown[]>('filasFormacion')().length).toBe(7);
+      expect(interno<() => readonly unknown[]>('filasFormacionVisibles')().length).toBe(7);
+      expect(interno<() => { data: readonly unknown[] }>('estadoFormacion')().data).toHaveLength(5);
+      expect(interno<() => number>('paginaFormacion')()).toBe(1);
+    });
+
+    it('el buscador filtra por tipo, número o institución, sin tildes ni mayúsculas', () => {
+      montarYCargar({ credentials: SIETE_TITULOS });
+      interno<WritableSignal<number>>('tamanoPaginaFormacion').set(5);
+
+      interno<(filters: Readonly<Record<string, string>>) => void>('onFiltrosFormacion')({ qTitulos: 'andres' });
+
+      expect(interno<() => readonly unknown[]>('filasFormacionVisibles')().length).toBe(1);
+      expect(
+        interno<() => { data: readonly { numero: string }[] }>('estadoFormacion')().data.map((f) => f.numero),
+      ).toEqual(['TIT-0']);
+      // El total sin filtrar no cambia: el buscador recorta la VISTA, no borra nada.
+      expect(interno<() => readonly unknown[]>('filasFormacion')().length).toBe(7);
+    });
+
+    it('paginar corta el resultado, y buscar vuelve a la página 1', () => {
+      montarYCargar({ credentials: SIETE_TITULOS });
+      interno<WritableSignal<number>>('tamanoPaginaFormacion').set(5);
+
+      interno<WritableSignal<number>>('paginaFormacion').set(2);
+      expect(interno<() => { data: readonly unknown[] }>('estadoFormacion')().data).toHaveLength(2);
+      expect(interno<() => number>('paginaFormacion')()).toBe(2);
+
+      // Buscar algo que da una sola página: quedarse en la 2 mostraría una
+      // tabla vacía con el paginador diciendo que hay más.
+      interno<(filters: Readonly<Record<string, string>>) => void>('onFiltrosFormacion')({ qTitulos: 'catolica' });
+      expect(interno<() => number>('paginaFormacion')()).toBe(1);
+      expect(interno<() => readonly unknown[]>('filasFormacionVisibles')().length).toBe(6);
+    });
+
+    it('sin coincidencias, lo dice sin tocar la lectura completa', () => {
+      montarYCargar({ credentials: SIETE_TITULOS });
+      interno<WritableSignal<number>>('tamanoPaginaFormacion').set(5);
+
+      interno<(filters: Readonly<Record<string, string>>) => void>('onFiltrosFormacion')({ qTitulos: 'inexistente' });
+
+      expect((interno<() => readonly unknown[]>('filasFormacion')().length > 0 && interno<() => readonly unknown[]>('filasFormacionVisibles')().length === 0)).toBe(true);
+      expect(interno<() => { data: readonly unknown[] }>('estadoFormacion')().data).toHaveLength(0);
+      expect(interno<() => readonly unknown[]>('filasFormacion')().length).toBe(7);
+    });
+
+    it('sin nada cargado no hay «sin coincidencias»: es el vacío de siempre', () => {
+      montarYCargar({ credentials: [] });
+
+      expect((interno<() => readonly unknown[]>('filasFormacion')().length > 0 && interno<() => readonly unknown[]>('filasFormacionVisibles')().length === 0)).toBe(false);
+      expect(interno<() => readonly unknown[]>('filasFormacion')().length).toBe(0);
+    });
+
+    it('la misma disciplina en Especialidades: buscador y «sin coincidencias»', () => {
+      montarYCargar({
+        specialties: [
+          {
+            id: 'spec-1',
+            specialtyConceptId: 'esp-cardio',
+            isPrimary: true,
+            boardCertified: false,
+            verificationStatusConceptId: 'st-pending',
+            verified: false,
+          },
+          {
+            id: 'spec-2',
+            specialtyConceptId: 'esp-pediatria',
+            isPrimary: false,
+            boardCertified: false,
+            verificationStatusConceptId: 'st-pending',
+            verified: false,
+          },
+        ],
+      });
+
+      interno<(filters: Readonly<Record<string, string>>) => void>('onFiltrosEspecialidades')({ qEspecialidades: 'cardio' });
+      expect(interno<() => readonly unknown[]>('filasEspecialidadesVisibles')().length).toBe(1);
+
+      interno<(filters: Readonly<Record<string, string>>) => void>('onFiltrosEspecialidades')({ qEspecialidades: 'no existe' });
+      expect((interno<() => readonly unknown[]>('filasEspecialidades')().length > 0 && interno<() => readonly unknown[]>('filasEspecialidadesVisibles')().length === 0)).toBe(true);
+    });
+
+    it('la misma disciplina en Matrículas: buscador y «sin coincidencias»', () => {
+      montarYCargar({
+        licenses: [
+          {
+            id: 'lic-1',
+            jurisdictionConceptId: 'jur-bo',
+            licenseNumber: 'MP-123',
+            regulatoryAuthority: 'SEDES Santa Cruz',
+            stateConceptId: 'st-ok',
+          },
+          {
+            id: 'lic-2',
+            jurisdictionConceptId: 'jur-bo',
+            licenseNumber: 'MP-456',
+            regulatoryAuthority: 'Ministerio de Salud',
+            stateConceptId: 'st-ok',
+          },
+        ],
+      });
+
+      interno<(filters: Readonly<Record<string, string>>) => void>('onFiltrosMatriculas')({ qMatriculas: 'sedes' });
+      expect(interno<() => readonly unknown[]>('filasMatriculasVisibles')().length).toBe(1);
+
+      interno<(filters: Readonly<Record<string, string>>) => void>('onFiltrosMatriculas')({ qMatriculas: 'no existe' });
+      expect((interno<() => readonly unknown[]>('filasMatriculas')().length > 0 && interno<() => readonly unknown[]>('filasMatriculasVisibles')().length === 0)).toBe(true);
+    });
+  });
+
+  /**
    * «Actividad» no está en el editor: son estadísticas y no se editan
    * (pedido del cliente del 24/09/2026). Entre el 20 y el 24/09/2026 estuvo,
    * sin campos; esta prueba fija que no vuelva.
@@ -3059,6 +3234,294 @@ describe('PractitionerProfileEdit', () => {
       // valor que la respuesta, todavía en vuelo, podría pisar igual.
       expect(señal<string>('titulo')()).toBe('Un título a medio escribir');
       señal<boolean>('guardandoPresentacion').set(false);
+    });
+  });
+
+  /* ---- el logo del consultorio (pestaña «Facturación») ---------------------- */
+
+  describe('el logo del consultorio', () => {
+    const PROPIA = { id: 'site-1', isOwnSite: true, logoFileId: null };
+    const PNG = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGP4z8DwHwAFAAH/iZk9HQAAAABJRU5ErkJggg==';
+
+    const archivo = (): File =>
+      new File([Uint8Array.from(atob(PNG), (c) => c.charCodeAt(0))], 'logo.png', {
+        type: 'image/png',
+      });
+
+    /** Deja que corra la lectura del archivo (`FileReader` es asíncrono). */
+    const esperarVista = async (): Promise<void> => {
+      for (let i = 0; i < 50 && interno<() => string | null>('logoVisible')() === null; i += 1) {
+        await new Promise((resolver) => setTimeout(resolver, 5));
+      }
+    };
+
+    /** Monta y responde la lectura del logo con la sede propia dada. */
+    function montarConSede(sede: object = PROPIA): void {
+      montarYCargar();
+      http.expectOne(SEDES).flush({ items: [sede], count: 1 });
+    }
+
+    it('trae el logo guardado y lo muestra en la caja', async () => {
+      montarConSede({ ...PROPIA, logoFileId: 'file-logo' });
+      const contenido = http.expectOne('/common/files/file-logo/content');
+      contenido.flush(new Blob([Uint8Array.from(atob(PNG), (c) => c.charCodeAt(0))], { type: 'image/png' }));
+      await esperarVista();
+
+      expect(interno<() => string | null>('logoVisible')()).toMatch(/^data:image\/png/);
+    });
+
+    it('sin logo ni consultorio propio la caja queda vacía y no falla', () => {
+      montarYCargar();
+      http.expectOne(SEDES).flush({ items: [], count: 0 });
+
+      expect(interno<() => string | null>('logoVisible')()).toBeNull();
+    });
+
+    it('si la lectura del logo falla, la pantalla sigue entera', () => {
+      montarYCargar();
+      http.expectOne(SEDES).flush('boom', { status: 500, statusText: 'Server Error' });
+
+      expect(interno<() => string | null>('logoVisible')()).toBeNull();
+    });
+
+    it('elegir un logo lo sube y lo deja pendiente: no se guarda hasta «Guardar cambios»', async () => {
+      montarConSede();
+
+      interno<(archivos: File[]) => void>('alElegirLogo')([archivo()]);
+      http.expectOne('/common/files/upload').flush({ id: 'file-nuevo' });
+      await esperarVista();
+
+      expect(interno<() => string | null>('logoVisible')()).toMatch(/^data:image\/png/);
+      // Ni el PUT del logo ni el PATCH del perfil salieron todavía.
+      http.expectNone((r) => r.method === 'PUT');
+      http.expectNone('/profiles/practitioners/me');
+    });
+
+    it('guardar sólo el logo no manda el PATCH del perfil y sí el PUT del logo', async () => {
+      montarConSede();
+      interno<(archivos: File[]) => void>('alElegirLogo')([archivo()]);
+      http.expectOne('/common/files/upload').flush({ id: 'file-nuevo' });
+      await esperarVista();
+
+      interno<() => void>('guardarPresentacion')();
+
+      http.expectNone('/profiles/practitioners/me');
+      http.expectOne(SEDES).flush({ items: [PROPIA], count: 1 });
+      const put = http.expectOne('/practitioners/me/sites/site-1/logo');
+      expect(put.request.method).toBe('PUT');
+      expect(put.request.body).toEqual({ fileId: 'file-nuevo' });
+      put.flush({ ...PROPIA, logoFileId: 'file-nuevo' });
+    });
+
+    it('quitar el logo guardado manda fileId nulo', async () => {
+      montarConSede({ ...PROPIA, logoFileId: 'file-logo' });
+      http
+        .expectOne('/common/files/file-logo/content')
+        .flush(new Blob(['x'], { type: 'image/png' }));
+      await esperarVista();
+
+      interno<() => void>('quitarLogo')();
+      expect(interno<() => string | null>('logoVisible')()).toBeNull();
+
+      interno<() => void>('guardarPresentacion')();
+      http.expectOne(SEDES).flush({ items: [{ ...PROPIA, logoFileId: 'file-logo' }], count: 1 });
+      const put = http.expectOne('/practitioners/me/sites/site-1/logo');
+      expect(put.request.body).toEqual({ fileId: null });
+      put.flush({ ...PROPIA, logoFileId: null });
+    });
+
+    it('cancelar descarta el logo elegido y vuelve al guardado', async () => {
+      montarConSede();
+      interno<(archivos: File[]) => void>('alElegirLogo')([archivo()]);
+      http.expectOne('/common/files/upload').flush({ id: 'file-nuevo' });
+      await esperarVista();
+
+      interno<() => void>('cancelarEdicion')();
+
+      expect(interno<() => string | null>('logoVisible')()).toBeNull();
+      // Nada que guardar: no hay ninguna petición.
+      interno<() => void>('guardarPresentacion')();
+      http.expectNone((r) => r.method === 'PUT' || r.method === 'PATCH');
+    });
+
+    it('un archivo demasiado pesado se explica y no toca el logo', () => {
+      montarConSede();
+
+      interno<(r: { file: File; reason: string }[]) => void>('alRechazarLogo')([
+        { file: archivo(), reason: 'tamaño' },
+      ]);
+
+      expect(interno<() => string>('errorDelLogo')()).toContain('2 MB');
+      expect(interno<() => string | null>('logoVisible')()).toBeNull();
+    });
+
+    it('si la subida falla lo dice y no deja nada pendiente', () => {
+      montarConSede();
+
+      interno<(archivos: File[]) => void>('alElegirLogo')([archivo()]);
+      http.expectOne('/common/files/upload').flush('boom', { status: 500, statusText: 'x' });
+
+      expect(interno<() => string>('errorDelLogo')()).toContain('No se pudo subir');
+      interno<() => void>('guardarPresentacion')();
+      http.expectNone((r) => r.method === 'PUT' || r.method === 'PATCH');
+    });
+  });
+
+  /* ---- la firma y el sello médicos (pestaña «Datos personales») ------------- */
+
+  describe('la firma y el sello médicos', () => {
+    const PNG = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGP4z8DwHwAFAAH/iZk9HQAAAABJRU5ErkJggg==';
+    const bytes = (): ArrayBuffer =>
+      Uint8Array.from(atob(PNG), (c) => c.charCodeAt(0)).buffer as ArrayBuffer;
+    const archivo = (): File => new File([bytes()], 'firma.png', { type: 'image/png' });
+
+    interface Imagen {
+      visible(): string | null;
+      cambio: string | null | undefined;
+      error(): string;
+    }
+    const firma = (): Imagen => interno<Imagen>('firma');
+    const sello = (): Imagen => interno<Imagen>('sello');
+
+    const esperar = async (leer: () => unknown): Promise<void> => {
+      for (let i = 0; i < 60 && !leer(); i += 1) {
+        await new Promise((resolver) => setTimeout(resolver, 5));
+      }
+    };
+
+    /** Monta y responde la lectura de las dos imágenes. */
+    function montarConFirma(activos: { signatureFileId: string | null; sealFileId: string | null }): void {
+      montarYCargar();
+      http.match((r) => r.url === SEDES).forEach((lectura) => lectura.flush({ items: [], count: 0 }));
+      http.expectOne(ACTIVOS_DE_FIRMA).flush(activos);
+    }
+
+    it('trae la firma y el sello guardados y los muestra en sus cajas', async () => {
+      montarConFirma({ signatureFileId: 'f1', sealFileId: 's1' });
+      http.expectOne('/common/files/f1/content').flush(new Blob([bytes()], { type: 'image/png' }));
+      http.expectOne('/common/files/s1/content').flush(new Blob([bytes()], { type: 'image/png' }));
+      await esperar(() => firma().visible() && sello().visible());
+
+      expect(firma().visible()).toMatch(/^data:image\/png/);
+      expect(sello().visible()).toMatch(/^data:image\/png/);
+    });
+
+    it('sin nada cargado las dos cajas quedan vacías y no falla', () => {
+      montarConFirma({ signatureFileId: null, sealFileId: null });
+
+      expect(firma().visible()).toBeNull();
+      expect(sello().visible()).toBeNull();
+    });
+
+    it('elegir una firma la sube y la deja pendiente: no se guarda hasta «Guardar cambios»', async () => {
+      montarConFirma({ signatureFileId: null, sealFileId: null });
+
+      interno<(archivos: File[]) => void>('alElegirFirma')([archivo()]);
+      http.expectOne('/common/files/upload').flush({ id: 'file-firma' });
+      await esperar(() => firma().visible());
+
+      expect(firma().cambio).toBe('file-firma');
+      expect(sello().cambio).toBeUndefined();
+      http.expectNone((r) => r.method === 'PUT');
+      http.expectNone('/profiles/practitioners/me');
+    });
+
+    it('guardar sólo la firma manda un PUT con esa clave y ningún PATCH del perfil', async () => {
+      montarConFirma({ signatureFileId: null, sealFileId: null });
+      interno<(archivos: File[]) => void>('alElegirFirma')([archivo()]);
+      http.expectOne('/common/files/upload').flush({ id: 'file-firma' });
+      await esperar(() => firma().visible());
+
+      interno<() => void>('guardarPresentacion')();
+
+      http.expectNone('/profiles/practitioners/me');
+      const put = http.expectOne(ACTIVOS_DE_FIRMA);
+      expect(put.request.method).toBe('PUT');
+      expect(put.request.body).toEqual({ signatureFileId: 'file-firma' });
+      put.flush({ signatureFileId: 'file-firma', sealFileId: null });
+      expect(firma().cambio).toBeUndefined();
+    });
+
+    it('firma y sello elegidos juntos viajan en un solo PUT', async () => {
+      montarConFirma({ signatureFileId: null, sealFileId: null });
+      interno<(archivos: File[]) => void>('alElegirFirma')([archivo()]);
+      http.expectOne('/common/files/upload').flush({ id: 'file-firma' });
+      await esperar(() => firma().visible());
+      interno<(archivos: File[]) => void>('alElegirSello')([archivo()]);
+      http.expectOne('/common/files/upload').flush({ id: 'file-sello' });
+      await esperar(() => sello().visible());
+
+      interno<() => void>('guardarPresentacion')();
+
+      const put = http.expectOne(ACTIVOS_DE_FIRMA);
+      expect(put.request.body).toEqual({ signatureFileId: 'file-firma', sealFileId: 'file-sello' });
+      put.flush({ signatureFileId: 'file-firma', sealFileId: 'file-sello' });
+    });
+
+    it('quitar el sello guardado manda sealFileId nulo y deja la firma como estaba', async () => {
+      montarConFirma({ signatureFileId: 'f1', sealFileId: 's1' });
+      http.expectOne('/common/files/f1/content').flush(new Blob([bytes()], { type: 'image/png' }));
+      http.expectOne('/common/files/s1/content').flush(new Blob([bytes()], { type: 'image/png' }));
+      await esperar(() => firma().visible() && sello().visible());
+
+      (componente as unknown as { sello: { quitar(): void } }).sello.quitar();
+      expect(sello().visible()).toBeNull();
+      interno<() => void>('guardarPresentacion')();
+
+      const put = http.expectOne(ACTIVOS_DE_FIRMA);
+      expect(put.request.body).toEqual({ sealFileId: null });
+      put.flush({ signatureFileId: 'f1', sealFileId: null });
+    });
+
+    it('cancelar descarta lo elegido y vuelve a lo guardado', async () => {
+      montarConFirma({ signatureFileId: null, sealFileId: null });
+      interno<(archivos: File[]) => void>('alElegirFirma')([archivo()]);
+      http.expectOne('/common/files/upload').flush({ id: 'file-firma' });
+      await esperar(() => firma().visible());
+
+      interno<() => void>('cancelarEdicion')();
+
+      expect(firma().visible()).toBeNull();
+      expect(firma().cambio).toBeUndefined();
+      interno<() => void>('guardarPresentacion')();
+      http.expectNone((r) => r.method === 'PUT' || r.method === 'PATCH');
+    });
+
+    it('no deja guardar mientras una imagen todavía se está subiendo', () => {
+      montarConFirma({ signatureFileId: null, sealFileId: null });
+      interno<(archivos: File[]) => void>('alElegirSello')([archivo()]);
+      const subida = http.expectOne('/common/files/upload');
+
+      interno<() => void>('guardarPresentacion')();
+
+      http.expectNone((r) => r.method === 'PUT' || r.method === 'PATCH');
+      subida.flush({ id: 'file-sello' });
+    });
+
+    it('si la subida falla lo dice y no deja nada pendiente', () => {
+      montarConFirma({ signatureFileId: null, sealFileId: null });
+
+      interno<(archivos: File[]) => void>('alElegirFirma')([archivo()]);
+      http.expectOne('/common/files/upload').flush('boom', { status: 500, statusText: 'x' });
+
+      expect(firma().error()).toContain('No se pudo subir la firma');
+      expect(firma().cambio).toBeUndefined();
+    });
+
+    it('el logo y la firma guardan cada uno por su ruta cuando cambian a la vez', async () => {
+      montarConFirma({ signatureFileId: null, sealFileId: null });
+      interno<(archivos: File[]) => void>('alElegirFirma')([archivo()]);
+      http.expectOne('/common/files/upload').flush({ id: 'file-firma' });
+      await esperar(() => firma().visible());
+      interno<(archivos: File[]) => void>('alElegirLogo')([archivo()]);
+      http.expectOne('/common/files/upload').flush({ id: 'file-logo' });
+      await esperar(() => interno<() => string | null>('logoVisible')());
+
+      interno<() => void>('guardarPresentacion')();
+
+      http.expectOne(SEDES).flush({ items: [{ id: 'site-1', isOwnSite: true }], count: 1 });
+      http.expectOne('/practitioners/me/sites/site-1/logo').flush({ id: 'site-1' });
+      http.expectOne(ACTIVOS_DE_FIRMA).flush({ signatureFileId: 'file-firma', sealFileId: null });
     });
   });
 });

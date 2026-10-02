@@ -280,8 +280,9 @@
         <app-informed-consent-block [encounterId]="encuentroActual()" />
       }
       @case ('pagos') {
-        <!-- La única casilla que no registra: muestra lo que la persona ya
-             pagó. No emite `cambio` porque no hay nada que releer. -->
+        <!-- No emite `cambio`: lo que registra —pagos, notas de venta y la
+             factura simulada— es de facturación y no toca nada que la
+             consulta tenga que releer. El bloque relee lo suyo. -->
         <app-payments-block [patientProfileId]="pacienteDeLaFicha()" />
       }
     }

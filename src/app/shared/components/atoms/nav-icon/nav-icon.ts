@@ -275,6 +275,19 @@ import type { NavIconName } from './nav-icon.types';
           <path d="M3.5 20.5h17" />
           <path d="M7 20.5v-6M12 20.5V5.5M17 20.5v-9.5" />
         }
+        @case ('wallet') {
+          <!-- Billetera con su cierre: lo que salió del bolsillo. -->
+          <path d="M5.5 6.5h13a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2v-9a2 2 0 0 1 2-2z" />
+          <path d="m5.5 6.5 9.8-2.7a1 1 0 0 1 1.2 1V6.5" />
+          <path d="M20.5 11h-3.8a2 2 0 0 0 0 4h3.8" />
+          <circle cx="16.8" cy="13" r="0.6" />
+        }
+        @case ('receipt') {
+          <!-- Ticket con el borde de abajo dentado y sus renglones: una factura,
+               no la tarjeta con banda de «Facturación» (cobrar). -->
+          <path d="M5.5 3.6h13v16.8l-2.2-1.4-2.1 1.4-2.2-1.4-2.2 1.4-2.1-1.4-2.2 1.4z" />
+          <path d="M8.6 8h6.8M8.6 11.4h6.8M8.6 14.8h4" />
+        }
         @case ('star') {
           <!-- Estrella: los puntos que se acumulan. -->
           <path d="m12 3.4 2.7 5.5 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z" />

@@ -48,6 +48,9 @@ function afiliacion(over: Partial<AfiliacionVisible> = {}): AfiliacionVisible {
   };
 }
 
+/** Facturación sin ningún dato cargado. */
+const FACTURA_VACIA = { nit: '', razonSocial: '', frecuenciaSeguro: '' };
+
 const PERFIL: PerfilProfesionalVisible = {
   nombre: 'Dra. Lucía Salas',
   titulo: 'Médica cardióloga',
@@ -421,7 +424,7 @@ describe('PractitionerProfileView', () => {
     // Con `facturacion` declarada: es la ficha PROPIA, y esa pestaña sólo
     // existe ahí. El fixture base la deja en `null` porque casi todas estas
     // pruebas miran la ficha de un colega.
-    const host = montar({ ...PERFIL, facturacion: { nit: '', razonSocial: '' } }, true);
+    const host = montar({ ...PERFIL, facturacion: { ...FACTURA_VACIA } }, true);
 
     const pestanas = Array.from(host.querySelectorAll('[role="tab"]')).map(
       (boton) => boton.textContent?.trim() ?? '',
@@ -435,7 +438,10 @@ describe('PractitionerProfileView', () => {
 
     expect(host.querySelector('.mi-perfil__cabecera')?.textContent).toContain('Tus datos');
     const lapiz = host.querySelector('[data-testid="mi-perfil-editar"]');
-    expect(lapiz?.getAttribute('aria-label')).toBe('Editar');
+    // «Editar perfil» con el lápiz, escrito: ya no es un botón de sólo ícono.
+    expect(lapiz?.textContent?.trim()).toBe('Editar perfil');
+    expect(lapiz?.querySelector('svg')).not.toBeNull();
+    expect(lapiz?.classList.contains('btn--icon-only')).toBe(false);
   });
 
   it('el dueño ve «Sin registrar» en lo que no cargó: es su ficha, no la de un colega', () => {
@@ -958,7 +964,7 @@ describe('PractitionerProfileView', () => {
 
     it('y no se repite: una sola lista de matrículas, sin sub-pestañas', () => {
       const host = montar(
-        { ...PERFIL, datosPersonales: DATOS, facturacion: { nit: '', razonSocial: '' } },
+        { ...PERFIL, datosPersonales: DATOS, facturacion: { ...FACTURA_VACIA } },
         true,
       );
       // Sin abrirla no probaría nada: el panel de una pestaña inactiva no se
@@ -1155,7 +1161,7 @@ describe('PractitionerProfileView', () => {
    * que se copia en una factura, y se consulta junto.
    */
   describe('el recuadro de facturación', () => {
-    const FACTURA = { nit: '8812345011', razonSocial: 'Consultorio Dra. Rojas S.R.L.' };
+    const FACTURA = { ...FACTURA_VACIA, nit: '8812345011', razonSocial: 'Consultorio Dra. Rojas S.R.L.' };
 
     it('en la ficha propia muestra el NIT y a nombre de quién factura', () => {
       const host = montar({ ...PERFIL, facturacion: FACTURA }, true);
@@ -1167,6 +1173,39 @@ describe('PractitionerProfileView', () => {
       expect(
         host.querySelector('[data-testid="perfil-factura-titular"]')?.textContent?.trim(),
       ).toBe('Consultorio Dra. Rojas S.R.L.');
+    });
+
+    it('con logo cargado, lo muestra como vista previa dentro del recuadro de facturación', () => {
+      const logoUrl = 'data:image/png;base64,iVBORw0KGgo=';
+      const host = montar(
+        {
+          ...PERFIL,
+          facturacion: FACTURA,
+          consultorio: { logoUrl, nombre: 'Consultorio Rojas' },
+        },
+        true,
+      );
+      seleccionarPestana(host, 'Facturación');
+
+      const recuadro = host.querySelector('[data-testid="perfil-factura-recuadro"]');
+      const imagen = recuadro?.querySelector('[data-testid="perfil-factura-logo"] img');
+      expect(imagen?.getAttribute('alt')).toBe('Logo de Consultorio Rojas');
+      expect(imagen?.getAttribute('src')).toBe(logoUrl);
+      // Es de lectura: acá no hay cómo cambiarlo.
+      expect(recuadro?.querySelector('input[type="file"]')).toBeNull();
+    });
+
+    it('sin logo deja el mismo hueco con «Sin logo» y el NIT sigue visible', () => {
+      const host = montar({ ...PERFIL, facturacion: FACTURA }, true);
+      seleccionarPestana(host, 'Facturación');
+
+      const logo = host.querySelector('[data-testid="perfil-factura-logo"]');
+      expect(logo).not.toBeNull();
+      expect(logo?.querySelector('img')).toBeNull();
+      expect(logo?.textContent).toContain('Sin logo');
+      expect(host.querySelector('[data-testid="perfil-factura-nit"]')?.textContent?.trim()).toBe(
+        '8812345011',
+      );
     });
 
     it('los dos datos van en un recuadro propio, separado de la lista de datos', () => {
@@ -1182,8 +1221,26 @@ describe('PractitionerProfileView', () => {
       expect(recuadro?.closest('dl')).toBeNull();
     });
 
+    it('muestra cada cuánto factura al seguro', () => {
+      const host = montar({ ...PERFIL, facturacion: { ...FACTURA, frecuenciaSeguro: 'Quincenal' } }, true);
+      seleccionarPestana(host, 'Facturación');
+
+      expect(
+        host.querySelector('[data-testid="perfil-factura-frecuencia-seguro"]')?.textContent?.trim(),
+      ).toBe('Quincenal');
+    });
+
+    it('sin frecuencia declarada dice «Sin registrar»', () => {
+      const host = montar({ ...PERFIL, facturacion: FACTURA }, true);
+      seleccionarPestana(host, 'Facturación');
+
+      expect(
+        host.querySelector('[data-testid="perfil-factura-frecuencia-seguro"]')?.textContent,
+      ).toContain('Sin registrar');
+    });
+
     it('sin NIT dice dónde cargarlo, en vez de dejar el hueco', () => {
-      const host = montar({ ...PERFIL, facturacion: { nit: '', razonSocial: '' } }, true);
+      const host = montar({ ...PERFIL, facturacion: { ...FACTURA_VACIA } }, true);
       seleccionarPestana(host, 'Facturación');
 
       expect(host.querySelector('[data-testid="perfil-factura-nit"]')?.textContent).toContain(
@@ -1201,6 +1258,53 @@ describe('PractitionerProfileView', () => {
       expect(rotulos).not.toContain('Facturación');
       expect(host.querySelector('[data-testid="perfil-facturacion"]')).toBeNull();
       expect(host.textContent).not.toContain('8812345011');
+    });
+  });
+
+  /* -- Con qué seguros trabaja (28/09/2026) ------------------------------- */
+
+  describe('los seguros con los que trabaja', () => {
+    const SEGUROS = [
+      { id: 'c-1', aseguradora: 'Alianza Seguros', red: 'Red médica Alianza Seguros' },
+      { id: 'c-2', aseguradora: 'Seguros Andina', red: 'Red Preferente · Red Oro' },
+    ];
+
+    it('los muestra en «Datos personales», uno por aseguradora, con la red en el título', () => {
+      const host = montar({ ...PERFIL, seguros: SEGUROS }, true);
+      const renglon = host.querySelector('[data-testid="perfil-seguros"]');
+      const chips = [...host.querySelectorAll<HTMLElement>('[data-testid="perfil-seguro"]')];
+
+      expect(host.querySelectorAll('[data-testid="perfil-seguros"]')).toHaveLength(1);
+      expect(renglon?.querySelector('dt')?.textContent?.trim()).toBe('Seguros con los que trabaja');
+      expect(chips.map((chip) => chip.textContent?.trim())).toEqual([
+        'Alianza Seguros',
+        'Seguros Andina',
+      ]);
+      expect(chips[1]?.getAttribute('title')).toBe('Red Preferente · Red Oro');
+      expect(renglon?.querySelector('[role="list"]')).not.toBeNull();
+    });
+
+    it('sin ninguna aseguradora lo dice, en vez de dejar el renglón vacío', () => {
+      const host = montar({ ...PERFIL, seguros: [] }, true);
+
+      expect(host.querySelector('[data-testid="perfil-seguros"]')?.textContent).toContain(
+        'Ninguna aseguradora te tiene en su red todavía',
+      );
+      expect(host.querySelector('[data-testid="perfil-seguro"]')).toBeNull();
+    });
+
+    it('con la lectura caída dice que no se pudo traer, no que no hay ninguna', () => {
+      const host = montar({ ...PERFIL, seguros: null }, true);
+      const renglon = host.querySelector('[data-testid="perfil-seguros"]');
+
+      expect(renglon?.querySelector('[data-testid="perfil-seguros-error"]')).not.toBeNull();
+      expect(renglon?.textContent).not.toContain('Ninguna aseguradora');
+    });
+
+    it('una ficha que no los pregunta no dibuja el renglón', () => {
+      const host = montar(PERFIL, true);
+
+      expect(host.querySelector('[data-testid="perfil-seguros"]')).toBeNull();
     });
   });
 
@@ -1270,6 +1374,89 @@ describe('PractitionerProfileView', () => {
       const host = montar(PERFIL, true, true);
 
       expect(host.querySelector('[data-testid="perfil-consultorio"]')).toBeNull();
+    });
+  });
+
+  describe('PractitionerProfileView · el logo del consultorio en «Datos personales»', () => {
+    const LOGO = 'data:image/png;base64,iVBORw0KGgo=';
+
+    it('en la ficha propia lo muestra en «Datos personales», con su nombre', () => {
+      const host = montar(
+        { ...PERFIL, consultorio: { logoUrl: LOGO, nombre: 'Consultorio Rojas' } },
+        true,
+      );
+
+      const bloque = host.querySelector('[data-testid="perfil-logo-consultorio"]');
+      const imagen = bloque?.querySelector('img');
+      expect(bloque?.textContent).toContain('Logo del consultorio');
+      expect(imagen?.getAttribute('alt')).toBe('Logo de Consultorio Rojas');
+      expect(imagen?.getAttribute('src')).toBe(LOGO);
+    });
+
+    it('sin logo dibuja el bloque igual, con «Sin logo»', () => {
+      const host = montar({ ...PERFIL, consultorio: { logoUrl: null, nombre: '' } }, true);
+
+      const bloque = host.querySelector('[data-testid="perfil-logo-consultorio"]');
+      expect(bloque).not.toBeNull();
+      expect(bloque?.querySelector('img')).toBeNull();
+      expect(bloque?.textContent).toContain('Sin logo');
+    });
+
+    it('la ficha de otro profesional no lo dibuja', () => {
+      const host = montar({ ...PERFIL, consultorio: null }, false);
+
+      expect(host.querySelector('[data-testid="perfil-logo-consultorio"]')).toBeNull();
+    });
+  });
+
+  describe('la firma y el sello en «Datos personales»', () => {
+    const FIRMA = 'data:image/png;base64,iVBORw0KGgo=';
+    const SELLO = 'data:image/png;base64,iVBORw0KGgp=';
+
+    it('en la ficha propia muestra las dos imágenes', () => {
+      const host = montar({ ...PERFIL, firmaYSello: { firmaUrl: FIRMA, selloUrl: SELLO } }, true);
+
+      const bloque = host.querySelector('[data-testid="perfil-firma-y-sello"]');
+      expect(bloque?.textContent).toContain('Firma y sello médico');
+      expect(host.querySelector('[data-testid="perfil-firma-vista"] img')?.getAttribute('src')).toBe(
+        FIRMA,
+      );
+      expect(host.querySelector('[data-testid="perfil-sello-vista"] img')?.getAttribute('src')).toBe(
+        SELLO,
+      );
+    });
+
+    it('sin nada cargado dibuja el bloque igual, con «Sin firma» y «Sin sello»', () => {
+      const host = montar({ ...PERFIL, firmaYSello: { firmaUrl: null, selloUrl: null } }, true);
+
+      const bloque = host.querySelector('[data-testid="perfil-firma-y-sello"]');
+      expect(bloque).not.toBeNull();
+      expect(bloque?.querySelector('img')).toBeNull();
+      expect(bloque?.textContent).toContain('Sin firma');
+      expect(bloque?.textContent).toContain('Sin sello');
+    });
+
+    it('con sólo una de las dos, la otra queda con su marcador', () => {
+      const host = montar({ ...PERFIL, firmaYSello: { firmaUrl: FIRMA, selloUrl: null } }, true);
+
+      expect(host.querySelector('[data-testid="perfil-firma-vista"] img')).not.toBeNull();
+      expect(host.querySelector('[data-testid="perfil-sello-vista"]')?.textContent).toContain(
+        'Sin sello',
+      );
+    });
+
+    it('es de lectura: la ficha no ofrece subir nada', () => {
+      const host = montar({ ...PERFIL, firmaYSello: { firmaUrl: FIRMA, selloUrl: SELLO } }, true);
+
+      expect(
+        host.querySelector('[data-testid="perfil-firma-y-sello"] input[type="file"]'),
+      ).toBeNull();
+    });
+
+    it('la ficha de otro profesional no lo dibuja', () => {
+      const host = montar({ ...PERFIL, firmaYSello: null }, false);
+
+      expect(host.querySelector('[data-testid="perfil-firma-y-sello"]')).toBeNull();
     });
   });
 });

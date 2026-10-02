@@ -1,0 +1,118 @@
+<app-page-header
+  title="Precios"
+  subtitle="El precio de lista de cada servicio y el descuento para usuarios de AloVida, tal como los ven los pacientes en la plataforma."
+/>
+
+<app-card class="prices" padding="lg" data-testid="lab-prices-card">
+  <div class="prices__panel">
+    @if (errors().length > 0) {
+      <app-alert tone="error" title="Falta resolver esto" data-testid="lab-prices-errors">
+        <ul class="prices__list">
+          @for (error of errors(); track error) {
+            <li>{{ error }}</li>
+          }
+        </ul>
+      </app-alert>
+    }
+
+    @if (rejected().length > 0) {
+      <app-alert tone="warning" title="Estos precios no se guardaron" data-testid="lab-prices-rejected">
+        <ul class="prices__list">
+          @for (rejection of rejected(); track rejection.name) {
+            <li><strong>{{ rejection.name }}:</strong> {{ rejection.reason }}</li>
+          }
+        </ul>
+      </app-alert>
+    }
+
+    <app-search-field
+      label="Buscar un servicio"
+      placeholder="Nombre, código o categoría"
+      [value]="term()"
+      (searched)="search($event)"
+    />
+
+    <div class="prices__bar">
+      <p class="prices__hint">Dejá el descuento vacío si ese servicio no tiene precio AloVida.</p>
+      <div class="prices__save">
+        @if (dirtyCount() > 0) {
+          <span class="prices__dirty" role="status">
+            {{ dirtyCount() === 1 ? '1 cambio sin guardar' : dirtyCount() + ' cambios sin guardar' }}
+          </span>
+          <button app-button variant="ghost" type="button" [disabled]="saving()" (clicked)="discard()">
+            Descartar
+          </button>
+        }
+        <button
+          app-button
+          type="button"
+          [isLoading]="saving()"
+          [disabled]="saving() || dirtyCount() === 0"
+          (clicked)="save()"
+          data-testid="lab-prices-save"
+        >
+          Guardar cambios
+        </button>
+      </div>
+    </div>
+
+    <app-data-table
+      caption="Precios de los servicios del laboratorio"
+      [state]="pageRows()"
+      [columns]="columns()"
+      [trackBy]="rowId"
+      [rowLabel]="rowLabel"
+      wrapHeaders
+      [cursor]="cursor()"
+      (cursorChanged)="goToCursor($event)"
+      (retry)="reload()"
+      (refresh)="reload()"
+      data-testid="lab-prices-table"
+    />
+  </div>
+</app-card>
+
+<ng-template #nameCell let-service>
+  <span class="prices__main">{{ service.name }}</span>
+  <code class="prices__code">{{ service.code }}</code>
+</ng-template>
+
+<ng-template #priceCell let-service>
+  <app-input
+    inputMode="decimal"
+    placeholder="0.00"
+    [ariaLabel]="'Precio de lista de ' + service.name + ', en bolivianos'"
+    [value]="priceOf(service)"
+    (valueChange)="setPrice(service, $event)"
+    [hasSuccess]="isEdited(service)"
+    [testId]="'lab-prices-price-' + service.code"
+  />
+</ng-template>
+
+<ng-template #discountCell let-service>
+  <app-input
+    inputMode="decimal"
+    placeholder="Sin descuento"
+    [ariaLabel]="'Descuento AloVida de ' + service.name + ', en porcentaje'"
+    [value]="discountOf(service)"
+    (valueChange)="setDiscount(service, $event)"
+    [hasSuccess]="isEdited(service)"
+    [testId]="'lab-prices-discount-' + service.code"
+  />
+</ng-template>
+
+<ng-template #alovidaCell let-service>
+  @if (alovidaPriceOf(service); as price) {
+    <span class="prices__amount" [attr.data-testid]="'lab-prices-alovida-' + service.code">{{ price }}</span>
+  } @else {
+    <span class="prices__muted">Revisá el precio</span>
+  }
+</ng-template>
+
+<ng-template #statusCell let-service>
+  @if (service.status === 'PUBLISHED') {
+    <app-badge variant="success">Visible</app-badge>
+  } @else {
+    <app-badge variant="info">Borrador</app-badge>
+  }
+</ng-template>

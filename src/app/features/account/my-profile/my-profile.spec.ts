@@ -819,9 +819,9 @@ describe('MyProfile · el enlace a editar los datos propios', () => {
 
     const boton = enlaceDeEdicion();
     // Lápiz y nombre a la vista (D-05, 22/09/2026): el glifo `edit` del set y
-    // «Editar» escrito, que es también su nombre accesible. Ya no es un botón
-    // de sólo ícono.
-    expect(boton?.textContent?.trim()).toBe('Editar');
+    // «Editar perfil» escrito (30/09/2026), que es también su nombre
+    // accesible. Ya no es un botón de sólo ícono.
+    expect(boton?.textContent?.trim()).toBe('Editar perfil');
     expect(boton?.querySelector('svg')).not.toBeNull();
     expect(boton?.classList.contains('btn--icon-only')).toBe(false);
     // Un botón, no un enlace: no lleva a ninguna parte.
@@ -1018,6 +1018,40 @@ describe('MyProfile · foto de perfil', () => {
     http.verify();
   });
 
+  /**
+   * RP-PAC-L0012: «el perfil muestra el departamento de emisión». La fila de
+   * documento sólo agrega el sufijo cuando `cargarPerfil()` trajo el concepto
+   * **y** `readConceptLabels` resolvió su etiqueta — a diferencia de
+   * `conPerfil()` (arriba, en el describe de `MyProfile`), acá se ejercita el
+   * camino real: `GET /profiles/patients/me` seguido de
+   * `GET /terminology/concepts?ids=<uuid>`, no la señal inyectada a mano.
+   */
+  it('L0012: el documento muestra el departamento de emisión cuando el perfil lo trae', () => {
+    http
+      .expectOne('/profiles/patients/me')
+      .flush(perfilCon({ nationalId: '7654321', issuerAdministrativeAreaConceptId: 'dept-1' }));
+
+    http
+      .expectOne((r) => r.url === '/terminology/concepts' && r.params.get('ids') === 'dept-1')
+      .flush({ items: [{ conceptId: 'dept-1', display: 'Santa Cruz' }], count: 1 });
+
+    fixture.detectChanges();
+
+    const texto = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(texto).toContain('7654321');
+    expect(texto).toContain('Santa Cruz');
+  });
+
+  /** El mismo criterio, en su ausencia: sin concepto, no hay sufijo que resolver. */
+  it('L0012: sin departamento de emisión declarado, no pide etiqueta ni la inventa', () => {
+    http.expectOne('/profiles/patients/me').flush(perfilCon({ nationalId: '7654321' }));
+    fixture.detectChanges();
+
+    const texto = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(texto).toContain('7654321');
+    http.verify();
+  });
+
   it('con foto ya guardada, baja la imagen y la pinta como data: URL', async () => {
     http.expectOne('/profiles/patients/me').flush(perfilCon({ photoFileId: 'f-1' }));
 
@@ -1207,6 +1241,15 @@ describe('MyProfile · las etiquetas del perfil sobreviven a las del resumen', (
     expect(raiz.querySelector('[data-testid="mi-perfil-municipio"]')?.textContent?.trim()).toBe(
       'Santa Cruz de la Sierra',
     );
+
+    // Y debajo, el mapa de residencia (30/09/2026): el mismo del médico, que
+    // pide su catálogo de departamentos y municipios al montarse.
+    expect(raiz.querySelector('[data-testid="mi-perfil-residencia"]')).not.toBeNull();
+    // Las dos lecturas van juntas: la primera que falla cancela la otra, y el
+    // mapa se queda sin dibujar —el municipio ya está escrito arriba—.
+    const municipios = http.expectOne('/terminology/value-sets?code=VS_BO_MUNICIPALITY');
+    http.expectOne('/terminology/value-sets?code=VS_BO_DEPARTMENT').flush([]);
+    if (!municipios.cancelled) municipios.flush([]);
   });
 });
 

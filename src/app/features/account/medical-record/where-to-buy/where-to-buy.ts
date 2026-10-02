@@ -14,7 +14,10 @@ import type {
   AvailabilitySite,
   GeoPoint,
 } from '../../../../core/data-access/pharmacy/pharmacy.types';
-import { PharmacyCampaignsClient } from '../../../../core/data-access/pharmacy-campaigns/pharmacy-campaigns.client';
+import {
+  PharmacyCampaignsClient,
+  etiquetaDeCampana,
+} from '../../../../core/data-access/pharmacy-campaigns/pharmacy-campaigns.client';
 import {
   aCentavos,
   aTexto,
@@ -31,6 +34,7 @@ import type {
   LineaDePedido,
 } from '../../../../core/data-access/pharmacy-orders/pharmacy-orders.types';
 import { ProfilesClient } from '../../../../core/data-access/profiles/profiles.client';
+import { SAMPLE_DATA_ENABLED } from '../../../../core/mock/sample-data';
 import { NO_SAVED_PLACES, savedPlacesOf, type SavedPlaces } from '../../../../core/data-access/profiles/saved-places';
 import { TerminologyClient } from '../../../../core/data-access/terminology/terminology.client';
 import type { ConceptLabels } from '../../../../core/data-access/terminology/terminology.types';
@@ -251,6 +255,9 @@ const SIN_SEDES: ResultadoDeSedes = { sedes: [], sinProducto: [], aprobadosInclu
  * terminología, faltantes por su nombre, sedes por el suyo. Los uuid viajan
  * en las consultas y no llegan nunca a la plantilla.
  */
+/** Cuántas campañas se ven de entrada en la tarjeta de una sede; el resto, plegado. */
+const PROMOCIONES_VISIBLES = 3;
+
 @Component({
   selector: 'app-where-to-buy',
   imports: [
@@ -306,6 +313,15 @@ export class WhereToBuy {
   protected readonly ciudades = CIUDADES;
   protected readonly opcionesDeOrden = OPCIONES_DE_ORDEN;
   protected readonly notaDeDemostracion = NOTA_DE_DEMOSTRACION;
+
+  /**
+   * Maqueta (`true`) o API real (`false`). La variante con seguro es una
+   * demostración sobre un dato que ningún contrato publica —qué renglón
+   * aprueba el seguro antes de que exista el pedido—, así que contra la API
+   * real no se ofrece: `conSeguro` queda apagado y la lista es la de la
+   * consulta, sin más. Ver `core/mock/sample-data.ts`.
+   */
+  protected readonly sampleData = inject(SAMPLE_DATA_ENABLED);
 
   /**
    * El domicilio y el trabajo del paciente, como puntos de referencia
@@ -638,6 +654,25 @@ export class WhereToBuy {
   /** Cuántas promociones vigentes tiene la farmacia de esta sede. */
   protected promocionesDe(sede: SedeVisible): readonly CampanaDeFarmacia[] {
     return this.campaigns.campanasVigentes(sede.pharmacyId);
+  }
+
+  /** La etiqueta que lee el paciente («2x1», «Combo»…): sale del motor. */
+  protected etiquetaDe(promo: CampanaDeFarmacia): string {
+    return etiquetaDeCampana(promo);
+  }
+
+  /** Las primeras campañas, a la vista en la tarjeta de la sede. */
+  protected primerasPromociones(
+    promociones: readonly CampanaDeFarmacia[],
+  ): readonly CampanaDeFarmacia[] {
+    return promociones.slice(0, PROMOCIONES_VISIBLES);
+  }
+
+  /** El resto, plegado: una farmacia con diez campañas no tapa su propia tarjeta. */
+  protected restoDePromociones(
+    promociones: readonly CampanaDeFarmacia[],
+  ): readonly CampanaDeFarmacia[] {
+    return promociones.slice(PROMOCIONES_VISIBLES);
   }
 
   /* ---- el pedido (FAR-I2) -------------------------------------------------- */

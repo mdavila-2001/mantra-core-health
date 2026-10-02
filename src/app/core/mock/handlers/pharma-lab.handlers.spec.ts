@@ -1,7 +1,7 @@
 import { HttpHeaders } from '@angular/common/http';
 
 import { crearRouterSimulado } from './index';
-import { PACIENTE } from '../fixtures/personas';
+import { PACIENTE, PACIENTES } from '../fixtures/personas';
 import { isMockReply, type MockMethod, type MockRequest } from '../mock-router';
 import { buscarUsuario } from '../mock-session';
 
@@ -135,7 +135,7 @@ describe('handlers de laboratorio farmacéutico: duración de visita y límite d
     });
 
     it('la médica (practitioner) SÍ puede leer el resumen clínico — la restricción es del rol, no global', () => {
-      const resultado = pedir('GET', `/clinical/patients/${PACIENTE.id}/summary`, medica);
+      const resultado = pedir('GET', `/clinical/patients/${PACIENTES[1]!.id}/summary`, medica);
       expect(estado(resultado)).toBe(200);
     });
 

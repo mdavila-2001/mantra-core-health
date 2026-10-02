@@ -18,6 +18,7 @@ import { NavIcon } from '../../shared/components/atoms/nav-icon/nav-icon';
 import { Alert } from '../../shared/components/molecules/alert/alert';
 import { Card } from '../../shared/components/molecules/card/card';
 import { EmptyState } from '../../shared/components/molecules/empty-state/empty-state';
+import { NotificationActions } from '../../shared/components/molecules/notification-actions/notification-actions';
 import { Tab } from '../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../shared/components/molecules/tabs/tabs';
 import { PageHeader } from '../../shared/components/organisms/page-header/page-header';
@@ -58,7 +59,19 @@ const PAGE_SIZE = 25;
  */
 @Component({
   selector: 'app-notification-center',
-  imports: [Alert, AppButton, Badge, Card, EmptyState, NavIcon, NgTemplateOutlet, PageHeader, Tab, Tabs],
+  imports: [
+    Alert,
+    AppButton,
+    Badge,
+    Card,
+    EmptyState,
+    NavIcon,
+    NgTemplateOutlet,
+    NotificationActions,
+    PageHeader,
+    Tab,
+    Tabs,
+  ],
   templateUrl: './notification-center.html',
   styleUrl: './notification-center.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -173,6 +186,23 @@ export class NotificationCenter {
     if (ruta) {
       void this.router.navigateByUrl(ruta);
     }
+  }
+
+  /**
+   * Una acción de la notificación terminó: se da por leída, se relee la bandeja
+   * y se avisa a la campana. Se recarga la lista entera y no la fila, porque
+   * quien decidió por una solicitud ya no debe ver sus botones.
+   */
+  protected alEjecutarAccion(aviso: InAppNotification): void {
+    const cerrar = (): void => {
+      this.store.refrescar();
+      this.recargar();
+    };
+    if (!aviso.unread) {
+      cerrar();
+      return;
+    }
+    this.notifications.markRead(aviso.id).subscribe({ next: cerrar, error: cerrar });
   }
 
   protected marcarTodas(): void {

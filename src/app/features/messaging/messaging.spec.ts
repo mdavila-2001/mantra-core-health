@@ -1,10 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
-import {
-  HttpTestingController,
-  provideHttpClientTesting,
-} from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 
 import { Messaging } from './messaging';
 import { ChatStore } from '../../core/messaging/chat.store';
@@ -91,12 +88,14 @@ describe('Messaging', () => {
     montar();
     http.expectOne('/community/profiles/me').flush(perfilPropio);
     fixture.detectChanges();
-    http.expectOne((r) => r.url === '/community/conversations').flush({
-      items,
-      count: items.length,
-      limit: 50,
-      nextCursor: null,
-    });
+    http
+      .expectOne((r) => r.url === '/community/conversations')
+      .flush({
+        items,
+        count: items.length,
+        limit: 50,
+        nextCursor: null,
+      });
     fixture.detectChanges();
   };
 
@@ -218,6 +217,47 @@ describe('Messaging', () => {
     abierta.flush({ id: 'c-9' });
   });
 
+  it('?escribirA= que llega antes que el perfil propio espera y abre el hilo igual', async () => {
+    // «Hablar con el broker» y «Enviar mensaje» llegan con la URL ya puesta:
+    // la ruta se lee antes de saber quién es la sesión, y antes se descartaba
+    // en silencio —quedaba la bandeja abierta sin hilo—.
+    await TestBed.inject(Router).navigateByUrl('/messaging?escribirA=broker-oriente');
+    montar();
+
+    // Sin perfil propio todavía no se pregunta por el slug.
+    http.expectNone('/community/profiles/by-slug/broker-oriente');
+
+    http.expectOne('/community/profiles/me').flush(perfilPropio);
+    fixture.detectChanges();
+
+    http
+      .expectOne('/community/profiles/by-slug/broker-oriente')
+      .flush(ficha('pp-7', 'broker-oriente'));
+    const abierta = http.expectOne(
+      (r) => r.url === '/community/conversations' && r.method === 'POST',
+    );
+    expect(abierta.request.body).toEqual({ participantProfileIds: ['pp-1', 'pp-7'] });
+    abierta.flush({ id: 'c-7' });
+  });
+
+  it('?escribirA= abre el hilo reemplazando la entrada, para que «Volver» salga del chat', async () => {
+    const router = TestBed.inject(Router);
+    const navegar = vi.spyOn(router, 'navigate');
+    await router.navigateByUrl('/messaging?escribirA=broker-oriente');
+    montar();
+
+    http.expectOne('/community/profiles/me').flush(perfilPropio);
+    fixture.detectChanges();
+    http
+      .expectOne('/community/profiles/by-slug/broker-oriente')
+      .flush(ficha('pp-7', 'broker-oriente'));
+    http
+      .expectOne((r) => r.url === '/community/conversations' && r.method === 'POST')
+      .flush({ id: 'c-7' });
+
+    expect(navegar).toHaveBeenCalledWith(['/messaging', 'c-7'], { replaceUrl: true });
+  });
+
   it('el filtro «No leídos» deja sólo las que tienen pendientes', () => {
     conBandeja([
       conversacion('c-1', [{ profileId: 'pp-2', displayName: 'Con pendientes' }], 3),
@@ -256,14 +296,10 @@ describe('Messaging', () => {
   });
 
   it('no borra la bandeja cuando un tic falla', () => {
-    conBandeja([
-      conversacion('c-1', [{ profileId: 'pp-2', displayName: 'Dra. Quispe' }]),
-    ]);
+    conBandeja([conversacion('c-1', [{ profileId: 'pp-2', displayName: 'Dra. Quispe' }])]);
 
     TestBed.inject(ChatStore).recargarBandeja();
-    http
-      .expectOne((r) => r.url === '/community/conversations')
-      .error(new ProgressEvent('error'));
+    http.expectOne((r) => r.url === '/community/conversations').error(new ProgressEvent('error'));
     fixture.detectChanges();
 
     expect(texto()).toContain('Dra. Quispe');

@@ -1,4 +1,5 @@
-<form [formGroup]="form()" (ngSubmit)="continuar()" novalidate>
+<ng-template #pageContent>
+<div [formGroup]="form()">
   <!-- El avance va arriba y siempre visible: es la respuesta a «¿cuánto me
        falta?», que es lo que decide si alguien sigue o abandona. -->
   <header class="paginated-form__avance">
@@ -281,16 +282,18 @@
          el modo ícono no llega a la última página: una flecha que en realidad
          crea la cuenta esconde aún más. -->
     <!-- Excepción ADR-0012 §3 (D-05, 23/09): pasar de página, con aria-label y globo; nunca en la última, que dice qué envía. -->
+    @if (!embedded() || !esUltima()) {
     <button
       app-button
-      type="submit"
+      [type]="embedded() ? 'button' : 'submit'"
+      (clicked)="embedded() && continuar()"
       [variant]="esUltima() && destructive() ? 'danger' : 'primary'"
       [isLoading]="pending()"
       [disabled]="pending()"
       [iconOnly]="nextAsIcon()"
       [attr.aria-label]="nextAsIcon() ? 'Siguiente' : null"
       [appTooltip]="nextAsIcon() ? 'Siguiente' : ''"
-      data-testid="paginated-form-continuar"
+      [attr.data-testid]="esUltima() ? submitTestId() : 'paginated-form-continuar'"
     >
       @if (nextAsIcon()) {
         <app-nav-icon name="arrow-right" />
@@ -298,5 +301,17 @@
         {{ esUltima() ? submitLabel() : 'Siguiente' }}
       }
     </button>
+    }
   </nav>
-</form>
+</div>
+</ng-template>
+
+@if (embedded()) {
+  <div tabindex="-1" (keydown.enter)="onEmbeddedEnter($event)">
+    <ng-container [ngTemplateOutlet]="pageContent" />
+  </div>
+} @else {
+  <form (submit)="$event.preventDefault(); continuar()" novalidate>
+    <ng-container [ngTemplateOutlet]="pageContent" />
+  </form>
+}

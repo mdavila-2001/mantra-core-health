@@ -3,7 +3,13 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 
 import { InsuranceClient } from './insurance.client';
-import type { BrokerProfile, CampaignPage, CarrierDetail, CarrierSummary } from './insurance.types';
+import type {
+  BrokerProfile,
+  CampaignPage,
+  CarrierDetail,
+  CarrierSummary,
+  PractitionerInsuranceNetworkPage,
+} from './insurance.types';
 
 const CONCEPTO = { code: 'CARRIER_ACTIVE', display: 'Aseguradora activa' };
 const VERIFICADO = { code: 'VERIFICATION_VERIFIED', display: 'Verificado' };
@@ -41,6 +47,21 @@ describe('InsuranceClient', () => {
 
   afterEach(() => http.verify());
 
+  it('listPractitionerCarriers pega en la ruta del profesional y desenvuelve items', () => {
+    let result: unknown;
+    client.listPractitionerCarriers('hp 1/x').subscribe((carriers) => (result = carriers));
+
+    const request = http.expectOne('/practitioners/hp%201%2Fx/insurance-carriers');
+    expect(request.request.method).toBe('GET');
+    const items = [
+      { carrierId: 'c-1', carrierName: 'Alianza Seguros', networks: [{ id: 'n-1', name: 'AFI GOLD' }] },
+    ];
+    request.flush({ items });
+    http.verify();
+
+    expect(result).toEqual(items);
+  });
+
   it('listCarriers pega en /insurance-carriers y convierte el alta a Date', () => {
     let filas: readonly CarrierSummary[] = [];
     client.listCarriers().subscribe((directorio) => (filas = directorio.items));
@@ -58,6 +79,35 @@ describe('InsuranceClient', () => {
    * `YYYY-MM-DD` pasada por `new Date()` se ancla a medianoche UTC y retrocede
    * un día al pintarse en cualquier huso al oeste de Greenwich.
    */
+  it('listNetworksOfPractitioner pega en /practitioners/:id/insurance-networks y lee la vigencia como fecha local', () => {
+    let pagina: PractitionerInsuranceNetworkPage | undefined;
+    client.listNetworksOfPractitioner('hp 1').subscribe((respuesta) => (pagina = respuesta));
+
+    http
+      .expectOne((r) => r.url === '/practitioners/hp%201/insurance-networks')
+      .flush({
+        items: [
+          {
+            membershipId: 'm-1',
+            carrierId: 'c-1',
+            carrierName: 'Seguros Andina',
+            networkName: 'Red de prestadores Seguros Andina',
+            effectiveFrom: '2025-06-01',
+            effectiveTo: null,
+          },
+        ],
+        count: 1,
+      });
+
+    const fila = pagina?.items[0];
+    expect(fila?.carrierName).toBe('Seguros Andina');
+    expect(fila?.effectiveFrom?.getFullYear()).toBe(2025);
+    expect(fila?.effectiveFrom?.getMonth()).toBe(5);
+    expect(fila?.effectiveFrom?.getDate()).toBe(1);
+    expect(fila?.effectiveTo).toBeNull();
+    expect(pagina?.count).toBe(1);
+  });
+
   it('getCarrier lee las vigencias como fecha local, no como instante UTC', () => {
     let ficha: CarrierDetail | undefined;
     client.getCarrier('c-1').subscribe((detalle) => (ficha = detalle));

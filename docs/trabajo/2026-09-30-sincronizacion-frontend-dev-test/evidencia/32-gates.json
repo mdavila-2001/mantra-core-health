@@ -1,0 +1,46 @@
+{
+  "commit": "4247bb0a211bf53e0c3d3291ccbee5ba1817d0dc",
+  "note": "diagnostic gates; regression repairs pending in worktree",
+  "results": [
+    {
+      "command": "node scripts/check-real-api-config.mjs",
+      "exitCode": 0
+    },
+    {
+      "command": "node scripts/check-architecture.mjs",
+      "exitCode": 1
+    },
+    {
+      "command": "node scripts/check-api-prefixes.mjs",
+      "exitCode": 0
+    },
+    {
+      "command": "node scripts/check-route-prefixes.mjs",
+      "exitCode": 0
+    },
+    {
+      "command": "node scripts/check-form-pages.mjs",
+      "exitCode": 1
+    },
+    {
+      "command": "node scripts/check-tokens.mjs",
+      "exitCode": 0
+    },
+    {
+      "command": "node scripts/check-css-tokens.mjs",
+      "exitCode": 1
+    },
+    {
+      "command": "node scripts/check-contrast.mjs",
+      "exitCode": 0
+    },
+    {
+      "command": "node scripts/check-english-identifiers.mjs",
+      "exitCode": 0
+    },
+    {
+      "command": "node scripts/generate-doc-report.mjs",
+      "exitCode": 1
+    }
+  ]
+}

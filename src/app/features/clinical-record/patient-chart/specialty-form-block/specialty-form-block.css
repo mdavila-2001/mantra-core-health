@@ -12,10 +12,36 @@
   font-weight: 600;
 }
 
+/* A lo ancho de la tarjeta, sin «medida de formulario» (composition-rules
+   §5): con el tope de 40rem los campos terminaban 150 px antes que el
+   selector de plantilla de arriba. `minmax(0, 1fr)` evita que la columna se
+   estire al ancho mínimo de su contenido. */
 .formulario-especialidad__formulario {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--sp-4);
-  max-inline-size: 40rem;
+}
+
+/* El formulario libre va suelto bajo el selector, sin el aviso ni el
+   interruptor que en las fichas hacen de separación: el aire se pone acá. */
+.formulario-especialidad__libre {
+  margin-block-start: var(--sp-5);
+}
+
+/* Lo ya registrado, debajo del botón de guardar: separado por un filete para
+   que no se lea como parte de lo que se está por enviar. */
+.formulario-especialidad__ya-registrado {
+  margin-block-start: var(--sp-5);
+  padding-block-start: var(--sp-5);
+  border-block-start: 1px solid var(--border-subtle);
+}
+
+/* Cada pestaña repite la rejilla del formulario: sus campos eran hijos
+   directos de él y tienen que seguir separados igual. */
+.formulario-especialidad__vista {
+  display: grid;
+  gap: var(--sp-4);
+  min-inline-size: 0;
 }
 
 .formulario-especialidad__estado {
@@ -35,14 +61,31 @@
   color: var(--text-secondary);
 }
 
+/* Por debajo de 780 px la barra queda fija abajo y el botón se estira: sin
+   esto el motivo quedaba en una columna de 70 px, partido en cuatro
+   renglones. Con `wrap` baja a su propia línea, encima del botón. */
+@media (max-width: 779px) {
+  .formulario-especialidad__acciones {
+    flex-wrap: wrap;
+  }
+}
+
+/* El motivo del botón gris, al lado del botón. */
+.formulario-especialidad__pendiente {
+  margin: 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}
+
 .formulario-especialidad__ver-todas {
   justify-self: start;
 }
 
 .formulario-especialidad__respondido {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--sp-4);
-  max-inline-size: 40rem;
 }
 
 .formulario-especialidad__completado {

@@ -120,6 +120,7 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
       'laboratory-directory',
       'clinics-directory',
       'pharmacies-directory',
+      'insurers-directory',
     ],
   },
 
@@ -140,6 +141,8 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
     group: 'Atención',
     icon: 'scan',
     // Lo que se le pide o se le hace al paciente fuera de la consulta.
+    // La recepción de muestras va con ellas: es la puerta del laboratorio por
+    // la que entra lo que después aparece en «Laboratorio e imagen».
     paths: ['diagnostics', 'interventions'],
   },
   {
@@ -191,6 +194,7 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
       'administration/insurance',
       'administration/brokers',
       'administration/insurance-claims',
+      'administration/received-claims',
       'administration/insurance-analytics',
       'administration/insurance-campaigns',
     ],
@@ -255,14 +259,42 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
   },
   {
     label: 'Farmacia',
-    group: 'Administración',
+    // `General` y no `Administración` (29/09/2026): la cuenta de farmacia ve su
+    // menú plano —ocho renglones sin encabezado—, y un dominio aplanado dibuja
+    // sus bloques sueltos. El bloque sigue existiendo porque el reparto cubre
+    // el registro entero.
+    group: 'General',
     icon: 'bag',
-    // El mostrador: lo que se despacha, lo que se promociona y la empresa que
-    // está detrás.
+    // El mostrador: lo que se vende, lo que se guarda, lo que se despacha, lo
+    // que se promociona y la empresa que está detrás.
     paths: [
+      'administration/pharmacy',
+      'administration/pharmacy-catalog',
+      'administration/pharmacy-categories',
+      'administration/pharmacy-import',
+      'administration/pharmacy-inventory',
+      'administration/pharmacy-prices',
       'administration/pharmacy-orders',
       'administration/pharmacy-campaigns',
       'administration/pharmacy-profile',
+      'administration/pharmacy-branches',
+    ],
+  },
+  {
+    label: 'Laboratorio',
+    // `General` (30/09/2026), por lo mismo que «Farmacia»: la cuenta de
+    // laboratorio ve su menú plano, sin encabezado. La recepción de muestras y
+    // la cola de trabajo salieron de «Estudios y procedimientos»: sólo las ve
+    // esta cuenta, y ahí quedaban bajo un encabezado que su menú ya no tiene.
+    group: 'General',
+    icon: 'flask',
+    paths: [
+      'administration/laboratory',
+      'laboratorio/recepcion',
+      'laboratorio/cola',
+      'administration/laboratory-results',
+      'administration/laboratory-prices',
+      'administration/laboratory-branches',
     ],
   },
 
@@ -297,16 +329,16 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
     label: 'Mis gestiones',
     group: 'Mi cuenta',
     icon: 'calendar',
-    // Lo que tengo en curso: un turno, un pedido, mis puntos. Las cotizaciones
-    // van acá y no en «Mi salud»: comparar precios es una gestión, no un dato
-    // clínico, y en medio de las pantallas clínicas partía ese bloque.
+    // Lo que tengo en curso: un turno, un pedido, mis puntos, lo que gasté.
     paths: [
       'my-account/appointments',
       'my-account/pharmacy',
       'my-account/pharmacy-orders',
       'my-account/loyalty',
       'my-account/promotions',
-      'my-account/cotizaciones',
+      'my-account/spending',
+      'my-account/invoices',
+      'my-account/requests',
     ],
   },
   {
@@ -320,6 +352,7 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
       'my-account/medical-record',
       'my-account/diagnostic-results',
       'my-account/diagnostic-orders',
+      'my-account/cotizaciones',
       'my-account/questionnaires',
     ],
   },
@@ -404,3 +437,36 @@ export const GRUPOS_APLANADOS: ReadonlySet<NavGroup> = new Set<NavGroup>([
   'Facturación',
   'Mi cuenta',
 ]);
+
+/**
+ * Los dominios que se aplanan **sólo para un tipo de organización**.
+ *
+ * «Administración» sigue plegada para quien administra la plataforma —veintidós
+ * secciones—, pero la cuenta de una aseguradora (`PAYER`) no ve esas veintidós:
+ * ve cinco (Aseguradora, Siniestralidad, Solicitudes recibidas, Campañas y Tu
+ * organización), todas suyas. Para ella el desplegable era un clic de más sobre
+ * un rótulo que no lleva a ninguna pantalla, así que sus cinco destinos van
+ * sueltos, a nivel 0 (pedido del propietario, 01/10/2026).
+ *
+ * Se resuelve por tipo de organización y no moviendo las secciones a otro
+ * dominio —como hizo la cuenta de farmacia con `General`— porque estas
+ * secciones **no son sólo de la aseguradora**: «Solicitudes de seguro» es del
+ * prestador y «Brokers» de quien administra seguridad, y ahí «Administración»
+ * tiene que seguir siendo su dominio y su breadcrumb.
+ */
+export const GRUPOS_APLANADOS_POR_TIPO_DE_ORGANIZACION: Readonly<
+  Record<string, ReadonlySet<NavGroup>>
+> = {
+  PAYER: new Set<NavGroup>(['Administración']),
+};
+
+/** ¿Se dibuja este dominio sin desplegable para la organización activa? */
+export function seAplanaElGrupo(group: NavGroup, activeTenantType: string | null): boolean {
+  if (GRUPOS_APLANADOS.has(group)) {
+    return true;
+  }
+  if (activeTenantType === null) {
+    return false;
+  }
+  return GRUPOS_APLANADOS_POR_TIPO_DE_ORGANIZACION[activeTenantType]?.has(group) === true;
+}
