@@ -1,3 +1,7 @@
+import { HttpHeaders } from '@angular/common/http';
+
+import { registrarVarios } from '../handlers/misc.handlers';
+import { MockRouter } from '../mock-router';
 import { conceptoPorCodigo, miembrosDe } from './conceptos';
 import { MEDICAMENTOS_LINAME } from './liname.generated';
 
@@ -41,5 +45,30 @@ describe('vademécum de la receta: la LINAME 2022-2024', () => {
 
   it('no quedan acentos graves de la fuente («sòdica»)', () => {
     expect(MEDICAMENTOS_LINAME.filter((m) => /[àèìòù]/i.test(m.name))).toEqual([]);
+  });
+
+  it('el buscador de la receta recibe el vademécum, no los estados de registro', () => {
+    // El catálogo que pide `medication-block` no estaba mapeado y caía al
+    // `VS_RECORD_STATUS` de respaldo: ninguna búsqueda encontraba un medicamento.
+    const router = new MockRouter();
+    registrarVarios(router);
+    const target = 'clinical.medication_requests.medication_concept_id';
+    const match = router.match('GET', '/system-context/dynamic-enums')!;
+    const enumeracion = match.handler({
+      method: 'GET',
+      path: '/system-context/dynamic-enums',
+      params: match.params,
+      query: new URLSearchParams({ target }),
+      body: null,
+      headers: new HttpHeaders(),
+      user: null,
+    }) as { name: string; options: readonly { code: string; display: string }[] };
+    expect(enumeracion.name).toBe('Medicamento');
+    expect(enumeracion.options.length).toBeGreaterThan(480);
+    expect(enumeracion.options).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ code: 'J01GB03', display: 'Gentamicina sulfato' }),
+      ]),
+    );
   });
 });
