@@ -2,21 +2,25 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  effect,
   inject,
   signal,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, Validators, type ValidatorFn } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { concatMap, map, of } from 'rxjs';
 
 import { AuthService } from '@core/auth/auth.service';
 
 import { ChartTemplatesClient } from '../../core/data-access/chart-templates/chart-templates.client';
+import { especialidadVigente } from '../../core/data-access/profiles/especialidad-vigente';
+import { ProfilesClient } from '../../core/data-access/profiles/profiles.client';
 import type {
   ChartTemplate,
   ChartTemplateField,
   ChartTemplateProvenance,
+  ChartTemplateKind,
 } from '../../core/data-access/chart-templates/chart-templates.types';
 import { FormsClient } from '../../core/data-access/forms/forms.client';
 import { TerminologyClient } from '../../core/data-access/terminology/terminology.client';
@@ -174,6 +178,8 @@ export class FormBuilder {
   private readonly forms = inject(FormsClient);
   private readonly navigation = inject(NavigationService);
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly profiles = inject(ProfilesClient);
   private readonly terminology = inject(TerminologyClient);
   private readonly toasts = inject(ToastService);
   private readonly auth = inject(AuthService);
@@ -194,6 +200,70 @@ export class FormBuilder {
 
   constructor() {
     this.cargarPlantillas();
+    this.resolverEspecialidadPropia();
+
+    // Se entra viendo lo de la especialidad propia, no las 43 fichas: lo pidió
+    // el propietario el 2026-10-02 («un filtro específico de formularios por
+    // el tipo de especialidad»). Una sola vez y sólo si el enlace no trae ya
+    // un filtro: quien eligió «Todas las especialidades» o compartió un enlace
+    // filtrado no tiene por qué ver que se le cambia.
+    effect(() => {
+      const propia = this.especialidadPropia();
+      const lista = this.listado();
+      if (!this.preseleccionPendiente || propia === null || lista === null) return;
+      this.preseleccionPendiente = false;
+      if ((this.criterios()['especialidad'] ?? '') !== '') return;
+      if (!lista.some((plantilla) => plantilla.specialtyConceptId === propia)) return;
+      void this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: { especialidad: propia },
+        queryParamsHandling: 'merge',
+        replaceUrl: true,
+      });
+    });
+  }
+
+  /** La especialidad con la que se presenta quien entra, o `null`. */
+  protected readonly especialidadPropia = signal<string | null>(null);
+
+  private preseleccionPendiente = true;
+
+  /**
+   * Pregunta la especialidad del perfil profesional. Falla en silencio: una
+   * cuenta sin perfil —administración— ve el catálogo entero, como antes.
+   */
+  private resolverEspecialidadPropia(): void {
+    this.profiles.getOwnPractitionerProfile().subscribe({
+      next: (perfil) => this.especialidadPropia.set(especialidadVigente(perfil.specialties)),
+      error: () => this.especialidadPropia.set(null),
+    });
+  }
+
+  /**
+   * El concepto del que cuelgan las fichas transversales (anamnesis, examen
+   * físico, consentimiento, epicrisis), deducido del catálogo por el prefijo
+   * de código: es un uuid que se siembra por entorno y no se escribe a mano.
+   */
+  private readonly conceptoTransversal = computed<string | null>(
+    () =>
+      this.listado()?.find((plantilla) => plantilla.code.startsWith('TRANSV_'))
+        ?.specialtyConceptId ?? null,
+  );
+
+  /** El rótulo de la especialidad filtrada, para el aviso. `null` sin filtro. */
+  protected readonly especialidadFiltrada = computed<string | null>(() => {
+    const id = this.criterios()['especialidad'] ?? '';
+    if (id === '' || id === this.conceptoTransversal()) return null;
+    return this.especialidades().get(id) ?? 'tu especialidad';
+  });
+
+  /** «Todas las especialidades»: quita el filtro. */
+  protected verTodasLasEspecialidades(): void {
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { especialidad: null },
+      queryParamsHandling: 'merge',
+    });
   }
 
   /**
@@ -250,10 +320,22 @@ export class FormBuilder {
       {
         key: 'especialidad',
         label: 'Especialidad',
+        placeholder: 'Todas las especialidades',
         options: [...presentes]
           .map(([value, label]) => ({ value, label }))
           .sort((a, b) => a.label.localeCompare(b.label, 'es')),
         unavailableReason: 'No pudimos leer el catálogo de especialidades.',
+      },
+      {
+        key: 'clase',
+        label: 'Tipo de ficha',
+        asChips: true,
+        chipsGroup: 'Tipo de ficha',
+        options: [
+          { value: 'BASE', label: 'Consulta inicial (base)' },
+          { value: 'SPECIFIC', label: 'Específicas por condición' },
+          { value: 'GENERAL', label: 'Generales' },
+        ],
       },
       {
         key: 'extension',
@@ -277,11 +359,23 @@ export class FormBuilder {
     const texto = normalizar(criterios['q'] ?? '');
     const especialidad = criterios['especialidad'] ?? '';
     const extension = criterios['extension'] ?? '';
+    const clase = criterios['clase'] ?? '';
     const rotulos = this.especialidades();
     const palabras = texto === '' ? [] : texto.split(/\s+/);
 
     return lista.filter((plantilla) => {
-      if (especialidad !== '' && plantilla.specialtyConceptId !== especialidad) return false;
+      // Filtrar por una especialidad deja también las transversales: la
+      // anamnesis o el consentimiento son de toda consulta, y esconderlas
+      // obligaría a cambiar de filtro a mitad de la atención.
+      if (
+        especialidad !== '' &&
+        plantilla.specialtyConceptId !== especialidad &&
+        plantilla.specialtyConceptId !== this.conceptoTransversal()
+      ) {
+        return false;
+      }
+
+      if (clase !== '' && claseDe(plantilla) !== clase) return false;
 
       const propios = this.cuantosPropios(plantilla);
       if (extension === 'con' && propios === 0) return false;
@@ -303,13 +397,37 @@ export class FormBuilder {
     });
   });
 
+  /**
+   * Lo filtrado, en los tres bloques en que trabaja un médico: la consulta
+   * inicial de la especialidad (la ficha base), las fichas estándar de cada
+   * condición para los controles, y las generales de toda consulta. Dentro de
+   * cada bloque, por especialidad y por nombre.
+   */
+  protected readonly grupos = computed<readonly GrupoDeFichas[]>(() => {
+    const lista = this.filtrados() ?? [];
+    const rotulos = this.especialidades();
+    const orden = (a: ChartTemplate, b: ChartTemplate) =>
+      (rotulos.get(a.specialtyConceptId) ?? '').localeCompare(rotulos.get(b.specialtyConceptId) ?? '', 'es') ||
+      a.name.localeCompare(b.name, 'es');
+    return GRUPOS_DE_FICHAS.map((grupo) => ({
+      ...grupo,
+      plantillas: lista.filter((plantilla) => claseDe(plantilla) === grupo.clase).sort(orden),
+    })).filter((grupo) => grupo.plantillas.length > 0);
+  });
+
+  /** El rótulo corto de la clase de una ficha, para su tarjeta. */
+  protected rotuloDeClase(plantilla: ChartTemplate): string {
+    return ROTULO_DE_CLASE[claseDe(plantilla)];
+  }
+
   /** Si hay algún criterio puesto: lo vacío del filtro no es lo vacío del catálogo. */
   protected readonly hayCriterios = computed(() => {
     const criterios = this.criterios();
     return (
       (criterios['q'] ?? '') !== '' ||
       (criterios['especialidad'] ?? '') !== '' ||
-      (criterios['extension'] ?? '') !== ''
+      (criterios['extension'] ?? '') !== '' ||
+      (criterios['clase'] ?? '') !== ''
     );
   });
 
@@ -992,9 +1110,23 @@ export class FormBuilder {
       return [];
     }
 
-    const campos: CampoDeFormulario[] = plantilla.fields.map(aCampoDelMotor);
+    // Una página por sección de la ficha (motivo, antecedentes, examen,
+    // diagnóstico presuntivo…), partida de a cuatro. Los campos sin sección
+    // —los propios, o los de una plantilla armada a mano— van con el nombre
+    // del formulario, como antes.
+    // Los propios van en su sección sólo si la ficha está seccionada: en una
+    // sin secciones, separarlos partiría en dos una página que entraba entera.
+    const seccionada = plantilla.fields.some((campo) => campo.section !== undefined);
+    const secciones: { titulo: string; campos: CampoDeFormulario[] }[] = [];
+    for (const campo of plantilla.fields) {
+      const titulo =
+        campo.own && seccionada ? 'Campos de tu organización' : (campo.section ?? plantilla.name);
+      const ultima = secciones.at(-1);
+      if (ultima?.titulo === titulo) ultima.campos.push(aCampoDelMotor(campo));
+      else secciones.push({ titulo, campos: [aCampoDelMotor(campo)] });
+    }
 
-    return paginarCampos(campos, { tituloPorDefecto: plantilla.name });
+    return paginarCampos(secciones, { tituloPorDefecto: plantilla.name });
   });
 
   /**
@@ -1085,6 +1217,15 @@ export class FormBuilder {
  * desplegable no tiene dónde escribir.
  */
 function aCampoDelMotor(campo: ChartTemplateField): CampoDeFormulario {
+  const base = aCampoDelMotorSinCondicion(campo);
+  // La clave del control es el `fieldId`, y la condición ya viene por
+  // `fieldId` del padre: se traduce tal cual.
+  return campo.showWhen === undefined
+    ? base
+    : { ...base, showWhen: { key: campo.showWhen.fieldId, equals: campo.showWhen.equals } };
+}
+
+function aCampoDelMotorSinCondicion(campo: ChartTemplateField): CampoDeFormulario {
   const opciones = campo.options ?? [];
   const esEleccion = familiaDeCampo(campo) !== null;
   const ayuda = campo.description === undefined || campo.description === ''
@@ -1158,6 +1299,14 @@ function valorInicial(control: TipoDeControl): unknown {
 function familiaDeCampo(
   campo: ChartTemplateField,
 ): 'eleccion' | 'casillas' | 'cuadricula' | 'cuadricula-casillas' | null {
+  // Las fichas del catálogo declaran sus listas cerradas con `options` sobre
+  // `string` (una respuesta) o `json` (varias), no con `code`: `code` escribe
+  // en `value_concept_id` y esas opciones no son conceptos de terminología.
+  // Lo que las hace de elección es tener opciones.
+  const conOpciones = (campo.options ?? []).length > 0 && (campo.rows ?? []).length === 0;
+  if (conOpciones && (campo.dataType === 'string' || campo.dataType === 'json')) {
+    return campo.multiple === true ? 'casillas' : 'eleccion';
+  }
   const familia = familiaDe(
     campo.dataType,
     campo.multiple ?? false,
@@ -1308,4 +1457,47 @@ function normalizar(texto: string): string {
     .replace(/[̀-ͯ]/g, '')
     .toLowerCase()
     .trim();
+}
+
+/** Un bloque del listado de fichas. */
+interface GrupoDeFichas {
+  readonly clase: ChartTemplateKind;
+  readonly titulo: string;
+  readonly descripcion: string;
+  readonly plantillas: readonly ChartTemplate[];
+}
+
+const GRUPOS_DE_FICHAS: readonly Omit<GrupoDeFichas, 'plantillas'>[] = [
+  {
+    clase: 'BASE',
+    titulo: 'Consulta inicial (ficha base)',
+    descripcion: 'La primera consulta de la especialidad: antecedentes, examen y lo que se sospecha.',
+  },
+  {
+    clase: 'SPECIFIC',
+    titulo: 'Fichas específicas por condición',
+    descripcion:
+      'El control estándar de cada enfermedad o situación, con lo que su guía pide registrar en cada visita.',
+  },
+  {
+    clase: 'GENERAL',
+    titulo: 'Generales de toda consulta',
+    descripcion: 'Anamnesis, examen físico, consentimiento y epicrisis.',
+  },
+];
+
+const ROTULO_DE_CLASE: Readonly<Record<ChartTemplateKind, string>> = {
+  BASE: 'Ficha base',
+  SPECIFIC: 'Ficha específica',
+  GENERAL: 'General',
+};
+
+/**
+ * La clase de una ficha. Las armadas a mano no la traen: son propias de la
+ * organización y se muestran con las específicas, salvo las transversales,
+ * que se reconocen por su prefijo.
+ */
+function claseDe(plantilla: ChartTemplate): ChartTemplateKind {
+  if (plantilla.kind !== undefined) return plantilla.kind;
+  return plantilla.code.startsWith('TRANSV_') ? 'GENERAL' : 'SPECIFIC';
 }

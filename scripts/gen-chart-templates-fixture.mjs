@@ -15,12 +15,13 @@
  * que se separen es no volver a correrlo — y para eso está la prueba de deriva
  * de `plantillas-de-expediente.spec.ts`, que cuenta los archivos.
  *
- * Uso: `yarn mock:chart-templates`
+ * Uso: `yarn mock:chart-templates`. Desde un worktree, donde el repo de la API
+ * no está al lado, la carpeta se pasa con `CLINICAL_FORMS_DIR=<ruta>`.
  */
 import { readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-const ORIGEN = join(
+const ORIGEN = process.env.CLINICAL_FORMS_DIR ?? join(
   process.cwd(),
   '..',
   'mantra-core-health-api',
@@ -49,6 +50,8 @@ for (const carpeta of readdirSync(ORIGEN, { withFileTypes: true })) {
     fichas.push({
       code: ficha.code,
       name: ficha.name,
+      version: ficha.version ?? 1,
+      kind: ficha.kind ?? 'BASE',
       specialty: ficha.specialty.code,
       ...(ficha.provenance === undefined ? {} : { provenance: ficha.provenance }),
       fields: ficha.fields.map((campo) => ({
@@ -56,9 +59,13 @@ for (const carpeta of readdirSync(ORIGEN, { withFileTypes: true })) {
         name: campo.name,
         dataType: campo.dataType,
         required: campo.required ?? false,
+        ...(campo.section === undefined ? {} : { section: campo.section }),
         ...(campo.options === undefined
           ? {}
           : { options: campo.options, multiple: campo.multiple ?? false }),
+        ...(campo.allowOther === true ? { allowOther: true } : {}),
+        ...(campo.description === undefined ? {} : { description: campo.description }),
+        ...(campo.showWhen === undefined ? {} : { showWhen: campo.showWhen }),
       })),
     });
   }
@@ -90,20 +97,41 @@ export interface ProcedenciaDeFicha {
   readonly note?: string;
 }
 
+/**
+ * Cuándo se muestra un campo: si el campo \`field\` (por código, dentro de la
+ * misma ficha) vale \`equals\`. Es \`enableWhen\` de FHIR con \`=\` y \`SHOW\`.
+ */
+export interface CondicionDeFicha {
+  readonly field: string;
+  readonly equals: string | boolean | readonly (string | boolean)[];
+}
+
 /** Un campo de la ficha. \`options\` sólo viene en los de lista cerrada. */
 export interface CampoDeFicha {
   readonly code: string;
   readonly name: string;
   readonly dataType: string;
   readonly required: boolean;
+  readonly section?: string;
   readonly options?: readonly string[];
   readonly multiple?: boolean;
+  readonly allowOther?: boolean;
+  readonly description?: string;
+  readonly showWhen?: CondicionDeFicha;
 }
 
 /** Una ficha clínica estándar. */
 export interface FichaEstandar {
   readonly code: string;
   readonly name: string;
+  /** Versión de la ficha en el catálogo: sube cuando cambia su esquema. */
+  readonly version: number;
+  /**
+   * La clase de ficha: la consulta inicial de la especialidad (\`BASE\`), el
+   * control estándar de una condición (\`SPECIFIC\`) o una de toda consulta
+   * (\`GENERAL\`).
+   */
+  readonly kind: 'BASE' | 'SPECIFIC' | 'GENERAL';
   /** Código de \`VS_MEDICAL_SPECIALTY\`, o \`TRANSVERSAL\`. */
   readonly specialty: string;
   readonly provenance?: ProcedenciaDeFicha;

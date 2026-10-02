@@ -107,3 +107,88 @@ test('#828 · «Quincenal» no se corta en el formulario de cotización a 375 px
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   await page.screenshot({ path: join(FOTOS, 'cotizacion-frecuencia-375.png'), fullPage: true });
 });
+
+/**
+ * Segunda tanda de la integración mockup → dev: #837 y #841.
+ * (Los otros cuatro cambios ya traen sus propios specs: horarios-otros-servicios
+ * y registro-doctor-universidad-y-profesiones.)
+ */
+
+test('#841 · los idiomas se eligen en el editor, se guardan, sobreviven a la recarga y salen en la ficha', async ({
+  page,
+}) => {
+  const errores: string[] = [];
+  page.on('pageerror', (e) => errores.push(`pageerror: ${e.message}`));
+  page.on('response', (r) => {
+    if (r.status() >= 400 && r.url().startsWith(BASE) && !r.url().includes('/glossary-data/')) {
+      errores.push(`${r.status()} ${r.url()}`);
+    }
+  });
+
+  await entrarAlSimulador(page, 'medica', BASE);
+  await page.goto(`${BASE}/my-account/edit`);
+  await esperarAQueSeAsiente(page);
+  await page.getByRole('tab', { name: /Credenciales/i }).click();
+
+  const bloque = page.getByTestId('edicion-idiomas');
+  await expect(bloque).toBeVisible();
+  await expect(bloque.getByText('Idiomas en los que atendés')).toBeVisible();
+  await bloque.scrollIntoViewIfNeeded();
+  await esperarAQueSeAsiente(page);
+  await page.screenshot({ path: join(FOTOS, 'idiomas-editor-antes-1440.png'), fullPage: true });
+
+  // Agrega una fila y elige un idioma que la médica no tenga todavía.
+  const filasAntes = await bloque.locator('[data-testid^="idioma-select-"]').count();
+  await page.getByTestId('agregar-idioma').click();
+  const nuevo = page.getByTestId(`idioma-select-${filasAntes}`).locator('select');
+  const candidatos = await nuevo.locator('option:not([value=""])').allTextContents();
+  const elegido = candidatos.find((t) => /guaran|quechua|aymara|portugu|franc/i.test(t)) ?? candidatos[0]!;
+  await nuevo.selectOption({ label: elegido });
+  await page.screenshot({ path: join(FOTOS, 'idiomas-editor-elegido-1440.png'), fullPage: true });
+
+  await expect(page.getByRole('button', { name: 'Guardar idiomas' })).toBeEnabled();
+  await page.getByRole('button', { name: 'Guardar idiomas' }).click();
+  await esperarAQueSeAsiente(page);
+
+  // Recarga completa: lo que se ve viene de la persistencia, no de la memoria.
+  await page.goto(`${BASE}/my-account/edit`);
+  await esperarAQueSeAsiente(page);
+  await page.getByRole('tab', { name: /Credenciales/i }).click();
+  await expect(page.getByTestId(`idioma-select-${filasAntes}`).locator('select option:checked')).toHaveText(elegido);
+
+  // La ficha lo muestra.
+  await page.goto(`${BASE}/my-account`);
+  await esperarAQueSeAsiente(page);
+  await page.getByRole('tab', { name: /Credenciales/i }).click();
+  await expect(page.getByText(elegido, { exact: false }).first()).toBeVisible();
+  await esperarAQueSeAsiente(page);
+  await page.screenshot({ path: join(FOTOS, 'idiomas-ficha-1440.png'), fullPage: true });
+
+  expect(errores).toEqual([]);
+});
+
+test('#837 · el mapa del directorio de laboratorios va debajo de los resultados', async ({ page }) => {
+  await entrarAlSimulador(page, 'paciente', BASE);
+  await page.goto(`${BASE}/laboratory-directory`);
+  await esperarAQueSeAsiente(page);
+
+  // `testId` de `app-department-map` y `data-testid` caen en elementos distintos
+  // (CLAUDE.md §5): se apunta a la sección que lo envuelve.
+  const mapa = page.locator('section.mapa-directorio');
+  await expect(mapa).toBeVisible();
+  await expect(mapa).toHaveAttribute('aria-label', 'Filtrar por departamento');
+
+  // Orden vertical: las tarjetas de centros empiezan antes que el mapa.
+  const tarjeta = page.getByText('Laboratorio clínico', { exact: true }).first();
+  await expect(tarjeta).toBeVisible();
+  const yTarjeta = (await tarjeta.boundingBox())!.y;
+  const yMapa = (await mapa.boundingBox())!.y;
+  expect(yTarjeta, 'las tarjetas deben quedar arriba del mapa').toBeLessThan(yMapa);
+
+  await esperarAQueSeAsiente(page);
+  await page.screenshot({ path: join(FOTOS, 'laboratorios-mapa-al-final-1440.png'), fullPage: true });
+  await page.setViewportSize({ width: 375, height: 812 });
+  await esperarAQueSeAsiente(page);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  await page.screenshot({ path: join(FOTOS, 'laboratorios-mapa-al-final-375.png'), fullPage: true });
+});

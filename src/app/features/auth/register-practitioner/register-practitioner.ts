@@ -67,6 +67,12 @@ import {
   opcionesAutoridadReguladora,
 } from '../../../core/profesion/autoridades-reguladoras';
 import { OPCIONES_TITULO_PROFESIONAL } from '../../../core/profesion/titulos-profesionales';
+import { INSTITUCION_FUERA_DE_CATALOGO } from '../../../core/profesion/instituciones-educativas';
+import {
+  PAIS_FUERA_DE_CATALOGO,
+  PadronDeUniversidades,
+  eleccionDesdeTexto,
+} from '../../../core/profesion/padron-de-universidades';
 import { SystemContextClient } from '../../../core/data-access/system-context/system-context.client';
 import {
   MAX_ATTACHMENT_BYTES,
@@ -305,12 +311,24 @@ interface TituloDeclarado {
    * que una fila sin número no se puede guardar y el alta no la manda.
    */
   readonly numero: string;
-  /** Dónde lo cursó: «Universidad Mayor de San Andrés». */
+  /**
+   * Dónde lo cursó: «Universidad Mayor de San Andrés». Es lo que viaja en
+   * `issuingInstitutionText`, elegido del padrón o escrito a mano.
+   */
   readonly universidad: string;
-  /** El país donde lo cursó. Ver {@link CampoDeEstudio} por qué es texto. */
+  /** El país donde lo cursó, por nombre. Ver {@link CampoDeEstudio}. */
   readonly pais: string;
   /** La ciudad donde lo cursó. */
   readonly ciudad: string;
+  /**
+   * Qué opción del desplegable de país está marcada: el nombre, el centinela
+   * {@link PAIS_FUERA_DE_CATALOGO} —que destapa la casilla escrita— o nada.
+   * Va aparte de `pais` porque con «Otro país…» elegido y nada escrito todavía,
+   * `pais` es vacío y el desplegable tiene que seguir en «Otro».
+   */
+  readonly paisElegido: string | null;
+  /** Lo mismo para la universidad, con {@link INSTITUCION_FUERA_DE_CATALOGO}. */
+  readonly universidadElegida: string | null;
   /** El nombre del archivo elegido, o `null` si todavía no adjuntó ninguno. */
   readonly archivo: string | null;
   readonly pesoBytes: number | null;
@@ -318,36 +336,36 @@ interface TituloDeclarado {
 }
 
 /**
- * Los tres datos de dónde se estudió un título, y por qué los tres son texto
- * libre y no listas cerradas.
+ * Los tres datos de dónde se estudió un título, y de dónde sale cada uno.
  *
  * Es la pregunta que más veces vuelve, así que va escrita una sola vez acá:
  *
- * - **Universidad.** El modelo ya la guarda como texto a propósito: el JSDoc de
- *   `AddOwnCredentialDto.issuingInstitutionText` lo dice —«las universidades del
- *   exterior no están en ningún catálogo nuestro, y exigir que lo estén dejaría
- *   fuera a cualquiera que se formó afuera»—. No hay padrón de universidades en
- *   ninguna de las cuatro capas, y la regla de datos del proyecto pide
- *   justamente **no** hardcodear uno sin dataset ni estrategia de importación.
- * - **País.** La columna del modelo (`issuing_country_concept_id`) sí es un
- *   concepto, pero hoy existen **dos** en toda la aplicación —`COUNTRY_BO` y
- *   `COUNTRY_PE`— y `VS_COUNTRY` no tiene miembros sembrados. Un desplegable
- *   cerrado ofrecería dos opciones y dejaría afuera a quien estudió en Cuba,
- *   Argentina o España, que es exactamente el caso que este campo abre.
- * - **Ciudad.** `profiles.professional_credentials` **no tiene columna de
- *   ciudad**. Se pregunta igual porque el propietario la pidió, y el hueco
- *   queda declarado en `docs/handoff/` en vez de inventado acá: abrir una
- *   columna es cambio de modelo (`.puml` → `gen_ddl.py` → `SQL/` → base → ORM),
- *   y esta pantalla no es el lugar donde eso se decide.
- *
- * Cuando el país tenga value set y la universidad tenga padrón, esto pasa a ser
- * dos comboboxes sin tocar nada más: lo que cambia es de dónde salen las
- * opciones, no dónde se guarda la respuesta.
+ * - **País.** Desplegable, poblado por {@link PadronDeUniversidades}: Bolivia
+ *   primero y 199 países más, con «Otro país…» que destapa una casilla escrita.
+ *   Lo pidió el propietario el 02/10/2026 («deben ser select, poblados con
+ *   datos, como árbol para filtrar por país»). Se guarda el **nombre**: la
+ *   columna del modelo (`issuing_country_concept_id`) es un concepto, pero
+ *   `VS_COUNTRY` sigue sin miembros y el alta no lo recibe, así que hoy no
+ *   viaja. Cuando lo reciba, es un mapeo nombre → concepto, no otra pantalla.
+ * - **Universidad.** Desplegable **acotado al país elegido** —es el árbol—, con
+ *   «Otra institución…» para la que falte. Bolivia usa la lista curada de
+ *   `instituciones-educativas.ts`; el resto, el padrón importado. Viaja como
+ *   `issuingInstitutionText`, que sigue siendo texto: el valor de cada opción
+ *   es el nombre, así que al backend le llega lo mismo que antes.
+ * - **Ciudad.** Texto libre. `profiles.professional_credentials` **no tiene
+ *   columna de ciudad**; se pregunta porque el propietario la pidió y el hueco
+ *   queda declarado en `docs/handoff/`, no inventado acá.
  */
 type CampoDeEstudio = 'universidad' | 'pais' | 'ciudad';
 
 /** Uno de los campos de una fila de título que se escriben a mano. */
 type CampoEditableDeTitulo = 'nombre' | 'numero' | CampoDeEstudio;
+
+/** Los tres controles de dónde se estudió el título con el que ejerce. */
+type ClaveDeEstudioDelTitulo =
+  | 'professionalTitleUniversity'
+  | 'professionalTitleCountry'
+  | 'professionalTitleCity';
 
 /** Un respaldo suelto: el de la matrícula y el del registro del SEDES. */
 interface RespaldoDeclarado {
@@ -924,25 +942,15 @@ export class RegisterPractitioner {
   protected readonly tiposDeTitulo = TIPOS_DE_TITULO;
 
   /**
-   * Las tres casillas de «dónde lo estudiaste» de cada fila de título.
-   *
-   * Misma lista que la del título principal, con la diferencia de que acá la
-   * clave es la del objeto de la fila y no la de un `FormControl`: las filas no
-   * viven en el formulario, viven en un signal.
+   * El tope de la universidad escrita a mano, en la fila y en el título
+   * principal: `issuingInstitutionText` lo acota a 200 y se acota acá igual,
+   * para que el exceso no llegue a ser un 400 en inglés técnico. País y ciudad
+   * no viajan todavía, así que no tienen tope.
    */
-  protected readonly camposDeEstudioDeFila = [
-    // La universidad viaja como `issuingInstitutionText`, que el contrato acota
-    // a 200: se acota acá igual, para que el exceso no llegue a ser un 400 en
-    // inglés técnico. País y ciudad no viajan todavía, así que no tienen tope.
-    { campo: 'universidad', label: 'Universidad', placeholder: 'Universidad', maxlength: 200 },
-    { campo: 'pais', label: 'País', placeholder: 'País', maxlength: null },
-    { campo: 'ciudad', label: 'Ciudad', placeholder: 'Ciudad', maxlength: null },
-  ] as const satisfies readonly {
-    campo: CampoDeEstudio;
-    label: string;
-    placeholder: string;
-    maxlength: number | null;
-  }[];
+  protected readonly topeDeUniversidad = 200;
+
+  protected readonly paisFueraDeCatalogo = PAIS_FUERA_DE_CATALOGO;
+  protected readonly institucionFueraDeCatalogo = INSTITUCION_FUERA_DE_CATALOGO;
 
   protected readonly formatosDeRespaldo = FORMATOS_DE_RESPALDO;
   /** Los títulos académicos usan la pre-carga existente, que acepta sólo PDF. */
@@ -1015,6 +1023,8 @@ export class RegisterPractitioner {
         universidad: '',
         pais: '',
         ciudad: '',
+        paisElegido: null,
+        universidadElegida: null,
         archivo: null,
         pesoBytes: null,
         fileId: null,
@@ -1056,9 +1066,101 @@ export class RegisterPractitioner {
    */
   escribirDatoDeTitulo(id: string, campo: CampoEditableDeTitulo, valor: string): void {
     this.titulos.update((titulos) =>
-      titulos.map((titulo) => (titulo.id === id ? { ...titulo, [campo]: valor } : titulo)),
+      titulos.map((titulo) =>
+        titulo.id === id ? this.conDatoEscrito(titulo, campo, valor) : titulo,
+      ),
     );
     this.limpiarAvisoDeTitulos();
+  }
+
+  /**
+   * Una fila con un dato escrito, y su desplegable puesto a tono.
+   *
+   * Escribir el país o la universidad **como texto** —lo hacen las pruebas y
+   * lo haría una restauración— tiene que dejar el desplegable en la opción que
+   * corresponde: el nombre si está en el padrón, «Otro…» si no. La excepción es
+   * cuando ya está en «Otro…» y lo que se escribe es la casilla a mano: ahí el
+   * desplegable se queda quieto aunque lo tecleado coincida con un nombre del
+   * padrón, para que la casilla no desaparezca debajo del cursor.
+   */
+  private conDatoEscrito(
+    titulo: TituloDeclarado,
+    campo: CampoEditableDeTitulo,
+    valor: string,
+  ): TituloDeclarado {
+    const escrito = { ...titulo, [campo]: valor };
+    if (campo === 'pais' && titulo.paisElegido !== PAIS_FUERA_DE_CATALOGO) {
+      return {
+        ...escrito,
+        paisElegido: eleccionDesdeTexto(
+          valor,
+          (pais) => this.padron.esPaisDelCatalogo(pais),
+          PAIS_FUERA_DE_CATALOGO,
+        ),
+      };
+    }
+    if (campo === 'universidad' && titulo.universidadElegida !== INSTITUCION_FUERA_DE_CATALOGO) {
+      return {
+        ...escrito,
+        universidadElegida: eleccionDesdeTexto(
+          valor,
+          (universidad) => this.padron.esUniversidadDe(titulo.pais, universidad),
+          INSTITUCION_FUERA_DE_CATALOGO,
+        ),
+      };
+    }
+    return escrito;
+  }
+
+  /**
+   * Elige en el desplegable de país o de universidad de una fila.
+   *
+   * Un nombre del padrón se guarda tal cual como texto —es lo que viaja—;
+   * «Otro…» vacía el texto y destapa la casilla a mano; nada vacía ambos.
+   * Cambiar de país **reinicia la universidad**: la lista es la del país, y
+   * dejar «Universidad de Buenos Aires» marcada bajo Chile sería mentir.
+   */
+  elegirEnFila(id: string, campo: 'pais' | 'universidad', eleccion: string | null): void {
+    this.titulos.update((titulos) =>
+      titulos.map((titulo) => {
+        if (titulo.id !== id) return titulo;
+        if (campo === 'universidad') {
+          return { ...titulo, ...this.universidadElegida(eleccion) };
+        }
+        const pais = this.paisElegido(eleccion);
+        const cambiaDePais = pais.pais !== titulo.pais;
+        return {
+          ...titulo,
+          ...pais,
+          ...(cambiaDePais ? this.universidadElegida(null) : {}),
+        };
+      }),
+    );
+    this.limpiarAvisoDeTitulos();
+  }
+
+  /** El par texto + opción marcada que deja una elección en el país. */
+  private paisElegido(eleccion: string | null): Pick<TituloDeclarado, 'pais' | 'paisElegido'> {
+    return {
+      paisElegido: eleccion,
+      pais: eleccion === null || eleccion === PAIS_FUERA_DE_CATALOGO ? '' : eleccion,
+    };
+  }
+
+  /** El par texto + opción marcada que deja una elección en la universidad. */
+  private universidadElegida(
+    eleccion: string | null,
+  ): Pick<TituloDeclarado, 'universidad' | 'universidadElegida'> {
+    return {
+      universidadElegida: eleccion,
+      universidad:
+        eleccion === null || eleccion === INSTITUCION_FUERA_DE_CATALOGO ? '' : eleccion,
+    };
+  }
+
+  /** Las opciones de universidad de una fila: las del país que eligió. */
+  opcionesDeUniversidadDeFila(titulo: TituloDeclarado): readonly SelectOption<string>[] {
+    return this.padron.opcionesDeUniversidad(titulo.pais);
   }
 
   /**
@@ -1389,44 +1491,108 @@ export class RegisterPractitioner {
   }
 
   /**
-   * Los tres controles de dónde se estudió el título con el que ejerce.
-   *
-   * Se listan acá y no en la plantilla para que agregar el cuarto —el año, si
-   * alguna vez se pide— sea una entrada más y no una casilla suelta que alguien
-   * se olvida de limpiar al reiniciar el formulario.
+   * El padrón país → universidades. Bolivia está siempre; el resto se pide en el
+   * constructor y llega por su propio trozo. Ver {@link PadronDeUniversidades}.
    */
-  protected readonly camposDeEstudioDelTitulo = [
-    {
-      key: 'professionalTitleUniversity',
-      label: 'Universidad',
-      placeholder: 'Universidad Mayor de San Andrés',
-      testId: 'registro-pro-titulo-universidad',
-    },
-    {
-      key: 'professionalTitleCountry',
-      label: 'País de estudio',
-      placeholder: 'Bolivia',
-      testId: 'registro-pro-titulo-pais',
-    },
-    {
-      key: 'professionalTitleCity',
-      label: 'Ciudad de estudio',
-      placeholder: 'La Paz',
-      testId: 'registro-pro-titulo-ciudad',
-    },
-  ] as const;
+  private readonly padron = inject(PadronDeUniversidades);
 
-  /** Lo escrito en uno de los tres campos de estudio del título principal. */
-  valorDeEstudio(key: (typeof this.camposDeEstudioDelTitulo)[number]['key']): string {
+  /** Las opciones del desplegable de país, iguales en el título y en las filas. */
+  protected readonly opcionesDePais = this.padron.opcionesDePais;
+
+  /** Si el padrón importado todavía viene, para decirlo debajo del campo. */
+  protected readonly padronCargando = computed(() => this.padron.estado() === 'cargando');
+
+  /**
+   * Qué opción del desplegable de país del título principal está marcada.
+   *
+   * Va en un signal aparte del `FormControl` por lo mismo que `paisElegido` en
+   * la fila: con «Otro país…» elegido y nada escrito, el control está vacío y
+   * el desplegable tiene que seguir diciendo «Otro».
+   */
+  protected readonly paisDelTituloElegido = signal<string | null>(null);
+  protected readonly universidadDelTituloElegida = signal<string | null>(null);
+
+  protected readonly paisDelTituloEsOtro = computed(
+    () => this.paisDelTituloElegido() === PAIS_FUERA_DE_CATALOGO,
+  );
+  protected readonly universidadDelTituloEsOtra = computed(
+    () => this.universidadDelTituloElegida() === INSTITUCION_FUERA_DE_CATALOGO,
+  );
+
+  /** El país del título principal como texto, espejado desde el control. */
+  private readonly paisDelTituloTexto = signal('');
+
+  /**
+   * Las universidades que se ofrecen para el título principal: las del país
+   * elegido. Es el árbol que pidió el propietario: primero el país, después la
+   * universidad acotada a él.
+   */
+  protected readonly opcionesDeUniversidadDelTitulo = computed(() =>
+    this.padron.opcionesDeUniversidad(this.paisDelTituloTexto()),
+  );
+
+  /** Lo guardado en uno de los tres campos de estudio del título principal. */
+  valorDeEstudio(key: ClaveDeEstudioDelTitulo): string {
     return this.formProfesional.controls[key].value;
   }
 
-  /** Escribe uno de los tres campos de estudio del título principal. */
-  escribirEstudio(
-    key: (typeof this.camposDeEstudioDelTitulo)[number]['key'],
-    valor: string | number | null,
-  ): void {
-    this.formProfesional.controls[key].setValue(valor === null ? '' : String(valor));
+  /**
+   * Escribe uno de los tres campos de estudio del título principal como texto.
+   *
+   * Es la casilla escrita a mano de «Otro…» y, para las pruebas, la forma de
+   * poner un valor: el desplegable se pone a tono con la misma regla que
+   * {@link conDatoEscrito} en la fila.
+   */
+  escribirEstudio(key: ClaveDeEstudioDelTitulo, valor: string | number | null): void {
+    const texto = valor === null ? '' : String(valor);
+    this.formProfesional.controls[key].setValue(texto);
+    if (key === 'professionalTitleCountry') {
+      this.paisDelTituloTexto.set(texto);
+      if (this.paisDelTituloElegido() !== PAIS_FUERA_DE_CATALOGO) {
+        this.paisDelTituloElegido.set(
+          eleccionDesdeTexto(
+            texto,
+            (pais) => this.padron.esPaisDelCatalogo(pais),
+            PAIS_FUERA_DE_CATALOGO,
+          ),
+        );
+      }
+    }
+    if (
+      key === 'professionalTitleUniversity' &&
+      this.universidadDelTituloElegida() !== INSTITUCION_FUERA_DE_CATALOGO
+    ) {
+      this.universidadDelTituloElegida.set(
+        eleccionDesdeTexto(
+          texto,
+          (universidad) => this.padron.esUniversidadDe(this.paisDelTituloTexto(), universidad),
+          INSTITUCION_FUERA_DE_CATALOGO,
+        ),
+      );
+    }
+  }
+
+  /**
+   * Elige el país del título principal en el desplegable. Cambiar de país
+   * reinicia la universidad, por lo mismo que en {@link elegirEnFila}.
+   */
+  elegirPaisDelTitulo(eleccion: string | null): void {
+    const pais = eleccion === null || eleccion === PAIS_FUERA_DE_CATALOGO ? '' : eleccion;
+    const cambiaDePais = pais !== this.paisDelTituloTexto();
+    this.paisDelTituloElegido.set(eleccion);
+    this.paisDelTituloTexto.set(pais);
+    this.formProfesional.controls.professionalTitleCountry.setValue(pais);
+    if (cambiaDePais) {
+      this.elegirUniversidadDelTitulo(null);
+    }
+  }
+
+  /** Elige la universidad del título principal en el desplegable. */
+  elegirUniversidadDelTitulo(eleccion: string | null): void {
+    this.universidadDelTituloElegida.set(eleccion);
+    this.formProfesional.controls.professionalTitleUniversity.setValue(
+      eleccion === null || eleccion === INSTITUCION_FUERA_DE_CATALOGO ? '' : eleccion,
+    );
   }
 
   /** Si hay que pintar en rojo el primer nombre. */
@@ -1576,9 +1742,9 @@ export class RegisterPractitioner {
    *   tiene dónde ir: sería una tercera fila de `common.identifiers`, y eso es
    *   esquema. Lo que sí se corrigió es que el segundo dejara de archivarse
    *   como título de grado: es una habilitación y vive con la matrícula.
-   * - **Lugar de estudio** (AC-05-13). La universidad se guarda por credencial;
-   *   el país y la ciudad se siguen preguntando, pero no viajan porque el alta
-   *   no define esos campos. Los PDFs de credenciales ahora se precargan y se
+   * - **Lugar de estudio** (AC-05-13). La universidad se guarda por credencial
+   *   y se elige de un padrón acotado al país; el país y la ciudad se siguen
+   *   preguntando, pero no viajan porque el alta no define esos campos. Los PDFs de credenciales ahora se precargan y se
    *   asocian a su fila en el alta.
    *
    * ## El tope de cuatro campos por página no se relaja (AC-05-2)
@@ -1911,9 +2077,10 @@ export class RegisterPractitioner {
         // la que se elige el título hace pensar que algo se perdió.
         //
         // La universidad y el lugar de estudio SÍ se preguntan acá desde el
-        // 09/09: el propietario los pidió en el alta, no en el perfil. Siguen
-        // sin viajar —viven en `credentials`, detrás de la sesión— y el mapeo
-        // campo por campo está en `docs/handoff/`.
+        // 09/09: el propietario los pidió en el alta, no en el perfil. Desde el
+        // 02/10 país y universidad son desplegables en árbol (ver
+        // `CampoDeEstudio`). Siguen sin viajar —viven en `credentials`, detrás
+        // de la sesión— y el mapeo campo por campo está en `docs/handoff/`.
         hint: 'Lo que van a ver tus pacientes. Podés cambiarlo cuando quieras.',
         campos: [
           {
@@ -2196,6 +2363,9 @@ export class RegisterPractitioner {
     this.cargarMunicipios();
     this.cargarEspecialidades();
     this.cargarTiposDeCredencial();
+    // El padrón de universidades llega por su propio trozo; un fallo no frena
+    // nada: Bolivia y «Otro…» están siempre.
+    void this.padron.cargar();
     this.syncCollegeWithProfession();
 
     // El aviso de un envío fallido se va en cuanto se corrige algo.

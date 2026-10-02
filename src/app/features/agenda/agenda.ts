@@ -77,6 +77,7 @@ import type { ColumnDef } from '../../shared/components/organisms/data-table/dat
 import { PageHeader } from '../../shared/components/organisms/page-header/page-header';
 import { AGENDA_BOOKING_PARAM, AGENDA_CREATE_ROUTE, bookingNewRoute } from './agenda.routes';
 import { MyAgenda } from './my-agenda/my-agenda';
+import { ServicesSchedule } from './services-schedule/services-schedule';
 import { WalkInForm, type TurnoDeMostrador } from './walk-in/walk-in-form';
 import { TutorialTarget } from '../../shared/components/organisms/tutorial-overlay/tutorial-target.directive';
 
@@ -445,12 +446,18 @@ const SCHEDULE_VIEW = 'agenda';
 const SLOTS_VIEW = 'cupos';
 
 /**
+ * `vista` de «Horarios de otros servicios». En castellano a propósito, como
+ * las otras dos: es lo que se ve en la barra de direcciones y se comparte.
+ */
+const SERVICES_VIEW = 'servicios';
+
+/**
  * Las solapas posibles de `/schedule`. **Nunca están las cuatro a la vez**
  * (C-07, C-10): con calendario son «Consultas» (el calendario) y «Mis
  * horarios»; sin calendario —quien reparte turnos, o quien todavía no publicó
  * la suya— siguen siendo la lista y los cupos, que es su único camino.
  */
-type AgendaTab = 'calendar' | 'consultations' | 'schedule' | 'slots';
+type AgendaTab = 'calendar' | 'consultations' | 'schedule' | 'services' | 'slots';
 
 /**
  * **Agenda** (M41) — la sección que hasta ahora era un cartel.
@@ -516,6 +523,7 @@ type AgendaTab = 'calendar' | 'consultations' | 'schedule' | 'slots';
     Textarea,
     Tooltip,
     MyAgenda,
+    ServicesSchedule,
     WalkInForm,
   ],
   templateUrl: './agenda.html',
@@ -872,15 +880,14 @@ export class Agenda {
    * reparte turnos no tiene agenda propia y no se le ofrece una puerta que la
    * otra pantalla no va a reconocer como suya.
    */
-  protected readonly pestanas = computed<readonly AgendaTab[]>(() =>
-    this.tieneCalendario()
-      ? (['calendar', ...(this.esQuienAtiende() ? (['schedule'] as const) : [])] as const)
-      : ([
-          'consultations',
-          ...(this.esQuienAtiende() ? (['schedule'] as const) : []),
-          'slots',
-        ] as const),
-  );
+  protected readonly pestanas = computed<readonly AgendaTab[]>(() => {
+    // «Horarios de otros servicios» va pegada a «Mis horarios» y con la misma
+    // condición: son los dos lados del mismo horario publicado.
+    const propias = this.esQuienAtiende() ? (['schedule', 'services'] as const) : ([] as const);
+    return this.tieneCalendario()
+      ? (['calendar', ...propias] as const)
+      : (['consultations', ...propias, 'slots'] as const);
+  });
 
   /**
    * La solapa abierta, leída de la URL para que un enlace pueda apuntar a una
@@ -893,6 +900,7 @@ export class Agenda {
   protected readonly pestanaActual = computed<AgendaTab>(() => {
     const vista = this.params()?.get('vista');
     if (vista === SCHEDULE_VIEW && this.esQuienAtiende()) return 'schedule';
+    if (vista === SERVICES_VIEW && this.esQuienAtiende()) return 'services';
     // C-07 · con calendario no hay ninguna tabla: `table`, `citas`,
     // `solicitudes`, `cupos` y cualquier valor viejo caen acá, que es lo que
     // `/schedule` a secas abre. No se redirige la URL a propósito: una
@@ -911,6 +919,9 @@ export class Agenda {
 
   /** Si está abierta «Mis horarios», el horario publicado. */
   protected readonly enHorario = computed(() => this.pestanaActual() === 'schedule');
+
+  /** Si está abierta «Horarios de otros servicios». */
+  protected readonly enServicios = computed(() => this.pestanaActual() === 'services');
 
   /**
    * Si la solapa abierta es una de las listas —Consultas o Cupos—, las únicas
@@ -1588,6 +1599,8 @@ export class Agenda {
         return null;
       case 'schedule':
         return SCHEDULE_VIEW;
+      case 'services':
+        return SERVICES_VIEW;
       case 'slots':
         return SLOTS_VIEW;
       case 'consultations':

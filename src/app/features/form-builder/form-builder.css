@@ -81,6 +81,15 @@
   max-width: 68ch;
 }
 
+.constructor__filtro-especialidad {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: 0;
+  color: var(--text-secondary);
+}
+
 .constructor__presupuesto {
   /* Layout del contenido vía el cuerpo de app-card (ver card.css). */
   --card-body-display: flex;
@@ -142,6 +151,38 @@
 /* El rótulo de la especialidad, arriba del nombre: es lo que agrupa la rejilla
    de un vistazo. En versalitas y no como chip para que no compita con el
    nombre, que es lo que se lee primero. */
+.constructor__grupo {
+  display: grid;
+  gap: var(--sp-2);
+}
+
+.constructor__grupo + .constructor__grupo {
+  margin-top: var(--sp-6);
+}
+
+.constructor__grupo-titulo {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-h4, 1.125rem);
+  color: var(--text-primary);
+}
+
+.constructor__grupo-cuenta,
+.constructor__grupo-descripcion {
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.constructor__grupo-descripcion {
+  margin: 0 0 var(--sp-2);
+  max-width: 68ch;
+}
+
+.constructor__clase {
+  font-size: var(--fs-caption, 0.75rem);
+  color: var(--text-secondary);
+}
+
 .constructor__especialidad {
   color: var(--brand-primary);
   font-size: var(--fs-overline);

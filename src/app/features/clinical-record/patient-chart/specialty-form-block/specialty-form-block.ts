@@ -40,7 +40,10 @@ import type {
   FormInstanceDetail,
 } from '../../../../core/data-access/forms/forms.types';
 import { ProfilesClient } from '../../../../core/data-access/profiles/profiles.client';
-import type { PractitionerSpecialty } from '../../../../core/data-access/profiles/profiles.types';
+import { especialidadVigente } from '../../../../core/data-access/profiles/especialidad-vigente';
+import { camposOcultos } from '../../../../shared/forms/paginated/visibilidad-condicional';
+import { CheckboxGroup } from '../../../../shared/components/molecules/checkbox-group/checkbox-group';
+import { Textarea } from '../../../../shared/components/atoms/textarea/textarea';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
 import { loading, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
@@ -156,7 +159,12 @@ function rotuloFlexible(cuantos: number): string {
 }
 
 /** Los tipos de dato que este bloque sabe dibujar como campo de captura. */
-type TipoDibujable = 'boolean' | 'integer' | 'decimal' | 'date' | 'text' | 'string';
+type TipoDibujable = 'boolean' | 'integer' | 'decimal' | 'date' | 'text' | 'string' | 'una' | 'una-corta' | 'varias';
+
+/** Hasta cuántas opciones cortas se ofrecen como botones en vez de desplegable. */
+const OPCIONES_COMO_BOTONES = 4;
+/** Largo máximo de una opción para que entre en un botón. */
+const LARGO_DE_OPCION_EN_BOTON = 24;
 
 /**
  * El código del campo que se dibuja como odontograma.
@@ -299,6 +307,8 @@ interface PasoDelCierre {
     Select,
     Tab,
     Tabs,
+    CheckboxGroup,
+    Textarea,
   ],
   templateUrl: './specialty-form-block.html',
   styleUrl: './specialty-form-block.css',
@@ -389,15 +399,27 @@ export class SpecialtyFormBlock {
     return sembrada?.specialtyConceptId ?? null;
   });
 
-  /** Las fichas de la especialidad de quien atiende. Vacío si no se sabe cuál es. */
+  /**
+   * Las fichas de la especialidad de quien atiende. Vacío si no se sabe cuál es.
+   *
+   * La ficha base —la consulta inicial— va primero y después las específicas
+   * de cada condición, por nombre: es el orden en que se usan, la primera vez
+   * y después en los controles.
+   */
   private readonly plantillasPropias = computed<readonly ChartTemplate[]>(() => {
     const especialidad = this.especialidad();
     if (especialidad === null) return [];
-    return this.catalogo().filter(
-      (plantilla) =>
-        plantilla.specialtyConceptId === especialidad &&
-        plantilla.specialtyConceptId !== this.conceptoTransversal(),
-    );
+    return this.catalogo()
+      .filter(
+        (plantilla) =>
+          plantilla.specialtyConceptId === especialidad &&
+          plantilla.specialtyConceptId !== this.conceptoTransversal(),
+      )
+      .sort(
+        (a, b) =>
+          Number(b.kind === 'BASE') - Number(a.kind === 'BASE') ||
+          a.name.localeCompare(b.name, 'es'),
+      );
   });
 
   /** Las que sirven para cualquier consulta. Nunca se esconden. */
@@ -437,13 +459,14 @@ export class SpecialtyFormBlock {
   /**
    * El interruptor «Ver todas las especialidades». Apagado, manda el filtro.
    *
-   * Arranca PRENDIDO a pedido explícito: el filtro por especialidad hacía que
-   * la misma cuenta viera listas de tamaño distinto según qué perfil
-   * profesional resolviera el backend, y eso se leía como un bug («en la Mac
-   * salen más formularios»). Mientras no haya una forma de fijar esto como
-   * preferencia real, mostrar todo por defecto es lo predecible.
+   * Arranca APAGADO por decisión del propietario (2026-10-02): «debe haber un
+   * filtro específico de formularios por el tipo de especialidad». Antes
+   * arrancaba prendido porque la lista cambiaba de tamaño según el perfil y se
+   * leía como un bug; ahora el filtro es lo esperado y el interruptor queda a
+   * la vista para ver el resto. Sin especialidad conocida se ve todo igual
+   * (ver {@link plantillasSugeridas}).
    */
-  protected readonly verTodas = signal(true);
+  protected readonly verTodas = signal(false);
 
   protected alternarVerTodas(activado: boolean): void {
     this.verTodas.set(activado);
@@ -1044,18 +1067,68 @@ export class SpecialtyFormBlock {
     return valor instanceof Date ? valor : null;
   }
 
-  /** Cómo dibujar un campo, a partir de su `dataType`. Lo no reconocido cae a texto. */
-  protected tipoDibujable(dataType: string): TipoDibujable {
+  /**
+   * Cómo dibujar un campo. Una lista cerrada se elige —con botones si son
+   * pocas opciones cortas, con desplegable si no, con casillas si van
+   * varias—; un párrafo va en área de texto; lo no reconocido cae a texto.
+   */
+  protected tipoDibujable(campo: ChartTemplateField): TipoDibujable {
+    const opciones = campo.options ?? [];
+    if (opciones.length > 0) {
+      if (campo.multiple === true) return 'varias';
+      const cortas =
+        opciones.length <= OPCIONES_COMO_BOTONES &&
+        opciones.every((opcion) => opcion.length <= LARGO_DE_OPCION_EN_BOTON);
+      return cortas ? 'una-corta' : 'una';
+    }
+    const { dataType } = campo;
     if (
       dataType === 'boolean' ||
       dataType === 'integer' ||
       dataType === 'decimal' ||
-      dataType === 'date'
+      dataType === 'date' ||
+      dataType === 'text'
     ) {
       return dataType;
     }
     return 'string';
   }
+
+  /** Las opciones de un campo de lista, en la forma que piden los controles. */
+  protected opcionesDe(campo: ChartTemplateField): readonly { value: string; label: string }[] {
+    const opciones = (campo.options ?? []).map((opcion) => ({ value: opcion, label: opcion }));
+    // En una de una sola respuesta, «Otro» es una opción más: lo que no está en
+    // la lista se detalla en el diagnóstico o en el relato. En las de varias lo
+    // resuelve el propio grupo de casillas, con su texto libre.
+    return campo.allowOther === true && campo.multiple !== true
+      ? [...opciones, { value: 'Otro', label: 'Otro' }]
+      : opciones;
+  }
+
+  protected valorLista(fieldId: string): readonly string[] {
+    const valor = this.valores()[fieldId];
+    return Array.isArray(valor) ? (valor as string[]) : [];
+  }
+
+  /**
+   * Los campos que su condición deja fuera de la vista, por `fieldId`: el
+   * «¿cuál?» de un «sí» que todavía no se contestó, o que se contestó «no».
+   * No se dibujan, no cuentan como obligatorios y no se envían.
+   */
+  protected readonly ocultos = computed<ReadonlySet<string>>(() => {
+    const plantilla = this.plantillaElegida();
+    if (plantilla === null) return new Set();
+    const valores = this.valores();
+    return camposOcultos(
+      plantilla.fields.map((campo) => ({
+        key: campo.fieldId,
+        ...(campo.showWhen === undefined
+          ? {}
+          : { showWhen: { key: campo.showWhen.fieldId, equals: campo.showWhen.equals } }),
+      })),
+      (fieldId) => valores[fieldId],
+    );
+  });
 
   /* -- El odontograma ------------------------------------------------------ */
 
@@ -1146,7 +1219,10 @@ export class SpecialtyFormBlock {
     const plantilla = this.plantillaElegida();
     if (!plantilla) return false;
     const valores = this.valores();
-    return plantilla.fields.filter((f) => f.required).every((f) => !esVacio(valores[f.fieldId]));
+    const ocultos = this.ocultos();
+    return plantilla.fields
+      .filter((f) => f.required && !ocultos.has(f.fieldId))
+      .every((f) => !esVacio(valores[f.fieldId]));
   });
 
   protected readonly puedeCompletar = computed(
@@ -1191,9 +1267,10 @@ export class SpecialtyFormBlock {
     const plantilla = this.plantillaElegida();
     if (plantilla === null) return [];
     const valores = this.valores();
+    const ocultos = this.ocultos();
     const deLaPlantilla = plantilla.fields.flatMap((campo) => {
       const valor = valores[campo.fieldId];
-      if (esVacio(valor) || esMapa(valor)) return [];
+      if (ocultos.has(campo.fieldId) || esVacio(valor) || esMapa(valor)) return [];
       return [{ question: campo.name, answer: textoDeValor(valor, campo.dataType) }];
     });
     // Lo que el doctor sumó a mano también es parte de lo observado.
@@ -1479,10 +1556,13 @@ export class SpecialtyFormBlock {
 
   private valoresParaEnviar(plantilla: ChartTemplate): FieldValueInput[] {
     const valores = this.valores();
+    const ocultos = this.ocultos();
     const entradas: FieldValueInput[] = [];
     for (const [ordinal, campo] of plantilla.fields.entries()) {
       const crudo = valores[campo.fieldId];
-      if (esVacio(crudo)) {
+      // Lo que quedó escrito en un «¿cuál?» que después se cerró con un «no»
+      // no se manda: no es una respuesta vigente.
+      if (esVacio(crudo) || ocultos.has(campo.fieldId)) {
         continue;
       }
       entradas.push({
@@ -1504,50 +1584,15 @@ function esVacio(valor: unknown): boolean {
     valor === '' ||
     // Un odontograma sin ninguna pieza tocada es un mapa vacío: es «no lo
     // llené», no un dato. Sin esto viajaría un `{}` y contaría como respuesta.
-    (esMapa(valor) && Object.keys(valor).length === 0)
+    (esMapa(valor) && Object.keys(valor).length === 0) ||
+    // Una lista de varias respuestas sin ninguna marcada tampoco es un dato.
+    (Array.isArray(valor) && valor.length === 0)
   );
 }
 
 /** Si el valor es un objeto plano —el mapa del odontograma, hoy—. */
 function esMapa(valor: unknown): valor is Record<string, unknown> {
-  return typeof valor === 'object' && valor !== null && !(valor instanceof Date);
-}
-
-/**
- * La especialidad con la que un profesional se presenta.
- *
- * La primaria vigente si la hay; si no, la primera vigente.
- *
- * **Vigente es una ventana, no una bandera** —mismo criterio que la matrícula
- * que firma el papel en el expediente—: sin `validTo` no caduca, y con
- * `validTo` en el futuro sigue ejerciendo. Tratar toda especialidad con fecha
- * de vencimiento como abandonada le escondería su propia ficha justo a quien
- * tiene la certificación en regla —una recertificación real declara hasta
- * cuándo vale—, y lo dejaría completando la anamnesis general. Vencida sí se
- * descarta: no debería decidir qué ficha se le ofrece hoy.
- */
-function especialidadVigente(especialidades: readonly PractitionerSpecialty[]): string | null {
-  const ahora = Date.now();
-  const vigentes = especialidades.filter((especialidad) =>
-    dentroDeLaVentana(especialidad.validFrom, especialidad.validTo, ahora),
+  return (
+    typeof valor === 'object' && valor !== null && !(valor instanceof Date) && !Array.isArray(valor)
   );
-  const principal = vigentes.find((especialidad) => especialidad.isPrimary);
-  return (principal ?? vigentes[0])?.specialtyConceptId ?? null;
-}
-
-/**
- * Si una vigencia declarada cubre el instante dado.
- *
- * Los dos extremos son opcionales y la ausencia de cada uno significa «no
- * empieza» y «no termina», que es cómo el contrato declara sus ventanas.
- */
-function dentroDeLaVentana(
-  desde: Date | undefined,
-  hasta: Date | undefined,
-  instante: number,
-): boolean {
-  if (desde !== undefined && desde.getTime() > instante) {
-    return false;
-  }
-  return hasta === undefined || hasta.getTime() > instante;
 }

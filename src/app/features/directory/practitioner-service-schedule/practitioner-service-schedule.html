@@ -1,0 +1,153 @@
+@if (!hasSession()) {
+  <app-empty-state
+    title="Entrá para ver los horarios"
+    description="Los horarios de sus servicios se ven con la sesión iniciada. Vas a volver a esta ficha."
+  />
+} @else if (tenantId() === null) {
+  <app-empty-state
+    title="Elegí una organización"
+    description="Los horarios dependen de la organización desde la que mirás."
+  />
+} @else {
+  <div class="otros-servicios" data-testid="service-schedule">
+    @switch (offerings().status) {
+      @case ('loading') {
+        <p class="otros-servicios__nota" role="status">Buscando sus servicios…</p>
+      }
+      @case ('error') {
+        <app-empty-state
+          variant="error"
+          title="No pudimos traer sus servicios"
+          description="El resto de la ficha sigue igual."
+        />
+        <button app-button type="button" size="sm" variant="secondary" (clicked)="retryOfferings()">
+          Reintentar
+        </button>
+      }
+      @default {
+        @if (bookable().length === 0) {
+          <app-empty-state
+            data-testid="service-schedule-none"
+            title="No ofrece otros servicios"
+            description="Este profesional sólo atiende consultas. Sus horarios están en la pestaña «Consultas»."
+          />
+        } @else {
+          <p class="otros-servicios__nota">
+            Estudios, procedimientos y demás servicios aparte de la consulta. Cada uno tiene su
+            propia duración: el horario reserva la más larga.
+          </p>
+
+          <app-form-field label="Servicio" class="otros-servicios__servicio">
+            <app-select
+              data-testid="service-schedule-offering"
+              [options]="offeringOptions()"
+              [value]="selectedOfferingId()"
+              (valueChange)="chooseOffering($event)"
+            />
+          </app-form-field>
+
+          @if (selected(); as offering) {
+            <p class="otros-servicios__detalle" data-testid="service-schedule-detail">
+              <strong>{{ offering.serviceName }}</strong> · dura {{ duration(offering) }} ·
+              {{ price(offering) }}
+              @if (offering.requiresApproval) {
+                · el profesional tiene que confirmarlo
+              }
+            </p>
+
+            <header class="otros-servicios__semana">
+              <button
+                app-button
+                type="button"
+                size="sm"
+                variant="secondary"
+                [disabled]="!canGoBack()"
+                (clicked)="goBack()"
+              >
+                Semana anterior
+              </button>
+              <p class="otros-servicios__rango" aria-live="polite">
+                {{ from() | date: 'd MMM' }} – {{ to() | date: 'd MMM' }}
+              </p>
+              <button
+                app-button
+                type="button"
+                size="sm"
+                variant="secondary"
+                [disabled]="!canGoForward()"
+                (clicked)="goForward()"
+              >
+                Semana siguiente
+              </button>
+            </header>
+
+            <app-view-state-host [state]="sites()" (retry)="retryStarts()">
+              @if (sites().status === 'ready') {
+                @if (siteList().length === 0) {
+                  <app-empty-state
+                    title="Todavía no publicó horarios"
+                    description="Cuando publique su horario, vas a ver acá cuándo podés pedir este servicio."
+                  />
+                }
+                @for (site of siteList(); track site.resource.id) {
+                  <app-card variant="outlined" padding="lg" class="otros-servicios__sede">
+                    <h3 class="otros-servicios__sede-nombre">{{ siteName(site.resource) }}</h3>
+                    @switch (site.starts.status) {
+                      @case ('ready') {
+                        @if (site.starts.data.length === 0) {
+                          <p class="otros-servicios__nota" data-testid="service-schedule-week-empty">
+                            Esta semana no tiene lugar para este servicio en esta sede. Probá con la
+                            semana siguiente.
+                          </p>
+                        } @else {
+                          <ul class="otros-servicios__inicios">
+                            @for (start of site.starts.data; track start.startAt.getTime()) {
+                              <li>
+                                <a
+                                  app-button
+                                  size="sm"
+                                  variant="secondary"
+                                  data-testid="service-schedule-start"
+                                  [routerLink]="bookingPath"
+                                  [queryParams]="bookingParams(start, offering)"
+                                  [attr.aria-label]="
+                                    'Pedir ' +
+                                    offering.serviceName +
+                                    ' el ' +
+                                    (start.startAt | date: 'EEEE d \'de\' MMMM') +
+                                    ' a las ' +
+                                    (start.startAt | date: 'HH:mm') +
+                                    ' en ' +
+                                    siteName(site.resource)
+                                  "
+                                >
+                                  {{ start.startAt | date: 'EEE d' }} ·
+                                  {{ start.startAt | date: 'HH:mm' }}
+                                </a>
+                              </li>
+                            }
+                          </ul>
+                        }
+                      }
+                      @case ('loading') {
+                        <p class="otros-servicios__nota" role="status">Buscando horarios…</p>
+                      }
+                      @default {
+                        <p class="otros-servicios__nota" role="alert">
+                          No pudimos traer los horarios de esta sede.
+                          <button app-button type="button" size="sm" variant="ghost" (clicked)="retryStarts()">
+                            Reintentar
+                          </button>
+                        </p>
+                      }
+                    }
+                  </app-card>
+                }
+              }
+            </app-view-state-host>
+          }
+        }
+      }
+    }
+  </div>
+}
