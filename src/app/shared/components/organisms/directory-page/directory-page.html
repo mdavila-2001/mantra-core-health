@@ -103,3 +103,8 @@
     }
   }
 </app-view-state-host>
+
+<!-- Lo que un vertical necesita **debajo** de los resultados. El directorio de
+     laboratorios pone acá su mapa: es un filtro por región y, arriba de la
+     lista, empujaba la portada y los centros fuera del pliegue. -->
+<ng-content select="[slot=despues-de-resultados]" />
