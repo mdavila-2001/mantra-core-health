@@ -81,6 +81,22 @@ Ninguna.
 - `pdf-motor.spec.ts` comprueba estructura, peso mínimo (50 KB) y fuentes embebidas, no el texto: con Identity-H el texto no es grepeable; la lectura de contenido queda en la revisión visual.
 - `playwright install chromium` dejó `chromium_headless_shell-1234` en la caché de usuario (94,7 MB), compartida por las otras sesiones con la misma versión.
 
+## Entrega
+
+PR [mdavila-2001/mantra-core-health#850](https://github.com/mdavila-2001/mantra-core-health/pull/850) → `mockup`.
+
+```text
+$ gh pr view 850 --json number,isDraft,mergeable,mergeStateStatus,reviewDecision,baseRefName,headRefName
+{"baseRefName":"mockup","headRefName":"justin/pdf-motor","isDraft":false,"mergeStateStatus":"UNSTABLE","mergeable":"MERGEABLE","number":850,"reviewDecision":""}
+$ gh pr checks 850
+dependencias  pending  0  …/actions/runs/37070475061/job/111048476020
+e2e           pending  0  …/actions/runs/37070475061/job/111048476006
+verificar     pending  0  …/actions/runs/37070475061/job/111048475732
+```
+
+`UNSTABLE` = los tres checks siguen `pending` en los runners autoalojados al momento de cerrar
+el turno (sin conflictos, sin draft). El merge exige revisión humana (`gh pr merge` bloqueado).
+
 ## Decisiones y ambigüedades
 
 - «chat» en el pedido: mensajería no genera PDFs; se interpretó «el motor en general». **Confirmar con el propietario** si esperaba exportar conversaciones.
