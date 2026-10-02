@@ -59,6 +59,7 @@ backend.
 | **P54** | Carga masiva de sucursales: `directory.branches` no tiene **descripción** ni **enlace de ubicación**, y `POST /tenants/{id}/branches` es de a una. **El front ya las manda** (altas de laboratorio y farmacia, ficha de organización) y el simulador las guarda |
 | **P58** | El **logo de una organización** (farmacia, laboratorio, clínica, aseguradora): hoy la imagen vive en `community.public_profiles.avatar_file_id` y sólo la escribe un administrador de plataforma (`PUT /admin/tenants/:id/public-profile`); `directory.tenants` no tiene columna de logo. Hace falta que el **owner/admin** de la organización lo cambie: `GET /tenants/{id}/logo` → `{ fileId \| null }` y `PUT /tenants/{id}/logo` con `{ fileId \| null }` (403 si no administra; el archivo ya subido por `/common/files/upload`, categoría `IMAGE`). **El front ya está construido contra el simulador** (`LogoDeOrganizacionClient`, tarjeta `app-organization-logo` en «Tu organización» y «Mi perfil»): al llegar la API se cambia ese cliente y `DirectoryClient`, no las pantallas. El modelo, antes, tiene que decir dónde se guarda (¿columna en `directory.tenants` o escritura del dueño sobre `public_profiles`?) |
 | **P59** | **Frecuencia de facturación al seguro** del médico (`WEEKLY`/`BIWEEKLY`/`MONTHLY`): el modelo no tiene columna ni value set, y el DTO de `PATCH /profiles/practitioners/me` no declara `insuranceBillingFrequency`, así que contra la API real **guardar el perfil habiendo cambiado ese campo devuelve 400** (`forbidNonWhitelisted`). Sólo existe en el simulador. **Bloquea el pase a producción de ese selector**, no el de `dev` |
+| **P60** | **Idiomas del médico** (`languages` en `PATCH /profiles/practitioners/me`): el editor los manda como lista entera, con la forma en que la lectura los devuelve, esperando que reemplace la guardada. **El repo no trae el DTO del PATCH y sólo el simulador demostró la persistencia**: si el DTO no declara `languages`, `forbidNonWhitelisted` devuelve 400 al guardar; si lo ignora, la recarga lo delata |
 
 ---
 
@@ -2540,3 +2541,24 @@ reintento; visor) y `features/laboratory/summary/`.
 > y lo devuelve en la lectura. Cuando exista, el código pasa a ser un mapeo a concepto y la vista y
 > el editor lo heredan juntos. Sin esto, ocultar el selector fuera de `demo` es la salida si hay
 > que desplegar antes.
+
+## P60 · Idiomas del médico: lo que escribe el editor — 02/10/2026
+
+> **Qué pide el front.** En «Configurar tu perfil» del médico, un bloque de **idiomas**: se eligen
+> del catálogo `VS_LANGUAGE` con su nivel de dominio (`VS_LANGUAGE_PROFICIENCY`) y se guardan con el
+> resto del formulario. Hasta el 02/10/2026 el perfil los **leía** y ninguna pantalla los escribía
+> (PR #841, rama `mockup`).
+>
+> **Cómo viaja.** `PATCH /profiles/practitioners/me` con `languages: PractitionerLanguage[]`, la
+> lista **entera** y con la misma forma que devuelve la lectura. Se espera que reemplace la
+> guardada; `[]` quita el último idioma. No hay «agregar» ni «retirar» con recurso propio.
+>
+> **Qué no está verificado.** El DTO real del PATCH no se pudo leer desde este repo. Sólo el
+> simulador demostró editar, guardar, recargar y ver el idioma nuevo. Dos desenlaces posibles contra
+> la API real: el DTO no declara `languages` y `forbidNonWhitelisted` devuelve **400** (el editor lo
+> muestra en su bloque), o lo acepta e ignora en silencio (la recarga lo delata). Es el mismo patrón
+> que P54 y P59.
+>
+> **Falta.** Confirmar el DTO. Si no existe: el modelo (`mantra-core-health-model`) tiene que
+> decir dónde se guardan idioma y nivel, y recién después el backend lo acepta y lo devuelve. El
+> supuesto original, con su razonamiento, está en `docs/progress/BLOCKERS.md`.
