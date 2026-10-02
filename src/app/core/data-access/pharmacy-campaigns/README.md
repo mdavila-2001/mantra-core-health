@@ -23,6 +23,36 @@ precios ni por URL directa, el precio promocional siempre es menor que el de lis
 `environment.campaignsDemo`. Apagado el interruptor, las secciones de promoción no se
 pintan en ningún lado: sin campañas no hay sección vacía decorativa.
 
+## Las mecánicas: un motor compartido (01/10/2026)
+
+El carril empezó con dos formas de descuento (un porcentaje, un precio por producto). Hoy son
+**14 mecánicas** en cinco familias —precio, cantidad, total de la compra, combos y regalos,
+fidelización— con condiciones opcionales (tope, cupón, calendario, límites, combinabilidad). Su
+cálculo **no vive acá**: vive en `core/promotions-engine/` (ver su `README.md`), sin Angular y sin
+dominio, para que cualquier organización lo adopte. Este módulo es el **adaptador de farmacia**:
+mapea productos a `PromotableItem`, guarda las campañas en memoria y expone
+`evaluarPedido()` / `precioPromocional()`.
+
+Decisiones que no se deducen leyendo el código:
+
+- **El formato anterior se sigue leyendo.** `mecanica`, `condiciones` y `alcance` son opcionales
+  en la campaña y en el borrador; sin `mecanica`, la campaña es de «precio de campaña por
+  producto» y los precios ya están en `productos`. Por eso los specs de antes siguen pasando sin
+  tocarles el comportamiento.
+- **`precioPromocional` ahora puede ser `null`**: un 2x1 o un combo no tienen precio por unidad.
+  Quien lo necesita con garantía usa `ProductoConPrecioPromocional`, que es lo que devuelve
+  `precioPromocional()`.
+- **El pedido se evalúa con `evaluarPedido()`, no con `precioPromocional()`.** Éste sólo ve las
+  campañas de precio por unidad y respeta calendario y cupón; el pedido y el checkout usan el
+  motor completo.
+- **El paquete sembrado son 11 campañas**, una por familia, más la vencida a propósito. Las ocho
+  nuevas no son de precio por unidad: no mueven la regla «gana el precio más bajo».
+- **La ficha pública nunca dice el código de un cupón** (se comparte por enlace) ni el
+  presupuesto (dato interno).
+- **`perPersonLimit`, `availableUnits` y `budget` se guardan pero no se hacen cumplir**: necesitan
+  el historial de canjes, que es del backend. El formulario lo dice.
+- Pedido al backend: `PENDIENTES-BACKEND.md` §P58.
+
 ## La segmentación por diagnóstico: lo que este módulo NO hace, y por qué
 
 El registro del cliente pide (FARMACIA-5, literal) *«campañas de medicamentos para
@@ -52,7 +82,7 @@ después del consentimiento, no antes.**
 | Archivo | Qué es |
 |---|---|
 | `pharmacy-campaigns.types.ts` | Los contratos. `CampanaPublica` es una unión discriminada para que una campaña vencida no pueda filtrar precios por plantilla |
-| `pharmacy-campaigns.money.ts` | Aritmética en centavos enteros. Los importes son texto siempre: el `numeric` del backend no cabe en un `number` |
+| `pharmacy-campaigns.money.ts` | Re-exporta, con los nombres en castellano de siempre, la aritmética en centavos del motor. Los importes son texto siempre: el `numeric` del backend no cabe en un `number` |
 | `pharmacy-campaigns.fixtures.ts` | La forma de las tres campañas sembradas — título, ventana y porcentaje. **No sus productos**: esos se materializan contra el catálogo real |
 | `pharmacy-campaigns.client.ts` | El cliente. Reglas puras exportadas (`estadoDe`, `revisar`, `ahorroDe`) para poder verificarlas sin instanciarlo |
 

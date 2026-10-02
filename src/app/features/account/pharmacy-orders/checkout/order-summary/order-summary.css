@@ -95,3 +95,8 @@
 .resumen__puntos {
   margin: 0;
 }
+
+.resumen__promocion {
+  display: inline-flex;
+  margin-block-start: var(--sp-1);
+}

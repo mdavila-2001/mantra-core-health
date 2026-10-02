@@ -2463,3 +2463,49 @@ reintento; visor) y `features/laboratory/summary/`.
 > prima por afiliado tomada de la **cobertura vigente** de cada uno (no de la del plan de su última
 > solicitud). Sin tabla nueva. Es dato personal de salud: el endpoint no debe devolver
 > diagnósticos ni detalle clínico, sólo identificación, plan e importes.
+
+## P58 · Las campañas de promoción con todas sus mecánicas — 01/10/2026
+
+> **Qué pide el front.** «Promociones» de la farmacia ya no ofrece sólo «un porcentaje» o «un
+> precio por producto»: ofrece **14 mecánicas** en cinco familias (precio, cantidad, total de la
+> compra, combos y regalos, fidelización) con **condiciones opcionales** (tope, cupón, días de la
+> semana y franja horaria, límites de uso, combinabilidad). El cálculo vive en un motor sin dominio
+> (`src/app/core/promotions-engine/`, ver su `README.md`) que cualquier organización puede
+> adoptar; hoy lo usa la farmacia sobre la maqueta (`environment.campaignsDemo`).
+>
+> **Hoy.** Todo es de demostración: el cliente guarda en memoria. El módulo 51 no publica una sola
+> lectura de campañas y **`discount_rules.target_filter_json` se persiste y nadie lo lee**, así que
+> ninguna mecánica *por producto* está soportada de punta a punta. Detalle por mecánica, con las
+> columnas del modelo que la sostienen, en `mechanic-catalog.ts` (`modelSupport`).
+>
+> **Falta en la API / el modelo**, en orden de dependencia:
+>
+> 1. **Relacionar una campaña con productos** (o categorías). Es lo que bloquea a todas las
+>    mecánicas por ítem. `applies_to_concept_id` (`ORDER | ITEM | CATEGORY`) es una clase de
+>    objetivo, no una lista.
+> 2. **`BOGO` cuenta lotes enteros.** `promotions-discounts.service.ts` calcula
+>    `importe × get / (buy + get)`: prorratea sobre el importe. Con **una** unidad en un 2x1 daría
+>    50 % de descuento. El motor del front cuenta lotes (3 unidades en un 2x1 regalan una); al
+>    conectar el backend hay que corregir la API, no el motor.
+> 3. **Mecánicas sin columna o sin semántica definida** (`PENDING_MODEL`): descuento por unidad N
+>    (`DISC_BOGO` + `percentage`: qué significa), tramos por cantidad (falta el umbral por
+>    cantidad), y combos / regalos / «comprando A, descuento en B» (la relación entre productos no
+>    está modelada).
+> 4. **Calendario de la campaña**: días de la semana y franja horaria. Sólo hay `valid_from` /
+>    `valid_to`.
+> 5. **Límites que sólo el backend puede hacer cumplir** (`per_user_limit`, `total_redemption_limit`,
+>    `budget_amount`): el motor del front los guarda y los muestra pero no los hace cumplir; exigen
+>    el historial de `redemptions`.
+> 6. **Cupón**: la campaña lleva un código, y la ficha pública **nunca lo muestra** (se comparte
+>    por enlace). Hace falta la lectura de un cupón por código sin exponer los demás.
+>
+> **Reglas que el motor fija y el backend tiene que respetar para no contradecirlo:** redondeo a
+> favor de quien compra (el precio resultante se trunca hacia abajo); un descuento nunca supera lo
+> que se paga; **un renglón pertenece a una sola campaña de ítem** (gana la de mayor ahorro); entre
+> ítem y total gana el escenario de mayor ahorro y sólo se suman si todas son combinables, midiendo
+> el mínimo sobre lo ya rebajado; el tope se aplica sobre lo que dio esa campaña. El total del
+> pedido sigue siendo **del backend**: lo que muestra el front es una estimación.
+>
+> **Decisión del propietario, 01/10/2026:** las mecánicas que empujan a comprar más unidades
+> (2x1, escalonados, combos, regalos) **se permiten también sobre medicamentos con receta**, sin
+> restricción.
