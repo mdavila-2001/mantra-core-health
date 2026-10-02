@@ -20,6 +20,7 @@ import type {
   ChartTemplate,
   ChartTemplateField,
   ChartTemplateProvenance,
+  ChartTemplateKind,
 } from '../../core/data-access/chart-templates/chart-templates.types';
 import { FormsClient } from '../../core/data-access/forms/forms.client';
 import { TerminologyClient } from '../../core/data-access/terminology/terminology.client';
@@ -326,6 +327,17 @@ export class FormBuilder {
         unavailableReason: 'No pudimos leer el catálogo de especialidades.',
       },
       {
+        key: 'clase',
+        label: 'Tipo de ficha',
+        asChips: true,
+        chipsGroup: 'Tipo de ficha',
+        options: [
+          { value: 'BASE', label: 'Consulta inicial (base)' },
+          { value: 'SPECIFIC', label: 'Específicas por condición' },
+          { value: 'GENERAL', label: 'Generales' },
+        ],
+      },
+      {
         key: 'extension',
         label: 'Mis campos',
         asChips: true,
@@ -347,6 +359,7 @@ export class FormBuilder {
     const texto = normalizar(criterios['q'] ?? '');
     const especialidad = criterios['especialidad'] ?? '';
     const extension = criterios['extension'] ?? '';
+    const clase = criterios['clase'] ?? '';
     const rotulos = this.especialidades();
     const palabras = texto === '' ? [] : texto.split(/\s+/);
 
@@ -361,6 +374,8 @@ export class FormBuilder {
       ) {
         return false;
       }
+
+      if (clase !== '' && claseDe(plantilla) !== clase) return false;
 
       const propios = this.cuantosPropios(plantilla);
       if (extension === 'con' && propios === 0) return false;
@@ -382,13 +397,37 @@ export class FormBuilder {
     });
   });
 
+  /**
+   * Lo filtrado, en los tres bloques en que trabaja un médico: la consulta
+   * inicial de la especialidad (la ficha base), las fichas estándar de cada
+   * condición para los controles, y las generales de toda consulta. Dentro de
+   * cada bloque, por especialidad y por nombre.
+   */
+  protected readonly grupos = computed<readonly GrupoDeFichas[]>(() => {
+    const lista = this.filtrados() ?? [];
+    const rotulos = this.especialidades();
+    const orden = (a: ChartTemplate, b: ChartTemplate) =>
+      (rotulos.get(a.specialtyConceptId) ?? '').localeCompare(rotulos.get(b.specialtyConceptId) ?? '', 'es') ||
+      a.name.localeCompare(b.name, 'es');
+    return GRUPOS_DE_FICHAS.map((grupo) => ({
+      ...grupo,
+      plantillas: lista.filter((plantilla) => claseDe(plantilla) === grupo.clase).sort(orden),
+    })).filter((grupo) => grupo.plantillas.length > 0);
+  });
+
+  /** El rótulo corto de la clase de una ficha, para su tarjeta. */
+  protected rotuloDeClase(plantilla: ChartTemplate): string {
+    return ROTULO_DE_CLASE[claseDe(plantilla)];
+  }
+
   /** Si hay algún criterio puesto: lo vacío del filtro no es lo vacío del catálogo. */
   protected readonly hayCriterios = computed(() => {
     const criterios = this.criterios();
     return (
       (criterios['q'] ?? '') !== '' ||
       (criterios['especialidad'] ?? '') !== '' ||
-      (criterios['extension'] ?? '') !== ''
+      (criterios['extension'] ?? '') !== '' ||
+      (criterios['clase'] ?? '') !== ''
     );
   });
 
@@ -1418,4 +1457,47 @@ function normalizar(texto: string): string {
     .replace(/[̀-ͯ]/g, '')
     .toLowerCase()
     .trim();
+}
+
+/** Un bloque del listado de fichas. */
+interface GrupoDeFichas {
+  readonly clase: ChartTemplateKind;
+  readonly titulo: string;
+  readonly descripcion: string;
+  readonly plantillas: readonly ChartTemplate[];
+}
+
+const GRUPOS_DE_FICHAS: readonly Omit<GrupoDeFichas, 'plantillas'>[] = [
+  {
+    clase: 'BASE',
+    titulo: 'Consulta inicial (ficha base)',
+    descripcion: 'La primera consulta de la especialidad: antecedentes, examen y lo que se sospecha.',
+  },
+  {
+    clase: 'SPECIFIC',
+    titulo: 'Fichas específicas por condición',
+    descripcion:
+      'El control estándar de cada enfermedad o situación, con lo que su guía pide registrar en cada visita.',
+  },
+  {
+    clase: 'GENERAL',
+    titulo: 'Generales de toda consulta',
+    descripcion: 'Anamnesis, examen físico, consentimiento y epicrisis.',
+  },
+];
+
+const ROTULO_DE_CLASE: Readonly<Record<ChartTemplateKind, string>> = {
+  BASE: 'Ficha base',
+  SPECIFIC: 'Ficha específica',
+  GENERAL: 'General',
+};
+
+/**
+ * La clase de una ficha. Las armadas a mano no la traen: son propias de la
+ * organización y se muestran con las específicas, salvo las transversales,
+ * que se reconocen por su prefijo.
+ */
+function claseDe(plantilla: ChartTemplate): ChartTemplateKind {
+  if (plantilla.kind !== undefined) return plantilla.kind;
+  return plantilla.code.startsWith('TRANSV_') ? 'GENERAL' : 'SPECIFIC';
 }

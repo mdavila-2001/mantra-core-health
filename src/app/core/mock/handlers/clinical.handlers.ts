@@ -659,6 +659,7 @@ export const PLANTILLAS_DE_EXPEDIENTE = FICHAS_ESTANDAR.map((ficha) =>
     ficha.fields,
     ficha.provenance,
     ficha.version,
+    ficha.kind,
   ),
 );
 
@@ -739,6 +740,7 @@ export function plantilla(
     readonly note?: string;
   },
   version = 1,
+  kind?: 'BASE' | 'SPECIFIC' | 'GENERAL',
 ) {
   return {
     id: uuid(`chart-template-${code}`),
@@ -746,6 +748,7 @@ export function plantilla(
     code,
     name,
     version,
+    ...(kind === undefined ? {} : { kind }),
     statusConceptId: ESTADO['ST-PUBLISHED']!,
     // Un target por formulario y no uno compartido: `POST /forms/assignments`
     // sólo recibe el `targetResourceConceptId`, así que con un target común no

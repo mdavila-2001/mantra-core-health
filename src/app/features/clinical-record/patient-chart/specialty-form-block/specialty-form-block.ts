@@ -399,15 +399,27 @@ export class SpecialtyFormBlock {
     return sembrada?.specialtyConceptId ?? null;
   });
 
-  /** Las fichas de la especialidad de quien atiende. Vacío si no se sabe cuál es. */
+  /**
+   * Las fichas de la especialidad de quien atiende. Vacío si no se sabe cuál es.
+   *
+   * La ficha base —la consulta inicial— va primero y después las específicas
+   * de cada condición, por nombre: es el orden en que se usan, la primera vez
+   * y después en los controles.
+   */
   private readonly plantillasPropias = computed<readonly ChartTemplate[]>(() => {
     const especialidad = this.especialidad();
     if (especialidad === null) return [];
-    return this.catalogo().filter(
-      (plantilla) =>
-        plantilla.specialtyConceptId === especialidad &&
-        plantilla.specialtyConceptId !== this.conceptoTransversal(),
-    );
+    return this.catalogo()
+      .filter(
+        (plantilla) =>
+          plantilla.specialtyConceptId === especialidad &&
+          plantilla.specialtyConceptId !== this.conceptoTransversal(),
+      )
+      .sort(
+        (a, b) =>
+          Number(b.kind === 'BASE') - Number(a.kind === 'BASE') ||
+          a.name.localeCompare(b.name, 'es'),
+      );
   });
 
   /** Las que sirven para cualquier consulta. Nunca se esconden. */

@@ -22,7 +22,9 @@ import { PLANTILLAS_DE_EXPEDIENTE } from '../handlers/clinical.handlers';
 describe('las fichas clínicas estándar del simulador', () => {
   /** Los JSON del backend, contados desde el disco. */
   function fichasDelBackend(): readonly string[] {
-    const raiz = join(
+    // Desde un worktree el repo de la API no está al lado: se pasa la carpeta
+    // con CLINICAL_FORMS_DIR, igual que al generar el fixture.
+    const raiz = process.env['CLINICAL_FORMS_DIR'] ?? join(
       process.cwd(),
       '..',
       'mantra-core-health-api',
@@ -120,13 +122,32 @@ describe('las fichas clínicas estándar del simulador', () => {
     }
   });
 
-  /** Odontología trae dos, y una de ellas es el odontograma. */
-  it('odontología trae su anamnesis y su odontograma', () => {
+  /** Odontología trae su anamnesis (base), el odontograma y la evaluación periodontal. */
+  it('odontología trae su anamnesis, su odontograma y la evaluación periodontal', () => {
     const odonto = PLANTILLAS_DE_EXPEDIENTE.filter((p) => p.code.startsWith('ODONTO_'));
     expect(odonto.map((p) => p.code).sort()).toEqual([
       'ODONTO_ANAMNESIS',
+      'ODONTO_CTRL_PERIODONTAL',
       'ODONTO_ODONTOGRAMA_OMS',
     ]);
+  });
+
+  it('cada especialidad trae una ficha base y al menos una específica', () => {
+    const porEspecialidad = new Map<string, { base: number; especificas: number }>();
+    for (const ficha of FICHAS_ESTANDAR) {
+      if (ficha.kind === 'GENERAL') continue;
+      const cuenta = porEspecialidad.get(ficha.specialty) ?? { base: 0, especificas: 0 };
+      if (ficha.kind === 'BASE') cuenta.base += 1;
+      else cuenta.especificas += 1;
+      porEspecialidad.set(ficha.specialty, cuenta);
+    }
+    for (const [especialidad, cuenta] of porEspecialidad) {
+      expect({ especialidad, base: cuenta.base, hayEspecificas: cuenta.especificas > 0 }).toEqual({
+        especialidad,
+        base: 1,
+        hayEspecificas: true,
+      });
+    }
   });
 
   /* ---- v2 (2026-10-02): listas, «¿cuál?» y diagnóstico presuntivo -------- */
@@ -146,21 +167,23 @@ describe('las fichas clínicas estándar del simulador', () => {
   it('las escalas se eligen de una lista y los «¿cuál?» existen', () => {
     const campos = FICHAS_ESTANDAR.flatMap((ficha) => ficha.fields);
     expect(campos.filter((campo) => (campo.options?.length ?? 0) > 0).length).toBeGreaterThan(400);
-    expect(campos.filter((campo) => campo.showWhen !== undefined).length).toBeGreaterThan(600);
+    expect(campos.filter((campo) => campo.showWhen !== undefined).length).toBeGreaterThan(300);
     const asa = FICHAS_ESTANDAR.find((f) => f.code === 'ANEST_VALORACION_PREANESTESICA')?.fields.find(
       (c) => c.code === 'clasificacion_asa',
     );
     expect(asa?.options?.length).toBe(6);
   });
 
-  it('la consulta de medicina general pregunta qué se sospecha y abre lo que el dengue exige', () => {
+  it('la consulta inicial pregunta qué se sospecha, y la ficha del dengue pide sus signos de alarma', () => {
     const medgen = FICHAS_ESTANDAR.find((f) => f.code === 'MEDGEN_CONSULTA_BASE')!;
+    expect(medgen.kind).toBe('BASE');
     const presuntivo = medgen.fields.find((c) => c.code === 'diagnostico_presuntivo');
     expect(presuntivo?.options).toContain('Dengue o síndrome febril agudo');
-    const alarma = medgen.fields.find((c) => c.code === 'dengue_signos_de_alarma');
-    expect(alarma?.showWhen).toEqual({
-      field: 'diagnostico_presuntivo',
-      equals: 'Dengue o síndrome febril agudo',
-    });
-  });
+
+    const dengue = FICHAS_ESTANDAR.find((f) => f.code === 'INFECTO_CTRL_DENGUE')!;
+    expect(dengue.kind).toBe('SPECIFIC');
+    const alarma = dengue.fields.find((c) => c.code === 'dengue_signos_de_alarma');
+    expect(alarma?.required).toBe(true);
+    expect(alarma?.options).toEqual(expect.arrayContaining(['Vómitos persistentes', 'Sangrado de mucosas']));
+  });;
 });
