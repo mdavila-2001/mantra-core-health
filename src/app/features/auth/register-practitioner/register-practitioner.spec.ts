@@ -7,6 +7,11 @@ import { firstValueFrom } from 'rxjs';
 import { NAV_ICON_NAMES } from '../../../shared/components/atoms/nav-icon/nav-icon.types';
 import { ESPECIALIDADES_ODONTOLOGICAS, RegisterPractitioner } from './register-practitioner';
 import { ESPECIALIDAD } from '../../../core/mock/fixtures/conceptos';
+import { INSTITUCION_FUERA_DE_CATALOGO } from '../../../core/profesion/instituciones-educativas';
+import {
+  PAIS_FUERA_DE_CATALOGO,
+  PadronDeUniversidades,
+} from '../../../core/profesion/padron-de-universidades';
 import { RefreshTokenStorage } from '../../../core/auth/refresh-token.storage';
 import type { BirthSexCode } from '../../../core/data-access/iam/iam.types';
 import { SystemContextClient } from '../../../core/data-access/system-context/system-context.client';
@@ -1089,6 +1094,43 @@ describe('RegisterPractitioner', () => {
       fixture.detectChanges();
     }
 
+    /** El `<select>` nativo de un `app-select` del paso, por el `data-testid` de su host. */
+    function desplegable(testId: string): HTMLSelectElement {
+      const select = enElPaso<HTMLElement>(testId)?.querySelector('select') ?? null;
+      if (select === null) throw new Error(`No está el desplegable ${testId}`);
+      return select;
+    }
+
+    /** Las etiquetas que ofrece un desplegable del paso, sin el placeholder oculto. */
+    function etiquetasDe(testId: string): readonly string[] {
+      return Array.from(desplegable(testId).options)
+        .filter((opcion) => !opcion.hidden)
+        .map((opcion) => opcion.textContent?.trim() ?? '');
+    }
+
+    /** La etiqueta marcada en un desplegable del paso, o `null` si está en el placeholder. */
+    function elegidoEn(testId: string): string | null {
+      const select = desplegable(testId);
+      const opcion = select.options[select.selectedIndex];
+      return opcion === undefined || opcion.hidden ? null : (opcion.textContent?.trim() ?? '');
+    }
+
+    /**
+     * Elige en un desplegable como lo hace el ratón: la opción por su etiqueta
+     * y el evento `change`. `app-select` indexa las opciones por posición, así
+     * que escribir el valor a mano no sirve.
+     */
+    function elegirEnDesplegable(testId: string, etiqueta: string): void {
+      const select = desplegable(testId);
+      const opcion = Array.from(select.options).find(
+        (candidata) => candidata.textContent?.trim() === etiqueta,
+      );
+      if (opcion === undefined) throw new Error(`No hay «${etiqueta}» en ${testId}`);
+      select.value = opcion.value;
+      select.dispatchEvent(new Event('change', { bubbles: true }));
+      fixture.detectChanges();
+    }
+
     it('permite cargar más de un título del mismo tipo', () => {
       component.agregarTitulo('UNIVERSITARIO');
       component.agregarTitulo('UNIVERSITARIO');
@@ -1414,7 +1456,10 @@ describe('RegisterPractitioner', () => {
       irAlPasoDeTitulos();
       pulsar('registro-pro-agregar-DIPLOMADO');
       const [fila] = component.titulosDe('DIPLOMADO');
-      escribirEnCasilla(`registro-pro-titulo-universidad-${fila.id}`, 'Nur');
+      // Universidad que no está en el padrón: país del árbol, «Otra…» y a mano.
+      elegirEnDesplegable(`registro-pro-titulo-pais-${fila.id}`, 'Bolivia');
+      elegirEnDesplegable(`registro-pro-titulo-universidad-${fila.id}`, 'Otra institución…');
+      escribirEnCasilla(`registro-pro-titulo-universidad-otra-${fila.id}`, 'Nur');
       return fila.id;
     }
 
@@ -1487,7 +1532,7 @@ describe('RegisterPractitioner', () => {
       expect(component.titulosDe('DIPLOMADO')).toHaveLength(0);
     });
 
-    it('las casillas acotan lo que el contrato acota: número 100, universidad 200', () => {
+    it('las casillas acotan lo que el contrato acota: número 100, universidad escrita a mano 200', () => {
       catalogoDeTiposDeTitulo();
       completarProfesional();
       const id = filaDeDiplomadoSinNumero();
@@ -1495,17 +1540,185 @@ describe('RegisterPractitioner', () => {
       // El exceso se frena en la casilla, no como un 400 en inglés técnico.
       expect(casillaDeNumero(id).getAttribute('maxlength')).toBe('100');
       expect(
-        enElPaso<HTMLInputElement>(`registro-pro-titulo-universidad-${id}`)?.getAttribute(
+        enElPaso<HTMLInputElement>(`registro-pro-titulo-universidad-otra-${id}`)?.getAttribute(
           'maxlength',
         ),
       ).toBe('200');
-      // País y ciudad no viajan todavía, así que no se les impone un tope.
-      expect(
-        enElPaso<HTMLInputElement>(`registro-pro-titulo-pais-${id}`)?.hasAttribute('maxlength'),
-      ).toBe(false);
+      expect(component.titulosDe('DIPLOMADO')[0].universidad).toBe('Nur');
+      // País y universidad del padrón son desplegables: una opción de la lista
+      // no necesita tope. La ciudad no viaja todavía, así que tampoco.
+      expect(desplegable(`registro-pro-titulo-pais-${id}`)).not.toBeNull();
       expect(
         enElPaso<HTMLInputElement>(`registro-pro-titulo-ciudad-${id}`)?.hasAttribute('maxlength'),
       ).toBe(false);
+    });
+
+    /**
+     * El pedido del propietario (02/10/2026): universidad y país de estudio son
+     * desplegables poblados con datos, en árbol —el país acota la universidad—.
+     * Acá se prueba por el DOM del paso, que es donde se elige.
+     */
+    describe('país y universidad en árbol', () => {
+      /** Lleva la pantalla hasta «Tu título profesional y foto». */
+      function irAlPasoDelTitulo(): void {
+        fixture.detectChanges();
+        for (let pagina = 0; pagina < 12; pagina += 1) {
+          if (fixture.nativeElement.querySelector('.registro__estudio') !== null) return;
+          const continuar: HTMLButtonElement | null = fixture.nativeElement.querySelector(
+            '[data-testid="paginated-form-continuar"]',
+          );
+          if (continuar === null) break;
+          continuar.click();
+          fixture.detectChanges();
+        }
+        if (fixture.nativeElement.querySelector('.registro__estudio') === null) {
+          throw new Error('No se llegó al paso del título');
+        }
+      }
+
+      it('el país acota la universidad: Bolivia ofrece la lista curada y Argentina la importada', async () => {
+        await TestBed.inject(PadronDeUniversidades).cargar();
+        completarProfesional();
+        irAlPasoDelTitulo();
+
+        // Sin país no hay universidad que elegir: el desplegable espera.
+        expect(desplegable('registro-pro-titulo-universidad').disabled).toBe(true);
+        expect(etiquetasDe('registro-pro-titulo-pais')[0]).toBe('Bolivia');
+        expect(etiquetasDe('registro-pro-titulo-pais')).toContain('Argentina');
+        expect(etiquetasDe('registro-pro-titulo-pais').at(-1)).toBe('Otro país…');
+
+        elegirEnDesplegable('registro-pro-titulo-pais', 'Bolivia');
+        expect(component.valorDeEstudio('professionalTitleCountry')).toBe('Bolivia');
+        expect(desplegable('registro-pro-titulo-universidad').disabled).toBe(false);
+        const bolivianas = etiquetasDe('registro-pro-titulo-universidad');
+        expect(bolivianas).toContain('Universidad Mayor de San Andrés (UMSA) — La Paz');
+        expect(bolivianas).not.toContain('Universidad de Buenos Aires');
+        expect(bolivianas.at(-1)).toBe('Otra institución…');
+
+        elegirEnDesplegable('registro-pro-titulo-pais', 'Argentina');
+        const argentinas = etiquetasDe('registro-pro-titulo-universidad');
+        expect(argentinas).toContain('Universidad de Buenos Aires');
+        expect(argentinas).not.toContain('Universidad Mayor de San Andrés (UMSA) — La Paz');
+      });
+
+      it('elegir del padrón guarda el nombre, y cambiar de país reinicia la universidad', async () => {
+        await TestBed.inject(PadronDeUniversidades).cargar();
+        completarProfesional();
+        irAlPasoDelTitulo();
+
+        elegirEnDesplegable('registro-pro-titulo-pais', 'Bolivia');
+        elegirEnDesplegable(
+          'registro-pro-titulo-universidad',
+          'Universidad Mayor de San Andrés (UMSA) — La Paz',
+        );
+        // Lo que se guarda es el nombre, que es lo que viaja en `issuingInstitutionText`.
+        expect(component.valorDeEstudio('professionalTitleUniversity')).toBe(
+          'Universidad Mayor de San Andrés',
+        );
+
+        elegirEnDesplegable('registro-pro-titulo-pais', 'Argentina');
+        expect(component.valorDeEstudio('professionalTitleCountry')).toBe('Argentina');
+        // Una universidad boliviana bajo Argentina sería mentir: se vacía.
+        expect(component.valorDeEstudio('professionalTitleUniversity')).toBe('');
+        expect(elegidoEn('registro-pro-titulo-universidad')).toBeNull();
+      });
+
+      it('«Otro…» destapa la casilla escrita a mano, y lo escrito es lo que se guarda', () => {
+        completarProfesional();
+        irAlPasoDelTitulo();
+
+        expect(enElPaso('registro-pro-titulo-pais-otro')).toBeNull();
+        elegirEnDesplegable('registro-pro-titulo-pais', 'Otro país…');
+        expect(component.valorDeEstudio('professionalTitleCountry')).toBe('');
+        escribirEnCasilla('registro-pro-titulo-pais-otro', 'Atlántida');
+        expect(component.valorDeEstudio('professionalTitleCountry')).toBe('Atlántida');
+        // El desplegable sigue en «Otro»: la casilla no desaparece debajo del cursor.
+        expect(elegidoEn('registro-pro-titulo-pais')).toBe('Otro país…');
+
+        // Con «Otro país» la única universidad posible es la escrita a mano.
+        expect(etiquetasDe('registro-pro-titulo-universidad')).toEqual(['Otra institución…']);
+        elegirEnDesplegable('registro-pro-titulo-universidad', 'Otra institución…');
+        escribirEnCasilla('registro-pro-titulo-universidad-otra', 'Universidad de Atlántida');
+        expect(component.valorDeEstudio('professionalTitleUniversity')).toBe(
+          'Universidad de Atlántida',
+        );
+      });
+
+      it('escribir el país o la universidad como texto deja el desplegable a tono', () => {
+        completarProfesional();
+        irAlPasoDelTitulo();
+
+        component.escribirEstudio('professionalTitleCountry', 'Bolivia');
+        component.escribirEstudio('professionalTitleUniversity', 'Universidad Mayor de San Simón');
+        fixture.detectChanges();
+        expect(elegidoEn('registro-pro-titulo-pais')).toBe('Bolivia');
+        expect(elegidoEn('registro-pro-titulo-universidad')).toBe(
+          'Universidad Mayor de San Simón (UMSS) — Cochabamba',
+        );
+
+        // Un texto que no está en el padrón cae en «Otro…» con la casilla a la vista.
+        component.escribirEstudio('professionalTitleUniversity', 'Universidad de La Habana');
+        fixture.detectChanges();
+        expect(elegidoEn('registro-pro-titulo-universidad')).toBe('Otra institución…');
+        expect(
+          enElPaso<HTMLInputElement>('registro-pro-titulo-universidad-otra')?.value,
+        ).toBe('Universidad de La Habana');
+      });
+
+      it('en una fila, el país acota la universidad y la elegida viaja en issuingInstitutionText', () => {
+        catalogoDeTiposDeTitulo();
+        completarProfesional();
+        irAlPasoDeTitulos();
+        pulsar('registro-pro-agregar-UNIVERSITARIO');
+        const [fila] = component.titulosDe('UNIVERSITARIO');
+        escribirEnCasilla(`registro-pro-titulo-numero-${fila.id}`, 'TIT-9');
+
+        expect(desplegable(`registro-pro-titulo-universidad-${fila.id}`).disabled).toBe(true);
+        elegirEnDesplegable(`registro-pro-titulo-pais-${fila.id}`, 'Bolivia');
+        elegirEnDesplegable(
+          `registro-pro-titulo-universidad-${fila.id}`,
+          'Universidad Privada Boliviana (UPB)',
+        );
+        const [elegida] = component.titulosDe('UNIVERSITARIO');
+        expect([elegida.pais, elegida.universidad]).toEqual([
+          'Bolivia',
+          'Universidad Privada Boliviana',
+        ]);
+        expect(elegida.paisElegido).toBe('Bolivia');
+
+        // «Otro país…» en la fila vacía país y universidad y destapa la casilla.
+        elegirEnDesplegable(`registro-pro-titulo-pais-${fila.id}`, 'Otro país…');
+        const [otra] = component.titulosDe('UNIVERSITARIO');
+        expect([otra.pais, otra.universidad, otra.paisElegido, otra.universidadElegida]).toEqual([
+          '',
+          '',
+          PAIS_FUERA_DE_CATALOGO,
+          null,
+        ]);
+        escribirEnCasilla(`registro-pro-titulo-pais-otro-${fila.id}`, 'Cuba');
+        elegirEnDesplegable(`registro-pro-titulo-universidad-${fila.id}`, 'Otra institución…');
+        escribirEnCasilla(
+          `registro-pro-titulo-universidad-otra-${fila.id}`,
+          'Universidad de La Habana',
+        );
+        const [cubana] = component.titulosDe('UNIVERSITARIO');
+        expect([cubana.pais, cubana.universidad, cubana.universidadElegida]).toEqual([
+          'Cuba',
+          'Universidad de La Habana',
+          INSTITUCION_FUERA_DE_CATALOGO,
+        ]);
+
+        component.submit();
+        const req = http.expectOne('/iam/auth/register-practitioner');
+        expect(req.request.body.credentials).toEqual([
+          {
+            credentialTypeConceptId: 'c-degree',
+            number: 'TIT-9',
+            issuingInstitutionText: 'Universidad de La Habana',
+          },
+        ]);
+        req.flush(RESPUESTA_PRO);
+      });
     });
 
     it('el paso dice qué se guarda hoy y qué se completa después desde el perfil', () => {

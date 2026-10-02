@@ -5,7 +5,7 @@
  * TypeScript compara por estructura, así que esto sigue sirviendo tal cual a un
  * `app-select`.
  */
-interface OpcionDeInstitucion {
+export interface OpcionDeInstitucion {
   readonly value: string;
   readonly label: string;
   /** Los separadores de grupo: se ven, no se eligen. */
