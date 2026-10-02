@@ -20,12 +20,15 @@ import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { dataOf, loading, notFound, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import type { StatusSealVariant } from '../../../shared/components/organisms/status-seal/status-seal.types';
+import { Tab } from '../../../shared/components/molecules/tabs/tab/tab';
+import { Tabs } from '../../../shared/components/molecules/tabs/tabs';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { conceptosDe } from '../../account/my-profile/practitioner-profile/practitioner-profile';
 import { PractitionerProfileView } from '../../account/my-profile/practitioner-profile/practitioner-profile-view/practitioner-profile-view';
 import { PractitionerAvailability } from '../practitioner-availability/practitioner-availability';
 import { PractitionerInsurers } from '../practitioner-insurers/practitioner-insurers';
+import { PractitionerServiceSchedule } from '../practitioner-service-schedule/practitioner-service-schedule';
 import { PractitionerServices } from '../practitioner-services/practitioner-services';
 import type {
   AfiliacionVisible,
@@ -83,7 +86,10 @@ interface PerfilResuelto {
     PractitionerAvailability,
     PractitionerInsurers,
     PractitionerProfileView,
+    PractitionerServiceSchedule,
     PractitionerServices,
+    Tab,
+    Tabs,
     ViewStateHost,
   ],
   templateUrl: './practitioner-detail.html',
@@ -113,6 +119,9 @@ export class PractitionerDetail {
    * cargue bien — cuando son dos lecturas que pueden fallar por separado.
    */
   protected readonly profileIdVisible = signal('');
+
+  /** La pestaña abierta de «Sedes y horarios»: 0 consultas, 1 otros servicios. */
+  protected readonly pestanaDeHorarios = signal(0);
 
   /** La organización desde la que se mira; decide qué agendas se listan. */
   protected readonly tenantId = inject(AuthService).activeTenantId;

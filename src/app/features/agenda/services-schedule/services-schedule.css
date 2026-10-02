@@ -1,0 +1,95 @@
+/* Horarios de otros servicios. Sólo tokens del sistema; mobile-first. */
+
+:host {
+  display: block;
+}
+
+.servicios-horario {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+}
+
+.servicios-horario__cabecera {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+@media (min-width: 48rem) {
+  .servicios-horario__cabecera {
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: space-between;
+  }
+}
+
+.servicios-horario__titulo {
+  margin: 0;
+  font-size: var(--fs-body-lg);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.servicios-horario__subtitulo,
+.servicios-horario__sede-nombre {
+  margin: 0;
+  font-size: var(--fs-body);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.servicios-horario__nota,
+.servicios-horario__ayuda {
+  margin: var(--sp-1) 0 0;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+  max-width: 65ch;
+}
+
+.servicios-horario__sede {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin-block-end: var(--sp-4);
+}
+
+.servicios-horario__ofertas {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.servicios-horario__lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--sp-3);
+}
+
+@media (min-width: 48rem) {
+  .servicios-horario__lista {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 80rem) {
+  .servicios-horario__lista {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.servicios-horario__nombre {
+  margin: 0;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.servicios-horario__dato {
+  margin: var(--sp-1) 0 0;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}

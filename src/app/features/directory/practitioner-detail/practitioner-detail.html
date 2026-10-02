@@ -26,10 +26,28 @@
          arriba de todo: es el contrato con `ANCLA_HORARIOS`. -->
     <section class="ficha__horarios" id="horarios">
       <h2 class="ficha__horarios-titulo">Sedes y horarios</h2>
-      <app-practitioner-availability
-        [practitionerProfileId]="profileIdVisible()"
-        [tenantId]="tenantId()"
-      />
+      <!-- Dos pestañas: las consultas y, aparte, los otros servicios
+           (estudios, procedimientos). Pedido del propietario: los horarios de
+           otros servicios en una pestaña propia, también para el paciente.
+           El `@if` dentro de cada pestaña evita que la oculta pida sus datos. -->
+      <app-tabs [selectedIndex]="pestanaDeHorarios()" (selectedIndexChange)="pestanaDeHorarios.set($event)">
+        <app-tab label="Consultas">
+          @if (pestanaDeHorarios() === 0) {
+            <app-practitioner-availability
+              [practitionerProfileId]="profileIdVisible()"
+              [tenantId]="tenantId()"
+            />
+          }
+        </app-tab>
+        <app-tab label="Otros servicios">
+          @if (pestanaDeHorarios() === 1) {
+            <app-practitioner-service-schedule
+              [practitionerProfileId]="profileIdVisible()"
+              [tenantId]="tenantId()"
+            />
+          }
+        </app-tab>
+      </app-tabs>
     </section>
 
     <!-- v4.2.40: lo que hace además de la consulta. Se dibuja sólo si el

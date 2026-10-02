@@ -1,0 +1,79 @@
+<!-- Horarios de otros servicios: estudios, procedimientos y demás servicios que
+     no son una consulta. Separado de «Mis horarios» a pedido del propietario. -->
+<section class="servicios-horario" data-testid="services-schedule" aria-labelledby="servicios-horario-titulo">
+  <header class="servicios-horario__cabecera">
+    <div>
+      <h2 id="servicios-horario-titulo" class="servicios-horario__titulo">
+        Horarios de otros servicios
+      </h2>
+      <p class="servicios-horario__nota">
+        Los días y horas en que atendés estudios, procedimientos y demás servicios que no son una
+        consulta. Los pacientes los ven en tu ficha, en la pestaña «Otros servicios».
+      </p>
+    </div>
+    <a app-button variant="secondary" size="sm" [routerLink]="editRoute" data-testid="services-schedule-edit">
+      Cambiar mi horario
+    </a>
+  </header>
+
+  <app-view-state-host [state]="state()" (retry)="load()" data-testid="services-schedule-state">
+    @for (site of sites(); track site.resource.id) {
+      <div class="servicios-horario__sede">
+        <h3 class="servicios-horario__sede-nombre">{{ siteName(site) }}</h3>
+        <app-schedule-grid
+          data-testid="services-schedule-grid"
+          [reglas]="site.rules"
+          [sede]="siteName(site)"
+          [nombre]="site.templateNames"
+          rango="atencion"
+        />
+      </div>
+    }
+    <p class="servicios-horario__ayuda">
+      Una franja «Ambos» comparte el tiempo con las consultas: quien reserva primero se la lleva.
+      Para cambiar qué atendés en cada franja, usá «Cambiar mi horario».
+    </p>
+  </app-view-state-host>
+
+  <section class="servicios-horario__ofertas" aria-labelledby="servicios-horario-ofertas">
+    <h3 id="servicios-horario-ofertas" class="servicios-horario__subtitulo">
+      Servicios que se reservan en estas franjas
+    </h3>
+    @switch (offerings().status) {
+      @case ('loading') {
+        <p class="servicios-horario__nota" role="status">Buscando tus servicios…</p>
+      }
+      @case ('error') {
+        <app-alert tone="warning" title="No pudimos traer tus servicios" data-testid="services-schedule-offerings-error">
+          El horario de arriba sigue siendo el vigente.
+          <button app-button variant="ghost" size="sm" type="button" (clicked)="reloadOfferings()">
+            Reintentar
+          </button>
+        </app-alert>
+      }
+      @default {
+        @if (activeOfferings().length === 0) {
+          <p class="servicios-horario__nota" data-testid="services-schedule-no-offerings">
+            Todavía no ofrecés servicios aparte de la consulta. Los declarás en «Mis servicios».
+          </p>
+        } @else {
+          <ul class="servicios-horario__lista">
+            @for (offering of activeOfferings(); track offering.id) {
+              <li>
+                <app-card variant="outlined" padding="md" data-testid="services-schedule-offering">
+                  <p class="servicios-horario__nombre">{{ offering.serviceName }}</p>
+                  <p class="servicios-horario__dato">
+                    Dura {{ duration(offering) }}<span aria-hidden="true"> · </span>{{ price(offering) }}
+                    @if (!offering.isPatientBookable) {
+                      <span aria-hidden="true"> · </span>Sólo lo agendás vos
+                    }
+                  </p>
+                </app-card>
+              </li>
+            }
+          </ul>
+        }
+      }
+    }
+  </section>
+</section>

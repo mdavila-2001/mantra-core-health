@@ -298,6 +298,18 @@
         </app-tab>
       }
 
+      <!-- ─── Horarios de otros servicios ──────────────────────────────────
+           Pedido del propietario: los horarios de estudios, procedimientos y
+           demás servicios en una pestaña propia, separados de las consultas.
+           Mismo `@if` interno que «Mis horarios», por la misma razón. -->
+      @if (esQuienAtiende()) {
+        <app-tab label="Horarios de otros servicios">
+          @if (enServicios()) {
+            <app-services-schedule />
+          }
+        </app-tab>
+      }
+
       <!-- ─── Cupos ─────────────────────────────────────────────────────────
            Mismo criterio que la lista: sobrevive sólo donde no hay calendario,
            porque es el único lugar en que esa persona ve los huecos y puede
