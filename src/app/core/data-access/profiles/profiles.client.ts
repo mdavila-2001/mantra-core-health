@@ -33,6 +33,7 @@ import type {
   NewPractitionerAffiliation,
   UpdatePractitionerAffiliation,
   PractitionerCredential,
+  PractitionerLanguage,
   PractitionerLicense,
   PractitionerProfile,
   PractitionerDirectoryPage,
@@ -504,6 +505,12 @@ export class ProfilesClient {
       readonly workAddressLines: string;
       readonly workLatitude: number | null;
       readonly workLongitude: number | null;
+      /* Los idiomas en los que atiende. A diferencia del resto, viaja la lista
+         ENTERA y reemplaza la guardada: un idioma no tramita nada, así que no
+         hay «agregar» ni «retirar» con su propio recurso, como sí tienen los
+         títulos. `[]` quita el último. Hasta el 02/10/2026 el perfil los leía
+         (`OwnPractitionerProfile.languages`) y nadie los escribía. */
+      readonly languages: readonly PractitionerLanguage[];
     }>,
   ): Observable<OwnPractitionerProfile> {
     return this.http

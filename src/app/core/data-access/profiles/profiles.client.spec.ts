@@ -601,6 +601,24 @@ describe('ProfilesClient', () => {
     req.flush(PERFIL_WIRE);
   });
 
+  /** Los idiomas viajan como lista entera, tal cual: el servidor reemplaza la guardada. */
+  it('updateOwnPractitionerProfile manda los idiomas como lista entera', () => {
+    const languages = [
+      { languageConceptId: 'lang-es', clinicalInterpretationAllowed: true },
+      {
+        languageConceptId: 'lang-en',
+        proficiencyConceptId: 'prof-avanzado',
+        clinicalInterpretationAllowed: false,
+      },
+    ];
+    client.updateOwnPractitionerProfile({ languages }).subscribe();
+
+    const req = http.expectOne('/profiles/practitioners/me');
+    expect(req.request.method).toBe('PATCH');
+    expect(req.request.body).toEqual({ languages });
+    req.flush(PERFIL_WIRE);
+  });
+
   it('updateOwnPractitionerProfile traduce la respuesta igual que la lectura', () => {
     let perfil: { professionalTitle?: string; createdAt: Date } | undefined;
     client

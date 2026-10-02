@@ -27,10 +27,14 @@ import {
   MAX_ATTACHMENT_BYTES,
   SUPPORT_FILE_FORMATS,
 } from '../../../auth/registro-compartido/credenciales-del-medico';
+import { LanguagesCatalog } from '../../../../core/data-access/terminology/languages.service';
 import { MedicalSpecialtiesCatalog } from '../../../../core/data-access/terminology/medical-specialties.service';
 import { TerminologyClient } from '../../../../core/data-access/terminology/terminology.client';
 import type { ConceptLabels } from '../../../../core/data-access/terminology/terminology.types';
-import type { OwnPractitionerProfile } from '../../../../core/data-access/profiles/profiles.types';
+import type {
+  OwnPractitionerProfile,
+  PractitionerLanguage,
+} from '../../../../core/data-access/profiles/profiles.types';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
 import { NavigationService } from '../../../../core/navigation/navigation.service';
 import { loading, ready } from '../../../../core/view-state/view-state';
@@ -95,6 +99,30 @@ function fechaIso(fecha: Date): string {
   const mes = String(fecha.getMonth() + 1).padStart(2, '0');
   const dia = String(fecha.getDate()).padStart(2, '0');
   return `${anio}-${mes}-${dia}`;
+}
+
+/**
+ * Un idioma mientras se corrige. `null` en el idioma es «esta fila todavía no
+ * eligió nada»; en el nivel, «sin especificar», que el contrato admite.
+ */
+interface IdiomaEditado {
+  readonly idioma: string | null;
+  readonly nivel: string | null;
+  readonly interpreta: boolean;
+}
+
+/** La opción «sin nivel» del selector de dominio: `''` vuelve a `null` al elegirla. */
+const SIN_NIVEL: SelectOption<string> = { value: '', label: 'Sin especificar' };
+
+/** Una forma comparable de la lista de idiomas, para saber si cambió. */
+function claveDeIdiomas(idiomas: readonly PractitionerLanguage[]): string {
+  return JSON.stringify(
+    idiomas.map((idioma) => [
+      idioma.languageConceptId,
+      idioma.proficiencyConceptId ?? '',
+      idioma.clinicalInterpretationAllowed,
+    ]),
+  );
 }
 
 /** Una fila de «Tu trayectoria cargada». */
@@ -260,6 +288,7 @@ export class PractitionerProfileEdit {
   private readonly toasts = inject(ToastService);
   private readonly navigation = inject(NavigationService);
   private readonly catalogo = inject(MedicalSpecialtiesCatalog);
+  private readonly catalogoDeIdiomas = inject(LanguagesCatalog);
   private readonly terminologia = inject(TerminologyClient);
   private readonly ruta = inject(ActivatedRoute);
 
@@ -340,6 +369,172 @@ export class PractitionerProfileEdit {
   /* «Acepto pacientes nuevos» ya no se pregunta (propietario, 13/09/2026):
      siempre está habilitado. Ver `guardarPresentacion`. */
   protected readonly telemedicina = signal(false);
+
+  /* -- Idiomas en los que atiende ------------------------------------------
+     La ficha los enseña en «Credenciales» y el editor no los ofrecía en
+     ninguna pestaña: el perfil los leía (`languages`) y ningún formulario los
+     escribía (doctor, 02/10/2026). Se corrigen como lista entera —no se
+     agregan de a uno como los títulos— porque no tramitan nada: no hay
+     verificación que un cambio invalide, y una lista que se reemplaza es más
+     fácil de dejar bien que un «agregar» más un «retirar». Van en la pestaña
+     donde la ficha los muestra, con su propio botón, como los otros bloques
+     de esa pestaña. */
+
+  /** Los idiomas del catálogo (`VS_LANGUAGE`), como opciones del selector. */
+  protected readonly opcionesDeIdioma = signal<readonly SelectOption<string>[]>([]);
+
+  /**
+   * Los niveles de dominio (`VS_LANGUAGE_PROFICIENCY`), con «Sin especificar»
+   * al frente: el nivel es opcional, y sin esa opción un nivel elegido por
+   * error no tendría cómo quitarse.
+   */
+  protected readonly opcionesDeNivel = signal<readonly SelectOption<string>[]>([SIN_NIVEL]);
+
+  /** El catálogo de idiomas no se pudo leer: se lo dice, no se ofrece un desplegable vacío. */
+  protected readonly catalogoIdiomasCaido = signal(false);
+
+  /** Las filas que se están corrigiendo. Nacen de `languages` al cargar. */
+  protected readonly idiomas = signal<readonly IdiomaEditado[]>([]);
+
+  protected readonly guardandoIdiomas = signal(false);
+
+  /** Si algún idioma está elegido en dos filas. */
+  protected readonly idiomasRepetidos = computed(() => {
+    const elegidos = this.idiomas()
+      .map((fila) => fila.idioma)
+      .filter((idioma): idioma is string => idioma !== null);
+    return new Set(elegidos).size !== elegidos.length;
+  });
+
+  /** Si lo que hay en las filas difiere de lo guardado. */
+  protected readonly idiomasCambiaron = computed(() => {
+    const original = this.datos();
+    return (
+      original !== null &&
+      claveDeIdiomas(this.idiomasDeclarados()) !== claveDeIdiomas(original.languages)
+    );
+  });
+
+  /**
+   * Se puede guardar con toda fila completa, sin repetidos y con algo distinto
+   * de lo guardado. Una lista vacía SÍ se guarda: es cómo se retira el último.
+   */
+  protected readonly puedeGuardarIdiomas = computed(
+    () =>
+      this.idiomas().every((fila) => fila.idioma !== null) &&
+      !this.idiomasRepetidos() &&
+      this.idiomasCambiaron(),
+  );
+
+  protected agregarIdioma(): void {
+    this.idiomas.update((filas) => [...filas, { idioma: null, nivel: null, interpreta: false }]);
+  }
+
+  protected quitarIdioma(indice: number): void {
+    this.idiomas.update((filas) => filas.filter((_, i) => i !== indice));
+  }
+
+  protected elegirIdioma(indice: number, idioma: string | null): void {
+    this.cambiarIdioma(indice, { idioma });
+  }
+
+  /** `''` es «Sin especificar»: se guarda como ningún nivel. */
+  protected elegirNivel(indice: number, nivel: string | null): void {
+    this.cambiarIdioma(indice, { nivel: nivel === '' ? null : nivel });
+  }
+
+  protected marcarInterpreta(indice: number, interpreta: boolean): void {
+    this.cambiarIdioma(indice, { interpreta });
+  }
+
+  private cambiarIdioma(indice: number, cambio: Partial<IdiomaEditado>): void {
+    this.idiomas.update((filas) =>
+      filas.map((fila, i) => (i === indice ? { ...fila, ...cambio } : fila)),
+    );
+  }
+
+  /** Las filas, en la forma del contrato. Las que no eligieron idioma no viajan. */
+  private idiomasDeclarados(): readonly PractitionerLanguage[] {
+    return this.idiomas().flatMap((fila) =>
+      fila.idioma === null
+        ? []
+        : [
+            {
+              languageConceptId: fila.idioma,
+              ...(fila.nivel === null ? {} : { proficiencyConceptId: fila.nivel }),
+              clinicalInterpretationAllowed: fila.interpreta,
+            },
+          ],
+    );
+  }
+
+  private sembrarIdiomas(perfil: OwnPractitionerProfile): void {
+    this.idiomas.set(
+      perfil.languages.map((idioma) => ({
+        idioma: idioma.languageConceptId,
+        nivel: idioma.proficiencyConceptId ?? null,
+        interpreta: idioma.clinicalInterpretationAllowed,
+      })),
+    );
+  }
+
+  /**
+   * Trae los dos catálogos de idiomas. Un fallo no rompe la pantalla: el
+   * bloque dice qué pasó y ofrece reintentar, como el de especialidades.
+   */
+  protected cargarIdiomas(): void {
+    forkJoin({
+      idiomas: this.catalogoDeIdiomas.idiomas(),
+      niveles: this.catalogoDeIdiomas.niveles(),
+    }).subscribe({
+      next: ({ idiomas, niveles }) => {
+        this.catalogoIdiomasCaido.set(false);
+        this.opcionesDeIdioma.set(idiomas.map((o) => ({ value: o.conceptId, label: o.display })));
+        this.opcionesDeNivel.set([
+          SIN_NIVEL,
+          ...niveles.map((o) => ({ value: o.conceptId, label: o.display })),
+        ]);
+      },
+      error: () => {
+        this.opcionesDeIdioma.set([]);
+        this.opcionesDeNivel.set([SIN_NIVEL]);
+        this.catalogoIdiomasCaido.set(true);
+      },
+    });
+  }
+
+  /** Olvida lo cacheado antes de pedir, por lo mismo que {@link reintentarEspecialidades}. */
+  protected reintentarIdiomas(): void {
+    this.catalogoDeIdiomas.olvidar();
+    this.cargarIdiomas();
+  }
+
+  /**
+   * Guarda la lista entera. Es el mismo `PATCH` del perfil, con sólo
+   * `languages`: el servidor reemplaza la guardada por ésta.
+   *
+   * La respuesta vuelve a sembrar **sólo** estas filas: sembrar el formulario
+   * entero pisaría lo que la persona tenga a medio escribir en otra pestaña.
+   */
+  protected guardarIdiomas(): void {
+    if (this.guardandoIdiomas() || !this.puedeGuardarIdiomas()) {
+      return;
+    }
+    this.erroresDelServidor.set(new Map());
+    this.guardandoIdiomas.set(true);
+    this.profiles.updateOwnPractitionerProfile({ languages: this.idiomasDeclarados() }).subscribe({
+      next: (perfil) => {
+        this.guardandoIdiomas.set(false);
+        this.sembrarIdiomas(perfil);
+        this.perfil.set(ready(perfil));
+        this.toasts.success('Tus idiomas quedaron guardados.', 'Perfil');
+      },
+      error: (error: unknown) => {
+        this.guardandoIdiomas.set(false);
+        this.anclarErroresDelServidor(error);
+      },
+    });
+  }
 
   /* -- Los datos personales, que hasta ahora no se podían corregir ---------
      Se declaran al registrarse y despues no habia forma de tocarlos: quien se
@@ -907,6 +1102,7 @@ export class PractitionerProfileEdit {
     this.abrirEnLaPestanaPedida();
     this.cargar();
     this.cargarEspecialidades();
+    this.cargarIdiomas();
   }
 
   /**
@@ -1000,6 +1196,7 @@ export class PractitionerProfileEdit {
     this.nit.set(perfil.taxId ?? '');
     this.razonSocial.set(perfil.taxHolderName ?? '');
     this.telemedicina.set(perfil.telehealthAvailable);
+    this.sembrarIdiomas(perfil);
     // ALV-003: los dos campos que el contrato ya aceptaba y el formulario no
     // ofrecía. Se siembran desde el perfil, igual que el resto.
     this.fechaNacimiento.set(perfil.birthDate ?? null);

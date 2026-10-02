@@ -1686,4 +1686,191 @@ describe('PractitionerProfileEdit', () => {
       expect(interno<() => number>('pestana')()).toBe(0);
     });
   });
+
+  /**
+   * Los idiomas en los que atiende.
+   *
+   * La ficha los mostraba en «Credenciales» y el editor no los ofrecía en
+   * ninguna pestaña (doctor, 02/10/2026). Se corrigen como lista entera: viaja
+   * completa en el `PATCH` y el servidor reemplaza la guardada.
+   */
+  describe('los idiomas en los que atiende', () => {
+    interface Fila {
+      readonly idioma: string | null;
+      readonly nivel: string | null;
+      readonly interpreta: boolean;
+    }
+
+    const IDIOMAS = [
+      { languageConceptId: 'lang-es', clinicalInterpretationAllowed: true },
+      {
+        languageConceptId: 'lang-en',
+        proficiencyConceptId: 'prof-avanzado',
+        clinicalInterpretationAllowed: false,
+      },
+    ];
+
+    /** Responde los dos catálogos —idiomas y niveles— con una opción cada uno de más. */
+    function responderCatalogoDeIdiomas(): void {
+      pedidoDeConjunto('VS_LANGUAGE').flush({
+        items: [{ id: 'vs-lang', internalCode: 'VS_LANGUAGE', name: 'Idiomas', defaultVersionId: 'v1' }],
+        count: 1,
+        limit: 50,
+        nextCursor: null,
+      });
+      http
+        .expectOne((r) => r.url.includes('/terminology/value-sets/vs-lang/$expand'))
+        .flush({
+          valueSetId: 'vs-lang',
+          items: [
+            { conceptId: 'lang-es', code: 'LANG-ES', display: 'Español', codeSystemVersionId: 'csv-1' },
+            { conceptId: 'lang-en', code: 'LANG-EN', display: 'Inglés', codeSystemVersionId: 'csv-1' },
+          ],
+          count: 2,
+          limit: 200,
+          nextCursor: null,
+        });
+      pedidoDeConjunto('VS_LANGUAGE_PROFICIENCY').flush({
+        items: [
+          {
+            id: 'vs-prof',
+            internalCode: 'VS_LANGUAGE_PROFICIENCY',
+            name: 'Dominio del idioma',
+            defaultVersionId: 'v1',
+          },
+        ],
+        count: 1,
+        limit: 50,
+        nextCursor: null,
+      });
+      http
+        .expectOne((r) => r.url.includes('/terminology/value-sets/vs-prof/$expand'))
+        .flush({
+          valueSetId: 'vs-prof',
+          items: [
+            { conceptId: 'prof-avanzado', code: 'PROF-AVANZADO', display: 'Avanzado', codeSystemVersionId: 'csv-1' },
+          ],
+          count: 1,
+          limit: 200,
+          nextCursor: null,
+        });
+    }
+
+    const filas = () => interno<() => readonly Fila[]>('idiomas')();
+    const puedeGuardar = () => interno<() => boolean>('puedeGuardarIdiomas')();
+    const elegirIdioma = (i: number, v: string | null) =>
+      interno<(i: number, v: string | null) => void>('elegirIdioma')(i, v);
+
+    it('siembra una fila por idioma guardado, con su nivel y si interpreta', () => {
+      montarYCargar({ languages: IDIOMAS });
+
+      expect(filas()).toEqual([
+        { idioma: 'lang-es', nivel: null, interpreta: true },
+        { idioma: 'lang-en', nivel: 'prof-avanzado', interpreta: false },
+      ]);
+    });
+
+    it('ofrece el catálogo de idiomas y el de niveles, con «Sin especificar» al frente', () => {
+      montarYCargar();
+      responderCatalogoDeIdiomas();
+
+      const etiquetas = (nombre: string) =>
+        interno<() => readonly { label: string }[]>(nombre)().map((o) => o.label);
+      expect(etiquetas('opcionesDeIdioma')).toEqual(['Español', 'Inglés']);
+      expect(etiquetas('opcionesDeNivel')).toEqual(['Sin especificar', 'Avanzado']);
+      expect(interno<() => boolean>('catalogoIdiomasCaido')()).toBe(false);
+    });
+
+    it('si el catálogo no llega, lo dice y no ofrece un desplegable vacío', () => {
+      montarYCargar();
+      pedidoDeConjunto('VS_LANGUAGE').flush({ items: [], count: 0, limit: 50, nextCursor: null });
+      pedidoDeConjunto('VS_LANGUAGE_PROFICIENCY').flush({ items: [], count: 0, limit: 50, nextCursor: null });
+
+      expect(interno<() => boolean>('catalogoIdiomasCaido')()).toBe(true);
+    });
+
+    it('guardar manda la lista ENTERA en el PATCH, y sólo eso', () => {
+      montarYCargar({ languages: IDIOMAS });
+
+      interno<() => void>('agregarIdioma')();
+      elegirIdioma(2, 'lang-qu');
+      interno<(i: number, v: boolean) => void>('marcarInterpreta')(2, true);
+      interno<() => void>('guardarIdiomas')();
+
+      const req = http.expectOne('/profiles/practitioners/me');
+      expect(req.request.method).toBe('PATCH');
+      const esperados = [
+        ...IDIOMAS,
+        { languageConceptId: 'lang-qu', clinicalInterpretationAllowed: true },
+      ];
+      expect(req.request.body).toEqual({ languages: esperados });
+      req.flush({ ...PERFIL_BASE, languages: esperados });
+    });
+
+    it('«Sin especificar» en el nivel viaja como ningún nivel', () => {
+      montarYCargar({ languages: IDIOMAS });
+
+      interno<(i: number, v: string | null) => void>('elegirNivel')(1, '');
+      interno<() => void>('guardarIdiomas')();
+
+      const req = http.expectOne('/profiles/practitioners/me');
+      expect(req.request.body).toEqual({
+        languages: [IDIOMAS[0], { languageConceptId: 'lang-en', clinicalInterpretationAllowed: false }],
+      });
+      req.flush(PERFIL_BASE);
+    });
+
+    it('sin cambios no hay nada que guardar', () => {
+      montarYCargar({ languages: IDIOMAS });
+
+      expect(puedeGuardar()).toBe(false);
+      interno<() => void>('guardarIdiomas')();
+
+      http.expectNone('/profiles/practitioners/me');
+    });
+
+    it('una fila sin idioma, o un idioma repetido, no se puede guardar', () => {
+      montarYCargar({ languages: IDIOMAS });
+
+      interno<() => void>('agregarIdioma')();
+      expect(puedeGuardar()).toBe(false);
+
+      elegirIdioma(2, 'lang-es');
+      expect(interno<() => boolean>('idiomasRepetidos')()).toBe(true);
+      expect(puedeGuardar()).toBe(false);
+
+      elegirIdioma(2, 'lang-qu');
+      expect(puedeGuardar()).toBe(true);
+    });
+
+    it('quitar el último manda una lista vacía: así se retira', () => {
+      montarYCargar({ languages: [IDIOMAS[0]] });
+
+      interno<(i: number) => void>('quitarIdioma')(0);
+      interno<() => void>('guardarIdiomas')();
+
+      const req = http.expectOne('/profiles/practitioners/me');
+      expect(req.request.body).toEqual({ languages: [] });
+      req.flush({ ...PERFIL_BASE, languages: [] });
+      expect(filas()).toEqual([]);
+    });
+
+    it('la respuesta vuelve a sembrar estas filas y no pisa lo que se escribía en otra pestaña', () => {
+      montarYCargar({ languages: [] });
+
+      señal<string>('bio').set('Cambio sin guardar');
+      interno<() => void>('agregarIdioma')();
+      elegirIdioma(0, 'lang-es');
+      interno<() => void>('guardarIdiomas')();
+
+      http.expectOne('/profiles/practitioners/me').flush({
+        ...PERFIL_BASE,
+        languages: [{ languageConceptId: 'lang-es', clinicalInterpretationAllowed: false }],
+      });
+
+      expect(filas()).toEqual([{ idioma: 'lang-es', nivel: null, interpreta: false }]);
+      expect(puedeGuardar()).toBe(false);
+      expect(interno<() => string>('bio')()).toBe('Cambio sin guardar');
+    });
+  });
 });

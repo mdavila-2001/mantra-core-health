@@ -375,7 +375,17 @@ const CALIDAD_DEMO = {
 } as const;
 
 /** Una corrección guardada del perfil profesional: su id y lo que se cambió. */
-type EdicionDeProfesional = { readonly id: string } & Record<string, string | boolean>;
+/** Un idioma declarado, tal como viaja en `languages` del `PATCH` del perfil. */
+interface IdiomaDeclarado {
+  readonly languageConceptId: string;
+  readonly proficiencyConceptId?: string;
+  readonly clinicalInterpretationAllowed: boolean;
+}
+
+/** Lo que el `PATCH` puede anotar: textos, interruptores y la lista de idiomas. */
+type CambioDeProfesional = string | boolean | readonly IdiomaDeclarado[];
+
+type EdicionDeProfesional = { readonly id: string } & Record<string, CambioDeProfesional>;
 
 /**
  * Lo que se editó del perfil profesional, por perfil.
@@ -915,7 +925,7 @@ export function registrarPerfiles(router: MockRouter): void {
     const p = profesionalDeSesion(request);
     if (p === undefined) return notFound();
     const cambios = cuerpo<Record<string, unknown>>(request);
-    const anotados = soloTextos(cambios);
+    const anotados = cambiosDelPerfilProfesional(cambios);
     if (edicionesDeProfesional.has(p.id)) {
       edicionesDeProfesional.actualizar(p.id, anotados);
     } else {
@@ -1175,8 +1185,34 @@ export function registrarPerfiles(router: MockRouter): void {
   }));
 }
 
-function soloTextos(cambios: Record<string, unknown>): Record<string, string | boolean> {
-  return Object.fromEntries(
+/**
+ * Lo que el `PATCH` del perfil profesional anota: los textos y los
+ * interruptores, y `languages`, que es el único campo que viaja como arreglo
+ * —la lista entera, que reemplaza la guardada—. Cualquier otra forma se
+ * descarta, como haría la validación del DTO.
+ */
+function cambiosDelPerfilProfesional(
+  cambios: Record<string, unknown>,
+): Record<string, CambioDeProfesional> {
+  const anotados: Record<string, CambioDeProfesional> = Object.fromEntries(
     Object.entries(cambios).filter(([, v]) => typeof v === 'string' || typeof v === 'boolean'),
   ) as Record<string, string | boolean>;
+  const idiomas = cambios['languages'];
+  if (Array.isArray(idiomas)) {
+    anotados['languages'] = idiomas
+      .filter(
+        (idioma: unknown): idioma is IdiomaDeclarado =>
+          typeof idioma === 'object' &&
+          idioma !== null &&
+          typeof (idioma as IdiomaDeclarado).languageConceptId === 'string',
+      )
+      .map((idioma) => ({
+        languageConceptId: idioma.languageConceptId,
+        ...(typeof idioma.proficiencyConceptId === 'string'
+          ? { proficiencyConceptId: idioma.proficiencyConceptId }
+          : {}),
+        clinicalInterpretationAllowed: idioma.clinicalInterpretationAllowed === true,
+      }));
+  }
+  return anotados;
 }

@@ -235,3 +235,28 @@
   margin-left: var(--sp-2);
   color: var(--text-muted);
 }
+
+/* Un idioma por renglón: el idioma, su nivel, el interruptor y el quitar. En
+   pantallas angostas se apilan; desde 780 px van en una fila, con los dos
+   selectores repartiéndose el ancho y los dos controles cortos a su medida.
+   `minmax(0, …)` por lo mismo que `.edicion__formulario`. */
+.edicion__idioma {
+  align-items: start;
+  display: grid;
+  gap: var(--sp-4);
+  grid-template-columns: minmax(0, 1fr);
+}
+
+@media (min-width: 780px) {
+  .edicion__idioma {
+    align-items: end;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto auto;
+  }
+
+  /* A la altura de la casilla, no de su etiqueta: el interruptor y el quitar
+     no tienen etiqueta encima, y pegados al borde inferior parecen caídos. */
+  .edicion__idioma-interpreta,
+  .edicion__idioma-quitar {
+    margin-block-end: var(--sp-2);
+  }
+}
