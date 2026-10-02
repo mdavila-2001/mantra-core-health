@@ -40,6 +40,8 @@ const { DocumentoFalso } = vi.hoisted(() => {
       setPage: number[];
       /** Una imagen: qué formato y en qué caja se dibujó. */
       addImage: { formato: string; x: number; y: number; ancho: number; alto: number }[];
+      /** Una fuente registrada: con qué archivo, familia y estilo. */
+      addFont: [string, string, string][];
     } = {
       setFont: [],
       setFontSize: [],
@@ -54,6 +56,7 @@ const { DocumentoFalso } = vi.hoisted(() => {
       charSpace: [],
       setPage: [],
       addImage: [],
+      addFont: [],
     };
 
     readonly internal = {
@@ -164,6 +167,15 @@ const { DocumentoFalso } = vi.hoisted(() => {
       return this;
     }
 
+    addFileToVFS(): this {
+      return this;
+    }
+
+    addFont(archivo: string, familia: string, estilo: string): this {
+      this.llamadas.addFont.push([archivo, familia, estilo]);
+      return this;
+    }
+
     setTextColor(): this {
       return this;
     }
@@ -231,6 +243,7 @@ let buildBlocksPdf: typeof import('./pdf-export').buildBlocksPdf;
 let exportElementToPdf: typeof import('./pdf-export').exportElementToPdf;
 let establecerLogoDeDocumentos: typeof import('./pdf-logo').establecerLogoDeDocumentos;
 let establecerFirmaDeDocumentos: typeof import('./pdf-firma').establecerFirmaDeDocumentos;
+let establecerFuentesDeDocumentos: typeof import('./pdf-fuentes').establecerFuentesDeDocumentos;
 
 /** Un elemento con encabezado, párrafo y una tabla de dos filas. */
 function elementoDeEjemplo(): HTMLElement {
@@ -289,7 +302,9 @@ beforeEach(async () => {
   ({ buildPdfDocument, buildBlocksPdf, exportElementToPdf } = await import('./pdf-export'));
   ({ establecerLogoDeDocumentos } = await import('./pdf-logo'));
   ({ establecerFirmaDeDocumentos } = await import('./pdf-firma'));
+  ({ establecerFuentesDeDocumentos } = await import('./pdf-fuentes'));
   establecerFirmaDeDocumentos(null);
+  establecerFuentesDeDocumentos(null);
   DocumentoFalso.fallarAlDibujarImagenes = false;
   establecerLogoDeDocumentos(null);
 });
@@ -331,6 +346,79 @@ describe('buildPdfDocument', () => {
     expect(textosDelCuerpo()).toEqual(['PACIENTE', 'Ana Pérez']);
   });
 
+  /**
+   * El defecto que esto cierra: el balance contable salía con el rótulo del
+   * propio botón «Exportar a PDF» como primer párrafo, una columna
+   * «Seleccionar las filas visibles» y las flechas de orden pegadas a cada
+   * encabezado. Lo que es control o texto sólo para lectores de pantalla no es
+   * contenido del papel.
+   */
+  it('no copia los controles ni el texto oculto de la pantalla', () => {
+    const el = document.createElement('div');
+    el.innerHTML = `
+      <div class="informe-encabezado">
+        <h2>Balance de sumas y saldos</h2>
+        <app-pdf-export-button><button type="button">Exportar a PDF</button></app-pdf-export-button>
+        <button type="button">Exportar a CSV</button>
+      </div>
+      <table>
+        <caption class="sr-only">Saldos por cuenta</caption>
+        <thead>
+          <tr>
+            <th data-pdf-ignore><input type="checkbox" aria-label="Seleccionar las filas visibles" /></th>
+            <th><button type="button">Cuenta <span aria-hidden="true">↕</span></button></th>
+            <th>Saldo</th>
+            <th data-pdf-ignore><span class="sr-only">Ver el detalle de la fila</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td data-pdf-ignore><input type="checkbox" /></td>
+            <td>Caja</td>
+            <td>1.500,00</td>
+            <td data-pdf-ignore><button type="button"><span aria-hidden="true">▼</span></button></td>
+          </tr>
+        </tbody>
+      </table>
+    `;
+
+    buildPdfDocument(el);
+
+    expect(textosDelCuerpo()).toEqual([
+      'BALANCE DE SUMAS Y SALDOS',
+      'Cuenta',
+      'Saldo',
+      'Caja',
+      '1.500,00',
+    ]);
+  });
+
+  /**
+   * El defecto que esto cierra: el balance contable salía con «Balance de
+   * sumas y saldos» como título grande y, dos renglones abajo, la misma frase
+   * en versalitas — el `h2` de la pantalla y el `title` del botón son el mismo
+   * texto. Sólo se quita el primer encabezado, y sólo si coincide.
+   */
+  it('no repite como sección el encabezado de la pantalla que ya es el título', () => {
+    const el = document.createElement('div');
+    el.innerHTML = '<h2>Balance de sumas y saldos</h2><p>Saldos</p><h2>Balance de sumas y saldos</h2>';
+
+    buildPdfDocument(el, { title: 'Balance de sumas y saldos' });
+
+    // El primero se va; el segundo es contenido y se queda. Se mira la hoja
+    // cruda: `textosDelCuerpo` descarta justamente las líneas iguales al título.
+    const lineas = ultimoDocumento().llamadas.text.map(([linea]) => linea);
+    expect(lineas.filter((linea) => linea === 'BALANCE DE SUMAS Y SALDOS')).toHaveLength(1);
+    expect(lineas.filter((linea) => linea === 'Balance de sumas y saldos')).toHaveLength(1);
+    expect(textosDelCuerpo()).toEqual(['Saldos']);
+  });
+
+  it('conserva el primer encabezado cuando no coincide con el título', () => {
+    buildPdfDocument(elementoDeEjemplo(), { title: 'Presupuesto de Ana Pérez' });
+
+    expect(textosDelCuerpo()[0]).toBe('PRESUPUESTO');
+  });
+
   it('imprime el título arriba y lo guarda en las propiedades del documento', () => {
     buildPdfDocument(elementoDeEjemplo(), { title: 'Presupuesto de Ana Pérez' });
 
@@ -357,6 +445,45 @@ describe('buildPdfDocument', () => {
   });
 });
 
+describe('las fuentes de marca', () => {
+  const FUENTES = {
+    titulos: { archivo: 'poppins-600.ttf', base64: 'AA==' },
+    cuerpo: { archivo: 'inter-400.ttf', base64: 'AA==' },
+  };
+
+  it('sin fuentes cargadas todo el papel va en Helvetica', () => {
+    buildBlocksPdf([{ kind: 'heading', text: 'Sección', level: 2 }, { kind: 'paragraph', text: 'Cuerpo' }]);
+
+    const doc = ultimoDocumento();
+    expect(doc.llamadas.addFont).toEqual([]);
+    expect(new Set(doc.llamadas.setFont.map(([familia]) => familia))).toEqual(new Set(['helvetica']));
+  });
+
+  it('con fuentes cargadas las registra en el documento y escribe lo destacado en Poppins y la lectura en Inter', () => {
+    establecerFuentesDeDocumentos(FUENTES);
+    buildBlocksPdf([{ kind: 'heading', text: 'Sección', level: 2 }, { kind: 'paragraph', text: 'Cuerpo' }]);
+
+    const doc = ultimoDocumento();
+    expect(doc.llamadas.addFont).toEqual([
+      ['poppins-600.ttf', 'Poppins', 'normal'],
+      ['inter-400.ttf', 'Inter', 'normal'],
+    ]);
+    const familias = doc.llamadas.setFont.map(([familia]) => familia);
+    expect(familias).toContain('Poppins');
+    expect(familias).toContain('Inter');
+    expect(familias).not.toContain('helvetica');
+  });
+
+  /** Cada `jsPDF` guarda sus fuentes: un segundo documento las registra de nuevo. */
+  it('registra las fuentes en cada documento, no una vez por sesión', () => {
+    establecerFuentesDeDocumentos(FUENTES);
+    buildBlocksPdf([{ kind: 'paragraph', text: 'Uno' }]);
+    buildBlocksPdf([{ kind: 'paragraph', text: 'Dos' }]);
+
+    expect(DocumentoFalso.instancias.map((doc) => doc.llamadas.addFont.length)).toEqual([2, 2]);
+  });
+});
+
 describe('el membrete de marca', () => {
   it('estampa el isotipo dos veces por página: el del membrete y la filigrana', () => {
     buildBlocksPdf([{ kind: 'paragraph', text: 'Una línea' }], { title: 'Receta médica' });
@@ -368,7 +495,12 @@ describe('el membrete de marca', () => {
     // encima del texto.
     const anchos = doc.llamadas.lines.map((trazo) => trazo.escala);
     expect(Math.max(...anchos)).toBeGreaterThan(Math.min(...anchos));
-    expect(doc.llamadas.gState.map((estado) => estado.opacity)).toContain(0.05);
+    expect(doc.llamadas.gState.map((estado) => estado.opacity)).toContain(0.04);
+    // Y va en el rincón inferior derecho, apoyada sobre el pie: nunca detrás
+    // de una tabla, donde se leía como una mancha gris.
+    const filigrana = doc.llamadas.lines.find((trazo) => trazo.escala === Math.max(...anchos));
+    expect(filigrana?.x).toBeGreaterThan(595 / 2);
+    expect(filigrana?.y).toBeGreaterThan(842 / 2);
   });
 
   it('la marca y la clase de documento se escriben con las letras separadas', () => {

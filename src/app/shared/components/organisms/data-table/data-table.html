@@ -16,7 +16,7 @@
       <thead>
         <tr>
           @if (selectable()) {
-            <th scope="col" class="data-table__select-cell">
+            <th scope="col" class="data-table__select-cell" data-pdf-ignore>
               <app-checkbox
                 [checked]="allVisibleSelected()"
                 [indeterminate]="someVisibleSelected()"
@@ -58,7 +58,7 @@
           }
 
           @if (secondaryColumns().length > 0) {
-            <th scope="col" class="data-table__detail-toggle-cell">
+            <th scope="col" class="data-table__detail-toggle-cell" data-pdf-ignore>
               <span class="sr-only">Ver el detalle de la fila</span>
             </th>
           }
@@ -74,7 +74,7 @@
             (click)="activateRow(row, $event)"
           >
             @if (selectable()) {
-              <td class="data-table__select-cell">
+              <td class="data-table__select-cell" data-pdf-ignore>
                 <app-checkbox
                   [checked]="isSelected(row)"
                   [label]="'Seleccionar ' + rowName(row, indice)"
@@ -95,7 +95,7 @@
             }
 
             @if (secondaryColumns().length > 0) {
-              <td class="data-table__detail-toggle-cell">
+              <td class="data-table__detail-toggle-cell" data-pdf-ignore>
                 <button
                   type="button"
                   class="data-table__detail-toggle"

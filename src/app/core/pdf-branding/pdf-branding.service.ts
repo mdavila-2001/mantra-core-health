@@ -7,6 +7,11 @@ import { ProfilesClient } from '../data-access/profiles/profiles.client';
 import { LogoDelConsultorioClient } from '../data-access/practice-sites/logo-del-consultorio.client';
 import { establecerFirmaDeDocumentos } from '../../shared/utils/pdf-export/pdf-firma';
 import {
+  establecerFuentesDeDocumentos,
+  prepararFuentes,
+  type PdfFuentes,
+} from '../../shared/utils/pdf-export/pdf-fuentes';
+import {
   establecerLogoDeDocumentos,
   prepararLogo,
   type PdfLogo,
@@ -23,8 +28,18 @@ export const PREPARAR_LOGO = new InjectionToken<(dataUrl: string) => Promise<Pdf
 );
 
 /**
- * Mantiene listos el logo del consultorio y la firma y el sello del médico para
- * el membrete y el pie de los PDF.
+ * Cómo se bajan las fuentes del papel. Token por lo mismo que `PREPARAR_LOGO`:
+ * `prepararFuentes` usa `fetch` contra la carpeta pública, que en una prueba no
+ * existe.
+ */
+export const PREPARAR_FUENTES = new InjectionToken<() => Promise<PdfFuentes | null>>(
+  'PREPARAR_FUENTES',
+  { providedIn: 'root', factory: () => prepararFuentes },
+);
+
+/**
+ * Mantiene listos el logo del consultorio, la firma y el sello del médico y las
+ * fuentes de marca para el membrete, el cuerpo y el pie de los PDF.
  *
  * ## Por qué existe
  *
@@ -53,11 +68,15 @@ export class PdfBrandingService {
   private readonly firmaYSello = inject(FirmaYSelloClient);
   private readonly perfiles = inject(ProfilesClient);
   private readonly preparar = inject(PREPARAR_LOGO);
+  private readonly prepararFuentes = inject(PREPARAR_FUENTES);
 
   /** Para descartar respuestas de un pedido que ya no es el vigente. */
   private pedido = 0;
 
   constructor() {
+    // Las fuentes no son de nadie: se bajan una vez por sesión, no por
+    // profesional, y no se limpian al cerrar sesión.
+    void this.prepararFuentes().then(establecerFuentesDeDocumentos);
     effect(() => {
       const profileId = this.auth.practitionerProfileId();
       untracked(() => this.cargar(profileId));

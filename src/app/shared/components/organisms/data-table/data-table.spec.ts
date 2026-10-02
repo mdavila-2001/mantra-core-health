@@ -172,6 +172,28 @@ describe('DataTable', () => {
       expect(root().textContent).toContain('Peña');
       expect(root().textContent).toContain('4821133');
     });
+
+    /**
+     * Las celdas de control —la casilla de selección y el botón del detalle—
+     * se marcan para que la exportación a PDF las salte: en el papel no hay
+     * nada que seleccionar ni desplegar. Las celdas de datos no llevan la marca.
+     */
+    it('marca las celdas de control para que el PDF las ignore, y sólo ésas', async () => {
+      host.selectable.set(true);
+      await fixture.whenStable();
+
+      const ignoradas = [...root().querySelectorAll('[data-pdf-ignore]')];
+      expect(ignoradas.length).toBeGreaterThan(0);
+      for (const celda of ignoradas) {
+        expect(
+          celda.classList.contains('data-table__select-cell') ||
+            celda.classList.contains('data-table__detail-toggle-cell'),
+        ).toBe(true);
+      }
+      for (const celda of root().querySelectorAll('.data-table__cell')) {
+        expect(celda.hasAttribute('data-pdf-ignore')).toBe(false);
+      }
+    });
   });
 
   describe('delegación de estados', () => {
