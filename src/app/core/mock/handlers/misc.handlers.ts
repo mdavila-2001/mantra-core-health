@@ -124,6 +124,10 @@ const ENUMS: readonly (readonly [patron: RegExp, valueSet: string, name: string]
    * `service_requests.category_concept_id` pero con el conjunto equivocado.
    */
   [/service_requests\.code_concept_id/, 'VS_DIAGNOSTIC_STUDY', 'Estudio'],
+  /* El buscador de la receta (`medication-block`) pide este catálogo y no estaba
+     mapeado: caía al `VS_RECORD_STATUS` de respaldo y ofrecía «Activo»,
+     «Inactivo»… como medicamentos, así que ninguna búsqueda encontraba nada. */
+  [/medication_requests\.medication_concept_id/, 'VS_MEDICATION', 'Medicamento'],
   [/service_requests\.category_concept_id/, 'VS_SERVICE_REQUEST_CATEGORY', 'Tipo'],
   [/service_requests\.priority_concept_id/, 'VS_PRIORITY', 'Prioridad'],
 
