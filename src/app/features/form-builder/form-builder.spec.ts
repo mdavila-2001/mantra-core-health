@@ -876,6 +876,28 @@ describe('FormBuilder', () => {
       expect(TestBed.inject(Router).url).toContain('especialidad=sp-1');
     });
 
+    it('agrupa en consulta inicial, específicas por condición y generales', () => {
+      http
+        .expectOne((r) => r.url === '/charts/templates' && r.method === 'GET')
+        .flush([
+          { ...OTRA, id: 'tpl-hta', code: 'CARDIO_CTRL_HTA', name: 'Control de hipertensión arterial', kind: 'SPECIFIC' },
+          { ...OTRA, kind: 'BASE' },
+          { ...PLANTILLA, id: 'tpl-t', code: 'TRANSV_EPICRISIS', name: 'Epicrisis', kind: 'GENERAL' },
+        ]);
+      harness.detectChanges();
+
+      interface Grupo { clase: string; plantillas: readonly ChartTemplate[] }
+      const grupos = interno<() => readonly Grupo[]>('grupos')();
+      expect(grupos.map((g) => [g.clase, g.plantillas.map((p) => p.code)])).toEqual([
+        ['BASE', ['CARDIO_FICHA_BASE']],
+        ['SPECIFIC', ['CARDIO_CTRL_HTA']],
+        ['GENERAL', ['TRANSV_EPICRISIS']],
+      ]);
+      const html = harness.routeNativeElement?.textContent ?? '';
+      expect(html).toContain('Consulta inicial (ficha base)');
+      expect(html).toContain('Fichas específicas por condición');
+    });
+
     it('lo vacío del filtro no es lo vacío del catálogo', async () => {
       listarDos();
       responderEspecialidades();

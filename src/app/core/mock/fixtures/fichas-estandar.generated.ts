@@ -2,7 +2,7 @@
     Las fichas clínicas estándar, portadas del backend.
 
     **GENERADO por `scripts/gen-chart-templates-fixture.mjs`. No editar a mano.**
-    La fuente son los 43 JSON de
+    La fuente son los 137 JSON de
     `mantra-core-health-api/src/common/seed/data/clinical-forms/`, con su
     procedencia —norma, organismo, URL y licencia— tal como la declara cada uno.
 
@@ -49,6 +49,12 @@ export interface FichaEstandar {
   readonly name: string;
   /** Versión de la ficha en el catálogo: sube cuando cambia su esquema. */
   readonly version: number;
+  /**
+   * La clase de ficha: la consulta inicial de la especialidad (`BASE`), el
+   * control estándar de una condición (`SPECIFIC`) o una de toda consulta
+   * (`GENERAL`).
+   */
+  readonly kind: 'BASE' | 'SPECIFIC' | 'GENERAL';
   /** Código de `VS_MEDICAL_SPECIALTY`, o `TRANSVERSAL`. */
   readonly specialty: string;
   readonly provenance?: ProcedenciaDeFicha;
@@ -57,9 +63,153 @@ export interface FichaEstandar {
 
 export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
   {
+    "code": "ANEST_CTRL_RECUPERACION",
+    "name": "Recuperación posanestésica",
+    "version": 1,
+    "kind": "SPECIFIC",
+    "specialty": "ANESTESIOLOGIA",
+    "provenance": {
+      "sourceTitle": "Norma Técnica de Salud para la Gestión de la Historia Clínica — NT N.º 022-MINSA/DGSP-V.02",
+      "organization": "Ministerio de Salud del Perú (MINSA)",
+      "url": "https://bvs.minsa.gob.pe/local/dgsp/NT022hist.pdf",
+      "license": "Norma técnica estatal de acceso público",
+      "retrievedAt": "2026-10-02",
+      "note": "Puntaje de Aldrete (publicado) para el alta de la sala de recuperación, dolor y náuseas."
+    },
+    "fields": [
+      {
+        "code": "tipo_de_evaluacion",
+        "name": "Tipo de evaluación",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación inicial",
+        "options": [
+          "Evaluación inicial",
+          "Reevaluación"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "inicio_de_sintomas",
+        "name": "Inicio de los síntomas (fecha u hora)",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación inicial"
+      },
+      {
+        "code": "tratamiento_previo",
+        "name": "Tratamiento recibido antes de esta consulta",
+        "dataType": "text",
+        "required": false,
+        "section": "Evaluación inicial"
+      },
+      {
+        "code": "aldrete_actividad",
+        "name": "Aldrete — actividad",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: recuperación posanestésica",
+        "options": [
+          "2 — mueve 4 extremidades",
+          "1 — mueve 2",
+          "0 — no mueve"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "aldrete_respiracion",
+        "name": "Aldrete — respiración",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: recuperación posanestésica",
+        "options": [
+          "2 — respira y tose",
+          "1 — disnea",
+          "0 — apnea"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "aldrete_circulacion",
+        "name": "Aldrete — circulación",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: recuperación posanestésica",
+        "options": [
+          "2 — PA ± 20 % del basal",
+          "1 — ± 20–50 %",
+          "0 — ± más de 50 %"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "aldrete_conciencia",
+        "name": "Aldrete — conciencia",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: recuperación posanestésica",
+        "options": [
+          "2 — despierto",
+          "1 — responde al llamado",
+          "0 — no responde"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "aldrete_saturacion",
+        "name": "Aldrete — saturación",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: recuperación posanestésica",
+        "options": [
+          "2 — > 92 % al aire",
+          "1 — necesita O₂",
+          "0 — < 90 % con O₂"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "aldrete_total",
+        "name": "Aldrete — total (alta con ≥ 9)",
+        "dataType": "integer",
+        "required": true,
+        "section": "Evaluación: recuperación posanestésica"
+      },
+      {
+        "code": "dolor_intensidad",
+        "name": "Dolor (0 a 10)",
+        "dataType": "integer",
+        "required": false,
+        "section": "Evaluación: recuperación posanestésica"
+      },
+      {
+        "code": "nauseas",
+        "name": "Náuseas o vómitos",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Evaluación: recuperación posanestésica"
+      },
+      {
+        "code": "diagnostico",
+        "name": "Diagnóstico (con código CIE-10 si se conoce)",
+        "dataType": "text",
+        "required": true,
+        "section": "Conclusión y plan"
+      },
+      {
+        "code": "plan",
+        "name": "Plan: tratamiento, estudios, interconsultas y destino",
+        "dataType": "text",
+        "required": false,
+        "section": "Conclusión y plan"
+      }
+    ]
+  },
+  {
     "code": "ANEST_VALORACION_PREANESTESICA",
-    "name": "Valoración preanestésica",
+    "name": "Anestesiología — valoración preanestésica (ficha base)",
     "version": 2,
+    "kind": "BASE",
     "specialty": "ANESTESIOLOGIA",
     "provenance": {
       "sourceTitle": "Norma Técnica de Salud para la Gestión de la Historia Clínica — NT N.º 022-MINSA/DGSP-V.02, anamnesis, antecedentes y examen físico preoperatorio",
@@ -482,8 +632,9 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
   },
   {
     "code": "BIOQ_INFORME_BASE",
-    "name": "Informe de laboratorio bioquímico",
+    "name": "Bioquímica Clínica — informe general de laboratorio (ficha base)",
     "version": 2,
+    "kind": "BASE",
     "specialty": "BIOQUIMICA_CLINICA",
     "provenance": {
       "sourceTitle": "Norma Técnica de Salud para la Gestión de la Historia Clínica — NT N.º 022-MINSA/DGSP-V.02, registro e informe de exámenes auxiliares de laboratorio",
@@ -698,9 +849,1545 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
     ]
   },
   {
+    "code": "BIOQ_INFORME_HEMOGRAMA",
+    "name": "Informe de hemograma",
+    "version": 1,
+    "kind": "SPECIFIC",
+    "specialty": "BIOQUIMICA_CLINICA",
+    "provenance": {
+      "sourceTitle": "Norma Técnica de Salud para la Gestión de la Historia Clínica — NT N.º 022-MINSA/DGSP-V.02",
+      "organization": "Ministerio de Salud del Perú (MINSA)",
+      "url": "https://bvs.minsa.gob.pe/local/dgsp/NT022hist.pdf",
+      "license": "Norma técnica estatal de acceso público",
+      "retrievedAt": "2026-10-02",
+      "note": "Serie roja, blanca y plaquetas con valores de referencia; la hemoglobina se interpreta según la altitud."
+    },
+    "fields": [
+      {
+        "code": "indicacion_del_estudio",
+        "name": "Indicación del estudio",
+        "dataType": "text",
+        "required": true,
+        "section": "Solicitud"
+      },
+      {
+        "code": "diagnostico_presuntivo_solicitante",
+        "name": "Diagnóstico presuntivo del solicitante",
+        "dataType": "string",
+        "required": false,
+        "section": "Solicitud"
+      },
+      {
+        "code": "fecha_del_estudio",
+        "name": "Fecha del estudio",
+        "dataType": "date",
+        "required": false,
+        "section": "Solicitud"
+      },
+      {
+        "code": "hemoglobina",
+        "name": "Hemoglobina (g/dL)",
+        "dataType": "decimal",
+        "required": true,
+        "section": "Resultado: hemograma"
+      },
+      {
+        "code": "hematocrito",
+        "name": "Hematocrito (%)",
+        "dataType": "decimal",
+        "required": false,
+        "section": "Resultado: hemograma"
+      },
+      {
+        "code": "vcm",
+        "name": "VCM (fL)",
+        "dataType": "decimal",
+        "required": false,
+        "section": "Resultado: hemograma"
+      },
+      {
+        "code": "hcm",
+        "name": "HCM (pg)",
+        "dataType": "decimal",
+        "required": false,
+        "section": "Resultado: hemograma"
+      },
+      {
+        "code": "leucocitos",
+        "name": "Leucocitos (/µL)",
+        "dataType": "integer",
+        "required": true,
+        "section": "Resultado: hemograma"
+      },
+      {
+        "code": "neutrofilos_pct",
+        "name": "Neutrófilos (%)",
+        "dataType": "decimal",
+        "required": false,
+        "section": "Resultado: hemograma"
+      },
+      {
+        "code": "linfocitos_pct",
+        "name": "Linfocitos (%)",
+        "dataType": "decimal",
+        "required": false,
+        "section": "Resultado: hemograma"
+      },
+      {
+        "code": "eosinofilos_pct",
+        "name": "Eosinófilos (%)",
+        "dataType": "decimal",
+        "required": false,
+        "section": "Resultado: hemograma"
+      },
+      {
+        "code": "plaquetas",
+        "name": "Plaquetas (/µL)",
+        "dataType": "integer",
+        "required": true,
+        "section": "Resultado: hemograma"
+      },
+      {
+        "code": "frotis",
+        "name": "Frotis de sangre periférica",
+        "dataType": "string",
+        "required": false,
+        "section": "Resultado: hemograma"
+      },
+      {
+        "code": "altitud",
+        "name": "Altitud del laboratorio (m s. n. m.)",
+        "dataType": "string",
+        "required": false,
+        "section": "Resultado: hemograma"
+      },
+      {
+        "code": "conclusion",
+        "name": "Conclusión",
+        "dataType": "text",
+        "required": true,
+        "section": "Conclusión"
+      },
+      {
+        "code": "recomendacion",
+        "name": "Recomendación",
+        "dataType": "text",
+        "required": false,
+        "section": "Conclusión"
+      },
+      {
+        "code": "hallazgo_critico",
+        "name": "Hay un hallazgo crítico",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Conclusión"
+      },
+      {
+        "code": "hallazgo_critico_comunicado",
+        "name": "¿A quién se comunicó y a qué hora?",
+        "dataType": "string",
+        "required": true,
+        "section": "Conclusión",
+        "showWhen": {
+          "field": "hallazgo_critico",
+          "equals": true
+        }
+      }
+    ]
+  },
+  {
+    "code": "BIOQ_INFORME_ORINA",
+    "name": "Informe de examen general de orina",
+    "version": 1,
+    "kind": "SPECIFIC",
+    "specialty": "BIOQUIMICA_CLINICA",
+    "provenance": {
+      "sourceTitle": "Norma Técnica de Salud para la Gestión de la Historia Clínica — NT N.º 022-MINSA/DGSP-V.02",
+      "organization": "Ministerio de Salud del Perú (MINSA)",
+      "url": "https://bvs.minsa.gob.pe/local/dgsp/NT022hist.pdf",
+      "license": "Norma técnica estatal de acceso público",
+      "retrievedAt": "2026-10-02",
+      "note": "Examen físico, químico (tira) y sedimento."
+    },
+    "fields": [
+      {
+        "code": "indicacion_del_estudio",
+        "name": "Indicación del estudio",
+        "dataType": "text",
+        "required": true,
+        "section": "Solicitud"
+      },
+      {
+        "code": "diagnostico_presuntivo_solicitante",
+        "name": "Diagnóstico presuntivo del solicitante",
+        "dataType": "string",
+        "required": false,
+        "section": "Solicitud"
+      },
+      {
+        "code": "fecha_del_estudio",
+        "name": "Fecha del estudio",
+        "dataType": "date",
+        "required": false,
+        "section": "Solicitud"
+      },
+      {
+        "code": "aspecto",
+        "name": "Aspecto",
+        "dataType": "string",
+        "required": false,
+        "section": "Resultado: examen de orina",
+        "options": [
+          "Transparente",
+          "Ligeramente turbio",
+          "Turbio"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "densidad",
+        "name": "Densidad",
+        "dataType": "decimal",
+        "required": false,
+        "section": "Resultado: examen de orina"
+      },
+      {
+        "code": "ph",
+        "name": "pH",
+        "dataType": "decimal",
+        "required": false,
+        "section": "Resultado: examen de orina"
+      },
+      {
+        "code": "proteinas",
+        "name": "Proteínas",
+        "dataType": "string",
+        "required": false,
+        "section": "Resultado: examen de orina",
+        "options": [
+          "Negativo",
+          "Trazas",
+          "+",
+          "++",
+          "+++"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "glucosa",
+        "name": "Glucosa",
+        "dataType": "string",
+        "required": false,
+        "section": "Resultado: examen de orina",
+        "options": [
+          "Negativo",
+          "+",
+          "++",
+          "+++"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "nitritos",
+        "name": "Nitritos",
+        "dataType": "string",
+        "required": true,
+        "section": "Resultado: examen de orina",
+        "options": [
+          "Negativo",
+          "Positivo"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "leucocitos_tira",
+        "name": "Esterasa leucocitaria",
+        "dataType": "string",
+        "required": false,
+        "section": "Resultado: examen de orina",
+        "options": [
+          "Negativo",
+          "+",
+          "++",
+          "+++"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "sedimento",
+        "name": "Sedimento (leucocitos, hematíes, cilindros, cristales por campo)",
+        "dataType": "string",
+        "required": false,
+        "section": "Resultado: examen de orina"
+      },
+      {
+        "code": "conclusion",
+        "name": "Conclusión",
+        "dataType": "text",
+        "required": true,
+        "section": "Conclusión"
+      },
+      {
+        "code": "recomendacion",
+        "name": "Recomendación",
+        "dataType": "text",
+        "required": false,
+        "section": "Conclusión"
+      },
+      {
+        "code": "hallazgo_critico",
+        "name": "Hay un hallazgo crítico",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Conclusión"
+      },
+      {
+        "code": "hallazgo_critico_comunicado",
+        "name": "¿A quién se comunicó y a qué hora?",
+        "dataType": "string",
+        "required": true,
+        "section": "Conclusión",
+        "showWhen": {
+          "field": "hallazgo_critico",
+          "equals": true
+        }
+      }
+    ]
+  },
+  {
+    "code": "CARDIO_CTRL_CHAGAS",
+    "name": "Control de cardiopatía chagásica",
+    "version": 1,
+    "kind": "SPECIFIC",
+    "specialty": "CARDIOLOGIA",
+    "provenance": {
+      "sourceTitle": "Enfermedad de Chagas (tripanosomiasis americana)",
+      "organization": "Organización Mundial de la Salud (OMS)",
+      "url": "https://www.who.int/health-topics/chagas-disease",
+      "license": "CC BY-NC-SA 3.0 IGO",
+      "retrievedAt": "2026-10-02",
+      "note": "Seguimiento de la enfermedad de Chagas crónica con compromiso cardíaco: serología, tratamiento antiparasitario, ECG y Holter."
+    },
+    "fields": [
+      {
+        "code": "tipo_de_control",
+        "name": "Tipo de consulta",
+        "dataType": "string",
+        "required": true,
+        "section": "Seguimiento",
+        "options": [
+          "Primera evaluación de la condición",
+          "Control programado",
+          "Descompensación o consulta no programada",
+          "Control posterior a internación"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "fecha_del_diagnostico",
+        "name": "Fecha del diagnóstico de enfermedad de Chagas",
+        "dataType": "date",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "tratamiento_actual",
+        "name": "Tratamiento actual (fármaco, dosis y frecuencia)",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "adherencia",
+        "name": "Adherencia al tratamiento",
+        "dataType": "string",
+        "required": false,
+        "section": "Seguimiento",
+        "options": [
+          "Toma el tratamiento como está indicado",
+          "Olvida dosis algunas veces",
+          "Abandonó el tratamiento",
+          "Todavía sin tratamiento"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "efectos_adversos",
+        "name": "¿Tuvo efectos adversos del tratamiento?",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "efectos_adversos_cuales",
+        "name": "¿Cuáles y con qué fármaco?",
+        "dataType": "text",
+        "required": true,
+        "section": "Seguimiento",
+        "showWhen": {
+          "field": "efectos_adversos",
+          "equals": true
+        }
+      },
+      {
+        "code": "evolucion_desde_ultimo_control",
+        "name": "Evolución desde el último control",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "chagas_serologia",
+        "name": "Serología para Chagas",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación: enfermedad de Chagas",
+        "options": [
+          "Positiva",
+          "Negativa",
+          "Pendiente",
+          "No realizada"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "chagas_compromiso",
+        "name": "Compromiso orgánico",
+        "dataType": "json",
+        "required": false,
+        "section": "Evaluación: enfermedad de Chagas",
+        "options": [
+          "Cardíaco (arritmia, bloqueo, insuficiencia)",
+          "Digestivo (megaesófago, megacolon)",
+          "Sin compromiso aparente"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "chagas_tratamiento_previo",
+        "name": "Recibió benznidazol o nifurtimox",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Evaluación: enfermedad de Chagas"
+      },
+      {
+        "code": "chagas_vivienda_endemica",
+        "name": "Vivió en vivienda con vinchucas",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Evaluación: enfermedad de Chagas"
+      },
+      {
+        "code": "ecg_chagas",
+        "name": "ECG — hallazgo (bloqueo de rama derecha, hemibloqueo, extrasístoles)",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: enfermedad de Chagas"
+      },
+      {
+        "code": "holter",
+        "name": "Holter — hallazgo",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: enfermedad de Chagas"
+      },
+      {
+        "code": "fevi_chagas",
+        "name": "Fracción de eyección (%)",
+        "dataType": "integer",
+        "required": false,
+        "section": "Evaluación: enfermedad de Chagas"
+      },
+      {
+        "code": "sintomas_chagas",
+        "name": "Síntomas",
+        "dataType": "json",
+        "required": false,
+        "section": "Evaluación: enfermedad de Chagas",
+        "options": [
+          "Palpitaciones",
+          "Síncope",
+          "Disnea",
+          "Disfagia",
+          "Constipación crónica",
+          "Ninguno"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "educacion_brindada",
+        "name": "Educación brindada en esta consulta",
+        "dataType": "json",
+        "required": false,
+        "section": "Metas y plan",
+        "options": [
+          "Control de vinchucas en la vivienda",
+          "Tamizaje de familiares",
+          "Tamizaje en embarazo"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "diagnostico",
+        "name": "Diagnóstico (con código CIE-10 si se conoce)",
+        "dataType": "text",
+        "required": true,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "plan",
+        "name": "Plan: tratamiento, estudios, interconsultas y destino",
+        "dataType": "text",
+        "required": false,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "proximo_control",
+        "name": "Próximo control",
+        "dataType": "date",
+        "required": false,
+        "section": "Metas y plan"
+      }
+    ]
+  },
+  {
+    "code": "CARDIO_CTRL_FA",
+    "name": "Control de fibrilación auricular y anticoagulación",
+    "version": 1,
+    "kind": "SPECIFIC",
+    "specialty": "CARDIOLOGIA",
+    "provenance": {
+      "sourceTitle": "Norma Técnica de Salud para la Gestión de la Historia Clínica — NT N.º 022-MINSA/DGSP-V.02",
+      "organization": "Ministerio de Salud del Perú (MINSA)",
+      "url": "https://bvs.minsa.gob.pe/local/dgsp/NT022hist.pdf",
+      "license": "Norma técnica estatal de acceso público",
+      "retrievedAt": "2026-10-02",
+      "note": "Estructura de la NT 022; riesgo embólico por CHA₂DS₂-VASc y de sangrado por HAS-BLED (puntajes publicados de uso libre)."
+    },
+    "fields": [
+      {
+        "code": "tipo_de_control",
+        "name": "Tipo de consulta",
+        "dataType": "string",
+        "required": true,
+        "section": "Seguimiento",
+        "options": [
+          "Primera evaluación de la condición",
+          "Control programado",
+          "Descompensación o consulta no programada",
+          "Control posterior a internación"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "fecha_del_diagnostico",
+        "name": "Fecha del diagnóstico de fibrilación auricular",
+        "dataType": "date",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "tratamiento_actual",
+        "name": "Tratamiento actual (fármaco, dosis y frecuencia)",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "adherencia",
+        "name": "Adherencia al tratamiento",
+        "dataType": "string",
+        "required": false,
+        "section": "Seguimiento",
+        "options": [
+          "Toma el tratamiento como está indicado",
+          "Olvida dosis algunas veces",
+          "Abandonó el tratamiento",
+          "Todavía sin tratamiento"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "efectos_adversos",
+        "name": "¿Tuvo efectos adversos del tratamiento?",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "efectos_adversos_cuales",
+        "name": "¿Cuáles y con qué fármaco?",
+        "dataType": "text",
+        "required": true,
+        "section": "Seguimiento",
+        "showWhen": {
+          "field": "efectos_adversos",
+          "equals": true
+        }
+      },
+      {
+        "code": "evolucion_desde_ultimo_control",
+        "name": "Evolución desde el último control",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "fa_tipo",
+        "name": "Tipo",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación: fibrilación auricular",
+        "options": [
+          "Paroxística",
+          "Persistente",
+          "Permanente"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "fa_estrategia",
+        "name": "Estrategia",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: fibrilación auricular",
+        "options": [
+          "Control de frecuencia",
+          "Control de ritmo"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "frecuencia_cardiaca",
+        "name": "Frecuencia cardíaca (lpm)",
+        "dataType": "integer",
+        "required": true,
+        "section": "Evaluación: fibrilación auricular"
+      },
+      {
+        "code": "chads_vasc",
+        "name": "CHA₂DS₂-VASc: factores presentes",
+        "dataType": "json",
+        "required": false,
+        "section": "Evaluación: fibrilación auricular",
+        "options": [
+          "Insuficiencia cardíaca",
+          "Hipertensión",
+          "Edad ≥ 75 (2)",
+          "Diabetes",
+          "ACV o embolia previa (2)",
+          "Enfermedad vascular",
+          "Edad 65–74",
+          "Sexo femenino"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "chads_vasc_puntaje",
+        "name": "CHA₂DS₂-VASc — puntaje",
+        "dataType": "integer",
+        "required": true,
+        "section": "Evaluación: fibrilación auricular"
+      },
+      {
+        "code": "has_bled_puntaje",
+        "name": "HAS-BLED — puntaje",
+        "dataType": "integer",
+        "required": false,
+        "section": "Evaluación: fibrilación auricular"
+      },
+      {
+        "code": "anticoagulante",
+        "name": "Anticoagulación",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: fibrilación auricular",
+        "options": [
+          "Warfarina o acenocumarol",
+          "Anticoagulante directo",
+          "Sin anticoagulación"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "inr",
+        "name": "Último INR",
+        "dataType": "decimal",
+        "required": true,
+        "section": "Evaluación: fibrilación auricular",
+        "showWhen": {
+          "field": "anticoagulante",
+          "equals": "Warfarina o acenocumarol"
+        }
+      },
+      {
+        "code": "sangrado",
+        "name": "Sangrado desde el último control",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Complicaciones y daño de órgano"
+      },
+      {
+        "code": "sangrado_donde",
+        "name": "¿Dónde y de qué gravedad?",
+        "dataType": "string",
+        "required": true,
+        "section": "Complicaciones y daño de órgano",
+        "showWhen": {
+          "field": "sangrado",
+          "equals": true
+        }
+      },
+      {
+        "code": "metas_cumplidas",
+        "name": "Metas de control que cumple hoy",
+        "dataType": "json",
+        "required": false,
+        "section": "Metas y plan",
+        "options": [
+          "Frecuencia en reposo < 110 lpm",
+          "INR entre 2 y 3 (si usa warfarina)",
+          "Anticoagulado si CHA₂DS₂-VASc lo indica",
+          "Ninguna todavía"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "educacion_brindada",
+        "name": "Educación brindada en esta consulta",
+        "dataType": "json",
+        "required": false,
+        "section": "Metas y plan",
+        "options": [
+          "Signos de sangrado",
+          "Interacciones con otros fármacos",
+          "Controles de INR"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "diagnostico",
+        "name": "Diagnóstico (con código CIE-10 si se conoce)",
+        "dataType": "text",
+        "required": true,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "plan",
+        "name": "Plan: tratamiento, estudios, interconsultas y destino",
+        "dataType": "text",
+        "required": false,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "proximo_control",
+        "name": "Próximo control",
+        "dataType": "date",
+        "required": false,
+        "section": "Metas y plan"
+      }
+    ]
+  },
+  {
+    "code": "CARDIO_CTRL_HTA",
+    "name": "Control de hipertensión arterial",
+    "version": 1,
+    "kind": "SPECIFIC",
+    "specialty": "CARDIOLOGIA",
+    "provenance": {
+      "sourceTitle": "HEARTS: paquete técnico para el manejo de las enfermedades cardiovasculares en la atención primaria de salud",
+      "organization": "Organización Mundial de la Salud (OMS)",
+      "url": "https://www.who.int/publications/i/item/hearts-technical-package",
+      "license": "CC BY-NC-SA 3.0 IGO",
+      "retrievedAt": "2026-10-02",
+      "note": "Estructura de la visita de control del módulo de hipertensión de HEARTS: cifras, adherencia, daño de órgano blanco y meta < 140/90 (< 130/80 en alto riesgo)."
+    },
+    "fields": [
+      {
+        "code": "tipo_de_control",
+        "name": "Tipo de consulta",
+        "dataType": "string",
+        "required": true,
+        "section": "Seguimiento",
+        "options": [
+          "Primera evaluación de la condición",
+          "Control programado",
+          "Descompensación o consulta no programada",
+          "Control posterior a internación"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "fecha_del_diagnostico",
+        "name": "Fecha del diagnóstico de hipertensión arterial",
+        "dataType": "date",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "tratamiento_actual",
+        "name": "Tratamiento actual (fármaco, dosis y frecuencia)",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "adherencia",
+        "name": "Adherencia al tratamiento",
+        "dataType": "string",
+        "required": false,
+        "section": "Seguimiento",
+        "options": [
+          "Toma el tratamiento como está indicado",
+          "Olvida dosis algunas veces",
+          "Abandonó el tratamiento",
+          "Todavía sin tratamiento"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "efectos_adversos",
+        "name": "¿Tuvo efectos adversos del tratamiento?",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "efectos_adversos_cuales",
+        "name": "¿Cuáles y con qué fármaco?",
+        "dataType": "text",
+        "required": true,
+        "section": "Seguimiento",
+        "showWhen": {
+          "field": "efectos_adversos",
+          "equals": true
+        }
+      },
+      {
+        "code": "evolucion_desde_ultimo_control",
+        "name": "Evolución desde el último control",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "presion_arterial_sistolica",
+        "name": "Presión arterial sistólica (mmHg)",
+        "dataType": "integer",
+        "required": true,
+        "section": "Evaluación: hipertensión arterial"
+      },
+      {
+        "code": "presion_arterial_diastolica",
+        "name": "Presión arterial diastólica (mmHg)",
+        "dataType": "integer",
+        "required": true,
+        "section": "Evaluación: hipertensión arterial"
+      },
+      {
+        "code": "frecuencia_cardiaca",
+        "name": "Frecuencia cardíaca (lpm)",
+        "dataType": "integer",
+        "required": false,
+        "section": "Evaluación: hipertensión arterial"
+      },
+      {
+        "code": "peso_kg",
+        "name": "Peso (kg)",
+        "dataType": "decimal",
+        "required": false,
+        "section": "Evaluación: hipertensión arterial"
+      },
+      {
+        "code": "perimetro_abdominal_cm",
+        "name": "Perímetro abdominal (cm)",
+        "dataType": "decimal",
+        "required": false,
+        "section": "Evaluación: hipertensión arterial"
+      },
+      {
+        "code": "hta_organo_blanco",
+        "name": "Síntomas de daño de órgano blanco",
+        "dataType": "json",
+        "required": true,
+        "section": "Evaluación: hipertensión arterial",
+        "options": [
+          "Cefalea intensa",
+          "Dolor torácico",
+          "Disnea",
+          "Alteración visual",
+          "Déficit neurológico",
+          "Ninguno"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "hta_registros_domiciliarios",
+        "name": "Registros de presión en domicilio (promedio)",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: hipertensión arterial"
+      },
+      {
+        "code": "hta_dano_organo",
+        "name": "Daño de órgano blanco conocido",
+        "dataType": "json",
+        "required": false,
+        "section": "Complicaciones y daño de órgano",
+        "options": [
+          "Hipertrofia ventricular izquierda",
+          "Enfermedad renal crónica",
+          "Retinopatía",
+          "ACV previo",
+          "Cardiopatía isquémica",
+          "Ninguno"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "creatinina",
+        "name": "Última creatinina (mg/dL)",
+        "dataType": "decimal",
+        "required": false,
+        "section": "Complicaciones y daño de órgano"
+      },
+      {
+        "code": "ecg_hecho",
+        "name": "ECG en el último año",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Complicaciones y daño de órgano"
+      },
+      {
+        "code": "metas_cumplidas",
+        "name": "Metas de control que cumple hoy",
+        "dataType": "json",
+        "required": false,
+        "section": "Metas y plan",
+        "options": [
+          "PA < 140/90 mmHg",
+          "PA < 130/80 mmHg (alto riesgo)",
+          "No fuma",
+          "IMC < 25",
+          "Ninguna todavía"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "educacion_brindada",
+        "name": "Educación brindada en esta consulta",
+        "dataType": "json",
+        "required": false,
+        "section": "Metas y plan",
+        "options": [
+          "Dieta con menos sal",
+          "Actividad física",
+          "Dejar de fumar",
+          "Reducir el alcohol",
+          "Adherencia a la medicación",
+          "Signos de alarma"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "diagnostico",
+        "name": "Diagnóstico (con código CIE-10 si se conoce)",
+        "dataType": "text",
+        "required": true,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "plan",
+        "name": "Plan: tratamiento, estudios, interconsultas y destino",
+        "dataType": "text",
+        "required": false,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "proximo_control",
+        "name": "Próximo control",
+        "dataType": "date",
+        "required": false,
+        "section": "Metas y plan"
+      }
+    ]
+  },
+  {
+    "code": "CARDIO_CTRL_IC",
+    "name": "Control de insuficiencia cardíaca",
+    "version": 1,
+    "kind": "SPECIFIC",
+    "specialty": "CARDIOLOGIA",
+    "provenance": {
+      "sourceTitle": "Norma Técnica de Salud para la Gestión de la Historia Clínica — NT N.º 022-MINSA/DGSP-V.02",
+      "organization": "Ministerio de Salud del Perú (MINSA)",
+      "url": "https://bvs.minsa.gob.pe/local/dgsp/NT022hist.pdf",
+      "license": "Norma técnica estatal de acceso público",
+      "retrievedAt": "2026-10-02",
+      "note": "Estructura de la historia clínica de la NT 022; contenido de la visita de seguimiento: clase funcional NYHA, signos de congestión (criterios de Framingham), peso seco y fracción de eyección."
+    },
+    "fields": [
+      {
+        "code": "tipo_de_control",
+        "name": "Tipo de consulta",
+        "dataType": "string",
+        "required": true,
+        "section": "Seguimiento",
+        "options": [
+          "Primera evaluación de la condición",
+          "Control programado",
+          "Descompensación o consulta no programada",
+          "Control posterior a internación"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "fecha_del_diagnostico",
+        "name": "Fecha del diagnóstico de insuficiencia cardíaca",
+        "dataType": "date",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "tratamiento_actual",
+        "name": "Tratamiento actual (fármaco, dosis y frecuencia)",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "adherencia",
+        "name": "Adherencia al tratamiento",
+        "dataType": "string",
+        "required": false,
+        "section": "Seguimiento",
+        "options": [
+          "Toma el tratamiento como está indicado",
+          "Olvida dosis algunas veces",
+          "Abandonó el tratamiento",
+          "Todavía sin tratamiento"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "efectos_adversos",
+        "name": "¿Tuvo efectos adversos del tratamiento?",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "efectos_adversos_cuales",
+        "name": "¿Cuáles y con qué fármaco?",
+        "dataType": "text",
+        "required": true,
+        "section": "Seguimiento",
+        "showWhen": {
+          "field": "efectos_adversos",
+          "equals": true
+        }
+      },
+      {
+        "code": "evolucion_desde_ultimo_control",
+        "name": "Evolución desde el último control",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "ic_clase_nyha",
+        "name": "Clase funcional NYHA",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación: insuficiencia cardíaca",
+        "options": [
+          "Clase I — sin limitación de la actividad física",
+          "Clase II — limitación leve: síntomas con la actividad ordinaria",
+          "Clase III — limitación marcada: síntomas con actividad menor a la ordinaria",
+          "Clase IV — síntomas en reposo"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "ic_signos",
+        "name": "Signos y síntomas (Framingham)",
+        "dataType": "json",
+        "required": true,
+        "section": "Evaluación: insuficiencia cardíaca",
+        "options": [
+          "Ortopnea",
+          "Disnea paroxística nocturna",
+          "Ingurgitación yugular",
+          "Crepitantes pulmonares",
+          "Tercer ruido (galope)",
+          "Edema de miembros inferiores",
+          "Hepatomegalia"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "ic_edema_grado",
+        "name": "Edema (fóvea)",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: insuficiencia cardíaca",
+        "options": [
+          "Sin edema",
+          "+ (2 mm)",
+          "++ (4 mm)",
+          "+++ (6 mm)",
+          "++++ (8 mm)"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "ic_peso_seco",
+        "name": "Peso de referencia (kg)",
+        "dataType": "decimal",
+        "required": false,
+        "section": "Evaluación: insuficiencia cardíaca"
+      },
+      {
+        "code": "peso_hoy",
+        "name": "Peso de hoy (kg)",
+        "dataType": "decimal",
+        "required": true,
+        "section": "Evaluación: insuficiencia cardíaca"
+      },
+      {
+        "code": "presion_arterial_sistolica",
+        "name": "Presión arterial sistólica (mmHg)",
+        "dataType": "integer",
+        "required": true,
+        "section": "Evaluación: insuficiencia cardíaca"
+      },
+      {
+        "code": "presion_arterial_diastolica",
+        "name": "Presión arterial diastólica (mmHg)",
+        "dataType": "integer",
+        "required": true,
+        "section": "Evaluación: insuficiencia cardíaca"
+      },
+      {
+        "code": "frecuencia_cardiaca",
+        "name": "Frecuencia cardíaca (lpm)",
+        "dataType": "integer",
+        "required": false,
+        "section": "Evaluación: insuficiencia cardíaca"
+      },
+      {
+        "code": "fevi",
+        "name": "Última fracción de eyección (%)",
+        "dataType": "integer",
+        "required": false,
+        "section": "Evaluación: insuficiencia cardíaca"
+      },
+      {
+        "code": "fevi_tipo",
+        "name": "Tipo según fracción de eyección",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: insuficiencia cardíaca",
+        "options": [
+          "Reducida (≤ 40 %)",
+          "Levemente reducida (41–49 %)",
+          "Preservada (≥ 50 %)",
+          "Sin ecocardiograma"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "internaciones_ic_anio",
+        "name": "Internaciones por insuficiencia cardíaca en el último año",
+        "dataType": "integer",
+        "required": false,
+        "section": "Complicaciones y daño de órgano"
+      },
+      {
+        "code": "potasio",
+        "name": "Último potasio (mEq/L)",
+        "dataType": "decimal",
+        "required": false,
+        "section": "Complicaciones y daño de órgano"
+      },
+      {
+        "code": "creatinina",
+        "name": "Última creatinina (mg/dL)",
+        "dataType": "decimal",
+        "required": false,
+        "section": "Complicaciones y daño de órgano"
+      },
+      {
+        "code": "metas_cumplidas",
+        "name": "Metas de control que cumple hoy",
+        "dataType": "json",
+        "required": false,
+        "section": "Metas y plan",
+        "options": [
+          "Sin congestión",
+          "Peso estable",
+          "Recibe los cuatro pilares de tratamiento si la FE está reducida",
+          "Ninguna todavía"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "educacion_brindada",
+        "name": "Educación brindada en esta consulta",
+        "dataType": "json",
+        "required": false,
+        "section": "Metas y plan",
+        "options": [
+          "Pesarse todos los días",
+          "Restricción de sal y líquidos",
+          "Signos de alarma",
+          "Adherencia a la medicación"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "diagnostico",
+        "name": "Diagnóstico (con código CIE-10 si se conoce)",
+        "dataType": "text",
+        "required": true,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "plan",
+        "name": "Plan: tratamiento, estudios, interconsultas y destino",
+        "dataType": "text",
+        "required": false,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "proximo_control",
+        "name": "Próximo control",
+        "dataType": "date",
+        "required": false,
+        "section": "Metas y plan"
+      }
+    ]
+  },
+  {
+    "code": "CARDIO_CTRL_ISQUEMICA",
+    "name": "Control de cardiopatía isquémica (después de un infarto o angina)",
+    "version": 1,
+    "kind": "SPECIFIC",
+    "specialty": "CARDIOLOGIA",
+    "provenance": {
+      "sourceTitle": "HEARTS: paquete técnico para el manejo de las enfermedades cardiovasculares en la atención primaria de salud",
+      "organization": "Organización Mundial de la Salud (OMS)",
+      "url": "https://www.who.int/publications/i/item/hearts-technical-package",
+      "license": "CC BY-NC-SA 3.0 IGO",
+      "retrievedAt": "2026-10-02",
+      "note": "Prevención secundaria según HEARTS: angina residual, metas de PA y LDL, antiagregación y estatina."
+    },
+    "fields": [
+      {
+        "code": "tipo_de_control",
+        "name": "Tipo de consulta",
+        "dataType": "string",
+        "required": true,
+        "section": "Seguimiento",
+        "options": [
+          "Primera evaluación de la condición",
+          "Control programado",
+          "Descompensación o consulta no programada",
+          "Control posterior a internación"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "fecha_del_diagnostico",
+        "name": "Fecha del diagnóstico de cardiopatía isquémica",
+        "dataType": "date",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "tratamiento_actual",
+        "name": "Tratamiento actual (fármaco, dosis y frecuencia)",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "adherencia",
+        "name": "Adherencia al tratamiento",
+        "dataType": "string",
+        "required": false,
+        "section": "Seguimiento",
+        "options": [
+          "Toma el tratamiento como está indicado",
+          "Olvida dosis algunas veces",
+          "Abandonó el tratamiento",
+          "Todavía sin tratamiento"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "efectos_adversos",
+        "name": "¿Tuvo efectos adversos del tratamiento?",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "efectos_adversos_cuales",
+        "name": "¿Cuáles y con qué fármaco?",
+        "dataType": "text",
+        "required": true,
+        "section": "Seguimiento",
+        "showWhen": {
+          "field": "efectos_adversos",
+          "equals": true
+        }
+      },
+      {
+        "code": "evolucion_desde_ultimo_control",
+        "name": "Evolución desde el último control",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "angina",
+        "name": "Angina desde el último control",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Evaluación: cardiopatía isquémica"
+      },
+      {
+        "code": "angina_inicio",
+        "name": "Dolor — inicio",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: cardiopatía isquémica",
+        "options": [
+          "Súbito",
+          "Progresivo"
+        ],
+        "multiple": false,
+        "showWhen": {
+          "field": "angina",
+          "equals": true
+        }
+      },
+      {
+        "code": "angina_caracter",
+        "name": "Dolor — carácter",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: cardiopatía isquémica",
+        "options": [
+          "Opresivo",
+          "Punzante",
+          "Urente (ardor)",
+          "Cólico",
+          "Pulsátil",
+          "Sordo",
+          "Lancinante",
+          "Eléctrico o en descarga"
+        ],
+        "multiple": false,
+        "allowOther": true,
+        "showWhen": {
+          "field": "angina",
+          "equals": true
+        }
+      },
+      {
+        "code": "angina_irradiado",
+        "name": "Dolor — ¿se irradia?",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Evaluación: cardiopatía isquémica",
+        "showWhen": {
+          "field": "angina",
+          "equals": true
+        }
+      },
+      {
+        "code": "angina_irradiacion",
+        "name": "¿Hacia dónde se irradia?",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación: cardiopatía isquémica",
+        "showWhen": {
+          "field": "angina_irradiado",
+          "equals": true
+        }
+      },
+      {
+        "code": "angina_intensidad",
+        "name": "Dolor — intensidad (0 a 10, escala numérica)",
+        "dataType": "integer",
+        "required": true,
+        "section": "Evaluación: cardiopatía isquémica",
+        "description": "0 = sin dolor; 10 = el peor dolor imaginable.",
+        "showWhen": {
+          "field": "angina",
+          "equals": true
+        }
+      },
+      {
+        "code": "angina_patron",
+        "name": "Dolor — patrón temporal",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: cardiopatía isquémica",
+        "options": [
+          "Continuo",
+          "Intermitente",
+          "Nocturno",
+          "Con el esfuerzo",
+          "Posprandial"
+        ],
+        "multiple": false,
+        "showWhen": {
+          "field": "angina",
+          "equals": true
+        }
+      },
+      {
+        "code": "angina_agravantes_atenuantes",
+        "name": "Dolor — qué lo agrava y qué lo alivia",
+        "dataType": "text",
+        "required": false,
+        "section": "Evaluación: cardiopatía isquémica",
+        "showWhen": {
+          "field": "angina",
+          "equals": true
+        }
+      },
+      {
+        "code": "angina_ccs",
+        "name": "Clase de angina (CCS)",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: cardiopatía isquémica",
+        "options": [
+          "I — sólo con esfuerzo intenso",
+          "II — limitación leve",
+          "III — limitación marcada",
+          "IV — con mínima actividad o en reposo"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "presion_arterial_sistolica",
+        "name": "Presión arterial sistólica (mmHg)",
+        "dataType": "integer",
+        "required": true,
+        "section": "Evaluación: cardiopatía isquémica"
+      },
+      {
+        "code": "presion_arterial_diastolica",
+        "name": "Presión arterial diastólica (mmHg)",
+        "dataType": "integer",
+        "required": true,
+        "section": "Evaluación: cardiopatía isquémica"
+      },
+      {
+        "code": "frecuencia_cardiaca",
+        "name": "Frecuencia cardíaca (lpm)",
+        "dataType": "integer",
+        "required": false,
+        "section": "Evaluación: cardiopatía isquémica"
+      },
+      {
+        "code": "ldl",
+        "name": "Último LDL (mg/dL)",
+        "dataType": "decimal",
+        "required": false,
+        "section": "Evaluación: cardiopatía isquémica"
+      },
+      {
+        "code": "prevencion_secundaria",
+        "name": "Recibe",
+        "dataType": "json",
+        "required": false,
+        "section": "Evaluación: cardiopatía isquémica",
+        "options": [
+          "Aspirina u otro antiagregante",
+          "Estatina",
+          "Betabloqueante",
+          "IECA o ARA II"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "rehabilitacion_cardiaca",
+        "name": "Rehabilitación cardíaca",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: cardiopatía isquémica",
+        "options": [
+          "Completa",
+          "En curso",
+          "No la hizo"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "metas_cumplidas",
+        "name": "Metas de control que cumple hoy",
+        "dataType": "json",
+        "required": false,
+        "section": "Metas y plan",
+        "options": [
+          "Sin angina",
+          "PA < 130/80 mmHg",
+          "LDL < 55 mg/dL",
+          "No fuma",
+          "Ninguna todavía"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "educacion_brindada",
+        "name": "Educación brindada en esta consulta",
+        "dataType": "json",
+        "required": false,
+        "section": "Metas y plan",
+        "options": [
+          "Dieta con menos sal",
+          "Actividad física",
+          "Dejar de fumar",
+          "Reducir el alcohol",
+          "Adherencia a la medicación",
+          "Signos de alarma"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "diagnostico",
+        "name": "Diagnóstico (con código CIE-10 si se conoce)",
+        "dataType": "text",
+        "required": true,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "plan",
+        "name": "Plan: tratamiento, estudios, interconsultas y destino",
+        "dataType": "text",
+        "required": false,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "proximo_control",
+        "name": "Próximo control",
+        "dataType": "date",
+        "required": false,
+        "section": "Metas y plan"
+      }
+    ]
+  },
+  {
     "code": "CARDIO_FICHA_BASE",
-    "name": "Ficha cardiológica — versión general base",
+    "name": "Cardiología — consulta inicial (ficha base)",
     "version": 2,
+    "kind": "BASE",
     "specialty": "CARDIOLOGIA",
     "provenance": {
       "sourceTitle": "Norma Técnica de Salud para la Gestión de la Historia Clínica — NT N.º 022-MINSA/DGSP-V.02, evaluación cardiovascular",
@@ -709,7 +2396,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
       "license": "Norma técnica estatal de acceso público",
       "sourceVersion": "V.02",
       "retrievedAt": "2026-08-14",
-      "note": "Estructura de anamnesis y examen cardiovascular del formato oficial. No incluye ninguna escala de sociedad científica. v2 (2026-10-02): reorganizada en secciones (motivo, antecedentes, examen, diagnóstico presuntivo, plan); las clasificaciones con categorías finitas pasan a lista cerrada; cada sí/no que tiene detalle pregunta «¿cuál?»; el diagnóstico presuntivo abre las observaciones que ese cuadro exige registrar. Instrumentos de uso libre incorporados: clase funcional NYHA, escala de Levine, criterios de Framingham."
+      "note": "Estructura de anamnesis y examen cardiovascular del formato oficial. No incluye ninguna escala de sociedad científica. v2 (2026-10-02): reorganizada en secciones (motivo, antecedentes, examen, diagnóstico presuntivo, plan); las clasificaciones con categorías finitas pasan a lista cerrada; cada sí/no que tiene detalle pregunta «¿cuál?»; el diagnóstico presuntivo abre las observaciones que ese cuadro exige registrar. Instrumentos de uso libre incorporados: clase funcional NYHA, escala de Levine."
     },
     "fields": [
       {
@@ -1334,264 +3021,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
         ],
         "multiple": false,
         "allowOther": true,
-        "description": "Al elegirlo se abren las observaciones que ese cuadro exige registrar."
-      },
-      {
-        "code": "dt_tipo",
-        "name": "Tipo de dolor torácico",
-        "dataType": "string",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Típico: retroesternal, con el esfuerzo, cede con reposo o nitratos",
-          "Atípico: cumple dos de los tres criterios",
-          "No anginoso: cumple uno o ninguno"
-        ],
-        "multiple": false,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Síndrome coronario o angina"
-        }
-      },
-      {
-        "code": "dt_acompanantes",
-        "name": "Acompañantes",
-        "dataType": "json",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Diaforesis",
-          "Náuseas o vómitos",
-          "Disnea",
-          "Síncope o presíncope",
-          "Ninguno"
-        ],
-        "multiple": true,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Síndrome coronario o angina"
-        }
-      },
-      {
-        "code": "dt_ecg",
-        "name": "ECG de 12 derivaciones — hallazgo principal",
-        "dataType": "string",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Síndrome coronario o angina"
-        }
-      },
-      {
-        "code": "ic_signos",
-        "name": "Signos y síntomas (Framingham)",
-        "dataType": "json",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Ortopnea",
-          "Disnea paroxística nocturna",
-          "Ingurgitación yugular",
-          "Crepitantes pulmonares",
-          "Tercer ruido (galope)",
-          "Edema de miembros inferiores",
-          "Hepatomegalia"
-        ],
-        "multiple": true,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Insuficiencia cardíaca"
-        }
-      },
-      {
-        "code": "ic_edema_grado",
-        "name": "Edema (fóvea)",
-        "dataType": "string",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Sin edema",
-          "+ (2 mm)",
-          "++ (4 mm)",
-          "+++ (6 mm)",
-          "++++ (8 mm)"
-        ],
-        "multiple": false,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Insuficiencia cardíaca"
-        }
-      },
-      {
-        "code": "ic_peso_seco",
-        "name": "Peso de referencia (kg)",
-        "dataType": "decimal",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Insuficiencia cardíaca"
-        }
-      },
-      {
-        "code": "hta_organo_blanco",
-        "name": "Síntomas de daño de órgano blanco",
-        "dataType": "json",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Cefalea intensa",
-          "Dolor torácico",
-          "Disnea",
-          "Alteración visual",
-          "Déficit neurológico",
-          "Ninguno"
-        ],
-        "multiple": true,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Hipertensión arterial"
-        }
-      },
-      {
-        "code": "hta_adherencia",
-        "name": "Adherencia al tratamiento",
-        "dataType": "string",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Toma la medicación todos los días",
-          "Olvida dosis",
-          "Abandonó el tratamiento",
-          "Sin tratamiento todavía"
-        ],
-        "multiple": false,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Hipertensión arterial"
-        }
-      },
-      {
-        "code": "hta_registros_domiciliarios",
-        "name": "Registros de presión en domicilio (promedio)",
-        "dataType": "string",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Hipertensión arterial"
-        }
-      },
-      {
-        "code": "arr_tipo",
-        "name": "Ritmo documentado",
-        "dataType": "string",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Fibrilación auricular",
-          "Flutter auricular",
-          "Taquicardia supraventricular",
-          "Extrasístoles",
-          "Bloqueo AV",
-          "No documentado"
-        ],
-        "multiple": false,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Arritmia"
-        }
-      },
-      {
-        "code": "arr_anticoagulado",
-        "name": "Recibe anticoagulación",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Arritmia"
-        }
-      },
-      {
-        "code": "chagas_serologia",
-        "name": "Serología para Chagas",
-        "dataType": "string",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Positiva",
-          "Negativa",
-          "Pendiente",
-          "No realizada"
-        ],
-        "multiple": false,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Cardiopatía chagásica"
-        }
-      },
-      {
-        "code": "chagas_compromiso",
-        "name": "Compromiso orgánico",
-        "dataType": "json",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Cardíaco (arritmia, bloqueo, insuficiencia)",
-          "Digestivo (megaesófago, megacolon)",
-          "Sin compromiso aparente"
-        ],
-        "multiple": true,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Cardiopatía chagásica"
-        }
-      },
-      {
-        "code": "chagas_tratamiento_previo",
-        "name": "Recibió benznidazol o nifurtimox",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Cardiopatía chagásica"
-        }
-      },
-      {
-        "code": "chagas_vivienda_endemica",
-        "name": "Vivió en vivienda con vinchucas",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Cardiopatía chagásica"
-        }
-      },
-      {
-        "code": "valv_valvula",
-        "name": "Válvula comprometida",
-        "dataType": "string",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Valvulopatía"
-        }
-      },
-      {
-        "code": "valv_eco",
-        "name": "Ecocardiograma — hallazgo principal",
-        "dataType": "string",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Valvulopatía"
-        }
+        "description": "Si el cuadro ya está diagnosticado, el seguimiento se hace con su ficha específica de la especialidad."
       },
       {
         "code": "diagnostico",
@@ -1614,6 +3044,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
     "code": "CARDIO_RIESGO_CV_OMS",
     "name": "Evaluación del riesgo cardiovascular (OMS/OPS)",
     "version": 2,
+    "kind": "SPECIFIC",
     "specialty": "CARDIOLOGIA",
     "provenance": {
       "sourceTitle": "Prevención de las enfermedades cardiovasculares: directrices para la evaluación y el manejo del riesgo cardiovascular",
@@ -1728,9 +3159,386 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
     ]
   },
   {
+    "code": "CIRGEN_CTRL_ABDOMEN_AGUDO",
+    "name": "Abdomen agudo: evaluación quirúrgica",
+    "version": 1,
+    "kind": "SPECIFIC",
+    "specialty": "CIRUGIA_GENERAL",
+    "provenance": {
+      "sourceTitle": "Norma Técnica de Salud para la Gestión de la Historia Clínica — NT N.º 022-MINSA/DGSP-V.02",
+      "organization": "Ministerio de Salud del Perú (MINSA)",
+      "url": "https://bvs.minsa.gob.pe/local/dgsp/NT022hist.pdf",
+      "license": "Norma técnica estatal de acceso público",
+      "retrievedAt": "2026-10-02",
+      "note": "Semiología del dolor, signos peritoneales y escala de Alvarado (publicada)."
+    },
+    "fields": [
+      {
+        "code": "tipo_de_evaluacion",
+        "name": "Tipo de evaluación",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación inicial",
+        "options": [
+          "Evaluación inicial",
+          "Reevaluación"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "inicio_de_sintomas",
+        "name": "Inicio de los síntomas (fecha u hora)",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación inicial"
+      },
+      {
+        "code": "tratamiento_previo",
+        "name": "Tratamiento recibido antes de esta consulta",
+        "dataType": "text",
+        "required": false,
+        "section": "Evaluación inicial"
+      },
+      {
+        "code": "dolor_abdominal",
+        "name": "Dolor abdominal",
+        "dataType": "boolean",
+        "required": true,
+        "section": "Evaluación: abdomen agudo"
+      },
+      {
+        "code": "dolor_localizacion",
+        "name": "Dolor — ¿dónde se localiza?",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación: abdomen agudo",
+        "showWhen": {
+          "field": "dolor_abdominal",
+          "equals": true
+        }
+      },
+      {
+        "code": "dolor_inicio",
+        "name": "Dolor — inicio",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: abdomen agudo",
+        "options": [
+          "Súbito",
+          "Progresivo"
+        ],
+        "multiple": false,
+        "showWhen": {
+          "field": "dolor_abdominal",
+          "equals": true
+        }
+      },
+      {
+        "code": "dolor_caracter",
+        "name": "Dolor — carácter",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: abdomen agudo",
+        "options": [
+          "Opresivo",
+          "Punzante",
+          "Urente (ardor)",
+          "Cólico",
+          "Pulsátil",
+          "Sordo",
+          "Lancinante",
+          "Eléctrico o en descarga"
+        ],
+        "multiple": false,
+        "allowOther": true,
+        "showWhen": {
+          "field": "dolor_abdominal",
+          "equals": true
+        }
+      },
+      {
+        "code": "dolor_irradiado",
+        "name": "Dolor — ¿se irradia?",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Evaluación: abdomen agudo",
+        "showWhen": {
+          "field": "dolor_abdominal",
+          "equals": true
+        }
+      },
+      {
+        "code": "dolor_irradiacion",
+        "name": "¿Hacia dónde se irradia?",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación: abdomen agudo",
+        "showWhen": {
+          "field": "dolor_irradiado",
+          "equals": true
+        }
+      },
+      {
+        "code": "dolor_intensidad",
+        "name": "Dolor — intensidad (0 a 10, escala numérica)",
+        "dataType": "integer",
+        "required": true,
+        "section": "Evaluación: abdomen agudo",
+        "description": "0 = sin dolor; 10 = el peor dolor imaginable.",
+        "showWhen": {
+          "field": "dolor_abdominal",
+          "equals": true
+        }
+      },
+      {
+        "code": "dolor_patron",
+        "name": "Dolor — patrón temporal",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: abdomen agudo",
+        "options": [
+          "Continuo",
+          "Intermitente",
+          "Nocturno",
+          "Con el esfuerzo",
+          "Posprandial"
+        ],
+        "multiple": false,
+        "showWhen": {
+          "field": "dolor_abdominal",
+          "equals": true
+        }
+      },
+      {
+        "code": "dolor_agravantes_atenuantes",
+        "name": "Dolor — qué lo agrava y qué lo alivia",
+        "dataType": "text",
+        "required": false,
+        "section": "Evaluación: abdomen agudo",
+        "showWhen": {
+          "field": "dolor_abdominal",
+          "equals": true
+        }
+      },
+      {
+        "code": "signos_peritoneales",
+        "name": "Signos peritoneales",
+        "dataType": "json",
+        "required": true,
+        "section": "Evaluación: abdomen agudo",
+        "options": [
+          "Defensa",
+          "Rebote",
+          "Rovsing",
+          "Psoas",
+          "Murphy",
+          "Ninguno"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "alvarado",
+        "name": "Escala de Alvarado",
+        "dataType": "json",
+        "required": false,
+        "section": "Evaluación: abdomen agudo",
+        "options": [
+          "Migración del dolor a fosa ilíaca derecha",
+          "Anorexia",
+          "Náuseas o vómitos",
+          "Dolor en fosa ilíaca derecha (2)",
+          "Rebote",
+          "Fiebre > 37,3 °C",
+          "Leucocitosis > 10 000 (2)",
+          "Desviación a la izquierda"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "alvarado_puntaje",
+        "name": "Alvarado — puntaje",
+        "dataType": "integer",
+        "required": false,
+        "section": "Evaluación: abdomen agudo"
+      },
+      {
+        "code": "imagen",
+        "name": "Imagen — hallazgo",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: abdomen agudo"
+      },
+      {
+        "code": "decision",
+        "name": "Decisión",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: abdomen agudo",
+        "options": [
+          "Cirugía",
+          "Observación",
+          "Alta con signos de alarma"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "diagnostico",
+        "name": "Diagnóstico (con código CIE-10 si se conoce)",
+        "dataType": "text",
+        "required": true,
+        "section": "Conclusión y plan"
+      },
+      {
+        "code": "plan",
+        "name": "Plan: tratamiento, estudios, interconsultas y destino",
+        "dataType": "text",
+        "required": false,
+        "section": "Conclusión y plan"
+      }
+    ]
+  },
+  {
+    "code": "CIRGEN_CTRL_POSOPERATORIO",
+    "name": "Control posoperatorio",
+    "version": 1,
+    "kind": "SPECIFIC",
+    "specialty": "CIRUGIA_GENERAL",
+    "provenance": {
+      "sourceTitle": "Norma Técnica de Salud para la Gestión de la Historia Clínica — NT N.º 022-MINSA/DGSP-V.02",
+      "organization": "Ministerio de Salud del Perú (MINSA)",
+      "url": "https://bvs.minsa.gob.pe/local/dgsp/NT022hist.pdf",
+      "license": "Norma técnica estatal de acceso público",
+      "retrievedAt": "2026-10-02",
+      "note": "Herida, dolor, tránsito y complicaciones graduadas por Clavien-Dindo (clasificación publicada de uso libre)."
+    },
+    "fields": [
+      {
+        "code": "tipo_de_evaluacion",
+        "name": "Tipo de evaluación",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación inicial",
+        "options": [
+          "Evaluación inicial",
+          "Reevaluación"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "inicio_de_sintomas",
+        "name": "Inicio de los síntomas (fecha u hora)",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación inicial"
+      },
+      {
+        "code": "tratamiento_previo",
+        "name": "Tratamiento recibido antes de esta consulta",
+        "dataType": "text",
+        "required": false,
+        "section": "Evaluación inicial"
+      },
+      {
+        "code": "cirugia_realizada",
+        "name": "Cirugía realizada",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación: posoperatorio"
+      },
+      {
+        "code": "fecha_cirugia",
+        "name": "Fecha de la cirugía",
+        "dataType": "date",
+        "required": false,
+        "section": "Evaluación: posoperatorio"
+      },
+      {
+        "code": "herida",
+        "name": "Herida",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación: posoperatorio",
+        "options": [
+          "Limpia y seca",
+          "Eritema",
+          "Secreción serosa",
+          "Secreción purulenta",
+          "Dehiscencia"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "dolor_intensidad",
+        "name": "Dolor (0 a 10)",
+        "dataType": "integer",
+        "required": false,
+        "section": "Evaluación: posoperatorio"
+      },
+      {
+        "code": "transito",
+        "name": "Tránsito intestinal",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: posoperatorio",
+        "options": [
+          "Conservado",
+          "Sin gases ni heces"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "fiebre",
+        "name": "Fiebre",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Evaluación: posoperatorio"
+      },
+      {
+        "code": "clavien_dindo",
+        "name": "Complicación (Clavien-Dindo)",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: posoperatorio",
+        "options": [
+          "Sin complicaciones",
+          "I",
+          "II",
+          "IIIa",
+          "IIIb",
+          "IVa",
+          "IVb",
+          "V"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "retiro_puntos",
+        "name": "Retiro de puntos hoy",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Evaluación: posoperatorio"
+      },
+      {
+        "code": "diagnostico",
+        "name": "Diagnóstico (con código CIE-10 si se conoce)",
+        "dataType": "text",
+        "required": true,
+        "section": "Conclusión y plan"
+      },
+      {
+        "code": "plan",
+        "name": "Plan: tratamiento, estudios, interconsultas y destino",
+        "dataType": "text",
+        "required": false,
+        "section": "Conclusión y plan"
+      }
+    ]
+  },
+  {
     "code": "CIRGEN_EVALUACION_BASE",
-    "name": "Evaluación de cirugía general",
+    "name": "Cirugía General — consulta inicial (ficha base)",
     "version": 2,
+    "kind": "BASE",
     "specialty": "CIRUGIA_GENERAL",
     "provenance": {
       "sourceTitle": "Norma Técnica de Salud para la Gestión de la Historia Clínica — NT N.º 022-MINSA/DGSP-V.02, anamnesis y examen por aparatos del abdomen",
@@ -1739,7 +3547,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
       "license": "Norma técnica estatal de acceso público",
       "sourceVersion": "V.02",
       "retrievedAt": "2026-08-14",
-      "note": "De la norma sale la estructura común de la consulta: motivo, tiempo de evolución, antecedentes, examen físico dirigido, diagnóstico y conducta. Son agregados propios de la especialidad los ítems quirúrgicos: características del dolor abdominal, tránsito intestinal, hernias, cirugías previas, riesgo quirúrgico descrito en prosa e indicación quirúrgica propuesta. v2 (2026-10-02): reorganizada en secciones (motivo, antecedentes, examen, diagnóstico presuntivo, plan); las clasificaciones con categorías finitas pasan a lista cerrada; cada sí/no que tiene detalle pregunta «¿cuál?»; el diagnóstico presuntivo abre las observaciones que ese cuadro exige registrar. Instrumentos de uso libre incorporados: clasificación ASA, escala de Alvarado."
+      "note": "De la norma sale la estructura común de la consulta: motivo, tiempo de evolución, antecedentes, examen físico dirigido, diagnóstico y conducta. Son agregados propios de la especialidad los ítems quirúrgicos: características del dolor abdominal, tránsito intestinal, hernias, cirugías previas, riesgo quirúrgico descrito en prosa e indicación quirúrgica propuesta. v2 (2026-10-02): reorganizada en secciones (motivo, antecedentes, examen, diagnóstico presuntivo, plan); las clasificaciones con categorías finitas pasan a lista cerrada; cada sí/no que tiene detalle pregunta «¿cuál?»; el diagnóstico presuntivo abre las observaciones que ese cuadro exige registrar. Instrumentos de uso libre incorporados: clasificación ASA."
     },
     "fields": [
       {
@@ -2192,111 +4000,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
         ],
         "multiple": false,
         "allowOther": true,
-        "description": "Al elegirlo se abren las observaciones que ese cuadro exige registrar."
-      },
-      {
-        "code": "alvarado",
-        "name": "Escala de Alvarado",
-        "dataType": "json",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Migración del dolor a fosa ilíaca derecha",
-          "Anorexia",
-          "Náuseas o vómitos",
-          "Dolor en fosa ilíaca derecha (2)",
-          "Rebote",
-          "Fiebre > 37,3 °C",
-          "Leucocitosis > 10 000 (2)",
-          "Desviación a la izquierda"
-        ],
-        "multiple": true,
-        "description": "7 o más puntos: probable apendicitis.",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Apendicitis aguda"
-        }
-      },
-      {
-        "code": "murphy_cirugia",
-        "name": "Signo de Murphy",
-        "dataType": "boolean",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Colecistitis o colelitiasis"
-        }
-      },
-      {
-        "code": "eco_vesicula",
-        "name": "Ecografía — hallazgo",
-        "dataType": "string",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Colecistitis o colelitiasis"
-        }
-      },
-      {
-        "code": "hernia_dolor_cronico",
-        "name": "Dolor crónico en la hernia",
-        "dataType": "boolean",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Hernia de pared abdominal"
-        }
-      },
-      {
-        "code": "obstruccion_signos",
-        "name": "Signos",
-        "dataType": "json",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Distensión",
-          "Vómitos fecaloides",
-          "Ruidos aumentados metálicos",
-          "Silencio abdominal",
-          "Cicatriz previa"
-        ],
-        "multiple": true,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Obstrucción intestinal"
-        }
-      },
-      {
-        "code": "abdomen_agudo_imagen",
-        "name": "Imagen solicitada",
-        "dataType": "string",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Abdomen agudo inespecífico"
-        }
-      },
-      {
-        "code": "anorrectal_tipo",
-        "name": "Sospecha",
-        "dataType": "string",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Hemorroides",
-          "Fisura",
-          "Absceso",
-          "Fístula"
-        ],
-        "multiple": false,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Patología anorrectal"
-        }
+        "description": "Si el cuadro ya está diagnosticado, el seguimiento se hace con su ficha específica de la especialidad."
       },
       {
         "code": "riesgo_asa",
@@ -2345,9 +4049,496 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
     ]
   },
   {
+    "code": "DERMA_CTRL_LEISHMANIASIS",
+    "name": "Control de leishmaniasis cutánea y mucosa",
+    "version": 1,
+    "kind": "SPECIFIC",
+    "specialty": "DERMATOLOGIA",
+    "provenance": {
+      "sourceTitle": "Leishmaniasis",
+      "organization": "Organización Mundial de la Salud (OMS)",
+      "url": "https://www.who.int/health-topics/leishmaniasis",
+      "license": "CC BY-NC-SA 3.0 IGO",
+      "retrievedAt": "2026-10-02",
+      "note": "Forma, número de lesiones, compromiso mucoso y respuesta al tratamiento."
+    },
+    "fields": [
+      {
+        "code": "tipo_de_control",
+        "name": "Tipo de consulta",
+        "dataType": "string",
+        "required": true,
+        "section": "Seguimiento",
+        "options": [
+          "Primera evaluación de la condición",
+          "Control programado",
+          "Descompensación o consulta no programada",
+          "Control posterior a internación"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "fecha_del_diagnostico",
+        "name": "Fecha del diagnóstico de leishmaniasis",
+        "dataType": "date",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "tratamiento_actual",
+        "name": "Tratamiento actual (fármaco, dosis y frecuencia)",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "adherencia",
+        "name": "Adherencia al tratamiento",
+        "dataType": "string",
+        "required": false,
+        "section": "Seguimiento",
+        "options": [
+          "Toma el tratamiento como está indicado",
+          "Olvida dosis algunas veces",
+          "Abandonó el tratamiento",
+          "Todavía sin tratamiento"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "efectos_adversos",
+        "name": "¿Tuvo efectos adversos del tratamiento?",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "efectos_adversos_cuales",
+        "name": "¿Cuáles y con qué fármaco?",
+        "dataType": "text",
+        "required": true,
+        "section": "Seguimiento",
+        "showWhen": {
+          "field": "efectos_adversos",
+          "equals": true
+        }
+      },
+      {
+        "code": "evolucion_desde_ultimo_control",
+        "name": "Evolución desde el último control",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "leish_forma",
+        "name": "Forma",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación: leishmaniasis",
+        "options": [
+          "Cutánea",
+          "Mucosa",
+          "Mucocutánea"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "leish_lesiones",
+        "name": "Número de úlceras",
+        "dataType": "integer",
+        "required": true,
+        "section": "Evaluación: leishmaniasis"
+      },
+      {
+        "code": "leish_tamano",
+        "name": "Tamaño de la mayor (mm)",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: leishmaniasis"
+      },
+      {
+        "code": "leish_mucosa",
+        "name": "Compromiso nasal u oral",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Evaluación: leishmaniasis"
+      },
+      {
+        "code": "leish_procedencia",
+        "name": "Zona de exposición",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: leishmaniasis"
+      },
+      {
+        "code": "leish_confirmacion",
+        "name": "Confirmación",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: leishmaniasis",
+        "options": [
+          "Frotis",
+          "Biopsia",
+          "PCR",
+          "Sin confirmar"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "leish_respuesta",
+        "name": "Respuesta al tratamiento",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: leishmaniasis",
+        "options": [
+          "Reepitelización completa",
+          "Parcial",
+          "Sin respuesta",
+          "Todavía en tratamiento"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "educacion_brindada",
+        "name": "Educación brindada en esta consulta",
+        "dataType": "json",
+        "required": false,
+        "section": "Metas y plan",
+        "options": [
+          "Completar el tratamiento",
+          "Control a los 3, 6 y 12 meses"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "diagnostico",
+        "name": "Diagnóstico (con código CIE-10 si se conoce)",
+        "dataType": "text",
+        "required": true,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "plan",
+        "name": "Plan: tratamiento, estudios, interconsultas y destino",
+        "dataType": "text",
+        "required": false,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "proximo_control",
+        "name": "Próximo control",
+        "dataType": "date",
+        "required": false,
+        "section": "Metas y plan"
+      }
+    ]
+  },
+  {
+    "code": "DERMA_CTRL_LESION_PIGMENTADA",
+    "name": "Evaluación de lesión pigmentada",
+    "version": 1,
+    "kind": "SPECIFIC",
+    "specialty": "DERMATOLOGIA",
+    "provenance": {
+      "sourceTitle": "Norma Técnica de Salud para la Gestión de la Historia Clínica — NT N.º 022-MINSA/DGSP-V.02",
+      "organization": "Ministerio de Salud del Perú (MINSA)",
+      "url": "https://bvs.minsa.gob.pe/local/dgsp/NT022hist.pdf",
+      "license": "Norma técnica estatal de acceso público",
+      "retrievedAt": "2026-10-02",
+      "note": "Regla ABCDE del melanoma y dermatoscopía."
+    },
+    "fields": [
+      {
+        "code": "tipo_de_evaluacion",
+        "name": "Tipo de evaluación",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación inicial",
+        "options": [
+          "Evaluación inicial",
+          "Reevaluación"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "inicio_de_sintomas",
+        "name": "Inicio de los síntomas (fecha u hora)",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación inicial"
+      },
+      {
+        "code": "tratamiento_previo",
+        "name": "Tratamiento recibido antes de esta consulta",
+        "dataType": "text",
+        "required": false,
+        "section": "Evaluación inicial"
+      },
+      {
+        "code": "localizacion",
+        "name": "Localización",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación: lesión pigmentada"
+      },
+      {
+        "code": "abcde",
+        "name": "Criterios ABCDE",
+        "dataType": "json",
+        "required": true,
+        "section": "Evaluación: lesión pigmentada",
+        "options": [
+          "Asimetría",
+          "Bordes irregulares",
+          "Color heterogéneo",
+          "Diámetro > 6 mm",
+          "Evolución (cambió)",
+          "Ninguno"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "fototipo",
+        "name": "Fototipo de Fitzpatrick",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: lesión pigmentada",
+        "options": [
+          "I",
+          "II",
+          "III",
+          "IV",
+          "V",
+          "VI"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "antecedente_melanoma",
+        "name": "Antecedente personal o familiar de melanoma",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Evaluación: lesión pigmentada"
+      },
+      {
+        "code": "dermatoscopia",
+        "name": "Dermatoscopía — hallazgo",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: lesión pigmentada"
+      },
+      {
+        "code": "conducta_lesion",
+        "name": "Conducta",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: lesión pigmentada",
+        "options": [
+          "Control",
+          "Biopsia",
+          "Extirpación"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "educacion_brindada",
+        "name": "Educación brindada en esta consulta",
+        "dataType": "json",
+        "required": false,
+        "section": "Conclusión y plan",
+        "options": [
+          "Fotoprotección",
+          "Autoexamen de la piel"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "diagnostico",
+        "name": "Diagnóstico (con código CIE-10 si se conoce)",
+        "dataType": "text",
+        "required": true,
+        "section": "Conclusión y plan"
+      },
+      {
+        "code": "plan",
+        "name": "Plan: tratamiento, estudios, interconsultas y destino",
+        "dataType": "text",
+        "required": false,
+        "section": "Conclusión y plan"
+      }
+    ]
+  },
+  {
+    "code": "DERMA_CTRL_PSORIASIS",
+    "name": "Control de psoriasis",
+    "version": 1,
+    "kind": "SPECIFIC",
+    "specialty": "DERMATOLOGIA",
+    "provenance": {
+      "sourceTitle": "Norma Técnica de Salud para la Gestión de la Historia Clínica — NT N.º 022-MINSA/DGSP-V.02",
+      "organization": "Ministerio de Salud del Perú (MINSA)",
+      "url": "https://bvs.minsa.gob.pe/local/dgsp/NT022hist.pdf",
+      "license": "Norma técnica estatal de acceso público",
+      "retrievedAt": "2026-10-02",
+      "note": "Extensión (PASI y superficie corporal) y artritis psoriásica."
+    },
+    "fields": [
+      {
+        "code": "tipo_de_control",
+        "name": "Tipo de consulta",
+        "dataType": "string",
+        "required": true,
+        "section": "Seguimiento",
+        "options": [
+          "Primera evaluación de la condición",
+          "Control programado",
+          "Descompensación o consulta no programada",
+          "Control posterior a internación"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "fecha_del_diagnostico",
+        "name": "Fecha del diagnóstico de psoriasis",
+        "dataType": "date",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "tratamiento_actual",
+        "name": "Tratamiento actual (fármaco, dosis y frecuencia)",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "adherencia",
+        "name": "Adherencia al tratamiento",
+        "dataType": "string",
+        "required": false,
+        "section": "Seguimiento",
+        "options": [
+          "Toma el tratamiento como está indicado",
+          "Olvida dosis algunas veces",
+          "Abandonó el tratamiento",
+          "Todavía sin tratamiento"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "efectos_adversos",
+        "name": "¿Tuvo efectos adversos del tratamiento?",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "efectos_adversos_cuales",
+        "name": "¿Cuáles y con qué fármaco?",
+        "dataType": "text",
+        "required": true,
+        "section": "Seguimiento",
+        "showWhen": {
+          "field": "efectos_adversos",
+          "equals": true
+        }
+      },
+      {
+        "code": "evolucion_desde_ultimo_control",
+        "name": "Evolución desde el último control",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "pasi",
+        "name": "PASI",
+        "dataType": "decimal",
+        "required": true,
+        "section": "Evaluación: psoriasis"
+      },
+      {
+        "code": "superficie_corporal",
+        "name": "Superficie corporal afectada (%)",
+        "dataType": "decimal",
+        "required": false,
+        "section": "Evaluación: psoriasis"
+      },
+      {
+        "code": "psoriasis_sitios",
+        "name": "Sitios especiales",
+        "dataType": "json",
+        "required": false,
+        "section": "Evaluación: psoriasis",
+        "options": [
+          "Cuero cabelludo",
+          "Uñas",
+          "Genitales",
+          "Palmas y plantas"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "dolor_articular",
+        "name": "Dolor o tumefacción articular",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Evaluación: psoriasis"
+      },
+      {
+        "code": "metas_cumplidas",
+        "name": "Metas de control que cumple hoy",
+        "dataType": "json",
+        "required": false,
+        "section": "Metas y plan",
+        "options": [
+          "Mejoría del PASI ≥ 75 %",
+          "Ninguna todavía"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "educacion_brindada",
+        "name": "Educación brindada en esta consulta",
+        "dataType": "json",
+        "required": false,
+        "section": "Metas y plan",
+        "options": [
+          "Emolientes",
+          "Desencadenantes",
+          "Riesgo cardiovascular"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "diagnostico",
+        "name": "Diagnóstico (con código CIE-10 si se conoce)",
+        "dataType": "text",
+        "required": true,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "plan",
+        "name": "Plan: tratamiento, estudios, interconsultas y destino",
+        "dataType": "text",
+        "required": false,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "proximo_control",
+        "name": "Próximo control",
+        "dataType": "date",
+        "required": false,
+        "section": "Metas y plan"
+      }
+    ]
+  },
+  {
     "code": "DERMA_EXAMEN_BASE",
-    "name": "Examen dermatológico — versión general base",
+    "name": "Dermatología — consulta inicial (ficha base)",
     "version": 2,
+    "kind": "BASE",
     "specialty": "DERMATOLOGIA",
     "provenance": {
       "sourceTitle": "Norma Técnica de Salud para la Gestión de la Historia Clínica — NT N.º 022-MINSA/DGSP-V.02, examen de piel y faneras",
@@ -2356,7 +4547,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
       "license": "Norma técnica estatal de acceso público",
       "sourceVersion": "V.02",
       "retrievedAt": "2026-08-14",
-      "note": "Estructura de la descripción semiológica de la lesión elemental, su distribución y su evolución. v2 (2026-10-02): reorganizada en secciones (motivo, antecedentes, examen, diagnóstico presuntivo, plan); las clasificaciones con categorías finitas pasan a lista cerrada; cada sí/no que tiene detalle pregunta «¿cuál?»; el diagnóstico presuntivo abre las observaciones que ese cuadro exige registrar. Instrumentos de uso libre incorporados: fototipos de Fitzpatrick, regla ABCDE del melanoma."
+      "note": "Estructura de la descripción semiológica de la lesión elemental, su distribución y su evolución. v2 (2026-10-02): reorganizada en secciones (motivo, antecedentes, examen, diagnóstico presuntivo, plan); las clasificaciones con categorías finitas pasan a lista cerrada; cada sí/no que tiene detalle pregunta «¿cuál?»; el diagnóstico presuntivo abre las observaciones que ese cuadro exige registrar. Instrumentos de uso libre incorporados: fototipos de Fitzpatrick."
     },
     "fields": [
       {
@@ -2572,201 +4763,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
         ],
         "multiple": false,
         "allowOther": true,
-        "description": "Al elegirlo se abren las observaciones que ese cuadro exige registrar."
-      },
-      {
-        "code": "abcde",
-        "name": "Criterios ABCDE",
-        "dataType": "json",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Asimetría",
-          "Bordes irregulares",
-          "Color heterogéneo",
-          "Diámetro > 6 mm",
-          "Evolución (cambió)"
-        ],
-        "multiple": true,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Lesión pigmentada (descartar melanoma)"
-        }
-      },
-      {
-        "code": "dermatoscopia",
-        "name": "Dermatoscopía realizada",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Lesión pigmentada (descartar melanoma)"
-        }
-      },
-      {
-        "code": "atopia",
-        "name": "Antecedente de atopia",
-        "dataType": "boolean",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Dermatitis (atópica o de contacto)"
-        }
-      },
-      {
-        "code": "dermatitis_contactante",
-        "name": "Posible contactante",
-        "dataType": "string",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Dermatitis (atópica o de contacto)"
-        }
-      },
-      {
-        "code": "pasi",
-        "name": "PASI",
-        "dataType": "decimal",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Psoriasis"
-        }
-      },
-      {
-        "code": "superficie_corporal",
-        "name": "Superficie corporal afectada (%)",
-        "dataType": "decimal",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Psoriasis"
-        }
-      },
-      {
-        "code": "psoriasis_artritis",
-        "name": "Dolor articular",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Psoriasis"
-        }
-      },
-      {
-        "code": "acne_grado",
-        "name": "Grado",
-        "dataType": "string",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Comedoniano",
-          "Papulopustuloso leve",
-          "Papulopustuloso moderado",
-          "Noduloquístico"
-        ],
-        "multiple": false,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Acné"
-        }
-      },
-      {
-        "code": "micosis_tipo",
-        "name": "Tipo",
-        "dataType": "string",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Tiña corporal",
-          "Tiña pedis",
-          "Onicomicosis",
-          "Pitiriasis versicolor",
-          "Candidiasis"
-        ],
-        "multiple": false,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Micosis superficial"
-        }
-      },
-      {
-        "code": "koh",
-        "name": "KOH o cultivo realizado",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Micosis superficial"
-        }
-      },
-      {
-        "code": "leish_cutanea_lesiones",
-        "name": "Número de úlceras",
-        "dataType": "integer",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Leishmaniasis cutánea"
-        }
-      },
-      {
-        "code": "leish_mucosa",
-        "name": "Compromiso nasal o bucal",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Leishmaniasis cutánea"
-        }
-      },
-      {
-        "code": "leish_procedencia",
-        "name": "Zona donde se expuso",
-        "dataType": "string",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Leishmaniasis cutánea"
-        }
-      },
-      {
-        "code": "cpnm_tipo",
-        "name": "Sospecha",
-        "dataType": "string",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Basocelular",
-          "Espinocelular",
-          "Queratosis actínica"
-        ],
-        "multiple": false,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Carcinoma de piel no melanoma"
-        }
-      },
-      {
-        "code": "cpnm_biopsia",
-        "name": "Biopsia indicada",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Carcinoma de piel no melanoma"
-        }
+        "description": "Si el cuadro ya está diagnosticado, el seguimiento se hace con su ficha específica de la especialidad."
       },
       {
         "code": "estudios_solicitados",
@@ -2793,9 +4790,135 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
     ]
   },
   {
+    "code": "EMERG_ACV",
+    "name": "Código ACV en emergencia",
+    "version": 1,
+    "kind": "SPECIFIC",
+    "specialty": "MEDICINA_EMERGENCIA",
+    "provenance": {
+      "sourceTitle": "NIH Stroke Scale",
+      "organization": "National Institute of Neurological Disorders and Stroke (NINDS/NIH)",
+      "url": "https://www.ninds.nih.gov/health-information/stroke/assess-and-treat/nih-stroke-scale",
+      "license": "Dominio público (Gobierno de los EE. UU.)",
+      "retrievedAt": "2026-10-02",
+      "note": "Hora de inicio, Cincinnati, NIHSS, glucemia e imagen para decidir trombólisis."
+    },
+    "fields": [
+      {
+        "code": "tipo_de_evaluacion",
+        "name": "Tipo de evaluación",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación inicial",
+        "options": [
+          "Evaluación inicial",
+          "Reevaluación"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "inicio_de_sintomas",
+        "name": "Inicio de los síntomas (fecha u hora)",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación inicial"
+      },
+      {
+        "code": "tratamiento_previo",
+        "name": "Tratamiento recibido antes de esta consulta",
+        "dataType": "text",
+        "required": false,
+        "section": "Evaluación inicial"
+      },
+      {
+        "code": "hora_inicio",
+        "name": "Hora de inicio o de la última vez visto bien",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación: accidente cerebrovascular agudo"
+      },
+      {
+        "code": "cincinnati",
+        "name": "Cincinnati",
+        "dataType": "json",
+        "required": true,
+        "section": "Evaluación: accidente cerebrovascular agudo",
+        "options": [
+          "Asimetría facial",
+          "Caída de un brazo",
+          "Alteración del habla"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "nihss",
+        "name": "NIHSS (0–42)",
+        "dataType": "integer",
+        "required": false,
+        "section": "Evaluación: accidente cerebrovascular agudo"
+      },
+      {
+        "code": "glucemia",
+        "name": "Glucemia capilar (mg/dL)",
+        "dataType": "decimal",
+        "required": true,
+        "section": "Evaluación: accidente cerebrovascular agudo"
+      },
+      {
+        "code": "presion_arterial_sistolica",
+        "name": "Presión arterial sistólica (mmHg)",
+        "dataType": "integer",
+        "required": true,
+        "section": "Evaluación: accidente cerebrovascular agudo"
+      },
+      {
+        "code": "presion_arterial_diastolica",
+        "name": "Presión arterial diastólica (mmHg)",
+        "dataType": "integer",
+        "required": true,
+        "section": "Evaluación: accidente cerebrovascular agudo"
+      },
+      {
+        "code": "tac",
+        "name": "TAC de cerebro — hallazgo y hora",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: accidente cerebrovascular agudo"
+      },
+      {
+        "code": "trombolisis",
+        "name": "Trombólisis",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: accidente cerebrovascular agudo",
+        "options": [
+          "Indicada",
+          "Contraindicada",
+          "Fuera de ventana"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "diagnostico",
+        "name": "Diagnóstico (con código CIE-10 si se conoce)",
+        "dataType": "text",
+        "required": true,
+        "section": "Conclusión y plan"
+      },
+      {
+        "code": "plan",
+        "name": "Plan: tratamiento, estudios, interconsultas y destino",
+        "dataType": "text",
+        "required": false,
+        "section": "Conclusión y plan"
+      }
+    ]
+  },
+  {
     "code": "EMERG_ATENCION_BASE",
-    "name": "Atención en emergencia",
+    "name": "Medicina de Emergencia — atención inicial en emergencia (ficha base)",
     "version": 2,
+    "kind": "BASE",
     "specialty": "MEDICINA_EMERGENCIA",
     "provenance": {
       "sourceTitle": "Norma Técnica de Salud para la Gestión de la Historia Clínica — NT N.º 022-MINSA/DGSP-V.02, registro de la atención de urgencias y emergencias",
@@ -2804,7 +4927,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
       "license": "Norma técnica estatal de acceso público",
       "sourceVersion": "V.02",
       "retrievedAt": "2026-08-14",
-      "note": "De la norma se transcribe la estructura común del registro: motivo, tiempo de evolución, antecedentes, alergias, medicación, signos vitales, diagnóstico y conducta. Son agregados propios de la especialidad la hora de llegada, la forma de llegada, la evaluación inicial y el nivel de prioridad asignado, que se registra como texto libre tal como lo escriba el profesional. v2 (2026-10-02): reorganizada en secciones (motivo, antecedentes, examen, diagnóstico presuntivo, plan); las clasificaciones con categorías finitas pasan a lista cerrada; cada sí/no que tiene detalle pregunta «¿cuál?»; el diagnóstico presuntivo abre las observaciones que ese cuadro exige registrar. Instrumentos de uso libre incorporados: escala de coma de Glasgow, escala de Cincinnati, guía de dengue OPS/OMS 2016, qSOFA (Sepsis-3)."
+      "note": "De la norma se transcribe la estructura común del registro: motivo, tiempo de evolución, antecedentes, alergias, medicación, signos vitales, diagnóstico y conducta. Son agregados propios de la especialidad la hora de llegada, la forma de llegada, la evaluación inicial y el nivel de prioridad asignado, que se registra como texto libre tal como lo escriba el profesional. v2 (2026-10-02): reorganizada en secciones (motivo, antecedentes, examen, diagnóstico presuntivo, plan); las clasificaciones con categorías finitas pasan a lista cerrada; cada sí/no que tiene detalle pregunta «¿cuál?»; el diagnóstico presuntivo abre las observaciones que ese cuadro exige registrar. Instrumentos de uso libre incorporados: escala de coma de Glasgow."
     },
     "fields": [
       {
@@ -3127,351 +5250,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
         ],
         "multiple": false,
         "allowOther": true,
-        "description": "Al elegirlo se abren las observaciones que ese cuadro exige registrar."
-      },
-      {
-        "code": "dt_tipo",
-        "name": "Tipo de dolor torácico",
-        "dataType": "string",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Típico: retroesternal, con el esfuerzo, cede con reposo o nitratos",
-          "Atípico: cumple dos de los tres criterios",
-          "No anginoso: cumple uno o ninguno"
-        ],
-        "multiple": false,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Dolor torácico agudo"
-        }
-      },
-      {
-        "code": "dt_acompanantes",
-        "name": "Acompañantes",
-        "dataType": "json",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Diaforesis",
-          "Náuseas o vómitos",
-          "Disnea",
-          "Síncope o presíncope",
-          "Ninguno"
-        ],
-        "multiple": true,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Dolor torácico agudo"
-        }
-      },
-      {
-        "code": "dt_ecg",
-        "name": "ECG de 12 derivaciones — hallazgo principal",
-        "dataType": "string",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Dolor torácico agudo"
-        }
-      },
-      {
-        "code": "troponina",
-        "name": "Troponina",
-        "dataType": "string",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Dolor torácico agudo"
-        }
-      },
-      {
-        "code": "acv_cincinnati",
-        "name": "Escala de Cincinnati",
-        "dataType": "json",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Asimetría facial",
-          "Caída de un brazo",
-          "Alteración del habla",
-          "Ninguno"
-        ],
-        "multiple": true,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Accidente cerebrovascular"
-        }
-      },
-      {
-        "code": "acv_hora_inicio",
-        "name": "Hora de inicio o de la última vez visto bien",
-        "dataType": "string",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Accidente cerebrovascular"
-        }
-      },
-      {
-        "code": "acv_glasgow",
-        "name": "Escala de Glasgow (3–15)",
-        "dataType": "integer",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Accidente cerebrovascular"
-        }
-      },
-      {
-        "code": "trauma_mecanismo",
-        "name": "Mecanismo de alta energía",
-        "dataType": "string",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Politraumatismo"
-        }
-      },
-      {
-        "code": "trauma_lesiones",
-        "name": "Lesiones",
-        "dataType": "json",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Craneoencefálica",
-          "Torácica",
-          "Abdominal",
-          "Pélvica",
-          "Extremidades",
-          "Columna"
-        ],
-        "multiple": true,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Politraumatismo"
-        }
-      },
-      {
-        "code": "dr_causa",
-        "name": "Causa probable",
-        "dataType": "string",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Asma o EPOC",
-          "Neumonía",
-          "Insuficiencia cardíaca",
-          "Anafilaxia",
-          "Embolia pulmonar"
-        ],
-        "multiple": false,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Dificultad respiratoria"
-        }
-      },
-      {
-        "code": "qsofa_emerg",
-        "name": "qSOFA",
-        "dataType": "json",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Frecuencia respiratoria ≥ 22",
-          "Alteración del estado mental",
-          "PAS ≤ 100 mmHg"
-        ],
-        "multiple": true,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Sepsis"
-        }
-      },
-      {
-        "code": "lactato",
-        "name": "Lactato (mmol/L)",
-        "dataType": "decimal",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Sepsis"
-        }
-      },
-      {
-        "code": "dengue_dias_de_fiebre",
-        "name": "Días de fiebre",
-        "dataType": "integer",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Dengue con signos de alarma"
-        }
-      },
-      {
-        "code": "dengue_signos_de_alarma",
-        "name": "Signos de alarma (OPS/OMS)",
-        "dataType": "json",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Dolor abdominal intenso y continuo",
-          "Vómitos persistentes",
-          "Acumulación de líquidos (ascitis, derrame)",
-          "Sangrado de mucosas",
-          "Letargia o irritabilidad",
-          "Hepatomegalia mayor a 2 cm",
-          "Aumento del hematocrito con caída de plaquetas",
-          "Hipotensión postural",
-          "Ninguno"
-        ],
-        "multiple": true,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Dengue con signos de alarma"
-        }
-      },
-      {
-        "code": "dengue_torniquete",
-        "name": "Prueba del torniquete",
-        "dataType": "string",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Positiva",
-          "Negativa",
-          "No realizada"
-        ],
-        "multiple": false,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Dengue con signos de alarma"
-        }
-      },
-      {
-        "code": "dengue_grupo",
-        "name": "Clasificación",
-        "dataType": "string",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Grupo A — sin signos de alarma",
-          "Grupo B — con signos de alarma o condición asociada",
-          "Grupo C — dengue grave"
-        ],
-        "multiple": false,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Dengue con signos de alarma"
-        }
-      },
-      {
-        "code": "convulsion_tipo",
-        "name": "Tipo de crisis",
-        "dataType": "string",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Tónico-clónica generalizada",
-          "Focal sin pérdida de conciencia",
-          "Focal con alteración de conciencia",
-          "Ausencia",
-          "No definido"
-        ],
-        "multiple": false,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Convulsión"
-        }
-      },
-      {
-        "code": "convulsion_duracion_minutos",
-        "name": "Duración (minutos)",
-        "dataType": "integer",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Convulsión"
-        }
-      },
-      {
-        "code": "convulsion_primera",
-        "name": "Es la primera crisis",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Convulsión"
-        }
-      },
-      {
-        "code": "convulsion_desencadenantes",
-        "name": "Posibles desencadenantes",
-        "dataType": "json",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Fiebre",
-          "Falta de sueño",
-          "Alcohol",
-          "Abandono de la medicación",
-          "Ninguno conocido"
-        ],
-        "multiple": true,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Convulsión"
-        }
-      },
-      {
-        "code": "intox_sustancia",
-        "name": "Sustancia y cantidad",
-        "dataType": "string",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Intoxicación"
-        }
-      },
-      {
-        "code": "intox_hora",
-        "name": "Hora de exposición",
-        "dataType": "string",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Intoxicación"
-        }
-      },
-      {
-        "code": "intox_via",
-        "name": "Vía",
-        "dataType": "string",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Oral",
-          "Inhalatoria",
-          "Cutánea",
-          "Parenteral"
-        ],
-        "multiple": false,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Intoxicación"
-        }
+        "description": "Si el cuadro ya está diagnosticado, el seguimiento se hace con su ficha específica de la especialidad."
       },
       {
         "code": "diagnostico",
@@ -3507,9 +5286,1443 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
     ]
   },
   {
+    "code": "EMERG_DOLOR_TORACICO",
+    "name": "Dolor torácico agudo en emergencia",
+    "version": 1,
+    "kind": "SPECIFIC",
+    "specialty": "MEDICINA_EMERGENCIA",
+    "provenance": {
+      "sourceTitle": "Norma Técnica de Salud para la Gestión de la Historia Clínica — NT N.º 022-MINSA/DGSP-V.02",
+      "organization": "Ministerio de Salud del Perú (MINSA)",
+      "url": "https://bvs.minsa.gob.pe/local/dgsp/NT022hist.pdf",
+      "license": "Norma técnica estatal de acceso público",
+      "retrievedAt": "2026-10-02",
+      "note": "ECG en menos de 10 minutos, troponina y estratificación con el puntaje HEART (publicado, de uso libre)."
+    },
+    "fields": [
+      {
+        "code": "tipo_de_evaluacion",
+        "name": "Tipo de evaluación",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación inicial",
+        "options": [
+          "Evaluación inicial",
+          "Reevaluación"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "inicio_de_sintomas",
+        "name": "Inicio de los síntomas (fecha u hora)",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación inicial"
+      },
+      {
+        "code": "tratamiento_previo",
+        "name": "Tratamiento recibido antes de esta consulta",
+        "dataType": "text",
+        "required": false,
+        "section": "Evaluación inicial"
+      },
+      {
+        "code": "dolor_actual",
+        "name": "Dolor en este momento",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Evaluación: dolor torácico"
+      },
+      {
+        "code": "dolor_inicio",
+        "name": "Dolor — inicio",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: dolor torácico",
+        "options": [
+          "Súbito",
+          "Progresivo"
+        ],
+        "multiple": false,
+        "showWhen": {
+          "field": "dolor_actual",
+          "equals": true
+        }
+      },
+      {
+        "code": "dolor_caracter",
+        "name": "Dolor — carácter",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: dolor torácico",
+        "options": [
+          "Opresivo",
+          "Punzante",
+          "Urente (ardor)",
+          "Cólico",
+          "Pulsátil",
+          "Sordo",
+          "Lancinante",
+          "Eléctrico o en descarga"
+        ],
+        "multiple": false,
+        "allowOther": true,
+        "showWhen": {
+          "field": "dolor_actual",
+          "equals": true
+        }
+      },
+      {
+        "code": "dolor_irradiado",
+        "name": "Dolor — ¿se irradia?",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Evaluación: dolor torácico",
+        "showWhen": {
+          "field": "dolor_actual",
+          "equals": true
+        }
+      },
+      {
+        "code": "dolor_irradiacion",
+        "name": "¿Hacia dónde se irradia?",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación: dolor torácico",
+        "showWhen": {
+          "field": "dolor_irradiado",
+          "equals": true
+        }
+      },
+      {
+        "code": "dolor_intensidad",
+        "name": "Dolor — intensidad (0 a 10, escala numérica)",
+        "dataType": "integer",
+        "required": true,
+        "section": "Evaluación: dolor torácico",
+        "description": "0 = sin dolor; 10 = el peor dolor imaginable.",
+        "showWhen": {
+          "field": "dolor_actual",
+          "equals": true
+        }
+      },
+      {
+        "code": "dolor_patron",
+        "name": "Dolor — patrón temporal",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: dolor torácico",
+        "options": [
+          "Continuo",
+          "Intermitente",
+          "Nocturno",
+          "Con el esfuerzo",
+          "Posprandial"
+        ],
+        "multiple": false,
+        "showWhen": {
+          "field": "dolor_actual",
+          "equals": true
+        }
+      },
+      {
+        "code": "dolor_agravantes_atenuantes",
+        "name": "Dolor — qué lo agrava y qué lo alivia",
+        "dataType": "text",
+        "required": false,
+        "section": "Evaluación: dolor torácico",
+        "showWhen": {
+          "field": "dolor_actual",
+          "equals": true
+        }
+      },
+      {
+        "code": "hora_ecg",
+        "name": "Hora del ECG",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación: dolor torácico"
+      },
+      {
+        "code": "ecg_hallazgo",
+        "name": "ECG — hallazgo",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación: dolor torácico"
+      },
+      {
+        "code": "ecg_st",
+        "name": "Segmento ST",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: dolor torácico",
+        "options": [
+          "Elevación (SCACEST: reperfusión ya)",
+          "Depresión o T invertida",
+          "Normal"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "troponina",
+        "name": "Troponina y hora",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: dolor torácico"
+      },
+      {
+        "code": "heart_score",
+        "name": "Puntaje HEART (0–10)",
+        "dataType": "integer",
+        "required": false,
+        "section": "Evaluación: dolor torácico"
+      },
+      {
+        "code": "presion_arterial_sistolica",
+        "name": "Presión arterial sistólica (mmHg)",
+        "dataType": "integer",
+        "required": true,
+        "section": "Evaluación: dolor torácico"
+      },
+      {
+        "code": "presion_arterial_diastolica",
+        "name": "Presión arterial diastólica (mmHg)",
+        "dataType": "integer",
+        "required": true,
+        "section": "Evaluación: dolor torácico"
+      },
+      {
+        "code": "diagnostico",
+        "name": "Diagnóstico (con código CIE-10 si se conoce)",
+        "dataType": "text",
+        "required": true,
+        "section": "Conclusión y plan"
+      },
+      {
+        "code": "plan",
+        "name": "Plan: tratamiento, estudios, interconsultas y destino",
+        "dataType": "text",
+        "required": false,
+        "section": "Conclusión y plan"
+      }
+    ]
+  },
+  {
+    "code": "EMERG_INTOXICACION",
+    "name": "Intoxicación aguda",
+    "version": 1,
+    "kind": "SPECIFIC",
+    "specialty": "MEDICINA_EMERGENCIA",
+    "provenance": {
+      "sourceTitle": "Norma Técnica de Salud para la Gestión de la Historia Clínica — NT N.º 022-MINSA/DGSP-V.02",
+      "organization": "Ministerio de Salud del Perú (MINSA)",
+      "url": "https://bvs.minsa.gob.pe/local/dgsp/NT022hist.pdf",
+      "license": "Norma técnica estatal de acceso público",
+      "retrievedAt": "2026-10-02",
+      "note": "Sustancia, tiempo, vía, toxíndrome e intención."
+    },
+    "fields": [
+      {
+        "code": "tipo_de_evaluacion",
+        "name": "Tipo de evaluación",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación inicial",
+        "options": [
+          "Evaluación inicial",
+          "Reevaluación"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "inicio_de_sintomas",
+        "name": "Inicio de los síntomas (fecha u hora)",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación inicial"
+      },
+      {
+        "code": "tratamiento_previo",
+        "name": "Tratamiento recibido antes de esta consulta",
+        "dataType": "text",
+        "required": false,
+        "section": "Evaluación inicial"
+      },
+      {
+        "code": "sustancia",
+        "name": "Sustancia y cantidad",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación: intoxicación"
+      },
+      {
+        "code": "hora_exposicion",
+        "name": "Hora de la exposición",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación: intoxicación"
+      },
+      {
+        "code": "via",
+        "name": "Vía",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: intoxicación",
+        "options": [
+          "Oral",
+          "Inhalatoria",
+          "Cutánea",
+          "Parenteral"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "toxindrome",
+        "name": "Toxíndrome",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: intoxicación",
+        "options": [
+          "Colinérgico (organofosforados)",
+          "Anticolinérgico",
+          "Simpaticomimético",
+          "Opioide",
+          "Sedante-hipnótico",
+          "No definido"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "intencion",
+        "name": "Intención",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación: intoxicación",
+        "options": [
+          "Accidental",
+          "Autolesión",
+          "Laboral",
+          "No se sabe"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "evaluacion_salud_mental",
+        "name": "Interconsulta a salud mental pedida",
+        "dataType": "boolean",
+        "required": true,
+        "section": "Evaluación: intoxicación",
+        "showWhen": {
+          "field": "intencion",
+          "equals": "Autolesión"
+        }
+      },
+      {
+        "code": "glasgow_ocular",
+        "name": "Glasgow — apertura ocular",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: intoxicación",
+        "options": [
+          "4 — espontánea",
+          "3 — a la voz",
+          "2 — al dolor",
+          "1 — ninguna"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "glasgow_verbal",
+        "name": "Glasgow — respuesta verbal",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: intoxicación",
+        "options": [
+          "5 — orientada",
+          "4 — confusa",
+          "3 — palabras inapropiadas",
+          "2 — sonidos incomprensibles",
+          "1 — ninguna"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "glasgow_motora",
+        "name": "Glasgow — respuesta motora",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: intoxicación",
+        "options": [
+          "6 — obedece órdenes",
+          "5 — localiza el dolor",
+          "4 — retira al dolor",
+          "3 — flexión anormal",
+          "2 — extensión",
+          "1 — ninguna"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "diagnostico",
+        "name": "Diagnóstico (con código CIE-10 si se conoce)",
+        "dataType": "text",
+        "required": true,
+        "section": "Conclusión y plan"
+      },
+      {
+        "code": "plan",
+        "name": "Plan: tratamiento, estudios, interconsultas y destino",
+        "dataType": "text",
+        "required": false,
+        "section": "Conclusión y plan"
+      }
+    ]
+  },
+  {
+    "code": "EMERG_POLITRAUMA",
+    "name": "Paciente politraumatizado: evaluación primaria",
+    "version": 1,
+    "kind": "SPECIFIC",
+    "specialty": "MEDICINA_EMERGENCIA",
+    "provenance": {
+      "sourceTitle": "Norma Técnica de Salud para la Gestión de la Historia Clínica — NT N.º 022-MINSA/DGSP-V.02",
+      "organization": "Ministerio de Salud del Perú (MINSA)",
+      "url": "https://bvs.minsa.gob.pe/local/dgsp/NT022hist.pdf",
+      "license": "Norma técnica estatal de acceso público",
+      "retrievedAt": "2026-10-02",
+      "note": "Evaluación primaria ABCDE con control cervical y Glasgow."
+    },
+    "fields": [
+      {
+        "code": "tipo_de_evaluacion",
+        "name": "Tipo de evaluación",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación inicial",
+        "options": [
+          "Evaluación inicial",
+          "Reevaluación"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "inicio_de_sintomas",
+        "name": "Inicio de los síntomas (fecha u hora)",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación inicial"
+      },
+      {
+        "code": "tratamiento_previo",
+        "name": "Tratamiento recibido antes de esta consulta",
+        "dataType": "text",
+        "required": false,
+        "section": "Evaluación inicial"
+      },
+      {
+        "code": "mecanismo",
+        "name": "Mecanismo",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación: politraumatismo"
+      },
+      {
+        "code": "via_aerea",
+        "name": "A — vía aérea con control cervical",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación: politraumatismo",
+        "options": [
+          "Permeable",
+          "Comprometida"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "respiracion",
+        "name": "B — respiración",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: politraumatismo",
+        "options": [
+          "Adecuada",
+          "Neumotórax sospechado",
+          "Dificultad respiratoria"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "circulacion",
+        "name": "C — circulación",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación: politraumatismo",
+        "options": [
+          "Estable",
+          "Hemorragia activa",
+          "Shock"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "glasgow_ocular",
+        "name": "Glasgow — apertura ocular",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: politraumatismo",
+        "options": [
+          "4 — espontánea",
+          "3 — a la voz",
+          "2 — al dolor",
+          "1 — ninguna"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "glasgow_verbal",
+        "name": "Glasgow — respuesta verbal",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: politraumatismo",
+        "options": [
+          "5 — orientada",
+          "4 — confusa",
+          "3 — palabras inapropiadas",
+          "2 — sonidos incomprensibles",
+          "1 — ninguna"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "glasgow_motora",
+        "name": "Glasgow — respuesta motora",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: politraumatismo",
+        "options": [
+          "6 — obedece órdenes",
+          "5 — localiza el dolor",
+          "4 — retira al dolor",
+          "3 — flexión anormal",
+          "2 — extensión",
+          "1 — ninguna"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "lesiones",
+        "name": "Lesiones",
+        "dataType": "json",
+        "required": false,
+        "section": "Evaluación: politraumatismo",
+        "options": [
+          "Craneoencefálica",
+          "Torácica",
+          "Abdominal",
+          "Pélvica",
+          "Extremidades",
+          "Columna"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "presion_arterial_sistolica",
+        "name": "Presión arterial sistólica (mmHg)",
+        "dataType": "integer",
+        "required": true,
+        "section": "Evaluación: politraumatismo"
+      },
+      {
+        "code": "presion_arterial_diastolica",
+        "name": "Presión arterial diastólica (mmHg)",
+        "dataType": "integer",
+        "required": true,
+        "section": "Evaluación: politraumatismo"
+      },
+      {
+        "code": "diagnostico",
+        "name": "Diagnóstico (con código CIE-10 si se conoce)",
+        "dataType": "text",
+        "required": true,
+        "section": "Conclusión y plan"
+      },
+      {
+        "code": "plan",
+        "name": "Plan: tratamiento, estudios, interconsultas y destino",
+        "dataType": "text",
+        "required": false,
+        "section": "Conclusión y plan"
+      }
+    ]
+  },
+  {
+    "code": "ENDO_CTRL_DISLIPIDEMIA",
+    "name": "Control de dislipidemia",
+    "version": 1,
+    "kind": "SPECIFIC",
+    "specialty": "ENDOCRINOLOGIA",
+    "provenance": {
+      "sourceTitle": "HEARTS: paquete técnico para el manejo de las enfermedades cardiovasculares en la atención primaria de salud",
+      "organization": "Organización Mundial de la Salud (OMS)",
+      "url": "https://www.who.int/publications/i/item/hearts-technical-package",
+      "license": "CC BY-NC-SA 3.0 IGO",
+      "retrievedAt": "2026-10-02",
+      "note": "Perfil lipídico y riesgo cardiovascular según el módulo de HEARTS."
+    },
+    "fields": [
+      {
+        "code": "tipo_de_control",
+        "name": "Tipo de consulta",
+        "dataType": "string",
+        "required": true,
+        "section": "Seguimiento",
+        "options": [
+          "Primera evaluación de la condición",
+          "Control programado",
+          "Descompensación o consulta no programada",
+          "Control posterior a internación"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "fecha_del_diagnostico",
+        "name": "Fecha del diagnóstico de dislipidemia",
+        "dataType": "date",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "tratamiento_actual",
+        "name": "Tratamiento actual (fármaco, dosis y frecuencia)",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "adherencia",
+        "name": "Adherencia al tratamiento",
+        "dataType": "string",
+        "required": false,
+        "section": "Seguimiento",
+        "options": [
+          "Toma el tratamiento como está indicado",
+          "Olvida dosis algunas veces",
+          "Abandonó el tratamiento",
+          "Todavía sin tratamiento"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "efectos_adversos",
+        "name": "¿Tuvo efectos adversos del tratamiento?",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "efectos_adversos_cuales",
+        "name": "¿Cuáles y con qué fármaco?",
+        "dataType": "text",
+        "required": true,
+        "section": "Seguimiento",
+        "showWhen": {
+          "field": "efectos_adversos",
+          "equals": true
+        }
+      },
+      {
+        "code": "evolucion_desde_ultimo_control",
+        "name": "Evolución desde el último control",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "colesterol_total",
+        "name": "Colesterol total (mg/dL)",
+        "dataType": "decimal",
+        "required": false,
+        "section": "Evaluación: dislipidemia"
+      },
+      {
+        "code": "ldl",
+        "name": "LDL (mg/dL)",
+        "dataType": "decimal",
+        "required": true,
+        "section": "Evaluación: dislipidemia"
+      },
+      {
+        "code": "hdl",
+        "name": "HDL (mg/dL)",
+        "dataType": "decimal",
+        "required": false,
+        "section": "Evaluación: dislipidemia"
+      },
+      {
+        "code": "trigliceridos",
+        "name": "Triglicéridos (mg/dL)",
+        "dataType": "decimal",
+        "required": false,
+        "section": "Evaluación: dislipidemia"
+      },
+      {
+        "code": "riesgo_cv",
+        "name": "Riesgo cardiovascular a 10 años (tabla OMS/OPS)",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: dislipidemia",
+        "options": [
+          "< 10 %",
+          "10 % a < 20 %",
+          "≥ 20 %",
+          "Prevención secundaria"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "estatina",
+        "name": "Recibe estatina",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Evaluación: dislipidemia"
+      },
+      {
+        "code": "mialgias",
+        "name": "Mialgias con la estatina",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Evaluación: dislipidemia",
+        "showWhen": {
+          "field": "estatina",
+          "equals": true
+        }
+      },
+      {
+        "code": "metas_cumplidas",
+        "name": "Metas de control que cumple hoy",
+        "dataType": "json",
+        "required": false,
+        "section": "Metas y plan",
+        "options": [
+          "LDL en la meta según su riesgo",
+          "Triglicéridos < 150 mg/dL",
+          "Ninguna todavía"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "educacion_brindada",
+        "name": "Educación brindada en esta consulta",
+        "dataType": "json",
+        "required": false,
+        "section": "Metas y plan",
+        "options": [
+          "Alimentación",
+          "Actividad física"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "diagnostico",
+        "name": "Diagnóstico (con código CIE-10 si se conoce)",
+        "dataType": "text",
+        "required": true,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "plan",
+        "name": "Plan: tratamiento, estudios, interconsultas y destino",
+        "dataType": "text",
+        "required": false,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "proximo_control",
+        "name": "Próximo control",
+        "dataType": "date",
+        "required": false,
+        "section": "Metas y plan"
+      }
+    ]
+  },
+  {
+    "code": "ENDO_CTRL_DM2",
+    "name": "Control de diabetes mellitus tipo 2",
+    "version": 1,
+    "kind": "SPECIFIC",
+    "specialty": "ENDOCRINOLOGIA",
+    "provenance": {
+      "sourceTitle": "HEARTS-D: diagnóstico y manejo de la diabetes tipo 2",
+      "organization": "Organización Mundial de la Salud (OMS)",
+      "url": "https://www.who.int/publications/i/item/who-ucn-ncd-20.1",
+      "license": "CC BY-NC-SA 3.0 IGO",
+      "retrievedAt": "2026-10-02",
+      "note": "Visita de control de HEARTS-D: glucemia y HbA1c, hipoglucemias, pie, ojo y riñón, y factores de riesgo cardiovascular."
+    },
+    "fields": [
+      {
+        "code": "tipo_de_control",
+        "name": "Tipo de consulta",
+        "dataType": "string",
+        "required": true,
+        "section": "Seguimiento",
+        "options": [
+          "Primera evaluación de la condición",
+          "Control programado",
+          "Descompensación o consulta no programada",
+          "Control posterior a internación"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "fecha_del_diagnostico",
+        "name": "Fecha del diagnóstico de diabetes tipo 2",
+        "dataType": "date",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "tratamiento_actual",
+        "name": "Tratamiento actual (fármaco, dosis y frecuencia)",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "adherencia",
+        "name": "Adherencia al tratamiento",
+        "dataType": "string",
+        "required": false,
+        "section": "Seguimiento",
+        "options": [
+          "Toma el tratamiento como está indicado",
+          "Olvida dosis algunas veces",
+          "Abandonó el tratamiento",
+          "Todavía sin tratamiento"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "efectos_adversos",
+        "name": "¿Tuvo efectos adversos del tratamiento?",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "efectos_adversos_cuales",
+        "name": "¿Cuáles y con qué fármaco?",
+        "dataType": "text",
+        "required": true,
+        "section": "Seguimiento",
+        "showWhen": {
+          "field": "efectos_adversos",
+          "equals": true
+        }
+      },
+      {
+        "code": "evolucion_desde_ultimo_control",
+        "name": "Evolución desde el último control",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "dm_glucemia_capilar",
+        "name": "Glucemia capilar (mg/dL)",
+        "dataType": "decimal",
+        "required": true,
+        "section": "Evaluación: diabetes tipo 2"
+      },
+      {
+        "code": "dm_hba1c",
+        "name": "Última HbA1c (%)",
+        "dataType": "decimal",
+        "required": false,
+        "section": "Evaluación: diabetes tipo 2"
+      },
+      {
+        "code": "dm_sintomas",
+        "name": "Síntomas",
+        "dataType": "json",
+        "required": false,
+        "section": "Evaluación: diabetes tipo 2",
+        "options": [
+          "Poliuria",
+          "Polidipsia",
+          "Pérdida de peso",
+          "Visión borrosa",
+          "Ninguno"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "dm_pie",
+        "name": "Examen del pie",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación: diabetes tipo 2",
+        "options": [
+          "Sensibilidad conservada (monofilamento)",
+          "Sensibilidad disminuida",
+          "Úlcera o lesión presente",
+          "No evaluado"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "dm_hipoglucemias",
+        "name": "Episodios de hipoglucemia desde el último control",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Evaluación: diabetes tipo 2"
+      },
+      {
+        "code": "presion_arterial_sistolica",
+        "name": "Presión arterial sistólica (mmHg)",
+        "dataType": "integer",
+        "required": true,
+        "section": "Evaluación: diabetes tipo 2"
+      },
+      {
+        "code": "presion_arterial_diastolica",
+        "name": "Presión arterial diastólica (mmHg)",
+        "dataType": "integer",
+        "required": true,
+        "section": "Evaluación: diabetes tipo 2"
+      },
+      {
+        "code": "frecuencia_cardiaca",
+        "name": "Frecuencia cardíaca (lpm)",
+        "dataType": "integer",
+        "required": false,
+        "section": "Evaluación: diabetes tipo 2"
+      },
+      {
+        "code": "peso_kg",
+        "name": "Peso (kg)",
+        "dataType": "decimal",
+        "required": false,
+        "section": "Evaluación: diabetes tipo 2"
+      },
+      {
+        "code": "perimetro_abdominal_cm",
+        "name": "Perímetro abdominal (cm)",
+        "dataType": "decimal",
+        "required": false,
+        "section": "Evaluación: diabetes tipo 2"
+      },
+      {
+        "code": "fondo_de_ojo",
+        "name": "Fondo de ojo en el último año",
+        "dataType": "string",
+        "required": false,
+        "section": "Complicaciones y daño de órgano",
+        "options": [
+          "Normal",
+          "Retinopatía",
+          "No realizado"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "albuminuria",
+        "name": "Relación albúmina/creatinina en orina (mg/g)",
+        "dataType": "decimal",
+        "required": false,
+        "section": "Complicaciones y daño de órgano"
+      },
+      {
+        "code": "tfg",
+        "name": "Filtrado glomerular estimado (mL/min/1,73 m²)",
+        "dataType": "decimal",
+        "required": false,
+        "section": "Complicaciones y daño de órgano"
+      },
+      {
+        "code": "dm_complicaciones",
+        "name": "Complicaciones conocidas",
+        "dataType": "json",
+        "required": false,
+        "section": "Complicaciones y daño de órgano",
+        "options": [
+          "Neuropatía",
+          "Pie diabético",
+          "Retinopatía",
+          "Nefropatía",
+          "Cardiopatía isquémica",
+          "Ninguna"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "metas_cumplidas",
+        "name": "Metas de control que cumple hoy",
+        "dataType": "json",
+        "required": false,
+        "section": "Metas y plan",
+        "options": [
+          "HbA1c < 7 %",
+          "PA < 130/80 mmHg",
+          "LDL < 100 mg/dL",
+          "Pies sin lesiones",
+          "Ninguna todavía"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "educacion_brindada",
+        "name": "Educación brindada en esta consulta",
+        "dataType": "json",
+        "required": false,
+        "section": "Metas y plan",
+        "options": [
+          "Alimentación",
+          "Actividad física",
+          "Cuidado de los pies",
+          "Reconocer y tratar una hipoglucemia",
+          "Automonitoreo"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "diagnostico",
+        "name": "Diagnóstico (con código CIE-10 si se conoce)",
+        "dataType": "text",
+        "required": true,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "plan",
+        "name": "Plan: tratamiento, estudios, interconsultas y destino",
+        "dataType": "text",
+        "required": false,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "proximo_control",
+        "name": "Próximo control",
+        "dataType": "date",
+        "required": false,
+        "section": "Metas y plan"
+      }
+    ]
+  },
+  {
+    "code": "ENDO_CTRL_OBESIDAD",
+    "name": "Control de obesidad",
+    "version": 1,
+    "kind": "SPECIFIC",
+    "specialty": "ENDOCRINOLOGIA",
+    "provenance": {
+      "sourceTitle": "Obesidad y sobrepeso",
+      "organization": "Organización Mundial de la Salud (OMS)",
+      "url": "https://www.who.int/health-topics/obesity",
+      "license": "CC BY-NC-SA 3.0 IGO",
+      "retrievedAt": "2026-10-02",
+      "note": "Clasificación de la OMS por IMC y perímetro abdominal; seguimiento de comorbilidades."
+    },
+    "fields": [
+      {
+        "code": "tipo_de_control",
+        "name": "Tipo de consulta",
+        "dataType": "string",
+        "required": true,
+        "section": "Seguimiento",
+        "options": [
+          "Primera evaluación de la condición",
+          "Control programado",
+          "Descompensación o consulta no programada",
+          "Control posterior a internación"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "fecha_del_diagnostico",
+        "name": "Fecha del diagnóstico de obesidad",
+        "dataType": "date",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "tratamiento_actual",
+        "name": "Tratamiento actual (fármaco, dosis y frecuencia)",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "adherencia",
+        "name": "Adherencia al tratamiento",
+        "dataType": "string",
+        "required": false,
+        "section": "Seguimiento",
+        "options": [
+          "Toma el tratamiento como está indicado",
+          "Olvida dosis algunas veces",
+          "Abandonó el tratamiento",
+          "Todavía sin tratamiento"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "efectos_adversos",
+        "name": "¿Tuvo efectos adversos del tratamiento?",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "efectos_adversos_cuales",
+        "name": "¿Cuáles y con qué fármaco?",
+        "dataType": "text",
+        "required": true,
+        "section": "Seguimiento",
+        "showWhen": {
+          "field": "efectos_adversos",
+          "equals": true
+        }
+      },
+      {
+        "code": "evolucion_desde_ultimo_control",
+        "name": "Evolución desde el último control",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "peso_kg",
+        "name": "Peso (kg)",
+        "dataType": "decimal",
+        "required": true,
+        "section": "Evaluación: obesidad"
+      },
+      {
+        "code": "talla_cm",
+        "name": "Talla (cm)",
+        "dataType": "decimal",
+        "required": true,
+        "section": "Evaluación: obesidad"
+      },
+      {
+        "code": "imc",
+        "name": "IMC (kg/m²)",
+        "dataType": "decimal",
+        "required": false,
+        "section": "Evaluación: obesidad"
+      },
+      {
+        "code": "obesidad_grado",
+        "name": "Clasificación OMS",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación: obesidad",
+        "options": [
+          "Sobrepeso (25–29,9)",
+          "Obesidad I (30–34,9)",
+          "Obesidad II (35–39,9)",
+          "Obesidad III (≥ 40)"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "perimetro_abdominal_cm",
+        "name": "Perímetro abdominal (cm)",
+        "dataType": "decimal",
+        "required": false,
+        "section": "Evaluación: obesidad"
+      },
+      {
+        "code": "cambio_de_peso_kg",
+        "name": "Cambio de peso desde el último control (kg)",
+        "dataType": "decimal",
+        "required": false,
+        "section": "Evaluación: obesidad"
+      },
+      {
+        "code": "comorbilidades_obesidad",
+        "name": "Comorbilidades",
+        "dataType": "json",
+        "required": false,
+        "section": "Evaluación: obesidad",
+        "options": [
+          "Diabetes o prediabetes",
+          "Hipertensión",
+          "Dislipidemia",
+          "Apnea del sueño",
+          "Hígado graso",
+          "Artrosis",
+          "Ninguna"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "metas_cumplidas",
+        "name": "Metas de control que cumple hoy",
+        "dataType": "json",
+        "required": false,
+        "section": "Metas y plan",
+        "options": [
+          "Bajó al menos 5 % del peso",
+          "Actividad física ≥ 150 min por semana",
+          "Ninguna todavía"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "educacion_brindada",
+        "name": "Educación brindada en esta consulta",
+        "dataType": "json",
+        "required": false,
+        "section": "Metas y plan",
+        "options": [
+          "Alimentación",
+          "Actividad física",
+          "Sueño"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "diagnostico",
+        "name": "Diagnóstico (con código CIE-10 si se conoce)",
+        "dataType": "text",
+        "required": true,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "plan",
+        "name": "Plan: tratamiento, estudios, interconsultas y destino",
+        "dataType": "text",
+        "required": false,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "proximo_control",
+        "name": "Próximo control",
+        "dataType": "date",
+        "required": false,
+        "section": "Metas y plan"
+      }
+    ]
+  },
+  {
+    "code": "ENDO_CTRL_TIROIDES",
+    "name": "Control de hipotiroidismo o hipertiroidismo",
+    "version": 1,
+    "kind": "SPECIFIC",
+    "specialty": "ENDOCRINOLOGIA",
+    "provenance": {
+      "sourceTitle": "Norma Técnica de Salud para la Gestión de la Historia Clínica — NT N.º 022-MINSA/DGSP-V.02",
+      "organization": "Ministerio de Salud del Perú (MINSA)",
+      "url": "https://bvs.minsa.gob.pe/local/dgsp/NT022hist.pdf",
+      "license": "Norma técnica estatal de acceso público",
+      "retrievedAt": "2026-10-02",
+      "note": "Seguimiento de la función tiroidea: TSH y T4 libre, síntomas y examen del cuello."
+    },
+    "fields": [
+      {
+        "code": "tipo_de_control",
+        "name": "Tipo de consulta",
+        "dataType": "string",
+        "required": true,
+        "section": "Seguimiento",
+        "options": [
+          "Primera evaluación de la condición",
+          "Control programado",
+          "Descompensación o consulta no programada",
+          "Control posterior a internación"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "fecha_del_diagnostico",
+        "name": "Fecha del diagnóstico de enfermedad tiroidea",
+        "dataType": "date",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "tratamiento_actual",
+        "name": "Tratamiento actual (fármaco, dosis y frecuencia)",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "adherencia",
+        "name": "Adherencia al tratamiento",
+        "dataType": "string",
+        "required": false,
+        "section": "Seguimiento",
+        "options": [
+          "Toma el tratamiento como está indicado",
+          "Olvida dosis algunas veces",
+          "Abandonó el tratamiento",
+          "Todavía sin tratamiento"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "efectos_adversos",
+        "name": "¿Tuvo efectos adversos del tratamiento?",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "efectos_adversos_cuales",
+        "name": "¿Cuáles y con qué fármaco?",
+        "dataType": "text",
+        "required": true,
+        "section": "Seguimiento",
+        "showWhen": {
+          "field": "efectos_adversos",
+          "equals": true
+        }
+      },
+      {
+        "code": "evolucion_desde_ultimo_control",
+        "name": "Evolución desde el último control",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "tiroides_condicion",
+        "name": "Condición",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación: enfermedad tiroidea",
+        "options": [
+          "Hipotiroidismo",
+          "Hipertiroidismo",
+          "Nódulo tiroideo",
+          "Bocio"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "tsh",
+        "name": "TSH (mUI/L)",
+        "dataType": "decimal",
+        "required": true,
+        "section": "Evaluación: enfermedad tiroidea"
+      },
+      {
+        "code": "t4_libre",
+        "name": "T4 libre (ng/dL)",
+        "dataType": "decimal",
+        "required": false,
+        "section": "Evaluación: enfermedad tiroidea"
+      },
+      {
+        "code": "sintomas_tiroideos",
+        "name": "Síntomas",
+        "dataType": "json",
+        "required": false,
+        "section": "Evaluación: enfermedad tiroidea",
+        "options": [
+          "Cansancio",
+          "Intolerancia al frío",
+          "Intolerancia al calor",
+          "Palpitaciones",
+          "Temblor",
+          "Cambio de peso",
+          "Ninguno"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "frecuencia_cardiaca",
+        "name": "Frecuencia cardíaca (lpm)",
+        "dataType": "integer",
+        "required": false,
+        "section": "Evaluación: enfermedad tiroidea"
+      },
+      {
+        "code": "peso_kg",
+        "name": "Peso (kg)",
+        "dataType": "decimal",
+        "required": false,
+        "section": "Evaluación: enfermedad tiroidea"
+      },
+      {
+        "code": "bocio_oms",
+        "name": "Bocio (clasificación OMS)",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: enfermedad tiroidea",
+        "options": [
+          "Grado 0",
+          "Grado 1",
+          "Grado 2"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "tirads",
+        "name": "Ecografía — categoría TI-RADS",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación: enfermedad tiroidea",
+        "showWhen": {
+          "field": "tiroides_condicion",
+          "equals": "Nódulo tiroideo"
+        }
+      },
+      {
+        "code": "metas_cumplidas",
+        "name": "Metas de control que cumple hoy",
+        "dataType": "json",
+        "required": false,
+        "section": "Metas y plan",
+        "options": [
+          "TSH en rango",
+          "Sin síntomas",
+          "Ninguna todavía"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "educacion_brindada",
+        "name": "Educación brindada en esta consulta",
+        "dataType": "json",
+        "required": false,
+        "section": "Metas y plan",
+        "options": [
+          "Tomar la levotiroxina en ayunas",
+          "Embarazo: avisar para ajustar la dosis"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "diagnostico",
+        "name": "Diagnóstico (con código CIE-10 si se conoce)",
+        "dataType": "text",
+        "required": true,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "plan",
+        "name": "Plan: tratamiento, estudios, interconsultas y destino",
+        "dataType": "text",
+        "required": false,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "proximo_control",
+        "name": "Próximo control",
+        "dataType": "date",
+        "required": false,
+        "section": "Metas y plan"
+      }
+    ]
+  },
+  {
     "code": "ENDO_EVALUACION_BASE",
-    "name": "Evaluación endocrinológica",
+    "name": "Endocrinología — consulta inicial (ficha base)",
     "version": 2,
+    "kind": "BASE",
     "specialty": "ENDOCRINOLOGIA",
     "provenance": {
       "sourceTitle": "Norma Técnica de Salud para la Gestión de la Historia Clínica — NT N.º 022-MINSA/DGSP-V.02, anamnesis, antecedentes y examen físico con registro antropométrico",
@@ -3518,7 +6731,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
       "license": "Norma técnica estatal de acceso público",
       "sourceVersion": "V.02",
       "retrievedAt": "2026-08-14",
-      "note": "De la norma salen la estructura común de la consulta: motivo, tiempo de evolución, antecedentes personales y familiares, examen físico con peso y talla, diagnóstico y conducta. Son agregados propios de la especialidad la anamnesis dirigida de síntomas tiroideos y de alteración de la glucemia (poliuria, polidipsia, polifagia), el registro del cambio de peso y del perímetro abdominal, y el examen de tiroides, piel y anexos. v2 (2026-10-02): reorganizada en secciones (motivo, antecedentes, examen, diagnóstico presuntivo, plan); las clasificaciones con categorías finitas pasan a lista cerrada; cada sí/no que tiene detalle pregunta «¿cuál?»; el diagnóstico presuntivo abre las observaciones que ese cuadro exige registrar. Instrumentos de uso libre incorporados: categorías TI-RADS."
+      "note": "De la norma salen la estructura común de la consulta: motivo, tiempo de evolución, antecedentes personales y familiares, examen físico con peso y talla, diagnóstico y conducta. Son agregados propios de la especialidad la anamnesis dirigida de síntomas tiroideos y de alteración de la glucemia (poliuria, polidipsia, polifagia), el registro del cambio de peso y del perímetro abdominal, y el examen de tiroides, piel y anexos. v2 (2026-10-02): reorganizada en secciones (motivo, antecedentes, examen, diagnóstico presuntivo, plan); las clasificaciones con categorías finitas pasan a lista cerrada; cada sí/no que tiene detalle pregunta «¿cuál?»; el diagnóstico presuntivo abre las observaciones que ese cuadro exige registrar."
     },
     "fields": [
       {
@@ -3761,184 +6974,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
         ],
         "multiple": false,
         "allowOther": true,
-        "description": "Al elegirlo se abren las observaciones que ese cuadro exige registrar."
-      },
-      {
-        "code": "dm_glucemia_capilar",
-        "name": "Glucemia capilar (mg/dL)",
-        "dataType": "decimal",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Diabetes mellitus"
-        }
-      },
-      {
-        "code": "dm_hba1c",
-        "name": "Última HbA1c (%)",
-        "dataType": "decimal",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Diabetes mellitus"
-        }
-      },
-      {
-        "code": "dm_sintomas",
-        "name": "Síntomas",
-        "dataType": "json",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Poliuria",
-          "Polidipsia",
-          "Pérdida de peso",
-          "Visión borrosa",
-          "Ninguno"
-        ],
-        "multiple": true,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Diabetes mellitus"
-        }
-      },
-      {
-        "code": "dm_pie",
-        "name": "Examen del pie",
-        "dataType": "string",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Sensibilidad conservada (monofilamento)",
-          "Sensibilidad disminuida",
-          "Úlcera o lesión presente",
-          "No evaluado"
-        ],
-        "multiple": false,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Diabetes mellitus"
-        }
-      },
-      {
-        "code": "dm_hipoglucemias",
-        "name": "Episodios de hipoglucemia desde el último control",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Diabetes mellitus"
-        }
-      },
-      {
-        "code": "tsh",
-        "name": "TSH (mUI/L)",
-        "dataType": "decimal",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Hipotiroidismo"
-        }
-      },
-      {
-        "code": "t4l",
-        "name": "T4 libre (ng/dL)",
-        "dataType": "decimal",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Hipotiroidismo"
-        }
-      },
-      {
-        "code": "tsh_hiper",
-        "name": "TSH (mUI/L)",
-        "dataType": "decimal",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Hipertiroidismo"
-        }
-      },
-      {
-        "code": "oftalmopatia",
-        "name": "Oftalmopatía",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Hipertiroidismo"
-        }
-      },
-      {
-        "code": "nodulo_tirads",
-        "name": "Ecografía — categoría TI-RADS",
-        "dataType": "string",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Nódulo tiroideo"
-        }
-      },
-      {
-        "code": "nodulo_puncion",
-        "name": "Punción con aguja fina indicada",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Nódulo tiroideo"
-        }
-      },
-      {
-        "code": "sm_criterios",
-        "name": "Criterios de síndrome metabólico",
-        "dataType": "json",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Perímetro abdominal aumentado",
-          "Triglicéridos ≥ 150 mg/dL",
-          "HDL bajo",
-          "PA ≥ 130/85",
-          "Glucemia en ayunas ≥ 100 mg/dL"
-        ],
-        "multiple": true,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Obesidad y síndrome metabólico"
-        }
-      },
-      {
-        "code": "ldl_endo",
-        "name": "LDL (mg/dL)",
-        "dataType": "decimal",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Dislipidemia"
-        }
-      },
-      {
-        "code": "trigliceridos",
-        "name": "Triglicéridos (mg/dL)",
-        "dataType": "decimal",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Dislipidemia"
-        }
+        "description": "Si el cuadro ya está diagnosticado, el seguimiento se hace con su ficha específica de la especialidad."
       },
       {
         "code": "diagnostico",
@@ -3958,9 +6994,160 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
     ]
   },
   {
+    "code": "ENFER_CTRL_HERIDAS",
+    "name": "Curación y control de heridas",
+    "version": 1,
+    "kind": "SPECIFIC",
+    "specialty": "ENFERMERIA",
+    "provenance": {
+      "sourceTitle": "Norma Técnica de Salud para la Gestión de la Historia Clínica — NT N.º 022-MINSA/DGSP-V.02",
+      "organization": "Ministerio de Salud del Perú (MINSA)",
+      "url": "https://bvs.minsa.gob.pe/local/dgsp/NT022hist.pdf",
+      "license": "Norma técnica estatal de acceso público",
+      "retrievedAt": "2026-10-02",
+      "note": "Tipo, dimensiones, lecho, exudado, signos de infección y estadio de lesión por presión."
+    },
+    "fields": [
+      {
+        "code": "tipo_de_evaluacion",
+        "name": "Tipo de evaluación",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación inicial",
+        "options": [
+          "Evaluación inicial",
+          "Reevaluación"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "inicio_de_sintomas",
+        "name": "Inicio de los síntomas (fecha u hora)",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación inicial"
+      },
+      {
+        "code": "tratamiento_previo",
+        "name": "Tratamiento recibido antes de esta consulta",
+        "dataType": "text",
+        "required": false,
+        "section": "Evaluación inicial"
+      },
+      {
+        "code": "tipo_herida",
+        "name": "Tipo",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación: herida",
+        "options": [
+          "Quirúrgica",
+          "Traumática",
+          "Lesión por presión",
+          "Úlcera venosa",
+          "Pie diabético",
+          "Quemadura"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "upp_estadio",
+        "name": "Estadio",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación: herida",
+        "options": [
+          "1",
+          "2",
+          "3",
+          "4",
+          "No estadificable"
+        ],
+        "multiple": false,
+        "showWhen": {
+          "field": "tipo_herida",
+          "equals": "Lesión por presión"
+        }
+      },
+      {
+        "code": "dimensiones",
+        "name": "Largo × ancho × profundidad (cm)",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: herida"
+      },
+      {
+        "code": "lecho",
+        "name": "Lecho",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: herida",
+        "options": [
+          "Granulación",
+          "Esfacelo",
+          "Necrosis",
+          "Epitelización"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "exudado",
+        "name": "Exudado",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: herida",
+        "options": [
+          "Ninguno",
+          "Escaso",
+          "Moderado",
+          "Abundante"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "infeccion",
+        "name": "Signos de infección",
+        "dataType": "json",
+        "required": false,
+        "section": "Evaluación: herida",
+        "options": [
+          "Calor",
+          "Rubor",
+          "Dolor creciente",
+          "Mal olor",
+          "Secreción purulenta",
+          "Ninguno"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "aposito",
+        "name": "Apósito utilizado",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: herida"
+      },
+      {
+        "code": "diagnostico",
+        "name": "Diagnóstico (con código CIE-10 si se conoce)",
+        "dataType": "text",
+        "required": true,
+        "section": "Conclusión y plan"
+      },
+      {
+        "code": "plan",
+        "name": "Plan: tratamiento, estudios, interconsultas y destino",
+        "dataType": "text",
+        "required": false,
+        "section": "Conclusión y plan"
+      }
+    ]
+  },
+  {
     "code": "ENFER_VALORACION_BASE",
-    "name": "Valoración de enfermería",
+    "name": "Enfermería — valoración de enfermería (ficha base)",
     "version": 2,
+    "kind": "BASE",
     "specialty": "ENFERMERIA",
     "provenance": {
       "sourceTitle": "Norma Técnica de Salud para la Gestión de la Historia Clínica — NT N.º 022-MINSA/DGSP-V.02, registro de funciones vitales y notas de enfermería",
@@ -4277,9 +7464,343 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
     ]
   },
   {
+    "code": "FISIO_CTRL_LUMBALGIA",
+    "name": "Rehabilitación de lumbalgia",
+    "version": 1,
+    "kind": "SPECIFIC",
+    "specialty": "FISIOTERAPIA",
+    "provenance": {
+      "sourceTitle": "Norma Técnica de Salud para la Gestión de la Historia Clínica — NT N.º 022-MINSA/DGSP-V.02",
+      "organization": "Ministerio de Salud del Perú (MINSA)",
+      "url": "https://bvs.minsa.gob.pe/local/dgsp/NT022hist.pdf",
+      "license": "Norma técnica estatal de acceso público",
+      "retrievedAt": "2026-10-02",
+      "note": "Banderas rojas, dolor, función y progreso del ejercicio."
+    },
+    "fields": [
+      {
+        "code": "tipo_de_control",
+        "name": "Tipo de consulta",
+        "dataType": "string",
+        "required": true,
+        "section": "Seguimiento",
+        "options": [
+          "Primera evaluación de la condición",
+          "Control programado",
+          "Descompensación o consulta no programada",
+          "Control posterior a internación"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "fecha_del_diagnostico",
+        "name": "Fecha del diagnóstico de lumbalgia",
+        "dataType": "date",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "tratamiento_actual",
+        "name": "Tratamiento actual (fármaco, dosis y frecuencia)",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "adherencia",
+        "name": "Adherencia al tratamiento",
+        "dataType": "string",
+        "required": false,
+        "section": "Seguimiento",
+        "options": [
+          "Toma el tratamiento como está indicado",
+          "Olvida dosis algunas veces",
+          "Abandonó el tratamiento",
+          "Todavía sin tratamiento"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "efectos_adversos",
+        "name": "¿Tuvo efectos adversos del tratamiento?",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "efectos_adversos_cuales",
+        "name": "¿Cuáles y con qué fármaco?",
+        "dataType": "text",
+        "required": true,
+        "section": "Seguimiento",
+        "showWhen": {
+          "field": "efectos_adversos",
+          "equals": true
+        }
+      },
+      {
+        "code": "evolucion_desde_ultimo_control",
+        "name": "Evolución desde el último control",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "lumbalgia_banderas_rojas",
+        "name": "Banderas rojas",
+        "dataType": "json",
+        "required": true,
+        "section": "Evaluación: lumbalgia",
+        "options": [
+          "Edad menor a 20 o mayor a 55 años",
+          "Traumatismo importante",
+          "Fiebre",
+          "Pérdida de peso no explicada",
+          "Antecedente de cáncer",
+          "Déficit neurológico progresivo",
+          "Alteración de esfínteres o anestesia en silla de montar",
+          "Ninguna"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "lumbalgia_ciatica",
+        "name": "Dolor irradiado por debajo de la rodilla",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Evaluación: lumbalgia"
+      },
+      {
+        "code": "lumbalgia_lasegue",
+        "name": "Signo de Lasègue",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: lumbalgia",
+        "options": [
+          "Positivo",
+          "Negativo",
+          "No evaluado"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "dolor_intensidad",
+        "name": "Dolor (0 a 10)",
+        "dataType": "integer",
+        "required": true,
+        "section": "Evaluación: lumbalgia"
+      },
+      {
+        "code": "sesion_numero",
+        "name": "Sesión número",
+        "dataType": "integer",
+        "required": false,
+        "section": "Evaluación: lumbalgia"
+      },
+      {
+        "code": "ejercicios",
+        "name": "Ejercicios indicados",
+        "dataType": "text",
+        "required": false,
+        "section": "Evaluación: lumbalgia"
+      },
+      {
+        "code": "metas_cumplidas",
+        "name": "Metas de control que cumple hoy",
+        "dataType": "json",
+        "required": false,
+        "section": "Metas y plan",
+        "options": [
+          "Dolor ≤ 3",
+          "Volvió a sus actividades",
+          "Ninguna todavía"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "diagnostico",
+        "name": "Diagnóstico (con código CIE-10 si se conoce)",
+        "dataType": "text",
+        "required": true,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "plan",
+        "name": "Plan: tratamiento, estudios, interconsultas y destino",
+        "dataType": "text",
+        "required": false,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "proximo_control",
+        "name": "Próximo control",
+        "dataType": "date",
+        "required": false,
+        "section": "Metas y plan"
+      }
+    ]
+  },
+  {
+    "code": "FISIO_CTRL_NEUROLOGICA",
+    "name": "Rehabilitación neurológica (secuela de ACV)",
+    "version": 1,
+    "kind": "SPECIFIC",
+    "specialty": "FISIOTERAPIA",
+    "provenance": {
+      "sourceTitle": "Norma Técnica de Salud para la Gestión de la Historia Clínica — NT N.º 022-MINSA/DGSP-V.02",
+      "organization": "Ministerio de Salud del Perú (MINSA)",
+      "url": "https://bvs.minsa.gob.pe/local/dgsp/NT022hist.pdf",
+      "license": "Norma técnica estatal de acceso público",
+      "retrievedAt": "2026-10-02",
+      "note": "Independencia por índice de Barthel (dominio público), marcha y equilibrio."
+    },
+    "fields": [
+      {
+        "code": "tipo_de_control",
+        "name": "Tipo de consulta",
+        "dataType": "string",
+        "required": true,
+        "section": "Seguimiento",
+        "options": [
+          "Primera evaluación de la condición",
+          "Control programado",
+          "Descompensación o consulta no programada",
+          "Control posterior a internación"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "fecha_del_diagnostico",
+        "name": "Fecha del diagnóstico de secuela neurológica",
+        "dataType": "date",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "tratamiento_actual",
+        "name": "Tratamiento actual (fármaco, dosis y frecuencia)",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "adherencia",
+        "name": "Adherencia al tratamiento",
+        "dataType": "string",
+        "required": false,
+        "section": "Seguimiento",
+        "options": [
+          "Toma el tratamiento como está indicado",
+          "Olvida dosis algunas veces",
+          "Abandonó el tratamiento",
+          "Todavía sin tratamiento"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "efectos_adversos",
+        "name": "¿Tuvo efectos adversos del tratamiento?",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "efectos_adversos_cuales",
+        "name": "¿Cuáles y con qué fármaco?",
+        "dataType": "text",
+        "required": true,
+        "section": "Seguimiento",
+        "showWhen": {
+          "field": "efectos_adversos",
+          "equals": true
+        }
+      },
+      {
+        "code": "evolucion_desde_ultimo_control",
+        "name": "Evolución desde el último control",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "barthel",
+        "name": "Índice de Barthel (0–100)",
+        "dataType": "integer",
+        "required": true,
+        "section": "Evaluación: secuela neurológica"
+      },
+      {
+        "code": "marcha",
+        "name": "Marcha",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: secuela neurológica",
+        "options": [
+          "Independiente",
+          "Con bastón",
+          "Con andador",
+          "No camina"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "fuerza_mrc",
+        "name": "Fuerza del lado afectado (MRC)",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: secuela neurológica",
+        "options": [
+          "5",
+          "4",
+          "3",
+          "2",
+          "1",
+          "0"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "espasticidad",
+        "name": "Espasticidad",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Evaluación: secuela neurológica"
+      },
+      {
+        "code": "sesion_numero",
+        "name": "Sesión número",
+        "dataType": "integer",
+        "required": false,
+        "section": "Evaluación: secuela neurológica"
+      },
+      {
+        "code": "diagnostico",
+        "name": "Diagnóstico (con código CIE-10 si se conoce)",
+        "dataType": "text",
+        "required": true,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "plan",
+        "name": "Plan: tratamiento, estudios, interconsultas y destino",
+        "dataType": "text",
+        "required": false,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "proximo_control",
+        "name": "Próximo control",
+        "dataType": "date",
+        "required": false,
+        "section": "Metas y plan"
+      }
+    ]
+  },
+  {
     "code": "FISIO_EVALUACION_BASE",
-    "name": "Evaluación kinesiológica",
+    "name": "Fisioterapia y Rehabilitación — consulta inicial (ficha base)",
     "version": 2,
+    "kind": "BASE",
     "specialty": "FISIOTERAPIA",
     "provenance": {
       "sourceTitle": "Norma Técnica de Salud para la Gestión de la Historia Clínica — NT N.º 022-MINSA/DGSP-V.02, anamnesis, examen físico regional y plan de trabajo",
@@ -4288,7 +7809,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
       "license": "Norma técnica estatal de acceso público",
       "sourceVersion": "V.02",
       "retrievedAt": "2026-08-14",
-      "note": "De la norma se transcribe la estructura común: motivo de consulta, tiempo de evolución, antecedentes, examen físico dirigido a la región afectada, diagnóstico y conducta. Son agregados propios de la especialidad la intensidad de dolor referida por el paciente en escala de 0 a 10, la zona afectada, la descripción en prosa del rango de movimiento, la fuerza muscular, la marcha, la limitación funcional y los objetivos de rehabilitación. v2 (2026-10-02): reorganizada en secciones (motivo, antecedentes, examen, diagnóstico presuntivo, plan); las clasificaciones con categorías finitas pasan a lista cerrada; cada sí/no que tiene detalle pregunta «¿cuál?»; el diagnóstico presuntivo abre las observaciones que ese cuadro exige registrar. Instrumentos de uso libre incorporados: escala de disnea mMRC, índice de Barthel, escala de fuerza MRC."
+      "note": "De la norma se transcribe la estructura común: motivo de consulta, tiempo de evolución, antecedentes, examen físico dirigido a la región afectada, diagnóstico y conducta. Son agregados propios de la especialidad la intensidad de dolor referida por el paciente en escala de 0 a 10, la zona afectada, la descripción en prosa del rango de movimiento, la fuerza muscular, la marcha, la limitación funcional y los objetivos de rehabilitación. v2 (2026-10-02): reorganizada en secciones (motivo, antecedentes, examen, diagnóstico presuntivo, plan); las clasificaciones con categorías finitas pasan a lista cerrada; cada sí/no que tiene detalle pregunta «¿cuál?»; el diagnóstico presuntivo abre las observaciones que ese cuadro exige registrar. Instrumentos de uso libre incorporados: escala de fuerza MRC."
     },
     "fields": [
       {
@@ -4453,167 +7974,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
         ],
         "multiple": false,
         "allowOther": true,
-        "description": "Al elegirlo se abren las observaciones que ese cuadro exige registrar."
-      },
-      {
-        "code": "lumbalgia_banderas_rojas",
-        "name": "Banderas rojas",
-        "dataType": "json",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Edad menor a 20 o mayor a 55 años",
-          "Traumatismo importante",
-          "Fiebre",
-          "Pérdida de peso no explicada",
-          "Antecedente de cáncer",
-          "Déficit neurológico progresivo",
-          "Alteración de esfínteres o anestesia en silla de montar",
-          "Ninguna"
-        ],
-        "multiple": true,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Lumbalgia"
-        }
-      },
-      {
-        "code": "lumbalgia_ciatica",
-        "name": "Dolor irradiado por debajo de la rodilla",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Lumbalgia"
-        }
-      },
-      {
-        "code": "lumbalgia_lasegue",
-        "name": "Signo de Lasègue",
-        "dataType": "string",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Positivo",
-          "Negativo",
-          "No evaluado"
-        ],
-        "multiple": false,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Lumbalgia"
-        }
-      },
-      {
-        "code": "cervical_irradiada",
-        "name": "Irradiada al brazo",
-        "dataType": "boolean",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Cervicalgia"
-        }
-      },
-      {
-        "code": "cervical_mareo",
-        "name": "Mareo o cefalea asociada",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Cervicalgia"
-        }
-      },
-      {
-        "code": "posqx_cirugia",
-        "name": "Cirugía o fractura y fecha",
-        "dataType": "string",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Posquirúrgico o posfractura"
-        }
-      },
-      {
-        "code": "posqx_carga",
-        "name": "Carga permitida",
-        "dataType": "string",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Sin carga",
-          "Parcial",
-          "Total"
-        ],
-        "multiple": false,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Posquirúrgico o posfractura"
-        }
-      },
-      {
-        "code": "barthel",
-        "name": "Barthel",
-        "dataType": "string",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Independiente (100)",
-          "Dependencia leve (91–99)",
-          "Moderada (61–90)",
-          "Grave (21–60)",
-          "Total (0–20)"
-        ],
-        "multiple": false,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Secuela neurológica (ACV, lesión medular)"
-        }
-      },
-      {
-        "code": "deporte_lesion",
-        "name": "Deporte y gesto lesivo",
-        "dataType": "string",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Lesión deportiva"
-        }
-      },
-      {
-        "code": "disnea_mmrc_fisio",
-        "name": "mMRC",
-        "dataType": "string",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "0",
-          "1",
-          "2",
-          "3",
-          "4"
-        ],
-        "multiple": false,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Rehabilitación respiratoria"
-        }
-      },
-      {
-        "code": "caminata_6min",
-        "name": "Prueba de caminata de 6 minutos (m)",
-        "dataType": "integer",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Rehabilitación respiratoria"
-        }
+        "description": "Si el cuadro ya está diagnosticado, el seguimiento se hace con su ficha específica de la especialidad."
       },
       {
         "code": "objetivos_de_rehabilitacion",
@@ -4639,9 +8000,573 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
     ]
   },
   {
+    "code": "GASTRO_CTRL_ERGE_DISPEPSIA",
+    "name": "Control de reflujo gastroesofágico y dispepsia",
+    "version": 1,
+    "kind": "SPECIFIC",
+    "specialty": "GASTROENTEROLOGIA",
+    "provenance": {
+      "sourceTitle": "Norma Técnica de Salud para la Gestión de la Historia Clínica — NT N.º 022-MINSA/DGSP-V.02",
+      "organization": "Ministerio de Salud del Perú (MINSA)",
+      "url": "https://bvs.minsa.gob.pe/local/dgsp/NT022hist.pdf",
+      "license": "Norma técnica estatal de acceso público",
+      "retrievedAt": "2026-10-02",
+      "note": "Síntomas típicos y atípicos, signos de alarma que indican endoscopía y estado de Helicobacter pylori."
+    },
+    "fields": [
+      {
+        "code": "tipo_de_control",
+        "name": "Tipo de consulta",
+        "dataType": "string",
+        "required": true,
+        "section": "Seguimiento",
+        "options": [
+          "Primera evaluación de la condición",
+          "Control programado",
+          "Descompensación o consulta no programada",
+          "Control posterior a internación"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "fecha_del_diagnostico",
+        "name": "Fecha del diagnóstico de reflujo o dispepsia",
+        "dataType": "date",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "tratamiento_actual",
+        "name": "Tratamiento actual (fármaco, dosis y frecuencia)",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "adherencia",
+        "name": "Adherencia al tratamiento",
+        "dataType": "string",
+        "required": false,
+        "section": "Seguimiento",
+        "options": [
+          "Toma el tratamiento como está indicado",
+          "Olvida dosis algunas veces",
+          "Abandonó el tratamiento",
+          "Todavía sin tratamiento"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "efectos_adversos",
+        "name": "¿Tuvo efectos adversos del tratamiento?",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "efectos_adversos_cuales",
+        "name": "¿Cuáles y con qué fármaco?",
+        "dataType": "text",
+        "required": true,
+        "section": "Seguimiento",
+        "showWhen": {
+          "field": "efectos_adversos",
+          "equals": true
+        }
+      },
+      {
+        "code": "evolucion_desde_ultimo_control",
+        "name": "Evolución desde el último control",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "erge_sintomas",
+        "name": "Síntomas",
+        "dataType": "json",
+        "required": true,
+        "section": "Evaluación: reflujo o dispepsia",
+        "options": [
+          "Pirosis",
+          "Regurgitación",
+          "Dolor epigástrico",
+          "Saciedad precoz",
+          "Tos crónica",
+          "Disfonía"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "dias_sintomas_semana",
+        "name": "Días con síntomas por semana",
+        "dataType": "integer",
+        "required": false,
+        "section": "Evaluación: reflujo o dispepsia"
+      },
+      {
+        "code": "alarma_digestiva",
+        "name": "Signos de alarma",
+        "dataType": "json",
+        "required": true,
+        "section": "Evaluación: reflujo o dispepsia",
+        "options": [
+          "Disfagia",
+          "Pérdida de peso",
+          "Anemia",
+          "Vómitos persistentes",
+          "Sangrado",
+          "Edad > 50 con síntomas nuevos",
+          "Ninguno"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "helicobacter",
+        "name": "Helicobacter pylori",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: reflujo o dispepsia",
+        "options": [
+          "Positivo, sin tratar",
+          "Erradicado",
+          "Negativo",
+          "No estudiado"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "aines",
+        "name": "Consume AINE",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Evaluación: reflujo o dispepsia"
+      },
+      {
+        "code": "endoscopia",
+        "name": "Endoscopía — hallazgo",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: reflujo o dispepsia"
+      },
+      {
+        "code": "metas_cumplidas",
+        "name": "Metas de control que cumple hoy",
+        "dataType": "json",
+        "required": false,
+        "section": "Metas y plan",
+        "options": [
+          "Sin síntomas",
+          "H. pylori erradicado",
+          "Ninguna todavía"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "educacion_brindada",
+        "name": "Educación brindada en esta consulta",
+        "dataType": "json",
+        "required": false,
+        "section": "Metas y plan",
+        "options": [
+          "Cenar temprano",
+          "Elevar la cabecera",
+          "Evitar AINE",
+          "Bajar de peso"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "diagnostico",
+        "name": "Diagnóstico (con código CIE-10 si se conoce)",
+        "dataType": "text",
+        "required": true,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "plan",
+        "name": "Plan: tratamiento, estudios, interconsultas y destino",
+        "dataType": "text",
+        "required": false,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "proximo_control",
+        "name": "Próximo control",
+        "dataType": "date",
+        "required": false,
+        "section": "Metas y plan"
+      }
+    ]
+  },
+  {
+    "code": "GASTRO_CTRL_HEMORRAGIA",
+    "name": "Hemorragia digestiva: evaluación inicial",
+    "version": 1,
+    "kind": "SPECIFIC",
+    "specialty": "GASTROENTEROLOGIA",
+    "provenance": {
+      "sourceTitle": "Norma Técnica de Salud para la Gestión de la Historia Clínica — NT N.º 022-MINSA/DGSP-V.02",
+      "organization": "Ministerio de Salud del Perú (MINSA)",
+      "url": "https://bvs.minsa.gob.pe/local/dgsp/NT022hist.pdf",
+      "license": "Norma técnica estatal de acceso público",
+      "retrievedAt": "2026-10-02",
+      "note": "Evaluación hemodinámica y puntaje de Glasgow-Blatchford (publicado, de uso libre) para decidir internación."
+    },
+    "fields": [
+      {
+        "code": "tipo_de_evaluacion",
+        "name": "Tipo de evaluación",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación inicial",
+        "options": [
+          "Evaluación inicial",
+          "Reevaluación"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "inicio_de_sintomas",
+        "name": "Inicio de los síntomas (fecha u hora)",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación inicial"
+      },
+      {
+        "code": "tratamiento_previo",
+        "name": "Tratamiento recibido antes de esta consulta",
+        "dataType": "text",
+        "required": false,
+        "section": "Evaluación inicial"
+      },
+      {
+        "code": "hd_forma",
+        "name": "Cómo se manifestó",
+        "dataType": "json",
+        "required": true,
+        "section": "Evaluación: hemorragia digestiva",
+        "options": [
+          "Hematemesis",
+          "Melena",
+          "Hematoquecia"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "hd_estabilidad",
+        "name": "Estado hemodinámico",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación: hemorragia digestiva",
+        "options": [
+          "Estable",
+          "Taquicardia",
+          "Hipotensión o shock"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "presion_arterial_sistolica",
+        "name": "Presión arterial sistólica (mmHg)",
+        "dataType": "integer",
+        "required": true,
+        "section": "Evaluación: hemorragia digestiva"
+      },
+      {
+        "code": "presion_arterial_diastolica",
+        "name": "Presión arterial diastólica (mmHg)",
+        "dataType": "integer",
+        "required": true,
+        "section": "Evaluación: hemorragia digestiva"
+      },
+      {
+        "code": "frecuencia_cardiaca",
+        "name": "Frecuencia cardíaca (lpm)",
+        "dataType": "integer",
+        "required": false,
+        "section": "Evaluación: hemorragia digestiva"
+      },
+      {
+        "code": "hemoglobina",
+        "name": "Hemoglobina (g/dL)",
+        "dataType": "decimal",
+        "required": true,
+        "section": "Evaluación: hemorragia digestiva"
+      },
+      {
+        "code": "urea",
+        "name": "Urea (mg/dL)",
+        "dataType": "decimal",
+        "required": false,
+        "section": "Evaluación: hemorragia digestiva"
+      },
+      {
+        "code": "glasgow_blatchford",
+        "name": "Puntaje de Glasgow-Blatchford",
+        "dataType": "integer",
+        "required": false,
+        "section": "Evaluación: hemorragia digestiva"
+      },
+      {
+        "code": "hd_factores",
+        "name": "Factores",
+        "dataType": "json",
+        "required": false,
+        "section": "Evaluación: hemorragia digestiva",
+        "options": [
+          "AINE",
+          "Anticoagulantes",
+          "Cirrosis",
+          "Úlcera previa",
+          "Alcohol"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "metas_cumplidas",
+        "name": "Metas de control que cumple hoy",
+        "dataType": "json",
+        "required": false,
+        "section": "Conclusión y plan",
+        "options": [
+          "Hemodinámicamente estable",
+          "Endoscopía en menos de 24 h",
+          "Ninguna todavía"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "diagnostico",
+        "name": "Diagnóstico (con código CIE-10 si se conoce)",
+        "dataType": "text",
+        "required": true,
+        "section": "Conclusión y plan"
+      },
+      {
+        "code": "plan",
+        "name": "Plan: tratamiento, estudios, interconsultas y destino",
+        "dataType": "text",
+        "required": false,
+        "section": "Conclusión y plan"
+      }
+    ]
+  },
+  {
+    "code": "GASTRO_CTRL_HEPATOPATIA",
+    "name": "Control de hepatopatía crónica y cirrosis",
+    "version": 1,
+    "kind": "SPECIFIC",
+    "specialty": "GASTROENTEROLOGIA",
+    "provenance": {
+      "sourceTitle": "Norma Técnica de Salud para la Gestión de la Historia Clínica — NT N.º 022-MINSA/DGSP-V.02",
+      "organization": "Ministerio de Salud del Perú (MINSA)",
+      "url": "https://bvs.minsa.gob.pe/local/dgsp/NT022hist.pdf",
+      "license": "Norma técnica estatal de acceso público",
+      "retrievedAt": "2026-10-02",
+      "note": "Gravedad por Child-Pugh (puntaje publicado de uso libre), descompensaciones y tamizaje de hepatocarcinoma."
+    },
+    "fields": [
+      {
+        "code": "tipo_de_control",
+        "name": "Tipo de consulta",
+        "dataType": "string",
+        "required": true,
+        "section": "Seguimiento",
+        "options": [
+          "Primera evaluación de la condición",
+          "Control programado",
+          "Descompensación o consulta no programada",
+          "Control posterior a internación"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "fecha_del_diagnostico",
+        "name": "Fecha del diagnóstico de hepatopatía crónica",
+        "dataType": "date",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "tratamiento_actual",
+        "name": "Tratamiento actual (fármaco, dosis y frecuencia)",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "adherencia",
+        "name": "Adherencia al tratamiento",
+        "dataType": "string",
+        "required": false,
+        "section": "Seguimiento",
+        "options": [
+          "Toma el tratamiento como está indicado",
+          "Olvida dosis algunas veces",
+          "Abandonó el tratamiento",
+          "Todavía sin tratamiento"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "efectos_adversos",
+        "name": "¿Tuvo efectos adversos del tratamiento?",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "efectos_adversos_cuales",
+        "name": "¿Cuáles y con qué fármaco?",
+        "dataType": "text",
+        "required": true,
+        "section": "Seguimiento",
+        "showWhen": {
+          "field": "efectos_adversos",
+          "equals": true
+        }
+      },
+      {
+        "code": "evolucion_desde_ultimo_control",
+        "name": "Evolución desde el último control",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "hepatopatia_causa",
+        "name": "Causa",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación: hepatopatía crónica",
+        "options": [
+          "Alcohol",
+          "Hígado graso",
+          "Hepatitis B",
+          "Hepatitis C",
+          "Autoinmune",
+          "Otra o no establecida"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "child_pugh",
+        "name": "Child-Pugh",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación: hepatopatía crónica",
+        "options": [
+          "A (5–6)",
+          "B (7–9)",
+          "C (10–15)"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "descompensaciones",
+        "name": "Descompensaciones desde el último control",
+        "dataType": "json",
+        "required": false,
+        "section": "Evaluación: hepatopatía crónica",
+        "options": [
+          "Ascitis",
+          "Encefalopatía",
+          "Hemorragia variceal",
+          "Ictericia",
+          "Ninguna"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "bilirrubina",
+        "name": "Bilirrubina total (mg/dL)",
+        "dataType": "decimal",
+        "required": false,
+        "section": "Evaluación: hepatopatía crónica"
+      },
+      {
+        "code": "albumina",
+        "name": "Albúmina (g/dL)",
+        "dataType": "decimal",
+        "required": false,
+        "section": "Evaluación: hepatopatía crónica"
+      },
+      {
+        "code": "inr",
+        "name": "INR",
+        "dataType": "decimal",
+        "required": false,
+        "section": "Evaluación: hepatopatía crónica"
+      },
+      {
+        "code": "ecografia_6_meses",
+        "name": "Ecografía de tamizaje en los últimos 6 meses",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: hepatopatía crónica",
+        "options": [
+          "Sí, sin nódulos",
+          "Sí, con nódulo",
+          "No"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "metas_cumplidas",
+        "name": "Metas de control que cumple hoy",
+        "dataType": "json",
+        "required": false,
+        "section": "Metas y plan",
+        "options": [
+          "Abstinencia de alcohol",
+          "Tamizaje al día",
+          "Vacunas de hepatitis A y B",
+          "Ninguna todavía"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "educacion_brindada",
+        "name": "Educación brindada en esta consulta",
+        "dataType": "json",
+        "required": false,
+        "section": "Metas y plan",
+        "options": [
+          "Abstinencia de alcohol",
+          "Restricción de sal si hay ascitis",
+          "Signos de alarma"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "diagnostico",
+        "name": "Diagnóstico (con código CIE-10 si se conoce)",
+        "dataType": "text",
+        "required": true,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "plan",
+        "name": "Plan: tratamiento, estudios, interconsultas y destino",
+        "dataType": "text",
+        "required": false,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "proximo_control",
+        "name": "Próximo control",
+        "dataType": "date",
+        "required": false,
+        "section": "Metas y plan"
+      }
+    ]
+  },
+  {
     "code": "GASTRO_EVALUACION_BASE",
-    "name": "Evaluación gastroenterológica",
+    "name": "Gastroenterología — consulta inicial (ficha base)",
     "version": 2,
+    "kind": "BASE",
     "specialty": "GASTROENTEROLOGIA",
     "provenance": {
       "sourceTitle": "Norma Técnica de Salud para la Gestión de la Historia Clínica — NT N.º 022-MINSA/DGSP-V.02, anamnesis, funciones biológicas y examen del abdomen",
@@ -5177,217 +9102,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
         ],
         "multiple": false,
         "allowOther": true,
-        "description": "Al elegirlo se abren las observaciones que ese cuadro exige registrar."
-      },
-      {
-        "code": "helicobacter",
-        "name": "Prueba de Helicobacter pylori realizada",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Dispepsia o gastritis"
-        }
-      },
-      {
-        "code": "aines",
-        "name": "Consume AINE",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Dispepsia o gastritis"
-        }
-      },
-      {
-        "code": "erge_sintomas",
-        "name": "Síntomas",
-        "dataType": "json",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Pirosis",
-          "Regurgitación",
-          "Tos crónica",
-          "Disfonía",
-          "Dolor torácico no cardíaco"
-        ],
-        "multiple": true,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Enfermedad por reflujo gastroesofágico"
-        }
-      },
-      {
-        "code": "eda_deposiciones_24h",
-        "name": "Deposiciones líquidas en las últimas 24 horas",
-        "dataType": "integer",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Enfermedad diarreica"
-        }
-      },
-      {
-        "code": "eda_sangre_en_heces",
-        "name": "Sangre en las heces (disentería)",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Enfermedad diarreica"
-        }
-      },
-      {
-        "code": "eda_vomitos",
-        "name": "Vómitos",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Enfermedad diarreica"
-        }
-      },
-      {
-        "code": "eda_hidratacion",
-        "name": "Estado de hidratación (OMS)",
-        "dataType": "string",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Sin deshidratación — Plan A",
-          "Algún grado de deshidratación — Plan B",
-          "Deshidratación grave — Plan C"
-        ],
-        "multiple": false,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Enfermedad diarreica"
-        }
-      },
-      {
-        "code": "eda_fiebre",
-        "name": "Fiebre",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Enfermedad diarreica"
-        }
-      },
-      {
-        "code": "sii_caracteristicas",
-        "name": "Dolor abdominal recurrente: características",
-        "dataType": "json",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Mejora o empeora con la defecación",
-          "Se asocia a cambio en la frecuencia",
-          "Se asocia a cambio en la forma de las heces"
-        ],
-        "multiple": true,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Síndrome de intestino irritable"
-        }
-      },
-      {
-        "code": "sii_meses",
-        "name": "Meses de evolución",
-        "dataType": "integer",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Síndrome de intestino irritable"
-        }
-      },
-      {
-        "code": "hd_estabilidad",
-        "name": "Estabilidad hemodinámica",
-        "dataType": "string",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Estable",
-          "Taquicardia",
-          "Hipotensión o shock"
-        ],
-        "multiple": false,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Hemorragia digestiva"
-        }
-      },
-      {
-        "code": "hd_hemoglobina",
-        "name": "Hemoglobina (g/dL)",
-        "dataType": "decimal",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Hemorragia digestiva"
-        }
-      },
-      {
-        "code": "hep_estigmas",
-        "name": "Estigmas de hepatopatía",
-        "dataType": "json",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Arañas vasculares",
-          "Eritema palmar",
-          "Ascitis",
-          "Encefalopatía",
-          "Ninguno"
-        ],
-        "multiple": true,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Hepatopatía o ictericia"
-        }
-      },
-      {
-        "code": "hep_serologias",
-        "name": "Serologías virales",
-        "dataType": "string",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Hepatopatía o ictericia"
-        }
-      },
-      {
-        "code": "murphy",
-        "name": "Signo de Murphy positivo",
-        "dataType": "boolean",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Colelitiasis o colecistitis"
-        }
-      },
-      {
-        "code": "colico_posprandial",
-        "name": "Dolor posprandial en hipocondrio derecho",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Colelitiasis o colecistitis"
-        }
+        "description": "Si el cuadro ya está diagnosticado, el seguimiento se hace con su ficha específica de la especialidad."
       },
       {
         "code": "diagnostico",
@@ -5407,9 +9122,475 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
     ]
   },
   {
+    "code": "GERIA_CTRL_CAIDAS",
+    "name": "Evaluación de caídas",
+    "version": 1,
+    "kind": "SPECIFIC",
+    "specialty": "GERIATRIA",
+    "provenance": {
+      "sourceTitle": "Atención integrada para las personas mayores (ICOPE): guía de evaluación y planes de atención",
+      "organization": "Organización Mundial de la Salud (OMS)",
+      "url": "https://www.who.int/publications/i/item/WHO-FWC-ALC-19.1",
+      "license": "CC BY-NC-SA 3.0 IGO",
+      "retrievedAt": "2026-10-02",
+      "note": "Caídas, factores de riesgo modificables y consecuencias."
+    },
+    "fields": [
+      {
+        "code": "tipo_de_evaluacion",
+        "name": "Tipo de evaluación",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación inicial",
+        "options": [
+          "Evaluación inicial",
+          "Reevaluación"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "inicio_de_sintomas",
+        "name": "Inicio de los síntomas (fecha u hora)",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación inicial"
+      },
+      {
+        "code": "tratamiento_previo",
+        "name": "Tratamiento recibido antes de esta consulta",
+        "dataType": "text",
+        "required": false,
+        "section": "Evaluación inicial"
+      },
+      {
+        "code": "caidas_anio",
+        "name": "Caídas en el último año",
+        "dataType": "integer",
+        "required": true,
+        "section": "Evaluación: caídas"
+      },
+      {
+        "code": "caida_con_lesion",
+        "name": "Alguna con lesión o fractura",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Evaluación: caídas"
+      },
+      {
+        "code": "caidas_riesgo",
+        "name": "Factores de riesgo",
+        "dataType": "json",
+        "required": false,
+        "section": "Evaluación: caídas",
+        "options": [
+          "Alteración de la marcha",
+          "Hipotensión ortostática",
+          "Psicofármacos",
+          "Déficit visual",
+          "Riesgos en el hogar",
+          "Incontinencia de urgencia"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "miedo_a_caer",
+        "name": "Miedo a caer",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Evaluación: caídas"
+      },
+      {
+        "code": "timed_up_and_go",
+        "name": "Prueba «levántate y anda» (segundos)",
+        "dataType": "decimal",
+        "required": false,
+        "section": "Evaluación: caídas"
+      },
+      {
+        "code": "educacion_brindada",
+        "name": "Educación brindada en esta consulta",
+        "dataType": "json",
+        "required": false,
+        "section": "Conclusión y plan",
+        "options": [
+          "Adaptar el hogar",
+          "Calzado",
+          "Ejercicio de equilibrio"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "diagnostico",
+        "name": "Diagnóstico (con código CIE-10 si se conoce)",
+        "dataType": "text",
+        "required": true,
+        "section": "Conclusión y plan"
+      },
+      {
+        "code": "plan",
+        "name": "Plan: tratamiento, estudios, interconsultas y destino",
+        "dataType": "text",
+        "required": false,
+        "section": "Conclusión y plan"
+      }
+    ]
+  },
+  {
+    "code": "GERIA_CTRL_DEMENCIA",
+    "name": "Control de demencia",
+    "version": 1,
+    "kind": "SPECIFIC",
+    "specialty": "GERIATRIA",
+    "provenance": {
+      "sourceTitle": "Guía de intervención mhGAP para los trastornos mentales, neurológicos y por consumo de sustancias, versión 2.0",
+      "organization": "Organización Mundial de la Salud (OMS)",
+      "url": "https://www.who.int/publications/i/item/9789241549790",
+      "license": "CC BY-NC-SA 3.0 IGO",
+      "retrievedAt": "2026-10-02",
+      "note": "Módulo de demencia de mhGAP: función, síntomas conductuales y apoyo al cuidador."
+    },
+    "fields": [
+      {
+        "code": "tipo_de_control",
+        "name": "Tipo de consulta",
+        "dataType": "string",
+        "required": true,
+        "section": "Seguimiento",
+        "options": [
+          "Primera evaluación de la condición",
+          "Control programado",
+          "Descompensación o consulta no programada",
+          "Control posterior a internación"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "fecha_del_diagnostico",
+        "name": "Fecha del diagnóstico de demencia",
+        "dataType": "date",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "tratamiento_actual",
+        "name": "Tratamiento actual (fármaco, dosis y frecuencia)",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "adherencia",
+        "name": "Adherencia al tratamiento",
+        "dataType": "string",
+        "required": false,
+        "section": "Seguimiento",
+        "options": [
+          "Toma el tratamiento como está indicado",
+          "Olvida dosis algunas veces",
+          "Abandonó el tratamiento",
+          "Todavía sin tratamiento"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "efectos_adversos",
+        "name": "¿Tuvo efectos adversos del tratamiento?",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "efectos_adversos_cuales",
+        "name": "¿Cuáles y con qué fármaco?",
+        "dataType": "text",
+        "required": true,
+        "section": "Seguimiento",
+        "showWhen": {
+          "field": "efectos_adversos",
+          "equals": true
+        }
+      },
+      {
+        "code": "evolucion_desde_ultimo_control",
+        "name": "Evolución desde el último control",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "prueba_cognitiva",
+        "name": "Prueba cognitiva y puntaje",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: demencia"
+      },
+      {
+        "code": "demencia_funcion",
+        "name": "Repercusión funcional",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación: demencia",
+        "options": [
+          "Leve: actividades instrumentales",
+          "Moderada: actividades básicas",
+          "Grave: dependencia total"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "sintomas_conductuales",
+        "name": "Síntomas conductuales",
+        "dataType": "json",
+        "required": false,
+        "section": "Evaluación: demencia",
+        "options": [
+          "Agitación",
+          "Agresividad",
+          "Deambulación",
+          "Alucinaciones",
+          "Insomnio",
+          "Depresión",
+          "Ninguno"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "sobrecarga_cuidador",
+        "name": "Sobrecarga del cuidador",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: demencia",
+        "options": [
+          "Baja",
+          "Moderada",
+          "Alta"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "educacion_brindada",
+        "name": "Educación brindada en esta consulta",
+        "dataType": "json",
+        "required": false,
+        "section": "Metas y plan",
+        "options": [
+          "Apoyo al cuidador",
+          "Seguridad en el hogar",
+          "Rutinas"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "diagnostico",
+        "name": "Diagnóstico (con código CIE-10 si se conoce)",
+        "dataType": "text",
+        "required": true,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "plan",
+        "name": "Plan: tratamiento, estudios, interconsultas y destino",
+        "dataType": "text",
+        "required": false,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "proximo_control",
+        "name": "Próximo control",
+        "dataType": "date",
+        "required": false,
+        "section": "Metas y plan"
+      }
+    ]
+  },
+  {
+    "code": "GERIA_CTRL_FRAGILIDAD",
+    "name": "Control de fragilidad y capacidad intrínseca (ICOPE)",
+    "version": 1,
+    "kind": "SPECIFIC",
+    "specialty": "GERIATRIA",
+    "provenance": {
+      "sourceTitle": "Atención integrada para las personas mayores (ICOPE): guía de evaluación y planes de atención",
+      "organization": "Organización Mundial de la Salud (OMS)",
+      "url": "https://www.who.int/publications/i/item/WHO-FWC-ALC-19.1",
+      "license": "CC BY-NC-SA 3.0 IGO",
+      "retrievedAt": "2026-10-02",
+      "note": "Los dominios de capacidad intrínseca del tamizaje ICOPE: cognición, movilidad, nutrición, visión, audición y ánimo."
+    },
+    "fields": [
+      {
+        "code": "tipo_de_control",
+        "name": "Tipo de consulta",
+        "dataType": "string",
+        "required": true,
+        "section": "Seguimiento",
+        "options": [
+          "Primera evaluación de la condición",
+          "Control programado",
+          "Descompensación o consulta no programada",
+          "Control posterior a internación"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "fecha_del_diagnostico",
+        "name": "Fecha del diagnóstico de fragilidad",
+        "dataType": "date",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "tratamiento_actual",
+        "name": "Tratamiento actual (fármaco, dosis y frecuencia)",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "adherencia",
+        "name": "Adherencia al tratamiento",
+        "dataType": "string",
+        "required": false,
+        "section": "Seguimiento",
+        "options": [
+          "Toma el tratamiento como está indicado",
+          "Olvida dosis algunas veces",
+          "Abandonó el tratamiento",
+          "Todavía sin tratamiento"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "efectos_adversos",
+        "name": "¿Tuvo efectos adversos del tratamiento?",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "efectos_adversos_cuales",
+        "name": "¿Cuáles y con qué fármaco?",
+        "dataType": "text",
+        "required": true,
+        "section": "Seguimiento",
+        "showWhen": {
+          "field": "efectos_adversos",
+          "equals": true
+        }
+      },
+      {
+        "code": "evolucion_desde_ultimo_control",
+        "name": "Evolución desde el último control",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "icope_alterados",
+        "name": "Dominios ICOPE con tamizaje alterado",
+        "dataType": "json",
+        "required": true,
+        "section": "Evaluación: fragilidad",
+        "options": [
+          "Cognición",
+          "Movilidad (levantarse 5 veces de la silla)",
+          "Nutrición (pérdida de peso o apetito)",
+          "Visión",
+          "Audición",
+          "Síntomas depresivos",
+          "Ninguno"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "silla_5_veces_segundos",
+        "name": "Levantarse 5 veces de la silla (segundos)",
+        "dataType": "decimal",
+        "required": false,
+        "section": "Evaluación: fragilidad"
+      },
+      {
+        "code": "velocidad_de_marcha",
+        "name": "Velocidad de marcha en 4 m (m/s)",
+        "dataType": "decimal",
+        "required": false,
+        "section": "Evaluación: fragilidad"
+      },
+      {
+        "code": "fried",
+        "name": "Criterios de Fried",
+        "dataType": "json",
+        "required": false,
+        "section": "Evaluación: fragilidad",
+        "options": [
+          "Pérdida de peso no intencionada",
+          "Agotamiento",
+          "Debilidad",
+          "Marcha lenta",
+          "Baja actividad física"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "numero_de_farmacos",
+        "name": "Fármacos en uso",
+        "dataType": "integer",
+        "required": false,
+        "section": "Evaluación: fragilidad"
+      },
+      {
+        "code": "metas_cumplidas",
+        "name": "Metas de control que cumple hoy",
+        "dataType": "json",
+        "required": false,
+        "section": "Metas y plan",
+        "options": [
+          "Plan de atención por cada dominio alterado",
+          "Ninguna todavía"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "educacion_brindada",
+        "name": "Educación brindada en esta consulta",
+        "dataType": "json",
+        "required": false,
+        "section": "Metas y plan",
+        "options": [
+          "Ejercicio multicomponente",
+          "Alimentación con proteínas",
+          "Revisión de fármacos"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "diagnostico",
+        "name": "Diagnóstico (con código CIE-10 si se conoce)",
+        "dataType": "text",
+        "required": true,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "plan",
+        "name": "Plan: tratamiento, estudios, interconsultas y destino",
+        "dataType": "text",
+        "required": false,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "proximo_control",
+        "name": "Próximo control",
+        "dataType": "date",
+        "required": false,
+        "section": "Metas y plan"
+      }
+    ]
+  },
+  {
     "code": "GERIA_VALORACION_BASE",
-    "name": "Valoración geriátrica",
+    "name": "Geriatría — consulta inicial (ficha base)",
     "version": 2,
+    "kind": "BASE",
     "specialty": "GERIATRIA",
     "provenance": {
       "sourceTitle": "Norma Técnica de Salud para la Gestión de la Historia Clínica — NT N.º 022-MINSA/DGSP-V.02, anamnesis, antecedentes y examen del adulto mayor",
@@ -5418,7 +9599,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
       "license": "Norma técnica estatal de acceso público",
       "sourceVersion": "V.02",
       "retrievedAt": "2026-08-14",
-      "note": "De la norma salen la estructura común del registro: motivo de consulta, tiempo de enfermedad, antecedentes, examen físico, diagnóstico y conducta. Son agregados propios de la especialidad la autonomía en actividades de la vida diaria, el antecedente de caídas, el recuento de fármacos en uso, la descripción en prosa del estado cognitivo y del ánimo, la continencia y el soporte social. v2 (2026-10-02): reorganizada en secciones (motivo, antecedentes, examen, diagnóstico presuntivo, plan); las clasificaciones con categorías finitas pasan a lista cerrada; cada sí/no que tiene detalle pregunta «¿cuál?»; el diagnóstico presuntivo abre las observaciones que ese cuadro exige registrar. Instrumentos de uso libre incorporados: SRQ-20 (OMS), índice de Katz, escala de Lawton, fenotipo de fragilidad de Fried, criterios de Beers/STOPP."
+      "note": "De la norma salen la estructura común del registro: motivo de consulta, tiempo de enfermedad, antecedentes, examen físico, diagnóstico y conducta. Son agregados propios de la especialidad la autonomía en actividades de la vida diaria, el antecedente de caídas, el recuento de fármacos en uso, la descripción en prosa del estado cognitivo y del ánimo, la continencia y el soporte social. v2 (2026-10-02): reorganizada en secciones (motivo, antecedentes, examen, diagnóstico presuntivo, plan); las clasificaciones con categorías finitas pasan a lista cerrada; cada sí/no que tiene detalle pregunta «¿cuál?»; el diagnóstico presuntivo abre las observaciones que ese cuadro exige registrar. Instrumentos de uso libre incorporados: índice de Katz, escala de Lawton, criterios de Beers/STOPP."
     },
     "fields": [
       {
@@ -5810,165 +9991,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
         ],
         "multiple": false,
         "allowOther": true,
-        "description": "Al elegirlo se abren las observaciones que ese cuadro exige registrar."
-      },
-      {
-        "code": "fried",
-        "name": "Criterios de Fried",
-        "dataType": "json",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Pérdida de peso no intencionada",
-          "Agotamiento",
-          "Debilidad (prensión)",
-          "Marcha lenta",
-          "Baja actividad física"
-        ],
-        "multiple": true,
-        "description": "3 o más: frágil · 1–2: prefrágil.",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Síndrome de fragilidad"
-        }
-      },
-      {
-        "code": "caidas_riesgo",
-        "name": "Factores de riesgo",
-        "dataType": "json",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Alteración de la marcha",
-          "Hipotensión ortostática",
-          "Psicofármacos",
-          "Déficit visual",
-          "Riesgos en el hogar"
-        ],
-        "multiple": true,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Caídas"
-        }
-      },
-      {
-        "code": "caidas_fractura",
-        "name": "Fractura en alguna caída",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Caídas"
-        }
-      },
-      {
-        "code": "demencia_prueba",
-        "name": "Prueba y puntaje",
-        "dataType": "string",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Deterioro cognitivo o demencia"
-        }
-      },
-      {
-        "code": "demencia_conducta",
-        "name": "Síntomas conductuales",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Deterioro cognitivo o demencia"
-        }
-      },
-      {
-        "code": "delirium_rasgos",
-        "name": "Rasgos de delirium",
-        "dataType": "json",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Inicio agudo y curso fluctuante",
-          "Inatención",
-          "Pensamiento desorganizado",
-          "Alteración del nivel de conciencia"
-        ],
-        "multiple": true,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Delirium"
-        }
-      },
-      {
-        "code": "polifarmacia_revision",
-        "name": "Fármacos a suspender o ajustar",
-        "dataType": "text",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Polifarmacia"
-        }
-      },
-      {
-        "code": "srq20_respuestas_si",
-        "name": "SRQ-20 (OMS): marque las preguntas que respondió «sí» en el último mes",
-        "dataType": "json",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "¿Tiene frecuentes dolores de cabeza?",
-          "¿Tiene mal apetito?",
-          "¿Duerme mal?",
-          "¿Se asusta con facilidad?",
-          "¿Sufre de temblor de manos?",
-          "¿Se siente nervioso, tenso o aburrido?",
-          "¿Sufre de mala digestión?",
-          "¿No puede pensar con claridad?",
-          "¿Se siente triste?",
-          "¿Llora usted con mucha frecuencia?",
-          "¿Tiene dificultad en disfrutar sus actividades diarias?",
-          "¿Tiene dificultad para tomar decisiones?",
-          "¿Tiene dificultad en hacer su trabajo?",
-          "¿Es incapaz de desempeñar un papel útil en su vida?",
-          "¿Ha perdido interés en las cosas?",
-          "¿Siente que usted es una persona inútil?",
-          "¿Ha tenido la idea de acabar con su vida?",
-          "¿Se siente cansado todo el tiempo?",
-          "¿Tiene sensaciones desagradables en su estómago?",
-          "¿Se cansa con facilidad?"
-        ],
-        "multiple": true,
-        "description": "8 o más respuestas positivas: probable trastorno mental común. La pregunta 17 positiva exige evaluar riesgo suicida.",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Depresión del adulto mayor"
-        }
-      },
-      {
-        "code": "srq20_puntaje",
-        "name": "SRQ-20 — total de respuestas «sí» (0–20)",
-        "dataType": "integer",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Depresión del adulto mayor"
-        }
-      },
-      {
-        "code": "ideacion_suicida",
-        "name": "Ideación suicida actual",
-        "dataType": "boolean",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Depresión del adulto mayor"
-        }
+        "description": "Si el cuadro ya está diagnosticado, el seguimiento se hace con su ficha específica de la especialidad."
       },
       {
         "code": "diagnostico",
@@ -5988,9 +10011,176 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
     ]
   },
   {
+    "code": "GINOBS_CONSULTA_GINECOLOGICA",
+    "name": "Ginecología y obstetricia — consulta ginecológica (ficha base)",
+    "version": 1,
+    "kind": "BASE",
+    "specialty": "GINECOLOGIA_OBSTETRICIA",
+    "provenance": {
+      "sourceTitle": "Norma Técnica de Salud para la Gestión de la Historia Clínica — NT N.º 022-MINSA/DGSP-V.02",
+      "organization": "Ministerio de Salud del Perú (MINSA)",
+      "url": "https://bvs.minsa.gob.pe/local/dgsp/NT022hist.pdf",
+      "license": "Norma técnica estatal de acceso público",
+      "retrievedAt": "2026-10-02",
+      "note": "Ficha base de ginecología: antecedentes gineco-obstétricos, ciclo, anticoncepción, tamizajes y examen."
+    },
+    "fields": [
+      {
+        "code": "tipo_de_evaluacion",
+        "name": "Tipo de consulta",
+        "dataType": "string",
+        "required": true,
+        "section": "Consulta",
+        "options": [
+          "Primera vez",
+          "Control"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "motivo_consulta",
+        "name": "Motivo de consulta",
+        "dataType": "text",
+        "required": true,
+        "section": "Evaluación: consulta ginecológica"
+      },
+      {
+        "code": "menarca",
+        "name": "Menarca (edad)",
+        "dataType": "integer",
+        "required": false,
+        "section": "Evaluación: consulta ginecológica"
+      },
+      {
+        "code": "fum",
+        "name": "Fecha de última menstruación",
+        "dataType": "date",
+        "required": false,
+        "section": "Evaluación: consulta ginecológica"
+      },
+      {
+        "code": "ciclo",
+        "name": "Ciclo",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: consulta ginecológica",
+        "options": [
+          "Regular",
+          "Irregular",
+          "Amenorrea",
+          "Menopausia"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "gestas",
+        "name": "Gestas",
+        "dataType": "integer",
+        "required": false,
+        "section": "Evaluación: consulta ginecológica"
+      },
+      {
+        "code": "partos",
+        "name": "Partos",
+        "dataType": "integer",
+        "required": false,
+        "section": "Evaluación: consulta ginecológica"
+      },
+      {
+        "code": "cesareas",
+        "name": "Cesáreas",
+        "dataType": "integer",
+        "required": false,
+        "section": "Evaluación: consulta ginecológica"
+      },
+      {
+        "code": "abortos",
+        "name": "Abortos",
+        "dataType": "integer",
+        "required": false,
+        "section": "Evaluación: consulta ginecológica"
+      },
+      {
+        "code": "anticoncepcion",
+        "name": "Anticoncepción",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: consulta ginecológica",
+        "options": [
+          "Ninguna",
+          "Preservativo",
+          "Hormonal",
+          "DIU",
+          "Implante",
+          "Quirúrgica"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "ultimo_tamizaje_cervix",
+        "name": "Último tamizaje de cuello uterino",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: consulta ginecológica",
+        "options": [
+          "Menos de 3 años",
+          "3 a 5 años",
+          "Más de 5 años",
+          "Nunca"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "sintomas_gineco",
+        "name": "Síntomas",
+        "dataType": "json",
+        "required": false,
+        "section": "Evaluación: consulta ginecológica",
+        "options": [
+          "Flujo anormal",
+          "Dolor pélvico",
+          "Sangrado anormal",
+          "Dispareunia",
+          "Bulto en la mama",
+          "Ninguno"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "examen_ginecologico",
+        "name": "Examen ginecológico y mamario",
+        "dataType": "text",
+        "required": false,
+        "section": "Evaluación: consulta ginecológica"
+      },
+      {
+        "code": "diagnostico",
+        "name": "Diagnóstico (con código CIE-10 si se conoce)",
+        "dataType": "text",
+        "required": true,
+        "section": "Conclusión y plan"
+      },
+      {
+        "code": "plan",
+        "name": "Plan: tratamiento, estudios, interconsultas y destino",
+        "dataType": "text",
+        "required": false,
+        "section": "Conclusión y plan"
+      },
+      {
+        "code": "proximo_control",
+        "name": "Próximo control",
+        "dataType": "date",
+        "required": false,
+        "section": "Conclusión y plan"
+      }
+    ]
+  },
+  {
     "code": "GINOBS_CONTROL_PRENATAL",
     "name": "Control prenatal — Historia Clínica Perinatal (CLAP/SMR)",
     "version": 2,
+    "kind": "SPECIFIC",
     "specialty": "GINECOLOGIA_OBSTETRICIA",
     "provenance": {
       "sourceTitle": "Historia Clínica Perinatal — Sistema Informático Perinatal (SIP)",
@@ -6282,9 +10472,664 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
     ]
   },
   {
+    "code": "GINOBS_CTRL_PUERPERIO",
+    "name": "Control de puerperio",
+    "version": 1,
+    "kind": "SPECIFIC",
+    "specialty": "GINECOLOGIA_OBSTETRICIA",
+    "provenance": {
+      "sourceTitle": "Recomendaciones de la OMS sobre la atención materna y neonatal para una experiencia posnatal positiva (2022)",
+      "organization": "Organización Mundial de la Salud (OMS)",
+      "url": "https://www.who.int/publications/i/item/9789240045989",
+      "license": "CC BY-NC-SA 3.0 IGO",
+      "retrievedAt": "2026-10-02",
+      "note": "Contactos posnatales de la OMS: sangrado, infección, presión, lactancia, ánimo y anticoncepción."
+    },
+    "fields": [
+      {
+        "code": "tipo_de_evaluacion",
+        "name": "Tipo de consulta",
+        "dataType": "string",
+        "required": true,
+        "section": "Consulta",
+        "options": [
+          "Primera vez",
+          "Control"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "tipo_parto",
+        "name": "Tipo de parto",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación: puerperio",
+        "options": [
+          "Vaginal",
+          "Cesárea"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "dias_posparto",
+        "name": "Días posparto",
+        "dataType": "integer",
+        "required": true,
+        "section": "Evaluación: puerperio"
+      },
+      {
+        "code": "presion_arterial_sistolica",
+        "name": "Presión arterial sistólica (mmHg)",
+        "dataType": "integer",
+        "required": true,
+        "section": "Evaluación: puerperio"
+      },
+      {
+        "code": "presion_arterial_diastolica",
+        "name": "Presión arterial diastólica (mmHg)",
+        "dataType": "integer",
+        "required": true,
+        "section": "Evaluación: puerperio"
+      },
+      {
+        "code": "temperatura",
+        "name": "Temperatura (°C)",
+        "dataType": "decimal",
+        "required": false,
+        "section": "Evaluación: puerperio"
+      },
+      {
+        "code": "loquios",
+        "name": "Loquios",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: puerperio",
+        "options": [
+          "Normales",
+          "Abundantes",
+          "Fétidos"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "involucion_uterina",
+        "name": "Involución uterina",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: puerperio",
+        "options": [
+          "Adecuada",
+          "Subinvolución"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "lactancia",
+        "name": "Lactancia",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: puerperio",
+        "options": [
+          "Exclusiva",
+          "Mixta",
+          "Sin lactancia"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "animo_puerperio",
+        "name": "Ánimo",
+        "dataType": "json",
+        "required": false,
+        "section": "Evaluación: puerperio",
+        "options": [
+          "Tristeza persistente",
+          "Ansiedad",
+          "Ideas de hacerse daño",
+          "Ninguno"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "anticoncepcion_posparto",
+        "name": "Anticoncepción",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: puerperio",
+        "options": [
+          "Elegida e iniciada",
+          "Elegida, pendiente",
+          "No desea"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "diagnostico",
+        "name": "Diagnóstico (con código CIE-10 si se conoce)",
+        "dataType": "text",
+        "required": true,
+        "section": "Conclusión y plan"
+      },
+      {
+        "code": "plan",
+        "name": "Plan: tratamiento, estudios, interconsultas y destino",
+        "dataType": "text",
+        "required": false,
+        "section": "Conclusión y plan"
+      },
+      {
+        "code": "proximo_control",
+        "name": "Próximo control",
+        "dataType": "date",
+        "required": false,
+        "section": "Conclusión y plan"
+      }
+    ]
+  },
+  {
+    "code": "GINOBS_CTRL_TAMIZAJE_CERVIX",
+    "name": "Tamizaje de cáncer de cuello uterino",
+    "version": 1,
+    "kind": "SPECIFIC",
+    "specialty": "GINECOLOGIA_OBSTETRICIA",
+    "provenance": {
+      "sourceTitle": "Directriz de la OMS para el tamizaje y tratamiento de lesiones precancerosas del cuello uterino (2021)",
+      "organization": "Organización Mundial de la Salud (OMS)",
+      "url": "https://www.who.int/publications/i/item/9789240030824",
+      "license": "CC BY-NC-SA 3.0 IGO",
+      "retrievedAt": "2026-10-02",
+      "note": "Estrategia de la OMS: prueba de VPH o IVAA, resultado y tratamiento de lesiones."
+    },
+    "fields": [
+      {
+        "code": "tipo_de_evaluacion",
+        "name": "Tipo de consulta",
+        "dataType": "string",
+        "required": true,
+        "section": "Consulta",
+        "options": [
+          "Primera vez",
+          "Control"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "prueba_tamizaje",
+        "name": "Prueba",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación: tamizaje de cuello uterino",
+        "options": [
+          "VPH",
+          "IVAA",
+          "Citología (Papanicolaou)"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "resultado_tamizaje",
+        "name": "Resultado",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación: tamizaje de cuello uterino",
+        "options": [
+          "Negativo",
+          "Positivo",
+          "No concluyente"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "conducta_tamizaje",
+        "name": "Conducta",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación: tamizaje de cuello uterino",
+        "options": [
+          "Tratamiento ablativo (crioterapia o termoablación)",
+          "Escisión (LEEP)",
+          "Colposcopía",
+          "Derivación por sospecha de cáncer"
+        ],
+        "multiple": false,
+        "showWhen": {
+          "field": "resultado_tamizaje",
+          "equals": "Positivo"
+        }
+      },
+      {
+        "code": "vih_positiva",
+        "name": "Mujer con VIH (tamizaje más frecuente)",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Evaluación: tamizaje de cuello uterino"
+      },
+      {
+        "code": "proximo_tamizaje",
+        "name": "Próximo tamizaje",
+        "dataType": "date",
+        "required": false,
+        "section": "Evaluación: tamizaje de cuello uterino"
+      },
+      {
+        "code": "diagnostico",
+        "name": "Diagnóstico (con código CIE-10 si se conoce)",
+        "dataType": "text",
+        "required": true,
+        "section": "Conclusión y plan"
+      },
+      {
+        "code": "plan",
+        "name": "Plan: tratamiento, estudios, interconsultas y destino",
+        "dataType": "text",
+        "required": false,
+        "section": "Conclusión y plan"
+      },
+      {
+        "code": "proximo_control",
+        "name": "Próximo control",
+        "dataType": "date",
+        "required": false,
+        "section": "Conclusión y plan"
+      }
+    ]
+  },
+  {
+    "code": "HEMATO_CTRL_ANEMIA",
+    "name": "Control de anemia ferropénica",
+    "version": 1,
+    "kind": "SPECIFIC",
+    "specialty": "HEMATOLOGIA",
+    "provenance": {
+      "sourceTitle": "Norma Técnica de Salud para la Gestión de la Historia Clínica — NT N.º 022-MINSA/DGSP-V.02",
+      "organization": "Ministerio de Salud del Perú (MINSA)",
+      "url": "https://bvs.minsa.gob.pe/local/dgsp/NT022hist.pdf",
+      "license": "Norma técnica estatal de acceso público",
+      "retrievedAt": "2026-10-02",
+      "note": "Hemoglobina ajustada por altitud, causa y respuesta al hierro."
+    },
+    "fields": [
+      {
+        "code": "tipo_de_control",
+        "name": "Tipo de consulta",
+        "dataType": "string",
+        "required": true,
+        "section": "Seguimiento",
+        "options": [
+          "Primera evaluación de la condición",
+          "Control programado",
+          "Descompensación o consulta no programada",
+          "Control posterior a internación"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "fecha_del_diagnostico",
+        "name": "Fecha del diagnóstico de anemia",
+        "dataType": "date",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "tratamiento_actual",
+        "name": "Tratamiento actual (fármaco, dosis y frecuencia)",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "adherencia",
+        "name": "Adherencia al tratamiento",
+        "dataType": "string",
+        "required": false,
+        "section": "Seguimiento",
+        "options": [
+          "Toma el tratamiento como está indicado",
+          "Olvida dosis algunas veces",
+          "Abandonó el tratamiento",
+          "Todavía sin tratamiento"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "efectos_adversos",
+        "name": "¿Tuvo efectos adversos del tratamiento?",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "efectos_adversos_cuales",
+        "name": "¿Cuáles y con qué fármaco?",
+        "dataType": "text",
+        "required": true,
+        "section": "Seguimiento",
+        "showWhen": {
+          "field": "efectos_adversos",
+          "equals": true
+        }
+      },
+      {
+        "code": "evolucion_desde_ultimo_control",
+        "name": "Evolución desde el último control",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "anemia_hemoglobina",
+        "name": "Hemoglobina (g/dL)",
+        "dataType": "decimal",
+        "required": true,
+        "section": "Evaluación: anemia",
+        "description": "Ajustar por altitud de residencia."
+      },
+      {
+        "code": "anemia_sintomas",
+        "name": "Síntomas",
+        "dataType": "json",
+        "required": false,
+        "section": "Evaluación: anemia",
+        "options": [
+          "Astenia",
+          "Disnea de esfuerzo",
+          "Palpitaciones",
+          "Pica",
+          "Ninguno"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "anemia_perdidas",
+        "name": "Posibles pérdidas",
+        "dataType": "json",
+        "required": false,
+        "section": "Evaluación: anemia",
+        "options": [
+          "Menstruación abundante",
+          "Sangrado digestivo",
+          "Parasitosis",
+          "Ninguna conocida"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "anemia_vcm",
+        "name": "VCM y ferritina, si se conocen",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: anemia"
+      },
+      {
+        "code": "ferritina",
+        "name": "Ferritina (ng/mL)",
+        "dataType": "decimal",
+        "required": false,
+        "section": "Evaluación: anemia"
+      },
+      {
+        "code": "vcm",
+        "name": "VCM (fL)",
+        "dataType": "decimal",
+        "required": false,
+        "section": "Evaluación: anemia"
+      },
+      {
+        "code": "altitud_residencia",
+        "name": "Altitud de residencia (m s. n. m.)",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: anemia"
+      },
+      {
+        "code": "reticulocitos",
+        "name": "Reticulocitos (%)",
+        "dataType": "decimal",
+        "required": false,
+        "section": "Evaluación: anemia"
+      },
+      {
+        "code": "metas_cumplidas",
+        "name": "Metas de control que cumple hoy",
+        "dataType": "json",
+        "required": false,
+        "section": "Metas y plan",
+        "options": [
+          "Hemoglobina normal para su altitud",
+          "Causa identificada",
+          "Ninguna todavía"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "educacion_brindada",
+        "name": "Educación brindada en esta consulta",
+        "dataType": "json",
+        "required": false,
+        "section": "Metas y plan",
+        "options": [
+          "Hierro con el estómago vacío y con vitamina C",
+          "Alimentos con hierro"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "diagnostico",
+        "name": "Diagnóstico (con código CIE-10 si se conoce)",
+        "dataType": "text",
+        "required": true,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "plan",
+        "name": "Plan: tratamiento, estudios, interconsultas y destino",
+        "dataType": "text",
+        "required": false,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "proximo_control",
+        "name": "Próximo control",
+        "dataType": "date",
+        "required": false,
+        "section": "Metas y plan"
+      }
+    ]
+  },
+  {
+    "code": "HEMATO_CTRL_ANTICOAGULACION",
+    "name": "Control de anticoagulación oral",
+    "version": 1,
+    "kind": "SPECIFIC",
+    "specialty": "HEMATOLOGIA",
+    "provenance": {
+      "sourceTitle": "Norma Técnica de Salud para la Gestión de la Historia Clínica — NT N.º 022-MINSA/DGSP-V.02",
+      "organization": "Ministerio de Salud del Perú (MINSA)",
+      "url": "https://bvs.minsa.gob.pe/local/dgsp/NT022hist.pdf",
+      "license": "Norma técnica estatal de acceso público",
+      "retrievedAt": "2026-10-02",
+      "note": "INR en rango terapéutico, sangrados e interacciones."
+    },
+    "fields": [
+      {
+        "code": "tipo_de_control",
+        "name": "Tipo de consulta",
+        "dataType": "string",
+        "required": true,
+        "section": "Seguimiento",
+        "options": [
+          "Primera evaluación de la condición",
+          "Control programado",
+          "Descompensación o consulta no programada",
+          "Control posterior a internación"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "fecha_del_diagnostico",
+        "name": "Fecha del diagnóstico de anticoagulación",
+        "dataType": "date",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "tratamiento_actual",
+        "name": "Tratamiento actual (fármaco, dosis y frecuencia)",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "adherencia",
+        "name": "Adherencia al tratamiento",
+        "dataType": "string",
+        "required": false,
+        "section": "Seguimiento",
+        "options": [
+          "Toma el tratamiento como está indicado",
+          "Olvida dosis algunas veces",
+          "Abandonó el tratamiento",
+          "Todavía sin tratamiento"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "efectos_adversos",
+        "name": "¿Tuvo efectos adversos del tratamiento?",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "efectos_adversos_cuales",
+        "name": "¿Cuáles y con qué fármaco?",
+        "dataType": "text",
+        "required": true,
+        "section": "Seguimiento",
+        "showWhen": {
+          "field": "efectos_adversos",
+          "equals": true
+        }
+      },
+      {
+        "code": "evolucion_desde_ultimo_control",
+        "name": "Evolución desde el último control",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "indicacion_anticoagulacion",
+        "name": "Indicación",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación: anticoagulación",
+        "options": [
+          "Fibrilación auricular",
+          "Trombosis venosa profunda",
+          "Embolia pulmonar",
+          "Prótesis valvular",
+          "Otra"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "inr",
+        "name": "INR de hoy",
+        "dataType": "decimal",
+        "required": true,
+        "section": "Evaluación: anticoagulación"
+      },
+      {
+        "code": "inr_meta",
+        "name": "INR meta",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: anticoagulación"
+      },
+      {
+        "code": "sangrado",
+        "name": "Sangrado desde el último control",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Evaluación: anticoagulación"
+      },
+      {
+        "code": "sangrado_gravedad",
+        "name": "Gravedad",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación: anticoagulación",
+        "options": [
+          "Menor",
+          "Mayor"
+        ],
+        "multiple": false,
+        "showWhen": {
+          "field": "sangrado",
+          "equals": true
+        }
+      },
+      {
+        "code": "farmacos_nuevos",
+        "name": "Fármacos o hierbas nuevos",
+        "dataType": "text",
+        "required": false,
+        "section": "Evaluación: anticoagulación"
+      },
+      {
+        "code": "metas_cumplidas",
+        "name": "Metas de control que cumple hoy",
+        "dataType": "json",
+        "required": false,
+        "section": "Metas y plan",
+        "options": [
+          "INR en rango",
+          "Ninguna todavía"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "educacion_brindada",
+        "name": "Educación brindada en esta consulta",
+        "dataType": "json",
+        "required": false,
+        "section": "Metas y plan",
+        "options": [
+          "Dieta estable en verduras de hoja verde",
+          "Signos de sangrado",
+          "Avisar antes de procedimientos"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "diagnostico",
+        "name": "Diagnóstico (con código CIE-10 si se conoce)",
+        "dataType": "text",
+        "required": true,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "plan",
+        "name": "Plan: tratamiento, estudios, interconsultas y destino",
+        "dataType": "text",
+        "required": false,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "proximo_control",
+        "name": "Próximo control",
+        "dataType": "date",
+        "required": false,
+        "section": "Metas y plan"
+      }
+    ]
+  },
+  {
     "code": "HEMATO_EVALUACION_BASE",
-    "name": "Evaluación hematológica",
+    "name": "Hematología — consulta inicial (ficha base)",
     "version": 2,
+    "kind": "BASE",
     "specialty": "HEMATOLOGIA",
     "provenance": {
       "sourceTitle": "Norma Técnica de Salud para la Gestión de la Historia Clínica — NT N.º 022-MINSA/DGSP-V.02, anamnesis y examen por aparatos",
@@ -6488,206 +11333,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
         ],
         "multiple": false,
         "allowOther": true,
-        "description": "Al elegirlo se abren las observaciones que ese cuadro exige registrar."
-      },
-      {
-        "code": "anemia_hemoglobina",
-        "name": "Hemoglobina (g/dL)",
-        "dataType": "decimal",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "description": "Ajustar por altitud de residencia.",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Anemia ferropénica"
-        }
-      },
-      {
-        "code": "anemia_sintomas",
-        "name": "Síntomas",
-        "dataType": "json",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Astenia",
-          "Disnea de esfuerzo",
-          "Palpitaciones",
-          "Pica",
-          "Ninguno"
-        ],
-        "multiple": true,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Anemia ferropénica"
-        }
-      },
-      {
-        "code": "anemia_perdidas",
-        "name": "Posibles pérdidas",
-        "dataType": "json",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Menstruación abundante",
-          "Sangrado digestivo",
-          "Parasitosis",
-          "Ninguna conocida"
-        ],
-        "multiple": true,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Anemia ferropénica"
-        }
-      },
-      {
-        "code": "anemia_vcm",
-        "name": "VCM y ferritina, si se conocen",
-        "dataType": "string",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Anemia ferropénica"
-        }
-      },
-      {
-        "code": "vcm_mega",
-        "name": "VCM (fL)",
-        "dataType": "decimal",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Anemia megaloblástica"
-        }
-      },
-      {
-        "code": "b12",
-        "name": "Vitamina B12 (pg/mL)",
-        "dataType": "decimal",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Anemia megaloblástica"
-        }
-      },
-      {
-        "code": "mega_neuro",
-        "name": "Síntomas neurológicos",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Anemia megaloblástica"
-        }
-      },
-      {
-        "code": "plaquetas",
-        "name": "Plaquetas (/µL)",
-        "dataType": "integer",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Trombocitopenia"
-        }
-      },
-      {
-        "code": "trombo_sangrado_activo",
-        "name": "Sangrado activo",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Trombocitopenia"
-        }
-      },
-      {
-        "code": "tp_inr",
-        "name": "TP / INR",
-        "dataType": "string",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Trastorno de la coagulación"
-        }
-      },
-      {
-        "code": "ttpa",
-        "name": "TTPa",
-        "dataType": "string",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Trastorno de la coagulación"
-        }
-      },
-      {
-        "code": "anticoagulado",
-        "name": "Recibe anticoagulantes",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Trastorno de la coagulación"
-        }
-      },
-      {
-        "code": "sintomas_b",
-        "name": "Síntomas B",
-        "dataType": "json",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Fiebre",
-          "Sudoración nocturna",
-          "Pérdida de más del 10 % del peso"
-        ],
-        "multiple": true,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Sospecha de leucemia o linfoma"
-        }
-      },
-      {
-        "code": "blastos",
-        "name": "Blastos en el frotis",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Sospecha de leucemia o linfoma"
-        }
-      },
-      {
-        "code": "hematocrito",
-        "name": "Hematocrito (%)",
-        "dataType": "decimal",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "description": "Interpretar según la altitud de residencia.",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Policitemia"
-        }
-      },
-      {
-        "code": "residencia_altitud",
-        "name": "Altitud de residencia (m s. n. m.)",
-        "dataType": "string",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Policitemia"
-        }
+        "description": "Si el cuadro ya está diagnosticado, el seguimiento se hace con su ficha específica de la especialidad."
       },
       {
         "code": "diagnostico",
@@ -6707,9 +11353,665 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
     ]
   },
   {
+    "code": "INFECTO_CTRL_DENGUE",
+    "name": "Dengue: evaluación y seguimiento diario",
+    "version": 1,
+    "kind": "SPECIFIC",
+    "specialty": "INFECTOLOGIA",
+    "provenance": {
+      "sourceTitle": "Dengue: guías para la atención de enfermos en la Región de las Américas, 2.ª ed.",
+      "organization": "Organización Panamericana de la Salud (OPS/OMS)",
+      "url": "https://www.paho.org/es/temas/dengue",
+      "license": "CC BY-NC-SA 3.0 IGO",
+      "retrievedAt": "2026-10-02",
+      "note": "Clasificación en grupos A/B/C y signos de alarma de la guía de OPS; control diario en la fase crítica (días 3 a 7)."
+    },
+    "fields": [
+      {
+        "code": "tipo_de_evaluacion",
+        "name": "Tipo de evaluación",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación inicial",
+        "options": [
+          "Evaluación inicial",
+          "Reevaluación"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "inicio_de_sintomas",
+        "name": "Inicio de los síntomas (fecha u hora)",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación inicial"
+      },
+      {
+        "code": "tratamiento_previo",
+        "name": "Tratamiento recibido antes de esta consulta",
+        "dataType": "text",
+        "required": false,
+        "section": "Evaluación inicial"
+      },
+      {
+        "code": "dengue_dias_de_fiebre",
+        "name": "Días de fiebre",
+        "dataType": "integer",
+        "required": true,
+        "section": "Evaluación: dengue"
+      },
+      {
+        "code": "dengue_signos_de_alarma",
+        "name": "Signos de alarma (OPS/OMS)",
+        "dataType": "json",
+        "required": true,
+        "section": "Evaluación: dengue",
+        "options": [
+          "Dolor abdominal intenso y continuo",
+          "Vómitos persistentes",
+          "Acumulación de líquidos (ascitis, derrame)",
+          "Sangrado de mucosas",
+          "Letargia o irritabilidad",
+          "Hepatomegalia mayor a 2 cm",
+          "Aumento del hematocrito con caída de plaquetas",
+          "Hipotensión postural",
+          "Ninguno"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "dengue_torniquete",
+        "name": "Prueba del torniquete",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: dengue",
+        "options": [
+          "Positiva",
+          "Negativa",
+          "No realizada"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "dengue_grupo",
+        "name": "Clasificación",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación: dengue",
+        "options": [
+          "Grupo A — sin signos de alarma",
+          "Grupo B — con signos de alarma o condición asociada",
+          "Grupo C — dengue grave"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "presion_arterial_sistolica",
+        "name": "Presión arterial sistólica (mmHg)",
+        "dataType": "integer",
+        "required": true,
+        "section": "Evaluación: dengue"
+      },
+      {
+        "code": "presion_arterial_diastolica",
+        "name": "Presión arterial diastólica (mmHg)",
+        "dataType": "integer",
+        "required": true,
+        "section": "Evaluación: dengue"
+      },
+      {
+        "code": "frecuencia_cardiaca",
+        "name": "Frecuencia cardíaca (lpm)",
+        "dataType": "integer",
+        "required": false,
+        "section": "Evaluación: dengue"
+      },
+      {
+        "code": "hematocrito",
+        "name": "Hematocrito (%)",
+        "dataType": "decimal",
+        "required": false,
+        "section": "Evaluación: dengue"
+      },
+      {
+        "code": "plaquetas",
+        "name": "Plaquetas (/µL)",
+        "dataType": "integer",
+        "required": false,
+        "section": "Evaluación: dengue"
+      },
+      {
+        "code": "hidratacion_oral",
+        "name": "Tolera la hidratación oral",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: dengue",
+        "options": [
+          "Sí",
+          "Parcialmente",
+          "No"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "diuresis",
+        "name": "Diuresis (mL/kg/h)",
+        "dataType": "decimal",
+        "required": false,
+        "section": "Evaluación: dengue"
+      },
+      {
+        "code": "metas_cumplidas",
+        "name": "Metas de control que cumple hoy",
+        "dataType": "json",
+        "required": false,
+        "section": "Conclusión y plan",
+        "options": [
+          "Sin signos de alarma",
+          "Hematocrito estable",
+          "Ninguna todavía"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "educacion_brindada",
+        "name": "Educación brindada en esta consulta",
+        "dataType": "json",
+        "required": false,
+        "section": "Conclusión y plan",
+        "options": [
+          "Hidratación oral",
+          "No tomar AINE ni aspirina",
+          "Volver ya ante un signo de alarma",
+          "Mosquitero y eliminar criaderos"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "diagnostico",
+        "name": "Diagnóstico (con código CIE-10 si se conoce)",
+        "dataType": "text",
+        "required": true,
+        "section": "Conclusión y plan"
+      },
+      {
+        "code": "plan",
+        "name": "Plan: tratamiento, estudios, interconsultas y destino",
+        "dataType": "text",
+        "required": false,
+        "section": "Conclusión y plan"
+      }
+    ]
+  },
+  {
+    "code": "INFECTO_CTRL_ITU",
+    "name": "Infección urinaria: evaluación y control",
+    "version": 1,
+    "kind": "SPECIFIC",
+    "specialty": "INFECTOLOGIA",
+    "provenance": {
+      "sourceTitle": "Norma Técnica de Salud para la Gestión de la Historia Clínica — NT N.º 022-MINSA/DGSP-V.02",
+      "organization": "Ministerio de Salud del Perú (MINSA)",
+      "url": "https://bvs.minsa.gob.pe/local/dgsp/NT022hist.pdf",
+      "license": "Norma técnica estatal de acceso público",
+      "retrievedAt": "2026-10-02",
+      "note": "Cistitis frente a pielonefritis, factores de complicación y urocultivo."
+    },
+    "fields": [
+      {
+        "code": "tipo_de_evaluacion",
+        "name": "Tipo de evaluación",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación inicial",
+        "options": [
+          "Evaluación inicial",
+          "Reevaluación"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "inicio_de_sintomas",
+        "name": "Inicio de los síntomas (fecha u hora)",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación inicial"
+      },
+      {
+        "code": "tratamiento_previo",
+        "name": "Tratamiento recibido antes de esta consulta",
+        "dataType": "text",
+        "required": false,
+        "section": "Evaluación inicial"
+      },
+      {
+        "code": "itu_sintomas",
+        "name": "Síntomas urinarios",
+        "dataType": "json",
+        "required": true,
+        "section": "Evaluación: infección urinaria",
+        "options": [
+          "Disuria",
+          "Polaquiuria",
+          "Urgencia miccional",
+          "Hematuria",
+          "Dolor suprapúbico"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "itu_fiebre_o_lumbar",
+        "name": "Fiebre o dolor lumbar (sospecha de pielonefritis)",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Evaluación: infección urinaria"
+      },
+      {
+        "code": "itu_punopercusion",
+        "name": "Puñopercusión lumbar",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: infección urinaria",
+        "options": [
+          "Positiva",
+          "Negativa",
+          "No evaluada"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "itu_embarazo",
+        "name": "¿Embarazo posible?",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: infección urinaria",
+        "options": [
+          "Sí",
+          "No",
+          "No aplica"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "itu_complicada",
+        "name": "Factores de complicación",
+        "dataType": "json",
+        "required": false,
+        "section": "Evaluación: infección urinaria",
+        "options": [
+          "Embarazo",
+          "Varón",
+          "Diabetes",
+          "Sonda vesical",
+          "Litiasis u obstrucción",
+          "Inmunosupresión",
+          "Ninguno"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "urocultivo",
+        "name": "Urocultivo y antibiograma",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: infección urinaria"
+      },
+      {
+        "code": "metas_cumplidas",
+        "name": "Metas de control que cumple hoy",
+        "dataType": "json",
+        "required": false,
+        "section": "Conclusión y plan",
+        "options": [
+          "Asintomático al control",
+          "Ninguna todavía"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "diagnostico",
+        "name": "Diagnóstico (con código CIE-10 si se conoce)",
+        "dataType": "text",
+        "required": true,
+        "section": "Conclusión y plan"
+      },
+      {
+        "code": "plan",
+        "name": "Plan: tratamiento, estudios, interconsultas y destino",
+        "dataType": "text",
+        "required": false,
+        "section": "Conclusión y plan"
+      }
+    ]
+  },
+  {
+    "code": "INFECTO_CTRL_MALARIA",
+    "name": "Malaria: evaluación y seguimiento",
+    "version": 1,
+    "kind": "SPECIFIC",
+    "specialty": "INFECTOLOGIA",
+    "provenance": {
+      "sourceTitle": "Directrices de la OMS sobre la malaria",
+      "organization": "Organización Mundial de la Salud (OMS)",
+      "url": "https://www.who.int/teams/global-malaria-programme",
+      "license": "CC BY-NC-SA 3.0 IGO",
+      "retrievedAt": "2026-10-02",
+      "note": "Especie, signos de gravedad de la OMS y control parasitológico."
+    },
+    "fields": [
+      {
+        "code": "tipo_de_evaluacion",
+        "name": "Tipo de evaluación",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación inicial",
+        "options": [
+          "Evaluación inicial",
+          "Reevaluación"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "inicio_de_sintomas",
+        "name": "Inicio de los síntomas (fecha u hora)",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación inicial"
+      },
+      {
+        "code": "tratamiento_previo",
+        "name": "Tratamiento recibido antes de esta consulta",
+        "dataType": "text",
+        "required": false,
+        "section": "Evaluación inicial"
+      },
+      {
+        "code": "malaria_especie",
+        "name": "Gota gruesa",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación: malaria",
+        "options": [
+          "P. vivax",
+          "P. falciparum",
+          "Mixta",
+          "Negativa"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "parasitemia",
+        "name": "Parasitemia",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: malaria"
+      },
+      {
+        "code": "malaria_gravedad",
+        "name": "Signos de gravedad",
+        "dataType": "json",
+        "required": true,
+        "section": "Evaluación: malaria",
+        "options": [
+          "Alteración de la conciencia",
+          "Convulsiones",
+          "Dificultad respiratoria",
+          "Ictericia",
+          "Anemia grave",
+          "Sangrado",
+          "Hipoglucemia",
+          "Ninguno"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "zona_exposicion",
+        "name": "Zona donde se expuso",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: malaria"
+      },
+      {
+        "code": "metas_cumplidas",
+        "name": "Metas de control que cumple hoy",
+        "dataType": "json",
+        "required": false,
+        "section": "Conclusión y plan",
+        "options": [
+          "Gota gruesa negativa al control",
+          "Ninguna todavía"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "educacion_brindada",
+        "name": "Educación brindada en esta consulta",
+        "dataType": "json",
+        "required": false,
+        "section": "Conclusión y plan",
+        "options": [
+          "Completar el tratamiento (primaquina en vivax)",
+          "Mosquitero"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "diagnostico",
+        "name": "Diagnóstico (con código CIE-10 si se conoce)",
+        "dataType": "text",
+        "required": true,
+        "section": "Conclusión y plan"
+      },
+      {
+        "code": "plan",
+        "name": "Plan: tratamiento, estudios, interconsultas y destino",
+        "dataType": "text",
+        "required": false,
+        "section": "Conclusión y plan"
+      }
+    ]
+  },
+  {
+    "code": "INFECTO_CTRL_VIH",
+    "name": "Control de VIH",
+    "version": 1,
+    "kind": "SPECIFIC",
+    "specialty": "INFECTOLOGIA",
+    "provenance": {
+      "sourceTitle": "VIH: directrices consolidadas de la OMS",
+      "organization": "Organización Mundial de la Salud (OMS)",
+      "url": "https://www.who.int/health-topics/hiv-aids",
+      "license": "CC BY-NC-SA 3.0 IGO",
+      "retrievedAt": "2026-10-02",
+      "note": "Estadio clínico de la OMS, carga viral, CD4, adherencia a la terapia antirretroviral y profilaxis."
+    },
+    "fields": [
+      {
+        "code": "tipo_de_control",
+        "name": "Tipo de consulta",
+        "dataType": "string",
+        "required": true,
+        "section": "Seguimiento",
+        "options": [
+          "Primera evaluación de la condición",
+          "Control programado",
+          "Descompensación o consulta no programada",
+          "Control posterior a internación"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "fecha_del_diagnostico",
+        "name": "Fecha del diagnóstico de VIH",
+        "dataType": "date",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "tratamiento_actual",
+        "name": "Tratamiento actual (fármaco, dosis y frecuencia)",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "adherencia",
+        "name": "Adherencia al tratamiento",
+        "dataType": "string",
+        "required": false,
+        "section": "Seguimiento",
+        "options": [
+          "Toma el tratamiento como está indicado",
+          "Olvida dosis algunas veces",
+          "Abandonó el tratamiento",
+          "Todavía sin tratamiento"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "efectos_adversos",
+        "name": "¿Tuvo efectos adversos del tratamiento?",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "efectos_adversos_cuales",
+        "name": "¿Cuáles y con qué fármaco?",
+        "dataType": "text",
+        "required": true,
+        "section": "Seguimiento",
+        "showWhen": {
+          "field": "efectos_adversos",
+          "equals": true
+        }
+      },
+      {
+        "code": "evolucion_desde_ultimo_control",
+        "name": "Evolución desde el último control",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "estadio_oms_vih",
+        "name": "Estadio clínico OMS",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación: VIH",
+        "options": [
+          "1",
+          "2",
+          "3",
+          "4"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "carga_viral",
+        "name": "Última carga viral (copias/mL)",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación: VIH"
+      },
+      {
+        "code": "cd4",
+        "name": "Último CD4 (células/µL)",
+        "dataType": "integer",
+        "required": false,
+        "section": "Evaluación: VIH"
+      },
+      {
+        "code": "vih_tamizajes",
+        "name": "Tamizajes al día",
+        "dataType": "json",
+        "required": false,
+        "section": "Evaluación: VIH",
+        "options": [
+          "Tuberculosis",
+          "Sífilis",
+          "Hepatitis B",
+          "Cáncer de cuello uterino"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "profilaxis_cotrimoxazol",
+        "name": "Recibe cotrimoxazol",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Evaluación: VIH"
+      },
+      {
+        "code": "vih_sintomas",
+        "name": "Síntomas",
+        "dataType": "json",
+        "required": false,
+        "section": "Evaluación: VIH",
+        "options": [
+          "Fiebre",
+          "Pérdida de peso",
+          "Diarrea crónica",
+          "Tos",
+          "Lesiones orales",
+          "Ninguno"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "metas_cumplidas",
+        "name": "Metas de control que cumple hoy",
+        "dataType": "json",
+        "required": false,
+        "section": "Metas y plan",
+        "options": [
+          "Carga viral indetectable",
+          "Adherencia > 95 %",
+          "Ninguna todavía"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "educacion_brindada",
+        "name": "Educación brindada en esta consulta",
+        "dataType": "json",
+        "required": false,
+        "section": "Metas y plan",
+        "options": [
+          "Adherencia",
+          "Prevención de la transmisión",
+          "Pareja: prueba"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "diagnostico",
+        "name": "Diagnóstico (con código CIE-10 si se conoce)",
+        "dataType": "text",
+        "required": true,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "plan",
+        "name": "Plan: tratamiento, estudios, interconsultas y destino",
+        "dataType": "text",
+        "required": false,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "proximo_control",
+        "name": "Próximo control",
+        "dataType": "date",
+        "required": false,
+        "section": "Metas y plan"
+      }
+    ]
+  },
+  {
     "code": "INFECTO_EVALUACION_BASE",
-    "name": "Evaluación infectológica",
+    "name": "Infectología — consulta inicial (ficha base)",
     "version": 2,
+    "kind": "BASE",
     "specialty": "INFECTOLOGIA",
     "provenance": {
       "sourceTitle": "Norma Técnica de Salud para la Gestión de la Historia Clínica — NT N.º 022-MINSA/DGSP-V.02, anamnesis, antecedentes epidemiológicos y examen por aparatos",
@@ -6718,7 +12020,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
       "license": "Norma técnica estatal de acceso público",
       "sourceVersion": "V.02",
       "retrievedAt": "2026-08-14",
-      "note": "De la norma salen la estructura común del registro: motivo de consulta, tiempo de enfermedad, antecedentes epidemiológicos, examen físico, diagnóstico y conducta. Son agregados propios de la especialidad la descripción del patrón febril, el foco clínico probable, los antecedentes de viajes y exposiciones, el estado de vacunación y los tratamientos antimicrobianos previos. v2 (2026-10-02): reorganizada en secciones (motivo, antecedentes, examen, diagnóstico presuntivo, plan); las clasificaciones con categorías finitas pasan a lista cerrada; cada sí/no que tiene detalle pregunta «¿cuál?»; el diagnóstico presuntivo abre las observaciones que ese cuadro exige registrar. Instrumentos de uso libre incorporados: guía de dengue OPS/OMS 2016, qSOFA (Sepsis-3)."
+      "note": "De la norma salen la estructura común del registro: motivo de consulta, tiempo de enfermedad, antecedentes epidemiológicos, examen físico, diagnóstico y conducta. Son agregados propios de la especialidad la descripción del patrón febril, el foco clínico probable, los antecedentes de viajes y exposiciones, el estado de vacunación y los tratamientos antimicrobianos previos. v2 (2026-10-02): reorganizada en secciones (motivo, antecedentes, examen, diagnóstico presuntivo, plan); las clasificaciones con categorías finitas pasan a lista cerrada; cada sí/no que tiene detalle pregunta «¿cuál?»; el diagnóstico presuntivo abre las observaciones que ese cuadro exige registrar."
     },
     "fields": [
       {
@@ -6962,284 +12264,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
         ],
         "multiple": false,
         "allowOther": true,
-        "description": "Al elegirlo se abren las observaciones que ese cuadro exige registrar."
-      },
-      {
-        "code": "dengue_signos_de_alarma",
-        "name": "Signos de alarma (OPS/OMS)",
-        "dataType": "json",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Dolor abdominal intenso y continuo",
-          "Vómitos persistentes",
-          "Acumulación de líquidos (ascitis, derrame)",
-          "Sangrado de mucosas",
-          "Letargia o irritabilidad",
-          "Hepatomegalia mayor a 2 cm",
-          "Aumento del hematocrito con caída de plaquetas",
-          "Hipotensión postural",
-          "Ninguno"
-        ],
-        "multiple": true,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Dengue"
-        }
-      },
-      {
-        "code": "dengue_torniquete",
-        "name": "Prueba del torniquete",
-        "dataType": "string",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Positiva",
-          "Negativa",
-          "No realizada"
-        ],
-        "multiple": false,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Dengue"
-        }
-      },
-      {
-        "code": "dengue_grupo",
-        "name": "Clasificación",
-        "dataType": "string",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Grupo A — sin signos de alarma",
-          "Grupo B — con signos de alarma o condición asociada",
-          "Grupo C — dengue grave"
-        ],
-        "multiple": false,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Dengue"
-        }
-      },
-      {
-        "code": "chik_artralgia",
-        "name": "Artralgias intensas",
-        "dataType": "boolean",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Chikungunya o zika"
-        }
-      },
-      {
-        "code": "zika_embarazo",
-        "name": "Embarazo en curso",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Chikungunya o zika"
-        }
-      },
-      {
-        "code": "chik_exantema",
-        "name": "Exantema",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Chikungunya o zika"
-        }
-      },
-      {
-        "code": "malaria_gota_gruesa",
-        "name": "Gota gruesa",
-        "dataType": "string",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Positiva — P. vivax",
-          "Positiva — P. falciparum",
-          "Negativa",
-          "Pendiente"
-        ],
-        "multiple": false,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Malaria"
-        }
-      },
-      {
-        "code": "leish_forma",
-        "name": "Forma",
-        "dataType": "string",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Cutánea",
-          "Mucosa",
-          "Visceral"
-        ],
-        "multiple": false,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Leishmaniasis"
-        }
-      },
-      {
-        "code": "leish_lesiones",
-        "name": "Número de lesiones",
-        "dataType": "integer",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Leishmaniasis"
-        }
-      },
-      {
-        "code": "tbc_dias_de_tos",
-        "name": "Días de tos con expectoración",
-        "dataType": "integer",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "description": "15 días o más: sintomático respiratorio, pedir baciloscopía.",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Tuberculosis"
-        }
-      },
-      {
-        "code": "tbc_sintomas",
-        "name": "Síntomas acompañantes",
-        "dataType": "json",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Fiebre vespertina",
-          "Sudoración nocturna",
-          "Pérdida de peso",
-          "Hemoptisis",
-          "Ninguno"
-        ],
-        "multiple": true,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Tuberculosis"
-        }
-      },
-      {
-        "code": "tbc_contacto",
-        "name": "Contacto con un caso de tuberculosis",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Tuberculosis"
-        }
-      },
-      {
-        "code": "tbc_baciloscopia",
-        "name": "Baciloscopía",
-        "dataType": "string",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Positiva",
-          "Negativa",
-          "Pedida",
-          "No pedida"
-        ],
-        "multiple": false,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Tuberculosis"
-        }
-      },
-      {
-        "code": "vih_cd4",
-        "name": "CD4 (células/µL)",
-        "dataType": "string",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "VIH"
-        }
-      },
-      {
-        "code": "vih_carga_viral",
-        "name": "Carga viral",
-        "dataType": "string",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "VIH"
-        }
-      },
-      {
-        "code": "vih_tar",
-        "name": "En terapia antirretroviral",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "VIH"
-        }
-      },
-      {
-        "code": "ppb_signos",
-        "name": "Signos",
-        "dataType": "json",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Eritema",
-          "Calor",
-          "Absceso fluctuante",
-          "Crepitación",
-          "Necrosis"
-        ],
-        "multiple": true,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Infección de piel y partes blandas"
-        }
-      },
-      {
-        "code": "ppb_sistemico",
-        "name": "Compromiso sistémico",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Infección de piel y partes blandas"
-        }
-      },
-      {
-        "code": "qsofa",
-        "name": "qSOFA",
-        "dataType": "json",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Frecuencia respiratoria ≥ 22",
-          "Alteración del estado mental",
-          "PAS ≤ 100 mmHg"
-        ],
-        "multiple": true,
-        "description": "2 o más: alto riesgo.",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Sepsis"
-        }
+        "description": "Si el cuadro ya está diagnosticado, el seguimiento se hace con su ficha específica de la especialidad."
       },
       {
         "code": "diagnostico",
@@ -7260,8 +12285,9 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
   },
   {
     "code": "MEDEP_EVALUACION_BASE",
-    "name": "Evaluación de medicina deportiva",
+    "name": "Medicina Deportiva — consulta inicial (ficha base)",
     "version": 2,
+    "kind": "BASE",
     "specialty": "MEDICINA_DEPORTIVA",
     "provenance": {
       "sourceTitle": "Norma Técnica de Salud para la Gestión de la Historia Clínica — NT N.º 022-MINSA/DGSP-V.02, anamnesis, antecedentes y examen por aparatos y sistemas",
@@ -7469,9 +12495,124 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
     ]
   },
   {
+    "code": "MEDEP_PREPARTICIPATIVA",
+    "name": "Evaluación preparticipativa deportiva",
+    "version": 1,
+    "kind": "SPECIFIC",
+    "specialty": "MEDICINA_DEPORTIVA",
+    "provenance": {
+      "sourceTitle": "Norma Técnica de Salud para la Gestión de la Historia Clínica — NT N.º 022-MINSA/DGSP-V.02",
+      "organization": "Ministerio de Salud del Perú (MINSA)",
+      "url": "https://bvs.minsa.gob.pe/local/dgsp/NT022hist.pdf",
+      "license": "Norma técnica estatal de acceso público",
+      "retrievedAt": "2026-10-02",
+      "note": "Tamizaje cardiovascular para muerte súbita: síntomas con esfuerzo, antecedente familiar, examen y ECG."
+    },
+    "fields": [
+      {
+        "code": "tipo_de_evaluacion",
+        "name": "Tipo de consulta",
+        "dataType": "string",
+        "required": true,
+        "section": "Consulta",
+        "options": [
+          "Primera vez",
+          "Control"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "sintomas_esfuerzo",
+        "name": "Síntomas con el esfuerzo",
+        "dataType": "json",
+        "required": true,
+        "section": "Evaluación: aptitud deportiva",
+        "options": [
+          "Dolor torácico",
+          "Síncope",
+          "Disnea desproporcionada",
+          "Palpitaciones",
+          "Ninguno"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "muerte_subita_familiar",
+        "name": "Familiar con muerte súbita antes de los 50 años",
+        "dataType": "boolean",
+        "required": true,
+        "section": "Evaluación: aptitud deportiva"
+      },
+      {
+        "code": "soplo",
+        "name": "Soplo",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Evaluación: aptitud deportiva"
+      },
+      {
+        "code": "presion_arterial_sistolica",
+        "name": "Presión arterial sistólica (mmHg)",
+        "dataType": "integer",
+        "required": true,
+        "section": "Evaluación: aptitud deportiva"
+      },
+      {
+        "code": "presion_arterial_diastolica",
+        "name": "Presión arterial diastólica (mmHg)",
+        "dataType": "integer",
+        "required": true,
+        "section": "Evaluación: aptitud deportiva"
+      },
+      {
+        "code": "ecg",
+        "name": "ECG de reposo — hallazgo",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: aptitud deportiva"
+      },
+      {
+        "code": "aptitud",
+        "name": "Aptitud",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación: aptitud deportiva",
+        "options": [
+          "Apto",
+          "Apto con restricciones",
+          "No apto temporal",
+          "No apto"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "diagnostico",
+        "name": "Diagnóstico (con código CIE-10 si se conoce)",
+        "dataType": "text",
+        "required": true,
+        "section": "Conclusión y plan"
+      },
+      {
+        "code": "plan",
+        "name": "Plan: tratamiento, estudios, interconsultas y destino",
+        "dataType": "text",
+        "required": false,
+        "section": "Conclusión y plan"
+      },
+      {
+        "code": "proximo_control",
+        "name": "Próximo control",
+        "dataType": "date",
+        "required": false,
+        "section": "Conclusión y plan"
+      }
+    ]
+  },
+  {
     "code": "MEDFAM_CONSULTA_BASE",
-    "name": "Consulta de medicina familiar",
+    "name": "Medicina Familiar — consulta inicial (ficha base)",
     "version": 2,
+    "kind": "BASE",
     "specialty": "MEDICINA_FAMILIAR",
     "provenance": {
       "sourceTitle": "Norma Técnica de Salud para la Gestión de la Historia Clínica — NT N.º 022-MINSA/DGSP-V.02, anamnesis, antecedentes y examen físico de la atención ambulatoria",
@@ -7480,7 +12621,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
       "license": "Norma técnica estatal de acceso público",
       "sourceVersion": "V.02",
       "retrievedAt": "2026-08-14",
-      "note": "De la norma salen la estructura común de la consulta: motivo, tiempo de evolución, enfermedad actual, antecedentes personales y familiares, examen físico, diagnóstico y conducta. Son agregados propios de medicina familiar los campos de composición del grupo familiar, condiciones de la vivienda y convivencia, red de apoyo, ocupación y hábitos, y el seguimiento de controles preventivos e inmunizaciones. v2 (2026-10-02): reorganizada en secciones (motivo, antecedentes, examen, diagnóstico presuntivo, plan); las clasificaciones con categorías finitas pasan a lista cerrada; cada sí/no que tiene detalle pregunta «¿cuál?»; el diagnóstico presuntivo abre las observaciones que ese cuadro exige registrar. Instrumentos de uso libre incorporados: AUDIT-C (OMS), SRQ-20 (OMS), APGAR familiar de Smilkstein."
+      "note": "De la norma salen la estructura común de la consulta: motivo, tiempo de evolución, enfermedad actual, antecedentes personales y familiares, examen físico, diagnóstico y conducta. Son agregados propios de medicina familiar los campos de composición del grupo familiar, condiciones de la vivienda y convivencia, red de apoyo, ocupación y hábitos, y el seguimiento de controles preventivos e inmunizaciones. v2 (2026-10-02): reorganizada en secciones (motivo, antecedentes, examen, diagnóstico presuntivo, plan); las clasificaciones con categorías finitas pasan a lista cerrada; cada sí/no que tiene detalle pregunta «¿cuál?»; el diagnóstico presuntivo abre las observaciones que ese cuadro exige registrar. Instrumentos de uso libre incorporados: AUDIT-C (OMS), APGAR familiar de Smilkstein."
     },
     "fields": [
       {
@@ -7947,319 +13088,257 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
         ],
         "multiple": false,
         "allowOther": true,
-        "description": "Al elegirlo se abren las observaciones que ese cuadro exige registrar."
+        "description": "Si el cuadro ya está diagnosticado, el seguimiento se hace con su ficha específica de la especialidad."
       },
       {
-        "code": "centor_fiebre",
-        "name": "Fiebre mayor a 38 °C",
-        "dataType": "boolean",
+        "code": "diagnostico",
+        "name": "Diagnóstico (con código CIE-10 si se conoce)",
+        "dataType": "text",
         "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Infección respiratoria alta"
-        }
+        "section": "Diagnóstico y plan"
       },
       {
-        "code": "centor_sin_tos",
-        "name": "Ausencia de tos",
-        "dataType": "boolean",
+        "code": "plan_de_tratamiento",
+        "name": "Plan de tratamiento y seguimiento familiar",
+        "dataType": "text",
         "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Infección respiratoria alta"
-        }
-      },
+        "section": "Diagnóstico y plan",
+        "description": "Tratamiento, estudios pedidos, educación, interconsultas y control."
+      }
+    ]
+  },
+  {
+    "code": "MEDFAM_CTRL_PLANIFICACION",
+    "name": "Consejería en planificación familiar",
+    "version": 1,
+    "kind": "SPECIFIC",
+    "specialty": "MEDICINA_FAMILIAR",
+    "provenance": {
+      "sourceTitle": "Criterios médicos de elegibilidad para el uso de anticonceptivos, 5.ª ed.",
+      "organization": "Organización Mundial de la Salud (OMS)",
+      "url": "https://www.who.int/publications/i/item/9789241549158",
+      "license": "CC BY-NC-SA 3.0 IGO",
+      "retrievedAt": "2026-10-02",
+      "note": "Elegibilidad de cada método según los criterios médicos de la OMS (categorías 1 a 4)."
+    },
+    "fields": [
       {
-        "code": "centor_adenopatias",
-        "name": "Adenopatías cervicales anteriores dolorosas",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Infección respiratoria alta"
-        }
-      },
-      {
-        "code": "centor_exudado",
-        "name": "Exudado o tumefacción amigdalina",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Infección respiratoria alta"
-        }
-      },
-      {
-        "code": "ira_rinorrea",
-        "name": "Rinorrea",
-        "dataType": "string",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Ausente",
-          "Acuosa",
-          "Purulenta"
-        ],
-        "multiple": false,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Infección respiratoria alta"
-        }
-      },
-      {
-        "code": "eda_deposiciones_24h",
-        "name": "Deposiciones líquidas en las últimas 24 horas",
-        "dataType": "integer",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Enfermedad diarreica aguda"
-        }
-      },
-      {
-        "code": "eda_sangre_en_heces",
-        "name": "Sangre en las heces (disentería)",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Enfermedad diarreica aguda"
-        }
-      },
-      {
-        "code": "eda_vomitos",
-        "name": "Vómitos",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Enfermedad diarreica aguda"
-        }
-      },
-      {
-        "code": "eda_hidratacion",
-        "name": "Estado de hidratación (OMS)",
+        "code": "tipo_de_evaluacion",
+        "name": "Tipo de consulta",
         "dataType": "string",
         "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
+        "section": "Consulta",
         "options": [
-          "Sin deshidratación — Plan A",
-          "Algún grado de deshidratación — Plan B",
-          "Deshidratación grave — Plan C"
+          "Primera vez",
+          "Control"
         ],
-        "multiple": false,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Enfermedad diarreica aguda"
-        }
+        "multiple": false
       },
       {
-        "code": "eda_fiebre",
-        "name": "Fiebre",
-        "dataType": "boolean",
+        "code": "metodo_actual",
+        "name": "Método actual",
+        "dataType": "string",
         "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Enfermedad diarreica aguda"
-        }
+        "section": "Evaluación: anticoncepción",
+        "options": [
+          "Ninguno",
+          "Preservativo",
+          "Píldora combinada",
+          "Inyectable",
+          "Implante",
+          "DIU de cobre",
+          "DIU hormonal",
+          "Ligadura o vasectomía"
+        ],
+        "multiple": false
       },
       {
-        "code": "hta_organo_blanco",
-        "name": "Síntomas de daño de órgano blanco",
+        "code": "condiciones_mec",
+        "name": "Condiciones que cambian la elegibilidad",
         "dataType": "json",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
+        "required": false,
+        "section": "Evaluación: anticoncepción",
         "options": [
-          "Cefalea intensa",
-          "Dolor torácico",
-          "Disnea",
-          "Alteración visual",
-          "Déficit neurológico",
+          "Fuma y tiene 35 años o más",
+          "Hipertensión",
+          "Migraña con aura",
+          "Antecedente de trombosis",
+          "Lactancia < 6 semanas",
+          "Ninguna"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "metodo_elegido",
+        "name": "Método elegido",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: anticoncepción",
+        "options": [
+          "Preservativo",
+          "Píldora combinada",
+          "Píldora de progestágeno",
+          "Inyectable",
+          "Implante",
+          "DIU de cobre",
+          "DIU hormonal",
+          "Ligadura o vasectomía",
           "Ninguno"
         ],
-        "multiple": true,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Hipertensión arterial"
-        }
+        "multiple": false
       },
       {
-        "code": "hta_adherencia",
+        "code": "categoria_mec",
+        "name": "Categoría OMS del método elegido",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: anticoncepción",
+        "options": [
+          "1",
+          "2",
+          "3",
+          "4"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "presion_arterial_sistolica",
+        "name": "Presión arterial sistólica (mmHg)",
+        "dataType": "integer",
+        "required": true,
+        "section": "Evaluación: anticoncepción"
+      },
+      {
+        "code": "presion_arterial_diastolica",
+        "name": "Presión arterial diastólica (mmHg)",
+        "dataType": "integer",
+        "required": true,
+        "section": "Evaluación: anticoncepción"
+      },
+      {
+        "code": "educacion_brindada",
+        "name": "Educación brindada en esta consulta",
+        "dataType": "json",
+        "required": false,
+        "section": "Conclusión y plan",
+        "options": [
+          "Uso correcto",
+          "Doble protección con preservativo",
+          "Anticoncepción de emergencia"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "diagnostico",
+        "name": "Diagnóstico (con código CIE-10 si se conoce)",
+        "dataType": "text",
+        "required": true,
+        "section": "Conclusión y plan"
+      },
+      {
+        "code": "plan",
+        "name": "Plan: tratamiento, estudios, interconsultas y destino",
+        "dataType": "text",
+        "required": false,
+        "section": "Conclusión y plan"
+      },
+      {
+        "code": "proximo_control",
+        "name": "Próximo control",
+        "dataType": "date",
+        "required": false,
+        "section": "Conclusión y plan"
+      }
+    ]
+  },
+  {
+    "code": "MEDFAM_CTRL_SALUD_MENTAL",
+    "name": "Salud mental en atención primaria (mhGAP)",
+    "version": 1,
+    "kind": "SPECIFIC",
+    "specialty": "MEDICINA_FAMILIAR",
+    "provenance": {
+      "sourceTitle": "Guía de intervención mhGAP para los trastornos mentales, neurológicos y por consumo de sustancias, versión 2.0",
+      "organization": "Organización Mundial de la Salud (OMS)",
+      "url": "https://www.who.int/publications/i/item/9789241549790",
+      "license": "CC BY-NC-SA 3.0 IGO",
+      "retrievedAt": "2026-10-02",
+      "note": "Tamizaje SRQ-20 de la OMS y evaluación de riesgo suicida según mhGAP."
+    },
+    "fields": [
+      {
+        "code": "tipo_de_control",
+        "name": "Tipo de consulta",
+        "dataType": "string",
+        "required": true,
+        "section": "Seguimiento",
+        "options": [
+          "Primera evaluación de la condición",
+          "Control programado",
+          "Descompensación o consulta no programada",
+          "Control posterior a internación"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "fecha_del_diagnostico",
+        "name": "Fecha del diagnóstico de trastorno mental común",
+        "dataType": "date",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "tratamiento_actual",
+        "name": "Tratamiento actual (fármaco, dosis y frecuencia)",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "adherencia",
         "name": "Adherencia al tratamiento",
         "dataType": "string",
         "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
+        "section": "Seguimiento",
         "options": [
-          "Toma la medicación todos los días",
-          "Olvida dosis",
+          "Toma el tratamiento como está indicado",
+          "Olvida dosis algunas veces",
           "Abandonó el tratamiento",
-          "Sin tratamiento todavía"
+          "Todavía sin tratamiento"
         ],
-        "multiple": false,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Hipertensión arterial"
-        }
+        "multiple": false
       },
       {
-        "code": "hta_registros_domiciliarios",
-        "name": "Registros de presión en domicilio (promedio)",
-        "dataType": "string",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Hipertensión arterial"
-        }
-      },
-      {
-        "code": "dm_glucemia_capilar",
-        "name": "Glucemia capilar (mg/dL)",
-        "dataType": "decimal",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Diabetes mellitus tipo 2"
-        }
-      },
-      {
-        "code": "dm_hba1c",
-        "name": "Última HbA1c (%)",
-        "dataType": "decimal",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Diabetes mellitus tipo 2"
-        }
-      },
-      {
-        "code": "dm_sintomas",
-        "name": "Síntomas",
-        "dataType": "json",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Poliuria",
-          "Polidipsia",
-          "Pérdida de peso",
-          "Visión borrosa",
-          "Ninguno"
-        ],
-        "multiple": true,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Diabetes mellitus tipo 2"
-        }
-      },
-      {
-        "code": "dm_pie",
-        "name": "Examen del pie",
-        "dataType": "string",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Sensibilidad conservada (monofilamento)",
-          "Sensibilidad disminuida",
-          "Úlcera o lesión presente",
-          "No evaluado"
-        ],
-        "multiple": false,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Diabetes mellitus tipo 2"
-        }
-      },
-      {
-        "code": "dm_hipoglucemias",
-        "name": "Episodios de hipoglucemia desde el último control",
+        "code": "efectos_adversos",
+        "name": "¿Tuvo efectos adversos del tratamiento?",
         "dataType": "boolean",
         "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Diabetes mellitus tipo 2"
-        }
+        "section": "Seguimiento"
       },
       {
-        "code": "itu_sintomas",
-        "name": "Síntomas urinarios",
-        "dataType": "json",
+        "code": "efectos_adversos_cuales",
+        "name": "¿Cuáles y con qué fármaco?",
+        "dataType": "text",
         "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Disuria",
-          "Polaquiuria",
-          "Urgencia miccional",
-          "Hematuria",
-          "Dolor suprapúbico"
-        ],
-        "multiple": true,
+        "section": "Seguimiento",
         "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Infección urinaria"
+          "field": "efectos_adversos",
+          "equals": true
         }
       },
       {
-        "code": "itu_fiebre_o_lumbar",
-        "name": "Fiebre o dolor lumbar (sospecha de pielonefritis)",
-        "dataType": "boolean",
+        "code": "evolucion_desde_ultimo_control",
+        "name": "Evolución desde el último control",
+        "dataType": "text",
         "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Infección urinaria"
-        }
-      },
-      {
-        "code": "itu_punopercusion",
-        "name": "Puñopercusión lumbar",
-        "dataType": "string",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Positiva",
-          "Negativa",
-          "No evaluada"
-        ],
-        "multiple": false,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Infección urinaria"
-        }
-      },
-      {
-        "code": "itu_embarazo",
-        "name": "¿Embarazo posible?",
-        "dataType": "string",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Sí",
-          "No",
-          "No aplica"
-        ],
-        "multiple": false,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Infección urinaria"
-        }
+        "section": "Seguimiento"
       },
       {
         "code": "srq20_respuestas_si",
         "name": "SRQ-20 (OMS): marque las preguntas que respondió «sí» en el último mes",
         "dataType": "json",
         "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
+        "section": "Evaluación: trastorno mental común",
         "options": [
           "¿Tiene frecuentes dolores de cabeza?",
           "¿Tiene mal apetito?",
@@ -8283,112 +13362,89 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
           "¿Se cansa con facilidad?"
         ],
         "multiple": true,
-        "description": "8 o más respuestas positivas: probable trastorno mental común. La pregunta 17 positiva exige evaluar riesgo suicida.",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Trastorno mental común (ansiedad, depresión)"
-        }
+        "description": "8 o más respuestas positivas: probable trastorno mental común. La pregunta 17 positiva exige evaluar riesgo suicida."
       },
       {
         "code": "srq20_puntaje",
         "name": "SRQ-20 — total de respuestas «sí» (0–20)",
         "dataType": "integer",
         "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Trastorno mental común (ansiedad, depresión)"
-        }
+        "section": "Evaluación: trastorno mental común"
       },
       {
         "code": "ideacion_suicida",
         "name": "Ideación suicida actual",
         "dataType": "boolean",
         "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Trastorno mental común (ansiedad, depresión)"
-        }
+        "section": "Evaluación: trastorno mental común"
       },
       {
-        "code": "chagas_serologia",
-        "name": "Serología para Chagas",
+        "code": "funcionamiento",
+        "name": "Funcionamiento en casa, trabajo o estudio",
         "dataType": "string",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
+        "required": false,
+        "section": "Evaluación: trastorno mental común",
         "options": [
-          "Positiva",
-          "Negativa",
-          "Pendiente",
-          "No realizada"
+          "Conservado",
+          "Algo afectado",
+          "Muy afectado"
         ],
-        "multiple": false,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Enfermedad de Chagas"
-        }
+        "multiple": false
       },
       {
-        "code": "chagas_compromiso",
-        "name": "Compromiso orgánico",
+        "code": "metas_cumplidas",
+        "name": "Metas de control que cumple hoy",
         "dataType": "json",
         "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
+        "section": "Metas y plan",
         "options": [
-          "Cardíaco (arritmia, bloqueo, insuficiencia)",
-          "Digestivo (megaesófago, megacolon)",
-          "Sin compromiso aparente"
+          "Mejora del SRQ-20",
+          "Sin ideación suicida",
+          "Ninguna todavía"
         ],
-        "multiple": true,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Enfermedad de Chagas"
-        }
+        "multiple": true
       },
       {
-        "code": "chagas_tratamiento_previo",
-        "name": "Recibió benznidazol o nifurtimox",
-        "dataType": "boolean",
+        "code": "educacion_brindada",
+        "name": "Educación brindada en esta consulta",
+        "dataType": "json",
         "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Enfermedad de Chagas"
-        }
-      },
-      {
-        "code": "chagas_vivienda_endemica",
-        "name": "Vivió en vivienda con vinchucas",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Enfermedad de Chagas"
-        }
+        "section": "Metas y plan",
+        "options": [
+          "Psicoeducación",
+          "Activación conductual",
+          "Red de apoyo"
+        ],
+        "multiple": true
       },
       {
         "code": "diagnostico",
         "name": "Diagnóstico (con código CIE-10 si se conoce)",
         "dataType": "text",
         "required": true,
-        "section": "Diagnóstico y plan"
+        "section": "Metas y plan"
       },
       {
-        "code": "plan_de_tratamiento",
-        "name": "Plan de tratamiento y seguimiento familiar",
+        "code": "plan",
+        "name": "Plan: tratamiento, estudios, interconsultas y destino",
         "dataType": "text",
         "required": false,
-        "section": "Diagnóstico y plan",
-        "description": "Tratamiento, estudios pedidos, educación, interconsultas y control."
+        "section": "Metas y plan"
+      },
+      {
+        "code": "proximo_control",
+        "name": "Próximo control",
+        "dataType": "date",
+        "required": false,
+        "section": "Metas y plan"
       }
     ]
   },
   {
     "code": "MEDGEN_CONSULTA_BASE",
-    "name": "Consulta de medicina general",
+    "name": "Medicina General — consulta inicial (ficha base)",
     "version": 2,
+    "kind": "BASE",
     "specialty": "MEDICINA_GENERAL",
     "provenance": {
       "sourceTitle": "Norma Técnica de Salud para la Gestión de la Historia Clínica — NT N.º 022-MINSA/DGSP-V.02, anamnesis y examen por aparatos",
@@ -8397,7 +13453,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
       "license": "Norma técnica estatal de acceso público",
       "sourceVersion": "V.02",
       "retrievedAt": "2026-08-14",
-      "note": "De la norma salen la estructura común de la consulta ambulatoria: motivo, tiempo de evolución, relato de la enfermedad actual, antecedentes personales y familiares, funciones biológicas, examen físico general y por aparatos, diagnóstico y conducta. Son agregados propios de la ficha el desglose de los signos vitales en campos separados (presión, frecuencia cardíaca, temperatura, peso y talla) para poder registrarlos como valores numéricos. v2 (2026-10-02): reorganizada en secciones (motivo, antecedentes, examen, diagnóstico presuntivo, plan); las clasificaciones con categorías finitas pasan a lista cerrada; cada sí/no que tiene detalle pregunta «¿cuál?»; el diagnóstico presuntivo abre las observaciones que ese cuadro exige registrar. Instrumentos de uso libre incorporados: AUDIT-C (OMS), CURB-65 (British Thoracic Society), guía de dengue OPS/OMS 2016."
+      "note": "De la norma salen la estructura común de la consulta ambulatoria: motivo, tiempo de evolución, relato de la enfermedad actual, antecedentes personales y familiares, funciones biológicas, examen físico general y por aparatos, diagnóstico y conducta. Son agregados propios de la ficha el desglose de los signos vitales en campos separados (presión, frecuencia cardíaca, temperatura, peso y talla) para poder registrarlos como valores numéricos. v2 (2026-10-02): reorganizada en secciones (motivo, antecedentes, examen, diagnóstico presuntivo, plan); las clasificaciones con categorías finitas pasan a lista cerrada; cada sí/no que tiene detalle pregunta «¿cuál?»; el diagnóstico presuntivo abre las observaciones que ese cuadro exige registrar. Instrumentos de uso libre incorporados: AUDIT-C (OMS)."
     },
     "fields": [
       {
@@ -8781,473 +13837,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
         ],
         "multiple": false,
         "allowOther": true,
-        "description": "Al elegirlo se abren las observaciones que ese cuadro exige registrar."
-      },
-      {
-        "code": "centor_fiebre",
-        "name": "Fiebre mayor a 38 °C",
-        "dataType": "boolean",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Infección respiratoria alta (resfrío, faringoamigdalitis)"
-        }
-      },
-      {
-        "code": "centor_sin_tos",
-        "name": "Ausencia de tos",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Infección respiratoria alta (resfrío, faringoamigdalitis)"
-        }
-      },
-      {
-        "code": "centor_adenopatias",
-        "name": "Adenopatías cervicales anteriores dolorosas",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Infección respiratoria alta (resfrío, faringoamigdalitis)"
-        }
-      },
-      {
-        "code": "centor_exudado",
-        "name": "Exudado o tumefacción amigdalina",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Infección respiratoria alta (resfrío, faringoamigdalitis)"
-        }
-      },
-      {
-        "code": "ira_rinorrea",
-        "name": "Rinorrea",
-        "dataType": "string",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Ausente",
-          "Acuosa",
-          "Purulenta"
-        ],
-        "multiple": false,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Infección respiratoria alta (resfrío, faringoamigdalitis)"
-        }
-      },
-      {
-        "code": "neumonia_crepitantes",
-        "name": "Crepitantes o soplo tubario localizados",
-        "dataType": "boolean",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Neumonía adquirida en la comunidad"
-        }
-      },
-      {
-        "code": "curb65",
-        "name": "Criterios CURB-65 presentes",
-        "dataType": "json",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Confusión de reciente aparición",
-          "Urea > 42 mg/dL (BUN > 19 mg/dL)",
-          "Frecuencia respiratoria ≥ 30 rpm",
-          "PAS < 90 o PAD ≤ 60 mmHg",
-          "Edad ≥ 65 años",
-          "Ninguno"
-        ],
-        "multiple": true,
-        "description": "0–1: ambulatorio · 2: valorar internación · 3 o más: neumonía grave.",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Neumonía adquirida en la comunidad"
-        }
-      },
-      {
-        "code": "neumonia_expectoracion",
-        "name": "Expectoración purulenta",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Neumonía adquirida en la comunidad"
-        }
-      },
-      {
-        "code": "eda_deposiciones_24h",
-        "name": "Deposiciones líquidas en las últimas 24 horas",
-        "dataType": "integer",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Enfermedad diarreica aguda"
-        }
-      },
-      {
-        "code": "eda_sangre_en_heces",
-        "name": "Sangre en las heces (disentería)",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Enfermedad diarreica aguda"
-        }
-      },
-      {
-        "code": "eda_vomitos",
-        "name": "Vómitos",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Enfermedad diarreica aguda"
-        }
-      },
-      {
-        "code": "eda_hidratacion",
-        "name": "Estado de hidratación (OMS)",
-        "dataType": "string",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Sin deshidratación — Plan A",
-          "Algún grado de deshidratación — Plan B",
-          "Deshidratación grave — Plan C"
-        ],
-        "multiple": false,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Enfermedad diarreica aguda"
-        }
-      },
-      {
-        "code": "eda_fiebre",
-        "name": "Fiebre",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Enfermedad diarreica aguda"
-        }
-      },
-      {
-        "code": "itu_sintomas",
-        "name": "Síntomas urinarios",
-        "dataType": "json",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Disuria",
-          "Polaquiuria",
-          "Urgencia miccional",
-          "Hematuria",
-          "Dolor suprapúbico"
-        ],
-        "multiple": true,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Infección urinaria"
-        }
-      },
-      {
-        "code": "itu_fiebre_o_lumbar",
-        "name": "Fiebre o dolor lumbar (sospecha de pielonefritis)",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Infección urinaria"
-        }
-      },
-      {
-        "code": "itu_punopercusion",
-        "name": "Puñopercusión lumbar",
-        "dataType": "string",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Positiva",
-          "Negativa",
-          "No evaluada"
-        ],
-        "multiple": false,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Infección urinaria"
-        }
-      },
-      {
-        "code": "itu_embarazo",
-        "name": "¿Embarazo posible?",
-        "dataType": "string",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Sí",
-          "No",
-          "No aplica"
-        ],
-        "multiple": false,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Infección urinaria"
-        }
-      },
-      {
-        "code": "hta_organo_blanco",
-        "name": "Síntomas de daño de órgano blanco",
-        "dataType": "json",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Cefalea intensa",
-          "Dolor torácico",
-          "Disnea",
-          "Alteración visual",
-          "Déficit neurológico",
-          "Ninguno"
-        ],
-        "multiple": true,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Hipertensión arterial"
-        }
-      },
-      {
-        "code": "hta_adherencia",
-        "name": "Adherencia al tratamiento",
-        "dataType": "string",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Toma la medicación todos los días",
-          "Olvida dosis",
-          "Abandonó el tratamiento",
-          "Sin tratamiento todavía"
-        ],
-        "multiple": false,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Hipertensión arterial"
-        }
-      },
-      {
-        "code": "hta_registros_domiciliarios",
-        "name": "Registros de presión en domicilio (promedio)",
-        "dataType": "string",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Hipertensión arterial"
-        }
-      },
-      {
-        "code": "dm_glucemia_capilar",
-        "name": "Glucemia capilar (mg/dL)",
-        "dataType": "decimal",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Diabetes mellitus tipo 2"
-        }
-      },
-      {
-        "code": "dm_hba1c",
-        "name": "Última HbA1c (%)",
-        "dataType": "decimal",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Diabetes mellitus tipo 2"
-        }
-      },
-      {
-        "code": "dm_sintomas",
-        "name": "Síntomas",
-        "dataType": "json",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Poliuria",
-          "Polidipsia",
-          "Pérdida de peso",
-          "Visión borrosa",
-          "Ninguno"
-        ],
-        "multiple": true,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Diabetes mellitus tipo 2"
-        }
-      },
-      {
-        "code": "dm_pie",
-        "name": "Examen del pie",
-        "dataType": "string",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Sensibilidad conservada (monofilamento)",
-          "Sensibilidad disminuida",
-          "Úlcera o lesión presente",
-          "No evaluado"
-        ],
-        "multiple": false,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Diabetes mellitus tipo 2"
-        }
-      },
-      {
-        "code": "dm_hipoglucemias",
-        "name": "Episodios de hipoglucemia desde el último control",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Diabetes mellitus tipo 2"
-        }
-      },
-      {
-        "code": "dengue_dias_de_fiebre",
-        "name": "Días de fiebre",
-        "dataType": "integer",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Dengue o síndrome febril agudo"
-        }
-      },
-      {
-        "code": "dengue_signos_de_alarma",
-        "name": "Signos de alarma (OPS/OMS)",
-        "dataType": "json",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Dolor abdominal intenso y continuo",
-          "Vómitos persistentes",
-          "Acumulación de líquidos (ascitis, derrame)",
-          "Sangrado de mucosas",
-          "Letargia o irritabilidad",
-          "Hepatomegalia mayor a 2 cm",
-          "Aumento del hematocrito con caída de plaquetas",
-          "Hipotensión postural",
-          "Ninguno"
-        ],
-        "multiple": true,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Dengue o síndrome febril agudo"
-        }
-      },
-      {
-        "code": "dengue_torniquete",
-        "name": "Prueba del torniquete",
-        "dataType": "string",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Positiva",
-          "Negativa",
-          "No realizada"
-        ],
-        "multiple": false,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Dengue o síndrome febril agudo"
-        }
-      },
-      {
-        "code": "dengue_grupo",
-        "name": "Clasificación",
-        "dataType": "string",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Grupo A — sin signos de alarma",
-          "Grupo B — con signos de alarma o condición asociada",
-          "Grupo C — dengue grave"
-        ],
-        "multiple": false,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Dengue o síndrome febril agudo"
-        }
-      },
-      {
-        "code": "lumbalgia_banderas_rojas",
-        "name": "Banderas rojas",
-        "dataType": "json",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Edad menor a 20 o mayor a 55 años",
-          "Traumatismo importante",
-          "Fiebre",
-          "Pérdida de peso no explicada",
-          "Antecedente de cáncer",
-          "Déficit neurológico progresivo",
-          "Alteración de esfínteres o anestesia en silla de montar",
-          "Ninguna"
-        ],
-        "multiple": true,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Lumbalgia"
-        }
-      },
-      {
-        "code": "lumbalgia_ciatica",
-        "name": "Dolor irradiado por debajo de la rodilla",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Lumbalgia"
-        }
-      },
-      {
-        "code": "lumbalgia_lasegue",
-        "name": "Signo de Lasègue",
-        "dataType": "string",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Positivo",
-          "Negativo",
-          "No evaluado"
-        ],
-        "multiple": false,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Lumbalgia"
-        }
+        "description": "Si el cuadro ya está diagnosticado, el seguimiento se hace con su ficha específica de la especialidad."
       },
       {
         "code": "examenes_auxiliares",
@@ -9274,9 +13864,953 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
     ]
   },
   {
+    "code": "MEDGEN_CTRL_ECNT",
+    "name": "Control de hipertensión y diabetes en atención primaria (HEARTS)",
+    "version": 1,
+    "kind": "SPECIFIC",
+    "specialty": "MEDICINA_GENERAL",
+    "provenance": {
+      "sourceTitle": "HEARTS: paquete técnico para el manejo de las enfermedades cardiovasculares en la atención primaria de salud",
+      "organization": "Organización Mundial de la Salud (OMS)",
+      "url": "https://www.who.int/publications/i/item/hearts-technical-package",
+      "license": "CC BY-NC-SA 3.0 IGO",
+      "retrievedAt": "2026-10-02",
+      "note": "La visita de control del programa HEARTS para hipertensión y diabetes en el primer nivel."
+    },
+    "fields": [
+      {
+        "code": "tipo_de_control",
+        "name": "Tipo de consulta",
+        "dataType": "string",
+        "required": true,
+        "section": "Seguimiento",
+        "options": [
+          "Primera evaluación de la condición",
+          "Control programado",
+          "Descompensación o consulta no programada",
+          "Control posterior a internación"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "fecha_del_diagnostico",
+        "name": "Fecha del diagnóstico de hipertensión o diabetes",
+        "dataType": "date",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "tratamiento_actual",
+        "name": "Tratamiento actual (fármaco, dosis y frecuencia)",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "adherencia",
+        "name": "Adherencia al tratamiento",
+        "dataType": "string",
+        "required": false,
+        "section": "Seguimiento",
+        "options": [
+          "Toma el tratamiento como está indicado",
+          "Olvida dosis algunas veces",
+          "Abandonó el tratamiento",
+          "Todavía sin tratamiento"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "efectos_adversos",
+        "name": "¿Tuvo efectos adversos del tratamiento?",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "efectos_adversos_cuales",
+        "name": "¿Cuáles y con qué fármaco?",
+        "dataType": "text",
+        "required": true,
+        "section": "Seguimiento",
+        "showWhen": {
+          "field": "efectos_adversos",
+          "equals": true
+        }
+      },
+      {
+        "code": "evolucion_desde_ultimo_control",
+        "name": "Evolución desde el último control",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "ecnt_condiciones",
+        "name": "Condiciones en control",
+        "dataType": "json",
+        "required": true,
+        "section": "Evaluación: hipertensión o diabetes",
+        "options": [
+          "Hipertensión",
+          "Diabetes tipo 2"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "presion_arterial_sistolica",
+        "name": "Presión arterial sistólica (mmHg)",
+        "dataType": "integer",
+        "required": true,
+        "section": "Evaluación: hipertensión o diabetes"
+      },
+      {
+        "code": "presion_arterial_diastolica",
+        "name": "Presión arterial diastólica (mmHg)",
+        "dataType": "integer",
+        "required": true,
+        "section": "Evaluación: hipertensión o diabetes"
+      },
+      {
+        "code": "dm_glucemia_capilar",
+        "name": "Glucemia capilar (mg/dL)",
+        "dataType": "decimal",
+        "required": true,
+        "section": "Evaluación: hipertensión o diabetes",
+        "showWhen": {
+          "field": "ecnt_condiciones",
+          "equals": "Diabetes tipo 2"
+        }
+      },
+      {
+        "code": "dm_hba1c",
+        "name": "Última HbA1c (%)",
+        "dataType": "decimal",
+        "required": false,
+        "section": "Evaluación: hipertensión o diabetes",
+        "showWhen": {
+          "field": "ecnt_condiciones",
+          "equals": "Diabetes tipo 2"
+        }
+      },
+      {
+        "code": "dm_sintomas",
+        "name": "Síntomas",
+        "dataType": "json",
+        "required": false,
+        "section": "Evaluación: hipertensión o diabetes",
+        "options": [
+          "Poliuria",
+          "Polidipsia",
+          "Pérdida de peso",
+          "Visión borrosa",
+          "Ninguno"
+        ],
+        "multiple": true,
+        "showWhen": {
+          "field": "ecnt_condiciones",
+          "equals": "Diabetes tipo 2"
+        }
+      },
+      {
+        "code": "dm_pie",
+        "name": "Examen del pie",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación: hipertensión o diabetes",
+        "options": [
+          "Sensibilidad conservada (monofilamento)",
+          "Sensibilidad disminuida",
+          "Úlcera o lesión presente",
+          "No evaluado"
+        ],
+        "multiple": false,
+        "showWhen": {
+          "field": "ecnt_condiciones",
+          "equals": "Diabetes tipo 2"
+        }
+      },
+      {
+        "code": "dm_hipoglucemias",
+        "name": "Episodios de hipoglucemia desde el último control",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Evaluación: hipertensión o diabetes",
+        "showWhen": {
+          "field": "ecnt_condiciones",
+          "equals": "Diabetes tipo 2"
+        }
+      },
+      {
+        "code": "hta_organo_blanco",
+        "name": "Síntomas de daño de órgano blanco",
+        "dataType": "json",
+        "required": true,
+        "section": "Evaluación: hipertensión o diabetes",
+        "options": [
+          "Cefalea intensa",
+          "Dolor torácico",
+          "Disnea",
+          "Alteración visual",
+          "Déficit neurológico",
+          "Ninguno"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "hta_registros_domiciliarios",
+        "name": "Registros de presión en domicilio (promedio)",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: hipertensión o diabetes"
+      },
+      {
+        "code": "peso_kg",
+        "name": "Peso (kg)",
+        "dataType": "decimal",
+        "required": false,
+        "section": "Evaluación: hipertensión o diabetes"
+      },
+      {
+        "code": "metas_cumplidas",
+        "name": "Metas de control que cumple hoy",
+        "dataType": "json",
+        "required": false,
+        "section": "Metas y plan",
+        "options": [
+          "PA < 140/90 mmHg",
+          "HbA1c < 7 %",
+          "No fuma",
+          "Ninguna todavía"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "educacion_brindada",
+        "name": "Educación brindada en esta consulta",
+        "dataType": "json",
+        "required": false,
+        "section": "Metas y plan",
+        "options": [
+          "Sal",
+          "Actividad física",
+          "Adherencia",
+          "Pies (diabetes)"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "diagnostico",
+        "name": "Diagnóstico (con código CIE-10 si se conoce)",
+        "dataType": "text",
+        "required": true,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "plan",
+        "name": "Plan: tratamiento, estudios, interconsultas y destino",
+        "dataType": "text",
+        "required": false,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "proximo_control",
+        "name": "Próximo control",
+        "dataType": "date",
+        "required": false,
+        "section": "Metas y plan"
+      }
+    ]
+  },
+  {
+    "code": "MEDGEN_CTRL_EDA",
+    "name": "Enfermedad diarreica aguda en adultos",
+    "version": 1,
+    "kind": "SPECIFIC",
+    "specialty": "MEDICINA_GENERAL",
+    "provenance": {
+      "sourceTitle": "Atención Integrada a las Enfermedades Prevalentes de la Infancia (AIEPI)",
+      "organization": "Organización Mundial de la Salud (OMS)",
+      "url": "https://www.who.int/teams/maternal-newborn-child-adolescent-health-and-ageing/child-health/integrated-management-of-childhood-illness",
+      "license": "CC BY-NC-SA 3.0 IGO",
+      "retrievedAt": "2026-10-02",
+      "note": "Estado de hidratación y planes A/B/C de la OMS."
+    },
+    "fields": [
+      {
+        "code": "tipo_de_evaluacion",
+        "name": "Tipo de evaluación",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación inicial",
+        "options": [
+          "Evaluación inicial",
+          "Reevaluación"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "inicio_de_sintomas",
+        "name": "Inicio de los síntomas (fecha u hora)",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación inicial"
+      },
+      {
+        "code": "tratamiento_previo",
+        "name": "Tratamiento recibido antes de esta consulta",
+        "dataType": "text",
+        "required": false,
+        "section": "Evaluación inicial"
+      },
+      {
+        "code": "eda_deposiciones_24h",
+        "name": "Deposiciones líquidas en las últimas 24 horas",
+        "dataType": "integer",
+        "required": true,
+        "section": "Evaluación: diarrea aguda"
+      },
+      {
+        "code": "eda_sangre_en_heces",
+        "name": "Sangre en las heces (disentería)",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Evaluación: diarrea aguda"
+      },
+      {
+        "code": "eda_vomitos",
+        "name": "Vómitos",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Evaluación: diarrea aguda"
+      },
+      {
+        "code": "eda_hidratacion",
+        "name": "Estado de hidratación (OMS)",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación: diarrea aguda",
+        "options": [
+          "Sin deshidratación — Plan A",
+          "Algún grado de deshidratación — Plan B",
+          "Deshidratación grave — Plan C"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "eda_fiebre",
+        "name": "Fiebre",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Evaluación: diarrea aguda"
+      },
+      {
+        "code": "presion_arterial_sistolica",
+        "name": "Presión arterial sistólica (mmHg)",
+        "dataType": "integer",
+        "required": true,
+        "section": "Evaluación: diarrea aguda"
+      },
+      {
+        "code": "presion_arterial_diastolica",
+        "name": "Presión arterial diastólica (mmHg)",
+        "dataType": "integer",
+        "required": true,
+        "section": "Evaluación: diarrea aguda"
+      },
+      {
+        "code": "educacion_brindada",
+        "name": "Educación brindada en esta consulta",
+        "dataType": "json",
+        "required": false,
+        "section": "Conclusión y plan",
+        "options": [
+          "Sales de rehidratación oral",
+          "Lavado de manos",
+          "Signos de alarma"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "diagnostico",
+        "name": "Diagnóstico (con código CIE-10 si se conoce)",
+        "dataType": "text",
+        "required": true,
+        "section": "Conclusión y plan"
+      },
+      {
+        "code": "plan",
+        "name": "Plan: tratamiento, estudios, interconsultas y destino",
+        "dataType": "text",
+        "required": false,
+        "section": "Conclusión y plan"
+      }
+    ]
+  },
+  {
+    "code": "MEDGEN_CTRL_IRA",
+    "name": "Infección respiratoria aguda en adultos",
+    "version": 1,
+    "kind": "SPECIFIC",
+    "specialty": "MEDICINA_GENERAL",
+    "provenance": {
+      "sourceTitle": "Norma Técnica de Salud para la Gestión de la Historia Clínica — NT N.º 022-MINSA/DGSP-V.02",
+      "organization": "Ministerio de Salud del Perú (MINSA)",
+      "url": "https://bvs.minsa.gob.pe/local/dgsp/NT022hist.pdf",
+      "license": "Norma técnica estatal de acceso público",
+      "retrievedAt": "2026-10-02",
+      "note": "Criterios de Centor/McIsaac para faringoamigdalitis y CURB-65 si se sospecha neumonía."
+    },
+    "fields": [
+      {
+        "code": "tipo_de_evaluacion",
+        "name": "Tipo de evaluación",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación inicial",
+        "options": [
+          "Evaluación inicial",
+          "Reevaluación"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "inicio_de_sintomas",
+        "name": "Inicio de los síntomas (fecha u hora)",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación inicial"
+      },
+      {
+        "code": "tratamiento_previo",
+        "name": "Tratamiento recibido antes de esta consulta",
+        "dataType": "text",
+        "required": false,
+        "section": "Evaluación inicial"
+      },
+      {
+        "code": "centor_fiebre",
+        "name": "Fiebre mayor a 38 °C",
+        "dataType": "boolean",
+        "required": true,
+        "section": "Evaluación: infección respiratoria aguda"
+      },
+      {
+        "code": "centor_sin_tos",
+        "name": "Ausencia de tos",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Evaluación: infección respiratoria aguda"
+      },
+      {
+        "code": "centor_adenopatias",
+        "name": "Adenopatías cervicales anteriores dolorosas",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Evaluación: infección respiratoria aguda"
+      },
+      {
+        "code": "centor_exudado",
+        "name": "Exudado o tumefacción amigdalina",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Evaluación: infección respiratoria aguda"
+      },
+      {
+        "code": "ira_rinorrea",
+        "name": "Rinorrea",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: infección respiratoria aguda",
+        "options": [
+          "Ausente",
+          "Acuosa",
+          "Purulenta"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "centor_puntaje",
+        "name": "Puntaje de Centor/McIsaac",
+        "dataType": "integer",
+        "required": false,
+        "section": "Evaluación: infección respiratoria aguda"
+      },
+      {
+        "code": "frecuencia_respiratoria",
+        "name": "Frecuencia respiratoria (rpm)",
+        "dataType": "integer",
+        "required": false,
+        "section": "Evaluación: infección respiratoria aguda"
+      },
+      {
+        "code": "saturacion_de_oxigeno",
+        "name": "Saturación de oxígeno (%)",
+        "dataType": "integer",
+        "required": false,
+        "section": "Evaluación: infección respiratoria aguda"
+      },
+      {
+        "code": "crepitantes",
+        "name": "Crepitantes (sospecha de neumonía)",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Evaluación: infección respiratoria aguda"
+      },
+      {
+        "code": "educacion_brindada",
+        "name": "Educación brindada en esta consulta",
+        "dataType": "json",
+        "required": false,
+        "section": "Conclusión y plan",
+        "options": [
+          "Hidratación y antipiréticos",
+          "Antibiótico sólo si está indicado",
+          "Signos de alarma"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "diagnostico",
+        "name": "Diagnóstico (con código CIE-10 si se conoce)",
+        "dataType": "text",
+        "required": true,
+        "section": "Conclusión y plan"
+      },
+      {
+        "code": "plan",
+        "name": "Plan: tratamiento, estudios, interconsultas y destino",
+        "dataType": "text",
+        "required": false,
+        "section": "Conclusión y plan"
+      }
+    ]
+  },
+  {
+    "code": "MEDGEN_CTRL_LUMBALGIA",
+    "name": "Lumbalgia",
+    "version": 1,
+    "kind": "SPECIFIC",
+    "specialty": "MEDICINA_GENERAL",
+    "provenance": {
+      "sourceTitle": "Norma Técnica de Salud para la Gestión de la Historia Clínica — NT N.º 022-MINSA/DGSP-V.02",
+      "organization": "Ministerio de Salud del Perú (MINSA)",
+      "url": "https://bvs.minsa.gob.pe/local/dgsp/NT022hist.pdf",
+      "license": "Norma técnica estatal de acceso público",
+      "retrievedAt": "2026-10-02",
+      "note": "Banderas rojas, componente radicular y función."
+    },
+    "fields": [
+      {
+        "code": "tipo_de_evaluacion",
+        "name": "Tipo de evaluación",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación inicial",
+        "options": [
+          "Evaluación inicial",
+          "Reevaluación"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "inicio_de_sintomas",
+        "name": "Inicio de los síntomas (fecha u hora)",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación inicial"
+      },
+      {
+        "code": "tratamiento_previo",
+        "name": "Tratamiento recibido antes de esta consulta",
+        "dataType": "text",
+        "required": false,
+        "section": "Evaluación inicial"
+      },
+      {
+        "code": "lumbalgia_banderas_rojas",
+        "name": "Banderas rojas",
+        "dataType": "json",
+        "required": true,
+        "section": "Evaluación: lumbalgia",
+        "options": [
+          "Edad menor a 20 o mayor a 55 años",
+          "Traumatismo importante",
+          "Fiebre",
+          "Pérdida de peso no explicada",
+          "Antecedente de cáncer",
+          "Déficit neurológico progresivo",
+          "Alteración de esfínteres o anestesia en silla de montar",
+          "Ninguna"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "lumbalgia_ciatica",
+        "name": "Dolor irradiado por debajo de la rodilla",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Evaluación: lumbalgia"
+      },
+      {
+        "code": "lumbalgia_lasegue",
+        "name": "Signo de Lasègue",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: lumbalgia",
+        "options": [
+          "Positivo",
+          "Negativo",
+          "No evaluado"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "dolor_intensidad",
+        "name": "Dolor (0 a 10)",
+        "dataType": "integer",
+        "required": true,
+        "section": "Evaluación: lumbalgia"
+      },
+      {
+        "code": "lumbalgia_duracion",
+        "name": "Duración",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación: lumbalgia",
+        "options": [
+          "Aguda (< 6 semanas)",
+          "Subaguda (6–12 semanas)",
+          "Crónica (> 12 semanas)"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "educacion_brindada",
+        "name": "Educación brindada en esta consulta",
+        "dataType": "json",
+        "required": false,
+        "section": "Conclusión y plan",
+        "options": [
+          "Mantenerse activo",
+          "Evitar reposo en cama"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "diagnostico",
+        "name": "Diagnóstico (con código CIE-10 si se conoce)",
+        "dataType": "text",
+        "required": true,
+        "section": "Conclusión y plan"
+      },
+      {
+        "code": "plan",
+        "name": "Plan: tratamiento, estudios, interconsultas y destino",
+        "dataType": "text",
+        "required": false,
+        "section": "Conclusión y plan"
+      }
+    ]
+  },
+  {
+    "code": "MEDINT_CTRL_MULTIMORBILIDAD",
+    "name": "Control de multimorbilidad y polifarmacia",
+    "version": 1,
+    "kind": "SPECIFIC",
+    "specialty": "MEDICINA_INTERNA",
+    "provenance": {
+      "sourceTitle": "Norma Técnica de Salud para la Gestión de la Historia Clínica — NT N.º 022-MINSA/DGSP-V.02",
+      "organization": "Ministerio de Salud del Perú (MINSA)",
+      "url": "https://bvs.minsa.gob.pe/local/dgsp/NT022hist.pdf",
+      "license": "Norma técnica estatal de acceso público",
+      "retrievedAt": "2026-10-02",
+      "note": "Revisión de problemas activos, fármacos (polifarmacia ≥ 5) y prioridades del paciente."
+    },
+    "fields": [
+      {
+        "code": "tipo_de_control",
+        "name": "Tipo de consulta",
+        "dataType": "string",
+        "required": true,
+        "section": "Seguimiento",
+        "options": [
+          "Primera evaluación de la condición",
+          "Control programado",
+          "Descompensación o consulta no programada",
+          "Control posterior a internación"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "fecha_del_diagnostico",
+        "name": "Fecha del diagnóstico de multimorbilidad",
+        "dataType": "date",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "tratamiento_actual",
+        "name": "Tratamiento actual (fármaco, dosis y frecuencia)",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "adherencia",
+        "name": "Adherencia al tratamiento",
+        "dataType": "string",
+        "required": false,
+        "section": "Seguimiento",
+        "options": [
+          "Toma el tratamiento como está indicado",
+          "Olvida dosis algunas veces",
+          "Abandonó el tratamiento",
+          "Todavía sin tratamiento"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "efectos_adversos",
+        "name": "¿Tuvo efectos adversos del tratamiento?",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "efectos_adversos_cuales",
+        "name": "¿Cuáles y con qué fármaco?",
+        "dataType": "text",
+        "required": true,
+        "section": "Seguimiento",
+        "showWhen": {
+          "field": "efectos_adversos",
+          "equals": true
+        }
+      },
+      {
+        "code": "evolucion_desde_ultimo_control",
+        "name": "Evolución desde el último control",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "condiciones_cronicas",
+        "name": "Condiciones crónicas activas",
+        "dataType": "json",
+        "required": true,
+        "section": "Evaluación: multimorbilidad",
+        "options": [
+          "Hipertensión",
+          "Diabetes",
+          "Insuficiencia cardíaca",
+          "EPOC",
+          "Enfermedad renal crónica",
+          "Fibrilación auricular",
+          "Depresión",
+          "Artrosis"
+        ],
+        "multiple": true,
+        "allowOther": true
+      },
+      {
+        "code": "numero_de_farmacos",
+        "name": "Fármacos en uso",
+        "dataType": "integer",
+        "required": true,
+        "section": "Evaluación: multimorbilidad",
+        "description": "5 o más: polifarmacia; revisar cada uno."
+      },
+      {
+        "code": "problemas_con_farmacos",
+        "name": "Problemas detectados",
+        "dataType": "json",
+        "required": false,
+        "section": "Evaluación: multimorbilidad",
+        "options": [
+          "Duplicación",
+          "Interacción relevante",
+          "Dosis no ajustada a la función renal",
+          "Fármaco sin indicación vigente",
+          "Ninguno"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "farmacos_a_suspender",
+        "name": "Fármacos a suspender o ajustar",
+        "dataType": "text",
+        "required": false,
+        "section": "Evaluación: multimorbilidad"
+      },
+      {
+        "code": "prioridades_paciente",
+        "name": "Qué es lo más importante para el paciente",
+        "dataType": "text",
+        "required": false,
+        "section": "Evaluación: multimorbilidad"
+      },
+      {
+        "code": "presion_arterial_sistolica",
+        "name": "Presión arterial sistólica (mmHg)",
+        "dataType": "integer",
+        "required": true,
+        "section": "Evaluación: multimorbilidad"
+      },
+      {
+        "code": "presion_arterial_diastolica",
+        "name": "Presión arterial diastólica (mmHg)",
+        "dataType": "integer",
+        "required": true,
+        "section": "Evaluación: multimorbilidad"
+      },
+      {
+        "code": "educacion_brindada",
+        "name": "Educación brindada en esta consulta",
+        "dataType": "json",
+        "required": false,
+        "section": "Metas y plan",
+        "options": [
+          "Lista actualizada de medicamentos",
+          "Pastillero",
+          "Signos de alarma"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "diagnostico",
+        "name": "Diagnóstico (con código CIE-10 si se conoce)",
+        "dataType": "text",
+        "required": true,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "plan",
+        "name": "Plan: tratamiento, estudios, interconsultas y destino",
+        "dataType": "text",
+        "required": false,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "proximo_control",
+        "name": "Próximo control",
+        "dataType": "date",
+        "required": false,
+        "section": "Metas y plan"
+      }
+    ]
+  },
+  {
+    "code": "MEDINT_CTRL_SFP",
+    "name": "Síndrome febril prolongado",
+    "version": 1,
+    "kind": "SPECIFIC",
+    "specialty": "MEDICINA_INTERNA",
+    "provenance": {
+      "sourceTitle": "Norma Técnica de Salud para la Gestión de la Historia Clínica — NT N.º 022-MINSA/DGSP-V.02",
+      "organization": "Ministerio de Salud del Perú (MINSA)",
+      "url": "https://bvs.minsa.gob.pe/local/dgsp/NT022hist.pdf",
+      "license": "Norma técnica estatal de acceso público",
+      "retrievedAt": "2026-10-02",
+      "note": "Estudio escalonado de la fiebre de origen desconocido."
+    },
+    "fields": [
+      {
+        "code": "tipo_de_evaluacion",
+        "name": "Tipo de evaluación",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación inicial",
+        "options": [
+          "Evaluación inicial",
+          "Reevaluación"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "inicio_de_sintomas",
+        "name": "Inicio de los síntomas (fecha u hora)",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación inicial"
+      },
+      {
+        "code": "tratamiento_previo",
+        "name": "Tratamiento recibido antes de esta consulta",
+        "dataType": "text",
+        "required": false,
+        "section": "Evaluación inicial"
+      },
+      {
+        "code": "dias_de_fiebre",
+        "name": "Días de fiebre",
+        "dataType": "integer",
+        "required": true,
+        "section": "Evaluación: síndrome febril prolongado"
+      },
+      {
+        "code": "sfp_sintomas",
+        "name": "Acompañantes",
+        "dataType": "json",
+        "required": false,
+        "section": "Evaluación: síndrome febril prolongado",
+        "options": [
+          "Pérdida de peso",
+          "Sudoración nocturna",
+          "Adenopatías",
+          "Artralgias",
+          "Lesiones de piel",
+          "Soplo nuevo"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "sfp_estudios",
+        "name": "Estudios realizados",
+        "dataType": "json",
+        "required": true,
+        "section": "Evaluación: síndrome febril prolongado",
+        "options": [
+          "Hemocultivos",
+          "Urocultivo",
+          "Serología VIH",
+          "Baciloscopía",
+          "Serología Chagas",
+          "Gota gruesa",
+          "Imágenes",
+          "Ninguno"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "sfp_exposicion",
+        "name": "Exposiciones y viajes",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: síndrome febril prolongado"
+      },
+      {
+        "code": "diagnostico",
+        "name": "Diagnóstico (con código CIE-10 si se conoce)",
+        "dataType": "text",
+        "required": true,
+        "section": "Conclusión y plan"
+      },
+      {
+        "code": "plan",
+        "name": "Plan: tratamiento, estudios, interconsultas y destino",
+        "dataType": "text",
+        "required": false,
+        "section": "Conclusión y plan"
+      }
+    ]
+  },
+  {
     "code": "MEDINT_EVALUACION_BASE",
-    "name": "Evaluación de medicina interna — versión general base",
+    "name": "Medicina interna — consulta inicial (ficha base)",
     "version": 2,
+    "kind": "BASE",
     "specialty": "MEDICINA_INTERNA",
     "provenance": {
       "sourceTitle": "Norma Técnica de Salud para la Gestión de la Historia Clínica — NT N.º 022-MINSA/DGSP-V.02, historia clínica de consulta externa",
@@ -9285,7 +14819,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
       "license": "Norma técnica estatal de acceso público",
       "sourceVersion": "V.02",
       "retrievedAt": "2026-08-14",
-      "note": "Estructura de la evaluación integral del adulto: comorbilidades, polifarmacia y revisión por sistemas. v2 (2026-10-02): reorganizada en secciones (motivo, antecedentes, examen, diagnóstico presuntivo, plan); las clasificaciones con categorías finitas pasan a lista cerrada; cada sí/no que tiene detalle pregunta «¿cuál?»; el diagnóstico presuntivo abre las observaciones que ese cuadro exige registrar. Instrumentos de uso libre incorporados: AUDIT-C (OMS), CURB-65 (British Thoracic Society), clase funcional NYHA, criterios de Framingham."
+      "note": "Estructura de la evaluación integral del adulto: comorbilidades, polifarmacia y revisión por sistemas. v2 (2026-10-02): reorganizada en secciones (motivo, antecedentes, examen, diagnóstico presuntivo, plan); las clasificaciones con categorías finitas pasan a lista cerrada; cada sí/no que tiene detalle pregunta «¿cuál?»; el diagnóstico presuntivo abre las observaciones que ese cuadro exige registrar. Instrumentos de uso libre incorporados: AUDIT-C (OMS)."
     },
     "fields": [
       {
@@ -9670,340 +15204,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
         ],
         "multiple": false,
         "allowOther": true,
-        "description": "Al elegirlo se abren las observaciones que ese cuadro exige registrar."
-      },
-      {
-        "code": "ic_clase_nyha",
-        "name": "Clase funcional NYHA",
-        "dataType": "string",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Clase I — sin limitación de la actividad física",
-          "Clase II — limitación leve: síntomas con la actividad ordinaria",
-          "Clase III — limitación marcada: síntomas con actividad menor a la ordinaria",
-          "Clase IV — síntomas en reposo"
-        ],
-        "multiple": false,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Insuficiencia cardíaca"
-        }
-      },
-      {
-        "code": "ic_signos",
-        "name": "Signos y síntomas (Framingham)",
-        "dataType": "json",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Ortopnea",
-          "Disnea paroxística nocturna",
-          "Ingurgitación yugular",
-          "Crepitantes pulmonares",
-          "Tercer ruido (galope)",
-          "Edema de miembros inferiores",
-          "Hepatomegalia"
-        ],
-        "multiple": true,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Insuficiencia cardíaca"
-        }
-      },
-      {
-        "code": "ic_edema_grado",
-        "name": "Edema (fóvea)",
-        "dataType": "string",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Sin edema",
-          "+ (2 mm)",
-          "++ (4 mm)",
-          "+++ (6 mm)",
-          "++++ (8 mm)"
-        ],
-        "multiple": false,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Insuficiencia cardíaca"
-        }
-      },
-      {
-        "code": "ic_peso_seco",
-        "name": "Peso de referencia (kg)",
-        "dataType": "decimal",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Insuficiencia cardíaca"
-        }
-      },
-      {
-        "code": "dm_glucemia_capilar",
-        "name": "Glucemia capilar (mg/dL)",
-        "dataType": "decimal",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Diabetes mellitus descompensada"
-        }
-      },
-      {
-        "code": "dm_hba1c",
-        "name": "Última HbA1c (%)",
-        "dataType": "decimal",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Diabetes mellitus descompensada"
-        }
-      },
-      {
-        "code": "dm_sintomas",
-        "name": "Síntomas",
-        "dataType": "json",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Poliuria",
-          "Polidipsia",
-          "Pérdida de peso",
-          "Visión borrosa",
-          "Ninguno"
-        ],
-        "multiple": true,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Diabetes mellitus descompensada"
-        }
-      },
-      {
-        "code": "dm_pie",
-        "name": "Examen del pie",
-        "dataType": "string",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Sensibilidad conservada (monofilamento)",
-          "Sensibilidad disminuida",
-          "Úlcera o lesión presente",
-          "No evaluado"
-        ],
-        "multiple": false,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Diabetes mellitus descompensada"
-        }
-      },
-      {
-        "code": "dm_hipoglucemias",
-        "name": "Episodios de hipoglucemia desde el último control",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Diabetes mellitus descompensada"
-        }
-      },
-      {
-        "code": "hta_organo_blanco",
-        "name": "Síntomas de daño de órgano blanco",
-        "dataType": "json",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Cefalea intensa",
-          "Dolor torácico",
-          "Disnea",
-          "Alteración visual",
-          "Déficit neurológico",
-          "Ninguno"
-        ],
-        "multiple": true,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Hipertensión arterial"
-        }
-      },
-      {
-        "code": "hta_adherencia",
-        "name": "Adherencia al tratamiento",
-        "dataType": "string",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Toma la medicación todos los días",
-          "Olvida dosis",
-          "Abandonó el tratamiento",
-          "Sin tratamiento todavía"
-        ],
-        "multiple": false,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Hipertensión arterial"
-        }
-      },
-      {
-        "code": "hta_registros_domiciliarios",
-        "name": "Registros de presión en domicilio (promedio)",
-        "dataType": "string",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Hipertensión arterial"
-        }
-      },
-      {
-        "code": "neumonia_crepitantes",
-        "name": "Crepitantes o soplo tubario localizados",
-        "dataType": "boolean",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Neumonía"
-        }
-      },
-      {
-        "code": "curb65",
-        "name": "Criterios CURB-65 presentes",
-        "dataType": "json",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Confusión de reciente aparición",
-          "Urea > 42 mg/dL (BUN > 19 mg/dL)",
-          "Frecuencia respiratoria ≥ 30 rpm",
-          "PAS < 90 o PAD ≤ 60 mmHg",
-          "Edad ≥ 65 años",
-          "Ninguno"
-        ],
-        "multiple": true,
-        "description": "0–1: ambulatorio · 2: valorar internación · 3 o más: neumonía grave.",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Neumonía"
-        }
-      },
-      {
-        "code": "neumonia_expectoracion",
-        "name": "Expectoración purulenta",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Neumonía"
-        }
-      },
-      {
-        "code": "anemia_hemoglobina",
-        "name": "Hemoglobina (g/dL)",
-        "dataType": "decimal",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "description": "Ajustar por altitud de residencia.",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Anemia"
-        }
-      },
-      {
-        "code": "anemia_sintomas",
-        "name": "Síntomas",
-        "dataType": "json",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Astenia",
-          "Disnea de esfuerzo",
-          "Palpitaciones",
-          "Pica",
-          "Ninguno"
-        ],
-        "multiple": true,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Anemia"
-        }
-      },
-      {
-        "code": "anemia_perdidas",
-        "name": "Posibles pérdidas",
-        "dataType": "json",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Menstruación abundante",
-          "Sangrado digestivo",
-          "Parasitosis",
-          "Ninguna conocida"
-        ],
-        "multiple": true,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Anemia"
-        }
-      },
-      {
-        "code": "anemia_vcm",
-        "name": "VCM y ferritina, si se conocen",
-        "dataType": "string",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Anemia"
-        }
-      },
-      {
-        "code": "sfp_estudios",
-        "name": "Estudios ya realizados",
-        "dataType": "json",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Hemocultivos",
-          "Urocultivo",
-          "Serología VIH",
-          "Baciloscopía",
-          "Imágenes",
-          "Ninguno"
-        ],
-        "multiple": true,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Síndrome febril prolongado"
-        }
-      },
-      {
-        "code": "erc_creatinina",
-        "name": "Creatinina (mg/dL)",
-        "dataType": "decimal",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Enfermedad renal crónica"
-        }
-      },
-      {
-        "code": "erc_tfg",
-        "name": "Filtrado glomerular estimado (mL/min/1,73 m²)",
-        "dataType": "decimal",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Enfermedad renal crónica"
-        }
+        "description": "Si el cuadro ya está diagnosticado, el seguimiento se hace con su ficha específica de la especialidad."
       },
       {
         "code": "problemas_activos",
@@ -10023,8 +15224,9 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
   },
   {
     "code": "MEDINT_UCI_EVALUACION",
-    "name": "Evaluación en medicina intensiva",
+    "name": "Medicina Intensiva — evaluación de ingreso (ficha base)",
     "version": 2,
+    "kind": "BASE",
     "specialty": "MEDICINA_INTENSIVA",
     "provenance": {
       "sourceTitle": "Norma Técnica de Salud para la Gestión de la Historia Clínica — NT N.º 022-MINSA/DGSP-V.02, notas de evolución y registro de la atención hospitalaria",
@@ -10033,7 +15235,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
       "license": "Norma técnica estatal de acceso público",
       "sourceVersion": "V.02",
       "retrievedAt": "2026-08-14",
-      "note": "De la norma se transcribe la estructura común del registro: motivo, fecha de ingreso, signos vitales, evolución, diagnóstico y conducta. Son agregados propios de la especialidad el motivo de ingreso a la unidad, los días de estancia, el soporte ventilatorio, el soporte vasoactivo, la sedación, el balance hídrico y la evolución del turno. v2 (2026-10-02): reorganizada en secciones (motivo, antecedentes, examen, diagnóstico presuntivo, plan); las clasificaciones con categorías finitas pasan a lista cerrada; cada sí/no que tiene detalle pregunta «¿cuál?»; el diagnóstico presuntivo abre las observaciones que ese cuadro exige registrar. Instrumentos de uso libre incorporados: CURB-65 (British Thoracic Society), escala de coma de Glasgow, KDIGO, RASS, definición de Berlín del SDRA."
+      "note": "De la norma se transcribe la estructura común del registro: motivo, fecha de ingreso, signos vitales, evolución, diagnóstico y conducta. Son agregados propios de la especialidad el motivo de ingreso a la unidad, los días de estancia, el soporte ventilatorio, el soporte vasoactivo, la sedación, el balance hídrico y la evolución del turno. v2 (2026-10-02): reorganizada en secciones (motivo, antecedentes, examen, diagnóstico presuntivo, plan); las clasificaciones con categorías finitas pasan a lista cerrada; cada sí/no que tiene detalle pregunta «¿cuál?»; el diagnóstico presuntivo abre las observaciones que ese cuadro exige registrar. Instrumentos de uso libre incorporados: escala de coma de Glasgow, RASS."
     },
     "fields": [
       {
@@ -10334,183 +15536,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
         ],
         "multiple": false,
         "allowOther": true,
-        "description": "Al elegirlo se abren las observaciones que ese cuadro exige registrar."
-      },
-      {
-        "code": "foco_sepsis",
-        "name": "Foco",
-        "dataType": "string",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Shock séptico"
-        }
-      },
-      {
-        "code": "hemocultivos",
-        "name": "Hemocultivos tomados",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Shock séptico"
-        }
-      },
-      {
-        "code": "antibiotico_hora",
-        "name": "Antibiótico y hora de inicio",
-        "dataType": "string",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Shock séptico"
-        }
-      },
-      {
-        "code": "sdra_berlin",
-        "name": "Gravedad (Berlín)",
-        "dataType": "string",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Leve (PaO₂/FiO₂ 200–300)",
-          "Moderado (100–200)",
-          "Grave (< 100)"
-        ],
-        "multiple": false,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Síndrome de distrés respiratorio agudo"
-        }
-      },
-      {
-        "code": "prono",
-        "name": "Ventilación en prono",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Síndrome de distrés respiratorio agudo"
-        }
-      },
-      {
-        "code": "neumonia_crepitantes",
-        "name": "Crepitantes o soplo tubario localizados",
-        "dataType": "boolean",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Neumonía grave"
-        }
-      },
-      {
-        "code": "curb65",
-        "name": "Criterios CURB-65 presentes",
-        "dataType": "json",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Confusión de reciente aparición",
-          "Urea > 42 mg/dL (BUN > 19 mg/dL)",
-          "Frecuencia respiratoria ≥ 30 rpm",
-          "PAS < 90 o PAD ≤ 60 mmHg",
-          "Edad ≥ 65 años",
-          "Ninguno"
-        ],
-        "multiple": true,
-        "description": "0–1: ambulatorio · 2: valorar internación · 3 o más: neumonía grave.",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Neumonía grave"
-        }
-      },
-      {
-        "code": "neumonia_expectoracion",
-        "name": "Expectoración purulenta",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Neumonía grave"
-        }
-      },
-      {
-        "code": "kdigo_lra",
-        "name": "Estadio KDIGO",
-        "dataType": "string",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "1",
-          "2",
-          "3"
-        ],
-        "multiple": false,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Insuficiencia renal aguda"
-        }
-      },
-      {
-        "code": "terapia_reemplazo",
-        "name": "Terapia de reemplazo renal",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Insuficiencia renal aguda"
-        }
-      },
-      {
-        "code": "cirugia_realizada",
-        "name": "Cirugía realizada",
-        "dataType": "string",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Posoperatorio de alto riesgo"
-        }
-      },
-      {
-        "code": "sangrado_postop",
-        "name": "Sangrado activo",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Posoperatorio de alto riesgo"
-        }
-      },
-      {
-        "code": "pupilas_simetricas",
-        "name": "Pupilas simétricas y reactivas",
-        "dataType": "boolean",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Coma o daño neurológico agudo"
-        }
-      },
-      {
-        "code": "tac_cerebro",
-        "name": "TAC de cerebro",
-        "dataType": "string",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Coma o daño neurológico agudo"
-        }
+        "description": "Si el cuadro ya está diagnosticado, el seguimiento se hace con su ficha específica de la especialidad."
       },
       {
         "code": "evolucion_del_turno",
@@ -10537,9 +15563,432 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
     ]
   },
   {
+    "code": "NEFRO_CTRL_ERC",
+    "name": "Control de enfermedad renal crónica",
+    "version": 1,
+    "kind": "SPECIFIC",
+    "specialty": "NEFROLOGIA",
+    "provenance": {
+      "sourceTitle": "Guías de práctica clínica KDIGO",
+      "organization": "Kidney Disease: Improving Global Outcomes (KDIGO)",
+      "url": "https://kdigo.org/guidelines/",
+      "license": "Guía de acceso público; se usan sus categorías clínicas, no su texto",
+      "retrievedAt": "2026-10-02",
+      "note": "Estadio por filtrado (G1–G5) y albuminuria (A1–A3) según las categorías KDIGO; control de PA, anemia y metabolismo mineral."
+    },
+    "fields": [
+      {
+        "code": "tipo_de_control",
+        "name": "Tipo de consulta",
+        "dataType": "string",
+        "required": true,
+        "section": "Seguimiento",
+        "options": [
+          "Primera evaluación de la condición",
+          "Control programado",
+          "Descompensación o consulta no programada",
+          "Control posterior a internación"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "fecha_del_diagnostico",
+        "name": "Fecha del diagnóstico de enfermedad renal crónica",
+        "dataType": "date",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "tratamiento_actual",
+        "name": "Tratamiento actual (fármaco, dosis y frecuencia)",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "adherencia",
+        "name": "Adherencia al tratamiento",
+        "dataType": "string",
+        "required": false,
+        "section": "Seguimiento",
+        "options": [
+          "Toma el tratamiento como está indicado",
+          "Olvida dosis algunas veces",
+          "Abandonó el tratamiento",
+          "Todavía sin tratamiento"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "efectos_adversos",
+        "name": "¿Tuvo efectos adversos del tratamiento?",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "efectos_adversos_cuales",
+        "name": "¿Cuáles y con qué fármaco?",
+        "dataType": "text",
+        "required": true,
+        "section": "Seguimiento",
+        "showWhen": {
+          "field": "efectos_adversos",
+          "equals": true
+        }
+      },
+      {
+        "code": "evolucion_desde_ultimo_control",
+        "name": "Evolución desde el último control",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "creatinina",
+        "name": "Creatinina (mg/dL)",
+        "dataType": "decimal",
+        "required": true,
+        "section": "Evaluación: enfermedad renal crónica"
+      },
+      {
+        "code": "tfg",
+        "name": "Filtrado glomerular estimado (mL/min/1,73 m²)",
+        "dataType": "decimal",
+        "required": true,
+        "section": "Evaluación: enfermedad renal crónica"
+      },
+      {
+        "code": "erc_estadio_kdigo",
+        "name": "Estadio por filtrado",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación: enfermedad renal crónica",
+        "options": [
+          "G1 (≥ 90)",
+          "G2 (60–89)",
+          "G3a (45–59)",
+          "G3b (30–44)",
+          "G4 (15–29)",
+          "G5 (< 15)"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "albuminuria",
+        "name": "Albuminuria",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: enfermedad renal crónica",
+        "options": [
+          "A1 (< 30 mg/g)",
+          "A2 (30–300 mg/g)",
+          "A3 (> 300 mg/g)",
+          "No medida"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "presion_arterial_sistolica",
+        "name": "Presión arterial sistólica (mmHg)",
+        "dataType": "integer",
+        "required": true,
+        "section": "Evaluación: enfermedad renal crónica"
+      },
+      {
+        "code": "presion_arterial_diastolica",
+        "name": "Presión arterial diastólica (mmHg)",
+        "dataType": "integer",
+        "required": true,
+        "section": "Evaluación: enfermedad renal crónica"
+      },
+      {
+        "code": "frecuencia_cardiaca",
+        "name": "Frecuencia cardíaca (lpm)",
+        "dataType": "integer",
+        "required": false,
+        "section": "Evaluación: enfermedad renal crónica"
+      },
+      {
+        "code": "potasio",
+        "name": "Potasio (mEq/L)",
+        "dataType": "decimal",
+        "required": false,
+        "section": "Evaluación: enfermedad renal crónica"
+      },
+      {
+        "code": "hemoglobina",
+        "name": "Hemoglobina (g/dL)",
+        "dataType": "decimal",
+        "required": false,
+        "section": "Evaluación: enfermedad renal crónica"
+      },
+      {
+        "code": "erc_causa",
+        "name": "Causa",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: enfermedad renal crónica",
+        "options": [
+          "Diabetes",
+          "Hipertensión",
+          "Glomerulopatía",
+          "Poliquistosis",
+          "Litiasis u obstructiva",
+          "No establecida"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "terapia_renal",
+        "name": "Terapia de reemplazo",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: enfermedad renal crónica",
+        "options": [
+          "No la necesita",
+          "En preparación",
+          "Hemodiálisis",
+          "Diálisis peritoneal",
+          "Trasplante"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "metas_cumplidas",
+        "name": "Metas de control que cumple hoy",
+        "dataType": "json",
+        "required": false,
+        "section": "Metas y plan",
+        "options": [
+          "PA < 130/80 mmHg",
+          "Recibe IECA o ARA II si hay albuminuria",
+          "Evita nefrotóxicos",
+          "Ninguna todavía"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "educacion_brindada",
+        "name": "Educación brindada en esta consulta",
+        "dataType": "json",
+        "required": false,
+        "section": "Metas y plan",
+        "options": [
+          "Evitar AINE y medicina sin indicación",
+          "Alimentación",
+          "Ajuste de dosis de fármacos"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "diagnostico",
+        "name": "Diagnóstico (con código CIE-10 si se conoce)",
+        "dataType": "text",
+        "required": true,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "plan",
+        "name": "Plan: tratamiento, estudios, interconsultas y destino",
+        "dataType": "text",
+        "required": false,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "proximo_control",
+        "name": "Próximo control",
+        "dataType": "date",
+        "required": false,
+        "section": "Metas y plan"
+      }
+    ]
+  },
+  {
+    "code": "NEFRO_CTRL_LITIASIS",
+    "name": "Control de litiasis renal",
+    "version": 1,
+    "kind": "SPECIFIC",
+    "specialty": "NEFROLOGIA",
+    "provenance": {
+      "sourceTitle": "Norma Técnica de Salud para la Gestión de la Historia Clínica — NT N.º 022-MINSA/DGSP-V.02",
+      "organization": "Ministerio de Salud del Perú (MINSA)",
+      "url": "https://bvs.minsa.gob.pe/local/dgsp/NT022hist.pdf",
+      "license": "Norma técnica estatal de acceso público",
+      "retrievedAt": "2026-10-02",
+      "note": "Episodios, tamaño y ubicación del lito, y estudio metabólico."
+    },
+    "fields": [
+      {
+        "code": "tipo_de_control",
+        "name": "Tipo de consulta",
+        "dataType": "string",
+        "required": true,
+        "section": "Seguimiento",
+        "options": [
+          "Primera evaluación de la condición",
+          "Control programado",
+          "Descompensación o consulta no programada",
+          "Control posterior a internación"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "fecha_del_diagnostico",
+        "name": "Fecha del diagnóstico de litiasis renal",
+        "dataType": "date",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "tratamiento_actual",
+        "name": "Tratamiento actual (fármaco, dosis y frecuencia)",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "adherencia",
+        "name": "Adherencia al tratamiento",
+        "dataType": "string",
+        "required": false,
+        "section": "Seguimiento",
+        "options": [
+          "Toma el tratamiento como está indicado",
+          "Olvida dosis algunas veces",
+          "Abandonó el tratamiento",
+          "Todavía sin tratamiento"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "efectos_adversos",
+        "name": "¿Tuvo efectos adversos del tratamiento?",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "efectos_adversos_cuales",
+        "name": "¿Cuáles y con qué fármaco?",
+        "dataType": "text",
+        "required": true,
+        "section": "Seguimiento",
+        "showWhen": {
+          "field": "efectos_adversos",
+          "equals": true
+        }
+      },
+      {
+        "code": "evolucion_desde_ultimo_control",
+        "name": "Evolución desde el último control",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "colicos_anio",
+        "name": "Cólicos en el último año",
+        "dataType": "integer",
+        "required": false,
+        "section": "Evaluación: litiasis renal"
+      },
+      {
+        "code": "lito_tamano",
+        "name": "Imagen: tamaño y ubicación del lito",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación: litiasis renal"
+      },
+      {
+        "code": "hidronefrosis",
+        "name": "Hidronefrosis",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Evaluación: litiasis renal"
+      },
+      {
+        "code": "fiebre_litiasis",
+        "name": "Fiebre (obstrucción infectada: urgencia)",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Evaluación: litiasis renal"
+      },
+      {
+        "code": "lito_composicion",
+        "name": "Composición",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: litiasis renal",
+        "options": [
+          "Oxalato de calcio",
+          "Ácido úrico",
+          "Estruvita",
+          "Cistina",
+          "Desconocida"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "estudio_metabolico",
+        "name": "Estudio metabólico realizado",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Evaluación: litiasis renal"
+      },
+      {
+        "code": "metas_cumplidas",
+        "name": "Metas de control que cumple hoy",
+        "dataType": "json",
+        "required": false,
+        "section": "Metas y plan",
+        "options": [
+          "Diuresis > 2 litros por día",
+          "Sin cólicos",
+          "Ninguna todavía"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "educacion_brindada",
+        "name": "Educación brindada en esta consulta",
+        "dataType": "json",
+        "required": false,
+        "section": "Metas y plan",
+        "options": [
+          "Tomar agua",
+          "Menos sal y proteína animal"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "diagnostico",
+        "name": "Diagnóstico (con código CIE-10 si se conoce)",
+        "dataType": "text",
+        "required": true,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "plan",
+        "name": "Plan: tratamiento, estudios, interconsultas y destino",
+        "dataType": "text",
+        "required": false,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "proximo_control",
+        "name": "Próximo control",
+        "dataType": "date",
+        "required": false,
+        "section": "Metas y plan"
+      }
+    ]
+  },
+  {
     "code": "NEFRO_EVALUACION_BASE",
-    "name": "Evaluación nefrológica",
+    "name": "Nefrología — consulta inicial (ficha base)",
     "version": 2,
+    "kind": "BASE",
     "specialty": "NEFROLOGIA",
     "provenance": {
       "sourceTitle": "Norma Técnica de Salud para la Gestión de la Historia Clínica — NT N.º 022-MINSA/DGSP-V.02, anamnesis y examen del aparato genitourinario",
@@ -10548,7 +15997,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
       "license": "Norma técnica estatal de acceso público",
       "sourceVersion": "V.02",
       "retrievedAt": "2026-08-14",
-      "note": "De la norma salen la estructura común del registro: motivo de consulta, tiempo de enfermedad, antecedentes, examen físico, diagnóstico y conducta. Son agregados propios de la especialidad el interrogatorio dirigido de diuresis, edemas y hematuria, el antecedente de litiasis, la presión arterial registrada en consulta y la referencia a estudios de función renal previos. v2 (2026-10-02): reorganizada en secciones (motivo, antecedentes, examen, diagnóstico presuntivo, plan); las clasificaciones con categorías finitas pasan a lista cerrada; cada sí/no que tiene detalle pregunta «¿cuál?»; el diagnóstico presuntivo abre las observaciones que ese cuadro exige registrar. Instrumentos de uso libre incorporados: KDIGO."
+      "note": "De la norma salen la estructura común del registro: motivo de consulta, tiempo de enfermedad, antecedentes, examen físico, diagnóstico y conducta. Son agregados propios de la especialidad el interrogatorio dirigido de diuresis, edemas y hematuria, el antecedente de litiasis, la presión arterial registrada en consulta y la referencia a estudios de función renal previos. v2 (2026-10-02): reorganizada en secciones (motivo, antecedentes, examen, diagnóstico presuntivo, plan); las clasificaciones con categorías finitas pasan a lista cerrada; cada sí/no que tiene detalle pregunta «¿cuál?»; el diagnóstico presuntivo abre las observaciones que ese cuadro exige registrar."
     },
     "fields": [
       {
@@ -10732,225 +16181,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
         ],
         "multiple": false,
         "allowOther": true,
-        "description": "Al elegirlo se abren las observaciones que ese cuadro exige registrar."
-      },
-      {
-        "code": "creatinina",
-        "name": "Creatinina (mg/dL)",
-        "dataType": "decimal",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Enfermedad renal crónica"
-        }
-      },
-      {
-        "code": "tfg",
-        "name": "Filtrado glomerular estimado (mL/min/1,73 m²)",
-        "dataType": "decimal",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Enfermedad renal crónica"
-        }
-      },
-      {
-        "code": "erc_estadio_kdigo",
-        "name": "Estadio KDIGO",
-        "dataType": "string",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "G1 (≥ 90)",
-          "G2 (60–89)",
-          "G3a (45–59)",
-          "G3b (30–44)",
-          "G4 (15–29)",
-          "G5 (< 15)"
-        ],
-        "multiple": false,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Enfermedad renal crónica"
-        }
-      },
-      {
-        "code": "albuminuria",
-        "name": "Albuminuria",
-        "dataType": "string",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "A1 (< 30 mg/g)",
-          "A2 (30–300 mg/g)",
-          "A3 (> 300 mg/g)",
-          "No medida"
-        ],
-        "multiple": false,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Enfermedad renal crónica"
-        }
-      },
-      {
-        "code": "lra_causa",
-        "name": "Causa probable",
-        "dataType": "string",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Prerrenal",
-          "Renal intrínseca",
-          "Posrenal (obstructiva)"
-        ],
-        "multiple": false,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Lesión renal aguda"
-        }
-      },
-      {
-        "code": "lra_creatinina_basal",
-        "name": "Creatinina basal (mg/dL)",
-        "dataType": "decimal",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Lesión renal aguda"
-        }
-      },
-      {
-        "code": "proteinuria_24h",
-        "name": "Proteinuria de 24 h (g)",
-        "dataType": "decimal",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Síndrome nefrótico"
-        }
-      },
-      {
-        "code": "albumina_serica",
-        "name": "Albúmina sérica (g/dL)",
-        "dataType": "decimal",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Síndrome nefrótico"
-        }
-      },
-      {
-        "code": "nefritico_hta",
-        "name": "Hipertensión",
-        "dataType": "boolean",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Síndrome nefrítico"
-        }
-      },
-      {
-        "code": "nefritico_infeccion_previa",
-        "name": "Infección faríngea o cutánea reciente",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Síndrome nefrítico"
-        }
-      },
-      {
-        "code": "litiasis_colico",
-        "name": "Cólico renal",
-        "dataType": "boolean",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Litiasis renal"
-        }
-      },
-      {
-        "code": "litiasis_imagen",
-        "name": "Imagen — tamaño y ubicación del lito",
-        "dataType": "string",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Litiasis renal"
-        }
-      },
-      {
-        "code": "itu_sintomas",
-        "name": "Síntomas urinarios",
-        "dataType": "json",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Disuria",
-          "Polaquiuria",
-          "Urgencia miccional",
-          "Hematuria",
-          "Dolor suprapúbico"
-        ],
-        "multiple": true,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Infección urinaria"
-        }
-      },
-      {
-        "code": "itu_fiebre_o_lumbar",
-        "name": "Fiebre o dolor lumbar (sospecha de pielonefritis)",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Infección urinaria"
-        }
-      },
-      {
-        "code": "itu_punopercusion",
-        "name": "Puñopercusión lumbar",
-        "dataType": "string",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Positiva",
-          "Negativa",
-          "No evaluada"
-        ],
-        "multiple": false,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Infección urinaria"
-        }
-      },
-      {
-        "code": "itu_embarazo",
-        "name": "¿Embarazo posible?",
-        "dataType": "string",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Sí",
-          "No",
-          "No aplica"
-        ],
-        "multiple": false,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Infección urinaria"
-        }
+        "description": "Si el cuadro ya está diagnosticado, el seguimiento se hace con su ficha específica de la especialidad."
       },
       {
         "code": "funcion_renal_previa",
@@ -10977,9 +16208,888 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
     ]
   },
   {
+    "code": "NEUMO_CTRL_ASMA",
+    "name": "Control de asma",
+    "version": 1,
+    "kind": "SPECIFIC",
+    "specialty": "NEUMOLOGIA",
+    "provenance": {
+      "sourceTitle": "Global Strategy for Asthma Management and Prevention",
+      "organization": "Global Initiative for Asthma (GINA)",
+      "url": "https://ginasthma.org/reports/",
+      "license": "Guía de acceso público; se usan sus categorías clínicas, no su texto",
+      "retrievedAt": "2026-10-02",
+      "note": "Control de síntomas de las últimas 4 semanas y riesgo futuro según las categorías de GINA."
+    },
+    "fields": [
+      {
+        "code": "tipo_de_control",
+        "name": "Tipo de consulta",
+        "dataType": "string",
+        "required": true,
+        "section": "Seguimiento",
+        "options": [
+          "Primera evaluación de la condición",
+          "Control programado",
+          "Descompensación o consulta no programada",
+          "Control posterior a internación"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "fecha_del_diagnostico",
+        "name": "Fecha del diagnóstico de asma",
+        "dataType": "date",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "tratamiento_actual",
+        "name": "Tratamiento actual (fármaco, dosis y frecuencia)",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "adherencia",
+        "name": "Adherencia al tratamiento",
+        "dataType": "string",
+        "required": false,
+        "section": "Seguimiento",
+        "options": [
+          "Toma el tratamiento como está indicado",
+          "Olvida dosis algunas veces",
+          "Abandonó el tratamiento",
+          "Todavía sin tratamiento"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "efectos_adversos",
+        "name": "¿Tuvo efectos adversos del tratamiento?",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "efectos_adversos_cuales",
+        "name": "¿Cuáles y con qué fármaco?",
+        "dataType": "text",
+        "required": true,
+        "section": "Seguimiento",
+        "showWhen": {
+          "field": "efectos_adversos",
+          "equals": true
+        }
+      },
+      {
+        "code": "evolucion_desde_ultimo_control",
+        "name": "Evolución desde el último control",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "asma_control_4_semanas",
+        "name": "En las últimas 4 semanas (GINA)",
+        "dataType": "json",
+        "required": true,
+        "section": "Evaluación: asma",
+        "options": [
+          "Síntomas diurnos más de 2 veces por semana",
+          "Despertares nocturnos por asma",
+          "Uso de rescate más de 2 veces por semana",
+          "Limitación de la actividad",
+          "Ninguno"
+        ],
+        "multiple": true,
+        "description": "Ninguno: controlada · 1–2: parcialmente controlada · 3–4: no controlada."
+      },
+      {
+        "code": "asma_crisis_anio",
+        "name": "Crisis que requirieron urgencias en el último año",
+        "dataType": "integer",
+        "required": false,
+        "section": "Evaluación: asma"
+      },
+      {
+        "code": "asma_tratamiento_actual",
+        "name": "Inhaladores que usa",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: asma"
+      },
+      {
+        "code": "tecnica_inhalatoria",
+        "name": "Técnica inhalatoria",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación: asma",
+        "options": [
+          "Correcta",
+          "Con errores",
+          "No evaluada"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "pef",
+        "name": "Flujo espiratorio máximo (L/min)",
+        "dataType": "decimal",
+        "required": false,
+        "section": "Evaluación: asma"
+      },
+      {
+        "code": "vef1",
+        "name": "VEF₁ (% del predicho)",
+        "dataType": "decimal",
+        "required": false,
+        "section": "Evaluación: asma"
+      },
+      {
+        "code": "saturacion_de_oxigeno",
+        "name": "Saturación de oxígeno (%)",
+        "dataType": "integer",
+        "required": false,
+        "section": "Evaluación: asma"
+      },
+      {
+        "code": "corticoides_orales",
+        "name": "Recibió corticoides orales en el último año",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Complicaciones y daño de órgano"
+      },
+      {
+        "code": "metas_cumplidas",
+        "name": "Metas de control que cumple hoy",
+        "dataType": "json",
+        "required": false,
+        "section": "Metas y plan",
+        "options": [
+          "Asma controlada",
+          "Sin crisis en el año",
+          "Técnica inhalatoria correcta",
+          "Ninguna todavía"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "educacion_brindada",
+        "name": "Educación brindada en esta consulta",
+        "dataType": "json",
+        "required": false,
+        "section": "Metas y plan",
+        "options": [
+          "Técnica inhalatoria",
+          "Plan de acción escrito",
+          "Evitar desencadenantes"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "diagnostico",
+        "name": "Diagnóstico (con código CIE-10 si se conoce)",
+        "dataType": "text",
+        "required": true,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "plan",
+        "name": "Plan: tratamiento, estudios, interconsultas y destino",
+        "dataType": "text",
+        "required": false,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "proximo_control",
+        "name": "Próximo control",
+        "dataType": "date",
+        "required": false,
+        "section": "Metas y plan"
+      }
+    ]
+  },
+  {
+    "code": "NEUMO_CTRL_EPOC",
+    "name": "Control de EPOC",
+    "version": 1,
+    "kind": "SPECIFIC",
+    "specialty": "NEUMOLOGIA",
+    "provenance": {
+      "sourceTitle": "Global Strategy for the Diagnosis, Management and Prevention of COPD",
+      "organization": "Global Initiative for Chronic Obstructive Lung Disease (GOLD)",
+      "url": "https://goldcopd.org/",
+      "license": "Guía de acceso público; se usan sus categorías clínicas, no su texto",
+      "retrievedAt": "2026-10-02",
+      "note": "Disnea (mMRC), exacerbaciones y grupo de manejo según las categorías GOLD; exposición a biomasa."
+    },
+    "fields": [
+      {
+        "code": "tipo_de_control",
+        "name": "Tipo de consulta",
+        "dataType": "string",
+        "required": true,
+        "section": "Seguimiento",
+        "options": [
+          "Primera evaluación de la condición",
+          "Control programado",
+          "Descompensación o consulta no programada",
+          "Control posterior a internación"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "fecha_del_diagnostico",
+        "name": "Fecha del diagnóstico de EPOC",
+        "dataType": "date",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "tratamiento_actual",
+        "name": "Tratamiento actual (fármaco, dosis y frecuencia)",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "adherencia",
+        "name": "Adherencia al tratamiento",
+        "dataType": "string",
+        "required": false,
+        "section": "Seguimiento",
+        "options": [
+          "Toma el tratamiento como está indicado",
+          "Olvida dosis algunas veces",
+          "Abandonó el tratamiento",
+          "Todavía sin tratamiento"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "efectos_adversos",
+        "name": "¿Tuvo efectos adversos del tratamiento?",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "efectos_adversos_cuales",
+        "name": "¿Cuáles y con qué fármaco?",
+        "dataType": "text",
+        "required": true,
+        "section": "Seguimiento",
+        "showWhen": {
+          "field": "efectos_adversos",
+          "equals": true
+        }
+      },
+      {
+        "code": "evolucion_desde_ultimo_control",
+        "name": "Evolución desde el último control",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "epoc_mmrc",
+        "name": "Disnea (escala mMRC)",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación: EPOC",
+        "options": [
+          "Grado 0 — disnea sólo con ejercicio intenso",
+          "Grado 1 — al caminar rápido o subir una pendiente",
+          "Grado 2 — camina más despacio que sus pares o se detiene en llano",
+          "Grado 3 — se detiene a los 100 metros o a los pocos minutos",
+          "Grado 4 — no sale de casa o se ahoga al vestirse"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "epoc_exacerbaciones_anio",
+        "name": "Exacerbaciones en el último año",
+        "dataType": "integer",
+        "required": true,
+        "section": "Evaluación: EPOC"
+      },
+      {
+        "code": "epoc_internaciones_anio",
+        "name": "Internaciones por exacerbación en el último año",
+        "dataType": "integer",
+        "required": false,
+        "section": "Evaluación: EPOC"
+      },
+      {
+        "code": "vef1",
+        "name": "VEF₁ posbroncodilatador (% del predicho)",
+        "dataType": "decimal",
+        "required": false,
+        "section": "Evaluación: EPOC"
+      },
+      {
+        "code": "gold_grupo",
+        "name": "Grupo GOLD",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: EPOC",
+        "options": [
+          "A",
+          "B",
+          "E"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "saturacion_de_oxigeno",
+        "name": "Saturación de oxígeno (%)",
+        "dataType": "integer",
+        "required": true,
+        "section": "Evaluación: EPOC"
+      },
+      {
+        "code": "tabaco",
+        "name": "Tabaco",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: EPOC",
+        "options": [
+          "Nunca fumó",
+          "Exfumador",
+          "Fumador actual"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "epoc_biomasa",
+        "name": "Exposición a humo de leña o biomasa",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Evaluación: EPOC"
+      },
+      {
+        "code": "oxigeno_domiciliario",
+        "name": "Usa oxígeno en domicilio",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Evaluación: EPOC"
+      },
+      {
+        "code": "tecnica_inhalatoria",
+        "name": "Técnica inhalatoria",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: EPOC",
+        "options": [
+          "Correcta",
+          "Con errores",
+          "No evaluada"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "metas_cumplidas",
+        "name": "Metas de control que cumple hoy",
+        "dataType": "json",
+        "required": false,
+        "section": "Metas y plan",
+        "options": [
+          "Sin exacerbaciones",
+          "No fuma",
+          "Vacunas al día (influenza y neumococo)",
+          "Ninguna todavía"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "educacion_brindada",
+        "name": "Educación brindada en esta consulta",
+        "dataType": "json",
+        "required": false,
+        "section": "Metas y plan",
+        "options": [
+          "Dejar de fumar",
+          "Técnica inhalatoria",
+          "Rehabilitación respiratoria",
+          "Signos de exacerbación"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "diagnostico",
+        "name": "Diagnóstico (con código CIE-10 si se conoce)",
+        "dataType": "text",
+        "required": true,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "plan",
+        "name": "Plan: tratamiento, estudios, interconsultas y destino",
+        "dataType": "text",
+        "required": false,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "proximo_control",
+        "name": "Próximo control",
+        "dataType": "date",
+        "required": false,
+        "section": "Metas y plan"
+      }
+    ]
+  },
+  {
+    "code": "NEUMO_CTRL_NEUMONIA",
+    "name": "Neumonía adquirida en la comunidad: evaluación y control",
+    "version": 1,
+    "kind": "SPECIFIC",
+    "specialty": "NEUMOLOGIA",
+    "provenance": {
+      "sourceTitle": "Norma Técnica de Salud para la Gestión de la Historia Clínica — NT N.º 022-MINSA/DGSP-V.02",
+      "organization": "Ministerio de Salud del Perú (MINSA)",
+      "url": "https://bvs.minsa.gob.pe/local/dgsp/NT022hist.pdf",
+      "license": "Norma técnica estatal de acceso público",
+      "retrievedAt": "2026-10-02",
+      "note": "Gravedad por CURB-65 (British Thoracic Society) y respuesta al tratamiento a las 48–72 horas."
+    },
+    "fields": [
+      {
+        "code": "tipo_de_control",
+        "name": "Tipo de consulta",
+        "dataType": "string",
+        "required": true,
+        "section": "Seguimiento",
+        "options": [
+          "Primera evaluación de la condición",
+          "Control programado",
+          "Descompensación o consulta no programada",
+          "Control posterior a internación"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "fecha_del_diagnostico",
+        "name": "Fecha del diagnóstico de neumonía",
+        "dataType": "date",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "tratamiento_actual",
+        "name": "Tratamiento actual (fármaco, dosis y frecuencia)",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "adherencia",
+        "name": "Adherencia al tratamiento",
+        "dataType": "string",
+        "required": false,
+        "section": "Seguimiento",
+        "options": [
+          "Toma el tratamiento como está indicado",
+          "Olvida dosis algunas veces",
+          "Abandonó el tratamiento",
+          "Todavía sin tratamiento"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "efectos_adversos",
+        "name": "¿Tuvo efectos adversos del tratamiento?",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "efectos_adversos_cuales",
+        "name": "¿Cuáles y con qué fármaco?",
+        "dataType": "text",
+        "required": true,
+        "section": "Seguimiento",
+        "showWhen": {
+          "field": "efectos_adversos",
+          "equals": true
+        }
+      },
+      {
+        "code": "evolucion_desde_ultimo_control",
+        "name": "Evolución desde el último control",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "neumonia_crepitantes",
+        "name": "Crepitantes o soplo tubario localizados",
+        "dataType": "boolean",
+        "required": true,
+        "section": "Evaluación: neumonía"
+      },
+      {
+        "code": "curb65",
+        "name": "Criterios CURB-65 presentes",
+        "dataType": "json",
+        "required": true,
+        "section": "Evaluación: neumonía",
+        "options": [
+          "Confusión de reciente aparición",
+          "Urea > 42 mg/dL (BUN > 19 mg/dL)",
+          "Frecuencia respiratoria ≥ 30 rpm",
+          "PAS < 90 o PAD ≤ 60 mmHg",
+          "Edad ≥ 65 años",
+          "Ninguno"
+        ],
+        "multiple": true,
+        "description": "0–1: ambulatorio · 2: valorar internación · 3 o más: neumonía grave."
+      },
+      {
+        "code": "neumonia_expectoracion",
+        "name": "Expectoración purulenta",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Evaluación: neumonía"
+      },
+      {
+        "code": "frecuencia_respiratoria",
+        "name": "Frecuencia respiratoria (rpm)",
+        "dataType": "integer",
+        "required": true,
+        "section": "Evaluación: neumonía"
+      },
+      {
+        "code": "saturacion_de_oxigeno",
+        "name": "Saturación de oxígeno (%)",
+        "dataType": "integer",
+        "required": true,
+        "section": "Evaluación: neumonía"
+      },
+      {
+        "code": "temperatura",
+        "name": "Temperatura (°C)",
+        "dataType": "decimal",
+        "required": false,
+        "section": "Evaluación: neumonía"
+      },
+      {
+        "code": "respuesta_48h",
+        "name": "Respuesta a las 48–72 h",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: neumonía",
+        "options": [
+          "Mejoría",
+          "Sin cambios",
+          "Empeoramiento",
+          "Todavía no corresponde"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "rx_torax",
+        "name": "Radiografía de tórax — hallazgo",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: neumonía"
+      },
+      {
+        "code": "metas_cumplidas",
+        "name": "Metas de control que cumple hoy",
+        "dataType": "json",
+        "required": false,
+        "section": "Metas y plan",
+        "options": [
+          "Afebril",
+          "Saturación ≥ 92 %",
+          "Ninguna todavía"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "educacion_brindada",
+        "name": "Educación brindada en esta consulta",
+        "dataType": "json",
+        "required": false,
+        "section": "Metas y plan",
+        "options": [
+          "Completar el antibiótico",
+          "Signos de alarma"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "diagnostico",
+        "name": "Diagnóstico (con código CIE-10 si se conoce)",
+        "dataType": "text",
+        "required": true,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "plan",
+        "name": "Plan: tratamiento, estudios, interconsultas y destino",
+        "dataType": "text",
+        "required": false,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "proximo_control",
+        "name": "Próximo control",
+        "dataType": "date",
+        "required": false,
+        "section": "Metas y plan"
+      }
+    ]
+  },
+  {
+    "code": "NEUMO_CTRL_TB",
+    "name": "Control de tratamiento de tuberculosis",
+    "version": 1,
+    "kind": "SPECIFIC",
+    "specialty": "NEUMOLOGIA",
+    "provenance": {
+      "sourceTitle": "Programa Mundial contra la Tuberculosis — directrices consolidadas",
+      "organization": "Organización Mundial de la Salud (OMS)",
+      "url": "https://www.who.int/teams/global-tuberculosis-programme",
+      "license": "CC BY-NC-SA 3.0 IGO",
+      "retrievedAt": "2026-10-02",
+      "note": "Seguimiento del tratamiento: fase, baciloscopías de control, adherencia (tratamiento directamente observado) y reacciones adversas."
+    },
+    "fields": [
+      {
+        "code": "tipo_de_control",
+        "name": "Tipo de consulta",
+        "dataType": "string",
+        "required": true,
+        "section": "Seguimiento",
+        "options": [
+          "Primera evaluación de la condición",
+          "Control programado",
+          "Descompensación o consulta no programada",
+          "Control posterior a internación"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "fecha_del_diagnostico",
+        "name": "Fecha del diagnóstico de tuberculosis",
+        "dataType": "date",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "tratamiento_actual",
+        "name": "Tratamiento actual (fármaco, dosis y frecuencia)",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "adherencia",
+        "name": "Adherencia al tratamiento",
+        "dataType": "string",
+        "required": false,
+        "section": "Seguimiento",
+        "options": [
+          "Toma el tratamiento como está indicado",
+          "Olvida dosis algunas veces",
+          "Abandonó el tratamiento",
+          "Todavía sin tratamiento"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "efectos_adversos",
+        "name": "¿Tuvo efectos adversos del tratamiento?",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "efectos_adversos_cuales",
+        "name": "¿Cuáles y con qué fármaco?",
+        "dataType": "text",
+        "required": true,
+        "section": "Seguimiento",
+        "showWhen": {
+          "field": "efectos_adversos",
+          "equals": true
+        }
+      },
+      {
+        "code": "evolucion_desde_ultimo_control",
+        "name": "Evolución desde el último control",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "tbc_dias_de_tos",
+        "name": "Días de tos con expectoración",
+        "dataType": "integer",
+        "required": true,
+        "section": "Evaluación: tuberculosis",
+        "description": "15 días o más: sintomático respiratorio, pedir baciloscopía."
+      },
+      {
+        "code": "tbc_sintomas",
+        "name": "Síntomas acompañantes",
+        "dataType": "json",
+        "required": false,
+        "section": "Evaluación: tuberculosis",
+        "options": [
+          "Fiebre vespertina",
+          "Sudoración nocturna",
+          "Pérdida de peso",
+          "Hemoptisis",
+          "Ninguno"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "tbc_contacto",
+        "name": "Contacto con un caso de tuberculosis",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Evaluación: tuberculosis"
+      },
+      {
+        "code": "tbc_baciloscopia",
+        "name": "Baciloscopía",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: tuberculosis",
+        "options": [
+          "Positiva",
+          "Negativa",
+          "Pedida",
+          "No pedida"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "tb_fase",
+        "name": "Fase del tratamiento",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación: tuberculosis",
+        "options": [
+          "Intensiva",
+          "Continuación",
+          "Terminado"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "tb_mes",
+        "name": "Mes de tratamiento",
+        "dataType": "integer",
+        "required": false,
+        "section": "Evaluación: tuberculosis"
+      },
+      {
+        "code": "tb_taes",
+        "name": "Tratamiento directamente observado",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: tuberculosis",
+        "options": [
+          "Diario sin faltas",
+          "Con faltas",
+          "No supervisado"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "peso_kg",
+        "name": "Peso (kg)",
+        "dataType": "decimal",
+        "required": false,
+        "section": "Evaluación: tuberculosis"
+      },
+      {
+        "code": "vih_tb",
+        "name": "Prueba de VIH",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: tuberculosis",
+        "options": [
+          "Negativa",
+          "Positiva",
+          "No realizada"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "ram_tb",
+        "name": "Reacciones adversas",
+        "dataType": "json",
+        "required": false,
+        "section": "Complicaciones y daño de órgano",
+        "options": [
+          "Hepatotoxicidad",
+          "Erupción",
+          "Neuropatía",
+          "Alteración visual",
+          "Ninguna"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "metas_cumplidas",
+        "name": "Metas de control que cumple hoy",
+        "dataType": "json",
+        "required": false,
+        "section": "Metas y plan",
+        "options": [
+          "Baciloscopía negativa al final de la fase intensiva",
+          "Sin faltas",
+          "Ninguna todavía"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "educacion_brindada",
+        "name": "Educación brindada en esta consulta",
+        "dataType": "json",
+        "required": false,
+        "section": "Metas y plan",
+        "options": [
+          "Adherencia",
+          "Estudio de contactos",
+          "Medidas de aislamiento respiratorio"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "diagnostico",
+        "name": "Diagnóstico (con código CIE-10 si se conoce)",
+        "dataType": "text",
+        "required": true,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "plan",
+        "name": "Plan: tratamiento, estudios, interconsultas y destino",
+        "dataType": "text",
+        "required": false,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "proximo_control",
+        "name": "Próximo control",
+        "dataType": "date",
+        "required": false,
+        "section": "Metas y plan"
+      }
+    ]
+  },
+  {
     "code": "NEUMO_EVALUACION_BASE",
-    "name": "Evaluación neumológica",
+    "name": "Neumología — consulta inicial (ficha base)",
     "version": 2,
+    "kind": "BASE",
     "specialty": "NEUMOLOGIA",
     "provenance": {
       "sourceTitle": "Norma Técnica de Salud para la Gestión de la Historia Clínica — NT N.º 022-MINSA/DGSP-V.02, anamnesis y examen del aparato respiratorio",
@@ -10988,7 +17098,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
       "license": "Norma técnica estatal de acceso público",
       "sourceVersion": "V.02",
       "retrievedAt": "2026-08-14",
-      "note": "De la norma salen la estructura común del registro: motivo de consulta, tiempo de enfermedad, antecedentes, examen por aparatos, diagnóstico y conducta. Son agregados propios de la especialidad la descripción dirigida de disnea, tos, expectoración y hemoptisis, el antecedente de tabaquismo, la auscultación pulmonar y la saturación de oxígeno. v2 (2026-10-02): reorganizada en secciones (motivo, antecedentes, examen, diagnóstico presuntivo, plan); las clasificaciones con categorías finitas pasan a lista cerrada; cada sí/no que tiene detalle pregunta «¿cuál?»; el diagnóstico presuntivo abre las observaciones que ese cuadro exige registrar. Instrumentos de uso libre incorporados: CURB-65 (British Thoracic Society), escala de disnea mMRC, control del asma GINA, escala de fuerza MRC."
+      "note": "De la norma salen la estructura común del registro: motivo de consulta, tiempo de enfermedad, antecedentes, examen por aparatos, diagnóstico y conducta. Son agregados propios de la especialidad la descripción dirigida de disnea, tos, expectoración y hemoptisis, el antecedente de tabaquismo, la auscultación pulmonar y la saturación de oxígeno. v2 (2026-10-02): reorganizada en secciones (motivo, antecedentes, examen, diagnóstico presuntivo, plan); las clasificaciones con categorías finitas pasan a lista cerrada; cada sí/no que tiene detalle pregunta «¿cuál?»; el diagnóstico presuntivo abre las observaciones que ese cuadro exige registrar. Instrumentos de uso libre incorporados: escala de disnea mMRC, escala de fuerza MRC."
     },
     "fields": [
       {
@@ -11310,238 +17420,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
         ],
         "multiple": false,
         "allowOther": true,
-        "description": "Al elegirlo se abren las observaciones que ese cuadro exige registrar."
-      },
-      {
-        "code": "asma_control_4_semanas",
-        "name": "En las últimas 4 semanas (GINA)",
-        "dataType": "json",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Síntomas diurnos más de 2 veces por semana",
-          "Despertares nocturnos por asma",
-          "Uso de rescate más de 2 veces por semana",
-          "Limitación de la actividad",
-          "Ninguno"
-        ],
-        "multiple": true,
-        "description": "Ninguno: controlada · 1–2: parcialmente controlada · 3–4: no controlada.",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Asma"
-        }
-      },
-      {
-        "code": "asma_crisis_anio",
-        "name": "Crisis que requirieron urgencias en el último año",
-        "dataType": "integer",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Asma"
-        }
-      },
-      {
-        "code": "asma_tratamiento_actual",
-        "name": "Inhaladores que usa",
-        "dataType": "string",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Asma"
-        }
-      },
-      {
-        "code": "epoc_exacerbaciones_anio",
-        "name": "Exacerbaciones en el último año",
-        "dataType": "integer",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "EPOC"
-        }
-      },
-      {
-        "code": "epoc_paquetes_anio",
-        "name": "Tabaquismo acumulado (paquetes-año)",
-        "dataType": "integer",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "EPOC"
-        }
-      },
-      {
-        "code": "epoc_exposicion_biomasa",
-        "name": "Exposición a humo de leña o biomasa",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "EPOC"
-        }
-      },
-      {
-        "code": "neumonia_crepitantes",
-        "name": "Crepitantes o soplo tubario localizados",
-        "dataType": "boolean",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Neumonía"
-        }
-      },
-      {
-        "code": "curb65",
-        "name": "Criterios CURB-65 presentes",
-        "dataType": "json",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Confusión de reciente aparición",
-          "Urea > 42 mg/dL (BUN > 19 mg/dL)",
-          "Frecuencia respiratoria ≥ 30 rpm",
-          "PAS < 90 o PAD ≤ 60 mmHg",
-          "Edad ≥ 65 años",
-          "Ninguno"
-        ],
-        "multiple": true,
-        "description": "0–1: ambulatorio · 2: valorar internación · 3 o más: neumonía grave.",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Neumonía"
-        }
-      },
-      {
-        "code": "neumonia_expectoracion",
-        "name": "Expectoración purulenta",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Neumonía"
-        }
-      },
-      {
-        "code": "tbc_dias_de_tos",
-        "name": "Días de tos con expectoración",
-        "dataType": "integer",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "description": "15 días o más: sintomático respiratorio, pedir baciloscopía.",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Tuberculosis pulmonar"
-        }
-      },
-      {
-        "code": "tbc_sintomas",
-        "name": "Síntomas acompañantes",
-        "dataType": "json",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Fiebre vespertina",
-          "Sudoración nocturna",
-          "Pérdida de peso",
-          "Hemoptisis",
-          "Ninguno"
-        ],
-        "multiple": true,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Tuberculosis pulmonar"
-        }
-      },
-      {
-        "code": "tbc_contacto",
-        "name": "Contacto con un caso de tuberculosis",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Tuberculosis pulmonar"
-        }
-      },
-      {
-        "code": "tbc_baciloscopia",
-        "name": "Baciloscopía",
-        "dataType": "string",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Positiva",
-          "Negativa",
-          "Pedida",
-          "No pedida"
-        ],
-        "multiple": false,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Tuberculosis pulmonar"
-        }
-      },
-      {
-        "code": "epi_velcro",
-        "name": "Crepitantes tipo «velcro»",
-        "dataType": "boolean",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Enfermedad pulmonar intersticial"
-        }
-      },
-      {
-        "code": "epi_hipocratismo",
-        "name": "Hipocratismo digital",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Enfermedad pulmonar intersticial"
-        }
-      },
-      {
-        "code": "apnea_sintomas",
-        "name": "Síntomas y factores de apnea del sueño",
-        "dataType": "json",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Ronquido fuerte",
-          "Somnolencia diurna",
-          "Apneas observadas por otra persona",
-          "Hipertensión",
-          "Obesidad",
-          "Cuello ancho"
-        ],
-        "multiple": true,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Apnea obstructiva del sueño"
-        }
-      },
-      {
-        "code": "somnolencia_diurna_veces_semana",
-        "name": "Veces por semana que se duerme sin querer de día",
-        "dataType": "integer",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Apnea obstructiva del sueño"
-        }
+        "description": "Si el cuadro ya está diagnosticado, el seguimiento se hace con su ficha específica de la especialidad."
       },
       {
         "code": "diagnostico",
@@ -11561,9 +17440,799 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
     ]
   },
   {
+    "code": "NEURO_CTRL_ACV",
+    "name": "Accidente cerebrovascular: evaluación y seguimiento",
+    "version": 1,
+    "kind": "SPECIFIC",
+    "specialty": "NEUROLOGIA",
+    "provenance": {
+      "sourceTitle": "NIH Stroke Scale",
+      "organization": "National Institute of Neurological Disorders and Stroke (NINDS/NIH)",
+      "url": "https://www.ninds.nih.gov/health-information/stroke/assess-and-treat/nih-stroke-scale",
+      "license": "Dominio público (Gobierno de los EE. UU.)",
+      "retrievedAt": "2026-10-02",
+      "note": "Déficit por la escala NIHSS (dominio público), discapacidad por escala de Rankin modificada y prevención secundaria."
+    },
+    "fields": [
+      {
+        "code": "tipo_de_control",
+        "name": "Tipo de consulta",
+        "dataType": "string",
+        "required": true,
+        "section": "Seguimiento",
+        "options": [
+          "Primera evaluación de la condición",
+          "Control programado",
+          "Descompensación o consulta no programada",
+          "Control posterior a internación"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "fecha_del_diagnostico",
+        "name": "Fecha del diagnóstico de accidente cerebrovascular",
+        "dataType": "date",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "tratamiento_actual",
+        "name": "Tratamiento actual (fármaco, dosis y frecuencia)",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "adherencia",
+        "name": "Adherencia al tratamiento",
+        "dataType": "string",
+        "required": false,
+        "section": "Seguimiento",
+        "options": [
+          "Toma el tratamiento como está indicado",
+          "Olvida dosis algunas veces",
+          "Abandonó el tratamiento",
+          "Todavía sin tratamiento"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "efectos_adversos",
+        "name": "¿Tuvo efectos adversos del tratamiento?",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "efectos_adversos_cuales",
+        "name": "¿Cuáles y con qué fármaco?",
+        "dataType": "text",
+        "required": true,
+        "section": "Seguimiento",
+        "showWhen": {
+          "field": "efectos_adversos",
+          "equals": true
+        }
+      },
+      {
+        "code": "evolucion_desde_ultimo_control",
+        "name": "Evolución desde el último control",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "acv_cincinnati",
+        "name": "Escala de Cincinnati",
+        "dataType": "json",
+        "required": true,
+        "section": "Evaluación: accidente cerebrovascular",
+        "options": [
+          "Asimetría facial",
+          "Caída de un brazo",
+          "Alteración del habla",
+          "Ninguno"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "acv_hora_inicio",
+        "name": "Hora de inicio o de la última vez visto bien",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación: accidente cerebrovascular"
+      },
+      {
+        "code": "acv_glasgow",
+        "name": "Escala de Glasgow (3–15)",
+        "dataType": "integer",
+        "required": false,
+        "section": "Evaluación: accidente cerebrovascular"
+      },
+      {
+        "code": "acv_glucemia",
+        "name": "Glucemia capilar (mg/dL)",
+        "dataType": "decimal",
+        "required": false,
+        "section": "Evaluación: accidente cerebrovascular"
+      },
+      {
+        "code": "nihss",
+        "name": "NIHSS (0–42)",
+        "dataType": "integer",
+        "required": true,
+        "section": "Evaluación: accidente cerebrovascular"
+      },
+      {
+        "code": "acv_tipo",
+        "name": "Tipo",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: accidente cerebrovascular",
+        "options": [
+          "Isquémico",
+          "Hemorrágico",
+          "Accidente isquémico transitorio",
+          "No establecido"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "rankin",
+        "name": "Escala de Rankin modificada",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: accidente cerebrovascular",
+        "options": [
+          "0 — sin síntomas",
+          "1 — sin discapacidad significativa",
+          "2 — discapacidad leve",
+          "3 — moderada",
+          "4 — moderadamente grave",
+          "5 — grave",
+          "6 — fallecido"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "disfagia_tamizaje",
+        "name": "Tamizaje de disfagia",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: accidente cerebrovascular",
+        "options": [
+          "Normal",
+          "Alterado",
+          "No realizado"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "presion_arterial_sistolica",
+        "name": "Presión arterial sistólica (mmHg)",
+        "dataType": "integer",
+        "required": true,
+        "section": "Evaluación: accidente cerebrovascular"
+      },
+      {
+        "code": "presion_arterial_diastolica",
+        "name": "Presión arterial diastólica (mmHg)",
+        "dataType": "integer",
+        "required": true,
+        "section": "Evaluación: accidente cerebrovascular"
+      },
+      {
+        "code": "frecuencia_cardiaca",
+        "name": "Frecuencia cardíaca (lpm)",
+        "dataType": "integer",
+        "required": false,
+        "section": "Evaluación: accidente cerebrovascular"
+      },
+      {
+        "code": "metas_cumplidas",
+        "name": "Metas de control que cumple hoy",
+        "dataType": "json",
+        "required": false,
+        "section": "Metas y plan",
+        "options": [
+          "PA < 130/80 mmHg",
+          "Antiagregado o anticoagulado según causa",
+          "Estatina",
+          "En rehabilitación",
+          "Ninguna todavía"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "educacion_brindada",
+        "name": "Educación brindada en esta consulta",
+        "dataType": "json",
+        "required": false,
+        "section": "Metas y plan",
+        "options": [
+          "Reconocer un nuevo ACV (cara, brazo, habla: llamar ya)",
+          "Adherencia",
+          "Rehabilitación"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "diagnostico",
+        "name": "Diagnóstico (con código CIE-10 si se conoce)",
+        "dataType": "text",
+        "required": true,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "plan",
+        "name": "Plan: tratamiento, estudios, interconsultas y destino",
+        "dataType": "text",
+        "required": false,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "proximo_control",
+        "name": "Próximo control",
+        "dataType": "date",
+        "required": false,
+        "section": "Metas y plan"
+      }
+    ]
+  },
+  {
+    "code": "NEURO_CTRL_CEFALEA",
+    "name": "Control de cefalea primaria (migraña o tensional)",
+    "version": 1,
+    "kind": "SPECIFIC",
+    "specialty": "NEUROLOGIA",
+    "provenance": {
+      "sourceTitle": "Norma Técnica de Salud para la Gestión de la Historia Clínica — NT N.º 022-MINSA/DGSP-V.02",
+      "organization": "Ministerio de Salud del Perú (MINSA)",
+      "url": "https://bvs.minsa.gob.pe/local/dgsp/NT022hist.pdf",
+      "license": "Norma técnica estatal de acceso público",
+      "retrievedAt": "2026-10-02",
+      "note": "Fenotipo, frecuencia, uso de analgésicos y banderas rojas SNOOP."
+    },
+    "fields": [
+      {
+        "code": "tipo_de_control",
+        "name": "Tipo de consulta",
+        "dataType": "string",
+        "required": true,
+        "section": "Seguimiento",
+        "options": [
+          "Primera evaluación de la condición",
+          "Control programado",
+          "Descompensación o consulta no programada",
+          "Control posterior a internación"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "fecha_del_diagnostico",
+        "name": "Fecha del diagnóstico de cefalea",
+        "dataType": "date",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "tratamiento_actual",
+        "name": "Tratamiento actual (fármaco, dosis y frecuencia)",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "adherencia",
+        "name": "Adherencia al tratamiento",
+        "dataType": "string",
+        "required": false,
+        "section": "Seguimiento",
+        "options": [
+          "Toma el tratamiento como está indicado",
+          "Olvida dosis algunas veces",
+          "Abandonó el tratamiento",
+          "Todavía sin tratamiento"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "efectos_adversos",
+        "name": "¿Tuvo efectos adversos del tratamiento?",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "efectos_adversos_cuales",
+        "name": "¿Cuáles y con qué fármaco?",
+        "dataType": "text",
+        "required": true,
+        "section": "Seguimiento",
+        "showWhen": {
+          "field": "efectos_adversos",
+          "equals": true
+        }
+      },
+      {
+        "code": "evolucion_desde_ultimo_control",
+        "name": "Evolución desde el último control",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "cefalea_snoop",
+        "name": "Banderas rojas (SNOOP)",
+        "dataType": "json",
+        "required": true,
+        "section": "Evaluación: cefalea",
+        "options": [
+          "Síntomas sistémicos (fiebre, pérdida de peso)",
+          "Déficit neurológico focal o confusión",
+          "Inicio súbito, en trueno",
+          "Inicio después de los 50 años",
+          "Cambio de patrón o empeora con Valsalva o posición",
+          "Ninguna"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "cefalea_tipo",
+        "name": "Fenotipo",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: cefalea",
+        "options": [
+          "Migraña sin aura",
+          "Migraña con aura",
+          "Tensional",
+          "En racimos",
+          "Por abuso de analgésicos",
+          "No definido"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "cefalea_dias_mes",
+        "name": "Días de cefalea por mes",
+        "dataType": "integer",
+        "required": false,
+        "section": "Evaluación: cefalea"
+      },
+      {
+        "code": "dias_analgesicos_mes",
+        "name": "Días por mes que toma analgésicos",
+        "dataType": "integer",
+        "required": false,
+        "section": "Evaluación: cefalea"
+      },
+      {
+        "code": "cefalea_intensidad",
+        "name": "Intensidad habitual (0 a 10)",
+        "dataType": "integer",
+        "required": false,
+        "section": "Evaluación: cefalea"
+      },
+      {
+        "code": "profilaxis",
+        "name": "Recibe tratamiento preventivo",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Evaluación: cefalea"
+      },
+      {
+        "code": "metas_cumplidas",
+        "name": "Metas de control que cumple hoy",
+        "dataType": "json",
+        "required": false,
+        "section": "Metas y plan",
+        "options": [
+          "Menos de 4 días de cefalea por mes",
+          "Analgésicos menos de 10 días por mes",
+          "Ninguna todavía"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "educacion_brindada",
+        "name": "Educación brindada en esta consulta",
+        "dataType": "json",
+        "required": false,
+        "section": "Metas y plan",
+        "options": [
+          "Diario de cefalea",
+          "Evitar abuso de analgésicos",
+          "Sueño y desencadenantes"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "diagnostico",
+        "name": "Diagnóstico (con código CIE-10 si se conoce)",
+        "dataType": "text",
+        "required": true,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "plan",
+        "name": "Plan: tratamiento, estudios, interconsultas y destino",
+        "dataType": "text",
+        "required": false,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "proximo_control",
+        "name": "Próximo control",
+        "dataType": "date",
+        "required": false,
+        "section": "Metas y plan"
+      }
+    ]
+  },
+  {
+    "code": "NEURO_CTRL_EPILEPSIA",
+    "name": "Control de epilepsia",
+    "version": 1,
+    "kind": "SPECIFIC",
+    "specialty": "NEUROLOGIA",
+    "provenance": {
+      "sourceTitle": "Guía de intervención mhGAP para los trastornos mentales, neurológicos y por consumo de sustancias, versión 2.0",
+      "organization": "Organización Mundial de la Salud (OMS)",
+      "url": "https://www.who.int/publications/i/item/9789241549790",
+      "license": "CC BY-NC-SA 3.0 IGO",
+      "retrievedAt": "2026-10-02",
+      "note": "Módulo de epilepsia de mhGAP: frecuencia de crisis, adherencia, efectos adversos y situaciones especiales (embarazo)."
+    },
+    "fields": [
+      {
+        "code": "tipo_de_control",
+        "name": "Tipo de consulta",
+        "dataType": "string",
+        "required": true,
+        "section": "Seguimiento",
+        "options": [
+          "Primera evaluación de la condición",
+          "Control programado",
+          "Descompensación o consulta no programada",
+          "Control posterior a internación"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "fecha_del_diagnostico",
+        "name": "Fecha del diagnóstico de epilepsia",
+        "dataType": "date",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "tratamiento_actual",
+        "name": "Tratamiento actual (fármaco, dosis y frecuencia)",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "adherencia",
+        "name": "Adherencia al tratamiento",
+        "dataType": "string",
+        "required": false,
+        "section": "Seguimiento",
+        "options": [
+          "Toma el tratamiento como está indicado",
+          "Olvida dosis algunas veces",
+          "Abandonó el tratamiento",
+          "Todavía sin tratamiento"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "efectos_adversos",
+        "name": "¿Tuvo efectos adversos del tratamiento?",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "efectos_adversos_cuales",
+        "name": "¿Cuáles y con qué fármaco?",
+        "dataType": "text",
+        "required": true,
+        "section": "Seguimiento",
+        "showWhen": {
+          "field": "efectos_adversos",
+          "equals": true
+        }
+      },
+      {
+        "code": "evolucion_desde_ultimo_control",
+        "name": "Evolución desde el último control",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "convulsion_tipo",
+        "name": "Tipo de crisis",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación: epilepsia",
+        "options": [
+          "Tónico-clónica generalizada",
+          "Focal sin pérdida de conciencia",
+          "Focal con alteración de conciencia",
+          "Ausencia",
+          "No definido"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "convulsion_duracion_minutos",
+        "name": "Duración (minutos)",
+        "dataType": "integer",
+        "required": false,
+        "section": "Evaluación: epilepsia"
+      },
+      {
+        "code": "convulsion_desencadenantes",
+        "name": "Posibles desencadenantes",
+        "dataType": "json",
+        "required": false,
+        "section": "Evaluación: epilepsia",
+        "options": [
+          "Fiebre",
+          "Falta de sueño",
+          "Alcohol",
+          "Abandono de la medicación",
+          "Ninguno conocido"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "crisis_desde_ultimo_control",
+        "name": "Crisis desde el último control",
+        "dataType": "integer",
+        "required": true,
+        "section": "Evaluación: epilepsia"
+      },
+      {
+        "code": "fecha_ultima_crisis",
+        "name": "Fecha de la última crisis",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: epilepsia"
+      },
+      {
+        "code": "embarazo_epilepsia",
+        "name": "¿Embarazo o deseo de embarazo?",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: epilepsia",
+        "options": [
+          "Sí",
+          "No",
+          "No aplica"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "metas_cumplidas",
+        "name": "Metas de control que cumple hoy",
+        "dataType": "json",
+        "required": false,
+        "section": "Metas y plan",
+        "options": [
+          "Sin crisis",
+          "Sin efectos adversos",
+          "Ninguna todavía"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "educacion_brindada",
+        "name": "Educación brindada en esta consulta",
+        "dataType": "json",
+        "required": false,
+        "section": "Metas y plan",
+        "options": [
+          "No suspender la medicación",
+          "Primeros auxilios en una crisis",
+          "Riesgos: conducir, nadar, alturas"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "diagnostico",
+        "name": "Diagnóstico (con código CIE-10 si se conoce)",
+        "dataType": "text",
+        "required": true,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "plan",
+        "name": "Plan: tratamiento, estudios, interconsultas y destino",
+        "dataType": "text",
+        "required": false,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "proximo_control",
+        "name": "Próximo control",
+        "dataType": "date",
+        "required": false,
+        "section": "Metas y plan"
+      }
+    ]
+  },
+  {
+    "code": "NEURO_CTRL_PARKINSON",
+    "name": "Control de enfermedad de Parkinson",
+    "version": 1,
+    "kind": "SPECIFIC",
+    "specialty": "NEUROLOGIA",
+    "provenance": {
+      "sourceTitle": "Norma Técnica de Salud para la Gestión de la Historia Clínica — NT N.º 022-MINSA/DGSP-V.02",
+      "organization": "Ministerio de Salud del Perú (MINSA)",
+      "url": "https://bvs.minsa.gob.pe/local/dgsp/NT022hist.pdf",
+      "license": "Norma técnica estatal de acceso público",
+      "retrievedAt": "2026-10-02",
+      "note": "Estadio de Hoehn y Yahr (publicado), fluctuaciones motoras y síntomas no motores."
+    },
+    "fields": [
+      {
+        "code": "tipo_de_control",
+        "name": "Tipo de consulta",
+        "dataType": "string",
+        "required": true,
+        "section": "Seguimiento",
+        "options": [
+          "Primera evaluación de la condición",
+          "Control programado",
+          "Descompensación o consulta no programada",
+          "Control posterior a internación"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "fecha_del_diagnostico",
+        "name": "Fecha del diagnóstico de enfermedad de Parkinson",
+        "dataType": "date",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "tratamiento_actual",
+        "name": "Tratamiento actual (fármaco, dosis y frecuencia)",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "adherencia",
+        "name": "Adherencia al tratamiento",
+        "dataType": "string",
+        "required": false,
+        "section": "Seguimiento",
+        "options": [
+          "Toma el tratamiento como está indicado",
+          "Olvida dosis algunas veces",
+          "Abandonó el tratamiento",
+          "Todavía sin tratamiento"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "efectos_adversos",
+        "name": "¿Tuvo efectos adversos del tratamiento?",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "efectos_adversos_cuales",
+        "name": "¿Cuáles y con qué fármaco?",
+        "dataType": "text",
+        "required": true,
+        "section": "Seguimiento",
+        "showWhen": {
+          "field": "efectos_adversos",
+          "equals": true
+        }
+      },
+      {
+        "code": "evolucion_desde_ultimo_control",
+        "name": "Evolución desde el último control",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "hoehn_yahr",
+        "name": "Estadio de Hoehn y Yahr",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación: enfermedad de Parkinson",
+        "options": [
+          "1 — unilateral",
+          "2 — bilateral sin alteración del equilibrio",
+          "3 — inestabilidad postural leve",
+          "4 — discapacidad grave, camina con ayuda",
+          "5 — silla de ruedas o cama"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "parkinson_motores",
+        "name": "Problemas motores",
+        "dataType": "json",
+        "required": false,
+        "section": "Evaluación: enfermedad de Parkinson",
+        "options": [
+          "Fluctuaciones (fin de dosis)",
+          "Discinesias",
+          "Congelamiento de la marcha",
+          "Caídas"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "parkinson_no_motores",
+        "name": "Síntomas no motores",
+        "dataType": "json",
+        "required": false,
+        "section": "Evaluación: enfermedad de Parkinson",
+        "options": [
+          "Depresión",
+          "Deterioro cognitivo",
+          "Alucinaciones",
+          "Constipación",
+          "Hipotensión ortostática",
+          "Trastorno del sueño"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "educacion_brindada",
+        "name": "Educación brindada en esta consulta",
+        "dataType": "json",
+        "required": false,
+        "section": "Metas y plan",
+        "options": [
+          "Horarios de la levodopa",
+          "Prevención de caídas",
+          "Ejercicio"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "diagnostico",
+        "name": "Diagnóstico (con código CIE-10 si se conoce)",
+        "dataType": "text",
+        "required": true,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "plan",
+        "name": "Plan: tratamiento, estudios, interconsultas y destino",
+        "dataType": "text",
+        "required": false,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "proximo_control",
+        "name": "Próximo control",
+        "dataType": "date",
+        "required": false,
+        "section": "Metas y plan"
+      }
+    ]
+  },
+  {
     "code": "NEURO_EVALUACION_BASE",
-    "name": "Evaluación neurológica",
+    "name": "Neurología — consulta inicial (ficha base)",
     "version": 2,
+    "kind": "BASE",
     "specialty": "NEUROLOGIA",
     "provenance": {
       "sourceTitle": "Norma Técnica de Salud para la Gestión de la Historia Clínica — NT N.º 022-MINSA/DGSP-V.02, anamnesis y examen del sistema nervioso",
@@ -11572,7 +18241,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
       "license": "Norma técnica estatal de acceso público",
       "sourceVersion": "V.02",
       "retrievedAt": "2026-08-14",
-      "note": "De la norma salen la estructura común de la consulta y el apartado de examen del sistema nervioso: motivo, tiempo de evolución, antecedentes, examen, diagnóstico y conducta. Son agregados propios de la especialidad el desglose del examen neurológico en campos separados (estado de conciencia, pares craneales, fuerza muscular, sensibilidad, reflejos, coordinación y marcha) y la anamnesis dirigida de cefalea y episodios convulsivos. v2 (2026-10-02): reorganizada en secciones (motivo, antecedentes, examen, diagnóstico presuntivo, plan); las clasificaciones con categorías finitas pasan a lista cerrada; cada sí/no que tiene detalle pregunta «¿cuál?»; el diagnóstico presuntivo abre las observaciones que ese cuadro exige registrar. Instrumentos de uso libre incorporados: escala de coma de Glasgow, escala de Cincinnati, banderas rojas SNOOP, escala de fuerza MRC, maniobra de Dix-Hallpike."
+      "note": "De la norma salen la estructura común de la consulta y el apartado de examen del sistema nervioso: motivo, tiempo de evolución, antecedentes, examen, diagnóstico y conducta. Son agregados propios de la especialidad el desglose del examen neurológico en campos separados (estado de conciencia, pares craneales, fuerza muscular, sensibilidad, reflejos, coordinación y marcha) y la anamnesis dirigida de cefalea y episodios convulsivos. v2 (2026-10-02): reorganizada en secciones (motivo, antecedentes, examen, diagnóstico presuntivo, plan); las clasificaciones con categorías finitas pasan a lista cerrada; cada sí/no que tiene detalle pregunta «¿cuál?»; el diagnóstico presuntivo abre las observaciones que ese cuadro exige registrar. Instrumentos de uso libre incorporados: escala de coma de Glasgow, escala de fuerza MRC."
     },
     "fields": [
       {
@@ -11797,260 +18466,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
         ],
         "multiple": false,
         "allowOther": true,
-        "description": "Al elegirlo se abren las observaciones que ese cuadro exige registrar."
-      },
-      {
-        "code": "acv_cincinnati",
-        "name": "Escala de Cincinnati",
-        "dataType": "json",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Asimetría facial",
-          "Caída de un brazo",
-          "Alteración del habla",
-          "Ninguno"
-        ],
-        "multiple": true,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Accidente cerebrovascular"
-        }
-      },
-      {
-        "code": "acv_hora_inicio",
-        "name": "Hora de inicio o de la última vez visto bien",
-        "dataType": "string",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Accidente cerebrovascular"
-        }
-      },
-      {
-        "code": "acv_glucemia",
-        "name": "Glucemia capilar (mg/dL)",
-        "dataType": "decimal",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Accidente cerebrovascular"
-        }
-      },
-      {
-        "code": "cefalea_snoop",
-        "name": "Banderas rojas (SNOOP)",
-        "dataType": "json",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Síntomas sistémicos (fiebre, pérdida de peso)",
-          "Déficit neurológico focal o confusión",
-          "Inicio súbito, en trueno",
-          "Inicio después de los 50 años",
-          "Cambio de patrón o empeora con Valsalva o posición",
-          "Ninguna"
-        ],
-        "multiple": true,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Cefalea primaria"
-        }
-      },
-      {
-        "code": "cefalea_tipo",
-        "name": "Fenotipo",
-        "dataType": "string",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Migraña sin aura",
-          "Migraña con aura",
-          "Tensional",
-          "En racimos",
-          "Por abuso de analgésicos",
-          "No definido"
-        ],
-        "multiple": false,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Cefalea primaria"
-        }
-      },
-      {
-        "code": "cefalea_dias_mes",
-        "name": "Días de cefalea por mes",
-        "dataType": "integer",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Cefalea primaria"
-        }
-      },
-      {
-        "code": "convulsion_tipo",
-        "name": "Tipo de crisis",
-        "dataType": "string",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Tónico-clónica generalizada",
-          "Focal sin pérdida de conciencia",
-          "Focal con alteración de conciencia",
-          "Ausencia",
-          "No definido"
-        ],
-        "multiple": false,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Epilepsia o crisis convulsiva"
-        }
-      },
-      {
-        "code": "convulsion_duracion_minutos",
-        "name": "Duración (minutos)",
-        "dataType": "integer",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Epilepsia o crisis convulsiva"
-        }
-      },
-      {
-        "code": "convulsion_primera",
-        "name": "Es la primera crisis",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Epilepsia o crisis convulsiva"
-        }
-      },
-      {
-        "code": "convulsion_desencadenantes",
-        "name": "Posibles desencadenantes",
-        "dataType": "json",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Fiebre",
-          "Falta de sueño",
-          "Alcohol",
-          "Abandono de la medicación",
-          "Ninguno conocido"
-        ],
-        "multiple": true,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Epilepsia o crisis convulsiva"
-        }
-      },
-      {
-        "code": "cognitivo_prueba",
-        "name": "Prueba cognitiva aplicada y puntaje",
-        "dataType": "string",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Deterioro cognitivo"
-        }
-      },
-      {
-        "code": "cognitivo_funcional",
-        "name": "Repercusión funcional",
-        "dataType": "string",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Ninguna",
-          "En actividades instrumentales",
-          "En actividades básicas"
-        ],
-        "multiple": false,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Deterioro cognitivo"
-        }
-      },
-      {
-        "code": "parkinson_signos",
-        "name": "Signos",
-        "dataType": "json",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Bradicinesia",
-          "Temblor de reposo",
-          "Rigidez",
-          "Inestabilidad postural"
-        ],
-        "multiple": true,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Enfermedad de Parkinson"
-        }
-      },
-      {
-        "code": "neuropatia_patron",
-        "name": "Patrón",
-        "dataType": "string",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "En guante y calcetín",
-          "Mononeuropatía",
-          "Multineuritis"
-        ],
-        "multiple": false,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Neuropatía periférica"
-        }
-      },
-      {
-        "code": "neuropatia_diabetes",
-        "name": "Diabetes asociada",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Neuropatía periférica"
-        }
-      },
-      {
-        "code": "dix_hallpike",
-        "name": "Maniobra de Dix-Hallpike",
-        "dataType": "string",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Positiva",
-          "Negativa",
-          "No realizada"
-        ],
-        "multiple": false,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Vértigo"
-        }
-      },
-      {
-        "code": "vertigo_signos_centrales",
-        "name": "Signos centrales (diplopía, disartria, ataxia)",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Vértigo"
-        }
+        "description": "Si el cuadro ya está diagnosticado, el seguimiento se hace con su ficha específica de la especialidad."
       },
       {
         "code": "diagnostico",
@@ -12070,9 +18486,349 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
     ]
   },
   {
+    "code": "NUTRI_CTRL_DIABETES",
+    "name": "Plan alimentario en diabetes",
+    "version": 1,
+    "kind": "SPECIFIC",
+    "specialty": "NUTRICION",
+    "provenance": {
+      "sourceTitle": "HEARTS-D: diagnóstico y manejo de la diabetes tipo 2",
+      "organization": "Organización Mundial de la Salud (OMS)",
+      "url": "https://www.who.int/publications/i/item/who-ucn-ncd-20.1",
+      "license": "CC BY-NC-SA 3.0 IGO",
+      "retrievedAt": "2026-10-02",
+      "note": "Recordatorio, distribución de carbohidratos y glucemias."
+    },
+    "fields": [
+      {
+        "code": "tipo_de_control",
+        "name": "Tipo de consulta",
+        "dataType": "string",
+        "required": true,
+        "section": "Seguimiento",
+        "options": [
+          "Primera evaluación de la condición",
+          "Control programado",
+          "Descompensación o consulta no programada",
+          "Control posterior a internación"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "fecha_del_diagnostico",
+        "name": "Fecha del diagnóstico de diabetes",
+        "dataType": "date",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "tratamiento_actual",
+        "name": "Tratamiento actual (fármaco, dosis y frecuencia)",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "adherencia",
+        "name": "Adherencia al tratamiento",
+        "dataType": "string",
+        "required": false,
+        "section": "Seguimiento",
+        "options": [
+          "Toma el tratamiento como está indicado",
+          "Olvida dosis algunas veces",
+          "Abandonó el tratamiento",
+          "Todavía sin tratamiento"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "efectos_adversos",
+        "name": "¿Tuvo efectos adversos del tratamiento?",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "efectos_adversos_cuales",
+        "name": "¿Cuáles y con qué fármaco?",
+        "dataType": "text",
+        "required": true,
+        "section": "Seguimiento",
+        "showWhen": {
+          "field": "efectos_adversos",
+          "equals": true
+        }
+      },
+      {
+        "code": "evolucion_desde_ultimo_control",
+        "name": "Evolución desde el último control",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "peso_kg",
+        "name": "Peso (kg)",
+        "dataType": "decimal",
+        "required": true,
+        "section": "Evaluación: diabetes"
+      },
+      {
+        "code": "hba1c",
+        "name": "Última HbA1c (%)",
+        "dataType": "decimal",
+        "required": false,
+        "section": "Evaluación: diabetes"
+      },
+      {
+        "code": "comidas_al_dia",
+        "name": "Comidas al día",
+        "dataType": "integer",
+        "required": false,
+        "section": "Evaluación: diabetes"
+      },
+      {
+        "code": "recordatorio_24h",
+        "name": "Recordatorio de 24 horas",
+        "dataType": "text",
+        "required": false,
+        "section": "Evaluación: diabetes"
+      },
+      {
+        "code": "hipoglucemias",
+        "name": "Hipoglucemias",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Evaluación: diabetes"
+      },
+      {
+        "code": "educacion_brindada",
+        "name": "Educación brindada en esta consulta",
+        "dataType": "json",
+        "required": false,
+        "section": "Metas y plan",
+        "options": [
+          "Conteo de carbohidratos",
+          "Horarios regulares",
+          "Qué hacer en una hipoglucemia"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "diagnostico",
+        "name": "Diagnóstico (con código CIE-10 si se conoce)",
+        "dataType": "text",
+        "required": true,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "plan",
+        "name": "Plan: tratamiento, estudios, interconsultas y destino",
+        "dataType": "text",
+        "required": false,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "proximo_control",
+        "name": "Próximo control",
+        "dataType": "date",
+        "required": false,
+        "section": "Metas y plan"
+      }
+    ]
+  },
+  {
+    "code": "NUTRI_CTRL_OBESIDAD",
+    "name": "Control nutricional de sobrepeso y obesidad",
+    "version": 1,
+    "kind": "SPECIFIC",
+    "specialty": "NUTRICION",
+    "provenance": {
+      "sourceTitle": "Obesidad y sobrepeso",
+      "organization": "Organización Mundial de la Salud (OMS)",
+      "url": "https://www.who.int/health-topics/obesity",
+      "license": "CC BY-NC-SA 3.0 IGO",
+      "retrievedAt": "2026-10-02",
+      "note": "Antropometría, cambio de peso, hábitos y metas."
+    },
+    "fields": [
+      {
+        "code": "tipo_de_control",
+        "name": "Tipo de consulta",
+        "dataType": "string",
+        "required": true,
+        "section": "Seguimiento",
+        "options": [
+          "Primera evaluación de la condición",
+          "Control programado",
+          "Descompensación o consulta no programada",
+          "Control posterior a internación"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "fecha_del_diagnostico",
+        "name": "Fecha del diagnóstico de sobrepeso u obesidad",
+        "dataType": "date",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "tratamiento_actual",
+        "name": "Tratamiento actual (fármaco, dosis y frecuencia)",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "adherencia",
+        "name": "Adherencia al tratamiento",
+        "dataType": "string",
+        "required": false,
+        "section": "Seguimiento",
+        "options": [
+          "Toma el tratamiento como está indicado",
+          "Olvida dosis algunas veces",
+          "Abandonó el tratamiento",
+          "Todavía sin tratamiento"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "efectos_adversos",
+        "name": "¿Tuvo efectos adversos del tratamiento?",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "efectos_adversos_cuales",
+        "name": "¿Cuáles y con qué fármaco?",
+        "dataType": "text",
+        "required": true,
+        "section": "Seguimiento",
+        "showWhen": {
+          "field": "efectos_adversos",
+          "equals": true
+        }
+      },
+      {
+        "code": "evolucion_desde_ultimo_control",
+        "name": "Evolución desde el último control",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "peso_kg",
+        "name": "Peso (kg)",
+        "dataType": "decimal",
+        "required": true,
+        "section": "Evaluación: sobrepeso u obesidad"
+      },
+      {
+        "code": "imc",
+        "name": "IMC (kg/m²)",
+        "dataType": "decimal",
+        "required": false,
+        "section": "Evaluación: sobrepeso u obesidad"
+      },
+      {
+        "code": "perimetro_abdominal_cm",
+        "name": "Perímetro abdominal (cm)",
+        "dataType": "decimal",
+        "required": false,
+        "section": "Evaluación: sobrepeso u obesidad"
+      },
+      {
+        "code": "cambio_de_peso_kg",
+        "name": "Cambio desde el último control (kg)",
+        "dataType": "decimal",
+        "required": false,
+        "section": "Evaluación: sobrepeso u obesidad"
+      },
+      {
+        "code": "consumo_frecuente",
+        "name": "Consumo frecuente",
+        "dataType": "json",
+        "required": false,
+        "section": "Evaluación: sobrepeso u obesidad",
+        "options": [
+          "Bebidas azucaradas",
+          "Frituras",
+          "Comida rápida",
+          "Frutas y verduras"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "actividad_fisica",
+        "name": "Actividad física",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: sobrepeso u obesidad",
+        "options": [
+          "Sedentario",
+          "Menos de 150 min por semana",
+          "150 min o más"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "metas_cumplidas",
+        "name": "Metas de control que cumple hoy",
+        "dataType": "json",
+        "required": false,
+        "section": "Metas y plan",
+        "options": [
+          "Bajó 5 % del peso",
+          "Sin bebidas azucaradas",
+          "Ninguna todavía"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "educacion_brindada",
+        "name": "Educación brindada en esta consulta",
+        "dataType": "json",
+        "required": false,
+        "section": "Metas y plan",
+        "options": [
+          "Plato saludable",
+          "Porciones",
+          "Actividad física"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "diagnostico",
+        "name": "Diagnóstico (con código CIE-10 si se conoce)",
+        "dataType": "text",
+        "required": true,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "plan",
+        "name": "Plan: tratamiento, estudios, interconsultas y destino",
+        "dataType": "text",
+        "required": false,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "proximo_control",
+        "name": "Próximo control",
+        "dataType": "date",
+        "required": false,
+        "section": "Metas y plan"
+      }
+    ]
+  },
+  {
     "code": "NUTRI_EVALUACION_BASE",
-    "name": "Evaluación nutricional",
+    "name": "Nutrición y Dietética — consulta inicial (ficha base)",
     "version": 2,
+    "kind": "BASE",
     "specialty": "NUTRICION",
     "provenance": {
       "sourceTitle": "Norma Técnica de Salud para la Gestión de la Historia Clínica — NT N.º 022-MINSA/DGSP-V.02, anamnesis, antecedentes y registro de medidas antropométricas",
@@ -12328,205 +19084,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
         ],
         "multiple": false,
         "allowOther": true,
-        "description": "Al elegirlo se abren las observaciones que ese cuadro exige registrar."
-      },
-      {
-        "code": "obesidad_grado",
-        "name": "Grado (IMC)",
-        "dataType": "string",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Sobrepeso (25–29,9)",
-          "Obesidad I (30–34,9)",
-          "Obesidad II (35–39,9)",
-          "Obesidad III (≥ 40)"
-        ],
-        "multiple": false,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Sobrepeso u obesidad"
-        }
-      },
-      {
-        "code": "riesgo_nutricional",
-        "name": "Señales de riesgo nutricional",
-        "dataType": "json",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "IMC menor a 20",
-          "Pérdida de más del 5 % del peso en 3 a 6 meses",
-          "Enfermedad aguda con poca o ninguna ingesta por más de 5 días"
-        ],
-        "multiple": true,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Desnutrición o riesgo nutricional"
-        }
-      },
-      {
-        "code": "dm_glucemia_capilar",
-        "name": "Glucemia capilar (mg/dL)",
-        "dataType": "decimal",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Diabetes o resistencia a la insulina"
-        }
-      },
-      {
-        "code": "dm_hba1c",
-        "name": "Última HbA1c (%)",
-        "dataType": "decimal",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Diabetes o resistencia a la insulina"
-        }
-      },
-      {
-        "code": "dm_sintomas",
-        "name": "Síntomas",
-        "dataType": "json",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Poliuria",
-          "Polidipsia",
-          "Pérdida de peso",
-          "Visión borrosa",
-          "Ninguno"
-        ],
-        "multiple": true,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Diabetes o resistencia a la insulina"
-        }
-      },
-      {
-        "code": "dm_pie",
-        "name": "Examen del pie",
-        "dataType": "string",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Sensibilidad conservada (monofilamento)",
-          "Sensibilidad disminuida",
-          "Úlcera o lesión presente",
-          "No evaluado"
-        ],
-        "multiple": false,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Diabetes o resistencia a la insulina"
-        }
-      },
-      {
-        "code": "dm_hipoglucemias",
-        "name": "Episodios de hipoglucemia desde el último control",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Diabetes o resistencia a la insulina"
-        }
-      },
-      {
-        "code": "ldl_nutri",
-        "name": "LDL (mg/dL)",
-        "dataType": "decimal",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Dislipidemia"
-        }
-      },
-      {
-        "code": "tg_nutri",
-        "name": "Triglicéridos (mg/dL)",
-        "dataType": "decimal",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Dislipidemia"
-        }
-      },
-      {
-        "code": "anemia_hemoglobina",
-        "name": "Hemoglobina (g/dL)",
-        "dataType": "decimal",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "description": "Ajustar por altitud de residencia.",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Anemia nutricional"
-        }
-      },
-      {
-        "code": "anemia_sintomas",
-        "name": "Síntomas",
-        "dataType": "json",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Astenia",
-          "Disnea de esfuerzo",
-          "Palpitaciones",
-          "Pica",
-          "Ninguno"
-        ],
-        "multiple": true,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Anemia nutricional"
-        }
-      },
-      {
-        "code": "anemia_perdidas",
-        "name": "Posibles pérdidas",
-        "dataType": "json",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Menstruación abundante",
-          "Sangrado digestivo",
-          "Parasitosis",
-          "Ninguna conocida"
-        ],
-        "multiple": true,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Anemia nutricional"
-        }
-      },
-      {
-        "code": "anemia_vcm",
-        "name": "VCM y ferritina, si se conocen",
-        "dataType": "string",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Anemia nutricional"
-        }
-      },
-      {
-        "code": "nutri_embarazo_semanas",
-        "name": "Semanas de gestación o meses de lactancia",
-        "dataType": "integer",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Embarazo o lactancia"
-        }
+        "description": "Si el cuadro ya está diagnosticado, el seguimiento se hace con su ficha específica de la especialidad."
       },
       {
         "code": "objetivo_nutricional",
@@ -12553,8 +19111,9 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
   },
   {
     "code": "OBST_CONTROL_BASE",
-    "name": "Control obstétrico",
+    "name": "Obstetricia — control obstétrico (ficha base)",
     "version": 2,
+    "kind": "BASE",
     "specialty": "OBSTETRICIA",
     "provenance": {
       "sourceTitle": "Norma Técnica de Salud para la Gestión de la Historia Clínica — NT N.º 022-MINSA/DGSP-V.02, historia clínica materno perinatal y registro de la atención prenatal",
@@ -12740,184 +19299,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
         ],
         "multiple": false,
         "allowOther": true,
-        "description": "Al elegirlo se abren las observaciones que ese cuadro exige registrar."
-      },
-      {
-        "code": "proteinuria_obst",
-        "name": "Proteinuria",
-        "dataType": "string",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Negativa",
-          "+",
-          "++",
-          "+++"
-        ],
-        "multiple": false,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Trastorno hipertensivo del embarazo"
-        }
-      },
-      {
-        "code": "preeclampsia_grave",
-        "name": "Criterios de gravedad",
-        "dataType": "json",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "PA ≥ 160/110",
-          "Cefalea o alteración visual",
-          "Dolor en epigastrio",
-          "Plaquetas < 100 000",
-          "Oliguria",
-          "Ninguno"
-        ],
-        "multiple": true,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Trastorno hipertensivo del embarazo"
-        }
-      },
-      {
-        "code": "contracciones_hora",
-        "name": "Contracciones por hora",
-        "dataType": "integer",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Amenaza de parto prematuro"
-        }
-      },
-      {
-        "code": "cervix",
-        "name": "Cuello: dilatación y borramiento",
-        "dataType": "string",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Amenaza de parto prematuro"
-        }
-      },
-      {
-        "code": "hemorragia_trimestre",
-        "name": "Trimestre",
-        "dataType": "string",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Primero",
-          "Segundo",
-          "Tercero"
-        ],
-        "multiple": false,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Hemorragia del embarazo"
-        }
-      },
-      {
-        "code": "hemorragia_dolor",
-        "name": "Con dolor",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Hemorragia del embarazo"
-        }
-      },
-      {
-        "code": "dm_glucemia_capilar",
-        "name": "Glucemia capilar (mg/dL)",
-        "dataType": "decimal",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Diabetes gestacional"
-        }
-      },
-      {
-        "code": "dm_hba1c",
-        "name": "Última HbA1c (%)",
-        "dataType": "decimal",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Diabetes gestacional"
-        }
-      },
-      {
-        "code": "dm_sintomas",
-        "name": "Síntomas",
-        "dataType": "json",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Poliuria",
-          "Polidipsia",
-          "Pérdida de peso",
-          "Visión borrosa",
-          "Ninguno"
-        ],
-        "multiple": true,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Diabetes gestacional"
-        }
-      },
-      {
-        "code": "dm_pie",
-        "name": "Examen del pie",
-        "dataType": "string",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Sensibilidad conservada (monofilamento)",
-          "Sensibilidad disminuida",
-          "Úlcera o lesión presente",
-          "No evaluado"
-        ],
-        "multiple": false,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Diabetes gestacional"
-        }
-      },
-      {
-        "code": "dm_hipoglucemias",
-        "name": "Episodios de hipoglucemia desde el último control",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Diabetes gestacional"
-        }
-      },
-      {
-        "code": "itu_obst",
-        "name": "Síntomas",
-        "dataType": "json",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Disuria",
-          "Polaquiuria",
-          "Fiebre",
-          "Dolor lumbar",
-          "Asintomática con urocultivo positivo"
-        ],
-        "multiple": true,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Infección urinaria en el embarazo"
-        }
+        "description": "Si el cuadro ya está diagnosticado, el seguimiento se hace con su ficha específica de la especialidad."
       },
       {
         "code": "diagnostico",
@@ -12937,9 +19319,502 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
     ]
   },
   {
+    "code": "OBST_CTRL_DIABETES_GESTACIONAL",
+    "name": "Control de diabetes gestacional",
+    "version": 1,
+    "kind": "SPECIFIC",
+    "specialty": "OBSTETRICIA",
+    "provenance": {
+      "sourceTitle": "Recomendaciones de la OMS sobre atención prenatal para una experiencia positiva del embarazo (2016)",
+      "organization": "Organización Mundial de la Salud (OMS)",
+      "url": "https://www.who.int/publications/i/item/9789241549912",
+      "license": "CC BY-NC-SA 3.0 IGO",
+      "retrievedAt": "2026-10-02",
+      "note": "Glucemias de ayuno y posprandiales, crecimiento fetal y tratamiento."
+    },
+    "fields": [
+      {
+        "code": "tipo_de_control",
+        "name": "Tipo de consulta",
+        "dataType": "string",
+        "required": true,
+        "section": "Seguimiento",
+        "options": [
+          "Primera evaluación de la condición",
+          "Control programado",
+          "Descompensación o consulta no programada",
+          "Control posterior a internación"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "fecha_del_diagnostico",
+        "name": "Fecha del diagnóstico de diabetes gestacional",
+        "dataType": "date",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "tratamiento_actual",
+        "name": "Tratamiento actual (fármaco, dosis y frecuencia)",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "adherencia",
+        "name": "Adherencia al tratamiento",
+        "dataType": "string",
+        "required": false,
+        "section": "Seguimiento",
+        "options": [
+          "Toma el tratamiento como está indicado",
+          "Olvida dosis algunas veces",
+          "Abandonó el tratamiento",
+          "Todavía sin tratamiento"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "efectos_adversos",
+        "name": "¿Tuvo efectos adversos del tratamiento?",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "efectos_adversos_cuales",
+        "name": "¿Cuáles y con qué fármaco?",
+        "dataType": "text",
+        "required": true,
+        "section": "Seguimiento",
+        "showWhen": {
+          "field": "efectos_adversos",
+          "equals": true
+        }
+      },
+      {
+        "code": "evolucion_desde_ultimo_control",
+        "name": "Evolución desde el último control",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "edad_gestacional_semanas",
+        "name": "Edad gestacional (semanas)",
+        "dataType": "integer",
+        "required": true,
+        "section": "Evaluación: diabetes gestacional"
+      },
+      {
+        "code": "glucemia_ayunas",
+        "name": "Glucemia en ayunas (mg/dL)",
+        "dataType": "decimal",
+        "required": true,
+        "section": "Evaluación: diabetes gestacional"
+      },
+      {
+        "code": "glucemia_posprandial",
+        "name": "Glucemia 1 h posprandial (mg/dL)",
+        "dataType": "decimal",
+        "required": false,
+        "section": "Evaluación: diabetes gestacional"
+      },
+      {
+        "code": "tratamiento_dg",
+        "name": "Tratamiento",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: diabetes gestacional",
+        "options": [
+          "Dieta",
+          "Metformina",
+          "Insulina"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "altura_uterina_cm",
+        "name": "Altura uterina (cm)",
+        "dataType": "decimal",
+        "required": false,
+        "section": "Evaluación: diabetes gestacional"
+      },
+      {
+        "code": "ecografia_crecimiento",
+        "name": "Ecografía — percentil de crecimiento",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: diabetes gestacional"
+      },
+      {
+        "code": "metas_cumplidas",
+        "name": "Metas de control que cumple hoy",
+        "dataType": "json",
+        "required": false,
+        "section": "Metas y plan",
+        "options": [
+          "Ayunas < 95 mg/dL",
+          "1 h posprandial < 140 mg/dL",
+          "Ninguna todavía"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "educacion_brindada",
+        "name": "Educación brindada en esta consulta",
+        "dataType": "json",
+        "required": false,
+        "section": "Metas y plan",
+        "options": [
+          "Alimentación",
+          "Automonitoreo",
+          "Tamizaje posparto a las 4–12 semanas"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "diagnostico",
+        "name": "Diagnóstico (con código CIE-10 si se conoce)",
+        "dataType": "text",
+        "required": true,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "plan",
+        "name": "Plan: tratamiento, estudios, interconsultas y destino",
+        "dataType": "text",
+        "required": false,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "proximo_control",
+        "name": "Próximo control",
+        "dataType": "date",
+        "required": false,
+        "section": "Metas y plan"
+      }
+    ]
+  },
+  {
+    "code": "OBST_CTRL_HIPERTENSION",
+    "name": "Trastorno hipertensivo del embarazo",
+    "version": 1,
+    "kind": "SPECIFIC",
+    "specialty": "OBSTETRICIA",
+    "provenance": {
+      "sourceTitle": "Recomendaciones de la OMS sobre atención prenatal para una experiencia positiva del embarazo (2016)",
+      "organization": "Organización Mundial de la Salud (OMS)",
+      "url": "https://www.who.int/publications/i/item/9789241549912",
+      "license": "CC BY-NC-SA 3.0 IGO",
+      "retrievedAt": "2026-10-02",
+      "note": "Presión, proteinuria y criterios de gravedad de preeclampsia; sulfato de magnesio y momento del parto."
+    },
+    "fields": [
+      {
+        "code": "tipo_de_control",
+        "name": "Tipo de consulta",
+        "dataType": "string",
+        "required": true,
+        "section": "Seguimiento",
+        "options": [
+          "Primera evaluación de la condición",
+          "Control programado",
+          "Descompensación o consulta no programada",
+          "Control posterior a internación"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "fecha_del_diagnostico",
+        "name": "Fecha del diagnóstico de hipertensión en el embarazo",
+        "dataType": "date",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "tratamiento_actual",
+        "name": "Tratamiento actual (fármaco, dosis y frecuencia)",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "adherencia",
+        "name": "Adherencia al tratamiento",
+        "dataType": "string",
+        "required": false,
+        "section": "Seguimiento",
+        "options": [
+          "Toma el tratamiento como está indicado",
+          "Olvida dosis algunas veces",
+          "Abandonó el tratamiento",
+          "Todavía sin tratamiento"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "efectos_adversos",
+        "name": "¿Tuvo efectos adversos del tratamiento?",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "efectos_adversos_cuales",
+        "name": "¿Cuáles y con qué fármaco?",
+        "dataType": "text",
+        "required": true,
+        "section": "Seguimiento",
+        "showWhen": {
+          "field": "efectos_adversos",
+          "equals": true
+        }
+      },
+      {
+        "code": "evolucion_desde_ultimo_control",
+        "name": "Evolución desde el último control",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "edad_gestacional_semanas",
+        "name": "Edad gestacional (semanas)",
+        "dataType": "integer",
+        "required": true,
+        "section": "Evaluación: hipertensión en el embarazo"
+      },
+      {
+        "code": "presion_arterial_sistolica",
+        "name": "Presión arterial sistólica (mmHg)",
+        "dataType": "integer",
+        "required": true,
+        "section": "Evaluación: hipertensión en el embarazo"
+      },
+      {
+        "code": "presion_arterial_diastolica",
+        "name": "Presión arterial diastólica (mmHg)",
+        "dataType": "integer",
+        "required": true,
+        "section": "Evaluación: hipertensión en el embarazo"
+      },
+      {
+        "code": "proteinuria",
+        "name": "Proteinuria",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación: hipertensión en el embarazo",
+        "options": [
+          "Negativa",
+          "+",
+          "++",
+          "+++"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "criterios_gravedad",
+        "name": "Criterios de gravedad",
+        "dataType": "json",
+        "required": true,
+        "section": "Evaluación: hipertensión en el embarazo",
+        "options": [
+          "PA ≥ 160/110",
+          "Cefalea o alteración visual",
+          "Dolor en epigastrio",
+          "Plaquetas < 100 000",
+          "Transaminasas elevadas",
+          "Oliguria",
+          "Edema pulmonar",
+          "Ninguno"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "sulfato_magnesio",
+        "name": "Recibe sulfato de magnesio",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Evaluación: hipertensión en el embarazo"
+      },
+      {
+        "code": "frecuencia_cardiaca_fetal",
+        "name": "Frecuencia cardíaca fetal (lpm)",
+        "dataType": "integer",
+        "required": false,
+        "section": "Evaluación: hipertensión en el embarazo"
+      },
+      {
+        "code": "educacion_brindada",
+        "name": "Educación brindada en esta consulta",
+        "dataType": "json",
+        "required": false,
+        "section": "Metas y plan",
+        "options": [
+          "Signos de alarma",
+          "Aspirina en dosis baja si corresponde"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "diagnostico",
+        "name": "Diagnóstico (con código CIE-10 si se conoce)",
+        "dataType": "text",
+        "required": true,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "plan",
+        "name": "Plan: tratamiento, estudios, interconsultas y destino",
+        "dataType": "text",
+        "required": false,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "proximo_control",
+        "name": "Próximo control",
+        "dataType": "date",
+        "required": false,
+        "section": "Metas y plan"
+      }
+    ]
+  },
+  {
+    "code": "OBST_TRABAJO_DE_PARTO",
+    "name": "Trabajo de parto (guía de cuidados de la OMS)",
+    "version": 1,
+    "kind": "SPECIFIC",
+    "specialty": "OBSTETRICIA",
+    "provenance": {
+      "sourceTitle": "Guía de cuidados durante el trabajo de parto (WHO Labour Care Guide, 2020)",
+      "organization": "Organización Mundial de la Salud (OMS)",
+      "url": "https://www.who.int/publications/i/item/9789240017566",
+      "license": "CC BY-NC-SA 3.0 IGO",
+      "retrievedAt": "2026-10-02",
+      "note": "Variables de la Labour Care Guide de la OMS: bienestar materno y fetal y progreso del trabajo de parto."
+    },
+    "fields": [
+      {
+        "code": "tipo_de_evaluacion",
+        "name": "Tipo de consulta",
+        "dataType": "string",
+        "required": true,
+        "section": "Consulta",
+        "options": [
+          "Primera vez",
+          "Control"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "hora_evaluacion",
+        "name": "Hora de la evaluación",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación: trabajo de parto"
+      },
+      {
+        "code": "dilatacion_cm",
+        "name": "Dilatación (cm)",
+        "dataType": "integer",
+        "required": true,
+        "section": "Evaluación: trabajo de parto"
+      },
+      {
+        "code": "descenso",
+        "name": "Descenso",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: trabajo de parto",
+        "options": [
+          "5/5",
+          "4/5",
+          "3/5",
+          "2/5",
+          "1/5",
+          "0/5"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "contracciones_10min",
+        "name": "Contracciones en 10 minutos",
+        "dataType": "integer",
+        "required": false,
+        "section": "Evaluación: trabajo de parto"
+      },
+      {
+        "code": "frecuencia_cardiaca_fetal",
+        "name": "Frecuencia cardíaca fetal (lpm)",
+        "dataType": "integer",
+        "required": true,
+        "section": "Evaluación: trabajo de parto"
+      },
+      {
+        "code": "liquido_amniotico",
+        "name": "Líquido amniótico",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: trabajo de parto",
+        "options": [
+          "Íntegras",
+          "Claro",
+          "Meconial",
+          "Sanguinolento"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "presion_arterial_sistolica",
+        "name": "Presión arterial sistólica (mmHg)",
+        "dataType": "integer",
+        "required": true,
+        "section": "Evaluación: trabajo de parto"
+      },
+      {
+        "code": "presion_arterial_diastolica",
+        "name": "Presión arterial diastólica (mmHg)",
+        "dataType": "integer",
+        "required": true,
+        "section": "Evaluación: trabajo de parto"
+      },
+      {
+        "code": "acompanante",
+        "name": "Tiene acompañante de su elección",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Evaluación: trabajo de parto"
+      },
+      {
+        "code": "diagnostico",
+        "name": "Diagnóstico (con código CIE-10 si se conoce)",
+        "dataType": "text",
+        "required": true,
+        "section": "Conclusión y plan"
+      },
+      {
+        "code": "plan",
+        "name": "Plan: tratamiento, estudios, interconsultas y destino",
+        "dataType": "text",
+        "required": false,
+        "section": "Conclusión y plan"
+      },
+      {
+        "code": "proximo_control",
+        "name": "Próximo control",
+        "dataType": "date",
+        "required": false,
+        "section": "Conclusión y plan"
+      }
+    ]
+  },
+  {
     "code": "ODONTO_ANAMNESIS",
-    "name": "Anamnesis y antecedentes odontológicos",
+    "name": "Odontología — anamnesis y consulta inicial (ficha base)",
     "version": 2,
+    "kind": "BASE",
     "specialty": "ODONTOLOGIA",
     "provenance": {
       "sourceTitle": "Oral health surveys: basic methods — 5th edition (cuestionario de salud bucodental)",
@@ -13258,9 +20133,174 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
     ]
   },
   {
+    "code": "ODONTO_CTRL_PERIODONTAL",
+    "name": "Evaluación periodontal",
+    "version": 1,
+    "kind": "SPECIFIC",
+    "specialty": "ODONTOLOGIA",
+    "provenance": {
+      "sourceTitle": "Oral health surveys: basic methods, 5.ª ed.",
+      "organization": "Organización Mundial de la Salud (OMS)",
+      "url": "https://www.who.int/publications/i/item/9789241548649",
+      "license": "CC BY-NC-SA 3.0 IGO",
+      "retrievedAt": "2026-10-02",
+      "note": "Índice periodontal comunitario (sangrado y bolsas) de los métodos de encuesta de salud bucal de la OMS."
+    },
+    "fields": [
+      {
+        "code": "tipo_de_control",
+        "name": "Tipo de consulta",
+        "dataType": "string",
+        "required": true,
+        "section": "Seguimiento",
+        "options": [
+          "Primera evaluación de la condición",
+          "Control programado",
+          "Descompensación o consulta no programada",
+          "Control posterior a internación"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "fecha_del_diagnostico",
+        "name": "Fecha del diagnóstico de enfermedad periodontal",
+        "dataType": "date",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "tratamiento_actual",
+        "name": "Tratamiento actual (fármaco, dosis y frecuencia)",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "adherencia",
+        "name": "Adherencia al tratamiento",
+        "dataType": "string",
+        "required": false,
+        "section": "Seguimiento",
+        "options": [
+          "Toma el tratamiento como está indicado",
+          "Olvida dosis algunas veces",
+          "Abandonó el tratamiento",
+          "Todavía sin tratamiento"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "efectos_adversos",
+        "name": "¿Tuvo efectos adversos del tratamiento?",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "efectos_adversos_cuales",
+        "name": "¿Cuáles y con qué fármaco?",
+        "dataType": "text",
+        "required": true,
+        "section": "Seguimiento",
+        "showWhen": {
+          "field": "efectos_adversos",
+          "equals": true
+        }
+      },
+      {
+        "code": "evolucion_desde_ultimo_control",
+        "name": "Evolución desde el último control",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "sangrado_gingival",
+        "name": "Sangrado al sondaje",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación: enfermedad periodontal",
+        "options": [
+          "Ausente",
+          "Presente"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "bolsas",
+        "name": "Bolsas periodontales",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación: enfermedad periodontal",
+        "options": [
+          "Sin bolsas",
+          "4–5 mm",
+          "6 mm o más"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "movilidad",
+        "name": "Movilidad dentaria",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Evaluación: enfermedad periodontal"
+      },
+      {
+        "code": "factores_perio",
+        "name": "Factores",
+        "dataType": "json",
+        "required": false,
+        "section": "Evaluación: enfermedad periodontal",
+        "options": [
+          "Tabaco",
+          "Diabetes",
+          "Higiene deficiente",
+          "Embarazo"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "educacion_brindada",
+        "name": "Educación brindada en esta consulta",
+        "dataType": "json",
+        "required": false,
+        "section": "Metas y plan",
+        "options": [
+          "Técnica de cepillado",
+          "Hilo dental",
+          "Dejar de fumar"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "diagnostico",
+        "name": "Diagnóstico (con código CIE-10 si se conoce)",
+        "dataType": "text",
+        "required": true,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "plan",
+        "name": "Plan: tratamiento, estudios, interconsultas y destino",
+        "dataType": "text",
+        "required": false,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "proximo_control",
+        "name": "Próximo control",
+        "dataType": "date",
+        "required": false,
+        "section": "Metas y plan"
+      }
+    ]
+  },
+  {
     "code": "ODONTO_ODONTOGRAMA_OMS",
     "name": "Odontograma y evaluación bucodental (OMS)",
     "version": 3,
+    "kind": "SPECIFIC",
     "specialty": "ODONTOLOGIA",
     "provenance": {
       "sourceTitle": "Oral health surveys: basic methods — 5th edition (formularios de evaluación bucodental)",
@@ -13430,9 +20470,300 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
     ]
   },
   {
+    "code": "OFTALMO_CTRL_GLAUCOMA",
+    "name": "Control de glaucoma",
+    "version": 1,
+    "kind": "SPECIFIC",
+    "specialty": "OFTALMOLOGIA",
+    "provenance": {
+      "sourceTitle": "Preferred Practice Pattern Guidelines",
+      "organization": "American Academy of Ophthalmology (AAO)",
+      "url": "https://www.aao.org/education/preferred-practice-pattern",
+      "license": "Guía de acceso público; se usan sus categorías clínicas, no su texto",
+      "retrievedAt": "2026-10-02",
+      "note": "Presión intraocular, nervio óptico y campo visual."
+    },
+    "fields": [
+      {
+        "code": "tipo_de_control",
+        "name": "Tipo de consulta",
+        "dataType": "string",
+        "required": true,
+        "section": "Seguimiento",
+        "options": [
+          "Primera evaluación de la condición",
+          "Control programado",
+          "Descompensación o consulta no programada",
+          "Control posterior a internación"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "fecha_del_diagnostico",
+        "name": "Fecha del diagnóstico de glaucoma",
+        "dataType": "date",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "tratamiento_actual",
+        "name": "Tratamiento actual (fármaco, dosis y frecuencia)",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "adherencia",
+        "name": "Adherencia al tratamiento",
+        "dataType": "string",
+        "required": false,
+        "section": "Seguimiento",
+        "options": [
+          "Toma el tratamiento como está indicado",
+          "Olvida dosis algunas veces",
+          "Abandonó el tratamiento",
+          "Todavía sin tratamiento"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "efectos_adversos",
+        "name": "¿Tuvo efectos adversos del tratamiento?",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "efectos_adversos_cuales",
+        "name": "¿Cuáles y con qué fármaco?",
+        "dataType": "text",
+        "required": true,
+        "section": "Seguimiento",
+        "showWhen": {
+          "field": "efectos_adversos",
+          "equals": true
+        }
+      },
+      {
+        "code": "evolucion_desde_ultimo_control",
+        "name": "Evolución desde el último control",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "pio_od",
+        "name": "Presión intraocular OD (mmHg)",
+        "dataType": "decimal",
+        "required": true,
+        "section": "Evaluación: glaucoma"
+      },
+      {
+        "code": "pio_oi",
+        "name": "Presión intraocular OI (mmHg)",
+        "dataType": "decimal",
+        "required": true,
+        "section": "Evaluación: glaucoma"
+      },
+      {
+        "code": "copa_disco",
+        "name": "Relación copa/disco OD/OI",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: glaucoma"
+      },
+      {
+        "code": "campo_visual",
+        "name": "Campo visual",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: glaucoma",
+        "options": [
+          "Sin cambios",
+          "Progresión",
+          "No realizado"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "angulo",
+        "name": "Tipo",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: glaucoma",
+        "options": [
+          "Ángulo abierto",
+          "Ángulo cerrado"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "metas_cumplidas",
+        "name": "Metas de control que cumple hoy",
+        "dataType": "json",
+        "required": false,
+        "section": "Metas y plan",
+        "options": [
+          "Presión en la meta individual",
+          "Campo visual estable",
+          "Ninguna todavía"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "educacion_brindada",
+        "name": "Educación brindada en esta consulta",
+        "dataType": "json",
+        "required": false,
+        "section": "Metas y plan",
+        "options": [
+          "Gotas todos los días",
+          "Técnica de aplicación"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "diagnostico",
+        "name": "Diagnóstico (con código CIE-10 si se conoce)",
+        "dataType": "text",
+        "required": true,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "plan",
+        "name": "Plan: tratamiento, estudios, interconsultas y destino",
+        "dataType": "text",
+        "required": false,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "proximo_control",
+        "name": "Próximo control",
+        "dataType": "date",
+        "required": false,
+        "section": "Metas y plan"
+      }
+    ]
+  },
+  {
+    "code": "OFTALMO_CTRL_RETINOPATIA",
+    "name": "Control de retinopatía diabética",
+    "version": 1,
+    "kind": "SPECIFIC",
+    "specialty": "OFTALMOLOGIA",
+    "provenance": {
+      "sourceTitle": "Preferred Practice Pattern Guidelines",
+      "organization": "American Academy of Ophthalmology (AAO)",
+      "url": "https://www.aao.org/education/preferred-practice-pattern",
+      "license": "Guía de acceso público; se usan sus categorías clínicas, no su texto",
+      "retrievedAt": "2026-10-02",
+      "note": "Escala internacional de retinopatía diabética y edema macular (categorías de la AAO)."
+    },
+    "fields": [
+      {
+        "code": "tipo_de_evaluacion",
+        "name": "Tipo de consulta",
+        "dataType": "string",
+        "required": true,
+        "section": "Consulta",
+        "options": [
+          "Primera vez",
+          "Control"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "agudeza_visual_od",
+        "name": "Agudeza visual OD",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación: retinopatía diabética"
+      },
+      {
+        "code": "agudeza_visual_oi",
+        "name": "Agudeza visual OI",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación: retinopatía diabética"
+      },
+      {
+        "code": "retinopatia_od",
+        "name": "Retinopatía OD",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación: retinopatía diabética",
+        "options": [
+          "Sin retinopatía",
+          "No proliferativa leve",
+          "No proliferativa moderada",
+          "No proliferativa grave",
+          "Proliferativa"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "retinopatia_oi",
+        "name": "Retinopatía OI",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación: retinopatía diabética",
+        "options": [
+          "Sin retinopatía",
+          "No proliferativa leve",
+          "No proliferativa moderada",
+          "No proliferativa grave",
+          "Proliferativa"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "edema_macular",
+        "name": "Edema macular",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: retinopatía diabética",
+        "options": [
+          "Ausente",
+          "Presente sin compromiso central",
+          "Presente con compromiso central"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "hba1c",
+        "name": "Última HbA1c (%)",
+        "dataType": "decimal",
+        "required": false,
+        "section": "Evaluación: retinopatía diabética"
+      },
+      {
+        "code": "diagnostico",
+        "name": "Diagnóstico (con código CIE-10 si se conoce)",
+        "dataType": "text",
+        "required": true,
+        "section": "Conclusión y plan"
+      },
+      {
+        "code": "plan",
+        "name": "Plan: tratamiento, estudios, interconsultas y destino",
+        "dataType": "text",
+        "required": false,
+        "section": "Conclusión y plan"
+      },
+      {
+        "code": "proximo_control",
+        "name": "Próximo control",
+        "dataType": "date",
+        "required": false,
+        "section": "Conclusión y plan"
+      }
+    ]
+  },
+  {
     "code": "OFTALMO_EXAMEN_BASE",
-    "name": "Examen oftalmológico — versión general base",
+    "name": "Oftalmología — consulta inicial (ficha base)",
     "version": 2,
+    "kind": "BASE",
     "specialty": "OFTALMOLOGIA",
     "provenance": {
       "sourceTitle": "Norma Técnica de Salud para la Gestión de la Historia Clínica — NT N.º 022-MINSA/DGSP-V.02, formatos especiales por especialidad",
@@ -13594,160 +20925,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
         ],
         "multiple": false,
         "allowOther": true,
-        "description": "Al elegirlo se abren las observaciones que ese cuadro exige registrar."
-      },
-      {
-        "code": "refraccion_tipo",
-        "name": "Tipo",
-        "dataType": "string",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Miopía",
-          "Hipermetropía",
-          "Astigmatismo",
-          "Presbicia"
-        ],
-        "multiple": false,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Vicio de refracción"
-        }
-      },
-      {
-        "code": "catarata_ojo",
-        "name": "Ojo",
-        "dataType": "string",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "OD",
-          "OI",
-          "Ambos"
-        ],
-        "multiple": false,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Catarata"
-        }
-      },
-      {
-        "code": "catarata_limita",
-        "name": "Limita las actividades diarias",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Catarata"
-        }
-      },
-      {
-        "code": "excavacion",
-        "name": "Relación copa/disco",
-        "dataType": "string",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Glaucoma"
-        }
-      },
-      {
-        "code": "campimetria",
-        "name": "Campimetría alterada",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Glaucoma"
-        }
-      },
-      {
-        "code": "retinopatia_grado",
-        "name": "Grado",
-        "dataType": "string",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Sin retinopatía",
-          "No proliferativa leve",
-          "No proliferativa moderada",
-          "No proliferativa grave",
-          "Proliferativa",
-          "Edema macular"
-        ],
-        "multiple": false,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Retinopatía diabética o hipertensiva"
-        }
-      },
-      {
-        "code": "conjuntivitis_tipo",
-        "name": "Tipo",
-        "dataType": "string",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Viral",
-          "Bacteriana",
-          "Alérgica"
-        ],
-        "multiple": false,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Conjuntivitis"
-        }
-      },
-      {
-        "code": "conjuntivitis_bav",
-        "name": "Baja de visión o dolor (descartar otra causa)",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Conjuntivitis"
-        }
-      },
-      {
-        "code": "pterigion_grado",
-        "name": "Grado",
-        "dataType": "string",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "I",
-          "II",
-          "III",
-          "IV"
-        ],
-        "multiple": false,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Pterigión"
-        }
-      },
-      {
-        "code": "ojo_rojo_alarma",
-        "name": "Signos de alarma",
-        "dataType": "json",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Dolor intenso",
-          "Baja de visión",
-          "Pupila arreactiva",
-          "Opacidad corneal",
-          "Trauma"
-        ],
-        "multiple": true,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Ojo rojo con signos de alarma"
-        }
+        "description": "Si el cuadro ya está diagnosticado, el seguimiento se hace con su ficha específica de la especialidad."
       },
       {
         "code": "diagnostico",
@@ -13767,9 +20945,425 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
     ]
   },
   {
+    "code": "ONCO_CTRL_PALIATIVOS",
+    "name": "Control de cuidados paliativos",
+    "version": 1,
+    "kind": "SPECIFIC",
+    "specialty": "ONCOLOGIA",
+    "provenance": {
+      "sourceTitle": "ECOG Performance Status Scale",
+      "organization": "ECOG-ACRIN Cancer Research Group",
+      "url": "https://ecog-acrin.org/resources/ecog-performance-status/",
+      "license": "De uso libre, citando la fuente",
+      "retrievedAt": "2026-10-02",
+      "note": "Intensidad de síntomas, dolor por la escala de la OMS y estado funcional."
+    },
+    "fields": [
+      {
+        "code": "tipo_de_control",
+        "name": "Tipo de consulta",
+        "dataType": "string",
+        "required": true,
+        "section": "Seguimiento",
+        "options": [
+          "Primera evaluación de la condición",
+          "Control programado",
+          "Descompensación o consulta no programada",
+          "Control posterior a internación"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "fecha_del_diagnostico",
+        "name": "Fecha del diagnóstico de enfermedad avanzada",
+        "dataType": "date",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "tratamiento_actual",
+        "name": "Tratamiento actual (fármaco, dosis y frecuencia)",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "adherencia",
+        "name": "Adherencia al tratamiento",
+        "dataType": "string",
+        "required": false,
+        "section": "Seguimiento",
+        "options": [
+          "Toma el tratamiento como está indicado",
+          "Olvida dosis algunas veces",
+          "Abandonó el tratamiento",
+          "Todavía sin tratamiento"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "efectos_adversos",
+        "name": "¿Tuvo efectos adversos del tratamiento?",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "efectos_adversos_cuales",
+        "name": "¿Cuáles y con qué fármaco?",
+        "dataType": "text",
+        "required": true,
+        "section": "Seguimiento",
+        "showWhen": {
+          "field": "efectos_adversos",
+          "equals": true
+        }
+      },
+      {
+        "code": "evolucion_desde_ultimo_control",
+        "name": "Evolución desde el último control",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "ecog",
+        "name": "ECOG",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación: enfermedad avanzada",
+        "options": [
+          "0",
+          "1",
+          "2",
+          "3",
+          "4"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "dolor_intensidad",
+        "name": "Dolor (0 a 10)",
+        "dataType": "integer",
+        "required": true,
+        "section": "Evaluación: enfermedad avanzada"
+      },
+      {
+        "code": "escalon_analgesico",
+        "name": "Escalón analgésico de la OMS",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: enfermedad avanzada",
+        "options": [
+          "1 — no opioide",
+          "2 — opioide débil",
+          "3 — opioide fuerte"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "sintomas_paliativos",
+        "name": "Síntomas que molestan",
+        "dataType": "json",
+        "required": false,
+        "section": "Evaluación: enfermedad avanzada",
+        "options": [
+          "Disnea",
+          "Náuseas",
+          "Constipación",
+          "Insomnio",
+          "Ansiedad",
+          "Delirium",
+          "Anorexia"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "voluntades",
+        "name": "Se conversaron las voluntades anticipadas",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Evaluación: enfermedad avanzada"
+      },
+      {
+        "code": "lugar_preferido",
+        "name": "Lugar donde prefiere ser atendido",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: enfermedad avanzada",
+        "options": [
+          "Domicilio",
+          "Hospital",
+          "No lo decidió"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "metas_cumplidas",
+        "name": "Metas de control que cumple hoy",
+        "dataType": "json",
+        "required": false,
+        "section": "Metas y plan",
+        "options": [
+          "Dolor ≤ 3",
+          "Síntomas controlados",
+          "Ninguna todavía"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "educacion_brindada",
+        "name": "Educación brindada en esta consulta",
+        "dataType": "json",
+        "required": false,
+        "section": "Metas y plan",
+        "options": [
+          "Opioides: uso y efectos",
+          "Apoyo a la familia"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "diagnostico",
+        "name": "Diagnóstico (con código CIE-10 si se conoce)",
+        "dataType": "text",
+        "required": true,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "plan",
+        "name": "Plan: tratamiento, estudios, interconsultas y destino",
+        "dataType": "text",
+        "required": false,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "proximo_control",
+        "name": "Próximo control",
+        "dataType": "date",
+        "required": false,
+        "section": "Metas y plan"
+      }
+    ]
+  },
+  {
+    "code": "ONCO_CTRL_QUIMIOTERAPIA",
+    "name": "Control previo a cada ciclo de quimioterapia",
+    "version": 1,
+    "kind": "SPECIFIC",
+    "specialty": "ONCOLOGIA",
+    "provenance": {
+      "sourceTitle": "Common Terminology Criteria for Adverse Events (CTCAE)",
+      "organization": "National Cancer Institute (NCI/NIH)",
+      "url": "https://ctep.cancer.gov/protocoldevelopment/electronic_applications/ctc.htm",
+      "license": "Dominio público (Gobierno de los EE. UU.)",
+      "retrievedAt": "2026-10-02",
+      "note": "Toxicidad graduada por CTCAE (NCI, dominio público) y estado funcional ECOG antes de autorizar el ciclo."
+    },
+    "fields": [
+      {
+        "code": "tipo_de_control",
+        "name": "Tipo de consulta",
+        "dataType": "string",
+        "required": true,
+        "section": "Seguimiento",
+        "options": [
+          "Primera evaluación de la condición",
+          "Control programado",
+          "Descompensación o consulta no programada",
+          "Control posterior a internación"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "fecha_del_diagnostico",
+        "name": "Fecha del diagnóstico de tratamiento oncológico",
+        "dataType": "date",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "tratamiento_actual",
+        "name": "Tratamiento actual (fármaco, dosis y frecuencia)",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "adherencia",
+        "name": "Adherencia al tratamiento",
+        "dataType": "string",
+        "required": false,
+        "section": "Seguimiento",
+        "options": [
+          "Toma el tratamiento como está indicado",
+          "Olvida dosis algunas veces",
+          "Abandonó el tratamiento",
+          "Todavía sin tratamiento"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "efectos_adversos",
+        "name": "¿Tuvo efectos adversos del tratamiento?",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "efectos_adversos_cuales",
+        "name": "¿Cuáles y con qué fármaco?",
+        "dataType": "text",
+        "required": true,
+        "section": "Seguimiento",
+        "showWhen": {
+          "field": "efectos_adversos",
+          "equals": true
+        }
+      },
+      {
+        "code": "evolucion_desde_ultimo_control",
+        "name": "Evolución desde el último control",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "esquema",
+        "name": "Esquema y número de ciclo",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación: tratamiento oncológico"
+      },
+      {
+        "code": "ecog",
+        "name": "ECOG",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación: tratamiento oncológico",
+        "options": [
+          "0",
+          "1",
+          "2",
+          "3",
+          "4"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "peso_kg",
+        "name": "Peso (kg)",
+        "dataType": "decimal",
+        "required": false,
+        "section": "Evaluación: tratamiento oncológico"
+      },
+      {
+        "code": "neutrofilos",
+        "name": "Neutrófilos (/µL)",
+        "dataType": "integer",
+        "required": false,
+        "section": "Evaluación: tratamiento oncológico"
+      },
+      {
+        "code": "plaquetas",
+        "name": "Plaquetas (/µL)",
+        "dataType": "integer",
+        "required": false,
+        "section": "Evaluación: tratamiento oncológico"
+      },
+      {
+        "code": "hemoglobina",
+        "name": "Hemoglobina (g/dL)",
+        "dataType": "decimal",
+        "required": false,
+        "section": "Evaluación: tratamiento oncológico"
+      },
+      {
+        "code": "toxicidad",
+        "name": "Toxicidad desde el último ciclo",
+        "dataType": "json",
+        "required": true,
+        "section": "Evaluación: tratamiento oncológico",
+        "options": [
+          "Náuseas y vómitos",
+          "Mucositis",
+          "Diarrea",
+          "Neuropatía",
+          "Fiebre con neutropenia",
+          "Fatiga",
+          "Ninguna"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "toxicidad_grado",
+        "name": "Peor grado CTCAE",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: tratamiento oncológico",
+        "options": [
+          "0",
+          "1",
+          "2",
+          "3",
+          "4"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "apto_ciclo",
+        "name": "¿Se autoriza el ciclo?",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación: tratamiento oncológico",
+        "options": [
+          "Sí",
+          "Se difiere",
+          "Se ajusta la dosis"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "educacion_brindada",
+        "name": "Educación brindada en esta consulta",
+        "dataType": "json",
+        "required": false,
+        "section": "Metas y plan",
+        "options": [
+          "Fiebre: consultar de inmediato",
+          "Higiene bucal",
+          "Hidratación"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "diagnostico",
+        "name": "Diagnóstico (con código CIE-10 si se conoce)",
+        "dataType": "text",
+        "required": true,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "plan",
+        "name": "Plan: tratamiento, estudios, interconsultas y destino",
+        "dataType": "text",
+        "required": false,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "proximo_control",
+        "name": "Próximo control",
+        "dataType": "date",
+        "required": false,
+        "section": "Metas y plan"
+      }
+    ]
+  },
+  {
     "code": "ONCO_EVALUACION_BASE",
-    "name": "Evaluación oncológica",
+    "name": "Oncología — consulta inicial (ficha base)",
     "version": 2,
+    "kind": "BASE",
     "specialty": "ONCOLOGIA",
     "provenance": {
       "sourceTitle": "Norma Técnica de Salud para la Gestión de la Historia Clínica — NT N.º 022-MINSA/DGSP-V.02, anamnesis, examen físico y notas de evolución",
@@ -13778,7 +21372,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
       "license": "Norma técnica estatal de acceso público",
       "sourceVersion": "V.02",
       "retrievedAt": "2026-08-14",
-      "note": "De la norma se transcribe la estructura común de la consulta: motivo, tiempo de evolución, antecedentes, examen físico, diagnóstico y conducta. Son agregados propios de la especialidad el diagnóstico oncológico y su fecha, el estadio registrado como texto libre, los tratamientos oncológicos recibidos, el estado funcional ECOG como número y la pérdida de peso. v2 (2026-10-02): reorganizada en secciones (motivo, antecedentes, examen, diagnóstico presuntivo, plan); las clasificaciones con categorías finitas pasan a lista cerrada; cada sí/no que tiene detalle pregunta «¿cuál?»; el diagnóstico presuntivo abre las observaciones que ese cuadro exige registrar. Instrumentos de uso libre incorporados: ECOG, CTCAE (NCI)."
+      "note": "De la norma se transcribe la estructura común de la consulta: motivo, tiempo de evolución, antecedentes, examen físico, diagnóstico y conducta. Son agregados propios de la especialidad el diagnóstico oncológico y su fecha, el estadio registrado como texto libre, los tratamientos oncológicos recibidos, el estado funcional ECOG como número y la pérdida de peso. v2 (2026-10-02): reorganizada en secciones (motivo, antecedentes, examen, diagnóstico presuntivo, plan); las clasificaciones con categorías finitas pasan a lista cerrada; cada sí/no que tiene detalle pregunta «¿cuál?»; el diagnóstico presuntivo abre las observaciones que ese cuadro exige registrar. Instrumentos de uso libre incorporados: ECOG."
     },
     "fields": [
       {
@@ -14050,136 +21644,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
         ],
         "multiple": false,
         "allowOther": true,
-        "description": "Al elegirlo se abren las observaciones que ese cuadro exige registrar."
-      },
-      {
-        "code": "neo_alarma",
-        "name": "Signos de alarma",
-        "dataType": "json",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Masa palpable",
-          "Adenopatía dura o fija",
-          "Sangrado no explicado",
-          "Pérdida de peso",
-          "Síntomas B"
-        ],
-        "multiple": true,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Sospecha de neoplasia (estudio inicial)"
-        }
-      },
-      {
-        "code": "neo_biopsia",
-        "name": "Biopsia — estado",
-        "dataType": "string",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Sospecha de neoplasia (estudio inicial)"
-        }
-      },
-      {
-        "code": "toxicidad",
-        "name": "Toxicidad",
-        "dataType": "json",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Neutropenia febril",
-          "Mucositis",
-          "Náuseas y vómitos",
-          "Diarrea",
-          "Neuropatía",
-          "Cardiotoxicidad"
-        ],
-        "multiple": true,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Toxicidad del tratamiento"
-        }
-      },
-      {
-        "code": "ctcae_grado",
-        "name": "Grado CTCAE",
-        "dataType": "string",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "1",
-          "2",
-          "3",
-          "4"
-        ],
-        "multiple": false,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Toxicidad del tratamiento"
-        }
-      },
-      {
-        "code": "progresion_sitio",
-        "name": "Sitio de progresión",
-        "dataType": "string",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Progresión de enfermedad"
-        }
-      },
-      {
-        "code": "paliativos_sintomas",
-        "name": "Síntomas a controlar",
-        "dataType": "json",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Dolor",
-          "Disnea",
-          "Náuseas",
-          "Constipación",
-          "Delirio",
-          "Ansiedad"
-        ],
-        "multiple": true,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Control de síntomas y cuidados paliativos"
-        }
-      },
-      {
-        "code": "voluntades",
-        "name": "Conversación sobre voluntades anticipadas",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Control de síntomas y cuidados paliativos"
-        }
-      },
-      {
-        "code": "emergencia_onco",
-        "name": "Tipo",
-        "dataType": "string",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Compresión medular",
-          "Síndrome de vena cava superior",
-          "Hipercalcemia",
-          "Síndrome de lisis tumoral",
-          "Neutropenia febril"
-        ],
-        "multiple": false,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Emergencia oncológica"
-        }
+        "description": "Si el cuadro ya está diagnosticado, el seguimiento se hace con su ficha específica de la especialidad."
       },
       {
         "code": "diagnostico",
@@ -14199,9 +21664,244 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
     ]
   },
   {
+    "code": "ORL_CTRL_HIPOACUSIA",
+    "name": "Hipoacusia: evaluación",
+    "version": 1,
+    "kind": "SPECIFIC",
+    "specialty": "OTORRINOLARINGOLOGIA",
+    "provenance": {
+      "sourceTitle": "Norma Técnica de Salud para la Gestión de la Historia Clínica — NT N.º 022-MINSA/DGSP-V.02",
+      "organization": "Ministerio de Salud del Perú (MINSA)",
+      "url": "https://bvs.minsa.gob.pe/local/dgsp/NT022hist.pdf",
+      "license": "Norma técnica estatal de acceso público",
+      "retrievedAt": "2026-10-02",
+      "note": "Inicio, lateralidad, audiometría y factores de riesgo."
+    },
+    "fields": [
+      {
+        "code": "tipo_de_evaluacion",
+        "name": "Tipo de evaluación",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación inicial",
+        "options": [
+          "Evaluación inicial",
+          "Reevaluación"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "inicio_de_sintomas",
+        "name": "Inicio de los síntomas (fecha u hora)",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación inicial"
+      },
+      {
+        "code": "tratamiento_previo",
+        "name": "Tratamiento recibido antes de esta consulta",
+        "dataType": "text",
+        "required": false,
+        "section": "Evaluación inicial"
+      },
+      {
+        "code": "inicio",
+        "name": "Inicio",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación: hipoacusia",
+        "options": [
+          "Súbito (urgencia)",
+          "Progresivo"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "lado",
+        "name": "Lado",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: hipoacusia",
+        "options": [
+          "Derecho",
+          "Izquierdo",
+          "Bilateral"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "tipo",
+        "name": "Tipo",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: hipoacusia",
+        "options": [
+          "Conductiva",
+          "Neurosensorial",
+          "Mixta",
+          "No establecida"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "audiometria",
+        "name": "Audiometría — umbrales",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: hipoacusia"
+      },
+      {
+        "code": "factores",
+        "name": "Factores",
+        "dataType": "json",
+        "required": false,
+        "section": "Evaluación: hipoacusia",
+        "options": [
+          "Ruido laboral",
+          "Ototóxicos",
+          "Edad",
+          "Antecedente familiar"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "diagnostico",
+        "name": "Diagnóstico (con código CIE-10 si se conoce)",
+        "dataType": "text",
+        "required": true,
+        "section": "Conclusión y plan"
+      },
+      {
+        "code": "plan",
+        "name": "Plan: tratamiento, estudios, interconsultas y destino",
+        "dataType": "text",
+        "required": false,
+        "section": "Conclusión y plan"
+      }
+    ]
+  },
+  {
+    "code": "ORL_CTRL_OTITIS",
+    "name": "Otitis media: evaluación y control",
+    "version": 1,
+    "kind": "SPECIFIC",
+    "specialty": "OTORRINOLARINGOLOGIA",
+    "provenance": {
+      "sourceTitle": "Norma Técnica de Salud para la Gestión de la Historia Clínica — NT N.º 022-MINSA/DGSP-V.02",
+      "organization": "Ministerio de Salud del Perú (MINSA)",
+      "url": "https://bvs.minsa.gob.pe/local/dgsp/NT022hist.pdf",
+      "license": "Norma técnica estatal de acceso público",
+      "retrievedAt": "2026-10-02",
+      "note": "Otoscopía, otorrea y audición."
+    },
+    "fields": [
+      {
+        "code": "tipo_de_evaluacion",
+        "name": "Tipo de evaluación",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación inicial",
+        "options": [
+          "Evaluación inicial",
+          "Reevaluación"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "inicio_de_sintomas",
+        "name": "Inicio de los síntomas (fecha u hora)",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación inicial"
+      },
+      {
+        "code": "tratamiento_previo",
+        "name": "Tratamiento recibido antes de esta consulta",
+        "dataType": "text",
+        "required": false,
+        "section": "Evaluación inicial"
+      },
+      {
+        "code": "oido",
+        "name": "Oído",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación: otitis media",
+        "options": [
+          "Derecho",
+          "Izquierdo",
+          "Ambos"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "membrana",
+        "name": "Membrana timpánica",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación: otitis media",
+        "options": [
+          "Normal",
+          "Abombada",
+          "Retraída",
+          "Perforada"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "otorrea",
+        "name": "Otorrea",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Evaluación: otitis media"
+      },
+      {
+        "code": "fiebre",
+        "name": "Fiebre",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Evaluación: otitis media"
+      },
+      {
+        "code": "audicion",
+        "name": "Audición",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: otitis media",
+        "options": [
+          "Conservada",
+          "Disminuida"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "episodios_anio",
+        "name": "Episodios en el último año",
+        "dataType": "integer",
+        "required": false,
+        "section": "Evaluación: otitis media"
+      },
+      {
+        "code": "diagnostico",
+        "name": "Diagnóstico (con código CIE-10 si se conoce)",
+        "dataType": "text",
+        "required": true,
+        "section": "Conclusión y plan"
+      },
+      {
+        "code": "plan",
+        "name": "Plan: tratamiento, estudios, interconsultas y destino",
+        "dataType": "text",
+        "required": false,
+        "section": "Conclusión y plan"
+      }
+    ]
+  },
+  {
     "code": "ORL_EVALUACION_BASE",
-    "name": "Evaluación otorrinolaringológica",
+    "name": "Otorrinolaringología — consulta inicial (ficha base)",
     "version": 2,
+    "kind": "BASE",
     "specialty": "OTORRINOLARINGOLOGIA",
     "provenance": {
       "sourceTitle": "Norma Técnica de Salud para la Gestión de la Historia Clínica — NT N.º 022-MINSA/DGSP-V.02, anamnesis y examen de cabeza y cuello",
@@ -14210,7 +21910,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
       "license": "Norma técnica estatal de acceso público",
       "sourceVersion": "V.02",
       "retrievedAt": "2026-08-14",
-      "note": "De la norma sale la estructura común de la consulta: motivo, tiempo de evolución, antecedentes, examen dirigido, diagnóstico y conducta. Son agregados propios de la especialidad la anamnesis otológica (hipoacusia, lado afectado, otalgia, otorrea, acúfenos, vértigo), la nasal y faringolaríngea (obstrucción nasal, epistaxis, odinofagia, disfonía) y la otoscopia y la rinoscopia anterior descritas en prosa. v2 (2026-10-02): reorganizada en secciones (motivo, antecedentes, examen, diagnóstico presuntivo, plan); las clasificaciones con categorías finitas pasan a lista cerrada; cada sí/no que tiene detalle pregunta «¿cuál?»; el diagnóstico presuntivo abre las observaciones que ese cuadro exige registrar. Instrumentos de uso libre incorporados: clasificación ARIA, maniobra de Dix-Hallpike."
+      "note": "De la norma sale la estructura común de la consulta: motivo, tiempo de evolución, antecedentes, examen dirigido, diagnóstico y conducta. Son agregados propios de la especialidad la anamnesis otológica (hipoacusia, lado afectado, otalgia, otorrea, acúfenos, vértigo), la nasal y faringolaríngea (obstrucción nasal, epistaxis, odinofagia, disfonía) y la otoscopia y la rinoscopia anterior descritas en prosa. v2 (2026-10-02): reorganizada en secciones (motivo, antecedentes, examen, diagnóstico presuntivo, plan); las clasificaciones con categorías finitas pasan a lista cerrada; cada sí/no que tiene detalle pregunta «¿cuál?»; el diagnóstico presuntivo abre las observaciones que ese cuadro exige registrar."
     },
     "fields": [
       {
@@ -14504,171 +22204,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
         ],
         "multiple": false,
         "allowOther": true,
-        "description": "Al elegirlo se abren las observaciones que ese cuadro exige registrar."
-      },
-      {
-        "code": "oma_abombamiento",
-        "name": "Membrana timpánica abombada",
-        "dataType": "boolean",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Otitis media aguda"
-        }
-      },
-      {
-        "code": "oma_fiebre",
-        "name": "Fiebre",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Otitis media aguda"
-        }
-      },
-      {
-        "code": "oe_dolor_trago",
-        "name": "Dolor a la presión del trago",
-        "dataType": "boolean",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Otitis externa"
-        }
-      },
-      {
-        "code": "oe_diabetes",
-        "name": "Diabetes (riesgo de otitis maligna)",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Otitis externa"
-        }
-      },
-      {
-        "code": "centor_fiebre_orl",
-        "name": "Fiebre > 38 °C",
-        "dataType": "boolean",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Faringoamigdalitis"
-        }
-      },
-      {
-        "code": "centor_exudado_orl",
-        "name": "Exudado amigdalino",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Faringoamigdalitis"
-        }
-      },
-      {
-        "code": "centor_adenopatias_orl",
-        "name": "Adenopatías cervicales dolorosas",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Faringoamigdalitis"
-        }
-      },
-      {
-        "code": "centor_sin_tos_orl",
-        "name": "Ausencia de tos",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Faringoamigdalitis"
-        }
-      },
-      {
-        "code": "rinosinusitis_dias",
-        "name": "Días de evolución",
-        "dataType": "integer",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "description": "Más de 10 días o empeoramiento tras mejoría: bacteriana probable.",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Rinosinusitis"
-        }
-      },
-      {
-        "code": "rinosinusitis_sintomas",
-        "name": "Síntomas",
-        "dataType": "json",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Rinorrea purulenta",
-          "Dolor facial",
-          "Hiposmia",
-          "Fiebre"
-        ],
-        "multiple": true,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Rinosinusitis"
-        }
-      },
-      {
-        "code": "rinitis_aria",
-        "name": "Clasificación ARIA",
-        "dataType": "string",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Intermitente leve",
-          "Intermitente moderada-grave",
-          "Persistente leve",
-          "Persistente moderada-grave"
-        ],
-        "multiple": false,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Rinitis alérgica"
-        }
-      },
-      {
-        "code": "audiometria",
-        "name": "Audiometría",
-        "dataType": "string",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Hipoacusia súbita"
-        }
-      },
-      {
-        "code": "dix_hallpike_orl",
-        "name": "Dix-Hallpike",
-        "dataType": "string",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Positiva",
-          "Negativa",
-          "No realizada"
-        ],
-        "multiple": false,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Vértigo periférico"
-        }
+        "description": "Si el cuadro ya está diagnosticado, el seguimiento se hace con su ficha específica de la especialidad."
       },
       {
         "code": "diagnostico",
@@ -14689,8 +22225,9 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
   },
   {
     "code": "PATOL_INFORME_BASE",
-    "name": "Informe de anatomía patológica",
+    "name": "Patología Clínica — informe general de anatomía patológica (ficha base)",
     "version": 2,
+    "kind": "BASE",
     "specialty": "PATOLOGIA_CLINICA",
     "provenance": {
       "sourceTitle": "Norma Técnica de Salud para la Gestión de la Historia Clínica — NT N.º 022-MINSA/DGSP-V.02, informe de exámenes auxiliares y estudios anatomopatológicos",
@@ -14917,9 +22454,125 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
     ]
   },
   {
+    "code": "PATOL_INFORME_CITOLOGIA_CERVICAL",
+    "name": "Informe de citología cervical",
+    "version": 1,
+    "kind": "SPECIFIC",
+    "specialty": "PATOLOGIA_CLINICA",
+    "provenance": {
+      "sourceTitle": "Directriz de la OMS para el tamizaje y tratamiento de lesiones precancerosas del cuello uterino (2021)",
+      "organization": "Organización Mundial de la Salud (OMS)",
+      "url": "https://www.who.int/publications/i/item/9789240030824",
+      "license": "CC BY-NC-SA 3.0 IGO",
+      "retrievedAt": "2026-10-02",
+      "note": "Calidad de la muestra y categorías del sistema Bethesda."
+    },
+    "fields": [
+      {
+        "code": "indicacion_del_estudio",
+        "name": "Indicación del estudio",
+        "dataType": "text",
+        "required": true,
+        "section": "Solicitud"
+      },
+      {
+        "code": "diagnostico_presuntivo_solicitante",
+        "name": "Diagnóstico presuntivo del solicitante",
+        "dataType": "string",
+        "required": false,
+        "section": "Solicitud"
+      },
+      {
+        "code": "fecha_del_estudio",
+        "name": "Fecha del estudio",
+        "dataType": "date",
+        "required": false,
+        "section": "Solicitud"
+      },
+      {
+        "code": "calidad_muestra",
+        "name": "Calidad de la muestra",
+        "dataType": "string",
+        "required": true,
+        "section": "Resultado: citología cervical",
+        "options": [
+          "Satisfactoria",
+          "Insatisfactoria"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "bethesda",
+        "name": "Resultado (Bethesda)",
+        "dataType": "string",
+        "required": true,
+        "section": "Resultado: citología cervical",
+        "options": [
+          "Negativo para lesión intraepitelial o malignidad",
+          "ASC-US",
+          "ASC-H",
+          "LSIL",
+          "HSIL",
+          "Carcinoma escamoso",
+          "AGC",
+          "Adenocarcinoma"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "microorganismos",
+        "name": "Microorganismos",
+        "dataType": "json",
+        "required": false,
+        "section": "Resultado: citología cervical",
+        "options": [
+          "Trichomonas",
+          "Cándida",
+          "Vaginosis bacteriana",
+          "Cambios por herpes",
+          "Ninguno"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "conclusion",
+        "name": "Conclusión",
+        "dataType": "text",
+        "required": true,
+        "section": "Conclusión"
+      },
+      {
+        "code": "recomendacion",
+        "name": "Recomendación",
+        "dataType": "text",
+        "required": false,
+        "section": "Conclusión"
+      },
+      {
+        "code": "hallazgo_critico",
+        "name": "Hay un hallazgo crítico",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Conclusión"
+      },
+      {
+        "code": "hallazgo_critico_comunicado",
+        "name": "¿A quién se comunicó y a qué hora?",
+        "dataType": "string",
+        "required": true,
+        "section": "Conclusión",
+        "showWhen": {
+          "field": "hallazgo_critico",
+          "equals": true
+        }
+      }
+    ]
+  },
+  {
     "code": "PEDIA_CONTROL_NINO_SANO",
-    "name": "Control de niño sano",
+    "name": "Pediatría — control de niño sano (ficha base)",
     "version": 2,
+    "kind": "BASE",
     "specialty": "PEDIATRIA",
     "provenance": {
       "sourceTitle": "Norma Técnica de Salud para la Gestión de la Historia Clínica — NT N.º 022-MINSA/DGSP-V.02, atención integral del niño",
@@ -15196,7 +22849,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
       },
       {
         "code": "motivo_agregado",
-        "name": "Motivo agregado al control",
+        "name": "Diagnóstico presuntivo (lo que se sospecha)",
         "dataType": "string",
         "required": true,
         "section": "Motivo agregado y observaciones",
@@ -15209,234 +22862,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
         ],
         "multiple": false,
         "allowOther": true,
-        "description": "Al elegirlo se abren las observaciones que ese cuadro exige registrar."
-      },
-      {
-        "code": "centor_fiebre",
-        "name": "Fiebre mayor a 38 °C",
-        "dataType": "boolean",
-        "required": true,
-        "section": "Motivo agregado y observaciones",
-        "showWhen": {
-          "field": "motivo_agregado",
-          "equals": "Infección respiratoria aguda"
-        }
-      },
-      {
-        "code": "centor_sin_tos",
-        "name": "Ausencia de tos",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Motivo agregado y observaciones",
-        "showWhen": {
-          "field": "motivo_agregado",
-          "equals": "Infección respiratoria aguda"
-        }
-      },
-      {
-        "code": "centor_adenopatias",
-        "name": "Adenopatías cervicales anteriores dolorosas",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Motivo agregado y observaciones",
-        "showWhen": {
-          "field": "motivo_agregado",
-          "equals": "Infección respiratoria aguda"
-        }
-      },
-      {
-        "code": "centor_exudado",
-        "name": "Exudado o tumefacción amigdalina",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Motivo agregado y observaciones",
-        "showWhen": {
-          "field": "motivo_agregado",
-          "equals": "Infección respiratoria aguda"
-        }
-      },
-      {
-        "code": "ira_rinorrea",
-        "name": "Rinorrea",
-        "dataType": "string",
-        "required": false,
-        "section": "Motivo agregado y observaciones",
-        "options": [
-          "Ausente",
-          "Acuosa",
-          "Purulenta"
-        ],
-        "multiple": false,
-        "showWhen": {
-          "field": "motivo_agregado",
-          "equals": "Infección respiratoria aguda"
-        }
-      },
-      {
-        "code": "fr_por_minuto",
-        "name": "Frecuencia respiratoria (rpm)",
-        "dataType": "integer",
-        "required": true,
-        "section": "Motivo agregado y observaciones",
-        "description": "Respiración rápida: ≥ 50 de 2 a 11 meses; ≥ 40 de 1 a 4 años.",
-        "showWhen": {
-          "field": "motivo_agregado",
-          "equals": "Infección respiratoria aguda"
-        }
-      },
-      {
-        "code": "tiraje",
-        "name": "Tiraje subcostal",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Motivo agregado y observaciones",
-        "showWhen": {
-          "field": "motivo_agregado",
-          "equals": "Infección respiratoria aguda"
-        }
-      },
-      {
-        "code": "eda_deposiciones_24h",
-        "name": "Deposiciones líquidas en las últimas 24 horas",
-        "dataType": "integer",
-        "required": true,
-        "section": "Motivo agregado y observaciones",
-        "showWhen": {
-          "field": "motivo_agregado",
-          "equals": "Enfermedad diarreica aguda"
-        }
-      },
-      {
-        "code": "eda_sangre_en_heces",
-        "name": "Sangre en las heces (disentería)",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Motivo agregado y observaciones",
-        "showWhen": {
-          "field": "motivo_agregado",
-          "equals": "Enfermedad diarreica aguda"
-        }
-      },
-      {
-        "code": "eda_vomitos",
-        "name": "Vómitos",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Motivo agregado y observaciones",
-        "showWhen": {
-          "field": "motivo_agregado",
-          "equals": "Enfermedad diarreica aguda"
-        }
-      },
-      {
-        "code": "eda_hidratacion",
-        "name": "Estado de hidratación (OMS)",
-        "dataType": "string",
-        "required": true,
-        "section": "Motivo agregado y observaciones",
-        "options": [
-          "Sin deshidratación — Plan A",
-          "Algún grado de deshidratación — Plan B",
-          "Deshidratación grave — Plan C"
-        ],
-        "multiple": false,
-        "showWhen": {
-          "field": "motivo_agregado",
-          "equals": "Enfermedad diarreica aguda"
-        }
-      },
-      {
-        "code": "eda_fiebre",
-        "name": "Fiebre",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Motivo agregado y observaciones",
-        "showWhen": {
-          "field": "motivo_agregado",
-          "equals": "Enfermedad diarreica aguda"
-        }
-      },
-      {
-        "code": "anemia_hemoglobina",
-        "name": "Hemoglobina (g/dL)",
-        "dataType": "decimal",
-        "required": true,
-        "section": "Motivo agregado y observaciones",
-        "description": "Ajustar por altitud de residencia.",
-        "showWhen": {
-          "field": "motivo_agregado",
-          "equals": "Anemia"
-        }
-      },
-      {
-        "code": "anemia_sintomas",
-        "name": "Síntomas",
-        "dataType": "json",
-        "required": false,
-        "section": "Motivo agregado y observaciones",
-        "options": [
-          "Astenia",
-          "Disnea de esfuerzo",
-          "Palpitaciones",
-          "Pica",
-          "Ninguno"
-        ],
-        "multiple": true,
-        "showWhen": {
-          "field": "motivo_agregado",
-          "equals": "Anemia"
-        }
-      },
-      {
-        "code": "anemia_perdidas",
-        "name": "Posibles pérdidas",
-        "dataType": "json",
-        "required": false,
-        "section": "Motivo agregado y observaciones",
-        "options": [
-          "Menstruación abundante",
-          "Sangrado digestivo",
-          "Parasitosis",
-          "Ninguna conocida"
-        ],
-        "multiple": true,
-        "showWhen": {
-          "field": "motivo_agregado",
-          "equals": "Anemia"
-        }
-      },
-      {
-        "code": "anemia_vcm",
-        "name": "VCM y ferritina, si se conocen",
-        "dataType": "string",
-        "required": false,
-        "section": "Motivo agregado y observaciones",
-        "showWhen": {
-          "field": "motivo_agregado",
-          "equals": "Anemia"
-        }
-      },
-      {
-        "code": "z_peso_talla",
-        "name": "Puntaje Z peso/talla",
-        "dataType": "decimal",
-        "required": true,
-        "section": "Motivo agregado y observaciones",
-        "showWhen": {
-          "field": "motivo_agregado",
-          "equals": "Desnutrición"
-        }
-      },
-      {
-        "code": "edema_bilateral",
-        "name": "Edema bilateral (kwashiorkor)",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Motivo agregado y observaciones",
-        "showWhen": {
-          "field": "motivo_agregado",
-          "equals": "Desnutrición"
-        }
+        "description": "Si el cuadro ya está diagnosticado, el seguimiento se hace con su ficha específica de la especialidad."
       },
       {
         "code": "proximo_control",
@@ -15448,9 +22874,680 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
     ]
   },
   {
+    "code": "PEDIA_CTRL_ASMA",
+    "name": "Control de asma en niños",
+    "version": 1,
+    "kind": "SPECIFIC",
+    "specialty": "PEDIATRIA",
+    "provenance": {
+      "sourceTitle": "Global Strategy for Asthma Management and Prevention",
+      "organization": "Global Initiative for Asthma (GINA)",
+      "url": "https://ginasthma.org/reports/",
+      "license": "Guía de acceso público; se usan sus categorías clínicas, no su texto",
+      "retrievedAt": "2026-10-02",
+      "note": "Control de síntomas de las últimas 4 semanas según las categorías de GINA y técnica con espaciador."
+    },
+    "fields": [
+      {
+        "code": "tipo_de_control",
+        "name": "Tipo de consulta",
+        "dataType": "string",
+        "required": true,
+        "section": "Seguimiento",
+        "options": [
+          "Primera evaluación de la condición",
+          "Control programado",
+          "Descompensación o consulta no programada",
+          "Control posterior a internación"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "fecha_del_diagnostico",
+        "name": "Fecha del diagnóstico de asma",
+        "dataType": "date",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "tratamiento_actual",
+        "name": "Tratamiento actual (fármaco, dosis y frecuencia)",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "adherencia",
+        "name": "Adherencia al tratamiento",
+        "dataType": "string",
+        "required": false,
+        "section": "Seguimiento",
+        "options": [
+          "Toma el tratamiento como está indicado",
+          "Olvida dosis algunas veces",
+          "Abandonó el tratamiento",
+          "Todavía sin tratamiento"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "efectos_adversos",
+        "name": "¿Tuvo efectos adversos del tratamiento?",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "efectos_adversos_cuales",
+        "name": "¿Cuáles y con qué fármaco?",
+        "dataType": "text",
+        "required": true,
+        "section": "Seguimiento",
+        "showWhen": {
+          "field": "efectos_adversos",
+          "equals": true
+        }
+      },
+      {
+        "code": "evolucion_desde_ultimo_control",
+        "name": "Evolución desde el último control",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "asma_control_4_semanas",
+        "name": "En las últimas 4 semanas (GINA)",
+        "dataType": "json",
+        "required": true,
+        "section": "Evaluación: asma",
+        "options": [
+          "Síntomas diurnos más de 2 veces por semana",
+          "Despertares nocturnos por asma",
+          "Uso de rescate más de 2 veces por semana",
+          "Limitación de la actividad",
+          "Ninguno"
+        ],
+        "multiple": true,
+        "description": "Ninguno: controlada · 1–2: parcialmente controlada · 3–4: no controlada."
+      },
+      {
+        "code": "asma_crisis_anio",
+        "name": "Crisis que requirieron urgencias en el último año",
+        "dataType": "integer",
+        "required": false,
+        "section": "Evaluación: asma"
+      },
+      {
+        "code": "asma_tratamiento_actual",
+        "name": "Inhaladores que usa",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: asma"
+      },
+      {
+        "code": "espaciador",
+        "name": "Usa espaciador",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación: asma",
+        "options": [
+          "Sí, correctamente",
+          "Sí, con errores",
+          "No"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "dias_escuela_perdidos",
+        "name": "Días de escuela perdidos en el mes",
+        "dataType": "integer",
+        "required": false,
+        "section": "Evaluación: asma"
+      },
+      {
+        "code": "metas_cumplidas",
+        "name": "Metas de control que cumple hoy",
+        "dataType": "json",
+        "required": false,
+        "section": "Metas y plan",
+        "options": [
+          "Asma controlada",
+          "Sin crisis",
+          "Ninguna todavía"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "educacion_brindada",
+        "name": "Educación brindada en esta consulta",
+        "dataType": "json",
+        "required": false,
+        "section": "Metas y plan",
+        "options": [
+          "Técnica con espaciador",
+          "Plan de acción",
+          "Evitar humo de tabaco y leña"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "diagnostico",
+        "name": "Diagnóstico (con código CIE-10 si se conoce)",
+        "dataType": "text",
+        "required": true,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "plan",
+        "name": "Plan: tratamiento, estudios, interconsultas y destino",
+        "dataType": "text",
+        "required": false,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "proximo_control",
+        "name": "Próximo control",
+        "dataType": "date",
+        "required": false,
+        "section": "Metas y plan"
+      }
+    ]
+  },
+  {
+    "code": "PEDIA_CTRL_DESNUTRICION",
+    "name": "Control de desnutrición aguda",
+    "version": 1,
+    "kind": "SPECIFIC",
+    "specialty": "PEDIATRIA",
+    "provenance": {
+      "sourceTitle": "Malnutrición",
+      "organization": "Organización Mundial de la Salud (OMS)",
+      "url": "https://www.who.int/health-topics/malnutrition",
+      "license": "CC BY-NC-SA 3.0 IGO",
+      "retrievedAt": "2026-10-02",
+      "note": "Puntaje Z peso/talla, perímetro braquial, edema y prueba del apetito."
+    },
+    "fields": [
+      {
+        "code": "tipo_de_control",
+        "name": "Tipo de consulta",
+        "dataType": "string",
+        "required": true,
+        "section": "Seguimiento",
+        "options": [
+          "Primera evaluación de la condición",
+          "Control programado",
+          "Descompensación o consulta no programada",
+          "Control posterior a internación"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "fecha_del_diagnostico",
+        "name": "Fecha del diagnóstico de desnutrición aguda",
+        "dataType": "date",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "tratamiento_actual",
+        "name": "Tratamiento actual (fármaco, dosis y frecuencia)",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "adherencia",
+        "name": "Adherencia al tratamiento",
+        "dataType": "string",
+        "required": false,
+        "section": "Seguimiento",
+        "options": [
+          "Toma el tratamiento como está indicado",
+          "Olvida dosis algunas veces",
+          "Abandonó el tratamiento",
+          "Todavía sin tratamiento"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "efectos_adversos",
+        "name": "¿Tuvo efectos adversos del tratamiento?",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "efectos_adversos_cuales",
+        "name": "¿Cuáles y con qué fármaco?",
+        "dataType": "text",
+        "required": true,
+        "section": "Seguimiento",
+        "showWhen": {
+          "field": "efectos_adversos",
+          "equals": true
+        }
+      },
+      {
+        "code": "evolucion_desde_ultimo_control",
+        "name": "Evolución desde el último control",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "edad_en_meses",
+        "name": "Edad (meses)",
+        "dataType": "integer",
+        "required": true,
+        "section": "Evaluación: desnutrición aguda"
+      },
+      {
+        "code": "peso_kg",
+        "name": "Peso (kg)",
+        "dataType": "decimal",
+        "required": true,
+        "section": "Evaluación: desnutrición aguda"
+      },
+      {
+        "code": "talla_cm",
+        "name": "Talla (cm)",
+        "dataType": "decimal",
+        "required": true,
+        "section": "Evaluación: desnutrición aguda"
+      },
+      {
+        "code": "z_peso_talla",
+        "name": "Z peso/talla",
+        "dataType": "decimal",
+        "required": true,
+        "section": "Evaluación: desnutrición aguda"
+      },
+      {
+        "code": "perimetro_braquial",
+        "name": "Perímetro braquial (mm)",
+        "dataType": "decimal",
+        "required": false,
+        "section": "Evaluación: desnutrición aguda"
+      },
+      {
+        "code": "edema_bilateral",
+        "name": "Edema bilateral",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Evaluación: desnutrición aguda"
+      },
+      {
+        "code": "prueba_apetito",
+        "name": "Prueba del apetito",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: desnutrición aguda",
+        "options": [
+          "Pasa",
+          "No pasa",
+          "No realizada"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "desnutricion_clasificacion",
+        "name": "Clasificación",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación: desnutrición aguda",
+        "options": [
+          "Aguda moderada",
+          "Aguda grave sin complicaciones",
+          "Aguda grave complicada"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "metas_cumplidas",
+        "name": "Metas de control que cumple hoy",
+        "dataType": "json",
+        "required": false,
+        "section": "Metas y plan",
+        "options": [
+          "Ganancia de peso ≥ 5 g/kg/día",
+          "Z peso/talla ≥ −2",
+          "Ninguna todavía"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "educacion_brindada",
+        "name": "Educación brindada en esta consulta",
+        "dataType": "json",
+        "required": false,
+        "section": "Metas y plan",
+        "options": [
+          "Alimento terapéutico",
+          "Lactancia",
+          "Higiene"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "diagnostico",
+        "name": "Diagnóstico (con código CIE-10 si se conoce)",
+        "dataType": "text",
+        "required": true,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "plan",
+        "name": "Plan: tratamiento, estudios, interconsultas y destino",
+        "dataType": "text",
+        "required": false,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "proximo_control",
+        "name": "Próximo control",
+        "dataType": "date",
+        "required": false,
+        "section": "Metas y plan"
+      }
+    ]
+  },
+  {
+    "code": "PEDIA_CTRL_EDA",
+    "name": "Niño con diarrea (AIEPI)",
+    "version": 1,
+    "kind": "SPECIFIC",
+    "specialty": "PEDIATRIA",
+    "provenance": {
+      "sourceTitle": "Atención Integrada a las Enfermedades Prevalentes de la Infancia (AIEPI)",
+      "organization": "Organización Mundial de la Salud (OMS)",
+      "url": "https://www.who.int/teams/maternal-newborn-child-adolescent-health-and-ageing/child-health/integrated-management-of-childhood-illness",
+      "license": "CC BY-NC-SA 3.0 IGO",
+      "retrievedAt": "2026-10-02",
+      "note": "Estado de hidratación y planes A/B/C, disentería y diarrea persistente."
+    },
+    "fields": [
+      {
+        "code": "tipo_de_evaluacion",
+        "name": "Tipo de evaluación",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación inicial",
+        "options": [
+          "Evaluación inicial",
+          "Reevaluación"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "inicio_de_sintomas",
+        "name": "Inicio de los síntomas (fecha u hora)",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación inicial"
+      },
+      {
+        "code": "tratamiento_previo",
+        "name": "Tratamiento recibido antes de esta consulta",
+        "dataType": "text",
+        "required": false,
+        "section": "Evaluación inicial"
+      },
+      {
+        "code": "edad_en_meses",
+        "name": "Edad (meses)",
+        "dataType": "integer",
+        "required": true,
+        "section": "Evaluación: diarrea"
+      },
+      {
+        "code": "signos_de_peligro",
+        "name": "Signos generales de peligro",
+        "dataType": "json",
+        "required": true,
+        "section": "Evaluación: diarrea",
+        "options": [
+          "No puede beber ni tomar el pecho",
+          "Vomita todo",
+          "Convulsiones",
+          "Letárgico o inconsciente",
+          "Ninguno"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "eda_deposiciones_24h",
+        "name": "Deposiciones líquidas en las últimas 24 horas",
+        "dataType": "integer",
+        "required": true,
+        "section": "Evaluación: diarrea"
+      },
+      {
+        "code": "eda_sangre_en_heces",
+        "name": "Sangre en las heces (disentería)",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Evaluación: diarrea"
+      },
+      {
+        "code": "eda_vomitos",
+        "name": "Vómitos",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Evaluación: diarrea"
+      },
+      {
+        "code": "eda_hidratacion",
+        "name": "Estado de hidratación (OMS)",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación: diarrea",
+        "options": [
+          "Sin deshidratación — Plan A",
+          "Algún grado de deshidratación — Plan B",
+          "Deshidratación grave — Plan C"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "eda_fiebre",
+        "name": "Fiebre",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Evaluación: diarrea"
+      },
+      {
+        "code": "dias_de_diarrea",
+        "name": "Días de diarrea",
+        "dataType": "integer",
+        "required": false,
+        "section": "Evaluación: diarrea",
+        "description": "14 o más: diarrea persistente."
+      },
+      {
+        "code": "peso_kg",
+        "name": "Peso (kg)",
+        "dataType": "decimal",
+        "required": false,
+        "section": "Evaluación: diarrea"
+      },
+      {
+        "code": "educacion_brindada",
+        "name": "Educación brindada en esta consulta",
+        "dataType": "json",
+        "required": false,
+        "section": "Conclusión y plan",
+        "options": [
+          "Sales de rehidratación oral",
+          "Zinc por 10 a 14 días",
+          "Seguir alimentando",
+          "Signos para volver"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "diagnostico",
+        "name": "Diagnóstico (con código CIE-10 si se conoce)",
+        "dataType": "text",
+        "required": true,
+        "section": "Conclusión y plan"
+      },
+      {
+        "code": "plan",
+        "name": "Plan: tratamiento, estudios, interconsultas y destino",
+        "dataType": "text",
+        "required": false,
+        "section": "Conclusión y plan"
+      }
+    ]
+  },
+  {
+    "code": "PEDIA_CTRL_IRA",
+    "name": "Niño con tos o dificultad para respirar (AIEPI)",
+    "version": 1,
+    "kind": "SPECIFIC",
+    "specialty": "PEDIATRIA",
+    "provenance": {
+      "sourceTitle": "Atención Integrada a las Enfermedades Prevalentes de la Infancia (AIEPI)",
+      "organization": "Organización Mundial de la Salud (OMS)",
+      "url": "https://www.who.int/teams/maternal-newborn-child-adolescent-health-and-ageing/child-health/integrated-management-of-childhood-illness",
+      "license": "CC BY-NC-SA 3.0 IGO",
+      "retrievedAt": "2026-10-02",
+      "note": "Signos generales de peligro, respiración rápida para la edad y tiraje, con la clasificación AIEPI."
+    },
+    "fields": [
+      {
+        "code": "tipo_de_evaluacion",
+        "name": "Tipo de evaluación",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación inicial",
+        "options": [
+          "Evaluación inicial",
+          "Reevaluación"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "inicio_de_sintomas",
+        "name": "Inicio de los síntomas (fecha u hora)",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación inicial"
+      },
+      {
+        "code": "tratamiento_previo",
+        "name": "Tratamiento recibido antes de esta consulta",
+        "dataType": "text",
+        "required": false,
+        "section": "Evaluación inicial"
+      },
+      {
+        "code": "edad_en_meses",
+        "name": "Edad (meses)",
+        "dataType": "integer",
+        "required": true,
+        "section": "Evaluación: tos o dificultad respiratoria"
+      },
+      {
+        "code": "signos_de_peligro",
+        "name": "Signos generales de peligro",
+        "dataType": "json",
+        "required": true,
+        "section": "Evaluación: tos o dificultad respiratoria",
+        "options": [
+          "No puede beber ni tomar el pecho",
+          "Vomita todo",
+          "Convulsiones",
+          "Letárgico o inconsciente",
+          "Ninguno"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "frecuencia_respiratoria",
+        "name": "Frecuencia respiratoria (rpm)",
+        "dataType": "integer",
+        "required": true,
+        "section": "Evaluación: tos o dificultad respiratoria",
+        "description": "Rápida: ≥ 50 de 2 a 11 meses; ≥ 40 de 1 a 4 años."
+      },
+      {
+        "code": "tiraje",
+        "name": "Tiraje subcostal",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Evaluación: tos o dificultad respiratoria"
+      },
+      {
+        "code": "estridor",
+        "name": "Estridor en reposo",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Evaluación: tos o dificultad respiratoria"
+      },
+      {
+        "code": "sibilancias",
+        "name": "Sibilancias",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Evaluación: tos o dificultad respiratoria"
+      },
+      {
+        "code": "saturacion_de_oxigeno",
+        "name": "Saturación de oxígeno (%)",
+        "dataType": "integer",
+        "required": false,
+        "section": "Evaluación: tos o dificultad respiratoria"
+      },
+      {
+        "code": "clasificacion_aiepi",
+        "name": "Clasificación",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación: tos o dificultad respiratoria",
+        "options": [
+          "Neumonía grave o enfermedad muy grave",
+          "Neumonía",
+          "Tos o resfriado"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "educacion_brindada",
+        "name": "Educación brindada en esta consulta",
+        "dataType": "json",
+        "required": false,
+        "section": "Conclusión y plan",
+        "options": [
+          "Signos para volver de inmediato",
+          "Alimentación y líquidos",
+          "Antibiótico completo si corresponde"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "diagnostico",
+        "name": "Diagnóstico (con código CIE-10 si se conoce)",
+        "dataType": "text",
+        "required": true,
+        "section": "Conclusión y plan"
+      },
+      {
+        "code": "plan",
+        "name": "Plan: tratamiento, estudios, interconsultas y destino",
+        "dataType": "text",
+        "required": false,
+        "section": "Conclusión y plan"
+      }
+    ]
+  },
+  {
     "code": "PEDIA_CURVAS_CRECIMIENTO_OMS",
     "name": "Curvas de crecimiento (patrones OMS)",
     "version": 2,
+    "kind": "SPECIFIC",
     "specialty": "PEDIATRIA",
     "provenance": {
       "sourceTitle": "Patrones de crecimiento infantil de la OMS (WHO Child Growth Standards)",
@@ -15576,9 +23673,530 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
     ]
   },
   {
+    "code": "PEDIA_RECIEN_NACIDO",
+    "name": "Atención del recién nacido",
+    "version": 1,
+    "kind": "SPECIFIC",
+    "specialty": "PEDIATRIA",
+    "provenance": {
+      "sourceTitle": "Recomendaciones de la OMS sobre la atención materna y neonatal para una experiencia posnatal positiva (2022)",
+      "organization": "Organización Mundial de la Salud (OMS)",
+      "url": "https://www.who.int/publications/i/item/9789240045989",
+      "license": "CC BY-NC-SA 3.0 IGO",
+      "retrievedAt": "2026-10-02",
+      "note": "Apgar, antropometría, tamizajes y signos de peligro del recién nacido."
+    },
+    "fields": [
+      {
+        "code": "tipo_de_evaluacion",
+        "name": "Tipo de consulta",
+        "dataType": "string",
+        "required": true,
+        "section": "Consulta",
+        "options": [
+          "Primera vez",
+          "Control"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "apgar_1",
+        "name": "Apgar al minuto",
+        "dataType": "integer",
+        "required": true,
+        "section": "Evaluación: recién nacido"
+      },
+      {
+        "code": "apgar_5",
+        "name": "Apgar a los 5 minutos",
+        "dataType": "integer",
+        "required": true,
+        "section": "Evaluación: recién nacido"
+      },
+      {
+        "code": "edad_gestacional",
+        "name": "Edad gestacional (semanas)",
+        "dataType": "integer",
+        "required": true,
+        "section": "Evaluación: recién nacido"
+      },
+      {
+        "code": "peso_g",
+        "name": "Peso al nacer (g)",
+        "dataType": "decimal",
+        "required": true,
+        "section": "Evaluación: recién nacido"
+      },
+      {
+        "code": "talla_cm",
+        "name": "Talla (cm)",
+        "dataType": "decimal",
+        "required": false,
+        "section": "Evaluación: recién nacido"
+      },
+      {
+        "code": "perimetro_cefalico_cm",
+        "name": "Perímetro cefálico (cm)",
+        "dataType": "decimal",
+        "required": false,
+        "section": "Evaluación: recién nacido"
+      },
+      {
+        "code": "lactancia_primera_hora",
+        "name": "Lactancia en la primera hora",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Evaluación: recién nacido"
+      },
+      {
+        "code": "tamizajes_rn",
+        "name": "Tamizajes",
+        "dataType": "json",
+        "required": false,
+        "section": "Evaluación: recién nacido",
+        "options": [
+          "Metabólico",
+          "Auditivo",
+          "Cardiopatía (oximetría)",
+          "Reflejo rojo"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "signos_peligro_rn",
+        "name": "Signos de peligro",
+        "dataType": "json",
+        "required": true,
+        "section": "Evaluación: recién nacido",
+        "options": [
+          "No se alimenta bien",
+          "Convulsiones",
+          "Respiración rápida (≥ 60)",
+          "Tiraje",
+          "Fiebre o hipotermia",
+          "Ictericia en las primeras 24 h",
+          "Ninguno"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "vacunas_rn",
+        "name": "BCG y hepatitis B aplicadas",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Evaluación: recién nacido"
+      },
+      {
+        "code": "diagnostico",
+        "name": "Diagnóstico (con código CIE-10 si se conoce)",
+        "dataType": "text",
+        "required": true,
+        "section": "Conclusión y plan"
+      },
+      {
+        "code": "plan",
+        "name": "Plan: tratamiento, estudios, interconsultas y destino",
+        "dataType": "text",
+        "required": false,
+        "section": "Conclusión y plan"
+      },
+      {
+        "code": "proximo_control",
+        "name": "Próximo control",
+        "dataType": "date",
+        "required": false,
+        "section": "Conclusión y plan"
+      }
+    ]
+  },
+  {
+    "code": "PSICO_CTRL_ANSIEDAD_DEPRESION",
+    "name": "Seguimiento psicológico de ansiedad y depresión",
+    "version": 1,
+    "kind": "SPECIFIC",
+    "specialty": "PSICOLOGIA_CLINICA",
+    "provenance": {
+      "sourceTitle": "Guía de intervención mhGAP para los trastornos mentales, neurológicos y por consumo de sustancias, versión 2.0",
+      "organization": "Organización Mundial de la Salud (OMS)",
+      "url": "https://www.who.int/publications/i/item/9789241549790",
+      "license": "CC BY-NC-SA 3.0 IGO",
+      "retrievedAt": "2026-10-02",
+      "note": "Tamizaje SRQ-20 de la OMS, funcionamiento y riesgo según mhGAP; intervención psicológica breve."
+    },
+    "fields": [
+      {
+        "code": "tipo_de_control",
+        "name": "Tipo de consulta",
+        "dataType": "string",
+        "required": true,
+        "section": "Seguimiento",
+        "options": [
+          "Primera evaluación de la condición",
+          "Control programado",
+          "Descompensación o consulta no programada",
+          "Control posterior a internación"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "fecha_del_diagnostico",
+        "name": "Fecha del diagnóstico de ansiedad o depresión",
+        "dataType": "date",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "tratamiento_actual",
+        "name": "Tratamiento actual (fármaco, dosis y frecuencia)",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "adherencia",
+        "name": "Adherencia al tratamiento",
+        "dataType": "string",
+        "required": false,
+        "section": "Seguimiento",
+        "options": [
+          "Toma el tratamiento como está indicado",
+          "Olvida dosis algunas veces",
+          "Abandonó el tratamiento",
+          "Todavía sin tratamiento"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "efectos_adversos",
+        "name": "¿Tuvo efectos adversos del tratamiento?",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "efectos_adversos_cuales",
+        "name": "¿Cuáles y con qué fármaco?",
+        "dataType": "text",
+        "required": true,
+        "section": "Seguimiento",
+        "showWhen": {
+          "field": "efectos_adversos",
+          "equals": true
+        }
+      },
+      {
+        "code": "evolucion_desde_ultimo_control",
+        "name": "Evolución desde el último control",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "srq20_respuestas_si",
+        "name": "SRQ-20 (OMS): marque las preguntas que respondió «sí» en el último mes",
+        "dataType": "json",
+        "required": false,
+        "section": "Evaluación: ansiedad o depresión",
+        "options": [
+          "¿Tiene frecuentes dolores de cabeza?",
+          "¿Tiene mal apetito?",
+          "¿Duerme mal?",
+          "¿Se asusta con facilidad?",
+          "¿Sufre de temblor de manos?",
+          "¿Se siente nervioso, tenso o aburrido?",
+          "¿Sufre de mala digestión?",
+          "¿No puede pensar con claridad?",
+          "¿Se siente triste?",
+          "¿Llora usted con mucha frecuencia?",
+          "¿Tiene dificultad en disfrutar sus actividades diarias?",
+          "¿Tiene dificultad para tomar decisiones?",
+          "¿Tiene dificultad en hacer su trabajo?",
+          "¿Es incapaz de desempeñar un papel útil en su vida?",
+          "¿Ha perdido interés en las cosas?",
+          "¿Siente que usted es una persona inútil?",
+          "¿Ha tenido la idea de acabar con su vida?",
+          "¿Se siente cansado todo el tiempo?",
+          "¿Tiene sensaciones desagradables en su estómago?",
+          "¿Se cansa con facilidad?"
+        ],
+        "multiple": true,
+        "description": "8 o más respuestas positivas: probable trastorno mental común. La pregunta 17 positiva exige evaluar riesgo suicida."
+      },
+      {
+        "code": "srq20_puntaje",
+        "name": "SRQ-20 — total de respuestas «sí» (0–20)",
+        "dataType": "integer",
+        "required": true,
+        "section": "Evaluación: ansiedad o depresión"
+      },
+      {
+        "code": "ideacion_suicida",
+        "name": "Ideación suicida actual",
+        "dataType": "boolean",
+        "required": true,
+        "section": "Evaluación: ansiedad o depresión"
+      },
+      {
+        "code": "predominio",
+        "name": "Predominio",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación: ansiedad o depresión",
+        "options": [
+          "Depresivo",
+          "Ansioso",
+          "Mixto"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "sesion_numero",
+        "name": "Sesión número",
+        "dataType": "integer",
+        "required": false,
+        "section": "Evaluación: ansiedad o depresión"
+      },
+      {
+        "code": "intervencion",
+        "name": "Intervención",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: ansiedad o depresión",
+        "options": [
+          "Activación conductual",
+          "Manejo del estrés",
+          "Resolución de problemas",
+          "Terapia cognitivo-conductual",
+          "Psicoeducación"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "funcionamiento",
+        "name": "Funcionamiento",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: ansiedad o depresión",
+        "options": [
+          "Conservado",
+          "Algo afectado",
+          "Muy afectado"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "metas_cumplidas",
+        "name": "Metas de control que cumple hoy",
+        "dataType": "json",
+        "required": false,
+        "section": "Metas y plan",
+        "options": [
+          "Mejora del SRQ-20",
+          "Sin ideación suicida",
+          "Retomó sus actividades",
+          "Ninguna todavía"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "educacion_brindada",
+        "name": "Educación brindada en esta consulta",
+        "dataType": "json",
+        "required": false,
+        "section": "Metas y plan",
+        "options": [
+          "Higiene del sueño",
+          "Respiración y relajación",
+          "Red de apoyo"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "diagnostico",
+        "name": "Diagnóstico (con código CIE-10 si se conoce)",
+        "dataType": "text",
+        "required": true,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "plan",
+        "name": "Plan: tratamiento, estudios, interconsultas y destino",
+        "dataType": "text",
+        "required": false,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "proximo_control",
+        "name": "Próximo control",
+        "dataType": "date",
+        "required": false,
+        "section": "Metas y plan"
+      }
+    ]
+  },
+  {
+    "code": "PSICO_CTRL_VIOLENCIA",
+    "name": "Atención a personas en situación de violencia",
+    "version": 1,
+    "kind": "SPECIFIC",
+    "specialty": "PSICOLOGIA_CLINICA",
+    "provenance": {
+      "sourceTitle": "Respuesta a la violencia de pareja y a la violencia sexual contra las mujeres: directrices clínicas (2013)",
+      "organization": "Organización Mundial de la Salud (OMS)",
+      "url": "https://www.who.int/publications/i/item/9789241548595",
+      "license": "CC BY-NC-SA 3.0 IGO",
+      "retrievedAt": "2026-10-02",
+      "note": "Primera ayuda (escuchar, preguntar, validar, mejorar la seguridad, apoyo) de las directrices clínicas de la OMS."
+    },
+    "fields": [
+      {
+        "code": "tipo_de_evaluacion",
+        "name": "Tipo de consulta",
+        "dataType": "string",
+        "required": true,
+        "section": "Consulta",
+        "options": [
+          "Primera vez",
+          "Control"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "violencia_tipo",
+        "name": "Tipo de violencia",
+        "dataType": "json",
+        "required": true,
+        "section": "Evaluación: violencia",
+        "options": [
+          "Física",
+          "Psicológica",
+          "Sexual",
+          "Económica"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "riesgo_inminente",
+        "name": "Riesgo inminente para su vida",
+        "dataType": "boolean",
+        "required": true,
+        "section": "Evaluación: violencia"
+      },
+      {
+        "code": "plan_de_seguridad",
+        "name": "Plan de seguridad acordado",
+        "dataType": "text",
+        "required": true,
+        "section": "Evaluación: violencia",
+        "showWhen": {
+          "field": "riesgo_inminente",
+          "equals": true
+        }
+      },
+      {
+        "code": "violencia_sexual_72h",
+        "name": "Violencia sexual en las últimas 72 horas",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Evaluación: violencia"
+      },
+      {
+        "code": "atencion_urgente",
+        "name": "Atención urgente",
+        "dataType": "json",
+        "required": true,
+        "section": "Evaluación: violencia",
+        "options": [
+          "Profilaxis VIH",
+          "Anticoncepción de emergencia",
+          "Profilaxis de ITS"
+        ],
+        "multiple": true,
+        "showWhen": {
+          "field": "violencia_sexual_72h",
+          "equals": true
+        }
+      },
+      {
+        "code": "orientacion_denuncia",
+        "name": "Orientada sobre la denuncia (Ley 348)",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Evaluación: violencia"
+      },
+      {
+        "code": "srq20_respuestas_si",
+        "name": "SRQ-20 (OMS): marque las preguntas que respondió «sí» en el último mes",
+        "dataType": "json",
+        "required": false,
+        "section": "Evaluación: violencia",
+        "options": [
+          "¿Tiene frecuentes dolores de cabeza?",
+          "¿Tiene mal apetito?",
+          "¿Duerme mal?",
+          "¿Se asusta con facilidad?",
+          "¿Sufre de temblor de manos?",
+          "¿Se siente nervioso, tenso o aburrido?",
+          "¿Sufre de mala digestión?",
+          "¿No puede pensar con claridad?",
+          "¿Se siente triste?",
+          "¿Llora usted con mucha frecuencia?",
+          "¿Tiene dificultad en disfrutar sus actividades diarias?",
+          "¿Tiene dificultad para tomar decisiones?",
+          "¿Tiene dificultad en hacer su trabajo?",
+          "¿Es incapaz de desempeñar un papel útil en su vida?",
+          "¿Ha perdido interés en las cosas?",
+          "¿Siente que usted es una persona inútil?",
+          "¿Ha tenido la idea de acabar con su vida?",
+          "¿Se siente cansado todo el tiempo?",
+          "¿Tiene sensaciones desagradables en su estómago?",
+          "¿Se cansa con facilidad?"
+        ],
+        "multiple": true,
+        "description": "8 o más respuestas positivas: probable trastorno mental común. La pregunta 17 positiva exige evaluar riesgo suicida."
+      },
+      {
+        "code": "srq20_puntaje",
+        "name": "SRQ-20 — total de respuestas «sí» (0–20)",
+        "dataType": "integer",
+        "required": true,
+        "section": "Evaluación: violencia"
+      },
+      {
+        "code": "ideacion_suicida",
+        "name": "Ideación suicida actual",
+        "dataType": "boolean",
+        "required": true,
+        "section": "Evaluación: violencia"
+      },
+      {
+        "code": "diagnostico",
+        "name": "Diagnóstico (con código CIE-10 si se conoce)",
+        "dataType": "text",
+        "required": true,
+        "section": "Conclusión y plan"
+      },
+      {
+        "code": "plan",
+        "name": "Plan: tratamiento, estudios, interconsultas y destino",
+        "dataType": "text",
+        "required": false,
+        "section": "Conclusión y plan"
+      },
+      {
+        "code": "proximo_control",
+        "name": "Próximo control",
+        "dataType": "date",
+        "required": false,
+        "section": "Conclusión y plan"
+      }
+    ]
+  },
+  {
     "code": "PSICO_EVALUACION_BASE",
-    "name": "Evaluación psicológica",
+    "name": "Psicología Clínica — consulta inicial (ficha base)",
     "version": 2,
+    "kind": "BASE",
     "specialty": "PSICOLOGIA_CLINICA",
     "provenance": {
       "sourceTitle": "Norma Técnica de Salud para la Gestión de la Historia Clínica — NT N.º 022-MINSA/DGSP-V.02, anamnesis, antecedentes personales y familiares y examen mental",
@@ -15923,127 +24541,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
         ],
         "multiple": false,
         "allowOther": true,
-        "description": "Al elegirlo se abren las observaciones que ese cuadro exige registrar."
-      },
-      {
-        "code": "tmc_predominio",
-        "name": "Predominio",
-        "dataType": "string",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Depresivo",
-          "Ansioso",
-          "Mixto",
-          "Somático"
-        ],
-        "multiple": false,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Trastorno mental común (ansiedad, depresión)"
-        }
-      },
-      {
-        "code": "tmc_meses",
-        "name": "Meses de evolución",
-        "dataType": "integer",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Trastorno mental común (ansiedad, depresión)"
-        }
-      },
-      {
-        "code": "duelo_perdida",
-        "name": "Pérdida y fecha",
-        "dataType": "string",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Duelo"
-        }
-      },
-      {
-        "code": "duelo_complicado",
-        "name": "Más de 12 meses con deterioro funcional",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Duelo"
-        }
-      },
-      {
-        "code": "tept",
-        "name": "Síntomas",
-        "dataType": "json",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Reexperimentación",
-          "Evitación",
-          "Hiperalerta",
-          "Cambios negativos del ánimo"
-        ],
-        "multiple": true,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Estrés postraumático"
-        }
-      },
-      {
-        "code": "violencia_tipo",
-        "name": "Tipo",
-        "dataType": "json",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Física",
-          "Psicológica",
-          "Sexual",
-          "Económica"
-        ],
-        "multiple": true,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Violencia"
-        }
-      },
-      {
-        "code": "violencia_riesgo_inminente",
-        "name": "Riesgo inminente",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Violencia"
-        }
-      },
-      {
-        "code": "violencia_denuncia",
-        "name": "Orientada a la denuncia (Ley 348)",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Violencia"
-        }
-      },
-      {
-        "code": "conducta_contexto",
-        "name": "Contexto escolar y familiar",
-        "dataType": "string",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Problemas de conducta en niños o adolescentes"
-        }
+        "description": "Si el cuadro ya está diagnosticado, el seguimiento se hace con su ficha específica de la especialidad."
       },
       {
         "code": "observaciones_de_la_entrevista",
@@ -16070,9 +24568,625 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
     ]
   },
   {
+    "code": "PSIQ_CTRL_ALCOHOL",
+    "name": "Consumo de alcohol: AUDIT completo (OMS)",
+    "version": 1,
+    "kind": "SPECIFIC",
+    "specialty": "PSIQUIATRIA",
+    "provenance": {
+      "sourceTitle": "Guía de intervención mhGAP para los trastornos mentales, neurológicos y por consumo de sustancias, versión 2.0",
+      "organization": "Organización Mundial de la Salud (OMS)",
+      "url": "https://www.who.int/publications/i/item/9789241549790",
+      "license": "CC BY-NC-SA 3.0 IGO",
+      "retrievedAt": "2026-10-02",
+      "note": "Las 10 preguntas del AUDIT de la OMS con su puntaje, y abstinencia."
+    },
+    "fields": [
+      {
+        "code": "tipo_de_evaluacion",
+        "name": "Tipo de consulta",
+        "dataType": "string",
+        "required": true,
+        "section": "Consulta",
+        "options": [
+          "Primera vez",
+          "Control"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "audit_1",
+        "name": "1. ¿Con qué frecuencia consume alguna bebida alcohólica?",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación: consumo de alcohol",
+        "options": [
+          "Nunca (0)",
+          "Una o menos veces al mes (1)",
+          "De 2 a 4 veces al mes (2)",
+          "De 2 a 3 veces a la semana (3)",
+          "4 o más veces a la semana (4)"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "audit_2",
+        "name": "2. ¿Cuántas consumiciones toma en un día de consumo normal?",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación: consumo de alcohol",
+        "options": [
+          "1 o 2 (0)",
+          "3 o 4 (1)",
+          "5 o 6 (2)",
+          "7 a 9 (3)",
+          "10 o más (4)"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "audit_3",
+        "name": "3. ¿Con qué frecuencia toma 6 o más bebidas en una sola ocasión?",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación: consumo de alcohol",
+        "options": [
+          "Nunca (0)",
+          "Menos de una vez al mes (1)",
+          "Mensualmente (2)",
+          "Semanalmente (3)",
+          "A diario o casi (4)"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "audit_4",
+        "name": "4. En el último año, ¿con qué frecuencia no pudo parar de beber una vez que empezó?",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación: consumo de alcohol",
+        "options": [
+          "Nunca (0)",
+          "Menos de una vez al mes (1)",
+          "Mensualmente (2)",
+          "Semanalmente (3)",
+          "A diario o casi (4)"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "audit_5",
+        "name": "5. ¿Con qué frecuencia no pudo hacer lo que se esperaba de usted porque había bebido?",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación: consumo de alcohol",
+        "options": [
+          "Nunca (0)",
+          "Menos de una vez al mes (1)",
+          "Mensualmente (2)",
+          "Semanalmente (3)",
+          "A diario o casi (4)"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "audit_6",
+        "name": "6. ¿Con qué frecuencia necesitó beber en ayunas para recuperarse después de beber mucho?",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación: consumo de alcohol",
+        "options": [
+          "Nunca (0)",
+          "Menos de una vez al mes (1)",
+          "Mensualmente (2)",
+          "Semanalmente (3)",
+          "A diario o casi (4)"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "audit_7",
+        "name": "7. ¿Con qué frecuencia tuvo remordimientos o sentimientos de culpa después de beber?",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación: consumo de alcohol",
+        "options": [
+          "Nunca (0)",
+          "Menos de una vez al mes (1)",
+          "Mensualmente (2)",
+          "Semanalmente (3)",
+          "A diario o casi (4)"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "audit_8",
+        "name": "8. ¿Con qué frecuencia no pudo recordar lo que sucedió la noche anterior porque había bebido?",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación: consumo de alcohol",
+        "options": [
+          "Nunca (0)",
+          "Menos de una vez al mes (1)",
+          "Mensualmente (2)",
+          "Semanalmente (3)",
+          "A diario o casi (4)"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "audit_9",
+        "name": "9. ¿Usted u otra persona resultó herida porque usted había bebido?",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación: consumo de alcohol",
+        "options": [
+          "No (0)",
+          "Sí, pero no en el último año (2)",
+          "Sí, en el último año (4)"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "audit_10",
+        "name": "10. ¿Algún familiar, amigo o profesional se preocupó por su consumo o le sugirió dejar de beber?",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación: consumo de alcohol",
+        "options": [
+          "No (0)",
+          "Sí, pero no en el último año (2)",
+          "Sí, en el último año (4)"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "audit_total",
+        "name": "AUDIT — total (0–40)",
+        "dataType": "integer",
+        "required": true,
+        "section": "Evaluación: consumo de alcohol",
+        "description": "8–15: consumo de riesgo · 16–19: perjudicial · ≥ 20: probable dependencia."
+      },
+      {
+        "code": "abstinencia",
+        "name": "Signos de abstinencia",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Evaluación: consumo de alcohol"
+      },
+      {
+        "code": "educacion_brindada",
+        "name": "Educación brindada en esta consulta",
+        "dataType": "json",
+        "required": false,
+        "section": "Conclusión y plan",
+        "options": [
+          "Intervención breve",
+          "Límites de consumo",
+          "Grupos de apoyo"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "diagnostico",
+        "name": "Diagnóstico (con código CIE-10 si se conoce)",
+        "dataType": "text",
+        "required": true,
+        "section": "Conclusión y plan"
+      },
+      {
+        "code": "plan",
+        "name": "Plan: tratamiento, estudios, interconsultas y destino",
+        "dataType": "text",
+        "required": false,
+        "section": "Conclusión y plan"
+      },
+      {
+        "code": "proximo_control",
+        "name": "Próximo control",
+        "dataType": "date",
+        "required": false,
+        "section": "Conclusión y plan"
+      }
+    ]
+  },
+  {
+    "code": "PSIQ_CTRL_DEPRESION",
+    "name": "Control de depresión",
+    "version": 1,
+    "kind": "SPECIFIC",
+    "specialty": "PSIQUIATRIA",
+    "provenance": {
+      "sourceTitle": "Guía de intervención mhGAP para los trastornos mentales, neurológicos y por consumo de sustancias, versión 2.0",
+      "organization": "Organización Mundial de la Salud (OMS)",
+      "url": "https://www.who.int/publications/i/item/9789241549790",
+      "license": "CC BY-NC-SA 3.0 IGO",
+      "retrievedAt": "2026-10-02",
+      "note": "Módulo de depresión de mhGAP: síntomas, funcionamiento, riesgo suicida y respuesta al tratamiento."
+    },
+    "fields": [
+      {
+        "code": "tipo_de_control",
+        "name": "Tipo de consulta",
+        "dataType": "string",
+        "required": true,
+        "section": "Seguimiento",
+        "options": [
+          "Primera evaluación de la condición",
+          "Control programado",
+          "Descompensación o consulta no programada",
+          "Control posterior a internación"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "fecha_del_diagnostico",
+        "name": "Fecha del diagnóstico de depresión",
+        "dataType": "date",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "tratamiento_actual",
+        "name": "Tratamiento actual (fármaco, dosis y frecuencia)",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "adherencia",
+        "name": "Adherencia al tratamiento",
+        "dataType": "string",
+        "required": false,
+        "section": "Seguimiento",
+        "options": [
+          "Toma el tratamiento como está indicado",
+          "Olvida dosis algunas veces",
+          "Abandonó el tratamiento",
+          "Todavía sin tratamiento"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "efectos_adversos",
+        "name": "¿Tuvo efectos adversos del tratamiento?",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "efectos_adversos_cuales",
+        "name": "¿Cuáles y con qué fármaco?",
+        "dataType": "text",
+        "required": true,
+        "section": "Seguimiento",
+        "showWhen": {
+          "field": "efectos_adversos",
+          "equals": true
+        }
+      },
+      {
+        "code": "evolucion_desde_ultimo_control",
+        "name": "Evolución desde el último control",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "depresion_sintomas",
+        "name": "Síntomas en las últimas 2 semanas",
+        "dataType": "json",
+        "required": true,
+        "section": "Evaluación: depresión",
+        "options": [
+          "Ánimo deprimido",
+          "Anhedonia",
+          "Sueño alterado",
+          "Apetito alterado",
+          "Fatiga",
+          "Culpa o inutilidad",
+          "Concentración",
+          "Enlentecimiento o agitación",
+          "Ideas de muerte"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "srq20_respuestas_si",
+        "name": "SRQ-20: preguntas respondidas «sí»",
+        "dataType": "json",
+        "required": false,
+        "section": "Evaluación: depresión",
+        "options": [
+          "¿Tiene frecuentes dolores de cabeza?",
+          "¿Tiene mal apetito?",
+          "¿Duerme mal?",
+          "¿Se asusta con facilidad?",
+          "¿Sufre de temblor de manos?",
+          "¿Se siente nervioso, tenso o aburrido?",
+          "¿Sufre de mala digestión?",
+          "¿No puede pensar con claridad?",
+          "¿Se siente triste?",
+          "¿Llora usted con mucha frecuencia?",
+          "¿Tiene dificultad en disfrutar sus actividades diarias?",
+          "¿Tiene dificultad para tomar decisiones?",
+          "¿Tiene dificultad en hacer su trabajo?",
+          "¿Es incapaz de desempeñar un papel útil en su vida?",
+          "¿Ha perdido interés en las cosas?",
+          "¿Siente que usted es una persona inútil?",
+          "¿Ha tenido la idea de acabar con su vida?",
+          "¿Se siente cansado todo el tiempo?",
+          "¿Tiene sensaciones desagradables en su estómago?",
+          "¿Se cansa con facilidad?"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "srq20_puntaje",
+        "name": "SRQ-20 — total",
+        "dataType": "integer",
+        "required": false,
+        "section": "Evaluación: depresión"
+      },
+      {
+        "code": "riesgo_suicida",
+        "name": "Riesgo suicida",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación: depresión",
+        "options": [
+          "Sin ideación",
+          "Ideación sin plan",
+          "Ideación con plan",
+          "Intento reciente"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "plan_de_seguridad",
+        "name": "Plan de seguridad y derivación",
+        "dataType": "text",
+        "required": true,
+        "section": "Evaluación: depresión",
+        "showWhen": {
+          "field": "riesgo_suicida",
+          "equals": [
+            "Ideación con plan",
+            "Intento reciente"
+          ]
+        }
+      },
+      {
+        "code": "metas_cumplidas",
+        "name": "Metas de control que cumple hoy",
+        "dataType": "json",
+        "required": false,
+        "section": "Metas y plan",
+        "options": [
+          "Remisión de síntomas",
+          "Sin ideación suicida",
+          "Ninguna todavía"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "educacion_brindada",
+        "name": "Educación brindada en esta consulta",
+        "dataType": "json",
+        "required": false,
+        "section": "Metas y plan",
+        "options": [
+          "El antidepresivo tarda 2 a 4 semanas",
+          "No suspender de golpe",
+          "Activación conductual"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "diagnostico",
+        "name": "Diagnóstico (con código CIE-10 si se conoce)",
+        "dataType": "text",
+        "required": true,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "plan",
+        "name": "Plan: tratamiento, estudios, interconsultas y destino",
+        "dataType": "text",
+        "required": false,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "proximo_control",
+        "name": "Próximo control",
+        "dataType": "date",
+        "required": false,
+        "section": "Metas y plan"
+      }
+    ]
+  },
+  {
+    "code": "PSIQ_CTRL_PSICOSIS",
+    "name": "Control de psicosis",
+    "version": 1,
+    "kind": "SPECIFIC",
+    "specialty": "PSIQUIATRIA",
+    "provenance": {
+      "sourceTitle": "Guía de intervención mhGAP para los trastornos mentales, neurológicos y por consumo de sustancias, versión 2.0",
+      "organization": "Organización Mundial de la Salud (OMS)",
+      "url": "https://www.who.int/publications/i/item/9789241549790",
+      "license": "CC BY-NC-SA 3.0 IGO",
+      "retrievedAt": "2026-10-02",
+      "note": "Módulo de psicosis de mhGAP: síntomas, adherencia al antipsicótico, efectos adversos y riesgo."
+    },
+    "fields": [
+      {
+        "code": "tipo_de_control",
+        "name": "Tipo de consulta",
+        "dataType": "string",
+        "required": true,
+        "section": "Seguimiento",
+        "options": [
+          "Primera evaluación de la condición",
+          "Control programado",
+          "Descompensación o consulta no programada",
+          "Control posterior a internación"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "fecha_del_diagnostico",
+        "name": "Fecha del diagnóstico de psicosis",
+        "dataType": "date",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "tratamiento_actual",
+        "name": "Tratamiento actual (fármaco, dosis y frecuencia)",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "adherencia",
+        "name": "Adherencia al tratamiento",
+        "dataType": "string",
+        "required": false,
+        "section": "Seguimiento",
+        "options": [
+          "Toma el tratamiento como está indicado",
+          "Olvida dosis algunas veces",
+          "Abandonó el tratamiento",
+          "Todavía sin tratamiento"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "efectos_adversos",
+        "name": "¿Tuvo efectos adversos del tratamiento?",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "efectos_adversos_cuales",
+        "name": "¿Cuáles y con qué fármaco?",
+        "dataType": "text",
+        "required": true,
+        "section": "Seguimiento",
+        "showWhen": {
+          "field": "efectos_adversos",
+          "equals": true
+        }
+      },
+      {
+        "code": "evolucion_desde_ultimo_control",
+        "name": "Evolución desde el último control",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "psicosis_sintomas",
+        "name": "Síntomas presentes",
+        "dataType": "json",
+        "required": true,
+        "section": "Evaluación: psicosis",
+        "options": [
+          "Delirios",
+          "Alucinaciones",
+          "Discurso desorganizado",
+          "Conducta desorganizada",
+          "Síntomas negativos",
+          "Ninguno"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "efectos_antipsicotico",
+        "name": "Efectos del antipsicótico",
+        "dataType": "json",
+        "required": false,
+        "section": "Evaluación: psicosis",
+        "options": [
+          "Rigidez o temblor",
+          "Acatisia",
+          "Aumento de peso",
+          "Sedación",
+          "Ninguno"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "peso_kg",
+        "name": "Peso (kg)",
+        "dataType": "decimal",
+        "required": false,
+        "section": "Evaluación: psicosis"
+      },
+      {
+        "code": "glucemia",
+        "name": "Glucemia (mg/dL)",
+        "dataType": "decimal",
+        "required": false,
+        "section": "Evaluación: psicosis"
+      },
+      {
+        "code": "riesgo_heteroagresion",
+        "name": "Riesgo de violencia",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: psicosis",
+        "options": [
+          "Bajo",
+          "Moderado",
+          "Alto"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "educacion_brindada",
+        "name": "Educación brindada en esta consulta",
+        "dataType": "json",
+        "required": false,
+        "section": "Metas y plan",
+        "options": [
+          "Adherencia",
+          "Signos de recaída",
+          "Apoyo a la familia"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "diagnostico",
+        "name": "Diagnóstico (con código CIE-10 si se conoce)",
+        "dataType": "text",
+        "required": true,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "plan",
+        "name": "Plan: tratamiento, estudios, interconsultas y destino",
+        "dataType": "text",
+        "required": false,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "proximo_control",
+        "name": "Próximo control",
+        "dataType": "date",
+        "required": false,
+        "section": "Metas y plan"
+      }
+    ]
+  },
+  {
     "code": "PSIQ_EVALUACION_BASE",
-    "name": "Evaluación de salud mental — versión general base",
+    "name": "Psiquiatría y salud mental — consulta inicial (ficha base)",
     "version": 2,
+    "kind": "BASE",
     "specialty": "PSIQUIATRIA",
     "provenance": {
       "sourceTitle": "Norma Técnica de Salud para la Gestión de la Historia Clínica — NT N.º 022-MINSA/DGSP-V.02, evaluación de salud mental",
@@ -16493,154 +25607,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
         ],
         "multiple": false,
         "allowOther": true,
-        "description": "Al elegirlo se abren las observaciones que ese cuadro exige registrar."
-      },
-      {
-        "code": "depresion_criterios",
-        "name": "Síntomas (2 semanas o más)",
-        "dataType": "json",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Ánimo deprimido",
-          "Anhedonia",
-          "Alteración del sueño",
-          "Alteración del apetito",
-          "Fatiga",
-          "Culpa o inutilidad",
-          "Dificultad para concentrarse",
-          "Enlentecimiento o agitación",
-          "Ideas de muerte"
-        ],
-        "multiple": true,
-        "description": "5 o más, incluido ánimo o anhedonia.",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Episodio depresivo"
-        }
-      },
-      {
-        "code": "ansiedad_tipo",
-        "name": "Presentación",
-        "dataType": "string",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Generalizada",
-          "Crisis de pánico",
-          "Fobia social",
-          "Fobia específica"
-        ],
-        "multiple": false,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Trastorno de ansiedad"
-        }
-      },
-      {
-        "code": "ansiedad_meses",
-        "name": "Meses de evolución",
-        "dataType": "integer",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Trastorno de ansiedad"
-        }
-      },
-      {
-        "code": "mania",
-        "name": "Síntomas maníacos",
-        "dataType": "json",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Ánimo elevado o irritable",
-          "Menos necesidad de dormir",
-          "Verborrea",
-          "Fuga de ideas",
-          "Grandiosidad",
-          "Conductas de riesgo"
-        ],
-        "multiple": true,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Trastorno bipolar"
-        }
-      },
-      {
-        "code": "psicosis_sintomas",
-        "name": "Síntomas",
-        "dataType": "json",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Delirios",
-          "Alucinaciones",
-          "Discurso desorganizado",
-          "Conducta desorganizada",
-          "Síntomas negativos"
-        ],
-        "multiple": true,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Psicosis"
-        }
-      },
-      {
-        "code": "psicosis_primer_episodio",
-        "name": "Primer episodio",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Psicosis"
-        }
-      },
-      {
-        "code": "audit_total",
-        "name": "AUDIT completo (0–40)",
-        "dataType": "integer",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Trastorno por consumo de alcohol"
-        }
-      },
-      {
-        "code": "abstinencia",
-        "name": "Signos de abstinencia",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Trastorno por consumo de alcohol"
-        }
-      },
-      {
-        "code": "sustancia_principal",
-        "name": "Sustancia principal",
-        "dataType": "string",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Trastorno por consumo de otras sustancias"
-        }
-      },
-      {
-        "code": "sustancia_via_frecuencia",
-        "name": "Vía y frecuencia",
-        "dataType": "string",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Trastorno por consumo de otras sustancias"
-        }
+        "description": "Si el cuadro ya está diagnosticado, el seguimiento se hace con su ficha específica de la especialidad."
       },
       {
         "code": "impresion_diagnostica",
@@ -16660,8 +25627,9 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
   },
   {
     "code": "RADIO_INFORME_BASE",
-    "name": "Informe de estudio por imágenes",
+    "name": "Radiología e Imagenología — informe general de estudio por imágenes (ficha base)",
     "version": 2,
+    "kind": "BASE",
     "specialty": "RADIOLOGIA",
     "provenance": {
       "sourceTitle": "Norma Técnica de Salud para la Gestión de la Historia Clínica — NT N.º 022-MINSA/DGSP-V.02, informe de exámenes auxiliares por imágenes",
@@ -16870,9 +25838,1144 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
     ]
   },
   {
+    "code": "RADIO_INFORME_ECO_OBSTETRICA",
+    "name": "Informe de ecografía obstétrica",
+    "version": 1,
+    "kind": "SPECIFIC",
+    "specialty": "RADIOLOGIA",
+    "provenance": {
+      "sourceTitle": "Recomendaciones de la OMS sobre atención prenatal para una experiencia positiva del embarazo (2016)",
+      "organization": "Organización Mundial de la Salud (OMS)",
+      "url": "https://www.who.int/publications/i/item/9789241549912",
+      "license": "CC BY-NC-SA 3.0 IGO",
+      "retrievedAt": "2026-10-02",
+      "note": "Biometría, edad gestacional, líquido, placenta y vitalidad (recomendada antes de las 24 semanas por la OMS)."
+    },
+    "fields": [
+      {
+        "code": "indicacion_del_estudio",
+        "name": "Indicación del estudio",
+        "dataType": "text",
+        "required": true,
+        "section": "Solicitud"
+      },
+      {
+        "code": "diagnostico_presuntivo_solicitante",
+        "name": "Diagnóstico presuntivo del solicitante",
+        "dataType": "string",
+        "required": false,
+        "section": "Solicitud"
+      },
+      {
+        "code": "fecha_del_estudio",
+        "name": "Fecha del estudio",
+        "dataType": "date",
+        "required": false,
+        "section": "Solicitud"
+      },
+      {
+        "code": "numero_fetos",
+        "name": "Número de fetos",
+        "dataType": "integer",
+        "required": true,
+        "section": "Resultado: ecografía obstétrica"
+      },
+      {
+        "code": "actividad_cardiaca",
+        "name": "Actividad cardíaca presente",
+        "dataType": "boolean",
+        "required": true,
+        "section": "Resultado: ecografía obstétrica"
+      },
+      {
+        "code": "biometria",
+        "name": "Biometría (DBP, CC, CA, LF)",
+        "dataType": "string",
+        "required": false,
+        "section": "Resultado: ecografía obstétrica"
+      },
+      {
+        "code": "edad_gestacional_eco",
+        "name": "Edad gestacional por ecografía",
+        "dataType": "string",
+        "required": false,
+        "section": "Resultado: ecografía obstétrica"
+      },
+      {
+        "code": "presentacion",
+        "name": "Presentación",
+        "dataType": "string",
+        "required": false,
+        "section": "Resultado: ecografía obstétrica",
+        "options": [
+          "Cefálica",
+          "Podálica",
+          "Transversa"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "placenta",
+        "name": "Placenta",
+        "dataType": "string",
+        "required": false,
+        "section": "Resultado: ecografía obstétrica",
+        "options": [
+          "Normoinserta",
+          "Previa",
+          "Baja"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "liquido",
+        "name": "Líquido amniótico",
+        "dataType": "string",
+        "required": false,
+        "section": "Resultado: ecografía obstétrica",
+        "options": [
+          "Normal",
+          "Oligoamnios",
+          "Polihidramnios"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "conclusion",
+        "name": "Conclusión",
+        "dataType": "text",
+        "required": true,
+        "section": "Conclusión"
+      },
+      {
+        "code": "recomendacion",
+        "name": "Recomendación",
+        "dataType": "text",
+        "required": false,
+        "section": "Conclusión"
+      },
+      {
+        "code": "hallazgo_critico",
+        "name": "Hay un hallazgo crítico",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Conclusión"
+      },
+      {
+        "code": "hallazgo_critico_comunicado",
+        "name": "¿A quién se comunicó y a qué hora?",
+        "dataType": "string",
+        "required": true,
+        "section": "Conclusión",
+        "showWhen": {
+          "field": "hallazgo_critico",
+          "equals": true
+        }
+      }
+    ]
+  },
+  {
+    "code": "RADIO_INFORME_MAMOGRAFIA",
+    "name": "Informe de mamografía",
+    "version": 1,
+    "kind": "SPECIFIC",
+    "specialty": "RADIOLOGIA",
+    "provenance": {
+      "sourceTitle": "Breast Imaging Reporting and Data System (BI-RADS)",
+      "organization": "American College of Radiology (ACR)",
+      "url": "https://www.acr.org/Clinical-Resources/Clinical-Tools-and-Reference/Reporting-and-Data-Systems/BI-RADS",
+      "license": "Sólo las categorías 0 a 6, que son de uso clínico universal; no se reproduce el atlas",
+      "retrievedAt": "2026-10-02",
+      "note": "Composición mamaria, hallazgos y categoría BI-RADS (0 a 6) con su conducta."
+    },
+    "fields": [
+      {
+        "code": "indicacion_del_estudio",
+        "name": "Indicación del estudio",
+        "dataType": "text",
+        "required": true,
+        "section": "Solicitud"
+      },
+      {
+        "code": "diagnostico_presuntivo_solicitante",
+        "name": "Diagnóstico presuntivo del solicitante",
+        "dataType": "string",
+        "required": false,
+        "section": "Solicitud"
+      },
+      {
+        "code": "fecha_del_estudio",
+        "name": "Fecha del estudio",
+        "dataType": "date",
+        "required": false,
+        "section": "Solicitud"
+      },
+      {
+        "code": "tipo_de_mamografia",
+        "name": "Tipo",
+        "dataType": "string",
+        "required": true,
+        "section": "Resultado: mamografía",
+        "options": [
+          "Tamizaje",
+          "Diagnóstica",
+          "Control"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "composicion",
+        "name": "Composición mamaria",
+        "dataType": "string",
+        "required": false,
+        "section": "Resultado: mamografía",
+        "options": [
+          "a — grasa",
+          "b — densidades fibroglandulares dispersas",
+          "c — heterogéneamente densa",
+          "d — extremadamente densa"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "hallazgos_mama",
+        "name": "Hallazgos",
+        "dataType": "json",
+        "required": true,
+        "section": "Resultado: mamografía",
+        "options": [
+          "Nódulo",
+          "Calcificaciones",
+          "Distorsión de la arquitectura",
+          "Asimetría",
+          "Adenopatía axilar",
+          "Ninguno"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "birads",
+        "name": "Categoría BI-RADS",
+        "dataType": "string",
+        "required": true,
+        "section": "Resultado: mamografía",
+        "options": [
+          "0 — incompleto",
+          "1 — negativo",
+          "2 — benigno",
+          "3 — probablemente benigno",
+          "4 — sospechoso",
+          "5 — altamente sugestivo de malignidad",
+          "6 — malignidad confirmada"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "conclusion",
+        "name": "Conclusión",
+        "dataType": "text",
+        "required": true,
+        "section": "Conclusión"
+      },
+      {
+        "code": "recomendacion",
+        "name": "Recomendación",
+        "dataType": "text",
+        "required": false,
+        "section": "Conclusión"
+      },
+      {
+        "code": "hallazgo_critico",
+        "name": "Hay un hallazgo crítico",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Conclusión"
+      },
+      {
+        "code": "hallazgo_critico_comunicado",
+        "name": "¿A quién se comunicó y a qué hora?",
+        "dataType": "string",
+        "required": true,
+        "section": "Conclusión",
+        "showWhen": {
+          "field": "hallazgo_critico",
+          "equals": true
+        }
+      }
+    ]
+  },
+  {
+    "code": "RADIO_INFORME_RX_TORAX",
+    "name": "Informe de radiografía de tórax",
+    "version": 1,
+    "kind": "SPECIFIC",
+    "specialty": "RADIOLOGIA",
+    "provenance": {
+      "sourceTitle": "Norma Técnica de Salud para la Gestión de la Historia Clínica — NT N.º 022-MINSA/DGSP-V.02",
+      "organization": "Ministerio de Salud del Perú (MINSA)",
+      "url": "https://bvs.minsa.gob.pe/local/dgsp/NT022hist.pdf",
+      "license": "Norma técnica estatal de acceso público",
+      "retrievedAt": "2026-10-02",
+      "note": "Lectura sistemática: técnica, partes blandas, huesos, mediastino, corazón, pulmones y pleura."
+    },
+    "fields": [
+      {
+        "code": "indicacion_del_estudio",
+        "name": "Indicación del estudio",
+        "dataType": "text",
+        "required": true,
+        "section": "Solicitud"
+      },
+      {
+        "code": "diagnostico_presuntivo_solicitante",
+        "name": "Diagnóstico presuntivo del solicitante",
+        "dataType": "string",
+        "required": false,
+        "section": "Solicitud"
+      },
+      {
+        "code": "fecha_del_estudio",
+        "name": "Fecha del estudio",
+        "dataType": "date",
+        "required": false,
+        "section": "Solicitud"
+      },
+      {
+        "code": "proyeccion",
+        "name": "Proyección",
+        "dataType": "string",
+        "required": true,
+        "section": "Resultado: radiografía de tórax",
+        "options": [
+          "PA",
+          "AP",
+          "Lateral"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "tecnica_adecuada",
+        "name": "Técnica",
+        "dataType": "string",
+        "required": false,
+        "section": "Resultado: radiografía de tórax",
+        "options": [
+          "Adecuada",
+          "Rotada",
+          "Subpenetrada",
+          "Inspiración insuficiente"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "hallazgos_torax",
+        "name": "Hallazgos",
+        "dataType": "json",
+        "required": true,
+        "section": "Resultado: radiografía de tórax",
+        "options": [
+          "Consolidación",
+          "Infiltrado intersticial",
+          "Derrame pleural",
+          "Neumotórax",
+          "Cardiomegalia",
+          "Nódulo o masa",
+          "Cavitación",
+          "Sin hallazgos"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "indice_cardiotoracico",
+        "name": "Índice cardiotorácico",
+        "dataType": "decimal",
+        "required": false,
+        "section": "Resultado: radiografía de tórax"
+      },
+      {
+        "code": "conclusion",
+        "name": "Conclusión",
+        "dataType": "text",
+        "required": true,
+        "section": "Conclusión"
+      },
+      {
+        "code": "recomendacion",
+        "name": "Recomendación",
+        "dataType": "text",
+        "required": false,
+        "section": "Conclusión"
+      },
+      {
+        "code": "hallazgo_critico",
+        "name": "Hay un hallazgo crítico",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Conclusión"
+      },
+      {
+        "code": "hallazgo_critico_comunicado",
+        "name": "¿A quién se comunicó y a qué hora?",
+        "dataType": "string",
+        "required": true,
+        "section": "Conclusión",
+        "showWhen": {
+          "field": "hallazgo_critico",
+          "equals": true
+        }
+      }
+    ]
+  },
+  {
+    "code": "REUMA_CTRL_AR",
+    "name": "Control de artritis reumatoide",
+    "version": 1,
+    "kind": "SPECIFIC",
+    "specialty": "REUMATOLOGIA",
+    "provenance": {
+      "sourceTitle": "Recomendaciones EULAR",
+      "organization": "European Alliance of Associations for Rheumatology (EULAR)",
+      "url": "https://www.eular.org/recommendations",
+      "license": "Guía de acceso público; se usan sus categorías clínicas, no su texto",
+      "retrievedAt": "2026-10-02",
+      "note": "Actividad por DAS28 (índice publicado) con recuento de 28 articulaciones; seguimiento de fármacos modificadores."
+    },
+    "fields": [
+      {
+        "code": "tipo_de_control",
+        "name": "Tipo de consulta",
+        "dataType": "string",
+        "required": true,
+        "section": "Seguimiento",
+        "options": [
+          "Primera evaluación de la condición",
+          "Control programado",
+          "Descompensación o consulta no programada",
+          "Control posterior a internación"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "fecha_del_diagnostico",
+        "name": "Fecha del diagnóstico de artritis reumatoide",
+        "dataType": "date",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "tratamiento_actual",
+        "name": "Tratamiento actual (fármaco, dosis y frecuencia)",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "adherencia",
+        "name": "Adherencia al tratamiento",
+        "dataType": "string",
+        "required": false,
+        "section": "Seguimiento",
+        "options": [
+          "Toma el tratamiento como está indicado",
+          "Olvida dosis algunas veces",
+          "Abandonó el tratamiento",
+          "Todavía sin tratamiento"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "efectos_adversos",
+        "name": "¿Tuvo efectos adversos del tratamiento?",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "efectos_adversos_cuales",
+        "name": "¿Cuáles y con qué fármaco?",
+        "dataType": "text",
+        "required": true,
+        "section": "Seguimiento",
+        "showWhen": {
+          "field": "efectos_adversos",
+          "equals": true
+        }
+      },
+      {
+        "code": "evolucion_desde_ultimo_control",
+        "name": "Evolución desde el último control",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "articulaciones_dolorosas_28",
+        "name": "Articulaciones dolorosas (de 28)",
+        "dataType": "integer",
+        "required": true,
+        "section": "Evaluación: artritis reumatoide"
+      },
+      {
+        "code": "articulaciones_tumefactas_28",
+        "name": "Articulaciones tumefactas (de 28)",
+        "dataType": "integer",
+        "required": true,
+        "section": "Evaluación: artritis reumatoide"
+      },
+      {
+        "code": "vsg",
+        "name": "VSG (mm/h)",
+        "dataType": "decimal",
+        "required": false,
+        "section": "Evaluación: artritis reumatoide"
+      },
+      {
+        "code": "pcr",
+        "name": "PCR (mg/L)",
+        "dataType": "decimal",
+        "required": false,
+        "section": "Evaluación: artritis reumatoide"
+      },
+      {
+        "code": "evaluacion_global_paciente",
+        "name": "Evaluación global del paciente (0 a 100)",
+        "dataType": "integer",
+        "required": false,
+        "section": "Evaluación: artritis reumatoide"
+      },
+      {
+        "code": "das28",
+        "name": "DAS28",
+        "dataType": "decimal",
+        "required": false,
+        "section": "Evaluación: artritis reumatoide"
+      },
+      {
+        "code": "actividad_das28",
+        "name": "Actividad",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación: artritis reumatoide",
+        "options": [
+          "Remisión (< 2,6)",
+          "Baja (2,6–3,2)",
+          "Moderada (3,2–5,1)",
+          "Alta (> 5,1)"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "rigidez_matinal_minutos",
+        "name": "Rigidez matinal (minutos)",
+        "dataType": "integer",
+        "required": false,
+        "section": "Evaluación: artritis reumatoide"
+      },
+      {
+        "code": "ar_controles_farmacos",
+        "name": "Controles de seguridad al día",
+        "dataType": "json",
+        "required": false,
+        "section": "Complicaciones y daño de órgano",
+        "options": [
+          "Hemograma",
+          "Transaminasas",
+          "Creatinina",
+          "Tamizaje de tuberculosis antes de biológico"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "metas_cumplidas",
+        "name": "Metas de control que cumple hoy",
+        "dataType": "json",
+        "required": false,
+        "section": "Metas y plan",
+        "options": [
+          "Remisión o baja actividad",
+          "Ninguna todavía"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "educacion_brindada",
+        "name": "Educación brindada en esta consulta",
+        "dataType": "json",
+        "required": false,
+        "section": "Metas y plan",
+        "options": [
+          "Adherencia al metotrexato y ácido fólico",
+          "Ejercicio",
+          "Protección articular"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "diagnostico",
+        "name": "Diagnóstico (con código CIE-10 si se conoce)",
+        "dataType": "text",
+        "required": true,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "plan",
+        "name": "Plan: tratamiento, estudios, interconsultas y destino",
+        "dataType": "text",
+        "required": false,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "proximo_control",
+        "name": "Próximo control",
+        "dataType": "date",
+        "required": false,
+        "section": "Metas y plan"
+      }
+    ]
+  },
+  {
+    "code": "REUMA_CTRL_ARTROSIS",
+    "name": "Control de artrosis",
+    "version": 1,
+    "kind": "SPECIFIC",
+    "specialty": "REUMATOLOGIA",
+    "provenance": {
+      "sourceTitle": "Norma Técnica de Salud para la Gestión de la Historia Clínica — NT N.º 022-MINSA/DGSP-V.02",
+      "organization": "Ministerio de Salud del Perú (MINSA)",
+      "url": "https://bvs.minsa.gob.pe/local/dgsp/NT022hist.pdf",
+      "license": "Norma técnica estatal de acceso público",
+      "retrievedAt": "2026-10-02",
+      "note": "Articulaciones afectadas, dolor y función."
+    },
+    "fields": [
+      {
+        "code": "tipo_de_control",
+        "name": "Tipo de consulta",
+        "dataType": "string",
+        "required": true,
+        "section": "Seguimiento",
+        "options": [
+          "Primera evaluación de la condición",
+          "Control programado",
+          "Descompensación o consulta no programada",
+          "Control posterior a internación"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "fecha_del_diagnostico",
+        "name": "Fecha del diagnóstico de artrosis",
+        "dataType": "date",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "tratamiento_actual",
+        "name": "Tratamiento actual (fármaco, dosis y frecuencia)",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "adherencia",
+        "name": "Adherencia al tratamiento",
+        "dataType": "string",
+        "required": false,
+        "section": "Seguimiento",
+        "options": [
+          "Toma el tratamiento como está indicado",
+          "Olvida dosis algunas veces",
+          "Abandonó el tratamiento",
+          "Todavía sin tratamiento"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "efectos_adversos",
+        "name": "¿Tuvo efectos adversos del tratamiento?",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "efectos_adversos_cuales",
+        "name": "¿Cuáles y con qué fármaco?",
+        "dataType": "text",
+        "required": true,
+        "section": "Seguimiento",
+        "showWhen": {
+          "field": "efectos_adversos",
+          "equals": true
+        }
+      },
+      {
+        "code": "evolucion_desde_ultimo_control",
+        "name": "Evolución desde el último control",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "artrosis_sitio",
+        "name": "Articulaciones",
+        "dataType": "json",
+        "required": true,
+        "section": "Evaluación: artrosis",
+        "options": [
+          "Rodilla",
+          "Cadera",
+          "Manos",
+          "Columna"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "dolor_intensidad",
+        "name": "Dolor (0 a 10)",
+        "dataType": "integer",
+        "required": true,
+        "section": "Evaluación: artrosis"
+      },
+      {
+        "code": "limitacion",
+        "name": "Limitación funcional",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: artrosis",
+        "options": [
+          "Ninguna",
+          "Leve",
+          "Moderada",
+          "Grave"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "imc",
+        "name": "IMC (kg/m²)",
+        "dataType": "decimal",
+        "required": false,
+        "section": "Evaluación: artrosis"
+      },
+      {
+        "code": "metas_cumplidas",
+        "name": "Metas de control que cumple hoy",
+        "dataType": "json",
+        "required": false,
+        "section": "Metas y plan",
+        "options": [
+          "Dolor ≤ 3",
+          "Hace ejercicio terapéutico",
+          "Ninguna todavía"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "educacion_brindada",
+        "name": "Educación brindada en esta consulta",
+        "dataType": "json",
+        "required": false,
+        "section": "Metas y plan",
+        "options": [
+          "Ejercicio de fortalecimiento",
+          "Bajar de peso",
+          "Uso de bastón"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "diagnostico",
+        "name": "Diagnóstico (con código CIE-10 si se conoce)",
+        "dataType": "text",
+        "required": true,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "plan",
+        "name": "Plan: tratamiento, estudios, interconsultas y destino",
+        "dataType": "text",
+        "required": false,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "proximo_control",
+        "name": "Próximo control",
+        "dataType": "date",
+        "required": false,
+        "section": "Metas y plan"
+      }
+    ]
+  },
+  {
+    "code": "REUMA_CTRL_GOTA",
+    "name": "Control de gota",
+    "version": 1,
+    "kind": "SPECIFIC",
+    "specialty": "REUMATOLOGIA",
+    "provenance": {
+      "sourceTitle": "Recomendaciones EULAR",
+      "organization": "European Alliance of Associations for Rheumatology (EULAR)",
+      "url": "https://www.eular.org/recommendations",
+      "license": "Guía de acceso público; se usan sus categorías clínicas, no su texto",
+      "retrievedAt": "2026-10-02",
+      "note": "Crisis, tofos y meta de uricemia < 6 mg/dL."
+    },
+    "fields": [
+      {
+        "code": "tipo_de_control",
+        "name": "Tipo de consulta",
+        "dataType": "string",
+        "required": true,
+        "section": "Seguimiento",
+        "options": [
+          "Primera evaluación de la condición",
+          "Control programado",
+          "Descompensación o consulta no programada",
+          "Control posterior a internación"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "fecha_del_diagnostico",
+        "name": "Fecha del diagnóstico de gota",
+        "dataType": "date",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "tratamiento_actual",
+        "name": "Tratamiento actual (fármaco, dosis y frecuencia)",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "adherencia",
+        "name": "Adherencia al tratamiento",
+        "dataType": "string",
+        "required": false,
+        "section": "Seguimiento",
+        "options": [
+          "Toma el tratamiento como está indicado",
+          "Olvida dosis algunas veces",
+          "Abandonó el tratamiento",
+          "Todavía sin tratamiento"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "efectos_adversos",
+        "name": "¿Tuvo efectos adversos del tratamiento?",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "efectos_adversos_cuales",
+        "name": "¿Cuáles y con qué fármaco?",
+        "dataType": "text",
+        "required": true,
+        "section": "Seguimiento",
+        "showWhen": {
+          "field": "efectos_adversos",
+          "equals": true
+        }
+      },
+      {
+        "code": "evolucion_desde_ultimo_control",
+        "name": "Evolución desde el último control",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "crisis_gota_anio",
+        "name": "Crisis en el último año",
+        "dataType": "integer",
+        "required": true,
+        "section": "Evaluación: gota"
+      },
+      {
+        "code": "acido_urico",
+        "name": "Ácido úrico (mg/dL)",
+        "dataType": "decimal",
+        "required": true,
+        "section": "Evaluación: gota"
+      },
+      {
+        "code": "tofos",
+        "name": "Tofos",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Evaluación: gota"
+      },
+      {
+        "code": "gota_comorbilidades",
+        "name": "Comorbilidades",
+        "dataType": "json",
+        "required": false,
+        "section": "Evaluación: gota",
+        "options": [
+          "Hipertensión",
+          "Enfermedad renal",
+          "Diabetes",
+          "Obesidad",
+          "Ninguna"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "metas_cumplidas",
+        "name": "Metas de control que cumple hoy",
+        "dataType": "json",
+        "required": false,
+        "section": "Metas y plan",
+        "options": [
+          "Ácido úrico < 6 mg/dL",
+          "Sin crisis",
+          "Ninguna todavía"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "educacion_brindada",
+        "name": "Educación brindada en esta consulta",
+        "dataType": "json",
+        "required": false,
+        "section": "Metas y plan",
+        "options": [
+          "Reducir alcohol y bebidas azucaradas",
+          "No suspender el alopurinol en una crisis"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "diagnostico",
+        "name": "Diagnóstico (con código CIE-10 si se conoce)",
+        "dataType": "text",
+        "required": true,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "plan",
+        "name": "Plan: tratamiento, estudios, interconsultas y destino",
+        "dataType": "text",
+        "required": false,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "proximo_control",
+        "name": "Próximo control",
+        "dataType": "date",
+        "required": false,
+        "section": "Metas y plan"
+      }
+    ]
+  },
+  {
+    "code": "REUMA_CTRL_LES",
+    "name": "Control de lupus eritematoso sistémico",
+    "version": 1,
+    "kind": "SPECIFIC",
+    "specialty": "REUMATOLOGIA",
+    "provenance": {
+      "sourceTitle": "Recomendaciones EULAR",
+      "organization": "European Alliance of Associations for Rheumatology (EULAR)",
+      "url": "https://www.eular.org/recommendations",
+      "license": "Guía de acceso público; se usan sus categorías clínicas, no su texto",
+      "retrievedAt": "2026-10-02",
+      "note": "Órganos comprometidos, actividad y vigilancia renal."
+    },
+    "fields": [
+      {
+        "code": "tipo_de_control",
+        "name": "Tipo de consulta",
+        "dataType": "string",
+        "required": true,
+        "section": "Seguimiento",
+        "options": [
+          "Primera evaluación de la condición",
+          "Control programado",
+          "Descompensación o consulta no programada",
+          "Control posterior a internación"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "fecha_del_diagnostico",
+        "name": "Fecha del diagnóstico de lupus eritematoso sistémico",
+        "dataType": "date",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "tratamiento_actual",
+        "name": "Tratamiento actual (fármaco, dosis y frecuencia)",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "adherencia",
+        "name": "Adherencia al tratamiento",
+        "dataType": "string",
+        "required": false,
+        "section": "Seguimiento",
+        "options": [
+          "Toma el tratamiento como está indicado",
+          "Olvida dosis algunas veces",
+          "Abandonó el tratamiento",
+          "Todavía sin tratamiento"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "efectos_adversos",
+        "name": "¿Tuvo efectos adversos del tratamiento?",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "efectos_adversos_cuales",
+        "name": "¿Cuáles y con qué fármaco?",
+        "dataType": "text",
+        "required": true,
+        "section": "Seguimiento",
+        "showWhen": {
+          "field": "efectos_adversos",
+          "equals": true
+        }
+      },
+      {
+        "code": "evolucion_desde_ultimo_control",
+        "name": "Evolución desde el último control",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "les_actividad",
+        "name": "Manifestaciones activas",
+        "dataType": "json",
+        "required": true,
+        "section": "Evaluación: lupus eritematoso sistémico",
+        "options": [
+          "Artritis",
+          "Lesiones cutáneas",
+          "Úlceras orales",
+          "Serositis",
+          "Nefritis",
+          "Citopenias",
+          "Neurológico",
+          "Ninguna"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "proteinuria_24h",
+        "name": "Proteinuria de 24 h (g)",
+        "dataType": "decimal",
+        "required": false,
+        "section": "Evaluación: lupus eritematoso sistémico"
+      },
+      {
+        "code": "creatinina",
+        "name": "Creatinina (mg/dL)",
+        "dataType": "decimal",
+        "required": false,
+        "section": "Evaluación: lupus eritematoso sistémico"
+      },
+      {
+        "code": "complemento",
+        "name": "Complemento C3/C4",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: lupus eritematoso sistémico"
+      },
+      {
+        "code": "anti_dna",
+        "name": "Anti-ADN",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: lupus eritematoso sistémico"
+      },
+      {
+        "code": "hidroxicloroquina",
+        "name": "Recibe hidroxicloroquina",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Evaluación: lupus eritematoso sistémico"
+      },
+      {
+        "code": "control_oftalmologico",
+        "name": "Control oftalmológico anual",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: lupus eritematoso sistémico",
+        "options": [
+          "Al día",
+          "Pendiente"
+        ],
+        "multiple": false,
+        "showWhen": {
+          "field": "hidroxicloroquina",
+          "equals": true
+        }
+      },
+      {
+        "code": "metas_cumplidas",
+        "name": "Metas de control que cumple hoy",
+        "dataType": "json",
+        "required": false,
+        "section": "Metas y plan",
+        "options": [
+          "Sin actividad",
+          "Corticoide ≤ 5 mg/día de prednisona",
+          "Ninguna todavía"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "educacion_brindada",
+        "name": "Educación brindada en esta consulta",
+        "dataType": "json",
+        "required": false,
+        "section": "Metas y plan",
+        "options": [
+          "Fotoprotección",
+          "Anticoncepción y planificación del embarazo"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "diagnostico",
+        "name": "Diagnóstico (con código CIE-10 si se conoce)",
+        "dataType": "text",
+        "required": true,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "plan",
+        "name": "Plan: tratamiento, estudios, interconsultas y destino",
+        "dataType": "text",
+        "required": false,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "proximo_control",
+        "name": "Próximo control",
+        "dataType": "date",
+        "required": false,
+        "section": "Metas y plan"
+      }
+    ]
+  },
+  {
     "code": "REUMA_EVALUACION_BASE",
-    "name": "Evaluación reumatológica",
+    "name": "Reumatología — consulta inicial (ficha base)",
     "version": 2,
+    "kind": "BASE",
     "specialty": "REUMATOLOGIA",
     "provenance": {
       "sourceTitle": "Norma Técnica de Salud para la Gestión de la Historia Clínica — NT N.º 022-MINSA/DGSP-V.02, anamnesis y examen del aparato locomotor",
@@ -17052,177 +27155,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
         ],
         "multiple": false,
         "allowOther": true,
-        "description": "Al elegirlo se abren las observaciones que ese cuadro exige registrar."
-      },
-      {
-        "code": "ar_fr_ccp",
-        "name": "Factor reumatoide o anti-CCP positivo",
-        "dataType": "boolean",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Artritis reumatoide"
-        }
-      },
-      {
-        "code": "ar_erosiones",
-        "name": "Erosiones en radiografía",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Artritis reumatoide"
-        }
-      },
-      {
-        "code": "ar_das28",
-        "name": "DAS28",
-        "dataType": "decimal",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Artritis reumatoide"
-        }
-      },
-      {
-        "code": "artrosis_sitio",
-        "name": "Articulaciones",
-        "dataType": "json",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Rodilla",
-          "Cadera",
-          "Manos",
-          "Columna"
-        ],
-        "multiple": true,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Artrosis"
-        }
-      },
-      {
-        "code": "artrosis_crepitacion",
-        "name": "Crepitación",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Artrosis"
-        }
-      },
-      {
-        "code": "acido_urico",
-        "name": "Ácido úrico (mg/dL)",
-        "dataType": "decimal",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Gota"
-        }
-      },
-      {
-        "code": "gota_tofos",
-        "name": "Tofos",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Gota"
-        }
-      },
-      {
-        "code": "gota_podagra",
-        "name": "Compromiso de la primera metatarsofalángica",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Gota"
-        }
-      },
-      {
-        "code": "les_ana",
-        "name": "ANA positivo",
-        "dataType": "boolean",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Lupus eritematoso sistémico"
-        }
-      },
-      {
-        "code": "les_organos",
-        "name": "Órganos comprometidos",
-        "dataType": "json",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Piel",
-          "Articulaciones",
-          "Riñón",
-          "Hematológico",
-          "Serosas",
-          "Neurológico"
-        ],
-        "multiple": true,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Lupus eritematoso sistémico"
-        }
-      },
-      {
-        "code": "espondilo_dolor_inflamatorio",
-        "name": "Lumbalgia inflamatoria de más de 3 meses",
-        "dataType": "boolean",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Espondiloartritis"
-        }
-      },
-      {
-        "code": "espondilo_hla_b27",
-        "name": "HLA-B27 positivo",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Espondiloartritis"
-        }
-      },
-      {
-        "code": "fibro_iid",
-        "name": "Índice de dolor generalizado (0–19)",
-        "dataType": "integer",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Fibromialgia"
-        }
-      },
-      {
-        "code": "fibro_sss",
-        "name": "Escala de gravedad de síntomas (0–12)",
-        "dataType": "integer",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Fibromialgia"
-        }
+        "description": "Si el cuadro ya está diagnosticado, el seguimiento se hace con su ficha específica de la especialidad."
       },
       {
         "code": "diagnostico",
@@ -17245,6 +27178,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
     "code": "TRANSV_ANAMNESIS_GENERAL",
     "name": "Anamnesis / Historia clínica general",
     "version": 2,
+    "kind": "GENERAL",
     "specialty": "TRANSVERSAL",
     "provenance": {
       "sourceTitle": "Norma Técnica de Salud para la Gestión de la Historia Clínica — NT N.º 022-MINSA/DGSP-V.02, formatos de historia clínica",
@@ -17597,6 +27531,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
     "code": "TRANSV_CONSENTIMIENTO_INFORMADO",
     "name": "Consentimiento informado",
     "version": 2,
+    "kind": "GENERAL",
     "specialty": "TRANSVERSAL",
     "provenance": {
       "sourceTitle": "Modelo de consentimiento informado — Resolución 1738",
@@ -17753,6 +27688,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
     "code": "TRANSV_EPICRISIS",
     "name": "Epicrisis / Resumen de egreso",
     "version": 2,
+    "kind": "GENERAL",
     "specialty": "TRANSVERSAL",
     "provenance": {
       "sourceTitle": "Resolución 1995 de 1999 — normas para el manejo de la historia clínica: epicrisis y resumen de egreso",
@@ -17902,6 +27838,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
     "code": "TRANSV_EXAMEN_FISICO",
     "name": "Examen físico general",
     "version": 2,
+    "kind": "GENERAL",
     "specialty": "TRANSVERSAL",
     "provenance": {
       "sourceTitle": "Norma Técnica de Salud para la Gestión de la Historia Clínica — NT N.º 022-MINSA/DGSP-V.02, examen físico y funciones vitales",
@@ -18141,9 +28078,252 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
     ]
   },
   {
+    "code": "TRAUMA_CTRL_FRACTURA",
+    "name": "Control de fractura",
+    "version": 1,
+    "kind": "SPECIFIC",
+    "specialty": "TRAUMATOLOGIA",
+    "provenance": {
+      "sourceTitle": "Norma Técnica de Salud para la Gestión de la Historia Clínica — NT N.º 022-MINSA/DGSP-V.02",
+      "organization": "Ministerio de Salud del Perú (MINSA)",
+      "url": "https://bvs.minsa.gob.pe/local/dgsp/NT022hist.pdf",
+      "license": "Norma técnica estatal de acceso público",
+      "retrievedAt": "2026-10-02",
+      "note": "Inmovilización, estado neurovascular, consolidación radiológica y rehabilitación."
+    },
+    "fields": [
+      {
+        "code": "tipo_de_evaluacion",
+        "name": "Tipo de evaluación",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación inicial",
+        "options": [
+          "Evaluación inicial",
+          "Reevaluación"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "inicio_de_sintomas",
+        "name": "Inicio de los síntomas (fecha u hora)",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación inicial"
+      },
+      {
+        "code": "tratamiento_previo",
+        "name": "Tratamiento recibido antes de esta consulta",
+        "dataType": "text",
+        "required": false,
+        "section": "Evaluación inicial"
+      },
+      {
+        "code": "fractura_hueso",
+        "name": "Hueso y segmento",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación: fractura"
+      },
+      {
+        "code": "fecha_fractura",
+        "name": "Fecha de la fractura",
+        "dataType": "date",
+        "required": false,
+        "section": "Evaluación: fractura"
+      },
+      {
+        "code": "tratamiento_fractura",
+        "name": "Tratamiento",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: fractura",
+        "options": [
+          "Yeso o férula",
+          "Cirugía con osteosíntesis",
+          "Funcional"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "neurovascular",
+        "name": "Estado neurovascular distal",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación: fractura",
+        "options": [
+          "Conservado",
+          "Alterado"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "compartimental",
+        "name": "Dolor desproporcionado (descartar síndrome compartimental)",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Evaluación: fractura"
+      },
+      {
+        "code": "consolidacion",
+        "name": "Consolidación radiológica",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: fractura",
+        "options": [
+          "Sin callo",
+          "Callo en formación",
+          "Consolidada",
+          "Retardo"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "carga",
+        "name": "Carga permitida",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: fractura",
+        "options": [
+          "Sin carga",
+          "Parcial",
+          "Total"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "diagnostico",
+        "name": "Diagnóstico (con código CIE-10 si se conoce)",
+        "dataType": "text",
+        "required": true,
+        "section": "Conclusión y plan"
+      },
+      {
+        "code": "plan",
+        "name": "Plan: tratamiento, estudios, interconsultas y destino",
+        "dataType": "text",
+        "required": false,
+        "section": "Conclusión y plan"
+      }
+    ]
+  },
+  {
+    "code": "TRAUMA_CTRL_RODILLA",
+    "name": "Rodilla dolorosa: evaluación",
+    "version": 1,
+    "kind": "SPECIFIC",
+    "specialty": "TRAUMATOLOGIA",
+    "provenance": {
+      "sourceTitle": "Norma Técnica de Salud para la Gestión de la Historia Clínica — NT N.º 022-MINSA/DGSP-V.02",
+      "organization": "Ministerio de Salud del Perú (MINSA)",
+      "url": "https://bvs.minsa.gob.pe/local/dgsp/NT022hist.pdf",
+      "license": "Norma técnica estatal de acceso público",
+      "retrievedAt": "2026-10-02",
+      "note": "Mecanismo, derrame, maniobras meniscales y ligamentarias y reglas de Ottawa."
+    },
+    "fields": [
+      {
+        "code": "tipo_de_evaluacion",
+        "name": "Tipo de evaluación",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación inicial",
+        "options": [
+          "Evaluación inicial",
+          "Reevaluación"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "inicio_de_sintomas",
+        "name": "Inicio de los síntomas (fecha u hora)",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación inicial"
+      },
+      {
+        "code": "tratamiento_previo",
+        "name": "Tratamiento recibido antes de esta consulta",
+        "dataType": "text",
+        "required": false,
+        "section": "Evaluación inicial"
+      },
+      {
+        "code": "lado",
+        "name": "Lado",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación: rodilla dolorosa",
+        "options": [
+          "Derecha",
+          "Izquierda"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "mecanismo",
+        "name": "Mecanismo",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: rodilla dolorosa",
+        "options": [
+          "Torsión",
+          "Golpe directo",
+          "Sin traumatismo"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "derrame",
+        "name": "Derrame",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Evaluación: rodilla dolorosa"
+      },
+      {
+        "code": "maniobras",
+        "name": "Maniobras positivas",
+        "dataType": "json",
+        "required": false,
+        "section": "Evaluación: rodilla dolorosa",
+        "options": [
+          "Lachman",
+          "Cajón anterior",
+          "McMurray",
+          "Bostezo varo",
+          "Bostezo valgo",
+          "Ninguna"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "ottawa",
+        "name": "Reglas de Ottawa positivas (pedir radiografía)",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Evaluación: rodilla dolorosa"
+      },
+      {
+        "code": "diagnostico",
+        "name": "Diagnóstico (con código CIE-10 si se conoce)",
+        "dataType": "text",
+        "required": true,
+        "section": "Conclusión y plan"
+      },
+      {
+        "code": "plan",
+        "name": "Plan: tratamiento, estudios, interconsultas y destino",
+        "dataType": "text",
+        "required": false,
+        "section": "Conclusión y plan"
+      }
+    ]
+  },
+  {
     "code": "TRAUMA_EVALUACION_BASE",
-    "name": "Evaluación musculoesquelética — versión general base",
+    "name": "Traumatología y ortopedia — consulta inicial (ficha base)",
     "version": 2,
+    "kind": "BASE",
     "specialty": "TRAUMATOLOGIA",
     "provenance": {
       "sourceTitle": "Norma Técnica de Salud para la Gestión de la Historia Clínica — NT N.º 022-MINSA/DGSP-V.02, examen del aparato locomotor",
@@ -18152,7 +28332,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
       "license": "Norma técnica estatal de acceso público",
       "sourceVersion": "V.02",
       "retrievedAt": "2026-08-14",
-      "note": "Estructura de anamnesis y examen locomotor del formato oficial. Las escalas funcionales de sociedades científicas quedaron fuera por licencia — ver README. v2 (2026-10-02): reorganizada en secciones (motivo, antecedentes, examen, diagnóstico presuntivo, plan); las clasificaciones con categorías finitas pasan a lista cerrada; cada sí/no que tiene detalle pregunta «¿cuál?»; el diagnóstico presuntivo abre las observaciones que ese cuadro exige registrar. Instrumentos de uso libre incorporados: clasificación de Gustilo, reglas de Ottawa, escala de fuerza MRC."
+      "note": "Estructura de anamnesis y examen locomotor del formato oficial. Las escalas funcionales de sociedades científicas quedaron fuera por licencia — ver README. v2 (2026-10-02): reorganizada en secciones (motivo, antecedentes, examen, diagnóstico presuntivo, plan); las clasificaciones con categorías finitas pasan a lista cerrada; cada sí/no que tiene detalle pregunta «¿cuál?»; el diagnóstico presuntivo abre las observaciones que ese cuadro exige registrar. Instrumentos de uso libre incorporados: clasificación de Gustilo, escala de fuerza MRC."
     },
     "fields": [
       {
@@ -18384,161 +28564,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
         ],
         "multiple": false,
         "allowOther": true,
-        "description": "Al elegirlo se abren las observaciones que ese cuadro exige registrar."
-      },
-      {
-        "code": "fractura_hueso",
-        "name": "Hueso y segmento",
-        "dataType": "string",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Fractura"
-        }
-      },
-      {
-        "code": "fractura_tipo",
-        "name": "Tipo",
-        "dataType": "string",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Cerrada",
-          "Expuesta"
-        ],
-        "multiple": false,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Fractura"
-        }
-      },
-      {
-        "code": "fractura_desplazamiento",
-        "name": "Desplazamiento",
-        "dataType": "string",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "No desplazada",
-          "Desplazada",
-          "Conminuta"
-        ],
-        "multiple": false,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Fractura"
-        }
-      },
-      {
-        "code": "esguince_grado",
-        "name": "Grado",
-        "dataType": "string",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "I — distensión",
-          "II — rotura parcial",
-          "III — rotura completa"
-        ],
-        "multiple": false,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Esguince"
-        }
-      },
-      {
-        "code": "ottawa",
-        "name": "Reglas de Ottawa positivas (tobillo/rodilla)",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Esguince"
-        }
-      },
-      {
-        "code": "luxacion_articulacion",
-        "name": "Articulación",
-        "dataType": "string",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Luxación"
-        }
-      },
-      {
-        "code": "luxacion_reducida",
-        "name": "Reducida",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Luxación"
-        }
-      },
-      {
-        "code": "rodilla_pruebas",
-        "name": "Pruebas positivas",
-        "dataType": "json",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Lachman",
-          "Cajón anterior",
-          "McMurray",
-          "Bostezo varo/valgo",
-          "Ninguna"
-        ],
-        "multiple": true,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Lesión meniscal o ligamentaria de rodilla"
-        }
-      },
-      {
-        "code": "rodilla_derrame",
-        "name": "Derrame",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Lesión meniscal o ligamentaria de rodilla"
-        }
-      },
-      {
-        "code": "lumbalgia_banderas_trauma",
-        "name": "Banderas rojas",
-        "dataType": "json",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Déficit neurológico",
-          "Alteración de esfínteres",
-          "Fiebre",
-          "Antecedente de cáncer",
-          "Ninguna"
-        ],
-        "multiple": true,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Lumbalgia mecánica"
-        }
-      },
-      {
-        "code": "tendon",
-        "name": "Tendón afectado",
-        "dataType": "string",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Tendinopatía"
-        }
+        "description": "Si el cuadro ya está diagnosticado, el seguimiento se hace con su ficha específica de la especialidad."
       },
       {
         "code": "conducta",
@@ -18550,9 +28576,578 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
     ]
   },
   {
+    "code": "UCI_CTRL_SEPSIS",
+    "name": "Sepsis y shock séptico en cuidados intensivos",
+    "version": 1,
+    "kind": "SPECIFIC",
+    "specialty": "MEDICINA_INTENSIVA",
+    "provenance": {
+      "sourceTitle": "Norma Técnica de Salud para la Gestión de la Historia Clínica — NT N.º 022-MINSA/DGSP-V.02",
+      "organization": "Ministerio de Salud del Perú (MINSA)",
+      "url": "https://bvs.minsa.gob.pe/local/dgsp/NT022hist.pdf",
+      "license": "Norma técnica estatal de acceso público",
+      "retrievedAt": "2026-10-02",
+      "note": "Disfunción orgánica por SOFA (publicado, de uso libre), lactato y metas de la primera hora."
+    },
+    "fields": [
+      {
+        "code": "tipo_de_evaluacion",
+        "name": "Tipo de evaluación",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación inicial",
+        "options": [
+          "Evaluación inicial",
+          "Reevaluación"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "inicio_de_sintomas",
+        "name": "Inicio de los síntomas (fecha u hora)",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación inicial"
+      },
+      {
+        "code": "tratamiento_previo",
+        "name": "Tratamiento recibido antes de esta consulta",
+        "dataType": "text",
+        "required": false,
+        "section": "Evaluación inicial"
+      },
+      {
+        "code": "foco_sepsis",
+        "name": "Foco",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación: sepsis"
+      },
+      {
+        "code": "sofa",
+        "name": "Puntaje SOFA",
+        "dataType": "integer",
+        "required": true,
+        "section": "Evaluación: sepsis"
+      },
+      {
+        "code": "lactato",
+        "name": "Lactato (mmol/L)",
+        "dataType": "decimal",
+        "required": true,
+        "section": "Evaluación: sepsis"
+      },
+      {
+        "code": "presion_arterial_media",
+        "name": "Presión arterial media (mmHg)",
+        "dataType": "integer",
+        "required": false,
+        "section": "Evaluación: sepsis"
+      },
+      {
+        "code": "primera_hora",
+        "name": "Medidas de la primera hora",
+        "dataType": "json",
+        "required": false,
+        "section": "Evaluación: sepsis",
+        "options": [
+          "Hemocultivos antes del antibiótico",
+          "Antibiótico en la primera hora",
+          "Cristaloides 30 mL/kg",
+          "Vasopresor si PAM < 65"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "diuresis",
+        "name": "Diuresis (mL/kg/h)",
+        "dataType": "decimal",
+        "required": false,
+        "section": "Evaluación: sepsis"
+      },
+      {
+        "code": "metas_cumplidas",
+        "name": "Metas de control que cumple hoy",
+        "dataType": "json",
+        "required": false,
+        "section": "Conclusión y plan",
+        "options": [
+          "PAM ≥ 65 mmHg",
+          "Lactato en descenso",
+          "Diuresis ≥ 0,5 mL/kg/h",
+          "Ninguna todavía"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "diagnostico",
+        "name": "Diagnóstico (con código CIE-10 si se conoce)",
+        "dataType": "text",
+        "required": true,
+        "section": "Conclusión y plan"
+      },
+      {
+        "code": "plan",
+        "name": "Plan: tratamiento, estudios, interconsultas y destino",
+        "dataType": "text",
+        "required": false,
+        "section": "Conclusión y plan"
+      }
+    ]
+  },
+  {
+    "code": "UCI_CTRL_VENTILACION",
+    "name": "Ventilación mecánica y destete",
+    "version": 1,
+    "kind": "SPECIFIC",
+    "specialty": "MEDICINA_INTENSIVA",
+    "provenance": {
+      "sourceTitle": "Norma Técnica de Salud para la Gestión de la Historia Clínica — NT N.º 022-MINSA/DGSP-V.02",
+      "organization": "Ministerio de Salud del Perú (MINSA)",
+      "url": "https://bvs.minsa.gob.pe/local/dgsp/NT022hist.pdf",
+      "license": "Norma técnica estatal de acceso público",
+      "retrievedAt": "2026-10-02",
+      "note": "Parámetros, oxigenación y prueba de respiración espontánea."
+    },
+    "fields": [
+      {
+        "code": "tipo_de_evaluacion",
+        "name": "Tipo de evaluación",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación inicial",
+        "options": [
+          "Evaluación inicial",
+          "Reevaluación"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "inicio_de_sintomas",
+        "name": "Inicio de los síntomas (fecha u hora)",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación inicial"
+      },
+      {
+        "code": "tratamiento_previo",
+        "name": "Tratamiento recibido antes de esta consulta",
+        "dataType": "text",
+        "required": false,
+        "section": "Evaluación inicial"
+      },
+      {
+        "code": "modo_ventilatorio",
+        "name": "Modo",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación: ventilación mecánica",
+        "options": [
+          "Volumen control",
+          "Presión control",
+          "Presión soporte",
+          "CPAP"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "fio2",
+        "name": "FiO₂ (%)",
+        "dataType": "decimal",
+        "required": false,
+        "section": "Evaluación: ventilación mecánica"
+      },
+      {
+        "code": "peep",
+        "name": "PEEP (cmH₂O)",
+        "dataType": "integer",
+        "required": false,
+        "section": "Evaluación: ventilación mecánica"
+      },
+      {
+        "code": "pafi",
+        "name": "PaO₂/FiO₂",
+        "dataType": "decimal",
+        "required": true,
+        "section": "Evaluación: ventilación mecánica"
+      },
+      {
+        "code": "rass",
+        "name": "RASS",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: ventilación mecánica",
+        "options": [
+          "+2",
+          "+1",
+          "0",
+          "−1",
+          "−2",
+          "−3",
+          "−4",
+          "−5"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "prueba_respiracion_espontanea",
+        "name": "Prueba de respiración espontánea",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: ventilación mecánica",
+        "options": [
+          "Superada",
+          "Fallida",
+          "No corresponde todavía"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "glasgow_ocular",
+        "name": "Glasgow — apertura ocular",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: ventilación mecánica",
+        "options": [
+          "4 — espontánea",
+          "3 — a la voz",
+          "2 — al dolor",
+          "1 — ninguna"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "glasgow_verbal",
+        "name": "Glasgow — respuesta verbal",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: ventilación mecánica",
+        "options": [
+          "5 — orientada",
+          "4 — confusa",
+          "3 — palabras inapropiadas",
+          "2 — sonidos incomprensibles",
+          "1 — ninguna"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "glasgow_motora",
+        "name": "Glasgow — respuesta motora",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: ventilación mecánica",
+        "options": [
+          "6 — obedece órdenes",
+          "5 — localiza el dolor",
+          "4 — retira al dolor",
+          "3 — flexión anormal",
+          "2 — extensión",
+          "1 — ninguna"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "diagnostico",
+        "name": "Diagnóstico (con código CIE-10 si se conoce)",
+        "dataType": "text",
+        "required": true,
+        "section": "Conclusión y plan"
+      },
+      {
+        "code": "plan",
+        "name": "Plan: tratamiento, estudios, interconsultas y destino",
+        "dataType": "text",
+        "required": false,
+        "section": "Conclusión y plan"
+      }
+    ]
+  },
+  {
+    "code": "URO_CTRL_HPB",
+    "name": "Control de hiperplasia prostática",
+    "version": 1,
+    "kind": "SPECIFIC",
+    "specialty": "UROLOGIA",
+    "provenance": {
+      "sourceTitle": "Norma Técnica de Salud para la Gestión de la Historia Clínica — NT N.º 022-MINSA/DGSP-V.02",
+      "organization": "Ministerio de Salud del Perú (MINSA)",
+      "url": "https://bvs.minsa.gob.pe/local/dgsp/NT022hist.pdf",
+      "license": "Norma técnica estatal de acceso público",
+      "retrievedAt": "2026-10-02",
+      "note": "Síntomas del tracto urinario inferior, residuo, PSA y tacto rectal."
+    },
+    "fields": [
+      {
+        "code": "tipo_de_control",
+        "name": "Tipo de consulta",
+        "dataType": "string",
+        "required": true,
+        "section": "Seguimiento",
+        "options": [
+          "Primera evaluación de la condición",
+          "Control programado",
+          "Descompensación o consulta no programada",
+          "Control posterior a internación"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "fecha_del_diagnostico",
+        "name": "Fecha del diagnóstico de hiperplasia prostática",
+        "dataType": "date",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "tratamiento_actual",
+        "name": "Tratamiento actual (fármaco, dosis y frecuencia)",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "adherencia",
+        "name": "Adherencia al tratamiento",
+        "dataType": "string",
+        "required": false,
+        "section": "Seguimiento",
+        "options": [
+          "Toma el tratamiento como está indicado",
+          "Olvida dosis algunas veces",
+          "Abandonó el tratamiento",
+          "Todavía sin tratamiento"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "efectos_adversos",
+        "name": "¿Tuvo efectos adversos del tratamiento?",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "efectos_adversos_cuales",
+        "name": "¿Cuáles y con qué fármaco?",
+        "dataType": "text",
+        "required": true,
+        "section": "Seguimiento",
+        "showWhen": {
+          "field": "efectos_adversos",
+          "equals": true
+        }
+      },
+      {
+        "code": "evolucion_desde_ultimo_control",
+        "name": "Evolución desde el último control",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "stui",
+        "name": "Síntomas urinarios",
+        "dataType": "json",
+        "required": true,
+        "section": "Evaluación: hiperplasia prostática",
+        "options": [
+          "Chorro débil",
+          "Esfuerzo",
+          "Goteo terminal",
+          "Vaciado incompleto",
+          "Polaquiuria",
+          "Urgencia"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "nicturia",
+        "name": "Nicturia (veces por noche)",
+        "dataType": "integer",
+        "required": false,
+        "section": "Evaluación: hiperplasia prostática"
+      },
+      {
+        "code": "molestia_global",
+        "name": "Si tuviera que vivir así el resto de su vida, se sentiría",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: hiperplasia prostática",
+        "options": [
+          "Bien",
+          "Más o menos",
+          "Mal"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "psa",
+        "name": "PSA total (ng/mL)",
+        "dataType": "decimal",
+        "required": false,
+        "section": "Evaluación: hiperplasia prostática"
+      },
+      {
+        "code": "residuo",
+        "name": "Residuo posmiccional (mL)",
+        "dataType": "decimal",
+        "required": false,
+        "section": "Evaluación: hiperplasia prostática"
+      },
+      {
+        "code": "volumen_prostatico",
+        "name": "Volumen prostático (mL)",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: hiperplasia prostática"
+      },
+      {
+        "code": "retencion",
+        "name": "Retención urinaria desde el último control",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Evaluación: hiperplasia prostática"
+      },
+      {
+        "code": "educacion_brindada",
+        "name": "Educación brindada en esta consulta",
+        "dataType": "json",
+        "required": false,
+        "section": "Metas y plan",
+        "options": [
+          "Reducir líquidos de noche",
+          "Evitar descongestionantes"
+        ],
+        "multiple": true
+      },
+      {
+        "code": "diagnostico",
+        "name": "Diagnóstico (con código CIE-10 si se conoce)",
+        "dataType": "text",
+        "required": true,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "plan",
+        "name": "Plan: tratamiento, estudios, interconsultas y destino",
+        "dataType": "text",
+        "required": false,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "proximo_control",
+        "name": "Próximo control",
+        "dataType": "date",
+        "required": false,
+        "section": "Metas y plan"
+      }
+    ]
+  },
+  {
+    "code": "URO_CTRL_LITIASIS",
+    "name": "Cólico renal y litiasis urinaria",
+    "version": 1,
+    "kind": "SPECIFIC",
+    "specialty": "UROLOGIA",
+    "provenance": {
+      "sourceTitle": "Norma Técnica de Salud para la Gestión de la Historia Clínica — NT N.º 022-MINSA/DGSP-V.02",
+      "organization": "Ministerio de Salud del Perú (MINSA)",
+      "url": "https://bvs.minsa.gob.pe/local/dgsp/NT022hist.pdf",
+      "license": "Norma técnica estatal de acceso público",
+      "retrievedAt": "2026-10-02",
+      "note": "Dolor, signos de obstrucción infectada y tamaño del lito para la decisión."
+    },
+    "fields": [
+      {
+        "code": "tipo_de_evaluacion",
+        "name": "Tipo de evaluación",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación inicial",
+        "options": [
+          "Evaluación inicial",
+          "Reevaluación"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "inicio_de_sintomas",
+        "name": "Inicio de los síntomas (fecha u hora)",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación inicial"
+      },
+      {
+        "code": "tratamiento_previo",
+        "name": "Tratamiento recibido antes de esta consulta",
+        "dataType": "text",
+        "required": false,
+        "section": "Evaluación inicial"
+      },
+      {
+        "code": "dolor_intensidad",
+        "name": "Dolor (0 a 10)",
+        "dataType": "integer",
+        "required": true,
+        "section": "Evaluación: litiasis urinaria"
+      },
+      {
+        "code": "fiebre",
+        "name": "Fiebre (urgencia: obstrucción infectada)",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Evaluación: litiasis urinaria"
+      },
+      {
+        "code": "lito_tamano",
+        "name": "Tamaño y ubicación del lito",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación: litiasis urinaria"
+      },
+      {
+        "code": "hidronefrosis",
+        "name": "Hidronefrosis",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Evaluación: litiasis urinaria"
+      },
+      {
+        "code": "conducta_lito",
+        "name": "Conducta",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: litiasis urinaria",
+        "options": [
+          "Expulsión espontánea",
+          "Litotricia",
+          "Ureteroscopía",
+          "Derivación urgente"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "diagnostico",
+        "name": "Diagnóstico (con código CIE-10 si se conoce)",
+        "dataType": "text",
+        "required": true,
+        "section": "Conclusión y plan"
+      },
+      {
+        "code": "plan",
+        "name": "Plan: tratamiento, estudios, interconsultas y destino",
+        "dataType": "text",
+        "required": false,
+        "section": "Conclusión y plan"
+      }
+    ]
+  },
+  {
     "code": "URO_EVALUACION_BASE",
-    "name": "Evaluación urológica",
+    "name": "Urología — consulta inicial (ficha base)",
     "version": 2,
+    "kind": "BASE",
     "specialty": "UROLOGIA",
     "provenance": {
       "sourceTitle": "Norma Técnica de Salud para la Gestión de la Historia Clínica — NT N.º 022-MINSA/DGSP-V.02, anamnesis y examen del aparato genitourinario",
@@ -18860,200 +29455,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
         ],
         "multiple": false,
         "allowOther": true,
-        "description": "Al elegirlo se abren las observaciones que ese cuadro exige registrar."
-      },
-      {
-        "code": "volumen_prostatico",
-        "name": "Volumen prostático estimado (mL)",
-        "dataType": "string",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Hiperplasia prostática benigna"
-        }
-      },
-      {
-        "code": "residuo_posmiccional",
-        "name": "Residuo posmiccional (mL)",
-        "dataType": "decimal",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Hiperplasia prostática benigna"
-        }
-      },
-      {
-        "code": "retencion_previa",
-        "name": "Retención urinaria previa",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Hiperplasia prostática benigna"
-        }
-      },
-      {
-        "code": "psa",
-        "name": "PSA total (ng/mL)",
-        "dataType": "decimal",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Sospecha de cáncer de próstata"
-        }
-      },
-      {
-        "code": "tacto_prostata",
-        "name": "Tacto rectal",
-        "dataType": "string",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Normal",
-          "Nódulo",
-          "Indurada",
-          "No realizado"
-        ],
-        "multiple": false,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Sospecha de cáncer de próstata"
-        }
-      },
-      {
-        "code": "lito_tamano",
-        "name": "Tamaño y ubicación del lito",
-        "dataType": "string",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Litiasis urinaria"
-        }
-      },
-      {
-        "code": "lito_obstruccion",
-        "name": "Hidronefrosis",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Litiasis urinaria"
-        }
-      },
-      {
-        "code": "lito_fiebre",
-        "name": "Fiebre (urgencia)",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Litiasis urinaria"
-        }
-      },
-      {
-        "code": "itu_uro",
-        "name": "Síntomas",
-        "dataType": "json",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Disuria",
-          "Polaquiuria",
-          "Fiebre",
-          "Dolor perineal (prostatitis)"
-        ],
-        "multiple": true,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Infección urinaria"
-        }
-      },
-      {
-        "code": "urocultivo",
-        "name": "Urocultivo",
-        "dataType": "string",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Infección urinaria"
-        }
-      },
-      {
-        "code": "hematuria_tabaco",
-        "name": "Fumador o exfumador",
-        "dataType": "boolean",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Hematuria en estudio"
-        }
-      },
-      {
-        "code": "hematuria_imagen",
-        "name": "Imagen y cistoscopía",
-        "dataType": "string",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Hematuria en estudio"
-        }
-      },
-      {
-        "code": "de_inicio",
-        "name": "Inicio",
-        "dataType": "string",
-        "required": true,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Gradual",
-          "Brusco"
-        ],
-        "multiple": false,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Disfunción eréctil"
-        }
-      },
-      {
-        "code": "de_erecciones_matinales",
-        "name": "Conserva erecciones matinales",
-        "dataType": "boolean",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Disfunción eréctil"
-        }
-      },
-      {
-        "code": "de_factores",
-        "name": "Factores asociados",
-        "dataType": "json",
-        "required": false,
-        "section": "Diagnóstico presuntivo y observaciones",
-        "options": [
-          "Diabetes",
-          "Hipertensión",
-          "Tabaquismo",
-          "Fármacos",
-          "Ansiedad o depresión",
-          "Ninguno"
-        ],
-        "multiple": true,
-        "showWhen": {
-          "field": "diagnostico_presuntivo",
-          "equals": "Disfunción eréctil"
-        }
+        "description": "Si el cuadro ya está diagnosticado, el seguimiento se hace con su ficha específica de la especialidad."
       },
       {
         "code": "diagnostico",
