@@ -231,4 +231,28 @@ describe('bloquesDeFormulario', () => {
     expect(bloques.some((bloque) => bloque.kind === 'blank')).toBe(false);
     expect(texto(bloques)).toContain('Este campo se completa en el sistema.');
   });
+
+  it('un «¿cuál?» dice en papel de qué pregunta depende y con qué respuesta', () => {
+    const conCondicion: FormularioParaPdf = {
+      ...FORMULARIO,
+      paginas: [
+        {
+          titulo: 'Antecedentes',
+          campos: [
+            { key: 'alergias', label: '¿Tiene alergias?', control: 'yes-no' },
+            {
+              key: 'cual',
+              label: '¿A qué?',
+              control: 'text',
+              showWhen: { key: 'alergias', equals: true },
+            },
+          ],
+        },
+      ],
+    };
+
+    const textos = bloquesDeFormulario(conCondicion).map((bloque) => bloque.text);
+
+    expect(textos).toContain('Sólo si en la 1 («¿Tiene alergias?») respondió «Sí».');
+  });
 });

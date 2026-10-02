@@ -116,12 +116,33 @@ export interface ChartTemplateField {
    */
   readonly oneResponsePerColumn?: boolean;
   /**
+   * La sección de la ficha en la que va —motivo, antecedentes, examen,
+   * diagnóstico presuntivo, plan—. La vista previa pagina por sección.
+   */
+  readonly section?: string;
+  /**
+   * Cuándo se muestra: si el campo `fieldId` vale `equals`. Es `enableWhen` de
+   * HL7 FHIR con operador `=` y comportamiento `SHOW`. Con un padre de varias
+   * respuestas se cumple si las incluye; si `equals` es una lista, basta uno.
+   * Un campo con el padre oculto también se oculta, y su `required` sólo vale
+   * cuando está a la vista. Ausente = siempre visible.
+   *
+   * Es lo que hace que un «Sí» pregunte «¿cuál?» debajo.
+   */
+  readonly showWhen?: CondicionDeCampo;
+  /**
    * Si el campo lo agregó esta organización, o viene del formulario estándar.
    *
    * El generador lo necesita para dos cosas que no puede adivinar: qué campos
    * puede tocar —los del estándar no— y cuáles cuentan contra su presupuesto.
    */
   readonly own: boolean;
+}
+
+/** La condición de visibilidad de un campo (ver {@link ChartTemplateField.showWhen}). */
+export interface CondicionDeCampo {
+  readonly fieldId: string;
+  readonly equals: string | boolean | readonly (string | boolean)[];
 }
 
 /**

@@ -952,11 +952,79 @@ describe('SpecialtyFormBlock', () => {
   /** Cardiología, dermatología y las dos transversales. */
   const CATALOGO = [PLANTILLA, DERMATOLOGIA, ANAMNESIS, CONSENTIMIENTO];
 
+  describe('una ficha v2: listas y «¿cuál?»', () => {
+    const CON_CONDICION = {
+      ...PLANTILLA,
+      id: 'tpl-v2',
+      fields: [
+        { ...PLANTILLA.fields[1], fieldId: 'f-si', name: '¿Tiene alergias?', required: false },
+        {
+          assignmentId: 'as-cual',
+          fieldId: 'f-cual',
+          code: 'tipo_de_alergia',
+          name: '¿A qué?',
+          dataType: 'json',
+          required: true,
+          options: ['Medicamentos', 'Alimentos'],
+          multiple: true,
+          showWhen: { fieldId: 'f-si', equals: true },
+        },
+        {
+          assignmentId: 'as-asa',
+          fieldId: 'f-asa',
+          code: 'clasificacion_asa',
+          name: 'Clasificación ASA',
+          dataType: 'string',
+          required: false,
+          options: ['ASA I — sano', 'ASA II — enfermedad sistémica leve'],
+        },
+      ],
+    };
+
+    function abrir(): void {
+      peticionDePlantillas().flush([CON_CONDICION]);
+      responderEspecialidad('sp-1');
+      interno<(id: string) => void>('elegirPlantilla')('tpl-v2');
+      fixture.detectChanges();
+      // Sin ficha ya respondida en este encuentro: se captura.
+      peticionDeRespuesta().flush(LISTADO_VACIO);
+      fixture.detectChanges();
+    }
+
+    it('el «¿a qué?» no aparece hasta que se contesta «sí», y su obligatorio espera', () => {
+      abrir();
+      const ocultos = () => interno<() => ReadonlySet<string>>('ocultos')();
+      expect(ocultos().has('f-cual')).toBe(true);
+      expect((fixture.nativeElement as HTMLElement).textContent).not.toContain('¿A qué?');
+
+      interno<(id: string, v: unknown) => void>('actualizarValor')('f-si', true);
+      fixture.detectChanges();
+      expect(ocultos().has('f-cual')).toBe(false);
+      expect((fixture.nativeElement as HTMLElement).textContent).toContain('¿A qué?');
+    });
+
+    it('elige las escalas de una lista y no manda lo que quedó en un «¿cuál?» cerrado', () => {
+      abrir();
+      type Campo = (typeof CON_CONDICION.fields)[number];
+      const tipo = interno<(c: Campo) => string>('tipoDibujable');
+      expect(tipo(CON_CONDICION.fields[1])).toBe('varias');
+      expect(tipo(CON_CONDICION.fields[2])).toBe('una');
+
+      const actualizar = interno<(id: string, v: unknown) => void>('actualizarValor');
+      actualizar('f-si', true);
+      actualizar('f-cual', ['Medicamentos']);
+      actualizar('f-si', false);
+
+      const enviar = interno<(p: unknown) => readonly { fieldId: string }[]>('valoresParaEnviar');
+      expect(enviar(CON_CONDICION).map((v) => v.fieldId)).toEqual(['f-si']);
+    });
+  });
+
   it('ofrece la ficha de su especialidad y las transversales, en ese orden', () => {
     peticionDePlantillas().flush(CATALOGO);
     responderEspecialidad('sp-1');
-    // El orden es de `plantillasSugeridas`, que sólo se ve sin el catálogo
-    // entero encima: se filtra a mano porque «Ver todas» ya no es el default.
+    // El orden es de `plantillasSugeridas`, que es lo que se ve por defecto;
+    // se fija explícito para que la prueba no dependa del valor inicial.
     interno<(v: boolean) => void>('alternarVerTodas')(false);
 
     expect(etiquetasOfrecidas()).toEqual([
@@ -978,8 +1046,8 @@ describe('SpecialtyFormBlock', () => {
     };
     peticionDePlantillas().flush([...CATALOGO, aMano]);
     responderEspecialidad('sp-1');
-    // El reconocimiento por concepto es del filtro por especialidad; se activa
-    // a mano porque ya no es el default.
+    // El reconocimiento por concepto es del filtro por especialidad; se fija
+    // explícito para que la prueba no dependa del valor inicial.
     interno<(v: boolean) => void>('alternarVerTodas')(false);
 
     expect(etiquetasOfrecidas()).toContain('Hoja de egreso');
@@ -999,24 +1067,23 @@ describe('SpecialtyFormBlock', () => {
 
   /* ---- el interruptor «Ver todas las especialidades» ------------------------ */
 
-  it('arranca prendido —muestra el catálogo entero— y apagarlo filtra por especialidad', () => {
+  it('arranca apagado —sólo su especialidad y las generales— y prenderlo muestra todo', () => {
     peticionDePlantillas().flush(CATALOGO);
     responderEspecialidad('sp-1');
 
-    // Arranca en «Ver todas»: dos cuentas con perfiles profesionales distintos
-    // no pueden ver listas de tamaño distinto por default, eso se leía como
-    // un bug («en la Mac salen más formularios»).
+    // Arranca filtrado por la especialidad de quien atiende: lo pidió el
+    // propietario el 2026-10-02 («un filtro específico de formularios por el
+    // tipo de especialidad»). El interruptor queda a la vista.
     expect(interno<() => boolean>('puedeVerTodas')()).toBe(true);
-    expect(etiquetasOfrecidas()).toHaveLength(4);
-    expect(etiquetasOfrecidas()).toContain('Examen dermatológico');
-
-    interno<(v: boolean) => void>('alternarVerTodas')(false);
     expect(etiquetasOfrecidas()).toHaveLength(3);
     expect(etiquetasOfrecidas()).not.toContain('Examen dermatológico');
 
     interno<(v: boolean) => void>('alternarVerTodas')(true);
     expect(etiquetasOfrecidas()).toHaveLength(4);
     expect(etiquetasOfrecidas()).toContain('Examen dermatológico');
+
+    interno<(v: boolean) => void>('alternarVerTodas')(false);
+    expect(etiquetasOfrecidas()).toHaveLength(3);
   });
 
   it('el interruptor no pide plantillas de nuevo: filtra sobre lo ya traído', () => {

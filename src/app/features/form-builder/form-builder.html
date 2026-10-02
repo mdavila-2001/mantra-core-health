@@ -229,6 +229,28 @@
       data-testid="filtros-formularios"
     />
 
+    @if (especialidadFiltrada(); as rotulo) {
+      <!-- El filtro por especialidad arranca puesto en la del médico: se dice
+           en palabras qué se está viendo y cómo salir, para que nadie crea que
+           el catálogo tiene sólo esto. -->
+      <p class="constructor__filtro-especialidad" role="status" data-testid="filtro-especialidad">
+        <span>
+          Mostrando los formularios de <strong>{{ rotulo }}</strong> y los generales de toda
+          consulta.
+        </span>
+        <button
+          app-button
+          type="button"
+          variant="ghost"
+          size="sm"
+          (clicked)="verTodasLasEspecialidades()"
+          data-testid="ver-todas-especialidades"
+        >
+          Ver todas las especialidades
+        </button>
+      </p>
+    }
+
     @if (cargandoListado()) {
       <p class="constructor__vacio">Cargando formularios…</p>
     } @else if (filtrados(); as lista) {

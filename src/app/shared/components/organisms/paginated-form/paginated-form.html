@@ -41,9 +41,13 @@
         [class.paginated-form__campos--dos-columnas]="actual.disposicion === 'dos-columnas'"
       >
         @for (campo of actual.campos; track campo.key) {
-          @if (campo.control === 'custom') {
+          <!-- Un campo condicional («¿cuál?») sólo existe en pantalla cuando su
+               padre tiene la respuesta que lo abre. -->
+          @if (ocultos().has(campo.key)) {
+          } @else if (campo.control === 'custom') {
             <app-form-field
               class="paginated-form__campo"
+              [class.paginated-form__campo--dependiente]="campo.showWhen !== undefined"
               [class.paginated-form__campo--mitad]="campo.ancho === 'mitad'"
               [label]="campo.label"
               [hint]="campo.hint ?? ''"
@@ -62,6 +66,7 @@
                  siendo el `aria-describedby` del control (ADR-0008). -->
             <app-form-field
               class="paginated-form__campo"
+              [class.paginated-form__campo--dependiente]="campo.showWhen !== undefined"
               [class.paginated-form__campo--mitad]="campo.ancho === 'mitad'"
               [label]="campo.label"
               [hint]="campo.hint ?? ''"
