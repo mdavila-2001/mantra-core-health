@@ -257,6 +257,23 @@
   outline-offset: 1px;
 }
 
+/* Otros servicios: tono secundario (menta) y borde punteado, así se distingue
+   de una franja de consultas por forma además de por color. «Ambos» mezcla:
+   fondo de consultas con el borde de servicios. */
+.grilla__bloque--services {
+  border-inline-start: 3px dashed var(--st-secondary-bd);
+  background: var(--st-secondary-bg);
+  color: var(--st-secondary-fg);
+}
+
+.grilla__bloque--services:focus-visible {
+  outline-color: var(--st-secondary-bd);
+}
+
+.grilla__bloque--mixed {
+  border-inline-start: 3px dashed var(--st-secondary-bd);
+}
+
 /* El texto parte renglón en vez de cortarse: con seis o siete días una columna
    mide unos 100 px, y «09:00 – 13:00» quedaba «09:00 – 13:0» en la vista
    previa del horario retirado. */

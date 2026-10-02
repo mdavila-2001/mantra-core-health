@@ -33,6 +33,14 @@ function camposDelAlta(): readonly string[] {
       claves.add(encontrado[1]);
     }
   }
+  // País, universidad y ciudad del título ya no son descripciones `key: '…'`
+  // (02/10/2026: son desplegables en árbol con su propio manejo) pero el alta los
+  // sigue preguntando. Se leen de la unión que los nombra, en vez de dejarlos
+  // fuera y que parezca que el alta dejó de pedirlos.
+  const estudio = /type ClaveDeEstudioDelTitulo\s*=([^;]+);/.exec(fuente);
+  for (const clave of estudio?.[1].matchAll(/'([A-Za-z0-9_]+)'/g) ?? []) {
+    claves.add(clave[1]);
+  }
   return [...claves].sort();
 }
 
