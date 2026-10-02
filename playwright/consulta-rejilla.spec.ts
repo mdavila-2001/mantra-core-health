@@ -28,7 +28,6 @@ const MEDICA: Actor = {
 
 const CASILLAS: readonly { readonly clave: string; readonly modal: string }[] = [
   { clave: 'diagnosticos', modal: 'Nuevo diagnóstico' },
-  { clave: 'alergias', modal: 'Nueva alergia' },
   { clave: 'medicacion', modal: 'Prescribir medicación' },
   { clave: 'observaciones', modal: 'Registrar una observación' },
   { clave: 'notas', modal: 'Escribir una nota clínica' },

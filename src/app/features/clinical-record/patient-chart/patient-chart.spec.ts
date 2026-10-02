@@ -10,6 +10,7 @@ import { DialogService } from '../../../shared/components/molecules/dialog/dialo
 import {
   bloquesDeAtencion,
   bloquesDeReceta,
+  VALOR_ENMASCARADO,
 } from '../../../shared/utils/clinical-pdf/clinical-pdf';
 import {
   atencionDesdeResumen,
@@ -486,6 +487,64 @@ describe('PatientChart', () => {
     const destacadas = interno<() => readonly Record<string, unknown>[]>('alergiasDestacadas')();
     expect(destacadas).toHaveLength(1);
     expect(destacadas[0]['principal']).toBe('Diabetes tipo 2');
+  });
+
+  /**
+   * Desde que la alergia se carga como diagnóstico, la banda tiene que verla:
+   * si sólo leyera `AllergyIntolerance`, la alergia de hoy no aparecería
+   * arriba y se recetaría sin verla. Se decide por el código CIE-10.
+   */
+  it('la banda incluye los diagnósticos de alergia sin resolver, y sólo esos', () => {
+    responderNombre();
+    responderExpediente({
+      resumen: {
+        conditions: [
+          {
+            id: 'c-alergia',
+            codeConceptId: 'dx-z880',
+            clinicalStatusConceptId: 'st-activa',
+            createdAt: '2026-02-01T00:00:00.000Z',
+          },
+          {
+            id: 'c-alergia-resuelta',
+            codeConceptId: 'dx-t784',
+            clinicalStatusConceptId: 'st-activa',
+            resolvedAt: '2026-03-01T00:00:00.000Z',
+            createdAt: '2026-02-01T00:00:00.000Z',
+          },
+          {
+            id: 'c-1',
+            codeConceptId: 'con-diabetes',
+            clinicalStatusConceptId: 'st-activa',
+            createdAt: '2026-01-03T00:00:00.000Z',
+          },
+        ],
+      },
+      conceptos: {
+        ...CONCEPTOS,
+        items: [
+          ...CONCEPTOS.items,
+          {
+            conceptId: 'dx-z880',
+            code: 'Z88.0',
+            display: 'Alergia a la penicilina',
+            codeSystemVersionId: 'v1',
+          },
+          {
+            conceptId: 'dx-t784',
+            code: 'T78.4',
+            display: 'Alergia no especificada',
+            codeSystemVersionId: 'v1',
+          },
+        ],
+      },
+    });
+
+    const destacadas = interno<() => readonly { id: string; principal: string }[]>(
+      'alergiasDestacadas',
+    )();
+    expect(destacadas.map((fila) => fila.id)).toEqual(['c-alergia']);
+    expect(destacadas[0]?.principal).toBe('Alergia a la penicilina');
   });
 
   /**
@@ -1351,6 +1410,105 @@ describe('PatientChart', () => {
         .expectOne((r) => r.url === '/forms/instances')
         .flush({ encounterId: 'e-1', items: [], limit: 50, truncated: false });
       expect(interno<() => string | null>('errorDeFormularios')()).toBeNull();
+    });
+
+    it('un 403 sin mensaje no deja el aviso vacío', () => {
+      abrirEncuentro();
+      http.expectOne((r) => r.url === '/charts/templates').flush([]);
+      http
+        .expectOne((r) => r.url === '/forms/instances')
+        .flush({ code: 'FORBIDDEN', message: '' }, { status: 403, statusText: 'Forbidden' });
+
+      expect(interno<() => string | null>('errorDeFormularios')()).toBe(
+        'Tu rol no permite ver formularios clínicos.',
+      );
+    });
+
+    it('un formulario que no se deja leer no esconde a los demás', () => {
+      abrirEncuentro();
+      http.expectOne((r) => r.url === '/charts/templates').flush([]);
+      http.expectOne((r) => r.url === '/forms/instances').flush({
+        encounterId: 'e-1',
+        items: [{ id: 'fi-1' }, { id: 'fi-2' }],
+        limit: 50,
+        truncated: false,
+      });
+      http
+        .expectOne('/forms/instances/fi-1')
+        .flush({ id: 'fi-1', createdAt: '2026-01-03T10:30:00.000Z', values: [] });
+      http
+        .expectOne('/forms/instances/fi-2')
+        .flush({ message: 'Sin permiso' }, { status: 403, statusText: 'Forbidden' });
+
+      expect(
+        interno<() => readonly { id: string }[] | null>('formulariosLeidos')()?.map((f) => f.id),
+      ).toEqual(['fi-1']);
+      expect(interno<() => number>('formulariosNoLeidos')()).toBe(1);
+      expect(interno<() => string | null>('errorDeFormularios')()).toBeNull();
+    });
+
+    /**
+     * Abrir un encuentro y, antes de que respondan, abrir otro: la respuesta
+     * tardía del primero no puede pintar sus formularios bajo el segundo.
+     */
+    it('la respuesta tardía de otro encuentro no se cuela', () => {
+      responderNombre();
+      responderExpediente({
+        resumen: {
+          encounters: [
+            { id: 'e-1', statusConceptId: 'st-final', startAt: '2026-01-03T10:00:00.000Z' },
+            { id: 'e-2', statusConceptId: 'st-final', startAt: '2026-02-03T10:00:00.000Z' },
+          ],
+        },
+      });
+      const [primero, segundo] = interno<() => readonly { id: string }[]>('encuentros')();
+      const ver = interno<(f: unknown) => void>('verDetalle');
+
+      ver(primero);
+      const plantillasA = http.expectOne((r) => r.url === '/charts/templates');
+      const listadoA = http.expectOne(
+        (r) => r.url === '/forms/instances' && r.params.get('encounter') === 'e-1',
+      );
+      interno<() => void>('cerrarDetalle')();
+      ver(segundo);
+      // La carga del primero quedó cancelada: su respuesta ya no llega.
+      expect(plantillasA.cancelled).toBe(true);
+      expect(listadoA.cancelled).toBe(true);
+
+      http.expectOne((r) => r.url === '/charts/templates').flush([]);
+      http
+        .expectOne((r) => r.url === '/forms/instances' && r.params.get('encounter') === 'e-2')
+        .flush({ encounterId: 'e-2', items: [], limit: 50, truncated: false });
+      expect(interno<() => readonly unknown[] | null>('formulariosLeidos')()).toEqual([]);
+    });
+
+    it('dibuja la sección con el formulario y sus respuestas', () => {
+      abrirEncuentro();
+      http.expectOne((r) => r.url === '/charts/templates').flush([
+        { id: 'tpl-1', name: 'Ficha odontológica', fields: [{ fieldId: 'f-1', name: 'Motivo' }] },
+      ]);
+      http
+        .expectOne((r) => r.url === '/forms/instances')
+        .flush({ encounterId: 'e-1', items: [{ id: 'fi-1' }], limit: 50, truncated: false });
+      http.expectOne('/forms/instances/fi-1').flush({
+        id: 'fi-1',
+        createdAt: '2026-01-03T10:30:00.000Z',
+        values: [
+          { id: 'v-1', fieldId: 'f-1', ordinal: 1, value: 'Dolor de muela', masked: false },
+          { id: 'v-2', fieldId: 'f-2', ordinal: 2, value: null, masked: true },
+        ],
+      });
+      harness.fixture.detectChanges();
+
+      // El `<dialog>` vive en el top layer: se busca en el documento.
+      const seccion = document.querySelector(
+        '[data-testid="expediente-formularios-del-encuentro"]',
+      );
+      expect(seccion?.textContent).toContain('Ficha odontológica');
+      expect(seccion?.textContent).toContain('Motivo');
+      expect(seccion?.textContent).toContain('Dolor de muela');
+      // Lo enmascarado se dice con el marcador, nunca con un hueco.
+      expect(seccion?.textContent).toContain(VALOR_ENMASCARADO);
     });
 
     it('abrir otro bloque no pide formularios', () => {

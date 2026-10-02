@@ -164,7 +164,7 @@ const AGENDA_DEL_DIA: TutorialDefinition = {
  */
 const EXPEDIENTE: TutorialDefinition = {
   id: 'expediente-clinico',
-  version: '2.0',
+  version: '2.1',
   title: 'Leer el expediente',
   description:
     'Cómo está organizada la historia clínica y dónde miran las alergias antes de recetar.',
@@ -178,7 +178,7 @@ const EXPEDIENTE: TutorialDefinition = {
     {
       id: 'alergias',
       title: 'Las alergias, primero',
-      body: 'Están arriba y fuera de las pestañas a propósito: son lo único que tenés que ver antes de recetar.',
+      body: 'Están arriba y fuera de las pestañas a propósito: son lo único que tenés que ver antes de recetar. Incluyen los diagnósticos de alergia (CIE-10 Z88, Z91.0, T78).',
       target: 'expediente-alergias',
       placement: 'bottom',
     },
@@ -208,7 +208,7 @@ const EXPEDIENTE: TutorialDefinition = {
  */
 const ATENCION_CLINICA: TutorialDefinition = {
   id: 'atencion-clinica',
-  version: '1.0',
+  version: '1.1',
   title: 'Registrar una atención',
   description:
     'Abrir el encuentro, elegir en la rejilla qué le vas a registrar a la persona y cerrar cuando terminás.',

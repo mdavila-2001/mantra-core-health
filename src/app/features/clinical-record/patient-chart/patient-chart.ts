@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  DestroyRef,
   effect,
   inject,
   signal,
@@ -94,6 +95,14 @@ const TOPE = 50;
 
 /** Lo que se muestra cuando el registro no trae ese dato. */
 const SIN_DATO = 'Sin registrar';
+
+/**
+ * Los códigos CIE-10 (OMS) que dicen «esta persona es alérgica»: Z88
+ * (antecedente de alergia a fármacos), Z91.0 (a otras sustancias), T78.0–T78.4
+ * (anafilaxia, edema angioneurótico, alergia no especificada) y T88.6
+ * (anafilaxia por fármaco bien administrado).
+ */
+const CODIGO_CIE10_DE_ALERGIA = /^(Z88|Z91\.0|T78\.[0-4]|T88\.6)/;
 
 /** Nombre legible de cada bloque, para el aviso de recorte. */
 const NOMBRE_DE_BLOQUE: Readonly<Record<string, string>> = {
@@ -259,6 +268,13 @@ export interface FormularioDelEncuentro {
   readonly titulo: string;
   readonly completadoEl: Date | null;
   readonly respuestas: readonly RespuestaVisible[];
+}
+
+/** Lo leído de `forms` para un encuentro. */
+interface FormulariosDelEncuentro {
+  readonly formularios: readonly FormularioDelEncuentro[];
+  /** Los que existen pero no se dejaron leer. */
+  readonly noLeidos: number;
 }
 
 /** Un vínculo clínico, ya resuelto a palabras. */
@@ -1049,16 +1065,22 @@ export class PatientChart {
      cincuenta peticiones para un dato que se mira de a uno. */
 
   /** `null` mientras el detalle abierto no es de un encuentro. */
-  protected readonly formulariosDelEncuentro = signal<ViewState<
-    readonly FormularioDelEncuentro[]
-  > | null>(null);
+  protected readonly formulariosDelEncuentro = signal<ViewState<FormulariosDelEncuentro> | null>(
+    null,
+  );
 
   protected readonly marcadorEnmascarado = VALOR_ENMASCARADO;
 
   /** Los formularios leídos, o `null` mientras no hay lista que mostrar. */
   protected readonly formulariosLeidos = computed(() => {
     const state = this.formulariosDelEncuentro();
-    return state === null ? null : dataOf(state);
+    return state === null ? null : (dataOf(state)?.formularios ?? null);
+  });
+
+  /** Cuántos formularios del encuentro existen pero no se pudieron leer. */
+  protected readonly formulariosNoLeidos = computed(() => {
+    const state = this.formulariosDelEncuentro();
+    return state === null ? 0 : (dataOf(state)?.noLeidos ?? 0);
   });
 
   /** Por qué no se pudieron leer, en palabras; `null` si no falló. */
@@ -1068,7 +1090,8 @@ export class PatientChart {
       case 'offline':
         return 'No pudimos conectarnos. Revisá tu conexión y reintentá.';
       case 'forbidden':
-        return state.message ?? 'Tu rol no permite ver formularios clínicos.';
+        // `||` y no `??`: un 403 con `message: ''` dejaba el aviso vacío.
+        return state.message || 'Tu rol no permite ver formularios clínicos.';
       case 'not-found':
         return 'No encontramos los formularios de este encuentro.';
       case 'validation':
@@ -1103,16 +1126,28 @@ export class PatientChart {
         .pipe(
           switchMap((listado) =>
             listado.items.length === 0
-              ? of<readonly FormInstanceDetail[]>([])
-              : forkJoin(listado.items.map((item) => this.forms.getInstance(item.id))),
+              ? of<readonly (FormInstanceDetail | null)[]>([])
+              : forkJoin(
+                  // Uno que no se deja leer —borrado, de otra especialidad sin
+                  // permiso— no tumba a los demás: se cuenta y se dice.
+                  listado.items.map((item) =>
+                    this.forms
+                      .getInstance(item.id)
+                      .pipe(catchError(() => of<FormInstanceDetail | null>(null))),
+                  ),
+                ),
           ),
         ),
     }).subscribe({
       next: ({ plantillas, detalles }) => {
         const campos = camposDe(plantillas);
+        const leidos = detalles.filter(
+          (detalle): detalle is FormInstanceDetail => detalle !== null,
+        );
         this.formulariosDelEncuentro.set(
-          ready(
-            detalles.map((detalle) => {
+          ready({
+            noLeidos: detalles.length - leidos.length,
+            formularios: leidos.map((detalle) => {
               const fecha = new Date(detalle.closedAt ?? detalle.createdAt);
               return {
                 id: detalle.id,
@@ -1121,13 +1156,11 @@ export class PatientChart {
                 respuestas: respuestasDe(detalle, campos),
               };
             }),
-          ),
+          }),
         );
       },
       error: (error: unknown) =>
-        this.formulariosDelEncuentro.set(
-          errorToViewState<readonly FormularioDelEncuentro[]>(error),
-        ),
+        this.formulariosDelEncuentro.set(errorToViewState<FormulariosDelEncuentro>(error)),
     });
   }
 
@@ -1167,15 +1200,36 @@ export class PatientChart {
      alérgica a algo había que acordarse de ir a mirar. */
 
   /**
-   * Las alergias registradas antes, arriba y a la vista.
+   * Las alergias, arriba y a la vista: es lo que hay que ver antes de recetar.
    *
-   * Ya no tienen pestaña ni alta (cliente, 02/10/2026): una alergia se carga
-   * como diagnóstico. Las que ya existen como `AllergyIntolerance` siguen
-   * acá, de lectura, porque esconder un dato que cambia una conducta antes de
-   * recetar sería peor que la duplicación. No se filtra por criticidad —llega
-   * como concepto y deducirla del texto sería adivinar—: se muestran todas.
+   * Desde el 02/10/2026 una alergia se carga **como diagnóstico** (pedido del
+   * cliente), así que la banda junta dos fuentes:
+   *
+   * - los diagnósticos sin resolver cuyo código CIE-10 es de alergia
+   *   ({@link CODIGO_CIE10_DE_ALERGIA}) — las de ahora en adelante;
+   * - las `AllergyIntolerance` ya registradas, que no tienen pestaña ni alta
+   *   pero esconderlas sería peor que repetirlas.
+   *
+   * Se decide por el código del catálogo, no por el texto: deducir «es una
+   * alergia» de un nombre sería adivinar.
    */
-  protected readonly alergiasDestacadas = this.alergias;
+  protected readonly alergiasDestacadas = computed<readonly FilaClinica[]>(() => {
+    const deAlergia = new Set(
+      (this.datos()?.resumen.conditions ?? [])
+        .filter(
+          (condicion) =>
+            condicion.resolvedAt === undefined &&
+            CODIGO_CIE10_DE_ALERGIA.test(
+              this.etiquetas().get(condicion.codeConceptId)?.code ?? '',
+            ),
+        )
+        .map((condicion) => condicion.id),
+    );
+    return [
+      ...this.diagnosticos().filter((fila) => deAlergia.has(fila.id)),
+      ...this.alergias(),
+    ];
+  });
 
   /** Las cifras del expediente, para dimensionarlo sin abrir pestaña por pestaña. */
   protected readonly cifras = computed(() => [
@@ -1521,6 +1575,8 @@ export class PatientChart {
   }
 
   constructor() {
+    // Salir con el detalle abierto no deja la carga escribiendo en la nada.
+    inject(DestroyRef).onDestroy(() => this.cargaDeFormularios?.unsubscribe());
     // Ir de un expediente a otro reutiliza el componente: sin escuchar el
     // parámetro, el segundo seguiría mostrando los datos del primero.
     effect(() => {

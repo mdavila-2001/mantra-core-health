@@ -352,7 +352,7 @@
         data-testid="expediente-formularios-del-encuentro"
       >
         <h3 id="expediente-formularios-titulo" class="expediente__formularios-titulo">
-          Formularios clínicos de esta consulta
+          Formularios clínicos del encuentro
         </h3>
         @if (estado.status === 'loading') {
           <p class="expediente__secundario" role="status">Buscando los formularios…</p>
@@ -364,16 +364,23 @@
             Reintentar
           </button>
         } @else if (formulariosLeidos(); as formularios) {
+          @if (formulariosNoLeidos() > 0) {
+            <app-alert tone="warning" data-testid="expediente-formularios-no-leidos">
+              {{ formulariosNoLeidos() === 1
+                ? 'Un formulario de este encuentro no se pudo leer.'
+                : formulariosNoLeidos() + ' formularios de este encuentro no se pudieron leer.' }}
+            </app-alert>
+          }
           @for (formulario of formularios; track formulario.id) {
             <div class="expediente__formulario" data-testid="expediente-formulario">
-              <p class="expediente__formulario-titulo">
+              <h4 class="expediente__formulario-titulo">
                 {{ formulario.titulo }}
                 @if (formulario.completadoEl) {
                   <span class="expediente__secundario">
                     — {{ formulario.completadoEl | date: 'd MMM y, HH:mm' }}
                   </span>
                 }
-              </p>
+              </h4>
               <dl class="expediente__detalle">
                 @for (respuesta of formulario.respuestas; track respuesta.id) {
                   <div class="expediente__detalle-fila">
@@ -390,7 +397,9 @@
               </dl>
             </div>
           } @empty {
-            <p class="expediente__secundario">Sin formularios clínicos en este encuentro.</p>
+            @if (formulariosNoLeidos() === 0) {
+              <p class="expediente__secundario">Sin formularios clínicos en este encuentro</p>
+            }
           }
         }
       </section>

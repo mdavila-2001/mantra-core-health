@@ -11,6 +11,10 @@
  *
  * Uso: `yarn node playwright/expediente-cuadra-con-la-consulta.mjs` con el
  * front en el 4300 (datos de prueba). Sin `networkidle`: con HMR no llega.
+ *
+ * La maqueta responde dentro de la app (un interceptor), así que no hay
+ * tráfico HTTP que citar: la persistencia se prueba recargando la página y
+ * leyendo lo escrito.
  */
 import { chromium } from '@playwright/test';
 import { mkdirSync } from 'node:fs';
@@ -22,17 +26,8 @@ mkdirSync(SALIDA, { recursive: true });
 
 const ANCHO = Number(process.env.ANCHO ?? 1440);
 const nav = await chromium.launch({ executablePath: process.env.CHROMIUM });
-const ctx = await nav.newContext({ viewport: { width: ANCHO, height: 1100 } });
+const ctx = await nav.newContext({ viewport: { width: ANCHO, height: 1100 }, reducedMotion: 'reduce' });
 const pg = await ctx.newPage();
-
-/** Las peticiones clínicas, para poder citar request → response. */
-const red = [];
-pg.on('response', (r) => {
-  const url = new URL(r.url());
-  if (/^\/(clinical|charts|forms)\//.test(url.pathname)) {
-    red.push(`${r.request().method()} ${url.pathname}${url.search} → ${r.status()}`);
-  }
-});
 
 const log = (linea) => process.stdout.write(`${linea}\n`);
 const foto = (nombre) => pg.screenshot({ path: `${SALIDA}/${ANCHO}-${nombre}.png`, fullPage: true });
@@ -50,6 +45,7 @@ if (pg.url().includes('/auth/organization')) {
 /* ---- 1. la consulta: sin casilla de alergia ------------------------------ */
 await pg.goto(`${B}/medical-records/${ID}/consultation`, { waitUntil: 'domcontentloaded' });
 await pg.getByTestId('consulta-rejilla').waitFor({ timeout: 60000 });
+await pg.waitForTimeout(800);
 const casillas = await pg.locator('[data-testid^="consulta-casilla-"]').evaluateAll((els) =>
   els.map((el) => el.getAttribute('data-testid')),
 );
@@ -116,11 +112,35 @@ try {
 } catch (e) {
   await foto('error-tras-completar');
   log(`modal tras completar:\n${(await modal.innerText()).slice(0, 1500)}`);
-  log(red.slice(-12).join('\n'));
   throw e;
 }
 log('formulario completado en la consulta: sí');
 await modal.getByRole('button', { name: 'Cerrar' }).first().click();
+
+/* ---- 3b. una alergia, cargada como diagnóstico --------------------------- */
+await pg.getByTestId('consulta-casilla-diagnosticos').click();
+const dx = modal.locator('select', { has: pg.locator('option', { hasText: /penicilina/i }) });
+await pg.waitForFunction(
+  () =>
+    [...document.querySelectorAll('[data-testid="consulta-modal"] select option')].some((o) =>
+      /penicilina/i.test(o.textContent ?? ''),
+    ),
+  undefined,
+  { timeout: 30000 },
+);
+const rotuloPenicilina = (
+  await dx.locator('option').evaluateAll((os) =>
+    os.map((o) => o.textContent?.trim() ?? '').filter((t) => /penicilina/i.test(t)),
+  )
+)[0];
+await dx.selectOption({ label: rotuloPenicilina });
+await modal.getByRole('button', { name: 'Registrar diagnóstico' }).click();
+await pg.waitForTimeout(1500);
+log(`diagnóstico de alergia registrado en la consulta: ${rotuloPenicilina}`);
+// Registrar cierra el modal solo; si quedó abierto (duplicado), se cierra.
+if (await modal.isVisible()) {
+  await modal.getByRole('button', { name: 'Cerrar' }).first().click();
+}
 
 /* ---- 4. internación ------------------------------------------------------ */
 await pg.getByTestId('consulta-casilla-internacion').click();
@@ -152,6 +172,9 @@ const pestanas = await pg.getByRole('tab').allInnerTexts();
 log(`pestañas del expediente: ${pestanas.map((p) => p.trim()).join(' | ')}`);
 log(`pestaña de alergias: ${pestanas.some((p) => /alergia/i.test(p)) ? 'SÍ' : 'no'}`);
 log(`botón «Nueva alergia»: ${await pg.getByTestId('expediente-nueva-alergia').count()}`);
+const banda = pg.locator('.expediente__alergias');
+log(`banda de alergias: ${(await banda.count()) > 0 ? (await banda.innerText()).replace(/\s+/g, ' ') : 'NO HAY'}`);
+log(`la alergia cargada como diagnóstico está en la banda: ${(await banda.innerText().catch(() => '')).match(/penicilina/i) ? 'SÍ' : 'NO'}`);
 await foto('3-expediente');
 
 await pg.getByRole('tab', { name: /Internaciones/ }).click();
@@ -190,4 +213,3 @@ if (process.env.SOLO_MIRAR !== undefined) {
 }
 
 await nav.close();
-log(red.join('\n'));
