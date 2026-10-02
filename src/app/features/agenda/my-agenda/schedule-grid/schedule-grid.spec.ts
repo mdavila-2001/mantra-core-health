@@ -379,6 +379,61 @@ describe('ScheduleGrid', () => {
     expect(bloqueosPintados()).toHaveLength(0);
   });
 
+  /* -- Qué atiende cada franja ---------------------------------------------- */
+
+  describe('qué atiende cada franja (consultas, otros servicios o ambos)', () => {
+    it('una franja sin modo es de consultas: sin clase extra y con la frase de siempre', () => {
+      montar([regla(1, '09:00:00', '13:00:00')], { slotMinutes: 30 });
+      const bloque = bloques()[0];
+      expect(bloque.getAttribute('data-mode')).toBe('CONSULTATIONS');
+      expect(bloque.classList.contains('grilla__bloque--services')).toBe(false);
+      expect(bloque.classList.contains('grilla__bloque--mixed')).toBe(false);
+      expect(bloque.textContent).toContain('consultas de 30 min');
+    });
+
+    it('una franja de servicios lo dice en el bloque, en su rótulo y en la celda', () => {
+      montar([regla(2, '14:00:00', '18:00:00', { bookingMode: 'SERVICES' })], {
+        slotMinutes: 30,
+        sede: 'Sede Centro',
+      });
+      const bloque = bloques()[0];
+      expect(bloque.classList.contains('grilla__bloque--services')).toBe(true);
+      expect(bloque.textContent).toContain('otros servicios');
+      expect(bloque.textContent).not.toContain('consultas de');
+      expect(bloque.getAttribute('aria-label')).toBe(
+        'martes de 14:00 a 18:00: atendés otros servicios en Sede Centro',
+      );
+      expect(celda(15, 1).getAttribute('aria-label')).toContain(
+        'atendés otros servicios de 14:00 a 18:00',
+      );
+    });
+
+    it('el globo de una franja de servicios dice qué atiende y no inventa turnos', () => {
+      montar([regla(2, '14:00:00', '18:00:00', { bookingMode: 'SERVICES', slotMinutes: 30 })]);
+      bloques()[0].dispatchEvent(new Event('mouseenter'));
+      fixture.detectChanges();
+      const texto =
+        fixture.nativeElement.querySelector('[data-testid="horario-globo"]')?.textContent ?? '';
+      expect(texto).toContain('Atiende');
+      expect(texto).toContain('Otros servicios');
+      expect(texto).not.toContain('Turnos en la franja');
+      expect(texto).not.toContain('Cada consulta');
+    });
+
+    it('una franja «Ambos» conserva sus turnos y suma los servicios', () => {
+      montar([regla(3, '08:00:00', '12:00:00', { bookingMode: 'MIXED', slotMinutes: 30 })]);
+      const bloque = bloques()[0];
+      expect(bloque.classList.contains('grilla__bloque--mixed')).toBe(true);
+      expect(bloque.textContent).toContain('consultas de 30 min y servicios');
+      bloque.dispatchEvent(new Event('mouseenter'));
+      fixture.detectChanges();
+      const texto =
+        fixture.nativeElement.querySelector('[data-testid="horario-globo"]')?.textContent ?? '';
+      expect(texto).toContain('Consultas y otros servicios');
+      expect(texto).toContain('Turnos en la franja');
+    });
+  });
+
   /* -- El globo de detalle -------------------------------------------------- */
 
   it('al pasar el mouse por una franja abre el globo con todos sus datos', () => {

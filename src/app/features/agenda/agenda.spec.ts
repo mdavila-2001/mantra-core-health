@@ -545,9 +545,11 @@ describe('Agenda', () => {
     // «Consultas» ES el calendario; la tabla de consultas y la grilla de cupos
     // no están. El horario se llama «Mis horarios», no «Mi agenda».
     const solapas = [...raiz.querySelectorAll('[role="tab"]')] as HTMLElement[];
+    // 02/10/2026: se suma «Horarios de otros servicios», pedido del propietario.
     expect(solapas.map((s) => s.textContent?.trim().replace(/\s*\(\d+\)$/, ''))).toEqual([
       'Consultas',
       'Mis horarios',
+      'Horarios de otros servicios',
     ]);
     // Y hay UNA sola «Consultas»: dos con el mismo nombre es el defecto que el
     // renombre y el retiro de la tabla, hechos juntos, existen para evitar.
@@ -585,7 +587,35 @@ describe('Agenda', () => {
     expect(raiz.querySelector('app-my-agenda')).not.toBeNull();
     // Ni los filtros de las listas: el horario no se filtra por ventana.
     expect(raiz.querySelector('.agenda__filtros')).toBeNull();
-    expect(interno<() => readonly string[]>('pestanas')()).toHaveLength(2);
+    expect(interno<() => readonly string[]>('pestanas')()).toHaveLength(3);
+  });
+
+  it('la solapa «Horarios de otros servicios» escribe `vista=servicios` y monta su pantalla', async () => {
+    await montar({ roles: ['PRACTITIONER'], hpid: 'hp-1' }, '/schedule');
+    await responderTodo();
+    const router = TestBed.inject(Router);
+    const raiz = harness.fixture.nativeElement as HTMLElement;
+    expect(raiz.querySelector('app-services-schedule')).toBeNull();
+
+    const solapa = [...raiz.querySelectorAll('[role="tab"]')].find(
+      (s) => s.textContent?.trim() === 'Horarios de otros servicios',
+    ) as HTMLElement;
+    solapa.click();
+    await responderTodo();
+
+    expect(router.url).toContain('vista=servicios');
+    expect(interno<() => boolean>('enServicios')()).toBe(true);
+    expect(interno<() => number>('pestana')()).toBe(2);
+    // Ni el calendario ni «Mis horarios» se construyen mientras tanto.
+    expect(raiz.querySelector('[data-testid="agenda-calendario"]')).toBeNull();
+    expect(raiz.querySelector('app-my-agenda')).toBeNull();
+    expect(raiz.querySelector('app-services-schedule')).not.toBeNull();
+  });
+
+  it('un enlace con `vista=servicios` abre directo esa solapa', async () => {
+    await montar({ roles: ['PRACTITIONER'], hpid: 'hp-1' }, '/schedule?vista=servicios');
+    await responderTodo();
+    expect(interno<() => string>('pestanaActual')()).toBe('services');
   });
 
   /**
@@ -647,6 +677,7 @@ describe('Agenda', () => {
     ] as HTMLElement[];
 
     expect(solapas.map((s) => s.textContent?.trim())).not.toContain('Mis horarios');
+    expect(solapas.map((s) => s.textContent?.trim())).not.toContain('Horarios de otros servicios');
   });
 
   /* -- Ingreso por mostrador (AC-C3-03) ------------------------------------ */
@@ -2674,7 +2705,11 @@ describe('Agenda', () => {
       responderResto();
 
       expect(interno<() => string>('pestanaActual')()).toBe('calendar');
-      expect(interno<() => readonly string[]>('pestanas')()).toEqual(['calendar', 'schedule']);
+      expect(interno<() => readonly string[]>('pestanas')()).toEqual([
+        'calendar',
+        'schedule',
+        'services',
+      ]);
     });
   });
 

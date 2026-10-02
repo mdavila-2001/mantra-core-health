@@ -1540,7 +1540,11 @@ export class MyAgenda implements OnInit {
    */
   protected readonly reglasVigentes = computed(() => {
     const e = this.estado();
-    return e.status === 'ready' || e.status === 'stale' ? (e.data?.rules ?? []) : [];
+    // Las franjas SÓLO de servicios viven en «Horarios de otros servicios»;
+    // acá quedan las de consultas y las «Ambos», que también reparten turnos.
+    return e.status === 'ready' || e.status === 'stale'
+      ? (e.data?.rules ?? []).filter((regla) => regla.bookingMode !== 'SERVICES')
+      : [];
   });
 
   /** Cómo se llama el horario vigente, para el globo de detalle de la grilla. */
