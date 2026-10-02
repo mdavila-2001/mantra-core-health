@@ -57,6 +57,7 @@ backend.
 | **P51** | Registro de laboratorio: la API acepta `tenantType: DIAGNOSTIC_CENTER` con `diagnosticUnit`, pero exige país, jurisdicción, cédula y poder del representante que el alta no pide, no conoce `diagnosticUnit.branches` y, sin `diagnosticUnitTypeConceptId`, crea una unidad **de imágenes** |
 | **P52** | Portal de la cuenta de laboratorio: resumen y **resultados** (subida por partes sin tope de tamaño, listado de todo lo subido, contenido, retiro con motivo y aviso al médico y al paciente). Ninguna ruta `/diagnostics/lab/*` existe en la API |
 | **P54** | Carga masiva de sucursales: `directory.branches` no tiene **descripción** ni **enlace de ubicación**, y `POST /tenants/{id}/branches` es de a una. **El front ya las manda** (altas de laboratorio y farmacia, ficha de organización) y el simulador las guarda |
+| **P58** | El **logo de una organización** (farmacia, laboratorio, clínica, aseguradora): hoy la imagen vive en `community.public_profiles.avatar_file_id` y sólo la escribe un administrador de plataforma (`PUT /admin/tenants/:id/public-profile`); `directory.tenants` no tiene columna de logo. Hace falta que el **owner/admin** de la organización lo cambie: `GET /tenants/{id}/logo` → `{ fileId \| null }` y `PUT /tenants/{id}/logo` con `{ fileId \| null }` (403 si no administra; el archivo ya subido por `/common/files/upload`, categoría `IMAGE`). **El front ya está construido contra el simulador** (`LogoDeOrganizacionClient`, tarjeta `app-organization-logo` en «Tu organización» y «Mi perfil»): al llegar la API se cambia ese cliente y `DirectoryClient`, no las pantallas. El modelo, antes, tiene que decir dónde se guarda (¿columna en `directory.tenants` o escritura del dueño sobre `public_profiles`?) |
 
 ---
 
@@ -2440,7 +2441,30 @@ reintento; visor) y `features/laboratory/summary/`.
 > solicitud, no con una cuenta); la regla del simulador ya lo cubre y está probada con un centro
 > sintético.
 
-## P57 · Las campañas de promoción con todas sus mecánicas — 01/10/2026
+## P57 · Siniestralidad por persona: el agregado en el servidor — 01/10/2026
+
+> **Qué pide el front.** La pestaña «Por persona» del tablero de «Siniestralidad y analítica»
+> (`/administration/insurance-analytics?tab=by-person`) tiene un botón «Generar informe» que
+> muestra, por cada afiliado con solicitudes en el período: reclamos (y cuántos siguen
+> pendientes), facturado, aprobado, denegado, tasa de aprobación, prima del período y
+> siniestralidad (aprobado ÷ prima). Se puede exportar a CSV.
+>
+> **Hoy.** Lo calcula el navegador a partir de `GET /insurance/received-claims`, el mismo
+> listado de «Solicitudes recibidas» (`docs/contracts/insurer-received-claims.md`), agrupando por
+> `patient.id` con aritmética decimal en enteros (sin `float`). La prima de cada persona es la
+> prima mensual de lista de su plan (la de su solicitud más reciente) × los meses del período.
+> **Límite que la pantalla declara:** ese listado viene con tope (`truncated`); si llega
+> recortado, el informe se rotula «parcial». Las solicitudes en otra moneda no se suman: se
+> cuentan y se avisa.
+>
+> **Falta en la API.** `GET /insurance/analytics/loss-ratio/by-member?startDate&endDate&planId`
+> con el mismo alcance que `loss-ratio` (la aseguradora del tenant activo), agregando en
+> Postgres sobre `insurance.insurance_claims` + `claim_adjudication_versions`, sin tope y con la
+> prima por afiliado tomada de la **cobertura vigente** de cada uno (no de la del plan de su última
+> solicitud). Sin tabla nueva. Es dato personal de salud: el endpoint no debe devolver
+> diagnósticos ni detalle clínico, sólo identificación, plan e importes.
+
+## P58 · Las campañas de promoción con todas sus mecánicas — 01/10/2026
 
 > **Qué pide el front.** «Promociones» de la farmacia ya no ofrece sólo «un porcentaje» o «un
 > precio por producto»: ofrece **14 mecánicas** en cinco familias (precio, cantidad, total de la

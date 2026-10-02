@@ -328,4 +328,90 @@ describe('InsuranceCatalog', () => {
 
     expect(status()).toBe('error');
   });
+
+  describe('un producto seguro por página', () => {
+    /** Dos productos seguros en un ramo y un segundo ramo sin planes: tres páginas. */
+    const FICHA_CON_TRES_PAGINAS = {
+      ...FICHA,
+      products: [
+        {
+          ...FICHA.products[0]!,
+          plans: [
+            FICHA.products[0]!.plans[0]!,
+            { ...FICHA.products[0]!.plans[0]!, id: 'pl-2', planCode: 'PLAN-2', name: 'Plan Plata' },
+          ],
+        },
+        { ...FICHA.products[0]!, id: 'p-2', productCode: 'PROD-2', name: 'Vida', plans: [] },
+      ],
+    };
+
+    function mountPaginado(): void {
+      mount();
+      http.expectOne('/insurance-carriers').flush({ items: [RESUMEN], count: 1 });
+      http.expectOne(`/insurance-carriers/${CARRIER_ID}`).flush(FICHA_CON_TRES_PAGINAS);
+      fixture.detectChanges();
+    }
+
+    function irAPagina(numero: number): void {
+      const boton: HTMLButtonElement = fixture.nativeElement.querySelector(
+        `[aria-label="Página ${numero}"]`,
+      );
+      expect(boton, `botón de la página ${numero}`).toBeTruthy();
+      boton.click();
+      fixture.detectChanges();
+    }
+
+    it('dibuja sólo un producto seguro a la vez, no toda la lista apilada', () => {
+      mountPaginado();
+
+      const element: HTMLElement = fixture.nativeElement;
+      expect(element.querySelector('#plan-pl-1')).not.toBeNull();
+      expect(element.querySelector('#plan-pl-2')).toBeNull();
+      expect(element.textContent).toContain('1–1 de 3');
+    });
+
+    it('deja elegir el número de página: botones numerados y selector «Ir a la página»', () => {
+      mountPaginado();
+
+      const element: HTMLElement = fixture.nativeElement;
+      for (const numero of [1, 2, 3]) {
+        expect(element.querySelector(`[aria-label="Página ${numero}"]`)).not.toBeNull();
+      }
+      expect(element.querySelector('.pagination__jump')).not.toBeNull();
+      // Un producto por página: no hay selector de «resultados por página».
+      expect(element.querySelector('.pagination__size')).toBeNull();
+    });
+
+    it('al elegir la página 2 se ve el otro producto seguro y deja de verse el primero', () => {
+      mountPaginado();
+
+      irAPagina(2);
+
+      const element: HTMLElement = fixture.nativeElement;
+      expect(element.querySelector('#plan-pl-2')).not.toBeNull();
+      expect(element.querySelector('#plan-pl-1')).toBeNull();
+      expect(element.textContent).toContain('Plan Plata');
+    });
+
+    it('un ramo sin productos seguros ocupa su propia página', () => {
+      mountPaginado();
+
+      irAPagina(3);
+
+      expect(fixture.nativeElement.textContent).toContain(
+        'Este ramo todavía no tiene productos seguros activos.',
+      );
+    });
+
+    it('una página fuera de rango se recorta a la última: nunca queda la pantalla vacía', () => {
+      mountPaginado();
+
+      member<{ set(value: number): void }>('pagina').set(99);
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.textContent).toContain(
+        'Este ramo todavía no tiene productos seguros activos.',
+      );
+    });
+  });
 });

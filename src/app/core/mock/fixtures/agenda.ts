@@ -30,7 +30,7 @@ export interface PlantillaSimulada {
   readonly resourceId: string;
   readonly retired: boolean;
   readonly name: string;
-  readonly rules: readonly { dayOfWeek: number; startTime: string; endTime: string; slotMinutes?: number; capacityPerSlot?: number; gapMinutes?: number }[];
+  readonly rules: readonly { dayOfWeek: number; startTime: string; endTime: string; slotMinutes?: number; capacityPerSlot?: number; gapMinutes?: number; bookingMode?: 'CONSULTATIONS' | 'SERVICES' | 'MIXED' }[];
   readonly slotMinutes: number;
   readonly validFrom: string;
   readonly validTo?: string;
@@ -50,6 +50,18 @@ export interface CupoSimulado {
   readonly remainingCapacity: number;
   readonly statusConceptId: string;
   readonly serviceConceptId: string | null;
+  /**
+   * De qué oferta de servicio es el cupo (v4.2.40). Ausente ≡ cupo de consulta.
+   * Un cupo de servicio **nace al retener**: no sale de una plantilla.
+   */
+  readonly serviceOfferingId?: string | null;
+  /**
+   * Hasta cuándo vale la retención de un cupo de servicio que nadie confirmó.
+   * La maqueta no tiene worker de vencimientos, así que se resuelve al leer.
+   */
+  readonly heldUntil?: string | null;
+  /** Un cupo de consulta que un servicio pisó: deja de ofrecerse y vuelve si ya nada lo pisa. */
+  readonly retractedByService?: boolean;
 }
 
 export interface ReservaSimulada {
@@ -80,6 +92,17 @@ export interface ReservaSimulada {
    * acá el instante viaja en texto, como todo lo que sirve el simulador.
    */
   readonly followUpOf: FollowUpOrigin | null;
+  /** La oferta de servicio que se reservó (v4.2.40). Ausente ≡ consulta. */
+  readonly serviceOfferingId?: string | null;
+  /** Lo que el paciente aceptó al reservar el servicio, congelado. */
+  readonly service?: {
+    readonly offeringId: string;
+    readonly name: string;
+    readonly price: string;
+    readonly minDurationMinutes: number;
+    readonly maxDurationMinutes: number;
+    readonly requiresApproval: boolean;
+  } | null;
   readonly createdAt: string;
 }
 
@@ -231,9 +254,32 @@ export const plantillas = new Coleccion<PlantillaSimulada>([
     // maqueta que se ve vacía dos días de cada siete no sirve para mostrar
     // nada. Además es lo que hace media Santa Cruz: consultorio el sábado por
     // la mañana.
-    rules: [1, 2, 3, 4, 5, 6].map((dayOfWeek) => ({ dayOfWeek, startTime: '08:00', endTime: '12:00', slotMinutes: 30, capacityPerSlot: 1 })),
+    // Los miércoles son MIXTOS (v4.2.40): la misma mañana admite consultas y
+    // servicios, que comparten el tiempo del médico. Es el caso que obliga a que
+    // los dos convivan sin pisarse.
+    rules: [1, 2, 3, 4, 5, 6].map((dayOfWeek) => ({
+      dayOfWeek,
+      startTime: '08:00',
+      endTime: '12:00',
+      slotMinutes: 30,
+      capacityPerSlot: 1,
+      ...(dayOfWeek === 3 ? { bookingMode: 'MIXED' as const } : {}),
+    })),
     slotMinutes: 30,
     validFrom: isoDia(-60),
+    bookingPolicyId: POLITICA_ESTANDAR,
+    statusConceptId: ESTADO['ST-PUBLISHED']!,
+  },
+  {
+    // Martes y jueves por la tarde la médica sólo hace estudios (v4.2.40): sin
+    // consultas, con el largo de cada uno según su servicio.
+    id: uuid('template-medica-servicios'),
+    resourceId: RECURSO_MEDICA,
+    retired: false,
+    name: 'Estudios en la clínica',
+    rules: [2, 4].map((dayOfWeek) => ({ dayOfWeek, startTime: '14:00', endTime: '18:00', bookingMode: 'SERVICES' as const })),
+    slotMinutes: 30,
+    validFrom: isoDia(-30),
     bookingPolicyId: POLITICA_ESTANDAR,
     statusConceptId: ESTADO['ST-PUBLISHED']!,
   },
@@ -296,6 +342,8 @@ function cuposDePlantilla(plantilla: PlantillaSimulada, servicio: string = ACTIV
     const d = fecha(dia, 0);
     const regla = plantilla.rules.find((r) => r.dayOfWeek === d.getDay());
     if (regla === undefined) continue;
+    // Una franja sólo de servicios no genera consultas: sus turnos nacen al retener.
+    if (regla.bookingMode === 'SERVICES') continue;
     const [hi, mi] = regla.startTime.split(':').map(Number) as [number, number];
     const [hf, mf] = regla.endTime.split(':').map(Number) as [number, number];
     const paso = (regla.slotMinutes ?? plantilla.slotMinutes) + (regla.gapMinutes ?? 0);

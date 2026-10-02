@@ -42,11 +42,14 @@ import { GlossaryCategoryIcon } from './glossary-category-icon';
  * agrupan en la ficha. `RELATED_TERM` va último: es el «ver también» genérico,
  * y las relaciones con significado clínico concreto —enfermedad, procedimiento,
  * tratamiento, anatomía, prueba diagnóstica— importan más para entender el
- * término.
+ * término. Síntomas y especialidad van justo después de enfermedad: es lo
+ * primero que busca quien llega a una ficha de enfermedad.
  */
 const RELATION_GROUPS: readonly { readonly type: GlossaryRelationType; readonly label: string }[] =
   [
     { type: 'DISEASE', label: 'Enfermedades relacionadas' },
+    { type: 'SYMPTOM', label: 'Síntomas y signos' },
+    { type: 'SPECIALTY', label: 'Especialidades que la atienden' },
     { type: 'PROCEDURE', label: 'Procedimientos relacionados' },
     { type: 'TREATMENT', label: 'Tratamientos relacionados' },
     { type: 'ANATOMY', label: 'Anatomía relacionada' },

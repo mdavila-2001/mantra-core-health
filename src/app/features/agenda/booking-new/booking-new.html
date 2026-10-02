@@ -61,6 +61,23 @@
             </div>
           }
 
+          <!-- Qué servicio es, cuánto dura y cuánto sale (v4.2.40). La duración
+               es un rango porque depende de cada paciente; el horario reserva el
+               máximo. Aparece sólo si se reserva un servicio. -->
+          @if (esServicio && servicio(); as s) {
+            <div class="reserva__dato" data-testid="reserva-servicio">
+              <dt>Servicio</dt>
+              <dd>
+                {{ s.serviceName }}
+                <span class="reserva__cifra" data-testid="reserva-duracion">· dura {{ duracion() }}</span>
+              </dd>
+            </div>
+            <div class="reserva__dato" data-testid="reserva-precio">
+              <dt>Precio de referencia</dt>
+              <dd class="reserva__cifra">{{ precio() }}</dd>
+            </div>
+          }
+
           <div class="reserva__dato">
             <dt>Fecha de reserva</dt>
             <dd>
@@ -68,10 +85,12 @@
               hasta <span class="reserva__cifra">{{ cupo.endAt | date: 'HH:mm' }}</span>
             </dd>
           </div>
-          <div class="reserva__dato">
-            <dt>Disponibilidad</dt>
-            <dd>{{ cupo.remainingCapacity }} de {{ cupo.capacity }} sin ocupar</dd>
-          </div>
+          @if (!esServicio) {
+            <div class="reserva__dato">
+              <dt>Disponibilidad</dt>
+              <dd>{{ cupo.remainingCapacity }} de {{ cupo.capacity }} sin ocupar</dd>
+            </div>
+          }
 
           <!-- Dónde es el turno. El renglón aparece sólo si el recurso tiene
                sede: uno vacío se leería como un dato que no cargó, y quien

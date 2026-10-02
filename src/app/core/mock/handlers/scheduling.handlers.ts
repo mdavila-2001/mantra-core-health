@@ -21,6 +21,7 @@ import { pacientePorId, pacientes } from '../fixtures/personas';
 import { representaA } from './profiles.handlers';
 import { conflict, forbidden, noContent, notFound, preconditionFailed, reply, validation, type MockReply, type MockRequest, type MockRouter } from '../mock-router';
 import { ahora, cuerpo, masMinutos, nuevoId, texto, uuid } from '../mock-store';
+import { liberarCupoDeServicio, liberarSobranteDeServicio, ofertaDelCupo } from './service-offerings.handlers';
 
 /* ============================================================================
     Agenda: recursos, cupos, reservas, plantillas, bloqueos y lista de espera.
@@ -302,19 +303,32 @@ export function registrarAgenda(router: MockRouter): void {
     if (cupo === undefined) return preconditionFailed('El hold venció o no existe');
     const datos = cuerpo<{ patientProfileId: string; channel?: string; reasonText?: string }>(request);
     const paciente = pacientePorId(datos.patientProfileId ?? request.user?.patientProfileId ?? '');
+    // v4.2.40 — el cupo de un servicio manda sobre el pedido: de la oferta salen la
+    // modalidad, lo que el paciente acepta y si la reserva espera aprobación. Un
+    // servicio que NO requiere aprobación nace confirmado aunque el paciente "pida".
+    const delServicio = ofertaDelCupo(cupo);
+    const estadoFinal: 'BK-CONFIRMED' | 'BK-REQUESTED' =
+      delServicio !== undefined && estado === 'BK-REQUESTED' && !delServicio.oferta.requiresApproval ? 'BK-CONFIRMED' : estado;
     const nueva: ReservaSimulada = {
       id: nuevoId('booking'),
       patientProfileId: paciente?.id ?? datos.patientProfileId ?? '',
       resourceId: cupo.resourceId,
       bookableSlotId: cupo.id,
-      appointmentId: estado === 'BK-CONFIRMED' ? nuevoId('appointment') : null,
-      typeConceptId: TIPO_CITA['APT-PRIMERA']!,
+      appointmentId: estadoFinal === 'BK-CONFIRMED' ? nuevoId('appointment') : null,
+      // Un servicio es un procedimiento para la agenda (la API lo clasifica así): es lo
+      // que la pinta con su tipología y no como una consulta más.
+      typeConceptId: delServicio === undefined ? TIPO_CITA['APT-PRIMERA']! : ACTIVIDAD['ACT-PROCEDIMIENTO']!,
       startAt: cupo.startAt,
       endAt: cupo.endAt,
-      statusConceptId: ESTADO_RESERVA[estado]!,
-      serviceConceptId: cupo.serviceConceptId ?? ACTIVIDAD['ACT-CONSULTA']!,
+      statusConceptId: ESTADO_RESERVA[estadoFinal]!,
+      serviceConceptId:
+        delServicio === undefined
+          ? (cupo.serviceConceptId ?? ACTIVIDAD['ACT-CONSULTA']!)
+          : delServicio.oferta.channel === 'TELECONSULTA'
+            ? ACTIVIDAD['ACT-TELECONSULTA']!
+            : ACTIVIDAD['ACT-PROCEDIMIENTO']!,
       bookingChannelConceptId: datos.channel === 'PHONE' ? CANAL['CH-TELECONSULTA']! : CANAL['CH-PRESENCIAL']!,
-      confirmedAt: estado === 'BK-CONFIRMED' ? ahora() : null,
+      confirmedAt: estadoFinal === 'BK-CONFIRMED' ? ahora() : null,
       checkedInAt: null,
       reasonText: datos.reasonText ?? 'Consulta',
       patientName: paciente?.displayName ?? 'Paciente',
@@ -326,11 +340,24 @@ export function registrarAgenda(router: MockRouter): void {
       // Un turno que el paciente pidió por su cuenta no sale de ninguna
       // consulta: la reconsulta la agenda el profesional (C4).
       followUpOf: null,
+      ...(delServicio === undefined
+        ? {}
+        : {
+            serviceOfferingId: delServicio.oferta.id,
+            service: {
+              offeringId: delServicio.oferta.id,
+              name: delServicio.dto.serviceName,
+              price: delServicio.dto.price,
+              minDurationMinutes: delServicio.oferta.minDurationMinutes,
+              maxDurationMinutes: delServicio.oferta.maxDurationMinutes,
+              requiresApproval: delServicio.oferta.requiresApproval,
+            },
+          }),
       createdAt: ahora(),
     };
     reservas.agregar(nueva);
-    cupos.actualizar(cupo.id, { remainingCapacity: Math.max(0, cupo.remainingCapacity - 1) });
-    return { status: 201, body: { id: nueva.id, bookableSlotId: cupo.id, statusConceptId: nueva.statusConceptId, remindersScheduled: 2 } };
+    cupos.actualizar(cupo.id, { remainingCapacity: Math.max(0, cupo.remainingCapacity - 1), ...(delServicio === undefined ? {} : { heldUntil: null }) });
+    return { status: 201, body: { id: nueva.id, bookableSlotId: cupo.id, statusConceptId: nueva.statusConceptId, remindersScheduled: estadoFinal === 'BK-CONFIRMED' ? 2 : 0 } };
   };
   router.post('/scheduling/holds/:token/confirm', confirmar('BK-CONFIRMED'));
   router.post('/scheduling/holds/:token/request', confirmar('BK-REQUESTED'));
@@ -395,8 +422,12 @@ export function registrarAgenda(router: MockRouter): void {
     cambiarEstado(r.id, estado, {
       statusReason: { reasonText: datos.reasonText ?? '', actorKind: datos.cancelledBy ?? 'PROVIDER', toStateConceptId: ESTADO_RESERVA[estado]!, changedAt: ahora() },
     });
-    const cupo = cupos.get(r.bookableSlotId);
-    if (cupo !== undefined) cupos.actualizar(cupo.id, { remainingCapacity: cupo.capacity });
+    // El cupo de un servicio nació para esta reserva: se borra y vuelven las
+    // consultas que había retraído. El de una consulta se reabre, como siempre.
+    if (!liberarCupoDeServicio(r.bookableSlotId)) {
+      const cupo = cupos.get(r.bookableSlotId);
+      if (cupo !== undefined) cupos.actualizar(cupo.id, { remainingCapacity: cupo.capacity });
+    }
     return { bookingId: r.id, feeAmount: datos.isNoShow ? '50.00' : undefined, capacityReleased: true };
   });
 
@@ -407,6 +438,7 @@ export function registrarAgenda(router: MockRouter): void {
     cambiarEstado(r.id, 'BK-REJECTED', {
       statusReason: { reasonText: datos.reasonText ?? '', actorKind: 'PROVIDER', toStateConceptId: ESTADO_RESERVA['BK-REJECTED']!, changedAt: ahora() },
     });
+    liberarCupoDeServicio(r.bookableSlotId);
     return { bookingId: r.id, capacityReleased: true };
   });
 
@@ -437,7 +469,13 @@ export function registrarAgenda(router: MockRouter): void {
   };
   router.post('/scheduling/bookings/:id/accept', decision('BK-CONFIRMED', () => ({ confirmedAt: ahora(), appointmentId: nuevoId('appointment') })));
   router.post('/scheduling/bookings/:id/start', decision('BK-IN-PROGRESS'));
-  router.post('/scheduling/bookings/:id/complete', decision('BK-COMPLETED'));
+  router.post('/scheduling/bookings/:id/complete', (request) => {
+    const respuesta = decision('BK-COMPLETED')(request);
+    // Terminar antes de lo reservado libera el sobrante del servicio.
+    const r = reservas.get(request.params['id']!);
+    if (r !== undefined) liberarSobranteDeServicio(r);
+    return respuesta;
+  });
 
   router.post('/scheduling/bookings/:id/check-in', ({ params }) => {
     const r = reservas.get(params['id']!);
@@ -863,7 +901,7 @@ export function registrarAgenda(router: MockRouter): void {
       // TODAS las franjas del día, no la primera: con hora de almuerzo un día
       // son dos franjas (mañana y tarde), igual que en el generador real, que
       // recorre cada regla. Con `find` la tarde desaparecía en silencio.
-      for (const regla of t.rules.filter((r) => r.dayOfWeek === d.getDay())) {
+      for (const regla of t.rules.filter((r) => r.dayOfWeek === d.getDay() && r.bookingMode !== 'SERVICES')) {
         const [hi, mi] = regla.startTime.split(':').map(Number) as [number, number];
         const [hf, mf] = regla.endTime.split(':').map(Number) as [number, number];
         const apertura = hi * 60 + mi;

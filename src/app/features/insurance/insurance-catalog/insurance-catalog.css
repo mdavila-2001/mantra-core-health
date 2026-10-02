@@ -165,3 +165,11 @@
     align-items: flex-start;
   }
 }
+
+.catalog__pager {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-3);
+}

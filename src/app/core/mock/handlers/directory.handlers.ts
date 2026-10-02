@@ -1,7 +1,14 @@
 import { reservas, recursos } from '../fixtures/agenda';
 import { CARGO, ESTADO, TIPO_ORGANIZACION } from '../fixtures/conceptos';
 import { afiliaciones, MEDICA, PROFESIONALES, profesionalPorId } from '../fixtures/personas';
-import { conflict, notFound, validation, type MockRequest, type MockRouter } from '../mock-router';
+import {
+  conflict,
+  forbidden,
+  notFound,
+  validation,
+  type MockRequest,
+  type MockRouter,
+} from '../mock-router';
 import {
   IDS,
   MOCK_USERS,
@@ -316,6 +323,32 @@ const membresias = new Coleccion<{
     endDate: null,
     createdAt: iso(-120),
   },
+  // La cuenta de una farmacia o de un laboratorio **es** la organización: su titular es el
+  // dueño. Sin esta membresía `canAdminister` daba falso y nadie podía cargar el logo.
+  {
+    id: uuid('membership-farmacia-owner'),
+    tenantId: TENANT_FARMACIA,
+    userId: IDS.farmacia.userId,
+    tenantRoleConceptId: ROL_TENANT.OWNER,
+    statusConceptId: ESTADO['ST-ACTIVE']!,
+    accessScopeConceptId: ALCANCE_ACCESO.ALL_TENANT,
+    primaryBranchId: null,
+    startDate: isoDia(-200),
+    endDate: null,
+    createdAt: iso(-200),
+  },
+  {
+    id: uuid('membership-laboratorio-owner'),
+    tenantId: TENANT_LABORATORIO,
+    userId: IDS.laboratorio.userId,
+    tenantRoleConceptId: ROL_TENANT.OWNER,
+    statusConceptId: ESTADO['ST-ACTIVE']!,
+    accessScopeConceptId: ALCANCE_ACCESO.ALL_TENANT,
+    primaryBranchId: null,
+    startDate: isoDia(-200),
+    endDate: null,
+    createdAt: iso(-200),
+  },
 ]);
 
 const asignaciones = new Coleccion<{
@@ -343,6 +376,9 @@ const asignaciones = new Coleccion<{
     createdAt: iso(-400),
   },
 ]);
+
+/** El archivo que es el logo de cada organización, por id de tenant. Sin entrada = sin logo. */
+const logosDeOrganizaciones = new Map<string, string | null>();
 
 function organizacionPropia(t: TenantSimulado, request: MockRequest) {
   const user = request.user;
@@ -484,6 +520,23 @@ export function registrarDirectorio(router: MockRouter): void {
       ...(datos.timeZone === undefined ? {} : { timeZone: datos.timeZone }),
     })!;
     return { ...actualizado, parentTenantId: actualizado.parentTenantId ?? undefined };
+  });
+
+  // El logo de una organización (PENDIENTES-BACKEND P58): la API real todavía no deja que el
+  // dueño lo cambie. Sólo owner/admin escribe; leerlo lo puede hacer cualquiera que vea la ficha.
+  router.get('/tenants/:id/logo', ({ params }) =>
+    tenants.get(params['id']!) === undefined
+      ? notFound('Organización no encontrada')
+      : { fileId: logosDeOrganizaciones.get(params['id']!) ?? null },
+  );
+
+  router.put('/tenants/:id/logo', (request) => {
+    const t = tenants.get(request.params['id']!);
+    if (t === undefined) return notFound('Organización no encontrada');
+    if (!organizacionPropia(t, request).canAdminister) return forbidden();
+    const fileId = cuerpo<{ fileId?: string | null }>(request).fileId ?? null;
+    logosDeOrganizaciones.set(t.id, fileId);
+    return { fileId };
   });
 
   router.get('/tenants/:id/child-tenants', ({ params, query }) =>

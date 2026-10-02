@@ -51,7 +51,7 @@ Decisiones que no se deducen leyendo el código:
   presupuesto (dato interno).
 - **`perPersonLimit`, `availableUnits` y `budget` se guardan pero no se hacen cumplir**: necesitan
   el historial de canjes, que es del backend. El formulario lo dice.
-- Pedido al backend: `PENDIENTES-BACKEND.md` §P57.
+- Pedido al backend: `PENDIENTES-BACKEND.md` §P58.
 
 ## La segmentación por diagnóstico: lo que este módulo NO hace, y por qué
 
