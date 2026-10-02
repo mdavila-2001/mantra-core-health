@@ -34,7 +34,11 @@ import {
 import { MedicalSpecialtiesCatalog } from '../../../../core/data-access/terminology/medical-specialties.service';
 import { TerminologyClient } from '../../../../core/data-access/terminology/terminology.client';
 import type { ConceptLabels } from '../../../../core/data-access/terminology/terminology.types';
-import type { OwnPractitionerProfile } from '../../../../core/data-access/profiles/profiles.types';
+import type {
+  InsuranceBillingFrequency,
+  OwnPractitionerProfile,
+} from '../../../../core/data-access/profiles/profiles.types';
+import { INSURANCE_BILLING_FREQUENCY_OPTIONS } from '../../../../core/profesion/insurance-billing-frequency';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
 import { NavigationService } from '../../../../core/navigation/navigation.service';
 import { loading, ready } from '../../../../core/view-state/view-state';
@@ -496,6 +500,9 @@ export class PractitionerProfileEdit {
   protected readonly nit = signal('');
   /** A nombre de quién sale el comprobante. */
   protected readonly razonSocial = signal('');
+  /** Cada cuánto le factura a las aseguradoras. `null` si todavía no eligió. */
+  protected readonly frecuenciaFacturacionSeguro = signal<InsuranceBillingFrequency | null>(null);
+  protected readonly opcionesFrecuenciaFacturacion = INSURANCE_BILLING_FREQUENCY_OPTIONS;
 
   /* -- El logo del consultorio ------------------------------------------------
      No viaja en el `PATCH` del perfil: va por `LogoDelConsultorioClient`, que es
@@ -1470,6 +1477,7 @@ export class PractitionerProfileEdit {
     this.errorCorreoTrabajo.set('');
     this.nit.set(perfil.taxId ?? '');
     this.razonSocial.set(perfil.taxHolderName ?? '');
+    this.frecuenciaFacturacionSeguro.set(perfil.insuranceBillingFrequency ?? null);
     this.telemedicina.set(perfil.telehealthAvailable);
     // ALV-003: los dos campos que el contrato ya aceptaba y el formulario no
     // ofrecía. Se siembran desde el perfil, igual que el resto.
@@ -1619,6 +1627,7 @@ export class PractitionerProfileEdit {
       workLongitude: number | null;
       taxId: string;
       taxHolderName: string;
+      insuranceBillingFrequency: InsuranceBillingFrequency;
     }> = {};
     // ALV-003/009: los dos campos nuevos viajan sólo si cambiaron, como el
     // resto. La fecha se compara por día local (`toISOString` la pasaría por
@@ -1705,6 +1714,12 @@ export class PractitionerProfileEdit {
     }
     if (this.razonSocial() !== (original.taxHolderName ?? '')) {
       cambios.taxHolderName = this.razonSocial();
+    }
+    // La frecuencia no tiene «vacío»: el selector no ofrece quitarla, así que
+    // sólo viaja cuando se eligió una distinta de la guardada.
+    const frecuencia = this.frecuenciaFacturacionSeguro();
+    if (frecuencia !== null && frecuencia !== original.insuranceBillingFrequency) {
+      cambios.insuranceBillingFrequency = frecuencia;
     }
 
     const logoPendiente = this.logoPendiente();

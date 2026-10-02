@@ -169,6 +169,8 @@ export interface FacturacionVisible {
   readonly nit: string;
   /** A nombre de quién sale el comprobante. Vacío si no lo cargó. */
   readonly razonSocial: string;
+  /** Cada cuánto factura a las aseguradoras, en palabras. Vacío si no lo declaró. */
+  readonly frecuenciaSeguro: string;
 }
 
 /**

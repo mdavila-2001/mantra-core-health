@@ -301,23 +301,28 @@ describe('PractitionerProfile', () => {
      * que la arma. El de la guía la deja en `null` — el NIT de un colega no es
      * de quien mira su ficha.
      */
-    it('lleva el NIT y la razón social del contrato a la ficha propia', () => {
+    it('lleva el NIT, la razón social y la frecuencia al seguro del contrato a la ficha propia', () => {
       montar();
-      responder({ taxId: '5414404011', taxHolderName: 'Consultorio Dra. Rojas S.R.L.' });
+      responder({
+        taxId: '5414404011',
+        taxHolderName: 'Consultorio Dra. Rojas S.R.L.',
+        insuranceBillingFrequency: 'BIWEEKLY',
+      });
 
       expect(visible().facturacion).toEqual({
         nit: '5414404011',
         razonSocial: 'Consultorio Dra. Rojas S.R.L.',
+        frecuenciaSeguro: 'Quincenal',
       });
     });
 
-    it('sin facturación declarada los dos quedan vacíos, no ausentes', () => {
+    it('sin facturación declarada los tres quedan vacíos, no ausentes', () => {
       // Vacío y no `null`: `null` es «esta ficha no es tuya», que es otra cosa
       // que la ficha dibuja distinto (ni siquiera muestra la pestaña).
       montar();
       responder({});
 
-      expect(visible().facturacion).toEqual({ nit: '', razonSocial: '' });
+      expect(visible().facturacion).toEqual({ nit: '', razonSocial: '', frecuenciaSeguro: '' });
     });
 
     it('un perfil sin departamento declarado no mete «undefined» en la petición', () => {
