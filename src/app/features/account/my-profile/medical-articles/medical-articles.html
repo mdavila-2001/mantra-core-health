@@ -48,20 +48,15 @@
         </header>
 
         <!-- ── Escritura ──────────────────────────────────────────────────
-             El `app-form-field` SE QUEDA: es quien asocia el rótulo al control
-             por `for`/`id`, y sacarlo dejaría el área de escritura sin nombre
-             accesible. Lo que se va es su PESO VISUAL: el rótulo se oculta sólo
-             para la vista y la ayuda se mudó a la cabecera, que es donde dice
-             dónde va a parar lo que se escriba. -->
-        <app-form-field class="compositor__campo" label="Contenido del artículo">
-          <app-textarea
-            [(value)]="nuevoCuerpo"
-            [rows]="10"
-            [maxLength]="cuerpoMaximo"
-            [autoResize]="true"
-            placeholder="Escribí tu artículo médico…"
-          />
-        </app-form-field>
+             Títulos y subtítulos (que el lector despliega), listas, negrita,
+             cursiva, emojis e imágenes intercaladas. El compositor arma el
+             borrador; publicar —subir imágenes y mandar el post— es de acá. -->
+        <app-article-composer
+          #compositor
+          [maxLength]="cuerpoMaximo"
+          [disabled]="publicando()"
+          [draftKey]="claveDelBorrador()"
+        />
 
         <!-- ── Pie ────────────────────────────────────────────────────────
              La acción a la derecha, separada por una línea tenue. -->
@@ -70,7 +65,7 @@
           submitLabel="Publicar artículo"
           [pending]="publicando()"
           [disabled]="!puedePublicar()"
-          (submitted)="publicar()"
+          (submitted)="publicar(compositor.draft())"
         />
       </form>
     </app-card>
@@ -84,13 +79,32 @@
           @if (estado.status === 'ready') {
             @for (articulo of estado.data; track articulo.post.id) {
             <app-card variant="outlined" padding="lg" class="articulos__tarjeta">
-              <p class="articulos__cuerpo">{{ articulo.resumen }}</p>
+              @if (leyendo() === articulo.post.id) {
+                <app-article-body
+                  [body]="articulo.post.bodyText"
+                  [images]="imagenesDelArticulo()"
+                  [headingLevel]="3"
+                />
+              } @else {
+                <p class="articulos__cuerpo">{{ articulo.resumen }}</p>
+              }
 
               <p class="articulos__fecha">
                 @if (articulo.post.publishedAt) {
                   Publicado el {{ articulo.post.publishedAt | date: 'dd/MM/yyyy' }}
                 }
               </p>
+
+              <button
+                app-button
+                variant="ghost"
+                type="button"
+                data-testid="article-read"
+                [attr.aria-expanded]="leyendo() === articulo.post.id"
+                (clicked)="alternarLectura(articulo)"
+              >
+                {{ leyendo() === articulo.post.id ? 'Mostrar resumen' : 'Leer artículo' }}
+              </button>
 
               <button
                 app-button

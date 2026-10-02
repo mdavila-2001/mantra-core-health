@@ -29,13 +29,16 @@ import { conflict, forbidden, notFound, validation, type MockRequest, type MockR
 // constante que la pantalla, para que no puedan separarse.
 import { VENTANA_DE_EDICION_MS } from '../../messaging/chat.store';
 import { ahora, contiene, cuerpo, iso, nuevoId, paginar, texto, uuid } from '../mock-store';
-import { fileContent } from './files.handlers';
+import { fileContent, urlDeArchivoSimulado } from './files.handlers';
 
 /* ============================================================================
     Red social con sesión: vitrina propia, perfiles, publicaciones,
     comentarios, reacciones, seguimientos, muro, notificaciones sociales,
     reseñas, grupos, temas, mensajería y moderación.
     ========================================================================== */
+
+/** Cuánto tarda el otro lado en «leer» lo que se le manda, en la maqueta. */
+const DEMORA_DE_LECTURA_MS = 30_000;
 
 type Reaccion = 'LIKE' | 'LOVE' | 'INSIGHTFUL' | 'CELEBRATE' | 'SUPPORT';
 
@@ -165,7 +168,13 @@ function publicacion(p: PublicacionSimulada, actor: string | null) {
 function detalleDePublicacion(p: PublicacionSimulada, actor: string | null) {
   return {
     ...publicacion(p, actor),
-    media: p.mediaUrls.map((_url, i) => ({ id: uuid(`media-${p.id}-${i}`), fileId: uuid(`file-media-${p.id}-${i}`), mediaRoleConceptId: CONCEPTO.mediaImage, altText: 'Imagen de la publicación', ordinal: i + 1 })),
+    media: p.mediaUrls.map((_url, i) => ({
+      id: uuid(`media-${p.id}-${i}`),
+      fileId: p.media?.[i]?.fileId ?? uuid(`file-media-${p.id}-${i}`),
+      mediaRoleConceptId: CONCEPTO.mediaImage,
+      altText: p.media?.[i]?.altText ?? 'Imagen de la publicación',
+      ordinal: p.media === undefined ? i + 1 : i,
+    })),
     hashtags: p.hashtags.map((tag) => ({ id: uuid(`hashtag-${p.id}-${tag}`), tag })),
     mentions: [],
   };
@@ -330,7 +339,20 @@ export function registrarComunidad(router: MockRouter): void {
   });
 
   router.post('/community/profiles/:id/posts', (request) => {
-    const datos = cuerpo<{ bodyText: string; visibility?: string; commentsEnabled?: boolean; hashtags?: string[] }>(request);
+    const datos = cuerpo<{
+      bodyText: string;
+      visibility?: string;
+      commentsEnabled?: boolean;
+      hashtags?: string[];
+      media?: { fileId: string; altText?: string; ordinal?: number }[];
+    }>(request);
+    // Mismos topes que el DTO real: sin ellos la maqueta aceptaría un artículo
+    // que la API rechaza, y la pantalla parecería funcionar cuando no.
+    if ((datos.bodyText ?? '').length > 20000) return validation('bodyText no puede superar 20000 caracteres');
+    if ((datos.media ?? []).length > 20) return validation('media admite hasta 20 elementos');
+    const media = [...(datos.media ?? [])]
+      .map((m, i) => ({ ...m, ordinal: m.ordinal ?? i }))
+      .sort((a, b) => a.ordinal - b.ordinal);
     const nueva: PublicacionSimulada = {
       id: nuevoId('post'),
       authorPublicProfileId: request.params['id']!,
@@ -340,7 +362,8 @@ export function registrarComunidad(router: MockRouter): void {
       commentsEnabled: datos.commentsEnabled ?? true,
       publishedAt: ahora(),
       editedAt: null,
-      mediaUrls: [],
+      mediaUrls: media.map((m) => urlDeArchivoSimulado(m.fileId) ?? `/public/media/${m.fileId}`),
+      media: media.map((m) => ({ fileId: m.fileId, ...(m.altText === undefined ? {} : { altText: m.altText }) })),
       hashtags: datos.hashtags ?? [],
       reacciones: { LIKE: 0, LOVE: 0, INSIGHTFUL: 0, CELEBRATE: 0, SUPPORT: 0 },
       reaccionDelActor: {},
@@ -736,7 +759,39 @@ export function registrarComunidad(router: MockRouter): void {
       .filtrar((m) => m.conversationId === params['id'])
       .sort((a, b) => b.sentAt.localeCompare(a.sentAt));
     const pagina = paginar(items, query, 30);
-    return { ...pagina, peerReadUpTo: items.length > 1 ? items[1]!.sentAt : null };
+    const yo = texto(query, 'profileId') ?? '';
+    // El otro lado «lee» con treinta segundos de demora: lo recién mandado se
+    // ve primero como entregado y, al releer el hilo, como leído. Sin esa
+    // demora, la maqueta marcaba leído lo que acababa de salir y nunca se veía
+    // el estado del medio.
+    const corte = Date.now() - DEMORA_DE_LECTURA_MS;
+    const peerReadUpTo =
+      items.find((m) => m.senderProfileId === yo && new Date(m.sentAt).getTime() <= corte)
+        ?.sentAt ?? null;
+    const c = conversaciones.get(params['id']!);
+    const otros = (c?.participantes ?? []).filter((p) => p !== yo);
+    // Los recibos de lo propio. La maqueta los **simula** con reglas fijas —
+    // llega al segundo y lo leen a los dos minutos si está dentro de lo leído—
+    // porque la API real todavía no publica las horas (PLAN-CHAT-WHATSAPP.md).
+    const conRecibos = (pagina.items as readonly MensajeSimulado[]).map((m) =>
+      m.senderProfileId !== yo
+        ? m
+        : {
+            ...m,
+            receipts: otros.map((profileId) => {
+              const enviado = new Date(m.sentAt).getTime();
+              const leido = peerReadUpTo !== null && m.sentAt <= peerReadUpTo;
+              return {
+                profileId,
+                deliveredAt: new Date(enviado + 1000).toISOString(),
+                readAt: leido
+                  ? new Date(Math.min(enviado + 2 * 60_000, Date.now())).toISOString()
+                  : null,
+              };
+            }),
+          },
+    );
+    return { ...pagina, items: conRecibos, peerReadUpTo };
   });
 
   router.post('/community/conversations/:id/messages', (request) => {
@@ -746,9 +801,16 @@ export function registrarComunidad(router: MockRouter): void {
       senderProfileId: string;
       bodyText: string;
       replyToMessageId?: string;
-      contentType?: 'TEXT' | 'MEDIA';
+      contentType?: 'TEXT' | 'MEDIA' | 'STICKER';
       attachmentFileId?: string;
     }>(request);
+    // Quien bloqueó a la otra persona no le escribe: como en cualquier chat, el
+    // bloqueo se levanta antes de seguir. La pantalla ya lo impide; esto es la
+    // regla, y ocultar el campo no lo es.
+    const bloqueado = c.participantes.some(
+      (p) => p !== (datos.senderProfileId ?? '') && conjunto(bloqueos, datos.senderProfileId ?? '').has(p),
+    );
+    if (bloqueado) return forbidden('Bloqueaste a esta persona: desbloquéala para escribirle');
     const nuevo: MensajeSimulado = {
       id: nuevoId('msg'),
       conversationId: c.id,
@@ -763,6 +825,7 @@ export function registrarComunidad(router: MockRouter): void {
       attachmentFileId: datos.attachmentFileId ?? null,
       isEdited: false,
       sentAt: ahora(),
+      ...(datos.contentType === 'STICKER' ? { contentType: 'STICKER' as const } : {}),
     };
     mensajes.agregar(nuevo);
     const noLeidos = { ...c.noLeidosPor };
@@ -822,6 +885,33 @@ export function registrarComunidad(router: MockRouter): void {
       return validation('Pasaron más de 5 minutos: el mensaje ya no se puede editar');
     }
     return mensajes.actualizar(m.id, { bodyText: texto, isEdited: true });
+  });
+
+  /**
+   * Reaccionar a un mensaje. Una reacción por perfil y mensaje: otro emoji
+   * reemplaza la anterior, y `emoji: null` la quita. Sólo quien participa de la
+   * conversación puede reaccionar.
+   */
+  router.put('/community/conversations/:id/messages/:messageId/reaction', (request) => {
+    const c = conversaciones.get(request.params['id']!);
+    const m = mensajes.get(request.params['messageId']!);
+    if (c === undefined || m === undefined || m.conversationId !== c.id) {
+      return notFound('Mensaje no encontrado');
+    }
+    const datos = cuerpo<{ profileId?: string; emoji?: string | null }>(request);
+    const yo = datos.profileId ?? vitrinaDeSesion(request)?.id ?? '';
+    if (!c.participantes.includes(yo)) return forbidden('No participás de esta conversación');
+    const emoji = (datos.emoji ?? '').trim();
+    const sinYo = (m.reactions ?? [])
+      .map((r) => ({ emoji: r.emoji, profileIds: r.profileIds.filter((p) => p !== yo) }))
+      .filter((r) => r.profileIds.length > 0);
+    const reactions =
+      emoji === ''
+        ? sinYo
+        : sinYo.some((r) => r.emoji === emoji)
+          ? sinYo.map((r) => (r.emoji === emoji ? { ...r, profileIds: [...r.profileIds, yo] } : r))
+          : [...sinYo, { emoji, profileIds: [yo] }];
+    return mensajes.actualizar(m.id, { reactions });
   });
 
   /**

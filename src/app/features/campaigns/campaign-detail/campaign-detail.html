@@ -13,6 +13,22 @@
               @if (campana.descripcion !== '') {
                 <p class="promo__descripcion">{{ campana.descripcion }}</p>
               }
+              @if (mecanica(); as dicha) {
+                <p class="promo__mecanica" data-testid="promo-mecanica">
+                  <app-badge variant="primary" data-testid="promo-mecanica-etiqueta">{{ dicha.badge }}</app-badge>
+                  <span data-testid="promo-mecanica-frase">{{ dicha.sentence }}</span>
+                </p>
+              }
+              @if (ejemplo(); as caso) {
+                <p class="promo__ejemplo" data-testid="promo-ejemplo">{{ caso }}</p>
+              }
+              @if (condiciones().length > 0) {
+                <ul class="promo__condiciones" data-testid="promo-condiciones">
+                  @for (condicion of condiciones(); track condicion) {
+                    <li>{{ condicion }}</li>
+                  }
+                </ul>
+              }
               @if (!campana.sembrada) {
                 <p class="promo__aviso" role="note">
                   <app-badge variant="info" data-testid="promo-chip-demo">
@@ -22,32 +38,48 @@
               }
             </header>
 
-            <h2 class="promo__subtitulo">Qué incluye</h2>
-            <ul class="promo__productos" data-testid="promo-productos">
-              @for (fila of productos(); track fila.producto.productId) {
-                <li class="promo__producto">
-                  <div class="promo__producto-datos">
-                    <span class="promo__principal">{{ fila.producto.nombre }}</span>
-                    @if (fila.producto.presentacion !== null) {
-                      <span class="promo__secundario">{{ fila.producto.presentacion }}</span>
-                    }
-                  </div>
-                  <div class="promo__precios">
-                    <s class="promo__antes cifras-tabulares">
-                      <span class="sr-only">Antes:</span>
-                      {{ fila.producto.precioNormal }} {{ moneda(fila.producto.moneda) }}
-                    </s>
-                    <strong class="promo__ahora cifras-tabulares">
-                      <span class="sr-only">Precio de campaña:</span>
-                      {{ fila.producto.precioPromocional }} {{ moneda(fila.producto.moneda) }}
-                    </strong>
-                    @if (fila.ahorro !== null) {
-                      <app-badge variant="success">{{ fila.ahorro }} % menos</app-badge>
-                    }
-                  </div>
-                </li>
-              }
-            </ul>
+            @if (apuntaAProductos()) {
+              <h2 class="promo__subtitulo">Qué incluye</h2>
+              <ul class="promo__productos" data-testid="promo-productos">
+                @for (fila of productos(); track fila.producto.productId) {
+                  <li class="promo__producto">
+                    <div class="promo__producto-datos">
+                      <span class="promo__principal">{{ fila.producto.nombre }}</span>
+                      @if (fila.producto.presentacion !== null) {
+                        <span class="promo__secundario">{{ fila.producto.presentacion }}</span>
+                      }
+                    </div>
+                    <div class="promo__precios">
+                      @if (fila.producto.precioPromocional; as promocional) {
+                        <s class="promo__antes cifras-tabulares">
+                          <span class="sr-only">Antes:</span>
+                          {{ fila.producto.precioNormal }} {{ moneda(fila.producto.moneda) }}
+                        </s>
+                        <strong class="promo__ahora cifras-tabulares">
+                          <span class="sr-only">Precio de campaña:</span>
+                          {{ promocional }} {{ moneda(fila.producto.moneda) }}
+                        </strong>
+                        @if (fila.ahorro !== null) {
+                          <app-badge variant="success">{{ fila.ahorro }} % menos</app-badge>
+                        }
+                      } @else {
+                        <!-- Un 2x1, un combo o un escalonado no tienen precio por
+                             unidad: se muestra el precio normal y la oración de
+                             arriba dice qué se descuenta. -->
+                        <strong class="promo__ahora cifras-tabulares">
+                          <span class="sr-only">Precio normal:</span>
+                          {{ fila.producto.precioNormal }} {{ moneda(fila.producto.moneda) }}
+                        </strong>
+                      }
+                    </div>
+                  </li>
+                }
+              </ul>
+            } @else {
+              <p class="promo__secundario" data-testid="promo-sin-productos">
+                Esta campaña no apunta a productos: vale sobre toda tu compra en la farmacia.
+              </p>
+            }
 
             <p class="promo__secundario">
               Los precios son los que publicó la farmacia. Para comprar, pedí desde tu receta en

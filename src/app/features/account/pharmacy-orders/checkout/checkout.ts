@@ -17,8 +17,16 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 
 import { environment } from '../../../../../environments/environment';
-import { PharmacyCampaignsClient } from '../../../../core/data-access/pharmacy-campaigns/pharmacy-campaigns.client';
-import { normalizado } from '../../../../core/data-access/pharmacy-campaigns/pharmacy-campaigns.money';
+import {
+  PharmacyCampaignsClient,
+  etiquetaDeCampana,
+} from '../../../../core/data-access/pharmacy-campaigns/pharmacy-campaigns.client';
+import {
+  aCentavos,
+  aTexto,
+  normalizado,
+} from '../../../../core/data-access/pharmacy-campaigns/pharmacy-campaigns.money';
+import type { OrderLine } from '../../../../core/promotions-engine/promotion-mechanics.types';
 import { PharmacyOrdersClient } from '../../../../core/data-access/pharmacy-orders/pharmacy-orders.client';
 import type { BorradorDePedido } from '../../../../core/data-access/pharmacy-orders/pharmacy-orders.types';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
@@ -248,10 +256,17 @@ export class Checkout {
       moneda: this.borrador?.moneda ?? null,
       conSeguro: this.conSeguro,
       conEnvio: this.entrega() === 'DELIVERY',
+      descuentoDeCampanaDelTotal: this.cobro.descuentoDelTotal,
     }),
   );
 
-  private readonly renglonesACobrar: readonly RenglonACobrar[] = this.armarRenglones();
+  /**
+   * El pedido a cobrar, ya evaluado contra las campañas de la farmacia. El
+   * checkout recibe un pedido **congelado** del paso anterior: se evalúa una
+   * sola vez, al construir.
+   */
+  private readonly cobro = this.armarCobro();
+  private readonly renglonesACobrar: readonly RenglonACobrar[] = this.cobro.renglones;
 
   /* ---- la confirmación final ------------------------------------------------ */
 
@@ -412,31 +427,72 @@ export class Checkout {
       : undefined;
   }
 
-  private armarRenglones(): readonly RenglonACobrar[] {
+  /**
+   * Los renglones a cobrar y lo que las campañas descuentan sobre el total.
+   *
+   * Cada renglón conserva su precio **de lista**; lo que una campaña descuenta
+   * va aparte, en `descuentoDeCampana`, porque un 2x1 o un combo no se
+   * expresan como un precio por unidad. Una alternativa elegida entra al motor
+   * con un identificador propio: ninguna campaña de la recetada la alcanza,
+   * pero suma al total sobre el que se mide una compra mínima.
+   */
+  private armarCobro(): { renglones: readonly RenglonACobrar[]; descuentoDelTotal: string | null } {
     const borrador = this.borrador;
     if (borrador === null) {
-      return [];
+      return { renglones: [], descuentoDelTotal: null };
     }
-    return borrador.lineas.map((linea, indice): RenglonACobrar => {
+    const base = borrador.lineas.map((linea, indice) => {
       const eleccion = this.traspaso?.renglones.find((renglon) => renglon.indice === indice);
       const alternativa = eleccion?.alternativa ?? null;
-      const promocional =
-        alternativa === null && linea.productId !== null
-          ? (this.campaigns.precioPromocional(borrador.pharmacyId, linea.productId)
-              ?.precioPromocional ?? null)
-          : null;
       const deLista = linea.precio === null ? null : (normalizado(linea.precio) ?? linea.precio);
-      return {
+      const renglon: RenglonACobrar = {
         indice,
         medicamento: alternativa?.nombre ?? linea.medicamento,
         presentacion: alternativa?.presentacion ?? linea.presentacion,
         cantidad: eleccion?.cantidad ?? linea.cantidad,
-        precioUnitario: alternativa?.precio ?? promocional ?? deLista,
+        precioUnitario: alternativa?.precio ?? deLista,
         esAlternativa: alternativa !== null,
         aprobadoPorSeguro: eleccion?.aprobadoPorSeguro ?? false,
         disponible: linea.disponible,
       };
+      const itemId =
+        alternativa === null && linea.productId !== null ? linea.productId : `renglon-${indice}`;
+      return { renglon, itemId };
     });
+
+    const lineas: OrderLine[] = base.flatMap(({ renglon, itemId }) =>
+      renglon.disponible && renglon.precioUnitario !== null
+        ? [{ itemId, quantity: renglon.cantidad, unitPrice: renglon.precioUnitario }]
+        : [],
+    );
+    const evaluacion = this.campaigns.evaluarPedido(borrador.pharmacyId, lineas);
+
+    // Dos renglones del mismo producto el motor los suma en uno: el resultado se
+    // asigna al primero.
+    const yaVistos = new Set<string>();
+    const renglones = base.map(({ renglon, itemId }): RenglonACobrar => {
+      const resultado = yaVistos.has(itemId)
+        ? undefined
+        : evaluacion.lines.find((candidato) => candidato.itemId === itemId);
+      yaVistos.add(itemId);
+      if (resultado === undefined || resultado.campaignId === null) {
+        return renglon;
+      }
+      const campana = this.campaigns.campanaPorId(resultado.campaignId);
+      return {
+        ...renglon,
+        descuentoDeCampana: resultado.discount,
+        promocion: campana === null ? null : etiquetaDeCampana(campana),
+      };
+    });
+    const descuentoDelTotal = evaluacion.orderDiscounts.reduce(
+      (suma, descuento) => suma + (aCentavos(descuento.amount) ?? 0),
+      0,
+    );
+    return {
+      renglones,
+      descuentoDelTotal: descuentoDelTotal > 0 ? aTexto(descuentoDelTotal) : null,
+    };
   }
 }
 

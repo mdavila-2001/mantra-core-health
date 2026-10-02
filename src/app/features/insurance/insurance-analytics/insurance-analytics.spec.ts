@@ -1,7 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 
 import { esperarSinViolaciones } from '../../../../testing/a11y';
 import { CsvExportService } from '../../../shared/utils/csv-export/csv-export';
@@ -21,7 +21,9 @@ function carrierDetailWire() {
     products: [
       {
         id: 'prod-1',
-        plans: [{ id: PLAN_ID, name: 'Plan Salud Total', benefits: [] }],
+        plans: [
+          { id: PLAN_ID, name: 'Plan Salud Total', monthlyPremiumAmount: '100.00', benefits: [] },
+        ],
       },
     ],
     networks: [],
@@ -181,10 +183,57 @@ describe('InsuranceAnalytics', () => {
     segunda.flush(dashboardWire());
   });
 
+  /** Abre una pestaña por su rótulo, como lo haría una persona. */
+  function abrirPestana(rotulo: string): void {
+    const pestanas: HTMLElement[] = [...fixture.nativeElement.querySelectorAll('[role="tab"]')];
+    const pestana = pestanas.find((el) => el.textContent?.trim() === rotulo);
+    expect(pestana, `pestaña «${rotulo}»`).toBeDefined();
+    pestana!.click();
+    fixture.detectChanges();
+  }
+
+  it('organiza el tablero en cuatro pestañas por grupo de vistas', () => {
+    const req = mount();
+    req.flush(dashboardWire());
+    fixture.detectChanges();
+
+    const rotulos = [...fixture.nativeElement.querySelectorAll('[role="tab"]')].map((el) =>
+      (el as HTMLElement).textContent?.trim(),
+    );
+    expect(rotulos).toEqual(['Resumen', 'Gasto y farmacia', 'Población', 'Por persona']);
+    // Sólo se dibuja el panel abierto: el resumen, no la población.
+    expect(fixture.nativeElement.querySelector('[data-testid="kpi-loss-ratio"]')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('[data-testid="section-immunization"]')).toBeNull();
+  });
+
+  it('cada pestaña pone sus tarjetas en una rejilla', () => {
+    const req = mount();
+    req.flush(dashboardWire());
+    fixture.detectChanges();
+
+    abrirPestana('Población');
+    const rejilla = fixture.nativeElement.querySelector('.analytics__grid');
+    expect(rejilla).not.toBeNull();
+    expect(rejilla.querySelectorAll('.analytics__panel').length).toBe(3);
+    expect(fixture.nativeElement.querySelector('[data-testid="section-immunization"]')).not.toBeNull();
+  });
+
+  it('la pestaña activa viaja en la URL, como el período y el plan', async () => {
+    const req = mount();
+    req.flush(dashboardWire());
+    fixture.detectChanges();
+
+    abrirPestana('Gasto y farmacia');
+    await fixture.whenStable();
+
+    expect(TestBed.inject(Router).url).toContain('tab=spend');
+  });
+
   it('el top 10 de medicamentos se pinta con nombre e importe tal cual llegaron', () => {
     const req = mount();
     req.flush(dashboardWire());
     fixture.detectChanges();
+    abrirPestana('Gasto y farmacia');
 
     const tabla = fixture.nativeElement.querySelector('[data-testid="table-top-medications"]');
     expect(tabla).not.toBeNull();
@@ -268,6 +317,148 @@ describe('InsuranceAnalytics', () => {
     const tile = fixture.nativeElement.querySelector('[data-testid="kpi-earned-premium"]');
     expect(tile.textContent).toContain('Estimada');
     expect(tile.textContent).toContain('4 cobertura(s) sin prima');
+  });
+
+  describe('informe de siniestralidad por persona', () => {
+    function reclamo(id: string, paciente: string, facturado: string, aprobado: string | null) {
+      return {
+        id,
+        claimIdentifier: `CL-${id}`,
+        patient: {
+          id: `pac-${paciente}`,
+          displayName: paciente,
+          patientCode: null,
+          memberIdentifier: `AF-${paciente}`,
+        },
+        practitioner: null,
+        providerName: 'Consultorio',
+        service: null,
+        additionalServiceCount: 0,
+        billedTotal: { amount: facturado, currency: { code: 'BOB', display: 'Boliviano' } },
+        approvedTotal:
+          aprobado === null
+            ? null
+            : { amount: aprobado, currency: { code: 'BOB', display: 'Boliviano' } },
+        submittedAt: new Date().toISOString(),
+        serviceDate: null,
+        policyIdentifier: null,
+        planName: 'Nacional Seguros · Plan Salud Total',
+        status: null,
+        lines: [],
+        decision: null,
+        invoice: null,
+      };
+    }
+
+    function abrirYGenerar(items: readonly unknown[], truncated = false) {
+      const req = mount();
+      req.flush(dashboardWire());
+      fixture.detectChanges();
+      abrirPestana('Por persona');
+      const generar: HTMLButtonElement = fixture.nativeElement.querySelector(
+        '[data-testid="btn-generate-person-report"]',
+      );
+      generar.click();
+      http.expectOne('/insurance/received-claims').flush({ items, truncated });
+      fixture.detectChanges();
+    }
+
+    it('no calcula nada hasta que se pide: primero dice cómo generarlo', () => {
+      const req = mount();
+      req.flush(dashboardWire());
+      fixture.detectChanges();
+      abrirPestana('Por persona');
+
+      expect(fixture.nativeElement.textContent).toContain('Todavía no generaste el informe');
+      expect(fixture.nativeElement.querySelector('[data-testid="table-person-loss"]')).toBeNull();
+      const exportar: HTMLButtonElement = fixture.nativeElement.querySelector(
+        '[data-testid="btn-export-person-report"]',
+      );
+      expect(exportar.getAttribute('aria-disabled')).toBe('true');
+    });
+
+    it('«Generar informe» agrupa las solicitudes por persona y las muestra en la tabla', () => {
+      abrirYGenerar([
+        reclamo('1', 'Ana Pérez', '800.00', '600.00'),
+        reclamo('2', 'Ana Pérez', '100.00', null),
+        reclamo('3', 'Luis Rojas', '50.00', '50.00'),
+      ]);
+
+      const tabla: HTMLElement = fixture.nativeElement.querySelector(
+        '[data-testid="table-person-loss"]',
+      );
+      expect(tabla.textContent).toContain('Ana Pérez');
+      expect(tabla.textContent).toContain('Luis Rojas');
+      // Ana: 2 reclamos, uno pendiente; facturado 900, aprobado 600.
+      expect(tabla.textContent).toContain('2 (1 pend.)');
+      expect(tabla.textContent).toContain('900.00');
+      expect(tabla.textContent).toContain('600.00');
+    });
+
+    it('el informe sobrevive a cambiar de pestaña y volver', () => {
+      abrirYGenerar([reclamo('1', 'Ana Pérez', '800.00', '600.00')]);
+
+      abrirPestana('Resumen');
+      abrirPestana('Por persona');
+
+      expect(fixture.nativeElement.querySelector('[data-testid="table-person-loss"]')).not.toBeNull();
+    });
+
+    it('exporta el informe a CSV, una fila por persona', () => {
+      abrirYGenerar([
+        reclamo('1', 'Ana Pérez', '800.00', '600.00'),
+        reclamo('2', 'Luis Rojas', '50.00', '50.00'),
+      ]);
+
+      const exportar: HTMLButtonElement = fixture.nativeElement.querySelector(
+        '[data-testid="btn-export-person-report"]',
+      );
+      exportar.click();
+
+      const [filas, columnas, nombre] = csvExportEspiado.download.mock.calls.at(-1) as [
+        readonly unknown[],
+        readonly unknown[],
+        string,
+      ];
+      expect(filas.length).toBe(2);
+      expect(columnas.length).toBe(12);
+      expect(nombre).toMatch(/^siniestralidad-por-persona-\d{4}-\d{2}-\d{2}-\d{4}-\d{2}-\d{2}$/);
+    });
+
+    it('si el servidor recortó el listado, el informe se rotula parcial', () => {
+      abrirYGenerar([reclamo('1', 'Ana Pérez', '800.00', '600.00')], true);
+
+      expect(
+        fixture.nativeElement.querySelector('[data-testid="person-report-partial"]'),
+      ).not.toBeNull();
+    });
+
+    it('sin solicitudes en el período lo dice, en vez de dibujar una tabla vacía', () => {
+      abrirYGenerar([]);
+
+      expect(fixture.nativeElement.textContent).toContain('Sin solicitudes en el período');
+      expect(fixture.nativeElement.querySelector('[data-testid="table-person-loss"]')).toBeNull();
+    });
+
+    it('al cambiar el período avisa que el informe mostrado es del filtro anterior', async () => {
+      abrirYGenerar([reclamo('1', 'Ana Pérez', '800.00', '600.00')]);
+      expect(fixture.nativeElement.querySelector('[data-testid="person-report-stale"]')).toBeNull();
+      // El cambio de pestaña navega (async): que se asiente antes de tocar el período.
+      await fixture.whenStable();
+
+      const boton: HTMLButtonElement = fixture.nativeElement.querySelector(
+        '[data-testid="segmentado-90d"]',
+      );
+      boton.click();
+      await fixture.whenStable();
+      fixture.detectChanges();
+      dashboardRequest().flush(dashboardWire());
+      fixture.detectChanges();
+
+      expect(
+        fixture.nativeElement.querySelector('[data-testid="person-report-stale"]'),
+      ).not.toBeNull();
+    });
   });
 
   it('el tablero no tiene violaciones mecánicas de accesibilidad', async () => {

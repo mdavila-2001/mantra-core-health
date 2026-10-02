@@ -31,5 +31,9 @@
         [tenantId]="tenantId()"
       />
     </section>
+
+    <!-- v4.2.40: lo que hace además de la consulta. Se dibuja sólo si el
+         profesional ofrece servicios que el paciente puede pedir. -->
+    <app-practitioner-services [practitionerProfileId]="profileIdVisible()" />
   }
 </app-view-state-host>

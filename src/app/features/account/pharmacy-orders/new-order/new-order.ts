@@ -11,10 +11,15 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router, RouterLink } from '@angular/router';
 
-import { PharmacyCampaignsClient } from '../../../../core/data-access/pharmacy-campaigns/pharmacy-campaigns.client';
 import {
+  PharmacyCampaignsClient,
+  etiquetaDeCampana,
+  mecanicaDe,
+} from '../../../../core/data-access/pharmacy-campaigns/pharmacy-campaigns.client';
+import {
+  aCentavos,
+  aTexto,
   normalizado,
-  totalDeRenglones,
 } from '../../../../core/data-access/pharmacy-campaigns/pharmacy-campaigns.money';
 import { PharmacyOrdersClient } from '../../../../core/data-access/pharmacy-orders/pharmacy-orders.client';
 import {
@@ -53,6 +58,10 @@ import {
 } from './new-order.handoff';
 import { OrderAlternatives } from './order-alternatives/order-alternatives';
 import { displayCurrency } from '../../../../core/money/display-currency';
+import { describeNudge } from '../../../../core/promotions-engine/describe-mechanic';
+import { hasUnitPrice } from '../../../../core/promotions-engine/mechanic-level';
+import { nearestNudges } from '../../../../core/promotions-engine/nearest-nudges';
+import type { LineResult, OrderLine } from '../../../../core/promotions-engine/promotion-mechanics.types';
 
 /** Menos de una unidad no es un renglón: para no pedirlo está «Volver». */
 const CANTIDAD_MINIMA = 1;
@@ -63,8 +72,8 @@ interface EleccionDeRenglon {
   readonly alternativaId: string | null;
 }
 
-/** Un renglón listo para pintar: el del borrador más lo que se eligió. */
-interface RenglonVisible {
+/** Un renglón del borrador más lo que se eligió, sin campañas todavía. */
+interface RenglonBase {
   readonly indice: number;
   /** La línea del borrador, intacta. */
   readonly linea: LineaDePedido;
@@ -74,15 +83,23 @@ interface RenglonVisible {
   readonly cantidadRecetada: number;
   /** El precio unitario sin campaña: el de la alternativa o el de la sede. */
   readonly precioDeLista: string | null;
-  /** El precio de campaña (FAR-I7), sólo sobre la recetada. */
-  readonly precioPromocional: string | null;
-  readonly subtotal: string | null;
   readonly alternativa: AlternativaDeEjemplo | null;
   readonly alternativas: readonly AlternativaDeEjemplo[];
   readonly aprobadoPorSeguro: boolean;
   /** Variante con seguro y renglón aprobado: no suma ni ofrece alternativas. */
   readonly cubierto: boolean;
   readonly ofreceAlternativas: boolean;
+}
+
+/** Un renglón con lo que le tocó de las campañas. */
+interface RenglonVisible extends RenglonBase {
+  /** El precio de campaña por unidad (FAR-I7), sólo si la campaña es de precio. */
+  readonly precioPromocional: string | null;
+  /** Lo que una campaña de otra forma (2x1, combo…) descuenta en este renglón. */
+  readonly descuento: string | null;
+  /** «2x1», «20 % menos»…: la campaña que lo alcanzó. */
+  readonly etiquetaDeCampana: string | null;
+  readonly subtotal: string | null;
 }
 
 /**
@@ -226,69 +243,6 @@ export class NewOrder {
   private readonly campaigns = inject(PharmacyCampaignsClient);
 
   /**
-   * Los renglones que alguna campaña vigente de esta farmacia alcanza.
-   *
-   * Se resuelve una sola vez al construir, como el borrador: el pedido ya está
-   * congelado y nada de esta pantalla lo cambia.
-   */
-  protected readonly renglonesEnPromocion = this.resolverPromociones();
-
-  /** El total con los precios promocionales aplicados, o `null`. */
-  protected readonly totalConPromocion = this.calcularTotalConPromocion();
-
-  /**
-   * El total del borrador **no se reescribe**: se muestra al lado del
-   * promocional.
-   *
-   * El precio congelado es del backend, y el cálculo de FAR-E1 es de Ender (la
-   * regla que tiene que agregar está en `COORDINACION-AGENTES.md`). Bakear el
-   * descuento en el borrador haría que la cifra enviada difiera de la que la
-   * API vuelve a calcular y congelar.
-   */
-  private resolverPromociones(): ReadonlyMap<string, string> {
-    const borrador = this.borrador;
-    if (borrador === null) {
-      return new Map();
-    }
-    const enPromocion = new Map<string, string>();
-    for (const linea of borrador.lineas) {
-      if (linea.productId === null || !linea.disponible) {
-        continue;
-      }
-      const promocional = this.campaigns.precioPromocional(borrador.pharmacyId, linea.productId);
-      if (promocional !== null) {
-        enPromocion.set(linea.productId, promocional.precioPromocional);
-      }
-    }
-    return enPromocion;
-  }
-
-  private calcularTotalConPromocion(): string | null {
-    const borrador = this.borrador;
-    if (borrador === null || this.renglonesEnPromocion.size === 0) {
-      return null;
-    }
-    return totalDeRenglones(
-      borrador.lineas
-        .filter((linea) => linea.disponible)
-        .map((linea) => ({
-          precio:
-            (linea.productId === null
-              ? null
-              : (this.renglonesEnPromocion.get(linea.productId) ?? null)) ??
-            linea.precio ??
-            '',
-          cantidad: linea.cantidad,
-        })),
-    );
-  }
-
-  /** El precio de campaña de un renglón, o `null` si ninguna lo alcanza. */
-  protected precioPromocionalDe(productId: string | null): string | null {
-    return productId === null ? null : (this.renglonesEnPromocion.get(productId) ?? null);
-  }
-
-  /**
    * El precio de lista con el mismo formato que el promocional.
    *
    * `GET /pharmacy-inventory/availability` devuelve el `numeric` tal cual —
@@ -304,9 +258,6 @@ export class NewOrder {
     return importe === null ? null : (normalizado(importe) ?? importe);
   }
 
-  /** `true` si hay al menos un renglón en promoción: gobierna el banner. */
-  protected readonly hayPromocion = this.renglonesEnPromocion.size > 0;
-
   /* ---- la receta como pedido (T-E1) ---------------------------------------- */
 
   protected readonly elecciones = signal<readonly EleccionDeRenglon[]>(
@@ -320,7 +271,13 @@ export class NewOrder {
   /** El renglón cuyo panel de alternativas está abierto, o `null`. */
   protected readonly panelAbierto = signal<number | null>(null);
 
-  protected readonly renglones = computed<readonly RenglonVisible[]>(() => {
+  /**
+   * Cada renglón **sin campañas**: lo que se eligió y el precio de lista. Es la
+   * entrada de la evaluación; las campañas se aplican después, sobre el pedido
+   * entero, porque un 2x1 o una compra mínima no se pueden decidir renglón por
+   * renglón.
+   */
+  private readonly renglonesBase = computed<readonly RenglonBase[]>(() => {
     const borrador = this.borrador;
     const datos = this.datos();
     if (borrador === null || datos === null) {
@@ -328,7 +285,7 @@ export class NewOrder {
     }
     const conSeguro = this.conSeguro();
     const elecciones = this.elecciones();
-    return borrador.lineas.map((linea, indice): RenglonVisible => {
+    return borrador.lineas.map((linea, indice): RenglonBase => {
       const deEjemplo = datos.renglones[indice];
       const eleccion = elecciones[indice] ?? { cantidad: linea.cantidad, alternativaId: null };
       const aprobadoPorSeguro = deEjemplo?.aprobadoPorSeguro ?? false;
@@ -340,10 +297,6 @@ export class NewOrder {
       const alternativa = cubierto
         ? null
         : (alternativas.find((opcion) => opcion.id === eleccion.alternativaId) ?? null);
-      const precioDeLista = alternativa?.precio ?? this.precioNormalizado(linea.precio);
-      const precioPromocional =
-        alternativa === null ? this.precioPromocionalDe(linea.productId) : null;
-      const precioUnitario = precioPromocional ?? precioDeLista;
       return {
         indice,
         linea,
@@ -351,12 +304,7 @@ export class NewOrder {
         presentacion: alternativa?.presentacion ?? linea.presentacion,
         cantidad: eleccion.cantidad,
         cantidadRecetada: deEjemplo?.cantidadRecetada ?? linea.cantidad,
-        precioDeLista,
-        precioPromocional,
-        subtotal:
-          linea.disponible && precioUnitario !== null
-            ? totalDeRenglones([{ precio: precioUnitario, cantidad: eleccion.cantidad }])
-            : null,
+        precioDeLista: alternativa?.precio ?? this.precioNormalizado(linea.precio),
         alternativa,
         alternativas,
         aprobadoPorSeguro,
@@ -365,6 +313,91 @@ export class NewOrder {
       };
     });
   });
+
+  /**
+   * El pedido evaluado contra **todas** las campañas vigentes de la farmacia:
+   * precio por unidad, 2x1, escalonados, compra mínima, combos, regalos y puntos.
+   *
+   * Entran los renglones que la persona va a pagar: disponibles, con precio y
+   * sin cubrir por el seguro. Una alternativa elegida entra con un identificador
+   * propio, para que ninguna campaña de la recetada la alcance —el criterio de
+   * siempre—, pero sí suma al total sobre el que se mide una compra mínima.
+   *
+   * El resultado es **una estimación**: el total autoritativo es del backend.
+   */
+  protected readonly evaluacion = computed(() => {
+    const borrador = this.borrador;
+    const lineas: OrderLine[] = [];
+    for (const renglon of this.renglonesBase()) {
+      if (!renglon.linea.disponible || renglon.cubierto || renglon.precioDeLista === null) {
+        continue;
+      }
+      lineas.push({
+        itemId: this.itemIdDelMotor(renglon),
+        quantity: renglon.cantidad,
+        unitPrice: renglon.precioDeLista,
+      });
+    }
+    return this.campaigns.evaluarPedido(borrador?.pharmacyId ?? '', lineas);
+  });
+
+  /** La clave con que el motor reconoce un renglón: el producto, si una campaña lo puede alcanzar. */
+  private itemIdDelMotor(renglon: RenglonBase): string {
+    return renglon.alternativa === null && renglon.linea.productId !== null
+      ? renglon.linea.productId
+      : `renglon-${renglon.indice}`;
+  }
+
+  /** ¿Alguna campaña descuenta algo de este pedido? Gobierna el banner. */
+  protected readonly hayPromocion = computed(
+    () => (aCentavos(this.evaluacion().totalDiscount) ?? 0) > 0,
+  );
+
+  protected readonly renglones = computed<readonly RenglonVisible[]>(() => {
+    const evaluacion = this.evaluacion();
+    const yaVistos = new Set<string>();
+    return this.renglonesBase().map((renglon): RenglonVisible => {
+      const itemId = this.itemIdDelMotor(renglon);
+      // Dos renglones del mismo producto el motor los suma en uno: el resultado
+      // se muestra en el primero.
+      const resultado =
+        yaVistos.has(itemId) || !renglon.linea.disponible || renglon.cubierto
+          ? undefined
+          : evaluacion.lines.find((candidato) => candidato.itemId === itemId);
+      yaVistos.add(itemId);
+      return this.conPromocion(renglon, resultado);
+    });
+  });
+
+  /** Un renglón con lo que le tocó de las campañas. */
+  private conPromocion(renglon: RenglonBase, resultado: LineResult | undefined): RenglonVisible {
+    const unitario = renglon.precioDeLista === null ? null : aCentavos(renglon.precioDeLista);
+    const descuento = resultado === undefined ? 0 : (aCentavos(resultado.discount) ?? 0);
+    const campana =
+      resultado?.campaignId == null ? null : this.campaigns.campanaPorId(resultado.campaignId);
+    // Un precio por unidad sólo existe si el descuento reparte exacto entre las
+    // unidades: con un tope de por medio puede no hacerlo, y ahí se dice como
+    // descuento del renglón y no como un precio inventado.
+    const esPrecioPorUnidad =
+      campana !== null &&
+      unitario !== null &&
+      descuento > 0 &&
+      hasUnitPrice(mecanicaDe(campana)) &&
+      descuento % renglon.cantidad === 0;
+    return {
+      ...renglon,
+      precioPromocional:
+        esPrecioPorUnidad && unitario !== null
+          ? aTexto(unitario - descuento / renglon.cantidad)
+          : null,
+      descuento: !esPrecioPorUnidad && descuento > 0 ? aTexto(descuento) : null,
+      etiquetaDeCampana: descuento > 0 && campana !== null ? etiquetaDeCampana(campana) : null,
+      subtotal:
+        renglon.linea.disponible && unitario !== null
+          ? aTexto(unitario * renglon.cantidad - descuento)
+          : null,
+    };
+  }
 
   /** Algo en pantalla ya no es el borrador tal como lo armó la sucursal. */
   protected readonly hayCambiosDeDemostracion = computed(() => {
@@ -390,10 +423,40 @@ export class NewOrder {
     if (suman.some((renglon) => renglon.subtotal === null)) {
       return null;
     }
-    return totalDeRenglones(
-      suman.map((renglon) => ({ precio: renglon.subtotal ?? '', cantidad: 1 })),
-    );
+    // El del motor ya trae los descuentos de renglón **y** los del total.
+    return this.evaluacion().total;
   });
+
+  /**
+   * El total con las promociones, o `null` si ninguna descuenta. El borrador
+   * **no se reescribe**: el total que viaja es el del backend, y este se
+   * muestra al lado.
+   */
+  protected readonly totalConPromocion = computed(() =>
+    this.hayPromocion() ? this.totalConCambios() : null,
+  );
+
+  /** Lo que el pedido descuenta sobre el total (compra mínima, escalonados), con su etiqueta. */
+  protected readonly descuentosDelTotal = computed(() =>
+    this.evaluacion().orderDiscounts.map((descuento) => {
+      const campana = this.campaigns.campanaPorId(descuento.campaignId);
+      return {
+        campaignId: descuento.campaignId,
+        etiqueta: campana === null ? 'Promoción' : etiquetaDeCampana(campana),
+        monto: descuento.amount,
+      };
+    }),
+  );
+
+  /** Lo que le falta al pedido para alcanzar una campaña: pocos, los más cercanos. */
+  protected readonly avisosDePromocion = computed(() =>
+    nearestNudges(this.evaluacion().nudges).map((aviso) =>
+      describeNudge(aviso, { labelOf: () => null, currency: this.moneda(this.borrador?.moneda) }),
+    ),
+  );
+
+  /** El multiplicador de puntos que alcanza este pedido, o `null`. */
+  protected readonly multiplicadorDePuntos = computed(() => this.evaluacion().pointsMultiplier);
 
   protected readonly renglonesCubiertos = computed(
     () => this.renglones().filter((renglon) => renglon.cubierto).length,

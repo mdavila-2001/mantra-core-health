@@ -1,0 +1,62 @@
+<app-card variant="outlined" padding="lg">
+  <section class="logo-organizacion" data-testid="logo-organizacion">
+    <h2 class="logo-organizacion__titulo">Logo de la organización</h2>
+    <p class="logo-organizacion__nota">
+      @if (puedeEditar()) {
+        Es la imagen con la que te reconocen. PNG, JPG o WEBP, hasta 2 MB. Se guarda al elegirla.
+      } @else {
+        La imagen con la que se reconoce a la organización.
+      }
+    </p>
+
+    <div class="logo-organizacion__cuerpo">
+      <app-logo-consultorio
+        data-testid="logo-organizacion-vista"
+        [src]="vista()"
+        [nombre]="nombre()"
+        etiqueta="Logo de la organización"
+      />
+
+      @if (puedeEditar()) {
+        <div class="logo-organizacion__acciones">
+          <app-file-input
+            data-testid="logo-organizacion-archivo"
+            testId="logo-organizacion-archivo"
+            [files]="archivos()"
+            (filesChange)="alElegir($event)"
+            (rejected)="alRechazar($event)"
+            [accept]="formatos"
+            [maxSizeBytes]="maxBytes"
+            [maxFiles]="1"
+            [disabled]="ocupado()"
+            [showList]="false"
+            [showFeedback]="false"
+            [label]="vista() ? 'Cambiar logo' : 'Subir logo'"
+            accessibleLabel="Logo de la organización"
+          />
+          @if (vista()) {
+            <button
+              app-button
+              type="button"
+              variant="neutral"
+              size="sm"
+              data-testid="logo-organizacion-quitar"
+              [disabled]="ocupado()"
+              (clicked)="quitar()"
+            >
+              Quitar logo
+            </button>
+          }
+          @if (ocupado()) {
+            <p class="logo-organizacion__estado" role="status">Guardando el logo…</p>
+          }
+          @if (error()) {
+            <p class="logo-organizacion__error" role="alert" data-testid="logo-organizacion-error">
+              {{ error() }}
+            </p>
+          }
+        </div>
+      }
+    </div>
+  </section>
+</app-card>

@@ -76,7 +76,7 @@ describe('RegisterImagingCenter', () => {
       taxId: '1023456789',
       modalidades: ['Tomografía computarizada', 'Resonancia magnética'],
       addressLines: 'Av. Cañoto esq. Ballivián 234',
-      legalRepName: 'Ana Paz Rojas',
+      legalRepName: { name: 'Ana', lastName: 'Paz', motherLastName: 'Rojas' },
       legalRepEmail: 'ana.paz@imagenoriente.test',
       legalRepIdNumber: '4872190',
       password: 'secreto12',
@@ -311,6 +311,19 @@ describe('RegisterImagingCenter', () => {
     },
   );
 
+  it('el poder se pide en la página del representante, no con la constitución', () => {
+    const pagina = (clave: string) => component.paginas.find((p) => p.clave === clave);
+
+    // El documento de identidad lo exige la API (`legalRepresentative.idNumber`).
+    expect(pagina('representante')?.campos.map((c) => c.key)).toEqual([
+      'legalRepName',
+      'legalRepIdNumber',
+      'legalRepEmail',
+      'poderFile',
+    ]);
+    expect(pagina('radioproteccion')?.campos.map((c) => c.key)).not.toContain('poderFile');
+  });
+
   it('el NIT en PDF frena el alta: viaja junto con los otros papeles', () => {
     completarLoObligatorio();
     component.updateAttachment('nitFile', []);
@@ -336,7 +349,7 @@ describe('RegisterImagingCenter', () => {
     atenderElEnvio(4);
 
     // Ninguno de los nueve campos de gerencia se tocó, y el alta sale igual.
-    expect(component.form.controls.generalManagerName.value).toBe('');
+    expect(component.form.controls.generalManagerName.value.name).toBe('');
     expect(component.form.controls.salesManagerEmail.value).toBe('');
     expect(component.form.controls.marketingManagerPhone.value).toBe('');
     expect(component.enviada()).toBe(true);
@@ -403,6 +416,8 @@ describe('RegisterImagingCenter', () => {
       {
         id: primera!.id,
         nombre: 'Equipetrol',
+        descripcion: '',
+        urlUbicacion: '',
         direccion: 'Av. San Martín 456',
         gps: { lat: -17.78, lng: -63.18 },
       },

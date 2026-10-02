@@ -1,0 +1,53 @@
+:host {
+  display: block;
+}
+
+.logo-organizacion {
+  display: grid;
+  gap: var(--sp-2);
+}
+
+.logo-organizacion__titulo {
+  margin: 0;
+  font-size: var(--fs-h3);
+  font-weight: 600;
+  line-height: var(--lh-h3);
+  color: var(--text-primary);
+}
+
+.logo-organizacion__nota {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+.logo-organizacion__cuerpo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--sp-4);
+  margin-block-start: var(--sp-2);
+}
+
+.logo-organizacion__acciones {
+  display: grid;
+  flex: 1 1 260px;
+  gap: var(--sp-2);
+  justify-items: start;
+  min-inline-size: 0;
+}
+
+.logo-organizacion__estado,
+.logo-organizacion__error {
+  margin: 0;
+  font-size: var(--fs-caption);
+}
+
+.logo-organizacion__estado {
+  color: var(--text-secondary);
+}
+
+.logo-organizacion__error {
+  color: var(--text-danger);
+}

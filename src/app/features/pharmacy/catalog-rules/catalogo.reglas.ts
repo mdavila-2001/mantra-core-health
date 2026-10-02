@@ -3,6 +3,23 @@ import type {
   PharmacyProductDraft,
   PharmacyProductIdentifier,
 } from '../../../core/data-access/pharmacy/pharmacy.types';
+import {
+  ArchivoInvalido,
+  normalizarEncabezado,
+  partirEnRenglones,
+  detectarSeparador,
+  sinApostrofoDeFormula,
+} from '../../../shared/utils/csv-import/csv-import';
+
+export {
+  ArchivoInvalido,
+  decodificarCsv,
+  leerTablaCsv,
+  type CodificacionDelCsv,
+  type Renglon,
+  type TablaCsv,
+  type TextoDelCsv,
+} from '../../../shared/utils/csv-import/csv-import';
 
 /* ============================================================================
     Reglas puras del catálogo de la farmacia: qué es un producto bien cargado,
@@ -90,6 +107,17 @@ export const CAMPOS_VACIOS: CamposDelProducto = {
   disponible: '',
 };
 
+/**
+ * El producto del catálogo universal al que se vincula el alta. Con él,
+ * nombre, concentración, presentación y receta son del registro oficial: el
+ * formulario no los pide y la revisión no los exige ni los manda.
+ */
+export interface VinculoConElCatalogo {
+  readonly catalogProductId: string;
+  /** Código de la presentación elegida (CN, CUM…), si el producto tiene varias. */
+  readonly presentationCode?: string;
+}
+
 /** El resultado de revisar un producto: el alta lista, o por qué no. */
 export type RevisionDelProducto =
   | { readonly valido: true; readonly borrador: PharmacyProductDraft }
@@ -110,6 +138,7 @@ const NO = new Set(['no', 'n', 'false', '0']);
 export function revisarProducto(
   campos: CamposDelProducto,
   categoriasPermitidas: readonly string[] = CATEGORIAS,
+  vinculo?: VinculoConElCatalogo,
 ): RevisionDelProducto {
   const errores: string[] = [];
   const codigo = campos.codigo.trim();
@@ -130,25 +159,27 @@ export function revisarProducto(
     );
   }
 
-  if (marca === '' && generico === '') {
-    errores.push('Poné la marca, el nombre genérico o los dos: sin nombre nadie lo encuentra.');
-  }
-  if (marca.length > LARGO_MAXIMO_DEL_NOMBRE) {
-    errores.push(`La marca no puede pasar de ${LARGO_MAXIMO_DEL_NOMBRE} caracteres.`);
-  }
-  if (generico.length > LARGO_MAXIMO_DEL_NOMBRE) {
-    errores.push(`El nombre genérico no puede pasar de ${LARGO_MAXIMO_DEL_NOMBRE} caracteres.`);
-  }
-  if (concentracion.length > LARGO_MAXIMO_DEL_DETALLE) {
-    errores.push(`La concentración no puede pasar de ${LARGO_MAXIMO_DEL_DETALLE} caracteres.`);
-  }
-  if (presentacion.length > LARGO_MAXIMO_DEL_DETALLE) {
-    errores.push(`La presentación no puede pasar de ${LARGO_MAXIMO_DEL_DETALLE} caracteres.`);
-  }
-
-  const receta = siONo(campos.receta);
-  if (receta === 'invalido') {
-    errores.push('«Receta» se responde con sí o no.');
+  // Con vínculo al catálogo esto lo trae el registro oficial: ni se pide ni se revisa.
+  const receta = vinculo === undefined ? siONo(campos.receta) : null;
+  if (vinculo === undefined) {
+    if (marca === '' && generico === '') {
+      errores.push('Poné la marca, el nombre genérico o los dos: sin nombre nadie lo encuentra.');
+    }
+    if (marca.length > LARGO_MAXIMO_DEL_NOMBRE) {
+      errores.push(`La marca no puede pasar de ${LARGO_MAXIMO_DEL_NOMBRE} caracteres.`);
+    }
+    if (generico.length > LARGO_MAXIMO_DEL_NOMBRE) {
+      errores.push(`El nombre genérico no puede pasar de ${LARGO_MAXIMO_DEL_NOMBRE} caracteres.`);
+    }
+    if (concentracion.length > LARGO_MAXIMO_DEL_DETALLE) {
+      errores.push(`La concentración no puede pasar de ${LARGO_MAXIMO_DEL_DETALLE} caracteres.`);
+    }
+    if (presentacion.length > LARGO_MAXIMO_DEL_DETALLE) {
+      errores.push(`La presentación no puede pasar de ${LARGO_MAXIMO_DEL_DETALLE} caracteres.`);
+    }
+    if (receta === 'invalido') {
+      errores.push('«Receta» se responde con sí o no.');
+    }
   }
   const cadenaDeFrio = siONo(campos.cadenaDeFrio);
   if (cadenaDeFrio === 'invalido') {
@@ -161,7 +192,7 @@ export function revisarProducto(
     );
   }
 
-  const precio = precioDe(campos.precio);
+  const precio = parsePrice(campos.precio);
   if (precio === 'invalido') {
     errores.push(
       `El precio va en bolivianos, mayor que 0 y hasta ${PRECIO_MAXIMO.toLocaleString('es-BO')}, con punto o coma y hasta dos decimales (sin separador de miles).`,
@@ -190,15 +221,27 @@ export function revisarProducto(
   const identificadores: PharmacyProductIdentifier[] =
     codigoDeBarras === '' ? [] : [{ identifierType: 'GTIN', identifierValue: codigoDeBarras }];
 
+  const nombrado =
+    vinculo !== undefined
+      ? {
+          catalogProductId: vinculo.catalogProductId,
+          ...(vinculo.presentationCode === undefined
+            ? {}
+            : { catalogPresentationCode: vinculo.presentationCode }),
+        }
+      : {
+          ...(marca === '' ? {} : { brandName: marca }),
+          ...(generico === '' ? {} : { genericName: generico }),
+          ...(concentracion === '' ? {} : { strengthText: concentracion }),
+          ...(presentacion === '' ? {} : { packageSizeText: presentacion }),
+          ...(receta === null || receta === 'invalido' ? {} : { requiresPrescription: receta }),
+        };
+
   return {
     valido: true,
     borrador: {
       productCode: codigo,
-      ...(marca === '' ? {} : { brandName: marca }),
-      ...(generico === '' ? {} : { genericName: generico }),
-      ...(concentracion === '' ? {} : { strengthText: concentracion }),
-      ...(presentacion === '' ? {} : { packageSizeText: presentacion }),
-      ...(receta === null || receta === 'invalido' ? {} : { requiresPrescription: receta }),
+      ...nombrado,
       ...(cadenaDeFrio === null || cadenaDeFrio === 'invalido'
         ? {}
         : { coldChainRequired: cadenaDeFrio }),
@@ -223,15 +266,23 @@ export function revisarProducto(
 export function cambiosDelBorrador(
   borrador: PharmacyProductDraft,
   completo: boolean,
+  delCatalogo = false,
 ): PharmacyProductChanges {
   const valor = <T>(dato: T | undefined): T | null | undefined =>
     dato !== undefined ? dato : completo ? null : undefined;
+  // Un producto del catálogo no manda lo oficial: el servidor lo rechazaría, y
+  // vaciarlo («completo») sería borrarle el nombre a un registro sanitario.
+  const oficiales: Record<string, unknown> = delCatalogo
+    ? {}
+    : {
+        brandName: valor(borrador.brandName),
+        genericName: valor(borrador.genericName),
+        strengthText: valor(borrador.strengthText),
+        packageSizeText: valor(borrador.packageSizeText),
+        requiresPrescription: valor(borrador.requiresPrescription),
+      };
   const cambios: Record<string, unknown> = {
-    brandName: valor(borrador.brandName),
-    genericName: valor(borrador.genericName),
-    strengthText: valor(borrador.strengthText),
-    packageSizeText: valor(borrador.packageSizeText),
-    requiresPrescription: valor(borrador.requiresPrescription),
+    ...oficiales,
     unitPrice: valor(borrador.unitPrice),
     category: valor(borrador.category),
     description: valor(borrador.description),
@@ -242,8 +293,8 @@ export function cambiosDelBorrador(
   ) as PharmacyProductChanges;
 }
 
-/** `null` = no se puso precio. */
-function precioDe(texto: string): number | null | 'invalido' {
+/** El precio escrito, en bolivianos: `null` = no se puso precio. Lo comparte la pestaña «Precios». */
+export function parsePrice(texto: string): number | null | 'invalido' {
   const limpio = texto.trim().replace(/^bs\.?\s*/i, '');
   if (limpio === '') {
     return null;
@@ -405,39 +456,6 @@ export const COLUMNAS_DEL_CSV: readonly ColumnaDelCsv[] = [
   },
 ];
 
-/** Cómo venía codificado el archivo. */
-export type CodificacionDelCsv = 'utf-8' | 'windows-1252';
-
-/** El texto del archivo y con qué codificación se leyó. */
-export interface TextoDelCsv {
-  readonly texto: string;
-  readonly codificacion: CodificacionDelCsv;
-}
-
-/**
- * Decodifica los bytes del archivo: UTF-8 si lo es de verdad, y si no,
- * Windows-1252.
- *
- * Excel en castellano guarda «CSV (delimitado por comas)» en Windows-1252, no
- * en UTF-8. Leído como UTF-8, cada tilde y cada eñe se vuelven «�» y el
- * producto se publica así — sin arreglo posible, porque el backend no edita y
- * el código retirado no se puede volver a usar. UTF-8 se decodifica en modo
- * estricto: un byte que no le corresponde no se reemplaza, lanza, y entonces
- * se relee como Windows-1252, que acepta cualquier byte.
- */
-export function decodificarCsv(bytes: ArrayBuffer | Uint8Array): TextoDelCsv {
-  try {
-    return { texto: new TextDecoder('utf-8', { fatal: true }).decode(bytes), codificacion: 'utf-8' };
-  } catch {
-    return { texto: new TextDecoder('windows-1252').decode(bytes), codificacion: 'windows-1252' };
-  }
-}
-
-/** Un fallo que invalida el archivo entero, antes de mirar fila por fila. */
-export class ArchivoInvalido extends Error {
-  override readonly name = 'ArchivoInvalido';
-}
-
 /** Una fila del archivo, ya llevada a los campos del producto. */
 export interface FilaDelCsv {
   /**
@@ -573,182 +591,10 @@ export function leerCsv(contenido: string): LecturaDelCsv {
   };
 }
 
-/** Una tabla leída de un CSV: encabezados normalizados y los renglones de datos. */
-export interface TablaCsv {
-  /** `Código de barras` → `codigo_de_barras`, uno por columna. */
-  readonly encabezados: readonly string[];
-  readonly renglones: readonly Renglon[];
-}
-
-/**
- * Lee cualquier CSV como tabla —separador detectado, comillas respetadas— sin
- * saber de qué es. Lo usan las cargas que no son de productos (el inventario);
- * `leerCsv` sigue siendo la del catálogo.
- *
- * Lanza {@link ArchivoInvalido} si está vacío, si una columna no tiene
- * encabezado, si hay dos con el mismo nombre o si pasa del tope de filas.
- */
-export function leerTablaCsv(contenido: string): TablaCsv {
-  const texto = contenido.replace(/^\uFEFF/, '');
-  if (texto.trim() === '') {
-    throw new ArchivoInvalido('El archivo está vacío.');
-  }
-  const [primero, ...datos] = partirEnRenglones(texto, detectarSeparador(texto));
-  const encabezado = [...primero!.celdas];
-  while (encabezado.length > 1 && encabezado[encabezado.length - 1]!.trim() === '') {
-    encabezado.pop();
-  }
-  const encabezados = encabezado.map(normalizarEncabezado);
-  if (encabezados.some((nombre) => nombre === '')) {
-    throw new ArchivoInvalido('Todas las columnas necesitan un encabezado.');
-  }
-  if (new Set(encabezados).size !== encabezados.length) {
-    throw new ArchivoInvalido('Hay dos columnas con el mismo encabezado.');
-  }
-  if (datos.length === 0) {
-    throw new ArchivoInvalido('El archivo tiene encabezado pero ninguna fila.');
-  }
-  if (datos.length > FILAS_MAXIMAS_POR_CARGA) {
-    throw new ArchivoInvalido(
-      `El archivo tiene ${datos.length} filas y el tope es ${FILAS_MAXIMAS_POR_CARGA}. Partilo en varios.`,
-    );
-  }
-  return {
-    encabezados,
-    renglones: datos.map((renglon) => ({
-      linea: renglon.linea,
-      celdas: renglon.celdas.map((celda) => sinApostrofoDeFormula(celda.trim())),
-    })),
-  };
-}
-
-/** El separador del archivo: el que más aparece en el encabezado, fuera de comillas. */
-function detectarSeparador(texto: string): string {
-  const cuentas: Record<string, number> = { ',': 0, ';': 0, '\t': 0 };
-  let entreComillas = false;
-  for (const caracter of texto) {
-    if (caracter === '"') {
-      entreComillas = !entreComillas;
-    } else if (!entreComillas && (caracter === '\n' || caracter === '\r')) {
-      break;
-    } else if (!entreComillas && caracter in cuentas) {
-      cuentas[caracter]!++;
-    }
-  }
-  return Object.keys(cuentas).sort((a, b) => cuentas[b]! - cuentas[a]!)[0]!;
-}
-
-/** Un renglón del archivo: sus celdas y la línea donde empieza. */
-export interface Renglon {
-  readonly linea: number;
-  readonly celdas: string[];
-}
-
-/**
- * Parte el texto en renglones de celdas, respetando las comillas, y anota en
- * qué línea del archivo empieza cada uno (un salto dentro de comillas cuenta
- * como línea, igual que en la planilla).
- */
-function partirEnRenglones(texto: string, separador: string): Renglon[] {
-  const renglones: Renglon[] = [];
-  let renglon: string[] = [];
-  let celda = '';
-  let entreComillas = false;
-  let recienCerrada = false;
-  let linea = 1;
-  let inicio = 1;
-
-  const cerrarCelda = (): void => {
-    renglon.push(celda);
-    celda = '';
-    recienCerrada = false;
-  };
-  const cerrarRenglon = (): void => {
-    cerrarCelda();
-    if (renglon.some((valor) => valor.trim() !== '')) {
-      renglones.push({ linea: inicio, celdas: renglon });
-    }
-    renglon = [];
-  };
-
-  for (let i = 0; i < texto.length; i++) {
-    const caracter = texto[i]!;
-    if (entreComillas) {
-      if (caracter === '"') {
-        if (texto[i + 1] === '"') {
-          celda += '"';
-          i++;
-        } else {
-          entreComillas = false;
-          recienCerrada = true;
-        }
-      } else {
-        if (caracter === '\n' || (caracter === '\r' && texto[i + 1] !== '\n')) {
-          linea++;
-        }
-        celda += caracter;
-      }
-      continue;
-    }
-    if (caracter === '"') {
-      if (celda.trim() !== '' || recienCerrada) {
-        throw new ArchivoInvalido(
-          `Hay una comilla en medio de un valor (línea ${linea}).`,
-        );
-      }
-      celda = '';
-      entreComillas = true;
-    } else if (caracter === separador) {
-      cerrarCelda();
-    } else if (caracter === '\n' || caracter === '\r') {
-      if (caracter === '\r' && texto[i + 1] === '\n') {
-        i++;
-      }
-      cerrarRenglon();
-      linea++;
-      inicio = linea;
-    } else if (recienCerrada) {
-      if (caracter.trim() !== '') {
-        throw new ArchivoInvalido(
-          `Hay texto después de cerrar las comillas (línea ${linea}).`,
-        );
-      }
-    } else {
-      celda += caracter;
-    }
-  }
-  if (entreComillas) {
-    throw new ArchivoInvalido('Hay comillas sin cerrar en el archivo.');
-  }
-  if (celda !== '' || renglon.length > 0) {
-    cerrarRenglon();
-  }
-  return renglones;
-}
-
-/** `Código de barras` → `codigo_de_barras`. */
-function normalizarEncabezado(nombre: string): string {
-  return nombre
-    .trim()
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .replace(/[\s-]+/g, '_');
-}
-
 function columnaPorNombre(nombre: string): ColumnaDelCsv | undefined {
   return COLUMNAS_DEL_CSV.find(
     (columna) => columna.encabezado === nombre || columna.alias.includes(nombre),
   );
-}
-
-/**
- * Deshace el apóstrofo que `CsvExportService` antepone a lo que parece una
- * fórmula: así el informe de errores que se descarga de acá se puede corregir
- * y volver a subir tal cual.
- */
-function sinApostrofoDeFormula(valor: string): string {
-  return /^'[=+\-@\t\r]/.test(valor) ? valor.slice(1) : valor;
 }
 
 /* ─── La revisión de la carga ─────────────────────────────────────────────── */

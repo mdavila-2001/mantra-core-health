@@ -80,8 +80,8 @@ describe('glosario de la maqueta en shards (semilla commiteada)', () => {
     const { almacen } = montar();
     expect(await almacen.origen()).toBe('glossary-seed');
     const manifiesto = await almacen.manifiesto();
-    // Curados + capas de data/glossary/ + atlas anatómico.
-    expect(manifiesto.total).toBeGreaterThan(5000);
+    // Los 69 curados + el glosario oficial (CIE-10-ES, CIMA, MedlinePlus, TA98, Wikidata).
+    expect(manifiesto.total).toBeGreaterThan(15000);
   });
 
   it('las facetas cuentan por categoría y por etiqueta sin bajar un solo shard', async () => {
@@ -126,10 +126,10 @@ describe('glosario de la maqueta en shards (semilla commiteada)', () => {
     }
   });
 
-  it('castellano primero: los nombres en inglés van después, y la tarjeta los cuenta aparte', async () => {
+  it('castellano: todas las enfermedades tienen nombre en castellano, y la tarjeta lo cuenta', async () => {
     const { almacen, get } = montar();
     const enfermedades = (await almacen.manifiesto()).categories.find((c) => c.key === 'disease')!;
-    expect(enfermedades.translatedCount).toBeLessThan(enfermedades.count);
+    expect(enfermedades.translatedCount).toBe(enfermedades.count);
 
     const valueSetId = idDeConjunto(enfermedades.internalCode);
     const primera = await get<Pagina>('/terminology/concepts', {
@@ -144,7 +144,7 @@ describe('glosario de la maqueta en shards (semilla commiteada)', () => {
       offset: String(enfermedades.count - 12),
     });
     expect(primera.items.every((t) => t.translated)).toBe(true);
-    expect(ultima.items.every((t) => !t.translated)).toBe(true);
+    expect(ultima.items.every((t) => t.translated)).toBe(true);
 
     const conjuntos = await get<{ items: readonly { internalCode: string; translatedMemberCount?: number }[] }>(
       '/terminology/value-sets',
@@ -210,19 +210,14 @@ describe('glosario de la maqueta en shards (semilla commiteada)', () => {
 
   it('un término sin definición viaja SIN definición: el simulador no inventa el párrafo', async () => {
     const { get } = montar();
-    const pagina = await get<Pagina>('/terminology/concepts', {
-      includeValueSets: 'true',
-      q: 'cholera',
-      limit: '12',
-    });
-    const enIngles = pagina.items.find((t) => !t.translated);
-    expect(enIngles).toBeDefined();
-
+    // CIE-10-ES A00.0 «Cólera debido a Vibrio cholerae 01, biotipo cholerae»: la
+    // fuente publica código y nombre, no una definición.
     const ficha = await get<Record<string, unknown>>(
-      `/terminology/concepts/${enIngles!.conceptId}`,
+      '/terminology/concepts/27db26c3-93d0-4fcd-a75a-a16af8bb1360',
     );
+    expect(ficha['display']).toMatch(/^Cólera debido a Vibrio cholerae/);
     expect(ficha['clinicalDefinition']).toBeUndefined();
-    expect(ficha['translated']).toBe(false);
+    expect(ficha['translated']).toBe(true);
   });
 
   it('un id que no es de nadie es 404, no una ficha vacía', async () => {

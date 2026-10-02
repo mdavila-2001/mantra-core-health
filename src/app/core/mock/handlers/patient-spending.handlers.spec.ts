@@ -39,6 +39,25 @@ describe('handlers de gastos del paciente: GET /patient-spending/me', () => {
     }
   });
 
+  it('nada en el futuro tampoco dentro de hoy: a primera hora no hay movimientos de la tarde', () => {
+    const id = paciente.patientProfileId!;
+    // Un día que de verdad tiene movimientos, para que la prueba no pase por vacía.
+    const conMovimientos = spendingMovementsFor(id, '2026-09-01', '2026-09-30', new Date(2026, 9, 5))[0];
+    expect(conMovimientos).toBeDefined();
+    const dia = new Date(conMovimientos!.occurredAt);
+    const clave = `${dia.getFullYear()}-${String(dia.getMonth() + 1).padStart(2, '0')}-${String(dia.getDate()).padStart(2, '0')}`;
+    const aLas = (hora: number) => new Date(dia.getFullYear(), dia.getMonth(), dia.getDate(), hora, 0);
+    const hasta = (ahora: Date) => spendingMovementsFor(id, clave, clave, ahora);
+
+    expect(hasta(aLas(7))).toHaveLength(0);
+    expect(hasta(aLas(19)).length).toBeGreaterThan(0);
+    for (const hora of [9, 12, 15, 19]) {
+      for (const item of hasta(aLas(hora))) {
+        expect(new Date(item.occurredAt).getTime(), `a las ${hora} h`).toBeLessThanOrEqual(aLas(hora).getTime());
+      }
+    }
+  });
+
   it('cada importe cuadra: lo pagado es el costo menos cobertura y descuento', () => {
     const items = spendingMovementsFor(paciente.patientProfileId!, '2025-01-01', '2026-09-27', TODAY);
 

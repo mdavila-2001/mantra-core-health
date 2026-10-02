@@ -195,6 +195,8 @@ describe('RegisterPractitioner', () => {
       licenseIssueDate: null,
       issuerAdministrativeAreaConceptId: 'dep-1',
       profilePhotoBase64: extra.profilePhotoBase64 ?? null,
+      signatureImageBase64: null,
+      sealImageBase64: null,
     });
     // Las especialidades agregadas no son controles: viven en una señal, igual
     // que los nombres extra.
@@ -277,6 +279,8 @@ describe('RegisterPractitioner', () => {
         'credential-files',
         'academic-titles',
         'specialties',
+        // La firma y el sello (imágenes, opcionales) van justo antes de cerrar.
+        'signature-seal',
         // La contraseña cierra el alta, sola: dejó de compartir página con los
         // teléfonos del consultorio y el correo de trabajo.
         'password',
@@ -432,8 +436,8 @@ describe('RegisterPractitioner', () => {
     }
   });
 
-  it('tiene catorce páginas, ninguna de más de cuatro preguntas', () => {
-    // Catorce y no menos porque el límite es de **campos por página**, no de
+  it('tiene quince páginas, ninguna de más de cuatro preguntas', () => {
+    // Quince (catorce más la opcional de firma y sello) y no menos porque el límite es de **campos por página**, no de
     // páginas: apretar el orden pedido en menos pasos es lo que este motor vino
     // a deshacer (AC-05-2, `MAX_CAMPOS_POR_PAGINA`). Las últimas cuatro son la
     // de contactos privados —separada de la del acceso al dejar de mezclar el
@@ -447,7 +451,7 @@ describe('RegisterPractitioner', () => {
     // mezclaría dos lugares distintos en una pregunta.
     const paginas = component.paginasProfesional();
 
-    expect(paginas.length).toBe(14);
+    expect(paginas.length).toBe(15);
     for (const pagina of paginas) {
       expect(
         pagina.campos.length,
@@ -1952,6 +1956,92 @@ describe('RegisterPractitioner', () => {
       expect(component.catalogoMunicipiosCaido()).toBe(true);
       expect(component.ramasMunicipios()).toEqual([]);
       expect(navegaciones).toEqual([]);
+    });
+  });
+
+  describe('firma y sello médicos del alta (imágenes, opcionales)', () => {
+    const FIRMA = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGP4z8DwHwAFAAH/iZk9HQAAAABJRU5ErkJggg==';
+    const SELLO = 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/2wBD';
+
+    it('el paso existe, es saltable y va antes de la contraseña', () => {
+      const claves = component.paginasProfesional().map((pagina) => pagina.clave);
+      expect(claves).toContain('signature-seal');
+      expect(claves.indexOf('signature-seal')).toBe(claves.indexOf('password') - 1);
+      const pagina = component.paginasProfesional().find((p) => p.clave === 'signature-seal')!;
+      // Ninguno de los dos campos es obligatorio: se puede seguir sin cargar nada.
+      expect(pagina.campos.map((c) => c.key)).toEqual(['signatureImageBase64', 'sealImageBase64']);
+      expect(pagina.campos.some((c) => c.required === true)).toBe(false);
+    });
+
+    it('envía las dos imágenes en el cuerpo cuando se cargan', () => {
+      completarProfesional();
+      component.formProfesional.controls.signatureImageBase64.setValue(FIRMA);
+      component.formProfesional.controls.sealImageBase64.setValue(SELLO);
+
+      component.submit();
+
+      const req = http.expectOne('/iam/auth/register-practitioner');
+      expect(req.request.body.signatureImageBase64).toBe(FIRMA);
+      expect(req.request.body.sealImageBase64).toBe(SELLO);
+      req.flush(RESPUESTA_PRO);
+    });
+
+    it('sin firma ni sello el alta viaja igual y no manda ninguna clave', () => {
+      completarProfesional();
+
+      component.submit();
+
+      const req = http.expectOne('/iam/auth/register-practitioner');
+      expect(req.request.body.signatureImageBase64).toBeUndefined();
+      expect(req.request.body.sealImageBase64).toBeUndefined();
+      req.flush(RESPUESTA_PRO);
+    });
+
+    it('quitar limpia la vista y el control de cada imagen', () => {
+      component.firmaBase64.set(FIRMA);
+      component.selloBase64.set(SELLO);
+      component.formProfesional.controls.signatureImageBase64.setValue(FIRMA);
+      component.formProfesional.controls.sealImageBase64.setValue(SELLO);
+
+      component.quitarFirma();
+
+      expect(component.firmaBase64()).toBeNull();
+      expect(component.formProfesional.controls.signatureImageBase64.value).toBeNull();
+      expect(component.selloBase64()).toBe(SELLO);
+
+      component.quitarSello();
+
+      expect(component.selloBase64()).toBeNull();
+      expect(component.formProfesional.controls.sealImageBase64.value).toBeNull();
+    });
+
+    it.each([
+      ['alSeleccionarFirma', 'errorFirma'],
+      ['alSeleccionarSello', 'errorSello'],
+    ] as const)('%s rechaza un formato que no es imagen', (metodo, error) => {
+      const entrada = document.createElement('input');
+      Object.defineProperty(entrada, 'files', {
+        value: [new File(['hola'], 'firma.txt', { type: 'text/plain' })],
+      });
+
+      component[metodo]({ target: entrada } as unknown as Event);
+
+      expect(component[error]()).toContain('JPG, PNG o WebP');
+    });
+
+    it.each([
+      ['alSeleccionarFirma', 'errorFirma'],
+      ['alSeleccionarSello', 'errorSello'],
+    ] as const)('%s rechaza una imagen de más de 2 MB', (metodo, error) => {
+      const entrada = document.createElement('input');
+      const pesada = new File([new Uint8Array(2 * 1024 * 1024 + 1)], 'firma.png', {
+        type: 'image/png',
+      });
+      Object.defineProperty(entrada, 'files', { value: [pesada] });
+
+      component[metodo]({ target: entrada } as unknown as Event);
+
+      expect(component[error]()).toContain('2 MB');
     });
   });
 

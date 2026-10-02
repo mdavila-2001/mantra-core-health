@@ -273,9 +273,11 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
       'administration/pharmacy-categories',
       'administration/pharmacy-import',
       'administration/pharmacy-inventory',
+      'administration/pharmacy-prices',
       'administration/pharmacy-orders',
       'administration/pharmacy-campaigns',
       'administration/pharmacy-profile',
+      'administration/pharmacy-branches',
     ],
   },
   {
@@ -291,6 +293,8 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
       'laboratorio/recepcion',
       'laboratorio/cola',
       'administration/laboratory-results',
+      'administration/laboratory-prices',
+      'administration/laboratory-branches',
     ],
   },
 
@@ -334,6 +338,7 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
       'my-account/promotions',
       'my-account/spending',
       'my-account/invoices',
+      'my-account/requests',
     ],
   },
   {
@@ -432,3 +437,36 @@ export const GRUPOS_APLANADOS: ReadonlySet<NavGroup> = new Set<NavGroup>([
   'Facturación',
   'Mi cuenta',
 ]);
+
+/**
+ * Los dominios que se aplanan **sólo para un tipo de organización**.
+ *
+ * «Administración» sigue plegada para quien administra la plataforma —veintidós
+ * secciones—, pero la cuenta de una aseguradora (`PAYER`) no ve esas veintidós:
+ * ve cinco (Aseguradora, Siniestralidad, Solicitudes recibidas, Campañas y Tu
+ * organización), todas suyas. Para ella el desplegable era un clic de más sobre
+ * un rótulo que no lleva a ninguna pantalla, así que sus cinco destinos van
+ * sueltos, a nivel 0 (pedido del propietario, 01/10/2026).
+ *
+ * Se resuelve por tipo de organización y no moviendo las secciones a otro
+ * dominio —como hizo la cuenta de farmacia con `General`— porque estas
+ * secciones **no son sólo de la aseguradora**: «Solicitudes de seguro» es del
+ * prestador y «Brokers» de quien administra seguridad, y ahí «Administración»
+ * tiene que seguir siendo su dominio y su breadcrumb.
+ */
+export const GRUPOS_APLANADOS_POR_TIPO_DE_ORGANIZACION: Readonly<
+  Record<string, ReadonlySet<NavGroup>>
+> = {
+  PAYER: new Set<NavGroup>(['Administración']),
+};
+
+/** ¿Se dibuja este dominio sin desplegable para la organización activa? */
+export function seAplanaElGrupo(group: NavGroup, activeTenantType: string | null): boolean {
+  if (GRUPOS_APLANADOS.has(group)) {
+    return true;
+  }
+  if (activeTenantType === null) {
+    return false;
+  }
+  return GRUPOS_APLANADOS_POR_TIPO_DE_ORGANIZACION[activeTenantType]?.has(group) === true;
+}

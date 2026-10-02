@@ -14,14 +14,26 @@ import { FormField } from '../../../shared/components/molecules/form-field/form-
 import { SearchField } from '../../../shared/components/molecules/search-field/search-field';
 import { DatePicker } from '../../../shared/components/organisms/date-picker/date-picker';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
+import { PromotionRuleEditor } from '../../../shared/components/organisms/promotion-rule-editor/promotion-rule-editor';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 
+import { displayCurrency } from '../../../core/money/display-currency';
+import { describeDraftFailure } from '../../../core/promotions-engine/describe-failure';
+import { isOrderLevel } from '../../../core/promotions-engine/mechanic-level';
+import type {
+  DraftFailure,
+  Mechanic,
+  PromotableItem,
+} from '../../../core/promotions-engine/promotion-mechanics.types';
+import { defaultRuleFields, ruleFromFields, textOf } from '../../../core/promotions-engine/rule-fields';
+import type { RuleFields } from '../../../core/promotions-engine/rule-fields';
 import { PharmacyClient } from '../../../core/data-access/pharmacy/pharmacy.client';
 import type { PharmacyProduct } from '../../../core/data-access/pharmacy/pharmacy.types';
 import {
   PharmacyCampaignsClient,
-  ahorroDe,
   estadoDe,
+  etiquetaDeCampana,
+  fallosDelMotor,
 } from '../../../core/data-access/pharmacy-campaigns/pharmacy-campaigns.client';
 import type {
   BorradorDeCampana,
@@ -29,7 +41,6 @@ import type {
   EstadoDeCampana,
   FalloDeBorrador,
   RenglonDeBorrador,
-  TipoDeDescuento,
 } from '../../../core/data-access/pharmacy-campaigns/pharmacy-campaigns.types';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
@@ -39,8 +50,11 @@ import type { ViewState } from '../../../core/view-state/view-state.types';
 /** Cuánto dura, por defecto, una campaña nueva. Un mes de mostrador. */
 const DIAS_DE_VIGENCIA_POR_DEFECTO = 30;
 
-/** El texto de cada fallo del borrador. Uno por causa, accionable. */
-const TEXTO_DEL_FALLO: Readonly<Record<FalloDeBorrador, string>> = {
+/**
+ * El texto de los fallos que este carril ya nombraba en castellano. Los del
+ * motor (`DraftFailure`) los dice `describeDraftFailure()`, su única fuente.
+ */
+const TEXTO_DEL_FALLO_HEREDADO = {
   SIN_TITULO: 'Poné un título: es lo primero que va a leer la gente.',
   SIN_PRODUCTOS: 'Agregá al menos un producto de tu catálogo.',
   FALTA_FECHA: 'Elegí desde qué día y hasta qué día vale la campaña.',
@@ -49,7 +63,13 @@ const TEXTO_DEL_FALLO: Readonly<Record<FalloDeBorrador, string>> = {
   PRECIO_NO_ES_DESCUENTO:
     'Cada precio de campaña tiene que ser menor que el precio normal del producto.',
   MONEDAS_MEZCLADAS: 'Todos los productos de una campaña tienen que estar en la misma moneda.',
-};
+} as const;
+
+function textoDelFallo(fallo: FalloDeBorrador): string {
+  return fallo in TEXTO_DEL_FALLO_HEREDADO
+    ? TEXTO_DEL_FALLO_HEREDADO[fallo as keyof typeof TEXTO_DEL_FALLO_HEREDADO]
+    : describeDraftFailure(fallo as DraftFailure);
+}
 
 /** Cómo se dice cada estado de vigencia en el panel. */
 const TEXTO_DEL_ESTADO: Readonly<Record<EstadoDeCampana, string>> = {
@@ -105,6 +125,7 @@ interface FilaDeCampana {
     Input,
     Link,
     PageHeader,
+    PromotionRuleEditor,
     RouterLink,
     SearchField,
     Select,
@@ -156,21 +177,61 @@ export class PharmacyCampaigns {
   protected readonly descripcion = signal('');
   protected readonly desde = signal<Date | null>(new Date());
   protected readonly hasta = signal<Date | null>(enDias(DIAS_DE_VIGENCIA_POR_DEFECTO));
-  protected readonly tipoDeDescuento = signal<TipoDeDescuento>('PORCENTAJE');
-  protected readonly porcentaje = signal('20');
+  /**
+   * Lo que se escribió en la regla, como texto. El editor lo pinta y emite el
+   * siguiente; acá se convierte a `Mechanic` recién al publicar.
+   */
+  protected readonly campos = signal<RuleFields>(defaultRuleFields());
   protected readonly renglones = signal<readonly RenglonDeBorrador[]>([]);
   protected readonly publicando = signal(false);
   protected readonly fallos = signal<readonly FalloDeBorrador[]>([]);
 
-  protected readonly opcionesDeDescuento: readonly SelectOption<TipoDeDescuento>[] = [
-    { value: 'PORCENTAJE', label: 'Un porcentaje para toda la campaña' },
-    { value: 'PRECIO', label: 'Un precio de campaña por producto' },
-  ];
+  /** La regla ya convertida: mecánica, condiciones y alcance. */
+  protected readonly regla = computed(() => ruleFromFields(this.campos()));
 
-  protected readonly porPorcentaje = computed(() => this.tipoDeDescuento() === 'PORCENTAJE');
+  /**
+   * La mecánica con los precios de campaña que se escribieron en la lista: el
+   * editor no los conoce, porque son por producto.
+   */
+  private readonly mecanica = computed<Mechanic>(() => {
+    const { mechanic } = this.regla();
+    if (mechanic.kind !== 'CAMPAIGN_PRICE') {
+      return mechanic;
+    }
+    const prices: Record<string, string> = {};
+    for (const renglon of this.renglones()) {
+      if (renglon.precioPromocional !== null) {
+        prices[renglon.productId] = renglon.precioPromocional;
+      }
+    }
+    return { kind: 'CAMPAIGN_PRICE', prices };
+  });
+
+  /** ¿Se eligen productos? No en las de total, ni en «toda la farmacia». */
+  protected readonly pideProductos = computed(
+    () => !isOrderLevel(this.regla().mechanic) && !this.regla().allItems,
+  );
+
+  protected readonly esPrecioPorProducto = computed(
+    () => this.regla().mechanic.kind === 'CAMPAIGN_PRICE',
+  );
+
+  /** Los productos elegidos, tal como los lee el editor. */
+  protected readonly itemsParaElEditor = computed<readonly PromotableItem[]>(() =>
+    this.renglones().map((renglon) => ({
+      itemId: renglon.productId,
+      label: renglon.nombre,
+      detail: renglon.presentacion,
+      unitPrice: renglon.precioNormal,
+      currency: renglon.moneda,
+    })),
+  );
+
+  /** Los fallos en el idioma del motor, para marcar cada campo del editor. */
+  protected readonly fallosParaElEditor = computed(() => fallosDelMotor(this.fallos()));
 
   protected readonly mensajesDeFallo = computed(() =>
-    this.fallos().map((fallo) => TEXTO_DEL_FALLO[fallo]),
+    this.fallos().map(textoDelFallo),
   );
 
   /* ─── El buscador del catálogo ────────────────────────────────────────── */
@@ -284,7 +345,8 @@ export class PharmacyCampaigns {
       productId: producto.id,
       nombre: nombreVisible(producto),
       presentacion: presentacionDe(producto),
-      precioNormal: '',
+      // Si el catálogo trae el precio vigente, la farmacia no lo tipea de nuevo.
+      precioNormal: producto.unitPrice ?? '',
       moneda: 'BOB',
       precioPromocional: null,
     };
@@ -293,21 +355,26 @@ export class PharmacyCampaigns {
 
   protected quitar(productId: string): void {
     this.renglones.set(this.renglones().filter((renglon) => renglon.productId !== productId));
+    // Un regalo o un 2x1 entre productos no puede apuntar a uno que ya no está.
+    this.campos.update((campos) => ({
+      ...campos,
+      triggerItemId: campos.triggerItemId === productId ? null : campos.triggerItemId,
+      rewardItemId: campos.rewardItemId === productId ? null : campos.rewardItemId,
+    }));
   }
 
   protected fijarTitulo(valor: ValorDeCampo): void {
     this.titulo.set(textoDe(valor));
   }
 
+  /** El porcentaje de la regla. El campo numérico emite un número: se normaliza al borde. */
   protected fijarPorcentaje(valor: ValorDeCampo): void {
-    this.porcentaje.set(textoDe(valor));
+    this.campos.update((campos) => ({ ...campos, percent: textOf(valor) }));
   }
 
-  /** El select no puede quedar en nada: sin tipo no hay con qué calcular. */
-  protected fijarTipoDeDescuento(valor: TipoDeDescuento | null): void {
-    if (valor !== null) {
-      this.tipoDeDescuento.set(valor);
-    }
+  /** El editor emite los campos ya con el cambio aplicado. */
+  protected cambiarCampos(siguientes: RuleFields): void {
+    this.campos.set(siguientes);
   }
 
   protected fijarPrecioNormal(productId: string, precio: ValorDeCampo): void {
@@ -339,14 +406,18 @@ export class PharmacyCampaigns {
     // falta al borrador es `revisar()`, y devuelve **todos** los fallos de una
     // vez. Cortar acá con uno solo obligaba a publicar tres veces para
     // enterarse de los tres problemas.
+    const { conditions, allItems } = this.regla();
     const borrador: BorradorDeCampana = {
       titulo: this.titulo(),
       descripcion: this.descripcion(),
       desde: this.desde(),
       hasta: this.hasta(),
-      tipoDeDescuento: this.tipoDeDescuento(),
-      porcentaje: this.porPorcentaje() ? enteroDe(this.porcentaje()) : null,
-      renglones: this.renglones(),
+      mecanica: this.mecanica(),
+      condiciones: conditions,
+      ...(allItems ? { alcance: { itemIds: [], categoryIds: [], allItems: true } } : {}),
+      // Las de total y «toda la farmacia» no apuntan a productos: lo que
+      // quedó elegido de antes no se arrastra.
+      renglones: this.pideProductos() ? this.renglones() : [],
     };
     this.publicando.set(true);
     this.campaigns.crear(borrador, pharmacyId, this.nombreDeLaFarmacia()).subscribe({
@@ -392,13 +463,13 @@ export class PharmacyCampaigns {
     return estado === 'PROGRAMADA' ? 'info' : 'secondary';
   }
 
-  /** El ahorro de una campaña ya publicada, para resumirla en una línea. */
-  protected ahorroMayor(campana: CampanaDeFarmacia): number | null {
-    const ahorros = campana.productos
-      .map((producto) => ahorroDe(producto))
-      .filter((ahorro): ahorro is number => ahorro !== null);
-    return ahorros.length === 0 ? null : Math.max(...ahorros);
+  /** Cómo se resume una campaña ya publicada en su fila: la etiqueta que lee el paciente. */
+  protected etiquetaDe(campana: CampanaDeFarmacia): string {
+    return etiquetaDeCampana(campana);
   }
+
+  /** La moneda con que el editor rotula los importes. */
+  protected readonly moneda = computed(() => displayCurrency(this.renglones()[0]?.moneda));
 }
 
 /** El nombre con que se lee un producto: marca, y si no, genérico. */
@@ -421,7 +492,6 @@ function enDias(dias: number): Date {
   return fecha;
 }
 
-/** El entero que se escribió, o `null` si lo escrito no es uno. */
 /**
  * Lo que emite `app-input`: el átomo declara `model<string | number | null>` y
  * en un campo `type="number"` devuelve un **número**, no su texto.
@@ -438,9 +508,4 @@ type ValorDeCampo = string | number | null;
  */
 function textoDe(valor: ValorDeCampo): string {
   return valor === null ? '' : String(valor);
-}
-
-function enteroDe(texto: string): number | null {
-  const limpio = texto.trim();
-  return /^\d+$/.test(limpio) ? Number(limpio) : null;
 }

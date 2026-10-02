@@ -20,7 +20,10 @@ import {
   type MensajeDelHilo,
 } from '../../../core/messaging/chat.store';
 import { stickerDe } from '../../../core/messaging/sticker-pack.generated';
-import type { ConversationListItem } from '../../../core/data-access/community/community.types';
+import type {
+  ConversationListItem,
+  MessageReaction,
+} from '../../../core/data-access/community/community.types';
 import { ChatPreferencias } from '../../../core/messaging/chat-preferencias';
 import {
   avatarDeConQuien as avatarDeConQuienDe,
@@ -28,9 +31,11 @@ import {
 } from '../../../core/messaging/con-quien';
 import { etiquetaDeDia, horaDelReloj } from '../../../shared/date/hora-de-chat';
 import { Avatar } from '../../../shared/components/atoms/avatar/avatar';
+import { AppButton } from '../../../shared/components/atoms/button/button';
 import { EmptyState } from '../../../shared/components/molecules/empty-state/empty-state';
 import { ContentDialog } from '../../../shared/components/organisms/content-dialog/content-dialog';
 import { Composer } from './composer/composer';
+import { SelectorEmojis } from './composer/selector-emojis';
 import { ContactPanel } from './contact-panel/contact-panel';
 import { FilePreview } from '../../../shared/components/molecules/file-preview/file-preview';
 import { formatearTamano } from '../../../core/data-access/files/upload-policy';
@@ -80,6 +85,27 @@ const TONOS = 8;
  * un tic por segundo sería redibujar el hilo entero sesenta veces de más.
  */
 const TIC_DE_EDICION_MS = 30_000;
+
+/**
+ * Las seis reacciones al alcance de un toque, como la barra de WhatsApp. Las
+ * demás están detrás del «+», que abre el catálogo completo.
+ */
+export const REACCIONES_RAPIDAS = ['👍', '❤️', '😂', '😮', '😢', '🙏'] as const;
+
+/** Cómo va un mensaje propio: ✓ salió, ✓✓ llegó, ✓✓ azul lo leyeron. */
+export type EstadoDeEntrega = 'enviado' | 'entregado' | 'leido';
+
+/** Una línea de «Info. del mensaje»: qué pasó con él para una persona. */
+export interface FilaDeInfo {
+  readonly nombre: string;
+  readonly entregado: Date | null;
+  readonly leido: Date | null;
+  /** `true` si se sabe que lo leyó pero la API no dice cuándo. */
+  readonly leidoSinHora: boolean;
+}
+
+/** Cuánto lugar libre bajo la flecha hace falta para abrir el menú hacia abajo. */
+const ESPACIO_PARA_EL_MENU = 340;
 
 /** A cuántos píxeles del tope se pide la página anterior. */
 const MARGEN_DE_CARGA = 220;
@@ -171,7 +197,17 @@ function resaltar(texto: string, termino: string): readonly TrozoDeTexto[] {
  */
 @Component({
   selector: 'app-thread',
-  imports: [Avatar, Composer, ContactPanel, ContentDialog, EmptyState, FilePreview, RouterLink],
+  imports: [
+    AppButton,
+    Avatar,
+    Composer,
+    ContactPanel,
+    ContentDialog,
+    EmptyState,
+    FilePreview,
+    RouterLink,
+    SelectorEmojis,
+  ],
   templateUrl: './thread.html',
   styleUrls: ['./thread.css', './thread-capas.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -198,6 +234,9 @@ export class Thread {
 
   /** Qué mensaje tiene el menú abierto. */
   protected readonly menuAbierto = signal<string | null>(null);
+
+  /** Si el menú abierto se despliega hacia arriba, por falta de lugar abajo. */
+  protected readonly menuArriba = signal(false);
 
   /** Si está abierto el menú de la cabecera. */
   protected readonly menuCabecera = signal(false);
@@ -238,6 +277,17 @@ export class Thread {
   protected readonly imagenAbierta = signal<{ readonly url: string; readonly nombre: string } | null>(
     null,
   );
+
+  /** El mensaje al que se está eligiendo reacción con el catálogo entero. */
+  protected readonly reaccionandoA = signal<MensajeDelHilo | null>(null);
+
+  /** El mensaje cuya «Info. del mensaje» está abierta. */
+  protected readonly infoDe = signal<MensajeDelHilo | null>(null);
+
+  /** Si se está confirmando el bloqueo del otro lado. */
+  protected readonly confirmandoBloqueo = signal(false);
+
+  protected readonly reaccionesRapidas = REACCIONES_RAPIDAS;
 
   /** El mensaje al que saltó una cita, para destellarlo. */
   protected readonly destellando = signal<string | null>(null);
@@ -399,6 +449,9 @@ export class Thread {
         this.menuCabecera.set(false);
         this.cerrarBusqueda();
         this.reenviando.set(null);
+        this.infoDe.set(null);
+        this.reaccionandoA.set(null);
+        this.confirmandoBloqueo.set(false);
         this.contactoAbierto.set(false);
         this.store.abrir(id);
       }
@@ -443,15 +496,118 @@ export class Thread {
 
   /** `true` si un mensaje propio ya lo leyó el otro lado — ✓✓ en vez de ✓. */
   protected leido(mensaje: MensajeDelHilo): boolean {
+    if (mensaje.senderProfileId !== this.store.perfil()) {
+      return false;
+    }
+    // Con recibos —un grupo, o una API que ya publica las horas— manda lo que
+    // dicen: leído es que **todos** los leyeron.
+    const recibos = mensaje.receipts ?? [];
+    if (recibos.length > 0 && recibos.every((r) => r.readAt !== undefined)) {
+      return true;
+    }
     const hasta = this.store.peerReadUpTo();
-    if (
-      mensaje.senderProfileId !== this.store.perfil() ||
-      hasta === null ||
-      !mensaje.sentAt
-    ) {
+    if (hasta === null || !mensaje.sentAt) {
       return false;
     }
     return mensaje.sentAt.getTime() <= hasta.getTime();
+  }
+
+  /**
+   * Si un mensaje propio salió, llegó o ya lo leyeron.
+   *
+   * «Llegó» sólo se afirma con recibos que lo digan: sin ellos la API no sabe
+   * más que «salió» y «leído», y pintar dos tildes grises sin saberlo sería
+   * mentir sobre lo único que mira quien espera una respuesta.
+   */
+  protected estadoDeEntrega(mensaje: MensajeDelHilo): EstadoDeEntrega {
+    if (this.leido(mensaje)) {
+      return 'leido';
+    }
+    const recibos = mensaje.receipts ?? [];
+    if (recibos.length > 0 && recibos.every((r) => r.deliveredAt !== undefined)) {
+      return 'entregado';
+    }
+    return 'enviado';
+  }
+
+  protected rotuloDeEntrega(mensaje: MensajeDelHilo): string {
+    return { enviado: 'Enviado', entregado: 'Entregado', leido: 'Leído' }[
+      this.estadoDeEntrega(mensaje)
+    ];
+  }
+
+  /* --- Reacciones ---------------------------------------------------------- */
+
+  protected reaccionar(mensaje: MensajeDelHilo, emoji: string): void {
+    this.menuAbierto.set(null);
+    this.reaccionandoA.set(null);
+    this.store.reaccionar(mensaje, emoji);
+  }
+
+  /** Abre el catálogo entero para elegir la reacción. */
+  protected masReacciones(mensaje: MensajeDelHilo): void {
+    this.menuAbierto.set(null);
+    this.reaccionandoA.set(mensaje);
+  }
+
+  protected cerrarReacciones(): void {
+    this.reaccionandoA.set(null);
+  }
+
+  /** Con qué emoji reaccionó la persona a este mensaje, si lo hizo. */
+  protected miReaccion(mensaje: MensajeDelHilo): string | null {
+    const propio = this.store.perfil();
+    return (
+      (mensaje.reactions ?? []).find((r) => propio !== null && r.profileIds.includes(propio))
+        ?.emoji ?? null
+    );
+  }
+
+  /** «Vos y Valeria reaccionaron con ❤️», para quien no puede pasar el mouse. */
+  protected rotuloDeReaccion(reaccion: MessageReaction): string {
+    const nombres = reaccion.profileIds.map((id) => this.nombreDe(id));
+    return `${nombres.join(', ')}: ${reaccion.emoji}`;
+  }
+
+  /** Una reacción tocada en la burbuja: quita la propia o suma la del emoji. */
+  protected tocarReaccion(mensaje: MensajeDelHilo, reaccion: MessageReaction): void {
+    this.store.reaccionar(mensaje, reaccion.emoji);
+  }
+
+  /* --- Info del mensaje ---------------------------------------------------- */
+
+  protected abrirInfo(mensaje: MensajeDelHilo): void {
+    this.menuAbierto.set(null);
+    this.infoDe.set(mensaje);
+  }
+
+  protected cerrarInfo(): void {
+    this.infoDe.set(null);
+  }
+
+  /** Quién lo recibió y leyó, y cuándo. Una fila por cada otro participante. */
+  protected readonly filasDeInfo = computed<readonly FilaDeInfo[]>(() => {
+    const mensaje = this.infoDe();
+    const activa = this.store.conversacionActiva();
+    if (mensaje === null || activa === undefined) {
+      return [];
+    }
+    const leidoEnGeneral = this.leido(mensaje);
+    return activa.peers.map((peer) => {
+      const recibo = (mensaje.receipts ?? []).find((r) => r.profileId === peer.profileId);
+      const leido = recibo?.readAt ?? null;
+      return {
+        nombre: peer.displayName ?? 'Alguien',
+        entregado: recibo?.deliveredAt ?? null,
+        leido,
+        leidoSinHora: leido === null && leidoEnGeneral && activa.peers.length === 1,
+      };
+    });
+  });
+
+  /** «Hoy · 9:12 a. m.»: cuándo pasó, con día. */
+  protected fechaYHora(fecha: Date | undefined): string {
+    return fecha === undefined ? '' : `${etiquetaDeDia(fecha)} · ${horaDelReloj(fecha)}`;
   }
 
   /** El mensaje al que responde otro, si está cargado. */
@@ -488,7 +644,7 @@ export class Thread {
    * producto — no hace falta un tipo de mensaje nuevo en el modelo.
    */
   protected esSticker(mensaje: MensajeDelHilo): boolean {
-    return stickerDe(mensaje.attachmentFileId) !== undefined;
+    return mensaje.contentType === 'STICKER' || stickerDe(mensaje.attachmentFileId) !== undefined;
   }
 
   /** Cómo se anuncia el sticker a quien no lo ve. */
@@ -720,6 +876,32 @@ export class Thread {
     }
   }
 
+  /** Pide confirmación antes de bloquear: es lo que corta la conversación. */
+  protected pedirBloqueo(): void {
+    this.menuCabecera.set(false);
+    this.confirmandoBloqueo.set(true);
+  }
+
+  protected confirmarBloqueo(): void {
+    const otro = this.perfilDelOtro();
+    this.confirmandoBloqueo.set(false);
+    if (otro !== null) {
+      this.store.bloquear(otro, this.conQuien());
+    }
+  }
+
+  protected cancelarBloqueo(): void {
+    this.confirmandoBloqueo.set(false);
+  }
+
+  protected desbloquear(): void {
+    this.menuCabecera.set(false);
+    const otro = this.perfilDelOtro();
+    if (otro !== null) {
+      this.store.desbloquear(otro);
+    }
+  }
+
   /**
    * Abre la hoja del contacto.
    *
@@ -785,6 +967,15 @@ export class Thread {
 
   protected alternarMenu(clave: string, evento: Event): void {
     evento.stopPropagation();
+    // Cerca del pie el menú se abre hacia arriba: el de la última burbuja se
+    // cortaba contra el borde. El menú mide unos 20 rem con la barra de
+    // reacciones, así que el umbral es un poco más.
+    const boton = evento.currentTarget;
+    const marco = this.marco()?.nativeElement;
+    if (boton instanceof HTMLElement && marco) {
+      const libre = marco.getBoundingClientRect().bottom - boton.getBoundingClientRect().bottom;
+      this.menuArriba.set(libre < ESPACIO_PARA_EL_MENU);
+    }
     this.menuAbierto.set(this.menuAbierto() === clave ? null : clave);
   }
 
@@ -801,6 +992,19 @@ export class Thread {
    */
   protected puedeEditarse(mensaje: MensajeDelHilo): boolean {
     return editable(mensaje, this.store.perfil(), this.ahora());
+  }
+
+  /**
+   * `true` si el mensaje es propio y de texto: al que el menú le muestra
+   * «Editar», habilitado o —fuera de la ventana— apagado y con su motivo.
+   * Ocultar la opción hacía creer que la función no existía.
+   */
+  protected esEditableEnTeoria(mensaje: MensajeDelHilo): boolean {
+    return (
+      mensaje.senderProfileId === this.store.perfil() &&
+      mensaje.estado === 'enviado' &&
+      (mensaje.bodyText ?? '').trim() !== ''
+    );
   }
 
   protected editar(mensaje: MensajeDelHilo): void {

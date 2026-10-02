@@ -1,0 +1,64 @@
+@switch (estado().status) {
+  @case ('loading') {
+    <!-- Nada mientras carga: la mayoría de los profesionales no ofrece servicios, y
+         un esqueleto que aparece y desaparece sin dejar nada sería un salto de
+         diseño en cada ficha. -->
+  }
+  @case ('ready') {
+    @if (servicios().length > 0) {
+    <section class="servicios" aria-labelledby="servicios-titulo" data-testid="ficha-servicios">
+      <h2 id="servicios-titulo" class="servicios__titulo">Servicios</h2>
+      <p class="servicios__nota">
+        Además de la consulta. Cada uno dura entre un mínimo y un máximo, y el horario reserva el
+        máximo.
+      </p>
+
+      <ul class="servicios__lista">
+        @for (servicio of servicios(); track servicio.id) {
+          <li>
+            <app-card variant="outlined" padding="lg" class="servicios__servicio">
+              <div class="servicios__cuerpo">
+                <h3 class="servicios__nombre">{{ servicio.serviceName }}</h3>
+                <p class="servicios__dato">
+                  <span data-testid="servicio-duracion">Dura {{ duracion(servicio) }}</span>
+                  <span aria-hidden="true"> · </span>
+                  <span data-testid="servicio-precio" class="servicios__precio">{{
+                    precio(servicio)
+                  }}</span>
+                </p>
+                @if (servicio.requiresApproval) {
+                  <p class="servicios__aviso">El profesional tiene que confirmarlo.</p>
+                }
+              </div>
+              <a
+                app-button
+                variant="primary"
+                size="sm"
+                data-testid="servicio-pedir"
+                [routerLink]="destino(servicio).path"
+                [queryParams]="destino(servicio).queryParams"
+                [attr.aria-label]="'Pedir turno: ' + servicio.serviceName"
+              >
+                Pedir turno
+              </a>
+            </app-card>
+          </li>
+        }
+      </ul>
+    </section>
+    }
+  }
+  @case ('error') {
+    <app-alert tone="warning" title="No pudimos traer sus servicios" data-testid="ficha-servicios-error">
+      El resto de la ficha sigue igual.
+      <button app-button variant="ghost" size="sm" type="button" (click)="recargar()">
+        Reintentar
+      </button>
+    </app-alert>
+  }
+  @default {
+    <!-- `offline` y el resto: no se dibuja nada. Una sección que dice «sin
+         servicios» en cada ficha de médico que sólo da consultas es ruido, y la
+         mayoría sólo da consultas. -->
+  }
+}

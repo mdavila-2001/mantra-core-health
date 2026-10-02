@@ -83,7 +83,11 @@
         <p class="composer__panel-cargando" role="status">Cargando emojis…</p>
       }
     } @else {
-      <app-sticker-picker (elegido)="mandarSticker($event)" />
+      <app-sticker-picker
+        (elegido)="mandarSticker($event)"
+        (propio)="mandarStickerPropio($event)"
+        (rechazado)="error.set($event)"
+      />
     }
   </div>
 }

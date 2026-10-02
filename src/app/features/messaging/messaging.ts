@@ -14,11 +14,12 @@ import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { debounceTime, filter, map, Subject } from 'rxjs';
 
-import { ChatStore } from '../../core/messaging/chat.store';
+import { ChatStore, SIN_NOMBRE } from '../../core/messaging/chat.store';
 import { ChatPreferencias } from '../../core/messaging/chat-preferencias';
 import { conQuien } from '../../core/messaging/con-quien';
 import type { ConversationListItem } from '../../core/data-access/community/community.types';
 import { AppButton } from '../../shared/components/atoms/button/button';
+import { Avatar } from '../../shared/components/atoms/avatar/avatar';
 import { Alert } from '../../shared/components/molecules/alert/alert';
 import { EmptyState } from '../../shared/components/molecules/empty-state/empty-state';
 import { ConversationList, type AccionDeFila } from './conversation-list/conversation-list';
@@ -59,6 +60,7 @@ const ESPERA_DE_BUSQUEDA_MS = 300;
   imports: [
     Alert,
     AppButton,
+    Avatar,
     ConversationList,
     EmptyState,
     FormsModule,
@@ -86,6 +88,12 @@ export class Messaging {
   protected readonly consulta = signal('');
   protected readonly filtro = signal<Filtro>('todos');
   protected readonly verArchivados = signal(false);
+  protected readonly verBloqueados = signal(false);
+
+  /** Los perfiles bloqueados, para marcar sus filas. */
+  protected readonly idsBloqueados = computed<ReadonlySet<string>>(
+    () => new Set(this.store.bloqueados().map((b) => b.profileId)),
+  );
 
   private readonly tecleado = new Subject<string>();
 
@@ -158,6 +166,9 @@ export class Messaging {
     () => this.store.bandejaCargada() && this.visibles().length === 0,
   );
 
+  /** Para el nombre de quien se muestra en «Bloqueados» sin ficha resuelta. */
+  protected readonly sinNombre = SIN_NOMBRE;
+
   /** `true` si hay algo escrito pero ninguna conversación propia casa. */
   protected readonly sinCoincidencias = computed(
     () => this.consulta().trim() !== '' && this.visibles().length === 0,
@@ -194,7 +205,7 @@ export class Messaging {
       if (slug === null || this.store.perfil() === null) return;
       untracked(() => {
         this.slugPendiente.set(null);
-        this.abrirConSlug(slug);
+        this.abrirDesdeEnlace(slug);
       });
     });
 
@@ -229,6 +240,7 @@ export class Messaging {
   protected elegirFiltro(filtro: Filtro): void {
     this.filtro.set(filtro);
     this.verArchivados.set(false);
+    this.verBloqueados.set(false);
   }
 
   protected rotulo(filtro: Filtro): string {
@@ -246,7 +258,19 @@ export class Messaging {
 
   protected alternarArchivados(): void {
     this.verArchivados.set(!this.verArchivados());
+    this.verBloqueados.set(false);
     this.filtro.set('todos');
+  }
+
+  /** La lista de a quiénes bloqueaste, con el botón para desbloquear. */
+  protected alternarBloqueados(): void {
+    this.verBloqueados.set(!this.verBloqueados());
+    this.verArchivados.set(false);
+    this.filtro.set('todos');
+  }
+
+  protected desbloquear(profileId: string): void {
+    this.store.desbloquear(profileId);
   }
 
   private estamparTitulo(): void {
@@ -270,6 +294,21 @@ export class Messaging {
       case 'perfil':
         this.verPerfil(accion.conversationId);
         break;
+      case 'bloquear':
+      case 'desbloquear': {
+        const peer = this.store
+          .conversaciones()
+          .find((c) => c.id === accion.conversationId)?.peers[0];
+        if (peer === undefined) {
+          break;
+        }
+        if (accion.tipo === 'bloquear') {
+          this.store.bloquear(peer.profileId, peer.displayName);
+        } else {
+          this.store.desbloquear(peer.profileId);
+        }
+        break;
+      }
     }
   }
 
@@ -297,6 +336,22 @@ export class Messaging {
     this.store.escribirA(slug, (conversationId) => {
       this.limpiarBusqueda();
       void this.router.navigate(['/messaging', conversationId]);
+    });
+  }
+
+  /**
+   * Abre el hilo pedido por `?escribirA=` **reemplazando** esa entrada del
+   * historial.
+   *
+   * Con un `navigate` común quedaban dos entradas de chat apiladas —
+   * `/messaging?escribirA=…` y `/messaging/<id>`—, y la flecha «Volver» caía en
+   * la primera, que reabría el hilo: quien tocaba «Hablar con el broker» no
+   * podía salir del chat. Reemplazando, atrás vuelve a la ficha de donde vino.
+   */
+  private abrirDesdeEnlace(slug: string): void {
+    this.store.escribirA(slug, (conversationId) => {
+      this.limpiarBusqueda();
+      void this.router.navigate(['/messaging', conversationId], { replaceUrl: true });
     });
   }
 }

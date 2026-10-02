@@ -309,3 +309,59 @@
   margin-left: var(--sp-2);
   color: var(--text-muted);
 }
+
+/* ─── El logo del consultorio, en «Facturación» ─────────────────────────────
+   La caja del logo es la misma molécula que dibuja la ficha (`app-logo-
+   consultorio`, 2:1), así que lo que se ve al editar es lo que se ve al mirar.
+   Logo a la izquierda y las acciones a la derecha; en móvil se apilan. */
+.edicion__logo {
+  display: grid;
+  gap: var(--sp-2);
+  margin-block: var(--sp-4) var(--sp-5);
+  padding-block-end: var(--sp-4);
+  border-block-end: 1px solid var(--border-subtle);
+}
+
+.edicion__logo-titulo {
+  margin: 0;
+  font-size: var(--fs-body);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.edicion__logo-nota {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+.edicion__logo-cuerpo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--sp-4);
+  margin-block-start: var(--sp-2);
+}
+
+.edicion__logo-acciones {
+  display: grid;
+  flex: 1 1 260px;
+  gap: var(--sp-2);
+  justify-items: start;
+  min-inline-size: 0;
+}
+
+.edicion__logo-estado,
+.edicion__logo-error {
+  margin: 0;
+  font-size: var(--fs-caption);
+}
+
+.edicion__logo-estado {
+  color: var(--text-secondary);
+}
+
+.edicion__logo-error {
+  color: var(--text-danger);
+}

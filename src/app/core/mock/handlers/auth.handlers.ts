@@ -1,5 +1,7 @@
 import { ESTADO, TIPO_SOCIETARIO } from '../fixtures/conceptos';
 import { pacientes, type PacienteSimulado } from '../fixtures/personas';
+import { guardarImagenDeDataUrl } from './files.handlers';
+import { guardarActivosDeFirma } from './firma-y-sello.handlers';
 import { conflict, notFound, preconditionFailed, reply, unauthorized, type MockRouter } from '../mock-router';
 import type { MockUser as CuentaSimulada } from '../mock-session';
 import {
@@ -254,15 +256,33 @@ export function registrarAuth(router: MockRouter): void {
   });
 
   router.post('/iam/auth/register-practitioner', ({ body }) => {
-    const datos = cuerpo<{ email?: string; photoFileId?: string }>({ body });
+    const datos = cuerpo<{
+      email?: string;
+      photoFileId?: string;
+      // Sólo simulador (el DTO real no los declara): la firma y el sello del alta,
+      // como imágenes en base64 igual que `profilePhotoBase64`.
+      signatureImageBase64?: string;
+      sealImageBase64?: string;
+    }>({ body });
     if (datos.email !== undefined && MOCK_USERS.some((u) => u.email === datos.email)) {
       return conflict('Ya existe una cuenta con ese correo', { email: datos.email });
     }
     const id = nuevoId('profesional-nuevo');
+    const practitionerProfileId = uuid(`hpid-${id}`);
+    if (datos.signatureImageBase64 !== undefined || datos.sealImageBase64 !== undefined) {
+      guardarActivosDeFirma(practitionerProfileId, {
+        ...(datos.signatureImageBase64 === undefined
+          ? {}
+          : { signatureFileId: guardarImagenDeDataUrl(datos.signatureImageBase64, 'firma.png') }),
+        ...(datos.sealImageBase64 === undefined
+          ? {}
+          : { sealFileId: guardarImagenDeDataUrl(datos.sealImageBase64, 'sello.png') }),
+      });
+    }
     return {
       userId: id,
       personId: uuid(`person-${id}`),
-      practitionerProfileId: uuid(`hpid-${id}`),
+      practitionerProfileId,
       practitionerCode: `MED-${Math.floor(Math.random() * 9000 + 1000)}`,
       ...(datos.photoFileId === undefined ? {} : { photoFileId: datos.photoFileId }),
     };

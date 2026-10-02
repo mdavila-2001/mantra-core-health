@@ -25,8 +25,10 @@ import type {
   AgendaResource,
   AgendaSlot,
   Booking,
+  ServiceOffering,
   WaitlistEntry,
 } from '../../../core/data-access/scheduling/scheduling.types';
+import { withDisplayCurrency } from '../../../core/money/display-currency';
 import { TerminologyClient } from '../../../core/data-access/terminology/terminology.client';
 import type {
   ConceptLabels,
@@ -55,7 +57,13 @@ import { PageHeader } from '../../../shared/components/organisms/page-header/pag
 import { AGENDA_ROUTE } from '../../agenda/agenda.routes';
 import { AppointmentCalendar } from './appointment-calendar/appointment-calendar';
 import type { CalendarAppointment } from './appointment-calendar/appointment-calendar.types';
-import { CAMPAIGN_PARAM, CAMPAIGN_TITLE_PARAM, reservaDelPortalRoute } from './appointments.routes';
+import {
+  CAMPAIGN_PARAM,
+  CAMPAIGN_TITLE_PARAM,
+  PROFESSIONAL_PARAM,
+  SERVICE_PARAM,
+  reservaDelPortalRoute,
+} from './appointments.routes';
 import { sufijoDeCodigo, toBookingStatusPresentation } from './booking-status';
 import { splitUpcomingAndPast } from './upcoming-and-past';
 
@@ -201,6 +209,11 @@ interface TurnoVisible {
   readonly sede: string;
   readonly motivo: string;
   /**
+   * El servicio que se pidió y cuánto dura, en una línea (v4.2.40). Vacío para una
+   * consulta. Sale de lo que se aceptó al reservar, no de la oferta de hoy.
+   */
+  readonly servicio: string;
+  /**
    * Por qué te cambiaron el turno, ya redactado (corrección #14).
    *
    * Vacío cuando el último cambio no exigía motivo —o cuando el turno es
@@ -273,7 +286,37 @@ interface HorarioVisible {
    * corriente y no un error.
    */
   readonly sede: string;
+  /**
+   * La oferta de servicio de este horario (v4.2.40). Ausente ≡ es una consulta.
+   *
+   * Un horario de servicio **no es un cupo**: lo calcula la API al leer, y el cupo
+   * nace al retenerlo. Por eso su `id` no sirve para reservar y la reserva viaja
+   * con la oferta, la sede y el inicio.
+   */
+  readonly ofertaId?: string;
 }
+
+/**
+ * «Ecocardiograma Doppler · 30–45 min», o `''` si la cita es una consulta.
+ *
+ * Con mínimo y máximo iguales dice un solo número. El rango es honesto: cuánto
+ * tarda depende de cada paciente, y el horario ya reservó el máximo.
+ */
+function servicioEnUnaLinea(cita: Booking): string {
+  const servicio = cita.service;
+  if (servicio === undefined) return '';
+  const duracion =
+    servicio.minDurationMinutes === servicio.maxDurationMinutes
+      ? `${servicio.maxDurationMinutes} min`
+      : `${servicio.minDurationMinutes}–${servicio.maxDurationMinutes} min`;
+  return `${servicio.name} · ${duracion}`;
+}
+
+/** El valor de «¿Qué querés pedir?» que significa consulta: lo de siempre. */
+const PEDIR_CONSULTA = 'CONSULTA';
+
+/** El id que acompaña a la ruta de reserva cuando el horario no es un cupo. */
+const RESERVA_DE_SERVICIO = 'servicio';
 
 /**
  * Las agendas de una misma persona, juntas (F-23).
@@ -884,6 +927,111 @@ export class Appointments {
    */
   protected readonly horariosIncompletos = signal(false);
 
+  /* ---- ¿qué se pide? consulta o un servicio (v4.2.40) ---------------------
+
+     Los servicios de un profesional —un estudio, un procedimiento— se piden con
+     la misma mecánica que una consulta: se elige con quién, qué y cuándo. Lo que
+     cambia es de dónde salen los horarios: de la grilla de la agenda para una
+     consulta, de la disponibilidad que la API CALCULA para un servicio (dura entre
+     un mínimo y un máximo, y se reserva el máximo). */
+
+  /** Los servicios que el profesional elegido deja pedir desde el portal. */
+  protected readonly ofertasDelProfesional = signal<readonly ServiceOffering[]>([]);
+
+  /** `PEDIR_CONSULTA` o el id de una oferta. */
+  protected readonly queQuiere = signal<string>(PEDIR_CONSULTA);
+
+  /** La oferta elegida, o `undefined` si se pide una consulta. */
+  protected readonly servicioElegido = computed<ServiceOffering | undefined>(() =>
+    this.ofertasDelProfesional().find((oferta) => oferta.id === this.queQuiere()),
+  );
+
+  /** Se está pidiendo un servicio y no una consulta. */
+  protected readonly enServicio = computed(() => this.servicioElegido() !== undefined);
+
+  /** Consulta, y uno por servicio con lo que dura: elegir sabiendo cuánto tarda. */
+  protected readonly opcionesDeServicio = computed<readonly SelectOption<string>[]>(() => [
+    { value: PEDIR_CONSULTA, label: 'Consulta' },
+    ...this.ofertasDelProfesional().map((oferta) => ({
+      value: oferta.id,
+      label: `${oferta.serviceName} · ${this.duracionDe(oferta)}`,
+    })),
+  ]);
+
+  /** «30–45 min», o «20 min» cuando el mínimo y el máximo coinciden. */
+  protected duracionDe(oferta: ServiceOffering): string {
+    return oferta.minDurationMinutes === oferta.maxDurationMinutes
+      ? `${oferta.maxDurationMinutes} min`
+      : `${oferta.minDurationMinutes}–${oferta.maxDurationMinutes} min`;
+  }
+
+  /** El precio de referencia del servicio, con la moneda del producto. */
+  protected precioDe(oferta: ServiceOffering): string {
+    return withDisplayCurrency(oferta.price);
+  }
+
+  /**
+   * Cambió lo que se pide: vuelven a pedirse los horarios, que son de otro origen.
+   *
+   * @param valor - `PEDIR_CONSULTA` o el id de una oferta.
+   */
+  protected elegirQueQuiere(valor: string | null): void {
+    this.queQuiere.set(valor ?? PEDIR_CONSULTA);
+    this.diaDeHorarios.set(null);
+    this.cargarHorarios();
+  }
+
+  /**
+   * Los servicios del profesional elegido.
+   *
+   * Un fallo no se muestra: sin servicios la pantalla es la de siempre, y perder
+   * la posibilidad de pedir una consulta por no poder leer los estudios sería
+   * cambiar lo principal por lo accesorio.
+   */
+  private cargarOfertas(): void {
+    this.ofertasDelProfesional.set([]);
+    this.queQuiere.set(PEDIR_CONSULTA);
+    const perfil = this.recursosEnFoco()[0]?.resourceRefId;
+    if (this.esLaboratorio() || perfil === undefined) return;
+    this.scheduling.listServiceOfferings(perfil).subscribe({
+      next: (lista) => {
+        this.ofertasDelProfesional.set(lista);
+        this.aplicarEnlaceDelServicio(lista);
+      },
+      error: () => this.ofertasDelProfesional.set([]),
+    });
+  }
+
+  /** El enlace sólo se aplica una vez: después manda lo que la persona elija a mano. */
+  private enlaceAplicado = false;
+
+  /**
+   * Con `?profesional=<perfil>` se llega con quién ya elegido.
+   *
+   * Lo trae la ficha del profesional —«Pedir turno» en uno de sus servicios—. Se
+   * aplica cuando llegan las agendas, que es cuando se sabe a cuál corresponde. Si
+   * ese profesional no tiene agenda en esta organización no se elige nada: mejor la
+   * pantalla de siempre que una elección inventada.
+   */
+  private aplicarEnlaceDelProfesional(): void {
+    if (this.enlaceAplicado) return;
+    const perfil = this.route.snapshot.queryParamMap.get(PROFESSIONAL_PARAM);
+    if (perfil === null) return;
+    const agenda = this.agendas().find((candidata) =>
+      candidata.recursos.some((recurso) => recurso.resourceRefId === perfil),
+    );
+    if (agenda === undefined) return;
+    this.enlaceAplicado = true;
+    this.elegirAgenda(agenda.clave);
+  }
+
+  /** Con `?servicio=<oferta>` queda elegido el servicio, si el profesional todavía lo ofrece. */
+  private aplicarEnlaceDelServicio(ofertas: readonly ServiceOffering[]): void {
+    const pedido = this.route.snapshot.queryParamMap.get(SERVICE_PARAM);
+    if (pedido === null || !ofertas.some((oferta) => oferta.id === pedido)) return;
+    this.elegirQueQuiere(pedido);
+  }
+
   /**
    * Lo tecleado en el buscador de profesional.
    *
@@ -1166,6 +1314,8 @@ export class Appointments {
     this.sedeElegida.set(SEDE_CUALQUIERA);
     this.recursos.set([]);
     this.busquedaDeRecurso.set('');
+    this.ofertasDelProfesional.set([]);
+    this.queQuiere.set(PEDIR_CONSULTA);
     this.cargarRecursos();
   }
 
@@ -1186,6 +1336,7 @@ export class Appointments {
           return mezcla;
         });
         this.sinRecursos.set(pagina.items.length === 0);
+        this.aplicarEnlaceDelProfesional();
         // Los turnos pueden haberse pintado antes que esto: las dos lecturas
         // del arranque salen a la vez. Se rehacen para que tomen el nombre de
         // su agenda, igual que con las etiquetas de estado.
@@ -1207,9 +1358,12 @@ export class Appointments {
     // «ningún horario» por una sede que este profesional no atiende.
     this.sedeElegida.set(SEDE_CUALQUIERA);
     if (clave === null) {
+      this.ofertasDelProfesional.set([]);
+      this.queQuiere.set(PEDIR_CONSULTA);
       this.horarios.set(empty(this.pasoElegirAgenda, ELEGIR_CON_QUIEN));
       return;
     }
+    this.cargarOfertas();
     this.cargarHorarios();
   }
 
@@ -1244,6 +1398,13 @@ export class Appointments {
 
     this.horarios.set(loading());
     this.horariosIncompletos.set(false);
+
+    const servicio = this.servicioElegido();
+    if (servicio !== undefined) {
+      this.cargarHorariosDeServicio(servicio, enFoco, desde, hasta, conSede);
+      return;
+    }
+
     // Se guarda el último fallo para poder distinguir un 403 de una caída de
     // red si al final NINGUNA sede contestó; con una sola en foco es el mismo
     // error de siempre, y la pantalla lo cuenta igual que antes.
@@ -1292,6 +1453,80 @@ export class Appointments {
             empty(
               { label: 'Probá con otra agenda' },
               'No hay horarios libres en las próximas dos semanas.',
+            ),
+          );
+          return;
+        }
+        this.horarios.set(ready(libres));
+      },
+      error: (error: unknown) =>
+        this.horarios.set(errorToViewState<readonly HorarioVisible[]>(error)),
+    });
+  }
+
+  /**
+   * Los horarios calculados de un servicio, sede por sede.
+   *
+   * Es la misma lista que la de una consulta —ordenada por hora, con la sede cuando
+   * vienen mezcladas— pero cada fila es un **inicio posible** que la API calculó
+   * con lo que ese profesional tiene libre, no un cupo de la grilla.
+   */
+  private cargarHorariosDeServicio(
+    servicio: ServiceOffering,
+    enFoco: readonly AgendaResource[],
+    desde: Date,
+    hasta: Date,
+    conSede: boolean,
+  ): void {
+    let ultimoFallo: unknown = null;
+    forkJoin(
+      enFoco.map((recurso) =>
+        this.scheduling
+          .getServiceAvailability({
+            offeringId: servicio.id,
+            resourceId: recurso.id,
+            from: desde,
+            to: hasta,
+          })
+          .pipe(
+            map((disponibilidad) =>
+              disponibilidad.items.map(
+                (item): HorarioVisible => ({
+                  id: `${RESERVA_DE_SERVICIO}|${item.resourceId}|${item.startAt.toISOString()}`,
+                  desde: item.startAt,
+                  // Lo que se reserva: el máximo. El mínimo sólo informa.
+                  hasta: item.endAtMax,
+                  resourceId: item.resourceId,
+                  lugaresLibres: 1,
+                  sede: conSede ? nombreDeSede(recurso) : '',
+                  ofertaId: servicio.id,
+                }),
+              ),
+            ),
+            catchError((error: unknown) => {
+              ultimoFallo = error;
+              this.horariosIncompletos.set(true);
+              return of<readonly HorarioVisible[] | null>(null);
+            }),
+          ),
+      ),
+    ).subscribe({
+      next: (porRecurso) => {
+        if (porRecurso.every((lista) => lista === null)) {
+          this.horariosIncompletos.set(false);
+          this.horarios.set(errorToViewState<readonly HorarioVisible[]>(ultimoFallo));
+          return;
+        }
+        const libres = porRecurso
+          .filter((lista): lista is readonly HorarioVisible[] => lista !== null)
+          .flat()
+          .sort((a, b) => a.desde.getTime() - b.desde.getTime())
+          .slice(0, TOPE_DE_HORARIOS);
+        if (libres.length === 0) {
+          this.horarios.set(
+            empty(
+              { label: 'Probá con otro servicio o profesional' },
+              `No hay horarios para ${servicio.serviceName} en las próximas dos semanas.`,
             ),
           );
           return;
@@ -1560,7 +1795,11 @@ export class Appointments {
   /* ---- destinos ----------------------------------------------------------- */
 
   protected rutaDeReserva(horario: HorarioVisible): string {
-    return reservaDelPortalRoute(horario.id);
+    // Un horario de servicio no es un cupo: no hay id que mandar. La pantalla de
+    // reserva lo reencuentra por la oferta, la sede y el inicio.
+    return reservaDelPortalRoute(
+      horario.ofertaId === undefined ? horario.id : RESERVA_DE_SERVICIO,
+    );
   }
 
   /**
@@ -1572,6 +1811,7 @@ export class Appointments {
       recurso: horario.resourceId,
       desde: horario.desde.toISOString(),
       hasta: horario.hasta.toISOString(),
+      ...(horario.ofertaId === undefined ? {} : { oferta: horario.ofertaId }),
     };
   }
 
@@ -1592,6 +1832,7 @@ export class Appointments {
       agenda: this.nombreDeLaAgenda(resourceId),
       sede: this.nombreDeLaSede(resourceId),
       motivo: cita.reasonText ?? '',
+      servicio: servicioEnUnaLinea(cita),
       reprogramadoDesde: cita.rescheduledFrom ?? null,
       avisoDelCambio: avisoDelCambio(cita),
       cambioCuando: cita.statusReason?.changedAt ?? null,

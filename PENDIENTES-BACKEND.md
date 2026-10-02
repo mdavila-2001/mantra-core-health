@@ -56,6 +56,8 @@ backend.
 | **P50** | Registro de farmacia: la API acepta `tenantType: PHARMACY` pero no crea la fila de `directory.pharmacies`, no tiene bloque `pharmacy.branches` y no enlaza la sede central; lo obligatorio para operar (los 6 PDF, SEDES) hoy no se exige en ninguna capa |
 | **P51** | Registro de laboratorio: la API acepta `tenantType: DIAGNOSTIC_CENTER` con `diagnosticUnit`, pero exige país, jurisdicción, cédula y poder del representante que el alta no pide, no conoce `diagnosticUnit.branches` y, sin `diagnosticUnitTypeConceptId`, crea una unidad **de imágenes** |
 | **P52** | Portal de la cuenta de laboratorio: resumen y **resultados** (subida por partes sin tope de tamaño, listado de todo lo subido, contenido, retiro con motivo y aviso al médico y al paciente). Ninguna ruta `/diagnostics/lab/*` existe en la API |
+| **P54** | Carga masiva de sucursales: `directory.branches` no tiene **descripción** ni **enlace de ubicación**, y `POST /tenants/{id}/branches` es de a una. **El front ya las manda** (altas de laboratorio y farmacia, ficha de organización) y el simulador las guarda |
+| **P58** | El **logo de una organización** (farmacia, laboratorio, clínica, aseguradora): hoy la imagen vive en `community.public_profiles.avatar_file_id` y sólo la escribe un administrador de plataforma (`PUT /admin/tenants/:id/public-profile`); `directory.tenants` no tiene columna de logo. Hace falta que el **owner/admin** de la organización lo cambie: `GET /tenants/{id}/logo` → `{ fileId \| null }` y `PUT /tenants/{id}/logo` con `{ fileId \| null }` (403 si no administra; el archivo ya subido por `/common/files/upload`, categoría `IMAGE`). **El front ya está construido contra el simulador** (`LogoDeOrganizacionClient`, tarjeta `app-organization-logo` en «Tu organización» y «Mi perfil»): al llegar la API se cambia ese cliente y `DirectoryClient`, no las pantallas. El modelo, antes, tiene que decir dónde se guarda (¿columna en `directory.tenants` o escritura del dueño sobre `public_profiles`?) |
 
 ---
 
@@ -2339,3 +2341,173 @@ reintento; visor) y `features/laboratory/summary/`.
 > paciente de la sesión) y por emisor (la organización o el profesional), con el mismo contrato,
 > para reemplazar el cliente simulado sin tocar la pantalla. Laboratorio, imagenología y
 > aseguradora todavía no emiten facturas: la pantalla lo dice en su estado vacío.
+
+## P54 · La carga masiva de sucursales — 30/09/2026
+
+> **Qué pide el front.** Pedido del propietario del 30/09/2026: que **toda** organización pueda
+> subir sus sucursales en lote, con tres campos —**nombre**, **descripción** y **URL de
+> ubicación**— más los que hagan falta. La pieza es una sola (`app-branch-bulk-import`, reglas
+> en `shared/utils/branch-import/`) y está en las cuatro puertas: el paso «Tus sucursales» de
+> las altas de laboratorio, farmacia e imagenología, y la pestaña Sucursales de la ficha de
+> cualquier organización (`/administration/organizations/:tenantId`). Un CSV con `nombre`
+> (obligatoria), `descripcion`, `url_ubicacion`, `direccion` y `codigo`; se revisa sin mandar
+> nada, se avisan las filas malas con su línea, y de la URL de Google Maps/OSM se sacan las
+> coordenadas cuando las trae escritas (un enlace acortado se guarda tal cual).
+>
+> **Hoy.** En la ficha se crean **de a una, en serie**, con `POST /tenants/{id}/branches` —el
+> código, si falta, se deriva del nombre sin chocar con los existentes—; una que la API rechaza
+> (409 por código repetido) no frena a las demás y se muestra con su motivo. El cuerpo lleva
+> dos claves que el `CreateBranchDto` **no declara**: `description` y `locationUrl`. Con el
+> `ValidationPipe` en `whitelist` + `forbidNonWhitelisted` la API real respondería **400**; el
+> simulador las acepta y las devuelve en `GET /tenants/{id}/branches`. En las altas viajan
+> dentro de `diagnosticUnit.branches[]` y `pharmacy.branches[]`, que ya eran claves del
+> cliente (P50, P51).
+>
+> **Falta en la API.** Empieza en el **modelo**, no en el backend (ADR-0021):
+>
+> 1. `directory.branches` en su `.puml`: `description` (texto, opcional) y `location_url`
+>    (varchar ~2000, opcional) → `gen_ddl.py` → `SQL/` → patch en `SQL/patches/` para bases
+>    vivas → entidad. Hoy la tabla tiene `latitude`/`longitude` pero ni dirección ni
+>    descripción.
+> 2. `CreateBranchDto` y la respuesta del listado con esas dos claves (la URL, validada como
+>    `http(s)` en el servidor: el front ya rechaza `javascript:` pero **la UI no es una
+>    barrera**).
+> 3. Opcional, si el volumen lo pide: un `POST /tenants/{id}/branches/bulk` todo-o-nada por
+>    fila con reporte, para no hacer N viajes. El front hoy no lo necesita (tope de 300 filas).
+>
+> Mientras tanto, **no cruzar esto a `dev`**: contra la API real la ficha daría 400 en cada fila
+> que traiga descripción o enlace.
+>
+> **Ampliación 01/10/2026 — la pestaña «Sucursales» de la farmacia y del laboratorio**
+> (`/administration/pharmacy-branches` y `/administration/laboratory-branches`, una sola pantalla
+> en `features/organization/organization-branches/`). Lista, crea, sube en lote **y edita**. La
+> edición es un endpoint que la API **no tiene**:
+>
+> | Método y ruta | Qué hace |
+> |---|---|
+> | `PATCH /tenants/{id}/branches/{branchId}` | `{ name?, description?, locationUrl?, latitude?, longitude? }`. `null` borra el dato, clave ausente lo deja. El código **no** se edita. 404 si la sucursal no es de ese tenant; 422 con nombre vacío. Devuelve la sucursal como el listado. |
+>
+> Al cambiar el enlace, el front manda también el punto: el que trae el enlace, o `null` si no
+> trae (el pin viejo era de otro lugar). La API debe validar `locationUrl` como `http(s)` y las
+> coordenadas en rango, igual que en el alta, y acotar por membresía del tenant (la UI no es una
+> barrera). Hoy lo responde sólo el simulador (`directory.handlers.ts`).
+>
+> Las pestañas **«Precios»** que salieron el mismo día no piden contrato nuevo: guardan con los
+> `PATCH` que ya usan el diálogo del producto (`/pharmacies/:id/products/:productId`, P47) y el
+> catálogo del laboratorio (`/diagnostics/lab/services/:id`, P52), de a uno y en serie. Si el
+> volumen lo pide, un `PATCH` de precios en lote todo-o-nada sería la mejora natural.
+
+## P55 · Artículos médicos completos (formato, imágenes intercaladas) — 30/09/2026
+
+> **Qué pide el front.** «Artículos médicos» (`/my-account/articles`) es ahora un editor
+> completo: Título › Subtítulo › Apartado (desplegables al leer), listas, citas, separadores,
+> negrita/cursiva/tachado, enlaces, emojis e imágenes intercaladas. El formato viaja como
+> **markdown acotado dentro de `bodyText`** (`shared/text/article-markup.ts`), y cada imagen es
+> un `media[]` del post (`fileId`, `mediaRole: IMAGE`, `altText`, `ordinal`) al que el texto
+> apunta con `![alt](imagen:N)`. **No hay tabla ni columna nueva**: `CreatePostDto` ya aceptaba
+> `media[]` con control de propiedad (`assertMediaFileUsableBy`).
+>
+> **Falta en la API.**
+>
+> 1. **Tope de 20 000 caracteres** en `CreatePostDto.bodyText` (hoy 5 000 → 400 para un
+>    artículo largo). **Resuelto en `mdavila-2001/mantra-core-health-api#522`** (sin DDL:
+>    `body_text` es `text`).
+> 2. **Imágenes de posts no públicos.** `GET /public/media/:id` sirve las fotos de un post
+>    PÚBLICO de una vitrina publicada (`isPublicPostMedia`). Un artículo de una vitrina en
+>    privado, o con visibilidad `FOLLOWERS`/`PRIVATE`, no tiene ruta autenticada para sus
+>    imágenes (los comentarios sí: `GET /community/comments/media/:fileId/content`). El autor las
+>    ve igual porque la pantalla las pide con `FilesClient.imageDataUrl` (archivo propio).
+> 3. **Archivos huérfanos.** Si una imagen sube y la siguiente falla, el artículo no se publica
+>    (todo o nada) y lo ya subido queda en `common.files` sin vínculo. No hay contrato para
+>    borrarlo desde el front.
+
+## P56 · «Mis solicitudes»: lo que decidió la aseguradora, para cada cuenta — 01/10/2026
+
+> **Qué pide el front.** Un ícono de la barra superior (paraguas) abre `/my-account/requests`
+> para **toda** cuenta: una tarjeta con dos pestañas, «Decisiones de la aseguradora» y «En espera
+> de decisión». El paciente ve sus solicitudes; el médico, las atenciones que presentó; el
+> laboratorio y el centro de imagenología, las de los estudios que hicieron. Cada decisión trae su
+> resultado (aprobada, aprobada en parte, rechazada), el monto aprobado, la fecha y el motivo.
+>
+> **Hoy.** Lo sirve el simulador **sobre la misma tabla** que la aseguradora dictamina en
+> «Solicitudes recibidas» (`docs/contracts/insurer-received-claims.md`):
+> `GET /insurance/my-claims` → `{ view: 'PATIENT' | 'PRACTITIONER' | 'LABORATORY' | 'IMAGING' |
+> 'NONE', items, truncated }`. Un dictamen tomado por la aseguradora aparece en la próxima lectura
+> de las otras cuentas, sin sincronización aparte. Contrato completo:
+> `docs/contracts/my-insurance-claims.md`.
+>
+> **Falta en la API.** El mismo endpoint sobre `insurance.insurance_claims` +
+> `claim_adjudication_versions`, con el alcance resuelto por la sesión (perfil de paciente,
+> perfil profesional del `encounter`, o unidad diagnóstica ejecutora de la orden). Sin tabla nueva.
+> **Ojo:** la demo todavía no tiene cuenta de centro de imagenología (su alta cierra con una
+> solicitud, no con una cuenta); la regla del simulador ya lo cubre y está probada con un centro
+> sintético.
+
+## P57 · Siniestralidad por persona: el agregado en el servidor — 01/10/2026
+
+> **Qué pide el front.** La pestaña «Por persona» del tablero de «Siniestralidad y analítica»
+> (`/administration/insurance-analytics?tab=by-person`) tiene un botón «Generar informe» que
+> muestra, por cada afiliado con solicitudes en el período: reclamos (y cuántos siguen
+> pendientes), facturado, aprobado, denegado, tasa de aprobación, prima del período y
+> siniestralidad (aprobado ÷ prima). Se puede exportar a CSV.
+>
+> **Hoy.** Lo calcula el navegador a partir de `GET /insurance/received-claims`, el mismo
+> listado de «Solicitudes recibidas» (`docs/contracts/insurer-received-claims.md`), agrupando por
+> `patient.id` con aritmética decimal en enteros (sin `float`). La prima de cada persona es la
+> prima mensual de lista de su plan (la de su solicitud más reciente) × los meses del período.
+> **Límite que la pantalla declara:** ese listado viene con tope (`truncated`); si llega
+> recortado, el informe se rotula «parcial». Las solicitudes en otra moneda no se suman: se
+> cuentan y se avisa.
+>
+> **Falta en la API.** `GET /insurance/analytics/loss-ratio/by-member?startDate&endDate&planId`
+> con el mismo alcance que `loss-ratio` (la aseguradora del tenant activo), agregando en
+> Postgres sobre `insurance.insurance_claims` + `claim_adjudication_versions`, sin tope y con la
+> prima por afiliado tomada de la **cobertura vigente** de cada uno (no de la del plan de su última
+> solicitud). Sin tabla nueva. Es dato personal de salud: el endpoint no debe devolver
+> diagnósticos ni detalle clínico, sólo identificación, plan e importes.
+
+## P58 · Las campañas de promoción con todas sus mecánicas — 01/10/2026
+
+> **Qué pide el front.** «Promociones» de la farmacia ya no ofrece sólo «un porcentaje» o «un
+> precio por producto»: ofrece **14 mecánicas** en cinco familias (precio, cantidad, total de la
+> compra, combos y regalos, fidelización) con **condiciones opcionales** (tope, cupón, días de la
+> semana y franja horaria, límites de uso, combinabilidad). El cálculo vive en un motor sin dominio
+> (`src/app/core/promotions-engine/`, ver su `README.md`) que cualquier organización puede
+> adoptar; hoy lo usa la farmacia sobre la maqueta (`environment.campaignsDemo`).
+>
+> **Hoy.** Todo es de demostración: el cliente guarda en memoria. El módulo 51 no publica una sola
+> lectura de campañas y **`discount_rules.target_filter_json` se persiste y nadie lo lee**, así que
+> ninguna mecánica *por producto* está soportada de punta a punta. Detalle por mecánica, con las
+> columnas del modelo que la sostienen, en `mechanic-catalog.ts` (`modelSupport`).
+>
+> **Falta en la API / el modelo**, en orden de dependencia:
+>
+> 1. **Relacionar una campaña con productos** (o categorías). Es lo que bloquea a todas las
+>    mecánicas por ítem. `applies_to_concept_id` (`ORDER | ITEM | CATEGORY`) es una clase de
+>    objetivo, no una lista.
+> 2. **`BOGO` cuenta lotes enteros.** `promotions-discounts.service.ts` calcula
+>    `importe × get / (buy + get)`: prorratea sobre el importe. Con **una** unidad en un 2x1 daría
+>    50 % de descuento. El motor del front cuenta lotes (3 unidades en un 2x1 regalan una); al
+>    conectar el backend hay que corregir la API, no el motor.
+> 3. **Mecánicas sin columna o sin semántica definida** (`PENDING_MODEL`): descuento por unidad N
+>    (`DISC_BOGO` + `percentage`: qué significa), tramos por cantidad (falta el umbral por
+>    cantidad), y combos / regalos / «comprando A, descuento en B» (la relación entre productos no
+>    está modelada).
+> 4. **Calendario de la campaña**: días de la semana y franja horaria. Sólo hay `valid_from` /
+>    `valid_to`.
+> 5. **Límites que sólo el backend puede hacer cumplir** (`per_user_limit`, `total_redemption_limit`,
+>    `budget_amount`): el motor del front los guarda y los muestra pero no los hace cumplir; exigen
+>    el historial de `redemptions`.
+> 6. **Cupón**: la campaña lleva un código, y la ficha pública **nunca lo muestra** (se comparte
+>    por enlace). Hace falta la lectura de un cupón por código sin exponer los demás.
+>
+> **Reglas que el motor fija y el backend tiene que respetar para no contradecirlo:** redondeo a
+> favor de quien compra (el precio resultante se trunca hacia abajo); un descuento nunca supera lo
+> que se paga; **un renglón pertenece a una sola campaña de ítem** (gana la de mayor ahorro); entre
+> ítem y total gana el escenario de mayor ahorro y sólo se suman si todas son combinables, midiendo
+> el mínimo sobre lo ya rebajado; el tope se aplica sobre lo que dio esa campaña. El total del
+> pedido sigue siendo **del backend**: lo que muestra el front es una estimación.
+>
+> **Decisión del propietario, 01/10/2026:** las mecánicas que empujan a comprar más unidades
+> (2x1, escalonados, combos, regalos) **se permiten también sobre medicamentos con receta**, sin
+> restricción.

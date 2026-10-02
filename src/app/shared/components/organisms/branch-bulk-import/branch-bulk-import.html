@@ -1,0 +1,192 @@
+<app-content-dialog
+  heading="Subir sucursales en lote"
+  description="Una sucursal por fila. Revisamos el archivo antes de agregar nada."
+  size="lg"
+  [dismissible]="!pending()"
+  [attr.data-testid]="testIdPrefix() + '-dialog'"
+  (closed)="closed.emit()"
+>
+  <div class="bulk__body">
+    <div class="bulk__template">
+      <p class="bulk__note">
+        Bajá la plantilla, llenala en Excel o Google Sheets y guardala como <strong>CSV</strong>.
+        Hasta {{ maxRows }} sucursales por archivo.
+      </p>
+      <button
+        app-button
+        type="button"
+        variant="secondary"
+        size="sm"
+        [attr.data-testid]="testIdPrefix() + '-template'"
+        (clicked)="downloadTemplate()"
+      >
+        Descargar plantilla
+      </button>
+    </div>
+
+    <dl class="bulk__columns" aria-label="Columnas del archivo">
+      @for (column of columns; track column.header) {
+        <div class="bulk__column">
+          <dt>
+            <code>{{ column.header }}</code>
+            @if (column.required) {
+              <span class="bulk__required">obligatoria</span>
+            }
+          </dt>
+          <dd>{{ column.hint }}</dd>
+        </div>
+      }
+    </dl>
+
+    @if (contextNote(); as note) {
+      <p class="bulk__note">{{ note }}</p>
+    }
+
+    <app-file-input
+      label="Elegir archivo CSV"
+      accept=".csv"
+      [maxSizeBytes]="maxBytes"
+      [maxFiles]="1"
+      [disabled]="reading() || pending()"
+      [files]="files()"
+      [showList]="false"
+      (filesChange)="choose($event)"
+      (rejected)="reject($event)"
+      [testId]="testIdPrefix() + '-file'"
+    />
+
+    <!-- Sin la lista del file-input: su vista previa vuelca el CSV crudo, que
+         repite lo que el resumen de abajo ya dice ordenado. Queda el nombre. -->
+    @if (files()[0]; as file) {
+      <p class="bulk__note" [attr.data-testid]="testIdPrefix() + '-file-name'">
+        Archivo: <strong>{{ file.name }}</strong>
+      </p>
+    }
+
+    @if (reading()) {
+      <p class="bulk__note" role="status">Revisando el archivo…</p>
+    }
+
+    @if (fileError(); as message) {
+      <app-alert tone="error" title="El archivo no sirve" [attr.data-testid]="testIdPrefix() + '-file-error'">
+        {{ message }}
+      </app-alert>
+    }
+
+    @if (review(); as r) {
+      <div class="bulk__summary" [attr.data-testid]="testIdPrefix() + '-summary'">
+        <ul class="bulk__counts">
+          <li>
+            <strong [attr.data-testid]="testIdPrefix() + '-valid-count'">{{ drafts().length }}</strong>
+            {{ drafts().length === 1 ? 'sucursal lista' : 'sucursales listas' }}
+          </li>
+          <li>
+            <strong>{{ withPoint() }}</strong>
+            con el punto leído del enlace
+          </li>
+          <li [class.bulk__counts--alert]="problems().length > 0">
+            <strong [attr.data-testid]="testIdPrefix() + '-problem-count'">{{ problems().length }}</strong>
+            {{ problems().length === 1 ? 'fila a corregir' : 'filas a corregir' }}
+          </li>
+        </ul>
+
+        @if (r.ignoredColumns.length > 0) {
+          <p class="bulk__note">Columnas que no se usan: {{ r.ignoredColumns.join(', ') }}.</p>
+        }
+
+        @if (drafts().length > 0) {
+          <div class="bulk__table-wrap">
+            <table class="bulk__table" [attr.data-testid]="testIdPrefix() + '-preview'">
+              <caption class="bulk__caption">Sucursales que se van a agregar</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Nombre</th>
+                  <th scope="col">Descripción</th>
+                  <th scope="col">Ubicación</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (draft of shownDrafts(); track draft.name) {
+                  <tr>
+                    <th scope="row">{{ draft.name }}</th>
+                    <td>{{ draft.description || '—' }}</td>
+                    <td>
+                      @if (draft.coordinates) {
+                        Punto en el mapa
+                      } @else if (draft.locationUrl) {
+                        Sólo el enlace
+                      } @else {
+                        Sin ubicación
+                      }
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+          @if (hiddenDrafts() > 0) {
+            <p class="bulk__note">… y {{ hiddenDrafts() }} más.</p>
+          }
+        }
+
+        @if (notes().length > 0) {
+          <app-alert tone="info" title="Para tener en cuenta">
+            <ul class="bulk__problems">
+              @for (note of notes().slice(0, 5); track note.line) {
+                <li><span class="bulk__line">Línea {{ note.line }}</span> {{ note.text }}</li>
+              }
+            </ul>
+            @if (notes().length > 5) {
+              <p class="bulk__note">… y {{ notes().length - 5 }} más con el mismo aviso.</p>
+            }
+          </app-alert>
+        }
+
+        @if (problems().length > 0) {
+          <app-alert
+            tone="warning"
+            title="Estas filas no se agregan"
+            [attr.data-testid]="testIdPrefix() + '-problems'"
+          >
+            <ul class="bulk__problems">
+              @for (problem of shownProblems(); track problem.line) {
+                <li>
+                  <span class="bulk__line">Línea {{ problem.line }}</span>
+                  {{ problem.name ? '«' + problem.name + '»: ' : '' }}{{ problem.errors.join(' ') }}
+                </li>
+              }
+            </ul>
+            @if (hiddenProblems() > 0) {
+              <p class="bulk__note">… y {{ hiddenProblems() }} más en el archivo.</p>
+            }
+            @if (drafts().length > 0) {
+              <p class="bulk__note">Las filas buenas se agregan igual.</p>
+            }
+          </app-alert>
+        }
+      </div>
+    }
+  </div>
+
+  <button
+    dialog-actions
+    app-button
+    type="button"
+    variant="ghost"
+    [disabled]="pending()"
+    (clicked)="dialog().close()"
+  >
+    Cancelar
+  </button>
+  <button
+    dialog-actions
+    app-button
+    type="button"
+    [isLoading]="pending()"
+    [disabled]="drafts().length === 0 || pending() || reading()"
+    [attr.data-testid]="testIdPrefix() + '-confirm'"
+    (clicked)="confirm()"
+  >
+    {{ confirmLabel() }}
+  </button>
+</app-content-dialog>

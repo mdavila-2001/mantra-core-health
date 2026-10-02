@@ -30,6 +30,11 @@ export interface MockUser {
   readonly patientProfileId?: string;
   readonly practitionerProfileId?: string;
   readonly personId: string;
+  /**
+   * Clase de cuenta que firmaría la API. Sin valor, el token no trae el claim y
+   * la sesión lo deduce (cuentas de paciente, que no pasan por esta lista).
+   */
+  readonly accountKind?: 'PERSON' | 'ORGANIZATION';
 }
 
 export const TENANT_CLINICA = uuid('tenant-clinica-los-olivos');
@@ -204,17 +209,19 @@ export const MOCK_USERS: readonly MockUser[] = [
     tenants: [TENANT_FARMACIA],
     tenantNames: TENANT_NAMES,
     personId: IDS.visitador.personId,
+    accountKind: 'PERSON',
   },
   {
     key: 'aseguradora',
     id: IDS.aseguradora.userId,
     email: 'aseguradora@alovida.mock',
     nationalId: '7001001',
-    displayName: 'Patricia Suárez · Seguros Andina',
+    displayName: 'Seguros Andina',
     roles: ['USER'],
     tenants: [TENANT_ASEGURADORA],
     tenantNames: TENANT_NAMES,
     personId: IDS.aseguradora.personId,
+    accountKind: 'ORGANIZATION',
   },
   {
     key: 'aseguradora_staff',
@@ -226,6 +233,7 @@ export const MOCK_USERS: readonly MockUser[] = [
     tenants: [TENANT_ASEGURADORA],
     tenantNames: TENANT_NAMES,
     personId: IDS.aseguradoraStaff.personId,
+    accountKind: 'PERSON',
   },
   {
     // El personal del laboratorio: `USER` y nada más, como el dueño de un
@@ -236,11 +244,12 @@ export const MOCK_USERS: readonly MockUser[] = [
     id: IDS.laboratorio.userId,
     email: 'laboratorio@alovida.mock',
     nationalId: '7002001',
-    displayName: 'Rocío Villarroel · Laboratorio Central',
+    displayName: 'Laboratorio Central',
     roles: ['USER'],
     tenants: [TENANT_LABORATORIO],
     tenantNames: TENANT_NAMES,
     personId: IDS.laboratorio.personId,
+    accountKind: 'ORGANIZATION',
   },
   {
     // La encargada de Farmacia Vida: `USER` y la membresía del tenant
@@ -250,11 +259,12 @@ export const MOCK_USERS: readonly MockUser[] = [
     id: IDS.farmacia.userId,
     email: 'farmacia@alovida.mock',
     nationalId: '7003001',
-    displayName: 'Mariela Céspedes · Farmacia Vida',
+    displayName: 'Farmacia Vida',
     roles: ['USER'],
     tenants: [TENANT_FARMACIA],
     tenantNames: TENANT_NAMES,
     personId: IDS.farmacia.personId,
+    accountKind: 'ORGANIZATION',
   },
 ];
 
@@ -319,6 +329,7 @@ export function emitirAccessToken(user: MockUser, ahora = Date.now()): string {
       tenantNames: user.tenantNames,
       ...(Object.keys(tenantTypes).length === 0 ? {} : { tenantTypes }),
       ...(user.scopedRoles === undefined ? {} : { scopedRoles: user.scopedRoles }),
+      ...(user.accountKind === undefined ? {} : { accountKind: user.accountKind }),
       ...(user.patientProfileId === undefined ? {} : { pid: user.patientProfileId }),
       ...(user.practitionerProfileId === undefined ? {} : { hpid: user.practitionerProfileId }),
       iat: Math.floor(ahora / 1000),

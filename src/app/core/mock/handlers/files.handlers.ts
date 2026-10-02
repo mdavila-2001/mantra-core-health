@@ -2,7 +2,7 @@ import { vitrinas } from '../fixtures/comunidad';
 import { ESTADO } from '../fixtures/conceptos';
 import { PACIENTES, PROFESIONALES } from '../fixtures/personas';
 import { forbidden, noContent, reply, type MockRouter } from '../mock-router';
-import { ahora, avatarSvg, Coleccion, imagenSvg, iso, nuevoId, qrSvg, texto, uuid } from '../mock-store';
+import { ahora, avatarSvg, Coleccion, firmaSvg, imagenSvg, iso, logoSvg, nuevoId, qrSvg, selloSvg, texto, uuid } from '../mock-store';
 
 /* ============================================================================
     Archivos: subida, vínculos, descarga y el contenido de las imágenes.
@@ -38,6 +38,12 @@ interface ArchivoSimulado {
    * lo llevan —no hay archivo detrás— y siguen con su `dataUrl` dibujado.
    */
   readonly bytes?: Blob;
+  /**
+   * La imagen subida como `data:`, cuando ya terminó de leerse (ver
+   * {@link urlDeArchivoSimulado}). Asíncrona: `FileReader` no tiene versión
+   * síncrona, y la subida simulada responde sin esperarla.
+   */
+  readonly dataUrlReal?: string;
 }
 
 /** La cuenta del laboratorio que sube los PDF de resultados del simulador. */
@@ -54,6 +60,16 @@ function puedeLeerPorAutoria(archivo: ArchivoSimulado, user: { readonly id: stri
 function escaneoPendiente(archivo: ArchivoSimulado): boolean {
   return archivo.bytes !== undefined && Date.now() - Date.parse(archivo.createdAt) < 5000;
 }
+
+/**
+ * Tope para guardar una imagen como `data:` dentro de una publicación.
+ *
+ * Las publicaciones de la maqueta sobreviven a F5 en `sessionStorage`, que
+ * ronda los 5 MB **en total**: una foto de cámara entera haría fallar el
+ * guardado de todas. Por encima de esto se usa `blob:`, que se ve en la
+ * pestaña pero no sobrevive a la recarga.
+ */
+const MAX_BYTES_EN_DATA_URL = 400 * 1024;
 
 const archivos = new Coleccion<ArchivoSimulado>([
   ...PROFESIONALES.map((p, i) => ({
@@ -106,6 +122,14 @@ const archivos = new Coleccion<ArchivoSimulado>([
   // solo y no cuatro: con todas las sedes configuradas no se vería el aviso en
   // ámbar, que es el estado que la pantalla tiene que saber contar.
   { id: uuid('file-qr-consultorio'), currentVersionId: uuid('v-file-qr-consultorio'), originalName: 'qr-banco-union.png', category: 'IMAGE', sensitivity: 'NORMAL', lifecycleStatusConceptId: ESTADO['ST-ACTIVE']!, createdAt: iso(-30), dataUrl: qrSvg('site-consultorio-rojas', 'Banco Unión · Cta. 1000-4477') },
+  /* SIMULADOR del logo del consultorio propio. Cuando exista el campo real en
+     el backend, esta fila y su gemela en `practice.handlers.ts` se borran: las
+     pantallas y el PDF sólo hablan con `LogoDelConsultorioClient`. */
+  /* SIMULADOR de la firma y el sello de la médica (imágenes, no firma
+     electrónica). Ver `firma-y-sello.handlers.ts`. */
+  { id: uuid('file-firma-medica'), currentVersionId: uuid('v-file-firma-medica'), originalName: 'firma-rojas.svg', category: 'IMAGE', sensitivity: 'NORMAL', lifecycleStatusConceptId: ESTADO['ST-ACTIVE']!, createdAt: iso(-30), dataUrl: firmaSvg() },
+  { id: uuid('file-sello-medica'), currentVersionId: uuid('v-file-sello-medica'), originalName: 'sello-rojas.svg', category: 'IMAGE', sensitivity: 'NORMAL', lifecycleStatusConceptId: ESTADO['ST-ACTIVE']!, createdAt: iso(-30), dataUrl: selloSvg('Dra. V. Rojas', '1000') },
+  { id: uuid('file-logo-consultorio'), currentVersionId: uuid('v-file-logo-consultorio'), originalName: 'logo-consultorio-rojas.svg', category: 'IMAGE', sensitivity: 'NORMAL', lifecycleStatusConceptId: ESTADO['ST-ACTIVE']!, createdAt: iso(-30), dataUrl: logoSvg('Consultorio Rojas', 'Cardiología · Santa Cruz') },
 ]);
 
 /**
@@ -207,6 +231,57 @@ export function fileContent(fileId: string): unknown {
   };
 }
 
+/** URLs `blob:` ya creadas, para no fabricar una nueva por cada lectura. */
+const urlsDeArchivos = new Map<string, string>();
+
+/**
+ * Una URL que el navegador puede pintar directo en un `<img>` para un archivo
+ * de la maqueta.
+ *
+ * Existe por las imágenes de un artículo: la API real las sirve por
+ * `/public/media/:id`, que en la maqueta es un dibujo fijo (`mock-media.svg`,
+ * fuera del simulador). Para que quien publica vea SU foto:
+ *
+ * - si ya se leyó y es chica, como `data:` — sobrevive a F5 junto con la
+ *   publicación que la guarda;
+ * - si no, como `blob:` de sus bytes reales (la CSP lo admite), que se ve
+ *   mientras dure la pestaña.
+ *
+ * @returns La URL, o `null` si el archivo no existe.
+ */
+export function urlDeArchivoSimulado(fileId: string): string | null {
+  const archivo = archivos.get(fileId);
+  if (archivo === undefined) return null;
+  if (archivo.dataUrlReal !== undefined) return archivo.dataUrlReal;
+  if (archivo.bytes === undefined || typeof URL.createObjectURL !== 'function') return archivo.dataUrl;
+  let url = urlsDeArchivos.get(fileId);
+  if (url === undefined) {
+    url = URL.createObjectURL(archivo.bytes);
+    urlsDeArchivos.set(fileId, url);
+  }
+  return url;
+}
+
+/**
+ * Guarda una imagen que llegó como `data:` URL —la foto, la firma o el sello de
+ * un alta, que viajan en el cuerpo y no por `upload`— y devuelve su id.
+ *
+ * Sólo simulador: es lo que hace el backend real con `profilePhotoBase64`.
+ */
+export function guardarImagenDeDataUrl(dataUrl: string, nombre: string): string {
+  const nuevo = archivos.agregar({
+    id: nuevoId('file'),
+    currentVersionId: nuevoId('file-version'),
+    originalName: nombre,
+    category: 'IMAGE',
+    sensitivity: 'NORMAL',
+    lifecycleStatusConceptId: ESTADO['ST-ACTIVE']!,
+    createdAt: ahora(),
+    dataUrl,
+  });
+  return nuevo.id;
+}
+
 export function registrarArchivos(router: MockRouter): void {
   router.post('/common/files/upload', (request) => {
     const form = request.body;
@@ -241,6 +316,11 @@ export function registrarArchivos(router: MockRouter): void {
       ...(subido === null ? {} : { bytes: subido }),
       ...(request.user === null ? {} : { uploaderUserId: request.user.id }),
     });
+    if (subido !== null && categoria === 'IMAGE' && subido.size <= MAX_BYTES_EN_DATA_URL && typeof FileReader !== 'undefined') {
+      const lector = new FileReader();
+      lector.onload = () => archivos.actualizar(nuevo.id, { dataUrlReal: String(lector.result) });
+      lector.readAsDataURL(subido);
+    }
     const tipo = subido?.type ?? (categoria === 'IMAGE' ? 'image/svg+xml' : 'application/pdf');
     return { status: 201, body: { ...metadatos(nuevo), fileId: nuevo.id, versionId: nuevo.currentVersionId, size: subido?.size ?? 24_576, mimeType: tipo } };
   });
@@ -286,7 +366,14 @@ export function registrarArchivos(router: MockRouter): void {
     const a = archivos.get(params['id']!);
     if (a === undefined) return avatarSvg('?', '#94a3b8');
     if (!puedeLeerPorAutoria(a, user)) return forbidden('No tiene acceso a este archivo');
-    return fileContent(a.id);
+    const contenido = fileContent(a.id);
+    // `{ body, headers }` sin `status` no es una respuesta para el interceptor
+    // (`isMockReply` exige el estado): la trataba como el cuerpo mismo y el
+    // `Blob` que recibía el front era el JSON `{"body":"data:…"}`, no la imagen.
+    // Los bytes subidos (`Blob`) ya salen bien.
+    return contenido instanceof Blob || contenido === undefined
+      ? contenido
+      : { status: 200, ...(contenido as { body: unknown; headers: Record<string, string> }) };
   });
 
   router.delete('/common/files/:id', ({ params }) => {

@@ -1,4 +1,5 @@
 import { ESTUDIO, displayDe } from '../fixtures/conceptos';
+import { precioInlasaDe } from '../fixtures/inlasa';
 import { PROFESIONALES, pacientePorId } from '../fixtures/personas';
 import {
   conflict,
@@ -101,8 +102,10 @@ export const categoriasDeLaboratorio = new Coleccion<CategoriaSimulada>(
 /**
  * El catálogo sembrado de Laboratorio Central: los mismos trece estudios que el
  * directorio público le muestra al paciente (`ESTUDIOS_POR_TIPO.LABORATORY` en
- * `diagnostics.handlers.ts`), con el mismo precio (`40 + i × 25`), para que la
- * cuenta y la vitrina no digan dos cosas distintas del mismo laboratorio.
+ * `diagnostics.handlers.ts`), con el mismo precio —el de referencia de INLASA
+ * 2026, ver `fixtures/inlasa.ts`—, para que la cuenta y la vitrina no digan dos
+ * cosas distintas del mismo laboratorio. La preparación queda en `null`: las
+ * indicaciones al paciente las escribe el laboratorio, no la maqueta.
  */
 const ESTUDIOS_SEMBRADOS: readonly {
   readonly code: keyof typeof ESTUDIO;
@@ -112,17 +115,17 @@ const ESTUDIOS_SEMBRADOS: readonly {
   readonly horas: number;
 }[] = [
   { code: 'STUDY-HEMOGRAMA', categoria: 'Hematología', muestra: 'Sangre venosa', preparacion: null, horas: 4 },
-  { code: 'STUDY-GLUCOSA', categoria: 'Química sanguínea', muestra: 'Sangre venosa', preparacion: 'Ayuno de 8 horas. Podés tomar agua.', horas: 4 },
-  { code: 'STUDY-PERFIL-LIPIDICO', categoria: 'Química sanguínea', muestra: 'Sangre venosa', preparacion: 'Ayuno de 12 horas. Cena liviana la noche anterior.', horas: 6 },
+  { code: 'STUDY-GLUCOSA', categoria: 'Química sanguínea', muestra: 'Sangre venosa', preparacion: null, horas: 4 },
+  { code: 'STUDY-PERFIL-LIPIDICO', categoria: 'Química sanguínea', muestra: 'Sangre venosa', preparacion: null, horas: 6 },
   { code: 'STUDY-TSH', categoria: 'Hormonas', muestra: 'Sangre venosa', preparacion: null, horas: 24 },
-  { code: 'STUDY-ORINA', categoria: 'Orina', muestra: 'Orina (primera de la mañana)', preparacion: 'Primera orina de la mañana, chorro medio, en frasco estéril.', horas: 4 },
+  { code: 'STUDY-ORINA', categoria: 'Orina', muestra: 'Orina (primera de la mañana)', preparacion: null, horas: 4 },
   { code: 'STUDY-CREATININA', categoria: 'Química sanguínea', muestra: 'Sangre venosa', preparacion: null, horas: 4 },
   { code: 'STUDY-UREA', categoria: 'Química sanguínea', muestra: 'Sangre venosa', preparacion: null, horas: 4 },
   { code: 'STUDY-HBA1C', categoria: 'Química sanguínea', muestra: 'Sangre venosa', preparacion: null, horas: 24 },
-  { code: 'STUDY-COAGULACION', categoria: 'Coagulación', muestra: 'Sangre venosa (tubo celeste)', preparacion: 'Avisá si tomás anticoagulantes.', horas: 6 },
-  { code: 'STUDY-HEPATICO', categoria: 'Química sanguínea', muestra: 'Sangre venosa', preparacion: 'Ayuno de 8 horas.', horas: 6 },
-  { code: 'STUDY-COPROLOGICO', categoria: 'Microbiología y parasitología', muestra: 'Heces', preparacion: 'Muestra en frasco estéril, sin laxantes los 3 días previos.', horas: 24 },
-  { code: 'STUDY-CULTIVO', categoria: 'Microbiología y parasitología', muestra: 'Orina (frasco estéril)', preparacion: 'Higiene previa y chorro medio. Sin antibióticos las 48 h previas si tu médico lo permite.', horas: 72 },
+  { code: 'STUDY-COAGULACION', categoria: 'Coagulación', muestra: 'Sangre venosa (tubo celeste)', preparacion: null, horas: 6 },
+  { code: 'STUDY-HEPATICO', categoria: 'Química sanguínea', muestra: 'Sangre venosa', preparacion: null, horas: 6 },
+  { code: 'STUDY-COPROLOGICO', categoria: 'Microbiología y parasitología', muestra: 'Heces', preparacion: null, horas: 24 },
+  { code: 'STUDY-CULTIVO', categoria: 'Microbiología y parasitología', muestra: 'Orina (frasco estéril)', preparacion: null, horas: 72 },
   { code: 'STUDY-VITAMINA-D', categoria: 'Hormonas', muestra: 'Sangre venosa', preparacion: null, horas: 48 },
 ];
 
@@ -139,7 +142,9 @@ export const serviciosDeLaboratorio = new Coleccion<ServicioSimulado>(
     turnaroundHours: e.horas,
     requiresMedicalOrder: i > 1,
     homeCollection: e.muestra.startsWith('Sangre'),
-    price: (40 + i * 25).toFixed(2),
+    // El precio de referencia de INLASA para ese análisis: el mismo que muestra
+    // la ficha pública (`diagnostics.handlers.ts`), y no una fórmula.
+    price: precioInlasaDe(e.code),
     alovidaDiscountPercent: 10,
     // Uno en borrador y uno sin reactivo, para que los filtros tengan qué
     // mostrar desde el primer ingreso.

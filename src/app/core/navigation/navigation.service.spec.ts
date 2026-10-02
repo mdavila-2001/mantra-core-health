@@ -767,6 +767,29 @@ describe('NavigationService', () => {
       ]);
     });
 
+    it('sus cinco opciones van sueltas, a nivel 0: «Administración» no se dibuja como desplegable', () => {
+      abrirSesion(['USER'], ['t-1'], { 't-1': 'PAYER' });
+
+      // El armazón dibuja sin `<details>` todo grupo con `aplanado`.
+      expect(service.menu().map((grupo) => [grupo.label, grupo.aplanado])).toEqual([
+        ['Administración', true],
+      ]);
+    });
+
+    it('el aplanado es de la aseguradora: quien administra la plataforma sigue viendo el desplegable', () => {
+      abrirSesion(['SUPERADMIN'], ['t-1'], { 't-1': 'PROVIDER' });
+
+      const administracion = service.menu().find((grupo) => grupo.label === 'Administración');
+      expect(administracion?.aplanado).toBe(false);
+    });
+
+    it('sin el claim de tipo, «Administración» sigue plegada', () => {
+      abrirSesion(['SUPERADMIN'], ['t-1']);
+
+      const administracion = service.menu().find((grupo) => grupo.label === 'Administración');
+      expect(administracion?.aplanado).toBe(false);
+    });
+
     it('no alcanza a entrar a lo que le cerraron: sigue existiendo el guard, no sólo el menú', () => {
       abrirSesion(['USER'], ['t-1'], { 't-1': 'PAYER' });
 

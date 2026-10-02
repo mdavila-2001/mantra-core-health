@@ -1,0 +1,123 @@
+<app-page-header
+  title="Precios"
+  subtitle="El precio de venta de cada producto, tal como lo ven los pacientes en la plataforma. Cambiá los que necesites y guardá todo junto."
+/>
+
+<app-view-state-host [state]="scope.options()" (retry)="scope.retry()">
+  @if (scope.hasSeveral()) {
+    <div class="prices__pharmacy">
+      <app-form-field label="Farmacia">
+        <app-select
+          [options]="scope.selectOptions()"
+          [value]="scope.pharmacyId()"
+          (valueChange)="scope.choose($event)"
+          placeholder="Elegí tu farmacia"
+        />
+      </app-form-field>
+    </div>
+  }
+
+  @if (scope.pharmacyId() !== null) {
+    <app-card class="prices" padding="lg" data-testid="prices-card">
+      <div class="prices__panel">
+        @if (errors().length > 0) {
+          <app-alert tone="error" title="Falta resolver esto" data-testid="prices-errors">
+            <ul class="prices__list">
+              @for (error of errors(); track error) {
+                <li>{{ error }}</li>
+              }
+            </ul>
+          </app-alert>
+        }
+
+        @if (rejected().length > 0) {
+          <app-alert tone="warning" title="Estos precios no se guardaron" data-testid="prices-rejected">
+            <ul class="prices__list">
+              @for (rejection of rejected(); track rejection.name) {
+                <li><strong>{{ rejection.name }}:</strong> {{ rejection.reason }}</li>
+              }
+            </ul>
+          </app-alert>
+        }
+
+        <app-search-field
+          label="Buscar un producto"
+          placeholder="Marca, genérico o código"
+          [value]="term()"
+          (searched)="search($event)"
+        />
+
+        <div class="prices__bar">
+          <p class="prices__hint">Dejá el precio vacío si todavía no querés mostrarlo.</p>
+          <div class="prices__save">
+            @if (dirtyCount() > 0) {
+              <span class="prices__dirty" role="status">
+                {{ dirtyCount() === 1 ? '1 cambio sin guardar' : dirtyCount() + ' cambios sin guardar' }}
+              </span>
+              <button app-button variant="ghost" type="button" [disabled]="saving()" (clicked)="discard()">
+                Descartar
+              </button>
+            }
+            <button
+              app-button
+              type="button"
+              [isLoading]="saving()"
+              [disabled]="saving() || dirtyCount() === 0"
+              (clicked)="save()"
+              data-testid="prices-save"
+            >
+              Guardar cambios
+            </button>
+          </div>
+        </div>
+
+        <app-data-table
+          caption="Precios de los productos de tu farmacia"
+          [state]="pageRows()"
+          [columns]="columns()"
+          [trackBy]="rowId"
+          [rowLabel]="rowLabel"
+          wrapHeaders
+          [cursor]="cursor()"
+          (cursorChanged)="goToCursor($event)"
+          (retry)="reload()"
+          (refresh)="reload()"
+          data-testid="prices-table"
+        />
+      </div>
+    </app-card>
+  }
+</app-view-state-host>
+
+<ng-template #nameCell let-product>
+  <span class="prices__main">{{ name(product) }}</span>
+  <code class="prices__code">{{ product.productCode }}</code>
+</ng-template>
+
+<ng-template #currentCell let-product>
+  @if (publishedPrice(product); as price) {
+    <span class="prices__amount">{{ price }}</span>
+  } @else {
+    <span class="prices__muted">Sin precio</span>
+  }
+</ng-template>
+
+<ng-template #priceCell let-product>
+  <app-input
+    inputMode="decimal"
+    placeholder="0.00"
+    [ariaLabel]="'Precio de ' + name(product) + ', en bolivianos'"
+    [value]="priceOf(product)"
+    (valueChange)="setPrice(product, $event)"
+    [hasSuccess]="isEdited(product)"
+    [testId]="'prices-price-' + product.productCode"
+  />
+</ng-template>
+
+<ng-template #statusCell let-product>
+  @if (status(product) === 'PUBLISHED') {
+    <app-badge variant="success">Visible</app-badge>
+  } @else {
+    <app-badge variant="info">Borrador</app-badge>
+  }
+</ng-template>

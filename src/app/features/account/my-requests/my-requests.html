@@ -1,0 +1,207 @@
+<app-page-header title="Mis solicitudes" [subtitle]="subtitulo()" [breadcrumbs]="breadcrumbs()" />
+
+<!-- UNA tarjeta con pestañas, a lo ancho y centrada: la regla de la casa
+     (`docs/components/composition-rules.md` §5). -->
+<app-card class="mis-solicitudes" variant="outlined" padding="lg" data-testid="mis-solicitudes-card">
+  <app-view-state-host [state]="estado()" (retry)="cargar()">
+    @if (estado().status === 'ready') {
+      @if (truncada()) {
+        <app-alert tone="info" title="Se muestran las 500 más recientes" data-testid="mis-solicitudes-recortada">
+          Tenés más solicitudes que las que entran en esta lista. Usá el buscador o el período para acotarla.
+        </app-alert>
+      }
+
+      <app-tabs
+        [selectedIndex]="pestana()"
+        (selectedIndexChange)="elegirPestana($event)"
+        data-testid="mis-solicitudes-pestanas"
+      >
+        <app-tab [label]="pestanas[0] + ' (' + decididas().length + ')'">
+          <ng-container [ngTemplateOutlet]="lista" />
+        </app-tab>
+        <app-tab [label]="pestanas[1] + ' (' + enEspera().length + ')'">
+          <ng-container [ngTemplateOutlet]="lista" />
+        </app-tab>
+      </app-tabs>
+    }
+  </app-view-state-host>
+</app-card>
+
+<!-- La lista de la pestaña activa: el panel inactivo no se renderiza, así que
+     las dos pestañas comparten esta plantilla sin pisarse. -->
+<ng-template #lista>
+  <app-view-state-host [state]="estadoDePestana()" (retry)="cargar()">
+    @if (estadoDePestana().status === 'ready') {
+      <app-filter-bar
+        searchLabel="Buscar en tus solicitudes"
+        searchPlaceholder="Número, servicio, paciente, médico o motivo"
+        [filters]="filtros()"
+        [wrap]="true"
+        (filtersChanged)="onFiltrosCambiaron($event)"
+      />
+
+      <p class="mis-solicitudes__resumen" aria-live="polite">
+        {{ totalFiltrado() }} {{ totalFiltrado() === 1 ? 'solicitud' : 'solicitudes' }}
+      </p>
+
+      @if (totalFiltrado() === 0) {
+        <p class="mis-solicitudes__vacio" data-testid="mis-solicitudes-sin-resultados">
+          Ninguna solicitud coincide con la búsqueda o el filtro.
+        </p>
+      } @else {
+        <app-data-table
+          [caption]="pestana() === 0 ? 'Decisiones de la aseguradora' : 'Solicitudes en espera de decisión'"
+          [state]="filasDeTabla()"
+          [columns]="columnas()"
+          [trackBy]="porId"
+          [rowLabel]="nombreDeFila"
+          maxHeight="560px"
+          (retry)="cargar()"
+          data-testid="mis-solicitudes-tabla"
+        />
+
+        <app-pagination
+          [totalItems]="totalFiltrado()"
+          [(page)]="pagina"
+          [(pageSize)]="tamano"
+          data-testid="mis-solicitudes-paginacion"
+        />
+      }
+    }
+  </app-view-state-host>
+</ng-template>
+
+<!-- ─── Plantillas de celda ──────────────────────────────────────────────── -->
+
+<ng-template #celdaSolicitud let-fila>
+  <span class="mis-solicitudes__principal">{{ fila.service?.display ?? 'Sin servicio' }}</span>
+  <span class="mis-solicitudes__secundario">
+    {{ fila.claimIdentifier }}
+    @if (fila.additionalServiceCount > 0) {
+      · y {{ fila.additionalServiceCount }} {{ fila.additionalServiceCount === 1 ? 'servicio más' : 'servicios más' }}
+    }
+  </span>
+  @if (fila.serviceDate) {
+    <span class="mis-solicitudes__secundario">
+      Atención del
+      <time [attr.datetime]="fila.serviceDate.toISOString().slice(0, 10)">{{
+        fila.serviceDate.toLocaleDateString('es-BO')
+      }}</time>
+    </span>
+  }
+</ng-template>
+
+<ng-template #celdaContraparte let-fila>
+  @if (vista() === 'PATIENT') {
+    <span class="mis-solicitudes__principal">{{ fila.practitioner?.displayName ?? 'Sin médico' }}</span>
+    <span class="mis-solicitudes__secundario">{{ fila.providerName }}</span>
+  } @else if (vista() === 'PRACTITIONER') {
+    <span class="mis-solicitudes__principal">{{ fila.patientName ?? 'Paciente sin nombre' }}</span>
+  } @else {
+    <span class="mis-solicitudes__principal">{{ fila.patientName ?? 'Paciente sin nombre' }}</span>
+    <span class="mis-solicitudes__secundario">Pidió {{ fila.practitioner?.displayName ?? 'sin médico' }}</span>
+  }
+</ng-template>
+
+<ng-template #celdaAseguradora let-fila>
+  <span class="mis-solicitudes__principal">{{ fila.insurerName }}</span>
+  @if (fila.planName) {
+    <span class="mis-solicitudes__secundario">{{ fila.planName }}</span>
+  }
+</ng-template>
+
+<ng-template #celdaMontos let-fila>
+  <span class="mis-solicitudes__monto">{{ formatMoney(fila.billedTotal) }}</span>
+  @if (fila.decision) {
+    <span class="mis-solicitudes__secundario mis-solicitudes__monto">
+      Aprobado {{ formatMoney(fila.approvedTotal) }}
+    </span>
+  }
+</ng-template>
+
+<ng-template #celdaEstado let-fila>
+  @if (fila.decision) {
+    <app-status-seal [variant]="selloDe(fila)" [label]="rotuloDecision(fila)" />
+    <span class="mis-solicitudes__secundario">
+      <time [attr.datetime]="fila.decision.decidedAt.toISOString()">{{
+        fila.decision.decidedAt.toLocaleDateString('es-BO')
+      }}</time>
+    </span>
+  } @else if (fila.status) {
+    <app-status-seal [variant]="selloDe(fila)" [label]="fila.status.display" />
+  } @else {
+    <span class="mis-solicitudes__secundario">Sin estado</span>
+  }
+</ng-template>
+
+<ng-template #celdaAcciones let-fila>
+  <app-row-actions
+    [actions]="accionesDe(fila)"
+    [fila]="'Solicitud ' + fila.claimIdentifier"
+    (actionSelected)="ejecutarAccion($event, fila)"
+  />
+</ng-template>
+
+<!-- ─── El detalle ───────────────────────────────────────────────────────── -->
+
+@if (abierta(); as fila) {
+  <app-content-dialog
+    [heading]="(fila.decision ? 'Decisión sobre ' : 'Solicitud ') + fila.claimIdentifier"
+    [description]="fila.service?.display ?? null"
+    size="md"
+    data-testid="mis-solicitudes-detalle"
+    (dismissAttempt)="cerrar()"
+    (closed)="cerrar()"
+  >
+    <dl class="mis-solicitudes__datos">
+      <div>
+        <dt>{{ fila.decision ? 'Decisión' : 'Estado' }}</dt>
+        <dd>
+          <app-status-seal
+            [variant]="selloDe(fila)"
+            [label]="fila.decision ? rotuloDecision(fila) : (fila.status?.display ?? 'Sin estado')"
+          />
+        </dd>
+      </div>
+      @if (fila.decision) {
+        <div>
+          <dt>Decidida el</dt>
+          <dd>{{ fila.decision.decidedAt.toLocaleString('es-BO') }}</dd>
+        </div>
+      }
+      <div>
+        <dt>Aseguradora</dt>
+        <dd>{{ fila.planName ?? fila.insurerName }}</dd>
+      </div>
+      <div>
+        <dt>Monto solicitado</dt>
+        <dd class="mis-solicitudes__monto">{{ formatMoney(fila.billedTotal) }}</dd>
+      </div>
+      <div>
+        <dt>Monto aprobado</dt>
+        <dd class="mis-solicitudes__monto">{{ formatMoney(fila.approvedTotal) }}</dd>
+      </div>
+      @if (fila.patientName) {
+        <div>
+          <dt>Paciente</dt>
+          <dd>{{ fila.patientName }}</dd>
+        </div>
+      }
+      <div>
+        <dt>Médico</dt>
+        <dd>{{ fila.practitioner?.displayName ?? 'Sin médico' }}<br />{{ fila.providerName }}</dd>
+      </div>
+      @if (fila.decision) {
+        <div class="mis-solicitudes__dato-ancho" data-testid="mis-solicitudes-motivo">
+          <dt>Motivo de la aseguradora</dt>
+          <dd>{{ fila.decision.reason ?? 'La aseguradora aprobó sin agregar un motivo.' }}</dd>
+        </div>
+      } @else {
+        <div class="mis-solicitudes__dato-ancho">
+          <dt>Qué sigue</dt>
+          <dd>La aseguradora todavía no decidió. Cuando lo haga, la decisión y su motivo aparecen en la otra pestaña.</dd>
+        </div>
+      }
+    </dl>
+  </app-content-dialog>
+}

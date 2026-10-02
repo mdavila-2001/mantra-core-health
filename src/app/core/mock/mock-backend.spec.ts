@@ -1,5 +1,7 @@
 import { HttpHeaders } from '@angular/common/http';
 
+import { SITIO_CONSULTORIO } from './fixtures/agenda';
+import { sedesDe } from './handlers/practice.handlers';
 import { TIPO_CREDENCIAL } from './fixtures/conceptos';
 import { credencialesDe, especialidadesDe, licenciasDe, PACIENTE, PACIENTES, PROFESIONALES, PROFESIONALES_DEMO_REGISTRADOS } from './fixtures/personas';
 import { ESPECIALIDAD } from './fixtures/conceptos';
@@ -369,5 +371,25 @@ describe('las agendas de los profesionales de demostración', () => {
     expect(sinZona.timeZone).toBe(ZONA_HORARIA_POR_OMISION);
     const sinSede = recursoDeDemo(p, { practiceId: 'x', site: null });
     expect(sinSede.timeZone).toBe(ZONA_HORARIA_POR_OMISION);
+  });
+});
+
+/* ============================================================================
+    El logo del consultorio propio (SIMULADOR).
+
+    Sólo el consultorio propio lleva logo, y es apaisado a propósito: es el caso
+    difícil para la ranura del membrete del PDF. Las sedes de clínicas donde la
+    médica atiende sin ser dueña no tienen: el logo de un hospital no es suyo.
+    ========================================================================== */
+describe('el logo del consultorio en la maqueta', () => {
+  it('el consultorio sembrado trae logo; las sedes de otras organizaciones, no', () => {
+    const sedes = sedesDe(PROFESIONALES[0]!.id);
+    const sembrado = sedes.find((sede) => sede.id === SITIO_CONSULTORIO.id);
+    const deOtros = sedes.filter((sede) => !sede.isOwnSite);
+
+    expect(sembrado?.isOwnSite).toBe(true);
+    expect(sembrado?.logoFileId).toEqual(expect.any(String));
+    expect(deOtros.length).toBeGreaterThan(0);
+    expect(deOtros.every((sede) => sede.logoFileId === null)).toBe(true);
   });
 });

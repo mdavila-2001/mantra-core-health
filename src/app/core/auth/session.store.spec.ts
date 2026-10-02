@@ -230,4 +230,44 @@ describe('SessionStore', () => {
     expect(store.accessToken()).toBeNull();
     expect(store.refreshToken()).toBeNull();
   });
+
+  describe('cuenta de organización', () => {
+    const sesion = (claims: Record<string, unknown>): void =>
+      store.start({
+        accessToken: makeToken({ sub: 'u-1', roles: ['USER'], tenants: ['t-1'], ...claims }),
+        refreshToken: 'r-1',
+      });
+
+    it('sin sesión no es una cuenta de organización', () => {
+      expect(store.isOrganizationAccount()).toBe(false);
+    });
+
+    it('el claim accountKind manda sobre la deducción', () => {
+      sesion({ accountKind: 'ORGANIZATION' });
+      expect(store.isOrganizationAccount()).toBe(true);
+
+      sesion({ accountKind: 'PERSON', tenantTypes: { 't-1': 'PHARMACY' } });
+      expect(store.isOrganizationAccount()).toBe(false);
+    });
+
+    it('sin el claim, una farmacia, un laboratorio o una aseguradora sin perfil de persona lo son', () => {
+      for (const tipo of ['PHARMACY', 'DIAGNOSTIC_CENTER', 'PAYER']) {
+        sesion({ tenantTypes: { 't-1': tipo } });
+        expect(store.isOrganizationAccount()).toBe(true);
+      }
+    });
+
+    it('sin el claim, quien tiene perfil de paciente o profesional sigue siendo una persona', () => {
+      sesion({ tenantTypes: { 't-1': 'PHARMACY' }, pid: 'p-1' });
+      expect(store.isOrganizationAccount()).toBe(false);
+
+      sesion({ tenantTypes: { 't-1': 'PHARMACY' }, hpid: 'h-1' });
+      expect(store.isOrganizationAccount()).toBe(false);
+    });
+
+    it('una clínica (PROVIDER) no es una cuenta de organización: la usan personas', () => {
+      sesion({ tenantTypes: { 't-1': 'PROVIDER' } });
+      expect(store.isOrganizationAccount()).toBe(false);
+    });
+  });
 });

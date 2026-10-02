@@ -106,7 +106,7 @@ describe('RegisterLaboratory', () => {
       companyType: 'SRL',
       taxId: '1023456789',
       addressLines: 'Av. Cañoto esq. Ballivián 234',
-      legalRepName: 'Ana Paz Rojas',
+      legalRepName: { name: 'Ana', lastName: 'Paz', motherLastName: 'Rojas' },
       legalRepEmail: 'ana.paz@labsur.test',
       password: 'secreto12',
     });
@@ -212,8 +212,10 @@ describe('RegisterLaboratory', () => {
   ] as const)('sin %s no se envía', (clave) => {
     completarLoObligatorio();
     // `patchValue` y no `controls[clave].setValue`: el tipo de sociedad se
-    // vacía con `null` y los demás con la cadena vacía.
-    component.form.patchValue({ [clave]: clave === 'companyType' ? null : '' });
+    // vacía con `null`, el nombre del representante vaciando su primer nombre,
+    // y los demás con la cadena vacía.
+    const vacio = clave === 'companyType' ? null : clave === 'legalRepName' ? { name: '' } : '';
+    component.form.patchValue({ [clave]: vacio });
 
     component.submit();
 
@@ -243,6 +245,17 @@ describe('RegisterLaboratory', () => {
     });
   });
 
+  it('el poder se pide en la página del representante, no con los papeles de la empresa', () => {
+    const pagina = (clave: string) => component.paginas.find((p) => p.clave === clave);
+
+    expect(pagina('representante')?.campos.map((c) => c.key)).toEqual([
+      'legalRepName',
+      'legalRepEmail',
+      'powerOfAttorneyFileId',
+    ]);
+    expect(pagina('documentos')?.campos.map((c) => c.key)).not.toContain('powerOfAttorneyFileId');
+  });
+
   it('con papeles a medias no viaja el bloque: el DTO lo pide todo o nada', () => {
     completarLoObligatorio();
     component.registrarDocumento('healthAuthorityCertificateFileId', 'f-sedes');
@@ -258,7 +271,7 @@ describe('RegisterLaboratory', () => {
     enviarConExito();
 
     // Ninguno de los nueve campos de gerencia se tocó, y el alta sale igual.
-    expect(component.form.controls.generalManagerName.value).toBe('');
+    expect(component.form.controls.generalManagerName.value.name).toBe('');
     expect(component.form.controls.salesManagerEmail.value).toBe('');
     expect(component.form.controls.marketingManagerPhone.value).toBe('');
     expect(component.registered()).toBe(true);
@@ -267,13 +280,13 @@ describe('RegisterLaboratory', () => {
   it('los tres cargos completos viajan como executives, con la comercial en commercialManager', () => {
     completarLoObligatorio();
     component.form.patchValue({
-      generalManagerName: 'Luis Vaca',
+      generalManagerName: { name: 'Luis', lastName: 'Vaca' },
       generalManagerPhone: '+591 70000001',
       generalManagerEmail: 'general@labsur.test',
-      salesManagerName: 'Rosa Justiniano',
+      salesManagerName: { name: 'Rosa', lastName: 'Justiniano' },
       salesManagerPhone: '+591 70000002',
       salesManagerEmail: 'ventas@labsur.test',
-      marketingManagerName: 'Iván Suárez',
+      marketingManagerName: { name: 'Iván', lastName: 'Suárez' },
       marketingManagerPhone: '+591 70000003',
       marketingManagerEmail: 'marketing@labsur.test',
     });
@@ -337,6 +350,43 @@ describe('RegisterLaboratory', () => {
     ]);
   });
 
+  it('las sucursales subidas en lote viajan con descripción, enlace y el punto que traía el enlace', () => {
+    completarLoObligatorio();
+    component.agregarSucursalesEnLote([
+      {
+        name: 'Norte',
+        description: 'Planta baja',
+        locationUrl: 'https://www.google.com/maps?q=-17.76,-63.19',
+        address: 'Av. Banzer 100',
+        code: '',
+        coordinates: { latitude: -17.76, longitude: -63.19 },
+      },
+      {
+        name: 'Sur',
+        description: '',
+        locationUrl: 'https://maps.app.goo.gl/abc',
+        address: '',
+        code: '',
+        coordinates: null,
+      },
+    ]);
+
+    expect(component.nombresDeSucursales()).toEqual(['Norte', 'Sur']);
+    const cuerpo = enviarConExito();
+
+    expect(cuerpo.organization.diagnosticUnit.branches).toEqual([
+      {
+        name: 'Norte',
+        addressLines: ['Av. Banzer 100'],
+        latitude: -17.76,
+        longitude: -63.19,
+        description: 'Planta baja',
+        locationUrl: 'https://www.google.com/maps?q=-17.76,-63.19',
+      },
+      { name: 'Sur', addressLines: [], locationUrl: 'https://maps.app.goo.gl/abc' },
+    ]);
+  });
+
   it('mientras se envía, un segundo clic no duplica el alta', () => {
     completarLoObligatorio();
 
@@ -385,6 +435,8 @@ describe('RegisterLaboratory', () => {
       {
         id: primera!.id,
         nombre: 'Equipetrol',
+        descripcion: '',
+        urlUbicacion: '',
         direccion: 'Av. San Martín 456',
         gps: { lat: -17.78, lng: -63.18 },
       },

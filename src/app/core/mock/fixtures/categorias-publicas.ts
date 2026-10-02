@@ -47,6 +47,8 @@ export const CATEGORIA = {
     label: 'Centro de primer nivel',
   },
 
+  /** Consultorios odontológicos del directorio oficial (Overture Places). */
+  ODONTOLOGIA: { code: 'odontologia', label: 'Odontología' },
   /* ---- centros de diagnóstico -------------------------------------------- */
   LABORATORIO_CLINICO: { code: 'laboratorio-clinico', label: 'Laboratorio clínico' },
   IMAGENOLOGIA: { code: 'imagenologia', label: 'Imagenología' },
@@ -141,4 +143,11 @@ export function cadenaPorNombre(
     }
   }
   return null;
+}
+
+
+/** La categoría fija con ese código, o `null` (las de cadena de farmacia no están acá). */
+export function categoriaPorCodigo(code: string | null): CategoriaSimulada | null {
+  if (code === null) return null;
+  return Object.values(CATEGORIA).find((c) => c.code === code) ?? null;
 }
