@@ -1196,7 +1196,14 @@ export class PractitionerProfileEdit {
     this.nit.set(perfil.taxId ?? '');
     this.razonSocial.set(perfil.taxHolderName ?? '');
     this.telemedicina.set(perfil.telehealthAvailable);
-    this.sembrarIdiomas(perfil);
+    // Los idiomas se siembran sólo si no hay una corrección a medias: esta
+    // siembra corre tras CADA recarga del perfil —agregar una matrícula en la
+    // misma pestaña, guardar «Datos personales»— y pisarlos ahí tiraría lo que
+    // la persona estaba eligiendo sin que nadie se lo dijera. `guardarIdiomas`
+    // los vuelve a sembrar por su cuenta cuando lo suyo sí se guardó.
+    if (!this.idiomasCambiaron()) {
+      this.sembrarIdiomas(perfil);
+    }
     // ALV-003: los dos campos que el contrato ya aceptaba y el formulario no
     // ofrecía. Se siembran desde el perfil, igual que el resto.
     this.fechaNacimiento.set(perfil.birthDate ?? null);

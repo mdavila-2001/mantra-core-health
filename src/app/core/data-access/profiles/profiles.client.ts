@@ -506,10 +506,17 @@ export class ProfilesClient {
       readonly workLatitude: number | null;
       readonly workLongitude: number | null;
       /* Los idiomas en los que atiende. A diferencia del resto, viaja la lista
-         ENTERA y reemplaza la guardada: un idioma no tramita nada, así que no
-         hay «agregar» ni «retirar» con su propio recurso, como sí tienen los
+         ENTERA con la misma forma en que la lectura la devuelve, y se espera
+         que reemplace la guardada: un idioma no tramita nada, así que no hay
+         «agregar» ni «retirar» con su propio recurso, como sí tienen los
          títulos. `[]` quita el último. Hasta el 02/10/2026 el perfil los leía
-         (`OwnPractitionerProfile.languages`) y nadie los escribía. */
+         (`OwnPractitionerProfile.languages`) y nadie los escribía.
+
+         CONTRATO NO VERIFICADO CONTRA LA API REAL (02/10/2026): el repo no
+         trae el DTO del `PATCH` y sólo el simulador demostró la persistencia.
+         Si el backend lo rechaza, llega como violación sobre `languages` y el
+         editor lo muestra en su bloque; si lo ignora en silencio, la recarga
+         lo delata. Queda anotado en `docs/progress/BLOCKERS.md`. */
       readonly languages: readonly PractitionerLanguage[];
     }>,
   ): Observable<OwnPractitionerProfile> {

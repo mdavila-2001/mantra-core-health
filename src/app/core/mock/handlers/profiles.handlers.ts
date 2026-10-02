@@ -1189,7 +1189,8 @@ export function registrarPerfiles(router: MockRouter): void {
  * Lo que el `PATCH` del perfil profesional anota: los textos y los
  * interruptores, y `languages`, que es el único campo que viaja como arreglo
  * —la lista entera, que reemplaza la guardada—. Cualquier otra forma se
- * descarta, como haría la validación del DTO.
+ * descarta. Es la semántica que el editor supone; la del backend real no se
+ * verificó (ver `updateOwnPractitionerProfile`).
  */
 function cambiosDelPerfilProfesional(
   cambios: Record<string, unknown>,

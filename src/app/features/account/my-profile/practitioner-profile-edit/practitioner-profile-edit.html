@@ -814,18 +814,22 @@
                           (valueChange)="elegirNivel($index, $event)"
                         />
                       </app-form-field>
+                      <!-- El rótulo visible se repite en cada fila; el nombre
+                           accesible dice de qué idioma es, para que el lector
+                           de pantalla no oiga tres veces lo mismo. -->
                       <app-switch
                         class="edicion__idioma-interpreta"
                         [attr.data-testid]="'idioma-interpreta-' + $index"
                         [checked]="fila.interpreta"
                         (checkedChange)="marcarInterpreta($index, $event)"
                         label="Interpreta en consulta"
+                        [ariaLabel]="'Interpreta en consulta, idioma ' + ($index + 1)"
                       />
                       <button
                         app-button
                         type="button"
                         variant="ghost"
-                        size="sm"
+                        size="md"
                         class="edicion__idioma-quitar"
                         [iconOnly]="true"
                         [attr.aria-label]="'Quitar el idioma ' + ($index + 1)"
@@ -845,6 +849,19 @@
                       data-testid="idiomas-repetidos"
                     >
                       Hay un idioma elegido dos veces.
+                    </p>
+                  }
+
+                  <!-- El rechazo del servidor sobre la lista, acá y no sólo en
+                       el aviso general: las filas no tienen un campo del
+                       contrato cada una, así que el mensaje se ancla al bloque. -->
+                  @if (errorDelServidor('languages'); as rechazo) {
+                    <p
+                      class="edicion__aviso edicion__campo-ancho"
+                      role="alert"
+                      data-testid="idiomas-rechazados"
+                    >
+                      {{ rechazo }}
                     </p>
                   }
 
