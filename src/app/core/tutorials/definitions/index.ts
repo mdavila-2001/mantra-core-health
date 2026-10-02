@@ -192,7 +192,7 @@ const EXPEDIENTE: TutorialDefinition = {
     {
       id: 'bloques',
       title: 'La historia, por bloques',
-      body: 'Diagnósticos, medicación, observaciones, encuentros, notas y documentos. Cada pestaña dice cuántos registros trae.',
+      body: 'Diagnósticos (también las alergias), medicación, observaciones, encuentros, internaciones, notas, planes y documentos. El detalle de un encuentro muestra todo lo que se registró en esa consulta.',
       target: 'expediente-pestanas',
       placement: 'bottom',
     },
@@ -228,7 +228,7 @@ const ATENCION_CLINICA: TutorialDefinition = {
     {
       id: 'receta',
       title: 'Qué le vas a registrar',
-      body: 'Cada casilla de la rejilla es algo que se puede registrar en esta consulta: diagnóstico, alergia, receta, observación, nota, plan, documento, formulario clínico o internación. Tocá una y se abre su formulario.',
+      body: 'Cada casilla de la rejilla es algo que se puede registrar en esta consulta: diagnóstico (también alergias), receta, observación, nota, plan, documento, formulario clínico o internación. Tocá una y se abre su formulario.',
       target: 'consulta-rejilla',
       placement: 'top',
     },

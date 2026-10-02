@@ -40,12 +40,6 @@
         [encounterId]="encounterId()"
         (cambio)="cambio.emit()"
       />
-    } @else if (esAlergia()) {
-      <app-allergy-block
-        [patientProfileId]="patientProfileId()"
-        [encounterId]="encounterId()"
-        (cambio)="cambio.emit()"
-      />
     } @else if (esCirugia()) {
       <app-procedures-block
         [patientProfileId]="patientProfileId()"

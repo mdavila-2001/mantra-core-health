@@ -423,12 +423,6 @@ describe('PatientChart', () => {
       http
         .expectOne('/clinical/medication-requests/rx-1/attachments')
         .flush({ id: 'link-2', fileId: 'file-2', ownerId: 'rx-1', createdAt: '2026-01-01' });
-
-      abrir('al-1', 'Penicilina', 'alergias');
-      enlazar('file-3', 'al-1').subscribe({ next: () => undefined });
-      http
-        .expectOne('/clinical/allergy-intolerances/al-1/attachments')
-        .flush({ id: 'link-3', fileId: 'file-3', ownerId: 'al-1', createdAt: '2026-01-01' });
     });
 
     /** El tipo de dueño acompaña al bloque; el encuentro cae al genérico. */
@@ -492,6 +486,35 @@ describe('PatientChart', () => {
     const destacadas = interno<() => readonly Record<string, unknown>[]>('alergiasDestacadas')();
     expect(destacadas).toHaveLength(1);
     expect(destacadas[0]['principal']).toBe('Diabetes tipo 2');
+  });
+
+  /**
+   * La alergia se carga como diagnóstico (cliente, 02/10/2026): sin pestaña y
+   * sin alta propias. Las ya registradas siguen en la banda, de lectura.
+   */
+  it('no dibuja pestaña ni alta de alergias, pero conserva la banda', () => {
+    responderNombre();
+    responderExpediente({
+      resumen: {
+        allergies: [
+          {
+            id: 'a-1',
+            substanceConceptId: 'con-diabetes',
+            clinicalStatusConceptId: 'st-activa',
+            createdAt: '2026-02-01T00:00:00.000Z',
+          },
+        ],
+      },
+    });
+
+    const claves = interno<() => readonly { clave: string }[]>('bloques')().map((b) => b.clave);
+    expect(claves).not.toContain('alergias');
+    expect(interno<(clave: string) => unknown>('altaDe')('alergias')).toBeUndefined();
+    harness.fixture.detectChanges();
+    expect(
+      harness.routeNativeElement!.querySelector('[data-testid="expediente-nueva-alergia"]'),
+    ).toBeNull();
+    expect(interno<() => readonly unknown[]>('alergiasDestacadas')()).toHaveLength(1);
   });
 
   it('sin alergias no dibuja la banda de alergias', () => {
@@ -731,7 +754,7 @@ describe('PatientChart', () => {
         filas: readonly unknown[],
         titulo: string,
       ) => { status: string; nextAction?: { label: string } }
-    >('estadoDe')([], 'Alergias');
+    >('estadoDe')([], 'Notas');
     expect(vacio.status).toBe('empty');
     expect(vacio.nextAction?.label).toBe('Elegir otra persona');
   });
@@ -1134,6 +1157,210 @@ describe('PatientChart', () => {
         rotulo: 'Diagnósticos del encuentro',
         valor: 'Diabetes tipo 2',
       });
+    });
+
+    /**
+     * Lo cargado en una consulta tiene que poder leerse en la historia,
+     * agrupado por la consulta: recetas, observaciones y notas también
+     * declaran su `encounterId`.
+     */
+    it('el encuentro lista también las recetas, observaciones y notas de esa consulta', () => {
+      responderNombre();
+      responderExpediente({
+        resumen: {
+          medicationRequests: [
+            {
+              id: 'm-1',
+              medicationConceptId: 'con-diabetes',
+              statusConceptId: 'st-activa',
+              encounterId: 'e-1',
+              createdAt: '2026-01-03T00:00:00.000Z',
+            },
+          ],
+          observations: [
+            {
+              id: 'o-1',
+              codeConceptId: 'obs-peso',
+              statusConceptId: 'st-final',
+              quantityValue: '78.5',
+              quantityUnitConceptId: 'u-kg',
+              encounterId: 'e-1',
+            },
+          ],
+          encounters: [
+            { id: 'e-1', statusConceptId: 'st-final', startAt: '2026-01-03T10:00:00.000Z' },
+            { id: 'e-2', statusConceptId: 'st-final', startAt: '2026-02-03T10:00:00.000Z' },
+          ],
+        },
+        chart: {
+          notes: [
+            {
+              noteId: 'n-1',
+              encounterId: 'e-1',
+              lifecycleStatusConceptId: 'st-final',
+              chiefComplaintText: 'Control de glucemia',
+              createdAt: '2026-01-03T00:00:00.000Z',
+            },
+          ],
+        },
+      });
+
+      const filas = interno<
+        () => readonly { id: string; vinculos: { rotulo: string; valor: string }[] }[]
+      >('encuentros')();
+      const deLaConsulta = (id: string) =>
+        Object.fromEntries(
+          (filas.find((fila) => fila.id === id)?.vinculos ?? []).map((v) => [v.rotulo, v.valor]),
+        );
+
+      expect(deLaConsulta('e-1')).toMatchObject({
+        'Recetas del encuentro': 'Diabetes tipo 2',
+        'Observaciones del encuentro': expect.stringContaining('Peso corporal'),
+        'Notas del encuentro': 'Control de glucemia',
+      });
+      // Lo de otra consulta no se cuela: el vínculo es por `encounterId`.
+      expect(deLaConsulta('e-2')).toMatchObject({
+        'Recetas del encuentro': 'Sin recetas en este encuentro',
+        'Observaciones del encuentro': 'Sin observaciones en este encuentro',
+        'Notas del encuentro': 'Sin notas en este encuentro',
+      });
+    });
+  });
+
+  /**
+   * Las internaciones se abren en la consulta y hasta acá no tenían pestaña:
+   * lo cargado en la consulta no aparecía en la historia.
+   */
+  it('muestra las internaciones en su propia pestaña', () => {
+    responderNombre();
+    responderExpediente({
+      resumen: {
+        careEpisodes: [
+          {
+            id: 'ce-1',
+            tenantId: 't-1',
+            statusConceptId: 'st-activa',
+            startAt: '2026-03-01T10:00:00.000Z',
+            createdAt: '2026-03-01T10:00:00.000Z',
+          },
+        ],
+      },
+    });
+
+    const bloque = interno<
+      () => readonly { clave: string; titulo: string; filas: Record<string, unknown>[] }[]
+    >('bloques')().find((b) => b.clave === 'internaciones');
+
+    expect(bloque?.titulo).toBe('Internaciones');
+    expect(bloque?.filas).toHaveLength(1);
+    expect(bloque?.filas[0]).toMatchObject({
+      id: 'ce-1',
+      principal: 'Internación',
+      estado: 'Activa',
+      detalle: 'En curso',
+    });
+    // Sin alta en el expediente: la internación se abre desde la consulta.
+    expect(interno<(clave: string) => unknown>('altaDe')('internaciones')).toBeUndefined();
+  });
+
+  /**
+   * El formulario clínico de la consulta (ficha, odontograma) vive en `forms`,
+   * atado al encuentro. Se pide al abrir el detalle del encuentro, no al cargar
+   * la pantalla: una petición por encuentro mirado, nunca cincuenta de golpe.
+   */
+  describe('los formularios clínicos de la consulta', () => {
+    function abrirEncuentro(): void {
+      responderNombre();
+      responderExpediente({
+        resumen: {
+          encounters: [
+            { id: 'e-1', statusConceptId: 'st-final', startAt: '2026-01-03T10:00:00.000Z' },
+          ],
+        },
+      });
+      // Nada de `forms` todavía: la pantalla no los pide al cargar.
+      http.expectNone((r) => r.url === '/forms/instances');
+      const fila = interno<() => readonly { id: string }[]>('encuentros')()[0]!;
+      interno<(f: unknown) => void>('verDetalle')(fila);
+    }
+
+    it('los pide al abrir el encuentro y los muestra con el nombre de cada campo', () => {
+      abrirEncuentro();
+      expect(interno<() => { status: string } | null>('formulariosDelEncuentro')()?.status).toBe(
+        'loading',
+      );
+
+      http.expectOne((r) => r.url === '/charts/templates').flush([
+        {
+          id: 'tpl-1',
+          name: 'Ficha odontológica',
+          fields: [{ fieldId: 'f-1', name: 'Motivo', dataType: 'TEXT' }],
+        },
+      ]);
+      const listado = http.expectOne((r) => r.url === '/forms/instances');
+      expect(listado.request.params.get('encounter')).toBe('e-1');
+      listado.flush({ encounterId: 'e-1', items: [{ id: 'fi-1' }], limit: 50, truncated: false });
+      http.expectOne('/forms/instances/fi-1').flush({
+        id: 'fi-1',
+        createdAt: '2026-01-03T10:30:00.000Z',
+        closedAt: '2026-01-03T10:45:00.000Z',
+        values: [
+          { id: 'v-1', fieldId: 'f-1', ordinal: 1, value: 'Dolor de muela', masked: false },
+        ],
+      });
+
+      const formularios = interno<() => readonly Record<string, unknown>[] | null>(
+        'formulariosLeidos',
+      )();
+      expect(formularios).toHaveLength(1);
+      expect(formularios?.[0]).toMatchObject({
+        id: 'fi-1',
+        titulo: 'Ficha odontológica',
+        respuestas: [{ id: 'v-1', etiqueta: 'Motivo', texto: 'Dolor de muela', masked: false }],
+      });
+    });
+
+    it('sin formularios lo dice, y al cerrar el detalle se olvidan', () => {
+      abrirEncuentro();
+      http.expectOne((r) => r.url === '/charts/templates').flush([]);
+      http
+        .expectOne((r) => r.url === '/forms/instances')
+        .flush({ encounterId: 'e-1', items: [], limit: 50, truncated: false });
+
+      expect(interno<() => readonly unknown[] | null>('formulariosLeidos')()).toEqual([]);
+
+      interno<() => void>('cerrarDetalle')();
+      expect(interno<() => unknown>('formulariosDelEncuentro')()).toBeNull();
+    });
+
+    it('un fallo de `forms` se dice y se puede reintentar', () => {
+      abrirEncuentro();
+      http.expectOne((r) => r.url === '/charts/templates').flush([]);
+      http
+        .expectOne((r) => r.url === '/forms/instances')
+        .flush(
+          { message: 'Sin permiso' },
+          { status: 403, statusText: 'Forbidden' },
+        );
+
+      expect(interno<() => string | null>('errorDeFormularios')()).not.toBeNull();
+
+      interno<() => void>('recargarFormularios')();
+      http.expectOne((r) => r.url === '/charts/templates').flush([]);
+      http
+        .expectOne((r) => r.url === '/forms/instances')
+        .flush({ encounterId: 'e-1', items: [], limit: 50, truncated: false });
+      expect(interno<() => string | null>('errorDeFormularios')()).toBeNull();
+    });
+
+    it('abrir otro bloque no pide formularios', () => {
+      responderNombre();
+      responderExpediente();
+      const diagnostico = interno<() => readonly { id: string }[]>('diagnosticos')()[0]!;
+      interno<(f: unknown) => void>('verDetalle')(diagnostico);
+
+      http.expectNone((r) => r.url === '/forms/instances');
+      expect(interno<() => unknown>('formulariosDelEncuentro')()).toBeNull();
     });
   });
 

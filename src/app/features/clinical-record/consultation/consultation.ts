@@ -54,7 +54,6 @@ import {
 } from '../clinical-record.routes';
 import { mensajeDeFalloDeEscritura } from '../mensaje-de-escritura';
 import { AdmissionBlock, type InternacionEnFicha } from '../patient-chart/admission-block/admission-block';
-import { AllergyBlock } from '../patient-chart/allergy-block/allergy-block';
 import { CarePlanBlock, type DiagnosticoDelPlan } from '../patient-chart/care-plan-block/care-plan-block';
 import { DiagnosisBlock, type CitaDelPaciente } from '../patient-chart/diagnosis-block/diagnosis-block';
 import { DocumentBlock } from '../patient-chart/document-block/document-block';
@@ -87,13 +86,12 @@ const TOPE_DEL_MOTIVO = 500;
  * —una por pestaña de la historia que admite alta— más las dos que sólo tienen
  * sentido atendiendo: el formulario clínico de la especialidad y la internación.
  *
- * Y una décima que no registra nada, «Pagos»: la respuesta a «¿esto ya está
+ * Y una última que no registra nada, «Pagos»: la respuesta a «¿esto ya está
  * pagado?», que se necesita en la consulta misma cuando quien atiende también
  * ejecuta el tratamiento.
  */
 export type CasillaDeConsulta =
   | 'diagnosticos'
-  | 'alergias'
   | 'medicacion'
   | 'observaciones'
   | 'notas'
@@ -141,7 +139,7 @@ interface DefinicionDeCasilla {
 }
 
 /**
- * Las diez casillas, en el orden en que se atiende: primero lo que se
+ * Las nueve casillas, en el orden en que se atiende: primero lo que se
  * diagnostica, después lo que se indica, y al final lo que sólo pasa en una
  * consulta con cama o con una ficha de especialidad. Cierra «Pagos», que es lo
  * único que se mira en vez de escribirse.
@@ -153,13 +151,6 @@ const CASILLAS: Readonly<Record<CasillaDeConsulta, DefinicionDeCasilla>> = {
     tituloDelModal: 'Nuevo diagnóstico',
     icono: 'M9 3h6l1 3h3v15H5V6h3l1-3Zm3 6v6m-3-3h6',
     testId: 'consulta-casilla-diagnosticos',
-  },
-  alergias: {
-    titulo: 'Alergia',
-    descripcion: 'Una sustancia que no tolera, con su criticidad.',
-    tituloDelModal: 'Nueva alergia',
-    icono: 'M12 3 2.5 20h19L12 3Zm0 6v5m0 3v.5',
-    testId: 'consulta-casilla-alergias',
   },
   medicacion: {
     titulo: 'Receta',
@@ -221,7 +212,6 @@ const CASILLAS: Readonly<Record<CasillaDeConsulta, DefinicionDeCasilla>> = {
 
 const ORDEN_DE_CASILLAS: readonly CasillaDeConsulta[] = [
   'diagnosticos',
-  'alergias',
   'medicacion',
   'observaciones',
   'notas',
@@ -244,9 +234,9 @@ const ORDEN_DE_CASILLAS: readonly CasillaDeConsulta[] = [
  * Reemplaza a la pantalla de atención anterior, que abría con un formulario
  * de una pregunta y escondía el resto detrás de tres pestañas. Acá lo que se
  * puede registrar está **todo a la vista**, una casilla por posibilidad —las
- * mismas ocho de la historia clínica más el formulario de especialidad y la
+ * mismas siete de la historia clínica más el formulario de especialidad y la
  * internación—, y cada una abre su propio formulario en modal, que es lo que la
- * regla de la casa pide para toda edición que pida datos. La décima, «Pagos»,
+ * regla de la casa pide para toda edición que pida datos. La última, «Pagos»,
  * no registra: contesta si lo hecho ya está cobrado.
  *
  * ## El encuentro sigue mandando
@@ -268,7 +258,6 @@ const ORDEN_DE_CASILLAS: readonly CasillaDeConsulta[] = [
   imports: [
     AdmissionBlock,
     Alert,
-    AllergyBlock,
     AppButton,
     AppButtonLink,
     CarePlanBlock,
@@ -444,7 +433,7 @@ export class Consultation {
   /* -- La rejilla ----------------------------------------------------------- */
 
   /**
-   * Las diez casillas con su cantidad. La cantidad sale de lo ya leído y no
+   * Las nueve casillas con su cantidad. La cantidad sale de lo ya leído y no
    * de una petición por casilla: dos lecturas de la misma lista pueden
    * discrepar.
    */
@@ -452,7 +441,6 @@ export class Consultation {
     const datos = this.datos();
     const cantidades: Readonly<Record<CasillaDeConsulta, number | null>> = {
       diagnosticos: datos?.resumen.conditions.length ?? 0,
-      alergias: datos?.resumen.allergies.length ?? 0,
       medicacion: datos?.resumen.medicationRequests.length ?? 0,
       observaciones: datos?.resumen.observations.length ?? 0,
       notas: datos?.chart.notes.length ?? 0,
@@ -475,7 +463,7 @@ export class Consultation {
   });
 
   /**
-   * La casilla cuyo modal está abierto, o `null`. Una señal para las diez:
+   * La casilla cuyo modal está abierto, o `null`. Una señal para las nueve:
    * sólo puede haber un modal a la vez.
    */
   protected readonly casillaAbierta = signal<CasillaDeConsulta | null>(null);
