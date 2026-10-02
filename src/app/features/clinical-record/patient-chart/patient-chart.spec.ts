@@ -1343,8 +1343,24 @@ describe('PatientChart', () => {
       interno<(f: unknown) => void>('verDetalle')(fila);
     }
 
+    /** Odontología y laboratorio: se leen por paciente junto con los formularios. */
+    function responderProcedimientos(dentales: object[] = [], ordenes: object[] = []): void {
+      http
+        .expectOne('/dental-procedures/catalog')
+        .flush({ procedureCodes: [], teeth: [], quadrants: [] });
+      http.expectOne((r) => r.url === '/dental-procedures').flush({ items: dentales, total: 0 });
+      http.expectOne((r) => r.url === '/diagnostics/patients/p-1/orders').flush({
+        patientProfileId: 'p-1',
+        orders: ordenes,
+        reports: [],
+        limit: 50,
+        truncated: [],
+      });
+    }
+
     it('los pide al abrir el encuentro y los muestra con el nombre de cada campo', () => {
       abrirEncuentro();
+      responderProcedimientos();
       expect(interno<() => { status: string } | null>('formulariosDelEncuentro')()?.status).toBe(
         'loading',
       );
@@ -1381,6 +1397,7 @@ describe('PatientChart', () => {
 
     it('sin formularios lo dice, y al cerrar el detalle se olvidan', () => {
       abrirEncuentro();
+      responderProcedimientos();
       http.expectOne((r) => r.url === '/charts/templates').flush([]);
       http
         .expectOne((r) => r.url === '/forms/instances')
@@ -1394,6 +1411,7 @@ describe('PatientChart', () => {
 
     it('un fallo de `forms` se dice y se puede reintentar', () => {
       abrirEncuentro();
+      responderProcedimientos();
       http.expectOne((r) => r.url === '/charts/templates').flush([]);
       http
         .expectOne((r) => r.url === '/forms/instances')
@@ -1405,6 +1423,7 @@ describe('PatientChart', () => {
       expect(interno<() => string | null>('errorDeFormularios')()).not.toBeNull();
 
       interno<() => void>('recargarFormularios')();
+      responderProcedimientos();
       http.expectOne((r) => r.url === '/charts/templates').flush([]);
       http
         .expectOne((r) => r.url === '/forms/instances')
@@ -1414,6 +1433,7 @@ describe('PatientChart', () => {
 
     it('un 403 sin mensaje no deja el aviso vacío', () => {
       abrirEncuentro();
+      responderProcedimientos();
       http.expectOne((r) => r.url === '/charts/templates').flush([]);
       http
         .expectOne((r) => r.url === '/forms/instances')
@@ -1426,6 +1446,7 @@ describe('PatientChart', () => {
 
     it('un formulario que no se deja leer no esconde a los demás', () => {
       abrirEncuentro();
+      responderProcedimientos();
       http.expectOne((r) => r.url === '/charts/templates').flush([]);
       http.expectOne((r) => r.url === '/forms/instances').flush({
         encounterId: 'e-1',
@@ -1474,6 +1495,21 @@ describe('PatientChart', () => {
       // La carga del primero quedó cancelada: su respuesta ya no llega.
       expect(plantillasA.cancelled).toBe(true);
       expect(listadoA.cancelled).toBe(true);
+      // Las dos lecturas por paciente: la del primero quedó cancelada, la del
+      // segundo se responde.
+      http
+        .match('/dental-procedures/catalog')
+        .filter((r) => !r.cancelled)
+        .forEach((r) => r.flush({ procedureCodes: [], teeth: [], quadrants: [] }));
+      const dentales = http.match((r) => r.url === '/dental-procedures');
+      const ordenes = http.match((r) => r.url === '/diagnostics/patients/p-1/orders');
+      expect(dentales.filter((r) => !r.cancelled)).toHaveLength(1);
+      dentales.filter((r) => !r.cancelled).forEach((r) => r.flush({ items: [], total: 0 }));
+      ordenes
+        .filter((r) => !r.cancelled)
+        .forEach((r) =>
+          r.flush({ patientProfileId: 'p-1', orders: [], reports: [], limit: 50, truncated: [] }),
+        );
 
       http.expectOne((r) => r.url === '/charts/templates').flush([]);
       http
@@ -1484,6 +1520,7 @@ describe('PatientChart', () => {
 
     it('dibuja la sección con el formulario y sus respuestas', () => {
       abrirEncuentro();
+      responderProcedimientos();
       http.expectOne((r) => r.url === '/charts/templates').flush([
         { id: 'tpl-1', name: 'Ficha odontológica', fields: [{ fieldId: 'f-1', name: 'Motivo' }] },
       ]);
@@ -1509,6 +1546,63 @@ describe('PatientChart', () => {
       expect(seccion?.textContent).toContain('Dolor de muela');
       // Lo enmascarado se dice con el marcador, nunca con un hueco.
       expect(seccion?.textContent).toContain(VALOR_ENMASCARADO);
+    });
+
+    /**
+     * El «Formulario clínico» de la consulta también guarda odontología y
+     * estudios fuera de `forms`: se leen por paciente y se filtran por el
+     * encuentro. Lo de otro encuentro no se cuela, y si una lectura falla lo
+     * dice sin tumbar la otra.
+     */
+    it('lista la odontología y los estudios de ese encuentro, y sólo esos', () => {
+      abrirEncuentro();
+      http.expectOne((r) => r.url === '/charts/templates').flush([]);
+      http
+        .expectOne((r) => r.url === '/forms/instances')
+        .flush({ encounterId: 'e-1', items: [], limit: 50, truncated: false });
+      http.expectOne('/dental-procedures/catalog').flush({
+        procedureCodes: [{ conceptId: 'dent-profilaxis', code: 'D1110', display: 'Profilaxis dental' }],
+        teeth: [{ conceptId: 'pieza-16', code: '16', display: 'Pieza 16' }],
+        quadrants: [],
+      });
+      http
+        .expectOne((r) => r.url === '/dental-procedures')
+        .flush({
+          items: [
+            {
+              id: 'dp-1',
+              patientProfileId: 'p-1',
+              procedureCodeConceptId: 'dent-profilaxis',
+              statusConceptId: 'st-final',
+              encounterId: 'e-1',
+              createdAt: '2026-01-03T10:40:00.000Z',
+              sites: [{ id: 's-1', bodySiteConceptId: 'pieza-16' }],
+            },
+            {
+              id: 'dp-2',
+              patientProfileId: 'p-1',
+              procedureCodeConceptId: 'obs-peso',
+              statusConceptId: 'st-final',
+              encounterId: 'otro',
+              createdAt: '2026-01-03T10:40:00.000Z',
+              sites: [],
+            },
+          ],
+          total: 2,
+        });
+      http
+        .expectOne((r) => r.url === '/diagnostics/patients/p-1/orders')
+        .flush({ message: 'Caído' }, { status: 503, statusText: 'Service Unavailable' });
+
+      const procedimientos = Object.fromEntries(
+        interno<() => readonly { rotulo: string; valor: string }[]>(
+          'procedimientosDelEncuentro',
+        )().map((v) => [v.rotulo, v.valor]),
+      );
+      expect(procedimientos).toEqual({
+        'Odontología del encuentro': 'Profilaxis dental (Pieza 16)',
+        'Estudios pedidos en el encuentro': 'No se pudieron leer los estudios',
+      });
     });
 
     it('abrir otro bloque no pide formularios', () => {

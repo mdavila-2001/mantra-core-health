@@ -30,6 +30,12 @@ const ctx = await nav.newContext({ viewport: { width: ANCHO, height: 1100 }, red
 const pg = await ctx.newPage();
 
 const log = (linea) => process.stdout.write(`${linea}\n`);
+// La consola cuenta como evidencia: un error de ejecución corta la plantilla
+// a la mitad y la captura sola no lo dice.
+pg.on('pageerror', (e) => log(`[pageerror] ${e.message}`));
+pg.on('console', (m) => {
+  if (m.type() === 'error') log(`[console.error] ${m.text().slice(0, 300)}`);
+});
 const foto = (nombre) => pg.screenshot({ path: `${SALIDA}/${ANCHO}-${nombre}.png`, fullPage: true });
 
 await pg.goto(`${B}/auth`, { waitUntil: 'domcontentloaded', timeout: 180000 });
@@ -115,6 +121,69 @@ try {
   throw e;
 }
 log('formulario completado en la consulta: sí');
+await modal.getByRole('button', { name: 'Cerrar' }).first().click();
+
+/* ---- 3a. odontología y laboratorio, desde «Formulario clínico» ----------- */
+/**
+ * Elige la primera opción real de un `<select>`. Los selectores de concepto
+ * repiten su placeholder como opción elegible (es «ninguno») y mientras cargan
+ * dicen «Cargando opciones…»: se espera a que haya una opción de verdad.
+ */
+async function primeraOpcion(select) {
+  const elegible = (el) => {
+    const marcador = el.options[0]?.textContent?.trim();
+    return (
+      [...el.options]
+        .filter((o) => o.value !== '' && !o.hidden)
+        .map((o) => o.textContent?.trim() ?? '')
+        .find((t) => t !== marcador && !/^(Elegí|Sin especificar|Cargando)/.test(t)) ?? ''
+    );
+  };
+  let etiqueta = '';
+  for (let intento = 0; intento < 60 && etiqueta === ''; intento++) {
+    etiqueta = await select.evaluate(elegible);
+    if (etiqueta === '') await pg.waitForTimeout(500);
+  }
+  if (etiqueta === '') throw new Error('El selector no cargó ninguna opción elegible.');
+  await select.selectOption({ label: etiqueta });
+  return etiqueta;
+}
+
+await pg.getByTestId('consulta-casilla-formulario').click();
+await selector.waitFor({ timeout: 30000 });
+await selector.selectOption({ label: 'Odontología' });
+const formDental = modal.locator('form.procedimientos__formulario');
+await formDental.waitFor({ timeout: 30000 });
+const tratamiento = await primeraOpcion(formDental.locator('select').nth(0));
+await primeraOpcion(formDental.locator('select').nth(1));
+await formDental.getByRole('button', { name: 'Registrar tratamiento' }).click();
+await modal.getByTestId('odontologia').getByText(tratamiento).first().waitFor({ timeout: 30000 });
+log(`odontología registrada en la consulta: ${tratamiento}`);
+
+await selector.selectOption({ label: 'Laboratorio e imagenología' });
+const formEstudio = modal.locator('form.estudios__formulario');
+await formEstudio.waitFor({ timeout: 30000 });
+// Uno que la persona no tenga ya: un estudio igual reciente dispara la
+// antiduplicación, y entonces no se crea una orden nueva.
+const previos = (await modal.getByTestId('estudios-lista').innerText().catch(() => '')) ?? '';
+const selectEstudio = formEstudio.locator('select').first();
+await primeraOpcion(selectEstudio);
+const estudio = await selectEstudio.evaluate(
+  (el, ya) =>
+    [...el.options]
+      .filter((o) => o.value !== '' && !o.hidden)
+      .map((o) => o.textContent?.trim() ?? '')
+      .filter((t) => !/^(Elegí|Cargando)/.test(t))
+      .find((t) => !ya.includes(t)) ?? '',
+  previos,
+);
+await selectEstudio.selectOption({ label: estudio });
+const resto = formEstudio.locator('select');
+// El tipo es obligatorio; la prioridad, no.
+await primeraOpcion(resto.nth(1));
+await formEstudio.getByRole('button', { name: 'Pedir estudio' }).click();
+await modal.getByTestId('estudios-lista').getByText(estudio).first().waitFor({ timeout: 30000 });
+log(`estudio pedido en la consulta: ${estudio}`);
 await modal.getByRole('button', { name: 'Cerrar' }).first().click();
 
 /* ---- 3b. una alergia, cargada como diagnóstico --------------------------- */
@@ -206,6 +275,8 @@ log(`detalle del encuentro:\n${textoDelDetalle}`);
 const formularios = await detalle.innerText();
 log(`formularios del encuentro:\n${formularios}`);
 log(`la marca escrita en la consulta aparece en la historia: ${formularios.includes(MARCA) ? 'SÍ' : 'NO'}`);
+log(`la odontología de la consulta aparece en la historia: ${formularios.includes(tratamiento) ? 'SÍ' : 'NO'}`);
+log(`el estudio de la consulta aparece en la historia: ${formularios.includes(estudio) ? 'SÍ' : 'NO'}`);
 await foto('5-detalle-del-encuentro');
 
 if (process.env.SOLO_MIRAR !== undefined) {

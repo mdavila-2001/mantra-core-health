@@ -352,7 +352,7 @@
         data-testid="expediente-formularios-del-encuentro"
       >
         <h3 id="expediente-formularios-titulo" class="expediente__formularios-titulo">
-          Formularios clínicos del encuentro
+          Formularios, procedimientos y estudios del encuentro
         </h3>
         @if (estado.status === 'loading') {
           <p class="expediente__secundario" role="status">Buscando los formularios…</p>
@@ -364,6 +364,14 @@
             Reintentar
           </button>
         } @else if (formulariosLeidos(); as formularios) {
+          <dl class="expediente__detalle" data-testid="expediente-procedimientos-del-encuentro">
+            @for (vinculo of procedimientosDelEncuentro(); track vinculo.rotulo) {
+              <div class="expediente__detalle-fila">
+                <dt>{{ vinculo.rotulo }}</dt>
+                <dd>{{ vinculo.valor }}</dd>
+              </div>
+            }
+          </dl>
           @if (formulariosNoLeidos() > 0) {
             <app-alert tone="warning" data-testid="expediente-formularios-no-leidos">
               {{ formulariosNoLeidos() === 1

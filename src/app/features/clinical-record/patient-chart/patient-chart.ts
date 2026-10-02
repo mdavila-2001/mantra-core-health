@@ -21,7 +21,14 @@ import { AuthService } from '../../../core/auth/auth.service';
 import { ChartTemplatesClient } from '../../../core/data-access/chart-templates/chart-templates.client';
 import type { ChartTemplate } from '../../../core/data-access/chart-templates/chart-templates.types';
 import { ClinicalClient } from '../../../core/data-access/clinical/clinical.client';
+import { DiagnosticsClient } from '../../../core/data-access/diagnostics/diagnostics.client';
+import type { DiagnosticOrder } from '../../../core/data-access/diagnostics/diagnostics.types';
 import { FormsClient } from '../../../core/data-access/forms/forms.client';
+import { ProceduresClient } from '../../../core/data-access/procedures/procedures.client';
+import type {
+  DentalCatalog,
+  DentalProcedure,
+} from '../../../core/data-access/procedures/procedures.types';
 import type { FormInstanceDetail } from '../../../core/data-access/forms/forms.types';
 import type {
   ClinicalSummary,
@@ -56,6 +63,7 @@ import {
   downloadVisitPdf,
   VALOR_ENMASCARADO,
 } from '../../../shared/utils/clinical-pdf/clinical-pdf';
+import { esCodigoDeAlergia } from '../../../shared/utils/alergias/alergias';
 import { contextoDeLaSesion } from '../../../shared/utils/clinical-pdf/firma-de-la-sesion';
 import {
   atencionDesdeResumen,
@@ -95,14 +103,6 @@ const TOPE = 50;
 
 /** Lo que se muestra cuando el registro no trae ese dato. */
 const SIN_DATO = 'Sin registrar';
-
-/**
- * Los códigos CIE-10 (OMS) que dicen «esta persona es alérgica»: Z88
- * (antecedente de alergia a fármacos), Z91.0 (a otras sustancias), T78.0–T78.4
- * (anafilaxia, edema angioneurótico, alergia no especificada) y T88.6
- * (anafilaxia por fármaco bien administrado).
- */
-const CODIGO_CIE10_DE_ALERGIA = /^(Z88|Z91\.0|T78\.[0-4]|T88\.6)/;
 
 /** Nombre legible de cada bloque, para el aviso de recorte. */
 const NOMBRE_DE_BLOQUE: Readonly<Record<string, string>> = {
@@ -270,11 +270,16 @@ export interface FormularioDelEncuentro {
   readonly respuestas: readonly RespuestaVisible[];
 }
 
-/** Lo leído de `forms` para un encuentro. */
+/** Lo leído a demanda para un encuentro: lo que no viaja en el resumen. */
 interface FormulariosDelEncuentro {
   readonly formularios: readonly FormularioDelEncuentro[];
   /** Los que existen pero no se dejaron leer. */
   readonly noLeidos: number;
+  /**
+   * Lo que el «Formulario clínico» de la consulta guarda fuera de `forms`:
+   * procedimientos odontológicos y estudios pedidos, ya en palabras.
+   */
+  readonly procedimientos: readonly VinculoClinico[];
 }
 
 /** Un vínculo clínico, ya resuelto a palabras. */
@@ -388,6 +393,8 @@ export class PatientChart {
 
   private readonly clinical = inject(ClinicalClient);
   private readonly forms = inject(FormsClient);
+  private readonly procedures = inject(ProceduresClient);
+  private readonly diagnostics = inject(DiagnosticsClient);
   private readonly chartTemplates = inject(ChartTemplatesClient);
   private readonly profiles = inject(ProfilesClient);
   private readonly terminology = inject(TerminologyClient);
@@ -1077,6 +1084,12 @@ export class PatientChart {
     return state === null ? null : (dataOf(state)?.formularios ?? null);
   });
 
+  /** Odontología y estudios del encuentro, ya en palabras. */
+  protected readonly procedimientosDelEncuentro = computed(() => {
+    const state = this.formulariosDelEncuentro();
+    return state === null ? [] : (dataOf(state)?.procedimientos ?? []);
+  });
+
   /** Cuántos formularios del encuentro existen pero no se pudieron leer. */
   protected readonly formulariosNoLeidos = computed(() => {
     const state = this.formulariosDelEncuentro();
@@ -1138,30 +1151,70 @@ export class PatientChart {
                 ),
           ),
         ),
-    }).subscribe({
-      next: ({ plantillas, detalles }) => {
-        const campos = camposDe(plantillas);
-        const leidos = detalles.filter(
-          (detalle): detalle is FormInstanceDetail => detalle !== null,
-        );
-        this.formulariosDelEncuentro.set(
-          ready({
-            noLeidos: detalles.length - leidos.length,
-            formularios: leidos.map((detalle) => {
-              const fecha = new Date(detalle.closedAt ?? detalle.createdAt);
-              return {
-                id: detalle.id,
-                titulo: plantillaPorCobertura(detalle, plantillas)?.name ?? 'Formulario clínico',
-                completadoEl: Number.isNaN(fecha.getTime()) ? null : fecha,
-                respuestas: respuestasDe(detalle, campos),
-              };
+      // Odontología y laboratorio se leen por paciente y se filtran por el
+      // encuentro. Cada uno falla por su cuenta: `null` es «no se pudo leer».
+      // Los códigos odontológicos no están en terminología: los nombra el
+      // catálogo propio de procedimientos.
+      catalogoDental: this.procedures
+        .readDentalCatalog()
+        .pipe(catchError(() => of<DentalCatalog | null>(null))),
+      dentales: this.procedures
+        .listDentalProcedures({ patientProfileId: this.profileId(), limit: TOPE })
+        .pipe(
+          map((pagina) => pagina.items.filter((item) => item.encounterId === encounterId)),
+          catchError(() => of(null)),
+        ),
+      estudios: this.diagnostics.getPatientDiagnostics(this.profileId(), TOPE).pipe(
+        map((circuito) => circuito.orders.filter((orden) => orden.encounterId === encounterId)),
+        catchError(() => of(null)),
+      ),
+    })
+      .pipe(
+        switchMap((leido) =>
+          this.terminology
+            .readConceptLabels(
+              (leido.estudios ?? []).flatMap((o) => [o.codeConceptId, o.statusConceptId]),
+            )
+            .pipe(
+              catchError(() => of<ConceptLabels>(new Map())),
+              map((etiquetas) => ({ ...leido, etiquetas })),
+            ),
+        ),
+      )
+      .subscribe({
+        next: ({ plantillas, detalles, catalogoDental, dentales, estudios, etiquetas }) => {
+          const campos = camposDe(plantillas);
+          const leidos = detalles.filter(
+            (detalle): detalle is FormInstanceDetail => detalle !== null,
+          );
+          this.formulariosDelEncuentro.set(
+            ready({
+              procedimientos: [
+                {
+                  rotulo: 'Odontología del encuentro',
+                  valor: describirDentales(dentales, catalogoDental),
+                },
+                {
+                  rotulo: 'Estudios pedidos en el encuentro',
+                  valor: describirEstudios(estudios, etiquetas),
+                },
+              ],
+              noLeidos: detalles.length - leidos.length,
+              formularios: leidos.map((detalle) => {
+                const fecha = new Date(detalle.closedAt ?? detalle.createdAt);
+                return {
+                  id: detalle.id,
+                  titulo: plantillaPorCobertura(detalle, plantillas)?.name ?? 'Formulario clínico',
+                  completadoEl: Number.isNaN(fecha.getTime()) ? null : fecha,
+                  respuestas: respuestasDe(detalle, campos),
+                };
+              }),
             }),
-          }),
-        );
-      },
-      error: (error: unknown) =>
-        this.formulariosDelEncuentro.set(errorToViewState<FormulariosDelEncuentro>(error)),
-    });
+          );
+        },
+        error: (error: unknown) =>
+          this.formulariosDelEncuentro.set(errorToViewState<FormulariosDelEncuentro>(error)),
+      });
   }
 
   /** El título del modal: específico del bloque, nunca «Detalle» a secas. */
@@ -1206,7 +1259,7 @@ export class PatientChart {
    * cliente), así que la banda junta dos fuentes:
    *
    * - los diagnósticos sin resolver cuyo código CIE-10 es de alergia
-   *   ({@link CODIGO_CIE10_DE_ALERGIA}) — las de ahora en adelante;
+   *   ({@link esCodigoDeAlergia}) — las de ahora en adelante;
    * - las `AllergyIntolerance` ya registradas, que no tienen pestaña ni alta
    *   pero esconderlas sería peor que repetirlas.
    *
@@ -1219,9 +1272,7 @@ export class PatientChart {
         .filter(
           (condicion) =>
             condicion.resolvedAt === undefined &&
-            CODIGO_CIE10_DE_ALERGIA.test(
-              this.etiquetas().get(condicion.codeConceptId)?.code ?? '',
-            ),
+            esCodigoDeAlergia(this.etiquetas().get(condicion.codeConceptId)?.code),
         )
         .map((condicion) => condicion.id),
     );
@@ -1906,4 +1957,53 @@ function conceptosDe({ resumen, chart }: Expediente): readonly string[] {
     ...chart.carePlans.flatMap((fila) => [fila.statusConceptId, fila.intentConceptId]),
     ...chart.documents.flatMap((fila) => [fila.categoryConceptId, fila.statusConceptId]),
   ].filter((id): id is string => id !== undefined);
+}
+
+/** Los procedimientos odontológicos de un encuentro, en palabras. */
+function describirDentales(
+  dentales: readonly DentalProcedure[] | null,
+  catalogo: DentalCatalog | null,
+): string {
+  if (dentales === null) {
+    return 'No se pudo leer el histórico odontológico';
+  }
+  if (dentales.length === 0) {
+    return 'Sin procedimientos odontológicos en este encuentro';
+  }
+  const nombres = new Map(
+    [
+      ...(catalogo?.procedureCodes ?? []),
+      ...(catalogo?.teeth ?? []),
+      ...(catalogo?.quadrants ?? []),
+    ].map((entrada) => [entrada.conceptId, entrada.display]),
+  );
+  return dentales
+    .map((d) => {
+      const nombre = nombres.get(d.procedureCodeConceptId) ?? 'Procedimiento odontológico';
+      const sitios = d.sites
+        .map((sitio) => nombres.get(sitio.bodySiteConceptId) ?? sitio.description)
+        .filter((sitio): sitio is string => sitio !== undefined && sitio !== '');
+      return sitios.length === 0 ? nombre : `${nombre} (${sitios.join(', ')})`;
+    })
+    .join(', ');
+}
+
+/** Los estudios de laboratorio e imagen pedidos en un encuentro, en palabras. */
+function describirEstudios(
+  estudios: readonly DiagnosticOrder[] | null,
+  etiquetas: ConceptLabels,
+): string {
+  if (estudios === null) {
+    return 'No se pudieron leer los estudios';
+  }
+  if (estudios.length === 0) {
+    return 'Sin estudios pedidos en este encuentro';
+  }
+  return estudios
+    .map((o) => {
+      const nombre = etiquetas.get(o.codeConceptId)?.display ?? 'Estudio';
+      const estado = etiquetas.get(o.statusConceptId)?.display;
+      return estado === undefined ? nombre : `${nombre} (${estado})`;
+    })
+    .join(', ');
 }
