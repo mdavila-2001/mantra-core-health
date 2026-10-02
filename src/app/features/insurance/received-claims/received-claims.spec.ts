@@ -134,7 +134,7 @@ describe('ReceivedClaims', () => {
     await mount([claimWire(1)]);
     expect(
       (fixture.nativeElement.querySelector('[data-testid="received-claims-count"]') as HTMLElement).textContent,
-    ).toContain('importes en Boliviano');
+    ).toContain('importes en BOB');
     const columns = internal<() => { header: string; sortable?: boolean }[]>('columns')();
     expect(columns.map((c) => c.header)).toEqual([
       'Paciente',

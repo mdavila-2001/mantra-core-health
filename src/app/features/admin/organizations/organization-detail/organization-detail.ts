@@ -34,7 +34,14 @@ import type {
 } from '../../../../core/view-state/view-state.types';
 import { Badge } from '../../../../shared/components/atoms/badge/badge';
 import type { BadgeVariant } from '../../../../shared/components/atoms/badge/badge.types';
+import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { AppButtonLink } from '../../../../shared/components/atoms/button/button-link';
+import { Link } from '../../../../shared/components/atoms/link/link';
+import { Alert } from '../../../../shared/components/molecules/alert/alert';
+import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
+import { BranchBulkImport } from '../../../../shared/components/organisms/branch-bulk-import/branch-bulk-import';
+import type { BranchDraft } from '../../../../shared/utils/branch-import/branch-import';
+import { createBranchesInSeries } from '../../../organization/organization-branches/create-branches-in-series';
 import { Tab } from '../../../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../../../shared/components/molecules/tabs/tabs';
 import { DataTable } from '../../../../shared/components/organisms/data-table/data-table';
@@ -107,13 +114,27 @@ const VARIANTE_POR_CODIGO: Readonly<Record<string, BadgeVariant>> = {
  */
 @Component({
   selector: 'app-organization-detail',
-  imports: [AppButtonLink, Badge, DataTable, DatePipe, PageHeader, RouterLink, Tab, Tabs],
+  imports: [
+    Alert,
+    AppButton,
+    AppButtonLink,
+    Badge,
+    BranchBulkImport,
+    DataTable,
+    DatePipe,
+    Link,
+    PageHeader,
+    RouterLink,
+    Tab,
+    Tabs,
+  ],
   templateUrl: './organization-detail.html',
   styleUrl: './organization-detail.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OrganizationDetail {
   private readonly directory = inject(DirectoryClient);
+  private readonly toasts = inject(ToastService);
   private readonly terminology = inject(TerminologyClient);
   private readonly navigation = inject(NavigationService);
   private readonly route = inject(ActivatedRoute);
@@ -213,6 +234,66 @@ export class OrganizationDetail {
   ]);
 
   protected readonly porId = (row: { readonly id: string }): string => row.id;
+
+  /* --- carga de sucursales en lote ---------------------------------------- */
+
+  private readonly cargaEnLote = viewChild(BranchBulkImport);
+  protected readonly cargaEnLoteAbierta = signal(false);
+  protected readonly creandoLote = signal(false);
+  /** Las que la API rechazó en el último lote, con su motivo. */
+  protected readonly rechazosDelLote = signal<readonly { nombre: string; motivo: string }[]>([]);
+
+  /** Se ofrece con la lista a la vista: sin ella no hay contra qué detectar repetidas. */
+  protected readonly puedeSubirEnLote = computed(() => {
+    const estado = this.sucursales().status;
+    return estado === 'ready' || estado === 'empty';
+  });
+
+  protected readonly nombresDeSucursales = computed(() => {
+    const estado = this.sucursales();
+    return estado.status === 'ready' ? estado.data.map((sucursal) => sucursal.name) : [];
+  });
+
+  protected abrirCargaEnLote(): void {
+    this.rechazosDelLote.set([]);
+    this.cargaEnLoteAbierta.set(true);
+  }
+
+  /**
+   * Crea las sucursales del archivo **una por una**, en su orden.
+   *
+   * No hay alta masiva en la API (`POST /tenants/{id}/branches` es de a una), y
+   * en serie —no en paralelo— porque el código es único por organización: dos
+   * altas simultáneas con el mismo código derivado se pisarían. Una que falla
+   * no frena a las demás; al final se dice cuáles no entraron y por qué.
+   */
+  protected crearSucursalesEnLote(lote: readonly BranchDraft[]): void {
+    const tenantId = this.tenantId();
+    if (tenantId === '' || this.creandoLote() || lote.length === 0) {
+      return;
+    }
+    const estado = this.sucursales();
+    const codigosTomados = estado.status === 'ready' ? estado.data.map((sucursal) => sucursal.code) : [];
+
+    this.creandoLote.set(true);
+    this.rechazosDelLote.set([]);
+    createBranchesInSeries(this.directory, tenantId, lote, codigosTomados).subscribe(
+      ({ created: creadas, rejected }) => {
+        this.creandoLote.set(false);
+        if (creadas > 0) {
+          this.toasts.success(
+            creadas === 1
+              ? 'Se creó 1 sucursal.'
+              : `Se crearon ${creadas} sucursales.`,
+            'Sucursales cargadas',
+          );
+        }
+        this.rechazosDelLote.set(rejected.map(({ name, reason }) => ({ nombre: name, motivo: reason })));
+        this.cargaEnLote()?.close();
+        this.cargar();
+      },
+    );
+  }
 
   constructor() {
     // El id viaja en la ruta: navegar de una organización a otra sin desmontar
@@ -347,6 +428,7 @@ export class OrganizationDetail {
     });
   }
 }
+
 
 /** Una rama del `forkJoin` que se resolvió con fallo en vez de con datos. */
 interface Fallo {

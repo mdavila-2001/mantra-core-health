@@ -1606,6 +1606,26 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M26 billing',
   },
   {
+    // «Mis solicitudes» (pedido del propietario, 01/10/2026): lo que decidió
+    // la aseguradora sobre cada solicitud de seguro, para el paciente, el
+    // médico, el laboratorio y el centro de imagenología. Mismo criterio que
+    // «Mis facturas»: ícono de la barra superior para toda cuenta y fuera del
+    // menú, que tiene listas cerradas fijadas por specs. Qué solicitudes ve
+    // cada cuenta lo decide el backend por la sesión.
+    //
+    // Hoy la sirve el simulador sobre la misma tabla que dictamina la
+    // aseguradora en «Solicitudes recibidas» — P56 en `PENDIENTES-BACKEND.md`.
+    fueraDelMenuPara: [ANY_ROLE],
+    path: 'my-account/requests',
+    label: 'Mis solicitudes',
+    group: 'Mi cuenta',
+    icon: 'umbrella',
+    roles: [ANY_ROLE],
+    availability: 'disponible',
+    summary: 'Tus solicitudes de seguro y lo que decidió la aseguradora: si cubre, cuánto y por qué.',
+    module: 'M26 insurance',
+  },
+  {
     // **«Mis organizaciones»** (propietario, 2026-09-10), en el lugar que
     // ocupaba «Tu organización». Aquélla mostraba la organización del tenant
     // activo —la clínica donde el médico está afiliado—, que no es suya: junto
@@ -1803,6 +1823,22 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M24 pharmacy',
   },
   {
+    // Los precios de la farmacia (01/10/2026): el de cada producto, editable en
+    // una tabla y guardado junto. El alta y la edición completa siguen en «Productos».
+    path: 'administration/pharmacy-prices',
+    onlyForTenantTypes: ['PHARMACY'],
+    roles: [ANY_ROLE],
+    fueraDelMenuPara: ['PRACTITIONER'],
+    hiddenFor: ['PATIENT'],
+    label: 'Precios',
+    group: 'General',
+    icon: 'tag',
+    requiresTenant: true,
+    availability: 'disponible',
+    summary: 'El precio de venta de cada producto, tal como lo ven los pacientes.',
+    module: 'M24 pharmacy',
+  },
+  {
     // La bandeja del mostrador de farmacia (carril FAR-I3). La membresía manda
     // (claim `tenants`), no un rol del token: no existe un rol de farmacia minorista.
     path: 'administration/pharmacy-orders',
@@ -1855,9 +1891,12 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // organización. La autoridad sigue siendo la API (`@Roles` del controller).
     onlyForTenantTypes: ['PHARMACY'],
     roles: [ANY_ROLE],
-    // §4.H · fuera del menú del médico. El paciente compra del catálogo, no lo
-    // administra.
-    fueraDelMenuPara: ['PRACTITIONER'],
+    // La ficha dejó de ser un renglón del menú (01/10/2026, pedido del
+    // propietario): la cuenta de farmacia ES la organización, y su ficha es su
+    // «Mi perfil». La ruta vieja redirige a `/my-account` en `app.routes.ts`
+    // (`SECCIONES_REDIRIGIDAS`); la sección se conserva registrada para que esa
+    // dirección guardada siga resolviendo.
+    fueraDelMenuPara: [ANY_ROLE],
     hiddenFor: ['PATIENT'],
     label: 'Ficha de la farmacia',
     // `General` y no `Administración`: es un dominio aplanado, así que los
@@ -1868,7 +1907,23 @@ export const APP_SECTIONS: readonly AppSection[] = [
     availability: 'disponible',
     summary: 'Los datos legales de tu farmacia, su carpeta de documentos y sus responsables.',
     module: 'M24 pharmacy',
+  },  {
+    // Las sucursales de la farmacia (01/10/2026): verlas, editarlas y subirlas en
+    // lote con un CSV. La pantalla es la misma que la del laboratorio.
+    path: 'administration/pharmacy-branches',
+    onlyForTenantTypes: ['PHARMACY'],
+    roles: [ANY_ROLE],
+    fueraDelMenuPara: ['PRACTITIONER'],
+    hiddenFor: ['PATIENT'],
+    label: 'Sucursales',
+    group: 'General',
+    icon: 'pin',
+    requiresTenant: true,
+    availability: 'disponible',
+    summary: 'Editá tus sucursales o subí varias de una vez con un CSV.',
+    module: 'M04 directory',
   },
+
   {
     // El portal de la cuenta de laboratorio (30/09/2026): el mismo menú plano que
     // tiene la farmacia desde el 29/09, adaptado a quien vende servicios y no
@@ -1958,5 +2013,37 @@ export const APP_SECTIONS: readonly AppSection[] = [
     availability: 'disponible',
     summary: 'Subí los resultados en cualquier formato y mirá todo lo que ya subiste.',
     module: 'M20 diagnostics',
+  },
+  {
+    // Los precios del laboratorio (01/10/2026): precio de lista y descuento
+    // AloVida de cada servicio, editables en una tabla y guardados juntos.
+    path: 'administration/laboratory-prices',
+    onlyForTenantTypes: ['DIAGNOSTIC_CENTER'],
+    roles: [ANY_ROLE],
+    fueraDelMenuPara: ['PRACTITIONER'],
+    hiddenFor: ['PATIENT'],
+    label: 'Precios',
+    group: 'General',
+    icon: 'tag',
+    requiresTenant: true,
+    availability: 'disponible',
+    summary: 'El precio de lista y el descuento AloVida de cada servicio.',
+    module: 'M20 diagnostics',
+  },
+  {
+    // Las sucursales del laboratorio (01/10/2026): la misma pantalla que la de la
+    // farmacia, sobre la organización activa.
+    path: 'administration/laboratory-branches',
+    onlyForTenantTypes: ['DIAGNOSTIC_CENTER'],
+    roles: [ANY_ROLE],
+    fueraDelMenuPara: ['PRACTITIONER'],
+    hiddenFor: ['PATIENT'],
+    label: 'Sucursales',
+    group: 'General',
+    icon: 'pin',
+    requiresTenant: true,
+    availability: 'disponible',
+    summary: 'Editá tus sucursales o subí varias de una vez con un CSV.',
+    module: 'M04 directory',
   },
 ];

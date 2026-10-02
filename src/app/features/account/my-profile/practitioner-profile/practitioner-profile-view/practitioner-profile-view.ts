@@ -23,6 +23,8 @@ import { AppButtonLink } from '../../../../../shared/components/atoms/button/but
 import { Chip } from '../../../../../shared/components/atoms/chip/chip';
 import { NavIcon } from '../../../../../shared/components/atoms/nav-icon/nav-icon';
 import { Card } from '../../../../../shared/components/molecules/card/card';
+import { FirmaOSello } from '../../../../../shared/components/molecules/firma-o-sello/firma-o-sello';
+import { LogoConsultorio } from '../../../../../shared/components/molecules/logo-consultorio/logo-consultorio';
 import { TabHelpBlock } from '../../../../../shared/components/molecules/tab-help-block/tab-help-block';
 import { Tabs } from '../../../../../shared/components/molecules/tabs/tabs';
 import { Tab } from '../../../../../shared/components/molecules/tabs/tab/tab';
@@ -97,6 +99,8 @@ interface FilaCredencial {
     Card,
     Chip,
     DatePipe,
+    LogoConsultorio,
+    FirmaOSello,
     NavIcon,
     RouterLink,
     SpecialtyBadge,

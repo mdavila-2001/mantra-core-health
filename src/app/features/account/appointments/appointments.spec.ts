@@ -839,6 +839,18 @@ describe('Appointments', () => {
     );
   }
 
+  /**
+   * Elegir un profesional pide además sus servicios (v4.2.40). Estos tests no
+   * hablan de servicios: se responde que no tiene, que deja la pantalla como era.
+   * Se **responde** y no se ignora, porque el `http.verify()` del `afterEach` es
+   * justo lo que impide que algo salga a la red sin que nadie lo sepa.
+   */
+  function sinServicios(): void {
+    http
+      .match((r) => r.url === '/scheduling/service-offerings')
+      .forEach((pedido) => pedido.flush({ items: [] }));
+  }
+
   function paginaDeCupos(items: readonly unknown[]) {
     return { items, count: items.length, limit: 100, truncated: false };
   }
@@ -868,12 +880,352 @@ describe('Appointments', () => {
     expect(opciones()[0].label).toBe('Dra. Ana Muñoz');
   });
 
+  /* ---- pedir un servicio, no una consulta (v4.2.40) ------------------------ */
+
+  /**
+   * Lo que estas pruebas fijan:
+   *
+   * 1. **La pregunta «¿Qué querés pedir?» sólo aparece si hay algo que elegir.**
+   *    Con un profesional que no ofrece servicios la pantalla no cambia.
+   * 2. **Los horarios de un servicio NO salen de la grilla de cupos**: los calcula
+   *    la API al leer, y cada fila reserva el MÁXIMO de la duración.
+   * 3. **La reserva de un servicio viaja con la oferta**, no con un id de cupo que
+   *    todavía no existe.
+   * 4. **Un servicio no tiene lista de espera**: no hay cupo al que anotarse.
+   */
+  describe('pedir un servicio, no una consulta', () => {
+    const OFERTA_ECO = {
+      id: 'of-eco',
+      practitionerProfileId: 'perfil-ana',
+      serviceCatalogId: 's-eco',
+      serviceCode: 'ECO',
+      serviceName: 'Ecocardiograma Doppler',
+      price: '480.00',
+      minDurationMinutes: 30,
+      maxDurationMinutes: 45,
+      prepMinutes: 0,
+      cleanupMinutes: 0,
+      isPatientBookable: true,
+      requiresApproval: false,
+      isActive: true,
+    };
+    const OFERTA_ECG = {
+      ...OFERTA_ECO,
+      id: 'of-ecg',
+      serviceName: 'Electrocardiograma',
+      price: '120.00',
+      minDurationMinutes: 20,
+      maxDurationMinutes: 20,
+      requiresApproval: true,
+    };
+
+    /** Un profesional con dos sedes y los servicios que se le pasen. */
+    function conServicios(ofertas: readonly unknown[]): void {
+      montar();
+      responderArranque([]);
+      crudo<{ set: (v: unknown) => void }>('recursos').set(DOS_CONSULTORIOS);
+      interno<(clave: string | null) => void>('elegirAgenda')(AGENDA_DE_ANA);
+      // Sus servicios se piden por su perfil, no por la sede.
+      const pedido = http.expectOne((r) => r.url === '/scheduling/service-offerings');
+      expect(pedido.request.params.get('practitionerProfileId')).toBe('perfil-ana');
+      pedido.flush({ items: ofertas });
+      for (const cupos of cuposPorRecurso().values()) cupos.flush(paginaDeCupos([]));
+      fixture.detectChanges();
+    }
+
+    /**
+     * Abre «Agendar una cita». Los chequeos de DOM de abajo la necesitan: la sección
+     * sale de la URL y por omisión se miran las citas propias. Sin esto, un
+     * `querySelector(...) === null` pasaría **vacuo** aunque el control no existiera.
+     */
+    async function abrirPedir(): Promise<void> {
+      interno<(s: string) => void>('elegirSeccion')('pedir');
+      await fixture.whenStable();
+      fixture.detectChanges();
+    }
+
+    const disponibilidadPorRecurso = (): Map<string | null, TestRequest> =>
+      new Map(
+        http
+          .match((r) => r.url === '/scheduling/service-availability')
+          .map((pedido) => [pedido.request.params.get('resourceId'), pedido]),
+      );
+
+    const disponibilidad = (resourceId: string, inicio: string, finMaximo: string) => ({
+      offeringId: 'of-eco',
+      minDurationMinutes: 30,
+      maxDurationMinutes: 45,
+      items: [{ resourceId, startAt: inicio, endAtMax: finMaximo, endAtMin: inicio }],
+    });
+
+    it('ofrece consulta y cada servicio, y cada opción dice cuánto dura', async () => {
+      conServicios([OFERTA_ECO, OFERTA_ECG]);
+      await abrirPedir();
+
+      expect(
+        interno<() => readonly { value: string; label: string }[]>('opcionesDeServicio')(),
+      ).toEqual([
+        { value: 'CONSULTA', label: 'Consulta' },
+        { value: 'of-eco', label: 'Ecocardiograma Doppler · 30–45 min' },
+        // Mínimo y máximo iguales: un solo número.
+        { value: 'of-ecg', label: 'Electrocardiograma · 20 min' },
+      ]);
+      expect(fixture.nativeElement.querySelector('[data-testid="turnos-servicio"]')).not.toBeNull();
+    });
+
+    /* -- el enlace de la ficha del profesional: ?profesional=…&servicio=… -- */
+
+    /** Monta con el enlace puesto y responde el arranque con las agendas de Ana. */
+    async function montarConEnlace(query: string): Promise<void> {
+      await TestBed.inject(Router).navigateByUrl(`/?seccion=pedir&${query}`);
+      montar();
+      http
+        .expectOne((r) => r.url === '/scheduling/bookings')
+        .flush({ items: [], count: 0, limit: 50, truncated: false });
+      http
+        .expectOne((r) => r.url === '/scheduling/resources')
+        .flush({ items: DOS_CONSULTORIOS, count: 2 });
+      fixture.detectChanges();
+    }
+
+    it('con ?profesional llega con ese profesional ya elegido', async () => {
+      await montarConEnlace('profesional=perfil-ana');
+
+      expect(interno<() => string | null>('agendaElegida')()).toBe(AGENDA_DE_ANA);
+      http.expectOne((r) => r.url === '/scheduling/service-offerings').flush({ items: [OFERTA_ECO] });
+      for (const cupos of cuposPorRecurso().values()) cupos.flush(paginaDeCupos([]));
+      // Sin ?servicio se pide lo de siempre: una consulta.
+      expect(interno<() => string>('queQuiere')()).toBe('CONSULTA');
+    });
+
+    it('con ?profesional y ?servicio llega con el servicio elegido y sus horarios pedidos', async () => {
+      await montarConEnlace('profesional=perfil-ana&servicio=of-eco');
+
+      http.expectOne((r) => r.url === '/scheduling/service-offerings').flush({ items: [OFERTA_ECO] });
+      // Los horarios de la consulta salieron a la vez que se leían los servicios...
+      for (const cupos of cuposPorRecurso().values()) cupos.flush(paginaDeCupos([]));
+
+      // ...y al llegar los servicios queda elegido el del enlace, que pide los suyos.
+      expect(interno<() => string>('queQuiere')()).toBe('of-eco');
+      const pedidos = disponibilidadPorRecurso();
+      expect([...pedidos.keys()].sort()).toEqual(['r-centro', 'r-norte']);
+      for (const p of pedidos.values()) {
+        p.flush({ offeringId: 'of-eco', minDurationMinutes: 30, maxDurationMinutes: 45, items: [] });
+      }
+    });
+
+    it('un ?servicio que el profesional ya no ofrece no se elige: queda la consulta', async () => {
+      await montarConEnlace('profesional=perfil-ana&servicio=of-que-no-existe');
+
+      http.expectOne((r) => r.url === '/scheduling/service-offerings').flush({ items: [OFERTA_ECO] });
+      for (const cupos of cuposPorRecurso().values()) cupos.flush(paginaDeCupos([]));
+
+      expect(interno<() => string>('queQuiere')()).toBe('CONSULTA');
+      http.expectNone((r) => r.url === '/scheduling/service-availability');
+    });
+
+    it('un ?profesional sin agenda en esta organización no elige a nadie', async () => {
+      await montarConEnlace('profesional=perfil-desconocido');
+
+      expect(interno<() => string | null>('agendaElegida')()).toBeNull();
+      http.expectNone((r) => r.url === '/scheduling/service-offerings');
+    });
+
+    it('el enlace se aplica una sola vez: elegir a mano después no lo pisa', async () => {
+      await montarConEnlace('profesional=perfil-ana');
+      http.expectOne((r) => r.url === '/scheduling/service-offerings').flush({ items: [] });
+      for (const cupos of cuposPorRecurso().values()) cupos.flush(paginaDeCupos([]));
+
+      interno<(clave: string | null) => void>('elegirAgenda')(null);
+
+      expect(interno<() => string | null>('agendaElegida')()).toBeNull();
+    });
+
+    it('un profesional sin servicios no recibe la pregunta', async () => {
+      conServicios([]);
+      await abrirPedir();
+      // Que la sección esté abierta es lo que hace significativo el «no existe».
+      expect(fixture.nativeElement.querySelector('[data-testid="turnos-sede"]')).not.toBeNull();
+      expect(fixture.nativeElement.querySelector('[data-testid="turnos-servicio"]')).toBeNull();
+      expect(interno<() => boolean>('enServicio')()).toBe(false);
+    });
+
+    it('por omisión se pide una consulta y los horarios son los de siempre', () => {
+      conServicios([OFERTA_ECO]);
+      expect(interno<() => string>('queQuiere')()).toBe('CONSULTA');
+      http.expectNone((r) => r.url === '/scheduling/service-availability');
+    });
+
+    it('elegir un servicio pide la disponibilidad calculada de cada sede, no los cupos', () => {
+      conServicios([OFERTA_ECO]);
+
+      interno<(v: string | null) => void>('elegirQueQuiere')('of-eco');
+
+      const pedidos = disponibilidadPorRecurso();
+      expect([...pedidos.keys()].sort()).toEqual(['r-centro', 'r-norte']);
+      expect(pedidos.get('r-centro')?.request.params.get('offeringId')).toBe('of-eco');
+      // Un servicio no tiene cupo en la grilla: no se pide la lista de cupos.
+      expect(cuposPorRecurso().size).toBe(0);
+      for (const p of pedidos.values()) p.flush({ offeringId: 'of-eco', minDurationMinutes: 30, maxDurationMinutes: 45, items: [] });
+    });
+
+    it('cada horario es un inicio posible y la hora de fin es el MÁXIMO que se reserva', () => {
+      conServicios([OFERTA_ECO]);
+      interno<(v: string | null) => void>('elegirQueQuiere')('of-eco');
+
+      const pedidos = disponibilidadPorRecurso();
+      // El de la sede Norte contesta primero y con hora posterior: se ORDENA, no se concatena.
+      pedidos.get('r-norte')?.flush(disponibilidad('r-norte', HORA_TARDE, '2026-09-02T15:45:00.000Z'));
+      pedidos.get('r-centro')?.flush(disponibilidad('r-centro', HORA_TEMPRANO, '2026-09-02T09:45:00.000Z'));
+
+      const listos = interno<
+        () => readonly { resourceId: string; desde: Date; hasta: Date; ofertaId?: string; sede: string }[]
+      >('horariosListos')();
+      expect(listos.map((h) => h.resourceId)).toEqual(['r-centro', 'r-norte']);
+      expect(listos[0].hasta.toISOString()).toBe('2026-09-02T09:45:00.000Z');
+      expect(listos[0].ofertaId).toBe('of-eco');
+      // Con las dos sedes en foco, cada hueco dice de dónde es.
+      expect(listos[0].sede).toBe('Sede Centro · Av. Siempreviva 1');
+    });
+
+    it('la reserva de un servicio viaja con la oferta, no con un id de cupo', () => {
+      conServicios([OFERTA_ECO]);
+      interno<(v: string | null) => void>('elegirQueQuiere')('of-eco');
+      const pedidos = disponibilidadPorRecurso();
+      pedidos.get('r-centro')?.flush(disponibilidad('r-centro', HORA_TEMPRANO, '2026-09-02T09:45:00.000Z'));
+      pedidos.get('r-norte')?.flush({ offeringId: 'of-eco', minDurationMinutes: 30, maxDurationMinutes: 45, items: [] });
+
+      const [horario] = interno<() => readonly object[]>('horariosListos')();
+      expect(interno<(h: object) => string>('rutaDeReserva')(horario)).toContain('/servicio');
+      expect(interno<(h: object) => Record<string, string>>('paramsDeReserva')(horario)).toEqual({
+        recurso: 'r-centro',
+        desde: HORA_TEMPRANO,
+        hasta: '2026-09-02T09:45:00.000Z',
+        oferta: 'of-eco',
+      });
+    });
+
+    it('una consulta sigue viajando sin `oferta` y con el id del cupo', () => {
+      montar();
+      responderArranque([]);
+      crudo<{ set: (v: unknown) => void }>('recursos').set([DOS_CONSULTORIOS[0]]);
+      interno<(clave: string | null) => void>('elegirAgenda')(AGENDA_DE_ANA);
+      sinServicios();
+      http.expectOne((r) => r.url === '/scheduling/slots').flush(paginaDeCupos([cupo('h-1', 'r-centro', HORA_TEMPRANO)]));
+
+      const [horario] = interno<() => readonly object[]>('horariosListos')();
+      expect(interno<(h: object) => string>('rutaDeReserva')(horario)).toContain('h-1');
+      expect(interno<(h: object) => Record<string, string>>('paramsDeReserva')(horario)).not.toHaveProperty('oferta');
+    });
+
+    it('volver a «Consulta» vuelve a pedir los cupos de la grilla', () => {
+      conServicios([OFERTA_ECO]);
+      interno<(v: string | null) => void>('elegirQueQuiere')('of-eco');
+      for (const p of disponibilidadPorRecurso().values()) {
+        p.flush({ offeringId: 'of-eco', minDurationMinutes: 30, maxDurationMinutes: 45, items: [] });
+      }
+
+      interno<(v: string | null) => void>('elegirQueQuiere')('CONSULTA');
+
+      expect(cuposPorRecurso().size).toBe(2);
+    });
+
+    it('el detalle del servicio dice cuánto dura, cuánto sale y si necesita confirmación', async () => {
+      conServicios([OFERTA_ECG]);
+      await abrirPedir();
+      interno<(v: string | null) => void>('elegirQueQuiere')('of-ecg');
+      for (const p of disponibilidadPorRecurso().values()) {
+        p.flush({ offeringId: 'of-ecg', minDurationMinutes: 20, maxDurationMinutes: 20, items: [] });
+      }
+      fixture.detectChanges();
+
+      const detalle: string = fixture.nativeElement.querySelector('[data-testid="turnos-servicio-detalle"]').textContent;
+      expect(detalle).toContain('Electrocardiograma');
+      expect(detalle).toContain('dura 20 min');
+      expect(detalle).toContain('120.00');
+      expect(detalle).toContain('Bs');
+      expect(detalle).toContain('tiene que confirmarlo');
+    });
+
+    it('un servicio no ofrece lista de espera: no hay cupo al que anotarse', async () => {
+      conServicios([OFERTA_ECO]);
+      await abrirPedir();
+      // Una sola sede en foco: ahí la espera sí se ofrecería para una consulta.
+      interno<(sede: string | null) => void>('elegirSede')('sede-centro');
+      http.expectOne((r) => r.url === '/scheduling/slots').flush(paginaDeCupos([]));
+      fixture.detectChanges();
+      expect(interno<() => string | null>('recursoParaEspera')()).toBe('r-centro');
+      expect(fixture.nativeElement.querySelector('[data-testid="turnos-anotarme-espera"]')).not.toBeNull();
+
+      interno<(v: string | null) => void>('elegirQueQuiere')('of-eco');
+      http.expectOne((r) => r.url === '/scheduling/service-availability').flush({
+        offeringId: 'of-eco', minDurationMinutes: 30, maxDurationMinutes: 45, items: [],
+      });
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelector('[data-testid="turnos-anotarme-espera"]')).toBeNull();
+    });
+
+    it('cambiar de profesional descarta el servicio elegido', () => {
+      conServicios([OFERTA_ECO]);
+      interno<(v: string | null) => void>('elegirQueQuiere')('of-eco');
+      for (const p of disponibilidadPorRecurso().values()) {
+        p.flush({ offeringId: 'of-eco', minDurationMinutes: 30, maxDurationMinutes: 45, items: [] });
+      }
+
+      interno<(clave: string | null) => void>('elegirAgenda')(null);
+
+      expect(interno<() => string>('queQuiere')()).toBe('CONSULTA');
+      expect(interno<() => readonly unknown[]>('ofertasDelProfesional')()).toEqual([]);
+    });
+
+    it('un servicio sin horarios lo dice con su nombre, no con un mensaje de consultas', () => {
+      conServicios([OFERTA_ECO]);
+      interno<(v: string | null) => void>('elegirQueQuiere')('of-eco');
+      for (const p of disponibilidadPorRecurso().values()) {
+        p.flush({ offeringId: 'of-eco', minDurationMinutes: 30, maxDurationMinutes: 45, items: [] });
+      }
+
+      const estado = interno<() => { status: string; message?: string }>('horarios')();
+      expect(estado.status).toBe('empty');
+      expect(estado.message).toContain('Ecocardiograma Doppler');
+    });
+
+    it('si una sede no contesta, muestra los horarios de la otra y lo avisa', () => {
+      conServicios([OFERTA_ECO]);
+      interno<(v: string | null) => void>('elegirQueQuiere')('of-eco');
+
+      const pedidos = disponibilidadPorRecurso();
+      pedidos.get('r-norte')?.error(new ProgressEvent('error'), { status: 500 });
+      pedidos.get('r-centro')?.flush(disponibilidad('r-centro', HORA_TEMPRANO, '2026-09-02T09:45:00.000Z'));
+
+      expect(interno<() => boolean>('horariosIncompletos')()).toBe(true);
+      expect(interno<() => readonly unknown[]>('horariosListos')()).toHaveLength(1);
+    });
+
+    it('si falla la lectura de los servicios, la pantalla sigue siendo la de consultas', () => {
+      montar();
+      responderArranque([]);
+      crudo<{ set: (v: unknown) => void }>('recursos').set([DOS_CONSULTORIOS[0]]);
+      interno<(clave: string | null) => void>('elegirAgenda')(AGENDA_DE_ANA);
+      http
+        .expectOne((r) => r.url === '/scheduling/service-offerings')
+        .flush({ message: 'caído' }, { status: 500, statusText: 'Server Error' });
+      http.expectOne((r) => r.url === '/scheduling/slots').flush(paginaDeCupos([]));
+      fixture.detectChanges();
+
+      expect(interno<() => readonly unknown[]>('ofertasDelProfesional')()).toEqual([]);
+      expect(fixture.nativeElement.querySelector('[data-testid="turnos-servicio"]')).toBeNull();
+    });
+  });
+
   it('con un solo consultorio no pregunta dónde', () => {
     montar();
     responderArranque([]);
 
     crudo<{ set: (v: unknown) => void }>('recursos').set([DOS_CONSULTORIOS[0]]);
     interno<(clave: string | null) => void>('elegirAgenda')(AGENDA_DE_ANA);
+    sinServicios();
 
     expect(interno<() => boolean>('preguntaPorSede')()).toBe(false);
     http.expectOne((r) => r.url === '/scheduling/slots').flush(paginaDeCupos([]));
@@ -885,6 +1237,7 @@ describe('Appointments', () => {
 
     crudo<{ set: (v: unknown) => void }>('recursos').set(DOS_CONSULTORIOS);
     interno<(clave: string | null) => void>('elegirAgenda')(AGENDA_DE_ANA);
+    sinServicios();
 
     expect(interno<() => boolean>('preguntaPorSede')()).toBe(true);
     // «Cualquier lugar» + las dos sedes.
@@ -912,6 +1265,7 @@ describe('Appointments', () => {
 
     crudo<{ set: (v: unknown) => void }>('recursos').set(DOS_CONSULTORIOS);
     interno<(clave: string | null) => void>('elegirAgenda')(AGENDA_DE_ANA);
+    sinServicios();
     for (const pedido of cuposPorRecurso().values()) {
       pedido.flush(paginaDeCupos([]));
     }
@@ -932,6 +1286,7 @@ describe('Appointments', () => {
 
     crudo<{ set: (v: unknown) => void }>('recursos').set(DOS_CONSULTORIOS);
     interno<(clave: string | null) => void>('elegirAgenda')(AGENDA_DE_ANA);
+    sinServicios();
 
     const pedidos = cuposPorRecurso();
     pedidos.get('r-norte')?.error(new ProgressEvent('error'), { status: 500 });
@@ -948,6 +1303,7 @@ describe('Appointments', () => {
 
     crudo<{ set: (v: unknown) => void }>('recursos').set(DOS_CONSULTORIOS);
     interno<(clave: string | null) => void>('elegirAgenda')(AGENDA_DE_ANA);
+    sinServicios();
 
     for (const pedido of cuposPorRecurso().values()) {
       pedido.error(new ProgressEvent('error'), { status: 500 });
@@ -963,6 +1319,7 @@ describe('Appointments', () => {
 
     crudo<{ set: (v: unknown) => void }>('recursos').set(DOS_CONSULTORIOS);
     interno<(clave: string | null) => void>('elegirAgenda')(AGENDA_DE_ANA);
+    sinServicios();
     for (const pedido of cuposPorRecurso().values()) {
       pedido.flush(paginaDeCupos([]));
     }
@@ -983,6 +1340,73 @@ describe('Appointments', () => {
    * como el turno de otro—, y la salida natural es cancelarlo. El sello y la
    * frase son lo que evita eso.
    */
+  describe('el servicio reservado en «Mis citas» (v4.2.40)', () => {
+    /** Una cita futura de un servicio, con lo que el paciente aceptó al reservar. */
+    function deServicio(extra: Record<string, unknown> = {}): Record<string, unknown> {
+      return {
+        ...cita('b-servicio', CONFIRMADO),
+        startAt: '2099-03-01T13:00:00.000Z',
+        endAt: '2099-03-01T13:45:00.000Z',
+        service: {
+          offeringId: 'of-1',
+          name: 'Ecocardiograma Doppler',
+          price: '480.00',
+          minDurationMinutes: 30,
+          maxDurationMinutes: 45,
+          requiresApproval: false,
+        },
+        ...extra,
+      };
+    }
+
+    function arrancarCon(citas: unknown[]): void {
+      montar();
+      responderArranque(citas);
+      responderTerminologia([
+        { conceptId: CONFIRMADO, code: 'BOOKING_CONFIRMED', display: 'Booking confirmed' },
+      ]);
+    }
+
+    const linea = (): HTMLElement | null =>
+      (fixture.nativeElement as HTMLElement).querySelector('[data-testid="mis-citas-servicio"]');
+
+    it('la fila de un servicio dice cuál es y cuánto puede durar', () => {
+      arrancarCon([deServicio()]);
+
+      expect(linea()?.textContent?.trim()).toBe('Ecocardiograma Doppler · 30–45 min');
+    });
+
+    it('con mínimo y máximo iguales dice un solo número', () => {
+      arrancarCon([
+        deServicio({
+          service: {
+            offeringId: 'of-1',
+            name: 'Electrocardiograma',
+            price: '120.00',
+            minDurationMinutes: 20,
+            maxDurationMinutes: 20,
+            requiresApproval: false,
+          },
+        }),
+      ]);
+
+      expect(linea()?.textContent?.trim()).toBe('Electrocardiograma · 20 min');
+    });
+
+    it('una consulta no lleva esa línea', () => {
+      arrancarCon([{ ...cita('b-consulta', CONFIRMADO), startAt: '2099-03-01T13:00:00.000Z', endAt: '2099-03-01T13:30:00.000Z' }]);
+
+      expect(linea()).toBeNull();
+    });
+
+    it('se guarda en el turno, para poder buscarlo y mostrarlo igual en el calendario', () => {
+      arrancarCon([deServicio()]);
+
+      const turnos = interno<() => readonly { servicio: string }[]>('todosLosTurnos')();
+      expect(turnos[0].servicio).toBe('Ecocardiograma Doppler · 30–45 min');
+    });
+  });
+
   describe('el sello de reconsulta (C4)', () => {
     /** Una cita futura que salió de una consulta del 12 de septiembre. */
     function reconsulta(extra: Record<string, unknown> = {}): Record<string, unknown> {

@@ -1,0 +1,147 @@
+:host {
+  display: contents;
+}
+
+.bulk__body {
+  display: grid;
+  gap: var(--sp-4);
+  padding-block: var(--sp-2);
+}
+
+.bulk__template {
+  display: grid;
+  gap: var(--sp-3);
+  justify-items: start;
+}
+
+.bulk__note {
+  margin: 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}
+
+.bulk__columns {
+  display: grid;
+  gap: var(--sp-2);
+  margin: 0;
+}
+
+.bulk__column {
+  display: grid;
+  gap: var(--sp-1);
+}
+
+.bulk__column dt {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  color: var(--text-primary);
+}
+
+.bulk__column dd {
+  margin: 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}
+
+.bulk__required {
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.bulk__summary {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.bulk__counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3) var(--sp-6);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--text-secondary);
+}
+
+.bulk__counts strong {
+  font-family: var(--font-display);
+  font-size: var(--fs-h3);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+}
+
+.bulk__counts--alert strong {
+  color: var(--st-error-fg);
+}
+
+.bulk__table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+}
+
+.bulk__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+.bulk__caption {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.bulk__table th,
+.bulk__table td {
+  padding: var(--sp-2) var(--sp-3);
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--border-default);
+  color: var(--text-primary);
+}
+
+.bulk__table thead th {
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.bulk__table tbody th {
+  font-weight: 600;
+}
+
+.bulk__table tbody tr:last-child > * {
+  border-bottom: 0;
+}
+
+.bulk__problems {
+  display: grid;
+  gap: var(--sp-1);
+  margin: 0;
+  padding-left: var(--sp-5);
+}
+
+.bulk__line {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (min-width: 640px) {
+  .bulk__template {
+    grid-template-columns: 1fr auto;
+    align-items: center;
+  }
+
+  .bulk__columns {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

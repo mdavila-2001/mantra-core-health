@@ -5,7 +5,7 @@ import { filter, map } from 'rxjs';
 
 import { AuthService } from '../auth/auth.service';
 import { APP_SECTIONS } from './navigation.map';
-import { GRUPOS_APLANADOS, NAV_GROUP_ICONS, SUBGROUP_BY_PATH } from './navigation.subgroups';
+import { NAV_GROUP_ICONS, SUBGROUP_BY_PATH, seAplanaElGrupo } from './navigation.subgroups';
 import {
   apareceEnElMenu,
   isVisibleTo,
@@ -63,9 +63,7 @@ export class NavigationService {
     const roles = this.auth.roles();
     const tenants = this.auth.tenants();
     const activeTenantType = this.auth.activeTenantType();
-    return APP_SECTIONS.filter((section) =>
-      isVisibleTo(section, roles, tenants, activeTenantType),
-    );
+    return APP_SECTIONS.filter((section) => isVisibleTo(section, roles, tenants, activeTenantType));
   });
 
   /**
@@ -106,7 +104,7 @@ export class NavigationService {
         // Un grupo aplanado igual se reparte en bloques: `blocks` es la única
         // vista que conserva el orden de dibujo, y el día que alguien lo saque
         // de la lista tiene que volver a plegarse sin recalcular nada.
-        aplanado: GRUPOS_APLANADOS.has(group),
+        aplanado: seAplanaElGrupo(group, activeTenantType),
       };
     }).filter((section) => section.items.length > 0);
   });

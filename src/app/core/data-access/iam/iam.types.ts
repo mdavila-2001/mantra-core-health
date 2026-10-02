@@ -397,6 +397,16 @@ export interface PractitionerRegistration {
   readonly sexAtBirth?: BirthSexCode;
   /** Foto de perfil en formato Base64 (Data URI o base64 plano). */
   readonly profilePhotoBase64?: string;
+  /**
+   * La **imagen** de la firma manuscrita, en base64 (Data URI). Opcional.
+   *
+   * **Sólo simulador**: el DTO real no la declara ni el backend tiene dónde
+   * guardarla (ver `docs/pendientes-backend-perfil-profesional.md`). No es una
+   * firma electrónica.
+   */
+  readonly signatureImageBase64?: string;
+  /** La **imagen** del sello médico, en base64. Mismas reservas que la firma. */
+  readonly sealImageBase64?: string;
   /** Ocupación del catálogo (VS_BO_OCCUPATION). */
   readonly occupationConceptId?: string;
   /** Ocupación en texto libre, para cuando no está en el catálogo. */
@@ -652,11 +662,20 @@ export interface RegisteredOrganization {
   readonly diagnosticUnitId?: string;
 }
 
-/** Una sucursal declarada en el alta pública de farmacia (1.18): sólo lo que el mapa confirma. */
+/**
+ * Una sucursal declarada en el alta pública de farmacia (1.18).
+ *
+ * Sólo lo que el mapa confirma: una sucursal sin punto no viaja (la del
+ * enlace de ubicación cuenta como punto cuando lo trae escrito).
+ * `description` y `locationUrl` los suma la carga masiva de sucursales
+ * (2026-09-30); la API todavía no los conoce (P54).
+ */
 export interface PharmacyBranchRegistration {
   readonly name: string;
   readonly latitude: number;
   readonly longitude: number;
+  readonly description?: string;
+  readonly locationUrl?: string;
 }
 
 /**
@@ -736,6 +755,10 @@ export interface DiagnosticUnitBranchRegistration {
   readonly name: string;
   readonly addressLines: readonly string[];
   readonly location?: RegistrationCoordinates;
+  /** Suma de la carga masiva de sucursales (2026-09-30); la API todavía no la conoce (P54). */
+  readonly description?: string;
+  /** El enlace de mapa tal como lo pegaron; ídem. */
+  readonly locationUrl?: string;
 }
 
 /**

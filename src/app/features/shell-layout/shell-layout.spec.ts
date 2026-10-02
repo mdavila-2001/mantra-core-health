@@ -113,6 +113,40 @@ describe('ShellLayout', () => {
     expect(user?.roles).toEqual(['PATIENT']);
   });
 
+  it('la cuenta de una organización se muestra como la organización, no como quien la registró', () => {
+    abrirSesion({
+      sub: 'u-1',
+      name: 'Mariela Céspedes',
+      roles: ['USER'],
+      tenants: ['t-1'],
+      tenantNames: { 't-1': 'Farmacia Vida' },
+      tenantTypes: { 't-1': 'PHARMACY' },
+      accountKind: 'ORGANIZATION',
+    });
+
+    expect(interno<() => { displayName: string } | null>('user')()?.displayName).toBe(
+      'Farmacia Vida',
+    );
+    expect(interno<() => string>('iniciales')()).toBe('FV');
+    expect(interno<() => string>('rolesLegibles')()).toBe('Farmacia');
+  });
+
+  it('una persona que trabaja en una farmacia sigue viéndose con su nombre', () => {
+    abrirSesion({
+      sub: 'u-2',
+      name: 'Luis Mercado',
+      roles: ['USER'],
+      tenants: ['t-1'],
+      tenantNames: { 't-1': 'Farmacia Vida' },
+      tenantTypes: { 't-1': 'PHARMACY' },
+      accountKind: 'PERSON',
+    });
+
+    expect(interno<() => { displayName: string } | null>('user')()?.displayName).toBe(
+      'Luis Mercado',
+    );
+  });
+
   it('sin nombre en el token cae al identificador, para que el encabezado no quede vacío', () => {
     abrirSesion({ sub: 'u-1', roles: [], tenants: ['t-1'] });
 
@@ -866,7 +900,7 @@ describe('ShellLayout', () => {
       expect(destinos).toContain('/design-system');
     });
 
-    it('la barra de la aseguradora: seis renglones, un solo dominio plegable (2026-09-25, +1 el 2026-09-27)', () => {
+    it('la barra de la aseguradora: siete renglones sueltos, ningún plegable (2026-09-25, +1 el 2026-09-27; aplanada el 2026-10-01)', () => {
       abrirSesion({
         sub: 'u-3',
         roles: ['USER'],
@@ -889,8 +923,10 @@ describe('ShellLayout', () => {
         '/administration/insurance-campaigns',
         '/administration/my-organization',
       ]);
-      expect(raiz().querySelectorAll('.app-side-nav__group').length).toBe(1);
-      expect(raiz().querySelectorAll('[data-testid="nav-sueltos"]').length).toBe(0);
+      // Pedido del propietario, 2026-10-01: «Administración» no se dibuja como
+      // desplegable para esta cuenta; sus opciones van a nivel 0, sin `<details>`.
+      expect(raiz().querySelectorAll('.app-side-nav__group').length).toBe(0);
+      expect(raiz().querySelectorAll('[data-testid="nav-sueltos"]').length).toBe(1);
     });
 
     /**

@@ -587,6 +587,53 @@ export interface ClaimDetail {
   readonly eob: ClaimEob | null;
 }
 
+/* ---- «Mis solicitudes»: lo que decidió la aseguradora -------------------
+   La misma `insurance_claims` que dictamina la aseguradora, vista por quien
+   presentó o recibió la prestación: el paciente, el médico, el laboratorio o
+   el centro de imagenología. El lado lo decide el servidor por la sesión.
+   Contrato: `docs/contracts/my-insurance-claims.md` (P56). */
+
+/** De qué lado mira la sesión. `NONE`: la cuenta no presenta solicitudes. */
+export type MyClaimsView = 'PATIENT' | 'PRACTITIONER' | 'LABORATORY' | 'IMAGING' | 'NONE';
+
+/** El dictamen, sin quién de la aseguradora lo firmó. */
+export interface MyClaimDecision {
+  readonly outcome: ReceivedClaimOutcome;
+  readonly decidedAt: Date;
+  /** Obligatorio al rechazar o aprobar en parte; opcional al aprobar. */
+  readonly reason: string | null;
+}
+
+/** Una solicitud de «Mis solicitudes». */
+export interface MyClaim {
+  readonly id: string;
+  readonly claimIdentifier: string;
+  /** `null` en la vista del paciente: es quien mira. */
+  readonly patientName: string | null;
+  readonly practitioner: Omit<ReceivedClaimPractitioner, 'id'> | null;
+  readonly providerName: string;
+  readonly service: InsuranceConcept | null;
+  readonly additionalServiceCount: number;
+  readonly billedTotal: Money;
+  /** `null` mientras no haya dictamen. **No es cero.** */
+  readonly approvedTotal: Money | null;
+  readonly submittedAt: Date | null;
+  /** Día de la atención: es una fecha, no un instante. */
+  readonly serviceDate: Date | null;
+  readonly insurerName: string;
+  readonly planName: string | null;
+  readonly status: InsuranceConcept | null;
+  /** `null` mientras la aseguradora no decidió. */
+  readonly decision: MyClaimDecision | null;
+}
+
+export interface MyClaimList {
+  readonly view: MyClaimsView;
+  readonly items: readonly MyClaim[];
+  /** `true` si el servidor recortó al tope. */
+  readonly truncated: boolean;
+}
+
 /* ============================================================================
    Campañas preventivas de la aseguradora (Tarea 4 · M-06)
 

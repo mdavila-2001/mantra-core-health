@@ -1,3 +1,4 @@
+import { CATALOGO_MEDICAMENTOS, type CatalogFixtureRow } from '../fixtures/catalogo-medicamentos.generated';
 import { FARMACIAS_DEL_CORPUS } from '../fixtures/bolivia-eje-central';
 import { patientSettlementForItems } from '../fixtures/patient-settlements';
 import { vitrinas } from '../fixtures/comunidad';
@@ -13,7 +14,7 @@ import {
 } from '../fixtures/pedidos-de-farmacia';
 import { conflict, notFound, preconditionFailed, validation, type MockRequest, type MockRouter } from '../mock-router';
 import { TENANT_TYPES } from '../mock-session';
-import { ahora, Coleccion, contiene, cuerpo, iso, isoDia, masMinutos, nuevoId, texto, uuid } from '../mock-store';
+import { ahora, Coleccion, contiene, contieneSinTildes, cuerpo, iso, isoDia, masMinutos, nuevoId, texto, uuid } from '../mock-store';
 
 /* ============================================================================
     Farmacias: el directorio, los productos publicados, la disponibilidad
@@ -206,6 +207,14 @@ interface ProductoSimulado {
   readonly minStock?: number;
   /** Archivos de `common.files`, hasta {@link MAX_IMAGENES} (P47). */
   readonly imageFileIds?: readonly string[];
+  /**
+   * El producto del catálogo universal del que viene. Con él, nombre,
+   * concentración, presentación y receta son del registro oficial y no se
+   * editan; sin él es un producto cargado a mano antes del catálogo.
+   */
+  readonly catalogProductId?: string;
+  /** Código de la presentación elegida (CN, CUM…). */
+  readonly catalogPresentationCode?: string | null;
 }
 
 /** Umbral de alerta que se asume mientras la farmacia no fije el suyo. */
@@ -251,15 +260,68 @@ const CATEGORIA_DE_FORMA: Readonly<Record<string, string>> = {
  * campos son una **extensión del simulador** (P47): la API real no los tiene.
  */
 function productoPublico(p: ProductoSimulado) {
-  const { medicationConceptId: _m, price, stock: _s, retirado: _r, sinStock: _x, category: _c, description, estado: _e, minStock: _n, imageFileIds: _i, ...resto } = p;
+  const { medicationConceptId: _m, price, stock: _s, retirado: _r, sinStock: _x, category: _c, description, estado: _e, minStock: _n, imageFileIds: _i, catalogProductId, catalogPresentationCode, ...resto } = p;
   return {
     ...resto,
+    catalog: vinculoConElCatalogo(catalogProductId, catalogPresentationCode),
     unitPrice: price,
     inStock: hayStock(p),
     category: categoriaDe(p),
     description: description ?? null,
   };
 }
+
+/* ---- catálogo universal de medicamentos --------------------------------- */
+
+/** El catálogo del simulador: un subconjunto REAL de CIMA e INVIMA (ver el script que lo genera). */
+const CATALOGO_POR_ID = new Map<string, CatalogFixtureRow>(CATALOGO_MEDICAMENTOS.map((c0) => [c0.id, c0]));
+
+/** Medicamento del vademécum del simulador por su código (`MED-…`). */
+function medicamentoPorCodigo(code: string | null): { conceptId: string; code: string; display: string } | null {
+  if (code === null || !(code in MEDICAMENTO)) return null;
+  const conceptId = MEDICAMENTO[code as keyof typeof MEDICAMENTO];
+  return { conceptId, code, display: displayDe(conceptId) };
+}
+
+/** Lo que el servidor lee del catálogo cuando la farmacia sólo mandó el id. */
+function derivadosDelCatalogo(entrada: CatalogFixtureRow, presentationCode: string | undefined) {
+  const presentacion = entrada.presentations.find((p) => p.code === presentationCode) ?? null;
+  return {
+    brandName: entrada.display,
+    genericName: entrada.activeIngredients.map((i) => i.name).join(' + ') || null,
+    strengthText: entrada.strengthText,
+    packageSizeText: presentacion?.name ?? null,
+    requiresPrescription: entrada.requiresPrescription,
+    dosageForm: entrada.dosageForm === null ? null : c(entrada.dosageForm.toUpperCase().replace(/\s+/g, '_'), entrada.dosageForm),
+    medication: medicamentoPorCodigo(entrada.medicationCode),
+  };
+}
+
+function vinculoConElCatalogo(catalogProductId: string | undefined, presentationCode: string | null | undefined) {
+  if (catalogProductId === undefined) return null;
+  const entrada = CATALOGO_POR_ID.get(catalogProductId);
+  if (entrada === undefined) return null;
+  return {
+    catalogProductId,
+    source: entrada.source,
+    sourceName: entrada.sourceName,
+    code: entrada.code,
+    presentationCode: presentationCode ?? null,
+    officialPhoto: entrada.photo,
+  };
+}
+
+/** Lo que la API entrega de una entrada del catálogo (sin el campo interno del simulador). */
+function productoDelCatalogo(entrada: CatalogFixtureRow) {
+  const { medicationCode: _medicationCode, ...publico } = entrada;
+  return publico;
+}
+
+/** Campos que, en un producto vinculado al catálogo, son del registro oficial. */
+const CAMPOS_DEL_CATALOGO = ['brandName', 'genericName', 'strengthText', 'packageSizeText', 'requiresPrescription'] as const;
+
+/** Solicitudes de alta al catálogo que la farmacia mandó (la revisa un administrador). */
+const solicitudesDeAlta = new Coleccion<{ readonly id: string; readonly pharmacyId: string; readonly name: string; readonly creadaEn: string }>([]);
 
 /** La categoría que la farmacia le puso o, si no, la que sale de la forma. */
 function categoriaDe(p: ProductoSimulado): string | null {
@@ -487,6 +549,11 @@ interface PedidoSimulado {
   readonly patientName: string;
   readonly pickupCode: string;
   readonly rejectionReasonText: string | null;
+  /**
+   * La sede del pedido. Ausente = la sede de la farmacia (`FarmaciaSimulada`);
+   * sólo los pedidos de las sedes adicionales de la bandeja lo declaran.
+   */
+  readonly siteId?: string;
   readonly lineas: readonly LineaSimulada[];
   readonly sustituciones: readonly { id: string; originalProductId: string; proposedProductId: string; status: 'PROPOSED' | 'ACCEPTED' | 'DECLINED'; decidedAt: string | null }[];
   /** Sin declarar, el pedido se retira en la farmacia (`PINV_DELIVERY_RETIRO`). */
@@ -497,6 +564,98 @@ interface PedidoSimulado {
 
 function productoDe(pharmacyId: string, code: keyof typeof MEDICAMENTO): ProductoSimulado {
   return productos.get(uuid(`product-${pharmacyId}-${code}`))!;
+}
+
+/**
+ * Las sedes adicionales de la primera farmacia, la del mostrador de la maqueta.
+ *
+ * Existen para que la bandeja tenga algo que elegir: con una sola sede el
+ * selector no aparece y el tablero por sede no se puede ver. La sede original
+ * (`Sucursal Central`) es la casa matriz; éstas no. Las direcciones son zonas
+ * de Santa Cruz, no domicilios de un negocio real.
+ */
+interface SedeAdicional {
+  readonly siteId: string;
+  readonly code: string;
+  readonly name: string;
+  readonly addressText: string;
+  readonly lat: number;
+  readonly lng: number;
+}
+
+const SEDES_ADICIONALES: readonly SedeAdicional[] = (() => {
+  const f0 = FARMACIAS[0]!;
+  return [
+    { siteId: uuid(`pharmacy-site-${f0.code}-equipetrol`), code: `${f0.code}_EQ`, name: 'Sucursal Equipetrol', addressText: 'Av. San Martín, Equipetrol', lat: -17.76, lng: -63.199 },
+    { siteId: uuid(`pharmacy-site-${f0.code}-plan3000`), code: `${f0.code}_P3`, name: 'Sucursal Plan 3000', addressText: 'Av. Paraguá, Plan 3000', lat: -17.814, lng: -63.137 },
+  ];
+})();
+
+const SEDE_CENTRAL_ID = FARMACIAS[0]!.siteId;
+
+/** La sede de un pedido: la declarada, o la de su farmacia. */
+function sedeDelPedido(p: PedidoSimulado, farmacia: FarmaciaSimulada) {
+  const adicional = SEDES_ADICIONALES.find((sede) => sede.siteId === p.siteId);
+  return adicional === undefined
+    ? { siteId: farmacia.siteId, siteName: farmacia.siteName }
+    : { siteId: adicional.siteId, siteName: adicional.name };
+}
+
+const NOMBRES_DE_EJEMPLO = ['Lucía', 'Marco', 'Elena', 'Rubén', 'Camila', 'Iván', 'Noemí', 'Álvaro', 'Paola', 'Sergio', 'Daniela', 'Gonzalo', 'Mariela', 'Esteban', 'Ximena', 'Julio'];
+const APELLIDOS_DE_EJEMPLO = ['Rojas Camacho', 'Vaca Suárez', 'Justiniano Roca', 'Cuéllar Parada', 'Menacho Soliz', 'Egüez Barba', 'Pedraza Ribera', 'Añez Moreno', 'Saucedo Ortiz', 'Terceros Landívar'];
+
+function pedidoDelTablero(clave: string, estado: EstadoPedido, n: number, createdAt: string, siteId?: string): PedidoSimulado {
+  const f0 = FARMACIAS[0]!;
+  const medicamentos = ['MED-IBUPROFENO', 'MED-OMEPRAZOL', 'MED-METFORMINA', 'MED-LOSARTAN', 'MED-SALBUTAMOL'] as const;
+  const med = medicamentos[n % medicamentos.length]!;
+  const terminado = ['RETIRADO', 'RECHAZADO', 'VENCIDO', 'CANCELADO'].includes(estado);
+  return {
+    id: uuid(`pharmacy-order-tablero-${clave}-${n}`),
+    estado,
+    createdAt,
+    expiresAt: createdAt,
+    pharmacyId: f0.id,
+    ...(siteId === undefined ? {} : { siteId }),
+    medicationRequestId: null,
+    patientProfileId: uuid(`pid-tablero-${clave}-${n}`),
+    patientName: `${NOMBRES_DE_EJEMPLO[n % NOMBRES_DE_EJEMPLO.length]} ${APELLIDOS_DE_EJEMPLO[(n * 3) % APELLIDOS_DE_EJEMPLO.length]}`,
+    pickupCode: `AV-${7000 + n}`,
+    rejectionReasonText: estado === 'RECHAZADO' ? 'La receta adjunta está vencida. Pedí una nueva a tu médico.' : null,
+    lineas: [{ productId: productoDe(f0.id, med).id, requestedQuantity: 1 + (n % 3), reservedQuantity: terminado ? 0 : 1, fulfilledQuantity: estado === 'RETIRADO' ? 1 : 0, status: estado === 'RETIRADO' ? ('FULFILLED' as const) : terminado ? ('RELEASED' as const) : ('RESERVED' as const) }],
+    sustituciones: [],
+  };
+}
+
+/**
+ * Los pedidos de relleno del tablero de la bandeja: lo suficiente en cada
+ * cola, en las tres sedes y en varias fechas, para ver el desplazamiento
+ * interno de una columna llena y el recorte de «Cerrados» por fecha. Los
+ * pendientes de días atrás están a propósito: la fecha no los esconde.
+ */
+function pedidosDelTablero(): PedidoSimulado[] {
+  const [equipetrol, plan3000] = SEDES_ADICIONALES.map((sede) => sede.siteId);
+  return [
+    // Sucursal Central (la casa matriz): lo cerrado de hoy, ayer y la semana.
+    pedidoDelTablero('central', 'RETIRADO', 1, iso(0, 8)),
+    pedidoDelTablero('central', 'RECHAZADO', 2, iso(0, 7, 30)),
+    pedidoDelTablero('central', 'RETIRADO', 3, iso(-1, 16)),
+    pedidoDelTablero('central', 'VENCIDO', 4, iso(-1, 9)),
+    pedidoDelTablero('central', 'CANCELADO', 5, iso(-3, 11)),
+    pedidoDelTablero('central', 'RETIRADO', 6, iso(-6, 15)),
+    pedidoDelTablero('central', 'ACEPTACION_PENDIENTE', 7, iso(-2, 10)),
+    pedidoDelTablero('central', 'LISTO_PARA_RETIRO', 8, iso(-1, 14)),
+    pedidoDelTablero('central', 'CONFIRMADO', 9, iso(0, 12)),
+    // Equipetrol: una columna de revisión llena, para que haga scroll.
+    ...Array.from({ length: 3 }, (_, i) => pedidoDelTablero('eq-nuevos', 'ENVIADO', i, iso(0, 13, i * 4), equipetrol)),
+    ...Array.from({ length: 14 }, (_, i) => pedidoDelTablero('eq-revision', 'EN_REVISION', i, iso(0, 9, i * 3), equipetrol)),
+    ...Array.from({ length: 2 }, (_, i) => pedidoDelTablero('eq-espera', 'ACEPTACION_PENDIENTE', i, iso(-1, 11, i * 9), equipetrol)),
+    ...Array.from({ length: 2 }, (_, i) => pedidoDelTablero('eq-listos', 'LISTO_PARA_RETIRO', i, iso(-1, 15, i * 7), equipetrol)),
+    ...Array.from({ length: 3 }, (_, i) => pedidoDelTablero('eq-cerrados', 'RETIRADO', i, iso(0, 8, i * 11), equipetrol)),
+    // Plan 3000: poco movimiento.
+    pedidoDelTablero('p3-nuevo', 'ENVIADO', 1, iso(0, 10, 20), plan3000),
+    pedidoDelTablero('p3-revision', 'EN_REVISION', 2, iso(0, 9, 40), plan3000),
+    pedidoDelTablero('p3-cerrado', 'RETIRADO', 3, iso(-2, 12), plan3000),
+  ];
 }
 
 const pedidos = new Coleccion<PedidoSimulado>(
@@ -520,6 +679,7 @@ const pedidos = new Coleccion<PedidoSimulado>(
       // contrato (`deliveryMode`, `deliveryAddressText`), así que los declara el backend simulado
       // y la pantalla los lee de la respuesta, igual que con la API real.
       { id: ID_PEDIDO_CON_DELIVERY, deliveryMode: 'DOMICILIO' as const, deliveryAddressText: DELIVERY_ORDER_ADDRESS, estado: 'EN_REVISION' as const, createdAt: iso(0, 11, 40), expiresAt: iso(3, 11), pharmacyId: f0.id, medicationRequestId: null, patientProfileId: uuid('pid-p-gutierrez'), patientName: 'Vania Gutiérrez Peña', pickupCode: 'AV-6004', rejectionReasonText: null, lineas: [{ productId: productoDe(f0.id, 'MED-IBUPROFENO').id, requestedQuantity: 1, reservedQuantity: 1, fulfilledQuantity: 0, status: 'RESERVED' as const }, { productId: productoDe(f0.id, 'MED-OMEPRAZOL').id, requestedQuantity: 2, reservedQuantity: 2, fulfilledQuantity: 0, status: 'RESERVED' as const }], sustituciones: [] },
+      ...pedidosDelTablero(),
     ];
   })(),
 );
@@ -629,8 +789,7 @@ function dto(p: PedidoSimulado, owner = false) {
     status: c(`PINV_ORDER_${p.estado}`, ETIQUETA[p.estado]),
     createdAt: p.createdAt,
     expiresAt: p.expiresAt,
-    siteId: farmacia.siteId,
-    siteName: farmacia.siteName,
+    ...sedeDelPedido(p, farmacia),
     pharmacyId: farmacia.id,
     pharmacyName: farmacia.name,
     medicationRequestId: p.medicationRequestId,
@@ -673,7 +832,7 @@ export function registrarFarmacia(router: MockRouter): void {
     const propias = tenant !== null && TENANT_TYPES[tenant] === 'PHARMACY' ? FARMACIAS.filter((f) => f.id === tenant) : [];
     const visibles = propias.length > 0 ? propias : FARMACIAS;
     return {
-      items: visibles.map((f) => ({ id: f.id, code: f.code, name: f.name, siteCount: 1, productCount: activos().filter((p) => p.pharmacyId === f.id).length })),
+      items: visibles.map((f) => ({ id: f.id, code: f.code, name: f.name, siteCount: f === FARMACIAS[0] ? 1 + SEDES_ADICIONALES.length : 1, productCount: activos().filter((p) => p.pharmacyId === f.id).length })),
       count: visibles.length,
     };
   });
@@ -696,18 +855,34 @@ export function registrarFarmacia(router: MockRouter): void {
       // el nombre comercial también como `legalName`.
       legalName: f0.name,
       type: null,
-      siteCount: sedes.length,
+      siteCount: sedes.length + (id === FARMACIAS[0]!.id ? SEDES_ADICIONALES.length : 0),
       productCount: productos.filtrar((p) => p.pharmacyId === id).length,
       homeDeliveryAvailable: sedes.some((f) => f.homeDelivery),
       pickupAvailable: true,
-      sites: sedes.map((f) => ({
-        id: f.siteId,
-        code: f.code,
-        name: f.siteName,
-        addressText: f.addressText,
-        latitude: f.lat,
-        longitude: f.lng,
-      })),
+      sites: [
+        ...sedes.map((f) => ({
+          id: f.siteId,
+          code: f.code,
+          name: f.siteName,
+          addressText: f.addressText,
+          latitude: f.lat,
+          longitude: f.lng,
+          // Sólo la sede original del mostrador de la maqueta es la matriz; en
+          // el resto el backend real todavía no publica la marca.
+          ...(f.siteId === SEDE_CENTRAL_ID ? { isHeadOffice: true } : {}),
+        })),
+        ...(id === FARMACIAS[0]!.id
+          ? SEDES_ADICIONALES.map((sede) => ({
+              id: sede.siteId,
+              code: sede.code,
+              name: sede.name,
+              addressText: sede.addressText,
+              latitude: sede.lat,
+              longitude: sede.lng,
+              isHeadOffice: false,
+            }))
+          : []),
+      ],
       ...legalProfileOf(f0),
     };
   });
@@ -745,6 +920,44 @@ export function registrarFarmacia(router: MockRouter): void {
     return { items, limit, truncated: coinciden.length > limit };
   });
 
+  // Catálogo universal: la farmacia busca el medicamento en el registro oficial
+  // y lo elige por su id. Sólo lectura; lo no vigente se lista pero no se elige.
+  router.get('/pharmacy/catalog-products', ({ query }) => {
+    const q = texto(query, 'search');
+    const source = texto(query, 'source');
+    const atc = texto(query, 'atc');
+    const limit = Number(query.get('limit') ?? 20) || 20;
+    const coinciden = CATALOGO_MEDICAMENTOS.filter(
+      (e) =>
+        (source === null || e.source === source) &&
+        (atc === null || e.atc.includes(atc)) &&
+        (q === null ||
+          contieneSinTildes(e.display, q) ||
+          contieneSinTildes(e.holder, q) ||
+          contieneSinTildes(e.code, q) ||
+          e.activeIngredients.some((i) => contieneSinTildes(i.name, q)) ||
+          e.atc.some((a) => contieneSinTildes(a, q))),
+    );
+    return { items: coinciden.slice(0, limit).map(productoDelCatalogo), limit, truncated: coinciden.length > limit };
+  });
+
+  // «No encuentro mi medicamento»: la farmacia no publica un producto libre,
+  // pide el alta y la revisa un administrador.
+  router.post('/pharmacies/:pharmacyId/catalog-requests', (request) => {
+    const pharmacyId = request.params['pharmacyId']!;
+    if (FARMACIAS.find((f) => f.id === pharmacyId) === undefined) return notFound('Farmacia no encontrada');
+    const datos = cuerpo<{ name: string; holder: string; strengthText: string; presentation: string; registrationNumber: string; notes: string }>(request);
+    const nombre = typeof datos.name === 'string' ? datos.name.trim() : '';
+    if (nombre.length < 2 || nombre.length > 300) {
+      return validation('name must be between 2 and 300 characters', [
+        { field: 'name', message: 'El nombre del medicamento es obligatorio (2 a 300 caracteres).' },
+      ]);
+    }
+    const nueva = solicitudesDeAlta.agregar({ id: nuevoId('catalog-request'), pharmacyId, name: nombre, creadaEn: ahora() });
+    registrarActividad(pharmacyId, 'ALTA', `Pediste incorporar «${nombre}» al catálogo.`);
+    return { status: 201, body: { id: nueva.id, status: 'PENDING', createdAt: nueva.creadaEn } };
+  });
+
   // UC-24-04 · el alta de un producto en el catálogo de la farmacia. Nace
   // activo y sin precio ni stock: esos viven en listas de precios y en el
   // inventario, que el alta no toca.
@@ -769,6 +982,8 @@ export function registrarFarmacia(router: MockRouter): void {
       stock: number;
       minStock: number;
       imageFileIds: string[];
+      catalogProductId: string;
+      catalogPresentationCode: string;
     }>(request);
     const codigo = typeof datos.productCode === 'string' ? datos.productCode : '';
     if (codigo.length < 1 || codigo.length > 100) {
@@ -780,6 +995,33 @@ export function registrarFarmacia(router: MockRouter): void {
     // (`findByPharmacyAndCode` no mira el estado).
     if (productos.filtrar((p) => p.pharmacyId === pharmacyId && p.productCode === codigo).length > 0) {
       return conflict('Ya existe un producto con ese código en la farmacia', { productCode: codigo });
+    }
+    // Vinculado al catálogo: nombre, concentración, presentación y receta los
+    // deriva el servidor, y mandarlos es un 400 (como `forbidNonWhitelisted`).
+    const entrada = datos.catalogProductId === undefined ? undefined : CATALOGO_POR_ID.get(datos.catalogProductId);
+    if (datos.catalogProductId !== undefined) {
+      // Como la API (`deriveFromCatalog`): un id que no está en el catálogo es un 404.
+      if (entrada === undefined) {
+        return notFound('Producto del catálogo no encontrado');
+      }
+      if (!entrada.selectable) {
+        return preconditionFailed('El registro sanitario de ese producto no está vigente', { catalogProductId: entrada.id });
+      }
+      const propios = CAMPOS_DEL_CATALOGO.filter((campo) => campo in datos);
+      if (propios.length > 0) {
+        return validation(`property ${propios[0]} should not exist`, propios.map((field) => ({ field, message: 'Este dato viene del catálogo oficial.' })));
+      }
+      if (datos.catalogPresentationCode !== undefined && !entrada.presentations.some((p) => p.code === datos.catalogPresentationCode)) {
+        return validation('catalogPresentationCode does not belong to the product', [
+          { field: 'catalogPresentationCode', message: 'Esa presentación no es de este producto.' },
+        ]);
+      }
+      const repetido = productos.filtrar(
+        (p) => p.pharmacyId === pharmacyId && p.catalogProductId === entrada.id && (p.catalogPresentationCode ?? null) === (datos.catalogPresentationCode ?? null),
+      );
+      if (repetido.length > 0) {
+        return conflict('Ya cargaste ese producto y presentación', { catalogProductId: entrada.id });
+      }
     }
     // Los topes del DTO (`MaxLength`): el simulador no deja pasar lo que la
     // API rechazaría, para que la maqueta no muestre un alta imposible.
@@ -800,20 +1042,22 @@ export function registrarFarmacia(router: MockRouter): void {
     }
     const invalido = validarGestion(datos);
     if (invalido !== null) return invalido;
-    const medicamento = medicamentoDe(datos.genericName);
+    const derivados = entrada === undefined ? null : derivadosDelCatalogo(entrada, datos.catalogPresentationCode);
+    const medicamento = derivados === null ? medicamentoDe(datos.genericName) : derivados.medication;
     const nuevo = productos.agregar({
       id: nuevoId('pharmacy-product'),
       pharmacyId,
       pharmacyName: farmacia.name,
       productCode: codigo,
-      brandName: datos.brandName ?? null,
-      genericName: datos.genericName ?? null,
-      strengthText: datos.strengthText ?? null,
-      packageSizeText: datos.packageSizeText ?? null,
-      dosageForm: null,
+      brandName: derivados?.brandName ?? datos.brandName ?? null,
+      genericName: derivados?.genericName ?? datos.genericName ?? null,
+      strengthText: derivados?.strengthText ?? datos.strengthText ?? null,
+      packageSizeText: derivados?.packageSizeText ?? datos.packageSizeText ?? null,
+      dosageForm: derivados?.dosageForm ?? null,
       medication: medicamento === null ? null : c(medicamento.code, medicamento.display),
       medicationConceptId: medicamento?.conceptId ?? null,
-      requiresPrescription: datos.requiresPrescription ?? null,
+      requiresPrescription: derivados === null ? (datos.requiresPrescription ?? null) : derivados.requiresPrescription,
+      ...(entrada === undefined ? {} : { catalogProductId: entrada.id, catalogPresentationCode: datos.catalogPresentationCode ?? null }),
       // Extensión del simulador (P47): precio, categoría, descripción y el
       // «no tengo». Un producto que se sube disponible entra a la vitrina.
       price: importeDe(datos.unitPrice),
@@ -868,6 +1112,14 @@ export function registrarFarmacia(router: MockRouter): void {
     // sobre él es el mismo 404 de siempre.
     if (producto.retirado === true && datos.status === undefined) {
       return notFound('Producto no encontrado');
+    }
+    // Vinculado al catálogo: lo oficial no se edita (precio, fotos, descripción,
+    // existencias, categoría y publicación sí).
+    if (producto.catalogProductId !== undefined) {
+      const bloqueados = CAMPOS_DEL_CATALOGO.filter((campo) => campo in datos);
+      if (bloqueados.length > 0) {
+        return validation(`property ${bloqueados[0]} should not exist`, bloqueados.map((field) => ({ field, message: 'Este dato viene del catálogo oficial y no se edita.' })));
+      }
     }
     const invalido = validarGestion(datos);
     if (invalido !== null) return invalido;
@@ -1168,10 +1420,19 @@ export function registrarFarmacia(router: MockRouter): void {
 
   router.get('/pharmacy/orders', ({ query }) => {
     const status = texto(query, 'status');
+    const siteId = texto(query, 'siteId');
+    const desde = texto(query, 'from');
+    const hasta = texto(query, 'to');
+    const tope = Number(texto(query, 'limit') ?? 100);
     const items = pedidos
       .todos()
       .filter((p) => status === null || p.estado === status || `PINV_ORDER_${p.estado}` === status)
+      .filter((p) => siteId === null || dto(p).siteId === siteId)
+      // Como la API: `from` inclusive y `to` exclusivo, sobre la creación.
+      .filter((p) => desde === null || Date.parse(p.createdAt) >= Date.parse(desde))
+      .filter((p) => hasta === null || Date.parse(p.createdAt) < Date.parse(hasta))
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+      .slice(0, Number.isFinite(tope) && tope > 0 ? tope : 100)
       .map((order) => dto(order));
     return { items, count: items.length };
   });

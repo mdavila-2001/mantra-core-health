@@ -375,24 +375,29 @@ describe('isVisibleTo con `onlyForTenantTypes`', () => {
     expect(isVisibleTo(labSection, ['PATIENT'], ['t-1'], 'DIAGNOSTIC_CENTER')).toBe(false);
   });
 
-  it('las secciones reales son las del laboratorio y las ocho de la farmacia, y nada más la usa', () => {
+  it('las secciones reales son las del laboratorio y las diez de la farmacia, y nada más la usa', () => {
     const flagged = APP_SECTIONS.filter((s) => s.onlyForTenantTypes !== undefined);
     // Desde el 29/09/2026 el menú de la cuenta de farmacia es plano y cerrado:
     // sus ocho pantallas sólo existen para una organización `PHARMACY`. Desde
     // el 30/09/2026 el de laboratorio también, y va después de la farmacia.
+    // El 01/10/2026 los dos sumaron «Precios» y «Sucursales».
     expect(flagged.map((s) => s.path)).toEqual([
       'administration/pharmacy',
       'administration/pharmacy-catalog',
       'administration/pharmacy-categories',
       'administration/pharmacy-import',
       'administration/pharmacy-inventory',
+      'administration/pharmacy-prices',
       'administration/pharmacy-orders',
       'administration/pharmacy-campaigns',
       'administration/pharmacy-profile',
+      'administration/pharmacy-branches',
       'administration/laboratory',
       'laboratorio/recepcion',
       'laboratorio/cola',
       'administration/laboratory-results',
+      'administration/laboratory-prices',
+      'administration/laboratory-branches',
     ]);
     for (const section of flagged) {
       expect(section.onlyForTenantTypes, section.path).toEqual(

@@ -36,6 +36,12 @@
       <dt>{{ rotulos.subtotal }}</dt>
       <dd class="cifras-tabulares">{{ importe(resumen().subtotal) }}</dd>
     </div>
+    @if (resumen().descuentoDeCampana; as promocion) {
+      <div class="resumen__cuenta" data-testid="resumen-promocion">
+        <dt>Promociones sobre el total</dt>
+        <dd class="cifras-tabulares">−{{ promocion }} {{ moneda(resumen().moneda) }}</dd>
+      </div>
+    }
     <div class="resumen__cuenta" data-testid="resumen-descuento">
       <dt>{{ rotulos.descuentoDeRed }}</dt>
       <dd class="cifras-tabulares">
@@ -93,6 +99,11 @@
           }
           @if (renglon.esAlternativa) {
             <span class="resumen__secundario">Alternativa de demostración</span>
+          }
+          @if (renglon.promocion) {
+            <span class="resumen__promocion" data-testid="resumen-renglon-promocion">
+              <app-badge variant="success">{{ renglon.promocion }}</app-badge>
+            </span>
           }
         </span>
         <span class="cifras-tabulares">

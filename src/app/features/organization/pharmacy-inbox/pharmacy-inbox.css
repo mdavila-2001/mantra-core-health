@@ -1,7 +1,52 @@
-/* Mobile-first: las colas apiladas; el tablero de cuatro columnas aparece
-   con ancho de mostrador. El destaque del pedido nuevo pulsa una sola tanda
-   y respeta «reducir movimiento» — sin animación, el borde y el badge
-   siguen diciendo que es nuevo. */
+/* El host de la ruta es hijo de la columna de contenido del shell: sin
+   `min-width: 0` no se achica por debajo del ancho de sus seis columnas, y el
+   desplazamiento horizontal sale en la PÁGINA en vez de quedarse en el tablero. */
+:host {
+  display: block;
+  min-width: 0;
+}
+
+/* Un tablero de seis columnas, una por cola. Cada columna tiene alto máximo
+   y se desplaza por dentro; el tablero se desplaza de costado cuando las seis
+   no entran. Mobile-first: en el teléfono una columna ocupa casi todo el ancho
+   y deja asomar la siguiente, para que se entienda que se desliza. El destaque
+   del pedido nuevo pulsa una sola tanda y respeta «reducir movimiento» — sin
+   animación, el borde y el badge siguen diciendo que es nuevo. */
+
+/* Las dos barras que recortan el tablero: sede y fecha de los cerrados. */
+.bandeja__filtros {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--sp-3);
+  margin-block-end: var(--sp-4);
+}
+
+.bandeja__filtro {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  min-width: min(100%, 16rem);
+}
+
+.bandeja__filtro-rotulo {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+}
+
+.bandeja__nota {
+  margin: 0 0 var(--sp-4);
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+/* De qué fechas es la columna de cerrados: justo bajo el título. */
+.bandeja__recorte {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
 
 .bandeja__controles {
   display: flex;
@@ -39,9 +84,31 @@ app-alert {
   gap: var(--sp-6);
 }
 
+/* Sin `min-width: 0`, un ancestro flex estira el tablero al ancho de las seis
+   columnas y el desplazamiento horizontal nunca aparece. */
+.bandeja {
+  min-width: 0;
+}
+
 .bandeja__colas {
+  /* El bloque contenedor de los `.sr-only` de los encabezados (posición
+     absoluta, 1 px). Sin esto cuelgan del documento, escapan del `overflow` del
+     tablero y el de la última columna estira el ancho de la PÁGINA: 285 px de
+     desplazamiento horizontal fantasma a 1280. */
+  position: relative;
   display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 85%;
   gap: var(--sp-4);
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x proximity;
+  /* El borde de la tarjeta enfocada no se recorta contra el del tablero. */
+  padding-block-end: var(--sp-2);
+}
+
+.bandeja__cola {
+  scroll-snap-align: start;
 }
 
 .bandeja__cola {
@@ -90,12 +157,23 @@ app-alert {
   font-size: var(--fs-caption);
 }
 
+/* El tope de la columna: cabe en una ventana baja (1280×680) sin que el
+   tablero se coma la pantalla, y en una grande no crece sin fin. Todas las
+   tarjetas son enlaces, así que el teclado llega a cada una con Tab y el
+   navegador la trae a la vista: la lista no necesita ser enfocable. */
 .bandeja__lista {
   display: flex;
   flex-direction: column;
   gap: var(--sp-2);
+  max-height: clamp(20rem, calc(100dvh - 22rem), 45rem);
   margin: 0;
-  padding: 0;
+  /* Aire para que el pulso de la tarjeta nueva (4 px) no se recorte contra el
+     borde de la lista que se desplaza. */
+  padding: var(--sp-1);
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  /* Con scroll o sin él, las tarjetas miden lo mismo: no se corren al aparecer. */
+  scrollbar-gutter: stable;
   list-style: none;
 }
 
@@ -170,12 +248,6 @@ app-alert {
 
 @media (min-width: 640px) {
   .bandeja__colas {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (min-width: 1100px) {
-  .bandeja__colas {
-    grid-template-columns: repeat(4, 1fr);
+    grid-auto-columns: minmax(16rem, 1fr);
   }
 }

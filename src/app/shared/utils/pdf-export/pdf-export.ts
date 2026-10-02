@@ -15,12 +15,16 @@ import {
   FILIGRANA,
   INICIO_DE_CONTENIDO_CONTINUACION_PT,
   INICIO_DE_CONTENIDO_PT,
+  FIRMA_Y_SELLO,
+  LOGO_DEL_CONSULTORIO,
   MARGEN_INFERIOR_PT,
   MARGEN_LATERAL_PT,
   MARGEN_SUPERIOR_PT,
   RITMO,
   TIPOGRAFIA,
 } from './pdf-theme';
+import { firmaDeDocumentos, type PdfFirma } from './pdf-firma';
+import { contenerLogo, logoDeDocumentos, type PdfLogo } from './pdf-logo';
 
 /**
  * El maquetador de PDF de AloVida, sobre `jsPDF` puro.
@@ -70,6 +74,24 @@ export interface PdfExportOptions {
   readonly reference?: string;
   /** La línea legal del pie. Por omisión, la de confidencialidad. */
   readonly footerNote?: string;
+  /**
+   * El logo del consultorio, arriba a la derecha de la primera página.
+   *
+   * Ausente, se usa el de la sesión (ver `establecerLogoDeDocumentos`);
+   * `null`, el documento sale **sin logo** aunque la sesión tenga uno. Con o
+   * sin él el membrete mide lo mismo: la ranura es de tamaño fijo.
+   */
+  readonly logo?: PdfLogo | null;
+  /**
+   * La firma y el sello del médico, al pie de la última página, con su nombre y
+   * matrícula debajo.
+   *
+   * Ausente, se usa la del profesional de la sesión (ver
+   * `establecerFirmaDeDocumentos`); `null`, el documento sale **sin bloque de
+   * firma**. Sin imágenes el bloque sale igual, con la línea de firma vacía.
+   * Son imágenes, **no una firma electrónica**.
+   */
+  readonly firma?: PdfFirma | null;
 }
 
 /**
@@ -211,6 +233,7 @@ export function buildBlocksPdf(blocks: readonly PdfBlock[], options: PdfExportOp
     dibujarBloque(hoja, elemento.bloque);
   }
 
+  dibujarBloqueDeFirma(hoja);
   sellarPies(hoja);
   return doc;
 }
@@ -254,6 +277,10 @@ interface Hoja {
    * leía como escrita.
    */
   inicio: number;
+  /** El logo del consultorio ya resuelto, o `null`. Se decide una vez por documento. */
+  readonly logo: PdfLogo | null;
+  /** La firma del pie, ya resuelta, o `null` si el documento no lleva bloque. */
+  readonly firma: PdfFirma | null;
   /** Dónde va la próxima línea. Lo único que se mueve. */
   y: number;
 }
@@ -274,6 +301,8 @@ function abrirHoja(doc: jsPDF, opciones: PdfExportOptions): Hoja {
     util,
     fondo: alto - MARGEN_INFERIOR_PT,
     inicio: INICIO_DE_CONTENIDO_PT,
+    logo: opciones.logo === undefined ? logoDeDocumentos() : opciones.logo,
+    firma: opciones.firma === undefined ? firmaDeDocumentos() : opciones.firma,
     y: 0,
   };
 
@@ -331,6 +360,41 @@ function dibujarFiligrana(hoja: Hoja): void {
 }
 
 /**
+ * Dibuja el logo del consultorio dentro de su caja, o no dibuja nada.
+ *
+ * Contenido (`contenerLogo`) y pegado al margen derecho. Si el logo no se puede
+ * dibujar —formato que `jsPDF` no acepta, datos rotos, proporciones absurdas—
+ * se **omite** y el documento sigue: un logo defectuoso nunca puede impedir una
+ * receta.
+ *
+ * @returns `true` si quedó dibujado. Sólo entonces la clase de documento se
+ *   corre a la izquierda.
+ */
+function dibujarLogoDelConsultorio(hoja: Hoja, arriba: number, derecha: number): boolean {
+  const { logo } = hoja;
+  if (logo === null) {
+    return false;
+  }
+  const caja = contenerLogo(logo, LOGO_DEL_CONSULTORIO);
+  if (caja === null) {
+    return false;
+  }
+  try {
+    hoja.doc.addImage(
+      logo.dataUrl,
+      logo.formato,
+      derecha - caja.ancho,
+      arriba + caja.arriba,
+      caja.ancho,
+      caja.alto,
+    );
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * El membrete. Devuelve la altura donde puede empezar el contenido.
  *
  * @param primera - La primera página lleva título y bajada; las siguientes,
@@ -370,10 +434,26 @@ function dibujarMembrete(hoja: Hoja, primera: boolean): number {
   // repetido compite con la numeración del pie sin decir nada nuevo.
   const hayReferencia = primera && referencia !== undefined && referencia.trim() !== '';
 
+  // El logo del consultorio vive en una caja de tamaño fijo a la derecha de la
+  // primera página. Es lo único que se mueve por su culpa: la clase y el folio
+  // se corren a su izquierda **sólo si hay logo**, y en vertical no cambia
+  // nada —ni el filete, ni el título, ni dónde arranca el contenido—. Sin logo,
+  // el membrete es idéntico al de siempre.
+  const hayLogo = primera && dibujarLogoDelConsultorio(hoja, topeMarca, derecha);
+  const bordeDerecho = hayLogo
+    ? derecha - LOGO_DEL_CONSULTORIO.ancho - LOGO_DEL_CONSULTORIO.separacion
+    : derecha;
+  // Un texto alineado a la derecha con letras espaciadas sobresale de su ancla
+  // por lo que suma el espaciado (un espacio por letra): ~19 pt en «RECETA
+  // MÉDICA». Pegado al margen no molesta; pegado a un logo, lo pisaría. Sólo
+  // con logo se descuenta, y sin logo la clase queda donde siempre estuvo.
+  const sobresale = (texto: string, espaciado: number): number =>
+    hayLogo ? texto.length * espaciado : 0;
+
   if (hayClase) {
     escribirEspaciado(hoja, {
       texto: clase.toLocaleUpperCase('es'),
-      x: derecha,
+      x: bordeDerecho - sobresale(clase, ESPACIADO.clase),
       // Con folio debajo, la clase sube para que el par quede centrado sobre
       // la misma línea que el logotipo.
       y: baseLogotipo - (hayReferencia ? 6 : 0),
@@ -387,7 +467,7 @@ function dibujarMembrete(hoja: Hoja, primera: boolean): number {
   if (hayReferencia) {
     escribirEspaciado(hoja, {
       texto: referencia,
-      x: derecha,
+      x: bordeDerecho - sobresale(referencia, 0.4),
       y: baseLogotipo + (hayClase ? 8 : 0),
       tamano: TIPOGRAFIA.clase,
       espaciado: 0.4,
@@ -456,6 +536,98 @@ function dibujarMembrete(hoja: Hoja, primera: boolean): number {
   }
 
   return Math.max(INICIO_DE_CONTENIDO_PT, y + 30);
+}
+
+/**
+ * El bloque de firma: firma y sello arriba, una línea, y nombre y matrícula
+ * debajo. Va **al pie de la última página**, a una altura fija.
+ *
+ * Se dibuja **después** de todo el contenido y en un lugar que no depende de él,
+ * así que no mueve nada de lo ya escrito. Si el contenido llega hasta donde
+ * iría el bloque, éste pasa a una página nueva en vez de pisarlo.
+ *
+ * Sin imágenes —o con imágenes que `jsPDF` no acepta— el bloque sale igual, con
+ * la línea vacía: un documento firmado a mano después necesita justo eso.
+ */
+function dibujarBloqueDeFirma(hoja: Hoja): void {
+  const { firma } = hoja;
+  if (firma === null) {
+    return;
+  }
+  const arriba = hoja.fondo - FIRMA_Y_SELLO.alto;
+  if (hoja.y + FIRMA_Y_SELLO.aireSobreElBloque > arriba) {
+    pasarDePagina(hoja);
+  }
+
+  const { cajaFirma, cajaSello, separacion } = FIRMA_Y_SELLO;
+  dibujarImagenEnCaja(hoja, firma.firma, hoja.izquierda, arriba, cajaFirma);
+  dibujarImagenEnCaja(
+    hoja,
+    firma.sello,
+    hoja.izquierda + cajaFirma.ancho + separacion,
+    arriba,
+    cajaSello,
+  );
+
+  // La línea de firma, bajo la caja de la firma.
+  const yLinea = arriba + cajaFirma.alto + 4;
+  hoja.doc.setDrawColor(COLOR_TINTA_SUAVE[0], COLOR_TINTA_SUAVE[1], COLOR_TINTA_SUAVE[2]);
+  hoja.doc.setLineWidth(0.6);
+  hoja.doc.line(hoja.izquierda, yLinea, hoja.izquierda + cajaFirma.ancho, yLinea);
+
+  if (firma.nombre.trim() !== '') {
+    escribir(hoja, {
+      texto: firma.nombre,
+      x: hoja.izquierda,
+      y: yLinea + 13,
+      tamano: TIPOGRAFIA.fila,
+      estilo: 'bold',
+      color: COLOR_TINTA,
+    });
+  }
+  if (firma.matricula !== null && firma.matricula.trim() !== '') {
+    escribir(hoja, {
+      texto: `Matrícula ${firma.matricula}`,
+      x: hoja.izquierda,
+      y: yLinea + 25,
+      tamano: TIPOGRAFIA.nota,
+      estilo: 'normal',
+      color: COLOR_TINTA_SUAVE,
+    });
+  }
+}
+
+/**
+ * Una imagen contenida en su caja, **pegada al borde inferior** (la firma apoya
+ * en su línea) y al izquierdo. Si no se puede dibujar, se omite sin más: es un
+ * hueco vacío, no un error.
+ */
+function dibujarImagenEnCaja(
+  hoja: Hoja,
+  imagen: PdfLogo | null,
+  x: number,
+  y: number,
+  caja: { readonly ancho: number; readonly alto: number },
+): void {
+  if (imagen === null) {
+    return;
+  }
+  const medida = contenerLogo(imagen, caja);
+  if (medida === null) {
+    return;
+  }
+  try {
+    hoja.doc.addImage(
+      imagen.dataUrl,
+      imagen.formato,
+      x,
+      y + caja.alto - medida.alto,
+      medida.ancho,
+      medida.alto,
+    );
+  } catch {
+    // Una imagen defectuosa deja el hueco; no impide emitir el documento.
+  }
 }
 
 /**

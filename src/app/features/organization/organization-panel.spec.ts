@@ -2,8 +2,10 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
+import { of } from 'rxjs';
 import { provideRouter } from '@angular/router';
 
+import { LogoDeOrganizacionClient } from '../../core/data-access/directory/logo-de-organizacion.client';
 import { OrganizationPanel } from './organization-panel';
 
 /**
@@ -50,7 +52,13 @@ describe('OrganizationPanel', () => {
   function montar(): void {
     TestBed.resetTestingModule();
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        // El logo tiene su propia prueba (`organization-logo.spec.ts`): acá no es lo que se mira.
+        { provide: LogoDeOrganizacionClient, useValue: { obtenerUrl: () => of(null) } },
+      ],
     });
     http = TestBed.inject(HttpTestingController);
     fixture = TestBed.createComponent(OrganizationPanel);

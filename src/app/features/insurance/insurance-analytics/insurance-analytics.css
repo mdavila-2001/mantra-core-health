@@ -94,3 +94,42 @@
   gap: var(--sp-2);
   margin: var(--sp-3) 0 0;
 }
+
+/* Pestañas: el panel abre con aire, no pegado a la tira. */
+.analytics__tabs {
+  display: block;
+}
+
+/* Filas de rejilla: una columna en teléfono, dos desde 780 px, y las tarjetas de
+   una misma fila se estiran al mismo alto. Mobile-first, sin `max-width`. */
+.analytics__grid {
+  align-items: stretch;
+  display: grid;
+  gap: var(--sp-4);
+  grid-template-columns: minmax(0, 1fr);
+  margin-block-start: var(--sp-4);
+}
+
+.analytics__panel {
+  display: block;
+  min-inline-size: 0;
+}
+
+.analytics__panel-body {
+  margin: 0;
+}
+
+.analytics__panel-body .analytics__section-title {
+  margin-block-start: 0;
+}
+
+@media (min-width: 780px) {
+  .analytics__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* El resumen es una sola fila de tarjetas, con el aire de las demás. */
+.analytics__tabs .analytics__tiles {
+  margin-block-start: var(--sp-4);
+}

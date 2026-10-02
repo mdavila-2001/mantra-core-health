@@ -689,3 +689,45 @@
   gap: var(--sp-2);
   margin-block-start: var(--sp-4);
 }
+
+/* ─── El logo del consultorio dentro del recuadro de Facturación ───────────
+   Va acá y no en `ficha-de-perfil.css`: el paciente no factura. El logo ocupa
+   una columna de tamaño fijo y los datos la otra; en móvil se apilan con el
+   logo arriba. La caja del logo mide lo mismo con o sin imagen. */
+.factura--con-logo {
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  column-gap: var(--sp-5);
+}
+
+.factura__datos {
+  display: grid;
+  gap: var(--sp-1);
+}
+
+@media (max-width: 599px) {
+  .factura--con-logo {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: var(--sp-3);
+  }
+}
+
+/* ─── El logo del consultorio en «Datos personales» ────────────────────────
+   Va acá y no en `ficha-de-perfil.css`: el paciente no tiene consultorio. El
+   título es `.mi-perfil__subtitulo`, que ya existe. Este archivo y aquél están
+   pegados al presupuesto de 12 kB: cada selector nuevo cuenta. */
+.mi-perfil__logo {
+  display: grid;
+  justify-items: start;
+  gap: var(--sp-2);
+}
+
+/* ─── Firma y sello en «Datos personales» ──────────────────────────────────
+   El título es `.mi-perfil__subtitulo`, que ya existe. Este archivo y
+   `ficha-de-perfil.css` están pegados al presupuesto de 12 kB del build. */
+.mi-perfil__firma-cajas {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--sp-3);
+}

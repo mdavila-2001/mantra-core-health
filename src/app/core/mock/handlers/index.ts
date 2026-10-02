@@ -1,5 +1,6 @@
 import { MockRouter } from '../mock-router';
 import { registrarAgenda } from './scheduling.handlers';
+import { registrarServiciosDeAgenda } from './service-offerings.handlers';
 import { registrarArchivos } from './files.handlers';
 import { registrarAuth } from './auth.handlers';
 import { registrarClinica } from './clinical.handlers';
@@ -20,6 +21,7 @@ import { registrarPortalDeLaboratorio } from './lab-portal.handlers';
 import { registerLoyalty } from './loyalty.handlers';
 import { registrarModulosAdministrativos } from './admin-modules.handlers';
 import { registrarNotificaciones } from './notifications.handlers';
+import { registrarFirmaYSello } from './firma-y-sello.handlers';
 import { registrarPerfiles } from './profiles.handlers';
 import { registrarPracticas } from './practice.handlers';
 import { registrarProcedimientos } from './procedures.handlers';
@@ -45,7 +47,9 @@ export function crearRouterSimulado(): MockRouter {
   registrarAuth(router);
   registrarTerminologia(router);
   registrarPerfiles(router);
+  registrarFirmaYSello(router);
   registrarAgenda(router);
+  registrarServiciosDeAgenda(router);
   registrarPracticas(router);
   registrarClinica(router);
   registerMedicalNotes(router);

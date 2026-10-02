@@ -1,3 +1,4 @@
+import { environment } from '../../../../../environments/environment';
 import { Location } from '@angular/common';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
@@ -5,9 +6,12 @@ import type { Provider } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
-import { NEVER, of, throwError } from 'rxjs';
+import { NEVER, firstValueFrom, of, throwError } from 'rxjs';
 
 import { routes } from '../../../../app.routes';
+import { PharmacyCampaignsClient } from '../../../../core/data-access/pharmacy-campaigns/pharmacy-campaigns.client';
+import { NO_CONDITIONS } from '../../../../core/promotions-engine/promotion-mechanics.types';
+import type { Mechanic } from '../../../../core/promotions-engine/promotion-mechanics.types';
 import { PharmacyOrdersClient } from '../../../../core/data-access/pharmacy-orders/pharmacy-orders.client';
 import { pharmacyOrderDtoFixture } from '../../../../core/data-access/pharmacy-orders/pharmacy-orders.spec-fixtures';
 import type { BorradorDePedido } from '../../../../core/data-access/pharmacy-orders/pharmacy-orders.types';
@@ -86,6 +90,13 @@ const TRASPASO_CON_SEGURO: TraspasoDeLaReceta = {
 };
 
 describe('Checkout', () => {
+  // Las campañas de demostración sólo existen con el interruptor encendido
+  // (`environment.campaignsDemo`, apagado fuera de `demo`): estas pruebas miden
+  // el motor de mecánicas sobre ese paquete sembrado.
+  const campanasDemoOriginal = environment.campaignsDemo;
+  beforeEach(() => Object.assign(environment, { campaignsDemo: true }));
+  afterEach(() => Object.assign(environment, { campaignsDemo: campanasDemoOriginal }));
+
   let fixture: ComponentFixture<Checkout>;
   let client: PharmacyOrdersClient;
   let http: HttpTestingController;
@@ -377,6 +388,86 @@ describe('Checkout', () => {
       expect(texto('resumen-total')).toContain('97.20 Bs');
       expect(texto('resumen-puntos')).toContain('9');
       expect(texto('resumen-puntos')).toContain('valor de ejemplo');
+    });
+
+    describe('con campañas de la farmacia', () => {
+      const AMOXICILINA_ID = 'f0e1d2c3-0000-4000-8000-000000000002';
+      const SIN_SEGURO_DOS_UNIDADES = {
+        conSeguro: false,
+        renglones: [
+          { indice: 0, cantidad: 2, alternativa: null, aprobadoPorSeguro: false },
+          { indice: 1, cantidad: 1, alternativa: null, aprobadoPorSeguro: false },
+        ],
+      };
+
+      async function campanaDe(mecanica: Mechanic, conProducto: boolean): Promise<void> {
+        await firstValueFrom(
+          TestBed.inject(PharmacyCampaignsClient).crear(
+            {
+              titulo: 'Campaña',
+              descripcion: '',
+              desde: new Date(Date.now() - 24 * 60 * 60 * 1000),
+              hasta: new Date(Date.now() + 24 * 60 * 60 * 1000),
+              mecanica,
+              condiciones: NO_CONDITIONS,
+              renglones: conProducto
+                ? [
+                    {
+                      productId: AMOXICILINA_ID,
+                      nombre: 'Amoxicilina 500 mg',
+                      presentacion: null,
+                      precioNormal: '68.00',
+                      moneda: 'BOB',
+                      precioPromocional: null,
+                    },
+                  ]
+                : [],
+            },
+            BORRADOR.pharmacyId,
+            BORRADOR.farmacia,
+          ),
+        );
+      }
+
+      it('un 2x1 baja el renglón y lo rotula en el resumen', async () => {
+        configurar();
+        conTraspaso(SIN_SEGURO_DOS_UNIDADES);
+        client.prepararBorrador(BORRADOR);
+        await campanaDe({ kind: 'BUY_X_PAY_Y', take: 2, pay: 1 }, true);
+        montar();
+        irAlResumen();
+
+        const renglones = todos('resumen-renglon');
+        // 2 × 68.00 con una gratis: 68.00; el otro renglón sigue en 40.00.
+        expect(renglones[0].textContent).toContain('68.00 Bs');
+        expect(renglones[0].querySelector('[data-testid="resumen-renglon-promocion"]')?.textContent).toContain('2x1');
+        expect(renglones[1].querySelector('[data-testid="resumen-renglon-promocion"]')).toBeNull();
+        expect(texto('resumen-subtotal')).toContain('108.00 Bs');
+      });
+
+      it('una compra mínima agrega la línea de promociones sobre el total', async () => {
+        configurar();
+        conTraspaso(SIN_SEGURO_DOS_UNIDADES);
+        client.prepararBorrador(BORRADOR);
+        await campanaDe({ kind: 'ORDER_AMOUNT_OVER', minSpend: '100.00', amount: '8.00' }, false);
+        montar();
+        irAlResumen();
+
+        // 2 × 68.00 + 40.00 = 176.00 ≥ 100: descuenta 8.00.
+        expect(texto('resumen-promocion')).toContain('−8.00 Bs');
+        expect(texto('resumen-subtotal')).toContain('176.00 Bs');
+      });
+
+      it('sin campañas no hay línea de promociones ni rótulos', () => {
+        configurar();
+        conTraspaso(SIN_SEGURO_DOS_UNIDADES);
+        client.prepararBorrador(BORRADOR);
+        montar();
+        irAlResumen();
+
+        expect(uno('resumen-promocion')).toBeNull();
+        expect(uno('resumen-renglon-promocion')).toBeNull();
+      });
     });
 
     it('con delivery suma la línea de envío', () => {

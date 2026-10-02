@@ -17,6 +17,7 @@ import type { ViewState } from '../../../core/view-state/view-state.types';
 import { Chip } from '../../../shared/components/atoms/chip/chip';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Card } from '../../../shared/components/molecules/card/card';
+import { Pagination } from '../../../shared/components/molecules/pagination/pagination';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
@@ -25,6 +26,12 @@ import { ApprovalRulesDialog } from './approval-rules-dialog';
 import { BenefitFormDialog } from './benefit-form-dialog';
 import { PlanFormDialog } from './plan-form-dialog';
 import { PlanPremiumDialog } from './plan-premium-dialog';
+
+/** Una página del catálogo: un producto seguro y el ramo al que pertenece. */
+interface CatalogEntry {
+  readonly product: Product;
+  readonly plan: Plan | null;
+}
 
 /**
  * Catálogo de la aseguradora del tenant activo: productos, planes, coberturas y
@@ -50,6 +57,7 @@ import { PlanPremiumDialog } from './plan-premium-dialog';
   imports: [
     Card,
     Chip,
+    Pagination,
     DatePipe,
     AppButton,
     PageHeader,
@@ -70,6 +78,30 @@ export class InsuranceCatalog {
 
   protected readonly state = signal<ViewState<CarrierDetail>>(loading());
   protected readonly carrier = computed(() => dataOf(this.state()));
+
+  /** Página pedida (1-based). Un producto seguro por página. */
+  protected readonly pagina = signal(1);
+
+  /**
+   * Lo que se pagina: cada producto seguro (plan) con el ramo que lo agrupa. Un
+   * ramo sin planes ocupa su propia página, para que «Añadir producto seguro»
+   * siga al alcance en él.
+   */
+  protected readonly entradas = computed<readonly CatalogEntry[]>(() =>
+    (this.carrier()?.products ?? []).flatMap((product): CatalogEntry[] =>
+      product.plans.length === 0
+        ? [{ product, plan: null }]
+        : product.plans.map((plan) => ({ product, plan })),
+    ),
+  );
+
+  /** La página pedida recortada al rango real: borrar el último plan no deja una página vacía. */
+  protected readonly paginaActual = computed(() =>
+    Math.min(Math.max(1, this.pagina()), Math.max(1, this.entradas().length)),
+  );
+  protected readonly entradaActual = computed(
+    () => this.entradas()[this.paginaActual() - 1] ?? null,
+  );
   protected readonly planEditor = signal<{
     readonly product: Product;
     readonly plan: Plan | null;

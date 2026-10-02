@@ -427,6 +427,76 @@ describe('DayView', () => {
   });
 
   /**
+   * EL SERVICIO RESERVADO (v4.2.40).
+   *
+   * Una reserva de un servicio no es una consulta: el médico necesita ver qué es y
+   * cuánto puede durar. El bloque ya mide lo que se reservó —el máximo—; el mínimo
+   * dice cuándo podría quedar libre antes.
+   */
+  describe('el servicio reservado', () => {
+    function montarConServicio(service: unknown): void {
+      TestBed.resetTestingModule();
+      TestBed.configureTestingModule({});
+      fixture = TestBed.createComponent(DayView);
+      fixture.componentRef.setInput('dia', DIA);
+      fixture.componentRef.setInput('cupos', [
+        { id: 's-1', startAt: new Date(2026, 8, 10, 9), endAt: new Date(2026, 8, 10, 9, 45) },
+      ]);
+      fixture.componentRef.setInput('citas', [
+        {
+          id: 'b-1',
+          bookableSlotId: 's-1',
+          statusConceptId: 'c-confirmada',
+          patientName: 'Ana',
+          ...(service === undefined ? {} : { service }),
+        },
+      ]);
+      fixture.componentRef.setInput('bloqueos', []);
+      fixture.componentRef.setInput('etiquetas', ETIQUETAS);
+      fixture.componentRef.setInput('puedeRegistrarLlegada', true);
+      fixture.detectChanges();
+    }
+
+    const linea = (): HTMLElement | null =>
+      (fixture.nativeElement as HTMLElement).querySelector('[data-testid="dia-servicio"]');
+
+    it('dice qué servicio es y su duración en rango', () => {
+      montarConServicio({
+        offeringId: 'of-1',
+        name: 'Ecocardiograma Doppler',
+        price: '480.00',
+        minDurationMinutes: 30,
+        maxDurationMinutes: 45,
+        requiresApproval: false,
+      });
+
+      const texto = linea()?.textContent?.replace(/\s+/g, ' ').trim();
+      expect(texto).toBe('Ecocardiograma Doppler · dura 30–45 min');
+    });
+
+    it('con mínimo y máximo iguales dice un solo número', () => {
+      montarConServicio({
+        offeringId: 'of-2',
+        name: 'Electrocardiograma',
+        price: '120.00',
+        minDurationMinutes: 20,
+        maxDurationMinutes: 20,
+        requiresApproval: false,
+      });
+
+      expect(linea()?.textContent?.replace(/\s+/g, ' ').trim()).toBe('Electrocardiograma · dura 20 min');
+    });
+
+    it('una consulta no lleva esa línea', () => {
+      montarConServicio(undefined);
+
+      expect(linea()).toBeNull();
+      // Y sigue diciendo quién viene: lo nuevo no desplaza lo de siempre.
+      expect(fixture.nativeElement.textContent).toContain('Ana');
+    });
+  });
+
+  /**
    * MOVER EL HORARIO Y CERRAR RATOS — los dos últimos del carril 12.
    *
    * «Un botón que se llame mover horario, que desplace los slots N minutos

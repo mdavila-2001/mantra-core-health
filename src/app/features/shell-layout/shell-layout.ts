@@ -14,6 +14,7 @@ import { NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router
 import { filter } from 'rxjs';
 
 import { AuthService } from '../../core/auth/auth.service';
+import { PdfBrandingService } from '../../core/pdf-branding/pdf-branding.service';
 import { esPaciente, etiquetasDeRoles } from '../../core/auth/role-labels';
 import { CartStore } from '../../core/data-access/pharmacy-cart/cart.store';
 import { LOGIN_ROUTE } from '../../core/http/auth.interceptor';
@@ -72,6 +73,13 @@ const PANEL = '/dashboard';
  * > las superficies que quedaron en el merge — `LOGIN_ROUTE` del interceptor y el `AuthService`
  * > nuestro, del que deriva `user` y `tenants` en vez de pedirle métodos que no tiene.
  */
+/** Cómo se rotula, en el menú de la cuenta, cada tipo de organización con cuenta propia. */
+const TIPO_DE_ORGANIZACION_LEGIBLE: Readonly<Record<string, string>> = {
+  PHARMACY: 'Farmacia',
+  DIAGNOSTIC_CENTER: 'Laboratorio o centro de diagnóstico',
+  PAYER: 'Aseguradora',
+};
+
 @Component({
   selector: 'app-shell-layout',
   imports: [
@@ -95,6 +103,8 @@ const PANEL = '/dashboard';
 })
 export class ShellLayout {
   private readonly auth = inject(AuthService);
+  // Sólo se instancia: mantiene listo el logo del consultorio para los PDF.
+  private readonly membretePdf = inject(PdfBrandingService);
   private readonly router = inject(Router);
   private readonly breakpoints = inject(Breakpoints);
   private readonly navigation = inject(NavigationService);
@@ -438,7 +448,9 @@ export class ShellLayout {
     return {
       // El guard no deja llegar acá sin sesión; el userId es el último recurso
       // para que el header nunca quede sin nombre.
-      displayName: this.auth.displayName() ?? this.auth.userId() ?? '',
+      // La cuenta de una organización se muestra como la organización, no como
+      // la persona que la registró: avatar, nombre y menú salen del tenant.
+      displayName: this.nombreDeLaCuenta(),
       roles: this.auth.roles(),
     };
   });
@@ -539,9 +551,21 @@ export class ShellLayout {
    * Van traducidos por el diccionario: el código crudo (`PATIENT`, `SECURITY_ADMIN`) es
    * vocabulario de sistema, y un rol sin etiqueta se omite antes que pintarse crudo.
    */
-  protected readonly rolesLegibles = computed(() =>
-    etiquetasDeRoles(this.user()?.roles ?? []).join(' · '),
-  );
+  protected readonly rolesLegibles = computed(() => {
+    if (this.auth.isOrganizationAccount()) {
+      // «USER» no le dice nada a una farmacia: se rotula con lo que es.
+      return TIPO_DE_ORGANIZACION_LEGIBLE[this.auth.activeTenantType() ?? ''] ?? 'Organización';
+    }
+    return etiquetasDeRoles(this.user()?.roles ?? []).join(' · ');
+  });
+
+  private nombreDeLaCuenta(): string {
+    const tenantId = this.activeTenantId();
+    if (this.auth.isOrganizationAccount() && tenantId) {
+      return this.auth.tenantName(tenantId);
+    }
+    return this.auth.displayName() ?? this.auth.userId() ?? '';
+  }
 
   /**
    * El enlace de salto mueve el foco al contenido en vez de sólo desplazar la

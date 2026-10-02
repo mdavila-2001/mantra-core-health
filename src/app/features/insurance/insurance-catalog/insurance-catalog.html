@@ -23,7 +23,19 @@
           </p>
         </app-card>
       } @else {
-        @for (producto of aseguradora.products; track producto.id) {
+        <!-- Un producto seguro por página: la tabla de cláusulas es larga y
+             apilarlos obligaba a desplazarse de más. El paginador deja elegir el
+             número de página (botones numerados y selector «Ir a la página»). -->
+        <app-pagination
+          class="catalog__pager"
+          [totalItems]="entradas().length"
+          [page]="paginaActual()"
+          [pageSize]="1"
+          [showPageSize]="false"
+          (pageChange)="pagina.set($event)"
+        />
+        @if (entradaActual(); as entrada) {
+          @let producto = entrada.product;
           <app-card variant="outlined" padding="lg" class="catalog__card catalog__card--wide">
             <div card-header class="catalog__heading">
               <h2>{{ producto.name }}</h2>
@@ -50,10 +62,10 @@
               }
             </p>
 
-            @if (producto.plans.length === 0) {
+            @if (entrada.plan === null) {
               <p class="catalog__hollow">Este ramo todavía no tiene productos seguros activos.</p>
             } @else {
-              @for (plan of producto.plans; track plan.id) {
+              @if (entrada.plan; as plan) {
                 <section class="catalog__plan" [attr.aria-labelledby]="'plan-' + plan.id">
                   <div class="catalog__heading catalog__heading--plan">
                     <h3 class="catalog__plan-title" [id]="'plan-' + plan.id">

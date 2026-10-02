@@ -124,3 +124,39 @@ export const FILIGRANA = {
   anchoRelativo: 0.62,
   opacidad: 0.05,
 } as const;
+
+/**
+ * La ranura del logo del consultorio: arriba a la derecha de la primera página,
+ * a la altura del isotipo.
+ *
+ * Es una caja de tamaño **fijo** y el logo se contiene dentro de ella, con o sin
+ * imagen. Por eso el membrete —el filete, el título y el arranque del contenido—
+ * mide lo mismo con un logo cuadrado, con uno apaisado, con uno altísimo o sin
+ * ninguno. `alto` deja 4 pt de aire sobre el filete.
+ */
+export const LOGO_DEL_CONSULTORIO = {
+  ancho: 120,
+  alto: 34,
+  /** Aire entre la caja del logo y la clase de documento, que se corre a su izquierda. */
+  separacion: 14,
+} as const;
+
+/**
+ * El bloque de firma del pie de la última página: la imagen de la firma, el
+ * sello al lado, una línea y debajo el nombre y la matrícula.
+ *
+ * Las cajas son de tamaño **fijo**, como la del logo: con firma, sin firma, con
+ * una firma altísima o con un sello roto, el bloque mide lo mismo y nada de lo
+ * escrito antes se corre. `alto` es lo que reserva al pie: si el contenido llega
+ * hasta ahí, el bloque pasa a una página nueva en vez de pisarlo.
+ */
+export const FIRMA_Y_SELLO = {
+  cajaFirma: { ancho: 150, alto: 56 },
+  cajaSello: { ancho: 56, alto: 56 },
+  /** Aire entre la caja de la firma y la del sello. */
+  separacion: 16,
+  /** Desde el borde superior del bloque hasta su último renglón. */
+  alto: 96,
+  /** Aire mínimo entre el final del contenido y el bloque. */
+  aireSobreElBloque: 18,
+} as const;

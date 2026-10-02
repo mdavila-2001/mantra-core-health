@@ -24,6 +24,8 @@ import { Textarea } from '../../../shared/components/atoms/textarea/textarea';
 import { Card } from '../../../shared/components/molecules/card/card';
 import { CommentMediaPicker } from '../../../shared/components/molecules/comment-media-picker/comment-media-picker';
 import { FilePreviewImage } from '../../../shared/components/molecules/file-preview-image/file-preview-image';
+import { ArticleBody } from '../../../shared/components/organisms/article-body/article-body';
+import { hasArticleStructure } from '../../../shared/text/article-markup';
 
 /** Cuántos comentarios raíz se piden por página del hilo. */
 const COMMENTS_PAGE_SIZE = 20;
@@ -84,7 +86,7 @@ export const REACCIONES_OFRECIDAS: readonly {
  */
 @Component({
   selector: 'app-post-card',
-  imports: [AppButton, Badge, Card, CommentMediaPicker, DatePipe, FilePreviewImage, Textarea],
+  imports: [AppButton, ArticleBody, Badge, Card, CommentMediaPicker, DatePipe, FilePreviewImage, Textarea],
   templateUrl: './post-card.html',
   styleUrl: './post-card.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -96,6 +98,13 @@ export class PostCard {
 
   /** La publicación a pintar. */
   readonly post = input.required<PostListItem>();
+
+  /**
+   * Si el cuerpo es un artículo: se pinta con sus secciones desplegables. El
+   * listado no trae los medios (P5), así que sus imágenes no se muestran acá
+   * —el artículo completo con imágenes se lee en la vitrina—.
+   */
+  protected readonly esArticulo = computed(() => hasArticleStructure(this.post().bodyText));
 
   /**
    * Quién mira, si hay sesión con perfil público.

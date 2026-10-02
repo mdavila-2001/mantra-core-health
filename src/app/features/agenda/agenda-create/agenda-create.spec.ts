@@ -496,6 +496,25 @@ describe('AgendaCreate', () => {
 
       expect(acc.grupoDe(1).getRawValue().respiro).toBe(10);
     });
+
+    it('un horario vigente con franjas de servicios carga qué atiende cada día (v4.2.40)', () => {
+      crearConHorarioVigente({
+        id: 'tpl-m',
+        name: 'Mixto',
+        slotMinutes: 30,
+        statusConceptId: 'c',
+        rules: [
+          { dayOfWeek: 2, startTime: '14:00:00', endTime: '18:00:00', bookingMode: 'SERVICES' },
+          { dayOfWeek: 3, startTime: '08:00:00', endTime: '12:00:00', slotMinutes: 30, bookingMode: 'MIXED' },
+          { dayOfWeek: 4, startTime: '08:00:00', endTime: '12:00:00', slotMinutes: 30 },
+        ],
+      });
+
+      expect(acc.grupoDe(1).getRawValue().modo).toBe('SERVICES');
+      expect(acc.grupoDe(2).getRawValue().modo).toBe('MIXED');
+      // Sin modo declarado ≡ sólo consultas: lo que toda franja era antes.
+      expect(acc.grupoDe(3).getRawValue().modo).toBe('CONSULTATIONS');
+    });
   });
 
   /* -- Quién puede entrar --------------------------------------------------- */
@@ -1181,8 +1200,98 @@ describe('AgendaCreate', () => {
       const encabezados = [...fixture.nativeElement.querySelectorAll('thead th')].map(
         (th: Element) => th.textContent?.trim(),
       );
-      expect(encabezados).toEqual(['Día', 'Desde', 'Hasta']);
+      // «Atiendo» sí está: qué admite la franja (consultas, servicios o ambos) no
+      // depende de si los turnos son fijos. Lo que NO aparece es duración ni descanso.
+      expect(encabezados).toEqual(['Día', 'Desde', 'Hasta', 'Atiendo']);
       expect(acc.resumen()).toContain('horario flexible sin turnos fijos');
+    });
+
+    describe('qué se atiende en cada franja (v4.2.40)', () => {
+      it('por omisión es sólo consultas y NO se manda: ausente ≡ lo de siempre', () => {
+        crear();
+        encenderLunes();
+
+        const reglas = cuerpoDeLaPlantilla()['rules'] as Record<string, unknown>[];
+        expect(acc.semana.at(0).getRawValue().modo).toBe('CONSULTATIONS');
+        expect(reglas[0]).not.toHaveProperty('bookingMode');
+      });
+
+      it('una franja de servicios viaja como SERVICES', () => {
+        crear();
+        encenderLunes();
+        acc.semana.at(0).patchValue({ modo: 'SERVICES' });
+
+        const reglas = cuerpoDeLaPlantilla()['rules'] as Record<string, unknown>[];
+        expect(reglas[0]['bookingMode']).toBe('SERVICES');
+      });
+
+      it('una franja mixta viaja como MIXED, con su duración de consulta', () => {
+        crear();
+        encenderLunes();
+        acc.semana.at(0).patchValue({ modo: 'MIXED', duracion: 20 });
+
+        const reglas = cuerpoDeLaPlantilla()['rules'] as Record<string, unknown>[];
+        expect(reglas[0]).toMatchObject({ bookingMode: 'MIXED', slotMinutes: 20 });
+      });
+
+      it('la columna «Atiendo» ofrece consultas, servicios y ambos', () => {
+        crear();
+        encenderLunes();
+        expect((acc as unknown as { opcionesDeModo: { value: string; label: string }[] }).opcionesDeModo).toEqual([
+          { value: 'CONSULTATIONS', label: 'Consultas' },
+          { value: 'SERVICES', label: 'Servicios' },
+          { value: 'MIXED', label: 'Ambos' },
+        ]);
+        expect(fixture.nativeElement.querySelector('[data-testid="agenda-create-modo-0"]')).not.toBeNull();
+      });
+
+      it('un día sólo de servicios no tiene turnos fijos que contar', () => {
+        crear();
+        encenderLunes();
+        acc.semana.at(0).patchValue({ desde: '14:00', hasta: '18:00', duracion: 30, modo: 'SERVICES' });
+        fixture.detectChanges();
+
+        expect(acc.turnosDelDia(0)).toBe(0);
+        const celda = fixture.nativeElement.querySelector('.agenda-create__fila-turnos');
+        expect(celda.textContent.trim()).toBe('—');
+      });
+
+      it('un día mixto SÍ cuenta sus consultas', () => {
+        crear();
+        encenderLunes();
+        acc.semana.at(0).patchValue({ desde: '08:00', hasta: '10:00', duracion: 30, modo: 'MIXED' });
+
+        expect(acc.turnosDelDia(0)).toBe(4);
+      });
+
+      it('el resumen no dice «consultas de 30 minutos» cuando hay franjas de servicios', () => {
+        crear();
+        encenderLunes();
+        acc.semana.at(0).patchValue({ modo: 'SERVICES' });
+
+        expect(acc.resumen()).toContain('franjas de servicios');
+        expect(acc.resumen()).not.toContain('consultas de');
+      });
+
+      it('repetir el primer día copia también qué atiende', () => {
+        crear();
+        acc.alternarDia(0);
+        acc.alternarDia(1);
+        acc.semana.at(0).patchValue({ modo: 'MIXED' });
+
+        acc.repetirElPrimero();
+
+        expect(acc.semana.at(1).getRawValue().modo).toBe('MIXED');
+      });
+
+      it('las reglas de la vista previa llevan el modo, igual que las que se publican', () => {
+        crear();
+        encenderLunes();
+        acc.semana.at(0).patchValue({ modo: 'SERVICES' });
+
+        const previa = (acc as unknown as { reglasDeLaPrevia(): { bookingMode?: string }[] }).reglasDeLaPrevia();
+        expect(previa[0].bookingMode).toBe('SERVICES');
+      });
     });
 
     it('con turnos fijos no se manda flexibleHours', () => {

@@ -493,9 +493,12 @@ describe('búsqueda del glosario: tildes y castellano primero', () => {
     readonly translatedMemberCount?: number;
   }
 
-  const TINA_CORPORAL = '46fe0752-651f-408c-ade2-d37afe1d009e';
-  const ONICOMICOSIS = '4e0b6652-f0f5-4db0-a456-819e4e525f02';
-  const PIELONEFRITIS_AGUDA = 'ee652cb9-a81f-4f25-a660-498c1882fe2e';
+  // Términos oficiales de la semilla (2026-10-01): CIE-10-ES B35.4 y B35.1, y el
+  // riñón de la anatomía TA98 (Wikidata Q9377). Antes eran filas de una capa
+  // redactada por desarrollo, que se retiró del glosario.
+  const TINA_CORPORAL = 'c08c4776-c531-484c-a62e-7f96d8dba482';
+  const TINA_DE_LAS_UNAS = 'c58c4f55-41db-4efd-add9-9a4825283e22';
+  const RINON = '0d827ff8-ed60-404a-a02d-9f52d0e4a4e2';
 
   const buscar = async (q: string) =>
     (
@@ -509,10 +512,10 @@ describe('búsqueda del glosario: tildes y castellano primero', () => {
   it.each([
     ['tina', TINA_CORPORAL],
     ['tiña', TINA_CORPORAL],
-    ['unas con hongos', ONICOMICOSIS],
-    ['uñas con hongos', ONICOMICOSIS],
-    ['infeccion de rinon', PIELONEFRITIS_AGUDA],
-    ['INFECCIÓN DE RIÑÓN', PIELONEFRITIS_AGUDA],
+    ['tina de las unas', TINA_DE_LAS_UNAS],
+    ['tiña de las uñas', TINA_DE_LAS_UNAS],
+    ['rinon', RINON],
+    ['RIÑÓN', RINON],
   ])('«%s» encuentra su término', async (q, id) => {
     expect(await buscar(q)).toContain(id);
   });
@@ -526,15 +529,14 @@ describe('búsqueda del glosario: tildes y castellano primero', () => {
     return conjunto;
   }
 
-  it('la categoría Enfermedades dice cuántos de sus términos están en castellano', async () => {
+  it('la categoría Enfermedades dice cuántos de sus términos están en castellano: todos', async () => {
     const categoria = await enfermedades();
-    const enCastellano = categoria.translatedMemberCount ?? -1;
-    // Casi todas son categorías ICD-10-CM en inglés; las traducidas son la minoría.
-    expect(enCastellano).toBeGreaterThan(0);
-    expect(enCastellano).toBeLessThan(categoria.memberCount);
+    // Desde el 2026-10-01 la semilla no trae las 1 918 categorías ICD-10-CM con
+    // el título en inglés: CIE-10-ES da el nombre oficial en castellano.
+    expect(categoria.translatedMemberCount).toBe(categoria.memberCount);
   });
 
-  it('los términos en castellano van antes que los que sólo están en inglés', async () => {
+  it('ningún término de Enfermedades está sólo en inglés', async () => {
     const categoria = await enfermedades();
     const { items } = await get<{ items: readonly Entrada[] }>('/terminology/concepts', {
       includeValueSets: 'true',
@@ -542,8 +544,7 @@ describe('búsqueda del glosario: tildes y castellano primero', () => {
       limit: '5000',
     });
 
-    const primeroEnIngles = items.findIndex((t) => !t.translated);
-    expect(primeroEnIngles).toBeGreaterThan(0);
-    expect(items.slice(primeroEnIngles).every((t) => !t.translated)).toBe(true);
+    expect(items.length).toBeGreaterThan(1000);
+    expect(items.filter((t) => !t.translated)).toEqual([]);
   });
 });

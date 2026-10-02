@@ -444,6 +444,56 @@ export function qrSvg(semilla: string, rotulo = 'QR bancario'): string {
   return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
 }
 
+/**
+ * Un logo de consultorio de mentira: un isotipo (cruz sobre círculo) y el
+ * nombre en dos renglones, apaisado 3:1.
+ *
+ * Es apaisado a propósito. Es la proporción más incómoda para una ranura de
+ * membrete —la que se sale por los costados si nadie la contiene—, así que la
+ * maqueta arranca con el caso difícil y no con uno cuadrado que oculta el
+ * problema.
+ */
+export function logoSvg(nombre: string, bajada: string): string {
+  const svg =
+    `<svg xmlns="http://www.w3.org/2000/svg" width="360" height="120" viewBox="0 0 360 120">` +
+    `<rect width="360" height="120" fill="#ffffff"/>` +
+    `<circle cx="60" cy="60" r="44" fill="#0f766e"/>` +
+    `<path d="M52 36h16v16h16v16H68v16H52V68H36V52h16z" fill="#ffffff"/>` +
+    `<text x="122" y="56" font-family="Inter, Arial, sans-serif" font-size="26" font-weight="700" fill="#0f172a">${nombre}</text>` +
+    `<text x="122" y="84" font-family="Inter, Arial, sans-serif" font-size="17" fill="#475569">${bajada}</text>` +
+    `</svg>`;
+  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+}
+
+/**
+ * Una firma manuscrita de mentira: un trazo continuo sobre fondo transparente.
+ *
+ * Apaisada a propósito (3:1): es la proporción de una firma de verdad y la que
+ * más incomoda a una caja de tamaño fijo.
+ */
+export function firmaSvg(): string {
+  const svg =
+    `<svg xmlns="http://www.w3.org/2000/svg" width="300" height="100" viewBox="0 0 300 100">` +
+    `<path d="M14 66c18-40 30-52 40-44s-14 52-6 54 26-46 38-44 0 40 10 40 22-30 34-28-2 26 10 26 26-18 40-22 30 4 46-2 30-20 54-16" ` +
+    `fill="none" stroke="#1e3a8a" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>` +
+    `<path d="M40 84c60-6 140-8 240-2" fill="none" stroke="#1e3a8a" stroke-width="2" stroke-linecap="round"/>` +
+    `</svg>`;
+  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+}
+
+/** Un sello médico de mentira: dos aros, el nombre y la matrícula. Cuadrado. */
+export function selloSvg(nombre: string, matricula: string): string {
+  const svg =
+    `<svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" viewBox="0 0 160 160">` +
+    `<circle cx="80" cy="80" r="74" fill="none" stroke="#7f1d1d" stroke-width="4"/>` +
+    `<circle cx="80" cy="80" r="64" fill="none" stroke="#7f1d1d" stroke-width="1.5"/>` +
+    `<text x="80" y="62" font-family="Inter, Arial, sans-serif" font-size="13" font-weight="700" fill="#7f1d1d" text-anchor="middle">${nombre}</text>` +
+    `<text x="80" y="82" font-family="Inter, Arial, sans-serif" font-size="11" fill="#7f1d1d" text-anchor="middle">Médica cirujana</text>` +
+    `<text x="80" y="102" font-family="Inter, Arial, sans-serif" font-size="11" font-weight="700" fill="#7f1d1d" text-anchor="middle">Mat. ${matricula}</text>` +
+    `</svg>`;
+  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+}
+
 export function imagenSvg(rotulo: string, fondo = '#e8f1f5', tinta = '#1f6f8b'): string {
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="960" height="540" viewBox="0 0 960 540"><rect width="960" height="540" fill="${fondo}"/><circle cx="820" cy="120" r="70" fill="${tinta}" opacity="0.15"/><circle cx="140" cy="440" r="110" fill="${tinta}" opacity="0.12"/><text x="480" y="285" font-family="Inter, Arial, sans-serif" font-size="40" font-weight="600" fill="${tinta}" text-anchor="middle">${rotulo}</text></svg>`;
   return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;

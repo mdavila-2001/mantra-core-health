@@ -1018,6 +1018,40 @@ describe('MyProfile · foto de perfil', () => {
     http.verify();
   });
 
+  /**
+   * RP-PAC-L0012: «el perfil muestra el departamento de emisión». La fila de
+   * documento sólo agrega el sufijo cuando `cargarPerfil()` trajo el concepto
+   * **y** `readConceptLabels` resolvió su etiqueta — a diferencia de
+   * `conPerfil()` (arriba, en el describe de `MyProfile`), acá se ejercita el
+   * camino real: `GET /profiles/patients/me` seguido de
+   * `GET /terminology/concepts?ids=<uuid>`, no la señal inyectada a mano.
+   */
+  it('L0012: el documento muestra el departamento de emisión cuando el perfil lo trae', () => {
+    http
+      .expectOne('/profiles/patients/me')
+      .flush(perfilCon({ nationalId: '7654321', issuerAdministrativeAreaConceptId: 'dept-1' }));
+
+    http
+      .expectOne((r) => r.url === '/terminology/concepts' && r.params.get('ids') === 'dept-1')
+      .flush({ items: [{ conceptId: 'dept-1', display: 'Santa Cruz' }], count: 1 });
+
+    fixture.detectChanges();
+
+    const texto = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(texto).toContain('7654321');
+    expect(texto).toContain('Santa Cruz');
+  });
+
+  /** El mismo criterio, en su ausencia: sin concepto, no hay sufijo que resolver. */
+  it('L0012: sin departamento de emisión declarado, no pide etiqueta ni la inventa', () => {
+    http.expectOne('/profiles/patients/me').flush(perfilCon({ nationalId: '7654321' }));
+    fixture.detectChanges();
+
+    const texto = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(texto).toContain('7654321');
+    http.verify();
+  });
+
   it('con foto ya guardada, baja la imagen y la pinta como data: URL', async () => {
     http.expectOne('/profiles/patients/me').flush(perfilCon({ photoFileId: 'f-1' }));
 

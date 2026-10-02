@@ -37,7 +37,8 @@ describe('handler de solicitudes recibidas por la aseguradora', () => {
   it('la dueña y el personal de la aseguradora ven la lista completa, sin recorte', () => {
     for (const key of ['aseguradora', 'aseguradora_staff', 'superadmin']) {
       const body = list(buscarUsuario(key)!) as { items: ReceivedClaimView[]; truncated: boolean };
-      expect(body.items.length).toBe(180);
+      // Las 180 al azar más las 3 abiertas de la paciente de la demo.
+      expect(body.items.length).toBe(183);
       expect(body.truncated).toBe(false);
     }
   });

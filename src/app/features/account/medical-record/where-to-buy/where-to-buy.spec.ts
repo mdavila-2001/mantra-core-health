@@ -1,3 +1,4 @@
+import { environment } from '../../../../../environments/environment';
 import { readFileSync } from 'node:fs';
 
 import { provideHttpClient } from '@angular/common/http';
@@ -251,6 +252,13 @@ class MemoriaCartStorage implements CartStorage {
 }
 
 describe('WhereToBuy', () => {
+  // Las campañas de demostración sólo existen con el interruptor encendido
+  // (`environment.campaignsDemo`, apagado fuera de `demo`): estas pruebas miden
+  // el motor de mecánicas sobre ese paquete sembrado.
+  const campanasDemoOriginal = environment.campaignsDemo;
+  beforeEach(() => Object.assign(environment, { campaignsDemo: true }));
+  afterEach(() => Object.assign(environment, { campaignsDemo: campanasDemoOriginal }));
+
   let harness: RouterTestingHarness;
   let http: HttpTestingController;
   let getCurrentPosition: ReturnType<typeof vi.fn>;
@@ -354,6 +362,26 @@ describe('WhereToBuy', () => {
     expect(pestanas[0]?.getAttribute('aria-selected')).toBe('true');
     // Y el panel activo es el de farmacias, no una promesa.
     expect(texto()).toContain('Sucursal Centro');
+  });
+
+  it('muestra las campañas de la farmacia con su etiqueta y pliega las que sobran', async () => {
+    await montar();
+    responderHastaProductos();
+    http.expectOne((r) => r.url === '/pharmacy-inventory/availability').flush(DISPONIBILIDAD_FIXTURE);
+    harness.detectChanges();
+
+    const sede = harness.routeNativeElement?.querySelector('.compra__sede');
+    const visibles = sede?.querySelectorAll('[data-testid="compra-promos"] > li') ?? [];
+    // Tres a la vista, cada una con su etiqueta de mecánica y un enlace a su ficha.
+    expect(visibles).toHaveLength(3);
+    for (const fila of Array.from(visibles)) {
+      expect(fila.querySelector('app-badge')?.textContent?.trim()).not.toBe('');
+      expect(fila.querySelector('a[href^="/promotions/"]')).not.toBeNull();
+    }
+    // El resto queda a un toque y no se pierde ningún enlace.
+    const mas = sede?.querySelector('[data-testid="compra-mas-promos"]');
+    expect(mas?.querySelector('summary')?.textContent).toMatch(/Ver \d+ promociones? más/);
+    expect(mas?.querySelectorAll('a[href^="/promotions/"]').length).toBeGreaterThan(0);
   });
 
   it('recorre el contrato E2 entero y pinta completas primero, sin coordenadas', async () => {
@@ -990,7 +1018,9 @@ describe('WhereToBuy', () => {
       const cobertura =
         tarjeta?.querySelector('[data-testid="compra-cobertura-seguro"]')?.textContent?.trim() ??
         '';
-      expect(tarjeta?.querySelector('app-badge')?.textContent?.trim()).toBe(estado);
+      // El badge de estado vive en las acciones de la tarjeta: las campañas de la
+      // farmacia también llevan su `app-badge` y ya no es el primero del DOM.
+      expect(tarjeta?.querySelector('.compra__acciones app-badge')?.textContent?.trim()).toBe(estado);
       expect(detalle.startsWith(cobertura)).toBe(true);
     }
     expect(pines[0].popup?.querySelector('.mapa__popup-estado')?.textContent).toBe(

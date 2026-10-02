@@ -9,7 +9,7 @@ import {
   estadoDe,
   revisar,
 } from './pharmacy-campaigns.client';
-import { UN_DIA } from './pharmacy-campaigns.fixtures';
+import { CAMPANAS_SEMBRADAS, UN_DIA } from './pharmacy-campaigns.fixtures';
 import { aCentavos, conDescuento, porcentajeDeAhorro } from './pharmacy-campaigns.money';
 import { BorradorDeCampana, CampanaDeFarmacia } from './pharmacy-campaigns.types';
 
@@ -274,9 +274,11 @@ describe('PharmacyCampaignsClient', () => {
       const vigentes = client.campanasVigentes(FARMACIA);
       const todas = await firstValueFrom(client.campanasDeFarmacia(FARMACIA));
 
-      // Tres en el paquete, una de ellas vencida a propósito.
-      expect(todas).toHaveLength(3);
-      expect(vigentes).toHaveLength(2);
+      // Todas las del paquete se siembran, y una está vencida a propósito: es la
+      // única que el paciente no ve. El conteo sale del paquete, no de un número.
+      expect(todas).toHaveLength(CAMPANAS_SEMBRADAS.length);
+      expect(vigentes).toHaveLength(CAMPANAS_SEMBRADAS.length - 1);
+      expect(CAMPANAS_SEMBRADAS.filter((plantilla) => plantilla.hastaEnDias < 0)).toHaveLength(1);
       expect(todas.filter((c) => estadoDe(c) === 'TERMINADA')).toHaveLength(1);
     });
 
@@ -307,7 +309,7 @@ describe('PharmacyCampaignsClient', () => {
       client.sembrarPara(FARMACIA, NOMBRE, CATALOGO);
       const todas = await firstValueFrom(client.campanasDeFarmacia(FARMACIA));
 
-      expect(todas).toHaveLength(3);
+      expect(todas).toHaveLength(CAMPANAS_SEMBRADAS.length);
     });
 
     it('mantiene el id de una campaña sembrada estable entre siembras', () => {

@@ -203,7 +203,7 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
   'administration/operations': () =>
     import('./features/admin/operations/operations').then((m) => m.Operations),
   tutorials: () => import('./features/tutorials/tutorials-center').then((m) => m.TutorialsCenter),
-  'my-account': () => import('./features/account/my-profile/my-profile').then((m) => m.MyProfile),
+  'my-account': () => import('./features/account/my-account/my-account').then((m) => m.MyAccount),
   'my-account/dependents': () =>
     import('./features/account/dependents/dependents').then((m) => m.Dependents),
   'my-account/security': () =>
@@ -248,6 +248,8 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/account/spending/spending').then((m) => m.Spending),
   'my-account/invoices': () =>
     import('./features/account/my-invoices/my-invoices').then((m) => m.MyInvoices),
+  'my-account/requests': () =>
+    import('./features/account/my-requests/my-requests').then((m) => m.MyRequests),
   'administration/pharmacy-orders': () =>
     import('./features/organization/pharmacy-inbox/pharmacy-inbox').then(
       (m) => m.PharmacyInbox,
@@ -292,12 +294,13 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/pharmacy/import/pharmacy-import').then((m) => m.PharmacyImport),
   'administration/pharmacy-inventory': () =>
     import('./features/pharmacy/inventory/pharmacy-inventory').then((m) => m.PharmacyInventory),
-  // La ficha legal de la farmacia. Ruta hermana de las dos de arriba y no una
-  // sección del panel de organización, por el mismo motivo: el panel es de
-  // TP-1 y así no se le toca una línea. Diferida: arrastra el mapa.
-  'administration/pharmacy-profile': () =>
-    import('./features/organization/pharmacy-profile/pharmacy-profile').then(
-      (m) => m.PharmacyProfile,
+  'administration/pharmacy-prices': () =>
+    import('./features/pharmacy/prices/pharmacy-prices').then((m) => m.PharmacyPrices),
+  // Las sucursales de la organización activa (01/10/2026): una sola pantalla
+  // para la farmacia y el laboratorio, cada una en su menú.
+  'administration/pharmacy-branches': () =>
+    import('./features/organization/organization-branches/organization-branches').then(
+      (m) => m.OrganizationBranches,
     ),
   // El portal de la cuenta de laboratorio (30/09/2026): el espejo del de la
   // farmacia, para quien vende servicios. Todo en `features/laboratory/`.
@@ -305,6 +308,12 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/laboratory/summary/laboratory-summary').then((m) => m.LaboratorySummaryPage),
   'administration/laboratory-results': () =>
     import('./features/laboratory/results/laboratory-results').then((m) => m.LaboratoryResults),
+  'administration/laboratory-prices': () =>
+    import('./features/laboratory/prices/laboratory-prices').then((m) => m.LaboratoryPrices),
+  'administration/laboratory-branches': () =>
+    import('./features/organization/organization-branches/organization-branches').then(
+      (m) => m.OrganizationBranches,
+    ),
   'my-account/identity/cases': () =>
     import('./features/identity-assurance/verification-cases/verification-cases').then(
       (m) => m.VerificationCases,
@@ -1172,6 +1181,9 @@ function rutasDeSecciones(): Routes {
  */
 export const SECCIONES_REDIRIGIDAS: Readonly<Record<string, DestinoRedirigido>> = {
   'my-account/loyalty': { ruta: '/my-account', query: { pestana: 'puntos' } },
+  // La ficha de la farmacia es el «Mi perfil» de la cuenta de farmacia
+  // (01/10/2026): la cuenta es la organización, no una persona que la administra.
+  'administration/pharmacy-profile': { ruta: '/my-account' },
 };
 
 /** A dónde manda una sección redirigida: la ruta y el query que le suma. */
