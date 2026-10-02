@@ -123,4 +123,25 @@ describe('paginarCampos', () => {
       expect(pagina.titulo).toBe('Tus datos');
     });
   });
+
+  it('un «¿cuál?» viaja en la página de su pregunta y no cuenta para el tope', () => {
+    const principal = (n: number) => ({ key: `p${n}`, label: `P${n}`, control: 'yes-no' as const });
+    const cual = (de: number) => ({
+      key: `c${de}`,
+      label: `¿Cuál ${de}?`,
+      control: 'text' as const,
+      showWhen: { key: `p${de}`, equals: true },
+    });
+
+    const paginas = paginarCampos([
+      principal(1), cual(1), cual(1 + 0.5),
+      principal(2), principal(3), principal(4), cual(4),
+      principal(5),
+    ]);
+
+    expect(paginas.map((p) => p.campos.map((c) => c.key))).toEqual([
+      ['p1', 'c1', 'c1.5', 'p2', 'p3', 'p4', 'c4'],
+      ['p5'],
+    ]);
+  });
 });

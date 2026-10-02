@@ -26,6 +26,8 @@ const FORMATO_FECHA = new Intl.DateTimeFormat('es-BO', { dateStyle: 'long' });
 export function textoDeValor(valor: unknown, dataType: string | undefined): string {
   if (valor === undefined || valor === null) return '—';
   if (typeof valor === 'boolean') return valor ? 'Sí' : 'No';
+  // Las listas de varias respuestas se leen como una enumeración.
+  if (Array.isArray(valor)) return valor.length === 0 ? '—' : valor.map(String).join(', ');
   if (dataType === 'date' || dataType === 'datetime') {
     const fecha = new Date(String(valor));
     if (!Number.isNaN(fecha.getTime())) {

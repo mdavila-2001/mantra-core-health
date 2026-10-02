@@ -220,3 +220,24 @@ Los campos de elección del catálogo sembrado
 clínicos reales —NYHA, factores de riesgo, tipo de lactancia— para que lo que se
 ve al abrir la pantalla sea lo que un doctor reconoce, y no «Opción 1 / Opción
 2».
+
+### 5. Dependencias entre campos («¿cuál?» debajo de un «sí») — 2026-10-02
+
+**Las fichas del catálogo ya las tienen en el backend real** (API `justin/fichas-clinicas-v2`):
+cada campo puede traer `showWhen: { fieldId, equals }` en `GET /charts/templates`, con la
+semántica de `enableWhen` de HL7 FHIR (operador `=`, comportamiento `SHOW`). La siembra las
+guarda en el `default_value_json` de la clave `__catalog__` (`fieldPresentation`) junto con
+`section`, `options`, `multiple`, `allowOther` y `description`, porque
+`forms.dynamic_field_definitions` no tiene columnas para nada de eso.
+
+Lo que **falta** es lo mismo para los campos **propios** de una organización: el generador no
+deja todavía declarar «mostrar este campo sólo si…». El backend ya tiene el contrato
+(`POST /forms/fields/:id/dependencies`, `CreateFieldDependencyDto` con `EQ`/`SHOW`) y la tabla
+`forms.field_dependencies`; falta que `GET /charts/templates` las lea y las publique en el mismo
+`showWhen`, y que el editor las ofrezca.
+
+Reglas que el cliente ya aplica y el servidor debería respetar al capturar:
+
+- un campo oculto **no se envía** y su `required` no cuenta;
+- con un padre de varias respuestas, la condición se cumple si la respuesta **incluye** el valor;
+- un campo cuyo padre está oculto también está oculto.
