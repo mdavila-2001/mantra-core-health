@@ -128,4 +128,39 @@ describe('las fichas clínicas estándar del simulador', () => {
       'ODONTO_ODONTOGRAMA_OMS',
     ]);
   });
+
+  /* ---- v2 (2026-10-02): listas, «¿cuál?» y diagnóstico presuntivo -------- */
+
+  it('cada condición apunta a una pregunta anterior de la misma ficha', () => {
+    for (const ficha of FICHAS_ESTANDAR) {
+      const anteriores = new Set<string>();
+      for (const campo of ficha.fields) {
+        if (campo.showWhen !== undefined) {
+          expect(anteriores.has(campo.showWhen.field), `${ficha.code}.${campo.code}`).toBe(true);
+        }
+        anteriores.add(campo.code);
+      }
+    }
+  });
+
+  it('las escalas se eligen de una lista y los «¿cuál?» existen', () => {
+    const campos = FICHAS_ESTANDAR.flatMap((ficha) => ficha.fields);
+    expect(campos.filter((campo) => (campo.options?.length ?? 0) > 0).length).toBeGreaterThan(400);
+    expect(campos.filter((campo) => campo.showWhen !== undefined).length).toBeGreaterThan(600);
+    const asa = FICHAS_ESTANDAR.find((f) => f.code === 'ANEST_VALORACION_PREANESTESICA')?.fields.find(
+      (c) => c.code === 'clasificacion_asa',
+    );
+    expect(asa?.options?.length).toBe(6);
+  });
+
+  it('la consulta de medicina general pregunta qué se sospecha y abre lo que el dengue exige', () => {
+    const medgen = FICHAS_ESTANDAR.find((f) => f.code === 'MEDGEN_CONSULTA_BASE')!;
+    const presuntivo = medgen.fields.find((c) => c.code === 'diagnostico_presuntivo');
+    expect(presuntivo?.options).toContain('Dengue o síndrome febril agudo');
+    const alarma = medgen.fields.find((c) => c.code === 'dengue_signos_de_alarma');
+    expect(alarma?.showWhen).toEqual({
+      field: 'diagnostico_presuntivo',
+      equals: 'Dengue o síndrome febril agudo',
+    });
+  });
 });

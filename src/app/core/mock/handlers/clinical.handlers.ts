@@ -24,7 +24,7 @@ import { conflict, forbidden, notFound, validation, type MockReply, type MockReq
 import { ahora, Coleccion, cuerpo, isoDia, nuevoId, uuid } from '../mock-store';
 import { emitirNotificacion } from './notifications.handlers';
 import { enlazarArchivo, pdfMinimo } from './files.handlers';
-import { FICHAS_ESTANDAR } from '../fixtures/fichas-estandar.generated';
+import { FICHAS_ESTANDAR, type CampoDeFicha } from '../fixtures/fichas-estandar.generated';
 import { representaA } from './profiles.handlers';
 
 /* ============================================================================
@@ -608,7 +608,7 @@ export function registrarClinica(router: MockRouter): void {
   router.get('/charts/templates/:id', ({ params }) => plantillasVigentes().find((t) => t.id === params['id']) ?? notFound('Plantilla no encontrada'));
   router.post('/charts/templates', (request) => {
     const datos = cuerpo<{ specialtyConceptId: string; code: string; name: string; fields: { code: string; name: string; dataType: string; required?: boolean }[] }>(request);
-    const nueva = plantilla(datos.code ?? 'NUEVA', datos.name ?? 'Plantilla nueva', datos.specialtyConceptId ?? '', (datos.fields ?? []).map((f) => [f.code, f.name, f.dataType, f.required ?? false] as const));
+    const nueva = plantilla(datos.code ?? 'NUEVA', datos.name ?? 'Plantilla nueva', datos.specialtyConceptId ?? '', (datos.fields ?? []).map((f) => ({ code: f.code, name: f.name, dataType: f.dataType, required: f.required ?? false })));
     PLANTILLAS_CREADAS.push(nueva);
     return { status: 201, body: nueva };
   });
@@ -656,18 +656,9 @@ export const PLANTILLAS_DE_EXPEDIENTE = FICHAS_ESTANDAR.map((ficha) =>
     ficha.specialty === 'TRANSVERSAL'
       ? ESPECIALIDAD_TRANSVERSAL
       : (ESPECIALIDAD[ficha.specialty] ?? ESPECIALIDAD_TRANSVERSAL),
-    ficha.fields.map(
-      (campo) =>
-        [
-          campo.code,
-          campo.name,
-          campo.dataType,
-          campo.required,
-          campo.options,
-          campo.multiple,
-        ] as const,
-    ),
+    ficha.fields,
     ficha.provenance,
+    ficha.version,
   ),
 );
 
@@ -725,18 +716,19 @@ function registroReceta(r: RecetaSimulada) {
 }
 
 /**
- * Una plantilla de expediente sembrada.
+ * Una plantilla de expediente sembrada, con la misma forma que devuelve
+ * `GET /charts/templates` de la API real.
  *
- * Cada campo es `[code, name, dataType, required]` y, si es de eleccion,
- * `[..., opciones, multiple?]`: `code` es el tipo tecnico de los que se
- * responden eligiendo, y lo que separa «una sola» de «varias» es la
- * cardinalidad, no el tipo.
+ * Los campos llegan como en la ficha (`CampoDeFicha`) y salen con sus ids. La
+ * condición `showWhen` se declara por **código** en la ficha y se publica por
+ * **`fieldId`**, igual que hace `ChartTemplatesService`: el cliente lee el valor
+ * del padre por la clave del control, que es el `fieldId`.
  */
 export function plantilla(
   code: string,
   name: string,
   specialtyConceptId: string,
-  campos: readonly (readonly [string, string, string, boolean, (readonly string[])?, boolean?])[],
+  campos: readonly CampoDeFicha[],
   provenance?: {
     readonly sourceTitle: string;
     readonly organization: string;
@@ -746,26 +738,40 @@ export function plantilla(
     readonly retrievedAt: string;
     readonly note?: string;
   },
+  version = 1,
 ) {
   return {
     id: uuid(`chart-template-${code}`),
     specialtyConceptId,
     code,
     name,
-    version: 1,
+    version,
     statusConceptId: ESTADO['ST-PUBLISHED']!,
     // Un target por formulario y no uno compartido: `POST /forms/assignments`
     // sólo recibe el `targetResourceConceptId`, así que con un target común no
     // había forma de saber a qué formulario colgarle el campo.
     fieldTargetConceptId: uuid(`concept-field-target-${code}`),
-    fields: campos.map(([c, n, dataType, required, options, multiple], i) => ({
-      assignmentId: uuid(`tpl-assign-${code}-${c}`),
-      fieldId: uuid(`tpl-field-${code}-${c}`),
-      code: c,
-      name: n,
-      dataType,
-      required,
-      ...(options === undefined ? {} : { options, multiple: multiple ?? false }),
+    fields: campos.map((campo, i) => ({
+      assignmentId: uuid(`tpl-assign-${code}-${campo.code}`),
+      fieldId: uuid(`tpl-field-${code}-${campo.code}`),
+      code: campo.code,
+      name: campo.name,
+      dataType: campo.dataType,
+      required: campo.required,
+      ...(campo.section === undefined ? {} : { section: campo.section }),
+      ...(campo.options === undefined
+        ? {}
+        : { options: campo.options, multiple: campo.multiple ?? false }),
+      ...(campo.allowOther === true ? { allowOther: true } : {}),
+      ...(campo.description === undefined ? {} : { description: campo.description }),
+      ...(campo.showWhen === undefined
+        ? {}
+        : {
+            showWhen: {
+              fieldId: uuid(`tpl-field-${code}-${campo.showWhen.field}`),
+              equals: campo.showWhen.equals,
+            },
+          }),
       ordinal: i + 1,
       // `false`: son los campos del formulario **estándar**, los que hacen
       // comparable una ficha entre consultorios. Marcarlos como propios ponía

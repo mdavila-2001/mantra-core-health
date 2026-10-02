@@ -124,6 +124,17 @@ export function bloquesDeFormulario(datos: FormularioParaPdf): readonly PdfBlock
   // La numeración es corrida y no por página: en el papel las preguntas se
   // citan por su número —«contestá la 7»—, y reiniciarla en cada rótulo daría
   // cinco preguntas número 1 en la misma hoja.
+  // El número y el enunciado de cada pregunta, por clave: un «¿cuál?» en papel
+  // tiene que decir de qué pregunta depende, y se la cita por su número.
+  const citas = new Map<string, Cita>();
+  let contador = 1;
+  for (const pagina of datos.paginas) {
+    for (const campo of pagina.campos) {
+      citas.set(campo.key, { numero: contador, enunciado: campo.label });
+      contador += 1;
+    }
+  }
+
   let numero = 1;
   datos.paginas.forEach((pagina, indice) => {
     // Una hoja por página del formulario, de la segunda en adelante: es lo que
@@ -133,7 +144,7 @@ export function bloquesDeFormulario(datos: FormularioParaPdf): readonly PdfBlock
     if (indice > 0) {
       bloques.push({ kind: 'pagebreak', text: '' });
     }
-    bloques.push(...bloquesDePagina(pagina, numero));
+    bloques.push(...bloquesDePagina(pagina, numero, citas));
     numero += pagina.campos.length;
   });
 
@@ -164,8 +175,18 @@ export function bloquesDeFormulario(datos: FormularioParaPdf): readonly PdfBlock
   return bloques;
 }
 
+/** Cómo se cita una pregunta en el papel. */
+interface Cita {
+  readonly numero: number;
+  readonly enunciado: string;
+}
+
 /** Una página del motor: su rótulo, su ayuda y sus preguntas. */
-function bloquesDePagina(pagina: PaginaDeFormulario, desde: number): readonly PdfBlock[] {
+function bloquesDePagina(
+  pagina: PaginaDeFormulario,
+  desde: number,
+  citas: ReadonlyMap<string, Cita>,
+): readonly PdfBlock[] {
   const bloques: PdfBlock[] = [
     { kind: 'heading', text: pagina.titulo === '' ? 'Preguntas' : pagina.titulo, level: 2 },
   ];
@@ -175,7 +196,7 @@ function bloquesDePagina(pagina: PaginaDeFormulario, desde: number): readonly Pd
   }
 
   pagina.campos.forEach((campo, indice) => {
-    bloques.push(...bloquesDePregunta(campo, desde + indice));
+    bloques.push(...bloquesDePregunta(campo, desde + indice, citas));
   });
 
   return bloques;
@@ -189,11 +210,25 @@ function bloquesDePagina(pagina: PaginaDeFormulario, desde: number): readonly Pd
  * distinguir la pregunta de la respuesta escrita encima es el peso de la
  * letra.
  */
-function bloquesDePregunta(campo: CampoDeFormulario, numero: number): readonly PdfBlock[] {
+function bloquesDePregunta(
+  campo: CampoDeFormulario,
+  numero: number,
+  citas: ReadonlyMap<string, Cita>,
+): readonly PdfBlock[] {
   const marca = campo.required === true ? ' *' : '';
   const bloques: PdfBlock[] = [
     { kind: 'heading', text: `${numero}. ${campo.label}${marca}`, level: 4 },
   ];
+
+  // En pantalla un «¿cuál?» aparece sólo con el «sí»; en papel están todas las
+  // preguntas a la vista, así que se dice cuándo se contesta.
+  const padre = campo.showWhen === undefined ? undefined : citas.get(campo.showWhen.key);
+  if (campo.showWhen !== undefined && padre !== undefined) {
+    bloques.push({
+      kind: 'caption',
+      text: `Sólo si en la ${padre.numero} («${padre.enunciado}») respondió ${enPalabrasLaCondicion(campo.showWhen.equals)}.`,
+    });
+  }
 
   const ayuda = campo.hint ?? campo.description;
   if (ayuda !== undefined && ayuda !== '') {
@@ -361,3 +396,11 @@ export const FORM_TEMPLATE_PDF_DOWNLOADER = new InjectionToken<
   providedIn: 'root',
   factory: () => downloadFormTemplatePdf,
 });
+
+/** El valor de una condición, como se lee en papel: «Sí», «No», «A o B». */
+function enPalabrasLaCondicion(equals: NonNullable<CampoDeFormulario['showWhen']>['equals']): string {
+  const valores: readonly (string | boolean)[] = Array.isArray(equals) ? equals : [equals];
+  return valores
+    .map((valor) => (valor === true ? '«Sí»' : valor === false ? '«No»' : `«${valor}»`))
+    .join(' o ');
+}

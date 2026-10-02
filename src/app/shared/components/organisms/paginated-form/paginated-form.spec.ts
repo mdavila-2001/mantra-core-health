@@ -234,6 +234,54 @@ describe('PaginatedForm', () => {
     });
   });
 
+  describe('los campos condicionales («¿cuál?»)', () => {
+    /** «Documento» decide si se pregunta el correo, que vive solo en su página. */
+    const CONDICIONALES: readonly PaginaDeFormulario[] = [
+      { titulo: 'Identidad', campos: [{ key: 'documento', label: 'Documento', control: 'text' }] },
+      {
+        titulo: 'Detalle',
+        campos: [
+          {
+            key: 'correo',
+            label: 'Correo',
+            control: 'email',
+            required: true,
+            showWhen: { key: 'documento', equals: 'si' },
+          },
+        ],
+      },
+      { titulo: 'Acceso', campos: [{ key: 'clave', label: 'Contraseña', control: 'password' }] },
+    ];
+
+    it('una página cuyos campos están todos ocultos se salta, y su obligatorio no frena', () => {
+      host.paginas.set(CONDICIONALES);
+      host.form.controls.documento.setValue('no');
+      fixture.detectChanges();
+
+      botonContinuar().click();
+      fixture.detectChanges();
+
+      expect(titulo()).toBe('Acceso');
+      expect(host.form.controls.correo.disabled).toBe(true);
+    });
+
+    it('con la respuesta que lo abre, el campo aparece en su página y vuelve a exigir', () => {
+      host.paginas.set(CONDICIONALES);
+      host.form.controls.documento.setValue('si');
+      fixture.detectChanges();
+
+      botonContinuar().click();
+      fixture.detectChanges();
+
+      expect(titulo()).toBe('Detalle');
+      expect(host.form.controls.correo.enabled).toBe(true);
+      botonContinuar().click();
+      fixture.detectChanges();
+      // Vacío y obligatorio: no deja pasar.
+      expect(titulo()).toBe('Detalle');
+    });
+  });
+
   describe('valida al pasar de página', () => {
     it('no avanza con un campo obligatorio vacío, y dice por qué', () => {
       botonContinuar().click();
