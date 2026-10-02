@@ -51,6 +51,7 @@ for (const carpeta of readdirSync(ORIGEN, { withFileTypes: true })) {
       code: ficha.code,
       name: ficha.name,
       version: ficha.version ?? 1,
+      kind: ficha.kind ?? 'BASE',
       specialty: ficha.specialty.code,
       ...(ficha.provenance === undefined ? {} : { provenance: ficha.provenance }),
       fields: ficha.fields.map((campo) => ({
@@ -125,6 +126,12 @@ export interface FichaEstandar {
   readonly name: string;
   /** Versión de la ficha en el catálogo: sube cuando cambia su esquema. */
   readonly version: number;
+  /**
+   * La clase de ficha: la consulta inicial de la especialidad (\`BASE\`), el
+   * control estándar de una condición (\`SPECIFIC\`) o una de toda consulta
+   * (\`GENERAL\`).
+   */
+  readonly kind: 'BASE' | 'SPECIFIC' | 'GENERAL';
   /** Código de \`VS_MEDICAL_SPECIALTY\`, o \`TRANSVERSAL\`. */
   readonly specialty: string;
   readonly provenance?: ProcedenciaDeFicha;

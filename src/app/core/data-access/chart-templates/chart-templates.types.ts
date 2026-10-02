@@ -139,6 +139,9 @@ export interface ChartTemplateField {
   readonly own: boolean;
 }
 
+/** Clase de ficha del catálogo (ver {@link ChartTemplate.kind}). */
+export type ChartTemplateKind = 'BASE' | 'SPECIFIC' | 'GENERAL';
+
 /** La condición de visibilidad de un campo (ver {@link ChartTemplateField.showWhen}). */
 export interface CondicionDeCampo {
   readonly fieldId: string;
@@ -182,6 +185,12 @@ export interface ChartTemplate {
   readonly code: string;
   readonly name: string;
   readonly version: number;
+  /**
+   * La clase de ficha del catálogo estándar: la consulta inicial de la
+   * especialidad (`BASE`), el control estándar de una condición (`SPECIFIC`)
+   * o una de toda consulta (`GENERAL`). Ausente en las armadas a mano.
+   */
+  readonly kind?: ChartTemplateKind;
   /** Concept id del estado de la plantilla. */
   readonly statusConceptId: string;
   /**
