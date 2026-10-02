@@ -8,7 +8,10 @@
  *      esté a la vista, y que el disparador diga de qué sede son.
  *   2. Cada sede ofrece la acción del **QR bancario** con el que el
  *      profesional cobra ahí. Sin uno cargado, el modal **es** la zona de
- *      soltar; con uno cargado, el lápiz de la esquina pide el reemplazo.
+ *      soltar; con uno cargado, «Cambiar el QR» —en el pie del modal— abre el
+ *      selector de archivos del sistema directamente, y cancelarlo deja el
+ *      QR vigente tal cual (corrección del 02/10/2026: antes el botón iba
+ *      sobre la imagen y la sacaba para mostrar una zona de soltar).
  *   3. Sin QR configurado lo dice con palabras, dos veces: la acción se llama
  *      «Configurar QR bancario» y la fila lleva su aviso en ámbar, que es el
  *      que se ve sin abrir nada. El color nunca fue la única señal
@@ -213,26 +216,78 @@ async function recorrer(pagina, tema) {
   await pagina.locator('[data-testid="sede-qr-imagen"]').waitFor({ timeout: 30_000 });
   await pagina.screenshot({ path: `${SALIDA}/qr-cargado-${tema}.png` });
   ok(
-    `[${tema}] con QR cargado muestra la imagen y el lápiz, no la zona de soltar`,
+    `[${tema}] con QR cargado muestra la imagen y «Cambiar el QR», no la zona de soltar`,
     (await pagina.locator('[data-testid="sede-qr-reemplazar"]').count()) === 1 &&
       (await pagina.locator('[data-testid="sede-qr-archivo"]').count()) === 0,
   );
 
-  // El lápiz abre el reemplazo, y se puede volver sin perder el que estaba.
-  await pagina.locator('[data-testid="sede-qr-reemplazar"]').click();
-  await pagina.locator('[data-testid="sede-qr-archivo"]').waitFor({ timeout: 10_000 });
-  await pagina.screenshot({ path: `${SALIDA}/qr-reemplazo-${tema}.png` });
-  await pagina.locator('[data-testid="sede-qr-cancelar"]').click();
-  /* `waitFor` y no `count()` a secas: el clic vuelve antes de que Angular haya
-     repintado, y medido en ese instante el modal todavía muestra la zona de
-     soltar. Comprobado: al instante daba imagen 0 / archivo 1, y 1,5 s después
-     imagen 1 / archivo 0. Era la aserción la que llegaba temprano, no la
-     pantalla la que tarda. */
-  await pagina.locator('[data-testid="sede-qr-imagen"]').waitFor({ timeout: 10_000 });
+  // El botón vive en el pie del modal, no encima de la imagen: no la tapa.
+  const pie = await pagina.getByTestId('content-dialog-actions').boundingBox();
+  const boton = await pagina.locator('[data-testid="sede-qr-reemplazar"]').boundingBox();
+  const imagen = await pagina.locator('[data-testid="sede-qr-imagen"]').boundingBox();
   ok(
-    `[${tema}] cancelar el reemplazo devuelve el QR que ya estaba`,
-    (await pagina.locator('[data-testid="sede-qr-archivo"]').count()) === 0,
+    `[${tema}] «Cambiar el QR» está en el pie del modal y no tapa la imagen`,
+    pie && boton && imagen && boton.y >= pie.y && boton.y >= imagen.y + imagen.height,
+    `pie.y=${pie?.y} boton.y=${boton?.y} imagen.bottom=${imagen ? imagen.y + imagen.height : '?'}`,
   );
+
+  // «Cambiar el QR» abre el selector del sistema directamente: ni zona de
+  // soltar ni «dejar el que ya tenía». Cancelar el selector no cambia nada.
+  const selector = pagina.waitForEvent('filechooser', { timeout: 10_000 });
+  await pagina.locator('[data-testid="sede-qr-reemplazar"]').click();
+  const abierto = await selector.then(
+    (fc) => !fc.isMultiple(),
+    () => false,
+  );
+  ok(`[${tema}] «Cambiar el QR» abre el selector de archivos del sistema`, abierto);
+  await pagina.waitForTimeout(500);
+  await pagina.screenshot({ path: `${SALIDA}/qr-reemplazo-${tema}.png` });
+  ok(
+    `[${tema}] con el selector cancelado, el QR vigente sigue a la vista`,
+    (await pagina.locator('[data-testid="sede-qr-imagen"]').count()) === 1 &&
+      (await pagina.locator('[data-testid="sede-qr-archivo"]').count()) === 0 &&
+      (await pagina.locator('[data-testid="sede-qr-cancelar"]').count()) === 0,
+  );
+
+  /* ---- Reemplazar de verdad, por el selector: UI → request → persistencia → UI */
+  if (tema === 'claro') {
+    const fuenteAnterior = await pagina
+      .locator('[data-testid="sede-qr-imagen"]')
+      .getAttribute('src');
+    const selectorDeReemplazo = pagina.waitForEvent('filechooser', { timeout: 10_000 });
+    await pagina.locator('[data-testid="sede-qr-reemplazar"]').click();
+    await (await selectorDeReemplazo).setFiles({
+      name: 'qr-banco-nuevo.png',
+      mimeType: 'image/png',
+      buffer: QR_DE_PRUEBA,
+    });
+    // Mientras sube, la imagen vigente no se va.
+    const imagenDuranteLaSubida = await pagina
+      .locator('[data-testid="sede-qr-imagen"]')
+      .count();
+    await pagina
+      .locator('[data-testid="sede-qr-subiendo"]')
+      .waitFor({ state: 'detached', timeout: 30_000 });
+    const fuenteNueva = await pagina.locator('[data-testid="sede-qr-imagen"]').getAttribute('src');
+    await pagina.screenshot({ path: `${SALIDA}/qr-reemplazado-${tema}.png` });
+    ok(
+      `[${tema}] el QR elegido en el selector reemplaza al anterior sin pasar por una zona de soltar`,
+      imagenDuranteLaSubida === 1 && fuenteNueva !== null && fuenteNueva !== fuenteAnterior,
+      `antes=${(fuenteAnterior ?? '').slice(0, 24)}… después=${(fuenteNueva ?? '').slice(0, 24)}…`,
+    );
+
+    // Y persistió: cerrar, volver a abrir y encontrar el nuevo.
+    await pagina.getByTestId('content-dialog-close').click();
+    await accionarSede(pagina, 0, 'qr');
+    await pagina.locator('[data-testid="sede-qr-imagen"]').waitFor({ timeout: 30_000 });
+    const fuenteAlReabrir = await pagina
+      .locator('[data-testid="sede-qr-imagen"]')
+      .getAttribute('src');
+    ok(
+      `[${tema}] al reabrir el modal, el QR nuevo es el que está guardado`,
+      fuenteAlReabrir === fuenteNueva,
+    );
+  }
   await pagina.getByTestId('content-dialog-close').click();
 
   /* ---- El modal del QR que FALTA: es la zona de soltar ------------------- */
@@ -277,7 +332,9 @@ async function recorrer(pagina, tema) {
 
 async function principal() {
   mkdirSync(SALIDA, { recursive: true });
-  navegador = await chromium.launch();
+  /* `PW_CHROMIUM_PATH` sólo cuando el Chromium que Playwright espera no está
+     instalado y hay otro a mano; sin la variable, el de siempre. */
+  navegador = await chromium.launch({ executablePath: process.env['PW_CHROMIUM_PATH'] });
 
   try {
     for (const tema of ['claro', 'oscuro']) {
