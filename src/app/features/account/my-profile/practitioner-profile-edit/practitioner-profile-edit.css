@@ -365,3 +365,47 @@
 .edicion__logo-error {
   color: var(--text-danger);
 }
+
+/* Un idioma por renglón: el idioma, su nivel, el interruptor y el quitar.
+
+   En pantallas angostas los dos selectores se apilan y el interruptor y el
+   quitar comparten la última línea —el quitar solo en una línea era un
+   puntito huérfano, y la barra pegajosa de «Guardar» lo tapaba—; cada idioma
+   se separa del siguiente con un filete, porque cuatro controles apilados por
+   fila no dejan ver dónde termina uno y empieza el otro. Desde 780 px van en
+   una fila, con los dos selectores repartiéndose el ancho y los dos controles
+   cortos a su medida, al nivel de la casilla (`align-items: end`: el
+   interruptor mide 40 px y la casilla 42, así que sin margen quedan
+   centrados). `minmax(0, …)` por lo mismo que `.edicion__formulario`. */
+.edicion__idioma {
+  align-items: start;
+  display: grid;
+  gap: var(--sp-3) var(--sp-4);
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.edicion__idioma app-form-field {
+  grid-column: 1 / -1;
+}
+
+.edicion__idioma + .edicion__idioma {
+  border-block-start: 1px solid var(--border-subtle);
+  padding-block-start: var(--sp-4);
+}
+
+@media (min-width: 780px) {
+  .edicion__idioma {
+    align-items: end;
+    gap: var(--sp-4);
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto auto;
+  }
+
+  .edicion__idioma app-form-field {
+    grid-column: auto;
+  }
+
+  .edicion__idioma + .edicion__idioma {
+    border-block-start: 0;
+    padding-block-start: 0;
+  }
+}
