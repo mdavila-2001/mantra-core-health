@@ -18,12 +18,12 @@ import {
   type EncuentroSimulado,
   type RecetaSimulada,
 } from '../fixtures/clinica';
-import { CLASE_ENCUENTRO, ESPECIALIDAD, ESTADO, ESTADO_CONDICION, ESTADO_ENCUENTRO, ESTADO_RECETA, INTENCION_DEL_PLAN, SEVERIDAD, VERIFICACION_DX } from '../fixtures/conceptos';
+import { CLASE_ENCUENTRO, displayDe, ESPECIALIDAD, ESTADO, ESTADO_CONDICION, ESTADO_ENCUENTRO, ESTADO_RECETA, INTENCION_DEL_PLAN, SEVERIDAD, VERIFICACION_DX } from '../fixtures/conceptos';
 import { MEDICA, PACIENTE, pacientePorId, profesionalPorId } from '../fixtures/personas';
 import { conflict, forbidden, notFound, preconditionFailed, validation, type MockReply, type MockRequest, type MockRouter } from '../mock-router';
 import { ahora, Coleccion, cuerpo, isoDia, nuevoId, uuid } from '../mock-store';
 import { emitirNotificacion } from './notifications.handlers';
-import { enlazarArchivo, pdfMinimo } from './files.handlers';
+import { enlazarArchivo } from './files.handlers';
 import { FICHAS_ESTANDAR, type CampoDeFicha } from '../fixtures/fichas-estandar.generated';
 import { representaA } from './profiles.handlers';
 import { accesoDeEmergenciaVigente, relacionDelProfesional } from './misc.handlers';
@@ -372,23 +372,23 @@ export function registrarClinica(router: MockRouter): void {
   /**
    * `GET /clinical/prescriptions/:id/pdf` — el PDF oficial de la receta (B.3).
    *
-   * Reusa `pdfMinimo` (mismo generador que ya sirve `/download-url`): alcanza
-   * para que el botón del portal descargue un archivo `%PDF` de verdad y
-   * ejercite el camino completo (blob autenticado → `data:` URL → guardado),
-   * que es lo que el barrido de Playwright del mock puede comprobar.
+   * Sale por el mismo motor con que el portal arma la copia de trabajo
+   * (`clinical-pdf.ts`): membrete, tabla de medicamentos, diagnóstico y firma.
+   * Antes servía `pdfMinimo`, una hoja en blanco con el id de la receta, que
+   * alcanzaba para probar que el botón descargaba un `%PDF` y nada más — y era
+   * lo que veía cualquiera que bajara una receta en la maqueta.
+   *
+   * El contenido **oficial** —sello, QR, marca de agua según estado— lo arma la
+   * API real (`prescription-pdf.service.ts`); acá no se finge.
    */
-  router.get('/clinical/prescriptions/:id/pdf', (request) => {
+  router.get('/clinical/prescriptions/:id/pdf', async (request) => {
     const r = recetas.get(request.params['id']!);
     if (r === undefined) return notFound('Receta no encontrada');
     if (!puedeLeer(request, r.patientProfileId)) return forbidden();
 
-    const esOficial = r.issuedAt !== null;
-    const texto = esOficial
-      ? `Receta oficial ${r.id}`
-      : `Copia de trabajo ${r.id} - sin validez farmaceutica`;
     return {
       status: 200,
-      body: new Blob([pdfMinimo(texto)], { type: 'application/pdf' }),
+      body: new Blob([await recetaEnPdf(r)], { type: 'application/pdf' }),
       headers: {
         'Content-Disposition': `attachment; filename*=UTF-8''receta-${r.id}.pdf`,
         'Cache-Control': 'private, no-store',
@@ -767,6 +767,64 @@ function falloDeIndicacion(
     }
   }
   return null;
+}
+
+/** Una fecha del simulador (ISO o `null`) como la espera el contrato. */
+function fechaDe(iso: string | null | undefined): Date | undefined {
+  return iso === null || iso === undefined || iso === '' ? undefined : new Date(iso);
+}
+
+/**
+ * La receta como el documento de receta del motor de PDF.
+ *
+ * Pasa por `recetaDesdeResumen`, el mismo mapeo con que el portal arma la
+ * copia de trabajo, así el papel del mock y el del portal dicen lo mismo. Lo
+ * único que se agrega es el «para qué es» (C5): el diagnóstico vinculado o,
+ * si no lo hay, el motivo escrito.
+ *
+ * Import dinámico por lo mismo que `PdfExportService`: `jspdf` se descarga
+ * cuando alguien baja una receta, no al arrancar la maqueta.
+ */
+async function recetaEnPdf(r: RecetaSimulada): Promise<ArrayBuffer> {
+  const [{ buildPrescriptionPdf }, { recetaDesdeResumen }] = await Promise.all([
+    import('../../../shared/utils/clinical-pdf/clinical-pdf'),
+    import('../../../shared/utils/clinical-pdf/from-summary'),
+  ]);
+  const paciente = pacientePorId(r.patientProfileId);
+  const profesional = profesionalPorId(r.prescriberProfileId);
+  const condicion = r.indicationConditionId === undefined ? undefined : condiciones.get(r.indicationConditionId);
+
+  const documento = recetaDesdeResumen(
+    {
+      id: r.id,
+      medicationConceptId: r.medicationConceptId,
+      statusConceptId: r.statusConceptId,
+      doseText: r.doseText,
+      frequencyText: r.frequencyText,
+      patientInstructionsText: r.patientInstructionsText,
+      createdAt: new Date(r.createdAt),
+      ...(fechaDe(r.signedAt) === undefined ? {} : { signedAt: fechaDe(r.signedAt) }),
+      ...(fechaDe(r.issuedAt) === undefined ? {} : { issuedAt: fechaDe(r.issuedAt) }),
+      ...(fechaDe(r.validFrom) === undefined ? {} : { validFrom: fechaDe(r.validFrom) }),
+      ...(fechaDe(r.validTo) === undefined ? {} : { validTo: fechaDe(r.validTo) }),
+    },
+    {
+      paciente: paciente?.displayName ?? '',
+      ...(paciente === undefined ? {} : { documentoDelPaciente: paciente.nationalId }),
+      profesional: profesional?.displayName ?? '',
+      ...(profesional === undefined ? {} : { matricula: profesional.matricula, organizacion: profesional.organizacion }),
+    },
+    (conceptId) => (conceptId === undefined ? '' : displayDe(conceptId)),
+  );
+
+  const porQueEs =
+    condicion !== undefined
+      ? { tipo: 'diagnostico' as const, texto: displayDe(condicion.codeConceptId) }
+      : r.indicationText === undefined || r.indicationText.trim() === ''
+        ? undefined
+        : { tipo: 'motivo' as const, texto: r.indicationText };
+
+  return buildPrescriptionPdf({ ...documento, ...(porQueEs === undefined ? {} : { porQueEs }) }).output('arraybuffer');
 }
 
 function registroReceta(r: RecetaSimulada) {
