@@ -25,12 +25,34 @@ import { expect, test, type Locator, type Page } from '@playwright/test';
  * `test.skip` por API caída: no hay API de la que depender.
  */
 
-/** Los tres campos de «Dónde lo estudiaste» del título con el que ejerce. */
+/**
+ * Los tres campos de «Dónde lo estudiaste» del título con el que ejerce.
+ *
+ * País y universidad son desplegables desde el 02/10/2026 (propietario:
+ * «deben ser select, poblados con datos, como árbol para filtrar por país»).
+ * Su `data-testid` cae en el **host** `app-select`, así que el control es el
+ * `<select>` de adentro; la ciudad sigue siendo un `app-input`, cuyo `testId`
+ * cae en el `<input>`.
+ */
 const CAMPOS_DE_ESTUDIO = [
-  { testId: 'registro-pro-titulo-universidad', nombre: 'Universidad' },
-  { testId: 'registro-pro-titulo-pais', nombre: 'País de estudio' },
-  { testId: 'registro-pro-titulo-ciudad', nombre: 'Ciudad de estudio' },
+  { testId: 'registro-pro-titulo-pais', nombre: 'País de estudio', control: 'select' },
+  { testId: 'registro-pro-titulo-universidad', nombre: 'Universidad', control: 'select' },
+  { testId: 'registro-pro-titulo-ciudad', nombre: 'Ciudad de estudio', control: 'input' },
 ] as const;
+
+/** El control real de un campo de estudio del título principal. */
+function campoDeEstudio(page: Page, campo: (typeof CAMPOS_DE_ESTUDIO)[number]): Locator {
+  const host = page.getByTestId(campo.testId);
+  return campo.control === 'select' ? host.locator('select') : host;
+}
+
+/** La etiqueta marcada en un `<select>`: `toHaveValue` daría el índice interno. */
+function elegidoEn(select: Locator): Locator {
+  return select.locator('option:checked');
+}
+
+const UMSA = 'Universidad Mayor de San Andrés (UMSA) — La Paz';
+const UPB = 'Universidad Privada Boliviana (UPB)';
 
 /** El encabezado de la página que el motor está mostrando ahora. */
 function encabezado(page: Page): Locator {
@@ -149,63 +171,143 @@ async function llegarALosTitulos(page: Page): Promise<void> {
   await avanzar(page, 'Tus títulos');
 }
 
-/** Las casillas de texto de una fila de título, en orden: nombre, universidad, país, ciudad. */
-function casillasDeLaFila(fila: Locator): Locator {
-  return fila.locator(
-    'input.registro-titulo__nombre, .registro-titulo__estudio input[type="text"]',
-  );
+/** Lo que se declara de una fila de título: nombre, país, universidad y ciudad. */
+interface DatosDeFila {
+  readonly nombre: string;
+  readonly pais: string;
+  /** La etiqueta del desplegable, que en Bolivia trae sigla y ciudad. */
+  readonly universidad: string;
+  readonly ciudad: string;
+}
+
+/** Los cuatro controles de una fila de título, cada uno por lo que es. */
+function controlesDeLaFila(fila: Locator): Record<keyof DatosDeFila, Locator> {
+  return {
+    nombre: fila.locator('input.registro-titulo__nombre'),
+    pais: fila.locator('app-select[data-testid^="registro-pro-titulo-pais-"] select'),
+    universidad: fila.locator(
+      'app-select[data-testid^="registro-pro-titulo-universidad-"] select',
+    ),
+    ciudad: fila.locator('input[data-testid^="registro-pro-titulo-ciudad-"]'),
+  };
 }
 
 /**
- * Comprueba las cuatro casillas de una fila, una por una.
- *
- * `toHaveValues` no sirve: es el matcher de un `<select multiple>`, y sobre
- * cuatro `<input>` distintos rompe por modo estricto. Acá se afirma cada
- * casilla por su posición, que además dice cuál falló cuando falla.
+ * Los controles de una fila en el orden en que se apilan: nombre, país,
+ * universidad y ciudad. Sirve para medir geometría, no para escribir.
  */
-async function esperarLaFila(fila: Locator, valores: readonly string[]): Promise<void> {
-  const casillas = casillasDeLaFila(fila);
-  await expect(casillas).toHaveCount(valores.length);
-  for (const [posicion, valor] of valores.entries()) {
-    await expect(casillas.nth(posicion)).toHaveValue(valor);
-  }
+function controlesApilados(fila: Locator): Locator {
+  return fila.locator(
+    'input.registro-titulo__nombre, .registro-titulo__estudio select, .registro-titulo__estudio input[type="text"]',
+  );
+}
+
+/** Completa una fila: el país antes que la universidad, porque la acota. */
+async function completarLaFila(fila: Locator, datos: DatosDeFila): Promise<void> {
+  const controles = controlesDeLaFila(fila);
+  await controles.nombre.fill(datos.nombre);
+  await expect(controles.universidad).toBeDisabled();
+  await controles.pais.selectOption({ label: datos.pais });
+  await controles.universidad.selectOption({ label: datos.universidad });
+  await controles.ciudad.fill(datos.ciudad);
+}
+
+/**
+ * Comprueba los cuatro controles de una fila, uno por uno: lo escrito en las
+ * casillas y la etiqueta marcada en los desplegables, que además dice cuál
+ * falló cuando falla.
+ */
+async function esperarLaFila(fila: Locator, datos: DatosDeFila): Promise<void> {
+  const controles = controlesDeLaFila(fila);
+  await expect(controles.nombre).toHaveValue(datos.nombre);
+  await expect(elegidoEn(controles.pais)).toHaveText(datos.pais);
+  await expect(elegidoEn(controles.universidad)).toHaveText(datos.universidad);
+  await expect(controles.ciudad).toHaveValue(datos.ciudad);
 }
 
 test.describe('alta de doctor · universidad, lugar de estudio y segunda profesión', () => {
-  test('el título con el que ejerce pregunta universidad, país y ciudad, y los tres son opcionales', async ({
+  test('el título con el que ejerce pregunta país, universidad y ciudad, y los tres son opcionales', async ({
     page,
   }) => {
     await llegarAlTitulo(page);
 
     // Existen, se ven y cada uno tiene nombre accesible propio: sin eso un
-    // lector de pantalla anuncia tres cajas de texto sin decir cuál es cuál.
+    // lector de pantalla anuncia tres controles sin decir cuál es cuál.
     for (const campo of CAMPOS_DE_ESTUDIO) {
-      const caja = page.getByTestId(campo.testId);
-      await expect(caja, `falta la casilla ${campo.nombre}`).toBeVisible();
-      await expect(caja).toHaveAccessibleName(campo.nombre);
+      const control = campoDeEstudio(page, campo);
+      await expect(control, `falta el campo ${campo.nombre}`).toBeVisible();
+      await expect(control).toHaveAccessibleName(campo.nombre);
     }
 
-    // Y son opcionales de verdad: sin escribir nada, el motor deja avanzar en
+    // Y son opcionales de verdad: sin elegir nada, el motor deja avanzar en
     // cuanto está el título, que es lo único obligatorio de esta página.
     await elegirTituloProfesional(page);
     await avanzar(page, 'Tu habilitación para ejercer');
     await retroceder(page, 'Tu título profesional y foto');
 
-    // Lo escrito sobrevive a irse de la página y volver. Es lo que se rompe
+    const [pais, universidad, ciudad] = CAMPOS_DE_ESTUDIO.map((campo) =>
+      campoDeEstudio(page, campo),
+    );
+
+    // Es un árbol: sin país no hay universidad que elegir, y la lista de
+    // universidades es la del país. Bolivia trae la curada (con sigla y
+    // ciudad); Argentina, la importada, que llega por su propio trozo.
+    await expect(universidad).toBeDisabled();
+    await expect(pais.locator('option', { hasText: 'Bolivia' })).toHaveCount(1);
+    await expect(pais.locator('option', { hasText: /^Argentina$/ })).toHaveCount(1, {
+      timeout: 20_000,
+    });
+
+    await pais.selectOption({ label: 'Argentina' });
+    await expect(universidad).toBeEnabled();
+    await expect(universidad.locator('option', { hasText: 'Universidad de Buenos Aires' })).toHaveCount(1);
+    await expect(universidad.locator('option', { hasText: UMSA })).toHaveCount(0);
+
+    await pais.selectOption({ label: 'Bolivia' });
+    await expect(universidad.locator('option', { hasText: UMSA })).toHaveCount(1);
+    await expect(universidad.locator('option', { hasText: 'Universidad de Buenos Aires' })).toHaveCount(0);
+
+    // Lo elegido sobrevive a irse de la página y volver. Es lo que se rompe
     // solo cuando un campo proyectado no está atado a su `FormControl`: se ve
-    // bien, se escribe bien, y al volver está vacío.
-    await page.getByTestId('registro-pro-titulo-universidad').fill('Universidad Mayor de San Andrés');
-    await page.getByTestId('registro-pro-titulo-pais').fill('Bolivia');
-    await page.getByTestId('registro-pro-titulo-ciudad').fill('La Paz');
+    // bien, se elige bien, y al volver está vacío.
+    await universidad.selectOption({ label: UMSA });
+    await ciudad.fill('La Paz');
 
     await avanzar(page, 'Tu habilitación para ejercer');
     await retroceder(page, 'Tu título profesional y foto');
 
-    await expect(page.getByTestId('registro-pro-titulo-universidad')).toHaveValue(
-      'Universidad Mayor de San Andrés',
-    );
-    await expect(page.getByTestId('registro-pro-titulo-pais')).toHaveValue('Bolivia');
-    await expect(page.getByTestId('registro-pro-titulo-ciudad')).toHaveValue('La Paz');
+    await expect(elegidoEn(pais)).toHaveText('Bolivia');
+    await expect(elegidoEn(universidad)).toHaveText(UMSA);
+    await expect(ciudad).toHaveValue('La Paz');
+
+    await page.screenshot({
+      path: 'artifacts/playwright/registro-doctor-titulo-pais-universidad.png',
+      fullPage: true,
+    });
+  });
+
+  test('«Otro país…» y «Otra institución…» destapan la casilla escrita a mano', async ({
+    page,
+  }) => {
+    await llegarAlTitulo(page);
+    const [pais, universidad] = CAMPOS_DE_ESTUDIO.map((campo) => campoDeEstudio(page, campo));
+
+    await expect(page.getByTestId('registro-pro-titulo-pais-otro')).toHaveCount(0);
+    await pais.selectOption({ label: 'Otro país…' });
+    const paisEscrito = page.getByTestId('registro-pro-titulo-pais-otro');
+    await expect(paisEscrito).toBeVisible();
+    await paisEscrito.fill('Atlántida');
+
+    // Con «Otro país» la única universidad posible es la escrita a mano.
+    await expect(universidad.locator('option:not([hidden])')).toHaveCount(1);
+    await universidad.selectOption({ label: 'Otra institución…' });
+    const universidadEscrita = page.getByTestId('registro-pro-titulo-universidad-otra');
+    await expect(universidadEscrita).toBeVisible();
+    await universidadEscrita.fill('Universidad de Atlántida');
+
+    // El desplegable se queda en «Otro»: la casilla no desaparece debajo del cursor.
+    await expect(elegidoEn(pais)).toHaveText('Otro país…');
+    await expect(elegidoEn(universidad)).toHaveText('Otra institución…');
   });
 
   test('se declaran dos profesiones y cada una lleva su universidad, su lugar de estudio y su diploma', async ({
@@ -230,21 +332,21 @@ test.describe('alta de doctor · universidad, lugar de estudio y segunda profesi
     await agregar.click();
     await expect(filas).toHaveCount(2);
 
-    const primera = ['Medicina', 'Universidad Mayor de San Andrés', 'Bolivia', 'La Paz'];
-    const segunda = [
-      'Ingeniería de Sistemas',
-      'Universidad Privada Boliviana',
-      'Bolivia',
-      'Cochabamba',
-    ];
+    const primera: DatosDeFila = {
+      nombre: 'Medicina',
+      pais: 'Bolivia',
+      universidad: UMSA,
+      ciudad: 'La Paz',
+    };
+    const segunda: DatosDeFila = {
+      nombre: 'Ingeniería de Sistemas',
+      pais: 'Bolivia',
+      universidad: UPB,
+      ciudad: 'Cochabamba',
+    };
 
-    for (const [indice, valores] of [primera, segunda].entries()) {
-      const casillas = casillasDeLaFila(filas.nth(indice));
-      await expect(casillas).toHaveCount(4);
-      for (const [posicion, valor] of valores.entries()) {
-        await casillas.nth(posicion).fill(valor);
-      }
-    }
+    await completarLaFila(filas.nth(0), primera);
+    await completarLaFila(filas.nth(1), segunda);
 
     // El diploma de cada una es suyo: se adjunta a la segunda y la primera
     // queda sin archivo. Es la trampa que el pedido nombra —«cada uno con …
@@ -301,7 +403,7 @@ test.describe('alta de doctor · universidad, lugar de estudio y segunda profesi
     await agregar.click();
 
     const fila = page.getByTestId('registro-pro-fila-UNIVERSITARIO').first();
-    const casillas = casillasDeLaFila(fila);
+    const casillas = controlesApilados(fila);
     await expect(casillas).toHaveCount(4);
     await expect(page.getByTestId('registro-pro-titulos-alcance')).toContainText(
       'la universidad y el PDF de cada título',

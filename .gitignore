@@ -175,3 +175,6 @@ src/app/features/component-stock/component-index.generated.ts
 # Las fuentes de Unicode/CLDR que baja `yarn emoji:catalog`. El catálogo
 # generado SÍ se versiona; estas son el insumo, pesan y se vuelven a bajar.
 /.cache/
+
+# Fuente cruda del padrón de universidades (2,2 MB): la descarga `scripts/gen-universidades-por-pais.mjs`.
+data/universidades/

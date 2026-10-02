@@ -129,3 +129,14 @@ sigue recibiendo lo mismo que recibía. El día que exista el catálogo del lado
 servidor, el frontend pasa a ser un mapeo y no cambia dónde se guarda la
 respuesta. Mismo criterio, y mismo archivo vecino, que
 `titulos-profesionales.ts`.
+
+Desde el 02/10/2026 el alta de profesionales (`register-practitioner`) va un paso
+más allá, a pedido del propietario: **país de estudio y universidad son
+desplegables en árbol**, el país acota la universidad. El árbol lo sirve
+`PadronDeUniversidades` (`src/app/core/profesion/padron-de-universidades.ts`):
+Bolivia con la lista curada de arriba, y 199 países más con 10 218
+universidades importadas de `Hipo/university-domains-list` por
+`scripts/gen-universidades-por-pais.mjs`, fijado a un commit y cargado por un
+`import()` diferido. Sigue guardándose el nombre, y sigue habiendo salida a mano
+(«Otro país…», «Otra institución…»). El editor del perfil todavía usa la lista
+plana boliviana; pasarlo al mismo árbol es un cambio de pantalla, no de datos.
