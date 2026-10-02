@@ -25,6 +25,7 @@ import type {
 import { TerminologyClient } from '../../../../core/data-access/terminology/terminology.client';
 import type { ConceptLabels } from '../../../../core/data-access/terminology/terminology.types';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
+import { insuranceBillingFrequencyLabel } from '../../../../core/profesion/insurance-billing-frequency';
 import { HelpBlockDismissalStore } from '../../../../core/tutorials/help-block-dismissal.store';
 import { dataOf, loading, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
@@ -544,6 +545,7 @@ export class PractitionerProfile {
       facturacion: {
         nit: perfil.taxId ?? '',
         razonSocial: perfil.taxHolderName ?? '',
+        frecuenciaSeguro: insuranceBillingFrequencyLabel(perfil.insuranceBillingFrequency),
       },
       consultorio: {
         logoUrl,

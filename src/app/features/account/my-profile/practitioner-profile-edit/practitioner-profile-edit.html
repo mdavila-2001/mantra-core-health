@@ -629,6 +629,18 @@
                   placeholder="Consultorio Dra. Rojas S.R.L."
                 />
               </app-form-field>
+
+              <app-form-field
+                label="Frecuencia de facturación al seguro"
+                hint="Cada cuánto presentás tu facturación a las aseguradoras."
+              >
+                <app-select
+                  data-testid="edicion-frecuencia-facturacion-seguro"
+                  [options]="opcionesFrecuenciaFacturacion"
+                  [(value)]="frecuenciaFacturacionSeguro"
+                  placeholder="Elegí la frecuencia"
+                />
+              </app-form-field>
             </form>
           </app-tab>
 

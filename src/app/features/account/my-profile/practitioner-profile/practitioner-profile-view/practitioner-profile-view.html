@@ -504,6 +504,15 @@
                     <span class="mi-perfil__ausente">Sin registrar</span>
                   }
                 </p>
+
+                <p class="mi-perfil__factura-rotulo">Facturación al seguro</p>
+                <p class="mi-perfil__factura-titular" data-testid="perfil-factura-frecuencia-seguro">
+                  @if (facturacion.frecuenciaSeguro) {
+                    {{ facturacion.frecuenciaSeguro }}
+                  } @else {
+                    <span class="mi-perfil__ausente">Sin registrar</span>
+                  }
+                </p>
               </div>
             </div>
 
