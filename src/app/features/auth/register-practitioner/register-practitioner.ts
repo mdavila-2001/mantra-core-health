@@ -1360,6 +1360,31 @@ export class RegisterPractitioner {
    */
   private readonly padron = inject(PadronDeUniversidades);
 
+  /**
+   * Los tres controles de dónde se estudió el título con el que ejerce, en el
+   * orden en que se preguntan: el país primero, porque acota la universidad.
+   *
+   * Es el inventario del bloque, con la clave escrita como en el resto de los
+   * campos del alta (`key: '…'`): `pestanas-del-perfil-medico.spec.ts` lee
+   * este archivo y exige que cada campo del alta tenga pestaña en el perfil.
+   * La plantilla monta los tres a mano porque son controles distintos (dos
+   * desplegables con su casilla «Otro…» y un texto), no una lista homogénea.
+   */
+  protected readonly camposDeEstudioDelTitulo = [
+    {
+      key: 'professionalTitleCountry',
+      label: 'País de estudio',
+    },
+    {
+      key: 'professionalTitleUniversity',
+      label: 'Universidad',
+    },
+    {
+      key: 'professionalTitleCity',
+      label: 'Ciudad de estudio',
+    },
+  ] as const satisfies readonly { key: ClaveDeEstudioDelTitulo; label: string }[];
+
   /** Las opciones del desplegable de país, iguales en el título y en las filas. */
   protected readonly opcionesDePais = this.padron.opcionesDePais;
 
