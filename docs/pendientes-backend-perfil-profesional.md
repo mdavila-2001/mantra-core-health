@@ -275,3 +275,16 @@ PUT /profiles/practitioners/me/signature-assets
   `files.handlers.ts`, `auth.handlers.ts`) son sólo maqueta y se borran cuando exista
   la ruta real. Los bytes de una imagen recién subida viven en memoria: un F5 los
   pierde (limitación conocida).
+
+## País y universidad del alta, en árbol (2026-10-02)
+
+Desde el 02/10/2026 el alta de profesionales (`register-practitioner`) va un paso
+más allá, a pedido del propietario: **país de estudio y universidad son
+desplegables en árbol**, el país acota la universidad. El árbol lo sirve
+`PadronDeUniversidades` (`src/app/core/profesion/padron-de-universidades.ts`):
+Bolivia con la lista curada de arriba, y 199 países más con 10 218
+universidades importadas de `Hipo/university-domains-list` por
+`scripts/gen-universidades-por-pais.mjs`, fijado a un commit y cargado por un
+`import()` diferido. Sigue guardándose el nombre, y sigue habiendo salida a mano
+(«Otro país…», «Otra institución…»). El editor del perfil todavía usa la lista
+plana boliviana; pasarlo al mismo árbol es un cambio de pantalla, no de datos.
