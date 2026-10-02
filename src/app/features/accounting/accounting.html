@@ -197,7 +197,10 @@
 }
 
 @if (muestraLibros()) {
-  <div #trialBalancePdf class="informe-encabezado">
+  <!-- La raíz exportable envuelve el encabezado Y la tabla: el botón apuntaba
+       sólo al encabezado y el PDF salía con el título y nada más. -->
+  <div #trialBalancePdf data-pdf-root>
+  <div class="informe-encabezado">
     <h2 class="titulo-de-seccion">Balance de sumas y saldos</h2>
     <app-pdf-export-button
       [target]="trialBalancePdf"
@@ -213,8 +216,10 @@
     [rowLabel]="nombreDeCuenta"
     caption="Saldos por cuenta del plan contable"
   />
+  </div>
 
-  <div #journalPdf class="informe-encabezado">
+  <div #journalPdf data-pdf-root>
+  <div class="informe-encabezado">
     <h2 class="titulo-de-seccion">Libro diario</h2>
     <div class="informe-encabezado__acciones">
       <app-pdf-export-button
@@ -234,6 +239,7 @@
     [trackBy]="claveDeAsiento"
     caption="Asientos de la práctica, del más reciente al más antiguo"
   />
+  </div>
 }
 
 @if (practicaElegida(); as practiceId) {
@@ -340,7 +346,8 @@
         <!-- Junta lo que las otras tres lecturas ya calcularon; no agrega
              ningún número propio (ver el JSDoc de `indicadores`). -->
         @if (indicadores(); as datos) {
-          <div #cuadroDeMandoPdf class="informe-encabezado">
+          <div #cuadroDeMandoPdf data-pdf-root>
+          <div class="informe-encabezado">
             <span></span>
             <app-pdf-export-button
               [target]="cuadroDeMandoPdf"
@@ -380,6 +387,7 @@
               </app-alert>
             }
           </app-card>
+          </div>
         } @else {
           <p class="nota">Cargando los tres informes que arman el cuadro de mando…</p>
         }
@@ -388,7 +396,8 @@
 
     <app-tab label="Libro mayor">
       @if (pestanaActiva() === 0) {
-        <div #ledgerPdf class="informe-encabezado">
+        <div #ledgerPdf data-pdf-root>
+        <div class="informe-encabezado">
           <app-form-field icon="billing" label="Cuenta" hint="El libro mayor es por cuenta: elegí cuál mirar">
             <app-select
               [options]="opcionesDeCuentaParaMayor()"
@@ -404,6 +413,7 @@
           [trackBy]="claveDeMovimiento"
           caption="Movimientos posteados de la cuenta elegida, con saldo corrido"
         />
+        </div>
       }
     </app-tab>
 
@@ -413,7 +423,8 @@
              separados del cuerpo de la tabla, no sueltos sobre el fondo de la
              página — si no, «Resultado del período» se lee como una fila más
              de la tabla de abajo en vez del cierre del informe. -->
-        <div #incomeStatementPdf class="informe-encabezado">
+        <div #incomeStatementPdf data-pdf-root>
+        <div class="informe-encabezado">
           <span></span>
           <app-pdf-export-button
             [target]="incomeStatementPdf"
@@ -455,12 +466,14 @@
           [rowLabel]="nombreDeLineaFinanciera"
           caption="Cuentas de ingreso y gasto posteadas de la práctica"
         />
+        </div>
       }
     </app-tab>
 
     <app-tab label="Balance general">
       @if (pestanaActiva() === 2) {
-        <div #balanceSheetPdf class="informe-encabezado">
+        <div #balanceSheetPdf data-pdf-root>
+        <div class="informe-encabezado">
           <span></span>
           <app-pdf-export-button
             [target]="balanceSheetPdf"
@@ -511,6 +524,7 @@
           [rowLabel]="nombreDeLineaFinanciera"
           caption="Cuentas de activo, pasivo y patrimonio a la fecha de corte"
         />
+        </div>
       }
     </app-tab>
 
@@ -519,7 +533,8 @@
         <!-- No es el estado de flujos de efectivo NIIF: ver el JSDoc de
              `flujoDeCaja` sobre por qué es el libro mayor de la cuenta que la
              propia persona elige como su caja o su banco. -->
-        <div #cashFlowPdf class="informe-encabezado">
+        <div #cashFlowPdf data-pdf-root>
+        <div class="informe-encabezado">
           <app-form-field icon="billing" label="Cuenta" hint="Elegí la cuenta que usás como caja o banco">
             <app-select
               [options]="opcionesDeCuentaParaMayor()"
@@ -553,6 +568,7 @@
           [trackBy]="claveDeMovimiento"
           caption="Movimientos posteados de la cuenta elegida como caja/banco"
         />
+        </div>
       }
     </app-tab>
   </app-tabs>
