@@ -249,7 +249,11 @@ export interface GlossaryTermTag {
    `valueSetId` la que dispara el acotamiento, no el idioma.
    --------------------------------------------------------------------------- */
 
-/** Los seis tipos de relación clínica tipada entre dos términos del glosario. */
+/**
+ * Los ocho tipos de relación clínica tipada entre dos términos del glosario.
+ * `SYMPTOM` y `SPECIALTY` llegaron el 2026-10-01 con las relaciones de Wikidata
+ * (espejo de `GLOSSARY_RELATION_TYPES` de la API).
+ */
 export const GLOSSARY_RELATION_TYPES = [
   'RELATED_TERM',
   'DISEASE',
@@ -257,6 +261,8 @@ export const GLOSSARY_RELATION_TYPES = [
   'TREATMENT',
   'ANATOMY',
   'DIAGNOSTIC_TEST',
+  'SYMPTOM',
+  'SPECIALTY',
 ] as const;
 export type GlossaryRelationType = (typeof GLOSSARY_RELATION_TYPES)[number];
 

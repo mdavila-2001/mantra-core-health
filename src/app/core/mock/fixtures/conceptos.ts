@@ -1,4 +1,6 @@
 import { uuid } from '../mock-store';
+import { analisisInlasaDe } from './inlasa';
+import { prestacionDeImagen } from './precios-de-referencia';
 
 /* ============================================================================
     El catálogo de terminología del backend simulado.
@@ -833,34 +835,41 @@ export const PRIORIDAD = definir('VS_PRIORITY', [
 ]);
 
 conjunto('VS_DIAGNOSTIC_STUDY', 'Estudios diagnósticos', 'Estudios de laboratorio e imagen.');
+/** Nombre oficial de INLASA para un estudio de laboratorio (ver `fixtures/inlasa.ts`). */
+const conNombreInlasa = (code: string, rotuloDeImagen?: string): readonly [string, string] => [
+  code,
+  analisisInlasaDe(code)?.name ?? rotuloDeImagen ?? code,
+];
+/** Un estudio de imagen con equivalente en FONASA lleva su nombre oficial (`precios-de-referencia.ts`). */
+const conNombreFonasa = (code: string): readonly [string, string] => [code, prestacionDeImagen(code)?.name ?? code];
 export const ESTUDIO = definir('VS_DIAGNOSTIC_STUDY', [
-  ['STUDY-HEMOGRAMA', 'Hemograma completo'],
-  ['STUDY-GLUCOSA', 'Glucosa en ayunas'],
-  ['STUDY-PERFIL-LIPIDICO', 'Perfil lipídico'],
-  ['STUDY-TSH', 'TSH'],
-  ['STUDY-ORINA', 'Examen general de orina'],
-  ['STUDY-RX-TORAX', 'Radiografía de tórax'],
-  ['STUDY-ECO-ABD', 'Ecografía abdominal'],
+  conNombreInlasa('STUDY-HEMOGRAMA'),
+  conNombreInlasa('STUDY-GLUCOSA'),
+  conNombreInlasa('STUDY-PERFIL-LIPIDICO'),
+  conNombreInlasa('STUDY-TSH'),
+  conNombreInlasa('STUDY-ORINA'),
+  conNombreFonasa('STUDY-RX-TORAX'),
+  conNombreFonasa('STUDY-ECO-ABD'),
   ['STUDY-ECG', 'Electrocardiograma'],
-  ['STUDY-RMN-RODILLA', 'Resonancia de rodilla'],
-  ['STUDY-TAC-CRANEO', 'Tomografía de cráneo'],
+  conNombreFonasa('STUDY-RMN-RODILLA'),
+  conNombreFonasa('STUDY-TAC-CRANEO'),
   /* Un catálogo de diez estudios dejaba a cada centro con cinco, o sea siempre
      por debajo del umbral con el que la ficha muestra su buscador y su
      paginador: la sección se veía entera y sus controles no aparecían nunca.
      Un laboratorio real ofrece decenas. */
-  ['STUDY-CREATININA', 'Creatinina en sangre'],
-  ['STUDY-UREA', 'Urea en sangre'],
-  ['STUDY-HBA1C', 'Hemoglobina glicosilada'],
-  ['STUDY-COAGULACION', 'Tiempo de coagulación'],
-  ['STUDY-HEPATICO', 'Perfil hepático'],
-  ['STUDY-COPROLOGICO', 'Coproparasitológico'],
-  ['STUDY-CULTIVO', 'Urocultivo con antibiograma'],
-  ['STUDY-VITAMINA-D', 'Vitamina D'],
-  ['STUDY-MAMOGRAFIA', 'Mamografía bilateral'],
-  ['STUDY-ECO-OBSTETRICA', 'Ecografía obstétrica'],
-  ['STUDY-RX-COLUMNA', 'Radiografía de columna'],
-  ['STUDY-TAC-ABDOMEN', 'Tomografía de abdomen'],
-  ['STUDY-RMN-CEREBRO', 'Resonancia de cerebro'],
+  conNombreInlasa('STUDY-CREATININA'),
+  conNombreInlasa('STUDY-UREA'),
+  conNombreInlasa('STUDY-HBA1C'),
+  conNombreInlasa('STUDY-COAGULACION'),
+  conNombreInlasa('STUDY-HEPATICO'),
+  conNombreInlasa('STUDY-COPROLOGICO'),
+  conNombreInlasa('STUDY-CULTIVO'),
+  conNombreInlasa('STUDY-VITAMINA-D'),
+  conNombreFonasa('STUDY-MAMOGRAFIA'),
+  conNombreFonasa('STUDY-ECO-OBSTETRICA'),
+  conNombreFonasa('STUDY-RX-COLUMNA'),
+  conNombreFonasa('STUDY-TAC-ABDOMEN'),
+  conNombreFonasa('STUDY-RMN-CEREBRO'),
   ['STUDY-DENSITOMETRIA', 'Densitometría ósea'],
 ]);
 

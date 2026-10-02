@@ -1,4 +1,7 @@
+import { DirectorioOficial, NOMBRE_DE_FUENTE, type ClaseOficial, type FichaOficial } from '../directorio-oficial';
 import { ETIQUETA_DE_PRECISION, FARMACIAS_DEL_CORPUS } from '../fixtures/bolivia-eje-central';
+import { categoriaPorCodigo } from '../fixtures/categorias-publicas';
+import { CATALOGO_MEDICAMENTOS } from '../fixtures/catalogo-medicamentos.generated';
 import { comentarios, CONCEPTO, publicaciones, resenas, vitrinaPorSlug, vitrinas, type VitrinaSimulada } from '../fixtures/comunidad';
 import { MEDICAMENTO, displayDe } from '../fixtures/conceptos';
 import { afiliaciones, PROFESIONALES, profesionalPorId } from '../fixtures/personas';
@@ -36,6 +39,63 @@ function resultado(v: VitrinaSimulada) {
   };
 }
 
+/** Una ficha del directorio oficial con la forma de un resultado del buscador. */
+function resultadoOficial(f: FichaOficial, kind: ClaseOficial) {
+  return {
+    kind: kind as ClasePublica,
+    slug: f.slug,
+    displayName: f.name,
+    headline: f.headline,
+    city: f.city,
+    avatarUrl: null,
+    // Listada por un registro oficial o una fuente comunitaria, no verificada en AloVida.
+    verified: false,
+    ratingAverage: null,
+    ratingCount: 0,
+    coverUrl: null,
+    address: f.address,
+    location: f.lat === null || f.lng === null ? null : { lat: f.lat, lng: f.lng },
+    hasPublishedAgenda: false,
+    nextAvailableDate: null,
+    category: categoriaPorCodigo(f.category),
+  };
+}
+
+/** La ficha de detalle de una entrada del directorio oficial: lo que la fuente declara, y nada más. */
+function fichaOficial(f: FichaOficial & { readonly kind: ClaseOficial }) {
+  const datos = [
+    `Fuente: ${NOMBRE_DE_FUENTE[f.source]}.`,
+    f.license === undefined ? null : `Resolución de habilitación de AGEMED: ${f.license}.`,
+    f.officialCode === undefined ? null : `Código RUES: ${f.officialCode}.`,
+    f.phone === null ? null : `Teléfono publicado por la fuente: ${f.phone}.`,
+    'Este establecimiento todavía no reclamó su ficha en AloVida.',
+  ].filter((linea): linea is string => linea !== null);
+  return {
+    kind: f.kind as ClasePublica,
+    slug: f.slug,
+    displayName: f.name,
+    headline: f.headline,
+    biography: datos.join('\n'),
+    avatarUrl: null,
+    coverUrl: null,
+    verified: false,
+    city: f.city,
+    address: f.address,
+    location: f.lat === null || f.lng === null ? null : { lat: f.lat, lng: f.lng },
+    specialties: [],
+    trajectory: [],
+    practiceSites: [],
+    ratingAverage: null,
+    ratingCount: 0,
+    acceptsReviews: false,
+    posts: [],
+    updatedAt: iso(-1),
+  };
+}
+
+/** Los verticales que el directorio oficial cubre. */
+const CLASES_OFICIALES: readonly ClaseOficial[] = ['PHARMACY', 'ORGANIZATION', 'DIAGNOSTIC_UNIT'];
+
 function actor(v: VitrinaSimulada) {
   return { slug: v.slug, displayName: v.displayName, headline: v.headline, avatarUrl: v.avatarUrl, kind: (v.kind === 'PATIENT' ? 'PRACTITIONER' : v.kind) as ClasePublica };
 }
@@ -68,19 +128,55 @@ function distanciaKm(aLat: number, aLng: number, bLat: number, bLng: number): nu
   return Math.round(2 * r * Math.asin(Math.sqrt(h)) * 10) / 10;
 }
 
-const GRUPOS_TERAPEUTICOS = ['Cardiovascular', 'Antidiabéticos', 'Antibióticos', 'Analgésicos', 'Digestivo', 'Respiratorio', 'Hormonas', 'Sistema nervioso', 'Antialérgicos', 'Suplementos'];
+/**
+ * Grupo anatómico principal de la clasificación ATC de la OMS (primer nivel),
+ * en castellano. Es el grupo terapéutico de la vitrina: sale del código, no se
+ * asigna a mano.
+ */
+const GRUPO_ATC: Readonly<Record<string, string>> = {
+  A: 'Tracto alimentario y metabolismo',
+  B: 'Sangre y órganos hematopoyéticos',
+  C: 'Sistema cardiovascular',
+  H: 'Preparados hormonales sistémicos',
+  J: 'Antiinfecciosos para uso sistémico',
+  M: 'Sistema musculoesquelético',
+  N: 'Sistema nervioso',
+  R: 'Sistema respiratorio',
+};
 
+/**
+ * El ATC nivel 5 de cada medicamento del vademécum, tal como lo traen sus
+ * registros sanitarios en el catálogo universal (CIMA/INVIMA,
+ * `catalogo-medicamentos.generated.ts`). Antes era un prefijo con el índice
+ * pegado («C0900», «A1002»): códigos que no existen.
+ */
+function atcDe(code: string): string {
+  const atc = CATALOGO_MEDICAMENTOS.find((p) => p.medicationCode === code)?.atc[0];
+  if (atc === undefined) throw new Error(`El catálogo universal no trae el ATC de ${code}`);
+  return atc;
+}
+
+/*
+ * Sin marcas: las marcas que se venden en Bolivia salen del registro de AGEMED,
+ * que todavía no se pudo descargar. Antes se inventaban «<genérico> Bagó» e
+ * «<genérico> Inti» — laboratorios reales con productos que no fabrican. La
+ * vitrina se busca por principio activo (DCI), que es lo que dice la receta.
+ *
+ * Los precios son la oferta SIMULADA de las farmacias de demostración de la
+ * maqueta: no hay precio oficial de medicamentos en Bolivia, cada farmacia
+ * publica el suyo.
+ */
 const MEDICAMENTOS_VITRINA = Object.entries(MEDICAMENTO).map(([code, conceptId], i) => {
   const display = displayDe(conceptId);
   const generico = display.split(' ')[0]!;
-  const grupo = GRUPOS_TERAPEUTICOS[[0, 0, 1, 0, 2, 3, 3, 4, 5, 6, 7, 8, 9, 2, 1][i] ?? 0]!;
+  const atcCode = atcDe(code);
   const precio = 8 + i * 4.5;
   return {
     conceptId,
-    atcCode: `${['C09', 'C09', 'A10', 'C10', 'J01', 'M01', 'N02', 'A02', 'R03', 'H03', 'N06', 'R06', 'B03', 'J01', 'A10'][i]}${String(i).padStart(2, '0')}`,
+    atcCode,
     genericName: generico,
-    therapeuticGroup: grupo,
-    brands: [`${generico} Bagó`, `${generico} Inti`, ...(i % 2 === 0 ? [`${generico} Genérico`] : [])],
+    therapeuticGroup: GRUPO_ATC[atcCode[0]!] ?? 'Otros',
+    brands: [] as string[],
     presentations: [display.replace(`${generico} `, '')],
     requiresPrescription: ![5, 6, 11, 12].includes(i),
     priceFrom: precio.toFixed(2),
@@ -122,7 +218,7 @@ function productosDeFarmacia(slug: string) {
     return {
       id: uuid(`public-product-${slug}-${m.code}`),
       genericName: m.genericName,
-      brandName: m.brands[(base + i) % m.brands.length]!,
+      brandName: null,
       presentation: m.presentations[0] ?? null,
       therapeuticGroup: m.therapeuticGroup,
       price: (desde + ((hasta - desde) * paso) / 4).toFixed(2),
@@ -170,6 +266,23 @@ interface SucursalPublica {
  * suya. Devolver vacío obligaría a la pantalla a distinguir «no tiene
  * sucursales» de «la lectura falló», que no es lo mismo.
  */
+/** La única sede de una farmacia del directorio oficial: la de la lista de AGEMED. */
+function sucursalOficial(f: FichaOficial): SucursalPublica {
+  return {
+    id: uuid(`sede-oficial-${f.id}`),
+    slug: f.slug,
+    name: f.name,
+    siteName: f.name,
+    city: f.city,
+    addressText: f.address,
+    phone: f.phone,
+    openingHours: null,
+    location: f.lat === null || f.lng === null ? null : { lat: f.lat, lng: f.lng },
+    locationAccuracy: null,
+    isCurrent: true,
+  };
+}
+
 function sucursalesDe(vitrina: VitrinaSimulada): readonly SucursalPublica[] {
   const propia = SUCURSAL_POR_SLUG.get(vitrina.slug);
   if (propia === undefined) {
@@ -281,7 +394,7 @@ function disponibilidadDe(
   };
 }
 
-export function registrarPublico(router: MockRouter): void {
+export function registrarPublico(router: MockRouter, directorio: DirectorioOficial = new DirectorioOficial()): void {
   router.get('/public/posts', ({ query }) => {
     const items = publicaciones
       .todos()
@@ -300,7 +413,7 @@ export function registrarPublico(router: MockRouter): void {
     return paginaPublica(items, query, 10);
   });
 
-  const buscar = (clases: readonly ClasePublica[] | null) => ({ query }: { query: URLSearchParams }) => {
+  const buscar = (clases: readonly ClasePublica[] | null) => async ({ query }: { query: URLSearchParams }) => {
     const q = texto(query, 'q');
     const city = texto(query, 'city');
     const specialty = texto(query, 'specialty');
@@ -312,7 +425,21 @@ export function registrarPublico(router: MockRouter): void {
       .filter((v) => specialty === null || v.specialties.includes(specialty) || v.specialties.some((s) => contiene(displayDe(s), specialty)))
       .filter((v) => !verified || v.verified)
       .map(resultado);
-    return paginaPublica(items, query);
+    // El directorio oficial suma después de las fichas de la comunidad: no está
+    // verificado (no entra si se pide `verified`) y no declara especialidades.
+    const oficiales: ReturnType<typeof resultadoOficial>[] = [];
+    if (!verified && specialty === null) {
+      const yaEstan = new Set(items.map((i) => i.slug));
+      for (const clase of CLASES_OFICIALES) {
+        if (clases !== null && !clases.includes(clase as ClasePublica)) continue;
+        for (const f of await directorio.de(clase)) {
+          if (yaEstan.has(f.slug) || !(contiene(f.name, q) || contiene(f.headline, q)) || !contiene(f.city, city)) continue;
+          oficiales.push(resultadoOficial(f, clase));
+        }
+      }
+      oficiales.sort((a, b) => a.displayName.localeCompare(b.displayName, 'es'));
+    }
+    return paginaPublica([...items, ...oficiales], query);
   };
 
   router.get('/public/search', buscar(null));
@@ -348,24 +475,39 @@ export function registrarPublico(router: MockRouter): void {
     return paginaPublica(items, query);
   });
 
-  router.get('/public/nearby', ({ query }) => {
+  router.get('/public/nearby', async ({ query }) => {
     const lat = Number(query.get('lat') ?? -17.78);
     const lng = Number(query.get('lng') ?? -63.18);
     const radio = Number(query.get('radiusKm') ?? 10);
     const kind = texto(query, 'kind') as ClasePublica | null;
     const limit = Number(query.get('limit') ?? 20) || 20;
-    const items = publicas()
+    const deLaComunidad = publicas()
       .filter((v) => kind === null || v.kind === kind)
-      .map((v) => ({ ...resultado(v), distanceKm: distanciaKm(lat, lng, v.lat, v.lng), location: { lat: v.lat, lng: v.lng } }))
+      .map((v) => ({ ...resultado(v), distanceKm: distanciaKm(lat, lng, v.lat, v.lng), location: { lat: v.lat, lng: v.lng } }));
+    // Las fichas del directorio oficial con coordenada también están cerca de alguien.
+    const yaEstan = new Set(deLaComunidad.map((v) => v.slug));
+    const oficiales = [];
+    for (const clase of CLASES_OFICIALES) {
+      if (kind !== null && kind !== clase) continue;
+      for (const f of await directorio.de(clase)) {
+        if (f.lat === null || f.lng === null || yaEstan.has(f.slug)) continue;
+        oficiales.push({ ...resultadoOficial(f, clase), distanceKm: distanciaKm(lat, lng, f.lat, f.lng), location: { lat: f.lat, lng: f.lng } });
+      }
+    }
+    const items = [...deLaComunidad, ...oficiales]
       .filter((v) => v.distanceKm <= radio)
       .sort((a, b) => a.distanceKm - b.distanceKm)
       .slice(0, limit);
     return { items, nextCursor: null, totalHint: items.length, generatedAt: ahora() };
   });
 
-  router.get('/public/profiles/:prefix/:slug', ({ params }) => {
+  router.get('/public/profiles/:prefix/:slug', async ({ params }) => {
     const v = vitrinaPorSlug(params['slug']!);
-    if (v === undefined || v.kind === 'PATIENT') return notFound('Ficha no encontrada');
+    if (v === undefined) {
+      const oficial = await directorio.porSlug(params['slug']!);
+      return oficial === undefined ? notFound('Ficha no encontrada') : fichaOficial(oficial);
+    }
+    if (v.kind === 'PATIENT') return notFound('Ficha no encontrada');
     const profesional = v.kind === 'PRACTITIONER' ? profesionalPorId(v.targetId) : undefined;
     return {
       kind: v.kind as ClasePublica,
@@ -417,8 +559,12 @@ export function registrarPublico(router: MockRouter): void {
      «Opiniones públicas de una ficha» en PENDIENTES-BACKEND.md). Cuelga de
      `/public/profiles/:prefijo/:slug/…` por lo mismo que los servicios. */
 
-  router.get('/public/profiles/:prefix/:slug/reviews', ({ params, query }) => {
+  router.get('/public/profiles/:prefix/:slug/reviews', async ({ params, query }) => {
     const v = vitrinaPorSlug(params['slug']!);
+    if (v === undefined && (await directorio.porSlug(params['slug']!)) !== undefined) {
+      // Una ficha del directorio oficial todavía no tiene opiniones.
+      return paginaPublica([], query);
+    }
     if (v === undefined || v.kind === 'PATIENT') return notFound('Ficha no encontrada');
     const items = resenas
       .filtrar((r) => r.targetPublicProfileId === v.id)
@@ -453,14 +599,17 @@ export function registrarPublico(router: MockRouter): void {
      por lo mismo que la ficha: `/o` es también una ruta del router, y el proxy
      de desarrollo enruta comparando el comienzo de la ruta. */
 
-  router.get('/public/profiles/o/:slug/services', ({ params, query }) => {
+  router.get('/public/profiles/o/:slug/services', async ({ params, query }) => {
     const v = vitrinaPorSlug(params['slug']!);
+    // Una ficha del directorio oficial no publica servicios: lista vacía, no 404.
+    if (v === undefined && (await directorio.porSlug(params['slug']!))?.kind === 'ORGANIZATION') return paginaPublica([], query, 50);
     if (v === undefined || v.kind !== 'ORGANIZATION') return notFound('Ficha no encontrada');
     return paginaPublica(serviciosPublicadosDe(v.slug), query, 50);
   });
 
-  router.get('/public/profiles/f/:slug/products', ({ params, query }) => {
+  router.get('/public/profiles/f/:slug/products', async ({ params, query }) => {
     const v = vitrinaPorSlug(params['slug']!);
+    if (v === undefined && (await directorio.porSlug(params['slug']!))?.kind === 'PHARMACY') return paginaPublica([], query, 50);
     if (v === undefined || v.kind !== 'PHARMACY') return notFound('Ficha no encontrada');
     return paginaPublica(productosDeFarmacia(v.slug), query, 50);
   });
@@ -471,14 +620,21 @@ export function registrarPublico(router: MockRouter): void {
      de Bolivia ya trae las cadenas con sus sucursales; la farmacia que no está
      en él es una sola y se devuelve sola. */
 
-  router.get('/public/profiles/f/:slug/branches', ({ params, query }) => {
+  router.get('/public/profiles/f/:slug/branches', async ({ params, query }) => {
     const v = vitrinaPorSlug(params['slug']!);
+    if (v === undefined) {
+      // La farmacia de AGEMED es una sola sede: la que figura en la lista.
+      const oficial = await directorio.porSlug(params['slug']!);
+      if (oficial?.kind === 'PHARMACY') return paginaPublica([sucursalOficial(oficial)], query, 50);
+    }
     if (v === undefined || v.kind !== 'PHARMACY') return notFound('Ficha no encontrada');
     return paginaPublica(sucursalesDe(v), query, 50);
   });
 
-  router.get('/public/profiles/f/:slug/branch-availability', ({ params, query }) => {
+  router.get('/public/profiles/f/:slug/branch-availability', async ({ params, query }) => {
     const v = vitrinaPorSlug(params['slug']!);
+    // Sin catálogo publicado no hay disponibilidad que calcular.
+    if (v === undefined && (await directorio.porSlug(params['slug']!))?.kind === 'PHARMACY') return { items: [], count: 0, generatedAt: ahora() };
     if (v === undefined || v.kind !== 'PHARMACY') return notFound('Ficha no encontrada');
 
     const renglones = (texto(query, 'items') ?? '')
@@ -584,7 +740,7 @@ export function registrarPublico(router: MockRouter): void {
         latitude: f.lat,
         longitude: f.lng,
         distanceKm: distanciaKm(lat, lng, f.lat, f.lng),
-        brandName: m.brands[i % m.brands.length]!,
+        brandName: null,
         presentation: m.presentations[0]!,
         price: (Number(m.priceFrom) * (1 + i * 0.2)).toFixed(2),
         currency: 'BOB',
