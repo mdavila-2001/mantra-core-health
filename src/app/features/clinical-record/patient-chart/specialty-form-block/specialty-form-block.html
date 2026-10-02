@@ -333,13 +333,51 @@
                       </p>
                     }
                   </fieldset>
-                } @else {
+                } @else if (!ocultos().has(campo.fieldId)) {
+                  <!-- Un «¿cuál?» sólo aparece con el «sí» que lo abre, y va con
+                       sangría debajo de su pregunta. -->
                   <app-form-field
                     [label]="campo.name"
+                    [hint]="campo.description ?? ''"
                     [required]="campo.required"
+                    [class.formulario-especialidad__dependiente]="campo.showWhen !== undefined"
                     data-testid="campo-especialidad"
                   >
-                    @switch (tipoDibujable(campo.dataType)) {
+                    @switch (tipoDibujable(campo)) {
+                      @case ('una-corta') {
+                        <app-segmented-control
+                          [options]="opcionesDe(campo)"
+                          [value]="valorTexto(campo.fieldId)"
+                          [ariaLabel]="campo.name"
+                          size="md"
+                          (valueChange)="actualizarValor(campo.fieldId, $event)"
+                        />
+                      }
+                      @case ('una') {
+                        <app-select
+                          [options]="opcionesDe(campo)"
+                          [value]="valorTexto(campo.fieldId) || null"
+                          [ariaLabel]="campo.name"
+                          placeholder="Elegir"
+                          (valueChange)="actualizarValor(campo.fieldId, $event)"
+                        />
+                      }
+                      @case ('varias') {
+                        <app-checkbox-group
+                          [options]="opcionesDe(campo)"
+                          [value]="valorLista(campo.fieldId)"
+                          [allowOther]="campo.allowOther ?? false"
+                          (valueChange)="actualizarValor(campo.fieldId, $event)"
+                        />
+                      }
+                      @case ('text') {
+                        <app-textarea
+                          [value]="valorTexto(campo.fieldId)"
+                          [rows]="2"
+                          autoResize
+                          (valueChange)="actualizarValor(campo.fieldId, $event)"
+                        />
+                      }
                       @case ('boolean') {
                         <!-- Dos botones y no una casilla: en una ficha clínica
                              «contestó que no» y «no se preguntó» no pueden guardarse

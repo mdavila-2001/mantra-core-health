@@ -151,3 +151,10 @@
   font-size: var(--fs-caption);
   color: var(--text-secondary);
 }
+
+/* El «¿cuál?» de un «sí»: con sangría y un filete de marca, para que se lea
+   como continuación de la pregunta de arriba. Tokens: vale en modo oscuro. */
+.formulario-especialidad__dependiente {
+  padding-inline-start: var(--sp-4);
+  border-inline-start: 2px solid var(--c-aqua-300);
+}

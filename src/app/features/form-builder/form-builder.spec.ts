@@ -4,7 +4,7 @@ import {
   provideHttpClientTesting,
 } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 
 import { FormBuilder } from './form-builder';
@@ -16,6 +16,18 @@ import {
 } from '../../shared/utils/form-template-pdf/form-template-pdf';
 
 const RUTA = '/form-builder';
+const PERFIL_PROPIO = '/profiles/practitioners/me/summary';
+
+/** El perfil propio de una cardióloga, con lo mínimo que la lectura traduce. */
+function perfilDe(specialtyConceptId: string) {
+  return {
+    createdAt: '2026-01-01T00:00:00Z',
+    specialties: [{ specialtyConceptId, isPrimary: true, validFrom: null, validTo: null }],
+    credentials: [],
+    licenses: [],
+    affiliations: [],
+  };
+}
 
 /** Un campo del formulario estándar: existe, no se toca. */
 function estandar(n: number) {
@@ -91,6 +103,12 @@ describe('FormBuilder', () => {
   afterEach(() => {
     for (const pendiente of http.match((r) => r.url === '/terminology/concepts')) {
       pendiente.flush({ items: [], count: 0, limit: 0, nextCursor: null });
+    }
+    // La pantalla pregunta la especialidad del perfil para preseleccionar el
+    // filtro. Las pruebas que no la miran responden «sin perfil»: el
+    // comportamiento de siempre, el catálogo entero.
+    for (const pendiente of http.match((r) => r.url === PERFIL_PROPIO)) {
+      pendiente.flush(null, { status: 404, statusText: 'Not Found' });
     }
     http.verify();
   });
@@ -806,6 +824,58 @@ describe('FormBuilder', () => {
       expect(filtros.find((f) => f.key === 'especialidad')?.options).toEqual([]);
     });
 
+    it('arranca en la especialidad de quien entra, con las fichas generales al lado', async () => {
+      const transversal: ChartTemplate = {
+        ...PLANTILLA,
+        id: 'tpl-3',
+        specialtyConceptId: 'sp-9',
+        code: 'TRANSV_ANAMNESIS_GENERAL',
+        name: 'Anamnesis general',
+      };
+      http
+        .expectOne((r) => r.url === '/charts/templates' && r.method === 'GET')
+        .flush([PLANTILLA, OTRA, transversal]);
+      http.expectOne((r) => r.url === PERFIL_PROPIO).flush(perfilDe('sp-2'));
+      harness.detectChanges();
+      responderEspecialidades();
+      await harness.fixture.whenStable();
+      harness.detectChanges();
+
+      expect(TestBed.inject(Router).url).toContain('especialidad=sp-2');
+      // La propia y la transversal; la de medicina general, no.
+      expect(filtrados()?.map((p) => p.code)).toEqual([
+        'CARDIO_FICHA_BASE',
+        'TRANSV_ANAMNESIS_GENERAL',
+      ]);
+      const html = harness.routeNativeElement?.textContent ?? '';
+      expect(html).toContain('Mostrando los formularios de Cardiología');
+      expect(html).toContain('Ver todas las especialidades');
+    });
+
+    it('«Ver todas las especialidades» quita el filtro y no se vuelve a poner solo', async () => {
+      listarDos();
+      http.expectOne((r) => r.url === PERFIL_PROPIO).flush(perfilDe('sp-2'));
+      responderEspecialidades();
+      await harness.fixture.whenStable();
+
+      interno<() => void>('verTodasLasEspecialidades')();
+      await harness.fixture.whenStable();
+      harness.detectChanges();
+
+      expect(TestBed.inject(Router).url).not.toContain('especialidad=');
+      expect(filtrados()?.length).toBe(2);
+    });
+
+    it('un enlace que ya trae filtro no se pisa con la especialidad propia', async () => {
+      await irA({ especialidad: 'sp-1' });
+      // `irA` creó una pantalla nueva: la primera ya no escucha.
+      for (const vieja of http.match((r) => r.url === '/charts/templates')) vieja.flush([]);
+      for (const vieja of http.match((r) => r.url === PERFIL_PROPIO)) vieja.flush(perfilDe('sp-2'));
+      await harness.fixture.whenStable();
+
+      expect(TestBed.inject(Router).url).toContain('especialidad=sp-1');
+    });
+
     it('lo vacío del filtro no es lo vacío del catálogo', async () => {
       listarDos();
       responderEspecialidades();
@@ -865,6 +935,66 @@ describe('FormBuilder', () => {
       interno<() => void>('descargar')();
 
       expect(bajado).toBeNull();
+    });
+  });
+
+  /* ---- vista previa de una ficha v2: secciones y «¿cuál?» ---------------- */
+
+  describe('vista previa de una ficha con condiciones', () => {
+    const FICHA: ChartTemplate = {
+      ...PLANTILLA,
+      fields: [
+        { ...estandar(1), name: '¿Tiene alergias?', dataType: 'boolean', section: 'Antecedentes' },
+        {
+          ...estandar(2),
+          name: '¿A qué?',
+          dataType: 'json',
+          options: ['Medicamentos', 'Alimentos'],
+          multiple: true,
+          section: 'Antecedentes',
+          showWhen: { fieldId: 'f-1', equals: true },
+        },
+        {
+          ...estandar(3),
+          name: 'Clasificación ASA',
+          options: ['ASA I', 'ASA II', 'ASA III'],
+          section: 'Evaluación',
+        },
+      ],
+    };
+
+    type Paginas = () => readonly { titulo: string; campos: readonly { key: string; control: string; showWhen?: unknown }[] }[];
+
+    it('pagina por sección y lleva la condición con la clave del padre', () => {
+      abrirPlantilla(FICHA);
+
+      const paginas = interno<Paginas>('paginas')();
+      expect(paginas.map((p) => p.titulo)).toEqual(['Antecedentes', 'Evaluación']);
+      const cual = paginas[0].campos.find((c) => c.key === 'f-2');
+      expect(cual?.showWhen).toEqual({ key: 'f-1', equals: true });
+      // Una lista sobre `json` es de casillas, y una sobre `string`, de opciones.
+      expect(cual?.control).toBe('checkboxes');
+      expect(paginas[1].campos[0].control).toBe('radio');
+    });
+
+    it('el «¿a qué?» aparece al contestar «sí» y se va con el «no»', () => {
+      abrirPlantilla(FICHA);
+      interno<() => void>('alternarPrevia')();
+      harness.detectChanges();
+
+      const texto = () => harness.routeNativeElement?.textContent ?? '';
+      expect(texto()).not.toContain('¿A qué?');
+
+      const form = interno<() => import('@angular/forms').FormGroup>('formularioDeMuestra')();
+      form.get('f-1')?.setValue(true);
+      harness.detectChanges();
+      expect(texto()).toContain('¿A qué?');
+
+      form.get('f-1')?.setValue(false);
+      harness.detectChanges();
+      expect(texto()).not.toContain('¿A qué?');
+      // Oculto = deshabilitado: no frena el avance ni sale en el valor.
+      expect(form.get('f-2')?.disabled).toBe(true);
     });
   });
 });
