@@ -297,6 +297,48 @@ describe('PractitionerDetail', () => {
     expect(insurers!.compareDocumentPosition(activity) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
+  /**
+   * 02/10/2026 — pedido del propietario: los horarios de otros servicios en una
+   * pestaña propia también del lado del paciente. La de consultas sigue siendo
+   * la que abre, y la de servicios no se construye hasta que se elige.
+   */
+  it('«Sedes y horarios» tiene dos pestañas: Consultas y Otros servicios', async () => {
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        {
+          provide: ActivatedRoute,
+          useValue: { paramMap: of(convertToParamMap({ profileId: 'per-9' })) },
+        },
+        { provide: AuthService, useValue: { isAuthenticated: () => false, activeTenantId: () => null } },
+      ],
+    });
+    http = TestBed.inject(HttpTestingController);
+    const fixture = TestBed.createComponent(PractitionerDetail);
+    fixture.detectChanges();
+    responder();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    http.expectOne('/practitioners/per-9/insurance-carriers').flush({ items: [] });
+    fixture.detectChanges();
+
+    const seccion = (fixture.nativeElement as HTMLElement).querySelector('#horarios')!;
+    const solapas = [...seccion.querySelectorAll<HTMLElement>('[role="tab"]')];
+    expect(solapas.map((s) => s.textContent?.trim())).toEqual(['Consultas', 'Otros servicios']);
+    expect(seccion.querySelector('app-practitioner-availability')).not.toBeNull();
+    expect(seccion.querySelector('app-practitioner-service-schedule')).toBeNull();
+
+    solapas[1]!.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(seccion.querySelector('app-practitioner-availability')).toBeNull();
+    expect(seccion.querySelector('app-practitioner-service-schedule')).not.toBeNull();
+    http.verify();
+  });
+
   /** Sin id en la ruta no se pide nada: no hay a quién consultar. */
   it('sin id en la ruta no dispara ninguna petición', () => {
     montar(null);

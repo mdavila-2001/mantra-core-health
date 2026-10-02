@@ -61,6 +61,7 @@ import {
   CAMPAIGN_PARAM,
   CAMPAIGN_TITLE_PARAM,
   PROFESSIONAL_PARAM,
+  SERVICE_BOOKING_SLOT,
   SERVICE_PARAM,
   reservaDelPortalRoute,
 } from './appointments.routes';
@@ -316,7 +317,7 @@ function servicioEnUnaLinea(cita: Booking): string {
 const PEDIR_CONSULTA = 'CONSULTA';
 
 /** El id que acompaña a la ruta de reserva cuando el horario no es un cupo. */
-const RESERVA_DE_SERVICIO = 'servicio';
+const RESERVA_DE_SERVICIO = SERVICE_BOOKING_SLOT;
 
 /**
  * Las agendas de una misma persona, juntas (F-23).

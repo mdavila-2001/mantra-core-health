@@ -25,6 +25,14 @@ export function reservaDelPortalRoute(slotId: string): string {
 }
 
 /**
+ * El «id de cupo» de una reserva de servicio. Un horario de servicio no es un
+ * cupo: la pantalla de reserva lo reencuentra por `recurso`, `desde`, `hasta` y
+ * `oferta`, que viajan por query string. Vive acá para que la ficha del
+ * profesional arme el mismo enlace sin importar `appointments.ts`.
+ */
+export const SERVICE_BOOKING_SLOT = 'servicio';
+
+/**
  * Query param con el código de una campaña preventiva del seguro (Tarea 4).
  *
  * Lo pone el widget de beneficios (`patient-campaigns-widget`) y lo lee

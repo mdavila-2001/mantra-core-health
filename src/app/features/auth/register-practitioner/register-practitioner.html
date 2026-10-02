@@ -161,26 +161,77 @@
               />
             </ng-template>
 
-            <!-- Dónde estudiaste la profesión con la que ejercés. Los tres
-                 son opcionales y de texto libre: no hay padrón de universidades
-                 en ninguna capa y sólo existen dos conceptos de país en toda la
-                 aplicación (ver `CampoDeEstudio`). -->
+            <!-- Dónde estudiaste la profesión con la que ejercés. Los tres son
+                 opcionales. País y universidad son desplegables en árbol: la
+                 lista de universidades es la del país elegido (propietario,
+                 02/10/2026), con «Otro…» que destapa una casilla escrita para
+                 lo que falte. La ciudad sigue siendo texto (ver `CampoDeEstudio`). -->
             <ng-template appCampoPersonalizado="professionalTitleEducation">
               <div class="registro__estudio">
-                @for (campo of camposDeEstudioDelTitulo; track campo.key) {
+                <div class="registro__estudio-campo">
                   <app-form-field
-                    class="registro__estudio-campo"
-                    [label]="campo.label"
-                    hint="Opcional."
+                    label="País de estudio"
+                    [hint]="padronCargando() ? 'Opcional. Cargando la lista de países…' : 'Opcional.'"
                   >
-                    <app-input
-                      [testId]="campo.testId"
-                      [placeholder]="campo.placeholder"
-                      [value]="valorDeEstudio(campo.key)"
-                      (valueChange)="escribirEstudio(campo.key, $event)"
+                    <app-select
+                      data-testid="registro-pro-titulo-pais"
+                      placeholder="Elegí el país"
+                      [options]="opcionesDePais()"
+                      [value]="paisDelTituloElegido()"
+                      (valueChange)="elegirPaisDelTitulo($event)"
                     />
                   </app-form-field>
-                }
+                  @if (paisDelTituloEsOtro()) {
+                    <app-form-field label="¿Qué país?" hint="Como figura en tu diploma.">
+                      <app-input
+                        testId="registro-pro-titulo-pais-otro"
+                        placeholder="Nombre del país"
+                        [value]="valorDeEstudio('professionalTitleCountry')"
+                        (valueChange)="escribirEstudio('professionalTitleCountry', $event)"
+                      />
+                    </app-form-field>
+                  }
+                </div>
+
+                <div class="registro__estudio-campo">
+                  <app-form-field
+                    label="Universidad"
+                    [hint]="paisDelTituloElegido() === null ? 'Opcional. Elegí primero el país.' : 'Opcional.'"
+                  >
+                    <app-select
+                      data-testid="registro-pro-titulo-universidad"
+                      placeholder="Elegí la universidad"
+                      [options]="opcionesDeUniversidadDelTitulo()"
+                      [disabled]="paisDelTituloElegido() === null"
+                      [value]="universidadDelTituloElegida()"
+                      (valueChange)="elegirUniversidadDelTitulo($event)"
+                    />
+                  </app-form-field>
+                  @if (universidadDelTituloEsOtra()) {
+                    <app-form-field
+                      label="¿Cuál?"
+                      hint="El nombre completo de la institución, como figura en tu diploma."
+                    >
+                      <app-input
+                        testId="registro-pro-titulo-universidad-otra"
+                        placeholder="Universidad de La Habana"
+                        [value]="valorDeEstudio('professionalTitleUniversity')"
+                        (valueChange)="escribirEstudio('professionalTitleUniversity', $event)"
+                      />
+                    </app-form-field>
+                  }
+                </div>
+
+                <div class="registro__estudio-campo">
+                  <app-form-field label="Ciudad de estudio" hint="Opcional.">
+                    <app-input
+                      testId="registro-pro-titulo-ciudad"
+                      placeholder="La Paz"
+                      [value]="valorDeEstudio('professionalTitleCity')"
+                      (valueChange)="escribirEstudio('professionalTitleCity', $event)"
+                    />
+                  </app-form-field>
+                </div>
               </div>
             </ng-template>
 
@@ -472,33 +523,83 @@
                           }
                         </label>
 
-                        <!-- Dónde se cursó. Los tres son opcionales y de texto
-                             libre, por lo mismo que en el título principal. -->
+                        <!-- Dónde se cursó. Los tres son opcionales; país y
+                             universidad son el mismo árbol que en el título
+                             principal, y la ciudad sigue siendo texto. -->
                         <div class="registro-titulo__estudio">
-                          @for (campo of camposDeEstudioDeFila; track campo.campo) {
-                            <label class="registro-titulo__campo">
-                              <span class="sr-only">
-                                {{ campo.label }} de {{ tipo.singular }}
-                              </span>
-                              <input
-                                type="text"
-                                class="registro-titulo__dato"
-                                [placeholder]="campo.placeholder"
-                                [attr.maxlength]="campo.maxlength"
-                                [value]="titulo[campo.campo]"
-                                [attr.data-testid]="
-                                  'registro-pro-titulo-' + campo.campo + '-' + titulo.id
-                                "
-                                (input)="
-                                  escribirDatoDeTitulo(
-                                    titulo.id,
-                                    campo.campo,
-                                    $any($event.target).value
-                                  )
-                                "
-                              />
-                            </label>
-                          }
+                          <div class="registro-titulo__estudio-campo">
+                            <app-select
+                              [ariaLabel]="'País de ' + tipo.singular"
+                              placeholder="País"
+                              [options]="opcionesDePais()"
+                              [value]="titulo.paisElegido"
+                              [attr.data-testid]="'registro-pro-titulo-pais-' + titulo.id"
+                              (valueChange)="elegirEnFila(titulo.id, 'pais', $event)"
+                            />
+                            @if (titulo.paisElegido === paisFueraDeCatalogo) {
+                              <label class="registro-titulo__campo">
+                                <span class="sr-only">¿Qué país? de {{ tipo.singular }}</span>
+                                <input
+                                  type="text"
+                                  class="registro-titulo__dato"
+                                  placeholder="Nombre del país"
+                                  [value]="titulo.pais"
+                                  [attr.data-testid]="'registro-pro-titulo-pais-otro-' + titulo.id"
+                                  (input)="
+                                    escribirDatoDeTitulo(titulo.id, 'pais', $any($event.target).value)
+                                  "
+                                />
+                              </label>
+                            }
+                          </div>
+
+                          <div class="registro-titulo__estudio-campo">
+                            <app-select
+                              [ariaLabel]="'Universidad de ' + tipo.singular"
+                              [placeholder]="titulo.paisElegido === null ? 'Elegí primero el país' : 'Universidad'"
+                              [options]="opcionesDeUniversidadDeFila(titulo)"
+                              [disabled]="titulo.paisElegido === null"
+                              [value]="titulo.universidadElegida"
+                              [attr.data-testid]="'registro-pro-titulo-universidad-' + titulo.id"
+                              (valueChange)="elegirEnFila(titulo.id, 'universidad', $event)"
+                            />
+                            @if (titulo.universidadElegida === institucionFueraDeCatalogo) {
+                              <label class="registro-titulo__campo">
+                                <span class="sr-only">¿Cuál institución? de {{ tipo.singular }}</span>
+                                <input
+                                  type="text"
+                                  class="registro-titulo__dato"
+                                  placeholder="Nombre de la institución"
+                                  [attr.maxlength]="topeDeUniversidad"
+                                  [value]="titulo.universidad"
+                                  [attr.data-testid]="
+                                    'registro-pro-titulo-universidad-otra-' + titulo.id
+                                  "
+                                  (input)="
+                                    escribirDatoDeTitulo(
+                                      titulo.id,
+                                      'universidad',
+                                      $any($event.target).value
+                                    )
+                                  "
+                                />
+                              </label>
+                            }
+                          </div>
+
+                          <label class="registro-titulo__campo">
+                            <span class="sr-only">Ciudad de {{ tipo.singular }}</span>
+                            <input
+                              type="text"
+                              class="registro-titulo__dato"
+                              placeholder="Ciudad"
+                              [value]="titulo.ciudad"
+                              [attr.data-testid]="'registro-pro-titulo-ciudad-' + titulo.id"
+                              (input)="
+                                escribirDatoDeTitulo(titulo.id, 'ciudad', $any($event.target).value)
+                              "
+                            />
+                          </label>
                         </div>
                         <app-file-input
                           [files]="attachmentFiles()[titulo.id] ?? []"

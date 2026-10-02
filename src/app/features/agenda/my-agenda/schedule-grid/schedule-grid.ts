@@ -11,7 +11,10 @@ import {
 } from '@angular/core';
 
 import { nextControlId } from '@shared/forms/form-control.context';
-import type { PublishedRule } from '../../../../core/data-access/scheduling/scheduling.types';
+import type {
+  FranjaModo,
+  PublishedRule,
+} from '../../../../core/data-access/scheduling/scheduling.types';
 import type { BloqueoDelMes } from '../month-view/month-view';
 import { lunesDe } from '../week-view/week-view';
 
@@ -37,8 +40,16 @@ export interface BloqueDelHorario {
   /** Porcentaje del alto de la grilla que ocupa. */
   readonly alto: number;
   readonly etiqueta: string;
-  /** «consultas de 30 min», o «tamaño libre» cuando la franja es dinámica. */
+  /** «consultas de 30 min», «tamaño libre», u «otros servicios». */
   readonly detalle: string;
+  /**
+   * Qué admite la franja (v4.2.40). Ausente en la regla ≡ `CONSULTATIONS`.
+   *
+   * La grilla lo dice con palabras —`detalle`, `etiqueta` y el globo— y además
+   * con una clase, para que «Mis horarios» y «Horarios de otros servicios» no
+   * dependan sólo del color para distinguir una franja de la otra.
+   */
+  readonly mode: FranjaModo;
   /** Lo que se cuenta al pasar el mouse: rótulo y valor, en orden. */
   readonly datos: readonly { readonly rotulo: string; readonly valor: string }[];
 }
@@ -398,6 +409,7 @@ export class ScheduleGrid {
         const inicio = minutos(r.startTime);
         const fin = minutos(r.endTime);
         const tamano = r.slotMinutes ?? this.slotMinutes();
+        const modo = r.bookingMode ?? 'CONSULTATIONS';
         return {
           id: `${r.dayOfWeek}-${r.startTime}`,
           dia: r.dayOfWeek,
@@ -407,9 +419,11 @@ export class ScheduleGrid {
           alto: ((fin - inicio) / total) * 100,
           etiqueta:
             `${LARGO[r.dayOfWeek]} de ${hhmm(r.startTime)} a ${hhmm(r.endTime)}: atendés` +
+            QUE_ATIENDE[modo] +
             (this.sede() ? ` en ${this.sede()}` : ''),
-          detalle: tamano ? `consultas de ${tamano} min` : 'tamaño libre',
-          datos: datosDe(r, fin - inicio, tamano),
+          detalle: detalleDe(modo, tamano),
+          mode: modo,
+          datos: datosDe(r, fin - inicio, tamano, modo),
         };
       })
       .sort((a, b) => a.top - b.top);
@@ -624,7 +638,7 @@ export class ScheduleGrid {
           (bloqueo.motivo ? ` (${bloqueo.motivo})` : ''),
       );
     } else if (bloque !== null) {
-      partes.push(`atendés de ${bloque.desde} a ${bloque.hasta}`);
+      partes.push(`atendés${QUE_ATIENDE[bloque.mode]} de ${bloque.desde} a ${bloque.hasta}`);
       const sede = this.sede();
       if (sede) partes.push(sede);
     } else {
@@ -691,16 +705,47 @@ export class ScheduleGrid {
   }
 }
 
+/** Qué se atiende en la franja, dicho para el globo («Atiende: …»). */
+export const ROTULO_DEL_MODO: Readonly<Record<FranjaModo, string>> = {
+  CONSULTATIONS: 'Consultas',
+  SERVICES: 'Otros servicios',
+  MIXED: 'Consultas y otros servicios',
+};
+
+/**
+ * Lo mismo, dentro de una frase: «atendés otros servicios de 14:00 a 18:00».
+ *
+ * La franja de consultas sigue diciendo sólo «atendés»: es el caso de siempre,
+ * y cambiarle la frase a quien navega con lector no le agrega nada.
+ */
+const QUE_ATIENDE: Readonly<Record<FranjaModo, string>> = {
+  CONSULTATIONS: '',
+  SERVICES: ' otros servicios',
+  MIXED: ' consultas y otros servicios',
+};
+
+/** La segunda línea del bloque. Una franja de servicios no reparte turnos. */
+function detalleDe(modo: FranjaModo, tamano: number | null): string {
+  if (modo === 'SERVICES') return 'otros servicios';
+  const consultas = tamano ? `consultas de ${tamano} min` : 'tamaño libre';
+  return modo === 'MIXED' ? `${consultas} y servicios` : consultas;
+}
+
 /** Lo que el globo cuenta de una franja, en el orden en que se lee. */
 function datosDe(
   r: PublishedRule,
   duracion: number,
   tamano: number | null,
+  modo: FranjaModo,
 ): readonly { readonly rotulo: string; readonly valor: string }[] {
   const datos: { rotulo: string; valor: string }[] = [
     { rotulo: 'Horario', valor: `${hhmm(r.startTime)} – ${hhmm(r.endTime)}` },
     { rotulo: 'Duración', valor: enPalabras(duracion) },
+    { rotulo: 'Atiende', valor: ROTULO_DEL_MODO[modo] },
   ];
+  // Una franja sólo de servicios no se parte en turnos: cada servicio dura lo
+  // que declara y el inicio lo elige el paciente. Contarle «turnos» mentiría.
+  if (modo === 'SERVICES') return datos;
   if (tamano) {
     const respiro = r.gapMinutes ?? 0;
     const turnos = Math.floor((duracion + respiro) / (tamano + respiro));

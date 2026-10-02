@@ -106,6 +106,9 @@
             @for (bloque of bloquesDe(dia.numero); track bloque.id) {
               <div
                 class="grilla__bloque"
+                [class.grilla__bloque--services]="bloque.mode === 'SERVICES'"
+                [class.grilla__bloque--mixed]="bloque.mode === 'MIXED'"
+                [attr.data-mode]="bloque.mode"
                 data-testid="horario-bloque"
                 [style.top.%]="bloque.top"
                 [style.height.%]="bloque.alto"
