@@ -1,6 +1,8 @@
 import { uuid } from '../mock-store';
 import { analisisInlasaDe } from './inlasa';
 import { prestacionDeImagen } from './precios-de-referencia';
+import { CATALOGO_MEDICAMENTOS } from './catalogo-medicamentos.generated';
+import { MEDICAMENTOS_LINAME, type MedicamentoLiname } from './liname.generated';
 
 /* ============================================================================
     El catálogo de terminología del backend simulado.
@@ -991,6 +993,36 @@ declararPropiedades('MED-METFORMINA', {
 });
 // `value_json` mal formado a propósito (número, no texto): ver el comentario de arriba.
 declararPropiedades('MED-INSULINA-NPH', { default_frequency: 42 });
+
+/**
+ * La LINAME 2022-2024 (Lista Nacional de Medicamentos Esenciales de Bolivia) en
+ * el vademécum de la receta, como en la API: un concepto por ATC nivel 5, con el
+ * nombre oficial en castellano y sus formas, concentraciones y presentaciones
+ * (`liname.generated.ts`). Los 15 de demostración siguen con sus códigos
+ * `MED-*` —las recetas de ejemplo los usan—; si la LINAME tiene su ATC, toman
+ * de ahí `dose_forms` y `strengths` en vez de duplicarse.
+ */
+const ATC_DE_DEMOSTRACION = new Map(
+  CATALOGO_MEDICAMENTOS.flatMap((p) =>
+    p.medicationCode === null || p.atc[0] === undefined ? [] : [[p.atc[0], p.medicationCode] as const],
+  ),
+);
+const propiedadesLiname = (m: MedicamentoLiname) => ({
+  dose_forms: m.doseForms,
+  strengths: m.strengths,
+  liname_presentations: m.presentations,
+});
+for (const m of MEDICAMENTOS_LINAME) {
+  const demostracion = ATC_DE_DEMOSTRACION.get(m.atc);
+  if (demostracion !== undefined) declararPropiedades(demostracion, propiedadesLiname(m));
+}
+export const MEDICAMENTO_LINAME = definir(
+  'VS_MEDICATION',
+  MEDICAMENTOS_LINAME.filter((m) => !ATC_DE_DEMOSTRACION.has(m.atc)).map((m) => [m.atc, m.name] as const),
+);
+for (const m of MEDICAMENTOS_LINAME) {
+  if (!ATC_DE_DEMOSTRACION.has(m.atc)) declararPropiedades(m.atc, propiedadesLiname(m));
+}
 
 /* ---- organizaciones ------------------------------------------------------ */
 
