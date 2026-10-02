@@ -480,6 +480,7 @@ function perfilProfesionalBase(p: ProfesionalSimulado) {
     // porque `011` solo no es un NIT.
     taxId: p.nationalId === '' ? '' : `${p.nationalId}011`,
     taxHolderName: p.displayName,
+    insuranceBillingFrequency: 'MONTHLY',
     homeAddress: { lines: p.direccion, city: p.ciudad, municipalityConceptId: p.municipioId, latitude: p.lat, longitude: p.lng },
     practitionerCategoryConceptId: CATEGORIA_MEDICO,
     verificationStatusConceptId: p.verified ? ESTADO['ST-VERIFIED']! : ESTADO['ST-PENDING']!,

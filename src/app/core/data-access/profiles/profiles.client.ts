@@ -7,6 +7,7 @@ import type { BirthSexCode } from '../iam/iam.types';
 import { maybeDate, maybeDateOnly, sinNulos, type ConNulos } from '../wire';
 import type {
   AccountLink,
+  InsuranceBillingFrequency,
   NewJurisdictionAuthorization,
   NewOwnCredential,
   NewPatientProfile,
@@ -579,6 +580,7 @@ export class ProfilesClient {
          forma de sacar un NIT que se cargó mal. */
       readonly taxId: string;
       readonly taxHolderName: string;
+      readonly insuranceBillingFrequency: InsuranceBillingFrequency;
       /* El domicilio (ALV-009): mismo contrato que
          `OwnPatientProfileChanges.homeAddressLines`. Sólo el texto y, si se
          marcó un punto, las dos coordenadas juntas — el municipio ya viaja

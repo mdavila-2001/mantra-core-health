@@ -399,6 +399,13 @@ export interface OwnPractitionerProfile {
   /** A nombre de quién sale el comprobante — la razón social del NIT. */
   readonly taxHolderName?: string;
   /**
+   * Cada cuánto le factura a las aseguradoras. Ausente si no lo declaró.
+   *
+   * Sólo en la maqueta: el modelo todavía no tiene dónde guardarlo (no hay
+   * columna ni value set), así que no se inventa un concepto.
+   */
+  readonly insuranceBillingFrequency?: InsuranceBillingFrequency;
+  /**
    * Su domicilio, si lo declaró (ALV-009). Ausente y no un objeto vacío
    * cuando no hay fila vigente — mismo contrato que {@link OwnPatientProfile}.
    */
@@ -420,6 +427,9 @@ export interface OwnPractitionerProfile {
   readonly activity: PractitionerActivity;
   readonly createdAt: Date;
 }
+
+/** Cada cuánto el profesional presenta su facturación a las aseguradoras. */
+export type InsuranceBillingFrequency = 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY';
 
 /** Vínculo entre una persona del directorio y una cuenta de acceso. */
 export interface AccountLink {

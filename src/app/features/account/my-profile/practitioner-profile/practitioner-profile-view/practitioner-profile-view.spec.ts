@@ -49,7 +49,7 @@ function afiliacion(over: Partial<AfiliacionVisible> = {}): AfiliacionVisible {
 }
 
 /** Facturación sin ningún dato cargado. */
-const FACTURA_VACIA = { nit: '', razonSocial: '' };
+const FACTURA_VACIA = { nit: '', razonSocial: '', frecuenciaSeguro: '' };
 
 const PERFIL: PerfilProfesionalVisible = {
   nombre: 'Dra. Lucía Salas',
@@ -1219,6 +1219,24 @@ describe('PractitionerProfileView', () => {
       expect(recuadro?.querySelector('[data-testid="perfil-factura-nit"]')).not.toBeNull();
       expect(recuadro?.querySelector('[data-testid="perfil-factura-titular"]')).not.toBeNull();
       expect(recuadro?.closest('dl')).toBeNull();
+    });
+
+    it('muestra cada cuánto factura al seguro', () => {
+      const host = montar({ ...PERFIL, facturacion: { ...FACTURA, frecuenciaSeguro: 'Quincenal' } }, true);
+      seleccionarPestana(host, 'Facturación');
+
+      expect(
+        host.querySelector('[data-testid="perfil-factura-frecuencia-seguro"]')?.textContent?.trim(),
+      ).toBe('Quincenal');
+    });
+
+    it('sin frecuencia declarada dice «Sin registrar»', () => {
+      const host = montar({ ...PERFIL, facturacion: FACTURA }, true);
+      seleccionarPestana(host, 'Facturación');
+
+      expect(
+        host.querySelector('[data-testid="perfil-factura-frecuencia-seguro"]')?.textContent,
+      ).toContain('Sin registrar');
     });
 
     it('sin NIT dice dónde cargarlo, en vez de dejar el hueco', () => {
