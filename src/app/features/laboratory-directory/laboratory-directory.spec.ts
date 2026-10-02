@@ -8,6 +8,7 @@ import {
   BoMunicipalitiesCatalog,
   type RamaDepartamento,
 } from '../../core/data-access/terminology/bo-municipalities.service';
+import { PatientStudyComparisonContext } from '../../core/diagnostics/patient-study-comparison';
 
 import {
   aConsulta,
@@ -246,6 +247,37 @@ describe('LaboratoryDirectory', () => {
     const pedido = http.expectOne((request) => request.url === BUSQUEDA);
     expect(pedido.request.url).not.toBe('/diagnostic-units');
     pedido.flush({ items: [], total: 0, limit: 20, offset: 0 });
+  });
+
+  it('intersects centers by every requested study and explains that availability is not confirmed', () => {
+    TestBed.inject(PatientStudyComparisonContext).start([
+      { code: 'US-ABD', name: 'Ecografía abdominal', preparationInstructions: null },
+      { code: 'RX-TORAX', name: 'Radiografía de tórax', preparationInstructions: null },
+      { code: 'RMN-RODILLA', name: 'Resonancia de rodilla', preparationInstructions: null },
+    ]);
+    mount();
+
+    const pedidos = http.match((request) => request.url === BUSQUEDA);
+    expect(pedidos).toHaveLength(3);
+    expect(pedidos.map((pedido) => pedido.request.params.get('studyCode'))).toEqual([
+      'US-ABD',
+      'RX-TORAX',
+      'RMN-RODILLA',
+    ]);
+    pedidos[0]!.flush({ items: [LAB, IMAGING], total: 2, limit: 100, offset: 0 });
+    pedidos[1]!.flush({ items: [LAB], total: 1, limit: 100, offset: 0 });
+    pedidos[2]!.flush({ items: [LAB, IMAGING], total: 2, limit: 100, offset: 0 });
+    fixture.detectChanges();
+
+    expect(groups().flatMap((group) => group.resultados.map((item) => item.title))).toEqual([
+      'Laboratorio Central',
+    ]);
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain('Ecografía abdominal');
+    expect(text).toContain('Radiografía de tórax');
+    expect(text).toContain('Resonancia de rodilla');
+    expect(text).toContain('misma sede');
+    expect(text).toContain('turnos ni cupos');
   });
 
   it('groups units by the existing category codes', () => {

@@ -104,6 +104,21 @@
               </li>
             }
           </ul>
+
+          <div class="ordenes__grupo-acciones">
+            <button
+              app-button
+              variant="secondary"
+              size="sm"
+              type="button"
+              data-testid="orden-comparar-centros"
+              [attr.aria-label]="'Comparar centros para ' + grupo.ordenes.length + ' estudios de ' + grupo.titulo"
+              (clicked)="compararCentros(grupo)"
+            >
+              Comparar centros para estos estudios
+            </button>
+            <p>La ficha de cada centro te ayuda a revisar su catálogo por sede.</p>
+          </div>
         </section>
       }
     }

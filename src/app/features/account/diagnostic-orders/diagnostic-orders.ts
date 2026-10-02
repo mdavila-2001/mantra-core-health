@@ -1,7 +1,7 @@
 import { PatientInsuranceSettlement } from '../../../shared/components/molecules/patient-insurance-settlement/patient-insurance-settlement';
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
@@ -15,6 +15,7 @@ import type {
   ValueSetOption,
 } from '../../../core/data-access/terminology/terminology.types';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
+import { PatientStudyComparisonContext } from '../../../core/diagnostics/patient-study-comparison';
 import { empty, loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AppButton } from '../../../shared/components/atoms/button/button';
@@ -41,6 +42,8 @@ interface OrdenVisible extends PatientSettlementFields {
   readonly preparacion: string;
   readonly tieneResultado: boolean;
   readonly reportId: string;
+  /** Código clínico del catálogo, si la lectura de terminología lo resolvió. */
+  readonly studyCode: string | null;
   /** Los uuid del catálogo, sólo para reetiquetar cuando llegue. */
   readonly codeConceptId: string;
   readonly categoryConceptId: string;
@@ -100,6 +103,8 @@ export class DiagnosticOrders {
   private readonly diagnostics = inject(DiagnosticsClient);
   private readonly terminology = inject(TerminologyClient);
   private readonly auth = inject(AuthService);
+  private readonly router = inject(Router);
+  private readonly comparison = inject(PatientStudyComparisonContext);
 
   /** Sin perfil de paciente no hay órdenes que leer: la API respondería 412. */
   protected readonly sinPerfilDePaciente = this.auth.patientProfileId() === null;
@@ -156,6 +161,18 @@ export class DiagnosticOrders {
     const estado = this.ordenes();
     return estado.status === 'empty' ? (estado.message ?? '') : '';
   });
+
+  /** Lleva el pedido completo al directorio sin poner estudios clínicos en la URL. */
+  protected compararCentros(grupo: GrupoDeOrdenes): void {
+    this.comparison.start(
+      grupo.ordenes.map((orden) => ({
+        code: orden.studyCode,
+        name: orden.estudio,
+        preparationInstructions: orden.preparacion === '' ? null : orden.preparacion,
+      })),
+    );
+    void this.router.navigate(['/laboratory-directory']);
+  }
 
   constructor() {
     if (!this.sinPerfilDePaciente) {
@@ -233,6 +250,7 @@ export class DiagnosticOrders {
       preparacion: item.preparationInstructions ?? '',
       tieneResultado: item.hasReleasedResult,
       reportId: item.reportId ?? '',
+      studyCode: this.codigoDelConcepto(item.codeConceptId),
       codeConceptId: item.codeConceptId,
       categoryConceptId: item.categoryConceptId ?? '',
       statusConceptId: item.statusConceptId,
@@ -245,7 +263,13 @@ export class DiagnosticOrders {
       estudio: this.etiqueta(item.codeConceptId, 'Estudio'),
       categoria: this.etiqueta(item.categoryConceptId, 'Sin clasificar'),
       estado: this.etiqueta(item.statusConceptId, 'Pendiente'),
+      studyCode: this.codigoDelConcepto(item.codeConceptId),
     };
+  }
+
+  private codigoDelConcepto(conceptId: string): string | null {
+    const code = this.etiquetas().get(conceptId)?.code;
+    return code === undefined || code === '' ? null : code;
   }
 
   private etiqueta(conceptId: string, neutro: string): string {

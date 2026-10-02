@@ -1,11 +1,13 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { signal } from '@angular/core';
 
 import { AuthService } from '../../../core/auth/auth.service';
+import { PatientStudyComparisonContext } from '../../../core/diagnostics/patient-study-comparison';
 import { DiagnosticOrders } from './diagnostic-orders';
+import type { ValueSetOption } from '../../../core/data-access/terminology/terminology.types';
 
 const PROFILE_ID = '44444444-4444-4444-8444-444444444444';
 const ORDER_ID = '66666666-6666-4666-8666-666666666666';
@@ -64,12 +66,12 @@ describe('DiagnosticOrders', () => {
   }
 
   /** Responde la lectura de órdenes y descarta la de terminología. */
-  function responderOrdenes(items: readonly unknown[]): void {
+  function responderOrdenes(items: readonly unknown[], conceptos: readonly ValueSetOption[] = []): void {
     http
       .expectOne((request) => request.url === '/diagnostic-results/me/orders')
       .flush({ patientProfileId: PROFILE_ID, items, limit: 50, truncated: false });
     for (const pedido of http.match((request) => request.url.startsWith('/terminology'))) {
-      pedido.flush({ items: [] });
+      pedido.flush({ items: conceptos });
     }
     fixture.detectChanges();
   }
@@ -139,24 +141,44 @@ describe('DiagnosticOrders', () => {
     expect(texto).toContain('Con resultado');
   });
 
-  it('refactor UX: «Reservar hora» lleva a Mis citas en modo laboratorio y dice de qué estudio', () => {
+  it('no presenta la agenda genérica de laboratorio como reserva de imagenología', () => {
     configurar(PROFILE_ID);
     mount();
     responderOrdenes([{ ...ORDEN, hasReleasedResult: true, reportId: REPORT_ID }]);
 
     const raiz = fixture.nativeElement as HTMLElement;
-    const reservar = raiz.querySelector('[data-testid="orden-reservar"]') as HTMLAnchorElement;
-    const estudio = raiz.querySelector('.ordenes__titulo')?.textContent?.trim() ?? '';
-    // Antes: botón deshabilitado con «Próximamente», aunque la reserva existía.
-    expect(reservar.tagName).toBe('A');
-    expect(reservar.getAttribute('aria-disabled')).not.toBe('true');
-    expect(reservar.getAttribute('href')).toBe('/my-account/appointments?resource=lab');
-    expect(reservar.getAttribute('aria-label')).toBe(`Reservar hora en un laboratorio: ${estudio}`);
-    expect(raiz.textContent).not.toContain('Próximamente');
-    const verResultado = [...raiz.querySelectorAll('a')].find((a) =>
-      a.textContent?.includes('Ver resultado'),
-    );
-    expect(verResultado?.getAttribute('aria-label')).toBe(`Ver resultado: ${estudio}`);
+    expect(raiz.querySelector('[data-testid="orden-reservar"]')).toBeNull();
+    expect(raiz.textContent).not.toContain('Reservar hora en un laboratorio');
+    expect(raiz.querySelector('[data-testid="orden-comparar-centros"]')).not.toBeNull();
+    expect(raiz.querySelector('a[aria-label^="Ver resultado:"]')).not.toBeNull();
+  });
+
+  it('inicia una comparación con todos los estudios agrupados y mantiene sus nombres fuera de la URL', () => {
+    configurar(PROFILE_ID);
+    const navegar = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+    mount();
+    responderOrdenes([
+      { ...ORDEN, id: 'o-1', codeConceptId: 'concept-1' },
+      { ...ORDEN, id: 'o-2', codeConceptId: 'concept-2' },
+      { ...ORDEN, id: 'o-3', codeConceptId: 'concept-3' },
+    ], [
+      { conceptId: 'concept-1', code: 'US-ABD', display: 'Ecografía abdominal', codeSystemVersionId: 'test' },
+      { conceptId: 'concept-2', code: 'RX-TORAX', display: 'Radiografía de tórax', codeSystemVersionId: 'test' },
+      { conceptId: 'concept-3', code: 'RMN-RODILLA', display: 'Resonancia de rodilla', codeSystemVersionId: 'test' },
+    ]);
+
+    const boton = fixture.nativeElement.querySelector(
+      '[data-testid="orden-comparar-centros"]',
+    ) as HTMLButtonElement | null;
+    expect(boton).not.toBeNull();
+    boton?.click();
+
+    expect(navegar).toHaveBeenCalledWith(['/laboratory-directory']);
+    expect(TestBed.inject(PatientStudyComparisonContext).studies()).toEqual([
+      { code: 'US-ABD', name: 'Ecografía abdominal', preparationInstructions: null },
+      { code: 'RX-TORAX', name: 'Radiografía de tórax', preparationInstructions: null },
+      { code: 'RMN-RODILLA', name: 'Resonancia de rodilla', preparationInstructions: null },
+    ]);
   });
 
   it('agrupa por atención: tres estudios de una consulta son un pedido, no tres', () => {
@@ -216,21 +238,17 @@ describe('DiagnosticOrders', () => {
     expect(salida.textContent).toContain('Ver mis turnos');
   });
 
-  it('reservar es enfocable y el lector lo anuncia: nunca un control apagado en nativo', () => {
-    // Invariante original (carril J1): el camino a reservar no se esconde ni
-    // deja de ser enfocable. Mientras la reserva no existía se apagaba con
-    // aria-disabled; desde el refactor UX es un enlace activo (ver el caso
-    // «Reservar hora lleva a Mis citas en modo laboratorio»).
+  it('el control de comparación del pedido es enfocable y tiene nombre accesible', () => {
     configurar(PROFILE_ID);
     mount();
     responderOrdenes([ORDEN]);
 
-    const reservar = fixture.nativeElement.querySelector(
-      '[data-testid="orden-reservar"]',
-    ) as HTMLAnchorElement;
-    expect(reservar.hasAttribute('href')).toBe(true);
-    expect(reservar.hasAttribute('disabled')).toBe(false);
-    expect(reservar.tabIndex).not.toBe(-1);
+    const comparar = fixture.nativeElement.querySelector(
+      '[data-testid="orden-comparar-centros"]',
+    ) as HTMLButtonElement;
+    expect(comparar.hasAttribute('disabled')).toBe(false);
+    expect(comparar.tabIndex).not.toBe(-1);
+    expect(comparar.getAttribute('aria-label')).toContain('1 estudios');
   });
 
   it('no muestra ningún uuid en pantalla', () => {

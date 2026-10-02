@@ -9,11 +9,17 @@ import type {
   DiagnosticStudy,
   DiagnosticUnitDetail,
 } from '../../../core/data-access/diagnostic-units/diagnostic-units.types';
+import {
+  comparePatientStudiesWithCatalog,
+  PatientStudyComparisonContext,
+  type PatientStudyCoverageItem,
+} from '../../../core/diagnostics/patient-study-comparison';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { dataOf, loading, notFound, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { Badge } from '../../../shared/components/atoms/badge/badge';
 import type { BadgeVariant } from '../../../shared/components/atoms/badge/badge.types';
+import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { NavIcon } from '../../../shared/components/atoms/nav-icon/nav-icon';
 import type { NavIconName } from '../../../shared/components/atoms/nav-icon/nav-icon.types';
 import { ServiceIcon } from '../../../shared/components/atoms/service-icon/service-icon';
@@ -86,6 +92,7 @@ function normalizar(texto: string): string {
 @Component({
   selector: 'app-laboratory-detail',
   imports: [
+    Alert,
     Badge,
     Card,
     FactList,
@@ -106,6 +113,7 @@ function normalizar(texto: string): string {
 export class LaboratoryDetail {
   private readonly route = inject(ActivatedRoute);
   private readonly units = inject(DiagnosticUnitsClient);
+  protected readonly comparison = inject(PatientStudyComparisonContext);
 
   protected readonly state = signal<ViewState<DiagnosticUnitDetail>>(loading());
   protected readonly detail = computed(() => dataOf(this.state()));
@@ -113,6 +121,24 @@ export class LaboratoryDetail {
   protected readonly category = computed(() => {
     const type = this.detail()?.type;
     return type ? categoryName(type.code, type.display) : '';
+  });
+  protected readonly studyCoverage = computed(() => {
+    const unit = this.detail();
+    const requested = this.comparison.studies();
+    return unit !== null && requested.length > 0
+      ? comparePatientStudiesWithCatalog(requested, unit.studies, unit.sites)
+      : null;
+  });
+  protected readonly coverageMessage = computed(() => {
+    const coverage = this.studyCoverage();
+    if (coverage === null) return '';
+    if (coverage.status === 'complete-at-one-site') {
+      return `El catálogo publicado muestra todos los estudios en una misma sede: ${coverage.sharedSiteNames.join(', ')}. La ficha no informa disponibilidad, horarios, turnos ni cupos y no confirma una reserva.`;
+    }
+    if (coverage.status === 'different-sites') {
+      return 'El catálogo publicado muestra los estudios en sedes distintas; consultá al centro si pueden realizar el pedido completo en una misma visita. Esta ficha no informa disponibilidad, horarios, turnos ni cupos.';
+    }
+    return 'No se pudo confirmar el conjunto completo con el catálogo publicado por este centro. Consultá directamente; esta ficha no informa disponibilidad, horarios, turnos ni cupos.';
   });
 
   /**
@@ -170,6 +196,19 @@ export class LaboratoryDetail {
 
   protected retry(): void {
     this.load();
+  }
+
+  protected coberturaDelEstudio(study: PatientStudyCoverageItem): string {
+    switch (study.status) {
+      case 'published-at-site':
+        return `Publicado en: ${study.siteNames.join(', ')}`;
+      case 'site-unavailable':
+        return 'Aparece en el catálogo, pero no tiene una sede especificada.';
+      case 'not-in-catalog':
+        return 'No aparece en el catálogo publicado. Confirmalo con el centro.';
+      case 'code-unavailable':
+        return 'No se puede comparar automáticamente porque falta el código del estudio.';
+    }
   }
 
   protected siteName(siteId: string | null): string | null {

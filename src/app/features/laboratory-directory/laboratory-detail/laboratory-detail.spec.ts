@@ -4,6 +4,10 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 
+import {
+  PatientStudyComparisonContext,
+  type RequestedPatientStudy,
+} from '../../../core/diagnostics/patient-study-comparison';
 import { LaboratoryDetail } from './laboratory-detail';
 
 const UNIT_ID = '11111111-1111-4111-8111-111111111111';
@@ -80,7 +84,10 @@ describe('LaboratoryDetail', () => {
   let fixture: ComponentFixture<LaboratoryDetail>;
   let http: HttpTestingController;
 
-  function mount(unitId: string | null = UNIT_ID): void {
+  function mount(
+    unitId: string | null = UNIT_ID,
+    requestedStudies: readonly RequestedPatientStudy[] = [],
+  ): void {
     TestBed.configureTestingModule({
       providers: [
         provideHttpClient(),
@@ -92,6 +99,9 @@ describe('LaboratoryDetail', () => {
         },
       ],
     });
+    if (requestedStudies.length > 0) {
+      TestBed.inject(PatientStudyComparisonContext).start(requestedStudies);
+    }
     http = TestBed.inject(HttpTestingController);
     fixture = TestBed.createComponent(LaboratoryDetail);
     fixture.detectChanges();
@@ -113,6 +123,70 @@ describe('LaboratoryDetail', () => {
     // puntuación de al lado.
     expect(text).toContain('85,00 Bs');
     expect(text).toContain('ISO-DEMO');
+  });
+
+  it('confirma sólo el catálogo común de una misma sede y deja turnos como pendientes', () => {
+    mount(UNIT_ID, [
+      { code: 'HEM-COMP', name: 'Hemograma completo', preparationInstructions: null },
+      { code: 'RX-TORAX', name: 'Radiografía de tórax', preparationInstructions: null },
+    ]);
+    http.expectOne(`/diagnostic-units/${UNIT_ID}`).flush({
+      ...DETAIL,
+      studies: [
+        DETAIL.studies[0]!,
+        {
+          ...DETAIL.studies[0]!,
+          id: '66666666-6666-4666-8666-666666666666',
+          code: 'RX-TORAX',
+          name: 'Radiografía de tórax',
+        },
+      ],
+    });
+    fixture.detectChanges();
+
+    const panel = (fixture.nativeElement as HTMLElement).querySelector(
+      '[data-testid="patient-study-coverage"]',
+    );
+    expect(panel?.textContent).toContain('Sede Centro');
+    expect(panel?.textContent).toContain('catálogo publicado muestra todos los estudios');
+    expect(panel?.textContent).toContain('no informa disponibilidad');
+    expect(panel?.textContent).toContain('turnos ni cupos');
+  });
+
+  it('no anuncia un paquete completo si los estudios sólo aparecen en sedes distintas', () => {
+    mount(UNIT_ID, [
+      { code: 'HEM-COMP', name: 'Hemograma completo', preparationInstructions: null },
+      { code: 'RX-TORAX', name: 'Radiografía de tórax', preparationInstructions: null },
+    ]);
+    http.expectOne(`/diagnostic-units/${UNIT_ID}`).flush({
+      ...DETAIL,
+      sites: [
+        DETAIL.sites[0]!,
+        {
+          ...DETAIL.sites[0]!,
+          id: '77777777-7777-4777-8777-777777777777',
+          code: 'NORTE',
+          name: 'Sede Norte',
+        },
+      ],
+      studies: [
+        DETAIL.studies[0]!,
+        {
+          ...DETAIL.studies[0]!,
+          id: '66666666-6666-4666-8666-666666666666',
+          code: 'RX-TORAX',
+          name: 'Radiografía de tórax',
+          siteId: '77777777-7777-4777-8777-777777777777',
+        },
+      ],
+    });
+    fixture.detectChanges();
+
+    const panel = (fixture.nativeElement as HTMLElement).querySelector(
+      '[data-testid="patient-study-coverage"]',
+    );
+    expect(panel?.textContent).toContain('en sedes distintas');
+    expect(panel?.textContent).not.toContain('Sede Centro o Sede Norte');
   });
 
   it('draws the four collections as the card grid, not as stacked fact tables', () => {

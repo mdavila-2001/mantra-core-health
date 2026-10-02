@@ -32,6 +32,23 @@
         }
       </app-card>
 
+      @if (comparison.active() && studyCoverage(); as coverage) {
+        <app-alert
+          tone="info"
+          title="Comparación del catálogo para tu pedido"
+          data-testid="patient-study-coverage"
+        >
+          <p>{{ coverageMessage() }}</p>
+          <ul>
+            @for (study of coverage.studies; track study.name) {
+              <li>
+                <strong>{{ study.name }}:</strong> {{ coberturaDelEstudio(study) }}
+              </li>
+            }
+          </ul>
+        </app-alert>
+      }
+
       <!-- Primero lo que el centro ofrece, como en las otras dos fichas: es la
            pregunta que trae a alguien acá. Las sedes, los equipos y las
            acreditaciones explican ese catálogo, así que van detrás.

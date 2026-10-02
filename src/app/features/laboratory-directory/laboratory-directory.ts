@@ -10,13 +10,17 @@ import {
 } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink, type Params } from '@angular/router';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
-import { catchError, map, of, Subject, switchMap, tap } from 'rxjs';
+import { catchError, forkJoin, map, of, Subject, switchMap, tap, type Observable } from 'rxjs';
 
 import { DiagnosticUnitsClient } from '../../core/data-access/diagnostic-units/diagnostic-units.client';
 import type {
   DiagnosticUnitSearchItem,
   DiagnosticUnitSearchQuery,
 } from '../../core/data-access/diagnostic-units/diagnostic-units.types';
+import {
+  intersectStudySearchResults,
+  PatientStudyComparisonContext,
+} from '../../core/diagnostics/patient-study-comparison';
 import { errorToViewState } from '../../core/http/error-to-view-state';
 import { dataOf, empty, loading, mapData, ready } from '../../core/view-state/view-state';
 import type { ViewState } from '../../core/view-state/view-state.types';
@@ -30,6 +34,7 @@ import {
   SEARCH_PARAM,
   type FilterDef,
 } from '../../shared/components/organisms/filter-bar/filter-bar';
+import { Alert } from '../../shared/components/molecules/alert/alert';
 import { AppButton } from '../../shared/components/atoms/button/button';
 import { AppButtonLink } from '../../shared/components/atoms/button/button-link';
 import {
@@ -167,7 +172,7 @@ const ICONO_POR_CATEGORIA: Readonly<Record<string, NavIconName>> = {
  */
 @Component({
   selector: 'app-laboratory-directory',
-  imports: [AppButton, AppButtonLink, DepartmentMap, DirectoryPage, NavIcon, RouterLink],
+  imports: [Alert, AppButton, AppButtonLink, DepartmentMap, DirectoryPage, NavIcon, RouterLink],
   templateUrl: './laboratory-directory.html',
   // El mapa comparte la hoja de clínicas y farmacias: es el mismo filtro.
   styleUrls: [
@@ -188,9 +193,17 @@ export class LaboratoryDirectory {
 
   private readonly units = inject(DiagnosticUnitsClient);
   private readonly route = inject(ActivatedRoute);
+  protected readonly comparison = inject(PatientStudyComparisonContext);
 
   protected readonly filtros = FILTROS;
   protected readonly sustantivo = SUSTANTIVO;
+  protected readonly comparisonNote = computed(() => {
+    if (!this.comparison.active()) return '';
+    if (!this.comparison.canSearchCompletePackage()) {
+      return 'Falta el código de catálogo de algún estudio. Mostramos el directorio general; confirmá manualmente qué ofrece cada centro. La disponibilidad y los turnos todavía no se consultan.';
+    }
+    return 'La lista cruza búsquedas por cada código del pedido. Abrí la ficha para revisar si todos figuran en una misma sede. La API actual no consulta disponibilidad, horarios, turnos ni cupos y no confirma reservas.';
+  });
 
   /** Lo que devolvió el buscador, sin agrupar: el mapa necesita las ciudades. */
   private readonly unidades = signal<ViewState<readonly DiagnosticUnitSearchItem[]>>(loading());
@@ -366,7 +379,10 @@ export class LaboratoryDirectory {
    * navegador devuelva a la portada en vez de sacar de la pantalla.
    */
   protected readonly enPortada = computed(
-    () => (this.activos()['kind'] ?? '') === '' && (this.activos()[SEARCH_PARAM] ?? '') === '',
+    () =>
+      !this.comparison.active() &&
+      (this.activos()['kind'] ?? '') === '' &&
+      (this.activos()[SEARCH_PARAM] ?? '') === '',
   );
 
   /**
@@ -374,9 +390,11 @@ export class LaboratoryDirectory {
    * centros hay; adentro, qué se está mirando.
    */
   protected readonly subtitulo = computed(() =>
-    this.enPortada()
-      ? `Elegí qué necesitás hacerte o buscá el centro por su nombre. ${this.totalDeCentros()} centros verificados en la red.`
-      : 'Centros verificados de toda la red, agrupados por categoría. Tocá un chip para acotar.',
+    this.comparison.active()
+      ? 'Comparación del catálogo publicado para tu pedido.'
+      : this.enPortada()
+        ? `Elegí qué necesitás hacerte o buscá el centro por su nombre. ${this.totalDeCentros()} centros verificados en la red.`
+        : 'Centros verificados de toda la red, agrupados por categoría. Tocá un chip para acotar.',
   );
 
   /**
@@ -439,26 +457,7 @@ export class LaboratoryDirectory {
     this.peticiones
       .pipe(
         tap(() => this.unidades.set(loading())),
-        switchMap(() =>
-          this.units.search({ ...aConsulta(this.activos()), limit: TOPE_DEL_DIRECTORIO }).pipe(
-            map((pagina) =>
-              pagina.items.length === 0
-                ? empty(
-                    { label: 'Volver al panel', route: '/dashboard' },
-                    hayFiltros(this.activos())
-                      ? 'Ningún centro verificado coincide con esa búsqueda. Probá quitando algún filtro.'
-                      : 'Todavía no hay centros verificados publicados.',
-                  )
-                : ready(pagina.items),
-            ),
-            // El error se convierte en valor para que el flujo siga vivo: un
-            // `error` que sube mata la suscripción y «Reintentar» dejaría de
-            // pedir sin decir por qué.
-            catchError((error: unknown) =>
-              of(errorToViewState<readonly DiagnosticUnitSearchItem[]>(error)),
-            ),
-          ),
-        ),
+        switchMap(() => this.buscarUnidades()),
         takeUntilDestroyed(this.destroyRef),
       )
       .subscribe((estado) => this.unidades.set(estado));
@@ -470,12 +469,62 @@ export class LaboratoryDirectory {
     // falta pedir aparte al arrancar. Tocar un chip navega, y navegar pide.
     effect(() => {
       this.activos();
+      this.comparison.studies();
       this.load();
     });
   }
 
   protected retry(): void {
     this.load();
+  }
+
+  protected limpiarComparacion(): void {
+    this.comparison.clear();
+  }
+
+  private buscarUnidades(): Observable<ViewState<readonly DiagnosticUnitSearchItem[]>> {
+    const query = { ...aConsulta(this.activos()), limit: TOPE_DEL_DIRECTORIO };
+    const requested = this.comparison.studies();
+    const completeCodes =
+      requested.length > 0 && requested.every((study) => study.code !== null && study.code !== '');
+
+    if (!completeCodes) {
+      return this.units.search(query).pipe(
+        map((pagina) => this.estadoDeBusqueda(pagina.items)),
+        catchError((error: unknown) =>
+          of(errorToViewState<readonly DiagnosticUnitSearchItem[]>(error)),
+        ),
+      );
+    }
+
+    const codes = [...new Set(requested.map((study) => study.code!))];
+    return forkJoin(codes.map((studyCode) => this.units.search({ ...query, studyCode }))).pipe(
+      map((paginas) => {
+        const candidatos = intersectStudySearchResults(paginas.map((pagina) => pagina.items));
+        return candidatos.length === 0
+          ? empty(
+              { label: 'Volver a Mis órdenes', route: '/my-account/diagnostic-orders' },
+              'El directorio no encontró centros que publiquen los códigos de todos los estudios de este pedido.',
+            )
+          : ready(candidatos);
+      }),
+      catchError((error: unknown) =>
+        of(errorToViewState<readonly DiagnosticUnitSearchItem[]>(error)),
+      ),
+    );
+  }
+
+  private estadoDeBusqueda(
+    items: readonly DiagnosticUnitSearchItem[],
+  ): ViewState<readonly DiagnosticUnitSearchItem[]> {
+    return items.length === 0
+      ? empty(
+          { label: 'Volver al panel', route: '/dashboard' },
+          hayFiltros(this.activos())
+            ? 'Ningún centro verificado coincide con esa búsqueda. Probá quitando algún filtro.'
+            : 'Todavía no hay centros verificados publicados.',
+        )
+      : ready(items);
   }
 
   private load(): void {

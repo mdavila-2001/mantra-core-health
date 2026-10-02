@@ -73,3 +73,17 @@
   font-weight: 600;
   margin: 0 0 var(--sp-3);
 }
+
+.ordenes__grupo-acciones {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2) var(--sp-3);
+  margin-block-start: var(--sp-3);
+}
+
+.ordenes__grupo-acciones p {
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+  margin: 0;
+}

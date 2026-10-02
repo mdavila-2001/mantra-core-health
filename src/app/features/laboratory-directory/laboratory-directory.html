@@ -2,7 +2,30 @@
      los parámetros de la URL, que es exactamente lo que significa «ver
      todas». Va afuera de `app-directory-page` para que aparecer y desaparecer
      no rehaga la barra: quien está escribiendo no pierde el foco. -->
-@if (!enPortada()) {
+@if (comparison.active()) {
+  <app-alert tone="info" title="Estudios de tu pedido" data-testid="patient-study-comparison">
+    <ul>
+      @for (study of comparison.studies(); track study.code ?? study.name) {
+        <li>{{ study.name }}</li>
+      }
+    </ul>
+    <p data-testid="patient-study-comparison-note">{{ comparisonNote() }}</p>
+    <div alert-actions>
+      <button
+        app-button
+        variant="ghost"
+        size="sm"
+        type="button"
+        data-testid="clear-patient-study-comparison"
+        (clicked)="limpiarComparacion()"
+      >
+        Quitar comparación
+      </button>
+    </div>
+  </app-alert>
+}
+
+@if (!enPortada() && !comparison.active()) {
   <a app-button variant="ghost" class="rejilla__volver" [routerLink]="[]" [queryParams]="{}">
     ← Todas las categorías
   </a>
