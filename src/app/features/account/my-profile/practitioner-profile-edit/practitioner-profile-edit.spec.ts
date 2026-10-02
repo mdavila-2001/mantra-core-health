@@ -536,6 +536,29 @@ describe('PractitionerProfileEdit', () => {
     req.flush({ ...PERFIL_BASE, taxId: '' });
   });
 
+  it('siembra la frecuencia de facturación al seguro y manda sólo la que cambió', () => {
+    montarYCargar({ insuranceBillingFrequency: 'MONTHLY' });
+    expect(interno<() => string | null>('frecuenciaFacturacionSeguro')()).toBe('MONTHLY');
+
+    señal<string>('frecuenciaFacturacionSeguro').set('BIWEEKLY');
+    interno<() => void>('guardarPresentacion')();
+
+    const req = http.expectOne('/profiles/practitioners/me');
+    expect(req.request.body).toEqual({ insuranceBillingFrequency: 'BIWEEKLY' });
+    req.flush({ ...PERFIL_BASE, insuranceBillingFrequency: 'BIWEEKLY' });
+  });
+
+  it('sin tocar la frecuencia no la manda', () => {
+    montarYCargar({ insuranceBillingFrequency: 'WEEKLY', taxId: '1' });
+
+    señal<string>('nit').set('2');
+    interno<() => void>('guardarPresentacion')();
+
+    const req = http.expectOne('/profiles/practitioners/me');
+    expect(req.request.body).toEqual({ taxId: '2' });
+    req.flush({ ...PERFIL_BASE, taxId: '2' });
+  });
+
   it('el botón de guardar también se ofrece en la pestaña «Facturación»', () => {
     // Los tres paneles son un solo formulario: si el botón no se dibuja ahí,
     // el NIT se escribe y no hay cómo guardarlo.

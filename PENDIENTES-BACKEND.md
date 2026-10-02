@@ -58,6 +58,7 @@ backend.
 | **P52** | Portal de la cuenta de laboratorio: resumen y **resultados** (subida por partes sin tope de tamaño, listado de todo lo subido, contenido, retiro con motivo y aviso al médico y al paciente). Ninguna ruta `/diagnostics/lab/*` existe en la API |
 | **P54** | Carga masiva de sucursales: `directory.branches` no tiene **descripción** ni **enlace de ubicación**, y `POST /tenants/{id}/branches` es de a una. **El front ya las manda** (altas de laboratorio y farmacia, ficha de organización) y el simulador las guarda |
 | **P58** | El **logo de una organización** (farmacia, laboratorio, clínica, aseguradora): hoy la imagen vive en `community.public_profiles.avatar_file_id` y sólo la escribe un administrador de plataforma (`PUT /admin/tenants/:id/public-profile`); `directory.tenants` no tiene columna de logo. Hace falta que el **owner/admin** de la organización lo cambie: `GET /tenants/{id}/logo` → `{ fileId \| null }` y `PUT /tenants/{id}/logo` con `{ fileId \| null }` (403 si no administra; el archivo ya subido por `/common/files/upload`, categoría `IMAGE`). **El front ya está construido contra el simulador** (`LogoDeOrganizacionClient`, tarjeta `app-organization-logo` en «Tu organización» y «Mi perfil»): al llegar la API se cambia ese cliente y `DirectoryClient`, no las pantallas. El modelo, antes, tiene que decir dónde se guarda (¿columna en `directory.tenants` o escritura del dueño sobre `public_profiles`?) |
+| **P59** | **Frecuencia de facturación al seguro** del médico (`WEEKLY`/`BIWEEKLY`/`MONTHLY`): el modelo no tiene columna ni value set, y el DTO de `PATCH /profiles/practitioners/me` no declara `insuranceBillingFrequency`, así que contra la API real **guardar el perfil habiendo cambiado ese campo devuelve 400** (`forbidNonWhitelisted`). Sólo existe en el simulador. **Bloquea el pase a producción de ese selector**, no el de `dev` |
 
 ---
 
@@ -1546,6 +1547,12 @@ Simulador: `core/mock/handlers/practice.handlers.ts`; cliente:
 
 ## P35 · Cotizaciones: plan de pagos flexible, sin interés — 18/09/2026
 
+> **En revisión (18/09/2026):** modelo v4.2.18 →
+> https://github.com/mantra-core-technologies/mantra-core-health-model/pull/28 · API →
+> https://github.com/mdavila-2001/mantra-core-health-api/pull/419. Falta, al integrar este front
+> a `dev`: mandar `offeredPrice`, `downPaymentAmount` y `installments[].amount` como **string**
+> con dos decimales, que es como la API recibe la plata.
+
 El propietario pidió **quitar por completo la tasa de interés y la simulación de
 crédito** de las cotizaciones: un consultorio no financia, reparte el precio de un
 tratamiento en cuotas a medida de la persona. El frontend (`mockup`) ya lo hace;
@@ -2511,3 +2518,25 @@ reintento; visor) y `features/laboratory/summary/`.
 > **Decisión del propietario, 01/10/2026:** las mecánicas que empujan a comprar más unidades
 > (2x1, escalonados, combos, regalos) **se permiten también sobre medicamentos con receta**, sin
 > restricción.
+
+## P59 · Frecuencia de facturación al seguro del médico — 02/10/2026
+
+> **Qué pide el front.** En «Editar perfil» del médico, pestaña **Facturación**, un selector
+> «Frecuencia de facturación al seguro» con tres opciones (Semanal, Quincenal, Mensual); la ficha
+> lo muestra junto al NIT y la razón social, o «Sin registrar». Se envía al guardar sólo si
+> cambió. La lista cerrada vive en `core/profesion/insurance-billing-frequency.ts`, una sola
+> fuente para la vista y el editor. Pedido del propietario, 01/10/2026 (PR #832, rama `mockup`).
+>
+> **Hoy.** Sólo el simulador lo guarda y lo devuelve en `GET/PATCH /profiles/practitioners/me`
+> como `insuranceBillingFrequency: 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY'`.
+>
+> **Qué pasa contra la API real (verificar al conectar).** El DTO de la actualización del perfil
+> propio no declara el campo y valida con `forbidNonWhitelisted`: un médico que cambie la
+> frecuencia y guarde recibe **400**. El mismo patrón que P54. El front no lo filtra a propósito:
+> un dato que se descarta en silencio es peor que un error visible.
+>
+> **Falta.** Empezar por `mantra-core-health-model` (patch `.puml → SQL`): dónde se guarda (¿columna
+> en el perfil profesional o un value set de periodicidad?). Después el backend lo acepta en el DTO
+> y lo devuelve en la lectura. Cuando exista, el código pasa a ser un mapeo a concepto y la vista y
+> el editor lo heredan juntos. Sin esto, ocultar el selector fuera de `demo` es la salida si hay
+> que desplegar antes.
