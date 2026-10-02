@@ -6,6 +6,8 @@ import {
   input,
   output,
   signal,
+  viewChild,
+  type ElementRef,
   type OnInit,
 } from '@angular/core';
 
@@ -14,6 +16,7 @@ import { UPLOAD_MAX_BYTES } from '../../../../../core/data-access/files/upload-p
 import { PracticeSitesClient } from '../../../../../core/data-access/practice-sites/practice-sites.client';
 import type { PracticeSite } from '../../../../../core/data-access/practice-sites/practice-sites.types';
 import { errorToViewState } from '../../../../../core/http/error-to-view-state';
+import { matchesFileAccept } from '../../../../../shared/forms/file-accept';
 import { AppButton } from '../../../../../shared/components/atoms/button/button';
 import { Spinner } from '../../../../../shared/components/atoms/spinner/spinner';
 import { Alert } from '../../../../../shared/components/molecules/alert/alert';
@@ -57,9 +60,12 @@ const RECHAZO = `La imagen tiene que ser JPG, PNG o WEBP y pesar menos de ${Math
  *
  * Sin QR, el modal **es** la zona de soltar: no hay nada que mirar y esconder
  * la carga detrás de un botón agregaría un clic a la única acción posible. Con
- * QR cargado se muestra la imagen y el lápiz de la esquina abre la misma zona
- * para reemplazarla; volver atrás no borra nada, porque cambiarlo es subir uno
- * nuevo y no «vaciar y después cargar».
+ * QR cargado se muestra la imagen, y «Cambiar el QR» —en el pie del modal—
+ * abre el selector de archivos del sistema **directamente**: no hay una
+ * segunda pantalla con zona de soltar, porque quien ya tiene un QR y quiere
+ * otro ya sabe qué archivo va a elegir. Cancelar el selector no hace nada, y
+ * la imagen vigente sigue a la vista hasta que la sede confirme la nueva:
+ * cambiarlo es subir uno nuevo y no «vaciar y después cargar».
  *
  * ## La imagen se baja autenticada
  *
@@ -99,22 +105,19 @@ export class SiteBankQrDialog implements OnInit {
   protected readonly imagen = signal<string | null>(null);
   protected readonly bajandoImagen = signal(false);
 
-  /**
-   * Si se está pidiendo una imagen nueva aunque ya haya una.
-   *
-   * Arranca en `true` sin QR: ahí el modal **es** la zona de soltar.
-   */
-  protected readonly reemplazando = signal(false);
-
   protected readonly subiendo = signal(false);
   protected readonly error = signal<string | null>(null);
 
   /** `app-file-input` lleva su propio arreglo de lo elegido. */
   protected readonly elegidos = signal<readonly File[]>([]);
 
-  /** Si toca dibujar la zona de soltar en vez de la imagen. */
-  protected readonly pidiendoImagen = computed(
-    () => this.fileId() === null || this.reemplazando(),
+  /**
+   * El `<input type="file">` oculto que abre «Cambiar el QR».
+   *
+   * Sólo existe con un QR vigente: sin QR la zona de soltar lleva el suyo.
+   */
+  private readonly entradaDeReemplazo = viewChild<ElementRef<HTMLInputElement>>(
+    'entradaDeReemplazo',
   );
 
   protected readonly titulo = computed(() => `QR bancario · ${this.site().name}`);
@@ -127,17 +130,46 @@ export class SiteBankQrDialog implements OnInit {
     }
   }
 
-  /** Pide una imagen nueva sin descartar la que ya está guardada. */
+  /**
+   * Abre el selector del sistema para elegir el QR nuevo.
+   *
+   * No toca ningún estado: si la persona cancela el selector no llega ningún
+   * `change`, y el QR guardado sigue tal cual. Lo único que se descarta es un
+   * error anterior, que era de OTRO archivo.
+   */
   protected reemplazar(): void {
+    if (this.subiendo()) {
+      return;
+    }
     this.error.set(null);
-    this.reemplazando.set(true);
+    this.entradaDeReemplazo()?.nativeElement.click();
   }
 
-  /** Vuelve a mirar el QR guardado, descartando el reemplazo a medias. */
-  protected cancelarReemplazo(): void {
-    this.elegidos.set([]);
-    this.error.set(null);
-    this.reemplazando.set(false);
+  /**
+   * Llegó el archivo del selector.
+   *
+   * Pasa por el mismo filtro que la zona de soltar —`accept` y tope de
+   * tamaño— porque el `accept` nativo sólo filtra el diálogo del sistema, y
+   * hay navegadores que igual dejan elegir «todos los archivos».
+   */
+  protected alElegirReemplazo(evento: Event): void {
+    const entrada = evento.target as HTMLInputElement;
+    const archivo = entrada.files?.[0];
+    // El input se limpia siempre: sin esto, elegir el mismo archivo dos veces
+    // seguidas no dispara `change` y parece que el botón dejó de andar.
+    entrada.value = '';
+    if (archivo === undefined) {
+      return;
+    }
+    if (!matchesFileAccept(archivo, this.accept)) {
+      this.rechazar([{ file: archivo, reason: 'tipo' }]);
+      return;
+    }
+    if (archivo.size > this.maxSizeBytes) {
+      this.rechazar([{ file: archivo, reason: 'tamaño' }]);
+      return;
+    }
+    this.subir([archivo]);
   }
 
   /**
@@ -179,7 +211,6 @@ export class SiteBankQrDialog implements OnInit {
       next: () => {
         this.subiendo.set(false);
         this.elegidos.set([]);
-        this.reemplazando.set(false);
         this.fileId.set(fileId);
         this.bajarImagen(fileId);
         this.toasts.success(
