@@ -51,6 +51,16 @@ function elegidoEn(select: Locator): Locator {
   return select.locator('option:checked');
 }
 
+/**
+ * La opción de un `<select>` con exactamente esa etiqueta. `app-select` pinta
+ * `{{ option.label }}` en su propia línea, así que el texto trae saltos y
+ * espacios alrededor y un `^…$` a secas no casa.
+ */
+function opcion(select: Locator, etiqueta: string): Locator {
+  const literal = etiqueta.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return select.locator('option', { hasText: new RegExp(`^\\s*${literal}\\s*$`) });
+}
+
 const UMSA = 'Universidad Mayor de San Andrés (UMSA) — La Paz';
 const UPB = 'Universidad Privada Boliviana (UPB)';
 
@@ -140,8 +150,10 @@ async function llegarAlTitulo(page: Page): Promise<void> {
   await page.getByTestId('registro-pro-correo-personal').fill('ana.paz@example.test');
   await avanzar(page, 'El contacto de tu trabajo');
 
-  // Trabajo, domicilio y consultorio son opcionales: se pasan de largo.
+  // Trabajo, domicilio, lugar de trabajo y consultorio son opcionales: se
+  // pasan de largo.
   await avanzar(page, '¿Dónde vivís?');
+  await avanzar(page, '¿Dónde trabajás?');
   await avanzar(page, 'Tu consultorio propio');
   await avanzar(page, 'Tu título profesional y foto');
 }
@@ -253,19 +265,17 @@ test.describe('alta de doctor · universidad, lugar de estudio y segunda profesi
     // universidades es la del país. Bolivia trae la curada (con sigla y
     // ciudad); Argentina, la importada, que llega por su propio trozo.
     await expect(universidad).toBeDisabled();
-    await expect(pais.locator('option', { hasText: 'Bolivia' })).toHaveCount(1);
-    await expect(pais.locator('option', { hasText: /^Argentina$/ })).toHaveCount(1, {
-      timeout: 20_000,
-    });
+    await expect(opcion(pais, 'Bolivia')).toHaveCount(1);
+    await expect(opcion(pais, 'Argentina')).toHaveCount(1, { timeout: 20_000 });
 
     await pais.selectOption({ label: 'Argentina' });
     await expect(universidad).toBeEnabled();
-    await expect(universidad.locator('option', { hasText: 'Universidad de Buenos Aires' })).toHaveCount(1);
-    await expect(universidad.locator('option', { hasText: UMSA })).toHaveCount(0);
+    await expect(opcion(universidad, 'Universidad de Buenos Aires')).toHaveCount(1);
+    await expect(opcion(universidad, UMSA)).toHaveCount(0);
 
     await pais.selectOption({ label: 'Bolivia' });
-    await expect(universidad.locator('option', { hasText: UMSA })).toHaveCount(1);
-    await expect(universidad.locator('option', { hasText: 'Universidad de Buenos Aires' })).toHaveCount(0);
+    await expect(opcion(universidad, UMSA)).toHaveCount(1);
+    await expect(opcion(universidad, 'Universidad de Buenos Aires')).toHaveCount(0);
 
     // Lo elegido sobrevive a irse de la página y volver. Es lo que se rompe
     // solo cuando un campo proyectado no está atado a su `FormControl`: se ve
@@ -289,6 +299,9 @@ test.describe('alta de doctor · universidad, lugar de estudio y segunda profesi
   test('«Otro país…» y «Otra institución…» destapan la casilla escrita a mano', async ({
     page,
   }) => {
+    // En teléfono: es donde una casilla extra debajo del desplegable más
+    // fácilmente desborda o se monta sobre la de al lado.
+    await page.setViewportSize({ width: 390, height: 844 });
     await llegarAlTitulo(page);
     const [pais, universidad] = CAMPOS_DE_ESTUDIO.map((campo) => campoDeEstudio(page, campo));
 
@@ -308,6 +321,16 @@ test.describe('alta de doctor · universidad, lugar de estudio y segunda profesi
     // El desplegable se queda en «Otro»: la casilla no desaparece debajo del cursor.
     await expect(elegidoEn(pais)).toHaveText('Otro país…');
     await expect(elegidoEn(universidad)).toHaveText('Otra institución…');
+
+    const desborda = await page.evaluate(
+      () => document.documentElement.scrollWidth > window.innerWidth,
+    );
+    expect(desborda, 'la página no debe desplazarse a lo ancho en 390 px').toBe(false);
+
+    await page.screenshot({
+      path: 'artifacts/playwright/registro-doctor-titulo-otro-pais-movil.png',
+      fullPage: true,
+    });
   });
 
   test('se declaran dos profesiones y cada una lleva su universidad, su lugar de estudio y su diploma', async ({
