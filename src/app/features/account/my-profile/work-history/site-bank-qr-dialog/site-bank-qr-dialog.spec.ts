@@ -56,6 +56,21 @@ async function esperarLaImagen(fixture: ComponentFixture<SiteBankQrDialog>): Pro
   }
 }
 
+/**
+ * Simula el archivo que devuelve el selector del sistema.
+ *
+ * `files` es de sólo lectura y jsdom no trae `DataTransfer`: se define encima,
+ * como en el resto de las pruebas de carga del repo.
+ */
+function elegirEnElSelector(fixture: ComponentFixture<SiteBankQrDialog>, archivo: File): void {
+  const entrada: HTMLInputElement = fixture.nativeElement.querySelector(
+    '[data-testid="sede-qr-entrada"]',
+  );
+  Object.defineProperty(entrada, 'files', { value: [archivo], configurable: true });
+  entrada.dispatchEvent(new Event('change'));
+  fixture.detectChanges();
+}
+
 /** Los miembros protegidos, para hablar de lo que hace sin pasar por el DOM. */
 function api(fixture: ComponentFixture<SiteBankQrDialog>): Record<string, UnMiembro> {
   return fixture.componentInstance as unknown as Record<string, UnMiembro>;
@@ -79,7 +94,7 @@ describe('SiteBankQrDialog — el QR bancario de una sede', () => {
     http.verify();
   });
 
-  it('con QR configurado, muestra la imagen y el lápiz para cambiarla', async () => {
+  it('con QR configurado, muestra la imagen y «Cambiar el QR» en el pie', async () => {
     const { fixture, http } = await montar({ ...SEDE, bankQrFileId: 'file-qr' });
 
     http.expectOne(CONTENIDO).flush(new Blob(['qr'], { type: 'image/png' }));
@@ -105,7 +120,7 @@ describe('SiteBankQrDialog — el QR bancario de una sede', () => {
     fixture.detectChanges();
 
     expect(fixture.nativeElement.querySelector('[data-testid="sede-qr-sin-imagen"]')).not.toBeNull();
-    // Sigue sin ser la zona de soltar: el lápiz es el camino.
+    // Sigue sin ser la zona de soltar: «Cambiar el QR» es el camino.
     expect(fixture.nativeElement.querySelector('[data-testid="sede-qr-archivo"]')).toBeNull();
   });
 
@@ -166,20 +181,67 @@ describe('SiteBankQrDialog — el QR bancario de una sede', () => {
     http.expectOne(SUBIDA);
   });
 
-  it('el lápiz pide otra imagen sin descartar la guardada', async () => {
+  /**
+   * «Cambiar el QR» abre el selector del sistema y nada más. Cancelarlo no
+   * dispara `change`, así que lo guardado sigue a la vista, intacto.
+   */
+  it('«Cambiar el QR» abre el selector de archivos sin sacar el QR vigente', async () => {
     const { fixture, http } = await montar({ ...SEDE, bankQrFileId: 'file-qr' });
     http.expectOne(CONTENIDO).flush(new Blob(['qr'], { type: 'image/png' }));
     await esperarLaImagen(fixture);
 
+    const entrada: HTMLInputElement = fixture.nativeElement.querySelector(
+      '[data-testid="sede-qr-entrada"]',
+    );
+    const abrir = vi.spyOn(entrada, 'click').mockImplementation(() => undefined);
+
     fixture.nativeElement.querySelector('[data-testid="sede-qr-reemplazar"]').click();
     fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('[data-testid="sede-qr-archivo"]')).not.toBeNull();
 
-    // Y se puede volver: cambiar de opinión no borra lo que ya estaba.
-    fixture.nativeElement.querySelector('[data-testid="sede-qr-cancelar"]').click();
-    fixture.detectChanges();
-    expect(leer<string | null>(api(fixture), 'fileId')).toBe('file-qr');
+    expect(abrir).toHaveBeenCalledTimes(1);
+    // Ni zona de soltar ni «dejar el que ya tenía»: el selector cancelado no
+    // deja nada que deshacer.
+    expect(fixture.nativeElement.querySelector('[data-testid="sede-qr-archivo"]')).toBeNull();
     expect(fixture.nativeElement.querySelector('[data-testid="sede-qr-imagen"]')).not.toBeNull();
+    expect(leer<string | null>(api(fixture), 'fileId')).toBe('file-qr');
+    http.verify();
+  });
+
+  it('el archivo elegido se sube, y el QR vigente sigue a la vista mientras tanto', async () => {
+    const { fixture, http } = await montar({ ...SEDE, bankQrFileId: 'file-qr' });
+    http.expectOne(CONTENIDO).flush(new Blob(['qr'], { type: 'image/png' }));
+    await esperarLaImagen(fixture);
+
+    elegirEnElSelector(fixture, unaImagen('qr-nuevo.png'));
+
+    expect(fixture.nativeElement.querySelector('[data-testid="sede-qr-subiendo"]')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('[data-testid="sede-qr-imagen"]')).not.toBeNull();
+    // Ni zona de soltar: la subida corre con el QR vigente a la vista.
+    expect(fixture.nativeElement.querySelector('[data-testid="sede-qr-archivo"]')).toBeNull();
+
+    http.expectOne(SUBIDA).flush({ id: 'file-nuevo' });
+    http.expectOne(QR_DE_LA_SEDE).flush({ ...SEDE, bankQrFileId: 'file-nuevo' });
+    fixture.detectChanges();
+
+    expect(leer<string | null>(api(fixture), 'fileId')).toBe('file-nuevo');
+    http.expectOne('/common/files/file-nuevo/content');
+  });
+
+  it('un reemplazo que no pasa el formato se explica, y el QR vigente no se toca', async () => {
+    const { fixture, http } = await montar({ ...SEDE, bankQrFileId: 'file-qr' });
+    http.expectOne(CONTENIDO).flush(new Blob(['qr'], { type: 'image/png' }));
+    await esperarLaImagen(fixture);
+
+    elegirEnElSelector(
+      fixture,
+      new File([new Uint8Array([37, 80])], 'receta.pdf', { type: 'application/pdf' }),
+    );
+
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="sede-qr-error"]').textContent,
+    ).toContain('JPG, PNG o WEBP');
+    expect(fixture.nativeElement.querySelector('[data-testid="sede-qr-imagen"]')).not.toBeNull();
+    expect(leer<string | null>(api(fixture), 'fileId')).toBe('file-qr');
     http.verify();
   });
 
