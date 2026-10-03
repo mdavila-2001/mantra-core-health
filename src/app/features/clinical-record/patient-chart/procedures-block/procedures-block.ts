@@ -153,6 +153,8 @@ export interface TratamientoEnPantalla {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProceduresBlock {
+  /** Dentro del registro clínico ya existe una tarjeta contenedora. */
+  readonly embedded = input(false);
   private readonly procedures = inject(ProceduresClient);
   private readonly clinical = inject(ClinicalClient);
   private readonly terminology = inject(TerminologyClient);
