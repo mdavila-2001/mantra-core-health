@@ -4,7 +4,7 @@
      ficha. Un `403` acá no puede vaciar el expediente, así que cada mitad dice
      lo suyo en su tarjeta y la otra sigue en pie. -->
 @if (modo() !== 'odontologia') {
-<app-card variant="outlined" padding="lg" class="procedimientos">
+<app-card variant="outlined" [padding]="embedded() ? 'none' : 'lg'" class="procedimientos" [class.procedimientos--integrado]="embedded()">
   <h2 class="procedimientos__titulo">Cirugías</h2>
 
   @switch (quirurgico().status) {
@@ -111,7 +111,7 @@
 
 <!-- ─── Odontología ─────────────────────────────────────────────────────── -->
 @if (modo() !== 'cirugia') {
-<app-card variant="outlined" padding="lg" class="procedimientos">
+<app-card variant="outlined" [padding]="embedded() ? 'none' : 'lg'" class="procedimientos" [class.procedimientos--integrado]="embedded()">
   <h2 class="procedimientos__titulo">Odontología</h2>
 
   @switch (odontologico().status) {
@@ -139,20 +139,6 @@
       </app-alert>
     }
     @default {
-      <!-- El odontograma va primero: la boca entera de un vistazo, y de ahí se
-           baja al detalle. Sin catálogo no se dibuja —los conceptos de pieza
-           salen de ahí— y la lista de abajo sigue contándolo todo igual. -->
-      @if (opcionesDeSitio().length > 0) {
-        <app-odontogram
-          [marcas]="marcasPorPieza()"
-          [seleccionada]="piezaElegidaFdi()"
-          (pieza)="elegirPieza($event)"
-        />
-        <p class="procedimientos__secundario">
-          Elegí una pieza para cargarla en el formulario de abajo.
-        </p>
-      }
-
       @if (tratamientos().length === 0) {
         <p class="procedimientos__vacio" data-testid="sin-odontologia">
           Sin tratamientos odontológicos registrados para esta persona.
@@ -246,6 +232,18 @@
             ariaLabel="Pieza o cuadrante tratado"
           />
         </app-form-field>
+
+        @if (opcionesDeSitio().length > 0) {
+          <details class="procedimientos__odontograma">
+            <summary>Elegir la pieza en el odontograma</summary>
+            <app-odontogram
+              [marcas]="marcasPorPieza()"
+              [seleccionada]="piezaElegidaFdi()"
+              [showEmptyMessage]="false"
+              (pieza)="elegirPieza($event)"
+            />
+          </details>
+        }
 
         <!-- Deshabilitado hasta que haya pieza: el backend rechaza una cara sin
              pieza con un 422, y es mejor que el campo no se pueda llenar a que
