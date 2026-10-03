@@ -60,7 +60,7 @@ import {
   obtenerZonaHorariaDefectoDePais,
   obtenerZonasHorariasDePais,
 } from '../../../core/i18n/timezone-by-country';
-import { CamposDeNombre } from '../registro-compartido/campos-de-nombre/campos-de-nombre';
+import { CamposDeNombreEnLinea } from '../registro-compartido/campos-de-nombre-en-linea/campos-de-nombre-en-linea';
 import {
   grupoDeNombre,
   nombreCompleto,
@@ -178,7 +178,7 @@ function grupoDeGerente() {
     FormField,
     Input,
     PhoneInput,
-    CamposDeNombre,
+    CamposDeNombreEnLinea,
   ],
   templateUrl: './register-organization.html',
   styleUrl: './register-organization.css',
