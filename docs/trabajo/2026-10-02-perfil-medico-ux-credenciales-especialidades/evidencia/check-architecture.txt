@@ -1,10 +1,10 @@
-node.exe : 
+node.exe :
 En línea: 5 Carácter: 3
 +   & node "scripts/$checkName.mjs" *> "$evidenceRoot/$checkName.txt"
 +   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     + CategoryInfo          : NotSpecified: (:String) [], RemoteException
     + FullyQualifiedErrorId : NativeCommandError
- 
+
 ✗ check-architecture
 
   1 dependencia(s) circular(es):

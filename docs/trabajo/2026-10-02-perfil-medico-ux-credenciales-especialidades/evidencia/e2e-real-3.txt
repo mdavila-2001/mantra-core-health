@@ -7,13 +7,13 @@ En línea: 9 Carácter: 1
 + ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     + CategoryInfo          : NotSpecified: ((node:19700) Wa... env being set.:String) [], RemoteException
     + FullyQualifiedErrorId : NativeCommandError
- 
+
 (Use `node --trace-warnings ...` to show where the warning was created)
   x  1 [chromium] › playwright\perfil-medico-ux.spec.ts:6:5 › cancelar protege el borrador y conserva el perfil persistido al recargar (3.3m)
 Testing stopped early after 1 maximum allowed failures.
 
 
-  1) [chromium] › playwright\perfil-medico-ux.spec.ts:6:5 › cancelar protege el borrador y conserva el perfil persistido al recargar 
+  1) [chromium] › playwright\perfil-medico-ux.spec.ts:6:5 › cancelar protege el borrador y conserva el perfil persistido al recargar
 
     Test timeout of 180000ms exceeded.
 
@@ -73,6 +73,6 @@ Testing stopped early after 1 maximum allowed failures.
     ────────────────────────────────────────────────────────────────────────────────────────────────
 
   1 failed
-    [chromium] › playwright\perfil-medico-ux.spec.ts:6:5 › cancelar protege el borrador y conserva el perfil persistido al recargar 
+    [chromium] › playwright\perfil-medico-ux.spec.ts:6:5 › cancelar protege el borrador y conserva el perfil persistido al recargar
   1 did not run
   1 error was not a part of any test, see above for details

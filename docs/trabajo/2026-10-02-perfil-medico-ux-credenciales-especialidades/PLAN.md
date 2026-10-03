@@ -16,7 +16,7 @@
 ## H1 — Perfil coherente, cancelación segura y lectura densa
 **CA:** Dado un profesional autenticado, cuando consulta o cancela la edición, entonces obtiene la ficha correcta, conserva decisiones sobre cambios pendientes y puede recorrer todos sus registros.
 **DoD:** typecheck/build/lint, suites dirigidas, E2E real, doble revisión visual independiente, reporte y PR mergeable.
-**Estado:** EN CURSO
+**Estado:** A MEDIAS
 
 ### H1.S1 — Preparación reproducible
 **CA:** Dadas las bases, al iniciar el cambio se trabaja en rama propia preservando archivos ajenos.
@@ -89,14 +89,14 @@ E2E Chromium 1 worker, cero retries, datos sintéticos y API real de desarrollo.
 ### H1.S6 — Reporte y entrega
 **CA:** Dado el cambio verificado, el equipo recibe PR revisable con evidencia.
 **DoD:** documentos versionados y salida de gh posterior al último push.
-**Estado:** EN CURSO
+**Estado:** A MEDIAS
 
 | ID | Microtarea | CA (binario) | DoD | Estado |
 |---|---|---|---|---|
 | H1.S6.M1 | Reporte | Al retomar se conoce avance real y límites | REPORTE.md completo, avance calculado | HECHO |
-| H1.S6.M2 | Commit/push | Al consultar remoto está el cambio acotado | git push -u origin rama → exit 0 | TODO |
-| H1.S6.M3 | PR | Al abrirlo apunta a dev con reviewers | gh pr view --json baseRefName,reviewRequests → dev + jsaldias39/PabloArauzCaballero | TODO |
-| H1.S6.M4 | Gate final | Al entregarlo no tiene conflictos ni checks fallidos | gh pr view --json isDraft,mergeable,mergeStateStatus; gh pr checks → MERGEABLE, no draft, checks PASS | TODO |
+| H1.S6.M2 | Commit/push | Al consultar remoto está el cambio acotado | git push -u origin rama → exit 0 | HECHO |
+| H1.S6.M3 | PR | Al abrirlo apunta a dev con reviewers | gh pr view --json baseRefName,reviewRequests → dev + jsaldias39/PabloArauzCaballero | HECHO |
+| H1.S6.M4 | Gate final | Al entregarlo no tiene conflictos ni checks fallidos | gh pr view --json isDraft,mergeable,mergeStateStatus; gh pr checks → MERGEABLE, no draft, checks PASS | A MEDIAS |
 
 Commit: fix(perfil-medico): retirar especialidades de credenciales en vista y navegar al cancelar edicion.
 No merge automático. Se declara aprobación humana pendiente. Stage explícito incluye docs/pruebas, excluye archivos ajenos.

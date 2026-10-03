@@ -1,10 +1,10 @@
-node : 
+node :
 En línea: 4 Carácter: 1
 + node scripts/check-architecture.mjs *> C:\Alovida\mantra-core-health\ ...
 + ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     + CategoryInfo          : NotSpecified: (:String) [], RemoteException
     + FullyQualifiedErrorId : NativeCommandError
- 
+
 ✗ check-architecture
 
   1 dependencia(s) circular(es):

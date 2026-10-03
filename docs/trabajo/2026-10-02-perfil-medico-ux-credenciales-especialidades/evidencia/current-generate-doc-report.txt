@@ -256,7 +256,7 @@ En línea: 2 Carácter: 396
 +                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     + CategoryInfo          : NotSpecified: (  ✗ 6 de 11 verificaciones fallaron.:String) [], RemoteException
     + FullyQualifiedErrorId : NativeCommandError
- 
+
 
       ✓ oscuro             --tinta              sobre --sup-pagina          14.33:1  (mín. 4.5)
       ✓ oscuro             --tinta              sobre --sup-inset           13.69:1  (mín. 4.5)

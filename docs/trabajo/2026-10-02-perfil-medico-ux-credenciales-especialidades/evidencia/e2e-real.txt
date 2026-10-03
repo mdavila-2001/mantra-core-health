@@ -7,13 +7,13 @@ En línea: 4 Carácter: 1
 + ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     + CategoryInfo          : NotSpecified: ((node:8296) War... env being set.:String) [], RemoteException
     + FullyQualifiedErrorId : NativeCommandError
- 
+
 (Use `node --trace-warnings ...` to show where the warning was created)
   x  1 [chromium] › playwright\perfil-medico-ux.spec.ts:6:5 › cancelar protege el borrador y conserva el perfil persistido al recargar (1ms)
 Testing stopped early after 1 maximum allowed failures.
 
 
-  1) [chromium] › playwright\perfil-medico-ux.spec.ts:6:5 › cancelar protege el borrador y conserva el perfil persistido al recargar 
+  1) [chromium] › playwright\perfil-medico-ux.spec.ts:6:5 › cancelar protege el borrador y conserva el perfil persistido al recargar
 
     Error: browserType.launch: Executable doesn't exist at C:\Users\dmarc\AppData\Local\ms-playwright\chromium_headless_shell-1234\chrome-headless-shell-win64\chrome-headless-shell.exe
     ╔════════════════════════════════════════════════════════════╗
@@ -36,6 +36,6 @@ Testing stopped early after 1 maximum allowed failures.
     ────────────────────────────────────────────────────────────────────────────────────────────────
 
   1 failed
-    [chromium] › playwright\perfil-medico-ux.spec.ts:6:5 › cancelar protege el borrador y conserva el perfil persistido al recargar 
+    [chromium] › playwright\perfil-medico-ux.spec.ts:6:5 › cancelar protege el borrador y conserva el perfil persistido al recargar
   1 did not run
   1 error was not a part of any test, see above for details

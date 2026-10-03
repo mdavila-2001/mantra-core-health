@@ -276,7 +276,7 @@ En línea: 2 Carácter: 333
 +                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     + CategoryInfo          : NotSpecified: (  ✗ 6 de 11 verificaciones fallaron.:String) [], RemoteException
     + FullyQualifiedErrorId : NativeCommandError
- 
+
       101 combinaciones medidas en 2 hojas · las excepciones E3 (v1.0) y R2 (bóveda) se esperan, no se ignoran
       R3 NO es un límite aceptado: --petroleo en oscuro está sobrecargado (enlace y relleno de botón) y hay que partirlo en dos. Es tarea abierta del diseñador.
 

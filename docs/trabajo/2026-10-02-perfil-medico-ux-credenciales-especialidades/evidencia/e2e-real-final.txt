@@ -7,7 +7,7 @@ En línea: 12 Carácter: 1
 + ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     + CategoryInfo          : NotSpecified: ((node:10812) Wa... env being set.:String) [], RemoteException
     + FullyQualifiedErrorId : NativeCommandError
- 
+
 (Use `node --trace-warnings ...` to show where the warning was created)
 BACKEND_HEALTH=200
 EVIDENCE_MODE=REAL: ninguna respuesta interceptada
@@ -15,7 +15,7 @@ EVIDENCE_MODE=REAL: ninguna respuesta interceptada
 Testing stopped early after 1 maximum allowed failures.
 
 
-  1) [chromium] › playwright\practitioner-profile-ux.spec.ts:9:5 › cancelar protege el borrador y conserva el perfil persistido al recargar 
+  1) [chromium] › playwright\practitioner-profile-ux.spec.ts:9:5 › cancelar protege el borrador y conserva el perfil persistido al recargar
 
     Error: consola y red del flujo real
 
@@ -72,6 +72,6 @@ Testing stopped early after 1 maximum allowed failures.
     Error Context: artifacts\playwright\salida\practitioner-profile-ux-ca-b1eda-rfil-persistido-al-recargar-chromium\error-context.md
 
   1 failed
-    [chromium] › playwright\practitioner-profile-ux.spec.ts:9:5 › cancelar protege el borrador y conserva el perfil persistido al recargar 
+    [chromium] › playwright\practitioner-profile-ux.spec.ts:9:5 › cancelar protege el borrador y conserva el perfil persistido al recargar
   1 did not run
   1 error was not a part of any test, see above for details

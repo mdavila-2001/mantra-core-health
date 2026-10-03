@@ -7,7 +7,7 @@ En línea: 2 Carácter: 179
 +                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     + CategoryInfo          : NotSpecified: ((node:13224) Wa... env being set.:String) [], RemoteException
     + FullyQualifiedErrorId : NativeCommandError
- 
+
 (Use `node --trace-warnings ...` to show where the warning was created)
 BACKEND_HEALTH=200
 EVIDENCE_MODE=ISOLATED: signature-assets, insurance-networks, insurance-carriers y service-offerings simulados; resto API real
@@ -18,7 +18,7 @@ EVIDENCE_MODE=ISOLATED: signature-assets, insurance-networks, insurance-carriers
 Testing stopped early after 1 maximum allowed failures.
 
 
-  1) [chromium] › playwright\practitioner-profile-lists.spec.ts:437:5 › un paciente consulta especialidades en portada y credenciales públicas sin respaldos privados 
+  1) [chromium] › playwright\practitioner-profile-lists.spec.ts:437:5 › un paciente consulta especialidades en portada y credenciales públicas sin respaldos privados
 
     Error: cada sello cabe dentro de su insignia de especialidad
 
@@ -43,7 +43,7 @@ Testing stopped early after 1 maximum allowed failures.
     Error Context: artifacts\playwright\salida\practitioner-profile-lists-5940f-icas-sin-respaldos-privados-chromium\error-context.md
 
   1 failed
-    [chromium] › playwright\practitioner-profile-lists.spec.ts:437:5 › un paciente consulta especialidades en portada y credenciales públicas sin respaldos privados 
+    [chromium] › playwright\practitioner-profile-lists.spec.ts:437:5 › un paciente consulta especialidades en portada y credenciales públicas sin respaldos privados
   2 did not run
   1 passed (57.6s)
   1 error was not a part of any test, see above for details

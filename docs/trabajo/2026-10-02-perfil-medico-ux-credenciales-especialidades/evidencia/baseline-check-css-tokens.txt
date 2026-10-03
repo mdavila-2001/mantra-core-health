@@ -1,10 +1,10 @@
-node.exe : 
+node.exe :
 En línea: 4 Carácter: 3
 +   & node "scripts/$checkName.mjs" *> "$evidenceRoot/baseline-$checkNa ...
 +   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     + CategoryInfo          : NotSpecified: (:String) [], RemoteException
     + FullyQualifiedErrorId : NativeCommandError
- 
+
 ✗ check-css-tokens — 1 token(s) sin declarar, 1 uso(s) sin valor de reserva
 
   --fs-body-sm  (1 uso(s))

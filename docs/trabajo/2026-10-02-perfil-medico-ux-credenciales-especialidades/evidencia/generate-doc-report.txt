@@ -269,7 +269,7 @@ En línea: 5 Carácter: 3
 +   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     + CategoryInfo          : NotSpecified: (  ✗ 6 de 11 verificaciones fallaron.:String) [], RemoteException
     + FullyQualifiedErrorId : NativeCommandError
- 
+
 
       ✓ oscuro             --anillo-foco        sobre --sup-inset            8.20:1  (mín. 3)
       ✓ oscuro             --anillo-foco-nav    sobre --sup-nav             11.38:1  (mín. 3)

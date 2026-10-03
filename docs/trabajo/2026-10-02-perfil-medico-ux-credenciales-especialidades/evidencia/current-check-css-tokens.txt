@@ -1,10 +1,10 @@
-node : 
+node :
 En línea: 2 Carácter: 396
 + ... report')) { node "scripts/$check.mjs" *> "$folder/current-$check.txt" ...
 +                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     + CategoryInfo          : NotSpecified: (:String) [], RemoteException
     + FullyQualifiedErrorId : NativeCommandError
- 
+
 ✗ check-css-tokens — 1 token(s) sin declarar, 1 uso(s) sin valor de reserva
 
   --fs-body-sm  (1 uso(s))

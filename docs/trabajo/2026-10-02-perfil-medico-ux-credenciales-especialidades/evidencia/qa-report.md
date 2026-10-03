@@ -15,7 +15,8 @@ Entorno: Windows/PowerShell, frontend b84f74aa más working tree de la rama soli
 | Suite completa | FAIL | 10.628 PASS, 2 FAIL; catálogo base también falla, logo no reproducido en subconjunto |
 | Arquitectura/tokens/documentación | FAIL | current-*.txt y baseline-current-*.txt, ambas bases exit 1 |
 | Entornos y archivos ajenos | PASS | preparation-and-env.txt |
-| PR/checks/aprobación humana | PENDIENTE | No se afirma cumplimiento antes de publicar |
+| PR, base dev, reviewers y mergeabilidad | PASS | #868 OPEN, no draft, MERGEABLE; REST reviewers exit 0 |
+| CI y aprobación humana | BLOCKED | tres jobs QUEUED; único runner offline. No equivale a checks aprobados ni hito cerrado |
 
 ## Comandos exactos
 
@@ -29,3 +30,9 @@ corepack.cmd yarn pw playwright/practitioner-profile-ux.spec.ts playwright/pract
 ```
 
 El último comando se corre por separado en REAL y con E2E_PROFILE_ISOLATED=1. Fixture documenta exactamente los cuatro GET simulados; no simula ni cancela mutaciones del perfil ni archivos. Cero reintentos, ninguna prueba omitida. [REPORTE.md](../REPORTE.md) incluye salida literal; los logs conservan la ejecución completa.
+
+## Gate de entrega
+
+PR abierto: https://github.com/mdavila-2001/mantra-core-health/pull/868. Estado OPEN, isDraft=false, MERGEABLE; reviewers Jsaldias39 y PabloArauzCaballero asignados. Aprobación humana pendiente. CI sin ejecutar por runner offline, tres jobs QUEUED. No se etiqueta REGRESSION_VERIFIED.
+
+El primer push no invocó el hook porque core.hooksPath estaba ausente; se habilitó localmente .githooks y se corrió manualmente el control completo (stdin LF como Git), exit 0. Sin no-verify. Los controles del último push documental se volverán a observar al terminarlo.

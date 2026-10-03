@@ -1,8 +1,9 @@
-> **AVANCE: 19 / 23 — 82,6 %.** QA de integración: **FAIL**. Entrega todavía en curso; no se declara el hito cerrado.
+> **AVANCE: 21 / 23 — 91,3 %.** QA de integración: **FAIL**. CI **PENDIENTE**, runner offline. PR abierto; no se declara el hito cerrado.
 
 # Reporte — Hito 1: perfil médico
 
 - Continuación: 2026-10-03. Plan: [PLAN.md](PLAN.md). Rama: `marcelo/fix-perfil-medico-ux-credenciales-especialidades`.
+- PR: [#868](https://github.com/mdavila-2001/mantra-core-health/pull/868), base dev, no draft, MERGEABLE. Reviewers solicitados: jsaldias39 y PabloArauzCaballero; aprobación humana pendiente.
 - Base actual: `b84f74aaf3a359de93c53ab05941e2ec7ac5d0c1`; inicial `ad5623a7`. Peldaño: **TESTED**, con límites explícitos.
 - Perfil, editor, adaptadores, navegación y shell modificados; backend, modelo, dependencias y entornos intactos.
 
@@ -29,6 +30,8 @@
 | H1.S5.M4 | 32 recapturas con P1 y P2 independiente, cero rechazos finales | `yarn pw ... --workers=1 --retries=0` y revisión individual | PASS: [doble-revision.md](evidencia/doble-revision.md), [final-second-review.md](evidencia/final-second-review.md) |
 | H1.S5.M5 | Entornos sin diff, mockBackend:false real preservado; archivos ajenos fuera | `git diff b84f74aa -- src/environments/` | PASS: [preparation-and-env.txt](evidencia/preparation-and-env.txt) |
 | H1.S6.M1 | Reporte de estado, evidencia y límites en disco | `Test-Path REPORTE.md` | PASS: [triage.md](evidencia/triage.md) |
+| H1.S6.M2 | Commit solicitado y rama publicada; hook reparado y verificado | `git push -u origin marcelo/fix-perfil-medico-ux-credenciales-especialidades` | PASS: [commit.txt](evidencia/commit.txt), [push-first.txt](evidencia/push-first.txt), [pre-push-hook.txt](evidencia/pre-push-hook.txt) |
+| H1.S6.M3 | PR no draft a dev y ambos reviewers asignados | `gh pr create ...`; `gh api .../requested_reviewers` | PASS: [pr-create.txt](evidencia/pr-create.txt), [pr-reviewers.txt](evidencia/pr-reviewers.txt) |
 
 ## A medias
 
@@ -39,13 +42,16 @@
 - Qué falta exactamente: el equipo API debe implementar los GET documentados y preparar la relación de scheduling y sembrar ambos catálogos de idiomas; después ejecutar ambos specs sin E2E_PROFILE_ISOLATED, con Chromium, un worker y cero reintentos.
 - Dónde quedó: los dos specs practitioner-profile-*.spec.ts y support/practitioner-profile-test.ts; compilación aprobada. Modo aislado opt-in limita simulaciones a esos cuatro GET, identificado en salida. No acredita integración completa.
 
+### H1.S6.M4 — gate final de CI
+
+- Qué anda: PR OPEN, isDraft=false, MERGEABLE y reviewers asignados; build local y hook pasan. Metadata por gh pr view exit 0 y reviewers por REST exit 0.
+- Qué no anda: los checks dependencias, e2e y verificar permanecen QUEUED, no satisfactorios. El único runner marcelo-wsl-front está offline, busy=false. La aprobación humana sigue pendiente.
+- Qué falta exactamente: el mantenedor debe reconectar el runner, ejecutar CI hasta terminar y revisar/corregir cualquier fallo real. Después volver a consultar gh pr view y gh pr checks. Este cambio no modifica infraestructura ni cierra fallos globales ajenos.
+- Dónde quedó: [PR #868](https://github.com/mdavila-2001/mantra-core-health/pull/868); rama publicada que compila, sin conflictos. Evidencia estable en pr-view-final.txt/pr-checks-final.txt/ci-runners.txt; se volverá a comprobar después del último push documental.
+
 ## Pendiente
 
-| ID | Estado | Qué falta |
-|---|---|---|
-| H1.S6.M2 | TODO | Commit acotado y push con hook build activo. |
-| H1.S6.M3 | TODO | Abrir PR no draft contra dev con ambos reviewers. |
-| H1.S6.M4 | TODO | Consultar GitHub después del último push; registrar mergeabilidad y checks reales. |
+Ninguna microtarea sin iniciar. H1.S5.M3 y H1.S6.M4 permanecen A MEDIAS por los límites descritos; el hito continúa abierto.
 
 ## Evidencia
 
@@ -78,6 +84,17 @@ git diff b84f74aa -- src/environments/
 EXIT_CODE=0
 ```
 
+```text
+gh pr view 868 --repo mdavila-2001/mantra-core-health --json state,url,isDraft,mergeable,mergeStateStatus,baseRefName
+{"baseRefName":"dev","isDraft":false,"mergeStateStatus":"UNSTABLE","mergeable":"MERGEABLE","state":"OPEN","url":"https://github.com/mdavila-2001/mantra-core-health/pull/868"}
+EXIT_CODE=0
+gh pr checks 868 --repo mdavila-2001/mantra-core-health --json name,state,bucket --jq 'sort_by(.name)'
+[{"bucket":"pending","name":"dependencias","state":"QUEUED"},{"bucket":"pending","name":"e2e","state":"QUEUED"},{"bucket":"pending","name":"verificar","state":"QUEUED"}]
+EXIT_CODE=0
+```
+
+En modo JSON, gh pr checks salió 0 aun con jobs QUEUED: **no significa checks aprobados**. La salida tabular conserva exit 8 en pr-checks-first.txt y se repetirá después del último push. Reviewer REST: users=[PabloArauzCaballero,Jsaldias39], teams=[]; diferencia de capitalización propia de GitHub.
+
 Arquitectura, CSS tokens y generate-doc-report tienen exit 1 en trabajo y base actual. El catálogo 137 frente a 43 falla también en base. El fallo adicional de pdf-logo no se reprodujo en base ni subconjunto: **causa completa no resuelta**, no se atribuye categóricamente a la base.
 
 ## No cubierto
@@ -91,13 +108,16 @@ Arquitectura, CSS tokens y generate-doc-report tienen exit 1 en trabajo y base a
 - Dos fast-forward de dev durante el trabajo: se preservaron frecuencia de facturación e idiomas independientes; estos últimos se trasladaron a Datos personales y se añadieron cinco pruebas de cancelación/persistencia.
 - Se añadió H1.S4.M6 antes del cambio, para corregir el overflow de cabecera tablet demostrado; total 23 microtareas.
 - La falta de cuatro GET auxiliares obliga a evidencia aislada explícita. No se cambió mockBackend ni se ocultaron errores en el modo REAL.
+- core.hooksPath no estaba configurado: se habilitó .githooks y se ejecutó su control completo, exit 0, antes de abrir el PR. El primer push había pasado sin invocarlo; no se presenta ese push como evidencia del hook.
+- Reviewers: GraphQL exige read:org ausente; REST confirma asignación con permisos existentes. Se conserva el rechazo GraphQL, no se pidió ni amplió el token.
+- Logs convertidos a UTF-8/LF y sin espacios de formato al final de línea; no se alteraron valores, errores ni códigos de salida. El commit inicial conserva el formato bruto.
 - Se habilitó GitHub CLI portable oficial, con checksum verificado y autenticación existente, sin guardar tokens.
 
 ## Riesgos residuales
 
 - Integración y suite global en rojo impiden certificar REGRESSION_VERIFIED. Fallas generales de arquitectura, tokens y documentación requieren trabajos ajenos al perfil.
 - Labels ingleses del catálogo y espacio de acciones públicas vacío son reservas visuales de baja severidad.
-- Aprobación humana y resultado de CI pendientes; no se autoriza ni ejecuta merge.
+- El runner de CI está offline; checks pendientes y aprobación humana pendiente; no se autoriza ni ejecuta merge.
 
 ## Decisiones y ambigüedades
 

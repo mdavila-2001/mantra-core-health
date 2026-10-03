@@ -1,10 +1,10 @@
-node : 
+node :
 En línea: 2 Carácter: 396
 + ... report')) { node "scripts/$check.mjs" *> "$folder/current-$check.txt" ...
 +                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     + CategoryInfo          : NotSpecified: (:String) [], RemoteException
     + FullyQualifiedErrorId : NativeCommandError
- 
+
 ✗ check-architecture
 
   1 dependencia(s) circular(es):

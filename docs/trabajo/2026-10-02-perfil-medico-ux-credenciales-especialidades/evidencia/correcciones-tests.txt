@@ -9,27 +9,27 @@ Using Vitest configuration file: C:\Alovida\mantra-core-health\vitest.config.ts
 > Building...
 √ Building...
 Initial chunk files                                                                         | Names                                                                                    |  Raw size
-chunk-LZGNL3D2.js                                                                           | -                                                                                        |   1.13 MB | 
-spec-app-features-account-my-profile-practitioner-profile-edit-practitioner-profile-edit.js | spec-app-features-account-my-profile-practitioner-profile-edit-practitioner-profile-edit | 609.81 kB | 
-chunk-D4IERQV5.js                                                                           | -                                                                                        | 556.74 kB | 
-chunk-2VS2AUKF.js                                                                           | -                                                                                        | 173.83 kB | 
-styles.css                                                                                  | styles                                                                                   | 166.42 kB | 
-spec-app-features-directory-practitioner-detail-practitioner-detail.js                      | spec-app-features-directory-practitioner-detail-practitioner-detail                      | 124.03 kB | 
-chunk-KAEWIBJH.js                                                                           | -                                                                                        |  34.97 kB | 
-spec-app-features-account-my-profile-practitioner-profile-practitioner-profile.js           | spec-app-features-account-my-profile-practitioner-profile-practitioner-profile           |  33.04 kB | 
-chunk-2DSMCGJJ.js                                                                           | -                                                                                        |  28.23 kB | 
-chunk-HZXEPMDQ.js                                                                           | -                                                                                        |   5.27 kB | 
-init-testbed.js                                                                             | init-testbed                                                                             |   1.21 kB | 
-vitest-mock-patch.js                                                                        | vitest-mock-patch                                                                        | 974 bytes | 
-setup-test-setup.js                                                                         | setup-test-setup                                                                         | 911 bytes | 
-chunk-RZMBRUBG.js                                                                           | -                                                                                        | 369 bytes | 
+chunk-LZGNL3D2.js                                                                           | -                                                                                        |   1.13 MB |
+spec-app-features-account-my-profile-practitioner-profile-edit-practitioner-profile-edit.js | spec-app-features-account-my-profile-practitioner-profile-edit-practitioner-profile-edit | 609.81 kB |
+chunk-D4IERQV5.js                                                                           | -                                                                                        | 556.74 kB |
+chunk-2VS2AUKF.js                                                                           | -                                                                                        | 173.83 kB |
+styles.css                                                                                  | styles                                                                                   | 166.42 kB |
+spec-app-features-directory-practitioner-detail-practitioner-detail.js                      | spec-app-features-directory-practitioner-detail-practitioner-detail                      | 124.03 kB |
+chunk-KAEWIBJH.js                                                                           | -                                                                                        |  34.97 kB |
+spec-app-features-account-my-profile-practitioner-profile-practitioner-profile.js           | spec-app-features-account-my-profile-practitioner-profile-practitioner-profile           |  33.04 kB |
+chunk-2DSMCGJJ.js                                                                           | -                                                                                        |  28.23 kB |
+chunk-HZXEPMDQ.js                                                                           | -                                                                                        |   5.27 kB |
+init-testbed.js                                                                             | init-testbed                                                                             |   1.21 kB |
+vitest-mock-patch.js                                                                        | vitest-mock-patch                                                                        | 974 bytes |
+setup-test-setup.js                                                                         | setup-test-setup                                                                         | 911 bytes |
+chunk-RZMBRUBG.js                                                                           | -                                                                                        | 369 bytes |
 
                                                                                             | Initial total                                                                            |   2.87 MB
 
 Lazy chunk files                                                                            | Names                                                                                    |  Raw size
-chunk-X4EJCEPU.js                                                                           | bolivia-municipalities-geometry                                                          | 107.84 kB | 
-chunk-M5M52FSB.js                                                                           | map                                                                                      | 254 bytes | 
-chunk-NAB4EWXZ.js                                                                           | location-picker                                                                          | 188 bytes | 
+chunk-X4EJCEPU.js                                                                           | bolivia-municipalities-geometry                                                          | 107.84 kB |
+chunk-M5M52FSB.js                                                                           | map                                                                                      | 254 bytes |
+chunk-NAB4EWXZ.js                                                                           | location-picker                                                                          | 188 bytes |
 
 Application bundle generation complete. [105.195 seconds] - 2026-10-02T19:11:03.924Z
 
@@ -39,7 +39,7 @@ En línea: 11 Carácter: 1
 + ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     + CategoryInfo          : NotSpecified: (▲ [WARNING] NG8...gular-compiler]:String) [], RemoteException
     + FullyQualifiedErrorId : NativeCommandError
- 
+
 
     src/app/features/account/my-profile/medical-articles/medical-articles.ts:93:4:
       93 │     Alert,

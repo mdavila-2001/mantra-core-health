@@ -9,36 +9,36 @@ Using Vitest configuration file: C:\Alovida\mantra-core-health\vitest.config.ts
 > Building...
 √ Building...
 Initial chunk files                                                                                                                | Names                                                                                                                           |  Raw size
-chunk-LPLWHYP2.js                                                                                                                  | -                                                                                                                               |   1.17 MB | 
-chunk-ABVHZJZG.js                                                                                                                  | -                                                                                                                               | 332.92 kB | 
-styles.css                                                                                                                         | styles                                                                                                                          | 166.42 kB | 
-spec-app-features-account-my-profile-practitioner-profile-practitioner-profile.js                                                  | spec-app-features-account-my-profile-practitioner-profile-practitioner-profile                                                  | 137.24 kB | 
-chunk-I66JSE5E.js                                                                                                                  | -                                                                                                                               | 100.04 kB | 
-chunk-Z2C5POPS.js                                                                                                                  | -                                                                                                                               |  73.73 kB | 
-spec-app-features-account-my-profile-practitioner-profile-practitioner-profile-view-practitioner-profile-view.js                   | spec-app-features-account-my-profile-practitioner-profile-practitioner-profile-view-practitioner-profile-view                   |  46.56 kB | 
-chunk-KAEWIBJH.js                                                                                                                  | -                                                                                                                               |  34.97 kB | 
-chunk-TMH2PNCD.js                                                                                                                  | -                                                                                                                               |  23.59 kB | 
-chunk-7JQWPMDG.js                                                                                                                  | -                                                                                                                               |  17.68 kB | 
-spec-app-features-account-my-profile-practitioner-profile-practitioner-profile-view-credentials-panel-credentials-panel.js         | spec-app-features-account-my-profile-practitioner-profile-practitioner-profile-view-credentials-panel-credentials-panel         |  15.47 kB | 
-chunk-2K37GGXZ.js                                                                                                                  | -                                                                                                                               |   9.14 kB | 
-chunk-2VLA7MR4.js                                                                                                                  | -                                                                                                                               |   9.12 kB | 
-chunk-MSOW33KK.js                                                                                                                  | -                                                                                                                               |   8.68 kB | 
-spec-app-features-account-my-profile-practitioner-profile-practitioner-profile-view-activity-chart-activity-chart.js               | spec-app-features-account-my-profile-practitioner-profile-practitioner-profile-view-activity-chart-activity-chart               |   5.61 kB | 
-chunk-HZXEPMDQ.js                                                                                                                  | -                                                                                                                               |   5.27 kB | 
-spec-app-features-account-my-profile-practitioner-profile-practitioner-profile-view-practitioner-activity-practitioner-activity.js | spec-app-features-account-my-profile-practitioner-profile-practitioner-profile-view-practitioner-activity-practitioner-activity |   4.12 kB | 
-spec-app-features-account-my-profile-practitioner-profile-practitioner-profile-view-practice-sites-map-practice-sites-map.js       | spec-app-features-account-my-profile-practitioner-profile-practitioner-profile-view-practice-sites-map-practice-sites-map       |   3.86 kB | 
-spec-app-features-account-my-profile-practitioner-profile-practitioner-profile-view-quality-indicators-quality-indicators.js       | spec-app-features-account-my-profile-practitioner-profile-practitioner-profile-view-quality-indicators-quality-indicators       |   2.75 kB | 
-init-testbed.js                                                                                                                    | init-testbed                                                                                                                    |   1.21 kB | 
-vitest-mock-patch.js                                                                                                               | vitest-mock-patch                                                                                                               | 974 bytes | 
-setup-test-setup.js                                                                                                                | setup-test-setup                                                                                                                | 911 bytes | 
-chunk-RZMBRUBG.js                                                                                                                  | -                                                                                                                               | 369 bytes | 
+chunk-LPLWHYP2.js                                                                                                                  | -                                                                                                                               |   1.17 MB |
+chunk-ABVHZJZG.js                                                                                                                  | -                                                                                                                               | 332.92 kB |
+styles.css                                                                                                                         | styles                                                                                                                          | 166.42 kB |
+spec-app-features-account-my-profile-practitioner-profile-practitioner-profile.js                                                  | spec-app-features-account-my-profile-practitioner-profile-practitioner-profile                                                  | 137.24 kB |
+chunk-I66JSE5E.js                                                                                                                  | -                                                                                                                               | 100.04 kB |
+chunk-Z2C5POPS.js                                                                                                                  | -                                                                                                                               |  73.73 kB |
+spec-app-features-account-my-profile-practitioner-profile-practitioner-profile-view-practitioner-profile-view.js                   | spec-app-features-account-my-profile-practitioner-profile-practitioner-profile-view-practitioner-profile-view                   |  46.56 kB |
+chunk-KAEWIBJH.js                                                                                                                  | -                                                                                                                               |  34.97 kB |
+chunk-TMH2PNCD.js                                                                                                                  | -                                                                                                                               |  23.59 kB |
+chunk-7JQWPMDG.js                                                                                                                  | -                                                                                                                               |  17.68 kB |
+spec-app-features-account-my-profile-practitioner-profile-practitioner-profile-view-credentials-panel-credentials-panel.js         | spec-app-features-account-my-profile-practitioner-profile-practitioner-profile-view-credentials-panel-credentials-panel         |  15.47 kB |
+chunk-2K37GGXZ.js                                                                                                                  | -                                                                                                                               |   9.14 kB |
+chunk-2VLA7MR4.js                                                                                                                  | -                                                                                                                               |   9.12 kB |
+chunk-MSOW33KK.js                                                                                                                  | -                                                                                                                               |   8.68 kB |
+spec-app-features-account-my-profile-practitioner-profile-practitioner-profile-view-activity-chart-activity-chart.js               | spec-app-features-account-my-profile-practitioner-profile-practitioner-profile-view-activity-chart-activity-chart               |   5.61 kB |
+chunk-HZXEPMDQ.js                                                                                                                  | -                                                                                                                               |   5.27 kB |
+spec-app-features-account-my-profile-practitioner-profile-practitioner-profile-view-practitioner-activity-practitioner-activity.js | spec-app-features-account-my-profile-practitioner-profile-practitioner-profile-view-practitioner-activity-practitioner-activity |   4.12 kB |
+spec-app-features-account-my-profile-practitioner-profile-practitioner-profile-view-practice-sites-map-practice-sites-map.js       | spec-app-features-account-my-profile-practitioner-profile-practitioner-profile-view-practice-sites-map-practice-sites-map       |   3.86 kB |
+spec-app-features-account-my-profile-practitioner-profile-practitioner-profile-view-quality-indicators-quality-indicators.js       | spec-app-features-account-my-profile-practitioner-profile-practitioner-profile-view-quality-indicators-quality-indicators       |   2.75 kB |
+init-testbed.js                                                                                                                    | init-testbed                                                                                                                    |   1.21 kB |
+vitest-mock-patch.js                                                                                                               | vitest-mock-patch                                                                                                               | 974 bytes |
+setup-test-setup.js                                                                                                                | setup-test-setup                                                                                                                | 911 bytes |
+chunk-RZMBRUBG.js                                                                                                                  | -                                                                                                                               | 369 bytes |
 
                                                                                                                                    | Initial total                                                                                                                   |   2.17 MB
 
 Lazy chunk files                                                                                                                   | Names                                                                                                                           |  Raw size
-chunk-X4EJCEPU.js                                                                                                                  | bolivia-municipalities-geometry                                                                                                 | 107.84 kB | 
-chunk-M5M52FSB.js                                                                                                                  | map                                                                                                                             | 254 bytes | 
-chunk-CZYB7BIB.js                                                                                                                  | location-picker                                                                                                                 | 218 bytes | 
+chunk-X4EJCEPU.js                                                                                                                  | bolivia-municipalities-geometry                                                                                                 | 107.84 kB |
+chunk-M5M52FSB.js                                                                                                                  | map                                                                                                                             | 254 bytes |
+chunk-CZYB7BIB.js                                                                                                                  | location-picker                                                                                                                 | 218 bytes |
 
 Application bundle generation complete. [56.829 seconds] - 2026-10-02T18:40:18.834Z
 
@@ -48,7 +48,7 @@ En línea: 2 Carácter: 1
 + ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     + CategoryInfo          : NotSpecified: (▲ [WARNING] NG8...gular-compiler]:String) [], RemoteException
     + FullyQualifiedErrorId : NativeCommandError
- 
+
 
     src/app/features/account/my-profile/medical-articles/medical-articles.ts:93:4:
       93 │     Alert,
@@ -115,8 +115,8 @@ En línea: 2 Carácter: 1
 
 ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
 
- FAIL  |mantra-core-health| 
-src/app/features/account/my-profile/practitioner-profile/practitioner-profile-view/practitioner-profile-view.spec.ts > 
+ FAIL  |mantra-core-health|
+src/app/features/account/my-profile/practitioner-profile/practitioner-profile-view/practitioner-profile-view.spec.ts >
 PractitionerProfileView > sin especialidades el caso vacío habla
 AssertionError: expected 'DSDra. Lucía SalasMédica cardiólogaCa…' to contain 'Todavía no hay especialidades registr…'
 
@@ -124,12 +124,12 @@ AssertionError: expected 'DSDra. Lucía SalasMédica cardiólogaCa…' to contai
 + Received
 
 - Todavía no hay especialidades registradas
-+ DSDra. Lucía SalasMédica cardiólogaCardiologíaVerificadaEn ejercicioQuince años en cardiología clínica.Atiende por 
-telemedicina Español · interpreta en consulta  Actividad en la plataforma Encuentros atendidos12Documentos publicados2 
-Son los registros asentados con esta cuenta. El detalle de cada uno vive en el expediente de la persona atendida. 
++ DSDra. Lucía SalasMédica cardiólogaCardiologíaVerificadaEn ejercicioQuince años en cardiología clínica.Atiende por
+telemedicina Español · interpreta en consulta  Actividad en la plataforma Encuentros atendidos12Documentos publicados2
+Son los registros asentados con esta cuenta. El detalle de cada uno vive en el expediente de la persona atendida.
 TrayectoriaCredenciales y verificaciones Verificado (2)  Formación
 + Título de gradoUMSAFuente: https://registro-profesional.test/matriculas/LIC-3 Matrícula
-+ NacionalVerificada Declarado (0) No hay nada pendiente de verificación.Matrículas (1)NacionalVerificada Matrícula 
++ NacionalVerificada Declarado (0) No hay nada pendiente de verificación.Matrículas (1)NacionalVerificada Matrícula
 LIC-3 · Colegio Médico En la plataforma desde January 2014
 
  ❯ src/app/features/account/my-profile/practitioner-profile/practitioner-profile-view/practitioner-profile-view.spec.ts
@@ -144,7 +144,7 @@ LIC-3 · Colegio Médico En la plataforma desde January 2014
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
 
  FAIL  |mantra-core-health| src/app/features/account/my-profile/practitioner-profile/practitioner-profile-view/credenti
-als-panel/credentials-panel.spec.ts > CredentialsPanel > una descarga en curso anuncia el progreso y bloquea los demás 
+als-panel/credentials-panel.spec.ts > CredentialsPanel > una descarga en curso anuncia el progreso y bloquea los demás
 respaldos
 AssertionError: expected false to be true // Object.is equality
 

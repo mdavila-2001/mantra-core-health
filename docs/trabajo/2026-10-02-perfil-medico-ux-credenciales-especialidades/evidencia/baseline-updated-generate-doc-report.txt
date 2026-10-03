@@ -256,7 +256,7 @@ En línea: 7 Carácter: 2
 +  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     + CategoryInfo          : NotSpecified: (  ✗ 6 de 11 verificaciones fallaron.:String) [], RemoteException
     + FullyQualifiedErrorId : NativeCommandError
- 
+
 
       ✓ oscuro             --tinta-2            sobre --sup-pagina           9.99:1  (mín. 4.5)
       ✓ oscuro             --tinta-3            sobre --sup-tarjeta          5.43:1  (mín. 4.5)

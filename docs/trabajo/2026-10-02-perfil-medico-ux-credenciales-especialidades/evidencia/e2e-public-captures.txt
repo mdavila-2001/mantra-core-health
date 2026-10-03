@@ -7,7 +7,7 @@ En línea: 13 Carácter: 1
 + ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     + CategoryInfo          : NotSpecified: ((node:2104) War... env being set.:String) [], RemoteException
     + FullyQualifiedErrorId : NativeCommandError
- 
+
 (Use `node --trace-warnings ...` to show where the warning was created)
 BACKEND_HEALTH=200
 EVIDENCE_MODE=ISOLATED: signature-assets, insurance-networks, insurance-carriers y service-offerings simulados; resto API real
