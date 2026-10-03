@@ -4,7 +4,6 @@ import {
 } from '../../../../core/data-access/pharmacy-campaigns/pharmacy-campaigns.money';
 import {
   CENTAVOS_POR_PUNTO,
-  COSTO_DE_ENVIO_DE_EJEMPLO,
   PORCENTAJE_DE_COASEGURO,
   PORCENTAJE_DE_DESCUENTO_DE_RED,
 } from './checkout.fixtures';
@@ -34,7 +33,6 @@ export interface EntradaDelResumen {
   readonly renglones: readonly RenglonACobrar[];
   readonly moneda: string | null;
   readonly conSeguro: boolean;
-  readonly conEnvio: boolean;
   /**
    * Lo que las campañas descuentan sobre el **total** del pedido (compra mínima,
    * escalonados). Se resta de lo que paga la persona; lo aprobado por el seguro
@@ -99,12 +97,11 @@ export function resumirPedido(entrada: EntradaDelResumen): ResumenDelPedido {
     !hayAprobados || sumaAprobados === null
       ? null
       : porcentaje(sumaAprobados, PORCENTAJE_DE_COASEGURO);
-  const envio = entrada.conEnvio ? aCentavos(COSTO_DE_ENVIO_DE_EJEMPLO) : null;
 
   const total =
     baseDePago === null || descuento === null || (hayAprobados && coaseguro === null)
       ? null
-      : baseDePago - descuento + (coaseguro ?? 0) + (envio ?? 0);
+      : baseDePago - descuento + (coaseguro ?? 0);
 
   return {
     moneda: entrada.moneda,
@@ -117,7 +114,6 @@ export function resumirPedido(entrada: EntradaDelResumen): ResumenDelPedido {
     coaseguro: textoONull(coaseguro),
     cubreElSeguro:
       coaseguro === null || sumaAprobados === null ? null : aTexto(sumaAprobados - coaseguro),
-    envio: textoONull(envio),
     total: textoONull(total),
     puntos: total === null ? null : Math.floor(total / CENTAVOS_POR_PUNTO),
   };

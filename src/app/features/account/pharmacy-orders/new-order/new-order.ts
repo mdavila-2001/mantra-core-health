@@ -23,10 +23,8 @@ import {
 } from '../../../../core/data-access/pharmacy-campaigns/pharmacy-campaigns.money';
 import { PharmacyOrdersClient } from '../../../../core/data-access/pharmacy-orders/pharmacy-orders.client';
 import {
-  MODALIDADES_DE_ENTREGA,
   type BorradorDePedido,
   type LineaDePedido,
-  type ModalidadDeEntrega,
 } from '../../../../core/data-access/pharmacy-orders/pharmacy-orders.types';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
 import { SAMPLE_DATA_ENABLED } from '../../../../core/mock/sample-data';
@@ -39,9 +37,6 @@ import { Badge } from '../../../../shared/components/atoms/badge/badge';
 import { Skeleton } from '../../../../shared/components/atoms/skeleton/skeleton';
 import { Switch } from '../../../../shared/components/atoms/switch/switch';
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
-import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
-import { RadioGroup } from '../../../../shared/components/molecules/radio-group/radio-group';
-import { Radio } from '../../../../shared/components/molecules/radio/radio';
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
 import { MI_HISTORIA_ROUTE } from '../../medical-record/medical-record.routes';
@@ -137,11 +132,10 @@ interface RenglonVisible extends RenglonBase {
  * `PharmacyOrdersClient.enviar()`: esa capacidad real sigue intacta en el
  * cliente para la confirmación final.
  *
- * ## La modalidad dice la verdad
+ * ## La entrega
  *
- * «Retiro en la farmacia» es el default del contrato y lo único elegible hoy:
- * los envíos existen para que se sepa que vienen, pero sin direcciones del
- * paciente en el backend quedan deshabilitados y con el porqué escrito.
+ * El pedido sólo se retira en la farmacia: no hay otra modalidad que ofrecer,
+ * así que la pantalla lo informa y no pide elegir nada.
  */
 @Component({
   selector: 'app-new-order',
@@ -151,11 +145,8 @@ interface RenglonVisible extends RenglonBase {
     AppButtonLink,
     Badge,
     DatePipe,
-    FormField,
     OrderAlternatives,
     PageHeader,
-    Radio,
-    RadioGroup,
     RouterLink,
     Skeleton,
     Switch,
@@ -567,15 +558,6 @@ export class NewOrder {
     );
   }
 
-  protected readonly modalidad = signal<ModalidadDeEntrega>('RETIRO');
-
-  /** El grupo de radios entrega `unknown`; acá se estrecha o se ignora. */
-  protected alElegirModalidad(valor: unknown): void {
-    if (esModalidad(valor)) {
-      this.modalidad.set(valor);
-    }
-  }
-
   private actualizarEleccion(indice: number, cambio: Partial<EleccionDeRenglon>): void {
     this.elecciones.update((actuales) =>
       actuales.map((eleccion, i) => (i === indice ? { ...eleccion, ...cambio } : eleccion)),
@@ -595,8 +577,4 @@ export class NewOrder {
       this.documento.getElementById(`pedido-ver-alternativas-${indice}`)?.focus(),
     );
   }
-}
-
-function esModalidad(valor: unknown): valor is ModalidadDeEntrega {
-  return (MODALIDADES_DE_ENTREGA as readonly unknown[]).includes(valor);
 }

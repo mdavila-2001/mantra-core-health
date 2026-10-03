@@ -4,7 +4,7 @@
   [breadcrumbs]="breadcrumbs()"
 />
 
-<app-view-state-host [state]="estado()" (retry)="cargar()">
+<app-view-state-host [state]="estado()">
   <div vsh-skeleton class="checkout" data-testid="checkout-cargando">
     <app-skeleton variant="rect" height="var(--sp-10)" />
     <app-skeleton variant="text" [lines]="2" />
@@ -33,88 +33,12 @@
           <!-- ─── 1 · Entrega ────────────────────────────────────────────── -->
           @case ('ENTREGA') {
             <h2 id="checkout-paso-titulo" class="checkout__titulo" tabindex="-1">Cómo lo recibís</h2>
-            <app-form-field label="Entrega">
-              <app-radio-group
-                data-testid="checkout-entrega"
-                [value]="entrega()"
-                (valueChange)="alElegirEntrega($event)"
-              >
-                <app-radio value="RETIRO" label="Recojo en la farmacia" />
-                <app-radio value="DELIVERY" label="Delivery" />
-              </app-radio-group>
-            </app-form-field>
-            @if (entrega() === 'DELIVERY') {
-              <p class="checkout__nota" data-testid="checkout-entrega-delivery">
-                La farmacia sigue siendo {{ pedido.farmacia }} · {{ pedido.sede }}: desde ahí sale tu
-                pedido. En el paso siguiente elegís la dirección.
-              </p>
-            }
-          }
-
-          <!-- ─── 2 · Dirección registrada (sólo delivery, maqueta) ──────── -->
-          @case ('DIRECCION') {
-            <h2 id="checkout-paso-titulo" class="checkout__titulo" tabindex="-1">Dirección de entrega</h2>
-            <p class="checkout__etiquetas">
-              <app-badge variant="info">Maqueta</app-badge>
-              <span class="checkout__secundario">
-                Las direcciones son de ejemplo: todavía no se guardan en tu cuenta.
-              </span>
+            <p class="checkout__nota" data-testid="checkout-entrega-retiro">
+              Retirás tu pedido en {{ pedido.farmacia }} · {{ pedido.sede }}.
             </p>
-            @if (sinDirecciones()) {
-              <app-alert tone="info" title="No tenés una dirección registrada" data-testid="checkout-sin-direccion">
-                Para recibir el pedido con delivery necesitás una dirección. También podés volver y
-                elegir recojo en la farmacia.
-              </app-alert>
-            } @else {
-              <ul class="checkout__direcciones" data-testid="checkout-direcciones">
-                @for (opcion of direccionesDisponibles(); track opcion.id) {
-                  <li
-                    class="checkout__direccion"
-                    data-testid="checkout-direccion"
-                    [class.checkout__direccion--elegida]="direccionElegida() === opcion.id"
-                  >
-                    <span class="checkout__direccion-datos">
-                      <span class="checkout__principal">{{ opcion.rotulo }}</span>
-                      <span class="checkout__secundario">{{ opcion.linea }}</span>
-                      @if (opcion.referencia !== null) {
-                        <span class="checkout__secundario">{{ opcion.referencia }}</span>
-                      }
-                    </span>
-                    @if (direccionElegida() === opcion.id) {
-                      <app-badge variant="success" data-testid="checkout-direccion-elegida">En uso</app-badge>
-                    } @else {
-                      <button
-                        app-button
-                        variant="outline"
-                        size="sm"
-                        type="button"
-                        data-testid="checkout-usar-direccion"
-                        [attr.aria-label]="'Usar la dirección ' + opcion.rotulo"
-                        (clicked)="usarDireccion(opcion.id)"
-                      >
-                        Usar esta
-                      </button>
-                    }
-                  </li>
-                }
-              </ul>
-            }
-            <div>
-              <button
-                app-button
-                variant="ghost"
-                size="sm"
-                type="button"
-                data-testid="checkout-agregar-direccion"
-                disabled
-              >
-                Agregar otra
-              </button>
-              <span class="checkout__secundario">Maqueta: agregar direcciones todavía no está disponible.</span>
-            </div>
           }
 
-          <!-- ─── 3 · Medio de pago (maqueta; igual para recojo y delivery) ─ -->
+          <!-- ─── 2 · Medio de pago (maqueta) ───────────────────────────── -->
           @case ('PAGO') {
             <h2 id="checkout-paso-titulo" class="checkout__titulo" tabindex="-1">Medio de pago</h2>
             <app-form-field label="Cómo pagás">
@@ -176,24 +100,20 @@
             </p>
           }
 
-          <!-- ─── 4 · Resumen y confirmación final ───────────────────────── -->
+          <!-- ─── 3 · Resumen y confirmación final ───────────────────────── -->
           @case ('RESUMEN') {
             <h2 id="checkout-paso-titulo" class="checkout__titulo" tabindex="-1">Revisá y confirmá</h2>
             <p class="checkout__etiquetas">
               <app-badge variant="info">{{ notaDeEjemplo }}</app-badge>
               <span class="checkout__secundario">
-                El descuento, el coaseguro, el envío y los puntos son valores de ejemplo.
+                El descuento, el coaseguro y los puntos son valores de ejemplo.
               </span>
             </p>
             <dl class="checkout__elecciones">
               <div>
                 <dt>Entrega</dt>
                 <dd data-testid="checkout-resumen-entrega">
-                  @if (entrega() === 'DELIVERY') {
-                    Delivery{{ direccion() ? ' · ' + direccion()!.rotulo : '' }}
-                  } @else {
-                    Recojo en {{ pedido.farmacia }} · {{ pedido.sede }}
-                  }
+                  Recojo en {{ pedido.farmacia }} · {{ pedido.sede }}
                 </dd>
               </div>
               <div>
@@ -214,13 +134,6 @@
             @if (productosSinPublicar.length > 0) {
               <app-alert tone="warning" title="Este pedido todavía no puede confirmarse">
                 No hay un producto publicado para: {{ productosSinPublicar.join(', ') }}.
-              </app-alert>
-            }
-
-            @if (entrega() === 'DELIVERY') {
-              <app-alert tone="warning" title="Con delivery todavía no se puede confirmar" data-testid="checkout-delivery-no-disponible">
-                El envío a domicilio todavía no está disponible para crear pedidos. Para confirmar,
-                volvé al paso de entrega y elegí «Recojo en la farmacia».
               </app-alert>
             }
 
