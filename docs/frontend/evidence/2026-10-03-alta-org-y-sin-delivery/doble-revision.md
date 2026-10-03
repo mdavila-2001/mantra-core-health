@@ -1,6 +1,6 @@
 # Doble revisión de las capturas
 
-Capturas en [`capturas/`](./capturas). Las 13 se abrieron como imagen **dos veces**: una pasada de verificación contra el criterio y una segunda, adversarial, buscando motivos para rechazar. Quien revisó es la misma sesión que implementó (no hubo un segundo revisor independiente: queda dicho en «No cubierto» del README).
+Capturas en [`capturas/`](./capturas). Las 13 se abrieron como imagen **dos veces**: una pasada de verificación contra el criterio y una segunda, adversarial, buscando motivos para rechazar. La segunda pasada **la hizo primero la misma sesión que implementó**, lo que la regla del proyecto prohíbe; por eso se agregó al final una **revisión independiente** (agente de sólo lectura, sin ver mis conclusiones). **La nota final de cada pantalla es la más baja de las dos.**
 
 Severidades: **BLOQUEANTE** impide entregar · **MAYOR** debe corregirse pronto · **MENOR** deuda. Nota: `RECHAZADA` · `ACEPTABLE CON RESERVAS` · `APROBADA`; ante la duda, la más baja.
 
@@ -31,3 +31,42 @@ Severidades: **BLOQUEANTE** impide entregar · **MAYOR** debe corregirse pronto 
 
 ## Veredicto
 Ninguna pantalla `RECHAZADA` y ningún hallazgo **BLOQUEANTE** atribuible a este cambio. Los dos **MAYOR** son de la maqueta de `mockup` y existían antes: el desborde del encabezado en móvil (medido sobre `origin/mockup` limpio, ver README) y los botones flotantes de la maqueta sobre el botón principal.
+
+---
+
+# Revisión independiente (agente de sólo lectura, sin acceso a mis notas)
+
+Se le dio sólo el criterio de aceptación y las 13 imágenes. Devolvió un veredicto global **RECHAZADO**, que se registra sin suavizar. Notas por pantalla y nota final (la más baja):
+
+| Captura | Mi nota | Nota independiente | **Final** |
+|---|---|---|---|
+| alta-valido-exito | APROBADA | APROBADA | **APROBADA** |
+| alta-visual-exito-movil | APROBADA | APROBADA (justo en 44 px) | **APROBADA** |
+| alta-visual-exito-oscuro | APROBADA | APROBADA | **APROBADA** |
+| alta-error-sigla-repetida | ACEPTABLE CON RESERVAS | ACEPTABLE CON RESERVAS (MAYOR: error no accionable) | **ACEPTABLE CON RESERVAS** |
+| alta-error-correo-repetido | ACEPTABLE CON RESERVAS | ACEPTABLE CON RESERVAS (MAYOR: campo no marcado) | **ACEPTABLE CON RESERVAS** |
+| alta-error-pdf-falso | ACEPTABLE CON RESERVAS | ACEPTABLE CON RESERVAS «bordeando RECHAZADA» (MAYOR: poco énfasis) | **ACEPTABLE CON RESERVAS** |
+| alta-limite-quitar-y-resubir | APROBADA | ACEPTABLE CON RESERVAS (MAYOR: «Quitar» pequeño y layout que colapsa) | **ACEPTABLE CON RESERVAS** |
+| pedido-escritorio-1 | ACEPTABLE CON RESERVAS | ACEPTABLE CON RESERVAS | **ACEPTABLE CON RESERVAS** |
+| pedido-escritorio-2 | ACEPTABLE CON RESERVAS | ACEPTABLE CON RESERVAS | **ACEPTABLE CON RESERVAS** |
+| pedido-escritorio-3 | ACEPTABLE CON RESERVAS | **RECHAZADA** (BLOQUEANTE: «Confirmar pedido» tapado por botones flotantes) | **RECHAZADA** |
+| pedido-movil-1 | ACEPTABLE CON RESERVAS | **RECHAZADA** (MAYOR: encabezado desborda) | **RECHAZADA** |
+| pedido-movil-2 | ACEPTABLE CON RESERVAS | **RECHAZADA** (MAYOR: mismo desborde) | **RECHAZADA** |
+| pedido-movil-3 | ACEPTABLE CON RESERVAS | **RECHAZADA** (MAYOR: desborde y 0.00 Bs) | **RECHAZADA** |
+
+## Clasificación de los hallazgos: qué es de este trabajo y qué no
+
+La pregunta de este trabajo en el flujo B era «¿queda algún envío a domicilio?»: **no queda ninguno en las 6 capturas**, y el revisor lo confirma. Las 4 pantallas `RECHAZADA` lo son por causas que **no introdujo este cambio**:
+
+| Hallazgo | Severidad | ¿De este trabajo? | Estado |
+|---|---|---|---|
+| «Confirmar pedido» tapado por «Datos de prueba» / «Ver componentes» (escritorio) | BLOQUEANTE | **No.** Es el aviso de la maqueta (`src/app/core/mock/mock-banner.ts`: «El aviso de la rama `mockup`»). En una captura de página completa los elementos fijos caen sobre el último contenido, lo que agrava el efecto. **No se verificó** que no se renderice en `production-api`. | Sin corregir; tarea de seguimiento |
+| Encabezado desborda en móvil (604 px a 390) | MAYOR | **No.** Medido sobre `origin/mockup` limpio con la misma salida (README). | Sin corregir; tarea de seguimiento |
+| 0.00 Bs en el resumen frente a 424.50 Bs en el paso previo | MAYOR | **No demostrado.** Son líneas «La farmacia no la tiene» de la maqueta; este cambio sólo quitó la línea de envío. **No se comparó contra la base.** | Sin corregir; a investigar |
+| Textos que insinúan elegir cómo se recibe («Elegí cómo recibís tu pedido…», «la entrega y el pago se eligen…») | MENOR | **Sí: sobras de este cambio.** | **Corregido**: PR #886 (test), #887 (dev), #888 (mockup) |
+| Error de sigla/correo repetidos sólo en un banner del paso 8, sin ir al campo | MAYOR | **No.** Comportamiento previo del formulario de alta. | Sin corregir; tarea de seguimiento |
+| Mensaje de PDF inválido de ~11 px y sin énfasis; «Quitar» ~11 px; la tarjeta de subida colapsa | MAYOR | **No.** Componentes previos de subida de archivos. | Sin corregir; tarea de seguimiento |
+
+## Veredicto honesto
+- **Criterio funcional de este trabajo:** cumplido (botón de «Ir a iniciar sesión» visible y operativo en claro, móvil y oscuro; cero delivery en las 6 pantallas del pedido).
+- **Puerta visual completa (`visual-quality-gate`):** **NO aprobada**. Con 4 pantallas `RECHAZADA` (por causas ajenas) no se puede declarar el cambio visualmente verificado: queda **`VERIFIED_FUNCTIONAL_ONLY`**.
