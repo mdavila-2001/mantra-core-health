@@ -2436,17 +2436,65 @@ describe('RegisterPractitioner', () => {
       expect(pagina.campos.some((c) => c.required === true)).toBe(false);
     });
 
-    it('envía las dos imágenes en el cuerpo cuando se cargan', () => {
+    it('sube firma y sello y envía sus fileId al backend real', () => {
       completarProfesional();
       component.formProfesional.controls.signatureImageBase64.setValue(FIRMA);
       component.formProfesional.controls.sealImageBase64.setValue(SELLO);
-
       component.submit();
 
+      const firma = http.expectOne('/iam/auth/upload-registration-signature-image');
+      expect(firma.request.body instanceof FormData).toBe(true);
+      expect((firma.request.body.get('file') as File).type).toBe('image/png');
+      http.expectNone('/iam/auth/register-practitioner');
+      firma.flush({
+        fileId: 'firma-id',
+        originalName: 'firma.png',
+        sizeBytes: 70,
+        mimeType: 'image/png',
+      });
+      const sello = http.expectOne('/iam/auth/upload-registration-signature-image');
+      sello.flush({
+        fileId: 'sello-id',
+        originalName: 'sello.png',
+        sizeBytes: 70,
+        mimeType: 'image/png',
+      });
+
       const req = http.expectOne('/iam/auth/register-practitioner');
-      expect(req.request.body.signatureImageBase64).toBe(FIRMA);
-      expect(req.request.body.sealImageBase64).toBe(SELLO);
+      expect(req.request.body.signatureFileId).toBe('firma-id');
+      expect(req.request.body.sealFileId).toBe('sello-id');
+      expect(req.request.body.signatureImageBase64).toBeUndefined();
+      expect(req.request.body.sealImageBase64).toBeUndefined();
       req.flush(RESPUESTA_PRO);
+    });
+
+    it('reintenta el sello sin repetir una firma ya cargada', () => {
+      completarProfesional();
+      component.formProfesional.controls.signatureImageBase64.setValue(FIRMA);
+      component.formProfesional.controls.sealImageBase64.setValue(SELLO);
+      component.submit();
+      http.expectOne('/iam/auth/upload-registration-signature-image').flush({ fileId: 'firma-id' });
+      http
+        .expectOne('/iam/auth/upload-registration-signature-image')
+        .flush({}, { status: 503, statusText: 'Unavailable' });
+      http.expectNone('/iam/auth/register-practitioner');
+      expect(component.registered()).toBe(false);
+
+      component.submit();
+      http.expectOne('/iam/auth/upload-registration-signature-image').flush({ fileId: 'sello-id' });
+      const req = http.expectOne('/iam/auth/register-practitioner');
+      expect(req.request.body.signatureFileId).toBe('firma-id');
+      expect(req.request.body.sealFileId).toBe('sello-id');
+      req.flush(RESPUESTA_PRO);
+    });
+
+    it('no registra si la subida no confirma un fileId', () => {
+      completarProfesional();
+      component.formProfesional.controls.signatureImageBase64.setValue(FIRMA);
+      component.submit();
+      http.expectOne('/iam/auth/upload-registration-signature-image').flush({ fileId: '' });
+      http.expectNone('/iam/auth/register-practitioner');
+      expect(component.registered()).toBe(false);
     });
 
     it('sin firma ni sello el alta viaja igual y no manda ninguna clave', () => {
