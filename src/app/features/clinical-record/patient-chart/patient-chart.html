@@ -347,6 +347,77 @@
         </div>
       }
     </dl>
+
+    <!-- Lo que la consulta guardó como formulario clínico (ficha de la
+         especialidad, odontograma): vive en `forms`, no en el resumen, y se
+         pide al abrir este detalle. -->
+    @if (formulariosDelEncuentro(); as estado) {
+      <section
+        class="expediente__formularios"
+        aria-labelledby="expediente-formularios-titulo"
+        data-testid="expediente-formularios-del-encuentro"
+      >
+        <h3 id="expediente-formularios-titulo" class="expediente__formularios-titulo">
+          Formularios, procedimientos y estudios del encuentro
+        </h3>
+        @if (estado.status === 'loading') {
+          <p class="expediente__secundario" role="status">Buscando los formularios…</p>
+        } @else if (errorDeFormularios(); as mensaje) {
+          <app-alert tone="error" title="No pudimos leer los formularios">
+            {{ mensaje }}
+          </app-alert>
+          <button app-button variant="outline" size="sm" type="button" (clicked)="recargarFormularios()">
+            Reintentar
+          </button>
+        } @else if (formulariosLeidos(); as formularios) {
+          <dl class="expediente__detalle" data-testid="expediente-procedimientos-del-encuentro">
+            @for (vinculo of procedimientosDelEncuentro(); track vinculo.rotulo) {
+              <div class="expediente__detalle-fila">
+                <dt>{{ vinculo.rotulo }}</dt>
+                <dd>{{ vinculo.valor }}</dd>
+              </div>
+            }
+          </dl>
+          @if (formulariosNoLeidos() > 0) {
+            <app-alert tone="warning" data-testid="expediente-formularios-no-leidos">
+              {{ formulariosNoLeidos() === 1
+                ? 'Un formulario de este encuentro no se pudo leer.'
+                : formulariosNoLeidos() + ' formularios de este encuentro no se pudieron leer.' }}
+            </app-alert>
+          }
+          @for (formulario of formularios; track formulario.id) {
+            <div class="expediente__formulario" data-testid="expediente-formulario">
+              <h4 class="expediente__formulario-titulo">
+                {{ formulario.titulo }}
+                @if (formulario.completadoEl) {
+                  <span class="expediente__secundario">
+                    — {{ formulario.completadoEl | date: 'd MMM y, HH:mm' }}
+                  </span>
+                }
+              </h4>
+              <dl class="expediente__detalle">
+                @for (respuesta of formulario.respuestas; track respuesta.id) {
+                  <div class="expediente__detalle-fila">
+                    <dt>{{ respuesta.etiqueta }}</dt>
+                    <dd>
+                      @if (respuesta.masked) {
+                        <em>{{ marcadorEnmascarado }}</em>
+                      } @else {
+                        {{ respuesta.texto }}
+                      }
+                    </dd>
+                  </div>
+                }
+              </dl>
+            </div>
+          } @empty {
+            @if (formulariosNoLeidos() === 0) {
+              <p class="expediente__secundario">Sin formularios clínicos en este encuentro</p>
+            }
+          }
+        }
+      </section>
+    }
   </app-content-dialog>
 }
 
@@ -426,14 +497,6 @@
           (cambio)="altaRegistrada()"
         />
       }
-      @case ('alergias') {
-        <app-allergy-block
-          [patientProfileId]="pacienteDeLaFicha()"
-          [encounterId]="null"
-          [citas]="citasParaElDiagnostico()"
-          (cambio)="altaRegistrada()"
-        />
-      }
       @case ('medicacion') {
         <!-- La receta trae su lista: firmar y emitir son pasos de la misma
              prescripción y dejarlos fuera obligaría a irse a «Atención» para
@@ -496,6 +559,7 @@
      tampoco: hay que cerrarlo con un clic para poder seguir, que es la misma
      interrupción con otra forma. Ahora se dicen una vez, por toast, al abrir
      el expediente (ver el constructor en patient-chart.ts). Lo mismo que
-     dicen sigue estando en su pestaña —«Alergias», «Encuentros»—: el toast
-     avisa, no es el único lugar donde consta. -->
+     dicen sigue estando en su pestaña —«Diagnósticos», donde se cargan las
+     alergias desde el 02/10/2026, y «Encuentros»—: el toast avisa, no es el
+     único lugar donde consta. -->
 

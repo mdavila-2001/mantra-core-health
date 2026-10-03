@@ -57,7 +57,6 @@ import {
 } from '../clinical-record.routes';
 import { mensajeDeFalloDeEscritura } from '../mensaje-de-escritura';
 import { loRegistradoEnElEncuentro, type LoRegistrado } from './lo-registrado';
-import { AllergyBlock } from '../patient-chart/allergy-block/allergy-block';
 import { CarePlanBlock, type DiagnosticoDelPlan } from '../patient-chart/care-plan-block/care-plan-block';
 import { DiagnosisBlock, type CitaDelPaciente } from '../patient-chart/diagnosis-block/diagnosis-block';
 import { AnalysisOrderBlock } from '../patient-chart/analysis-order-block/analysis-order-block';
@@ -104,7 +103,6 @@ const TOPE_DEL_MOTIVO = 500;
  */
 export type CasillaDeConsulta =
   | 'diagnosticos'
-  | 'alergias'
   | 'medicacion'
   | 'ordenes'
   | 'reconsulta'
@@ -165,13 +163,6 @@ const CASILLAS: Readonly<Record<CasillaDeConsulta, DefinicionDeCasilla>> = {
     icono: 'M9 3h6l1 3h3v15H5V6h3l1-3Zm3 6v6m-3-3h6',
     testId: 'consulta-casilla-diagnosticos',
   },
-  alergias: {
-    titulo: 'Alergia',
-    descripcion: 'Una sustancia que no tolera, con su criticidad.',
-    tituloDelModal: 'Nueva alergia',
-    icono: 'M12 3 2.5 20h19L12 3Zm0 6v5m0 3v.5',
-    testId: 'consulta-casilla-alergias',
-  },
   medicacion: {
     titulo: 'Receta',
     descripcion: 'Prescribir, firmar y emitir medicación.',
@@ -226,7 +217,6 @@ const ORDEN_DE_CASILLAS: readonly CasillaDeConsulta[] = [
   'medicacion',
   'planes',
   'reconsulta',
-  'alergias',
   'pagos',
 ];
 
@@ -237,7 +227,7 @@ const ORDEN_DE_CASILLAS: readonly CasillaDeConsulta[] = [
  *
  * Reemplaza a la pantalla de atención anterior, que abría con un formulario
  * de una pregunta y escondía el resto detrás de tres pestañas. Acá lo que se
- * puede registrar está a la vista en ocho casillas. Cada una abre su bloque
+ * puede registrar está a la vista en siete casillas. Cada una abre su bloque
  * en un modal. Nota médica es la tabla de filas campo/valor de C1; órdenes y
  * reconsulta reutilizan sus bloques funcionales. Pagos consulta lo que ya
  * está cobrado.
@@ -261,7 +251,6 @@ const ORDEN_DE_CASILLAS: readonly CasillaDeConsulta[] = [
   imports: [
     AnalysisOrderBlock,
     Alert,
-    AllergyBlock,
     AppButton,
     AppButtonLink,
     CarePlanBlock,
@@ -474,7 +463,7 @@ export class Consultation {
   /* -- La rejilla ----------------------------------------------------------- */
 
   /**
-   * Las ocho casillas con su cantidad. La cantidad sale de lo ya leído y no
+   * Las siete casillas con su cantidad. La cantidad sale de lo ya leído y no
    * de una petición por casilla: dos lecturas de la misma lista pueden
    * discrepar.
    */
@@ -482,7 +471,6 @@ export class Consultation {
     const datos = this.datos();
     const cantidades: Readonly<Record<CasillaDeConsulta, number | null>> = {
       diagnosticos: datos?.resumen.conditions.length ?? 0,
-      alergias: datos?.resumen.allergies.length ?? 0,
       medicacion: datos?.resumen.medicationRequests.length ?? 0,
       ordenes: null,
       reconsulta: null,
@@ -505,7 +493,7 @@ export class Consultation {
   });
 
   /**
-   * La casilla cuyo modal está abierto, o `null`. Una señal para las ocho:
+   * La casilla cuyo modal está abierto, o `null`. Una señal para las siete:
    * sólo puede haber un modal a la vez.
    */
   protected readonly casillaAbierta = signal<CasillaDeConsulta | null>(null);

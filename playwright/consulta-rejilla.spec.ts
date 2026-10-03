@@ -19,7 +19,6 @@ const TILES = [
   { key: 'medicacion', title: 'Receta', modal: 'Prescribir medicación' },
   { key: 'planes', title: 'Plan de cuidados', modal: 'Abrir un plan de cuidados' },
   { key: 'reconsulta', title: 'Reconsulta', modal: 'Agendar la reconsulta' },
-  { key: 'alergias', title: 'Alergia', modal: 'Nueva alergia' },
   { key: 'pagos', title: 'Pagos', modal: 'Pagos de la persona' },
 ] as const;
 const VIEWPORTS = [
@@ -111,10 +110,10 @@ async function checkTile(page: Page, tile: (typeof TILES)[number], capture?: str
 }
 
 test.describe('C0 · contrato de la consulta', () => {
-  test('ocho acciones, modales y encuentro persistente al recargar', async ({ page }) => {
+  test('siete acciones, modales y encuentro persistente al recargar', async ({ page }) => {
     await openConsultation(page);
     await expect(page.locator('.consulta__casilla-titulo')).toHaveText(TILES.map((tile) => tile.title));
-    await expect(page.locator('[data-testid^="consulta-casilla-"]')).toHaveCount(8);
+    await expect(page.locator('[data-testid^="consulta-casilla-"]')).toHaveCount(7);
     const open = page.getByTestId('consulta-abrir-encuentro');
     if (await open.isVisible()) await open.click();
     await expect(page.getByTestId('encuentros-en-curso')).toBeVisible();
