@@ -929,6 +929,29 @@ export const DIAGNOSTICO = definir('VS_CONDITION_CODE', [
   ['E66', 'Obesidad', 'Exceso de grasa corporal.'],
   ['D50', 'Anemia ferropénica', 'Anemia por déficit de hierro.'],
   ['L20', 'Dermatitis atópica', 'Enfermedad inflamatoria crónica de la piel.'],
+  // Las alergias se cargan como diagnóstico (cliente, 02/10/2026): sin estos
+  // códigos la maqueta no tenía cómo registrar una.
+  [
+    'Z88.0',
+    'Alergia a la penicilina',
+    'Antecedente personal de alergia a la penicilina.',
+  ],
+  [
+    'Z88.1',
+    'Alergia a otros antibióticos',
+    'Antecedente personal de alergia a otros agentes antibióticos.',
+  ],
+  [
+    'Z88.6',
+    'Alergia a analgésicos',
+    'Antecedente personal de alergia a agentes analgésicos.',
+  ],
+  [
+    'Z91.0',
+    'Alergia a otras sustancias',
+    'Antecedente personal de alergia distinta de fármacos: alimentos, insectos, látex.',
+  ],
+  ['T78.4', 'Alergia no especificada', 'Reacción alérgica sin agente identificado.'],
 ]);
 
 /* ---- medicamentos (vademécum abreviado) ---------------------------------- */

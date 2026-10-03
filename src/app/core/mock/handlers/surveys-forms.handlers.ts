@@ -377,6 +377,9 @@ export function registrarEncuestas(router: MockRouter): void {
       values: [{ id: uuid('fv-5'), fieldId: uuid('field-pa-sis'), dataType: 'integer', fieldName: 'Presión sistólica', value: 130, ordinal: 1, masked: false, valueStatusConceptId: ESTADO['ST-DRAFT']!, valueVersion: 1, effectiveFrom: iso(-47, 9) }],
     },
   ]);
+  // Sobrevive a F5 como los encuentros que la cuelgan: si no, el formulario
+  // completado en la consulta desaparecía de la historia al recargar.
+  instancias.persistirEn('mock.surveys-forms.instancias');
 
   const item = (i: (typeof instancias extends Coleccion<infer T> ? T : never)) => ({ id: i.id, resourceId: i.resourceId, resourceTypeConceptId: i.resourceTypeConceptId, schemaVersion: i.schemaVersion, stateConceptId: i.stateConceptId, ...(i.closedAt === undefined ? {} : { closedAt: i.closedAt }), createdAt: i.createdAt });
 
