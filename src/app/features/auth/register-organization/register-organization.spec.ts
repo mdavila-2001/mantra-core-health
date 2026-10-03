@@ -9,6 +9,7 @@ import { DropzonePdf } from '../../../shared/components/molecules/dropzone-pdf/d
 import { CARGADOR_DE_LEAFLET } from '../../../shared/components/organisms/map/map';
 import { UbicacionPicker } from '../registro-compartido/ubicacion-picker/ubicacion-picker';
 import { RegisterOrganization } from './register-organization';
+import { controlDeNombreExtra } from '../registro-compartido/campos-de-nombre/nombre-de-persona';
 
 const RESPUESTA = {
   tenantId: 't-1',
@@ -100,6 +101,7 @@ describe('RegisterOrganization', () => {
     name: 'Mariana',
     middleName: '',
     thirdName: '',
+    extraNames: [] as string[],
     lastName: 'Siles',
     motherLastName: 'Justiniano',
   };
@@ -111,29 +113,38 @@ describe('RegisterOrganization', () => {
    */
   const GERENCIAS_DE_PRUEBA = {
     generalManager: {
-      name: 'Carlos',
-      middleName: 'Eduardo',
-      thirdName: 'Andrés',
-      lastName: 'Mendoza',
-      motherLastName: 'Rivero',
+      nombre: {
+        name: 'Carlos',
+        middleName: 'Eduardo',
+        thirdName: 'Andrés',
+        extraNames: [] as string[],
+        lastName: 'Mendoza',
+        motherLastName: 'Rivero',
+      },
       phone: '+591 70000001',
       email: 'gm@andina.test',
     },
     commercialManager: {
-      name: 'Ana',
-      middleName: '',
-      thirdName: '',
-      lastName: 'Paz',
-      motherLastName: '',
+      nombre: {
+        name: 'Ana',
+        middleName: '',
+        thirdName: '',
+        extraNames: [] as string[],
+        lastName: 'Paz',
+        motherLastName: '',
+      },
       phone: '+591 70000002',
       email: 'cm@andina.test',
     },
     marketingManager: {
-      name: 'Luis',
-      middleName: '',
-      thirdName: '',
-      lastName: 'Rojas',
-      motherLastName: '',
+      nombre: {
+        name: 'Luis',
+        middleName: '',
+        thirdName: '',
+        extraNames: [] as string[],
+        lastName: 'Rojas',
+        motherLastName: '',
+      },
       phone: '+591 70000003',
       email: 'mm@andina.test',
     },
@@ -190,6 +201,7 @@ describe('RegisterOrganization', () => {
         name: 'Ana',
         middleName: extra.middleName ?? '',
         thirdName: extra.thirdName ?? '',
+        extraNames: [] as string[],
         lastName: 'Paz',
         motherLastName: extra.motherLastName ?? '',
       },
@@ -793,7 +805,7 @@ describe('RegisterOrganization', () => {
     it('con la gerencia de marketing incompleta, «Continuar» no avanza y su panel se despliega solo', () => {
       fixture.detectChanges();
       completar();
-      component.form.controls.executives.controls.marketingManager.controls.lastName.setValue('');
+      component.form.controls.executives.controls.marketingManager.controls.nombre.controls.lastName.setValue('');
       fixture.detectChanges();
       avanzarHasta('Directorio ejecutivo');
 
@@ -808,7 +820,7 @@ describe('RegisterOrganization', () => {
       ).toContain('Directorio ejecutivo');
       expect(paneles()[2].classList.contains('is-expanded')).toBe(true);
       expect((fixture.nativeElement as HTMLElement).textContent).toContain(
-        'Este dato es obligatorio.',
+        'Escribí el apellido paterno.',
       );
     });
 
@@ -839,8 +851,8 @@ describe('RegisterOrganization', () => {
       fixture.detectChanges();
 
       expect(
-        component.form.controls.executives.controls.generalManager.controls.name.value,
-      ).toBe(GERENCIAS_DE_PRUEBA.generalManager.name);
+        component.form.controls.executives.controls.generalManager.controls.nombre.controls.name.value,
+      ).toBe(GERENCIAS_DE_PRUEBA.generalManager.nombre.name);
     });
 
     it('en «Representante legal (1 de 2)» con los nombres vacíos, «Continuar» no avanza y los cinco campos quedan marcados', () => {
@@ -898,6 +910,63 @@ describe('RegisterOrganization', () => {
       );
 
       req.flush(RESPUESTA);
+    });
+
+    it('los nombres agregados con «+ Agregar otro nombre» viajan en el fullName del representante y de cada gerencia', () => {
+      fixture.detectChanges();
+      completar();
+      component.form.controls.legalRepresentative.controls.extraNames.push(
+        controlDeNombreExtra(),
+      );
+      component.form.controls.legalRepresentative.controls.extraNames.at(0).setValue('Beatriz');
+      const gerente = component.form.controls.executives.controls.commercialManager.controls.nombre;
+      gerente.controls.extraNames.push(controlDeNombreExtra());
+      gerente.controls.extraNames.at(0).setValue('Rocío');
+      component.submit();
+
+      const req = http.expectOne('/iam/auth/register-organization');
+      expect(req.request.body.organization.legalRepresentative.fullName).toBe(
+        'Mariana Beatriz Siles Justiniano',
+      );
+      expect(req.request.body.organization.executives.commercialManager.fullName).toBe(
+        'Ana Rocío Paz',
+      );
+
+      req.flush(RESPUESTA);
+    });
+
+    it('los nombres agregados del owner se pliegan en middleName', () => {
+      fixture.detectChanges();
+      completar({ middleName: 'María' });
+      component.form.controls.ownerName.controls.extraNames.push(controlDeNombreExtra());
+      component.form.controls.ownerName.controls.extraNames.at(0).setValue('Luz');
+      component.submit();
+
+      const req = http.expectOne('/iam/auth/register-organization');
+      expect(req.request.body.owner.middleName).toBe('María Luz');
+
+      req.flush(RESPUESTA);
+    });
+
+    it('el representante legal ofrece «+ Agregar otro nombre», igual que el alta de médico', () => {
+      fixture.detectChanges();
+      completar();
+      fixture.detectChanges();
+      avanzarHasta('Representante legal (1 de 2)');
+
+      const agregar = (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>(
+        '[data-testid="registro-organizacion-representante-agregar-nombre"]',
+      );
+      expect(agregar).not.toBeNull();
+      agregar?.click();
+      fixture.detectChanges();
+
+      expect(component.form.controls.legalRepresentative.controls.extraNames.length).toBe(1);
+      expect(
+        (fixture.nativeElement as HTMLElement).querySelector(
+          '[data-testid="registro-organizacion-representante-nombre-extra-0"]',
+        ),
+      ).not.toBeNull();
     });
 
     it('el representante legal sin los opcionales compone sólo nombre y apellido paterno', () => {
@@ -969,7 +1038,7 @@ describe('RegisterOrganization', () => {
       fixture.detectChanges();
       completar();
 
-      const grupo = component.form.controls.executives.controls.generalManager;
+      const grupo = component.form.controls.executives.controls.generalManager.controls.nombre;
       grupo.controls.middleName.setValue('');
       grupo.controls.thirdName.setValue('');
       grupo.controls.motherLastName.setValue('');
@@ -1039,11 +1108,11 @@ describe('RegisterOrganization', () => {
       avanzarHasta('Tu cuenta');
 
       const grilla: HTMLElement = fixture.nativeElement.querySelector(
-        '[data-testid="registro-organizacion-owner-nombres"]',
+        'app-campos-de-nombre-en-linea .nombres',
       );
       expect(grilla).not.toBeNull();
-      expect(grilla.querySelectorAll('.register-org__nombre--tercio').length).toBe(3);
-      expect(grilla.querySelectorAll('.register-org__nombre--mitad').length).toBe(2);
+      expect(grilla.querySelectorAll('.nombres__campo--tercio').length).toBe(3);
+      expect(grilla.querySelectorAll('.nombres__campo--mitad').length).toBe(2);
     });
 
     it('con los nombres vacíos, «Continuar» no avanza y las cinco casillas quedan marcadas', () => {

@@ -29,8 +29,10 @@ import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { AppButtonLink } from '../../../shared/components/atoms/button/button-link';
 import { Input } from '../../../shared/components/atoms/input/input';
+import { NavIcon } from '../../../shared/components/atoms/nav-icon/nav-icon';
 import { Select } from '../../../shared/components/atoms/select/select';
 import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
+import { Tooltip } from '../../../shared/components/atoms/tooltip/tooltip';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 import { ReferenceCombobox } from '../../../shared/components/molecules/reference-combobox/reference-combobox';
@@ -112,10 +114,12 @@ const DIGITOS_DE_CEDULA = 6;
     DatePicker,
     FormField,
     Input,
+    NavIcon,
     PageHeader,
     ReferenceCombobox,
     RouterLink,
     Select,
+    Tooltip,
   ],
   templateUrl: './appointment-new.html',
   styleUrl: './appointment-new.css',
@@ -192,6 +196,8 @@ export class AppointmentNew {
   protected readonly nuevoTercerNombre = signal('');
   protected readonly nuevoApellidoPaterno = signal('');
   protected readonly nuevoApellidoMaterno = signal('');
+  /** Los nombres agregados con «+ Agregar otro nombre», en el orden en que se escriben. */
+  protected readonly nuevosNombresExtra = signal<readonly string[]>([]);
 
   /**
    * La cédula y el departamento que la expidió.
@@ -296,12 +302,31 @@ export class AppointmentNew {
       this.nuevoCelular().trim() !== '',
   );
 
+  /** Agrega una casilla de nombre, en blanco. */
+  protected agregarNombre(): void {
+    this.nuevosNombresExtra.update((actuales) => [...actuales, '']);
+  }
+
+  /** Quita una de las casillas agregadas (`indice` empieza en 0). */
+  protected quitarNombre(indice: number): void {
+    this.nuevosNombresExtra.update((actuales) => actuales.filter((_, i) => i !== indice));
+  }
+
+  /** Escribe en una de las casillas agregadas (`indice` empieza en 0). */
+  protected escribirNombreExtra(indice: number, valor: string | number | null): void {
+    const texto = valor === null ? '' : String(valor);
+    this.nuevosNombresExtra.update((actuales) =>
+      actuales.map((nombre, i) => (i === indice ? texto : nombre)),
+    );
+  }
+
   /** El nombre del paciente nuevo tal como se va a ver escrito. */
   protected readonly nombreDelNuevo = computed(() =>
     [
       this.nuevoNombre(),
       this.nuevoSegundoNombre(),
       this.nuevoTercerNombre(),
+      ...this.nuevosNombresExtra(),
       this.nuevoApellidoPaterno(),
       this.nuevoApellidoMaterno(),
     ]
@@ -707,7 +732,11 @@ export class AppointmentNew {
    * mandarlo haría rebotar la petición entera con 400.
    */
   private datosDelPacienteNuevo(): WalkInPatient {
-    const otrosNombres = [this.nuevoSegundoNombre(), this.nuevoTercerNombre()]
+    const otrosNombres = [
+      this.nuevoSegundoNombre(),
+      this.nuevoTercerNombre(),
+      ...this.nuevosNombresExtra(),
+    ]
       .map((parte) => parte.trim())
       .filter((parte) => parte !== '')
       .join(' ');
