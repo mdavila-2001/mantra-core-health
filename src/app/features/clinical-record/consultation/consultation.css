@@ -120,12 +120,22 @@
   .consulta__rejilla {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  /* Nueve casillas en dos columnas dejan la última sola, con un hueco al lado:
+     esa ocupa la fila entera. */
+  .consulta__rejilla > li:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
 }
 
 @media (min-width: 64rem) {
   .consulta__rejilla {
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: var(--sp-4);
+  }
+
+  .consulta__rejilla > li:last-child:nth-child(odd) {
+    grid-column: auto;
   }
 }
 
@@ -138,6 +148,9 @@
   align-items: center;
   gap: var(--sp-3);
   inline-size: 100%;
+  /* Todo el alto de la fila: una casilla con descripción de dos renglones no
+     deja a sus vecinas más bajas. */
+  block-size: 100%;
   min-block-size: 5.5rem;
   padding: var(--sp-4);
   font: inherit;

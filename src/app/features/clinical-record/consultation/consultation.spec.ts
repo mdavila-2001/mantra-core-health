@@ -58,7 +58,6 @@ const CLAVES = [
   'medicacion',
   'planes',
   'reconsulta',
-  'alergias',
   'pagos',
 ];
 const TITULOS = [
@@ -68,7 +67,6 @@ const TITULOS = [
   'Receta',
   'Plan de cuidados',
   'Reconsulta',
-  'Alergia',
   'Pagos',
 ];
 
@@ -120,7 +118,7 @@ describe('Consultation', () => {
     componente = await harness.navigateByUrl('/medical-records/p-1/consultation', Consultation);
   });
 
-  it('ofrece las ocho posibilidades en la rejilla, con su cantidad', async () => {
+  it('ofrece las siete posibilidades en la rejilla, con su cantidad', async () => {
     await responderLectura();
 
     const casillas = interno<() => readonly { clave: string; titulo: string; cantidad: number | null }[]>(
@@ -140,7 +138,23 @@ describe('Consultation', () => {
     const botones = harness.routeNativeElement!.querySelectorAll(
       '[data-testid^="consulta-casilla-"]',
     );
-    expect(botones).toHaveLength(8);
+    expect(botones).toHaveLength(7);
+  });
+
+  /**
+   * La alergia se carga como diagnóstico (cliente, 02/10/2026). Ofrecerla acá
+   * dejaba un registro que el expediente ya no muestra en ninguna pestaña: lo
+   * cargado en la consulta tiene que ser lo que la historia muestra.
+   */
+  it('no ofrece la alergia como casilla aparte', async () => {
+    await responderLectura();
+
+    expect(
+      harness.routeNativeElement!.querySelector('[data-testid="consulta-casilla-alergias"]'),
+    ).toBeNull();
+    expect(
+      interno<() => readonly { clave: string }[]>('casillas')().map((c) => c.clave),
+    ).not.toContain('alergias');
   });
 
   /**
@@ -194,7 +208,7 @@ describe('Consultation', () => {
   it('destruye el modal al cerrar y permite reabrir la misma casilla de inmediato', async () => {
     await responderLectura();
     const tile = harness.routeNativeElement!.querySelector<HTMLButtonElement>(
-      '[data-testid="consulta-casilla-alergias"]',
+      '[data-testid="consulta-casilla-planes"]',
     )!;
     tile.click();
     await harness.fixture.whenStable();
@@ -235,9 +249,9 @@ describe('Consultation', () => {
     await responderLectura();
 
     const abrir = interno<(clave: string) => void>('abrir').bind(componente);
-    abrir('alergias');
-    expect(interno<() => string | null>('casillaAbierta')()).toBe('alergias');
-    expect(interno<() => string>('tituloDelModal')()).toBe('Nueva alergia');
+    abrir('planes');
+    expect(interno<() => string | null>('casillaAbierta')()).toBe('planes');
+    expect(interno<() => string>('tituloDelModal')()).toBe('Abrir un plan de cuidados');
 
     abrir('medicacion');
     expect(interno<() => string | null>('casillaAbierta')()).toBe('medicacion');
