@@ -711,7 +711,7 @@ export class RegisterPractitioner {
   }
 
   /** La universidad escrita en el bloque del título con el que ejerce. */
-  private universidadPrincipal(): string {
+  protected universidadPrincipal(): string {
     return this.formProfesional.controls.professionalTitleUniversity.value.trim();
   }
 
@@ -722,8 +722,8 @@ export class RegisterPractitioner {
    * `issuing_institution_text` de una credencial, y una credencial exige número
    * (NOT NULL). Por eso se une a la primera fila de título universitario que ya
    * tiene número y que o bien no declaró universidad o declaró la misma. `null`
-   * si no hay ninguna: en ese caso el alta se frena y lo dice, en vez de
-   * descartarla en silencio.
+   * si no hay ninguna: en ese caso no viaja, y la pantalla lo dice antes de
+   * enviar (`registro-pro-titulos-universidad`) para que no se pierda en silencio.
    */
   private filaDeLaUniversidadPrincipal(): TituloDeclarado | null {
     const principal = this.universidadPrincipal().toLowerCase();
@@ -2650,22 +2650,13 @@ export class RegisterPractitioner {
       );
       return;
     }
-    // La universidad del título principal se guarda en una credencial, y una
-    // credencial necesita número: sin una fila de título universitario que la
-    // lleve, no se manda como si se fuera a guardar.
-    if (this.hayUniversidadPrincipalSinTitulo()) {
-      this.state.set(
-        validation([
-          {
-            field: 'professionalTitleUniversity',
-            message:
-              'La universidad de tu título principal se guarda junto con un título. Cargalo en el paso «Tus títulos» como «Universitario», con su número, o borrá la universidad.',
-          },
-        ]),
-      );
-      return;
-    }
-    // Y tampoco se manda si el catálogo de tipos no cargó: la fila viajaría sin
+    // La universidad del título principal NO frena el alta: el campo es
+    // opcional, y frenar la cuenta entera por un dato opcional era un
+    // callejón sin salida para el médico (lo reportó el propietario,
+    // 03/10/2026). Si ninguna fila puede llevarla, «Tus títulos» lo dice antes
+    // de enviar (`registro-pro-titulos-universidad`) y la cuenta se crea.
+    //
+    // Tampoco se manda si el catálogo de tipos no cargó: la fila viajaría sin
     // tipo, que el contrato exige, o se perdería en silencio.
     //
     // El aviso nombra el botón que de verdad reintenta. Antes decía «volvé al

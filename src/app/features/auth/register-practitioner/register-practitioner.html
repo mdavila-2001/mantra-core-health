@@ -437,6 +437,19 @@
                   título. El nombre, el país y la ciudad que completes aquí todavía no se guardan.
                   Si falla una carga, podés reintentar y se conservan las que ya subieron.
                 </p>
+                <!-- La universidad del título principal sólo se guarda pegada a
+                     un título con número, y en esta alta el único tipo que la
+                     lleva se llama «Otra profesión» (pensado para la segunda
+                     carrera). Mandar al médico a cargar ahí su título principal
+                     no se entiende, así que no se le pide: se le dice que no
+                     frena la cuenta y dónde completarla después. -->
+                @if (hayUniversidadPrincipalSinTitulo()) {
+                  <p class="registro-titulos__ayuda" data-testid="registro-pro-titulos-universidad">
+                    La universidad que elegiste («{{ universidadPrincipal() }}») no hace falta para
+                    crear tu cuenta. Para que aparezca en tu perfil, después agregá tu título con su
+                    número de diploma desde «Mi perfil».
+                  </p>
+                }
                 <!-- Sin catálogo de tipos, una fila con número no se puede
                      mandar: el contrato exige el concepto. Se avisa acá, donde
                      se escriben, y con el botón que vuelve a pedirlo —mismo
