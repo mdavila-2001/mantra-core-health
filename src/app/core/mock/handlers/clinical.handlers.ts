@@ -23,7 +23,7 @@ import { MEDICA, PACIENTE, pacientePorId, profesionalPorId } from '../fixtures/p
 import { conflict, forbidden, notFound, preconditionFailed, validation, type MockReply, type MockRequest, type MockRouter } from '../mock-router';
 import { ahora, Coleccion, cuerpo, isoDia, nuevoId, uuid } from '../mock-store';
 import { emitirNotificacion } from './notifications.handlers';
-import { enlazarArchivo, pdfMinimo } from './files.handlers';
+import { enlazarArchivo } from './files.handlers';
 import { FICHAS_ESTANDAR, type CampoDeFicha } from '../fixtures/fichas-estandar.generated';
 import { representaA } from './profiles.handlers';
 import { accesoDeEmergenciaVigente, relacionDelProfesional } from './misc.handlers';
