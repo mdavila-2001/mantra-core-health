@@ -1,3 +1,4 @@
+import { environment } from '../../../../environments/environment';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
@@ -597,5 +598,59 @@ describe('IamClient', () => {
 
       req.flush(RESPUESTA);
     });
+  });
+});
+
+describe('IamClient · precarga de firma/sello', () => {
+  let http: HttpTestingController;
+  let client: IamClient;
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      providers: [provideHttpClient(), provideHttpClientTesting()],
+    });
+    http = TestBed.inject(HttpTestingController);
+    client = TestBed.inject(IamClient);
+  });
+  afterEach(() => http.verify());
+
+  it('envía multipart a la ruta de imágenes sin fijar Content-Type', () => {
+    const file = new File(['imagen'], 'firma.png', { type: 'image/png' });
+    client.uploadRegistrationSignatureImage(file).subscribe();
+    const req = http.expectOne('/iam/auth/upload-registration-signature-image');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body.get('file')).toBe(file);
+    expect(req.request.headers.has('Content-Type')).toBe(false);
+    req.flush({ fileId: 'firma-id' });
+  });
+
+  it('el cliente real conserva fileId y no envía base64 incompatible', () => {
+    const original = environment.mockBackend;
+    Object.assign(environment, { mockBackend: false });
+    try {
+      client
+        .registerPractitioner({
+          email: 'qa@example.test',
+          password: 'clave123',
+          name: 'QA',
+          lastName: 'Prueba',
+          licenseNumber: 'QA-123',
+          sedesLicenseNumber: 'SEDES-QA-123',
+          nationalId: 'QA-123',
+          issuerAdministrativeAreaConceptId: '22222222-2222-4222-8222-222222222222',
+          signatureImageBase64: 'imagen',
+          sealImageBase64: 'imagen',
+          signatureFileId: 'firma-id',
+          sealFileId: 'sello-id',
+        })
+        .subscribe();
+      const req = http.expectOne('/iam/auth/register-practitioner');
+      expect(req.request.body.signatureFileId).toBe('firma-id');
+      expect(req.request.body.sealFileId).toBe('sello-id');
+      expect(req.request.body.signatureImageBase64).toBeUndefined();
+      expect(req.request.body.sealImageBase64).toBeUndefined();
+      req.flush({});
+    } finally {
+      Object.assign(environment, { mockBackend: original });
+    }
   });
 });

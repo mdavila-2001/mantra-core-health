@@ -1,0 +1,145 @@
+✓ src/app/features/component-stock/component-index.generated.ts
+  615 componentes · 3 otros · 365 pantallas · 138 maquetas · 23 atomos · 48 moleculas · 38 organismos
+  208 con algo que mirar
+  relaciones: 2744 template-instantiates · 5 imports-available sin instanciar · 68 type-only · 233 dynamic-loads
+  nivel: 0 declarado · 615 por-ruta · 5 unresolvedEvidence en 5 componentes
+  acreditación: descubiertos 615/615 · con escenario 3/615 · verificados visualmente 0/615 · bloqueados 82/615 · montó e interactuó: se miden en el banco (runtime)
+[generate-env] src/environments/env.generated.ts · PUBLIC_API_BASE_URL=(vacío)
+Using Vitest configuration file: /app/vitest.config.ts
+❯ Building...
+✔ Building...
+Initial chunk files                                                   | Names                                                              |  Raw size
+spec-app-features-auth-register-practitioner-register-practitioner.js | spec-app-features-auth-register-practitioner-register-practitioner |   1.40 MB | 
+chunk-TQEZM6US.js                                                     | -                                                                  | 659.61 kB | 
+styles.css                                                            | styles                                                             | 166.42 kB | 
+chunk-Q3OBHODR.js                                                     | -                                                                  |  26.79 kB | 
+spec-app-core-data-access-iam-iam.client.js                           | spec-app-core-data-access-iam-iam.client                           |  20.96 kB | 
+chunk-HZXEPMDQ.js                                                     | -                                                                  |   5.27 kB | 
+chunk-MESLNGZD.js                                                     | -                                                                  |   1.96 kB | 
+init-testbed.js                                                       | init-testbed                                                       |   1.21 kB | 
+setup-test-setup.js                                                   | setup-test-setup                                                   | 984 bytes | 
+vitest-mock-patch.js                                                  | vitest-mock-patch                                                  | 974 bytes | 
+
+                                                                      | Initial total                                                      |   2.28 MB
+
+Lazy chunk files                                                      | Names                                                              |  Raw size
+chunk-2CKO6KXE.js                                                     | index                                                              |   4.35 MB | 
+chunk-5HQGZZ4E.js                                                     | universidades-por-pais-generated                                   | 429.85 kB | 
+chunk-IHDEU4NG.js                                                     | bolivia-municipalities-geometry                                    | 107.84 kB | 
+chunk-T4WBWW75.js                                                     | clinical-pdf                                                       |  47.78 kB | 
+chunk-TFYCAGQE.js                                                     | from-summary                                                       |   7.26 kB | 
+
+Application bundle generation complete. [141.306 seconds] - 2026-10-03T16:32:48.435Z
+
+▲ [WARNING] NG8113: Alert is not used within the template of MedicalArticles [plugin angular-compiler]
+
+    src/app/features/account/my-profile/medical-articles/medical-articles.ts:93:4:
+      93 │     Alert,
+         ╵     ~~~~~
+
+
+▲ [WARNING] NG8113: RouterLink is not used within the template of MedicalArticles [plugin angular-compiler]
+
+    src/app/features/account/my-profile/medical-articles/medical-articles.ts:105:4:
+      105 │     RouterLink,
+          ╵     ~~~~~~~~~~
+
+
+▲ [WARNING] NG8113: AppButtonLink is not used within the template of Questionnaires [plugin angular-compiler]
+
+    src/app/features/account/questionnaires/questionnaires.ts:88:4:
+      88 │     AppButtonLink,
+         ╵     ~~~~~~~~~~~~~
+
+
+▲ [WARNING] NG8113: Link is not used within the template of Groups [plugin angular-compiler]
+
+    src/app/features/groups/groups.ts:59:4:
+      59 │     Link,
+         ╵     ~~~~
+
+
+▲ [WARNING] NG8113: AppButtonLink is not used within the template of SurveysHome [plugin angular-compiler]
+
+    src/app/features/questionnaires/questionnaires.ts:132:4:
+      132 │     AppButtonLink,
+          ╵     ~~~~~~~~~~~~~
+
+
+▲ [WARNING] NG8113: Card is not used within the template of SymptomCheck [plugin angular-compiler]
+
+    src/app/features/symptom-check/symptom-check.ts:120:39:
+      120 │ ... [Alert, AppButton, BodyMap, Card, Chip, FormField, RouterLink...
+          ╵                                 ~~~~
+
+
+▲ [WARNING] NG8113: RouterLink is not used within the template of SymptomCheck [plugin angular-compiler]
+
+    src/app/features/symptom-check/symptom-check.ts:120:62:
+      120 │ ...AppButton, BodyMap, Card, Chip, FormField, RouterLink, Textarea],
+          ╵                                               ~~~~~~~~~~
+
+
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.10 [39m[90m/app[39m
+
+ [32m✓[39m [30m[46m mantra-core-health [49m[39m src/app/core/data-access/iam/iam.client.spec.ts [2m([22m[2m26 tests[22m[2m)[22m[32m 209[2mms[22m[39m
+[90mstderr[2m | src/app/features/auth/register-practitioner/register-practitioner.spec.ts[2m > [22m[2mRegisterPractitioner con mockBackend[2m > [22m[2mresuelve los cinco tipos canónicos de credencial desde el backend simulado
+[22m[39m[mock] el glosario no se pudo leer para el listado de conjuntos [TypeError: fetch failed] {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:3000
+  [90m    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:2021:16)[39m {
+    errno: [33m-111[39m,
+    code: [32m'ECONNREFUSED'[39m,
+    syscall: [32m'connect'[39m,
+    address: [32m'127.0.0.1'[39m,
+    port: [33m3000[39m
+  }
+}
+[mock] el glosario no se pudo leer para el listado de conjuntos [TypeError: fetch failed] {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:3000
+  [90m    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:2021:16)[39m {
+    errno: [33m-111[39m,
+    code: [32m'ECONNREFUSED'[39m,
+    syscall: [32m'connect'[39m,
+    address: [32m'127.0.0.1'[39m,
+    port: [33m3000[39m
+  }
+}
+[mock] el glosario no se pudo leer para el listado de conjuntos [TypeError: fetch failed] {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:3000
+  [90m    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:2021:16)[39m {
+    errno: [33m-111[39m,
+    code: [32m'ECONNREFUSED'[39m,
+    syscall: [32m'connect'[39m,
+    address: [32m'127.0.0.1'[39m,
+    port: [33m3000[39m
+  }
+}
+
+ [32m✓[39m [30m[46m mantra-core-health [49m[39m src/app/features/auth/register-practitioner/register-practitioner.spec.ts [2m([22m[2m131 tests[22m[2m)[22m[33m 30221[2mms[22m[39m
+       [33m[2m✓[22m[39m presenta los bloques en el orden pedido (AC-05-1) [33m 1329[2mms[22m[39m
+       [33m[2m✓[22m[39m un médico ve también las especialidades odontológicas del catálogo [33m 304[2mms[22m[39m
+       [33m[2m✓[22m[39m permite una especialidad principal y tres adicionales [33m 716[2mms[22m[39m
+       [33m[2m✓[22m[39m la universidad del título principal viaja en la fila universitaria que ya tiene número (ID-10) [33m 306[2mms[22m[39m
+       [33m[2m✓[22m[39m reutiliza el PDF principal para una fila universitaria numerada existente [33m 556[2mms[22m[39m
+       [33m[2m✓[22m[39m una fila con datos y sin número frena el envío, lo dice en pantalla y marca la fila [33m 891[2mms[22m[39m
+       [33m[2m✓[22m[39m completar el número en la casilla borra el aviso, desmarca la fila y deja enviar [33m 1177[2mms[22m[39m
+       [33m[2m✓[22m[39m el botón «Quitar» de la fila problemática la saca del paso y borra el aviso [33m 1326[2mms[22m[39m
+       [33m[2m✓[22m[39m las casillas acotan lo que el contrato acota: número 100, universidad escrita a mano 200 [33m 457[2mms[22m[39m
+         [33m[2m✓[22m[39m el país acota la universidad: Bolivia ofrece la lista curada y Argentina la importada [33m 434[2mms[22m[39m
+         [33m[2m✓[22m[39m «Otro…» destapa la casilla escrita a mano, y lo escrito es lo que se guarda [33m 328[2mms[22m[39m
+         [33m[2m✓[22m[39m en una fila, el país acota la universidad y la elegida viaja en issuingInstitutionText [33m 474[2mms[22m[39m
+       [33m[2m✓[22m[39m el paso dice qué se guarda hoy y qué se completa después desde el perfil [33m 523[2mms[22m[39m
+       [33m[2m✓[22m[39m sin universidad elegida, el paso no muestra ese aviso [33m 449[2mms[22m[39m
+         [33m[2m✓[22m[39m con la carga caída, «Reintentar» está en el paso y el clic real recupera el catálogo [33m 447[2mms[22m[39m
+         [33m[2m✓[22m[39m tras el reintento con éxito, el envío arma credentials[] con lo escrito [33m 476[2mms[22m[39m
+         [33m[2m✓[22m[39m un segundo fallo deja el botón y el aviso, y el alta sigue sin salir [33m 710[2mms[22m[39m
+         [33m[2m✓[22m[39m un 200 sin los tipos también enciende el botón: manda el mapa, no el error [33m 654[2mms[22m[39m
+         [33m[2m✓[22m[39m el aviso del número que falta NO se borra cuando el catálogo carga [33m 304[2mms[22m[39m
+     [33m[2m✓[22m[39m resuelve los cinco tipos canónicos de credencial desde el backend simulado [33m 8485[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m2 passed[39m[22m[90m (2)[39m
+[2m      Tests [22m [1m[32m157 passed[39m[22m[90m (157)[39m
+[2m   Start at [22m 16:32:50
+[2m   Duration [22m 36.92s[2m (transform 8.52s, setup 1.59s, import 4.65s, tests 30.43s, environment 4.64s)[22m
+
