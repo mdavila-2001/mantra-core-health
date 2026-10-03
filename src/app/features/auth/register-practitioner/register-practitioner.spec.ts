@@ -1353,16 +1353,23 @@ describe('RegisterPractitioner', () => {
       req.flush(RESPUESTA_PRO);
     });
 
-    it('con la universidad del título principal y ninguna fila que la lleve, el alta se frena y lo dice', () => {
+    // La universidad es opcional: sin una fila que la lleve, el alta NO se
+    // frena (propietario, 03/10/2026). Antes se cortaba con un mensaje que el
+    // médico no entendía y que lo dejaba sin crear la cuenta.
+    it('con la universidad del título principal y ninguna fila que la lleve, el alta igual se envía y avisa en el campo', () => {
       catalogoDeTiposDeTitulo();
       completarProfesional({ professionalTitleUniversity: 'Universidad Mayor de San Andrés' });
+      expect(component['hayUniversidadPrincipalSinTitulo']()).toBe(true);
       component.submit();
 
-      http.expectNone('/iam/auth/register-practitioner');
-      expect(component.errorMessage()).toContain('La universidad de tu título principal');
+      const req = http.expectOne('/iam/auth/register-practitioner');
+      expect(req.request.body.credentials).toBeUndefined();
+      expect(component.errorMessage()).toBeNull();
+      req.flush(RESPUESTA_PRO);
+      expect(component.registered()).toBe(true);
     });
 
-    it('una universidad distinta en la fila no se pisa: la del título principal necesita su propia fila', () => {
+    it('una universidad distinta en la fila no se pisa, y el alta igual se envía', () => {
       catalogoDeTiposDeTitulo();
       component.agregarTitulo('UNIVERSITARIO');
       const [profesion] = component.titulosDe('UNIVERSITARIO');
@@ -1371,8 +1378,15 @@ describe('RegisterPractitioner', () => {
       completarProfesional({ professionalTitleUniversity: 'Universidad Mayor de San Andrés' });
       component.submit();
 
-      http.expectNone('/iam/auth/register-practitioner');
-      expect(component.errorMessage()).toContain('La universidad de tu título principal');
+      const req = http.expectOne('/iam/auth/register-practitioner');
+      expect(req.request.body.credentials).toEqual([
+        {
+          credentialTypeConceptId: 'c-degree',
+          number: 'TIT-1',
+          issuingInstitutionText: 'Universidad Privada Boliviana',
+        },
+      ]);
+      req.flush(RESPUESTA_PRO);
     });
 
     it('dos filas del mismo tipo viajan como dos credenciales', () => {
@@ -1784,6 +1798,32 @@ describe('RegisterPractitioner', () => {
           'El nombre, el país y la ciudad que completes aquí todavía no se guardan. ' +
           'Si falla una carga, podés reintentar y se conservan las que ya subieron.',
       );
+    });
+
+    // El aviso que reemplaza al freno: no manda a cargar el título principal
+    // como «Otra profesión» —que es lo único que en esta alta lleva universidad
+    // y nadie entendía—, sino que dice que no hace falta y dónde completarla.
+    it('con universidad elegida y sin título que la lleve, el paso lo dice en criollo', () => {
+      catalogoDeTiposDeTitulo();
+      completarProfesional({ professionalTitleUniversity: 'Universidad Mayor de San Andrés' });
+      irAlPasoDeTitulos();
+
+      const aviso = (enElPaso('registro-pro-titulos-universidad')?.textContent ?? '')
+        .replace(/\s+/g, ' ')
+        .trim();
+      expect(aviso).toBe(
+        'La universidad que elegiste («Universidad Mayor de San Andrés») no hace falta para ' +
+          'crear tu cuenta. Para que aparezca en tu perfil, después agregá tu título con su ' +
+          'número de diploma desde «Mi perfil».',
+      );
+    });
+
+    it('sin universidad elegida, el paso no muestra ese aviso', () => {
+      catalogoDeTiposDeTitulo();
+      completarProfesional();
+      irAlPasoDeTitulos();
+
+      expect(enElPaso('registro-pro-titulos-universidad')).toBeNull();
     });
 
     it('una fila agregada y vacía no frena ni viaja', () => {
