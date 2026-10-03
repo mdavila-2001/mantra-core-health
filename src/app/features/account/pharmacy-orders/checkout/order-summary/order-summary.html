@@ -62,12 +62,6 @@
         <dd class="cifras-tabulares">{{ importe(resumen().cubreElSeguro) }}</dd>
       </div>
     }
-    @if (resumen().envio !== null) {
-      <div class="resumen__cuenta" data-testid="resumen-envio">
-        <dt>Envío</dt>
-        <dd class="cifras-tabulares">{{ importe(resumen().envio) }}</dd>
-      </div>
-    }
     <div class="resumen__cuenta resumen__cuenta--total" data-testid="resumen-total">
       <dt>Total a pagar</dt>
       <dd class="cifras-tabulares">
