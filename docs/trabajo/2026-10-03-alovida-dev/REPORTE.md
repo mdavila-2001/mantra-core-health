@@ -17,3 +17,10 @@ Pruebas dirigidas; no se afirma que toda la suite del repositorio haya sido ejec
 
 ## Integración y reversión
 API primero, frontend después, en cada destino. Test recibe estos commits sobre origin/test y conserva su cambio de dirección de domicilio. Revertir los commits de frontend restaura el comportamiento previo. No se cambian contratos de registro del API ni se borran datos.
+
+## Actualización de las bases durante la revisión
+Se incorporó origin/dev 8c30eee5 y origin/test fa68b1c8 en sus ramas respectivas sin conflictos; se conservó la mejora de AppButton en la confirmación de registro institucional. La integración upstream tenía una referencia a pdfMinimo sin importarlo en clinical.handlers.ts: se restauró sólo ese import en ambos destinos.
+
+El runner con heap de 2 GB terminó antes de ejecutar casos con una aserción interna del compilador. Al repetir con heap de 6 GB expuso el TS2304 anterior. Esta evidencia no se cuenta como tests aprobados. Tras corregir el import, la integración de dev aprobó los 7 archivos / 237 tests con heap de 6 GB, un solo worker del compilador y código de salida 0. No se cambia la configuración del producto por este ajuste del runner.
+
+Resultado final: build production-api de las fuentes actuales de dev y test aprobado, código de salida 0; lint del import restaurado aprobado. El contenedor verificador usa heap de 6 GB sin cambiar el Dockerfile ni la configuración del producto. La compilación de las fuentes de cada destino se ejecutó en serie con sus archivos de configuración/dependencias equivalentes.
