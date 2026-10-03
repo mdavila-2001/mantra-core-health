@@ -26,6 +26,10 @@ que el sistema necesita y vigila.
 
 **188 tokens.** `DESIGN_TOKENS` los enumera en tiempo de ejecución.
 
+Los PDF del sistema toman de acá sus colores y sus dos familias tipográficas,
+copiados en RGB y TTF porque `jsPDF` no lee CSS; cómo y con qué prueba de
+deriva, en [paper.md](./paper.md).
+
 ## Cómo se consume desde TypeScript
 
 ```ts

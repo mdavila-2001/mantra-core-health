@@ -4,6 +4,7 @@ import { altoDeMarca, dibujarMarcaAlovida, type ColorRgb } from './alovida-mark'
 import {
   ANCHO_DE_ISOTIPO_CONTINUACION_PT,
   ANCHO_DE_ISOTIPO_PT,
+  COLOR_CEBRA,
   COLOR_FILETE,
   COLOR_FILETE_FUERTE,
   COLOR_MARCA,
@@ -12,6 +13,7 @@ import {
   COLOR_TINTA,
   COLOR_TINTA_SUAVE,
   ESPACIADO,
+  FAMILIAS,
   FILIGRANA,
   INICIO_DE_CONTENIDO_CONTINUACION_PT,
   INICIO_DE_CONTENIDO_PT,
@@ -24,6 +26,7 @@ import {
   TIPOGRAFIA,
 } from './pdf-theme';
 import { firmaDeDocumentos, type PdfFirma } from './pdf-firma';
+import { fuentesDeDocumentos, type PdfFuentes } from './pdf-fuentes';
 import { contenerLogo, logoDeDocumentos, type PdfLogo } from './pdf-logo';
 
 /**
@@ -201,7 +204,35 @@ const TAMANO_DE_ENCABEZADO: Readonly<Record<number, number>> = {
  * @returns El documento `jsPDF` ya maquetado, listo para `.save()` o `.output()`.
  */
 export function buildPdfDocument(element: HTMLElement, options: PdfExportOptions = {}): jsPDF {
-  return buildBlocksPdf(blocksOf(element), options);
+  return buildBlocksPdf(sinElTituloRepetido(blocksOf(element), options.title), options);
+}
+
+/**
+ * Quita el primer encabezado de la pantalla cuando dice lo mismo que el título
+ * del documento.
+ *
+ * Una vista empieza casi siempre con su propio `h2` —«Balance de sumas y
+ * saldos»— y el botón de exportar manda ese mismo texto como `title`: el papel
+ * salía con el título grande y, dos renglones abajo, la misma frase en
+ * versalitas. Es la regla que el membrete ya aplica en las páginas de
+ * continuación (no repetir el título cuando la clase ya lo dice), llevada a la
+ * entrada desde el DOM. Sólo el primero y sólo si es un encabezado: un párrafo
+ * que casualmente coincide es contenido.
+ */
+function sinElTituloRepetido(
+  blocks: readonly PdfBlock[],
+  titulo: string | undefined,
+): readonly PdfBlock[] {
+  const primero = blocks[0];
+  if (
+    titulo === undefined ||
+    primero === undefined ||
+    primero.kind !== 'heading' ||
+    primero.text.trim().toLocaleLowerCase('es') !== titulo.trim().toLocaleLowerCase('es')
+  ) {
+    return blocks;
+  }
+  return blocks.slice(1);
 }
 
 /**
@@ -281,8 +312,52 @@ interface Hoja {
   readonly logo: PdfLogo | null;
   /** La firma del pie, ya resuelta, o `null` si el documento no lleva bloque. */
   readonly firma: PdfFirma | null;
+  /** Con qué familia se escribe cada estilo, ya registrada en el documento. */
+  readonly fuentes: FuentesDeLaHoja;
   /** Dónde va la próxima línea. Lo único que se mueve. */
   y: number;
+}
+
+/** Estilos con que el motor escribe. `italic` existe por la interfaz; no se usa. */
+type Estilo = 'normal' | 'bold' | 'italic';
+
+/** Familia y estilo de `jsPDF` para cada estilo del motor. */
+type FuentesDeLaHoja = Readonly<Record<Estilo, readonly [familia: string, estilo: string]>>;
+
+/** Sin fuentes de marca: Helvetica, que `jsPDF` trae consigo. */
+const FUENTES_DE_RESPALDO: FuentesDeLaHoja = {
+  normal: [FAMILIAS.respaldo, 'normal'],
+  bold: [FAMILIAS.respaldo, 'bold'],
+  italic: [FAMILIAS.respaldo, 'italic'],
+};
+
+/**
+ * Registra las fuentes de marca en el documento y dice con cuál va cada estilo.
+ *
+ * Se registran por documento porque `jsPDF` las guarda por instancia. Poppins
+ * cubre la negrita —todo lo que el motor destaca— e Inter lo normal; las dos
+ * se registran bajo el estilo `normal` de su familia porque cada archivo es un
+ * solo peso. Si las fuentes no están cargadas, todo va en Helvetica.
+ */
+function registrarFuentes(doc: jsPDF, fuentes: PdfFuentes | null): FuentesDeLaHoja {
+  if (fuentes === null) {
+    return FUENTES_DE_RESPALDO;
+  }
+  doc.addFileToVFS(fuentes.titulos.archivo, fuentes.titulos.base64);
+  doc.addFont(fuentes.titulos.archivo, FAMILIAS.titulos, 'normal');
+  doc.addFileToVFS(fuentes.cuerpo.archivo, fuentes.cuerpo.base64);
+  doc.addFont(fuentes.cuerpo.archivo, FAMILIAS.cuerpo, 'normal');
+  return {
+    normal: [FAMILIAS.cuerpo, 'normal'],
+    bold: [FAMILIAS.titulos, 'normal'],
+    italic: [FAMILIAS.cuerpo, 'normal'],
+  };
+}
+
+/** Pone la fuente del estilo pedido. */
+function usarFuente(hoja: Hoja, estilo: Estilo): void {
+  const [familia, estiloDeFamilia] = hoja.fuentes[estilo];
+  hoja.doc.setFont(familia, estiloDeFamilia);
 }
 
 /** Abre la primera página con su membrete y deja la pluma lista. */
@@ -303,6 +378,7 @@ function abrirHoja(doc: jsPDF, opciones: PdfExportOptions): Hoja {
     inicio: INICIO_DE_CONTENIDO_PT,
     logo: opciones.logo === undefined ? logoDeDocumentos() : opciones.logo,
     firma: opciones.firma === undefined ? firmaDeDocumentos() : opciones.firma,
+    fuentes: registrarFuentes(doc, fuentesDeDocumentos()),
     y: 0,
   };
 
@@ -342,7 +418,12 @@ function abrirEspacio(hoja: Hoja, alto: number): void {
 /* ---- el membrete, la filigrana y el pie --------------------------------- */
 
 /**
- * El isotipo enorme y casi transparente detrás del texto.
+ * La filigrana: el isotipo chico y casi transparente, abajo a la derecha,
+ * apoyado sobre el filete del pie.
+ *
+ * Antes iba enorme y centrado detrás de todo el texto, y sobre una tabla se
+ * leía como una mancha gris. Abajo a la derecha firma la hoja sin cruzarse con
+ * nada: el bloque de firma va a la izquierda y el contenido termina antes.
  *
  * Va **antes** que cualquier contenido de la página: en un PDF lo que se dibuja
  * después tapa lo anterior, así que la filigrana tiene que ser lo primero de
@@ -351,12 +432,17 @@ function abrirEspacio(hoja: Hoja, alto: number): void {
 function dibujarFiligrana(hoja: Hoja): void {
   const anchoMarca = hoja.ancho * FILIGRANA.anchoRelativo;
   dibujarMarcaAlovida(hoja.doc, {
-    x: (hoja.ancho - anchoMarca) / 2,
-    y: (hoja.alto - altoDeMarca(anchoMarca)) / 2,
+    x: hoja.izquierda + hoja.util - anchoMarca,
+    y: fileteDelPie(hoja) - FILIGRANA.aireSobreElPie - altoDeMarca(anchoMarca),
     ancho: anchoMarca,
     color: COLOR_MARCA,
     opacidad: FILIGRANA.opacidad,
   });
+}
+
+/** Dónde va el filete del pie: lo comparten el pie y la filigrana que se apoya sobre él. */
+function fileteDelPie(hoja: Hoja): number {
+  return hoja.alto - MARGEN_INFERIOR_PT + 24;
 }
 
 /**
@@ -641,7 +727,7 @@ function sellarPies(hoja: Hoja): void {
   const { doc } = hoja;
   const total = doc.getNumberOfPages();
   const derecha = hoja.izquierda + hoja.util;
-  const yFilete = hoja.alto - MARGEN_INFERIOR_PT + 24;
+  const yFilete = fileteDelPie(hoja);
   const yTexto = yFilete + 13;
 
   for (let pagina = 1; pagina <= total; pagina += 1) {
@@ -819,15 +905,20 @@ function dibujarDato(hoja: Hoja, bloque: PdfBlock): void {
   const xValor = hoja.izquierda + RITMO.columnaDeEtiqueta;
   const anchoValor = hoja.util - RITMO.columnaDeEtiqueta;
 
+  const lineasDeEtiqueta = partirEtiqueta(
+    hoja,
+    etiqueta.toLocaleUpperCase('es'),
+    RITMO.columnaDeEtiqueta - RITMO.aireDeEtiqueta,
+  );
   const lineas = partir(hoja, valor, anchoValor, TIPOGRAFIA.cuerpo, 'normal');
-  const alto = lineas.length * RITMO.linea;
+  const alto = Math.max(lineas.length, lineasDeEtiqueta.length) * RITMO.linea;
   abrirEspacio(hoja, alto);
 
-  if (etiqueta !== '') {
+  for (const [indice, linea] of lineasDeEtiqueta.entries()) {
     escribirEspaciado(hoja, {
-      texto: etiqueta.toLocaleUpperCase('es'),
+      texto: linea,
       x: hoja.izquierda,
-      y: hoja.y,
+      y: hoja.y + indice * RITMO.linea,
       tamano: TIPOGRAFIA.etiqueta,
       espaciado: ESPACIADO.etiqueta,
       estilo: 'bold',
@@ -844,6 +935,41 @@ function dibujarDato(hoja: Hoja, bloque: PdfBlock): void {
     interlineado: RITMO.linea,
   });
   hoja.y += alto + 4;
+}
+
+/**
+ * Parte una etiqueta en versalitas en las líneas que entran en su columna.
+ *
+ * No sirve `splitTextToSize`: mide sin el espaciado entre letras, y en una
+ * etiqueta espaciada ese extra es casi un quinto del ancho. Se parte por
+ * palabras midiendo con el espaciado puesto.
+ *
+ * El defecto que esto cierra: «HIPERTENSIÓN ARTERIAL ESENCIAL» o «ENALAPRIL 10
+ * MG COMPRIMIDOS» —los diagnósticos y medicamentos de la historia clínica van
+ * como etiqueta de su estado— se salían de la columna y pisaban el valor.
+ */
+function partirEtiqueta(hoja: Hoja, texto: string, ancho: number): readonly string[] {
+  if (texto.trim() === '') {
+    return [];
+  }
+  usarFuente(hoja, 'bold');
+  hoja.doc.setFontSize(TIPOGRAFIA.etiqueta);
+  const mide = (fragmento: string): number =>
+    medir(hoja, fragmento) + fragmento.length * ESPACIADO.etiqueta;
+
+  const lineas: string[] = [];
+  let actual = '';
+  for (const palabra of texto.trim().split(/\s+/)) {
+    const candidata = actual === '' ? palabra : `${actual} ${palabra}`;
+    if (actual !== '' && mide(candidata) > ancho) {
+      lineas.push(actual);
+      actual = palabra;
+    } else {
+      actual = candidata;
+    }
+  }
+  lineas.push(actual);
+  return lineas;
 }
 
 /**
@@ -968,23 +1094,35 @@ function dibujarSeparador(hoja: Hoja): void {
 
 /* ---- las tablas --------------------------------------------------------- */
 
-/**
- * Hasta qué fracción del ancho útil una columna cuenta como angosta.
- *
- * Por debajo de esto no se la achica cuando la tabla no entra: son las columnas
- * de una numeración o un recuento, donde el texto no tiene por dónde partirse.
- */
-const ANCHO_DE_COLUMNA_ANGOSTA = 0.18;
-
 /** Cómo se parten las columnas cuando la fila no las trae ya separadas. */
 const SEPARADOR_DE_COLUMNAS = /\t|\s{3,}/;
 
+/** Aire a cada lado del texto de una celda. */
+const SANGRIA_DE_CELDA = 4;
+
 /**
- * Una tabla: columnas alineadas, cabecera sobre un panel y un filete por fila.
+ * Lo que una celda de números puede traer además de las cifras: signo, moneda,
+ * separadores de miles y decimales, porcentaje. Una fecha («8 de septiembre»)
+ * o un documento («6543210 SC») tienen cifras y **no** son números: antes
+ * bastaba con que la celda trajera un dígito y la columna de fechas salía
+ * alineada a la derecha.
+ */
+const PATRON_NUMERICO = /^[-+]?(?:Bs\.?\s*|\$\s*)?[\d.,\s]+(?:\s*(?:%|Bs\.?))?$/;
+
+/** La raya con que un dato ausente ocupa su columna. No decide la alineación. */
+const CELDA_VACIA = /^[—–-]?$/;
+
+/**
+ * Una tabla: columnas alineadas, cabecera sobre un panel, cuerpo con las filas
+ * impares apenas teñidas y un filete de un cabello entre renglones.
  *
- * La última columna se alinea a la derecha cuando todos sus valores traen algún
- * número —importes, cantidades—: una columna de precios alineada a la izquierda
- * obliga a leer cifra por cifra para compararlas.
+ * El sombreado alterno es lo que deja seguir una fila larga con la vista; el
+ * filete es lo que sobrevive a la fotocopia cuando el sombreado se pierde. Las
+ * columnas de números —importes, cantidades, numeración— van a la derecha, que
+ * es lo que permite comparar cifras sin leerlas una por una.
+ *
+ * La pluma (`hoja.y`) es la línea base del próximo texto; la tabla trabaja con
+ * el **borde superior** de cada fila y al terminar vuelve a dejar una línea base.
  */
 function dibujarTabla(hoja: Hoja, filas: readonly PdfBlock[]): void {
   const celdas = filas.map((fila) => columnasDe(fila));
@@ -994,41 +1132,57 @@ function dibujarTabla(hoja: Hoja, filas: readonly PdfBlock[]): void {
   }
 
   const anchos = repartirColumnas(hoja, filas, celdas, columnas);
-  const derechaUltima = ultimaColumnaEsNumerica(filas, celdas, columnas);
+  const numericas = columnasNumericas(filas, celdas, columnas);
   const cabecera = filas.findIndex((fila) => fila.header === true);
 
-  abrirEspacio(hoja, 46);
-  hoja.y += 6;
+  let borde = hoja.y - TIPOGRAFIA.fila;
+  let filasDelCuerpo = 0;
 
   for (const [indice, fila] of filas.entries()) {
     const esCabecera = fila.header === true;
     const partidas = partirFila(hoja, celdas[indice], anchos, esCabecera);
-    const altoFila = altoDeFila(partidas);
 
-    const paginaAntes = hoja.doc.getNumberOfPages();
-    abrirEspacio(hoja, altoFila);
-
-    // La tabla siguió en otra carilla: se repite la fila de encabezado antes
-    // de seguir. Una columna de números sin su nombre, en la página 3, obliga
-    // a volver a la 2 para saber cuál es el capital y cuál el interés — y en
-    // un papel impreso, a veces esa página ya no está.
-    if (hoja.doc.getNumberOfPages() > paginaAntes && cabecera !== -1 && indice > cabecera) {
-      const partidasCabecera = partirFila(hoja, celdas[cabecera], anchos, true);
-      dibujarFila(hoja, partidasCabecera, anchos, columnas, true, derechaUltima);
-      filete(hoja, hoja.y, COLOR_FILETE, 0.5);
-      hoja.y += 13;
+    if (borde + altoDeFila(partidas) > hoja.fondo && borde > hoja.inicio) {
+      pasarDePagina(hoja);
+      borde = hoja.y - TIPOGRAFIA.fila;
+      // La tabla siguió en otra carilla: se repite la fila de encabezado antes
+      // de seguir. Una columna de números sin su nombre, en la página 3, obliga
+      // a volver a la 2 para saber cuál es el capital y cuál el interés — y en
+      // un papel impreso, a veces esa página ya no está.
+      if (cabecera !== -1 && indice > cabecera) {
+        const partidasCabecera = partirFila(hoja, celdas[cabecera], anchos, true);
+        borde = dibujarFila(hoja, {
+          partidas: partidasCabecera,
+          anchos,
+          numericas,
+          borde,
+          esCabecera: true,
+          sombreada: false,
+        });
+        filete(hoja, borde, COLOR_FILETE_FUERTE, 0.8);
+      }
     }
 
-    dibujarFila(hoja, partidas, anchos, columnas, esCabecera, derechaUltima);
+    borde = dibujarFila(hoja, {
+      partidas,
+      anchos,
+      numericas,
+      borde,
+      esCabecera,
+      sombreada: !esCabecera && filasDelCuerpo % 2 === 1,
+    });
+    if (!esCabecera) {
+      filasDelCuerpo += 1;
+    }
 
-    // El filete de la última fila cierra la tabla, así que se dibuja más
-    // marcado: es el borde de la tabla, no una separación entre dos renglones.
+    // Bajo la cabecera y al cerrar la tabla el filete va más marcado: son los
+    // bordes de la tabla, no una separación entre dos renglones.
     const ultima = indice === filas.length - 1;
-    filete(hoja, hoja.y, ultima ? COLOR_FILETE_FUERTE : COLOR_FILETE, ultima ? 0.9 : 0.5);
-    hoja.y += 13;
+    const marcado = esCabecera || ultima;
+    filete(hoja, borde, marcado ? COLOR_FILETE_FUERTE : COLOR_FILETE, marcado ? 0.8 : 0.4);
   }
 
-  hoja.y += RITMO.entreBloques - 5;
+  hoja.y = borde + RITMO.entreBloques + TIPOGRAFIA.cuerpo;
 }
 
 /** Las celdas de una fila, ya partidas en las líneas que entran en su columna. */
@@ -1039,52 +1193,67 @@ function partirFila(
   esCabecera: boolean,
 ): readonly (readonly string[])[] {
   return celdas.map((texto, columna) =>
-    partir(hoja, texto, anchos[columna] - 8, TIPOGRAFIA.fila, esCabecera ? 'bold' : 'normal'),
+    partir(
+      hoja,
+      texto,
+      anchos[columna] - SANGRIA_DE_CELDA * 2,
+      esCabecera ? TIPOGRAFIA.cabeceraDeTabla : TIPOGRAFIA.fila,
+      esCabecera ? 'bold' : 'normal',
+    ),
   );
 }
 
-/** El alto de una fila: manda la celda que más líneas ocupa. */
+/** El alto de una fila: manda la celda que más líneas ocupa, más el aire arriba y abajo. */
 function altoDeFila(partidas: readonly (readonly string[])[]): number {
   const lineas = Math.max(1, ...partidas.map((parte) => parte.length));
-  return lineas * RITMO.lineaDeFila + 9;
+  return lineas * RITMO.lineaDeFila + RITMO.rellenoDeFila * 2;
 }
 
-/** Pinta una fila donde está la pluma y deja la pluma bajo su última línea. */
-function dibujarFila(
-  hoja: Hoja,
-  partidas: readonly (readonly string[])[],
-  anchos: readonly number[],
-  columnas: number,
-  esCabecera: boolean,
-  derechaUltima: boolean,
-): void {
-  const tamano = TIPOGRAFIA.fila;
-  const altoFila = altoDeFila(partidas);
+/** Una fila lista para pintar, con su borde superior. */
+interface FilaDeTabla {
+  readonly partidas: readonly (readonly string[])[];
+  readonly anchos: readonly number[];
+  readonly numericas: readonly boolean[];
+  readonly borde: number;
+  readonly esCabecera: boolean;
+  readonly sombreada: boolean;
+}
 
-  if (esCabecera) {
-    hoja.doc.setFillColor(COLOR_PANEL[0], COLOR_PANEL[1], COLOR_PANEL[2]);
-    hoja.doc.rect(hoja.izquierda, hoja.y - tamano - 2, hoja.util, altoFila, 'F');
+/**
+ * Pinta una fila desde su borde superior y devuelve el inferior.
+ *
+ * La línea base del texto se baja desde el borde lo que ocupan el aire y las
+ * mayúsculas (≈ 0,78 del cuerpo): así el texto queda centrado en su franja con
+ * una fuente o con otra.
+ */
+function dibujarFila(hoja: Hoja, fila: FilaDeTabla): number {
+  const tamano = fila.esCabecera ? TIPOGRAFIA.cabeceraDeTabla : TIPOGRAFIA.fila;
+  const alto = altoDeFila(fila.partidas);
+
+  if (fila.esCabecera || fila.sombreada) {
+    const color = fila.esCabecera ? COLOR_PANEL : COLOR_CEBRA;
+    hoja.doc.setFillColor(color[0], color[1], color[2]);
+    hoja.doc.rect(hoja.izquierda, fila.borde, hoja.util, alto, 'F');
   }
 
+  const base = fila.borde + RITMO.rellenoDeFila + tamano * 0.78;
   let x = hoja.izquierda;
-  for (let columna = 0; columna < columnas; columna += 1) {
-    const alineacion =
-      derechaUltima && columna === columnas - 1 ? ('right' as const) : ('left' as const);
-    const xTexto = alineacion === 'right' ? x + anchos[columna] - 4 : x + 4;
+  for (const [columna, ancho] of fila.anchos.entries()) {
+    const aLaDerecha = fila.numericas[columna] ?? false;
     escribirLineas(hoja, {
-      lineas: partidas[columna] ?? [''],
-      x: xTexto,
-      y: hoja.y,
+      lineas: fila.partidas[columna] ?? [''],
+      x: aLaDerecha ? x + ancho - SANGRIA_DE_CELDA : x + SANGRIA_DE_CELDA,
+      y: base,
       tamano,
-      estilo: esCabecera ? 'bold' : 'normal',
-      color: esCabecera ? COLOR_MARCA : COLOR_TINTA,
+      estilo: fila.esCabecera ? 'bold' : 'normal',
+      color: fila.esCabecera ? COLOR_MARCA : COLOR_TINTA,
       interlineado: RITMO.lineaDeFila,
-      alineacion,
+      alineacion: aLaDerecha ? 'right' : 'left',
     });
-    x += anchos[columna];
+    x += ancho;
   }
 
-  hoja.y += altoFila - 9 + 5;
+  return fila.borde + alto;
 }
 
 /** Las columnas de una fila: las que trae, o las que salen de partir su texto. */
@@ -1098,11 +1267,19 @@ function columnasDe(fila: PdfBlock): readonly string[] {
 /**
  * Reparte el ancho entre las columnas.
  *
- * Cada una pide lo que mide su contenido más largo; si entre todas entran, el
- * sobrante se lo queda la **más ancha**, que es la de la descripción: la que
- * gana algo con el espacio de más. Dárselo a la primera columna dejaría una
- * numeración de tres caracteres ocupando media hoja. Si no entran, se achican
- * todas en proporción antes que dejar que una se salga del margen.
+ * Cada una pide lo que mide su contenido más largo (**preferido**) y no puede
+ * bajar de lo que mide su palabra más larga (**mínimo**): una columna más
+ * angosta que su palabra más larga parte palabras por la mitad. Si entre todas
+ * entran, el sobrante se lo queda la más ancha, que es la de la descripción.
+ * Si no entran, cada una recibe su mínimo y el resto se reparte en proporción
+ * a la **holgura** (preferido − mínimo) de cada una: las columnas de una sola
+ * palabra —una numeración, un recuento, una fecha corta— no tienen holgura y
+ * conservan su ancho entero; las de texto largo, que son las que se pueden
+ * partir en varias líneas sin quedar mal, ceden lo que haga falta.
+ *
+ * El defecto que esto cierra: achicar en proporción al ancho pedido partía en
+ * dos renglones la fecha, el motivo y el nombre a la vez, mientras la columna
+ * del recuento se quedaba con medio cuerpo vacío.
  */
 function repartirColumnas(
   hoja: Hoja,
@@ -1110,63 +1287,65 @@ function repartirColumnas(
   celdas: readonly (readonly string[])[],
   columnas: number,
 ): readonly number[] {
-  const relleno = 12;
-  const pedidos: number[] = [];
+  const sangria = SANGRIA_DE_CELDA * 2;
+  const preferidos: number[] = [];
+  const minimos: number[] = [];
 
   for (let columna = 0; columna < columnas; columna += 1) {
-    let ancho = 0;
+    let preferido = 0;
+    let minimo = 0;
     for (const [indice, fila] of filas.entries()) {
       const texto = celdas[indice][columna] ?? '';
-      hoja.doc.setFont('helvetica', fila.header === true ? 'bold' : 'normal');
-      hoja.doc.setFontSize(TIPOGRAFIA.fila);
-      ancho = Math.max(ancho, medir(hoja, texto));
+      const esCabecera = fila.header === true;
+      usarFuente(hoja, esCabecera ? 'bold' : 'normal');
+      hoja.doc.setFontSize(esCabecera ? TIPOGRAFIA.cabeceraDeTabla : TIPOGRAFIA.fila);
+      preferido = Math.max(preferido, medir(hoja, texto));
+      for (const palabra of texto.split(/\s+/)) {
+        minimo = Math.max(minimo, medir(hoja, palabra));
+      }
     }
-    pedidos.push(Math.min(ancho + relleno, hoja.util * 0.7));
+    preferidos.push(preferido + sangria);
+    // Una palabra interminable no puede quedarse con la hoja entera.
+    minimos.push(Math.min(minimo + sangria, hoja.util / 2));
   }
 
-  const total = pedidos.reduce((suma, ancho) => suma + ancho, 0);
+  const sumar = (anchos: readonly number[]): number => anchos.reduce((suma, ancho) => suma + ancho, 0);
+  const total = sumar(preferidos);
   if (total <= 0) {
-    return pedidos.map(() => hoja.util / columnas);
+    return preferidos.map(() => hoja.util / columnas);
   }
   if (total <= hoja.util) {
-    const anchos = [...pedidos];
-    const masAncha = pedidos.indexOf(Math.max(...pedidos));
+    const anchos = [...preferidos];
+    const masAncha = preferidos.indexOf(Math.max(...preferidos));
     anchos[masAncha] += hoja.util - total;
     return anchos;
   }
 
-  // No entran. Se achican **las anchas**, que son las de texto y se parten en
-  // varias líneas sin quedar mal; las angostas —una numeración, un recuento,
-  // el rótulo «Atenciones»— conservan lo que piden.
-  //
-  // El defecto que esto cierra: repartir la falta entre todas por igual dejaba
-  // un encabezado de una palabra partido en dos renglones («Atencion / es»),
-  // que es lo primero que se ve como descuido en un documento.
-  const esAngosta = (ancho: number): boolean => ancho <= hoja.util * ANCHO_DE_COLUMNA_ANGOSTA;
-  const reservado = pedidos.filter(esAngosta).reduce((suma, ancho) => suma + ancho, 0);
-  const aRepartir = hoja.util - reservado;
-  const pedidoDeLasAnchas = total - reservado;
-  if (aRepartir > 0 && pedidoDeLasAnchas > 0) {
-    return pedidos.map((ancho) =>
-      esAngosta(ancho) ? ancho : (ancho / pedidoDeLasAnchas) * aRepartir,
-    );
+  const base = sumar(minimos);
+  const sobrante = hoja.util - base;
+  if (sobrante <= 0) {
+    // Ni los mínimos entran: se achica todo en proporción antes que salirse del margen.
+    return minimos.map((minimo) => (minimo / base) * hoja.util);
   }
-  return pedidos.map((ancho) => (ancho / total) * hoja.util);
+  const holguras = preferidos.map((preferido, columna) => Math.max(0, preferido - minimos[columna]));
+  const holguraTotal = sumar(holguras);
+  return minimos.map((minimo, columna) =>
+    holguraTotal > 0 ? minimo + (holguras[columna] / holguraTotal) * sobrante : minimo + sobrante / columnas,
+  );
 }
 
-/** Si la última columna es de números —importes, cantidades—, va a la derecha. */
-function ultimaColumnaEsNumerica(
+/** Qué columnas son de números —importes, cantidades, numeración— y van a la derecha. */
+function columnasNumericas(
   filas: readonly PdfBlock[],
   celdas: readonly (readonly string[])[],
   columnas: number,
-): boolean {
-  if (columnas < 2) {
-    return false;
-  }
-  const cuerpo = filas
-    .map((fila, indice) => ({ fila, texto: celdas[indice][columnas - 1] ?? '' }))
-    .filter((entrada) => entrada.fila.header !== true && entrada.texto !== '');
-  return cuerpo.length > 0 && cuerpo.every((entrada) => /\d/.test(entrada.texto));
+): readonly boolean[] {
+  return Array.from({ length: columnas }, (_, columna) => {
+    const cuerpo = filas
+      .map((fila, indice) => ({ fila, texto: celdas[indice][columna] ?? '' }))
+      .filter((entrada) => entrada.fila.header !== true && !CELDA_VACIA.test(entrada.texto));
+    return cuerpo.length > 0 && cuerpo.every((entrada) => PATRON_NUMERICO.test(entrada.texto));
+  });
 }
 
 /* ---- primitivas de dibujo ----------------------------------------------- */
@@ -1184,7 +1363,7 @@ interface Escritura {
   readonly x: number;
   readonly y: number;
   readonly tamano: number;
-  readonly estilo: 'normal' | 'bold' | 'italic';
+  readonly estilo: Estilo;
   readonly color: ColorRgb;
   readonly alineacion?: 'left' | 'right';
 }
@@ -1207,7 +1386,7 @@ function escribirLineas(
   },
 ): void {
   const { doc } = hoja;
-  doc.setFont('helvetica', escritura.estilo);
+  usarFuente(hoja, escritura.estilo);
   doc.setFontSize(escritura.tamano);
   doc.setTextColor(escritura.color[0], escritura.color[1], escritura.color[2]);
   for (const [indice, linea] of escritura.lineas.entries()) {
@@ -1242,9 +1421,9 @@ function partir(
   texto: string,
   ancho: number,
   tamano: number,
-  estilo: 'normal' | 'bold' | 'italic',
+  estilo: Estilo,
 ): readonly string[] {
-  hoja.doc.setFont('helvetica', estilo);
+  usarFuente(hoja, estilo);
   hoja.doc.setFontSize(tamano);
   return hoja.doc.splitTextToSize(texto, Math.max(1, ancho)) as string[];
 }
@@ -1261,12 +1440,47 @@ function blocksOf(element: HTMLElement): readonly PdfBlock[] {
 const HEADING_TAGS = new Set(['H1', 'H2', 'H3', 'H4', 'H5', 'H6']);
 const PARAGRAPH_TAGS = new Set(['P', 'LI']);
 
+/**
+ * Lo que está en la pantalla pero **no es contenido**: texto que sólo existe
+ * para el lector de pantalla, lo que se declara oculto, y lo que una vista marca
+ * a mano con `data-pdf-ignore`.
+ *
+ * El defecto que esto cierra: el balance contable salía con una columna
+ * «Seleccionar las filas visibles», las flechas «▲ ▼ ↕» pegadas a cada
+ * encabezado y el rótulo del propio botón «Exportar a PDF» como primer párrafo.
+ * Un documento que copia los controles de la pantalla no es un documento.
+ */
+const SELECTOR_OCULTO = '[aria-hidden="true"], [data-pdf-ignore], .sr-only';
+
+/**
+ * Los controles: un botón suelto en la pantalla es una acción, no una línea
+ * del papel. Se saltan como nodo entero al recorrer.
+ *
+ * **Dentro de una celda no se podan**: el encabezado ordenable de una tabla es
+ * un `<button>` y su texto es el nombre de la columna. Ahí lo que sobra es la
+ * flecha, y la flecha ya viene con `aria-hidden`.
+ */
+const SELECTOR_CONTROL = 'button, input, select, textarea, app-pdf-export-button';
+
+/** El texto de un nodo sin lo que {@link SELECTOR_OCULTO} tapa, con los blancos normalizados. */
+function textoVisible(node: Element): string {
+  const copia = node.cloneNode(true) as Element;
+  for (const oculto of Array.from(copia.querySelectorAll(SELECTOR_OCULTO))) {
+    oculto.remove();
+  }
+  return (copia.textContent ?? '').replace(/\s+/g, ' ').trim();
+}
+
 function walk(node: Element, blocks: PdfBlock[]): void {
+  if (node.matches(SELECTOR_OCULTO) || node.matches(SELECTOR_CONTROL)) {
+    return;
+  }
+
   if (node.tagName === 'TABLE') {
     for (const row of Array.from(node.querySelectorAll(':scope tr'))) {
-      const celdas = Array.from(row.querySelectorAll('th, td')).map((cell) =>
-        (cell.textContent ?? '').trim(),
-      );
+      const celdas = Array.from(row.querySelectorAll('th, td'))
+        .filter((cell) => !cell.matches(SELECTOR_OCULTO))
+        .map((cell) => textoVisible(cell));
       const texto = celdas.join('   ');
       if (texto.trim() !== '') {
         // La fila de `th` es la cabecera de la tabla: se marca acá, donde se
@@ -1290,12 +1504,10 @@ function walk(node: Element, blocks: PdfBlock[]): void {
       if (hijo.tagName !== 'DT') {
         continue;
       }
-      const etiqueta = (hijo.textContent ?? '').trim();
+      const etiqueta = textoVisible(hijo);
       const siguiente = hijos[indice + 1];
       const valor =
-        siguiente !== undefined && siguiente.tagName === 'DD'
-          ? (siguiente.textContent ?? '').trim()
-          : '';
+        siguiente !== undefined && siguiente.tagName === 'DD' ? textoVisible(siguiente) : '';
       if (etiqueta !== '' && valor !== '') {
         blocks.push(campoDeBloque(etiqueta, valor));
       }
@@ -1304,7 +1516,7 @@ function walk(node: Element, blocks: PdfBlock[]): void {
   }
 
   if (HEADING_TAGS.has(node.tagName)) {
-    const texto = (node.textContent ?? '').trim();
+    const texto = textoVisible(node);
     if (texto !== '') {
       blocks.push({ kind: 'heading', text: texto, level: Number(node.tagName[1]) });
     }
@@ -1312,7 +1524,7 @@ function walk(node: Element, blocks: PdfBlock[]): void {
   }
 
   if (PARAGRAPH_TAGS.has(node.tagName)) {
-    const texto = (node.textContent ?? '').trim();
+    const texto = textoVisible(node);
     if (texto !== '') {
       blocks.push({ kind: 'paragraph', text: texto });
     }
@@ -1321,7 +1533,7 @@ function walk(node: Element, blocks: PdfBlock[]): void {
 
   const hijos = Array.from(node.children);
   if (hijos.length === 0) {
-    const texto = (node.textContent ?? '').trim();
+    const texto = textoVisible(node);
     if (texto !== '') {
       blocks.push({ kind: 'paragraph', text: texto });
     }

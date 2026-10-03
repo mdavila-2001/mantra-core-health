@@ -18,26 +18,62 @@ import type { ColorRgb } from './alovida-mark';
     leyéndose como un documento serio. El lujo acá es el margen, no la tinta.
     ========================================================================== */
 
-/** El azul de AloVida, el mismo del logo (`#0b557e`). */
+/**
+ * Las dos familias del papel, con el nombre con que se registran en `jsPDF`.
+ *
+ * Son las mismas de la pantalla (`--font-display` y `--font-body` de
+ * `styles.css`): Poppins para lo que se destaca —títulos, rótulos, cabeceras,
+ * versalitas— e Inter para lo que se lee —cuerpo, datos, tablas, pie—. El
+ * reparto es por **estilo**: todo lo que el motor escribe en negrita es un
+ * título o un rótulo y va en Poppins; todo lo normal es lectura y va en Inter.
+ * Cuando las fuentes no se pudieron cargar (ver `pdf-fuentes.ts`), las dos caen
+ * a Helvetica.
+ */
+export const FAMILIAS = {
+  titulos: 'Poppins',
+  cuerpo: 'Inter',
+  respaldo: 'helvetica',
+} as const;
+
+/* Los colores son los de `styles.css`, copiados en RGB porque `jsPDF` no lee
+   CSS. `pdf-theme.spec.ts` compara cada uno contra su variable: si la rampa de
+   la pantalla cambia, el papel se entera por una prueba en rojo. */
+
+/** El azul de AloVida, el mismo del logo: `--c-petrol-500`. */
 export const COLOR_MARCA: ColorRgb = [11, 85, 126];
 
-/** Un azul más profundo para los títulos: contrasta sin gritar. */
-export const COLOR_MARCA_PROFUNDO: ColorRgb = [8, 62, 92];
+/** Un azul más profundo para los títulos, `--c-petrol-700`: contrasta sin gritar. */
+export const COLOR_MARCA_PROFUNDO: ColorRgb = [11, 57, 83];
 
-/** La tinta del cuerpo. Negro puro no, que en papel se lee duro. */
-export const COLOR_TINTA: ColorRgb = [26, 42, 51];
+/** La tinta del cuerpo, `--c-neutral-500` (el `--text-primary` de la pantalla). Negro puro no, que en papel se lee duro. */
+export const COLOR_TINTA: ColorRgb = [36, 40, 40];
 
-/** Para etiquetas y datos secundarios: presente, nunca protagonista. */
-export const COLOR_TINTA_SUAVE: ColorRgb = [110, 130, 142];
+/** Para etiquetas y datos secundarios, `--c-neutral-400`: presente, nunca protagonista. */
+export const COLOR_TINTA_SUAVE: ColorRgb = [78, 81, 81];
 
-/** El filete de un cabello, que separa sin dibujar una caja. */
-export const COLOR_FILETE: ColorRgb = [219, 229, 234];
+/** El filete de un cabello, `--c-petrol-50`, que separa sin dibujar una caja. */
+export const COLOR_FILETE: ColorRgb = [217, 229, 235];
 
-/** Un filete algo más presente, para cerrar una tabla. */
-export const COLOR_FILETE_FUERTE: ColorRgb = [176, 199, 211];
+/** Un filete algo más presente, `--c-petrol-200`, para cerrar una tabla. */
+export const COLOR_FILETE_FUERTE: ColorRgb = [149, 181, 199];
 
-/** El relleno apenas teñido de los paneles y las cabeceras de tabla. */
-export const COLOR_PANEL: ColorRgb = [243, 248, 250];
+/**
+ * Mezcla un color con blanco: `fraccion` de color, el resto de papel.
+ *
+ * Es cómo el papel obtiene los tintes que la rampa no trae: la pantalla pone
+ * un color sobre un fondo con transparencia; el PDF no tiene transparencia de
+ * relleno barata, así que el tinte se calcula de antemano.
+ */
+export function mezclarConBlanco(color: ColorRgb, fraccion: number): ColorRgb {
+  const canal = (valor: number): number => Math.round(255 - (255 - valor) * fraccion);
+  return [canal(color[0]), canal(color[1]), canal(color[2])];
+}
+
+/** El relleno apenas teñido de los paneles y las cabeceras de tabla: `--c-petrol-50` al 40 %. */
+export const COLOR_PANEL: ColorRgb = mezclarConBlanco(COLOR_FILETE, 0.4);
+
+/** El sombreado de las filas impares de una tabla: `--c-petrol-50` al 20 %, apenas visible. */
+export const COLOR_CEBRA: ColorRgb = mezclarConBlanco(COLOR_FILETE, 0.2);
 
 /** Hoja A4 en puntos, con márgenes anchos: el aire es parte del diseño. */
 export const MARGEN_LATERAL_PT = 54;
@@ -53,25 +89,27 @@ export const INICIO_DE_CONTENIDO_CONTINUACION_PT = 116;
 /** Tamaños de fuente, en puntos. */
 export const TIPOGRAFIA = {
   /** El título del documento, arriba de todo. */
-  titulo: 21,
+  titulo: 20,
   /** La bajada del título. */
   bajada: 10.5,
   /** El nombre de la marca, junto al isotipo. */
-  logotipo: 13,
+  logotipo: 12.5,
   /** La clase de documento, arriba a la derecha, en versalitas espaciadas. */
-  clase: 7.5,
+  clase: 7,
   /** Título de sección grande. */
   seccion: 13,
   /** Título de sección, en versalitas espaciadas sobre un filete. */
   subseccion: 8.5,
   /** Subtítulo dentro de una sección. */
   rotulo: 10.5,
-  /** El cuerpo. */
-  cuerpo: 10,
+  /** El cuerpo. Inter tiene la x alta: a 9,5 se lee como Helvetica a 10. */
+  cuerpo: 9.5,
   /** La etiqueta de un dato, a la izquierda de su valor. */
-  etiqueta: 8,
+  etiqueta: 7.5,
   /** Las filas de una tabla. */
-  fila: 9.5,
+  fila: 9,
+  /** La fila de encabezado de una tabla. */
+  cabeceraDeTabla: 8.5,
   /** Notas al pie de un bloque y letra chica. */
   nota: 8.5,
   /** El pie de página. */
@@ -93,7 +131,9 @@ export const RITMO = {
   /** Alto de una línea de cuerpo. */
   linea: 14,
   /** Alto de una línea de tabla. */
-  lineaDeFila: 13,
+  lineaDeFila: 12.5,
+  /** Aire arriba y abajo del texto de una fila de tabla. */
+  rellenoDeFila: 5,
   /** Aire entre dos bloques seguidos. */
   entreBloques: 9,
   /** Aire antes de una sección nueva: la separación que hace la jerarquía. */
@@ -102,6 +142,8 @@ export const RITMO = {
   despuesDeSeccion: 12,
   /** Ancho de la columna de etiquetas en un dato. */
   columnaDeEtiqueta: 132,
+  /** Aire entre el final de la etiqueta y el arranque del valor: una etiqueta que llega al borde se lee pegada. */
+  aireDeEtiqueta: 10,
   /** Relleno interno de un panel. */
   panel: 10,
 } as const;
@@ -113,16 +155,20 @@ export const ANCHO_DE_ISOTIPO_PT = 30;
 export const ANCHO_DE_ISOTIPO_CONTINUACION_PT = 18;
 
 /**
- * La filigrana: el isotipo enorme y casi transparente detrás del texto.
+ * La filigrana: el isotipo chico y casi transparente, abajo a la derecha,
+ * apoyado sobre el filete del pie.
  *
- * `0.05` está medido para que se vea en pantalla y en una impresión decente, y
- * para que **no** se coma la legibilidad del texto que le pasa por encima ni
- * salga como una mancha en una fotocopia.
+ * Al 62 % del ancho y centrada se cruzaba con las tablas y en pantalla se leía
+ * como una mancha gris. Al 25 % y en el rincón firma la hoja sin tocar el
+ * contenido; `0.04` se ve en pantalla y en una impresión decente y desaparece
+ * en una fotocopia, que es exactamente lo que se quiere de una filigrana.
  */
 export const FILIGRANA = {
   /** Fracción del ancho de página que ocupa el isotipo. */
-  anchoRelativo: 0.62,
-  opacidad: 0.05,
+  anchoRelativo: 0.25,
+  opacidad: 0.04,
+  /** Aire entre el isotipo y el filete del pie. */
+  aireSobreElPie: 12,
 } as const;
 
 /**
