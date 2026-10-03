@@ -3,8 +3,10 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { FormControl } from '@angular/forms';
 import { provideRouter, Router } from '@angular/router';
+import { of } from 'rxjs';
 
 import { CARGADOR_DE_LEAFLET } from '../../../shared/components/organisms/map/map';
+import { AltaDeCentroDiagnostico } from '../registro-compartido/alta-de-centro-diagnostico';
 import { RegisterPharmacy } from './register-pharmacy';
 
 /** La forma que espera `IamClient.registerPharmacyOrganization`, según lo arma el cliente. */
@@ -33,6 +35,17 @@ interface CuerpoDelAlta {
 
 const RUTA_ALTA = '/iam/auth/register-organization';
 
+/**
+ * Catálogo fijo para el alta: país, jurisdicción, tipo de unidad y modalidad
+ * que la API exige como conceptos. Cada id es «concepto-<código>».
+ */
+const CATALOGOS_DE_PRUEBA = {
+  pais: new Map([['BO', 'concepto-BO']]),
+  jurisdiccion: new Map([['JURISDICTION_NATIONAL', 'concepto-JURISDICTION_NATIONAL']]),
+  tipoDeUnidad: new Map([['DU_TYPE_LAB', 'concepto-DU_TYPE_LAB']]),
+  modalidad: new Map([['DU_MODALITY_LAB', 'concepto-DU_MODALITY_LAB']]),
+};
+
 const RESPUESTA_201 = {
   tenantId: 'tenant-1',
   code: 'FARM-123',
@@ -56,6 +69,7 @@ describe('RegisterPharmacy', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         provideRouter([]),
+        { provide: AltaDeCentroDiagnostico, useValue: { catalogos: () => of(CATALOGOS_DE_PRUEBA) } },
         // El mapa (GPS de la central/sucursales) no debe cargar Leaflet de
         // verdad en jsdom: ver el mismo provider en `register-organization.spec.ts`.
         { provide: CARGADOR_DE_LEAFLET, useValue: () => new Promise<never>(() => undefined) },
@@ -85,7 +99,10 @@ describe('RegisterPharmacy', () => {
     component.form.controls.taxId.setValue('1023456789');
     component.form.controls.addressLines.setValue('Av. Cañoto esq. Ballivián 234');
     component.form.controls.legalRepName.patchValue({ name: 'Mariana', lastName: 'Siles' });
+    component.form.controls.legalRepIdNumber.setValue('4872190');
     component.form.controls.legalRepEmail.setValue('legal@farmacia-sanmartin.test');
+    // Una S.R.L. no puede omitir el poder (BR-09): la API responde 422.
+    component.form.controls.powerOfAttorneyFileId.setValue('file-poder');
     component.form.controls.password.setValue('secreto12');
   }
 
@@ -101,8 +118,15 @@ describe('RegisterPharmacy', () => {
     expect(cuerpo.organization.legalEntityType).toBe('SRL');
     expect(cuerpo.organization.legalRepresentative).toEqual({
       fullName: 'Mariana Siles',
+      idNumber: '4872190',
       email: 'legal@farmacia-sanmartin.test',
+      powerOfAttorneyFileId: 'file-poder',
     });
+    // País y jurisdicción: sin ellos la API responde 422 «exige país y jurisdicción».
+    expect(cuerpo.organization['countryConceptId' as keyof typeof cuerpo.organization]).toBe('concepto-BO');
+    expect(cuerpo.organization['jurisdictionConceptId' as keyof typeof cuerpo.organization]).toBe(
+      'concepto-JURISDICTION_NATIONAL',
+    );
     expect(cuerpo.owner).toEqual({
       email: 'legal@farmacia-sanmartin.test',
       password: 'secreto12',
@@ -220,7 +244,12 @@ describe('RegisterPharmacy', () => {
         .filter((p) => p.clave === clave)
         .flatMap((p) => p.campos.map((c) => c.key));
 
-    expect(camposDe('representante')).toEqual(['legalRepName', 'legalRepEmail', 'powerOfAttorneyFileId']);
+    expect(camposDe('representante')).toEqual([
+      'legalRepName',
+      'legalRepIdNumber',
+      'legalRepEmail',
+      'powerOfAttorneyFileId',
+    ]);
     expect(camposDe('documentos')).not.toContain('powerOfAttorneyFileId');
   });
 
@@ -232,9 +261,25 @@ describe('RegisterPharmacy', () => {
     const req = http.expectOne(RUTA_ALTA);
     expect((req.request.body as CuerpoDelAlta).organization.legalRepresentative).toEqual({
       fullName: 'Mariana Siles',
+      idNumber: '4872190',
       email: 'legal@farmacia-sanmartin.test',
       powerOfAttorneyFileId: 'file-poder',
     });
+    req.flush(RESPUESTA_201);
+  });
+
+  it('una S.R.L. sin poder notariado no se envía; una unipersonal sí (BR-09)', () => {
+    completarObligatorio();
+    component.form.controls.powerOfAttorneyFileId.setValue('');
+    component.submit();
+    http.expectNone(RUTA_ALTA);
+
+    component.form.controls.companyType.setValue('UNIPERSONAL');
+    component.submit();
+    const req = http.expectOne(RUTA_ALTA);
+    expect((req.request.body as CuerpoDelAlta).organization.legalRepresentative).not.toHaveProperty(
+      'powerOfAttorneyFileId',
+    );
     req.flush(RESPUESTA_201);
   });
 

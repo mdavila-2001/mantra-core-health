@@ -1,6 +1,8 @@
 import { NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { HttpErrorResponse } from '@angular/common/http';
+import { map, switchMap } from 'rxjs';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 
@@ -11,7 +13,14 @@ import type {
 } from '../../../core/data-access/iam/iam.types';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { uiLanguage } from '../../../core/i18n/ui-language';
-import { loading, ready } from '../../../core/view-state/view-state';
+import { loading, ready, validation } from '../../../core/view-state/view-state';
+import {
+  AVISO_CATALOGO_DE_DIAGNOSTICO,
+  AltaDeCentroDiagnostico,
+  CODIGOS_DE_DIAGNOSTICO,
+  CatalogoIncompleto,
+  type CatalogosDeDiagnostico,
+} from '../registro-compartido/alta-de-centro-diagnostico';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
 import { AppButton } from '../../../shared/components/atoms/button/button';
@@ -46,7 +55,10 @@ import {
   type ClaveDeDocumentoDelAlta,
 } from '../registro-compartido/documentos-legales';
 import { CamposDeNombre } from '../registro-compartido/campos-de-nombre/campos-de-nombre';
-import { grupoDeNombre, nombreCompleto } from '../registro-compartido/campos-de-nombre/nombre-de-persona';
+import {
+  grupoDeNombre,
+  nombreCompleto,
+} from '../registro-compartido/campos-de-nombre/nombre-de-persona';
 import {
   MENSAJE_CONTRASENA_CORTA,
   validadoresDeContrasena,
@@ -153,7 +165,8 @@ const AYUDA: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
     {
       icono: 'shield',
       titulo: 'Quién los ve',
-      texto: 'Los mira el equipo que aprueba el alta. No se publican en tu ficha ni los ve un paciente.',
+      texto:
+        'Los mira el equipo que aprueba el alta. No se publican en tu ficha ni los ve un paciente.',
     },
   ],
   ubicacion: [
@@ -198,14 +211,16 @@ const AYUDA: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
     {
       icono: 'chart',
       titulo: 'A quién le llega el resumen de ventas',
-      texto: 'Si lo dejás vacío, el resumen de pedidos y ventas va al correo del representante legal.',
+      texto:
+        'Si lo dejás vacío, el resumen de pedidos y ventas va al correo del representante legal.',
     },
   ],
   'gerencia-marketing': [
     {
       icono: 'megaphone',
       titulo: 'Promociones y campañas',
-      texto: 'Las promociones de tu farmacia se coordinan con esta persona. Se puede cargar después.',
+      texto:
+        'Las promociones de tu farmacia se coordinan con esta persona. Se puede cargar después.',
     },
   ],
   acceso: [
@@ -272,6 +287,8 @@ const AYUDA: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
 })
 export class RegisterPharmacy {
   private readonly iam = inject(IamClient);
+  /** Resuelve del catálogo los conceptos de país y jurisdicción que la API exige. */
+  private readonly alta = inject(AltaDeCentroDiagnostico);
   private readonly router = inject(Router);
 
   readonly form = new FormGroup({
@@ -284,7 +301,11 @@ export class RegisterPharmacy {
     // --- 1.2 · el NIT --------------------------------------------------------
     taxId: new FormControl('', {
       nonNullable: true,
-      validators: [Validators.required, Validators.maxLength(MAX_NIT), Validators.pattern(NIT_VALIDO)],
+      validators: [
+        Validators.required,
+        Validators.maxLength(MAX_NIT),
+        Validators.pattern(NIT_VALIDO),
+      ],
     }),
     // --- 1.1.2, 1.2.1, 1.3, 1.4, 1.5, 1.8.1 · los seis papeles, todos opcionales
     constitutionFileId: new FormControl('', { nonNullable: true }),
@@ -301,6 +322,11 @@ export class RegisterPharmacy {
     // --- 1.8, 1.8.2 · representante legal -------------------------------------
     // Un grupo con las partes del nombre (primer nombre y apellido paterno obligatorios).
     legalRepName: grupoDeNombre(true),
+    // La API exige el documento del representante legal (4 a 50 caracteres).
+    legalRepIdNumber: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.minLength(4), Validators.maxLength(50)],
+    }),
     legalRepEmail: new FormControl('', {
       nonNullable: true,
       validators: [Validators.required, Validators.email, Validators.maxLength(MAX_CORREO)],
@@ -314,13 +340,19 @@ export class RegisterPharmacy {
       validators: [Validators.email, Validators.maxLength(MAX_CORREO)],
     }),
     commercialManagerName: grupoDeNombre(false),
-    commercialManagerPhone: new FormControl('', { nonNullable: true, validators: [telefonoCompleto] }),
+    commercialManagerPhone: new FormControl('', {
+      nonNullable: true,
+      validators: [telefonoCompleto],
+    }),
     commercialManagerEmail: new FormControl('', {
       nonNullable: true,
       validators: [Validators.email, Validators.maxLength(MAX_CORREO)],
     }),
     marketingManagerName: grupoDeNombre(false),
-    marketingManagerPhone: new FormControl('', { nonNullable: true, validators: [telefonoCompleto] }),
+    marketingManagerPhone: new FormControl('', {
+      nonNullable: true,
+      validators: [telefonoCompleto],
+    }),
     marketingManagerEmail: new FormControl('', {
       nonNullable: true,
       validators: [Validators.email, Validators.maxLength(MAX_CORREO)],
@@ -337,8 +369,10 @@ export class RegisterPharmacy {
   readonly errorMessage = computed<string | null>(() => {
     const state = this.state();
     if (state.status === 'validation') return state.issues[0]?.message ?? null;
-    if (state.status === 'offline') return 'No pudimos conectarnos. Revisá tu conexión y reintentá.';
-    if (state.status === 'error') return `${state.message || 'Ocurrió un error inesperado.'} (${state.requestId})`;
+    if (state.status === 'offline')
+      return 'No pudimos conectarnos. Revisá tu conexión y reintentá.';
+    if (state.status === 'error')
+      return `${state.message || 'Ocurrió un error inesperado.'} (${state.requestId})`;
     return null;
   });
 
@@ -349,7 +383,9 @@ export class RegisterPharmacy {
    * El poder del representante (1.8.1) no va con los papeles de la empresa:
    * se pide en la misma página que el representante, junto a quien lo firma.
    */
-  private readonly campoDelPoder = campoDelPoderNotariado(PAIS, uiLanguage(), false);
+  private readonly campoDelPoder = computed(() =>
+    campoDelPoderNotariado(PAIS, uiLanguage(), this.poderObligatorio()),
+  );
 
   readonly paginas = computed<readonly PaginaDeFormulario[]>(() =>
     paginarCampos([
@@ -446,6 +482,16 @@ export class RegisterPharmacy {
             mensajeDeError: '',
           },
           {
+            key: 'legalRepIdNumber',
+            label: 'Documento de identidad del representante',
+            hint: 'Cédula de identidad o documento equivalente.',
+            control: 'text' as const,
+            required: true,
+            icono: 'people' as const,
+            testId: 'registro-farmacia-representante-documento',
+            mensajeDeError: 'Escribí el documento del representante (al menos cuatro caracteres).',
+          },
+          {
             key: 'legalRepEmail',
             label: 'Correo del representante legal',
             hint: 'Con este correo vas a entrar a la plataforma.',
@@ -456,7 +502,7 @@ export class RegisterPharmacy {
             testId: 'registro-farmacia-representante-correo',
             mensajeDeError: 'Escribí un correo válido: es el usuario de la cuenta.',
           },
-          this.campoDelPoder,
+          this.campoDelPoder(),
         ],
       },
       ...this.paginasDeGerencia(),
@@ -568,7 +614,8 @@ export class RegisterPharmacy {
   /* --- documentos legales (dropzone real, con `fileId`) -------------------- */
 
   /** Cómo sube cada `app-dropzone-pdf`: mismo endpoint de pre-carga pública que usa la aseguradora. */
-  protected readonly subirDocumento: PdfUploader = (file) => this.iam.uploadRegistrationDocument(file);
+  protected readonly subirDocumento: PdfUploader = (file) =>
+    this.iam.uploadRegistrationDocument(file);
 
   /** Lo ya subido por cada dropzone, para sobrevivir a que el asistente destruya y recree la página. */
   protected readonly documentosSubidos = signal<
@@ -595,7 +642,7 @@ export class RegisterPharmacy {
 
   /** El rótulo ya resuelto del documento (sin el sufijo «(opcional)», acá es siempre opcional). */
   protected etiquetaDeDocumento(clave: ClaveDeDocumentoDelAlta): string {
-    const campo = [...this.camposDeDocumentos, this.campoDelPoder].find((c) => c.key === clave);
+    const campo = [...this.camposDeDocumentos, this.campoDelPoder()].find((c) => c.key === clave);
     return campo?.label.replace(' (opcional)', '') ?? 'Documento';
   }
 
@@ -609,6 +656,33 @@ export class RegisterPharmacy {
   readonly gpsCentral = signal<Coordenadas | null>(null);
 
   private readonly direccionVaciadaPorElMapa = signal(false);
+  /** El tipo societario elegido: decide si el poder del representante es obligatorio. */
+  private readonly tipoSocietario = toSignal(this.form.controls.companyType.valueChanges, {
+    initialValue: this.form.controls.companyType.value,
+  });
+
+  /**
+   * La API exige el poder notariado del representante salvo a una empresa
+   * unipersonal (BR-09, 422 «sólo una empresa unipersonal puede omitirlo»).
+   * Mismo criterio que imagenología: sin tipo elegido todavía, no se exige.
+   */
+  private poderObligatorio(): boolean {
+    const tipo = this.tipoSocietario();
+    return tipo !== null && tipo !== 'UNIPERSONAL';
+  }
+
+  constructor() {
+    this.form.controls.companyType.valueChanges.subscribe((tipo) => {
+      const poder = this.form.controls.powerOfAttorneyFileId;
+      if (tipo === null || tipo === 'UNIPERSONAL') {
+        poder.removeValidators(Validators.required);
+      } else {
+        poder.addValidators(Validators.required);
+      }
+      poder.updateValueAndValidity();
+    });
+  }
+
   private readonly direccionEscrita = toSignal(this.form.controls.addressLines.valueChanges, {
     initialValue: '',
   });
@@ -652,7 +726,10 @@ export class RegisterPharmacy {
   agregarSucursal(): void {
     const id = `sucursal-${this.proximaSucursal}`;
     this.proximaSucursal += 1;
-    this.sucursales.update((lista) => [...lista, { id, nombre: '', direccion: '', descripcion: '', urlUbicacion: '', gps: null }]);
+    this.sucursales.update((lista) => [
+      ...lista,
+      { id, nombre: '', direccion: '', descripcion: '', urlUbicacion: '', gps: null },
+    ]);
   }
 
   quitarSucursal(id: string): void {
@@ -735,7 +812,9 @@ export class RegisterPharmacy {
   /* --- la columna de ayuda ------------------------------------------------- */
 
   private readonly claveVisible = signal('empresa');
-  readonly ayudaVisible = computed<readonly TarjetaDeAyuda[]>(() => AYUDA[this.claveVisible()] ?? []);
+  readonly ayudaVisible = computed<readonly TarjetaDeAyuda[]>(
+    () => AYUDA[this.claveVisible()] ?? [],
+  );
 
   /**
    * Al bloquear «Siguiente», el motor sólo marca al grupo del nombre, no a sus
@@ -760,14 +839,34 @@ export class RegisterPharmacy {
 
     this.state.set(loading());
 
-    this.iam.registerPharmacyOrganization(this.datos()).subscribe({
-      next: (resultado) => {
-        this.state.set(ready(null));
-        this.verificationSent.set(resultado.emailVerificationSent);
-        this.registered.set(true);
-      },
-      error: (error: unknown) => this.state.set(errorToViewState<null>(error)),
-    });
+    // País y jurisdicción (y, en el laboratorio, su tipo de unidad) son
+    // conceptos: se resuelven del catálogo antes de enviar. Sin ellos la API
+    // responde 422 «exige país y jurisdicción».
+    this.alta
+      .catalogos()
+      .pipe(
+        map((catalogos) => this.datos(catalogos)),
+        switchMap((datos) => this.iam.registerPharmacyOrganization(datos)),
+      )
+      .subscribe({
+        next: (resultado) => {
+          this.state.set(ready(null));
+          this.verificationSent.set(resultado.emailVerificationSent);
+          this.registered.set(true);
+        },
+        error: (error: unknown) => this.state.set(this.fallaDelEnvio(error)),
+      });
+  }
+
+  /** Un catálogo incompleto se explica; el resto, como cualquier error de la API. */
+  private fallaDelEnvio(error: unknown): ViewState<null> {
+    if (error instanceof CatalogoIncompleto) {
+      return validation([{ field: 'catalogos', message: AVISO_CATALOGO_DE_DIAGNOSTICO }]);
+    }
+    if (error instanceof Error && !(error instanceof HttpErrorResponse)) {
+      return validation([{ field: 'alta', message: error.message }]);
+    }
+    return errorToViewState<null>(error);
   }
 
   goToLogin(): void {
@@ -785,7 +884,8 @@ export class RegisterPharmacy {
     return g.name !== '' && g.phone.trim() !== '' && g.email.trim() !== '';
   }
 
-  private datos(): PharmacyOrganizationRegistration {
+  private datos(catalogos: CatalogosDeDiagnostico): PharmacyOrganizationRegistration {
+    const concepto = AltaDeCentroDiagnostico.concepto;
     const raw = this.form.getRawValue();
     const central = this.gpsCentral();
     const nombreDelRepresentante = nombreCompleto(raw.legalRepName);
@@ -832,9 +932,16 @@ export class RegisterPharmacy {
       code: this.codigoDesdeNit(raw.taxId),
       legalName: raw.legalName.trim(),
       legalEntityType: raw.companyType ?? '',
+      countryConceptId: concepto(catalogos.pais, CODIGOS_DE_DIAGNOSTICO.pais),
+      jurisdictionConceptId: concepto(
+        catalogos.jurisdiccion,
+        CODIGOS_DE_DIAGNOSTICO.jurisdiccionNacional,
+      ),
       taxIdentifier: raw.taxId.trim(),
       legalAddress: raw.addressLines.trim(),
-      ...(central === null ? {} : { headquarters: { latitude: central.lat, longitude: central.lng } }),
+      ...(central === null
+        ? {}
+        : { headquarters: { latitude: central.lat, longitude: central.lng } }),
       ...(sucursales.length === 0 ? {} : { branches: sucursales }),
       owner: {
         email: raw.legalRepEmail.trim(),
@@ -843,8 +950,11 @@ export class RegisterPharmacy {
       },
       legalRepresentative: {
         fullName: nombreDelRepresentante,
+        idNumber: raw.legalRepIdNumber.trim(),
         email: raw.legalRepEmail.trim(),
-        ...(raw.powerOfAttorneyFileId === '' ? {} : { powerOfAttorneyFileId: raw.powerOfAttorneyFileId }),
+        ...(raw.powerOfAttorneyFileId === ''
+          ? {}
+          : { powerOfAttorneyFileId: raw.powerOfAttorneyFileId }),
       },
       ...(documentosCompletos ? { legalDocuments: documentos } : {}),
       ...(todasCompletas
