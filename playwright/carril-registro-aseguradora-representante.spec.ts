@@ -161,7 +161,7 @@ test.describe('alta pública de aseguradora — representante legal y gerencias 
     await expect(marketing).toHaveAttribute('aria-expanded', 'false');
     // Plegado = ausente del DOM, no escondido con CSS.
     await expect(
-      page.getByTestId('registro-organizacion-executives-commercial-manager-name'),
+      page.getByTestId('registro-organizacion-executives-commercial-manager-nombre'),
     ).toHaveCount(0);
 
     await capturar(page, 'directorio-tres-paneles');
@@ -180,10 +180,10 @@ test.describe('alta pública de aseguradora — representante legal y gerencias 
     await completarRepresentanteLegal(page);
 
     await page
-      .getByTestId('registro-organizacion-executives-general-manager-name')
+      .getByTestId('registro-organizacion-executives-general-manager-nombre')
       .fill('Carlos');
     await page
-      .getByTestId('registro-organizacion-executives-general-manager-lastName')
+      .getByTestId('registro-organizacion-executives-general-manager-apellido-paterno')
       .fill('Mendoza');
     await page
       .getByTestId('registro-organizacion-executives-general-manager-phone')
@@ -193,10 +193,10 @@ test.describe('alta pública de aseguradora — representante legal y gerencias 
       .fill('gm@andina.test');
     await page.getByRole('button', { name: /Gerente Comercial/ }).click();
     await page
-      .getByTestId('registro-organizacion-executives-commercial-manager-name')
+      .getByTestId('registro-organizacion-executives-commercial-manager-nombre')
       .fill('Ana');
     await page
-      .getByTestId('registro-organizacion-executives-commercial-manager-lastName')
+      .getByTestId('registro-organizacion-executives-commercial-manager-apellido-paterno')
       .fill('Paz');
     await page
       .getByTestId('registro-organizacion-executives-commercial-manager-phone')
@@ -229,7 +229,7 @@ test.describe('alta pública de aseguradora — representante legal y gerencias 
     await completarRepresentanteLegal(page);
 
     await page
-      .getByTestId('registro-organizacion-executives-general-manager-name')
+      .getByTestId('registro-organizacion-executives-general-manager-nombre')
       .fill('Carlos');
     // Apellido paterno queda vacío a propósito: es el otro obligatorio.
     await page
