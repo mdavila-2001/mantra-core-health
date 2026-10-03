@@ -98,11 +98,7 @@ for (const candidata of opciones.filter((o) => !FIJA.test(o.label))) {
   await selector.selectOption({ label: candidata.label });
   await pg.waitForTimeout(500);
   const campos = modal.locator('[data-testid="campo-especialidad"]');
-  const textos = campos.locator('textarea, input[type="text"]');
-  const cuantos = await textos.count();
-  if (cuantos === 0) continue;
-  await textos.first().fill(MARCA);
-  for (let i = 1; i < cuantos; i++) await textos.nth(i).fill('Sin particularidades');
+  if ((await campos.locator('textarea, input[type="text"]').count()) === 0) continue;
   const numeros = campos.locator('input[type="number"]');
   for (let i = 0; i < (await numeros.count()); i++) await numeros.nth(i).fill('1');
   const siNo = campos.locator('app-segmented-control');
@@ -116,6 +112,13 @@ for (const candidata of opciones.filter((o) => !FIJA.test(o.label))) {
     // El input nativo va escondido detrás de su caja: se marca por su rótulo.
     await grupos.nth(i).locator('label').first().click();
   }
+  // El texto al final: las respuestas de arriba muestran u ocultan los
+  // «¿cuál?», y lo escrito en un campo que después se oculta no se guarda.
+  const textos = campos.locator('textarea:visible, input[type="text"]:visible');
+  const cuantos = await textos.count();
+  if (cuantos === 0) continue;
+  await textos.first().fill(MARCA);
+  for (let i = 1; i < cuantos; i++) await textos.nth(i).fill('Sin particularidades');
   if (await completar.isEnabled()) {
     plantilla = candidata;
     break;
