@@ -68,7 +68,7 @@ genera en su `CMD`.
 
 ## El login responde, pero el panel no carga datos
 
-**Síntoma.** Entrás bien y el panel muestra la tarjeta «Directorio público» en
+**Síntoma.** Entrás bien y el panel muestra la franja «Lo que toca hoy» en
 estado **S8 (sin conexión)** o **S9 (error inesperado)**.
 
 **Esto no es un fallo de la aplicación**: es exactamente lo que debe mostrar

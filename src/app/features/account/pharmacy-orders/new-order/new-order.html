@@ -329,19 +329,8 @@
       <!-- ─── La modalidad ───────────────────────────────────────────────── -->
       <section class="confirmacion__bloque" aria-labelledby="confirmacion-modalidad">
         <h2 id="confirmacion-modalidad" class="confirmacion__titulo">Cómo lo recibís</h2>
-        <app-form-field label="Modalidad de entrega">
-          <app-radio-group
-            data-testid="pedido-modalidad"
-            [value]="modalidad()"
-            (valueChange)="alElegirModalidad($event)"
-          >
-            <app-radio value="RETIRO" label="Retiro en la farmacia" />
-            <app-radio value="DOMICILIO" label="Envío a domicilio" [disabled]="true" />
-            <app-radio value="TRABAJO" label="Envío a mi trabajo" [disabled]="true" />
-          </app-radio-group>
-        </app-form-field>
-        <p class="confirmacion__nota">
-          Envío a domicilio y al trabajo todavía no están disponibles.
+        <p class="confirmacion__nota" data-testid="pedido-modalidad-retiro">
+          Retirás el pedido en la farmacia.
         </p>
       </section>
 

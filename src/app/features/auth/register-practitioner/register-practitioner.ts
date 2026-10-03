@@ -2064,7 +2064,7 @@ export class RegisterPractitioner {
           {
             key: 'homeAddressLines',
             label: 'Línea de dirección 1 (opcional)',
-            hint: 'Como se lo dirías a quien te trae algo a casa.',
+            hint: 'Como la escribirías en un sobre.',
             description:
               'Calle, número y referencia. El punto del mapa no la escribe solo: ver el aviso de abajo.',
             control: 'text',
