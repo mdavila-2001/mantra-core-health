@@ -79,12 +79,20 @@
   }
 
   <app-paginated-form
-  [paginas]="paginas"
-  [form]="form"
-  label="Alta de paciente"
-  submitLabel="Registrar paciente"
-  [pending]="isSubmitting()"
-  (enviado)="submit()"
-  data-testid="alta-paciente-form"
-/>
+    [paginas]="paginas"
+    [form]="form"
+    label="Alta de paciente"
+    submitLabel="Registrar paciente"
+    [pending]="isSubmitting()"
+    (enviado)="submit()"
+    data-testid="alta-paciente-form"
+  >
+    <ng-template appCampoPersonalizado="patientName">
+      <app-campos-de-nombre
+        [grupo]="form.controls.patientName"
+        [obligatorio]="true"
+        prefijoTestId="alta-paciente"
+      />
+    </ng-template>
+  </app-paginated-form>
 }
