@@ -1,0 +1,74 @@
+Fecha: 2026-10-03. Salidas literales recortadas de comandos reales.
+Las rutas de perfil y el dueño del remoto se omiten; no se leyó contenido de claves privadas.
+
+Comando:
+git -C C:\Alovida\AlovidaPromptManager pull --ff-only
+Salida (contexto del titular):
+Already up to date.
+Exit: 0
+Observación: el primer intento bajo la cuenta aislada falló por dubious ownership. No se agregó safe.directory; el contexto del titular permitió ejecutar el comando solicitado.
+
+Comando:
+ssh -V
+Salida:
+OpenSSH_for_Windows_9.5p2, LibreSSL 3.8.2
+
+Comando:
+Get-ChildItem -LiteralPath (Join-Path $env:USERPROFILE '.ssh') -Force | Select-Object Name,Length | ConvertTo-Json -Compress
+Salida:
+{"Name":"known_hosts","Length":93}
+
+Comando:
+Get-Service ssh-agent | ForEach-Object { "ssh-agent status=$($_.Status) startType=$($_.StartType)" }
+Salida:
+ssh-agent status=Stopped startType=Disabled
+
+Comando:
+ssh-add -l
+Salida:
+Error connecting to agent: No such file or directory
+
+Comando:
+ssh -G git@github.com
+Salida recortada:
+user git
+hostname github.com
+port 22
+identitiesonly no
+stricthostkeychecking ask
+identityfile ~/.ssh/id_rsa
+identityfile ~/.ssh/id_ecdsa
+identityfile ~/.ssh/id_ecdsa_sk
+identityfile ~/.ssh/id_ed25519
+identityfile ~/.ssh/id_ed25519_sk
+identityfile ~/.ssh/id_xmss
+identityfile ~/.ssh/id_dsa
+
+Comando:
+ssh -vT -o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=10 git@github.com
+Salida recortada:
+debug1: Connection established.
+debug1: Authenticating to github.com:22 as 'git'
+debug1: Host 'github.com' is known and matches the ED25519 host key.
+debug1: get_agent_identities: ssh_get_authentication_socket: No such file or directory
+debug1: Authentications that can continue: publickey
+debug1: Next authentication method: publickey
+debug1: No more authentication methods to try.
+git@github.com: Permission denied (publickey).
+ssh_exit=255
+
+Comando:
+$env:GIT_TERMINAL_PROMPT = '0'
+git -C C:\Alovida\mantra-core-health rev-parse HEAD
+git -C C:\Alovida\mantra-core-health ls-remote origin HEAD
+Write-Output "https_exit=$LASTEXITCODE"
+Salida:
+b84f74aaf3a359de93c53ab05941e2ec7ac5d0c1
+bf8171b18a5ec04178a0e0f7b13bae23c35a4668	HEAD
+https_exit=0
+
+Comando:
+git -C C:\Alovida\mantra-core-health diff --stat | Select-Object -Last 1
+Salida (cambios previos del usuario; archivos nuevos de diagnóstico sin indexar):
+ 30 files changed, 1869 insertions(+), 569 deletions(-)
+Observación: Git también informó advertencias LF/CRLF sobre archivos previos. No se modificó la configuración de saltos de línea.
