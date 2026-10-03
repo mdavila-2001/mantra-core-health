@@ -1108,7 +1108,7 @@ describe('RegisterOrganization', () => {
       avanzarHasta('Tu cuenta');
 
       const grilla: HTMLElement = fixture.nativeElement.querySelector(
-        'app-campos-de-nombre .nombres',
+        'app-campos-de-nombre-en-linea .nombres',
       );
       expect(grilla).not.toBeNull();
       expect(grilla.querySelectorAll('.nombres__campo--tercio').length).toBe(3);

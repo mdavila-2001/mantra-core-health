@@ -24,7 +24,7 @@ import { Link } from '../../../shared/components/atoms/link/link';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
-import { CamposDeNombre } from '../../auth/registro-compartido/campos-de-nombre/campos-de-nombre';
+import { CamposDeNombreEnLinea } from '../../auth/registro-compartido/campos-de-nombre-en-linea/campos-de-nombre-en-linea';
 import { grupoDeNombre } from '../../auth/registro-compartido/campos-de-nombre/nombre-de-persona';
 import { unirNombres } from '../../../core/profesion/nombres-adicionales';
 import { CampoPersonalizado } from '../../../shared/components/organisms/paginated-form/campo-personalizado';
@@ -77,7 +77,7 @@ const MAX_MOTIVO = 500;
     PageHeader,
     PaginatedForm,
     CampoPersonalizado,
-    CamposDeNombre,
+    CamposDeNombreEnLinea,
     RouterLink,
   ],
   templateUrl: './assisted-registration.html',
