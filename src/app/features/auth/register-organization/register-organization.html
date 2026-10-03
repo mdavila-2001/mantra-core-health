@@ -121,44 +121,18 @@
             />
           </ng-template>
           <ng-template appCampoPersonalizado="legalRepresentative">
-            <div class="register-org__nombres" data-testid="registro-organizacion-representante-nombres">
-              @for (campo of camposDeNombre; track campo.key) {
-                <app-form-field
-                  [label]="campo.label"
-                  [required]="campo.required ?? false"
-                  [errorMessage]="errorDelRepresentante(campo)"
-                  [class]="'register-org__nombre--' + campo.ancho"
-                >
-                  <app-input
-                    type="text"
-                    [formControl]="controlDelRepresentante(campo.key)"
-                    [hasError]="errorDelRepresentante(campo) !== ''"
-                    [autocomplete]="campo.autocomplete ?? null"
-                    [testId]="'registro-organizacion-representante-' + campo.testId"
-                  />
-                </app-form-field>
-              }
-            </div>
+            <app-campos-de-nombre
+              [grupo]="form.controls.legalRepresentative"
+              [obligatorio]="true"
+              prefijoTestId="registro-organizacion-representante"
+            />
           </ng-template>
           <ng-template appCampoPersonalizado="ownerName">
-            <div class="register-org__nombres" data-testid="registro-organizacion-owner-nombres">
-              @for (campo of camposDeNombre; track campo.key) {
-                <app-form-field
-                  [label]="campo.label"
-                  [required]="campo.required ?? false"
-                  [errorMessage]="errorDelOwner(campo)"
-                  [class]="'register-org__nombre--' + campo.ancho"
-                >
-                  <app-input
-                    type="text"
-                    [formControl]="controlDelOwner(campo.key)"
-                    [hasError]="errorDelOwner(campo) !== ''"
-                    [autocomplete]="campo.autocomplete ?? null"
-                    [testId]="'registro-organizacion-owner-' + campo.testId"
-                  />
-                </app-form-field>
-              }
-            </div>
+            <app-campos-de-nombre
+              [grupo]="form.controls.ownerName"
+              [obligatorio]="true"
+              prefijoTestId="registro-organizacion-owner"
+            />
           </ng-template>
           <ng-template appCampoPersonalizado="powerOfAttorneyFileId">
             <ng-container
@@ -174,29 +148,11 @@
                   [(expanded)]="gerencia.expanded"
                   [attr.data-testid]="'registro-organizacion-executives-' + gerencia.testId"
                 >
-                  <div class="register-org__nombres">
-                    @for (campo of camposDeNombre; track campo.key) {
-                      <app-form-field
-                        [label]="campo.label"
-                        [required]="campo.required ?? false"
-                        [errorMessage]="errorDeGerencia(gerencia.key, campo)"
-                        [class]="'register-org__nombre--' + campo.ancho"
-                      >
-                        <app-input
-                          type="text"
-                          [formControl]="controlDeGerencia(gerencia.key, campo.key)"
-                          [hasError]="errorDeGerencia(gerencia.key, campo) !== ''"
-                          [autocomplete]="campo.autocomplete ?? null"
-                          [testId]="
-                            'registro-organizacion-executives-' +
-                            gerencia.testId +
-                            '-' +
-                            campo.key
-                          "
-                        />
-                      </app-form-field>
-                    }
-                  </div>
+                  <app-campos-de-nombre
+                    [grupo]="form.controls.executives.controls[gerencia.key].controls.nombre"
+                    [obligatorio]="true"
+                    [prefijoTestId]="'registro-organizacion-executives-' + gerencia.testId"
+                  />
                   <div class="register-org__executive-grid">
                     @for (campo of camposDeContactoDeGerencia; track campo.key) {
                       <app-form-field

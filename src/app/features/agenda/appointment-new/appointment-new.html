@@ -113,6 +113,45 @@
               <app-form-field label="Tercer nombre" hint="Si no tiene, dejalo vacío.">
                 <app-input data-testid="cita-alta-tercer-nombre" [(value)]="nuevoTercerNombre" />
               </app-form-field>
+              <!-- Hay gente con cuatro y cinco nombres: se agregan las casillas
+                   que hagan falta, igual que en el alta de médico. -->
+              @for (extra of nuevosNombresExtra(); track $index) {
+                <app-form-field [label]="'Nombre ' + ($index + 4)">
+                  <div class="cita__nombre-extra">
+                    <app-input
+                      [testId]="'cita-alta-nombre-extra-' + $index"
+                      placeholder="Otro nombre"
+                      [value]="extra"
+                      (valueChange)="escribirNombreExtra($index, $event)"
+                    />
+                    <button
+                      app-button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      [iconOnly]="true"
+                      [attr.aria-label]="'Quitar el nombre ' + ($index + 4)"
+                      [appTooltip]="'Quitar el nombre ' + ($index + 4)"
+                      [attr.data-testid]="'cita-alta-quitar-nombre-' + $index"
+                      (clicked)="quitarNombre($index)"
+                    >
+                      <app-nav-icon name="remove" />
+                    </button>
+                  </div>
+                </app-form-field>
+              }
+              <div class="cita__alta-agregar-nombre">
+                <button
+                  app-button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  data-testid="cita-alta-agregar-nombre"
+                  (clicked)="agregarNombre()"
+                >
+                  + Agregar otro nombre
+                </button>
+              </div>
               <app-form-field label="Apellido paterno" [required]="true">
                 <app-input data-testid="cita-alta-apellido-paterno" [(value)]="nuevoApellidoPaterno" />
               </app-form-field>
