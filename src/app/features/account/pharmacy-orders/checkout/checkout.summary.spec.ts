@@ -28,12 +28,11 @@ const LOSARTAN: RenglonACobrar = {
 };
 
 describe('resumirPedido', () => {
-  it('sin seguro y con recojo: subtotal, descuento de red, total y puntos; sin coaseguro ni envío', () => {
+  it('sin seguro: subtotal, descuento de red, total y puntos; sin coaseguro', () => {
     const resumen = resumirPedido({
       renglones: [AMOXICILINA, LOSARTAN],
       moneda: 'BOB',
       conSeguro: false,
-      conEnvio: false,
     });
 
     expect(resumen.aprobados).toEqual([]);
@@ -42,22 +41,8 @@ describe('resumirPedido', () => {
     expect(resumen.descuentoDeRed).toBe('10.80');
     expect(resumen.coaseguro).toBeNull();
     expect(resumen.cubreElSeguro).toBeNull();
-    expect(resumen.envio).toBeNull();
     expect(resumen.total).toBe('97.20');
     expect(resumen.puntos).toBe(9);
-  });
-
-  it('con delivery suma el envío de ejemplo', () => {
-    const resumen = resumirPedido({
-      renglones: [AMOXICILINA, LOSARTAN],
-      moneda: 'BOB',
-      conSeguro: false,
-      conEnvio: true,
-    });
-
-    expect(resumen.envio).toBe('15.00');
-    expect(resumen.total).toBe('112.20');
-    expect(resumen.puntos).toBe(11);
   });
 
   it('con seguro separa los dos bloques y consolida un solo total', () => {
@@ -65,7 +50,6 @@ describe('resumirPedido', () => {
       renglones: [{ ...AMOXICILINA, cantidad: 2 }, LOSARTAN],
       moneda: 'BOB',
       conSeguro: true,
-      conEnvio: false,
     });
 
     expect(resumen.aprobados.map((r) => r.medicamento)).toEqual(['Amoxicilina 500 mg']);
@@ -83,7 +67,6 @@ describe('resumirPedido', () => {
       renglones: [{ ...AMOXICILINA, disponible: false }, LOSARTAN],
       moneda: 'BOB',
       conSeguro: true,
-      conEnvio: false,
     });
 
     expect(resumen.aprobados).toEqual([]);
@@ -98,7 +81,6 @@ describe('resumirPedido', () => {
       renglones: [AMOXICILINA, { ...LOSARTAN, precioUnitario: null }],
       moneda: 'BOB',
       conSeguro: false,
-      conEnvio: false,
     });
 
     expect(resumen.subtotal).toBeNull();
@@ -111,7 +93,6 @@ describe('resumirPedido', () => {
         renglones: [{ ...LOSARTAN, cantidad: 2, descuentoDeCampana: '40.00', promocion: '2x1' }],
         moneda: 'BOB',
         conSeguro: false,
-        conEnvio: false,
       });
 
       // 2 × 40.00 − 40.00 = 40.00.
@@ -121,7 +102,7 @@ describe('resumirPedido', () => {
     });
 
     it('un renglón sin campaña no tiene promoción', () => {
-      const resumen = resumirPedido({ renglones: [LOSARTAN], moneda: 'BOB', conSeguro: false, conEnvio: false });
+      const resumen = resumirPedido({ renglones: [LOSARTAN], moneda: 'BOB', conSeguro: false });
 
       expect(resumen.noAprobados[0].promocion).toBeNull();
       expect(resumen.descuentoDeCampana).toBeNull();
@@ -132,7 +113,6 @@ describe('resumirPedido', () => {
         renglones: [{ ...LOSARTAN, descuentoDeCampana: '99.00' }],
         moneda: 'BOB',
         conSeguro: false,
-        conEnvio: false,
       });
 
       expect(resumen.noAprobados[0].subtotal).toBe('0.00');
@@ -143,7 +123,6 @@ describe('resumirPedido', () => {
         renglones: [AMOXICILINA, LOSARTAN],
         moneda: 'BOB',
         conSeguro: false,
-        conEnvio: false,
         descuentoDeCampanaDelTotal: '8.00',
       });
 
@@ -159,7 +138,6 @@ describe('resumirPedido', () => {
         renglones: [LOSARTAN],
         moneda: 'BOB',
         conSeguro: false,
-        conEnvio: false,
         descuentoDeCampanaDelTotal: '500.00',
       });
 
@@ -172,7 +150,6 @@ describe('resumirPedido', () => {
         renglones: [AMOXICILINA, LOSARTAN],
         moneda: 'BOB',
         conSeguro: true,
-        conEnvio: false,
         descuentoDeCampanaDelTotal: '10.00',
       });
 
@@ -184,7 +161,7 @@ describe('resumirPedido', () => {
     });
 
     it('sin descuento sobre el total, no hay línea de promoción', () => {
-      const resumen = resumirPedido({ renglones: [LOSARTAN], moneda: 'BOB', conSeguro: false, conEnvio: false });
+      const resumen = resumirPedido({ renglones: [LOSARTAN], moneda: 'BOB', conSeguro: false });
 
       expect(resumen.descuentoDeCampana).toBeNull();
     });
@@ -194,7 +171,6 @@ describe('resumirPedido', () => {
         renglones: [{ ...LOSARTAN, precioUnitario: null }],
         moneda: 'BOB',
         conSeguro: false,
-        conEnvio: false,
         descuentoDeCampanaDelTotal: '5.00',
       });
 
