@@ -32,10 +32,8 @@ interface WireActivos {
  *
  * ## Por qué existe
  *
- * El backend no tiene dónde guardarlas (ver
- * `docs/pendientes-backend-perfil-profesional.md`). Hoy las atiende el simulador
- * de `mockup` con dos rutas propias. Si cada pantalla supiera eso, mudarlas al
- * backend real sería tocarlas todas; con esta fachada es tocar **este archivo**.
+ * GET/PUT propios del backend real; el simulador conserva el mismo contrato
+ * para demostraciones. Los archivos se validan y persisten del lado de la API.
  *
  * `data:` y no una URL de archivo porque la CSP es `img-src 'self' data:` (ver
  * `FilesClient.imageDataUrl`).
