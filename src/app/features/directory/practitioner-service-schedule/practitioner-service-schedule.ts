@@ -25,6 +25,7 @@ import { loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { AppButtonLink } from '../../../shared/components/atoms/button/button-link';
+import { Link } from '../../../shared/components/atoms/link/link';
 import { Select } from '../../../shared/components/atoms/select/select';
 import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
 import { Card } from '../../../shared/components/molecules/card/card';
@@ -32,6 +33,7 @@ import { EmptyState } from '../../../shared/components/molecules/empty-state/emp
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import {
+  MIS_TURNOS_ROUTE,
   reservaDelPortalRoute,
   SERVICE_BOOKING_SLOT,
 } from '../../account/appointments/appointments.routes';
@@ -79,6 +81,7 @@ export interface SiteServiceStarts {
   imports: [
     AppButton,
     AppButtonLink,
+    Link,
     Card,
     DatePipe,
     EmptyState,
@@ -198,6 +201,9 @@ export class PractitionerServiceSchedule {
   }
 
   protected readonly bookingPath = reservaDelPortalRoute(SERVICE_BOOKING_SLOT);
+
+  /** Donde el paciente sigue sus pedidos y puede cancelarlos. */
+  protected readonly myAppointmentsPath = MIS_TURNOS_ROUTE;
 
   /** El mismo contrato que `paramsDeReserva` de «Agendar una cita». */
   protected bookingParams(start: ServiceStart, offering: ServiceOffering): Record<string, string> {
