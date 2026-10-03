@@ -1285,6 +1285,80 @@ describe('RegisterPractitioner', () => {
     });
 
     /**
+     * El pedido del propietario del 03/10/2026, sobre una captura con la UMSS
+     * elegida y «LPZ» tecleado al lado: «debe mostrar la ciudad por defecto».
+     * La ciudad la sabe el padrón; preguntarla en blanco era hacerla adivinar.
+     */
+    describe('la ciudad de estudio sale de la universidad elegida', () => {
+      const UMSS = 'Universidad Mayor de San Simón';
+      const UMSA = 'Universidad Mayor de San Andrés';
+      const UCB = 'Universidad Católica Boliviana San Pablo';
+
+      it('elegir la universidad completa la ciudad', () => {
+        component.elegirPaisDelTitulo('Bolivia');
+        component.elegirUniversidadDelTitulo(UMSS);
+
+        expect(component.valorDeEstudio('professionalTitleCity')).toBe('Cochabamba');
+      });
+
+      it('cambiar de universidad cambia la ciudad propuesta', () => {
+        component.elegirPaisDelTitulo('Bolivia');
+        component.elegirUniversidadDelTitulo(UMSS);
+        component.elegirUniversidadDelTitulo(UMSA);
+
+        expect(component.valorDeEstudio('professionalTitleCity')).toBe('La Paz');
+      });
+
+      it('la ciudad escrita a mano no se pisa al elegir la universidad', () => {
+        component.elegirPaisDelTitulo('Bolivia');
+        component.escribirEstudio('professionalTitleCity', 'Quillacollo');
+        component.elegirUniversidadDelTitulo(UMSS);
+
+        expect(component.valorDeEstudio('professionalTitleCity')).toBe('Quillacollo');
+      });
+
+      it('una universidad con sedes en varias ciudades no propone ninguna, y retira la anterior', () => {
+        component.elegirPaisDelTitulo('Bolivia');
+        component.elegirUniversidadDelTitulo(UMSS);
+        component.elegirUniversidadDelTitulo(UCB);
+
+        expect(component.valorDeEstudio('professionalTitleCity')).toBe('');
+      });
+
+      it('cambiar de país se lleva la ciudad propuesta junto con la universidad', () => {
+        component.elegirPaisDelTitulo('Bolivia');
+        component.elegirUniversidadDelTitulo(UMSS);
+        component.elegirPaisDelTitulo(PAIS_FUERA_DE_CATALOGO);
+
+        expect(component.valorDeEstudio('professionalTitleUniversity')).toBe('');
+        expect(component.valorDeEstudio('professionalTitleCity')).toBe('');
+      });
+
+      it('vale igual en cada fila de «Tus títulos»', () => {
+        component.agregarTitulo('UNIVERSITARIO');
+        const [{ id }] = component.titulosDe('UNIVERSITARIO');
+        const fila = () => component.titulosDe('UNIVERSITARIO')[0];
+
+        component.elegirEnFila(id, 'pais', 'Bolivia');
+        component.elegirEnFila(id, 'universidad', UMSS);
+        expect(fila().ciudad).toBe('Cochabamba');
+
+        component.elegirEnFila(id, 'universidad', UMSA);
+        expect(fila().ciudad).toBe('La Paz');
+
+        // Otro país: se van la universidad y la ciudad que ella había puesto.
+        component.elegirEnFila(id, 'pais', PAIS_FUERA_DE_CATALOGO);
+        expect([fila().universidad, fila().ciudad]).toEqual(['', '']);
+
+        // Y lo escrito a mano se queda.
+        component.elegirEnFila(id, 'pais', 'Bolivia');
+        component.escribirDatoDeTitulo(id, 'ciudad', 'Quillacollo');
+        component.elegirEnFila(id, 'universidad', UMSS);
+        expect(fila().ciudad).toBe('Quillacollo');
+      });
+    });
+
+    /**
      * Responde el catálogo de tipos de título, que el constructor pide por
      * campo destino. Sin él resuelto, una fila con número no se puede mandar:
      * el contrato exige el concepto y la pantalla no lo inventa.
@@ -1353,16 +1427,23 @@ describe('RegisterPractitioner', () => {
       req.flush(RESPUESTA_PRO);
     });
 
-    it('con la universidad del título principal y ninguna fila que la lleve, el alta se frena y lo dice', () => {
+    // La universidad es opcional: sin una fila que la lleve, el alta NO se
+    // frena (propietario, 03/10/2026). Antes se cortaba con un mensaje que el
+    // médico no entendía y que lo dejaba sin crear la cuenta.
+    it('con la universidad del título principal y ninguna fila que la lleve, el alta igual se envía y avisa en el campo', () => {
       catalogoDeTiposDeTitulo();
       completarProfesional({ professionalTitleUniversity: 'Universidad Mayor de San Andrés' });
+      expect(component['hayUniversidadPrincipalSinTitulo']()).toBe(true);
       component.submit();
 
-      http.expectNone('/iam/auth/register-practitioner');
-      expect(component.errorMessage()).toContain('La universidad de tu título principal');
+      const req = http.expectOne('/iam/auth/register-practitioner');
+      expect(req.request.body.credentials).toBeUndefined();
+      expect(component.errorMessage()).toBeNull();
+      req.flush(RESPUESTA_PRO);
+      expect(component.registered()).toBe(true);
     });
 
-    it('una universidad distinta en la fila no se pisa: la del título principal necesita su propia fila', () => {
+    it('una universidad distinta en la fila no se pisa, y el alta igual se envía', () => {
       catalogoDeTiposDeTitulo();
       component.agregarTitulo('UNIVERSITARIO');
       const [profesion] = component.titulosDe('UNIVERSITARIO');
@@ -1371,8 +1452,15 @@ describe('RegisterPractitioner', () => {
       completarProfesional({ professionalTitleUniversity: 'Universidad Mayor de San Andrés' });
       component.submit();
 
-      http.expectNone('/iam/auth/register-practitioner');
-      expect(component.errorMessage()).toContain('La universidad de tu título principal');
+      const req = http.expectOne('/iam/auth/register-practitioner');
+      expect(req.request.body.credentials).toEqual([
+        {
+          credentialTypeConceptId: 'c-degree',
+          number: 'TIT-1',
+          issuingInstitutionText: 'Universidad Privada Boliviana',
+        },
+      ]);
+      req.flush(RESPUESTA_PRO);
     });
 
     it('dos filas del mismo tipo viajan como dos credenciales', () => {
@@ -1671,6 +1759,28 @@ describe('RegisterPractitioner', () => {
         expect(elegidoEn('registro-pro-titulo-universidad')).toBeNull();
       });
 
+      it('elegir la universidad deja su ciudad a la vista en «Ciudad de estudio»', () => {
+        completarProfesional();
+        irAlPasoDelTitulo();
+        const casillaDeCiudad = (): HTMLInputElement => {
+          const casilla: HTMLInputElement | null = fixture.nativeElement.querySelector(
+            'input[data-testid="registro-pro-titulo-ciudad"]',
+          );
+          if (casilla === null) throw new Error('No está la casilla de ciudad');
+          return casilla;
+        };
+        expect(casillaDeCiudad().value).toBe('');
+
+        elegirEnDesplegable('registro-pro-titulo-pais', 'Bolivia');
+        elegirEnDesplegable(
+          'registro-pro-titulo-universidad',
+          'Universidad Mayor de San Simón (UMSS) — Cochabamba',
+        );
+
+        // La captura del propietario: UMSS elegida y la ciudad en blanco.
+        expect(casillaDeCiudad().value).toBe('Cochabamba');
+      });
+
       it('«Otro…» destapa la casilla escrita a mano, y lo escrito es lo que se guarda', () => {
         completarProfesional();
         irAlPasoDelTitulo();
@@ -1784,6 +1894,32 @@ describe('RegisterPractitioner', () => {
           'El nombre, el país y la ciudad que completes aquí todavía no se guardan. ' +
           'Si falla una carga, podés reintentar y se conservan las que ya subieron.',
       );
+    });
+
+    // El aviso que reemplaza al freno: no manda a cargar el título principal
+    // como «Otra profesión» —que es lo único que en esta alta lleva universidad
+    // y nadie entendía—, sino que dice que no hace falta y dónde completarla.
+    it('con universidad elegida y sin título que la lleve, el paso lo dice en criollo', () => {
+      catalogoDeTiposDeTitulo();
+      completarProfesional({ professionalTitleUniversity: 'Universidad Mayor de San Andrés' });
+      irAlPasoDeTitulos();
+
+      const aviso = (enElPaso('registro-pro-titulos-universidad')?.textContent ?? '')
+        .replace(/\s+/g, ' ')
+        .trim();
+      expect(aviso).toBe(
+        'La universidad que elegiste («Universidad Mayor de San Andrés») no hace falta para ' +
+          'crear tu cuenta. Para que aparezca en tu perfil, después agregá tu título con su ' +
+          'número de diploma desde «Mi perfil».',
+      );
+    });
+
+    it('sin universidad elegida, el paso no muestra ese aviso', () => {
+      catalogoDeTiposDeTitulo();
+      completarProfesional();
+      irAlPasoDeTitulos();
+
+      expect(enElPaso('registro-pro-titulos-universidad')).toBeNull();
     });
 
     it('una fila agregada y vacía no frena ni viaja', () => {

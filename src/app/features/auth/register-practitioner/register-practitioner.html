@@ -165,7 +165,8 @@
                  opcionales. País y universidad son desplegables en árbol: la
                  lista de universidades es la del país elegido (propietario,
                  02/10/2026), con «Otro…» que destapa una casilla escrita para
-                 lo que falte. La ciudad sigue siendo texto (ver `CampoDeEstudio`). -->
+                 lo que falte. La ciudad es texto, y se completa sola con la de
+                 la universidad elegida (ver `CampoDeEstudio`). -->
             <ng-template appCampoPersonalizado="professionalTitleEducation">
               <div class="registro__estudio">
                 <div class="registro__estudio-campo">
@@ -436,6 +437,19 @@
                   título. El nombre, el país y la ciudad que completes aquí todavía no se guardan.
                   Si falla una carga, podés reintentar y se conservan las que ya subieron.
                 </p>
+                <!-- La universidad del título principal sólo se guarda pegada a
+                     un título con número, y en esta alta el único tipo que la
+                     lleva se llama «Otra profesión» (pensado para la segunda
+                     carrera). Mandar al médico a cargar ahí su título principal
+                     no se entiende, así que no se le pide: se le dice que no
+                     frena la cuenta y dónde completarla después. -->
+                @if (hayUniversidadPrincipalSinTitulo()) {
+                  <p class="registro-titulos__ayuda" data-testid="registro-pro-titulos-universidad">
+                    La universidad que elegiste («{{ universidadPrincipal() }}») no hace falta para
+                    crear tu cuenta. Para que aparezca en tu perfil, después agregá tu título con su
+                    número de diploma desde «Mi perfil».
+                  </p>
+                }
                 <!-- Sin catálogo de tipos, una fila con número no se puede
                      mandar: el contrato exige el concepto. Se avisa acá, donde
                      se escriben, y con el botón que vuelve a pedirlo —mismo
@@ -525,7 +539,8 @@
 
                         <!-- Dónde se cursó. Los tres son opcionales; país y
                              universidad son el mismo árbol que en el título
-                             principal, y la ciudad sigue siendo texto. -->
+                             principal, y la ciudad es texto que la universidad
+                             elegida completa. -->
                         <div class="registro-titulo__estudio">
                           <div class="registro-titulo__estudio-campo">
                             <app-select

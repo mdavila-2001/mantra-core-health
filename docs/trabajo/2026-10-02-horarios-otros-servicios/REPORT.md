@@ -44,6 +44,37 @@ Se lo pidió varias veces, y lo que se entregó fue otra cosa:
     usa «Agendar una cita» para un servicio (`recurso`, `desde`, `hasta`,
     `oferta`).
 
+## Gestión de las solicitudes de servicios (segunda vuelta, mismo día)
+
+El propietario preguntó, con razón, cómo se gestionan esas solicitudes. Antes de
+este cambio, una reserva de servicio era una cita más. Si el servicio exige
+aprobación, nacía «solicitada», y sólo se podía aceptar encontrándola en el
+calendario del día que tocaba.
+
+- **Médico.** «Horarios de otros servicios» abre con **Solicitudes y turnos de
+  servicios**. Junta las de todas sus sedes, de hoy a 8 semanas:
+  - primero **Esperan tu respuesta**, después **Próximos turnos**;
+  - cada fila muestra fecha y hora, servicio y precio, paciente, sede, motivo y
+    estado;
+  - las acciones de cada fila son **las mismas del calendario** (aceptar,
+    rechazar con motivo, cancelar, iniciar, registrar llegada). Las dibuja
+    `/schedule` con su plantilla `accionesDeLaCitaDelDia`, así que no hay una
+    segunda copia de esas reglas;
+  - al operar, la lista se relee.
+- **Número en la pestaña.** Muestra cuántas esperan respuesta, por ejemplo
+  «Horarios de otros servicios (2)». Límite: el número aparece después de abrir
+  la pestaña una vez en la visita. Contarlo al entrar a `/schedule` exige otra
+  lectura de reservas, y rompía el orden de peticiones que fijan decenas de
+  pruebas de la agenda.
+- **«Mover» no se ofrece para un turno de servicio**, ni en el calendario ni acá.
+  Lleva a un cupo de consulta, y un servicio dura lo que declara y se ubica en
+  sus propias franjas. Se cancela y el paciente vuelve a pedir.
+- **Paciente.** En la pestaña «Otros servicios» de la ficha hay un enlace a «Mis
+  citas», donde ya ve cada pedido de servicio con su estado y puede cancelarlo.
+- **Maqueta.** Siembra tres turnos de servicio de la médica en sus tardes de
+  estudios. Holter y prueba de esfuerzo esperan aprobación, y el
+  electrocardiograma está confirmado.
+
 ## Fuera de alcance
 
 - No hay entrada nueva en el menú lateral. La lista del médico está fijada por
@@ -69,13 +100,17 @@ Ver la sección «Resultados» al final y la carpeta `evidencia/`.
 | eslint sobre los archivos tocados | sin errores (el lint global ya tenía 276 errores en otros archivos) |
 | Specs unitarias de agenda, grilla, «Mis horarios» y pestaña nueva | 180 + 45 en verde |
 | Specs de ficha, disponibilidad, reserva y pestaña del paciente | 140 en verde |
+| Segunda vuelta: specs de la pestaña (11), agenda + estados (138), maqueta + ficha (84) | verde |
+| Segunda vuelta: maqueta, panel, citas del paciente y agenda juntos | 1519/1520. El que falla es `access-tree.spec.ts` (zonas de la aseguradora); esta rama no toca navegación ni panel. No se reprodujo en una copia limpia de la base |
 | Navegador, médica (maqueta, Chrome, 1 worker) | pestaña visible, grilla sólo con franjas `SERVICES`/`MIXED`, servicios listados, enlace a «Cambiar mi horario» |
 
-**No verificado** (se cortó la sesión porque la RAM de la Mac se llenó):
+| Navegador, segunda vuelta (maqueta, Chrome del sistema, 1 worker) | **2/2 en verde**: médica ve la pestaña con «(2)», acepta una solicitud desde la pestaña (aviso «Solicitud aceptada», pasa a «Próximos turnos»); paciente ve «Otros servicios» en la ficha, elige servicio y llega a confirmar la reserva |
+| A mano en el navegador | rechazar con motivo obligatorio funciona; aceptar persiste tras recargar; un turno de servicio confirmado no ofrece «Mover» |
+| Capturas | `evidencia/`: médica y paciente en 375/768/1440 claro y 1440 oscuro |
 
-- `yarn build`: no terminó.
-- La prueba de navegador completa: el caso del médico falló en la medición de
-  desborde por la barra superior preexistente. Se corrigió la medición, pero la
-  prueba no se volvió a correr.
-- El caso del paciente en navegador no llegó a correr.
-- Las capturas en 375/768/1440 claro y 1440 oscuro no se generaron.
+**Pendiente o ajeno:**
+
+- `yarn build` de producción no se corrió (la máquina venía de quedarse sin RAM).
+- La prueba de navegador excluye por hash dos scripts del «event replay» de Angular
+  que la CSP bloquea en todas las páginas. Es un defecto previo, registrado aparte.
+- `access-tree.spec.ts` falla en la base; esta rama no toca esa zona.

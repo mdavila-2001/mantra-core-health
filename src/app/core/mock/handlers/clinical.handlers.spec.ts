@@ -532,3 +532,52 @@ describe('Idempotency-Key · el doble la tolera', () => {
     expect(respuesta.status).toBe(201);
   });
 });
+
+describe('GET /clinical/prescriptions/:id/pdf · la receta sale por el motor de PDF', () => {
+  const router = new MockRouter();
+  const medica = buscarUsuario('medica')!;
+  registrarClinica(router);
+
+  function pedir(method: MockMethod, path: string, body: unknown): unknown {
+    const match = router.match(method, path);
+    if (match === null) throw new Error(`No existe ${method} ${path}`);
+    return match.handler({
+      method,
+      path,
+      params: match.params,
+      query: new URLSearchParams(),
+      body,
+      headers: new HttpHeaders(),
+      user: medica as MockUser,
+    });
+  }
+
+  /**
+   * El defecto que esto cierra: la ruta servía `pdfMinimo`, una hoja en blanco
+   * con el id de la receta en Helvetica 18 — menos de 1 KB —, y era lo que veía
+   * cualquiera que bajara una receta en la maqueta. Ahora es el documento de
+   * receta del motor: pesa lo que pesa un papel con membrete y tabla.
+   */
+  it('devuelve un PDF de verdad, armado por el maquetador, y no la hoja en blanco de antes', async () => {
+    const creada = pedir('POST', '/clinical/medication-requests', {
+      patientProfileId: PACIENTE.id,
+      medicationConceptId: 'med-enalapril',
+      doseText: '1 comprimido',
+      frequencyText: 'cada 12 horas',
+      indicationText: 'Control de la presión arterial',
+    }) as MockReply & { body: { id: string } };
+    expect(creada.status).toBe(201);
+
+    const respuesta = (await pedir('GET', `/clinical/prescriptions/${creada.body.id}/pdf`, null)) as MockReply & {
+      body: Blob;
+      headers: Record<string, string>;
+    };
+
+    expect(respuesta.status).toBe(200);
+    expect(respuesta.body.type).toBe('application/pdf');
+    expect(respuesta.headers['Content-Disposition']).toContain('receta-');
+    const bytes = new Uint8Array(await respuesta.body.arrayBuffer());
+    expect(String.fromCharCode(...bytes.subarray(0, 5))).toBe('%PDF-');
+    expect(bytes.byteLength).toBeGreaterThan(5_000);
+  });
+});

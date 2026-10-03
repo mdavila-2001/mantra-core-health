@@ -71,6 +71,7 @@ import { INSTITUCION_FUERA_DE_CATALOGO } from '../../../core/profesion/instituci
 import {
   PAIS_FUERA_DE_CATALOGO,
   PadronDeUniversidades,
+  ciudadAlCambiarDeUniversidad,
   eleccionDesdeTexto,
 } from '../../../core/profesion/padron-de-universidades';
 import { SystemContextClient } from '../../../core/data-access/system-context/system-context.client';
@@ -352,9 +353,15 @@ interface TituloDeclarado {
  *   `instituciones-educativas.ts`; el resto, el padrón importado. Viaja como
  *   `issuingInstitutionText`, que sigue siendo texto: el valor de cada opción
  *   es el nombre, así que al backend le llega lo mismo que antes.
- * - **Ciudad.** Texto libre. `profiles.professional_credentials` **no tiene
- *   columna de ciudad**; se pregunta porque el propietario la pidió y el hueco
- *   queda declarado en `docs/handoff/`, no inventado acá.
+ * - **Ciudad.** Texto, **propuesto por la universidad**: al elegir una del
+ *   padrón con sede única se completa con su ciudad («UMSS» → Cochabamba), y
+ *   sigue a la universidad mientras nadie la escriba a mano (ver
+ *   `ciudadAlCambiarDeUniversidad`). Lo pidió el propietario el 03/10/2026
+ *   («debe mostrar la ciudad por defecto»). Las de varias sedes y las del
+ *   padrón importado no proponen nada, y ahí se escribe.
+ *   `profiles.professional_credentials` **no tiene columna de ciudad**; se
+ *   pregunta porque el propietario la pidió y el hueco queda declarado en
+ *   `docs/handoff/`, no inventado acá.
  */
 type CampoDeEstudio = 'universidad' | 'pais' | 'ciudad';
 
@@ -704,7 +711,7 @@ export class RegisterPractitioner {
   }
 
   /** La universidad escrita en el bloque del título con el que ejerce. */
-  private universidadPrincipal(): string {
+  protected universidadPrincipal(): string {
     return this.formProfesional.controls.professionalTitleUniversity.value.trim();
   }
 
@@ -715,8 +722,8 @@ export class RegisterPractitioner {
    * `issuing_institution_text` de una credencial, y una credencial exige número
    * (NOT NULL). Por eso se une a la primera fila de título universitario que ya
    * tiene número y que o bien no declaró universidad o declaró la misma. `null`
-   * si no hay ninguna: en ese caso el alta se frena y lo dice, en vez de
-   * descartarla en silencio.
+   * si no hay ninguna: en ese caso no viaja, y la pantalla lo dice antes de
+   * enviar (`registro-pro-titulos-universidad`) para que no se pierda en silencio.
    */
   private filaDeLaUniversidadPrincipal(): TituloDeclarado | null {
     const principal = this.universidadPrincipal().toLowerCase();
@@ -1119,24 +1126,42 @@ export class RegisterPractitioner {
    * «Otro…» vacía el texto y destapa la casilla a mano; nada vacía ambos.
    * Cambiar de país **reinicia la universidad**: la lista es la del país, y
    * dejar «Universidad de Buenos Aires» marcada bajo Chile sería mentir.
+   * La ciudad acompaña a la universidad en los dos casos (ver
+   * {@link conUniversidadElegida}).
    */
   elegirEnFila(id: string, campo: 'pais' | 'universidad', eleccion: string | null): void {
     this.titulos.update((titulos) =>
       titulos.map((titulo) => {
         if (titulo.id !== id) return titulo;
         if (campo === 'universidad') {
-          return { ...titulo, ...this.universidadElegida(eleccion) };
+          return this.conUniversidadElegida(titulo, eleccion);
         }
         const pais = this.paisElegido(eleccion);
         const cambiaDePais = pais.pais !== titulo.pais;
         return {
-          ...titulo,
+          ...(cambiaDePais ? this.conUniversidadElegida(titulo, null) : titulo),
           ...pais,
-          ...(cambiaDePais ? this.universidadElegida(null) : {}),
         };
       }),
     );
     this.limpiarAvisoDeTitulos();
+  }
+
+  /**
+   * Una fila con otra universidad marcada, y su ciudad puesta a tono: la de la
+   * universidad nueva, salvo que la persona ya hubiera escrito la suya.
+   */
+  private conUniversidadElegida(titulo: TituloDeclarado, eleccion: string | null): TituloDeclarado {
+    const universidad = this.universidadElegida(eleccion);
+    return {
+      ...titulo,
+      ...universidad,
+      ciudad: ciudadAlCambiarDeUniversidad(
+        titulo.ciudad,
+        this.padron.ciudadDe(titulo.pais, titulo.universidad),
+        this.padron.ciudadDe(titulo.pais, universidad.universidad),
+      ),
+    };
   }
 
   /** El par texto + opción marcada que deja una elección en el país. */
@@ -1579,20 +1604,37 @@ export class RegisterPractitioner {
   elegirPaisDelTitulo(eleccion: string | null): void {
     const pais = eleccion === null || eleccion === PAIS_FUERA_DE_CATALOGO ? '' : eleccion;
     const cambiaDePais = pais !== this.paisDelTituloTexto();
-    this.paisDelTituloElegido.set(eleccion);
-    this.paisDelTituloTexto.set(pais);
-    this.formProfesional.controls.professionalTitleCountry.setValue(pais);
+    // Antes de mover el país: la ciudad propuesta se reconoce por la
+    // universidad que estaba elegida **en el país anterior**.
     if (cambiaDePais) {
       this.elegirUniversidadDelTitulo(null);
     }
+    this.paisDelTituloElegido.set(eleccion);
+    this.paisDelTituloTexto.set(pais);
+    this.formProfesional.controls.professionalTitleCountry.setValue(pais);
   }
 
-  /** Elige la universidad del título principal en el desplegable. */
+  /**
+   * Elige la universidad del título principal en el desplegable.
+   *
+   * La ciudad de estudio la acompaña: se completa con la de la universidad
+   * elegida, salvo que la persona ya hubiera escrito la suya. Es la misma regla
+   * que en la fila ({@link conUniversidadElegida}).
+   */
   elegirUniversidadDelTitulo(eleccion: string | null): void {
-    this.universidadDelTituloElegida.set(eleccion);
-    this.formProfesional.controls.professionalTitleUniversity.setValue(
-      eleccion === null || eleccion === INSTITUCION_FUERA_DE_CATALOGO ? '' : eleccion,
+    const { professionalTitleUniversity, professionalTitleCity } = this.formProfesional.controls;
+    const pais = this.paisDelTituloTexto();
+    const universidad =
+      eleccion === null || eleccion === INSTITUCION_FUERA_DE_CATALOGO ? '' : eleccion;
+    professionalTitleCity.setValue(
+      ciudadAlCambiarDeUniversidad(
+        professionalTitleCity.value,
+        this.padron.ciudadDe(pais, professionalTitleUniversity.value),
+        this.padron.ciudadDe(pais, universidad),
+      ),
     );
+    this.universidadDelTituloElegida.set(eleccion);
+    professionalTitleUniversity.setValue(universidad);
   }
 
   /** Si hay que pintar en rojo el primer nombre. */
@@ -2608,22 +2650,13 @@ export class RegisterPractitioner {
       );
       return;
     }
-    // La universidad del título principal se guarda en una credencial, y una
-    // credencial necesita número: sin una fila de título universitario que la
-    // lleve, no se manda como si se fuera a guardar.
-    if (this.hayUniversidadPrincipalSinTitulo()) {
-      this.state.set(
-        validation([
-          {
-            field: 'professionalTitleUniversity',
-            message:
-              'La universidad de tu título principal se guarda junto con un título. Cargalo en el paso «Tus títulos» como «Universitario», con su número, o borrá la universidad.',
-          },
-        ]),
-      );
-      return;
-    }
-    // Y tampoco se manda si el catálogo de tipos no cargó: la fila viajaría sin
+    // La universidad del título principal NO frena el alta: el campo es
+    // opcional, y frenar la cuenta entera por un dato opcional era un
+    // callejón sin salida para el médico (lo reportó el propietario,
+    // 03/10/2026). Si ninguna fila puede llevarla, «Tus títulos» lo dice antes
+    // de enviar (`registro-pro-titulos-universidad`) y la cuenta se crea.
+    //
+    // Tampoco se manda si el catálogo de tipos no cargó: la fila viajaría sin
     // tipo, que el contrato exige, o se perdería en silencio.
     //
     // El aviso nombra el botón que de verdad reintenta. Antes decía «volvé al
