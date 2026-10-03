@@ -2436,17 +2436,42 @@ describe('RegisterPractitioner', () => {
       expect(pagina.campos.some((c) => c.required === true)).toBe(false);
     });
 
-    it('envía las dos imágenes en el cuerpo cuando se cargan', () => {
-      completarProfesional();
-      component.formProfesional.controls.signatureImageBase64.setValue(FIRMA);
-      component.formProfesional.controls.sealImageBase64.setValue(SELLO);
+    it('con el backend real no manda firma ni sello aunque estén cargados', () => {
+      const original = environment.mockBackend;
+      Object.assign(environment, { mockBackend: false });
+      try {
+        completarProfesional();
+        component.formProfesional.controls.signatureImageBase64.setValue(FIRMA);
+        component.formProfesional.controls.sealImageBase64.setValue(SELLO);
 
-      component.submit();
+        component.submit();
 
-      const req = http.expectOne('/iam/auth/register-practitioner');
-      expect(req.request.body.signatureImageBase64).toBe(FIRMA);
-      expect(req.request.body.sealImageBase64).toBe(SELLO);
-      req.flush(RESPUESTA_PRO);
+        const req = http.expectOne('/iam/auth/register-practitioner');
+        expect(req.request.body.signatureImageBase64).toBeUndefined();
+        expect(req.request.body.sealImageBase64).toBeUndefined();
+        req.flush(RESPUESTA_PRO);
+      } finally {
+        Object.assign(environment, { mockBackend: original });
+      }
+    });
+
+    it('con mockBackend envía las dos imágenes en el cuerpo cuando se cargan', () => {
+      const original = environment.mockBackend;
+      Object.assign(environment, { mockBackend: true });
+      try {
+        completarProfesional();
+        component.formProfesional.controls.signatureImageBase64.setValue(FIRMA);
+        component.formProfesional.controls.sealImageBase64.setValue(SELLO);
+
+        component.submit();
+
+        const req = http.expectOne('/iam/auth/register-practitioner');
+        expect(req.request.body.signatureImageBase64).toBe(FIRMA);
+        expect(req.request.body.sealImageBase64).toBe(SELLO);
+        req.flush(RESPUESTA_PRO);
+      } finally {
+        Object.assign(environment, { mockBackend: original });
+      }
     });
 
     it('sin firma ni sello el alta viaja igual y no manda ninguna clave', () => {
