@@ -6,13 +6,25 @@ import { By } from '@angular/platform-browser';
 
 import { MAX_CAMPOS_POR_PAGINA } from '../../../shared/forms/paginated/paginated-form.types';
 import { UbicacionPicker } from '../registro-compartido/ubicacion-picker/ubicacion-picker';
-import { lastValueFrom } from 'rxjs';
+import { lastValueFrom, of } from 'rxjs';
 import type {
   PdfUploader,
   UploadedDocument,
 } from '../../../shared/components/molecules/dropzone-pdf/dropzone-pdf.types';
 import type { ClaveDeDocumentoDelAlta } from '../registro-compartido/documentos-legales';
+import { AltaDeCentroDiagnostico } from '../registro-compartido/alta-de-centro-diagnostico';
 import { RegisterLaboratory, TIPOS_DE_SOCIEDAD } from './register-laboratory';
+
+/**
+ * Catálogo fijo para el alta: país, jurisdicción, tipo de unidad y modalidad
+ * que la API exige como conceptos. Cada id es «concepto-<código>».
+ */
+const CATALOGOS_DE_PRUEBA = {
+  pais: new Map([['BO', 'concepto-BO']]),
+  jurisdiccion: new Map([['JURISDICTION_NATIONAL', 'concepto-JURISDICTION_NATIONAL']]),
+  tipoDeUnidad: new Map([['DU_TYPE_LAB', 'concepto-DU_TYPE_LAB']]),
+  modalidad: new Map([['DU_MODALITY_LAB', 'concepto-DU_MODALITY_LAB']]),
+};
 
 /* ============================================================================
     Lo que esta pantalla promete, y por lo tanto lo que se prueba:
@@ -68,6 +80,7 @@ describe('RegisterLaboratory', () => {
         provideHttpClientTesting(),
         // Router real: la plantilla tiene `routerLink` y necesita su contexto.
         provideRouter([]),
+        { provide: AltaDeCentroDiagnostico, useValue: { catalogos: () => of(CATALOGOS_DE_PRUEBA) } },
       ],
     }).compileComponents();
 
@@ -107,7 +120,10 @@ describe('RegisterLaboratory', () => {
       taxId: '1023456789',
       addressLines: 'Av. Cañoto esq. Ballivián 234',
       legalRepName: { name: 'Ana', lastName: 'Paz', motherLastName: 'Rojas' },
+      legalRepIdNumber: '4872190',
       legalRepEmail: 'ana.paz@labsur.test',
+      // Una S.R.L. no puede omitir el poder (BR-09): la API responde 422.
+      powerOfAttorneyFileId: 'file-poder',
       password: 'secreto12',
     });
   }
@@ -148,7 +164,7 @@ describe('RegisterLaboratory', () => {
     // La invariante del formulario por partes. Se comprueba acá además de en el
     // motor porque una página de cinco campos no rompe nada: sólo se ve como
     // una pared, que es lo que hace abandonar un alta a la mitad.
-    for (const pagina of component.paginas) {
+    for (const pagina of component.paginas()) {
       expect(pagina.campos.length).toBeLessThanOrEqual(MAX_CAMPOS_POR_PAGINA);
     }
   });
@@ -174,10 +190,20 @@ describe('RegisterLaboratory', () => {
       legalName: 'Laboratorio Clínico del Sur S.R.L.',
       legalEntityType: 'SRL',
       tenantType: 'DIAGNOSTIC_CENTER',
-      legalRepresentative: { fullName: 'Ana Paz Rojas', email: 'ana.paz@labsur.test' },
+      // País y jurisdicción: sin ellos la API responde 422 «exige país y jurisdicción».
+      countryConceptId: 'concepto-BO',
+      jurisdictionConceptId: 'concepto-JURISDICTION_NATIONAL',
+      legalRepresentative: {
+        fullName: 'Ana Paz Rojas',
+        idNumber: '4872190',
+        email: 'ana.paz@labsur.test',
+        powerOfAttorneyFileId: 'file-poder',
+      },
     });
     expect(cuerpo.organization.diagnosticUnit).toEqual({
       name: 'Laboratorio Clínico del Sur S.R.L.',
+      diagnosticUnitTypeConceptId: 'concepto-DU_TYPE_LAB',
+      modalityConceptIds: ['concepto-DU_MODALITY_LAB'],
       primarySite: { name: 'Casa central', address: { lines: ['Av. Cañoto esq. Ballivián 234'] } },
     });
     expect(cuerpo.owner).toEqual({
@@ -185,10 +211,10 @@ describe('RegisterLaboratory', () => {
       password: 'secreto12',
       displayName: 'Ana Paz Rojas',
     });
-    // Lo opcional que no se completó no viaja: ni papeles, ni cargos, ni poder.
+    // Lo opcional que no se completó no viaja: ni papeles ni cargos. El poder sí:
+    // una S.R.L. no puede omitirlo (BR-09).
     expect(cuerpo.organization).not.toHaveProperty('legalDocuments');
     expect(cuerpo.organization).not.toHaveProperty('executives');
-    expect(cuerpo.organization['legalRepresentative']).not.toHaveProperty('powerOfAttorneyFileId');
     expect(component.registered()).toBe(true);
   });
 
@@ -207,6 +233,7 @@ describe('RegisterLaboratory', () => {
     'taxId',
     'addressLines',
     'legalRepName',
+    'legalRepIdNumber',
     'legalRepEmail',
     'password',
   ] as const)('sin %s no se envía', (clave) => {
@@ -246,10 +273,11 @@ describe('RegisterLaboratory', () => {
   });
 
   it('el poder se pide en la página del representante, no con los papeles de la empresa', () => {
-    const pagina = (clave: string) => component.paginas.find((p) => p.clave === clave);
+    const pagina = (clave: string) => component.paginas().find((p) => p.clave === clave);
 
     expect(pagina('representante')?.campos.map((c) => c.key)).toEqual([
       'legalRepName',
+      'legalRepIdNumber',
       'legalRepEmail',
       'powerOfAttorneyFileId',
     ]);
@@ -600,9 +628,10 @@ describe('RegisterLaboratory', () => {
       mimeType: 'application/pdf',
     };
 
-    it.each(['SRL', 'UNIPERSONAL'])('keeps all six papers optional for %s', (companyType) => {
+    it('keeps all six papers optional for UNIPERSONAL', () => {
       completarLoObligatorio();
-      component.form.controls.companyType.setValue(companyType);
+      component.form.controls.companyType.setValue('UNIPERSONAL');
+      component.form.controls.powerOfAttorneyFileId.setValue('');
       for (const key of documentKeys) {
         expect(component.form.controls[key].value).toBe('');
         expect(component.form.controls[key].valid).toBe(true);
@@ -611,7 +640,17 @@ describe('RegisterLaboratory', () => {
       const body = enviarConExito();
       expect(body.organization).not.toHaveProperty('legalDocuments');
       expect(body.organization['legalRepresentative']).not.toHaveProperty('powerOfAttorneyFileId');
-      expect(body.organization['legalRepresentative']).not.toHaveProperty('idNumber');
+      // La API exige el documento del representante en toda alta de organización.
+      expect(body.organization['legalRepresentative']).toHaveProperty('idNumber', '4872190');
+    });
+
+    // BR-09: la API rechaza con 422 una S.R.L. sin poder notariado.
+    it('requires the power of attorney for SRL, as the API does', () => {
+      completarLoObligatorio();
+      component.form.controls.companyType.setValue('SRL');
+      component.form.controls.powerOfAttorneyFileId.setValue('');
+      expect(component.form.controls.powerOfAttorneyFileId.valid).toBe(false);
+      expect(component.form.valid).toBe(false);
     });
 
     it('uploads the PDF before registration and preserves its response', async () => {
