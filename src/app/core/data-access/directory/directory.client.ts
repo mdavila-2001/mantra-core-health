@@ -339,13 +339,23 @@ export class DirectoryClient {
   /**
    * `GET /tenants/{id}/logo` — el archivo que es el logo de la organización.
    *
-   * **Contrato de la maqueta, todavía sin API** (PENDIENTES-BACKEND P58): hoy la imagen
-   * vive en el perfil público de la organización y sólo la escribe un administrador de
-   * plataforma. Ningún componente lo llama: pasan por `LogoDeOrganizacionClient`.
+   * El archivo vive en el perfil público. La API comprueba pertenencia a la
+   * organización al leer y membresía owner/admin al escribir.
    */
   getOrganizationLogo(tenantId: string): Observable<{ readonly fileId: string | null }> {
-    return this.http.get<{ readonly fileId: string | null }>(this.url(`/tenants/${tenantId}/logo`), {
+    return this.http.get<{ readonly fileId: string | null }>(
+      this.url(`/tenants/${tenantId}/logo`),
+      {
+        headers: deLaOrganizacion(tenantId),
+      },
+    );
+  }
+
+  /** Bytes autorizados por pertenencia a la organización, aunque otro miembro los haya subido. */
+  getOrganizationLogoContent(tenantId: string): Observable<Blob> {
+    return this.http.get(this.url(`/tenants/${tenantId}/logo/content`), {
       headers: deLaOrganizacion(tenantId),
+      responseType: 'blob',
     });
   }
 

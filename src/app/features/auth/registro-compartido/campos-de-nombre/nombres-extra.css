@@ -1,0 +1,14 @@
+:host {
+  display: grid;
+  gap: var(--sp-3);
+  width: 100%;
+}
+.nombres-extra__campo {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+.nombres-extra__campo app-input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
