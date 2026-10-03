@@ -141,6 +141,40 @@
     overflow-wrap: anywhere;
 }
 
+/* Los formularios clínicos de la consulta, debajo de sus vínculos: mismo marco
+   que el detalle, para que se lean como parte del mismo registro. */
+.expediente__formularios {
+    display: grid;
+    gap: var(--sp-3);
+    margin-block-start: var(--sp-5);
+}
+
+.expediente__formularios-titulo {
+    margin: 0;
+    font-size: var(--fs-body-lg);
+    line-height: var(--lh-body-lg);
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.expediente__formulario {
+    display: grid;
+    gap: var(--sp-2);
+}
+
+.expediente__formulario-titulo {
+    margin: 0;
+    font-size: var(--fs-body);
+    line-height: var(--lh-body);
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.expediente__formulario-titulo .expediente__secundario {
+    display: inline;
+    font-weight: 400;
+}
+
 /* El secundario del registro, debajo del principal y no al lado: en el detalle
    hay sitio para los dos renglones. */
 .expediente__detalle-fila dd .expediente__secundario {

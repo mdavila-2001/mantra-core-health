@@ -165,7 +165,7 @@ const AGENDA_DEL_DIA: TutorialDefinition = {
  */
 const EXPEDIENTE: TutorialDefinition = {
   id: 'expediente-clinico',
-  version: '3.0',
+  version: '3.1',
   title: 'Leer el expediente',
   description: 'Cómo está organizada la historia clínica, bloque por bloque.',
   category: 'Atención',
@@ -178,7 +178,7 @@ const EXPEDIENTE: TutorialDefinition = {
     {
       id: 'bloques',
       title: 'La historia, por bloques',
-      body: 'Diagnósticos, medicación, observaciones, encuentros, notas y documentos. Cada pestaña dice cuántos registros trae.',
+      body: 'Diagnósticos (también las alergias), medicación, observaciones, encuentros, internaciones, notas, planes y documentos. El detalle de un encuentro muestra todo lo que se registró en esa consulta.',
       target: 'expediente-pestanas',
       placement: 'bottom',
     },
@@ -194,7 +194,7 @@ const EXPEDIENTE: TutorialDefinition = {
  */
 const ATENCION_CLINICA: TutorialDefinition = {
   id: 'atencion-clinica',
-  version: '1.0',
+  version: '1.1',
   title: 'Registrar una atención',
   description:
     'Abrir el encuentro, elegir en la rejilla qué le vas a registrar a la persona y cerrar cuando terminás.',
@@ -214,7 +214,7 @@ const ATENCION_CLINICA: TutorialDefinition = {
     {
       id: 'receta',
       title: 'Qué le vas a registrar',
-      body: 'Cada casilla de la rejilla es algo que se puede registrar en esta consulta: diagnóstico, alergia, receta, observación, nota, plan, documento, formulario clínico o internación. Tocá una y se abre su formulario.',
+      body: 'Cada casilla de la rejilla es algo que se puede registrar en esta consulta: formulario médico, orden de análisis, diagnóstico (también alergias), receta, plan de cuidados o reconsulta. Tocá una y se abre su formulario.',
       target: 'consulta-rejilla',
       placement: 'top',
     },
