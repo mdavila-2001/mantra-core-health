@@ -17,6 +17,7 @@ import { uiLanguage } from '../../../core/i18n/ui-language';
 import { loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import type { DynamicEnumOption } from '../../../core/data-access/system-context/system-context.types';
+import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Link } from '../../../shared/components/atoms/link/link';
 import { Input } from '../../../shared/components/atoms/input/input';
 import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
@@ -159,6 +160,12 @@ function grupoDeGerente() {
   selector: 'app-register-organization',
   imports: [
     RouterLink,
+    // El botón «Ir a iniciar sesión» de la confirmación es `<button app-button>`:
+    // sin esta importación es un `<button>` nativo y su `(clicked)` —un output
+    // de AppButton— nunca se dispara, así que quien termina el alta se quedaba
+    // sin poder avanzar. `tsc` no lo ve: los eventos de un elemento nativo no
+    // se tipan.
+    AppButton,
     Link,
     Alert,
     AuthSplit,

@@ -438,8 +438,16 @@ describe('RegisterOrganization', () => {
     completar();
     component.submit();
     http.expectOne('/iam/auth/register-organization').flush(RESPUESTA);
+    fixture.detectChanges();
 
-    component.goToLogin();
+    // Se hace clic en el botón del DOM, no se llama al método: una versión que
+    // llamaba `goToLogin()` a secas pasó en verde mientras el botón estaba muerto
+    // (el componente no importaba `AppButton`).
+    const boton = (fixture.nativeElement as HTMLElement).querySelector<HTMLElement>(
+      '[data-testid="registro-organizacion-ir-login"]',
+    );
+    expect(boton).not.toBeNull();
+    boton?.click();
 
     expect(navegaciones).toEqual(['/auth']);
   });
