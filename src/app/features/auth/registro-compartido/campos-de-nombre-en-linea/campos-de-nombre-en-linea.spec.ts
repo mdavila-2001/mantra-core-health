@@ -48,6 +48,18 @@ describe('CamposDeNombreEnLinea', () => {
     expect(raiz.querySelector('[data-testid="t-nombre-extra-0"]')).toBeNull();
   });
 
+  it('muestra el límite de un nombre adicional inválido', () => {
+    const { fixture, raiz, grupo } = montar();
+    clic(raiz, 't-agregar-nombre');
+    fixture.detectChanges();
+    const extra = grupo.controls.extraNames.at(0);
+    extra.setValue('a'.repeat(101));
+    extra.markAsTouched();
+    fixture.detectChanges();
+    expect(grupo.invalid).toBe(true);
+    expect(raiz.textContent).toContain('El nombre no puede pasar de 100 caracteres.');
+  });
+
   it('compone el nombre completo con todas las partes en orden y descarta las vacías', () => {
     const { raiz, fixture, grupo } = montar();
     clic(raiz, 't-agregar-nombre');

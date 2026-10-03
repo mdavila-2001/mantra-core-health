@@ -1,12 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { NgTemplateOutlet } from '@angular/common';
-import {
-  FormControl,
-  FormGroup,
-  ReactiveFormsModule,
-  Validators,
-} from '@angular/forms';
+import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 
 import { IamClient } from '../../../core/data-access/iam/iam.client';
@@ -528,8 +523,7 @@ export class RegisterOrganization {
             label: '',
             control: 'custom' as const,
             ancho: 'completo' as const,
-            mensajeDeError:
-              'Completá el nombre y el apellido paterno del representante legal.',
+            mensajeDeError: 'Completá el nombre y el apellido paterno del representante legal.',
           },
           {
             key: 'legalRepresentativeIdNumber',
@@ -620,7 +614,7 @@ export class RegisterOrganization {
             mensajeDeError: MENSAJE_CONTRASENA_CORTA,
           },
         ],
-    },
+      },
     ]),
   );
 
@@ -655,6 +649,13 @@ export class RegisterOrganization {
   });
 
   constructor() {
+    this.form.controls.ownerName.addValidators((grupo) => {
+      const nombre = grupo.getRawValue() as ValorDeNombre;
+      return unirNombres([nombre.middleName, nombre.thirdName, ...nombre.extraNames]).length > 100
+        ? { nombresAdicionalesLargos: true }
+        : null;
+    });
+    this.form.controls.ownerName.updateValueAndValidity();
     this.cargarTipoSocietario();
     this.acomodarPaisYTipoSocietario();
   }
@@ -991,9 +992,7 @@ export class RegisterOrganization {
         regulatorIdentifier: raw.regulatorIdentifier.trim(),
         sigla: raw.sigla.trim(),
         address: raw.address.trim(),
-        ...(casaMatriz === null
-          ? {}
-          : { latitude: casaMatriz.lat, longitude: casaMatriz.lng }),
+        ...(casaMatriz === null ? {} : { latitude: casaMatriz.lat, longitude: casaMatriz.lng }),
       },
       owner: {
         email: raw.email.trim(),

@@ -3,16 +3,14 @@ import { catchError, map, of, switchMap, type Observable } from 'rxjs';
 
 import { FilesClient } from '../files/files.client';
 import { DirectoryClient } from './directory.client';
+import { blobToDataUrl } from '../files/blob-to-data-url';
 
 /**
  * El logo de una organización —farmacia, laboratorio, clínica, aseguradora—: **la única
  * puerta** por la que sus pantallas lo leen o lo cambian.
  *
- * Es el mismo patrón que `LogoDelConsultorioClient`: hoy el backend no tiene un
- * endpoint con el que el dueño de la organización cambie su propio logo (la imagen
- * vive en el perfil público y sólo la escribe un administrador de plataforma), así
- * que la maqueta responde `GET`/`PUT /tenants/{id}/logo`. Cuando la API real lo
- * resuelva se toca **este archivo y `DirectoryClient`**, no las pantallas.
+ * La API guarda el archivo en el perfil público de la organización. Su contenido
+ * se lee por pertenencia al tenant, aunque lo haya subido otro miembro.
  *
  * `data:` y no una URL de archivo porque la CSP es `img-src 'self' data:`.
  */
@@ -30,7 +28,10 @@ export class LogoDeOrganizacionClient {
       switchMap(({ fileId }) =>
         fileId === null
           ? of<string | null>(null)
-          : this.files.imageDataUrl(fileId).pipe(map((url): string | null => url)),
+          : this.directory.getOrganizationLogoContent(tenantId).pipe(
+              switchMap(blobToDataUrl),
+              map((url): string | null => url),
+            ),
       ),
       catchError(() => of<string | null>(null)),
     );

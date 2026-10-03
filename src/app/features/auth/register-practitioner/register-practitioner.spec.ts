@@ -177,6 +177,7 @@ describe('RegisterPractitioner', () => {
       professionalTitle: extra.professionalTitle ?? 'Médico / Médica',
       // Dónde estudió la profesión con la que ejerce. Los tres son opcionales,
       // así que por defecto van vacíos; las pruebas que los ejercen los pisan.
+      professionalTitleNumber: '',
       professionalTitleUniversity: extra.professionalTitleUniversity ?? '',
       professionalTitleCountry: extra.professionalTitleCountry ?? '',
       professionalTitleCity: extra.professionalTitleCity ?? '',
@@ -1427,6 +1428,118 @@ describe('RegisterPractitioner', () => {
       req.flush(RESPUESTA_PRO);
     });
 
+    it('guarda universidad y PDF del principal sin repetirlo en Tus títulos', () => {
+      catalogoDeTiposDeTitulo();
+      completarProfesional({ professionalTitleUniversity: 'Universidad Mayor de San Andrés' });
+      component.escribirEstudio('professionalTitleNumber', 'DIP-123');
+      const pdf = archivoDe('principal.pdf', 'application/pdf', 1024);
+      component.updateSupportFiles('professional-title', [pdf]);
+      component.submit();
+      const upload = http.expectOne('/iam/auth/upload-registration-document');
+      expect((upload.request.body as FormData).get('file')).toBe(pdf);
+      upload.flush({
+        fileId: 'pdf-principal',
+        originalName: pdf.name,
+        sizeBytes: 1024,
+        mimeType: 'application/pdf',
+      });
+      const alta = http.expectOne('/iam/auth/register-practitioner');
+      expect(alta.request.body.credentials).toEqual([
+        {
+          credentialTypeConceptId: 'c-degree',
+          number: 'DIP-123',
+          issuingInstitutionText: 'Universidad Mayor de San Andrés',
+          fileId: 'pdf-principal',
+        },
+      ]);
+      alta.flush(RESPUESTA_PRO);
+    });
+
+    it('vincula por número sin duplicar la fila ni rechazar una sigla de universidad', () => {
+      catalogoDeTiposDeTitulo();
+      completarProfesional({ professionalTitleUniversity: 'Universidad Mayor de San Andrés' });
+      component.escribirEstudio('professionalTitleNumber', 'DIP-123');
+      component.agregarTitulo('UNIVERSITARIO');
+      const [titulo] = component.titulosDe('UNIVERSITARIO');
+      component.escribirDatoDeTitulo(titulo.id, 'numero', 'DIP-123');
+      component.escribirDatoDeTitulo(titulo.id, 'universidad', 'UMSA');
+      component.updateSupportFiles('professional-title', [
+        archivoDe('principal.pdf', 'application/pdf', 1024),
+      ]);
+      component.submit();
+      http.expectOne('/iam/auth/upload-registration-document').flush({ fileId: 'pdf-principal' });
+      const alta = http.expectOne('/iam/auth/register-practitioner');
+      expect(alta.request.body.credentials).toEqual([
+        {
+          credentialTypeConceptId: 'c-degree',
+          number: 'DIP-123',
+          issuingInstitutionText: 'UMSA',
+          fileId: 'pdf-principal',
+        },
+      ]);
+      alta.flush(RESPUESTA_PRO);
+    });
+
+    it('reutiliza el PDF principal para una fila universitaria numerada existente', () => {
+      catalogoDeTiposDeTitulo();
+      completarProfesional({ professionalTitleUniversity: 'UMSA' });
+      component.agregarTitulo('UNIVERSITARIO');
+      const [titulo] = component.titulosDe('UNIVERSITARIO');
+      component.escribirDatoDeTitulo(titulo.id, 'numero', 'DIP-123');
+      component.updateSupportFiles('professional-title', [
+        archivoDe('principal.pdf', 'application/pdf', 1024),
+      ]);
+      component.submit();
+      http.expectOne('/iam/auth/upload-registration-document').flush({ fileId: 'pdf-principal' });
+      const alta = http.expectOne('/iam/auth/register-practitioner');
+      expect(alta.request.body.credentials[0]).toEqual({
+        credentialTypeConceptId: 'c-degree',
+        number: 'DIP-123',
+        issuingInstitutionText: 'UMSA',
+        fileId: 'pdf-principal',
+      });
+      alta.flush(RESPUESTA_PRO);
+    });
+
+    it('PDF sin número avisa qué completar y no inventa una credencial', () => {
+      catalogoDeTiposDeTitulo();
+      completarProfesional();
+      component.updateSupportFiles('professional-title', [
+        archivoDe('principal.pdf', 'application/pdf', 1024),
+      ]);
+      component.submit();
+      http.expectNone('/iam/auth/upload-registration-document');
+      http.expectNone('/iam/auth/register-practitioner');
+      expect(component.errorMessage()).toContain('Completá el número del diploma');
+    });
+
+    it('tras fallar el alta no vuelve a subir el PDF principal; cambiarlo sí invalida su fileId', () => {
+      catalogoDeTiposDeTitulo();
+      completarProfesional();
+      component.escribirEstudio('professionalTitleNumber', 'DIP-123');
+      component.updateSupportFiles('professional-title', [
+        archivoDe('principal.pdf', 'application/pdf', 1024),
+      ]);
+      component.submit();
+      http.expectOne('/iam/auth/upload-registration-document').flush({ fileId: 'pdf-uno' });
+      http
+        .expectOne('/iam/auth/register-practitioner')
+        .flush(null, { status: 500, statusText: 'Error' });
+      component.submit();
+      http.expectNone('/iam/auth/upload-registration-document');
+      const retry = http.expectOne('/iam/auth/register-practitioner');
+      expect(retry.request.body.credentials[0].fileId).toBe('pdf-uno');
+      retry.flush(null, { status: 500, statusText: 'Error' });
+      component.updateSupportFiles('professional-title', [
+        archivoDe('nuevo.pdf', 'application/pdf', 1024),
+      ]);
+      component.submit();
+      http.expectOne('/iam/auth/upload-registration-document').flush({ fileId: 'pdf-dos' });
+      const final = http.expectOne('/iam/auth/register-practitioner');
+      expect(final.request.body.credentials[0].fileId).toBe('pdf-dos');
+      final.flush(RESPUESTA_PRO);
+    });
+
     // La universidad es opcional: sin una fila que la lleve, el alta NO se
     // frena (propietario, 03/10/2026). Antes se cortaba con un mensaje que el
     // médico no entendía y que lo dejaba sin crear la cuenta.
@@ -1818,9 +1931,9 @@ describe('RegisterPractitioner', () => {
         component.escribirEstudio('professionalTitleUniversity', 'Universidad de La Habana');
         fixture.detectChanges();
         expect(elegidoEn('registro-pro-titulo-universidad')).toBe('Otra institución…');
-        expect(
-          enElPaso<HTMLInputElement>('registro-pro-titulo-universidad-otra')?.value,
-        ).toBe('Universidad de La Habana');
+        expect(enElPaso<HTMLInputElement>('registro-pro-titulo-universidad-otra')?.value).toBe(
+          'Universidad de La Habana',
+        );
       });
 
       it('en una fila, el país acota la universidad y la elegida viaja en issuingInstitutionText', () => {
@@ -2309,7 +2422,8 @@ describe('RegisterPractitioner', () => {
   });
 
   describe('firma y sello médicos del alta (imágenes, opcionales)', () => {
-    const FIRMA = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGP4z8DwHwAFAAH/iZk9HQAAAABJRU5ErkJggg==';
+    const FIRMA =
+      'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGP4z8DwHwAFAAH/iZk9HQAAAABJRU5ErkJggg==';
     const SELLO = 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/2wBD';
 
     it('el paso existe, es saltable y va antes de la contraseña', () => {
@@ -2621,17 +2735,20 @@ describe('RegisterPractitioner con mockBackend', () => {
       'CREDENTIAL_TYPE_SPECIALTY',
     ];
 
-    await vi.waitFor(() => {
-      fixture.detectChanges();
-      const conceptos = (
-        component as unknown as {
-          conceptoPorCodigo: () => ReadonlyMap<string, string>;
-        }
-      ).conceptoPorCodigo();
-      expect(codigosCanonicos.map((code) => conceptos.get(code))).toEqual(
-        enumeracion.options.map((option) => option.conceptId),
-      );
-    }, { timeout: 18_000 });
+    await vi.waitFor(
+      () => {
+        fixture.detectChanges();
+        const conceptos = (
+          component as unknown as {
+            conceptoPorCodigo: () => ReadonlyMap<string, string>;
+          }
+        ).conceptoPorCodigo();
+        expect(codigosCanonicos.map((code) => conceptos.get(code))).toEqual(
+          enumeracion.options.map((option) => option.conceptId),
+        );
+      },
+      { timeout: 18_000 },
+    );
 
     fixture.destroy();
     // Tope propio, medido y no a ojo: esta prueba monta el alta entera contra el

@@ -2,16 +2,15 @@ import { PaginatedForm } from '../../../../shared/components/organisms/paginated
 import { CampoPersonalizado } from '../../../../shared/components/organisms/paginated-form/campo-personalizado';
 import { paginarCampos } from '../../../../shared/forms/paginated/paginar-campos';
 import type { CampoDeFormulario } from '../../../../shared/forms/paginated/paginated-form.types';
-import { ChangeDetectionStrategy, Component, computed, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
 
-import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { Input as AppInput } from '../../../../shared/components/atoms/input/input';
-import { NavIcon } from '../../../../shared/components/atoms/nav-icon/nav-icon';
-import { Tooltip } from '../../../../shared/components/atoms/tooltip/tooltip';
 import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
 import { mensajeDeError } from '../../../../shared/forms/paginated/mensaje-de-error';
-import { controlDeNombreExtra, type GrupoDeNombre } from './nombre-de-persona';
+import { type GrupoDeNombre } from './nombre-de-persona';
+
+import { NombresExtra } from './nombres-extra';
 
 /**
  * Los campos del nombre de una persona: primer, segundo y tercer nombre, tantos
@@ -23,7 +22,14 @@ import { controlDeNombreExtra, type GrupoDeNombre } from './nombre-de-persona';
  */
 @Component({
   selector: 'app-campos-de-nombre',
-  imports: [PaginatedForm, CampoPersonalizado, ReactiveFormsModule, AppButton, AppInput, NavIcon, Tooltip, FormField],
+  imports: [
+    PaginatedForm,
+    CampoPersonalizado,
+    ReactiveFormsModule,
+    AppInput,
+    FormField,
+    NombresExtra,
+  ],
   templateUrl: './campos-de-nombre.html',
   styleUrl: './campos-de-nombre.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -38,31 +44,13 @@ export class CamposDeNombre {
   /** Marca primer nombre y apellido paterno como obligatorios (debe coincidir con `grupoDeNombre`). */
   readonly obligatorio = input(false);
 
-  /** Un cambio en el `FormArray` no avisa a `OnPush`: este contador sí. */
-  private readonly version = signal(0);
-
-  protected readonly extras = computed(() => {
-    this.version();
-    return this.grupo().controls.extraNames.controls;
-  });
-
   protected readonly namePages = computed(() => {
     const field = (key: string): CampoDeFormulario => ({ key, label: '', control: 'custom' });
     return paginarCampos([
-      { titulo: 'Nombres', campos: ['name', 'middleName', 'thirdName'].map(field) },
+      { titulo: 'Nombres', campos: ['name', 'middleName', 'thirdName', 'extraNames'].map(field) },
       { titulo: 'Apellidos', campos: ['lastName', 'motherLastName'].map(field) },
     ]);
   });
-
-  protected agregarNombre(): void {
-    this.grupo().controls.extraNames.push(controlDeNombreExtra());
-    this.version.update((v) => v + 1);
-  }
-
-  protected quitarNombre(indice: number): void {
-    this.grupo().controls.extraNames.removeAt(indice);
-    this.version.update((v) => v + 1);
-  }
 
   protected errorDe(clave: 'name' | 'lastName'): string {
     const esNombre = clave === 'name';
