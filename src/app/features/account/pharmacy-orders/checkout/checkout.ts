@@ -29,9 +29,8 @@ import {
 import type { OrderLine } from '../../../../core/promotions-engine/promotion-mechanics.types';
 import { PharmacyOrdersClient } from '../../../../core/data-access/pharmacy-orders/pharmacy-orders.client';
 import type { BorradorDePedido } from '../../../../core/data-access/pharmacy-orders/pharmacy-orders.types';
-import { errorToViewState } from '../../../../core/http/error-to-view-state';
 import { NavigationService } from '../../../../core/navigation/navigation.service';
-import { empty, loading, notFound, ready } from '../../../../core/view-state/view-state';
+import { empty, notFound, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { Badge } from '../../../../shared/components/atoms/badge/badge';
@@ -50,12 +49,7 @@ import { MI_HISTORIA_ROUTE } from '../../medical-record/medical-record.routes';
 import { NOTA_DE_DATOS_DE_EJEMPLO } from '../new-order/new-order.fixtures';
 import { CLAVE_DEL_TRASPASO, type TraspasoDeLaReceta } from '../new-order/new-order.handoff';
 import { MIS_PEDIDOS_ROUTE } from '../pharmacy-orders.routes';
-import {
-  contenidoDelQrDeEjemplo,
-  DIRECCIONES_REGISTRADAS,
-  TARJETA_DE_EJEMPLO,
-  type DireccionDeEjemplo,
-} from './checkout.fixtures';
+import { contenidoDelQrDeEjemplo, TARJETA_DE_EJEMPLO } from './checkout.fixtures';
 import { resumirPedido, type RenglonACobrar } from './checkout.summary';
 import { OrderSummary } from './order-summary/order-summary';
 
@@ -65,30 +59,28 @@ const RUTA_DE_LA_ORDEN = `${MIS_PEDIDOS_ROUTE}/new`;
 /** Lado del QR de ejemplo: el mismo que el QR de pago de `order-payment`. */
 const LADO_DEL_QR = 176;
 
-export const ENTREGAS = ['RETIRO', 'DELIVERY'] as const;
-export type Entrega = (typeof ENTREGAS)[number];
-
 export const MEDIOS_DE_PAGO = ['QR', 'TARJETA'] as const;
 export type MedioDePago = (typeof MEDIOS_DE_PAGO)[number];
 
-type Paso = 'ENTREGA' | 'DIRECCION' | 'PAGO' | 'RESUMEN';
+type Paso = 'ENTREGA' | 'PAGO' | 'RESUMEN';
 
 const ROTULO_DEL_PASO: Readonly<Record<Paso, string>> = {
   ENTREGA: 'Entrega',
-  DIRECCION: 'Dirección',
   PAGO: 'Medio de pago',
   RESUMEN: 'Resumen',
 };
 
-/** Lo que el checkout carga antes de estar listo. */
+/** Lo que el checkout necesita para estar listo. */
 interface DatosDelCheckout {
   readonly borrador: BorradorDePedido;
-  readonly direcciones: readonly DireccionDeEjemplo[];
 }
 
+/** Los pasos del checkout, en orden: el pedido sólo se retira en la farmacia. */
+const PASOS: readonly Paso[] = ['ENTREGA', 'PAGO', 'RESUMEN'];
+
 /**
- * **El checkout** (T-E3 · pantalla G): entrega → dirección → medio de pago →
- * resumen → confirmación final.
+ * **El checkout** (T-E3 · pantalla G): entrega → medio de pago → resumen →
+ * confirmación final.
  *
  * ## Acá se crea el pedido (D-FARMOCK-T-E1-01)
  *
@@ -111,10 +103,9 @@ interface DatosDelCheckout {
  *
  * ## Lo que dice la verdad
  *
- * - **Delivery** se puede elegir y recorrer, pero su confirmación no se
- *   ejecuta: la integración real sólo admite retiro, y un retiro disfrazado de
- *   delivery sería un pedido falso.
- * - **Dirección y tarjeta** son maquetas marcadas; ningún paso cobra nada.
+ * - **El pedido sólo se retira en la farmacia.** No hay envío a domicilio: ni
+ *   se ofrece ni se simula, y el pedido se crea siempre con `RETIRO`.
+ * - **La tarjeta** es una maqueta marcada; ningún paso cobra nada.
  * - El pedido se crea **una sola vez**: el borrador que se envía es siempre el
  *   mismo objeto, y el cliente reutiliza su clave de idempotencia al reintentar.
  */
@@ -147,7 +138,6 @@ export class Checkout {
   private readonly injector = inject(Injector);
   private readonly documento = inject(DOCUMENT);
   private readonly esBrowser = isPlatformBrowser(inject(PLATFORM_ID));
-  private readonly fuenteDeDirecciones = inject(DIRECCIONES_REGISTRADAS);
 
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
   protected readonly notaDeEjemplo = NOTA_DE_DATOS_DE_EJEMPLO;
@@ -174,10 +164,7 @@ export class Checkout {
    */
   private readonly borradorAEnviar = conCantidadesElegidas(this.borrador, this.traspaso);
 
-  /* ---- carga ---------------------------------------------------------------- */
-
-  private readonly direcciones = signal<readonly DireccionDeEjemplo[] | null>(null);
-  private readonly falloDeCarga = signal<ViewState<DatosDelCheckout> | null>(null);
+  /* ---- estado --------------------------------------------------------------- */
 
   protected readonly estado = computed<ViewState<DatosDelCheckout>>(() => {
     const borrador = this.borrador;
@@ -190,58 +177,33 @@ export class Checkout {
         'Este pedido no tiene medicamentos para confirmar.',
       );
     }
-    const fallo = this.falloDeCarga();
-    if (fallo !== null) {
-      return fallo;
-    }
-    const direcciones = this.direcciones();
-    return direcciones === null ? loading() : ready({ borrador, direcciones });
+    return ready({ borrador });
   });
 
   /* ---- los pasos ------------------------------------------------------------ */
 
-  protected readonly entrega = signal<Entrega>('RETIRO');
-  protected readonly direccionElegida = signal<string | null>(null);
   protected readonly medioDePago = signal<MedioDePago>('QR');
 
-  /** Con recojo no hay dirección: el paso 2 aparece sólo con delivery. */
-  protected readonly pasos = computed<readonly Paso[]>(() =>
-    this.entrega() === 'DELIVERY'
-      ? ['ENTREGA', 'DIRECCION', 'PAGO', 'RESUMEN']
-      : ['ENTREGA', 'PAGO', 'RESUMEN'],
-  );
+  protected readonly pasos = PASOS;
 
   private readonly indiceActual = signal(0);
 
   protected readonly pasoActual = computed<Paso>(
-    () => this.pasos()[Math.min(this.indiceActual(), this.pasos().length - 1)] ?? 'ENTREGA',
+    () => this.pasos[Math.min(this.indiceActual(), this.pasos.length - 1)] ?? 'ENTREGA',
   );
 
-  protected readonly direccionesDisponibles = computed(() => this.direcciones() ?? []);
-
-  protected readonly sinDirecciones = computed(() => this.direccionesDisponibles().length === 0);
-
   /** Lo que el paso actual necesita para seguir. */
-  protected readonly puedeSeguir = computed(() => {
-    if (this.pasoActual() === 'DIRECCION') {
-      return this.direccionElegida() !== null;
-    }
-    return this.pasoActual() !== 'RESUMEN';
-  });
+  protected readonly puedeSeguir = computed(() => this.pasoActual() !== 'RESUMEN');
 
   protected readonly pasosDelStepper = computed<readonly StepperStep[]>(() => {
-    const actual = Math.min(this.indiceActual(), this.pasos().length - 1);
-    return this.pasos().map((paso, indice) => ({
+    const actual = Math.min(this.indiceActual(), this.pasos.length - 1);
+    return this.pasos.map((paso, indice) => ({
       label: ROTULO_DEL_PASO[paso],
       status: indice < actual ? 'complete' : indice === actual ? 'current' : 'upcoming',
       disabled: indice > actual,
       disabledReason: indice > actual ? 'Completá el paso actual primero' : undefined,
     }));
   });
-
-  protected readonly direccion = computed(
-    () => this.direccionesDisponibles().find((d) => d.id === this.direccionElegida()) ?? null,
-  );
 
   /* ---- el resumen ----------------------------------------------------------- */
 
@@ -255,7 +217,6 @@ export class Checkout {
       renglones: this.renglonesACobrar,
       moneda: this.borrador?.moneda ?? null,
       conSeguro: this.conSeguro,
-      conEnvio: this.entrega() === 'DELIVERY',
       descuentoDeCampanaDelTotal: this.cobro.descuentoDelTotal,
     }),
   );
@@ -273,13 +234,9 @@ export class Checkout {
   protected readonly enviando = signal(false);
   protected readonly falloAlConfirmar = signal(false);
 
-  /** Delivery se recorre pero no se confirma (ver el JSDoc de la clase). */
   protected readonly puedeConfirmar = computed(
     () =>
-      this.entrega() === 'RETIRO' &&
-      this.productosSinPublicar.length === 0 &&
-      this.borradorAEnviar !== null &&
-      !this.enviando(),
+      this.productosSinPublicar.length === 0 && this.borradorAEnviar !== null && !this.enviando(),
   );
 
   /** `true` desde que se vuelve a la orden médica: el borrador no se descarta. */
@@ -309,38 +266,12 @@ export class Checkout {
         LADO_DEL_QR,
       ).catch(() => this.qrDisponible.set(false));
     });
-    this.cargar();
-  }
-
-  protected cargar(): void {
-    if (this.borrador === null || this.borrador.lineas.length === 0) {
-      return;
-    }
-    this.falloDeCarga.set(null);
-    this.direcciones.set(null);
-    this.fuenteDeDirecciones()
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (direcciones) => this.direcciones.set(direcciones),
-        error: (error: unknown) =>
-          this.falloDeCarga.set(errorToViewState<DatosDelCheckout>(error)),
-      });
-  }
-
-  protected alElegirEntrega(valor: unknown): void {
-    if ((ENTREGAS as readonly unknown[]).includes(valor)) {
-      this.entrega.set(valor as Entrega);
-    }
   }
 
   protected alElegirMedioDePago(valor: unknown): void {
     if ((MEDIOS_DE_PAGO as readonly unknown[]).includes(valor)) {
       this.medioDePago.set(valor as MedioDePago);
     }
-  }
-
-  protected usarDireccion(id: string): void {
-    this.direccionElegida.set(id);
   }
 
   protected siguiente(): void {
@@ -376,8 +307,8 @@ export class Checkout {
   }
 
   /**
-   * La confirmación final: crea el pedido real y lleva a su detalle. Sólo con
-   * recojo, y una sola vez aunque se pulse dos veces.
+   * La confirmación final: crea el pedido real y lleva a su detalle. Una sola
+   * vez aunque se pulse dos veces.
    */
   protected confirmar(): void {
     const borrador = this.borradorAEnviar;
@@ -401,7 +332,7 @@ export class Checkout {
   }
 
   private irAlPaso(indice: number): void {
-    const destino = Math.max(0, Math.min(indice, this.pasos().length - 1));
+    const destino = Math.max(0, Math.min(indice, this.pasos.length - 1));
     this.indiceActual.set(destino);
     if (!this.esBrowser) {
       return;

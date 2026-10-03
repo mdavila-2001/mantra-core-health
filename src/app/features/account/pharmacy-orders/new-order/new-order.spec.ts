@@ -27,7 +27,7 @@ import {
 /**
  * «Confirmá tu pedido» (FAR-I2) extendida como la orden médica como pedido
  * (T-E1). Lo que se fija: sin borrador hay salida y no error; el resumen dice
- * claro lo que la farmacia no tiene; retiro es la única modalidad habilitada;
+ * claro lo que la farmacia no tiene; la entrega es sólo retiro;
  * y una línea sin `productId` se conserva y bloquea el paso siguiente.
  *
  * T-E1 suma: cabecera de receta, cantidad dentro de lo recetado, alternativas
@@ -200,19 +200,15 @@ describe('NewOrder', () => {
     );
   });
 
-  it('el retiro es el default y los envíos fuera de alcance quedan deshabilitados', () => {
+  it('la entrega es sólo retiro: no ofrece elegir ni menciona envío a domicilio', () => {
     configurar();
     client.prepararBorrador(BORRADOR);
     montar();
 
-    const radios = raiz().querySelectorAll<HTMLInputElement>(
-      '[data-testid="pedido-modalidad"] input[type="radio"]',
-    );
-    expect(radios).toHaveLength(3);
-    expect(radios[0].checked).toBe(true);
-    expect(radios[1].disabled).toBe(true);
-    expect(radios[2].disabled).toBe(true);
-    expect(texto()).toContain('todavía no están disponibles');
+    expect(uno('pedido-modalidad')).toBeNull();
+    expect(raiz().querySelectorAll('input[type="radio"]')).toHaveLength(0);
+    expect(uno('pedido-modalidad-retiro')?.textContent).toContain('Retirás el pedido en la farmacia');
+    expect(texto()).not.toMatch(/delivery|domicilio|envío a mi trabajo/i);
   });
 
   it('salir sin continuar descarta el borrador: no reaparece después por URL directa', () => {

@@ -1226,7 +1226,7 @@ export class RegisterPatient {
           {
             key: 'homeAddressLines',
             label: 'Línea de dirección 1 (opcional)',
-            hint: 'Como se lo dirías a quien te trae algo a casa.',
+            hint: 'Como la escribirías en un sobre.',
             description:
               'Calle, número y referencia. El punto del mapa no la escribe solo: ver el aviso de abajo.',
             control: 'text',
@@ -1238,7 +1238,7 @@ export class RegisterPatient {
           {
             key: 'gpsDomicilio',
             label: 'Ubicación GPS (opcional)',
-            hint: 'Si la compartís, el delivery llega sin llamarte.',
+            hint: 'Si la compartís, podés ver primero lo que te queda más cerca.',
             description: 'Marcá el punto exacto de tu casa y confirmalo para que quede guardado.',
             control: 'custom',
           },
