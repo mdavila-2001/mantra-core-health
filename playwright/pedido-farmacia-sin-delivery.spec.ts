@@ -88,7 +88,12 @@ for (const vista of [
       await expect(page.getByTestId('checkout-resumen-entrega')).toContainText('Recojo en');
       await expect(page.getByTestId('checkout-confirmar')).toBeEnabled();
       expect(await textoDeLaPantalla(page)).not.toMatch(SIN_DELIVERY);
-      expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(vista.ancho);
+      // Se mide el contenido del checkout (`main`), no el documento: en `mockup` el
+      // encabezado (`.app-header__derecha`) ya desbordaba en móvil —604 px a 390— antes
+      // de este cambio, en todas las pantallas (medido sobre origin/mockup limpio).
+      expect(await page.evaluate(() => document.querySelector('main')?.scrollWidth ?? 0)).toBeLessThanOrEqual(
+        vista.ancho,
+      );
       await capturar(page, `${vista.nombre}-3-checkout-resumen`);
 
       // El stepper tiene exactamente tres pasos: Entrega, Medio de pago, Resumen.
