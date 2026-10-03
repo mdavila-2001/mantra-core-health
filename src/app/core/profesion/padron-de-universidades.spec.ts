@@ -5,6 +5,7 @@ import { INSTITUCION_FUERA_DE_CATALOGO } from './instituciones-educativas';
 import {
   PAIS_FUERA_DE_CATALOGO,
   PadronDeUniversidades,
+  ciudadAlCambiarDeUniversidad,
   eleccionDesdeTexto,
 } from './padron-de-universidades';
 
@@ -65,6 +66,43 @@ describe('PadronDeUniversidades', () => {
     expect(servicio.cargar()).toBe(primera);
     await primera;
     expect(servicio.estado()).toBe('listo');
+  });
+
+  it('una universidad boliviana de sede única trae su ciudad; el resto, ninguna', async () => {
+    const servicio = padron();
+    await servicio.cargar();
+
+    expect(servicio.ciudadDe('Bolivia', 'Universidad Mayor de San Simón')).toBe('Cochabamba');
+    expect(servicio.ciudadDe('Bolivia', 'Universidad Mayor de San Andrés')).toBe('La Paz');
+    // La etiqueta las ubica por departamento; la ciudad es la de la sede.
+    expect(servicio.ciudadDe('Bolivia', 'Universidad Autónoma del Beni José Ballivián')).toBe(
+      'Trinidad',
+    );
+    // Con sedes en varias ciudades no hay una que proponer.
+    expect(servicio.ciudadDe('Bolivia', 'Universidad Católica Boliviana San Pablo')).toBe('');
+    // El padrón importado no trae ciudad, y lo que no figura tampoco.
+    expect(servicio.ciudadDe('Argentina', 'Universidad de Buenos Aires')).toBe('');
+    expect(servicio.ciudadDe('Bolivia', 'Universidad de la Atlántida')).toBe('');
+    expect(servicio.ciudadDe('', 'Universidad Mayor de San Simón')).toBe('');
+  });
+
+  describe('ciudadAlCambiarDeUniversidad', () => {
+    it('vacía, toma la de la universidad elegida', () => {
+      expect(ciudadAlCambiarDeUniversidad('', '', 'Cochabamba')).toBe('Cochabamba');
+      expect(ciudadAlCambiarDeUniversidad('   ', '', 'Cochabamba')).toBe('Cochabamba');
+    });
+
+    it('si seguía siendo la propuesta, pasa a la de la nueva, aunque sea ninguna', () => {
+      expect(ciudadAlCambiarDeUniversidad('Cochabamba', 'Cochabamba', 'La Paz')).toBe('La Paz');
+      expect(ciudadAlCambiarDeUniversidad('Cochabamba', 'Cochabamba', '')).toBe('');
+    });
+
+    it('lo escrito a mano no se pisa', () => {
+      expect(ciudadAlCambiarDeUniversidad('Quillacollo', 'Cochabamba', 'La Paz')).toBe(
+        'Quillacollo',
+      );
+      expect(ciudadAlCambiarDeUniversidad('Quillacollo', '', 'La Paz')).toBe('Quillacollo');
+    });
   });
 
   describe('eleccionDesdeTexto', () => {

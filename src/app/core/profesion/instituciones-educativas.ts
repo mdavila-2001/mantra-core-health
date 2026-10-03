@@ -10,6 +10,13 @@ export interface OpcionDeInstitucion {
   readonly label: string;
   /** Los separadores de grupo: se ven, no se eligen. */
   readonly disabled?: boolean;
+  /**
+   * La ciudad de su sede, que el formulario propone como «Ciudad de estudio»
+   * al elegirla. Falta —a propósito— en las que tienen sedes en varias
+   * ciudades: ahí no hay una respuesta por defecto y proponer una sería
+   * adivinar dónde estudió la persona.
+   */
+  readonly ciudad?: string;
 }
 
 /**
@@ -33,40 +40,57 @@ export const UNIVERSIDADES_DEL_SISTEMA: readonly OpcionDeInstitucion[] = [
   {
     value: 'Universidad Mayor de San Andrés',
     label: 'Universidad Mayor de San Andrés (UMSA) — La Paz',
+    ciudad: 'La Paz',
   },
   {
     value: 'Universidad Mayor de San Simón',
     label: 'Universidad Mayor de San Simón (UMSS) — Cochabamba',
+    ciudad: 'Cochabamba',
   },
   {
     value: 'Universidad Mayor Real y Pontificia de San Francisco Xavier de Chuquisaca',
     label: 'Universidad San Francisco Xavier de Chuquisaca (USFX) — Sucre',
+    ciudad: 'Sucre',
   },
   {
     value: 'Universidad Autónoma Gabriel René Moreno',
     label: 'Universidad Autónoma Gabriel René Moreno (UAGRM) — Santa Cruz',
+    ciudad: 'Santa Cruz de la Sierra',
   },
-  { value: 'Universidad Técnica de Oruro', label: 'Universidad Técnica de Oruro (UTO) — Oruro' },
+  {
+    value: 'Universidad Técnica de Oruro',
+    label: 'Universidad Técnica de Oruro (UTO) — Oruro',
+    ciudad: 'Oruro',
+  },
   {
     value: 'Universidad Autónoma Tomás Frías',
     label: 'Universidad Autónoma Tomás Frías (UATF) — Potosí',
+    ciudad: 'Potosí',
   },
   {
     value: 'Universidad Autónoma Juan Misael Saracho',
     label: 'Universidad Autónoma Juan Misael Saracho (UAJMS) — Tarija',
+    ciudad: 'Tarija',
   },
   {
     value: 'Universidad Autónoma del Beni José Ballivián',
     label: 'Universidad Autónoma del Beni José Ballivián (UABJB) — Beni',
+    ciudad: 'Trinidad',
   },
   {
     value: 'Universidad Amazónica de Pando',
     label: 'Universidad Amazónica de Pando (UAP) — Pando',
+    ciudad: 'Cobija',
   },
-  { value: 'Universidad Nacional Siglo XX', label: 'Universidad Nacional Siglo XX — Llallagua' },
+  {
+    value: 'Universidad Nacional Siglo XX',
+    label: 'Universidad Nacional Siglo XX — Llallagua',
+    ciudad: 'Llallagua',
+  },
   {
     value: 'Universidad Pública de El Alto',
     label: 'Universidad Pública de El Alto (UPEA) — El Alto',
+    ciudad: 'El Alto',
   },
   {
     value: 'Universidad Católica Boliviana San Pablo',
@@ -89,49 +113,70 @@ export const UNIVERSIDADES_PRIVADAS: readonly OpcionDeInstitucion[] = [
   {
     value: 'Universidad Privada de Santa Cruz de la Sierra',
     label: 'Universidad Privada de Santa Cruz de la Sierra (UPSA)',
+    ciudad: 'Santa Cruz de la Sierra',
   },
   { value: 'Universidad Privada Domingo Savio', label: 'Universidad Privada Domingo Savio (UPDS)' },
   { value: 'Universidad Franz Tamayo', label: 'Universidad Franz Tamayo (UNIFRANZ)' },
   {
     value: 'Universidad Nuestra Señora de La Paz',
     label: 'Universidad Nuestra Señora de La Paz (UNSLP)',
+    ciudad: 'La Paz',
   },
   {
     value: 'Universidad Evangélica Boliviana',
     label: 'Universidad Evangélica Boliviana (UEB) — Santa Cruz',
+    ciudad: 'Santa Cruz de la Sierra',
   },
   {
     value: 'Universidad Cristiana de Bolivia',
     label: 'Universidad Cristiana de Bolivia (UCEBOL) — Santa Cruz',
+    ciudad: 'Santa Cruz de la Sierra',
   },
-  { value: 'Universidad NUR', label: 'Universidad NUR — Santa Cruz' },
+  {
+    value: 'Universidad NUR',
+    label: 'Universidad NUR — Santa Cruz',
+    ciudad: 'Santa Cruz de la Sierra',
+  },
   { value: 'Universidad de Aquino Bolivia', label: 'Universidad de Aquino Bolivia (UDABOL)' },
   {
     value: 'Universidad Técnica Privada Cosmos',
     label: 'Universidad Técnica Privada Cosmos (UNITEPC) — Cochabamba',
+    ciudad: 'Cochabamba',
   },
   {
     value: 'Universidad Salesiana de Bolivia',
     label: 'Universidad Salesiana de Bolivia (USB) — La Paz',
+    ciudad: 'La Paz',
   },
   {
     value: 'Universidad Adventista de Bolivia',
     label: 'Universidad Adventista de Bolivia (UAB) — Cochabamba',
+    ciudad: 'Cochabamba',
   },
   {
     value: 'Universidad San Francisco de Asís',
     label: 'Universidad San Francisco de Asís (USFA) — La Paz',
+    ciudad: 'La Paz',
   },
   {
     value: 'Universidad Privada Abierta Latinoamericana',
     label: 'Universidad Privada Abierta Latinoamericana (UPAL)',
   },
-  { value: 'Universidad Central', label: 'Universidad Central (UNICEN) — La Paz' },
+  {
+    value: 'Universidad Central',
+    label: 'Universidad Central (UNICEN) — La Paz',
+    ciudad: 'La Paz',
+  },
   {
     value: 'Universidad Tecnológica Privada de Santa Cruz',
     label: 'Universidad Tecnológica Privada de Santa Cruz (UTEPSA)',
+    ciudad: 'Santa Cruz de la Sierra',
   },
-  { value: 'Universidad Real de La Paz', label: 'Universidad Real de La Paz' },
+  {
+    value: 'Universidad Real de La Paz',
+    label: 'Universidad Real de La Paz',
+    ciudad: 'La Paz',
+  },
 ];
 
 /**
