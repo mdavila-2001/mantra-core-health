@@ -92,7 +92,7 @@ test.describe('alta pública de aseguradora — casa matriz georreferenciada (su
 
     const mapa = page.getByTestId('registro-organizacion-casa-matriz-map');
     await expect(mapa).toBeVisible();
-    await expect(mapa.locator('.leaflet-marker-icon').first()).toBeVisible({ timeout: 15_000 });
+    await expect(mapa.locator('.leaflet-marker-icon.mapa__marcador').first()).toBeVisible({ timeout: 15_000 });
     await expect(
       page.getByTestId('registro-organizacion-casa-matriz-location-confirm'),
     ).toBeVisible();
@@ -119,7 +119,7 @@ test.describe('alta pública de aseguradora — casa matriz georreferenciada (su
 
     const mapa = page.getByTestId('registro-organizacion-casa-matriz-map');
     await expect(mapa).toBeVisible();
-    await expect(mapa.locator('.leaflet-marker-icon')).toHaveCount(0);
+    await expect(mapa.locator('.leaflet-marker-icon.mapa__marcador')).toHaveCount(0);
     await expect(mapa.locator('.mapa--seleccionable')).toHaveCount(1);
     await expect(
       page.getByTestId('registro-organizacion-casa-matriz-location-pick-indicacion'),
@@ -128,7 +128,7 @@ test.describe('alta pública de aseguradora — casa matriz georreferenciada (su
 
     await tocar(page, mapa, -40, -20);
     const primerPin = await centroDelPin(mapa);
-    await expect(mapa.locator('.leaflet-marker-icon')).toHaveCount(1);
+    await expect(mapa.locator('.leaflet-marker-icon.mapa__marcador')).toHaveCount(1);
     await expect(
       page.getByTestId('registro-organizacion-casa-matriz-location-confirm'),
     ).toBeVisible();
@@ -137,7 +137,7 @@ test.describe('alta pública de aseguradora — casa matriz georreferenciada (su
     // El mapa recentra en zoom 17 sobre el primer pin: un segundo toque
     // desplazado lo corre, sin sumar un segundo marcador.
     await tocar(page, mapa, 90, 40);
-    await expect(mapa.locator('.leaflet-marker-icon')).toHaveCount(1);
+    await expect(mapa.locator('.leaflet-marker-icon.mapa__marcador')).toHaveCount(1);
     await expect
       .poll(async () => (await centroDelPin(mapa)).x, { timeout: 10_000 })
       .not.toBe(primerPin.x);
@@ -215,7 +215,7 @@ test.describe('alta pública de aseguradora — casa matriz georreferenciada (su
 
     await page.getByTestId('registro-organizacion-casa-matriz-location-use').click();
     const mapa = page.getByTestId('registro-organizacion-casa-matriz-map');
-    await expect(mapa.locator('.leaflet-marker-icon').first()).toBeVisible({ timeout: 15_000 });
+    await expect(mapa.locator('.leaflet-marker-icon.mapa__marcador').first()).toBeVisible({ timeout: 15_000 });
     await page.getByTestId('registro-organizacion-casa-matriz-location-confirm').click();
     await expect(
       page.getByTestId('registro-organizacion-casa-matriz-location-confirmed'),
@@ -252,7 +252,7 @@ test.describe('alta pública de aseguradora — casa matriz georreferenciada (su
     await llegarADatosDeAseguradora(page);
     await page.getByTestId('registro-organizacion-casa-matriz-location-use').click();
     const mapa = page.getByTestId('registro-organizacion-casa-matriz-map');
-    await expect(mapa.locator('.leaflet-marker-icon').first()).toBeVisible({ timeout: 15_000 });
+    await expect(mapa.locator('.leaflet-marker-icon.mapa__marcador').first()).toBeVisible({ timeout: 15_000 });
     await page.getByTestId('registro-organizacion-casa-matriz-location-confirm').click();
     await expect(
       page.getByTestId('registro-organizacion-casa-matriz-location-confirmed'),
