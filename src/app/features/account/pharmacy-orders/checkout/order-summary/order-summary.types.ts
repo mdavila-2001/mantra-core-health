@@ -37,8 +37,6 @@ export interface ResumenDelPedido {
   readonly coaseguro: string | null;
   /** Sólo con seguro: lo aprobado menos el coaseguro. */
   readonly cubreElSeguro: string | null;
-  /** Sólo con delivery. */
-  readonly envio: string | null;
   readonly total: string | null;
   /** Valor de ejemplo, o `null` sin total. */
   readonly puntos: number | null;
