@@ -35,19 +35,19 @@ export async function completarGerencias(page: Page): Promise<void> {
   // La General trae las cinco partes (AC-01): es la que demuestra el
   // desglose completo, comercial y marketing sólo las dos obligatorias.
   await page
-    .getByTestId('registro-organizacion-executives-general-manager-name')
+    .getByTestId('registro-organizacion-executives-general-manager-nombre')
     .fill('Carlos');
   await page
-    .getByTestId('registro-organizacion-executives-general-manager-middleName')
+    .getByTestId('registro-organizacion-executives-general-manager-segundo-nombre')
     .fill('Eduardo');
   await page
-    .getByTestId('registro-organizacion-executives-general-manager-thirdName')
+    .getByTestId('registro-organizacion-executives-general-manager-tercer-nombre')
     .fill('Andrés');
   await page
-    .getByTestId('registro-organizacion-executives-general-manager-lastName')
+    .getByTestId('registro-organizacion-executives-general-manager-apellido-paterno')
     .fill('Mendoza');
   await page
-    .getByTestId('registro-organizacion-executives-general-manager-motherLastName')
+    .getByTestId('registro-organizacion-executives-general-manager-apellido-materno')
     .fill('Rivero');
   await page
     .getByTestId('registro-organizacion-executives-general-manager-phone')
@@ -58,10 +58,10 @@ export async function completarGerencias(page: Page): Promise<void> {
 
   await page.getByRole('button', { name: /Gerente Comercial/ }).click();
   await page
-    .getByTestId('registro-organizacion-executives-commercial-manager-name')
+    .getByTestId('registro-organizacion-executives-commercial-manager-nombre')
     .fill('Ana');
   await page
-    .getByTestId('registro-organizacion-executives-commercial-manager-lastName')
+    .getByTestId('registro-organizacion-executives-commercial-manager-apellido-paterno')
     .fill('Paz');
   await page
     .getByTestId('registro-organizacion-executives-commercial-manager-phone')
@@ -72,10 +72,10 @@ export async function completarGerencias(page: Page): Promise<void> {
 
   await page.getByRole('button', { name: /Gerente de Marketing/ }).click();
   await page
-    .getByTestId('registro-organizacion-executives-marketing-manager-name')
+    .getByTestId('registro-organizacion-executives-marketing-manager-nombre')
     .fill('Luis');
   await page
-    .getByTestId('registro-organizacion-executives-marketing-manager-lastName')
+    .getByTestId('registro-organizacion-executives-marketing-manager-apellido-paterno')
     .fill('Rojas');
   await page
     .getByTestId('registro-organizacion-executives-marketing-manager-phone')
