@@ -24,12 +24,15 @@ import { Link } from '../../../shared/components/atoms/link/link';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
+import { CamposDeNombre } from '../../auth/registro-compartido/campos-de-nombre/campos-de-nombre';
+import { grupoDeNombre } from '../../auth/registro-compartido/campos-de-nombre/nombre-de-persona';
+import { unirNombres } from '../../../core/profesion/nombres-adicionales';
+import { CampoPersonalizado } from '../../../shared/components/organisms/paginated-form/campo-personalizado';
 import { paginarCampos } from '../../../shared/forms/paginated/paginar-campos';
 import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
 
 /** Largos que exige `AssistedRegistrationDto` en el backend. */
 const MAX_MOTIVO = 500;
-const MAX_PARTE_NOMBRE = 100;
 
 /**
  * Alta asistida de un paciente que no puede registrarse por sí mismo
@@ -73,6 +76,8 @@ const MAX_PARTE_NOMBRE = 100;
     Link,
     PageHeader,
     PaginatedForm,
+    CampoPersonalizado,
+    CamposDeNombre,
     RouterLink,
   ],
   templateUrl: './assisted-registration.html',
@@ -98,10 +103,9 @@ export class AssistedRegistration {
       titulo: 'Datos del paciente',
       hint: 'Lo mínimo para crear la cuenta; el resto lo completa su filiación.',
       campos: [
-        { key: 'name', testId: 'alta-paciente-nombre', label: 'Nombre', control: 'text', required: true, mensajeDeError: 'Escribí el nombre del paciente.' },
-        { key: 'middleName', testId: 'alta-paciente-segundo-nombre', label: 'Segundo nombre', hint: 'Si no tiene, dejalo vacío.', control: 'text' },
-        { key: 'lastName', testId: 'alta-paciente-apellido-paterno', label: 'Apellido paterno', control: 'text', required: true, mensajeDeError: 'Escribí el apellido paterno del paciente.' },
-        { key: 'motherLastName', testId: 'alta-paciente-apellido-materno', label: 'Apellido materno', hint: 'Si no lleva, dejalo vacío.', control: 'text' },
+        // El nombre es el mismo bloque que usan paciente, médico y aseguradora:
+        // tres nombres, «+ Agregar otro nombre» y los dos apellidos.
+        { key: 'patientName', label: '', control: 'custom', mensajeDeError: 'Completá el primer nombre y el apellido paterno del paciente.' },
         { key: 'email', testId: 'alta-paciente-correo', label: 'Correo', hint: 'Con este correo va a activar la cuenta e iniciar sesión.', control: 'email', required: true, mensajeDeError: 'Ingresá un correo válido.' },
       ],
     },
@@ -115,25 +119,10 @@ export class AssistedRegistration {
   ]);
 
   protected readonly form = new FormGroup({
-    // El nombre va en sus cuatro partes, no en un campo libre: es como lo emite
-    // el documento de identidad y como se comparan dos personas al buscar
+    // El nombre va desglosado, no en un campo libre: es como lo emite el
+    // documento de identidad y como se comparan dos personas al buscar
     // duplicados.
-    name: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.maxLength(MAX_PARTE_NOMBRE)],
-    }),
-    middleName: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.maxLength(MAX_PARTE_NOMBRE)],
-    }),
-    lastName: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.maxLength(MAX_PARTE_NOMBRE)],
-    }),
-    motherLastName: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.maxLength(MAX_PARTE_NOMBRE)],
-    }),
+    patientName: grupoDeNombre(true),
     email: new FormControl('', {
       nonNullable: true,
       validators: [Validators.required, Validators.email],
@@ -210,6 +199,8 @@ export class AssistedRegistration {
 
   /** Deja la pantalla lista para otra alta y saca el token de la vista. */
   protected altaNueva(): void {
+    // `reset()` vacía los valores pero deja las casillas agregadas: se quitan.
+    this.form.controls.patientName.controls.extraNames.clear();
     this.form.reset();
     this.result.set(null);
     this.copied.set(false);
@@ -217,14 +208,19 @@ export class AssistedRegistration {
   }
 
   private datos(): AssistedPatientRegistration {
-    const { name, middleName, lastName, motherLastName, email, reason } =
-      this.form.getRawValue();
-    const segundoNombre = middleName.trim();
-    const apellidoMaterno = motherLastName.trim();
+    const { patientName, email, reason } = this.form.getRawValue();
+    // El backend no tiene columna para el tercer nombre ni los agregados: se
+    // pliegan en `middleName`, igual que en el alta de paciente.
+    const segundoNombre = unirNombres([
+      patientName.middleName,
+      patientName.thirdName,
+      ...patientName.extraNames,
+    ]);
+    const apellidoMaterno = patientName.motherLastName.trim();
 
     return {
-      name: name.trim(),
-      lastName: lastName.trim(),
+      name: patientName.name.trim(),
+      lastName: patientName.lastName.trim(),
       // Ausente si no se completó: `forbidNonWhitelisted` rechaza lo que sobra,
       // y una cadena vacía no es lo mismo que la ausencia del campo.
       ...(segundoNombre === '' ? {} : { middleName: segundoNombre }),
