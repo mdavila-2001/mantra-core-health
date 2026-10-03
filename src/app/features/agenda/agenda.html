@@ -303,9 +303,16 @@
            demás servicios en una pestaña propia, separados de las consultas.
            Mismo `@if` interno que «Mis horarios», por la misma razón. -->
       @if (esQuienAtiende()) {
-        <app-tab label="Horarios de otros servicios">
+        <app-tab [label]="rotuloDeServicios()">
           @if (enServicios()) {
-            <app-services-schedule />
+            <!-- Las mismas acciones que el calendario: una solicitud de servicio
+                 se acepta, rechaza, mueve o cancela igual que una consulta. -->
+            <app-services-schedule
+              [appointmentActions]="accionesDeLaCitaDelDia"
+              [reloadToken]="versionDeAcciones()"
+              (statusLabels)="sumarEtiquetas($event)"
+              (pendingCount)="serviciosPorResponder.set($event)"
+            />
           }
         </app-tab>
       }

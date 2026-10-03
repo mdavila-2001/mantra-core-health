@@ -130,6 +130,16 @@ export interface BookingStatusPresentation {
   readonly code: string;
 }
 
+/**
+ * Estados en los que una solicitud espera respuesta del profesional
+ * (corrección #11). Compartido por la lista de `/schedule` y por «Horarios de
+ * otros servicios»: los dos ofrecen aceptar o rechazar sobre los mismos.
+ */
+export const AWAITING_RESPONSE_CODES: ReadonlySet<string> = new Set([
+  'BOOKING_REQUESTED',
+  'BOOKING_PENDING_CONFIRMATION',
+]);
+
 /** El código sin el prefijo de módulo (`scheduling:X` → `X`). */
 export function sufijoDeCodigo(code: string): string {
   return code.includes(':') ? code.slice(code.lastIndexOf(':') + 1) : code;
