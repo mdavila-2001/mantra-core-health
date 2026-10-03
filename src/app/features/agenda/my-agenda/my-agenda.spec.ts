@@ -211,7 +211,18 @@ describe('MyAgenda', () => {
   /* -- La agenda del día: lo que `/schedule` abre por defecto (18/09) -------- */
 
   describe('modo calendario', () => {
+    async function crearCalendarioEn(url: string): Promise<void> {
+      configurarCalendario();
+      await TestBed.inject(Router).navigateByUrl(url);
+      montarCalendario();
+    }
+
     function crearCalendario(): void {
+      configurarCalendario();
+      montarCalendario();
+    }
+
+    function configurarCalendario(): void {
       TestBed.resetTestingModule();
       TestBed.configureTestingModule({
         providers: [
@@ -228,6 +239,9 @@ describe('MyAgenda', () => {
           },
         ],
       });
+    }
+
+    function montarCalendario(): void {
       fixture = TestBed.createComponent(MyAgenda);
       fixture.componentRef.setInput('mode', 'calendar');
       http = TestBed.inject(HttpTestingController);
@@ -275,6 +289,60 @@ describe('MyAgenda', () => {
       // No es la solapa del horario: ni sus pestañas ni su grilla.
       expect($('.mi-agenda__solapas')).toBeNull();
       expect($('app-schedule-grid')).toBeNull();
+    });
+
+    /**
+     * «Cuando se da volver siempre vuelve al inicio» (propietario, 2026-10-03).
+     * El día abierto queda en la URL, y volver a esa entrada lo reabre.
+     */
+    describe('el día mirado vive en la URL', () => {
+      const pasadoManiana = (): Date => {
+        const dia = new Date();
+        dia.setHours(0, 0, 0, 0);
+        dia.setDate(dia.getDate() + 2);
+        return dia;
+      };
+      const comoEnLaUrl = (dia: Date): string =>
+        `${dia.getFullYear()}-${String(dia.getMonth() + 1).padStart(2, '0')}-${String(dia.getDate()).padStart(2, '0')}`;
+
+      it('al volver con ?day= abre ese día y no hoy', async () => {
+        const dia = pasadoManiana();
+        await crearCalendarioEn(`/?day=${comoEnLaUrl(dia)}`);
+        conRecurso();
+        conPlantilla([{ dayOfWeek: 1, startTime: '09:00:00', endTime: '13:00:00' }]);
+        sinOcupacion();
+
+        const nombre = dia.toLocaleDateString('es-BO', { weekday: 'long', day: 'numeric' });
+        expect($('.dia__titulo')?.textContent?.toLowerCase()).toContain(nombre.split(' ')[0]);
+        expect($('.dia__titulo')?.textContent).toContain(String(dia.getDate()));
+      });
+
+      it('con ?calendar=week vuelve a la semana', async () => {
+        await crearCalendarioEn(`/?day=${comoEnLaUrl(pasadoManiana())}&calendar=week`);
+        conRecurso();
+        conPlantilla([{ dayOfWeek: 1, startTime: '09:00:00', endTime: '13:00:00' }]);
+        sinOcupacion();
+        sinOcupacion();
+
+        expect($('app-week-view')).not.toBeNull();
+        expect($('[data-testid="ver-semana"]')?.getAttribute('aria-pressed')).toBe('true');
+      });
+
+      it('moverse de día lo escribe en la URL; hoy en el día no deja rastro', async () => {
+        abrir();
+        const router = TestBed.inject(Router);
+        await fixture.whenStable();
+        expect(router.url).not.toContain('day=');
+
+        ($('[aria-label="Ver el día siguiente"]') as HTMLButtonElement).click();
+        fixture.detectChanges();
+        sinOcupacion();
+        await fixture.whenStable();
+
+        const maniana = new Date();
+        maniana.setDate(maniana.getDate() + 1);
+        expect(router.url).toContain(`day=${comoEnLaUrl(maniana)}`);
+      });
     });
 
     it('ya no ofrece «Ver como tabla»: Consultas es una solapa al lado', () => {

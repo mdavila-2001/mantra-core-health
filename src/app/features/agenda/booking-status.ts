@@ -146,6 +146,21 @@ export function statusVariantOf(code: string): StatusSealVariant {
 }
 
 /**
+ * La palabra de un estado a partir de su código, con o sin prefijo de módulo.
+ *
+ * Es la pareja de {@link statusVariantOf} para las vistas del calendario, que
+ * ya tienen el código resuelto. El día y la semana mostraban el `display` del
+ * catálogo tal cual —«Booking in progress»—, y quien atiende lo leía como «la
+ * reserva todavía se está procesando» sobre una consulta que ya había empezado.
+ *
+ * @param code - El código del catálogo, o `''` si no se resolvió.
+ * @param textoDeReserva - Qué decir cuando el código no tiene palabra conocida.
+ */
+export function statusLabelOf(code: string, textoDeReserva: string): string {
+  return ETIQUETA_POR_CODIGO[sufijoDeCodigo(code)] ?? textoDeReserva;
+}
+
+/**
  * Traduce el concepto de estado de una cita a sello y palabra.
  *
  * Nunca lanza y nunca devuelve vacío: un estado que el catálogo todavía no

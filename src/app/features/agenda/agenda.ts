@@ -2345,10 +2345,21 @@ export class Agenda {
    * C-04 · tocaron la tarjeta de una cita del calendario.
    *
    * La tarjeta **no repite un botón**: hace lo que la cita admite en su estado.
-   * Una confirmada se inicia; una ya en curso se continúa —volver a iniciarla
-   * es el 409 de arriba—; y una que ni se inicia ni está en curso (una
-   * solicitud sin aceptar, una cancelada) no navega a ninguna parte: se abre su
-   * detalle, que es lo único que se puede hacer con ella.
+   * Una ya en curso se continúa —volver a iniciarla es el 409 de arriba—; una
+   * confirmada **ofrece** iniciarse; y una que ni se inicia ni está en curso
+   * (una solicitud sin aceptar, una cancelada) no navega a ninguna parte: se
+   * abre su detalle, que es lo único que se puede hacer con ella.
+   *
+   * ## Iniciar se pregunta (propietario, 2026-10-03)
+   *
+   * Antes un toque sobre una confirmada la iniciaba en el acto. Pero tocar una
+   * tarjeta es también la forma natural de *abrirla para mirarla*, y ese toque
+   * cambiaba el estado sin que nadie lo pidiera: la cita recién aceptada pasaba
+   * a «en curso» y, con eso, perdía Mover, Cancelar, Llegó y Demora —que sólo
+   * valen sobre una cita vigente—. Quien la había aceptado volvía y la veía
+   * «sin aceptar» y con la mitad de las opciones. Es el mismo diálogo que ya
+   * usa el panel de inicio (`ofrecerAtender`): el detalle, y «Iniciar
+   * consulta» o «Ahora no».
    *
    * El estado se lee del ciclo (`sePuedeIniciar` / `sePuedeCompletar`, que
    * salen de `booking-status.ts`) y no de una bandera nueva.
@@ -2361,7 +2372,7 @@ export class Agenda {
       return;
     }
     if (this.sePuedeIniciar(cita) && this.puedeAtender()) {
-      this.iniciarAtencion(cita);
+      void this.ofrecerAtender(cita);
       return;
     }
     void this.verDetalleDeLaCita(cita);
