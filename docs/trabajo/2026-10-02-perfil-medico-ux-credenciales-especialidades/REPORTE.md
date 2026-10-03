@@ -105,6 +105,8 @@ Arquitectura, CSS tokens y generate-doc-report tienen exit 1 en trabajo y base a
 
 ## Desvíos del plan
 
+- Un commit concurrente 06ef94f6 sobre la misma rama añadió configuración VS Code y documentación de sincronización/SSH ajenas, además de normalizar nuestros logs ya preparados. Se preservaron sus cinco archivos en disco y se retiraron únicamente del índice para restaurar el diff acotado del PR; no se reescribió historia ni se alteró código del perfil.
+
 - Dos fast-forward de dev durante el trabajo: se preservaron frecuencia de facturación e idiomas independientes; estos últimos se trasladaron a Datos personales y se añadieron cinco pruebas de cancelación/persistencia.
 - Se añadió H1.S4.M6 antes del cambio, para corregir el overflow de cabecera tablet demostrado; total 23 microtareas.
 - La falta de cuatro GET auxiliares obliga a evidencia aislada explícita. No se cambió mockBackend ni se ocultaron errores en el modo REAL.

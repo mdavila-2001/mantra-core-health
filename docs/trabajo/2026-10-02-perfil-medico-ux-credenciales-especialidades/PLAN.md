@@ -127,3 +127,6 @@ Durante la pausa dev avanzó a b84f74aaf3a359de93c53ab05941e2ec7ac5d0c1. Se inte
 
 ## Corrección final del sello público, antes de cambiar padding
 Medición Chromium a 390 px: insignia/grid 276 px, sello 275,625 px más 26 px de padding/borde. El grupo disponibilidad suma padding horizontal al ya provisto por Card. Se elimina ese padding local redundante, conservándolo en bio, para dar al sello el ancho real de la tarjeta. Se mantiene el límite de una columna en portada para evitar celdas desktop de 14rem. No se cambia SpecialtyBadge/StatusSeal ni presupuestos.
+
+## Concurrencia y alcance de entrega
+Un commit concurrente 06ef94f6 sobre la misma rama añadió configuración VS Code y documentación de sincronización/SSH ajenas, además de normalizar nuestros logs ya preparados. Se preservaron sus cinco archivos en disco y se retiraron únicamente del índice para restaurar el diff acotado del PR; no se reescribió historia ni se alteró código del perfil.
