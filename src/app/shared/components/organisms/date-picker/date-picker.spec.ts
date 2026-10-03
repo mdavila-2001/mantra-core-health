@@ -252,6 +252,35 @@ describe('DatePicker', () => {
       expect(inputEl.selectionEnd).toBe(10);
     });
 
+    // Regresión 03/10/2026: vacío, la plantilla ocupa sólo la izquierda del
+    // input y un clic a la derecha dejaba el cursor en el año; «01011990»
+    // tecleado quedaba en «DD/MM/0101» y el alta no avanzaba.
+    it('con el campo vacío, un clic en cualquier punto empieza por el día', () => {
+      fixture.componentRef.setInput('value', null);
+      fixture.detectChanges();
+
+      const inputEl = input()!;
+      inputEl.dispatchEvent(new MouseEvent('click'));
+
+      expect(inputEl.value).toBe('DD/MM/AAAA');
+      expect(inputEl.selectionStart).toBe(0);
+      expect(inputEl.selectionEnd).toBe(2);
+    });
+
+    it('el reajuste diferido del mouseup no pisa un dígito ya tecleado', async () => {
+      fixture.componentRef.setInput('value', null);
+      fixture.detectChanges();
+
+      const inputEl = input()!;
+      inputEl.focus();
+      inputEl.dispatchEvent(new MouseEvent('mouseup'));
+      inputEl.dispatchEvent(new KeyboardEvent('keydown', { key: '0', bubbles: true, cancelable: true }));
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      expect(inputEl.value).toBe('0D/MM/AAAA');
+      expect(inputEl.selectionStart).toBe(1);
+    });
+
     it('Tab navega de Día a Mes y de Mes a Año', () => {
       fixture.componentRef.setInput('value', new Date(2026, 6, 15));
       fixture.detectChanges();
