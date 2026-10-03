@@ -1,0 +1,18 @@
+# Estado de los 8 PR (gh pr view, consultado el 2026-10-03)
+
+mantra-core-health-api#537 MERGED base=test rama=justin/catalogo-afiliacion-seed-test mergedAt=2026-10-03T05:30:59Z por=PabloArauzCaballero merge-commit=5e245aec09d4a79cdbb58505c32e5721a1bbc554
+   fix(seed): el alta de organización ya no da 422 «catálogo de documentos de afiliación no disponible»
+mantra-core-health-api#538 MERGED base=dev rama=justin/catalogo-afiliacion-seed-dev mergedAt=2026-10-03T05:31:48Z por=Jsaldias39 merge-commit=dff74722ef89992daf54ce3ff1eefdabd18ac70c
+   fix(seed): el alta de organización ya no da 422 «catálogo de documentos de afiliación no disponible» (dev)
+mantra-core-health#869 MERGED base=test rama=justin/alta-organizacion-boton-y-e2e-test mergedAt=2026-10-03T05:29:18Z por=PabloArauzCaballero merge-commit=af52ae3a740c4031cba9f7b961ae797d62936064
+   fix(auth): «Ir a iniciar sesión» del alta de aseguradora no hacía nada + pruebas de navegador contra la API real
+mantra-core-health#870 MERGED base=test rama=justin/sin-delivery-test mergedAt=2026-10-03T05:29:24Z por=PabloArauzCaballero merge-commit=62d30a181a6ad4da0d3565262030f0c2fd84fed5
+   feat(farmacia): el pedido sólo se retira en la farmacia; fuera el envío a domicilio de la pantalla
+mantra-core-health#874 MERGED base=dev rama=justin/alta-organizacion-boton-y-e2e-dev mergedAt=2026-10-03T05:35:02Z por=PabloArauzCaballero merge-commit=9a5350f2f2d968e416e0ec5d70727a6c5639f783
+   fix(auth): «Ir a iniciar sesión» del alta de aseguradora no hacía nada + pruebas de navegador contra la API real (dev)
+mantra-core-health#875 MERGED base=dev rama=justin/sin-delivery-dev mergedAt=2026-10-03T05:35:08Z por=PabloArauzCaballero merge-commit=b96543e329c8474bb8278b6331c90d96878f63dd
+   feat(farmacia): el pedido sólo se retira en la farmacia; fuera el envío a domicilio de la pantalla (dev)
+mantra-core-health#876 MERGED base=mockup rama=justin/alta-organizacion-boton-y-e2e mergedAt=2026-10-03T05:37:28Z por=PabloArauzCaballero merge-commit=9ace190536ec3936d74bf602b71154bba30e78ff
+   fix(auth): «Ir a iniciar sesión» del alta de aseguradora no hacía nada + pruebas de navegador contra la API real (mockup)
+mantra-core-health#877 MERGED base=mockup rama=justin/sin-delivery mergedAt=2026-10-03T05:45:24Z por=PabloArauzCaballero merge-commit=49a5f084b6ee9e6a1671b5da42631631839c3f8e
+   feat(farmacia): el pedido sólo se retira en la farmacia; fuera el envío a domicilio de la pantalla (mockup)

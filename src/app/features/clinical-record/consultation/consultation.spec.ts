@@ -58,7 +58,6 @@ const CLAVES = [
   'medicacion',
   'planes',
   'reconsulta',
-  'alergias',
   'pagos',
 ];
 const TITULOS = [
@@ -68,7 +67,6 @@ const TITULOS = [
   'Receta',
   'Plan de cuidados',
   'Reconsulta',
-  'Alergia',
   'Pagos',
 ];
 
@@ -120,7 +118,7 @@ describe('Consultation', () => {
     componente = await harness.navigateByUrl('/medical-records/p-1/consultation', Consultation);
   });
 
-  it('ofrece las ocho posibilidades en la rejilla, con su cantidad', async () => {
+  it('ofrece las siete posibilidades en la rejilla, con su cantidad', async () => {
     await responderLectura();
 
     const casillas = interno<() => readonly { clave: string; titulo: string; cantidad: number | null }[]>(
@@ -140,62 +138,26 @@ describe('Consultation', () => {
     const botones = harness.routeNativeElement!.querySelectorAll(
       '[data-testid^="consulta-casilla-"]',
     );
-    expect(botones).toHaveLength(8);
+    expect(botones).toHaveLength(7);
   });
 
   /**
-   * En la cita, lo emitido cuelga de la respuesta del formulario médico: el
-   * bloque la pide y viene cargada con la más reciente.
+   * La alergia se carga como diagnóstico (cliente, 02/10/2026). Ofrecerla acá
+   * dejaba un registro que el expediente ya no muestra en ninguna pestaña: lo
+   * cargado en la consulta tiene que ser lo que la historia muestra.
    */
-  it('el plan de cuidados exige la respuesta del formulario médico, y viene cargada', async () => {
-    await responderLectura({
-      encounters: [{ id: 'e-1', statusConceptId: 'st', startAt: '2026-03-01T10:00:00Z' }],
-    });
-    interno<(key: string) => void>('abrir').call(componente, 'planes');
-    harness.fixture.detectChanges();
+  it('no ofrece la alergia como casilla aparte', async () => {
+    await responderLectura();
 
-    const plan = harness.fixture.debugElement.query(By.directive(CarePlanBlock))
-      .componentInstance as CarePlanBlock;
-    expect(plan.exigeRespuesta()).toBe(true);
-
-    http
-      .expectOne(
-        (r) =>
-          r.method === 'GET' && r.url === '/forms/instances' && r.params.get('encounter') === 'e-1',
-      )
-      .flush({
-        encounterId: 'e-1',
-        items: [
-          {
-            id: 'inst-1',
-            resourceId: 'e-1',
-            resourceTypeConceptId: 'rt',
-            schemaVersion: 1,
-            closedAt: '2026-03-01T10:30:00Z',
-            createdAt: '2026-03-01T10:05:00Z',
-          },
-        ],
-        limit: 50,
-        truncated: false,
-      });
-    harness.fixture.detectChanges();
-
-    const picker = harness.fixture.debugElement.query(By.directive(FormResponsePicker))
-      .componentInstance as FormResponsePicker;
-    // Una sola respuesta: elegida sola, y el selector no se puede tocar.
-    expect(picker.seleccionada()).toBe('inst-1');
-    const selector = harness.routeNativeElement!.querySelector(
-      '[data-testid="respuesta-del-formulario"]',
-    );
-    expect(selector).not.toBeNull();
-    expect(selector!.querySelector('[disabled], [aria-disabled="true"]')).not.toBeNull();
+    expect(
+      harness.routeNativeElement!.querySelector('[data-testid="consulta-casilla-alergias"]'),
+    ).toBeNull();
+    expect(
+      interno<() => readonly { clave: string }[]>('casillas')().map((c) => c.clave),
+    ).not.toContain('alergias');
   });
 
-  /**
-   * Pagos es la única casilla que no escribe, y la bajada del modal es la
-   * única línea que dice qué va a pasar al confirmar. Prometer que «se
-   * registra» ahí sería mentir en el peor lugar posible.
-   */
+  /** El plan de cuidados se vincula a la respuesta del formulario médico. */
   it('el plan de cuidados exige la respuesta del formulario médico, y viene cargada', async () => {
     await responderLectura({
       encounters: [{ id: 'e-1', statusConceptId: 'st', startAt: '2026-03-01T10:00:00Z' }],
@@ -242,7 +204,7 @@ describe('Consultation', () => {
   it('destruye el modal al cerrar y permite reabrir la misma casilla de inmediato', async () => {
     await responderLectura();
     const tile = harness.routeNativeElement!.querySelector<HTMLButtonElement>(
-      '[data-testid="consulta-casilla-alergias"]',
+      '[data-testid="consulta-casilla-planes"]',
     )!;
     tile.click();
     await harness.fixture.whenStable();
@@ -283,9 +245,9 @@ describe('Consultation', () => {
     await responderLectura();
 
     const abrir = interno<(clave: string) => void>('abrir').bind(componente);
-    abrir('alergias');
-    expect(interno<() => string | null>('casillaAbierta')()).toBe('alergias');
-    expect(interno<() => string>('tituloDelModal')()).toBe('Nueva alergia');
+    abrir('planes');
+    expect(interno<() => string | null>('casillaAbierta')()).toBe('planes');
+    expect(interno<() => string>('tituloDelModal')()).toBe('Abrir un plan de cuidados');
 
     abrir('medicacion');
     expect(interno<() => string | null>('casillaAbierta')()).toBe('medicacion');
