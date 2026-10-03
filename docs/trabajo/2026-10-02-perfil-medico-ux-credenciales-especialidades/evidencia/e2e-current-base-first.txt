@@ -1,0 +1,56 @@
+
+Running 4 tests using 1 worker
+
+corepack.cmd : (node:22444) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+En línea: 2 Carácter: 179
++ ... OLATED='1'; corepack.cmd yarn pw playwright/practitioner-profile-ux.s ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ((node:22444) Wa... env being set.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+(Use `node --trace-warnings ...` to show where the warning was created)
+BACKEND_HEALTH=200
+EVIDENCE_MODE=ISOLATED: signature-assets, insurance-networks, insurance-carriers y service-offerings simulados; resto API real
+  ok 1 [chromium] › playwright\practitioner-profile-lists.spec.ts:170:5 › listados densos, respaldo autorizado y matriz visual conservan los datos reales al recargar (51.1s)
+BACKEND_HEALTH=200
+EVIDENCE_MODE=ISOLATED: signature-assets, insurance-networks, insurance-carriers y service-offerings simulados; resto API real
+  x  2 [chromium] › playwright\practitioner-profile-lists.spec.ts:437:5 › un paciente consulta especialidades en portada y credenciales públicas sin respaldos privados (17.3s)
+Testing stopped early after 1 maximum allowed failures.
+
+
+  1) [chromium] › playwright\practitioner-profile-lists.spec.ts:437:5 › un paciente consulta especialidades en portada y credenciales públicas sin respaldos privados
+
+    Error: expect(locator).not.toContainText(expected) failed
+
+    Locator: getByRole('tabpanel')
+    Expected substring: not "Cardiología"
+    Error: strict mode violation: getByRole('tabpanel') resolved to 2 elements:
+        1) <app-tab class="tab" tabindex="0" role="tabpanel" id="mch-tab-28-panel" _nghost-ng-c265247973="" _ngcontent-ng-c3881421748="" aria-labelledby="mch-tab-28-tab" label="Credenciales y verificaciones" data-tutorial-id="perfil-credenciales" apptutorialtarget="perfil-credenciales">…</app-tab> aka getByRole('tabpanel', { name: 'Credenciales y verificaciones' })
+        2) <app-tab class="tab" tabindex="0" role="tabpanel" label="Consultas" id="mch-tab-25-panel" _nghost-ng-c265247973="" _ngcontent-ng-c331014764="" aria-labelledby="mch-tab-25-tab">…</app-tab> aka getByRole('tabpanel', { name: 'Consultas' })
+
+    Call log:
+      - Expect "not toContainText" with timeout 15000ms
+      - waiting for getByRole('tabpanel')
+
+
+      526 |         ).toHaveCount(7);
+      527 |         await expect(panel.getByRole('heading', { name: /^Especialidades/ })).toHaveCount(0);
+    > 528 |         await expect(panel).not.toContainText(specialty!.display);
+          |                                 ^
+      529 |         await expect(page.getByRole('button', { name: /Descargar respaldo/ })).toHaveCount(0);
+      530 |         const specialtyBounds = await page.locator('.profesional__especialidades app-specialty-badge').evaluateAll((badges) =>
+      531 |           badges.map((badge) => {
+        at C:\Alovida\mantra-core-health\playwright\practitioner-profile-lists.spec.ts:528:33
+
+    attachment #2: screenshot (image/png) ──────────────────────────────────────────────────────────
+    artifacts\playwright\salida\practitioner-profile-lists-5940f-icas-sin-respaldos-privados-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: artifacts\playwright\salida\practitioner-profile-lists-5940f-icas-sin-respaldos-privados-chromium\error-context.md
+
+  1 failed
+    [chromium] › playwright\practitioner-profile-lists.spec.ts:437:5 › un paciente consulta especialidades en portada y credenciales públicas sin respaldos privados
+  2 did not run
+  1 passed (1.2m)
+  1 error was not a part of any test, see above for details
+EXIT_CODE=1

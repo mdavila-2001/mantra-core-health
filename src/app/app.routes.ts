@@ -1140,29 +1140,46 @@ const RUTAS_ANIDADAS: Readonly<Record<string, Routes>> = {
 };
 
 function rutasDeSecciones(): Routes {
-  return APP_SECTIONS.map((section) => ({
-    path: section.path,
-    title: titleOf(section),
-    ...(RUTAS_ANIDADAS[section.path] === undefined
-      ? {}
-      : { children: RUTAS_ANIDADAS[section.path] }),
-    // Los roles que el registro declara se hacen cumplir **también por ruta**
-    // (carril 02). Filtrar el menú es cortesía; quien escribe la dirección a
-    // mano llega igual, y la corrección #2 pide que la Guía de profesionales no
-    // sea *accesible* para quien no es paciente, no sólo que no se vea.
-    //
-    // Excepción: una sección de `SECCIONES_REDIRIGIDAS` no lleva `canActivate`
-    // — Angular lo rechaza en tiempo de configuración (`NG04014`): un
-    // `redirectTo` se resuelve antes que cualquier guard, así que combinarlos
-    // no es «más seguro», es una ruta inválida.
-    ...(SECCIONES_REDIRIGIDAS[section.path] === undefined
-      ? { canActivate: [seccionRolesGuard] }
-      : {}),
-    // La sección viaja con la ruta: el placeholder la lee de acá y no necesita
-    // saber cuál de todas es.
-    data: { [SECTION_ROUTE_DATA]: section },
-    ...componenteDe(section),
-  }));
+  return APP_SECTIONS.flatMap((section) => {
+    const ruta: Routes[number] = {
+      path: section.path,
+      title: titleOf(section),
+      ...(RUTAS_ANIDADAS[section.path] === undefined
+        ? {}
+        : { children: RUTAS_ANIDADAS[section.path] }),
+      // Los roles que el registro declara se hacen cumplir **también por ruta**
+      // (carril 02). Filtrar el menú es cortesía; quien escribe la dirección a
+      // mano llega igual, y la corrección #2 pide que la Guía de profesionales no
+      // sea *accesible* para quien no es paciente, no sólo que no se vea.
+      //
+      // Excepción: una sección de `SECCIONES_REDIRIGIDAS` no lleva `canActivate`
+      // — Angular lo rechaza en tiempo de configuración (`NG04014`): un
+      // `redirectTo` se resuelve antes que cualquier guard, así que combinarlos
+      // no es «más seguro», es una ruta inválida.
+      ...(SECCIONES_REDIRIGIDAS[section.path] === undefined
+        ? { canActivate: [seccionRolesGuard] }
+        : {}),
+      // La sección viaja con la ruta: el placeholder la lee de acá y no necesita
+      // saber cuál de todas es.
+      data: { [SECTION_ROUTE_DATA]: section },
+      ...componenteDe(section),
+    };
+    if (section.path !== 'my-account') {
+      return [ruta];
+    }
+
+    // Cancelar la edición conserva esta URL, pero sigue siendo «Mi perfil»:
+    // mismo cargador y política, sin otra sección ni redirección.
+    return [
+      ruta,
+      {
+        ...ruta,
+        path: 'account/profile',
+        pathMatch: 'full',
+        data: { ...ruta.data, [ROLES_ROUTE_DATA]: section.roles },
+      },
+    ];
+  });
 }
 
 /**

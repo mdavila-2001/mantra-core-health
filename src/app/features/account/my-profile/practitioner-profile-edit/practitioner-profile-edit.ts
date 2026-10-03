@@ -485,12 +485,16 @@ export class PractitionerProfileEdit {
 
   protected readonly titulo = signal('');
   protected readonly bio = signal('');
+  protected readonly cancelandoEdicion = signal(false);
+  private presentacionGuardada = '';
+  private textoNacimientoGuardado = '';
+  private textoNacimientoEditado: string | null = null;
   /* «Acepto pacientes nuevos» ya no se pregunta (propietario, 13/09/2026):
      siempre está habilitado. Ver `guardarPresentacion`. */
   protected readonly telemedicina = signal(false);
 
   /* -- Idiomas en los que atiende ------------------------------------------
-     La ficha los enseña en «Credenciales» y el editor no los ofrecía en
+     La ficha los enseña en «Datos personales» y el editor no los ofrecía en
      ninguna pestaña: el perfil los leía (`languages`) y ningún formulario los
      escribía (doctor, 02/10/2026). Se corrigen como lista entera —no se
      agregan de a uno como los títulos— porque no tramitan nada: no hay
@@ -1723,6 +1727,13 @@ export class PractitionerProfileEdit {
     if (this.ramasMunicipios().length === 0 && !this.catalogoMunicipiosCaido()) {
       this.cargarMunicipios();
     }
+    const nacimiento = this.fechaNacimiento();
+    this.textoNacimientoGuardado = nacimiento === null ? '' : [
+      String(nacimiento.getDate()).padStart(2, '0'),
+      String(nacimiento.getMonth() + 1).padStart(2, '0'), nacimiento.getFullYear(),
+    ].join('/');
+    this.textoNacimientoEditado = null;
+    this.presentacionGuardada = this.instantaneaPresentacion();
   }
 
   /**
@@ -1758,32 +1769,60 @@ export class PractitionerProfileEdit {
     this.cargarMunicipios();
   }
 
-  /**
-   * Cancela la edición de Datos personales, Contacto y Facturación.
-   *
-   * No navega a ningún lado: es un formulario repartido en tres pestañas de
-   * la MISMA pantalla, y «cancelar» yéndose obligaría a volver a entrar para
-   * seguir mirando el resto del perfil. Vuelve a sembrar los tres paneles con
-   * lo último que el servidor confirmó —la misma función que ya usa un
-   * guardado exitoso—, así que descarta lo tipeado sin tocar la red.
-   *
-   * Nada mientras hay un guardado en curso: cancelar a mitad de un `PATCH`
-   * dejaría el formulario mostrando un valor que la respuesta, todavía en
-   * vuelo, podría pisar igual.
-   */
-  protected cancelarEdicion(): void {
+  /** DatePicker conserva texto inválido sin emitir un valor de fecha. */
+  protected recordarTextoNacimiento(evento: Event): void {
+    const control = evento.currentTarget;
+    if (!(control instanceof HTMLElement)) return;
+    const campo = control.querySelector('input');
+    if (campo) this.textoNacimientoEditado = campo.value.trim().replace(/^DD\/MM\/AAAA$/, '');
+  }
+
+  /** Compara lo escrito, incluso inválido, sin ejecutar validadores ni armar un PATCH. */
+  private instantaneaPresentacion(): string {
+    return JSON.stringify([
+      this.titulo(), this.bio(), this.telemedicina(), this.nombre(),
+      this.segundoNombre(), this.tercerNombre(), this.nombresExtra(),
+      this.apellidoPaterno(), this.apellidoMaterno(), this.celularPersonal.value,
+      this.correoPersonal(), this.correoTrabajo(), this.nit(), this.razonSocial(),
+      this.frecuenciaFacturacionSeguro(),
+      this.fechaNacimiento() === null ? null : fechaIso(this.fechaNacimiento() as Date), this.sexoAlNacer(), this.departamentoEmisor(),
+      this.municipioResidencia(), this.direccion(), this.direccionTrabajo(),
+      this.gpsDomicilioInicial(), this.gpsTrabajoInicial(),
+      this.textoNacimientoEditado ?? this.textoNacimientoGuardado,
+    ]);
+  }
+
+  /** Salir sólo después de decidir sobre el borrador de los tres paneles. */
+  protected async cancelarEdicion(): Promise<void> {
     const original = this.datos();
-    if (original === null || this.guardandoPresentacion()) {
+    if (original === null || this.guardandoPresentacion() || this.guardandoIdiomas() || this.cancelandoEdicion() ||
+        this.subiendoLogo() || this.firma.subiendo() || this.sello.subiendo()) {
       return;
     }
-    this.erroresDelServidor.set(new Map());
-    this.sembrarFormulario(original);
-    this.logoPendiente.set(null);
-    this.logoVisible.set(this.logoGuardado());
-    this.errorDelLogo.set('');
-    this.firma.descartar();
-    this.sello.descartar();
-    this.toasts.success('Descartamos los cambios sin guardar.', 'Edición cancelada');
+    this.cancelandoEdicion.set(true);
+    try {
+      const hayCambios = this.instantaneaPresentacion() !== this.presentacionGuardada ||
+        this.logoPendiente() !== null || this.firma.cambio !== undefined ||
+        this.sello.cambio !== undefined || this.idiomasCambiaron() ||
+        this.idiomas().some((language) => language.idioma === null);
+      if (hayCambios && !(await this.dialogs.confirmarDescarte())) return;
+
+      this.erroresDelServidor.set(new Map());
+      this.sembrarIdiomas(original);
+      this.sembrarFormulario(original);
+      this.logoPendiente.set(null);
+      this.logoVisible.set(this.logoGuardado());
+      this.errorDelLogo.set('');
+      this.firma.descartar();
+      this.sello.descartar();
+      if (!(await this.router.navigate(['/account/profile']))) {
+        this.toasts.error('No pudimos volver a tu perfil. Probá de nuevo.', 'Perfil');
+      }
+    } catch {
+      this.toasts.error('No pudimos volver a tu perfil. Probá de nuevo.', 'Perfil');
+    } finally {
+      this.cancelandoEdicion.set(false);
+    }
   }
 
   /**

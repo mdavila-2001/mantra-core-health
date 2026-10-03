@@ -62,6 +62,7 @@ describe('ShellLayout', () => {
            comprobar. */
         provideRouter([
           { path: 'my-account', children: [] },
+          { path: 'account/profile', children: [] },
           { path: 'my-account/medical-record', children: [] },
           { path: 'my-account/appointments/book/:id', children: [] },
           { path: 'settings', children: [] },
@@ -993,6 +994,16 @@ describe('ShellLayout', () => {
         await ir('/my-account');
 
         expect(marcadas()).toEqual(['/my-account']);
+      });
+
+      it('el alias del perfil marca el único enlace de Mi perfil', async () => {
+        await ir('/account/profile?pestana=personales#datos');
+
+        expect(router.url).toBe('/account/profile?pestana=personales#datos');
+        expect(marcadas()).toEqual(['/my-account']);
+        expect(
+          raiz().querySelector('[data-testid="nav-enlace"][data-route="/account/profile"]'),
+        ).toBeNull();
       });
 
       it('en una hija que también está en el menú, gana la hija sobre su padre', async () => {

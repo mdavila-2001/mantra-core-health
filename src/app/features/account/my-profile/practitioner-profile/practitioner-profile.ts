@@ -4,6 +4,7 @@ import { catchError, forkJoin, map, of, switchMap, type Observable } from 'rxjs'
 import { AuthService } from '../../../../core/auth/auth.service';
 import { CommunityClient } from '../../../../core/data-access/community/community.client';
 import { FilesClient } from '../../../../core/data-access/files/files.client';
+import { FileDownloader } from '../../../../core/data-access/files/file-downloader';
 import { InsuranceClient } from '../../../../core/data-access/insurance/insurance.client';
 import type { PractitionerInsuranceNetwork } from '../../../../core/data-access/insurance/insurance.types';
 import { FirmaYSelloClient, type FirmaYSello } from '../../../../core/data-access/profiles/firma-y-sello.client';
@@ -45,6 +46,7 @@ import type {
   MatriculaVisible,
   PerfilProfesionalVisible,
   PuntoDeSerie,
+  RespaldoCredencial,
   SedeVisible,
   SeguroVisible,
 } from './practitioner-profile-view/practitioner-profile-view.types';
@@ -177,6 +179,26 @@ export class PractitionerProfile {
   private readonly profiles = inject(ProfilesClient);
   private readonly terminology = inject(TerminologyClient);
   private readonly files = inject(FilesClient);
+  private readonly descargas = inject(FileDownloader);
+  protected readonly descargandoRespaldo = signal<string | null>(null);
+
+  protected descargarRespaldo(respaldo: RespaldoCredencial): void {
+    if (this.descargandoRespaldo() !== null) return;
+    const propio = this.visible();
+    const archivos = [...(propio?.formacion ?? []), ...(propio?.matriculas ?? [])];
+    if (!archivos.some((fila) => fila.fileId === respaldo.fileId)) return;
+    this.descargandoRespaldo.set(respaldo.fileId);
+    this.files.contentDataUrl(respaldo.fileId).subscribe({
+      next: (contenido) => {
+        this.descargas.trigger(contenido, respaldo.nombre);
+        this.descargandoRespaldo.set(null);
+      },
+      error: () => {
+        this.descargandoRespaldo.set(null);
+        this.toasts.error('No pudimos traer el archivo. Probá de nuevo en un momento.', 'Credenciales');
+      },
+    });
+  }
   private readonly sites = inject(PracticeSitesClient);
   private readonly logo = inject(LogoDelConsultorioClient);
   private readonly firmaYSello = inject(FirmaYSelloClient);
@@ -480,7 +502,7 @@ export class PractitionerProfile {
   private convertir(resuelto: PerfilResuelto): PerfilProfesionalVisible {
     const { perfil, etiquetas, fotoUrl, logoUrl, firmaYSello, sedes, seguros } = resuelto;
     const especialidades = this.especialidades(perfil, etiquetas);
-    const afiliaciones = afiliacionesDe(perfil);
+    const afiliaciones = visibleAffiliations(perfil);
     return {
       sedes: sedes.map(sedeVisible),
       seguros: seguros === null ? null : segurosVisibles(seguros),
@@ -589,23 +611,20 @@ export class PractitionerProfile {
       .sort((a, b) => fecha(b.issueDate) - fecha(a.issueDate))
       .map((credencial: PractitionerCredential) => {
         const vencida = credencial.expiryDate !== undefined && credencial.expiryDate < ahora;
+        const decisionSeal = sello(etiquetas, credencial.stateConceptId);
         return {
           id: credencial.id,
+          fileId: credencial.fileId,
           tipo: label(etiquetas, credencial.credentialTypeConceptId),
           numero: credencial.number,
           institucion: credencial.issuingInstitutionText ?? '',
           desde: credencial.issueDate ?? null,
           hasta: credencial.expiryDate ?? null,
           estado: label(etiquetas, credencial.stateConceptId),
-          // El vencimiento manda sobre todo lo demás —una credencial vencida no
-          // habilita, por más verificada que esté—; después la verificación
-          // manda sobre el estado del catálogo, porque una credencial con fecha
-          // de comprobación está verificada aunque el concepto no se resuelva.
-          sello: vencida
-            ? ('expired' as StatusSealVariant)
-            : credencial.verifiedAt !== undefined
-              ? ('approved' as StatusSealVariant)
-              : sello(etiquetas, credencial.stateConceptId),
+          // La decisión viene del catálogo. Fuente y fecha de revisión también
+          // existen en rechazos; el vencimiento cambia el sello, no la decisión.
+          approved: decisionSeal === 'approved',
+          sello: vencida ? ('expired' as StatusSealVariant) : decisionSeal,
           vencida,
           fuenteVerificacion: credencial.verificationSourceUri,
         };
@@ -618,6 +637,7 @@ export class PractitionerProfile {
   ): readonly MatriculaVisible[] {
     return perfil.licenses.map((matricula: PractitionerLicense) => ({
       id: matricula.id,
+      fileId: matricula.fileId,
       jurisdiccion: label(etiquetas, matricula.jurisdictionConceptId),
       numero: matricula.licenseNumber,
       autoridad: matricula.regulatoryAuthority ?? '',
@@ -672,15 +692,18 @@ function label(etiquetas: ConceptLabels, conceptId: string | undefined): string 
  * neutro — afirmar «verificado» sobre un concepto que no se pudo leer sería
  * inventar, y acá lo que se afirma es la habilitación de alguien para ejercer.
  */
-function sello(etiquetas: ConceptLabels, conceptId: string | undefined): StatusSealVariant {
+export function sello(etiquetas: ConceptLabels, conceptId: string | undefined): StatusSealVariant {
   const codigo = conceptId === undefined ? undefined : etiquetas.get(conceptId)?.code;
   if (codigo === undefined) {
     return 'unknown';
   }
-  if (CODIGOS_EN_ORDEN.some((esperado) => codigo.includes(esperado))) {
+  if (codigo === 'REJECTED' || codigo === 'REVOKED' || codigo.endsWith('_REJECTED') || codigo.endsWith('_REVOKED')) return 'rejected';
+  if (codigo === 'EXPIRED' || codigo.endsWith('_EXPIRED')) return 'expired';
+  if (codigo.endsWith('_PENDING') || codigo === 'PENDING') return 'pending';
+  if (CODIGOS_EN_ORDEN.includes(codigo)) {
     return 'approved';
   }
-  if (CODIGOS_PENDIENTES.some((esperado) => codigo.includes(esperado))) {
+  if (CODIGOS_PENDIENTES.includes(codigo)) {
     return 'in-review';
   }
   return 'unknown';
@@ -710,7 +733,16 @@ function fecha(valor: Date | undefined): number {
  * al contrato de la vista y se reparte en los dos grupos que pide la pestaña
  * Trayectoria — «actividad actual» primero, por ser lo más relevante hoy.
  */
-function afiliacionesDe(perfil: OwnPractitionerProfile): {
+const AFFILIATION_SEALS: Readonly<Record<PractitionerAffiliation['statusKind'], StatusSealVariant>> = {
+  aprobado: 'approved', pendiente: 'pending', rechazado: 'rejected',
+  revocado: 'rejected', declarado: 'unknown', desconocido: 'unknown',
+};
+const AFFILIATION_STATUS_LABELS: Readonly<Record<PractitionerAffiliation['statusKind'], string>> = {
+  aprobado: 'Verificado', pendiente: 'Pendiente', rechazado: 'Rechazado',
+  revocado: 'Revocado', declarado: 'Declarado', desconocido: 'Sin determinar',
+};
+
+export function visibleAffiliations(perfil: OwnPractitionerProfile): {
   readonly actual: readonly AfiliacionVisible[];
   readonly historica: readonly AfiliacionVisible[];
 } {
@@ -724,6 +756,8 @@ function afiliacionesDe(perfil: OwnPractitionerProfile): {
       desde: afiliacion.startDate,
       hasta: afiliacion.endDate,
       actual: afiliacion.current,
+      sello: AFFILIATION_SEALS[afiliacion.statusKind],
+      estado: AFFILIATION_STATUS_LABELS[afiliacion.statusKind],
     }));
   return {
     actual: visibles.filter((afiliacion) => afiliacion.actual),

@@ -1,0 +1,312 @@
+
+  Informe documental
+  ══════════════════
+
+  ✗ inventarios al día
+      los inventarios generados reflejan el código
+      ✗ desactualizado: docs/reports/generated/route-inventory.md
+      ✗ desactualizado: docs/reports/generated/component-inventory.md
+      ✗ desactualizado: docs/reports/generated/api-inventory.md
+      ✗ desactualizado: docs/reports/generated/module-graph.md
+      ✗ desactualizado: docs/reports/generated/e2e-inventory.md
+      5 inventario(s) no reflejan el código. Ejecutá: node scripts/generate-inventory.mjs
+
+  ✗ arquitectura
+      sin ciclos, capas en una dirección, red confinada
+      ✗ check-architecture
+      1 dependencia(s) circular(es):
+      src/app/core/data-access/pharmacy-campaigns/pharmacy-campaigns.client.ts
+      → src/app/core/data-access/pharmacy-campaigns/pharmacy-campaigns.fixtures.ts
+      4 import(s) contra la dirección de las capas:
+      src/app/core/pdf-branding/pdf-branding.service.spec.ts
+      → src/app/shared/utils/pdf-export/pdf-firma.ts
+      src/app/core/pdf-branding/pdf-branding.service.spec.ts
+      → src/app/shared/utils/pdf-export/pdf-logo.ts
+      src/app/core/pdf-branding/pdf-branding.service.ts
+      → src/app/shared/utils/pdf-export/pdf-firma.ts
+      src/app/core/pdf-branding/pdf-branding.service.ts
+      → src/app/shared/utils/pdf-export/pdf-logo.ts
+
+  ✗ enlaces documentales
+      ningún enlace ni ancla interna rota
+      ✗ check-doc-links — 24 enlace(s) roto(s) de 1258
+      docs/tareas/subtarea-2.4-transparencia-copagos/verification.md → destino inexistente: ../../../artifacts/patient-coverage-copays/final-mocks/coverage-1440.png
+      docs/tareas/subtarea-2.4-transparencia-copagos/verification.md → destino inexistente: ../../../artifacts/patient-coverage-copays/final-mocks/coverage-390.png
+      docs/tareas/subtarea-2.4-transparencia-copagos/verification.md → destino inexistente: ../../../artifacts/patient-coverage-copays/final-mocks/pharmacy-partial-1440.png
+      docs/tareas/subtarea-2.4-transparencia-copagos/verification.md → destino inexistente: ../../../artifacts/patient-coverage-copays/final-mocks/pharmacy-partial-390.png
+      docs/tareas/subtarea-2.4-transparencia-copagos/verification.md → destino inexistente: ../../../artifacts/patient-coverage-copays/final-mocks/diagnostics-1440.png
+      docs/tareas/subtarea-2.4-transparencia-copagos/verification.md → destino inexistente: ../../../artifacts/patient-coverage-copays/final-mocks/diagnostics-390.png
+      docs/tareas/subtarea-2.4-transparencia-copagos/verification.md → destino inexistente: ../../../artifacts/patient-coverage-copays/final-real-profile/coverage-1440.png
+      docs/tareas/subtarea-2.4-transparencia-copagos/verification.md → destino inexistente: ../../../artifacts/patient-coverage-copays/final-real-profile/coverage-390.png
+      docs/tareas/subtarea-2.4-transparencia-copagos/verification.md → destino inexistente: ../../../artifacts/patient-coverage-copays/final-real-profile/traffic-1440.json
+      docs/tareas/subtarea-2.4-transparencia-copagos/verification.md → destino inexistente: ../../../artifacts/patient-coverage-copays/final-real-profile/traffic-390.json
+      docs/trabajo/2026-09-23-paciente-closure/PLAN.md → destino inexistente: ../../../../MetaPrompts/PLAN_PACIENTE_01_METAPROMPT_17b41ce468a1_2026-09-23/PATIENT_PLAN_01_METAPROMPT_2026-09-23.md
+      docs/trabajo/2026-09-23-paciente-closure/PLAN.md → destino inexistente: ../../../../MetaPrompts/PLAN_PACIENTE_01_METAPROMPT_17b41ce468a1_2026-09-23/SOURCE.md
+      docs/trabajo/2026-09-23-paciente-closure/PLAN.md → destino inexistente: ../../../../MetaPrompts/PLAN_PACIENTE_01_METAPROMPT_17b41ce468a1_2026-09-23/REPORTE.md
+      docs/trabajo/2026-09-25-encuentro-clinico/c0/evidencia/doble-revision-p1.md → destino inexistente: ../../../../../../.agents/skills/fable-visual-proof/SKILL.md
+      docs/trabajo/2026-09-25-marcelo-calidad/FICHA-ORIGINAL.md → destino inexistente: ../../CONTRATO-CARGA-MASIVA.md
+      docs/trabajo/2026-09-25-marcelo-calidad/FICHA-ORIGINAL.md → destino inexistente: ../../Daily-Noche-2026-09-25.md
+      docs/trabajo/2026-09-25-marcelo-calidad/PLAN.md → destino inexistente: ../../../../../AlovidaPromptManager/repartos/2026-09-25/PromptNoche/Marcelo/Noche-CargaMasiva.CalidadE2EVisualYGates/E2EPlaywrightCapturasDobleRevisionGatesYSegundoPerfil.md
+      docs/trabajo/2026-09-25-marcelo-calidad/REPORTE.md → destino inexistente: ../../../AlovidaPromptManager/repartos/2026-09-25/PromptNoche/Marcelo/Marcelo-Daily-Noche-2026-09-25.md
+      docs/work/Plan_Paciente_Laboratorio_2026-09-23_bb8a5f72a192/MATRIX.md → destino inexistente: ../../../../MetaPrompts/Plan_Paciente_Laboratorio_2026-09-23_bb8a5f72a192/evidence-corr34-full-baseline-20260924/GLOBAL-BASELINE-REPORT.md
+      docs/work/Plan_Paciente_Laboratorio_2026-09-23_bb8a5f72a192/PLAN.md → destino inexistente: ../../../../MetaPrompts/Plan_Paciente_Laboratorio_2026-09-23_bb8a5f72a192/evidence-corr34-full-baseline-20260924/GLOBAL-BASELINE-REPORT.md
+      docs/work/Plan_Paciente_Laboratorio_2026-09-23_bb8a5f72a192/PLAN.md → destino inexistente: ../../../../MetaPrompts/Plan_Paciente_Laboratorio_2026-09-23_bb8a5f72a192/LABORATORY_SOURCE.md
+      docs/work/Plan_Paciente_Laboratorio_2026-09-23_bb8a5f72a192/PLAN.md → destino inexistente: ../../../../MetaPrompts/Plan_Paciente_Laboratorio_2026-09-23_bb8a5f72a192/PROVENANCE.json
+      docs/work/Plan_Paciente_Laboratorio_2026-09-23_bb8a5f72a192/PLAN.md → destino inexistente: ../../../../MetaPrompts/Plan_Paciente_Laboratorio_2026-09-23_bb8a5f72a192/evidence-corr34-full-baseline-20260924/RUN-LOG.md
+      docs/work/Plan_Paciente_Laboratorio_2026-09-23_bb8a5f72a192/PLAN.md → destino inexistente: ../../../../MetaPrompts/Plan_Paciente_Laboratorio_2026-09-23_bb8a5f72a192/evidence-corr34-full-baseline-20260924/GLOBAL-BASELINE-REPORT.md
+
+  ✗ cobertura documental
+      rutas, organismos y servicios documentados; sin marcadores
+      ✗ check-doc-coverage — 58 hallazgo(s)
+      organismo sin mencionar: app-branch-bulk-import (BranchBulkImport)
+      organismo sin mencionar: app-promotion-rule-editor (PromotionRuleEditor)
+      servicio sin mencionar: LogoDeOrganizacionClient
+      servicio sin mencionar: LanguagesCatalog
+      servicio sin mencionar: MisStickers
+      servicio sin mencionar: PdfBrandingService
+      servicio sin mencionar: PersonLossReportStore
+      marcador provisional «TODO» en docs/brechas-front-back-2026-09-24/anexos/B-clinico.md
+      marcador provisional «TODO» en docs/brechas-front-back-2026-09-24/prompts/BR-02-mock-honesto-e-inventario.md
+      marcador provisional «TODO» en docs/brechas-front-back-2026-09-24/prompts/BR-03-enrutado-produccion-y-triage-ia.md
+      marcador provisional «TODO» en docs/brechas-front-back-2026-09-24/prompts/BR-05-archivos-descarga-y-acceso.md
+      marcador provisional «TODO» en docs/brechas-front-back-2026-09-24/prompts/BR-07-alta-y-perfil-del-medico.md
+      marcador provisional «TODO» en docs/brechas-front-back-2026-09-24/prompts/BR-09-altas-laboratorio-imagenologia-hospital.md
+      marcador provisional «TODO» en docs/brechas-front-back-2026-09-24/prompts/BR-16-plan-de-cuidados-plantillas-y-documentos.md
+      marcador provisional «TODO» en docs/brechas-front-back-2026-09-24/prompts/BR-18-formularios-dinamicos.md
+      marcador provisional «TODO» en docs/brechas-front-back-2026-09-24/prompts/BR-30-contrato-ci-e2e-y-observabilidad.md
+      marcador provisional «TODO» en docs/progress/DECISIONS.md
+      marcador provisional «TODO» en docs/trabajo/2026-09-22-ender-simulador-cabecera/PLAN.md
+      marcador provisional «TODO» en docs/trabajo/2026-09-22-pablo-disciplina-tablas/PLAN.md
+      marcador provisional «TODO» en docs/trabajo/2026-09-23-continuacion-reserva-cotizaciones/PLAN.md
+      marcador provisional «TODO» en docs/trabajo/2026-09-23-continuacion-reserva-cotizaciones/REPORTE.md
+      marcador provisional «TODO» en docs/trabajo/2026-09-23-paciente-closure/PLAN.md
+      marcador provisional «TODO» en docs/trabajo/2026-09-23-paciente-closure/PROGRESS.md
+      marcador provisional «TODO» en docs/trabajo/2026-09-23-perfil-medico-configurar-tu-perfil/PLAN.md
+      marcador provisional «TODO» en docs/trabajo/2026-09-23-perfil-medico-configurar-tu-perfil/REPORTE.md
+      marcador provisional «TODO» en docs/trabajo/2026-09-24-insurance-exclusions-settlement-contracts/PLAN.md
+      marcador provisional «TODO» en docs/trabajo/2026-09-24-portabilidad-aseguradora/PLAN.md
+      marcador provisional «TODO» en docs/trabajo/2026-09-24-whatsapp-callcenter-aseguradora/PLAN.md
+      marcador provisional «TODO» en docs/trabajo/2026-09-25-encuentro-clinico/c0/PLAN.md
+      marcador provisional «TODO» en docs/trabajo/2026-09-25-encuentro-clinico/c0/REPORTE.md
+      marcador provisional «TODO» en docs/trabajo/2026-09-25-encuentro-clinico/c4/REPORTE.md
+      marcador provisional «TODO» en docs/trabajo/2026-09-25-encuentro-clinico/c6/REPORTE.md
+      marcador provisional «TODO» en docs/trabajo/2026-09-25-encuentro-clinico/c7/PLAN.md
+      marcador provisional «TODO» en docs/trabajo/2026-09-25-encuentro-clinico/c7/REPORTE.md
+      marcador provisional «TODO» en docs/trabajo/2026-09-25-encuentro-clinico/c9/PLAN.md
+      marcador provisional «TODO» en docs/trabajo/2026-09-25-farmacia-carrito-y-navegacion/PLAN.md
+      marcador provisional «TODO» en docs/trabajo/2026-09-25-farmacia-datos-y-contrato-real/PLAN.md
+      marcador provisional «TODO» en docs/trabajo/2026-09-25-farmacia-datos-y-contrato-real/REPORTE.md
+      marcador provisional «TODO» en docs/trabajo/2026-09-25-farmacia-datos/PLAN.md
+      marcador provisional «TODO» en docs/trabajo/2026-09-25-farmacia-datos/REPORTE.md
+      marcador provisional «TODO» en docs/trabajo/2026-09-25-insurance-preventive-campaigns/PLAN.md
+      marcador provisional «TODO» en docs/trabajo/2026-09-25-justin-farmacia-tienda/PLAN.md
+      marcador provisional «TODO» en docs/trabajo/2026-09-25-marcelo-calidad/FICHA-ORIGINAL.md
+      marcador provisional «TODO» en docs/trabajo/2026-09-25-marcelo-calidad/PLAN.md
+      marcador provisional «TODO» en docs/trabajo/2026-09-25-registrar-dependiente-por-ci/REPORTE.md
+      marcador provisional «TODO» en docs/trabajo/2026-09-26-campanas-aseguradora/PLAN.md
+      marcador provisional «TODO» en docs/trabajo/2026-09-30-sincronizacion-frontend-dev-test/PLAN.md
+      marcador provisional «TODO» en docs/trabajo/2026-09-30-sincronizacion-frontend-dev-test/REPORTE.md
+      marcador provisional «TODO» en docs/trabajo/2026-09-30-sincronizacion-frontend-dev-test/evidencia/historical-dev/docs/trabajo/2026-09-23-perfil-medico-configurar-tu-perfil/PLAN.md
+      marcador provisional «TODO» en docs/trabajo/2026-09-30-sincronizacion-frontend-dev-test/evidencia/historical-dev/docs/trabajo/2026-09-23-perfil-medico-configurar-tu-perfil/REPORTE.md
+      marcador provisional «TODO» en docs/trabajo/2026-10-01-homologacion-metodos-http/PLAN.md
+      marcador provisional «TODO» en docs/trabajo/2026-10-02-perfil-medico-ux-credenciales-especialidades/PLAN.md
+      marcador provisional «TODO» en docs/trabajo/2026-10-02-sincronizacion-dev-mockup/PLAN.md
+      marcador provisional «TODO» en docs/work/02-medical-module-plan-b57dfd316c4d/HANDOFF.md
+      marcador provisional «TODO» en docs/work/02-medical-module-plan-b57dfd316c4d/MATRIX.md
+      marcador provisional «TODO» en docs/work/02-medical-module-plan-b57dfd316c4d/PLAN.md
+      marcador provisional «TODO» en docs/work/02-medical-module-plan-b57dfd316c4d/REPORT.md
+      marcador provisional «TODO» en docs/work/02-medical-module-plan-b57dfd316c4d/evidence/h1-real-api/REPORT.md
+
+  ✗ deriva de contrato de API
+      los endpoints del código coinciden con los declarados
+      ✗ check-api-contract-drift
+      14 operación(es) que el código llama y la documentación no declara:
+      GET /insurance/my-claims
+      GET /pharmacy/catalog-products
+      GET /scheduling/service-availability
+      GET /scheduling/service-offerings
+      GET /tenants/:tenantId/logo
+      PATCH /pharmacies/:pharmacyId/inventory
+      PATCH /scheduling/service-offerings/:id
+      PATCH /tenants/:tenantId/branches/:branchId
+      POST /pharmacies/:pharmacyId/catalog-requests
+      POST /scheduling/service-offerings
+      POST /scheduling/service-offerings/:offeringId/holds
+      PUT /community/conversations/:conversationId/messages/:messageId/reaction
+      PUT /practitioners/me/sites/:siteId/logo
+      PUT /tenants/:tenantId/logo
+      1 operación(es) declarada(s) que el código no llama:
+      GET /pharmacies/:pharmacyId/inventory
+      Actualizá docs/integrations/backend-api.md.
+
+  ✓ prefijos de la API
+      las tres declaraciones de la superficie de red dicen lo mismo
+      ✓ check-api-prefixes
+      81 prefijos, iguales en las 3 fuentes
+      /access-requests  /accounting  /admin/analytics  /admin/catalog  /admin/content-packs  /admin/ops  /admin/qa  /admin/tenants  /ai  /auth-providers  /authz  /billing/service-catalog  /billing/simulated  /cds  /charts  /clinical  /common  /community  /consent  /delegated-access  /delegated-permission-sets  /dental-procedures  /diagnostic-results  /diagnostic-study-offerings  /diagnostic-units  /diagnostics/accessions  /diagnostics/containers  /diagnostics/lab  /diagnostics/patients  /diagnostics/reports  /diagnostics/service-requests  /diagnostics/specimens  /diagnostics/work-orders  /forms  /geo  /health-context  /iam  /identity  /insurance-brokers  /insurance-campaigns  /insurance-carrier-catalog  /insurance-carriers  /insurance-claims  /insurance-marketplace  /insurance-plans  /insurance-products  /insurance/analytics  /insurance/portability  /insurance/received-claims  /loyalty  /notifications  /org  /otel  /patient-spending  /patients/me  /patients/me/reviews  /pharma-labs  /pharmacies  /pharmacy  /pharmacy-inventory  /practices  /practitioner-delegates  /practitioners  /prescription-favorites  /price-schedules  /procedure-cases  /profiles  /promotions/me  /public  /quotations  /scheduling  /socket.io  /study-prices  /surveys  /system-context  /tenants  /terminology  /visit-agenda  /visit-records  /visit-requests  /visit-surveys
+
+  ✓ rutas contra prefijos
+      ninguna ruta del router empieza con un prefijo de la API
+      ✓ check-route-prefixes
+      267 rutas del router, ninguna colisiona con los 80 prefijos de la API
+      excepción declarada: 'practitioners' — cuelga de 'search': la URL real es /search/practitioners
+
+  ✗ clientes contra prefijos
+      toda llamada de core/data-access cae en un prefijo que el proxy enruta
+      ✗ check-client-prefixes — 1 operación(es) sin rutear
+      InsuranceClient (1)
+      GET /insurance/my-claims
+      El servidor de desarrollo responde estas rutas con el index.html de
+      Angular y un 200: el cliente recibe HTML donde espera JSON. Agregá el
+      prefijo a las TRES declaraciones (proxy.conf.json, proxy.conf.docker.json
+      y deploy/nginx.conf) y comprobá que no se coma una ruta del router.
+
+  ✓ tokens del sistema de diseño
+      el catálogo tipado y styles.css declaran lo mismo, en ambos sentidos
+      ✓ check-tokens
+      212 tokens, iguales en styles.css y en el catálogo tipado
+
+  ✓ contrastes del sistema de diseño
+      los tokens cumplen WCAG AA, salvo las excepciones declaradas
+      ✓ check-contrast
+      ── src/styles.css · ALOVIDA v1.0
+      ✓ claro              --text-primary       sobre --bg-surface          14.90:1  (mín. 4.5)
+      ✓ claro              --text-secondary     sobre --bg-surface           8.02:1  (mín. 4.5)
+      ✓ claro              --text-muted         sobre --bg-surface           5.69:1  (mín. 4.5)
+      ✓ claro              --text-muted         sobre --bg-surface-alt       5.23:1  (mín. 4.5)
+      ✓ claro              --text-muted         sobre --bg-inset             5.35:1  (mín. 4.5)
+      ✓ claro              --text-muted         sobre #F6F3ED                5.13:1  (mín. 4.5)
+      ✓ claro              --focus-ring         sobre --bg-base              5.71:1  (mín. 3)
+      ✓ claro              --focus-ring         sobre --bg-surface           5.71:1  (mín. 3)
+      ✓ claro              --focus-ring         sobre --bg-surface-alt       5.25:1  (mín. 3)
+      ✓ claro              --focus-ring         sobre --bg-inset             5.38:1  (mín. 3)
+      ✓ claro              --focus-ring         sobre #F6F3ED                5.16:1  (mín. 3)
+      ✓ claro              --brand-primary      sobre --bg-surface           8.03:1  (mín. 4.5)
+      ✓ claro              --border-strong      sobre --bg-surface           3.70:1  (mín. 3)
+      ✓ claro              --st-success-fg      sobre --st-success-bg        6.75:1  (mín. 4.5)
+      ✓ claro              --st-warning-fg      sobre --st-warning-bg        7.49:1  (mín. 4.5)
+      ✓ claro              --st-error-fg        sobre --st-error-bg          7.53:1  (mín. 4.5)
+      ✓ claro              --st-info-fg         sobre --st-info-bg           5.01:1  (mín. 4.5)
+      ✓ claro              --st-primary-fg      sobre --st-primary-bg        9.49:1  (mín. 4.5)
+      ✓ claro              --st-secondary-fg    sobre --st-secondary-bg      6.63:1  (mín. 4.5)
+      ✓ oscuro · sistema   --text-primary       sobre --bg-surface          13.30:1  (mín. 4.5)
+      ✓ oscuro · sistema   --text-secondary     sobre --bg-surface          12.57:1  (mín. 4.5)
+      ✓ oscuro · sistema   --text-muted         sobre --bg-surface           6.60:1  (mín. 4.5)
+      ✓ oscuro · sistema   --text-muted         sobre --bg-surface-alt       5.46:1  (mín. 4.5)
+      ✓ oscuro · sistema   --text-muted         sobre --bg-inset             6.32:1  (mín. 4.5)
+      ✓ oscuro · sistema   --focus-ring         sobre --bg-base             10.93:1  (mín. 3)
+      ✓ oscuro · sistema   --focus-ring         sobre --bg-surface           9.26:1  (mín. 3)
+      ✓ oscuro · sistema   --focus-ring         sobre --bg-surface-alt       7.66:1  (mín. 3)
+      ✓ oscuro · sistema   --focus-ring         sobre --bg-inset             8.87:1  (mín. 3)
+      ✓ oscuro · sistema   --brand-primary      sobre --bg-surface           7.03:1  (mín. 4.5)
+      · oscuro · sistema   --border-strong      sobre --bg-surface           2.15:1  (mín. 3)  ← E3
+      ✓ oscuro · sistema   --st-success-fg      sobre --st-success-bg        6.64:1  (mín. 4.5)
+      ✓ oscuro · sistema   --st-warning-fg      sobre --st-warning-bg        6.15:1  (mín. 4.5)
+      ✓ oscuro · sistema   --st-error-fg        sobre --st-error-bg          6.76:1  (mín. 4.5)
+      ✓ oscuro · sistema   --st-info-fg         sobre --st-info-bg           6.23:1  (mín. 4.5)
+      ✓ oscuro · sistema   --st-primary-fg      sobre --st-primary-bg        6.56:1  (mín. 4.5)
+      ✓ oscuro · sistema   --st-secondary-fg    sobre --st-secondary-bg      5.83:1  (mín. 4.5)
+      ✓ oscuro · manual    --text-primary       sobre --bg-surface          13.30:1  (mín. 4.5)
+      ✓ oscuro · manual    --text-secondary     sobre --bg-surface          12.57:1  (mín. 4.5)
+      ✓ oscuro · manual    --text-muted         sobre --bg-surface           6.60:1  (mín. 4.5)
+      ✓ oscuro · manual    --text-muted         sobre --bg-surface-alt       5.46:1  (mín. 4.5)
+      ✓ oscuro · manual    --text-muted         sobre --bg-inset             6.32:1  (mín. 4.5)
+      ✓ oscuro · manual    --focus-ring         sobre --bg-base             10.93:1  (mín. 3)
+      ✓ oscuro · manual    --focus-ring         sobre --bg-surface           9.26:1  (mín. 3)
+      ✓ oscuro · manual    --focus-ring         sobre --bg-surface-alt       7.66:1  (mín. 3)
+      ✓ oscuro · manual    --focus-ring         sobre --bg-inset             8.87:1  (mín. 3)
+      ✓ oscuro · manual    --brand-primary      sobre --bg-surface           7.03:1  (mín. 4.5)
+      · oscuro · manual    --border-strong      sobre --bg-surface           2.15:1  (mín. 3)  ← E3
+      ✓ oscuro · manual    --st-success-fg      sobre --st-success-bg        6.64:1  (mín. 4.5)
+      ✓ oscuro · manual    --st-warning-fg      sobre --st-warning-bg        6.15:1  (mín. 4.5)
+      ✓ oscuro · manual    --st-error-fg        sobre --st-error-bg          6.76:1  (mín. 4.5)
+      ✓ oscuro · manual    --st-info-fg         sobre --st-info-bg           6.23:1  (mín. 4.5)
+      ✓ oscuro · manual    --st-primary-fg      sobre --st-primary-bg        6.56:1  (mín. 4.5)
+      ✓ oscuro · manual    --st-secondary-fg    sobre --st-secondary-bg      5.83:1  (mín. 4.5)
+      ── src/styles/alovida.css · ALOVIDA v1.1 (bóveda)
+      ✓ claro              --tinta              sobre --sup-tarjeta         14.90:1  (mín. 4.5)
+      ✓ claro              --tinta              sobre --sup-pagina          14.90:1  (mín. 4.5)
+      ✓ claro              --tinta              sobre --sup-inset           14.02:1  (mín. 4.5)
+      ✓ claro              --tinta-2            sobre --sup-tarjeta          8.02:1  (mín. 4.5)
+      ✓ claro              --tinta-2            sobre --sup-pagina           8.02:1  (mín. 4.5)
+      ✓ claro              --tinta-3            sobre --sup-tarjeta          5.69:1  (mín. 4.5)
+      ✓ claro              --tinta-3            sobre --sup-pagina           5.69:1  (mín. 4.5)
+      ✓ claro              --tinta-3            sobre --sup-inset            5.35:1  (mín. 4.5)
+      ✓ claro              --tinta-3            sobre #F6F3ED                5.13:1  (mín. 4.5)
+      ✓ claro              --tinta-marca        sobre --sup-tarjeta         11.31:1  (mín. 4.5)
+      ✓ claro              --petroleo           sobre --sup-pagina           8.03:1  (mín. 4.5)
+      ✓ claro              --petroleo           sobre --sup-tarjeta          8.03:1  (mín. 4.5)
+      ✓ claro              --borde-ctrl         sobre --sup-tarjeta          3.70:1  (mín. 3)
+      ✓ claro              --borde-ctrl         sobre --sup-inset            3.48:1  (mín. 3)
+      ✓ claro              --ok-tinta           sobre --ok-bg                4.78:1  (mín. 4.5)
+      ✓ claro              --aviso-tinta        sobre --aviso-bg             7.49:1  (mín. 4.5)
+      ✓ claro              --error-tinta        sobre --error-bg             5.49:1  (mín. 4.5)
+      ✓ claro              --info-tinta         sobre --info-bg              5.01:1  (mín. 4.5)
+      ✓ claro              --neutro-tinta       sobre --neutro-bg            7.37:1  (mín. 4.5)
+      ✓ claro              --anillo-foco        sobre --sup-pagina           5.71:1  (mín. 3)
+      ✓ claro              --anillo-foco        sobre --sup-tarjeta          5.71:1  (mín. 3)
+      ✓ claro              --anillo-foco        sobre --sup-inset            5.38:1  (mín. 3)
+      ✓ claro              --anillo-foco        sobre #F6F3ED                5.16:1  (mín. 3)
+      ✓ claro              --anillo-foco-nav    sobre --sup-nav              5.05:1  (mín. 3)
+      ✓ claro              --anillo-foco-nav    sobre --petroleo-x           8.80:1  (mín. 3)
+      ✓ oscuro             --tinta              sobre --sup-tarjeta         13.01:1  (mín. 4.5)
+node :   ✗ 6 de 11 verificaciones fallaron.
+En línea: 2 Carácter: 396
++ ... report')) { node "scripts/$check.mjs" *> "$folder/current-$check.txt" ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (  ✗ 6 de 11 verificaciones fallaron.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+
+      ✓ oscuro             --tinta              sobre --sup-pagina          14.33:1  (mín. 4.5)
+      ✓ oscuro             --tinta              sobre --sup-inset           13.69:1  (mín. 4.5)
+      ✓ oscuro             --tinta-2            sobre --sup-tarjeta          9.07:1  (mín. 4.5)
+      ✓ oscuro             --tinta-2            sobre --sup-pagina           9.99:1  (mín. 4.5)
+      ✓ oscuro             --tinta-3            sobre --sup-tarjeta          5.43:1  (mín. 4.5)
+      ✓ oscuro             --tinta-3            sobre --sup-pagina           5.98:1  (mín. 4.5)
+      ✓ oscuro             --tinta-3            sobre --sup-inset            5.71:1  (mín. 4.5)
+      ✓ oscuro             --tinta-marca        sobre --sup-tarjeta         12.43:1  (mín. 4.5)
+      · oscuro             --petroleo           sobre --sup-pagina           3.41:1  (mín. 4.5)  ← R3
+      · oscuro             --petroleo           sobre --sup-tarjeta          3.09:1  (mín. 4.5)  ← R3
+      · oscuro             --borde-ctrl         sobre --sup-tarjeta          2.47:1  (mín. 3)  ← R2
+      · oscuro             --borde-ctrl         sobre --sup-inset            2.60:1  (mín. 3)  ← R2
+      ✓ oscuro             --ok-tinta           sobre --ok-bg                7.89:1  (mín. 4.5)
+      ✓ oscuro             --aviso-tinta        sobre --aviso-bg             7.83:1  (mín. 4.5)
+      ✓ oscuro             --error-tinta        sobre --error-bg             7.40:1  (mín. 4.5)
+      ✓ oscuro             --info-tinta         sobre --info-bg              8.19:1  (mín. 4.5)
+      ✓ oscuro             --neutro-tinta       sobre --neutro-bg            8.72:1  (mín. 4.5)
+      ✓ oscuro             --anillo-foco        sobre --sup-pagina           8.59:1  (mín. 3)
+      ✓ oscuro             --anillo-foco        sobre --sup-tarjeta          7.80:1  (mín. 3)
+      ✓ oscuro             --anillo-foco        sobre --sup-inset            8.20:1  (mín. 3)
+      ✓ oscuro             --anillo-foco-nav    sobre --sup-nav             11.38:1  (mín. 3)
+      ✓ oscuro             --anillo-foco-nav    sobre --petroleo-x          11.94:1  (mín. 3)
+      101 combinaciones medidas en 2 hojas · las excepciones E3 (v1.0) y R2 (bóveda) se esperan, no se ignoran
+      R3 NO es un límite aceptado: --petroleo en oscuro está sobrecargado (enlace y relleno de botón) y hay que partirlo en dos. Es tarea abierta del diseñador.
+
+  ✓ presupuesto de bundle
+      el artefacto no supera el umbral de error
+      ✓ check-bundle-budget
+      inicial: 278.27 kB en 12 archivos
+      137.70 kB  styles-ZNX5SMOT.css
+      84.76 kB  main-DV456OPX.js
+      19.25 kB  chunk-4L6MMC2A.js
+      7.72 kB  chunk-5SDEZMG6.js
+      7.22 kB  chunk-IM2C5TB2.js
+      6.03 kB  chunk-NS2LAPFK.js
+      5.58 kB  chunk-6XAXIKC4.js
+      5.21 kB  chunk-H2RZCHO5.js
+      2.13 kB  chunk-OLPUAJUT.js
+      1.93 kB  chunk-UOFM655Q.js
+      0.67 kB  chunk-3YP2YVSU.js
+      0.07 kB  chunk-HDZRTEBD.js
+      diferidos: 1092 fragmentos
+      2595.14 kB  chunk-BLFS75T3.js
+      919.01 kB  chunk-QYQGV6R3.js
+      806.03 kB  chunk-TGQJPFEN.js
+      594.55 kB  chunk-VMQYV22Y.js
+      432.96 kB  chunk-FWMMDP6O.js
+
+  ──────────────────
+  576 páginas · ~892k palabras · 6 generadas
+
+EXIT_CODE=1

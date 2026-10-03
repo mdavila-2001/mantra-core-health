@@ -1,0 +1,50 @@
+
+Running 4 tests using 1 worker
+
+corepack.cmd : (node:23012) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+En línea: 8 Carácter: 1
++ corepack.cmd yarn pw playwright/practitioner-profile-ux.spec.ts playw ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ((node:23012) Wa... env being set.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+(Use `node --trace-warnings ...` to show where the warning was created)
+BACKEND_HEALTH=200
+EVIDENCE_MODE=ISOLATED: signature-assets e insurance-networks simulados; resto API real
+  ok 1 [chromium] › playwright\practitioner-profile-lists.spec.ts:170:5 › listados densos, respaldo autorizado y matriz visual conservan los datos reales al recargar (46.5s)
+BACKEND_HEALTH=200
+EVIDENCE_MODE=ISOLATED: signature-assets e insurance-networks simulados; resto API real
+  x  2 [chromium] › playwright\practitioner-profile-lists.spec.ts:437:5 › un paciente consulta especialidades en portada y credenciales públicas sin respaldos privados (18.9s)
+Testing stopped early after 1 maximum allowed failures.
+
+
+  1) [chromium] › playwright\practitioner-profile-lists.spec.ts:437:5 › un paciente consulta especialidades en portada y credenciales públicas sin respaldos privados
+
+    Error: desborde del documento en public-768x1024-claro-credentials
+
+    expect(received).toBeLessThanOrEqual(expected)
+
+    Expected: <= 769
+    Received:    784
+
+      157 |       })),
+      158 |   }));
+    > 159 |   expect(measurements.documentWidth, `desborde del documento en ${cell}`).toBeLessThanOrEqual(
+          |                                                                           ^
+      160 |     measurements.viewport + 1,
+      161 |   );
+      162 |   for (const table of measurements.tables) {
+        at measureOverflow (C:\Alovida\mantra-core-health\playwright\practitioner-profile-lists.spec.ts:159:75)
+        at C:\Alovida\mantra-core-health\playwright\practitioner-profile-lists.spec.ts:531:27
+
+    attachment #2: screenshot (image/png) ──────────────────────────────────────────────────────────
+    artifacts\playwright\salida\practitioner-profile-lists-5940f-icas-sin-respaldos-privados-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: artifacts\playwright\salida\practitioner-profile-lists-5940f-icas-sin-respaldos-privados-chromium\error-context.md
+
+  1 failed
+    [chromium] › playwright\practitioner-profile-lists.spec.ts:437:5 › un paciente consulta especialidades en portada y credenciales públicas sin respaldos privados
+  2 did not run
+  1 passed (1.1m)
+  1 error was not a part of any test, see above for details

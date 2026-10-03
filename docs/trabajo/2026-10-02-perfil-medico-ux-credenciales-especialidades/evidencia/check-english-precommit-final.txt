@@ -1,0 +1,2 @@
+check-english-identifiers: OK — sin identificadores nuevos en castellano contra "b84f74aaf3a359de93c53ab05941e2ec7ac5d0c1".
+EXIT_CODE=0

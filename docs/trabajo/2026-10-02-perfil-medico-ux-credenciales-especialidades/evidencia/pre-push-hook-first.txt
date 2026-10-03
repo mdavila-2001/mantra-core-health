@@ -1,0 +1,2 @@
+pre-push: nada de lo empujado mueve el paquete. No se construye.
+EXIT_CODE=0

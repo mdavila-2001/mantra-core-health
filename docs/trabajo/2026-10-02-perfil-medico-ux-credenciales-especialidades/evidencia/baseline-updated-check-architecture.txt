@@ -1,0 +1,23 @@
+node :
+En línea: 7 Carácter: 2
++  node "scripts/$scriptName.mjs" *> "$evidenceRoot/baseline-updated-$s ...
++  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+✗ check-architecture
+
+  1 dependencia(s) circular(es):
+      src/app/core/data-access/pharmacy-campaigns/pharmacy-campaigns.client.ts
+      → src/app/core/data-access/pharmacy-campaigns/pharmacy-campaigns.fixtures.ts
+  4 import(s) contra la dirección de las capas:
+      src/app/core/pdf-branding/pdf-branding.service.spec.ts
+      → src/app/shared/utils/pdf-export/pdf-firma.ts
+      src/app/core/pdf-branding/pdf-branding.service.spec.ts
+      → src/app/shared/utils/pdf-export/pdf-logo.ts
+      src/app/core/pdf-branding/pdf-branding.service.ts
+      → src/app/shared/utils/pdf-export/pdf-firma.ts
+      src/app/core/pdf-branding/pdf-branding.service.ts
+      → src/app/shared/utils/pdf-export/pdf-logo.ts
+
+EXIT_CODE=1

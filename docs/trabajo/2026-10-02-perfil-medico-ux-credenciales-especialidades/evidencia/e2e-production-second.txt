@@ -1,0 +1,49 @@
+
+Running 2 tests using 1 worker
+
+corepack.cmd : (node:8512) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+En línea: 5 Carácter: 1
++ corepack.cmd yarn pw playwright/practitioner-profile-lists.spec.ts -- ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ((node:8512) War... env being set.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  1 [chromium] › playwright\practitioner-profile-lists.spec.ts:160:5 › listados densos, respaldo autorizado y matriz visual conservan los datos reales al recargar (31.8s)
+Testing stopped early after 1 maximum allowed failures.
+
+
+  1) [chromium] › playwright\practitioner-profile-lists.spec.ts:160:5 › listados densos, respaldo autorizado y matriz visual conservan los datos reales al recargar
+
+    Error: expect(locator).toHaveValue(expected) failed
+
+    Locator: getByPlaceholder('Tu nombre', { exact: true })
+    Expected: "Prueba"
+    Error: strict mode violation: getByPlaceholder('Tu nombre', { exact: true }) resolved to 2 elements:
+        1) <app-input class="app-input-host" placeholder="Tu nombre" _nghost-ng-c965621110="" _ngcontent-ng-c1454120093="">…</app-input> aka locator('app-input').first()
+        2) <input type="text" class="native-input" aria-invalid="false" placeholder="Tu nombre" id="mch-field-49-control" _ngcontent-ng-c965621110=""/> aka getByRole('textbox', { name: 'Nombre', exact: true })
+
+    Call log:
+      - Expect "toHaveValue" with timeout 15000ms
+      - waiting for getByPlaceholder('Tu nombre', { exact: true })
+
+
+      363 |           await irA(page, '/my-account/edit');
+      364 |           const name = page.getByPlaceholder('Tu nombre', { exact: true });
+    > 365 |           await expect(name).toHaveValue('Prueba');
+          |                              ^
+      366 |           await name.fill('Borrador sintético sin guardar');
+      367 |           await page.getByRole('button', { name: 'Cancelar edición', exact: true }).click();
+      368 |           const dialog = page.getByRole('dialog');
+        at C:\Alovida\mantra-core-health\playwright\practitioner-profile-lists.spec.ts:365:30
+
+    attachment #2: screenshot (image/png) ──────────────────────────────────────────────────────────
+    artifacts\playwright\salida\practitioner-profile-lists-92186-os-datos-reales-al-recargar-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: artifacts\playwright\salida\practitioner-profile-lists-92186-os-datos-reales-al-recargar-chromium\error-context.md
+
+  1 failed
+    [chromium] › playwright\practitioner-profile-lists.spec.ts:160:5 › listados densos, respaldo autorizado y matriz visual conservan los datos reales al recargar
+  1 did not run
+  1 error was not a part of any test, see above for details

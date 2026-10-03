@@ -1,11 +1,16 @@
 import { TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
+import { provideRouter, Router } from '@angular/router';
 
 import { CredentialsPanel } from './credentials-panel';
+import { FilterBar } from '../../../../../../shared/components/organisms/filter-bar/filter-bar';
+import { StatusSeal } from '../../../../../../shared/components/organisms/status-seal/status-seal';
 import type {
   EspecialidadVisible,
   FormacionVisible,
   IdiomaVisible,
   MatriculaVisible,
+  RespaldoCredencial,
 } from '../practitioner-profile-view.types';
 
 const MATRICULA: MatriculaVisible = {
@@ -64,9 +69,11 @@ describe('CredentialsPanel', () => {
       formacion?: readonly FormacionVisible[];
       idiomas?: readonly IdiomaVisible[];
       retirables?: ReadonlySet<string>;
+      permiteDescarga?: boolean;
+      descargando?: string | null;
     } = {},
   ) {
-    TestBed.configureTestingModule({ imports: [CredentialsPanel] });
+    TestBed.configureTestingModule({ imports: [CredentialsPanel], providers: [provideRouter([])] });
     const fixture = TestBed.createComponent(CredentialsPanel);
     fixture.componentRef.setInput('matriculas', over.matriculas ?? [MATRICULA]);
     fixture.componentRef.setInput('especialidades', over.especialidades ?? [ESPECIALIDAD]);
@@ -75,6 +82,8 @@ describe('CredentialsPanel', () => {
     if (over.retirables !== undefined) {
       fixture.componentRef.setInput('retirables', over.retirables);
     }
+    fixture.componentRef.setInput('permiteDescarga', over.permiteDescarga ?? false);
+    fixture.componentRef.setInput('descargando', over.descargando ?? null);
     fixture.detectChanges();
     return fixture;
   }
@@ -115,7 +124,7 @@ describe('CredentialsPanel', () => {
       .querySelector<HTMLButtonElement>('[data-testid="credenciales-filtro-verificadas"]')!
       .click();
     fixture.detectChanges();
-    // Verificadas: la matrícula aprobada y el título con fuente. La
+    // Verificadas: la matrícula y el título aprobados. La
     // especialidad pendiente y el idioma —que no tramita nada— quedan afuera.
     expect(tarjetas(fixture)).toEqual(['license', 'education']);
 
@@ -124,6 +133,41 @@ describe('CredentialsPanel', () => {
       .click();
     fixture.detectChanges();
     expect(tarjetas(fixture)).toEqual(['specialty', 'language']);
+  });
+
+  it.each([3, 6])('el filtro de %i títulos distingue aprobación de fuente y vencimiento', (count) => {
+    const studies: FormacionVisible[] = [
+      { ...FORMACION, id: 'rejected', tipo: 'Título rechazado', sello: 'rejected', estado: 'Rechazado', approved: false },
+      { ...FORMACION, id: 'unknown', tipo: 'Título sin decisión', sello: 'unknown', estado: 'Sin determinar' },
+      { ...FORMACION, id: 'expired', tipo: 'Título aprobado vencido', sello: 'expired', estado: 'Vencido', hasta: new Date('2001-01-01'), vencida: true, approved: true },
+      ...Array.from({ length: count - 3 }, (_, index): FormacionVisible => ({
+        ...FORMACION, id: `pending-${index}`, tipo: `Título pendiente ${index}`,
+        sello: 'pending', estado: 'Pendiente', fuenteVerificacion: undefined,
+      })),
+    ];
+    const fixture = montar({ matriculas: [], especialidades: [], idiomas: [], formacion: studies });
+    const root = fixture.nativeElement as HTMLElement;
+    if (count === 3) {
+      // La tarjeta rechazada sigue mostrando la fuente, sin presentarla como aprobación.
+      const card = Array.from(root.querySelectorAll('[data-testid="credencial"]'))
+        .find((item) => item.textContent?.includes('Título rechazado'));
+      expect(card).toBeDefined();
+      expect(card?.textContent).toContain('Fuente de revisión:');
+      expect(card?.textContent).not.toContain('Verificada contra');
+    }
+
+    root.querySelector<HTMLButtonElement>('[data-testid="credenciales-filtro-verificadas"]')!.click();
+    fixture.detectChanges();
+    expect(root.textContent).toContain('Título aprobado vencido');
+    expect(root.textContent).not.toContain('Título rechazado');
+    expect(root.textContent).not.toContain('Título sin decisión');
+    expect(root.querySelector('app-status-seal')?.textContent).toContain('Vencido');
+
+    root.querySelector<HTMLButtonElement>('[data-testid="credenciales-filtro-declaradas"]')!.click();
+    fixture.detectChanges();
+    expect(root.textContent).toContain('Título rechazado');
+    expect(root.textContent).toContain('Título sin decisión');
+    expect(root.textContent).not.toContain('Título aprobado vencido');
   });
 
   function bloques(fixture: ReturnType<typeof montar>): readonly string[] {
@@ -195,5 +239,225 @@ describe('CredentialsPanel', () => {
     expect(
       (fixture.nativeElement as HTMLElement).querySelector('.credenciales__vacio')?.textContent,
     ).toContain('Todavía no cargaste credenciales');
+  });
+
+  function formaciones(cantidad: number): readonly FormacionVisible[] {
+    return Array.from({ length: cantidad }, (_, indice) => ({
+      ...FORMACION,
+      id: `formacion-${indice + 1}`,
+      tipo: `Diploma ${indice + 1}`,
+      numero: `TIT-${indice + 1}`,
+    }));
+  }
+
+  function grupo(fixture: ReturnType<typeof montar>, clase: string): HTMLElement {
+    return (fixture.nativeElement as HTMLElement).querySelector<HTMLElement>(
+      `[data-testid="credenciales-grupo"][data-kind="${clase}"]`,
+    )!;
+  }
+
+  function filas(bloque: HTMLElement): readonly string[] {
+    return [...bloque.querySelectorAll('[data-testid="tabla-fila"]')].map((fila) =>
+      fila.querySelector('[data-testid="credencial-titulo"]')?.textContent?.trim() ?? '',
+    );
+  }
+
+  function buscar(fixture: ReturnType<typeof montar>, clase: string, termino: string): void {
+    const bloque = fixture.debugElement.query(
+      By.css(`[data-testid="credenciales-grupo"][data-kind="${clase}"]`),
+    );
+    const barra = bloque.query(By.directive(FilterBar)).componentInstance as FilterBar;
+    expect(barra.searchInUrl()).toBe(false);
+    barra.searchChanged.emit(termino);
+    fixture.detectChanges();
+  }
+
+  it('cinco registros conservan tarjetas y seis usan tabla en su propio grupo', () => {
+    const fixture = montar({ formacion: formaciones(5) });
+    expect(grupo(fixture, 'education').querySelectorAll('[data-testid="credencial"]')).toHaveLength(5);
+    expect(grupo(fixture, 'education').querySelector('app-data-table')).toBeNull();
+
+    fixture.componentRef.setInput('formacion', formaciones(6));
+    fixture.detectChanges();
+
+    expect(filas(grupo(fixture, 'education'))).toHaveLength(6);
+    expect(grupo(fixture, 'education').querySelectorAll('[data-testid="credencial"]')).toHaveLength(0);
+    expect(grupo(fixture, 'license').querySelectorAll('[data-testid="credencial"]')).toHaveLength(1);
+  });
+
+  it('doce registros se recorren en páginas de diez independientes por grupo', () => {
+    const matriculas = Array.from({ length: 12 }, (_, indice) => ({
+      ...MATRICULA, id: `lic-${indice}`, jurisdiccion: `Matrícula ${indice + 1}`,
+    }));
+    const fixture = montar({ formacion: formaciones(12), matriculas });
+    const formacion = grupo(fixture, 'education');
+    expect(filas(formacion)).toHaveLength(10);
+    expect(filas(grupo(fixture, 'license'))).toHaveLength(10);
+
+    formacion.querySelector<HTMLButtonElement>('[aria-label="Página siguiente"]')!.click();
+    fixture.detectChanges();
+
+    expect(filas(formacion)).toEqual(['Diploma 11', 'Diploma 12']);
+    expect(filas(grupo(fixture, 'license'))).toHaveLength(10);
+    expect(formacion.querySelector('[aria-current="page"]')?.textContent?.trim()).toBe('2');
+  });
+
+  it('al reducir la colección a cinco no queda una búsqueda oculta filtrando tarjetas', () => {
+    const fixture = montar({ formacion: formaciones(6) });
+    buscar(fixture, 'education', 'Diploma 6');
+    expect(filas(grupo(fixture, 'education'))).toEqual(['Diploma 6']);
+
+    fixture.componentRef.setInput('formacion', formaciones(5));
+    fixture.detectChanges();
+
+    expect(grupo(fixture, 'education').querySelector('app-filter-bar')).toBeNull();
+    expect(grupo(fixture, 'education').querySelectorAll('[data-testid="credencial"]')).toHaveLength(5);
+  });
+
+  it('buscar normaliza texto, vuelve a la primera página y conserva tabla aun sin resultados', () => {
+    const datos = formaciones(12).map((fila, indice) => ({
+      ...fila, institucion: indice === 0 ? 'Clínica Académica' : 'Universidad',
+    }));
+    const fixture = montar({ formacion: datos });
+    const formacion = grupo(fixture, 'education');
+    formacion.querySelector<HTMLButtonElement>('[aria-label="Página siguiente"]')!.click();
+    fixture.detectChanges();
+    const url = TestBed.inject(Router).url;
+
+    buscar(fixture, 'education', 'CLINICA ACADEMICA');
+
+    expect(filas(formacion)).toEqual(['Diploma 1']);
+    expect(formacion.querySelector('app-data-table')).not.toBeNull();
+    expect(formacion.querySelector('[aria-current="page"]')?.textContent?.trim()).toBe('1');
+    expect(TestBed.inject(Router).url).toBe(url);
+
+    buscar(fixture, 'education', 'No coincide');
+    expect(formacion.querySelector('app-data-table')).not.toBeNull();
+    expect(formacion.querySelector('[role="status"]')?.textContent).toContain('Ninguna credencial coincide');
+
+    buscar(fixture, 'education', '');
+    expect(filas(formacion)).toHaveLength(10);
+  });
+
+  it('cambiar el filtro de estado reinicia páginas sin volver de tabla a tarjeta', () => {
+    const fixture = montar({ formacion: formaciones(12) });
+    const formacion = grupo(fixture, 'education');
+    formacion.querySelector<HTMLButtonElement>('[aria-label="Página siguiente"]')!.click();
+    fixture.detectChanges();
+
+    (fixture.nativeElement as HTMLElement)
+      .querySelector<HTMLButtonElement>('[data-testid="credenciales-filtro-declaradas"]')!.click();
+    fixture.detectChanges();
+    expect(formacion.querySelector('app-data-table')).not.toBeNull();
+    expect(filas(formacion)).toHaveLength(0);
+
+    (fixture.nativeElement as HTMLElement)
+      .querySelector<HTMLButtonElement>('[data-testid="credenciales-filtro-todas"]')!.click();
+    fixture.detectChanges();
+    expect(filas(formacion)[0]).toBe('Diploma 1');
+  });
+
+  it('la tabla conserva los sellos aprobados, pendientes, rechazados y desconocidos', () => {
+    const sellos = ['approved', 'pending', 'rejected', 'expired', 'unknown', 'in-review'] as const;
+    const fixture = montar({
+      matriculas: [], especialidades: [], idiomas: [],
+      formacion: formaciones(6).map((fila, indice) => ({
+        ...fila, sello: sellos[indice]!, estado: `Estado ${indice + 1}`,
+      })),
+    });
+    const dibujados = fixture.debugElement.queryAll(By.directive(StatusSeal)).map((sello) =>
+      (sello.componentInstance as StatusSeal).variant(),
+    );
+    expect(dibujados).toEqual(sellos);
+    expect(grupo(fixture, 'education').textContent).toContain('Estado 3');
+  });
+
+  it('el título y el estado completo comparten una celda principal sin ocultar la verificación', () => {
+    const fixture = montar({
+      matriculas: [], especialidades: [], idiomas: [],
+      formacion: formaciones(6).map((study): FormacionVisible => ({
+        ...study, tipo: 'Título universitario', sello: 'pending',
+        estado: 'Credencial pendiente de verificación',
+      })),
+    });
+    const group = grupo(fixture, 'education');
+    const headings = Array.from(group.querySelectorAll('thead th'))
+      .filter((cell) => !cell.classList.contains('data-table__secondary') &&
+        !cell.classList.contains('data-table__detail-toggle-cell'));
+    expect(headings.map((cell) => cell.textContent?.trim())).toEqual(['Credencial y estado']);
+    for (const row of group.querySelectorAll('[data-testid="tabla-fila"]')) {
+      const primaryCell = row.querySelector('td:not(.data-table__secondary):not(.data-table__detail-toggle-cell)');
+      expect(primaryCell?.querySelector('strong')?.textContent).toBe('Título universitario');
+      expect(primaryCell?.querySelector('app-status-seal')?.textContent).toContain('Credencial pendiente de verificación');
+      expect(row.querySelectorAll('app-status-seal')).toHaveLength(1);
+    }
+  });
+
+  it('la descarga exige permiso y respaldo, emite contexto y no fuerza una extensión', () => {
+    const fixture = montar({ formacion: [{ ...FORMACION, fileId: 'archivo-diploma' }] });
+    const raiz = fixture.nativeElement as HTMLElement;
+    expect(raiz.querySelector('[data-testid="credencial-descargar-cr-1"]')).toBeNull();
+    fixture.componentRef.setInput('permiteDescarga', true);
+    fixture.detectChanges();
+    const pedidos: RespaldoCredencial[] = [];
+    fixture.componentInstance.descargar.subscribe((pedido) => pedidos.push(pedido));
+    const boton = raiz.querySelector<HTMLButtonElement>('[data-testid="credencial-descargar-cr-1"]')!;
+
+    expect(boton.getAttribute('aria-label')).toContain('Título de grado');
+    expect(boton.getAttribute('aria-label')).toContain('TIT-9');
+    expect(raiz.querySelector('[data-testid="credencial-descargar-lic-1"]')).toBeNull();
+    boton.click();
+
+    expect(pedidos).toEqual([{ fileId: 'archivo-diploma', nombre: 'diploma-TIT-9' }]);
+  });
+
+  it('una descarga en curso anuncia el progreso y bloquea los demás respaldos', () => {
+    const fixture = montar({
+      formacion: [{ ...FORMACION, fileId: 'archivo-diploma' }],
+      matriculas: [{ ...MATRICULA, fileId: 'archivo-matricula' }],
+      permiteDescarga: true,
+      descargando: 'archivo-diploma',
+    });
+    const pedidos: RespaldoCredencial[] = [];
+    fixture.componentInstance.descargar.subscribe((pedido) => pedidos.push(pedido));
+    const raiz = fixture.nativeElement as HTMLElement;
+    const diploma = raiz.querySelector<HTMLButtonElement>('[data-testid="credencial-descargar-cr-1"]')!;
+    const matricula = raiz.querySelector<HTMLButtonElement>('[data-testid="credencial-descargar-lic-1"]')!;
+
+    expect(diploma.textContent).toContain('Descargando…');
+    expect(diploma.getAttribute('aria-disabled')).toBe('true');
+    expect(matricula.getAttribute('aria-disabled')).toBe('true');
+    diploma.click();
+    matricula.click();
+    expect(pedidos).toEqual([]);
+
+    fixture.componentRef.setInput('descargando', null);
+    fixture.detectChanges();
+    matricula.click();
+    expect(pedidos).toEqual([{ fileId: 'archivo-matricula', nombre: 'matricula-LIC-3' }]);
+  });
+
+  it('el detalle de una fila densa conserva descarga y retiro permitido', () => {
+    const datos = formaciones(6).map((fila, indice) => ({
+      ...fila, ...(indice === 0 ? { fileId: 'archivo-diploma' } : {}),
+    }));
+    const fixture = montar({
+      formacion: datos, permiteDescarga: true, retirables: new Set(['formacion-1']),
+    });
+    const pedidos: RespaldoCredencial[] = [];
+    const retiros: FormacionVisible[] = [];
+    fixture.componentInstance.descargar.subscribe((pedido) => pedidos.push(pedido));
+    fixture.componentInstance.retirar.subscribe((pedido) => retiros.push(pedido));
+    const bloque = grupo(fixture, 'education');
+    bloque.querySelector<HTMLButtonElement>('[aria-expanded="false"]')!.click();
+    fixture.detectChanges();
+    const detalle = bloque.querySelector('.data-table__detail-row')!;
+
+    detalle.querySelector<HTMLButtonElement>('[data-testid="credencial-descargar-formacion-1"]')!.click();
+    detalle.querySelector<HTMLButtonElement>('[data-testid="formacion-retirar-formacion-1"]')!.click();
+
+    expect(pedidos).toEqual([{ fileId: 'archivo-diploma', nombre: 'diploma-TIT-1' }]);
+    expect(retiros).toEqual([datos[0]]);
+    expect(bloque.querySelector('[data-testid="formacion-retirar-formacion-2"]')).toBeNull();
   });
 });

@@ -172,7 +172,10 @@
                 [errorMessage]="errorDelServidor('birthDate')"
                 hint="Se usa para calcular tu edad en la ficha. No se publica."
               >
-                <app-date-picker [(value)]="fechaNacimiento" data-testid="edicion-nacimiento" />
+                <app-date-picker [(value)]="fechaNacimiento" data-testid="edicion-nacimiento"
+                  (input)="recordarTextoNacimiento($event)"
+                  (keyup)="recordarTextoNacimiento($event)"
+                  (focusout)="recordarTextoNacimiento($event)" />
               </app-form-field>
 
               <!-- La MISMA lista cerrada del alta, no un texto libre: de este
@@ -462,6 +465,133 @@
                   [(page)]="paginaEspecialidades"
                   [(pageSize)]="tamanoPaginaEspecialidades"
                 />
+              }
+            </section>
+
+            <!-- ─── Idiomas ───────────────────────────────────────────────
+                 La ficha los enseña en Datos personales y hasta el
+                 02/10/2026 no había dónde corregirlos: el perfil los leía y
+                 ningún formulario los escribía. Se corrigen —no se agregan
+                 como los títulos— porque no tramitan nada: no hay verificación
+                 que un cambio invalide. Viaja la lista entera en el mismo
+                 `PATCH` del perfil, con su propio botón, igual que los otros
+                 bloques de esta pestaña. -->
+            <section class="edicion__seccion" data-testid="edicion-idiomas">
+              <h3 class="edicion__titulo">Idiomas en los que atendés</h3>
+              <p class="edicion__nota">
+                Los que un paciente puede elegir para la consulta. «Interpreta en consulta» dice
+                que podés sostener una consulta clínica en ese idioma, no sólo hablarlo.
+              </p>
+
+              @if (catalogoIdiomasCaido()) {
+                <p class="edicion__aviso" data-testid="idiomas-caidos">
+                  No pudimos traer el catálogo de idiomas.
+                  <button app-button variant="ghost" size="sm" (clicked)="reintentarIdiomas()">
+                    Reintentar
+                  </button>
+                </p>
+              } @else {
+                <form class="edicion__formulario" (submit)="$event.preventDefault()">
+                  @if (idiomas().length === 0) {
+                    <p class="edicion__vacio edicion__campo-ancho" data-testid="idiomas-vacio">
+                      Todavía no declaraste ningún idioma.
+                    </p>
+                  }
+
+                  @for (fila of idiomas(); track $index) {
+                    <div
+                      class="edicion__idioma edicion__campo-ancho"
+                      [attr.data-testid]="'idioma-' + $index"
+                    >
+                      <app-form-field [label]="'Idioma ' + ($index + 1)" [required]="true">
+                        <app-select
+                          [attr.data-testid]="'idioma-select-' + $index"
+                          [options]="opcionesDeIdioma()"
+                          placeholder="Elegí un idioma"
+                          [value]="fila.idioma"
+                          (valueChange)="elegirIdioma($index, $event)"
+                        />
+                      </app-form-field>
+                      <app-form-field label="Nivel (opcional)">
+                        <app-select
+                          [attr.data-testid]="'idioma-nivel-' + $index"
+                          [options]="opcionesDeNivel()"
+                          [value]="fila.nivel ?? ''"
+                          (valueChange)="elegirNivel($index, $event)"
+                        />
+                      </app-form-field>
+                      <!-- El rótulo visible se repite en cada fila; el nombre
+                           accesible dice de qué idioma es, para que el lector
+                           de pantalla no oiga tres veces lo mismo. -->
+                      <app-switch
+                        class="edicion__idioma-interpreta"
+                        [attr.data-testid]="'idioma-interpreta-' + $index"
+                        [checked]="fila.interpreta"
+                        (checkedChange)="marcarInterpreta($index, $event)"
+                        label="Interpreta en consulta"
+                        [ariaLabel]="'Interpreta en consulta, idioma ' + ($index + 1)"
+                      />
+                      <button
+                        app-button
+                        type="button"
+                        variant="ghost"
+                        size="md"
+                        class="edicion__idioma-quitar"
+                        [iconOnly]="true"
+                        [attr.aria-label]="'Quitar el idioma ' + ($index + 1)"
+                        [appTooltip]="'Quitar el idioma ' + ($index + 1)"
+                        [attr.data-testid]="'quitar-idioma-' + $index"
+                        (clicked)="quitarIdioma($index)"
+                      >
+                        <app-nav-icon name="remove" />
+                      </button>
+                    </div>
+                  }
+
+                  @if (idiomasRepetidos()) {
+                    <p
+                      class="edicion__aviso edicion__campo-ancho"
+                      role="alert"
+                      data-testid="idiomas-repetidos"
+                    >
+                      Hay un idioma elegido dos veces.
+                    </p>
+                  }
+
+                  <!-- El rechazo del servidor sobre la lista, acá y no sólo en
+                       el aviso general: las filas no tienen un campo del
+                       contrato cada una, así que el mensaje se ancla al bloque. -->
+                  @if (errorDelServidor('languages'); as rechazo) {
+                    <p
+                      class="edicion__aviso edicion__campo-ancho"
+                      role="alert"
+                      data-testid="idiomas-rechazados"
+                    >
+                      {{ rechazo }}
+                    </p>
+                  }
+
+                  <p class="edicion__sumar edicion__campo-ancho">
+                    <button
+                      app-button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      data-testid="agregar-idioma"
+                      (clicked)="agregarIdioma()"
+                    >
+                      + Agregar un idioma
+                    </button>
+                  </p>
+
+                  <app-form-actions
+                    class="edicion__campo-ancho"
+                    submitLabel="Guardar idiomas"
+                    [pending]="guardandoIdiomas()"
+                    [disabled]="!puedeGuardarIdiomas()"
+                    (submitted)="guardarIdiomas()"
+                  />
+                </form>
               }
             </section>
           </app-tab>
@@ -854,132 +984,6 @@
               }
             </section>
 
-            <!-- ─── Idiomas ───────────────────────────────────────────────
-                 La ficha los enseña en esta misma pestaña y hasta el
-                 02/10/2026 no había dónde corregirlos: el perfil los leía y
-                 ningún formulario los escribía. Se corrigen —no se agregan
-                 como los títulos— porque no tramitan nada: no hay verificación
-                 que un cambio invalide. Viaja la lista entera en el mismo
-                 `PATCH` del perfil, con su propio botón, igual que los otros
-                 bloques de esta pestaña. -->
-            <section class="edicion__seccion" data-testid="edicion-idiomas">
-              <h3 class="edicion__titulo">Idiomas en los que atendés</h3>
-              <p class="edicion__nota">
-                Los que un paciente puede elegir para la consulta. «Interpreta en consulta» dice
-                que podés sostener una consulta clínica en ese idioma, no sólo hablarlo.
-              </p>
-
-              @if (catalogoIdiomasCaido()) {
-                <p class="edicion__aviso" data-testid="idiomas-caidos">
-                  No pudimos traer el catálogo de idiomas.
-                  <button app-button variant="ghost" size="sm" (clicked)="reintentarIdiomas()">
-                    Reintentar
-                  </button>
-                </p>
-              } @else {
-                <form class="edicion__formulario" (submit)="$event.preventDefault()">
-                  @if (idiomas().length === 0) {
-                    <p class="edicion__vacio edicion__campo-ancho" data-testid="idiomas-vacio">
-                      Todavía no declaraste ningún idioma.
-                    </p>
-                  }
-
-                  @for (fila of idiomas(); track $index) {
-                    <div
-                      class="edicion__idioma edicion__campo-ancho"
-                      [attr.data-testid]="'idioma-' + $index"
-                    >
-                      <app-form-field [label]="'Idioma ' + ($index + 1)" [required]="true">
-                        <app-select
-                          [attr.data-testid]="'idioma-select-' + $index"
-                          [options]="opcionesDeIdioma()"
-                          placeholder="Elegí un idioma"
-                          [value]="fila.idioma"
-                          (valueChange)="elegirIdioma($index, $event)"
-                        />
-                      </app-form-field>
-                      <app-form-field label="Nivel (opcional)">
-                        <app-select
-                          [attr.data-testid]="'idioma-nivel-' + $index"
-                          [options]="opcionesDeNivel()"
-                          [value]="fila.nivel ?? ''"
-                          (valueChange)="elegirNivel($index, $event)"
-                        />
-                      </app-form-field>
-                      <!-- El rótulo visible se repite en cada fila; el nombre
-                           accesible dice de qué idioma es, para que el lector
-                           de pantalla no oiga tres veces lo mismo. -->
-                      <app-switch
-                        class="edicion__idioma-interpreta"
-                        [attr.data-testid]="'idioma-interpreta-' + $index"
-                        [checked]="fila.interpreta"
-                        (checkedChange)="marcarInterpreta($index, $event)"
-                        label="Interpreta en consulta"
-                        [ariaLabel]="'Interpreta en consulta, idioma ' + ($index + 1)"
-                      />
-                      <button
-                        app-button
-                        type="button"
-                        variant="ghost"
-                        size="md"
-                        class="edicion__idioma-quitar"
-                        [iconOnly]="true"
-                        [attr.aria-label]="'Quitar el idioma ' + ($index + 1)"
-                        [appTooltip]="'Quitar el idioma ' + ($index + 1)"
-                        [attr.data-testid]="'quitar-idioma-' + $index"
-                        (clicked)="quitarIdioma($index)"
-                      >
-                        <app-nav-icon name="remove" />
-                      </button>
-                    </div>
-                  }
-
-                  @if (idiomasRepetidos()) {
-                    <p
-                      class="edicion__aviso edicion__campo-ancho"
-                      role="alert"
-                      data-testid="idiomas-repetidos"
-                    >
-                      Hay un idioma elegido dos veces.
-                    </p>
-                  }
-
-                  <!-- El rechazo del servidor sobre la lista, acá y no sólo en
-                       el aviso general: las filas no tienen un campo del
-                       contrato cada una, así que el mensaje se ancla al bloque. -->
-                  @if (errorDelServidor('languages'); as rechazo) {
-                    <p
-                      class="edicion__aviso edicion__campo-ancho"
-                      role="alert"
-                      data-testid="idiomas-rechazados"
-                    >
-                      {{ rechazo }}
-                    </p>
-                  }
-
-                  <p class="edicion__sumar edicion__campo-ancho">
-                    <button
-                      app-button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      data-testid="agregar-idioma"
-                      (clicked)="agregarIdioma()"
-                    >
-                      + Agregar un idioma
-                    </button>
-                  </p>
-
-                  <app-form-actions
-                    class="edicion__campo-ancho"
-                    submitLabel="Guardar idiomas"
-                    [pending]="guardandoIdiomas()"
-                    [disabled]="!puedeGuardarIdiomas()"
-                    (submitted)="guardarIdiomas()"
-                  />
-                </form>
-              }
-            </section>
           </app-tab>
         </app-tabs>
 
@@ -1002,7 +1006,7 @@
           submitLabel="Guardar cambios"
           cancelLabel="Cancelar edición"
           [showSubmit]="editandoPresentacion()"
-          [pending]="guardandoPresentacion()"
+          [pending]="guardandoPresentacion() || guardandoIdiomas() || cancelandoEdicion() || subiendoLogo() || firma.subiendo() || sello.subiendo()"
           (submitted)="guardarPresentacion()"
           (cancelled)="cancelarEdicion()"
         />

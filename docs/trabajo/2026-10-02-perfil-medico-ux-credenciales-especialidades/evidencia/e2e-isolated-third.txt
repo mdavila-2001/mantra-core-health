@@ -1,0 +1,63 @@
+
+Running 4 tests using 1 worker
+
+corepack.cmd : (node:9788) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+En línea: 6 Carácter: 1
++ corepack.cmd yarn pw playwright/practitioner-profile-ux.spec.ts playw ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ((node:9788) War... env being set.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+(Use `node --trace-warnings ...` to show where the warning was created)
+BACKEND_HEALTH=200
+EVIDENCE_MODE=ISOLATED: signature-assets e insurance-networks simulados; resto API real
+  ok 1 [chromium] › playwright\practitioner-profile-lists.spec.ts:170:5 › listados densos, respaldo autorizado y matriz visual conservan los datos reales al recargar (51.9s)
+BACKEND_HEALTH=200
+EVIDENCE_MODE=ISOLATED: signature-assets e insurance-networks simulados; resto API real
+  x  2 [chromium] › playwright\practitioner-profile-lists.spec.ts:437:5 › un paciente consulta especialidades en portada y credenciales públicas sin respaldos privados (29.4s)
+Testing stopped early after 1 maximum allowed failures.
+
+
+  1) [chromium] › playwright\practitioner-profile-lists.spec.ts:437:5 › un paciente consulta especialidades en portada y credenciales públicas sin respaldos privados
+
+    Error: consola y red de la ficha pública real
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  -  1
+    + Received  + 12
+
+    - Array []
+    + Array [
+    +   "404 /practitioners/d6614a7a-9dfc-41ec-90ba-48ad81012785/insurance-carriers",
+    +   "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    +   "404 /practitioners/d6614a7a-9dfc-41ec-90ba-48ad81012785/insurance-carriers",
+    +   "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    +   "500 /scheduling/service-offerings",
+    +   "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+    +   "404 /practitioners/d6614a7a-9dfc-41ec-90ba-48ad81012785/insurance-carriers",
+    +   "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    +   "500 /scheduling/service-offerings",
+    +   "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+    + ]
+
+      538 |       }
+      539 |     }
+    > 540 |     expect(problems, 'consola y red de la ficha pública real').toEqual([]);
+          |                                                                ^
+      541 |   } finally {
+      542 |     await testInfo.attach('public-profile-measurements', {
+      543 |       body: Buffer.from(JSON.stringify({ measurements, problems }, null, 2)),
+        at C:\Alovida\mantra-core-health\playwright\practitioner-profile-lists.spec.ts:540:64
+
+    attachment #2: screenshot (image/png) ──────────────────────────────────────────────────────────
+    artifacts\playwright\salida\practitioner-profile-lists-5940f-icas-sin-respaldos-privados-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: artifacts\playwright\salida\practitioner-profile-lists-5940f-icas-sin-respaldos-privados-chromium\error-context.md
+
+  1 failed
+    [chromium] › playwright\practitioner-profile-lists.spec.ts:437:5 › un paciente consulta especialidades en portada y credenciales públicas sin respaldos privados
+  2 did not run
+  1 passed (1.4m)
+  1 error was not a part of any test, see above for details

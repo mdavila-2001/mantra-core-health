@@ -3,6 +3,8 @@ import type { Type } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { of } from 'rxjs';
+import { SessionStore } from './core/auth/session.store';
+import { LOGIN_ROUTE } from './core/http/auth.interceptor';
 import { PublicDirectoryClient } from './core/data-access/public-directory/public-directory.client';
 import { APP_SECTIONS } from './core/navigation/navigation.map';
 import { seccionRolesGuard } from './core/navigation/section-roles.guard';
@@ -76,8 +78,8 @@ describe('rutas del armazón', () => {
   /**
    * Ninguna **pantalla** puede quedar fuera del árbol que el registro declara.
    *
-   * Una ruta hija es legítima de dos maneras: **es** una sección, o **cuelga**
-   * de una —el alta, la ficha de un registro, un flujo alternativo—. Lo que
+   * Una ruta hija **es** una sección, **cuelga** de una o declara un alias de
+   * ella con la misma política —el alta, la ficha, un flujo alternativo—. Lo que
    * sigue prohibido es una pantalla que no se pueda alcanzar desde ninguna
    * sección: esa es una pantalla a la que el menú nunca lleva y que nadie
    * recuerda mantener.
@@ -120,10 +122,38 @@ describe('rutas del armazón', () => {
       if (path === '' || r.redirectTo !== undefined || sinSeccionAProposito.includes(path)) {
         return false;
       }
-      return !declaradas.some((seccion) => path === seccion || path.startsWith(`${seccion}/`));
+      const esAliasDeclarado = APP_SECTIONS.some(
+        (seccion) =>
+          r.data?.[SECTION_ROUTE_DATA] === seccion &&
+          seccion.representaEnElMenu?.includes(path) === true &&
+          r.pathMatch === 'full' &&
+          r.canActivate?.includes(seccionRolesGuard) === true &&
+          r.data?.[ROLES_ROUTE_DATA] === seccion.roles,
+      );
+      return (
+        !esAliasDeclarado &&
+        !declaradas.some((seccion) => path === seccion || path.startsWith(`${seccion}/`))
+      );
     });
 
     expect(huerfanas.map((r) => r.path)).toEqual([]);
+  });
+
+  it('el alias del perfil conserva el cargador, el título y la política de Mi perfil', async () => {
+    const canonica = hijas.find((route) => route.path === 'my-account');
+    const alias = hijas.find((route) => route.path === 'account/profile');
+    const seccion = APP_SECTIONS.find((section) => section.path === 'my-account');
+    const { MyAccount } = await import('./features/account/my-account/my-account');
+
+    expect(alias).toBeDefined();
+    expect(alias?.redirectTo).toBeUndefined();
+    expect(alias?.pathMatch).toBe('full');
+    expect(alias?.title).toBe(canonica?.title);
+    expect(alias?.data?.[SECTION_ROUTE_DATA]).toBe(seccion);
+    expect(alias?.data?.[ROLES_ROUTE_DATA]).toBe(seccion?.roles);
+    expect(alias?.canActivate).toEqual(canonica?.canActivate);
+    expect(await alias?.loadComponent?.()).toBe(MyAccount);
+    expect(APP_SECTIONS.some((section) => section.path === 'account/profile')).toBe(false);
   });
 
   /**
@@ -548,6 +578,65 @@ function withoutGuards(tree: typeof routes): typeof routes {
     ...(route.children === undefined ? {} : { children: withoutGuards(route.children) }),
   }));
 }
+
+describe('el alias del perfil conserva su URL con los guards reales', () => {
+  let router: Router;
+  let session: SessionStore;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({ providers: [provideRouter(routes)] });
+    router = TestBed.inject(Router);
+    session = TestBed.inject(SessionStore);
+  });
+
+  function openSession(rol: string): void {
+    // Claims sintéticos ASCII: el test de rutas sólo necesita identidad y rol.
+    const payload = btoa(JSON.stringify({ sub: 'perfil-test', roles: [rol], tenants: ['t-1'] }))
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=+$/, '');
+    session.start({ accessToken: `eyJhbGciOiJIUzI1NiJ9.${payload}.firma`, refreshToken: 'r-test' });
+  }
+
+  it.each(['PRACTITIONER', 'PATIENT', 'USER'])(
+    'una sesión %s abre la misma ficha sin cambiar la URL',
+    async (rol) => {
+      openSession(rol);
+
+      expect(await router.navigateByUrl('/account/profile')).toBe(true);
+      expect(router.url).toBe('/account/profile');
+      expect(router.routerState.snapshot.root.firstChild?.firstChild?.routeConfig?.path).toBe(
+        'account/profile',
+      );
+    },
+  );
+
+  it('conserva query y fragmento al abrir el alias', async () => {
+    openSession('PRACTITIONER');
+    const url = '/account/profile?pestana=personales#datos';
+
+    await router.navigateByUrl(url);
+
+    expect(router.url).toBe(url);
+  });
+
+  it('sin sesión la URL del perfil pasa por el login', async () => {
+    await router.navigateByUrl('/account/profile');
+
+    expect(router.url).toBe(LOGIN_ROUTE);
+  });
+
+  it('el acceso anterior a Mi perfil continúa disponible', async () => {
+    openSession('PRACTITIONER');
+
+    await router.navigateByUrl('/my-account');
+
+    expect(router.url).toBe('/my-account');
+    expect(router.routerState.snapshot.root.firstChild?.firstChild?.routeConfig?.path).toBe(
+      'my-account',
+    );
+  });
+});
 
 /**
  * El comprobante (FAR-I5) vive en `…/:orderId/receipt`, declarado DESPUÉS del

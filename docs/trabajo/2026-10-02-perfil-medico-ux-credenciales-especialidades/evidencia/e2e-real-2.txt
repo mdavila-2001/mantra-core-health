@@ -1,0 +1,51 @@
+
+Running 2 tests using 1 worker
+
+corepack.cmd : (node:10060) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+En línea: 5 Carácter: 1
++ corepack.cmd yarn pw playwright/perfil-medico-ux.spec.ts --project=ch ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ((node:10060) Wa... env being set.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  1 [chromium] › playwright\perfil-medico-ux.spec.ts:6:5 › cancelar protege el borrador y conserva el perfil persistido al recargar (2.7s)
+Testing stopped early after 1 maximum allowed failures.
+
+
+  1) [chromium] › playwright\perfil-medico-ux.spec.ts:6:5 › cancelar protege el borrador y conserva el perfil persistido al recargar
+
+    Error: alta sintética contra API real
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 201
+    Received: 400
+
+       9 |   const actor: Actor = { rol:'doctora', identificador:'perfil.h1.'+sufijo+'@example.com', clave:'Synthetic-H1-2026!', nombre:'Prueba Perfil' };
+      10 |   const alta = await api.post('/iam/auth/register-practitioner', {data:{ email:actor.identificador, password:actor.clave, name:'Prueba', lastName:'Perfil', licenseNumber:'H1-'+sufijo }});
+    > 11 |   expect(alta.status(), 'alta sintética contra API real').toBe(201);
+         |                                                           ^
+      12 |   await api.dispose();
+      13 |   const errores: string[]=[];
+      14 |   page.on('pageerror', error=>errores.push(error.message));
+        at C:\Alovida\mantra-core-health\playwright\perfil-medico-ux.spec.ts:11:59
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    artifacts\playwright\salida\perfil-medico-ux-cancelar--47be9-rfil-persistido-al-recargar-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: artifacts\playwright\salida\perfil-medico-ux-cancelar--47be9-rfil-persistido-al-recargar-chromium\error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    artifacts\playwright\salida\perfil-medico-ux-cancelar--47be9-rfil-persistido-al-recargar-chromium\trace.zip
+    Usage:
+
+        yarn playwright show-trace artifacts\playwright\salida\perfil-medico-ux-cancelar--47be9-rfil-persistido-al-recargar-chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    [chromium] › playwright\perfil-medico-ux.spec.ts:6:5 › cancelar protege el borrador y conserva el perfil persistido al recargar
+  1 did not run
+  1 error was not a part of any test, see above for details

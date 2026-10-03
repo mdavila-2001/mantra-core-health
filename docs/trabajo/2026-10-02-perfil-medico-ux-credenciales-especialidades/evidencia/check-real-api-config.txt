@@ -1,0 +1,1 @@
+[check-real-api-config] PASS: API real por defecto, demo explicita y production-api con SSR.

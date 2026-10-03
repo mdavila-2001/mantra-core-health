@@ -1,0 +1,46 @@
+
+Running 4 tests using 1 worker
+
+corepack.cmd : (node:3316) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+En línea: 6 Carácter: 1
++ corepack.cmd yarn pw playwright/practitioner-profile-ux.spec.ts playw ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ((node:3316) War... env being set.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+(Use `node --trace-warnings ...` to show where the warning was created)
+BACKEND_HEALTH=200
+EVIDENCE_MODE=ISOLATED: signature-assets e insurance-networks simulados; resto API real
+  x  1 [chromium] › playwright\practitioner-profile-lists.spec.ts:170:5 › listados densos, respaldo autorizado y matriz visual conservan los datos reales al recargar (57.0s)
+Testing stopped early after 1 maximum allowed failures.
+
+
+  1) [chromium] › playwright\practitioner-profile-lists.spec.ts:170:5 › listados densos, respaldo autorizado y matriz visual conservan los datos reales al recargar
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: true
+    Received: false
+
+    Call Log:
+    - Timeout 15000ms exceeded while waiting on the predicate
+
+      386 |           await expect
+      387 |             .poll(() => dialog.evaluate((element) => element.contains(document.activeElement)))
+    > 388 |             .toBe(true);
+          |              ^
+      389 |           measurements.push(await measureOverflow(page, 'cancelacion-390x844-claro'));
+      390 |           const bounds = await dialog.boundingBox();
+      391 |           expect(bounds).not.toBeNull();
+        at C:\Alovida\mantra-core-health\playwright\practitioner-profile-lists.spec.ts:388:14
+
+    attachment #2: screenshot (image/png) ──────────────────────────────────────────────────────────
+    artifacts\playwright\salida\practitioner-profile-lists-92186-os-datos-reales-al-recargar-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: artifacts\playwright\salida\practitioner-profile-lists-92186-os-datos-reales-al-recargar-chromium\error-context.md
+
+  1 failed
+    [chromium] › playwright\practitioner-profile-lists.spec.ts:170:5 › listados densos, respaldo autorizado y matriz visual conservan los datos reales al recargar
+  3 did not run
+  1 error was not a part of any test, see above for details

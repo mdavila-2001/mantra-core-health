@@ -221,6 +221,17 @@
             </dd>
           </div>
 
+          <div class="mi-perfil__dato mi-perfil__dato--ancho" data-testid="profile-languages">
+            <dt>Idiomas</dt>
+            <dd>
+              @for (idioma of perfil().idiomas; track idioma.id) {
+                <p>{{ idioma.nombre }}@if (idioma.nivel) { · {{ idioma.nivel }} }@if (idioma.interpreta) { · Interpreta en consulta }</p>
+              } @empty {
+                <span class="mi-perfil__ausente">Sin registrar</span>
+              }
+            </dd>
+          </div>
+
           <!-- El estado de habilitación es lo que decide si puede ejercer: va
                con la identidad, no escondido en una pestaña de trámites. -->
           <div class="mi-perfil__dato">
@@ -620,6 +631,9 @@
              pidió que las dos se vean igual—, así que retocarlo acá le
              cambiaría el dibujo a una pantalla que nadie tocó. -->
 
+@if (trayectoriaDensa()) {
+<ng-container [ngTemplateOutlet]="tablaTrayectoria" />
+} @else {
         <section class="trayecto trayecto--curso">
           <h3 class="trayecto__titulo">Actividad actual</h3>
           @if (perfil().actividadActual.length > 0) {
@@ -640,7 +654,10 @@
                         Desde {{ afiliacion.desde | date: 'MMM y' }}
                       </p>
                     </div>
-                    <app-badge variant="success" value="En curso" />
+                    <div class="profesional__hito-cuerpo">
+                      <span class="trayecto__fechas">En curso</span>
+                      <app-status-seal [variant]="afiliacion.sello ?? 'unknown'" [label]="afiliacion.estado ?? 'Sin verificar'" />
+                    </div>
                   </div>
                 </li>
               }
@@ -671,6 +688,7 @@
                       {{ afiliacion.desde | date: 'MMM y' }} —
                       {{ afiliacion.hasta | date: 'MMM y' }}
                     </p>
+                    <app-status-seal [variant]="afiliacion.sello ?? 'unknown'" [label]="afiliacion.estado ?? 'Sin verificar'" />
                   </div>
                 </li>
               }
@@ -683,6 +701,7 @@
           }
         </section>
 
+}
         <!-- El formulario de alta de trayectoria, el mismo de siempre: no se
              duplica ni se reescribe, se sigue embebiendo en modo «timeline». -->
         <section class="mi-perfil__seccion">
@@ -713,7 +732,10 @@
           appTutorialTarget="perfil-matriculas"
           [matriculas]="perfil().matriculas"
           [formacion]="perfil().formacion"
-          [idiomas]="perfil().idiomas"
+          [idiomas]="[]"
+          [permiteDescarga]="true"
+          [descargando]="descargandoRespaldo()"
+          (descargar)="alPedirRespaldo($event)"
           [retirables]="formacionRetirable()"
           (retirar)="alPedirRetiro($event)"
         />
@@ -1115,6 +1137,9 @@
           }
 
           <!-- Actividad actual: primero y destacada, porque es lo más relevante hoy. -->
+@if (trayectoriaDensa()) {
+<ng-container [ngTemplateOutlet]="tablaTrayectoria" />
+} @else {
           <section class="profesional__fase">
             <h3 class="profesional__fase-titulo">Actividad actual</h3>
             @if (perfil().actividadActual.length > 0) {
@@ -1125,7 +1150,8 @@
                     <div class="profesional__hito-cuerpo">
                       <div class="profesional__item-encabezado">
                         <span class="profesional__item-titulo">{{ afiliacion.organizacion }}</span>
-                        <app-badge variant="success" value="En curso" />
+                        <span class="profesional__item-fechas">En curso</span>
+                        <app-status-seal [variant]="afiliacion.sello ?? 'unknown'" [label]="afiliacion.estado ?? 'Sin verificar'" />
                       </div>
                       <p class="profesional__item-texto">
                         {{ afiliacion.cargo }}
@@ -1164,6 +1190,7 @@
                         {{ afiliacion.desde | date: 'MMM y' }} —
                         {{ afiliacion.hasta | date: 'MMM y' }}
                       </p>
+                      <app-status-seal [variant]="afiliacion.sello ?? 'unknown'" [label]="afiliacion.estado ?? 'Sin verificar'" />
                     </div>
                   </li>
                 }
@@ -1176,10 +1203,13 @@
             }
           </section>
 
+}
           <!-- Formación: se mantiene casi igual, es la misma línea de tiempo de siempre. -->
           <section class="profesional__fase">
             <h3 class="profesional__fase-titulo">Formación</h3>
-            @if (perfil().formacion.length > 0) {
+            @if (perfil().formacion.length > 5) {
+              <app-credentials-panel [matriculas]="[]" [formacion]="perfil().formacion" />
+            } @else if (perfil().formacion.length > 0) {
               <ol class="profesional__linea" appTutorialTarget="perfil-formacion">
                 @for (estudio of perfil().formacion; track estudio.id) {
                   <li
@@ -1269,6 +1299,9 @@
             </app-tab-help-block>
           }
 
+@if (perfil().formacion.length > 5 || perfil().matriculas.length > 5) {
+  <app-credentials-panel [matriculas]="perfil().matriculas" [formacion]="perfil().formacion" />
+} @else {
           <div class="profesional__seguimiento">
             <div class="profesional__seguimiento-grupo">
               <h3 class="profesional__fase-titulo">
@@ -1316,136 +1349,35 @@
             </div>
           </div>
 
-          <!-- Especialidades y matrículas son la misma pregunta —«¿qué lo
-             habilita?»— contada dos veces. En la ficha PROPIA la matrícula ya
-             está arriba, así que acá queda una sola lista y las sub-pestañas
-             sobran: un tabset de una pestaña es un control que no elige nada.
-             Para quien visita el perfil ajeno no hay tarjeta arriba, y las dos
-             sub-pestañas siguen siendo el único lugar donde vive el detalle. -->
-          @if (perfil().datosPersonales) {
-            <h3 class="profesional__sub-titulo">
-              Especialidades ({{ perfil().especialidades.length }})
-            </h3>
-            @if (perfil().especialidades.length > 0) {
-              <ul class="profesional__lista">
-                @for (especialidad of perfil().especialidades; track especialidad.id) {
-                  <li
-                    class="profesional__item"
-                    [class.profesional__item--pasado]="especialidad.hasta"
-                  >
-                    <!-- C-09: la misma insignia que arriba. Antes acá el nombre
-                         iba en un `<span>` y «Principal» y «Certificada» en dos
-                         `app-badge` sueltos, con tonos que sólo existían en esta
-                         lista. El estado sube del renglón de fechas al sello de
-                         la insignia: no se pierde, se dice una sola vez y en el
-                         mismo lugar que en el resto de la aplicación. -->
-                    <div class="profesional__item-encabezado">
-                      <app-specialty-badge
-                        [especialidad]="especialidad.nombre"
-                        [estado]="especialidad.estado"
-                        [sello]="especialidad.sello"
-                      />
-                    </div>
+          <h3 class="profesional__sub-titulo">Matrículas ({{ perfil().matriculas.length }})</h3>
+          @if (perfil().matriculas.length > 0) {
+            <ul class="profesional__lista" appTutorialTarget="perfil-matriculas">
+              @for (matricula of perfil().matriculas; track matricula.id) {
+                <li class="profesional__item">
+                  <div class="profesional__item-encabezado">
+                    <span class="profesional__item-titulo">{{ matricula.jurisdiccion }}</span>
+                    <app-status-seal [variant]="matricula.sello" [label]="matricula.estado" />
+                  </div>
 
-                    <!-- Alcance y fechas NO entran en la insignia y por eso
-                         siguen acá: unificar la forma no es recortar el dato. -->
-                    @if (especialidad.alcance) {
-                      <p class="profesional__item-texto">{{ especialidad.alcance }}</p>
+                  <p class="profesional__item-fechas">
+                    Matrícula <span class="profesional__cifra">{{ matricula.numero }}</span>
+                    @if (matricula.autoridad) {
+                      · {{ matricula.autoridad }}
                     }
-
-                    <p class="profesional__item-fechas">
-                      @if (especialidad.desde) {
-                        Desde {{ especialidad.desde | date: 'MMM y' }}
-                      }
-                      @if (especialidad.hasta) {
-                        · hasta {{ especialidad.hasta | date: 'MMM y' }}
-                      } @else if (especialidad.desde) {
-                        · en ejercicio
-                      }
-                    </p>
-                  </li>
-                }
-              </ul>
-            } @else {
-              <p class="profesional__nota">
-                Todavía no hay especialidades registradas. Las carga quien administra la
-                organización junto con la credencial que las respalda.
-              </p>
-            }
+                    @if (matricula.hasta) {
+                      · vigente hasta {{ matricula.hasta | date: 'dd/MM/yyyy' }}
+                    }
+                  </p>
+                </li>
+              }
+            </ul>
           } @else {
-            <app-tabs orientation="horizontal">
-              <app-tab [label]="'Especialidades (' + perfil().especialidades.length + ')'">
-                @if (perfil().especialidades.length > 0) {
-                  <ul class="profesional__lista">
-                    @for (especialidad of perfil().especialidades; track especialidad.id) {
-                      <li
-                        class="profesional__item"
-                        [class.profesional__item--pasado]="especialidad.hasta"
-                      >
-                        <div class="profesional__item-encabezado">
-                          <span class="profesional__item-titulo">{{ especialidad.nombre }}</span>
-                          @if (especialidad.certificada) {
-                            <app-badge variant="success" value="Certificada" />
-                          }
-                        </div>
-
-                        @if (especialidad.alcance) {
-                          <p class="profesional__item-texto">{{ especialidad.alcance }}</p>
-                        }
-
-                        <p class="profesional__item-fechas">
-                          @if (especialidad.desde) {
-                            Desde {{ especialidad.desde | date: 'MMM y' }}
-                          }
-                          @if (especialidad.hasta) {
-                            · hasta {{ especialidad.hasta | date: 'MMM y' }}
-                          } @else if (especialidad.desde) {
-                            · en ejercicio
-                          }
-                          · {{ especialidad.estado }}
-                        </p>
-                      </li>
-                    }
-                  </ul>
-                } @else {
-                  <p class="profesional__nota">
-                    Todavía no hay especialidades registradas. Las carga quien administra la
-                    organización junto con la credencial que las respalda.
-                  </p>
-                }
-              </app-tab>
-
-              <app-tab [label]="'Matrículas (' + perfil().matriculas.length + ')'">
-                @if (perfil().matriculas.length > 0) {
-                  <ul class="profesional__lista" appTutorialTarget="perfil-matriculas">
-                    @for (matricula of perfil().matriculas; track matricula.id) {
-                      <li class="profesional__item">
-                        <div class="profesional__item-encabezado">
-                          <span class="profesional__item-titulo">{{ matricula.jurisdiccion }}</span>
-                          <app-status-seal [variant]="matricula.sello" [label]="matricula.estado" />
-                        </div>
-
-                        <p class="profesional__item-fechas">
-                          Matrícula <span class="profesional__cifra">{{ matricula.numero }}</span>
-                          @if (matricula.autoridad) {
-                            · {{ matricula.autoridad }}
-                          }
-                          @if (matricula.hasta) {
-                            · vigente hasta {{ matricula.hasta | date: 'dd/MM/yyyy' }}
-                          }
-                        </p>
-                      </li>
-                    }
-                  </ul>
-                } @else {
-                  <p class="profesional__nota">
-                    No hay matrículas registradas. Es lo que declara en qué jurisdicción está
-                    habilitado el ejercicio.
-                  </p>
-                }
-              </app-tab>
-            </app-tabs>
+            <p class="profesional__nota">
+              No hay matrículas registradas. Es lo que declara en qué jurisdicción está
+              habilitado el ejercicio.
+            </p>
           }
+}
         </app-tab>
       </app-tabs>
     </app-card>
@@ -1459,3 +1391,34 @@
     }
   </div>
 }
+
+<ng-template #tablaTrayectoria>
+  <div class="perfil-tabla" data-testid="trayectoria-tablas">
+    <app-filter-bar searchLabel="Buscar trayectoria" searchPlaceholder="Institución, cargo o estado"
+      [searchInUrl]="false" [searchValue]="busquedaTrayectoria()"
+      (searchChanged)="filtrarTrayectoria({q: $event})" />
+    @for (grupo of gruposTrayectoria(); track grupo.id) {
+      <section class="perfil-tabla" [attr.data-testid]="'trayectoria-' + grupo.id">
+        <h3>{{ grupo.titulo }}</h3>
+        @if (grupo.total > 0) {
+          <app-data-table [state]="grupo.estado" [columns]="columnasTrayectoria()"
+            [trackBy]="idDeAfiliacion" [rowLabel]="nombreDeAfiliacion" [caption]="grupo.titulo" maxHeight="420px" />
+          <app-pagination [totalItems]="grupo.total" [page]="grupo.pagina" [pageSize]="grupo.tamano"
+            (pageChange)="paginarTrayectoria(grupo.id, $event)"
+            (pageSizeChange)="dimensionarTrayectoria(grupo.id, $event)" />
+        } @else {
+          <p class="mi-perfil__nota">{{ busquedaTrayectoria() ? 'Ningún vínculo coincide con la búsqueda.' : 'Sin registros.' }}</p>
+        }
+      </section>
+    }
+  </div>
+</ng-template>
+<ng-template #celdaInstitucionTrayectoria let-fila>
+  <div class="perfil-tabla__texto"><strong>{{ fila.organizacion }}</strong><span>{{ fila.cargo }}</span></div>
+</ng-template>
+<ng-template #celdaEstadoTrayectoria let-fila>
+  <app-status-seal [variant]="fila.sello ?? 'unknown'" [label]="fila.estado ?? 'Sin determinar'" />
+</ng-template>
+<ng-template #celdaPeriodoTrayectoria let-fila>
+  {{ fila.desde | date:'MMM y' }} — {{ fila.hasta ? (fila.hasta | date:'MMM y') : 'En curso' }}
+</ng-template>

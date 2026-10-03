@@ -1,0 +1,21 @@
+✓ check-bundle-budget
+  inicial: 278.27 kB en 12 archivos
+     137.70 kB  styles-ZNX5SMOT.css
+      84.76 kB  main-PC7VZUQY.js
+      19.25 kB  chunk-3CK6ZYXT.js
+       7.72 kB  chunk-FVRHJ6CU.js
+       7.22 kB  chunk-I5GDSSSR.js
+       6.03 kB  chunk-IF7I7UGW.js
+       5.58 kB  chunk-QU3JABRP.js
+       5.21 kB  chunk-H2RZCHO5.js
+       2.13 kB  chunk-OLPUAJUT.js
+       1.93 kB  chunk-UOFM655Q.js
+       0.67 kB  chunk-3YP2YVSU.js
+       0.07 kB  chunk-HDZRTEBD.js
+  diferidos: 1098 fragmentos
+    3062.81 kB  chunk-VT7UKPAK.js
+     919.01 kB  chunk-KXVYILTX.js
+     808.84 kB  chunk-PDTD2SHB.js
+     594.55 kB  chunk-VMQYV22Y.js
+     432.96 kB  chunk-FWMMDP6O.js
+EXIT_CODE=0

@@ -1,0 +1,4 @@
+dependencias	pending	0	https://github.com/mdavila-2001/mantra-core-health/actions/runs/37099268557/job/111135418024
+e2e	pending	0	https://github.com/mdavila-2001/mantra-core-health/actions/runs/37099268557/job/111135418005
+verificar	pending	0	https://github.com/mdavila-2001/mantra-core-health/actions/runs/37099268557/job/111135417772
+EXIT_CODE=8

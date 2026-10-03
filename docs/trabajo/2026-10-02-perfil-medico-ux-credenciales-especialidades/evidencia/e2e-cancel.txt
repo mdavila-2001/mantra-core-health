@@ -1,0 +1,73 @@
+
+Running 2 tests using 1 worker
+
+corepack.cmd : (node:5832) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+En línea: 5 Carácter: 1
++ corepack.cmd yarn pw playwright/practitioner-profile-ux.spec.ts --pro ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ((node:5832) War... env being set.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  1 [chromium] › playwright\practitioner-profile-ux.spec.ts:8:5 › cancelar protege el borrador y conserva el perfil persistido al recargar (15.3s)
+Testing stopped early after 1 maximum allowed failures.
+
+
+  1) [chromium] › playwright\practitioner-profile-ux.spec.ts:8:5 › cancelar protege el borrador y conserva el perfil persistido al recargar
+
+    Error: consola y red del flujo real
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  -  1
+    + Received  + 28
+
+    - Array []
+    + Array [
+    +   "404 /profiles/practitioners/me/signature-assets",
+    +   "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    +   "404 /profiles/practitioners/me/signature-assets",
+    +   "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    +   "404 /practitioners/01bce041-34c9-4a48-8fa6-68d79f8b3687/insurance-networks",
+    +   "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    +   "404 /profiles/practitioners/me/signature-assets",
+    +   "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    +   "404 /profiles/practitioners/me/signature-assets",
+    +   "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    +   "404 /practitioners/01bce041-34c9-4a48-8fa6-68d79f8b3687/insurance-networks",
+    +   "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    +   "404 /profiles/practitioners/me/signature-assets",
+    +   "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    +   "404 /profiles/practitioners/me/signature-assets",
+    +   "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    +   "404 /practitioners/01bce041-34c9-4a48-8fa6-68d79f8b3687/insurance-networks",
+    +   "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    +   "404 /profiles/practitioners/me/signature-assets",
+    +   "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    +   "404 /profiles/practitioners/me/signature-assets",
+    +   "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    +   "404 /profiles/practitioners/me/signature-assets",
+    +   "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    +   "404 /practitioners/01bce041-34c9-4a48-8fa6-68d79f8b3687/insurance-networks",
+    +   "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    + ]
+
+      75 |   await expect(name).toHaveValue('Prueba');
+      76 |   expect(profileWrites, 'cancelar no escribe el perfil').toBe(0);
+    > 77 |   expect(errors, 'consola y red del flujo real').toEqual([]);
+         |                                                  ^
+      78 | });
+      79 |
+      80 | test('la ruta directa sin sesión solicita autenticación', async ({ page }) => {
+        at C:\Alovida\mantra-core-health\playwright\practitioner-profile-ux.spec.ts:77:50
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    artifacts\playwright\salida\practitioner-profile-ux-ca-b1eda-rfil-persistido-al-recargar-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: artifacts\playwright\salida\practitioner-profile-ux-ca-b1eda-rfil-persistido-al-recargar-chromium\error-context.md
+
+  1 failed
+    [chromium] › playwright\practitioner-profile-ux.spec.ts:8:5 › cancelar protege el borrador y conserva el perfil persistido al recargar
+  1 did not run
+  1 error was not a part of any test, see above for details

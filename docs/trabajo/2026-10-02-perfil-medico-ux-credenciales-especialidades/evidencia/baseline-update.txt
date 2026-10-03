@@ -1,0 +1,61 @@
+Updating ad5623a7..e32dc33b
+Fast-forward
+ PENDIENTES-BACKEND.md                              |  29 +++
+ .../evidence/sync-mockup-dev-2026-10-02/REPORT.md  |  31 +++
+ .../cotizacion-frecuencia-375.png                  | Bin 0 -> 165647 bytes
+ .../editar-facturacion-1440.png                    | Bin 0 -> 206284 bytes
+ .../ficha-facturacion-1440.png                     | Bin 0 -> 221009 bytes
+ .../ficha-facturacion-375.png                      | Bin 0 -> 58297 bytes
+ .../2026-09-16-appointment-tutorials-design.md     | 118 ++++++++++++
+ .../A-registro-de-farmacia.md                      | 190 ++++++++++++++++++
+ .../B-portal-de-farmacia.md                        | 181 ++++++++++++++++++
+ docs/trabajo/2026-09-29-farmacia-cuenta/README.md  | 130 +++++++++++++
+ .../CONTRACTS.md                                   |  31 +++
+ .../DECISIONS.md                                   |  12 ++
+ .../HANDOFF.md                                     |  18 ++
+ .../MATRIX.md                                      |  25 +++
+ .../PLAN.md                                        | 139 ++++++++++++++
+ playwright/planes-de-pago-flexibles.spec.ts        |   7 +
+ playwright/sync-mockup-dev-2026-10-02.spec.ts      | 109 +++++++++++
+ .../core/data-access/profiles/profiles.client.ts   |   2 +
+ .../core/data-access/profiles/profiles.types.ts    |  10 +
+ src/app/core/mock/handlers/profiles.handlers.ts    |   1 +
+ .../core/profesion/insurance-billing-frequency.ts  |  28 +++
+ .../practitioner-profile-edit.html                 |  12 ++
+ .../practitioner-profile-edit.spec.ts              |  23 +++
+ .../practitioner-profile-edit.ts                   |  17 +-
+ .../practitioner-profile-view.html                 |   9 +
+ .../practitioner-profile-view.spec.ts              |  20 +-
+ .../practitioner-profile-view.types.ts             |   2 +
+ .../practitioner-profile.spec.ts                   |  13 +-
+ .../practitioner-profile/practitioner-profile.ts   |   2 +
+ .../quotations/quotation-form/quotation-form.css   |  16 +-
+ tools/autodeploy/README.md                         | 113 +++++++++++
+ tools/autodeploy/bo.alovida.autodeploy-test.plist  |  40 ++++
+ tools/autodeploy/bo.alovida.autodeploy.plist       |  45 +++++
+ tools/autodeploy/instalar.sh                       |  33 ++++
+ tools/autodeploy/vps-autodeploy-test.sh            |  34 ++++
+ tools/autodeploy/vps-autodeploy.sh                 | 212 +++++++++++++++++++++
+ 36 files changed, 1642 insertions(+), 10 deletions(-)
+ create mode 100644 docs/progress/evidence/sync-mockup-dev-2026-10-02/REPORT.md
+ create mode 100644 docs/progress/evidence/sync-mockup-dev-2026-10-02/cotizacion-frecuencia-375.png
+ create mode 100644 docs/progress/evidence/sync-mockup-dev-2026-10-02/editar-facturacion-1440.png
+ create mode 100644 docs/progress/evidence/sync-mockup-dev-2026-10-02/ficha-facturacion-1440.png
+ create mode 100644 docs/progress/evidence/sync-mockup-dev-2026-10-02/ficha-facturacion-375.png
+ create mode 100644 docs/superpowers/specs/2026-09-16-appointment-tutorials-design.md
+ create mode 100644 docs/trabajo/2026-09-29-farmacia-cuenta/A-registro-de-farmacia.md
+ create mode 100644 docs/trabajo/2026-09-29-farmacia-cuenta/B-portal-de-farmacia.md
+ create mode 100644 docs/trabajo/2026-09-29-farmacia-cuenta/README.md
+ create mode 100644 docs/work/Plan_Paciente_Laboratorio_2026-09-23_bb8a5f72a192/CONTRACTS.md
+ create mode 100644 docs/work/Plan_Paciente_Laboratorio_2026-09-23_bb8a5f72a192/DECISIONS.md
+ create mode 100644 docs/work/Plan_Paciente_Laboratorio_2026-09-23_bb8a5f72a192/HANDOFF.md
+ create mode 100644 docs/work/Plan_Paciente_Laboratorio_2026-09-23_bb8a5f72a192/MATRIX.md
+ create mode 100644 docs/work/Plan_Paciente_Laboratorio_2026-09-23_bb8a5f72a192/PLAN.md
+ create mode 100644 playwright/sync-mockup-dev-2026-10-02.spec.ts
+ create mode 100644 src/app/core/profesion/insurance-billing-frequency.ts
+ create mode 100644 tools/autodeploy/README.md
+ create mode 100644 tools/autodeploy/bo.alovida.autodeploy-test.plist
+ create mode 100644 tools/autodeploy/bo.alovida.autodeploy.plist
+ create mode 100755 tools/autodeploy/instalar.sh
+ create mode 100755 tools/autodeploy/vps-autodeploy-test.sh
+ create mode 100755 tools/autodeploy/vps-autodeploy.sh

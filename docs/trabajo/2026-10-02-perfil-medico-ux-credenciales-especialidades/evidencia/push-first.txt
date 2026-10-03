@@ -1,0 +1,18 @@
+git : remote:
+En línea: 2 Carácter: 1
++ git -c safe.directory=C:/Alovida/mantra-core-health push -u origin ma ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (remote: :String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+remote: Create a pull request for 'marcelo/fix-perfil-medico-ux-credenciales-especialidades' on GitHub by visiting:
+
+remote:
+https://github.com/mdavila-2001/mantra-core-health/pull/new/marcelo/fix-perfil-medico-ux-credenciales-especialidades
+
+remote:
+To https://github.com/mdavila-2001/mantra-core-health.git
+ * [new branch]        marcelo/fix-perfil-medico-ux-credenciales-especialidades ->
+marcelo/fix-perfil-medico-ux-credenciales-especialidades
+branch 'marcelo/fix-perfil-medico-ux-credenciales-especialidades' set up to track 'origin/marcelo/fix-perfil-medico-ux-credenciales-especialidades'.
+EXIT_CODE=0
