@@ -7,13 +7,14 @@ import {
   input,
   LOCALE_ID,
   output,
+  PLATFORM_ID,
   signal,
   type OnInit,
   type TemplateRef,
   untracked,
 } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
-import { formatDate, NgTemplateOutlet } from '@angular/common';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { formatDate, isPlatformBrowser, NgTemplateOutlet } from '@angular/common';
 import { calcularTurnos } from '../agenda-create/agenda-turnos';
 import { forkJoin } from 'rxjs';
 
@@ -68,6 +69,15 @@ import { MonthView, type BloqueoDelMes } from './month-view/month-view';
 import { WeekView, lunesDe } from './week-view/week-view';
 import { ScheduleGrid, type RangoDeGrilla } from './schedule-grid/schedule-grid';
 import { AGENDA_CREATE_ROUTE, APPOINTMENT_NEW_ROUTE } from '../agenda.routes';
+import { statusLabelOf } from '../booking-status';
+import {
+  CALENDAR_DAY_PARAM,
+  CALENDAR_VIEW_PARAM,
+  formatCalendarDay,
+  parseCalendarDay,
+  parseCalendarView,
+  type CalendarView,
+} from './calendar-position';
 
 /** Los días de la semana en el orden en que se leen; el índice es `dayOfWeek`. */
 const NOMBRE_DEL_DIA = [
@@ -307,6 +317,8 @@ export class MyAgenda implements OnInit {
   private readonly auth = inject(AuthService);
   private readonly dialogs = inject(DialogService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+  private readonly enElNavegador = isPlatformBrowser(inject(PLATFORM_ID));
   /** El idioma activo, para formatear fechas fuera de la plantilla. */
   /**
    * El idioma activo, para formatear fechas fuera de la plantilla.
@@ -366,6 +378,27 @@ export class MyAgenda implements OnInit {
    * libres se marcan en el día, así que al empezar a moverla se abre su día.
    */
   private citaAMoverDesdeLaSemana: Booking | null = null;
+
+  /**
+   * El día y la vista del calendario, escritos en la URL a medida que cambian.
+   *
+   * Con `replaceUrl`: moverse de día no apila una entrada por día —el atrás
+   * tiene que sacar de la agenda, no deshacer cada flecha—, pero la entrada que
+   * queda sí recuerda dónde se estaba. Es la que encuentra «Volver» al regresar
+   * de una cita abierta. Ver `calendar-position.ts`.
+   */
+  private readonly escribirPosicionEnLaUrl = effect(() => {
+    if (this.mode() !== 'calendar' || this.estado().status !== 'ready') return;
+    const vista = this.calendarView();
+    const fecha =
+      vista === 'day'
+        ? this.diaAbierto()
+        : vista === 'week'
+          ? this.semanaVisible()
+          : this.mesVisible();
+    if (fecha === null) return;
+    untracked(() => this.publicarPosicion(vista, fecha));
+  });
 
   private readonly abrirDiaAlMover = effect(() => {
     if (!this.moviendoCita()) return;
@@ -792,8 +825,7 @@ export class MyAgenda implements OnInit {
         }
         this.estado.set(ready(vigente));
         if (this.mode() === 'calendar') {
-          this.cargarMes();
-          this.openDay(this.diaDeReferencia());
+          this.abrirPosicionInicial();
           // C-13 · las visitas de laboratorio del doctor, para que el día las
           // muestre. Se leen una vez: son de la persona, no del día.
           this.leerVisitasDeLaboratorio();
@@ -1406,7 +1438,10 @@ export class MyAgenda implements OnInit {
    * de sólo lectura con «Abrir expediente».
    */
   protected verDetalleDeLaSemana(cita: Booking): void {
-    const estado = this.estadosResueltos().get(cita.statusConceptId)?.display ?? 'Reservado';
+    const estado = statusLabelOf(
+      this.estadosResueltos().get(cita.statusConceptId)?.code ?? '',
+      'Reservado',
+    );
     if (this.appointmentActions() === null) {
       void this.verDetalleDeLaCita(cita, estado);
       return;
@@ -1709,6 +1744,56 @@ export class MyAgenda implements OnInit {
           this.avisarFallo(error, 'cerrar ese rato');
         },
       });
+  }
+
+  /**
+   * Abre el calendario donde corresponde: donde ya estaba si se está
+   * recargando, donde dice la URL si se llega volviendo de otra pantalla, y
+   * hoy en la vista del día si no hay nada de eso.
+   */
+  private abrirPosicionInicial(): void {
+    const yaAbierto = this.diaAbierto();
+    const params = this.route.snapshot.queryParamMap;
+    const dia =
+      yaAbierto ?? parseCalendarDay(params.get(CALENDAR_DAY_PARAM)) ?? aMedianoche(new Date());
+    const vista: CalendarView =
+      yaAbierto !== null
+        ? this.calendarView()
+        : (parseCalendarView(params.get(CALENDAR_VIEW_PARAM)) ?? 'day');
+
+    // El mes se fija antes de leerlo: si no, se pediría el mes de hoy y en
+    // seguida el del día pedido, y la primera respuesta no serviría de nada.
+    if (yaAbierto === null) this.mesVisible.set(primerDiaDelMes(dia));
+    this.cargarMes();
+    this.openDay(dia);
+    if (vista === 'week') this.showWeek();
+    if (vista === 'month') this.showMonth();
+  }
+
+  /** Escribe la posición en la URL, salvo que sea la de siempre (hoy, día). */
+  private publicarPosicion(vista: CalendarView, fecha: Date): void {
+    if (!this.enElNavegador) return;
+
+    const dia = formatCalendarDay(fecha);
+    const esHoyEnElDia = vista === 'day' && dia === formatCalendarDay(new Date());
+    const cambios = {
+      [CALENDAR_DAY_PARAM]: esHoyEnElDia ? null : dia,
+      [CALENDAR_VIEW_PARAM]: vista === 'day' ? null : vista,
+    };
+
+    const actuales = this.route.snapshot.queryParamMap;
+    if (
+      actuales.get(CALENDAR_DAY_PARAM) === cambios[CALENDAR_DAY_PARAM] &&
+      actuales.get(CALENDAR_VIEW_PARAM) === cambios[CALENDAR_VIEW_PARAM]
+    ) {
+      return;
+    }
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: cambios,
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
   }
 
   protected volverAlMes(): void {

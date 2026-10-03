@@ -16,7 +16,7 @@ import type {
 } from '../../../../core/data-access/scheduling/scheduling.types';
 import { nextControlId } from '@shared/forms/form-control.context';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
-import { sufijoDeCodigo } from '../../booking-status';
+import { statusLabelOf, sufijoDeCodigo } from '../../booking-status';
 import type { EstadoResuelto } from '../day-view/day-view';
 import { detalleDeLaCita, pacienteDeLaCita, type ParDelDetalle } from '../detalle-de-la-cita';
 import type { BloqueoDelMes, EstadoDelDia } from '../month-view/month-view';
@@ -375,7 +375,7 @@ export class WeekView {
         // C-08 · el MISMO detalle que el día, calculado con la misma función.
         detalle: detalleDeLaCita(
           cita,
-          this.etiquetas().get(cita.statusConceptId)?.display ?? 'Reservado',
+          statusLabelOf(this.etiquetas().get(cita.statusConceptId)?.code ?? '', 'Reservado'),
           this.idioma(),
         ),
         reserva: cita,

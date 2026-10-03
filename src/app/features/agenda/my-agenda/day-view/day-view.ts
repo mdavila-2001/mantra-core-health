@@ -25,7 +25,7 @@ import {
   UNKNOWN_STATUS_VARIANT,
   type StatusSealVariant,
 } from '../../../../shared/components/organisms/status-seal/status-seal.types';
-import { statusVariantOf } from '../../booking-status';
+import { statusLabelOf, statusVariantOf } from '../../booking-status';
 import type { BloqueoDelMes } from '../month-view/month-view';
 
 /** Un estado del catálogo, ya resuelto: su código y cómo se lee. */
@@ -772,7 +772,7 @@ export class DayView {
         // Sin nombre no se inventa un relleno ni se muestra el uuid: se dice
         // que no está. Que falte es una condición del servidor, no un error.
         paciente: cita.patientName ?? 'Paciente sin nombre registrado',
-        estado: this.etiquetas().get(cita.statusConceptId)?.display ?? 'Reservado',
+        estado: statusLabelOf(this.etiquetas().get(cita.statusConceptId)?.code ?? '', 'Reservado'),
         statusCode: this.etiquetas().get(cita.statusConceptId)?.code ?? '',
         statusVariant: this.selloDe(cita),
         tipologia: this.tipologiaDe(cita),

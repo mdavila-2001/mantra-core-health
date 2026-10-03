@@ -51,6 +51,8 @@ describe('DayView', () => {
   const ETIQUETAS = new Map([
     ['confirmado', { code: 'BOOKING_CONFIRMED', display: 'Confirmado' }],
     ['llego', { code: 'scheduling:BOOKING_CHECKED_IN', display: 'Llegó' }],
+    // Como lo devuelve la API real: `display` en inglés, que no se muestra.
+    ['curso', { code: 'BOOKING_IN_PROGRESS', display: 'Booking in progress' }],
     ['cancelado', { code: 'BOOKING_CANCELLED', display: 'Cancelado' }],
   ]);
 
@@ -251,8 +253,21 @@ describe('DayView', () => {
     montar([cupo(9)], [cita('s-9-0', { statusConceptId: 'llego' })]);
 
     const texto: string = fixture.nativeElement.textContent;
-    expect(texto).toContain('Llegó');
+    expect(texto).toContain('Ya llegó');
     expect(texto).not.toContain('BOOKING_CHECKED_IN');
+  });
+
+  /**
+   * La API devuelve el `display` del catálogo en inglés. El día lo mostraba
+   * tal cual y «Booking in progress» se leía como «la reserva sigue
+   * pendiente» sobre una consulta que ya había empezado (2026-10-03).
+   */
+  it('nunca muestra la etiqueta inglesa del catálogo: una consulta iniciada dice «En curso»', () => {
+    montar([cupo(9)], [cita('s-9-0', { statusConceptId: 'curso' })]);
+
+    const texto: string = fixture.nativeElement.textContent;
+    expect(texto).toContain('En curso');
+    expect(texto).not.toContain('Booking in progress');
   });
 
   it('a quien ya llegó no le ofrece «Llegó» otra vez', () => {
