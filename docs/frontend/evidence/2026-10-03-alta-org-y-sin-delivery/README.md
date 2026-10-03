@@ -63,7 +63,7 @@ Al volver a compilar sobre `origin/test` apareció `TS2304: Cannot find name 'pd
 
 ## No cubierto
 
-- **Servidor de `test`/`dev` desplegado:** no se verificó que el alta ya no devuelva el 422 allá. Depende del redespliegue (`api-migrate` corre `seed-cli`). Hacerlo crea una organización de prueba en un entorno compartido y requiere el visto bueno del propietario.
+- **Servidor de `test` desplegado:** **verificado después** de este documento, ver [`../2026-10-03-servidor-test/README.md`](../2026-10-03-servidor-test/README.md): alta completa con 201 en navegador real y 10/10 pruebas. `dev` y `mockup` no tienen servidor de prueba equivalente verificado.
 - **Captura «antes» del botón muerto:** se vio durante la depuración, pero no se conservó el archivo; la prueba del defecto es el test que falla sin el arreglo.
 - **Revisión visual independiente:** la hubo, hecha por un agente sin ver mis notas (ver `doble-revision.md`); **rechazó 4 de las 13 pantallas por causas ajenas** (encabezado de móvil, botones flotantes de la maqueta). Por eso el veredicto visual es `VERIFIED_FUNCTIONAL_ONLY`, no verificado.
 - **Cross-browser** (sólo Chromium), **laboratorio y farmacia en navegador** contra la API real (sólo aseguradora) y los 5 viewports completos del gate visual (se usaron 390 y 1440, más móvil/oscuro en el éxito del alta).
