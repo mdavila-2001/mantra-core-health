@@ -72,13 +72,22 @@ async function saltarSucursales(page: Page): Promise<void> {
   await page.getByTestId('paginated-form-continuar').click();
 }
 
+/**
+ * Escribe un nombre desglosado (`app-campos-de-nombre`): primer nombre y
+ * apellido paterno, que son las dos partes obligatorias desde e1acc37a.
+ */
+async function escribirNombre(page: Page, prefijo: string, nombre: string, apellido: string): Promise<void> {
+  await page.getByTestId(`${prefijo}-nombre`).fill(nombre);
+  await page.getByTestId(`${prefijo}-apellido-paterno`).fill(apellido);
+}
+
 /** Página «Representante legal»: nombre y correo, los dos obligatorios. */
 async function completarRepresentante(
   page: Page,
   correo = 'legal@farmacia-sanmartin.test',
 ): Promise<void> {
   await expect(page.locator('.paginated-form__titulo')).toContainText('Representante legal');
-  await page.getByTestId('registro-farmacia-representante').fill('Mariana Siles');
+  await escribirNombre(page, 'registro-farmacia-representante', 'Mariana', 'Siles');
   await page.getByTestId('registro-farmacia-representante-correo').fill(correo);
   await page.getByTestId('paginated-form-continuar').click();
 }
@@ -204,12 +213,13 @@ test.describe('alta pública de farmacia (Módulo Farmacia §1)', () => {
     }
     await page.getByTestId('paginated-form-continuar').click();
     await expect(page.locator('.paginated-form__titulo')).toContainText('(2 de 2)');
-    for (const clave of ['healthAuthorityCertificateFileId', 'powerOfAttorneyFileId'] as const) {
-      await page.getByTestId(`registro-farmacia-doc-${clave}`).setInputFiles(pdfDePrueba(clave));
-      await expect(page.getByTestId(`registro-farmacia-doc-${clave}-quitar`)).toBeVisible({
-        timeout: 15_000,
-      });
-    }
+    // El poder ya no va acá: viaja con quien lo firma, en «Representante legal».
+    await page
+      .getByTestId('registro-farmacia-doc-healthAuthorityCertificateFileId')
+      .setInputFiles(pdfDePrueba('healthAuthorityCertificateFileId'));
+    await expect(
+      page.getByTestId('registro-farmacia-doc-healthAuthorityCertificateFileId-quitar'),
+    ).toBeVisible({ timeout: 15_000 });
     await capturar(page, 'papeles-completos');
     await page.getByTestId('paginated-form-continuar').click();
 
@@ -239,7 +249,17 @@ test.describe('alta pública de farmacia (Módulo Farmacia §1)', () => {
     await capturar(page, 'sucursal-agregada');
     await page.getByTestId('paginated-form-continuar').click();
 
-    await completarRepresentante(page, 'legal@farmacia-completa.test');
+    // El representante, con su poder notarial: el sexto papel.
+    await expect(page.locator('.paginated-form__titulo')).toContainText('Representante legal');
+    await escribirNombre(page, 'registro-farmacia-representante', 'Mariana', 'Siles');
+    await page.getByTestId('registro-farmacia-representante-correo').fill('legal@farmacia-completa.test');
+    await page
+      .getByTestId('registro-farmacia-doc-powerOfAttorneyFileId')
+      .setInputFiles(pdfDePrueba('powerOfAttorneyFileId'));
+    await expect(page.getByTestId('registro-farmacia-doc-powerOfAttorneyFileId-quitar')).toBeVisible({
+      timeout: 15_000,
+    });
+    await page.getByTestId('paginated-form-continuar').click();
 
     // Las tres gerencias, completas.
     for (const [titulo, prefijo] of [
@@ -248,7 +268,7 @@ test.describe('alta pública de farmacia (Módulo Farmacia §1)', () => {
       ['Gerencia de marketing', 'registro-farmacia-gerente-marketing'],
     ] as const) {
       await expect(page.locator('.paginated-form__titulo')).toContainText(titulo);
-      await page.getByTestId(prefijo).fill(`${titulo} de prueba`);
+      await escribirNombre(page, prefijo, titulo, 'de prueba');
       await page.getByTestId(`${prefijo}-celular`).fill('70012345');
       await page.getByTestId(`${prefijo}-correo`).fill(`${prefijo}@farmacia-completa.test`);
       await page.getByTestId('paginated-form-continuar').click();

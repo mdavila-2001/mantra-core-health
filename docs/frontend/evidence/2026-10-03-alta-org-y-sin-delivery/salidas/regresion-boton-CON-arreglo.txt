@@ -1,0 +1,4 @@
+# Test «el botón de la confirmación lleva al login» — CON el arreglo (AppButton importado)
+# rama: justin/alta-organizacion-boton-y-e2e · commit: 4318e3bc · 2026-10-03 02:02
+ Test Files  2 passed (2)
+      Tests  77 passed (77)

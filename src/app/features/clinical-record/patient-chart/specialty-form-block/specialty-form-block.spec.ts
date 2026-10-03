@@ -11,7 +11,6 @@ import { AdditionalFields, type FilaAdicional } from '../additional-fields/addit
 import type { CierreDelFormulario } from '../form-conclusion-block/form-conclusion-block';
 import {
   BLOQUE_CIRUGIA,
-  BLOQUE_ALERGIA,
   BLOQUE_DIAGNOSTICO,
   BLOQUE_LABORATORIO,
   BLOQUE_ODONTOLOGIA,
@@ -162,8 +161,8 @@ describe('SpecialtyFormBlock', () => {
   /**
    * Las **plantillas** que ofrece el desplegable.
    *
-   * Deja fuera las siete entradas fijas a propósito —diagnóstico, alergia, hoja
-   * en blanco, formulario libre, cirugía, odontología y laboratorio—: no son plantillas del
+   * Deja fuera las seis entradas fijas a propósito —diagnóstico, hoja en
+   * blanco, formulario libre, cirugía, odontología y laboratorio—: no son plantillas del
    * catálogo sino lo que se puede completar sin ninguna, y están siempre. Si
    * contaran, cada prueba sobre qué fichas se ofrecen tendría que sumarles
    * cinco, y el número dejaría de decir lo que la prueba quiere decir. Que
@@ -171,7 +170,6 @@ describe('SpecialtyFormBlock', () => {
    */
   const ENTRADAS_FIJAS: readonly string[] = [
     BLOQUE_DIAGNOSTICO,
-    BLOQUE_ALERGIA,
     PLANTILLA_HOJA_LIBRE,
     PLANTILLA_FORMULARIO_LIBRE,
     BLOQUE_CIRUGIA,
@@ -1223,17 +1221,18 @@ describe('SpecialtyFormBlock', () => {
     fixture.detectChanges();
 
     const opciones = opcionesCrudas();
-    expect(opciones.slice(0, 7).map((opcion) => opcion.value)).toEqual([
+    expect(opciones.slice(0, 6).map((opcion) => opcion.value)).toEqual([
       BLOQUE_DIAGNOSTICO,
       PLANTILLA_HOJA_LIBRE,
       PLANTILLA_FORMULARIO_LIBRE,
-      BLOQUE_ALERGIA,
       BLOQUE_CIRUGIA,
       BLOQUE_ODONTOLOGIA,
       BLOQUE_LABORATORIO,
     ]);
-    // La hoja en blanco **conserva el segundo lugar**: la alergia entró detrás,
-    // no delante. Enterrarla al final equivale a no tenerla.
+    // La alergia ya no se ofrece: se carga como diagnóstico (02/10/2026).
+    expect(opciones.map((opcion) => opcion.value)).not.toContain('bloque-alergia');
+    // La hoja en blanco **conserva el segundo lugar**: enterrarla al final
+    // equivale a no tenerla.
     expect(opciones[1].label).toContain('Hoja en blanco');
     // Y el formulario libre, pegado a ella: las dos maneras de escribir sin ficha.
     expect(opciones[2].label).toBe('Formulario libre — campo y valor');

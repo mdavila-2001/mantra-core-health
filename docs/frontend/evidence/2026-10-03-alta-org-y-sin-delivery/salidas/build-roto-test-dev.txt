@@ -1,0 +1,23 @@
+# Build roto en `test` y `dev` (2026-10-03) — incidente ajeno al alta de organización y al delivery
+# Fuente: `yarn ng build --configuration production-api` sobre origin/test (fa68b1c8) con sólo dos plantillas HTML tocadas, y `git show origin/<base>:...`.
+
+## 1. El error de compilación (log literal)
+✘ [ERROR] TS2304: Cannot find name 'pdfMinimo'. [plugin angular-compiler]
+
+    src/app/core/mock/handlers/clinical.handlers.ts:651:22:
+      651 │       body: new Blob([pdfMinimo(documento.title)], { type: 'appli...
+          ╵                       ~~~~~~~~~
+
+
+## 2. Estado de la importación en cada base (`git show origin/<base>:src/app/core/mock/handlers/clinical.handlers.ts`)
+origin/test:   usa pdfMinimo(...)=1 · lo importa=0 · HEAD fa68b1c8 merge: integra los aportes locales de mockup en test
+origin/dev:    usa pdfMinimo(...)=1 · lo importa=0 · HEAD 8c30eee5 merge: integra los aportes locales de mockup en dev
+origin/mockup: usa pdfMinimo(...)=0 · lo importa=0 · HEAD cce9e1a9 chore(mockup): integra evidencias locales en la base actual
+
+## 3. Consecuencia
+`ng build` falla → el despliegue queda en la versión anterior sin avisar. Los arreglos mergeados (alta de organización, botón, sin delivery) no llegarían al servidor.
+
+## 4. Arreglo (una línea: `import { enlazarArchivo, pdfMinimo } from './files.handlers';`) y su verificación
+- test: PR #884 → typecheck 0 · eslint 0 · `clinical.handlers.spec.ts` 22 tests · build production-api 0.
+- dev:  PR #885 → typecheck 0 · eslint 0 · `clinical.handlers.spec.ts` 22 tests · build 0.
+- mockup: no lo necesita.
