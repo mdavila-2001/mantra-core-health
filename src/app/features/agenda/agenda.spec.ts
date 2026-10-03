@@ -2263,12 +2263,16 @@ describe('Agenda', () => {
       interno<(b: unknown) => void>('atenderDesdeLaTarjeta')(cruda);
     }
 
-    it('una cita CONFIRMADA se inicia y se entra a atender', async () => {
+    it('una cita CONFIRMADA pregunta antes de iniciarla y, con el sí, entra a atender', async () => {
       await montar({ roles: ['PRACTITIONER'], hpid: 'hp-1' });
       await responderConEstado('BOOKING_CONFIRMED', 'Confirmada');
+      const confirmar = vi.spyOn(TestBed.inject(DialogService), 'confirm').mockResolvedValue(true);
       const navegar = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
 
       tocarLaTarjeta();
+      await harness.fixture.whenStable();
+
+      expect(confirmar.mock.calls[0]?.[0]?.confirmLabel).toBe('Iniciar consulta');
       http.expectOne('/scheduling/bookings/b-1/start').flush({
         bookingId: 'b-1',
         statusConceptId: 'c-curso',
@@ -2279,6 +2283,23 @@ describe('Agenda', () => {
       expect(navegar).toHaveBeenCalledTimes(1);
       const [ruta] = navegar.mock.calls[0] as [string[]];
       expect(ruta[0]).toMatch(/\/medical-records\/[^/]+\/consultation$/);
+    });
+
+    /**
+     * Abrir la tarjeta para mirarla no puede cambiar el estado de la cita: la
+     * dejaba «en curso» y sin Mover, Cancelar, Llegó ni Demora (2026-10-03).
+     */
+    it('una cita CONFIRMADA abierta y cerrada con «Ahora no» queda como estaba', async () => {
+      await montar({ roles: ['PRACTITIONER'], hpid: 'hp-1' });
+      await responderConEstado('BOOKING_CONFIRMED', 'Confirmada');
+      vi.spyOn(TestBed.inject(DialogService), 'confirm').mockResolvedValue(false);
+      const navegar = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+
+      tocarLaTarjeta();
+      await harness.fixture.whenStable();
+
+      expect(navegar).not.toHaveBeenCalled();
+      // Sin `POST …/start`: el `http.verify()` del afterEach lo confirma.
     });
 
     it('una cita EN CURSO se continúa, sin repetir la transición', async () => {
@@ -2322,7 +2343,9 @@ describe('Agenda', () => {
       const avisar = vi.spyOn(TestBed.inject(ToastService), 'info');
 
       expect(interno<() => boolean>('puedeVerExpedientes')()).toBe(false);
+      vi.spyOn(TestBed.inject(DialogService), 'confirm').mockResolvedValue(true);
       tocarLaTarjeta();
+      await harness.fixture.whenStable();
       http.expectOne('/scheduling/bookings/b-1/start').flush({
         bookingId: 'b-1',
         statusConceptId: 'c-curso',
