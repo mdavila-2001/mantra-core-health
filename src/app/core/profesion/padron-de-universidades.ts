@@ -84,6 +84,29 @@ export function eleccionDesdeTexto(
 }
 
 /**
+ * Qué ciudad de estudio queda al cambiar de universidad en el desplegable.
+ *
+ * La ciudad **sigue a la universidad** mientras nadie la haya escrito a mano:
+ * vacía, o todavía la que se propuso con la universidad anterior, se reemplaza
+ * por la de la nueva —que es vacía si la nueva no tiene una sola sede—. Lo que
+ * la persona tecleó se respeta: quien cursó en una subsede sabe más que el
+ * padrón, y pisárselo al tocar el desplegable sería perderle el dato.
+ *
+ * @param actual - Lo que hoy dice el campo de ciudad.
+ * @param propuestaAnterior - La ciudad de la universidad que estaba elegida.
+ * @param propuestaNueva - La ciudad de la universidad que se acaba de elegir.
+ */
+export function ciudadAlCambiarDeUniversidad(
+  actual: string,
+  propuestaAnterior: string,
+  propuestaNueva: string,
+): string {
+  const escrita = actual.trim();
+  const sigueALaUniversidad = escrita === '' || escrita === propuestaAnterior;
+  return sigueALaUniversidad ? propuestaNueva : actual;
+}
+
+/**
  * El padrón de universidades por país, como árbol: se elige el país y la
  * lista de universidades se acota a él.
  *
@@ -190,5 +213,17 @@ export class PadronDeUniversidades {
   /** Si la universidad figura en la lista de ese país. */
   esUniversidadDe(pais: string, universidad: string): boolean {
     return this.universidadesDe(pais).some((opcion) => opcion.value === universidad);
+  }
+
+  /**
+   * La ciudad que se propone como «Ciudad de estudio» para esa universidad, o
+   * vacío si no hay una que proponer.
+   *
+   * Sólo la lista curada de Bolivia la trae, y sólo para las de sede única. El
+   * padrón importado no tiene ciudad —la fuente no la publica—, así que para
+   * el resto de los países el campo se sigue escribiendo a mano.
+   */
+  ciudadDe(pais: string, universidad: string): string {
+    return this.universidadesDe(pais).find((opcion) => opcion.value === universidad)?.ciudad ?? '';
   }
 }
