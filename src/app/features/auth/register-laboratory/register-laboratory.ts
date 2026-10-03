@@ -1,6 +1,8 @@
 import { NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { HttpErrorResponse } from '@angular/common/http';
+import { map, switchMap } from 'rxjs';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 
@@ -11,7 +13,14 @@ import type {
 } from '../../../core/data-access/iam/iam.types';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { uiLanguage } from '../../../core/i18n/ui-language';
-import { loading, ready } from '../../../core/view-state/view-state';
+import { loading, ready, validation } from '../../../core/view-state/view-state';
+import {
+  AVISO_CATALOGO_DE_DIAGNOSTICO,
+  AltaDeCentroDiagnostico,
+  CODIGOS_DE_DIAGNOSTICO,
+  CatalogoIncompleto,
+  type CatalogosDeDiagnostico,
+} from '../registro-compartido/alta-de-centro-diagnostico';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
 import { AppButton } from '../../../shared/components/atoms/button/button';
@@ -56,7 +65,10 @@ import {
 } from '../registro-compartido/ubicacion-picker/ubicacion-picker';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { CamposDeNombre } from '../registro-compartido/campos-de-nombre/campos-de-nombre';
-import { grupoDeNombre, nombreCompleto } from '../registro-compartido/campos-de-nombre/nombre-de-persona';
+import {
+  grupoDeNombre,
+  nombreCompleto,
+} from '../registro-compartido/campos-de-nombre/nombre-de-persona';
 
 /* ============================================================================
     Alta del laboratorio de sangre — proceso 4.1 del registro del stakeholder.
@@ -292,6 +304,8 @@ const AYUDA: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
 })
 export class RegisterLaboratory {
   private readonly iam = inject(IamClient);
+  /** Resuelve del catálogo los conceptos de país y jurisdicción que la API exige. */
+  private readonly alta = inject(AltaDeCentroDiagnostico);
   private readonly router = inject(Router);
 
   readonly form = new FormGroup({
@@ -328,6 +342,11 @@ export class RegisterLaboratory {
     // --- 4.1.8 · representante legal ---------------------------------------
     // Un grupo con las partes del nombre (primer nombre y apellido paterno obligatorios).
     legalRepName: grupoDeNombre(true),
+    // La API exige el documento del representante legal (4 a 50 caracteres).
+    legalRepIdNumber: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.minLength(4), Validators.maxLength(50)],
+    }),
     legalRepEmail: new FormControl('', {
       nonNullable: true,
       validators: [Validators.required, Validators.email, Validators.maxLength(MAX_CORREO)],
@@ -373,237 +392,250 @@ export class RegisterLaboratory {
    * Pasan por `paginarCampos` como todo lo que monta el motor. Ninguna supera
    * los cuatro campos, así que cada sección es una página y conserva su rótulo.
    */
-  readonly paginas = paginarCampos([
-    {
-      titulo: 'La empresa',
-      clave: 'empresa',
-      icon: 'building' as const,
-      hint: 'Los datos con los que figura en tu matrícula de comercio.',
-      campos: [
-        {
-          key: 'legalName',
-          label: 'Nombre o razón social',
-          control: 'text' as const,
-          required: true,
-          icono: 'building' as const,
-          placeholder: 'Laboratorio Clínico del Sur S.R.L.',
-          testId: 'registro-lab-razon-social',
-          mensajeDeError: 'Escribí el nombre o la razón social de la empresa.',
-        },
-        {
-          key: 'companyType',
-          label: 'Tipo de sociedad',
-          hint: 'El que figura en tu matrícula de comercio.',
-          control: 'select' as const,
-          options: TIPOS_DE_SOCIEDAD,
-          required: true,
-          icono: 'labels' as const,
-          placeholder: 'Elegí el tipo de sociedad',
-          testId: 'registro-lab-tipo-sociedad',
-          mensajeDeError: 'Elegí el tipo de sociedad.',
-        },
-        {
-          key: 'taxId',
-          label: 'Número de NIT',
-          hint: 'Sólo números. Es el que va a salir en las facturas.',
-          control: 'text' as const,
-          required: true,
-          icono: 'billing' as const,
-          placeholder: '1023456789',
-          testId: 'registro-lab-nit',
-          mensajeDeError: 'Escribí el NIT: sólo números, al menos cuatro dígitos.',
-        },
-      ],
-    },
-    {
-      titulo: 'Los papeles de la empresa',
-      clave: 'documentos',
-      icon: 'folder' as const,
-      hint: 'Opcionales: podés adjuntarlos ahora o más adelante. PDF, hasta 10 MB por archivo.',
-      // Los seis, en el orden del registro de procesos: el motor parte la
-      // página sola en «(1 de 2)» y «(2 de 2)».
-      campos: camposDeDocumentosLegales(PAIS, uiLanguage(), false),
-    },
-    {
-      titulo: 'Dónde está la central',
-      clave: 'ubicacion',
-      icon: 'pin' as const,
-      campos: [
-        {
-          key: 'addressLines',
-          label: 'Dirección legal de la central',
-          hint: 'Calle, número y zona. Es la que figura en tus papeles.',
-          control: 'text' as const,
-          required: true,
-          icono: 'pin' as const,
-          placeholder: 'Av. Cañoto esq. Ballivián 234, Zona Central',
-          testId: 'registro-lab-direccion',
-          mensajeDeError: 'Escribí la dirección legal de la central.',
-        },
-        {
-          key: 'gpsCentral',
-          label: 'Ubicación en el mapa (opcional)',
-          hint: 'Sin el punto, tu laboratorio no aparece cuando alguien busca el más cercano.',
-          control: 'custom' as const,
-        },
-      ],
-    },
-    {
-      titulo: 'Tus sucursales',
-      clave: 'sucursales',
-      icon: 'hospital' as const,
-      hint: 'Si sólo atendés en la central, seguí de largo.',
-      campos: [
-        {
-          key: 'sucursales',
-          label: 'Sucursales (opcional)',
-          control: 'custom' as const,
-        },
-      ],
-    },
-    {
-      titulo: 'Representante legal',
-      clave: 'representante',
-      icon: 'shield' as const,
-      campos: [
-        {
-          // Sin rótulo ni error propios: `app-campos-de-nombre` pinta cada casilla
-          // con el suyo, y un `<label for>` externo apuntaría a un control que no existe.
-          key: 'legalRepName',
-          label: '',
-          control: 'custom' as const,
-          mensajeDeError: '',
-        },
-        {
-          key: 'legalRepEmail',
-          label: 'Correo del representante legal',
-          hint: 'Con este correo vas a entrar a la plataforma.',
-          control: 'email' as const,
-          required: true,
-          icono: 'mail' as const,
-          autocomplete: 'username',
-          testId: 'registro-lab-representante-correo',
-          mensajeDeError: 'Escribí un correo válido: es el usuario de la cuenta.',
-        },
-        // El poder (4.1.8.1) se pide junto a quien lo firma, no con los papeles de la empresa.
-        campoDelPoderNotariado(PAIS, uiLanguage(), false),
-      ],
-    },
-    {
-      titulo: 'Gerencia general',
-      clave: 'gerencia-general',
-      icon: 'briefcase' as const,
-      hint: 'Todo este paso es opcional: podés completarlo después.',
-      campos: [
-        {
-          key: 'generalManagerName',
-          label: '',
-          control: 'custom' as const,
-          mensajeDeError: '',
-          testId: 'registro-lab-gerente-general',
-        },
-        {
-          key: 'generalManagerPhone',
-          label: 'Celular',
-          control: 'tel' as const,
-          testId: 'registro-lab-gerente-general-celular',
-          mensajeDeError: 'El número está incompleto.',
-        },
-        {
-          key: 'generalManagerEmail',
-          label: 'Correo',
-          control: 'email' as const,
-          icono: 'mail' as const,
-          testId: 'registro-lab-gerente-general-correo',
-          mensajeDeError: 'Escribí un correo válido o dejalo vacío.',
-        },
-      ],
-    },
-    {
-      titulo: 'Gerencia comercial',
-      clave: 'gerencia-comercial',
-      icon: 'chart' as const,
-      hint: 'Opcional. Es a quien le llega el detalle semanal de ventas y comisiones.',
-      campos: [
-        {
-          key: 'salesManagerName',
-          label: '',
-          control: 'custom' as const,
-          mensajeDeError: '',
-          testId: 'registro-lab-gerente-comercial',
-        },
-        {
-          key: 'salesManagerPhone',
-          label: 'Celular',
-          control: 'tel' as const,
-          testId: 'registro-lab-gerente-comercial-celular',
-          mensajeDeError: 'El número está incompleto.',
-        },
-        {
-          key: 'salesManagerEmail',
-          label: 'Correo',
-          control: 'email' as const,
-          icono: 'mail' as const,
-          testId: 'registro-lab-gerente-comercial-correo',
-          mensajeDeError: 'Escribí un correo válido o dejalo vacío.',
-        },
-      ],
-    },
-    {
-      titulo: 'Gerencia de marketing',
-      clave: 'gerencia-marketing',
-      icon: 'megaphone' as const,
-      hint: 'Opcional. Es con quien se coordinan las campañas.',
-      campos: [
-        {
-          key: 'marketingManagerName',
-          label: '',
-          control: 'custom' as const,
-          mensajeDeError: '',
-          testId: 'registro-lab-gerente-marketing',
-        },
-        {
-          key: 'marketingManagerPhone',
-          label: 'Celular',
-          control: 'tel' as const,
-          testId: 'registro-lab-gerente-marketing-celular',
-          mensajeDeError: 'El número está incompleto.',
-        },
-        {
-          key: 'marketingManagerEmail',
-          label: 'Correo',
-          control: 'email' as const,
-          icono: 'mail' as const,
-          testId: 'registro-lab-gerente-marketing-correo',
-          mensajeDeError: 'Escribí un correo válido o dejalo vacío.',
-        },
-      ],
-    },
-    {
-      titulo: 'Tu acceso',
-      clave: 'acceso',
-      icon: 'lock' as const,
-      hint: 'Entrás con el correo del representante legal y esta contraseña.',
-      campos: [
-        {
-          key: 'password',
-          label: 'Contraseña',
-          hint: 'Al menos 8 caracteres.',
-          control: 'password' as const,
-          required: true,
-          icono: 'lock' as const,
-          autocomplete: 'new-password',
-          testId: 'registro-lab-password',
-          mensajeDeError: MENSAJE_CONTRASENA_CORTA,
-        },
-      ],
-    },
-  ]);
+  readonly paginas = computed(() =>
+    paginarCampos([
+      {
+        titulo: 'La empresa',
+        clave: 'empresa',
+        icon: 'building' as const,
+        hint: 'Los datos con los que figura en tu matrícula de comercio.',
+        campos: [
+          {
+            key: 'legalName',
+            label: 'Nombre o razón social',
+            control: 'text' as const,
+            required: true,
+            icono: 'building' as const,
+            placeholder: 'Laboratorio Clínico del Sur S.R.L.',
+            testId: 'registro-lab-razon-social',
+            mensajeDeError: 'Escribí el nombre o la razón social de la empresa.',
+          },
+          {
+            key: 'companyType',
+            label: 'Tipo de sociedad',
+            hint: 'El que figura en tu matrícula de comercio.',
+            control: 'select' as const,
+            options: TIPOS_DE_SOCIEDAD,
+            required: true,
+            icono: 'labels' as const,
+            placeholder: 'Elegí el tipo de sociedad',
+            testId: 'registro-lab-tipo-sociedad',
+            mensajeDeError: 'Elegí el tipo de sociedad.',
+          },
+          {
+            key: 'taxId',
+            label: 'Número de NIT',
+            hint: 'Sólo números. Es el que va a salir en las facturas.',
+            control: 'text' as const,
+            required: true,
+            icono: 'billing' as const,
+            placeholder: '1023456789',
+            testId: 'registro-lab-nit',
+            mensajeDeError: 'Escribí el NIT: sólo números, al menos cuatro dígitos.',
+          },
+        ],
+      },
+      {
+        titulo: 'Los papeles de la empresa',
+        clave: 'documentos',
+        icon: 'folder' as const,
+        hint: 'Opcionales: podés adjuntarlos ahora o más adelante. PDF, hasta 10 MB por archivo.',
+        // Los seis, en el orden del registro de procesos: el motor parte la
+        // página sola en «(1 de 2)» y «(2 de 2)».
+        campos: camposDeDocumentosLegales(PAIS, uiLanguage(), false),
+      },
+      {
+        titulo: 'Dónde está la central',
+        clave: 'ubicacion',
+        icon: 'pin' as const,
+        campos: [
+          {
+            key: 'addressLines',
+            label: 'Dirección legal de la central',
+            hint: 'Calle, número y zona. Es la que figura en tus papeles.',
+            control: 'text' as const,
+            required: true,
+            icono: 'pin' as const,
+            placeholder: 'Av. Cañoto esq. Ballivián 234, Zona Central',
+            testId: 'registro-lab-direccion',
+            mensajeDeError: 'Escribí la dirección legal de la central.',
+          },
+          {
+            key: 'gpsCentral',
+            label: 'Ubicación en el mapa (opcional)',
+            hint: 'Sin el punto, tu laboratorio no aparece cuando alguien busca el más cercano.',
+            control: 'custom' as const,
+          },
+        ],
+      },
+      {
+        titulo: 'Tus sucursales',
+        clave: 'sucursales',
+        icon: 'hospital' as const,
+        hint: 'Si sólo atendés en la central, seguí de largo.',
+        campos: [
+          {
+            key: 'sucursales',
+            label: 'Sucursales (opcional)',
+            control: 'custom' as const,
+          },
+        ],
+      },
+      {
+        titulo: 'Representante legal',
+        clave: 'representante',
+        icon: 'shield' as const,
+        campos: [
+          {
+            // Sin rótulo ni error propios: `app-campos-de-nombre` pinta cada casilla
+            // con el suyo, y un `<label for>` externo apuntaría a un control que no existe.
+            key: 'legalRepName',
+            label: '',
+            control: 'custom' as const,
+            mensajeDeError: '',
+          },
+          {
+            key: 'legalRepIdNumber',
+            label: 'Documento de identidad del representante',
+            hint: 'Cédula de identidad o documento equivalente.',
+            control: 'text' as const,
+            required: true,
+            icono: 'people' as const,
+            testId: 'registro-lab-representante-documento',
+            mensajeDeError: 'Escribí el documento del representante (al menos cuatro caracteres).',
+          },
+          {
+            key: 'legalRepEmail',
+            label: 'Correo del representante legal',
+            hint: 'Con este correo vas a entrar a la plataforma.',
+            control: 'email' as const,
+            required: true,
+            icono: 'mail' as const,
+            autocomplete: 'username',
+            testId: 'registro-lab-representante-correo',
+            mensajeDeError: 'Escribí un correo válido: es el usuario de la cuenta.',
+          },
+          // El poder (4.1.8.1) se pide junto a quien lo firma, no con los papeles de la empresa.
+          campoDelPoderNotariado(PAIS, uiLanguage(), this.poderObligatorio()),
+        ],
+      },
+      {
+        titulo: 'Gerencia general',
+        clave: 'gerencia-general',
+        icon: 'briefcase' as const,
+        hint: 'Todo este paso es opcional: podés completarlo después.',
+        campos: [
+          {
+            key: 'generalManagerName',
+            label: '',
+            control: 'custom' as const,
+            mensajeDeError: '',
+            testId: 'registro-lab-gerente-general',
+          },
+          {
+            key: 'generalManagerPhone',
+            label: 'Celular',
+            control: 'tel' as const,
+            testId: 'registro-lab-gerente-general-celular',
+            mensajeDeError: 'El número está incompleto.',
+          },
+          {
+            key: 'generalManagerEmail',
+            label: 'Correo',
+            control: 'email' as const,
+            icono: 'mail' as const,
+            testId: 'registro-lab-gerente-general-correo',
+            mensajeDeError: 'Escribí un correo válido o dejalo vacío.',
+          },
+        ],
+      },
+      {
+        titulo: 'Gerencia comercial',
+        clave: 'gerencia-comercial',
+        icon: 'chart' as const,
+        hint: 'Opcional. Es a quien le llega el detalle semanal de ventas y comisiones.',
+        campos: [
+          {
+            key: 'salesManagerName',
+            label: '',
+            control: 'custom' as const,
+            mensajeDeError: '',
+            testId: 'registro-lab-gerente-comercial',
+          },
+          {
+            key: 'salesManagerPhone',
+            label: 'Celular',
+            control: 'tel' as const,
+            testId: 'registro-lab-gerente-comercial-celular',
+            mensajeDeError: 'El número está incompleto.',
+          },
+          {
+            key: 'salesManagerEmail',
+            label: 'Correo',
+            control: 'email' as const,
+            icono: 'mail' as const,
+            testId: 'registro-lab-gerente-comercial-correo',
+            mensajeDeError: 'Escribí un correo válido o dejalo vacío.',
+          },
+        ],
+      },
+      {
+        titulo: 'Gerencia de marketing',
+        clave: 'gerencia-marketing',
+        icon: 'megaphone' as const,
+        hint: 'Opcional. Es con quien se coordinan las campañas.',
+        campos: [
+          {
+            key: 'marketingManagerName',
+            label: '',
+            control: 'custom' as const,
+            mensajeDeError: '',
+            testId: 'registro-lab-gerente-marketing',
+          },
+          {
+            key: 'marketingManagerPhone',
+            label: 'Celular',
+            control: 'tel' as const,
+            testId: 'registro-lab-gerente-marketing-celular',
+            mensajeDeError: 'El número está incompleto.',
+          },
+          {
+            key: 'marketingManagerEmail',
+            label: 'Correo',
+            control: 'email' as const,
+            icono: 'mail' as const,
+            testId: 'registro-lab-gerente-marketing-correo',
+            mensajeDeError: 'Escribí un correo válido o dejalo vacío.',
+          },
+        ],
+      },
+      {
+        titulo: 'Tu acceso',
+        clave: 'acceso',
+        icon: 'lock' as const,
+        hint: 'Entrás con el correo del representante legal y esta contraseña.',
+        campos: [
+          {
+            key: 'password',
+            label: 'Contraseña',
+            hint: 'Al menos 8 caracteres.',
+            control: 'password' as const,
+            required: true,
+            icono: 'lock' as const,
+            autocomplete: 'new-password',
+            testId: 'registro-lab-password',
+            mensajeDeError: MENSAJE_CONTRASENA_CORTA,
+          },
+        ],
+      },
+    ]),
+  );
 
   /* --- documentos legales (dropzone real, con `fileId`) ------------------ */
 
   /** Cómo sube cada `app-dropzone-pdf`: la misma pre-carga pública que la farmacia y la aseguradora. */
-  protected readonly subirDocumento: PdfUploader = (file) => this.iam.uploadRegistrationDocument(file);
+  protected readonly subirDocumento: PdfUploader = (file) =>
+    this.iam.uploadRegistrationDocument(file);
 
   /** Lo ya subido por cada dropzone, para sobrevivir a que el asistente destruya y recree la página. */
   protected readonly documentosSubidos = signal<
@@ -635,7 +667,9 @@ export class RegisterLaboratory {
 
   /** El rótulo ya resuelto del documento, sin el sufijo «(opcional)» que lleva el campo. */
   protected etiquetaDeDocumento(clave: ClaveDeDocumentoDelAlta): string {
-    const campo = this.paginas.flatMap((pagina) => pagina.campos).find((c) => c.key === clave);
+    const campo = this.paginas()
+      .flatMap((pagina) => pagina.campos)
+      .find((c) => c.key === clave);
     return campo?.label.replace(' (opcional)', '') ?? 'Documento';
   }
 
@@ -657,6 +691,33 @@ export class RegisterLaboratory {
    * vuelve a escribir, se va solo. Las sucursales llevan el suyo, por id.
    */
   private readonly direccionVaciadaPorElMapa = signal(false);
+  /** El tipo societario elegido: decide si el poder del representante es obligatorio. */
+  private readonly tipoSocietario = toSignal(this.form.controls.companyType.valueChanges, {
+    initialValue: this.form.controls.companyType.value,
+  });
+
+  /**
+   * La API exige el poder notariado del representante salvo a una empresa
+   * unipersonal (BR-09, 422 «sólo una empresa unipersonal puede omitirlo»).
+   * Mismo criterio que imagenología: sin tipo elegido todavía, no se exige.
+   */
+  private poderObligatorio(): boolean {
+    const tipo = this.tipoSocietario();
+    return tipo !== null && tipo !== 'UNIPERSONAL';
+  }
+
+  constructor() {
+    this.form.controls.companyType.valueChanges.subscribe((tipo) => {
+      const poder = this.form.controls.powerOfAttorneyFileId;
+      if (tipo === null || tipo === 'UNIPERSONAL') {
+        poder.removeValidators(Validators.required);
+      } else {
+        poder.addValidators(Validators.required);
+      }
+      poder.updateValueAndValidity();
+    });
+  }
+
   private readonly direccionEscrita = toSignal(this.form.controls.addressLines.valueChanges, {
     initialValue: '',
   });
@@ -714,7 +775,10 @@ export class RegisterLaboratory {
   agregarSucursal(): void {
     const id = `sucursal-${this.proximaSucursal}`;
     this.proximaSucursal += 1;
-    this.sucursales.update((lista) => [...lista, { id, nombre: '', direccion: '', descripcion: '', urlUbicacion: '', gps: null }]);
+    this.sucursales.update((lista) => [
+      ...lista,
+      { id, nombre: '', direccion: '', descripcion: '', urlUbicacion: '', gps: null },
+    ]);
   }
 
   quitarSucursal(id: string): void {
@@ -826,8 +890,10 @@ export class RegisterLaboratory {
   readonly errorMessage = computed<string | null>(() => {
     const state = this.state();
     if (state.status === 'validation') return state.issues[0]?.message ?? null;
-    if (state.status === 'offline') return 'No pudimos conectarnos. Revisá tu conexión y reintentá.';
-    if (state.status === 'error') return `${state.message || 'Ocurrió un error inesperado.'} (${state.requestId})`;
+    if (state.status === 'offline')
+      return 'No pudimos conectarnos. Revisá tu conexión y reintentá.';
+    if (state.status === 'error')
+      return `${state.message || 'Ocurrió un error inesperado.'} (${state.requestId})`;
     return null;
   });
 
@@ -840,14 +906,34 @@ export class RegisterLaboratory {
 
     this.state.set(loading());
 
-    this.iam.registerLaboratoryOrganization(this.datos()).subscribe({
-      next: (resultado) => {
-        this.state.set(ready(null));
-        this.verificationSent.set(resultado.emailVerificationSent);
-        this.registered.set(true);
-      },
-      error: (error: unknown) => this.state.set(errorToViewState<null>(error)),
-    });
+    // País y jurisdicción (y, en el laboratorio, su tipo de unidad) son
+    // conceptos: se resuelven del catálogo antes de enviar. Sin ellos la API
+    // responde 422 «exige país y jurisdicción».
+    this.alta
+      .catalogos()
+      .pipe(
+        map((catalogos) => this.datos(catalogos)),
+        switchMap((datos) => this.iam.registerLaboratoryOrganization(datos)),
+      )
+      .subscribe({
+        next: (resultado) => {
+          this.state.set(ready(null));
+          this.verificationSent.set(resultado.emailVerificationSent);
+          this.registered.set(true);
+        },
+        error: (error: unknown) => this.state.set(this.fallaDelEnvio(error)),
+      });
+  }
+
+  /** Un catálogo incompleto se explica; el resto, como cualquier error de la API. */
+  private fallaDelEnvio(error: unknown): ViewState<null> {
+    if (error instanceof CatalogoIncompleto) {
+      return validation([{ field: 'catalogos', message: AVISO_CATALOGO_DE_DIAGNOSTICO }]);
+    }
+    if (error instanceof Error && !(error instanceof HttpErrorResponse)) {
+      return validation([{ field: 'alta', message: error.message }]);
+    }
+    return errorToViewState<null>(error);
   }
 
   goToLogin(): void {
@@ -864,7 +950,8 @@ export class RegisterLaboratory {
     return cargo.name.trim() !== '' && cargo.phone.trim() !== '' && cargo.email.trim() !== '';
   }
 
-  private datos(): LaboratoryOrganizationRegistration {
+  private datos(catalogos: CatalogosDeDiagnostico): LaboratoryOrganizationRegistration {
+    const concepto = AltaDeCentroDiagnostico.concepto;
     const raw = this.form.getRawValue();
     const central = this.gpsCentral();
 
@@ -920,8 +1007,20 @@ export class RegisterLaboratory {
       code: this.codigoDesdeNit(raw.taxId),
       legalName: razonSocial,
       legalEntityType: raw.companyType ?? '',
+      countryConceptId: concepto(catalogos.pais, CODIGOS_DE_DIAGNOSTICO.pais),
+      jurisdictionConceptId: concepto(
+        catalogos.jurisdiccion,
+        CODIGOS_DE_DIAGNOSTICO.jurisdiccionNacional,
+      ),
       diagnosticUnit: {
         name: razonSocial,
+        diagnosticUnitTypeConceptId: concepto(
+          catalogos.tipoDeUnidad,
+          CODIGOS_DE_DIAGNOSTICO.laboratorio,
+        ),
+        modalityConceptIds: [
+          concepto(catalogos.modalidad, CODIGOS_DE_DIAGNOSTICO.modalidades.laboratorio),
+        ],
         primarySite: {
           name: NOMBRE_DE_LA_CENTRAL,
           address: {
@@ -938,8 +1037,11 @@ export class RegisterLaboratory {
       },
       legalRepresentative: {
         fullName: nombreDelRepresentante,
+        idNumber: raw.legalRepIdNumber.trim(),
         email: raw.legalRepEmail.trim(),
-        ...(raw.powerOfAttorneyFileId === '' ? {} : { powerOfAttorneyFileId: raw.powerOfAttorneyFileId }),
+        ...(raw.powerOfAttorneyFileId === ''
+          ? {}
+          : { powerOfAttorneyFileId: raw.powerOfAttorneyFileId }),
       },
       ...(documentosCompletos ? { legalDocuments: documentos } : {}),
       ...(cargosCompletos
