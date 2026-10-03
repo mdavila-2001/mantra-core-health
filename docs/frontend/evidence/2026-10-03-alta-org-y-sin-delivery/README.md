@@ -12,6 +12,14 @@ Fecha: 2026-10-03 · Repos: `mantra-core-health` (este) y `mantra-core-health-ap
 
 Detalle de cada PR (rama, commit de merge, quién y cuándo): [`salidas/pr-estado.txt`](./salidas/pr-estado.txt).
 
+PR posteriores, abiertos al auditar esta evidencia (al escribir esto siguen abiertos):
+
+| PR | Qué | Bases |
+|---|---|---|
+| `#884`, `#885` | **Arreglo del build roto**: falta importar `pdfMinimo` en `clinical.handlers.ts` (ver «Incidente») | test, dev |
+| `#886`, `#887`, `#888` | Textos del pedido que aún insinuaban elegir cómo se recibe (hallazgo de la revisión independiente) | test, dev, mockup |
+| `#878`, `#879`, `#880` | Esta carpeta de evidencia | test, dev, mockup |
+
 ## Pruebas, y dónde está la salida de cada una
 
 | Afirmación | Prueba | Salida literal |
@@ -21,9 +29,13 @@ Detalle de cada PR (rama, commit de merge, quién y cuándo): [`salidas/pr-estad
 | El recorrido del pedido no muestra delivery ni selector de modalidad (móvil 390 y escritorio 1440) | 2 pruebas de navegador sobre la maqueta | [`e2e-sin-delivery-test.txt`](./salidas/e2e-sin-delivery-test.txt) · [`e2e-sin-delivery-mockup.txt`](./salidas/e2e-sin-delivery-mockup.txt) |
 | Cada rama compila y pasa tipos, lint y tests dirigidos sobre **su** base | `typecheck`, `eslint`, `yarn test` dirigido y build, por rama | [`verificacion-por-rama.txt`](./salidas/verificacion-por-rama.txt) |
 | La suite completa del front está sana | `yarn test --watch=false` en el árbol integrado de `test` | [`suite-completa-front-rama-test.txt`](./salidas/suite-completa-front-rama-test.txt) |
-| Lo visual se ve como corresponde | 13 capturas con doble revisión | [`doble-revision.md`](./doble-revision.md) y [`capturas/`](./capturas) |
+| Lo visual se ve como corresponde | 13 capturas, revisión propia **y revisión independiente** | [`doble-revision.md`](./doble-revision.md) y [`capturas/`](./capturas) — veredicto: **`VERIFIED_FUNCTIONAL_ONLY`** |
 
 La evidencia del **lado API** (causa raíz, kill-test en rojo, `seed-cli` ×3, matriz de 32 casos, int-specs) está en `mantra-core-health-api`, carpeta `docs/trabajo/2026-10-03-catalogo-afiliacion/` (`REPORTE.md` y `evidencia/`).
+
+## Incidente: `test` y `dev` no compilan (hallazgo de esta auditoría, ajeno a los 3 defectos)
+
+Al volver a compilar sobre `origin/test` apareció `TS2304: Cannot find name 'pdfMinimo'` en `clinical.handlers.ts:651`: los merges «integra los aportes locales de mockup en test/dev» dejaron el uso sin la importación. **`ng build` falla en `test` y `dev` (no en `mockup`)**, así que el despliegue se queda en la versión anterior **sin avisar** y los arreglos de arriba no llegarían al servidor. Evidencia: [`salidas/build-roto-test-dev.txt`](./salidas/build-roto-test-dev.txt). Arreglo de una línea en `#884` (test) y `#885` (dev), con build en exit 0. **Mientras no se mezclen, el servidor no recibe nada de lo anterior.**
 
 ## Estado real del CI (lo que NO se puede dar por verde)
 
@@ -40,7 +52,8 @@ La evidencia del **lado API** (causa raíz, kill-test en rojo, `seed-cli` ×3, m
    MEDIDA checkout paso 1:    scrollWidth=604 · div.app-header__derecha right=604 | …
    ```
    En `test` y `dev` el mismo recorrido no desborda. Por eso, en la rama de `mockup`, la aserción de desborde del spec mide el contenido del checkout y no el documento (commit aparte). Tarea de seguimiento creada.
-2. **Maqueta: los botones flotantes «Datos de prueba» y «Ver componentes» se superponen a «Confirmar pedido»** en el resumen de escritorio (ver `capturas/pedido-escritorio-3-checkout-resumen.png`).
+2. **Maqueta: los botones flotantes «Datos de prueba» y «Ver componentes» se superponen a «Confirmar pedido»** en el resumen de escritorio (ver `capturas/pedido-escritorio-3-checkout-resumen.png`); no se verificó si aparecen en `production-api`.
+3. **Formulario de alta:** errores de sigla/correo repetidos poco accionables, mensaje de PDF inválido sin énfasis, «Quitar» pequeño y tarjeta de subida que colapsa (revisión independiente; previos a este trabajo).
 
 ## Transcrito de la sesión (no existen como archivo original)
 
@@ -52,6 +65,6 @@ La evidencia del **lado API** (causa raíz, kill-test en rojo, `seed-cli` ×3, m
 
 - **Servidor de `test`/`dev` desplegado:** no se verificó que el alta ya no devuelva el 422 allá. Depende del redespliegue (`api-migrate` corre `seed-cli`). Hacerlo crea una organización de prueba en un entorno compartido y requiere el visto bueno del propietario.
 - **Captura «antes» del botón muerto:** se vio durante la depuración, pero no se conservó el archivo; la prueba del defecto es el test que falla sin el arreglo.
-- **Revisión visual por una segunda persona o agente independiente** (la regla pide que no sea quien implementó): no la hubo.
+- **Revisión visual independiente:** la hubo, hecha por un agente sin ver mis notas (ver `doble-revision.md`); **rechazó 4 de las 13 pantallas por causas ajenas** (encabezado de móvil, botones flotantes de la maqueta). Por eso el veredicto visual es `VERIFIED_FUNCTIONAL_ONLY`, no verificado.
 - **Cross-browser** (sólo Chromium), **laboratorio y farmacia en navegador** contra la API real (sólo aseguradora) y los 5 viewports completos del gate visual (se usaron 390 y 1440, más móvil/oscuro en el éxito del alta).
 - Las capturas del pedido son de la maqueta de `mockup`, no de `test`.
