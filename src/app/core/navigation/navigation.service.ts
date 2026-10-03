@@ -228,10 +228,13 @@ function repartirEnBloques(sections: readonly AppSection[]): readonly NavMenuBlo
  */
 function sectionForUrl(url: string): AppSection | null {
   const path = url.split('?')[0]?.split('#')[0] ?? '';
+  // El alias mantiene su URL: sólo cambia cómo se identifica la sección.
+  // La coincidencia es exacta para no inventar hijas de /account/profile.
+  const sectionPath = path === '/account/profile' ? '/my-account' : path;
 
   const matches = APP_SECTIONS.filter((section) => {
     const route = routeOf(section);
-    return path === route || path.startsWith(`${route}/`);
+    return sectionPath === route || sectionPath.startsWith(`${route}/`);
   });
 
   return [...matches].sort((a, b) => b.path.length - a.path.length)[0] ?? null;

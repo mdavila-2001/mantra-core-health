@@ -1,6 +1,6 @@
-/* Las acciones pasan a otra fila en pantallas angostas, sin ocultar controles
+/* Las acciones pasan a otra fila en pantallas de teléfono y tablet, sin ocultar controles
    ni reducir sus areas tactiles cuando aparece la navegacion de retorno. */
-@media (max-width: 640px) {
+@media (max-width: 1024px) {
   .app-header {
     height: auto;
     min-height: var(--h-header);

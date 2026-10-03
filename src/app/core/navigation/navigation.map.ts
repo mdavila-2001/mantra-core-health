@@ -1204,6 +1204,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     label: 'Mi perfil',
     group: 'Mi cuenta',
     icon: 'patients',
+    representaEnElMenu: ['account/profile'],
     // Suelta y arriba, fuera del desplegable. Ver `AppSection.pinnedTop`.
     pinnedTop: true,
     roles: [ANY_ROLE],

@@ -111,12 +111,9 @@
   color: var(--text-secondary);
 }
 
-/* La especialidad principal es lo que identifica profesionalmente a alguien:
-   va con el peso de un dato, no con el de una nota al pie. */
-.profesional__especialidad {
-  margin: var(--sp-1) 0 0;
-  font-weight: 600;
-  color: var(--brand-primary);
+.profesional__especialidades {
+  inline-size: min(100%, 24rem);
+  min-inline-size: 0;
 }
 
 .profesional__codigo {
@@ -151,8 +148,7 @@
   color: var(--text-secondary);
 }
 
-.profesional__bio,
-.profesional__disponibilidad {
+.profesional__bio {
   padding-inline: var(--sp-5);
 }
 
@@ -191,11 +187,15 @@
 /* El rótulo que reemplaza a la pestaña «Especialidades» cuando la ficha es
    propia y la de matrículas ya no existe. Un escalón por debajo del título de
    bloque: sigue siendo un encabezado, pero no compite con él. */
-.profesional__sub-titulo {
+.profesional__sub-titulo,
+.profesional__fase-titulo {
   margin: 0 0 var(--sp-3);
   font-size: var(--fs-body-lg);
   line-height: var(--lh-body-lg);
   font-weight: 600;
+}
+
+.profesional__sub-titulo {
   color: var(--text-secondary);
 }
 
@@ -344,7 +344,8 @@
   background: var(--border-strong);
 }
 
-.profesional__hito-cuerpo {
+.profesional__hito-cuerpo,
+.perfil-tabla__texto {
   display: grid;
   gap: var(--sp-1);
   min-inline-size: 0;
@@ -362,13 +363,6 @@
 
 .profesional__fase:first-of-type {
   margin-block-start: 0;
-}
-
-.profesional__fase-titulo {
-  margin: 0 0 var(--sp-3);
-  font-size: var(--fs-body-lg);
-  line-height: var(--lh-body-lg);
-  font-weight: 600;
 }
 
 /* ── Declarado vs. verificado (pestaña Credenciales, carril 05) ────────────
@@ -478,10 +472,6 @@
 
 .profesional__dato dd {
   margin: 0;
-}
-
-.profesional__cifra {
-  font-variant-numeric: tabular-nums;
 }
 
 /* El departamento emisor, junto al documento y en segundo plano. */
@@ -730,4 +720,13 @@
   flex-wrap: wrap;
   align-items: flex-end;
   gap: var(--sp-3);
+}
+.perfil-tabla {
+  display: grid;
+  gap: var(--sp-3);
+  min-inline-size: 0;
+}
+
+.perfil-tabla__texto {
+  overflow-wrap: anywhere;
 }

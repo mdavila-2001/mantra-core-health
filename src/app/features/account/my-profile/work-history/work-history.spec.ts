@@ -2,6 +2,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, DeferBlockBehavior, TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
+import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 
 import { of } from 'rxjs';
@@ -13,6 +14,8 @@ import type { RamaDepartamento } from '../../../../core/data-access/terminology/
 import { DialogService } from '../../../../shared/components/molecules/dialog/dialog-service';
 import { CONFIRMAR_DESCARTE } from '../../../../shared/components/molecules/dialog/dialog.types';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
+import { FilterBar } from '../../../../shared/components/organisms/filter-bar/filter-bar';
+import { StatusSeal } from '../../../../shared/components/organisms/status-seal/status-seal';
 import { WorkHistory } from './work-history';
 import type { ReferenceOption } from '../../../../shared/components/molecules/reference-combobox/reference-combobox.types';
 
@@ -1827,7 +1830,7 @@ describe('WorkHistory — el historial como tabla guarda en el servidor (H4.S3)'
     fixture.componentRef.setInput('layout', 'tabla');
     http
       .expectOne(AFILIACIONES)
-      .flush({ items: [enCable(), enCable({ id: 'af-2', organizationName: 'Clínica del Sur', roleTitle: 'Pediatra' })], count: 2 });
+      .flush({ items: [enCable({ statusKind: 'declarado' }), enCable({ id: 'af-2', organizationName: 'Clínica del Sur', roleTitle: 'Pediatra' })], count: 2 });
     http.expectOne('/practitioners/prac-1/sites').flush({ items: [], count: 0 });
     fixture.detectChanges();
     return { fixture, http, dialogs, componente: api(fixture) };
@@ -1837,7 +1840,7 @@ describe('WorkHistory — el historial como tabla guarda en el servidor (H4.S3)'
   function accionDeFila(componente: Record<string, UnMiembro>, code: string): void {
     (componente['ejecutarAccionDeAfiliacion'] as unknown as (c: string, a: unknown) => void)(
       code,
-      enCable(),
+      enCable({ statusKind: 'declarado' }),
     );
   }
 
@@ -2037,6 +2040,214 @@ describe('WorkHistory — el historial como tabla guarda en el servidor (H4.S3)'
     );
     expect(filtrado).toHaveLength(1);
     expect(filtrado[0].organizationName).toBe('Clínica del Sur');
+    http.verify();
+  });
+});
+
+describe('WorkHistory — densidad, estados y acciones de la trayectoria', () => {
+  const declarados = (cantidad: number) => Array.from({ length: cantidad }, (_, indice) =>
+    enCable({
+      id: `vinculo-${indice + 1}`,
+      organizationName: `Institución ${indice + 1}`,
+      statusKind: 'declarado',
+    }),
+  );
+
+  async function montarListado(
+    items: ReturnType<typeof enCable>[],
+    layout: 'timeline' | 'tabla' = 'timeline',
+  ) {
+    const resultado = await montar('prac-1');
+    resultado.fixture.componentRef.setInput('layout', layout);
+    resultado.fixture.componentRef.setInput('secciones', 'historial');
+    resultado.http.expectOne(AFILIACIONES).flush({ items, count: items.length });
+    resultado.http.expectOne('/practitioners/prac-1/sites').flush({ items: [], count: 0 });
+    resultado.fixture.detectChanges();
+    return resultado;
+  }
+
+  function tabla(fixture: ComponentFixture<WorkHistory>): HTMLElement | null {
+    return (fixture.nativeElement as HTMLElement).querySelector('[data-testid="historial-tabla"]');
+  }
+
+  function filas(fixture: ComponentFixture<WorkHistory>): HTMLElement[] {
+    return Array.from(tabla(fixture)?.querySelectorAll<HTMLElement>('[data-testid="tabla-fila"]') ?? []);
+  }
+
+  function buscar(fixture: ComponentFixture<WorkHistory>, texto: string): void {
+    const barra = fixture.debugElement.query(By.directive(FilterBar)).componentInstance as FilterBar;
+    expect(barra.searchInUrl()).toBe(false);
+    barra.searchChanged.emit(texto);
+    fixture.detectChanges();
+  }
+
+  it('cinco vínculos corregibles conservan su lista aunque existan vínculos ya decididos', async () => {
+    const { fixture, http } = await montarListado([
+      ...declarados(5),
+      enCable({ id: 'aprobado', statusKind: 'aprobado' }),
+      enCable({ id: 'rechazado', statusKind: 'rechazado' }),
+    ]);
+
+    expect(tabla(fixture)).toBeNull();
+    expect(fixture.nativeElement.querySelectorAll('[data-testid="vinculos-editables"] li')).toHaveLength(5);
+    http.verify();
+  });
+
+  it('seis vínculos corregibles pasan a tabla de dos columnas principales sin duplicar la lista', async () => {
+    const { fixture, http } = await montarListado(declarados(6));
+
+    expect(filas(fixture)).toHaveLength(6);
+    expect(fixture.nativeElement.querySelector('[data-testid="vinculos-editables"]')).toBeNull();
+    expect(tabla(fixture)?.querySelector<HTMLElement>('.data-table__scroll')?.style.maxHeight).toBe('420px');
+    const principales = Array.from(tabla(fixture)!.querySelectorAll('thead th'))
+      .filter((celda) => !celda.classList.contains('data-table__secondary') &&
+        !celda.classList.contains('data-table__detail-toggle-cell'))
+      .map((celda) => celda.textContent?.trim());
+    expect(principales).toEqual(['Institución', 'Estado']);
+    http.verify();
+  });
+
+  it('doce vínculos se paginan de diez y la búsqueda normalizada vuelve al inicio conservando la tabla', async () => {
+    const { fixture, http } = await montarListado(declarados(12));
+    const raiz = fixture.nativeElement as HTMLElement;
+    const tablaOriginal = tabla(fixture);
+    expect(filas(fixture)).toHaveLength(10);
+    expect(filas(fixture)[0].textContent).toContain('Institución 1');
+
+    raiz.querySelector<HTMLButtonElement>('[aria-label="Página siguiente"]')!.click();
+    fixture.detectChanges();
+    expect(filas(fixture)).toHaveLength(2);
+    expect(filas(fixture)[0].textContent).toContain('Institución 11');
+
+    buscar(fixture, 'INSTITUCION 12');
+    expect(tabla(fixture)).toBe(tablaOriginal);
+    expect(filas(fixture)).toHaveLength(1);
+    expect(filas(fixture)[0].textContent).toContain('Institución 12');
+    expect(raiz.querySelector('[aria-current="page"]')?.textContent?.trim()).toBe('1');
+
+    buscar(fixture, 'no existe');
+    expect(tabla(fixture)).toBe(tablaOriginal);
+    expect(filas(fixture)).toHaveLength(0);
+    expect(raiz.querySelector('[data-testid="work-history-no-results"]')).not.toBeNull();
+
+    buscar(fixture, 'medico');
+    expect(filas(fixture)).toHaveLength(10);
+    expect(filas(fixture)[0].textContent).toContain('Institución 1');
+    http.verify();
+  });
+
+  it('si la recarga reduce el total a una página no deja filas ocultas en la segunda', async () => {
+    const { fixture, http } = await montarListado(declarados(12));
+    (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>('[aria-label="Página siguiente"]')!.click();
+    fixture.detectChanges();
+    api(fixture)['recargar']();
+    http.expectOne(AFILIACIONES).flush({ items: declarados(10), count: 10 });
+    fixture.detectChanges();
+
+    expect(filas(fixture)).toHaveLength(10);
+    expect(filas(fixture)[0].textContent).toContain('Institución 1');
+    expect(fixture.nativeElement.querySelector('[aria-current="page"]')?.textContent?.trim()).toBe('1');
+    http.verify();
+  });
+
+  it('separa declaración y sellos de la vigencia, y solo ofrece acciones permitidas', async () => {
+    const estados = ['declarado', 'pendiente', 'aprobado', 'rechazado', 'revocado', 'desconocido'];
+    const { fixture, http } = await montarListado(estados.map((statusKind, indice) => enCable({
+      id: `estado-${indice}`, organizationName: `Institución ${statusKind}`, statusKind,
+      current: false, endDate: '2024-03-01',
+      decisionReasonText: statusKind === 'rechazado' ? 'Revisar la institución declarada' : null,
+    })), 'tabla');
+    const rows = filas(fixture);
+    const acciones = rows.map((fila) => Array.from(fila.querySelectorAll<HTMLElement>('[data-action]'))
+      .map((accion) => accion.dataset['action']));
+
+    expect(acciones).toEqual([['editar', 'retirar'], ['retirar'], [], [], [], []]);
+    expect(rows[0].textContent).toContain('Declarado por vos');
+    expect(rows[0].querySelector('app-status-seal')).toBeNull();
+    expect(rows.every((fila) => fila.textContent?.includes('Finalizado'))).toBe(true);
+    expect(rows[3].textContent).toContain('Revisar la institución declarada');
+    for (const fila of rows.slice(2)) expect(fila.querySelector('app-row-actions')).toBeNull();
+    const sellos = fixture.debugElement.queryAll(By.directive(StatusSeal))
+      .map((sello) => ({
+        variante: (sello.componentInstance as StatusSeal).variant(),
+        texto: (sello.componentInstance as StatusSeal).label(),
+      }));
+    expect(sellos).toEqual([
+      { variante: 'pending', texto: 'Pendiente' },
+      { variante: 'approved', texto: 'Aprobado' },
+      { variante: 'rejected', texto: 'Rechazado' },
+      { variante: 'rejected', texto: 'Revocado' },
+      { variante: 'unknown', texto: 'Estado desconocido' },
+    ]);
+    http.verify();
+  });
+
+  it('el detalle responsive mantiene las acciones de los vínculos declarados', async () => {
+    const { fixture, http } = await montarListado(declarados(6));
+    filas(fixture)[0].querySelector<HTMLButtonElement>('[aria-label="Ver el detalle de Institución 1"]')!.click();
+    fixture.detectChanges();
+    const detalle = tabla(fixture)!.querySelector('.data-table__detail-row')!;
+
+    expect(detalle.textContent).toContain('En curso');
+    expect(Array.from(detalle.querySelectorAll<HTMLElement>('[data-action]'))
+      .map((accion) => accion.dataset['action'])).toEqual(['editar', 'retirar']);
+    http.verify();
+  });
+
+  it.each(['aprobado', 'rechazado'])('tampoco ejecuta acciones sobre un vínculo %s ante un evento directo', async (statusKind) => {
+    const { fixture, http, dialogs } = await montarListado([enCable({ statusKind })], 'tabla');
+    const ejecutar = api(fixture)['ejecutarAccionDeAfiliacion'] as unknown as (code: string, fila: unknown) => void;
+    ejecutar.call(fixture.componentInstance, 'editar', enDominio({ statusKind }));
+    ejecutar.call(fixture.componentInstance, 'retirar', enDominio({ statusKind }));
+
+    expect(leer<boolean>(api(fixture), 'edicionAfiliacionAbierta')).toBe(false);
+    expect(dialogs.confirm).not.toHaveBeenCalled();
+    http.verify();
+  });
+
+  it('la fila pendiente permite retirar mediante DELETE y no ofrece editar', async () => {
+    const { fixture, http, dialogs } = await montarListado([enCable({ statusKind: 'pendiente' })], 'tabla');
+    expect(filas(fixture)[0].querySelector('[data-action="editar"]')).toBeNull();
+    filas(fixture)[0].querySelector<HTMLButtonElement>('[data-action="retirar"]')!.click();
+    const solicitud = await vi.waitFor(() => http.expectOne({ method: 'DELETE', url: `${AFILIACIONES}/af-1` }));
+    expect(dialogs.confirm).toHaveBeenCalled();
+    solicitud.flush(null, { status: 204, statusText: 'No Content' });
+    http.expectOne(AFILIACIONES).flush({ items: [], count: 0 });
+    fixture.detectChanges();
+
+    expect(filas(fixture)).toHaveLength(0);
+    expect(fixture.nativeElement.querySelector('[data-testid="historial-tabla-vacio"]')).not.toBeNull();
+    http.verify();
+  });
+
+  it.each(['tabla', 'timeline'])('con layout %s muestra carga y error, sin falso vacío, y permite reintentar', async (layout) => {
+    const { fixture, http } = await montar('prac-1');
+    fixture.componentRef.setInput('layout', layout);
+    fixture.componentRef.setInput('secciones', 'historial');
+    http.expectOne('/practitioners/prac-1/sites').flush({ items: [], count: 0 });
+    fixture.detectChanges();
+
+    expect(tabla(fixture)?.querySelector('.view-state-host__loading')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('[data-testid="historial-tabla-vacio"]')).toBeNull();
+    expect(fixture.nativeElement.querySelector('app-pagination')).toBeNull();
+    http.expectOne(AFILIACIONES).flush({}, {
+      status: 500, statusText: 'Server Error', headers: { 'x-request-id': 'historial-test-500' },
+    });
+    fixture.detectChanges();
+
+    expect(tabla(fixture)?.textContent).toContain('Algo salió mal');
+    expect(tabla(fixture)?.textContent).toContain('historial-test-500');
+    expect(fixture.nativeElement.querySelector('[data-testid="historial-tabla-vacio"]')).toBeNull();
+    const reintentar = Array.from(tabla(fixture)!.querySelectorAll<HTMLButtonElement>('button'))
+      .find((boton) => boton.textContent?.includes('Reintentar'))!;
+    reintentar.click();
+    fixture.detectChanges();
+    expect(tabla(fixture)?.querySelector('.view-state-host__loading')).not.toBeNull();
+    http.expectOne(AFILIACIONES).flush({ items: declarados(6), count: 6 });
+    fixture.detectChanges();
+
+    expect(filas(fixture)).toHaveLength(6);
+    expect(tabla(fixture)?.textContent).not.toContain('Algo salió mal');
     http.verify();
   });
 });

@@ -1,0 +1,6 @@
+Reproducción Chromium instalado: diálogo HTML nativo, dos botones y un botón de fondo.
+LAST_FOCUSED {"active":"BUTTON","id":"last","modal":true}
+TAB_BOUNDARY {"active":"BODY","id":"","modal":true}
+TAB_RETURN {"active":"BUTTON","id":"first","modal":true}
+BACKGROUND_FOCUS_ATTEMPT {"active":"BUTTON","id":"first","modal":true}
+EXIT_CODE=0

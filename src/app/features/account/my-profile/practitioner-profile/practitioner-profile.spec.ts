@@ -4,6 +4,7 @@ import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 
+import { FileDownloader } from '../../../../core/data-access/files/file-downloader';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { DialogService } from '../../../../shared/components/molecules/dialog/dialog-service';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
@@ -394,6 +395,41 @@ describe('PractitionerProfile', () => {
 
     expect(visible().formacion[0].vencida).toBe(true);
     expect(visible().formacion[0].sello).toBe('expired');
+    expect(visible().formacion[0].approved).toBe(true);
+  });
+
+  it.each([
+    ['CRED_REJECTED','rejected'], ['REJECTED','rejected'], ['REVOKED','rejected'],
+    ['CRED_PENDING','pending'], ['AUTH_EXPIRED','expired'], ['EXPIRED','expired'],
+    ['CRED_VERIFIED','approved'], ['INACTIVE','unknown'], ['UNVERIFIED','unknown'],
+    ['FUTURE_STATUS','unknown'],
+  ])('mapea el estado real %s de títulos y matrículas', (code,esperado) => {
+    montar(); responder({credentials:[{...PERFIL.credentials[0],verifiedAt:undefined}]},
+      {...CONCEPTOS,items:CONCEPTOS.items.map(c=>c.conceptId==='st-verificado'?{...c,code}:c)});
+    expect(visible().formacion[0].sello).toBe(esperado);
+    expect(visible().matriculas[0].sello).toBe(esperado);
+  });
+
+  it.each([
+    { code: 'CRED_REJECTED', expectedSeal: 'rejected', approved: false, expired: false },
+    { code: 'FUTURE_STATUS', expectedSeal: 'unknown', approved: false, expired: false },
+    { code: 'CRED_VERIFIED', expectedSeal: 'expired', approved: true, expired: true },
+    { code: 'CRED_PENDING', expectedSeal: 'pending', approved: false, expired: false },
+  ])('decide la aprobación propia por catálogo y no por metadatos de revisión: $code', ({ code, expectedSeal, approved, expired }) => {
+    montar();
+    responder({
+      credentials: [{
+        ...PERFIL.credentials[0],
+        expiryDate: expired ? AYER : MANANA,
+        verifiedAt: code === 'CRED_PENDING' ? null : '2020-01-15T00:00:00.000Z',
+        verificationSourceUri: code === 'CRED_PENDING' ? null : 'https://registro.test/revision',
+      }],
+    }, {
+      ...CONCEPTOS,
+      items: CONCEPTOS.items.map((concept) => concept.conceptId === 'st-verificado' ? { ...concept, code } : concept),
+    });
+
+    expect(visible().formacion[0]).toMatchObject({ approved, sello: expectedSeal, vencida: expired });
   });
 
   it('una credencial vigente y verificada sale aprobada', () => {
@@ -467,6 +503,41 @@ describe('PractitionerProfile', () => {
   /* -- La foto (carril R2-4) ---------------------------------------------- */
 
   /** Sin `photoFileId` no se pide nada: el avatar de iniciales es el diseño. */
+  it('propaga los respaldos y descarga el contenido conservando el MIME real', async () => {
+    const bajar = vi.spyOn(TestBed.inject(FileDownloader), 'trigger').mockImplementation(() => undefined);
+    montar(); responder({credentials:[{...PERFIL.credentials[0],fileId:'pdf-1'}], licenses:[{...PERFIL.licenses[0],fileId:'pdf-2'}]});
+    expect(visible().formacion[0].fileId).toBe('pdf-1');
+    expect(visible().matriculas[0].fileId).toBe('pdf-2');
+    const descargar = interno<(r:{fileId:string;nombre:string})=>void>('descargarRespaldo');
+    descargar({fileId:'pdf-1',nombre:'Diploma'});
+    descargar({fileId:'pdf-2',nombre:'Matricula'});
+    http.expectNone('/common/files/pdf-2/content');
+    http.expectOne('/common/files/pdf-1/content').flush(new Blob(['%PDF-1.4'],{type:'application/pdf'}));
+    await vi.waitFor(()=>expect(bajar).toHaveBeenCalledWith(expect.stringMatching(/^data:application\/pdf;base64,/),'Diploma'));
+    expect(interno<()=>string|null>('descargandoRespaldo')()).toBeNull();
+    bajar.mockRestore();
+  });
+
+  it('rechaza archivos ajenos al perfil y permite reintentar tras un error', () => {
+    const avisar = vi.spyOn(TestBed.inject(ToastService),'error');
+    montar(); responder({credentials:[{...PERFIL.credentials[0],fileId:'pdf-1'}]});
+    const descargar = interno<(r:{fileId:string;nombre:string})=>void>('descargarRespaldo');
+    descargar({fileId:'ajeno',nombre:'Ajeno'});
+    http.expectNone('/common/files/ajeno/content');
+    descargar({fileId:'pdf-1',nombre:'Diploma'});
+    http.expectOne('/common/files/pdf-1/content').error(new ProgressEvent('error'),{status:403,statusText:'Forbidden'});
+    expect(avisar).toHaveBeenCalled();
+    expect(interno<()=>string|null>('descargandoRespaldo')()).toBeNull();
+    descargar({fileId:'pdf-1',nombre:'Diploma'});
+    http.expectOne('/common/files/pdf-1/content').error(new ProgressEvent('error'),{status:500,statusText:'Server Error'});
+    avisar.mockRestore();
+  });
+
+  it.each([['aprobado','approved'],['pendiente','pending'],['rechazado','rejected'],['desconocido','unknown']])('separa vínculo en curso de aprobación %s', (statusKind,sello) => {
+    montar(); responder({affiliations:[{...PERFIL.affiliations[1],statusKind}]});
+    expect(visible().actividadActual[0]).toMatchObject({actual:true,sello});
+  });
+
   it('sin foto registrada no pide ninguna URL de descarga', () => {
     montar();
     responder();
@@ -956,7 +1027,7 @@ describe('PractitionerProfile · el logo del consultorio', () => {
   let componente: PractitionerProfile;
 
   const PNG = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGP4z8DwHwAFAAH/iZk9HQAAAABJRU5ErkJggg==';
-  const PROPIA = { id: 'site-1', name: 'Consultorio Dra. Rojas', isOwnSite: true };
+  const PROPIA = { id: 'site-1', name: 'Consultorio Dra. Rojas', isOwnSite: true, latitude: null, longitude: null };
 
   function montarConSedes(sedes: readonly object[]): void {
     TestBed.resetTestingModule();

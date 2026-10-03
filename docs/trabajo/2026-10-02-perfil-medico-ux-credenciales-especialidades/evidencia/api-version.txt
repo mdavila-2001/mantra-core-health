@@ -1,0 +1,8 @@
+git -C C:/Alovida/mantra-core-health-api rev-parse HEAD origin/dev
+954e116766a6c83ef9307baa67e2dba9e7cf001a
+954e116766a6c83ef9307baa67e2dba9e7cf001a
+git -C C:/Alovida/mantra-core-health-api ls-remote origin refs/heads/dev
+954e116766a6c83ef9307baa67e2dba9e7cf001a	refs/heads/dev
+Invoke-WebRequest -UseBasicParsing -TimeoutSec 10 http://localhost:3000/health
+StatusCode
+200

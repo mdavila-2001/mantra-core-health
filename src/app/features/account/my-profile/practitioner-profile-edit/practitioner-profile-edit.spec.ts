@@ -1070,7 +1070,7 @@ describe('PractitionerProfileEdit', () => {
     http.match(() => true);
   });
 
-  it('«Credenciales» junta matrículas, títulos e idiomas, cada uno en su bloque', () => {
+  it('«Credenciales» junta sólo matrículas y títulos, cada uno en su bloque', () => {
     const fixture = montarConVista();
     señal<number>('pestana').set(5);
     fixture.detectChanges();
@@ -1082,8 +1082,8 @@ describe('PractitionerProfileEdit', () => {
     expect(titulos).toEqual([
       'Tus matrículas cargadas',
       'Tus títulos cargados',
-      'Idiomas en los que atendés',
     ]);
+    expect(panel.querySelector('[data-testid="edicion-idiomas"]')).toBeNull();
     // Cada bloque ofrece su alta a la derecha de su barra; el formulario vive en un modal (D-04).
     expect(panel.querySelector('app-filter-bar [data-testid="matricula-agregar"]')).not.toBeNull();
     expect(panel.querySelector('app-filter-bar [data-testid="credencial-agregar"]')).not.toBeNull();
@@ -3220,18 +3220,179 @@ describe('PractitionerProfileEdit', () => {
    * «Falta un botón en editar perfil para cancelar edición» (pedido del
    * propietario, 24/09/2026). Datos personales, Contacto y Facturación son
    * UN formulario con UN botón de guardar: cancelar descarta lo tipeado en
-   * los tres paneles sin salir de la pantalla ni pegarle a la red.
+   * los tres paneles tras confirmar, sin escribir en el servidor, y vuelve a la ficha.
    */
   describe('cancelar la edición de Datos personales, Contacto y Facturación', () => {
-    it('vuelve a sembrar el formulario con lo último guardado, sin pegarle al servidor', () => {
+    it.each([false, true])('protege incluso una fila de idioma incompleta (descarte=%s)', async (discard) => {
+      montarYCargar({ languages: [] });
+      const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+      const confirmation = responderConfirmacion(discard);
+      interno<() => void>('agregarIdioma')();
+      await interno<() => Promise<void>>('cancelarEdicion')();
+      expect(confirmation.preguntas).toBe(1);
+      expect(interno<() => readonly unknown[]>('idiomas')()).toHaveLength(discard ? 0 : 1);
+      expect(navigate).toHaveBeenCalledTimes(discard ? 1 : 0);
+      http.expectNone((request) => ['PATCH', 'PUT', 'POST', 'DELETE'].includes(request.method));
+    });
+
+    it.each([false, true])('excluye idiomas ya guardados y protege otro borrador (borrador=%s)', async (keepDraft) => {
+      montarYCargar({ languages: [] });
+      const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+      const confirmation = responderConfirmacion(false);
+      if (keepDraft) señal<string>('bio').set('Otro borrador');
+      interno<() => void>('agregarIdioma')();
+      interno<(index: number, value: string) => void>('elegirIdioma')(0, 'lang-es');
+      interno<() => void>('guardarIdiomas')();
+      const request = http.expectOne('/profiles/practitioners/me');
+      request.flush({ ...PERFIL_BASE, languages: [{ languageConceptId: 'lang-es', clinicalInterpretationAllowed: false }] });
+      await interno<() => Promise<void>>('cancelarEdicion')();
+      expect(confirmation.preguntas).toBe(keepDraft ? 1 : 0);
+      expect(navigate).toHaveBeenCalledTimes(keepDraft ? 0 : 1);
+      if (keepDraft) expect(señal<string>('bio')()).toBe('Otro borrador');
+      expect(interno<() => readonly { idioma: string }[]>('idiomas')()[0].idioma).toBe('lang-es');
+      http.expectNone((pending) => ['PATCH', 'PUT', 'POST', 'DELETE'].includes(pending.method));
+    });
+
+    it('espera el guardado independiente de idiomas antes de salir', async () => {
+      montarYCargar({ languages: [] });
+      const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+      const confirmation = responderConfirmacion(false);
+      interno<() => void>('agregarIdioma')();
+      interno<(index: number, value: string) => void>('elegirIdioma')(0, 'lang-es');
+      interno<() => void>('guardarIdiomas')();
+      const request = http.expectOne('/profiles/practitioners/me');
+      await interno<() => Promise<void>>('cancelarEdicion')();
+      expect(navigate).not.toHaveBeenCalled();
+      expect(confirmation.preguntas).toBe(0);
+      request.flush({ ...PERFIL_BASE, languages: [{ languageConceptId: 'lang-es', clinicalInterpretationAllowed: false }] });
+      await interno<() => Promise<void>>('cancelarEdicion')();
+      expect(navigate).toHaveBeenCalledExactlyOnceWith(['/account/profile']);
+      expect(confirmation.preguntas).toBe(0);
+    });
+
+    it.each([false, true])('protege la frecuencia de facturación al cancelar (descarte=%s)', async (discard) => {
+      montarYCargar({ insuranceBillingFrequency: 'MONTHLY' });
+      const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+      const confirmation = responderConfirmacion(discard);
+      señal<string>('frecuenciaFacturacionSeguro').set('BIWEEKLY');
+      await interno<() => Promise<void>>('cancelarEdicion')();
+      expect(confirmation.preguntas).toBe(1);
+      expect(señal<string>('frecuenciaFacturacionSeguro')()).toBe(discard ? 'MONTHLY' : 'BIWEEKLY');
+      expect(navigate).toHaveBeenCalledTimes(discard ? 1 : 0);
+      http.expectNone((request) => ['PATCH', 'PUT', 'POST', 'DELETE'].includes(request.method));
+    });
+
+    it('revertir la frecuencia de facturación conserva la cancelación limpia', async () => {
+      montarYCargar({ insuranceBillingFrequency: 'MONTHLY' });
+      const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+      const confirmation = responderConfirmacion(false);
+      señal<string>('frecuenciaFacturacionSeguro').set('BIWEEKLY');
+      señal<string>('frecuenciaFacturacionSeguro').set('MONTHLY');
+      await interno<() => Promise<void>>('cancelarEdicion')();
+      expect(confirmation.preguntas).toBe(0);
+      expect(navigate).toHaveBeenCalledExactlyOnceWith(['/account/profile']);
+    });
+
+    it('descarta tras confirmar y vuelve a la ficha sin escribir en el servidor', async () => {
       montarYCargar({ professionalTitle: 'Cardióloga' });
+      const navegar = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+      const confirmacion = responderConfirmacion(true);
 
       señal<string>('titulo').set('Un título a medio escribir');
-      interno<() => void>('cancelarEdicion')();
+      await interno<() => Promise<void>>('cancelarEdicion')();
 
       expect(señal<string>('titulo')()).toBe('Cardióloga');
+      expect(confirmacion.preguntas).toBe(1);
+      expect(navegar).toHaveBeenCalledExactlyOnceWith(['/account/profile']);
+      http.expectNone((r) => ['PATCH', 'PUT', 'POST', 'DELETE'].includes(r.method));
       // `http.verify()` del `afterEach` ya se encarga de que no haya quedado
       // ninguna petición pendiente — cancelar no debe disparar ninguna.
+    });
+
+    it('sin cambios vuelve directo, aunque el guardado normal corrija acceptsNewPatients', async () => {
+      montarYCargar({ acceptsNewPatients: false });
+      const navegar = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+      const confirmacion = responderConfirmacion(false);
+      await interno<() => Promise<void>>('cancelarEdicion')();
+      expect(confirmacion.preguntas).toBe(0);
+      expect(navegar).toHaveBeenCalledExactlyOnceWith(['/account/profile']);
+    });
+
+    it('rechazar conserva el borrador de los tres paneles, incluso un teléfono inválido', async () => {
+      montarYCargar();
+      const navegar = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+      const confirmacion = responderConfirmacion(false);
+      señal<string>('titulo').set('Borrador');
+      señal<string>('direccion').set('Dirección de prueba');
+      señal<string>('nit').set('NIT incompleto');
+      const phone = interno<{ setValue: (v: string) => void; value: string }>('celularPersonal');
+      phone.setValue('123');
+      await interno<() => Promise<void>>('cancelarEdicion')();
+      expect(confirmacion.preguntas).toBe(1);
+      expect(navegar).not.toHaveBeenCalled();
+      expect(señal<string>('titulo')()).toBe('Borrador');
+      expect(señal<string>('direccion')()).toBe('Dirección de prueba');
+      expect(señal<string>('nit')()).toBe('NIT incompleto');
+      expect(phone.value).toBe('123');
+    });
+
+    it('una fecha inválida escrita en el control pide descarte y conserva el texto al rechazar', async () => {
+      const fixture = montarConVista({birthDate:'2000-01-01'});
+      const campo = (fixture.nativeElement as HTMLElement).querySelector<HTMLInputElement>('[data-testid="edicion-nacimiento"] input');
+      if (!campo) throw new Error('Falta el campo de nacimiento');
+      const originalDate = campo.value;
+      const navegar = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+      const confirmacion = responderConfirmacion(false);
+      campo.value = '31/02/2000';
+      campo.dispatchEvent(new Event('input',{bubbles:true}));
+      fixture.detectChanges();
+      await interno<()=>Promise<void>>('cancelarEdicion')();
+      expect(confirmacion.preguntas).toBe(1);
+      expect(navegar).not.toHaveBeenCalled();
+      expect(campo.value).toBe('31/02/2000');
+      campo.value = originalDate;
+      campo.dispatchEvent(new Event('input',{bubbles:true}));
+      fixture.detectChanges();
+      await interno<()=>Promise<void>>('cancelarEdicion')();
+      expect(confirmacion.preguntas).toBe(1);
+      expect(navegar).toHaveBeenCalledOnce();
+    });
+
+    it('volver al valor original no pide descartar', async () => {
+      montarYCargar({ professionalTitle: 'Cardióloga' });
+      const navegar = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+      const confirmacion = responderConfirmacion(false);
+      señal<string>('titulo').set('Borrador');
+      señal<string>('titulo').set('Cardióloga');
+      await interno<() => Promise<void>>('cancelarEdicion')();
+      expect(confirmacion.preguntas).toBe(0);
+      expect(navegar).toHaveBeenCalledOnce();
+    });
+
+    it('dos clics esperan una sola decisión y navegan una sola vez', async () => {
+      montarYCargar();
+      señal<string>('titulo').set('Borrador');
+      const navegar = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+      let resolver!: (aceptado: boolean) => void;
+      const confirmar = vi.fn(() => new Promise<boolean>((r) => { resolver = r; }));
+      interno<{ confirm: () => Promise<boolean> }>('dialogs').confirm = confirmar;
+      const primero = interno<() => Promise<void>>('cancelarEdicion')();
+      await interno<() => Promise<void>>('cancelarEdicion')();
+      expect(confirmar).toHaveBeenCalledOnce();
+      expect(navegar).not.toHaveBeenCalled();
+      resolver(true);
+      await primero;
+      expect(navegar).toHaveBeenCalledOnce();
+    });
+
+    it('no sale mientras se sube el logo', async () => {
+      montarYCargar();
+      const navegar = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+      const confirmacion = responderConfirmacion(true);
+      señal<boolean>('subiendoLogo').set(true);
+      await interno<() => Promise<void>>('cancelarEdicion')();
+      expect(navegar).not.toHaveBeenCalled();
+      expect(confirmacion.preguntas).toBe(0);
     });
 
     it('no hace nada mientras hay un guardado en curso', () => {
@@ -3343,11 +3504,13 @@ describe('PractitionerProfileEdit', () => {
 
     it('cancelar descarta el logo elegido y vuelve al guardado', async () => {
       montarConSede();
+      responderConfirmacion(true);
+      vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
       interno<(archivos: File[]) => void>('alElegirLogo')([archivo()]);
       http.expectOne('/common/files/upload').flush({ id: 'file-nuevo' });
       await esperarVista();
 
-      interno<() => void>('cancelarEdicion')();
+      await interno<() => Promise<void>>('cancelarEdicion')();
 
       expect(interno<() => string | null>('logoVisible')()).toBeNull();
       // Nada que guardar: no hay ninguna petición.
@@ -3486,11 +3649,13 @@ describe('PractitionerProfileEdit', () => {
 
     it('cancelar descarta lo elegido y vuelve a lo guardado', async () => {
       montarConFirma({ signatureFileId: null, sealFileId: null });
+      responderConfirmacion(true);
+      vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
       interno<(archivos: File[]) => void>('alElegirFirma')([archivo()]);
       http.expectOne('/common/files/upload').flush({ id: 'file-firma' });
       await esperar(() => firma().visible());
 
-      interno<() => void>('cancelarEdicion')();
+      await interno<() => Promise<void>>('cancelarEdicion')();
 
       expect(firma().visible()).toBeNull();
       expect(firma().cambio).toBeUndefined();
@@ -3778,8 +3943,8 @@ describe('PractitionerProfileEdit', () => {
       expect(interno<() => readonly unknown[]>('opcionesDeIdioma')()).toHaveLength(2);
     });
 
-    it('con vista: la pestaña «Credenciales» pinta las filas y su propio «Guardar idiomas»', () => {
-      parametros = { pestana: '5' };
+    it('con vista: Datos personales conserva idiomas y su guardado; Credenciales los excluye', () => {
+      parametros = { pestana: '0' };
       const fixture = montarConVista({ languages: IDIOMAS });
       responderCatalogoDeIdiomas();
       fixture.detectChanges();
@@ -3795,8 +3960,10 @@ describe('PractitionerProfileEdit', () => {
       );
       expect(guardar).toBeDefined();
       expect(guardar?.hasAttribute('disabled') || guardar?.getAttribute('aria-disabled') === 'true').toBe(true);
-      // El «Guardar cambios» del formulario de presentación NO está en esta pestaña.
-      expect(fixture.nativeElement.textContent).not.toContain('Guardar cambios');
+      expect(fixture.nativeElement.textContent).toContain('Guardar cambios');
+      señal<number>('pestana').set(5);
+      fixture.detectChanges();
+      expect(panelAbierto(fixture).querySelector('[data-testid="edicion-idiomas"]')).toBeNull();
     });
   });
 });

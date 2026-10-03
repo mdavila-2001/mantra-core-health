@@ -649,22 +649,19 @@ describe('PractitionerProfileView', () => {
 
   /* -- Credenciales y verificaciones ----------------------------------------- */
 
-  it('agrupa especialidades, formación y matrículas en declarado vs. verificado', () => {
+  it('agrupa únicamente formación y matrículas en declarado vs. verificado', () => {
     const host = montar();
+    expect(host.textContent).toContain('Cardiología');
     seleccionarPestana(host, 'Credenciales y verificaciones');
-
-    const verificado = Array.from(host.querySelectorAll('.profesional__seguimiento-grupo'))[0];
-    const declarado = Array.from(host.querySelectorAll('.profesional__seguimiento-grupo'))[1];
-
-    // Verificado (3): la formación con fuente, la especialidad principal y la
-    // matrícula, las tres con sello "approved".
-    expect(verificado.textContent).toContain('Verificado (3)');
-    expect(verificado.textContent).toContain('Título de grado');
-    expect(verificado.textContent).toContain('Cardiología');
-    expect(verificado.textContent).toContain('Nacional');
-    // Declarado (1): la especialidad "en revisión".
-    expect(declarado.textContent).toContain('Declarado (1)');
-    expect(declarado.textContent).toContain('Medicina interna');
+    const grupos = host.querySelectorAll('.profesional__seguimiento-grupo');
+    expect(grupos[0].textContent).toContain('Verificado (2)');
+    expect(grupos[0].textContent).toContain('Título de grado');
+    expect(grupos[0].textContent).toContain('Nacional');
+    expect(grupos[1].textContent).toContain('Declarado (0)');
+    for (const grupo of grupos) {
+      expect(grupo.textContent).not.toContain('Cardiología');
+      expect(grupo.textContent).not.toContain('Medicina interna');
+    }
   });
 
   it('muestra la fuente de verificación cuando existe', () => {
@@ -672,6 +669,29 @@ describe('PractitionerProfileView', () => {
     seleccionarPestana(host, 'Credenciales y verificaciones');
 
     expect(host.textContent).toContain('https://registro-profesional.test/matriculas/LIC-3');
+  });
+
+  it('el resumen público no aprueba títulos por la fuente y conserva la aprobación de uno vencido', () => {
+    const host = montar({
+      ...PERFIL,
+      matriculas: [],
+      formacion: [
+        { ...PERFIL.formacion[0], id: 'rejected', tipo: 'Título rechazado', sello: 'rejected', estado: 'Rechazado', approved: false },
+        { ...PERFIL.formacion[0], id: 'unknown', tipo: 'Título sin decisión', sello: 'unknown', estado: 'Sin determinar' },
+        { ...PERFIL.formacion[0], id: 'expired', tipo: 'Título aprobado vencido', sello: 'expired', estado: 'Vencido', hasta: new Date('2001-01-01'), vencida: true, approved: true },
+      ],
+    });
+    seleccionarPestana(host, 'Credenciales y verificaciones');
+    const groups = host.querySelectorAll('.profesional__seguimiento-grupo');
+
+    expect(groups[0].textContent).toContain('Verificado (1)');
+    expect(groups[0].textContent).toContain('Título aprobado vencido');
+    expect(groups[0].textContent).not.toContain('Título rechazado');
+    expect(groups[0].textContent).not.toContain('Título sin decisión');
+    expect(groups[1].textContent).toContain('Declarado (2)');
+    expect(groups[1].textContent).toContain('Título rechazado');
+    expect(groups[1].textContent).toContain('Título sin decisión');
+    expect(groups[1].textContent).not.toContain('Título aprobado vencido');
   });
 
   it('sin nada verificado, el bloque lo dice', () => {
@@ -690,15 +710,14 @@ describe('PractitionerProfileView', () => {
     expect(host.textContent).toContain('Todavía no hay nada verificado');
   });
 
-  it('conserva las sub-pestañas de Especialidades y Matrículas dentro de Credenciales', () => {
+  it('presenta Matrículas sin sub-pestañas ni detalle de especialidades en Credenciales', () => {
     const host = montar();
     seleccionarPestana(host, 'Credenciales y verificaciones');
-
-    const subPestanas = Array.from(host.querySelectorAll('[role="tab"]')).map(
-      (boton) => boton.textContent?.trim() ?? '',
-    );
-    expect(subPestanas.some((texto) => texto.includes('Especialidades ('))).toBe(true);
-    expect(subPestanas.some((texto) => texto.includes('Matrículas ('))).toBe(true);
+    const pestanas = Array.from(host.querySelectorAll('[role="tab"]')).map(b => b.textContent);
+    expect(pestanas.some(t => t?.includes('Especialidades ('))).toBe(false);
+    expect(pestanas.some(t => t?.includes('Matrículas ('))).toBe(false);
+    expect(host.textContent).toContain('LIC-3');
+    expect(host.querySelector('.profesional__detalle-especialidades')).toBeNull();
   });
 
   /* -- Vista previa del perfil público ---------------------------------------
@@ -776,13 +795,81 @@ describe('PractitionerProfileView', () => {
     expect(host.textContent).not.toContain('Tu actividad');
   });
 
+  it('traslada idioma, nivel e interpretación a Datos personales propios', () => {
+    const host = montar({...PERFIL, idiomas: [{id:'es', nombre:'Español', nivel:'Avanzado', interpreta:true}]}, true);
+    expect(host.querySelector('[data-testid="profile-languages"]')?.textContent).toContain('Avanzado');
+    expect(host.querySelector('[data-testid="profile-languages"]')?.textContent).toContain('Interpreta en consulta');
+    seleccionarPestana(host, 'Credenciales');
+    expect(host.querySelector('app-credentials-panel')?.textContent).not.toContain('Español');
+  });
+
+  it.each([0, 1, 5, 6, 12])('presenta %i vínculos sin cambiar de formato al buscar', (cantidad) => {
+    const lista = Array.from({length:cantidad}, (_,i) => afiliacion({id: 'af-'+i, organizacion:'Institución '+i, actual:true, hasta:null}));
+    const host = montar({...PERFIL, actividadActual:lista, experienciaHistorica:[]});
+    seleccionarPestana(host, 'Trayectoria');
+    expect(host.querySelector('[data-testid="trayectoria-tablas"]') !== null).toBe(cantidad > 5);
+    if(cantidad > 5) {
+      const grupo = host.querySelector('[data-testid="trayectoria-actual"]');
+      expect(grupo?.querySelectorAll('tbody tr').length).toBe(Math.min(10,cantidad));
+      const interno = fixture.componentInstance as unknown as {filtrarTrayectoria: (f:{q:string})=>void};
+      interno.filtrarTrayectoria({q:'sin coincidencias'}); fixture.detectChanges();
+      expect(host.querySelector('[data-testid="trayectoria-tablas"]')).not.toBeNull();
+      expect(host.textContent).toContain('Ningún vínculo coincide');
+    }
+  });
+
+  it.each([
+    { isOwn: true, variant: 'pending', label: 'Pendiente', tone: 'warning' },
+    { isOwn: false, variant: 'pending', label: 'Pendiente', tone: 'warning' },
+    { isOwn: true, variant: 'rejected', label: 'Rechazado', tone: 'error' },
+    { isOwn: false, variant: 'rejected', label: 'Rechazado', tone: 'error' },
+  ] as const)('separa vigencia y verificación en listas pequeñas: $label, propio $isOwn', ({ isOwn, variant, label, tone }) => {
+    const host = montar({
+      ...PERFIL,
+      actividadActual: [afiliacion({
+        id: 'current-test', organizacion: 'Institución actual de prueba',
+        actual: true, hasta: null, sello: variant, estado: label,
+      })],
+      experienciaHistorica: [afiliacion({
+        id: 'historical-test', organizacion: 'Institución histórica de prueba',
+        sello: 'rejected', estado: 'Rechazado',
+      })],
+    }, isOwn);
+    seleccionarPestana(host, 'Trayectoria');
+    const currentItem = Array.from(host.querySelectorAll('li'))
+      .find((item) => item.textContent?.includes('Institución actual de prueba'));
+    const historicalItem = Array.from(host.querySelectorAll('li'))
+      .find((item) => item.textContent?.includes('Institución histórica de prueba'));
+
+    expect(currentItem).toBeDefined();
+    expect(currentItem?.textContent).toContain('En curso');
+    expect(currentItem?.querySelector('app-badge')).toBeNull();
+    expect(currentItem?.querySelector('app-status-seal')?.textContent).toContain(label);
+    expect(currentItem?.querySelector('app-status-seal')?.classList.contains(`tone--${tone}`)).toBe(true);
+    expect(historicalItem).toBeDefined();
+    expect(historicalItem?.textContent).not.toContain('En curso');
+    expect(historicalItem?.querySelector('app-status-seal')?.textContent).toContain('Rechazado');
+    expect(historicalItem?.querySelector('app-status-seal')?.classList.contains('tone--error')).toBe(true);
+  });
+
+  it.each([[true,false,true], [false,false,false], [true,true,false]])('ofrece respaldo según propiedad y preview (%s/%s)', (propio,preview,permitido) => {
+    const emitir = vi.fn();
+    const host = montar({...PERFIL, formacion:[{...PERFIL.formacion[0],fileId:'pdf-1'}]}, propio, preview,
+      vista=>vista.respaldoADescargar.subscribe(emitir));
+    seleccionarPestana(host, 'Credenciales');
+    const boton = Array.from(host.querySelectorAll<HTMLButtonElement>('button')).find(b=>b.getAttribute('aria-label')?.includes('Descargar respaldo'));
+    expect(Boolean(boton)).toBe(permitido);
+    if(permitido) { boton?.click(); expect(emitir).toHaveBeenCalledWith(expect.objectContaining({fileId:'pdf-1'})); }
+    else expect(emitir).not.toHaveBeenCalled();
+  });
+
   /* -- Casos vacíos ----------------------------------------------------------- */
 
-  it('sin especialidades el caso vacío habla', () => {
-    const host = montar({ ...PERFIL, especialidades: [] });
-    seleccionarPestana(host, 'Credenciales y verificaciones');
-
-    expect(host.textContent).toContain('Todavía no hay especialidades registradas');
+  it('sin especialidades la ficha propia conserva el caso vacío en Datos personales', () => {
+    const host = montar({ ...PERFIL, especialidades: [] }, true);
+    const specialtyLabel = Array.from(host.querySelectorAll('dt')).find((term) => term.textContent?.trim() === 'Especialidades');
+    expect(specialtyLabel).toBeDefined();
+    expect(specialtyLabel?.nextElementSibling?.textContent?.trim()).toBe('Sin registrar');
   });
 
   it('sin biografía no queda la presentación vacía', () => {
@@ -1052,18 +1139,14 @@ describe('PractitionerProfileView', () => {
       expect(bloque?.querySelector('app-status-seal')?.textContent).toContain('Rechazado');
     });
 
-    it('quien visita conserva su ficha de siempre, con sus sub-pestañas', () => {
-      // La Guía de profesionales no cambió: este rediseño es el de la ficha
-      // PROPIA. Sin `datosPersonales` no hay bloque de filiación, así que las
-      // dos sub-pestañas siguen siendo el único lugar donde vive el detalle.
+    it('la visita conserva las especialidades de portada y las matrículas en Credenciales', () => {
       const host = montar({ ...PERFIL, datosPersonales: null });
+      expect(host.textContent).toContain('Cardiología');
       seleccionarPestana(host, 'Credenciales y verificaciones');
-
-      const pestanas = Array.from(host.querySelectorAll('[role="tab"]')).map(
-        (boton) => boton.textContent?.trim() ?? '',
-      );
-      expect(pestanas.some((etiqueta) => etiqueta.startsWith('Matrículas'))).toBe(true);
-      expect(pestanas.some((etiqueta) => etiqueta.startsWith('Especialidades'))).toBe(true);
+      const pestanas = Array.from(host.querySelectorAll('[role="tab"]')).map(b => b.textContent ?? '');
+      expect(pestanas.some(t => t.startsWith('Especialidades'))).toBe(false);
+      expect(pestanas.some(t => t.startsWith('Matrículas'))).toBe(false);
+      expect(host.textContent).toContain('LIC-3');
     });
   });
 

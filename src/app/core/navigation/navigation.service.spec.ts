@@ -685,6 +685,33 @@ describe('NavigationService', () => {
   });
 
   describe('dónde estás parado', () => {
+    it.each(['/account/profile', '/account/profile?pestana=personales#datos'])(
+      'el alias %s conserva Mi perfil y sus breadcrumbs sin duplicar el menú',
+      async (url) => {
+        abrirSesion(['PRACTITIONER'], ['t-1']);
+        await router.navigateByUrl(url);
+
+        expect(router.url).toBe(url);
+        expect(service.currentSection()?.path).toBe('my-account');
+        expect(service.breadcrumbs()).toEqual([
+          { label: 'Panel', routerLink: '/dashboard' },
+          { label: 'Mi perfil' },
+        ]);
+        expect(rutasDelMenu().filter((route) => route === '/my-account')).toHaveLength(1);
+        expect(rutasDelMenu()).not.toContain('/account/profile');
+      },
+    );
+
+    it.each(['/account/profile/otro', '/account/profiles'])(
+      'el alias no inventa una sección para %s',
+      async (url) => {
+        await router.navigateByUrl(url);
+
+        expect(service.currentSection()).toBeNull();
+        expect(service.breadcrumbs()).toEqual([]);
+      },
+    );
+
     it('fuera del armazón no hay sección ni ruta de navegación', async () => {
       await router.navigateByUrl('/design-system');
 

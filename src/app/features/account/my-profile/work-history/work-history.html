@@ -351,37 +351,45 @@
          máximo, paginación en cliente. Corregir el cargo y retirar van al
          servidor. Sin adjunto: un vínculo laboral no tiene dónde guardar un
          archivo (encabezado de la sección TS). -->
-    @if (layout() === 'tabla') {
+    @if (historialEnTabla()) {
       <app-filter-bar
         searchLabel="Buscar por institución o cargo"
         searchPlaceholder="Institución o cargo"
-        (filtersChanged)="onFiltrosHistorialChanged($event)"
+        [searchInUrl]="false"
+        [searchValue]="busquedaHistorial()"
+        (searchChanged)="onFiltrosHistorialChanged({q: $event})"
       />
 
       <app-data-table
+        data-testid="historial-tabla"
         [state]="estadoHistorialTabla()"
         [columns]="columnasHistorial()"
         [trackBy]="porIdDeAfiliacion"
         [rowLabel]="nombreAccesibleDeAfiliacion"
         caption="Tu historial laboral"
         maxHeight="420px"
+        (retry)="recargar()"
+        (refresh)="recargar()"
       />
 
-      @if (afiliaciones().length === 0) {
-        <p class="historial__vacio" data-testid="historial-tabla-vacio">
-          Todavía no cargaste ningún vínculo laboral. Es lo que le dice a un paciente dónde
-          ejerciste antes de llegar acá.
-        </p>
-      } @else if (historialFiltrado().length === 0) {
-        <p class="historial__vacio" data-testid="historial-tabla-sin-resultados">
-          Ningún vínculo coincide con la búsqueda.
-        </p>
-      } @else {
-        <app-pagination
-          [totalItems]="historialFiltrado().length"
-          [(page)]="paginaHistorial"
-          [(pageSize)]="tamanoPaginaHistorial"
-        />
+      @if (historial().status === 'ready') {
+        @if (afiliaciones().length === 0) {
+          <p class="historial__vacio" data-testid="historial-tabla-vacio">
+            Todavía no cargaste ningún vínculo laboral. Es lo que le dice a un paciente dónde
+            ejerciste antes de llegar acá.
+          </p>
+        } @else if (historialFiltrado().length === 0) {
+          <p class="historial__vacio" data-testid="work-history-no-results">
+            Ningún vínculo coincide con la búsqueda.
+          </p>
+        } @else {
+          <app-pagination
+            [totalItems]="historialFiltrado().length"
+            [page]="paginaHistorialVisible()"
+            (pageChange)="paginaHistorial.set($event)"
+            [(pageSize)]="tamanoPaginaHistorial"
+          />
+        }
       }
     }
 
@@ -391,7 +399,7 @@
            profesional y lo que ninguna institución contestó todavía—, y va
            pegado al formulario que es el que corrige. Sin nada que tocar, el
            bloque no existe. -->
-    @if (layout() === 'timeline' && vinculosEditables().length > 0) {
+    @if (layout() === 'timeline' && !historialEnTabla() && vinculosEditables().length > 0) {
       <h3 class="historial__subtitulo">Corregir o retirar</h3>
       <p class="historial__intro">
         Lo que declaraste vos, y las solicitudes que todavía nadie contestó. Lo que una institución
@@ -749,19 +757,53 @@
   </div>
 </ng-template>
 
+<ng-template #celdaEstadoHistorial let-afiliacion>
+  @switch (afiliacion.statusKind) {
+    @case ('declarado') {
+      <span class="historial__estado">Declarado por vos</span>
+    }
+    @case ('pendiente') {
+      <app-status-seal variant="pending" label="Pendiente" />
+    }
+    @case ('aprobado') {
+      <app-status-seal variant="approved" label="Aprobado" />
+    }
+    @case ('rechazado') {
+      <app-status-seal variant="rejected" label="Rechazado" />
+    }
+    @case ('revocado') {
+      <app-status-seal variant="rejected" label="Revocado" />
+    }
+    @default {
+      <app-status-seal variant="unknown" label="Estado desconocido" />
+    }
+  }
+</ng-template>
+
 <ng-template #celdaPeriodoHistorial let-afiliacion>
-  {{ afiliacion.startDate | date: 'MM/yyyy' }} —
-  @if (afiliacion.endDate) {
-    {{ afiliacion.endDate | date: 'MM/yyyy' }}
-  } @else {
-    actualidad
+  <div class="historial__institucion">
+    <span class="historial__fechas">
+      {{ afiliacion.startDate | date: 'MM/yyyy' }} —
+      @if (afiliacion.endDate) {
+        {{ afiliacion.endDate | date: 'MM/yyyy' }}
+      } @else {
+        actualidad
+      }
+    </span>
+    <span class="historial__estado">{{ periodo(afiliacion) }}</span>
+  </div>
+  @if (avisoDelVinculo(afiliacion); as aviso) {
+    <p class="historial__estado">{{ aviso }}</p>
   }
 </ng-template>
 
 <ng-template #celdaAccionesHistorial let-afiliacion>
-  <app-row-actions
-    [actions]="accionesDeAfiliacion()"
-    [fila]="afiliacion.organizationName"
-    (actionSelected)="ejecutarAccionDeAfiliacion($event, afiliacion)"
-  />
+  @let acciones = accionesDeAfiliacion(afiliacion);
+  @if (acciones.length > 0) {
+    <app-row-actions
+      [actions]="acciones"
+      [fila]="afiliacion.organizationName"
+      (actionSelected)="ejecutarAccionDeAfiliacion($event, afiliacion)"
+    />
+  }
 </ng-template>
