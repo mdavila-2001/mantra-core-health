@@ -1,0 +1,51 @@
+# Verificación por rama (cada una sobre su propia base, con `yarn install --immutable` previo)
+# Líneas literales extraídas de las salidas de cada comando (ANSI quitado). Exit 0 = correcto.
+
+## justin/alta-organizacion-boton-y-e2e-test  (base test, alta)
+  [typecheck] typecheck EXIT=0
+  [lint] lint EXIT=0
+  [tests dirigidos] Test Files  2 passed (2)
+  [tests dirigidos] Tests  74 passed (74)
+  [tests dirigidos] tests EXIT=0
+  [build production-api] build production-api EXIT=0
+
+## justin/sin-delivery-test  (base test, delivery)
+  [typecheck] typecheck EXIT=0
+  [lint] lint EXIT=0
+  [tests dirigidos] Test Files  25 passed (25)
+  [tests dirigidos] Tests  504 passed (504)
+  [tests dirigidos] tests EXIT=0
+  [build production-api] build production-api EXIT=0
+
+## justin/alta-organizacion-boton-y-e2e-dev  (base dev, alta)
+  [typecheck] typecheck EXIT=0
+  [lint] lint EXIT=0
+  [tests dirigidos] Test Files  2 passed (2)
+  [tests dirigidos] Tests  77 passed (77)
+  [tests dirigidos] tests EXIT=0
+  [build] build EXIT=0
+
+## justin/sin-delivery-dev  (base dev, delivery)
+  [typecheck] typecheck EXIT=0
+  [lint] lint EXIT=0
+  [tests dirigidos] Test Files  32 passed (32)
+  [tests dirigidos] Tests  571 passed (571)
+  [tests dirigidos] tests EXIT=0
+  [build] build EXIT=0
+
+## justin/alta-organizacion-boton-y-e2e  (base mockup, alta)
+  [typecheck] typecheck EXIT=0
+  [lint] lint EXIT=0
+  [tests dirigidos] Test Files  2 passed (2)
+  [tests dirigidos] Tests  77 passed (77)
+  [tests dirigidos] tests EXIT=0
+  [build] build EXIT=0
+
+## justin/sin-delivery  (base mockup, delivery)
+  [typecheck] typecheck EXIT=0
+  [lint] lint EXIT=0
+  [tests dirigidos] Test Files  32 passed (32)
+  [tests dirigidos] Tests  565 passed (565)
+  [tests dirigidos] tests EXIT=0
+  [build] build EXIT=0
+
