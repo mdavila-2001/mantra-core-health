@@ -16,6 +16,71 @@
     </a>
   </header>
 
+  <!-- ─── Solicitudes y turnos de servicios ─────────────────────────────
+       Va primero porque es lo que tiene apuro. Las acciones de cada fila son
+       las del calendario (las dibuja `/schedule`): aceptar, rechazar con
+       motivo, mover y cancelar se comportan exactamente igual. -->
+  <section
+    class="servicios-horario__solicitudes"
+    aria-labelledby="servicios-horario-solicitudes"
+    data-testid="services-schedule-requests"
+  >
+    <h3 id="servicios-horario-solicitudes" class="servicios-horario__subtitulo">
+      Solicitudes y turnos de servicios
+    </h3>
+    <p class="servicios-horario__nota">
+      Lo que los pacientes pidieron para tus servicios, de hoy a {{ weeks }} semanas. Las que
+      esperan tu respuesta van primero.
+    </p>
+
+    @switch (bookings().status) {
+      @case ('loading') {
+        <p class="servicios-horario__nota" role="status">Buscando solicitudes…</p>
+      }
+      @case ('ready') {
+        @if (awaiting().length === 0 && upcoming().length === 0) {
+          <p class="servicios-horario__nota" data-testid="services-schedule-requests-empty">
+            Todavía nadie pidió tus servicios en las próximas {{ weeks }} semanas.
+          </p>
+        } @else {
+          @if (awaiting().length > 0) {
+            <h4 class="servicios-horario__grupo">
+              Esperan tu respuesta ({{ awaiting().length }})
+            </h4>
+            <ul class="servicios-horario__reservas" data-testid="services-schedule-awaiting">
+              @for (booking of awaiting(); track booking.id) {
+                <ng-container
+                  [ngTemplateOutlet]="fila"
+                  [ngTemplateOutletContext]="{ $implicit: booking }"
+                />
+              }
+            </ul>
+          }
+          @if (upcoming().length > 0) {
+            <h4 class="servicios-horario__grupo">Próximos turnos ({{ upcoming().length }})</h4>
+            <ul class="servicios-horario__reservas" data-testid="services-schedule-upcoming">
+              @for (booking of upcoming(); track booking.id) {
+                <ng-container
+                  [ngTemplateOutlet]="fila"
+                  [ngTemplateOutletContext]="{ $implicit: booking }"
+                />
+              }
+            </ul>
+          }
+        }
+      }
+      @default {
+        <app-alert tone="warning" title="No pudimos traer las solicitudes">
+          El horario de abajo sigue siendo el vigente.
+          <button app-button variant="ghost" size="sm" type="button" (clicked)="loadBookings()">
+            Reintentar
+          </button>
+        </app-alert>
+      }
+    }
+  </section>
+
+  <h3 class="servicios-horario__subtitulo">Tu horario para otros servicios</h3>
   <app-view-state-host [state]="state()" (retry)="load()" data-testid="services-schedule-state">
     @for (site of sites(); track site.resource.id) {
       <div class="servicios-horario__sede">
@@ -77,3 +142,32 @@
     }
   </section>
 </section>
+
+<ng-template #fila let-booking>
+  <li>
+    <app-card variant="outlined" padding="md" class="servicios-horario__reserva" data-testid="services-schedule-booking">
+      <div class="servicios-horario__reserva-cuerpo">
+        <p class="servicios-horario__cuando">
+          {{ booking.startAt | date: "EEEE d 'de' MMMM" }} ·
+          {{ booking.startAt | date: 'HH:mm' }}–{{ booking.endAt | date: 'HH:mm' }}
+        </p>
+        <p class="servicios-horario__nombre">{{ serviceLine(booking) }}</p>
+        <p class="servicios-horario__dato">
+          {{ booking.patientName ?? 'Paciente' }}
+          @if (siteOf(booking); as sede) {
+            <span aria-hidden="true"> · </span>{{ sede }}
+          }
+          @if (reasonOf(booking); as motivo) {
+            <span aria-hidden="true"> · </span>{{ motivo }}
+          }
+        </p>
+      </div>
+      <div class="servicios-horario__reserva-estado">
+        <app-status-seal [variant]="statusOf(booking).variant" [label]="statusOf(booking).label" />
+        @if (appointmentActions(); as acciones) {
+          <ng-container [ngTemplateOutlet]="acciones" [ngTemplateOutletContext]="{ $implicit: booking }" />
+        }
+      </div>
+    </app-card>
+  </li>
+</ng-template>
