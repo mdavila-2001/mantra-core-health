@@ -84,6 +84,9 @@ export class Odontogram {
   /** Sin elección posible: la boca se lee, no se edita. */
   readonly readonly = input(false, { transform: booleanAttribute });
 
+  /** El bloque que lo contiene puede describir el estado vacío una sola vez. */
+  readonly showEmptyMessage = input(true, { transform: booleanAttribute });
+
   /** Se eligió una pieza. Viaja su código FDI. */
   readonly pieza = output<string>();
 

@@ -118,8 +118,8 @@ export const BLOQUE_ODONTOLOGIA = 'bloque-odontologia';
 export const BLOQUE_LABORATORIO = 'bloque-laboratorio';
 
 /**
- * Las entradas fijas, en el orden en que se ofrecen. La alergia ya no está:
- * se carga como diagnóstico (cliente, 02/10/2026).
+ * Registros disponibles en cualquier especialidad. La alergia se carga como
+ * diagnóstico (cliente, 02/10/2026).
  *
  * Cirugía y odontología van separadas —antes eran una sola opción,
  * «Procedimiento»— porque no comparten ni permiso de servidor ni datos:
@@ -127,12 +127,10 @@ export const BLOQUE_LABORATORIO = 'bloque-laboratorio';
  * rol de cirugía se topaba con un aviso de permiso denegado en medio de un
  * formulario que no le pedía nada de eso.
  */
-const ENTRADAS_FIJAS: readonly { readonly value: string; readonly label: string }[] = [
+const ENTRADAS_GENERALES: readonly { readonly value: string; readonly label: string }[] = [
   { value: BLOQUE_DIAGNOSTICO, label: 'Diagnóstico — del catálogo CIE-10' },
   { value: PLANTILLA_HOJA_LIBRE, label: 'Hoja en blanco — escribir sin campos' },
   { value: PLANTILLA_FORMULARIO_LIBRE, label: 'Formulario libre — campo y valor' },
-  { value: BLOQUE_CIRUGIA, label: 'Cirugía' },
-  { value: BLOQUE_ODONTOLOGIA, label: 'Odontología' },
   { value: BLOQUE_LABORATORIO, label: 'Laboratorio e imagenología' },
 ];
 
@@ -360,7 +358,7 @@ export class SpecialtyFormBlock {
    * posible el match. `null` mientras no se sabe, o si la cuenta no tiene
    * perfil profesional.
    */
-  private readonly especialidad = signal<string | null>(null);
+  protected readonly especialidad = signal<string | null>(null);
 
   /** El catálogo tal como llegó, o vacío mientras no se sepa. */
   private readonly catalogo = computed<readonly ChartTemplate[]>(() => {
@@ -426,22 +424,19 @@ export class SpecialtyFormBlock {
    * Lo que se le ofrece a quien atiende: primero lo suyo, después lo
    * transversal.
    *
-   * Se cae al catálogo entero en dos casos, los dos por lo mismo —filtrar sin
-   * criterio esconde más de lo que ayuda—:
-   *
-   * 1. **No se sabe la especialidad.** Una cuenta sin perfil profesional
-   *    —recepción, administración— o un perfil que no respondió. Dejar sólo
-   *    las transversales le escondería las 36 fichas de especialidad sin
-   *    saber siquiera si le corresponden.
-   * 2. **El filtro no deja nada.** Su especialidad no tiene ficha y el
-   *    catálogo tampoco tiene transversales: un desplegable vacío sobre un
-   *    catálogo que sí tiene fichas.
+   * Sin especialidad conocida se ofrecen las generales. Si tampoco existen,
+   * el catálogo completo queda disponible para no bloquear la consulta.
+   * Con especialidad conocida, una lista vacía se explica en pantalla y el
+   * profesional puede abrir el catálogo para una interconsulta.
    */
   private readonly plantillasSugeridas = computed<readonly ChartTemplate[]>(() => {
-    if (this.especialidad() === null) return this.catalogo();
+    if (this.especialidad() === null) {
+      return this.plantillasTransversales().length > 0
+        ? this.plantillasTransversales()
+        : this.catalogo();
+    }
 
-    const sugeridas = [...this.plantillasPropias(), ...this.plantillasTransversales()];
-    return sugeridas.length > 0 ? sugeridas : this.catalogo();
+    return [...this.plantillasPropias(), ...this.plantillasTransversales()];
   });
 
   /** Si hay algo escondido, y por lo tanto algo que el interruptor pueda revelar. */
@@ -452,12 +447,8 @@ export class SpecialtyFormBlock {
   /**
    * El interruptor «Ver todas las especialidades». Apagado, manda el filtro.
    *
-   * Arranca APAGADO por decisión del propietario (2026-10-02): «debe haber un
-   * filtro específico de formularios por el tipo de especialidad». Antes
-   * arrancaba prendido porque la lista cambiaba de tamaño según el perfil y se
-   * leía como un bug; ahora el filtro es lo esperado y el interruptor queda a
-   * la vista para ver el resto. Sin especialidad conocida se ve todo igual
-   * (ver {@link plantillasSugeridas}).
+   * Arranca apagado para mostrar la especialidad de quien atiende y las fichas
+   * generales. La interconsulta abre el resto del catálogo a pedido.
    */
   protected readonly verTodas = signal(false);
 
@@ -479,21 +470,39 @@ export class SpecialtyFormBlock {
     return visibles;
   });
 
+  protected readonly sinPlantillasVisibles = computed(
+    () =>
+      this.plantillaId() === null &&
+      this.catalogo().length > 0 &&
+      this.plantillasVisibles().length === 0,
+  );
+
   /**
    * Todo lo que se puede completar en el encuentro, en una sola lista.
    *
-   * Las fijas primero —diagnóstico, hoja en blanco, procedimiento y
-   * laboratorio— porque son las que sirven en cualquier consulta y enterrarlas
-   * al final de cuarenta y cuatro fichas equivale a no tenerlas. Detrás, las
-   * plantillas: la de la especialidad de quien atiende y las transversales.
+   * Primero los registros generales, luego cirugía y odontología cuando
+   * corresponden, y después las plantillas de la especialidad y transversales.
    */
-  protected readonly opcionesDePlantilla = computed<readonly SelectOption<string>[]>(() => [
-    ...ENTRADAS_FIJAS,
-    ...this.plantillasVisibles().map((plantilla) => ({
-      value: plantilla.id,
-      label: plantilla.name,
-    })),
-  ]);
+  protected readonly opcionesDePlantilla = computed<readonly SelectOption<string>[]>(() => {
+    const mostrarCirugia =
+      this.verTodas() ||
+      this.plantillaId() === BLOQUE_CIRUGIA ||
+      this.plantillasPropias().some((plantilla) => plantilla.code.startsWith('CIRGEN_'));
+    const mostrarOdontologia =
+      this.verTodas() ||
+      this.plantillaId() === BLOQUE_ODONTOLOGIA ||
+      this.plantillasPropias().some((plantilla) => plantilla.code.startsWith('ODONTO_'));
+
+    return [
+      ...ENTRADAS_GENERALES,
+      ...(mostrarCirugia ? [{ value: BLOQUE_CIRUGIA, label: 'Cirugía' }] : []),
+      ...(mostrarOdontologia ? [{ value: BLOQUE_ODONTOLOGIA, label: 'Odontología' }] : []),
+      ...this.plantillasVisibles().map((plantilla) => ({
+        value: plantilla.id,
+        label: plantilla.name,
+      })),
+    ];
+  });
 
   /**
    * La pestaña que se está mirando. `app-tab` no dibuja el panel cerrado, pero
@@ -621,9 +630,8 @@ export class SpecialtyFormBlock {
    * una general y se sigue.
    *
    * Las dos condiciones van juntas porque el aviso promete algo concreto. Si el
-   * catálogo no tuviera ninguna transversal, {@link plantillasSugeridas} cae al
-   * catálogo entero y no hay ninguna ficha general que ofrecer: avisar ahí sería
-   * prometer una anamnesis que no existe.
+   * catálogo no tuviera ninguna transversal, se muestra el estado vacío con
+   * acceso explícito a todas las especialidades.
    */
   protected readonly sinFichaPropia = computed(
     () =>
@@ -699,6 +707,19 @@ export class SpecialtyFormBlock {
     this.profiles.getOwnPractitionerProfile().subscribe({
       next: (perfil) => {
         this.especialidad.set(especialidadVigente(perfil.specialties));
+        // El catálogo puede haber llegado primero y haber preseleccionado su
+        // única ficha. Si era de otra especialidad, se corrige al resolver el
+        // perfil; una elección manual permanece intacta.
+        const elegida = this.plantillaElegida();
+        if (
+          !this.eleccionManual() &&
+          elegida !== null &&
+          this.especialidad() !== null &&
+          !this.plantillasPropias().includes(elegida) &&
+          !this.plantillasTransversales().includes(elegida)
+        ) {
+          this.plantillaId.set(null);
+        }
         this.preseleccionar();
       },
       error: () => this.especialidad.set(null),
@@ -741,7 +762,7 @@ export class SpecialtyFormBlock {
     // Su especialidad no tiene ficha propia: la anamnesis general sirve para
     // cualquier consulta y es mejor que dejarlo buscándola entre 43 opciones.
     // Sólo cuando la especialidad se conoce: sin perfil profesional no hay a
-    // quién caerle y el selector se ofrece entero, como siempre.
+    // quién asignarle una ficha de especialidad.
     if (this.especialidad() !== null) {
       const general = this.anamnesisGeneral();
       if (general !== undefined) {
@@ -750,8 +771,9 @@ export class SpecialtyFormBlock {
       }
     }
 
-    // Con una sola en el catálogo no hay nada que elegir.
-    if (state.data.length === 1) {
+    // Con una sola ficha se puede adelantar la elección mientras llega el
+    // perfil; al resolverlo se descarta si pertenece a otra especialidad.
+    if (this.especialidad() === null && state.data.length === 1) {
       this.plantillaId.set(state.data[0].id);
     }
   }
