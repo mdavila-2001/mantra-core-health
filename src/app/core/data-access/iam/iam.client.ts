@@ -2,6 +2,7 @@ import { HttpClient, HttpEvent } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { map, type Observable } from 'rxjs';
 
+import { environment } from '../../../../environments/environment';
 import { API_BASE_URL, apiUrl } from '../api';
 import { sinNulos, type ConNulos } from '../wire';
 import type {
@@ -282,10 +283,13 @@ export class IamClient {
       ...(registration.profilePhotoBase64 === undefined
         ? {}
         : { profilePhotoBase64: registration.profilePhotoBase64 }),
-      ...(registration.signatureImageBase64 === undefined
+      // Firma y sello sólo los entiende el simulador: el DTO real no los
+      // declara y, con `forbidNonWhitelisted`, los rechaza con 400 («property
+      // signatureImageBase64 should not exist») y el alta no avanza.
+      ...(!environment.mockBackend || registration.signatureImageBase64 === undefined
         ? {}
         : { signatureImageBase64: registration.signatureImageBase64 }),
-      ...(registration.sealImageBase64 === undefined
+      ...(!environment.mockBackend || registration.sealImageBase64 === undefined
         ? {}
         : { sealImageBase64: registration.sealImageBase64 }),
       ...(registration.occupationConceptId === undefined
