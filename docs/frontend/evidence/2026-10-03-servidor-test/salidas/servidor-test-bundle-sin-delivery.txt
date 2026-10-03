@@ -1,0 +1,20 @@
+# Artefacto DESPLEGADO en https://test.173.249.39.237.sslip.io — 2026-10-03 02:46 (hora local)
+# Despliegue: front af1550f4 «finished» 06:34:51 UTC (ver coolify-despliegues.txt) · bundle principal main-CCBOSK2P.js
+# Método: se descargan TODOS los JS públicos por cierre recursivo de chunks (index → main → chunks anidados) y se decodifican las secuencias \xNN/\uNNNN antes de buscar (el bundle minificado escribe las tildes escapadas).
+# archivos analizados: 1116 · caracteres: 16216101 · sin crear datos
+
+PASS  AUSENTE  «Envío a mi trabajo» → 0  · opción de envío al trabajo (selector de «Confirmá tu pedido»)
+PASS  AUSENTE  «Con delivery todavía no se puede confirmar» → 0  · aviso del checkout con delivery
+PASS  AUSENTE  «Dirección de entrega» → 0  · paso de dirección del checkout
+PASS  AUSENTE  «Elegí cómo recibís tu pedido» → 0  · subtítulo viejo del checkout
+PASS  AUSENTE  «la entrega y el pago se eligen» → 0  · nota vieja de «Confirmá tu pedido»
+PASS  AUSENTE  «Modalidad de entrega"» → 0  · etiqueta del selector de modalidad (como texto de plantilla)
+PASS  PRESENTE «Retirás tu pedido en» → 1 ['chunk-JJRWTRQK.js'] · paso «Entrega» del checkout (#870)
+PASS  PRESENTE «Retirás el pedido en la farmacia» → 1 ['chunk-HV3KVOLB.js'] · «Confirmá tu pedido» (#870)
+PASS  PRESENTE «Elegí cómo lo pagás» → 1 ['chunk-JJRWTRQK.js'] · subtítulo nuevo del checkout (#886)
+PASS  PRESENTE «el pago se elige en el paso siguiente» → 1 ['chunk-HV3KVOLB.js'] · nota nueva de «Confirmá tu pedido» (#886)
+PASS  PRESENTE «registro-organizacion-ir-login» → 1 ['chunk-UQZP6UFQ.js'] · botón «Ir a iniciar sesión» del alta (#869)
+
+CONSERVADO A PROPÓSITO (lectura de pedidos antiguos): rótulo «Envío a domicilio» en el mapa de estados = 1 aparición(es), contexto: .freeze({RETIRO:"Retiro en la farmacia",DOMICILIO:"Envío a domicilio",TRABAJO:"Envío a tu trabajo"})
+
+RESULTADO: PASS
