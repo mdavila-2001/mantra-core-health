@@ -6,10 +6,9 @@
   gap: var(--sp-4);
 }
 
-/* La imagen y su lápiz. `relative` porque el lápiz se ancla a la esquina de la
-   figura, no del modal. */
+/* La imagen, sola: «Cambiar el QR» vive en el pie del modal, no encima de
+   ella —ahí tapaba el QR y se leía como parte de él. */
 .qr-sede__figura {
-  position: relative;
   margin: 0;
   display: grid;
   place-items: center;
@@ -34,12 +33,6 @@
   object-fit: contain;
 }
 
-.qr-sede__reemplazar {
-  position: absolute;
-  inset-block-start: var(--sp-2);
-  inset-inline-end: var(--sp-2);
-}
-
 .qr-sede__cargando,
 .qr-sede__sin-imagen {
   margin: 0;
@@ -62,9 +55,11 @@
   line-height: var(--lh-caption);
 }
 
-/* La salida del reemplazo. Discreta: es la vuelta atrás, no la acción. */
-.qr-sede__escape {
+/* El pie del modal: el botón y, detrás, el `<input type="file">` oculto que
+   abre. `relative` para que el input —absoluto por `solo-lectores`— quede
+   anclado acá y no al modal entero. */
+.qr-sede__acciones {
+  position: relative;
   display: flex;
-  justify-content: center;
-  margin: 0;
+  justify-content: flex-end;
 }
