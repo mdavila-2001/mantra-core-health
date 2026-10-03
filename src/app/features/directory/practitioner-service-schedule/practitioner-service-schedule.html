@@ -37,6 +37,11 @@
             propia duración: el horario reserva la más larga.
           </p>
 
+          <p class="otros-servicios__nota">
+            Lo que ya pediste, y si el profesional lo confirmó, está en
+            <a app-link [routerLink]="myAppointmentsPath" data-testid="service-schedule-my-requests">Mis citas</a>.
+          </p>
+
           <app-form-field label="Servicio" class="otros-servicios__servicio">
             <app-select
               data-testid="service-schedule-offering"

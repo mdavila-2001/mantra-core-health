@@ -18,7 +18,11 @@ import { catchError, map, switchMap } from 'rxjs/operators';
 
 import { AuthService } from '../../core/auth/auth.service';
 import { StatusSeal } from '../../shared/components/organisms/status-seal/status-seal';
-import { toBookingStatusPresentation, type BookingStatusPresentation } from './booking-status';
+import {
+  AWAITING_RESPONSE_CODES,
+  toBookingStatusPresentation,
+  type BookingStatusPresentation,
+} from './booking-status';
 import {
   BOOKING_QUERY_PARAM,
   CITA_QUERY_PARAM,
@@ -157,10 +161,7 @@ const ROLES_QUE_OPERAN_CITAS = ['SCHEDULING_ADMIN', 'SCHEDULING_AGENT', 'SUPERAD
 const ROLES_QUE_ATIENDEN = [...ROLES_QUE_OPERAN_CITAS, 'PRACTITIONER'];
 
 /** Estados en los que una solicitud espera respuesta (corrección #11). */
-const CODIGOS_POR_RESPONDER: ReadonlySet<string> = new Set([
-  'BOOKING_REQUESTED',
-  'BOOKING_PENDING_CONFIRMATION',
-]);
+const CODIGOS_POR_RESPONDER = AWAITING_RESPONSE_CODES;
 
 /**
  * Estados desde los que se puede **iniciar** la atención (corrección #15).
@@ -273,6 +274,12 @@ export interface CitaVisible {
    * no lo distingue—.
    */
   readonly estado: BookingStatusPresentation;
+  /**
+   * Si es un turno de un servicio (estudio, procedimiento) y no una consulta.
+   * Un servicio no se mueve a un cupo de consulta: su duración es la del
+   * servicio y su lugar lo calcula la API sobre las franjas de servicios.
+   */
+  readonly esServicio?: boolean;
   readonly motivo: string;
   readonly patientProfileId: string | null;
   readonly rutaPaciente: string | null;
@@ -924,6 +931,34 @@ export class Agenda {
   protected readonly enServicios = computed(() => this.pestanaActual() === 'services');
 
   /**
+   * Solicitudes de servicios que esperan respuesta, según las contó la pestaña
+   * la última vez que se abrió. `null` mientras no se abrió en esta visita: la
+   * cuenta exige leer las reservas de varias semanas, y hacerlo en cada entrada
+   * a `/schedule` sería una lectura de más para quien sólo mira el día.
+   */
+  protected readonly serviciosPorResponder = signal<number | null>(null);
+
+  protected readonly rotuloDeServicios = computed(() => {
+    const n = this.serviciosPorResponder();
+    return n !== null && n > 0
+      ? `Horarios de otros servicios (${n})`
+      : 'Horarios de otros servicios';
+  });
+
+  /**
+   * Suma las etiquetas de estado que resolvió «Horarios de otros servicios».
+   *
+   * Las acciones de cada fila las decide esta pantalla con `citaDelDia`, que
+   * traduce el estado con estas etiquetas. Las propias sólo cubren la ventana a
+   * la vista; sin las de la pestaña, una solicitud de la semana que viene no
+   * ofrecería «Aceptar». Se fusiona, no se pisa (mismo criterio que la agenda).
+   */
+  protected sumarEtiquetas(nuevas: ConceptLabels): void {
+    if (nuevas.size === 0) return;
+    this.etiquetas.update((actuales) => new Map([...actuales, ...nuevas]));
+  }
+
+  /**
    * Si la solapa abierta es una de las listas —Consultas o Cupos—, las únicas
    * que usan la ventana, las canceladas y la sede: mostrarlos sobre el
    * calendario o el horario sugería que los cambiaban.
@@ -1107,11 +1142,15 @@ export class Agenda {
 
     if (this.puedeAtender() && this.estaVigente(cita)) {
       acciones.push({ code: 'agenda-demorar', label: 'Avisar una demora', icon: 'bell' });
-      acciones.push({
-        code: 'agenda-reprogramar',
-        label: 'Mover a otro horario',
-        icon: 'calendar',
-      });
+      // «Mover» lleva a un cupo de consulta. Un servicio no cabe ahí: dura lo
+      // que declara el servicio y su lugar sale de las franjas de servicios.
+      if (cita.esServicio !== true) {
+        acciones.push({
+          code: 'agenda-reprogramar',
+          label: 'Mover a otro horario',
+          icon: 'calendar',
+        });
+      }
     }
 
     if (this.estaVigente(cita) || this.porResponder(cita)) {
@@ -2831,6 +2870,7 @@ export class Agenda {
       hasta: cita.endAt ?? null,
       recurso: this.nombreDeRecurso(cita.resourceId),
       estado,
+      esServicio: cita.service !== undefined && cita.service !== null,
       motivo: cita.reasonText ?? SIN_DATO,
       patientProfileId: paciente,
       rutaPaciente:
