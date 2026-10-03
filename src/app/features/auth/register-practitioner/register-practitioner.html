@@ -164,7 +164,8 @@
                  opcionales. País y universidad son desplegables en árbol: la
                  lista de universidades es la del país elegido (propietario,
                  02/10/2026), con «Otro…» que destapa una casilla escrita para
-                 lo que falte. La ciudad sigue siendo texto (ver `CampoDeEstudio`). -->
+                 lo que falte. La ciudad es texto, y se completa sola con la de
+                 la universidad elegida (ver `CampoDeEstudio`). -->
             <ng-template appCampoPersonalizado="professionalTitleEducation">
               <div class="registro__estudio">
                 <div class="registro__estudio-campo">
@@ -413,7 +414,8 @@
 
                         <!-- Dónde se cursó. Los tres son opcionales; país y
                              universidad son el mismo árbol que en el título
-                             principal, y la ciudad sigue siendo texto. -->
+                             principal, y la ciudad es texto que la universidad
+                             elegida completa. -->
                         <div class="registro-titulo__estudio">
                           <div class="registro-titulo__estudio-campo">
                             <app-select

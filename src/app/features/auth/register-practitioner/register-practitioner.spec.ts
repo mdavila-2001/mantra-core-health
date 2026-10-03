@@ -1274,6 +1274,80 @@ describe('RegisterPractitioner', () => {
     });
 
     /**
+     * El pedido del propietario del 03/10/2026, sobre una captura con la UMSS
+     * elegida y «LPZ» tecleado al lado: «debe mostrar la ciudad por defecto».
+     * La ciudad la sabe el padrón; preguntarla en blanco era hacerla adivinar.
+     */
+    describe('la ciudad de estudio sale de la universidad elegida', () => {
+      const UMSS = 'Universidad Mayor de San Simón';
+      const UMSA = 'Universidad Mayor de San Andrés';
+      const UCB = 'Universidad Católica Boliviana San Pablo';
+
+      it('elegir la universidad completa la ciudad', () => {
+        component.elegirPaisDelTitulo('Bolivia');
+        component.elegirUniversidadDelTitulo(UMSS);
+
+        expect(component.valorDeEstudio('professionalTitleCity')).toBe('Cochabamba');
+      });
+
+      it('cambiar de universidad cambia la ciudad propuesta', () => {
+        component.elegirPaisDelTitulo('Bolivia');
+        component.elegirUniversidadDelTitulo(UMSS);
+        component.elegirUniversidadDelTitulo(UMSA);
+
+        expect(component.valorDeEstudio('professionalTitleCity')).toBe('La Paz');
+      });
+
+      it('la ciudad escrita a mano no se pisa al elegir la universidad', () => {
+        component.elegirPaisDelTitulo('Bolivia');
+        component.escribirEstudio('professionalTitleCity', 'Quillacollo');
+        component.elegirUniversidadDelTitulo(UMSS);
+
+        expect(component.valorDeEstudio('professionalTitleCity')).toBe('Quillacollo');
+      });
+
+      it('una universidad con sedes en varias ciudades no propone ninguna, y retira la anterior', () => {
+        component.elegirPaisDelTitulo('Bolivia');
+        component.elegirUniversidadDelTitulo(UMSS);
+        component.elegirUniversidadDelTitulo(UCB);
+
+        expect(component.valorDeEstudio('professionalTitleCity')).toBe('');
+      });
+
+      it('cambiar de país se lleva la ciudad propuesta junto con la universidad', () => {
+        component.elegirPaisDelTitulo('Bolivia');
+        component.elegirUniversidadDelTitulo(UMSS);
+        component.elegirPaisDelTitulo(PAIS_FUERA_DE_CATALOGO);
+
+        expect(component.valorDeEstudio('professionalTitleUniversity')).toBe('');
+        expect(component.valorDeEstudio('professionalTitleCity')).toBe('');
+      });
+
+      it('vale igual en cada fila de «Tus títulos»', () => {
+        component.agregarTitulo('UNIVERSITARIO');
+        const [{ id }] = component.titulosDe('UNIVERSITARIO');
+        const fila = () => component.titulosDe('UNIVERSITARIO')[0];
+
+        component.elegirEnFila(id, 'pais', 'Bolivia');
+        component.elegirEnFila(id, 'universidad', UMSS);
+        expect(fila().ciudad).toBe('Cochabamba');
+
+        component.elegirEnFila(id, 'universidad', UMSA);
+        expect(fila().ciudad).toBe('La Paz');
+
+        // Otro país: se van la universidad y la ciudad que ella había puesto.
+        component.elegirEnFila(id, 'pais', PAIS_FUERA_DE_CATALOGO);
+        expect([fila().universidad, fila().ciudad]).toEqual(['', '']);
+
+        // Y lo escrito a mano se queda.
+        component.elegirEnFila(id, 'pais', 'Bolivia');
+        component.escribirDatoDeTitulo(id, 'ciudad', 'Quillacollo');
+        component.elegirEnFila(id, 'universidad', UMSS);
+        expect(fila().ciudad).toBe('Quillacollo');
+      });
+    });
+
+    /**
      * Responde el catálogo de tipos de título, que el constructor pide por
      * campo destino. Sin él resuelto, una fila con número no se puede mandar:
      * el contrato exige el concepto y la pantalla no lo inventa.
@@ -1607,6 +1681,28 @@ describe('RegisterPractitioner', () => {
         // Una universidad boliviana bajo Argentina sería mentir: se vacía.
         expect(component.valorDeEstudio('professionalTitleUniversity')).toBe('');
         expect(elegidoEn('registro-pro-titulo-universidad')).toBeNull();
+      });
+
+      it('elegir la universidad deja su ciudad a la vista en «Ciudad de estudio»', () => {
+        completarProfesional();
+        irAlPasoDelTitulo();
+        const casillaDeCiudad = (): HTMLInputElement => {
+          const casilla: HTMLInputElement | null = fixture.nativeElement.querySelector(
+            'input[data-testid="registro-pro-titulo-ciudad"]',
+          );
+          if (casilla === null) throw new Error('No está la casilla de ciudad');
+          return casilla;
+        };
+        expect(casillaDeCiudad().value).toBe('');
+
+        elegirEnDesplegable('registro-pro-titulo-pais', 'Bolivia');
+        elegirEnDesplegable(
+          'registro-pro-titulo-universidad',
+          'Universidad Mayor de San Simón (UMSS) — Cochabamba',
+        );
+
+        // La captura del propietario: UMSS elegida y la ciudad en blanco.
+        expect(casillaDeCiudad().value).toBe('Cochabamba');
       });
 
       it('«Otro…» destapa la casilla escrita a mano, y lo escrito es lo que se guarda', () => {
