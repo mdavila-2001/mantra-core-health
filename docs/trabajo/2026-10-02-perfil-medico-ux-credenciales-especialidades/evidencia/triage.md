@@ -33,3 +33,7 @@ Cada cierre de fallo requiere la corrida final referenciada por REPORTE.md. No s
 - Logs UTF-16 de PowerShell convertidos sin pérdida a UTF-8 para que el PR pueda revisarlos.
 
 - CONCURRENT_WORK: Un commit concurrente 06ef94f6 sobre la misma rama añadió configuración VS Code y documentación de sincronización/SSH ajenas, además de normalizar nuestros logs ya preparados. Se preservaron sus cinco archivos en disco y se retiraron únicamente del índice para restaurar el diff acotado del PR; no se reescribió historia ni se alteró código del perfil.
+
+## Estado externo al cierre
+
+El PR #868 fue fusionado por PabloArauzCaballero, no por este agente, el 2026-10-03T05:29:13Z (74a2c2bad4f3fde8647cc8330d04017690162c75). CI permanece QUEUED y el runner offline. La actualización concurrente 70ce450b motivó un worktree aislado para finalizar documentos; el intento de push concurrente fue rechazado por cambio de referencia, sin reescribir historia. Se mantienen 21/23 microtareas demostradas y dos A MEDIAS; no se declara el hito cerrado ni se crea otro PR.

@@ -1,0 +1,6 @@
+gh api repos/mdavila-2001/mantra-core-health/pulls/868 --jq '{base:.base.sha,head:.head.sha,merge_commit_sha,merged,merged_at,merged_by:.merged_by.login,state}'
+{"base":"013dba77ed4339f05fc22e2354c4d3aa0c84b9ba","head":"92386c7b195b71c7ada2a3120e1847658f869c9a","merge_commit_sha":"74a2c2bad4f3fde8647cc8330d04017690162c75","merged":true,"merged_at":"2026-10-03T05:29:13Z","merged_by":"PabloArauzCaballero","state":"closed"}
+EXIT_CODE=0
+gh api repos/mdavila-2001/mantra-core-health/pulls/868/reviews --jq '[.[]|{commit_id,state,user:.user.login}]'
+[{"commit_id":"794d6fb2637726a8ecf7ee817b06ea06ff3de647","state":"COMMENTED","user":"copilot-pull-request-reviewer[bot]"}]
+EXIT_CODE=0

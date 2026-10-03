@@ -1,10 +1,10 @@
-> **AVANCE: 21 / 23 — 91,3 %.** QA de integración: **FAIL**. CI **PENDIENTE**, runner offline. PR abierto; no se declara el hito cerrado.
+> **AVANCE: 21 / 23 — 91,3 %.** QA de integración: **FAIL**. CI **PENDIENTE**, runner offline. PR fusionado externamente; no se declara el hito cerrado.
 
 # Reporte — Hito 1: perfil médico
 
 - Continuación: 2026-10-03. Plan: [PLAN.md](PLAN.md). Rama: `marcelo/fix-perfil-medico-ux-credenciales-especialidades`.
-- PR: [#868](https://github.com/mdavila-2001/mantra-core-health/pull/868), base dev, no draft, MERGEABLE. Reviewers solicitados: jsaldias39 y PabloArauzCaballero; aprobación humana pendiente.
-- Base actual: `b84f74aaf3a359de93c53ab05941e2ec7ac5d0c1`; inicial `ad5623a7`. Peldaño: **TESTED**, con límites explícitos.
+- PR: [#868](https://github.com/mdavila-2001/mantra-core-health/pull/868), fusionado por PabloArauzCaballero el 2026-10-03 a las 05:29:13 UTC, commit `74a2c2bad4f3fde8647cc8330d04017690162c75`. El agente no ejecutó el merge. Se abrió sin draft, contra dev y con ambos reviewers solicitados; no hay aprobación humana formal registrada.
+- Base de las pruebas: `b84f74aaf3a359de93c53ab05941e2ec7ac5d0c1`; inicial `ad5623a7`. Peldaño: **TESTED**, con límites explícitos.
 - Perfil, editor, adaptadores, navegación y shell modificados; backend, modelo, dependencias y entornos intactos.
 
 ## Completado
@@ -44,10 +44,10 @@
 
 ### H1.S6.M4 — gate final de CI
 
-- Qué anda: PR OPEN, isDraft=false, MERGEABLE y reviewers asignados; build local y hook pasan. Metadata por gh pr view exit 0 y reviewers por REST exit 0.
-- Qué no anda: los checks dependencias, e2e y verificar permanecen QUEUED, no satisfactorios. El único runner marcelo-wsl-front está offline, busy=false. La aprobación humana sigue pendiente.
+- Qué anda: apertura comprobada OPEN, isDraft=false, MERGEABLE y reviewers asignados; build local y hook pasan. La consulta final confirma MERGED por una acción externa, con mergeable=UNKNOWN. Metadata por gh pr view exit 0 y reviewers por REST exit 0.
+- Qué no anda: los checks dependencias, e2e y verificar permanecen QUEUED, no satisfactorios. El único runner marcelo-wsl-front está offline, busy=false. Sólo consta una revisión COMMENTED de Copilot; no una revisión humana APPROVED.
 - Qué falta exactamente: el mantenedor debe reconectar el runner, ejecutar CI hasta terminar y revisar/corregir cualquier fallo real. Después volver a consultar gh pr view y gh pr checks. Este cambio no modifica infraestructura ni cierra fallos globales ajenos.
-- Dónde quedó: [PR #868](https://github.com/mdavila-2001/mantra-core-health/pull/868); rama publicada que compila, sin conflictos. Evidencia estable en pr-view-final.txt/pr-checks-final.txt/ci-runners.txt; se volverá a comprobar después del último push documental.
+- Dónde quedó: [PR #868](https://github.com/mdavila-2001/mantra-core-health/pull/868); rama publicada y PR fusionado externamente. Evidencia en pr-view-final.txt/pr-checks-final.txt/ci-runners.txt y external-merge.txt. El requisito de terminar con PR abierto dejó de cumplirse por esa acción externa; no se revierte ni se crea un duplicado.
 
 ## Pendiente
 
@@ -86,7 +86,7 @@ EXIT_CODE=0
 
 ```text
 gh pr view 868 --repo mdavila-2001/mantra-core-health --json state,url,isDraft,mergeable,mergeStateStatus,baseRefName
-{"baseRefName":"dev","isDraft":false,"mergeStateStatus":"UNSTABLE","mergeable":"MERGEABLE","state":"OPEN","url":"https://github.com/mdavila-2001/mantra-core-health/pull/868"}
+{"baseRefName":"dev","isDraft":false,"mergeStateStatus":"UNKNOWN","mergeable":"UNKNOWN","state":"MERGED","url":"https://github.com/mdavila-2001/mantra-core-health/pull/868"}
 EXIT_CODE=0
 gh pr checks 868 --repo mdavila-2001/mantra-core-health --json name,state,bucket --jq 'sort_by(.name)'
 [{"bucket":"pending","name":"dependencias","state":"QUEUED"},{"bucket":"pending","name":"e2e","state":"QUEUED"},{"bucket":"pending","name":"verificar","state":"QUEUED"}]
@@ -119,7 +119,7 @@ Arquitectura, CSS tokens y generate-doc-report tienen exit 1 en trabajo y base a
 
 - Integración y suite global en rojo impiden certificar REGRESSION_VERIFIED. Fallas generales de arquitectura, tokens y documentación requieren trabajos ajenos al perfil.
 - Labels ingleses del catálogo y espacio de acciones públicas vacío son reservas visuales de baja severidad.
-- El runner de CI está offline; checks pendientes y aprobación humana pendiente; no se autoriza ni ejecuta merge.
+- El runner de CI está offline; checks pendientes y sin aprobación humana formal registrada. El merge fue externo, no ejecutado por este agente.
 
 ## Decisiones y ambigüedades
 

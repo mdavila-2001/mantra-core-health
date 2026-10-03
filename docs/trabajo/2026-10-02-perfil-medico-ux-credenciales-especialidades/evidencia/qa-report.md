@@ -15,7 +15,7 @@ Entorno: Windows/PowerShell, frontend b84f74aa más working tree de la rama soli
 | Suite completa | FAIL | 10.628 PASS, 2 FAIL; catálogo base también falla, logo no reproducido en subconjunto |
 | Arquitectura/tokens/documentación | FAIL | current-*.txt y baseline-current-*.txt, ambas bases exit 1 |
 | Entornos y archivos ajenos | PASS | preparation-and-env.txt |
-| PR, base dev, reviewers y mergeabilidad | PASS | #868 OPEN, no draft, MERGEABLE; REST reviewers exit 0 |
+| PR, base dev, reviewers y mergeabilidad | PASS | Apertura: OPEN, no draft, MERGEABLE y reviewers; estado final MERGED externamente (external-merge.txt) |
 | CI y aprobación humana | BLOCKED | tres jobs QUEUED; único runner offline. No equivale a checks aprobados ni hito cerrado |
 
 ## Comandos exactos
@@ -33,6 +33,8 @@ El último comando se corre por separado en REAL y con E2E_PROFILE_ISOLATED=1. F
 
 ## Gate de entrega
 
-PR abierto: https://github.com/mdavila-2001/mantra-core-health/pull/868. Estado OPEN, isDraft=false, MERGEABLE; reviewers Jsaldias39 y PabloArauzCaballero asignados. Aprobación humana pendiente. CI sin ejecutar por runner offline, tres jobs QUEUED. No se etiqueta REGRESSION_VERIFIED.
+PR: https://github.com/mdavila-2001/mantra-core-health/pull/868. Se abrió OPEN, isDraft=false, MERGEABLE con ambos reviewers asignados. PabloArauzCaballero lo fusionó externamente a las 05:29:13 UTC; estado actual MERGED, mergeable UNKNOWN. El agente no hizo merge. Sólo hay revisión COMMENTED de Copilot, sin aprobación humana formal registrada. CI sin ejecutar por runner offline, tres jobs QUEUED. No se etiqueta REGRESSION_VERIFIED.
 
 El primer push no invocó el hook porque core.hooksPath estaba ausente; se habilitó localmente .githooks y se corrió manualmente el control completo (stdin LF como Git), exit 0. Sin no-verify. Los controles del último push documental se volverán a observar al terminarlo.
+
+Las pruebas y capturas corresponden a b84f74aa más el producto 794d6fb2. La sincronización concurrente posterior 70ce450b y el resultado externo 74a2c2ba no se presentan como regresión completa certificada. El cierre documental se publica en la rama solicitada, sin un segundo PR.
