@@ -74,6 +74,17 @@ if (typeof globalThis.localStorage === 'undefined') {
 }
 
 /**
+ * Cada archivo de prueba arranca con `sessionStorage` vacío, como una pestaña
+ * nueva. El corredor lo comparte entre los archivos de un mismo worker, y las
+ * tablas del backend de maqueta que sobreviven a F5 se iban acumulando ahí
+ * hasta la cuota de 5 MB: el archivo que escribía después caía con
+ * `QuotaExceededError` sin tener nada que ver, y cuál caía dependía del orden.
+ */
+if (typeof sessionStorage !== 'undefined') {
+  sessionStorage.clear();
+}
+
+/**
  * `decodeAccessToken` decodifica el JWT con `atob` y `TextDecoder`. Los dos
  * existen tanto en el navegador como en Node, pero **si jsdom cambiara y alguno
  * faltara**, el síntoma sería un puñado de pruebas fallando por «token

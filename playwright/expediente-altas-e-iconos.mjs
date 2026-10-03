@@ -16,10 +16,9 @@ import { chromium } from '@playwright/test';
 const B = 'http://localhost:4300';
 const ID = 'c2aa6dda-67d6-46a6-aa79-a40ca7e62ee0';
 
-/** Las siete pestañas con alta, con el `data-testid` de su botón. */
+/** Las seis pestañas con alta, con el `data-testid` de su botón. */
 const ALTAS = [
   ['Diagnósticos', 'expediente-nuevo-diagnostico'],
-  ['Alergias', 'expediente-nueva-alergia'],
   ['Medicación', 'expediente-nueva-receta'],
   ['Observaciones', 'expediente-nueva-observacion'],
   ['Notas', 'expediente-nueva-nota'],
