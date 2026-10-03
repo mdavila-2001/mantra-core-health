@@ -126,14 +126,14 @@
         @if (consulta().trim() !== '' && store.resultados().length > 0) {
           <p class="mensajeria__rotulo">Contactos</p>
           <ul class="mensajeria__contactos">
-            @for (resultado of store.resultados(); track resultado.slug) {
+            @for (resultado of store.resultados(); track resultado.profileId) {
               <li>
                 <button
                   class="mensajeria__contacto"
                   type="button"
                   data-testid="mensajeria-resultado"
                   [disabled]="store.abriendo()"
-                  (click)="escribirA(resultado.slug)"
+                  (click)="escribirAPerfil(resultado.profileId)"
                 >
                   <span class="mensajeria__contacto-nombre">{{ resultado.displayName }}</span>
                   @if (resultado.headline) {
@@ -189,7 +189,7 @@
           } @else {
             <app-empty-state
               title="No tenés conversaciones"
-              description="Buscá a un profesional acá arriba y escribile: la conversación va a aparecer en esta lista."
+              description="Buscá a una persona acá arriba y escribile: la conversación va a aparecer en esta lista."
               variant="empty"
             />
           }
@@ -217,7 +217,7 @@
           </p>
           <p class="mensajeria__vacio-titulo">Alovida · Chats</p>
           <p class="mensajeria__vacio-texto">
-            Elegí una conversación de la izquierda para leerla acá, o buscá a un profesional
+            Elegí una conversación de la izquierda para leerla acá, o buscá a una persona
             para empezar una nueva.
           </p>
         </div>
