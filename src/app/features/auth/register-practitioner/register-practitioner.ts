@@ -370,6 +370,7 @@ type CampoEditableDeTitulo = 'nombre' | 'numero' | CampoDeEstudio;
 
 /** Los tres controles de dónde se estudió el título con el que ejerce. */
 type ClaveDeEstudioDelTitulo =
+  | 'professionalTitleNumber'
   | 'professionalTitleUniversity'
   | 'professionalTitleCountry'
   | 'professionalTitleCity';
@@ -703,7 +704,7 @@ export class RegisterPractitioner {
    * que esta subtarea vino a corregir, así que el envío se frena y lo dice.
    */
   protected hayTitulosSinTipo(): boolean {
-    return this.titulos().some(
+    return this.titulosParaRegistro().some(
       (titulo) =>
         titulo.numero.trim() !== '' &&
         this.conceptoPorCodigo().get(this.codigoDeConceptoPorTipo[titulo.tipo]) === undefined,
@@ -715,31 +716,72 @@ export class RegisterPractitioner {
     return this.formProfesional.controls.professionalTitleUniversity.value.trim();
   }
 
-  /**
-   * La fila de «Tus títulos» que lleva la universidad del título principal.
-   *
-   * Esa universidad no tiene columna propia: el modelo la guarda como
-   * `issuing_institution_text` de una credencial, y una credencial exige número
-   * (NOT NULL). Por eso se une a la primera fila de título universitario que ya
-   * tiene número y que o bien no declaró universidad o declaró la misma. `null`
-   * si no hay ninguna: en ese caso no viaja, y la pantalla lo dice antes de
-   * enviar (`registro-pro-titulos-universidad`) para que no se pierda en silencio.
-   */
+  /** El diploma principal usa el mismo contrato de credenciales universitarias. */
+  private tituloPrincipalDeclarado(): TituloDeclarado | null {
+    const numero = this.formProfesional.controls.professionalTitleNumber.value.trim();
+    if (!numero) return null;
+    return {
+      id: 'professional-title',
+      tipo: 'UNIVERSITARIO',
+      nombre: this.formProfesional.controls.professionalTitle.value.trim(),
+      numero,
+      universidad: this.universidadPrincipal(),
+      pais: this.formProfesional.controls.professionalTitleCountry.value.trim(),
+      ciudad: this.formProfesional.controls.professionalTitleCity.value.trim(),
+      paisElegido: this.paisDelTituloElegido(),
+      universidadElegida: this.universidadDelTituloElegida(),
+      archivo: this.respaldoTituloProfesional()?.archivo ?? null,
+      pesoBytes: this.respaldoTituloProfesional()?.pesoBytes ?? null,
+      fileId: this.fileIdTituloPrincipal(),
+    };
+  }
+
+  /** El mismo número universitario identifica una única credencial, aunque se use una sigla. */
+  private titulosParaRegistro(): readonly TituloDeclarado[] {
+    const principal = this.tituloPrincipalDeclarado();
+    const titulos = this.titulos();
+    return principal &&
+      !titulos.some((t) => t.tipo === 'UNIVERSITARIO' && t.numero.trim() === principal.numero)
+      ? [principal, ...titulos]
+      : titulos;
+  }
+
+  /** Con número explícito se vincula por diploma; sin él se conserva la coincidencia de universidad. */
   private filaDeLaUniversidadPrincipal(): TituloDeclarado | null {
-    const principal = this.universidadPrincipal().toLowerCase();
+    const numero = this.formProfesional.controls.professionalTitleNumber.value.trim();
+    const universidad = this.universidadPrincipal().toLowerCase();
     return (
-      this.titulos().find(
+      this.titulosParaRegistro().find(
         (titulo) =>
           titulo.tipo === 'UNIVERSITARIO' &&
           titulo.numero.trim() !== '' &&
-          (titulo.universidad.trim() === '' || titulo.universidad.trim().toLowerCase() === principal),
+          (numero
+            ? titulo.numero.trim() === numero
+            : titulo.universidad.trim() === '' ||
+              titulo.universidad.trim().toLowerCase() === universidad),
       ) ?? null
     );
   }
 
-  /** Si escribió la universidad de su título principal y ninguna fila puede llevarla. */
+  /** Un PDF o una universidad necesitan un diploma numerado; nunca se inventa el número. */
   protected hayUniversidadPrincipalSinTitulo(): boolean {
-    return this.universidadPrincipal() !== '' && this.filaDeLaUniversidadPrincipal() === null;
+    return (
+      (this.universidadPrincipal() !== '' ||
+        !!this.attachmentFiles()['professional-title']?.length) &&
+      this.filaDeLaUniversidadPrincipal() === null
+    );
+  }
+
+  private usaPdfPrincipal(titulo: TituloDeclarado): boolean {
+    return (
+      titulo.id === this.filaDeLaUniversidadPrincipal()?.id &&
+      (titulo.id === 'professional-title' || !this.attachmentFiles()[titulo.id]?.length) &&
+      !!this.attachmentFiles()['professional-title']?.length
+    );
+  }
+
+  private fileIdDeTitulo(titulo: TituloDeclarado): string | null {
+    return this.usaPdfPrincipal(titulo) ? this.fileIdTituloPrincipal() : titulo.fileId;
   }
 
   /**
@@ -749,14 +791,14 @@ export class RegisterPractitioner {
   private credencialesDeclaradas(): readonly NewRegistrationCredential[] {
     const conceptos = this.conceptoPorCodigo();
     const filaPrincipal = this.filaDeLaUniversidadPrincipal();
-    return this.titulos().flatMap((titulo) => {
+    return this.titulosParaRegistro().flatMap((titulo) => {
       const numero = titulo.numero.trim();
       const conceptId = conceptos.get(this.codigoDeConceptoPorTipo[titulo.tipo]);
       if (numero === '' || conceptId === undefined) {
         return [];
       }
       const universidad =
-        titulo.universidad.trim() === '' && titulo === filaPrincipal
+        titulo.universidad.trim() === '' && titulo.id === filaPrincipal?.id
           ? this.universidadPrincipal()
           : titulo.universidad.trim();
       return [
@@ -764,7 +806,7 @@ export class RegisterPractitioner {
           credentialTypeConceptId: conceptId,
           number: numero,
           ...(universidad === '' ? {} : { issuingInstitutionText: universidad }),
-          ...(titulo.fileId === null ? {} : { fileId: titulo.fileId }),
+          ...(this.fileIdDeTitulo(titulo) === null ? {} : { fileId: this.fileIdDeTitulo(titulo)! }),
         },
       ];
     });
@@ -875,7 +917,14 @@ export class RegisterPractitioner {
     // el alta se completa sin ninguno, y quien no se acuerde del año o del
     // nombre exacto de su casa de estudios los carga después desde el perfil.
     // Por qué son texto y no listas cerradas: ver `CampoDeEstudio`.
-    professionalTitleUniversity: new FormControl('', { nonNullable: true }),
+    professionalTitleNumber: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.maxLength(100)],
+    }),
+    professionalTitleUniversity: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.maxLength(200)],
+    }),
     professionalTitleCountry: new FormControl('', { nonNullable: true }),
     professionalTitleCity: new FormControl('', { nonNullable: true }),
     // El control guarda lo que `app-phone-input` compone —el prefijo del país
@@ -986,6 +1035,7 @@ export class RegisterPractitioner {
    * tiene que dejar clarísimo cuál de las dos cosas frena el avance.
    */
   readonly respaldoTituloProfesional = signal<RespaldoDeclarado | null>(null);
+  private readonly fileIdTituloPrincipal = signal<string | null>(null);
   readonly respaldoMatricula = signal<RespaldoDeclarado | null>(null);
   readonly respaldoSedes = signal<RespaldoDeclarado | null>(null);
 
@@ -1178,8 +1228,7 @@ export class RegisterPractitioner {
   ): Pick<TituloDeclarado, 'universidad' | 'universidadElegida'> {
     return {
       universidadElegida: eleccion,
-      universidad:
-        eleccion === null || eleccion === INSTITUCION_FUERA_DE_CATALOGO ? '' : eleccion,
+      universidad: eleccion === null || eleccion === INSTITUCION_FUERA_DE_CATALOGO ? '' : eleccion,
     };
   }
 
@@ -1205,6 +1254,7 @@ export class RegisterPractitioner {
   updateSupportFiles(key: ClaveDeRespaldo, files: readonly File[]): void {
     this.attachmentFiles.update((current) => ({ ...current, [key]: files }));
     const file = files[0];
+    if (key === 'professional-title') this.fileIdTituloPrincipal.set(null);
     this.destinoDelRespaldo(key).set(file ? { archivo: file.name, pesoBytes: file.size } : null);
     this.errorAdjunto.set(null);
   }
@@ -2650,13 +2700,24 @@ export class RegisterPractitioner {
       );
       return;
     }
-    // La universidad del título principal NO frena el alta: el campo es
-    // opcional, y frenar la cuenta entera por un dato opcional era un
-    // callejón sin salida para el médico (lo reportó el propietario,
-    // 03/10/2026). Si ninguna fila puede llevarla, «Tus títulos» lo dice antes
-    // de enviar (`registro-pro-titulos-universidad`) y la cuenta se crea.
-    //
-    // Tampoco se manda si el catálogo de tipos no cargó: la fila viajaría sin
+    // La universidad sola conserva su carácter opcional. Un PDF declarado sí
+    // necesita un diploma numerado para que no se pierda al crear la cuenta.
+    if (
+      this.attachmentFiles()['professional-title']?.length &&
+      this.hayUniversidadPrincipalSinTitulo()
+    ) {
+      this.state.set(
+        validation([
+          {
+            field: 'professionalTitleUniversity',
+            message:
+              'Completá el número del diploma en «Tu título profesional y foto». La universidad y el PDF que ya cargaste se guardarán con ese título. También podés indicar su número en una fila «Universitario» de «Tus títulos».',
+          },
+        ]),
+      );
+      return;
+    }
+    // Y tampoco se manda si el catálogo de tipos no cargó: la fila viajaría sin
     // tipo, que el contrato exige, o se perdería en silencio.
     //
     // El aviso nombra el botón que de verdad reintenta. Antes decía «volvé al
@@ -2690,11 +2751,15 @@ export class RegisterPractitioner {
    * progreso disponible para reintentar sin reclamar dos veces el mismo PDF.
    */
   private subirPdfDeTitulosPendientes(): Observable<void> {
-    const titulosConNumero = this.titulos().filter((titulo) => titulo.numero.trim() !== '');
+    const titulosConNumero = this.titulosParaRegistro().filter(
+      (titulo) => titulo.numero.trim() !== '',
+    );
     return from(titulosConNumero).pipe(
       concatMap((titulo) => {
-        const archivo = this.attachmentFiles()[titulo.id]?.[0];
-        if (titulo.fileId !== null || archivo === undefined) {
+        const usaPrincipal = this.usaPdfPrincipal(titulo);
+        const archivo =
+          this.attachmentFiles()[usaPrincipal ? 'professional-title' : titulo.id]?.[0];
+        if (this.fileIdDeTitulo(titulo) !== null || archivo === undefined) {
           return of(undefined);
         }
         return this.iam.uploadRegistrationDocument(archivo).pipe(
@@ -2707,7 +2772,8 @@ export class RegisterPractitioner {
             if (!documento?.fileId || documento.fileId.trim() === '') {
               throw new Error('No pudimos confirmar la carga del PDF. Volvé a intentarlo.');
             }
-            this.recordarFileIdDelTitulo(titulo.id, documento.fileId);
+            if (usaPrincipal) this.fileIdTituloPrincipal.set(documento.fileId);
+            else this.recordarFileIdDelTitulo(titulo.id, documento.fileId);
             return undefined;
           }),
           throwIfEmpty(

@@ -32,12 +32,14 @@
   </app-form-field>
 
   @for (extra of extras(); track extra; let i = $index) {
-    <app-form-field class="nombres__campo nombres__campo--tercio" [label]="'Nombre ' + (i + 4)">
+    <app-form-field class="nombres__campo nombres__campo--tercio" [label]="'Nombre ' + (i + 4)"
+      [errorMessage]="extra.invalid && (extra.dirty || extra.touched) ? 'El nombre no puede pasar de 100 caracteres.' : ''">
       <div class="nombres__extra">
         <app-input
           type="text"
           placeholder="Otro nombre"
           [formControl]="extra"
+          [hasError]="extra.invalid && (extra.dirty || extra.touched)"
           [testId]="prefijoTestId() + '-nombre-extra-' + i"
         />
         <button

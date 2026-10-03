@@ -169,10 +169,29 @@
                  la universidad elegida (ver `CampoDeEstudio`). -->
             <ng-template appCampoPersonalizado="professionalTitleEducation">
               <div class="registro__estudio">
+                <app-form-field
+                  class="registro__estudio-campo"
+                  label="Número del diploma"
+                  hint="Para guardar la universidad y el PDF con este título. No hace falta repetirlo en «Tus títulos»."
+                  [errorMessage]="
+                    formProfesional.controls.professionalTitleNumber.invalid
+                      ? 'El número del diploma no puede pasar de 100 caracteres.'
+                      : ''
+                  "
+                >
+                  <app-input
+                    testId="registro-pro-titulo-numero-principal"
+                    placeholder="Como figura en tu diploma"
+                    [value]="valorDeEstudio('professionalTitleNumber')"
+                    (valueChange)="escribirEstudio('professionalTitleNumber', $event)"
+                  />
+                </app-form-field>
                 <div class="registro__estudio-campo">
                   <app-form-field
                     label="País de estudio"
-                    [hint]="padronCargando() ? 'Opcional. Cargando la lista de países…' : 'Opcional.'"
+                    [hint]="
+                      padronCargando() ? 'Opcional. Cargando la lista de países…' : 'Opcional.'
+                    "
                   >
                     <app-select
                       data-testid="registro-pro-titulo-pais"
@@ -197,7 +216,11 @@
                 <div class="registro__estudio-campo">
                   <app-form-field
                     label="Universidad"
-                    [hint]="paisDelTituloElegido() === null ? 'Opcional. Elegí primero el país.' : 'Opcional.'"
+                    [hint]="
+                      paisDelTituloElegido() === null
+                        ? 'Opcional. Elegí primero el país.'
+                        : 'Opcional.'
+                    "
                   >
                     <app-select
                       data-testid="registro-pro-titulo-universidad"
@@ -243,14 +266,17 @@
               <div class="registro-respaldo">
                 <app-file-input
                   [files]="attachmentFiles()['professional-title'] ?? []"
-                  [accept]="formatosDeRespaldo"
+                  [accept]="formatosDeTitulo"
                   [maxSizeBytes]="maxAttachmentBytes"
                   accessibleLabel="Título profesional"
                   testId="registro-pro-respaldo-titulo"
                   removeTestId="registro-pro-respaldo-quitar-titulo"
                   (filesChange)="updateSupportFiles('professional-title', $event)"
                 />
-                <p class="registro-respaldos__ayuda">PDF, JPG o PNG. Máximo 5 MB.</p>
+                <p class="registro-respaldos__ayuda">
+                  PDF. Máximo 5 MB. Se guarda junto con el número del diploma y la universidad de
+                  este paso.
+                </p>
                 @if (errorAdjunto(); as error) {
                   <p class="registro-respaldos__error" role="alert">{{ error }}</p>
                 }
@@ -340,7 +366,10 @@
                       Quitar firma
                     </button>
                   }
-                  <p class="registro-foto__ayuda">Tu firma de puño y letra, escaneada o fotografiada. JPG, PNG o WebP, máximo 2 MB.</p>
+                  <p class="registro-foto__ayuda">
+                    Tu firma de puño y letra, escaneada o fotografiada. JPG, PNG o WebP, máximo 2
+                    MB.
+                  </p>
                   @if (errorFirma(); as error) {
                     <p class="registro-foto__error" role="alert">{{ error }}</p>
                   }
@@ -561,7 +590,11 @@
                                   [value]="titulo.pais"
                                   [attr.data-testid]="'registro-pro-titulo-pais-otro-' + titulo.id"
                                   (input)="
-                                    escribirDatoDeTitulo(titulo.id, 'pais', $any($event.target).value)
+                                    escribirDatoDeTitulo(
+                                      titulo.id,
+                                      'pais',
+                                      $any($event.target).value
+                                    )
                                   "
                                 />
                               </label>
@@ -571,7 +604,11 @@
                           <div class="registro-titulo__estudio-campo">
                             <app-select
                               [ariaLabel]="'Universidad de ' + tipo.singular"
-                              [placeholder]="titulo.paisElegido === null ? 'Elegí primero el país' : 'Universidad'"
+                              [placeholder]="
+                                titulo.paisElegido === null
+                                  ? 'Elegí primero el país'
+                                  : 'Universidad'
+                              "
                               [options]="opcionesDeUniversidadDeFila(titulo)"
                               [disabled]="titulo.paisElegido === null"
                               [value]="titulo.universidadElegida"
@@ -580,7 +617,9 @@
                             />
                             @if (titulo.universidadElegida === institucionFueraDeCatalogo) {
                               <label class="registro-titulo__campo">
-                                <span class="sr-only">¿Cuál institución? de {{ tipo.singular }}</span>
+                                <span class="sr-only"
+                                  >¿Cuál institución? de {{ tipo.singular }}</span
+                                >
                                 <input
                                   type="text"
                                   class="registro-titulo__dato"

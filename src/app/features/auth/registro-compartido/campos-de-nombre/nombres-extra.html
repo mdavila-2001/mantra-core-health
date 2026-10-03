@@ -1,0 +1,44 @@
+@for (control of controles(); track control; let i = $index) {
+  <app-form-field
+    [label]="'Nombre ' + (i + 4)"
+    [errorMessage]="
+      control.invalid && (control.touched || control.dirty)
+        ? 'El nombre no puede pasar de 100 caracteres.'
+        : ''
+    "
+  >
+    <div class="nombres-extra__campo">
+      <app-input
+        type="text"
+        autocomplete="additional-name"
+        placeholder="Otro nombre"
+        [formControl]="control"
+        [hasError]="control.invalid && (control.touched || control.dirty)"
+        [testId]="prefijoTestId() + '-nombre-extra-' + i"
+      />
+      <button
+        app-button
+        type="button"
+        variant="ghost"
+        size="sm"
+        [iconOnly]="true"
+        [attr.aria-label]="'Quitar el nombre ' + (i + 4)"
+        [appTooltip]="'Quitar el nombre ' + (i + 4)"
+        [attr.data-testid]="prefijoTestId() + '-quitar-nombre-' + i"
+        (clicked)="quitar(i)"
+      >
+        <app-nav-icon name="remove" />
+      </button>
+    </div>
+  </app-form-field>
+}
+<button
+  app-button
+  type="button"
+  variant="ghost"
+  size="sm"
+  [attr.data-testid]="prefijoTestId() + '-agregar-nombre'"
+  (clicked)="agregar()"
+>
+  + Agregar otro nombre
+</button>

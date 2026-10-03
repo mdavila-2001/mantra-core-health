@@ -30,12 +30,48 @@ const CATALOGO_TIPO_SOCIETARIO = {
   valueSetId: 'vs-1',
   allowCustomValue: false,
   options: [
-    { conceptId: 'c-unipersonal', code: 'UNIPERSONAL', display: 'Sole proprietorship', ordinal: 0, isDefault: false },
-    { conceptId: 'c-srl', code: 'SRL', display: 'Limited liability company (S.R.L.)', ordinal: 1, isDefault: false },
-    { conceptId: 'c-br-ltda', code: 'BR_LTDA', display: 'Sociedade Limitada (Brazil)', ordinal: 8, isDefault: false },
-    { conceptId: 'c-br-sa', code: 'BR_SA', display: 'Sociedade Anônima (Brazil)', ordinal: 9, isDefault: false },
-    { conceptId: 'c-us-llc', code: 'US_LLC', display: 'Limited Liability Company (US)', ordinal: 12, isDefault: false },
-    { conceptId: 'c-ar-sas', code: 'AR_SAS', display: 'Sociedad por Acciones Simplificada (Argentina)', ordinal: 16, isDefault: false },
+    {
+      conceptId: 'c-unipersonal',
+      code: 'UNIPERSONAL',
+      display: 'Sole proprietorship',
+      ordinal: 0,
+      isDefault: false,
+    },
+    {
+      conceptId: 'c-srl',
+      code: 'SRL',
+      display: 'Limited liability company (S.R.L.)',
+      ordinal: 1,
+      isDefault: false,
+    },
+    {
+      conceptId: 'c-br-ltda',
+      code: 'BR_LTDA',
+      display: 'Sociedade Limitada (Brazil)',
+      ordinal: 8,
+      isDefault: false,
+    },
+    {
+      conceptId: 'c-br-sa',
+      code: 'BR_SA',
+      display: 'Sociedade Anônima (Brazil)',
+      ordinal: 9,
+      isDefault: false,
+    },
+    {
+      conceptId: 'c-us-llc',
+      code: 'US_LLC',
+      display: 'Limited Liability Company (US)',
+      ordinal: 12,
+      isDefault: false,
+    },
+    {
+      conceptId: 'c-ar-sas',
+      code: 'AR_SAS',
+      display: 'Sociedad por Acciones Simplificada (Argentina)',
+      ordinal: 16,
+      isDefault: false,
+    },
   ],
 };
 
@@ -221,8 +257,7 @@ describe('RegisterOrganization', () => {
         ...extra.legalRepresentativeNombre,
       },
       legalRepresentativeIdNumber:
-        extra.legalRepresentativeIdNumber ??
-        REPRESENTANTE_DE_PRUEBA.legalRepresentativeIdNumber,
+        extra.legalRepresentativeIdNumber ?? REPRESENTANTE_DE_PRUEBA.legalRepresentativeIdNumber,
       legalRepresentativeEmail:
         extra.legalRepresentativeEmail ?? REPRESENTANTE_DE_PRUEBA.legalRepresentativeEmail,
       legalRepresentativePhone: extra.legalRepresentativePhone ?? '',
@@ -244,7 +279,8 @@ describe('RegisterOrganization', () => {
    */
   function avanzarHasta(fragmentoDeTitulo: string): void {
     for (let paso = 0; paso < 12; paso += 1) {
-      const titulo = fixture.nativeElement.querySelector('.paginated-form__titulo')?.textContent ?? '';
+      const titulo =
+        fixture.nativeElement.querySelector('.paginated-form__titulo')?.textContent ?? '';
       if (titulo.includes(fragmentoDeTitulo)) return;
       const continuar: HTMLButtonElement | null = fixture.nativeElement.querySelector(
         '[data-testid="paginated-form-continuar"]',
@@ -645,12 +681,18 @@ describe('RegisterOrganization', () => {
 
     function tocarElMapa(): void {
       const mapa = fixture.debugElement.query(By.directive(UbicacionPicker));
-      (mapa.componentInstance as UbicacionPicker).puntoElegido.emit({ lat: -17.7833, lng: -63.1821 });
+      (mapa.componentInstance as UbicacionPicker).puntoElegido.emit({
+        lat: -17.7833,
+        lng: -63.1821,
+      });
       fixture.detectChanges();
     }
 
     function errorDe(campo: HTMLElement): string {
-      return campo.closest('app-form-field')?.querySelector('.form-field-error')?.textContent?.trim() ?? '';
+      return (
+        campo.closest('app-form-field')?.querySelector('.form-field-error')?.textContent?.trim() ??
+        ''
+      );
     }
 
     const AVISO = '[data-testid="registro-organizacion-direccion-reescribir"]';
@@ -805,7 +847,9 @@ describe('RegisterOrganization', () => {
     it('con la gerencia de marketing incompleta, «Continuar» no avanza y su panel se despliega solo', () => {
       fixture.detectChanges();
       completar();
-      component.form.controls.executives.controls.marketingManager.controls.nombre.controls.lastName.setValue('');
+      component.form.controls.executives.controls.marketingManager.controls.nombre.controls.lastName.setValue(
+        '',
+      );
       fixture.detectChanges();
       avanzarHasta('Directorio ejecutivo');
 
@@ -851,7 +895,8 @@ describe('RegisterOrganization', () => {
       fixture.detectChanges();
 
       expect(
-        component.form.controls.executives.controls.generalManager.controls.nombre.controls.name.value,
+        component.form.controls.executives.controls.generalManager.controls.nombre.controls.name
+          .value,
       ).toBe(GERENCIAS_DE_PRUEBA.generalManager.nombre.name);
     });
 
@@ -915,9 +960,7 @@ describe('RegisterOrganization', () => {
     it('los nombres agregados con «+ Agregar otro nombre» viajan en el fullName del representante y de cada gerencia', () => {
       fixture.detectChanges();
       completar();
-      component.form.controls.legalRepresentative.controls.extraNames.push(
-        controlDeNombreExtra(),
-      );
+      component.form.controls.legalRepresentative.controls.extraNames.push(controlDeNombreExtra());
       component.form.controls.legalRepresentative.controls.extraNames.at(0).setValue('Beatriz');
       const gerente = component.form.controls.executives.controls.commercialManager.controls.nombre;
       gerente.controls.extraNames.push(controlDeNombreExtra());
@@ -933,6 +976,17 @@ describe('RegisterOrganization', () => {
       );
 
       req.flush(RESPUESTA);
+    });
+
+    it('el segundo, tercero y nombres extra del owner respetan el límite agregado del backend', () => {
+      fixture.detectChanges();
+      completar();
+      const grupo = component.form.controls.ownerName;
+      grupo.controls.middleName.setValue('a'.repeat(50));
+      grupo.controls.thirdName.setValue('b'.repeat(50));
+      component.submit();
+      expect(grupo.hasError('nombresAdicionalesLargos')).toBe(true);
+      http.expectNone('/iam/auth/register-organization');
     });
 
     it('los nombres agregados del owner se pliegan en middleName', () => {
@@ -1007,12 +1061,8 @@ describe('RegisterOrganization', () => {
       component.submit();
 
       const req = http.expectOne('/iam/auth/register-organization');
-      expect(req.request.body.organization.executives.commercialManager.fullName).toBe(
-        'Ana Paz',
-      );
-      expect(req.request.body.organization.executives.marketingManager.fullName).toBe(
-        'Luis Rojas',
-      );
+      expect(req.request.body.organization.executives.commercialManager.fullName).toBe('Ana Paz');
+      expect(req.request.body.organization.executives.marketingManager.fullName).toBe('Luis Rojas');
 
       req.flush(RESPUESTA);
     });
@@ -1090,9 +1140,7 @@ describe('RegisterOrganization', () => {
         'registro-organizacion-owner-correo',
         'registro-organizacion-owner-password',
       ]) {
-        expect(
-          fixture.nativeElement.querySelector(`[data-testid="${testId}"]`),
-        ).not.toBeNull();
+        expect(fixture.nativeElement.querySelector(`[data-testid="${testId}"]`)).not.toBeNull();
       }
 
       // Y el título no lleva numeración: «(1 de 2)» era justamente el síntoma.
@@ -1125,18 +1173,16 @@ describe('RegisterOrganization', () => {
       grupo.reset({ name: '', middleName: '', thirdName: '', lastName: '', motherLastName: '' });
       fixture.detectChanges();
 
-      fixture.nativeElement
-        .querySelector('[data-testid="paginated-form-continuar"]')
-        ?.click();
+      fixture.nativeElement.querySelector('[data-testid="paginated-form-continuar"]')?.click();
       fixture.detectChanges();
 
       // El motor sólo marca el GRUPO; `alRechazarPagina` es quien alcanza a
       // sus cinco hijos — sin eso las casillas vacías no se pintarían.
       expect(grupo.controls.name.touched).toBe(true);
       expect(grupo.controls.motherLastName.touched).toBe(true);
-      expect(
-        fixture.nativeElement.querySelector('.paginated-form__titulo')?.textContent,
-      ).toContain('Tu cuenta');
+      expect(fixture.nativeElement.querySelector('.paginated-form__titulo')?.textContent).toContain(
+        'Tu cuenta',
+      );
     });
 
     it('el owner compone su nombre en las claves del contrato, sin fullName', () => {
