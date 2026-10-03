@@ -1,6 +1,7 @@
 import { encuentros } from './clinica';
 import { ACTIVIDAD, CANAL, ESTADO, ESTADO_RESERVA, TIPO_BLOQUEO, TIPO_CITA } from './conceptos';
 import { MEDICA, PACIENTE, PACIENTES, PROFESIONALES, type ProfesionalSimulado } from './personas';
+import { ofertas } from './servicios-ofrecidos';
 import type { FollowUpOrigin } from '../../data-access/scheduling/scheduling.types';
 import { TENANT_CLINICA } from '../mock-session';
 import { ahora, Coleccion, fecha, iso, isoDia, masMinutos, uuid } from '../mock-store';
@@ -570,7 +571,74 @@ function generarReservas(): ReservaSimulada[] {
       cupos.actualizar(pasado.id, { remainingCapacity: 0 });
     }
   });
+  reservas.push(...reservasDeServicios());
   return reservas;
+}
+
+/**
+ * Turnos de **otros servicios** de la médica (v4.2.40), para que «Horarios de
+ * otros servicios» tenga qué gestionar desde la primera visita.
+ *
+ * Caen en las tardes «Estudios en la clínica» (martes y jueves, 14 a 18) de las
+ * próximas dos semanas. Dos esperan respuesta —Holter y prueba de esfuerzo
+ * exigen aprobación— y uno ya está confirmado. Cada uno lleva su cupo de
+ * servicio ocupado, que es lo que el motor de disponibilidad descuenta.
+ *
+ * El nombre y el precio son la foto que el paciente aceptó al reservar
+ * (`service`), los mismos del catálogo de la práctica (`practice.handlers.ts`).
+ */
+function reservasDeServicios(): ReservaSimulada[] {
+  const pedidos = [
+    { codigo: 'HOLTER', nombre: 'Holter de 24 horas', precio: '350.00', dia: 0, hora: 14, minuto: 0, estado: 'BK-REQUESTED', motivo: 'Palpitaciones de noche' },
+    { codigo: 'ERGO', nombre: 'Prueba de esfuerzo', precio: '520.00', dia: 1, hora: 15, minuto: 0, estado: 'BK-REQUESTED', motivo: 'Control antes de volver a entrenar' },
+    { codigo: 'ECG', nombre: 'Electrocardiograma', precio: '120.00', dia: 2, hora: 14, minuto: 30, estado: 'BK-CONFIRMED', motivo: 'Chequeo preoperatorio' },
+  ] as const;
+
+  // Los próximos martes y jueves desde mañana: hoy puede estar ya avanzado.
+  const tardes: Date[] = [];
+  for (let d = 1; tardes.length < 3 && d < 21; d++) {
+    const dia = new Date();
+    dia.setDate(dia.getDate() + d);
+    if (dia.getDay() === 2 || dia.getDay() === 4) tardes.push(dia);
+  }
+
+  return pedidos.flatMap((pedido, k) => {
+    const oferta = ofertas.get(uuid(`offering-${MEDICA.id}-${pedido.codigo}`));
+    const tarde = tardes[pedido.dia];
+    if (oferta === undefined || tarde === undefined) return [];
+    const inicio = new Date(tarde.getFullYear(), tarde.getMonth(), tarde.getDate(), pedido.hora, pedido.minuto);
+    const fin = new Date(inicio.getTime() + oferta.maxDurationMinutes * 60_000);
+    const cupo = cupos.agregar({
+      id: uuid(`slot-servicio-${pedido.codigo}`),
+      resourceId: RECURSO_MEDICA,
+      scheduleTemplateId: null,
+      startAt: inicio.toISOString(),
+      endAt: fin.toISOString(),
+      capacity: 1,
+      remainingCapacity: 0,
+      statusConceptId: ESTADO['ST-ACTIVE']!,
+      serviceConceptId: null,
+      serviceOfferingId: oferta.id,
+      heldUntil: null,
+    });
+    return [
+      reserva(k + 1, cupo, pedido.estado, {
+        typeConceptId: ACTIVIDAD['ACT-PROCEDIMIENTO']!,
+        serviceConceptId: ACTIVIDAD['ACT-PROCEDIMIENTO']!,
+        reasonText: pedido.motivo,
+        serviceOfferingId: oferta.id,
+        service: {
+          offeringId: oferta.id,
+          name: pedido.nombre,
+          price: pedido.precio,
+          minDurationMinutes: oferta.minDurationMinutes,
+          maxDurationMinutes: oferta.maxDurationMinutes,
+          requiresApproval: oferta.requiresApproval,
+        },
+        createdAt: masMinutos(new Date().toISOString(), -60 * (k + 2)),
+      }),
+    ];
+  });
 }
 
 /* ---- el cupo que se libera durante el recorrido ---------------------------
