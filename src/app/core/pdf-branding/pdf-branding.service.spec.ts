@@ -3,19 +3,28 @@ import { TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 
 import { establecerFirmaDeDocumentos, firmaDeDocumentos } from '../../shared/utils/pdf-export/pdf-firma';
+import {
+  establecerFuentesDeDocumentos,
+  fuentesDeDocumentos,
+} from '../../shared/utils/pdf-export/pdf-fuentes';
 import { establecerLogoDeDocumentos, logoDeDocumentos } from '../../shared/utils/pdf-export/pdf-logo';
 import { AuthService } from '../auth/auth.service';
 import { FirmaYSelloClient } from '../data-access/profiles/firma-y-sello.client';
 import { ProfilesClient } from '../data-access/profiles/profiles.client';
 import { LogoDelConsultorioClient } from '../data-access/practice-sites/logo-del-consultorio.client';
-import { PdfBrandingService, PREPARAR_LOGO } from './pdf-branding.service';
+import { PdfBrandingService, PREPARAR_FUENTES, PREPARAR_LOGO } from './pdf-branding.service';
 
 const LOGO = { dataUrl: 'data:image/png;base64,AAAA', formato: 'PNG' as const, ancho: 3, alto: 1 };
+const FUENTES = {
+  titulos: { archivo: 'poppins-600.ttf', base64: 'AA==' },
+  cuerpo: { archivo: 'inter-400.ttf', base64: 'AA==' },
+};
 
 describe('PdfBrandingService', () => {
   const perfil = signal<string | null>(null);
   const cliente = { obtenerUrl: vi.fn() };
   const prepararLogo = vi.fn();
+  const prepararFuentes = vi.fn();
   const firmaYSello = { obtener: vi.fn() };
   const perfiles = { getOwnPractitionerProfile: vi.fn() };
 
@@ -31,6 +40,8 @@ describe('PdfBrandingService', () => {
     perfil.set(null);
     establecerLogoDeDocumentos(null);
     establecerFirmaDeDocumentos(null);
+    establecerFuentesDeDocumentos(null);
+    prepararFuentes.mockResolvedValue(FUENTES);
     firmaYSello.obtener.mockReturnValue(of({ firmaUrl: null, selloUrl: null }));
     perfiles.getOwnPractitionerProfile.mockReturnValue(
       of({ displayName: 'Dra. Valeria Rojas', licenses: [{ licenseNumber: 'M-1234' }] }),
@@ -42,10 +53,37 @@ describe('PdfBrandingService', () => {
         { provide: AuthService, useValue: { practitionerProfileId: perfil } },
         { provide: LogoDelConsultorioClient, useValue: cliente },
         { provide: PREPARAR_LOGO, useValue: prepararLogo },
+        { provide: PREPARAR_FUENTES, useValue: prepararFuentes },
         { provide: FirmaYSelloClient, useValue: firmaYSello },
         { provide: ProfilesClient, useValue: perfiles },
       ],
     });
+  });
+
+  /**
+   * Las fuentes no son de nadie: se bajan una vez por sesión y no se limpian
+   * al cambiar de profesional ni al cerrar sesión.
+   */
+  it('baja las fuentes de marca una sola vez, haya o no profesional', async () => {
+    TestBed.inject(PdfBrandingService);
+    await asentar();
+    expect(fuentesDeDocumentos()).toEqual(FUENTES);
+
+    perfil.set('per-1');
+    await asentar();
+    perfil.set(null);
+    await asentar();
+
+    expect(prepararFuentes).toHaveBeenCalledTimes(1);
+    expect(fuentesDeDocumentos()).toEqual(FUENTES);
+  });
+
+  it('si las fuentes no se pudieron bajar, los PDF salen en Helvetica', async () => {
+    prepararFuentes.mockResolvedValue(null);
+    TestBed.inject(PdfBrandingService);
+    await asentar();
+
+    expect(fuentesDeDocumentos()).toBeNull();
   });
 
   it('sin profesional en la sesión no pide nada y deja los PDF sin logo', async () => {
