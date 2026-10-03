@@ -142,6 +142,22 @@
     gap: var(--sp-4);
 }
 
+.cita__alta-agregar-nombre {
+    grid-column: 1 / -1;
+}
+
+/* La casilla agregada y su botón de quitar, en la misma línea. */
+.cita__nombre-extra {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    width: 100%;
+}
+
+.cita__nombre-extra app-input {
+    flex: 1 1 auto;
+}
+
 .cita__alta-catalogo-caido {
     display: flex;
     flex-wrap: wrap;

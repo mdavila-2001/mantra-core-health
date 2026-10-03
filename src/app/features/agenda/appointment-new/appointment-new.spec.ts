@@ -304,6 +304,7 @@ describe('AppointmentNew', () => {
       nuevoNombre: { set(v: string): void };
       nuevoApellidoPaterno: { set(v: string): void };
       nuevoSegundoNombre: { (): string; set(v: string): void };
+      nuevosNombresExtra: { (): readonly string[]; set(v: readonly string[]): void };
       nuevoDocumento: { set(v: string): void };
       nuevoCelular: { set(v: string): void };
       nuevoNacimiento: { set(v: Date | null): void };
@@ -502,6 +503,34 @@ describe('AppointmentNew', () => {
      * real. La prueba fija ahora el endpoint atómico, con la filiación entera
      * adentro de `patient`, y **que ya no se llame al alta suelta**.
      */
+    it('los nombres agregados con «+ Agregar otro nombre» viajan junto al segundo en middleName', () => {
+      crear();
+      conAgendas([{ id: 'res-1', name: 'Consultorio Centro' }]);
+
+      const c = instancia();
+      c.registrarPacienteNuevo();
+      conCatalogos();
+      c.nuevoSegundoNombre.set('Elena');
+      c.nuevosNombresExtra.set(['Beatriz', '']);
+      completarAlta();
+      c.guardar();
+
+      const turno = http.expectOne('/scheduling/appointments/walk-in');
+      expect(turno.request.body.patient.middleName).toBe('Elena Beatriz');
+
+      turno.flush({
+        patientProfileId: 'pac-nuevo',
+        personId: 'per-nuevo',
+        patientCode: 'PAC-99',
+        bookingId: 'book-1',
+        bookableSlotId: 'slot-1',
+        appointmentId: 'appt-1',
+        encounterId: 'enc-1',
+        statusConceptId: 'st-1',
+        retractedSlots: 0,
+      });
+    });
+
     it('registra y atiende en una sola petición al walk-in', () => {
       crear();
       conAgendas([{ id: 'res-1', name: 'Consultorio Centro' }]);
