@@ -23,6 +23,7 @@ import { SchedulingClient } from '../../../core/data-access/scheduling/schedulin
 import type { Booking } from '../../../core/data-access/scheduling/scheduling.types';
 import { TerminologyClient } from '../../../core/data-access/terminology/terminology.client';
 import type { ConceptLabels } from '../../../core/data-access/terminology/terminology.types';
+import { esCodigoDeAlergia } from '../../../shared/utils/alergias/alergias';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { empty, loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
@@ -409,14 +410,32 @@ export class MedicalRecord {
     })),
   );
 
-  protected readonly alergias = computed<readonly FilaVisible[]>(() =>
-    (this.datos()?.allergies ?? []).map((fila) => ({
+  /**
+   * Las alergias: las cargadas como diagnóstico con código CIE-10 de alergia
+   * (así se registran desde el 02/10/2026) y las `AllergyIntolerance` de antes.
+   * Esta pantalla no tiene pestaña de diagnósticos: si leyera sólo las
+   * segundas, la persona vería «No tenés alergias registradas» teniendo una.
+   */
+  protected readonly alergias = computed<readonly FilaVisible[]>(() => [
+    ...(this.datos()?.conditions ?? [])
+      .filter(
+        (condicion) =>
+          condicion.resolvedAt === undefined &&
+          esCodigoDeAlergia(this.etiquetas().get(condicion.codeConceptId)?.code),
+      )
+      .map((condicion) => ({
+        id: condicion.id,
+        principal: this.label(condicion.codeConceptId),
+        secundario: this.label(condicion.clinicalStatusConceptId),
+        cuando: condicion.onsetAt ?? condicion.createdAt,
+      })),
+    ...(this.datos()?.allergies ?? []).map((fila) => ({
       id: fila.id,
       principal: this.label(fila.substanceConceptId),
       secundario: this.label(fila.criticalityConceptId),
       cuando: fila.createdAt,
     })),
-  );
+  ]);
 
   protected readonly resultados = computed<readonly FilaVisible[]>(() =>
     (this.datos()?.observations ?? []).map((fila) => ({

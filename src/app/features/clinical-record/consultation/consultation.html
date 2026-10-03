@@ -192,7 +192,7 @@
 </app-view-state-host>
 
 <!-- ─── El formulario de la casilla elegida ──────────────────────────────
-     Un solo modal para las ocho, con el bloque elegido adentro. Cada bloque
+     Un solo modal para las siete, con el bloque elegido adentro. Cada bloque
      es EL MISMO que usa el expediente, atado al encuentro en curso cuando lo
      hay y a una cita ya existente cuando no. La última —Pagos— no escribe:
      muestra lo cobrado. -->
@@ -213,14 +213,6 @@
           [patientProfileId]="pacienteDeLaFicha()"
           [encounterId]="encuentroActual()"
           [exigeEncuentro]="false"
-          [citas]="citas()"
-          (cambio)="altaRegistrada()"
-        />
-      }
-      @case ('alergias') {
-        <app-allergy-block
-          [patientProfileId]="pacienteDeLaFicha()"
-          [encounterId]="encuentroActual()"
           [citas]="citas()"
           (cambio)="altaRegistrada()"
         />
