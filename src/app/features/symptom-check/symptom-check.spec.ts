@@ -349,6 +349,51 @@ describe('SymptomCheck · el área de texto', () => {
   });
 });
 
+describe('SymptomCheck · mientras la IA lee', () => {
+  let fixture: ReturnType<typeof TestBed.createComponent<SymptomCheck>>;
+  let html: HTMLElement;
+  let http: HttpTestingController;
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+    TestBed.configureTestingModule({
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
+    });
+    http = TestBed.inject(HttpTestingController);
+    fixture = TestBed.createComponent(SymptomCheck);
+    fixture.detectChanges();
+    responderSexoPropio(http);
+    html = fixture.nativeElement as HTMLElement;
+  });
+
+  afterEach(() => vi.useRealTimers());
+
+  function escribir(texto: string): void {
+    const control = html.querySelector<HTMLTextAreaElement>('[data-testid="sintomas-texto"] textarea');
+    if (control === null) throw new Error('no está el área de texto');
+    control.value = texto;
+    control.dispatchEvent(new Event('input', { bubbles: true }));
+    fixture.detectChanges();
+  }
+
+  it('dice que está leyendo, no «no reconocimos», hasta que el servicio contesta', () => {
+    escribir('siento que el corazon se me sale del pecho');
+    expect(html.querySelector('[data-testid="sintomas-leyendo"]')?.textContent).toContain('Estamos leyendo');
+    expect(html.textContent).not.toContain('No reconocimos');
+
+    vi.advanceTimersByTime(700);
+    const consulta = http.expectOne((r) => r.url.endsWith('/v1/triage/analyze'));
+    fixture.detectChanges();
+    expect(html.querySelector('[data-testid="sintomas-leyendo"]')).not.toBeNull();
+
+    consulta.flush('falla', { status: 500, statusText: 'Error' });
+    fixture.detectChanges();
+    expect(html.querySelector('[data-testid="sintomas-leyendo"]')).toBeNull();
+    expect(html.textContent).toContain('No reconocimos');
+    http.match(() => true);
+  });
+});
+
 /**
  * Dictar (P-02, Q-12), con un doble del reconocedor en los tres niveles de
  * la regla 65: con soporte y una frase que llega al texto; sin soporte, sin
