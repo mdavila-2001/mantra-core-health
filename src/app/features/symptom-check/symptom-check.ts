@@ -33,6 +33,7 @@ import {
 
 import {
   conceptIdDe,
+  conMedicinaGeneralPrimero,
   enumerar,
   explicar,
   normalizar,
@@ -362,14 +363,46 @@ export class SymptomCheck {
     sugerir(ultimaFrase(this.texto()), this.sintomas()).filter((s) => this.sintomaVisible(s)),
   );
 
-  protected readonly recomendaciones = computed<readonly Recomendacion[]>(() =>
+  /**
+   * Por qué la lectura no es segura, o `null` si lo es. Sin certeza la
+   * respuesta por defecto es Medicina general (ver `conMedicinaGeneralPrimero`):
+   *
+   * - el texto no se reconoció y la IA ya terminó de leerlo;
+   * - todo lo reconocido lo interpretó MedGemma (`source: 'model'`): el motor
+   *   local no vio nada en el texto ni se eligió nada a mano o en la figura.
+   *   Lo que el servicio lee con sus tablas («manchas en la espalda» →
+   *   Dermatología) es determinista y no entra acá.
+   *
+   * Lo negado a secas («no tengo fiebre») no cuenta: ahí la pantalla ya dice
+   * qué entendió y pide lo que sí se siente.
+   */
+  protected readonly faltaDeCerteza = computed<string | null>(() => {
+    if (this.texto().trim() === '' || this.agregados().length > 0) {
+      return null;
+    }
+    if (this.sintomas().length === 0) {
+      return this.leyendoConIa() || this.descartados() !== ''
+        ? null
+        : 'No pudimos identificar con certeza qué te pasa: un médico general te evalúa y te deriva si hace falta.';
+    }
+    const soloMedGemma = reconocer(this.texto()).length === 0 && this.lecturaVigente()?.source === 'model';
+    return soloMedGemma
+      ? 'Lo que escribiste lo interpretamos con IA y puede no ser exacto: un médico general te evalúa y te deriva si hace falta.'
+      : null;
+  });
+
+  protected readonly recomendaciones = computed<readonly Recomendacion[]>(() => {
     // Con una alarma en el texto no se recomienda nada: la pantalla entera pasa
     // a decir «andá a urgencias», y una lista de especialidades debajo
     // competiría con ese mensaje.
-    this.alarmas().length > 0
-      ? []
-      : recomendar(this.sintomas(), new Set(this.especialidadesDisponibles().keys())),
-  );
+    if (this.alarmas().length > 0) {
+      return [];
+    }
+    const disponibles = new Set(this.especialidadesDisponibles().keys());
+    const lista = recomendar(this.sintomas(), disponibles);
+    const motivo = this.faltaDeCerteza();
+    return motivo === null ? lista : conMedicinaGeneralPrimero(lista, motivo, disponibles);
+  });
 
   /**
    * Qué decirle a quien escribió una urgencia.
