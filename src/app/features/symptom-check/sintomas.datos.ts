@@ -312,6 +312,8 @@ export const SINTOMAS_DE_ALARMA: readonly Sintoma[] = [
       // Autolesión: va con la misma urgencia. «me corto» a secas NO: es también un corte en la cocina.
       'me corto a proposito',
       'me hago cortes',
+      'me corto cuando estoy mal',
+      'me corto las munecas',
       'me autolesiono',
       'autolesion',
       'me lastimo a proposito',
@@ -1598,6 +1600,7 @@ export const SINTOMAS: readonly Sintoma[] = [
       'me lavo las manos todo el tiempo',
       'reviso todo muchas veces',
       'reviso mil veces si cerre la puerta',
+      'tengo que revisar todo varias veces',
       'tengo manias',
       'tengo que ordenar todo',
       'obsesiones',
@@ -1622,6 +1625,10 @@ export const SINTOMAS: readonly Sintoma[] = [
       'dejo de comer para no engordar',
       'me da culpa comer',
       'miedo a engordar',
+      'vomito a proposito',
+      'como mucho y despues vomito',
+      'miedo a subir de peso',
+      'casi no como para no engordar',
     ],
     especialidades: [
       { nombre: 'Psiquiatría', peso: 3 },
@@ -1641,6 +1648,8 @@ export const SINTOMAS: readonly Sintoma[] = [
       'estoy muy irritable',
       'tengo mucha rabia',
       'me peleo con todos',
+      'me pongo agresivo',
+      'agresividad',
     ],
     especialidades: [
       { nombre: 'Psicología', peso: 3 },
@@ -1659,6 +1668,8 @@ export const SINTOMAS: readonly Sintoma[] = [
       'revivo lo que paso',
       'me asaltaron y tengo miedo',
       'recuerdos que no me dejan',
+      'no puedo dejar de pensar en el accidente',
+      'desde el accidente tengo miedo',
     ],
     especialidades: [
       { nombre: 'Psicología', peso: 3 },
