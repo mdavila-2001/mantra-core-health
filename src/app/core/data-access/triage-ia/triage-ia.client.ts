@@ -71,11 +71,12 @@ export function leerLectura(cuerpo: unknown): LecturaIa | null {
   if (typeof cuerpo !== 'object' || cuerpo === null) {
     return null;
   }
-  const { symptoms, urgency } = cuerpo as { symptoms?: unknown; urgency?: unknown };
+  const { symptoms, urgency, source } = cuerpo as { symptoms?: unknown; urgency?: unknown; source?: unknown };
   if (!Array.isArray(symptoms) || (urgency !== 'urgente' && urgency !== 'prioritaria' && urgency !== 'programada')) {
     return null;
   }
-  return { symptoms: symptoms.filter(esHallazgo), urgency };
+  const lectura: LecturaIa = { symptoms: symptoms.filter(esHallazgo), urgency };
+  return source === 'model' || source === 'catalog' ? { ...lectura, source } : lectura;
 }
 
 function esHallazgo(valor: unknown): valor is HallazgoIa {

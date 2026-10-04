@@ -31,4 +31,10 @@ export interface HallazgoIa {
 export interface LecturaIa {
   readonly symptoms: readonly HallazgoIa[];
   readonly urgency: 'urgente' | 'prioritaria' | 'programada';
+  /**
+   * Quién leyó el texto: `model` = MedGemma (una interpretación, puede no ser
+   * exacta); `catalog` = las tablas del servicio (determinista). Opcional: un
+   * servicio viejo no lo manda.
+   */
+  readonly source?: 'model' | 'catalog';
 }
