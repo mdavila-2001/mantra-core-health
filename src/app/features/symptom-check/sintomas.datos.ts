@@ -245,6 +245,11 @@ export const SINTOMAS_DE_ALARMA: readonly Sintoma[] = [
       'ataque convulsivo',
       'se convulsiono',
       'perdio el conocimiento y temblaba',
+      // Camba «cosar»: ataque epiléptico o epileptiforme (Sanabria Fernández).
+      'cosar',
+      'le dio el cosar',
+      'me dio el cosar',
+      'cosariento',
     ],
     alarma: true,
     especialidades: [],
@@ -304,10 +309,43 @@ export const SINTOMAS_DE_ALARMA: readonly Sintoma[] = [
       'no le veo sentido a nada',
       'no quiero seguir viviendo',
       'no quiero vivir mas',
+      // Autolesión: va con la misma urgencia. «me corto» a secas NO: es también un corte en la cocina.
+      'me corto a proposito',
+      'me hago cortes',
+      'me corto cuando estoy mal',
+      'me corto las munecas',
+      'me autolesiono',
+      'autolesion',
+      'me lastimo a proposito',
+      'me quiero cortar las venas',
+      'estoy cansado de vivir',
+      'quisiera no despertar',
+      'quiero desaparecer',
+      'mejor estaria muerto',
     ],
     alarma: true,
     mensaje:
       'No estás solo con esto y no hace falta esperar un turno. Hablá ahora con alguien: llamá a una línea de ayuda o andá a una guardia.',
+    especialidades: [],
+  },
+  {
+    id: 'violencia-o-abuso',
+    nombre: 'violencia o abuso',
+    sinonimos: [
+      'me violaron',
+      'abuso sexual',
+      'abusaron de mi',
+      'me pega mi pareja',
+      'mi marido me pega',
+      'mi esposo me pega',
+      'me golpea mi pareja',
+      'violencia familiar',
+      'violencia domestica',
+      'me maltratan en mi casa',
+    ],
+    alarma: true,
+    mensaje:
+      'Lo que te pasó no es tu culpa y no tenés que esperar un turno. Si estás en peligro o fue hace poco, andá ahora a una guardia: te atienden, te protegen y hay medicación que sirve sólo en las primeras horas.',
     especialidades: [],
   },
 ];
@@ -336,6 +374,8 @@ export const SINTOMAS: readonly Sintoma[] = [
       // Bolivia: «chujcho» (del quechua) es estar con escalofríos y fiebre.
       'chujcho',
       'chujchu',
+      'terciana',
+      'tercianas',
     ],
     especialidades: [
       { nombre: 'Medicina general', peso: 3 },
@@ -358,6 +398,8 @@ export const SINTOMAS: readonly Sintoma[] = [
       // Bolivia: el «surazo» es el viento frío del sur; «me agarró el surazo» es resfriarse.
       'me agarro el surazo',
       'surazo',
+      // Camba «arrebato» (resfrío fuerte) NO entra: el motor lo reduce a «arrebato» a secas y
+      // cazaba «en un arrebato le grité a mi jefe» (lo detectó el banco).
     ],
     especialidades: [
       { nombre: 'Medicina general', peso: 3 },
@@ -436,6 +478,11 @@ export const SINTOMAS: readonly Sintoma[] = [
       'perdi kilos sin proponermelo',
       'baje de peso sin hacer dieta',
       'baje de peso sin dieta',
+      // Sin apetito + adelgazar: mismo estudio de base.
+      'no tengo hambre',
+      'perdi el apetito',
+      'no me da hambre',
+      'estoy muy flaco',
     ],
     especialidades: [
       { nombre: 'Medicina general', peso: 3 },
@@ -512,7 +559,16 @@ export const SINTOMAS: readonly Sintoma[] = [
   {
     id: 'dolor-de-cabeza',
     nombre: 'dolor de cabeza',
-    sinonimos: ['cefalea', 'jaqueca', 'migrana', 'me parte la cabeza', 'presion en la cabeza'],
+    sinonimos: [
+      'cefalea',
+      'jaqueca',
+      'migrana',
+      'me parte la cabeza',
+      'presion en la cabeza',
+      'me late la cabeza',
+      'me martillea la cabeza',
+      'me revienta la cabeza',
+    ],
     // «nuca» va acá y no en el cuello: el dolor de nuca que alguien escribe en
     // una pantalla de síntomas casi siempre viene con la presión alta.
     partes: ['cabeza', 'sien', 'nuca', 'craneo'],
@@ -533,6 +589,13 @@ export const SINTOMAS: readonly Sintoma[] = [
       'la cabeza me da vueltas',
       'siento que me caigo',
       'inestable al caminar',
+      // «Sorojchi»: mal de altura (Diccionario de Americanismos, ASALE).
+      'sorojchi',
+      'sorojche',
+      'soroche',
+      'me dio sorojchi',
+      'mal de altura',
+      'me apune',
     ],
     especialidades: [
       { nombre: 'Otorrinolaringología', peso: 3 },
@@ -552,6 +615,9 @@ export const SINTOMAS: readonly Sintoma[] = [
       'se me duermen las piernas',
       'siento pinchazos en las manos',
       'calambres',
+      // Camba «chicó»: adormecimiento pasajero de una parte del cuerpo. Sólo en frase: sin tilde es «chico».
+      'me dio chico',
+      'me da chico',
     ],
     especialidades: [
       { nombre: 'Neurología', peso: 3 },
@@ -617,6 +683,14 @@ export const SINTOMAS: readonly Sintoma[] = [
       'lagana',
       'me arde el ojo',
       'ojo seco',
+      // Camba «lopopo/lopopudo»: párpado hinchado; «sapirá»: lagañoso (O. Roca).
+      'lopopo',
+      'ojos lopopos',
+      'lopopudo',
+      'lopopuda',
+      'parpado hinchado',
+      'sapira',
+      'tengo laganas',
     ],
     partes: ['ojo'],
     especialidades: [
@@ -666,7 +740,12 @@ export const SINTOMAS: readonly Sintoma[] = [
     sinonimos: [
       'oido tapado',
       'zumbido en el oido',
-      'no escucho bien',
+      // «no escucho bien» a secas NO: el motor lo reduce a «no» + «escuchar» sin orden y cazaba
+      // «escucho voces y no hay nadie», que es de Psiquiatría.
+      'no escucho bien del oido',
+      'escucho mal',
+      'me estoy quedando sordo',
+      'sordera',
       'otitis',
       'me sale liquido del oido',
       'tinnitus',
@@ -752,6 +831,12 @@ export const SINTOMAS: readonly Sintoma[] = [
       'encias inflamadas',
       'flemon',
       'absceso dental',
+      // Camba «chío»: diente corroído por las caries.
+      'tengo un chio',
+      'diente chio',
+      'muela chio',
+      'diente picado',
+      'muela picada',
     ],
     partes: ['muela', 'diente', 'encia'],
     especialidades: [{ nombre: 'Odontología', peso: 3 }],
@@ -891,6 +976,9 @@ export const SINTOMAS: readonly Sintoma[] = [
       'venas saltadas en las piernas',
       'aranitas en las piernas',
       'venas hinchadas',
+      'venas moradas',
+      'venitas moradas en las piernas',
+      'venas marcadas en las piernas',
     ],
     especialidades: [
       { nombre: 'Cirugía general', peso: 2 },
@@ -903,7 +991,18 @@ export const SINTOMAS: readonly Sintoma[] = [
   {
     id: 'dolor-de-panza',
     nombre: 'dolor de panza',
-    sinonimos: ['retorcijones', 'colicos', 'me duele la boca del estomago', 'punzadas en la panza'],
+    sinonimos: [
+      'retorcijones',
+      'colicos',
+      'me duele la boca del estomago',
+      'punzadas en la panza',
+      // Camba «ajitería/ahitera»: indigestión por haber comido mucho (Sanabria Fernández).
+      'ajiteria',
+      'ahitera',
+      'empacho',
+      'estoy empachado',
+      'me empache',
+    ],
     // Cada país tiene su palabra y ninguna se deduce de otra: van todas.
     partes: ['panza', 'estomago', 'barriga', 'guata', 'vientre', 'abdomen'],
     especialidades: [
@@ -922,6 +1021,19 @@ export const SINTOMAS: readonly Sintoma[] = [
       'voy mucho al bano',
       'deposiciones liquidas',
       'estoy flojo del estomago',
+      // Fuente: «El habla popular de Santa Cruz» (H. Sanabria Fernández, vía soysantacruz.com.bo) y Diccionario Camba de O. Roca.
+      // «Cursialera»: defecación líquida y frecuente; «tener el curso / estar de curso».
+      'cursialera',
+      'estoy de curso',
+      'tengo el curso',
+      'tener el curso',
+      // Quechua «q'echa» = diarrea (PMC3259717).
+      'qecha',
+      'q echa',
+      'cagadera',
+      'caca aguada',
+      'popo aguado',
+      'estomago suelto',
     ],
     especialidades: [
       { nombre: 'Gastroenterología', peso: 3 },
@@ -941,6 +1053,9 @@ export const SINTOMAS: readonly Sintoma[] = [
       'hace dias que no voy al bano',
       'no puedo ir al bano',
       'no voy al bano',
+      'no puedo cagar',
+      'no cago hace dias',
+      'estoy tapado',
     ],
     especialidades: [
       { nombre: 'Gastroenterología', peso: 3 },
@@ -999,10 +1114,89 @@ export const SINTOMAS: readonly Sintoma[] = [
       'sangre al obrar',
       'me arde al obrar',
       'bulto al obrar',
+      // Camba «chupeé»: recto, porción final del intestino (Sanabria Fernández).
+      'me duele el chupee',
+      'me arde el chupee',
     ],
     especialidades: [
       { nombre: 'Gastroenterología', peso: 3 },
       { nombre: 'Cirugía general', peso: 2 },
+    ],
+  },
+  {
+    // «Cago sangre», «caca con sangre», «heces negras»: sangrado digestivo bajo o melena. No es
+    // alarma por sí solo (casi siempre son hemorroides o una fisura), pero lo ve un gastroenterólogo.
+    id: 'sangre-en-las-heces',
+    nombre: 'sangre en las heces',
+    sinonimos: [
+      'sangre en las heces',
+      'heces con sangre',
+      'cago sangre',
+      'cagar sangre',
+      'estoy cagando sangre',
+      'caca con sangre',
+      'sangre en la caca',
+      'popo con sangre',
+      'sangre en el popo',
+      'deposiciones con sangre',
+      // «obro sangre» NO: empataba con «sangre al obrar», que es la fila de hemorroides.
+      // «sangre por el ano» NO: el motor descarta «ano» (3 letras) y quedaba «sangre» a secas, que
+      // cazaba nariz, encías y análisis de sangre (lo detectó el banco de 296 textos).
+      'sangrado anal',
+      'sangre por el recto',
+      'rectorragia',
+      'heces negras',
+      'caca negra',
+      'popo negro',
+      'kgo sangre',
+      'cg sangre',
+    ],
+    especialidades: [
+      { nombre: 'Gastroenterología', peso: 3 },
+      { nombre: 'Cirugía general', peso: 2 },
+      { nombre: 'Medicina general', peso: 1 },
+    ],
+  },
+  {
+    // Hematospermia. Camba «acabar»: eyacular (Sanabria Fernández).
+    id: 'sangre-en-el-semen',
+    nombre: 'sangre en el semen',
+    sinonimos: [
+      'sangre en el semen',
+      'semen con sangre',
+      'eyaculo sangre',
+      'eyacule sangre',
+      'eyaculacion con sangre',
+      'hematospermia',
+      'acabo con sangre',
+      'semen rojo',
+      'semen marron',
+    ],
+    soloParaSexo: 'MALE',
+    especialidades: [
+      { nombre: 'Urología', peso: 3 },
+      { nombre: 'Medicina general', peso: 1 },
+    ],
+  },
+  {
+    // Bolivianismo «macurca» (RAE) y camba «agujeta»: dolor muscular por cansancio o esfuerzo.
+    id: 'dolor-muscular',
+    nombre: 'dolor muscular',
+    sinonimos: [
+      'dolor muscular',
+      'me duelen los musculos',
+      'dolor de musculos',
+      'macurca',
+      'tengo macurca',
+      'agujetas',
+      'contractura',
+      'me dan calambres',
+      'calambres',
+    ],
+    especialidades: [
+      { nombre: 'Medicina general', peso: 2 },
+      { nombre: 'Traumatología', peso: 2 },
+      { nombre: 'Fisioterapia', peso: 2 },
     ],
   },
 
@@ -1026,6 +1220,7 @@ export const SINTOMAS: readonly Sintoma[] = [
       'contractura en el cuello',
       'cervicalgia',
       'me quede duro del cuello',
+      'me duele el coto',
     ],
     partes: ['cuello', 'cervical'],
     especialidades: [
@@ -1058,7 +1253,12 @@ export const SINTOMAS: readonly Sintoma[] = [
   {
     id: 'dolor-de-cadera',
     nombre: 'dolor de cadera',
-    sinonimos: ['cadera desgastada', 'me duele al caminar la cadera'],
+    sinonimos: [
+      'cadera desgastada',
+      'me duele al caminar la cadera',
+      // Camba «toco»: la cadera (O. Roca).
+      'me duele el toco',
+    ],
     partes: ['cadera'],
     especialidades: [
       { nombre: 'Traumatología', peso: 3 },
@@ -1155,6 +1355,10 @@ export const SINTOMAS: readonly Sintoma[] = [
       'me pica la piel',
       'picazon',
       'me salio una alergia en la piel',
+      // Camba «pitaí»: erupción cutánea con escozor producida por el calor.
+      'pitai',
+      'me salio pitai',
+      'tengo pitai',
     ],
     especialidades: [
       { nombre: 'Dermatología', peso: 3 },
@@ -1208,6 +1412,10 @@ export const SINTOMAS: readonly Sintoma[] = [
       'la herida se me infecto',
       'ulcera en la pierna',
       'llaga que no cura',
+      'herida que no se cura',
+      'no se me cura la herida',
+      'llaga que no sana',
+      'pie diabetico',
     ],
     especialidades: [
       { nombre: 'Medicina general', peso: 2 },
@@ -1226,6 +1434,11 @@ export const SINTOMAS: readonly Sintoma[] = [
       'me mordio un perro',
       'mordedura',
       'me pico una arana',
+      // «Boro»: larva de la mosca Dermatobia hominis bajo la piel (Sanabria Fernández).
+      'tengo un boro',
+      'me entro un boro',
+      'me salio un boro',
+      'boro',
     ],
     especialidades: [
       { nombre: 'Medicina general', peso: 3 },
@@ -1247,6 +1460,22 @@ export const SINTOMAS: readonly Sintoma[] = [
       'estres',
       'no puedo parar de pensar',
       'me agarran crisis de nervios',
+      'miedo a morirme',
+      'siento que me voy a morir',
+      'ataque de nervios',
+      'crisis de ansiedad',
+      'estres laboral',
+      'burnout',
+      'estoy colapsado',
+      'vivo preocupado',
+      'me preocupo por todo',
+      'fobia',
+      'miedo a salir de la casa',
+      'miedo a la gente',
+      'ansiedad social',
+      'tengo los nervios de punta',
+      // «Susto» andino: afección popular con nervios, insomnio y desgano. A secas NO («me dio un susto»).
+      'me agarro el susto',
     ],
     especialidades: [
       { nombre: 'Psiquiatría', peso: 3 },
@@ -1267,6 +1496,18 @@ export const SINTOMAS: readonly Sintoma[] = [
       'lloro seguido',
       'me siento vacio',
       'nada me entusiasma',
+      'estoy depre',
+      'tengo la depre',
+      'estoy bajoneado',
+      'ando con el bajon',
+      'estoy deprimido',
+      'soledad',
+      'me siento abandonado',
+      'no valgo nada',
+      'me siento inutil',
+      'baja autoestima',
+      'no tengo ganas de levantarme',
+      'no disfruto nada',
     ],
     especialidades: [
       { nombre: 'Psicología', peso: 3 },
@@ -1286,6 +1527,9 @@ export const SINTOMAS: readonly Sintoma[] = [
       'no me deja dormir',
       'no puedo conciliar el sueno',
       'doy vueltas en la cama',
+      'no pego un ojo',
+      'paso la noche en vela',
+      'tengo el sueno cambiado',
     ],
     especialidades: [
       { nombre: 'Psiquiatría', peso: 2 },
@@ -1322,6 +1566,15 @@ export const SINTOMAS: readonly Sintoma[] = [
       'consumo drogas',
       'no puedo dejar de tomar',
       'ludopatia',
+      // «chupar» en Bolivia: tomar alcohol.
+      'chupo mucho',
+      'me emborracho seguido',
+      'no puedo dejar el trago',
+      'fumo marihuana',
+      'consumo cocaina',
+      'juego mucho por plata',
+      'apuestas',
+      'no puedo dejar el celular',
     ],
     especialidades: [
       { nombre: 'Psiquiatría', peso: 3 },
@@ -1329,6 +1582,152 @@ export const SINTOMAS: readonly Sintoma[] = [
     ],
   },
 
+  {
+    id: 'alucinaciones',
+    nombre: 'escuchar voces o ver cosas que no están',
+    sinonimos: [
+      'escucho voces',
+      'oigo voces',
+      'me hablan voces en la cabeza',
+      'escucho gente que no esta',
+      'oigo gente hablandome',
+      'veo cosas que no hay',
+      'veo cosas que no existen',
+      'alucinaciones',
+      'alucino',
+      'siento que me persiguen',
+      'siento que me vigilan',
+      'paranoia',
+      'creo que me quieren envenenar',
+    ],
+    especialidades: [
+      { nombre: 'Psiquiatría', peso: 3 },
+      { nombre: 'Medicina general', peso: 1 },
+    ],
+  },
+  {
+    id: 'obsesiones',
+    nombre: 'pensamientos o manías que no puedo frenar',
+    sinonimos: [
+      // «toc» NO: tres letras, el motor las descarta.
+      'trastorno obsesivo compulsivo',
+      'pensamientos intrusivos',
+      'pensamientos que no me puedo sacar',
+      'me lavo las manos todo el tiempo',
+      'reviso todo muchas veces',
+      'reviso mil veces si cerre la puerta',
+      'tengo que revisar todo varias veces',
+      'tengo manias',
+      'tengo que ordenar todo',
+      'obsesiones',
+    ],
+    especialidades: [
+      { nombre: 'Psiquiatría', peso: 3 },
+      { nombre: 'Psicología', peso: 3 },
+    ],
+  },
+  {
+    id: 'trastorno-alimentario',
+    nombre: 'problemas con la comida',
+    sinonimos: [
+      'anorexia',
+      'bulimia',
+      'me hago vomitar',
+      'me provoco el vomito',
+      'atracones',
+      'como a escondidas',
+      'como sin control',
+      'me siento gorda aunque estoy flaca',
+      'dejo de comer para no engordar',
+      'me da culpa comer',
+      'miedo a engordar',
+      'vomito a proposito',
+      'como mucho y despues vomito',
+      'miedo a subir de peso',
+      'casi no como para no engordar',
+    ],
+    especialidades: [
+      { nombre: 'Psiquiatría', peso: 3 },
+      { nombre: 'Psicología', peso: 3 },
+      { nombre: 'Nutrición', peso: 2 },
+    ],
+  },
+  {
+    id: 'ira',
+    nombre: 'enojo que no puedo controlar',
+    sinonimos: [
+      'me enojo por todo',
+      'no controlo la ira',
+      'no controlo mi enojo',
+      'exploto de rabia',
+      'ataques de ira',
+      'estoy muy irritable',
+      'tengo mucha rabia',
+      'me peleo con todos',
+      'me pongo agresivo',
+      'agresividad',
+    ],
+    especialidades: [
+      { nombre: 'Psicología', peso: 3 },
+      { nombre: 'Psiquiatría', peso: 2 },
+    ],
+  },
+  {
+    id: 'trauma',
+    nombre: 'algo que me pasó y no puedo superar',
+    sinonimos: [
+      'trauma',
+      'estres postraumatico',
+      'tengo pesadillas',
+      'pesadillas',
+      'no puedo superar lo que me paso',
+      'revivo lo que paso',
+      'me asaltaron y tengo miedo',
+      'recuerdos que no me dejan',
+      'no puedo dejar de pensar en el accidente',
+      'desde el accidente tengo miedo',
+    ],
+    especialidades: [
+      { nombre: 'Psicología', peso: 3 },
+      { nombre: 'Psiquiatría', peso: 2 },
+    ],
+  },
+  {
+    id: 'concentracion',
+    nombre: 'problemas de atención y concentración',
+    sinonimos: [
+      'no me puedo concentrar',
+      'me cuesta concentrarme',
+      'me distraigo facil',
+      'deficit de atencion',
+      'tdah',
+      'hiperactividad',
+      'no puedo estar quieto',
+      'no rindo en el estudio',
+    ],
+    especialidades: [
+      { nombre: 'Psiquiatría', peso: 3 },
+      { nombre: 'Psicología', peso: 2 },
+      { nombre: 'Neurología', peso: 1 },
+    ],
+  },
+  {
+    id: 'cambios-de-humor',
+    nombre: 'cambios bruscos de ánimo',
+    sinonimos: [
+      'cambios de humor',
+      'cambios de animo',
+      'mi humor cambia mucho',
+      'un dia estoy feliz y otro triste',
+      'un rato bien y otro mal',
+      'bipolar',
+      'estoy euforico',
+    ],
+    especialidades: [
+      { nombre: 'Psiquiatría', peso: 3 },
+      { nombre: 'Psicología', peso: 2 },
+    ],
+  },
   /* --- Hormonas y metabolismo --------------------------------------------- */
   {
     id: 'azucar-alta',
@@ -1358,6 +1757,11 @@ export const SINTOMAS: readonly Sintoma[] = [
       'bocio',
       'nodulo en el cuello',
       'tsh alta',
+      // «Coto» = bocio (Sanabria Fernández). «me duele el coto» es cuello y va en esa fila.
+      'tengo coto',
+      'me salio coto',
+      'coto en el cuello',
+      'bocio',
     ],
     especialidades: [
       { nombre: 'Endocrinología', peso: 3 },
@@ -1410,6 +1814,10 @@ export const SINTOMAS: readonly Sintoma[] = [
       'voy seguido al bano a orinar',
       'orino seguido',
       'cistitis',
+      'me arde al mear',
+      'me arde cuando meo',
+      'me arde el pichi',
+      'ardor al hacer pichi',
     ],
     especialidades: [
       { nombre: 'Urología', peso: 3 },
@@ -1420,7 +1828,15 @@ export const SINTOMAS: readonly Sintoma[] = [
   {
     id: 'sangre-en-la-orina',
     nombre: 'sangre en la orina',
-    sinonimos: ['sangre en la orina', 'orino sangre', 'orina roja', 'hematuria'],
+    sinonimos: [
+      'sangre en la orina',
+      'orino sangre',
+      'orina roja',
+      'hematuria',
+      'meo sangre',
+      'mear sangre',
+      'pichi con sangre',
+    ],
     especialidades: [
       { nombre: 'Urología', peso: 3 },
       { nombre: 'Nefrología', peso: 2 },
@@ -1474,6 +1890,11 @@ export const SINTOMAS: readonly Sintoma[] = [
       'no puedo tener ereccion',
       'impotencia',
       'eyaculacion precoz',
+      // «no se me para» a secas NO: el motor se queda con «no» y cazaba cualquier negación.
+      'no se me para el pene',
+      'no se me levanta el pene',
+      'se me pone blando el pene',
+      'se me baja rapido',
     ],
     soloParaSexo: 'MALE',
     especialidades: [
@@ -1604,7 +2025,9 @@ export const SINTOMAS: readonly Sintoma[] = [
     sinonimos: [
       'menopausia',
       'sofocos',
-      'calores',
+      // «calores» a secas NO: se reduce a «calor» y cazaba «me salió pitaí por el calor».
+      'bochornos',
+      'calores de la menopausia',
       'climaterio',
       // «se me fue la regla hace meses» no está: se reducía a «regla» sola y
       // con eso se quedaba con cualquier consulta sobre la menstruación.
@@ -1655,6 +2078,13 @@ export const SINTOMAS: readonly Sintoma[] = [
       'verrugas genitales',
       'tuve relaciones sin proteccion',
       'tuve relaciones sin cuidarme',
+      'me sale pus del pene',
+      'pus del pene',
+      'secrecion del pene',
+      'goteo en el pene',
+      'purgaciones',
+      'llagas en el pene',
+      'llagas en la vagina',
     ],
     especialidades: [
       { nombre: 'Infectología', peso: 3 },

@@ -368,7 +368,7 @@ export class SymptomCheck {
    * respuesta por defecto es Medicina general (ver `conMedicinaGeneralPrimero`):
    *
    * - el texto no se reconoció y la IA ya terminó de leerlo;
-   * - todo lo reconocido lo interpretó MedGemma (`source: 'model'`): el motor
+   * - todo lo reconocido lo interpretó la IA (`source: 'model'` o `'semantic'`): el motor
    *   local no vio nada en el texto ni se eligió nada a mano o en la figura.
    *   Lo que el servicio lee con sus tablas («manchas en la espalda» →
    *   Dermatología) es determinista y no entra acá.
@@ -385,8 +385,9 @@ export class SymptomCheck {
         ? null
         : 'No pudimos identificar con certeza qué te pasa: un médico general te evalúa y te deriva si hace falta.';
     }
-    const soloMedGemma = reconocer(this.texto()).length === 0 && this.lecturaVigente()?.source === 'model';
-    return soloMedGemma
+    const fuente = this.lecturaVigente()?.source;
+    const soloIa = reconocer(this.texto()).length === 0 && (fuente === 'model' || fuente === 'semantic');
+    return soloIa
       ? 'Lo que escribiste lo interpretamos con IA y puede no ser exacto: un médico general te evalúa y te deriva si hace falta.'
       : null;
   });

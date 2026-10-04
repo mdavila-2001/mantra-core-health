@@ -633,6 +633,12 @@ describe('SymptomCheck · lo que entiende el servicio de triage', () => {
     expect(especialidades[0]).toBe('Medicina general');
     expect(especialidades).toContain('Dermatología');
     expect(html.querySelector('.sintomas__porque')?.textContent).toContain('interpretamos con IA');
+
+    escribir('me brota algo raro en el lomo');
+    vi.advanceTimersByTime(600);
+    http.expectOne('/ai/v1/triage/analyze').flush({ ...MANCHAS, source: 'semantic' });
+    fixture.detectChanges();
+    expect(html.querySelector('.sintomas__especialidad')?.textContent).toContain('Medicina general');
   });
 
   it('con un síntoma reconocido con certeza el especialista va primero, como siempre', () => {
