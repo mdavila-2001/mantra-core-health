@@ -1,4 +1,3 @@
-import { environment } from '../../../../environments/environment';
 import { HttpClient, HttpEvent } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { map, type Observable } from 'rxjs';
