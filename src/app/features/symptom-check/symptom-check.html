@@ -362,6 +362,13 @@
     </app-alert>
   } @else if (recomendaciones().length > 0) {
     <div class="sintomas__recomendaciones">
+      @if (sintomas().length === 0) {
+        <!-- Sin certeza no se deja a la persona sin camino: Medicina general,
+             y la pista para que pruebe de nuevo si quiere. -->
+        <p class="sintomas__sin-coincidencias" role="status" data-testid="sintomas-sin-certeza">
+          No reconocimos un síntoma concreto. Podés probar con otras palabras o tocar una zona de arriba.
+        </p>
+      }
       <h3 class="sintomas__subtitulo">Conviene que veas a</h3>
       <ul class="sintomas__lista">
         @for (recomendacion of recomendaciones(); track recomendacion.nombre) {
