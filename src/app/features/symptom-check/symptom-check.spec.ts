@@ -617,6 +617,32 @@ describe('SymptomCheck · lo que entiende el servicio de triage', () => {
     http.match('/ai/v1/triage/analyze').forEach((req) => req.flush({ symptoms: [], urgency: 'programada' }));
   });
 
+  it('sin certeza manda a Medicina general: nada reconocido, o sólo lo que interpretó MedGemma', () => {
+    escribir('tengo un problema que no se explicar');
+    vi.advanceTimersByTime(600);
+    http.expectOne('/ai/v1/triage/analyze').flush({ symptoms: [], urgency: 'programada', source: 'catalog' });
+    fixture.detectChanges();
+    expect(html.querySelector('[data-testid="sintomas-sin-certeza"]')).not.toBeNull();
+    expect(html.querySelector('.sintomas__especialidad')?.textContent).toContain('Medicina general');
+
+    escribir('me siento rarisimo desde ayer');
+    vi.advanceTimersByTime(600);
+    http.expectOne('/ai/v1/triage/analyze').flush({ ...MANCHAS, source: 'model' });
+    fixture.detectChanges();
+    const especialidades = [...html.querySelectorAll('.sintomas__especialidad')].map((e) => e.textContent?.trim());
+    expect(especialidades[0]).toBe('Medicina general');
+    expect(especialidades).toContain('Dermatología');
+    expect(html.querySelector('.sintomas__porque')?.textContent).toContain('interpretamos con IA');
+  });
+
+  it('con un síntoma reconocido con certeza el especialista va primero, como siempre', () => {
+    escribir('me salieron granos en la cara');
+    vi.advanceTimersByTime(600);
+    http.match('/ai/v1/triage/analyze').forEach((req) => req.flush({ symptoms: [], urgency: 'programada', source: 'catalog' }));
+    fixture.detectChanges();
+    expect(html.querySelector('.sintomas__especialidad')?.textContent).not.toContain('Medicina general');
+  });
+
   it('con menos de tres letras no pregunta nada', () => {
     escribir('me');
     vi.advanceTimersByTime(2_000);

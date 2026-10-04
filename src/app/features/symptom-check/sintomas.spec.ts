@@ -1,5 +1,7 @@
 import {
   conceptIdDe,
+  conMedicinaGeneralPrimero,
+  MEDICINA_GENERAL,
   explicar,
   normalizar,
   reconocer,
@@ -86,6 +88,29 @@ describe('reconocerAlarmas', () => {
     for (const alarma of reconocerAlarmas('dolor de pecho')) {
       expect(alarma.especialidades).toEqual([]);
     }
+  });
+});
+
+describe('conMedicinaGeneralPrimero (sin certeza, Medicina general)', () => {
+  const MOTIVO = 'No pudimos identificar con certeza qué te pasa.';
+
+  it('sin ninguna recomendación agrega Medicina general con su motivo', () => {
+    const lista = conMedicinaGeneralPrimero([], MOTIVO);
+    expect(lista.map((r) => r.nombre)).toEqual([MEDICINA_GENERAL]);
+    expect(explicar(lista[0])).toBe(MOTIVO);
+  });
+
+  it('si ya estaba última, la sube primera y deja al resto en su orden', () => {
+    const base = [
+      { nombre: 'Cardiología', peso: 3, porque: ['palpitaciones'] },
+      { nombre: 'Medicina general', peso: 1, porque: ['palpitaciones'] },
+    ];
+    expect(conMedicinaGeneralPrimero(base, MOTIVO).map((r) => r.nombre)).toEqual(['Medicina general', 'Cardiología']);
+  });
+
+  it('si el directorio no la ofrece, no la inventa', () => {
+    const base = [{ nombre: 'Cardiología', peso: 3, porque: ['palpitaciones'] }];
+    expect(conMedicinaGeneralPrimero(base, MOTIVO, new Set(['Cardiología']))).toEqual(base);
   });
 });
 

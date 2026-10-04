@@ -75,6 +75,8 @@ export interface Recomendacion {
   readonly peso: number;
   /** Los síntomas que la trajeron, en el orden en que se reconocieron. */
   readonly porque: readonly string[];
+  /** Cuando no la trajo un síntoma sino la falta de certeza: qué decirle a la persona. */
+  readonly motivo?: string;
 }
 
 /**
@@ -193,6 +195,31 @@ export function recomendar(
     });
 }
 
+/** La especialidad a la que se manda cuando no hay certeza. */
+export const MEDICINA_GENERAL = 'Medicina general';
+
+/**
+ * Sin certeza, Medicina general **primero** (decisión del propietario, 2026-10-04: «cuando no
+ * sepas a ciencia cierta, mandalo a medicina general»). Un médico general evalúa y deriva; un
+ * especialista elegido a partir de una lectura dudosa puede ser el equivocado.
+ *
+ * Es la excepción a {@link GENERALISTAS}, que la deja última cuando el síntoma SÍ se reconoció. Si
+ * ya venía en la lista, se sube; si no, se agrega con su `motivo`. Si el directorio no la ofrece,
+ * no se inventa: la lista queda como estaba.
+ */
+export function conMedicinaGeneralPrimero(
+  recomendaciones: readonly Recomendacion[],
+  motivo: string,
+  disponibles: ReadonlySet<string> = new Set(),
+): readonly Recomendacion[] {
+  const existente = recomendaciones.find((r) => normalizar(r.nombre) === normalizar(MEDICINA_GENERAL));
+  if (!existente && disponibles.size > 0 && !estaDisponible(MEDICINA_GENERAL, disponibles)) {
+    return recomendaciones;
+  }
+  const general: Recomendacion = { ...(existente ?? { nombre: MEDICINA_GENERAL, peso: 0, porque: [] }), motivo };
+  return [general, ...recomendaciones.filter((r) => r !== existente)];
+}
+
 /**
  * Busca en `disponibles` la clave que corresponde a `nombre`.
  *
@@ -263,6 +290,9 @@ export function conceptIdDe(
  * comas hasta el final, porque se lee dentro de un renglón de la pantalla.
  */
 export function explicar(recomendacion: Recomendacion): string {
+  if (recomendacion.motivo) {
+    return recomendacion.motivo;
+  }
   const cuales = enumerar(recomendacion.porque);
   return cuales === '' ? '' : `Por ${cuales}`;
 }
