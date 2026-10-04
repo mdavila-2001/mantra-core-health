@@ -377,7 +377,8 @@ describe('SymptomCheck · mientras la IA lee', () => {
   }
 
   it('dice que está leyendo, no «no reconocimos», hasta que el servicio contesta', () => {
-    escribir('siento que el corazon se me sale del pecho');
+    // Un texto que el motor local no reconoce: sólo el servicio puede leerlo.
+    escribir('algo raro me pasa desde ayer');
     expect(html.querySelector('[data-testid="sintomas-leyendo"]')?.textContent).toContain('Estamos leyendo');
     expect(html.textContent).not.toContain('No reconocimos');
 
