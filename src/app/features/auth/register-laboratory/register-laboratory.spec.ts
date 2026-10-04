@@ -442,7 +442,9 @@ describe('RegisterLaboratory', () => {
     await fixture.whenStable();
 
     expect(component.registered()).toBe(false);
-    expect(component.errorMessage()).toContain('Ya existe una cuenta con ese correo');
+    // El catálogo explica de quién es el correo y qué hacer, sin repetir la API.
+    expect(component.errorMessage()).toContain('Ya hay una cuenta registrada con el correo del representante legal');
+    expect(component.errorMessage()).toContain('¿Olvidaste tu contraseña?');
     const alerta = fixture.debugElement.query(By.css('[data-testid="registro-lab-error"]'));
     expect(alerta).not.toBeNull();
   });

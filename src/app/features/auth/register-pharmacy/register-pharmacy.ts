@@ -11,7 +11,7 @@ import type {
   PharmacyBranchRegistration,
   PharmacyOrganizationRegistration,
 } from '../../../core/data-access/iam/iam.types';
-import { errorToViewState } from '../../../core/http/error-to-view-state';
+import { registrationErrorToViewState } from '../registro-compartido/registration-errors';
 import { uiLanguage } from '../../../core/i18n/ui-language';
 import { loading, ready, validation } from '../../../core/view-state/view-state';
 import {
@@ -866,7 +866,7 @@ export class RegisterPharmacy {
     if (error instanceof Error && !(error instanceof HttpErrorResponse)) {
       return validation([{ field: 'alta', message: error.message }]);
     }
-    return errorToViewState<null>(error);
+    return registrationErrorToViewState(error, 'organization');
   }
 
   goToLogin(): void {

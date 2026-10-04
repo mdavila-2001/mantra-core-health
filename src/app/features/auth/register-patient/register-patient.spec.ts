@@ -1710,7 +1710,7 @@ describe('RegisterPatient', () => {
   });
 
   describe('errores', () => {
-    it('CONFLICT muestra el mensaje que manda la API', () => {
+    it('CONFLICT de documento explica qué hacer, sin repetir el texto de la API', () => {
       completar();
       component.submit();
       http.expectOne('/iam/auth/register-patient').flush(
@@ -1723,27 +1723,30 @@ describe('RegisterPatient', () => {
         { status: 409, statusText: 'Conflict' },
       );
 
-      // El texto sale del catálogo, no de una redacción nuestra: el backend
-      // declara `message` como el mensaje de negocio.
-      expect(component.errorMessage()).toBe('Ya existe una cuenta con ese documento');
+      // El texto sale del catálogo de errores del alta (`registration-errors.ts`):
+      // dice qué dato está repetido y qué hacer.
+      expect(component.errorMessage()).toContain('Ya hay una cuenta registrada con este número de documento');
+      expect(component.errorMessage()).toContain('iniciá sesión');
       expect(component.registered()).toBe(false);
     });
 
-    it('VALIDATION_FAILED expone el primer problema de la lista', () => {
+    it('VALIDATION_FAILED nombra el campo en castellano y dice la regla', () => {
       completar();
       component.submit();
       http.expectOne('/iam/auth/register-patient').flush(
         {
           code: 'VALIDATION_FAILED',
           message: 'Validation failed',
-          details: { messages: ['password is too short'] },
+          details: { violations: ['password must be longer than or equal to 8 characters'] },
           timestamp: 't',
           path: '/iam/auth/register-patient',
         },
         { status: 400, statusText: 'Bad Request' },
       );
 
-      expect(component.errorMessage()).toBe('password is too short');
+      expect(component.errorMessage()).toBe(
+        'Revisá este dato y volvé a enviar. Contraseña: tiene que tener al menos 8 caracteres.',
+      );
     });
 
     it('sin conexión lo dice como tal', () => {

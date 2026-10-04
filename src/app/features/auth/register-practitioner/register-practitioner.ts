@@ -29,7 +29,7 @@ import type {
   PractitionerRegistration,
   UploadedRegistrationDocument,
 } from '../../../core/data-access/iam/iam.types';
-import { errorToViewState } from '../../../core/http/error-to-view-state';
+import { registrationErrorToViewState } from '../registro-compartido/registration-errors';
 import { loading, ready, validation } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
@@ -2744,10 +2744,12 @@ export class RegisterPractitioner {
               this.state.set(ready(null));
               this.registered.set(true);
             },
-            error: (error: unknown) => this.state.set(errorToViewState<null>(error)),
+            error: (error: unknown) =>
+              this.state.set(registrationErrorToViewState(error, 'practitioner')),
           });
         },
-        error: (error: unknown) => this.state.set(errorToViewState<null>(error)),
+        error: (error: unknown) =>
+          this.state.set(registrationErrorToViewState(error, 'practitioner')),
       });
   }
 
