@@ -357,7 +357,11 @@ export function tokenizar(normalizado: string): readonly Token[] {
     if (CORTE_DURO.test(separador)) {
       frase += 1;
     }
-    const suLema = lema(texto);
+    // «para» después de «no» es el verbo parar, no la preposición: «no para de sangrar», «sangro y
+    // no para». Como preposición se descarta, y la alarma quedaba en «no» + «sangre» —que también
+    // dice «no hay sangre»—.
+    const esVerboParar = texto === 'para' && tokens.at(-1)?.texto === 'no';
+    const suLema = esVerboParar ? 'parar' : lema(texto);
     tokens.push({
       texto,
       lema: suLema,
@@ -367,7 +371,7 @@ export function tokenizar(normalizado: string): readonly Token[] {
       hasta: desde + texto.length,
       frase,
       corte: CORTE_DURO.test(separador) || CORTE_BLANDO.test(separador),
-      contenido: !VACIAS.has(texto),
+      contenido: esVerboParar || !VACIAS.has(texto),
     });
     anterior = desde + texto.length;
     encontrado = PALABRAS.exec(normalizado);
