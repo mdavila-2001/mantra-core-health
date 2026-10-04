@@ -593,4 +593,9 @@ export const BANCO: readonly CasoDelBanco[] = [
   { texto: 'me pongo agresivo con todos', sintomas: ['ira'] },
   { texto: 'tengo miedo a subir de peso y casi no como para no engordar', sintomas: ['trastorno-alimentario'] },
   { texto: 'me corto cuando estoy mal', sintomas: [], alarmas: ['ideas-suicidas'] },
+  // «escucho … y no hay» no es sordera.
+  { texto: 'oigo gente hablandome y no hay nadie', sintomas: ['alucinaciones'] },
+  { texto: 'escucho voces y no hay nadie en la casa', sintomas: ['alucinaciones'] },
+  { texto: 'la cabesa me late y tengo calentura', sintomas: ['dolor-de-cabeza', 'fiebre'] },
+  { texto: 'me estoy quedando sordo', sintomas: ['dolor-de-oido'] },
 ];
