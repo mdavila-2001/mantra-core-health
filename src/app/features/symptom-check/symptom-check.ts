@@ -9,7 +9,7 @@ import {
 } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { Router, RouterLink } from '@angular/router';
-import { catchError, map, of, switchMap, timer, type Observable } from 'rxjs';
+import { catchError, finalize, map, of, switchMap, timer, type Observable } from 'rxjs';
 
 import { ProfilesClient } from '@core/data-access/profiles/profiles.client';
 import { PublicDirectoryClient } from '@core/data-access/public-directory/public-directory.client';
@@ -19,6 +19,7 @@ import { TriageIaClient } from '@core/data-access/triage-ia/triage-ia.client';
 import { ZONAS_DEL_CUERPO, type ZonaDelCuerpo } from './zonas.datos';
 import { AppButton } from '@shared/components/atoms/button/button';
 import { Chip } from '@shared/components/atoms/chip/chip';
+import { Spinner } from '@shared/components/atoms/spinner/spinner';
 import { Textarea } from '@shared/components/atoms/textarea/textarea';
 import { Alert } from '@shared/components/molecules/alert/alert';
 import { Card } from '@shared/components/molecules/card/card';
@@ -117,7 +118,7 @@ const VACIO: ReadonlyMap<string, string> = new Map();
  */
 @Component({
   selector: 'app-symptom-check',
-  imports: [Alert, AppButton, BodyMap, Card, Chip, FormField, RouterLink, Textarea],
+  imports: [Alert, AppButton, BodyMap, Card, Chip, FormField, RouterLink, Spinner, Textarea],
   templateUrl: './symptom-check.html',
   // El dictado vive y muere con la pantalla: ver `Dictado`.
   providers: [Dictado],
@@ -277,11 +278,29 @@ export class SymptomCheck {
           : timer(PAUSA_PARA_LEER_MS).pipe(
               switchMap(() => this.triageIa.analizar(texto)),
               map((lectura): LecturaDelTexto | null => (lectura === null ? null : { texto, lectura })),
+              // Con respuesta, sin ella (falla o espera vencida) o cancelada porque se
+              // siguió escribiendo: la consulta de ESTE texto ya no está en curso.
+              finalize(() => this.textoLeido.set(texto)),
             ),
       ),
     ),
     { initialValue: null },
   );
+
+  /** El último texto cuya consulta al servicio terminó. */
+  private readonly textoLeido = signal('');
+
+  /**
+   * El servicio todavía está leyendo lo escrito. Con MedGemma en el servidor,
+   * lo que el motor local no entiende tarda 10–25 s; sin este estado la
+   * pantalla decía «No reconocimos ningún síntoma» mientras tanto y parecía
+   * rota. Cubre también la pausa previa a la consulta, para no titilar
+   * mientras la persona escribe.
+   */
+  protected readonly leyendoConIa = computed(() => {
+    const texto = this.texto().trim();
+    return texto.length >= 3 && this.textoLeido() !== texto;
+  });
 
   /** La lectura del servicio que todavía vale para lo escrito. */
   private readonly lecturaVigente = computed(() =>
