@@ -28,10 +28,16 @@ export function camposDe(
 }
 
 /**
- * La plantilla de la que salió la respuesta, inferida por cobertura de
- * campos: la instancia no declara su plantilla, así que gana la que más
- * `fieldId` de los valores contiene. Con el dato real —una plantilla por
- * especialidad— la inferencia es exacta; si nada coincide, `null`.
+ * La plantilla de la que salió la respuesta. La instancia no declara su
+ * plantilla, así que se infiere de los `fieldId` respondidos:
+ *
+ * 1. La que contiene **todos** los campos respondidos y tiene menos campos.
+ *    Las fichas comparten los campos base (motivo, antecedentes…): contar sólo
+ *    coincidencias le daba la anamnesis a la ficha cardiológica, que trae esos
+ *    mismos campos y más.
+ * 2. Si ninguna los contiene a todos, la que más contiene.
+ *
+ * `null` si ninguna comparte un solo campo.
  */
 export function plantillaPorCobertura(
   detalle: FormInstanceDetail,
@@ -40,14 +46,23 @@ export function plantillaPorCobertura(
   const respondidos = new Set(detalle.values.map((valor) => valor.fieldId));
   let mejor: ChartTemplate | null = null;
   let mejorCobertura = 0;
+  let menorQueCubreTodo: ChartTemplate | null = null;
   for (const plantilla of plantillas) {
-    const cobertura = plantilla.fields.filter((campo) => respondidos.has(campo.fieldId)).length;
+    const propios = new Set(plantilla.fields.map((campo) => campo.fieldId));
+    const cobertura = [...respondidos].filter((id) => propios.has(id)).length;
     if (cobertura > mejorCobertura) {
       mejor = plantilla;
       mejorCobertura = cobertura;
     }
+    if (
+      respondidos.size > 0 &&
+      cobertura === respondidos.size &&
+      (menorQueCubreTodo === null || plantilla.fields.length < menorQueCubreTodo.fields.length)
+    ) {
+      menorQueCubreTodo = plantilla;
+    }
   }
-  return mejor;
+  return menorQueCubreTodo ?? mejor;
 }
 
 /** Las respuestas de una instancia, en orden y en palabras. */
