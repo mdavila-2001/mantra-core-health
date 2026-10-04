@@ -37,13 +37,28 @@
        entonces no había forma de llegar al diagnóstico. Acá arriba, elegir qué
        se va a completar no depende de si el catálogo cargó ni de lo que este
        encuentro ya tenga escrito. -->
-  <app-form-field icon="survey" label="Qué vas a completar" hint="Una sola cosa por vez.">
-    <app-select
-      [options]="opcionesDePlantilla()"
-      [value]="plantillaId()"
-      (valueChange)="elegirPlantilla($event)"
-    />
-  </app-form-field>
+  <div class="formulario-especialidad__selector">
+    <app-form-field
+      icon="survey"
+      label="Qué vas a completar"
+      [hint]="especialidad() === null ? 'Se muestran las fichas generales disponibles.' : 'Se muestran las fichas de tu especialidad y las generales.'"
+    >
+      <app-select
+        [options]="opcionesDePlantilla()"
+        [value]="plantillaId()"
+        (valueChange)="elegirPlantilla($event)"
+      />
+    </app-form-field>
+    @if (puedeVerTodas()) {
+      <app-checkbox
+        class="formulario-especialidad__ver-todas"
+        label="Ver todas las especialidades"
+        [checked]="verTodas()"
+        (checkedChange)="alternarVerTodas($event)"
+        data-testid="ver-todas-especialidades"
+      />
+    }
+  </div>
 
   @if (bloquePropio()) {
     <!-- Las tres que no pasan por `forms`: cada una escribe donde corresponde
@@ -60,12 +75,14 @@
         [patientProfileId]="patientProfileId()"
         [encounterId]="encounterId()"
         modo="cirugia"
+        [embedded]="true"
       />
     } @else if (esOdontologia()) {
       <app-procedures-block
         [patientProfileId]="patientProfileId()"
         [encounterId]="encounterId()"
         modo="odontologia"
+        [embedded]="true"
       />
     } @else if (esLaboratorio()) {
       <app-analysis-order-block
@@ -258,6 +275,10 @@
       Todavía no hay ninguna plantilla de formulario clínico cargada. Un admin de especialidad las
       crea en «Formularios clínicos».
     </app-alert>
+  } @else if (sinPlantillasVisibles()) {
+    <app-alert tone="info" title="Sin ficha para esta especialidad">
+      No hay formularios propios ni generales en el catálogo. Activá «Ver todas las especialidades» para elegir otra ficha.
+    </app-alert>
   } @else {
     <form class="formulario-especialidad__formulario" (submit)="$event.preventDefault()">
       @if (sinFichaPropia()) {
@@ -268,18 +289,6 @@
         </p>
       }
 
-      @if (puedeVerTodas()) {
-        <!-- El escape para la interconsulta o la segunda especialidad que no
-             está en el perfil. Filtra sobre lo ya traído: no pide nada más. -->
-        <app-checkbox
-          class="formulario-especialidad__ver-todas"
-          label="Ver todas las especialidades"
-          [checked]="verTodas()"
-          (checkedChange)="alternarVerTodas($event)"
-          data-testid="ver-todas-especialidades"
-        />
-      }
-
       @if (plantillaElegida(); as plantilla) {
         <!-- Dos pestañas: los campos fijos de la plantilla y las filas «campo:
              valor» con archivos. `app-tab` no dibuja el panel cerrado, pero lo
@@ -288,45 +297,52 @@
         <app-tabs [(selectedIndex)]="pestana" data-testid="formulario-pestanas">
           <app-tab label="Plantilla" data-testid="vista-plantilla">
             <div class="formulario-especialidad__vista">
+              <div class="formulario-especialidad__ficha">
+                <h3>{{ plantilla.name }}</h3>
+                <p>Completá los datos de esta consulta. Los campos obligatorios están marcados.</p>
+              </div>
               @for (campo of plantilla.fields; track campo.fieldId) {
                 <!-- El odontograma no entra en un `app-form-field`: no es un control
                      con etiqueta al lado sino una boca entera, con su propio panel de
                      estados debajo. -->
                 @if (esOdontograma(campo)) {
-                  <fieldset
-                    class="formulario-especialidad__odontograma"
-                    data-testid="campo-odontograma"
-                  >
-                    <legend class="formulario-especialidad__subtitulo">{{ campo.name }}</legend>
-                    <app-odontogram
-                      [estados]="mapaDental(campo.fieldId)"
-                      [seleccionada]="piezaAbierta()"
-                      (pieza)="abrirPieza($event)"
-                    />
-                    @if (piezaAbierta(); as fdi) {
-                      <div class="formulario-especialidad__estados">
-                        <p class="formulario-especialidad__ayuda" id="ayuda-estado-dental">
-                          Pieza {{ fdi }} — elegí su estado. Volver a elegir el mismo lo borra.
+                  <details class="formulario-especialidad__odontograma-desplegable">
+                    <summary>{{ campo.name }}</summary>
+                    <fieldset
+                      class="formulario-especialidad__odontograma"
+                      data-testid="campo-odontograma"
+                    >
+                      <legend class="sr-only">{{ campo.name }}</legend>
+                      <app-odontogram
+                        [estados]="mapaDental(campo.fieldId)"
+                        [seleccionada]="piezaAbierta()"
+                        (pieza)="abrirPieza($event)"
+                      />
+                      @if (piezaAbierta(); as fdi) {
+                        <div class="formulario-especialidad__estados">
+                          <p class="formulario-especialidad__ayuda" id="ayuda-estado-dental">
+                            Pieza {{ fdi }} — elegí su estado. Volver a elegir el mismo lo borra.
+                          </p>
+                          @for (estado of estadosDentales; track estado.codigo) {
+                            <button
+                              app-button
+                              variant="outline"
+                              size="sm"
+                              type="button"
+                              aria-describedby="ayuda-estado-dental"
+                              (clicked)="fijarEstado(campo.fieldId, estado.codigo)"
+                            >
+                              {{ estado.codigo }} · {{ estado.etiqueta }}
+                            </button>
+                          }
+                        </div>
+                      } @else {
+                        <p class="formulario-especialidad__ayuda">
+                          Elegí una pieza para registrar su estado.
                         </p>
-                        @for (estado of estadosDentales; track estado.codigo) {
-                          <button
-                            app-button
-                            variant="outline"
-                            size="sm"
-                            type="button"
-                            aria-describedby="ayuda-estado-dental"
-                            (clicked)="fijarEstado(campo.fieldId, estado.codigo)"
-                          >
-                            {{ estado.codigo }} · {{ estado.etiqueta }}
-                          </button>
-                        }
-                      </div>
-                    } @else {
-                      <p class="formulario-especialidad__ayuda">
-                        Elegí una pieza para registrar su estado.
-                      </p>
-                    }
-                  </fieldset>
+                      }
+                    </fieldset>
+                  </details>
                 } @else if (!ocultos().has(campo.fieldId)) {
                   <!-- Un «¿cuál?» sólo aparece con el «sí» que lo abre, y va con
                        sangría debajo de su pregunta. -->
@@ -335,6 +351,7 @@
                     [hint]="campo.description ?? ''"
                     [required]="campo.required"
                     [class.formulario-especialidad__dependiente]="campo.showWhen !== undefined"
+                    [class.formulario-especialidad__campo-amplio]="tipoDibujable(campo) === 'text' || tipoDibujable(campo) === 'varias'"
                     data-testid="campo-especialidad"
                   >
                     @switch (tipoDibujable(campo)) {

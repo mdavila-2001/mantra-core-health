@@ -6,10 +6,16 @@
 }
 
 .formulario-especialidad__titulo {
-  margin: 0 0 var(--sp-4);
+  margin: 0 0 var(--sp-5);
   font-size: var(--fs-h3);
   line-height: var(--lh-h3);
   font-weight: 600;
+}
+
+.formulario-especialidad__selector {
+  display: grid;
+  gap: var(--sp-2);
+  margin-block-end: var(--sp-5);
 }
 
 /* A lo ancho de la tarjeta, sin «medida de formulario» (composition-rules
@@ -40,8 +46,39 @@
    directos de él y tienen que seguir separados igual. */
 .formulario-especialidad__vista {
   display: grid;
-  gap: var(--sp-4);
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-4) var(--sp-5);
   min-inline-size: 0;
+}
+
+.formulario-especialidad__ficha {
+  grid-column: 1 / -1;
+  padding-block-end: var(--sp-3);
+  border-block-end: 1px solid var(--border-default);
+}
+
+.formulario-especialidad__ficha h3 {
+  margin: 0;
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+}
+
+.formulario-especialidad__ficha p {
+  margin: var(--sp-1) 0 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.formulario-especialidad__campo-amplio,
+.formulario-especialidad__odontograma-desplegable,
+.formulario-especialidad__dependiente {
+  grid-column: 1 / -1;
+}
+
+@media (min-width: 48rem) {
+  .formulario-especialidad__vista {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .formulario-especialidad__estado {
@@ -116,11 +153,21 @@
   justify-self: start;
 }
 
-/* ─── El odontograma dentro del formulario ─────────────────────────────────
-   Va sin borde ni caja propia: es un campo más del formulario, aunque ocupe
-   el ancho entero en vez de una etiqueta y un control al lado. */
+/* El mapa dental ocupa el ancho entero y se abre sólo cuando se necesita. */
+.formulario-especialidad__odontograma-desplegable {
+  padding: var(--sp-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+}
+
+.formulario-especialidad__odontograma-desplegable summary {
+  color: var(--brand-primary);
+  font-weight: 600;
+  cursor: pointer;
+}
+
 .formulario-especialidad__odontograma {
-  margin: 0;
+  margin: var(--sp-3) 0 0;
   padding: 0;
   border: 0;
   min-inline-size: 0;

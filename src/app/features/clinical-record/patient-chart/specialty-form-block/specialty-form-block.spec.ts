@@ -769,6 +769,16 @@ describe('SpecialtyFormBlock', () => {
     expect(interno<() => string | null>('plantillaId')()).toBe('tpl-odo');
   });
 
+  it('corrige la preselección si el perfil llega después del catálogo', () => {
+    peticionDePlantillas().flush([PLANTILLA]);
+    expect(interno<() => string | null>('plantillaId')()).toBe('tpl-1');
+
+    responderEspecialidad('sp-odo');
+
+    expect(interno<() => string | null>('plantillaId')()).toBeNull();
+    expect(etiquetasOfrecidas()).toEqual([]);
+  });
+
   it('el selector esconde las fichas de otras especialidades', () => {
     const odonto = {
       ...PLANTILLA,
@@ -779,10 +789,6 @@ describe('SpecialtyFormBlock', () => {
     };
     peticionDePlantillas().flush([PLANTILLA, odonto]);
     responderEspecialidad('sp-odo');
-    // El filtro por especialidad sigue existiendo; sólo dejó de ser el
-    // default. Se lo activa a mano para probarlo.
-    interno<(v: boolean) => void>('alternarVerTodas')(false);
-
     // La de cardiología no le sirve a quien atiende en odontología.
     expect(etiquetasOfrecidas()).toEqual(['Ficha odontológica']);
     expect(interno<() => string | null>('plantillaId')()).toBe('tpl-odo');
@@ -1052,15 +1058,17 @@ describe('SpecialtyFormBlock', () => {
     expect(etiquetasOfrecidas()).not.toContain('Examen dermatológico');
   });
 
-  it('sin especialidad conocida no filtra nada ni ofrece el interruptor', () => {
+  it('sin especialidad conocida ofrece las fichas generales y permite ver todo', () => {
     peticionDePlantillas().flush(CATALOGO);
     http
       .expectOne((r) => r.url === '/profiles/practitioners/me/summary')
       .flush({ code: 'NOT_FOUND' }, { status: 404, statusText: 'Not Found' });
 
-    // Sin perfil profesional no hay por qué filtrar: queda el catálogo entero.
-    expect(etiquetasOfrecidas()).toHaveLength(4);
-    expect(interno<() => boolean>('puedeVerTodas')()).toBe(false);
+    expect(etiquetasOfrecidas()).toEqual([
+      'Anamnesis / Historia clínica general',
+      'Consentimiento informado',
+    ]);
+    expect(interno<() => boolean>('puedeVerTodas')()).toBe(true);
   });
 
   /* ---- el interruptor «Ver todas las especialidades» ------------------------ */
@@ -1082,6 +1090,19 @@ describe('SpecialtyFormBlock', () => {
 
     interno<(v: boolean) => void>('alternarVerTodas')(false);
     expect(etiquetasOfrecidas()).toHaveLength(3);
+  });
+
+  it('oculta los registros de odontología y cirugía ajenos a la especialidad', () => {
+    const odonto = { ...PLANTILLA, id: 'tpl-odo', specialtyConceptId: 'sp-odo', code: 'ODONTO_ANAMNESIS' };
+    peticionDePlantillas().flush([...CATALOGO, odonto]);
+    responderEspecialidad('sp-1');
+
+    expect(opcionesCrudas().some((opcion) => opcion.value === BLOQUE_ODONTOLOGIA)).toBe(false);
+    expect(opcionesCrudas().some((opcion) => opcion.value === BLOQUE_CIRUGIA)).toBe(false);
+
+    interno<(v: boolean) => void>('alternarVerTodas')(true);
+    expect(opcionesCrudas().some((opcion) => opcion.value === BLOQUE_ODONTOLOGIA)).toBe(true);
+    expect(opcionesCrudas().some((opcion) => opcion.value === BLOQUE_CIRUGIA)).toBe(true);
   });
 
   it('el interruptor no pide plantillas de nuevo: filtra sobre lo ya traído', () => {
@@ -1192,9 +1213,8 @@ describe('SpecialtyFormBlock', () => {
 
   /**
    * El aviso promete algo concreto —«te ofrecemos las fichas generales»—, así
-   * que sólo aparece cuando esas fichas existen. Sin ninguna transversal el
-   * filtro cae al catálogo entero, y avisar ahí sería prometer una anamnesis
-   * que nadie sembró.
+   * que sólo aparece cuando esas fichas existen. Si no hay ninguna,
+   * se ofrece explícitamente abrir el catálogo completo.
    */
   it('sin fichas generales en el catálogo no promete una que no existe', () => {
     peticionDePlantillas().flush([PLANTILLA, DERMATOLOGIA]);
@@ -1206,8 +1226,12 @@ describe('SpecialtyFormBlock', () => {
     expect(interno<() => boolean>('sinFichaPropia')()).toBe(false);
     const html = fixture.nativeElement as HTMLElement;
     expect(html.querySelector('[data-testid="sin-ficha-propia"]')).toBeNull();
-    // Sin criterio para filtrar queda el catálogo entero, no un desplegable vacío.
-    expect(etiquetasOfrecidas()).toHaveLength(2);
+    expect(etiquetasOfrecidas()).toHaveLength(0);
+    expect(html.textContent).toContain('Sin ficha para esta especialidad');
+    expect(interno<() => boolean>('puedeVerTodas')()).toBe(true);
+
+    interno<(id: string | null) => void>('elegirPlantilla')(PLANTILLA_HOJA_LIBRE);
+    expect(interno<() => boolean>('sinPlantillasVisibles')()).toBe(false);
   });
 
   it('la hoja en blanco encabeza el desplegable, aun sin ninguna plantilla', () => {
@@ -1221,12 +1245,10 @@ describe('SpecialtyFormBlock', () => {
     fixture.detectChanges();
 
     const opciones = opcionesCrudas();
-    expect(opciones.slice(0, 6).map((opcion) => opcion.value)).toEqual([
+    expect(opciones.slice(0, 4).map((opcion) => opcion.value)).toEqual([
       BLOQUE_DIAGNOSTICO,
       PLANTILLA_HOJA_LIBRE,
       PLANTILLA_FORMULARIO_LIBRE,
-      BLOQUE_CIRUGIA,
-      BLOQUE_ODONTOLOGIA,
       BLOQUE_LABORATORIO,
     ]);
     // La alergia ya no se ofrece: se carga como diagnóstico (02/10/2026).

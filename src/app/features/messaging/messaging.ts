@@ -225,11 +225,11 @@ export class Messaging {
 
   protected alEscribir(texto: string): void {
     this.consulta.set(texto);
-    if (texto.trim() === '') {
-      this.store.limpiarBusqueda();
-    } else {
-      this.tecleado.next(texto);
-    }
+    // Invalida en la misma tecla cualquier HTTP anterior. Esperar al debounce
+    // dejaba que una respuesta vieja apareciera durante 300 ms bajo el texto
+    // nuevo. También se emite el vacío para cancelar una consulta pendiente.
+    this.store.limpiarBusqueda();
+    this.tecleado.next(texto);
   }
 
   protected limpiarBusqueda(): void {
@@ -330,6 +330,14 @@ export class Messaging {
   /** Abre el hilo con alguien del directorio. */
   protected escribirA(slug: string): void {
     this.abrirConSlug(slug);
+  }
+
+  /** Abre el contacto autenticado sin resolverlo otra vez por slug público. */
+  protected escribirAPerfil(profileId: string): void {
+    this.store.escribirAPerfil(profileId, (conversationId) => {
+      this.limpiarBusqueda();
+      void this.router.navigate(['/messaging', conversationId]);
+    });
   }
 
   private abrirConSlug(slug: string): void {

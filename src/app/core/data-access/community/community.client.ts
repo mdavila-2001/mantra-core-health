@@ -21,6 +21,7 @@ import type {
   ConversationRead,
   ConversationsQuery,
   ChatAutoReplySettings,
+  ChatContact,
   DirectMessage,
   DirectMessagePage,
   EditDirectMessage,
@@ -1150,6 +1151,16 @@ export class CommunityClient {
       .get<{ readonly items: readonly PublicDirectoryResult[] }>(
         this.url('/public/search/practitioners'),
         { params },
+      )
+      .pipe(map((body) => body.items));
+  }
+
+  /** Personas públicas y no bloqueadas para iniciar un chat autenticado. */
+  searchChatContacts(profileId: string, q: string, limit = 10): Observable<readonly ChatContact[]> {
+    return this.http
+      .post<{ readonly items: readonly ChatContact[] }>(
+        this.url('/community/conversations/contacts/search'),
+        { profileId, q, limit },
       )
       .pipe(map((body) => body.items));
   }

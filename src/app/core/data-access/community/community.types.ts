@@ -751,6 +751,14 @@ export interface PublicDirectoryResult {
   readonly verified: boolean;
 }
 
+/** Persona autenticada que puede elegirse para iniciar un chat. */
+export interface ChatContact {
+  readonly profileId: string;
+  readonly displayName: string;
+  readonly headline: string | null;
+  readonly avatarUrl: string | null;
+}
+
 /** El otro lado de una conversación. */
 export interface ConversationPeer {
   readonly profileId: string;
