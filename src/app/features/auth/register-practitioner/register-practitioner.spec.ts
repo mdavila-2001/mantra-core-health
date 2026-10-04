@@ -2468,6 +2468,48 @@ describe('RegisterPractitioner', () => {
       req.flush(RESPUESTA_PRO);
     });
 
+    it('con el backend real no manda imágenes inline de firma ni sello aunque estén cargadas', () => {
+      const original = environment.mockBackend;
+      Object.assign(environment, { mockBackend: false });
+      try {
+        completarProfesional();
+        component.formProfesional.controls.signatureImageBase64.setValue(FIRMA);
+        component.formProfesional.controls.sealImageBase64.setValue(SELLO);
+
+        component.submit();
+
+        const firma = http.expectOne('/iam/auth/upload-registration-signature-image');
+        firma.flush({ fileId: 'firma-id', originalName: 'firma.png', sizeBytes: 70, mimeType: 'image/png' });
+        const sello = http.expectOne('/iam/auth/upload-registration-signature-image');
+        sello.flush({ fileId: 'sello-id', originalName: 'sello.png', sizeBytes: 70, mimeType: 'image/png' });
+        const req = http.expectOne('/iam/auth/register-practitioner');
+        expect(req.request.body.signatureImageBase64).toBeUndefined();
+        expect(req.request.body.sealImageBase64).toBeUndefined();
+        req.flush(RESPUESTA_PRO);
+      } finally {
+        Object.assign(environment, { mockBackend: original });
+      }
+    });
+
+    it('con mockBackend envía las dos imágenes en el cuerpo cuando se cargan', () => {
+      const original = environment.mockBackend;
+      Object.assign(environment, { mockBackend: true });
+      try {
+        completarProfesional();
+        component.formProfesional.controls.signatureImageBase64.setValue(FIRMA);
+        component.formProfesional.controls.sealImageBase64.setValue(SELLO);
+
+        component.submit();
+
+        const req = http.expectOne('/iam/auth/register-practitioner');
+        expect(req.request.body.signatureImageBase64).toBe(FIRMA);
+        expect(req.request.body.sealImageBase64).toBe(SELLO);
+        req.flush(RESPUESTA_PRO);
+      } finally {
+        Object.assign(environment, { mockBackend: original });
+      }
+    });
+
     it('con mockBackend envía las dos imágenes en el cuerpo sin subirlas', () => {
       const original = environment.mockBackend;
       Object.assign(environment, { mockBackend: true });
