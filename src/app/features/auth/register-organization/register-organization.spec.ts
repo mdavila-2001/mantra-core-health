@@ -1270,21 +1270,22 @@ describe('RegisterOrganization', () => {
   });
 
   describe('errores', () => {
-    it('CONFLICT muestra el mensaje que manda la API', () => {
+    it('CONFLICT de correo explica qué hacer, sin repetir el texto de la API', () => {
       fixture.detectChanges();
       completar();
       component.submit();
       http.expectOne('/iam/auth/register-organization').flush(
         {
           code: 'CONFLICT',
-          message: 'Ya existe una organización con ese código',
+          message: 'Ya existe una cuenta con ese correo',
           timestamp: 't',
           path: '/iam/auth/register-organization',
         },
         { status: 409, statusText: 'Conflict' },
       );
 
-      expect(component.errorMessage()).toBe('Ya existe una organización con ese código');
+      expect(component.errorMessage()).toContain('correo del representante legal');
+      expect(component.errorMessage()).toContain('¿Olvidaste tu contraseña?');
       expect(component.registered()).toBe(false);
     });
 

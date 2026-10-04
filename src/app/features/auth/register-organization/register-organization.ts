@@ -7,7 +7,7 @@ import { Router, RouterLink } from '@angular/router';
 import { IamClient } from '../../../core/data-access/iam/iam.client';
 import type { OrganizationRegistration } from '../../../core/data-access/iam/iam.types';
 import { LegalEntityTypesCatalog } from '../../../core/data-access/system-context/legal-entity-types.service';
-import { errorToViewState } from '../../../core/http/error-to-view-state';
+import { registrationErrorToViewState } from '../registro-compartido/registration-errors';
 import { uiLanguage } from '../../../core/i18n/ui-language';
 import { loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
@@ -90,7 +90,6 @@ const PAIS_POR_DEFECTO = 'BO';
  * muestra ningún «código», ese 409 genérico se reescribe nombrando la sigla,
  * que es lo único que la persona escribió.
  */
-const MENSAJE_CODIGO_EN_USO_API = 'El código de organización ya existe';
 
 /**
  * Una gerencia de contacto (subtarea 1.4): el nombre como grupo compartido
@@ -633,7 +632,7 @@ export class RegisterOrganization {
       // único que la persona escribió y puede cambiar. Cualquier otro 409
       // (el correo del owner, por ejemplo) se muestra tal como lo manda
       // la API.
-      if (mensaje === MENSAJE_CODIGO_EN_USO_API) {
+      if (state.issues[0]?.field === 'code') {
         const sigla = this.form.controls.sigla.value.trim();
         return `La sigla «${sigla}» ya está en uso en la plataforma. Elegí otra.`;
       }
@@ -940,7 +939,7 @@ export class RegisterOrganization {
         this.verificationSent.set(resultado.emailVerificationSent);
         this.registered.set(true);
       },
-      error: (error: unknown) => this.state.set(errorToViewState<null>(error)),
+      error: (error: unknown) => this.state.set(registrationErrorToViewState(error, 'organization')),
     });
   }
 
