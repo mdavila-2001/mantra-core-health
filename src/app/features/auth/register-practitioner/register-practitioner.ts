@@ -1,3 +1,4 @@
+import { environment } from '../../../../environments/environment';
 import { FileDropTarget } from '../../../shared/forms/file-drop-target';
 import { FileInput } from '../../../shared/components/molecules/file-input/file-input';
 import { FirmaOSello } from '../../../shared/components/molecules/firma-o-sello/firma-o-sello';
@@ -2847,8 +2848,11 @@ export class RegisterPractitioner {
       ...(fechaNacimiento === null ? {} : { birthDate: fechaIso(fechaNacimiento) }),
       ...(sexoAlNacer === null ? {} : { sexAtBirth: sexoAlNacer }),
       ...(foto ? { profilePhotoBase64: foto } : {}),
-      ...(firmaImagen ? { signatureImageBase64: firmaImagen } : {}),
-      ...(selloImagen ? { sealImageBase64: selloImagen } : {}),
+      // El DTO real no declara firma ni sello y la API usa forbidNonWhitelisted:
+      // mandarlos da 400 `property signatureImageBase64 should not exist`. Sólo
+      // viajan con el backend simulado.
+      ...(environment.mockBackend && firmaImagen ? { signatureImageBase64: firmaImagen } : {}),
+      ...(environment.mockBackend && selloImagen ? { sealImageBase64: selloImagen } : {}),
       ...(documento === '' ? {} : { nationalId: documento }),
       // Sólo tiene sentido con documento: sin CI no hay identificador al que
       // atarle un departamento de emisión.
