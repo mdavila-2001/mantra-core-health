@@ -161,8 +161,25 @@ test.describe('paciente', () => {
       password: 'Paciente-2026!',
     });
     expect(r.status(), await r.text()).toBe(409);
-    await expect(page.getByTestId('registro-error')).toBeVisible();
+    // El catálogo explica qué dato está repetido y qué hacer; nada del texto técnico.
+    await expect(page.getByTestId('registro-error')).toContainText(
+      'Ya hay una cuenta registrada con este número de documento',
+    );
+    await expect(page.getByTestId('registro-error')).toContainText('iniciá sesión');
     await expect(page.getByTestId('registro-exito')).toHaveCount(0);
+  });
+
+  // El paciente entra con su documento: el correo es opcional y no es su usuario,
+  // y la recuperación de contraseña busca por documento. Una familia puede
+  // compartir el correo (diseño de `IamPatientSelfRegistrationService`).
+  test('límite: el mismo correo con otro documento se acepta (el usuario del paciente es su documento)', async ({ page }) => {
+    const r = await altaPaciente(page, {
+      documento: `PCO${RUN}`,
+      correo: `paciente.${RUN}@alovida.test`.toLowerCase(),
+      password: 'Paciente-2026!',
+    });
+    expect(r.status(), await r.text()).toBe(201);
+    await expect(page.getByTestId('registro-exito')).toBeVisible({ timeout: 20_000 });
   });
 });
 
@@ -237,7 +254,10 @@ test.describe('médico', () => {
   test('error: el mismo correo otra vez lo rechaza el backend y la pantalla lo dice', async ({ page }) => {
     const r = await altaMedico(page, { documento: `MDU${RUN}`, correo, matricula: `MP-D${RUN}`, sedes: `T.I. D${RUN}`, password: 'Medico-2026!' });
     expect(r.status(), await r.text()).toBe(409);
-    await expect(page.getByTestId('registro-error')).toBeVisible();
+    await expect(page.getByTestId('registro-error')).toContainText(
+      'Ya hay una cuenta registrada con este correo electrónico',
+    );
+    await expect(page.getByTestId('registro-error')).toContainText('¿Olvidaste tu contraseña?');
     await expect(page.getByTestId('registro-exito')).toHaveCount(0);
   });
 });
@@ -385,7 +405,11 @@ for (const org of ORGANIZACIONES) {
         password: 'Organizacion-26!',
       });
       expect(r.status(), await r.text()).toBe(409);
-      await expect(page.getByTestId(org.error)).toBeVisible();
+      await expect(page.getByTestId(org.error)).toContainText(
+        'Ya hay una cuenta registrada con el correo del representante legal',
+      );
+      await expect(page.getByTestId(org.error)).toContainText('¿Olvidaste tu contraseña?');
+      await page.screenshot({ path: `artifacts/errores-alta/${org.prefijo}-correo-repetido.png`, fullPage: true });
       await expect(page.getByTestId(org.exito)).toHaveCount(0);
     });
   });

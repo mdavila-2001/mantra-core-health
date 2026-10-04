@@ -37,7 +37,7 @@ import type {
   BirthSexCode,
   PatientRegistration,
 } from '../../../core/data-access/iam/iam.types';
-import { errorToViewState } from '../../../core/http/error-to-view-state';
+import { registrationErrorToViewState } from '../registro-compartido/registration-errors';
 import { loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AppButton } from '../../../shared/components/atoms/button/button';
@@ -2365,7 +2365,7 @@ export class RegisterPatient {
         this.verificationSent.set(resultado.emailVerificationSent);
         this.registered.set(true);
       },
-      error: (error: unknown) => this.state.set(errorToViewState<null>(error)),
+      error: (error: unknown) => this.state.set(registrationErrorToViewState(error, 'patient')),
     });
   }
 

@@ -46,7 +46,7 @@ import type {
   OrganizationContactPerson,
   OrganizationExecutives,
 } from '../../../core/data-access/iam/iam.types';
-import { errorToViewState } from '../../../core/http/error-to-view-state';
+import { registrationErrorToViewState } from '../registro-compartido/registration-errors';
 import { loading, ready, validation } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { codigoDesdeSigla } from '../register-organization/codigo-desde-sigla';
@@ -1306,7 +1306,7 @@ export class RegisterImagingCenter {
     if (error instanceof Error && !(error instanceof HttpErrorResponse)) {
       return validation([{ field: 'alta', message: error.message }]);
     }
-    return errorToViewState<null>(error);
+    return registrationErrorToViewState(error, 'organization');
   }
 
   goToLogin(): void {

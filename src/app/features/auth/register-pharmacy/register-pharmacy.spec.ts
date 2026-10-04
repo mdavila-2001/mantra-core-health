@@ -396,7 +396,8 @@ describe('RegisterPharmacy', () => {
     );
     fixture.detectChanges();
 
-    expect(component.errorMessage()).toContain('legalEntityType');
+    expect(component.errorMessage()).toContain('Tipo de sociedad');
+    expect(component.errorMessage()).not.toContain('legalEntityType');
     expect(component.registered()).toBe(false);
   });
 
