@@ -168,9 +168,9 @@
 </app-view-state-host>
 
 <!-- ─── El formulario de la casilla elegida ──────────────────────────────
-     Un solo modal para las diez, con el bloque elegido adentro. Cada bloque
+     Un solo modal para las nueve, con el bloque elegido adentro. Cada bloque
      es EL MISMO que usa el expediente, atado al encuentro en curso cuando lo
-     hay y a una cita ya existente cuando no. La décima —Pagos— no escribe:
+     hay y a una cita ya existente cuando no. La última —Pagos— no escribe:
      muestra lo cobrado. -->
 @if (casillaAbierta(); as casilla) {
   <app-content-dialog
@@ -187,14 +187,6 @@
           [patientProfileId]="pacienteDeLaFicha()"
           [encounterId]="encuentroActual()"
           [exigeEncuentro]="false"
-          [citas]="citas()"
-          (cambio)="altaRegistrada()"
-        />
-      }
-      @case ('alergias') {
-        <app-allergy-block
-          [patientProfileId]="pacienteDeLaFicha()"
-          [encounterId]="encuentroActual()"
           [citas]="citas()"
           (cambio)="altaRegistrada()"
         />

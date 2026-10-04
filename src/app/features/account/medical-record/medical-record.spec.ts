@@ -506,6 +506,49 @@ describe('MedicalRecord', () => {
   });
 
   /**
+   * Desde el 02/10/2026 una alergia se carga como diagnóstico. Esta pantalla no
+   * tiene pestaña de diagnósticos: si «Alergias» leyera sólo `allergies`, la
+   * persona vería que no tiene ninguna teniendo una.
+   */
+  it('la pestaña de alergias incluye los diagnósticos de alergia', async () => {
+    await montar();
+    responder(
+      {
+        ...RESUMEN,
+        conditions: [
+          ...RESUMEN.conditions,
+          {
+            id: 'c-alergia',
+            codeConceptId: 'dx-z880',
+            clinicalStatusConceptId: 'st-activa',
+            createdAt: '2026-03-02T10:00:00.000Z',
+          },
+        ],
+      },
+      {
+        ...CONCEPTOS,
+        items: [
+          ...CONCEPTOS.items,
+          {
+            conceptId: 'dx-z880',
+            code: 'Z88.0',
+            display: 'Alergia a la penicilina',
+            codeSystemVersionId: 'v1',
+          },
+        ],
+      },
+    );
+
+    const raiz = harness.routeNativeElement;
+    expect(pestanas(raiz)).toContain('Alergias (1)');
+    await abrirPestana(2);
+    const lista = raiz?.querySelector('[data-testid="historia-alergias"]');
+    expect(lista?.textContent).toContain('Alergia a la penicilina');
+    // La faringitis es un diagnóstico, no una alergia: no se cuela.
+    expect(lista?.textContent).not.toContain('Faringitis');
+  });
+
+  /**
    * FT-20-R05 · el enlace apunta a la sección que se estaba leyendo. Es lo que
    * permite mandar «mirá mis resultados» como enlace y no como instrucción.
    */

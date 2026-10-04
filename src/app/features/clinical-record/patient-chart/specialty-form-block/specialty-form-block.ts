@@ -13,7 +13,6 @@ import { of, switchMap } from 'rxjs';
 
 import { ChartTemplatesClient } from '../../../../core/data-access/chart-templates/chart-templates.client';
 import { DiagnosisBlock } from '../diagnosis-block/diagnosis-block';
-import { AllergyBlock } from '../allergy-block/allergy-block';
 import { DiagnosticsBlock } from '../diagnostics-block/diagnostics-block';
 import { FreeNoteBlock } from '../free-note-block/free-note-block';
 import { ProceduresBlock } from '../procedures-block/procedures-block';
@@ -48,8 +47,13 @@ import {
   downloadFormResponsePdf,
   VALOR_ENMASCARADO,
 } from '../../../../shared/utils/clinical-pdf/clinical-pdf';
-import { textoDeValor } from '../../../../shared/utils/form-values/form-values';
 import { Odontogram } from '../odontogram/odontogram';
+import {
+  camposDe,
+  plantillaPorCobertura,
+  respuestasDe,
+  type RespuestaVisible,
+} from './lectura-de-formulario';
 import { ESTADOS_DENTALES, recuentoCpod } from '../odontogram/odontogram.types';
 import type { MapaDental } from '../odontogram/odontogram.types';
 
@@ -78,14 +82,13 @@ export const PLANTILLA_HOJA_LIBRE = 'hoja-libre';
  * El prefijo las hace imposibles de confundir con el uuid de una plantilla.
  */
 export const BLOQUE_DIAGNOSTICO = 'bloque-diagnostico';
-/** La alergia: mismo criterio que el diagnóstico, otra entidad clínica. */
-export const BLOQUE_ALERGIA = 'bloque-alergia';
 export const BLOQUE_CIRUGIA = 'bloque-cirugia';
 export const BLOQUE_ODONTOLOGIA = 'bloque-odontologia';
 export const BLOQUE_LABORATORIO = 'bloque-laboratorio';
 
 /**
- * Las cinco entradas fijas, en el orden en que se ofrecen.
+ * Las cinco entradas fijas, en el orden en que se ofrecen. La alergia ya no
+ * está: se carga como diagnóstico (cliente, 02/10/2026).
  *
  * Cirugía y odontología van separadas —antes eran una sola opción,
  * «Procedimiento»— porque no comparten ni permiso de servidor ni datos:
@@ -96,7 +99,6 @@ export const BLOQUE_LABORATORIO = 'bloque-laboratorio';
 const ENTRADAS_FIJAS: readonly { readonly value: string; readonly label: string }[] = [
   { value: BLOQUE_DIAGNOSTICO, label: 'Diagnóstico — del catálogo CIE-10' },
   { value: PLANTILLA_HOJA_LIBRE, label: 'Hoja en blanco — escribir sin campos' },
-  { value: BLOQUE_ALERGIA, label: 'Alergia o intolerancia' },
   { value: BLOQUE_CIRUGIA, label: 'Cirugía' },
   { value: BLOQUE_ODONTOLOGIA, label: 'Odontología' },
   { value: BLOQUE_LABORATORIO, label: 'Laboratorio e imagenología' },
@@ -142,15 +144,6 @@ const PREFIJO_TRANSVERSAL = 'TRANSV_';
  * consulta.
  */
 const CODIGO_ANAMNESIS_GENERAL = 'TRANSV_ANAMNESIS_GENERAL';
-
-/** Una respuesta ya lista para leerse: etiqueta, texto y si está protegida. */
-interface RespuestaVisible {
-  readonly id: string;
-  readonly etiqueta: string;
-  /** La respuesta en palabras. Vacía cuando `masked`: el marcador la reemplaza. */
-  readonly texto: string;
-  readonly masked: boolean;
-}
 
 /** Cómo se imprime una fecha en el modo lectura. Local, no ISO: lo lee gente. */
 const FORMATO_FECHA = new Intl.DateTimeFormat('es-BO', {
@@ -215,7 +208,6 @@ const FORMATO_FECHA = new Intl.DateTimeFormat('es-BO', {
     AppButton,
     Card,
     DiagnosisBlock,
-    AllergyBlock,
     DiagnosticsBlock,
     FreeNoteBlock,
     Checkbox,
@@ -404,8 +396,6 @@ export class SpecialtyFormBlock {
   protected readonly hojaLibre = computed(() => this.plantillaId() === PLANTILLA_HOJA_LIBRE);
 
   protected readonly esDiagnostico = computed(() => this.plantillaId() === BLOQUE_DIAGNOSTICO);
-
-  protected readonly esAlergia = computed(() => this.plantillaId() === BLOQUE_ALERGIA);
 
   protected readonly esCirugia = computed(() => this.plantillaId() === BLOQUE_CIRUGIA);
 
@@ -690,14 +680,7 @@ export class SpecialtyFormBlock {
   /** Todos los campos conocidos por las plantillas, para ponerle nombre a cada valor. */
   private readonly camposConocidos = computed<ReadonlyMap<string, ChartTemplateField>>(() => {
     const state = this.plantillas();
-    const campos = new Map<string, ChartTemplateField>();
-    if (state.status !== 'ready') return campos;
-    for (const plantilla of state.data) {
-      for (const campo of plantilla.fields) {
-        if (!campos.has(campo.fieldId)) campos.set(campo.fieldId, campo);
-      }
-    }
-    return campos;
+    return camposDe(state.status === 'ready' ? state.data : []);
   });
 
   /**
@@ -711,18 +694,7 @@ export class SpecialtyFormBlock {
     const detalle = this.formularioRespondido();
     const state = this.plantillas();
     if (detalle === null || state.status !== 'ready') return null;
-
-    const respondidos = new Set(detalle.values.map((valor) => valor.fieldId));
-    let mejor: ChartTemplate | null = null;
-    let mejorCobertura = 0;
-    for (const plantilla of state.data) {
-      const cobertura = plantilla.fields.filter((campo) => respondidos.has(campo.fieldId)).length;
-      if (cobertura > mejorCobertura) {
-        mejor = plantilla;
-        mejorCobertura = cobertura;
-      }
-    }
-    return mejor;
+    return plantillaPorCobertura(detalle, state.data);
   });
 
   protected readonly tituloDeLaRespuesta = computed(
@@ -741,21 +713,7 @@ export class SpecialtyFormBlock {
   protected readonly respuestasVisibles = computed<readonly RespuestaVisible[]>(() => {
     const detalle = this.formularioRespondido();
     if (detalle === null) return [];
-    const campos = this.camposConocidos();
-    return [...detalle.values]
-      .sort((a, b) => a.ordinal - b.ordinal)
-      .map((valor) => {
-        const campo = campos.get(valor.fieldId);
-        return {
-          id: valor.id,
-          etiqueta: campo?.name ?? 'Campo del formulario',
-          texto: valor.masked
-            ? // El marcador lo pone la vista; acá jamás viaja el contenido.
-              ''
-            : textoDeValor(valor.value, valor.dataType ?? campo?.dataType),
-          masked: valor.masked,
-        };
-      });
+    return respuestasDe(detalle, this.camposConocidos());
   });
 
   /** Descarga el formulario respondido con el motor PDF compartido. */

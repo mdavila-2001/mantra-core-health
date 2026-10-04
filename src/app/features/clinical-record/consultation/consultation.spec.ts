@@ -46,7 +46,6 @@ const CHART = {
 
 const CLAVES = [
   'diagnosticos',
-  'alergias',
   'medicacion',
   'observaciones',
   'notas',
@@ -54,7 +53,7 @@ const CLAVES = [
   'documentos',
   'formulario',
   'internacion',
-  // La décima, y la única de sólo lectura: lo que la persona ya pagó.
+  // La última, y la única de sólo lectura: lo que la persona ya pagó.
   'pagos',
 ];
 
@@ -99,7 +98,7 @@ describe('Consultation', () => {
     componente = await harness.navigateByUrl('/medical-records/p-1/consultation', Consultation);
   });
 
-  it('ofrece las diez posibilidades en la rejilla, con su cantidad', async () => {
+  it('ofrece las nueve posibilidades en la rejilla, con su cantidad', async () => {
     await responderLectura();
 
     const casillas = interno<() => readonly { clave: string; cantidad: number | null }[]>(
@@ -117,7 +116,23 @@ describe('Consultation', () => {
     const botones = harness.routeNativeElement!.querySelectorAll(
       '[data-testid^="consulta-casilla-"]',
     );
-    expect(botones).toHaveLength(10);
+    expect(botones).toHaveLength(9);
+  });
+
+  /**
+   * La alergia se carga como diagnóstico (cliente, 02/10/2026). Ofrecerla acá
+   * dejaba un registro que el expediente ya no muestra en ninguna pestaña: lo
+   * cargado en la consulta tiene que ser lo que la historia muestra.
+   */
+  it('no ofrece la alergia como casilla aparte', async () => {
+    await responderLectura();
+
+    expect(
+      harness.routeNativeElement!.querySelector('[data-testid="consulta-casilla-alergias"]'),
+    ).toBeNull();
+    expect(
+      interno<() => readonly { clave: string }[]>('casillas')().map((c) => c.clave),
+    ).not.toContain('alergias');
   });
 
   /**
@@ -140,9 +155,9 @@ describe('Consultation', () => {
     await responderLectura();
 
     const abrir = interno<(clave: string) => void>('abrir').bind(componente);
-    abrir('alergias');
-    expect(interno<() => string | null>('casillaAbierta')()).toBe('alergias');
-    expect(interno<() => string>('tituloDelModal')()).toBe('Nueva alergia');
+    abrir('observaciones');
+    expect(interno<() => string | null>('casillaAbierta')()).toBe('observaciones');
+    expect(interno<() => string>('tituloDelModal')()).toBe('Registrar una observación');
 
     abrir('medicacion');
     expect(interno<() => string | null>('casillaAbierta')()).toBe('medicacion');
