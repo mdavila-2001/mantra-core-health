@@ -1,3 +1,4 @@
+import { environment } from '../../../../environments/environment';
 import { HttpClient, HttpEvent } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { map, type Observable } from 'rxjs';
@@ -282,12 +283,16 @@ export class IamClient {
       ...(registration.profilePhotoBase64 === undefined
         ? {}
         : { profilePhotoBase64: registration.profilePhotoBase64 }),
-      ...(registration.signatureImageBase64 === undefined
+      ...(!environment.mockBackend || registration.signatureImageBase64 === undefined
         ? {}
         : { signatureImageBase64: registration.signatureImageBase64 }),
-      ...(registration.sealImageBase64 === undefined
+      ...(!environment.mockBackend || registration.sealImageBase64 === undefined
         ? {}
         : { sealImageBase64: registration.sealImageBase64 }),
+      ...(registration.signatureFileId === undefined
+        ? {}
+        : { signatureFileId: registration.signatureFileId }),
+      ...(registration.sealFileId === undefined ? {} : { sealFileId: registration.sealFileId }),
       ...(registration.occupationConceptId === undefined
         ? {}
         : { occupationConceptId: registration.occupationConceptId }),
@@ -546,6 +551,19 @@ export class IamClient {
     form.append('file', file);
     return this.http.post<UploadedRegistrationDocument>(
       this.url('/iam/auth/upload-registration-document'),
+      form,
+      { reportProgress: true, observe: 'events' },
+    );
+  }
+
+  /** Precarga privada de una imagen de firma/sello antes de crear la cuenta. */
+  uploadRegistrationSignatureImage(
+    file: File,
+  ): Observable<HttpEvent<UploadedRegistrationDocument>> {
+    const form = new FormData();
+    form.append('file', file);
+    return this.http.post<UploadedRegistrationDocument>(
+      this.url('/iam/auth/upload-registration-signature-image'),
       form,
       { reportProgress: true, observe: 'events' },
     );

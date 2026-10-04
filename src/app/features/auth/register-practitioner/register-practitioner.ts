@@ -1329,6 +1329,9 @@ export class RegisterPractitioner {
    * La firma y el sello médicos del alta, como imágenes para previsualizar y
    * enviar. Opcionales: se saltan y se cargan después desde el perfil.
    */
+  private readonly imagenesSubidas: Partial<
+    Record<'signatureImageBase64' | 'sealImageBase64', { dataUrl: string; fileId: string }>
+  > = {};
   readonly firmaBase64 = signal<string | null>(null);
   readonly selloBase64 = signal<string | null>(null);
   readonly errorFirma = signal<string | null>(null);
@@ -2732,18 +2735,20 @@ export class RegisterPractitioner {
 
     this.state.set(loading());
 
-    this.subirPdfDeTitulosPendientes().subscribe({
-      next: () => {
-        this.iam.registerPractitioner(this.datosProfesional()).subscribe({
-          next: () => {
-            this.state.set(ready(null));
-            this.registered.set(true);
-          },
-          error: (error: unknown) => this.state.set(errorToViewState<null>(error)),
-        });
-      },
-      error: (error: unknown) => this.state.set(errorToViewState<null>(error)),
-    });
+    this.subirPdfDeTitulosPendientes()
+      .pipe(concatMap(() => this.subirFirmaYSelloPendientes()))
+      .subscribe({
+        next: () => {
+          this.iam.registerPractitioner(this.datosProfesional()).subscribe({
+            next: () => {
+              this.state.set(ready(null));
+              this.registered.set(true);
+            },
+            error: (error: unknown) => this.state.set(errorToViewState<null>(error)),
+          });
+        },
+        error: (error: unknown) => this.state.set(errorToViewState<null>(error)),
+      });
   }
 
   /**
@@ -2779,6 +2784,47 @@ export class RegisterPractitioner {
           }),
           throwIfEmpty(
             () => new Error('No pudimos confirmar la carga del PDF. Volvé a intentarlo.'),
+          ),
+        );
+      }),
+      toArray(),
+      map(() => undefined),
+    );
+  }
+
+  /** Recuerda cada carga confirmada; un reintento no repite esa imagen. */
+  private subirFirmaYSelloPendientes(): Observable<void> {
+    if (environment.mockBackend) return of(undefined);
+    const controles = ['signatureImageBase64', 'sealImageBase64'] as const;
+    return from(controles).pipe(
+      concatMap((control) => {
+        const dataUrl = this.formProfesional.controls[control].value;
+        if (!dataUrl || this.imagenesSubidas[control]?.dataUrl === dataUrl) {
+          return of(undefined);
+        }
+        const match = /^data:(image\/(?:png|jpeg|webp));base64,(.+)$/.exec(dataUrl);
+        if (!match) throw new Error('La imagen de firma o sello no tiene un formato válido.');
+        const bytes = Uint8Array.from(atob(match[2]), (caracter) => caracter.charCodeAt(0));
+        const archivo = new File([bytes], `${control}.${match[1].split('/')[1]}`, {
+          type: match[1],
+        });
+        return this.iam.uploadRegistrationSignatureImage(archivo).pipe(
+          filter(
+            (evento): evento is HttpResponse<UploadedRegistrationDocument> =>
+              evento instanceof HttpResponse,
+          ),
+          map((respuesta) => {
+            const fileId = respuesta.body?.fileId;
+            if (!fileId || fileId.trim() === '') {
+              throw new Error(
+                'No pudimos confirmar la carga de firma o sello. Volvé a intentarlo.',
+              );
+            }
+            this.imagenesSubidas[control] = { dataUrl, fileId };
+            return undefined;
+          }),
+          throwIfEmpty(
+            () => new Error('No pudimos confirmar la carga de firma o sello. Volvé a intentarlo.'),
           ),
         );
       }),
@@ -2848,11 +2894,18 @@ export class RegisterPractitioner {
       ...(fechaNacimiento === null ? {} : { birthDate: fechaIso(fechaNacimiento) }),
       ...(sexoAlNacer === null ? {} : { sexAtBirth: sexoAlNacer }),
       ...(foto ? { profilePhotoBase64: foto } : {}),
-      // El DTO real no declara firma ni sello y la API usa forbidNonWhitelisted:
-      // mandarlos da 400 `property signatureImageBase64 should not exist`. Sólo
-      // viajan con el backend simulado.
       ...(environment.mockBackend && firmaImagen ? { signatureImageBase64: firmaImagen } : {}),
+      ...(!environment.mockBackend &&
+      firmaImagen &&
+      this.imagenesSubidas.signatureImageBase64?.dataUrl === firmaImagen
+        ? { signatureFileId: this.imagenesSubidas.signatureImageBase64.fileId }
+        : {}),
       ...(environment.mockBackend && selloImagen ? { sealImageBase64: selloImagen } : {}),
+      ...(!environment.mockBackend &&
+      selloImagen &&
+      this.imagenesSubidas.sealImageBase64?.dataUrl === selloImagen
+        ? { sealFileId: this.imagenesSubidas.sealImageBase64.fileId }
+        : {}),
       ...(documento === '' ? {} : { nationalId: documento }),
       // Sólo tiene sentido con documento: sin CI no hay identificador al que
       // atarle un departamento de emisión.
