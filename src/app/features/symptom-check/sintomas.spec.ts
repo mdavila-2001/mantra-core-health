@@ -345,7 +345,7 @@ describe('la tabla', () => {
         .sort();
 
     expect(porSexo('MALE')).toEqual(
-      ['dolor-de-testiculos', 'problemas-de-ereccion', 'prostata'].sort(),
+      ['dolor-de-testiculos', 'problemas-de-ereccion', 'prostata', 'sangre-en-el-semen'].sort(),
     );
     expect(porSexo('FEMALE')).toEqual(
       [

@@ -245,6 +245,11 @@ export const SINTOMAS_DE_ALARMA: readonly Sintoma[] = [
       'ataque convulsivo',
       'se convulsiono',
       'perdio el conocimiento y temblaba',
+      // Camba «cosar»: ataque epiléptico o epileptiforme (Sanabria Fernández).
+      'cosar',
+      'le dio el cosar',
+      'me dio el cosar',
+      'cosariento',
     ],
     alarma: true,
     especialidades: [],
@@ -336,6 +341,8 @@ export const SINTOMAS: readonly Sintoma[] = [
       // Bolivia: «chujcho» (del quechua) es estar con escalofríos y fiebre.
       'chujcho',
       'chujchu',
+      'terciana',
+      'tercianas',
     ],
     especialidades: [
       { nombre: 'Medicina general', peso: 3 },
@@ -358,6 +365,8 @@ export const SINTOMAS: readonly Sintoma[] = [
       // Bolivia: el «surazo» es el viento frío del sur; «me agarró el surazo» es resfriarse.
       'me agarro el surazo',
       'surazo',
+      // Camba «arrebato» (resfrío fuerte) NO entra: el motor lo reduce a «arrebato» a secas y
+      // cazaba «en un arrebato le grité a mi jefe» (lo detectó el banco).
     ],
     especialidades: [
       { nombre: 'Medicina general', peso: 3 },
@@ -533,6 +542,13 @@ export const SINTOMAS: readonly Sintoma[] = [
       'la cabeza me da vueltas',
       'siento que me caigo',
       'inestable al caminar',
+      // «Sorojchi»: mal de altura (Diccionario de Americanismos, ASALE).
+      'sorojchi',
+      'sorojche',
+      'soroche',
+      'me dio sorojchi',
+      'mal de altura',
+      'me apune',
     ],
     especialidades: [
       { nombre: 'Otorrinolaringología', peso: 3 },
@@ -552,6 +568,9 @@ export const SINTOMAS: readonly Sintoma[] = [
       'se me duermen las piernas',
       'siento pinchazos en las manos',
       'calambres',
+      // Camba «chicó»: adormecimiento pasajero de una parte del cuerpo. Sólo en frase: sin tilde es «chico».
+      'me dio chico',
+      'me da chico',
     ],
     especialidades: [
       { nombre: 'Neurología', peso: 3 },
@@ -617,6 +636,14 @@ export const SINTOMAS: readonly Sintoma[] = [
       'lagana',
       'me arde el ojo',
       'ojo seco',
+      // Camba «lopopo/lopopudo»: párpado hinchado; «sapirá»: lagañoso (O. Roca).
+      'lopopo',
+      'ojos lopopos',
+      'lopopudo',
+      'lopopuda',
+      'parpado hinchado',
+      'sapira',
+      'tengo laganas',
     ],
     partes: ['ojo'],
     especialidades: [
@@ -752,6 +779,12 @@ export const SINTOMAS: readonly Sintoma[] = [
       'encias inflamadas',
       'flemon',
       'absceso dental',
+      // Camba «chío»: diente corroído por las caries.
+      'tengo un chio',
+      'diente chio',
+      'muela chio',
+      'diente picado',
+      'muela picada',
     ],
     partes: ['muela', 'diente', 'encia'],
     especialidades: [{ nombre: 'Odontología', peso: 3 }],
@@ -903,7 +936,18 @@ export const SINTOMAS: readonly Sintoma[] = [
   {
     id: 'dolor-de-panza',
     nombre: 'dolor de panza',
-    sinonimos: ['retorcijones', 'colicos', 'me duele la boca del estomago', 'punzadas en la panza'],
+    sinonimos: [
+      'retorcijones',
+      'colicos',
+      'me duele la boca del estomago',
+      'punzadas en la panza',
+      // Camba «ajitería/ahitera»: indigestión por haber comido mucho (Sanabria Fernández).
+      'ajiteria',
+      'ahitera',
+      'empacho',
+      'estoy empachado',
+      'me empache',
+    ],
     // Cada país tiene su palabra y ninguna se deduce de otra: van todas.
     partes: ['panza', 'estomago', 'barriga', 'guata', 'vientre', 'abdomen'],
     especialidades: [
@@ -922,6 +966,19 @@ export const SINTOMAS: readonly Sintoma[] = [
       'voy mucho al bano',
       'deposiciones liquidas',
       'estoy flojo del estomago',
+      // Fuente: «El habla popular de Santa Cruz» (H. Sanabria Fernández, vía soysantacruz.com.bo) y Diccionario Camba de O. Roca.
+      // «Cursialera»: defecación líquida y frecuente; «tener el curso / estar de curso».
+      'cursialera',
+      'estoy de curso',
+      'tengo el curso',
+      'tener el curso',
+      // Quechua «q'echa» = diarrea (PMC3259717).
+      'qecha',
+      'q echa',
+      'cagadera',
+      'caca aguada',
+      'popo aguado',
+      'estomago suelto',
     ],
     especialidades: [
       { nombre: 'Gastroenterología', peso: 3 },
@@ -941,6 +998,9 @@ export const SINTOMAS: readonly Sintoma[] = [
       'hace dias que no voy al bano',
       'no puedo ir al bano',
       'no voy al bano',
+      'no puedo cagar',
+      'no cago hace dias',
+      'estoy tapado',
     ],
     especialidades: [
       { nombre: 'Gastroenterología', peso: 3 },
@@ -999,10 +1059,87 @@ export const SINTOMAS: readonly Sintoma[] = [
       'sangre al obrar',
       'me arde al obrar',
       'bulto al obrar',
+      // Camba «chupeé»: recto, porción final del intestino (Sanabria Fernández).
+      'me duele el chupee',
+      'me arde el chupee',
     ],
     especialidades: [
       { nombre: 'Gastroenterología', peso: 3 },
       { nombre: 'Cirugía general', peso: 2 },
+    ],
+  },
+  {
+    // «Cago sangre», «caca con sangre», «heces negras»: sangrado digestivo bajo o melena. No es
+    // alarma por sí solo (casi siempre son hemorroides o una fisura), pero lo ve un gastroenterólogo.
+    id: 'sangre-en-las-heces',
+    nombre: 'sangre en las heces',
+    sinonimos: [
+      'sangre en las heces',
+      'heces con sangre',
+      'cago sangre',
+      'cagar sangre',
+      'estoy cagando sangre',
+      'caca con sangre',
+      'sangre en la caca',
+      'popo con sangre',
+      'sangre en el popo',
+      'deposiciones con sangre',
+      // «obro sangre» NO: empataba con «sangre al obrar», que es la fila de hemorroides.
+      // «sangre por el ano» NO: el motor descarta «ano» (3 letras) y quedaba «sangre» a secas, que
+      // cazaba nariz, encías y análisis de sangre (lo detectó el banco de 296 textos).
+      'sangrado anal',
+      'sangre por el recto',
+      'rectorragia',
+      'heces negras',
+      'caca negra',
+      'popo negro',
+    ],
+    especialidades: [
+      { nombre: 'Gastroenterología', peso: 3 },
+      { nombre: 'Cirugía general', peso: 2 },
+      { nombre: 'Medicina general', peso: 1 },
+    ],
+  },
+  {
+    // Hematospermia. Camba «acabar»: eyacular (Sanabria Fernández).
+    id: 'sangre-en-el-semen',
+    nombre: 'sangre en el semen',
+    sinonimos: [
+      'sangre en el semen',
+      'semen con sangre',
+      'eyaculo sangre',
+      'eyacule sangre',
+      'eyaculacion con sangre',
+      'hematospermia',
+      'acabo con sangre',
+      'semen rojo',
+      'semen marron',
+    ],
+    soloParaSexo: 'MALE',
+    especialidades: [
+      { nombre: 'Urología', peso: 3 },
+      { nombre: 'Medicina general', peso: 1 },
+    ],
+  },
+  {
+    // Bolivianismo «macurca» (RAE) y camba «agujeta»: dolor muscular por cansancio o esfuerzo.
+    id: 'dolor-muscular',
+    nombre: 'dolor muscular',
+    sinonimos: [
+      'dolor muscular',
+      'me duelen los musculos',
+      'dolor de musculos',
+      'macurca',
+      'tengo macurca',
+      'agujetas',
+      'contractura',
+      'me dan calambres',
+      'calambres',
+    ],
+    especialidades: [
+      { nombre: 'Medicina general', peso: 2 },
+      { nombre: 'Traumatología', peso: 2 },
+      { nombre: 'Fisioterapia', peso: 2 },
     ],
   },
 
@@ -1026,6 +1163,7 @@ export const SINTOMAS: readonly Sintoma[] = [
       'contractura en el cuello',
       'cervicalgia',
       'me quede duro del cuello',
+      'me duele el coto',
     ],
     partes: ['cuello', 'cervical'],
     especialidades: [
@@ -1058,7 +1196,12 @@ export const SINTOMAS: readonly Sintoma[] = [
   {
     id: 'dolor-de-cadera',
     nombre: 'dolor de cadera',
-    sinonimos: ['cadera desgastada', 'me duele al caminar la cadera'],
+    sinonimos: [
+      'cadera desgastada',
+      'me duele al caminar la cadera',
+      // Camba «toco»: la cadera (O. Roca).
+      'me duele el toco',
+    ],
     partes: ['cadera'],
     especialidades: [
       { nombre: 'Traumatología', peso: 3 },
@@ -1155,6 +1298,10 @@ export const SINTOMAS: readonly Sintoma[] = [
       'me pica la piel',
       'picazon',
       'me salio una alergia en la piel',
+      // Camba «pitaí»: erupción cutánea con escozor producida por el calor.
+      'pitai',
+      'me salio pitai',
+      'tengo pitai',
     ],
     especialidades: [
       { nombre: 'Dermatología', peso: 3 },
@@ -1226,6 +1373,11 @@ export const SINTOMAS: readonly Sintoma[] = [
       'me mordio un perro',
       'mordedura',
       'me pico una arana',
+      // «Boro»: larva de la mosca Dermatobia hominis bajo la piel (Sanabria Fernández).
+      'tengo un boro',
+      'me entro un boro',
+      'me salio un boro',
+      'boro',
     ],
     especialidades: [
       { nombre: 'Medicina general', peso: 3 },
@@ -1358,6 +1510,11 @@ export const SINTOMAS: readonly Sintoma[] = [
       'bocio',
       'nodulo en el cuello',
       'tsh alta',
+      // «Coto» = bocio (Sanabria Fernández). «me duele el coto» es cuello y va en esa fila.
+      'tengo coto',
+      'me salio coto',
+      'coto en el cuello',
+      'bocio',
     ],
     especialidades: [
       { nombre: 'Endocrinología', peso: 3 },
@@ -1410,6 +1567,10 @@ export const SINTOMAS: readonly Sintoma[] = [
       'voy seguido al bano a orinar',
       'orino seguido',
       'cistitis',
+      'me arde al mear',
+      'me arde cuando meo',
+      'me arde el pichi',
+      'ardor al hacer pichi',
     ],
     especialidades: [
       { nombre: 'Urología', peso: 3 },
@@ -1420,7 +1581,15 @@ export const SINTOMAS: readonly Sintoma[] = [
   {
     id: 'sangre-en-la-orina',
     nombre: 'sangre en la orina',
-    sinonimos: ['sangre en la orina', 'orino sangre', 'orina roja', 'hematuria'],
+    sinonimos: [
+      'sangre en la orina',
+      'orino sangre',
+      'orina roja',
+      'hematuria',
+      'meo sangre',
+      'mear sangre',
+      'pichi con sangre',
+    ],
     especialidades: [
       { nombre: 'Urología', peso: 3 },
       { nombre: 'Nefrología', peso: 2 },
@@ -1604,7 +1773,9 @@ export const SINTOMAS: readonly Sintoma[] = [
     sinonimos: [
       'menopausia',
       'sofocos',
-      'calores',
+      // «calores» a secas NO: se reduce a «calor» y cazaba «me salió pitaí por el calor».
+      'bochornos',
+      'calores de la menopausia',
       'climaterio',
       // «se me fue la regla hace meses» no está: se reducía a «regla» sola y
       // con eso se quedaba con cualquier consulta sobre la menstruación.
