@@ -386,6 +386,11 @@
         }
       </ul>
     </div>
+  } @else if (texto().trim() !== '' && sintomas().length === 0 && leyendoConIa()) {
+    <p class="sintomas__leyendo" role="status" data-testid="sintomas-leyendo">
+      <app-spinner size="sm" decorative />
+      <span>Estamos leyendo lo que escribiste… puede tardar unos segundos.</span>
+    </p>
   } @else if (texto().trim() !== '' && sintomas().length === 0) {
     <p class="sintomas__sin-coincidencias" role="status">
       @if (descartados() !== '') {
