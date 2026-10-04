@@ -559,7 +559,16 @@ export const SINTOMAS: readonly Sintoma[] = [
   {
     id: 'dolor-de-cabeza',
     nombre: 'dolor de cabeza',
-    sinonimos: ['cefalea', 'jaqueca', 'migrana', 'me parte la cabeza', 'presion en la cabeza'],
+    sinonimos: [
+      'cefalea',
+      'jaqueca',
+      'migrana',
+      'me parte la cabeza',
+      'presion en la cabeza',
+      'me late la cabeza',
+      'me martillea la cabeza',
+      'me revienta la cabeza',
+    ],
     // «nuca» va acá y no en el cuello: el dolor de nuca que alguien escribe en
     // una pantalla de síntomas casi siempre viene con la presión alta.
     partes: ['cabeza', 'sien', 'nuca', 'craneo'],
@@ -731,7 +740,12 @@ export const SINTOMAS: readonly Sintoma[] = [
     sinonimos: [
       'oido tapado',
       'zumbido en el oido',
-      'no escucho bien',
+      // «no escucho bien» a secas NO: el motor lo reduce a «no» + «escuchar» sin orden y cazaba
+      // «escucho voces y no hay nadie», que es de Psiquiatría.
+      'no escucho bien del oido',
+      'escucho mal',
+      'me estoy quedando sordo',
+      'sordera',
       'otitis',
       'me sale liquido del oido',
       'tinnitus',
@@ -1575,6 +1589,8 @@ export const SINTOMAS: readonly Sintoma[] = [
       'escucho voces',
       'oigo voces',
       'me hablan voces en la cabeza',
+      'escucho gente que no esta',
+      'oigo gente hablandome',
       'veo cosas que no hay',
       'veo cosas que no existen',
       'alucinaciones',
