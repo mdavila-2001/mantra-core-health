@@ -333,6 +333,9 @@ export const SINTOMAS: readonly Sintoma[] = [
       'destemplado',
       'escalofrios',
       'me hierve la cabeza',
+      // Bolivia: «chujcho» (del quechua) es estar con escalofríos y fiebre.
+      'chujcho',
+      'chujchu',
     ],
     especialidades: [
       { nombre: 'Medicina general', peso: 3 },
@@ -352,6 +355,9 @@ export const SINTOMAS: readonly Sintoma[] = [
       'catarro',
       'me agarre un resfrio',
       'estoy resfriado',
+      // Bolivia: el «surazo» es el viento frío del sur; «me agarró el surazo» es resfriarse.
+      'me agarro el surazo',
+      'surazo',
     ],
     especialidades: [
       { nombre: 'Medicina general', peso: 3 },
@@ -402,6 +408,10 @@ export const SINTOMAS: readonly Sintoma[] = [
       'sin fuerzas',
       'me falta energia',
       'decaido',
+      // Bolivia: «estoy hecho bolsa» / «molido» = agotado.
+      'estoy hecho bolsa',
+      'hecho bolsa',
+      'estoy molido',
     ],
     especialidades: [
       { nombre: 'Medicina general', peso: 3 },
@@ -424,6 +434,8 @@ export const SINTOMAS: readonly Sintoma[] = [
       'baje mucho de peso de golpe',
       'baje kilos sin querer',
       'perdi kilos sin proponermelo',
+      'baje de peso sin hacer dieta',
+      'baje de peso sin dieta',
     ],
     especialidades: [
       { nombre: 'Medicina general', peso: 3 },
@@ -828,6 +840,9 @@ export const SINTOMAS: readonly Sintoma[] = [
       'corazon acelerado',
       'siento el corazon en la garganta',
       'arritmia',
+      'me late a mil',
+      'el corazon se me sale',
+      'se me sale el corazon',
     ],
     especialidades: [
       { nombre: 'Cardiología', peso: 3 },
@@ -924,6 +939,8 @@ export const SINTOMAS: readonly Sintoma[] = [
       'no hago del bano',
       'constipacion',
       'hace dias que no voy al bano',
+      'no puedo ir al bano',
+      'no voy al bano',
     ],
     especialidades: [
       { nombre: 'Gastroenterología', peso: 3 },
@@ -1115,6 +1132,9 @@ export const SINTOMAS: readonly Sintoma[] = [
       'me lastime jugando',
       'creo que me fracture',
       'luxacion',
+      'se me doblo el tobillo',
+      'me doble el tobillo',
+      'se me doblo el pie',
     ],
     especialidades: [
       { nombre: 'Traumatología', peso: 3 },
@@ -1473,6 +1493,8 @@ export const SINTOMAS: readonly Sintoma[] = [
       'menstruacion dolorosa',
       'regla dolorosa',
       'dismenorrea',
+      'me duele cuando me viene la regla',
+      'dolor de regla',
     ],
     partes: ['menstruacion', 'regla', 'periodo', 'ovario'],
     soloParaSexo: 'FEMALE',
