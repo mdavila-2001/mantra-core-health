@@ -2468,6 +2468,26 @@ describe('RegisterPractitioner', () => {
       req.flush(RESPUESTA_PRO);
     });
 
+    it('con mockBackend envía las dos imágenes en el cuerpo sin subirlas', () => {
+      const original = environment.mockBackend;
+      Object.assign(environment, { mockBackend: true });
+      try {
+        completarProfesional();
+        component.formProfesional.controls.signatureImageBase64.setValue(FIRMA);
+        component.formProfesional.controls.sealImageBase64.setValue(SELLO);
+
+        component.submit();
+
+        http.expectNone('/iam/auth/upload-registration-signature-image');
+        const req = http.expectOne('/iam/auth/register-practitioner');
+        expect(req.request.body.signatureImageBase64).toBe(FIRMA);
+        expect(req.request.body.sealImageBase64).toBe(SELLO);
+        req.flush(RESPUESTA_PRO);
+      } finally {
+        Object.assign(environment, { mockBackend: original });
+      }
+    });
+
     it('reintenta el sello sin repetir una firma ya cargada', () => {
       completarProfesional();
       component.formProfesional.controls.signatureImageBase64.setValue(FIRMA);

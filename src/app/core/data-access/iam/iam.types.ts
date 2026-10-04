@@ -559,7 +559,10 @@ export interface DiagnosticCenterRegistration {
 }
 
 /** Los cinco documentos, con la constitución opcional (una unipersonal no la tiene). */
-export type DiagnosticCenterLegalDocuments = Omit<OrganizationLegalDocuments, 'constitutionFileId'> & {
+export type DiagnosticCenterLegalDocuments = Omit<
+  OrganizationLegalDocuments,
+  'constitutionFileId'
+> & {
   readonly constitutionFileId?: string;
 };
 
@@ -702,6 +705,9 @@ export interface PharmacyOrganizationRegistration {
   readonly legalName: string;
   /** Tipo societario del diccionario `VS_LEGAL_ENTITY_TYPE`, p. ej. `SRL`. */
   readonly legalEntityType: string;
+  /** País y jurisdicción (conceptos): la API los exige a toda organización territorial. */
+  readonly countryConceptId: string;
+  readonly jurisdictionConceptId: string;
   readonly taxIdentifier: string;
   readonly legalAddress: string;
   /** Coordenadas de la central, ambas o ninguna. */
@@ -731,7 +737,8 @@ export interface PharmacyOrganizationRegistration {
   readonly legalRepresentative: {
     readonly fullName: string;
     readonly email: string;
-    readonly idNumber?: string;
+    /** Obligatorio: la API exige el documento del representante (4 a 50 caracteres). */
+    readonly idNumber: string;
     readonly powerOfAttorneyFileId?: string;
   };
   readonly legalDocuments?: OrganizationLegalDocuments;
@@ -779,9 +786,15 @@ export interface LaboratoryOrganizationRegistration {
   readonly legalName: string;
   /** Tipo societario del diccionario `VS_LEGAL_ENTITY_TYPE`, p. ej. `SRL`. */
   readonly legalEntityType: string;
+  /** País y jurisdicción (conceptos): la API los exige a toda organización territorial. */
+  readonly countryConceptId: string;
+  readonly jurisdictionConceptId: string;
   /** La unidad diagnóstica que nace con el alta: la central y, si hay, sus sucursales. */
   readonly diagnosticUnit: {
     readonly name: string;
+    /** `DU_TYPE_LAB` y `DU_MODALITY_LAB`, resueltos del catálogo. */
+    readonly diagnosticUnitTypeConceptId: string;
+    readonly modalityConceptIds: readonly string[];
     readonly primarySite: {
       readonly name: string;
       readonly address: {
@@ -802,6 +815,8 @@ export interface LaboratoryOrganizationRegistration {
   readonly legalRepresentative: {
     readonly fullName: string;
     readonly email: string;
+    /** Obligatorio: la API exige el documento del representante (4 a 50 caracteres). */
+    readonly idNumber: string;
     readonly powerOfAttorneyFileId?: string;
   };
   readonly legalDocuments?: OrganizationLegalDocuments;

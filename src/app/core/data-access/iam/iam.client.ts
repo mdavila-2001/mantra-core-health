@@ -129,16 +129,14 @@ export class IamClient {
       ...(registration.issuerAdministrativeAreaConceptId === undefined
         ? {}
         : {
-            issuerAdministrativeAreaConceptId:
-              registration.issuerAdministrativeAreaConceptId,
+            issuerAdministrativeAreaConceptId: registration.issuerAdministrativeAreaConceptId,
           }),
       // Sólo el municipio: el departamento de residencia lo deriva el backend
       // del código del INE, así que el par no puede llegar incoherente.
       ...(registration.residenceMunicipalityConceptId === undefined
         ? {}
         : {
-            residenceMunicipalityConceptId:
-              registration.residenceMunicipalityConceptId,
+            residenceMunicipalityConceptId: registration.residenceMunicipalityConceptId,
           }),
       ...(registration.phone === undefined ? {} : { phone: registration.phone }),
       ...(registration.gender === undefined ? {} : { gender: registration.gender }),
@@ -185,8 +183,7 @@ export class IamClient {
       ...(registration.guardianRelationshipConceptId === undefined
         ? {}
         : {
-            guardianRelationshipConceptId:
-              registration.guardianRelationshipConceptId,
+            guardianRelationshipConceptId: registration.guardianRelationshipConceptId,
           }),
       ...(registration.privateInsurancePlanId === undefined
         ? {}
@@ -388,9 +385,7 @@ export class IamClient {
         ...(registration.legalRepresentative === undefined
           ? {}
           : { legalRepresentative: registration.legalRepresentative }),
-        ...(registration.executives === undefined
-          ? {}
-          : { executives: registration.executives }),
+        ...(registration.executives === undefined ? {} : { executives: registration.executives }),
       },
       owner: {
         email: registration.owner.email,
@@ -428,12 +423,12 @@ export class IamClient {
         legalName: registration.legalName,
         legalEntityType: registration.legalEntityType,
         tenantType: 'PHARMACY',
+        countryConceptId: registration.countryConceptId,
+        jurisdictionConceptId: registration.jurisdictionConceptId,
         legalRepresentative: {
           fullName: registration.legalRepresentative.fullName,
           email: registration.legalRepresentative.email,
-          ...(registration.legalRepresentative.idNumber === undefined
-            ? {}
-            : { idNumber: registration.legalRepresentative.idNumber }),
+          idNumber: registration.legalRepresentative.idNumber,
           ...(registration.legalRepresentative.powerOfAttorneyFileId === undefined
             ? {}
             : { powerOfAttorneyFileId: registration.legalRepresentative.powerOfAttorneyFileId }),
@@ -492,8 +487,12 @@ export class IamClient {
         legalName: registration.legalName,
         legalEntityType: registration.legalEntityType,
         tenantType: 'DIAGNOSTIC_CENTER',
+        countryConceptId: registration.countryConceptId,
+        jurisdictionConceptId: registration.jurisdictionConceptId,
         diagnosticUnit: {
           name: diagnosticUnit.name,
+          diagnosticUnitTypeConceptId: diagnosticUnit.diagnosticUnitTypeConceptId,
+          modalityConceptIds: [...diagnosticUnit.modalityConceptIds],
           primarySite: {
             name: diagnosticUnit.primarySite.name,
             address: {
@@ -519,6 +518,7 @@ export class IamClient {
         },
         legalRepresentative: {
           fullName: registration.legalRepresentative.fullName,
+          idNumber: registration.legalRepresentative.idNumber,
           email: registration.legalRepresentative.email,
           ...(registration.legalRepresentative.powerOfAttorneyFileId === undefined
             ? {}
@@ -698,14 +698,12 @@ export class IamClient {
     if (query.cursor !== undefined) filters['cursor'] = query.cursor;
     if (query.limit !== undefined) filters['limit'] = query.limit;
 
-    return this.http
-      .post<RespuestaPaginaUsuarios>(this.url('/iam/users/search'), filters)
-      .pipe(
-        map((body) => ({
-          ...body,
-          items: body.items.map(toUserListItem),
-        })),
-      );
+    return this.http.post<RespuestaPaginaUsuarios>(this.url('/iam/users/search'), filters).pipe(
+      map((body) => ({
+        ...body,
+        items: body.items.map(toUserListItem),
+      })),
+    );
   }
 
   private url(path: string): string {
