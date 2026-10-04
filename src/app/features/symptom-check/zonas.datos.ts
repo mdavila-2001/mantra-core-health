@@ -124,7 +124,7 @@ export const ZONAS_DEL_CUERPO: readonly ZonaDelCuerpo[] = [
     id: 'abdomen',
     nombre: 'Panza e intestino',
     icono: 'panza',
-    sintomas: ['dolor-de-panza', 'diarrea', 'estrenimiento', 'gases'],
+    sintomas: ['dolor-de-panza', 'diarrea', 'estrenimiento', 'gases', 'sangre-en-las-heces'],
   },
   {
     id: 'espalda',
@@ -152,6 +152,7 @@ export const ZONAS_DEL_CUERPO: readonly ZonaDelCuerpo[] = [
       'control-embarazo',
       'prostata',
       'dolor-de-testiculos',
+      'sangre-en-el-semen',
       'problemas-de-ereccion',
       'dolor-al-tener-relaciones',
       'infeccion-de-transmision-sexual',
@@ -161,7 +162,7 @@ export const ZONAS_DEL_CUERPO: readonly ZonaDelCuerpo[] = [
     id: 'gluteos',
     nombre: 'Glúteos y cola',
     icono: 'huesos',
-    sintomas: ['hemorroides', 'dolor-de-cadera', 'dolor-de-espalda'],
+    sintomas: ['hemorroides', 'sangre-en-las-heces', 'dolor-de-cadera', 'dolor-de-espalda'],
   },
   // ─── Brazos y piernas ─────────────────────────────────────────────────
   {
@@ -217,7 +218,21 @@ export const ZONAS_DEL_CUERPO: readonly ZonaDelCuerpo[] = [
     id: 'animo',
     nombre: 'Ánimo y sueño',
     icono: 'animo',
-    sintomas: ['ansiedad', 'tristeza', 'insomnio', 'cansancio', 'duelo', 'adiccion'],
+    sintomas: [
+      'ansiedad',
+      'tristeza',
+      'insomnio',
+      'cansancio',
+      'duelo',
+      'adiccion',
+      'cambios-de-humor',
+      'ira',
+      'concentracion',
+      'obsesiones',
+      'trauma',
+      'trastorno-alimentario',
+      'alucinaciones',
+    ],
   },
   {
     id: 'general',
@@ -225,6 +240,7 @@ export const ZONAS_DEL_CUERPO: readonly ZonaDelCuerpo[] = [
     icono: 'general',
     sintomas: [
       'fiebre',
+      'dolor-muscular',
       'azucar-alta',
       'tiroides',
       'colesterol',
