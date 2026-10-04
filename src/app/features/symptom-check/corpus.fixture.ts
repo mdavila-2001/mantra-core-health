@@ -590,4 +590,7 @@ export const BANCO: readonly CasoDelBanco[] = [
   { texto: 'tengo venas moradas en las piernas', sintomas: ['varices'] },
   { texto: 'no tengo hambre y estoy muy flaca', sintomas: ['perdida-de-peso'] },
   { texto: 'kgo sangre', sintomas: ['sangre-en-las-heces'] },
+  { texto: 'me pongo agresivo con todos', sintomas: ['ira'] },
+  { texto: 'tengo miedo a subir de peso y casi no como para no engordar', sintomas: ['trastorno-alimentario'] },
+  { texto: 'me corto cuando estoy mal', sintomas: [], alarmas: ['ideas-suicidas'] },
 ];
