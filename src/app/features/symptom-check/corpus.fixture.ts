@@ -610,4 +610,6 @@ export const BANCO: readonly CasoDelBanco[] = [
   { texto: 'quiero que me revisen la presion', sintomas: [] },
   { texto: 'necesito la vacuna contra la rabia', sintomas: ['vacunas'] },
   { texto: 'tengo la diabetes sin control', sintomas: ['azucar-alta'] },
+  { texto: 'ando de curso todo el dia', sintomas: ['diarrea'] },
+  { texto: 'quiero hacer un curso de primeros auxilios', sintomas: [] },
 ];
