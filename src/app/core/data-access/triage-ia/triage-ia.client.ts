@@ -76,7 +76,7 @@ export function leerLectura(cuerpo: unknown): LecturaIa | null {
     return null;
   }
   const lectura: LecturaIa = { symptoms: symptoms.filter(esHallazgo), urgency };
-  return source === 'model' || source === 'catalog' ? { ...lectura, source } : lectura;
+  return source === 'model' || source === 'semantic' || source === 'catalog' ? { ...lectura, source } : lectura;
 }
 
 function esHallazgo(valor: unknown): valor is HallazgoIa {

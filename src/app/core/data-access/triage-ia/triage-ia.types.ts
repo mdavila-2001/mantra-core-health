@@ -33,8 +33,9 @@ export interface LecturaIa {
   readonly urgency: 'urgente' | 'prioritaria' | 'programada';
   /**
    * Quién leyó el texto: `model` = MedGemma (una interpretación, puede no ser
-   * exacta); `catalog` = las tablas del servicio (determinista). Opcional: un
-   * servicio viejo no lo manda.
+   * exacta); `semantic` = parecido de significado con las frases de la tabla
+   * (bge-m3: rápido, pero también aproximado); `catalog` = las tablas del
+   * servicio (determinista). Opcional: un servicio viejo no lo manda.
    */
-  readonly source?: 'model' | 'catalog';
+  readonly source?: 'model' | 'semantic' | 'catalog';
 }
