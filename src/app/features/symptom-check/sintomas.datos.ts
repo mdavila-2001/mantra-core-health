@@ -1027,11 +1027,9 @@ export const SINTOMAS: readonly Sintoma[] = [
       'deposiciones liquidas',
       'estoy flojo del estomago',
       // Fuente: «El habla popular de Santa Cruz» (H. Sanabria Fernández, vía soysantacruz.com.bo) y Diccionario Camba de O. Roca.
-      // «Cursialera»: defecación líquida y frecuente; «tener el curso / estar de curso».
+      // «Cursialera»: defecación líquida y frecuente. «Estar de curso» lo resuelve el tokenizador
+      // (texto.ts): «curso» a secas es el de inglés.
       'cursialera',
-      'estoy de curso',
-      'tengo el curso',
-      'tener el curso',
       // Quechua «q'echa» = diarrea (PMC3259717).
       'qecha',
       'q echa',
