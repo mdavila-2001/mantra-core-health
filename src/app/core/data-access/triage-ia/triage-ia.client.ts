@@ -21,11 +21,15 @@ export const AI_BASE_URL = new InjectionToken<string>('AI_BASE_URL', {
  * Cuánto se espera al servicio antes de seguir sin él.
  *
  * La pantalla ya reconoció lo que pudo con el motor local mientras la persona
- * escribía; el servicio suma lo que el motor no entiende (partes del cuerpo sin
- * fila en la tabla, frases enteras). Si tarda más que esto, se sigue sin su
- * aporte en vez de hacer esperar a nadie.
+ * escribía, y no se bloquea mientras espera. Desde que el servicio corre
+ * MedGemma en su propio servidor (CPU, sin proveedor externo), responde en
+ * menos de un segundo todo lo que su catálogo entiende y sólo consulta al
+ * modelo lo que nadie reconoció —«el corazón se me sale del pecho»—, que tarda
+ * 10–15 s. Por eso se espera más que su propio límite con el modelo (30 s):
+ * así siempre llega una respuesta del servicio, con o sin modelo, en vez de
+ * cortarla a mitad de camino.
  */
-const ESPERA_MS = 4_000;
+const ESPERA_MS = 35_000;
 
 /**
  * Habla con AlovidaAIService: le manda el texto del paciente y recibe síntomas,

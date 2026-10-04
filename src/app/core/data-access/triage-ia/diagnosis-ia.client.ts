@@ -16,11 +16,13 @@ import type {
 /**
  * Cuánto se espera al servicio antes de seguir sin él.
  *
- * Más que el triage (4 s) porque acá el servicio puede consultar un modelo con
- * un prompt más largo; menos que lo que alguien tolera mirando un spinner. Si
- * tarda más, el cierre del formulario sigue a mano.
+ * El servicio deja que MedGemma (en su propio servidor, en CPU) reordene los
+ * candidatos de su índice, y eso tarda 15–25 s; a los 25 s se rinde y contesta
+ * con el orden del índice. Se espera un poco más que eso para recibir siempre
+ * una respuesta del servicio. Si aun así no llega, el cierre del formulario
+ * sigue a mano.
  */
-const ESPERA_MS = 6_000;
+const ESPERA_MS = 30_000;
 
 /**
  * Habla con AlovidaAIService: le manda las respuestas de un formulario clínico
