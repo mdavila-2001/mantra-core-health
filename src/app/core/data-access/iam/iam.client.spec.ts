@@ -2,6 +2,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 
+import { environment } from '../../../../environments/environment';
 import { IamClient } from './iam.client';
 
 describe('IamClient', () => {
@@ -596,6 +597,46 @@ describe('IamClient', () => {
       expect('executives' in req.request.body.organization).toBe(false);
 
       req.flush(RESPUESTA);
+    });
+  });
+
+  describe('registerPractitioner: firma y sello', () => {
+    const IMG = 'data:image/png;base64,iVBORw0KGgo=';
+    const ALTA = {
+      email: 'dra@ejemplo.bo',
+      password: 'secreto12',
+      name: 'Ana',
+      lastName: 'Paz',
+      licenseNumber: 'MP-1',
+      sedesLicenseNumber: 'SEDES-1',
+      signatureImageBase64: IMG,
+      sealImageBase64: IMG,
+    } as unknown as Parameters<IamClient['registerPractitioner']>[0];
+    const env = environment as { mockBackend: boolean };
+    const original = env.mockBackend;
+
+    afterEach(() => {
+      env.mockBackend = original;
+    });
+
+    it('contra la API real no las manda: su DTO las rechaza con 400', () => {
+      env.mockBackend = false;
+      client.registerPractitioner(ALTA).subscribe();
+
+      const req = http.expectOne((r) => r.url.endsWith('/iam/auth/register-practitioner'));
+      expect(req.request.body).not.toHaveProperty('signatureImageBase64');
+      expect(req.request.body).not.toHaveProperty('sealImageBase64');
+      req.flush({});
+    });
+
+    it('contra el simulador sí las manda', () => {
+      env.mockBackend = true;
+      client.registerPractitioner(ALTA).subscribe();
+
+      const req = http.expectOne((r) => r.url.endsWith('/iam/auth/register-practitioner'));
+      expect(req.request.body.signatureImageBase64).toBe(IMG);
+      expect(req.request.body.sealImageBase64).toBe(IMG);
+      req.flush({});
     });
   });
 });
