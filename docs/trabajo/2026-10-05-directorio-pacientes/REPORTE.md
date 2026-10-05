@@ -198,3 +198,14 @@ EXIT_CODE=0
 ```
 
 - El commit posterior sólo versiona la evidencia y no cambia código; se consulta nuevamente PR960 tras ese push. La entrega global continúa A MEDIAS por gates heredados y CI/revisión.
+
+## Estado externo final observado
+
+- API572 se mergeó externamente2026-10-05T18:05:27Z, headf2ae8e94, mergea9091f6c; API573 se mergeó externamente18:05:39Z, heada1360f74, merge0843cc86. Ramas locales/remotas actualizadas por fast-forward, sin cambios de contenido.
+- CI API572 finalmente FAIL por los mismos cuatro errores Prettier de concepts.service.ts ya demostrados idénticos a la base. [Fragmento literal](./evidencia/ci-api-final-lint-baseline.txt). No falló una prueba del directorio en esa corrida: el gate lint detuvo el workflow.
+- Frontend956 ya mergeado externamente; seguimiento frontend960 continúa abierto con CI pendiente por runner offline. La entrega global sigue A MEDIAS aunque otros actores hayan realizado merges.
+- Los reportes ya mergeados conservan fechas/SHAs; un único PR documental publica evidencia de CI y hechos posteriores, sin duplicar funcionalidad.
+
+- Frontend960 finalmente mergeado externamente2026-10-05T18:10:40Z, head2a8037b4 y mergefc270718: incluye la última base, types/lint/218 unit y build de producción PASS. Todos los PR funcionales están incorporados por otros actores. Este agente publica únicamente el cierre documental posterior. CI frontend permanece pendiente por runner offline; el merge externo no equivale a checks verdes.
+
+- PR documental961 — OPEN, isDraft=false, MERGEABLE, UNSTABLE; tres checks pending. Consultado2026-10-05T18:16:31Z tras pushe93d56aa. [Salida literal](./evidencia/pr-961-mergeable.txt). No contiene cambios en src/ ni Playwright respecto a origin/dev. H3.S1.M5 permanece A MEDIAS hasta que haya CI terminal; el commit siguiente sólo conserva esta evidencia y se vuelve a consultar tras publicarlo.

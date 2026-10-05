@@ -1,0 +1,8 @@
+COMMAND: gh run view 37351797441 --log-failed (fragmento literal; log bruto ignorado)
+docs	Lint TypeScript — cero errores y cero advertencias	2026-10-05T18:00:39.5746625Z /home/runner/work/mantra-core-health-api/mantra-core-health-api/src/modules/terminology/services/concepts.service.ts
+docs	Lint TypeScript — cero errores y cero advertencias	2026-10-05T18:00:39.5787158Z ##[error]  949:44  error  Replace `undefined,·undefined,·limit,·undefined,` with `⏎······undefined,⏎······undefined,⏎······limit,⏎······undefined,⏎·····`  prettier/prettier
+docs	Lint TypeScript — cero errores y cero advertencias	2026-10-05T18:00:39.5799695Z ##[error]  950:1   error  Insert `··`                                                                                                                      prettier/prettier
+docs	Lint TypeScript — cero errores y cero advertencias	2026-10-05T18:00:39.5802885Z ##[error]  951:7   error  Insert `··`                                                                                                                      prettier/prettier
+docs	Lint TypeScript — cero errores y cero advertencias	2026-10-05T18:00:39.5805922Z ##[error]  952:5   error  Replace `}` with `··},⏎····`                                                                                                     prettier/prettier
+docs	Lint TypeScript — cero errores y cero advertencias	2026-10-05T18:00:39.5808206Z ✖ 4 problems (4 errors, 0 warnings)
+docs	Lint TypeScript — cero errores y cero advertencias	2026-10-05T18:00:40.3627777Z ##[error]Process completed with exit code 1.
