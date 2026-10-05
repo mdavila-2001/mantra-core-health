@@ -184,7 +184,7 @@
                 <!-- La lupa que pide el registro del cliente (PACIENTE §1.4.2): son
                      cientos de oficios y un desplegable sin filtro no se recorre. El
                      alta ya la tenía; este editor había quedado con un `<select>`. -->
-                <app-form-field label="Ocupación (opcional)" [hint]="hintOcupacion()">
+                <app-form-field label="Ocupación (opcional)" [hint]="hintOcupacion">
                   <app-reference-combobox
                     data-testid="perfil-ocupacion"
                     label="Ocupación"
@@ -197,6 +197,18 @@
                     (selectionChange)="elegirOcupacion($event)"
                   />
                 </app-form-field>
+                @if (ocupacionEsOtra()) {
+                  <app-form-field
+                    label="Especificá tu ocupación"
+                    hint="Escribí tu profesión u oficio como lo dirías vos."
+                  >
+                    <app-input
+                      testId="perfil-ocupacion-otra"
+                      placeholder="Apicultor"
+                      [(value)]="ocupacionTextoLibre"
+                    />
+                  </app-form-field>
+                }
               }
             </div>
           </section>

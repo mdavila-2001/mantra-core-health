@@ -232,7 +232,10 @@
             }
   
             @if (ocupacionEsOtra()) {
-              <app-form-field label="¿Cuál?" hint="El oficio que no estaba en la lista.">
+              <app-form-field
+                label="Especificá su ocupación"
+                hint="El oficio que no estaba en la lista."
+              >
                 <app-input
                   data-testid="cita-alta-ocupacion-otra"
                   placeholder="Apicultor"
