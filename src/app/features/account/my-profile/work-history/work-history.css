@@ -255,9 +255,8 @@
    sigue a la vista sin abrir nada. Lo que se fue es la SEGUNDA copia del
    mismo aviso, la que vivía en el glifo. */
 
-/* La segunda puerta: buscar un establecimiento que ya existe. Va separada del
-   alta del consultorio propio por una línea, porque son dos operaciones
-   distintas y pegadas se leen como pasos de la misma. */
+/* El panel de «Agregar lugar de atención»: el padrón oficial primero y, al
+   pie, la salida para cargar un lugar propio. */
 .historial__padron {
   margin-block-start: var(--sp-5);
   padding-block-start: var(--sp-4);
@@ -269,4 +268,20 @@
    ninguno de sus renglones. */
 .historial__alta {
   margin: var(--sp-4) 0 0;
+}
+
+/* La salida «¿No está en la lista? Cargarlo yo» del panel de agregar lugar:
+   en fila cuando entra, apilada en pantallas chicas. */
+.historial__padron-salida {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-block-start: var(--sp-4);
+  padding-block-start: var(--sp-3);
+  border-block-start: 1px solid var(--border-subtle);
+}
+
+.historial__padron-salida .historial__intro {
+  margin: 0;
 }

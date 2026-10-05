@@ -8,7 +8,7 @@ import {
   untracked,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { catchError, forkJoin, map, of, switchMap, type Observable } from 'rxjs';
 
 import { ProfilesClient } from '../../../core/data-access/profiles/profiles.client';
@@ -28,12 +28,8 @@ import {
   SEARCH_PARAM,
   type FilterDef,
 } from '../../../shared/components/organisms/filter-bar/filter-bar';
-import { AppButtonLink } from '../../../shared/components/atoms/button/button-link';
-import { SpecialtyIcon } from '../../../shared/components/atoms/specialty-icon/specialty-icon';
-import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
-import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { inicialesDe } from '../../../shared/text/iniciales';
-import { fotoDeDirectorio, fotoDeEspecialidad } from '../../../shared/utils/foto-de-directorio';
+import { fotoDeDirectorio } from '../../../shared/utils/foto-de-directorio';
 import { subtituloProfesional } from '../subtitulo-profesional';
 
 /** Una especialidad en la portada: su nombre y cuánta gente hay detrás. */
@@ -137,6 +133,16 @@ const SIN_ESPECIALIDAD = 'Sin especialidad registrada';
  * El buscador de arriba filtra **encima** de esa estructura, en memoria, y
  * nunca es la puerta de entrada.
  *
+ * ## Filas de médicos primero (propietario, 04/10/2026)
+ *
+ * «Primero ver la opción de ver como filas y solo doctores, no como un grid de
+ * especialidad.» La portada de especialidades dejó de ser la entrada: se abre
+ * la lista de médicos, en filas, y la especialidad es un filtro de la barra.
+ * Cada fila dice las especialidades **reales** del médico —la elegida
+ * primero—, no el título escrito a mano: un cardiólogo listado bajo
+ * Cardiología decía «Médico especialista» o aparecía también en el grupo de
+ * otra especialidad.
+ *
  * ## Por qué agrupa en el cliente
  *
  * El backend pagina por cursor sin total y el filtro por especialidad devuelve
@@ -146,21 +152,15 @@ const SIN_ESPECIALIDAD = 'Sin especialidad registrada';
  */
 @Component({
   selector: 'app-practitioners-directory',
-  imports: [AppButtonLink, DirectoryPage, PageHeader, RouterLink, SpecialtyIcon, ViewStateHost],
+  imports: [DirectoryPage],
   templateUrl: './practitioners-directory.html',
-  styleUrls: [
-    '../../../shared/styles/rejilla-de-tarjetas.css',
-    './practitioners-directory.css',
-  ],
+  styleUrls: ['../../../shared/styles/rejilla-de-tarjetas.css', './practitioners-directory.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PractitionersDirectory {
-  protected readonly fotoDe = fotoDeEspecialidad;
-
   private readonly profiles = inject(ProfilesClient);
   private readonly terminology = inject(TerminologyClient);
   private readonly route = inject(ActivatedRoute);
-  private readonly router = inject(Router);
 
   /**
    * La especialidad elegida, leída de la URL.
@@ -184,9 +184,6 @@ export class PractitionersDirectory {
     { initialValue: null },
   );
 
-  /** Sin especialidad elegida se muestra la portada de especialidades. */
-  protected readonly enPortada = computed(() => this.especialidadEnUrl() === null);
-
   /** El recuento por especialidad: lo que dibuja la portada. */
   protected readonly recuento = signal<ViewState<readonly TarjetaDeEspecialidad[]>>(loading());
 
@@ -198,12 +195,15 @@ export class PractitionersDirectory {
     () => dataOf(this.recuento()) ?? [],
   );
 
-  /** La portada también navega una sola vez: cuatro toques no son cuatro cargas. */
-  protected readonly navegandoEspecialidad = signal<string | null>(null);
-
   protected readonly sustantivo = SUSTANTIVO;
 
   protected readonly estado = signal<ViewState<readonly GrupoDeEspecialidad[]>>(loading());
+
+  /**
+   * El título escrito de cada médico, por id: ya no se muestra —la fila dice
+   * sus especialidades reales— pero se sigue pudiendo buscar por él.
+   */
+  private readonly titulosPorId = signal<ReadonlyMap<string, string>>(new Map());
 
   /** Filtro en memoria: el directorio ya está entero en pantalla. */
   protected readonly filtro = signal('');
@@ -212,24 +212,22 @@ export class PractitionersDirectory {
   protected readonly especialidad = signal<string | null>(null);
 
   /**
-   * Los chips de especialidad, sacados del propio directorio.
-   *
-   * **No de un catálogo**: el catálogo de terminología tiene especialidades que
-   * en esta plataforma no ejerce nadie, y un chip que siempre devuelve cero
-   * resultados es peor que no tenerlo. Se ordenan por cantidad —las que más
-   * médicos tienen primero— porque son las que más gente busca, y recién
-   * después alfabéticamente para que el orden sea estable entre cargas.
+   * El filtro de especialidad: las que TIENEN gente, con su cantidad, del mismo
+   * recuento del backend. Un chip que siempre devuelve cero es peor que no
+   * tenerlo. Vive en la URL (la barra la escribe), así que elegir uno recarga
+   * la lista filtrada en el servidor.
    */
-  /**
-   * Sin chips de especialidad: la portada los reemplaza.
-   *
-   * Eran un atajo a las 12 con más médicos cuando la pantalla mostraba la guía
-   * entera de una vez. Ahora la especialidad se elige ANTES —en la portada, con
-   * las 33 que tienen gente y su cantidad— y dentro de una especialidad un chip
-   * para cambiarla sería un segundo selector diciendo lo mismo. Queda el
-   * buscador, que corta por otra cosa: el nombre.
-   */
-  protected readonly filtros = computed<readonly FilterDef[]>(() => []);
+  protected readonly filtros = computed<readonly FilterDef[]>(() => [
+    {
+      key: PARAM_ESPECIALIDAD,
+      label: 'Especialidad',
+      placeholder: 'Todas las especialidades',
+      options: this.tarjetas().map((tarjeta) => ({
+        value: tarjeta.conceptId,
+        label: `${tarjeta.nombre} (${tarjeta.cantidad})`,
+      })),
+    },
+  ]);
 
   /** Si se cortó por el techo de páginas, para poder decirlo. */
   protected readonly recortada = signal(false);
@@ -263,7 +261,9 @@ export class PractitionersDirectory {
         // grupo, el grupo entra entero (TJ-3).
         profesionales: normalizar(grupo.nombre).includes(busqueda)
           ? grupo.profesionales
-          : grupo.profesionales.filter((profesional) => coincide(profesional, busqueda)),
+          : grupo.profesionales.filter((profesional) =>
+              coincide(profesional, busqueda, this.titulosPorId().get(profesional.id)),
+            ),
       }))
       .filter((grupo) => grupo.profesionales.length > 0);
   });
@@ -315,15 +315,11 @@ export class PractitionersDirectory {
     // la URL pero NO recrea el componente —es la misma ruta—, así que sin esto
     // la portada se quedaría dibujada sobre una especialidad ya elegida. Cada
     // cambio del parámetro es una pantalla distinta y una lectura distinta.
+    // El recuento alimenta el filtro de especialidad: se pide una vez.
+    this.cargarRecuento();
     effect(() => {
       const elegida = this.especialidadEnUrl();
-      untracked(() => {
-        if (elegida === null) {
-          this.cargarPortada();
-        } else {
-          this.cargarEspecialidad(elegida);
-        }
-      });
+      untracked(() => this.cargarLista(elegida));
     });
   }
 
@@ -331,42 +327,8 @@ export class PractitionersDirectory {
     this.cargar();
   }
 
-  /**
-   * Cambia de portada a especialidad sin dejar que el enlace nativo y el
-   * router disparen dos navegaciones distintas. Los modificadores conservan
-   * su significado de enlace (abrir pestaña, ventana o descarga de historial).
-   */
-  protected abrirEspecialidad(evento: MouseEvent, conceptId: string): void {
-    if (
-      evento.button !== 0 ||
-      evento.ctrlKey ||
-      evento.metaKey ||
-      evento.shiftKey ||
-      evento.altKey
-    ) {
-      return;
-    }
-    evento.preventDefault();
-    if (this.navegandoEspecialidad() !== null) {
-      return;
-    }
-    this.navegandoEspecialidad.set(conceptId);
-    void this.router
-      .navigate([], {
-        relativeTo: this.route,
-        queryParams: { especialidad: conceptId },
-        queryParamsHandling: 'merge',
-      })
-      .finally(() => this.navegandoEspecialidad.set(null));
-  }
-
   private cargar(): void {
-    const elegida = this.especialidadEnUrl();
-    if (elegida === null) {
-      this.cargarPortada();
-      return;
-    }
-    this.cargarEspecialidad(elegida);
+    this.cargarLista(this.especialidadEnUrl());
   }
 
   /**
@@ -376,7 +338,7 @@ export class PractitionersDirectory {
    * cursor hasta agotarlo **sólo para contar**, y con un techo que la dejaba
    * recortada sin decirlo.
    */
-  private cargarPortada(): void {
+  private cargarRecuento(): void {
     this.recuento.set(loading());
 
     this.profiles
@@ -425,7 +387,7 @@ export class PractitionersDirectory {
    * portada —traer a los 88 de cardiología en vez de a los 836 para mostrar 88—
    * y encima el backend ya lo soportaba.
    */
-  private cargarEspecialidad(specialtyConceptId: string): void {
+  private cargarLista(specialtyConceptId: string | null): void {
     this.estado.set(loading());
     this.recortada.set(false);
 
@@ -443,7 +405,16 @@ export class PractitionersDirectory {
         ),
       )
       .subscribe({
-        next: ({ filas, etiquetas }) => this.estado.set(ready(agrupar(filas, etiquetas))),
+        next: ({ filas, etiquetas }) => {
+          this.titulosPorId.set(
+            new Map(
+              filas
+                .filter((fila) => fila.professionalTitle)
+                .map((fila) => [fila.profileId, fila.professionalTitle as string] as const),
+            ),
+          );
+          this.estado.set(ready(agrupar(filas, etiquetas, specialtyConceptId)));
+        },
         error: (error: unknown) =>
           this.estado.set(errorToViewState<readonly GrupoDeEspecialidad[]>(error)),
       });
@@ -459,12 +430,14 @@ export class PractitionersDirectory {
     acumulado: readonly PractitionerListItem[],
     cursor: string | undefined,
     pagina: number,
-    specialtyConceptId: string,
+    specialtyConceptId: string | null,
   ): Observable<readonly PractitionerListItem[]> {
     const filtro =
-      specialtyConceptId === SIN_ESPECIALIDAD_URL
-        ? { withoutSpecialty: true }
-        : { specialtyConceptId };
+      specialtyConceptId === null
+        ? {}
+        : specialtyConceptId === SIN_ESPECIALIDAD_URL
+          ? { withoutSpecialty: true }
+          : { specialtyConceptId };
     return this.profiles.listPractitioners({ ...filtro, cursor, limit: POR_PAGINA }).pipe(
       switchMap((respuesta) => {
         // ALV-013: una misma persona, una sola tarjeta. El keyset del servidor
@@ -490,9 +463,7 @@ export class PractitionersDirectory {
  * Las mismas filas, una por `profileId`, conservando la primera aparición y el
  * orden (ALV-013).
  */
-function sinRepetidos(
-  filas: readonly PractitionerListItem[],
-): readonly PractitionerListItem[] {
+function sinRepetidos(filas: readonly PractitionerListItem[]): readonly PractitionerListItem[] {
   const vistos = new Set<string>();
   return filas.filter((fila) => {
     if (vistos.has(fila.profileId)) {
@@ -523,8 +494,11 @@ function normalizar(texto: string): string {
  * exactamente lo que pasó al mover el campo, y lo que la prueba de «el buscador
  * también encuentra por el título profesional» cazó.
  */
-function coincide(profesional: SearchResultItem, busqueda: string): boolean {
+function coincide(profesional: SearchResultItem, busqueda: string, titulo?: string): boolean {
   if (normalizar(profesional.title).includes(busqueda)) {
+    return true;
+  }
+  if (titulo !== undefined && normalizar(titulo).includes(busqueda)) {
     return true;
   }
   if (profesional.subtitle !== undefined && normalizar(profesional.subtitle).includes(busqueda)) {
@@ -539,61 +513,56 @@ function conceptosDe(filas: readonly PractitionerListItem[]): readonly string[] 
 }
 
 /**
- * Arma los grupos de la guía.
+ * Arma la lista de la guía.
  *
- * Un profesional con varias especialidades aparece **en cada una**: es lo que
- * hace una guía telefónica, y esconderlo bajo una sola dejaría a alguien fuera
- * del encabezado por el que lo buscan. Quien no declara ninguna va a un grupo
- * propio al final — existe igual y tiene que poder encontrarse.
+ * Una sola tanda, sin repartir a cada médico en todas sus especialidades: eso
+ * hacía que, buscando cardiólogos, aparecieran también grupos de Neumología o
+ * Pediatría con la misma gente (propietario, 04/10/2026). Con especialidad
+ * elegida, la tanda lleva su nombre; sin ella, son todos los médicos.
  */
 function agrupar(
   filas: readonly PractitionerListItem[],
   etiquetas: ConceptLabels,
+  elegida: string | null = null,
 ): readonly GrupoDeEspecialidad[] {
-  const porEspecialidad = new Map<string, { nombre: string; filas: PractitionerListItem[] }>();
-  const sinEspecialidad: PractitionerListItem[] = [];
-  // Los nombres de toda la respuesta, para que ninguna tarjeta pueda mostrar el
-  // de otra como subtítulo (F-25). Se calculan una vez: es la comprobación
-  // exacta, y la heurística de `subtituloProfesional` sólo cubre lo que esta no
-  // puede ver.
+  if (filas.length === 0) return [];
   const nombres = filas
     .map((fila) => fila.displayName)
     .filter((nombre): nombre is string => nombre !== undefined && nombre !== '');
+  const nombreDelGrupo =
+    elegida === null
+      ? 'Todos los médicos'
+      : elegida === SIN_ESPECIALIDAD_URL
+        ? SIN_ESPECIALIDAD
+        : (etiquetas.get(elegida)?.display ?? SIN_ESPECIALIDAD);
+  return [
+    {
+      conceptId: elegida ?? 'todos',
+      nombre: nombreDelGrupo,
+      profesionales: filas
+        .map((fila) => toResultado(fila, nombres, etiquetas, elegida))
+        .sort(porNombre),
+    },
+  ];
+}
 
-  for (const fila of filas) {
-    if (fila.specialties.length === 0) {
-      sinEspecialidad.push(fila);
-      continue;
-    }
-    for (const especialidad of fila.specialties) {
-      const clave = especialidad.specialtyConceptId;
-      const grupo = porEspecialidad.get(clave) ?? {
-        nombre: etiquetas.get(clave)?.display ?? SIN_ESPECIALIDAD,
-        filas: [],
-      };
-      grupo.filas.push(fila);
-      porEspecialidad.set(clave, grupo);
-    }
-  }
-
-  const grupos = [...porEspecialidad.entries()]
-    .map(([conceptId, grupo]) => ({
-      conceptId,
-      nombre: grupo.nombre,
-      profesionales: grupo.filas.map((fila) => toResultado(fila, nombres)).sort(porNombre),
-    }))
-    // Alfabético por especialidad: es como se hojea una guía, no por cuántos
-    // tenga cada una.
-    .sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
-
-  if (sinEspecialidad.length > 0) {
-    grupos.push({
-      conceptId: 'sin-especialidad',
-      nombre: SIN_ESPECIALIDAD,
-      profesionales: sinEspecialidad.map((fila) => toResultado(fila, nombres)).sort(porNombre),
-    });
-  }
-  return grupos;
+/**
+ * Las especialidades reales del médico, en palabras y con la elegida primero:
+ * en Cardiología, el cardiólogo dice «Cardiología». `undefined` si no declaró
+ * ninguna o el catálogo no las resolvió, y entonces queda el título.
+ */
+function especialidadesDe(
+  fila: PractitionerListItem,
+  etiquetas: ConceptLabels,
+  elegida: string | null,
+): string | undefined {
+  const nombres = [...fila.specialties]
+    .sort(
+      (a, b) => Number(b.specialtyConceptId === elegida) - Number(a.specialtyConceptId === elegida),
+    )
+    .map((especialidad) => etiquetas.get(especialidad.specialtyConceptId)?.display)
+    .filter((nombre): nombre is string => nombre !== undefined && nombre !== '');
+  return nombres.length === 0 ? undefined : [...new Set(nombres)].join(' · ');
 }
 
 function porNombre(a: SearchResultItem, b: SearchResultItem): number {
@@ -614,12 +583,18 @@ function porNombre(a: SearchResultItem, b: SearchResultItem): number {
 function toResultado(
   fila: PractitionerListItem,
   nombresDeOtros: readonly string[] = [],
+  etiquetas: ConceptLabels = new Map(),
+  elegida: string | null = null,
 ): SearchResultItem {
   const nombre = fila.displayName ?? 'Profesional sin nombre registrado';
   const meta = [];
   // El subtítulo pasa por el guardia de F-25: una tarjeta sin subtítulo es más
   // pobre, una con el nombre de otro es una guía que miente.
-  const subtitulo = subtituloProfesional(fila.professionalTitle, nombre, nombresDeOtros);
+  // Primero las especialidades reales (propietario, 04/10/2026); el título
+  // escrito a mano sólo cuando no declaró ninguna.
+  const subtitulo =
+    especialidadesDe(fila, etiquetas, elegida) ??
+    subtituloProfesional(fila.professionalTitle, nombre, nombresDeOtros);
   // El subtítulo del profesional —«Cardióloga · Clínica Los Olivos»— NO va en
   // `meta`: es qué es esta persona, no un dato de contexto, y en el gris de
   // 13 px se leía igual que la lista de sedes de abajo. Va en `subtitle`, que

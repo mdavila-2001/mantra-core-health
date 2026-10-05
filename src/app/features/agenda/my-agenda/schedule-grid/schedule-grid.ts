@@ -293,6 +293,16 @@ export class ScheduleGrid {
    */
   readonly sede = input<string | null>(null);
 
+  /**
+   * Si la semana tiene franjas de otros servicios: sólo entonces hace falta la
+   * leyenda que explica el segundo tono.
+   */
+  protected readonly hayOtrosServicios = computed(() =>
+    this.reglas().some(
+      (regla) => regla.bookingMode === 'SERVICES' || regla.bookingMode === 'MIXED',
+    ),
+  );
+
   private readonly caja = viewChild<ElementRef<HTMLElement>>('caja');
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
 
@@ -555,8 +565,14 @@ export class ScheduleGrid {
     if (movida !== null) {
       return { row: Math.min(movida.row, filas.length - 1), col: Math.min(movida.col, 6) };
     }
-    const row = Math.max(0, filas.findIndex((f) => f.celdas.some((c) => c.bloque !== null)));
-    const col = Math.max(0, filas[row].celdas.findIndex((c) => c.bloque !== null));
+    const row = Math.max(
+      0,
+      filas.findIndex((f) => f.celdas.some((c) => c.bloque !== null)),
+    );
+    const col = Math.max(
+      0,
+      filas[row].celdas.findIndex((c) => c.bloque !== null),
+    );
     return { row, col };
   });
 

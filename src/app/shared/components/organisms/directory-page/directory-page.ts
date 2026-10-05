@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, computed, input, output, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  input,
+  linkedSignal,
+  output,
+} from '@angular/core';
 
 import { ResultCard } from '../../molecules/result-card/result-card';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
@@ -42,12 +49,13 @@ const CLAVE_DE_VISTA = 'alovida.directorio.vista';
 
 type Vista = 'grilla' | 'lista';
 
-function vistaGuardada(): Vista {
+function vistaGuardada(clave: string): Vista | null {
   try {
-    return globalThis.localStorage?.getItem(CLAVE_DE_VISTA) === 'lista' ? 'lista' : 'grilla';
+    const guardada = globalThis.localStorage?.getItem(clave);
+    return guardada === 'lista' || guardada === 'grilla' ? guardada : null;
   } catch {
-    // Almacenamiento bloqueado (modo privado, SSR): se ve la grilla y listo.
-    return 'grilla';
+    // Almacenamiento bloqueado (modo privado, SSR): vale la de por defecto.
+    return null;
   }
 }
 
@@ -117,12 +125,27 @@ export class DirectoryPage {
    * recuerda entre visitas y vale para los cuatro: quien prefiere la lista en
    * farmacias la quiere también en laboratorios.
    */
-  protected readonly vista = signal<Vista>(vistaGuardada());
+  /**
+   * La forma con que abre cuando nadie eligió todavía. El directorio de
+   * médicos abre en lista (propietario, 04/10/2026); el resto, en grilla.
+   */
+  readonly vistaPorDefecto = input<Vista>('grilla');
+
+  /**
+   * Dónde se recuerda la elección. Los médicos tienen la suya: si no, una
+   * grilla elegida en farmacias abriría en grilla también la guía de médicos,
+   * que tiene que abrir en filas.
+   */
+  readonly claveDeVista = input(CLAVE_DE_VISTA);
+
+  protected readonly vista = linkedSignal<Vista>(
+    () => vistaGuardada(this.claveDeVista()) ?? this.vistaPorDefecto(),
+  );
 
   protected elegirVista(vista: Vista): void {
     this.vista.set(vista);
     try {
-      globalThis.localStorage?.setItem(CLAVE_DE_VISTA, vista);
+      globalThis.localStorage?.setItem(this.claveDeVista(), vista);
     } catch {
       // Sin almacenamiento la elección vale sólo para esta pantalla.
     }
