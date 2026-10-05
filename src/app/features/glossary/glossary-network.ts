@@ -26,20 +26,24 @@ import { ViewStateHost } from '../../shared/components/organisms/view-state-host
 
 const RELATION_LABELS: Readonly<Record<GlossaryRelationType, string>> = {
   DISEASE: 'Enfermedad o síntoma asociado',
+  SYMPTOM: 'Síntoma asociado',
   TREATMENT: 'Tratamiento',
   PROCEDURE: 'Procedimiento',
   ANATOMY: 'Anatomía',
   DIAGNOSTIC_TEST: 'Prueba diagnóstica',
   RELATED_TERM: 'Término relacionado',
+  SPECIALTY: 'Especialidad médica',
 };
 
 const RELATION_COLORS: Readonly<Record<GlossaryRelationType, string>> = {
   DISEASE: '#9b3f70',
+  SYMPTOM: '#b54708',
   TREATMENT: '#26816c',
   PROCEDURE: '#7654a4',
   ANATOMY: '#bd7627',
   DIAGNOSTIC_TEST: '#3977a8',
   RELATED_TERM: '#667085',
+  SPECIALTY: '#6b5dd3',
 };
 
 interface PuntoDeGrafo {
