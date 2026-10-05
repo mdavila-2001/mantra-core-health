@@ -337,8 +337,27 @@
                     [class.formulario-especialidad__dependiente]="campo.showWhen !== undefined"
                     data-testid="campo-especialidad"
                   >
-                    @switch (tipoDibujable(campo)) {
-                      @case ('una-corta') {
+                    @if (esDeCatalogo(campo)) {
+                      <!-- Campo de catálogo: `valueSetId` manda sobre el `dataType` —
+                           conviven, igual que en `ChartTemplateFieldDto`. Las
+                           opciones salen del conjunto de valores, no se tipean. -->
+                      <app-select
+                        [options]="opcionesDeCatalogo(campo)"
+                        [value]="valorCatalogo(campo.fieldId)"
+                        [disabled]="catalogoCargando(campo)"
+                        [placeholder]="
+                          catalogoConError(campo)
+                            ? 'No pudimos traer las opciones'
+                            : catalogoCargando(campo)
+                              ? 'Cargando opciones…'
+                              : 'Seleccionar opción'
+                        "
+                        (valueChange)="actualizarValor(campo.fieldId, $event)"
+                        data-testid="campo-catalogo"
+                      />
+                    } @else {
+                      @switch (tipoDibujable(campo)) {
+                        @case ('una-corta') {
                         <app-segmented-control
                           [options]="opcionesDe(campo)"
                           [value]="valorTexto(campo.fieldId)"
@@ -409,6 +428,7 @@
                           [value]="valorTexto(campo.fieldId)"
                           (valueChange)="actualizarValor(campo.fieldId, $event)"
                         />
+                      }
                       }
                     }
                   </app-form-field>

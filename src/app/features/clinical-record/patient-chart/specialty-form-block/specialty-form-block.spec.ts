@@ -63,6 +63,33 @@ const PLANTILLA = {
   ],
 };
 
+/**
+ * Una plantilla con un campo de catálogo: `valueSetId` apunta al conjunto de
+ * valores de terminología, no a opciones tecleadas. Un `dataType: 'string'`
+ * a propósito — `valueSetId` convive con cualquier tipo, igual que en
+ * `ChartTemplateFieldDto`; no es el `dataType` el que decide si el campo es
+ * de catálogo.
+ */
+const PLANTILLA_CATALOGO = {
+  id: 'tpl-cat',
+  specialtyConceptId: 'sp-1',
+  code: 'CATALOGO_INTAKE',
+  name: 'Ficha con catálogo',
+  version: 1,
+  statusConceptId: 'st-1',
+  fields: [
+    {
+      assignmentId: 'as-10',
+      fieldId: 'f-10',
+      code: 'habito_tabaquico',
+      name: '¿Fuma?',
+      dataType: 'string',
+      valueSetId: 'vs-tabaco',
+      required: true,
+    },
+  ],
+};
+
 describe('SpecialtyFormBlock', () => {
   let fixture: ComponentFixture<SpecialtyFormBlock>;
   let componente: SpecialtyFormBlock;
@@ -204,6 +231,11 @@ describe('SpecialtyFormBlock', () => {
 
   function peticionDePlantillas() {
     return http.expectOne((r) => r.url === '/charts/templates' && r.method === 'GET');
+  }
+
+  /** `GET /terminology/value-sets/:id/$expand` — las opciones de un campo de catálogo. */
+  function peticionDeExpansion(valueSetId: string) {
+    return http.expectOne((r) => r.url === `/terminology/value-sets/${valueSetId}/$expand`);
   }
 
   function peticionDeRespuesta() {
@@ -1855,6 +1887,114 @@ describe('SpecialtyFormBlock', () => {
           '[data-testid="formulario-libre-fallos"]',
         ),
       ).not.toBeNull();
+    });
+  });
+
+  /**
+   * Un campo con `valueSetId` se dibuja como desplegable sobre el catálogo de
+   * terminología — no como texto libre, que es lo que pasaba antes: el
+   * backend ya publicaba `valueSetId` por campo y ya servía sus opciones por
+   * `GET /terminology/value-sets/:id/$expand`, y este bloque los ignoraba.
+   */
+  describe('campo de catálogo (valueSetId)', () => {
+    it('se dibuja como desplegable, con las opciones del conjunto de valores', () => {
+      peticionDePlantillas().flush([PLANTILLA_CATALOGO]);
+      fixture.detectChanges();
+
+      peticionDeExpansion('vs-tabaco').flush({
+        valueSetId: 'vs-tabaco',
+        valueSetVersionId: 'vsv-1',
+        version: '1.0.0',
+        items: [
+          { conceptId: 'c-nunca', code: 'NUNCA', display: 'Nunca', codeSystemVersionId: 'cv-1' },
+          {
+            conceptId: 'c-exfumador',
+            code: 'EX',
+            display: 'Ex fumador',
+            codeSystemVersionId: 'cv-1',
+          },
+        ],
+        count: 2,
+        limit: 200,
+        nextCursor: null,
+      });
+      peticionDeRespuesta().flush(LISTADO_VACIO);
+      fixture.detectChanges();
+
+      const campo = (fixture.nativeElement as HTMLElement).querySelector(
+        '[data-testid="campo-catalogo"]',
+      );
+      expect(campo).not.toBeNull();
+      const select = campo!.querySelector('select') as HTMLSelectElement;
+      expect(Array.from(select.options).map((opcion) => opcion.textContent?.trim())).toEqual([
+        'Seleccionar opción',
+        'Nunca',
+        'Ex fumador',
+      ]);
+
+      // Elegir «Ex fumador»: índice 2, porque el 0 es el placeholder oculto.
+      select.selectedIndex = 2;
+      select.dispatchEvent(new Event('change'));
+      fixture.detectChanges();
+
+      const valores = interno<() => Record<string, unknown>>('valores')();
+      // Lo que se guarda es el `conceptId`, no la etiqueta: es lo que
+      // `valoresParaEnviar` manda y lo que el modo lectura tiene que resolver
+      // de vuelta a texto.
+      expect(valores['f-10']).toBe('c-exfumador');
+    });
+
+    it('en modo lectura, muestra la etiqueta elegida y no el conceptId guardado', () => {
+      peticionDePlantillas().flush([PLANTILLA_CATALOGO]);
+      fixture.detectChanges();
+
+      peticionDeExpansion('vs-tabaco').flush({
+        valueSetId: 'vs-tabaco',
+        valueSetVersionId: 'vsv-1',
+        version: '1.0.0',
+        items: [
+          {
+            conceptId: 'c-exfumador',
+            code: 'EX',
+            display: 'Ex fumador',
+            codeSystemVersionId: 'cv-1',
+          },
+        ],
+        count: 1,
+        limit: 200,
+        nextCursor: null,
+      });
+      peticionDeRespuesta().flush({ ...LISTADO_VACIO, items: [INSTANCIA] });
+      http
+        .expectOne((r) => r.url === '/forms/instances/inst-9' && r.method === 'GET')
+        .flush({
+          ...INSTANCIA,
+          values: [
+            {
+              id: 'v-10',
+              fieldId: 'f-10',
+              dataType: 'string',
+              value: 'c-exfumador',
+              ordinal: 0,
+              masked: false,
+            },
+          ],
+        });
+      // El modo lectura carga también el bloque de notas/adicionales.
+      http.expectOne((r) => r.url === '/charts/notes' && r.method === 'GET').flush({
+        items: [],
+        limit: 50,
+        truncated: false,
+      });
+      fixture.detectChanges();
+
+      const respuestas =
+        interno<() => readonly { etiqueta: string; texto: string; masked: boolean }[]>(
+          'respuestasVisibles',
+        )();
+      expect(respuestas).toEqual([
+        { id: 'v-10', etiqueta: '¿Fuma?', texto: 'Ex fumador', masked: false },
+      ]);
     });
   });
 });

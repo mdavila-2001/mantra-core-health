@@ -1,3 +1,4 @@
+import { isPlatformBrowser } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -6,6 +7,7 @@ import {
   inject,
   input,
   output,
+  PLATFORM_ID,
   signal,
   untracked,
   viewChild,
@@ -18,6 +20,7 @@ import { ClinicalClient } from '../../../../core/data-access/clinical/clinical.c
 import { DiagnosticsClient } from '../../../../core/data-access/diagnostics/diagnostics.client';
 import type { RespuestaDeFormulario } from '../../../../core/data-access/triage-ia/diagnosis-ia.types';
 import { mensajeDeFalloDeEscritura } from '../../mensaje-de-escritura';
+import { TerminologyClient } from '../../../../core/data-access/terminology/terminology.client';
 import { DiagnosisBlock } from '../diagnosis-block/diagnosis-block';
 import { AdditionalFields } from '../additional-fields/additional-fields';
 import { ChartNotesClient } from '../../../../core/data-access/chart-notes/chart-notes.client';
@@ -321,6 +324,8 @@ export class SpecialtyFormBlock {
   private readonly adicionales = viewChild(AdditionalFields);
   private readonly auth = inject(AuthService);
   private readonly toasts = inject(ToastService);
+  private readonly terminology = inject(TerminologyClient);
+  private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
   /**
    * El encuentro en curso, o `null` si no hay ninguno abierto.
@@ -657,6 +662,22 @@ export class SpecialtyFormBlock {
       const encounterId = this.encounterId();
       untracked(() => this.consultarRespuesta(encounterId));
     });
+    // En cuanto el catálogo está, se piden de una vez las opciones de TODOS
+    // los campos de catálogo de TODAS las plantillas — no sólo la elegida: el
+    // modo lectura puede mostrar la respuesta de otra plantilla, y pedirlas
+    // recién ahí demoraría la etiqueta detrás de un segundo viaje.
+    effect(() => {
+      const catalogo = this.catalogo();
+      const valueSetIds = new Set<string>();
+      for (const plantilla of catalogo) {
+        for (const campo of plantilla.fields) {
+          if (campo.valueSetId !== undefined) valueSetIds.add(campo.valueSetId);
+        }
+      }
+      untracked(() => {
+        for (const valueSetId of valueSetIds) this.asegurarOpcionesDeCatalogo(valueSetId);
+      });
+    });
   }
 
   protected recargarPlantillas(): void {
@@ -947,7 +968,7 @@ export class SpecialtyFormBlock {
   protected readonly respuestasVisibles = computed<readonly RespuestaVisible[]>(() => {
     const detalle = this.formularioRespondido();
     if (detalle === null) return [];
-    return respuestasDe(detalle, this.camposConocidos());
+    return respuestasDe(detalle, this.camposConocidos(), this.etiquetaDeConceptId());
   });
 
   /** Descarga el formulario respondido con el motor PDF compartido. */
@@ -1076,6 +1097,115 @@ export class SpecialtyFormBlock {
       (fieldId) => valores[fieldId],
     );
   });
+
+  /* -- Campos de catálogo (valueSetId): un desplegable, no texto libre ------
+   *
+   * El backend ya publica `valueSetId` en cada campo (`TemplateFieldInputDto`,
+   * `ChartTemplateFieldDto`) y ya sirve sus opciones
+   * (`GET /terminology/value-sets/:id/$expand`), pero este bloque los dibujaba
+   * como texto libre igual que cualquier campo sin tipo reconocido: quien
+   * completaba la ficha tecleaba a mano un valor que ya existía como catálogo
+   * cerrado, y lo tecleado no era comparable entre dos respuestas de la misma
+   * pregunta («Fumador» contra «fumador» contra «SI»).
+   *
+   * Es un control aparte del `@switch` por `dataType` —no un caso más— porque
+   * la pertenencia a un catálogo no es un tipo de dato: conviven con `string`,
+   * `integer` o cualquier otro, igual que en `ChartTemplateFieldDto`.
+   */
+
+  /** Las opciones ya resueltas, por `valueSetId`. Ausente mientras no se pidieron. */
+  private readonly opcionesPorValueSet = signal<
+    ReadonlyMap<string, readonly SelectOption<string>[]>
+  >(new Map());
+
+  /** `valueSetId` con una lectura en curso, para no pedir el mismo catálogo dos veces. */
+  private readonly valueSetsCargando = signal<ReadonlySet<string>>(new Set());
+
+  /** `valueSetId` cuya lectura falló, para poder avisarlo en el campo. */
+  private readonly valueSetsConError = signal<ReadonlySet<string>>(new Set());
+
+  /**
+   * `conceptId → display`, para el modo lectura.
+   *
+   * Vive aparte de {@link opcionesPorValueSet} porque el modo lectura no
+   * conoce el `valueSetId` de memoria rápida: conoce el `conceptId` que se
+   * guardó, y tiene que resolverlo a lo que un humano lee. Se completa con la
+   * misma lectura que llena las opciones — no es una segunda llamada.
+   */
+  private readonly etiquetaDeConceptId = signal<ReadonlyMap<string, string>>(new Map());
+
+  /** Si el campo es de catálogo: tiene `valueSetId`, sin importar su `dataType`. */
+  protected esDeCatalogo(campo: ChartTemplateField): boolean {
+    return campo.valueSetId !== undefined;
+  }
+
+  /** Las opciones del campo, o vacío mientras no llegaron (ni dibuja texto a cambio). */
+  protected opcionesDeCatalogo(campo: ChartTemplateField): readonly SelectOption<string>[] {
+    if (campo.valueSetId === undefined) return [];
+    return this.opcionesPorValueSet().get(campo.valueSetId) ?? [];
+  }
+
+  protected catalogoCargando(campo: ChartTemplateField): boolean {
+    return campo.valueSetId !== undefined && this.valueSetsCargando().has(campo.valueSetId);
+  }
+
+  protected catalogoConError(campo: ChartTemplateField): boolean {
+    return campo.valueSetId !== undefined && this.valueSetsConError().has(campo.valueSetId);
+  }
+
+  /** El valor guardado del campo de catálogo: el `conceptId` elegido, o `null`. */
+  protected valorCatalogo(fieldId: string): string | null {
+    const valor = this.valores()[fieldId];
+    return typeof valor === 'string' ? valor : null;
+  }
+
+  /**
+   * Pide, una sola vez por `valueSetId`, las opciones de todo campo de
+   * catálogo del catálogo de plantillas — no sólo de la elegida: el modo
+   * lectura puede mostrar una respuesta de una plantilla distinta a la que
+   * está seleccionada ahora, y necesita la misma etiqueta.
+   *
+   * Sin SSR: igual que `BoDepartmentsCatalog`, durante el prerender no hay API
+   * a la que preguntar.
+   */
+  private asegurarOpcionesDeCatalogo(valueSetId: string): void {
+    if (!this.isBrowser) return;
+    if (this.opcionesPorValueSet().has(valueSetId)) return;
+    if (this.valueSetsCargando().has(valueSetId)) return;
+
+    this.valueSetsCargando.update((actuales) => new Set(actuales).add(valueSetId));
+    this.terminology.readAllOptions(valueSetId).subscribe({
+      next: (opciones) => {
+        const seleccionables = opciones.filter((opcion) => opcion.selectable !== false);
+        this.opcionesPorValueSet.update((mapa) => {
+          const nuevo = new Map(mapa);
+          nuevo.set(
+            valueSetId,
+            seleccionables.map((opcion) => ({ value: opcion.conceptId, label: opcion.display })),
+          );
+          return nuevo;
+        });
+        this.etiquetaDeConceptId.update((mapa) => {
+          const nuevo = new Map(mapa);
+          for (const opcion of opciones) nuevo.set(opcion.conceptId, opcion.display);
+          return nuevo;
+        });
+        this.valueSetsCargando.update((actuales) => {
+          const nuevo = new Set(actuales);
+          nuevo.delete(valueSetId);
+          return nuevo;
+        });
+      },
+      error: () => {
+        this.valueSetsCargando.update((actuales) => {
+          const nuevo = new Set(actuales);
+          nuevo.delete(valueSetId);
+          return nuevo;
+        });
+        this.valueSetsConError.update((actuales) => new Set(actuales).add(valueSetId));
+      },
+    });
+  }
 
   /* -- El odontograma ------------------------------------------------------ */
 
