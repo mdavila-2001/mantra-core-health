@@ -11,9 +11,9 @@
   </p>
 
   <p class="portability-card__description">
-    ¿Estás evaluando cambiar de aseguradora o necesitás tu historial? Solicitá una exportación de
-    la información de pólizas y siniestros disponible para tu perfil. El resultado incluye una
-    huella SHA-256 y un enlace para consultar su verificación.
+    ¿Estás evaluando cambiar de aseguradora o necesitás tu historial? Descargá en PDF la información
+    de pólizas y siniestros disponible para tu perfil. El documento incluye un código QR para
+    consultar su verificación.
   </p>
 
   @if (isActingForDependent()) {
@@ -23,25 +23,24 @@
     </app-alert>
   }
 
+  @if (errorMessage(); as mensaje) {
+    <app-alert appAnuncio tone="error" data-testid="portability-export-error">
+      {{ mensaje }}
+    </app-alert>
+  }
+
   @if (ownPatientProfileId()) {
     <div card-footer>
       <button
         app-button
         type="button"
-        data-testid="btn-open-portability-dialog"
-        (clicked)="openDialog()"
+        data-testid="btn-download-portability-pdf"
+        [isLoading]="isDownloading()"
+        [disabled]="isDownloading()"
+        (clicked)="downloadPdf()"
       >
-        Solicitar exportación de portabilidad
+        Descargar
       </button>
     </div>
   }
 </app-card>
-
-@if (dialogOpen()) {
-  @if (ownPatientProfileId(); as patientProfileId) {
-    <app-portability-export-dialog
-      [patientProfileId]="patientProfileId"
-      (closed)="closeDialog()"
-    />
-  }
-}

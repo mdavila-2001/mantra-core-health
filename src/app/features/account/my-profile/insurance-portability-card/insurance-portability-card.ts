@@ -1,12 +1,27 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  DestroyRef,
+  inject,
+  input,
+  signal,
+} from '@angular/core';
+import { finalize, map, switchMap } from 'rxjs';
 
 import { AuthService } from '../../../../core/auth/auth.service';
+import { blobToDataUrl } from '../../../../core/data-access/files/blob-to-data-url';
+import { FileDownloader } from '../../../../core/data-access/files/file-downloader';
+import { InsurancePortabilityClient } from '../../../../core/data-access/insurance/insurance-portability.client';
 import type { OwnCoverage } from '../../../../core/data-access/profiles/profiles.types';
+import { readApiError } from '../../../../core/http/api-error';
 import { PatientContextService } from '../../../../core/patient-context/patient-context.service';
+import { AnnounceOnAppear } from '../../../../shared/a11y/announce-on-appear';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
 import { Card } from '../../../../shared/components/molecules/card/card';
-import { PortabilityExportDialog } from './portability-export-dialog/portability-export-dialog';
 
 /**
  * Portabilidad de póliza y siniestralidad a 1 clic (subtarea 3.3, registro de
@@ -37,7 +52,7 @@ import { PortabilityExportDialog } from './portability-export-dialog/portability
  */
 @Component({
   selector: 'app-insurance-portability-card',
-  imports: [AppButton, Alert, Card, PortabilityExportDialog],
+  imports: [AnnounceOnAppear, AppButton, Alert, Card],
   templateUrl: './insurance-portability-card.html',
   styleUrl: './insurance-portability-card.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -45,6 +60,9 @@ import { PortabilityExportDialog } from './portability-export-dialog/portability
 export class InsurancePortabilityCard {
   private readonly auth = inject(AuthService);
   private readonly patientContext = inject(PatientContextService);
+  private readonly portability = inject(InsurancePortabilityClient);
+  private readonly downloader = inject(FileDownloader);
+  private readonly destroyRef = inject(DestroyRef);
 
   /** Las coberturas declaradas del titular, tal como ya las cargó `my-profile`. */
   readonly coverages = input<readonly OwnCoverage[]>([]);
@@ -78,13 +96,44 @@ export class InsurancePortabilityCard {
     return `${currentCount} de ${total} coberturas vigentes.`;
   });
 
-  protected readonly dialogOpen = signal(false);
+  protected readonly isDownloading = signal(false);
+  protected readonly errorMessage = signal<string | null>(null);
 
-  protected openDialog(): void {
-    this.dialogOpen.set(true);
+  protected downloadPdf(): void {
+    const patientProfileId = this.ownPatientProfileId();
+    if (!patientProfileId || this.isDownloading()) return;
+
+    this.isDownloading.set(true);
+    this.errorMessage.set(null);
+
+    this.portability
+      .exportPortability({ patientProfileId, format: 'PDF' })
+      .pipe(
+        switchMap((result) =>
+          this.portability.downloadCertificatePdf(result.certificateId).pipe(
+            switchMap(({ blob, fileName }) =>
+              blobToDataUrl(blob).pipe(
+                map((dataUrl) => ({
+                  dataUrl,
+                  fileName: fileName ?? `portabilidad-${result.certificateId}.pdf`,
+                })),
+              ),
+            ),
+          ),
+        ),
+        finalize(() => this.isDownloading.set(false)),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: ({ dataUrl, fileName }) => this.downloader.trigger(dataUrl, fileName),
+        error: (error: unknown) => this.errorMessage.set(this.downloadErrorMessage(error)),
+      });
   }
 
-  protected closeDialog(): void {
-    this.dialogOpen.set(false);
+  private downloadErrorMessage(error: unknown): string {
+    if (error instanceof HttpErrorResponse) {
+      return readApiError(error)?.message ?? 'No se pudo descargar el PDF. Probá de nuevo.';
+    }
+    return 'No se pudo descargar el PDF. Probá de nuevo.';
   }
 }
