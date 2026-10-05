@@ -1,16 +1,60 @@
 import { provideHttpClient } from '@angular/common/http';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { By } from '@angular/platform-browser';
 
 import { AuthService } from '../../../../core/auth/auth.service';
+import { FileDownloader } from '../../../../core/data-access/files/file-downloader';
 import type {
   CoverageValidity,
   OwnCoverage,
 } from '../../../../core/data-access/profiles/profiles.types';
 import { PatientContextService } from '../../../../core/patient-context/patient-context.service';
 import { InsurancePortabilityCard } from './insurance-portability-card';
-import { PortabilityExportDialog } from './portability-export-dialog/portability-export-dialog';
+
+const HASH = 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855';
+
+function exportResultWire(overrides: Record<string, unknown> = {}) {
+  return {
+    certificateId: 'cert-1',
+    manifestHash: HASH,
+    generatedAt: '2026-09-18T18:00:00.000Z',
+    format: 'PDF',
+    recordCount: 14,
+    policiesCount: 3,
+    pdfDownloadUrl: '/insurance/portability/certificates/cert-1/pdf',
+    jsonDownloadUrl: '/insurance/portability/certificates/cert-1/json',
+    verificationUrl: `https://app.alovida.com/verify/portability/${HASH}`,
+    summary: {
+      currencyCode: 'BOB',
+      allTime: {
+        claimsCount: 14,
+        approvedCount: 10,
+        deniedCount: 1,
+        pendingCount: 3,
+        billedAmount: '12450.00',
+        coveredAmount: '10230.00',
+        patientCopayAmount: '1200.00',
+        deniedAmount: '0.00',
+        coveredMonths: '11.87',
+      },
+      last36Months: {
+        claimsCount: 14,
+        approvedCount: 10,
+        deniedCount: 1,
+        pendingCount: 3,
+        billedAmount: '12450.00',
+        coveredAmount: '10230.00',
+        patientCopayAmount: '1200.00',
+        deniedAmount: '0.00',
+        coveredMonths: '11.87',
+      },
+      byYear: [],
+      claimsOver2000Count: 0,
+      estimatedLossRatioPercent: null,
+    },
+    ...overrides,
+  };
+}
 
 /** Una cobertura con lo mínimo que la tarjeta mira: su vigencia. */
 function cobertura(validityStatus: CoverageValidity): OwnCoverage {
@@ -28,15 +72,21 @@ function query(testId: string): HTMLElement | null {
   return document.querySelector(`[data-testid="${testId}"]`);
 }
 
-function montar(opciones: {
-  patientProfileId?: string | null;
-  isActingForDependent?: boolean;
-  coverages?: readonly OwnCoverage[];
-} = {}): ComponentFixture<InsurancePortabilityCard> {
+let http: HttpTestingController;
+let downloader: { trigger: ReturnType<typeof vi.fn> };
+
+function montar(
+  opciones: {
+    patientProfileId?: string | null;
+    isActingForDependent?: boolean;
+    coverages?: readonly OwnCoverage[];
+  } = {},
+): ComponentFixture<InsurancePortabilityCard> {
   // `?? 'patient-1'` no serviría: un `patientProfileId: null` explícito es
   // justo el caso que se quiere probar, y `??` lo confundiría con "omitido".
   const patientProfileId: string | null =
     opciones.patientProfileId === undefined ? 'patient-1' : opciones.patientProfileId;
+  downloader = { trigger: vi.fn() };
   TestBed.configureTestingModule({
     imports: [InsurancePortabilityCard],
     providers: [
@@ -50,8 +100,10 @@ function montar(opciones: {
         provide: PatientContextService,
         useValue: { isActingForDependent: () => opciones.isActingForDependent ?? false },
       },
+      { provide: FileDownloader, useValue: downloader },
     ],
   });
+  http = TestBed.inject(HttpTestingController);
   const fixture = TestBed.createComponent(InsurancePortabilityCard);
   fixture.componentRef.setInput('coverages', opciones.coverages ?? []);
   fixture.detectChanges();
@@ -59,21 +111,23 @@ function montar(opciones: {
 }
 
 describe('InsurancePortabilityCard', () => {
+  afterEach(() => http?.verify());
+
   it('muestra el botón para exportar el historial', () => {
     montar();
 
     expect(query('insurance-portability-card')).not.toBeNull();
-    expect(query('btn-open-portability-dialog')).not.toBeNull();
+    expect(query('btn-download-portability-pdf')).not.toBeNull();
   });
 
-  it('el botón se llama «Solicitar exportación de portabilidad»', () => {
+  it('ofrece un único botón llamado «Descargar», sin diálogo ni selector de formato', () => {
     montar();
 
-    // Es el nombre accesible que fija el requisito, y el mismo con el que se
-    // titula el diálogo que abre (WCAG 2.5.3, la etiqueta está en el nombre).
-    expect(query('btn-open-portability-dialog')?.textContent?.trim()).toBe(
-      'Solicitar exportación de portabilidad',
-    );
+    const tarjeta = query('insurance-portability-card');
+    expect(tarjeta?.querySelectorAll('button')).toHaveLength(1);
+    expect(query('btn-download-portability-pdf')?.textContent?.trim()).toBe('Descargar');
+    expect(document.querySelector('app-portability-export-dialog')).toBeNull();
+    expect(tarjeta?.querySelector('select')).toBeNull();
   });
 
   it('describe la información disponible sin afirmar que tenga firma digital', () => {
@@ -92,7 +146,7 @@ describe('InsurancePortabilityCard', () => {
         'No tenés coberturas declaradas.',
       );
       // El derecho de portabilidad no depende de tener una cobertura.
-      expect(query('btn-open-portability-dialog')).not.toBeNull();
+      expect(query('btn-download-portability-pdf')).not.toBeNull();
     });
 
     it('con todas vigentes las cuenta sin más', () => {
@@ -140,41 +194,93 @@ describe('InsurancePortabilityCard', () => {
     });
   });
 
-  it('abre el diálogo al pulsar el botón de exportar', () => {
+  it('descarga directamente el PDF con QR del titular', async () => {
     const fixture = montar();
+    let descarga: { dataUrl: string; fileName: string } | undefined;
+    const descargado = new Promise<void>((resolve) => {
+      downloader.trigger.mockImplementation((dataUrl: string, fileName: string) => {
+        descarga = { dataUrl, fileName };
+        resolve();
+      });
+    });
 
-    expect(document.querySelector('app-portability-export-dialog')).toBeNull();
-
-    query('btn-open-portability-dialog')?.dispatchEvent(
+    query('btn-download-portability-pdf')?.dispatchEvent(
       new MouseEvent('click', { bubbles: true }),
     );
     fixture.detectChanges();
 
-    expect(document.querySelector('app-portability-export-dialog')).not.toBeNull();
+    const exportacion = http.expectOne('/insurance/portability/export');
+    expect(exportacion.request.method).toBe('POST');
+    expect(exportacion.request.body).toEqual({
+      patientProfileId: 'patient-1',
+      format: 'PDF',
+    });
+    exportacion.flush(exportResultWire());
+
+    const pdf = http.expectOne('/insurance/portability/certificates/cert-1/pdf');
+    expect(pdf.request.method).toBe('GET');
+    pdf.flush(new Blob([new Uint8Array([0x25, 0x50, 0x44, 0x46])], { type: 'application/pdf' }), {
+      headers: { 'Content-Disposition': 'attachment; filename="portabilidad-cert-1.pdf"' },
+    });
+
+    await descargado;
+    expect(descarga?.fileName).toBe('portabilidad-cert-1.pdf');
+    expect(descarga?.dataUrl).toMatch(/^data:application\/pdf;base64,/);
+    expect(document.querySelector('app-portability-export-dialog')).toBeNull();
   });
 
   it('avisa cuando la sesión está actuando por un dependiente', () => {
     montar({ isActingForDependent: true });
 
-    expect(query('insurance-portability-card')?.textContent).toContain(
-      'trámite personal',
+    expect(query('insurance-portability-card')?.textContent).toContain('trámite personal');
+  });
+
+  it('actuando por un dependiente, exporta el perfil del TITULAR, nunca el del dependiente', () => {
+    const fixture = montar({ isActingForDependent: true, patientProfileId: 'own-profile' });
+
+    query('btn-download-portability-pdf')?.dispatchEvent(
+      new MouseEvent('click', { bubbles: true }),
+    );
+    fixture.detectChanges();
+
+    const exportacion = http.expectOne('/insurance/portability/export');
+    expect(exportacion.request.body).toEqual({
+      patientProfileId: 'own-profile',
+      format: 'PDF',
+    });
+    exportacion.flush(
+      { code: 'FORBIDDEN', message: 'No disponible.', timestamp: '', path: '' },
+      { status: 403, statusText: 'Forbidden' },
     );
   });
 
-  it('actuando por un dependiente, el diálogo exporta el perfil del TITULAR, nunca el del dependiente', () => {
-    const fixture = montar({ isActingForDependent: true, patientProfileId: 'own-profile' });
+  it('muestra el error en la tarjeta y permite reintentar', () => {
+    const fixture = montar();
 
-    query('btn-open-portability-dialog')?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    query('btn-download-portability-pdf')?.dispatchEvent(
+      new MouseEvent('click', { bubbles: true }),
+    );
+    fixture.detectChanges();
+    http.expectOne('/insurance/portability/export').flush(
+      {
+        code: 'FORBIDDEN',
+        message: 'No podés exportar este historial.',
+        timestamp: '',
+        path: '',
+      },
+      { status: 403, statusText: 'Forbidden' },
+    );
     fixture.detectChanges();
 
-    const dialogo = fixture.debugElement.query(By.directive(PortabilityExportDialog));
-    expect(dialogo).not.toBeNull();
-    expect(dialogo.componentInstance.patientProfileId()).toBe('own-profile');
+    expect(query('portability-export-error')?.textContent).toContain(
+      'No podés exportar este historial.',
+    );
+    expect(query('btn-download-portability-pdf')?.getAttribute('aria-disabled')).not.toBe('true');
   });
 
   it('sin perfil de paciente propio, no ofrece exportar', () => {
     montar({ patientProfileId: null });
 
-    expect(query('btn-open-portability-dialog')).toBeNull();
+    expect(query('btn-download-portability-pdf')).toBeNull();
   });
 });

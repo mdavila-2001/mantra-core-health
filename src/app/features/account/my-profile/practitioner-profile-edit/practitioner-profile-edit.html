@@ -35,15 +35,12 @@
             <section class="edicion__logo" data-testid="edicion-logo">
               <h3 class="edicion__logo-titulo">Logo del consultorio</h3>
               <p class="edicion__logo-nota">
-                Sale en el membrete de tus PDF. PNG, JPG o WEBP, hasta 2 MB. Si no cargás
-                ninguno, el espacio queda vacío y el documento se ve igual.
+                Sale en el membrete de tus PDF. PNG, JPG o WEBP, hasta 2 MB. Si no cargás ninguno,
+                el espacio queda vacío y el documento se ve igual.
               </p>
 
               <div class="edicion__logo-cuerpo">
-                <app-logo-consultorio
-                  data-testid="edicion-logo-vista"
-                  [src]="logoVisible()"
-                />
+                <app-logo-consultorio data-testid="edicion-logo-vista" [src]="logoVisible()" />
 
                 <div class="edicion__logo-acciones">
                   <app-file-input
@@ -172,10 +169,13 @@
                 [errorMessage]="errorDelServidor('birthDate')"
                 hint="Se usa para calcular tu edad en la ficha. No se publica."
               >
-                <app-date-picker [(value)]="fechaNacimiento" data-testid="edicion-nacimiento"
+                <app-date-picker
+                  [(value)]="fechaNacimiento"
+                  data-testid="edicion-nacimiento"
                   (input)="recordarTextoNacimiento($event)"
                   (keyup)="recordarTextoNacimiento($event)"
-                  (focusout)="recordarTextoNacimiento($event)" />
+                  (focusout)="recordarTextoNacimiento($event)"
+                />
               </app-form-field>
 
               <!-- La MISMA lista cerrada del alta, no un texto libre: de este
@@ -479,8 +479,8 @@
             <section class="edicion__seccion" data-testid="edicion-idiomas">
               <h3 class="edicion__titulo">Idiomas en los que atendés</h3>
               <p class="edicion__nota">
-                Los que un paciente puede elegir para la consulta. «Interpreta en consulta» dice
-                que podés sostener una consulta clínica en ese idioma, no sólo hablarlo.
+                Los que un paciente puede elegir para la consulta. «Interpreta en consulta» dice que
+                podés sostener una consulta clínica en ese idioma, no sólo hablarlo.
               </p>
 
               @if (catalogoIdiomasCaido()) {
@@ -983,7 +983,6 @@
                 />
               }
             </section>
-
           </app-tab>
         </app-tabs>
 
@@ -1006,7 +1005,14 @@
           submitLabel="Guardar cambios"
           cancelLabel="Cancelar edición"
           [showSubmit]="editandoPresentacion()"
-          [pending]="guardandoPresentacion() || guardandoIdiomas() || cancelandoEdicion() || subiendoLogo() || firma.subiendo() || sello.subiendo()"
+          [pending]="
+            guardandoPresentacion() ||
+            guardandoIdiomas() ||
+            cancelandoEdicion() ||
+            subiendoLogo() ||
+            firma.subiendo() ||
+            sello.subiendo()
+          "
           (submitted)="guardarPresentacion()"
           (cancelled)="cancelarEdicion()"
         />
@@ -1215,6 +1221,22 @@
             />
           </app-form-field>
 
+          <!-- La ciudad sale de la institución (propietario, 04/10/2026): sus
+               sedes, fija si tiene una sola. Nunca se escribe. -->
+          <app-form-field
+            class="edicion__campo-ancho"
+            label="Ciudad de estudio"
+            hint="Sale de la institución que elijas."
+          >
+            <app-select
+              data-testid="edicion-credencial-ciudad"
+              [options]="edicionCiudades()"
+              [disabled]="edicionCiudades().length <= 1"
+              [(value)]="edicionCiudad"
+              placeholder="Sale de la institución"
+            />
+          </app-form-field>
+
           @if (edicionInstitucionFueraDeCatalogo()) {
             <app-form-field class="edicion__campo-ancho" label="¿Cuál?">
               <app-input
@@ -1379,6 +1401,22 @@
           [options]="opcionesInstitucion"
           [(value)]="institucionElegida"
           placeholder="Elegí dónde lo cursaste"
+        />
+      </app-form-field>
+
+      <!-- La ciudad sale de la institución (propietario, 04/10/2026): sus
+           sedes, fija si tiene una sola. Nunca se escribe. -->
+      <app-form-field
+        class="edicion__campo-ancho"
+        label="Ciudad de estudio"
+        hint="Sale de la institución que elijas."
+      >
+        <app-select
+          data-testid="credencial-ciudad"
+          [options]="ciudadesDeLaInstitucion()"
+          [disabled]="ciudadesDeLaInstitucion().length <= 1"
+          [(value)]="ciudadCredencial"
+          placeholder="Sale de la institución"
         />
       </app-form-field>
 
