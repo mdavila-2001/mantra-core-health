@@ -213,7 +213,6 @@ export const CAMPO_DEL_ALTA_EN_PESTANA: Readonly<Record<string, number>> = {
      Trayectoria ofrecía el formulario de un título a quien venía a corregir
      un cargo. */
   professionalTitleEducation: PESTANA_MEDICO.credenciales,
-  professionalTitleNumber: PESTANA_MEDICO.credenciales,
   professionalTitleUniversity: PESTANA_MEDICO.credenciales,
   professionalTitleCountry: PESTANA_MEDICO.credenciales,
   professionalTitleCity: PESTANA_MEDICO.credenciales,
