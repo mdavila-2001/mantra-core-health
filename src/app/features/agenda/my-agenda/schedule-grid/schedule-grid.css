@@ -416,3 +416,42 @@
   font-size: var(--fs-caption);
   color: var(--text-secondary);
 }
+
+/* ---- la leyenda de los dos tonos ------------------------------------------ */
+
+.grilla__leyenda {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2) var(--sp-4);
+  margin: 0 0 var(--sp-3);
+  padding: 0;
+  list-style: none;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.grilla__leyenda-item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.grilla__leyenda-muestra {
+  flex: none;
+  inline-size: 18px;
+  block-size: 14px;
+  border-radius: var(--r-xs);
+  border-inline-start: 3px solid var(--st-primary-bd);
+  background: var(--st-primary-bg);
+}
+
+.grilla__leyenda-muestra--services {
+  border-inline-start-style: dashed;
+  border-inline-start-color: var(--st-secondary-bd);
+  background: var(--st-secondary-bg);
+}
+
+.grilla__leyenda-muestra--mixed {
+  border-inline-start-style: dashed;
+  border-inline-start-color: var(--st-secondary-bd);
+}

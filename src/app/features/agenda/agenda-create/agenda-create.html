@@ -19,8 +19,8 @@
   </app-alert>
 } @else if (sinOrganizacion()) {
   <app-alert tone="warning" title="Elegí una organización primero">
-    Una agenda pertenece a una organización. Elegí en cuál vas a atender desde el selector de
-    arriba y volvé.
+    Una agenda pertenece a una organización. Elegí en cuál vas a atender desde el selector de arriba
+    y volvé.
   </app-alert>
 } @else if (sinPerfilProfesional()) {
   <app-alert tone="info" title="Esta sección es para profesionales">
@@ -55,9 +55,17 @@
     @if (publicaSoloLaPropia()) {
       <p class="agenda-create__titular">
         @if (esCambio()) {
-          Estás cambiando tu propia agenda@if (nombreDelTitular()) {, {{ nombreDelTitular() }}}.
+          Estás cambiando tu propia agenda
+          @if (nombreDelTitular()) {
+            , {{ nombreDelTitular() }}
+          }
+          .
         } @else {
-          Vas a publicar tu propia agenda@if (nombreDelTitular()) {, {{ nombreDelTitular() }}}.
+          Vas a publicar tu propia agenda
+          @if (nombreDelTitular()) {
+            , {{ nombreDelTitular() }}
+          }
+          .
         }
       </p>
     }
@@ -165,6 +173,28 @@
            uno por uno para saberlo.
 
            Debajo sigue el mismo `FormArray` de antes; sólo cambió el dibujo. -->
+      <!-- «Horario masivo» del pedido original, ARRIBA de la tabla y con
+           confirmación (propietario, 04/10/2026): repetir pisa los demás días,
+           así que primero pregunta y deja elegir qué fila repetir. -->
+      <div class="agenda-create__tabla-acciones">
+        <p class="agenda-create__tabla-ayuda">
+          «Otros servicios» son los que ofrecés además de la consulta: cirugías, toma de muestras,
+          tratamientos y similares.
+        </p>
+        @if (diasActivos().length > 1) {
+          <button
+            app-button
+            variant="outline"
+            size="sm"
+            type="button"
+            data-testid="agenda-create-masivo"
+            (clicked)="abrirRepetir()"
+          >
+            Repetir un horario en todos los días
+          </button>
+        }
+      </div>
+
       <div class="agenda-create__tabla-scroll">
         <table class="agenda-create__tabla">
           <caption class="agenda-create__tabla-caption">
@@ -237,33 +267,33 @@
                     />
                   </td>
                   @if (!flexible()) {
-                  <td>
-                    <app-select
-                      [options]="opcionesDeDuracion"
-                      [value]="grupoDe(dia.indice).controls['duracion'].value"
-                      [ariaLabel]="'Cuánto dura una consulta, ' + dia.largo"
-                      (valueChange)="fijarDeLaFila(dia.indice, 'duracion', $event)"
-                    />
-                  </td>
-                  <td>
-                    <app-select
-                      [options]="opcionesDeRespiro"
-                      [value]="grupoDe(dia.indice).controls['respiro'].value"
-                      [ariaLabel]="'Descanso entre consultas, ' + dia.largo"
-                      (valueChange)="fijarDeLaFila(dia.indice, 'respiro', $event)"
-                    />
-                  </td>
-                  <!-- El costo, en la misma fila: elegir descanso sobre una
+                    <td>
+                      <app-select
+                        [options]="opcionesDeDuracion"
+                        [value]="grupoDe(dia.indice).controls['duracion'].value"
+                        [ariaLabel]="'Cuánto dura una consulta, ' + dia.largo"
+                        (valueChange)="fijarDeLaFila(dia.indice, 'duracion', $event)"
+                      />
+                    </td>
+                    <td>
+                      <app-select
+                        [options]="opcionesDeRespiro"
+                        [value]="grupoDe(dia.indice).controls['respiro'].value"
+                        [ariaLabel]="'Descanso entre consultas, ' + dia.largo"
+                        (valueChange)="fijarDeLaFila(dia.indice, 'respiro', $event)"
+                      />
+                    </td>
+                    <!-- El costo, en la misma fila: elegir descanso sobre una
                        franja corta quita turnos, y ese número no se deduce. -->
-                  <td class="agenda-create__fila-turnos" aria-live="polite">
-                    @if (soloServicios(dia.indice)) {
-                      <!-- Sin turnos fijos: cada servicio dura lo que declaró su
+                    <td class="agenda-create__fila-turnos" aria-live="polite">
+                      @if (soloServicios(dia.indice)) {
+                        <!-- Sin turnos fijos: cada servicio dura lo que declaró su
                            profesional y el turno nace al reservarlo. -->
-                      <span title="Los turnos de servicios nacen al reservar">—</span>
-                    } @else {
-                      <strong>{{ turnosDelDia(dia.indice) }}</strong>
-                    }
-                  </td>
+                        <span title="Los turnos de servicios nacen al reservar">—</span>
+                      } @else {
+                        <strong>{{ turnosDelDia(dia.indice) }}</strong>
+                      }
+                    </td>
                   }
                 } @else {
                   <td [attr.colspan]="flexible() ? 3 : 6" class="agenda-create__fila-apagada">
@@ -277,7 +307,9 @@
       </div>
 
       @if (sinDias()) {
-        <p class="agenda-create__vacio">Marcá «Sí» en los días que atendés para cargar su horario.</p>
+        <p class="agenda-create__vacio">
+          Marcá «Sí» en los días que atendés para cargar su horario.
+        </p>
       }
 
       <!-- La hora de almuerzo: una para toda la semana. Por dentro, cada día
@@ -325,28 +357,20 @@
         </div>
       }
 
-      @if (diasActivos().length > 1) {
-        <!-- «Horario masivo» del pedido original: una configuración para
-             varios días. Se llama por lo que hace, no por su nombre técnico. -->
-        <button
-          app-button
-          variant="outline"
-          size="sm"
-          type="button"
-          data-testid="agenda-create-masivo"
-          (clicked)="repetirElPrimero()"
-        >
-          Aplicar este horario a todos los días encendidos
-        </button>
-      }
-
       <!-- La vista previa: los turnos que van a salir, sin llamar a la API.
            Se recalcula sola al cambiar una hora o una duración. -->
       @if (!sinDias()) {
         <div class="agenda-create__previa" role="status">
           <h3 class="agenda-create__previa-titulo">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
-                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
               <circle cx="12" cy="12" r="9" />
               <path d="M12 7v5l3 2" />
             </svg>
@@ -398,8 +422,27 @@
                 @if (!flexible() && dia.restoDesde !== null) {
                   <p class="agenda-create__previa-resto">
                     Te queda libre de {{ dia.restoDesde }} a
-                    {{ grupoDe(diasActivos()[$index].indice).controls.hasta.value }} ({{ dia.resto }}
+                    {{ grupoDe(diasActivos()[$index].indice).controls.hasta.value }} ({{
+                      dia.resto
+                    }}
                     min): no alcanza para otra consulta.
+                  </p>
+                }
+                <!-- Redondeo hacia adelante (propietario, 04/10/2026): el último
+                     turno se completa aunque pase la hora de fin. Se dice, para
+                     que la hora de cierre de arriba no sorprenda. -->
+                @if (
+                  !flexible() &&
+                  dia.turnos.length > 0 &&
+                  dia.turnos[dia.turnos.length - 1].hasta >
+                    grupoDe(diasActivos()[$index].indice).controls.hasta.value
+                ) {
+                  <p
+                    class="agenda-create__previa-resto"
+                    data-testid="agenda-create-previa-extiende"
+                  >
+                    El último turno termina a las {{ dia.turnos[dia.turnos.length - 1].hasta }}: se
+                    completa aunque pase tu hora de fin, para que no pierdas ese tiempo.
                   </p>
                 }
               </li>
@@ -494,7 +537,11 @@
                 hint="Hasta cuánto antes del turno se puede pedir."
               >
                 <div class="agenda-create__con-unidad">
-                  <app-input type="number" placeholder="Ej.: 60" formControlName="minNoticeMinutes" />
+                  <app-input
+                    type="number"
+                    placeholder="Ej.: 60"
+                    formControlName="minNoticeMinutes"
+                  />
                   <span class="agenda-create__unidad" aria-hidden="true">min</span>
                 </div>
               </app-form-field>
@@ -528,7 +575,11 @@
                 hint="Máximo de turnos pendientes a la vez."
               >
                 <div class="agenda-create__con-unidad">
-                  <app-input type="number" placeholder="Ej.: 2" formControlName="maxActivePerPatient" />
+                  <app-input
+                    type="number"
+                    placeholder="Ej.: 2"
+                    formControlName="maxActivePerPatient"
+                  />
                   <span class="agenda-create__unidad" aria-hidden="true">turnos</span>
                 </div>
               </app-form-field>
@@ -628,10 +679,53 @@
       <!-- «Cancelar» del pedido original. Vuelve a la agenda sin publicar; no
            limpia nada, porque cancelar y limpiar son dos cosas distintas y
            confundirlas hace perder trabajo. -->
-      <a app-button variant="ghost" data-testid="agenda-create-cancelar" [routerLink]="rutaDeMiAgenda">
+      <a
+        app-button
+        variant="ghost"
+        data-testid="agenda-create-cancelar"
+        [routerLink]="rutaDeMiAgenda"
+      >
         Cancelar
       </a>
     </div>
+
+    @if (repetirAbierto()) {
+      <app-content-dialog
+        heading="¿Repetir un horario en todos los días?"
+        description="Elegí qué fila se copia. Se reemplazan el horario, qué atendés, la duración y el descanso de los demás días habilitados."
+        size="sm"
+        closeLabel="Cancelar"
+        (closed)="cerrarRepetir()"
+      >
+        <app-form-field label="Fila que se repite">
+          <app-select
+            data-testid="agenda-create-masivo-fila"
+            [options]="opcionesDeFilaARepetir()"
+            [value]="filaARepetir()"
+            (valueChange)="filaARepetir.set($event)"
+          />
+        </app-form-field>
+        <button
+          dialog-actions
+          app-button
+          type="button"
+          variant="outline"
+          data-testid="agenda-create-masivo-cancelar"
+          (clicked)="cerrarRepetir()"
+        >
+          Cancelar
+        </button>
+        <button
+          dialog-actions
+          app-button
+          type="button"
+          data-testid="agenda-create-masivo-confirmar"
+          (clicked)="repetirFila()"
+        >
+          Repetir en todos
+        </button>
+      </app-content-dialog>
+    }
 
     <!-- «Previsualizar horario»: el MISMO organismo que dibuja el horario ya
          publicado en «Mi agenda» (`ScheduleGrid`), no una imitación en texto.

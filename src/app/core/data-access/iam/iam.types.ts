@@ -420,6 +420,14 @@ export interface NewRegistrationCredential {
   readonly number: string;
   /** Dónde se cursó, como texto libre. */
   readonly issuingInstitutionText?: string;
+  /** Ciudad donde se cursó: sale de la universidad elegida. */
+  readonly issuingCityText?: string;
+  /** País donde se cursó, por nombre. */
+  readonly issuingCountryText?: string;
+  /** Qué profesión acredita, de `VS_BO_PROFESSION` (COB-2023). */
+  readonly professionConceptId?: string;
+  /** Cómo se llama el diplomado, la maestría o el doctorado. */
+  readonly titleText?: string;
   /** PDF ya subido anónimamente y reclamado al crear la cuenta. */
   readonly fileId?: string;
 }
