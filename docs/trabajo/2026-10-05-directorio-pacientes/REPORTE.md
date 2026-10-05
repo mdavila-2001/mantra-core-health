@@ -185,3 +185,15 @@ INSURANCE_OPERATOR restringido a su aseguradora; cobertura vigente para asegurad
 - origin/dev avanzó aa9453c0e (tutores/perfil) después de la consulta de PR anterior. Merge limpio35f187f7; directorio, cliente y specs sin diferencias respecto a la versión validada. Sin cambios de dependencias.
 - frontend-dev-finalbase-typecheck.txt y frontend-dev-finalbase-lint.txt: EXIT_CODE=0. frontend-dev-finalbase-unit.txt: 11 suites/218 tests PASS,27.80s. El push ejecuta el hook de build de producción; su resultado se añade a evidencia al finalizar.
 - Estos cambios de tutores/perfil no se ejercitan funcionalmente en esta tarea. Las pruebas reales conservan sus SHAs originales y no se presentan como reejecutadas sobre esta última base.
+
+## Build final frontend y publicación
+
+- Push24b5be17 ejecutó el hook de producción sin bypass sobre la basea9453c0e: PASS. [Salida completa](./evidencia/frontend-dev-finalbase-push-build.txt).
+
+`	ext
+COMMAND: git push origin marcelo/insurer-patient-directory-dev (native production build hook)
+Application bundle generation complete. [92.493 seconds] - 2026-10-05T18:02:26.004Z
+pre-push: la construcción pasó. Empujando.
+EXIT_CODE=0
+` 
+- El último commit siguiente sólo versiona esta salida y no cambia código; se consulta nuevamente PR960 tras ese push. La entrega global continúa A MEDIAS por gates heredados y CI/revisión.
