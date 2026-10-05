@@ -3,6 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 
 import { InsuranceClient } from './insurance.client';
+import { API_BASE_URL } from '../api';
 import type {
   BrokerProfile,
   CampaignPage,
@@ -39,7 +40,11 @@ describe('InsuranceClient', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        { provide: API_BASE_URL, useValue: '' },
+      ],
     });
 
     client = TestBed.inject(InsuranceClient);
@@ -55,7 +60,11 @@ describe('InsuranceClient', () => {
     const request = http.expectOne('/practitioners/hp%201%2Fx/insurance-carriers');
     expect(request.request.method).toBe('GET');
     const items = [
-      { carrierId: 'c-1', carrierName: 'Alianza Seguros', networks: [{ id: 'n-1', name: 'AFI GOLD' }] },
+      {
+        carrierId: 'c-1',
+        carrierName: 'Alianza Seguros',
+        networks: [{ id: 'n-1', name: 'AFI GOLD' }],
+      },
     ];
     request.flush({ items });
     http.verify();
@@ -494,7 +503,22 @@ describe('InsuranceClient', () => {
   });
 
   describe('directorio de pacientes de la aseguradora', () => {
-    it('listInsurerPatients pega en /insurance/patients con los filtros presentes y omite los vacíos', () => {
+    it('obtiene las opciones autorizadas y resuelve chat sólo por id y canal', () => {
+      client.patientDirectoryOptions().subscribe();
+      const options = http.expectOne('/insurance/patients/options');
+      expect(options.request.method).toBe('GET');
+      options.flush({ insurers: [] });
+      client.openPatientConversation('patient-1', 'internal').subscribe();
+      const conversation = http.expectOne('/insurance/patients/conversation');
+      expect(conversation.request.method).toBe('POST');
+      expect(conversation.request.params.keys()).toEqual([]);
+      expect(conversation.request.body).toEqual({
+        patientProfileId: 'patient-1',
+        channel: 'internal',
+      });
+      conversation.flush({ conversationId: 'conversation-1' });
+    });
+    it('listInsurerPatients pega en /insurance/patients/search con los filtros presentes y omite los vacíos', () => {
       let pagina: InsurerPatientPage | undefined;
       client
         .listInsurerPatients({
@@ -507,28 +531,32 @@ describe('InsuranceClient', () => {
         })
         .subscribe((respuesta) => (pagina = respuesta));
 
-      const request = http.expectOne((r) => r.url === '/insurance/patients');
-      expect(request.request.method).toBe('GET');
-      expect(request.request.params.keys().sort()).toEqual([
+      const request = http.expectOne((r) => r.url === '/insurance/patients/search');
+      expect(request.request.method).toBe('POST');
+      expect(Object.keys(request.request.body).sort()).toEqual([
         'birthDateFrom',
         'insuranceStatus',
         'limit',
         'search',
       ]);
-      expect(request.request.params.get('limit')).toBe('25');
+      expect(request.request.body.limit).toBe(25);
       request.flush({
         items: [
           {
             patientProfileId: 'p-1',
             fullName: 'Ana Pérez',
-            coverage: { hasActiveCoverage: false },
+            insurers: [],
+            messaging: { channel: 'internal', available: false },
           },
         ],
+        total: 1,
         limit: 25,
         nextCursor: 'c-2',
       });
 
-      expect(pagina?.items[0]?.coverage.hasActiveCoverage).toBe(false);
+      expect(pagina?.items[0]?.insurers).toEqual([]);
+      expect(request.request.params.keys()).toEqual([]);
+      expect(pagina?.total).toBe(1);
       expect(pagina?.nextCursor).toBe('c-2');
     });
   });
