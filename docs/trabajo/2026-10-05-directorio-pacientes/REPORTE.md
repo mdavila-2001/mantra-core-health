@@ -180,3 +180,8 @@ INSURANCE_OPERATOR restringido a su aseguradora; cobertura vigente para asegurad
 - API572 — OPEN, MERGEABLE, BLOCKED por review pendiente y CI docs pending; API573 — OPEN, MERGEABLE, CLEAN, sin checks configurados. Gates globales locales heredados siguen FAIL.
 - Runner marcelo-wsl-front offline demostrado en ci-runner-status.txt. No se usa una espera indefinida de checks mientras no existe runner operativo; pruebas locales y stack real se ejercitaron de forma aislada.
 - Entrega A MEDIAS; no se mergea ni se despliega por este agente. La publicación siguiente sólo versiona esta evidencia; se vuelve a consultar tras el último push en el cierre.
+## Última base frontend incorporada
+
+- origin/dev avanzó aa9453c0e (tutores/perfil) después de la consulta de PR anterior. Merge limpio35f187f7; directorio, cliente y specs sin diferencias respecto a la versión validada. Sin cambios de dependencias.
+- frontend-dev-finalbase-typecheck.txt y frontend-dev-finalbase-lint.txt: EXIT_CODE=0. frontend-dev-finalbase-unit.txt: 11 suites/218 tests PASS,27.80s. El push ejecuta el hook de build de producción; su resultado se añade a evidencia al finalizar.
+- Estos cambios de tutores/perfil no se ejercitan funcionalmente en esta tarea. Las pruebas reales conservan sus SHAs originales y no se presentan como reejecutadas sobre esta última base.
