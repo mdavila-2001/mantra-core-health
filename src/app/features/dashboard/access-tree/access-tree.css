@@ -116,8 +116,8 @@
   color: var(--zona-fg);
   box-shadow: inset 0 0 0 1px var(--zona-bd);
   transition:
-    scale var(--dur-fast) var(--ease-spring),
-    rotate var(--dur-fast) var(--ease-spring);
+    scale var(--dur-fast) var(--ease-standard),
+    background-color var(--dur-fast) var(--ease-standard);
 }
 
 .arbol__zona-icono app-nav-icon {
@@ -127,8 +127,7 @@
 
 .arbol__zona:hover .arbol__zona-icono,
 .arbol__zona:focus-visible .arbol__zona-icono {
-  scale: 1.06;
-  rotate: -3deg;
+  scale: 1.04;
 }
 
 .arbol__zona-texto {
@@ -335,7 +334,9 @@
   border-radius: var(--r-sm);
   background: var(--zona-bg);
   color: var(--zona-fg);
-  transition: scale var(--dur-fast) var(--ease-spring);
+  transition:
+    scale var(--dur-fast) var(--ease-standard),
+    background-color var(--dur-fast) var(--ease-standard);
 }
 
 .arbol__acceso-icono app-nav-icon {
@@ -352,7 +353,7 @@ a.arbol__acceso:focus-visible {
 
 a.arbol__acceso:hover .arbol__acceso-icono,
 a.arbol__acceso:focus-visible .arbol__acceso-icono {
-  scale: 1.08;
+  scale: 1.04;
 }
 
 a.arbol__acceso:active {

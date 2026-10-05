@@ -16,9 +16,116 @@
   }
 }
 
+/*
+ * Lo propio del armazón que la hoja global (`styles/alovida.css`) no trae.
+ *
+ * N-01 · a 375 px el encabezado lleva la hamburguesa, la flecha de «Volver»
+ * (en toda pantalla que no es el panel) y seis o siete acciones: campana,
+ * tema, Tutoriales, Chats, Ajustes, cuenta y, si hay, el selector de persona.
+ * La hoja global ya junta las acciones entre sí (`.app-header__derecha`, gap
+ * de 4 px a ≤ 400 px); con la flecha el avatar igual se salía 1 px de la
+ * pantalla y la página se podía correr de costado. Se agrupan los destinos
+ * secundarios en «Más accesos» en móvil y se conserva su presentación en línea
+ * en escritorio; el tema, las notificaciones y la cuenta siguen a la vista.
+ */
 @media (max-width: 400px) {
   .app-header {
     gap: var(--e1);
     padding-inline: var(--e2);
+  }
+}
+
+.app-header__rapidos {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.app-header__rapidos-boton {
+  display: none;
+}
+
+.app-header__rapidos-lista {
+  display: flex;
+  align-items: center;
+  gap: var(--e3);
+}
+
+.app-header__rapidos-label {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .app-header__rapidos-boton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    inline-size: 2.5rem;
+    block-size: 2.5rem;
+    padding: 0;
+    border: 1px solid var(--filete);
+    border-radius: 50%;
+    background: var(--sup-tarjeta);
+    color: inherit;
+    cursor: pointer;
+  }
+
+  .app-header__rapidos-boton svg {
+    inline-size: 1.25rem;
+    block-size: 1.25rem;
+  }
+
+  .app-header__rapidos-boton:focus-visible {
+    outline: 2px solid var(--aguamarina);
+    outline-offset: 2px;
+  }
+
+  .app-header__rapidos-lista {
+    position: absolute;
+    inset-block-start: calc(100% + var(--e2));
+    inset-inline-end: 0;
+    z-index: 30;
+    display: none;
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--e1);
+    inline-size: min(18rem, calc(100vw - 1.5rem));
+    max-block-size: calc(100dvh - var(--h-header) - var(--e6));
+    overflow-y: auto;
+    padding: var(--e2);
+    border: 1px solid var(--filete);
+    border-radius: var(--r-menu);
+    background: var(--sup-tarjeta);
+    box-shadow: 0 8px 24px rgb(0 0 0 / 18%);
+  }
+
+  .app-header__rapidos.is-open .app-header__rapidos-lista {
+    display: flex;
+  }
+
+  .app-header__rapidos-lista .app-header__ajustes,
+  .app-header__rapidos-lista .app-header__red-social {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: var(--e3);
+    inline-size: 100%;
+    min-block-size: 2.75rem;
+    box-sizing: border-box;
+    padding-inline: var(--e3);
+    border-radius: var(--r-ctrl);
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .app-header__rapidos-label,
+  .app-header__red-social-texto {
+    display: inline;
+    font-size: var(--fs-body);
+    font-weight: 500;
+  }
+
+  .app-header__rapidos-lista .app-header__chats-badge {
+    margin-inline-start: auto;
   }
 }
