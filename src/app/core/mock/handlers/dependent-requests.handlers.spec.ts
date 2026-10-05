@@ -1,5 +1,6 @@
 import { HttpHeaders } from '@angular/common/http';
 
+import { PARENTESCO } from '../fixtures/conceptos';
 import { PACIENTES } from '../fixtures/personas';
 import { MockRouter, type MockMethod, type MockReply } from '../mock-router';
 import { buscarUsuario, type MockUser } from '../mock-session';
@@ -65,7 +66,12 @@ describe('solicitudes de dependiente por CI (simulador)', () => {
   let solicitudId = '';
 
   it('un CI sin cuenta registrada responde 404 y no avisa a nadie', () => {
-    const respuesta = call('POST', '/profiles/patients/me/dependent-requests', { nationalId: '999999999' }, titular);
+    const respuesta = call(
+      'POST',
+      '/profiles/patients/me/dependent-requests',
+      { nationalId: '999999999' },
+      titular,
+    );
     expect(estado(respuesta)).toBe(404);
     expect((respuesta as MockReply).body).toMatchObject({
       message: 'No hay ninguna cuenta registrada con ese CI.',
@@ -74,17 +80,29 @@ describe('solicitudes de dependiente por CI (simulador)', () => {
 
   it('el propio CI se rechaza con 422', () => {
     const propio = PACIENTES[0]!.nationalId;
-    const respuesta = call('POST', '/profiles/patients/me/dependent-requests', { nationalId: propio }, titular);
+    const respuesta = call(
+      'POST',
+      '/profiles/patients/me/dependent-requests',
+      { nationalId: propio },
+      titular,
+    );
     expect(estado(respuesta)).toBe(422);
   });
 
   it('un CI vacío se rechaza con 400', () => {
-    const respuesta = call('POST', '/profiles/patients/me/dependent-requests', { nationalId: '  ' }, titular);
+    const respuesta = call(
+      'POST',
+      '/profiles/patients/me/dependent-requests',
+      { nationalId: '  ' },
+      titular,
+    );
     expect(estado(respuesta)).toBe(400);
   });
 
   it('con una cuenta existente crea la solicitud y le llega la notificación', () => {
-    const antes = avisosDe(jorge).filter((a) => a.destination?.type === 'DEPENDENT_LINK_REQUEST').length;
+    const antes = avisosDe(jorge).filter(
+      (a) => a.destination?.type === 'DEPENDENT_LINK_REQUEST',
+    ).length;
 
     const respuesta = call<{ status: number; body: { id: string; status: string } }>(
       'POST',
@@ -106,7 +124,12 @@ describe('solicitudes de dependiente por CI (simulador)', () => {
   });
 
   it('repetir la solicitud pendiente responde 409', () => {
-    const respuesta = call('POST', '/profiles/patients/me/dependent-requests', { nationalId: JORGE.nationalId }, titular);
+    const respuesta = call(
+      'POST',
+      '/profiles/patients/me/dependent-requests',
+      { nationalId: JORGE.nationalId },
+      titular,
+    );
     expect(estado(respuesta)).toBe(409);
   });
 
@@ -118,7 +141,9 @@ describe('solicitudes de dependiente por CI (simulador)', () => {
       jorge,
     ) as { id: string; requesterDisplayName: string }[];
     expect(deJorge.map((s) => s.id)).toContain(solicitudId);
-    expect(deJorge.find((s) => s.id === solicitudId)!.requesterDisplayName).toBe(PACIENTES[0]!.displayName);
+    expect(deJorge.find((s) => s.id === solicitudId)!.requesterDisplayName).toBe(
+      PACIENTES[0]!.displayName,
+    );
 
     const delTitular = call<unknown[]>(
       'GET',
@@ -130,12 +155,22 @@ describe('solicitudes de dependiente por CI (simulador)', () => {
   });
 
   it('sólo la persona destinataria puede responder', () => {
-    const respuesta = call('POST', `/profiles/patients/me/dependent-requests/${solicitudId}/accept`, {}, titular);
+    const respuesta = call(
+      'POST',
+      `/profiles/patients/me/dependent-requests/${solicitudId}/accept`,
+      {},
+      titular,
+    );
     expect(estado(respuesta)).toBe(404);
   });
 
   it('aceptar crea el vínculo y le avisa al titular', () => {
-    const respuesta = call('POST', `/profiles/patients/me/dependent-requests/${solicitudId}/accept`, {}, jorge);
+    const respuesta = call(
+      'POST',
+      `/profiles/patients/me/dependent-requests/${solicitudId}/accept`,
+      { relationshipConceptId: PARENTESCO['RELATIONSHIP_MOTHER'] },
+      jorge,
+    );
     expect(estado(respuesta)).toBe(200);
 
     const dependientes = call<{ patientProfileId: string }[]>(
@@ -148,15 +183,40 @@ describe('solicitudes de dependiente por CI (simulador)', () => {
 
     const avisos = avisosDe(titular).map((a) => a.subject);
     expect(avisos).toContain(`${JORGE.displayName} aceptó ser tu dependiente`);
+
+    const perfil = call<{
+      emergencyContacts: unknown[];
+      guardians: { displayName: string; relationshipDisplay: string }[];
+    }>('GET', '/profiles/patients/me', null, jorge) as {
+      emergencyContacts: unknown[];
+      guardians: { displayName: string; relationshipDisplay: string }[];
+    };
+    expect(perfil.emergencyContacts.length).toBeGreaterThan(0);
+    expect(perfil.guardians).toContainEqual(
+      expect.objectContaining({
+        displayName: PACIENTES[0]!.displayName,
+        relationshipDisplay: 'Madre',
+      }),
+    );
   });
 
   it('una solicitud ya respondida no se vuelve a responder', () => {
-    const respuesta = call('POST', `/profiles/patients/me/dependent-requests/${solicitudId}/reject`, {}, jorge);
+    const respuesta = call(
+      'POST',
+      `/profiles/patients/me/dependent-requests/${solicitudId}/reject`,
+      {},
+      jorge,
+    );
     expect(estado(respuesta)).toBe(409);
   });
 
   it('pedir de nuevo a quien ya es dependiente responde 409', () => {
-    const respuesta = call('POST', '/profiles/patients/me/dependent-requests', { nationalId: JORGE.nationalId }, titular);
+    const respuesta = call(
+      'POST',
+      '/profiles/patients/me/dependent-requests',
+      { nationalId: JORGE.nationalId },
+      titular,
+    );
     expect(estado(respuesta)).toBe(409);
   });
 });

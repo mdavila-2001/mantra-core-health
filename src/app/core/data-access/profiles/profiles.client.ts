@@ -388,20 +388,20 @@ export class ProfilesClient {
   /** `GET /profiles/patients/me/dependent-requests/incoming` — las que esperan respuesta. */
   listIncomingDependentLinkRequests(): Observable<readonly IncomingDependentLinkRequest[]> {
     return this.http
-      .get<
-        { id: string; requesterDisplayName: string; createdAt: string }[]
-      >(this.url('/profiles/patients/me/dependent-requests/incoming'))
-      .pipe(
-        map((body) => body.map((fila) => ({ ...fila, createdAt: new Date(fila.createdAt) }))),
-      );
+      .get<{ id: string; requesterDisplayName: string; createdAt: string }[]>(
+        this.url('/profiles/patients/me/dependent-requests/incoming'),
+      )
+      .pipe(map((body) => body.map((fila) => ({ ...fila, createdAt: new Date(fila.createdAt) }))));
   }
 
   /** `POST …/dependent-requests/:id/accept` — quien pidió pasa a representar a esta cuenta. */
-  acceptDependentLinkRequest(requestId: string): Observable<void> {
+  acceptDependentLinkRequest(requestId: string, relationshipConceptId?: string): Observable<void> {
     return this.http
       .post<unknown>(
-        this.url(`/profiles/patients/me/dependent-requests/${encodeURIComponent(requestId)}/accept`),
-        {},
+        this.url(
+          `/profiles/patients/me/dependent-requests/${encodeURIComponent(requestId)}/accept`,
+        ),
+        relationshipConceptId === undefined ? {} : { relationshipConceptId },
       )
       .pipe(map(() => undefined));
   }
@@ -410,7 +410,9 @@ export class ProfilesClient {
   rejectDependentLinkRequest(requestId: string): Observable<void> {
     return this.http
       .post<unknown>(
-        this.url(`/profiles/patients/me/dependent-requests/${encodeURIComponent(requestId)}/reject`),
+        this.url(
+          `/profiles/patients/me/dependent-requests/${encodeURIComponent(requestId)}/reject`,
+        ),
         {},
       )
       .pipe(map(() => undefined));
@@ -1134,12 +1136,15 @@ function toOwnPatientProfile(body: ConNulos<WireOwnPatientProfile>): OwnPatientP
     // preguntar. Vacías dicen «no declaró ninguna», que es lo correcto ahí.
     coverages: (limpio.coverages ?? []).map((coverage, index) => ({
       ...sinNulos(coverage),
-      id: coverage.id ?? `legacy:${coverage.policyIdentifier ?? coverage.memberIdentifier ?? coverage.planId ?? 'coverage'}:${index}`,
+      id:
+        coverage.id ??
+        `legacy:${coverage.policyIdentifier ?? coverage.memberIdentifier ?? coverage.planId ?? 'coverage'}:${index}`,
       benefits: (coverage.benefits ?? []).map((benefit, benefitIndex) => ({
         ...sinNulos(benefit),
         id: benefit.id ?? `legacy-benefit:${index}:${benefitIndex}`,
       })),
     })),
+    emergencyContacts: limpio.emergencyContacts ?? [],
     guardians: limpio.guardians ?? [],
   };
 }
