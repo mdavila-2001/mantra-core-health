@@ -19,6 +19,18 @@ import {
  * doler.
  */
 describe('APP_SECTIONS', () => {
+  it('el directorio admite administración global sin tenant y conserva el acceso de aseguradora', () => {
+    const directory = APP_SECTIONS.find(section => section.path === 'administration/insurance-patients')!;
+    expect(isVisibleTo(directory, ['SECURITY_ADMIN'])).toBe(true);
+    expect(isVisibleTo(directory, ['SUPERADMIN'], [], 'PHARMACY')).toBe(true);
+    expect(isVisibleTo(directory, ['INSURANCE_OPERATOR'], ['payer-1'], 'PAYER')).toBe(true);
+    expect(isVisibleTo(directory, ['USER'], ['payer-1'], 'PAYER')).toBe(true);
+    expect(isVisibleTo(directory, ['PATIENT'], ['payer-1'], 'PAYER')).toBe(false);
+    expect(isVisibleTo(directory, ['USER'])).toBe(false);
+    expect(isVisibleTo(directory, ['USER'], ['pharmacy-1'], 'PHARMACY')).toBe(false);
+    const organization = APP_SECTIONS.find(section => section.requiresTenant && !section.platformAccessRoles)!;
+    expect(isVisibleTo(organization, ['SUPERADMIN'])).toBe(false);
+  });
   it('no repite rutas: dos secciones con el mismo path se taparían entre sí', () => {
     const paths = APP_SECTIONS.map((s) => s.path);
 

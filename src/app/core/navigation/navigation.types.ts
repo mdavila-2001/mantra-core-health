@@ -325,6 +325,9 @@ export interface AppSection {
    */
   readonly requiresTenant?: boolean;
 
+  /** Acceso administrativo global explícito; el resto conserva los filtros de organización. */
+  readonly platformAccessRoles?: readonly string[];
+
   /**
    * Roles para los que la sección **no existe**: ni menú, ni «Tus accesos», ni
    * puerta que empujar.
@@ -569,9 +572,10 @@ export function isVisibleTo(
   activeTenantType: string | null = null,
 ): boolean {
   const required = section.roles;
+  if (section.platformAccessRoles?.some((role) => roles.includes(role))) return true;
 
-  // Lo primero, porque no admite excepción: una sección oculta para este rol no
-  // existe para esta sesión, comodín incluido. Ver {@link AppSection.hiddenFor}.
+  // Fuera del acceso global explícito, una sección oculta no existe para este
+  // rol, comodín incluido. Ver {@link AppSection.hiddenFor}.
   if (section.hiddenFor?.some((role) => roles.includes(role)) === true) {
     return false;
   }
