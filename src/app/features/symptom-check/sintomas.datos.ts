@@ -222,12 +222,15 @@ export const SINTOMAS_DE_ALARMA: readonly Sintoma[] = [
       // entero, no con una palabra suelta.
       'sangrado abundante',
       'no para de sangrar',
+      'no deja de sangrar',
+      'sigue sangrando y sangrando',
       'sangro sin parar',
       'perdi mucha sangre',
       'hemorragia',
       'vomito sangre',
       'sangre en el vomito',
       'sangrado que no para',
+      'sangrado que no se corta',
     ],
     alarma: true,
     especialidades: [],
@@ -479,9 +482,11 @@ export const SINTOMAS: readonly Sintoma[] = [
       'baje de peso sin hacer dieta',
       'baje de peso sin dieta',
       // Sin apetito + adelgazar: mismo estudio de base.
-      'no tengo hambre',
+      // «no tengo hambre» NO: queda en «no» + «hambre» y caza «tengo hambre y no …».
+      'perdi el hambre',
+      'falta de apetito',
+      'sin apetito',
       'perdi el apetito',
-      'no me da hambre',
       'estoy muy flaco',
     ],
     especialidades: [
@@ -1022,11 +1027,9 @@ export const SINTOMAS: readonly Sintoma[] = [
       'deposiciones liquidas',
       'estoy flojo del estomago',
       // Fuente: «El habla popular de Santa Cruz» (H. Sanabria Fernández, vía soysantacruz.com.bo) y Diccionario Camba de O. Roca.
-      // «Cursialera»: defecación líquida y frecuente; «tener el curso / estar de curso».
+      // «Cursialera»: defecación líquida y frecuente. «Estar de curso» lo resuelve el tokenizador
+      // (texto.ts): «curso» a secas es el de inglés.
       'cursialera',
-      'estoy de curso',
-      'tengo el curso',
-      'tener el curso',
       // Quechua «q'echa» = diarrea (PMC3259717).
       'qecha',
       'q echa',
@@ -1054,7 +1057,8 @@ export const SINTOMAS: readonly Sintoma[] = [
       'no puedo ir al bano',
       'no voy al bano',
       'no puedo cagar',
-      'no cago hace dias',
+      // «no cago hace días» NO: quedaba en «no» + «cago» y cazaba «cago sangre pero no me duele».
+      'llevo dias sin cagar',
       'estoy tapado',
     ],
     especialidades: [
@@ -1468,7 +1472,6 @@ export const SINTOMAS: readonly Sintoma[] = [
       'burnout',
       'estoy colapsado',
       'vivo preocupado',
-      'me preocupo por todo',
       'fobia',
       'miedo a salir de la casa',
       'miedo a la gente',
@@ -1614,11 +1617,12 @@ export const SINTOMAS: readonly Sintoma[] = [
       'pensamientos intrusivos',
       'pensamientos que no me puedo sacar',
       'me lavo las manos todo el tiempo',
-      'reviso todo muchas veces',
+      // Nada que quede en «revisar» u «ordenar» solos: cazaban «quiero que me revisen» u «ordenar estudios».
+      'compulsion por revisar',
+      'reviso varias veces las puertas',
       'reviso mil veces si cerre la puerta',
-      'tengo que revisar todo varias veces',
       'tengo manias',
-      'tengo que ordenar todo',
+      'obsesion por el orden',
       'obsesiones',
     ],
     especialidades: [
@@ -1635,16 +1639,16 @@ export const SINTOMAS: readonly Sintoma[] = [
       'me hago vomitar',
       'me provoco el vomito',
       'atracones',
-      'como a escondidas',
-      'como sin control',
+      // «como» se descarta (es también «como si»): todas dicen «comer».
+      'comer a escondidas',
+      'comer sin control',
       'me siento gorda aunque estoy flaca',
       'dejo de comer para no engordar',
       'me da culpa comer',
       'miedo a engordar',
       'vomito a proposito',
-      'como mucho y despues vomito',
       'miedo a subir de peso',
-      'casi no como para no engordar',
+      'casi no comer para no engordar',
     ],
     especialidades: [
       { nombre: 'Psiquiatría', peso: 3 },
@@ -1662,7 +1666,8 @@ export const SINTOMAS: readonly Sintoma[] = [
       'exploto de rabia',
       'ataques de ira',
       'estoy muy irritable',
-      'tengo mucha rabia',
+      // «rabia» sola NO: es también la enfermedad («vacuna contra la rabia»).
+      'siento mucha rabia',
       'me peleo con todos',
       'me pongo agresivo',
       'agresividad',
@@ -1891,7 +1896,9 @@ export const SINTOMAS: readonly Sintoma[] = [
       'impotencia',
       'eyaculacion precoz',
       // «no se me para» a secas NO: el motor se queda con «no» y cazaba cualquier negación.
-      'no se me para el pene',
+      // Ninguna se apoya en «no» + «pene» solos: cazaban «me duele el pene y no …».
+      'el pene no se me pone duro',
+      'el pene no se me endurece',
       'no se me levanta el pene',
       'se me pone blando el pene',
       'se me baja rapido',
@@ -1928,7 +1935,7 @@ export const SINTOMAS: readonly Sintoma[] = [
     id: 'atraso-menstrual',
     nombre: 'atraso menstrual',
     sinonimos: [
-      'no me vino',
+      'no me vino la regla',
       'no me baja la regla',
       'no me viene la menstruacion',
       'creo que estoy embarazada',
@@ -2115,7 +2122,8 @@ export const SINTOMAS: readonly Sintoma[] = [
     nombre: 'el desarrollo del niño',
     sinonimos: [
       'mi hijo no habla',
-      'no camina todavia',
+      'mi hijo no camina todavia',
+      'el bebe todavia no camina',
       'no sube de peso el bebe',
       'problemas de aprendizaje',
       'llora mucho el bebe',

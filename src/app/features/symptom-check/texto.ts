@@ -342,6 +342,8 @@ export interface Token {
  * encontrarse dentro de «ataques de pánico» — dos falsos positivos que el
  * motor viejo tenía, y el segundo mandaba a urgencias a alguien con ansiedad.
  */
+const FORMAS_DE_ESTAR: ReadonlySet<string> = new Set(['estoy', 'esta', 'estas', 'estaba', 'estuve', 'ando', 'anda', 'andaba']);
+
 export function tokenizar(normalizado: string): readonly Token[] {
   const tokens: Token[] = [];
   let frase = 0;
@@ -357,7 +359,15 @@ export function tokenizar(normalizado: string): readonly Token[] {
     if (CORTE_DURO.test(separador)) {
       frase += 1;
     }
-    const suLema = lema(texto);
+    // «para» después de «no» es el verbo parar, no la preposición: «no para de sangrar», «sangro y
+    // no para». Como preposición se descarta, y la alarma quedaba en «no» + «sangre» —que también
+    // dice «no hay sangre»—.
+    const esVerboParar = texto === 'para' && tokens.at(-1)?.texto === 'no';
+    // Camba «estar de curso» = tener diarrea (Sanabria Fernández). Sólo en esa construcción: a
+    // secas, «curso» es el de inglés.
+    const esCursoCamba =
+      texto === 'curso' && tokens.at(-1)?.texto === 'de' && FORMAS_DE_ESTAR.has(tokens.at(-2)?.texto ?? '');
+    const suLema = esVerboParar ? 'parar' : esCursoCamba ? 'cursialera' : lema(texto);
     tokens.push({
       texto,
       lema: suLema,
@@ -367,7 +377,7 @@ export function tokenizar(normalizado: string): readonly Token[] {
       hasta: desde + texto.length,
       frase,
       corte: CORTE_DURO.test(separador) || CORTE_BLANDO.test(separador),
-      contenido: !VACIAS.has(texto),
+      contenido: esVerboParar || !VACIAS.has(texto),
     });
     anterior = desde + texto.length;
     encontrado = PALABRAS.exec(normalizado);
