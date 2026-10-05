@@ -190,10 +190,11 @@ INSURANCE_OPERATOR restringido a su aseguradora; cobertura vigente para asegurad
 
 - Push24b5be17 ejecutó el hook de producción sin bypass sobre la basea9453c0e: PASS. [Salida completa](./evidencia/frontend-dev-finalbase-push-build.txt).
 
-`	ext
+```text
 COMMAND: git push origin marcelo/insurer-patient-directory-dev (native production build hook)
 Application bundle generation complete. [92.493 seconds] - 2026-10-05T18:02:26.004Z
 pre-push: la construcción pasó. Empujando.
 EXIT_CODE=0
-` 
-- El último commit siguiente sólo versiona esta salida y no cambia código; se consulta nuevamente PR960 tras ese push. La entrega global continúa A MEDIAS por gates heredados y CI/revisión.
+```
+
+- El commit posterior sólo versiona la evidencia y no cambia código; se consulta nuevamente PR960 tras ese push. La entrega global continúa A MEDIAS por gates heredados y CI/revisión.
