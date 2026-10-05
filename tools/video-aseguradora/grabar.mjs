@@ -242,6 +242,7 @@ async function main() {
   });
 
   const marcas = [];
+  let capturas = 0;
 
   async function mover(destX, destY, pasos = 28) {
     await page.mouse.move(destX, destY, { steps: pasos });
@@ -275,7 +276,7 @@ async function main() {
     const texto = await page.locator('body').innerText();
     if (/Andina|ANDINA/.test(texto)) problemas.push(`${nombre}: aparece «Andina» en pantalla`);
     if (/\.mock\b/.test(texto)) problemas.push(`${nombre}: aparece un dominio .mock en pantalla`);
-    await page.screenshot({ path: join(SALIDA, `${String(marcas.length).padStart(2, '0')}-${nombre}.png`) });
+    await page.screenshot({ path: join(SALIDA, `${String(++capturas).padStart(2, '0')}-${nombre}.png`) });
   }
   const marcar = (nombre) => marcas.push({ nombre, segundo: (Date.now() - t0) / 1000 });
 
@@ -317,22 +318,61 @@ async function main() {
   }
   await revisar('mis-productos');
 
-  // 3. Solicitudes recibidas: la bandeja y el detalle de una.
+  // 3. Solicitudes recibidas: la bandeja, aprobar una y rechazar otra. La
+  //    bandeja abre en «Por dictaminar»: la dictaminada sale de la lista y la
+  //    siguiente abierta pasa a ser la primera.
   await menu('/administration/received-claims');
   await page.getByTestId('received-claims-table').waitFor({ timeout: 30_000 });
   marcar('solicitudes-recibidas');
   await pausa(2200);
-  await mover(ANCHO * 0.6, ALTO * 0.62);
-  // Pasar sobre el paciente muestra su tarjeta; «Ver» abre el detalle.
+  // Pasar sobre el paciente muestra su tarjeta.
   await apuntar(page.getByTestId('received-claim-open').nth(1));
   await pausa(1800);
-  await desplazar(300, 1200);
-  await clic(page.getByTestId('received-claim-view').nth(2));
-  await page.getByRole('dialog', { name: 'Detalle de la solicitud' }).waitFor();
-  await pausa(2600);
-  await revisar('solicitud-detalle');
-  await page.keyboard.press('Escape');
-  await pausa(900);
+
+  const detalle = page.getByRole('dialog', { name: 'Detalle de la solicitud' });
+  const accion = (nombre) =>
+    detalle.getByTestId('received-claim-detail-actions').locator('button', { hasText: new RegExp(`^\\s*${nombre}\\s*$`) });
+  async function abrirPrimeraAbierta() {
+    await clic(page.getByTestId('received-claim-view').first());
+    await detalle.waitFor();
+    await pausa(1800);
+  }
+  async function verDictamen(nombre) {
+    await mover(ANCHO * 0.5, ALTO * 0.55);
+    await desplazar(500, 1800);
+    await revisar(nombre);
+    await clic(detalle.getByRole('button', { name: 'Cerrar' }));
+    await detalle.waitFor({ state: 'hidden' });
+    await pausa(900);
+  }
+
+  // Aprobar: confirma y emite la factura por el monto solicitado.
+  marcar('aprobar');
+  await abrirPrimeraAbierta();
+  await clic(accion('Aprobar'));
+  const confirmarAprobacion = page.getByRole('dialog', { name: /^Aprobar la solicitud/ });
+  await confirmarAprobacion.waitFor();
+  await pausa(1800);
+  await revisar('confirmar-aprobacion');
+  await clic(confirmarAprobacion.getByRole('button', { name: 'Aprobar y facturar' }));
+  await detalle.getByTestId('received-claim-invoices').waitFor();
+  await pausa(1500);
+  await verDictamen('solicitud-aprobada');
+
+  // Rechazar: pide el motivo, que el prestador va a leer, y no emite factura.
+  marcar('rechazar');
+  await abrirPrimeraAbierta();
+  await clic(accion('Rechazar'));
+  const confirmarRechazo = page.getByRole('dialog', { name: /^Rechazar la solicitud/ });
+  await confirmarRechazo.waitFor();
+  await pausa(1500);
+  await clic(confirmarRechazo.locator('textarea'));
+  await page.keyboard.type('El servicio no está cubierto por el plan contratado.', { delay: 55 });
+  await revisar('confirmar-rechazo');
+  await clic(confirmarRechazo.getByRole('button', { name: 'Rechazar', exact: true }));
+  await detalle.getByText('Rechazada: no se emite factura.').waitFor();
+  await pausa(1500);
+  await verDictamen('solicitud-rechazada');
 
   // 4. Siniestralidad: sólo «Por persona».
   await menu('/administration/insurance-analytics');

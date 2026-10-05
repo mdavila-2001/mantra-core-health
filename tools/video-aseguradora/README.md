@@ -4,7 +4,7 @@ Graba una interacción continua sobre el app real de la rama `mockup`, iniciando
 
 1. **Mi perfil.**
 2. **Mis productos.** Recorre los siete planes.
-3. **Solicitudes recibidas.** Muestra la tarjeta del paciente y abre el detalle de una solicitud.
+3. **Solicitudes recibidas.** Muestra la tarjeta del paciente, **aprueba** una solicitud abierta («Aprobar y facturar», que emite la factura) y **rechaza** otra con su motivo.
 4. **Siniestralidad.** Solo la pestaña «Por persona»: genera el informe.
 5. **Directorio de pacientes.** Hace una búsqueda.
 
