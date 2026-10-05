@@ -1,0 +1,126 @@
+npm notice run mantra-core-health@0.1.0 npx
+npm notice run ng test --watch=false --include=src/app/features/dashboard/access-tree/**/*.spec.ts --include=src/app/features/shell-layout/**/*.spec.ts
+Using Vitest configuration file: C:\Alovida\mch-video\vitest.config.ts
+[33m❯[39m Building...
+[32m✔[39m Building...
+[1mInitial chunk files[22m                                   [2m | [22m[1mNames[22m                                              [2m | [22m [1mRaw size[22m
+[32mspec-app-features-dashboard-access-tree-access-tree.js[39m[2m | [22m[2mspec-app-features-dashboard-access-tree-access-tree[22m[2m | [22m[36m718.01 kB[39m[2m | [22m
+[32mspec-app-features-shell-layout-shell-layout.js[39m        [2m | [22m[2mspec-app-features-shell-layout-shell-layout[22m        [2m | [22m[36m513.59 kB[39m[2m | [22m
+[32mchunk-SACDH3ET.js[39m                                     [2m | [22m[2m-[22m                                                  [2m | [22m[36m358.87 kB[39m[2m | [22m
+[32mstyles.css[39m                                            [2m | [22m[2mstyles[22m                                             [2m | [22m[36m166.42 kB[39m[2m | [22m
+[32mchunk-HZXEPMDQ.js[39m                                     [2m | [22m[2m-[22m                                                  [2m | [22m  [36m5.27 kB[39m[2m | [22m
+[32minit-testbed.js[39m                                       [2m | [22m[2minit-testbed[22m                                       [2m | [22m  [36m1.21 kB[39m[2m | [22m
+[32msetup-test-setup.js[39m                                   [2m | [22m[2msetup-test-setup[22m                                   [2m | [22m[36m984 bytes[39m[2m | [22m
+[32mvitest-mock-patch.js[39m                                  [2m | [22m[2mvitest-mock-patch[22m                                  [2m | [22m[36m974 bytes[39m[2m | [22m
+
+[1m [22m                                                     [2m | [22m[1mInitial total[22m                                      [2m | [22m  [1m1.77 MB[22m
+
+[1mLazy chunk files[22m                                      [2m | [22m[1mNames[22m                                              [2m | [22m [1mRaw size[22m
+[32mchunk-X4EJCEPU.js[39m                                     [2m | [22m[2mbolivia-municipalities-geometry[22m                    [2m | [22m[36m107.84 kB[39m[2m | [22m
+
+Application bundle generation complete. [91.396 seconds] - 2026-10-05T19:20:52.508Z
+
+[1m[33m[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: Alert is not used within the template of MedicalArticles[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/account/my-profile/medical-articles/medical-articles.ts:93:4:
+[37m      93 │     [32mAlert[37m,
+         ╵     [32m~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: RouterLink is not used within the template of MedicalArticles[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/account/my-profile/medical-articles/medical-articles.ts:105:4:
+[37m      105 │     [32mRouterLink[37m,
+          ╵     [32m~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: AppButtonLink is not used within the template of Questionnaires[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/account/questionnaires/questionnaires.ts:88:4:
+[37m      88 │     [32mAppButtonLink[37m,
+         ╵     [32m~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8107: NG8107: The left side of this optional chain operation does not include 'null' or 'undefined' in its type, therefore the '?.' operator can be replaced with the '.' operator. Find more at https://v21.angular.dev/extended-diagnostics/NG8107[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/glossary/glossary-network.html:15:34:
+[37m      15 │ ...<select [value]="titleNode()?.[32mslug[37m ?? ''" (change)="cambiarFoco...
+         ╵                                  [32m~~~~[0m
+
+  Warning occurs in the template of component GlossaryNetwork.
+
+    src/app/features/glossary/glossary-network.ts:64:15:
+[37m      64 │   templateUrl: [32m'./glossary-network.html'[37m,
+         ╵                [32m~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: Link is not used within the template of Groups[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/groups/groups.ts:59:4:
+[37m      59 │     [32mLink[37m,
+         ╵     [32m~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: AppButtonLink is not used within the template of SurveysHome[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/questionnaires/questionnaires.ts:132:4:
+[37m      132 │     [32mAppButtonLink[37m,
+          ╵     [32m~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: Card is not used within the template of SymptomCheck[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/symptom-check/symptom-check.ts:122:39:
+[37m      122 │ ... [Alert, AppButton, BodyMap, [32mCard[37m, Chip, FormField, RouterLink...
+          ╵                                 [32m~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: RouterLink is not used within the template of SymptomCheck[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/symptom-check/symptom-check.ts:122:62:
+[37m      122 │ ..., BodyMap, Card, Chip, FormField, [32mRouterLink[37m, Spinner, Textarea],
+          ╵                                      [32m~~~~~~~~~~[0m
+
+[39m[22m
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.10 [39m[90mC:/Alovida/mch-video[39m
+
+(node:19620) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:12780) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ [31m❯[39m [30m[46m mantra-core-health [49m[39m src/app/features/dashboard/access-tree/access-tree.spec.ts [2m([22m[2m16 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[33m 1202[2mms[22m[39m
+[31m     [31m×[31m la aseguradora ve exactamente dos zonas: Chats, y las cuatro de seguros (2026-09-25)[39m[32m 69[2mms[22m[39m
+
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 1 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/features/dashboard/access-tree/access-tree.spec.ts[2m > [22mAccessTree[2m > [22mla aseguradora ve exactamente dos zonas: Chats, y las cuatro de seguros (2026-09-25)
+[31m[1mAssertionError[22m: expected [ …(5) ] to deeply equal [ …(4) ][39m
+
+- Expected
++ Received
+
+  [
+    "/administration/insurance-analytics",
+    "/administration/insurance-campaigns",
+    "/administration/my-organization",
+    "/administration/insurance",
++   "/administration/received-claims",
+  ]
+
+[36m [2m❯[22m src/app/features/dashboard/access-tree/access-tree.spec.ts:[2m286:53[22m[39m
+    [90m284|[39m
+    [90m285|[39m     [34mabrir[39m([32m'organizacion'[39m)[33m;[39m
+    [90m286|[39m     [34mexpect[39m([34maccesos[39m()[33m.[39m[34mmap[39m((a) [33m=>[39m a[33m.[39mdataset[[32m'ruta'[39m]))[33m.[39m[34mtoEqual[39m([
+    [90m   |[39m                                                     [31m^[39m
+    [90m287|[39m       [32m'/administration/insurance-analytics'[39m[33m,[39m
+    [90m288|[39m       // Tarea 4 · M-06: el «Módulo de promociones» del registro de pr…
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯[22m[39m
+
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m1 passed[39m[22m[90m (2)[39m
+[2m      Tests [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m102 passed[39m[22m[90m (103)[39m
+[2m   Start at [22m 15:20:53
+[2m   Duration [22m 9.10s[2m (transform 3.06s, setup 995ms, import 3.93s, tests 6.07s, environment 2.87s)[22m
+
