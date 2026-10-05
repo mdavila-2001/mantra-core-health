@@ -17,14 +17,15 @@
   justify-content: space-between;
   gap: var(--sp-4);
   inline-size: 100%;
-  margin-block-start: var(--sp-4);
-  padding: var(--sp-5);
+  margin-block-start: var(--sp-5);
+  padding: var(--sp-6);
   border: 1px solid var(--border-default);
   /* El filo del lado del inicio es lo que la separa de la tira de resumen sin
      necesidad de un segundo color de fondo. */
   border-inline-start: 4px solid var(--petroleo, var(--border-strong));
   border-radius: var(--r-md);
   background: var(--bg-surface);
+  box-shadow: var(--shadow-sm);
 }
 
 .proxima-cita__titulo {
@@ -41,6 +42,8 @@
 
 .proxima-cita__titulo-icono {
   display: inline-flex;
+  align-items: center;
+  justify-content: center;
   inline-size: 1.25rem;
   block-size: 1.25rem;
   color: var(--petroleo, var(--text-secondary));
@@ -63,6 +66,7 @@
   font-size: var(--fs-h3);
   line-height: var(--lh-h3);
   color: var(--text-primary);
+  letter-spacing: -0.025em;
 }
 
 /* El día llega en minúscula del locale y acá encabeza. Sólo la inicial:
@@ -155,6 +159,15 @@
   border: 1px solid var(--border-subtle, var(--border-default));
   border-radius: var(--r-sm);
   background: var(--bg-surface);
+  transition:
+    border-color var(--dur-fast) var(--ease-standard),
+    background-color var(--dur-fast) var(--ease-standard),
+    box-shadow var(--dur-fast) var(--ease-standard);
+}
+
+.mi-salud__resumen-item:focus-within {
+  border-color: var(--brand-primary);
+  box-shadow: var(--shadow-sm);
 }
 
 .mi-salud__resumen-icono {
