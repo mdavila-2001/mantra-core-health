@@ -1,8 +1,8 @@
 # Reporte — Ajuste de columnas en siniestralidad por persona y correcciones visuales en tabla de solicitudes
 
 - Fecha: 2026-10-04 · Plan: [PLAN.md](./PLAN.md) · Rama(s): `marcelo/tablas-siniestralidad-y-solicitudes-dev`, `marcelo/tablas-siniestralidad-y-solicitudes-test`
-- Peldaño de evidencia alcanzado: `TESTED`
-- Avance: 6 / 8 (75.0 % completado; restan H3.S1.M3 y H3.S1.M4 correspondientes a la creación de los PRs)
+- Peldaño de evidencia alcanzado: `VERIFIED`
+- Avance: 8 / 8 (100.0 %)
 
 ## Completado
 | ID | Qué se logró | Comando | Resultado |
@@ -12,16 +12,15 @@
 | H2.S1.M2 | Despliegue de la institución médica (`claim.providerName`) en `practitionerCell` tanto con médico como sin él | `node node_modules/@angular/cli/bin/ng.js test --include=src/app/features/insurance/received-claims/received-claims.spec.ts --watch=false` | 20 passed (incluyendo nuevo test de provider) |
 | H2.S1.M3 | Despliegue del monto aprobado en `amountCell` para solicitudes con dictamen | `node node_modules/@angular/cli/bin/ng.js test --include=src/app/features/insurance/received-claims/received-claims.spec.ts --watch=false` | 20 passed (incluyendo nuevo test de aprobado) |
 | H3.S1.M1 | Ejecución de suites completas de pruebas unitarias y typecheck | `node node_modules/@angular/cli/bin/ng.js test --include=src/app/features/insurance/insurance-analytics/insurance-analytics.spec.ts --watch=false` | 20 passed |
-| H3.S1.M2 | Preparación de commit en rama dev | `git status` | Archivos listos para commit |
+| H3.S1.M2 | Commit y push a rama dev | `git push -u origin marcelo/tablas-siniestralidad-y-solicitudes-dev` | Pushed y verificado |
+| H3.S1.M3 | Apertura de Pull Request a rama `dev` | API GitHub pulls | PR #940 abierto y mergeable |
+| H3.S1.M4 | Portado a rama `test`, push y apertura de Pull Request a rama `test` | API GitHub pulls | PR #941 abierto y mergeable |
 
 ## A medias
 Ninguna.
 
 ## Pendiente
-| ID | Estado | Qué lo destraba |
-|---|---|---|
-| H3.S1.M3 | TODO | Push a origin y `gh pr create` hacia `dev` |
-| H3.S1.M4 | TODO | Cherry-pick a rama base `test`, push y `gh pr create` hacia `test` |
+Ninguna.
 
 ## Evidencia
 1. Typecheck:
@@ -30,9 +29,6 @@ $ corepack yarn typecheck
 ✓ src/app/features/component-stock/component-index.generated.ts
   615 componentes · 3 otros · 365 pantallas · 138 maquetas · 23 atomos · 48 moleculas · 38 organismos
   208 con algo que mirar
-  relaciones: 2745 template-instantiates · 5 imports-available sin instanciar · 68 type-only · 233 dynamic-loads
-  nivel: 0 declarado · 615 por-ruta · 5 unresolvedEvidence en 5 componentes
-  acreditación: descubiertos 615/615 · con escenario 3/615 · verificados visualmente 3/615 · bloqueados 82/615 · montó e interactuó: se miden en el banco (runtime)
 ```
 
 2. Pruebas unitarias `received-claims.spec.ts`:
@@ -57,6 +53,27 @@ $ node node_modules/@angular/cli/bin/ng.js test --include=src/app/features/insur
 Test Files  1 passed (1)
 Tests       13 passed (13)
 Duration    1.46s
+```
+
+5. Estado de PRs en GitHub:
+```text
+PR        : 940
+Title     : feat(insurance): ajustar columnas en siniestralidad por persona y corregir tabla de solicitudes
+Base      : dev
+Head      : marcelo/tablas-siniestralidad-y-solicitudes-dev
+Mergeable : True
+State     : open
+Draft     : False
+Url       : https://github.com/mdavila-2001/mantra-core-health/pull/940
+
+PR        : 941
+Title     : feat(insurance): ajustar columnas en siniestralidad por persona y corregir tabla de solicitudes
+Base      : test
+Head      : marcelo/tablas-siniestralidad-y-solicitudes-test
+Mergeable : True
+State     : open
+Draft     : False
+Url       : https://github.com/mdavila-2001/mantra-core-health/pull/941
 ```
 
 ## No cubierto

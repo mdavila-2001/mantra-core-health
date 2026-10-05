@@ -53,14 +53,14 @@
 ## H3 — Verificación integral y entrega de PRs
 **CA:** Todo el código pasa typecheck, pruebas dirigidas y se crean PRs a `dev` y `test`.
 **DoD:** Salida de checks y PRs mergeables demostrada.
-**Estado:** EN CURSO
+**Estado:** HECHO
 
 | ID | Microtarea | CA (binario) | DoD (comando de verificación) | Estado |
 |---|---|---|---|---|
 | H3.S1.M1 | Ejecutar typecheck y suites de tests | Cero errores de compilación y pruebas en verde | `corepack yarn typecheck` | HECHO |
-| H3.S1.M2 | Commit y push a rama dev | Rama subida a origin | `git push -u origin marcelo/tablas-siniestralidad-y-solicitudes-dev` | TODO |
-| H3.S1.M3 | Crear PR a `dev` | PR abierto | `gh pr create` | TODO |
-| H3.S1.M4 | Portar a rama `test` y crear PR | PR abierto a `test` | `gh pr create` | TODO |
+| H3.S1.M2 | Commit y push a rama dev | Rama subida a origin | `git push -u origin marcelo/tablas-siniestralidad-y-solicitudes-dev` | HECHO |
+| H3.S1.M3 | Crear PR a `dev` | PR abierto | `https://github.com/mdavila-2001/mantra-core-health/pull/940` | HECHO |
+| H3.S1.M4 | Portar a rama `test` y crear PR | PR abierto a `test` | `https://github.com/mdavila-2001/mantra-core-health/pull/941` | HECHO |
 
 ## Riesgos y bloqueos previstos
 | Riesgo | Impacto | Mitigación |
