@@ -26,7 +26,10 @@ import {
   BoMunicipalitiesCatalog,
   type RamaDepartamento,
 } from '../../../../core/data-access/terminology/bo-municipalities.service';
-import { BoOccupationsCatalog } from '../../../../core/data-access/terminology/bo-occupations.service';
+import {
+  BoOccupationsCatalog,
+  CODIGO_OCUPACION_OTRA,
+} from '../../../../core/data-access/terminology/bo-occupations.service';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
 import { NavigationService } from '../../../../core/navigation/navigation.service';
 import { loading, ready } from '../../../../core/view-state/view-state';
@@ -85,11 +88,6 @@ const NACIMIENTO_MAS_ANTIGUO = new Date(1900, 0, 1);
  * distintos para el mismo dato hacen dudar de si se trata del mismo campo.
  */
 const HINT_OCUPACION = 'En qué trabajás. Ayuda a tu médico con los riesgos propios de cada oficio.';
-
-/** Lo que se muestra cuando la ocupación guardada es texto de antes del catálogo. */
-function hintDeOcupacionHeredada(texto: string): string {
-  return `Registrada como «${texto}». Elegí una opción del catálogo para reemplazarla.`;
-}
 
 /** Los cambios mientras se arman: el contrato que sale es de solo lectura. */
 type CambiosEnCurso = {
@@ -261,8 +259,9 @@ export class PatientProfileEdit {
   protected readonly fechaNacimiento = signal<Date | null>(null);
   protected readonly sexoAlNacer = signal<BirthSexCode | null>(null);
 
-  /** La ocupación es un concepto de `VS_BO_OCCUPATION`, no un texto: ver `cargarOcupaciones`. */
+  /** El concepto elegido o la salida «Otro» que habilita texto libre. */
   protected readonly ocupacionConceptId = signal<string | null>(null);
+  protected readonly ocupacionTextoLibre = signal('');
 
   protected readonly municipio = signal<string | null>(null);
 
@@ -401,7 +400,9 @@ export class PatientProfileEdit {
 
   /* -- Catálogo de ocupaciones --------------------------------------------- */
 
-  protected readonly opcionesOcupacion = signal<readonly SelectOption<string>[]>([]);
+  protected readonly opcionesOcupacion = signal<
+    readonly (SelectOption<string> & { readonly code: string })[]
+  >([]);
 
   /** Lo tecleado en la lupa de ocupaciones. */
   protected readonly busquedaOcupacion = signal('');
@@ -435,6 +436,13 @@ export class PatientProfileEdit {
     return opcion ? { value: opcion.value, label: opcion.label } : null;
   });
 
+  /** El concepto de salida se reconoce por código estable, nunca por su rótulo. */
+  protected readonly ocupacionEsOtra = computed(
+    () =>
+      this.opcionesOcupacion().find((opcion) => opcion.value === this.ocupacionConceptId())
+        ?.code === CODIGO_OCUPACION_OTRA,
+  );
+
   /**
    * Guarda la ocupación elegida.
    *
@@ -443,34 +451,15 @@ export class PatientProfileEdit {
    */
   protected elegirOcupacion(opcion: ReferenceOption | null): void {
     this.ocupacionConceptId.set(opcion?.value ?? null);
+    if (!this.ocupacionEsOtra()) {
+      this.ocupacionTextoLibre.set('');
+    }
   }
 
   /** Ver `catalogoMunicipiosCaido`: mismo criterio y mismo aviso con reintento. */
   protected readonly catalogoOcupacionesCaido = signal(false);
 
-  /**
-   * La ayuda del campo de ocupación.
-   *
-   * Cuando el perfil trae texto libre y ningún concepto —lo escribió un alta
-   * anterior al catálogo— la ayuda lo dice: si no, el desplegable aparecería
-   * vacío y la persona leería que no declaró ocupación cuando sí lo hizo. El
-   * texto heredado **reemplaza** a la ayuda de siempre en vez de sumarse: dos
-   * párrafos debajo de un desplegable compiten entre sí.
-   */
-  protected readonly hintOcupacion = computed(() => {
-    const heredada = this.ocupacionHeredada();
-    return heredada === null ? HINT_OCUPACION : hintDeOcupacionHeredada(heredada);
-  });
-
-  /** El texto libre que sigue guardado porque nadie eligió un concepto todavía. */
-  private readonly ocupacionHeredada = computed(() => {
-    const perfil = this.datos();
-    if (perfil === null || perfil.occupationConceptId !== undefined) {
-      return null;
-    }
-    const texto = perfil.occupationFreeText?.trim() ?? '';
-    return texto === '' ? null : texto;
-  });
+  protected readonly hintOcupacion = HINT_OCUPACION;
 
   /* -- Validación mínima, la misma que admite el backend ------------------- */
 
@@ -558,6 +547,8 @@ export class PatientProfileEdit {
     this.fechaNacimiento.set(perfil.birthDate ?? null);
     this.sexoAlNacer.set(perfil.sexAtBirth ?? null);
     this.ocupacionConceptId.set(perfil.occupationConceptId ?? null);
+    this.ocupacionTextoLibre.set(perfil.occupationFreeText ?? '');
+    this.seleccionarOtroParaTextoLibre();
     this.municipio.set(perfil.residenceMunicipalityConceptId ?? null);
     this.departamentoEmisor.set(perfil.issuerAdministrativeAreaConceptId ?? null);
     this.nit.set(perfil.taxId ?? '');
@@ -629,8 +620,13 @@ export class PatientProfileEdit {
       next: (opciones) => {
         this.catalogoOcupacionesCaido.set(false);
         this.opcionesOcupacion.set(
-          opciones.map((opcion) => ({ value: opcion.conceptId, label: opcion.display })),
+          opciones.map((opcion) => ({
+            value: opcion.conceptId,
+            label: opcion.display,
+            code: opcion.code,
+          })),
         );
+        this.seleccionarOtroParaTextoLibre();
       },
       error: () => {
         this.opcionesOcupacion.set([]);
@@ -643,6 +639,17 @@ export class PatientProfileEdit {
   protected reintentarOcupaciones(): void {
     this.ocupaciones.olvidar();
     this.cargarOcupaciones();
+  }
+
+  /** Representa un oficio guardado como texto con la salida visible «Otro». */
+  private seleccionarOtroParaTextoLibre(): void {
+    if (this.ocupacionConceptId() !== null || this.ocupacionTextoLibre().trim() === '') {
+      return;
+    }
+    const otra = this.opcionesOcupacion().find((opcion) => opcion.code === CODIGO_OCUPACION_OTRA);
+    if (otra !== undefined) {
+      this.ocupacionConceptId.set(otra.value);
+    }
   }
 
   private aGrupo(rama: RamaDepartamento): TreeSelectGroup<string> {
@@ -889,13 +896,35 @@ export class PatientProfileEdit {
     Object.assign(cambios, coordenadasCambiadas('home', this.gpsDomicilio()));
     Object.assign(cambios, coordenadasCambiadas('work', this.gpsTrabajo()));
 
-    // La ocupación **sí se puede borrar**: es el único concepto de esta pantalla
-    // cuyo validador admite la cadena vacía, así que volver a «Sin especificar»
-    // la vacía en vez de no mandar nada. El texto libre de las altas viejas no
-    // viaja: quien no toca el desplegable lo conserva tal cual.
+    // «Otro» es sólo la salida visual del catálogo: se guarda el oficio escrito,
+    // no ese concepto. Elegir después una ocupación catalogada hace lo inverso;
+    // el backend deja una sola de las dos representaciones activa.
     const ocupacion = this.ocupacionConceptId();
-    if (ocupacion !== (original.occupationConceptId ?? null)) {
-      cambios.occupationConceptId = ocupacion ?? '';
+    const ocupacionOriginal = original.occupationConceptId ?? null;
+    if (this.ocupacionEsOtra()) {
+      if (ocupacionOriginal !== null) {
+        cambios.occupationConceptId = '';
+      }
+      const textoLibre = textoCambiado(
+        this.ocupacionTextoLibre(),
+        original.occupationFreeText,
+      );
+      if (textoLibre !== undefined) {
+        cambios.occupationFreeText = textoLibre;
+      }
+    } else {
+      if (ocupacion !== ocupacionOriginal) {
+        cambios.occupationConceptId = ocupacion ?? '';
+      }
+      if (ocupacion === null && ocupacionOriginal === null) {
+        const textoLibre = textoCambiado(
+          this.ocupacionTextoLibre(),
+          original.occupationFreeText,
+        );
+        if (textoLibre !== undefined) {
+          cambios.occupationFreeText = textoLibre;
+        }
+      }
     }
 
     return cambios;
