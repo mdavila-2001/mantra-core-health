@@ -26,7 +26,7 @@ const uninsured = {
   insurers: [],
   messaging: { channel: 'internal', available: false },
 };
-type Scenario = 'data' | 'empty' | 'error' | 'loading' | 'forbidden';
+type Scenario = 'data' | 'empty' | 'error' | 'loading' | 'forbidden' | 'chat-error';
 
 async function setup(page: Page, scenario: Scenario = 'data') {
   const payload = Buffer.from(
@@ -45,7 +45,8 @@ async function setup(page: Page, scenario: Scenario = 'data') {
   });
   const problems: string[] = [];
   const requests: { url: string; body: Record<string, unknown> }[] = [];
-  const allowedStatus = scenario === 'error' ? 500 : scenario === 'forbidden' ? 403 : null;
+  const allowedStatus =
+    scenario === 'error' ? 500 : ['forbidden', 'chat-error'].includes(scenario) ? 403 : null;
   page.on('pageerror', (error) => problems.push(error.message));
   page.on('console', (message) => {
     if (
@@ -61,69 +62,76 @@ async function setup(page: Page, scenario: Scenario = 'data') {
     )
       problems.push(`${response.status()} ${new URL(response.url()).pathname}`);
   });
-  await page.route('**/api/**', async (intercepted) => {
-    const url = new URL(intercepted.request().url());
-    const endpoint = url.pathname.replace(/^\/api/, '');
-    let json: unknown = {};
-    let status = 200;
-    if (endpoint === '/iam/auth/token/refresh')
-      json = {
-        accessToken: token,
-        refreshToken: 'synthetic-refresh',
-        expiresAt: '2100-01-01T00:00:00Z',
-      };
-    else if (endpoint === '/community/profiles/me') json = null;
-    else if (endpoint === '/insurance/patients/options') {
-      json = { insurers: patient.insurers };
-      if (scenario === 'forbidden') {
-        status = 403;
-        json = { code: 'FORBIDDEN', message: 'Acceso denegado' };
-      }
-    } else if (endpoint === '/system-context/dynamic-enums')
-      json = {
-        code: 'gender',
-        name: 'Sexo',
-        definitionId: 'gender',
-        valueSetId: 'gender',
-        cacheToken: 'v1',
-        options: [
-          { conceptId: 'gender-f', code: 'GENDER_FEMALE', display: 'Femenino' },
-          { conceptId: 'gender-m', code: 'GENDER_MALE', display: 'Masculino' },
-          { conceptId: 'gender-o', code: 'GENDER_OTHER', display: 'Otro' },
-        ],
-      };
-    else if (endpoint === '/insurance/patients/search') {
-      expect(intercepted.request().method()).toBe('POST');
-      expect(url.search).toBe('');
-      const body = intercepted.request().postDataJSON() as Record<string, unknown>;
-      requests.push({ url: url.pathname, body });
-      if (scenario === 'loading') return;
-      if (scenario === 'error') {
-        status = 500;
-        json = { message: 'Error sintético', requestId: 'synthetic-request' };
-      } else
+  // Supports both same-origin production and a local /api proxy build.
+  await page.route(
+    (url) =>
+      /^\/(?:api\/)?(?:iam|community|insurance|system-context|notifications|profiles)\//.test(
+        url.pathname,
+      ),
+    async (intercepted) => {
+      const url = new URL(intercepted.request().url());
+      const endpoint = url.pathname.replace(/^\/api/, '');
+      let json: unknown = {};
+      let status = 200;
+      if (endpoint === '/iam/auth/token/refresh')
         json = {
-          items:
-            scenario === 'empty' || body['search'] === 'sin coincidencia'
-              ? []
-              : [patient, uninsured],
-          total: scenario === 'empty' || body['search'] === 'sin coincidencia' ? 0 : 42,
-          limit: body['limit'],
-          nextCursor: body['cursor'] ? null : 'synthetic-next',
+          accessToken: token,
+          refreshToken: 'synthetic-refresh',
+          expiresAt: '2100-01-01T00:00:00Z',
         };
-    } else if (endpoint === '/insurance/patients/conversation') {
-      expect(intercepted.request().postDataJSON()).toEqual({
-        patientProfileId: patient.patientProfileId,
-        channel: 'internal',
-      });
-      status = 403;
-      json = { message: 'Cobertura revocada' };
-    } else if (endpoint.includes('notifications'))
-      json = { items: [], nextCursor: null, unreadCount: 0 };
-    else if (endpoint.includes('dependents')) json = [];
-    else if (endpoint.includes('conversations')) json = { items: [], nextCursor: null };
-    await intercepted.fulfill({ status, json });
-  });
+      else if (endpoint === '/community/profiles/me') json = null;
+      else if (endpoint === '/insurance/patients/options') {
+        json = { insurers: patient.insurers };
+        if (scenario === 'forbidden') {
+          status = 403;
+          json = { code: 'FORBIDDEN', message: 'Acceso denegado' };
+        }
+      } else if (endpoint === '/system-context/dynamic-enums')
+        json = {
+          code: 'gender',
+          name: 'Sexo',
+          definitionId: 'gender',
+          valueSetId: 'gender',
+          cacheToken: 'v1',
+          options: [
+            { conceptId: 'gender-f', code: 'GENDER_FEMALE', display: 'Femenino' },
+            { conceptId: 'gender-m', code: 'GENDER_MALE', display: 'Masculino' },
+            { conceptId: 'gender-o', code: 'GENDER_OTHER', display: 'Otro' },
+          ],
+        };
+      else if (endpoint === '/insurance/patients/search') {
+        expect(intercepted.request().method()).toBe('POST');
+        expect(url.search).toBe('');
+        const body = intercepted.request().postDataJSON() as Record<string, unknown>;
+        requests.push({ url: url.pathname, body });
+        if (scenario === 'loading') return;
+        if (scenario === 'error') {
+          status = 500;
+          json = { message: 'Error sintético', requestId: 'synthetic-request' };
+        } else
+          json = {
+            items:
+              scenario === 'empty' || body['search'] === 'sin coincidencia'
+                ? []
+                : [patient, uninsured],
+            total: scenario === 'empty' || body['search'] === 'sin coincidencia' ? 0 : 42,
+            limit: body['limit'],
+            nextCursor: body['cursor'] ? null : 'synthetic-next',
+          };
+      } else if (endpoint === '/insurance/patients/conversation') {
+        expect(intercepted.request().postDataJSON()).toEqual({
+          patientProfileId: patient.patientProfileId,
+          channel: 'internal',
+        });
+        status = 403;
+        json = { message: 'Cobertura revocada' };
+      } else if (endpoint.includes('notifications'))
+        json = { items: [], nextCursor: null, unreadCount: 0 };
+      else if (endpoint.includes('dependents')) json = [];
+      else if (endpoint.includes('conversations')) json = { items: [], nextCursor: null };
+      await intercepted.fulfill({ status, json });
+    },
+  );
   await page.goto(route);
   await expect(
     page.getByRole('heading', { name: 'Directorio de Pacientes', exact: true }),
@@ -197,10 +205,14 @@ test.describe('Directorio de pacientes @ui-mock', () => {
         await expect(
           page.getByText('No tenés acceso a esta sección', { exact: true }),
         ).toBeVisible();
-      await page.screenshot({
-        path: path.join(evidence, `directory-${scenario}.png`),
-        fullPage: true,
-      });
+      for (const theme of ['light', 'dark']) {
+        if (theme === 'dark')
+          await page.getByRole('switch', { name: 'Cambiar a modo oscuro', exact: true }).click();
+        await page.screenshot({
+          path: path.join(evidence, `directory-${scenario}-${theme}.png`),
+          fullPage: true,
+        });
+      }
       expect(problems).toEqual([]);
     });
   }
@@ -224,6 +236,23 @@ test.describe('Directorio de pacientes @ui-mock', () => {
       .getByRole('combobox', { name: 'Filas por página' })
       .selectOption({ label: '50 por página' });
     await expect.poll(() => requests.at(-1)?.body['limit']).toBe(50);
+    expect(problems).toEqual([]);
+  });
+
+  test('error de conversación conserva la búsqueda y permite reintentar', async ({ page }) => {
+    const { problems, requests } = await setup(page, 'chat-error');
+    const search = page.getByRole('textbox', { name: 'Buscar pacientes', exact: true });
+    await search.fill('Paciente Sintético');
+    await expect.poll(() => requests.at(-1)?.body['search']).toBe('Paciente Sintético');
+    const message = page.getByTestId('table-insurer-patients').getByRole('button', {
+      name: `Enviar Mensaje a ${patient.fullName}`,
+      exact: true,
+    });
+    await message.click();
+    await expect(page.getByText('No se pudo abrir la conversación', { exact: true })).toBeVisible();
+    await expect(search).toHaveValue('Paciente Sintético');
+    await expect(message).toBeEnabled();
+    await expect(page).toHaveURL(new RegExp(`${route}$`));
     expect(problems).toEqual([]);
   });
 });
