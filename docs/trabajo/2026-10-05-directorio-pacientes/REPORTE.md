@@ -172,3 +172,11 @@ INSURANCE_OPERATOR restringido a su aseguradora; cobertura vigente para asegurad
 - Conflicto OpenAPI dev: se leyó el contenido entrante, se conservaron todos sus paths/schemas ajenos y se regeneró sólo el directorio desde el controller real; comparación estructural no-directory PASS. No se eligió un archivo entero ignorando la otra funcionalidad.
 - Compatibilidad final API: dev e9708dc9 types/build y70 unit PASS; test d125415b types/build y74 unit PASS. Lint global final dev4 FAIL/test53 FAIL; OpenAPI global final dev3 FAIL/test2 FAIL, todos de base demostrados. Lint dev anterior PASS corresponde a la base previa, no al código final.
 - La integración real anterior sigue referida a sus SHAs explícitos; no se presenta como reejecutada después. Los formularios clínicos nuevos no forman parte de la fixture QA con SEED_CONTENT_ON_BOOT=false. Tutores y búsqueda general de terminología no se ejercitaron en este alcance.
+
+## Estado de PR consultado después de publicar código y QA
+
+- Frontend960 — OPEN, isDraft=false, MERGEABLE, UNSTABLE; dependencias/e2e/verificar pending. Consultado2026-10-05T17:51:58Z tras push0037e10a. [Salida literal](./evidencia/pr-960-mergeable.txt).
+- Frontend956 — MERGED externamente, head17d0f205; checks históricos pendientes. Consultado2026-10-05T17:52:01Z. [Salida literal](./evidencia/pr-956-mergeable.txt). UNKNOWN en mergeable corresponde al PR cerrado, no a un PR abierto entregado como listo.
+- API572 — OPEN, MERGEABLE, BLOCKED por review pendiente y CI docs pending; API573 — OPEN, MERGEABLE, CLEAN, sin checks configurados. Gates globales locales heredados siguen FAIL.
+- Runner marcelo-wsl-front offline demostrado en ci-runner-status.txt. No se usa una espera indefinida de checks mientras no existe runner operativo; pruebas locales y stack real se ejercitaron de forma aislada.
+- Entrega A MEDIAS; no se mergea ni se despliega por este agente. La publicación siguiente sólo versiona esta evidencia; se vuelve a consultar tras el último push en el cierre.
