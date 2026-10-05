@@ -577,21 +577,23 @@ function dibujarEncabezado(hoja: Hoja, bloque: PdfBlock): void {
   const tamano = TAMANO_DE_ENCABEZADO[nivel] ?? TIPOGRAFIA.cuerpo;
 
   if (nivel <= 2) {
+    const titulo = partir(hoja, bloque.text.toLocaleUpperCase('es'), hoja.util - 18,
+      TIPOGRAFIA.subseccion, 'bold');
     abrirEspacio(
       hoja,
-      RITMO.antesDeSeccion + RITMO.despuesDeSeccion + tamano + RITMO.linea * 2,
+      RITMO.antesDeSeccion + RITMO.despuesDeSeccion + titulo.length * RITMO.linea + RITMO.linea * 2,
     );
     hoja.y += RITMO.antesDeSeccion;
-    escribirEspaciado(hoja, {
-      texto: bloque.text.toLocaleUpperCase('es'),
-      x: hoja.izquierda,
-      y: hoja.y,
-      tamano: nivel === 1 ? TIPOGRAFIA.subseccion + 1.5 : TIPOGRAFIA.subseccion,
-      espaciado: ESPACIADO.subseccion,
-      estilo: 'bold',
-      color: COLOR_MARCA,
-    });
-    hoja.y += 7;
+    for (const linea of titulo) {
+      abrirEspacio(hoja, RITMO.linea + RITMO.despuesDeSeccion);
+      escribirEspaciado(hoja, {
+        texto: linea, x: hoja.izquierda, y: hoja.y,
+        tamano: nivel === 1 ? TIPOGRAFIA.subseccion + 1.5 : TIPOGRAFIA.subseccion,
+        espaciado: ESPACIADO.subseccion, estilo: 'bold', color: COLOR_MARCA,
+      });
+      hoja.y += RITMO.linea;
+    }
+    hoja.y -= 7;
     filete(hoja, hoja.y, nivel === 1 ? COLOR_FILETE_FUERTE : COLOR_FILETE, nivel === 1 ? 0.9 : 0.6);
     hoja.y += RITMO.despuesDeSeccion;
     return;
@@ -619,18 +621,13 @@ function dibujarEncabezado(hoja: Hoja, bloque: PdfBlock): void {
 /** Un párrafo del cuerpo. */
 function dibujarParrafo(hoja: Hoja, bloque: PdfBlock): void {
   const lineas = partir(hoja, bloque.text, hoja.util, TIPOGRAFIA.cuerpo, 'normal');
-  const alto = lineas.length * RITMO.linea;
-  abrirEspacio(hoja, alto);
-  escribirLineas(hoja, {
-    lineas,
-    x: hoja.izquierda,
-    y: hoja.y,
-    tamano: TIPOGRAFIA.cuerpo,
-    estilo: 'normal',
-    color: COLOR_TINTA,
-    interlineado: RITMO.linea,
-  });
-  hoja.y += alto + RITMO.entreBloques;
+  for (const linea of lineas) {
+    abrirEspacio(hoja, RITMO.linea);
+    escribir(hoja, { texto: linea, x: hoja.izquierda, y: hoja.y,
+      tamano: TIPOGRAFIA.cuerpo, estilo: 'normal', color: COLOR_TINTA });
+    hoja.y += RITMO.linea;
+  }
+  hoja.y += RITMO.entreBloques;
 }
 
 /**
@@ -647,31 +644,23 @@ function dibujarDato(hoja: Hoja, bloque: PdfBlock): void {
   const xValor = hoja.izquierda + RITMO.columnaDeEtiqueta;
   const anchoValor = hoja.util - RITMO.columnaDeEtiqueta;
 
-  const lineas = partir(hoja, valor, anchoValor, TIPOGRAFIA.cuerpo, 'normal');
-  const alto = lineas.length * RITMO.linea;
-  abrirEspacio(hoja, alto);
-
-  if (etiqueta !== '') {
-    escribirEspaciado(hoja, {
-      texto: etiqueta.toLocaleUpperCase('es'),
-      x: hoja.izquierda,
-      y: hoja.y,
-      tamano: TIPOGRAFIA.etiqueta,
-      espaciado: ESPACIADO.etiqueta,
-      estilo: 'bold',
-      color: COLOR_TINTA_SUAVE,
-    });
+  const valores = partir(hoja, valor, anchoValor, TIPOGRAFIA.cuerpo, 'normal');
+  const etiquetas = etiqueta === '' ? [] : partir(hoja, etiqueta.toLocaleUpperCase('es'),
+    RITMO.columnaDeEtiqueta - 12, TIPOGRAFIA.etiqueta, 'bold');
+  for (let i = 0; i < Math.max(valores.length, etiquetas.length); i += 1) {
+    abrirEspacio(hoja, RITMO.linea);
+    if (etiquetas[i] !== undefined) {
+      escribirEspaciado(hoja, { texto: etiquetas[i], x: hoja.izquierda, y: hoja.y,
+        tamano: TIPOGRAFIA.etiqueta, espaciado: ESPACIADO.etiqueta,
+        estilo: 'bold', color: COLOR_TINTA_SUAVE });
+    }
+    if (valores[i] !== undefined) {
+      escribir(hoja, { texto: valores[i], x: xValor, y: hoja.y,
+        tamano: TIPOGRAFIA.cuerpo, estilo: 'normal', color: COLOR_TINTA });
+    }
+    hoja.y += RITMO.linea;
   }
-  escribirLineas(hoja, {
-    lineas,
-    x: xValor,
-    y: hoja.y,
-    tamano: TIPOGRAFIA.cuerpo,
-    estilo: 'normal',
-    color: COLOR_TINTA,
-    interlineado: RITMO.linea,
-  });
-  hoja.y += alto + 4;
+  hoja.y += 4;
 }
 
 /**
@@ -685,6 +674,29 @@ function dibujarNota(hoja: Hoja, bloque: PdfBlock): void {
   const lineas = partir(hoja, bloque.text, anchoTexto, TIPOGRAFIA.nota, 'normal');
   const altoTexto = lineas.length * (TIPOGRAFIA.nota + 3.5);
   const altoPanel = altoTexto + relleno * 2 - 3;
+
+  if (altoPanel > hoja.fondo - hoja.inicio - 20) {
+    const altoLinea = TIPOGRAFIA.nota + 3.5;
+    let desde = 0;
+    while (desde < lineas.length) {
+      const caben = Math.floor((hoja.fondo - hoja.y - relleno * 2 - 8) / altoLinea);
+      if (caben < 1) pasarDePagina(hoja);
+      const disponibles = Math.max(1, Math.floor((hoja.fondo - hoja.y - relleno * 2 - 8) / altoLinea));
+      const parte = lineas.slice(desde, desde + disponibles);
+      const alto = parte.length * altoLinea + relleno * 2;
+      hoja.doc.setFillColor(COLOR_PANEL[0], COLOR_PANEL[1], COLOR_PANEL[2]);
+      hoja.doc.rect(hoja.izquierda, hoja.y, hoja.util, alto, 'F');
+      hoja.doc.setFillColor(COLOR_MARCA[0], COLOR_MARCA[1], COLOR_MARCA[2]);
+      hoja.doc.rect(hoja.izquierda, hoja.y, 2.2, alto, 'F');
+      escribirLineas(hoja, { lineas: parte, x: hoja.izquierda + relleno + 4,
+        y: hoja.y + relleno + TIPOGRAFIA.nota - 2, tamano: TIPOGRAFIA.nota,
+        estilo: 'normal', color: COLOR_TINTA_SUAVE, interlineado: altoLinea });
+      hoja.y += alto + RITMO.entreBloques;
+      desde += parte.length;
+      if (desde < lineas.length) pasarDePagina(hoja);
+    }
+    return;
+  }
 
   abrirEspacio(hoja, altoPanel + RITMO.entreBloques);
   hoja.y += 4;
@@ -736,19 +748,16 @@ function dibujarTotal(hoja: Hoja, bloque: PdfBlock): void {
  */
 function dibujarPieDeBloque(hoja: Hoja, bloque: PdfBlock): void {
   const lineas = partir(hoja, bloque.text, hoja.util, TIPOGRAFIA.nota, 'normal');
-  const alto = lineas.length * (TIPOGRAFIA.nota + 3.5);
-  abrirEspacio(hoja, alto + 14);
+  const altoLinea = TIPOGRAFIA.nota + 3.5;
+  abrirEspacio(hoja, altoLinea + 14);
   hoja.y += 14;
-  escribirLineas(hoja, {
-    lineas,
-    x: hoja.izquierda,
-    y: hoja.y,
-    tamano: TIPOGRAFIA.nota,
-    estilo: 'normal',
-    color: COLOR_TINTA_SUAVE,
-    interlineado: TIPOGRAFIA.nota + 3.5,
-  });
-  hoja.y += alto + RITMO.entreBloques;
+  for (const linea of lineas) {
+    abrirEspacio(hoja, altoLinea);
+    escribir(hoja, { texto: linea, x: hoja.izquierda, y: hoja.y,
+      tamano: TIPOGRAFIA.nota, estilo: 'normal', color: COLOR_TINTA_SUAVE });
+    hoja.y += altoLinea;
+  }
+  hoja.y += RITMO.entreBloques;
 }
 
 /**
@@ -833,8 +842,47 @@ function dibujarTabla(hoja: Hoja, filas: readonly PdfBlock[]): void {
     const partidas = partirFila(hoja, celdas[indice], anchos, esCabecera);
     const altoFila = altoDeFila(partidas);
 
+    // Una fila más alta que la caja útil se divide por renglones. La versión
+    // anterior la dibujaba completa fuera de la hoja porque abrirEspacio evita
+    // pasar página cuando la hoja aún está vacía.
+    if (altoFila > hoja.fondo - hoja.inicio - 45) {
+      const totalLineas = Math.max(1, ...partidas.map((parte) => parte.length));
+      let desde = 0;
+      while (desde < totalLineas) {
+        let caben = Math.floor((hoja.fondo - hoja.y - 18) / RITMO.lineaDeFila);
+        if (caben < 1) {
+          pasarDePagina(hoja);
+          if (cabecera !== -1 && indice > cabecera) {
+            const repetida = partirFila(hoja, celdas[cabecera], anchos, true);
+            dibujarFila(hoja, repetida, anchos, columnas, true, derechaUltima);
+            filete(hoja, hoja.y, COLOR_FILETE, 0.5);
+            hoja.y += 13;
+          }
+          caben = Math.floor((hoja.fondo - hoja.y - 18) / RITMO.lineaDeFila);
+        }
+        const hasta = Math.min(totalLineas, desde + Math.max(1, caben));
+        const segmento = partidas.map((parte) => parte.slice(desde, hasta));
+        dibujarFila(hoja, segmento, anchos, columnas, esCabecera && desde === 0, derechaUltima);
+        filete(hoja, hoja.y, COLOR_FILETE, 0.5);
+        hoja.y += 13;
+        desde = hasta;
+        if (desde < totalLineas) {
+          pasarDePagina(hoja);
+          if (cabecera !== -1 && indice > cabecera) {
+            const repetida = partirFila(hoja, celdas[cabecera], anchos, true);
+            dibujarFila(hoja, repetida, anchos, columnas, true, derechaUltima);
+            filete(hoja, hoja.y, COLOR_FILETE, 0.5);
+            hoja.y += 13;
+          }
+        }
+      }
+      continue;
+    }
+
     const paginaAntes = hoja.doc.getNumberOfPages();
-    abrirEspacio(hoja, altoFila);
+    const altoCabecera = cabecera !== -1 && indice > cabecera
+      ? altoDeFila(partirFila(hoja, celdas[cabecera], anchos, true)) + 13 : 0;
+    abrirEspacio(hoja, hoja.y + altoFila > hoja.fondo ? altoFila + altoCabecera : altoFila);
 
     // La tabla siguió en otra carilla: se repite la fila de encabezado antes
     // de seguir. Una columna de números sin su nombre, en la página 3, obliga

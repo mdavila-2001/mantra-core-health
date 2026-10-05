@@ -341,6 +341,8 @@ export function bloquesDeOrden(orden: DocumentoDeOrden): readonly PdfBlock[] {
 export function bloquesDeHistoria(historia: DocumentoDeHistoria): readonly PdfBlock[] {
   const bloques: PdfBlock[] = [seccion('El paciente')];
 
+  if (historia.avisoDeIntegridad) bloques.push(aviso(historia.avisoDeIntegridad));
+
   bloques.push(campoDeBloque('Paciente', textoDe(historia.paciente.nombre)));
   if (historia.paciente.documento !== undefined && historia.paciente.documento.trim() !== '') {
     bloques.push(campoDeBloque('Documento', historia.paciente.documento));

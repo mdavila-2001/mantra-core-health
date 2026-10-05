@@ -3,7 +3,7 @@
   subtitle="Tus atenciones, tus recetas y lo que quedó registrado de cada consulta."
 />
 
-@if (sinPerfilDePaciente) {
+@if (sinPerfilDePaciente()) {
   <!-- Sesión válida de una cuenta que no es de un paciente. No es un 403: es
        que esta pantalla no le corresponde. -->
   <app-alert tone="info" title="Esta sección es para pacientes">
@@ -39,7 +39,7 @@
               <ng-container [ngTemplateOutlet]="panelAtenciones" />
             }
           </app-tab>
-          <app-tab [label]="'Recetas (' + recetas().length + ')'">
+          <app-tab [label]="'Recetas (' + (totalRecetas() ?? recetas().length) + ')'">
             @if (seccion() === 1) {
               <ng-container [ngTemplateOutlet]="panelRecetas" />
             }
@@ -64,6 +64,7 @@
 
            Trae órdenes y resultados al tocarse, no al abrir la pantalla: son dos
            lecturas más que la mayoría de las visitas no necesita. -->
+      @if (!esDependiente()) {
       <aside class="historia__lateral" aria-label="Descargar tu historia">
         <div class="historia__descarga-total">
           <button
@@ -73,13 +74,14 @@
             [isLoading]="armandoHistoria()"
             (clicked)="descargarHistoriaCompleta()"
           >
-            Descargar mi historia completa
+            Descargar resumen clínico (PDF)
           </button>
           <p class="historia__descarga-nota">
-            Un solo PDF con tus atenciones, recetas, órdenes y resultados.
+            PDF con los registros cargados de tus atenciones, recetas, órdenes y resultados. Si la historia está recortada, este resumen también lo está.
           </p>
         </div>
       </aside>
+      }
     </div>
 
     <!-- ─── Los paneles ───────────────────────────────────────────────────
@@ -146,23 +148,45 @@
           Recetas ({{ recetas().length }})
         </h2>
 
-        @if (recetas().length === 0) {
+        <div class="historia__descarga-recetas">
+          <button app-button variant="primary" type="button"
+            data-testid="historia-descargar-historico-recetas"
+            [isLoading]="descargandoHistorico()"
+            (clicked)="descargarHistoricoRecetas()">
+            Descargar historial de recetas (PDF)
+          </button>
+          <p class="historia__descarga-nota">Incluye todas tus recetas emitidas, también las anteriores a esta lista.</p>
+        </div>
+
+        @if (cargandoMasRecetas() && !recetasServidorCargadas()) {
+          <p class="historia__vacio" role="status">Cargando tus recetas…</p>
+        } @else if (errorCargaRecetas() && !recetasServidorCargadas()) {
+          <div class="historia__vacio" role="alert">
+            <p>No pudimos cargar tus recetas.</p>
+            <button app-button variant="outline" type="button" (clicked)="cargarMasRecetas()">
+              Reintentar
+            </button>
+          </div>
+        } @else if (recetas().length === 0) {
           <p class="historia__vacio">Todavía no tenés recetas registradas.</p>
         } @else {
           <ul class="historia__lista" data-testid="historia-recetas">
             @for (receta of recetas(); track receta.id) {
-              <li class="historia__item">
+              <li class="historia__item historia__item--receta">
                 <div class="historia__datos">
                   <span class="historia__principal">{{ receta.medicamento }}</span>
                   @if (receta.indicacion !== '') {
-                    <span class="historia__secundario">{{ receta.indicacion }}</span>
+                  <span class="historia__secundario">{{ receta.indicacion }}</span>
                   }
                   <span class="historia__secundario">{{ receta.cuando | date: 'd MMM y' }}</span>
+                  @if (receta.profesional) {
+                    <span class="historia__secundario">Profesional: {{ receta.profesional }}</span>
+                  }
                 </div>
 
                 <div class="historia__acciones">
-                  <app-badge [variant]="receta.emitida ? 'success' : 'warning'">
-                    {{ receta.estado }}
+                  <app-badge [variant]="receta.vigente ? 'success' : 'warning'">
+                    {{ receta.vencida && receta.vigente === false ? 'Vencida' : receta.estado }}
                   </app-badge>
                   <button
                     app-button
@@ -170,7 +194,7 @@
                     size="sm"
                     type="button"
                     data-testid="historia-descargar-receta"
-                    [attr.aria-label]="'Descargar receta oficial (PDF): ' + receta.medicamento"
+                    [attr.aria-label]="'Descargar receta en PDF: ' + receta.medicamento + ', ' + (receta.cuando | date: 'd MMM y')"
                     [isLoading]="descargandoReceta() === receta.id"
                     (clicked)="descargarReceta(receta)"
                   >
@@ -188,22 +212,39 @@
                       <path d="m7 10 5 5 5-5" />
                       <path d="M4 19h16" />
                     </svg>
-                    Descargar receta oficial (PDF)
+                    Descargar PDF
                   </button>
-                  <a
-                    app-button
-                    variant="ghost"
-                    size="sm"
-                    data-testid="historia-donde-comprar"
-                    [attr.aria-label]="'Dónde comprarla: ' + receta.medicamento"
-                    [routerLink]="['where-to-buy', receta.id]"
-                  >
-                    Dónde comprarla
-                  </a>
+                  @if (receta.vigente) {
+                    <a
+                      app-button
+                      variant="ghost"
+                      size="sm"
+                      data-testid="historia-donde-comprar"
+                      [attr.aria-label]="'Dónde comprarla: ' + receta.medicamento"
+                      [routerLink]="['where-to-buy', receta.id]"
+                    >
+                      Dónde comprarla
+                    </a>
+                  }
                 </div>
               </li>
             }
           </ul>
+          @if (errorCargaRecetas() && recetasServidorCargadas()) {
+            <div class="historia__vacio" role="alert">
+              <p>No pudimos cargar más recetas.</p>
+              <button app-button variant="outline" type="button" (clicked)="cargarMasRecetas()">
+                Reintentar
+              </button>
+            </div>
+          }
+          @if ((totalRecetas() !== null && recetas().length < totalRecetas()!) ||
+               (totalRecetas() === null && recorte().includes('medicationRequests'))) {
+            <button app-button variant="outline" type="button"
+              [isLoading]="cargandoMasRecetas()" (clicked)="cargarMasRecetas()">
+              Ver más recetas
+            </button>
+          }
         }
       </section>
 
