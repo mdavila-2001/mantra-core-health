@@ -113,17 +113,14 @@ export class PersonLossReportView {
     const code = this.report()?.currencyCode;
     const unit = code ? ` · ${code}` : '';
     return [
-      { key: 'person', header: 'Persona', priority: 1 },
-      { key: 'planName', header: 'Plan', priority: 3 },
-      { key: 'claims', header: 'Reclamos', priority: 2, align: 'end' },
-      { key: 'billed', header: `Facturado${unit}`, priority: 2, align: 'end' },
-      { key: 'approved', header: `Aprobado${unit}`, priority: 1, align: 'end' },
-      { key: 'denied', header: `Denegado${unit}`, priority: 3, align: 'end' },
-      { key: 'approvalRate', header: '% aprobación', priority: 3, align: 'end' },
-      { key: 'premium', header: `Prima del período${unit}`, priority: 3, align: 'end' },
+      { key: 'person', header: 'Nombre', priority: 1 },
+      { key: 'claims', header: 'Solicitudes', priority: 2, align: 'end' },
+      { key: 'approved', header: `Monto aprobado${unit}`, priority: 1, align: 'end' },
+      { key: 'denied', header: `Monto rechazado${unit}`, priority: 2, align: 'end' },
+      { key: 'premium', header: `Cuota pagada${unit}`, priority: 2, align: 'end' },
       {
         key: 'lossRatio',
-        header: 'Siniestralidad',
+        header: '% Siniestralidad',
         priority: 1,
         align: 'end',
         cell: this.ratioCell(),

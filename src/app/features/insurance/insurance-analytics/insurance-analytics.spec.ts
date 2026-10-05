@@ -389,10 +389,10 @@ describe('InsuranceAnalytics', () => {
       );
       expect(tabla.textContent).toContain('Ana Pérez');
       expect(tabla.textContent).toContain('Luis Rojas');
-      // Ana: 2 reclamos, uno pendiente; facturado 900, aprobado 600.
+      // Ana: 2 solicitudes, una pendiente; aprobado 600, rechazado 200.
       expect(tabla.textContent).toContain('2 (1 pend.)');
-      expect(tabla.textContent).toContain('900.00');
       expect(tabla.textContent).toContain('600.00');
+      expect(tabla.textContent).toContain('200.00');
     });
 
     it('el informe sobrevive a cambiar de pestaña y volver', () => {
