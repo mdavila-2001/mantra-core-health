@@ -272,7 +272,7 @@ describe('AccessTree', () => {
     expect(zonas()).toHaveLength(0);
   });
 
-  it('la aseguradora ve exactamente dos zonas: Chats, y las cuatro de seguros (2026-09-25)', () => {
+  it('la aseguradora ve exactamente dos zonas: Chats, y las de seguros (2026-09-25)', () => {
     crear(['USER'], 'PAYER');
 
     const ids = zonas().map((z) => z.dataset['zona']);
@@ -291,6 +291,7 @@ describe('AccessTree', () => {
       '/administration/insurance',
       '/administration/insurance-claims',
       '/administration/received-claims',
+      '/administration/insurance-patients',
     ]);
   });
 });
