@@ -1,92 +1,162 @@
 :host {
   display: block;
 }
-
-.directory__filters {
-  margin-bottom: var(--space-3);
+.directory__toolbar {
+  display: grid;
+  gap: var(--sp-4);
+  padding: var(--sp-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
 }
-
-.directory__extra {
+.directory__control,
+.directory__search {
+  min-width: 0;
+  display: grid;
+  gap: var(--sp-2);
+}
+.directory__label {
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+.directory__summary {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-end;
-  gap: var(--space-3);
-  margin-bottom: var(--space-3);
+  align-items: center;
+  gap: var(--sp-3);
+  margin-block: var(--sp-4);
 }
-
-.directory__date {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-  min-width: 11rem;
+.directory__summary p {
+  margin: 0;
+  flex: 1;
+  min-height: 1.5em;
 }
-
-.directory__label {
-  font-size: 0.8125rem;
-  color: var(--color-text-muted, var(--c-neutral-600));
-}
-
-.directory__size {
-  margin-left: auto;
+.directory__summary app-select {
   min-width: 10rem;
 }
-
-/* Región viva siempre presente; vacía no ocupa renglón. */
-.directory__notice {
-  margin: 0 0 var(--space-2);
-  font-size: 0.875rem;
+.directory__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin-block-end: var(--sp-3);
 }
-
-.directory__notice:empty {
+.directory__notice {
+  margin: 0;
+  min-height: 1.5em;
+  color: var(--text-secondary);
+}
+.directory__desktop {
   display: none;
 }
-
-.directory__person {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
+.directory__cards {
+  display: grid;
+  gap: var(--sp-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
-
-.directory__person-text,
-.directory__insurance {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
+.directory__card {
+  min-width: 0;
+  padding: var(--sp-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+  overflow-wrap: anywhere;
+}
+.directory__card h2 {
+  margin: 0 0 var(--sp-3);
+  font-size: var(--fs-h3);
+}
+.directory__card dl {
+  margin-block: var(--sp-4) 0;
+  display: grid;
+  gap: var(--sp-3);
+}
+.directory__card dl > div {
   min-width: 0;
 }
-
-.directory__name {
-  font-weight: 600;
+.directory__card dt {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
 }
-
-.directory__sub {
-  font-size: 0.8125rem;
-  color: var(--color-text-muted, var(--c-neutral-600));
+.directory__card dd {
+  margin: var(--sp-1) 0 0;
 }
-
-/* El teléfono es el dato que más se usa: cifras tabulares y peso de énfasis. */
+.directory__contact {
+  display: grid;
+  gap: var(--sp-2);
+}
 .directory__phone {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: var(--space-1);
+  flex-wrap: wrap;
+  gap: var(--sp-1);
 }
-
 .directory__phone-link {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  color: var(--brand-primary);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
-
-.directory__link {
+.directory__name {
+  font-weight: 600;
   overflow-wrap: anywhere;
 }
-
-.directory__figure {
-  font-variant-numeric: tabular-nums;
-  margin-right: var(--space-1);
+.directory__email {
+  display: block;
+  overflow-wrap: anywhere;
 }
-
-.directory__empty {
-  color: var(--color-text-muted, var(--c-neutral-600));
+.directory__muted {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+.directory__insurers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1);
+}
+.directory__paging {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding-block: var(--sp-4);
+}
+.directory__empty-state {
+  text-align: center;
+  padding: var(--sp-6);
+}
+.directory__empty-state h2 {
+  font-size: var(--fs-h3);
+}
+.directory__skeleton {
+  display: grid;
+  gap: var(--sp-4);
+  min-height: 26rem;
+  padding: var(--sp-4);
+}
+@media (min-width: 650px) {
+  .directory__toolbar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .directory__search {
+    grid-column: 1 / -1;
+  }
+  .directory__card dl {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (min-width: 1024px) {
+  .directory__toolbar {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .directory__search {
+    grid-column: auto;
+  }
+  .directory__desktop {
+    display: block;
+  }
+  .directory__mobile {
+    display: none;
+  }
 }
