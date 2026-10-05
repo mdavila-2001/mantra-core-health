@@ -1,8 +1,8 @@
 # Reporte — Video demo del módulo aseguradora como Alianza Seguros (rama `mockup`)
 
 - Fecha: 2026-10-05 · Plan: [PLAN.md](./PLAN.md) · Rama: `marcelo/video-aseguradora-alianza-mockup` → PR a `mockup`
-- Peldaño de evidencia alcanzado: **VERIFIED** (directorio en `mockup` y video verificados en el navegador, con la doble revisión hecha). No llega a REGRESSION_VERIFIED porque la suite completa (`yarn test`) se interrumpió antes de terminar.
-- Avance: 14 de 16 microtareas en HECHO, 1 A MEDIAS y 1 TODO (87,5 %).
+- Peldaño de evidencia alcanzado: **VERIFIED**. El directorio en `mockup` y el video están verificados en el navegador, con la doble revisión hecha. La regresión completa corrió: tiene 4 rojos, ninguno introducido por este PR (ver Evidencia), y el CI del PR sigue en curso.
+- Avance: 15 / 16 microtareas HECHO, 1 A MEDIAS (93,75 %).
 
 ## Completado
 
@@ -31,7 +31,7 @@
 
 | ID | Estado | Qué lo destraba |
 |---|---|---|
-| Regresión completa (`yarn test`) | TODO | Se lanzó y se interrumpió antes de terminar. Hay que correrla de nuevo o dejar que la corra el CI del PR. |
+| ninguno | — | — |
 
 ## Evidencia
 
@@ -59,6 +59,16 @@ Video: …\artifacts\video-aseguradora\alianza-aseguradora-1080p.mp4
 Marcas (s): mi-perfil=0.4 · mis-productos=9.27 · solicitudes-recibidas=42.14 · siniestralidad-por-persona=56.93 · directorio=66.11 · fin=76.61
 Controles: sin «Andina», sin dominios .mock, sin errores de página ni rutas sin manejador.
 
+# regresión completa en la rama (evidencia/regresion-yarn-test.txt)
+$ yarn test --watch=false
+ Test Files  4 failed | 744 passed (748)
+      Tests  4 failed | 10373 passed (10377)
+
+# los mismos 4 specs, re-corridos en la rama y en mockup puro (evidencia/regresion-rojos-en-mockup-base.txt)
+# rama:   Tests 3 failed | 56 passed (59)   (fichas-estandar, pestanas-del-perfil-medico, resumen contable)
+# mockup: Tests 3 failed | 56 passed (59)   (los mismos tres)  → previos a este PR
+# clinical.handlers.spec (PDF de receta) falló en la suite completa y pasó al re-correrlo: intermitente
+
 $ ffprobe …mp4
 codec_name=h264  width=1920  height=1080  duration=78.960000
 ```
@@ -73,7 +83,6 @@ El MP4 queda en `artifacts/` (lo ignora git) y se entregó por fuera del repo.
 
 ## No cubierto
 
-- **Regresión completa** (`yarn test`): se interrumpió. Solo se corrieron los specs dirigidos.
 - **`yarn lint` del repo entero:** se corrió eslint solo sobre los archivos tocados.
 - **E2E de Playwright del menú** (`playwright/aseguradora-menu-pestanas.spec.ts`): se actualizó la lista que espera, pero no se ejecutó.
 - **«Enviar Mensaje» en el video:** no se pulsa. Con las personas del video, el simulador respondería 412.
@@ -89,6 +98,8 @@ El MP4 queda en `artifacts/` (lo ignora git) y se entregó por fuera del repo.
 - **«Enviar Mensaje»:** la capa de respuesta lo marca disponible para las personas del video. Lo detectó la primera pasada de la revisión: el botón salía apagado en todas las filas.
 
 ## Riesgos residuales
+
+- **Rojos previos de `mockup`, fuera de alcance y sin tocar:** `fichas-estandar.spec`, `pestanas-del-perfil-medico.spec` y `resumen.spec` (contabilidad). Además, `clinical.handlers.spec` (el PDF de la receta) es intermitente.
 
 - **El video combina el nombre real de Alianza Seguros con datos inventados:**
   - las cuotas de Silver, Salud Mundial Plus y Asistencia Familiar Integral;
