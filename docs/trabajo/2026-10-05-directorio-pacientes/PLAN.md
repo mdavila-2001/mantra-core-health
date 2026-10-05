@@ -1,4 +1,4 @@
-# Plan — Completar el directorio de pacientes
+﻿# Plan — Completar el directorio de pacientes
 
 - Fecha: 2026-10-05 · Repos: mantra-core-health, mantra-core-health-api · Predecesor: ramas marcelo/insurer-patient-directory-dev y -test.
 - Resultado observable: administración autorizada y aseguradoras encuentran pacientes y abren su conversación interna en /administration/insurance-patients.
@@ -28,8 +28,8 @@
 **Estado:** EN CURSO
 | ID | Microtarea | CA (binario) | DoD | Estado |
 |---|---|---|---|---|
-| H1.S1.M1 | Integrar dev | Dada dev, al comprobarla, es ancestro de la rama de trabajo | git merge-base --is-ancestor origin/dev HEAD -> 0 | EN CURSO |
-| H1.S1.M2 | Integrar test | Dada test, al comprobarla, es ancestro de la rama test | git merge-base --is-ancestor origin/test marcelo/insurer-patient-directory-test -> 0 | TODO |
+| H1.S1.M1 | Integrar dev | Dada dev, al comprobarla, es ancestro de la rama de trabajo | git merge-base --is-ancestor origin/dev HEAD -> 0 | HECHO |
+| H1.S1.M2 | Integrar test | Dada test, al comprobarla, es ancestro de la rama test | git merge-base --is-ancestor origin/test marcelo/insurer-patient-directory-test -> 0 | HECHO |
 
 ## H2 — Directorio completo
 **CA:** Dado un actor autorizado, al buscar y contactar, recibe sólo datos permitidos y abre el hilo correcto.
@@ -41,18 +41,18 @@
 **Estado:** TODO
 | ID | Microtarea | CA (binario) | DoD | Estado |
 |---|---|---|---|---|
-| H2.S1.M1 | Consulta y opciones autorizadas | Dado un actor ajeno, al buscar, no obtiene datos ajenos | yarn test --runInBand insurer-patients -> PASS | TODO |
-| H2.S1.M2 | Abrir conversación | Dado un paciente permitido, al abrir dos veces, recibe el mismo hilo | yarn test --runInBand insurer-patients -> PASS | TODO |
-| H2.S1.M3 | Contrato OpenAPI | Dada la spec, al inspeccionarla, declara POST y sólo campos mínimos | prueba de contrato del directorio -> PASS | TODO |
+| H2.S1.M1 | Consulta y opciones autorizadas | Dado un actor ajeno, al buscar, no obtiene datos ajenos | yarn test --runInBand insurer-patients -> PASS | HECHO |
+| H2.S1.M2 | Abrir conversación | Dado un paciente permitido, al abrir dos veces, recibe el mismo hilo | yarn test --runInBand insurer-patients -> PASS | HECHO |
+| H2.S1.M3 | Contrato OpenAPI | Dada la spec, al inspeccionarla, declara POST y sólo campos mínimos | prueba de contrato del directorio -> PASS | HECHO |
 ### H2.S2 — Interfaz
 **CA:** Dados datos, al operar filtros y chat, muestra estados correctos en todos los anchos.
 **DoD:** yarn ng test --watch=false --include '**/insurance-patients.spec.ts' -> PASS.
 **Estado:** TODO
 | ID | Microtarea | CA (binario) | DoD | Estado |
 |---|---|---|---|---|
-| H2.S2.M1 | Cliente POST mínimo | Dada una búsqueda, al enviar, los filtros sólo viajan en body | prueba insurance.client.spec -> PASS | TODO |
-| H2.S2.M2 | Filtros y estados | Dados cambios rápidos, al completarlos, se muestra sólo la respuesta vigente | prueba insurance-patients.spec -> PASS | TODO |
-| H2.S2.M3 | Tabla y tarjetas | Dado un ancho móvil, al renderizar, el chat es primario en cada tarjeta | Playwright directorio -> PASS | TODO |
+| H2.S2.M1 | Cliente POST mínimo | Dada una búsqueda, al enviar, los filtros sólo viajan en body | prueba insurance.client.spec -> PASS | HECHO |
+| H2.S2.M2 | Filtros y estados | Dados cambios rápidos, al completarlos, se muestra sólo la respuesta vigente | prueba insurance-patients.spec -> PASS | HECHO |
+| H2.S2.M3 | Tabla y tarjetas | Dado un ancho móvil, al renderizar, el chat es primario en cada tarjeta | Playwright directorio -> PASS | HECHO |
 
 ## H3 — Evidencia e integración final
 **CA:** Dado el stack real sintético, al recorrerlo, cumple los criterios y no expone pacientes ajenos.
@@ -66,7 +66,7 @@
 |---|---|---|---|---|
 | H3.S1.M1 | Gates y regresión | Dado el código final, al compilar/probar, pasa | yarn lint; yarn typecheck; yarn build; pruebas dirigidas -> 0 | TODO |
 | H3.S1.M2 | Recorrido real y privacidad | Dado actor A, al solicitar paciente B, no obtiene acceso | integración + Playwright con API real -> PASS | TODO |
-| H3.S1.M3 | Revisión visual | Dadas capturas, al revisar dos veces, no quedan hallazgos bloqueantes | evidencia/doble-revision.md -> APROBADA | TODO |
+| H3.S1.M3 | Revisión visual | Dadas capturas, al revisar dos veces, no quedan hallazgos bloqueantes | evidencia/doble-revision.md -> APROBADA | HECHO |
 | H3.S1.M4 | Propagar a test | Dada la corrección dev, al aplicarla en test, conserva diferencias de base | diff de archivos del directorio y gates -> PASS | TODO |
 
 ## Riesgos y bloqueos previstos
@@ -76,3 +76,8 @@
 | Stack local ausente | No se puede afirmar integración real | Inspeccionar herramientas/puertos; datos sintéticos; aislar dobles declarados sin afirmar E2E real |
 | PHI en logs o respuestas | Exposición indebida | DTO allowlist, POST, auditoría por ids, pruebas negativas |
 | Pruebas previas exigen semántica antigua | Assertions incompatibles | Actualizar assertions a requisitos confirmados conservando cobertura; nunca skip/only |
+## Ajustes de verificación observados
+- Bases remotas avanzaron durante QA: se incorporaron origin/dev y origin/test actualizadas mediante merge sin conflictos; preservar variantes.
+- El área disponible junto al sidebar puede ser menor a1024px aunque el viewport sea mayor: usar tarjetas también por ancho del contenedor; defecto de Seguro oculto cerrado con recapturas.
+- Pruebas UI interceptadas declaradas @ui-mock; recorrido adicional @real-directory exige API y persistencia reales con fixtures sintéticas y trazas desactivadas.
+
