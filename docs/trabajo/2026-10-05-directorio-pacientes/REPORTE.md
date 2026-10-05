@@ -204,4 +204,6 @@ EXIT_CODE=0
 - API572 se mergeó externamente2026-10-05T18:05:27Z, headf2ae8e94, mergea9091f6c; API573 se mergeó externamente18:05:39Z, heada1360f74, merge0843cc86. Ramas locales/remotas actualizadas por fast-forward, sin cambios de contenido.
 - CI API572 finalmente FAIL por los mismos cuatro errores Prettier de concepts.service.ts ya demostrados idénticos a la base. [Fragmento literal](./evidencia/ci-api-final-lint-baseline.txt). No falló una prueba del directorio en esa corrida: el gate lint detuvo el workflow.
 - Frontend956 ya mergeado externamente; seguimiento frontend960 continúa abierto con CI pendiente por runner offline. La entrega global sigue A MEDIAS aunque otros actores hayan realizado merges.
-- No se abren nuevos PR sólo para reescribir el estado histórico de reportes ya mergeados. Este cierre conserva sus fechas/SHAs y agrega los hechos posteriores.
+- Los reportes ya mergeados conservan fechas/SHAs; un único PR documental publica evidencia de CI y hechos posteriores, sin duplicar funcionalidad.
+
+- Frontend960 finalmente mergeado externamente2026-10-05T18:10:40Z, head2a8037b4 y mergefc270718: incluye la última base, types/lint/218 unit y build de producción PASS. Todos los PR funcionales están incorporados por otros actores. Este agente publica únicamente el cierre documental posterior. CI frontend permanece pendiente por runner offline; el merge externo no equivale a checks verdes.
