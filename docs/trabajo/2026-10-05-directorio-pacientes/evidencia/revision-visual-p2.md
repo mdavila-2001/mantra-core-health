@@ -58,3 +58,22 @@ Se agrupan exclusivamente celdas con contenido identico: tarjetas (390/649/650/7
 Nota por pantalla: Directorio con datos, ACEPTABLE CON RESERVAS por el MENOR1024. Carga, directorio vacio, error, acceso denegado y vacio por filtros, APROBADA en las celdas capturadas. No se considera la integracion completa aprobada a partir de imagenes interceptadas.
 
 No cubierto: 360px, navegadores adicionales, zoom, contraste numerico, lector de pantalla, desplegables abiertos, todos los estados en cada ancho, reintento real, datos reales y persistencia del chat. Estas limitaciones no se presentan como verificadas.
+
+## Anexo: captura de fallo del primer navegador con API real
+
+P1 cerrada previamente por root. Abierta imagen adicional `artifacts/artifacts/playwright/salida/insurer-patient-directory--5c309-con-API-real-real-directory-chromium/test-failed-1.png`. P2 visual OK; fallo funcional registrado por root como TEST_BUG (selector ngValue), no se declara el E2E aprobado con esta captura.
+
+| Pregunta adversarial | Respuesta |
+|---|---|
+| 1. Primero que veria mal | Nombre Directory con sufijo envuelve dentro de columna; no identifica una persona real y no oculta caracteres. |
+| 2. Cortes/solapamientos | Siete columnas visibles sin colisiones. Segunda fila continua fuera del viewport, desplazamiento vertical normal, no recorte interno. |
+| 3. Terminado/prototipo | Toolbar, chip y tabla mantienen espaciado y acciones consistentes. Los nombres son fixtures de QA deliberadas. |
+| 4. Coherencia | Sidebar propia del actor aseguradora y misma identidad de la matriz anterior. |
+| 5. Tema oscuro | No aplica: captura clara; oscuro ya evaluado en matriz interceptada, no se extrapola esta conexion real. |
+| 6. Estados orientan | Sin telefono/correo y sexo no especificado explicitos; perfil sin chat explica impedimento. Vacio/error/carga no aparecen en esta imagen. |
+| 7. Accion principal | Enviar Mensaje destaca en fila00, incluso sin numero de telefono porque el canal es interno. |
+| 8. Datos sensibles | Prefix Directory y seguro A coinciden con fixtures sinteticas de integracion local; no hay identidad real ni tokens visibles. |
+| 9. Requisito literal | Fecha/edad juntas, siete columnas, seguro propio y busqueda con chip/contador12. Captura muestra25 por pagina, no prueba cambio10. |
+| 10. Motivo de rechazo | Ningun MAYOR/BLOQUEANTE visual; E2E funcional fallo y requiere nueva ejecucion. Imagen sola no demuestra paginacion o chat persistido. |
+
+Nota visual de esta celda: APROBADA, sin nuevos defectos. Directorio general conserva ACEPTABLE CON RESERVAS por placeholder1024 de la matriz previa. No cubierto en esta imagen: filas fuera del viewport, resto de estados y tema oscuro real.

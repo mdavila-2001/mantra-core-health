@@ -4,12 +4,12 @@ Running 1 test using 1 worker
 
 
 yarn.cmd : (node:18188) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
-En línea: 2 Carácter: 44
+En lÃ­nea: 2 CarÃ¡cter: 44
 + ... .0.1:4200'; yarn.cmd playwright test --config artifacts/playwright.di ...
 +                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     + CategoryInfo          : NotSpecified: ((node:18188) Wa... env being set.:String) [], RemoteException
     + FullyQualifiedErrorId : NativeCommandError
  
 (Use `node --trace-warnings ...` to show where the warning was created)
-[1/1] [chromium] › playwright\insurer-patient-directory.spec.ts:256:7 › Directorio de pacientes @ui-mock › error de conversación conserva la búsqueda y permite reintentar
+[1/1] [chromium] â€º playwright\insurer-patient-directory.spec.ts:256:7 â€º Directorio de pacientes @ui-mock â€º error de conversaciÃ³n conserva la bÃºsqueda y permite reintentar
   1 passed (6.6s)

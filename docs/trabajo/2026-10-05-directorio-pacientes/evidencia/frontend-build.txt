@@ -1,0 +1,15 @@
+[generate-env] src/environments/env.generated.ts · PUBLIC_API_BASE_URL=http://127.0.0.1:4200/api, PUBLIC_TELEMETRY_ENABLED=false, PUBLIC_REFRESH_COOKIE=false
+✓ src/app/features/component-stock/component-index.generated.ts
+  615 componentes · 3 otros · 365 pantallas · 138 maquetas · 23 atomos · 48 moleculas · 38 organismos
+  208 con algo que mirar
+  relaciones: 2745 template-instantiates · 5 imports-available sin instanciar · 68 type-only · 234 dynamic-loads
+  nivel: 0 declarado · 615 por-ruta · 5 unresolvedEvidence en 5 componentes
+  acreditación: descubiertos 615/615 · con escenario 3/615 · verificados visualmente 3/615 · bloqueados 82/615 · montó e interactuó: se miden en el banco (runtime)
+yarn.cmd : The "prerender" option is not considered when "outputMode" is specified.
+En línea: 2 Carácter: 130
++ ... '; $env:PUBLIC_TELEMETRY_ENABLED='false'; yarn.cmd build 2>&1 | Tee-O ...
++                                               ~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (The "prerender"..." is specified.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+> Building...
