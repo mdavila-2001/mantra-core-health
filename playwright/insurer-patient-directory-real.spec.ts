@@ -4,12 +4,13 @@ import path from 'node:path';
 
 // Requires the isolated API integration suite to create synthetic fixtures first.
 // Authentication snapshots stay in ignored cache; never attach traces with tokens.
-test.use({ trace: 'off', viewport: { width: 1440, height: 900 }, reducedMotion: 'reduce' });
+test.use({ trace: 'off', viewport: { width: 1440, height: 900 } });
 
 test('directorio y conversación persistida con API real @real-directory', async ({
   page,
   request,
 }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
   const fixturePath =
     process.env['DIRECTORY_BROWSER_FIXTURES_PATH'] ??
     path.resolve('../mantra-core-health-api/node_modules/.cache/directory-qa/browser.json');
@@ -95,7 +96,12 @@ test('directorio y conversación persistida con API real @real-directory', async
       expect(item).not.toHaveProperty(forbidden);
   }
   await expect(page.getByTestId('directory-count')).toContainText('12');
-  await page.getByRole('combobox', { name: 'Filas por página' }).selectOption('10');
+  await page.screenshot({
+    path: path.resolve('docs/trabajo/2026-10-05-directorio-pacientes/evidencia/directory-real-data.png'),
+  });
+  await page
+    .getByRole('combobox', { name: 'Filas por página' })
+    .selectOption({ label: '10 por página' });
   await expect.poll(() => directoryRequests.at(-1)?.body['limit']).toBe(10);
   await page.getByRole('button', { name: 'Siguiente', exact: true }).click();
   await expect.poll(() => directoryRequests.at(-1)?.body['cursor']).toEqual(expect.any(String));
@@ -128,6 +134,9 @@ test('directorio y conversación persistida con API real @real-directory', async
   await page.reload();
   await expect(page).toHaveURL(new RegExp(`/messaging/${first}$`));
   await expect(page.getByTestId('hilo-texto')).toBeVisible();
+  await page.screenshot({
+    path: path.resolve('docs/trabajo/2026-10-05-directorio-pacientes/evidencia/directory-real-chat.png'),
+  });
   await page.goto(directory);
   await search.fill(fixture.marker);
   await expect(page.getByTestId('directory-count')).toContainText('12');

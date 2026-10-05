@@ -1,18 +1,19 @@
+COMMAND: yarn ng test --watch=false --ts-config artifacts/tsconfig.directory.json --include **/insurance-patients.spec.ts --include **/insurance.client.spec.ts --include **/navigation/**/*.spec.ts
 Using Vitest configuration file: C:\Alovida\mantra-core-health\vitest.config.ts
 > Building...
 √ Building...
 Initial chunk files                                                  | Names                                                             |  Raw size
-spec-app-features-insurance-insurance-patients-insurance-patients.js | spec-app-features-insurance-insurance-patients-insurance-patients | 575.91 kB | 
+spec-app-features-insurance-insurance-patients-insurance-patients.js | spec-app-features-insurance-insurance-patients-insurance-patients | 576.98 kB | 
 styles.css                                                           | styles                                                            | 166.42 kB | 
-chunk-YVINIG22.js                                                    | -                                                                 | 101.31 kB | 
-chunk-V4G7EKQY.js                                                    | -                                                                 |  50.86 kB | 
+chunk-SBJFRVTU.js                                                    | -                                                                 | 101.31 kB | 
+chunk-KSKUUJOV.js                                                    | -                                                                 |  50.86 kB | 
 spec-app-core-navigation-navigation.service.js                       | spec-app-core-navigation-navigation.service                       |  25.66 kB | 
-chunk-7V4PXR2F.js                                                    | -                                                                 |  20.78 kB | 
+chunk-NHLFSUXS.js                                                    | -                                                                 |  20.78 kB | 
 spec-app-core-data-access-insurance-insurance.client.js              | spec-app-core-data-access-insurance-insurance.client              |  20.17 kB | 
 spec-app-core-navigation-navigation.map.js                           | spec-app-core-navigation-navigation.map                           |  16.02 kB | 
 spec-app-core-navigation-access-tree.js                              | spec-app-core-navigation-access-tree                              |  14.07 kB | 
-chunk-IIVKZK5C.js                                                    | -                                                                 |  12.79 kB | 
-chunk-T3XACA6V.js                                                    | -                                                                 |  12.51 kB | 
+chunk-XC2BR4RP.js                                                    | -                                                                 |  12.79 kB | 
+chunk-X5NZCN5S.js                                                    | -                                                                 |  12.51 kB | 
 chunk-ANVBA57G.js                                                    | -                                                                 |  12.18 kB | 
 spec-app-core-navigation-section-roles.guard.js                      | spec-app-core-navigation-section-roles.guard                      |  12.00 kB | 
 chunk-JOFNNU56.js                                                    | -                                                                 |   7.95 kB | 
@@ -22,8 +23,8 @@ chunk-JBWBLPNK.js                                                    | -        
 spec-app-core-navigation-navigation.laboratorio.js                   | spec-app-core-navigation-navigation.laboratorio                   |   5.18 kB | 
 spec-app-core-navigation-navigation.subgroups.js                     | spec-app-core-navigation-navigation.subgroups                     |   3.19 kB | 
 spec-app-core-navigation-search-memory.service.js                    | spec-app-core-navigation-search-memory.service                    |   2.60 kB | 
-chunk-LHPWPOJL.js                                                    | -                                                                 |   2.03 kB | 
-chunk-6XP2PIAK.js                                                    | -                                                                 |   1.90 kB | 
+chunk-TJJA76FK.js                                                    | -                                                                 |   2.03 kB | 
+chunk-KTMRE642.js                                                    | -                                                                 |   1.68 kB | 
 init-testbed.js                                                      | init-testbed                                                      |   1.21 kB | 
 setup-test-setup.js                                                  | setup-test-setup                                                  | 984 bytes | 
 vitest-mock-patch.js                                                 | vitest-mock-patch                                                 | 974 bytes | 
@@ -31,30 +32,23 @@ chunk-ORGD43PW.js                                                    | -        
 
                                                                      | Initial total                                                     |   1.09 MB
 
-Application bundle generation complete. [8.510 seconds] - 2026-10-05T14:50:12.528Z
+Application bundle generation complete. [8.507 seconds] - 2026-10-05T17:59:09.761Z
 
 
  RUN  v4.1.10 C:/Alovida/mantra-core-health
 
-yarn.cmd : (node:19080) ExperimentalWarning: localStorage is not available because --localstorage-file was not 
-provided.
-En línea: 2 Carácter: 1
-+ yarn.cmd ng test --watch=false --ts-config artifacts/tsconfig.directo ...
-+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    + CategoryInfo          : NotSpecified: ((node:19080) Ex...s not provided.:String) [], RemoteException
-    + FullyQualifiedErrorId : NativeCommandError
- 
+(node:5112) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
 (Use `node --trace-warnings ...` to show where the warning was created)
-(node:19080) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(node:5112) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
 (Use `node --trace-warnings ...` to show where the warning was created)
-(node:19080) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(node:5112) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
 (Use `node --trace-warnings ...` to show where the warning was created)
-(node:19080) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(node:5112) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
 (Use `node --trace-warnings ...` to show where the warning was created)
 
  Test Files  11 passed (11)
       Tests  218 passed (218)
-   Start at  10:50:14
-   Duration  10.51s (transform 8.25s, setup 6.76s, import 8.92s, tests 7.17s, environment 17.50s)
+   Start at  13:59:13
+   Duration  27.80s (transform 6.11s, setup 2.85s, import 7.83s, tests 2.89s, environment 239.99s)
 
 EXIT_CODE=0
