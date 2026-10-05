@@ -156,10 +156,9 @@ test.describe('Directorio de pacientes @ui-mock', () => {
       await page.emulateMedia({ reducedMotion: 'reduce', colorScheme: 'light' });
       const { problems } = await setup(page);
       await expect(page.getByTestId('directory-count')).toContainText('42');
-      const region =
-        width < 1024
-          ? page.getByTestId('patient-cards')
-          : page.getByTestId('table-insurer-patients');
+      const cards = page.getByTestId('patient-cards');
+      const table = page.getByTestId('table-insurer-patients');
+      const region = width <= 1024 ? cards : table;
       await expect(region).toBeVisible();
       await expect(
         region.getByRole('button', { name: `Enviar Mensaje a ${patient.fullName}`, exact: true }),
@@ -167,6 +166,8 @@ test.describe('Directorio de pacientes @ui-mock', () => {
       await expect(region).toContainText('Ninguno');
       await expect(region).toContainText('05/10/1990');
       await expect(region).toContainText('36 años');
+      // Text presence alone does not prove that an overflowing column is visible.
+      if (width > 1024) await expect(region.getByText('Ninguno', { exact: true })).toBeInViewport();
       await page.getByRole('textbox', { name: 'Buscar pacientes', exact: true }).focus();
       await mkdir(evidence, { recursive: true });
       for (const theme of ['light', 'dark']) {

@@ -1,5 +1,6 @@
 :host {
   display: block;
+  container: patient-directory / inline-size;
 }
 .directory__toolbar {
   display: grid;
@@ -158,5 +159,15 @@
   }
   .directory__mobile {
     display: none;
+  }
+}
+
+/* The navigation sidebar can leave a tablet-sized content area on desktop. */
+@container patient-directory (width < 1024px) {
+  .directory__desktop {
+    display: none;
+  }
+  .directory__mobile {
+    display: block;
   }
 }
