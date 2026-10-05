@@ -323,15 +323,7 @@ describe('PatientProfileEdit', () => {
     expect([...pestanas].map((p) => p.textContent?.trim())).not.toContain('Mis puntos');
   });
 
-  /**
-   * Pedido del propietario del 25/09/2026: una cobertura es el resultado de
-   * una integración posterior —la aseguradora la declara, no la persona—, así
-   * que nunca se corrige desde este formulario. No es el caso de «Tutores»,
-   * que sí puede cambiar y por eso sigue siendo una pestaña utilizable. El
-   * mismo día se corrigió: en vez de apagada, «Seguros» se saca de la tira
-   * del editor, igual que «Mis puntos».
-   */
-  it('«Seguros» no está en la tira del editor; «Tutores» sigue abierta', () => {
+  it('«Seguros» y «Tutores» no se editan desde los datos personales', () => {
     montarPintadoYCargado({
       coverages: [{ carrierName: 'Alianza Vida Seguros', planName: 'AFI Gold' }],
       guardians: [{ displayName: 'Carlos Mamani', phone: '+591 70055443' }],
@@ -344,13 +336,11 @@ describe('PatientProfileEdit', () => {
       'Datos personales',
       'Contacto',
       'Facturación',
-      'Tutores',
     ]);
-    expect((fixture.nativeElement as HTMLElement).textContent).not.toContain('Alianza Vida Seguros');
-
-    expect(pestanas[3].disabled).toBe(false);
-    abrirPestana(3);
-    expect((fixture.nativeElement as HTMLElement).textContent).toContain('Carlos Mamani');
+    expect((fixture.nativeElement as HTMLElement).textContent).not.toContain(
+      'Alianza Vida Seguros',
+    );
+    expect((fixture.nativeElement as HTMLElement).textContent).not.toContain('Carlos Mamani');
   });
 
   it('siembra el formulario con lo ya guardado, en las cuatro partes del nombre', () => {
@@ -593,9 +583,9 @@ describe('PatientProfileEdit', () => {
       fixture.detectChanges();
 
       expect(señal<string>('domicilio')()).toBe('');
-      expect(raiz.querySelector('[data-testid="perfil-domicilio-reescribir"]')?.textContent).toContain(
-        'Volvé a escribir la dirección para este punto',
-      );
+      expect(
+        raiz.querySelector('[data-testid="perfil-domicilio-reescribir"]')?.textContent,
+      ).toContain('Volvé a escribir la dirección para este punto');
       // El trabajo no se entera: cada mapa vacía sólo su campo.
       expect(señal<string>('direccionTrabajo')()).toBe('Calle Ayacucho 241');
       expect(raiz.querySelector('[data-testid="perfil-trabajo-reescribir"]')).toBeNull();
@@ -636,9 +626,7 @@ describe('PatientProfileEdit', () => {
       abrirPestana(pestanaDe('perfil-domicilio'));
       fixture.detectChanges();
 
-      const mapas = (fixture.nativeElement as HTMLElement).querySelectorAll(
-        'app-ubicacion-picker',
-      );
+      const mapas = (fixture.nativeElement as HTMLElement).querySelectorAll('app-ubicacion-picker');
       expect(mapas).toHaveLength(2);
     });
 

@@ -889,12 +889,20 @@ export interface OwnCoverage {
   readonly benefits: readonly CoverageBenefitSummary[];
 }
 
-/** Un tutor o persona autorizada, con su teléfono. */
+/** Una persona que puede actuar por el paciente. */
 export interface OwnGuardian {
   readonly displayName?: string;
   readonly relationshipConceptId?: string;
-  readonly isEmergencyContact: boolean;
+  readonly relationshipDisplay: string;
   readonly isLegalGuardian: boolean;
+  readonly phone?: string;
+}
+
+/** Una persona a quien llamar ante una urgencia. */
+export interface OwnEmergencyContact {
+  readonly displayName?: string;
+  readonly relationshipConceptId?: string;
+  readonly relationshipDisplay: string;
   readonly phone?: string;
 }
 
@@ -956,6 +964,7 @@ export interface OwnPatientProfile {
   readonly workAddress?: OwnAddress;
   /** Siempre presentes, vacías si no declaró nada. */
   readonly coverages: readonly OwnCoverage[];
+  readonly emergencyContacts: readonly OwnEmergencyContact[];
   readonly guardians: readonly OwnGuardian[];
 }
 
