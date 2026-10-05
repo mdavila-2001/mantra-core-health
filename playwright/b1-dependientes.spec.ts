@@ -96,8 +96,32 @@ test.describe('B.1 · dependientes por CI', () => {
     await page.goto('/my-account/dependents');
     const solicitudes = page.getByTestId('dependents-solicitudes');
     await expect(solicitudes).toContainText(TITULAR.nombre);
+    await solicitudes.getByRole('combobox').selectOption({ label: 'Madre' });
     await page.getByRole('button', { name: `Aceptar la solicitud de ${TITULAR.nombre}` }).click();
     await expect(solicitudes).toHaveCount(0);
+
+    // La relación aceptada aparece en el perfil del dependiente; sus contactos
+    // de emergencia siguen en Contacto y no se mezclan con Tutores.
+    await page.goto('/my-account');
+    await expect(page.getByRole('tab', { name: 'Tutores' })).toBeVisible();
+    await page.getByRole('tab', { name: 'Contacto' }).click();
+    await expect(page.getByText('Contactos de emergencia')).toBeVisible();
+    await page.getByRole('tab', { name: 'Tutores' }).click();
+    await expect(page.getByText(TITULAR.nombre)).toBeVisible();
+    await expect(page.getByText('Madre', { exact: true })).toBeVisible();
+    await page.screenshot({
+      path: 'artifacts/playwright/perfil-tutores-escritorio.png',
+      fullPage: true,
+    });
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.reload();
+    await page.getByRole('tab', { name: 'Tutores' }).click();
+    await expect(page.getByText(TITULAR.nombre)).toBeVisible();
+    await page.screenshot({
+      path: 'artifacts/playwright/perfil-tutores-telefono.png',
+      fullPage: true,
+    });
 
     // Y la titular la ve en su lista.
     await entrar(page, TITULAR.documento);
@@ -140,9 +164,10 @@ test.describe('B.1 · dependientes por CI', () => {
         ] as const) {
           expect(caja, `${que} sin caja en ${nombre}`).not.toBeNull();
           expect(caja!.x, `${que} cortado a la izquierda en ${nombre}`).toBeGreaterThanOrEqual(0);
-          expect(caja!.x + caja!.width, `${que} cortado a la derecha en ${nombre}`).toBeLessThanOrEqual(
-            ancho,
-          );
+          expect(
+            caja!.x + caja!.width,
+            `${que} cortado a la derecha en ${nombre}`,
+          ).toBeLessThanOrEqual(ancho);
         }
 
         await page.screenshot({

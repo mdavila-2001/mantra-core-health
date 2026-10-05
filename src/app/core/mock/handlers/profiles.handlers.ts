@@ -27,7 +27,17 @@ import {
   type PacienteSimulado,
   type ProfesionalSimulado,
 } from '../fixtures/personas';
-import { conflict, forbidden, noContent, notFound, preconditionFailed, reply, validation, type MockRequest, type MockRouter } from '../mock-router';
+import {
+  conflict,
+  forbidden,
+  noContent,
+  notFound,
+  preconditionFailed,
+  reply,
+  validation,
+  type MockRequest,
+  type MockRouter,
+} from '../mock-router';
 import { cerrarAcciones, emitirNotificacion } from './notifications.handlers';
 import {
   ahora,
@@ -111,8 +121,14 @@ interface PrincipalElegida {
 
 const principalElegida = new Coleccion<PrincipalElegida>([], 'mock.perfil-medico.principal');
 
-const especialidadesAgregadas = new Coleccion<EspecialidadAgregada>([], 'mock.perfil-medico.especialidades');
-const credencialesAgregadas = new Coleccion<CredencialAgregada>([], 'mock.perfil-medico.credenciales');
+const especialidadesAgregadas = new Coleccion<EspecialidadAgregada>(
+  [],
+  'mock.perfil-medico.especialidades',
+);
+const credencialesAgregadas = new Coleccion<CredencialAgregada>(
+  [],
+  'mock.perfil-medico.credenciales',
+);
 const matriculasAgregadas = new Coleccion<MatriculaAgregada>([], 'mock.perfil-medico.matriculas');
 
 /* ---- corregir y retirar lo ya cargado -------------------------------------
@@ -127,7 +143,10 @@ const matriculasAgregadas = new Coleccion<MatriculaAgregada>([], 'mock.perfil-me
    así que una sola tabla de cada cosa alcanza para las tres. */
 
 /** Los ids que dejaron de verse. */
-const retiradasDelPerfil = new Coleccion<{ readonly id: string }>([], 'mock.perfil-medico.retiradas');
+const retiradasDelPerfil = new Coleccion<{ readonly id: string }>(
+  [],
+  'mock.perfil-medico.retiradas',
+);
 
 /** Un parche sobre una fila: lo que la persona corrigió, encima de lo que había. */
 interface CorreccionDePerfil {
@@ -135,7 +154,10 @@ interface CorreccionDePerfil {
   readonly cambios: Record<string, unknown>;
 }
 
-const correccionesDelPerfil = new Coleccion<CorreccionDePerfil>([], 'mock.perfil-medico.correcciones');
+const correccionesDelPerfil = new Coleccion<CorreccionDePerfil>(
+  [],
+  'mock.perfil-medico.correcciones',
+);
 
 /**
  * Lo que se ve de una colección del perfil: sin lo retirado y con lo corregido
@@ -166,7 +188,10 @@ function existeEnElPerfil(filas: readonly { readonly id: string }[], id: string)
 }
 
 /** Las claves del cuerpo que el DTO de la API no declara: con la lista blanca estricta, un 400. */
-function clavesFueraDeLaLista(cambios: Record<string, unknown>, permitidas: readonly string[]): string[] {
+function clavesFueraDeLaLista(
+  cambios: Record<string, unknown>,
+  permitidas: readonly string[],
+): string[] {
   return Object.keys(cambios).filter((clave) => !permitidas.includes(clave));
 }
 
@@ -208,15 +233,24 @@ function conElegidaAlFrente<T extends { readonly id: string; readonly isPrimary?
    escriben, y separarse sería servir una lista y escribir sobre otra. */
 
 function especialidadesPropiasDe(p: ProfesionalSimulado) {
-  return [...especialidadesDe(p), ...especialidadesAgregadas.filtrar((e) => e.profileId === p.id).map(sinDueno)];
+  return [
+    ...especialidadesDe(p),
+    ...especialidadesAgregadas.filtrar((e) => e.profileId === p.id).map(sinDueno),
+  ];
 }
 
 function credencialesPropiasDe(p: ProfesionalSimulado) {
-  return [...credencialesDe(p), ...credencialesAgregadas.filtrar((c) => c.profileId === p.id).map(sinDueno)];
+  return [
+    ...credencialesDe(p),
+    ...credencialesAgregadas.filtrar((c) => c.profileId === p.id).map(sinDueno),
+  ];
 }
 
 function matriculasPropiasDe(p: ProfesionalSimulado) {
-  return [...licenciasDe(p), ...matriculasAgregadas.filtrar((m) => m.profileId === p.id).map(sinDueno)];
+  return [
+    ...licenciasDe(p),
+    ...matriculasAgregadas.filtrar((m) => m.profileId === p.id).map(sinDueno),
+  ];
 }
 
 function profesionalDeSesion(request: MockRequest): ProfesionalSimulado | undefined {
@@ -329,50 +363,108 @@ export function perfilPropioDe(p: PacienteSimulado) {
       lines: p.direccionTrabajo ?? 'Av. Cañoto esq. Landívar, piso 3',
       city: displayDe(p.municipioId),
       municipalityConceptId: p.municipioId,
-      ...(p.workLat === null || p.workLat === undefined || p.workLng === null || p.workLng === undefined
+      ...(p.workLat === null ||
+      p.workLat === undefined ||
+      p.workLng === null ||
+      p.workLng === undefined
         ? {}
         : { latitude: p.workLat, longitude: p.workLng }),
     },
     coverages:
       p.aseguradora === undefined
         ? []
-        : [{ id: `coverage-${p.id}`,
-            carrierName: p.aseguradora,
-            planName: p.plan,
-            isPublic: false,
-            policyIdentifier: `POL-${p.patientCode.slice(4)}`,
-            memberIdentifier: `AF-${p.patientCode.slice(4)}`,
-            verified: true,
-            status: 'Cobertura activa',
-            statusCode: 'COVERAGE_ACTIVE',
-            validityStatus: 'CURRENT',
-            referenceDate: isoDia(0),
-            effectiveFrom: '2026-01-01',
-            effectiveTo: '2026-12-31',
-            currencyCode: 'BOB',
-            carrierWhatsappNumber: canales.whatsapp,
-            carrierCallCenterPhone: canales.callCenter,
-            benefits: [
-              { id: `benefit-general-${p.id}`, categoryName: 'Atención ambulatoria', coveragePercent: '80.50', copayAmount: '20.00', deductibleAmount: null, effectiveFrom: '2026-01-01', effectiveTo: '2026-12-31', validityStatus: 'CURRENT' },
-              { id: `benefit-service-${p.id}`, categoryName: 'Atención ambulatoria', serviceConceptId: uuid('benefit-consultation'), serviceName: 'Consulta de seguimiento', coveragePercent: '100', copayAmount: '0.00', deductibleAmount: '150.00', effectiveFrom: '2026-01-01', effectiveTo: '2026-12-31', validityStatus: 'CURRENT' },
-            ] },
-            { id: `coverage-expired-${p.id}`, carrierName: p.aseguradora, planName: 'Plan anterior', isPublic: false,
-              policyIdentifier: `POL-ANT-${p.patientCode.slice(4)}`, verified: true, status: 'Cobertura activa',
-              statusCode: 'COVERAGE_ACTIVE', validityStatus: 'EXPIRED', effectiveFrom: '2025-01-01', effectiveTo: '2025-12-31',
-              carrierWhatsappNumber: canales.whatsapp, benefits: [],
+        : [
+            {
+              id: `coverage-${p.id}`,
+              carrierName: p.aseguradora,
+              planName: p.plan,
+              isPublic: false,
+              policyIdentifier: `POL-${p.patientCode.slice(4)}`,
+              memberIdentifier: `AF-${p.patientCode.slice(4)}`,
+              verified: true,
+              status: 'Cobertura activa',
+              statusCode: 'COVERAGE_ACTIVE',
+              validityStatus: 'CURRENT',
+              referenceDate: isoDia(0),
+              effectiveFrom: '2026-01-01',
+              effectiveTo: '2026-12-31',
+              currencyCode: 'BOB',
+              carrierWhatsappNumber: canales.whatsapp,
+              carrierCallCenterPhone: canales.callCenter,
+              benefits: [
+                {
+                  id: `benefit-general-${p.id}`,
+                  categoryName: 'Atención ambulatoria',
+                  coveragePercent: '80.50',
+                  copayAmount: '20.00',
+                  deductibleAmount: null,
+                  effectiveFrom: '2026-01-01',
+                  effectiveTo: '2026-12-31',
+                  validityStatus: 'CURRENT',
+                },
+                {
+                  id: `benefit-service-${p.id}`,
+                  categoryName: 'Atención ambulatoria',
+                  serviceConceptId: uuid('benefit-consultation'),
+                  serviceName: 'Consulta de seguimiento',
+                  coveragePercent: '100',
+                  copayAmount: '0.00',
+                  deductibleAmount: '150.00',
+                  effectiveFrom: '2026-01-01',
+                  effectiveTo: '2026-12-31',
+                  validityStatus: 'CURRENT',
+                },
+              ],
             },
-            { id: `coverage-future-${p.id}`, carrierName: p.aseguradora, planName: 'Plan próxima renovación', isPublic: false,
-              memberIdentifier: `DECL-${p.patientCode.slice(4)}`, verified: false, status: 'Cobertura activa',
-              statusCode: 'COVERAGE_ACTIVE', validityStatus: 'UPCOMING', effectiveFrom: '2027-01-01', effectiveTo: '2027-12-31',
-              currencyCode: 'USD', carrierCallCenterPhone: canales.callCenter, benefits: [],
-            }],
-    guardians: personasRelacionadasDe(p).map((r) => ({
-      displayName: r.displayName,
-      relationshipConceptId: r.relationshipConceptId,
-      isEmergencyContact: r.isEmergencyContact,
-      isLegalGuardian: r.isLegalGuardian,
-      phone: '+591 70011223',
-    })),
+            {
+              id: `coverage-expired-${p.id}`,
+              carrierName: p.aseguradora,
+              planName: 'Plan anterior',
+              isPublic: false,
+              policyIdentifier: `POL-ANT-${p.patientCode.slice(4)}`,
+              verified: true,
+              status: 'Cobertura activa',
+              statusCode: 'COVERAGE_ACTIVE',
+              validityStatus: 'EXPIRED',
+              effectiveFrom: '2025-01-01',
+              effectiveTo: '2025-12-31',
+              carrierWhatsappNumber: canales.whatsapp,
+              benefits: [],
+            },
+            {
+              id: `coverage-future-${p.id}`,
+              carrierName: p.aseguradora,
+              planName: 'Plan próxima renovación',
+              isPublic: false,
+              memberIdentifier: `DECL-${p.patientCode.slice(4)}`,
+              verified: false,
+              status: 'Cobertura activa',
+              statusCode: 'COVERAGE_ACTIVE',
+              validityStatus: 'UPCOMING',
+              effectiveFrom: '2027-01-01',
+              effectiveTo: '2027-12-31',
+              currencyCode: 'USD',
+              carrierCallCenterPhone: canales.callCenter,
+              benefits: [],
+            },
+          ],
+    emergencyContacts: personasRelacionadasDe(p)
+      .filter((r) => r.isEmergencyContact)
+      .map((r) => ({
+        displayName: r.displayName,
+        relationshipConceptId: r.relationshipConceptId,
+        relationshipDisplay: displayDe(r.relationshipConceptId),
+        phone: '+591 70011223',
+      })),
+    guardians: apoderamientos
+      .filtrar((a) => a.dependienteId === p.id)
+      .map((a) => ({
+        displayName: pacientePorId(a.titularId)?.displayName ?? '',
+        relationshipConceptId: a.relationshipConceptId,
+        relationshipDisplay: displayDe(a.relationshipConceptId),
+        isLegalGuardian: a.relationshipConceptId === PARENTESCO['RELATIONSHIP_GUARDIAN'],
+        phone: pacientePorId(a.titularId)?.phone,
+      })),
   };
 }
 
@@ -394,7 +486,11 @@ const ENCUENTROS_CON_SEGURO_POR_MES = [11, 13, 15, 12, 16, 18, 14, 17, 19, 18, 1
 function serieMensualDemo(): readonly { month: string; count: number; insuredCount: number }[] {
   const hoy = new Date();
   return ENCUENTROS_POR_MES.map((count, indice) => {
-    const mes = new Date(hoy.getFullYear(), hoy.getMonth() - (ENCUENTROS_POR_MES.length - 1 - indice), 1);
+    const mes = new Date(
+      hoy.getFullYear(),
+      hoy.getMonth() - (ENCUENTROS_POR_MES.length - 1 - indice),
+      1,
+    );
     return {
       month: `${mes.getFullYear()}-${String(mes.getMonth() + 1).padStart(2, '0')}`,
       count,
@@ -491,7 +587,13 @@ function perfilProfesionalBase(p: ProfesionalSimulado) {
     taxId: p.nationalId === '' ? '' : `${p.nationalId}011`,
     taxHolderName: p.displayName,
     insuranceBillingFrequency: 'MONTHLY',
-    homeAddress: { lines: p.direccion, city: p.ciudad, municipalityConceptId: p.municipioId, latitude: p.lat, longitude: p.lng },
+    homeAddress: {
+      lines: p.direccion,
+      city: p.ciudad,
+      municipalityConceptId: p.municipioId,
+      latitude: p.lat,
+      longitude: p.lng,
+    },
     practitionerCategoryConceptId: CATEGORIA_MEDICO,
     verificationStatusConceptId: p.verified ? ESTADO['ST-VERIFIED']! : ESTADO['ST-PENDING']!,
     practiceStatusConceptId: ESTADO['ST-ACTIVE']!,
@@ -535,13 +637,18 @@ function itemDeGuia(p: ProfesionalSimulado) {
     verified: p.verified,
     acceptsNewPatients: p.acceptsNewPatients,
     telehealthAvailable: p.telehealthAvailable,
-    specialties: p.especialidades.map((specialtyConceptId, i) => ({ specialtyConceptId, isPrimary: i === 0 })),
+    specialties: p.especialidades.map((specialtyConceptId, i) => ({
+      specialtyConceptId,
+      isPrimary: i === 0,
+    })),
     // Para los de la red, el consultorio es la dirección que publica la
     // aseguradora: «Consultorio Al» (de «Al Hamss») no existe en ningún lado.
-    workplaces: p.origen !== undefined ? [p.organizacion, p.direccion].filter((x) => x !== '') : [p.organizacion, `Consultorio ${p.lastName}`],
+    workplaces:
+      p.origen !== undefined
+        ? [p.organizacion, p.direccion].filter((x) => x !== '')
+        : [p.organizacion, `Consultorio ${p.lastName}`],
   };
 }
-
 
 /* ---- dependientes (B.1) ---------------------------------------------------
    El apoderamiento vive acá y no en los fixtures porque nace en la sesión: no
@@ -588,7 +695,10 @@ function cuentaConDocumento(documento: string): PacienteSimulado | undefined {
 
 /** Minúsculas y sin tildes, para que «maria» encuentre a «María». */
 function sinTildes(valor: string): string {
-  return valor.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('es');
+  return valor
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLocaleLowerCase('es');
 }
 
 /** Cuántas letras hacen falta para buscar personas por nombre. */
@@ -658,9 +768,7 @@ function resumenDeDependiente(apoderamiento: ApoderamientoSimulado) {
     ...(p?.birthDate === undefined || p.birthDate === ''
       ? {}
       : { birthDate: p.birthDate, ageYears: edadEnAnios(p.birthDate) }),
-    ...(p?.nationalId === undefined || p.nationalId === ''
-      ? {}
-      : { nationalId: p.nationalId }),
+    ...(p?.nationalId === undefined || p.nationalId === '' ? {} : { nationalId: p.nationalId }),
     relationshipCode: relacion.code,
     relationshipDisplay: relacion.display,
     isLegalGuardian: true,
@@ -697,7 +805,10 @@ export function registrarPerfiles(router: MockRouter): void {
     const idiomaClinico = texto(query, 'clinicalLanguageConceptId');
     const todos = pacientes
       .todos()
-      .filter((p) => contiene(p.displayName, q) || contiene(p.patientCode, q) || contiene(p.nationalId, q))
+      .filter(
+        (p) =>
+          contiene(p.displayName, q) || contiene(p.patientCode, q) || contiene(p.nationalId, q),
+      )
       .filter((p) => nationalId === null || p.nationalId === nationalId)
       .filter((p) => aboGroup === null || p.aboGroupId === aboGroup)
       .filter((p) => rhFactor === null || p.rhFactorId === rhFactor)
@@ -771,12 +882,22 @@ export function registrarPerfiles(router: MockRouter): void {
         ? { middleName: cambios['middleName'] === '' ? undefined : cambios['middleName'] }
         : {}),
       ...(typeof cambios['lastName'] === 'string' ? { lastName: cambios['lastName'] } : {}),
-      ...(typeof cambios['motherLastName'] === 'string' ? { motherLastName: cambios['motherLastName'] } : {}),
+      ...(typeof cambios['motherLastName'] === 'string'
+        ? { motherLastName: cambios['motherLastName'] }
+        : {}),
       ...(typeof cambios['phone'] === 'string' ? { phone: cambios['phone'] } : {}),
-      ...(typeof cambios['birthDate'] === 'string' ? { birthDate: cambios['birthDate'].slice(0, 10) } : {}),
-      ...(typeof cambios['residenceMunicipalityConceptId'] === 'string' ? { municipioId: cambios['residenceMunicipalityConceptId'] } : {}),
-      ...(typeof cambios['occupationConceptId'] === 'string' ? { ocupacionId: cambios['occupationConceptId'] } : {}),
-      ...(typeof cambios['homeAddressLines'] === 'string' ? { direccion: cambios['homeAddressLines'] } : {}),
+      ...(typeof cambios['birthDate'] === 'string'
+        ? { birthDate: cambios['birthDate'].slice(0, 10) }
+        : {}),
+      ...(typeof cambios['residenceMunicipalityConceptId'] === 'string'
+        ? { municipioId: cambios['residenceMunicipalityConceptId'] }
+        : {}),
+      ...(typeof cambios['occupationConceptId'] === 'string'
+        ? { ocupacionId: cambios['occupationConceptId'] }
+        : {}),
+      ...(typeof cambios['homeAddressLines'] === 'string'
+        ? { direccion: cambios['homeAddressLines'] }
+        : {}),
       // La dirección de trabajo no se guardaba: el contrato la declaraba, la
       // pantalla la mandaba y la maqueta la tiraba, así que editarla parecía
       // funcionar hasta recargar.
@@ -787,7 +908,9 @@ export function registrarPerfiles(router: MockRouter): void {
       ...coordenadasDelCuerpo(cambios, 'work'),
     });
     const conNombre = actualizado!;
-    pacientes.actualizar(p.id, { displayName: `${conNombre.name}${conNombre.middleName ? ` ${conNombre.middleName}` : ''} ${conNombre.lastName} ${conNombre.motherLastName}` });
+    pacientes.actualizar(p.id, {
+      displayName: `${conNombre.name}${conNombre.middleName ? ` ${conNombre.middleName}` : ''} ${conNombre.lastName} ${conNombre.motherLastName}`,
+    });
     return perfilPropioDe(pacientes.get(p.id)!);
   });
 
@@ -832,7 +955,9 @@ export function registrarPerfiles(router: MockRouter): void {
   );
 
   router.post('/profiles/patients/merge', (request) => {
-    const datos = cuerpo<{ survivingPatientProfileId: string; mergedPatientProfileId: string }>(request);
+    const datos = cuerpo<{ survivingPatientProfileId: string; mergedPatientProfileId: string }>(
+      request,
+    );
     return {
       status: 201,
       body: {
@@ -996,7 +1121,8 @@ export function registrarPerfiles(router: MockRouter): void {
       return conflict('Esa persona ya es tu dependiente.');
     }
     const pendiente = solicitudes.filtrar(
-      (s) => s.titularId === titular.id && s.dependienteId === destinatario.id && s.estado === 'PENDING',
+      (s) =>
+        s.titularId === titular.id && s.dependienteId === destinatario.id && s.estado === 'PENDING',
     )[0];
     if (pendiente !== undefined) {
       return conflict('Ya le enviaste una solicitud a esa persona. Falta que la acepte.');
@@ -1082,11 +1208,12 @@ export function registrarPerfiles(router: MockRouter): void {
     cerrarAcciones({ type: 'DEPENDENT_LINK_REQUEST', id: solicitud.id });
     const titular = pacientePorId(solicitud.titularId);
     if (estado === 'ACCEPTED') {
+      const datos = cuerpo<{ relationshipConceptId?: string }>(request);
       apoderamientos.agregar({
         id: nuevoId('proxy'),
         titularId: solicitud.titularId,
         dependienteId: yo.id,
-        relationshipConceptId: '',
+        relationshipConceptId: datos.relationshipConceptId ?? PARENTESCO['RELATIONSHIP_OTHER']!,
       });
     }
     if (titular !== undefined) {
@@ -1116,7 +1243,13 @@ export function registrarPerfiles(router: MockRouter): void {
 
   router.post('/profiles/patients/:id/related-persons', ({ params }) => ({
     status: 201,
-    body: { id: nuevoId('related'), patientProfileId: params['id'], personId: nuevoId('person'), status: 'ACTIVE', createdAt: ahora() },
+    body: {
+      id: nuevoId('related'),
+      patientProfileId: params['id'],
+      personId: nuevoId('person'),
+      status: 'ACTIVE',
+      createdAt: ahora(),
+    },
   }));
 
   /**
@@ -1154,7 +1287,8 @@ export function registrarPerfiles(router: MockRouter): void {
       personId: uuid(`person-${id}`),
       userId: uuid(`user-${id}`),
       patientCode: datos.patientCode ?? `PAC-${Date.now() % 100000}`,
-      displayName: datos.displayName ?? [nombre, apellido, materno].filter((p) => p !== '').join(' '),
+      displayName:
+        datos.displayName ?? [nombre, apellido, materno].filter((p) => p !== '').join(' '),
       name: nombre,
       ...(datos.middleName === undefined ? {} : { middleName: datos.middleName }),
       lastName: apellido,
@@ -1174,7 +1308,13 @@ export function registrarPerfiles(router: MockRouter): void {
     pacientes.agregar(nuevo);
     return {
       status: 201,
-      body: { profileId: nuevo.id, personId: nuevo.personId, patientCode: nuevo.patientCode, recordLinkageStatus: 'UNLINKED', createdAt: ahora() },
+      body: {
+        profileId: nuevo.id,
+        personId: nuevo.personId,
+        patientCode: nuevo.patientCode,
+        recordLinkageStatus: 'UNLINKED',
+        createdAt: ahora(),
+      },
     };
   });
 
@@ -1194,8 +1334,16 @@ export function registrarPerfiles(router: MockRouter): void {
       steps: [
         { key: 'professional-data', complete: true, missing: [] },
         { key: 'photo', complete: true, missing: [] },
-        { key: 'organizations', complete: completo, missing: completo ? [] : ['Vinculá al menos una organización'] },
-        { key: 'schedule', complete: completo, missing: completo ? [] : ['Publicá un horario de atención'] },
+        {
+          key: 'organizations',
+          complete: completo,
+          missing: completo ? [] : ['Vinculá al menos una organización'],
+        },
+        {
+          key: 'schedule',
+          complete: completo,
+          missing: completo ? [] : ['Publicá un horario de atención'],
+        },
         { key: 'review', complete: completo, missing: completo ? [] : ['Revisión pendiente'] },
       ],
       firstIncomplete: completo ? 'done' : 'organizations',
@@ -1221,7 +1369,10 @@ export function registrarPerfiles(router: MockRouter): void {
       for (const e of p.especialidades) conteo.set(e, (conteo.get(e) ?? 0) + 1);
     }
     return {
-      items: [...conteo.entries()].map(([specialtyConceptId, practitionerCount]) => ({ specialtyConceptId, practitionerCount })),
+      items: [...conteo.entries()].map(([specialtyConceptId, practitionerCount]) => ({
+        specialtyConceptId,
+        practitionerCount,
+      })),
       practitionerTotal: PROFESIONALES.length,
       withoutSpecialtyCount: PROFESIONALES.filter((p) => p.especialidades.length === 0).length,
     };
@@ -1232,7 +1383,9 @@ export function registrarPerfiles(router: MockRouter): void {
     const especialidad = texto(query, 'specialtyConceptId');
     const sinEspecialidad = query.get('withoutSpecialty') === 'true';
     const soloVerificados = query.get('verified') === 'true';
-    const todos = PROFESIONALES.filter((p) => contiene(p.displayName, q) || contiene(p.professionalTitle, q))
+    const todos = PROFESIONALES.filter(
+      (p) => contiene(p.displayName, q) || contiene(p.professionalTitle, q),
+    )
       .filter((p) => especialidad === null || p.especialidades.includes(especialidad))
       .filter((p) => !sinEspecialidad || p.especialidades.length === 0)
       .filter((p) => !soloVerificados || p.verified)
@@ -1242,15 +1395,30 @@ export function registrarPerfiles(router: MockRouter): void {
 
   router.get('/profiles/practitioners/me/affiliations', (request) => {
     const p = profesionalDeSesion(request);
-    const items = p === undefined ? [] : afiliaciones.filtrar((a) => a.practitionerProfileId === p.id);
+    const items =
+      p === undefined ? [] : afiliaciones.filtrar((a) => a.practitionerProfileId === p.id);
     return { items, count: items.length };
   });
 
   router.post('/profiles/practitioners/me/affiliations', (request) => {
     const p = profesionalDeSesion(request);
     if (p === undefined) return forbidden();
-    const datos = cuerpo<{ organizationName: string; roleTitle?: string; startDate: string; endDate?: string; practiceSiteId?: string; affiliationTypeConceptId?: string }>(request);
-    if (afiliaciones.filtrar((a) => a.practitionerProfileId === p.id && a.organizationName === datos.organizationName && a.startDate === datos.startDate).length > 0) {
+    const datos = cuerpo<{
+      organizationName: string;
+      roleTitle?: string;
+      startDate: string;
+      endDate?: string;
+      practiceSiteId?: string;
+      affiliationTypeConceptId?: string;
+    }>(request);
+    if (
+      afiliaciones.filtrar(
+        (a) =>
+          a.practitionerProfileId === p.id &&
+          a.organizationName === datos.organizationName &&
+          a.startDate === datos.startDate,
+      ).length > 0
+    ) {
       return conflict('Ese vínculo ya está en el historial laboral');
     }
     const nueva: AfiliacionSimulada = {
@@ -1276,7 +1444,10 @@ export function registrarPerfiles(router: MockRouter): void {
     const actual = afiliaciones.get(request.params['id']!);
     if (actual === undefined) return notFound();
     const datos = cuerpo<Partial<AfiliacionSimulada>>(request);
-    return afiliaciones.actualizar(actual.id, { ...datos, current: (datos.endDate ?? actual.endDate) === null });
+    return afiliaciones.actualizar(actual.id, {
+      ...datos,
+      current: (datos.endDate ?? actual.endDate) === null,
+    });
   });
 
   router.delete('/profiles/practitioners/me/affiliations/:id', ({ params }) => {
@@ -1287,13 +1458,21 @@ export function registrarPerfiles(router: MockRouter): void {
   router.post('/profiles/practitioners/me/credentials', (request) => {
     const p = profesionalDeSesion(request);
     if (p === undefined) return notFound();
-    const datos = cuerpo<{ credentialTypeConceptId: string; number: string; issuingInstitutionText?: string; issueDate?: string; fileId?: string }>(request);
+    const datos = cuerpo<{
+      credentialTypeConceptId: string;
+      number: string;
+      issuingInstitutionText?: string;
+      issueDate?: string;
+      fileId?: string;
+    }>(request);
     const nueva = credencialesAgregadas.agregar({
       id: nuevoId('cred'),
       profileId: p.id,
       credentialTypeConceptId: datos.credentialTypeConceptId ?? '',
       number: datos.number ?? '',
-      ...(datos.issuingInstitutionText === undefined ? {} : { issuingInstitutionText: datos.issuingInstitutionText }),
+      ...(datos.issuingInstitutionText === undefined
+        ? {}
+        : { issuingInstitutionText: datos.issuingInstitutionText }),
       ...(datos.issueDate === undefined ? {} : { issueDate: datos.issueDate }),
       // El diploma se devuelve en la lectura: sin esto, el título recién
       // cargado se quedaba sin nada que descargar aunque se hubiera adjuntado.
@@ -1338,9 +1517,16 @@ export function registrarPerfiles(router: MockRouter): void {
     if (!existeEnElPerfil(especialidadesPropiasDe(p), id)) return notFound();
     const cambios = cuerpo<Record<string, unknown>>(request);
     const sobrantes = clavesFueraDeLaLista(cambios, ['specialtyConceptId', 'boardCertified']);
-    if (sobrantes.length > 0) return validation('Cuerpo inválido', sobrantes.map(propiedadSobrante));
-    if (!estaPendiente(especialidadesPropiasDe(p).find((e) => e.id === id)?.verificationStatusConceptId)) {
-      return preconditionFailed('Esa especialidad ya no está pendiente de verificación; no se puede corregir');
+    if (sobrantes.length > 0)
+      return validation('Cuerpo inválido', sobrantes.map(propiedadSobrante));
+    if (
+      !estaPendiente(
+        especialidadesPropiasDe(p).find((e) => e.id === id)?.verificationStatusConceptId,
+      )
+    ) {
+      return preconditionFailed(
+        'Esa especialidad ya no está pendiente de verificación; no se puede corregir',
+      );
     }
     corregirDelPerfil(id, cambios);
     return noContent();
@@ -1351,8 +1537,14 @@ export function registrarPerfiles(router: MockRouter): void {
     if (p === undefined) return notFound();
     const id = request.params['id']!;
     if (!existeEnElPerfil(especialidadesPropiasDe(p), id)) return notFound();
-    if (!estaPendiente(especialidadesPropiasDe(p).find((e) => e.id === id)?.verificationStatusConceptId)) {
-      return preconditionFailed('Esa especialidad ya no está pendiente de verificación; no se puede retirar');
+    if (
+      !estaPendiente(
+        especialidadesPropiasDe(p).find((e) => e.id === id)?.verificationStatusConceptId,
+      )
+    ) {
+      return preconditionFailed(
+        'Esa especialidad ya no está pendiente de verificación; no se puede retirar',
+      );
     }
     especialidadesAgregadas.borrar(id);
     retiradasDelPerfil.agregar({ id });
@@ -1370,8 +1562,14 @@ export function registrarPerfiles(router: MockRouter): void {
     const id = request.params['id']!;
     if (!existeEnElPerfil(matriculasPropiasDe(p), id)) return notFound();
     const cambios = cuerpo<Record<string, unknown>>(request);
-    const sobrantes = clavesFueraDeLaLista(cambios, ['licenseNumber', 'regulatoryAuthority', 'validFrom', 'fileId']);
-    if (sobrantes.length > 0) return validation('Cuerpo inválido', sobrantes.map(propiedadSobrante));
+    const sobrantes = clavesFueraDeLaLista(cambios, [
+      'licenseNumber',
+      'regulatoryAuthority',
+      'validFrom',
+      'fileId',
+    ]);
+    if (sobrantes.length > 0)
+      return validation('Cuerpo inválido', sobrantes.map(propiedadSobrante));
     if (!estaPendiente(matriculasPropiasDe(p).find((m) => m.id === id)?.stateConceptId)) {
       return preconditionFailed('Esa matrícula ya no está pendiente; no se puede corregir');
     }
@@ -1418,7 +1616,11 @@ export function registrarPerfiles(router: MockRouter): void {
   });
 
   router.post('/profiles/practitioners/:id/specialties', (request) => {
-    const datos = cuerpo<{ specialtyConceptId: string; isPrimary?: boolean; boardCertified?: boolean }>(request);
+    const datos = cuerpo<{
+      specialtyConceptId: string;
+      isPrimary?: boolean;
+      boardCertified?: boolean;
+    }>(request);
     const nueva = especialidadesAgregadas.agregar({
       id: nuevoId('spec'),
       profileId: request.params['id']!,
@@ -1444,13 +1646,21 @@ export function registrarPerfiles(router: MockRouter): void {
   });
 
   router.post('/profiles/practitioners/:id/jurisdiction-authorizations', (request) => {
-    const datos = cuerpo<{ licenseNumber: string; jurisdictionConceptId?: string; regulatoryAuthority?: string; validFrom?: string; fileId?: string }>(request);
+    const datos = cuerpo<{
+      licenseNumber: string;
+      jurisdictionConceptId?: string;
+      regulatoryAuthority?: string;
+      validFrom?: string;
+      fileId?: string;
+    }>(request);
     const nueva = matriculasAgregadas.agregar({
       id: nuevoId('jur'),
       profileId: request.params['id']!,
       jurisdictionConceptId: datos.jurisdictionConceptId ?? JURISDICCION['JUR-BO']!,
       licenseNumber: datos.licenseNumber ?? '',
-      ...(datos.regulatoryAuthority === undefined ? {} : { regulatoryAuthority: datos.regulatoryAuthority }),
+      ...(datos.regulatoryAuthority === undefined
+        ? {}
+        : { regulatoryAuthority: datos.regulatoryAuthority }),
       stateConceptId: ESTADO['ST-PENDING']!,
       ...(datos.validFrom === undefined ? {} : { validFrom: datos.validFrom }),
       ...(datos.fileId === undefined ? {} : { fileId: datos.fileId }),
@@ -1478,7 +1688,13 @@ export function registrarPerfiles(router: MockRouter): void {
 
   router.post('/profiles/persons/:personId/account-links', ({ params }) => ({
     status: 201,
-    body: { id: nuevoId('link'), personId: params['personId'], userId: nuevoId('user'), status: 'ACTIVE', validFrom: ahora() },
+    body: {
+      id: nuevoId('link'),
+      personId: params['personId'],
+      userId: nuevoId('user'),
+      status: 'ACTIVE',
+      validFrom: ahora(),
+    },
   }));
 }
 
