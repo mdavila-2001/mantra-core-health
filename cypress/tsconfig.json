@@ -18,7 +18,7 @@
   "extends": "../tsconfig.json",
   "compilerOptions": {
     "outDir": "../out-tsc/e2e",
-    "module": "preserve",
+    "module": "ES2022",
     "moduleResolution": "bundler",
     /* `cypress` trae los globales `cy`, `Cypress`, `describe` e `it`; `node` es
        por el `node:fs`, `node:http` y `express` del arnés. Los tipos del DOM
