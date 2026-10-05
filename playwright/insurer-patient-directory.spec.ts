@@ -29,6 +29,7 @@ const uninsured = {
 type Scenario = 'data' | 'empty' | 'error' | 'loading' | 'forbidden' | 'chat-error';
 
 async function setup(page: Page, scenario: Scenario = 'data') {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
   const payload = Buffer.from(
     JSON.stringify({
       sub: 'synthetic-admin',
@@ -223,6 +224,7 @@ test.describe('Directorio de pacientes @ui-mock', () => {
   }
 
   test('búsqueda, chips, reinicio y paginación sin filtros en URL', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
     const { problems, requests } = await setup(page);
     const search = page.getByRole('textbox', { name: 'Buscar pacientes', exact: true });
     await expect(page.getByTestId('directory-count')).toContainText('42');
@@ -234,6 +236,9 @@ test.describe('Directorio de pacientes @ui-mock', () => {
     ).toBeVisible();
     expect(requests.at(-1)?.body['search']).toBe('sin coincidencia');
     await expect(page).toHaveURL(new RegExp(`${route}$`));
+    await expect
+      .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth))
+      .toBe(true);
     for (const theme of ['light', 'dark']) {
       if (theme === 'dark')
         await page.getByRole('switch', { name: 'Cambiar a modo oscuro', exact: true }).click();
@@ -254,11 +259,14 @@ test.describe('Directorio de pacientes @ui-mock', () => {
   });
 
   test('error de conversación conserva la búsqueda y permite reintentar', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
     const { problems, requests } = await setup(page, 'chat-error');
     const search = page.getByRole('textbox', { name: 'Buscar pacientes', exact: true });
     await search.fill('Paciente Sintético');
     await expect.poll(() => requests.at(-1)?.body['search']).toBe('Paciente Sintético');
-    const message = page.getByTestId('table-insurer-patients').getByRole('button', {
+    const region = await page.getByTestId('patient-cards').isVisible()
+      ? page.getByTestId('patient-cards') : page.getByTestId('table-insurer-patients');
+    const message = region.getByRole('button', {
       name: `Enviar Mensaje a ${patient.fullName}`,
       exact: true,
     });
