@@ -206,6 +206,39 @@ export function registrarTerminologia(router: MockRouter): void {
     return { items, count: items.length, limit };
   });
 
+  router.get('/terminology/concepts/glossary-graph', ({ query }) => {
+    const limit = Number(query.get('limit') ?? 500) || 500;
+    const terms = miembrosDeConjunto(PARAGUAS);
+    const nodes = terms.slice(0, limit).map(terminoEnLinea).map((term) => ({
+      conceptId: term.conceptId,
+      slug: term.slug,
+      display: term.display,
+      category: term.category,
+      shortDefinition: term.shortDefinition,
+    }));
+    const idsBySlug = new Map(terms.map((term) => [term.slug, term.id]));
+    const nodeIds = new Set(nodes.map((node) => node.conceptId));
+    const edges = terms.slice(0, limit).flatMap((term) =>
+      term.relations.flatMap((relation) => {
+        const targetConceptId = idsBySlug.get(relation.targetSlug);
+        return targetConceptId === undefined || !nodeIds.has(targetConceptId)
+          ? []
+          : [{
+              sourceConceptId: term.id,
+              targetConceptId,
+              type: relation.type,
+            }];
+      }),
+    );
+    return {
+      nodes,
+      edges,
+      count: nodes.length,
+      limit,
+      possiblyTruncated: nodes.length === limit,
+    };
+  });
+
   router.get('/terminology/concepts/:id', ({ params }) => {
     const delGlosario = terminoPorId(params['id']!);
     if (delGlosario !== undefined) return fichaEnLinea(delGlosario);

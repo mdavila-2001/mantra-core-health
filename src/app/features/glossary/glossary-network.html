@@ -1,0 +1,108 @@
+<app-page-header
+  title="Mapa de relaciones del glosario"
+  subtitle="Explora cómo se conectan los términos clínicos del catálogo."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<main class="glosario-red">
+  <p class="glosario-red__intro">
+    Elige un término para ver sus conexiones directas. Las líneas representan relaciones
+    registradas en el catálogo; no expresan causalidad ni recomiendan un tratamiento.
+  </p>
+
+  <label class="glosario-red__selector">
+    <span>Término central</span>
+    <select [value]="titleNode()?.slug ?? ''" (change)="cambiarFoco($event)">
+      @for (node of nodes(); track node.conceptId) {
+        <option [value]="node.slug">{{ node.display }} · {{ node.category?.name ?? 'Otro' }}</option>
+      }
+    </select>
+  </label>
+
+  <app-view-state-host [state]="graph()" (retry)="recargar()">
+    @if (titleNode(); as focus) {
+      <app-card variant="outlined" padding="md">
+        <div class="glosario-red__cabecera">
+          <div>
+            <h2>{{ focus.display }}</h2>
+            <p>{{ focus.shortDefinition }}</p>
+          </div>
+          <a [routerLink]="['/glossary', focus.conceptId]">Abrir ficha</a>
+        </div>
+
+        <div class="glosario-red__lienzo" role="group" [attr.aria-label]="'Relaciones de ' + focus.display">
+          <svg viewBox="0 0 1000 640" role="img" [attr.aria-labelledby]="'red-titulo red-desc'">
+            <title id="red-titulo">Relaciones de {{ focus.display }}</title>
+            <desc id="red-desc">
+              {{ connections().length }} relaciones directas. Selecciona un nodo para centrarlo.
+            </desc>
+            @for (connection of connections(); track connection.edge.sourceConceptId + connection.edge.type + connection.edge.targetConceptId) {
+              @if (positionById().get(connection.node.conceptId); as point) {
+                <line
+                  class="glosario-red__arista"
+                  [attr.x1]="500"
+                  [attr.y1]="320"
+                  [attr.x2]="point.x"
+                  [attr.y2]="point.y"
+                  [attr.stroke]="colorRelacion(connection.edge.type)"
+                />
+              }
+            }
+
+            @for (point of points(); track point.node.conceptId) {
+              <g
+                class="glosario-red__nodo"
+                [class.glosario-red__nodo--central]="point.node.conceptId === focus.conceptId"
+                [attr.transform]="'translate(' + point.x + ' ' + point.y + ')'"
+                [attr.role]="point.node.conceptId === focus.conceptId ? null : 'button'"
+                [attr.tabindex]="point.node.conceptId === focus.conceptId ? null : 0"
+                [attr.aria-label]="point.node.display + (point.node.category ? ', ' + point.node.category.name : '')"
+                (click)="seleccionarNodo(point.node)"
+                (keydown.enter)="seleccionarNodo(point.node)"
+                (keydown.space)="seleccionarNodo(point.node)"
+              >
+                <circle r="56" />
+                <text text-anchor="middle" y="-3">{{ point.node.display.length > 18 ? point.node.display.slice(0, 17) + '…' : point.node.display }}</text>
+                <text class="glosario-red__categoria" text-anchor="middle" y="17">
+                  {{ point.node.category?.name ?? 'Otro' }}
+                </text>
+              </g>
+            }
+          </svg>
+        </div>
+
+        <ul class="glosario-red__leyenda" aria-label="Tipos de relación">
+          @for (type of ['DISEASE', 'TREATMENT', 'DIAGNOSTIC_TEST', 'PROCEDURE', 'ANATOMY', 'RELATED_TERM']; track type) {
+            <li>
+              <span class="glosario-red__muestra" [style.backgroundColor]="colorRelacion($any(type))"></span>
+              {{ etiquetaRelacion($any(type)) }}
+            </li>
+          }
+        </ul>
+
+        @if (connections().length === 0) {
+          <p class="glosario-red__vacio">Este término todavía no tiene relaciones tipadas publicadas.</p>
+        } @else {
+          <h3>Relaciones directas</h3>
+          <ul class="glosario-red__lista">
+            @for (connection of connections(); track connection.edge.sourceConceptId + connection.edge.type + connection.edge.targetConceptId) {
+              <li>
+                <span class="glosario-red__tipo" [style.borderColor]="colorRelacion(connection.edge.type)">
+                  {{ etiquetaConexion(connection) }} · {{ connection.direction }}
+                </span>
+                <button type="button" (click)="seleccionarNodo(connection.node)">{{ connection.node.display }}</button>
+                <a [routerLink]="['/glossary', connection.node.conceptId]">Ver ficha</a>
+              </li>
+            }
+          </ul>
+        }
+      </app-card>
+    }
+  </app-view-state-host>
+
+  @if (data()?.possiblyTruncated) {
+    <p class="glosario-red__aviso" role="status">
+      El mapa llegó al límite de nodos de esta lectura. Acota el catálogo antes de explorar más relaciones.
+    </p>
+  }
+</main>
