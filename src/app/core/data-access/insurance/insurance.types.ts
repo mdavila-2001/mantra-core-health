@@ -537,10 +537,7 @@ export interface ClaimDispute {
  * Idéntica semántica que `InsuranceSettlementAvailability` del paciente.
  */
 export type ClaimSettlementAvailability =
-  | 'AVAILABLE'
-  | 'PENDING_PUBLICATION'
-  | 'UNDER_REVIEW'
-  | 'NOT_AVAILABLE';
+  'AVAILABLE' | 'PENDING_PUBLICATION' | 'UNDER_REVIEW' | 'NOT_AVAILABLE';
 
 /** Una exclusión formal del desglose, con su cita de cláusula. */
 export interface ClaimExclusion {
@@ -646,11 +643,7 @@ export interface MyClaimList {
    afiliados por su historia clínica (decisión D4).
    ========================================================================== */
 
-export type CampaignType =
-  | 'LABORATORY'
-  | 'PHARMACY'
-  | 'DIAGNOSTIC_IMAGING'
-  | 'VACCINATION';
+export type CampaignType = 'LABORATORY' | 'PHARMACY' | 'DIAGNOSTIC_IMAGING' | 'VACCINATION';
 
 export type CampaignStatus = 'DRAFT' | 'ACTIVE' | 'PAUSED' | 'EXPIRED';
 
@@ -661,11 +654,7 @@ export type CampaignTargetStatus = Exclude<CampaignStatus, 'DRAFT'>;
 export type CampaignPartnerRole = 'SPONSOR' | 'PROVIDER';
 
 export type CampaignPartnerType =
-  | 'IMPORTER'
-  | 'MANUFACTURER'
-  | 'LABORATORY'
-  | 'PHARMACY'
-  | 'MEDICAL_CENTER';
+  'IMPORTER' | 'MANUFACTURER' | 'LABORATORY' | 'PHARMACY' | 'MEDICAL_CENTER';
 
 /** La patología que la campaña previene, resuelta desde el catálogo CIE-10. */
 export interface CampaignCondition {
@@ -892,4 +881,63 @@ export interface ReceivedClaimList {
   readonly items: readonly ReceivedClaim[];
   /** `true` si el servidor recortó al tope: hay más solicitudes que las recibidas. */
   readonly truncated: boolean;
+}
+
+/* --- Directorio autorizado de pacientes (`POST /insurance/patients/search`) --- */
+
+/** Filtro por seguro: una pregunta sobre las coberturas de ESTA aseguradora, no un catálogo. */
+export type InsurerPatientInsuranceStatus = 'ALL' | 'WITH_INSURANCE' | 'NO_INSURANCE';
+export type InsurerPatientSortField = 'fullName' | 'birthDate' | 'createdAt';
+
+/** Filtros dentro del alcance que impone el servidor. Nunca viajan en la URL. */
+export interface InsurerPatientQuery {
+  readonly cursor?: string;
+  /** 10, 25 o 50. */
+  readonly limit?: number;
+  readonly search?: string;
+  readonly genderConceptId?: string;
+  readonly occupation?: string;
+  readonly insuranceCarrierId?: string;
+  /** `YYYY-MM-DD`. */
+  readonly birthDateFrom?: string;
+  /** `YYYY-MM-DD`. */
+  readonly birthDateTo?: string;
+  readonly insuranceStatus?: InsurerPatientInsuranceStatus;
+  readonly sortBy?: InsurerPatientSortField;
+  readonly sortDirection?: 'asc' | 'desc';
+}
+
+/** Sólo la identidad visible de una aseguradora; sin póliza ni afiliación. */
+export interface PatientDirectoryInsurer {
+  readonly id: string;
+  readonly name: string;
+}
+
+export interface PatientDirectoryOptions {
+  readonly insurers: readonly PatientDirectoryInsurer[];
+}
+
+/** Una fila del directorio: filiación y contacto, nada clínico. */
+export interface InsurerPatientListItem {
+  readonly patientProfileId: string;
+  readonly fullName: string;
+  /** `YYYY-MM-DD`, fecha civil: no se convierte a `Date` para no correrla de huso. */
+  readonly birthDate?: string;
+  readonly age?: number;
+  /** Celular, o el fijo si no hay celular. */
+  readonly phone?: string;
+  readonly email?: string;
+  /** `GENDER_FEMALE`…: la palabra la pone la pantalla, el catálogo rotula en inglés. */
+  readonly genderCode?: string;
+  readonly occupationDisplay?: string;
+  readonly insurers: readonly PatientDirectoryInsurer[];
+  readonly messaging: { readonly channel: 'internal'; readonly available: boolean };
+}
+
+/** Total exacto del conjunto autorizado y filtrado, independiente del cursor. */
+export interface InsurerPatientPage {
+  readonly items: readonly InsurerPatientListItem[];
+  readonly total: number;
+  readonly limit: number;
+  readonly nextCursor: string | null;
 }
