@@ -3,6 +3,7 @@ import { analisisInlasaDe } from './inlasa';
 import { prestacionDeImagen } from './precios-de-referencia';
 import { CATALOGO_MEDICAMENTOS } from './catalogo-medicamentos.generated';
 import { MEDICAMENTOS_LINAME, type MedicamentoLiname } from './liname.generated';
+import { PROFESIONES_COB_2023 } from './profesiones-cob-2023.generated';
 
 /* ============================================================================
     El catálogo de terminología del backend simulado.
@@ -173,6 +174,16 @@ export const MUNICIPIO = definir('VS_BO_MUNICIPALITY', [
    allá y esto es una maqueta, no el paquete de seeds. Lo que no se recorta son
    las cuatro salidas del final, que son las que la pantalla necesita para
    ofrecerle una respuesta a quien no se encuentra en la lista. */
+/* Las profesiones que acredita un título («Otra profesión» del alta del
+   médico): la COB-2023 del INE, grandes grupos 2 y 3, con los mismos códigos
+   que siembra la API. */
+conjunto(
+  'VS_BO_PROFESSION',
+  'Profesiones (COB-2023)',
+  'Clasificación de Ocupaciones de Bolivia 2023, grandes grupos 2 y 3.',
+);
+export const PROFESION = definir('VS_BO_PROFESSION', PROFESIONES_COB_2023);
+
 conjunto('VS_BO_OCCUPATION', 'Ocupaciones', 'Catálogo normado de ocupaciones.');
 export const OCUPACION = definir('VS_BO_OCCUPATION', [
   ['occupation:bo:ABOGADO', 'Abogado / Abogada'],
@@ -478,13 +489,17 @@ conjunto('VS_CREDENTIAL_TYPE', 'Tipos de credencial', 'Títulos y certificacione
  * en castellano existía en el catálogo desde siempre y es la que el cliente de
  * terminología pide con `lang`.
  */
-export const TIPO_CREDENCIAL = definir('VS_CREDENTIAL_TYPE', [
-  ['CREDENTIAL_TYPE_DEGREE', 'Título universitario'],
-  ['CREDENTIAL_TYPE_DIPLOMA', 'Diplomado'],
-  ['CREDENTIAL_TYPE_MASTER', 'Maestría'],
-  ['CREDENTIAL_TYPE_DOCTORATE', 'Doctorado'],
-  ['CREDENTIAL_TYPE_SPECIALTY', 'Título de especialidad'],
-], 0);
+export const TIPO_CREDENCIAL = definir(
+  'VS_CREDENTIAL_TYPE',
+  [
+    ['CREDENTIAL_TYPE_DEGREE', 'Título universitario'],
+    ['CREDENTIAL_TYPE_DIPLOMA', 'Diplomado'],
+    ['CREDENTIAL_TYPE_MASTER', 'Maestría'],
+    ['CREDENTIAL_TYPE_DOCTORATE', 'Doctorado'],
+    ['CREDENTIAL_TYPE_SPECIALTY', 'Título de especialidad'],
+  ],
+  0,
+);
 
 conjunto('VS_JURISDICTION', 'Jurisdicciones', 'Ámbito de la matrícula.');
 export const JURISDICCION = definir('VS_JURISDICTION', [
@@ -843,7 +858,10 @@ const conNombreInlasa = (code: string, rotuloDeImagen?: string): readonly [strin
   analisisInlasaDe(code)?.name ?? rotuloDeImagen ?? code,
 ];
 /** Un estudio de imagen con equivalente en FONASA lleva su nombre oficial (`precios-de-referencia.ts`). */
-const conNombreFonasa = (code: string): readonly [string, string] => [code, prestacionDeImagen(code)?.name ?? code];
+const conNombreFonasa = (code: string): readonly [string, string] => [
+  code,
+  prestacionDeImagen(code)?.name ?? code,
+];
 export const ESTUDIO = definir('VS_DIAGNOSTIC_STUDY', [
   conNombreInlasa('STUDY-HEMOGRAMA'),
   conNombreInlasa('STUDY-GLUCOSA'),
@@ -931,21 +949,13 @@ export const DIAGNOSTICO = definir('VS_CONDITION_CODE', [
   ['L20', 'Dermatitis atópica', 'Enfermedad inflamatoria crónica de la piel.'],
   // Las alergias se cargan como diagnóstico (cliente, 02/10/2026): sin estos
   // códigos la maqueta no tenía cómo registrar una.
-  [
-    'Z88.0',
-    'Alergia a la penicilina',
-    'Antecedente personal de alergia a la penicilina.',
-  ],
+  ['Z88.0', 'Alergia a la penicilina', 'Antecedente personal de alergia a la penicilina.'],
   [
     'Z88.1',
     'Alergia a otros antibióticos',
     'Antecedente personal de alergia a otros agentes antibióticos.',
   ],
-  [
-    'Z88.6',
-    'Alergia a analgésicos',
-    'Antecedente personal de alergia a agentes analgésicos.',
-  ],
+  ['Z88.6', 'Alergia a analgésicos', 'Antecedente personal de alergia a agentes analgésicos.'],
   [
     'Z91.0',
     'Alergia a otras sustancias',
@@ -1027,7 +1037,9 @@ declararPropiedades('MED-INSULINA-NPH', { default_frequency: 42 });
  */
 const ATC_DE_DEMOSTRACION = new Map(
   CATALOGO_MEDICAMENTOS.flatMap((p) =>
-    p.medicationCode === null || p.atc[0] === undefined ? [] : [[p.atc[0], p.medicationCode] as const],
+    p.medicationCode === null || p.atc[0] === undefined
+      ? []
+      : [[p.atc[0], p.medicationCode] as const],
   ),
 );
 const propiedadesLiname = (m: MedicamentoLiname) => ({
@@ -1041,7 +1053,9 @@ for (const m of MEDICAMENTOS_LINAME) {
 }
 export const MEDICAMENTO_LINAME = definir(
   'VS_MEDICATION',
-  MEDICAMENTOS_LINAME.filter((m) => !ATC_DE_DEMOSTRACION.has(m.atc)).map((m) => [m.atc, m.name] as const),
+  MEDICAMENTOS_LINAME.filter((m) => !ATC_DE_DEMOSTRACION.has(m.atc)).map(
+    (m) => [m.atc, m.name] as const,
+  ),
 );
 for (const m of MEDICAMENTOS_LINAME) {
   if (!ATC_DE_DEMOSTRACION.has(m.atc)) declararPropiedades(m.atc, propiedadesLiname(m));
@@ -1168,13 +1182,21 @@ export const ESTADO_DE_CASO = definir('VS_IDENTITY_CASE_STATUS', [
    de la maqueta frenaba en «No pudimos cargar los catálogos del alta» antes de
    subir un solo PDF. */
 
-conjunto('VS_DIAGNOSTIC_UNIT_TYPE', 'Tipo de unidad diagnóstica', 'Laboratorio clínico o centro de imagenología.');
+conjunto(
+  'VS_DIAGNOSTIC_UNIT_TYPE',
+  'Tipo de unidad diagnóstica',
+  'Laboratorio clínico o centro de imagenología.',
+);
 export const DIAGNOSTIC_UNIT_TYPE = definir('VS_DIAGNOSTIC_UNIT_TYPE', [
   ['DU_TYPE_LAB', 'Laboratorio clínico'],
   ['DU_TYPE_IMAGING', 'Centro de imagenología'],
 ]);
 
-conjunto('VS_DIAGNOSTIC_MODALITY', 'Modalidad diagnóstica', 'Las modalidades que un alta puede declarar.');
+conjunto(
+  'VS_DIAGNOSTIC_MODALITY',
+  'Modalidad diagnóstica',
+  'Las modalidades que un alta puede declarar.',
+);
 export const DIAGNOSTIC_MODALITY = definir('VS_DIAGNOSTIC_MODALITY', [
   ['DU_MODALITY_LAB', 'Laboratorio'],
   ['DU_MODALITY_XRAY', 'Rayos X'],
@@ -1187,13 +1209,21 @@ export const DIAGNOSTIC_MODALITY = definir('VS_DIAGNOSTIC_MODALITY', [
 
 // Hoy sólo Bolivia, igual que `tenant-country` en la API: no es el
 // `VS_COUNTRY` universal, que allá sigue sin miembros.
-conjunto('VS_TENANT_COUNTRY', 'País de la organización', 'País donde está constituida la organización.');
+conjunto(
+  'VS_TENANT_COUNTRY',
+  'País de la organización',
+  'País donde está constituida la organización.',
+);
 export const TENANT_COUNTRY = definir('VS_TENANT_COUNTRY', [['BO', 'Bolivia']]);
 
 // El catálogo `jurisdiction` de la API, con sus dos códigos. No reemplaza a
 // `VS_JURISDICTION` (`JUR-*`), que siguen usando las matrículas sembradas de
 // la maqueta: sólo lo lee el alta de centros de diagnóstico.
-conjunto('VS_LICENSE_JURISDICTION', 'Jurisdicción', 'Ámbito territorial de la licencia para operar.');
+conjunto(
+  'VS_LICENSE_JURISDICTION',
+  'Jurisdicción',
+  'Ámbito territorial de la licencia para operar.',
+);
 export const LICENSE_JURISDICTION = definir('VS_LICENSE_JURISDICTION', [
   ['JURISDICTION_NATIONAL', 'Nacional'],
   ['JURISDICTION_SEDES_SANTA_CRUZ', 'SEDES Santa Cruz'],
@@ -1210,7 +1240,11 @@ export const SPECIMEN_STATUS = definir('VS_SPECIMEN_STATUS', [
   ['SPEC_REJECTED', 'Rechazado'],
 ]);
 
-conjunto('VS_ACCESSION_STATUS', 'Estado de la acesión', 'Ciclo de vida de una acesión de laboratorio.');
+conjunto(
+  'VS_ACCESSION_STATUS',
+  'Estado de la acesión',
+  'Ciclo de vida de una acesión de laboratorio.',
+);
 export const ACCESSION_STATUS = definir('VS_ACCESSION_STATUS', [
   ['ACC_RECEIVED', 'Recibida'],
   ['ACC_IN_PROCESS', 'En proceso'],
@@ -1218,7 +1252,11 @@ export const ACCESSION_STATUS = definir('VS_ACCESSION_STATUS', [
   ['ACC_ITEM_REJECTED', 'Espécimen rechazado'],
 ]);
 
-conjunto('VS_CUSTODY_EVENT_TYPE', 'Evento de custodia', 'Qué pasó con el espécimen en la cadena de custodia.');
+conjunto(
+  'VS_CUSTODY_EVENT_TYPE',
+  'Evento de custodia',
+  'Qué pasó con el espécimen en la cadena de custodia.',
+);
 export const CUSTODY_EVENT_TYPE = definir('VS_CUSTODY_EVENT_TYPE', [
   ['CUSTODY_RECEPTION', 'Recepción'],
   ['CUSTODY_TRANSFER', 'Traslado'],
@@ -1232,7 +1270,11 @@ export const CONTAINER_STATUS = definir('VS_CONTAINER_STATUS', [
   ['CONTAINER_STORED', 'Almacenado'],
 ]);
 
-conjunto('VS_SPECIMEN_REJECTION_REASON', 'Motivo de rechazo', 'Por qué el laboratorio rechaza un espécimen.');
+conjunto(
+  'VS_SPECIMEN_REJECTION_REASON',
+  'Motivo de rechazo',
+  'Por qué el laboratorio rechaza un espécimen.',
+);
 export const SPECIMEN_REJECTION_REASON = definir('VS_SPECIMEN_REJECTION_REASON', [
   ['REJECTION_QUALITY', 'Calidad insuficiente (hemólisis o volumen)'],
 ]);
@@ -1257,7 +1299,11 @@ export const SPECIMEN_TYPE = definir('VS_SPECIMEN_TYPE', [
   ['THRT', 'Hisopado de garganta'],
 ]);
 
-conjunto('VS_SPECIMEN_CONTAINER_TYPE', 'Tipo de contenedor', 'Tubo o frasco en el que viaja la muestra.');
+conjunto(
+  'VS_SPECIMEN_CONTAINER_TYPE',
+  'Tipo de contenedor',
+  'Tubo o frasco en el que viaja la muestra.',
+);
 export const SPECIMEN_CONTAINER_TYPE = definir('VS_SPECIMEN_CONTAINER_TYPE', [
   ['TUBE_LAVENDER_EDTA', 'Tubo tapa lila (EDTA)'],
   ['TUBE_GOLD_SST', 'Tubo tapa amarilla (gel separador)'],

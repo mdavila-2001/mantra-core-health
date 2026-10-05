@@ -3,6 +3,7 @@ import {
   Component,
   computed,
   inject,
+  linkedSignal,
   model,
   signal,
   viewChild,
@@ -62,7 +63,10 @@ import {
   telefonoCompleto,
 } from '../../../../shared/components/molecules/phone-input/phone-input';
 import { ConceptSelect } from '../../../../shared/components/molecules/concept-select/concept-select';
-import { FileInput, type RejectedFile } from '../../../../shared/components/molecules/file-input/file-input';
+import {
+  FileInput,
+  type RejectedFile,
+} from '../../../../shared/components/molecules/file-input/file-input';
 import { FirmaOSello } from '../../../../shared/components/molecules/firma-o-sello/firma-o-sello';
 import { LogoConsultorio } from '../../../../shared/components/molecules/logo-consultorio/logo-consultorio';
 import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
@@ -118,7 +122,9 @@ import {
   institucionConCodigo,
   matriculaPendiente,
   OPCIONES_DE_INSTITUCION_CON_SIGLA,
+  ciudadesDeInstitucion,
 } from './practitioner-profile-edit.logic';
+import { ciudadAlElegirUniversidad } from '../../../../core/profesion/padron-de-universidades';
 
 /** El tipo de título (formación), del catálogo dinámico: los cinco `CREDENTIAL_TYPE_*`. */
 const TARGET_CREDENCIAL = 'profiles.professional_credentials.credential_type_concept_id';
@@ -1108,6 +1114,24 @@ export class PractitionerProfileEdit {
     return elegida === INSTITUCION_FUERA_DE_CATALOGO ? this.institucionEscrita().trim() : elegida;
   });
 
+  /** Las ciudades de la institución elegida: sus sedes. */
+  protected readonly ciudadesDeLaInstitucion = computed(() =>
+    ciudadesDeInstitucion(this.institucionDeclarada()),
+  );
+
+  /** La ciudad del título nuevo: sigue a la institución, nunca se escribe. */
+  protected readonly ciudadCredencial = linkedSignal<
+    readonly { value: string; label: string }[],
+    string | null
+  >({
+    source: this.ciudadesDeLaInstitucion,
+    computation: (opciones, previa) =>
+      ciudadAlElegirUniversidad(
+        previa?.value ?? '',
+        opciones.map((o) => o.value),
+      ) || null,
+  });
+
   /** Si la institución se eligió del catálogo, para el aviso de la ficha vieja. */
   protected readonly esInstitucionDelCatalogo = esInstitucionDelCatalogo;
   protected readonly nuevaFechaEmisionCredencial = signal<Date | null>(null);
@@ -1625,11 +1649,7 @@ export class PractitionerProfileEdit {
     this.subiendoLogo.set(true);
     this.logo
       .subir(archivo)
-      .pipe(
-        switchMap((fileId) =>
-          blobToDataUrl(archivo).pipe(map((vista) => ({ fileId, vista }))),
-        ),
-      )
+      .pipe(switchMap((fileId) => blobToDataUrl(archivo).pipe(map((vista) => ({ fileId, vista })))))
       .subscribe({
         next: ({ fileId, vista }) => {
           this.subiendoLogo.set(false);
@@ -1998,28 +2018,30 @@ export class PractitionerProfileEdit {
     const firmaYSello$ = hayCambiosDeFirma
       ? this.firmaYSello.guardar(cambiosDeFirma)
       : of(undefined);
-    forkJoin([perfil$, logo$, firmaYSello$]).pipe(map(([perfil]) => perfil)).subscribe({
-      next: (perfil) => {
-        this.guardandoPresentacion.set(false);
-        if (logoPendiente !== null) {
-          this.logoGuardado.set(this.logoVisible());
-          this.logoPendiente.set(null);
-        }
-        this.firma.confirmar();
-        this.sello.confirmar();
-        if (logoPendiente !== null || hayCambiosDeFirma) {
-          // Los PDF que se emitan desde ahora llevan lo nuevo.
-          this.membretePdf.recargar();
-        }
-        this.sembrarFormulario(perfil);
-        this.perfil.set(ready(perfil));
-        this.toasts.success('Tu perfil quedó actualizado.', 'Perfil');
-      },
-      error: (error: unknown) => {
-        this.guardandoPresentacion.set(false);
-        this.anclarErroresDelServidor(error);
-      },
-    });
+    forkJoin([perfil$, logo$, firmaYSello$])
+      .pipe(map(([perfil]) => perfil))
+      .subscribe({
+        next: (perfil) => {
+          this.guardandoPresentacion.set(false);
+          if (logoPendiente !== null) {
+            this.logoGuardado.set(this.logoVisible());
+            this.logoPendiente.set(null);
+          }
+          this.firma.confirmar();
+          this.sello.confirmar();
+          if (logoPendiente !== null || hayCambiosDeFirma) {
+            // Los PDF que se emitan desde ahora llevan lo nuevo.
+            this.membretePdf.recargar();
+          }
+          this.sembrarFormulario(perfil);
+          this.perfil.set(ready(perfil));
+          this.toasts.success('Tu perfil quedó actualizado.', 'Perfil');
+        },
+        error: (error: unknown) => {
+          this.guardandoPresentacion.set(false);
+          this.anclarErroresDelServidor(error);
+        },
+      });
   }
 
   /**
@@ -2295,6 +2317,7 @@ export class PractitionerProfileEdit {
         credentialTypeConceptId: tipo,
         number: numero,
         issuingInstitutionText: this.institucionDeclarada() || undefined,
+        issuingCityText: this.ciudadCredencial() ?? undefined,
         issueDate: fecha === null ? undefined : fechaIso(fecha),
         ...(fileId === undefined ? {} : { fileId }),
       })
@@ -2582,6 +2605,24 @@ export class PractitionerProfileEdit {
       : elegida;
   });
 
+  /** Las ciudades de la institución en edición: sus sedes. */
+  protected readonly edicionCiudades = computed(() =>
+    ciudadesDeInstitucion(this.edicionInstitucionDeclarada()),
+  );
+
+  /** La ciudad en edición: sigue a la institución, nunca se escribe. */
+  protected readonly edicionCiudad = linkedSignal<
+    readonly { value: string; label: string }[],
+    string | null
+  >({
+    source: this.edicionCiudades,
+    computation: (opciones, previa) =>
+      ciudadAlElegirUniversidad(
+        previa?.value ?? '',
+        opciones.map((o) => o.value),
+      ) || null,
+  });
+
   /**
    * El diploma o el respaldo que reemplaza al que está cargado (D-08). Uno,
    * opcional: sin elegir nada, el archivo que había queda como estaba.
@@ -2791,6 +2832,11 @@ export class PractitionerProfileEdit {
       institucion === '' ? null : delCatalogo ? institucion : INSTITUCION_FUERA_DE_CATALOGO,
     );
     this.edicionInstitucionEscrita.set(delCatalogo ? '' : institucion);
+    // Una ciudad ya guardada se respeta; sin ella queda la sede principal de
+    // la institución, que es lo que el `linkedSignal` ya propuso.
+    if (credencial.issuingCityText) {
+      this.edicionCiudad.set(credencial.issuingCityText);
+    }
     this.edicionEmision.set(credencial.issueDate ?? null);
     this.abrirEdicion({
       recurso: 'formacion',
@@ -2925,6 +2971,7 @@ export class PractitionerProfileEdit {
           credentialTypeConceptId: this.edicionTipo() ?? undefined,
           number: this.edicionNumero().trim(),
           issuingInstitutionText: this.edicionInstitucionDeclarada(),
+          issuingCityText: this.edicionCiudad() ?? '',
           issueDate: emision === null ? undefined : fechaIso(emision),
           ...archivo,
         });

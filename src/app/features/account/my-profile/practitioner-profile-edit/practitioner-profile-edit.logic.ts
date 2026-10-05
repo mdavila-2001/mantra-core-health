@@ -159,6 +159,31 @@ export function coincideConElEstado(filtro: string | null, pendiente: boolean): 
 /** Las instituciones que se eligen del desplegable, sin separadores de grupo. */
 const INSTITUCIONES_DEL_CATALOGO = [...UNIVERSIDADES_DEL_SISTEMA, ...UNIVERSIDADES_PRIVADAS];
 
+/**
+ * Las sedes de una institución del catálogo, como opciones del desplegable de
+ * ciudad: la ciudad sale de la institución y no se escribe (propietario,
+ * 04/10/2026). Vacío si no está en el catálogo.
+ */
+export function ciudadesDeInstitucion(
+  institucion: string,
+): readonly { value: string; label: string }[] {
+  const sedes = INSTITUCIONES_DEL_CATALOGO.find(
+    (candidata) => candidata.value === institucion,
+  )?.sedes;
+  if (sedes === undefined) return SIN_CIUDADES;
+  let opciones = CIUDADES_ARMADAS.get(sedes);
+  if (opciones === undefined) {
+    opciones = sedes.map((sede) => ({ value: sede, label: sede }));
+    CIUDADES_ARMADAS.set(sedes, opciones);
+  }
+  return opciones;
+}
+const SIN_CIUDADES: readonly { value: string; label: string }[] = [];
+const CIUDADES_ARMADAS = new WeakMap<
+  readonly string[],
+  readonly { value: string; label: string }[]
+>();
+
 /** Lo que va entre paréntesis en la etiqueta de una institución del catálogo. */
 const SIGLA_EN_LA_ETIQUETA = /\(([^()]+)\)/u;
 

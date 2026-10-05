@@ -11,7 +11,7 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { concatMap, filter, from, map, of, throwIfEmpty, toArray, type Observable } from 'rxjs';
@@ -67,13 +67,17 @@ import {
   esColegio,
   opcionesAutoridadReguladora,
 } from '../../../core/profesion/autoridades-reguladoras';
-import { OPCIONES_TITULO_PROFESIONAL } from '../../../core/profesion/titulos-profesionales';
+import {
+  OPCIONES_TITULO_PROFESIONAL,
+  filtroDeSaludDelTitulo,
+} from '../../../core/profesion/titulos-profesionales';
 import { INSTITUCION_FUERA_DE_CATALOGO } from '../../../core/profesion/instituciones-educativas';
 import {
   PAIS_FUERA_DE_CATALOGO,
   PadronDeUniversidades,
-  ciudadAlCambiarDeUniversidad,
+  ciudadAlElegirUniversidad,
   eleccionDesdeTexto,
+  type FiltroDeSalud,
 } from '../../../core/profesion/padron-de-universidades';
 import { SystemContextClient } from '../../../core/data-access/system-context/system-context.client';
 import {
@@ -89,6 +93,7 @@ import type {
   CampoDeFormulario,
   PaginaDeFormulario,
 } from '../../../shared/forms/paginated/paginated-form.types';
+import { BoProfessionsCatalog } from '../../../core/data-access/terminology/bo-professions.service';
 
 /**
  * `Date` → ISO `YYYY-MM-DD`, tal como lo esperan los DTO del backend.
@@ -307,6 +312,12 @@ interface TituloDeclarado {
   readonly tipo: CodigoDeTitulo;
   /** Cómo se llama el título: «Medicina», «Salud Pública»… */
   readonly nombre: string;
+  /**
+   * La profesión de la COB-2023 que acredita, sólo en «Otra profesión»: ahí el
+   * nombre ya no se escribe, se elige de `VS_BO_PROFESSION` (propietario,
+   * 04/10/2026) y `nombre` guarda su etiqueta para mostrarla.
+   */
+  readonly profesionConceptId?: string | null;
   /**
    * El número del diploma. **Es el único dato obligatorio de la fila**: la
    * columna que lo recibe (`professional_credentials.number`) es NOT NULL, así
@@ -572,6 +583,32 @@ const AYUDA_PROFESIONAL: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
  * «Reintentar». El motor les reserva el sitio con su rótulo y su error, y no
  * aprende nada de terminología ni de árboles.
  */
+/**
+ * Las sedes de una universidad como opciones del desplegable de ciudad.
+ *
+ * Se arman una vez por lista: el padrón devuelve siempre la misma referencia
+ * para la misma universidad, y una lista nueva en cada detección de cambios
+ * repintaría el desplegable.
+ */
+const opcionesDeCiudadArmadas = new WeakMap<readonly string[], readonly SelectOption<string>[]>();
+function opcionesDeCiudad(sedes: readonly string[]): readonly SelectOption<string>[] {
+  let opciones = opcionesDeCiudadArmadas.get(sedes);
+  if (opciones === undefined) {
+    opciones = sedes.map((sede) => ({ value: sede, label: sede }));
+    opcionesDeCiudadArmadas.set(sedes, opciones);
+  }
+  return opciones;
+}
+
+/** Texto comparable para un buscador: sin mayúsculas ni tildes. */
+function sinTildes(texto: string): string {
+  return texto
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
+}
+
 @Component({
   selector: 'app-register-practitioner',
   imports: [
@@ -605,6 +642,58 @@ export class RegisterPractitioner {
   private readonly iam = inject(IamClient);
   private readonly router = inject(Router);
   private readonly systemContext = inject(SystemContextClient);
+
+  /* ---- «Otra profesión»: lista normalizada (COB-2023) --------------------
+
+     El nombre de la segunda carrera se elige de `VS_BO_PROFESSION` y no se
+     escribe (propietario, 04/10/2026): «no es cualquier profesión que se deja
+     ingresar». El filtro es local —son 241— y sin tildes, porque casi nadie
+     escribe «ingeniería» con acento. */
+  private readonly catalogoDeProfesiones = inject(BoProfessionsCatalog);
+  protected readonly profesiones = signal<readonly ReferenceOption[]>([]);
+  protected readonly catalogoProfesionesCaido = signal(false);
+  /** Lo escrito en el buscador de profesión de cada fila, por id de fila. */
+  private readonly busquedaDeProfesion = signal<Readonly<Record<string, string>>>({});
+
+  private cargarProfesiones(): void {
+    this.catalogoProfesionesCaido.set(false);
+    this.catalogoDeProfesiones.listar().subscribe({
+      next: (opciones) =>
+        this.profesiones.set(
+          opciones.map((opcion) => ({ value: opcion.conceptId, label: opcion.display })),
+        ),
+      error: () => this.catalogoProfesionesCaido.set(true),
+    });
+  }
+
+  /** Vuelve a pedir el catálogo de profesiones después de un fallo. */
+  reintentarProfesiones(): void {
+    this.catalogoDeProfesiones.olvidar();
+    this.cargarProfesiones();
+  }
+
+  /** Guarda lo escrito en el buscador de profesión de una fila. */
+  buscarProfesionEnFila(id: string, texto: string): void {
+    this.busquedaDeProfesion.update((busquedas) => ({ ...busquedas, [id]: texto }));
+  }
+
+  /** Las profesiones que coinciden con lo escrito en esa fila. */
+  profesionesDeFila(id: string): readonly ReferenceOption[] {
+    const busqueda = sinTildes(this.busquedaDeProfesion()[id] ?? '');
+    const todas = this.profesiones();
+    return busqueda === '' ? todas : todas.filter((o) => sinTildes(o.label).includes(busqueda));
+  }
+
+  /** La profesión elegida en una fila, como opción del combobox. */
+  profesionElegidaDeFila(titulo: TituloDeclarado): ReferenceOption | null {
+    if (!titulo.profesionConceptId) return null;
+    return (
+      this.profesiones().find((opcion) => opcion.value === titulo.profesionConceptId) ?? {
+        value: titulo.profesionConceptId,
+        label: titulo.nombre,
+      }
+    );
+  }
 
   /**
    * De qué campo cuelga el catálogo de tipos de título.
@@ -690,6 +779,27 @@ export class RegisterPractitioner {
    */
   tituloSinNumero(titulo: TituloDeclarado): boolean {
     return !this.filaVacia(titulo) && titulo.numero.trim() === '';
+  }
+
+  /**
+   * Qué falta en «Tus títulos», nombrando las secciones tal como se ven
+   * («Otra profesión», «Maestría»…). `null` si no falta nada.
+   */
+  protected readonly avisoDeTitulosIncompletos = computed<string | null>(() => {
+    const secciones = TIPOS_DE_TITULO.filter((tipo) =>
+      this.titulos().some((titulo) => titulo.tipo === tipo.codigo && this.tituloSinNumero(titulo)),
+    ).map((tipo) => `«${tipo.etiqueta}»`);
+    if (secciones.length === 0) return null;
+    const donde =
+      secciones.length === 1
+        ? secciones[0]
+        : `${secciones.slice(0, -1).join(', ')} y ${secciones.at(-1)}`;
+    return `Falta el número del diploma en ${donde}. Completalo o quitá la fila para seguir.`;
+  });
+
+  /** Lo mismo que {@link hayTitulosSinNumero}, público para las pruebas. */
+  tituloSinNumeroEnAlgunaFila(): boolean {
+    return this.hayTitulosSinNumero();
   }
 
   /** Si alguna fila declara algo sin número. Ver `tituloSinNumero`. */
@@ -802,11 +912,21 @@ export class RegisterPractitioner {
         titulo.universidad.trim() === '' && titulo.id === filaPrincipal?.id
           ? this.universidadPrincipal()
           : titulo.universidad.trim();
+      const ciudad = titulo.ciudad.trim();
+      const pais = titulo.pais.trim();
       return [
         {
           credentialTypeConceptId: conceptId,
           number: numero,
           ...(universidad === '' ? {} : { issuingInstitutionText: universidad }),
+          ...(ciudad === '' ? {} : { issuingCityText: ciudad }),
+          ...(pais === '' ? {} : { issuingCountryText: pais }),
+          ...(titulo.profesionConceptId ? { professionConceptId: titulo.profesionConceptId } : {}),
+          // El nombre escrito viaja en los títulos sin catálogo (diplomado,
+          // maestría, doctorado). «Otra profesión» lo dice con su concepto.
+          ...(titulo.tipo !== 'UNIVERSITARIO' && titulo.nombre.trim() !== ''
+            ? { titleText: titulo.nombre.trim() }
+            : {}),
           ...(this.fileIdDeTitulo(titulo) === null ? {} : { fileId: this.fileIdDeTitulo(titulo)! }),
         },
       ];
@@ -928,6 +1048,16 @@ export class RegisterPractitioner {
     }),
     professionalTitleCountry: new FormControl('', { nonNullable: true }),
     professionalTitleCity: new FormControl('', { nonNullable: true }),
+    // Respaldo de la página «Tus títulos» para el motor de pasos, que sólo
+    // frena una página si alguno de sus controles es inválido. Vale `true`
+    // mientras ninguna fila tenga datos sin número (lo sincroniza un `effect`
+    // del constructor) y NO viaja: `datosProfesional()` arma el cuerpo campo
+    // a campo. Así «Siguiente» se frena en el paso donde está el error y no
+    // recién en el último (propietario, 04/10/2026).
+    academicTitles: new FormControl(true, {
+      nonNullable: true,
+      validators: [(control) => (control.value === true ? null : { tituloSinNumero: true })],
+    }),
     // El control guarda lo que `app-phone-input` compone —el prefijo del país
     // elegido y su número—, así que el validador comprueba justamente eso, y
     // viene del propio campo: es él quien sabe qué largo tiene cada país.
@@ -1070,7 +1200,7 @@ export class RegisterPractitioner {
 
   /** Agrega una fila vacía del tipo pedido, lista para escribir y adjuntar. */
   agregarTitulo(tipo: CodigoDeTitulo): void {
-    this.titulos.update((titulos) => [
+    this.actualizarTitulos((titulos) => [
       ...titulos,
       {
         // `crypto.randomUUID` existe en el navegador y en el Node del SSR.
@@ -1095,7 +1225,7 @@ export class RegisterPractitioner {
     this.attachmentFiles.update((files) =>
       Object.fromEntries(Object.entries(files).filter(([key]) => key !== id)),
     );
-    this.titulos.update((titulos) => titulos.filter((titulo) => titulo.id !== id));
+    this.actualizarTitulos((titulos) => titulos.filter((titulo) => titulo.id !== id));
     this.limpiarAvisoDeTitulos();
   }
 
@@ -1107,6 +1237,19 @@ export class RegisterPractitioner {
    * el número no dispara `valueChanges` y el aviso se quedaría contradiciendo
    * a la pantalla.
    */
+  /**
+   * Cambia las filas de títulos y, en el mismo paso, el control que respalda
+   * la página «Tus títulos» ante el motor. Síncrono a propósito: con un
+   * `effect` el control quedaba viejo hasta la próxima detección de cambios, y
+   * un «Siguiente» o un envío inmediato leían la fila de antes.
+   */
+  private actualizarTitulos(
+    cambio: (titulos: readonly TituloDeclarado[]) => readonly TituloDeclarado[],
+  ): void {
+    this.titulos.update(cambio);
+    this.formProfesional.controls.academicTitles.setValue(!this.hayTitulosSinNumero());
+  }
+
   private limpiarAvisoDeTitulos(): void {
     if (this.state().status === 'validation') {
       this.state.set(ready(null));
@@ -1123,7 +1266,7 @@ export class RegisterPractitioner {
    * comportamiento: el comportamiento es el mismo para las cuatro.
    */
   escribirDatoDeTitulo(id: string, campo: CampoEditableDeTitulo, valor: string): void {
-    this.titulos.update((titulos) =>
+    this.actualizarTitulos((titulos) =>
       titulos.map((titulo) =>
         titulo.id === id ? this.conDatoEscrito(titulo, campo, valor) : titulo,
       ),
@@ -1181,7 +1324,7 @@ export class RegisterPractitioner {
    * {@link conUniversidadElegida}).
    */
   elegirEnFila(id: string, campo: 'pais' | 'universidad', eleccion: string | null): void {
-    this.titulos.update((titulos) =>
+    this.actualizarTitulos((titulos) =>
       titulos.map((titulo) => {
         if (titulo.id !== id) return titulo;
         if (campo === 'universidad') {
@@ -1207,12 +1350,45 @@ export class RegisterPractitioner {
     return {
       ...titulo,
       ...universidad,
-      ciudad: ciudadAlCambiarDeUniversidad(
+      ciudad: ciudadAlElegirUniversidad(
         titulo.ciudad,
-        this.padron.ciudadDe(titulo.pais, titulo.universidad),
-        this.padron.ciudadDe(titulo.pais, universidad.universidad),
+        this.padron.ciudadesDe(titulo.pais, universidad.universidad),
       ),
     };
+  }
+
+  /**
+   * Las universidades que se ofrecen en una fila según su tipo: «Otra
+   * profesión» puede ser cualquier carrera; diplomados, maestrías y doctorados
+   * se cargan en un alta de salud y se acotan a las casas que dictan salud.
+   */
+  private filtroDeFila(titulo: TituloDeclarado): FiltroDeSalud {
+    return titulo.tipo === 'UNIVERSITARIO' ? null : 'salud';
+  }
+
+  /** Las ciudades que puede tener una fila: las sedes de su universidad. */
+  ciudadesDeFila(titulo: TituloDeclarado): readonly SelectOption<string>[] {
+    return opcionesDeCiudad(this.padron.ciudadesDe(titulo.pais, titulo.universidad));
+  }
+
+  /** Elige la ciudad de una fila, que sólo puede ser una de las sedes. */
+  elegirCiudadEnFila(id: string, ciudad: string | null): void {
+    this.actualizarTitulos((titulos) =>
+      titulos.map((titulo) => (titulo.id === id ? { ...titulo, ciudad: ciudad ?? '' } : titulo)),
+    );
+    this.limpiarAvisoDeTitulos();
+  }
+
+  /** Elige la profesión COB-2023 de una fila de «Otra profesión». */
+  elegirProfesionEnFila(id: string, opcion: ReferenceOption | null): void {
+    this.actualizarTitulos((titulos) =>
+      titulos.map((titulo) =>
+        titulo.id === id
+          ? { ...titulo, profesionConceptId: opcion?.value ?? null, nombre: opcion?.label ?? '' }
+          : titulo,
+      ),
+    );
+    this.limpiarAvisoDeTitulos();
   }
 
   /** El par texto + opción marcada que deja una elección en el país. */
@@ -1235,7 +1411,7 @@ export class RegisterPractitioner {
 
   /** Las opciones de universidad de una fila: las del país que eligió. */
   opcionesDeUniversidadDeFila(titulo: TituloDeclarado): readonly SelectOption<string>[] {
-    return this.padron.opcionesDeUniversidad(titulo.pais);
+    return this.padron.opcionesDeUniversidad(titulo.pais, this.filtroDeFila(titulo));
   }
 
   /**
@@ -1263,7 +1439,7 @@ export class RegisterPractitioner {
   updateTitleFiles(id: string, files: readonly File[]): void {
     this.attachmentFiles.update((current) => ({ ...current, [id]: files }));
     const file = files[0];
-    this.titulos.update((titles) =>
+    this.actualizarTitulos((titles) =>
       titles.map((title) =>
         title.id === id
           ? { ...title, archivo: file?.name ?? null, pesoBytes: file?.size ?? null, fileId: null }
@@ -1604,8 +1780,41 @@ export class RegisterPractitioner {
    * universidad acotada a él.
    */
   protected readonly opcionesDeUniversidadDelTitulo = computed(() =>
-    this.padron.opcionesDeUniversidad(this.paisDelTituloTexto()),
+    this.padron.opcionesDeUniversidad(
+      this.paisDelTituloTexto(),
+      filtroDeSaludDelTitulo(this.tituloProfesionalTexto() ?? ''),
+    ),
   );
+
+  /** El título con el que ejerce, como signal: acota las universidades de arriba. */
+  private readonly tituloProfesionalTexto = toSignal(
+    this.formProfesional.controls.professionalTitle.valueChanges,
+    { initialValue: this.formProfesional.controls.professionalTitle.value },
+  );
+
+  /** La ciudad del título principal elegida, como signal para el desplegable. */
+  private readonly ciudadDelTituloTexto = toSignal(
+    this.formProfesional.controls.professionalTitleCity.valueChanges,
+    { initialValue: this.formProfesional.controls.professionalTitleCity.value },
+  );
+
+  /** Las ciudades del título principal: las sedes de la universidad elegida. */
+  protected readonly ciudadesDelTitulo = computed(() =>
+    opcionesDeCiudad(
+      this.padron.ciudadesDe(this.paisDelTituloTexto(), this.universidadDelTituloTexto()),
+    ),
+  );
+
+  /** La universidad del título principal como texto, espejada desde el control. */
+  private readonly universidadDelTituloTexto = signal('');
+
+  /** Lo que muestra el desplegable de ciudad del título principal. */
+  protected readonly ciudadDelTitulo = computed(() => this.ciudadDelTituloTexto() || null);
+
+  /** Elige la ciudad del título principal, entre las sedes de su universidad. */
+  elegirCiudadDelTitulo(ciudad: string | null): void {
+    this.formProfesional.controls.professionalTitleCity.setValue(ciudad ?? '');
+  }
 
   /** Lo guardado en uno de los tres campos de estudio del título principal. */
   valorDeEstudio(key: ClaveDeEstudioDelTitulo): string {
@@ -1622,6 +1831,9 @@ export class RegisterPractitioner {
   escribirEstudio(key: ClaveDeEstudioDelTitulo, valor: string | number | null): void {
     const texto = valor === null ? '' : String(valor);
     this.formProfesional.controls[key].setValue(texto);
+    if (key === 'professionalTitleUniversity') {
+      this.universidadDelTituloTexto.set(texto);
+    }
     if (key === 'professionalTitleCountry') {
       this.paisDelTituloTexto.set(texto);
       if (this.paisDelTituloElegido() !== PAIS_FUERA_DE_CATALOGO) {
@@ -1678,13 +1890,13 @@ export class RegisterPractitioner {
     const universidad =
       eleccion === null || eleccion === INSTITUCION_FUERA_DE_CATALOGO ? '' : eleccion;
     professionalTitleCity.setValue(
-      ciudadAlCambiarDeUniversidad(
+      ciudadAlElegirUniversidad(
         professionalTitleCity.value,
-        this.padron.ciudadDe(pais, professionalTitleUniversity.value),
-        this.padron.ciudadDe(pais, universidad),
+        this.padron.ciudadesDe(pais, universidad),
       ),
     );
     this.universidadDelTituloElegida.set(eleccion);
+    this.universidadDelTituloTexto.set(universidad);
     professionalTitleUniversity.setValue(universidad);
   }
 
@@ -2456,6 +2668,7 @@ export class RegisterPractitioner {
     this.cargarMunicipios();
     this.cargarEspecialidades();
     this.cargarTiposDeCredencial();
+    this.cargarProfesiones();
     // El padrón de universidades llega por su propio trozo; un fallo no frena
     // nada: Bolivia y «Otro…» están siempre.
     void this.padron.cargar();
@@ -2673,7 +2886,11 @@ export class RegisterPractitioner {
       return;
     }
 
-    if (this.formProfesional.invalid) {
+    // El aviso de títulos va ANTES del corte por formulario inválido: desde
+    // que «Tus títulos» tiene su control de respaldo, una fila sin número
+    // también deja el formulario inválido, y cortar primero escondería el
+    // mensaje que dice qué sección corregir.
+    if (this.formProfesional.invalid && !this.hayTitulosSinNumero()) {
       this.formProfesional.markAllAsTouched();
       return;
     }
@@ -2695,7 +2912,7 @@ export class RegisterPractitioner {
           {
             field: 'academicTitles',
             message:
-              'Volvé al paso «Tus títulos»: cada título necesita su número de diploma. Completalo o quitá la fila.',
+              `Volvé al paso «Tus títulos». ${this.avisoDeTitulosIncompletos() ?? ''}`.trim(),
           },
         ]),
       );
@@ -2789,7 +3006,7 @@ export class RegisterPractitioner {
 
   /** Recuerda el PDF subido en la fila que lo originó. */
   private recordarFileIdDelTitulo(id: string, fileId: string): void {
-    this.titulos.update((titulos) =>
+    this.actualizarTitulos((titulos) =>
       titulos.map((titulo) => (titulo.id === id ? { ...titulo, fileId } : titulo)),
     );
   }
