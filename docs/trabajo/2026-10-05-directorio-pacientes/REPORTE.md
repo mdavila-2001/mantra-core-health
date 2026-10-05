@@ -207,3 +207,5 @@ EXIT_CODE=0
 - Los reportes ya mergeados conservan fechas/SHAs; un único PR documental publica evidencia de CI y hechos posteriores, sin duplicar funcionalidad.
 
 - Frontend960 finalmente mergeado externamente2026-10-05T18:10:40Z, head2a8037b4 y mergefc270718: incluye la última base, types/lint/218 unit y build de producción PASS. Todos los PR funcionales están incorporados por otros actores. Este agente publica únicamente el cierre documental posterior. CI frontend permanece pendiente por runner offline; el merge externo no equivale a checks verdes.
+
+- PR documental961 — OPEN, isDraft=false, MERGEABLE, UNSTABLE; tres checks pending. Consultado2026-10-05T18:16:31Z tras pushe93d56aa. [Salida literal](./evidencia/pr-961-mergeable.txt). No contiene cambios en src/ ni Playwright respecto a origin/dev. H3.S1.M5 permanece A MEDIAS hasta que haya CI terminal; el commit siguiente sólo conserva esta evidencia y se vuelve a consultar tras publicarlo.
