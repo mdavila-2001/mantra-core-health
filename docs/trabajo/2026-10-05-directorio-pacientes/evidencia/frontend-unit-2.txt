@@ -1,0 +1,41 @@
+Using Vitest configuration file: C:\Alovida\mantra-core-health\vitest.config.ts
+> Building...
+√ Building...
+Initial chunk files                                                  | Names                                                             |  Raw size
+spec-app-features-insurance-insurance-patients-insurance-patients.js | spec-app-features-insurance-insurance-patients-insurance-patients | 661.28 kB | 
+styles.css                                                           | styles                                                            | 166.42 kB | 
+chunk-EC25APQ2.js                                                    | -                                                                 | 109.05 kB | 
+chunk-N4NDCMK4.js                                                    | -                                                                 |  23.14 kB | 
+spec-app-core-data-access-insurance-insurance.client.js              | spec-app-core-data-access-insurance-insurance.client              |  20.02 kB | 
+spec-app-core-navigation-navigation.map.js                           | spec-app-core-navigation-navigation.map                           |  15.98 kB | 
+chunk-JBWBLPNK.js                                                    | -                                                                 |   5.19 kB | 
+init-testbed.js                                                      | init-testbed                                                      |   1.21 kB | 
+setup-test-setup.js                                                  | setup-test-setup                                                  | 984 bytes | 
+vitest-mock-patch.js                                                 | vitest-mock-patch                                                 | 974 bytes | 
+
+                                                                     | Initial total                                                     |   1.00 MB
+
+Application bundle generation complete. [19.152 seconds] - 2026-10-05T14:05:13.448Z
+
+
+ RUN  v4.1.10 C:/Alovida/mantra-core-health
+
+yarn.cmd : (node:19560) ExperimentalWarning: localStorage is not available because --localstorage-file was not 
+provided.
+En línea: 2 Carácter: 1
++ yarn.cmd ng test --watch=false --ts-config artifacts/tsconfig.directo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ((node:19560) Ex...s not provided.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:19560) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:19560) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ Test Files  3 passed (3)
+      Tests  84 passed (84)
+   Start at  10:05:15
+   Duration  15.05s (transform 4.13s, setup 4.65s, import 6.67s, tests 6.19s, environment 11.20s)
+

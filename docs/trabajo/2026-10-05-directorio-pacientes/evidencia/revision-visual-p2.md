@@ -1,0 +1,100 @@
+# Segunda revision visual independiente
+
+Revisor: agente API, sin autoria de los componentes frontend. P2 realizada despues del cierre P1 final por el agente principal. Se abrieron como imagen las 26 recapturas finales de esta carpeta mediante view_image; no se dedujo calidad del DOM ni del resultado Playwright. Evidencia sintetica, con HTTP interceptado: no demuestra acceso, SQL ni chat persistido.
+
+## Capturas inspeccionadas y veredicto individual
+
+| Captura | P2 | Observacion |
+|---|---|---|
+| directory-390-light.png | OK | Nombre largo envuelve, siete campos y chat completo. |
+| directory-390-dark.png | OK | Ninguno, telefono y foco legibles. |
+| directory-649-light.png | OK | Una columna amplia sin recortes de datos. |
+| directory-649-dark.png | OK | Chat destaca y la ausencia de perfil se explica. |
+| directory-650-light.png | OK | Transicion a dos columnas sin colisiones. |
+| directory-650-dark.png | OK | Etiquetas y aseguradoras completas. |
+| directory-768-light.png | OK | Tarjetas conservan correo, nacimiento y Seguro. |
+| directory-768-dark.png | OK | Superficies y campos distinguibles. |
+| directory-1023-light.png | OK | Sidebar no oculta datos de las tarjetas. |
+| directory-1023-dark.png | OK | Chat y badges conservan contraste. |
+| directory-1024-light.png | MENOR | Placeholder del buscador corta el final de telefono; Seguro visible en tarjeta. |
+| directory-1024-dark.png | MENOR | Mismo recorte de placeholder; no corta valores del paciente. |
+| directory-1440-light.png | OK | Siete columnas completas, datos largos envuelven. |
+| directory-1440-dark.png | OK | Tabla legible y accion principal identificable. |
+| directory-1920-light.png | OK | Ancho acotado y siete columnas sin perdida. |
+| directory-1920-dark.png | OK | Correo envuelve sin ocultar texto y copia accesible. |
+| directory-loading-light.png | OK | Skeleton estable y anuncio Buscando pacientes. |
+| directory-loading-dark.png | OK | Skeleton perceptible sin fondo blanco. |
+| directory-empty-light.png | OK | Ausencia de pacientes explica alcance y ofrece actualizar. |
+| directory-empty-dark.png | OK | Mensaje y accion legibles. |
+| directory-error-light.png | OK | Reintento y codigo sintetico de soporte visibles. |
+| directory-error-dark.png | OK | Alerta conserva jerarquia y texto completo. |
+| directory-forbidden-light.png | OK | Acceso denegado sin datos y seguro deshabilitado. |
+| directory-forbidden-dark.png | OK | Mismo impedimento explicito, sin pacientes expuestos. |
+| directory-filter-empty-light.png | OK | Chip, cero resultados, frase exacta y restablecimiento. |
+| directory-filter-empty-dark.png | OK | Accion de recuperacion y chip legibles. |
+
+## Diez preguntas adversariales
+
+Se agrupan exclusivamente celdas con contenido identico: tarjetas (390/649/650/768/1023/1024, ambos temas), tabla (1440/1920, ambos temas) y cada estado (ambos temas). Las diferencias de distribucion y el defecto1024 se evaluan explicitamente. Todas las capturas fueron abiertas individualmente.
+
+| Pregunta | Tarjetas y tabla con datos | Carga | Directorio vacio | Error | Prohibido | Vacio por filtros |
+|---|---|---|---|---|---|---|
+| 1. Primero que veria mal | A1024 el placeholder termina incompleto. En otras celdas no encuentro defecto obvio. | La toolbar ocupa altura movil, pero conserva filtros y explica espera. | No presenta pacientes ficticios como resultados. | Alerta identifica problema y accion, no error tecnico crudo. | Filtros permanecen visibles aunque no hay permiso; la alerta evita ambiguedad. | Chip y frase exacta muestran por que no hay resultados. |
+| 2. Texto cortado o solapado | Solo placeholder1024; nombres, correos y aseguradoras envuelven. Siete campos completos incluso junto a sidebar. | Skeleton y controles sin solapamientos. | Titulo envuelve sin recorte. | Codigo de soporte y texto caben. | Mensaje cabe y no tapa controles. | Frase y boton caben en1440. |
+| 3. Terminado o prototipo | Espaciado, bordes y botones consistentes; ausencias normalizadas. | Skeleton repetido y estable, no pantalla blanca. | Mensaje descriptivo y accion completa. | Alerta y reintento terminados. | Estado explicito y coherente. | Chip removible y restablecimiento completos. |
+| 4. Coherencia producto | Tipografia, shell, sidebar y botones siguen misma identidad visible; no se probaron todas las pantallas vecinas. | Mantiene shell y toolbar. | Usa mismos encabezado y controles. | Conserva shell y estilo de alerta. | Misma alerta y shell. | Mantiene toolbar y chips del directorio. |
+| 5. Tema oscuro | Texto, foco, telefono y badges legibles; botones deshabilitados tenues intencionalmente, impedimento legible. | Barras distinguibles del fondo. | Titulo y accion visibles. | Texto claro sobre alerta oscura distinguible. | Alerta y campos deshabilitados identificables. | Chip y restablecimiento distinguibles. |
+| 6. Estados orientan | Sin perfil: explica mensajeria indisponible; vacio/error/carga se evalua en sus columnas. | Buscando pacientes, con seis skeleton. | Explica directorio autorizado y ofrece Actualizar directorio. | Confirma filtros conservados y Reintentar carga. | No tenes acceso y Acceso denegado; no simula cero resultados. | Mensaje exacto y Restablecer filtros. |
+| 7. Jerarquia accion | Enviar Mensaje domina frente a copiar; telefono junto a chat, tarjetas lo conservan. | No hay accion ficticia de chat mientras carga. | Actualizar es accion del estado. | Reintentar carga claramente accion principal. | No aplica chat ni reintento: autorizacion denegada, ningun paciente. | Restablecer destaca debajo del mensaje. |
+| 8. Datos sensibles | Paciente Sintetico, aseguradoras Sinteticas y example.test explicitos; no se observa identidad real. | Sin datos personales. | Sin datos personales. | synthetic-request es identificador de prueba. | Sin datos personales. | Texto sin coincidencia es fixture de busqueda, no identidad. |
+| 9. Requisito literal | Siete campos, DD/MM/AAAA y edad, Ninguno, chat primario; tarjetas tambien1024 por espacio disponible. | Skeleton en lugar de spinner. | Directorio vacio diferenciado de filtros. | Alerta y boton exacto Reintentar carga. | Rechazo seguro adicional al alcance pedido. | Frase exacta solicitada y Restablecer filtros. |
+| 10. Motivo de rechazo | No hay MAYOR/BLOQUEANTE visual abierto. Reserva: placeholder1024. Fotos no demuestran autorizacion ni persistencia. | Imagen no prueba ausencia de cambios de layout durante toda la transicion. | Imagen no demuestra causa real backend del vacio. | Imagen no demuestra reintento exitoso. | Imagen no prueba autorizacion del servidor. | Captura1440 no demuestra este estado en todos los viewports. |
+
+## Defectos y nota
+
+- MENOR: directory-1024-light.png y directory-1024-dark.png, final del placeholder Nombre, correo o telefono recortado por ancho de columna. Etiqueta Buscar pacientes permanece visible y accesible; ningun dato ni control queda oculto. Se conserva sin alterar layout por decision del agente principal; registrar reserva en REPORTE.
+- Defecto MAYOR anterior Seguro oculto a1024: recapturas muestran tarjetas con campo Seguro y Ninguno completos; cerrado visualmente en P1 y confirmado P2.
+
+Nota por pantalla: Directorio con datos, ACEPTABLE CON RESERVAS por el MENOR1024. Carga, directorio vacio, error, acceso denegado y vacio por filtros, APROBADA en las celdas capturadas. No se considera la integracion completa aprobada a partir de imagenes interceptadas.
+
+No cubierto: 360px, navegadores adicionales, zoom, contraste numerico, lector de pantalla, desplegables abiertos, todos los estados en cada ancho, reintento real, datos reales y persistencia del chat. Estas limitaciones no se presentan como verificadas.
+
+## Anexo: captura de fallo del primer navegador con API real
+
+P1 cerrada previamente por root. Abierta imagen adicional `artifacts/artifacts/playwright/salida/insurer-patient-directory--5c309-con-API-real-real-directory-chromium/test-failed-1.png`. P2 visual OK; fallo funcional registrado por root como TEST_BUG (selector ngValue), no se declara el E2E aprobado con esta captura.
+
+Limitacion de conservacion: esta imagen historica fue inspeccionada en P1/P2 antes de que Playwright limpiara automaticamente su output al reejecutar. No se conserva el PNG ni se fabrica una copia; la ruta anterior ya no es evidencia visual disponible. El log FAIL sigue versionado. Este anexo documenta la inspeccion historica, no se usa para aprobar el estado actual; las capturas positivas reales finales deben revisarse de nuevo en ambas pasadas.
+
+| Pregunta adversarial | Respuesta |
+|---|---|
+| 1. Primero que veria mal | Nombre Directory con sufijo envuelve dentro de columna; no identifica una persona real y no oculta caracteres. |
+| 2. Cortes/solapamientos | Siete columnas visibles sin colisiones. Segunda fila continua fuera del viewport, desplazamiento vertical normal, no recorte interno. |
+| 3. Terminado/prototipo | Toolbar, chip y tabla mantienen espaciado y acciones consistentes. Los nombres son fixtures de QA deliberadas. |
+| 4. Coherencia | Sidebar propia del actor aseguradora y misma identidad de la matriz anterior. |
+| 5. Tema oscuro | No aplica: captura clara; oscuro ya evaluado en matriz interceptada, no se extrapola esta conexion real. |
+| 6. Estados orientan | Sin telefono/correo y sexo no especificado explicitos; perfil sin chat explica impedimento. Vacio/error/carga no aparecen en esta imagen. |
+| 7. Accion principal | Enviar Mensaje destaca en fila00, incluso sin numero de telefono porque el canal es interno. |
+| 8. Datos sensibles | Prefix Directory y seguro A coinciden con fixtures sinteticas de integracion local; no hay identidad real ni tokens visibles. |
+| 9. Requisito literal | Fecha/edad juntas, siete columnas, seguro propio y busqueda con chip/contador12. Captura muestra25 por pagina, no prueba cambio10. |
+| 10. Motivo de rechazo | Ningun MAYOR/BLOQUEANTE visual; E2E funcional fallo y requiere nueva ejecucion. Imagen sola no demuestra paginacion o chat persistido. |
+
+Nota visual de esta celda: APROBADA, sin nuevos defectos. Directorio general conserva ACEPTABLE CON RESERVAS por placeholder1024 de la matriz previa. No cubierto en esta imagen: filas fuera del viewport, resto de estados y tema oscuro real.
+
+## P2 final: dos capturas positivas con API real
+
+P1 final cerrada por root antes de esta pasada. Se abrieron individualmente las imagenes conservadas `directory-real-data.png` y `directory-real-chat.png`, obtenidas del E2E real API test PASS1/5.6s. Revisor independiente API, sin autoria frontend. Los nombres Directory/Seguro A/Perfil patient son fixtures sinteticas propias, no pacientes reales.
+
+| Pregunta | directory-real-data.png | directory-real-chat.png |
+|---|---|---|
+| 1. Primero que veria mal | Sufijo Directory envuelve entre lineas, legible completo; no es nombre comercial real. | Perfil patient es nombre sintetico de QA; header y conversacion seleccionada coinciden. |
+| 2. Texto cortado/solapado | Siete columnas sin solapamiento, fecha y edad juntas. Vista parcial por altura normal; no oculta Seguro. | Composer, header y lista sin colisiones ni recortes. |
+| 3. Terminado/prototipo | Filtros, chip, contador y acciones consistentes; datos de QA se distinguen. | Layout nativo chat completo, lista y composer visibles, no placeholder de ruta. |
+| 4. Coherencia producto | Sidebar aseguradora y toolbar coherentes con matriz anterior. | Misma shell y sidebar; se reutiliza modulo real de Chats. |
+| 5. Tema oscuro | No aplica captura clara; no se extrapola este flujo al tema oscuro real. | No aplica captura clara; fondo y texto claro legibles. |
+| 6. Estados orientan | Sin telefono/correo/sexo explicitos; filas sin perfil explican mensajeria no disponible. | Todavia no se escribieron nada y Escribi el primer mensaje abajo orientan al composer. El envio no se ejecuto. |
+| 7. Accion principal | Enviar Mensaje primario fila00; restantes deshabilitados con explicacion. | Campo Escribi un mensaje visible en pie y conversacion activa clara. |
+| 8. Datos sensibles | Datos generados por integracion propia, sin documentos/polizas/tokens. | Perfil patient de fixture; historial vacio, ningun contenido sensible. |
+| 9. Requisito literal | Vista7campos con filtro/chip/count12 y25porpagina; screenshot sola no prueba cursor. | Modulo interno y composer abierto del paciente objetivo; persistencia y reuso se apoyan en E2E/SQL, no en pixeles. |
+| 10. Motivo para rechazar | Ningun MAYOR/BLOQUEANTE visual en esta celda; reserva1024 previa no aplica a1440. | Ningun MAYOR/BLOQUEANTE visual; no afirmar envio de mensajes ni todos los dispositivos a partir de este screenshot. |
+
+P2 individual: directory-real-data.png OK, APROBADA; directory-real-chat.png OK, APROBADA. No nuevos defectos. Nota global directorio: ACEPTABLE CON RESERVAS por MENOR placeholder1024 ya registrado. No cubierto en estas dos imagenes: claro/oscuro real en todos los anchos, dropdowns abiertos, teclado completo, envio/recepcion o reconexion WebSocket. E2E verifica apertura, recarga y reapertura con mismo identificador; los9 casos SQL verifican reuso persistido y aislamiento por separado.

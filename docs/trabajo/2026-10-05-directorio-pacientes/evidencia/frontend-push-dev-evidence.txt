@@ -1,0 +1,10 @@
+pre-push: nada de lo empujado mueve el paquete. No se construye.
+git : To https://github.com/mdavila-2001/mantra-core-health.git
+En línea: 2 Carácter: 1
++ git -c safe.directory=C:/Alovida/mantra-core-health push origin marce ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (To https://gith...core-health.git:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+   d8ffe254..88a8f641  marcelo/insurer-patient-directory-dev -> marcelo/insurer-patient-directory-dev
+EXIT_CODE=0

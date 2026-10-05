@@ -1,0 +1,81 @@
+Using Vitest configuration file: C:\Alovida\mantra-core-health\vitest.config.ts
+> Building...
+√ Building...
+Initial chunk files                                                  | Names                                                             |  Raw size
+spec-app-features-insurance-insurance-patients-insurance-patients.js | spec-app-features-insurance-insurance-patients-insurance-patients | 575.76 kB | 
+styles.css                                                           | styles                                                            | 166.42 kB | 
+chunk-YVINIG22.js                                                    | -                                                                 | 101.31 kB | 
+chunk-V4G7EKQY.js                                                    | -                                                                 |  50.86 kB | 
+spec-app-core-navigation-navigation.service.js                       | spec-app-core-navigation-navigation.service                       |  25.66 kB | 
+chunk-7V4PXR2F.js                                                    | -                                                                 |  20.78 kB | 
+spec-app-core-data-access-insurance-insurance.client.js              | spec-app-core-data-access-insurance-insurance.client              |  20.17 kB | 
+spec-app-core-navigation-navigation.map.js                           | spec-app-core-navigation-navigation.map                           |  16.02 kB | 
+spec-app-core-navigation-access-tree.js                              | spec-app-core-navigation-access-tree                              |  14.07 kB | 
+chunk-IIVKZK5C.js                                                    | -                                                                 |  12.79 kB | 
+chunk-T3XACA6V.js                                                    | -                                                                 |  12.51 kB | 
+chunk-ANVBA57G.js                                                    | -                                                                 |  12.18 kB | 
+spec-app-core-navigation-section-roles.guard.js                      | spec-app-core-navigation-section-roles.guard                      |  12.00 kB | 
+chunk-FNZ4AGGO.js                                                    | -                                                                 |   7.93 kB | 
+spec-app-core-navigation-navigation-history.service.js               | spec-app-core-navigation-navigation-history.service               |   6.49 kB | 
+spec-app-core-navigation-navigation.farmacia.js                      | spec-app-core-navigation-navigation.farmacia                      |   6.13 kB | 
+chunk-JBWBLPNK.js                                                    | -                                                                 |   5.19 kB | 
+spec-app-core-navigation-navigation.laboratorio.js                   | spec-app-core-navigation-navigation.laboratorio                   |   5.18 kB | 
+spec-app-core-navigation-navigation.subgroups.js                     | spec-app-core-navigation-navigation.subgroups                     |   3.19 kB | 
+spec-app-core-navigation-search-memory.service.js                    | spec-app-core-navigation-search-memory.service                    |   2.60 kB | 
+chunk-LHPWPOJL.js                                                    | -                                                                 |   2.03 kB | 
+chunk-6XP2PIAK.js                                                    | -                                                                 |   1.90 kB | 
+init-testbed.js                                                      | init-testbed                                                      |   1.21 kB | 
+setup-test-setup.js                                                  | setup-test-setup                                                  | 984 bytes | 
+vitest-mock-patch.js                                                 | vitest-mock-patch                                                 | 974 bytes | 
+chunk-ORGD43PW.js                                                    | -                                                                 | 668 bytes | 
+
+                                                                     | Initial total                                                     |   1.09 MB
+
+Application bundle generation complete. [11.504 seconds] - 2026-10-05T14:47:58.308Z
+
+
+ RUN  v4.1.10 C:/Alovida/mantra-core-health
+
+yarn.cmd : (node:7164) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+En línea: 2 Carácter: 1
++ yarn.cmd ng test --watch=false --ts-config artifacts/tsconfig.directo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ((node:7164) Exp...s not provided.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:7164) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:7164) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:7164) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ❯ |mantra-core-health| src/app/features/insurance/insurance-patients/insurance-patients.spec.ts (24 tests | 1 failed) 2206ms
+     × descarta búsquedas al cambiar de cuenta y no consulta si falla la autorización 84ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |mantra-core-health| src/app/features/insurance/insurance-patients/insurance-patients.spec.ts > 
+InsurancePatients > descarta búsquedas al cambiar de cuenta y no consulta si falla la autorización
+AssertionError: expected 'error' to be 'forbidden' // Object.is equality
+
+Expected: "forbidden"
+Received: "error"
+
+ ❯ src/app/features/insurance/insurance-patients/insurance-patients.spec.ts:407:28
+    405|     options.flush({}, { status: 403, statusText: 'Forbidden' });
+    406|     harness.detectChanges();
+    407|     expect(state().status).toBe('forbidden');
+       |                            ^
+    408|     expect(internal<() => { search: string }>('criteria')().search).to…
+    409|     expect(el().textContent).not.toContain('Ana Salas');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 10 passed (11)
+      Tests  1 failed | 217 passed (218)
+   Start at  10:48:03
+   Duration  32.17s (transform 2.87s, setup 2.51s, import 4.44s, tests 2.95s, environment 298.00s)
+
+EXIT_CODE=1
