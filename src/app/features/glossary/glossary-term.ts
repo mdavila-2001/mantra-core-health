@@ -15,6 +15,7 @@ import { TerminologyClient } from '../../core/data-access/terminology/terminolog
 import type {
   GlossaryRelation,
   GlossaryRelationType,
+  GlossarySourceReference,
   GlossaryTermDetail,
 } from '../../core/data-access/terminology/terminology.types';
 import { valorDeTexto } from '../../core/data-access/terminology/terminology.types';
@@ -105,6 +106,41 @@ export interface SeccionDeLaFuente {
 
 function esObjeto(valor: unknown): valor is Readonly<Record<string, unknown>> {
   return typeof valor === 'object' && valor !== null && !Array.isArray(valor);
+}
+
+function fuentesDesdePropiedad(valor: unknown): readonly GlossarySourceReference[] {
+  if (!Array.isArray(valor)) return [];
+  return valor.flatMap((item: unknown) => {
+    if (!esObjeto(item)) return [];
+    const { source, recordId, url, language, version, retrievedAt, role, attribution, rights } = item;
+    if (
+      typeof source !== 'string' ||
+      typeof recordId !== 'string' ||
+      typeof url !== 'string' ||
+      !url.startsWith('https://') ||
+      (language !== 'es' && language !== 'en') ||
+      typeof version !== 'string' ||
+      typeof retrievedAt !== 'string' ||
+      (role !== 'concept_match' && role !== 'related_context' && role !== 'editorial_reference') ||
+      typeof attribution !== 'string' ||
+      typeof rights !== 'string'
+    ) {
+      return [];
+    }
+    const matchBasis = item['matchBasis'];
+    return [{
+      source,
+      recordId,
+      url,
+      language,
+      version,
+      retrievedAt,
+      role,
+      ...(matchBasis === 'title' || matchBasis === 'also_called' ? { matchBasis } : {}),
+      attribution,
+      rights,
+    }];
+  });
 }
 
 /** Un grupo de relaciones ya resuelto contra la ficha, listo para pintarse. */
@@ -260,6 +296,22 @@ export class GlossaryTerm {
       consultado: typeof cruda['retrievedAt'] === 'string' ? cruda['retrievedAt'].slice(0, 10) : null,
     };
   });
+
+  /** Referencias editoriales curadas, sin confundir contexto relacionado con equivalencia. */
+  protected readonly referenciasEditoriales = computed<readonly GlossarySourceReference[]>(() =>
+    fuentesDesdePropiedad(this.ficha()?.properties?.['glossary-sources']),
+  );
+
+  protected rolDeFuente(rol: GlossarySourceReference['role']): string {
+    switch (rol) {
+      case 'concept_match':
+        return 'Correspondencia del concepto';
+      case 'related_context':
+        return 'Contexto relacionado; no es una equivalencia';
+      case 'editorial_reference':
+        return 'Referencia editorial';
+    }
+  }
 
   /**
    * Si la «definición» es la descripción breve de la comunidad de Wikidata
