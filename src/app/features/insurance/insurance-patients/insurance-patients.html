@@ -1,0 +1,185 @@
+<app-page-header
+  title="Pacientes de la aseguradora"
+  subtitle="Quiénes tienen cobertura en tus planes o presentaron una solicitud, con su contacto."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<!-- Los filtros de catálogo viven en la URL; el texto buscado NO: es el nombre,
+     el teléfono, el correo o el documento de un paciente, y la URL lo dejaría
+     en el historial y en los logs (ver la clase). -->
+<app-filter-bar
+  class="directory__filters"
+  searchLabel="Buscar pacientes"
+  searchPlaceholder="Nombre, teléfono, correo o documento"
+  [searchLoading]="loadingNow()"
+  [filters]="filters()"
+  [searchInUrl]="false"
+  [searchValue]="search()"
+  (searchChanged)="onSearch($event)"
+>
+  <button
+    app-button
+    filter-bar-action
+    variant="ghost"
+    type="button"
+    data-testid="btn-reset-filters"
+    [disabled]="!hasFilters()"
+    (clicked)="resetFilters()"
+  >
+    Limpiar filtros
+  </button>
+</app-filter-bar>
+
+<div class="directory__extra" role="group" aria-label="Fecha de nacimiento y tamaño de página">
+  <div class="directory__date">
+    <span class="directory__label" id="birth-from-label">Nacidos desde</span>
+    <app-date-picker
+      aria-labelledby="birth-from-label"
+      data-testid="input-filter-birthdate-from"
+      [value]="birthFrom()"
+      (valueChange)="onBirthFrom($event)"
+    />
+  </div>
+  <div class="directory__date">
+    <span class="directory__label" id="birth-to-label">Nacidos hasta</span>
+    <app-date-picker
+      aria-labelledby="birth-to-label"
+      data-testid="input-filter-birthdate-to"
+      [value]="birthTo()"
+      (valueChange)="onBirthTo($event)"
+    />
+  </div>
+  <div class="directory__size">
+    <app-select
+      ariaLabel="Filas por página"
+      data-testid="select-page-size"
+      [options]="pageSizeOptions"
+      [value]="'' + pageSize()"
+      (valueChange)="onPageSize($event)"
+    />
+  </div>
+</div>
+
+<!-- Siempre en el DOM: una región viva dentro de un `@if` no se anuncia. -->
+<p class="directory__notice" role="status" aria-live="polite" data-testid="directory-notice">
+  {{ notice() }}
+</p>
+
+<app-data-table
+  data-testid="table-insurer-patients"
+  [state]="listing()"
+  [columns]="columns()"
+  [trackBy]="byProfile"
+  [rowLabel]="rowName"
+  caption="Pacientes con cobertura o solicitudes en esta aseguradora"
+  [cursor]="cursor()"
+  (cursorChanged)="move($event)"
+  (retry)="reload()"
+/>
+
+<!-- Plantillas de celda: el organismo las recibe por `ColumnDef.cell`. -->
+<ng-template #patientCell let-patient>
+  <div class="directory__person">
+    <app-avatar size="sm" [name]="patient.fullName" [alt]="'Iniciales de ' + patient.fullName" />
+    <div class="directory__person-text">
+      <span class="directory__name">{{ patient.fullName }}</span>
+      @if (patient.documentNumber) {
+        <span class="directory__sub">CI {{ patient.documentNumber }}</span>
+      }
+    </div>
+  </div>
+</ng-template>
+
+<ng-template #phoneCell let-patient>
+  @if (patient.phone) {
+    <span class="directory__phone">
+      <a class="directory__phone-link" [href]="telHref(patient.phone)">{{ patient.phone }}</a>
+      <button
+        app-button
+        variant="ghost"
+        size="sm"
+        type="button"
+        [iconOnly]="true"
+        [attr.aria-label]="'Copiar el teléfono de ' + patient.fullName"
+        data-testid="btn-copy-phone"
+        (clicked)="copyPhone(patient.phone)"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <rect x="9" y="9" width="11" height="11" rx="2" />
+          <path d="M5 15V6a2 2 0 0 1 2-2h9" />
+        </svg>
+      </button>
+    </span>
+  } @else {
+    <span class="directory__empty" aria-label="Sin teléfono registrado">—</span>
+  }
+</ng-template>
+
+<ng-template #emailCell let-patient>
+  @if (patient.email) {
+    <a class="directory__link" [href]="'mailto:' + patient.email">{{ patient.email }}</a>
+  } @else {
+    <span class="directory__empty">Sin correo</span>
+  }
+</ng-template>
+
+<ng-template #birthCell let-patient>
+  @if (patient.birthDate) {
+    <span class="directory__figure">{{ formatBirth(patient.birthDate) }}</span>
+    @if (patient.age !== undefined) {
+      <app-badge variant="secondary" size="sm" [value]="patient.age + ' años'" />
+    }
+  } @else {
+    <span class="directory__empty" aria-label="Sin fecha de nacimiento registrada">—</span>
+  }
+</ng-template>
+
+<ng-template #genderCell let-patient>
+  <span [attr.title]="genderFull(patient.genderCode)" [attr.aria-label]="genderFull(patient.genderCode)">
+    {{ genderShort(patient.genderCode) }}
+  </span>
+</ng-template>
+
+<ng-template #occupationCell let-patient>
+  @if (patient.occupationDisplay) {
+    {{ patient.occupationDisplay }}
+  } @else {
+    <span class="directory__empty">No especificada</span>
+  }
+</ng-template>
+
+<ng-template #insuranceCell let-patient>
+  @if (patient.coverage.hasActiveCoverage) {
+    <div class="directory__insurance">
+      <app-badge variant="primary" [value]="patient.coverage.planName || 'Con seguro'" />
+      @if (patient.coverage.policyIdentifier) {
+        <span class="directory__sub">Póliza {{ patient.coverage.policyIdentifier }}</span>
+      }
+    </div>
+  } @else {
+    <!-- El estado nunca lo lleva solo el color: el badge trae su texto. -->
+    <app-badge variant="secondary" value="Ninguno" data-testid="badge-insurance-none" />
+  }
+</ng-template>
+
+<ng-template #actionsCell let-patient>
+  <!-- Deshabilitado con `aria-disabled` (lo hace `app-button`) y no con
+       `disabled`: sigue en el orden de tabulación y el motivo se puede leer. -->
+  <button
+    app-button
+    variant="primary"
+    size="sm"
+    type="button"
+    data-testid="btn-message-patient"
+    [disabled]="!patient.communityProfileSlug"
+    [appTooltip]="patient.communityProfileSlug ? '' : 'Este paciente todavía no activó la mensajería'"
+    [attr.aria-label]="
+      patient.communityProfileSlug
+        ? 'Escribir a ' + patient.fullName
+        : 'Escribir a ' + patient.fullName + ': todavía no activó la mensajería'
+    "
+    (clicked)="message(patient)"
+  >
+    Escribir
+  </button>
+</ng-template>

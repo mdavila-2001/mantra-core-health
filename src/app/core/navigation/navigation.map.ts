@@ -830,6 +830,23 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M26 insurance',
   },
   {
+    // El directorio de LA ASEGURADORA: sus pacientes —con cobertura en un plan
+    // suyo o con una solicitud presentada— y cómo contactarlos. Mismo acceso
+    // que «Solicitudes recibidas»: la autoridad es la membresía en la
+    // aseguradora, que resuelve la API.
+    path: 'administration/insurance-patients',
+    label: 'Pacientes de la aseguradora',
+    group: 'Administración',
+    icon: 'patients',
+    hiddenForTenantTypes: ['PHARMACY', 'DIAGNOSTIC_CENTER'],
+    roles: [ANY_ROLE],
+    requiresTenant: true,
+    hiddenFor: ['PATIENT', 'PRACTITIONER'],
+    availability: 'disponible',
+    summary: 'Quiénes tienen cobertura en tus planes o presentaron una solicitud, con su contacto.',
+    module: 'M26 insurance',
+  },
+  {
     // Tarea 4 · M-06 — Proceso 4 del registro del cliente, «Módulo de
     // promociones»: la aseguradora publica campañas de prevención junto a
     // laboratorios e importadoras para que el seguro no erogue por
