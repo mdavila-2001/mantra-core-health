@@ -63,6 +63,7 @@ for (const ancho of [1440, 390]) {
         '/administration/insurance',
         '/administration/insurance-analytics',
         '/administration/received-claims',
+        '/administration/insurance-patients',
         '/administration/insurance-campaigns',
         '/administration/my-organization',
       ]);
