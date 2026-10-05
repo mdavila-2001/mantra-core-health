@@ -950,6 +950,9 @@ export const SINTOMAS: readonly Sintoma[] = [
       'pastillas para la presion',
       'remedio para la presion',
       'receta de la presion',
+      'presion por las nubes',
+      'presion disparada',
+      'la presion me esta por las nubes',
     ],
     especialidades: [
       { nombre: 'Cardiología', peso: 3 },
@@ -1378,7 +1381,17 @@ export const SINTOMAS: readonly Sintoma[] = [
   {
     id: 'hongos',
     nombre: 'hongos en la piel o las uñas',
-    sinonimos: ['hongos', 'pie de atleta', 'unas amarillas', 'micosis', 'hongos en la piel'],
+    sinonimos: [
+      'hongos',
+      'pie de atleta',
+      'unas amarillas',
+      'micosis',
+      'hongos en la piel',
+      'comezon entre los dedos',
+      'picazon entre los dedos',
+      'picazon entre los dedos del pie',
+      'piel pelada entre los dedos',
+    ],
     especialidades: [{ nombre: 'Dermatología', peso: 3 }],
   },
   {
@@ -1477,6 +1490,12 @@ export const SINTOMAS: readonly Sintoma[] = [
       'miedo a la gente',
       'ansiedad social',
       'tengo los nervios de punta',
+      // Agotamiento por el trabajo o el jefe: Psicología primero.
+      'mi jefe me tiene podrido',
+      'mi jefe me tiene harto',
+      'estoy harto de mi jefe',
+      'estoy harto del trabajo',
+      'el trabajo me tiene podrido',
       // «Susto» andino: afección popular con nervios, insomnio y desgano. A secas NO («me dio un susto»).
       'me agarro el susto',
     ],
@@ -1621,6 +1640,11 @@ export const SINTOMAS: readonly Sintoma[] = [
       'compulsion por revisar',
       'reviso varias veces las puertas',
       'reviso mil veces si cerre la puerta',
+      // «chequear» solo NO (también es «chequear mi presión»): siempre con lo que se revisa.
+      'chequear la cocina',
+      'chequear la puerta',
+      'chequear el gas',
+      'chequear las llaves',
       'tengo manias',
       'obsesion por el orden',
       'obsesiones',
