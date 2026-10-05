@@ -1,0 +1,210 @@
+:host {
+  display: block;
+}
+
+.glosario-red {
+  display: grid;
+  gap: 1rem;
+  width: min(100% - 2rem, 76rem);
+  margin-inline: auto;
+  padding-block: 1rem 3rem;
+}
+
+.glosario-red__intro {
+  max-width: 70ch;
+  margin: 0;
+  color: var(--st-text-secondary, #475467);
+  line-height: 1.55;
+}
+
+.glosario-red__selector {
+  display: grid;
+  gap: 0.35rem;
+  max-width: 36rem;
+  font-weight: 600;
+}
+
+.glosario-red__selector select {
+  min-height: 2.75rem;
+  padding-inline: 0.75rem;
+  border: 1px solid var(--st-border-strong, #667085);
+  border-radius: 0.5rem;
+  background: var(--st-surface, #fff);
+  color: inherit;
+  font: inherit;
+}
+
+.glosario-red__cabecera {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.glosario-red__cabecera h2,
+.glosario-red__cabecera p {
+  margin: 0;
+}
+
+.glosario-red__cabecera p {
+  max-width: 72ch;
+  margin-top: 0.35rem;
+  color: var(--st-text-secondary, #475467);
+  line-height: 1.5;
+}
+
+.glosario-red__cabecera a,
+.glosario-red__lista a {
+  color: var(--st-link, #175cd3);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.glosario-red__lienzo {
+  overflow: hidden;
+  margin-block: 1rem;
+  border: 1px solid var(--st-border-default, #eaecf0);
+  border-radius: 0.75rem;
+  background:
+    radial-gradient(circle at 50% 50%, var(--st-surface, #fff) 0 28%, transparent 28.2%),
+    var(--st-surface-subtle, #f9fafb);
+}
+
+.glosario-red__lienzo svg {
+  display: block;
+  width: 100%;
+  min-height: 24rem;
+  max-height: 48rem;
+}
+
+.glosario-red__arista {
+  stroke-width: 2.5;
+  opacity: 0.62;
+}
+
+.glosario-red__nodo {
+  cursor: pointer;
+  outline: none;
+}
+
+.glosario-red__nodo circle {
+  fill: var(--st-surface, #fff);
+  stroke: var(--st-border-strong, #667085);
+  stroke-width: 2;
+  filter: drop-shadow(0 3px 5px rgb(16 24 40 / 12%));
+  transition: fill 140ms ease, stroke-width 140ms ease;
+}
+
+.glosario-red__nodo:hover circle,
+.glosario-red__nodo:focus circle {
+  fill: var(--st-primary-subtle, #eff8ff);
+  stroke: var(--st-primary, #175cd3);
+  stroke-width: 4;
+}
+
+.glosario-red__nodo--central circle {
+  fill: var(--st-primary-subtle, #eff8ff);
+  stroke: var(--st-primary, #175cd3);
+  stroke-width: 4;
+}
+
+.glosario-red__nodo text {
+  fill: var(--st-text-primary, #101828);
+  font-size: 12px;
+  font-weight: 700;
+  pointer-events: none;
+}
+
+.glosario-red__nodo .glosario-red__categoria {
+  fill: var(--st-text-secondary, #475467);
+  font-size: 9px;
+  font-weight: 500;
+}
+
+.glosario-red__leyenda {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  margin: 0 0 1rem;
+  padding: 0;
+  list-style: none;
+}
+
+.glosario-red__leyenda li {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--st-text-secondary, #475467);
+  font-size: 0.875rem;
+}
+
+.glosario-red__muestra {
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 50%;
+}
+
+.glosario-red__lista {
+  display: grid;
+  gap: 0.65rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.glosario-red__lista li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+  padding-block: 0.5rem;
+  border-top: 1px solid var(--st-border-default, #eaecf0);
+}
+
+.glosario-red__tipo {
+  padding: 0.2rem 0.5rem;
+  border-inline-start: 3px solid;
+  color: var(--st-text-secondary, #475467);
+  font-size: 0.8rem;
+}
+
+.glosario-red__lista button {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--st-text-primary, #101828);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.glosario-red__vacio,
+.glosario-red__aviso {
+  color: var(--st-text-secondary, #475467);
+}
+
+.glosario-red__aviso {
+  padding: 0.75rem 1rem;
+  border-inline-start: 4px solid var(--st-warning, #b54708);
+  background: var(--st-warning-subtle, #fffaeb);
+}
+
+@media (max-width: 42rem) {
+  .glosario-red {
+    width: min(100% - 1rem, 76rem);
+  }
+
+  .glosario-red__lienzo svg {
+    min-height: 18rem;
+  }
+
+  .glosario-red__cabecera {
+    flex-direction: column;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .glosario-red__nodo circle {
+    transition: none;
+  }
+}

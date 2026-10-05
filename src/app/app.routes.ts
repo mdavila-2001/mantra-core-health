@@ -992,6 +992,15 @@ const PANTALLAS_HIJAS: Routes = [
         .catch(() => chunkFallido()),
   },
   {
+    path: 'glossary/network',
+    title: `${APP_TITLE} - Mapa de relaciones del glosario`,
+    canActivate: [seccionRolesGuard],
+    loadComponent: () =>
+      import('./features/glossary/glossary-network')
+        .then((m) => m.GlossaryNetwork)
+        .catch(() => chunkFallido()),
+  },
+  {
     // La ficha de un término del glosario. Es ruta y no panel porque un término
     // se comparte: «mirá qué quiere decir esto» es un enlace, y un panel no
     // tiene enlace. Cuelga de `/glossary`, así que el rastro de migas y la
