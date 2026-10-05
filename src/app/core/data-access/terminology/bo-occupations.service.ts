@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 
 import { CatalogoDeConjunto } from './catalogo-de-conjunto';
+import type { ValueSetOption } from './terminology.types';
 
 /**
  * El código interno del catálogo de ocupaciones de Bolivia.
@@ -37,4 +38,9 @@ export const CODIGO_OCUPACION_OTRA = 'occupation:bo:OTRA';
 @Injectable({ providedIn: 'root' })
 export class BoOccupationsCatalog extends CatalogoDeConjunto {
   protected readonly codigo = CODIGO_CATALOGO_OCUPACIONES;
+  protected override transformarOpciones(opciones: readonly ValueSetOption[]): readonly ValueSetOption[] {
+    return opciones.map((opcion) =>
+      opcion.code === CODIGO_OCUPACION_OTRA ? { ...opcion, display: 'Otro' } : opcion,
+    );
+  }
 }

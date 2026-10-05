@@ -251,8 +251,9 @@ describe('RegisterPatient', () => {
         items: [
           { conceptId: 'o-1', code: 'occupation:bo:DOCENTE', display: 'Docente' },
           { conceptId: 'o-2', code: 'occupation:bo:MINERO', display: 'Minero / Minera' },
+          { conceptId: 'o-otra', code: CODIGO_OCUPACION_OTRA, display: 'Otra ocupación' },
         ],
-        count: 2,
+        count: 3,
         limit: 200,
         nextCursor: null,
       });
@@ -263,6 +264,7 @@ describe('RegisterPatient', () => {
       expect(component.opcionesOcupacion()).toEqual([
         { value: 'o-1', label: 'Docente', code: 'occupation:bo:DOCENTE' },
         { value: 'o-2', label: 'Minero / Minera', code: 'occupation:bo:MINERO' },
+        { value: 'o-otra', label: 'Otro', code: CODIGO_OCUPACION_OTRA },
       ]);
     });
 

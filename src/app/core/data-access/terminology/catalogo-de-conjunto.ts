@@ -47,6 +47,11 @@ export abstract class CatalogoDeConjunto {
     this.cache = null;
   }
 
+  /** Permite que un catálogo adapte sólo su presentación sin duplicar la lectura. */
+  protected transformarOpciones(opciones: readonly ValueSetOption[]): readonly ValueSetOption[] {
+    return opciones;
+  }
+
   private leerCatalogo(): Observable<readonly ValueSetOption[]> {
     return this.terminology.listValueSets({ code: this.codigo }).pipe(
       map((pagina) => pagina.items.find((conjunto) => conjunto.internalCode === this.codigo)),
@@ -56,7 +61,9 @@ export abstract class CatalogoDeConjunto {
         }
         return this.terminology.readAllOptions(conjunto.id);
       }),
-      map((opciones) => opciones.filter((opcion) => opcion.selectable !== false)),
+      map((opciones) =>
+        this.transformarOpciones(opciones.filter((opcion) => opcion.selectable !== false)),
+      ),
     );
   }
 }
