@@ -183,10 +183,16 @@
   <!-- El número SIEMPRE visible: el color solo no alcanza. Y en palabras: un
        «4» suelto no dice de qué son los cuatro. -->
   @if (celda.disponibles !== null) {
-    <span class="mes__cuenta" aria-hidden="true">{{
-      celda.disponibles === 1 ? '1 cupo disponible' : celda.disponibles + ' cupos disponibles'
-    }}</span>
+    <span class="mes__cuenta" aria-hidden="true">
+      <span class="mes__cuenta-larga">{{
+        celda.disponibles === 1 ? '1 cupo disponible' : celda.disponibles + ' cupos disponibles'
+      }}</span>
+      <span class="mes__cuenta-corta">{{ celda.disponibles }} {{ celda.disponibles === 1 ? 'libre' : 'libres' }}</span>
+    </span>
   } @else if (celda.estado === 'bloqueado') {
-    <span class="mes__motivo" aria-hidden="true">{{ celda.motivo ?? 'Bloqueado' }}</span>
+    <span class="mes__motivo" aria-hidden="true">
+      <span class="mes__motivo-largo">{{ celda.motivo ?? 'Bloqueado' }}</span>
+      <span class="mes__motivo-corto">Bloq.</span>
+    </span>
   }
 </ng-template>
