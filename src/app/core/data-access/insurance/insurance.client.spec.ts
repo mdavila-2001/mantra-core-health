@@ -8,6 +8,7 @@ import type {
   CampaignPage,
   CarrierDetail,
   CarrierSummary,
+  InsurerPatientPage,
   PractitionerInsuranceNetworkPage,
 } from './insurance.types';
 
@@ -546,6 +547,46 @@ describe('InsuranceClient', () => {
 
       expect(campaigns[0]?.carrierName).toBe('Seguros Andina');
       expect(campaigns[0]?.validTo.getDate()).toBe(30);
+    });
+  });
+
+  describe('directorio de pacientes de la aseguradora', () => {
+    it('listInsurerPatients pega en /insurance/patients con los filtros presentes y omite los vacíos', () => {
+      let pagina: InsurerPatientPage | undefined;
+      client
+        .listInsurerPatients({
+          limit: 25,
+          search: 'Pérez',
+          genderConceptId: '',
+          insuranceStatus: 'NO_INSURANCE',
+          birthDateFrom: '1980-01-01',
+          cursor: undefined,
+        })
+        .subscribe((respuesta) => (pagina = respuesta));
+
+      const request = http.expectOne((r) => r.url === '/insurance/patients');
+      expect(request.request.method).toBe('GET');
+      expect(request.request.params.keys().sort()).toEqual([
+        'birthDateFrom',
+        'insuranceStatus',
+        'limit',
+        'search',
+      ]);
+      expect(request.request.params.get('limit')).toBe('25');
+      request.flush({
+        items: [
+          {
+            patientProfileId: 'p-1',
+            fullName: 'Ana Pérez',
+            coverage: { hasActiveCoverage: false },
+          },
+        ],
+        limit: 25,
+        nextCursor: 'c-2',
+      });
+
+      expect(pagina?.items[0]?.coverage.hasActiveCoverage).toBe(false);
+      expect(pagina?.nextCursor).toBe('c-2');
     });
   });
 });

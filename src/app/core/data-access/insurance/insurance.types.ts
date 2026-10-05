@@ -893,3 +893,62 @@ export interface ReceivedClaimList {
   /** `true` si el servidor recortó al tope: hay más solicitudes que las recibidas. */
   readonly truncated: boolean;
 }
+
+/* --- Directorio de pacientes de la aseguradora (`GET /insurance/patients`) --- */
+
+/** Filtro por seguro: una pregunta sobre las coberturas de ESTA aseguradora, no un catálogo. */
+export type InsurerPatientInsuranceStatus = 'ALL' | 'WITH_INSURANCE' | 'NO_INSURANCE';
+export type InsurerPatientSortField = 'fullName' | 'birthDate' | 'createdAt';
+
+/** Filtros del directorio. Ninguno elige la aseguradora: sale del tenant activo. */
+export interface InsurerPatientQuery {
+  readonly cursor?: string;
+  /** 10, 25 o 50. */
+  readonly limit?: number;
+  readonly search?: string;
+  readonly genderConceptId?: string;
+  readonly occupationConceptId?: string;
+  /** `YYYY-MM-DD`. */
+  readonly birthDateFrom?: string;
+  /** `YYYY-MM-DD`. */
+  readonly birthDateTo?: string;
+  readonly insuranceStatus?: InsurerPatientInsuranceStatus;
+  readonly sortBy?: InsurerPatientSortField;
+  readonly sortDirection?: 'asc' | 'desc';
+}
+
+/** La cobertura del paciente con ESTA aseguradora. `false` ⇒ la pantalla dice «Ninguno». */
+export interface InsurerPatientCoverage {
+  readonly hasActiveCoverage: boolean;
+  readonly planName?: string;
+  readonly policyIdentifier?: string;
+  readonly memberIdentifier?: string;
+  readonly validityStatus?: string;
+}
+
+/** Una fila del directorio: filiación y contacto, nada clínico. */
+export interface InsurerPatientListItem {
+  readonly patientProfileId: string;
+  readonly fullName: string;
+  readonly documentNumber?: string;
+  /** `YYYY-MM-DD`, fecha civil: no se convierte a `Date` para no correrla de huso. */
+  readonly birthDate?: string;
+  readonly age?: number;
+  /** Celular, o el fijo si no hay celular. */
+  readonly phone?: string;
+  readonly email?: string;
+  readonly genderConceptId?: string;
+  /** `GENDER_FEMALE`…: la palabra la pone la pantalla, el catálogo rotula en inglés. */
+  readonly genderCode?: string;
+  readonly occupationDisplay?: string;
+  readonly coverage: InsurerPatientCoverage;
+  /** Slug del perfil al que se le puede escribir. Ausente ⇒ todavía no activó la mensajería. */
+  readonly communityProfileSlug?: string;
+}
+
+/** Una página del directorio, por cursor: sin total ni número de página. */
+export interface InsurerPatientPage {
+  readonly items: readonly InsurerPatientListItem[];
+  readonly limit: number;
+  readonly nextCursor: string | null;
+}

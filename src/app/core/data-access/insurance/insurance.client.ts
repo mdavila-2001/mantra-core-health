@@ -55,6 +55,8 @@ import type {
   ReceivedClaimDecisionInput,
   ReceivedClaimInvoice,
   ReceivedClaimList,
+  InsurerPatientPage,
+  InsurerPatientQuery,
 } from './insurance.types';
 
 /* ---- formas de transporte -------------------------------------------------
@@ -486,6 +488,27 @@ export class InsuranceClient {
           truncated: body.truncated,
         })),
       );
+  }
+
+  /**
+   * `GET /insurance/patients` — el directorio de pacientes de la aseguradora
+   * activa, por cursor.
+   *
+   * Sólo trae pacientes con cobertura en un plan de esta aseguradora o con un
+   * reclamo presentado a ella; el alcance lo resuelve el servidor por el tenant
+   * activo y el cliente no manda ningún id de aseguradora. Los parámetros vacíos
+   * no se envían, por lo mismo que en {@link listClaims}.
+   *
+   * @param query - Filtros, orden y cursor de continuación.
+   * @returns La página, con el cursor de la siguiente.
+   */
+  listInsurerPatients(query: InsurerPatientQuery = {}): Observable<InsurerPatientPage> {
+    let params = new HttpParams();
+    for (const [clave, valor] of Object.entries(query)) {
+      if (valor === undefined || valor === null || valor === '') continue;
+      params = params.set(clave, String(valor));
+    }
+    return this.http.get<InsurerPatientPage>(this.url('/insurance/patients'), { params });
   }
 
   /**
