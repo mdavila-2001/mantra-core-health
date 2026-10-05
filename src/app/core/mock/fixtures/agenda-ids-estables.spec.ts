@@ -29,7 +29,7 @@ describe('agenda de la maqueta — ids de cupo estables entre días', () => {
     for (const clave of comunes) {
       expect(hoy.get(clave), clave).toBe(ayer.get(clave));
     }
-  });
+  }, 30_000);
 
   it('la capacidad libre de cada cupo sale de las reservas vigentes que tiene encima', async () => {
     const { cupos, reservas } = await import('./agenda');
@@ -41,5 +41,5 @@ describe('agenda de la maqueta — ids de cupo estables entre días', () => {
         .filter((r) => r.bookableSlotId === cupo.id && !anuladas.has(r.statusConceptId)).length;
       expect(cupo.remainingCapacity, cupo.id).toBe(Math.max(0, cupo.capacity - encima));
     }
-  });
+  }, 30_000);
 });

@@ -378,19 +378,25 @@ describe('rutas del armazón', () => {
    * ningún defecto: no hay aserción que dependa de cuánto tarde.
    */
   it('una sección disponible NO cae en el placeholder', async () => {
-    for (const section of APP_SECTIONS.filter(
+    const secciones = APP_SECTIONS.filter(
       (s) => s.availability === 'disponible' && SECCIONES_REDIRIGIDAS[s.path] === undefined,
-    )) {
-      const ruta = hijas.find((route) => route.path === section.path);
-      const componente = ruta?.component ?? (await ruta?.loadComponent?.());
+    );
 
-      expect(componente, section.path).toBeDefined();
-      // Se compara por identidad y no por `name`: el compilador de Angular
-      // renombra la clase (`_SectionPlaceholder`) y una prueba por texto se
-      // rompería sin que nada esté mal.
-      expect(componente, section.path).not.toBe(SectionPlaceholder);
-    }
-  }, 30_000);
+    // Las cargas son independientes: resolverlas en paralelo evita que el
+    // tiempo de esta prueba crezca como la suma de todas las pantallas.
+    await Promise.all(
+      secciones.map(async (section) => {
+        const ruta = hijas.find((route) => route.path === section.path);
+        const componente = ruta?.component ?? (await ruta?.loadComponent?.());
+
+        expect(componente, section.path).toBeDefined();
+        // Se compara por identidad y no por `name`: el compilador de Angular
+        // renombra la clase (`_SectionPlaceholder`) y una prueba por texto se
+        // rompería sin que nada esté mal.
+        expect(componente, section.path).not.toBe(SectionPlaceholder);
+      }),
+    );
+  }, 60_000);
 
   it('una sección planificada cae en el placeholder, y diferido', async () => {
     for (const section of APP_SECTIONS.filter((s) => s.availability === 'planificada')) {

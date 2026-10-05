@@ -57,6 +57,8 @@ describe('el gate de maquetas con la API real (production-api)', () => {
       expect(location.path() || '/').toBe(target);
       expect(leafPath()).not.toBe('**');
     },
+    // Lazy route imports can exceed Vitest's 5s default when V8 coverage is on.
+    15_000,
   );
 
   it.each([
