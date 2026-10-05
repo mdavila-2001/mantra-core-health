@@ -1,5 +1,5 @@
 > Building...
-âˆš Building...
+√ Building...
 Initial chunk files | Names                            |  Raw size
 chunk-FXD6LJDF.js   | -                                | 946.69 kB | 
 chunk-76WAAORJ.js   | -                                | 262.12 kB | 
@@ -166,59 +166,59 @@ chunk-T4P7EBHZ.js   | -                                | 236.91 kB |
 chunk-VCNUTCXI.js   | design-system-sample             | 221.95 kB | 
 chunk-LCPIT4TA.js   | agenda                           | 208.27 kB | 
 ...and 962 more lazy chunks files. Use "--verbose" to show all the files.
-yarn.cmd : â–² [WARNING] NG8113: Alert is not used within the template of MedicalArticles [plugin angular-compiler]
-En lÃ­nea: 2 CarÃ¡cter: 161
+yarn.cmd : ▲ [WARNING] NG8113: Alert is not used within the template of MedicalArticles [plugin angular-compiler]
+En línea: 2 Carácter: 161
 + ... te-env.mjs; yarn.cmd ng build --configuration e2e-real --source-map=f ...
 +                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    + CategoryInfo          : NotSpecified: (â–² [WARNING] NG8...gular-compiler]:String) [], RemoteException
+    + CategoryInfo          : NotSpecified: (▲ [WARNING] NG8...gular-compiler]:String) [], RemoteException
     + FullyQualifiedErrorId : NativeCommandError
  
 
     src/app/features/account/my-profile/medical-articles/medical-articles.ts:93:4:
-      93 â”‚     Alert,
-         â•µ     ~~~~~
+      93 │     Alert,
+         ╵     ~~~~~
 
 
-â–² [WARNING] NG8113: RouterLink is not used within the template of MedicalArticles [plugin angular-compiler]
+▲ [WARNING] NG8113: RouterLink is not used within the template of MedicalArticles [plugin angular-compiler]
 
     src/app/features/account/my-profile/medical-articles/medical-articles.ts:105:4:
-      105 â”‚     RouterLink,
-          â•µ     ~~~~~~~~~~
+      105 │     RouterLink,
+          ╵     ~~~~~~~~~~
 
 
-â–² [WARNING] NG8113: AppButtonLink is not used within the template of Questionnaires [plugin angular-compiler]
+▲ [WARNING] NG8113: AppButtonLink is not used within the template of Questionnaires [plugin angular-compiler]
 
     src/app/features/account/questionnaires/questionnaires.ts:88:4:
-      88 â”‚     AppButtonLink,
-         â•µ     ~~~~~~~~~~~~~
+      88 │     AppButtonLink,
+         ╵     ~~~~~~~~~~~~~
 
 
-â–² [WARNING] NG8113: Link is not used within the template of Groups [plugin angular-compiler]
+▲ [WARNING] NG8113: Link is not used within the template of Groups [plugin angular-compiler]
 
     src/app/features/groups/groups.ts:59:4:
-      59 â”‚     Link,
-         â•µ     ~~~~
+      59 │     Link,
+         ╵     ~~~~
 
 
-â–² [WARNING] NG8113: AppButtonLink is not used within the template of SurveysHome [plugin angular-compiler]
+▲ [WARNING] NG8113: AppButtonLink is not used within the template of SurveysHome [plugin angular-compiler]
 
     src/app/features/questionnaires/questionnaires.ts:132:4:
-      132 â”‚     AppButtonLink,
-          â•µ     ~~~~~~~~~~~~~
+      132 │     AppButtonLink,
+          ╵     ~~~~~~~~~~~~~
 
 
-â–² [WARNING] NG8113: Card is not used within the template of SymptomCheck [plugin angular-compiler]
+▲ [WARNING] NG8113: Card is not used within the template of SymptomCheck [plugin angular-compiler]
 
     src/app/features/symptom-check/symptom-check.ts:122:39:
-      122 â”‚ ... [Alert, AppButton, BodyMap, Card, Chip, FormField, RouterLink...
-          â•µ                                 ~~~~
+      122 │ ... [Alert, AppButton, BodyMap, Card, Chip, FormField, RouterLink...
+          ╵                                 ~~~~
 
 
-â–² [WARNING] NG8113: RouterLink is not used within the template of SymptomCheck [plugin angular-compiler]
+▲ [WARNING] NG8113: RouterLink is not used within the template of SymptomCheck [plugin angular-compiler]
 
     src/app/features/symptom-check/symptom-check.ts:122:62:
-      122 â”‚ ..., BodyMap, Card, Chip, FormField, RouterLink, Spinner, Textarea],
-          â•µ                                      ~~~~~~~~~~
+      122 │ ..., BodyMap, Card, Chip, FormField, RouterLink, Spinner, Textarea],
+          ╵                                      ~~~~~~~~~~
 
 
 

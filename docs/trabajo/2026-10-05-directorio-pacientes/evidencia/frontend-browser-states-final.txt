@@ -4,16 +4,16 @@ Running 5 tests using 1 worker
 
 
 yarn.cmd : (node:17184) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
-En lÃ­nea: 2 CarÃ¡cter: 44
+En línea: 2 Carácter: 44
 + ... .0.1:4200'; yarn.cmd playwright test --config artifacts/playwright.di ...
 +                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     + CategoryInfo          : NotSpecified: ((node:17184) Wa... env being set.:String) [], RemoteException
     + FullyQualifiedErrorId : NativeCommandError
  
 (Use `node --trace-warnings ...` to show where the warning was created)
-[1/5] [chromium] â€º playwright\insurer-patient-directory.spec.ts:200:9 â€º Directorio de pacientes @ui-mock â€º estado loading
-[2/5] [chromium] â€º playwright\insurer-patient-directory.spec.ts:200:9 â€º Directorio de pacientes @ui-mock â€º estado empty
-[3/5] [chromium] â€º playwright\insurer-patient-directory.spec.ts:200:9 â€º Directorio de pacientes @ui-mock â€º estado error
-[4/5] [chromium] â€º playwright\insurer-patient-directory.spec.ts:200:9 â€º Directorio de pacientes @ui-mock â€º estado forbidden
-[5/5] [chromium] â€º playwright\insurer-patient-directory.spec.ts:226:7 â€º Directorio de pacientes @ui-mock â€º bÃºsqueda, chips, reinicio y paginaciÃ³n sin filtros en URL
+[1/5] [chromium] › playwright\insurer-patient-directory.spec.ts:200:9 › Directorio de pacientes @ui-mock › estado loading
+[2/5] [chromium] › playwright\insurer-patient-directory.spec.ts:200:9 › Directorio de pacientes @ui-mock › estado empty
+[3/5] [chromium] › playwright\insurer-patient-directory.spec.ts:200:9 › Directorio de pacientes @ui-mock › estado error
+[4/5] [chromium] › playwright\insurer-patient-directory.spec.ts:200:9 › Directorio de pacientes @ui-mock › estado forbidden
+[5/5] [chromium] › playwright\insurer-patient-directory.spec.ts:226:7 › Directorio de pacientes @ui-mock › búsqueda, chips, reinicio y paginación sin filtros en URL
   5 passed (14.3s)
