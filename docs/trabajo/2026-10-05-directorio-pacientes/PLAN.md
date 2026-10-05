@@ -85,3 +85,5 @@
 
 ## Cierre de verificación
 - Directorio verificado con API y PostgreSQL reales en dev y test; chat persistido y revocaciones comprobados. La entrega global permanece A MEDIAS: gates heredados y CI externo, detallados en REPORTE.md. No se modifican permisos de reclamos ni contratos públicos ajenos para forzar gates verdes.
+
+- Merges externos de los PR iniciales observados y bases reintegradas; seguimiento de entrega en API572/573 y frontend960/956, sin merge automático por el agente. Los estados A MEDIAS se conservan hasta gates globales y CI terminales.

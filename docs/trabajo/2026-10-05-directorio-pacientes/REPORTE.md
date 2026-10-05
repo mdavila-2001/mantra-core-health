@@ -25,8 +25,8 @@
 ## A medias
 
 ### H3.S1.M1 — Gates globales
-- Qué anda: frontend dev/test build producción, types, lint y regresión218/214 PASS; API dev types/build/lint PASS; API test types/build/lint dirigido PASS, unit70/74 y SQL9 por variante PASS.
-- Qué no anda: BASELINE-LINT-TEST: 53 errores Prettier en cinco archivos idénticos a origin/test; BASELINE-OPENAPI: dos operaciones públicas heredadas sin security. BASELINE-CLAIMS-DEV: aserción de roles de reclamos incompatible con su controller; ambos archivos idénticos a origin/dev. CI antiguo API dev falló por ese caso.
+- Qué anda: frontend dev/test build producción, types, lint y regresión218/214 PASS; API dev types/build PASS; lint global final dev con cuatro errores de formato heredados; API test types/build/lint dirigido PASS, unit70/74 y SQL9 por variante PASS.
+- Qué no anda: BASELINE-LINT-TEST: 53 errores Prettier en cinco archivos idénticos a origin/test; BASELINE-OPENAPI: test conserva dos operaciones públicas sin security; dev final conserva tres, incluida upload-registration-signature-image, todas idénticas a origin/dev. BASELINE-LINT-DEV: cuatro errores Prettier en concepts.service.ts idéntico a origin/dev. BASELINE-CLAIMS-DEV: aserción de roles de reclamos incompatible con su controller; ambos archivos idénticos a origin/dev. CI antiguo API dev falló por ese caso.
 - Qué falta exactamente: propietarios de las bases deben corregir esos gates ajenos al directorio; repetir gates globales tras integrar sus correcciones. No se relajan permisos ni aserciones.
 - Dónde quedó: evidencia API api-test-baseline-gate-failures.txt, api-test-lint-final.txt, api-test-openapi-lint-rechecked.txt, api-dev-claims-baseline-regression.txt y ci-docs-baseline-failure.txt.
 
@@ -40,7 +40,7 @@
 - Qué anda: cuatro PR publicados por pedido del usuario; actualización API primero y frontend después, sin force ni merge. Estado literal en evidencia/pr-<n>-mergeable.txt.
 - Qué no anda: CI frontend pendiente por runner self-hosted marcelo-wsl-front offline; API dev tiene fallo histórico de reclamos; globales heredados aún rojos. No se afirma entrega mergeable completa.
 - Qué falta exactamente: reactivar runner frontend y corregir gates heredados; comprobar checks tras el último push y revisión humana antes de merge.
-- Dónde quedó: frontend955/956 y API567/568, con reportes y referencias cruzadas.
+- Dónde quedó: frontend960/956 y API572/573 (anteriores955/567/568 mergeados externamente), con reportes y referencias cruzadas.
 
 ## Pendiente
 
@@ -163,4 +163,12 @@ CI externo y gates de base bloquean cierre global. Reserva visual MENOR: cola de
 
 ## Decisiones y ambigüedades
 
-INSURANCE_OPERATOR restringido a su aseguradora; cobertura vigente para aseguradoras, padrón global administrativo autorizado mediante opt-in limitado al directorio. POST y allowlist eliminan filtros de URLs y campos ajenos. Logs HTTP reales27 por variante sin query/body/auth; supresión SQL limitada a consultas sensibles. Push y PR anticipados solicitados por usuario; no merge/deploy ni solicitudes de review a terceros. Configuración local y cache auth ignorados, no versionados. Stack sintético propio cerrado con compose down sin-v; tres volúmenes conservados y Docker Desktop intacto. Ninguna ambigüedad adicional.
+INSURANCE_OPERATOR restringido a su aseguradora; cobertura vigente para aseguradoras, padrón global administrativo autorizado mediante opt-in limitado al directorio. POST y allowlist eliminan filtros de URLs y campos ajenos. Logs HTTP reales27 por variante sin query/body/auth; supresión SQL limitada a consultas sensibles. Push y PR anticipados solicitados por usuario. API567/568 y frontend955 se mergearon desde fuera de esta sesión el2026-10-05 entre17:05Z y17:07Z; no lo hizo este agente. Se abrieron API572/573 y frontend960 para los cambios posteriores; frontend956 sigue abierto. Se incorporaron esas nuevas bases por merge limpio. Sin merge/deploy ni solicitudes de review a terceros por este agente. Configuración local y cache auth ignorados, no versionados. Stack sintético propio cerrado con compose down sin-v; tres volúmenes conservados y Docker Desktop intacto. Ninguna ambigüedad adicional.
+
+## Actualización tras merges externos
+
+- API dev base75383cce y test6a6d3442 incorporadas. Nuevos cambios de base: documentación, catálogos/formularios clínicos y perfiles/tutores/terminología en dev. Código de autorización, consulta y comunidad del directorio sin cambios. Frontend dev baseea9b72b9 incorporada sin cambiar contenido respecto a la instantánea validada; test base5ab13bbb incorporada por fast-forward sin diferencias de contenido respecto a17d0f205.
+- Frontend956 se mergeó externamente el2026-10-05T17:25:00Z con head17d0f205: incluye la última prueba real y28 capturas. El seguimiento frontend abierto es960; los cambios funcionales de test ya están incorporados. El reporte adicional de cierre se publica en dev; no se abre un PR de test sólo para duplicar este estado documental.
+- Conflicto OpenAPI dev: se leyó el contenido entrante, se conservaron todos sus paths/schemas ajenos y se regeneró sólo el directorio desde el controller real; comparación estructural no-directory PASS. No se eligió un archivo entero ignorando la otra funcionalidad.
+- Compatibilidad final API: dev e9708dc9 types/build y70 unit PASS; test d125415b types/build y74 unit PASS. Lint global final dev4 FAIL/test53 FAIL; OpenAPI global final dev3 FAIL/test2 FAIL, todos de base demostrados. Lint dev anterior PASS corresponde a la base previa, no al código final.
+- La integración real anterior sigue referida a sus SHAs explícitos; no se presenta como reejecutada después. Los formularios clínicos nuevos no forman parte de la fixture QA con SEED_CONTENT_ON_BOOT=false. Tutores y búsqueda general de terminología no se ejercitaron en este alcance.
