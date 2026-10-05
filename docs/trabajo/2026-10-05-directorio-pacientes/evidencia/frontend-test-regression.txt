@@ -1,6 +1,6 @@
 Using Vitest configuration file: C:\Alovida\mantra-core-health\vitest.config.ts
 > Building...
-âˆš Building...
+√ Building...
 Initial chunk files                                                  | Names                                                             |  Raw size
 spec-app-features-insurance-insurance-patients-insurance-patients.js | spec-app-features-insurance-insurance-patients-insurance-patients | 576.98 kB | 
 styles.css                                                           | styles                                                            | 166.42 kB | 
@@ -37,7 +37,7 @@ Application bundle generation complete. [8.454 seconds] - 2026-10-05T15:42:11.68
  RUN  v4.1.10 C:/Alovida/mantra-core-health
 
 yarn.cmd : (node:5884) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
-En lÃ­nea: 2 CarÃ¡cter: 1
+En línea: 2 Carácter: 1
 + yarn.cmd ng test --watch=false --ts-config artifacts/tsconfig.directo ...
 + ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     + CategoryInfo          : NotSpecified: ((node:5884) Exp...s not provided.:String) [], RemoteException

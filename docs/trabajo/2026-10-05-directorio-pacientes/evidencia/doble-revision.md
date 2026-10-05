@@ -81,3 +81,9 @@ Pendiente fuera de P1: P2 independiente y recorrido con API real. Las respuestas
 La segunda pasada está registrada en [revision-visual-p2.md](./revision-visual-p2.md): abrió las 26 capturas y contestó las diez preguntas adversariales. Directorio con datos: ACEPTABLE CON RESERVAS por el final recortado del placeholder del buscador a1024px; etiqueta accesible y operación permanecen completas. Los cinco estados capturados: APROBADA. Ningún hallazgo MAYOR o BLOQUEANTE pendiente. El defecto de Seguro oculto quedó cerrado en ambas pasadas.
 
 Estas notas sustituyen el estado pendiente anterior de revisión visual. El recorrido con API real se evalúa separadamente y todavía está pendiente.
+
+## P1 positiva — API real test
+
+Se abrieron directory-real-data.png y directory-real-chat.png tras frontend-browser-real-test-api.txt: 1 passed (5.6s), EXIT_CODE=0. Listado: siete columnas completas, total12, chip de búsqueda, ausencia de contacto explícita y chat00 primario; texto largo envuelve sin recortes. Conversación tras recarga: hilo seleccionado, cabecera del perfil sintético, vacío orientado y compositor visible; sin solapamientos. P1 OK en ambas. El identificador y canal enviados, reutilización, persistencia y consola/red se demuestran por las pruebas reales, no por las imágenes.
+
+La captura histórica de fallo del selector se abrió y revisó en P1/P2 antes de la limpieza automática de Playwright; no quedó conservada. Se preservó su salida literal FAIL y se reemplaza como evidencia visual actual con estas dos capturas positivas.

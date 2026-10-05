@@ -21,11 +21,11 @@
 ## H1 — Bases actualizadas
 **CA:** Dadas las ramas existentes, cuando se integra su base, entonces conservan el directorio y contienen el último commit de integración.
 **DoD:** git merge-base --is-ancestor origin/<base> marcelo/insurer-patient-directory-<base> -> 0; build de cada variante.
-**Estado:** EN CURSO
+**Estado:** HECHO
 ### H1.S1 — Integración local
 **CA:** Dada cada base, cuando se comprueba ascendencia, entonces está incorporada sin conflictos.
 **DoD:** git merge-base --is-ancestor -> 0.
-**Estado:** EN CURSO
+**Estado:** HECHO
 | ID | Microtarea | CA (binario) | DoD | Estado |
 |---|---|---|---|---|
 | H1.S1.M1 | Integrar dev | Dada dev, al comprobarla, es ancestro de la rama de trabajo | git merge-base --is-ancestor origin/dev HEAD -> 0 | HECHO |
@@ -34,11 +34,11 @@
 ## H2 — Directorio completo
 **CA:** Dado un actor autorizado, al buscar y contactar, recibe sólo datos permitidos y abre el hilo correcto.
 **DoD:** pruebas dirigidas de API y frontend PASS.
-**Estado:** TODO
+**Estado:** HECHO
 ### H2.S1 — API y contrato mínimo
 **CA:** Dada una consulta, al resolverla, filtros/conteo/página aplican el mismo alcance.
 **DoD:** yarn test --runInBand insurer-patients -> PASS.
-**Estado:** TODO
+**Estado:** HECHO
 | ID | Microtarea | CA (binario) | DoD | Estado |
 |---|---|---|---|---|
 | H2.S1.M1 | Consulta y opciones autorizadas | Dado un actor ajeno, al buscar, no obtiene datos ajenos | yarn test --runInBand insurer-patients -> PASS | HECHO |
@@ -47,7 +47,7 @@
 ### H2.S2 — Interfaz
 **CA:** Dados datos, al operar filtros y chat, muestra estados correctos en todos los anchos.
 **DoD:** yarn ng test --watch=false --include '**/insurance-patients.spec.ts' -> PASS.
-**Estado:** TODO
+**Estado:** HECHO
 | ID | Microtarea | CA (binario) | DoD | Estado |
 |---|---|---|---|---|
 | H2.S2.M1 | Cliente POST mínimo | Dada una búsqueda, al enviar, los filtros sólo viajan en body | prueba insurance.client.spec -> PASS | HECHO |
@@ -57,17 +57,17 @@
 ## H3 — Evidencia e integración final
 **CA:** Dado el stack real sintético, al recorrerlo, cumple los criterios y no expone pacientes ajenos.
 **DoD:** API integration y Playwright PASS; lint/typecheck/build seriales, revisión visual doble independiente; reporte literal.
-**Estado:** TODO
+**Estado:** A MEDIAS
 ### H3.S1 — Verificación
 **CA:** Dadas ambas variantes, al verificarlas, el reporte distingue lo comprobado de lo pendiente.
 **DoD:** comandos y salidas en evidencia; REPORTE.md.
-**Estado:** TODO
+**Estado:** A MEDIAS
 | ID | Microtarea | CA (binario) | DoD | Estado |
 |---|---|---|---|---|
-| H3.S1.M1 | Gates y regresión | Dado el código final, al compilar/probar, pasa | yarn lint; yarn typecheck; yarn build; pruebas dirigidas -> 0 | TODO |
-| H3.S1.M2 | Recorrido real y privacidad | Dado actor A, al solicitar paciente B, no obtiene acceso | integración + Playwright con API real -> PASS | TODO |
+| H3.S1.M1 | Gates y regresión | Dado el código final, al compilar/probar, pasa | yarn lint; yarn typecheck; yarn build; pruebas dirigidas -> 0 | A MEDIAS |
+| H3.S1.M2 | Recorrido real y privacidad | Dado actor A, al solicitar paciente B, no obtiene acceso | integración + Playwright con API real -> PASS | HECHO |
 | H3.S1.M3 | Revisión visual | Dadas capturas, al revisar dos veces, no quedan hallazgos bloqueantes | evidencia/doble-revision.md -> APROBADA | HECHO |
-| H3.S1.M4 | Propagar a test | Dada la corrección dev, al aplicarla en test, conserva diferencias de base | diff de archivos del directorio y gates -> PASS | TODO |
+| H3.S1.M4 | Propagar a test | Dada la corrección dev, al aplicarla en test, conserva diferencias de base | diff de archivos del directorio y gates -> PASS | A MEDIAS |
 
 ## Riesgos y bloqueos previstos
 | Riesgo | Impacto | Mitigación |
@@ -77,7 +77,11 @@
 | PHI en logs o respuestas | Exposición indebida | DTO allowlist, POST, auditoría por ids, pruebas negativas |
 | Pruebas previas exigen semántica antigua | Assertions incompatibles | Actualizar assertions a requisitos confirmados conservando cobertura; nunca skip/only |
 ## Ajustes de verificación observados
+- H3.S1.M5 — Publicar ambas ramas y dejar PR revisables. CA: dadas las variantes, al abrir sus PR, contienen la base actual, no tienen conflictos y el estado de CI es explícito. DoD: push no force; gh pr view --json isDraft,mergeable,mergeStateStatus; gh pr checks después del último push; fuera de draft y checks sin pendientes para entrega completa. Estado: A MEDIAS. No se mergea ni se despliega. Runner self-hosted offline es bloqueo externo documentado.
 - Bases remotas avanzaron durante QA: se incorporaron origin/dev y origin/test actualizadas mediante merge sin conflictos; preservar variantes.
 - El área disponible junto al sidebar puede ser menor a1024px aunque el viewport sea mayor: usar tarjetas también por ancho del contenedor; defecto de Seguro oculto cerrado con recapturas.
 - Pruebas UI interceptadas declaradas @ui-mock; recorrido adicional @real-directory exige API y persistencia reales con fixtures sintéticas y trazas desactivadas.
 
+
+## Cierre de verificación
+- Directorio verificado con API y PostgreSQL reales en dev y test; chat persistido y revocaciones comprobados. La entrega global permanece A MEDIAS: gates heredados y CI externo, detallados en REPORTE.md. No se modifican permisos de reclamos ni contratos públicos ajenos para forzar gates verdes.
