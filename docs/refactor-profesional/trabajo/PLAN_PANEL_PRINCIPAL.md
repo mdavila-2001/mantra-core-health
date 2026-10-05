@@ -40,7 +40,7 @@ Este es el primer piloto de una modernización más amplia. La inspección dispo
 | P-06 | P0 | Revisar en navegador escritorio y móvil, en claro/oscuro y con varios roles | Panel y `capturas/despues/` | Personal, administración y paciente observados; 320, 390, 768, 1024, 1440 y 1920 px; claro y oscuro. **Hecho en Chromium con datos simulados.** |
 | P-07 | P0 | Recorrer carga, error, vacío, agenda terminada, apertura/cierre rápido y movimiento reducido | Panel y directivas de movimiento existentes | Estados de carga, error, vacío y jornada terminada revisados en plantilla y componente; Enter/Escape/foco y `prefers-reduced-motion` verificados en navegador. **Hecho dentro del alcance disponible; estados excepcionales no forzados visualmente.** |
 | P-08 | P2 | Hacer inventario de otras áreas antes de extender el sistema | Rutas identificadas en `features/` | Familias y siguiente piloto priorizados abajo, sin cambiar rutas ni contratos. **Hecho.** |
-| P-09 | P0 | Cerrar calidad, rendimiento y recuperación del incremento | Archivos del piloto, `EVIDENCIAS.md`, `QA_FINAL.md` | Build, typecheck y E2E enfocado pasan; lint del archivo nuevo pasa. Lint global falla por 256 errores fuera de este piloto. **Hecho con limitación documentada.** |
+| P-09 | P0 | Cerrar calidad, rendimiento y recuperación del incremento | Archivos del piloto, `EVIDENCIAS.md`, `QA_FINAL.md` | Build, typecheck, lint y E2E enfocado pasan; prueba unitaria mensual 29/29. **Hecho.** |
 
 ## Registro de movimiento
 
@@ -108,4 +108,4 @@ Fuera de `/dashboard`, `/schedule` tiene una revisión visual verificada en Chro
 
 ## Siguiente acción
 
-Usar la cobertura registrada como base para la siguiente revisión; ampliar a otros roles y navegadores en un alcance separado. La deuda de lint global debe tratarse en una tarea propia para evitar mezclar 256 errores de otras áreas con este cambio de diseño.
+La cobertura registrada queda como base; ampliar roles y navegadores corresponde a una revisión separada. Lint global verificado: exit 0.

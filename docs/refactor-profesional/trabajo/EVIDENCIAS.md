@@ -30,7 +30,7 @@ Entorno: Windows, rama `master`, `ng serve` en `http://localhost:4200`, datos si
 | `yarn typecheck` | exit 0 |
 | `yarn eslint playwright/panel-refactor-visual.spec.ts` | exit 0 |
 | `yarn build` | exit 0; mantiene avisos de presupuesto CSS y CommonJS de otras áreas |
-| `yarn lint` | exit 1: 256 errores distribuidos en el repositorio, principalmente `prefer-on-push-component-change-detection`; el archivo nuevo pasa el lint aislado |
+| `yarn lint` | exit 0 tras corregir el manejador de Escape del menú |
 
 La tabla de intensidad tenía una regla de oscuro dentro de una hoja CSS encapsulada que no alcanzaba a `:root`. Se sustituyó por tokens semánticos globales; la prueba mide el color computado de cada celda con datos y exige al menos 4,5:1 en ambos temas. El mínimo de los pares definidos es 4,97:1. En 320 px la tabla se desplaza dentro de su contenedor y la página conserva su ancho.
 

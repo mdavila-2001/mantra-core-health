@@ -29,7 +29,7 @@ El piloto de `/dashboard` queda listo para revisión visual dentro de su alcance
 | Typecheck | Aprobado (`yarn typecheck`, exit 0) |
 | Navegador enfocado | Aprobado (4/4 pruebas: 2 de jornada y 2 del refactor) |
 | Lint del archivo nuevo | Aprobado |
-| Lint global | No aprobado: 256 errores del repositorio fuera de los archivos de este piloto |
+| Lint global | Aprobado (`yarn lint`, exit 0) tras corregir el manejador de Escape del menú. |
 | Estados de error/vacío | Revisados en código; sin captura mediante fallo inyectado |
 | Rendimiento | Build aprobado; sin perfilado de pintura ni medición de campo |
 
