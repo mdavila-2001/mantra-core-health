@@ -379,4 +379,27 @@ describe('ReceivedClaims', () => {
     request.flush(claimWire(1, { status: approved, decision, invoice: invoice('ANNULLED') }));
     expect(rows()[0]!.invoice?.status).toBe('ANNULLED');
   });
+
+  it('muestra la institución médica junto al médico y como entidad principal cuando no hay médico', async () => {
+    await mount([
+      claimWire(1, { practitioner: { id: 'doc-1', displayName: 'Valeria Rojas', specialty: 'Cardiología' }, providerName: 'Clínica Los Olivos' }),
+      claimWire(2, { practitioner: null, providerName: 'Laboratorio Central' }),
+    ]);
+    const providers = fixture.nativeElement.querySelectorAll('[data-testid="received-claim-provider"]');
+    expect(providers.length).toBe(2);
+    expect(providers[0].textContent.trim()).toBe('Clínica Los Olivos');
+    expect(providers[1].textContent.trim()).toBe('Laboratorio Central');
+  });
+
+  it('muestra el monto aprobado cuando la solicitud tiene dictamen favorable', async () => {
+    await mount([
+      claimWire(1, {
+        billedTotal: { amount: '120.00', currency: BOB },
+        approvedTotal: { amount: '80.00', currency: BOB },
+      }),
+    ]);
+    const approvedEl = fixture.nativeElement.querySelector('[data-testid="received-claim-approved"]');
+    expect(approvedEl).not.toBeNull();
+    expect(approvedEl.textContent).toContain('80.00');
+  });
 });

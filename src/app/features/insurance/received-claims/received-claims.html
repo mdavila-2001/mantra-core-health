@@ -66,7 +66,6 @@
           rowNavigable
           wrapHeaders
           caption="Solicitudes recibidas por la aseguradora"
-          maxHeight="560px"
           data-testid="received-claims-table"
           (sortChanged)="sort.set($event)"
           (rowActivated)="openDetail($event)"
@@ -135,6 +134,11 @@
     @if (practitioner.specialty) {
       <span class="received__secondary">{{ practitioner.specialty }}</span>
     }
+    @if (claim.providerName) {
+      <span class="received__secondary received__institution" data-testid="received-claim-provider">
+        {{ claim.providerName }}
+      </span>
+    }
 
     <ng-template #practitionerCard>
       <dl class="received__peek" data-testid="received-claim-peek-practitioner">
@@ -142,10 +146,13 @@
         <dd>{{ practitioner.displayName }}</dd>
         <dt>Especialidad</dt>
         <dd>{{ practitioner.specialty ?? 'Sin especialidad registrada' }}</dd>
-        <dt>Prestador</dt>
+        <dt>Institución médica</dt>
         <dd>{{ claim.providerName }}</dd>
       </dl>
     </ng-template>
+  } @else if (claim.providerName) {
+    <span class="received__primary" data-testid="received-claim-provider">{{ claim.providerName }}</span>
+    <span class="received__secondary">Institución médica</span>
   } @else {
     <span class="received__absent">Sin atención asociada</span>
   }
@@ -206,6 +213,11 @@
 
 <ng-template #amountCell let-claim>
   <span class="received__money">{{ amount(claim.billedTotal) }}</span>
+  @if (claim.approvedTotal) {
+    <span class="received__secondary received__money" data-testid="received-claim-approved">
+      Aprobado {{ amount(claim.approvedTotal) }}
+    </span>
+  }
 </ng-template>
 
 <!-- Las dos fechas en una columna, cada una con su rótulo: así entra la de

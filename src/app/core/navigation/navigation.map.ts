@@ -734,7 +734,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // exactamente lo que destaparon `access-tree.spec.ts` y
     // `navigation.service.spec.ts`. Mismo par que «Tu organización».
     path: 'administration/insurance',
-    label: 'Aseguradora',
+    label: 'Mis productos',
     group: 'Administración',
     icon: 'umbrella',
     // Cuenta de farmacia: su menú es el del mostrador y nada más (D3 del
