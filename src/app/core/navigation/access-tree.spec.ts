@@ -328,6 +328,8 @@ describe('buildAccessTree', () => {
       'administration/insurance',
       // 2026-09-27: «Solicitudes recibidas», pedida por la propietaria.
       'administration/received-claims',
+      // El directorio de pacientes de la aseguradora.
+      'administration/insurance-patients',
     ]);
   });
 });

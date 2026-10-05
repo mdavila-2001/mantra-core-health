@@ -1,0 +1,92 @@
+:host {
+  display: block;
+}
+
+.directory__filters {
+  margin-bottom: var(--space-3);
+}
+
+.directory__extra {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.directory__date {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 11rem;
+}
+
+.directory__label {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted, var(--c-neutral-600));
+}
+
+.directory__size {
+  margin-left: auto;
+  min-width: 10rem;
+}
+
+/* Región viva siempre presente; vacía no ocupa renglón. */
+.directory__notice {
+  margin: 0 0 var(--space-2);
+  font-size: 0.875rem;
+}
+
+.directory__notice:empty {
+  display: none;
+}
+
+.directory__person {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.directory__person-text,
+.directory__insurance {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.directory__name {
+  font-weight: 600;
+}
+
+.directory__sub {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted, var(--c-neutral-600));
+}
+
+/* El teléfono es el dato que más se usa: cifras tabulares y peso de énfasis. */
+.directory__phone {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.directory__phone-link {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.directory__link {
+  overflow-wrap: anywhere;
+}
+
+.directory__figure {
+  font-variant-numeric: tabular-nums;
+  margin-right: var(--space-1);
+}
+
+.directory__empty {
+  color: var(--color-text-muted, var(--c-neutral-600));
+}
