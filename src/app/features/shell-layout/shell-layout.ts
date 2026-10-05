@@ -153,6 +153,14 @@ export class ShellLayout {
     this.accesosRapidosAbiertos.update((abiertos) => !abiertos);
   }
 
+  @HostListener('document:keydown.escape', ['$event'])
+  protected cerrarAccesosRapidosAlPresionarEscape(evento: Event): void {
+    const anclaje = this.document.querySelector<HTMLElement>('.app-header__rapidos');
+    if (this.accesosRapidosAbiertos() && anclaje?.contains(evento.target as Node)) {
+      this.cerrarAccesosRapidos(evento);
+    }
+  }
+
   @HostListener('document:click', ['$event'])
   protected cerrarAccesosRapidosAlTocarFuera(evento: MouseEvent): void {
     const anclaje = this.document.querySelector<HTMLElement>('.app-header__rapidos');
