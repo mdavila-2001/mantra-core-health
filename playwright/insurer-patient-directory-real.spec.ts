@@ -120,11 +120,14 @@ test('directorio y conversación persistida con API real @real-directory', async
     });
     const conversation = (await reply.json()) as { conversationId: string };
     await expect(page).toHaveURL(new RegExp(`/messaging/${conversation.conversationId}$`));
+    await expect(page.getByTestId('hilo-texto')).toBeVisible();
+    await expect(page.getByTestId('hilo-texto')).toBeEnabled();
     return conversation.conversationId;
   };
   const first = await openConversation();
   await page.reload();
   await expect(page).toHaveURL(new RegExp(`/messaging/${first}$`));
+  await expect(page.getByTestId('hilo-texto')).toBeVisible();
   await page.goto(directory);
   await search.fill(fixture.marker);
   await expect(page.getByTestId('directory-count')).toContainText('12');
