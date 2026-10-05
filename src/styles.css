@@ -242,6 +242,12 @@
     --st-primary-bg: var(--c-petrol-50);  --st-primary-fg: var(--c-petrol-700);  --st-primary-bd: var(--c-petrol-200);
     --st-secondary-bg: var(--c-mint-50);  --st-secondary-fg: var(--c-mint-800);  --st-secondary-bd: var(--c-mint-300);
 
+    /* Escala semántica de la matriz de consultas: contraste AA en ambos temas. */
+    --heat-1-bg: var(--c-petrol-100); --heat-1-fg: var(--c-petrol-900);
+    --heat-2-bg: var(--c-petrol-200); --heat-2-fg: var(--c-petrol-900);
+    --heat-3-bg: var(--c-petrol-400); --heat-3-fg: var(--c-ivory-50);
+    --heat-4-bg: var(--c-petrol-600); --heat-4-fg: var(--c-ivory-50);
+
     /* alias semánticos de compatibilidad para superficies y enlaces */
     --surface-raised: var(--bg-surface);
     --surface-hover: var(--bg-hover);
@@ -298,6 +304,11 @@
            y el chip desaparecería sobre una tarjeta. Sube a 600/100/400. */
         --st-primary-bg: var(--c-petrol-600); --st-primary-fg: var(--c-petrol-100); --st-primary-bd: var(--c-petrol-400);
         --st-secondary-bg: var(--c-mint-800); --st-secondary-fg: var(--c-mint-200); --st-secondary-bd: var(--c-mint-600);
+
+        --heat-1-bg: var(--c-petrol-800); --heat-1-fg: var(--c-ivory-50);
+        --heat-2-bg: var(--c-petrol-700); --heat-2-fg: var(--c-ivory-50);
+        --heat-3-bg: var(--c-petrol-300); --heat-3-fg: var(--c-petrol-900);
+        --heat-4-bg: var(--c-petrol-200); --heat-4-fg: var(--c-petrol-900);
     }
 }
 
@@ -339,6 +350,11 @@
 
     --st-primary-bg: var(--c-petrol-600); --st-primary-fg: var(--c-petrol-100); --st-primary-bd: var(--c-petrol-400);
     --st-secondary-bg: var(--c-mint-800); --st-secondary-fg: var(--c-mint-200); --st-secondary-bd: var(--c-mint-600);
+
+    --heat-1-bg: var(--c-petrol-800); --heat-1-fg: var(--c-ivory-50);
+    --heat-2-bg: var(--c-petrol-700); --heat-2-fg: var(--c-ivory-50);
+    --heat-3-bg: var(--c-petrol-300); --heat-3-fg: var(--c-petrol-900);
+    --heat-4-bg: var(--c-petrol-200); --heat-4-fg: var(--c-petrol-900);
 }
 
 /* ---- base ---- */

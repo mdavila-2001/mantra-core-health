@@ -25,7 +25,7 @@
    día lo monte. */
 .panel__hoy {
   display: block;
-  margin-block-start: var(--sp-6);
+  margin-block-start: var(--sp-8);
 }
 
 /* ── Rejilla de contenido ─────────────────────────────────────────────────
@@ -35,8 +35,8 @@
 .panel__grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
-  gap: var(--sp-5);
-  margin-block-start: var(--sp-5);
+  gap: var(--sp-6);
+  margin-block-start: var(--sp-8);
   /* Sin esto, la tarjeta de accesos —que ocupa toda la fila— deja huecos
      detrás cuando las que siguen no llenan su fila. */
   grid-auto-flow: row dense;
@@ -56,11 +56,12 @@
   flex-wrap: wrap;
   align-items: baseline;
   gap: var(--sp-3);
-  margin: 0 0 var(--sp-3);
+  margin: 0 0 var(--sp-2);
   font-family: var(--font-display);
   font-size: var(--fs-h3);
   line-height: var(--lh-h3);
-  font-weight: 500;
+  font-weight: 600;
+  letter-spacing: -0.025em;
 }
 
 /* El total, al lado del título y no en una tarjeta de cifra propia: es el
@@ -85,7 +86,7 @@
    lo arrastraría a cualquier otra pantalla que algún día lo use. */
 app-access-tree {
   display: block;
-  margin-block-start: var(--sp-4);
+  margin-block-start: var(--sp-5);
 }
 
 /* ── Listas y datos ───────────────────────────────────────────────────────*/
@@ -103,6 +104,13 @@ app-access-tree {
   align-items: baseline;
   justify-content: space-between;
   gap: var(--sp-3);
+  padding-block: var(--sp-3);
+  border-block-start: 1px solid var(--border-default);
+}
+
+.panel__fila:first-child {
+  border-block-start: 0;
+  padding-block-start: 0;
 }
 
 .panel__fila-nombre {

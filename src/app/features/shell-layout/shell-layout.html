@@ -355,32 +355,6 @@
           </div>
         }
 
-        <!-- Red social (pedido del cliente, 28/09/2026): arriba y para TODOS
-             los tipos de cuenta. Hasta ahora `/posts` sólo se alcanzaba sin
-             sesión —es donde `homeGuard` manda a quien no entró—, así que
-             para leer la red había que cerrar sesión. El marco público ya
-             reconoce la sesión viva (ofrece «Volver a mi panel», no «Entrar»),
-             así que basta con un enlace: no se toca la sesión.
-
-             Enlace y no botón porque navega. Lleva texto visible (ADR-0012
-             §1: «red social» no es un ícono de significado universal); en
-             pantallas angostas queda sólo el ícono y el nombre viaja en el
-             `aria-label` y el globo. -->
-        <a
-          app-button
-          data-variante="secundario"
-          data-tam="sm"
-          class="app-header__red-social"
-          routerLink="/posts"
-          data-testid="header-red-social"
-          appTooltip="Red social"
-          appTooltipPosition="bottom"
-          aria-label="Red social"
-        >
-          <app-nav-icon name="people" />
-          <span class="app-header__red-social-texto">Red social</span>
-        </a>
-
         <!-- Interruptor de tema. Volvió al encabezado a pedido del cliente
              (2026-09-18): claro/oscuro se cambia seguido y no debe exigir ir a
              Ajustes. Es el mismo `switch` sol/luna del marco público y de
@@ -404,6 +378,48 @@
           </span>
         </button>
 
+        <!-- En móvil estos destinos forman un menú legible. En escritorio se
+             presentan en línea, con el mismo enlace y sin duplicar rutas. -->
+        <div
+          class="app-header__rapidos"
+          [class.is-open]="accesosRapidosAbiertos()"
+          (keydown.escape)="cerrarAccesosRapidos($event)"
+        >
+          <button
+            type="button"
+            class="app-header__rapidos-boton"
+            data-testid="header-mas"
+            aria-controls="header-accesos-rapidos"
+            [attr.aria-expanded]="accesosRapidosAbiertos()"
+            aria-label="Más accesos"
+            (click)="alternarAccesosRapidos()"
+          >
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false">
+              <circle cx="5" cy="12" r="1.7" />
+              <circle cx="12" cy="12" r="1.7" />
+              <circle cx="19" cy="12" r="1.7" />
+            </svg>
+          </button>
+          <nav
+            class="app-header__rapidos-lista"
+            id="header-accesos-rapidos"
+            aria-label="Accesos rápidos"
+          >
+            <a
+              app-button
+              data-variante="secundario"
+              data-tam="sm"
+              class="app-header__red-social"
+              routerLink="/posts"
+              data-testid="header-red-social"
+              appTooltip="Red social"
+              appTooltipPosition="bottom"
+              aria-label="Red social"
+            >
+              <app-nav-icon name="people" />
+              <span class="app-header__red-social-texto">Red social</span>
+            </a>
+
         <!-- Tutoriales y Chats (N-01, 2026-09-22). Calcados de «Ajustes» de
              abajo: `<a routerLink>` con `aria-label` y `appTooltip` (ADR-0012
              §3), nunca un `<button>`, porque los dos llevan a una pantalla.
@@ -425,6 +441,7 @@
           aria-label="Tutoriales"
         >
           <app-nav-icon name="teach" />
+          <span class="app-header__rapidos-label">Tutoriales</span>
         </a>
 
         <a
@@ -436,6 +453,7 @@
           [attr.aria-label]="etiquetaChats()"
         >
           <app-nav-icon name="chat" />
+          <span class="app-header__rapidos-label">Chats</span>
           @if (chatsSinLeer() > 0) {
             <!-- Sin «0» permanente, igual que la campana. Fuera del árbol
                  accesible: el número ya viaja en el nombre del enlace. -->
@@ -465,6 +483,7 @@
           aria-label="Mis facturas"
         >
           <app-nav-icon name="receipt" />
+          <span class="app-header__rapidos-label">Mis facturas</span>
         </a>
 
         <!-- Mis solicitudes (propietario, 01/10/2026): lo que decidió la
@@ -481,6 +500,7 @@
           aria-label="Mis solicitudes"
         >
           <app-nav-icon name="umbrella" />
+          <span class="app-header__rapidos-label">Mis solicitudes</span>
         </a>
 
         <!-- El carrito de farmacia (H4.S1, carril 41/46). Es la compra del
@@ -500,6 +520,7 @@
             aria-label="Mis gastos"
           >
             <app-nav-icon name="wallet" />
+            <span class="app-header__rapidos-label">Mis gastos</span>
           </a>
 
           <!-- Promociones: arriba y no en el menú lateral (cliente, 25/09/2026). -->
@@ -512,6 +533,7 @@
             aria-label="Promociones"
           >
             <app-nav-icon name="tag" />
+            <span class="app-header__rapidos-label">Promociones</span>
           </a>
 
           <a
@@ -523,6 +545,7 @@
             [attr.aria-label]="etiquetaCarrito()"
           >
             <app-nav-icon name="bag" />
+            <span class="app-header__rapidos-label">Carrito</span>
             @if (unidadesDelCarrito() > 0) {
               <!-- Sin «0» permanente, igual que Chats. Fuera del árbol
                    accesible: el número ya viaja en el nombre del enlace. -->
@@ -554,7 +577,11 @@
           aria-label="Ajustes"
         >
           <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+          <span class="app-header__rapidos-label">Ajustes</span>
         </a>
+
+          </nav>
+        </div>
 
         @if (user(); as persona) {
           <div class="menu-anclaje">
