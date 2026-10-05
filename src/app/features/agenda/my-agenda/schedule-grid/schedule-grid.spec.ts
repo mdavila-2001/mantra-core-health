@@ -432,6 +432,23 @@ describe('ScheduleGrid', () => {
       expect(texto).toContain('Consultas y otros servicios');
       expect(texto).toContain('Turnos en la franja');
     });
+
+    it('con otros servicios en la semana, la leyenda explica el segundo tono', () => {
+      montar([
+        regla(1, '08:00:00', '12:00:00', { slotMinutes: 30 }),
+        regla(2, '14:00:00', '18:00:00', { bookingMode: 'SERVICES' }),
+      ]);
+      const leyenda: HTMLElement | null = fixture.nativeElement.querySelector(
+        '[data-testid="horario-leyenda"]',
+      );
+      expect(leyenda?.textContent).toContain('Consultas');
+      expect(leyenda?.textContent).toContain('Otros servicios: cirugías, toma de muestras');
+    });
+
+    it('sin otros servicios no hay leyenda que leer', () => {
+      montar([regla(1, '08:00:00', '12:00:00', { slotMinutes: 30 })]);
+      expect(fixture.nativeElement.querySelector('[data-testid="horario-leyenda"]')).toBeNull();
+    });
   });
 
   /* -- El globo de detalle -------------------------------------------------- */
@@ -499,7 +516,9 @@ describe('ScheduleGrid', () => {
   }
 
   function tecla(desde: HTMLElement, key: string, extra: KeyboardEventInit = {}): void {
-    desde.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true, ...extra }));
+    desde.dispatchEvent(
+      new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true, ...extra }),
+    );
     fixture.detectChanges();
   }
 
@@ -517,7 +536,9 @@ describe('ScheduleGrid', () => {
       expect(grilla.querySelectorAll('[role="rowheader"]')).toHaveLength(24);
       expect(celdas()).toHaveLength(24 * 7);
       // El dibujo dice lo mismo con color: al lector no se le repite.
-      const columnas = Array.from(fixture.nativeElement.querySelectorAll('.grilla__columna')) as HTMLElement[];
+      const columnas = Array.from(
+        fixture.nativeElement.querySelectorAll('.grilla__columna'),
+      ) as HTMLElement[];
       expect(columnas.every((c) => c.getAttribute('aria-hidden') === 'true')).toBe(true);
     });
 
@@ -528,8 +549,12 @@ describe('ScheduleGrid', () => {
         'Lunes 7 de septiembre, 09:00, atendés de 09:00 a 13:00, Sede Centro',
       );
       // Una hora sin atención existe para el lector: antes era `aria-hidden`.
-      expect(celda(14, 0).getAttribute('aria-label')).toBe('Lunes 7 de septiembre, 14:00, sin atención');
-      expect(celda(9, 1).getAttribute('aria-label')).toBe('Martes 8 de septiembre, 09:00, sin atención');
+      expect(celda(14, 0).getAttribute('aria-label')).toBe(
+        'Lunes 7 de septiembre, 14:00, sin atención',
+      );
+      expect(celda(9, 1).getAttribute('aria-label')).toBe(
+        'Martes 8 de septiembre, 09:00, sin atención',
+      );
     });
 
     it('sin sede registrada la etiqueta no la inventa', () => {
@@ -553,14 +578,21 @@ describe('ScheduleGrid', () => {
       montar([regla(3, '09:00:00', '13:00:00')], {
         sede: 'Sede Centro',
         bloqueos: [
-          { id: 'b', desde: new Date(2026, 8, 9, 12, 0), hasta: new Date(2026, 8, 9, 18, 0), motivo: 'Congreso' },
+          {
+            id: 'b',
+            desde: new Date(2026, 8, 9, 12, 0),
+            hasta: new Date(2026, 8, 9, 18, 0),
+            motivo: 'Congreso',
+          },
         ],
       });
 
       expect(celda(12, 2).getAttribute('aria-label')).toBe(
         'Miércoles 9 de septiembre, 12:00, bloqueado de 12:00 a 18:00 (Congreso)',
       );
-      expect(celda(11, 2).getAttribute('aria-label')).toContain('atendés de 09:00 a 13:00, Sede Centro');
+      expect(celda(11, 2).getAttribute('aria-label')).toContain(
+        'atendés de 09:00 a 13:00, Sede Centro',
+      );
     });
 
     it('sin fechas —horario retirado— el día va sin número', () => {
