@@ -115,13 +115,8 @@ interface UnMiembro {
  * la acción y no por la forma: preguntar por la forma lo rompería cada vez que
  * una sede gane o pierda una acción, aunque la pantalla siguiera funcionando.
  */
-function accionesDeSede(
-  fixture: ComponentFixture<WorkHistory>,
-  fila: HTMLElement,
-): HTMLElement[] {
-  const disparador = fila.querySelector<HTMLButtonElement>(
-    '[data-testid="row-actions-trigger"]',
-  );
+function accionesDeSede(fixture: ComponentFixture<WorkHistory>, fila: HTMLElement): HTMLElement[] {
+  const disparador = fila.querySelector<HTMLButtonElement>('[data-testid="row-actions-trigger"]');
   if (disparador === null) {
     return [...fila.querySelectorAll<HTMLElement>('app-row-actions [data-action]')];
   }
@@ -185,20 +180,22 @@ function elegirDelPadron(
   nombre: string,
 ): void {
   componente['buscarEnPadron'](nombre);
-  http.expectOne((r) => r.url === PADRON).flush({
-    items: [
-      {
-        facilityConceptId: `fac-${nombre}`,
-        code: 'X',
-        name: nombre,
-        municipality: 'SANTA CRUZ DE LA SIERRA',
-        type: 'CLINICA_PRIVADA',
-        address: null,
-      },
-    ],
-    count: 1,
-    limit: 20,
-  });
+  http
+    .expectOne((r) => r.url === PADRON)
+    .flush({
+      items: [
+        {
+          facilityConceptId: `fac-${nombre}`,
+          code: 'X',
+          name: nombre,
+          municipality: 'SANTA CRUZ DE LA SIERRA',
+          type: 'CLINICA_PRIVADA',
+          address: null,
+        },
+      ],
+      count: 1,
+      limit: 20,
+    });
   componente['establecimiento'].set(leer<readonly ReferenceOption[]>(componente, 'resultados')[0]);
 }
 
@@ -338,10 +335,12 @@ describe('WorkHistory', () => {
 
     await (componente['registrar'] as unknown as () => Promise<void>)();
 
-    http.expectOne((r) => r.url === AFILIACIONES && r.method === 'POST').flush(
-      { code: 'CONFLICT', message: 'Ese vínculo ya está en el historial laboral' },
-      { status: 409, statusText: 'Conflict' },
-    );
+    http
+      .expectOne((r) => r.url === AFILIACIONES && r.method === 'POST')
+      .flush(
+        { code: 'CONFLICT', message: 'Ese vínculo ya está en el historial laboral' },
+        { status: 409, statusText: 'Conflict' },
+      );
     fixture.detectChanges();
 
     expect(componente['avisoDeDuplicado']()).not.toBeNull();
@@ -419,7 +418,9 @@ describe('WorkHistory', () => {
       fixture.detectChanges();
 
       expect(fixture.nativeElement.querySelector('app-card')).toBeNull();
-      expect(fixture.nativeElement.querySelector('[data-testid="abrir-alta-vinculo"]')).not.toBeNull();
+      expect(
+        fixture.nativeElement.querySelector('[data-testid="abrir-alta-vinculo"]'),
+      ).not.toBeNull();
 
       http.verify();
     });
@@ -466,7 +467,9 @@ describe('WorkHistory', () => {
       fixture.detectChanges();
 
       expect(leer<boolean>(componente, 'altaDeVinculoAbierta')).toBe(true);
-      expect(fixture.nativeElement.querySelector('[data-testid="afiliacion-error"]')).not.toBeNull();
+      expect(
+        fixture.nativeElement.querySelector('[data-testid="afiliacion-error"]'),
+      ).not.toBeNull();
 
       await (componente['registrar'] as unknown as () => Promise<void>)();
       http
@@ -535,11 +538,13 @@ describe('WorkHistory', () => {
       const componente = api(fixture);
 
       componente['buscarEnPadron']('foia');
-      http.expectOne((r) => r.url === PADRON).flush({
-        items: [delPadron()],
-        count: 1,
-        limit: 20,
-      });
+      http
+        .expectOne((r) => r.url === PADRON)
+        .flush({
+          items: [delPadron()],
+          count: 1,
+          limit: 20,
+        });
       componente['establecimiento'].set(
         leer<readonly ReferenceOption[]>(componente, 'resultados')[0],
       );
@@ -565,11 +570,13 @@ describe('WorkHistory', () => {
       const componente = api(fixture);
 
       componente['buscarEnPadron']('san luis');
-      http.expectOne((r) => r.url === PADRON).flush({
-        items: [delPadron({ name: 'SAN LUIS', municipality: 'EL TORNO', address: null })],
-        count: 1,
-        limit: 20,
-      });
+      http
+        .expectOne((r) => r.url === PADRON)
+        .flush({
+          items: [delPadron({ name: 'SAN LUIS', municipality: 'EL TORNO', address: null })],
+          count: 1,
+          limit: 20,
+        });
 
       const opcion = leer<readonly ReferenceOption[]>(componente, 'resultados')[0];
       expect(opcion.label).toBe('SAN LUIS');
@@ -607,11 +614,13 @@ describe('WorkHistory', () => {
       const componente = api(fixture);
 
       componente['buscarEnPadron']('foia');
-      http.expectOne((r) => r.url === PADRON).flush({
-        items: [delPadron()],
-        count: 1,
-        limit: 20,
-      });
+      http
+        .expectOne((r) => r.url === PADRON)
+        .flush({
+          items: [delPadron()],
+          count: 1,
+          limit: 20,
+        });
       componente['establecimiento'].set(
         leer<readonly ReferenceOption[]>(componente, 'resultados')[0],
       );
@@ -639,7 +648,6 @@ describe('WorkHistory', () => {
     });
   });
 
-
   describe('el medico ve en que quedo su tramite', () => {
     /** Monta el bloque con un historial de una sola afiliación. */
     async function conHistorial(over: Record<string, unknown>) {
@@ -658,7 +666,9 @@ describe('WorkHistory', () => {
         practiceSiteId: 'sede-1',
       });
 
-      expect(fixture.nativeElement.textContent).toContain('Esperando que la organización te acepte');
+      expect(fixture.nativeElement.textContent).toContain(
+        'Esperando que la organización te acepte',
+      );
       expect(fixture.nativeElement.textContent).toContain('no vas a poder publicar agenda');
       http.verify();
     });
@@ -711,9 +721,7 @@ describe('WorkHistory', () => {
       });
 
       expect(fixture.nativeElement.textContent).toContain('no aceptó este vínculo');
-      expect(fixture.nativeElement.textContent).toContain(
-        'No figurás en nuestro plantel',
-      );
+      expect(fixture.nativeElement.textContent).toContain('No figurás en nuestro plantel');
       http.verify();
     });
 
@@ -832,9 +840,7 @@ describe('WorkHistory — dónde atiendo (ALV-005/006/010) y cargo opcional (ALV
     http.expectOne(SITIOS).flush({ items: [], count: 0 });
     fixture.detectChanges();
 
-    expect(
-      fixture.nativeElement.querySelector('[data-testid="sedes-vacio"]'),
-    ).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('[data-testid="sedes-vacio"]')).not.toBeNull();
     expect(
       fixture.nativeElement.querySelectorAll('[data-testid="sedes-propias"] tbody tr').length,
     ).toBe(0);
@@ -872,7 +878,9 @@ describe('WorkHistory — dónde atiendo (ALV-005/006/010) y cargo opcional (ALV
     http.expectOne(SITIOS).flush({ items: [sedeEnCable()], count: 1 });
     fixture.detectChanges();
     expect(leer<boolean>(componente, 'altaDeSedeAbierta')).toBe(false);
-    expect(fixture.nativeElement.querySelectorAll('[data-testid="sedes-propias"] tbody tr').length).toBe(1);
+    expect(
+      fixture.nativeElement.querySelectorAll('[data-testid="sedes-propias"] tbody tr').length,
+    ).toBe(1);
     http.verify();
   });
 
@@ -941,9 +949,7 @@ describe('WorkHistory — dónde atiendo (ALV-005/006/010) y cargo opcional (ALV
     http.expectOne(SITIOS).flush({ items: [sedeEnCable()], count: 1 });
     fixture.detectChanges();
 
-    await (api(fixture)['quitarSede'] as unknown as (s: unknown) => Promise<void>)(
-      sedeEnCable(),
-    );
+    await (api(fixture)['quitarSede'] as unknown as (s: unknown) => Promise<void>)(sedeEnCable());
     expect(dialogs.confirm).toHaveBeenCalled();
     http.expectOne((r) => r.url === `${SITIO_PROPIO}/site-1` && r.method === 'DELETE').flush(null);
     http.expectOne(SITIOS).flush({ items: [], count: 0 });
@@ -954,9 +960,7 @@ describe('WorkHistory — dónde atiendo (ALV-005/006/010) y cargo opcional (ALV
     const { fixture, http } = await montarConSedes(false);
     http.expectOne(SITIOS).flush({ items: [sedeEnCable()], count: 1 });
 
-    await (api(fixture)['quitarSede'] as unknown as (s: unknown) => Promise<void>)(
-      sedeEnCable(),
-    );
+    await (api(fixture)['quitarSede'] as unknown as (s: unknown) => Promise<void>)(sedeEnCable());
     http.expectNone((r) => r.method === 'DELETE');
     http.verify();
   });
@@ -988,7 +992,6 @@ describe('WorkHistory — dónde atiendo (ALV-005/006/010) y cargo opcional (ALV
     http.verify();
   });
 });
-
 
 /**
  * Lo que el cliente pidió el 13/09/2026 sobre «Dónde atiendo».
@@ -1036,14 +1039,48 @@ describe('WorkHistory — las dos puertas de «Dónde atiendo» (13/09/2026)', (
     http.verify();
   });
 
-  it('distingue el consultorio propio del lugar donde trabaja', async () => {
+  /*
+   * Propietario, 04/10/2026: «saques los filtros y lo de agregar mi
+   * consultorio propio, sino agregar lugar de atención en general». La tabla
+   * ya no etiqueta los lugares por tipo ni tiene columna «Tipo».
+   */
+  it('no etiqueta los lugares como «Tu consultorio» o «Trabajás acá»', async () => {
     const { fixture, http } = await montarConSedes();
     http.expectOne(SITIOS).flush({ items: [propia(), ajena()], count: 2 });
     fixture.detectChanges();
 
     const texto: string = fixture.nativeElement.textContent;
-    expect(texto).toContain('Tu consultorio');
-    expect(texto).toContain('Trabajás acá');
+    expect(texto).not.toContain('Tu consultorio');
+    expect(texto).not.toContain('Trabajás acá');
+    const encabezados = [
+      ...fixture.nativeElement.querySelectorAll('[data-testid="sedes-propias"] th'),
+    ].map((th) => (th as HTMLElement).textContent?.trim());
+    expect(encabezados).not.toContain('Tipo');
+  });
+
+  it('una sola puerta: «Agregar lugar de atención» abre el padrón y, si no está, el formulario propio', async () => {
+    const { fixture, http } = await montarConSedes();
+    http.expectOne(SITIOS).flush({ items: [], count: 0 });
+    fixture.detectChanges();
+
+    const agregar = fixture.nativeElement.querySelector(
+      '[data-testid="sede-agregar"]',
+    ) as HTMLButtonElement;
+    expect(agregar.textContent?.trim()).toBe('Agregar lugar de atención');
+    expect(fixture.nativeElement.textContent).not.toContain('Agregar mi consultorio propio');
+    // Antes de tocar nada no hay una segunda puerta a la vista.
+    expect(fixture.nativeElement.querySelector('[data-testid="sede-padron"]')).toBeNull();
+
+    agregar.click();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('[data-testid="sede-padron"]')).not.toBeNull();
+
+    (
+      fixture.nativeElement.querySelector('[data-testid="sede-cargar-propio"]') as HTMLButtonElement
+    ).click();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('[data-testid="sede-formulario"]')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('[data-testid="sede-padron"]')).toBeNull();
   });
 
   it('el propio sólo ofrece el QR; el ajeno, el QR y dejar de atender', async () => {
@@ -1084,6 +1121,11 @@ describe('WorkHistory — las dos puertas de «Dónde atiendo» (13/09/2026)', (
     ) as HTMLButtonElement | null;
     expect(agregar).not.toBeNull();
     agregar!.click();
+    fixture.detectChanges();
+    // Una sola puerta: primero el padrón, y «Cargarlo yo» abre el formulario.
+    (
+      fixture.nativeElement.querySelector('[data-testid="sede-cargar-propio"]') as HTMLButtonElement
+    ).click();
     fixture.detectChanges();
 
     const componente = api(fixture);
@@ -1141,9 +1183,7 @@ describe('WorkHistory — las dos puertas de «Dónde atiendo» (13/09/2026)', (
     const req = http.expectOne(
       (r) => r.url === `${SITIO_PROPIO}/site-propio` && r.method === 'PATCH',
     );
-    expect((req.request.body as { name: string }).name).toBe(
-      'Consultorio Dra. Pérez · Equipetrol',
-    );
+    expect((req.request.body as { name: string }).name).toBe('Consultorio Dra. Pérez · Equipetrol');
     req.flush(propia());
     http.expectOne(SITIOS).flush({ items: [propia()], count: 1 });
     http.verify();
@@ -1182,9 +1222,21 @@ describe('WorkHistory — las acciones de cada sede (13/09/2026)', () => {
   afterEach(() => TestBed.resetTestingModule());
 
   const conQr = (over: Record<string, unknown> = {}) =>
-    sedeEnCable({ id: 'site-qr', name: 'Consultorio Dra. Pérez', isOwnSite: true, bankQrFileId: 'file-qr', ...over });
+    sedeEnCable({
+      id: 'site-qr',
+      name: 'Consultorio Dra. Pérez',
+      isOwnSite: true,
+      bankQrFileId: 'file-qr',
+      ...over,
+    });
   const sinQr = (over: Record<string, unknown> = {}) =>
-    sedeEnCable({ id: 'site-sin-qr', name: 'Hospital San Lucas', isOwnSite: false, bankQrFileId: null, ...over });
+    sedeEnCable({
+      id: 'site-sin-qr',
+      name: 'Hospital San Lucas',
+      isOwnSite: false,
+      bankQrFileId: null,
+      ...over,
+    });
 
   /** Las filas de «Dónde atiendo», en el orden en que se dibujan. */
   function filas(fixture: ComponentFixture<WorkHistory>): HTMLElement[] {
@@ -1304,9 +1356,7 @@ describe('WorkHistory — las acciones de cada sede (13/09/2026)', () => {
     accionDeSede(fixture, filas(fixture)[0]!, 'qr')!.click();
     fixture.detectChanges();
 
-    expect(
-      fixture.nativeElement.querySelectorAll('app-site-bank-qr-dialog'),
-    ).toHaveLength(1);
+    expect(fixture.nativeElement.querySelectorAll('app-site-bank-qr-dialog')).toHaveLength(1);
   });
 
   /**
@@ -1342,7 +1392,11 @@ describe('WorkHistory — las acciones de cada sede (13/09/2026)', () => {
 describe('WorkHistory — consultorio propio vs. ajeno y QR bancario (P32 / P33)', () => {
   afterEach(() => TestBed.resetTestingModule());
 
-  const PROPIA = sedeEnCable({ id: 'site-propia', name: 'Consultorio Dra. Pérez', isOwnSite: true });
+  const PROPIA = sedeEnCable({
+    id: 'site-propia',
+    name: 'Consultorio Dra. Pérez',
+    isOwnSite: true,
+  });
   const AJENA = sedeEnCable({
     id: 'site-hospital',
     name: 'Hospital San Lucas',
@@ -1350,13 +1404,15 @@ describe('WorkHistory — consultorio propio vs. ajeno y QR bancario (P32 / P33)
     bankQrFileId: 'file-qr',
   });
 
-  it('distingue el consultorio propio del hospital, y sólo el hospital ofrece dejar de atender', async () => {
+  it('sin marcar el tipo, sólo el hospital ofrece dejar de atender', async () => {
     const { fixture, http } = await montarConSedes();
     http.expectOne(SITIOS).flush({ items: [PROPIA, AJENA], count: 2 });
     fixture.detectChanges();
 
-    const marcas = fixture.nativeElement.querySelectorAll('[data-testid="sede-propia-marca"]');
-    expect(marcas.length).toBe(1);
+    // La insignia de tipo se fue con la columna (04/10/2026).
+    expect(fixture.nativeElement.querySelectorAll('[data-testid="sede-propia-marca"]').length).toBe(
+      0,
+    );
     // Dejar de atender alcanza sólo a la sede del hospital: el consultorio
     // propio no se quita.
     const sedes = [
@@ -1763,18 +1819,22 @@ describe('WorkHistory — barra y paginación de «Dónde atiendo» (ADR-0015, H
     http.verify();
   });
 
-  it('filtra por tipo (propio / ajeno)', async () => {
+  it('no filtra por tipo: la barra es sólo el buscador', async () => {
     const { fixture, http } = await montarConSedes();
     http.expectOne(SITIOS).flush({ items: DOCE_SEDES, count: 12 });
     const componente = api(fixture);
+    fixture.detectChanges();
 
+    // Sin desplegable de tipo en la barra.
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="sedes-propias"] app-filter-bar select'),
+    ).toBeNull();
+    // Y aunque llegara un `tipo`, se ignora: las doce siguen.
     (componente['onFiltrosSedesChanged'] as unknown as (a: Record<string, string>) => void)({
       tipo: 'propio',
     });
     fixture.detectChanges();
-
-    const filtradas = leer<readonly { name: string }[]>(componente, 'sedesFiltradas');
-    expect(filtradas).toEqual([expect.objectContaining({ name: 'Consultorio 1' })]);
+    expect(leer<readonly unknown[]>(componente, 'sedesFiltradas').length).toBe(12);
     http.verify();
   });
 
@@ -2153,9 +2213,7 @@ describe('WorkHistory — corregir y retirar un vínculo laboral', () => {
     componente['cargo'].set('Jefa de guardia');
     componente['guardarVinculo']();
 
-    const req = http.expectOne(
-      (r) => r.url === `${AFILIACIONES}/af-1` && r.method === 'PATCH',
-    );
+    const req = http.expectOne((r) => r.url === `${AFILIACIONES}/af-1` && r.method === 'PATCH');
     expect(req.request.body).toEqual({
       organizationName: 'Hospital Obrero N.º 1',
       roleTitle: 'Jefa de guardia',
@@ -2188,17 +2246,13 @@ describe('WorkHistory — corregir y retirar un vínculo laboral', () => {
   });
 
   it('retira con un DELETE, y sólo después de que la persona confirme', async () => {
-    const { fixture, http, dialogs } = await montarConVinculo(
-      enCable({ statusKind: 'declarado' }),
-    );
+    const { fixture, http, dialogs } = await montarConVinculo(enCable({ statusKind: 'declarado' }));
     const componente = api(fixture);
 
     await componente['retirarVinculo'](enDominio({ statusKind: 'declarado' }) as never);
 
     expect(dialogs.confirm).toHaveBeenCalledOnce();
-    const req = http.expectOne(
-      (r) => r.url === `${AFILIACIONES}/af-1` && r.method === 'DELETE',
-    );
+    const req = http.expectOne((r) => r.url === `${AFILIACIONES}/af-1` && r.method === 'DELETE');
     req.flush(null);
     http.expectOne(AFILIACIONES).flush({ items: [], count: 0 });
     http.verify();

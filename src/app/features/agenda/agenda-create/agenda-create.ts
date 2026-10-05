@@ -240,9 +240,10 @@ export class AgendaCreate {
    */
   protected readonly pasoDeHora = 300;
 
-  protected readonly opcionesDeDuracion: readonly SelectOption<number>[] = DURACIONES.map(
-    (m) => ({ value: m, label: `${m} min` }),
-  );
+  protected readonly opcionesDeDuracion: readonly SelectOption<number>[] = DURACIONES.map((m) => ({
+    value: m,
+    label: `${m} min`,
+  }));
 
   protected readonly opcionesDeRespiro: readonly SelectOption<number>[] = RESPIROS.map((m) => ({
     value: m,
@@ -256,14 +257,20 @@ export class AgendaCreate {
    */
   protected readonly opcionesDeModo: readonly SelectOption<FranjaModo>[] = [
     { value: 'CONSULTATIONS', label: 'Consultas' },
-    { value: 'SERVICES', label: 'Servicios' },
+    // «Otros servicios»: lo que el médico ofrece además de la consulta simple
+    // —cirugías, toma de muestras, tratamientos— (propietario, 04/10/2026).
+    // «Servicios» a secas se leía como sinónimo de consulta.
+    { value: 'SERVICES', label: 'Otros servicios' },
     { value: 'MIXED', label: 'Ambos' },
   ];
 
   /** Fija un valor de la fila sin que la plantilla tenga que saber de formularios. */
   protected fijarDeLaFila(indice: number, campo: string, valor: unknown): void {
     if (valor === null || valor === undefined) return;
-    this.semana.at(indice).get(campo)?.setValue(valor as never);
+    this.semana
+      .at(indice)
+      .get(campo)
+      ?.setValue(valor as never);
     this.versionDeLaSemana.update((v) => v + 1);
   }
 
@@ -512,13 +519,16 @@ export class AgendaCreate {
     // Una franja sólo de servicios no se corta en turnos: cada servicio dura lo que
     // declaró su profesional y el turno nace al reservarlo.
     if (v.modo === 'SERVICES') return { dia: nombre, turnos: [], resto: 0, restoDesde: null };
+    const franjas = this.franjasDe(indice);
     const partes = calcularTurnos(
-      this.franjasDe(indice).map((franja) => ({
+      franjas.map((franja, posicion) => ({
         dia: nombre,
         desde: franja.desde,
         hasta: franja.hasta,
         duracion: v.duracion,
         receso: v.respiro,
+        // La mañana no puede estirarse sobre la tarde.
+        ...(franjas[posicion + 1] === undefined ? {} : { tope: franjas[posicion + 1].desde }),
       })),
     ).porDia;
     const ultima = partes.at(-1);
@@ -845,20 +855,51 @@ export class AgendaCreate {
    * Casi todas las agendas repiten el mismo horario, y cargarlo cinco veces es
    * el tipo de trabajo que la pantalla tiene que hacer por vos.
    */
-  protected repetirElPrimero(): void {
-    const primero = this.diasActivos()[0];
-    if (primero === undefined) return;
+  /* -- Repetir un horario en los demás días --------------------------------
 
-    const modelo = this.semana.at(primero.indice).getRawValue();
+     Propietario, 04/10/2026: el botón estaba al pie y copiaba el primer día
+     sobre todos SIN preguntar. Ahora va arriba de la tabla, abre un modal que
+     pregunta y deja elegir qué fila repetir, y copia también el descanso, que
+     antes se quedaba atrás. */
+
+  /** Si el modal de repetir está abierto. */
+  protected readonly repetirAbierto = signal(false);
+
+  /** La fila que se va a repetir, por índice de día. */
+  protected readonly filaARepetir = signal<number | null>(null);
+
+  /** Las filas que se pueden repetir: las de los días encendidos. */
+  protected readonly opcionesDeFilaARepetir = computed<readonly SelectOption<number>[]>(() =>
+    this.diasActivos().map((dia) => ({ value: dia.indice, label: dia.largo })),
+  );
+
+  /** Abre el modal con la primera fila encendida elegida. */
+  protected abrirRepetir(): void {
+    this.filaARepetir.set(this.diasActivos()[0]?.indice ?? null);
+    this.repetirAbierto.set(true);
+  }
+
+  protected cerrarRepetir(): void {
+    this.repetirAbierto.set(false);
+  }
+
+  /** Copia la fila elegida —horas, qué atiende, duración y descanso— en los demás días encendidos. */
+  protected repetirFila(): void {
+    const origen = this.filaARepetir();
+    this.repetirAbierto.set(false);
+    if (origen === null) return;
+    const modelo = this.semana.at(origen).getRawValue();
     for (const dia of this.diasActivos()) {
-      if (dia.indice === primero.indice) continue;
+      if (dia.indice === origen) continue;
       this.semana.at(dia.indice).patchValue({
         desde: modelo.desde,
         hasta: modelo.hasta,
         duracion: modelo.duracion,
+        respiro: modelo.respiro,
         modo: modelo.modo,
       });
     }
+    this.versionDeLaSemana.update((v) => v + 1);
   }
 
   /* -- Vista previa --------------------------------------------------------- */
@@ -1220,9 +1261,7 @@ export class AgendaCreate {
           : [
               {
                 label: 'Del horario anterior',
-                value: `${this.cuposSoltados()} turnos libres se retiraron; ${
-                  this.cuposConservados()
-                } con cita siguen en pie`,
+                value: `${this.cuposSoltados()} turnos libres se retiraron; ${this.cuposConservados()} con cita siguen en pie`,
               },
             ]),
       ],
@@ -1319,7 +1358,9 @@ export class AgendaCreate {
     if (this.flexible()) return `${dias}${horario}${almuerzo}, horario flexible sin turnos fijos`;
     // Con franjas de servicios la frase no puede decir «consultas de 30 minutos» de
     // todo el horario: ni todo es consulta, ni los servicios tienen un largo único.
-    const hayServicios = activos.some((dia) => this.semana.at(dia.indice).getRawValue().modo !== 'CONSULTATIONS');
+    const hayServicios = activos.some(
+      (dia) => this.semana.at(dia.indice).getRawValue().modo !== 'CONSULTATIONS',
+    );
     if (hayServicios) return `${dias}${horario}${almuerzo}, con franjas de servicios`;
     return `${dias}${horario}${almuerzo}, consultas de ${primero.duracion} minutos${respiro}`;
   });

@@ -513,3 +513,20 @@
     flex: none;
   }
 }
+
+/* Arriba de la tabla: qué es «Otros servicios» y el botón de repetir un
+   horario. En fila cuando entra; apilado en pantallas chicas. */
+.agenda-create__tabla-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  margin-block-end: var(--sp-3);
+}
+
+.agenda-create__tabla-ayuda {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}

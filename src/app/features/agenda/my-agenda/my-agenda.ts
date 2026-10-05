@@ -1575,11 +1575,11 @@ export class MyAgenda implements OnInit {
    */
   protected readonly reglasVigentes = computed(() => {
     const e = this.estado();
-    // Las franjas SÓLO de servicios viven en «Horarios de otros servicios»;
-    // acá quedan las de consultas y las «Ambos», que también reparten turnos.
-    return e.status === 'ready' || e.status === 'stale'
-      ? (e.data?.rules ?? []).filter((regla) => regla.bookingMode !== 'SERVICES')
-      : [];
+    // Todas las franjas, también las SÓLO de otros servicios (propietario,
+    // 04/10/2026): el médico ve su semana completa en un lugar, y la grilla
+    // pinta los otros servicios con otro tono y su leyenda. Antes se filtraban
+    // y sólo aparecían en «Horarios de otros servicios».
+    return e.status === 'ready' || e.status === 'stale' ? (e.data?.rules ?? []) : [];
   });
 
   /** Cómo se llama el horario vigente, para el globo de detalle de la grilla. */

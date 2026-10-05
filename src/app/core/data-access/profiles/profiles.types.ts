@@ -161,6 +161,8 @@ export interface PractitionerCredential {
   readonly number: string;
   /** Dónde se cursó. Texto libre: la institución no siempre es una organización. */
   readonly issuingInstitutionText?: string;
+  /** Ciudad donde se cursó: sale de la institución elegida (`issuing_city_text`). */
+  readonly issuingCityText?: string;
   readonly issueDate?: Date;
   readonly expiryDate?: Date;
   readonly stateConceptId: string;
@@ -193,6 +195,8 @@ export interface NewOwnCredential {
   readonly credentialTypeConceptId: string;
   readonly number: string;
   readonly issuingInstitutionText?: string;
+  /** Ciudad donde se cursó: sale de la institución elegida (`issuing_city_text`). */
+  readonly issuingCityText?: string;
   /** ISO `YYYY-MM-DD`, mismo criterio que {@link NewJurisdictionAuthorization.validFrom}. */
   readonly issueDate?: string;
   /** El diploma, ya subido con `FilesClient.upload`. */
@@ -235,6 +239,8 @@ export interface OwnCredentialChanges {
   readonly credentialTypeConceptId?: string;
   readonly number?: string;
   readonly issuingInstitutionText?: string;
+  /** Ciudad donde se cursó: sale de la institución elegida (`issuing_city_text`). */
+  readonly issuingCityText?: string;
   /** ISO `YYYY-MM-DD`, mismo criterio que en el alta. */
   readonly issueDate?: string;
   readonly fileId?: string;
@@ -1172,7 +1178,6 @@ export interface LinkableOrganizationPage {
   readonly limit: number;
 }
 
-
 /**
  * Qué es el dependiente para quien lo representa, ya dado vuelta por el
  * servidor.
@@ -1260,8 +1265,7 @@ export interface DependentLinkRequestSent {
  * contra la misma regla (una cuenta registrada que no sea la propia).
  */
 export type DependentLinkTarget =
-  | { readonly nationalId: string }
-  | { readonly patientProfileId: string };
+  { readonly nationalId: string } | { readonly patientProfileId: string };
 
 /**
  * Una cuenta que coincide con el nombre buscado, para elegir a quién enviarle

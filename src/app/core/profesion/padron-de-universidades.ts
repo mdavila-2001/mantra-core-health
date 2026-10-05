@@ -4,6 +4,7 @@ import {
   INSTITUCION_FUERA_DE_CATALOGO,
   UNIVERSIDADES_DEL_SISTEMA,
   UNIVERSIDADES_PRIVADAS,
+  type AreaDeSalud,
   type OpcionDeInstitucion,
 } from './instituciones-educativas';
 import type { PaisGenerado } from './universidades-por-pais.generated';
@@ -84,26 +85,41 @@ export function eleccionDesdeTexto(
 }
 
 /**
- * Qué ciudad de estudio queda al cambiar de universidad en el desplegable.
+ * Qué universidades se ofrecen según el título que se está cargando.
  *
- * La ciudad **sigue a la universidad** mientras nadie la haya escrito a mano:
- * vacía, o todavía la que se propuso con la universidad anterior, se reemplaza
- * por la de la nueva —que es vacía si la nueva no tiene una sola sede—. Lo que
- * la persona tecleó se respeta: quien cursó en una subsede sabe más que el
- * padrón, y pisárselo al tocar el desplegable sería perderle el dato.
+ * - `null`: todas (la «Otra profesión» puede ser Derecho o Ingeniería).
+ * - `'salud'`: las que dictan alguna carrera de salud.
+ * - un {@link AreaDeSalud}: las que dictan esa carrera («Odontólogo» →
+ *   las que tienen Odontología).
  *
- * @param actual - Lo que hoy dice el campo de ciudad.
- * @param propuestaAnterior - La ciudad de la universidad que estaba elegida.
- * @param propuestaNueva - La ciudad de la universidad que se acaba de elegir.
+ * El filtro sólo se aplica donde hay dato: la lista curada de Bolivia. El
+ * padrón del exterior no trae carreras —Wikidata las enlaza para 2 de 179
+ * universidades argentinas, medido el 04/10/2026—, así que ahí se ofrece
+ * entero en vez de vaciarlo.
  */
-export function ciudadAlCambiarDeUniversidad(
-  actual: string,
-  propuestaAnterior: string,
-  propuestaNueva: string,
-): string {
-  const escrita = actual.trim();
-  const sigueALaUniversidad = escrita === '' || escrita === propuestaAnterior;
-  return sigueALaUniversidad ? propuestaNueva : actual;
+export type FiltroDeSalud = null | 'salud' | AreaDeSalud;
+
+/** Si la universidad pasa el filtro. Sin dato de carreras, pasa. */
+export function pasaElFiltro(opcion: OpcionDeInstitucion, filtro: FiltroDeSalud): boolean {
+  if (filtro === null || opcion.areasDeSalud === undefined) return true;
+  return filtro === 'salud'
+    ? opcion.areasDeSalud.length > 0
+    : opcion.areasDeSalud.includes(filtro);
+}
+
+/**
+ * Qué ciudad queda al elegir una universidad.
+ *
+ * La ciudad **sale de la universidad** (propietario, 04/10/2026): nunca se
+ * escribe. Si la que estaba sigue siendo una de sus sedes se conserva —quien
+ * estudió en la sede de Montero no vuelve a Santa Cruz por tocar el
+ * desplegable—; si no, la sede principal, o vacío si el padrón no la conoce.
+ *
+ * @param actual - La ciudad elegida hasta ahora.
+ * @param sedes - Las ciudades de la universidad recién elegida.
+ */
+export function ciudadAlElegirUniversidad(actual: string, sedes: readonly string[]): string {
+  return sedes.includes(actual) ? actual : (sedes[0] ?? '');
 }
 
 /**
@@ -144,7 +160,12 @@ export class PadronDeUniversidades {
     ...this.generados().map((pais) => ({
       iso: pais.iso,
       nombre: pais.nombre,
-      universidades: pais.universidades.map((nombre) => ({ value: nombre, label: nombre })),
+      universidades: pais.universidades.map((nombre) => {
+        const sedes = pais.ciudades?.[nombre];
+        return sedes === undefined
+          ? { value: nombre, label: nombre }
+          : { value: nombre, label: nombre, sedes };
+      }),
     })),
   ]);
 
@@ -188,25 +209,30 @@ export class PadronDeUniversidades {
   }
 
   /**
-   * Las listas ya armadas por país, para devolver la misma referencia mientras
-   * el padrón no cambie: las plantillas piden esto en cada detección de
-   * cambios y un arreglo nuevo cada vez repintaría el desplegable entero.
+   * Las listas ya armadas por país y filtro, para devolver la misma referencia
+   * mientras el padrón no cambie: las plantillas piden esto en cada detección
+   * de cambios y un arreglo nuevo cada vez repintaría el desplegable entero.
    */
-  private readonly opcionesPorPais = computed(() => {
+  private readonly opcionesArmadas = computed(() => {
     this.paises();
     return new Map<string, readonly OpcionDeInstitucion[]>();
   });
 
   /**
-   * Las opciones del desplegable de universidad para un país, con «Otra
-   * institución…» siempre al final: con «Otro país…» elegido es la única.
+   * Las opciones del desplegable de universidad para un país, acotadas por
+   * {@link FiltroDeSalud}, con «Otra institución…» siempre al final: con
+   * «Otro país…» elegido es la única.
    */
-  opcionesDeUniversidad(pais: string): readonly OpcionDeInstitucion[] {
-    const armadas = this.opcionesPorPais();
-    const previa = armadas.get(pais);
+  opcionesDeUniversidad(pais: string, filtro: FiltroDeSalud = null): readonly OpcionDeInstitucion[] {
+    const clave = `${pais}\u0000${filtro ?? ''}`;
+    const armadas = this.opcionesArmadas();
+    const previa = armadas.get(clave);
     if (previa !== undefined) return previa;
-    const opciones = [...this.universidadesDe(pais), OPCION_OTRA_INSTITUCION];
-    armadas.set(pais, opciones);
+    const opciones = [
+      ...this.universidadesDe(pais).filter((opcion) => pasaElFiltro(opcion, filtro)),
+      OPCION_OTRA_INSTITUCION,
+    ];
+    armadas.set(clave, opciones);
     return opciones;
   }
 
@@ -216,14 +242,16 @@ export class PadronDeUniversidades {
   }
 
   /**
-   * La ciudad que se propone como «Ciudad de estudio» para esa universidad, o
-   * vacío si no hay una que proponer.
-   *
-   * Sólo la lista curada de Bolivia la trae, y sólo para las de sede única. El
-   * padrón importado no tiene ciudad —la fuente no la publica—, así que para
-   * el resto de los países el campo se sigue escribiendo a mano.
+   * Las ciudades que el desplegable «Ciudad de estudio» ofrece para esa
+   * universidad: sus sedes, la principal primero. Vacío si el padrón no las
+   * conoce (universidad escrita a mano o sin ciudad en Wikidata).
    */
-  ciudadDe(pais: string, universidad: string): string {
-    return this.universidadesDe(pais).find((opcion) => opcion.value === universidad)?.ciudad ?? '';
+  ciudadesDe(pais: string, universidad: string): readonly string[] {
+    return (
+      this.universidadesDe(pais).find((opcion) => opcion.value === universidad)?.sedes ?? SIN_CIUDADES
+    );
   }
 }
+
+/** Una sola referencia para «sin ciudades», por lo mismo que las opciones armadas. */
+const SIN_CIUDADES: readonly string[] = [];
