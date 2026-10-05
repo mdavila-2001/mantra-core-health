@@ -25,20 +25,20 @@
     <section class="historial__sedes" data-testid="sedes-propias">
       <h2 class="historial__titulo">Dónde atiendo</h2>
       <p class="historial__intro">
-        Los consultorios, clínicas u hospitales donde atendés hoy. Es lo que ve un paciente al
-        reservar y lo que la agenda usa para decir dónde es la consulta.
+        Los lugares donde atendés hoy: tu consultorio, una clínica, un hospital o donde hagas
+        cualquiera de tus servicios. Es lo que ve un paciente al reservar y lo que la agenda usa
+        para decir dónde es la atención.
       </p>
 
-      <!-- Barra: buscador (nombre + dirección, normalizado) y filtro por tipo
-           (ADR-0015, regla 5). El alta sigue disponible aunque ya haya otros
-           consultorios propios: cada uno queda como una sede independiente. -->
+      <!-- Barra: sólo el buscador (nombre + dirección, normalizado). Sin
+           filtro por tipo y con una sola puerta para agregar (propietario,
+           04/10/2026): un lugar de atención es un lugar de atención. -->
       <app-filter-bar
         searchLabel="Buscar por nombre o dirección"
         searchPlaceholder="Nombre o dirección"
-        [filters]="filtrosSedes"
         (filtersChanged)="onFiltrosSedesChanged($event)"
       >
-        @if (!altaDeSedeAbierta()) {
+        @if (!altaDeSedeAbierta() && !agregandoLugar()) {
           <button
             filter-bar-action
             app-button
@@ -46,9 +46,9 @@
             size="sm"
             type="button"
             data-testid="sede-agregar"
-            (clicked)="abrirAltaDeSede()"
+            (clicked)="abrirAgregarLugar()"
           >
-            Agregar mi consultorio propio
+            Agregar lugar de atención
           </button>
         }
       </app-filter-bar>
@@ -60,17 +60,18 @@
         [columns]="columnasSedes()"
         [trackBy]="porIdDeSede"
         [rowLabel]="nombreAccesibleDeSede"
-        caption="Tus consultorios y sedes"
+        caption="Tus lugares de atención"
         maxHeight="420px"
       />
 
       @if (sedes().length === 0) {
         <p class="historial__vacio" data-testid="sedes-vacio">
-          Todavía no cargaste ningún consultorio. Sin uno, tu ficha no dice dónde encontrarte.
+          Todavía no cargaste ningún lugar de atención. Sin uno, tu ficha no dice dónde
+          encontrarte.
         </p>
       } @else if (sedesFiltradas().length === 0) {
         <p class="historial__vacio" data-testid="sedes-sin-resultados">
-          Ningún consultorio coincide con la búsqueda o el filtro.
+          Ningún lugar coincide con la búsqueda.
         </p>
       } @else {
         <app-pagination
@@ -84,17 +85,16 @@
         <app-alert tone="error" data-testid="sede-error">{{ mensaje }}</app-alert>
       }
 
-      @if (!altaDeSedeAbierta()) {
-        <!-- ─── La segunda puerta ──────────────────────────────────────────
-             Crear un consultorio **tuyo** (arriba, en la barra) y declarar
-             que atendés en un hospital que ya existe no son la misma
-             operación: quien atiende en la Clínica Foianini no se crea un
-             consultorio con el nombre de la clínica. -->
+      @if (agregandoLugar() && !altaDeSedeAbierta()) {
+        <!-- ─── Agregar lugar de atención: una sola puerta ──────────────────
+             Primero el padrón oficial —quien atiende en la Clínica Foianini no
+             se crea un lugar con el nombre de la clínica—; si no está, se
+             carga uno propio con el formulario de siempre. -->
         <div class="historial__padron" data-testid="sede-padron">
-          <h3 class="historial__subtitulo">¿Atendés en un consultorio, clínica u hospital?</h3>
+          <h3 class="historial__subtitulo">Agregar lugar de atención</h3>
           <p class="historial__intro">
-            Buscalo por su nombre en el padrón oficial de salud y elegilo. No hace falta crearlo: ya
-            existe.
+            Buscalo por su nombre en el padrón oficial de salud: clínicas, hospitales, consultorios y
+            laboratorios ya están cargados. Si es tu consultorio y no aparece, cargalo vos.
           </p>
           <app-form-field
             label="Buscar el establecimiento"
@@ -125,6 +125,29 @@
               </button>
             </p>
           }
+          <div class="historial__padron-salida">
+            <p class="historial__intro">¿No está en la lista?</p>
+            <button
+              app-button
+              variant="outline"
+              size="sm"
+              type="button"
+              data-testid="sede-cargar-propio"
+              (clicked)="cargarLugarPropio()"
+            >
+              Cargarlo yo
+            </button>
+            <button
+              app-button
+              variant="ghost"
+              size="sm"
+              type="button"
+              data-testid="sede-agregar-cancelar"
+              (clicked)="cerrarAgregarLugar()"
+            >
+              Cancelar
+            </button>
+          </div>
         </div>
       }
 
@@ -135,7 +158,7 @@
            descarte que el botón Cancelar, nunca cierran directo. -->
       @if (altaDeSedeAbierta()) {
         <app-content-dialog
-          [heading]="sedeEnEdicion() === null ? 'Nuevo consultorio' : 'Corregir tu consultorio'"
+          [heading]="sedeEnEdicion() === null ? 'Nuevo lugar de atención' : 'Corregir el lugar de atención'"
           size="md"
           closeLabel="Cancelar"
           [dismissible]="false"
@@ -213,7 +236,7 @@
                   [value]="municipioDeSede()"
                   [punto]="puntoDeSede()"
                   (valueChange)="municipioDeSede.set($event)"
-                  mapLabel="Mapa de Bolivia: elegí el departamento del consultorio"
+                  mapLabel="Mapa de Bolivia: elegí el departamento del lugar de atención"
                   municipalityLabel="Municipio (opcional)"
                   municipalityHint="Sólo se ofrecen los del departamento que elegiste."
                 />
@@ -238,7 +261,7 @@
                     data-testid="sede-mapa"
                     [pines]="pinesDeSede()"
                     [centro]="puntoDeSede()"
-                    etiqueta="Mapa para marcar dónde queda el consultorio"
+                    etiqueta="Mapa para marcar dónde queda el lugar de atención"
                     (pointPicked)="marcarPunto($event)"
                   />
                   @if (puntoDeSede(); as punto) {
@@ -273,7 +296,7 @@
             [disabled]="!puedeGuardarSede()"
             (clicked)="guardarSede()"
           >
-            {{ sedeEnEdicion() === null ? 'Guardar consultorio' : 'Guardar los cambios' }}
+            {{ sedeEnEdicion() === null ? 'Guardar lugar' : 'Guardar los cambios' }}
           </button>
         </app-content-dialog>
       }
@@ -295,16 +318,6 @@
          `patient-list.html`. -->
     <ng-template #celdaNombreSede let-sede>
       <strong>{{ sede.name }}</strong>
-    </ng-template>
-
-    <ng-template #celdaTipoSede let-sede>
-      <!-- Tuyo o de otro: el propio lo creás y lo corregís vos; en el ajeno
-           tenés un vínculo, y la sede es de la organización. -->
-      @if (sede.isOwnSite) {
-        <app-badge variant="success" value="Tu consultorio" data-testid="sede-propia-marca" />
-      } @else {
-        <app-badge variant="secondary" value="Trabajás acá" data-testid="sede-ajena-marca" />
-      }
     </ng-template>
 
     <ng-template #celdaDireccionSede let-sede>

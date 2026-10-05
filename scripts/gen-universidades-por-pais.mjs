@@ -47,6 +47,12 @@ const COMMIT = '603e10f51b67c6553b9bca9aecc0db4c2417ed10';
 const URL_FUENTE = `https://raw.githubusercontent.com/Hipo/university-domains-list/${COMMIT}/world_universities_and_domains.json`;
 const FUENTE_LOCAL = resolve(raiz, 'data/universidades', `world_universities_and_domains.${COMMIT.slice(0, 7)}.json`);
 const DESTINO = resolve(raiz, 'src/app/core/profesion/universidades-por-pais.generated.ts');
+/**
+ * Las ciudades de cada universidad, de Wikidata (CC0), que deja en caché
+ * `gen-ciudades-de-universidades.mjs`. Opcional: sin la caché el padrón sale
+ * igual, sin ciudades, y el desplegable de ciudad queda vacío y bloqueado.
+ */
+const CIUDADES = resolve(raiz, 'data/universidades/wikidata-ciudades.json');
 
 /** Países que NO se importan: Bolivia tiene su lista curada. */
 const OMITIDOS = new Set(['BO']);
@@ -64,6 +70,7 @@ async function fuente() {
 }
 
 const cotejo = new Intl.Collator('es', { sensitivity: 'base' });
+const ciudades = existsSync(CIUDADES) ? JSON.parse(readFileSync(CIUDADES, 'utf8')).paises : {};
 const nombresDePais = new Intl.DisplayNames(['es'], { type: 'region' });
 
 const porIso = new Map();
@@ -82,11 +89,16 @@ const paises = [...porIso.entries()]
     iso,
     nombre: nombresDePais.of(iso) ?? iso,
     universidades: [...universidades].sort(cotejo.compare),
+    ciudades: ciudades[iso] ?? {},
   }))
   .filter((pais) => pais.nombre !== pais.iso)
   .sort((a, b) => cotejo.compare(a.nombre, b.nombre));
 
 const totalUniversidades = paises.reduce((suma, pais) => suma + pais.universidades.length, 0);
+const totalConCiudad = paises.reduce(
+  (suma, pais) => suma + pais.universidades.filter((u) => pais.ciudades[u]?.length).length,
+  0,
+);
 
 const literal = (texto) => JSON.stringify(texto).replace(/'/g, "\\'").replace(/^"|"$/g, "'").replace(/\\"/g, '"');
 
@@ -97,6 +109,7 @@ const lineas = [
   '    **GENERADO por `scripts/gen-universidades-por-pais.mjs`. No editar a mano.**',
   `    Fuente: Hipo/university-domains-list @ ${COMMIT.slice(0, 7)} (MIT),`,
   `    ${totalFuente} filas → ${paises.length} países · ${totalUniversidades} universidades.`,
+  `    Ciudades: Wikidata (CC0), cruzadas por dominio web; ${totalConCiudad} universidades con ciudad.`,
   '',
   '    Bolivia NO está acá: su lista es la curada de `instituciones-educativas.ts`',
   '    y la composición de ambas vive en `universidades-por-pais.ts`, que es lo que',
@@ -110,6 +123,8 @@ const lineas = [
   '  /** El nombre en español, de `Intl.DisplayNames` al generar. */',
   '  readonly nombre: string;',
   '  readonly universidades: readonly string[];',
+  '  /** Las ciudades de cada universidad que Wikidata conoce, por nombre. */',
+  '  readonly ciudades?: Readonly<Record<string, readonly string[]>>;',
   '}',
   '',
   'export const PAISES_GENERADOS: readonly PaisGenerado[] = [',
@@ -117,7 +132,16 @@ const lineas = [
 for (const pais of paises) {
   lineas.push(`  {`, `    iso: '${pais.iso}',`, `    nombre: ${literal(pais.nombre)},`, `    universidades: [`);
   for (const universidad of pais.universidades) lineas.push(`      ${literal(universidad)},`);
-  lineas.push(`    ],`, `  },`);
+  lineas.push(`    ],`);
+  const conCiudad = pais.universidades.filter((u) => pais.ciudades[u]?.length);
+  if (conCiudad.length > 0) {
+    lineas.push(`    ciudades: {`);
+    for (const universidad of conCiudad) {
+      lineas.push(`      ${literal(universidad)}: [${pais.ciudades[universidad].map(literal).join(', ')}],`);
+    }
+    lineas.push(`    },`);
+  }
+  lineas.push(`  },`);
 }
 lineas.push('];', '');
 

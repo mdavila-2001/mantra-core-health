@@ -753,6 +753,46 @@ describe('MyAgenda', () => {
       expect(franjas).toEqual(['lunes de 09:00 a 13:00: atendés']);
     });
 
+    it('las franjas de otros servicios aparecen en «Mis horarios», con su tono', () => {
+      // Propietario, 04/10/2026: «dentro del mismo Mis horarios debería
+      // aparecer también los horarios de otros servicios, pero con otro color».
+      // Antes `reglasVigentes` las filtraba y sólo vivían en otra pestaña.
+      crear();
+      conRecurso();
+      http.expectOne('/scheduling/resources/res-1/templates').flush({
+        items: [
+          {
+            id: 'tpl-viva',
+            name: 'La vigente',
+            statusConceptId: 'c',
+            retired: false,
+            rules: [
+              { dayOfWeek: 1, startTime: '09:00:00', endTime: '13:00:00' },
+              {
+                dayOfWeek: 3,
+                startTime: '15:00:00',
+                endTime: '19:00:00',
+                bookingMode: 'SERVICES',
+              },
+            ],
+          },
+        ],
+        count: 1,
+      });
+      fixture.detectChanges();
+      conCuposHasta(new Date('2030-01-01'));
+
+      const modos = Array.from(
+        fixture.nativeElement.querySelectorAll(
+          '.mi-agenda__tarjeta [data-testid="horario-bloque"]',
+        ) as NodeListOf<HTMLElement>,
+      ).map((b) => b.getAttribute('data-mode'));
+      expect(modos).toEqual(['CONSULTATIONS', 'SERVICES']);
+      expect(
+        fixture.nativeElement.querySelector('.mi-agenda__tarjeta [data-testid="horario-leyenda"]'),
+      ).not.toBeNull();
+    });
+
     it('los horarios retirados se listan aparte, como historia', () => {
       crear();
       conRecurso();

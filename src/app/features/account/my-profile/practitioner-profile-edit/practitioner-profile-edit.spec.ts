@@ -1121,6 +1121,8 @@ describe('PractitionerProfileEdit', () => {
       credentialTypeConceptId: 'cred-titulo',
       number: 'Médico cirujano',
       issuingInstitutionText: 'Universidad Mayor de San Andrés',
+      // La ciudad sale de la institución: la sede principal de la UMSA.
+      issuingCityText: 'La Paz',
     });
     req.flush({ id: 'cred-1' });
 
@@ -2057,6 +2059,7 @@ describe('PractitionerProfileEdit', () => {
         credentialTypeConceptId: 'cred-titulo',
         number: 'TIT-1-CORREGIDO',
         issuingInstitutionText: 'Universidad Mayor de San Andrés',
+        issuingCityText: 'La Paz',
         issueDate: '2016-03-01',
       });
       req.flush(null);

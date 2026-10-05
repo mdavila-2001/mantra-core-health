@@ -10,6 +10,32 @@
       recorré la grilla con las flechas para ver su detalle.
     </p>
 
+    <!-- La leyenda del segundo tono (propietario, 04/10/2026): «otros
+         servicios» son los distintos de la consulta simple. Color y forma
+         (borde punteado), para no depender sólo del color. -->
+    @if (hayOtrosServicios()) {
+      <ul class="grilla__leyenda" data-testid="horario-leyenda">
+        <li class="grilla__leyenda-item">
+          <span class="grilla__leyenda-muestra" aria-hidden="true"></span>
+          Consultas
+        </li>
+        <li class="grilla__leyenda-item">
+          <span
+            class="grilla__leyenda-muestra grilla__leyenda-muestra--services"
+            aria-hidden="true"
+          ></span>
+          Otros servicios: cirugías, toma de muestras, tratamientos y similares
+        </li>
+        <li class="grilla__leyenda-item">
+          <span
+            class="grilla__leyenda-muestra grilla__leyenda-muestra--mixed"
+            aria-hidden="true"
+          ></span>
+          Consultas y otros servicios
+        </li>
+      </ul>
+    }
+
     <!-- Una grilla de varias columnas no entra en un teléfono: scrollea dentro
          de su caja y la página nunca se va de lado. -->
     <div class="grilla__scroll" #caja>
@@ -48,7 +74,9 @@
               @if (conFechas()) {
                 <span class="grilla__dia-numero" aria-hidden="true">{{ dia.fecha.getDate() }}</span>
               }
-              <span class="solo-lectores">{{ dia.largo }}{{ conFechas() ? ' ' + dia.fecha.getDate() : '' }}</span>
+              <span class="solo-lectores"
+                >{{ dia.largo }}{{ conFechas() ? ' ' + dia.fecha.getDate() : '' }}</span
+              >
             </div>
           }
         </div>
@@ -58,11 +86,7 @@
              sigue tocando los bloques de abajo como siempre. Una sola celda
              lleva `tabindex="0"` (roving tabindex); las flechas mueven esa
              parada. Ver «Para el teclado y el lector» en el componente. -->
-        <div
-          class="grilla__foco"
-          role="rowgroup"
-          [style.grid-template-columns]="columnas().dias"
-        >
+        <div class="grilla__foco" role="rowgroup" [style.grid-template-columns]="columnas().dias">
           @for (fila of filas(); track fila.hora) {
             <div class="grilla__fila" role="row">
               <span class="solo-lectores" role="rowheader">{{ rotulo(fila.hora) }}</span>
