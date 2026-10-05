@@ -1501,7 +1501,7 @@ export class RegisterPatient {
     return [
       {
         key: 'occupationFreeText',
-        label: '¿Cuál?',
+        label: 'Especificá tu ocupación',
         hint: 'Escribí tu oficio como lo dirías vos.',
         description: 'El oficio que no encontraste en la lista: se guarda tal cual lo escribas.',
         control: 'text',

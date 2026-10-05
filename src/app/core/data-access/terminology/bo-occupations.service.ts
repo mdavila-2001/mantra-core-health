@@ -82,7 +82,13 @@ export class BoOccupationsCatalog {
         }
         return this.terminology.readAllOptions(conjunto.id);
       }),
-      map((opciones) => opciones.filter((opcion) => opcion.selectable !== false)),
+      map((opciones) =>
+        opciones
+          .filter((opcion) => opcion.selectable !== false)
+          .map((opcion) =>
+            opcion.code === CODIGO_OCUPACION_OTRA ? { ...opcion, display: 'Otro' } : opcion,
+          ),
+      ),
     );
   }
 }
