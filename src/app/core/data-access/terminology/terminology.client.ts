@@ -17,6 +17,7 @@ import type {
   ConceptSearchQuery,
   GlossaryFacets,
   GlossaryQuery,
+  GlossaryGraph,
   GlossaryTagPage,
   GlossaryTagQuery,
   GlossaryTermDetail,
@@ -399,6 +400,14 @@ export class TerminologyClient {
     return this.http.get<GlossaryTermDetail>(
       this.url(`/terminology/concepts/${encodeURIComponent(conceptId)}`),
       { params: new HttpParams().set('lang', IDIOMA_DEL_CATALOGO) },
+    );
+  }
+
+  /** Lee los nodos publicados y sus relaciones tipadas para el mapa. */
+  readGlossaryGraph(): Observable<GlossaryGraph> {
+    return this.http.get<GlossaryGraph>(
+      this.url('/terminology/concepts/glossary-graph'),
+      { params: new HttpParams().set('lang', IDIOMA_DEL_CATALOGO).set('limit', '500') },
     );
   }
 

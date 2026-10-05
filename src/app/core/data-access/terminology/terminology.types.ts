@@ -279,6 +279,31 @@ export interface GlossaryRelation {
   readonly display: string;
 }
 
+/** Nodo activo incluido en el mapa de relaciones del glosario. */
+export interface GlossaryGraphNode {
+  readonly conceptId: string;
+  readonly slug: string;
+  readonly display: string;
+  readonly category: GlossaryCategoryRef | null;
+  readonly shortDefinition: string;
+}
+
+/** Relación dirigida tal como está registrada en el catálogo. */
+export interface GlossaryGraphEdge {
+  readonly sourceConceptId: string;
+  readonly targetConceptId: string;
+  readonly type: GlossaryRelationType;
+}
+
+/** Grafo publicado y limitado para una vista interactiva. */
+export interface GlossaryGraph {
+  readonly nodes: readonly GlossaryGraphNode[];
+  readonly edges: readonly GlossaryGraphEdge[];
+  readonly count: number;
+  readonly limit: number;
+  readonly possiblyTruncated: boolean;
+}
+
 /**
  * Un texto con su bandera de traducción — el mismo patrón que ya usaba
  * `translated` a nivel de término, aplicado ahora a un campo puntual.

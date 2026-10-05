@@ -382,6 +382,45 @@ export function registrarTerminologia(
     return { items, count: items.length, limit };
   });
 
+  router.get('/terminology/concepts/glossary-graph', async () => {
+    const limit = 500;
+    try {
+      const manifiesto = await glosario.manifiesto();
+      const { filas, total } = await glosario.pagina({ offset: 0, limit });
+      const nodes = filas.map((fila) => {
+        const term = terminoEnLinea(fila, manifiesto);
+        return {
+          conceptId: term.conceptId,
+          slug: term.slug,
+          display: term.display,
+          category: term.category,
+          shortDefinition: term.shortDefinition ?? '',
+        };
+      });
+      const nodeIds = new Set(nodes.map((node) => node.conceptId));
+      const edges = filas.flatMap((fila) =>
+        fila.relations.flatMap((relation) =>
+          nodeIds.has(relation.targetId)
+            ? [{
+                sourceConceptId: fila.id,
+                targetConceptId: relation.targetId,
+                type: relation.type,
+              }]
+            : [],
+        ),
+      );
+      return {
+        nodes,
+        edges,
+        count: nodes.length,
+        limit,
+        possiblyTruncated: total > nodes.length,
+      };
+    } catch (error: unknown) {
+      return glosarioNoDisponible(error);
+    }
+  });
+
   router.get('/terminology/concepts/:id', async ({ params }) => {
     const c = conceptoPorId(params['id']!);
     if (c === undefined) {
