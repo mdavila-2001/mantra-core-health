@@ -53,6 +53,9 @@ import type {
   ReceivedClaimDecisionInput,
   ReceivedClaimInvoice,
   ReceivedClaimList,
+  InsurerPatientPage,
+  InsurerPatientQuery,
+  PatientDirectoryOptions,
 } from './insurance.types';
 
 /* ---- formas de transporte -------------------------------------------------
@@ -482,6 +485,44 @@ export class InsuranceClient {
       );
   }
 
+  /**
+   * `POST /insurance/patients/search` — el directorio autorizado de pacientes
+   * por cursor, con total exacto.
+   *
+   * El servidor restringe a cobertura vigente o padrón administrativo según
+   * el actor. Seleccionar una aseguradora filtra dentro de ese alcance.
+   * Los filtros viajan en el cuerpo y no se conservan en transfer cache.
+   *
+   * @param query - Filtros, orden y cursor de continuación.
+   * @returns La página, con el cursor de la siguiente.
+   */
+  listInsurerPatients(query: InsurerPatientQuery = {}): Observable<InsurerPatientPage> {
+    const body = Object.fromEntries(
+      Object.entries(query).filter(
+        ([, value]) => value !== undefined && value !== null && value !== '',
+      ),
+    );
+    return this.http.post<InsurerPatientPage>(this.url('/insurance/patients/search'), body, {
+      transferCache: false,
+    });
+  }
+
+  patientDirectoryOptions(): Observable<PatientDirectoryOptions> {
+    return this.http.get<PatientDirectoryOptions>(this.url('/insurance/patients/options'), {
+      transferCache: false,
+    });
+  }
+
+  openPatientConversation(
+    patientProfileId: string,
+    channel: 'internal',
+  ): Observable<{ readonly conversationId: string }> {
+    return this.http.post<{ readonly conversationId: string }>(
+      this.url('/insurance/patients/conversation'),
+      { patientProfileId, channel },
+      { transferCache: false },
+    );
+  }
   /**
    * `GET /insurance/my-claims` — «Mis solicitudes»: las solicitudes de seguro
    * de quien mira y lo que decidió la aseguradora. Cualquier sesión puede

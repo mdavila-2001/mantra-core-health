@@ -290,6 +290,7 @@ describe('AccessTree', () => {
       '/administration/my-organization',
       '/administration/insurance',
       '/administration/received-claims',
+      '/administration/insurance-patients',
     ]);
   });
 });

@@ -1,0 +1,146 @@
+npm notice run mantra-core-health@0.1.0 npx
+npm notice run ng test --watch=false --include=src/app/features/insurance/insurance-patients/**/*.spec.ts --include=src/app/core/navigation/**/*.spec.ts --include=src/app/core/data-access/insurance/**/*.spec.ts --include=src/app/features/shell-layout/**/*.spec.ts --include=src/app/features/dashboard/access-tree/**/*.spec.ts
+Using Vitest configuration file: C:\Alovida\mch-video\vitest.config.ts
+[33m❯[39m Building...
+[32m✔[39m Building...
+[1mInitial chunk files[22m                                                      [2m | [22m[1mNames[22m                                                                 [2m | [22m [1mRaw size[22m
+[32mspec-app-features-dashboard-access-tree-access-tree.js[39m                   [2m | [22m[2mspec-app-features-dashboard-access-tree-access-tree[22m                   [2m | [22m[36m494.21 kB[39m[2m | [22m
+[32mspec-app-features-shell-layout-shell-layout.js[39m                           [2m | [22m[2mspec-app-features-shell-layout-shell-layout[22m                           [2m | [22m[36m492.63 kB[39m[2m | [22m
+[32mspec-app-features-insurance-insurance-patients-insurance-patients.js[39m     [2m | [22m[2mspec-app-features-insurance-insurance-patients-insurance-patients[22m     [2m | [22m[36m261.48 kB[39m[2m | [22m
+[32mchunk-A44OUU5H.js[39m                                                        [2m | [22m[2m-[22m                                                                     [2m | [22m[36m210.57 kB[39m[2m | [22m
+[32mstyles.css[39m                                                               [2m | [22m[2mstyles[22m                                                                [2m | [22m[36m166.42 kB[39m[2m | [22m
+[32mchunk-XGG3ZTUA.js[39m                                                        [2m | [22m[2m-[22m                                                                     [2m | [22m[36m102.48 kB[39m[2m | [22m
+[32mchunk-4FQE2D25.js[39m                                                        [2m | [22m[2m-[22m                                                                     [2m | [22m [36m99.47 kB[39m[2m | [22m
+[32mchunk-CECLCUPE.js[39m                                                        [2m | [22m[2m-[22m                                                                     [2m | [22m [36m92.71 kB[39m[2m | [22m
+[32mchunk-DL5PUXVX.js[39m                                                        [2m | [22m[2m-[22m                                                                     [2m | [22m [36m37.14 kB[39m[2m | [22m
+[32mspec-app-core-navigation-navigation.service.js[39m                           [2m | [22m[2mspec-app-core-navigation-navigation.service[22m                           [2m | [22m [36m24.73 kB[39m[2m | [22m
+[32mchunk-YB7C76PV.js[39m                                                        [2m | [22m[2m-[22m                                                                     [2m | [22m [36m19.80 kB[39m[2m | [22m
+[32mspec-app-core-data-access-insurance-insurance.client.js[39m                  [2m | [22m[2mspec-app-core-data-access-insurance-insurance.client[22m                  [2m | [22m [36m18.32 kB[39m[2m | [22m
+[32mspec-app-core-navigation-navigation.map.js[39m                               [2m | [22m[2mspec-app-core-navigation-navigation.map[22m                               [2m | [22m [36m16.02 kB[39m[2m | [22m
+[32mspec-app-core-data-access-insurance-patient-insurance-settlement.types.js[39m[2m | [22m[2mspec-app-core-data-access-insurance-patient-insurance-settlement.types[22m[2m | [22m [36m14.79 kB[39m[2m | [22m
+[32mchunk-5WNDLO7L.js[39m                                                        [2m | [22m[2m-[22m                                                                     [2m | [22m [36m12.55 kB[39m[2m | [22m
+[32mspec-app-core-navigation-section-roles.guard.js[39m                          [2m | [22m[2mspec-app-core-navigation-section-roles.guard[22m                          [2m | [22m [36m12.03 kB[39m[2m | [22m
+[32mchunk-PLJASVO2.js[39m                                                        [2m | [22m[2m-[22m                                                                     [2m | [22m [36m11.96 kB[39m[2m | [22m
+[32mchunk-FOIJGYX3.js[39m                                                        [2m | [22m[2m-[22m                                                                     [2m | [22m [36m11.06 kB[39m[2m | [22m
+[32mspec-app-core-navigation-access-tree.js[39m                                  [2m | [22m[2mspec-app-core-navigation-access-tree[22m                                  [2m | [22m  [36m9.41 kB[39m[2m | [22m
+[32mchunk-RZ5AFEC4.js[39m                                                        [2m | [22m[2m-[22m                                                                     [2m | [22m  [36m8.43 kB[39m[2m | [22m
+[32mspec-app-core-data-access-insurance-insurance-portability.client.js[39m      [2m | [22m[2mspec-app-core-data-access-insurance-insurance-portability.client[22m      [2m | [22m  [36m7.51 kB[39m[2m | [22m
+[32mchunk-4OXV7O2F.js[39m                                                        [2m | [22m[2m-[22m                                                                     [2m | [22m  [36m7.13 kB[39m[2m | [22m
+[32mspec-app-core-navigation-navigation.farmacia.js[39m                          [2m | [22m[2mspec-app-core-navigation-navigation.farmacia[22m                          [2m | [22m  [36m6.22 kB[39m[2m | [22m
+[32mchunk-XXW5WIYA.js[39m                                                        [2m | [22m[2m-[22m                                                                     [2m | [22m  [36m5.32 kB[39m[2m | [22m
+[32mchunk-HZXEPMDQ.js[39m                                                        [2m | [22m[2m-[22m                                                                     [2m | [22m  [36m5.27 kB[39m[2m | [22m
+[32mspec-app-core-navigation-navigation.laboratorio.js[39m                       [2m | [22m[2mspec-app-core-navigation-navigation.laboratorio[22m                       [2m | [22m  [36m5.27 kB[39m[2m | [22m
+[32mspec-app-core-navigation-navigation-history.service.js[39m                   [2m | [22m[2mspec-app-core-navigation-navigation-history.service[22m                   [2m | [22m  [36m3.76 kB[39m[2m | [22m
+[32mchunk-IIVEIPN2.js[39m                                                        [2m | [22m[2m-[22m                                                                     [2m | [22m  [36m3.56 kB[39m[2m | [22m
+[32mspec-app-core-navigation-navigation.subgroups.js[39m                         [2m | [22m[2mspec-app-core-navigation-navigation.subgroups[22m                         [2m | [22m  [36m3.19 kB[39m[2m | [22m
+[32mchunk-3JJU4HUQ.js[39m                                                        [2m | [22m[2m-[22m                                                                     [2m | [22m  [36m2.79 kB[39m[2m | [22m
+[32mspec-app-core-navigation-search-memory.service.js[39m                        [2m | [22m[2mspec-app-core-navigation-search-memory.service[22m                        [2m | [22m  [36m2.57 kB[39m[2m | [22m
+[32mchunk-52ZM43ZD.js[39m                                                        [2m | [22m[2m-[22m                                                                     [2m | [22m  [36m2.03 kB[39m[2m | [22m
+[32minit-testbed.js[39m                                                          [2m | [22m[2minit-testbed[22m                                                          [2m | [22m  [36m1.21 kB[39m[2m | [22m
+[32mchunk-ZUB2YDBL.js[39m                                                        [2m | [22m[2m-[22m                                                                     [2m | [22m[36m995 bytes[39m[2m | [22m
+[32msetup-test-setup.js[39m                                                      [2m | [22m[2msetup-test-setup[22m                                                      [2m | [22m[36m984 bytes[39m[2m | [22m
+[32mvitest-mock-patch.js[39m                                                     [2m | [22m[2mvitest-mock-patch[22m                                                     [2m | [22m[36m974 bytes[39m[2m | [22m
+[32mchunk-ORGD43PW.js[39m                                                        [2m | [22m[2m-[22m                                                                     [2m | [22m[36m668 bytes[39m[2m | [22m
+[32mchunk-OGHK6GY5.js[39m                                                        [2m | [22m[2m-[22m                                                                     [2m | [22m[36m535 bytes[39m[2m | [22m
+[32mchunk-L2LPC2SD.js[39m                                                        [2m | [22m[2m-[22m                                                                     [2m | [22m[36m249 bytes[39m[2m | [22m
+
+[1m [22m                                                                        [2m | [22m[1mInitial total[22m                                                         [2m | [22m  [1m2.18 MB[22m
+
+[1mLazy chunk files[22m                                                         [2m | [22m[1mNames[22m                                                                 [2m | [22m [1mRaw size[22m
+[32mchunk-X4EJCEPU.js[39m                                                        [2m | [22m[2mbolivia-municipalities-geometry[22m                                       [2m | [22m[36m107.84 kB[39m[2m | [22m
+
+Application bundle generation complete. [101.601 seconds] - 2026-10-05T19:23:30.582Z
+
+[1m[33m[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: Alert is not used within the template of MedicalArticles[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/account/my-profile/medical-articles/medical-articles.ts:93:4:
+[37m      93 │     [32mAlert[37m,
+         ╵     [32m~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: RouterLink is not used within the template of MedicalArticles[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/account/my-profile/medical-articles/medical-articles.ts:105:4:
+[37m      105 │     [32mRouterLink[37m,
+          ╵     [32m~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: AppButtonLink is not used within the template of Questionnaires[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/account/questionnaires/questionnaires.ts:88:4:
+[37m      88 │     [32mAppButtonLink[37m,
+         ╵     [32m~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8107: NG8107: The left side of this optional chain operation does not include 'null' or 'undefined' in its type, therefore the '?.' operator can be replaced with the '.' operator. Find more at https://v21.angular.dev/extended-diagnostics/NG8107[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/glossary/glossary-network.html:15:34:
+[37m      15 │ ...<select [value]="titleNode()?.[32mslug[37m ?? ''" (change)="cambiarFoco...
+         ╵                                  [32m~~~~[0m
+
+  Warning occurs in the template of component GlossaryNetwork.
+
+    src/app/features/glossary/glossary-network.ts:64:15:
+[37m      64 │   templateUrl: [32m'./glossary-network.html'[37m,
+         ╵                [32m~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: Link is not used within the template of Groups[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/groups/groups.ts:59:4:
+[37m      59 │     [32mLink[37m,
+         ╵     [32m~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: AppButtonLink is not used within the template of SurveysHome[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/questionnaires/questionnaires.ts:132:4:
+[37m      132 │     [32mAppButtonLink[37m,
+          ╵     [32m~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: Card is not used within the template of SymptomCheck[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/symptom-check/symptom-check.ts:122:39:
+[37m      122 │ ... [Alert, AppButton, BodyMap, [32mCard[37m, Chip, FormField, RouterLink...
+          ╵                                 [32m~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: RouterLink is not used within the template of SymptomCheck[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/symptom-check/symptom-check.ts:122:62:
+[37m      122 │ ..., BodyMap, Card, Chip, FormField, [32mRouterLink[37m, Spinner, Textarea],
+          ╵                                      [32m~~~~~~~~~~[0m
+
+[39m[22m
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.10 [39m[90mC:/Alovida/mch-video[39m
+
+(node:23296) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:9656) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:10724) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:16816) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:7584) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:19740) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:18116) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:23536) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:10504) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:23604) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:22572) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+[2m Test Files [22m [1m[32m15 passed[39m[22m[90m (15)[39m
+[2m      Tests [22m [1m[32m331 passed[39m[22m[90m (331)[39m
+[2m   Start at [22m 15:23:31
+[2m   Duration [22m 17.11s[2m (transform 33.13s, setup 21.00s, import 48.89s, tests 11.08s, environment 45.66s)[22m
+
