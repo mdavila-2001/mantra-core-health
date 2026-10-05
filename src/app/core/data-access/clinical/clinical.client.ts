@@ -38,6 +38,32 @@ import type {
   PatientChart,
 } from './clinical.types';
 
+export interface PrescriptionHistoryItem {
+  readonly id: string;
+  readonly medication: string;
+  readonly status: string;
+  readonly issuedAt: Date;
+  readonly validTo?: Date;
+  readonly doseText?: string;
+  readonly frequencyText?: string;
+  readonly prescriber?: string;
+}
+
+interface WirePrescriptionHistoryItem extends Omit<
+  PrescriptionHistoryItem,
+  'issuedAt' | 'validTo'
+> {
+  readonly issuedAt: string;
+  readonly validTo?: string;
+}
+
+export interface PrescriptionHistoryPage {
+  readonly items: readonly PrescriptionHistoryItem[];
+  readonly total: number;
+  readonly offset: number;
+  readonly limit: number;
+}
+
 /**
  * Cliente del archivo clínico: `clinical` (M08) y `chart` (M15).
  *
@@ -94,6 +120,46 @@ import type {
 export class ClinicalClient {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = inject(API_BASE_URL);
+
+  listPrescriptionHistory(
+    patientProfileId: string,
+    offset = 0,
+    limit = 50,
+  ): Observable<PrescriptionHistoryPage> {
+    return this.http
+      .get<{ items: WirePrescriptionHistoryItem[]; total: number; offset: number; limit: number }>(
+        this.url(`/clinical/patients/${encodeURIComponent(patientProfileId)}/prescriptions`),
+        { params: new HttpParams().set('offset', offset).set('limit', limit) },
+      )
+      .pipe(
+        map((page) => ({
+          ...page,
+          items: page.items.map(({ issuedAt, validTo, ...item }) => ({
+            ...item,
+            issuedAt: new Date(issuedAt),
+            ...(validTo ? { validTo: new Date(validTo) } : {}),
+          })),
+        })),
+      );
+  }
+
+  downloadPrescriptionHistoryPdf(
+    patientProfileId: string,
+  ): Observable<{ readonly blob: Blob; readonly fileName?: string }> {
+    return this.http
+      .get(
+        this.url(
+          `/clinical/patients/${encodeURIComponent(patientProfileId)}/prescriptions/history.pdf`,
+        ),
+        { responseType: 'blob', observe: 'response' },
+      )
+      .pipe(
+        map((response) => ({
+          blob: response.body ?? new Blob([]),
+          fileName: nombreDeContentDisposition(response.headers.get('Content-Disposition')),
+        })),
+      );
+  }
 
   /**
    * `GET /clinical/patients/:id/summary` — condiciones, alergias, medicación,
@@ -269,9 +335,7 @@ export class ClinicalClient {
    * @param receta - El medicamento y su indicación. Lo ausente no viaja.
    * @returns La receta en borrador, con `signedAt` en `null`.
    */
-  createMedicationRequest(
-    receta: NewMedicationRequest,
-  ): Observable<MedicationRequestRegistration> {
+  createMedicationRequest(receta: NewMedicationRequest): Observable<MedicationRequestRegistration> {
     return this.http
       .post<WireMedicationRequestRegistration>(
         this.url('/clinical/medication-requests'),
@@ -298,9 +362,7 @@ export class ClinicalClient {
   signMedicationRequest(medicationRequestId: string): Observable<MedicationRequestRegistration> {
     return this.http
       .post<WireMedicationRequestRegistration>(
-        this.url(
-          `/clinical/medication-requests/${encodeURIComponent(medicationRequestId)}/sign`,
-        ),
+        this.url(`/clinical/medication-requests/${encodeURIComponent(medicationRequestId)}/sign`),
         {},
       )
       .pipe(map(toMedicationRequestRegistration));
@@ -327,9 +389,7 @@ export class ClinicalClient {
   issueMedicationRequest(medicationRequestId: string): Observable<MedicationRequestRegistration> {
     return this.http
       .post<WireMedicationRequestRegistration>(
-        this.url(
-          `/clinical/medication-requests/${encodeURIComponent(medicationRequestId)}/issue`,
-        ),
+        this.url(`/clinical/medication-requests/${encodeURIComponent(medicationRequestId)}/issue`),
         {},
       )
       .pipe(map(toMedicationRequestRegistration));
@@ -356,18 +416,14 @@ export class ClinicalClient {
     medicationRequestId: string,
   ): Observable<{ readonly blob: Blob; readonly fileName?: string }> {
     return this.http
-      .get(
-        this.url(
-          `/clinical/prescriptions/${encodeURIComponent(medicationRequestId)}/pdf`,
-        ),
-        { responseType: 'blob', observe: 'response' },
-      )
+      .get(this.url(`/clinical/prescriptions/${encodeURIComponent(medicationRequestId)}/pdf`), {
+        responseType: 'blob',
+        observe: 'response',
+      })
       .pipe(
         map((respuesta) => ({
           blob: respuesta.body ?? new Blob([]),
-          fileName: nombreDeContentDisposition(
-            respuesta.headers.get('Content-Disposition'),
-          ),
+          fileName: nombreDeContentDisposition(respuesta.headers.get('Content-Disposition')),
         })),
       );
   }
@@ -557,9 +613,7 @@ export class ClinicalClient {
    *
    * @param informe - El estudio y su contexto.
    */
-  createDiagnosticReport(
-    informe: NewDiagnosticReport,
-  ): Observable<DiagnosticReportRegistration> {
+  createDiagnosticReport(informe: NewDiagnosticReport): Observable<DiagnosticReportRegistration> {
     return this.http
       .post<WireDiagnosticReportRegistration>(
         this.url('/clinical/diagnostic-reports'),
@@ -585,9 +639,7 @@ export class ClinicalClient {
   ): Observable<DiagnosticReportRegistration> {
     return this.http
       .post<WireDiagnosticReportRegistration>(
-        this.url(
-          `/clinical/diagnostic-reports/${encodeURIComponent(diagnosticReportId)}/release`,
-        ),
+        this.url(`/clinical/diagnostic-reports/${encodeURIComponent(diagnosticReportId)}/release`),
         expectedRowVersion === undefined ? {} : { expectedRowVersion },
       )
       .pipe(map(toDiagnosticReportRegistration));
@@ -625,9 +677,7 @@ export class ClinicalClient {
  * `forbidNonWhitelisted` del backend está mirando.
  */
 function sinAusentes<T extends object>(valor: T): Partial<T> {
-  return Object.fromEntries(
-    Object.entries(valor).filter(([, v]) => v !== undefined),
-  ) as Partial<T>;
+  return Object.fromEntries(Object.entries(valor).filter(([, v]) => v !== undefined)) as Partial<T>;
 }
 
 /**
@@ -683,12 +733,7 @@ type WireCareEpisode = Omit<Fechas<CareEpisode, 'startAt' | 'endAt'>, 'createdAt
 
 interface WireSummary extends Omit<
   ClinicalSummary,
-  | 'conditions'
-  | 'allergies'
-  | 'medicationRequests'
-  | 'observations'
-  | 'encounters'
-  | 'careEpisodes'
+  'conditions' | 'allergies' | 'medicationRequests' | 'observations' | 'encounters' | 'careEpisodes'
 > {
   readonly conditions: readonly WireCondition[];
   readonly allergies: readonly WireAllergy[];
@@ -725,10 +770,7 @@ interface WireChart extends Omit<PatientChart, 'notes' | 'carePlans' | 'document
  * los declara así: un encuentro recién abierto tiene `endAt: null`, que no es lo
  * mismo que no traer el campo.
  */
-type WireEncounterRegistration = Omit<
-  EncounterRegistration,
-  'startAt' | 'endAt' | 'createdAt'
-> & {
+type WireEncounterRegistration = Omit<EncounterRegistration, 'startAt' | 'endAt' | 'createdAt'> & {
   readonly startAt: string | null;
   readonly endAt: string | null;
   readonly createdAt: string;
@@ -881,10 +923,7 @@ function toCareEpisode({ startAt, endAt, createdAt, ...resto }: WireCareEpisode)
  * encuentro: se conserva el `null` en vez de borrarlo porque significa «el
  * backend no fijó el inicio», que no es lo mismo que «no vino el campo».
  */
-type WireCareEpisodeRegistration = Omit<
-  CareEpisodeRegistration,
-  'startAt' | 'createdAt'
-> & {
+type WireCareEpisodeRegistration = Omit<CareEpisodeRegistration, 'startAt' | 'createdAt'> & {
   readonly startAt: string | null;
   readonly createdAt: string;
 };

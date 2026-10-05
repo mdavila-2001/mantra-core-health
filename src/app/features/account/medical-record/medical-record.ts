@@ -1,13 +1,23 @@
 import { DatePipe, NgTemplateOutlet } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  signal,
+} from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
 
-import { AuthService } from '../../../core/auth/auth.service';
 import { PatientContextService } from '../../../core/patient-context/patient-context.service';
-import { ClinicalClient } from '../../../core/data-access/clinical/clinical.client';
+import {
+  ClinicalClient,
+  type PrescriptionHistoryItem,
+} from '../../../core/data-access/clinical/clinical.client';
 import { DiagnosticsClient } from '../../../core/data-access/diagnostics/diagnostics.client';
 import type {
   ClinicalSummary,
@@ -33,7 +43,10 @@ import { Tabs } from '../../../shared/components/molecules/tabs/tabs';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
-import { downloadHistoryPdf, downloadVisitPdf } from '../../../shared/utils/clinical-pdf/clinical-pdf';
+import {
+  downloadHistoryPdf,
+  downloadVisitPdf,
+} from '../../../shared/utils/clinical-pdf/clinical-pdf';
 import type { DocumentoDeFormulario } from '../../../shared/utils/clinical-pdf/clinical-pdf.types';
 import {
   atencionDesdeResumen,
@@ -79,7 +92,10 @@ interface RecetaVisible {
   readonly medicamento: string;
   readonly indicacion: string;
   readonly estado: string;
+  readonly profesional?: string;
   readonly emitida: boolean;
+  readonly vigente: boolean;
+  readonly vencida: boolean;
   readonly cuando: Date;
 }
 
@@ -163,7 +179,6 @@ export class MedicalRecord {
   private readonly diagnostics = inject(DiagnosticsClient);
   private readonly terminology = inject(TerminologyClient);
   private readonly forms = inject(FormsClient);
-  private readonly auth = inject(AuthService);
   private readonly contexto = inject(PatientContextService);
   private readonly toasts = inject(ToastService);
   private readonly descargas = inject(FileDownloader);
@@ -177,7 +192,7 @@ export class MedicalRecord {
    * Computado (B.1): quien representa a un dependiente lee la suya sin cambiar
    * de cuenta, y una instantánea dejaría la pantalla clavada en el titular.
    */
-  private readonly perfil = this.contexto.activePatientProfileId();
+  private readonly perfil = this.contexto.activePatientProfileId;
 
   /**
    * La cuenta no es de un paciente.
@@ -186,7 +201,8 @@ export class MedicalRecord {
    * válida y su historia clínica, si la tiene, es la de su propia cuenta de
    * paciente — que es otra.
    */
-  protected readonly sinPerfilDePaciente = this.perfil === null;
+  protected readonly sinPerfilDePaciente = computed(() => this.perfil() === null);
+  protected readonly esDependiente = this.contexto.isActingForDependent;
 
   /** La salida cuando la cuenta no es de un paciente. */
   protected readonly rutaDeTurnos = MIS_TURNOS_ROUTE;
@@ -222,6 +238,9 @@ export class MedicalRecord {
       queryParamsHandling: 'merge',
       replaceUrl: true,
     });
+    if (indice === 1 && this.recetasServidor() === null) {
+      this.cargarMasRecetas();
+    }
   }
 
   protected readonly historia = signal<ViewState<ClinicalSummary>>(loading());
@@ -235,6 +254,12 @@ export class MedicalRecord {
    * `isLoading` de cada botón para nada.
    */
   protected readonly descargandoReceta = signal<string | null>(null);
+  protected readonly descargandoHistorico = signal(false);
+  protected readonly cargandoMasRecetas = signal(false);
+  protected readonly errorCargaRecetas = signal(false);
+  protected readonly totalRecetas = signal<number | null>(null);
+  private readonly recetasServidor = signal<readonly PrescriptionHistoryItem[] | null>(null);
+  protected readonly recetasServidorCargadas = computed(() => this.recetasServidor() !== null);
 
   private readonly etiquetas = signal<ConceptLabels>(new Map());
 
@@ -269,16 +294,46 @@ export class MedicalRecord {
       }));
   });
 
-  protected readonly recetas = computed<readonly RecetaVisible[]>(() =>
-    (this.datos()?.medicationRequests ?? []).map((receta) => ({
-      id: receta.id,
-      medicamento: this.label(receta.medicationConceptId),
-      indicacion: [receta.doseText, receta.frequencyText].filter(Boolean).join(' · '),
-      estado: this.label(receta.statusConceptId),
-      emitida: receta.issuedAt !== undefined,
-      cuando: receta.createdAt,
-    })),
+  protected readonly recetas = computed<readonly RecetaVisible[]>(
+    () =>
+      this.recetasServidor()?.map((receta) => ({
+        id: receta.id,
+        medicamento: receta.medication,
+        indicacion: [receta.doseText, receta.frequencyText].filter(Boolean).join(' · '),
+        estado: receta.status,
+        profesional: receta.prescriber,
+        emitida: true,
+        vigente: this.esRecetaVigente(receta.status, receta.validTo),
+        vencida:
+          receta.validTo !== undefined &&
+          receta.validTo.getTime() < Date.now() &&
+          !/invalid|replac|anulad|sustituid/i.test(receta.status),
+        cuando: receta.issuedAt,
+      })) ??
+      (this.datos()?.medicationRequests ?? [])
+        .filter((receta) => receta.issuedAt !== undefined)
+        .map((receta) => ({
+          id: receta.id,
+          medicamento: this.label(receta.medicationConceptId),
+          indicacion: [receta.doseText, receta.frequencyText].filter(Boolean).join(' · '),
+          estado: this.label(receta.statusConceptId),
+          profesional: undefined,
+          emitida: receta.issuedAt !== undefined,
+          vigente: this.esRecetaVigente(this.label(receta.statusConceptId), receta.validTo),
+          vencida:
+            receta.validTo !== undefined &&
+            receta.validTo.getTime() < Date.now() &&
+            !/invalid|replac|anulad|sustituid/i.test(this.label(receta.statusConceptId)),
+          cuando: receta.issuedAt ?? receta.createdAt,
+        })),
   );
+
+  private esRecetaVigente(estado: string, hasta?: Date): boolean {
+    return (
+      /^(emitida|vigente|activa|issued|active)$/i.test(estado.trim()) &&
+      (hasta === undefined || hasta.getTime() >= Date.now())
+    );
+  }
 
   /**
    * Las alergias: las cargadas como diagnóstico con código CIE-10 de alergia
@@ -353,7 +408,14 @@ export class MedicalRecord {
    * puede depender de una lectura que todavía no salió.
    */
   private cargarFormularios(): void {
-    if (this.perfil === null) {
+    const perfil = this.perfil();
+    if (perfil === null) {
+      return;
+    }
+    // /forms/me corresponde al titular de la sesión. Usarlo para el dependiente
+    // mezclaría respuestas de dos personas en un mismo documento clínico.
+    if (this.esDependiente()) {
+      this.formularios.set(ready([]));
       return;
     }
 
@@ -369,29 +431,39 @@ export class MedicalRecord {
       )
       .subscribe({
         next: (detalles) => {
+          if (this.perfil() !== perfil) return;
           this.formularios.set(ready(detalles.map((detalle) => formularioLeible(detalle))));
         },
-        error: (error: unknown) =>
-          this.formularios.set(errorToViewState<readonly FormularioVisible[]>(error)),
+        error: (error: unknown) => {
+          if (this.perfil() === perfil)
+            this.formularios.set(errorToViewState<readonly FormularioVisible[]>(error));
+        },
       });
   }
 
   constructor() {
-    if (this.perfil !== null) {
-      this.cargar();
-      this.cargarFormularios();
-    } else {
-      // No es un vacío de datos ni un error: la pantalla no le corresponde a
-      // esta cuenta, y el aviso lo dice con su propia salida.
-      this.historia.set(empty({ label: 'Ir a mis turnos', route: MIS_TURNOS_ROUTE }));
-      this.formularios.set(ready([]));
-    }
+    effect(() => {
+      const perfil = this.perfil();
+      this.recetasServidor.set(null);
+      this.totalRecetas.set(null);
+      this.cargandoMasRecetas.set(false);
+      this.errorCargaRecetas.set(false);
+      this.descargandoHistorico.set(false);
+      this.descargandoReceta.set(null);
+      if (perfil !== null) {
+        this.cargar();
+        this.cargarFormularios();
+      } else {
+        this.historia.set(empty({ label: 'Ir a mis turnos', route: MIS_TURNOS_ROUTE }));
+        this.formularios.set(ready([]));
+      }
+    });
   }
 
   /* ---- lectura ------------------------------------------------------------ */
 
   protected cargar(): void {
-    const perfil = this.perfil;
+    const perfil = this.perfil();
     if (perfil === null) {
       return;
     }
@@ -415,6 +487,7 @@ export class MedicalRecord {
       )
       .subscribe({
         next: ({ resumen, etiquetas }) => {
+          if (this.perfil() !== perfil) return;
           this.etiquetas.set(etiquetas);
           this.historia.set(
             estaVacia(resumen)
@@ -424,8 +497,13 @@ export class MedicalRecord {
                 )
               : ready(resumen),
           );
+          if (this.seccion() === 1 && this.recetasServidor() === null) {
+            this.cargarMasRecetas();
+          }
         },
-        error: (error: unknown) => this.historia.set(errorToViewState<ClinicalSummary>(error)),
+        error: (error: unknown) => {
+          if (this.perfil() === perfil) this.historia.set(errorToViewState<ClinicalSummary>(error));
+        },
       });
   }
 
@@ -470,35 +548,51 @@ export class MedicalRecord {
    */
   protected descargarHistoriaCompleta(): void {
     const datos = this.datos();
-    if (datos === null || this.armandoHistoria()) {
+    const perfil = this.perfil();
+    if (datos === null || this.armandoHistoria() || this.esDependiente()) {
       return;
     }
     this.armandoHistoria.set(true);
 
     forkJoin({
-      ordenes: this.diagnostics.getOwnOrders().pipe(catchError(() => of({ items: [] as never[] }))),
+      ordenes: this.diagnostics
+        .getOwnOrders()
+        .pipe(catchError(() => of({ items: [] as never[], truncated: true }))),
       resultados: this.diagnostics
         .getOwnResults()
-        .pipe(catchError(() => of({ items: [] as never[] }))),
+        .pipe(catchError(() => of({ items: [] as never[], truncated: true }))),
     }).subscribe({
       next: ({ ordenes, resultados }) => {
+        if (this.perfil() !== perfil) return;
         this.armandoHistoria.set(false);
-        downloadHistoryPdf(
-          historiaDesdeFuentes(
-            {
-              resumen: datos,
-              // Todos los formularios del paciente, sin filtrar por encuentro:
-              // la historia completa es longitudinal. Si su lectura falló, va
-              // vacío — el documento no se niega por eso.
-              formularios: this.formulariosVisibles().map(comoDocumentoDeFormulario),
-              ordenes: ordenes.items,
-              resultados: resultados.items,
-            },
-            this.contextoDelDocumento(),
-            (id) => this.label(id),
-          ),
+        const documento = historiaDesdeFuentes(
+          {
+            resumen: datos,
+            // Todos los formularios del paciente, sin filtrar por encuentro:
+            // la historia completa es longitudinal. Si su lectura falló, va
+            // vacío — el documento no se niega por eso.
+            formularios: this.formulariosVisibles().map(comoDocumentoDeFormulario),
+            ordenes: ordenes.items,
+            resultados: resultados.items,
+          },
+          this.contextoDelDocumento(),
+          (id) => this.label(id),
         );
-        this.toasts.success('Descargamos tu historia completa.', 'Historia clínica');
+        const incompleto =
+          datos.truncated.length > 0 ||
+          ordenes.truncated ||
+          resultados.truncated ||
+          this.formularios().status !== 'ready';
+        downloadHistoryPdf({
+          ...documento,
+          ...(incompleto
+            ? {
+                avisoDeIntegridad:
+                  'Esta copia es un resumen parcial. Algunos registros antiguos o fuentes no están incluidos.',
+              }
+            : {}),
+        });
+        this.toasts.success('Descargamos tu resumen clínico.', 'Historia clínica');
       },
       error: () => {
         this.armandoHistoria.set(false);
@@ -536,15 +630,17 @@ export class MedicalRecord {
     if (this.descargandoReceta() !== null) {
       return;
     }
+    const perfil = this.perfil();
     this.descargandoReceta.set(receta.id);
 
     this.clinical.downloadPrescriptionPdf(receta.id).subscribe({
       next: ({ blob, fileName }) => {
         blobToDataUrl(blob).subscribe({
           next: (dataUrl) => {
+            if (this.perfil() !== perfil) return;
             this.descargas.trigger(dataUrl, fileName ?? `receta-${receta.id}.pdf`);
             this.descargandoReceta.set(null);
-            this.toasts.success('Descarga iniciada exitosamente', 'Receta oficial');
+            this.toasts.success('Descarga iniciada exitosamente', 'Receta');
           },
           error: () => this.fallaAlDescargarReceta(),
         });
@@ -553,13 +649,69 @@ export class MedicalRecord {
     });
   }
 
+  protected cargarMasRecetas(): void {
+    const perfil = this.perfil();
+    if (perfil === null || this.cargandoMasRecetas()) return;
+    const offset = this.recetasServidor()?.length ?? 0;
+    if (this.totalRecetas() !== null && offset >= this.totalRecetas()!) return;
+    this.cargandoMasRecetas.set(true);
+    this.errorCargaRecetas.set(false);
+    this.clinical.listPrescriptionHistory(perfil, offset).subscribe({
+      next: (page) => {
+        if (this.perfil() !== perfil) return;
+        this.recetasServidor.set([...(this.recetasServidor() ?? []), ...page.items]);
+        this.totalRecetas.set(page.total);
+        this.cargandoMasRecetas.set(false);
+        this.errorCargaRecetas.set(false);
+      },
+      error: () => {
+        if (this.perfil() !== perfil) return;
+        this.cargandoMasRecetas.set(false);
+        this.errorCargaRecetas.set(true);
+        this.toasts.error('No pudimos cargar más recetas. Reintentá.', 'Recetas');
+      },
+    });
+  }
+
+  protected descargarHistoricoRecetas(): void {
+    const perfil = this.perfil();
+    if (perfil === null || this.descargandoHistorico()) return;
+    this.descargandoHistorico.set(true);
+    this.clinical.downloadPrescriptionHistoryPdf(perfil).subscribe({
+      next: ({ blob, fileName }) =>
+        blobToDataUrl(blob).subscribe({
+          next: (dataUrl) => {
+            if (this.perfil() !== perfil) return;
+            this.descargas.trigger(dataUrl, fileName ?? 'historial-recetas.pdf');
+            this.descargandoHistorico.set(false);
+            this.toasts.success('Descargamos tu historial de recetas.', 'Recetas');
+          },
+          error: (error: unknown) => {
+            if (this.perfil() === perfil) this.fallaAlDescargarHistorico(error);
+          },
+        }),
+      error: (error: unknown) => {
+        if (this.perfil() === perfil) this.fallaAlDescargarHistorico(error);
+      },
+    });
+  }
+
+  private fallaAlDescargarHistorico(error?: unknown): void {
+    this.descargandoHistorico.set(false);
+    if (error instanceof HttpErrorResponse && error.status === 413) {
+      this.toasts.error(
+        'Tu historial supera el límite de descarga. Contactá a soporte para obtener una copia.',
+        'Recetas',
+      );
+      return;
+    }
+    this.toasts.error('No pudimos descargar el historial. Reintentá.', 'Recetas');
+  }
+
   /** Un solo sitio para el fallo: el motivo no se distingue, a propósito. */
   private fallaAlDescargarReceta(): void {
     this.descargandoReceta.set(null);
-    this.toasts.error(
-      'No pudimos descargar la receta oficial. Reintentá en un momento.',
-      'Receta oficial',
-    );
+    this.toasts.error('No pudimos descargar la receta. Reintentá en un momento.', 'Receta');
   }
 
   /**
@@ -574,7 +726,7 @@ export class MedicalRecord {
    */
   private contextoDelDocumento(_encuentro?: Encounter): ContextoDelDocumento {
     return {
-      paciente: this.auth.displayName() ?? '',
+      paciente: this.contexto.activePatientName() ?? '',
       profesional: '',
     };
   }

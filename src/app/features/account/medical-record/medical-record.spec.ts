@@ -5,6 +5,7 @@ import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 
 import { SessionStore } from '../../../core/auth/session.store';
+import { PatientContextService } from '../../../core/patient-context/patient-context.service';
 import { FileDownloader } from '../../../core/data-access/files/file-downloader';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
 import { MedicalRecord } from './medical-record';
@@ -217,9 +218,30 @@ describe('MedicalRecord', () => {
    * en la URL, así que el cambio pasa por el router y no está aplicado cuando
    * el clic vuelve.
    */
-  async function abrirPestana(indice: number): Promise<void> {
+  async function abrirPestana(indice: number, cargarRecetas = true): Promise<void> {
     harness.routeNativeElement?.querySelectorAll<HTMLButtonElement>('[role="tab"]')[indice].click();
     await harness.fixture.whenStable();
+    harness.detectChanges();
+    if (indice === 1 && cargarRecetas) responderListadoRecetas();
+  }
+
+  function responderListadoRecetas(
+    patientProfileId = 'pp-1',
+    status = 'Emitida',
+  ): void {
+    http.expectOne((request) => request.url === `/clinical/patients/${patientProfileId}/prescriptions`).flush({
+      items: [{
+        id: 'm-1',
+        medication: 'Amoxicilina',
+        status,
+        issuedAt: '2026-03-01T11:00:00.000Z',
+        doseText: '500 mg',
+        frequencyText: 'cada 8 horas',
+      }],
+      total: 1,
+      offset: 0,
+      limit: 20,
+    });
     harness.detectChanges();
   }
 
@@ -285,6 +307,36 @@ describe('MedicalRecord', () => {
     expect(texto).toContain('500 mg · cada 8 horas');
   });
 
+  it('no muestra una lista vacía cuando falla la carga inicial de recetas', async () => {
+    await montar();
+    responder();
+    await abrirPestana(1, false);
+    expect(harness.routeNativeElement?.textContent).toContain('Cargando tus recetas');
+    expect(harness.routeNativeElement?.textContent).not.toContain('Todavía no tenés recetas');
+
+    http.expectOne((request) => request.url === '/clinical/patients/pp-1/prescriptions')
+      .flush(null, { status: 503, statusText: 'Service Unavailable' });
+    harness.detectChanges();
+    expect(harness.routeNativeElement?.textContent).toContain('No pudimos cargar tus recetas');
+    expect(harness.routeNativeElement?.querySelector('[role="alert"] button')?.textContent)
+      .toContain('Reintentar');
+
+    harness.routeNativeElement?.querySelector<HTMLButtonElement>('[role="alert"] button')?.click();
+    http.expectOne((request) => request.url === '/clinical/patients/pp-1/prescriptions').flush({
+      items: [], total: 0, offset: 0, limit: 20,
+    });
+    harness.detectChanges();
+    expect(harness.routeNativeElement?.textContent).toContain('Todavía no tenés recetas');
+  });
+
+  it('solo ofrece comprar una receta cuando conoce su estado vigente', async () => {
+    await montar();
+    responder();
+    await abrirPestana(1, false);
+    responderListadoRecetas('pp-1', 'Estado desconocido');
+    expect(harness.routeNativeElement?.querySelector('[data-testid="historia-donde-comprar"]')).toBeNull();
+  });
+
   it('cada atención y cada receta ofrecen su descarga (corrección #16)', async () => {
     await montar();
     responder();
@@ -294,6 +346,83 @@ describe('MedicalRecord', () => {
 
     await abrirPestana(1);
     expect(raiz?.querySelector('[data-testid="historia-descargar-receta"]')).not.toBeNull();
+  });
+
+  it('descarga el histórico completo de recetas desde la API', async () => {
+    await montar();
+    responder();
+    await abrirPestana(1);
+    const downloaded = nombreDescargado();
+    harness.routeNativeElement?.querySelector<HTMLButtonElement>(
+      '[data-testid="historia-descargar-historico-recetas"]',
+    )?.click();
+    const request = http.expectOne('/clinical/patients/pp-1/prescriptions/history.pdf');
+    expect(request.request.responseType).toBe('blob');
+    request.flush(new Blob([new Uint8Array([0x25, 0x50, 0x44, 0x46])], { type: 'application/pdf' }), {
+      headers: { 'Content-Disposition': 'attachment; filename="historial-recetas.pdf"' },
+    });
+    expect((await downloaded).fileName).toBe('historial-recetas.pdf');
+  });
+
+  it('permite cargar las recetas anteriores cuando el resumen llega recortado', async () => {
+    await montar();
+    responder({ ...RESUMEN, truncated: ['medicationRequests'] });
+    await abrirPestana(1, false);
+    const request = http.expectOne((r) => r.url === '/clinical/patients/pp-1/prescriptions');
+    expect(request.request.params.get('offset')).toBe('0');
+    request.flush({
+      items: Array.from({ length: 50 }, (_, i) => ({ id: `m-${i}`, medication: `Medicamento ${i}`,
+        status: 'Emitida', issuedAt: '2026-02-01T11:00:00.000Z', doseText: '400 mg' })),
+      total: 51, offset: 0, limit: 50,
+    });
+    harness.detectChanges();
+    const more = [...(harness.routeNativeElement?.querySelectorAll<HTMLButtonElement>('button') ?? [])]
+      .find((button) => button.textContent?.includes('Ver más recetas'));
+    more?.click();
+    const second = http.expectOne((r) => r.url === '/clinical/patients/pp-1/prescriptions');
+    expect(second.request.params.get('offset')).toBe('50');
+    second.flush(null, { status: 503, statusText: 'Service Unavailable' });
+    harness.detectChanges();
+    expect(harness.routeNativeElement?.querySelector('[role="alert"]')?.textContent)
+      .toContain('No pudimos cargar más recetas');
+
+    harness.routeNativeElement?.querySelector<HTMLButtonElement>('[role="alert"] button')?.click();
+    const retry = http.expectOne((r) => r.url === '/clinical/patients/pp-1/prescriptions');
+    expect(retry.request.params.get('offset')).toBe('50');
+    retry.flush({
+      items: [{ id: 'm-old', medication: 'Ibuprofeno', status: 'Emitida',
+        issuedAt: '2025-02-01T11:00:00.000Z', doseText: '400 mg' }],
+      total: 51, offset: 50, limit: 50,
+    });
+    harness.detectChanges();
+    expect(harness.routeNativeElement?.textContent).toContain('Ibuprofeno');
+  });
+
+  it('al cambiar a un dependiente carga su historia y no mezcla formularios del titular', async () => {
+    await montar();
+    responder();
+    const contexto = TestBed.inject(PatientContextService);
+    contexto.addDependent({ id: 'proxy-1', patientProfileId: 'pp-child', personId: 'pp-child',
+      fullName: 'Lucía Pérez', relationshipCode: 'CHILD', relationshipDisplay: 'Hijo/a',
+      isLegalGuardian: true });
+    contexto.selectPatient('pp-child');
+    harness.detectChanges();
+    http.expectOne((r) => r.url === '/clinical/patients/pp-child/summary').flush({
+      ...RESUMEN, patientProfileId: 'pp-child', encounters: [],
+    });
+    http.expectOne((r) => r.url === '/terminology/concepts').flush(CONCEPTOS);
+    http.expectNone('/forms/me/instances');
+    harness.detectChanges();
+    expect(harness.routeNativeElement?.querySelector('[data-testid="historia-descargar-todo"]')).toBeNull();
+    await abrirPestana(1, false);
+    responderListadoRecetas('pp-child');
+    const downloaded = nombreDescargado();
+    harness.routeNativeElement?.querySelector<HTMLButtonElement>(
+      '[data-testid="historia-descargar-historico-recetas"]',
+    )?.click();
+    http.expectOne('/clinical/patients/pp-child/prescriptions/history.pdf')
+      .flush(new Blob([], { type: 'application/pdf' }));
+    await downloaded;
   });
 
   /* ---- B.3 · el PDF oficial de la receta, desde la API ------------------- */
@@ -324,7 +453,7 @@ describe('MedicalRecord', () => {
 
     expect(dataUrl).toMatch(/^data:application\/pdf;base64,/);
     expect(fileName).toBe('receta-m-1.pdf');
-    expect(toasts.success).toHaveBeenCalledWith('Descarga iniciada exitosamente', 'Receta oficial');
+    expect(toasts.success).toHaveBeenCalledWith('Descarga iniciada exitosamente', 'Receta');
   });
 
   it('si la API falla, avisa el error y el botón vuelve a estar disponible', async () => {
@@ -344,8 +473,8 @@ describe('MedicalRecord', () => {
     harness.detectChanges();
 
     expect(toasts.error).toHaveBeenCalledWith(
-      'No pudimos descargar la receta oficial. Reintentá en un momento.',
-      'Receta oficial',
+      'No pudimos descargar la receta. Reintentá en un momento.',
+      'Receta',
     );
     expect(toasts.success).not.toHaveBeenCalled();
     // El botón no queda trabado: una segunda descarga sí sale a la red.
@@ -434,7 +563,7 @@ describe('MedicalRecord', () => {
 
     const boton = [
       ...(harness.routeNativeElement?.querySelectorAll('button[app-button]') ?? []),
-    ].find((b) => (b.textContent ?? '').includes('historia completa')) as HTMLButtonElement;
+    ].find((b) => (b.textContent ?? '').includes('resumen clínico')) as HTMLButtonElement;
     expect(boton).toBeDefined();
     boton.click();
     harness.detectChanges();
@@ -453,7 +582,7 @@ describe('MedicalRecord', () => {
 
     const boton = [
       ...(harness.routeNativeElement?.querySelectorAll('button[app-button]') ?? []),
-    ].find((b) => (b.textContent ?? '').includes('historia completa')) as HTMLButtonElement;
+    ].find((b) => (b.textContent ?? '').includes('resumen clínico')) as HTMLButtonElement;
     boton.click();
     harness.detectChanges();
 
@@ -560,6 +689,7 @@ describe('MedicalRecord', () => {
     harness = await RouterTestingHarness.create();
     await harness.navigateByUrl('/my-account/medical-record?seccion=recetas', MedicalRecord);
     responder();
+    responderListadoRecetas();
 
     const raiz = harness.routeNativeElement;
     expect(

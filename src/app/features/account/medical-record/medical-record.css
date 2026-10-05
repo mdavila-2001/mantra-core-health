@@ -146,3 +146,34 @@
   font-size: var(--fs-caption);
   margin: 0;
 }
+
+.historia__item--receta {
+  border-inline-start: 3px solid var(--color-primary, #0b557e);
+  gap: var(--sp-4);
+  box-shadow: 0 2px 10px rgb(11 85 126 / 6%);
+}
+
+.historia__item--receta .historia__principal {
+  font-size: var(--fs-h4, 1.05rem);
+}
+
+.historia__descarga-recetas {
+  display: grid;
+  gap: var(--sp-2);
+  justify-items: start;
+  padding: var(--sp-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+}
+
+@media (max-width: 47.99rem) {
+  .historia__descarga-recetas {
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: stretch;
+  }
+
+  .historia__descarga-recetas button {
+    inline-size: 100%;
+  }
+}
