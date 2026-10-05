@@ -107,7 +107,11 @@ async function setup(page: Page, scenario: Scenario = 'data') {
         if (scenario === 'loading') return;
         if (scenario === 'error') {
           status = 500;
-          json = { message: 'Error sintético', requestId: 'synthetic-request' };
+          json = {
+            code: 'INTERNAL',
+            message: 'Error sintético',
+            correlationId: 'synthetic-request',
+          };
         } else
           json = {
             items:
@@ -230,6 +234,15 @@ test.describe('Directorio de pacientes @ui-mock', () => {
     ).toBeVisible();
     expect(requests.at(-1)?.body['search']).toBe('sin coincidencia');
     await expect(page).toHaveURL(new RegExp(`${route}$`));
+    for (const theme of ['light', 'dark']) {
+      if (theme === 'dark')
+        await page.getByRole('switch', { name: 'Cambiar a modo oscuro', exact: true }).click();
+      await search.focus();
+      await page.screenshot({
+        path: path.join(evidence, `directory-filter-empty-${theme}.png`),
+        fullPage: true,
+      });
+    }
     await page.getByRole('button', { name: 'Restablecer filtros', exact: true }).click();
     await expect(search).toHaveValue('');
     await expect(page.getByTestId('directory-count')).toContainText('42');
