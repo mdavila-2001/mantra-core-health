@@ -5,7 +5,7 @@ import { INSTITUCION_FUERA_DE_CATALOGO } from './instituciones-educativas';
 import {
   PAIS_FUERA_DE_CATALOGO,
   PadronDeUniversidades,
-  ciudadAlCambiarDeUniversidad,
+  ciudadAlElegirUniversidad,
   eleccionDesdeTexto,
 } from './padron-de-universidades';
 
@@ -68,40 +68,76 @@ describe('PadronDeUniversidades', () => {
     expect(servicio.estado()).toBe('listo');
   });
 
-  it('una universidad boliviana de sede única trae su ciudad; el resto, ninguna', async () => {
+  it('las ciudades de una universidad son sus sedes, la principal primero', async () => {
     const servicio = padron();
     await servicio.cargar();
 
-    expect(servicio.ciudadDe('Bolivia', 'Universidad Mayor de San Simón')).toBe('Cochabamba');
-    expect(servicio.ciudadDe('Bolivia', 'Universidad Mayor de San Andrés')).toBe('La Paz');
-    // La etiqueta las ubica por departamento; la ciudad es la de la sede.
-    expect(servicio.ciudadDe('Bolivia', 'Universidad Autónoma del Beni José Ballivián')).toBe(
-      'Trinidad',
+    expect(servicio.ciudadesDe('Bolivia', 'Universidad Privada de Santa Cruz de la Sierra')).toEqual(
+      ['Santa Cruz de la Sierra'],
     );
-    // Con sedes en varias ciudades no hay una que proponer.
-    expect(servicio.ciudadDe('Bolivia', 'Universidad Católica Boliviana San Pablo')).toBe('');
-    // El padrón importado no trae ciudad, y lo que no figura tampoco.
-    expect(servicio.ciudadDe('Argentina', 'Universidad de Buenos Aires')).toBe('');
-    expect(servicio.ciudadDe('Bolivia', 'Universidad de la Atlántida')).toBe('');
-    expect(servicio.ciudadDe('', 'Universidad Mayor de San Simón')).toBe('');
+    expect(servicio.ciudadesDe('Bolivia', 'Universidad Católica Boliviana San Pablo')).toEqual([
+      'La Paz',
+      'Cochabamba',
+      'Santa Cruz de la Sierra',
+      'Tarija',
+      'Sucre',
+    ]);
+    // Lo que no figura en el padrón no tiene ciudad: no se inventa.
+    expect(servicio.ciudadesDe('Bolivia', 'Universidad de la Atlántida')).toEqual([]);
+    expect(servicio.ciudadesDe('', 'Universidad Mayor de San Simón')).toEqual([]);
   });
 
-  describe('ciudadAlCambiarDeUniversidad', () => {
-    it('vacía, toma la de la universidad elegida', () => {
-      expect(ciudadAlCambiarDeUniversidad('', '', 'Cochabamba')).toBe('Cochabamba');
-      expect(ciudadAlCambiarDeUniversidad('   ', '', 'Cochabamba')).toBe('Cochabamba');
+  describe('el filtro de salud (propietario, 04/10/2026)', () => {
+    const nombres = (opciones: readonly { value: string }[]): string[] =>
+      opciones.map((o) => o.value);
+
+    it('la UPSA entra en un título de salud por Psicología, aunque no tenga Medicina', () => {
+      const servicio = padron();
+      const deSalud = nombres(servicio.opcionesDeUniversidad('Bolivia', 'salud'));
+      expect(deSalud).toContain('Universidad Privada de Santa Cruz de la Sierra');
+      // Sin ninguna carrera de salud no entra.
+      expect(deSalud).not.toContain('Escuela Militar de Ingeniería');
+      expect(deSalud).not.toContain('Universidad Real de La Paz');
     });
 
-    it('si seguía siendo la propuesta, pasa a la de la nueva, aunque sea ninguna', () => {
-      expect(ciudadAlCambiarDeUniversidad('Cochabamba', 'Cochabamba', 'La Paz')).toBe('La Paz');
-      expect(ciudadAlCambiarDeUniversidad('Cochabamba', 'Cochabamba', '')).toBe('');
-    });
-
-    it('lo escrito a mano no se pisa', () => {
-      expect(ciudadAlCambiarDeUniversidad('Quillacollo', 'Cochabamba', 'La Paz')).toBe(
-        'Quillacollo',
+    it('un médico no ve la UPSA; un psicólogo sí', () => {
+      const servicio = padron();
+      expect(nombres(servicio.opcionesDeUniversidad('Bolivia', 'Medicina'))).not.toContain(
+        'Universidad Privada de Santa Cruz de la Sierra',
       );
-      expect(ciudadAlCambiarDeUniversidad('Quillacollo', '', 'La Paz')).toBe('Quillacollo');
+      expect(nombres(servicio.opcionesDeUniversidad('Bolivia', 'Psicología'))).toContain(
+        'Universidad Privada de Santa Cruz de la Sierra',
+      );
+    });
+
+    it('sin filtro —«Otra profesión»— se ofrecen todas', () => {
+      const servicio = padron();
+      expect(nombres(servicio.opcionesDeUniversidad('Bolivia', null))).toContain(
+        'Escuela Militar de Ingeniería',
+      );
+    });
+
+    it('«Otra institución…» sigue al final con cualquier filtro', () => {
+      const servicio = padron();
+      expect(servicio.opcionesDeUniversidad('Bolivia', 'Medicina').at(-1)?.value).toBe(
+        INSTITUCION_FUERA_DE_CATALOGO,
+      );
+    });
+  });
+
+  describe('ciudadAlElegirUniversidad', () => {
+    it('toma la sede principal de la universidad elegida', () => {
+      expect(ciudadAlElegirUniversidad('', ['Cochabamba', 'Punata'])).toBe('Cochabamba');
+    });
+
+    it('conserva la elegida si sigue siendo una de las sedes', () => {
+      expect(ciudadAlElegirUniversidad('Montero', ['Santa Cruz de la Sierra', 'Montero'])).toBe(
+        'Montero',
+      );
+    });
+
+    it('si la universidad no tiene sede conocida, queda vacía: no se inventa', () => {
+      expect(ciudadAlElegirUniversidad('La Paz', [])).toBe('');
     });
   });
 

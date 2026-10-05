@@ -34,7 +34,6 @@ import type { ViewState } from '../../../../core/view-state/view-state.types';
 import { LocationPicker } from '../../../auth/registro-compartido/location-picker/location-picker';
 import { SiteBankQrDialog } from './site-bank-qr-dialog/site-bank-qr-dialog';
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
-import { Badge } from '../../../../shared/components/atoms/badge/badge';
 import { Card } from '../../../../shared/components/molecules/card/card';
 import { DialogService } from '../../../../shared/components/molecules/dialog/dialog-service';
 import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
@@ -55,7 +54,6 @@ import { DataTable } from '../../../../shared/components/organisms/data-table/da
 import type { ColumnDef } from '../../../../shared/components/organisms/data-table/data-table.types';
 import {
   FilterBar,
-  type FilterDef,
 } from '../../../../shared/components/organisms/filter-bar/filter-bar';
 import { Pagination } from '../../../../shared/components/molecules/pagination/pagination';
 
@@ -123,7 +121,6 @@ import { Pagination } from '../../../../shared/components/molecules/pagination/p
     Alert,
     AppButton,
     AppMap,
-    Badge,
     Card,
     ContentDialog,
     DataTable,
@@ -409,6 +406,32 @@ export class WorkHistory implements OnInit {
      estado de aprobación: el vínculo queda **declarado por vos**, que es
      exactamente lo que `avisoDelVinculo` ya sabe contar. */
 
+  /**
+   * Si está abierto el panel de «Agregar lugar de atención».
+   *
+   * Una sola puerta (propietario, 04/10/2026): primero se busca el lugar en el
+   * padrón oficial —casi siempre ya existe— y, si no está, se carga uno propio.
+   * Antes eran dos puertas («Agregar mi consultorio propio» y «¿Atendés en un
+   * consultorio, clínica u hospital?») que obligaban a decidir de antemano qué
+   * clase de lugar era.
+   */
+  protected readonly agregandoLugar = signal(false);
+
+  protected abrirAgregarLugar(): void {
+    this.agregandoLugar.set(true);
+  }
+
+  protected cerrarAgregarLugar(): void {
+    this.agregandoLugar.set(false);
+    this.lugarElegido.set(null);
+  }
+
+  /** «No está en la lista»: el formulario del lugar propio, que ya existía. */
+  protected cargarLugarPropio(): void {
+    this.agregandoLugar.set(false);
+    this.abrirAltaDeSede();
+  }
+
   /** Lo que devolvió el padrón para este buscador. */
   protected readonly lugaresDelPadron = signal<readonly ReferenceOption[]>([]);
   protected readonly buscandoLugar = signal(false);
@@ -454,25 +477,17 @@ export class WorkHistory implements OnInit {
 
   /* -- Tabla, barra y paginación de «Dónde atiendo» (ADR-0015, H4.S1) ------ */
 
-  /** El filtro «Tipo»: sólo dos valores del value set cerrado propio, no un catálogo. */
-  protected readonly filtrosSedes: readonly FilterDef[] = [
-    {
-      key: 'tipo',
-      label: 'Tipo',
-      options: [
-        { value: 'propio', label: 'Tu consultorio' },
-        { value: 'ajeno', label: 'Trabajás acá' },
-      ],
-    },
-  ];
-
   protected readonly busquedaSedes = signal('');
-  protected readonly filtroTipoSedes = signal<string | null>(null);
   protected readonly paginaSedes = signal(1);
   protected readonly tamanoPaginaSedes = signal(10);
 
   /**
-   * Sedes filtradas por nombre/dirección (normalizado) y por tipo.
+   * Sedes filtradas por nombre/dirección (normalizado).
+   *
+   * Sin filtro por tipo desde el 04/10/2026: «Tu consultorio / Trabajás acá»
+   * obligaba a entender una distinción interna y sugería que un lugar sirve
+   * para una cosa y otro para otra. Un lugar de atención es un lugar de
+   * atención (propietario).
    *
    * Todo en cliente: con un consultorio propio y unas pocas ajenas, pedirle al
    * servidor una página a la vez sería una petición por tecla para una lista
@@ -481,14 +496,7 @@ export class WorkHistory implements OnInit {
    */
   protected readonly sedesFiltradas = computed<readonly PracticeSite[]>(() => {
     const termino = normalizarTexto(this.busquedaSedes());
-    const tipo = this.filtroTipoSedes();
     return this.sedes().filter((sede) => {
-      if (tipo === 'propio' && sede.isOwnSite !== true) {
-        return false;
-      }
-      if (tipo === 'ajeno' && sede.isOwnSite === true) {
-        return false;
-      }
       if (termino === '') {
         return true;
       }
@@ -511,8 +519,6 @@ export class WorkHistory implements OnInit {
 
   private readonly celdaNombreSede =
     viewChild.required<TemplateRef<{ $implicit: PracticeSite }>>('celdaNombreSede');
-  private readonly celdaTipoSede =
-    viewChild.required<TemplateRef<{ $implicit: PracticeSite }>>('celdaTipoSede');
   private readonly celdaDireccionSede =
     viewChild.required<TemplateRef<{ $implicit: PracticeSite }>>('celdaDireccionSede');
   private readonly celdaQrSede =
@@ -520,10 +526,9 @@ export class WorkHistory implements OnInit {
   private readonly celdaAccionesSede =
     viewChild.required<TemplateRef<{ $implicit: PracticeSite }>>('celdaAccionesSede');
 
-  /** Columnas de H4.S1.M1: nombre, tipo (la insignia), dirección, QR, acciones. */
+  /** Columnas: nombre, dirección, QR y acciones. Sin «Tipo» (propietario, 04/10/2026). */
   protected readonly columnasSedes = computed<readonly ColumnDef<PracticeSite>[]>(() => [
     { key: 'name', header: 'Nombre', priority: 1, cell: this.celdaNombreSede() },
-    { key: 'isOwnSite', header: 'Tipo', priority: 1, cell: this.celdaTipoSede() },
     { key: 'addressText', header: 'Dirección', priority: 2, cell: this.celdaDireccionSede() },
     { key: 'bankQrFileId', header: 'QR bancario', priority: 2, cell: this.celdaQrSede() },
     { key: 'acciones', header: 'Acciones', priority: 1, cell: this.celdaAccionesSede() },
@@ -532,10 +537,9 @@ export class WorkHistory implements OnInit {
   protected readonly porIdDeSede = (sede: PracticeSite): string => sede.id;
   protected readonly nombreAccesibleDeSede = (sede: PracticeSite): string => sede.name;
 
-  /** El único evento de `app-filter-bar`: trae el término (`q`) y el filtro `tipo` juntos. */
+  /** El único evento de `app-filter-bar`: trae el término (`q`). */
   protected onFiltrosSedesChanged(activos: Readonly<Record<string, string>>): void {
     this.busquedaSedes.set(activos['q'] ?? '');
-    this.filtroTipoSedes.set(activos['tipo'] ?? null);
     this.paginaSedes.set(1);
   }
 
@@ -1067,6 +1071,7 @@ export class WorkHistory implements OnInit {
       .subscribe({
         next: () => {
           this.vinculandoLugar.set(false);
+          this.agregandoLugar.set(false);
           this.registroDeSede.set(ready(null));
           this.lugarElegido.set(null);
           this.lugaresDelPadron.set([]);

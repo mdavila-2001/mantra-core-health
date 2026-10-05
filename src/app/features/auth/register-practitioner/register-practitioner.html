@@ -223,13 +223,27 @@
                   }
                 </div>
 
+                <!-- La ciudad sale de la universidad (propietario, 04/10/2026):
+                     un desplegable con sus sedes, fijo si tiene una sola y
+                     bloqueado si el padrón no conoce ninguna. Nunca se escribe. -->
                 <div class="registro__estudio-campo">
-                  <app-form-field label="Ciudad de estudio" hint="Opcional.">
-                    <app-input
-                      testId="registro-pro-titulo-ciudad"
-                      placeholder="La Paz"
-                      [value]="valorDeEstudio('professionalTitleCity')"
-                      (valueChange)="escribirEstudio('professionalTitleCity', $event)"
+                  <app-form-field
+                    label="Ciudad de estudio"
+                    [hint]="
+                      ciudadesDelTitulo().length === 0
+                        ? 'Sale de la universidad que elijas.'
+                        : ciudadesDelTitulo().length === 1
+                          ? 'La sede de esa universidad.'
+                          : 'Elegí en qué sede estudiaste.'
+                    "
+                  >
+                    <app-select
+                      data-testid="registro-pro-titulo-ciudad"
+                      placeholder="Sale de la universidad"
+                      [options]="ciudadesDelTitulo()"
+                      [disabled]="ciudadesDelTitulo().length <= 1"
+                      [value]="ciudadDelTitulo()"
+                      (valueChange)="elegirCiudadDelTitulo($event)"
                     />
                   </app-form-field>
                 </div>
@@ -433,9 +447,9 @@
                      El nombre, el país y la ciudad siguen visibles pero no
                      viajan; cada PDF sí queda asociado a la credencial. -->
                 <p class="registro-titulos__ayuda" data-testid="registro-pro-titulos-alcance">
-                  En esta alta se guardan el tipo, el número, la universidad y el PDF de cada
-                  título. El nombre, el país y la ciudad que completes aquí todavía no se guardan.
-                  Si falla una carga, podés reintentar y se conservan las que ya subieron.
+                  De cada título se guardan el tipo, el número, la profesión, la universidad, el
+                  país, la ciudad y el PDF. Lo único obligatorio de una fila es el número del
+                  diploma: si no lo tenés a mano, quitá la fila y cargala después desde «Mi perfil».
                 </p>
                 <!-- Sin catálogo de tipos, una fila con número no se puede
                      mandar: el contrato exige el concepto. Se avisa acá, donde
@@ -473,19 +487,51 @@
                         class="registro-titulo"
                         [attr.data-testid]="'registro-pro-fila-' + tipo.codigo"
                       >
-                        <label class="registro-titulo__campo">
-                          <span class="sr-only">Nombre de {{ tipo.singular }}</span>
-                          <input
-                            type="text"
-                            class="registro-titulo__nombre"
-                            [placeholder]="tipo.placeholderNombre"
-                            [value]="titulo.nombre"
-                            [attr.data-testid]="'registro-pro-titulo-nombre-' + titulo.id"
-                            (input)="
-                              escribirDatoDeTitulo(titulo.id, 'nombre', $any($event.target).value)
-                            "
-                          />
-                        </label>
+                        @if (tipo.codigo === 'UNIVERSITARIO') {
+                          <!-- La profesión se elige de la COB-2023 del INE: es un
+                               dato normalizado, no texto libre (propietario,
+                               04/10/2026). -->
+                          <div class="registro-titulo__campo">
+                            <app-reference-combobox
+                              [attr.data-testid]="'registro-pro-titulo-profesion-' + titulo.id"
+                              label="Profesión"
+                              placeholder="Buscá la carrera: abogado, ingeniero civil…"
+                              emptyMessage="Ninguna profesión de la clasificación oficial coincide."
+                              [options]="profesionesDeFila(titulo.id)"
+                              [selected]="profesionElegidaDeFila(titulo)"
+                              [minQueryLength]="0"
+                              (searched)="buscarProfesionEnFila(titulo.id, $event)"
+                              (selectionChange)="elegirProfesionEnFila(titulo.id, $event)"
+                            />
+                            @if (catalogoProfesionesCaido()) {
+                              <p class="registro__catalogo-caido">
+                                No pudimos traer la lista de profesiones.
+                                <button
+                                  app-button
+                                  variant="ghost"
+                                  size="sm"
+                                  (clicked)="reintentarProfesiones()"
+                                >
+                                  Reintentar
+                                </button>
+                              </p>
+                            }
+                          </div>
+                        } @else {
+                          <label class="registro-titulo__campo">
+                            <span class="sr-only">Nombre de {{ tipo.singular }}</span>
+                            <input
+                              type="text"
+                              class="registro-titulo__nombre"
+                              [placeholder]="tipo.placeholderNombre"
+                              [value]="titulo.nombre"
+                              [attr.data-testid]="'registro-pro-titulo-nombre-' + titulo.id"
+                              (input)="
+                                escribirDatoDeTitulo(titulo.id, 'nombre', $any($event.target).value)
+                              "
+                            />
+                          </label>
+                        }
 
                         <!-- El número del diploma. Es el único obligatorio de la
                              fila: la columna que lo recibe es NOT NULL, así que
@@ -589,19 +635,17 @@
                             }
                           </div>
 
-                          <label class="registro-titulo__campo">
-                            <span class="sr-only">Ciudad de {{ tipo.singular }}</span>
-                            <input
-                              type="text"
-                              class="registro-titulo__dato"
-                              placeholder="Ciudad"
-                              [value]="titulo.ciudad"
+                          <div class="registro-titulo__estudio-campo">
+                            <app-select
+                              [ariaLabel]="'Ciudad de ' + tipo.singular"
+                              placeholder="Ciudad: sale de la universidad"
+                              [options]="ciudadesDeFila(titulo)"
+                              [disabled]="ciudadesDeFila(titulo).length <= 1"
+                              [value]="titulo.ciudad || null"
                               [attr.data-testid]="'registro-pro-titulo-ciudad-' + titulo.id"
-                              (input)="
-                                escribirDatoDeTitulo(titulo.id, 'ciudad', $any($event.target).value)
-                              "
+                              (valueChange)="elegirCiudadEnFila(titulo.id, $event)"
                             />
-                          </label>
+                          </div>
                         </div>
                         <app-file-input
                           [files]="attachmentFiles()[titulo.id] ?? []"
@@ -639,6 +683,18 @@
                 }
                 @if (errorAdjunto(); as error) {
                   <p class="registro-titulos__error" role="alert">{{ error }}</p>
+                }
+                <!-- El resumen del paso: QUÉ sección está incompleta, con su
+                     nombre visible. El motor no deja pasar a «Siguiente»
+                     mientras esté (control `academicTitles`). -->
+                @if (avisoDeTitulosIncompletos(); as aviso) {
+                  <p
+                    class="registro-titulos__error"
+                    role="alert"
+                    data-testid="registro-pro-titulos-incompletos"
+                  >
+                    {{ aviso }}
+                  </p>
                 }
               </div>
             </ng-template>
