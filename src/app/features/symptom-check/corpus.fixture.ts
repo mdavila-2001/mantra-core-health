@@ -612,4 +612,13 @@ export const BANCO: readonly CasoDelBanco[] = [
   { texto: 'tengo la diabetes sin control', sintomas: ['azucar-alta'] },
   { texto: 'ando de curso todo el dia', sintomas: ['diarrea'] },
   { texto: 'quiero hacer un curso de primeros auxilios', sintomas: [] },
+  /* --- Cierre: lo que seguía cayendo en Medicina general (2026-10-05) ------ */
+  { texto: 'tengo que chequear la cocina veinte veces antes de salir', sintomas: ['obsesiones'] },
+  { texto: 'ya no aguanto a mi jefe, me tiene podrido', sintomas: ['ansiedad'] },
+  { texto: 'tengo comezon en los pies entre los dedos', sintomas: ['hongos'] },
+  { texto: 'tengo la presion por las nubes', sintomas: ['presion-alta'] },
+  // «chequear» solo es un control médico, no una compulsión; «mi jefe» solo no es un síntoma.
+  { texto: 'quiero chequear mi presion', sintomas: [] },
+  { texto: 'mi jefe me dio un aumento', sintomas: [] },
+  { texto: 'vi a mi jefe en la clinica', sintomas: [] },
 ];
