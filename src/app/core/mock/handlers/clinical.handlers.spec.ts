@@ -7,6 +7,32 @@ import { buscarUsuario, type MockUser } from '../mock-session';
 import { registrarClinica } from './clinical.handlers';
 import { registrarDiagnostico } from './diagnostics.handlers';
 
+describe('histórico de recetas del paciente en el mock', () => {
+  const router = new MockRouter();
+  registrarClinica(router);
+  const paciente = buscarUsuario('paciente')!;
+
+  function get(path: string, user: MockUser = paciente): unknown {
+    const url = new URL(path, 'http://localhost');
+    const route = router.match('GET', url.pathname);
+    if (!route) throw new Error(`Falta ruta ${path}`);
+    return route.handler({ method: 'GET', path: url.pathname, params: route.params,
+      query: url.searchParams, body: null, headers: new HttpHeaders(), user });
+  }
+
+  it('lista solo recetas emitidas y ofrece el PDF consolidado', () => {
+    const page = get(`/clinical/patients/${PACIENTE.id}/prescriptions?offset=0&limit=1`) as {
+      items: { issuedAt: string }[]; total: number;
+    };
+    expect(page.items).toHaveLength(1);
+    expect(page.items[0]?.issuedAt).toBeTruthy();
+    expect(page.total).toBeGreaterThan(0);
+    const response = get(`/clinical/patients/${PACIENTE.id}/prescriptions/history.pdf`) as MockReply;
+    expect(response.status).toBe(200);
+    expect(response.headers?.['Cache-Control']).toBe('private, no-store');
+  });
+});
+
 interface OrdenWire {
   readonly id: string;
   readonly codeConceptId: string;

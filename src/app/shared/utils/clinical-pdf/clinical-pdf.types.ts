@@ -203,6 +203,8 @@ export interface HistoriaAtencion {
  */
 export interface DocumentoDeHistoria {
   readonly paciente: DocumentoPaciente;
+  /** Advierte que alguna fuente quedó recortada o no pudo leerse. */
+  readonly avisoDeIntegridad?: string;
   /** Edad ya calculada, en palabras. La aritmética no se hace en el papel. */
   readonly edad?: string;
   /** Organización que emite la copia, si la sesión pertenece a una. */

@@ -444,6 +444,33 @@ describe('ClinicalClient', () => {
     await expect(recibido).resolves.toMatchObject({ fileName: 'receta-rx-1.pdf' });
   });
 
+  it('lista el histórico paginado y convierte sus fechas', async () => {
+    const result = new Promise<import('./clinical.client').PrescriptionHistoryPage>((resolve) => {
+      client.listPrescriptionHistory('pp-1', 50).subscribe(resolve);
+    });
+    const request = http.expectOne((r) => r.url === '/clinical/patients/pp-1/prescriptions');
+    expect(request.request.params.get('offset')).toBe('50');
+    request.flush({ items: [{ id: 'rx-1', medication: 'Amoxicilina', status: 'Emitida',
+      issuedAt: '2026-03-01T11:00:00.000Z', validTo: '2026-03-20T11:00:00.000Z' }],
+      total: 51, offset: 50, limit: 50 });
+    const page = await result;
+    expect(page.total).toBe(51);
+    expect(page.items[0]?.issuedAt).toBeInstanceOf(Date);
+    expect(page.items[0]?.validTo).toBeInstanceOf(Date);
+  });
+
+  it('descarga el PDF del histórico completo con el nombre sugerido', async () => {
+    const result = new Promise<{ blob: Blob; fileName?: string }>((resolve) => {
+      client.downloadPrescriptionHistoryPdf('pp-1').subscribe(resolve);
+    });
+    const request = http.expectOne('/clinical/patients/pp-1/prescriptions/history.pdf');
+    expect(request.request.responseType).toBe('blob');
+    request.flush(new Blob(['%PDF'], { type: 'application/pdf' }), {
+      headers: { 'Content-Disposition': 'attachment; filename="historial-recetas.pdf"' },
+    });
+    expect((await result).fileName).toBe('historial-recetas.pdf');
+  });
+
   it('downloadPrescriptionPdf escapa el identificador de la receta', () => {
     client.downloadPrescriptionPdf('rx/1').subscribe();
 

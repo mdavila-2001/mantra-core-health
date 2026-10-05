@@ -39,6 +39,26 @@ const VIEWPORTS = [
 const esRuidoDelServidorDeDesarrollo = (error: string): boolean =>
   error.includes('Content Security Policy') && error.includes('inline script');
 
+test('Mi historia clínica no desborda a 320 ni 390 px', async ({ page }) => {
+  await entrar(page, PACIENTE);
+  await irA(page, '/my-account/medical-record?seccion=recetas');
+  await estable(page);
+  await expect(page.getByTestId('historia-recetas')).toBeVisible({ timeout: 30_000 });
+
+  for (const width of [320, 390]) {
+    await page.setViewportSize({ width, height: 844 });
+    const medidas = await page.evaluate(() => ({
+      anchoVisible: document.documentElement.clientWidth,
+      anchoDocumento: document.documentElement.scrollWidth,
+    }));
+    expect(
+      medidas.anchoDocumento,
+      `desborde horizontal en ${width}px: ${medidas.anchoDocumento} > ${medidas.anchoVisible}`,
+    ).toBeLessThanOrEqual(medidas.anchoVisible + 1);
+    await expect(page.getByTestId('historia-descargar-historico-recetas')).toBeVisible();
+  }
+});
+
 test('el botón de la receta oficial descarga un PDF real, en dos anchos, sin errores propios', async ({
   browser,
 }) => {

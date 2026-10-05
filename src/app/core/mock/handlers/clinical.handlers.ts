@@ -21,7 +21,7 @@ import {
   type NotaSimulada,
   type RecetaSimulada,
 } from '../fixtures/clinica';
-import { CLASE_ENCUENTRO, ESPECIALIDAD, ESTADO, ESTADO_CONDICION, ESTADO_ENCUENTRO, ESTADO_RECETA, INTENCION_DEL_PLAN, SEVERIDAD, VERIFICACION_DX } from '../fixtures/conceptos';
+import { CLASE_ENCUENTRO, ESPECIALIDAD, ESTADO, ESTADO_CONDICION, ESTADO_ENCUENTRO, ESTADO_RECETA, INTENCION_DEL_PLAN, SEVERIDAD, VERIFICACION_DX, displayDe } from '../fixtures/conceptos';
 import { MEDICA, PACIENTE, pacientePorId, profesionalPorId } from '../fixtures/personas';
 import { forbidden, notFound, preconditionFailed, type MockRequest, type MockRouter } from '../mock-router';
 import { ahora, Coleccion, cuerpo, isoDia, nuevoId, uuid } from '../mock-store';
@@ -224,16 +224,44 @@ export function registrarClinica(router: MockRouter): void {
     if (pacientePorId(id) === undefined) return notFound('Paciente no encontrado');
     if (!puedeLeer(request, id)) return forbidden('No tenés turno hoy ni vínculo vigente con esta persona');
     const limit = Number(request.query.get('limit') ?? 50) || 50;
+    const recetasDelPaciente = recetas.filtrar((r) => r.patientProfileId === id)
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
     return {
       patientProfileId: id,
       conditions: condiciones.filtrar((c) => c.patientProfileId === id).map(sinPaciente),
       allergies: alergias.filtrar((a) => a.patientProfileId === id).map(sinPaciente),
-      medicationRequests: recetas.filtrar((r) => r.patientProfileId === id).map(sinPaciente),
+      medicationRequests: recetasDelPaciente.slice(0, limit).map(sinPaciente),
       observations: observaciones.filtrar((o) => o.patientProfileId === id).sort((a, b) => b.effectiveStartAt.localeCompare(a.effectiveStartAt)).map(sinPaciente),
       encounters: encuentros.filtrar((e) => e.patientProfileId === id).sort((a, b) => b.startAt.localeCompare(a.startAt)).map(sinPaciente),
       careEpisodes: episodios.filtrar((e) => e.patientProfileId === id).map(sinPaciente),
       limit,
-      truncated: [],
+      truncated: recetasDelPaciente.length > limit ? ['medicationRequests'] : [],
+    };
+  });
+
+  router.get('/clinical/patients/:id/prescriptions', (request) => {
+    const id = request.params['id']!;
+    if (pacientePorId(id) === undefined) return notFound('Paciente no encontrado');
+    if (!puedeLeer(request, id)) return forbidden();
+    const offset = Math.max(0, Number(request.query.get('offset') ?? 0) || 0);
+    const limit = Math.min(100, Math.max(1, Number(request.query.get('limit') ?? 20) || 20));
+    const todas = recetas.filtrar((r) => r.patientProfileId === id && r.issuedAt !== null)
+      .sort((a, b) => b.issuedAt!.localeCompare(a.issuedAt!) || b.id.localeCompare(a.id));
+    return { items: todas.slice(offset, offset + limit).map((r) => ({
+      id: r.id, medication: displayDe(r.medicationConceptId), status: displayDe(r.statusConceptId),
+      issuedAt: r.issuedAt, validTo: r.validTo, doseText: r.doseText, frequencyText: r.frequencyText,
+    })), total: todas.length, offset, limit };
+  });
+
+  router.get('/clinical/patients/:id/prescriptions/history.pdf', (request) => {
+    const id = request.params['id']!;
+    if (pacientePorId(id) === undefined) return notFound('Paciente no encontrado');
+    if (!puedeLeer(request, id)) return forbidden();
+    const total = recetas.filtrar((r) => r.patientProfileId === id && r.issuedAt !== null).length;
+    return { status: 200,
+      body: new Blob([pdfMinimo(`Historial de recetas: ${total} recetas emitidas`)], { type: 'application/pdf' }),
+      headers: { 'Content-Disposition': `attachment; filename="historial-recetas-${ahora().slice(0, 10)}.pdf"`,
+        'Cache-Control': 'private, no-store' },
     };
   });
 
