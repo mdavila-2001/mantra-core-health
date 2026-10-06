@@ -665,8 +665,23 @@ const CUPO_POR_LIBERARSE = uuid('slot-a-punto-de-liberarse');
    prueba comprueba que los dos números coinciden. */
 const MINUTOS_DE_GRACIA = 10;
 
+/**
+ * El horario en que la médica atiende: fuera de él no se siembra nada. Sin este
+ * corte, abrir la maqueta de madrugada ofrecía «un turno de las 05:38» con la
+ * cardióloga, que nadie atiende a esa hora.
+ */
+const ATIENDE_DESDE_LA_HORA = 8;
+const ATIENDE_HASTA_LA_HORA = 18;
+
 function sembrarCupoPorLiberarse(): void {
-  const inicio = masMinutos(ahora(), -(MINUTOS_DE_GRACIA - 1));
+  const reloj = new Date(ahora());
+  if (reloj.getHours() < ATIENDE_DESDE_LA_HORA || reloj.getHours() >= ATIENDE_HASTA_LA_HORA) return;
+  // Empieza en un múltiplo de cinco minutos —«las 11:35», no «las 11:34»—, y
+  // redondeando hacia arriba la gracia se cumple igual entre uno y cinco
+  // minutos después de abrir: el aviso sigue llegando durante el recorrido.
+  const crudo = new Date(masMinutos(ahora(), -(MINUTOS_DE_GRACIA - 1)));
+  const cincoMin = 5 * 60_000;
+  const inicio = new Date(Math.ceil(crudo.getTime() / cincoMin) * cincoMin).toISOString();
   cupos.agregar({
     id: CUPO_POR_LIBERARSE,
     resourceId: RECURSO_MEDICA,

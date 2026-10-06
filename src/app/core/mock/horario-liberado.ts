@@ -145,7 +145,9 @@ export function avisoDeHorarioLiberado(hueco: HorarioLiberado) {
     userId: PACIENTE.userId,
     category: 'SCHEDULING' as const,
     subject: 'Se liberó un horario',
-    bodyText: `Un paciente no confirmó su cita del ${cuando(hueco.startAt)} con la ${MEDICA.professionalTitle} ${MEDICA.displayName}. Si te sirve mejor que la tuya, podés tomarla.`,
+    // «No se presentó» y no «no confirmó»: la regla de arriba libera el cupo
+    // cuando pasaron diez minutos sin que la consulta empiece, que es eso.
+    bodyText: `El paciente del ${cuando(hueco.startAt)} con la ${MEDICA.professionalTitle} ${MEDICA.displayName} no se presentó. Si te sirve antes que tu cita, podés tomar ese horario.`,
     destination: { type: 'APPOINTMENT', id: hueco.bookableSlotId },
     payloadJson: {
       kind: 'SLOT_RELEASED',

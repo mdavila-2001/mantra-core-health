@@ -36,6 +36,18 @@ const CADA_MS = 20_000;
  */
 const NO_SE_VA_SOLO = null;
 
+/**
+ * Dónde se recuerda qué avisos ya se mostraron.
+ *
+ * En `sessionStorage` y no sólo en memoria: cada recarga —o cada vez que se
+ * entra por una URL— arranca la aplicación de nuevo, y con la memoria vacía
+ * el mismo aviso volvía a saltar en cada pantalla (visto el 06/10/2026: el
+ * paciente reservaba un estudio y le aparecían, una y otra vez, dos turnos de
+ * la cardióloga que no tenían nada que ver). Una sesión, un toast por aviso; el
+ * aviso sigue en la campana.
+ */
+const CLAVE_DE_MOSTRADOS = 'mock.avisos-de-hueco.mostrados';
+
 /** Lo que distingue este aviso de los demás de su categoría. Ver `horario-liberado.ts`. */
 const CLASE_DE_AVISO = 'SLOT_RELEASED';
 
@@ -70,7 +82,7 @@ export class AvisoDeHuecoLibre {
    * notificación sigue sin leer hasta que alguien la abra, así que «no leída»
    * no alcanza como criterio de novedad.
    */
-  private readonly yaMostrados = new Set<string>();
+  private readonly yaMostrados = new Set<string>(leerMostrados());
 
   private reloj: ReturnType<typeof setInterval> | null = null;
 
@@ -80,6 +92,16 @@ export class AvisoDeHuecoLibre {
     this.reloj = setInterval(() => this.mirar(), CADA_MS);
     this.destroyRef.onDestroy(() => this.parar());
     this.mirar();
+  }
+
+  private recordar(id: string): void {
+    this.yaMostrados.add(id);
+    try {
+      sessionStorage.setItem(CLAVE_DE_MOSTRADOS, JSON.stringify([...this.yaMostrados]));
+    } catch {
+      // Sin almacenamiento (ventana privada, SSR) vale la memoria: a lo sumo
+      // se repite tras una recarga, como antes.
+    }
   }
 
   parar(): void {
@@ -93,7 +115,15 @@ export class AvisoDeHuecoLibre {
     // aplicación entera, así que también corre en el login y en lo público.
     if (!this.auth.isAuthenticated()) return;
     this.notificaciones.listMine({ unread: true, limit: 20 }).subscribe({
-      next: (pagina) => pagina.items.filter(esHuecoLibre).forEach((aviso) => this.mostrar(aviso)),
+      // Uno solo por vuelta, el más nuevo: dos o tres toasts fijos apilados
+      // tapan la pantalla. Los demás quedan dados por vistos y siguen en la
+      // campana, que es donde se elige entre varios.
+      next: (pagina) => {
+        const nuevos = pagina.items.filter(esHuecoLibre).filter((a) => !this.yaMostrados.has(a.id));
+        const [masNuevo] = [...nuevos].sort((a, b) => String(b.availableAt).localeCompare(String(a.availableAt)));
+        if (masNuevo !== undefined) this.mostrar(masNuevo);
+        for (const otro of nuevos) this.recordar(otro.id);
+      },
       // Un sondeo que falla no dice nada: es una comodidad de la maqueta, no
       // una lectura que alguien esté esperando. La campana sigue mostrando lo
       // que haya cuando se la abra.
@@ -113,13 +143,23 @@ export class AvisoDeHuecoLibre {
    */
   private mostrar(aviso: InAppNotification): void {
     if (this.yaMostrados.has(aviso.id)) return;
-    this.yaMostrados.add(aviso.id);
+    this.recordar(aviso.id);
     this.toasts.show({
       type: 'info',
       title: aviso.subject ?? 'Se liberó un horario',
       message: aviso.bodyText ?? '',
       durationMs: NO_SE_VA_SOLO,
     });
+  }
+}
+
+function leerMostrados(): string[] {
+  try {
+    const crudo = sessionStorage.getItem(CLAVE_DE_MOSTRADOS);
+    const lista: unknown = crudo === null ? [] : JSON.parse(crudo);
+    return Array.isArray(lista) ? lista.filter((x): x is string => typeof x === 'string') : [];
+  } catch {
+    return [];
   }
 }
 
