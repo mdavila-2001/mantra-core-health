@@ -1,6 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, inject, signal, type OnInit } from '@angular/core';
-import { RouterLink } from '@angular/router';
 
 import { CenterScheduleClient } from '../../../core/data-access/diagnostic-units/center-schedule.client';
 import {
@@ -21,6 +20,7 @@ import type {
 } from '../../../core/data-access/diagnostic-units/center-schedule.types';
 import { MODALIDADES, modalidad, type ModalityCode } from '../../../core/data-access/diagnostic-units/modalidades';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
+import { NavigationService } from '../../../core/navigation/navigation.service';
 import { loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AppButton } from '../../../shared/components/atoms/button/button';
@@ -32,6 +32,7 @@ import { Tab } from '../../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../../shared/components/molecules/tabs/tabs';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
+import { GlossaryDataFlow } from '../../glossary/glossary-data-flow';
 import { ScheduleBlockEditor } from './schedule-block-editor';
 
 /* ============================================================================
@@ -83,19 +84,25 @@ const ETIQUETA_DE_ESTADO: Readonly<Record<EquipmentStatus, string>> = {
 
 @Component({
   selector: 'app-center-schedule',
-  imports: [RouterLink, PageHeader, ViewStateHost, Card, Tabs, Tab, SegmentedControl, AppButton, Alert, ScheduleBlockEditor],
+  imports: [PageHeader, ViewStateHost, Card, Tabs, Tab, SegmentedControl, AppButton, Alert, ScheduleBlockEditor, GlossaryDataFlow],
   templateUrl: './center-schedule.html',
   styleUrl: './center-schedule.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CenterSchedulePage implements OnInit {
   private readonly cliente = inject(CenterScheduleClient);
+  private readonly navegacion = inject(NavigationService);
 
   protected readonly estado = signal<ViewState<CenterScheduleView>>(loading());
   protected readonly borrador = signal<CenterSchedule | null>(null);
   protected readonly pestana = signal(0);
   protected readonly guardando = signal(false);
   protected readonly publicado = signal(false);
+
+  /** Los equipos con su mapa de datos desplegado: se lee al abrirlo, no antes. */
+  protected readonly mapasAbiertos = signal<ReadonlySet<string>>(new Set());
+  /** El Glosario es de quien atiende; sin él, el mapa se lee sin enlaces. */
+  protected readonly veGlosario = computed(() => this.navegacion.visibleSections().some((s) => s.path === 'glossary'));
   protected readonly problemas = signal<readonly string[]>([]);
   protected readonly cambiandoEquipo = signal<string | null>(null);
 
@@ -315,6 +322,16 @@ export class CenterSchedulePage implements OnInit {
 
   protected nombreDeModalidad(code: ModalityCode): string {
     return modalidad(code).label;
+  }
+
+  protected alternarMapa(equipoId: string, evento: Event): void {
+    const abierto = (evento.target as HTMLDetailsElement).open;
+    this.mapasAbiertos.update((actual) => {
+      const nuevo = new Set(actual);
+      if (abierto) nuevo.add(equipoId);
+      else nuevo.delete(equipoId);
+      return nuevo;
+    });
   }
 }
 

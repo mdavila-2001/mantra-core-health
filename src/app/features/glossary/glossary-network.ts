@@ -33,6 +33,9 @@ const RELATION_LABELS: Readonly<Record<GlossaryRelationType, string>> = {
   DIAGNOSTIC_TEST: 'Prueba diagnóstica',
   RELATED_TERM: 'Término relacionado',
   SPECIALTY: 'Especialidad médica',
+  INCLUDES: 'Incluye',
+  PERFORMS: 'Realiza',
+  SENDS_DATA_TO: 'Envía datos a',
 };
 
 const RELATION_COLORS: Readonly<Record<GlossaryRelationType, string>> = {
@@ -44,6 +47,9 @@ const RELATION_COLORS: Readonly<Record<GlossaryRelationType, string>> = {
   DIAGNOSTIC_TEST: '#3977a8',
   RELATED_TERM: '#667085',
   SPECIALTY: '#6b5dd3',
+  INCLUDES: '#2f6f8f',
+  PERFORMS: '#8a5a12',
+  SENDS_DATA_TO: '#1d7a52',
 };
 
 interface PuntoDeGrafo {

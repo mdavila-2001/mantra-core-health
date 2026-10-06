@@ -177,7 +177,12 @@
                             <p class="seccion__ayuda">{{ e.manufacturer }} {{ e.model }}</p>
                           }
                           @if (e.glossaryConceptId) {
-                            <a class="equipo__mapa" [routerLink]="['/glossary', e.glossaryConceptId]">Cómo se conectan sus datos</a>
+                            <details class="equipo__mapa" (toggle)="alternarMapa(e.id, $event)">
+                              <summary>Cómo se conectan sus datos</summary>
+                              @if (mapasAbiertos().has(e.id)) {
+                                <app-glossary-data-flow [conceptoId]="e.glossaryConceptId" [enlazar]="veGlosario()" />
+                              }
+                            </details>
                           }
                         </div>
                         <app-segmented-control
@@ -202,7 +207,12 @@
                         <div class="equipo__datos">
                           <p class="equipo__nombre">{{ e.name }}</p>
                           @if (e.glossaryConceptId) {
-                            <a class="equipo__mapa" [routerLink]="['/glossary', e.glossaryConceptId]">Cómo se conectan sus datos</a>
+                            <details class="equipo__mapa" (toggle)="alternarMapa(e.id, $event)">
+                              <summary>Cómo se conectan sus datos</summary>
+                              @if (mapasAbiertos().has(e.id)) {
+                                <app-glossary-data-flow [conceptoId]="e.glossaryConceptId" [enlazar]="veGlosario()" />
+                              }
+                            </details>
                           }
                         </div>
                         <span class="seccion__ayuda">{{ etiquetaDeEstado(e.status) }}</span>

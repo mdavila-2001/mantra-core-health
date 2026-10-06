@@ -217,6 +217,15 @@
   color: var(--text-primary);
 }
 
+.equipo__mapa summary {
+  cursor: pointer;
+}
+
+.equipo__mapa app-glossary-data-flow {
+  margin-block-start: var(--sp-2);
+  font-size: var(--fs-body);
+}
+
 .equipo__mapa {
   color: var(--text-link);
   font-size: var(--fs-caption);
