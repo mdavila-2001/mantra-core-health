@@ -32,7 +32,6 @@ import {
 } from '../clinical-record/clinical-record.routes';
 import { ClinicalClient } from '../../core/data-access/clinical/clinical.client';
 import { SchedulingClient } from '../../core/data-access/scheduling/scheduling.client';
-// El sello de reconsulta (C4).
 import { esReconsulta } from '../../core/data-access/scheduling/scheduling.types';
 import type {
   AgendaResource,
@@ -42,7 +41,6 @@ import type {
   PaymentStateCode,
   PaymentStateInfo,
 } from '../../core/data-access/scheduling/scheduling.types';
-// hasta que C0 publique los tipos congelados.
 import { TerminologyClient } from '../../core/data-access/terminology/terminology.client';
 import type { ConceptLabels } from '../../core/data-access/terminology/terminology.types';
 import { errorToViewState } from '../../core/http/error-to-view-state';
@@ -3116,4 +3114,3 @@ function cuenta<T>(estado: ViewState<readonly T[]>): number | null {
 function rotulo(nombre: string, total: number | null): string {
   return total === null ? nombre : `${nombre} (${total})`;
 }
-
