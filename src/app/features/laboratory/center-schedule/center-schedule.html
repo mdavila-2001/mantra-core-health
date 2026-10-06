@@ -1,0 +1,220 @@
+<app-page-header
+  title="Horarios y equipos"
+  subtitle="Cuándo atiende tu centro cada servicio, y con cuántos equipos: de eso salen los turnos que ven los pacientes."
+/>
+
+<app-view-state-host [state]="estado()" (retry)="cargar()">
+  @if (centro(); as c) {
+    @if (borrador(); as b) {
+      <app-card class="centro" padding="lg" data-testid="centro-horarios">
+        <p class="centro__nombre">{{ c.unitName }}</p>
+
+        <app-tabs [(selectedIndex)]="pestana">
+          <!-- ─── Horarios ─────────────────────────────────────────────── -->
+          <app-tab label="Horarios">
+            <div class="centro__panel">
+              <section class="seccion" aria-labelledby="horario-general">
+                <div class="seccion__cabecera">
+                  <h2 id="horario-general" class="seccion__titulo" data-testid="centro-horario-general-titulo">{{ nombreGeneral() }}</h2>
+                  <p class="seccion__ayuda">
+                    @if (enElGeneral().length === modalidades().length) {
+                      Vale para todos los servicios del centro. Si alguno atiende en otro horario, ponele horario propio abajo.
+                    } @else {
+                      Vale para los servicios que no tienen horario propio:
+                    }
+                  </p>
+                  <ul class="chips" role="list" aria-label="Servicios que usan este horario">
+                    @for (m of enElGeneral(); track m.code) {
+                      <li class="chip">{{ m.label }}</li>
+                    } @empty {
+                      <li class="chip chip--vacio">Ninguno: todos tienen horario propio</li>
+                    }
+                  </ul>
+                </div>
+                <app-schedule-block-editor
+                  testPrefix="centro-general"
+                  [nombre]="nombreGeneral()"
+                  [block]="b.general"
+                  (blockChange)="fijarGeneral($event)"
+                />
+              </section>
+
+              <section class="seccion" aria-labelledby="horarios-propios">
+                <div class="seccion__cabecera">
+                  <h2 id="horarios-propios" class="seccion__titulo">Servicios con horario propio</h2>
+                  <p class="seccion__ayuda">
+                    Una modalidad con horario propio aplica a todos sus estudios. Si un estudio puntual necesita otro horario, agregale una excepción.
+                  </p>
+                </div>
+
+                <ul class="modalidades" role="list">
+                  @for (m of modalidades(); track m.code) {
+                    <li class="modalidad" [attr.data-testid]="'centro-modalidad-' + m.code">
+                      <div class="modalidad__cabecera">
+                        <div>
+                          <p class="modalidad__nombre">{{ m.label }}</p>
+                          <p class="modalidad__equipos" [class.modalidad__equipos--sin]="m.operativos === 0">
+                            {{ m.operativos }} de {{ m.total }} {{ m.total === 1 ? m.equipoSingular : m.equipoPlural }} operativos
+                            · {{ m.estudios.length }} {{ m.estudios.length === 1 ? 'estudio' : 'estudios' }}
+                          </p>
+                        </div>
+                        <div class="modalidad__propio">
+                          <span class="modalidad__rotulo">Tiene horario propio</span>
+                          <app-segmented-control
+                            [attr.data-testid]="'centro-propio-' + m.code"
+                            [ariaLabel]="m.label + ': ¿tiene horario propio?'"
+                            [options]="siNo"
+                            [value]="m.propio !== null ? 'si' : 'no'"
+                            (valueChange)="alternarPropio(m.code, $event)"
+                          />
+                        </div>
+                      </div>
+
+                      @if (m.propio; as propio) {
+                        <app-schedule-block-editor
+                          [testPrefix]="'centro-' + m.code"
+                          [nombre]="m.label"
+                          [block]="propio"
+                          (blockChange)="fijarModalidad(m.code, $event)"
+                        />
+                      }
+
+                      @if (m.estudios.length > 1) {
+                        <details class="excepciones" [open]="m.conExcepcion">
+                          <summary>Excepción para un estudio</summary>
+                          <ul class="excepciones__lista" role="list">
+                            @for (s of m.estudios; track s.code) {
+                              <li class="excepcion" [attr.data-testid]="'centro-estudio-' + s.code">
+                                <div class="excepcion__cabecera">
+                                  <span>{{ s.name }}</span>
+                                  @if (tieneExcepcion(s.code)) {
+                                    <button app-button variant="ghost" size="sm" (click)="quitarExcepcion(s.code)">Quitar excepción</button>
+                                  } @else {
+                                    <button app-button variant="outline" size="sm" (click)="agregarExcepcion(m, s.code)">Horario aparte</button>
+                                  }
+                                </div>
+                                @if (excepcionDe(s.code); as excepcion) {
+                                  <app-schedule-block-editor
+                                    [testPrefix]="'centro-' + s.code"
+                                    [nombre]="s.name"
+                                    [block]="excepcion"
+                                    (blockChange)="fijarExcepcion(s.code, $event)"
+                                  />
+                                }
+                              </li>
+                            }
+                          </ul>
+                        </details>
+                      }
+                    </li>
+                  }
+                </ul>
+              </section>
+
+              <!-- ─── Así queda ──────────────────────────────────────────── -->
+              <section class="seccion" aria-labelledby="asi-queda">
+                <h2 id="asi-queda" class="seccion__titulo">Así queda</h2>
+                <ul class="resumen" role="list" data-testid="centro-resumen">
+                  @for (fila of resumen(); track fila.code) {
+                    <li class="resumen__fila">
+                      <p class="resumen__nombre">{{ fila.label }} <span class="resumen__origen">· {{ fila.origen }}</span></p>
+                      <p class="resumen__horario">{{ fila.horario }}</p>
+                      <p class="resumen__cupo">{{ fila.cupo }}</p>
+                      @for (ex of fila.excepciones; track ex.nombre) {
+                        <p class="resumen__excepcion">Excepción · {{ ex.nombre }}: {{ ex.horario }}</p>
+                      }
+                    </li>
+                  }
+                </ul>
+              </section>
+
+              @if (problemas().length > 0) {
+                <app-alert tone="error" title="No se pudo publicar" data-testid="centro-problemas">
+                  <ul class="problemas">
+                    @for (p of problemas(); track p) {
+                      <li>{{ p }}</li>
+                    }
+                  </ul>
+                </app-alert>
+              }
+              @if (publicado()) {
+                <app-alert tone="success" title="Horarios publicados" data-testid="centro-publicado">
+                  Los pacientes ya ven los turnos nuevos.
+                </app-alert>
+              }
+
+              <div class="centro__acciones">
+                <button app-button variant="ghost" [disabled]="!hayCambios()" (click)="descartar()">Descartar cambios</button>
+                <button
+                  app-button
+                  variant="primary"
+                  data-testid="centro-publicar"
+                  [disabled]="!hayCambios()"
+                  [isLoading]="guardando()"
+                  (click)="publicar()"
+                >
+                  Publicar horarios
+                </button>
+              </div>
+            </div>
+          </app-tab>
+
+          <!-- ─── Equipos ──────────────────────────────────────────────── -->
+          <app-tab label="Equipos">
+            <div class="centro__panel">
+              <p class="seccion__ayuda">
+                Cada equipo operativo atiende a un paciente por turno. Si uno se rompe o entra en mantenimiento, marcalo: el cupo baja solo.
+              </p>
+              @for (m of modalidades(); track m.code) {
+                <section class="seccion" [attr.aria-label]="m.label">
+                  <h2 class="seccion__titulo">{{ m.label }} <span class="resumen__origen">· {{ m.operativos }} de {{ m.total }} operativos</span></h2>
+                  <ul class="equipos" role="list">
+                    @for (e of equiposDe(m.code); track e.id) {
+                      <li class="equipo" [attr.data-testid]="'centro-equipo-' + e.id">
+                        <div class="equipo__datos">
+                          <p class="equipo__nombre">{{ e.name }}</p>
+                          @if (e.manufacturer || e.model) {
+                            <p class="seccion__ayuda">{{ e.manufacturer }} {{ e.model }}</p>
+                          }
+                          @if (e.glossaryConceptId) {
+                            <a class="equipo__mapa" [routerLink]="['/glossary', e.glossaryConceptId]">Cómo se conectan sus datos</a>
+                          }
+                        </div>
+                        <app-segmented-control
+                          [ariaLabel]="'Estado de ' + e.name"
+                          [options]="estados"
+                          [value]="e.status"
+                          (valueChange)="cambiarEstado(e, $event)"
+                        />
+                      </li>
+                    } @empty {
+                      <li class="seccion__ayuda">Sin {{ m.equipoPlural }} cargados: esta modalidad no da turnos.</li>
+                    }
+                  </ul>
+                </section>
+              }
+              @if (otrosEquipos().length > 0) {
+                <section class="seccion" aria-label="Otros equipos">
+                  <h2 class="seccion__titulo">Otros equipos <span class="resumen__origen">· no limitan los turnos</span></h2>
+                  <ul class="equipos" role="list">
+                    @for (e of otrosEquipos(); track e.id) {
+                      <li class="equipo">
+                        <div class="equipo__datos">
+                          <p class="equipo__nombre">{{ e.name }}</p>
+                          @if (e.glossaryConceptId) {
+                            <a class="equipo__mapa" [routerLink]="['/glossary', e.glossaryConceptId]">Cómo se conectan sus datos</a>
+                          }
+                        </div>
+                        <span class="seccion__ayuda">{{ etiquetaDeEstado(e.status) }}</span>
+                      </li>
+                    }
+                  </ul>
+                </section>
+              }
+            </div>
+          </app-tab>
+        </app-tabs>
+      </app-card>
+    }
+  }
+</app-view-state-host>

@@ -55,8 +55,8 @@ export interface CenterEquipment {
   /** `null`: no limita turnos (un analizador, una centrífuga). */
   readonly modalityCode: ModalityCode | null;
   readonly status: EquipmentStatus;
-  /** El tipo de equipo en el glosario, con su mapa de conexión de datos. */
-  readonly glossarySlug: string | null;
+  /** El concepto del tipo de equipo en el glosario, con su mapa de conexión de datos. */
+  readonly glossaryConceptId: string | null;
 }
 
 /** Un estudio que el centro ofrece. */

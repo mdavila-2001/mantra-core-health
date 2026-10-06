@@ -300,6 +300,8 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/laboratory/results/laboratory-results').then((m) => m.LaboratoryResults),
   'administration/laboratory-prices': () =>
     import('./features/laboratory/prices/laboratory-prices').then((m) => m.LaboratoryPrices),
+  'administration/center-schedule': () =>
+    import('./features/laboratory/center-schedule/center-schedule').then((m) => m.CenterSchedulePage),
   'administration/laboratory-branches': () =>
     import('./features/organization/organization-branches/organization-branches').then(
       (m) => m.OrganizationBranches,

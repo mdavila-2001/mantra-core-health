@@ -30,7 +30,7 @@ const equipo = (id: string, modalityCode: CenterEquipment['modalityCode'], statu
   model: null,
   modalityCode,
   status,
-  glossarySlug: null,
+  glossaryConceptId: null,
 });
 
 describe('resolverHorario', () => {

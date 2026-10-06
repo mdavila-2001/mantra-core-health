@@ -1,0 +1,79 @@
+:host {
+  display: block;
+}
+
+.bloque {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+.bloque__dias {
+  display: grid;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.bloque__dia {
+  display: grid;
+  grid-template-columns: 6rem auto;
+  gap: var(--sp-2) var(--sp-3);
+  align-items: center;
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-sm);
+  background: var(--bg-surface);
+}
+
+.bloque__dia--activo {
+  border-color: var(--border-default);
+}
+
+.bloque__nombre {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.bloque__horas {
+  display: flex;
+  grid-column: 1 / -1;
+  gap: var(--sp-2);
+  align-items: center;
+}
+
+.bloque__horas app-input {
+  flex: 0 1 11rem;
+}
+
+.bloque__a {
+  color: var(--text-secondary);
+}
+
+.bloque__cerrado {
+  grid-column: 1 / -1;
+  color: var(--text-tertiary);
+}
+
+.bloque__duracion {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2) var(--sp-3);
+  align-items: center;
+}
+
+.bloque__rotulo {
+  color: var(--text-secondary);
+}
+
+/* Tableta (--bp-md, 780 px): el día en una sola fila. */
+@media (min-width: 780px) {
+  .bloque__dia {
+    grid-template-columns: 7rem auto 1fr;
+  }
+
+  .bloque__horas,
+  .bloque__cerrado {
+    grid-column: auto;
+  }
+}

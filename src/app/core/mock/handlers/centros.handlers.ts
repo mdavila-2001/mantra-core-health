@@ -47,6 +47,7 @@ import { equipoDe, estudiosDe, pacienteDeSesion, sitioDe, UNIDADES, type UnidadS
     Contrato propuesto, que la API todavía no tiene (PENDIENTES-BACKEND,
     P-CENTRO-HORARIOS):
 
+      GET    /diagnostic-units/me/schedule
       GET    /diagnostic-units/:unitId/schedule
       PUT    /diagnostic-units/:unitId/schedule
       PATCH  /diagnostic-units/:unitId/equipment/:equipmentId
@@ -77,6 +78,10 @@ const TERMINO_DE_EQUIPO: Readonly<Record<string, string>> = {
   SAMPLING_STATION: 'equipo-puesto-de-extraccion',
 };
 
+/** El id con el que el glosario sirve un término: el mismo que deriva `glossary-shards.ts`. */
+const conceptoDelGlosario = (slug: string | undefined): string | null =>
+  slug === undefined ? null : uuid(`concept-glossary-${slug}`);
+
 const ESTUDIO_POR_CONCEPTO = new Map(Object.entries(ESTUDIO).map(([code, id]) => [id, code]));
 
 const unidadPorId = (id: string): UnidadSimulada | undefined => UNIDADES.find((u) => u.id === id);
@@ -104,7 +109,7 @@ export function equiposDe(u: UnidadSimulada): readonly CenterEquipment[] {
     model: e.model,
     modalityCode: modalidadDeEquipo(e.type.code),
     status: estadosDeEquipos.get(e.id)?.status ?? (e.operationalStatus.code as EquipmentStatus),
-    glossarySlug: TERMINO_DE_EQUIPO[e.type.code] ?? null,
+    glossaryConceptId: conceptoDelGlosario(TERMINO_DE_EQUIPO[e.type.code]),
   }));
   if (u.kind !== 'LABORATORY') return propios;
   // En un laboratorio el turno lo limitan los puestos de extracción, no los
@@ -118,7 +123,7 @@ export function equiposDe(u: UnidadSimulada): readonly CenterEquipment[] {
       model: null,
       modalityCode: 'LAB',
       status: estadosDeEquipos.get(id)?.status ?? 'OPERATIONAL',
-      glossarySlug: TERMINO_DE_EQUIPO['SAMPLING_STATION']!,
+      glossaryConceptId: conceptoDelGlosario(TERMINO_DE_EQUIPO['SAMPLING_STATION']),
     };
   });
   return [...puestos, ...propios];
@@ -274,6 +279,15 @@ function ordenDelPaciente(request: MockRequest) {
 
 export function registrarCentros(router: MockRouter): void {
   definirResolverCitaDeOrden(citaDeOrden);
+
+  // El centro de la organización activa: la pantalla del centro no sabe su id
+  // de unidad, sabe con qué organización entró.
+  router.get('/diagnostic-units/me/schedule', (request) => {
+    const tenants = request.user?.tenants ?? [];
+    const u = UNIDADES.find((x) => x.publiclyListed && tenants.includes(x.tenantId));
+    if (u === undefined) return notFound('Tu organización no tiene un centro de diagnóstico con agenda.');
+    return vistaDelCentro(u);
+  });
 
   router.get('/diagnostic-units/:unitId/schedule', (request) => {
     const u = unidadPorId(request.params['unitId']!);

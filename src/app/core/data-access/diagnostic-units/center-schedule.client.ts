@@ -25,6 +25,11 @@ export class CenterScheduleClient {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = inject(API_BASE_URL);
 
+  /** `GET /diagnostic-units/me/schedule` — el centro de la organización activa. */
+  getMySchedule(): Observable<CenterScheduleView> {
+    return this.http.get<CenterScheduleView>(this.url('/diagnostic-units/me/schedule'));
+  }
+
   /** `GET /diagnostic-units/{unitId}/schedule` — horario, estudios y equipos del centro. */
   getSchedule(unitId: string): Observable<CenterScheduleView> {
     return this.http.get<CenterScheduleView>(this.url(`/diagnostic-units/${encodeURIComponent(unitId)}/schedule`));
