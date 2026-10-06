@@ -28,7 +28,8 @@ import { centroDelPin, tocar } from './helpers/mapa';
  * convención que el resto de esta suite (ver `carril-registro-aseguradora.spec.ts`).
  */
 
-const RUTA_TIPOS = '/auth/register';
+/** Las organizaciones se eligen aparte de las cuentas de persona (03/10/2026). */
+const RUTA_TIPOS = '/auth/register/organization-type';
 const RUTA = '/auth/register/pharmacy';
 const EVIDENCIA = join(__dirname, '..', 'artifacts', 'registro-farmacia');
 
@@ -110,7 +111,7 @@ async function completarAccesoYEnviar(page: Page): Promise<void> {
 test.describe('alta pública de farmacia (Módulo Farmacia §1)', () => {
   test.describe.configure({ mode: 'serial' });
 
-  test('la tarjeta «Farmacia» está en /auth/register, junto a las otras cinco', async ({ page }) => {
+  test('la tarjeta «Farmacia» está en «Registrá tu organización», junto a las otras tres', async ({ page }) => {
     await page.goto(RUTA_TIPOS, { waitUntil: 'domcontentloaded' });
     await expect(page.locator('app-root')).not.toBeEmpty({ timeout: 30_000 });
 

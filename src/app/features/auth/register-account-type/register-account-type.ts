@@ -1,5 +1,5 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 
 import { AccountIcon } from '../../../shared/components/atoms/account-icon/account-icon';
 import type { AccountIconName } from '../../../shared/components/atoms/account-icon/account-icon.types';
@@ -16,7 +16,7 @@ interface TipoDeCuenta {
 }
 
 /**
- * Los cinco tipos de cuenta que se dan de alta solos.
+ * Las cuentas de persona que se dan de alta solas: paciente y médico.
  *
  * **No hay «Otro».** Cada tarjeta lleva a una pantalla de alta que existe. Una
  * que no llevara a ningún lado sería peor que no ofrecerla: quien la pulsa ya
@@ -46,7 +46,7 @@ interface TipoDeCuenta {
  * `tenantType: 'PHARMACY'` — ver el JSDoc de `RegisterPharmacy`. Va última
  * porque es la más nueva; no hay otro criterio de orden entre las seis.
  */
-const TIPOS: readonly TipoDeCuenta[] = [
+const CUENTAS_PERSONALES: readonly TipoDeCuenta[] = [
   {
     icono: 'patient',
     titulo: 'Paciente',
@@ -61,6 +61,16 @@ const TIPOS: readonly TipoDeCuenta[] = [
     ruta: '/auth/register/practitioner',
     testId: 'tipo-profesional',
   },
+];
+
+/**
+ * Las organizaciones que se dan de alta solas. Cuelgan de «Registrá tu
+ * organización» en el acceso, **no** de «Crear cuenta»: una persona que busca
+ * su cuenta no tiene por qué leer «Aseguradora» ni «Farmacia», y quien viene a
+ * registrar la suya no debería tener que adivinar que está escondida entre las
+ * cuentas de paciente y de médico.
+ */
+const CUENTAS_DE_ORGANIZACION: readonly TipoDeCuenta[] = [
   {
     icono: 'insurer',
     titulo: 'Aseguradora',
@@ -91,8 +101,43 @@ const TIPOS: readonly TipoDeCuenta[] = [
   },
 ];
 
+/** Qué se está eligiendo: una cuenta de persona o el alta de una organización. */
+type Audiencia = 'people' | 'organizations';
+
+/** Lo que cambia entre las dos elecciones; la rejilla y su estilo son los mismos. */
+interface CatalogoDeAltas {
+  readonly claim: string;
+  readonly tagline: string;
+  readonly titulo: string;
+  readonly subtitulo: string;
+  readonly tipos: readonly TipoDeCuenta[];
+}
+
+const CATALOGOS: Readonly<Record<Audiencia, CatalogoDeAltas>> = {
+  people: {
+    claim: 'Tu salud, en un solo lugar',
+    tagline: 'Creá tu cuenta y empezá a usar AloVida en un par de minutos.',
+    titulo: 'Crear cuenta',
+    subtitulo: '¿Qué tipo de cuenta necesitás?',
+    tipos: CUENTAS_PERSONALES,
+  },
+  organizations: {
+    claim: 'Tu organización, dentro de la red',
+    tagline: 'Registrá tu organización y empezá a recibir a tus pacientes y afiliados.',
+    titulo: 'Registrá tu organización',
+    subtitulo: '¿Qué tipo de organización sos?',
+    tipos: CUENTAS_DE_ORGANIZACION,
+  },
+};
+
+/** La ruta de organizaciones declara `data: { audience: 'organizations' }`; sin dato, personas. */
+function audienciaDe(valor: unknown): Audiencia {
+  return valor === 'organizations' ? 'organizations' : 'people';
+}
+
 /**
- * **Elegir tipo de cuenta** — la primera pantalla de «crear cuenta».
+ * **Elegir tipo de cuenta** — la primera pantalla de «crear cuenta» y, con
+ * `data.audience = 'organizations'`, la de «registrá tu organización».
  *
  * ## Por qué una rejilla y no las pestañas que había
  *
@@ -121,5 +166,6 @@ const TIPOS: readonly TipoDeCuenta[] = [
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RegisterAccountType {
-  protected readonly tipos = TIPOS;
+  protected readonly catalogo =
+    CATALOGOS[audienciaDe(inject(ActivatedRoute).snapshot.data['audience'])];
 }
