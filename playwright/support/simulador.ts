@@ -28,8 +28,9 @@ import type { Page } from '@playwright/test';
  * es un fallo del producto, es el producto pidiendo lo que necesita.
  */
 export async function entrarAlSimulador(page: Page, usuario: string, base: string): Promise<void> {
+  const loginName = usuario === 'administrador' ? 'admin' : usuario;
   await page.goto(`${base}/auth`, { waitUntil: 'domcontentloaded' });
-  await page.getByTestId('login-identifier').fill(`${usuario}@alovida.mock`);
+  await page.getByTestId('login-identifier').fill(`${loginName}@alovida.mock`);
   await page.getByTestId('login-password').fill('cualquiera');
   await page.getByTestId('login-submit').click();
 
