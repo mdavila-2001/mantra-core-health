@@ -39,12 +39,13 @@
 
   <div class="bloque__duracion">
     <span class="bloque__rotulo" [id]="testPrefix() + '-duracion'">Cada turno dura</span>
-    <app-segmented-control
+    <app-select
+      class="bloque__select"
       [attr.data-testid]="testPrefix() + '-duracion'"
       [ariaLabel]="nombre() + ': duración de cada turno'"
       [options]="duraciones"
       [value]="'' + block().slotMinutes"
-      (valueChange)="fijarDuracion($event)"
+      (valueChange)="$event !== null && fijarDuracion($event)"
     />
   </div>
 </div>

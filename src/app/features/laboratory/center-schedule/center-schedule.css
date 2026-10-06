@@ -120,6 +120,10 @@
   align-items: center;
 }
 
+.modalidad__propio app-segmented-control {
+  flex: none;
+}
+
 .modalidad__rotulo {
   color: var(--text-secondary);
 }
@@ -237,4 +241,8 @@
     grid-template-columns: 1fr auto;
     align-items: center;
   }
+}
+
+.equipo__estado {
+  min-inline-size: 12rem;
 }

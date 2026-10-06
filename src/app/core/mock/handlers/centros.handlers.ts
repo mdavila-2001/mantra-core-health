@@ -38,7 +38,7 @@ import { pacientePorId } from '../fixtures/personas';
 import { conflict, forbidden, noContent, notFound, validation, type MockRequest, type MockRouter } from '../mock-router';
 import { ahora, cuerpo, nuevoId, uuid } from '../mock-store';
 import { avisarPorChatDeSoporte, fechaDelAviso } from './aviso-por-chat';
-import { equipoDe, estudiosDe, pacienteDeSesion, sitioDe, UNIDADES, type UnidadSimulada } from './diagnostics.handlers';
+import { equipoDe, estudiosDe, informes, pacienteDeSesion, sitioDe, UNIDADES, type UnidadSimulada } from './diagnostics.handlers';
 
 /* ============================================================================
     Horarios y equipos de un centro de diagnóstico, y la reserva de un estudio
@@ -219,6 +219,7 @@ export function disponibilidad(
 
 function vistaDelCentro(u: UnidadSimulada): CenterScheduleView {
   return {
+    bookingsWithoutEquipment: turnosSinEquipo(u),
     unitId: u.id,
     unitName: u.name,
     kind: u.kind,
@@ -274,6 +275,11 @@ function ordenDelPaciente(request: MockRequest) {
   if (studyCode === undefined || modalityCode === null) {
     return { error: validation('Esta orden no es de un estudio que se reserve en un centro.') } as const;
   }
+  // La autoridad es el servidor: una orden con su resultado publicado ya se
+  // hizo, y no se reserva aunque alguien llegue a la URL de reserva.
+  if (informes.filtrar((i) => i.serviceRequestId === orden.id && i.released).length > 0) {
+    return { error: conflict('Esta orden ya tiene su resultado: no hace falta reservar.') } as const;
+  }
   return { orden, studyCode, modalityCode } as const;
 }
 
@@ -314,7 +320,7 @@ export function registrarCentros(router: MockRouter): void {
           : (estudiosDelCentro(u).find((e) => e.code === donde)?.name ?? donde),
     );
     if (problemas.length > 0) return validation('El horario tiene datos incompletos.', problemas);
-    const afectados = turnosFueraDeHorario(u, schedule, equiposDe(u));
+    const afectados = turnosFueraDeHorario(u, schedule);
     if (afectados > 0) {
       return conflict(`Hay ${afectados} turno${afectados === 1 ? '' : 's'} reservado${afectados === 1 ? '' : 's'} que quedaría${afectados === 1 ? '' : 'n'} fuera del horario nuevo.`, {
         affectedBookings: afectados,
@@ -468,17 +474,31 @@ function estudioNombre(code: string): string {
   return code;
 }
 
-/** Turnos de orden futuros que no entrarían en el horario o el cupo nuevos. */
-function turnosFueraDeHorario(u: UnidadSimulada, schedule: CenterSchedule, equipos: readonly CenterEquipment[]): number {
+/**
+ * Turnos de orden futuros que no entrarían en el horario nuevo. Sólo mira el
+ * horario: el cupo lo fijan los equipos, y si se mirara acá, un equipo roto
+ * con un turno tomado trabaría cualquier publicación —también la de otra
+ * modalidad— hasta repararlo. Eso lo avisa {@link turnosSinEquipo}.
+ */
+function turnosFueraDeHorario(u: UnidadSimulada, schedule: CenterSchedule): number {
   const ahoraMs = Date.now();
   let afectados = 0;
   for (const t of turnosDeOrdenes.filtrar((x) => x.unitId === u.id && new Date(x.startAt).getTime() > ahoraMs)) {
     const inicio = new Date(t.startAt);
     const { block } = resolverHorario(schedule, t.studyCode, t.modalityCode);
-    const entra = turnosDelDia(block, inicio).some((x) => x.inicio.getTime() === inicio.getTime());
-    const cupo = capacidadDeModalidad(equipos, t.modalityCode);
-    const otros = ocupados(u, t.modalityCode, inicio.getTime(), new Date(t.endAt).getTime(), t.id);
-    if (!entra || otros >= cupo) afectados++;
+    if (!turnosDelDia(block, inicio).some((x) => x.inicio.getTime() === inicio.getTime())) afectados++;
   }
   return afectados;
+}
+
+/** Turnos de orden futuros que quedaron sin un equipo operativo que los atienda. */
+function turnosSinEquipo(u: UnidadSimulada): number {
+  const ahoraMs = Date.now();
+  const equipos = equiposDe(u);
+  let sinEquipo = 0;
+  for (const t of turnosDeOrdenes.filtrar((x) => x.unitId === u.id && new Date(x.startAt).getTime() > ahoraMs)) {
+    const otros = ocupados(u, t.modalityCode, new Date(t.startAt).getTime(), new Date(t.endAt).getTime(), t.id);
+    if (otros >= capacidadDeModalidad(equipos, t.modalityCode)) sinEquipo++;
+  }
+  return sinEquipo;
 }

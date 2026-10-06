@@ -1,5 +1,16 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, computed, inject, signal, type OnInit } from '@angular/core';
+import {
+  afterNextRender,
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  ElementRef,
+  inject,
+  Injector,
+  signal,
+  type OnInit,
+} from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 
 import { CenterScheduleClient } from '../../../../core/data-access/diagnostic-units/center-schedule.client';
@@ -63,6 +74,8 @@ const DIAS_VISIBLES = 5;
 export class OrderBooking implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly centros = inject(CenterScheduleClient);
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+  private readonly injector = inject(Injector);
 
   protected readonly rutaDeOrdenes = MIS_ORDENES_ROUTE;
   private readonly orderId = this.route.snapshot.paramMap.get('orderId') ?? '';
@@ -79,6 +92,22 @@ export class OrderBooking implements OnInit {
   protected readonly aviso = signal<string | null>(null);
   protected readonly turno = signal<OrderAppointment | null>(null);
 
+  /**
+   * Al cambiar de paso, el foco va al título del paso nuevo: sin esto, quien
+   * usa lector de pantalla no se entera de que la pantalla cambió (ni de que
+   * volvió a «Horario» porque el turno se ocupó). El primer paso no lo mueve.
+   */
+  private readonly enfocarPaso = effect(() => {
+    const paso = this.paso();
+    if (this.primerPaso) {
+      this.primerPaso = false;
+      return;
+    }
+    const id = { centro: 'reserva-centros', horario: 'reserva-horarios', confirmar: 'reserva-confirmar', listo: 'reserva-listo' }[paso];
+    afterNextRender(() => this.host.nativeElement.querySelector<HTMLElement>(`#${id}`)?.focus(), { injector: this.injector });
+  });
+  private primerPaso = true;
+
   protected readonly opciones = computed<OrderBookingOptions | null>(() => {
     const e = this.estado();
     return e.status === 'ready' ? e.data : null;
@@ -90,9 +119,11 @@ export class OrderBooking implements OnInit {
   });
 
   protected readonly ordenes: readonly SegmentedOption<Orden>[] = [
-    { value: 'pronto', label: 'Más pronto' },
-    { value: 'precio', label: 'Más barato' },
-    { value: 'cerca', label: 'Más cerca' },
+    // Rótulos cortos para que entren a 390 px sin cortarse; el nombre accesible
+    // lleva la frase entera.
+    { value: 'pronto', label: 'Pronto', description: 'Primero el turno más pronto' },
+    { value: 'precio', label: 'Barato', description: 'Primero el más barato' },
+    { value: 'cerca', label: 'Cerca', description: 'Primero el más cerca de tu casa' },
   ];
 
   protected readonly centrosOrdenados = computed<readonly OrderBookingOption[]>(() => {

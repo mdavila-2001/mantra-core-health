@@ -28,6 +28,8 @@ import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { Card } from '../../../shared/components/molecules/card/card';
 import { SegmentedControl } from '../../../shared/components/molecules/segmented-control/segmented-control';
 import type { SegmentedOption } from '../../../shared/components/molecules/segmented-control/segmented-control.types';
+import { Select } from '../../../shared/components/atoms/select/select';
+import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
 import { Tab } from '../../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../../shared/components/molecules/tabs/tabs';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
@@ -84,7 +86,7 @@ const ETIQUETA_DE_ESTADO: Readonly<Record<EquipmentStatus, string>> = {
 
 @Component({
   selector: 'app-center-schedule',
-  imports: [PageHeader, ViewStateHost, Card, Tabs, Tab, SegmentedControl, AppButton, Alert, ScheduleBlockEditor, GlossaryDataFlow],
+  imports: [PageHeader, ViewStateHost, Card, Tabs, Tab, SegmentedControl, Select, AppButton, Alert, ScheduleBlockEditor, GlossaryDataFlow],
   templateUrl: './center-schedule.html',
   styleUrl: './center-schedule.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -105,6 +107,8 @@ export class CenterSchedulePage implements OnInit {
   protected readonly veGlosario = computed(() => this.navegacion.visibleSections().some((s) => s.path === 'glossary'));
   protected readonly problemas = signal<readonly string[]>([]);
   protected readonly cambiandoEquipo = signal<string | null>(null);
+  /** El error del último cambio de estado de un equipo: se muestra en «Equipos», no en «Horarios». */
+  protected readonly errorDeEquipo = signal<string | null>(null);
 
   protected readonly centro = computed<CenterScheduleView | null>(() => {
     const e = this.estado();
@@ -116,7 +120,12 @@ export class CenterSchedulePage implements OnInit {
     { value: 'no', label: 'No' },
   ];
 
-  protected readonly estados: readonly SegmentedOption<EquipmentStatus>[] = [
+  /**
+   * Un desplegable y no un segmentado: «Fuera de servicio» y «Mantenimiento»
+   * no entran en tres pastillas a 390 px. Mientras un cambio viaja, los
+   * desplegables quedan deshabilitados en vez de ignorar la elección.
+   */
+  protected readonly estados: readonly SelectOption<EquipmentStatus>[] = [
     { value: 'OPERATIONAL', label: 'Operativo' },
     { value: 'MAINTENANCE', label: 'Mantenimiento' },
     { value: 'OUT_OF_SERVICE', label: 'Fuera de servicio' },
@@ -305,6 +314,7 @@ export class CenterSchedulePage implements OnInit {
     const centro = this.centro();
     if (centro === null || status === equipo.status || this.cambiandoEquipo() !== null) return;
     this.cambiandoEquipo.set(equipo.id);
+    this.errorDeEquipo.set(null);
     const borrador = this.borrador();
     this.cliente.setEquipmentStatus(centro.unitId, equipo.id, status).subscribe({
       next: (vista) => {
@@ -315,7 +325,7 @@ export class CenterSchedulePage implements OnInit {
       },
       error: (error: unknown) => {
         this.cambiandoEquipo.set(null);
-        this.problemas.set([mensajeDeError(error)]);
+        this.errorDeEquipo.set(mensajeDeErrorDeEquipo(error));
       },
     });
   }
@@ -341,4 +351,12 @@ function mensajeDeError(error: unknown): string {
     if (typeof cuerpo?.message === 'string' && cuerpo.message !== '') return cuerpo.message;
   }
   return 'No pudimos guardar los cambios. Probá de nuevo en un momento.';
+}
+
+function mensajeDeErrorDeEquipo(error: unknown): string {
+  if (error instanceof HttpErrorResponse) {
+    const cuerpo = error.error as { message?: string } | null;
+    if (typeof cuerpo?.message === 'string' && cuerpo.message !== '') return cuerpo.message;
+  }
+  return 'No pudimos cambiar el estado del equipo. Probá de nuevo en un momento.';
 }

@@ -32,6 +32,9 @@ interface Eslabon {
 
 const MAXIMO_DE_ESLABONES = 8;
 
+/** La pestaña «Equipos» puede abrir varios mapas a la vez: cada uno, su id. */
+let siguienteId = 0;
+
 const siguienteDe = (relaciones: readonly GlossaryRelation[]): GlossaryRelation | undefined =>
   relaciones.find((r) => r.type === 'SENDS_DATA_TO');
 
@@ -40,8 +43,8 @@ const siguienteDe = (relaciones: readonly GlossaryRelation[]): GlossaryRelation 
   imports: [RouterLink],
   template: `
     @if (cadena().length > 1) {
-      <section class="flujo" aria-labelledby="flujo-titulo" data-testid="glosario-mapa-de-datos">
-        <h2 id="flujo-titulo" class="flujo__titulo">Mapa de conexión de datos</h2>
+      <section class="flujo" [attr.aria-labelledby]="tituloId" data-testid="glosario-mapa-de-datos">
+        <h2 [id]="tituloId" class="flujo__titulo">Mapa de conexión de datos</h2>
         <p class="flujo__ayuda">El camino que recorren los datos desde el equipo hasta el resultado que ve el paciente.</p>
         <ol class="flujo__cadena">
           @for (e of cadena(); track e.conceptId; let primero = $first) {
@@ -130,6 +133,7 @@ export class GlossaryDataFlow {
   readonly enlazar = input(true);
 
   protected readonly cadena = signal<readonly Eslabon[]>([]);
+  protected readonly tituloId = `flujo-titulo-${++siguienteId}`;
 
   constructor() {
     effect((onCleanup) => {

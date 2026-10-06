@@ -8,6 +8,8 @@ import type { ScheduleBlock, ScheduleWindow } from '../../../core/data-access/di
 import { Input } from '../../../shared/components/atoms/input/input';
 import { SegmentedControl } from '../../../shared/components/molecules/segmented-control/segmented-control';
 import type { SegmentedOption } from '../../../shared/components/molecules/segmented-control/segmented-control.types';
+import { Select } from '../../../shared/components/atoms/select/select';
+import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
 
 /* ============================================================================
     Un horario: qué días se atiende, de qué hora a qué hora y cuánto dura cada
@@ -23,7 +25,7 @@ const POR_DEFECTO: Pick<ScheduleWindow, 'startTime' | 'endTime'> = { startTime: 
 
 @Component({
   selector: 'app-schedule-block-editor',
-  imports: [Input, SegmentedControl],
+  imports: [Input, SegmentedControl, Select],
   templateUrl: './schedule-block-editor.html',
   styleUrl: './schedule-block-editor.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -43,7 +45,8 @@ export class ScheduleBlockEditor {
     { value: 'no', label: 'No' },
   ];
 
-  protected readonly duraciones: readonly SegmentedOption<string>[] = DURACIONES_DE_TURNO.map((m) => ({
+  /** Siete duraciones no entran en un segmentado a 390 px: van en un desplegable. */
+  protected readonly duraciones: readonly SelectOption<string>[] = DURACIONES_DE_TURNO.map((m) => ({
     value: String(m),
     label: `${m} min`,
   }));

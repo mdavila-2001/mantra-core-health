@@ -17,7 +17,7 @@ import { MockRouter, type MockMethod } from '../mock-router';
 import { buscarUsuario } from '../mock-session';
 import { uuid } from '../mock-store';
 import { registrarCentros } from './centros.handlers';
-import { registrarDiagnostico } from './diagnostics.handlers';
+import { informes, registrarDiagnostico } from './diagnostics.handlers';
 
 describe('handlers de horarios de centros y reserva por orden', () => {
   const router = new MockRouter();
@@ -149,6 +149,34 @@ describe('handlers de horarios de centros y reserva por orden', () => {
       ...vista.schedule,
       modalities: [{ modalityCode: 'ECO', schedule: horarioDeSemana('20:00', '21:00', 30, [7]) }],
     });
+    expect(r.status).toBe(409);
+  });
+
+  it('un equipo que se rompe con un turno tomado lo avisa, y no traba publicar otro horario', () => {
+    const libre = disponibilidad('STUDY-ECO-ABD').items[0]!;
+    llamar('POST', `/diagnostic-results/me/orders/${ordenDeEcografia()}/booking`, paciente, { unitId: IMAGEN_SUR, startAt: libre.startAt });
+    const vista = llamar<CenterScheduleView>('GET', `/diagnostic-units/${IMAGEN_SUR}/schedule`).body;
+    expect(vista.bookingsWithoutEquipment).toBe(0);
+    const fijo = vista.equipment.find((e) => e.modalityCode === 'ECO' && e.status === 'OPERATIONAL')!;
+
+    const roto = llamar<CenterScheduleView>('PATCH', `/diagnostic-units/${IMAGEN_SUR}/equipment/${fijo.id}`, imagen, { status: 'MAINTENANCE' });
+    expect(roto.status).toBe(200);
+    expect(roto.body.bookingsWithoutEquipment).toBe(1);
+
+    // Cambiar el horario de radiografía no toca el turno de ecografía: se publica.
+    const r = llamar('PUT', `/diagnostic-units/${IMAGEN_SUR}/schedule`, imagen, {
+      ...vista.schedule,
+      modalities: [{ modalityCode: 'RX', schedule: horarioDeSemana('09:00', '12:00', 15) }],
+    });
+    expect(r.status).toBe(200);
+  });
+
+  it('una orden con su resultado publicado no se reserva, aunque se llegue por la URL', () => {
+    const conResultado = ordenes
+      .filtrar((o) => o.patientProfileId === PACIENTE.id)
+      .find((o) => informes.filtrar((i) => i.serviceRequestId === o.id && i.released).length > 0);
+    expect(conResultado).toBeDefined();
+    const r = llamar('GET', `/diagnostic-results/me/orders/${conResultado!.id}/booking-options`, paciente);
     expect(r.status).toBe(409);
   });
 });

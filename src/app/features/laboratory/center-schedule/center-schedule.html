@@ -17,7 +17,7 @@
                 <div class="seccion__cabecera">
                   <h2 id="horario-general" class="seccion__titulo" data-testid="centro-horario-general-titulo">{{ nombreGeneral() }}</h2>
                   <p class="seccion__ayuda">
-                    @if (enElGeneral().length === modalidades().length) {
+                    @if (enElGeneral().length === modalidades().length && (borrador()?.studies ?? []).length === 0) {
                       Vale para todos los servicios del centro. Si alguno atiende en otro horario, ponele horario propio abajo.
                     } @else {
                       Vale para los servicios que no tienen horario propio:
@@ -165,6 +165,16 @@
               <p class="seccion__ayuda">
                 Cada equipo operativo atiende a un paciente por turno. Si uno se rompe o entra en mantenimiento, marcalo: el cupo baja solo.
               </p>
+              @if (errorDeEquipo(); as error) {
+                <app-alert tone="error" title="No se cambió el estado" data-testid="centro-equipo-error">{{ error }}</app-alert>
+              }
+              @if ((c.bookingsWithoutEquipment ?? 0) > 0) {
+                <app-alert tone="warning" title="Hay turnos sin equipo" data-testid="centro-turnos-sin-equipo">
+                  {{ c.bookingsWithoutEquipment }} turno{{ c.bookingsWithoutEquipment === 1 ? '' : 's' }} ya reservado{{ c.bookingsWithoutEquipment === 1 ? '' : 's' }} no
+                  tiene{{ c.bookingsWithoutEquipment === 1 ? '' : 'n' }} un equipo operativo que lo{{ c.bookingsWithoutEquipment === 1 ? '' : 's' }} atienda. Avisale a cada
+                  paciente y reprogramalo, o volvé a poner el equipo en servicio.
+                </app-alert>
+              }
               @for (m of modalidades(); track m.code) {
                 <section class="seccion" [attr.aria-label]="m.label">
                   <h2 class="seccion__titulo">{{ m.label }} <span class="resumen__origen">· {{ m.operativos }} de {{ m.total }} operativos</span></h2>
@@ -185,11 +195,14 @@
                             </details>
                           }
                         </div>
-                        <app-segmented-control
+                        <app-select
+                          class="equipo__estado"
                           [ariaLabel]="'Estado de ' + e.name"
                           [options]="estados"
                           [value]="e.status"
-                          (valueChange)="cambiarEstado(e, $event)"
+                          [disabled]="cambiandoEquipo() !== null"
+                          (valueChange)="$event !== null && cambiarEstado(e, $event)"
+                          [attr.data-testid]="'centro-estado-' + e.id"
                         />
                       </li>
                     } @empty {

@@ -85,8 +85,11 @@ describe('CenterSchedulePage', () => {
     const { el, clic } = await montar({ getMySchedule: () => of(VISTA), setEquipmentStatus });
     const pestana = [...el.querySelectorAll('[role="tab"]')].find((t) => t.textContent?.trim() === 'Equipos') as HTMLElement;
     await clic(pestana);
-    const boton = [...el.querySelectorAll('[data-testid="centro-equipo-eco-2"] [role="radio"]')].find((b) => b.textContent?.trim() === 'Operativo') as HTMLElement;
-    await clic(boton);
+    const estado = el.querySelector('[data-testid="centro-equipo-eco-2"] select') as HTMLSelectElement;
+    const operativo = [...estado.options].findIndex((o) => o.textContent?.trim() === 'Operativo');
+    estado.selectedIndex = operativo;
+    estado.dispatchEvent(new Event('change'));
+    await clic(estado);
     expect(setEquipmentStatus).toHaveBeenCalledWith('sur', 'eco-2', 'OPERATIONAL');
   });
 });

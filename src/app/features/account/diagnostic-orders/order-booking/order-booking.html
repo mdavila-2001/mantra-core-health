@@ -25,7 +25,7 @@
         @case ('centro') {
           <section class="reserva__seccion" aria-labelledby="reserva-centros">
             <div class="reserva__cabecera">
-              <h2 id="reserva-centros" class="reserva__titulo">¿Dónde te lo hacés?</h2>
+              <h2 id="reserva-centros" class="reserva__titulo" tabindex="-1">¿Dónde te lo hacés?</h2>
               <app-segmented-control
                 ariaLabel="Ordenar los centros"
                 [options]="ordenes"
@@ -76,7 +76,7 @@
           @if (centro(); as c) {
             <section class="reserva__seccion" aria-labelledby="reserva-horarios">
               <div class="reserva__cabecera">
-                <h2 id="reserva-horarios" class="reserva__titulo">Horarios de {{ c.unitName }}</h2>
+                <h2 id="reserva-horarios" class="reserva__titulo" tabindex="-1">Horarios de {{ c.unitName }}</h2>
                 <button app-button variant="ghost" (click)="volverA('centro')">Cambiar de centro</button>
               </div>
               <app-view-state-host [state]="horarios()" (retry)="cargarHorarios()">
@@ -117,7 +117,7 @@
           @if (centro(); as c) {
             @if (horario(); as h) {
               <section class="reserva__seccion" aria-labelledby="reserva-confirmar">
-                <h2 id="reserva-confirmar" class="reserva__titulo">Revisá y confirmá</h2>
+                <h2 id="reserva-confirmar" class="reserva__titulo" tabindex="-1">Revisá y confirmá</h2>
                 <dl class="resumen" data-testid="reserva-estudio-resumen">
                   <div class="resumen__fila"><dt>Estudio</dt><dd>{{ op.studyName }}</dd></div>
                   <div class="resumen__fila"><dt>Centro</dt><dd>{{ c.unitName }}</dd></div>

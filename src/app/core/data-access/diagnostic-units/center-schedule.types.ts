@@ -78,6 +78,12 @@ export interface CenterScheduleView {
   readonly studies: readonly CenterStudy[];
   readonly equipment: readonly CenterEquipment[];
   readonly updatedAt: string | null;
+  /**
+   * Turnos ya reservados que no tienen un equipo operativo que los atienda
+   * (se rompió o entró en mantenimiento después de reservarlos). El centro
+   * tiene que reprogramarlos: el servidor no los cancela solo.
+   */
+  readonly bookingsWithoutEquipment?: number;
 }
 
 /** Respuesta 409 de `PUT …/schedule`: turnos ya reservados que quedarían afuera. */
