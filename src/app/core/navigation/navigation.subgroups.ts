@@ -295,6 +295,7 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
       'laboratorio/cola',
       'administration/laboratory-results',
       'administration/laboratory-prices',
+      'administration/center-schedule',
       'administration/laboratory-branches',
     ],
   },

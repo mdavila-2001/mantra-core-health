@@ -30,6 +30,7 @@ import { MEDICA, PACIENTE, PACIENTES, PROFESIONALES, pacientePorId } from '../fi
 import { forbidden, notFound, preconditionFailed, reply, validation, type MockRequest, type MockRouter } from '../mock-router';
 import { TENANT_CLINICA, TENANT_HOSPITAL, TENANT_LABORATORIO, TENANT_NAMES, TENANT_TYPES, type MockUser } from '../mock-session';
 import { ahora, Coleccion, contiene, cuerpo, iso, isoDia, nuevoId, texto, uuid } from '../mock-store';
+import { citaDeLaOrden } from '../fixtures/centros';
 
 /* ============================================================================
     Diagnóstico: órdenes e informes del circuito clínico, la cola de trabajo
@@ -312,7 +313,7 @@ const ordenesDeTrabajo = new Coleccion<{ id: string; workOrderNumber: string; la
 
 /* ---- centros de diagnóstico ------------------------------------------------ */
 
-interface UnidadSimulada {
+export interface UnidadSimulada {
   readonly id: string;
   readonly tenantId: string;
   readonly code: string;
@@ -425,7 +426,7 @@ const UNIDADES_DE_LA_PLANILLA: readonly UnidadSimulada[] = PHARMACIES_AND_LABS.f
   },
 }));
 
-const UNIDADES: readonly UnidadSimulada[] = [...UNIDADES_DEL_CORPUS, ...UNIDADES_DE_LA_PLANILLA, ...UNIDADES_DE_MAQUETA];
+export const UNIDADES: readonly UnidadSimulada[] = [...UNIDADES_DEL_CORPUS, ...UNIDADES_DE_LA_PLANILLA, ...UNIDADES_DE_MAQUETA];
 
 /** El laboratorio del corpus detrás de una unidad, si lo hay. */
 function corpusDe(u: UnidadSimulada) {
@@ -511,7 +512,7 @@ function ciudadesDe(u: UnidadSimulada): readonly string[] {
 }
 
 /** La sede principal: la que ancla precios, equipos y acreditaciones. */
-function sitioDe(u: UnidadSimulada) {
+export function sitioDe(u: UnidadSimulada) {
   return sedesDe(u)[0]!;
 }
 
@@ -574,7 +575,7 @@ function estudiosDelCorpus(u: UnidadSimulada) {
  */
 const ESTUDIOS_EN_MEMORIA = new Map<string, ReturnType<typeof construirEstudios>>();
 
-function estudiosDe(u: UnidadSimulada) {
+export function estudiosDe(u: UnidadSimulada) {
   const memorizado = ESTUDIOS_EN_MEMORIA.get(u.id);
   if (memorizado !== undefined) return memorizado;
   const calculado = construirEstudios(u);
@@ -703,7 +704,7 @@ function itemDeDirectorio(u: UnidadSimulada) {
  * número de serie y fecha de calibración es inventar el inventario de una
  * institución real. El corpus no lo declara y la ficha no lo dibuja.
  */
-function equipoDe(u: UnidadSimulada) {
+export function equipoDe(u: UnidadSimulada) {
   if (u.corpusId !== undefined) return [];
   // Nueve y ocho, no cuatro: con cuatro equipos la sección nunca cruzaba el
   // umbral del buscador ni el de la paginación, así que esos controles no se
@@ -768,7 +769,7 @@ function resultadoPropio(r: InformeSimulado) {
   };
 }
 
-function pacienteDeSesion(request: MockRequest): string {
+export function pacienteDeSesion(request: MockRequest): string {
   return request.user?.patientProfileId ?? (request.user?.key === 'medica' ? PACIENTE.id : '');
 }
 
@@ -1375,6 +1376,8 @@ export function registrarDiagnostico(router: MockRouter): void {
         preparationInstructions: o.codeConceptId === ESTUDIO['STUDY-GLUCOSA'] || o.codeConceptId === ESTUDIO['STUDY-PERFIL-LIPIDICO'] ? 'Ayuno de 8 a 12 horas. Podés tomar agua.' : undefined,
         hasReleasedResult: informe?.released ?? false,
         reportId: informe?.released ? informe.id : undefined,
+        // El turno que el paciente reservó en un centro para esta orden.
+        appointment: citaDeLaOrden(o.id),
       };
     });
     return { patientProfileId: id, items, limit: 50, truncated: false };

@@ -1,0 +1,51 @@
+<div class="bloque">
+  <ul class="bloque__dias" role="list">
+    @for (dia of dias(); track dia.dayOfWeek) {
+      <li class="bloque__dia" [class.bloque__dia--activo]="dia.franja !== null">
+        <span class="bloque__nombre">{{ dia.label }}</span>
+        <app-segmented-control
+          [attr.data-testid]="testPrefix() + '-dia-' + dia.dayOfWeek"
+          [ariaLabel]="nombre() + ': ¿atienden el ' + dia.label.toLowerCase() + '?'"
+          [options]="siNo"
+          [value]="dia.franja !== null ? 'si' : 'no'"
+          (valueChange)="fijarDia(dia.dayOfWeek, $event)"
+        />
+        @if (dia.franja; as franja) {
+          <div class="bloque__horas">
+            <app-select
+              class="bloque__hora"
+              [options]="horasCon(franja.startTime)"
+              [value]="franja.startTime"
+              [ariaLabel]="nombre() + ', ' + dia.label + ': desde'"
+              [attr.data-testid]="testPrefix() + '-desde-' + dia.dayOfWeek"
+              (valueChange)="$event !== null && fijarHora(dia.dayOfWeek, 'startTime', $event)"
+            />
+            <span class="bloque__a" aria-hidden="true">a</span>
+            <app-select
+              class="bloque__hora"
+              [options]="horasCon(franja.endTime)"
+              [value]="franja.endTime"
+              [ariaLabel]="nombre() + ', ' + dia.label + ': hasta'"
+              [attr.data-testid]="testPrefix() + '-hasta-' + dia.dayOfWeek"
+              (valueChange)="$event !== null && fijarHora(dia.dayOfWeek, 'endTime', $event)"
+            />
+          </div>
+        } @else {
+          <span class="bloque__cerrado">No atienden</span>
+        }
+      </li>
+    }
+  </ul>
+
+  <div class="bloque__duracion">
+    <span class="bloque__rotulo" [id]="testPrefix() + '-duracion'">Cada turno dura</span>
+    <app-select
+      class="bloque__select"
+      [attr.data-testid]="testPrefix() + '-duracion'"
+      [ariaLabel]="nombre() + ': duración de cada turno'"
+      [options]="duraciones"
+      [value]="'' + block().slotMinutes"
+      (valueChange)="$event !== null && fijarDuracion($event)"
+    />
+  </div>
+</div>

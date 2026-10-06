@@ -192,26 +192,23 @@ test.describe('refactor UX · piloto «Mis citas»', () => {
     await page.screenshot({ path: `${EVIDENCIA}/mis-citas-1440-oscuro.png` });
   });
 
-  test('Mis órdenes → «Reservar hora» abre Mis citas en modo laboratorio', async ({ page }) => {
+  test('Mis órdenes → «Reservar hora» abre la reserva de ESA orden, sin motivo que escribir', async ({ page }) => {
+    // Desde el 06/10/2026 la reserva sale de la orden: la orden ya dice qué
+    // estudio es, así que no se pasa por «Mis citas» ni se escribe un motivo.
     await page.setViewportSize({ width: 1440, height: 900 });
     await entrar(page, PACIENTE);
     await irA(page, '/my-account/diagnostic-orders');
 
-    const reservar = page.getByTestId('orden-reservar').first();
+    const reservar = page.getByRole('button', { name: /^Reservar hora/ }).first();
     await expect(reservar).toBeVisible({ timeout: 20_000 });
-    await expect(reservar).toHaveAttribute('aria-label', /^Reservar hora en un laboratorio: .+/);
     await reservar.focus();
     await page.keyboard.press('Enter');
 
-    await expect(page).toHaveURL(/\/my-account\/appointments\?resource=lab/);
-    await expect(page.getByTestId('turnos-tipo-laboratorio')).toHaveAttribute(
-      'aria-pressed',
-      'true',
-    );
-    await expect(page.getByRole('heading', { name: 'Agendar una cita' })).toBeFocused();
-    await expect(
-      page.getByText('Elegí un laboratorio para ver los horarios libres.'),
-    ).toBeVisible();
+    await expect(page).toHaveURL(/\/my-account\/diagnostic-orders\/[^/]+\/book$/);
+    await expect(page.getByTestId('reserva-estudio-orden')).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByRole('heading', { name: '¿Dónde te lo hacés?' })).toBeVisible();
+    await expect(page.getByTestId('reserva-estudio-centro').first()).toBeVisible();
+    await expect(page.getByTestId('reserva-estudio').getByRole('textbox')).toHaveCount(0);
   });
 });
 

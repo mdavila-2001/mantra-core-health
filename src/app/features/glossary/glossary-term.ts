@@ -37,6 +37,7 @@ import {
   type GlossaryDrugFacts,
 } from './glossary-drug-facts';
 import { GlossaryCategoryIcon } from './glossary-category-icon';
+import { GlossaryDataFlow } from './glossary-data-flow';
 
 /**
  * Rótulo en castellano de cada tipo de relación clínica, en el orden en que se
@@ -55,6 +56,9 @@ const RELATION_GROUPS: readonly { readonly type: GlossaryRelationType; readonly 
     { type: 'TREATMENT', label: 'Tratamientos relacionados' },
     { type: 'ANATOMY', label: 'Anatomía relacionada' },
     { type: 'DIAGNOSTIC_TEST', label: 'Pruebas diagnósticas relacionadas' },
+    { type: 'PERFORMS', label: 'Modalidad que realiza' },
+    { type: 'INCLUDES', label: 'Estudios que incluye' },
+    { type: 'SENDS_DATA_TO', label: 'Envía sus datos a' },
     { type: 'RELATED_TERM', label: 'También se relaciona con' },
   ];
 
@@ -190,6 +194,7 @@ export interface GrupoDeRelaciones {
     Chip,
     ContentDialog,
     GlossaryCategoryIcon,
+    GlossaryDataFlow,
     PageHeader,
     RouterLink,
     Tab,

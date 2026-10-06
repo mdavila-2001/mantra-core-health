@@ -102,7 +102,12 @@
 </ng-template>
 
 <ng-template #celdaEstado let-fila>
-  <app-status-seal [variant]="varianteDeEstado(fila)" [label]="fila.stateLabel" />
+  @if (fila.appointment; as turno) {
+    <app-status-seal variant="approved" label="Con turno" />
+    <span class="orden__turno" data-testid="mis-ordenes-turno">{{ fechaDelTurno(turno.startAt) }} · {{ turno.unitName }}</span>
+  } @else {
+    <app-status-seal [variant]="varianteDeEstado(fila)" [label]="fila.stateLabel" />
+  }
 </ng-template>
 
 <ng-template #celdaResultado let-fila>
@@ -151,4 +156,39 @@
       [availability]="fila.insuranceSettlementAvailability ?? 'NOT_AVAILABLE'"
     />
   </app-content-dialog>
+}
+
+@if (turnoAbierto(); as fila) {
+  @if (fila.appointment; as turno) {
+    <app-content-dialog
+      heading="Tu turno"
+      [description]="fila.studyLabel"
+      data-testid="mis-ordenes-turno-dialog"
+      (dismissAttempt)="turnoAbierto.set(null)"
+      (closed)="turnoAbierto.set(null)"
+    >
+      <dl class="orden__turno-datos">
+        <dt>Centro</dt>
+        <dd>{{ turno.unitName }}</dd>
+        @if (turno.addressText) {
+          <dt>Dirección</dt>
+          <dd>{{ turno.addressText }}</dd>
+        }
+        <dt>Cuándo</dt>
+        <dd>{{ fechaDelTurno(turno.startAt) }}</dd>
+        @if (turno.preparation) {
+          <dt>Preparación</dt>
+          <dd>{{ turno.preparation }}</dd>
+        }
+      </dl>
+      @if (cancelacionFallida()) {
+        <app-alert tone="error">No pudimos cancelar el turno. Probá de nuevo en un momento.</app-alert>
+      }
+      <div class="orden__turno-acciones">
+        <button app-button variant="danger" [isLoading]="cancelando()" data-testid="mis-ordenes-cancelar-turno" (click)="cancelarTurno(fila)">
+          Cancelar turno
+        </button>
+      </div>
+    </app-content-dialog>
+  }
 }

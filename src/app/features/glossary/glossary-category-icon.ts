@@ -24,6 +24,9 @@ export const GLOSSARY_CATEGORY_ORDER = [
   'glossary-category-lab',
   'glossary-category-imaging',
   'glossary-category-care',
+  // Equipos de diagnóstico y el camino de sus datos (capa de la maqueta,
+  // 2026-10-06). Antes de `other`, que cierra la grilla.
+  'glossary-category-equipment',
   'glossary-category-other',
 ] as const;
 
@@ -147,6 +150,12 @@ export function glossaryCategoryOrder(internalCode: string): number {
           <path d="M9 3h6" />
           <path d="M10 3v9.5L5.6 19a2 2 0 0 0 1.7 3h9.4a2 2 0 0 0 1.7-3L14 12.5V3" />
           <line x1="8" y1="15" x2="16" y2="15" />
+        }
+        @case ('glossary-category-equipment') {
+          <!-- Un equipo conectado: la pantalla del equipo y su cable de datos. -->
+          <rect x="3" y="4" width="13" height="10" rx="2" />
+          <path d="M7 18h5M9.5 14v4M16 9h2a3 3 0 0 1 3 3v5" />
+          <circle cx="21" cy="19" r="1" />
         }
         @case ('glossary-category-imaging') {
           <!-- Placa radiográfica. -->

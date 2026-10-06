@@ -2515,3 +2515,33 @@ reintento; visor) y `features/laboratory/summary/`.
 > **Decisión del propietario, 01/10/2026:** las mecánicas que empujan a comprar más unidades
 > (2x1, escalonados, combos, regalos) **se permiten también sobre medicamentos con receta**, sin
 > restricción.
+
+## P-CENTRO-HORARIOS · Horarios y equipos del centro, y la reserva desde la orden — 06/10/2026
+
+> **Qué pide el front.** El paciente reserva un estudio **desde su orden**: la orden ya dice qué
+> estudio es, así que no hay motivo ni descripción. Elige un centro (precio, distancia, próximo
+> turno), un horario y confirma. El centro publica **cuándo** atiende y **con cuántos equipos**.
+> Contrato completo en `docs/integrations/backend-api.md` (`CenterScheduleClient`).
+>
+> **Reglas que el front da por hechas:**
+>
+> 1. El horario se resuelve **estudio → modalidad → general**. Si ninguna modalidad tiene horario
+>    propio, el general vale para todo; en cuanto una lo tiene, el general pasa a llamarse
+>    «Resto de servicios».
+> 2. **Cupo = equipos operativos de la modalidad** (`diagnostic_equipment.operational_status`).
+>    Un equipo en mantenimiento o fuera de servicio baja el cupo de inmediato. Laboratorio: puestos
+>    de extracción.
+> 3. La modalidad sale de `diagnostic_study_offerings.modality_concept_id`. El front agrupa con
+>    ocho códigos genéricos (ECO, RX, RM, TC, MG, DXA, ECG, LAB): «Ecografía y listo», sin
+>    distinguir variantes.
+> 4. Reservar un turno ocupado responde `409` con `details.slotTaken`. Publicar un horario que deja
+>    afuera turnos ya tomados responde `409` con `affectedBookings`; uno inválido, `422`.
+> 5. La confirmación llega al paciente por el chat de la app.
+>
+> **Falta en la API / el modelo:** el horario por modalidad y por estudio (hoy no hay tabla de
+> franjas de atención del centro), el turno ligado a la orden (`service_request` → reserva), y la
+> lectura de disponibilidad que resta los turnos tomados del cupo.
+>
+> **Qué hay en el front (sólo simulador):** `core/mock/handlers/centros.handlers.ts`, cuenta
+> `imagen@alovida.mock`. Los precios son los de ejemplo del catálogo y son iguales entre centros.
+

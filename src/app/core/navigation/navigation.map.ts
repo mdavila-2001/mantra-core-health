@@ -2004,6 +2004,23 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M20 diagnostics',
   },
   {
+    // Horarios y equipos del centro (mockup, 2026-10-06): el horario general,
+    // los propios de cada modalidad, las excepciones por estudio y el estado
+    // de cada equipo, que es el cupo de cada turno.
+    path: 'administration/center-schedule',
+    onlyForTenantTypes: ['DIAGNOSTIC_CENTER'],
+    roles: [ANY_ROLE],
+    fueraDelMenuPara: ['PRACTITIONER'],
+    hiddenFor: ['PATIENT'],
+    label: 'Horarios y equipos',
+    group: 'General',
+    icon: 'calendar',
+    requiresTenant: true,
+    availability: 'disponible',
+    summary: 'Cuándo atiende cada servicio y con cuántos equipos: de eso salen los turnos.',
+    module: 'M20 diagnostics',
+  },
+  {
     // Las sucursales del laboratorio (01/10/2026): la misma pantalla que la de la
     // farmacia, sobre la organización activa.
     path: 'administration/laboratory-branches',

@@ -342,6 +342,7 @@
 
           @if (gruposDeRelaciones().length > 0) {
             <app-tab label="Relacionados">
+              <app-glossary-data-flow [termino]="termino" />
               @for (grupo of gruposDeRelaciones(); track grupo.label) {
                 <h2 class="termino__subtitulo">{{ grupo.label }}</h2>
                 <ul class="termino__relaciones">

@@ -22,6 +22,8 @@ import {
   PARAGUAS_DEL_GLOSARIO,
   type ManifiestoDelGlosario,
 } from '../glossary-shards';
+import { AlmacenConCapasDeLaMaqueta, type FuenteDeGlosario } from '../glossary-capa-de-equipos';
+import { FUENTE_DE_LA_CAPA } from '../fixtures/glosario-equipos';
 import {
   forbidden,
   notFound,
@@ -230,7 +232,7 @@ function campoDelFormulario(body: unknown, clave: string): string | null {
 
 export function registrarTerminologia(
   router: MockRouter,
-  glosario: AlmacenDeGlosario = new AlmacenDeGlosario(leerConFetch),
+  glosario: FuenteDeGlosario = new AlmacenConCapasDeLaMaqueta(new AlmacenDeGlosario(leerConFetch)),
 ): void {
   router.get('/terminology/value-sets/$glossary-facets', async () => {
     try {
@@ -386,7 +388,24 @@ export function registrarTerminologia(
     const limit = 500;
     try {
       const manifiesto = await glosario.manifiesto();
-      const { filas, total } = await glosario.pagina({ offset: 0, limit });
+      const pagina = await glosario.pagina({ offset: 0, limit });
+      const total = pagina.total;
+      // Los destinos de la capa de equipos de la maqueta (los estudios
+      // curados que «Incluye» cada modalidad) casi nunca caen entre las
+      // primeras filas: se suman para que el mapa dibuje esas aristas.
+      const presentes = new Set(pagina.filas.map((f) => f.id));
+      const faltantes = [
+        ...new Set(
+          pagina.filas
+            .filter((f) => f.source === FUENTE_DE_LA_CAPA)
+            .flatMap((f) => f.relations.map((r) => r.targetId))
+            .filter((id) => !presentes.has(id)),
+        ),
+      ];
+      const sumadas = (await Promise.all(faltantes.map((id) => glosario.porId(id)))).filter(
+        (f): f is NonNullable<typeof f> => f !== null,
+      );
+      const filas = [...pagina.filas, ...sumadas];
       const nodes = filas.map((fila) => {
         const term = terminoEnLinea(fila, manifiesto);
         return {

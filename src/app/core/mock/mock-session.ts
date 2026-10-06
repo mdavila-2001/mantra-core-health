@@ -37,6 +37,8 @@ export const TENANT_HOSPITAL = uuid('tenant-hospital-san-lucas');
 export const TENANT_PLATAFORMA = uuid('tenant-plataforma-alovida');
 export const TENANT_FARMACIA = uuid('tenant-farmacia-vida');
 export const TENANT_LABORATORIO = uuid('tenant-laboratorio-central');
+/** El Centro de Imagen Sur: el centro de imagen con el que el paciente reserva sus estudios. */
+export const TENANT_IMAGEN_SUR = uuid('tenant-imagen-sur');
 export const TENANT_ASEGURADORA = uuid('tenant-seguros-andina');
 /** El consultorio propio de la médica: su organización por defecto. */
 export const TENANT_CONSULTORIO = uuid('tenant-consultorio-rojas');
@@ -48,6 +50,7 @@ export const TENANT_NAMES: Readonly<Record<string, string>> = {
   [TENANT_PLATAFORMA]: 'AloVida Plataforma',
   [TENANT_FARMACIA]: 'Farmacia Vida',
   [TENANT_LABORATORIO]: 'Laboratorio Central',
+  [TENANT_IMAGEN_SUR]: 'Centro de Imagen Sur',
   [TENANT_ASEGURADORA]: 'Seguros Andina',
 };
 
@@ -79,6 +82,7 @@ export const TENANT_TYPES: Readonly<Record<string, TenantTypeCode | 'DIAGNOSTIC_
   // `TENANT_TYPE_CODES` —esa lista es la del alta administrativa— pero sí en el
   // claim, y es lo que abre «Recepción de muestras» en el menú.
   [TENANT_LABORATORIO]: 'DIAGNOSTIC_CENTER',
+  [TENANT_IMAGEN_SUR]: 'DIAGNOSTIC_CENTER',
   [TENANT_ASEGURADORA]: 'PAYER',
 };
 
@@ -118,6 +122,10 @@ export const IDS = {
   laboratorio: {
     userId: uuid('user-laboratorio-staff'),
     personId: uuid('person-laboratorio-staff'),
+  },
+  imagen: {
+    userId: uuid('user-imagen-sur-staff'),
+    personId: uuid('person-imagen-sur-staff'),
   },
   farmacia: {
     userId: uuid('user-farmacia-vida'),
@@ -240,6 +248,22 @@ export const MOCK_USERS: readonly MockUser[] = [
     tenants: [TENANT_LABORATORIO],
     tenantNames: TENANT_NAMES,
     personId: IDS.laboratorio.personId,
+    accountKind: 'ORGANIZATION',
+  },
+  {
+    // El Centro de Imagen Sur (mockup, 2026-10-06): la cuenta con la que el
+    // centro configura sus horarios por modalidad y el estado de sus equipos.
+    // Mismo molde que `laboratorio`: `USER` y la membresía de su tenant
+    // `DIAGNOSTIC_CENTER`.
+    key: 'imagen',
+    id: IDS.imagen.userId,
+    email: 'imagen@alovida.mock',
+    nationalId: '7002002',
+    displayName: 'Centro de Imagen Sur',
+    roles: ['USER'],
+    tenants: [TENANT_IMAGEN_SUR],
+    tenantNames: TENANT_NAMES,
+    personId: IDS.imagen.personId,
     accountKind: 'ORGANIZATION',
   },
   {

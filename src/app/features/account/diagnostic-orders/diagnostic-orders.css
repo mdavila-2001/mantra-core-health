@@ -27,3 +27,33 @@
   margin-block: var(--sp-6);
   text-align: center;
 }
+
+/* El turno reservado en un centro, bajo el sello «Con turno». */
+.orden__turno {
+  display: block;
+  margin-block-start: var(--sp-1);
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.orden__turno-datos {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: var(--sp-2) var(--sp-4);
+  margin: 0 0 var(--sp-4);
+}
+
+.orden__turno-datos dt {
+  color: var(--text-secondary);
+}
+
+.orden__turno-datos dd {
+  margin: 0;
+  color: var(--text-primary);
+}
+
+.orden__turno-acciones {
+  display: flex;
+  justify-content: flex-end;
+  margin-block-start: var(--sp-4);
+}

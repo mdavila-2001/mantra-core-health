@@ -29,9 +29,10 @@ las lista y permite copiarlas.
 | Superadmin | `superadmin@alovida.mock` | Comodín: entra a todo. Tres organizaciones. |
 | Visitador | `visitador@alovida.mock` | Carla Fernández Ríos, visitadora médica de Laboratorios Inti. Solicitudes de visita, agenda de visitas, registros. |
 | Farmacia | `farmacia@alovida.mock` | Mariela Céspedes, encargada de Farmacia Vida. Catálogo de productos (alta, carga masiva por CSV, «sin stock», edición y retiro), pedidos del mostrador y promociones. |
+| Centro de imagen | `imagen@alovida.mock` | Personal del Centro de Imagen Sur (`DIAGNOSTIC_CENTER`). «Horarios y equipos»: horario general («Resto de servicios» en cuanto una modalidad tiene horario propio), horarios por modalidad, excepciones por estudio y estado de cada equipo, que es el cupo de cada turno. |
 
 También entran por número de documento (`4567890`, `7654321`, `1112223`,
-`9998887`, `5556667`).
+`9998887`, `5556667`, `7002002`).
 
 ## Qué hay adentro
 

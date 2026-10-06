@@ -263,6 +263,12 @@ export const GLOSSARY_RELATION_TYPES = [
   'DIAGNOSTIC_TEST',
   'SYMPTOM',
   'SPECIALTY',
+  // Capa de equipos de la maqueta (2026-10-06), pendiente en la API: una
+  // modalidad «incluye» estudios, un equipo «realiza» una modalidad y cada
+  // eslabón de datos «envía datos a» el siguiente.
+  'INCLUDES',
+  'PERFORMS',
+  'SENDS_DATA_TO',
 ] as const;
 export type GlossaryRelationType = (typeof GLOSSARY_RELATION_TYPES)[number];
 
