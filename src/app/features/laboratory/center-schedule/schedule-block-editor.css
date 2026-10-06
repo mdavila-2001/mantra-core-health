@@ -42,7 +42,7 @@
   align-items: center;
 }
 
-.bloque__horas app-input {
+.bloque__horas .bloque__hora {
   flex: 1 1 0;
   min-inline-size: 0;
   max-inline-size: 11rem;

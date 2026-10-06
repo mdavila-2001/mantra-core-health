@@ -5,11 +5,13 @@ import {
   DURACIONES_DE_TURNO,
 } from '../../../core/data-access/diagnostic-units/center-schedule.rules';
 import type { ScheduleBlock, ScheduleWindow } from '../../../core/data-access/diagnostic-units/center-schedule.types';
-import { Input } from '../../../shared/components/atoms/input/input';
 import { SegmentedControl } from '../../../shared/components/molecules/segmented-control/segmented-control';
 import type { SegmentedOption } from '../../../shared/components/molecules/segmented-control/segmented-control.types';
 import { Select } from '../../../shared/components/atoms/select/select';
 import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
+
+const HORAS: readonly string[] = Array.from({ length: 96 }, (_, i) => `${String(Math.floor(i / 4)).padStart(2, '0')}:${String((i % 4) * 15).padStart(2, '0')}`);
+const OPCIONES_DE_HORA: readonly SelectOption<string>[] = HORAS.map((h) => ({ value: h, label: h }));
 
 /* ============================================================================
     Un horario: qué días se atiende, de qué hora a qué hora y cuánto dura cada
@@ -25,7 +27,7 @@ const POR_DEFECTO: Pick<ScheduleWindow, 'startTime' | 'endTime'> = { startTime: 
 
 @Component({
   selector: 'app-schedule-block-editor',
-  imports: [Input, SegmentedControl, Select],
+  imports: [SegmentedControl, Select],
   templateUrl: './schedule-block-editor.html',
   styleUrl: './schedule-block-editor.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -44,6 +46,15 @@ export class ScheduleBlockEditor {
     { value: 'si', label: 'Sí' },
     { value: 'no', label: 'No' },
   ];
+
+  /**
+   * Las horas, de 15 en 15 y en 24 h. Un desplegable y no `<input type=time>`:
+   * el nativo sigue el idioma del navegador (en es-BO muestra «08:00 a.m.») y
+   * quedaba en otro formato que el resumen «Así queda», que va en 24 h.
+   */
+  protected horasCon(actual: string): readonly SelectOption<string>[] {
+    return HORAS.includes(actual) ? OPCIONES_DE_HORA : [...OPCIONES_DE_HORA, { value: actual, label: actual }].sort((a, b) => a.value.localeCompare(b.value));
+  }
 
   /** Siete duraciones no entran en un segmentado a 390 px: van en un desplegable. */
   protected readonly duraciones: readonly SelectOption<string>[] = DURACIONES_DE_TURNO.map((m) => ({

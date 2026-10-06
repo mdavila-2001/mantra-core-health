@@ -257,7 +257,9 @@
 @media (min-width: 780px) {
   .equipo {
     grid-template-columns: 1fr auto;
-    align-items: center;
+    /* Arriba y no al centro: con el mapa de datos abierto, el estado quedaba
+       flotando a mitad de la tarjeta, lejos del nombre del equipo. */
+    align-items: start;
   }
 }
 

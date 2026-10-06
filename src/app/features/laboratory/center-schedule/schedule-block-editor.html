@@ -12,22 +12,22 @@
         />
         @if (dia.franja; as franja) {
           <div class="bloque__horas">
-            <app-input
-              type="time"
-              [step]="300"
+            <app-select
+              class="bloque__hora"
+              [options]="horasCon(franja.startTime)"
               [value]="franja.startTime"
               [ariaLabel]="nombre() + ', ' + dia.label + ': desde'"
-              [testId]="testPrefix() + '-desde-' + dia.dayOfWeek"
-              (valueChange)="fijarHora(dia.dayOfWeek, 'startTime', $event)"
+              [attr.data-testid]="testPrefix() + '-desde-' + dia.dayOfWeek"
+              (valueChange)="$event !== null && fijarHora(dia.dayOfWeek, 'startTime', $event)"
             />
             <span class="bloque__a" aria-hidden="true">a</span>
-            <app-input
-              type="time"
-              [step]="300"
+            <app-select
+              class="bloque__hora"
+              [options]="horasCon(franja.endTime)"
               [value]="franja.endTime"
               [ariaLabel]="nombre() + ', ' + dia.label + ': hasta'"
-              [testId]="testPrefix() + '-hasta-' + dia.dayOfWeek"
-              (valueChange)="fijarHora(dia.dayOfWeek, 'endTime', $event)"
+              [attr.data-testid]="testPrefix() + '-hasta-' + dia.dayOfWeek"
+              (valueChange)="$event !== null && fijarHora(dia.dayOfWeek, 'endTime', $event)"
             />
           </div>
         } @else {
