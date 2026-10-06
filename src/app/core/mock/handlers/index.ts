@@ -1,11 +1,12 @@
 import { MockRouter } from '../mock-router';
-import { registrarAgenda } from './scheduling.handlers';
+import { activarAceptacionDeDemostracion, registrarAgenda } from './scheduling.handlers';
 import { registrarServiciosDeAgenda } from './service-offerings.handlers';
 import { registrarArchivos } from './files.handlers';
 import { registrarAuth } from './auth.handlers';
 import { registrarClinica } from './clinical.handlers';
 import { registrarComunidad } from './community.handlers';
 import { registrarDiagnostico } from './diagnostics.handlers';
+import { registrarCentros } from './centros.handlers';
 import { registerDiagnosisVerification } from './diagnosis-verification.handlers';
 import { registerMedicalNotes } from './medical-notes.handlers';
 import { registrarDirectorio } from './directory.handlers';
@@ -48,6 +49,7 @@ export function crearRouterSimulado(): MockRouter {
   registrarPerfiles(router);
   registrarFirmaYSello(router);
   registrarAgenda(router);
+  activarAceptacionDeDemostracion();
   registrarServiciosDeAgenda(router);
   registrarPracticas(router);
   registrarClinica(router);
@@ -73,6 +75,8 @@ export function crearRouterSimulado(): MockRouter {
   registrarModulosAdministrativos(router);
   registrarFarmacia(router);
   registrarDiagnostico(router);
+  // Después de diagnóstico: usa sus unidades y la agenda que les abre.
+  registrarCentros(router);
   registrarPortalDeLaboratorio(router);
   registrarProcedimientos(router);
   registrarLaboratorioFarmaceutico(router);

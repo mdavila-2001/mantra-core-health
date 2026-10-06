@@ -1,3 +1,4 @@
+import type { OrderAppointment } from '../diagnostic-units/center-schedule.types';
 import type { PatientSettlementFields } from '../insurance/patient-insurance-settlement.types';
 
 /** Clasificación de C2; el simulador la resuelve al concepto. Pendiente de backend P40. */
@@ -310,6 +311,12 @@ export interface PatientOrder extends PatientSettlementFields {
   readonly preparationInstructions?: string;
   readonly hasReleasedResult: boolean;
   readonly reportId?: string;
+  /**
+   * El turno que el paciente reservó en un centro para hacer este estudio.
+   * `null` o ausente: todavía no reservó. Contrato del simulador, pendiente de
+   * backend (P-CENTRO-HORARIOS).
+   */
+  readonly appointment?: OrderAppointment | null;
 }
 
 /** Página de órdenes propias. */

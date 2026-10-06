@@ -16,6 +16,7 @@ import { ACTIVIDAD, CANAL, CLASE_ENCUENTRO, ESTADO, ESTADO_ENCUENTRO, ESTADO_RES
 import { encuentros, type EncuentroSimulado } from '../fixtures/clinica';
 import type { FollowUpOrigin } from '../../data-access/scheduling/scheduling.types';
 import { emitirNotificacion } from './notifications.handlers';
+import { avisarPorChatDeSoporte, fechaDelAviso } from './aviso-por-chat';
 import { solicitudDeLaCita } from './insurance.handlers';
 import { pacientePorId, pacientes } from '../fixtures/personas';
 import { representaA } from './profiles.handlers';
@@ -127,6 +128,36 @@ function cambiarEstado(id: string, estado: keyof typeof ESTADO_RESERVA, extra: P
   const r = reservas.get(id);
   if (r === undefined) return undefined;
   return reservas.actualizar(id, { statusConceptId: ESTADO_RESERVA[estado]!, ...extra });
+}
+
+/**
+ * Confirma una solicitud y se lo avisa al paciente por el chat de la app. Es
+ * lo que hace «Aceptar la solicitud» de la agenda del profesional, y lo que la
+ * maqueta hace sola con las solicitudes del portal (ver
+ * {@link activarAceptacionDeDemostracion}).
+ */
+function aceptarYAvisar(id: string): void {
+  const r = reservas.get(id);
+  if (r === undefined || r.statusConceptId !== ESTADO_RESERVA['BK-REQUESTED']) return;
+  cambiarEstado(id, 'BK-CONFIRMED', { confirmedAt: ahora(), appointmentId: nuevoId('appointment') });
+  const quien = recursos.get(r.resourceId)?.practitionerName ?? null;
+  avisarPorChatDeSoporte(
+    r.patientProfileId,
+    `${quien === null ? 'Tu cita' : `Tu solicitud de cita con ${quien}`} fue aceptada para el ${fechaDelAviso(r.startAt)}. Podés ver el detalle en «Mis citas».`,
+  );
+}
+
+/**
+ * En la maqueta no hay un profesional del otro lado que acepte a tiempo para
+ * una demostración: con esto encendido, una solicitud del portal se acepta
+ * sola a los pocos segundos y el paciente recibe la confirmación por chat.
+ * Lo enciende `crearRouterSimulado()`, o sea la app; las pruebas que arman su
+ * propio router no lo encienden y siguen viendo la solicitud pendiente.
+ */
+let aceptacionDeDemostracionMs: number | null = null;
+
+export function activarAceptacionDeDemostracion(ms = 6000): void {
+  aceptacionDeDemostracionMs = ms;
 }
 
 /**
@@ -357,6 +388,9 @@ export function registrarAgenda(router: MockRouter): void {
     };
     reservas.agregar(nueva);
     cupos.actualizar(cupo.id, { remainingCapacity: Math.max(0, cupo.remainingCapacity - 1), ...(delServicio === undefined ? {} : { heldUntil: null }) });
+    if (estadoFinal === 'BK-REQUESTED' && datos.channel === 'PORTAL' && aceptacionDeDemostracionMs !== null) {
+      setTimeout(() => aceptarYAvisar(nueva.id), aceptacionDeDemostracionMs);
+    }
     return { status: 201, body: { id: nueva.id, bookableSlotId: cupo.id, statusConceptId: nueva.statusConceptId, remindersScheduled: estadoFinal === 'BK-CONFIRMED' ? 2 : 0 } };
   };
   router.post('/scheduling/holds/:token/confirm', confirmar('BK-CONFIRMED'));
@@ -467,7 +501,13 @@ export function registrarAgenda(router: MockRouter): void {
     cambiarEstado(r.id, estado, extra(r));
     return { bookingId: r.id, statusConceptId: ESTADO_RESERVA[estado]!, occurredAt: ahora() };
   };
-  router.post('/scheduling/bookings/:id/accept', decision('BK-CONFIRMED', () => ({ confirmedAt: ahora(), appointmentId: nuevoId('appointment') })));
+  router.post('/scheduling/bookings/:id/accept', (request) => {
+    const r = reservas.get(request.params['id']!);
+    if (r === undefined) return notFound();
+    if (r.statusConceptId === ESTADO_RESERVA['BK-REQUESTED']) aceptarYAvisar(r.id);
+    else cambiarEstado(r.id, 'BK-CONFIRMED', { confirmedAt: ahora(), appointmentId: nuevoId('appointment') });
+    return { bookingId: r.id, statusConceptId: ESTADO_RESERVA['BK-CONFIRMED']!, occurredAt: ahora() };
+  });
   router.post('/scheduling/bookings/:id/start', decision('BK-IN-PROGRESS'));
   router.post('/scheduling/bookings/:id/complete', (request) => {
     const respuesta = decision('BK-COMPLETED')(request);
