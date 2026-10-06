@@ -226,3 +226,7 @@
     align-items: baseline;
   }
 }
+
+.reserva__aviso-accion {
+  margin-block-start: var(--sp-3);
+}

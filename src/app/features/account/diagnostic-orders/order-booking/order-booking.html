@@ -17,8 +17,15 @@
         <app-stepper class="reserva__pasos" label="Pasos de la reserva" [steps]="pasos()" />
       }
 
-      @if (aviso(); as texto) {
-        <app-alert tone="warning" class="reserva__aviso" data-testid="reserva-estudio-aviso">{{ texto }}</app-alert>
+      @if (aviso(); as a) {
+        <app-alert [tone]="a.tipo === 'error' ? 'error' : 'warning'" [title]="a.titulo" class="reserva__aviso" data-testid="reserva-estudio-aviso">
+          {{ a.texto }}
+          @if (a.tipo === 'ya-tiene-turno') {
+            <div class="reserva__aviso-accion">
+              <a app-button variant="primary" size="sm" [routerLink]="rutaDeOrdenes" data-testid="reserva-estudio-ir-a-ordenes">Ver mi turno en «Mis órdenes»</a>
+            </div>
+          }
+        </app-alert>
       }
 
       @switch (paso()) {
@@ -116,6 +123,9 @@
         @case ('confirmar') {
           @if (centro(); as c) {
             @if (horario(); as h) {
+              <!-- Si la orden ya tenía turno, el resumen con «Confirmar» no se ofrece:
+                   confirmar de nuevo choca con lo mismo. El aviso de arriba lleva a «Mis órdenes». -->
+              @if (!yaTieneTurno()) {
               <section class="reserva__seccion" aria-labelledby="reserva-confirmar">
                 <h2 id="reserva-confirmar" class="reserva__titulo" tabindex="-1">Revisá y confirmá</h2>
                 <dl class="resumen" data-testid="reserva-estudio-resumen">
@@ -143,6 +153,7 @@
                   </button>
                 </div>
               </section>
+              }
             }
           }
         }

@@ -129,9 +129,23 @@ describe('OrderBooking', () => {
     await clic(boton('Ver horarios de Centro de Imagen Sur'));
     await clic(el.querySelector<HTMLButtonElement>('[data-testid="reserva-estudio-horario"]')!);
     await clic(el.querySelector<HTMLButtonElement>('[data-testid="reserva-estudio-confirmar"]')!);
-    expect(el.querySelector('[data-testid="reserva-estudio-aviso"]')?.textContent).toContain('se acaba de ocupar');
+    expect(el.querySelector('[data-testid="reserva-estudio-aviso"]')?.textContent).toContain('Ese horario se ocupó');
     expect(el.querySelectorAll('[data-testid="reserva-estudio-horario"]').length).toBe(2);
     expect(getStudyAvailability).toHaveBeenCalledTimes(2);
+  });
+
+  it('si la orden ya tenía turno, no ofrece confirmar de nuevo y lleva a «Mis órdenes»', async () => {
+    const { el, boton, clic } = await montar({
+      getBookingOptions: () => of(OPCIONES),
+      getStudyAvailability: () => of(HORARIOS),
+      bookOrder: () => throwError(() => new HttpErrorResponse({ status: 409, error: { message: 'Esta orden ya tiene un turno.' } })),
+    });
+    await clic(boton('Ver horarios de Centro de Imagen Sur'));
+    await clic(el.querySelector<HTMLButtonElement>('[data-testid="reserva-estudio-horario"]')!);
+    await clic(el.querySelector<HTMLButtonElement>('[data-testid="reserva-estudio-confirmar"]')!);
+    expect(el.querySelector('[data-testid="reserva-estudio-aviso"]')?.textContent).toContain('Esta orden ya tiene turno');
+    expect(el.querySelector('[data-testid="reserva-estudio-confirmar"]')).toBeNull();
+    expect(el.querySelector('[data-testid="reserva-estudio-ir-a-ordenes"]')?.getAttribute('href')).toBe('/my-account/diagnostic-orders');
   });
 
   it('sin centros que hagan el estudio, ofrece volver a las órdenes', async () => {

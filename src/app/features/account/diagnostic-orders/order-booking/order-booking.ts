@@ -64,6 +64,12 @@ const DIAS_A_MOSTRAR = 14;
 /** Días con horarios que se ven de entrada; el resto, con «Ver más días». */
 const DIAS_VISIBLES = 5;
 
+interface Aviso {
+  readonly tipo: 'ocupado' | 'ya-tiene-turno' | 'error';
+  readonly titulo: string;
+  readonly texto: string;
+}
+
 @Component({
   selector: 'app-order-booking',
   imports: [RouterLink, PageHeader, ViewStateHost, Card, Stepper, SegmentedControl, AppButton, AppButtonLink, Alert],
@@ -89,7 +95,12 @@ export class OrderBooking implements OnInit {
   protected readonly diasVisibles = signal(DIAS_VISIBLES);
   protected readonly confirmando = signal(false);
   /** Un aviso que no saca al paciente del paso: el horario se ocupó, la orden ya tiene turno. */
-  protected readonly aviso = signal<string | null>(null);
+  protected readonly aviso = signal<Aviso | null>(null);
+  /**
+   * La orden ya tenía turno (409 sin `slotTaken`): confirmar de nuevo choca
+   * con lo mismo, así que el paso deja de ofrecerlo y lleva a «Mis órdenes».
+   */
+  protected readonly yaTieneTurno = computed(() => this.aviso()?.tipo === 'ya-tiene-turno');
   protected readonly turno = signal<OrderAppointment | null>(null);
 
   /**
@@ -233,12 +244,16 @@ export class OrderBooking implements OnInit {
           if (ocupado) this.volverA('horario');
           this.aviso.set(
             ocupado
-              ? 'Ese horario se acaba de ocupar. Elegí otro de la lista.'
-              : 'Esta orden ya tiene un turno. Para cambiarlo, cancelalo desde «Mis órdenes».',
+              ? { tipo: 'ocupado', titulo: 'Ese horario se ocupó', texto: 'Alguien lo tomó recién. Elegí otro de la lista.' }
+              : {
+                  tipo: 'ya-tiene-turno',
+                  titulo: 'Esta orden ya tiene turno',
+                  texto: 'Para cambiarlo, cancelá el turno actual desde «Mis órdenes» y volvé a reservar.',
+                },
           );
           return;
         }
-        this.aviso.set('No pudimos confirmar el turno. Probá de nuevo en un momento.');
+        this.aviso.set({ tipo: 'error', titulo: 'No se confirmó el turno', texto: 'Probá de nuevo en un momento.' });
       },
     });
   }
