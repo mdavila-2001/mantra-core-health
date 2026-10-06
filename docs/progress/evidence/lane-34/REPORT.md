@@ -2,19 +2,19 @@
 
 ## Veredicto: FAIL
 
-Todas las mediciones visuales aplicables pasan en las 460 celdas cargadas y revisadas. El ancho de las altas públicas en oscuro queda como «no aplica» para conservar la escena oscura de dos columnas. El auditor conserva 20 fallas de consola por rol: la política CSP bloquea dos scripts inline en cinco altas públicas. La ficha exige consola sin errores, por eso el carril no queda cerrado.
+Todas las mediciones visuales aplicables pasan en las 464 celdas cargadas y revisadas. El ancho de las altas públicas en oscuro queda como «no aplica» para conservar la escena oscura de dos columnas. El auditor conserva 20 fallas de consola por rol: la política CSP bloquea dos scripts inline en cinco altas públicas. La ficha exige consola sin errores, por eso el carril no queda cerrado.
 
-La auditoría se corrió en `justin/mockup-corr-34-cierre-global-20261005`, basada en `mockup` (`525859e9`). El propietario confirmó fondo blanco sólo en claro, conservar superficies oscuras, cubrir médica y paciente, y auditar administración con la cuenta disponible.
+La auditoría visual se corrió en `justin/mockup-corr-34-cierre-global-20261005` con las pantallas del cambio. Después se rebasó la rama sobre el `mockup` remoto actualizado (`7b4993e0`); el rebase sólo incorporó cambios ajenos a las pantallas de esta auditoría. El mapa actualizado agregó `/administration/insurance-patients`; se midió en 375/768/1440 claro y 1440 oscuro (4/4 PASS) y se añadió a la matriz de administración.
 
 ## Inventario y cobertura
 
-El generador produce 81 vistas auditables desde el mapa de navegación. Excluye las dos secciones registradas que redirigen sin renderizar una vista (`/my-account/loyalty` y `/administration/pharmacy-profile`), además de rutas parametrizadas sin datos de fixture. Las ocho vistas públicas agregadas son `/posts` y las siete altas.
+El generador produce 82 vistas auditables desde el mapa de navegación. Excluye las dos secciones registradas que redirigen sin renderizar una vista (`/my-account/loyalty` y `/administration/pharmacy-profile`), además de rutas parametrizadas sin datos de fixture. Las ocho vistas públicas agregadas son `/posts` y las siete altas.
 
 | Actor auditado | Rutas | Celdas | Resultado de métricas visuales | Rojos de consola | Matriz |
 |---|---:|---:|---|---:|---|
 | Médica (`PRACTITIONER`/`CLINICIAN`) | 35 | 140 | 140/140 PASS | 20 CSP | [MATRIZ-visual.md](MATRIZ-visual.md) |
 | Paciente (`PATIENT`) | 34 | 136 | 136/136 PASS | 20 CSP | [paciente/MATRIZ-visual.md](paciente/MATRIZ-visual.md) |
-| Administración (`SECURITY_ADMIN`) | 46 | 184 | 184/184 PASS | 20 CSP | [administrador/MATRIZ-visual.md](administrador/MATRIZ-visual.md) |
+| Administración (`SECURITY_ADMIN`) | 47 | 188 | 188/188 PASS | 20 CSP | [administrador/MATRIZ-visual.md](administrador/MATRIZ-visual.md) |
 
 Cada celda es una ruta en 375, 768 o 1440 px en claro, o 1440 px en oscuro. En las tres matrices: fondo claro blanco, centrado dentro de 2 px, ancho mínimo del 85 % donde aplica y sin scroll horizontal. En oscuro se conserva la superficie existente; el ancho de las altas públicas no se fuerza porque alteraría esa composición. Las altas se miden sobre `.auth-split__panel` en contexto público independiente.
 
@@ -24,26 +24,26 @@ La cuenta de administración del simulador es `admin@alovida.mock` con rol `SECU
 
 ## Fotos
 
-Las tres matrices finales enlazan 460 PNG: 140 de médica, 136 de paciente y 184 de administración. Todos los archivos referenciados existen y superan 8 kB. Revisé las 460 capturas agrupadas en 13 hojas de contacto: contenido centrado, fondo claro blanco, pantallas oscuras conservadas y formularios públicos en los tres anchos.
+Las tres matrices finales enlazan 464 PNG: 140 de médica, 136 de paciente y 188 de administración. Todos los archivos referenciados existen y superan 8 kB. Revisé las capturas de las matrices completas agrupadas en 13 hojas de contacto y las cuatro nuevas capturas de la ruta administrativa; muestran contenido centrado, fondo claro blanco, pantallas oscuras conservadas y formularios públicos en los tres anchos.
 
 Las carpetas conservan capturas anteriores de inventarios ya descartados. Se consideran evidencia vigente únicamente los archivos enlazados desde las matrices finales.
 
 ## Comandos y salida
 
-- `node scripts/corr-rutas.mjs` → `Carril 34: inventario 81; médica 35; paciente 34; administración 46`.
+- `node scripts/corr-rutas.mjs` → `Carril 34: inventario 82; médica 35; paciente 34; administración 47`.
 - `corepack yarn typecheck` → PASS.
 - `corepack yarn eslint scripts/audit-design-views.mjs scripts/corr-rutas.mjs playwright/corr-evidencia.spec.ts playwright/support/simulador.ts` → PASS.
 - `git diff --check` → PASS.
 - `corepack yarn build` → PASS, con advertencias existentes de dependencias CommonJS y `prerender` ignorado por `outputMode`.
 - `CORR_USUARIO=medica scripts/corr-evidencia.sh 34 --auditoria` → 140 celdas; falla el gate únicamente por 20 mensajes CSP.
 - `CORR_USUARIO=paciente scripts/corr-evidencia.sh 34` → 136 celdas; falla el gate únicamente por 20 mensajes CSP.
-- `CORR_USUARIO=administrador scripts/corr-evidencia.sh 34 --auditoria` → 184 celdas; falla el gate únicamente por 20 mensajes CSP.
+- `CORR_USUARIO=administrador scripts/corr-evidencia.sh 34 --auditoria --ruta=/administration/insurance-patients` → 4/4 celdas PASS. La corrida completa de 188 celdas se intentó tras actualizar `mockup`, excedió el tiempo de trabajo y se canceló; las 184 celdas anteriores siguen referenciadas y la ruta nueva se capturó dirigida.
 - `corepack yarn lint` → FAIL: 276 errores distribuidos por el repositorio. El ESLint dirigido a los cuatro archivos JS/TS modificados pasó.
-- `corepack yarn test --watch=false` (repetición final) → 733 archivos PASS, 3 FAIL; 10.167 pruebas PASS, 3 FAIL (10.170 total).
-  - `src/app/features/accounting/resumen/resumen.spec.ts`: esperaba 6 ventanas únicas y obtuvo 5.
-  - `src/app/features/dashboard/access-tree/access-tree.spec.ts`: apareció `/administration/received-claims` en la lista esperada de la aseguradora.
-  - `src/app/features/account/pharmacy/cart/cart-page.spec.ts`: el estado/cantidad del carrito compartido no coincidió con el caso vacío.
-  Ninguno de esos archivos está modificado por CORR-34; no se debilitaron ni borraron aserciones. La prueba dirigida de `clinical.handlers.spec.ts` pasó 22/22 después de una corrida completa anterior que mostró un resultado distinto.
+- `corepack yarn test --watch=false` (repetición sobre el `mockup` remoto actualizado) → 745 archivos PASS, 3 FAIL; 10.374 pruebas PASS, 3 FAIL (10.377 total).
+  - `src/app/core/mock/handlers/clinical.handlers.spec.ts`: `buildPrescriptionPdf(...).output` no es una función.
+  - `src/app/core/mock/handlers/insurance-analytics.handlers.spec.ts`: el fixture tiene 1 cobertura sin prima (esperaba 0).
+  - `src/app/shared/utils/pdf-export/pdf-logo.spec.ts`: el logo compartido persiste entre casos.
+  Ninguno de esos archivos está modificado por CORR-34; no se debilitaron ni borraron aserciones.
 - `corepack yarn pw playwright/carril-19-route-health.spec.ts --workers=1` → FAIL antes del barrido: `la API tiene que estar viva para el barrido`. La API local no estaba disponible; no se levantó ni modificó backend.
 - `python3 -S .claude/hooks/claim.py --lane 34 --level VERIFIED --allow-downgrade ...` → nivel `VERIFIED`; se reemplazó el claim `REGRESSION_VERIFIED` heredado del PR #457, que no describía esta corrección.
 - `python3 -S scripts/atlas/fable-proof-check.py --lane 34` → FAIL correcto: `Claim level=VERIFIED != REGRESSION_VERIFIED`.
@@ -53,7 +53,7 @@ Las carpetas conservan capturas anteriores de inventarios ya descartados. Se con
 - El generador deja de tomar rutas históricas escritas en comentarios, reconoce listas de roles compartidas, aplica restricciones de tenant y excluye secciones que sólo redirigen. Conserva por separado inventario global y listas por actor.
 - El auditor comprueba que la ruta solicitada sea la que quedó cargada, separa las salidas por rol y usa viewport fijo para cada foto. Las altas públicas se miden sin la sesión autenticada.
 - El simulador asigna `CORR_USUARIO=administrador` a la cuenta real `admin@alovida.mock`.
-- Se actualizó la ficha, el prompt y las instrucciones `.md` de evidencia, microtareas y pruebas para documentar las decisiones del propietario, la sintaxis vigente y el inventario de 81 vistas.
+- Se actualizó la ficha, el prompt y las instrucciones `.md` de evidencia, microtareas y pruebas para documentar las decisiones del propietario, la sintaxis vigente y el inventario vigente de 82 vistas.
 - El checkout también contiene cambios visuales del espacio de trabajo en `shell-layout.css` y `register-pharmacy.html`; no hice más cambios de UI durante esta continuación porque las mediciones visuales ya pasaban.
 
 ## Autorrevisión de código

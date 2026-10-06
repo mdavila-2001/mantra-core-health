@@ -315,6 +315,7 @@
       "apis": [
         "ChartTemplatesClient",
         "FormsClient",
+        "ProfilesClient",
         "TerminologyClient"
       ],
       "estado": "conectada con deuda",
@@ -419,7 +420,7 @@
     },
     {
       "ruta": "/administration/insurance",
-      "etiqueta": "Aseguradora",
+      "etiqueta": "Mis productos",
       "grupo": "Administración",
       "roles": [],
       "rolesExclusivos": false,
@@ -485,6 +486,20 @@
       "componente": "ReceivedClaims",
       "apis": [
         "InsuranceClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/insurance-patients",
+      "etiqueta": "Pacientes de la aseguradora",
+      "grupo": "Administración",
+      "roles": [],
+      "rolesExclusivos": false,
+      "componente": "InsurancePatients",
+      "apis": [
+        "InsuranceClient",
+        "SystemContextClient"
       ],
       "estado": "conectada",
       "parametrizada": false
@@ -2479,6 +2494,29 @@
       ],
       "estado": "conectada",
       "parametrizada": true
+    },
+    {
+      "ruta": "/glossary/network",
+      "seccion": "Glosario",
+      "roles": [
+        "PRACTITIONER",
+        "CLINICIAN",
+        "SCHEDULING_ADMIN",
+        "SCHEDULING_AGENT",
+        "SURGEON",
+        "ANESTHESIOLOGIST",
+        "PERIOP_NURSE",
+        "SURGERY_SCHEDULER",
+        "PERIOP_ADMIN",
+        "MEDICAL_VISITOR",
+        "SECURITY_ADMIN"
+      ],
+      "componente": "GlossaryNetwork",
+      "apis": [
+        "TerminologyClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
     },
     {
       "ruta": "/groups/:groupId",

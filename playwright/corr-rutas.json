@@ -359,6 +359,10 @@
       "nombre": "administration_received-claims"
     },
     {
+      "ruta": "/administration/insurance-patients",
+      "nombre": "administration_insurance-patients"
+    },
+    {
       "ruta": "/administration/insurance-campaigns",
       "nombre": "administration_insurance-campaigns"
     },
@@ -777,6 +781,10 @@
     {
       "ruta": "/administration/received-claims",
       "nombre": "administration_received-claims"
+    },
+    {
+      "ruta": "/administration/insurance-patients",
+      "nombre": "administration_insurance-patients"
     },
     {
       "ruta": "/administration/insurance-campaigns",
