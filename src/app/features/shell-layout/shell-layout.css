@@ -10,6 +10,22 @@
  * espacios** del encabezado —entre sus tres bloques y su margen lateral—:
  * ninguna acción se esconde y ninguna pierde su área táctil.
  */
+@media (max-width: 900px) {
+  .app-header__derecha {
+    min-width: 0;
+    max-width: 100%;
+    flex: 1 1 auto;
+    gap: var(--e1);
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    scrollbar-width: none;
+  }
+
+  .app-header__derecha::-webkit-scrollbar {
+    display: none;
+  }
+}
+
 @media (max-width: 400px) {
   .app-header {
     gap: var(--e1);
