@@ -1,6 +1,6 @@
-# MATRIZ visual — carril 34 — despues — 2026-10-06T03:30:42.800Z
+# MATRIZ visual — carril 34 — despues — 2026-10-06T04:16:29.019Z
 
-Celdas: 184 · en rojo: 20
+Celdas: 188 · en rojo: 20
 
 | Ruta | Viewport | Tema | Fondo blanco | Centrado (≤2 px) | Ancho (≥85 %) | Sin scroll H | Consola | Foto |
 |---|---|---|---|---|---|---|---|---|
@@ -22,6 +22,7 @@ Celdas: 184 · en rojo: 20
 | `/administration/insurance-claims` | 375 | claro | PASS | PASS | PASS (<app-insurance-claims>) | PASS | PASS | `fotos/despues/administration_insurance-claims-375-claro.png` |
 | `/administration/insurance-analytics` | 375 | claro | PASS | PASS | PASS (<app-insurance-analytics>) | PASS | PASS | `fotos/despues/administration_insurance-analytics-375-claro.png` |
 | `/administration/received-claims` | 375 | claro | PASS | PASS | PASS (1 app-card) | PASS | PASS | `fotos/despues/administration_received-claims-375-claro.png` |
+| `/administration/insurance-patients` | 375 | claro | PASS | PASS | PASS (<app-insurance-patients>) | PASS | PASS | `fotos/despues/administration_insurance-patients-375-claro.png` |
 | `/administration/insurance-campaigns` | 375 | claro | PASS | PASS | PASS (<app-insurance-campaigns>) | PASS | PASS | `fotos/despues/administration_insurance-campaigns-375-claro.png` |
 | `/administration/delegated-access` | 375 | claro | PASS | PASS | PASS (5 app-card) | PASS | PASS | `fotos/despues/administration_delegated-access-375-claro.png` |
 | `/administration/identity-assurance` | 375 | claro | PASS | PASS | PASS (6 app-card) | PASS | PASS | `fotos/despues/administration_identity-assurance-375-claro.png` |
@@ -68,6 +69,7 @@ Celdas: 184 · en rojo: 20
 | `/administration/insurance-claims` | 768 | claro | PASS | PASS | PASS (<app-insurance-claims>) | PASS | PASS | `fotos/despues/administration_insurance-claims-768-claro.png` |
 | `/administration/insurance-analytics` | 768 | claro | PASS | PASS | PASS (<app-insurance-analytics>) | PASS | PASS | `fotos/despues/administration_insurance-analytics-768-claro.png` |
 | `/administration/received-claims` | 768 | claro | PASS | PASS | PASS (1 app-card) | PASS | PASS | `fotos/despues/administration_received-claims-768-claro.png` |
+| `/administration/insurance-patients` | 768 | claro | PASS | PASS | PASS (<app-insurance-patients>) | PASS | PASS | `fotos/despues/administration_insurance-patients-768-claro.png` |
 | `/administration/insurance-campaigns` | 768 | claro | PASS | PASS | PASS (<app-insurance-campaigns>) | PASS | PASS | `fotos/despues/administration_insurance-campaigns-768-claro.png` |
 | `/administration/delegated-access` | 768 | claro | PASS | PASS | PASS (5 app-card) | PASS | PASS | `fotos/despues/administration_delegated-access-768-claro.png` |
 | `/administration/identity-assurance` | 768 | claro | PASS | PASS | PASS (6 app-card) | PASS | PASS | `fotos/despues/administration_identity-assurance-768-claro.png` |
@@ -114,6 +116,7 @@ Celdas: 184 · en rojo: 20
 | `/administration/insurance-claims` | 1440 | claro | PASS | PASS | PASS (<app-insurance-claims>) | PASS | PASS | `fotos/despues/administration_insurance-claims-1440-claro.png` |
 | `/administration/insurance-analytics` | 1440 | claro | PASS | PASS | PASS (<app-insurance-analytics>) | PASS | PASS | `fotos/despues/administration_insurance-analytics-1440-claro.png` |
 | `/administration/received-claims` | 1440 | claro | PASS | PASS | PASS (1 app-card) | PASS | PASS | `fotos/despues/administration_received-claims-1440-claro.png` |
+| `/administration/insurance-patients` | 1440 | claro | PASS | PASS | PASS (<app-insurance-patients>) | PASS | PASS | `fotos/despues/administration_insurance-patients-1440-claro.png` |
 | `/administration/insurance-campaigns` | 1440 | claro | PASS | PASS | PASS (<app-insurance-campaigns>) | PASS | PASS | `fotos/despues/administration_insurance-campaigns-1440-claro.png` |
 | `/administration/delegated-access` | 1440 | claro | PASS | PASS | PASS (5 app-card) | PASS | PASS | `fotos/despues/administration_delegated-access-1440-claro.png` |
 | `/administration/identity-assurance` | 1440 | claro | PASS | PASS | PASS (6 app-card) | PASS | PASS | `fotos/despues/administration_identity-assurance-1440-claro.png` |
@@ -160,6 +163,7 @@ Celdas: 184 · en rojo: 20
 | `/administration/insurance-claims` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (<app-insurance-claims>) | PASS | PASS | `fotos/despues/administration_insurance-claims-1440-oscuro.png` |
 | `/administration/insurance-analytics` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (<app-insurance-analytics>) | PASS | PASS | `fotos/despues/administration_insurance-analytics-1440-oscuro.png` |
 | `/administration/received-claims` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (1 app-card) | PASS | PASS | `fotos/despues/administration_received-claims-1440-oscuro.png` |
+| `/administration/insurance-patients` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (<app-insurance-patients>) | PASS | PASS | `fotos/despues/administration_insurance-patients-1440-oscuro.png` |
 | `/administration/insurance-campaigns` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (<app-insurance-campaigns>) | PASS | PASS | `fotos/despues/administration_insurance-campaigns-1440-oscuro.png` |
 | `/administration/delegated-access` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (5 app-card) | PASS | PASS | `fotos/despues/administration_delegated-access-1440-oscuro.png` |
 | `/administration/identity-assurance` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (6 app-card) | PASS | PASS | `fotos/despues/administration_identity-assurance-1440-oscuro.png` |
