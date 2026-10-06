@@ -58,6 +58,14 @@ const appRoutes = readFileSync(join(SRC_ROOT, 'app/app.routes.ts'), 'utf8');
  */
 function leerSecciones() {
   const secciones = [];
+  const rolesCompartidos = new Map(
+    [...navMap.matchAll(/(?:export\s+)?const\s+(\w+)[\s\S]*?=\s*\[([^\]]*)\]\s*(?:as const)?\s*;/g)].map(
+      ([, nombre, contenido]) => [
+        nombre,
+        [...contenido.matchAll(/'([^']+)'/g)].map((m) => m[1]),
+      ],
+    ),
+  );
   const bloques = navMap.split(/\n\s*\{\s*\n/).slice(1);
   for (const bloque of bloques) {
     const path = /path:\s*'([^']+)'/.exec(bloque)?.[1];
@@ -66,11 +74,13 @@ function leerSecciones() {
     const group = /group:\s*'([^']+)'/.exec(bloque)?.[1] ?? '—';
     const availability = /availability:\s*'([^']+)'/.exec(bloque)?.[1] ?? '—';
     const module = /module:\s*'([^']+)'/.exec(bloque)?.[1] ?? '—';
-    const rolesRaw = /roles:\s*\[([^\]]*)\]/.exec(bloque)?.[1];
+    const rolesRaw = /roles:\s*(\[[^\]]*\]|[A-Z][A-Z0-9_]*)/.exec(bloque)?.[1];
     const roles =
       rolesRaw === undefined
         ? []
-        : [...rolesRaw.matchAll(/'([^']+)'/g)].map((m) => m[1]);
+        : rolesRaw.startsWith('[')
+          ? [...rolesRaw.matchAll(/'([^']+)'/g)].map((m) => m[1])
+          : (rolesCompartidos.get(rolesRaw) ?? []);
     // Los roles excluyentes ignoran el comodín `SUPERADMIN` (corrección #2). El
     // barrido lo necesita para no dar por rota una ruta que rebota a propósito.
     const exclusiveRoles = /exclusiveRoles:\s*true/.test(bloque);

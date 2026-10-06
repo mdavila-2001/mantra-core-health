@@ -60,7 +60,8 @@
       "etiqueta": "Directorio de médicos",
       "grupo": "General",
       "roles": [
-        "PATIENT"
+        "PATIENT",
+        "PRACTITIONER"
       ],
       "rolesExclusivos": true,
       "componente": "PractitionersDirectory",
@@ -72,28 +73,22 @@
       "parametrizada": false
     },
     {
-      "ruta": "/nearby-places",
-      "etiqueta": "Lugares cercanos",
-      "grupo": "General",
-      "roles": [
-        "PATIENT"
-      ],
-      "rolesExclusivos": false,
-      "componente": "NearbyPlaces",
-      "apis": [
-        "ClinicalClient",
-        "ProfilesClient",
-        "PublicDirectoryClient",
-        "TerminologyClient"
-      ],
-      "estado": "conectada",
-      "parametrizada": false
-    },
-    {
       "ruta": "/groups",
       "etiqueta": "Grupos y foros",
       "grupo": "General",
-      "roles": [],
+      "roles": [
+        "PRACTITIONER",
+        "CLINICIAN",
+        "SCHEDULING_ADMIN",
+        "SCHEDULING_AGENT",
+        "SURGEON",
+        "ANESTHESIOLOGIST",
+        "PERIOP_NURSE",
+        "SURGERY_SCHEDULER",
+        "PERIOP_ADMIN",
+        "MEDICAL_VISITOR",
+        "SECURITY_ADMIN"
+      ],
       "rolesExclusivos": false,
       "componente": "Groups",
       "apis": [
@@ -123,6 +118,7 @@
       "rolesExclusivos": false,
       "componente": "ClinicsDirectory",
       "apis": [
+        "InsuranceClient",
         "PublicCatalogClient",
         "PublicDirectoryClient"
       ],
@@ -137,6 +133,22 @@
       "rolesExclusivos": false,
       "componente": "PharmaciesDirectory",
       "apis": [
+        "InsuranceClient",
+        "PublicCatalogClient",
+        "PublicDirectoryClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/insurers-directory",
+      "etiqueta": "Directorio de aseguradoras",
+      "grupo": "General",
+      "roles": [],
+      "rolesExclusivos": false,
+      "componente": "InsurersDirectory",
+      "apis": [
+        "InsuranceClient",
         "PublicCatalogClient",
         "PublicDirectoryClient"
       ],
@@ -155,6 +167,8 @@
       "rolesExclusivos": false,
       "componente": "Agenda",
       "apis": [
+        "ClinicalClient",
+        "PharmaLabClient",
         "ProfilesClient",
         "SchedulingClient",
         "TerminologyClient"
@@ -175,6 +189,7 @@
       "apis": [
         "AccountingClient",
         "AuthzClient",
+        "BillingSimulatedClient",
         "ChartCarePlansClient",
         "ChartDocumentsClient",
         "ChartNotesClient",
@@ -183,30 +198,13 @@
         "DiagnosticsClient",
         "FilesClient",
         "FormsClient",
-        "PrescriptionFavoritesClient",
         "ProceduresClient",
         "ProfilesClient",
         "QuotationsClient",
-        "SystemContextClient",
-        "TerminologyClient"
-      ],
-      "estado": "conectada",
-      "parametrizada": false
-    },
-    {
-      "ruta": "/progress-notes",
-      "etiqueta": "Evoluciones",
-      "grupo": "Atención",
-      "roles": [
-        "CLINICIAN",
-        "PRACTITIONER"
-      ],
-      "rolesExclusivos": false,
-      "componente": "ProgressNotes",
-      "apis": [
-        "ClinicalClient",
         "SchedulingClient",
-        "TerminologyClient"
+        "SystemContextClient",
+        "TerminologyClient",
+        "DiagnosisIaClient"
       ],
       "estado": "conectada",
       "parametrizada": false
@@ -283,7 +281,19 @@
       "ruta": "/glossary",
       "etiqueta": "Glosario",
       "grupo": "Atención",
-      "roles": [],
+      "roles": [
+        "PRACTITIONER",
+        "CLINICIAN",
+        "SCHEDULING_ADMIN",
+        "SCHEDULING_AGENT",
+        "SURGEON",
+        "ANESTHESIOLOGIST",
+        "PERIOP_NURSE",
+        "SURGERY_SCHEDULER",
+        "PERIOP_ADMIN",
+        "MEDICAL_VISITOR",
+        "SECURITY_ADMIN"
+      ],
       "rolesExclusivos": false,
       "componente": "Glossary",
       "apis": [
@@ -296,7 +306,10 @@
       "ruta": "/form-builder",
       "etiqueta": "Formularios",
       "grupo": "Atención",
-      "roles": [],
+      "roles": [
+        "CLINICIAN",
+        "PRACTITIONER"
+      ],
       "rolesExclusivos": true,
       "componente": "FormBuilder",
       "apis": [
@@ -311,10 +324,14 @@
       "ruta": "/my-services",
       "etiqueta": "Mis servicios",
       "grupo": "Atención",
-      "roles": [],
+      "roles": [
+        "CLINICIAN",
+        "PRACTITIONER"
+      ],
       "rolesExclusivos": false,
       "componente": "MyServices",
       "apis": [
+        "SchedulingClient",
         "ServicesCatalogClient"
       ],
       "estado": "conectada",
@@ -324,7 +341,10 @@
       "ruta": "/my-quotations",
       "etiqueta": "Cotizaciones",
       "grupo": "Atención",
-      "roles": [],
+      "roles": [
+        "CLINICIAN",
+        "PRACTITIONER"
+      ],
       "rolesExclusivos": false,
       "componente": "QuotationList",
       "apis": [
@@ -360,7 +380,8 @@
       "rolesExclusivos": false,
       "componente": "PatientList",
       "apis": [
-        "ProfilesClient"
+        "ProfilesClient",
+        "SystemContextClient"
       ],
       "estado": "conectada con deuda",
       "parametrizada": false
@@ -404,7 +425,8 @@
       "rolesExclusivos": false,
       "componente": "InsuranceCatalog",
       "apis": [
-        "InsuranceClient"
+        "InsuranceClient",
+        "ServicesCatalogClient"
       ],
       "estado": "conectada",
       "parametrizada": false
@@ -449,6 +471,32 @@
       "componente": "InsuranceAnalytics",
       "apis": [
         "InsuranceAnalyticsClient",
+        "InsuranceClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/received-claims",
+      "etiqueta": "Solicitudes recibidas",
+      "grupo": "Administración",
+      "roles": [],
+      "rolesExclusivos": false,
+      "componente": "ReceivedClaims",
+      "apis": [
+        "InsuranceClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/insurance-campaigns",
+      "etiqueta": "Campañas preventivas",
+      "grupo": "Administración",
+      "roles": [],
+      "rolesExclusivos": false,
+      "componente": "InsuranceCampaigns",
+      "apis": [
         "InsuranceClient"
       ],
       "estado": "conectada",
@@ -505,7 +553,7 @@
       "apis": [
         "TerminologyClient"
       ],
-      "estado": "conectada",
+      "estado": "conectada con deuda",
       "parametrizada": false
     },
     {
@@ -534,6 +582,81 @@
       "componente": "Moderation",
       "apis": [
         "CommunityClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/data-catalog",
+      "etiqueta": "Catálogo de datos",
+      "grupo": "Administración",
+      "roles": [
+        "SECURITY_ADMIN",
+        "PLATFORM_ADMIN",
+        "GOVERNANCE_ADMIN",
+        "DATA_PLATFORM_ADMIN",
+        "DPO"
+      ],
+      "rolesExclusivos": false,
+      "componente": "DataCatalog",
+      "apis": [
+        "DataCatalogClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/web-analytics",
+      "etiqueta": "Analítica web",
+      "grupo": "Administración",
+      "roles": [
+        "PLATFORM_ADMIN",
+        "SECURITY_ADMIN",
+        "DATA_PLATFORM_ADMIN",
+        "MARKETING_MANAGER",
+        "DPO"
+      ],
+      "rolesExclusivos": false,
+      "componente": "WebAnalytics",
+      "apis": [
+        "WebAnalyticsClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/qa-lab",
+      "etiqueta": "QA Lab",
+      "grupo": "Administración",
+      "roles": [
+        "QA_ADMIN",
+        "QA_ENGINEER",
+        "RELEASE_MANAGER",
+        "PLATFORM_ADMIN"
+      ],
+      "rolesExclusivos": false,
+      "componente": "QaLab",
+      "apis": [
+        "QaLabClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/operations",
+      "etiqueta": "Operación",
+      "grupo": "Administración",
+      "roles": [
+        "PLATFORM_ADMIN",
+        "SRE",
+        "SECURITY_ADMIN",
+        "RELEASE_MANAGER",
+        "GOVERNANCE_ADMIN"
+      ],
+      "rolesExclusivos": false,
+      "componente": "Operations",
+      "apis": [
+        "OpsConsoleClient"
       ],
       "estado": "conectada",
       "parametrizada": false
@@ -643,9 +766,11 @@
         "PAYMENTS_ADMIN"
       ],
       "rolesExclusivos": false,
-      "componente": "SectionPlaceholder",
-      "apis": [],
-      "estado": "placeholder",
+      "componente": "Billing",
+      "apis": [
+        "BillingSimulatedClient"
+      ],
+      "estado": "conectada",
       "parametrizada": false
     },
     {
@@ -701,17 +826,9 @@
       "grupo": "Mi cuenta",
       "roles": [],
       "rolesExclusivos": false,
-      "componente": "MyProfile",
-      "apis": [
-        "CommunityClient",
-        "FilesClient",
-        "IdentityClient",
-        "InsurancePortabilityClient",
-        "PracticeSitesClient",
-        "ProfilesClient",
-        "TerminologyClient"
-      ],
-      "estado": "conectada con deuda",
+      "componente": "MyAccount",
+      "apis": [],
+      "estado": "presentacional",
       "parametrizada": false
     },
     {
@@ -743,6 +860,7 @@
         "PharmacyOrdersClient",
         "PharmacyClient",
         "ProfilesClient",
+        "SchedulingClient",
         "TerminologyClient"
       ],
       "estado": "conectada con deuda",
@@ -774,7 +892,23 @@
         "DiagnosticsClient",
         "TerminologyClient"
       ],
-      "estado": "conectada con deuda",
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/my-account/cotizaciones",
+      "etiqueta": "Cotizaciones",
+      "grupo": "Mi cuenta",
+      "roles": [],
+      "rolesExclusivos": false,
+      "componente": "Cotizaciones",
+      "apis": [
+        "DiagnosticUnitsClient",
+        "PharmacyClient",
+        "ProfilesClient",
+        "ServicesCatalogClient"
+      ],
+      "estado": "conectada",
       "parametrizada": false
     },
     {
@@ -827,6 +961,22 @@
       "parametrizada": false
     },
     {
+      "ruta": "/my-account/pharmacy",
+      "etiqueta": "Farmacia",
+      "grupo": "Mi cuenta",
+      "roles": [
+        "PATIENT"
+      ],
+      "rolesExclusivos": false,
+      "componente": "StoreFront",
+      "apis": [
+        "PharmacyOrdersClient",
+        "ProfilesClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
       "ruta": "/my-account/pharmacy-orders",
       "etiqueta": "Mis pedidos",
       "grupo": "Mi cuenta",
@@ -851,11 +1001,9 @@
         "PATIENT"
       ],
       "rolesExclusivos": false,
-      "componente": "Loyalty",
-      "apis": [
-        "LoyaltyClient"
-      ],
-      "estado": "conectada",
+      "componente": "SectionPlaceholder",
+      "apis": [],
+      "estado": "sin pantalla",
       "parametrizada": false
     },
     {
@@ -867,8 +1015,51 @@
       ],
       "rolesExclusivos": false,
       "componente": "Promotions",
-      "apis": [],
-      "estado": "presentacional",
+      "apis": [
+        "PromotionsClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/my-account/spending",
+      "etiqueta": "Mis gastos",
+      "grupo": "Mi cuenta",
+      "roles": [
+        "PATIENT"
+      ],
+      "rolesExclusivos": false,
+      "componente": "Spending",
+      "apis": [
+        "PatientSpendingClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/my-account/invoices",
+      "etiqueta": "Mis facturas",
+      "grupo": "Mi cuenta",
+      "roles": [],
+      "rolesExclusivos": false,
+      "componente": "MyInvoices",
+      "apis": [
+        "BillingSimulatedClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/my-account/requests",
+      "etiqueta": "Mis solicitudes",
+      "grupo": "Mi cuenta",
+      "roles": [],
+      "rolesExclusivos": false,
+      "componente": "MyRequests",
+      "apis": [
+        "InsuranceClient"
+      ],
+      "estado": "conectada",
       "parametrizada": false
     },
     {
@@ -893,6 +1084,7 @@
       "componente": "OrganizationPanel",
       "apis": [
         "DirectoryClient",
+        "LogoDeOrganizacionClient",
         "PharmacyCampaignsClient",
         "PharmacyOrdersClient",
         "PharmacyClient"
@@ -901,9 +1093,88 @@
       "parametrizada": false
     },
     {
+      "ruta": "/administration/pharmacy",
+      "etiqueta": "Resumen",
+      "grupo": "General",
+      "roles": [],
+      "rolesExclusivos": false,
+      "componente": "PharmacySummaryPage",
+      "apis": [
+        "PharmacyClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/pharmacy-catalog",
+      "etiqueta": "Productos",
+      "grupo": "General",
+      "roles": [],
+      "rolesExclusivos": false,
+      "componente": "PharmacyProducts",
+      "apis": [
+        "FilesClient",
+        "PharmacyClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/pharmacy-categories",
+      "etiqueta": "Categorías",
+      "grupo": "General",
+      "roles": [],
+      "rolesExclusivos": false,
+      "componente": "PharmacyCategories",
+      "apis": [
+        "PharmacyClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/pharmacy-import",
+      "etiqueta": "Importación masiva",
+      "grupo": "General",
+      "roles": [],
+      "rolesExclusivos": false,
+      "componente": "PharmacyImport",
+      "apis": [
+        "PharmacyClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/pharmacy-inventory",
+      "etiqueta": "Inventario",
+      "grupo": "General",
+      "roles": [],
+      "rolesExclusivos": false,
+      "componente": "PharmacyInventory",
+      "apis": [
+        "PharmacyClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/pharmacy-prices",
+      "etiqueta": "Precios",
+      "grupo": "General",
+      "roles": [],
+      "rolesExclusivos": false,
+      "componente": "PharmacyPrices",
+      "apis": [
+        "PharmacyClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
       "ruta": "/administration/pharmacy-orders",
-      "etiqueta": "Pedidos de farmacia",
-      "grupo": "Administración",
+      "etiqueta": "Solicitudes de retiro",
+      "grupo": "General",
       "roles": [],
       "rolesExclusivos": false,
       "componente": "PharmacyInbox",
@@ -917,7 +1188,7 @@
     {
       "ruta": "/administration/pharmacy-campaigns",
       "etiqueta": "Promociones",
-      "grupo": "Administración",
+      "grupo": "General",
       "roles": [],
       "rolesExclusivos": false,
       "componente": "PharmacyCampaigns",
@@ -931,12 +1202,93 @@
     {
       "ruta": "/administration/pharmacy-profile",
       "etiqueta": "Ficha de la farmacia",
-      "grupo": "Administración",
+      "grupo": "General",
       "roles": [],
       "rolesExclusivos": false,
-      "componente": "PharmacyProfile",
+      "componente": "SectionPlaceholder",
       "apis": [],
-      "estado": "con deuda",
+      "estado": "sin pantalla",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/laboratory",
+      "etiqueta": "Resumen",
+      "grupo": "General",
+      "roles": [],
+      "rolesExclusivos": false,
+      "componente": "LaboratorySummaryPage",
+      "apis": [
+        "LabPortalClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/laboratorio/recepcion",
+      "etiqueta": "Recepción de muestras",
+      "grupo": "General",
+      "roles": [],
+      "rolesExclusivos": false,
+      "componente": "LabReception",
+      "apis": [
+        "DiagnosticsLabClient",
+        "SystemContextClient",
+        "TerminologyClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/laboratorio/cola",
+      "etiqueta": "Cola de trabajo",
+      "grupo": "General",
+      "roles": [],
+      "rolesExclusivos": false,
+      "componente": "Diagnostics",
+      "apis": [
+        "DiagnosticsClient",
+        "TerminologyClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/laboratory-results",
+      "etiqueta": "Resultados",
+      "grupo": "General",
+      "roles": [],
+      "rolesExclusivos": false,
+      "componente": "LaboratoryResults",
+      "apis": [
+        "LabPortalClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/laboratory-prices",
+      "etiqueta": "Precios",
+      "grupo": "General",
+      "roles": [],
+      "rolesExclusivos": false,
+      "componente": "LaboratoryPrices",
+      "apis": [
+        "LabPortalClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/laboratory-branches",
+      "etiqueta": "Sucursales",
+      "grupo": "General",
+      "roles": [],
+      "rolesExclusivos": false,
+      "componente": "OrganizationBranches",
+      "apis": [
+        "DirectoryClient"
+      ],
+      "estado": "conectada",
       "parametrizada": false
     }
   ],
@@ -982,7 +1334,8 @@
       ],
       "componente": "Accounting",
       "apis": [
-        "AccountingClient"
+        "AccountingClient",
+        "SimpleAccountingClient"
       ],
       "estado": "conectada con deuda",
       "parametrizada": false
@@ -996,6 +1349,23 @@
       "componente": "BrokerDetail",
       "apis": [
         "InsuranceClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": true
+    },
+    {
+      "ruta": "/administration/data-catalog/:objectId",
+      "seccion": "Catálogo de datos",
+      "roles": [
+        "SECURITY_ADMIN",
+        "PLATFORM_ADMIN",
+        "GOVERNANCE_ADMIN",
+        "DATA_PLATFORM_ADMIN",
+        "DPO"
+      ],
+      "componente": "CatalogObjectDetail",
+      "apis": [
+        "DataCatalogClient"
       ],
       "estado": "conectada",
       "parametrizada": true
@@ -2008,12 +2378,28 @@
     },
     {
       "ruta": "/administration/pharmacy-orders/:orderId",
-      "seccion": "Pedidos de farmacia",
+      "seccion": "Solicitudes de retiro",
       "roles": [],
       "componente": "InboxOrder",
       "apis": [
         "PharmacyOrdersClient",
         "PharmacyClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": true
+    },
+    {
+      "ruta": "/administration/qa-lab/plans/:planId",
+      "seccion": "QA Lab",
+      "roles": [
+        "QA_ADMIN",
+        "QA_ENGINEER",
+        "RELEASE_MANAGER",
+        "PLATFORM_ADMIN"
+      ],
+      "componente": "QaPlanDetail",
+      "apis": [
+        "QaLabClient"
       ],
       "estado": "conectada",
       "parametrizada": true
@@ -2041,7 +2427,7 @@
       "apis": [
         "TerminologyClient"
       ],
-      "estado": "conectada",
+      "estado": "conectada con deuda",
       "parametrizada": false
     },
     {
@@ -2059,7 +2445,8 @@
       "ruta": "/directory/:profileId",
       "seccion": "Directorio de médicos",
       "roles": [
-        "PATIENT"
+        "PATIENT",
+        "PRACTITIONER"
       ],
       "componente": "PractitionerDetail",
       "apis": [
@@ -2073,7 +2460,19 @@
     {
       "ruta": "/glossary/:conceptId",
       "seccion": "Glosario",
-      "roles": [],
+      "roles": [
+        "PRACTITIONER",
+        "CLINICIAN",
+        "SCHEDULING_ADMIN",
+        "SCHEDULING_AGENT",
+        "SURGEON",
+        "ANESTHESIOLOGIST",
+        "PERIOP_NURSE",
+        "SURGERY_SCHEDULER",
+        "PERIOP_ADMIN",
+        "MEDICAL_VISITOR",
+        "SECURITY_ADMIN"
+      ],
       "componente": "GlossaryTerm",
       "apis": [
         "TerminologyClient"
@@ -2084,10 +2483,33 @@
     {
       "ruta": "/groups/:groupId",
       "seccion": "Grupos y foros",
-      "roles": [],
+      "roles": [
+        "PRACTITIONER",
+        "CLINICIAN",
+        "SCHEDULING_ADMIN",
+        "SCHEDULING_AGENT",
+        "SURGEON",
+        "ANESTHESIOLOGIST",
+        "PERIOP_NURSE",
+        "SURGERY_SCHEDULER",
+        "PERIOP_ADMIN",
+        "MEDICAL_VISITOR",
+        "SECURITY_ADMIN"
+      ],
       "componente": "GroupDetail",
       "apis": [
         "CommunityClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": true
+    },
+    {
+      "ruta": "/insurers-directory/:slug",
+      "seccion": "Directorio de aseguradoras",
+      "roles": [],
+      "componente": "InsurerDetail",
+      "apis": [
+        "InsuranceClient"
       ],
       "estado": "conectada",
       "parametrizada": true
@@ -2113,6 +2535,7 @@
       "componente": "PatientChart",
       "apis": [
         "AccountingClient",
+        "BillingSimulatedClient",
         "ChartCarePlansClient",
         "ChartDocumentsClient",
         "ChartNotesClient",
@@ -2121,11 +2544,12 @@
         "DiagnosticsClient",
         "FilesClient",
         "FormsClient",
-        "PrescriptionFavoritesClient",
         "ProceduresClient",
         "ProfilesClient",
+        "SchedulingClient",
         "SystemContextClient",
-        "TerminologyClient"
+        "TerminologyClient",
+        "DiagnosisIaClient"
       ],
       "estado": "conectada",
       "parametrizada": true
@@ -2192,7 +2616,8 @@
       "roles": [],
       "componente": "MedicalArticles",
       "apis": [
-        "CommunityClient"
+        "CommunityClient",
+        "FilesClient"
       ],
       "estado": "conectada",
       "parametrizada": false
@@ -2204,6 +2629,8 @@
       "componente": "PractitionerProfileEdit",
       "apis": [
         "FilesClient",
+        "LogoDelConsultorioClient",
+        "FirmaYSelloClient",
         "ProfilesClient",
         "TerminologyClient"
       ],
@@ -2306,6 +2733,34 @@
       "parametrizada": false
     },
     {
+      "ruta": "/my-account/pharmacy/cart",
+      "seccion": "Farmacia",
+      "roles": [
+        "PATIENT"
+      ],
+      "componente": "CartPage",
+      "apis": [
+        "PharmacyOrdersClient",
+        "PharmacyClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/my-account/pharmacy/prescriptions",
+      "seccion": "Farmacia",
+      "roles": [
+        "PATIENT"
+      ],
+      "componente": "PrescriptionsPage",
+      "apis": [
+        "ClinicalClient",
+        "TerminologyClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
       "ruta": "/my-account/profile/edit",
       "seccion": "Mi perfil",
       "roles": [],
@@ -2330,7 +2785,10 @@
     {
       "ruta": "/my-quotations/new",
       "seccion": "Cotizaciones",
-      "roles": [],
+      "roles": [
+        "CLINICIAN",
+        "PRACTITIONER"
+      ],
       "componente": "QuotationForm",
       "apis": [
         "ProfilesClient",
