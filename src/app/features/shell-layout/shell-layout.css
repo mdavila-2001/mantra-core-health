@@ -28,6 +28,32 @@
  * secundarios en «Más accesos» en móvil y se conserva su presentación en línea
  * en escritorio; el tema, las notificaciones y la cuenta siguen a la vista.
  */
+@media (max-width: 900px) {
+  /* Desde que la cabecera sumó Facturas y Solicitudes, la fila de acciones
+     puede medir más que el espacio que dejan la hamburguesa y Volver. Se la
+     acota como tira desplazable —igual que las pestañas— para que el documento
+     nunca se ensanche y todos los accesos sigan disponibles. */
+  .app-header__derecha {
+    min-width: 0;
+    max-width: 100%;
+    flex: 1 1 auto;
+    gap: var(--e1);
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    scrollbar-width: none;
+  }
+
+  .app-header__derecha::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* En modo cajón el nombre ya viaja en aria-label y en el globo. El texto
+     visible vuelve en escritorio, donde sí hay lugar para leerlo. */
+  .app-header__red-social-texto {
+    display: none;
+  }
+}
+
 @media (max-width: 400px) {
   .app-header {
     gap: var(--e1);

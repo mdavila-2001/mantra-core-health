@@ -33,8 +33,12 @@ const FASE = process.env['CORR_FASE'] ?? 'despues';
 const SOLO_RUTA = process.env['CORR_RUTA'] ?? '';
 const BASE = process.env['E2E_BASE_URL'] ?? 'http://localhost:4200';
 const USUARIO = process.env['CORR_USUARIO'] ?? 'medica';
+const ROUTE_KEY =
+  LANE === '34' && USUARIO !== 'medica' ? `${LANE}-${USUARIO}` : LANE;
 
-const DESTINO = join('..', 'docs', 'progress', 'evidence', `lane-${LANE}`);
+const BASE_DESTINATION = join('..', 'docs', 'progress', 'evidence', `lane-${LANE}`);
+// Las dos pasadas de usuario deben conservar matrices y fotos independientes.
+const DESTINO = USUARIO === 'medica' ? BASE_DESTINATION : join(BASE_DESTINATION, USUARIO);
 const FOTOS = join(DESTINO, 'fotos', FASE);
 
 interface Ruta {
@@ -50,7 +54,7 @@ interface Ruta {
 
 const RUTAS: readonly Ruta[] = (
   (JSON.parse(readFileSync(join(__dirname, 'corr-rutas.json'), 'utf8')) as Record<string, Ruta[]>)[
-    LANE
+    ROUTE_KEY
   ] ?? []
 ).filter((r) => !SOLO_RUTA || r.ruta === SOLO_RUTA);
 
@@ -64,6 +68,10 @@ const VIEWPORTS = [
 const HOLGURA_MAX_PX = 2;
 const ANCHO_MIN = 0.85;
 const FOTO_MIN_BYTES = 8 * 1024;
+
+function isPublicRoute(routePath: string): boolean {
+  return routePath === '/posts' || routePath.startsWith('/auth/');
+}
 
 interface Medicion {
   readonly fondo: string;
@@ -102,7 +110,13 @@ interface Medicion {
  */
 async function medir(page: Page): Promise<Medicion> {
   return page.evaluate(() => {
-    const area = document.querySelector('.app-main__inner') as HTMLElement | null;
+    const applicationArea = document.querySelector('.app-main__inner') as HTMLElement | null;
+    const registrationScene = document.querySelector('.auth-split') as HTMLElement | null;
+    const registrationArea = document.querySelector('.auth-split__panel') as HTMLElement | null;
+    const registrationContent = document.querySelector(
+      '.registro-conjunto, .registro, .tipos',
+    ) as HTMLElement | null;
+    const area = applicationArea ?? registrationArea;
     if (!area) {
       return {
         fondo: '',
@@ -126,17 +140,34 @@ async function medir(page: Page): Promise<Medicion> {
     // aguamarina que siguen al puntero—: con cualquiera de los dos encendido
     // el fondo se ve celeste aunque el color de abajo sea blanco, así que
     // cuentan como «no es blanco».
-    const cb = getComputedStyle(document.body);
-    const velo1 = Number(getComputedStyle(document.body, '::before').opacity || '0');
-    const velo2 = Number(getComputedStyle(document.body, '::after').opacity || '0');
+    const surface = registrationScene ?? document.body;
+    const cb = getComputedStyle(surface);
+    const veilOne = registrationScene
+      ? 0
+      : Number(getComputedStyle(document.body, '::before').opacity || '0');
+    const veilTwo = registrationScene
+      ? 0
+      : Number(getComputedStyle(document.body, '::after').opacity || '0');
+    const registrationDecoration = registrationScene
+      ? ['.auth-split__stage', '.auth-split__aurora', '.auth-split__brand'].some((selector) =>
+          Array.from(registrationScene.querySelectorAll(selector)).some(
+            (element) => getComputedStyle(element).display !== 'none',
+          ),
+        )
+      : false;
     const fondo = cb.backgroundColor;
-    const fondoImagen = cb.backgroundImage !== 'none' || velo1 > 0.01 || velo2 > 0.01;
-    const fondoQuien =
-      cb.backgroundImage !== 'none'
-        ? 'body + imagen'
-        : velo1 > 0.01 || velo2 > 0.01
-          ? `body + velo(${velo1.toFixed(2)}/${velo2.toFixed(2)})`
-          : 'body';
+    const backgroundImage =
+      cb.backgroundImage !== 'none' || veilOne > 0.01 || veilTwo > 0.01 || registrationDecoration;
+    const backgroundSource =
+      registrationDecoration
+        ? 'alta + escena decorativa'
+        : cb.backgroundImage !== 'none'
+          ? `${registrationScene ? 'alta' : 'body'} + imagen`
+        : veilOne > 0.01 || veilTwo > 0.01
+          ? `body + velo(${veilOne.toFixed(2)}/${veilTwo.toFixed(2)})`
+          : registrationScene
+            ? 'alta'
+            : 'body';
 
     // --- qué ocupa el contenido, de verdad -------------------------------
     // **La unión de las tarjetas, no la más ancha.** Medir la más ancha
@@ -162,7 +193,13 @@ async function medir(page: Page): Promise<Medicion> {
     let ancho: number;
     let queSeMidio: string;
 
-    if (tarjetas.length > 0) {
+    if (registrationArea && registrationContent) {
+      const b = registrationContent.getBoundingClientRect();
+      izq = b.left - a.left;
+      der = a.right - b.right;
+      ancho = b.width;
+      queSeMidio = `.${registrationContent.classList[0] ?? 'registration-content'}`;
+    } else if (tarjetas.length > 0) {
       const cajas = tarjetas.map((t) => t.getBoundingClientRect());
       const min = Math.min(...cajas.map((c) => c.left));
       const max = Math.max(...cajas.map((c) => c.right));
@@ -185,8 +222,8 @@ async function medir(page: Page): Promise<Medicion> {
 
     return {
       fondo,
-      fondoQuien,
-      fondoImagen,
+      fondoQuien: backgroundSource,
+      fondoImagen: backgroundImage,
       holguraIzq: izq,
       holguraDer: der,
       ancho,
@@ -225,15 +262,29 @@ function fila(
   // sobre un color blanco se seguiría viendo celeste, que es lo que el
   // propietario rechazó.
   const esBlanco = m.fondo === 'rgb(255, 255, 255)' && !m.fondoImagen;
-  const fondo = tema === 'oscuro' ? '—' : esBlanco ? 'PASS' : `FAIL (${m.fondoQuien}: ${m.fondo})`;
+  const fondo =
+    tema === 'oscuro'
+      ? esBlanco
+        ? 'FAIL (se perdió la superficie oscura)'
+        : 'PASS (oscuro conservado)'
+      : esBlanco
+        ? 'PASS'
+        : `FAIL (${m.fondoQuien}: ${m.fondo})`;
   const centrado =
     Math.abs(m.holguraIzq - m.holguraDer) <= HOLGURA_MAX_PX
       ? 'PASS'
       : `FAIL (${Math.round(m.holguraIzq)}/${Math.round(m.holguraDer)})`;
+  // `plainSurface` sólo existe en claro: la decisión registrada para CORR-34
+  // exige conservar en oscuro la escena pública de dos columnas. Allí el
+  // formulario no debe estirarse al 85 % porque eso sí sería una regresión de
+  // la composición preservada; el auditor continúa exigiendo centrado, carga,
+  // ausencia de scroll y consola limpia.
   const ancho =
-    m.anchoArea > 0 && m.ancho / m.anchoArea >= ANCHO_MIN
-      ? `PASS (${m.queSeMidio})`
-      : `FAIL (${Math.round((m.ancho / Math.max(1, m.anchoArea)) * 100)} % · ${m.queSeMidio})`;
+    tema === 'oscuro' && isPublicRoute(ruta)
+      ? `— (${m.queSeMidio}; escena conservada)`
+      : m.anchoArea > 0 && m.ancho / m.anchoArea >= ANCHO_MIN
+        ? `PASS (${m.queSeMidio})`
+        : `FAIL (${Math.round((m.ancho / Math.max(1, m.anchoArea)) * 100)} % · ${m.queSeMidio})`;
   const scroll = m.scrollHorizontal ? 'FAIL' : 'PASS';
   const cons = consola === 0 ? 'PASS' : `FAIL (${consola})`;
   const texto = `| \`${ruta}\` | ${vp} | ${tema} | ${fondo} | ${centrado} | ${ancho} | ${scroll} | ${cons} | \`${foto}\` |`;
@@ -253,38 +304,55 @@ test.describe(`evidencia del carril ${LANE} (${FASE})`, () => {
     for (const tema of ['claro', 'oscuro'] as const) {
       const vps = tema === 'claro' ? VIEWPORTS : VIEWPORTS.slice(2);
       for (const vp of vps) {
-        const context = await browser.newContext({
+        const contextOptions = {
           viewport: { width: vp.width, height: vp.height },
           colorScheme: tema === 'oscuro' ? 'dark' : 'light',
           locale: 'es-BO',
           timezoneId: 'America/La_Paz',
-        });
+        } as const;
+        const context = await browser.newContext(contextOptions);
+        const publicContext = await browser.newContext(contextOptions);
         const page = await context.newPage();
-        let consola = 0;
-        page.on('console', (m) => {
-          if (m.type() !== 'error') return;
-          // **Una excepción, nombrada.** En esta rama no hay API: `mockBackend`
-          // intercepta HTTP, pero no WebSockets, así que el chat intenta abrir
-          // `ws://…/socket.io` contra un servidor que no existe y el navegador
-          // lo reporta como error en cada intento. Es del entorno de la maqueta,
-          // no de la pantalla — y contarlo dejaría `/messaging` en rojo para
-          // siempre, que es la forma más rápida de que nadie mire el rojo.
-          // Si algún día la rama levanta un socket, esta línea se cae sola.
-          if (m.text().includes('socket.io')) return;
-          consola += 1;
-        });
-        page.on('response', (r) => {
-          if (r.status() >= 500) consola += 1;
-        });
+        const publicPage = await publicContext.newPage();
+        const consoleByPage = new Map<Page, { count: number; details: string[] }>([
+          [page, { count: 0, details: [] }],
+          [publicPage, { count: 0, details: [] }],
+        ]);
+        for (const pagina of [page, publicPage]) {
+          pagina.on('console', (m) => {
+            if (m.type() !== 'error') return;
+            const state = consoleByPage.get(pagina);
+            if (!state) return;
+            state.count += 1;
+            state.details.push(m.text());
+          });
+          pagina.on('response', (r) => {
+            if (r.status() >= 500) {
+              const state = consoleByPage.get(pagina);
+              if (!state) return;
+              state.count += 1;
+              state.details.push(`${r.status()} ${r.url()}`);
+            }
+          });
+        }
 
         await entrarAlSimulador(page, USUARIO, BASE);
 
         for (const { ruta, nombre, esperado } of RUTAS) {
-          consola = 0;
-          await page.goto(`${BASE}${ruta}`, { waitUntil: 'domcontentloaded' });
-          await esperarAQueSeAsiente(page);
+          const activePage = isPublicRoute(ruta) ? publicPage : page;
+          const consoleState = consoleByPage.get(activePage);
+          if (!consoleState) throw new Error(`No hay contador de consola para ${ruta}`);
+          consoleState.count = 0;
+          consoleState.details.length = 0;
+          // La captura anterior puede haber aumentado el alto para sacar los
+          // elementos fijos del camino. Volver siempre al viewport que se está
+          // auditando evita que ese alto se acumule ruta tras ruta y termine
+          // alterando el layout que pretendemos medir.
+          await activePage.setViewportSize({ width: vp.width, height: vp.height });
+          await activePage.goto(`${BASE}${ruta}`, { waitUntil: 'domcontentloaded' });
+          await esperarAQueSeAsiente(activePage);
           if (ruta.includes('with-file=1')) {
-            const input = page.getByTestId('matricula-archivo');
+            const input = activePage.getByTestId('matricula-archivo');
             await expect(input).toBeVisible();
             await input.setInputFiles({
               name: 'matricula.png',
@@ -294,32 +362,50 @@ test.describe(`evidencia del carril ${LANE} (${FASE})`, () => {
                 'base64',
               ),
             });
-            await expect(page.getByText('matricula.png')).toBeVisible();
-            await expect(page.locator('app-file-preview img')).toBeVisible();
+            await expect(activePage.getByText('matricula.png')).toBeVisible();
+            await expect(activePage.locator('app-file-preview img')).toBeVisible();
           }
           const foto = join(FOTOS, `${nombre}-${vp.nombre}-${tema}.png`);
-          // Playwright fija los elementos `position: fixed` al alto de la
-          // ventana original al capturar `fullPage`. En estas pantallas el
-          // menú y el aviso de la maqueta quedaban pegados arriba/abajo y
-          // tapaban campos de la página larga. Se conserva el ancho de prueba
-          // y se extiende sólo el alto para que la captura muestre el contenido
-          // completo con esos elementos fuera del formulario.
-          const altoDocumento = await page.evaluate(() => document.documentElement.scrollHeight);
-          await page.setViewportSize({
-            width: vp.width,
-            height: Math.max(vp.height, altoDocumento + 64),
-          });
-          await page.screenshot({ path: foto });
+          // La medición y la foto usan el viewport declarado
+          // (375/768/1440), igual al que usaría una persona.
+          const m = await medir(activePage);
+          const expectedPath = new URL(ruta, BASE).pathname.replace(/\/$/, '') || '/';
+          const actualPath = new URL(activePage.url()).pathname.replace(/\/$/, '') || '/';
+          const routeLoaded = expectedPath === actualPath;
+          // La foto representa el viewport medido. Capturar documentos de casi
+          // 200 000 px de alto producía una franja ilegible y ocultaba el primer
+          // pantallazo que realmente recibe la persona.
+          await activePage.screenshot({ path: foto });
           const bytes = statSync(foto).size;
           if (bytes < FOTO_MIN_BYTES && esperado !== 'no-encontrado') {
             errores.push(`${ruta} @ ${vp.nombre}/${tema}: foto vacía (${bytes} B)`);
           }
-          const m = await medir(page);
-          const f = fila(ruta, vp.nombre, tema, m, consola, foto.replace(`${DESTINO}/`, ''), esperado);
+          if (!routeLoaded && esperado !== 'no-encontrado') {
+            errores.push(`${ruta} @ ${vp.nombre}/${tema}: redirigió a ${actualPath}`);
+          }
+          if (!m.cargo && esperado !== 'no-encontrado') {
+            errores.push(`${ruta} @ ${vp.nombre}/${tema}: la ruta no cargó el área de contenido`);
+          }
+          const routeMeasurement = routeLoaded ? m : { ...m, cargo: false };
+          const f = fila(
+            ruta,
+            vp.nombre,
+            tema,
+            routeMeasurement,
+            consoleState.count,
+            foto.replace(`${DESTINO}/`, ''),
+            esperado,
+          );
           filas.push(f.texto);
           if (!f.ok) rojos += 1;
+          if (consoleState.details.length > 0) {
+            errores.push(
+              `${ruta} @ ${vp.nombre}/${tema}: consola: ${consoleState.details.join(' | ')}`,
+            );
+          }
         }
         await context.close();
+        await publicContext.close();
       }
     }
 
