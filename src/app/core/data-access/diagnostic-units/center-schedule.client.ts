@@ -54,10 +54,10 @@ export class CenterScheduleClient {
     );
   }
 
-  /** `GET /diagnostic-orders/{orderId}/booking-options` — centros que hacen el estudio de la orden. */
+  /** `GET /diagnostic-results/me/orders/{orderId}/booking-options` — centros que hacen el estudio de la orden. */
   getBookingOptions(orderId: string): Observable<OrderBookingOptions> {
     return this.http.get<OrderBookingOptions>(
-      this.url(`/diagnostic-orders/${encodeURIComponent(orderId)}/booking-options`),
+      this.url(`/diagnostic-results/me/orders/${encodeURIComponent(orderId)}/booking-options`),
     );
   }
 
@@ -74,20 +74,20 @@ export class CenterScheduleClient {
   }
 
   /**
-   * `POST /diagnostic-orders/{orderId}/booking` — reserva el turno y queda
+   * `POST /diagnostic-results/me/orders/{orderId}/booking` — reserva el turno y queda
    * confirmado. 409 si el horario se ocupó en el medio (`slotTaken`) o si la
    * orden ya tiene turno.
    */
   bookOrder(orderId: string, unitId: string, startAt: string): Observable<OrderAppointment> {
     return this.http.post<OrderAppointment>(
-      this.url(`/diagnostic-orders/${encodeURIComponent(orderId)}/booking`),
+      this.url(`/diagnostic-results/me/orders/${encodeURIComponent(orderId)}/booking`),
       { unitId, startAt },
     );
   }
 
-  /** `DELETE /diagnostic-orders/{orderId}/booking` — cancela el turno de la orden. */
+  /** `DELETE /diagnostic-results/me/orders/{orderId}/booking` — cancela el turno de la orden. */
   cancelOrderBooking(orderId: string): Observable<void> {
-    return this.http.delete<void>(this.url(`/diagnostic-orders/${encodeURIComponent(orderId)}/booking`));
+    return this.http.delete<void>(this.url(`/diagnostic-results/me/orders/${encodeURIComponent(orderId)}/booking`));
   }
 
   private url(path: string): string {

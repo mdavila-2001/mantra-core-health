@@ -105,7 +105,7 @@ describe('handlers de horarios de centros y reserva por orden', () => {
   });
 
   it('la orden ofrece los centros que hacen su estudio, con precio y distancia', () => {
-    const opciones = llamar<OrderBookingOptions>('GET', `/diagnostic-orders/${ordenDeEcografia()}/booking-options`, paciente).body;
+    const opciones = llamar<OrderBookingOptions>('GET', `/diagnostic-results/me/orders/${ordenDeEcografia()}/booking-options`, paciente).body;
     expect(opciones.studyCode).toBe('STUDY-ECO-ABD');
     expect(opciones.modalityLabel).toBe('Ecografía');
     const sur = opciones.options.find((o) => o.unitId === IMAGEN_SUR)!;
@@ -119,22 +119,22 @@ describe('handlers de horarios de centros y reserva por orden', () => {
     const orden = ordenDeEcografia();
     const libre = disponibilidad('STUDY-ECO-ABD').items[0]!;
     const antes = mensajes.tamano;
-    const r = llamar<OrderAppointment>('POST', `/diagnostic-orders/${orden}/booking`, paciente, { unitId: IMAGEN_SUR, startAt: libre.startAt });
+    const r = llamar<OrderAppointment>('POST', `/diagnostic-results/me/orders/${orden}/booking`, paciente, { unitId: IMAGEN_SUR, startAt: libre.startAt });
     expect(r.status).toBe(201);
     expect(r.body.unitName).toBe('Centro de Imagen Sur');
     expect(mensajes.tamano).toBe(antes + 1);
     expect(disponibilidad('STUDY-ECO-ABD').items.some((i) => i.startAt === libre.startAt)).toBe(false);
-    expect(llamar('POST', `/diagnostic-orders/${orden}/booking`, paciente, { unitId: IMAGEN_SUR, startAt: libre.startAt }).status).toBe(409);
+    expect(llamar('POST', `/diagnostic-results/me/orders/${orden}/booking`, paciente, { unitId: IMAGEN_SUR, startAt: libre.startAt }).status).toBe(409);
 
     const conTurno = llamar<{ items: { id: string; appointment: OrderAppointment | null }[] }>('GET', '/diagnostic-results/me/orders', paciente).body;
     expect(conTurno.items.find((o) => o.id === orden)?.appointment?.startAt).toBe(libre.startAt);
 
-    expect(llamar('DELETE', `/diagnostic-orders/${orden}/booking`, paciente).status).toBe(204);
+    expect(llamar('DELETE', `/diagnostic-results/me/orders/${orden}/booking`, paciente).status).toBe(204);
     expect(disponibilidad('STUDY-ECO-ABD').items.some((i) => i.startAt === libre.startAt)).toBe(true);
   });
 
   it('un horario ocupado en el medio devuelve 409 con slotTaken', () => {
-    const r = llamar<{ details?: { slotTaken?: boolean } }>('POST', `/diagnostic-orders/${ordenDeEcografia()}/booking`, paciente, {
+    const r = llamar<{ details?: { slotTaken?: boolean } }>('POST', `/diagnostic-results/me/orders/${ordenDeEcografia()}/booking`, paciente, {
       unitId: IMAGEN_SUR,
       startAt: '2020-01-01T08:00:00.000Z',
     });
@@ -143,7 +143,7 @@ describe('handlers de horarios de centros y reserva por orden', () => {
 
   it('no deja publicar un horario que deja afuera un turno ya reservado', () => {
     const libre = disponibilidad('STUDY-ECO-ABD').items[0]!;
-    llamar('POST', `/diagnostic-orders/${ordenDeEcografia()}/booking`, paciente, { unitId: IMAGEN_SUR, startAt: libre.startAt });
+    llamar('POST', `/diagnostic-results/me/orders/${ordenDeEcografia()}/booking`, paciente, { unitId: IMAGEN_SUR, startAt: libre.startAt });
     const vista = llamar<CenterScheduleView>('GET', `/diagnostic-units/${IMAGEN_SUR}/schedule`).body;
     const r = llamar<{ details: { affectedBookings: number } }>('PUT', `/diagnostic-units/${IMAGEN_SUR}/schedule`, imagen, {
       ...vista.schedule,

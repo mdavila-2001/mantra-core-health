@@ -99,7 +99,7 @@ export interface OrderBookingOption {
   readonly operationalEquipment: number;
 }
 
-/** Respuesta de `GET /diagnostic-orders/{orderId}/booking-options`. */
+/** Respuesta de `GET /diagnostic-results/me/orders/{orderId}/booking-options`. */
 export interface OrderBookingOptions {
   readonly orderId: string;
   readonly studyCode: string;

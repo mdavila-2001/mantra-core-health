@@ -33,6 +33,7 @@ const MENU_DEL_LABORATORIO = [
   '/laboratorio/cola',
   '/administration/laboratory-results',
   '/administration/laboratory-prices',
+  '/administration/center-schedule',
   '/administration/laboratory-branches',
 ];
 
@@ -102,6 +103,7 @@ describe('Menú de la cuenta de laboratorio', () => {
       'Cola de trabajo',
       'Resultados',
       'Precios',
+      'Horarios y equipos',
       'Sucursales',
     ]);
   });

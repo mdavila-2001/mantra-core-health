@@ -380,7 +380,8 @@ describe('isVisibleTo con `onlyForTenantTypes`', () => {
     // Desde el 29/09/2026 el menú de la cuenta de farmacia es plano y cerrado:
     // sus ocho pantallas sólo existen para una organización `PHARMACY`. Desde
     // el 30/09/2026 el de laboratorio también, y va después de la farmacia.
-    // El 01/10/2026 los dos sumaron «Precios» y «Sucursales».
+    // El 01/10/2026 los dos sumaron «Precios» y «Sucursales». El 06/10/2026
+    // el centro sumó «Horarios y equipos» (mockup).
     expect(flagged.map((s) => s.path)).toEqual([
       'administration/pharmacy',
       'administration/pharmacy-catalog',
@@ -397,6 +398,7 @@ describe('isVisibleTo con `onlyForTenantTypes`', () => {
       'laboratorio/cola',
       'administration/laboratory-results',
       'administration/laboratory-prices',
+      'administration/center-schedule',
       'administration/laboratory-branches',
     ]);
     for (const section of flagged) {

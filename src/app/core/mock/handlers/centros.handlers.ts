@@ -52,9 +52,9 @@ import { equipoDe, estudiosDe, pacienteDeSesion, sitioDe, UNIDADES, type UnidadS
       PUT    /diagnostic-units/:unitId/schedule
       PATCH  /diagnostic-units/:unitId/equipment/:equipmentId
       GET    /diagnostic-units/:unitId/study-availability?studyCode&from&to
-      GET    /diagnostic-orders/:orderId/booking-options
-      POST   /diagnostic-orders/:orderId/booking
-      DELETE /diagnostic-orders/:orderId/booking
+      GET    /diagnostic-results/me/orders/:orderId/booking-options
+      POST   /diagnostic-results/me/orders/:orderId/booking
+      DELETE /diagnostic-results/me/orders/:orderId/booking
 
     Las reglas (qué horario vale para un estudio y cuántos pacientes entran por
     franja) son las de `center-schedule.rules.ts`, las mismas que usa la
@@ -349,7 +349,7 @@ export function registrarCentros(router: MockRouter): void {
     return { unitId: u.id, studyCode, origin, items };
   });
 
-  router.get('/diagnostic-orders/:orderId/booking-options', (request) => {
+  router.get('/diagnostic-results/me/orders/:orderId/booking-options', (request) => {
     const r = ordenDelPaciente(request);
     if ('error' in r) return r.error;
     const paciente = pacientePorId(r.orden.patientProfileId) as { homeLat?: number | null; homeLng?: number | null } | undefined;
@@ -388,7 +388,7 @@ export function registrarCentros(router: MockRouter): void {
     };
   });
 
-  router.post('/diagnostic-orders/:orderId/booking', (request) => {
+  router.post('/diagnostic-results/me/orders/:orderId/booking', (request) => {
     const r = ordenDelPaciente(request);
     if ('error' in r) return r.error;
     if (turnosDeOrdenes.has(r.orden.id)) return conflict('Esta orden ya tiene un turno. Cancelalo para elegir otro.');
@@ -446,7 +446,7 @@ export function registrarCentros(router: MockRouter): void {
     return { status: 201, body: turnoComoCita(turno) };
   });
 
-  router.delete('/diagnostic-orders/:orderId/booking', (request) => {
+  router.delete('/diagnostic-results/me/orders/:orderId/booking', (request) => {
     const r = ordenDelPaciente(request);
     if ('error' in r) return r.error;
     const turno = turnosDeOrdenes.get(r.orden.id);

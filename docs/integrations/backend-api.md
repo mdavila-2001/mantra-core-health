@@ -792,6 +792,33 @@ Laboratorios e imagenología (M52).
 > distingue «lo agregó otro» de «lo agregué yo». Si algún consumidor de arriba
 > quedó mal atribuido, corregilo — se dedujo de quién importa cada cliente.
 
+### `CenterScheduleClient` — 8 operaciones · maqueta (06/10/2026)
+
+Horarios y equipos de un centro de diagnóstico, y la reserva **desde la orden**
+del paciente. Hoy sólo los responde la maqueta (`core/mock/handlers/centros.handlers.ts`);
+el pedido al backend está en `PENDIENTES-BACKEND.md` (P-CENTRO-HORARIOS).
+
+- El horario se resuelve **estudio → modalidad → general**: lo que no tiene
+  horario propio usa el general, que entonces se llama «Resto de servicios».
+- El cupo de cada turno es la cantidad de equipos **operativos** de la
+  modalidad (`diagnostic_equipment.operational_status` en el modelo).
+- La reserva no lleva motivo ni descripción: la orden ya dice qué estudio es.
+  Un turno ocupado responde `409` con `details.slotTaken`.
+- Las tres operaciones de la orden cuelgan de `/diagnostic-results/me/orders`,
+  que es donde el paciente ya lee sus órdenes, y por eso no piden un prefijo
+  de proxy nuevo.
+
+| Método | Ruta | Consumidor |
+|---|---|---|
+| `GET` | `/diagnostic-units/me/schedule` | `CenterSchedulePage` |
+| `GET` | `/diagnostic-units/:unitId/schedule` | `CenterSchedulePage` |
+| `PUT` | `/diagnostic-units/:unitId/schedule` | `CenterSchedulePage` (`422` validación · `409` con `affectedBookings`) |
+| `PATCH` | `/diagnostic-units/:unitId/equipment/:equipmentId` | `CenterSchedulePage` (estado del equipo) |
+| `GET` | `/diagnostic-units/:unitId/study-availability` | `OrderBooking` |
+| `GET` | `/diagnostic-results/me/orders/:orderId/booking-options` | `OrderBooking` (centros, precio, distancia) |
+| `POST` | `/diagnostic-results/me/orders/:orderId/booking` | `OrderBooking` |
+| `DELETE` | `/diagnostic-results/me/orders/:orderId/booking` | `DiagnosticOrders` (cancelar turno) |
+
 ### `FilesClient` — 6 operaciones
 
 | Método | Ruta | Consumidor |
