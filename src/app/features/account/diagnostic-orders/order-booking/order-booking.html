@@ -1,0 +1,171 @@
+<app-page-header
+  title="Reservar estudio"
+  subtitle="Elegí dónde y cuándo hacerte el estudio de tu orden. No hace falta escribir nada: la orden ya dice qué es."
+/>
+
+<app-view-state-host [state]="estado()" (retry)="cargar()">
+  @if (opciones(); as op) {
+    <app-card class="reserva" padding="lg" data-testid="reserva-estudio">
+      <!-- Lo que la orden fija y el paciente no edita. -->
+      <div class="reserva__orden" data-testid="reserva-estudio-orden">
+        <p class="reserva__rotulo">Tu orden</p>
+        <p class="reserva__estudio">{{ op.studyName }}</p>
+        <p class="reserva__secundario">{{ op.modalityLabel }}</p>
+      </div>
+
+      @if (paso() !== 'listo') {
+        <app-stepper class="reserva__pasos" label="Pasos de la reserva" [steps]="pasos()" />
+      }
+
+      @if (aviso(); as texto) {
+        <app-alert tone="warning" class="reserva__aviso" data-testid="reserva-estudio-aviso">{{ texto }}</app-alert>
+      }
+
+      @switch (paso()) {
+        @case ('centro') {
+          <section class="reserva__seccion" aria-labelledby="reserva-centros">
+            <div class="reserva__cabecera">
+              <h2 id="reserva-centros" class="reserva__titulo">¿Dónde te lo hacés?</h2>
+              <app-segmented-control
+                ariaLabel="Ordenar los centros"
+                [options]="ordenes"
+                [value]="orden()"
+                (valueChange)="cambiarOrden($event)"
+              />
+            </div>
+            <ul class="reserva__centros" role="list">
+              @for (opcion of centrosOrdenados(); track opcion.unitId) {
+                <li class="centro" data-testid="reserva-estudio-centro">
+                  <div class="centro__datos">
+                    <p class="centro__nombre">{{ opcion.unitName }}</p>
+                    @if (opcion.addressText) {
+                      <p class="reserva__secundario">{{ opcion.addressText }}</p>
+                    }
+                    <p class="centro__hechos">
+                      <span class="centro__precio">{{ dinero(opcion.price, opcion.currency) }}</span>
+                      <span>{{ distancia(opcion.distanceKm) }}</span>
+                      <span>
+                        @if (opcion.nextStartAt) {
+                          Próximo turno: {{ fechaLarga(opcion.nextStartAt) }}, {{ hora(opcion.nextStartAt) }}
+                        } @else {
+                          Sin turnos libres en las próximas dos semanas
+                        }
+                      </span>
+                    </p>
+                    @if (opcion.preparation) {
+                      <p class="centro__preparacion">Preparación: {{ opcion.preparation }}</p>
+                    }
+                  </div>
+                  <button
+                    app-button
+                    variant="primary"
+                    [disabled]="opcion.nextStartAt === null"
+                    [attr.aria-label]="'Ver horarios de ' + opcion.unitName"
+                    (click)="elegirCentro(opcion)"
+                  >
+                    Ver horarios
+                  </button>
+                </li>
+              }
+            </ul>
+            <p class="reserva__nota">Precios e indicaciones de preparación de ejemplo de la maqueta: el centro publica los suyos.</p>
+          </section>
+        }
+
+        @case ('horario') {
+          @if (centro(); as c) {
+            <section class="reserva__seccion" aria-labelledby="reserva-horarios">
+              <div class="reserva__cabecera">
+                <h2 id="reserva-horarios" class="reserva__titulo">Horarios de {{ c.unitName }}</h2>
+                <button app-button variant="ghost" (click)="volverA('centro')">Cambiar de centro</button>
+              </div>
+              <app-view-state-host [state]="horarios()" (retry)="cargarHorarios()">
+                @if (dias(); as lista) {
+                  <div class="reserva__dias">
+                    @for (dia of lista.slice(0, diasVisibles()); track dia.clave) {
+                      <section class="dia" [attr.aria-label]="dia.titulo">
+                        <h3 class="dia__titulo">{{ dia.titulo }}</h3>
+                        <ul class="dia__horarios" role="list">
+                          @for (h of dia.horarios; track h.startAt) {
+                            <li>
+                              <button
+                                app-button
+                                variant="outline"
+                                size="sm"
+                                data-testid="reserva-estudio-horario"
+                                [attr.aria-label]="'Elegir ' + dia.titulo + ' a las ' + hora(h.startAt)"
+                                (click)="elegirHorario(h)"
+                              >
+                                {{ hora(h.startAt) }}
+                              </button>
+                            </li>
+                          }
+                        </ul>
+                      </section>
+                    }
+                  </div>
+                  @if (lista.length > diasVisibles()) {
+                    <button app-button variant="ghost" class="reserva__mas" (click)="verMasDias()">Ver más días</button>
+                  }
+                }
+              </app-view-state-host>
+            </section>
+          }
+        }
+
+        @case ('confirmar') {
+          @if (centro(); as c) {
+            @if (horario(); as h) {
+              <section class="reserva__seccion" aria-labelledby="reserva-confirmar">
+                <h2 id="reserva-confirmar" class="reserva__titulo">Revisá y confirmá</h2>
+                <dl class="resumen" data-testid="reserva-estudio-resumen">
+                  <div class="resumen__fila"><dt>Estudio</dt><dd>{{ op.studyName }}</dd></div>
+                  <div class="resumen__fila"><dt>Centro</dt><dd>{{ c.unitName }}</dd></div>
+                  @if (c.addressText) {
+                    <div class="resumen__fila"><dt>Dirección</dt><dd>{{ c.addressText }}</dd></div>
+                  }
+                  <div class="resumen__fila"><dt>Cuándo</dt><dd>{{ fechaLarga(h.startAt) }}, {{ hora(h.startAt) }}</dd></div>
+                  <div class="resumen__fila"><dt>Precio</dt><dd>{{ dinero(c.price, c.currency) }}</dd></div>
+                  @if (c.preparation) {
+                    <div class="resumen__fila"><dt>Preparación</dt><dd>{{ c.preparation }}</dd></div>
+                  }
+                </dl>
+                <div class="reserva__acciones">
+                  <button app-button variant="ghost" (click)="volverA('horario')">Elegir otro horario</button>
+                  <button
+                    app-button
+                    variant="primary"
+                    data-testid="reserva-estudio-confirmar"
+                    [isLoading]="confirmando()"
+                    (click)="confirmar()"
+                  >
+                    Confirmar turno
+                  </button>
+                </div>
+              </section>
+            }
+          }
+        }
+
+        @case ('listo') {
+          @if (turno(); as t) {
+            <section class="reserva__seccion reserva__listo" aria-labelledby="reserva-listo" data-testid="reserva-estudio-listo">
+              <h2 id="reserva-listo" class="reserva__titulo" tabindex="-1">Turno confirmado</h2>
+              <p>
+                {{ t.studyName }} en {{ t.unitName }}, el {{ fechaLarga(t.startAt) }} a las {{ hora(t.startAt) }}.
+              </p>
+              @if (t.preparation) {
+                <p class="centro__preparacion">Preparación: {{ t.preparation }}</p>
+              }
+              <p class="reserva__secundario">Te mandamos la confirmación por el chat de la app.</p>
+              <div class="reserva__acciones">
+                <a app-button variant="secondary" routerLink="/messaging">Ver el chat</a>
+                <a app-button variant="primary" [routerLink]="rutaDeOrdenes">Volver a mis órdenes</a>
+              </div>
+            </section>
+          }
+        }
+      }
+    </app-card>
+  }
+</app-view-state-host>

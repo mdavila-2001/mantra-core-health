@@ -538,6 +538,17 @@ const PANTALLAS_HIJAS: Routes = [
         .catch(() => chunkFallido()),
   },
   {
+    // Reservar el estudio de una orden médica (mockup, 2026-10-06): la orden ya
+    // dice qué estudio es, así que se elige centro y horario y se confirma.
+    path: 'my-account/diagnostic-orders/:orderId/book',
+    title: `${APP_TITLE} - Reservar estudio`,
+    canActivate: [seccionRolesGuard],
+    loadComponent: () =>
+      import('./features/account/diagnostic-orders/order-booking/order-booking')
+        .then((m) => m.OrderBooking)
+        .catch(() => chunkFallido()),
+  },
+  {
     // La ficha de un pedido concreto: línea de tiempo, decisión de sustitución
     // y código de retiro. `new` va declarada antes: el router prueba en orden
     // y el parámetro se la tragaría.
