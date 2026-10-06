@@ -54,7 +54,7 @@
                         <div>
                           <p class="modalidad__nombre">{{ m.label }}</p>
                           <p class="modalidad__equipos" [class.modalidad__equipos--sin]="m.operativos === 0">
-                            {{ m.operativos }} de {{ m.total }} {{ m.total === 1 ? m.equipoSingular : m.equipoPlural }} operativos
+                            {{ m.operativos }} de {{ m.total }} {{ m.total === 1 ? m.equipoSingular + ' operativo' : m.equipoPlural + ' operativos' }}
                             · {{ m.estudios.length }} {{ m.estudios.length === 1 ? 'estudio' : 'estudios' }}
                           </p>
                         </div>
@@ -116,7 +116,7 @@
                 <h2 id="asi-queda" class="seccion__titulo">Así queda</h2>
                 <ul class="resumen" role="list" data-testid="centro-resumen">
                   @for (fila of resumen(); track fila.code) {
-                    <li class="resumen__fila">
+                    <li class="resumen__fila" [class.resumen__fila--sin-turnos]="fila.sinTurnos">
                       <p class="resumen__nombre">{{ fila.label }} <span class="resumen__origen">· {{ fila.origen }}</span></p>
                       <p class="resumen__horario">{{ fila.horario }}</p>
                       <p class="resumen__cupo">{{ fila.cupo }}</p>
@@ -177,7 +177,7 @@
               }
               @for (m of modalidades(); track m.code) {
                 <section class="seccion" [attr.aria-label]="m.label">
-                  <h2 class="seccion__titulo">{{ m.label }} <span class="resumen__origen">· {{ m.operativos }} de {{ m.total }} operativos</span></h2>
+                  <h2 class="seccion__titulo">{{ m.label }} <span class="resumen__origen">· {{ m.operativos }} de {{ m.total }} {{ m.total === 1 ? 'operativo' : 'operativos' }}</span></h2>
                   <ul class="equipos" role="list">
                     @for (e of equiposDe(m.code); track e.id) {
                       <li class="equipo" [attr.data-testid]="'centro-equipo-' + e.id">

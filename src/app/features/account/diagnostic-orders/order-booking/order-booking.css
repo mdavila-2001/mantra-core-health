@@ -53,6 +53,15 @@
   margin-block-start: var(--sp-6);
 }
 
+.reserva__cabecera app-segmented-control {
+  /* Crece y no se encoge: a 390 px el segmentado reparte la fila entera
+     (su propia regla angosta) en vez de cortar los rótulos. */
+  flex: 1 0 auto;
+  /* Por debajo de 30rem sus opciones tienen base 0: sin un mínimo, el
+     tamaño «auto» queda en el mínimo y corta los rótulos. */
+  min-inline-size: 16rem;
+}
+
 .reserva__cabecera {
   display: flex;
   flex-wrap: wrap;
@@ -91,6 +100,7 @@
 
 .centro__nombre {
   margin: 0;
+  font-size: var(--fs-body-lg);
   font-weight: 600;
   color: var(--text-primary);
 }
@@ -148,13 +158,19 @@
   justify-self: start;
 }
 
+/* Rejilla de columnas iguales: con flex, la última hora quedaba sola en una
+   fila y las columnas no se alineaban entre días. */
 .dia__horarios {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(5.5rem, 1fr));
   gap: var(--sp-2);
   margin: 0;
   padding: 0;
   list-style: none;
+}
+
+.dia__horarios button {
+  inline-size: 100%;
 }
 
 .resumen {

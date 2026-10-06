@@ -37,7 +37,7 @@
               @for (opcion of centrosOrdenados(); track opcion.unitId) {
                 <li class="centro" data-testid="reserva-estudio-centro">
                   <div class="centro__datos">
-                    <p class="centro__nombre">{{ opcion.unitName }}</p>
+                    <h3 class="centro__nombre">{{ opcion.unitName }}</h3>
                     @if (opcion.addressText) {
                       <p class="reserva__secundario">{{ opcion.addressText }}</p>
                     }

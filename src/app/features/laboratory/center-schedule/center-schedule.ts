@@ -75,6 +75,8 @@ interface FilaDelResumen {
   readonly origen: string;
   readonly horario: string;
   readonly cupo: string;
+  /** Sin equipos operativos el horario existe pero no da turnos: se lee apagado. */
+  readonly sinTurnos: boolean;
   readonly excepciones: readonly { readonly nombre: string; readonly horario: string }[];
 }
 
@@ -170,6 +172,7 @@ export class CenterSchedulePage implements OnInit {
         label: m.label,
         origen: origin === 'MODALITY' ? 'Horario propio' : this.nombreGeneral(),
         horario: describirHorario(block),
+        sinTurnos: m.operativos === 0,
         cupo:
           m.operativos === 0
             ? `Sin ${m.equipoPlural} operativos: no se dan turnos`

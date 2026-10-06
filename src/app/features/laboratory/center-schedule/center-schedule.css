@@ -121,7 +121,12 @@
 }
 
 .modalidad__propio app-segmented-control {
-  flex: none;
+  /* Crece y no se encoge: a 390 px el segmentado reparte la fila entera
+     (su propia regla angosta) en vez de cortar los rótulos. */
+  flex: 1 0 auto;
+  /* Por debajo de 30rem sus opciones tienen base 0: sin un mínimo, el
+     tamaño «auto» queda en el mínimo y corta los rótulos. */
+  min-inline-size: 8rem;
 }
 
 .modalidad__rotulo {
@@ -160,6 +165,19 @@
   border-inline-start: 3px solid var(--brand-primary);
   border-radius: var(--r-sm);
   background: var(--bg-inset);
+}
+
+.resumen__fila--sin-turnos {
+  border-inline-start-color: var(--border-default);
+}
+
+.resumen__fila--sin-turnos .resumen__horario {
+  color: var(--text-tertiary);
+  text-decoration: line-through;
+}
+
+.resumen__fila--sin-turnos .resumen__cupo {
+  color: var(--text-danger);
 }
 
 .resumen__fila p {
