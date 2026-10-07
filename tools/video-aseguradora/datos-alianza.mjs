@@ -36,8 +36,9 @@ export const ASEGURADORA = {
   nombre: 'Alianza Seguros',
   razonSocial: 'Alianza Seguros y Reaseguros S.A.',
   codigo: 'ALIANZA',
-  sigla: 'ASR',
-  registro: 'APS-0015',
+  sigla: 'ALIANZA',
+  /** El NIT que se escribe en el alta: «Mi perfil» lo muestra como NIT y como registro ante el regulador. */
+  registro: '1020347028',
   direccion: 'Av. Camacho N.º 1400, La Paz',
 };
 
