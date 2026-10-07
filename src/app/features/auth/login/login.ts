@@ -25,8 +25,15 @@ import { PointerScene } from '../../../shared/motion/pointer-scene.directive';
 
 /** A dónde se entra tras iniciar sesión con la organización ya resuelta. */
 const HOME_ROUTE = '/';
-/** El inicio de una cuenta de farmacia: el «Resumen» de su catálogo. */
-const PHARMACY_HOME_ROUTE = '/administration/pharmacy';
+/**
+ * El inicio de las cuentas de organización que tienen un panel propio: la
+ * farmacia y el centro de diagnóstico empiezan en su «Resumen», no en el
+ * panel general («Pacientes y equipo», «Directorios»).
+ */
+const INICIO_POR_TIPO: Readonly<Record<string, string>> = {
+  PHARMACY: '/administration/pharmacy',
+  DIAGNOSTIC_CENTER: '/administration/laboratory',
+};
 
 /**
  * Dónde aterriza quien entra sin pertenecer a ninguna organización.
@@ -191,13 +198,12 @@ export class Login {
   }
 
   /**
-   * Dónde empieza el día cada cuenta. La farmacia entraba al «Panel» general
-   * —«Pacientes y equipo», «Directorios»—, que no le dice nada de su
-   * mostrador; su inicio es el «Resumen» del catálogo, con la bandeja de
-   * pedidos a un clic en el menú.
+   * Dónde empieza el día cada cuenta. La farmacia y el laboratorio entraban
+   * al «Panel» general, que no les dice nada de su trabajo; su inicio es su
+   * «Resumen». Ver {@link INICIO_POR_TIPO}.
    */
   private inicioDeLaCuenta(): string {
-    return this.auth.activeTenantType() === 'PHARMACY' ? PHARMACY_HOME_ROUTE : HOME_ROUTE;
+    return INICIO_POR_TIPO[this.auth.activeTenantType() ?? ''] ?? HOME_ROUTE;
   }
 
   /**

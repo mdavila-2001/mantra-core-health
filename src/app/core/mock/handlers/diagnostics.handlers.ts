@@ -266,6 +266,49 @@ export const labInboxOrders = new Coleccion<LabInboxOrderRecord>(
   })),
 );
 
+/* ---- la orden que llega mientras se mira la recepción --------------------
+
+   El registro de procesos (4.2) pide que la orden *llegue* con alarma, «muy
+   similar a PEDIDOS YA», y que el laboratorio vea «que medico realizo la
+   solicitud». Con todo sembrado de antemano no llega nada: esta orden nace la
+   primera vez que el Laboratorio Central mira su recepción, con la fecha de
+   pedido unos segundos en el futuro (menos que el sondeo de la pantalla); la
+   bandeja esconde lo que todavía no fue pedido, así que entra en el sondeo
+   siguiente y suena. Una sola vez por sesión: queda en la colección. */
+
+export const ID_ORDEN_ENTRANTE = uuid('inbox-order-entrante');
+const SEGUNDOS_HASTA_LA_ORDEN_ENTRANTE = 15;
+
+function sembrarOrdenEntrante(): void {
+  if (labInboxOrders.get(ID_ORDEN_ENTRANTE) !== undefined) return;
+  const paciente = PACIENTES[8] ?? PACIENTES[0]!;
+  labInboxOrders.agregar({
+    id: ID_ORDEN_ENTRANTE,
+    patientProfileId: paciente.id,
+    codeConceptId: ESTUDIO['STUDY-PERFIL-LIPIDICO']!,
+    categoryConceptId: CATEGORIA_ORDEN['SRQ-LAB']!,
+    priorityConceptId: PRIORIDAD['PRI-ROUTINE']!,
+    statusConceptId: ESTADO['ST-ACTIVE']!,
+    requesterProfileId: MEDICA.id,
+    requestingTenantId: TENANT_CLINICA,
+    performerTenantId: TENANT_LABORATORIO,
+    requestedAt: new Date(Date.parse(ahora()) + SEGUNDOS_HASTA_LA_ORDEN_ENTRANTE * 1000).toISOString(),
+  });
+}
+
+/** Lo que ya fue pedido: una orden con la fecha en el futuro todavía no llegó. */
+function yaLlego(o: LabInboxOrderRecord): boolean {
+  return Date.parse(o.requestedAt) <= Date.parse(ahora());
+}
+
+/** Quién pidió la orden, en palabras: «Nombre · Especialidad». */
+function solicitante(profileId: string): string | null {
+  const profesional = PROFESIONALES.find((p) => p.id === profileId);
+  if (profesional === undefined) return null;
+  const especialidad = profesional.especialidades[0];
+  return especialidad === undefined ? profesional.displayName : `${profesional.displayName} · ${displayDe(especialidad)}`;
+}
+
 /** Las muestras sembradas de la bandeja: una recibida y una rechazada. */
 function seedInboxSpecimens(): void {
   const [, received, , rejected] = labInboxOrders.todos();
@@ -298,7 +341,7 @@ function seedInboxSpecimens(): void {
 }
 seedInboxSpecimens();
 
-const ordenesDeTrabajo = new Coleccion<{ id: string; workOrderNumber: string; laboratoryAccessionId: string; statusConceptId: string; priorityConceptId: string; assignedProfileId: string | null; scheduledAt: string; completedAt: string | null }>(
+const ordenesDeTrabajo = new Coleccion<{ id: string; workOrderNumber: string; laboratoryAccessionId: string; statusConceptId: string; priorityConceptId: string; assignedProfileId: string | null; scheduledAt: string; completedAt: string | null; tenantId?: string }>(
   LAB_ORDERS.map((o, i) => ({
     id: uuid(`work-order-${o.id}`),
     workOrderNumber: `OT-2026-${String(400 + i).padStart(4, '0')}`,
@@ -1079,8 +1122,12 @@ export function registrarDiagnostico(router: MockRouter): void {
     }
     const status = texto(query, 'statusConceptId');
     const assigned = texto(query, 'assignedProfileId');
-    return ordenesDeTrabajo
-      .todos()
+    // Lo que nació de una accesión del laboratorio activo va primero; las
+    // sembradas no declaran laboratorio y se ven como antes.
+    const propias = ordenesDeTrabajo.filtrar((w) => w.tenantId !== undefined && w.tenantId === tenantId).reverse();
+    const sembradas = ordenesDeTrabajo.filtrar((w) => w.tenantId === undefined);
+    return [...propias, ...sembradas]
+      .map(({ tenantId: _t, ...w }) => w)
       .filter((w) => status === null || w.statusConceptId === status)
       .filter((w) => assigned === null || w.assignedProfileId === assigned)
       .slice(Number(query.get('offset') ?? 0), Number(query.get('offset') ?? 0) + (Number(query.get('limit') ?? 50) || 50));
@@ -1171,6 +1218,19 @@ export function registrarDiagnostico(router: MockRouter): void {
       items,
     };
     labAccessions.agregar(accession);
+    // La accesión abre la orden de trabajo: «Cada orden de trabajo nace
+    // cuando registrás la accesión», dice la cola. Antes no nacía ninguna.
+    ordenesDeTrabajo.agregar({
+      id: nuevoId('work-order'),
+      workOrderNumber: `OT-2026-${String(400 + ordenesDeTrabajo.todos().length).padStart(4, '0')}`,
+      laboratoryAccessionId: accession.id,
+      statusConceptId: ESTADO['ST-IN-PROGRESS']!,
+      priorityConceptId: accession.priorityConceptId,
+      assignedProfileId: null,
+      scheduledAt: receivedAt,
+      completedAt: null,
+      tenantId: accession.custodianTenantId,
+    });
     return reply(201, { id: accession.id, status: accession.statusConceptId, accessionSpecimenIds: items.map((item) => item.accessionSpecimenId) });
   });
 
@@ -1273,6 +1333,7 @@ export function registrarDiagnostico(router: MockRouter): void {
     }
     const cursorKey = after;
 
+    if (tenantId === TENANT_LABORATORIO) sembrarOrdenEntrante();
     const accessioned = new Set(
       labAccessions
         .filtrar((a) => a.custodianTenantId === tenantId && a.serviceRequestId !== null)
@@ -1280,7 +1341,7 @@ export function registrarDiagnostico(router: MockRouter): void {
     );
     const needle = typeof query === 'string' ? normalizeText(query) : null;
     const pending = labInboxOrders
-      .filtrar((o) => o.performerTenantId === tenantId && o.statusConceptId === ESTADO['ST-ACTIVE'] && !accessioned.has(o.id))
+      .filtrar((o) => o.performerTenantId === tenantId && o.statusConceptId === ESTADO['ST-ACTIVE'] && !accessioned.has(o.id) && yaLlego(o))
       .filter((o) => {
         if (needle === null) return true;
         const patient = pacientePorId(o.patientProfileId);
@@ -1313,6 +1374,9 @@ export function registrarDiagnostico(router: MockRouter): void {
           priorityConceptId: o.priorityConceptId,
           statusConceptId: o.statusConceptId,
           requesterProfileId: o.requesterProfileId,
+          // Sólo simulador por ahora (P-LAB-SOLICITANTE): el DTO real trae el
+          // id y no el nombre, y 4.2 pide que el laboratorio vea quién pidió.
+          requesterDisplayName: solicitante(o.requesterProfileId),
           requestingTenantId: o.requestingTenantId,
           requestingTenantName: TENANT_NAMES[o.requestingTenantId] ?? null,
           requestedAt: o.requestedAt,

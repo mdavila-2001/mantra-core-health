@@ -4,6 +4,36 @@
   [breadcrumbs]="breadcrumbs()"
 />
 
+<!-- El aviso vive desde el primer render: una región viva que aparece con
+     el contenido no se anuncia. -->
+<p class="sr-only" role="status" data-testid="recepcion-aviso">{{ avisoDeNuevas() }}</p>
+
+<!-- Igual que la bandeja de la farmacia: el interruptor es además el primer
+     gesto con la página, sin el cual el navegador no deja sonar la alarma. -->
+<div class="recepcion__controles">
+  <app-switch
+    label="Sonido de alarma"
+    data-testid="recepcion-sonido"
+    [ngModel]="alarma.sonidoActivo()"
+    (ngModelChange)="alarma.alternarSonido()"
+  />
+  <p class="recepcion__estado-sonido">{{ estadoDelSonido() }}</p>
+</div>
+
+@if (ultimaNueva(); as nueva) {
+  <app-alert
+    tone="info"
+    dismissible
+    data-testid="recepcion-cartel-nueva"
+    [title]="'Llegó una orden nueva: ' + (nueva.codeDisplay ?? 'estudio sin nombre')"
+    (dismissed)="descartarAviso()"
+  >
+    De {{ patientName(nueva) }}@if (nueva.requesterDisplayName) {, pedida por {{ nueva.requesterDisplayName }}}.
+    Está arriba de todo, marcada como «Nueva». Recibir la muestra la saca de nuevas y calla la
+    alarma.
+  </app-alert>
+}
+
 <div class="recepcion">
   <!-- La búsqueda viaja en el cuerpo del pedido, no en la URL: es un nombre o
        un código de historia clínica. -->
@@ -272,7 +302,12 @@
 
 <!-- Plantillas de celda: el organismo las recibe por `ColumnDef.cell`. -->
 <ng-template #patientCell let-order>
-  <span class="recepcion__paciente">{{ patientName(order) }}</span>
+  <span class="recepcion__paciente">
+    {{ patientName(order) }}
+    @if (esNueva(order)) {
+      <app-badge size="sm" variant="info" data-testid="recepcion-nueva">Nueva</app-badge>
+    }
+  </span>
   @if (order.patientCode) {
     <span class="recepcion__secundario">HC {{ order.patientCode }}</span>
   }
@@ -286,6 +321,11 @@
       · {{ label(order.priorityConceptId) }}
     }
   </span>
+  @if (order.requesterDisplayName) {
+    <span class="recepcion__secundario" data-testid="recepcion-solicitante">
+      Pidió {{ order.requesterDisplayName }}
+    </span>
+  }
 </ng-template>
 
 <ng-template #requestedCell let-order>

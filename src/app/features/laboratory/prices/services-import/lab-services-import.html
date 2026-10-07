@@ -1,0 +1,223 @@
+<app-content-dialog
+  heading="Importar análisis desde un CSV"
+  description="Tu lista de análisis y precios de una vez. Revisamos el archivo antes de cargar nada."
+  size="xl"
+  [dismissible]="!pending()"
+  data-testid="lab-import-dialog"
+  (closed)="onClosed()"
+>
+  <div class="import__body">
+    @if (result(); as r) {
+      <!-- Paso 4 · lo que respondió la API, fila por fila. -->
+      <div class="import__summary" data-testid="lab-import-result">
+        <ul class="import__counts" aria-label="Resultado de la carga">
+          <li>
+            <strong data-testid="lab-import-created">{{ r.created }}</strong>
+            {{ r.created === 1 ? 'creado' : 'creados' }}
+          </li>
+          <li>
+            <strong data-testid="lab-import-updated">{{ r.updated }}</strong>
+            {{ r.updated === 1 ? 'actualizado' : 'actualizados' }}
+          </li>
+          <li>
+            <strong data-testid="lab-import-unchanged">{{ r.unchanged }}</strong>
+            sin cambios
+          </li>
+          <li [class.import__counts--alert]="r.rejected > 0">
+            <strong data-testid="lab-import-rejected">{{ r.rejected }}</strong>
+            {{ r.rejected === 1 ? 'rechazado' : 'rechazados' }}
+          </li>
+        </ul>
+
+        @if (r.rejected > 0) {
+          <app-alert tone="warning" title="Algunas filas no entraron">
+            Corregilas en tu planilla y volvé a subir el archivo: las que ya entraron quedan sin cambios.
+          </app-alert>
+        } @else {
+          <app-alert tone="success" title="Tu catálogo quedó al día">
+            Los análisis nuevos ya aparecen en la lista de precios al cerrar.
+          </app-alert>
+        }
+
+        <app-data-table
+          caption="Resultado de la carga, fila por fila"
+          [state]="resultState()"
+          [columns]="resultColumns()"
+          [trackBy]="lineOf"
+          wrapHeaders
+          maxHeight="24rem"
+          data-testid="lab-import-result-table"
+        />
+      </div>
+    } @else {
+      <app-view-state-host [state]="context()" (retry)="loadContext()">
+        <div class="import__step">
+          <!-- Paso 1 · qué columnas lee y la plantilla. -->
+          <div class="import__template">
+            <p class="import__note">
+              Bajá la plantilla, llenala en Excel o Google Sheets y guardala como <strong>CSV</strong>.
+              Hasta {{ maxRows }} análisis por archivo. Si un código ya existe, se actualiza.
+            </p>
+            <button
+              app-button
+              type="button"
+              variant="secondary"
+              size="sm"
+              data-testid="lab-import-template"
+              (clicked)="downloadTemplate()"
+            >
+              Descargar plantilla
+            </button>
+          </div>
+
+          <dl class="import__columns" aria-label="Columnas del archivo" data-testid="lab-import-columns">
+            @for (column of columnsHelp; track column.header) {
+              <div class="import__column">
+                <dt>
+                  <code>{{ column.header }}</code>
+                  @if (column.required) {
+                    <span class="import__required">obligatoria</span>
+                  }
+                </dt>
+                <dd>
+                  {{ column.hint }}
+                  @if (column.field === 'category' && categoryNames().length > 0) {
+                    <span class="import__options">Hoy: {{ categoryNames().join(', ') }}.</span>
+                  }
+                </dd>
+              </div>
+            }
+          </dl>
+
+          <p class="import__note">
+            Una columna que no viene en el archivo no se toca en los análisis que ya existen.
+          </p>
+
+          <!-- Paso 2 · el archivo. -->
+          <app-file-input
+            label="Elegir archivo CSV"
+            accept=".csv"
+            [maxSizeBytes]="maxBytes"
+            [maxFiles]="1"
+            [disabled]="reading() || pending()"
+            [files]="files()"
+            [showList]="false"
+            (filesChange)="choose($event)"
+            (rejected)="reject($event)"
+            testId="lab-import-file"
+          />
+
+          @if (files()[0]; as file) {
+            <p class="import__note" data-testid="lab-import-file-name">
+              Archivo: <strong>{{ file.name }}</strong>
+            </p>
+          }
+
+          @if (reading()) {
+            <p class="import__note" role="status">Revisando el archivo…</p>
+          }
+
+          @if (fileError(); as message) {
+            <app-alert tone="error" title="El archivo no sirve" data-testid="lab-import-file-error">
+              {{ message }}
+            </app-alert>
+          }
+
+          @if (review(); as rv) {
+            <div class="import__summary" data-testid="lab-import-preview">
+              <ul class="import__counts" aria-label="Revisión del archivo">
+                <li>
+                  <strong data-testid="lab-import-new-count">{{ newCount() }}</strong>
+                  {{ newCount() === 1 ? 'nuevo' : 'nuevos' }}
+                </li>
+                <li>
+                  <strong data-testid="lab-import-update-count">{{ updateCount() }}</strong>
+                  {{ updateCount() === 1 ? 'se actualiza' : 'se actualizan' }}
+                </li>
+                <li [class.import__counts--alert]="problems().length > 0">
+                  <strong data-testid="lab-import-problem-count">{{ problems().length }}</strong>
+                  {{ problems().length === 1 ? 'fila a corregir' : 'filas a corregir' }}
+                </li>
+              </ul>
+
+              @if (rv.ignoredColumns.length > 0) {
+                <p class="import__note">Columnas que no se usan: {{ rv.ignoredColumns.join(', ') }}.</p>
+              }
+
+              @if (problems().length > 0) {
+                <p class="import__note">
+                  Estas filas no se cargan.
+                  @if (validRows().length > 0) {
+                    Las demás se cargan igual.
+                  }
+                </p>
+                <app-data-table
+                  caption="Filas a corregir"
+                  [state]="problemState()"
+                  [columns]="problemColumns"
+                  [trackBy]="lineOf"
+                  wrapHeaders
+                  maxHeight="20rem"
+                  data-testid="lab-import-problems"
+                />
+              }
+            </div>
+          }
+
+          @if (uploadError(); as failure) {
+            <div data-testid="lab-import-error">
+              <app-view-state-host [state]="failure" (retry)="send()" />
+            </div>
+          }
+        </div>
+      </app-view-state-host>
+    }
+  </div>
+
+  <!-- Un botón por bloque: con dos nodos en la raíz de un @if, Angular no los
+       proyecta al pie del diálogo (NG8011). -->
+  @if (result()) {
+    <button
+      dialog-actions
+      app-button
+      type="button"
+      variant="ghost"
+      data-testid="lab-import-again"
+      (clicked)="again()"
+    >
+      Subir otro archivo
+    </button>
+  } @else {
+    <button
+      dialog-actions
+      app-button
+      type="button"
+      variant="ghost"
+      [disabled]="pending()"
+      (clicked)="dialog().close()"
+    >
+      Cancelar
+    </button>
+  }
+  @if (result()) {
+    <button dialog-actions app-button type="button" data-testid="lab-import-done" (clicked)="finish()">
+      Listo
+    </button>
+  } @else {
+    <button
+      dialog-actions
+      app-button
+      type="button"
+      [isLoading]="pending()"
+      [disabled]="validRows().length === 0 || pending() || reading()"
+      data-testid="lab-import-confirm"
+      (clicked)="confirm()"
+    >
+      {{ confirmLabel() }}
+    </button>
+  }
+</app-content-dialog>
+
+<ng-template #outcomeCell let-row>
+  <app-badge [variant]="outcomeTone(row.outcome)">{{ outcomeLabel(row.outcome) }}</app-badge>
+</ng-template>

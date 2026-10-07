@@ -2,6 +2,8 @@ import { HttpHeaders } from '@angular/common/http';
 
 import { MockRouter, isMockReply, type MockMethod } from '../mock-router';
 import { registrarAuth } from './auth.handlers';
+import { registrarDirectorio } from './directory.handlers';
+import { TENANT_LABORATORIO, usuarioDeAccessToken } from '../mock-session';
 
 /**
  * El alta pública de laboratorio contra el simulador (carril A de la cuenta de
@@ -14,8 +16,21 @@ import { registrarAuth } from './auth.handlers';
 describe('alta pública de laboratorio en el simulador', () => {
   const router = new MockRouter();
   registrarAuth(router);
+  registrarDirectorio(router);
+
+  // El alta ahora guarda la cuenta (y un correo repetido es 409): cada caso es
+  // un laboratorio distinto, con su propio correo, salvo que el caso traiga
+  // uno a propósito.
+  let altas = 0;
+  function conCorreoPropio(body: unknown): unknown {
+    const owner = (body as { owner?: { email?: string } } | null)?.owner;
+    if (owner?.email !== 'legal@labsur.test') return body;
+    altas += 1;
+    return { ...(body as object), owner: { ...owner, email: `legal+${altas}@labsur.test` } };
+  }
 
   function call(method: MockMethod, path: string, body: unknown = null) {
+    if (path === '/iam/auth/register-organization') body = conCorreoPropio(body);
     const match = router.match(method, path);
     if (match === null) throw new Error(`No existe ${method} ${path}`);
     const result = match.handler({
@@ -179,5 +194,33 @@ describe('alta pública de laboratorio en el simulador', () => {
     const { status } = call('POST', '/iam/auth/register-organization', cuerpo);
 
     expect(status).toBe(409);
+  });
+
+  it('correcto — el laboratorio registrado entra con el correo del representante, a su panel', () => {
+    const correo = 'ana.paz@labsur.test';
+    const alta = call('POST', '/iam/auth/register-organization', {
+      ...CUERPO_MINIMO,
+      owner: { ...CUERPO_MINIMO.owner, email: correo },
+    });
+    expect(alta.status).toBe(200);
+
+    const sesion = call('POST', '/iam/auth/login', { email: correo, password: 'secreto12' });
+    const usuario = usuarioDeAccessToken((sesion.body as { accessToken: string }).accessToken);
+    expect(usuario?.email).toBe(correo);
+    expect(usuario?.tenants).toEqual([TENANT_LABORATORIO]);
+    expect(usuario?.tenantNames[TENANT_LABORATORIO]).toBe('Laboratorio Clínico del Sur S.R.L.');
+  });
+
+  it('correcto — las sucursales del alta quedan en «Sucursales», junto a la sede principal', () => {
+    const cuerpo = conUnidad({
+      ...CUERPO_MINIMO.organization.diagnosticUnit,
+      branches: [{ name: 'Toma de muestras Equipetrol', addressLines: ['Av. San Martín 456'], latitude: -17.76, longitude: -63.19 }],
+    });
+    expect(call('POST', '/iam/auth/register-organization', cuerpo).status).toBe(200);
+
+    const { body } = call('GET', `/tenants/${TENANT_LABORATORIO}/branches`);
+    const sucursales = (body as { items: readonly { name: string; description?: string }[] }).items;
+    expect(sucursales.map((b) => b.name)).toEqual(expect.arrayContaining(['Sede principal', 'Toma de muestras Equipetrol']));
+    expect(sucursales.find((b) => b.name === 'Toma de muestras Equipetrol')?.description).toBe('Av. San Martín 456');
   });
 });

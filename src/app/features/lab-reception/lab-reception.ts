@@ -2,16 +2,19 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  DestroyRef,
   effect,
   inject,
+  PLATFORM_ID,
   signal,
   untracked,
   viewChild,
   type TemplateRef,
 } from '@angular/core';
-import { DatePipe } from '@angular/common';
+import { DatePipe, isPlatformBrowser } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
-import { forkJoin, of, type Observable } from 'rxjs';
+import { forkJoin, of, type Observable, type Subscription } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
 
 import { AuthService } from '../../core/auth/auth.service';
@@ -37,6 +40,8 @@ import type { BadgeVariant } from '../../shared/components/atoms/badge/badge.typ
 import { AppButton } from '../../shared/components/atoms/button/button';
 import { Input } from '../../shared/components/atoms/input/input';
 import { Select } from '../../shared/components/atoms/select/select';
+import { Switch } from '../../shared/components/atoms/switch/switch';
+import { AlarmaDePedidos } from '../organization/pharmacy-inbox/alarma-de-pedidos';
 import type { SelectOption } from '../../shared/components/atoms/select/select.types';
 import { Alert } from '../../shared/components/molecules/alert/alert';
 import { Card } from '../../shared/components/molecules/card/card';
@@ -50,6 +55,17 @@ import { PageHeader } from '../../shared/components/organisms/page-header/page-h
 
 /** Filas por página de la bandeja. La API acota a 100. */
 const PAGE_SIZE = 25;
+
+/**
+ * Cada cuánto se vuelve a mirar si llegó una orden: el mismo pulso que la
+ * bandeja de la farmacia. 4.2 pide que la orden llegue «con alarma o sonido,
+ * muy similar a PEDIDOS YA»; sin sondeo, aparecía sólo al recargar.
+ */
+const SONDEO_MS = 20_000;
+
+/** De a cuántas mira el sondeo (el tope que acepta la API) y hasta cuántas en total. */
+const SONDEO_LIMITE = 100;
+const SONDEO_TOPE = 1000;
 
 /** Lo que se muestra cuando un dato no está. */
 const NO_DATA = '—';
@@ -122,11 +138,14 @@ const STAGE_BADGE: Readonly<Record<ReceptionStage, { label: string; variant: Bad
     DataTable,
     DatePipe,
     FormField,
+    FormsModule,
     Input,
     PageHeader,
     SearchField,
     Select,
+    Switch,
   ],
+  providers: [AlarmaDePedidos],
   templateUrl: './lab-reception.html',
   styleUrl: './lab-reception.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -219,10 +238,139 @@ export class LabReception {
   protected readonly accessioning = signal(false);
   protected readonly accessionError = signal<string | null>(null);
 
+  /* ---- las órdenes que llegan (4.2) ---------------------------------------- */
+
+  protected readonly alarma = inject(AlarmaDePedidos);
+  private readonly esBrowser = isPlatformBrowser(inject(PLATFORM_ID));
+  /** Las órdenes que ya se vieron: la primera carga es el punto de partida. */
+  private vistas: Set<string> | null = null;
+  /** Las que llegaron con la pantalla abierta y nadie tomó todavía. */
+  protected readonly nuevas = signal<ReadonlySet<string>>(new Set());
+  /** La última que llegó, para decir de quién es y quién la pidió. */
+  protected readonly ultimaNueva = signal<LabInboxItem | null>(null);
+  protected readonly avisoDeNuevas = signal('');
+  protected readonly estadoDelSonido = computed(() =>
+    this.alarma.sonidoActivo() ? 'Aviso sonoro activado' : 'Aviso sonoro silenciado',
+  );
+  private temporizador: ReturnType<typeof setTimeout> | null = null;
+  private sondeoEnVuelo: Subscription | null = null;
+
   constructor() {
     effect(() => {
       untracked(() => this.load());
     });
+    this.agendar();
+    inject(DestroyRef).onDestroy(() => {
+      if (this.temporizador !== null) clearTimeout(this.temporizador);
+      this.sondeoEnVuelo?.unsubscribe();
+    });
+  }
+
+  protected esNueva(row: LabInboxItem): boolean {
+    return this.nuevas().has(row.serviceRequestId);
+  }
+
+  /** Cerrar el cartel acusa recibo: calla la alarma, la fila sigue marcada. */
+  protected descartarAviso(): void {
+    this.ultimaNueva.set(null);
+    this.alarma.acusarRecibo();
+  }
+
+  /** Encadena el próximo vistazo. Nunca hay dos vivos a la vez. */
+  private agendar(): void {
+    if (!this.esBrowser) return;
+    this.temporizador = setTimeout(() => {
+      this.sondear();
+      this.agendar();
+    }, SONDEO_MS);
+  }
+
+  /**
+   * Mira si llegó algo sin tocar lo que se está haciendo: con una búsqueda
+   * puesta, una carga en curso, un diálogo abierto o un estado que no es la
+   * bandeja (error, prohibido) no reemplaza nada, y vuelve a mirar en el
+   * próximo pulso. Recorre la bandeja entera: la API la devuelve de la más
+   * vieja a la más nueva, y lo que llega cae al final, no en la primera página.
+   */
+  private sondear(): void {
+    if (!this.puedeSondear()) return;
+    this.sondeoEnVuelo?.unsubscribe();
+    this.sondeoEnVuelo = this.bandejaEntera().subscribe({
+      next: (items) => this.recibirNuevas(items),
+      // Un sondeo que falla no rompe la pantalla: el próximo vuelve a probar.
+      error: () => undefined,
+    });
+  }
+
+  private puedeSondear(): boolean {
+    const estado = this.inbox().status;
+    return (
+      this.patientQuery() === '' &&
+      (estado === 'ready' || estado === 'empty') &&
+      this.receiveOrder() === null &&
+      this.accessionOrder() === null
+    );
+  }
+
+  /** Todas las páginas de la bandeja, sin búsqueda, de a cien. */
+  private bandejaEntera(): Observable<readonly LabInboxItem[]> {
+    const pagina = (cursor: string | undefined, juntas: readonly LabInboxItem[]): Observable<readonly LabInboxItem[]> =>
+      this.lab.listInbox({ limit: SONDEO_LIMITE, ...(cursor === undefined ? {} : { cursor }) }).pipe(
+        switchMap((page) => {
+          const todas = [...juntas, ...page.items];
+          return page.nextCursor === null || todas.length >= SONDEO_TOPE
+            ? this.withLabels(conceptsOf(todas)).pipe(map(() => todas))
+            : pagina(page.nextCursor, todas);
+        }),
+      );
+    return pagina(undefined, []);
+  }
+
+  /** Lo que la pantalla ya conoce: entra a la línea de base de la alarma. */
+  private conocer(items: readonly LabInboxItem[]): void {
+    this.vistas ??= new Set();
+    for (const item of items) this.vistas.add(item.serviceRequestId);
+  }
+
+  /**
+   * Suma arriba de todo las órdenes que no estaban: es donde las busca quien
+   * escuchó la alarma (la API las devuelve por fecha de pedido, al final).
+   */
+  private recibirNuevas(items: readonly LabInboxItem[]): void {
+    // La respuesta pudo llegar después de una búsqueda o de abrir un diálogo.
+    if (!this.puedeSondear()) return;
+    const vistas = this.vistas;
+    if (vistas === null) {
+      this.conocer(items);
+      return;
+    }
+    const estado = this.inbox();
+    const actuales = estado.status === 'ready' ? estado.data : [];
+    const enPantalla = new Set(actuales.map((a) => a.serviceRequestId));
+    const llegadas = items.filter((i) => !vistas.has(i.serviceRequestId) && !enPantalla.has(i.serviceRequestId));
+    this.conocer(items);
+    if (llegadas.length === 0) return;
+    this.inbox.set(ready([...llegadas, ...actuales]));
+    this.nuevas.update((n) => new Set([...n, ...llegadas.map((l) => l.serviceRequestId)]));
+    const ultima = llegadas.at(-1)!;
+    this.ultimaNueva.set(ultima);
+    const sinVer = this.nuevas().size;
+    this.avisoDeNuevas.set(
+      sinVer === 1
+        ? `Llegó una orden nueva de ${this.patientName(ultima)}.`
+        : `Hay ${sinVer} órdenes nuevas sin recibir; la última, de ${this.patientName(ultima)}.`,
+    );
+    this.alarma.notificar(llegadas.length);
+  }
+
+  /** La muestra de una orden nueva ya se recibió: deja de ser nueva. */
+  private atendida(serviceRequestId: string): void {
+    if (!this.nuevas().has(serviceRequestId)) return;
+    const quedan = new Set([...this.nuevas()].filter((id) => id !== serviceRequestId));
+    this.nuevas.set(quedan);
+    if (this.ultimaNueva()?.serviceRequestId === serviceRequestId) this.ultimaNueva.set(null);
+    // La alarma se calla cuando no queda ninguna nueva sin tomar.
+    if (quedan.size === 0) this.descartarAviso();
   }
 
   /* ---- lectura para la plantilla ------------------------------------------- */
@@ -281,7 +429,10 @@ export class LabReception {
         const state = this.inbox();
         const current = state.status === 'ready' ? state.data : [];
         this.nextCursor.set(page.nextCursor);
-        this.inbox.set(ready([...current, ...page.items]));
+        if (this.patientQuery() === '') this.conocer(page.items);
+        // Una orden que el sondeo ya subió arriba no se repite al paginar.
+        const yaEstan = new Set(current.map((c) => c.serviceRequestId));
+        this.inbox.set(ready([...current, ...page.items.filter((i) => !yaEstan.has(i.serviceRequestId))]));
       },
       error: () => {
         this.loadingMore.set(false);
@@ -295,6 +446,8 @@ export class LabReception {
   }
 
   private load(): void {
+    // Un sondeo en vuelo respondería sobre lo que esta carga va a pintar.
+    this.sondeoEnVuelo?.unsubscribe();
     this.inbox.set(loading());
     this.nextCursor.set(null);
     this.loadMoreError.set(null);
@@ -303,6 +456,9 @@ export class LabReception {
     this.fetchPage(undefined).subscribe({
       next: (page) => {
         this.nextCursor.set(page.nextCursor);
+        // Lo que una carga sin búsqueda muestra ya no puede «llegar»: entra a
+        // la línea de base (también vacía: la primera orden tiene que sonar).
+        if (this.patientQuery() === '') this.conocer(page.items);
         if (page.items.length === 0 && page.nextCursor === null) {
           this.inbox.set(this.emptyState());
           return;
@@ -429,6 +585,7 @@ export class LabReception {
             specimens: [...current.specimens, detail],
           }));
           this.receiveOrder.set(null);
+          this.atendida(row.serviceRequestId);
           this.toasts.success(
             `Recibiste la muestra de ${this.patientName(row)}. Falta registrar la accesión.`,
           );
