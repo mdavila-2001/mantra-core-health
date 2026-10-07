@@ -28,7 +28,6 @@
 }
 
 :host > app-alert {
-  display: block;
   margin-block-end: var(--sp-4);
 }
 
