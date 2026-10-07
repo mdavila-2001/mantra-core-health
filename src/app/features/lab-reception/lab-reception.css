@@ -11,6 +11,27 @@
   gap: var(--sp-6);
 }
 
+/* La alarma de órdenes nuevas (4.2): el mismo bloque que la bandeja de la
+   farmacia, para que las dos cuentas lo encuentren en el mismo lugar. */
+.recepcion__controles {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3);
+  margin-block-end: var(--sp-4);
+}
+
+.recepcion__estado-sonido {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+:host > app-alert {
+  display: block;
+  margin-block-end: var(--sp-4);
+}
+
 .recepcion__buscar {
   max-inline-size: 40rem;
 }
@@ -30,6 +51,10 @@
 .recepcion__estudio {
   display: block;
   font-weight: 600;
+}
+
+.recepcion__paciente app-badge {
+  margin-inline-start: var(--sp-2);
 }
 
 .recepcion__secundario {

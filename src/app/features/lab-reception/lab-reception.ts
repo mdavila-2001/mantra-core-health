@@ -2,16 +2,19 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  DestroyRef,
   effect,
   inject,
+  PLATFORM_ID,
   signal,
   untracked,
   viewChild,
   type TemplateRef,
 } from '@angular/core';
-import { DatePipe } from '@angular/common';
+import { DatePipe, isPlatformBrowser } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
-import { forkJoin, of, type Observable } from 'rxjs';
+import { forkJoin, of, type Observable, type Subscription } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
 
 import { AuthService } from '../../core/auth/auth.service';
@@ -37,6 +40,8 @@ import type { BadgeVariant } from '../../shared/components/atoms/badge/badge.typ
 import { AppButton } from '../../shared/components/atoms/button/button';
 import { Input } from '../../shared/components/atoms/input/input';
 import { Select } from '../../shared/components/atoms/select/select';
+import { Switch } from '../../shared/components/atoms/switch/switch';
+import { AlarmaDePedidos } from '../organization/pharmacy-inbox/alarma-de-pedidos';
 import type { SelectOption } from '../../shared/components/atoms/select/select.types';
 import { Alert } from '../../shared/components/molecules/alert/alert';
 import { Card } from '../../shared/components/molecules/card/card';
@@ -50,6 +55,13 @@ import { PageHeader } from '../../shared/components/organisms/page-header/page-h
 
 /** Filas por página de la bandeja. La API acota a 100. */
 const PAGE_SIZE = 25;
+
+/**
+ * Cada cuánto se vuelve a mirar si llegó una orden: el mismo pulso que la
+ * bandeja de la farmacia. 4.2 pide que la orden llegue «con alarma o sonido,
+ * muy similar a PEDIDOS YA»; sin sondeo, aparecía sólo al recargar.
+ */
+const SONDEO_MS = 20_000;
 
 /** Lo que se muestra cuando un dato no está. */
 const NO_DATA = '—';
@@ -122,11 +134,14 @@ const STAGE_BADGE: Readonly<Record<ReceptionStage, { label: string; variant: Bad
     DataTable,
     DatePipe,
     FormField,
+    FormsModule,
     Input,
     PageHeader,
     SearchField,
     Select,
+    Switch,
   ],
+  providers: [AlarmaDePedidos],
   templateUrl: './lab-reception.html',
   styleUrl: './lab-reception.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -219,10 +234,101 @@ export class LabReception {
   protected readonly accessioning = signal(false);
   protected readonly accessionError = signal<string | null>(null);
 
+  /* ---- las órdenes que llegan (4.2) ---------------------------------------- */
+
+  protected readonly alarma = inject(AlarmaDePedidos);
+  private readonly esBrowser = isPlatformBrowser(inject(PLATFORM_ID));
+  /** Las órdenes que ya se vieron: la primera carga es el punto de partida. */
+  private vistas: Set<string> | null = null;
+  /** Las que llegaron con la pantalla abierta y nadie tomó todavía. */
+  protected readonly nuevas = signal<ReadonlySet<string>>(new Set());
+  /** La última que llegó, para decir de quién es y quién la pidió. */
+  protected readonly ultimaNueva = signal<LabInboxItem | null>(null);
+  protected readonly avisoDeNuevas = signal('');
+  protected readonly estadoDelSonido = computed(() =>
+    this.alarma.sonidoActivo() ? 'Aviso sonoro activado' : 'Aviso sonoro silenciado',
+  );
+  private temporizador: ReturnType<typeof setTimeout> | null = null;
+  private sondeoEnVuelo: Subscription | null = null;
+
   constructor() {
     effect(() => {
       untracked(() => this.load());
     });
+    this.agendar();
+    inject(DestroyRef).onDestroy(() => {
+      if (this.temporizador !== null) clearTimeout(this.temporizador);
+      this.sondeoEnVuelo?.unsubscribe();
+    });
+  }
+
+  protected esNueva(row: LabInboxItem): boolean {
+    return this.nuevas().has(row.serviceRequestId);
+  }
+
+  /** Cerrar el cartel acusa recibo: calla la alarma, la fila sigue marcada. */
+  protected descartarAviso(): void {
+    this.ultimaNueva.set(null);
+    this.alarma.acusarRecibo();
+  }
+
+  /** Encadena el próximo vistazo. Nunca hay dos vivos a la vez. */
+  private agendar(): void {
+    if (!this.esBrowser) return;
+    this.temporizador = setTimeout(() => {
+      this.sondear();
+      this.agendar();
+    }, SONDEO_MS);
+  }
+
+  /**
+   * Mira la primera página sin tocar lo que se está haciendo: con una
+   * búsqueda puesta, una carga en curso o un diálogo abierto no reemplaza
+   * nada, y vuelve a mirar en el próximo pulso.
+   */
+  private sondear(): void {
+    const estado = this.inbox();
+    if (
+      this.patientQuery() !== '' ||
+      estado.status === 'loading' ||
+      this.receiveOrder() !== null ||
+      this.accessionOrder() !== null
+    ) {
+      return;
+    }
+    this.sondeoEnVuelo?.unsubscribe();
+    this.sondeoEnVuelo = this.fetchPage(undefined).subscribe({
+      next: (page) => this.recibirNuevas(page.items),
+      // Un sondeo que falla no rompe la pantalla: el próximo vuelve a probar.
+      error: () => undefined,
+    });
+  }
+
+  /**
+   * Suma arriba de todo las órdenes que no estaban: es donde las busca quien
+   * escuchó la alarma (la API las devuelve por fecha de pedido, al final).
+   */
+  private recibirNuevas(items: readonly LabInboxItem[]): void {
+    const vistas = this.vistas;
+    if (vistas === null) {
+      this.vistas = new Set(items.map((i) => i.serviceRequestId));
+      return;
+    }
+    const llegadas = items.filter((i) => !vistas.has(i.serviceRequestId));
+    if (llegadas.length === 0) return;
+    for (const l of llegadas) vistas.add(l.serviceRequestId);
+    const estado = this.inbox();
+    const actuales = estado.status === 'ready' ? estado.data : [];
+    this.inbox.set(ready([...llegadas, ...actuales]));
+    this.nuevas.update((n) => new Set([...n, ...llegadas.map((l) => l.serviceRequestId)]));
+    const ultima = llegadas.at(-1)!;
+    this.ultimaNueva.set(ultima);
+    this.avisoDeNuevas.set(
+      llegadas.length === 1
+        ? `Llegó una orden nueva de ${this.patientName(ultima)}.`
+        : `Llegaron ${llegadas.length} órdenes nuevas.`,
+    );
+    this.alarma.notificar(llegadas.length);
   }
 
   /* ---- lectura para la plantilla ------------------------------------------- */
@@ -308,6 +414,10 @@ export class LabReception {
           return;
         }
         this.inbox.set(ready(page.items));
+        // La primera carga sin búsqueda es el punto de partida de la alarma.
+        if (this.vistas === null && this.patientQuery() === '') {
+          this.vistas = new Set(page.items.map((i) => i.serviceRequestId));
+        }
       },
       error: (error: unknown) => this.inbox.set(this.errorState(error)),
     });
@@ -370,6 +480,11 @@ export class LabReception {
   /* ---- «Recibir muestra» --------------------------------------------------- */
 
   protected openReceive(row: LabInboxItem): void {
+    // Tomar la orden es atenderla: se calla la alarma y deja de ser «nueva».
+    if (this.nuevas().has(row.serviceRequestId)) {
+      this.nuevas.update((n) => new Set([...n].filter((id) => id !== row.serviceRequestId)));
+      this.descartarAviso();
+    }
     this.receiveOrder.set(row);
     this.specimenType.set(null);
     this.containerType.set(null);

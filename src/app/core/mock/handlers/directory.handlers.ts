@@ -234,6 +234,22 @@ const sucursales = new Coleccion<{
     timeZone: 'America/La_Paz',
     createdAt: iso(-300),
   },
+  // Laboratorio Central: su sede principal, la misma que publica la vitrina
+  // (Calle Sucre N.º 210). Antes «Sucursales» del laboratorio no tenía ni una.
+  {
+    id: uuid('branch-laboratorio-central-principal'),
+    tenantId: TENANT_LABORATORIO,
+    code: 'PRINCIPAL',
+    name: 'Sede principal',
+    branchTypeConceptId: TIPO_SUCURSAL.OFFICE,
+    statusConceptId: ESTADO['ST-ACTIVE']!,
+    timeZone: 'America/La_Paz',
+    createdAt: iso(-900),
+    description: 'Toma de muestras y laboratorio · Calle Sucre N.º 210',
+    latitude: -17.784,
+    longitude: -63.1815,
+    locationUrl: 'https://www.openstreetmap.org/?mlat=-17.784&mlon=-63.1815#map=17/-17.784/-63.1815',
+  },
   // Farmacia Vida: las mismas tres sedes que ofrece la bandeja del mostrador
   // («Sede») en `pharmacy.handlers`. Antes «Sucursales» decía «Todavía no
   // cargaste sucursales» mientras la bandeja ya repartía pedidos entre tres.

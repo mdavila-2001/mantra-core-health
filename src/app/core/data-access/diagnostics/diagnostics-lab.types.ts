@@ -224,6 +224,13 @@ export interface LabInboxItem {
   readonly priorityConceptId: string | null;
   readonly statusConceptId: string;
   readonly requesterProfileId: string | null;
+  /**
+   * Quién pidió la orden, en palabras («Nombre · Especialidad»). 4.2: «el
+   * laboratorio tendrá la orden médica, donde verá el requerimiento y qué
+   * médico realizó la solicitud». El DTO real todavía no lo publica
+   * (P-LAB-SOLICITANTE): opcional, y sin él la pantalla no lo dice.
+   */
+  readonly requesterDisplayName?: string | null;
   /** La organización que emitió la orden. */
   readonly requestingTenantId: string;
   readonly requestingTenantName: string | null;

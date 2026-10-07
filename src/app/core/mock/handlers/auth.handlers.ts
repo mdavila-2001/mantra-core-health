@@ -13,6 +13,7 @@ import {
   resolverCuentasDePacientes,
   resolverCuentasRegistradas,
   TENANT_FARMACIA,
+  TENANT_LABORATORIO,
   TENANT_NAMES,
   TENANT_PLATAFORMA,
   usuarioDeRefreshToken,
@@ -126,28 +127,41 @@ function cuentaDe(p: PacienteSimulado): MockUser {
   };
 }
 
-/* ---- las farmacias que se registran durante el recorrido -------------------
+/* ---- las organizaciones que se registran durante el recorrido -------------
 
    Antes el alta respondía «Tu cuenta está lista» y el login rechazaba ese
    mismo correo: nada se guardaba. Ahora la cuenta queda (en la pestaña, como
    el resto de la maqueta) y entra con el correo del representante legal.
+   Vale para la farmacia (3.1) y el laboratorio (4.1).
 
-   Límite del doble, a propósito: la cuenta entra a la farmacia de
-   demostración —el tenant de Farmacia Vida, con su catálogo, sus sedes y su
-   bandeja sembrados— rotulada con la razón social que se registró. Una
-   farmacia vacía de verdad exigiría un tenant nuevo en todo el simulador. */
+   Límite del doble, a propósito: la cuenta entra a la organización de
+   demostración de su tipo —Farmacia Vida o Laboratorio Central, con su
+   catálogo, sus sedes y su bandeja sembrados— rotulada con la razón social
+   que se registró. Una organización vacía de verdad exigiría un tenant nuevo
+   en todo el simulador. */
 
-interface CuentaDeFarmaciaRegistrada {
+interface CuentaRegistrada {
   readonly id: string;
   readonly email: string;
   readonly razonSocial: string;
+  /** El tenant de demostración al que entra. Ausente en las guardadas antes: farmacia. */
+  readonly tenantId?: string;
 }
 
-const cuentasDeFarmacia = new Coleccion<CuentaDeFarmaciaRegistrada>([]).persistirEn(
+/** A qué organización de demostración entra cada tipo de alta. */
+const TENANT_DE_DEMOSTRACION: Readonly<Record<string, string>> = {
+  PHARMACY: TENANT_FARMACIA,
+  // Sólo el alta de laboratorio sale a la red con este tipo (la de
+  // imagenología todavía no envía nada): es el Laboratorio Central.
+  DIAGNOSTIC_CENTER: TENANT_LABORATORIO,
+};
+
+const cuentasRegistradas = new Coleccion<CuentaRegistrada>([]).persistirEn(
   'mock.auth.cuentas-de-farmacia',
 );
 
-function cuentaDeFarmacia(c: CuentaDeFarmaciaRegistrada): MockUser {
+function cuentaRegistrada(c: CuentaRegistrada): MockUser {
+  const tenant = c.tenantId ?? TENANT_FARMACIA;
   return {
     key: `alta-${c.id}`,
     id: c.id,
@@ -155,15 +169,15 @@ function cuentaDeFarmacia(c: CuentaDeFarmaciaRegistrada): MockUser {
     nationalId: '',
     displayName: c.razonSocial,
     roles: ['USER'],
-    tenants: [TENANT_FARMACIA],
-    tenantNames: { ...TENANT_NAMES, [TENANT_FARMACIA]: c.razonSocial },
+    tenants: [tenant],
+    tenantNames: { ...TENANT_NAMES, [tenant]: c.razonSocial },
     personId: uuid(`person-${c.id}`),
     accountKind: 'ORGANIZATION',
   };
 }
 
 resolverCuentasRegistradas(({ identificador, id, key }) => {
-  const c = cuentasDeFarmacia
+  const c = cuentasRegistradas
     .todos()
     .find(
       (cuenta) =>
@@ -171,7 +185,7 @@ resolverCuentasRegistradas(({ identificador, id, key }) => {
         (id !== undefined && cuenta.id === id) ||
         (key !== undefined && `alta-${cuenta.id}` === key),
     );
-  return c === undefined ? undefined : cuentaDeFarmacia(c);
+  return c === undefined ? undefined : cuentaRegistrada(c);
 });
 
 resolverCuentasDePacientes(({ identificador, id, key }) => {
@@ -303,6 +317,8 @@ export function registrarAuth(router: MockRouter): void {
             addressLines?: readonly string[];
             latitude?: number;
             longitude?: number;
+            description?: string;
+            locationUrl?: string;
           }[];
         };
         // Representante legal y gerencias (subtarea 1.4). El mock NO prueba
@@ -338,7 +354,7 @@ export function registrarAuth(router: MockRouter): void {
     if (
       correoDelOwner !== undefined &&
       (MOCK_USERS.some((u) => u.email === correoDelOwner) ||
-        cuentasDeFarmacia.todos().some((c) => c.email === correoDelOwner))
+        cuentasRegistradas.todos().some((c) => c.email === correoDelOwner))
     ) {
       return conflict('Ya existe una cuenta con ese correo', { email: correoDelOwner });
     }
@@ -537,15 +553,24 @@ export function registrarAuth(router: MockRouter): void {
         : (legalRepresentative === undefined ? 0 : 1) + (executives === undefined ? 0 : 3);
 
     const ownerUserId = nuevoId('owner');
-    if (datos.organization?.tenantType === 'PHARMACY' && datos.owner?.email !== undefined) {
-      cuentasDeFarmacia.agregar({
+    const tenantDeDemostracion = TENANT_DE_DEMOSTRACION[datos.organization?.tenantType ?? ''];
+    if (tenantDeDemostracion !== undefined && datos.owner?.email !== undefined) {
+      cuentasRegistradas.agregar({
         id: ownerUserId,
         email: datos.owner.email.trim().toLocaleLowerCase('es'),
-        razonSocial: datos.organization.legalName?.trim() || 'Mi farmacia',
+        razonSocial: datos.organization?.legalName?.trim() || TENANT_NAMES[tenantDeDemostracion] || 'Mi organización',
+        tenantId: tenantDeDemostracion,
       });
+      const declaradas =
+        datos.organization?.tenantType === 'PHARMACY'
+          ? (pharmacy?.branches ?? [])
+          : (diagnosticUnit?.branches ?? []).map((b) => ({
+              ...b,
+              ...(b.description === undefined && b.addressLines?.length ? { description: b.addressLines.join(', ') } : {}),
+            }));
       sumarSucursalesDelAlta(
-        TENANT_FARMACIA,
-        (pharmacy?.branches ?? []).flatMap((b) => (b.name ? [{ ...b, name: b.name }] : [])),
+        tenantDeDemostracion,
+        declaradas.flatMap((b) => (b.name ? [{ ...b, name: b.name }] : [])),
       );
     }
 
