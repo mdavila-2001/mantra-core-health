@@ -1,0 +1,34 @@
+[
+  {
+    "nombre": "mi-perfil",
+    "segundo": 0.4
+  },
+  {
+    "nombre": "mis-productos",
+    "segundo": 9.3
+  },
+  {
+    "nombre": "solicitudes-recibidas",
+    "segundo": 42.25
+  },
+  {
+    "nombre": "aprobar",
+    "segundo": 47.11
+  },
+  {
+    "nombre": "rechazar",
+    "segundo": 73.31
+  },
+  {
+    "nombre": "siniestralidad-por-persona",
+    "segundo": 106.84
+  },
+  {
+    "nombre": "directorio",
+    "segundo": 115.88
+  },
+  {
+    "nombre": "fin",
+    "segundo": 126.33
+  }
+]

@@ -1,8 +1,9 @@
-import { Component, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 
 import { CartStore } from '../../../../core/data-access/pharmacy-cart/cart.store';
+import { CART_STORAGE } from '../../../../core/data-access/pharmacy-cart/cart.storage';
 import { DialogService } from '../../../../shared/components/molecules/dialog/dialog-service';
 import { ProductResults } from './product-results';
 import type { ProductHit } from './pharmacy-search.types';
@@ -34,6 +35,7 @@ function fila(cambios: Partial<ProductHit> = {}): ProductHit {
  */
 @Component({
   selector: 'app-host',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [ProductResults],
   template: `<app-product-results [items]="items()" [sinOrigen]="sinOrigen()" />`,
 })
@@ -50,11 +52,22 @@ describe('ProductResults', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [Host],
-      providers: [provideRouter([])],
+      providers: [
+        provideRouter([]),
+        // Cada prueba empieza sin un carrito persistido por otro spec. El
+        // almacenamiento real se cubre en CartStore; aquí se prueba la fila.
+        {
+          provide: CART_STORAGE,
+          useValue: { read: () => null, write: () => undefined, clear: () => undefined },
+        },
+      ],
     });
     fixture = TestBed.createComponent(Host);
     host = fixture.componentInstance;
     cart = TestBed.inject(CartStore);
+    // Ejecuta el efecto inicial de carga del store antes de que cada prueba
+    // escriba el primer carrito.
+    fixture.detectChanges();
   });
 
   function raiz(): HTMLElement {

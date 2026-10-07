@@ -102,7 +102,7 @@
 
   @if (data()?.possiblyTruncated) {
     <p class="glosario-red__aviso" role="status">
-      El mapa llegó al límite de nodos de esta lectura. Acota el catálogo antes de explorar más relaciones.
+      El mapa alcanzó el límite de {{ data()?.limit }} nodos. Las relaciones con términos fuera de esta lectura no aparecen.
     </p>
   }
 </main>

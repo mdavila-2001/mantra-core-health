@@ -3,6 +3,7 @@ import { join } from 'node:path';
 
 import { HttpRequest } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
+import { vi } from 'vitest';
 
 import { mockBackendInterceptor } from './mock-backend.interceptor';
 import { buscarUsuario, emitirAccessToken } from './mock-session';
@@ -11,8 +12,8 @@ import { buscarUsuario, emitirAccessToken } from './mock-session';
  * H2.S1.M3 (2026-09-22) — los tres niveles del contrato de `latencia()`:
  * prefijo conocido (valor de la tabla), desconocido (valor por omisión) y
  * subida (600, sin cambios). H2.S1.M2 confirma que dos corridas de la misma
- * ruta tardan lo mismo, dentro del margen de jitter real de un `timer()` —ya
- * no hay `Math.random` que pueda hacerlas divergir hasta 179 ms como antes.
+ * ruta usan el mismo tiempo simulado, con el reloj controlado para no medir
+ * jitter del event loop.
  */
 describe('latencia del interceptor — tabla por prefijo, sin azar', () => {
   const siguiente = () => {
@@ -30,7 +31,7 @@ describe('latencia del interceptor — tabla por prefijo, sin azar', () => {
     });
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await firstValueFrom(mockBackendInterceptor(request, siguiente as any));
-  });
+  }, 30_000);
 
   async function medir(method: 'GET' | 'POST', path: string): Promise<number> {
     const token = emitirAccessToken(buscarUsuario('paciente')!);
@@ -67,19 +68,32 @@ describe('latencia del interceptor — tabla por prefijo, sin azar', () => {
     expect(ms).toBeLessThan(650);
   }, 2000);
 
-  it('dos corridas de la misma ruta tardan lo mismo (sin Math.random)', async () => {
-    const a = await medir('GET', '/scheduling/slots');
-    const b = await medir('GET', '/scheduling/slots');
-    // El azar viejo (120 + random*180) podía diferir hasta 179ms entre dos
-    // corridas cualquiera; con la tabla fija sólo queda el jitter real del
-    // event loop, muy por debajo de eso.
-    expect(Math.abs(a - b)).toBeLessThan(30);
+  it('dos corridas de la misma ruta cumplen la latencia fija (sin Math.random)', async () => {
+    vi.useFakeTimers();
+    try {
+      const primera = medir('GET', '/scheduling/slots');
+      await vi.advanceTimersByTimeAsync(40);
+      expect(await primera).toBe(40);
+
+      const segunda = medir('GET', '/scheduling/slots');
+      await vi.advanceTimersByTimeAsync(40);
+      expect(await segunda).toBe(40);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('no queda ningún Math.random en el archivo (H2.S1.M1)', () => {
     // Duplica el comando del DoD (`git grep -c Math.random`) como aserción,
     // para que un regreso al azar rompa la suite y no sólo el grep manual.
-    const fuente = readFileSync(join(__dirname, 'mock-backend.interceptor.ts'), 'utf-8');
+    // Angular bundles specs into `.angular/cache`; `__dirname` then points at
+    // the generated bundle directory instead of this source directory. The
+    // test runner's working directory is the workspace root in both normal
+    // and coverage runs.
+    const fuente = readFileSync(
+      join(process.cwd(), 'src/app/core/mock/mock-backend.interceptor.ts'),
+      'utf-8',
+    );
     expect(fuente).not.toContain('Math.random');
   });
 });

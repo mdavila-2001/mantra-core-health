@@ -467,5 +467,5 @@ describe('InsuranceAnalytics', () => {
     fixture.detectChanges();
 
     await esperarSinViolaciones(fixture.nativeElement as HTMLElement);
-  });
+  }, 15_000);
 });

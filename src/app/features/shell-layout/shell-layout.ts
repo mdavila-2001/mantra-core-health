@@ -5,6 +5,7 @@ import {
   computed,
   DOCUMENT,
   effect,
+  HostListener,
   inject,
   signal,
   untracked,
@@ -145,6 +146,31 @@ export class ShellLayout {
    */
   protected readonly anuncio = signal('');
 
+  /** En móvil, agrupa destinos secundarios del encabezado sin perderlos. */
+  protected readonly accesosRapidosAbiertos = signal(false);
+
+  protected alternarAccesosRapidos(): void {
+    this.accesosRapidosAbiertos.update((abiertos) => !abiertos);
+  }
+
+  @HostListener('document:click', ['$event'])
+  protected cerrarAccesosRapidosAlTocarFuera(evento: MouseEvent): void {
+    const anclaje = this.document.querySelector<HTMLElement>('.app-header__rapidos');
+    if (this.accesosRapidosAbiertos() && anclaje && !anclaje.contains(evento.target as Node)) {
+      this.accesosRapidosAbiertos.set(false);
+    }
+  }
+
+  protected cerrarAccesosRapidos(evento?: Event): void {
+    if (!this.accesosRapidosAbiertos()) return;
+    this.accesosRapidosAbiertos.set(false);
+    if (evento) {
+      evento.preventDefault();
+      evento.stopPropagation();
+      this.document.querySelector<HTMLElement>('[data-testid="header-mas"]')?.focus();
+    }
+  }
+
   /** La URL de la pantalla, sin parámetros de consulta ni fragmento. */
   private readonly urlActual = signal('');
 
@@ -226,6 +252,7 @@ export class ShellLayout {
       )
       .subscribe(() => {
         this.urlActual.set(this.rutaLimpia());
+        this.accesosRapidosAbiertos.set(false);
         this.anuncio.set(
           `${this.navigation.currentSection()?.label ?? 'Pantalla'} cargada`,
         );

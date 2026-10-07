@@ -336,6 +336,20 @@
   color: var(--text-secondary);
 }
 
+.termino__fuentes-editoriales {
+  display: grid;
+  gap: var(--sp-3);
+  margin: 0;
+  padding-inline-start: var(--sp-5);
+  color: var(--text-secondary);
+}
+
+.termino__fuente-derechos {
+  margin: var(--sp-1) 0 0;
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+}
+
 .termino__idioma {
   color: var(--text-muted);
   font-size: var(--fs-caption);

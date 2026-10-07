@@ -372,10 +372,30 @@
               @if (origen.licencia; as licencia) {
                 <p class="termino__medicamento-fuente">Condición de uso: {{ licencia }}</p>
               }
-            } @else {
+            } @else if (referenciasEditoriales().length === 0) {
               <p class="termino__definicion termino__definicion--ausente">
                 Este término no declara su fuente.
               </p>
+            }
+
+            @if (referenciasEditoriales().length > 0) {
+              <h2 class="termino__subtitulo">Fuentes editoriales</h2>
+              <ul class="termino__fuentes-editoriales">
+                @for (referencia of referenciasEditoriales(); track referencia.source + referencia.recordId + referencia.language) {
+                  <li>
+                    <a [href]="referencia.url" target="_blank" rel="noopener noreferrer">
+                      {{ referencia.source }} · {{ referencia.recordId }}
+                    </a>
+                    <span class="termino__idioma">
+                      {{ referencia.language === 'es' ? 'Español' : 'Inglés' }} · versión {{ referencia.version }} ·
+                      {{ rolDeFuente(referencia.role) }}
+                    </span>
+                    <p class="termino__fuente-derechos">
+                      {{ referencia.attribution }} {{ referencia.rights }}
+                    </p>
+                  </li>
+                }
+              </ul>
             }
 
             <!-- El código se muestra sólo cuando sirve afuera: `I10` identifica

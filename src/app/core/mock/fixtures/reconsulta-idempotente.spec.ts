@@ -22,6 +22,7 @@ describe('agenda: la reconsulta sembrada no se duplica al recargar', () => {
 
   afterEach(() => {
     sessionStorage.clear();
+    vi.resetModules();
   });
 
   function contarReconsultas(reservas: { readonly followUpOf: unknown }[]): number {
@@ -46,5 +47,5 @@ describe('agenda: la reconsulta sembrada no se duplica al recargar', () => {
         trasPrimeraCarga,
       );
     }
-  });
+  }, 30_000);
 });

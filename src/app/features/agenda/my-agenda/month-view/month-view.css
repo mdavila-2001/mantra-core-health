@@ -69,6 +69,7 @@
 }
 
 .mes__dia {
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -126,20 +127,66 @@
 }
 
 .mes__cuenta {
+  inline-size: 100%;
+  min-inline-size: 0;
   font-size: var(--fs-caption);
   font-variant-numeric: tabular-nums;
   line-height: 1.2;
   text-align: center;
 }
 
+.mes__cuenta-corta {
+  display: none;
+}
+
+/* Siete columnas dejan poco ancho para una frase por cupo en el teléfono.
+   El botón conserva el día y el texto completo en su nombre accesible; la
+   etiqueta visible se acorta para que nunca invada la celda vecina. */
+@media (max-width: 39.999rem) {
+  .mes__dia {
+    gap: 1px;
+    padding: 2px;
+  }
+
+  .mes__cuenta {
+    font-size: 0.625rem;
+  }
+
+  .mes__cuenta-larga {
+    display: none;
+  }
+
+  .mes__cuenta-corta {
+    display: inline;
+  }
+
+}
+
 .mes__motivo {
+  max-inline-size: 100%;
+  min-inline-size: 0;
   font-size: var(--fs-caption);
   line-height: 1.1;
   text-align: center;
   overflow: hidden;
+  overflow-wrap: anywhere;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
+}
+
+.mes__motivo-corto {
+  display: none;
+}
+
+@media (max-width: 39.999rem) {
+  .mes__motivo-largo {
+    display: none;
+  }
+
+  .mes__motivo-corto {
+    display: inline;
+  }
 }
 
 /* ---- los cinco estados ------------------------------------------------------ */
