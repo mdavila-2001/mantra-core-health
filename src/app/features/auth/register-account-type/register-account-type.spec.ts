@@ -1,5 +1,5 @@
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { ActivatedRoute, provideRouter } from '@angular/router';
 import { By } from '@angular/platform-browser';
 
 import { RegisterAccountType } from './register-account-type';
@@ -29,7 +29,7 @@ describe('RegisterAccountType', () => {
       .map((el) => el.nativeElement as HTMLAnchorElement);
   }
 
-  it('ofrece las seis cuentas que tienen pantalla de alta, y ninguna más', () => {
+  it('ofrece las dos cuentas de persona, y ninguna organización', () => {
     const titulos = tarjetas().map((card) =>
       card.querySelector('.tipos__card-title')!.textContent!.trim(),
     );
@@ -38,30 +38,14 @@ describe('RegisterAccountType', () => {
     // ya eligió la suya.
     // «Médico» y no «Doctor» (F2 del plan de UX del 22/08/2026): en toda la
     // superficie que ve un paciente o un profesional se dice «médico».
-    // «Farmacia» es la sexta, agregada con `RegisterPharmacy` (carril A,
-    // 2026-09-29): es la primera cuenta nueva desde imagenología que sí sale
-    // a la red.
-    expect(titulos).toEqual([
-      'Paciente',
-      'Médico',
-      'Aseguradora',
-      'Laboratorio',
-      'Imagenología',
-      'Farmacia',
-    ]);
+    // Las organizaciones viven en «Registrá tu organización» del acceso.
+    expect(titulos).toEqual(['Paciente', 'Médico']);
   });
 
   it('cada tarjeta lleva a su alta', () => {
     const destinos = tarjetas().map((card) => card.getAttribute('href'));
 
-    expect(destinos).toEqual([
-      '/auth/register/patient',
-      '/auth/register/practitioner',
-      '/auth/register/organization',
-      '/auth/register/laboratory',
-      '/auth/register/imaging-center',
-      '/auth/register/pharmacy',
-    ]);
+    expect(destinos).toEqual(['/auth/register/patient', '/auth/register/practitioner']);
   });
 
   it('son enlaces, no botones', () => {
@@ -75,22 +59,65 @@ describe('RegisterAccountType', () => {
   it('la rejilla es una lista: el lector anuncia cuántas opciones hay antes de leerlas', () => {
     const items = fixture.debugElement.queryAll(By.css('.tipos__grid > li'));
 
-    expect(items).toHaveLength(6);
-  });
-
-  it('dice «Aseguradora», que es lo que el alta crea de verdad', () => {
-    const aseguradora = fixture.debugElement.query(By.css('[data-testid="tipo-aseguradora"]'))
-      .nativeElement as HTMLElement;
-
-    // `register-organization` crea un tenant PAYER y sólo ése: llamarla
-    // «Organización» prometería clínicas y farmacias que todavía no entran.
-    expect(aseguradora.textContent).toContain('Aseguradora');
-    expect(aseguradora.textContent).not.toContain('Organización');
+    expect(items).toHaveLength(2);
   });
 
   it('deja volver a iniciar sesión', () => {
     expect(
       fixture.debugElement.query(By.css('[data-testid="tipos-ir-login"]')),
     ).not.toBeNull();
+  });
+});
+
+describe('RegisterAccountType · organizaciones', () => {
+  let fixture: ComponentFixture<RegisterAccountType>;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [RegisterAccountType],
+      providers: [
+        provideRouter([]),
+        {
+          provide: ActivatedRoute,
+          useValue: { snapshot: { data: { audience: 'organizations' } } },
+        },
+      ],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(RegisterAccountType);
+    await fixture.whenStable();
+  });
+
+  function tarjetas(): HTMLAnchorElement[] {
+    return fixture.debugElement
+      .queryAll(By.css('.tipos__card'))
+      .map((el) => el.nativeElement as HTMLAnchorElement);
+  }
+
+  it('ofrece las cuatro organizaciones que tienen alta, y ninguna cuenta de persona', () => {
+    const titulos = tarjetas().map((card) =>
+      card.querySelector('.tipos__card-title')!.textContent!.trim(),
+    );
+
+    // `register-organization` crea un tenant PAYER y sólo ése: por eso la
+    // tarjeta dice «Aseguradora» y no «Organización».
+    expect(titulos).toEqual(['Aseguradora', 'Laboratorio', 'Imagenología', 'Farmacia']);
+  });
+
+  it('cada tarjeta lleva a su alta', () => {
+    const destinos = tarjetas().map((card) => card.getAttribute('href'));
+
+    expect(destinos).toEqual([
+      '/auth/register/organization',
+      '/auth/register/laboratory',
+      '/auth/register/imaging-center',
+      '/auth/register/pharmacy',
+    ]);
+  });
+
+  it('titula la pantalla como el alta de una organización', () => {
+    const titulo = fixture.debugElement.query(By.css('.tipos__title')).nativeElement as HTMLElement;
+
+    expect(titulo.textContent).toContain('Registrá tu organización');
   });
 });

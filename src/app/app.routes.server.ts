@@ -37,6 +37,10 @@ export const serverRoutes: ServerRoute[] = [
     renderMode: RenderMode.Prerender,
   },
   {
+    path: 'auth/register/organization-type',
+    renderMode: RenderMode.Prerender,
+  },
+  {
     path: 'auth/register/patient',
     renderMode: RenderMode.Prerender,
   },

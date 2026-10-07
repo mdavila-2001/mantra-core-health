@@ -1,21 +1,21 @@
 <app-auth-split
   scene="stage"
-  claim="Tu salud, en un solo lugar"
-  tagline="Creá tu cuenta y empezá a usar AloVida en un par de minutos."
+  [claim]="catalogo.claim"
+  [tagline]="catalogo.tagline"
   contentWidth="wide"
   [plainSurface]="true"
 >
   <div class="tipos">
     <div class="tipos__header">
-      <h1 class="tipos__title">Crear cuenta</h1>
-      <p class="tipos__subtitle">¿Qué tipo de cuenta necesitás?</p>
+      <h1 class="tipos__title">{{ catalogo.titulo }}</h1>
+      <p class="tipos__subtitle">{{ catalogo.subtitulo }}</p>
     </div>
 
-    <!-- Una lista, y no un montón de enlaces sueltos: son tres opciones de lo
-         mismo, y el lector de pantalla anuncia «lista de 3 elementos» antes de
+    <!-- Una lista, y no un montón de enlaces sueltos: son opciones de lo
+         mismo, y el lector de pantalla anuncia «lista de N elementos» antes de
          leerlas — que es justo el dato que hace falta para decidir. -->
     <ul class="tipos__grid">
-      @for (tipo of tipos; track tipo.ruta) {
+      @for (tipo of catalogo.tipos; track tipo.ruta) {
         <li class="tipos__item">
           <a class="tipos__card" [routerLink]="tipo.ruta" [attr.data-testid]="tipo.testId">
             <span class="tipos__icon" aria-hidden="true">

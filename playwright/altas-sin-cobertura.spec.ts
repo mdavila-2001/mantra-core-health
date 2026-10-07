@@ -62,6 +62,32 @@ async function subir(page: Page, testId: string, nombre: string): Promise<void> 
   await destino.first().setInputFiles(pdfDePrueba(nombre));
 }
 
+test.describe('dónde se elige el tipo de alta', () => {
+  test('«Crear cuenta» ofrece sólo paciente y médico', async ({ page }) => {
+    await page.goto('/auth/register', { waitUntil: 'domcontentloaded' });
+    await expect(page.getByTestId('tipo-paciente')).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByTestId('tipo-profesional')).toBeVisible();
+    for (const id of ['tipo-aseguradora', 'tipo-laboratorio', 'tipo-imagenologia', 'tipo-farmacia']) {
+      await expect(page.getByTestId(id)).toHaveCount(0);
+    }
+  });
+
+  test('«Registrá tu organización» del acceso lleva a las cuatro altas de organización', async ({ page }) => {
+    await page.goto('/auth', { waitUntil: 'domcontentloaded' });
+    await page.getByTestId('login-registro-organizacion').click();
+    await expect(page).toHaveURL(/\/auth\/register\/organization-type$/);
+    for (const [id, ruta] of [
+      ['tipo-aseguradora', '/auth/register/organization'],
+      ['tipo-laboratorio', '/auth/register/laboratory'],
+      ['tipo-imagenologia', '/auth/register/imaging-center'],
+      ['tipo-farmacia', '/auth/register/pharmacy'],
+    ] as const) {
+      await expect(page.getByTestId(id)).toHaveAttribute('href', ruta);
+    }
+    await expect(page.getByTestId('tipo-paciente')).toHaveCount(0);
+  });
+});
+
 test.describe('altas públicas sin cobertura previa: paciente, laboratorio, imagenología', () => {
   /**
    * Regresión del 03/10/2026: con el campo vacío, la plantilla `DD/MM/AAAA`
