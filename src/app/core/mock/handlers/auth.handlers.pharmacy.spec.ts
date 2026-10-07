@@ -167,6 +167,35 @@ describe('alta pública de farmacia en el simulador', () => {
     expect(otra.status).toBe(409);
   });
 
+  it('correcto — «farmacia@su-dominio» no choca con la cuenta demo y entra a la suya', () => {
+    const correo = 'farmacia@sanmartin.test';
+    expect(
+      call('POST', '/iam/auth/register-organization', {
+        ...CUERPO_MINIMO,
+        owner: { ...CUERPO_MINIMO.owner, email: correo },
+      }).status,
+    ).toBe(200);
+
+    const sesion = call('POST', '/iam/auth/login', { email: correo, password: 'secreto12' });
+    const usuario = usuarioDeAccessToken((sesion.body as { accessToken: string }).accessToken);
+    expect(usuario?.email).toBe(correo);
+  });
+
+  it('correcto — la sesión de la farmacia registrada se renueva con su refresh token', () => {
+    const correo = 'renueva@farmacia-nueva.test';
+    call('POST', '/iam/auth/register-organization', {
+      ...CUERPO_MINIMO,
+      owner: { ...CUERPO_MINIMO.owner, email: correo },
+    });
+    const sesion = call('POST', '/iam/auth/login', { email: correo, password: 'secreto12' });
+    const renovada = call('POST', '/iam/auth/token/refresh', {
+      refreshToken: (sesion.body as { refreshToken: string }).refreshToken,
+    });
+
+    expect(renovada.status).toBe(200);
+    expect(usuarioDeAccessToken((renovada.body as { accessToken: string }).accessToken)?.email).toBe(correo);
+  });
+
   it('correcto — las sucursales del alta quedan en «Sucursales»', () => {
     const cuerpo = {
       ...CUERPO_MINIMO,

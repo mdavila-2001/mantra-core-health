@@ -147,8 +147,9 @@ export class InboxOrder {
   }): string {
     const moneda = this.moneda(linea.moneda);
     if (linea.precio === null) return '';
-    if (linea.cantidad <= 1) return `${linea.precio} ${moneda}`;
-    const subtotal = (Number(linea.precio) * linea.cantidad).toFixed(2);
+    const unitario = Number(linea.precio);
+    if (linea.cantidad <= 1 || !Number.isFinite(unitario)) return `${linea.precio} ${moneda}`;
+    const subtotal = (unitario * linea.cantidad).toFixed(2);
     return `${linea.precio} ${moneda} c/u · ${subtotal} ${moneda}`;
   }
   private readonly ordersClient = inject(PharmacyOrdersClient);

@@ -142,6 +142,19 @@ describe('InboxOrder with the real pharmacy-orders contract', () => {
     expect(element('[data-testid="mostrador-decision-0"]')).not.toBeNull();
   });
 
+  it('con más de una unidad, el renglón dice el precio por unidad y su subtotal', async () => {
+    const base = pharmacyOrderDtoFixture();
+    await mount(
+      pharmacyOrderDtoFixture({
+        // Ya en revisión: abrirlo no pasa por `review`, que respondería otro pedido.
+        status: { code: 'PINV_ORDER_EN_REVISION', display: 'En revisión' },
+        totalAmount: '136.00',
+        lines: [{ ...base.lines[0]!, requestedQuantity: 2, reservedQuantity: 2 }],
+      }),
+    );
+    expect(text()).toContain('68.00 Bs c/u · 136.00 Bs');
+  });
+
   it('confirms unchanged lines and reloads the canonical API representation', async () => {
     const review = pharmacyOrderDtoFixture({
       status: { code: 'PINV_ORDER_EN_REVISION', display: 'En revisión' },

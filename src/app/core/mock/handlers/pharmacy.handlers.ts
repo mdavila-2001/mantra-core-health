@@ -717,12 +717,13 @@ for (const suffix of ['partial', 'denied', 'pending']) {
    similar a PEDIDOS YA». Con todo sembrado de antemano la alarma no suena
    nunca: la bandeja toma lo que ve al abrir como punto de partida y sólo avisa
    de lo que aparece después. Este pedido nace la primera vez que alguien mira
-   la casa matriz, con la hora de creación unos segundos en el futuro; el
-   listado esconde lo que todavía no fue creado, así que entra en el sondeo
-   siguiente y suena. Una sola vez por sesión: queda en la colección. */
+   la casa matriz de Farmacia Vida, con la hora de creación unos segundos en
+   el futuro —menos que el sondeo de la bandeja (20 s)—; el listado esconde lo
+   que todavía no fue creado, así que entra en el sondeo siguiente y suena.
+   Una sola vez por sesión: queda en la colección. */
 
 const ID_PEDIDO_ENTRANTE = uuid('pharmacy-order-entrante');
-const SEGUNDOS_HASTA_EL_PEDIDO_ENTRANTE = 25;
+const SEGUNDOS_HASTA_EL_PEDIDO_ENTRANTE = 15;
 
 function sembrarPedidoEntrante(): void {
   if (pedidos.get(ID_PEDIDO_ENTRANTE) !== undefined) return;
@@ -1482,13 +1483,16 @@ export function registrarFarmacia(router: MockRouter): void {
     return { items, count: items.length };
   });
 
-  router.get('/pharmacy/orders', ({ query }) => {
+  router.get('/pharmacy/orders', ({ query, headers, user }) => {
     const status = texto(query, 'status');
     const siteId = texto(query, 'siteId');
     const desde = texto(query, 'from');
     const hasta = texto(query, 'to');
     const tope = Number(texto(query, 'limit') ?? 100);
-    if (siteId === null || siteId === SEDE_CENTRAL_ID) sembrarPedidoEntrante();
+    // Sólo para quien mira Farmacia Vida: otra farmacia no tiene por qué
+    // oír la alarma de un pedido que no es suyo.
+    const tenant = headers.get('X-Tenant-Id') ?? user?.tenants[0] ?? null;
+    if (tenant === FARMACIAS[0]!.id && (siteId === null || siteId === SEDE_CENTRAL_ID)) sembrarPedidoEntrante();
     const items = pedidos
       .todos()
       .filter(yaLlego)

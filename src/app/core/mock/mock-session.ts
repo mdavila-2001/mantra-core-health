@@ -316,16 +316,15 @@ export function resolverCuentasRegistradas(resolver: ResolverDeCuentas): void {
 
 export function buscarUsuario(identificador: string): MockUser | undefined {
   const limpio = identificador.trim().toLocaleLowerCase('es');
+  // Primero lo exacto, en todas las fuentes; recién al final el atajo «la
+  // parte antes de la arroba es la clave» (`farmacia@…` → la cuenta demo).
+  // Al revés, `farmacia@sanmartin.bo`, registrada en el recorrido, entraba a
+  // la cuenta de demostración.
   return (
-    MOCK_USERS.find(
-      (u) =>
-        u.email === limpio ||
-        u.nationalId === limpio ||
-        u.key === limpio ||
-        u.key === limpio.replace(/@.*$/, ''),
-    ) ??
+    MOCK_USERS.find((u) => u.email === limpio || u.nationalId === limpio || u.key === limpio) ??
     cuentaDePaciente({ identificador: limpio }) ??
-    cuentaRegistrada({ identificador: limpio })
+    cuentaRegistrada({ identificador: limpio }) ??
+    MOCK_USERS.find((u) => u.key === limpio.replace(/@.*$/, ''))
   );
 }
 

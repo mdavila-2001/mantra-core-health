@@ -1,13 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  effect,
-  inject,
-  input,
-  output,
-  signal,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
 
 import { nextControlId } from '@shared/forms/form-control.context';
@@ -166,16 +157,19 @@ function formatCoordinate(valor: number): string {
 export class UbicacionPicker {
   private readonly documento = inject(DOCUMENT);
 
-  /** Si ya se sembró el punto guardado. Ver {@link inicial}. */
-  private sembrado = false;
-
   constructor() {
     // `effect` y no un valor inicial de la señal: el perfil llega por HTTP y el
     // componente ya está montado cuando aparece.
+    //
+    // Se vuelve a sembrar cuando el padre trae un punto distinto del que ya
+    // está —el alta de farmacia ubica una sucursal desde su enlace de Maps—.
+    // Lo que el propio picker confirmó vuelve igual por `inicial` y no mueve
+    // nada; un `null` (pin quitado) tampoco.
     effect(() => {
       const guardado = this.inicial();
-      if (this.sembrado || guardado === null) return;
-      this.sembrado = true;
+      if (guardado === null) return;
+      const actual = untracked(this.punto);
+      if (actual !== null && actual.lat === guardado.lat && actual.lng === guardado.lng) return;
       this.punto.set(guardado);
       // Confirmado de entrada: es un punto que la persona ya dio por bueno
       // alguna vez. Pedirle que lo vuelva a confirmar para no perderlo sería

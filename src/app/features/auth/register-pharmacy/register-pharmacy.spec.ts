@@ -184,6 +184,18 @@ describe('RegisterPharmacy', () => {
     req.flush(RESPUESTA_201);
   });
 
+  it('escrito tecla por tecla, el pin termina donde dice el enlace completo', () => {
+    completarObligatorio();
+    component.agregarSucursal();
+    const [sucursal] = component.sucursales();
+    const enlace = 'https://www.google.com/maps?q=-17.7480,-63.1750';
+    for (let i = 1; i <= enlace.length; i++) {
+      component.escribirUrlDeSucursal(sucursal!.id, enlace.slice(0, i));
+    }
+
+    expect(component.sucursales()[0]!.gps).toEqual({ lat: -17.748, lng: -63.175 });
+  });
+
   it('el enlace no pisa un punto que ya se marcó a mano', () => {
     completarObligatorio();
     component.agregarSucursal();

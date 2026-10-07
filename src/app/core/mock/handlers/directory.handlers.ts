@@ -285,8 +285,9 @@ export function sumarSucursalesDelAlta(
       .replace(/[^A-Z0-9]+/g, '-')
       .replace(/^-|-$/g, '');
     const usados = new Set(existentes.map((s) => s.code));
-    let code = base === '' ? 'SUC' : base;
-    for (let n = 2; usados.has(code); n++) code = `${base}-${n}`;
+    const raiz = base === '' ? 'SUC' : base;
+    let code = raiz;
+    for (let n = 2; usados.has(code); n++) code = `${raiz}-${n}`;
     sucursales.agregar({
       id: nuevoId('branch'),
       tenantId,
