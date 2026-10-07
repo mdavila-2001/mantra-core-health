@@ -30,7 +30,10 @@ import { FormField } from '../../../shared/components/molecules/form-field/form-
 import { telefonoCompleto } from '../../../shared/components/molecules/phone-input/phone-input';
 import { AuthSplit } from '../../../shared/components/organisms/auth-split/auth-split';
 import { BranchBulkImport } from '../../../shared/components/organisms/branch-bulk-import/branch-bulk-import';
-import type { BranchDraft } from '../../../shared/utils/branch-import/branch-import';
+import {
+  coordinatesFromMapUrl,
+  type BranchDraft,
+} from '../../../shared/utils/branch-import/branch-import';
 import { CampoPersonalizado } from '../../../shared/components/organisms/paginated-form/campo-personalizado';
 import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
 import {
@@ -671,8 +674,32 @@ export class RegisterPharmacy {
     this.actualizarSucursal(id, { descripcion: descripcion === null ? '' : String(descripcion) });
   }
 
+  /**
+   * Las sucursales cuyo pin salió del enlace y no de la mano: mientras sea
+   * así, corregir el enlace mueve el pin. En cuanto la persona confirma un
+   * punto en el mapa, el enlace deja de moverlo.
+   */
+  private readonly pinesDelEnlace = new Set<string>();
+
   escribirUrlDeSucursal(id: string, url: string | number | null): void {
     this.actualizarSucursal(id, { urlUbicacion: url === null ? '' : String(url).trim() });
+  }
+
+  /**
+   * Al salir del campo del enlace: si trae el punto escrito (Google Maps,
+   * OpenStreetMap) y la sucursal no tiene un pin puesto a mano, el pin sale
+   * de ahí, igual que en la carga en lote. Al salir y no en cada tecla: a
+   * medio escribir «…q=-17.748,-6» ya es un punto legible —en medio del
+   * Atlántico—, y aparecer el pin mientras se escribe le quitaba el foco al
+   * campo y se comía el resto del enlace.
+   */
+  ubicarSucursalPorEnlace(id: string): void {
+    const actual = this.sucursales().find((sucursal) => sucursal.id === id);
+    if (actual === undefined) return;
+    const punto = coordinatesFromMapUrl(actual.urlUbicacion);
+    if (punto === null || (actual.gps !== null && !this.pinesDelEnlace.has(id))) return;
+    this.pinesDelEnlace.add(id);
+    this.actualizarSucursal(id, { gps: { lat: punto.latitude, lng: punto.longitude } });
   }
 
   /* --- carga en lote ------------------------------------------------------ */
@@ -711,6 +738,8 @@ export class RegisterPharmacy {
   }
 
   fijarGpsDeSucursal(id: string, gps: Coordenadas | null): void {
+    // Un punto confirmado (o quitado) en el mapa manda sobre el enlace.
+    this.pinesDelEnlace.delete(id);
     this.actualizarSucursal(id, { gps });
   }
 

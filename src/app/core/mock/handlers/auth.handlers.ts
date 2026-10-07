@@ -1,6 +1,7 @@
 import { ESTADO, TIPO_SOCIETARIO } from '../fixtures/conceptos';
 import { pacientes, type PacienteSimulado } from '../fixtures/personas';
 import { guardarImagenDeDataUrl } from './files.handlers';
+import { sumarSucursalesDelAlta } from './directory.handlers';
 import { guardarActivosDeFirma } from './firma-y-sello.handlers';
 import { conflict, notFound, reply, unauthorized, type MockRouter } from '../mock-router';
 import {
@@ -10,12 +11,14 @@ import {
   expiracion,
   MOCK_USERS,
   resolverCuentasDePacientes,
+  resolverCuentasRegistradas,
+  TENANT_FARMACIA,
   TENANT_NAMES,
   TENANT_PLATAFORMA,
   usuarioDeRefreshToken,
   type MockUser,
 } from '../mock-session';
-import { ahora, bodyAsQuery, contiene, cuerpo, iso, nuevoId, paginar, texto, uuid } from '../mock-store';
+import { ahora, bodyAsQuery, Coleccion, contiene, cuerpo, iso, nuevoId, paginar, texto, uuid } from '../mock-store';
 
 /* ============================================================================
     IAM: sesión, altas y usuarios.
@@ -123,6 +126,54 @@ function cuentaDe(p: PacienteSimulado): MockUser {
   };
 }
 
+/* ---- las farmacias que se registran durante el recorrido -------------------
+
+   Antes el alta respondía «Tu cuenta está lista» y el login rechazaba ese
+   mismo correo: nada se guardaba. Ahora la cuenta queda (en la pestaña, como
+   el resto de la maqueta) y entra con el correo del representante legal.
+
+   Límite del doble, a propósito: la cuenta entra a la farmacia de
+   demostración —el tenant de Farmacia Vida, con su catálogo, sus sedes y su
+   bandeja sembrados— rotulada con la razón social que se registró. Una
+   farmacia vacía de verdad exigiría un tenant nuevo en todo el simulador. */
+
+interface CuentaDeFarmaciaRegistrada {
+  readonly id: string;
+  readonly email: string;
+  readonly razonSocial: string;
+}
+
+const cuentasDeFarmacia = new Coleccion<CuentaDeFarmaciaRegistrada>([]).persistirEn(
+  'mock.auth.cuentas-de-farmacia',
+);
+
+function cuentaDeFarmacia(c: CuentaDeFarmaciaRegistrada): MockUser {
+  return {
+    key: `alta-${c.id}`,
+    id: c.id,
+    email: c.email,
+    nationalId: '',
+    displayName: c.razonSocial,
+    roles: ['USER'],
+    tenants: [TENANT_FARMACIA],
+    tenantNames: { ...TENANT_NAMES, [TENANT_FARMACIA]: c.razonSocial },
+    personId: uuid(`person-${c.id}`),
+    accountKind: 'ORGANIZATION',
+  };
+}
+
+resolverCuentasRegistradas(({ identificador, id, key }) => {
+  const c = cuentasDeFarmacia
+    .todos()
+    .find(
+      (cuenta) =>
+        (identificador !== undefined && cuenta.email === identificador) ||
+        (id !== undefined && cuenta.id === id) ||
+        (key !== undefined && `alta-${cuenta.id}` === key),
+    );
+  return c === undefined ? undefined : cuentaDeFarmacia(c);
+});
+
 resolverCuentasDePacientes(({ identificador, id, key }) => {
   const p = pacientes
     .todos()
@@ -210,6 +261,7 @@ export function registrarAuth(router: MockRouter): void {
     const datos = cuerpo<{
       organization?: {
         code?: string;
+        legalName?: string;
         legalEntityType?: string;
         // `tenantType` (carril de farmacia, 2026-09-29): el mock aceptaba
         // cualquier valor en silencio porque no lo leía. Se valida contra
@@ -227,7 +279,13 @@ export function registrarAuth(router: MockRouter): void {
         pharmacy?: {
           latitude?: number;
           longitude?: number;
-          branches?: readonly { name?: string; latitude?: number; longitude?: number }[];
+          branches?: readonly {
+            name?: string;
+            description?: string;
+            latitude?: number;
+            longitude?: number;
+            locationUrl?: string;
+          }[];
         };
         // Bloque del centro de diagnóstico (carril A de la cuenta de
         // laboratorio, 2026-09-30): éste SÍ lo declara el DTO real
@@ -273,11 +331,16 @@ export function registrarAuth(router: MockRouter): void {
       };
       owner?: { email?: string };
     }>({ body });
+    // Por correo exacto, no con `buscarUsuario`: aquél acepta `farmacia@…`
+    // como atajo de la cuenta demo, y acá eso respondía «ya existe» a
+    // cualquier farmacia que se registrara con `farmacia@su-dominio`.
+    const correoDelOwner = datos.owner?.email?.trim().toLocaleLowerCase('es');
     if (
-      datos.owner?.email !== undefined &&
-      MOCK_USERS.some((u) => u.email === datos.owner?.email)
+      correoDelOwner !== undefined &&
+      (MOCK_USERS.some((u) => u.email === correoDelOwner) ||
+        cuentasDeFarmacia.todos().some((c) => c.email === correoDelOwner))
     ) {
-      return conflict('Ya existe una cuenta con ese correo', { email: datos.owner.email });
+      return conflict('Ya existe una cuenta con ese correo', { email: correoDelOwner });
     }
     const legalEntityType = datos.organization?.legalEntityType;
     // Mismo contrato que el `ValidationPipe` real: un código fuera del
@@ -473,10 +536,23 @@ export function registrarAuth(router: MockRouter): void {
         ? undefined
         : (legalRepresentative === undefined ? 0 : 1) + (executives === undefined ? 0 : 3);
 
+    const ownerUserId = nuevoId('owner');
+    if (datos.organization?.tenantType === 'PHARMACY' && datos.owner?.email !== undefined) {
+      cuentasDeFarmacia.agregar({
+        id: ownerUserId,
+        email: datos.owner.email.trim().toLocaleLowerCase('es'),
+        razonSocial: datos.organization.legalName?.trim() || 'Mi farmacia',
+      });
+      sumarSucursalesDelAlta(
+        TENANT_FARMACIA,
+        (pharmacy?.branches ?? []).flatMap((b) => (b.name ? [{ ...b, name: b.name }] : [])),
+      );
+    }
+
     return {
       tenantId: nuevoId('tenant-nuevo'),
       code: datos.organization?.code ?? 'ORG-NUEVA',
-      ownerUserId: nuevoId('owner'),
+      ownerUserId,
       status: 'PENDING_VERIFICATION',
       verificationStatus: 'PENDING',
       emailVerificationSent: true,

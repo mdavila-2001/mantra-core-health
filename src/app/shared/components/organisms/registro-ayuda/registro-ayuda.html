@@ -27,10 +27,9 @@
     <div class="ayuda__cuerpo">
       <h3 class="ayuda__titulo">Tus datos están a salvo</h3>
       <ul class="ayuda__lista">
-        <li>Todo lo que escribís viaja cifrado hasta nuestros servidores.</li>
-        <li>Tu información clínica la ve el profesional que te atiende, nadie más.</li>
-        <li>No vendemos tus datos ni los usamos para publicidad.</li>
-        <li>Podés corregirlos cuando quieras desde tu perfil.</li>
+        @for (promesa of promesas(); track promesa) {
+          <li>{{ promesa }}</li>
+        }
       </ul>
     </div>
   </article>

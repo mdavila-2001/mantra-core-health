@@ -76,13 +76,13 @@ describe('bandeja-status', () => {
     }
   });
 
-  it('el tablero tiene las seis colas, de lo que corre contra el reloj a lo cerrado', () => {
+  it('el tablero tiene las seis colas en el orden en que un pedido las recorre', () => {
     expect(GRUPOS_DE_BANDEJA).toEqual([
       'NUEVOS',
       'EN_REVISION',
       'ESPERANDO_PACIENTE',
-      'LISTOS',
       'EN_PREPARACION',
+      'LISTOS',
       'CERRADOS',
     ]);
     for (const grupo of GRUPOS_DE_BANDEJA) {

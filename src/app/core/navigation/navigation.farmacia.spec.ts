@@ -113,7 +113,7 @@ describe('Menú de la cuenta de farmacia', () => {
       'Importación masiva',
       'Inventario',
       'Precios',
-      'Solicitudes de retiro',
+      'Pedidos',
       'Promociones',
       'Sucursales',
     ]);

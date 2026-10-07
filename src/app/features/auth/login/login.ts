@@ -25,6 +25,8 @@ import { PointerScene } from '../../../shared/motion/pointer-scene.directive';
 
 /** A dónde se entra tras iniciar sesión con la organización ya resuelta. */
 const HOME_ROUTE = '/';
+/** El inicio de una cuenta de farmacia: el «Resumen» de su catálogo. */
+const PHARMACY_HOME_ROUTE = '/administration/pharmacy';
 
 /**
  * Dónde aterriza quien entra sin pertenecer a ninguna organización.
@@ -185,7 +187,17 @@ export class Login {
         ? GETTING_STARTED_ROUTE
         : MY_ORGANIZATIONS_ROUTE;
     }
-    return this.retornoPedido() ?? HOME_ROUTE;
+    return this.retornoPedido() ?? this.inicioDeLaCuenta();
+  }
+
+  /**
+   * Dónde empieza el día cada cuenta. La farmacia entraba al «Panel» general
+   * —«Pacientes y equipo», «Directorios»—, que no le dice nada de su
+   * mostrador; su inicio es el «Resumen» del catálogo, con la bandeja de
+   * pedidos a un clic en el menú.
+   */
+  private inicioDeLaCuenta(): string {
+    return this.auth.activeTenantType() === 'PHARMACY' ? PHARMACY_HOME_ROUTE : HOME_ROUTE;
   }
 
   /**

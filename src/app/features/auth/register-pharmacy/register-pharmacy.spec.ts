@@ -169,6 +169,53 @@ describe('RegisterPharmacy', () => {
     req.flush(RESPUESTA_201);
   });
 
+  it('pegar un enlace de mapa con el punto escrito ya ubica la sucursal', () => {
+    completarObligatorio();
+    component.agregarSucursal();
+    const [sucursal] = component.sucursales();
+    component.escribirNombreDeSucursal(sucursal!.id, 'Sucursal Norte');
+    component.escribirUrlDeSucursal(sucursal!.id, 'https://www.google.com/maps?q=-17.7480,-63.1750');
+    component.ubicarSucursalPorEnlace(sucursal!.id);
+    component.submit();
+
+    const req = http.expectOne(RUTA_ALTA);
+    expect((req.request.body as CuerpoDelAlta).organization.pharmacy?.branches).toEqual([
+      expect.objectContaining({ name: 'Sucursal Norte', latitude: -17.748, longitude: -63.175 }),
+    ]);
+    req.flush(RESPUESTA_201);
+  });
+
+  it('mientras se escribe el enlace no aparece ningún pin; al salir del campo, el del enlace completo', () => {
+    completarObligatorio();
+    component.agregarSucursal();
+    const [sucursal] = component.sucursales();
+    const enlace = 'https://www.google.com/maps?q=-17.7480,-63.1750';
+    for (let i = 1; i <= enlace.length; i++) {
+      component.escribirUrlDeSucursal(sucursal!.id, enlace.slice(0, i));
+    }
+    expect(component.sucursales()[0]!.gps).toBeNull();
+
+    component.ubicarSucursalPorEnlace(sucursal!.id);
+    expect(component.sucursales()[0]!.gps).toEqual({ lat: -17.748, lng: -63.175 });
+
+    // Corregir el enlace mueve el pin que vino de él.
+    component.escribirUrlDeSucursal(sucursal!.id, 'https://www.google.com/maps?q=-17.7000,-63.1000');
+    component.ubicarSucursalPorEnlace(sucursal!.id);
+    expect(component.sucursales()[0]!.gps).toEqual({ lat: -17.7, lng: -63.1 });
+  });
+
+  it('el enlace no pisa un punto que ya se marcó a mano', () => {
+    completarObligatorio();
+    component.agregarSucursal();
+    const [sucursal] = component.sucursales();
+    component.escribirNombreDeSucursal(sucursal!.id, 'Sucursal Norte');
+    component.fijarGpsDeSucursal(sucursal!.id, { lat: -17.7, lng: -63.1 });
+    component.escribirUrlDeSucursal(sucursal!.id, 'https://www.google.com/maps?q=-17.7480,-63.1750');
+    component.ubicarSucursalPorEnlace(sucursal!.id);
+
+    expect(component.sucursales()[0]!.gps).toEqual({ lat: -17.7, lng: -63.1 });
+  });
+
   it('una sucursal sin punto confirmado no viaja: incompleta se descarta, no se manda a medias', () => {
     completarObligatorio();
     component.agregarSucursal();

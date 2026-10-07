@@ -198,6 +198,7 @@
                         placeholder="https://maps.google.com/…"
                         [value]="sucursal.urlUbicacion"
                         (valueChange)="escribirUrlDeSucursal(sucursal.id, $event)"
+                        (blurred)="ubicarSucursalPorEnlace(sucursal.id)"
                       />
                     </app-form-field>
 
@@ -264,7 +265,7 @@
     </div>
 
     @if (!registered()) {
-      <app-registro-ayuda class="registro-conjunto__ayuda" [tarjetas]="ayudaVisible()" />
+      <app-registro-ayuda class="registro-conjunto__ayuda" [tarjetas]="ayudaVisible()" para="empresa" />
     }
   </div>
 </app-auth-split>
