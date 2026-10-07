@@ -169,6 +169,32 @@ describe('RegisterPharmacy', () => {
     req.flush(RESPUESTA_201);
   });
 
+  it('pegar un enlace de mapa con el punto escrito ya ubica la sucursal', () => {
+    completarObligatorio();
+    component.agregarSucursal();
+    const [sucursal] = component.sucursales();
+    component.escribirNombreDeSucursal(sucursal!.id, 'Sucursal Norte');
+    component.escribirUrlDeSucursal(sucursal!.id, 'https://www.google.com/maps?q=-17.7480,-63.1750');
+    component.submit();
+
+    const req = http.expectOne(RUTA_ALTA);
+    expect((req.request.body as CuerpoDelAlta).organization.pharmacy?.branches).toEqual([
+      expect.objectContaining({ name: 'Sucursal Norte', latitude: -17.748, longitude: -63.175 }),
+    ]);
+    req.flush(RESPUESTA_201);
+  });
+
+  it('el enlace no pisa un punto que ya se marcó a mano', () => {
+    completarObligatorio();
+    component.agregarSucursal();
+    const [sucursal] = component.sucursales();
+    component.escribirNombreDeSucursal(sucursal!.id, 'Sucursal Norte');
+    component.fijarGpsDeSucursal(sucursal!.id, { lat: -17.7, lng: -63.1 });
+    component.escribirUrlDeSucursal(sucursal!.id, 'https://www.google.com/maps?q=-17.7480,-63.1750');
+
+    expect(component.sucursales()[0]!.gps).toEqual({ lat: -17.7, lng: -63.1 });
+  });
+
   it('una sucursal sin punto confirmado no viaja: incompleta se descarta, no se manda a medias', () => {
     completarObligatorio();
     component.agregarSucursal();

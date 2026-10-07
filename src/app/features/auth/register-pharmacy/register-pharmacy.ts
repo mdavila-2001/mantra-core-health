@@ -30,7 +30,10 @@ import { FormField } from '../../../shared/components/molecules/form-field/form-
 import { telefonoCompleto } from '../../../shared/components/molecules/phone-input/phone-input';
 import { AuthSplit } from '../../../shared/components/organisms/auth-split/auth-split';
 import { BranchBulkImport } from '../../../shared/components/organisms/branch-bulk-import/branch-bulk-import';
-import type { BranchDraft } from '../../../shared/utils/branch-import/branch-import';
+import {
+  coordinatesFromMapUrl,
+  type BranchDraft,
+} from '../../../shared/utils/branch-import/branch-import';
 import { CampoPersonalizado } from '../../../shared/components/organisms/paginated-form/campo-personalizado';
 import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
 import {
@@ -671,8 +674,21 @@ export class RegisterPharmacy {
     this.actualizarSucursal(id, { descripcion: descripcion === null ? '' : String(descripcion) });
   }
 
+  /**
+   * El enlace de ubicación. Si trae el punto escrito (Google Maps,
+   * OpenStreetMap) y la sucursal todavía no tiene pin, el pin sale de ahí,
+   * igual que en la carga en lote: pegar el enlace ya es ubicarla.
+   */
   escribirUrlDeSucursal(id: string, url: string | number | null): void {
-    this.actualizarSucursal(id, { urlUbicacion: url === null ? '' : String(url).trim() });
+    const urlUbicacion = url === null ? '' : String(url).trim();
+    const actual = this.sucursales().find((sucursal) => sucursal.id === id);
+    const punto = coordinatesFromMapUrl(urlUbicacion);
+    this.actualizarSucursal(id, {
+      urlUbicacion,
+      ...(actual?.gps === null && punto !== null
+        ? { gps: { lat: punto.latitude, lng: punto.longitude } }
+        : {}),
+    });
   }
 
   /* --- carga en lote ------------------------------------------------------ */
