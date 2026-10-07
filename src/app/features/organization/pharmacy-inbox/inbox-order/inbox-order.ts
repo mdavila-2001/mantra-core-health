@@ -134,6 +134,23 @@ export class InboxOrder {
   protected moneda(code?: string | null): string {
     return displayCurrency(code);
   }
+
+  /**
+   * El importe de un renglón. El precio que llega es el unitario: con más de
+   * una unidad, «35.00 Bs» al lado de «Cantidad: 2» se leía como el subtotal
+   * y el total no cerraba a la vista. Se dice «c/u» y se suma el subtotal.
+   */
+  protected importeDeLinea(linea: {
+    readonly precio: string | null;
+    readonly cantidad: number;
+    readonly moneda: string | null;
+  }): string {
+    const moneda = this.moneda(linea.moneda);
+    if (linea.precio === null) return '';
+    if (linea.cantidad <= 1) return `${linea.precio} ${moneda}`;
+    const subtotal = (Number(linea.precio) * linea.cantidad).toFixed(2);
+    return `${linea.precio} ${moneda} c/u · ${subtotal} ${moneda}`;
+  }
   private readonly ordersClient = inject(PharmacyOrdersClient);
   private readonly pharmacyClient = inject(PharmacyClient);
   private readonly destroyRef = inject(DestroyRef);

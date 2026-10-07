@@ -27,7 +27,7 @@ const MENU = [
   ['/administration/pharmacy-categories', 'Categorías'],
   ['/administration/pharmacy-import', 'Importación masiva'],
   ['/administration/pharmacy-inventory', 'Inventario'],
-  ['/administration/pharmacy-orders', 'Solicitudes de retiro'],
+  ['/administration/pharmacy-orders', 'Pedidos'],
   ['/administration/pharmacy-campaigns', 'Promociones'],
 ] as const;
 

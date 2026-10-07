@@ -302,6 +302,18 @@ export function resolverCuentasDePacientes(resolver: ResolverDeCuentas): void {
   cuentaDePaciente = resolver;
 }
 
+/**
+ * Las cuentas que nacen de un alta pública durante el recorrido (hoy, la de
+ * farmacia). Mismo mecanismo que {@link resolverCuentasDePacientes}: las
+ * guarda quien atiende el alta (`auth.handlers`) y se resuelven acá, así el
+ * login, el token y la renovación las reconocen igual que a las sembradas.
+ */
+let cuentaRegistrada: ResolverDeCuentas = () => undefined;
+
+export function resolverCuentasRegistradas(resolver: ResolverDeCuentas): void {
+  cuentaRegistrada = resolver;
+}
+
 export function buscarUsuario(identificador: string): MockUser | undefined {
   const limpio = identificador.trim().toLocaleLowerCase('es');
   return (
@@ -311,12 +323,14 @@ export function buscarUsuario(identificador: string): MockUser | undefined {
         u.nationalId === limpio ||
         u.key === limpio ||
         u.key === limpio.replace(/@.*$/, ''),
-    ) ?? cuentaDePaciente({ identificador: limpio })
+    ) ??
+    cuentaDePaciente({ identificador: limpio }) ??
+    cuentaRegistrada({ identificador: limpio })
   );
 }
 
 export function usuarioPorId(userId: string): MockUser | undefined {
-  return MOCK_USERS.find((u) => u.id === userId) ?? cuentaDePaciente({ id: userId });
+  return MOCK_USERS.find((u) => u.id === userId) ?? cuentaDePaciente({ id: userId }) ?? cuentaRegistrada({ id: userId });
 }
 
 /* ---- tokens ---------------------------------------------------------------- */
@@ -361,7 +375,7 @@ export function emitirRefreshToken(user: MockUser): string {
 export function usuarioDeRefreshToken(refreshToken: string): MockUser | undefined {
   const [prefijo, key] = refreshToken.split('.');
   if (prefijo !== 'mock-refresh' || key === undefined) return undefined;
-  return MOCK_USERS.find((u) => u.key === key) ?? cuentaDePaciente({ key });
+  return MOCK_USERS.find((u) => u.key === key) ?? cuentaDePaciente({ key }) ?? cuentaRegistrada({ key });
 }
 
 export function usuarioDeAccessToken(token: string): MockUser | undefined {

@@ -61,7 +61,7 @@
                   }
                   <span class="mostrador__secundario">Cantidad: {{ linea.cantidad }}</span>
                   @if (linea.precio !== null) {
-                    <span class="cifras-tabulares">{{ linea.precio }} {{ moneda(linea.moneda) }}</span>
+                    <span class="cifras-tabulares">{{ importeDeLinea(linea) }}</span>
                   } @else {
                     <span class="mostrador__secundario">Sin precio publicado</span>
                   }
@@ -195,7 +195,7 @@
                 </div>
                 <div class="mostrador__linea-precio">
                   @if (linea.precio !== null) {
-                    <span class="cifras-tabulares">{{ linea.precio }} {{ moneda(linea.moneda) }}</span>
+                    <span class="cifras-tabulares">{{ importeDeLinea(linea) }}</span>
                   }
                   @if (!linea.disponible) {
                     <app-badge variant="warning">No disponible</app-badge>

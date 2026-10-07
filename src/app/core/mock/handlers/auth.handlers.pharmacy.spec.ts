@@ -2,6 +2,8 @@ import { HttpHeaders } from '@angular/common/http';
 
 import { MockRouter, isMockReply, type MockMethod } from '../mock-router';
 import { registrarAuth } from './auth.handlers';
+import { registrarDirectorio } from './directory.handlers';
+import { TENANT_FARMACIA, usuarioDeAccessToken } from '../mock-session';
 
 /**
  * El alta pública de farmacia contra el simulador (carril de farmacia,
@@ -15,8 +17,21 @@ import { registrarAuth } from './auth.handlers';
 describe('alta pública de farmacia en el simulador', () => {
   const router = new MockRouter();
   registrarAuth(router);
+  registrarDirectorio(router);
+
+  // El alta ahora guarda la cuenta (y un correo repetido es 409): cada caso es
+  // una farmacia distinta, con su propio correo, salvo que el caso traiga uno
+  // a propósito.
+  let altas = 0;
+  function conCorreoPropio(body: unknown): unknown {
+    const owner = (body as { owner?: { email?: string } } | null)?.owner;
+    if (owner?.email !== CUERPO_MINIMO.owner.email) return body;
+    altas += 1;
+    return { ...(body as object), owner: { ...owner, email: `legal+${altas}@farmacia.test` } };
+  }
 
   function call(method: MockMethod, path: string, body: unknown = null) {
+    if (path === '/iam/auth/register-organization') body = conCorreoPropio(body);
     const match = router.match(method, path);
     if (match === null) throw new Error(`No existe ${method} ${path}`);
     const result = match.handler({
@@ -127,5 +142,44 @@ describe('alta pública de farmacia en el simulador', () => {
     const { status } = call('POST', '/iam/auth/register-organization', cuerpo);
 
     expect(status).toBe(409);
+  });
+
+  it('correcto — la farmacia registrada entra con el correo del representante', () => {
+    const correo = 'mariela@farmacia-nueva.test';
+    const alta = call('POST', '/iam/auth/register-organization', {
+      ...CUERPO_MINIMO,
+      owner: { ...CUERPO_MINIMO.owner, email: correo },
+    });
+    expect(alta.status).toBe(200);
+
+    const sesion = call('POST', '/iam/auth/login', { email: correo, password: 'secreto12' });
+    expect(sesion.status).toBe(200);
+    const usuario = usuarioDeAccessToken((sesion.body as { accessToken: string }).accessToken);
+    expect(usuario?.email).toBe(correo);
+    expect(usuario?.tenants).toEqual([TENANT_FARMACIA]);
+    expect(usuario?.tenantNames[TENANT_FARMACIA]).toBe('Farmacia San Martín S.R.L.');
+
+    // Y no se puede registrar dos veces el mismo correo.
+    const otra = call('POST', '/iam/auth/register-organization', {
+      ...CUERPO_MINIMO,
+      owner: { ...CUERPO_MINIMO.owner, email: correo },
+    });
+    expect(otra.status).toBe(409);
+  });
+
+  it('correcto — las sucursales del alta quedan en «Sucursales»', () => {
+    const cuerpo = {
+      ...CUERPO_MINIMO,
+      organization: {
+        ...CUERPO_MINIMO.organization,
+        pharmacy: { branches: [{ name: 'Sucursal Urubó', latitude: -17.748, longitude: -63.235 }] },
+      },
+    };
+    expect(call('POST', '/iam/auth/register-organization', cuerpo).status).toBe(200);
+
+    const { body } = call('GET', `/tenants/${TENANT_FARMACIA}/branches`);
+    const nombres = (body as { items: readonly { name: string }[] }).items.map((b) => b.name);
+    expect(nombres).toContain('Sucursal Urubó');
+    expect(nombres.filter((n) => n === 'Sucursal Urubó')).toHaveLength(1);
   });
 });

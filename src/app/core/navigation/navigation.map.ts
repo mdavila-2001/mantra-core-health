@@ -1824,14 +1824,14 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // administra.
     fueraDelMenuPara: ['PRACTITIONER'],
     hiddenFor: ['PATIENT'],
-    label: 'Solicitudes de retiro',
+    label: 'Pedidos',
     // `General` y no `Administración`: es un dominio aplanado, así que los
     // ocho renglones van sueltos, sin encabezado ni desplegable.
     group: 'General',
     icon: 'bag',
     requiresTenant: true,
     availability: 'disponible',
-    summary: 'La bandeja del mostrador: solicitudes que llegan, preparación y retiros.',
+    summary: 'La bandeja del mostrador: pedidos que llegan, preparación, retiros y envíos.',
     module: 'M24 pharmacy',
   },
   {

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 
 import { NavIcon } from '../../atoms/nav-icon/nav-icon';
 import type { NavIconName } from '../../atoms/nav-icon/nav-icon.types';
@@ -57,4 +57,30 @@ export class RegistroAyuda {
    * como algo que no cargó.
    */
   readonly tarjetas = input<readonly TarjetaDeAyuda[]>([]);
+
+  /**
+   * Quién se está registrando. El sello prometía «tu información clínica la ve
+   * el profesional que te atiende» también en el alta de una farmacia o de un
+   * laboratorio, donde no hay información clínica: lo que se cuida ahí son los
+   * papeles de la empresa.
+   */
+  readonly para = input<'persona' | 'empresa'>('persona');
+
+  protected readonly promesas = computed(() =>
+    this.para() === 'empresa' ? PROMESAS_A_LA_EMPRESA : PROMESAS_A_LA_PERSONA,
+  );
 }
+
+const PROMESAS_A_LA_PERSONA = [
+  'Todo lo que escribís viaja cifrado hasta nuestros servidores.',
+  'Tu información clínica la ve el profesional que te atiende, nadie más.',
+  'No vendemos tus datos ni los usamos para publicidad.',
+  'Podés corregirlos cuando quieras desde tu perfil.',
+] as const;
+
+const PROMESAS_A_LA_EMPRESA = [
+  'Todo lo que escribís viaja cifrado hasta nuestros servidores.',
+  'Los papeles de la empresa los revisa sólo el equipo que aprueba tu alta.',
+  'No vendemos los datos de tu empresa ni de tus gerentes.',
+  'Podés corregirlos cuando quieras desde la ficha de tu empresa.',
+] as const;

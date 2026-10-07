@@ -123,16 +123,17 @@ export function toBandejaStatusPresentation(
 }
 
 /**
- * Los grupos de la bandeja, en el orden de la tarjeta: una columna del tablero
- * cada uno, de lo que corre contra el reloj (los nuevos arriba y destacados) a
- * lo que ya terminó.
+ * Los grupos de la bandeja: una columna del tablero cada uno, en el orden en
+ * que un pedido los recorre, de lo que corre contra el reloj (los nuevos,
+ * destacados) a lo que ya terminó. «En preparación» va antes de «Listos para
+ * retiro»: un pedido se prepara y después queda listo, no al revés.
  */
 export const GRUPOS_DE_BANDEJA = [
   'NUEVOS',
   'EN_REVISION',
   'ESPERANDO_PACIENTE',
-  'LISTOS',
   'EN_PREPARACION',
+  'LISTOS',
   'CERRADOS',
 ] as const;
 
