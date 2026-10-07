@@ -175,6 +175,7 @@ describe('RegisterPharmacy', () => {
     const [sucursal] = component.sucursales();
     component.escribirNombreDeSucursal(sucursal!.id, 'Sucursal Norte');
     component.escribirUrlDeSucursal(sucursal!.id, 'https://www.google.com/maps?q=-17.7480,-63.1750');
+    component.ubicarSucursalPorEnlace(sucursal!.id);
     component.submit();
 
     const req = http.expectOne(RUTA_ALTA);
@@ -184,7 +185,7 @@ describe('RegisterPharmacy', () => {
     req.flush(RESPUESTA_201);
   });
 
-  it('escrito tecla por tecla, el pin termina donde dice el enlace completo', () => {
+  it('mientras se escribe el enlace no aparece ningún pin; al salir del campo, el del enlace completo', () => {
     completarObligatorio();
     component.agregarSucursal();
     const [sucursal] = component.sucursales();
@@ -192,8 +193,15 @@ describe('RegisterPharmacy', () => {
     for (let i = 1; i <= enlace.length; i++) {
       component.escribirUrlDeSucursal(sucursal!.id, enlace.slice(0, i));
     }
+    expect(component.sucursales()[0]!.gps).toBeNull();
 
+    component.ubicarSucursalPorEnlace(sucursal!.id);
     expect(component.sucursales()[0]!.gps).toEqual({ lat: -17.748, lng: -63.175 });
+
+    // Corregir el enlace mueve el pin que vino de él.
+    component.escribirUrlDeSucursal(sucursal!.id, 'https://www.google.com/maps?q=-17.7000,-63.1000');
+    component.ubicarSucursalPorEnlace(sucursal!.id);
+    expect(component.sucursales()[0]!.gps).toEqual({ lat: -17.7, lng: -63.1 });
   });
 
   it('el enlace no pisa un punto que ya se marcó a mano', () => {
@@ -203,6 +211,7 @@ describe('RegisterPharmacy', () => {
     component.escribirNombreDeSucursal(sucursal!.id, 'Sucursal Norte');
     component.fijarGpsDeSucursal(sucursal!.id, { lat: -17.7, lng: -63.1 });
     component.escribirUrlDeSucursal(sucursal!.id, 'https://www.google.com/maps?q=-17.7480,-63.1750');
+    component.ubicarSucursalPorEnlace(sucursal!.id);
 
     expect(component.sucursales()[0]!.gps).toEqual({ lat: -17.7, lng: -63.1 });
   });

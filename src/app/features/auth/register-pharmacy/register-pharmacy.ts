@@ -675,29 +675,31 @@ export class RegisterPharmacy {
   }
 
   /**
-   * Las sucursales cuyo pin salió del enlace y no de la mano. Mientras sea
-   * así, el pin sigue al enlace: el campo avisa en cada tecla, y quedarse con
-   * el primer punto legible clavaba «…q=-17.748,-6» en medio del Atlántico.
-   * En cuanto la persona confirma un punto en el mapa, el enlace deja de
-   * moverlo.
+   * Las sucursales cuyo pin salió del enlace y no de la mano: mientras sea
+   * así, corregir el enlace mueve el pin. En cuanto la persona confirma un
+   * punto en el mapa, el enlace deja de moverlo.
    */
   private readonly pinesDelEnlace = new Set<string>();
 
-  /**
-   * El enlace de ubicación. Si trae el punto escrito (Google Maps,
-   * OpenStreetMap) y la sucursal no tiene un pin puesto a mano, el pin sale
-   * de ahí, igual que en la carga en lote: pegar el enlace ya es ubicarla.
-   */
   escribirUrlDeSucursal(id: string, url: string | number | null): void {
-    const urlUbicacion = url === null ? '' : String(url).trim();
+    this.actualizarSucursal(id, { urlUbicacion: url === null ? '' : String(url).trim() });
+  }
+
+  /**
+   * Al salir del campo del enlace: si trae el punto escrito (Google Maps,
+   * OpenStreetMap) y la sucursal no tiene un pin puesto a mano, el pin sale
+   * de ahí, igual que en la carga en lote. Al salir y no en cada tecla: a
+   * medio escribir «…q=-17.748,-6» ya es un punto legible —en medio del
+   * Atlántico—, y aparecer el pin mientras se escribe le quitaba el foco al
+   * campo y se comía el resto del enlace.
+   */
+  ubicarSucursalPorEnlace(id: string): void {
     const actual = this.sucursales().find((sucursal) => sucursal.id === id);
-    const punto = coordinatesFromMapUrl(urlUbicacion);
-    const loSigue = actual?.gps === null || this.pinesDelEnlace.has(id);
-    if (punto !== null && loSigue) this.pinesDelEnlace.add(id);
-    this.actualizarSucursal(id, {
-      urlUbicacion,
-      ...(punto !== null && loSigue ? { gps: { lat: punto.latitude, lng: punto.longitude } } : {}),
-    });
+    if (actual === undefined) return;
+    const punto = coordinatesFromMapUrl(actual.urlUbicacion);
+    if (punto === null || (actual.gps !== null && !this.pinesDelEnlace.has(id))) return;
+    this.pinesDelEnlace.add(id);
+    this.actualizarSucursal(id, { gps: { lat: punto.latitude, lng: punto.longitude } });
   }
 
   /* --- carga en lote ------------------------------------------------------ */

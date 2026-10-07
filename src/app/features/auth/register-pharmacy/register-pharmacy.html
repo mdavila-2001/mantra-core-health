@@ -198,6 +198,7 @@
                         placeholder="https://maps.google.com/…"
                         [value]="sucursal.urlUbicacion"
                         (valueChange)="escribirUrlDeSucursal(sucursal.id, $event)"
+                        (blurred)="ubicarSucursalPorEnlace(sucursal.id)"
                       />
                     </app-form-field>
 
