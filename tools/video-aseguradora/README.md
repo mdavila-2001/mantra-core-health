@@ -1,18 +1,21 @@
 # Video del módulo de aseguradora (Alianza Seguros)
 
-Graba una interacción continua sobre el app real de la rama `mockup`, iniciando sesión como la aseguradora y presentándola como **Alianza Seguros y Reaseguros S.A.**:
+Graba una interacción continua sobre el app real de la rama `mockup`: la aseguradora se registra, entra con su cuenta y recorre el módulo, presentada como **Alianza Seguros y Reaseguros S.A.**:
 
-1. **Mi perfil.**
-2. **Mis productos.** Recorre los siete planes.
-3. **Solicitudes recibidas.** Muestra la tarjeta del paciente, **aprueba** una solicitud abierta («Aprobar y facturar», que emite la factura) y **rechaza** otra con su motivo.
-4. **Siniestralidad.** Solo la pestaña «Por persona»: genera el informe.
-5. **Directorio de pacientes.** Hace una búsqueda.
+1. **Registro.** Desde el inicio de sesión entra a «Registrá tu organización · Aseguradoras» y completa las 8 páginas del alta: la empresa, sus datos, los cinco documentos legales, el representante legal con su poder notariado, las tres gerencias y la cuenta del administrador.
+2. **Login.** Tras «Tu cuenta está lista», entra con el correo y la contraseña que acaba de registrar.
+3. **Mi perfil.** Muestra lo registrado: razón social, NIT, sigla y dirección.
+4. **Mis productos.** Recorre los siete planes.
+5. **Solicitudes recibidas.** Muestra la tarjeta del paciente, **aprueba** una solicitud abierta («Aprobar y facturar», que emite la factura) y **rechaza** otra con su motivo.
+6. **Siniestralidad.** Solo la pestaña «Por persona»: genera el informe.
+7. **Directorio de pacientes.** Hace una búsqueda.
 
 ## Cómo se corre
 
 ```sh
 yarn start:dev                            # el app en http://localhost:4200, con el backend simulado
 node tools/video-aseguradora/grabar.mjs   # --base <url> si el app corre en otro lado
+node tools/video-aseguradora/grabar.mjs --hasta perfil   # ensayo: corta en «Mi perfil»
 ```
 
 Necesita ffmpeg con libx264. Instalalo con `winget install Gyan.FFmpeg` o indicá la ruta del ejecutable en `FFMPEG_PATH`. El ffmpeg que trae Playwright no sirve: solo escribe WebM.
@@ -59,7 +62,17 @@ El simulador entrega cada respuesta con `structuredClone` (función `desconectar
 
 Es el equivalente a interceptar la red, que en la maqueta no existe. Los componentes pintan lo que reciben: no se edita texto del DOM.
 
-### 3. Solo para el video
+### 3. El alta y el login
+
+Los datos del alta están en `datos-alta.mjs`. Todo se escribe en la pantalla real (`/auth/register/organization`); no hay pantallas ni handlers nuevos.
+
+- **Subida de documentos (simulada).** Cada documento va por la zona de arrastre real: el script hace clic en ella, atiende el selector de archivos y entrega un PDF de ejemplo generado en memoria (`pdfDeEjemplo`). Es un PDF válido de una página que dice «DOCUMENTO DE EJEMPLO», con un peso creíble (100 a 430 KB). El handler existente `POST /iam/auth/upload-registration-document` lo acepta. Los seis (cinco legales y el poder) quedan «subidos» con su marca de verificación.
+- **El login con la cuenta recién creada.** El simulador no crea usuarios al registrar: `buscarUsuario` (`mock-session.ts`) resuelve el login por la parte local del correo. Por eso el dueño se registra como `aseguradora@mail.com` y entra con ese mismo correo; el simulador lo reconoce como la cuenta de la aseguradora de prueba. Sin esto, el login respondería 401.
+- **Coincidencia con «Mi perfil».** El NIT (`1020347028`, ficticio) y la sigla (`ALIANZA`, de la que la pantalla deriva el código `ALIANZA`) se reescriben en la capa de respuesta, para que «Mi perfil» muestre lo que se escribió en el registro. La pantalla usa el mismo campo para el NIT y para el «Registro ante el regulador», así que ese valor sale en los dos lugares.
+- **Sin recargar.** Entre el registro y «Mi perfil» no hay `goto`: se navega solo con clics.
+- **Fuera del video.** El alta real deja la organización pendiente de aprobación y manda un correo de verificación. El video no muestra ninguno de los dos pasos.
+
+### 4. Solo para el video
 
 - Oculta los botones flotantes «Datos de prueba» y «Ver componentes».
 - Dibuja un cursor visible, con una onda en cada clic.
@@ -71,12 +84,14 @@ Es el equivalente a interceptar la red, que en la maqueta no existe. Los compone
 | Emisión Rápida, planes 1 a 4: cuota mensual Bs 90 / 120 / 180 / 250; muerte o invalidez Bs 3.000 / 5.000 / 10.000 / 15.000; beneficio educacional o canasta Bs 3.600 / 6.000 / 12.000 / 18.000; telemedicina ilimitada sin costo; consulta presencial con copago Bs 20 | **Publicado por la aseguradora** (`fuente: 'oficial'`) |
 | Salud Mundial Plus: maternidad hasta Bs 700.000 | Publicado por la aseguradora |
 | Cuotas de Plan Silver (Bs 380), Salud Mundial Plus (Bs 1.250) y Asistencia Familiar Integral (Bs 65); porcentajes, deducibles y topes de esos tres | **Referencial, inventado para la demo** (`fuente: 'referencial'`) |
-| Personas, médicos, consultorios, pólizas, montos, dirección, NIT y contactos | Ficticios |
+| Personas, médicos, consultorios, pólizas, montos, dirección, NIT, contactos, gerencias, representante legal, administrador y los seis PDF del alta | Ficticios |
 
 Quedan fuera Auto Alianza y TU Hogar. La pantalla muestra «Prima mensual» sin moneda y la analítica suma primas, así que una prima anual en dólares quedaría mal.
 
 ## Limitaciones conocidas
 
+- **Mapa de la casa matriz.** El alta lo ofrece como opcional y el video no lo toca (pide teselas a internet).
+- **Desplegables.** «Tipo societario» es un `<select>` nativo: en la grabación se ve el valor elegido, no la lista abierta.
 - **Logo.** «Mi perfil» muestra «Sin logo»: no se usa la marca real de la aseguradora.
 - **Calidad de imagen.** El video de Playwright sale en VP8 con una tasa de bits modesta. El texto se lee, pero puede verse un leve fantasma de compresión.
 - **Filtro «Sexo» del directorio.** Solo ofrece «Todos»: el catálogo de la maqueta usa `GEN-F`/`GEN-M` y la pantalla espera `GENDER_*`.
