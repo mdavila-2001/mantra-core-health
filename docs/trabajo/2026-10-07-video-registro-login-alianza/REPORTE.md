@@ -2,9 +2,9 @@
 
 - **Fecha:** 2026-10-07
 - **Plan:** [PLAN.md](./PLAN.md)
-- **Rama:** `marcelo/video-registro-login-alianza-mockup`, creada con `--no-track` desde `origin/mockup` (`ec86d301`, tras `git pull origin mockup`: ya estaba al día)
+- **Ramas:** `marcelo/video-registro-login-alianza-mockup` (el trabajo, PR #982) y `marcelo/video-registro-login-reporte-final` (este cierre del reporte). Las dos se crearon con `--no-track` desde `origin/mockup`, tras `git pull origin mockup`.
 - **Peldaño de evidencia alcanzado:** **VERIFIED**. El video y las capturas salen de una corrida real contra el app de `mockup`, con doble revisión. No se corrió la suite de tests (ver «No cubierto»).
-- **Avance:** 11 de 12 microtareas HECHO y 1 A MEDIAS, la entrega (91,7 %).
+- **Avance:** 12 de 12 microtareas HECHO (100 %). Fuera de las microtareas queda un punto BLOQUEADO: los checks de CI del PR #982 nunca arrancaron (ver «Pendiente»).
 
 ## Completado
 
@@ -20,21 +20,19 @@
 | H1.S3.M1 | Video regenerado | `ffprobe` | h264 · 1920×1080 · 188,56 s; salida 0 y controles limpios |
 | H1.S3.M2 | Doble revisión | [evidencia/doble-revision.md](./evidencia/doble-revision.md) | ninguna pantalla RECHAZADA |
 | H1.S3.M3 | README actualizado | — | secciones «El alta y el login» y limitaciones nuevas |
+| H1.S3.M4 | Commit, push de la rama y PR #982 a `mockup`, fuera de draft. El usuario lo mergeó | `git log -1` · `gh pr view 982` | commit `a743a417` con trailer; PR `MERGED` en `60ba66c9` (2026-10-07 17:44:48 UTC); antes del merge era mergeable y no draft |
 | H1.S3.M5 | Este reporte | — | en disco |
 
 ## A medias
 
-### H1.S3.M4 — Commit y entrega
-- **Qué anda:** el trabajo está listo en la rama local y el MP4 ya se entregó al usuario.
-- **Qué no anda:** no hay PR. No se subió nada a GitHub.
-- **Qué falta exactamente:** el visto bueno del usuario para empujar la rama con `git push -u origin marcelo/video-registro-login-alianza-mockup` (con la rama explícita, nunca a `mockup`) y abrir el PR a `mockup` fuera de draft. Después, `gh pr view --json isDraft,mergeable,mergeStateStatus` y `gh pr checks` con salida literal.
-- **Dónde quedó:** rama local `marcelo/video-registro-login-alianza-mockup`.
+Ninguna. H1.S3.M4 estaba aquí y se cerró (ver «Completado»).
 
 ## Pendiente
 
 | ID | Estado | Qué lo destraba |
 |---|---|---|
-| Revert o no de `dceaff41` y `c3a928a5` | Abierto desde el 2026-10-05 | Que el usuario diga si los commits que quedaron en `mockup` sin PR se dejan o se revierten |
+| Checks de CI del PR #982 (`dependencias`, `e2e`, `verificar`) | BLOQUEADO | Que el CI de GitHub vuelva a ejecutar: los tres jobs siguen `queued` desde las 17:40 UTC y la ejecución del PR #977 también, desde las 17:15. Causa ajena a este trabajo; el PR se mergeó sin que los checks corrieran |
+| Revert o no de `dceaff41` y `c3a928a5` | Abierto desde el 2026-10-05 | Que el usuario diga si los commits que quedaron en `mockup` sin PR se dejan o se revierten. Con el merge de #982 encima, revertirlos es más enredado |
 
 ## Evidencia
 
@@ -54,8 +52,28 @@ $ node tools/video-aseguradora/grabar.mjs --hasta perfil   (8 corridas seguidas)
 8 de 8 llegaron a «Mi perfil»; en una el primer clic se perdió y el reintento lo cubrió (registro a 15,6 s en vez de 6,4 s).
 ```
 
+```
+$ gh pr view 982 --json number,state,isDraft,mergeable,mergeStateStatus,mergedAt   (después del merge)
+{"isDraft":false,"mergeStateStatus":"UNKNOWN","mergeable":"UNKNOWN","mergedAt":"2026-10-07T17:44:48Z","number":982,"state":"MERGED"}
+
+$ gh pr view 982 --json …   (antes del merge, recién creado)
+{"baseRefName":"mockup","headRefName":"marcelo/video-registro-login-alianza-mockup","isDraft":false,"mergeStateStatus":"UNSTABLE","mergeable":"MERGEABLE","number":982}
+
+$ gh pr checks 982
+dependencias  pending  0  …/actions/runs/37660899417/…
+e2e           pending  0  …/actions/runs/37660899417/…
+verificar     pending  0  …/actions/runs/37660899417/…
+
+$ gh run view 37660899417 --json status,jobs
+status: queued · los tres jobs: status "queued", conclusion "" (creados 17:40:30 UTC, sin arrancar a las 17:46 UTC)
+
+$ git ls-remote origin mockup   (tras el push de la rama, antes del merge)
+ec86d301…  mockup   (sin cambios: el push fue solo de la rama)
+```
+
 ## No cubierto
 
+- **Checks de CI del PR #982:** nunca se ejecutaron (jobs en cola), así que no hay evidencia de verde en CI. La verificación de este trabajo es la corrida local del script, `ffprobe` y `eslint`.
 - **Suite de tests.** Este trabajo no toca código del app ni del simulador, solo `tools/video-aseguradora/` y documentación; no se corrió `yarn test`.
 - **Barra de avance de la subida** (0,6 s simulados) y **errores de validación** del alta: no aparecen en el video.
 - **Mapa de la casa matriz** (opcional) y país multizona.
@@ -83,3 +101,4 @@ $ node tools/video-aseguradora/grabar.mjs --hasta perfil   (8 corridas seguidas)
 - **Login con la cuenta recién creada.** Supuesto: el administrador se registra como `aseguradora@mail.com` y entra con ese correo. **Confirmar con:** el usuario.
 - **NIT y sigla.** Supuesto: un NIT numérico ficticio y la sigla `ALIANZA`. **Confirmar con:** el usuario.
 - **Commits en `mockup` sin PR (2026-10-05).** Siguen abiertos; la rama de este trabajo nació desde ese `mockup` actualizado.
+- **Merge sin checks de CI (2026-10-07).** El usuario mergeó el PR #982 mientras los checks seguían en cola. No se esperó a un verde que no iba a llegar mientras el CI siga detenido. **Confirmar con:** quien administre el CI de GitHub.

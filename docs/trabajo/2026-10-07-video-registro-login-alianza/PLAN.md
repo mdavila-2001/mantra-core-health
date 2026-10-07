@@ -27,7 +27,8 @@
 **CA:** Dado el MP4 final, cuando se reproduce, entonces: (1) se ve la pantalla de inicio de sesión y se entra a «Registrá tu organización · Aseguradoras»; (2) se completan las 8 páginas con los datos de Alianza y se suben, uno a uno, los cinco documentos legales y el poder notariado; (3) «Crear cuenta» termina en la confirmación del alta; (4) «Ir a iniciar sesión» lleva al login, donde se escribe el correo y la contraseña del registro y se entra; (5) desde la sesión recién abierta se llega a «Mi perfil», que muestra la razón social, el NIT, la sigla y la dirección que se registraron; (6) el recorrido siguiente es el de siempre.
 
 **DoD:** `node tools/video-aseguradora/grabar.mjs` → salida 0 con sus controles limpios · `ffprobe` (h264, 1920×1080) · capturas de cada pantalla del alta · doble revisión crítica · PR mergeable.
-**Estado:** A MEDIAS
+**Estado:** HECHO
+(Los checks de CI del PR #982 nunca arrancaron: ver «Pendiente» del REPORTE.)
 
 ### H1.S1 — Datos y documentos del alta
 
@@ -53,7 +54,7 @@
 | H1.S3.M1 | Video regenerado | h264, 1920×1080, salida 0, sin «Andina», sin `.mock`, sin `pageerror`, sin «sin manejador» | `ffprobe` + salida del script | HECHO |
 | H1.S3.M2 | Doble revisión crítica de las capturas nuevas | Ninguna pantalla RECHAZADA | `evidencia/doble-revision.md` | HECHO |
 | H1.S3.M3 | README del script actualizado | Explica el alta, la subida simulada y el supuesto del login | archivo en disco | HECHO |
-| H1.S3.M4 | Commit local y entrega | Un commit con trailer; PR solo con el visto bueno | `git log -1` | A MEDIAS |
+| H1.S3.M4 | Commit local y entrega | Un commit con trailer; PR solo con el visto bueno | `git log -1` | HECHO |
 | H1.S3.M5 | REPORTE.md | Con las tres secciones | archivo en disco | HECHO |
 
 ## Riesgos
