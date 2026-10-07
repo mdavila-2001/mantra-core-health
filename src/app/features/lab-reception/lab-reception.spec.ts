@@ -8,6 +8,7 @@ import { provideRouter } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
 import type { LabInboxItem } from '../../core/data-access/diagnostics/diagnostics-lab.types';
 import { ToastService } from '../../shared/components/molecules/toast/toast.service';
+import { AlarmaDePedidos } from '../organization/pharmacy-inbox/alarma-de-pedidos';
 import { LabReception } from './lab-reception';
 
 /**
@@ -153,6 +154,92 @@ describe('LabReception', () => {
     if (found === undefined) throw new Error(`No hay ${testId}`);
     return found;
   }
+
+  describe('las órdenes que llegan (4.2: alarma y quién la pidió)', () => {
+    let alarma: { notificar: ReturnType<typeof vi.fn>; acusarRecibo: ReturnType<typeof vi.fn> };
+
+    beforeEach(() => {
+      // Otra instancia con relojes falsos: el sondeo se agenda al construir.
+      fixture.destroy();
+      vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+      fixture = TestBed.createComponent(LabReception);
+      component = fixture.componentInstance;
+      host = fixture.nativeElement as HTMLElement;
+      const real = fixture.debugElement.injector.get(AlarmaDePedidos);
+      alarma = { notificar: vi.spyOn(real, 'notificar').mockImplementation(() => undefined), acusarRecibo: vi.spyOn(real, 'acusarRecibo') } as never;
+    });
+
+    afterEach(() => {
+      fixture.destroy();
+      vi.useRealTimers();
+    });
+
+    /** Un pulso del sondeo que responde con estas órdenes (de una página). */
+    function sondeo(items: readonly unknown[], nextCursor: string | null = null): void {
+      vi.advanceTimersByTime(20_000);
+      const req = inboxRequest();
+      expect(req.request.body).toEqual({ limit: 100 });
+      req.flush({ items, count: items.length, limit: 100, nextCursor });
+      flushLabels();
+      fixture.detectChanges();
+    }
+
+    it('con la bandeja vacía, la primera orden que llega aparece, se marca «Nueva» y suena', () => {
+      loadInbox([]);
+      sondeo([{ ...wireOrder('n1'), requesterDisplayName: 'Valeria Rojas · Cardiología' }]);
+
+      expect(rows().map((r) => r.serviceRequestId)).toEqual(['n1']);
+      expect(alarma.notificar).toHaveBeenCalledWith(1);
+      expect(host.querySelector('[data-testid="recepcion-nueva"]')).not.toBeNull();
+      expect(host.querySelector('[data-testid="recepcion-cartel-nueva"]')?.textContent).toContain('Valeria Rojas · Cardiología');
+      expect(host.querySelector('[data-testid="recepcion-solicitante"]')?.textContent).toContain('Pidió Valeria Rojas');
+    });
+
+    it('lo que ya se veía no suena ni se duplica, tampoco después de recargar la bandeja', () => {
+      loadInbox([wireOrder('1')]);
+      sondeo([wireOrder('1')]);
+      expect(alarma.notificar).not.toHaveBeenCalled();
+
+      // Una recarga que ya trae la orden nueva: el sondeo siguiente no la «recibe» otra vez.
+      component['reload']();
+      inboxRequest().flush({ items: [wireOrder('1'), wireOrder('2')], count: 2, limit: 25, nextCursor: null });
+      flushLabels();
+      sondeo([wireOrder('1'), wireOrder('2')]);
+
+      expect(alarma.notificar).not.toHaveBeenCalled();
+      expect(rows().map((r) => r.serviceRequestId)).toEqual(['1', '2']);
+    });
+
+    it('recorre la bandeja entera: la orden nueva cae al final, después de la primera página', () => {
+      loadInbox([wireOrder('1')]);
+      vi.advanceTimersByTime(20_000);
+      inboxRequest().flush({ items: [wireOrder('1')], count: 1, limit: 100, nextCursor: 'c-2' });
+      const segunda = inboxRequest();
+      expect(segunda.request.body).toEqual({ limit: 100, cursor: 'c-2' });
+      segunda.flush({ items: [wireOrder('nueva')], count: 1, limit: 100, nextCursor: null });
+      flushLabels();
+      fixture.detectChanges();
+
+      expect(rows()[0]!.serviceRequestId).toBe('nueva');
+      expect(alarma.notificar).toHaveBeenCalledWith(1);
+    });
+
+    it('con una búsqueda puesta no sondea, y una respuesta tardía no pisa la búsqueda', () => {
+      loadInbox([wireOrder('1')]);
+      vi.advanceTimersByTime(20_000);
+      const tardia = inboxRequest();
+      component['search']('Pérez');
+      // Buscar cancela el sondeo en vuelo: su respuesta ya no puede pisar nada.
+      expect(tardia.cancelled).toBe(true);
+      inboxRequest().flush({ items: [], count: 0, limit: 25, nextCursor: null });
+      fixture.detectChanges();
+
+      expect(component['inbox']().status).toBe('empty');
+      expect(alarma.notificar).not.toHaveBeenCalled();
+      vi.advanceTimersByTime(20_000);
+      http.expectNone((r) => r.url === '/diagnostics/service-requests/inbox');
+    });
+  });
 
   describe('la bandeja', () => {
     it('empieza cargando y pide la bandeja por POST, sin nada del paciente en la URL', () => {

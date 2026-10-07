@@ -58,10 +58,9 @@ describe('recepción del laboratorio: la orden entrante y su orden de trabajo', 
     for (const item of bandeja()) expect(item.requesterDisplayName, item.serviceRequestId).toMatch(/\S/);
   });
 
-  it('otro tenant no recibe la orden del Laboratorio Central', () => {
-    const otra = pedir<{ items: readonly Item[] }>('POST', '/diagnostics/service-requests/inbox', { limit: 100 }, TENANT_CLINICA);
-    const items = otra.status === 200 ? otra.body.items : [];
-    expect(items.map((i) => i.serviceRequestId)).not.toContain(ID_ORDEN_ENTRANTE);
+  it('fuera del Laboratorio Central la bandeja ni siquiera responde (403), y nada nace', () => {
+    const otra = pedir<unknown>('POST', '/diagnostics/service-requests/inbox', { limit: 100 }, TENANT_CLINICA);
+    expect(otra.status).toBe(403);
   });
 
   it('registrar la accesión abre su orden de trabajo, primera en la cola del laboratorio', () => {

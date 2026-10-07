@@ -534,6 +534,11 @@ function leerDeDisco(id: string): Promise<Blob | undefined> {
 
 /* ---- rutas --------------------------------------------------------------- */
 
+/** Una orden con la fecha de pedido en el futuro (la entrante) todavía no llegó. */
+function yaPedida(requestedAt: string): boolean {
+  return Date.parse(requestedAt) <= Date.parse(ahora());
+}
+
 export function registrarPortalDeLaboratorio(router: MockRouter): void {
   /* servicios */
 
@@ -727,7 +732,7 @@ export function registrarPortalDeLaboratorio(router: MockRouter): void {
     const vigentes = servicios.filter((s) => s.status !== 'WITHDRAWN');
     const archivos = resultadosDeLaboratorio.filtrar((r) => r.tenantId === tenantId && r.status === 'AVAILABLE');
     const conResultado = new Set(archivos.map((r) => r.orderId));
-    const ordenes = labInboxOrders.filtrar((o) => o.performerTenantId === tenantId);
+    const ordenes = labInboxOrders.filtrar((o) => o.performerTenantId === tenantId && yaPedida(o.requestedAt));
     const porCategoria = new Map<string, number>();
     for (const s of vigentes) {
       const nombre =
@@ -774,7 +779,7 @@ export function registrarPortalDeLaboratorio(router: MockRouter): void {
     const tenantId = laboratorioDe(request);
     if (tenantId === null) return forbidden();
     const items = labInboxOrders
-      .filtrar((o) => o.performerTenantId === tenantId)
+      .filtrar((o) => o.performerTenantId === tenantId && yaPedida(o.requestedAt))
       .map((o) => {
         const destino = destinoDeOrden(o.id)!;
         return {

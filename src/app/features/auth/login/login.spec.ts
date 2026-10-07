@@ -135,6 +135,21 @@ describe('Login', () => {
       expect(navegaciones).toEqual(['/administration/pharmacy']);
     });
 
+    it('un centro de diagnóstico (laboratorio o imagen) empieza en su «Resumen»', () => {
+      const centro = makeToken({
+        sub: 'u-3',
+        sid: 's-3',
+        roles: ['USER'],
+        tenants: ['t-lab'],
+        tenantTypes: { 't-lab': 'DIAGNOSTIC_CENTER' },
+      });
+      completar('laboratorio@mantra.test');
+      component.submit();
+      http.expectOne('/iam/auth/login').flush(tokens(centro));
+
+      expect(navegaciones).toEqual(['/administration/laboratory']);
+    });
+
     it('con varias organizaciones va al selector', () => {
       completar('admin@mantra.test');
       component.submit();
