@@ -621,4 +621,20 @@ export const BANCO: readonly CasoDelBanco[] = [
   { texto: 'quiero chequear mi presion', sintomas: [] },
   { texto: 'mi jefe me dio un aumento', sintomas: [] },
   { texto: 'vi a mi jefe en la clinica', sintomas: [] },
+  /* --- Registro popular boliviano (2026-10-08): hay gente que lo dice así y no por eso está menos enferma */
+  { texto: 'me arde el culo al cagar', sintomas: ['hemorroides'] },
+  { texto: 'me sangra el culo', sintomas: ['sangre-en-las-heces'] },
+  { texto: 'me duelen los huevos', sintomas: ['dolor-de-testiculos'] },
+  { texto: 'me duelen las pelotas', sintomas: ['dolor-de-testiculos'] },
+  { texto: 'tengo los huevos hinchados', sintomas: ['dolor-de-testiculos'] },
+  { texto: 'me sale pus de la pilila', sintomas: ['infeccion-de-transmision-sexual'] },
+  { texto: 'me sale algo de la paloma', sintomas: ['infeccion-de-transmision-sexual'] },
+  { texto: 'la paloma no se me pone dura', sintomas: ['problemas-de-ereccion'] },
+  { texto: 'me pica la chucha y tengo flujo', sintomas: ['flujo-vaginal'] },
+  // Lo que NO es el cuerpo: alimentos, aves, adornos.
+  { texto: 'vi una paloma en el parque', sintomas: [] },
+  { texto: 'desayune dos huevos fritos', sintomas: [] },
+  { texto: 'necesito huevos para la torta', sintomas: [] },
+  { texto: 'compre una concha de mar', sintomas: [] },
+  { texto: 'me duelen los huesos', sintomas: ['dolor-articular'] },
 ];
