@@ -42,6 +42,9 @@ const EXCLUIDOS = [
   /\.spec\.ts$/,
   /comunidad\.ts$/,
   /sintomas\.datos\.ts$/,
+  // El motor de lenguaje del triaje: sus listas («te», «tu», «tus») son palabras
+  // que escribe el paciente, no texto de AloVida. Cambiarlas rompe el motor.
+  /symptom-check\/texto\.ts$/,
   /corpus\.fixture/,
   /universidades/,
   /instituciones-educativas/,
