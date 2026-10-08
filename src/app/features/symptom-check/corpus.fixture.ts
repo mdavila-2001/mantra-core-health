@@ -684,4 +684,5 @@ export const BANCO: readonly CasoDelBanco[] = [
   { texto: 'me mordio una culebra en el chaco', sintomas: [], alarmas: ['mordedura-peligrosa'] },
   { texto: 'a mi hijo lo mordio un murcielago anoche', sintomas: ['control-de-nino'], alarmas: ['mordedura-peligrosa'] },
   { texto: 'me mordio un gato', sintomas: ['picadura'] },
+  { texto: 'el corazon me late raro y me mareo', sintomas: ['palpitaciones', 'mareo'] },
 ];
