@@ -8,6 +8,7 @@
     repetirlo por pantalla es garantizar que en alguna falte.
     ========================================================================== */
 
+import { PanicButton } from '../../emergency/panic-button/panic-button';
 import { Component, computed, inject } from '@angular/core';
 import { Router, RouterLink, RouterOutlet } from '@angular/router';
 
@@ -27,6 +28,7 @@ import { AlovidaDesignNotice } from './alovida-design-notice';
     RouterLink,
     RouterOutlet,
     AlovidaThemeToggleDirective,
+    PanicButton,
   ],
   templateUrl: './alovida-public-shell.html',
 })
