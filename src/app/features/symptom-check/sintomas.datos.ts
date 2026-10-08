@@ -351,6 +351,28 @@ export const SINTOMAS_DE_ALARMA: readonly Sintoma[] = [
       'Lo que te pasó no es tu culpa y no tenés que esperar un turno. Si estás en peligro o fue hace poco, andá ahora a una guardia: te atienden, te protegen y hay medicación que sirve sólo en las primeras horas.',
     especialidades: [],
   },
+  {
+    id: 'mordedura-peligrosa',
+    nombre: 'mordedura de serpiente o murciélago',
+    // Serpiente: puede necesitar suero antiofídico. Murciélago: la rabia se previene sólo si la vacuna
+    // se pone a tiempo (en el oriente boliviano hay murciélagos hematófagos). Las dos van a una guardia.
+    sinonimos: [
+      'me mordio una culebra',
+      'me mordio una vibora',
+      'me mordio una serpiente',
+      'mordedura de serpiente',
+      'mordedura de vibora',
+      'me pico una vibora',
+      'me mordio una cascabel',
+      'me mordio una yarara',
+      'me mordio un murcielago',
+      'mordedura de murcielago',
+    ],
+    alarma: true,
+    mensaje:
+      'Andá ahora a una guardia: una mordedura de serpiente o de murciélago puede necesitar suero o vacuna que sólo sirven si se ponen a tiempo. Lavá la herida con agua y jabón y no hagas cortes ni torniquetes.',
+    especialidades: [],
+  },
 ];
 
 /**
@@ -403,6 +425,8 @@ export const SINTOMAS: readonly Sintoma[] = [
       'surazo',
       // Camba «arrebato» (resfrío fuerte) NO entra: el motor lo reduce a «arrebato» a secas y
       // cazaba «en un arrebato le grité a mi jefe» (lo detectó el banco).
+      'me moquea la nariz',
+      'tengo flema',
     ],
     especialidades: [
       { nombre: 'Medicina general', peso: 3 },
@@ -457,6 +481,10 @@ export const SINTOMAS: readonly Sintoma[] = [
       'estoy hecho bolsa',
       'hecho bolsa',
       'estoy molido',
+      'no tengo fuerzas',
+      'no tengo energia',
+      'estoy debil',
+      'me siento debil',
     ],
     especialidades: [
       { nombre: 'Medicina general', peso: 3 },
@@ -483,11 +511,11 @@ export const SINTOMAS: readonly Sintoma[] = [
       'baje de peso sin dieta',
       // Sin apetito + adelgazar: mismo estudio de base.
       // «no tengo hambre» NO: queda en «no» + «hambre» y caza «tengo hambre y no …».
-      'perdi el hambre',
-      'falta de apetito',
-      'sin apetito',
-      'perdi el apetito',
       'estoy muy flaco',
+      'estoy muy delgado',
+      'estoy flaquisimo',
+      'estoy muy flaca',
+      'estoy flaca',
     ],
     especialidades: [
       { nombre: 'Medicina general', peso: 3 },
@@ -522,6 +550,10 @@ export const SINTOMAS: readonly Sintoma[] = [
       'sudo de noche',
       'me despierto transpirado',
       'transpiro mucho de noche',
+      'sudo mucho',
+      'sudo demasiado',
+      'sudor frio',
+      'hiperhidrosis',
     ],
     especialidades: [
       { nombre: 'Medicina general', peso: 3 },
@@ -538,6 +570,8 @@ export const SINTOMAS: readonly Sintoma[] = [
       'tengo la sangre baja',
       'estoy palido',
       'ferritina baja',
+      'tengo la piel palida',
+      'muy palido',
     ],
     especialidades: [
       { nombre: 'Hematología', peso: 3 },
@@ -609,6 +643,7 @@ export const SINTOMAS: readonly Sintoma[] = [
       // «Turumba»: aturdido.
       'estoy turumba',
       'ando turumba',
+      'se me va la cabeza',
     ],
     especialidades: [
       { nombre: 'Otorrinolaringología', peso: 3 },
@@ -678,6 +713,9 @@ export const SINTOMAS: readonly Sintoma[] = [
       'veo manchas',
       'veo doble',
       'veo lucecitas',
+      'cataratas',
+      'vista nublada',
+      'ojo blanco',
     ],
     especialidades: [
       { nombre: 'Oftalmología', peso: 3 },
@@ -704,6 +742,9 @@ export const SINTOMAS: readonly Sintoma[] = [
       'parpado hinchado',
       'sapira',
       'tengo laganas',
+      'ojos llorosos',
+      'lagrimeo',
+      'me lloran los ojos',
     ],
     partes: ['ojo'],
     especialidades: [
@@ -744,6 +785,10 @@ export const SINTOMAS: readonly Sintoma[] = [
       // «Tacuara»: garganta.
       'me duele la tacuara',
       'tengo mal la tacuara',
+      'amigdalitis',
+      'amigdalas inflamadas',
+      'garganta roja',
+      'tengo la garganta inflamada',
     ],
     partes: ['garganta'],
     especialidades: [
@@ -761,6 +806,8 @@ export const SINTOMAS: readonly Sintoma[] = [
       // «escucho voces y no hay nadie», que es de Psiquiatría.
       'no escucho bien del oido',
       'escucho mal',
+      'no escucho bien',
+      'no oigo bien',
       'me estoy quedando sordo',
       'sordera',
       'otitis',
@@ -815,6 +862,10 @@ export const SINTOMAS: readonly Sintoma[] = [
       'me quede ronco',
       'voz ronca',
       'me duele al hablar',
+      'no tengo voz',
+      'me quede sin voz',
+      'sin voz',
+      'perdi la voz',
     ],
     especialidades: [{ nombre: 'Otorrinolaringología', peso: 3 }],
   },
@@ -854,6 +905,11 @@ export const SINTOMAS: readonly Sintoma[] = [
       'muela chio',
       'diente picado',
       'muela picada',
+      'caries',
+      'sarro',
+      'muela del juicio',
+      'me sangran las encias',
+      'encia inflamada',
     ],
     partes: ['muela', 'diente', 'encia'],
     especialidades: [{ nombre: 'Odontología', peso: 3 }],
@@ -1003,6 +1059,7 @@ export const SINTOMAS: readonly Sintoma[] = [
       'venas moradas',
       'venitas moradas en las piernas',
       'venas marcadas en las piernas',
+      'mala circulacion',
     ],
     especialidades: [
       { nombre: 'Cirugía general', peso: 2 },
@@ -1032,6 +1089,10 @@ export const SINTOMAS: readonly Sintoma[] = [
       'me duele la petaca',
       'tengo el buche hinchado',
       'tengo la petaca inflada',
+      'indigestion',
+      'me cayo mal la comida',
+      'comi algo malo',
+      'me duele el estomago',
     ],
     // Cada país tiene su palabra y ninguna se deduce de otra: van todas.
     partes: ['panza', 'estomago', 'barriga', 'guata', 'vientre', 'abdomen'],
@@ -1067,6 +1128,12 @@ export const SINTOMAS: readonly Sintoma[] = [
       'estoy de banderita',
       'ando de banderita',
       'estar de banderita',
+      'caca blanda',
+      'tengo soltura',
+      'suelto el estomago',
+      'disenteria',
+      'descomposicion',
+      'rotavirus',
     ],
     especialidades: [
       { nombre: 'Gastroenterología', peso: 3 },
@@ -1130,6 +1197,11 @@ export const SINTOMAS: readonly Sintoma[] = [
       'ardor despues de comer',
       'me sube la comida',
       'gastritis',
+      'me repite la comida',
+      'tengo agruras',
+      'tengo reflujo',
+      'reflujo',
+      'agruras',
     ],
     especialidades: [
       { nombre: 'Gastroenterología', peso: 3 },
@@ -1260,7 +1332,14 @@ export const SINTOMAS: readonly Sintoma[] = [
   {
     id: 'dolor-de-espalda',
     nombre: 'dolor de espalda',
-    sinonimos: ['lumbago', 'ciatica', 'me quede duro de la espalda', 'contractura en la espalda'],
+    sinonimos: [
+      'lumbago',
+      'ciatica',
+      'me quede duro de la espalda',
+      'contractura en la espalda',
+      'lumbalgia',
+      'lumbago',
+    ],
     partes: ['espalda', 'cintura', 'columna', 'lumbar'],
     especialidades: [
       { nombre: 'Traumatología', peso: 3 },
@@ -1373,6 +1452,11 @@ export const SINTOMAS: readonly Sintoma[] = [
       'articulaciones hinchadas',
       'me duele todo el cuerpo',
       'rigidez al levantarme',
+      'reuma',
+      'reumatismo',
+      'acido urico',
+      'acido urico alto',
+      'dolor de huesos',
     ],
     partes: ['articulacion', 'hueso', 'coyuntura'],
     especialidades: [
@@ -1404,6 +1488,12 @@ export const SINTOMAS: readonly Sintoma[] = [
       // «Taporito»: contusiones en el rostro por golpes recibidos.
       'tengo la cara taporito',
       'quede taporito',
+      'hueso roto',
+      'fractura',
+      'me cai de la moto',
+      'me cai de la bicicleta',
+      'me cai de las gradas',
+      'me cai en la calle',
     ],
     especialidades: [
       { nombre: 'Traumatología', peso: 3 },
@@ -1428,6 +1518,8 @@ export const SINTOMAS: readonly Sintoma[] = [
       'pitai',
       'me salio pitai',
       'tengo pitai',
+      'granos',
+      'tengo granos',
     ],
     especialidades: [
       { nombre: 'Dermatología', peso: 3 },
@@ -1512,6 +1604,12 @@ export const SINTOMAS: readonly Sintoma[] = [
       'picadura',
       'me mordio un perro',
       'mordedura',
+      // Una mordedura de perro, gato o mono puede necesitar la vacuna antirrábica: Medicina general primero.
+      'mordedura de perro',
+      'me mordio un gato',
+      'me mordio una rata',
+      'me mordio un mono',
+      'me mordio un animal',
       'me pico una arana',
       // «Boro»: larva de la mosca Dermatobia hominis bajo la piel (Sanabria Fernández).
       'tengo un boro',
@@ -1598,6 +1696,9 @@ export const SINTOMAS: readonly Sintoma[] = [
       'ando a las cachuchas',
       // Fuente: ídem. «Amartelo»: malestar por la distancia de un ser querido (en el estudio, hijos que quedaron en Bolivia). Muestra pequeña: 27 personas.
       'tengo amartelo',
+      'tengo mucha pena',
+      'me da pena todo',
+      'tengo pena',
     ],
     especialidades: [
       { nombre: 'Psicología', peso: 3 },
@@ -1623,6 +1724,7 @@ export const SINTOMAS: readonly Sintoma[] = [
       // Fuente: «Palabras y frases del Oriente boliviano» (H. Sanabria Fernández, R. Gandarilla y J. Sánchez Suárez; eju.tv, 14/09/2021).
       // «Dormir por enciminga»: tener el sueño muy leve.
       'duermo por enciminga',
+      // «No duermo bien» NO: el motor reduce «duermo» y «duerme» al mismo verbo y cazaba «mi esposa no duerme» (es su ronquido).
     ],
     especialidades: [
       { nombre: 'Psiquiatría', peso: 2 },
@@ -1668,6 +1770,8 @@ export const SINTOMAS: readonly Sintoma[] = [
       'juego mucho por plata',
       'apuestas',
       'no puedo dejar el celular',
+      'fumo mucho',
+      'fumo demasiado',
     ],
     especialidades: [
       { nombre: 'Psiquiatría', peso: 3 },
@@ -1895,6 +1999,10 @@ export const SINTOMAS: readonly Sintoma[] = [
       'sobrepeso',
       'obesidad',
       'plan alimentario',
+      'he subido de peso',
+      'subi de peso',
+      'estoy gordo',
+      'estoy pasado de peso',
     ],
     especialidades: [
       { nombre: 'Nutrición', peso: 3 },
@@ -2011,6 +2119,9 @@ export const SINTOMAS: readonly Sintoma[] = [
       'la paloma no me responde',
       'no se me levanta la paloma',
       'no se me levanta la pilila',
+      'no se me para',
+      'no se me levanta',
+      'no se me para el pene',
       'eyaculacion precoz',
       // «no se me para» a secas NO: el motor se queda con «no» y cazaba cualquier negación.
       // Ninguna se apoya en «no» + «pene» solos: cazaban «me duele el pene y no …».
@@ -2058,6 +2169,9 @@ export const SINTOMAS: readonly Sintoma[] = [
       'creo que estoy embarazada',
       'prueba de embarazo',
       'test de embarazo positivo',
+      'regla atrasada',
+      'tengo la regla atrasada',
+      'me atrase',
     ],
     // El motor arma «atraso de la regla», «se me retrasó la menstruación» y las
     // demás combinaciones solo.
@@ -2120,6 +2234,8 @@ export const SINTOMAS: readonly Sintoma[] = [
       'candidiasis',
       'mal olor vaginal',
       'ardor vaginal',
+      'infeccion vaginal',
+      'hongos vaginales',
     ],
     soloParaSexo: 'FEMALE',
     especialidades: [{ nombre: 'Ginecología', peso: 3 }],
@@ -2184,6 +2300,9 @@ export const SINTOMAS: readonly Sintoma[] = [
       'implante anticonceptivo',
       'ligadura',
       'vasectomia',
+      'planificacion familiar',
+      'metodo para no quedar embarazada',
+      'cuidarme para no quedar embarazada',
     ],
     especialidades: [
       { nombre: 'Ginecología', peso: 3 },
@@ -2226,6 +2345,12 @@ export const SINTOMAS: readonly Sintoma[] = [
       'purgaciones',
       'llagas en el pene',
       'llagas en la vagina',
+      'ladillas',
+      'herpes',
+      'condilomas',
+      'papiloma',
+      'vph',
+      'chancro',
     ],
     especialidades: [
       { nombre: 'Infectología', peso: 3 },
@@ -2308,6 +2433,10 @@ export const SINTOMAS: readonly Sintoma[] = [
       'resultados de laboratorio',
       'resultado de mis analisis',
       'necesito que me vean unos analisis',
+      'quiero leer mis analisis',
+      'leer mis analisis',
+      'que me expliquen mis analisis',
+      'no entiendo mis analisis',
     ],
     especialidades: [{ nombre: 'Medicina general', peso: 3 }],
   },
@@ -2347,6 +2476,676 @@ export const SINTOMAS: readonly Sintoma[] = [
     especialidades: [
       { nombre: 'Medicina general', peso: 3 },
       { nombre: 'Infectología', peso: 1 },
+    ],
+  },
+
+  /* --- Lo que faltaba: palabras comunes de salud (2026-10-08) -------------------------- */
+  {
+    id: 'infeccion-respiratoria',
+    nombre: 'bronquitis o neumonía',
+    // Registro común hispanoamericano (2026-10-08, batería de 311 frases): sin fuente boliviana específica salvo donde se cita.
+    sinonimos: [
+      'bronquitis',
+      'neumonia',
+      'pulmonia',
+      'infeccion en los pulmones',
+      'pecho cargado',
+      'pecho cerrado',
+      'tos con pecho cerrado',
+    ],
+    especialidades: [
+      { nombre: 'Neumología', peso: 3 },
+      { nombre: 'Medicina general', peso: 2 },
+      { nombre: 'Infectología', peso: 1 },
+    ],
+  },
+  {
+    id: 'colitis-ulcera',
+    nombre: 'colitis o úlcera',
+    sinonimos: [
+      'colitis',
+      'ulcera de estomago',
+      'ulcera gastrica',
+      'colon irritable',
+      'colon inflamado',
+    ],
+    especialidades: [
+      { nombre: 'Gastroenterología', peso: 3 },
+      { nombre: 'Medicina general', peso: 1 },
+    ],
+  },
+  {
+    id: 'parasitos',
+    nombre: 'parásitos o lombrices',
+    // Registro común hispanoamericano (2026-10-08, batería de 311 frases): sin fuente boliviana específica salvo donde se cita.
+    sinonimos: [
+      'parasitos',
+      'lombrices',
+      'lombriz',
+      'solitaria',
+      'oxiuros',
+      'giardia',
+      'amebas',
+      'tengo bichos en la barriga',
+      'me salio un gusano',
+    ],
+    especialidades: [
+      { nombre: 'Medicina general', peso: 3 },
+      { nombre: 'Gastroenterología', peso: 2 },
+      { nombre: 'Infectología', peso: 2 },
+      { nombre: 'Pediatría', peso: 1 },
+    ],
+  },
+  {
+    id: 'vesicula',
+    nombre: 'vesícula o cálculos biliares',
+    sinonimos: [
+      'calculos en la vesicula',
+      'piedras en la vesicula',
+      'dolor de vesicula',
+      'vesicula inflamada',
+      'colecistitis',
+      'mal de la vesicula',
+    ],
+    especialidades: [
+      { nombre: 'Cirugía general', peso: 3 },
+      { nombre: 'Gastroenterología', peso: 2 },
+      { nombre: 'Medicina general', peso: 1 },
+    ],
+  },
+  {
+    id: 'apendicitis',
+    nombre: 'posible apendicitis',
+    sinonimos: [
+      'apendicitis',
+      'dolor en el lado derecho abajo de la panza',
+      'dolor en la fosa iliaca derecha',
+    ],
+    especialidades: [
+      { nombre: 'Cirugía general', peso: 3 },
+      { nombre: 'Medicina general', peso: 2 },
+    ],
+  },
+  {
+    id: 'hernia',
+    nombre: 'hernia',
+    sinonimos: [
+      'hernia',
+      'hernia inguinal',
+      'hernia umbilical',
+      'bulto en la ingle',
+      'bulto en el ombligo',
+      'me salio una bola en la ingle',
+    ],
+    especialidades: [
+      { nombre: 'Cirugía general', peso: 3 },
+      { nombre: 'Medicina general', peso: 1 },
+    ],
+  },
+  {
+    id: 'hipo',
+    nombre: 'hipo que no se quita',
+    sinonimos: [
+      'hipo',
+      'hipo que no se quita',
+      'hipo que no para',
+    ],
+    especialidades: [
+      { nombre: 'Medicina general', peso: 3 },
+      { nombre: 'Gastroenterología', peso: 1 },
+    ],
+  },
+  {
+    id: 'mal-aliento',
+    nombre: 'mal aliento o lengua blanca',
+    sinonimos: [
+      'halitosis',
+      'aliento feo',
+      'lengua blanca',
+      'sabor amargo en la boca',
+      'sabor feo en la boca',
+    ],
+    especialidades: [
+      { nombre: 'Odontología', peso: 2 },
+      { nombre: 'Gastroenterología', peso: 2 },
+      { nombre: 'Medicina general', peso: 2 },
+    ],
+  },
+  {
+    id: 'boca-seca',
+    nombre: 'boca seca',
+    sinonimos: [
+      'boca seca',
+      'sequedad en la boca',
+      'me seca la boca',
+      'mucha sed por la noche',
+    ],
+    especialidades: [
+      { nombre: 'Medicina general', peso: 3 },
+      { nombre: 'Odontología', peso: 2 },
+      { nombre: 'Endocrinología', peso: 1 },
+    ],
+  },
+  {
+    id: 'falta-de-apetito',
+    nombre: 'falta de apetito',
+    // «No tengo hambre» vale desde que el motor exige el «no» pegado a la palabra siguiente.
+    sinonimos: [
+      'falta de apetito',
+      'sin apetito',
+      'sin hambre',
+      'perdi el apetito',
+      'perdi el hambre',
+      'sin ganas de comer',
+      'perdi las ganas de comer',
+      'no quiero comer',
+      'no tengo hambre',
+      'no me da hambre',
+    ],
+    especialidades: [
+      { nombre: 'Medicina general', peso: 3 },
+      { nombre: 'Nutrición', peso: 1 },
+      { nombre: 'Psiquiatría', peso: 1 },
+    ],
+  },
+  {
+    id: 'mucha-hambre-o-sed',
+    nombre: 'mucha hambre o mucha sed',
+    sinonimos: [
+      // «Mucha hambre» y «mucha sed» NO: «mucha» se descarta y quedaban en «hambre» o «sed» a secas.
+      'hambre todo el tiempo',
+      'hambre a cada rato',
+      'hambre excesiva',
+      'sed todo el tiempo',
+      'sed a cada rato',
+      'sed excesiva',
+      'polifagia',
+      'polidipsia',
+    ],
+    especialidades: [
+      { nombre: 'Endocrinología', peso: 3 },
+      { nombre: 'Medicina general', peso: 2 },
+      { nombre: 'Nutrición', peso: 1 },
+    ],
+  },
+  {
+    id: 'cambios-en-la-orina',
+    nombre: 'cambios en la orina',
+    // Registro común hispanoamericano (2026-10-08, batería de 311 frases): sin fuente boliviana específica salvo donde se cita.
+    sinonimos: [
+      'orino mucho',
+      'orino poco',
+      'orino a cada rato',
+      'orina oscura',
+      'orina turbia',
+      'orina con mal olor',
+      'orina espumosa',
+      'se me escapa la orina',
+      'pierdo orina',
+      'incontinencia',
+      'me orino sin querer',
+      'no puedo orinar',
+      'no sale la orina',
+    ],
+    especialidades: [
+      { nombre: 'Urología', peso: 3 },
+      { nombre: 'Nefrología', peso: 1 },
+      { nombre: 'Medicina general', peso: 1 },
+    ],
+  },
+  {
+    id: 'miomas-quistes',
+    nombre: 'miomas o quistes en los ovarios',
+    sinonimos: [
+      'miomas',
+      'fibromas',
+      'quistes en los ovarios',
+      'quiste de ovario',
+      'ovarios poliquisticos',
+      'tumor en el utero',
+    ],
+    soloParaSexo: 'FEMALE',
+    especialidades: [
+      { nombre: 'Ginecología', peso: 3 },
+      { nombre: 'Medicina general', peso: 1 },
+    ],
+  },
+  {
+    id: 'enfermedad-de-la-piel',
+    nombre: 'eczema, dermatitis o psoriasis',
+    // «Saro»: piel escamosa por la sequedad del ambiente (Sanabria Fernández et al., 2021).
+    sinonimos: [
+      'eczema',
+      'eccema',
+      'dermatitis',
+      'psoriasis',
+      'caspa',
+      'vitiligo',
+      'rosacea',
+      'piel muy seca',
+      'piel reseca',
+      'piel escamosa',
+      'piel pelada',
+      'saro',
+    ],
+    especialidades: [
+      { nombre: 'Dermatología', peso: 3 },
+      { nombre: 'Medicina general', peso: 1 },
+    ],
+  },
+  {
+    id: 'piojos-sarna',
+    nombre: 'piojos o sarna',
+    sinonimos: [
+      'piojos',
+      'piojo',
+      'liendres',
+      'sarna',
+      'escabiosis',
+      'pulgas',
+      'chinches',
+      'me pica de noche entre los dedos',
+    ],
+    especialidades: [
+      { nombre: 'Dermatología', peso: 3 },
+      { nombre: 'Pediatría', peso: 1 },
+      { nombre: 'Medicina general', peso: 1 },
+    ],
+  },
+  {
+    id: 'quemadura',
+    nombre: 'quemadura',
+    sinonimos: [
+      'quemadura',
+      'me queme',
+      'me quemo el sol',
+      'quemadura de sol',
+      'me escalde',
+      'me queme con aceite',
+      'me queme con agua caliente',
+      'ampollas por quemadura',
+      'me quemo la plancha',
+    ],
+    especialidades: [
+      { nombre: 'Cirugía general', peso: 3 },
+      { nombre: 'Dermatología', peso: 2 },
+      { nombre: 'Medicina general', peso: 2 },
+    ],
+  },
+  {
+    id: 'herida-o-corte',
+    nombre: 'herida o corte',
+    // Cada frase nombra lo cortado o el objeto: «me corto» a secas es también la autolesión (ver ideas-suicidas).
+    sinonimos: [
+      'me corte el dedo',
+      'me corte la mano',
+      'me corte con un cuchillo',
+      'me corte con un vidrio',
+      'herida profunda',
+      'herida abierta',
+      'cortadura',
+      'tajo',
+      'me raspe',
+      'raspadura',
+      'me hice una herida',
+      'herida que sangra',
+    ],
+    especialidades: [
+      { nombre: 'Cirugía general', peso: 3 },
+      { nombre: 'Medicina general', peso: 3 },
+    ],
+  },
+  {
+    id: 'ampolla-callo',
+    nombre: 'ampolla o callo',
+    sinonimos: [
+      'ampolla',
+      'ampollas',
+      'callo',
+      'callos',
+      'callosidad',
+    ],
+    especialidades: [
+      { nombre: 'Dermatología', peso: 2 },
+      { nombre: 'Medicina general', peso: 2 },
+      { nombre: 'Traumatología', peso: 1 },
+    ],
+  },
+  {
+    id: 'ictericia',
+    nombre: 'piel o ojos amarillos',
+    sinonimos: [
+      'ojos amarillos',
+      'piel amarilla',
+      'ictericia',
+      'hepatitis',
+      'amarillez',
+      'me puse amarillo',
+      'mal del higado',
+    ],
+    especialidades: [
+      { nombre: 'Gastroenterología', peso: 3 },
+      { nombre: 'Medicina general', peso: 2 },
+      { nombre: 'Infectología', peso: 1 },
+    ],
+  },
+  {
+    id: 'osteoporosis-escoliosis',
+    nombre: 'huesos débiles o columna torcida',
+    sinonimos: [
+      'osteoporosis',
+      'escoliosis',
+      'huesos debiles',
+      'columna torcida',
+      'joroba',
+      'espalda encorvada',
+      'cifosis',
+    ],
+    especialidades: [
+      { nombre: 'Traumatología', peso: 3 },
+      { nombre: 'Reumatología', peso: 2 },
+      { nombre: 'Medicina general', peso: 1 },
+    ],
+  },
+  {
+    id: 'presion-baja',
+    nombre: 'presión baja',
+    sinonimos: [
+      'presion baja',
+      'tengo la presion baja',
+      'hipotension',
+      'se me baja la presion',
+      'bajon de presion',
+      'me baja la presion',
+    ],
+    especialidades: [
+      { nombre: 'Medicina general', peso: 3 },
+      { nombre: 'Cardiología', peso: 2 },
+    ],
+  },
+  {
+    id: 'azucar-baja',
+    nombre: 'azúcar baja',
+    sinonimos: [
+      'azucar baja',
+      'tengo el azucar baja',
+      'hipoglucemia',
+      'bajon de azucar',
+      'se me baja el azucar',
+    ],
+    especialidades: [
+      { nombre: 'Endocrinología', peso: 3 },
+      { nombre: 'Medicina general', peso: 2 },
+    ],
+  },
+  {
+    id: 'somnolencia',
+    nombre: 'sueño excesivo',
+    // «Duermo mucho / poco / demasiado» NO: el motor descarta la cantidad y queda «dormir» a secas.
+    sinonimos: [
+      'tengo sueno todo el dia',
+      'mucho sueno',
+      'me quedo dormido en el dia',
+      'somnolencia',
+    ],
+    especialidades: [
+      { nombre: 'Medicina general', peso: 3 },
+      { nombre: 'Neurología', peso: 1 },
+      { nombre: 'Psiquiatría', peso: 1 },
+    ],
+  },
+  {
+    id: 'malaria',
+    nombre: 'malaria o paludismo',
+    sinonimos: [
+      'malaria',
+      'paludismo',
+      'fiebre terciana',
+      'fiebre con escalofrios y temblores',
+    ],
+    especialidades: [
+      { nombre: 'Infectología', peso: 3 },
+      { nombre: 'Medicina general', peso: 2 },
+    ],
+  },
+  {
+    id: 'chagas',
+    nombre: 'mal de Chagas',
+    // Endémico en Bolivia; el contagio es por la vinchuca.
+    sinonimos: [
+      'chagas',
+      'mal de chagas',
+      'vinchuca',
+      'me pico una vinchuca',
+      'me pico la vinchuca',
+      'tengo chagas',
+    ],
+    especialidades: [
+      { nombre: 'Infectología', peso: 3 },
+      { nombre: 'Cardiología', peso: 2 },
+      { nombre: 'Gastroenterología', peso: 1 },
+      { nombre: 'Medicina general', peso: 1 },
+    ],
+  },
+  {
+    id: 'leishmaniasis',
+    nombre: 'leishmaniasis',
+    // «Uta» (leishmaniasis cutánea en Bolivia) no se agrega: el motor descarta las palabras de 3 letras.
+    sinonimos: [
+      'leishmaniasis',
+      'espundia',
+      'llaga de la selva',
+      'llaga que no sana en la selva',
+      'herida del mosquito que no sana',
+    ],
+    especialidades: [
+      { nombre: 'Infectología', peso: 3 },
+      { nombre: 'Dermatología', peso: 2 },
+      { nombre: 'Medicina general', peso: 1 },
+    ],
+  },
+  {
+    id: 'tuberculosis',
+    nombre: 'tuberculosis',
+    sinonimos: [
+      'tuberculosis',
+      'tisis',
+      'tos con sangre',
+      'escupo sangre',
+      'esputo con sangre',
+      'tos de mas de dos semanas',
+      'tos de mas de quince dias',
+    ],
+    especialidades: [
+      { nombre: 'Neumología', peso: 3 },
+      { nombre: 'Infectología', peso: 3 },
+      { nombre: 'Medicina general', peso: 1 },
+    ],
+  },
+  {
+    id: 'tifoidea',
+    nombre: 'fiebre tifoidea',
+    sinonimos: [
+      'tifoidea',
+      'fiebre tifoidea',
+      'salmonela',
+      'salmonelosis',
+    ],
+    especialidades: [
+      { nombre: 'Infectología', peso: 3 },
+      { nombre: 'Gastroenterología', peso: 2 },
+      { nombre: 'Medicina general', peso: 2 },
+    ],
+  },
+  {
+    id: 'enfermedad-infantil-contagiosa',
+    nombre: 'varicela, sarampión u otra enfermedad infantil',
+    // «Lechina»: varicela en el habla popular de la región andina.
+    sinonimos: [
+      'varicela',
+      'sarampion',
+      'paperas',
+      'rubeola',
+      'escarlatina',
+      'roseola',
+      'tos ferina',
+      'coqueluche',
+      'lechina',
+    ],
+    especialidades: [
+      { nombre: 'Pediatría', peso: 3 },
+      { nombre: 'Infectología', peso: 2 },
+      { nombre: 'Medicina general', peso: 1 },
+    ],
+  },
+  {
+    id: 'alzheimer-parkinson',
+    nombre: 'Parkinson, Alzheimer o demencia',
+    // «Tembleque»: persona con Parkinson (Sanabria Fernández et al., 2021).
+    sinonimos: [
+      'parkinson',
+      'mal de parkinson',
+      'tembleque',
+      'alzheimer',
+      'demencia',
+      'se le olvida todo',
+      'no reconoce a la familia',
+    ],
+    especialidades: [
+      { nombre: 'Neurología', peso: 3 },
+      { nombre: 'Geriatría', peso: 2 },
+      { nombre: 'Medicina general', peso: 1 },
+    ],
+  },
+  {
+    id: 'cancer',
+    nombre: 'cáncer o tumor',
+    sinonimos: [
+      'cancer',
+      'tumor',
+      'quimioterapia',
+      'radioterapia',
+      'me detectaron un tumor',
+      'bulto que crece',
+    ],
+    especialidades: [
+      { nombre: 'Oncología', peso: 3 },
+      { nombre: 'Medicina general', peso: 1 },
+    ],
+  },
+  {
+    id: 'enfermedad-renal',
+    nombre: 'enfermedad de los riñones',
+    sinonimos: [
+      'insuficiencia renal',
+      'dialisis',
+      'rinones enfermos',
+      'enfermedad renal',
+      'proteinuria',
+    ],
+    especialidades: [
+      { nombre: 'Nefrología', peso: 3 },
+      { nombre: 'Medicina general', peso: 1 },
+    ],
+  },
+  {
+    id: 'golpe-de-calor',
+    nombre: 'golpe de calor o deshidratación',
+    sinonimos: [
+      'insolacion',
+      'golpe de calor',
+      'deshidratacion',
+      'me deshidrate',
+      'me dio un golpe de calor',
+    ],
+    especialidades: [
+      { nombre: 'Medicina general', peso: 3 },
+    ],
+  },
+  {
+    id: 'lactancia-posparto',
+    nombre: 'lactancia o posparto',
+    sinonimos: [
+      'lactancia',
+      'mastitis',
+      'no tengo leche',
+      'dar de lactar',
+      'posparto',
+      'puerperio',
+      'cesarea',
+      'sangrado despues del parto',
+    ],
+    soloParaSexo: 'FEMALE',
+    especialidades: [
+      { nombre: 'Obstetricia', peso: 3 },
+      { nombre: 'Ginecología', peso: 2 },
+      { nombre: 'Pediatría', peso: 1 },
+    ],
+  },
+  {
+    id: 'fimosis',
+    nombre: 'fimosis',
+    sinonimos: [
+      'fimosis',
+      'prepucio apretado',
+      'circuncision',
+      'no baja el prepucio',
+    ],
+    soloParaSexo: 'MALE',
+    especialidades: [
+      { nombre: 'Urología', peso: 3 },
+    ],
+  },
+  {
+    id: 'resaca',
+    nombre: 'resaca',
+    // «Cruda» (México), «guayabo» (Colombia), «chak'i» (Bolivia): hangover. Fuente de chak'i: psicologiaymente.com «125 palabras bolivianas».
+    sinonimos: [
+      'resaca',
+      'cruda',
+      'guayabo',
+      'chaqui',
+      'tengo chaqui',
+      'guayaba por tomar',
+    ],
+    especialidades: [
+      { nombre: 'Medicina general', peso: 3 },
+      { nombre: 'Gastroenterología', peso: 1 },
+    ],
+  },
+  {
+    id: 'dificultad-para-caminar',
+    nombre: 'dificultad para caminar',
+    sinonimos: [
+      'dificultad para caminar',
+      'camina con dificultad',
+      'le cuesta caminar',
+      'arrastra los pies',
+      'se cae seguido',
+      'camina muy despacio',
+    ],
+    especialidades: [
+      { nombre: 'Traumatología', peso: 2 },
+      { nombre: 'Neurología', peso: 2 },
+      { nombre: 'Geriatría', peso: 2 },
+      { nombre: 'Medicina general', peso: 2 },
+    ],
+  },
+  {
+    id: 'alergia',
+    nombre: 'alergia',
+    sinonimos: [
+      'soy alergico',
+      'rinitis alergica',
+      'estornudos alergicos',
+      'alergia a la penicilina',
+      'alergia a un medicamento',
+      'alergia a la comida',
+    ],
+    especialidades: [
+      { nombre: 'Alergología', peso: 3 },
+      { nombre: 'Medicina general', peso: 2 },
+      { nombre: 'Dermatología', peso: 1 },
     ],
   },
 ];
