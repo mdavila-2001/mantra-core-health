@@ -1,6 +1,6 @@
 <app-content-dialog
   [heading]="titulo()"
-  description="Las cuentas son también los tipos de tus gastos, activos y deudas."
+  description="Las cuentas son también los tipos de sus gastos, activos y deudas."
   size="sm"
   [dismissible]="!guardando()"
   data-testid="cuenta-dialog"
@@ -15,7 +15,7 @@
       [required]="true"
       [errorMessage]="
         form.controls.name.touched && form.controls.name.invalid
-          ? 'Escribí un nombre de hasta 80 caracteres.'
+          ? 'Escriba un nombre de hasta 80 caracteres.'
           : ''
       "
     >

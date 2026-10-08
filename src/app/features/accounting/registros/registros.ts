@@ -255,7 +255,7 @@ export class ContabilidadSimple {
       codigo: cuenta.code,
       nombre: cuenta.name,
       clase: NOMBRE_DE_CLASE[cuenta.accountClass],
-      origen: cuenta.seeded ? 'General' : 'Tuya',
+      origen: cuenta.seeded ? 'General' : 'Suya',
       cuenta,
     })),
   );

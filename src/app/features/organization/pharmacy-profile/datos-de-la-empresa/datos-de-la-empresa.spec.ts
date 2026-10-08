@@ -118,7 +118,7 @@ describe('DatosDeLaEmpresa', () => {
 
     const opciones = Array.from(root.querySelectorAll('option'))
       .map((opcion) => opcion.textContent?.trim())
-      .filter((texto) => texto !== 'Elegí el tipo de sociedad');
+      .filter((texto) => texto !== 'Elija el tipo de sociedad');
     expect(opciones).toEqual([...TIPOS_DE_SOCIEDAD]);
   });
 

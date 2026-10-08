@@ -214,8 +214,8 @@ test.describe('Hito 2 · glosario seed bajo demanda · solo demo', () => {
         const missing = page.locator('.termino app-empty-state');
         await expect(missing).toHaveAttribute('role', 'status');
         await expect(missing).toHaveAttribute('aria-live', 'polite');
-        await expect(missing).toContainText('No encontramos lo que buscás');
-        await expect(missing).toContainText('Verificá la dirección o volvé al listado.');
+        await expect(missing).toContainText('No encontramos lo que busca');
+        await expect(missing).toContainText('Verifique la dirección o vuelva al listado.');
         await expect(page.locator('.termino__tarjeta')).toHaveCount(0);
         expect(browser.responses.some((response) => response.path === SEED + 'mock/ids/00.json')).toBe(true);
         await capture(page, 'missing', viewport.width, info);

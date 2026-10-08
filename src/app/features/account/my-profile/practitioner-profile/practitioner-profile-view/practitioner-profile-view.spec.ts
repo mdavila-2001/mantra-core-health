@@ -433,10 +433,10 @@ describe('PractitionerProfileView', () => {
     expect(pestanas).not.toContain('Vista previa del perfil público');
   });
 
-  it('el dueño ve la misma cabecera que el paciente: «Tus datos» y el lápiz', () => {
+  it('el dueño ve la misma cabecera que el paciente: «Sus datos» y el lápiz', () => {
     const host = montar(PERFIL, true);
 
-    expect(host.querySelector('.mi-perfil__cabecera')?.textContent).toContain('Tus datos');
+    expect(host.querySelector('.mi-perfil__cabecera')?.textContent).toContain('Sus datos');
     const lapiz = host.querySelector('[data-testid="mi-perfil-editar"]');
     // «Editar perfil» con el lápiz, escrito: ya no es un botón de sólo ícono.
     expect(lapiz?.textContent?.trim()).toBe('Editar perfil');
@@ -555,7 +555,7 @@ describe('PractitionerProfileView', () => {
 
     // Desde el 19/09/2026 el formulario vive en un modal: lo embebido es la
     // puerta, no los ocho campos.
-    expect(host.textContent).toContain('Añadir elemento a tu historial');
+    expect(host.textContent).toContain('Añadir elemento a su historial');
     // No debe repetir su propio listado plano: ya está la línea de tiempo arriba.
     expect(host.querySelectorAll('.historial__lista')).toHaveLength(0);
   });
@@ -563,7 +563,7 @@ describe('PractitionerProfileView', () => {
   it('un visitante no ve el formulario de alta', () => {
     const host = montar(PERFIL, false);
 
-    expect(host.textContent).not.toContain('Añadir elemento a tu historial');
+    expect(host.textContent).not.toContain('Añadir elemento a su historial');
   });
 
   /* -- I-D (F-31): la ayuda es de quien arma su perfil, no de quien lo mira -- */
@@ -749,7 +749,7 @@ describe('PractitionerProfileView', () => {
     seleccionarPestana(host, 'Actividad');
 
     expect(host.textContent).toContain('Encuentros atendidos');
-    expect(host.textContent).toContain('Son los registros que dejaste asentados con esta cuenta');
+    expect(host.textContent).toContain('Son los registros que dejó asentados con esta cuenta');
   });
 
   /**
@@ -773,7 +773,7 @@ describe('PractitionerProfileView', () => {
   it('un visitante ve la actividad en tercera persona', () => {
     const host = montar(PERFIL, false);
     expect(host.textContent).toContain('Actividad en la plataforma');
-    expect(host.textContent).not.toContain('Tu actividad');
+    expect(host.textContent).not.toContain('Su actividad');
   });
 
   /* -- Casos vacíos ----------------------------------------------------------- */
@@ -861,7 +861,7 @@ describe('PractitionerProfileView', () => {
       const host = montar({ ...PERFIL, datosPersonales: null });
       const texto = host.textContent ?? '';
 
-      expect(texto).not.toContain('Tus datos');
+      expect(texto).not.toContain('Sus datos');
       expect(texto).not.toContain('8812345');
     });
 
@@ -883,7 +883,7 @@ describe('PractitionerProfileView', () => {
         },
       });
 
-      expect(host.textContent ?? '').not.toContain('Tus datos');
+      expect(host.textContent ?? '').not.toContain('Sus datos');
     });
   });
 
@@ -919,7 +919,7 @@ describe('PractitionerProfileView', () => {
     it('el dueño lee sus datos sin tocar una pestaña: son la primera', () => {
       const host = montar({ ...PERFIL, datosPersonales: DATOS }, true);
 
-      expect(host.textContent).toContain('Tus datos');
+      expect(host.textContent).toContain('Sus datos');
       expect(host.textContent).toContain('8812345');
     });
 
@@ -1139,7 +1139,7 @@ describe('PractitionerProfileView', () => {
 
       fixture.componentRef.setInput(
         'errorDeFoto',
-        'Tu cuenta todavía no está asociada a un perfil profesional.',
+        'Su cuenta todavía no está asociada a un perfil profesional.',
       );
       fixture.detectChanges();
 
@@ -1247,7 +1247,7 @@ describe('PractitionerProfileView', () => {
         'Sin registrar',
       );
       expect(host.querySelector('[data-testid="perfil-factura-falta"]')?.textContent).toContain(
-        'Editar tu info',
+        'Editar su info',
       );
     });
 
@@ -1288,7 +1288,7 @@ describe('PractitionerProfileView', () => {
       const host = montar({ ...PERFIL, seguros: [] }, true);
 
       expect(host.querySelector('[data-testid="perfil-seguros"]')?.textContent).toContain(
-        'Ninguna aseguradora te tiene en su red todavía',
+        'Ninguna aseguradora le tiene en su red todavía',
       );
       expect(host.querySelector('[data-testid="perfil-seguro"]')).toBeNull();
     });
@@ -1311,14 +1311,14 @@ describe('PractitionerProfileView', () => {
   /* -- «Dónde atiendo» después de C-01 y C-02 (doctor, 20/09/2026) --------- */
 
   describe('la pestaña «Dónde atiendo»', () => {
-    it('ya no muestra «Cómo atendés»', () => {
+    it('ya no muestra «Cómo atiende»', () => {
       // El kill-test del hito, en prueba: «abrí Dónde atiendo; si ves
       // Telemedicina o Pacientes nuevos, C-01 no está hecho».
       const host = montar(PERFIL, true);
       seleccionarPestana(host, 'Dónde atiendo');
       const panel = host.querySelector('[role="tabpanel"]')!;
 
-      expect(panel.textContent).not.toContain('Cómo atendés');
+      expect(panel.textContent).not.toContain('Cómo atiende');
       expect(panel.textContent).not.toContain('Pacientes nuevos');
       expect(panel.textContent).not.toContain('Telemedicina');
     });
@@ -1332,7 +1332,7 @@ describe('PractitionerProfileView', () => {
       const host = montar({ ...PERFIL, telemedicina: true }, true);
 
       expect(host.querySelector('.mi-perfil__cabecera')?.textContent).toContain(
-        'Atendés por telemedicina',
+        'Atiende por telemedicina',
       );
     });
 

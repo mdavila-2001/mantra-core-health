@@ -66,10 +66,10 @@ const PERIODOS: readonly { readonly value: string; readonly label: string; reado
 ];
 
 const SUBTITULO: Readonly<Record<MyClaimsView, string>> = {
-  PATIENT: 'Lo que tu aseguradora decidió sobre tus consultas y estudios: si los cubre, cuánto y por qué.',
-  PRACTITIONER: 'Lo que las aseguradoras decidieron sobre las atenciones que presentaste: cuánto cubren y por qué.',
-  LABORATORY: 'Lo que las aseguradoras decidieron sobre los análisis que hizo tu laboratorio.',
-  IMAGING: 'Lo que las aseguradoras decidieron sobre los estudios de imagen que hizo tu centro.',
+  PATIENT: 'Lo que su aseguradora decidió sobre sus consultas y estudios: si los cubre, cuánto y por qué.',
+  PRACTITIONER: 'Lo que las aseguradoras decidieron sobre las atenciones que presentó: cuánto cubren y por qué.',
+  LABORATORY: 'Lo que las aseguradoras decidieron sobre los análisis que hizo su laboratorio.',
+  IMAGING: 'Lo que las aseguradoras decidieron sobre los estudios de imagen que hizo su centro.',
   NONE: 'Las solicitudes a aseguradoras y lo que cada una decidió.',
 };
 
@@ -77,7 +77,7 @@ const SUBTITULO: Readonly<Record<MyClaimsView, string>> = {
 function vacioDe(vista: MyClaimsView, pestana: number): { readonly accion: ViewStateNextAction; readonly texto: string } {
   const panel: ViewStateNextAction = { label: 'Volver al panel', route: '/dashboard' };
   if (vista === 'NONE') {
-    return { accion: panel, texto: 'Tu cuenta no presenta solicitudes a aseguradoras, así que no hay decisiones que mostrar.' };
+    return { accion: panel, texto: 'Su cuenta no presenta solicitudes a aseguradoras, así que no hay decisiones que mostrar.' };
   }
   if (pestana === PESTANA_DECIDIDAS) {
     return {

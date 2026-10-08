@@ -63,7 +63,7 @@ test.describe('Carril E3 · dónde comprar mi receta', () => {
     await irA(page, '/my-account/medical-record');
     await estable(page);
     await expect(
-      page.getByText('Todavía no hay atenciones registradas en tu historia.'),
+      page.getByText('Todavía no hay atenciones registradas en su historia.'),
     ).toBeVisible();
     await expect(page.getByTestId('historia-donde-comprar')).toHaveCount(0);
 

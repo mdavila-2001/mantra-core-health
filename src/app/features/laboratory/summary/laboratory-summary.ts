@@ -30,7 +30,7 @@ const SHORTCUTS: readonly Shortcut[] = [
   },
   {
     label: 'Recibir muestras',
-    hint: 'Las órdenes que te derivaron y todavía esperan su muestra.',
+    hint: 'Las órdenes que le derivaron y todavía esperan su muestra.',
     route: '/laboratorio/recepcion',
   },
   {

@@ -119,7 +119,7 @@ async function llegarATuCuenta(page: Page, sigla: string): Promise<void> {
   await subirLosCincoDocumentos(page);
   await completarRepresentanteLegal(page);
   await completarGerencias(page);
-  await expect(page.locator('.paginated-form__titulo')).toContainText('Tu cuenta');
+  await expect(page.locator('.paginated-form__titulo')).toContainText('Su cuenta');
 }
 
 /** Envía el alta y devuelve la respuesta del servidor. */

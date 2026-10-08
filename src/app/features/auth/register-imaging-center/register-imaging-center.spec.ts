@@ -531,7 +531,7 @@ describe('RegisterImagingCenter', () => {
       campo.dispatchEvent(new FocusEvent('blur'));
       fixture.detectChanges();
 
-      expect(errorDe(campo)).toBe('Escribí la dirección legal de la central.');
+      expect(errorDe(campo)).toBe('Escriba la dirección legal de la central.');
       expect(
         fixture.nativeElement.querySelector('[data-testid="registro-imagen-direccion-reescribir"]'),
       ).not.toBeNull();
@@ -547,7 +547,7 @@ describe('RegisterImagingCenter', () => {
       expect(fixture.nativeElement.querySelector('.paginated-form__titulo').textContent).toContain(
         'Dónde está la central',
       );
-      expect(errorDe(campo)).toBe('Escribí la dirección legal de la central.');
+      expect(errorDe(campo)).toBe('Escriba la dirección legal de la central.');
     });
   });
 });

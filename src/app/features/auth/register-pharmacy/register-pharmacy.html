@@ -12,8 +12,8 @@
 </ng-template>
 
 <app-auth-split
-  claim="Sumá tu farmacia a la red"
-  tagline="Publicá tu catálogo, recibí pedidos con receta y atendé desde un solo lugar."
+  claim="Sume su farmacia a la red"
+  tagline="Publique su catálogo, reciba pedidos con receta y atienda desde un solo lugar."
   contentWidth="full"
   [plainSurface]="true"
 >
@@ -22,15 +22,15 @@
       @if (registered()) {
         <div class="registro__header">
           <h1 appAnuncio [asertivo]="false" class="registro__title" data-testid="registro-farmacia-exito">
-            Tu cuenta está lista
+            Su cuenta está lista
           </h1>
           <p class="registro__subtitle">
-            Ya podés entrar con el correo del representante legal y la contraseña que elegiste.
+            Ya puede entrar con el correo del representante legal y la contraseña que eligió.
             @if (verificationSent()) {
-              Te mandamos un correo para verificar tu dirección; podés hacerlo cuando quieras, no hace
-              falta para usar tu cuenta.
+              Le mandamos un correo para verificar su dirección; puede hacerlo cuando quiera, no hace
+              falta para usar su cuenta.
             }
-            Tu farmacia queda pendiente de aprobación: mientras la plataforma no la apruebe, no aparece
+            Su farmacia queda pendiente de aprobación: mientras la plataforma no la apruebe, no aparece
             en las búsquedas de pacientes.
           </p>
         </div>
@@ -46,10 +46,10 @@
         </button>
       } @else {
         <div class="registro__header">
-          <h1 class="registro__title">Registrá tu farmacia</h1>
+          <h1 class="registro__title">Registre su farmacia</h1>
           <p class="registro__subtitle">
-            Necesitamos lo básico para crear tu cuenta. Podés volver atrás en cualquier paso, y
-            completar el resto más adelante desde la Ficha de tu farmacia.
+            Necesitamos lo básico para crear su cuenta. Puede volver atrás en cualquier paso, y
+            completar el resto más adelante desde la Ficha de su farmacia.
           </p>
         </div>
 
@@ -120,9 +120,9 @@
               }
               <app-ubicacion-picker
                 pinId="farmacia-central"
-                etiquetaConfirmada="Tu farmacia"
+                etiquetaConfirmada="Su farmacia"
                 etiquetaQuitar="Quitar la ubicación de la central"
-                etiquetaMapa="La ubicación de tu farmacia en el mapa"
+                etiquetaMapa="La ubicación de su farmacia en el mapa"
                 [ids]="idsUbicacionCentral"
                 [inicial]="gpsCentral()"
                 (confirmado)="gpsCentral.set($event)"
@@ -214,7 +214,7 @@
                   </section>
                 } @empty {
                   <p class="farmacia-sucursales__vacio">
-                    Todavía no agregaste ninguna. Si atendés en un solo local, no hace falta.
+                    Todavía no agregó ninguna. Si atiende en un solo local, no hace falta.
                   </p>
                 }
 
@@ -244,7 +244,7 @@
                 @if (cargaEnLoteAbierta()) {
                   <app-branch-bulk-import
                     testIdPrefix="registro-farmacia-lote"
-                    contextNote="En farmacia una sucursal se registra con su punto en el mapa. A las que no lo traigan en el enlace, marcales el pin antes de terminar."
+                    contextNote="En farmacia una sucursal se registra con su punto en el mapa. A las que no lo traigan en el enlace, márqueles el pin antes de terminar."
                     [existingNames]="nombresDeSucursales()"
                     (imported)="agregarSucursalesEnLote($event)"
                     (closed)="cargaEnLoteAbierta.set(false)"
@@ -257,7 +257,7 @@
 
         <div class="registro__footer">
           <p class="registro__pie">
-            ¿Ya tenés cuenta? <a app-link routerLink="/auth">Iniciá sesión</a>
+            ¿Ya tiene cuenta? <a app-link routerLink="/auth">Inicie sesión</a>
           </p>
         </div>
       }

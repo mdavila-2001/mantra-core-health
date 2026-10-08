@@ -2,8 +2,8 @@
   title="Mi perfil"
   [subtitle]="
     esProfesional()
-      ? 'Tu trayectoria profesional, tu actividad y con qué credenciales estás entrando.'
-      : 'Tus datos, tu verificación de identidad y con qué credenciales estás entrando.'
+      ? 'Su trayectoria profesional, su actividad y con qué credenciales está entrando.'
+      : 'Sus datos, su verificación de identidad y con qué credenciales está entrando.'
   "
   [breadcrumbs]="breadcrumbs()"
 />
@@ -70,10 +70,10 @@
                   size="lg"
                   [src]="fotoUrl()"
                   [name]="resumen.displayName ?? ''"
-                  [alt]="'Foto de ' + (resumen.displayName ?? 'tu perfil')"
+                  [alt]="'Foto de ' + (resumen.displayName ?? 'su perfil')"
                 />
                 <span class="solo-lectores">
-                  {{ subiendoFoto() ? 'Subiendo tu foto…' : 'Cambiar mi foto de perfil' }}
+                  {{ subiendoFoto() ? 'Subiendo su foto…' : 'Cambiar mi foto de perfil' }}
                 </span>
                 <input #dropInput1
                   type="file"
@@ -86,7 +86,7 @@
               </label>
             }
             <div class="mi-perfil__rotulo">
-              <h2 class="mi-perfil__titulo">Tus datos</h2>
+              <h2 class="mi-perfil__titulo">Sus datos</h2>
               @if (datos(); as resumen) {
                 <p class="mi-perfil__nombre">{{ resumen.displayName ?? 'Sin nombre registrado' }}</p>
               }
@@ -142,19 +142,19 @@
             @if (verificacionPendiente()) {
               <app-alert
                 tone="info"
-                title="Tus datos aparecen acá cuando tu identidad esté verificada"
+                title="Sus datos aparecen acá cuando su identidad esté verificada"
               >
-                Es un trámite único: subís tu documento, lo revisamos y a partir de ahí ves acá tu
-                código de paciente y tus datos.
+                Es un trámite único: sube su documento, lo revisamos y a partir de ahí ve acá su
+                código de paciente y sus datos.
                 <div alert-actions>
                   <a app-link [routerLink]="rutaDeVerificacion">Verificar identidad</a>
                 </div>
               </app-alert>
             } @else {
-              <app-alert tone="error" title="No tenés acceso a esta sección">
+              <app-alert tone="error" title="No tiene acceso a esta sección">
                 {{
                   motivoDelMuro() ??
-                    'Tu rol o el propósito de uso declarado no alcanzan para ver este contenido.'
+                    'Su rol o el propósito de uso declarado no alcanzan para ver este contenido.'
                 }}
               </app-alert>
             }
@@ -246,7 +246,7 @@
                         @if (edad(); as anios) {
                           {{ anios }} años
                         } @else {
-                          <span class="mi-perfil__ausente">Falta tu fecha de nacimiento</span>
+                          <span class="mi-perfil__ausente">Falta su fecha de nacimiento</span>
                         }
                       </dd>
                     </div>
@@ -300,7 +300,7 @@
                 @if (verificacionOfrecida && !resumen.identityVerified) {
                   <p class="mi-perfil__nota">
                     <a app-link [routerLink]="rutaDeVerificacion">
-                      Verificá tu identidad para ver tu código de paciente
+                      Verifique su identidad para ver su código de paciente
                     </a>
                   </p>
                 }
@@ -442,7 +442,7 @@
                       }
                     </ul>
                   } @else {
-                    <p class="mi-perfil__nota mi-perfil__nota--primera">No declaraste ningún seguro.</p>
+                    <p class="mi-perfil__nota mi-perfil__nota--primera">No declaró ningún seguro.</p>
                   }
 
                   <!-- Tarea 4 · M-06: beneficios preventivos de la aseguradora. Sólo
@@ -453,7 +453,7 @@
                       <app-patient-campaigns-widget
                         class="mi-perfil__campaigns"
                         [patientProfileId]="patientId"
-                        emptyMessage="Tu seguro no tiene campañas preventivas activas hoy."
+                        emptyMessage="Su seguro no tiene campañas preventivas activas hoy."
                       />
                     }
                   }
@@ -490,7 +490,7 @@
                       }
                     </ul>
                   } @else {
-                    <p class="mi-perfil__nota mi-perfil__nota--primera">No declaraste ningún contacto de emergencia ni tutor.</p>
+                    <p class="mi-perfil__nota mi-perfil__nota--primera">No declaró ningún contacto de emergencia ni tutor.</p>
                   }
                 } @else {
                   <p class="mi-perfil__nota">Todavía no pudimos traer estos datos.</p>
@@ -520,7 +520,7 @@
        hermanos suyos, y por eso van en un lateral angosto. Sin ninguna de las
        dos, el lateral no se dibuja y la rejilla no le reserva la columna. -->
   @if (hayLateral()) {
-  <aside class="mi-perfil__lateral" aria-label="Tu cuenta">
+  <aside class="mi-perfil__lateral" aria-label="Su cuenta">
     <!-- ─── Verificación de identidad ─────────────────────────────────────────
          `GET /identity/me/verification-cases`. El backend lo publica desde
          siempre; la pantalla mostraba un solo caso y sólo si estaba abierto, así
@@ -565,7 +565,7 @@
           <!-- Sin casos no hay historial que mostrar, y lo que hace falta no es un
                cartel de vacío sino la salida: el trámite todavía no empezó. -->
           <p class="mi-perfil__nota">
-            Todavía no iniciaste ninguna verificación. Es lo que habilita el acceso a tus datos
+            Todavía no inició ninguna verificación. Es lo que habilita el acceso a sus datos
             clínicos.
           </p>
           <p class="mi-perfil__nota">

@@ -102,7 +102,7 @@ describe('solicitudes de dependiente por CI (simulador)', () => {
 
     const despues = avisosDe(jorge).filter((a) => a.destination?.type === 'DEPENDENT_LINK_REQUEST');
     expect(despues.length).toBe(antes + 1);
-    expect(despues[0]!.subject).toBe('Te quieren registrar como dependiente');
+    expect(despues[0]!.subject).toBe('Le quieren registrar como dependiente');
   });
 
   it('repetir la solicitud pendiente responde 409', () => {
@@ -147,7 +147,7 @@ describe('solicitudes de dependiente por CI (simulador)', () => {
     expect(dependientes.map((d) => d.patientProfileId)).toContain(JORGE.id);
 
     const avisos = avisosDe(titular).map((a) => a.subject);
-    expect(avisos).toContain(`${JORGE.displayName} aceptó ser tu dependiente`);
+    expect(avisos).toContain(`${JORGE.displayName} aceptó ser su dependiente`);
   });
 
   it('una solicitud ya respondida no se vuelve a responder', () => {

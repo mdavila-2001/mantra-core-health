@@ -711,7 +711,7 @@ export function registrarPerfiles(router: MockRouter): void {
 
   router.get('/profiles/patients/me/summary', (request) => {
     const p = pacienteDeSesion(request);
-    if (p === undefined) return notFound('No tenés perfil de paciente');
+    if (p === undefined) return notFound('No tiene perfil de paciente');
     return {
       personId: p.personId,
       patientProfileId: p.id,
@@ -725,7 +725,7 @@ export function registrarPerfiles(router: MockRouter): void {
 
   router.get('/profiles/patients/me', (request) => {
     const p = pacienteDeSesion(request);
-    if (p === undefined) return notFound('No tenés perfil de paciente');
+    if (p === undefined) return notFound('No tiene perfil de paciente');
     return perfilPropioDe(p);
   });
 
@@ -761,7 +761,7 @@ export function registrarPerfiles(router: MockRouter): void {
 
   router.patch('/profiles/patients/me', (request) => {
     const p = pacienteDeSesion(request);
-    if (p === undefined) return notFound('No tenés perfil de paciente');
+    if (p === undefined) return notFound('No tiene perfil de paciente');
     const cambios = cuerpo<Record<string, unknown>>(request);
     const actualizado = pacientes.actualizar(p.id, {
       ...(typeof cambios['name'] === 'string' ? { name: cambios['name'] } : {}),
@@ -964,7 +964,7 @@ export function registrarPerfiles(router: MockRouter): void {
       return reply(400, {
         statusCode: 400,
         code: 'VALIDATION_FAILED',
-        message: 'Escribí el CI de la persona o elegila de la búsqueda.',
+        message: 'Escriba el CI de la persona o elíjala de la búsqueda.',
         error: 'Bad Request',
       });
     }
@@ -981,7 +981,7 @@ export function registrarPerfiles(router: MockRouter): void {
       return reply(422, {
         statusCode: 422,
         code: 'VALIDATION_FAILED',
-        message: 'Ese CI es el tuyo: no podés registrarte como tu propio dependiente.',
+        message: 'Ese CI es el suyo: no puede registrarse como su propio dependiente.',
         error: 'Unprocessable Entity',
       });
     }
@@ -993,13 +993,13 @@ export function registrarPerfiles(router: MockRouter): void {
       );
     }
     if (representaA(titular.id, destinatario.id)) {
-      return conflict('Esa persona ya es tu dependiente.');
+      return conflict('Esa persona ya es su dependiente.');
     }
     const pendiente = solicitudes.filtrar(
       (s) => s.titularId === titular.id && s.dependienteId === destinatario.id && s.estado === 'PENDING',
     )[0];
     if (pendiente !== undefined) {
-      return conflict('Ya le enviaste una solicitud a esa persona. Falta que la acepte.');
+      return conflict('Ya le envió una solicitud a esa persona. Falta que la acepte.');
     }
 
     const solicitud = solicitudes.agregar({
@@ -1012,8 +1012,8 @@ export function registrarPerfiles(router: MockRouter): void {
     emitirNotificacion({
       userId: destinatario.userId,
       category: 'CLINICAL',
-      subject: 'Te quieren registrar como dependiente',
-      bodyText: `${titular.displayName} pide registrarte como su dependiente. Si aceptás, va a poder pedirte turnos y ver tu historia clínica.`,
+      subject: 'Le quieren registrar como dependiente',
+      bodyText: `${titular.displayName} pide registrarse como su dependiente. Si acepta, va a poder pedirle turnos y ver su historia clínica.`,
       destination: { type: 'DEPENDENT_LINK_REQUEST', id: solicitud.id },
       // Decidir desde la campana, sin abrir la pantalla de Dependientes.
       actions: [
@@ -1095,11 +1095,11 @@ export function registrarPerfiles(router: MockRouter): void {
         category: 'CLINICAL',
         subject:
           estado === 'ACCEPTED'
-            ? `${yo.displayName} aceptó ser tu dependiente`
-            : `${yo.displayName} rechazó ser tu dependiente`,
+            ? `${yo.displayName} aceptó ser su dependiente`
+            : `${yo.displayName} rechazó ser su dependiente`,
         bodyText:
           estado === 'ACCEPTED'
-            ? 'Ya aparece en tu lista de dependientes.'
+            ? 'Ya aparece en su lista de dependientes.'
             : 'No se creó ningún vínculo.',
         destination: { type: 'DEPENDENT_LINK_REQUEST', id: solicitud.id },
       });
@@ -1182,20 +1182,20 @@ export function registrarPerfiles(router: MockRouter): void {
 
   router.get('/profiles/practitioners/me/summary', (request) => {
     const p = profesionalDeSesion(request);
-    return p === undefined ? notFound('No tenés perfil profesional') : perfilProfesionalDe(p);
+    return p === undefined ? notFound('No tiene perfil profesional') : perfilProfesionalDe(p);
   });
 
   router.get('/profiles/practitioners/me/onboarding', (request) => {
     const p = profesionalDeSesion(request);
-    if (p === undefined) return notFound('No tenés perfil profesional');
+    if (p === undefined) return notFound('No tiene perfil profesional');
     const completo = p.id === MEDICA.id;
     return {
       practitionerProfileId: p.id,
       steps: [
         { key: 'professional-data', complete: true, missing: [] },
         { key: 'photo', complete: true, missing: [] },
-        { key: 'organizations', complete: completo, missing: completo ? [] : ['Vinculá al menos una organización'] },
-        { key: 'schedule', complete: completo, missing: completo ? [] : ['Publicá un horario de atención'] },
+        { key: 'organizations', complete: completo, missing: completo ? [] : ['Vincule al menos una organización'] },
+        { key: 'schedule', complete: completo, missing: completo ? [] : ['Publique un horario de atención'] },
         { key: 'review', complete: completo, missing: completo ? [] : ['Revisión pendiente'] },
       ],
       firstIncomplete: completo ? 'done' : 'organizations',

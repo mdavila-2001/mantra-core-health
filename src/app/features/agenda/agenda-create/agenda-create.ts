@@ -397,7 +397,7 @@ export class AgendaCreate {
   protected readonly estado = signal<ViewState<null>>(ready(null));
   protected readonly cargando = computed(() => this.estado().status === 'loading');
   protected readonly errorMessage = computed(() =>
-    errorMessageOf(this.estado(), 'No tenés permiso para configurar agenda.'),
+    errorMessageOf(this.estado(), 'No tiene permiso para configurar agenda.'),
   );
   protected readonly publicado = signal(false);
 
@@ -938,7 +938,7 @@ export class AgendaCreate {
   protected readonly vigenciaDeLaPrevia = computed(() => {
     const fin = this.fechaDeFin();
     return fin === null
-      ? 'Sin fecha de fin: rige hasta que lo cambies.'
+      ? 'Sin fecha de fin: rige hasta que lo cambie.'
       : `Rige hasta el ${formatDate(fin, "d 'de' MMMM yyyy", this.idioma)}.`;
   });
 
@@ -987,7 +987,7 @@ export class AgendaCreate {
     const seguro = await this.dialogs.confirm({
       title: 'Limpiar el formulario',
       message:
-        'Se borra lo que escribiste acá y volvés a empezar. Tu horario ya publicado no se toca.',
+        'Se borra lo que escribió acá y vuelve a empezar. Su horario ya publicado no se toca.',
       confirmLabel: 'Limpiar',
       cancelLabel: 'Volver',
       destructive: true,
@@ -1245,8 +1245,8 @@ export class AgendaCreate {
   private async avisarQueQuedoPublicado(cupos: number): Promise<void> {
     const irAVerla = await this.dialogs.confirm({
       title: this.esCambio()
-        ? 'Listo, tu horario quedó cambiado'
-        : 'Listo, tu agenda ya está publicada',
+        ? 'Listo, su horario quedó cambiado'
+        : 'Listo, su agenda ya está publicada',
       message: `${this.resumen()}. Los pacientes ya pueden reservar.`,
       details: [
         {

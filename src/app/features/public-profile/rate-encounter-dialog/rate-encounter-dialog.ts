@@ -146,13 +146,13 @@ export class RateEncounterDialog implements OnInit {
       return estado.issues.map((issue) => issue.message).join(' ') || null;
     }
     if (estado.status === 'forbidden') {
-      return estado.message ?? 'Tu cuenta no puede calificar atenciones.';
+      return estado.message ?? 'Su cuenta no puede calificar atenciones.';
     }
     if (estado.status === 'offline') {
-      return 'No pudimos conectarnos. Revisá tu conexión y reintentá.';
+      return 'No pudimos conectarnos. Revise su conexión y reintente.';
     }
     if (estado.status === 'error') {
-      return estado.message || 'No pudimos publicar tu opinión.';
+      return estado.message || 'No pudimos publicar su opinión.';
     }
     return null;
   });

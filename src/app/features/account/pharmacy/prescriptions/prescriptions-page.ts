@@ -142,7 +142,7 @@ export class PrescriptionsPage {
           return recetas.length === 0
             ? empty(
                 { label: 'Ir a mi historia clínica', route: MI_HISTORIA_ROUTE },
-                'Todavía no tenés recetas registradas. Las que te den tus médicos aparecen acá.',
+                'Todavía no tiene recetas registradas. Las que le den sus médicos aparecen acá.',
               )
             : ready(recetas);
         }),

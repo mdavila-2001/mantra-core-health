@@ -67,22 +67,22 @@ export const PACK_DE_STICKERS: readonly Sticker[] = [
   {
     id: 'a7c1f0e2-0006-4a00-9000-5713ca110006',
     clave: 'te-espero',
-    nombre: "Te espero en la consulta",
-    frase: "Te espero en la consulta",
+    nombre: "Le espero en la consulta",
+    frase: "Le espero en la consulta",
     url: '/stickers/te-espero.svg',
   },
   {
     id: 'a7c1f0e2-0007-4a00-9000-5713ca110007',
     clave: 'receta-lista',
     nombre: "Receta lista",
-    frase: "Tu receta está lista",
+    frase: "Su receta está lista",
     url: '/stickers/receta-lista.svg',
   },
   {
     id: 'a7c1f0e2-0008-4a00-9000-5713ca110008',
     clave: 'tomar-remedio',
-    nombre: "Acordate del remedio",
-    frase: "Acordate del remedio",
+    nombre: "Recuerde su medicamento",
+    frase: "Recuerde su medicamento",
     url: '/stickers/tomar-remedio.svg',
   },
   {
@@ -95,15 +95,15 @@ export const PACK_DE_STICKERS: readonly Sticker[] = [
   {
     id: 'a7c1f0e2-0010-4a00-9000-5713ca110010',
     clave: 'ayunas',
-    nombre: "Vení en ayunas",
-    frase: "Vení en ayunas",
+    nombre: "Venga en ayunas",
+    frase: "Venga en ayunas",
     url: '/stickers/ayunas.svg',
   },
   {
     id: 'a7c1f0e2-0011-4a00-9000-5713ca110011',
     clave: 'mejorate',
-    nombre: "Recuperate pronto",
-    frase: "Recuperate pronto",
+    nombre: "Que se recupere pronto",
+    frase: "Que se recupere pronto",
     url: '/stickers/mejorate.svg',
   },
   {
@@ -116,22 +116,22 @@ export const PACK_DE_STICKERS: readonly Sticker[] = [
   {
     id: 'a7c1f0e2-0013-4a00-9000-5713ca110013',
     clave: 'cuidate',
-    nombre: "Cuidate mucho",
-    frase: "Cuidate mucho",
+    nombre: "Cuídese mucho",
+    frase: "Cuídese mucho",
     url: '/stickers/cuidate.svg',
   },
   {
     id: 'a7c1f0e2-0014-4a00-9000-5713ca110014',
     clave: 'descansa',
-    nombre: "Descansá",
-    frase: "Descansá",
+    nombre: "Descanse",
+    frase: "Descanse",
     url: '/stickers/descansa.svg',
   },
   {
     id: 'a7c1f0e2-0015-4a00-9000-5713ca110015',
     clave: 'agua',
-    nombre: "Tomá agua",
-    frase: "Tomá agua",
+    nombre: "Tome agua",
+    frase: "Tome agua",
     url: '/stickers/agua.svg',
   },
   {
@@ -172,8 +172,8 @@ export const PACK_DE_STICKERS: readonly Sticker[] = [
   {
     id: 'a7c1f0e2-0021-4a00-9000-5713ca110021',
     clave: 'estudios',
-    nombre: "Traé tus estudios",
-    frase: "Traé tus estudios",
+    nombre: "Traiga sus estudios",
+    frase: "Traiga sus estudios",
     url: '/stickers/estudios.svg',
   },
   {

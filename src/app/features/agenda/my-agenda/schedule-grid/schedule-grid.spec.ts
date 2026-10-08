@@ -134,7 +134,7 @@ describe('ScheduleGrid', () => {
 
   it('sin horarios lo dice, en vez de dibujar un rectángulo vacío', () => {
     montar([]);
-    expect(fixture.nativeElement.textContent).toContain('Todavía no publicaste horarios');
+    expect(fixture.nativeElement.textContent).toContain('Todavía no publicó horarios');
   });
 
   /* -- Como Google Calendar ------------------------------------------------- */
@@ -184,7 +184,7 @@ describe('ScheduleGrid', () => {
     expect(parseFloat(bloque.style.top)).toBeCloseTo((510 / 1440) * 100, 2);
     expect(parseFloat(bloque.style.height)).toBeCloseTo((240 / 1440) * 100, 2);
     expect(bloque.textContent).toContain('08:30 – 12:30');
-    expect(bloque.getAttribute('aria-label')).toBe('lunes de 08:30 a 12:30: atendés');
+    expect(bloque.getAttribute('aria-label')).toBe('lunes de 08:30 a 12:30: atiende');
   });
 
   it('cada franja va en la columna de su día', () => {
@@ -401,10 +401,10 @@ describe('ScheduleGrid', () => {
       expect(bloque.textContent).toContain('otros servicios');
       expect(bloque.textContent).not.toContain('consultas de');
       expect(bloque.getAttribute('aria-label')).toBe(
-        'martes de 14:00 a 18:00: atendés otros servicios en Sede Centro',
+        'martes de 14:00 a 18:00: atiende otros servicios en Sede Centro',
       );
       expect(celda(15, 1).getAttribute('aria-label')).toContain(
-        'atendés otros servicios de 14:00 a 18:00',
+        'atiende otros servicios de 14:00 a 18:00',
       );
     });
 
@@ -546,7 +546,7 @@ describe('ScheduleGrid', () => {
       montar([regla(1, '09:00:00', '13:00:00')], { sede: 'Sede Centro' });
 
       expect(celda(9, 0).getAttribute('aria-label')).toBe(
-        'Lunes 7 de septiembre, 09:00, atendés de 09:00 a 13:00, Sede Centro',
+        'Lunes 7 de septiembre, 09:00, atiende de 09:00 a 13:00, Sede Centro',
       );
       // Una hora sin atención existe para el lector: antes era `aria-hidden`.
       expect(celda(14, 0).getAttribute('aria-label')).toBe(
@@ -561,16 +561,16 @@ describe('ScheduleGrid', () => {
       montar([regla(1, '09:00:00', '13:00:00')]);
 
       expect(celda(9, 0).getAttribute('aria-label')).toBe(
-        'Lunes 7 de septiembre, 09:00, atendés de 09:00 a 13:00',
+        'Lunes 7 de septiembre, 09:00, atiende de 09:00 a 13:00',
       );
-      expect(bloques()[0].getAttribute('aria-label')).toBe('lunes de 09:00 a 13:00: atendés');
+      expect(bloques()[0].getAttribute('aria-label')).toBe('lunes de 09:00 a 13:00: atiende');
     });
 
     it('la franja dibujada también nombra la sede', () => {
       montar([regla(1, '08:30:00', '12:30:00')], { sede: 'Consultorio Norte' });
 
       expect(bloques()[0].getAttribute('aria-label')).toBe(
-        'lunes de 08:30 a 12:30: atendés en Consultorio Norte',
+        'lunes de 08:30 a 12:30: atiende en Consultorio Norte',
       );
     });
 
@@ -591,14 +591,14 @@ describe('ScheduleGrid', () => {
         'Miércoles 9 de septiembre, 12:00, bloqueado de 12:00 a 18:00 (Congreso)',
       );
       expect(celda(11, 2).getAttribute('aria-label')).toContain(
-        'atendés de 09:00 a 13:00, Sede Centro',
+        'atiende de 09:00 a 13:00, Sede Centro',
       );
     });
 
     it('sin fechas —horario retirado— el día va sin número', () => {
       montar([regla(1, '09:00:00', '13:00:00')], { conFechas: false });
 
-      expect(celda(9, 0).getAttribute('aria-label')).toBe('Lunes, 09:00, atendés de 09:00 a 13:00');
+      expect(celda(9, 0).getAttribute('aria-label')).toBe('Lunes, 09:00, atiende de 09:00 a 13:00');
     });
 
     it('una sola parada de Tab, en la primera hora atendida del primer día que se atiende', () => {
@@ -692,7 +692,7 @@ describe('ScheduleGrid', () => {
       montar([regla(1, '09:00:00', '13:00:00')], { rango: 'atencion' });
 
       expect(celdas()).toHaveLength(4 * 7);
-      expect(celda(9, 0).getAttribute('aria-label')).toContain('09:00, atendés');
+      expect(celda(9, 0).getAttribute('aria-label')).toContain('09:00, atiende');
     });
   });
 });

@@ -332,7 +332,7 @@ describe('DayView', () => {
   it('un día sin nada lo dice con palabras, y deja crear', () => {
     montar([]);
 
-    expect(fixture.nativeElement.textContent).toContain('No atendés este día');
+    expect(fixture.nativeElement.textContent).toContain('No atiende este día');
     expect(fixture.nativeElement.textContent).toContain('Agregar');
   });
 

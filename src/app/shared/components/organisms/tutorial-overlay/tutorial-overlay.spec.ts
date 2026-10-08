@@ -378,6 +378,6 @@ describe('TutorialOverlay', () => {
     ]);
     await engine.start('t-1');
 
-    expect(html()).toContain('Hacé clic en lo que está resaltado');
+    expect(html()).toContain('Haga clic en lo que está resaltado');
   });
 });

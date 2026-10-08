@@ -1,6 +1,6 @@
 <app-page-header
   title="Bloqueos de agenda"
-  subtitle="Los ratos que cerraste y los que ya pasaron. Acá no hay turnos: sólo lo que no se atiende."
+  subtitle="Los ratos que cerró y los que ya pasaron. Acá no hay turnos: sólo lo que no se atiende."
 >
   <!-- No es un `routerLink`: no hay ninguna ruta `schedule/blocks/new`
        declarada (ver el comentario de `creando` en blocks.ts), así que un
@@ -145,8 +145,8 @@
   }
 
   @if (vigentes().length === 0 && historicos().length > 0) {
-    <app-alert tone="info" title="No tenés ningún bloqueo vigente">
-      Tu agenda está abierta en todos los días que publicaste.
+    <app-alert tone="info" title="No tiene ningún bloqueo vigente">
+      Su agenda está abierta en todos los días que publicó.
     </app-alert>
   }
 </app-view-state-host>

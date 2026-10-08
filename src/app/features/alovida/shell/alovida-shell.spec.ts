@@ -259,7 +259,7 @@ describe('AlovidaPublicShell', () => {
     const parrafos = (fixture.nativeElement as HTMLElement).querySelectorAll('.app-public-pie p');
 
     expect(parrafos).toHaveLength(4);
-    expect(parrafos[0].textContent).toContain('Quién paga lo que ves');
+    expect(parrafos[0].textContent).toContain('Quién paga lo que ve');
   });
 
   it('ofrece entrar y crear cuenta, contra las rutas de sesión que ya existen', () => {

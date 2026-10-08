@@ -153,7 +153,7 @@ export class RichTextEditor {
   readonly label = input<string>('Nota');
 
   /** Lo que se ve mientras está vacío. */
-  readonly placeholder = input<string>('Escribí acá…');
+  readonly placeholder = input<string>('Escriba acá…');
 
   /** Deja el contenido a la vista pero sin poder tocarlo. */
   readonly readOnly = input(false, { transform: booleanAttribute });

@@ -272,7 +272,7 @@ const TIPOS_DE_TITULO = [
     etiqueta: 'Otra profesión',
     singular: 'otra profesión',
     ayuda:
-      'Si además de tu profesión de salud estudiaste otra carrera, cargala acá. Podés cargar las que tengas, y ninguna es obligatoria.',
+      'Si además de su profesión de salud estudió otra carrera, cárguela acá. Puede cargar las que tenga, y ninguna es obligatoria.',
     placeholderNombre: 'Qué carrera: Derecho, Ingeniería de Sistemas…',
   },
   {
@@ -434,17 +434,17 @@ const AYUDA_PROFESIONAL: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
   name: [
     {
       icono: 'people',
-      titulo: 'Así te van a ver tus pacientes',
+      titulo: 'Así le van a ver sus pacientes',
       texto:
-        'El nombre de tu ficha pública sale de acá, y se escribe como figura en tu documento: es lo que un paciente contrasta antes de elegirte.',
+        'El nombre de su ficha pública sale de acá, y se escribe como figura en su documento: es lo que un paciente contrasta antes de elegirle.',
     },
   ],
   document: [
     {
       icono: 'patients',
-      titulo: 'Tu cédula queda como documento oficial',
+      titulo: 'Su cédula queda como documento oficial',
       texto:
-        'No es con lo que entrás —eso es tu correo—, pero es lo que identifica a la persona detrás de la matrícula.',
+        'No es con lo que entra —eso es su correo—, pero es lo que identifica a la persona detrás de la matrícula.',
     },
     {
       icono: 'pin',
@@ -455,61 +455,61 @@ const AYUDA_PROFESIONAL: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
   credentials: [
     {
       icono: 'shield',
-      titulo: 'Es lo que te habilita a atender',
+      titulo: 'Es lo que le habilita a atender',
       texto:
-        'Comprobamos matrícula y colegio antes de que aparezcas en el directorio. Es lo que le da certeza a quien te elige sin conocerte.',
+        'Comprobamos matrícula y colegio antes de que aparezca en el directorio. Es lo que le da certeza a quien le elige sin conocerle.',
     },
     {
       icono: 'history',
-      titulo: 'Lo opcional podés dejarlo para después',
+      titulo: 'Lo opcional puede dejarlo para después',
       texto:
-        'La autoridad que la emitió y la fecha de inscripción no frenan tu alta: se cargan cuando las tengas a mano, desde tu perfil.',
+        'La autoridad que la emitió y la fecha de inscripción no frenan su alta: se cargan cuando las tenga a mano, desde su perfil.',
     },
   ],
   practice: [
     {
       icono: 'stethoscope',
-      titulo: 'Es tu carta de presentación',
+      titulo: 'Es su carta de presentación',
       texto:
-        'El título es lo primero que ve un paciente antes de pedirte un turno. Podés cambiarlo cuando quieras.',
+        'El título es lo primero que ve un paciente antes de pedirle un turno. Puede cambiarlo cuando quiera.',
     },
     {
       icono: 'directory',
       titulo: 'Y decide qué sigue',
       texto:
-        'De él dependen el colegio que se te ofrece en la habilitación y las especialidades que vas a poder elegir: un odontólogo no elige entre las 36 del catálogo, elige entre las suyas. Por eso se pregunta antes que las dos cosas.',
+        'De él dependen el colegio que se le ofrece en la habilitación y las especialidades que va a poder elegir: un odontólogo no elige entre las 36 del catálogo, elige entre las suyas. Por eso se pregunta antes que las dos cosas.',
     },
   ],
   profile: [
     {
       icono: 'stethoscope',
-      titulo: 'Por qué te pedimos los dos',
+      titulo: 'Por qué le pedimos los dos',
       texto:
-        'Sexo y fecha de nacimiento son dato clínico: mandan en dosis, valores de referencia y tamizajes. Los dos se guardan en tu perfil. Qué clase de profesional sos se pregunta más adelante, con tu título.',
+        'Sexo y fecha de nacimiento son dato clínico: mandan en dosis, valores de referencia y tamizajes. Los dos se guardan en su perfil. Qué clase de profesional es se pregunta más adelante, con su título.',
     },
   ],
   residence: [
     {
       icono: 'pin',
-      titulo: 'Para ubicarte en el directorio',
+      titulo: 'Para ubicarle en el directorio',
       texto:
-        'Un paciente busca por ciudad antes que por nombre. Con tu localidad declarada aparecés en la búsqueda de quien te tiene cerca.',
+        'Un paciente busca por ciudad antes que por nombre. Con su localidad declarada aparece en la búsqueda de quien le tiene cerca.',
     },
   ],
   specialties: [
     {
       icono: 'directory',
-      titulo: 'Es por donde te encuentran',
+      titulo: 'Es por donde le encuentran',
       texto:
-        'Un paciente busca por especialidad. Las que elijas son las búsquedas en las que vas a aparecer.',
+        'Un paciente busca por especialidad. Las que elija son las búsquedas en las que va a aparecer.',
     },
   ],
   'personal-contact': [
     {
       icono: 'mail',
-      titulo: 'Con tu correo personal vas a entrar',
+      titulo: 'Con su correo personal va a entrar',
       texto:
-        'Usá uno que sigas teniendo si cambiás de trabajo: es tu identidad de acceso y por donde se recupera la cuenta si perdés la clave.',
+        'Use uno que siga teniendo si cambia de trabajo: es su identidad de acceso y por donde se recupera la cuenta si pierde la clave.',
     },
   ],
   access: [
@@ -517,7 +517,7 @@ const AYUDA_PROFESIONAL: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
       icono: 'phone',
       titulo: 'Todo esto es del consultorio',
       texto:
-        'Son los datos por los que te ubican en el trabajo, no los de tu acceso. Podés dejarlos vacíos y cargarlos después desde tu perfil.',
+        'Son los datos por los que le ubican en el trabajo, no los de su acceso. Puede dejarlos vacíos y cargarlos después desde su perfil.',
     },
   ],
   'credential-files': [
@@ -525,7 +525,7 @@ const AYUDA_PROFESIONAL: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
       icono: 'folder',
       titulo: 'Los verifica una persona, no un robot',
       texto:
-        'Podés registrarte sin subirlos y cargarlos después desde tu perfil. Mientras no estén, tu matrícula figura como declarada y no como verificada.',
+        'Puede registrarse sin subirlos y cargarlos después desde su perfil. Mientras no estén, su matrícula figura como declarada y no como verificada.',
     },
   ],
   'academic-titles': [
@@ -541,15 +541,15 @@ const AYUDA_PROFESIONAL: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
       icono: 'shield',
       titulo: 'Son imágenes, no una firma electrónica',
       texto:
-        'Subí la foto o el escaneo de tu firma de puño y letra y de tu sello. Se imprimen al pie de tus documentos junto a tu nombre y matrícula. Podés saltear este paso y cargarlos después.',
+        'Suba la foto o el escaneo de su firma de puño y letra y de su sello. Se imprimen al pie de sus documentos junto a su nombre y matrícula. Puede saltear este paso y cargarlos después.',
     },
   ],
   password: [
     {
       icono: 'lock',
-      titulo: 'Tu contraseña, sólo tuya',
+      titulo: 'Su contraseña, sólo suya',
       texto:
-        'Ocho caracteres o más. Se guarda cifrada: ni el equipo de AloVida puede verla, y nunca te la vamos a pedir por teléfono ni por correo.',
+        'Ocho caracteres o más. Se guarda cifrada: ni el equipo de AloVida puede verla, y nunca se la vamos a pedir por teléfono ni por correo.',
     },
   ],
 };
@@ -752,7 +752,7 @@ export class RegisterPractitioner {
    * número que falta— viaja por el mismo canal y no debe borrarse de rebote.
    */
   private readonly avisoCatalogoDeTipos =
-    'No pudimos cargar los tipos de título. En el paso «Tus títulos», el botón «Reintentar» vuelve a pedirlos.';
+    'No pudimos cargar los tipos de título. En el paso «Sus títulos», el botón «Reintentar» vuelve a pedirlos.';
 
   /**
    * Una fila que todavía no dice nada: se agregó y quedó en blanco.
@@ -794,7 +794,7 @@ export class RegisterPractitioner {
       secciones.length === 1
         ? secciones[0]
         : `${secciones.slice(0, -1).join(', ')} y ${secciones.at(-1)}`;
-    return `Falta el número del diploma en ${donde}. Completalo o quitá la fila para seguir.`;
+    return `Falta el número del diploma en ${donde}. Complételo o quite la fila para seguir.`;
   });
 
   /** Lo mismo que {@link hayTitulosSinNumero}, público para las pruebas. */
@@ -2070,8 +2070,8 @@ export class RegisterPractitioner {
         : 'Matrícula profesional';
 
     const hintMatricula = esOdontologo
-      ? 'La de tu habilitación profesional como odontólogo.'
-      : 'La que te habilita a ejercer, la del registro del Ministerio.';
+      ? 'La de su habilitación profesional como odontólogo.'
+      : 'La que le habilita a ejercer, la del registro del Ministerio.';
 
     const placeholderMatricula = esOdontologo ? 'ODO-12345' : 'MP-12345';
 
@@ -2083,10 +2083,10 @@ export class RegisterPractitioner {
 
     return paginarCampos([
       {
-        titulo: '¿Cómo te llamás?',
+        titulo: '¿Cómo se llama?',
         clave: 'name',
         icon: 'people',
-        hint: 'Como figura en tu documento. Si no tenés alguno, dejalo vacío.',
+        hint: 'Como figura en su documento. Si no tiene alguno, déjelo vacío.',
         // Nombres y apellidos van juntos en una página, como pide el registro
         // del cliente. Los tres nombres entran en UN campo proyectado —bajo la
         // `key` de `name`, para que el motor siga validando el obligatorio y
@@ -2097,7 +2097,7 @@ export class RegisterPractitioner {
             key: 'name',
             label: '',
             control: 'custom',
-            mensajeDeError: 'Ingresá tu nombre.',
+            mensajeDeError: 'Ingrese su nombre.',
           },
           {
             key: 'lastName',
@@ -2108,12 +2108,12 @@ export class RegisterPractitioner {
             placeholder: 'Rojas',
             testId: 'registro-pro-apellido-paterno',
             ancho: 'mitad',
-            mensajeDeError: 'Ingresá tu apellido paterno.',
+            mensajeDeError: 'Ingrese su apellido paterno.',
           },
           {
             key: 'motherLastName',
             label: 'Apellido materno',
-            hint: 'Si no llevás, dejalo vacío.',
+            hint: 'Si no lleva, déjelo vacío.',
             control: 'text',
             autocomplete: 'family-name',
             placeholder: 'Paz',
@@ -2123,7 +2123,7 @@ export class RegisterPractitioner {
         ],
       },
       {
-        titulo: 'Tu documento de identidad',
+        titulo: 'Su documento de identidad',
         clave: 'document',
         icon: 'patients',
         hint: 'Los dos hacen falta. Identifican a la persona detrás de la matrícula.',
@@ -2132,9 +2132,9 @@ export class RegisterPractitioner {
             key: 'nationalId',
             label: 'Cédula de identidad',
             required: true,
-            hint: 'Se guarda como tu documento oficial.',
+            hint: 'Se guarda como su documento oficial.',
             description:
-              'No es con lo que iniciás sesión —eso es tu correo—, pero es lo que ata tu matrícula a una persona.',
+              'No es con lo que inicia sesión —eso es su correo—, pero es lo que ata su matrícula a una persona.',
             control: 'text',
             autocomplete: 'off',
             placeholder: '1234567',
@@ -2144,28 +2144,28 @@ export class RegisterPractitioner {
             // pareja que en el alta de paciente, y por lo mismo — el número y
             // su expedición son un solo documento.
             ancho: 'mitad',
-            mensajeDeError: 'Ingresá un documento válido: letras, números, punto y guion.',
+            mensajeDeError: 'Ingrese un documento válido: letras, números, punto y guion.',
           },
           this.campoDepartamentoEmisor('registro-pro-departamento-ci'),
         ],
       },
       {
-        titulo: 'Contanos un poco sobre vos',
+        titulo: 'Cuéntenos un poco sobre usted',
         clave: 'profile',
         icon: 'stethoscope',
-        hint: 'Los dos hacen falta. Se guardan en tu perfil profesional.',
+        hint: 'Los dos hacen falta. Se guardan en su perfil profesional.',
         campos: [
           {
             key: 'sexAtBirth',
             label: 'Sexo',
-            hint: 'Es el que registra tu documento de identidad.',
+            hint: 'Es el que registra su documento de identidad.',
             control: 'select',
             required: true,
             options: OPCIONES_SEXO,
-            placeholder: 'Elegí una opción',
+            placeholder: 'Elija una opción',
             testId: 'registration-practitioner-sex',
             icono: 'heart',
-            mensajeDeError: 'Elegí una opción.',
+            mensajeDeError: 'Elija una opción.',
           },
           {
             key: 'birthDate',
@@ -2174,23 +2174,23 @@ export class RegisterPractitioner {
             required: true,
             maxDate: 'today',
             minDate: new Date(1900, 0, 1),
-            mensajeDeError: 'Indicá tu fecha de nacimiento.',
+            mensajeDeError: 'Indique su fecha de nacimiento.',
           },
         ],
       },
       {
-        titulo: 'Cómo te contactamos en privado',
+        titulo: 'Cómo le contactamos en privado',
         clave: 'personal-contact',
         icon: 'phone',
-        hint: 'Los dos hacen falta, y con el correo entrás. Nada de esto se publica en tu ficha.',
+        hint: 'Los dos hacen falta, y con el correo entra. Nada de esto se publica en su ficha.',
         campos: [
           {
             key: 'mobilePhone',
-            label: 'Tu celular personal',
+            label: 'Su celular personal',
             required: true,
-            hint: 'Elegí el país si tu número no es de Bolivia.',
+            hint: 'Elija el país si su número no es de Bolivia.',
             description:
-              'Es el número por el que te contactamos a vos. El que ve un paciente es el de tu consultorio, que se pide en la página siguiente.',
+              'Es el número por el que le contactamos a usted. El que ve un paciente es el de su consultorio, que se pide en la página siguiente.',
             control: 'tel',
             autocomplete: 'tel',
             testId: 'registro-pro-celular-personal',
@@ -2199,10 +2199,10 @@ export class RegisterPractitioner {
           },
           {
             key: 'personalEmail',
-            label: 'Tu correo personal — con éste entrás',
-            hint: 'Es tu identidad de acceso, no sólo un dato de contacto.',
+            label: 'Su correo personal — con éste entra',
+            hint: 'Es su identidad de acceso, no sólo un dato de contacto.',
             description:
-              'Usá uno que sigas teniendo si cambiás de trabajo: es por donde se recupera la cuenta si perdés la clave.',
+              'Use uno que siga teniendo si cambia de trabajo: es por donde se recupera la cuenta si pierde la clave.',
             control: 'email',
             required: true,
             // `username`: acá el correo SÍ es el identificador de acceso. Sin
@@ -2211,20 +2211,20 @@ export class RegisterPractitioner {
             placeholder: 'ana.rojas@gmail.com',
             testId: 'registro-pro-correo-personal',
             icono: 'mail',
-            mensajeDeError: 'Ingresá un correo válido.',
+            mensajeDeError: 'Ingrese un correo válido.',
           },
         ],
       },
       {
-        titulo: 'El contacto de tu trabajo',
+        titulo: 'El contacto de su trabajo',
         clave: 'access',
         icon: 'phone',
-        hint: 'Los datos del consultorio. Todo opcional: tu acceso ya quedó definido.',
+        hint: 'Los datos del consultorio. Todo opcional: su acceso ya quedó definido.',
         campos: [
           {
             key: 'workMobilePhone',
             label: 'Celular del trabajo (opcional)',
-            hint: 'Elegí el país si tu número no es de Bolivia.',
+            hint: 'Elija el país si su número no es de Bolivia.',
             control: 'tel',
             autocomplete: 'tel',
             testId: 'registro-pro-celular-trabajo',
@@ -2246,9 +2246,9 @@ export class RegisterPractitioner {
           {
             key: 'email',
             label: 'Correo de trabajo (opcional)',
-            hint: 'El institucional, si tenés. No es con el que entrás.',
+            hint: 'El institucional, si tiene. No es con el que entra.',
             description:
-              'Es un dato de contacto del consultorio: lo ve quien necesita escribirte por trabajo.',
+              'Es un dato de contacto del consultorio: lo ve quien necesita escribirle por trabajo.',
             control: 'email',
             // `email` y no `username`: el identificador de acceso es el correo
             // personal del paso anterior. Marcar los dos como `username` haría
@@ -2257,17 +2257,17 @@ export class RegisterPractitioner {
             placeholder: 'matricula@hospital.bo',
             testId: 'registro-pro-correo',
             icono: 'mail',
-            mensajeDeError: 'Ingresá un correo válido.',
+            mensajeDeError: 'Ingrese un correo válido.',
           },
         ],
       },
       {
-        titulo: '¿Dónde vivís?',
+        titulo: '¿Dónde vive?',
         clave: 'residence',
         icon: 'home',
         // La **zona** sigue sin preguntarse, y eso no cambió: `common.addresses`
         // no tiene columna de zona para ninguno de los dos registros.
-        hint: 'Tu localidad hace falta; la calle y el punto del mapa son opcionales.',
+        hint: 'Su localidad hace falta; la calle y el punto del mapa son opcionales.',
         campos: [
           {
             key: 'municipio',
@@ -2277,7 +2277,7 @@ export class RegisterPractitioner {
           {
             key: 'homeAddressLines',
             label: 'Línea de dirección 1 (opcional)',
-            hint: 'Como la escribirías en un sobre.',
+            hint: 'Como la escribiría en un sobre.',
             description:
               'Calle, número y referencia. El punto del mapa no la escribe solo: ver el aviso de abajo.',
             control: 'text',
@@ -2289,23 +2289,23 @@ export class RegisterPractitioner {
           {
             key: 'gpsDomicilio',
             label: 'Ubicación GPS (opcional)',
-            hint: 'Si la compartís, quien te busca llega sin llamarte.',
-            description: 'Marcá el punto exacto de tu casa y confirmalo para que quede guardado.',
+            hint: 'Si la comparte, quien le busca llega sin llamarle.',
+            description: 'Marque el punto exacto de su casa y confírmelo para que quede guardado.',
             control: 'custom',
           },
         ],
       },
       {
-        titulo: '¿Dónde trabajás?',
+        titulo: '¿Dónde trabaja?',
         clave: 'workplace-location',
         icon: 'building',
-        hint: 'La dirección de tu trabajo queda separada de tu casa y de tu consultorio propio.',
+        hint: 'La dirección de su trabajo queda separada de su casa y de su consultorio propio.',
         campos: [
           {
             key: 'workAddressLines',
             label: 'Dirección del trabajo (opcional)',
-            hint: 'Calle, número y referencia del lugar donde trabajás.',
-            description: 'Se guarda como dirección laboral, separada de tu domicilio.',
+            hint: 'Calle, número y referencia del lugar donde trabaja.',
+            description: 'Se guarda como dirección laboral, separada de su domicilio.',
             control: 'text',
             autocomplete: 'street-address',
             placeholder: 'Av. Principal 200, Hospital Central',
@@ -2315,14 +2315,14 @@ export class RegisterPractitioner {
           {
             key: 'gpsTrabajo',
             label: 'Ubicación GPS del trabajo (opcional)',
-            hint: 'Confirmá el punto para guardar la ubicación laboral.',
-            description: 'Marcá el lugar donde trabajás y confirmalo en el mapa.',
+            hint: 'Confirme el punto para guardar la ubicación laboral.',
+            description: 'Marque el lugar donde trabaja y confírmelo en el mapa.',
             control: 'custom',
           },
         ],
       },
       {
-        titulo: 'Tu consultorio propio',
+        titulo: 'Su consultorio propio',
         clave: 'own-office',
         icon: 'building',
         // **Opcional, y aun así el que más importa** (punto 12/13/22 del módulo
@@ -2334,14 +2334,14 @@ export class RegisterPractitioner {
         //
         // Por eso se pregunta acá y no sólo en el perfil: quien se registra
         // para empezar a atender lo necesita el primer día.
-        hint: 'Opcional. Es el lugar que no depende de que otro te acepte, y desde donde vas a poder publicar tu agenda.',
+        hint: 'Opcional. Es el lugar que no depende de que otro le acepte, y desde donde va a poder publicar su agenda.',
         campos: [
           {
             key: 'officeName',
             label: 'Cómo se llama (opcional)',
-            hint: 'El nombre con el que tus pacientes lo van a ver.',
+            hint: 'El nombre con el que sus pacientes lo van a ver.',
             description:
-              'Si no le ponés uno, no pasa nada: se puede completar después desde tu perfil.',
+              'Si no le pone uno, no pasa nada: se puede completar después desde su perfil.',
             control: 'text',
             placeholder: 'Consultorio Dr. Suárez',
             testId: 'registration-practitioner-office-name',
@@ -2368,13 +2368,13 @@ export class RegisterPractitioner {
             label: 'Ubicación GPS (opcional)',
             hint: 'Con el punto, un paciente llega sin preguntar.',
             description:
-              'Marcá el punto exacto del consultorio y confirmalo. Se confirma aparte del de tu casa.',
+              'Marque el punto exacto del consultorio y confírmelo. Se confirma aparte del de su casa.',
             control: 'custom',
           },
         ],
       },
       {
-        titulo: 'Tu título profesional y foto',
+        titulo: 'Su título profesional y foto',
         clave: 'practice',
         icon: 'teach',
         // Página propia y no pegada a las especialidades: es la que DECIDE qué
@@ -2386,7 +2386,7 @@ export class RegisterPractitioner {
         // 02/10 país y universidad son desplegables en árbol (ver
         // `CampoDeEstudio`). Siguen sin viajar —viven en `credentials`, detrás
         // de la sesión— y el mapeo campo por campo está en `docs/handoff/`.
-        hint: 'Lo que van a ver tus pacientes. Podés cambiarlo cuando quieras.',
+        hint: 'Lo que van a ver sus pacientes. Puede cambiarlo cuando quiera.',
         campos: [
           {
             key: 'profilePhotoBase64',
@@ -2397,10 +2397,10 @@ export class RegisterPractitioner {
             key: 'professionalTitle',
             label: 'Título profesional',
             required: true,
-            mensajeDeError: 'Elegí tu título profesional en la lista.',
+            mensajeDeError: 'Elija su título profesional en la lista.',
             hint: 'Al elegirlo, la lista de especialidades y el colegio se acomodan solos.',
             description:
-              'Es como aparecés en tu ficha pública. Sale de una lista cerrada para que la misma profesión no figure escrita de cuatro maneras distintas.',
+              'Es como aparece en su ficha pública. Sale de una lista cerrada para que la misma profesión no figure escrita de cuatro maneras distintas.',
             // `custom` y no `select`: la pantalla proyecta acá una lupa. La
             // lista sigue siendo cerrada —son doce— pero se busca escribiendo.
             control: 'custom',
@@ -2414,29 +2414,29 @@ export class RegisterPractitioner {
             // misma pregunta —qué estudiaste y dónde—, y partirlas obligaría a
             // volver atrás para recordar de qué título se está hablando.
             key: 'professionalTitleEducation',
-            label: 'Dónde lo estudiaste',
+            label: 'Dónde lo estudió',
             control: 'custom',
           },
           {
             key: 'professionalTitleFile',
             label: 'Diploma del título (opcional)',
-            hint: 'Podés adjuntarlo ahora o cargarlo después desde tu perfil.',
+            hint: 'Puede adjuntarlo ahora o cargarlo después desde su perfil.',
             control: 'custom',
           },
         ],
       },
       {
-        titulo: 'Tu habilitación para ejercer',
+        titulo: 'Su habilitación para ejercer',
         clave: 'credentials',
         icon: 'shield',
-        hint: 'Sin matrícula y número de colegio no podemos darte de alta.',
+        hint: 'Sin matrícula y número de colegio no podemos darle de alta.',
         campos: [
           {
             key: 'licenseNumber',
             label: rotuloMatricula,
             hint: hintMatricula,
             description:
-              'Es la que comprobamos antes de que aparezcas en el directorio: es lo que le da certeza a quien te elige sin conocerte.',
+              'Es la que comprobamos antes de que aparezca en el directorio: es lo que le da certeza a quien le elige sin conocerle.',
             control: 'text',
             required: true,
             autocomplete: 'off',
@@ -2446,12 +2446,12 @@ export class RegisterPractitioner {
             // Los dos números de la habilitación, en el mismo renglón: se
             // copian de la misma credencial y se contestan de una sentada.
             ancho: 'mitad',
-            mensajeDeError: 'Ingresá tu matrícula profesional.',
+            mensajeDeError: 'Ingrese su matrícula profesional.',
           },
           {
             key: 'sedesLicenseNumber',
             label: 'Registro del SEDES',
-            hint: 'El de tu habilitación departamental, como figura en tu título del SEDES.',
+            hint: 'El de su habilitación departamental, como figura en su título del SEDES.',
             control: 'text',
             required: true,
             autocomplete: 'off',
@@ -2459,12 +2459,12 @@ export class RegisterPractitioner {
             testId: 'registro-pro-credencial',
             icono: 'briefcase',
             ancho: 'mitad',
-            mensajeDeError: 'Ingresá tu número de registro del SEDES.',
+            mensajeDeError: 'Ingrese su número de registro del SEDES.',
           },
           {
             key: 'regulatoryAuthority',
             label: 'Autoridad que la emitió (opcional)',
-            hint: 'El Ministerio de Salud, el SEDES de tu gobernación o el colegio de tu profesión.',
+            hint: 'El Ministerio de Salud, el SEDES de su gobernación o el colegio de su profesión.',
             control: 'select',
             options: opcionesAutoridadReguladora(titulo),
             placeholder: 'Sin especificar',
@@ -2474,7 +2474,7 @@ export class RegisterPractitioner {
           {
             key: 'licenseIssueDate',
             label: 'Fecha de inscripción (opcional)',
-            hint: 'Cuándo te registraste, no cuándo vence.',
+            hint: 'Cuándo se registró, no cuándo vence.',
             control: 'date',
           },
         ],
@@ -2484,10 +2484,10 @@ export class RegisterPractitioner {
       // input. Va inmediatamente después para que cada archivo se vea al lado
       // del número que respalda.
       {
-        titulo: 'Los respaldos de tu habilitación',
+        titulo: 'Los respaldos de su habilitación',
         clave: 'credential-files',
         icon: 'folder',
-        hint: 'Opcional al registrarte. Un administrativo los verifica después.',
+        hint: 'Opcional al registrarse. Un administrativo los verifica después.',
         campos: [
           {
             key: 'credentialAttachments',
@@ -2497,10 +2497,10 @@ export class RegisterPractitioner {
         ],
       },
       {
-        titulo: 'Tus títulos',
+        titulo: 'Sus títulos',
         clave: 'academic-titles',
         icon: 'teach',
-        hint: 'Todos opcionales, y podés cargar más de uno de cada tipo.',
+        hint: 'Todos opcionales, y puede cargar más de uno de cada tipo.',
         campos: [
           {
             key: 'academicTitles',
@@ -2510,7 +2510,7 @@ export class RegisterPractitioner {
         ],
       },
       {
-        titulo: 'Tus especialidades',
+        titulo: 'Sus especialidades',
         clave: 'specialties',
         icon: 'directory',
         hint: 'Hasta cuatro. La lista completa está disponible para cualquier profesión.',
@@ -2527,10 +2527,10 @@ export class RegisterPractitioner {
       // La firma y el sello: **imágenes** escaneadas, no una firma electrónica.
       // Opcional y saltable, como la foto: se cargan después desde el perfil.
       {
-        titulo: 'Tu firma y tu sello',
+        titulo: 'Su firma y su sello',
         clave: 'signature-seal',
         icon: 'shield',
-        hint: 'Opcional. Salen al pie de tus recetas y documentos; podés cargarlos después desde tu perfil.',
+        hint: 'Opcional. Salen al pie de sus recetas y documentos; puede cargarlos después desde su perfil.',
         campos: [
           {
             key: 'signatureImageBase64',
@@ -2550,21 +2550,21 @@ export class RegisterPractitioner {
       // de la cuenta, que no es ninguna de las dos cosas. Separarla también
       // deja el gesto de «elegir contraseña» pegado al de terminar.
       {
-        titulo: 'Tu contraseña',
+        titulo: 'Su contraseña',
         clave: 'password',
         icon: 'lock',
-        hint: 'Lo último. Con ella y tu correo personal vas a iniciar sesión.',
+        hint: 'Lo último. Con ella y su correo personal va a iniciar sesión.',
         campos: [
           {
             key: 'password',
             label: 'Contraseña',
             hint: 'Al menos 8 caracteres.',
             description:
-              'Se guarda cifrada: ni el equipo de AloVida puede verla, y nunca te la vamos a pedir por teléfono ni por correo.',
+              'Se guarda cifrada: ni el equipo de AloVida puede verla, y nunca se la vamos a pedir por teléfono ni por correo.',
             control: 'password',
             required: true,
             autocomplete: 'new-password',
-            placeholder: 'Tu contraseña',
+            placeholder: 'Su contraseña',
             testId: 'registro-pro-password',
             icono: 'lock',
             mensajeDeError: MENSAJE_CONTRASENA_CORTA,
@@ -2591,8 +2591,8 @@ export class RegisterPractitioner {
       key: 'issuerAdministrativeAreaConceptId',
       label: 'Departamento de emisión',
       required: true,
-      hint: 'El «SC», «LP»... de tu cédula.',
-      mensajeDeError: 'Elegí el departamento que expidió tu cédula.',
+      hint: 'El «SC», «LP»... de su cédula.',
+      mensajeDeError: 'Elija el departamento que expidió su cédula.',
     } as const;
 
     return this.catalogoDepartamentosCaido()
@@ -2605,7 +2605,7 @@ export class RegisterPractitioner {
           ...base,
           control: 'select',
           options: this.opcionesDepartamento(),
-          placeholder: 'Elegí el departamento',
+          placeholder: 'Elija el departamento',
           testId,
           // La otra mitad del renglón del documento. Ver la página que lo usa.
           ancho: 'mitad',
@@ -2627,7 +2627,7 @@ export class RegisterPractitioner {
    * vivían en el mismo componente esto era un `computed` sobre el tipo de
    * cuenta.
    */
-  readonly accessHint = 'tu correo';
+  readonly accessHint = 'su correo';
 
   /**
    * La clave de la página que se está contestando, tal como la avisa el motor.
@@ -2655,7 +2655,7 @@ export class RegisterPractitioner {
       return state.issues[0]?.message ?? null;
     }
     if (state.status === 'offline') {
-      return 'No pudimos conectarnos. Revisá tu conexión y reintentá.';
+      return 'No pudimos conectarnos. Revise su conexión y reintente.';
     }
     if (state.status === 'error') {
       return `${state.message || 'Ocurrió un error inesperado.'} (${state.requestId})`;
@@ -2912,7 +2912,7 @@ export class RegisterPractitioner {
           {
             field: 'academicTitles',
             message:
-              `Volvé al paso «Tus títulos». ${this.avisoDeTitulosIncompletos() ?? ''}`.trim(),
+              `Vuelva al paso «Sus títulos». ${this.avisoDeTitulosIncompletos() ?? ''}`.trim(),
           },
         ]),
       );
@@ -2929,7 +2929,7 @@ export class RegisterPractitioner {
           {
             field: 'professionalTitleUniversity',
             message:
-              'Completá el número del diploma en «Tu título profesional y foto». La universidad y el PDF que ya cargaste se guardarán con ese título. También podés indicar su número en una fila «Universitario» de «Tus títulos».',
+              'Complete el número del diploma en «Su título profesional y foto». La universidad y el PDF que ya cargó se guardarán con ese título. También puede indicar su número en una fila «Universitario» de «Sus títulos».',
           },
         ]),
       );
@@ -2988,14 +2988,14 @@ export class RegisterPractitioner {
           map((respuesta) => {
             const documento = respuesta.body;
             if (!documento?.fileId || documento.fileId.trim() === '') {
-              throw new Error('No pudimos confirmar la carga del PDF. Volvé a intentarlo.');
+              throw new Error('No pudimos confirmar la carga del PDF. Vuelva a intentarlo.');
             }
             if (usaPrincipal) this.fileIdTituloPrincipal.set(documento.fileId);
             else this.recordarFileIdDelTitulo(titulo.id, documento.fileId);
             return undefined;
           }),
           throwIfEmpty(
-            () => new Error('No pudimos confirmar la carga del PDF. Volvé a intentarlo.'),
+            () => new Error('No pudimos confirmar la carga del PDF. Vuelva a intentarlo.'),
           ),
         );
       }),

@@ -347,12 +347,12 @@ export class LaboratoryResults {
             page.count === 0
               ? this.hasFilters()
                 ? empty(
-                    { label: 'Probá con otros filtros o activá «Mostrar retirados»' },
+                    { label: 'Pruebe con otros filtros o active «Mostrar retirados»' },
                     'Ningún archivo coincide con los filtros.',
                   )
                 : empty(
-                    { label: 'Soltá el primer archivo en «Subir resultados», arriba' },
-                    'Todavía no subiste resultados.',
+                    { label: 'Suelte el primer archivo en «Subir resultados», arriba' },
+                    'Todavía no subió resultados.',
                   )
               : ready(page),
           ),
@@ -437,14 +437,14 @@ export class LaboratoryResults {
     }
     this.lab.withdrawResult(file.id, reason).subscribe({
       next: () => {
-        this.toast.success(`Retiraste ${file.fileName}.`);
+        this.toast.success(`Retiró ${file.fileName}.`);
         if (this.viewerId() === file.id) {
           this.closeViewer();
         }
         this.loadFiles();
         this.loadTargets();
       },
-      error: () => this.toast.error('No se pudo retirar el archivo. Probá de nuevo.'),
+      error: () => this.toast.error('No se pudo retirar el archivo. Pruebe de nuevo.'),
     });
   }
 

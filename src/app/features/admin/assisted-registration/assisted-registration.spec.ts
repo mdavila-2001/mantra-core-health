@@ -167,7 +167,7 @@ describe('AssistedRegistration', () => {
     http.expectOne('/iam/users/assisted-registration').flush(
       {
         code: 'FORBIDDEN',
-        message: 'Necesitás el rol SECURITY_ADMIN para registrar pacientes.',
+        message: 'Necesita el rol SECURITY_ADMIN para registrar pacientes.',
         timestamp: '2026-08-04T10:00:00Z',
         path: '/iam/users/assisted-registration',
       },

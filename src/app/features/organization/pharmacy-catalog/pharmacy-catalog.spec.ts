@@ -127,7 +127,7 @@ describe('PharmacyCatalog', () => {
   it('un catálogo vacío dice qué hacer', () => {
     montar([]);
 
-    expect(texto()).toContain('Tu catálogo todavía no tiene productos.');
+    expect(texto()).toContain('Su catálogo todavía no tiene productos.');
     expect(texto()).toContain('Nuevo producto');
   });
 
@@ -209,7 +209,7 @@ describe('PharmacyCatalog', () => {
     retiro.flush({ ok: true });
 
     esperarListado([]);
-    expect(texto()).toContain('Tu catálogo todavía no tiene productos.');
+    expect(texto()).toContain('Su catálogo todavía no tiene productos.');
   });
 
   it('no retira nada si se cancela la confirmación', async () => {
@@ -246,7 +246,7 @@ describe('PharmacyCatalog', () => {
       const revision = raiz().querySelector('[data-testid="catalogo-revision"]')?.textContent ?? '';
       expect(revision).toMatch(/2\s+filas listas/);
       expect(revision).toMatch(/2\s+filas a corregir/);
-      expect(texto()).toContain('ya está en tu catálogo');
+      expect(texto()).toContain('ya está en su catálogo');
       http.expectNone(`/pharmacies/${FARMACIA.id}/products`);
     });
 
@@ -312,7 +312,7 @@ describe('PharmacyCatalog', () => {
       esperarListado([producto({}), producto({ id: 'n-1', productCode: 'A-1' })]);
       const resultado = raiz().querySelector('[data-testid="catalogo-resultado"]')?.textContent ?? '';
       expect(resultado).toMatch(/1\s+producto publicado/);
-      expect(texto()).toContain('Detuviste la carga');
+      expect(texto()).toContain('Detuvo la carga');
     });
 
     it('un CSV guardado por Excel en Windows-1252 conserva las tildes', async () => {

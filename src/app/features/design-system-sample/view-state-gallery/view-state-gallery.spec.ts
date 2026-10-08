@@ -52,7 +52,7 @@ describe('ViewStateGallery · vitrina de los 9 estados', () => {
     ) as HTMLElement | undefined;
 
     expect(tarjetaS6).toBeDefined();
-    expect(tarjetaS6?.textContent).toContain('No encontramos lo que buscabas');
+    expect(tarjetaS6?.textContent).toContain('No encontramos lo que buscaba');
     // La ocupación de camas es el dato de las tarjetas con contenido: S6 no lo tiene.
     expect(tarjetaS6?.textContent).not.toContain('Ocupación de camas');
   });

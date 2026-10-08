@@ -1,6 +1,6 @@
 ﻿<app-page-header
   title="Directorio de Pacientes"
-  subtitle="Buscá pacientes y contactalos por mensajería interna."
+  subtitle="Busque pacientes y contáctelos por mensajería interna."
   [breadcrumbs]="breadcrumbs()"
 />
 
@@ -60,7 +60,7 @@
 </section>
 @if (genderError()) {
   <app-alert tone="warning" title="No pudimos cargar las opciones de sexo">
-    Podés seguir usando los demás filtros.
+    Puede seguir usando los demás filtros.
     <button app-button alert-actions variant="outline" (clicked)="reloadGender()">
       Reintentar opciones
     </button>
@@ -123,14 +123,14 @@
       <h2>No se encontraron pacientes con los filtros seleccionados</h2>
       <button app-button variant="outline" (clicked)="resetFilters()">Restablecer filtros</button>
     } @else {
-      <h2>Tu directorio todavía no tiene pacientes</h2>
-      <p>Todavía no hay pacientes disponibles en tu directorio autorizado.</p>
+      <h2>Su directorio todavía no tiene pacientes</h2>
+      <p>Todavía no hay pacientes disponibles en su directorio autorizado.</p>
       <button app-button variant="outline" (clicked)="reload()">Actualizar directorio</button>
     }
   </div>
   <div vsh-error>
     <app-alert tone="error" title="No pudimos cargar el directorio">
-      <p>Tus filtros se conservan. Intentá cargar nuevamente.</p>
+      <p>Sus filtros se conservan. Intente cargar nuevamente.</p>
       @let state = listing();
       @if (state.status === 'error') {
         <p>
@@ -144,7 +144,7 @@
   </div>
   <div vsh-offline>
     <app-alert tone="error" title="Sin conexión">
-      <p>Revisá tu conexión. Tus filtros se conservan.</p>
+      <p>Revise su conexión. Sus filtros se conservan.</p>
       <button app-button alert-actions variant="outline" (clicked)="reload()">
         Reintentar carga
       </button>

@@ -1,13 +1,13 @@
 <app-page-header
   title="Mis recetas"
-  subtitle="Elegí una receta y te mostramos dónde comprarla completa, ordenado por precio y por distancia."
+  subtitle="Elija una receta y le mostramos dónde comprarla completa, ordenado por precio y por distancia."
 />
 
 <main class="recetas" aria-label="Recetas del paciente">
   <app-card class="recetas__tarjeta" padding="lg">
     @if (sinPerfilDePaciente) {
       <p class="recetas__sin-perfil" data-testid="pharmacy-prescriptions-sin-perfil">
-        Tus recetas están en tu historia clínica de paciente. Entrá con tu cuenta de paciente para
+        Sus recetas están en su historia clínica de paciente. Entre con su cuenta de paciente para
         verlas.
       </p>
     } @else {

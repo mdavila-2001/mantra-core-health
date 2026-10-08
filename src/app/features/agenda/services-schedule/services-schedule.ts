@@ -55,12 +55,12 @@ export interface ServicesSite {
 
 const NO_RESOURCE = empty(
   { label: 'Publicar mi agenda', route: AGENDA_CREATE_ROUTE },
-  'Todavía no publicaste tu horario. Primero publicalo; después marcás qué franjas son para otros servicios.',
+  'Todavía no publicó su horario. Primero publíquelo; después marca qué franjas son para otros servicios.',
 );
 
 const NO_SERVICE_HOURS = empty(
   { label: 'Cambiar mi horario', route: SCHEDULE_EDIT_ROUTE },
-  'Todavía no declaraste horarios para otros servicios. En «Cambiar mi horario», elegí «Servicios» o «Ambos» en la columna «Atiendo» de cada franja.',
+  'Todavía no declaró horarios para otros servicios. En «Cambiar mi horario», elija «Servicios» o «Ambos» en la columna «Atiendo» de cada franja.',
 );
 
 /** Si la franja admite servicios: `SERVICES` o `MIXED`. Sin modo es sólo consultas. */

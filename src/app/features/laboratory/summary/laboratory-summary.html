@@ -1,6 +1,6 @@
 <app-page-header
   title="Resumen"
-  [subtitle]="(data()?.labName ?? 'Tu laboratorio') + ': qué ofrecés, qué órdenes esperan su resultado y qué pasó hace poco.'"
+  [subtitle]="(data()?.labName ?? 'Su laboratorio') + ': qué ofrece, qué órdenes esperan su resultado y qué pasó hace poco.'"
 />
 
 <app-view-state-host [state]="summary()" (retry)="reload()">
@@ -26,7 +26,7 @@
           <li class="summary__indicator" [class.summary__indicator--alert]="s.ordersWithoutResults > 0">
             <span class="summary__label">Órdenes sin resultado</span>
             <strong class="summary__figure" data-testid="summary-orders-without-results">{{ s.ordersWithoutResults }}</strong>
-            <span class="summary__note">esperan que subas el archivo</span>
+            <span class="summary__note">esperan que suba el archivo</span>
           </li>
           <li class="summary__indicator">
             <span class="summary__label">Resultados subidos</span>
@@ -39,7 +39,7 @@
           <section class="summary__section" aria-labelledby="summary-by-category">
             <h2 class="summary__heading" id="summary-by-category">Servicios por categoría</h2>
             @if (s.byCategory.length === 0) {
-              <p class="summary__note">Todavía no hay servicios en tu catálogo.</p>
+              <p class="summary__note">Todavía no hay servicios en su catálogo.</p>
             } @else {
               <ul class="summary__bars" data-testid="summary-by-category">
                 @for (row of s.byCategory; track row.category) {
@@ -74,7 +74,7 @@
           <h2 class="summary__heading" id="summary-activity">Actividad reciente</h2>
           @if (s.recentActivity.length === 0) {
             <p class="summary__note" data-testid="summary-no-activity">
-              Todavía no hay actividad: cuando cargues servicios o subas resultados, aparece acá.
+              Todavía no hay actividad: cuando cargue servicios o subas resultados, aparece acá.
             </p>
           } @else {
             <ul class="summary__activity" data-testid="summary-activity">

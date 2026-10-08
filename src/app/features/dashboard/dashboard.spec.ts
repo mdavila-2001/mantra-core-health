@@ -120,7 +120,7 @@ describe('Dashboard', () => {
       'panel-cifra-identidad',
     ];
 
-    it('ni «Tu cuenta», ni el directorio, ni las cifras de sistema', () => {
+    it('ni «Su cuenta», ni el directorio, ni las cifras de sistema', () => {
       crear({
         sub: '11111111-1111-4111-8111-111111111111',
         roles: ['PRACTITIONER', 'CLINICIAN'],
@@ -134,7 +134,7 @@ describe('Dashboard', () => {
       }
 
       const texto = panel.textContent ?? '';
-      expect(texto).not.toContain('Tu cuenta');
+      expect(texto).not.toContain('Su cuenta');
       expect(texto).not.toContain('Directorio público');
       expect(texto).not.toContain('Secciones disponibles');
       expect(texto).not.toContain('Organizaciones');
@@ -185,7 +185,7 @@ describe('Dashboard', () => {
         .flush({ items: [], count: 0, limit: 5, nextCursor: null });
 
       expect(hayJornada()).toBe(false);
-      expect(raiz().textContent).toContain('Todo lo que tu cuenta habilita');
+      expect(raiz().textContent).toContain('Todo lo que puede hacer en esta organización');
     });
   });
 
@@ -241,7 +241,7 @@ describe('Dashboard', () => {
 
   /* -- Carril 02 · «Tus accesos» dejó de ser una lista y pasó a ser un árbol -- */
 
-  describe('Tus accesos', () => {
+  describe('Sus accesos', () => {
     function abrirPanel(roles: readonly string[]): void {
       crear({ sub: 'u-1', roles, tenants: ['t-1'] });
     }
@@ -357,7 +357,7 @@ describe('Dashboard', () => {
       responderAlta(2, 'organizations');
 
       const texto: string = fixture.nativeElement.textContent;
-      expect(texto).toContain('Completá tu perfil');
+      expect(texto).toContain('Complete su perfil');
       expect(texto).toContain('2 de 5');
     });
 
@@ -365,7 +365,7 @@ describe('Dashboard', () => {
       crear({ sub: 'u-1', roles: ['PRACTITIONER'], tenants: ['t-1'] });
       responderAlta(5, 'done');
 
-      expect(fixture.nativeElement.textContent).not.toContain('Completá tu perfil');
+      expect(fixture.nativeElement.textContent).not.toContain('Complete su perfil');
     });
 
     it('si la lectura falla no inventa un aviso', () => {
@@ -376,7 +376,7 @@ describe('Dashboard', () => {
       fixture.detectChanges();
 
       // Decirle a alguien que le falta algo sin saberlo es peor que no avisar.
-      expect(fixture.nativeElement.textContent).not.toContain('Completá tu perfil');
+      expect(fixture.nativeElement.textContent).not.toContain('Complete su perfil');
     });
 
     it('a quien no atiende no se le pregunta siquiera', () => {

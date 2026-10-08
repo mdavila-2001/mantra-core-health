@@ -90,7 +90,7 @@ test.describe('B.1 · dependientes por CI', () => {
     // …y a esa cuenta le llega la notificación.
     await entrar(page, DEPENDIENTE.documento);
     await page.goto('/notification-center');
-    await expect(page.getByText('Te quieren registrar como dependiente').first()).toBeVisible();
+    await expect(page.getByText('Le quieren registrar como dependiente').first()).toBeVisible();
 
     // 4 · acepta desde Dependientes.
     await page.goto('/my-account/dependents');

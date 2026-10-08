@@ -31,22 +31,22 @@ Escritas para AloVida. No provienen de ninguna fuente de terceros.
 | `en-camino.svg` | Ya voy en camino | OpenMoji `1F697` |
 | `llegando-tarde.svg` | Llego tarde | OpenMoji `23F0` |
 | `confirmado.svg` | Turno confirmado | OpenMoji `2705` |
-| `te-espero.svg` | Te espero en la consulta | OpenMoji `1FA7A` |
+| `te-espero.svg` | Le espero en la consulta | OpenMoji `1FA7A` |
 | `receta-lista.svg` | Receta lista | OpenMoji `1F48A` |
-| `tomar-remedio.svg` | Acordate del remedio | OpenMoji `1F552` |
+| `tomar-remedio.svg` | Recuerde su medicamento | OpenMoji `1F552` |
 | `resultados.svg` | Resultados listos | OpenMoji `1F9EA` |
-| `ayunas.svg` | Vení en ayunas | OpenMoji `1F957` |
-| `mejorate.svg` | Recuperate pronto | OpenMoji `1F917` |
+| `ayunas.svg` | Venga en ayunas | OpenMoji `1F957` |
+| `mejorate.svg` | Que se recupere pronto | OpenMoji `1F917` |
 | `animo.svg` | Ánimo | OpenMoji `1F4AA` |
-| `cuidate.svg` | Cuidate mucho | OpenMoji `2764` |
-| `descansa.svg` | Descansá | OpenMoji `1F634` |
-| `agua.svg` | Tomá agua | OpenMoji `1F4A7` |
+| `cuidate.svg` | Cuídese mucho | OpenMoji `2764` |
+| `descansa.svg` | Descanse | OpenMoji `1F634` |
+| `agua.svg` | Tome agua | OpenMoji `1F4A7` |
 | `control.svg` | Control en dos semanas | OpenMoji `1FA7A` |
 | `entendido.svg` | Entendido | OpenMoji `1F44C` |
 | `consulta.svg` | Tengo una consulta | OpenMoji `2753` |
 | `reprogramar.svg` | Podemos reprogramar | OpenMoji `1F4C6` |
 | `urgencia.svg` | Es urgente | OpenMoji `1F691` |
-| `estudios.svg` | Traé tus estudios | OpenMoji `1FA7B` |
+| `estudios.svg` | Traiga sus estudios | OpenMoji `1FA7B` |
 | `buen-dia.svg` | Buen día | OpenMoji `2600` |
 | `buenas-noches.svg` | Buenas noches | OpenMoji `1F319` |
 | `felicitaciones.svg` | Felicitaciones | OpenMoji `1F389` |

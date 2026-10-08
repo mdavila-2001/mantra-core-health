@@ -173,7 +173,7 @@ export class PatientCampaignsWidget {
           this.state.set(
             items.length > 0
               ? ready(items)
-              : empty({ label: 'Ver mi seguro' }, 'Hoy tu seguro no tiene campañas activas.'),
+              : empty({ label: 'Ver mi seguro' }, 'Hoy su seguro no tiene campañas activas.'),
           ),
         error: (error: unknown) =>
           this.state.set(errorToViewState<readonly PatientCampaign[]>(error)),

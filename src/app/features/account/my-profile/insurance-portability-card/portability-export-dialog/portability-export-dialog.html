@@ -1,7 +1,7 @@
 <app-content-dialog
   data-testid="portability-export-dialog"
   heading="Solicitar exportación de portabilidad"
-  description="Se exporta la información disponible de tus pólizas y siniestros. Al terminar, vas a poder descargar el archivo, consultar la huella SHA-256 del manifiesto y abrir el enlace de verificación."
+  description="Se exporta la información disponible de sus pólizas y siniestros. Al terminar, va a poder descargar el archivo, consultar la huella SHA-256 del manifiesto y abrir el enlace de verificación."
   [dismissible]="state() !== 'loading'"
   (dismissAttempt)="attemptClose()"
   (closed)="close()"
@@ -68,7 +68,7 @@
     }
     @default {
       <p>
-        Vas a exportar la información disponible de tus pólizas y siniestros. Al terminar, vas a
+        Va a exportar la información disponible de sus pólizas y siniestros. Al terminar, va a
         poder descargar el archivo, consultar la huella SHA-256 del manifiesto y abrir el enlace de
         verificación.
       </p>

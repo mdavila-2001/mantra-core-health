@@ -214,7 +214,7 @@ export class SiteBankQrDialog implements OnInit {
         this.fileId.set(fileId);
         this.bajarImagen(fileId);
         this.toasts.success(
-          `Tus pacientes de ${this.site().name} van a pagar con este QR.`,
+          `Sus pacientes de ${this.site().name} van a pagar con este QR.`,
           'QR guardado',
         );
         this.saved.emit(fileId);
@@ -229,7 +229,7 @@ export class SiteBankQrDialog implements OnInit {
     this.error.set(
       estado.status === 'validation'
         ? estado.issues.map((issue) => issue.message).join(' ')
-        : 'No pudimos guardar el QR. Probá de nuevo.',
+        : 'No pudimos guardar el QR. Pruebe de nuevo.',
     );
   }
 

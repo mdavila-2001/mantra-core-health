@@ -55,9 +55,9 @@ const DIAS_DE_VIGENCIA_POR_DEFECTO = 30;
  * motor (`DraftFailure`) los dice `describeDraftFailure()`, su única fuente.
  */
 const TEXTO_DEL_FALLO_HEREDADO = {
-  SIN_TITULO: 'Poné un título: es lo primero que va a leer la gente.',
-  SIN_PRODUCTOS: 'Agregá al menos un producto de tu catálogo.',
-  FALTA_FECHA: 'Elegí desde qué día y hasta qué día vale la campaña.',
+  SIN_TITULO: 'Ponga un título: es lo primero que va a leer la gente.',
+  SIN_PRODUCTOS: 'Agregue al menos un producto de su catálogo.',
+  FALTA_FECHA: 'Elija desde qué día y hasta qué día vale la campaña.',
   VIGENCIA_INVERTIDA: 'La fecha de fin no puede ser anterior a la de inicio.',
   PORCENTAJE_FUERA_DE_RANGO: 'El descuento tiene que estar entre 1 % y 99 %.',
   PRECIO_NO_ES_DESCUENTO:
@@ -335,7 +335,7 @@ export class PharmacyCampaigns {
         this.resultados.set([]);
         this.seBusco.set(true);
         this.buscando.set(false);
-        this.toasts.error('No se pudo consultar el catálogo. Probá de nuevo.');
+        this.toasts.error('No se pudo consultar el catálogo. Pruebe de nuevo.');
       },
     });
   }
@@ -430,11 +430,11 @@ export class PharmacyCampaigns {
         this.fallos.set([]);
         this.limpiarFormulario();
         this.recargarLista(pharmacyId);
-        this.toasts.success('Tu campaña ya está publicada.');
+        this.toasts.success('Su campaña ya está publicada.');
       },
       error: () => {
         this.publicando.set(false);
-        this.toasts.error('No se pudo publicar la campaña. Probá de nuevo.');
+        this.toasts.error('No se pudo publicar la campaña. Pruebe de nuevo.');
       },
     });
   }

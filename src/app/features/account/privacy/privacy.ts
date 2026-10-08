@@ -117,8 +117,8 @@ export class AccountPrivacy {
           status: 'error',
           mensaje:
             vista.status === 'offline'
-              ? 'No pudimos conectarnos. Revisá tu conexión y reintentá.'
-              : 'No pudimos traer tu información de privacidad.',
+              ? 'No pudimos conectarnos. Revise su conexión y reintente.'
+              : 'No pudimos traer su información de privacidad.',
           requestId: vista.status === 'error' ? vista.requestId : null,
         });
       },
@@ -136,9 +136,9 @@ export class AccountPrivacy {
   protected decisionDe(decision: MyTreatmentConsent['decision']): string {
     switch (decision) {
       case 'ACCEPTED':
-        return 'Aceptaste el tratamiento';
+        return 'Aceptó el tratamiento';
       case 'DECLINED':
-        return 'Rechazaste el tratamiento';
+        return 'Rechazó el tratamiento';
       default:
         return 'Sin decisión registrada';
     }
@@ -152,7 +152,7 @@ export class AccountPrivacy {
     const confirmado = await this.dialogs.confirm({
       title: 'Retirar el consentimiento',
       message:
-        'Vas a retirar este consentimiento. Los accesos que se apoyaban en él se cierran, y el registro queda guardado como «Retirado».',
+        'Va a retirar este consentimiento. Los accesos que se apoyaban en él se cierran, y el registro queda guardado como «Retirado».',
       details: [{ label: 'Propósito', value: this.propositoDe(consentimiento.purpose) }],
       confirmLabel: 'Retirar',
       destructive: true,
@@ -165,12 +165,12 @@ export class AccountPrivacy {
     this.consent.withdrawMyConsent(consentimiento.id).subscribe({
       next: () => {
         this.retirando.set(null);
-        this.toasts.success('Retiraste el consentimiento.');
+        this.toasts.success('Retiró el consentimiento.');
         this.cargar();
       },
       error: () => {
         this.retirando.set(null);
-        this.toasts.warning('No pudimos retirar el consentimiento. Probá de nuevo.');
+        this.toasts.warning('No pudimos retirar el consentimiento. Pruebe de nuevo.');
       },
     });
   }

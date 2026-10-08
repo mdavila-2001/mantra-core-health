@@ -10,12 +10,12 @@
        nada que mostrar hasta que la 1 y la 2 están resueltas, y una pestaña
        que se puede abrir vacía invita a empezar por el final. -->
   <app-card class="carga">
-    <h2 class="carga__paso-titulo" id="carga-paso-1">1 · Qué vas a cargar</h2>
+    <h2 class="carga__paso-titulo" id="carga-paso-1">1 · Qué va a cargar</h2>
 
     <section class="carga__paso" aria-labelledby="carga-paso-1">
       <div class="carga__campos">
         <app-form-field
-          label="Qué vas a cargar"
+          label="Qué va a cargar"
           hint="Fija qué columnas se esperan en el archivo."
         >
           <app-select
@@ -23,7 +23,7 @@
             [value]="perfil()"
             (valueChange)="cambiarPerfil($event)"
             [options]="opcionesDePerfil"
-            placeholder="Elegí qué vas a cargar"
+            placeholder="Elija qué va a cargar"
           />
         </app-form-field>
 
@@ -33,7 +33,7 @@
             [value]="sistema()"
             (valueChange)="cambiarSistema($event)"
             [options]="opcionesDeSistema()"
-            placeholder="Elegí un sistema"
+            placeholder="Elija un sistema"
           />
         </app-form-field>
 
@@ -42,7 +42,7 @@
                descubre recién al enviar. -->
           <app-alert tone="warning">
             Este sistema no tiene ninguna versión que admita conceptos: las publicadas ya no los
-            aceptan. Creá una versión nueva en borrador antes de importar.
+            aceptan. Cree una versión nueva en borrador antes de importar.
           </app-alert>
         } @else {
           <app-form-field label="Versión" hint="Sólo se ofrecen las que todavía admiten conceptos.">
@@ -52,14 +52,14 @@
               (valueChange)="cambiarVersion($event)"
               [options]="opcionesDeVersion()"
               [disabled]="sistema() === null || cargandoVersiones()"
-              placeholder="Elegí una versión"
+              placeholder="Elija una versión"
             />
           </app-form-field>
         }
       </div>
 
       <p class="carga__nota">
-        ¿No sabés cómo armar el archivo? Bajá la plantilla: trae los nombres de las columnas y una
+        ¿No sabe cómo armar el archivo? Baje la plantilla: trae los nombres de las columnas y una
         fila de ejemplo.
       </p>
 
@@ -164,7 +164,7 @@
           <app-alert tone="error" title="No se pudo completar">
             {{ mensajeDe(problema) }}
             <span class="carga__preservado">
-              Lo que elegiste sigue acá: no hace falta volver a cargar el archivo.
+              Lo que eligió sigue acá: no hace falta volver a cargar el archivo.
             </span>
           </app-alert>
         }
@@ -209,7 +209,7 @@
           <!-- Sin publicar, los conceptos importados son invisibles a toda
                expansión y no da ningún error: el paso que más se olvida. -->
           <app-alert tone="warning">
-            Los conceptos quedaron en borrador. Hasta que publiques la versión, no aparecen en
+            Los conceptos quedaron en borrador. Hasta que publique la versión, no aparecen en
             ningún desplegable ni búsqueda de catálogo — y no da error, sale vacío.
           </app-alert>
 
@@ -265,7 +265,7 @@
 
           @if (validacion.aborted || validacion.errors > 0) {
             <app-alert tone="warning" title="No se guardó nada">
-              Corregí las filas de abajo en tu archivo y volvé a validar. La importación es todo o
+              Corrija las filas de abajo en su archivo y vuelva a validar. La importación es todo o
               nada: con un solo error no entra ninguna fila.
             </app-alert>
           }

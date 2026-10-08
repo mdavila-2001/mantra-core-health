@@ -94,8 +94,8 @@ export class AccountClinicalAccess {
         this.error.set({
           mensaje:
             vista.status === 'offline'
-              ? 'No pudimos conectarnos. Revisá tu conexión y reintentá.'
-              : 'No pudimos traer quién ve tu historia.',
+              ? 'No pudimos conectarnos. Revise su conexión y reintente.'
+              : 'No pudimos traer quién ve su historia.',
           requestId: vista.status === 'error' ? vista.requestId : null,
         });
       },
@@ -114,7 +114,7 @@ export class AccountClinicalAccess {
     const quien = relacion.practitionerName ?? 'este profesional';
     const confirmado = await this.dialogs.confirm({
       title: 'Revocar el vínculo',
-      message: `${quien} deja de ver tu historia clínica salvo que tenga un turno tuyo el mismo día.`,
+      message: `${quien} deja de ver su historia clínica salvo que tenga un turno suyo el mismo día.`,
       confirmLabel: 'Revocar',
       destructive: true,
     });
@@ -136,7 +136,7 @@ export class AccountClinicalAccess {
     const quien = acceso.grantedName ?? 'esta persona';
     const confirmado = await this.dialogs.confirm({
       title: acceso.isEmergency ? 'Revocar el acceso de emergencia' : 'Revocar el acceso',
-      message: `${quien} deja de tener acceso a tu historia clínica.`,
+      message: `${quien} deja de tener acceso a su historia clínica.`,
       confirmLabel: 'Revocar',
       destructive: true,
     });
@@ -159,6 +159,6 @@ export class AccountClinicalAccess {
 
   private fallarRevocacion(): void {
     this.revocando.set(null);
-    this.toasts.warning('No pudimos revocar el acceso. Probá de nuevo.');
+    this.toasts.warning('No pudimos revocar el acceso. Pruebe de nuevo.');
   }
 }

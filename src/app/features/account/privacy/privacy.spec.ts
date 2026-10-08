@@ -95,7 +95,7 @@ describe('AccountPrivacy (BR-20)', () => {
     responderLecturas([{ ...ACTIVO, state: 'WITHDRAWN', withdrawnAt: '2026-09-26T10:00:00.000Z' }]);
     expect(fixture.nativeElement.textContent).toContain('Retirado');
     expect(fixture.nativeElement.querySelector('[data-testid="consentimiento-retirar-c-activo"]')).toBeNull();
-    expect(avisos).toContain('Retiraste el consentimiento.');
+    expect(avisos).toContain('Retiró el consentimiento.');
   });
 
   it('si se cancela la confirmación no se llama a la API', async () => {
@@ -111,7 +111,7 @@ describe('AccountPrivacy (BR-20)', () => {
   it('estado vacío: dice qué pasa en vez de una lista en blanco', () => {
     responderLecturas([]);
 
-    expect(fixture.nativeElement.textContent).toContain('Todavía no diste ningún consentimiento');
+    expect(fixture.nativeElement.textContent).toContain('Todavía no dio ningún consentimiento');
   });
 
   it('un 403 (cuenta sin perfil de paciente) se dice como tal', () => {

@@ -71,7 +71,7 @@ export const BRANCH_IMPORT_COLUMNS: readonly BranchImportColumn[] = [
     field: 'name',
     aliases: ['name', 'sucursal', 'nombre_de_la_sucursal', 'nombre_sucursal', 'sede'],
     required: true,
-    hint: 'Cómo la reconocen tus pacientes. Obligatorio.',
+    hint: 'Cómo la reconocen sus pacientes. Obligatorio.',
   },
   {
     header: 'descripcion',
@@ -111,7 +111,7 @@ export const BRANCH_IMPORT_COLUMNS: readonly BranchImportColumn[] = [
     field: 'code',
     aliases: ['code', 'cod', 'codigo_de_la_sucursal', 'codigo_sucursal'],
     required: false,
-    hint: 'Tu código interno. Si lo dejás vacío, lo armamos con el nombre.',
+    hint: 'Su código interno. Si lo deja vacío, lo armamos con el nombre.',
   },
 ];
 
@@ -172,7 +172,7 @@ export function reviewBranchCsv(
 
   if (!targets.includes('name')) {
     throw new ArchivoInvalido(
-      'Falta la columna «nombre». Descargá la plantilla para ver los encabezados.',
+      'Falta la columna «nombre». Descargue la plantilla para ver los encabezados.',
     );
   }
   const mapped = targets.filter((field) => field !== null);
@@ -240,11 +240,11 @@ function reviewRow(line: number, fields: Omit<BranchDraft, 'coordinates'>): Bran
     if (fields.locationUrl.length > BRANCH_LOCATION_URL_MAX_LENGTH) {
       errors.push('El enlace de ubicación es demasiado largo.');
     } else if (!isWebUrl(fields.locationUrl)) {
-      errors.push('El enlace de ubicación tiene que empezar con https:// (copialo desde el mapa).');
+      errors.push('El enlace de ubicación tiene que empezar con https:// (cópielo desde el mapa).');
     } else {
       coordinates = coordinatesFromMapUrl(fields.locationUrl);
       if (coordinates === null) {
-        notes.push('El enlace no trae el punto escrito: se guarda tal cual, y el pin lo marcás vos.');
+        notes.push('El enlace no trae el punto escrito: se guarda tal cual, y el pin lo marca usted.');
       }
     }
   }

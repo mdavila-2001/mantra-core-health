@@ -1,6 +1,6 @@
 <app-page-header
   title="Categorías"
-  subtitle="Con qué categorías ordenás tus productos. Al renombrar una, los productos que la usan la siguen."
+  subtitle="Con qué categorías ordena sus productos. Al renombrar una, los productos que la usan la siguen."
 />
 
 <app-view-state-host [state]="scope.options()" (retry)="scope.retry()">
@@ -11,7 +11,7 @@
           [options]="scope.selectOptions()"
           [value]="scope.pharmacyId()"
           (valueChange)="scope.choose($event)"
-          placeholder="Elegí tu farmacia"
+          placeholder="Elija su farmacia"
         />
       </app-form-field>
     </div>
@@ -33,7 +33,7 @@
         }
 
         <app-data-table
-          caption="Categorías de tu farmacia"
+          caption="Categorías de su farmacia"
           [state]="categories()"
           [columns]="columns()"
           [trackBy]="rowId"

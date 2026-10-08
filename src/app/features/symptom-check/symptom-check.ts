@@ -383,12 +383,12 @@ export class SymptomCheck {
     if (this.sintomas().length === 0) {
       return this.leyendoConIa() || this.descartados() !== ''
         ? null
-        : 'No pudimos identificar con certeza qué te pasa: un médico general te evalúa y te deriva si hace falta.';
+        : 'No pudimos identificar con certeza qué le pasa: un médico general le evalúa y le deriva si hace falta.';
     }
     const fuente = this.lecturaVigente()?.source;
     const soloIa = reconocer(this.texto()).length === 0 && (fuente === 'model' || fuente === 'semantic');
     return soloIa
-      ? 'Lo que escribiste lo interpretamos con IA y puede no ser exacto: un médico general te evalúa y te deriva si hace falta.'
+      ? 'Lo que escribió lo interpretamos con IA y puede no ser exacto: un médico general le evalúa y le deriva si hace falta.'
       : null;
   });
 

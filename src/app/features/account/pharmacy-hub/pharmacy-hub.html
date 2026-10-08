@@ -1,6 +1,6 @@
 <app-page-header
   title="Farmacia"
-  subtitle="Tus pedidos de farmacia y cuánto cuesta comprar, en un solo lugar."
+  subtitle="Sus pedidos de farmacia y cuánto cuesta comprar, en un solo lugar."
   [breadcrumbs]="breadcrumbs()"
 />
 
@@ -22,7 +22,7 @@
       @defer (when pestana() === 1) {
         <app-cotizaciones [embedded]="true" fixedVertical="MEDICAMENTOS" />
       } @placeholder {
-        <p class="farmacia__cargando">Abrí esta pestaña para comparar precios de farmacia.</p>
+        <p class="farmacia__cargando">Abra esta pestaña para comparar precios de farmacia.</p>
       } @loading {
         <app-spinner label="Cargando cotizaciones" />
       }
@@ -34,7 +34,7 @@
       @defer (when pestana() === 2) {
         <app-pharmacy-shop />
       } @placeholder {
-        <p class="farmacia__cargando">Abrí esta pestaña para elegir una farmacia y comprar.</p>
+        <p class="farmacia__cargando">Abra esta pestaña para elegir una farmacia y comprar.</p>
       } @loading {
         <app-spinner label="Cargando el catálogo" />
       }

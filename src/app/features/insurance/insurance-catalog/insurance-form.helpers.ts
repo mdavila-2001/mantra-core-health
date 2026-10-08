@@ -36,8 +36,8 @@ export function nullableDecimal(value: string): string | null {
 export function apiErrorMessage(error: unknown): string {
   if (error instanceof HttpErrorResponse) {
     return (
-      readApiError(error)?.message ?? 'No se pudo guardar. Revisá los datos e intentá de nuevo.'
+      readApiError(error)?.message ?? 'No se pudo guardar. Revise los datos e intente de nuevo.'
     );
   }
-  return 'No se pudo guardar. Intentá de nuevo.';
+  return 'No se pudo guardar. Intente de nuevo.';
 }

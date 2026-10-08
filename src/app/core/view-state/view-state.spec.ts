@@ -157,9 +157,9 @@ describe('ViewState · los 9 estados del M34', () => {
     });
 
     it('S5 sí puede llevar una salida: distingue la puerta del muro', () => {
-      const muro = forbidden({ message: 'No tenés permiso sobre esta sección' });
+      const muro = forbidden({ message: 'No tiene permiso sobre esta sección' });
       const puerta = forbidden({
-        message: 'Verificá tu identidad para continuar',
+        message: 'Verifique su identidad para continuar',
         nextAction: { label: 'Verificar identidad', route: '/identity/me' },
       });
 

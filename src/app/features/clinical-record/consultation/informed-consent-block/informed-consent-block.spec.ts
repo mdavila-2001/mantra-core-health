@@ -100,7 +100,7 @@ describe('InformedConsentBlock (CL-77)', () => {
     fixture.detectChanges();
 
     expect(fixture.nativeElement.querySelector('[data-testid="consentimiento-error"]')?.textContent).toContain(
-      'No tenés acceso',
+      'No tiene acceso',
     );
   });
 });

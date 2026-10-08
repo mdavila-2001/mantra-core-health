@@ -1,12 +1,12 @@
 <app-page-header
   title="Agendar una cita"
-  subtitle="Elegís el rato, no un turno publicado."
+  subtitle="Elija el horario que le convenga."
 >
   <a app-button page-actions variant="ghost" [routerLink]="[rutaDeMiAgenda]">Volver a mi agenda</a>
 </app-page-header>
 
 @if (cargandoAgendas()) {
-  <p class="cita__cargando">Buscando tus agendas…</p>
+  <p class="cita__cargando">Buscando sus agendas…</p>
 } @else if (agendas().length === 0) {
   <!-- Sin agenda no hay dónde poner la cita, y decirlo así evita que alguien
        complete el formulario para descubrirlo al guardar. -->
@@ -15,8 +15,8 @@
        efecto — el aviso caía siempre en el tono `info` por omisión, que acá
        coincidía por casualidad con lo que se quería mostrar. -->
   <app-alert tone="info" data-testid="cita-sin-agenda">
-    Todavía no tenés una agenda publicada. Creala desde
-    <a [routerLink]="[rutaDeMiAgenda]">Mi agenda</a> y volvé.
+    Todavía no tiene una agenda publicada. Créela desde
+    <a [routerLink]="[rutaDeMiAgenda]">Mi agenda</a> y vuelva.
   </app-alert>
 } @else {
   <form
@@ -67,7 +67,7 @@
       <div class="cita__quien">
         <app-form-field
           label="¿Con quién?"
-          hint="Buscá por nombre, código o cédula."
+          hint="Busque por nombre, código o cédula."
           [required]="true"
         >
           <app-reference-combobox
@@ -76,7 +76,7 @@
             [options]="candidatos()"
             [loading]="buscando()"
             placeholder="Nombre, cédula o código del paciente"
-            emptyMessage="Ningún paciente coincide. Podés darlo de alta abajo."
+            emptyMessage="Ningún paciente coincide. Puede darlo de alta abajo."
             (searched)="buscarPaciente($event)"
             (selectionChange)="paciente.set($event)"
           />
@@ -100,17 +100,17 @@
           <fieldset class="cita__alta cita__quien" data-testid="cita-alta-paciente">
             <legend class="cita__alta-titulo">Paciente nuevo</legend>
             <p class="cita__alta-nota">
-              Lo damos de alta con lo que sepas ahora. El resto de su ficha se completa después.
+              Lo damos de alta con lo que sepa ahora. El resto de su ficha se completa después.
             </p>
   
             <div class="cita__alta-grilla">
               <app-form-field label="Nombre" [required]="true">
                 <app-input data-testid="cita-alta-nombre" [(value)]="nuevoNombre" />
               </app-form-field>
-              <app-form-field label="Segundo nombre" hint="Si no tiene, dejalo vacío.">
+              <app-form-field label="Segundo nombre" hint="Si no tiene, déjelo vacío.">
                 <app-input data-testid="cita-alta-segundo-nombre" [(value)]="nuevoSegundoNombre" />
               </app-form-field>
-              <app-form-field label="Tercer nombre" hint="Si no tiene, dejalo vacío.">
+              <app-form-field label="Tercer nombre" hint="Si no tiene, déjelo vacío.">
                 <app-input data-testid="cita-alta-tercer-nombre" [(value)]="nuevoTercerNombre" />
               </app-form-field>
               <!-- Hay gente con cuatro y cinco nombres: se agregan las casillas
@@ -155,7 +155,7 @@
               <app-form-field label="Apellido paterno" [required]="true">
                 <app-input data-testid="cita-alta-apellido-paterno" [(value)]="nuevoApellidoPaterno" />
               </app-form-field>
-              <app-form-field label="Apellido materno" hint="Si no lleva, dejalo vacío.">
+              <app-form-field label="Apellido materno" hint="Si no lleva, déjelo vacío.">
                 <app-input data-testid="cita-alta-apellido-materno" [(value)]="nuevoApellidoMaterno" />
               </app-form-field>
             </div>
@@ -220,8 +220,8 @@
               <app-form-field label="Ocupación" hint="Ayuda a ver los riesgos propios de cada oficio.">
                 <app-reference-combobox
                   data-testid="cita-alta-ocupacion"
-                  placeholder="Buscá su profesión u oficio…"
-                  emptyMessage="Ninguna ocupación coincide. Podés dejarlo vacío."
+                  placeholder="Busque su profesión u oficio…"
+                  emptyMessage="Ninguna ocupación coincide. Puede dejarlo vacío."
                   [options]="ocupacionesFiltradas()"
                   [selected]="ocupacionElegida()"
                   [minQueryLength]="0"
@@ -285,7 +285,7 @@
 
     <!-- Es un select y no tres radios: así ocupa una casilla como los demás
          campos y cuadra en fila con la duración. -->
-    <app-form-field class="cita__modalidad" label="¿Cómo lo atendés?" [required]="true">
+    <app-form-field class="cita__modalidad" label="¿Cómo lo atiende?" [required]="true">
       <app-select
         data-testid="cita-modalidad"
         [options]="opcionesDeModalidad"

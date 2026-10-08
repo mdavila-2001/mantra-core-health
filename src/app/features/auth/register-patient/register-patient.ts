@@ -148,7 +148,7 @@ const PIN_TRABAJO = 'trabajo';
  * un campo vacío, porque nadie la vuelve a mirar.
  */
 const AVISO_SIN_GEOCODIFICACION =
-  'El punto del mapa se guarda tal cual, pero no podemos convertirlo en el nombre de la calle: escribila vos arriba.';
+  'El punto del mapa se guarda tal cual, pero no podemos convertirlo en el nombre de la calle: escríbala usted arriba.';
 
 /**
  * Cuánto se espera al navegador antes de dar la ubicación por perdida.
@@ -270,9 +270,9 @@ const AYUDA_PACIENTE: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
   document: [
     {
       icono: 'patients',
-      titulo: 'Con tu documento vas a entrar',
+      titulo: 'Con su documento va a entrar',
       texto:
-        'Es tu usuario: no tenés que inventar ni recordar otro. Lo pedimos primero para avisarte enseguida si ya tenías cuenta.',
+        'Es su usuario: no tiene que inventar ni recordar otro. Lo pedimos primero para avisarle enseguida si ya tenía cuenta.',
     },
     {
       icono: 'pin',
@@ -284,57 +284,57 @@ const AYUDA_PACIENTE: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
   name: [
     {
       icono: 'people',
-      titulo: 'Tu nombre, como figura en tu documento',
+      titulo: 'Su nombre, como figura en su documento',
       texto:
-        'Es lo que evita que tu historia clínica se mezcle con la de alguien que se llama parecido. Si no llevás segundo nombre o apellido materno, dejalos vacíos.',
+        'Es lo que evita que su historia clínica se mezcle con la de alguien que se llama parecido. Si no lleva segundo nombre o apellido materno, déjelos vacíos.',
     },
   ],
   profile: [
     {
       icono: 'stethoscope',
-      titulo: 'Cambia cómo te atienden',
+      titulo: 'Cambia cómo le atienden',
       texto:
-        'La edad y el sexo deciden dosis, valores de referencia de laboratorio y qué controles te corresponden por edad.',
+        'La edad y el sexo deciden dosis, valores de referencia de laboratorio y qué controles le corresponden por edad.',
     },
     {
       icono: 'briefcase',
-      titulo: 'Tu oficio también es un dato clínico',
+      titulo: 'Su oficio también es un dato clínico',
       texto:
-        'Cada trabajo trae sus riesgos —químicos, esfuerzo, turnos de noche— y tu médico los tiene en cuenta.',
+        'Cada trabajo trae sus riesgos —químicos, esfuerzo, turnos de noche— y su médico los tiene en cuenta.',
     },
   ],
   residence: [
     {
       icono: 'pin',
-      titulo: 'Para mostrarte lo que tenés cerca',
+      titulo: 'Para mostrarle lo que tiene cerca',
       texto:
-        'Farmacias, laboratorios y consultorios de tu zona, en vez de los del otro lado de la ciudad.',
+        'Farmacias, laboratorios y consultorios de su zona, en vez de los del otro lado de la ciudad.',
     },
     {
       icono: 'package',
       titulo: 'El mapa es opcional',
       texto:
-        'Si marcás tu punto en el mapa y lo confirmás, la entrega de tus medicamentos llega sin que tengas que explicar dónde vivís. Si no, tu alta sigue igual.',
+        'Si marca su punto en el mapa y lo confirma, la entrega de sus medicamentos llega sin que tenga que explicar dónde vive. Si no, su alta sigue igual.',
     },
     {
       icono: 'route',
-      titulo: 'La calle la escribís vos',
+      titulo: 'La calle la escribe usted',
       texto:
-        'El punto del mapa no se convierte solo en el nombre de una calle: eso necesita un servicio que hoy no tenemos. Por eso la línea de dirección se escribe a mano, y por eso nunca vas a encontrar ahí algo que no hayas escrito.',
+        'El punto del mapa no se convierte solo en el nombre de una calle: eso necesita un servicio que hoy no tenemos. Por eso la línea de dirección se escribe a mano, y por eso nunca va a encontrar ahí algo que no haya escrito.',
     },
   ],
   work: [
     {
       icono: 'building',
-      titulo: 'Para qué sirve dónde trabajás',
+      titulo: 'Para qué sirve dónde trabaja',
       texto:
-        'Para los convenios con empresas y para los controles de salud laboral: cada oficio y cada lugar traen sus riesgos, y tu médico los tiene en cuenta.',
+        'Para los convenios con empresas y para los controles de salud laboral: cada oficio y cada lugar traen sus riesgos, y su médico los tiene en cuenta.',
     },
     {
       icono: 'note',
-      titulo: 'Si no está en la lista, escribila',
+      titulo: 'Si no está en la lista, escríbala',
       texto:
-        'La lista tiene las empresas más grandes del país. Si la tuya no aparece, elegí «Otra empresa» y ponés el nombre vos.',
+        'La lista tiene las empresas más grandes del país. Si la suya no aparece, elija «Otra empresa» y pone el nombre usted.',
     },
   ],
   'work-location': [
@@ -342,56 +342,56 @@ const AYUDA_PACIENTE: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
       icono: 'pin',
       titulo: 'Todo esto es opcional',
       texto:
-        'Si tu trabajo queda lejos de tu casa, saberlo nos deja mostrarte farmacias y laboratorios cerca de los dos sitios, no sólo de uno.',
+        'Si su trabajo queda lejos de su casa, saberlo nos deja mostrarle farmacias y laboratorios cerca de los dos sitios, no sólo de uno.',
     },
     {
       icono: 'route',
-      titulo: 'La calle la escribís vos',
+      titulo: 'La calle la escribe usted',
       texto:
-        'Igual que en tu domicilio: el punto del mapa se guarda tal cual, pero el nombre de la calle lo ponés vos.',
+        'Igual que en su domicilio: el punto del mapa se guarda tal cual, pero el nombre de la calle lo pone usted.',
     },
   ],
   insurance: [
     {
       icono: 'umbrella',
-      titulo: 'Para que no pagues lo que ya está cubierto',
+      titulo: 'Para que no pague lo que ya está cubierto',
       texto:
-        'Con tu seguro declarado, la cobertura se aplica cuando reservás o comprás, sin que tengas que reclamarla después.',
+        'Con su seguro declarado, la cobertura se aplica cuando reserva o compra, sin que tenga que reclamarla después.',
     },
   ],
   billing: [
     {
       icono: 'billing',
-      titulo: 'El NIT es sólo para tus facturas',
-      texto: 'Lo usamos cuando hay que emitir una. Si no lo tenés a mano, dejalo vacío.',
+      titulo: 'El NIT es sólo para sus facturas',
+      texto: 'Lo usamos cuando hay que emitir una. Si no lo tiene a mano, déjelo vacío.',
     },
   ],
   contact: [
     {
       icono: 'phone',
-      titulo: 'Tu celular hace falta',
+      titulo: 'Su celular hace falta',
       texto:
-        'Es por donde te avisamos de un turno, de un resultado listo o de un cambio de hora. No se muestra en ninguna ficha ni se comparte.',
+        'Es por donde le avisamos de un turno, de un resultado listo o de un cambio de hora. No se muestra en ninguna ficha ni se comparte.',
     },
     {
       icono: 'people',
       titulo: 'A quién avisamos si hace falta',
       texto:
-        'El contacto de emergencia es opcional: la persona a la que llamamos en una urgencia, o quien te acompaña si sos menor de edad. Sólo se usa para eso.',
+        'El contacto de emergencia es opcional: la persona a la que llamamos en una urgencia, o quien le acompaña si es menor de edad. Sólo se usa para eso.',
     },
   ],
   access: [
     {
       icono: 'lock',
-      titulo: 'Tu contraseña, sólo tuya',
+      titulo: 'Su contraseña, sólo suya',
       texto:
-        'Ocho caracteres o más. Se guarda cifrada: ni el equipo de AloVida puede verla, y por eso nunca te la vamos a pedir por teléfono ni por correo.',
+        'Ocho caracteres o más. Se guarda cifrada: ni el equipo de AloVida puede verla, y por eso nunca se la vamos a pedir por teléfono ni por correo.',
     },
     {
       icono: 'mail',
-      titulo: 'Entrás con tu documento, no con el correo',
+      titulo: 'Entra con su documento, no con el correo',
       texto:
-        'El correo hace falta igual: es la única forma de devolverte el acceso si perdés la contraseña, y por donde te llegan los avisos de tus turnos.',
+        'El correo hace falta igual: es la única forma de devolverle el acceso si pierde la contraseña, y por donde le llegan los avisos de sus turnos.',
     },
   ],
 };
@@ -781,7 +781,7 @@ export class RegisterPatient {
   readonly errorDeMunicipio = computed<string>(() => {
     const control = this.formPaciente.controls.residenceMunicipalityConceptId;
     void this.municipioPaciente();
-    return control.touched && control.invalid ? 'Elegí tu ciudad o municipio.' : '';
+    return control.touched && control.invalid ? 'Elija su ciudad o municipio.' : '';
   });
 
   /**
@@ -836,10 +836,10 @@ export class RegisterPatient {
         lat: punto.lat,
         lng: punto.lng,
         titulo: this.direccionConfirmada()
-          ? 'Tu dirección'
+          ? 'Su dirección'
           : this.gpsDomicilioDelNavegador()
-            ? 'Acá te encontramos'
-            : 'El punto que marcaste',
+            ? 'Acá le encontramos'
+            : 'El punto que marcó',
       },
     ];
   });
@@ -892,10 +892,10 @@ export class RegisterPatient {
         lat: punto.lat,
         lng: punto.lng,
         titulo: this.direccionTrabajoConfirmada()
-          ? 'Tu lugar de trabajo'
+          ? 'Su lugar de trabajo'
           : this.gpsTrabajoDelNavegador()
-            ? 'Acá te encontramos'
-            : 'El punto que marcaste',
+            ? 'Acá le encontramos'
+            : 'El punto que marcó',
       },
     ];
   });
@@ -1044,10 +1044,10 @@ export class RegisterPatient {
   readonly paginasPaciente = computed<readonly PaginaDeFormulario[]>(() =>
     paginarCampos([
       {
-        titulo: '¿Cómo te llamás?',
+        titulo: '¿Cómo se llama?',
         clave: 'name',
         icon: 'people',
-        hint: 'Como figura en tu documento. Si no tenés alguno, dejalo vacío.',
+        hint: 'Como figura en su documento. Si no tiene alguno, déjelo vacío.',
         // Nombres y apellidos van juntos en una página, como pide el registro
         // del cliente. Los tres nombres entran en UN campo proyectado —bajo la
         // `key` de `name`, para que el motor siga validando el obligatorio y
@@ -1058,12 +1058,12 @@ export class RegisterPatient {
             key: 'name',
             label: '',
             control: 'custom',
-            mensajeDeError: 'Ingresá tu nombre.',
+            mensajeDeError: 'Ingrese su nombre.',
           },
           {
             key: 'lastName',
             label: 'Apellido paterno',
-            description: 'El apellido de tu papá, como figura en tu documento.',
+            description: 'El apellido de su papá, como figura en su documento.',
             control: 'text',
             required: true,
             autocomplete: 'family-name',
@@ -1071,13 +1071,13 @@ export class RegisterPatient {
             testId: 'registro-apellido-paterno',
             icono: 'people',
             ancho: 'mitad',
-            mensajeDeError: 'Ingresá tu apellido paterno.',
+            mensajeDeError: 'Ingrese su apellido paterno.',
           },
           {
             key: 'motherLastName',
             label: 'Apellido materno',
-            hint: 'Si no llevás, dejalo vacío.',
-            description: 'El apellido de tu mamá, tal como aparece en tu documento.',
+            hint: 'Si no lleva, déjelo vacío.',
+            description: 'El apellido de su mamá, tal como aparece en su documento.',
             control: 'text',
             autocomplete: 'family-name',
             placeholder: 'Quispe',
@@ -1088,17 +1088,17 @@ export class RegisterPatient {
         ],
       },
       {
-        titulo: 'Tu documento de identidad',
+        titulo: 'Su documento de identidad',
         clave: 'document',
         icon: 'patients',
-        hint: 'Con este número vas a iniciar sesión.',
+        hint: 'Con este número va a iniciar sesión.',
         campos: [
           {
             key: 'nationalId',
             label: 'Documento de identidad',
-            hint: 'Con este número vas a iniciar sesión.',
+            hint: 'Con este número va a iniciar sesión.',
             description:
-              'El número de tu cédula, sin el complemento: el departamento que la emitió va en la casilla de al lado.',
+              'El número de su cédula, sin el complemento: el departamento que la emitió va en la casilla de al lado.',
             control: 'text',
             required: true,
             // Es el identificador con el que va a entrar: `username`.
@@ -1109,7 +1109,7 @@ export class RegisterPatient {
             // Medio renglón: el número y su expedición son UN documento
             // escrito en dos casillas. Ver `campoDepartamentoEmisor`.
             ancho: 'mitad',
-            mensajeDeError: 'Ingresá tu documento: letras, números, punto y guion.',
+            mensajeDeError: 'Ingrese su documento: letras, números, punto y guion.',
           },
           // Pegado al documento porque es un dato DE ese documento: la
           // terminación «SC», «LP»… que distingue dos cédulas homónimas. Y en
@@ -1120,7 +1120,7 @@ export class RegisterPatient {
         ],
       },
       {
-        titulo: 'Contanos un poco sobre vos',
+        titulo: 'Cuéntenos un poco sobre usted',
         clave: 'profile',
         icon: 'stethoscope',
         hint: 'La fecha y el sexo deciden dosis, valores de laboratorio y controles por edad.',
@@ -1134,55 +1134,55 @@ export class RegisterPatient {
             // año antes de seguir.
             hint: this.edadEnPalabras() ?? 'Sirve para calcular dosis y valores de referencia.',
             description:
-              'Con ella calculamos tu edad, y con la edad las dosis, los valores de referencia del laboratorio y qué controles te tocan.',
+              'Con ella calculamos su edad, y con la edad las dosis, los valores de referencia del laboratorio y qué controles le tocan.',
             control: 'date',
             required: true,
             maxDate: 'today',
             minDate: new Date(1900, 0, 1),
-            mensajeDeError: 'Ingresá tu fecha de nacimiento.',
+            mensajeDeError: 'Ingrese su fecha de nacimiento.',
           },
           {
             key: 'sexAtBirth',
             label: 'Sexo',
             hint: 'Dato clínico: cambia las dosis, los valores de referencia y los tamizajes.',
             description:
-              'Es el sexo que registra tu documento de identidad. Lo usamos como dato clínico, no para dirigirnos a vos.',
+              'Es el sexo que registra su documento de identidad. Lo usamos como dato clínico, no para dirigirnos a usted.',
             control: 'select',
             required: true,
             options: OPCIONES_SEXO,
-            placeholder: 'Elegí una opción',
+            placeholder: 'Elija una opción',
             testId: 'registro-genero',
             icono: 'heart',
-            mensajeDeError: 'Elegí una opción.',
+            mensajeDeError: 'Elija una opción.',
           },
           this.campoOcupacion(),
           ...this.campoOtraOcupacion(),
         ],
       },
       {
-        titulo: '¿Cómo te contactamos?',
+        titulo: '¿Cómo le contactamos?',
         clave: 'contact',
         icon: 'phone',
-        hint: 'Tu celular, y a quién avisamos si hace falta.',
+        hint: 'Su celular, y a quién avisamos si hace falta.',
         campos: [
           {
             key: 'phone',
-            label: 'Tu celular',
-            hint: 'Elegí el país si tu número no es de Bolivia.',
+            label: 'Su celular',
+            hint: 'Elija el país si su número no es de Bolivia.',
             description:
-              'Es por donde te avisamos de un turno o de un resultado. No se muestra a nadie más.',
+              'Es por donde le avisamos de un turno o de un resultado. No se muestra a nadie más.',
             // `tel` lo dibuja `app-phone-input`: ver el motor.
             control: 'tel',
             required: true,
             autocomplete: 'tel',
             testId: 'registro-telefono',
-            mensajeDeError: 'Ingresá un número completo para el país elegido.',
+            mensajeDeError: 'Ingrese un número completo para el país elegido.',
           },
           {
             key: 'guardianName',
             label: 'Contacto de emergencia (opcional)',
-            hint: 'A quién llamamos si pasa algo, o quién te acompaña si sos menor.',
-            description: 'A quién llamamos si te pasa algo y no podés responder vos.',
+            hint: 'A quién llamamos si pasa algo, o quién le acompaña si es menor.',
+            description: 'A quién llamamos si le pasa algo y no puede responder usted.',
             control: 'text',
             placeholder: 'Rosa Quispe',
             testId: 'registro-tutor-nombre',
@@ -1192,12 +1192,12 @@ export class RegisterPatient {
           {
             key: 'guardianPhone',
             label: 'Su teléfono (opcional)',
-            hint: 'Elegí el país si el número no es de Bolivia.',
+            hint: 'Elija el país si el número no es de Bolivia.',
             description: 'El número al que llamamos a esa persona. Sin su nombre no se guarda.',
             control: 'tel',
             testId: 'registro-tutor-telefono',
             ancho: 'mitad',
-            mensajeDeError: 'Para guardar el teléfono, contanos también su nombre.',
+            mensajeDeError: 'Para guardar el teléfono, cuéntenos también su nombre.',
           },
           // La «Relación» que el orden pide junto al contacto de emergencia
           // (AC-03-11). Va la cuarta y última de la página: el tope del motor
@@ -1207,10 +1207,10 @@ export class RegisterPatient {
         ],
       },
       {
-        titulo: '¿Dónde vivís?',
+        titulo: '¿Dónde vive?',
         clave: 'residence',
         icon: 'home',
-        hint: 'Tu localidad hace falta; la calle y el punto del mapa son opcionales.',
+        hint: 'Su localidad hace falta; la calle y el punto del mapa son opcionales.',
         campos: [
           {
             // El mapa de departamentos y el select de ciudad son UN campo: son
@@ -1221,12 +1221,12 @@ export class RegisterPatient {
             label: '',
             control: 'custom',
             required: true,
-            mensajeDeError: 'Elegí tu departamento en el mapa y después tu ciudad.',
+            mensajeDeError: 'Elija su departamento en el mapa y después su ciudad.',
           },
           {
             key: 'homeAddressLines',
             label: 'Línea de dirección 1 (opcional)',
-            hint: 'Como la escribirías en un sobre.',
+            hint: 'Como la escribiría en un sobre.',
             description:
               'Calle, número y referencia. El punto del mapa no la escribe solo: ver el aviso de abajo.',
             control: 'text',
@@ -1238,21 +1238,21 @@ export class RegisterPatient {
           {
             key: 'gpsDomicilio',
             label: 'Ubicación GPS (opcional)',
-            hint: 'Si la compartís, podés ver primero lo que te queda más cerca.',
-            description: 'Marcá el punto exacto de tu casa y confirmalo para que quede guardado.',
+            hint: 'Si la comparte, puede ver primero lo que le queda más cerca.',
+            description: 'Marque el punto exacto de su casa y confírmelo para que quede guardado.',
             control: 'custom',
           },
         ],
       },
       {
-        titulo: '¿Dónde trabajás?',
+        titulo: '¿Dónde trabaja?',
         clave: 'work',
         icon: 'briefcase',
         hint: 'Opcional. Con el nombre de la empresa alcanza.',
         campos: [this.campoEmpresa(), ...this.campoOtraEmpresa()],
       },
       {
-        titulo: 'El lugar donde trabajás',
+        titulo: 'El lugar donde trabaja',
         clave: 'work-location',
         icon: 'building',
         hint: 'Opcional, y va aparte de la empresa: son dos preguntas distintas.',
@@ -1265,8 +1265,8 @@ export class RegisterPatient {
           {
             key: 'workAddressLines',
             label: 'Línea de dirección 1 (opcional)',
-            hint: 'Calle y número de tu trabajo.',
-            description: 'Sirve para ubicar tu lugar de trabajo cuando la empresa tiene varias sedes.',
+            hint: 'Calle y número de su trabajo.',
+            description: 'Sirve para ubicar su lugar de trabajo cuando la empresa tiene varias sedes.',
             control: 'text',
             placeholder: 'Calle Libertad #120',
             testId: 'registration-work-address',
@@ -1275,24 +1275,24 @@ export class RegisterPatient {
           {
             key: 'gpsTrabajo',
             label: 'Ubicación GPS (opcional)',
-            hint: 'El punto exacto de tu lugar de trabajo.',
-            description: 'El punto exacto de tu trabajo en el mapa. Se confirma aparte del de tu casa.',
+            hint: 'El punto exacto de su lugar de trabajo.',
+            description: 'El punto exacto de su trabajo en el mapa. Se confirma aparte del de su casa.',
             control: 'custom',
           },
         ],
       },
       {
-        titulo: 'Tu acceso',
+        titulo: 'Su acceso',
         clave: 'access',
         icon: 'lock',
-        hint: 'Entrás con tu documento; el correo es por donde recuperás la cuenta.',
+        hint: 'Entra con su documento; el correo es por donde recupera la cuenta.',
         campos: [
           {
             key: 'email',
             label: 'Correo electrónico',
-            hint: 'Por acá recuperás tu cuenta y te avisamos de tus turnos.',
+            hint: 'Por acá recupera su cuenta y le avisamos de sus turnos.',
             description:
-              'No es con lo que entrás —eso es tu documento—, pero sin él no hay forma de devolverte el acceso si perdés la contraseña.',
+              'No es con lo que entra —eso es su documento—, pero sin él no hay forma de devolverle el acceso si pierde la contraseña.',
             // `email` y no `username`: acá el correo NO es con lo que entra.
             control: 'email',
             required: true,
@@ -1300,18 +1300,18 @@ export class RegisterPatient {
             placeholder: 'correo@ejemplo.com',
             testId: 'registro-correo',
             icono: 'mail',
-            mensajeDeError: 'Ingresá un correo válido.',
+            mensajeDeError: 'Ingrese un correo válido.',
           },
           {
             key: 'password',
             label: 'Contraseña',
             hint: 'Al menos 8 caracteres.',
             description:
-              'Se guarda cifrada: ni el equipo de AloVida puede verla, y por eso nunca te la vamos a pedir por teléfono ni por correo.',
+              'Se guarda cifrada: ni el equipo de AloVida puede verla, y por eso nunca se la vamos a pedir por teléfono ni por correo.',
             control: 'password',
             required: true,
             autocomplete: 'new-password',
-            placeholder: 'Tu contraseña',
+            placeholder: 'Su contraseña',
             testId: 'registro-password',
             icono: 'lock',
             mensajeDeError: MENSAJE_CONTRASENA_CORTA,
@@ -1319,24 +1319,24 @@ export class RegisterPatient {
         ],
       },
       {
-        titulo: 'Tu seguro de salud',
+        titulo: 'Su seguro de salud',
         clave: 'insurance',
         icon: 'umbrella',
-        hint: 'Opcional. Si tenés los dos, podés declararlos.',
+        hint: 'Opcional. Si tiene los dos, puede declararlos.',
         campos: [this.campoSeguro('privado'), this.campoSeguro('publico')],
       },
       {
         titulo: 'Datos de facturación',
         clave: 'billing',
         icon: 'billing',
-        hint: 'Opcional. Sólo para las facturas que recibís.',
+        hint: 'Opcional. Sólo para las facturas que recibe.',
         campos: [
           {
             key: 'billingTaxId',
             label: 'NIT (opcional)',
             hint: 'Sólo el número.',
             description:
-              'Lo usamos cuando hay que emitir una factura. Si no lo tenés a mano, dejalo vacío.',
+              'Lo usamos cuando hay que emitir una factura. Si no lo tiene a mano, déjelo vacío.',
             control: 'text',
             placeholder: '1023456789',
             testId: 'registro-nit',
@@ -1348,7 +1348,7 @@ export class RegisterPatient {
             label: 'Nombre o Razón Social (opcional)',
             hint: 'A nombre de quién se emite la factura.',
             description:
-              'Si declarás NIT, ingresá el nombre o razón social correspondiente.',
+              'Si declara NIT, ingrese el nombre o razón social correspondiente.',
             control: 'text',
             placeholder: 'Carlos Roca Aguilera',
             testId: 'registro-razon-social',
@@ -1376,10 +1376,10 @@ export class RegisterPatient {
       key: 'issuerAdministrativeAreaConceptId',
       label: 'Departamento de emisión',
       required: true,
-      hint: 'El «SC», «LP»... de tu cédula.',
+      hint: 'El «SC», «LP»... de su cédula.',
       description:
-        'El departamento que emitió tu cédula: distingue dos documentos con el mismo número.',
-      mensajeDeError: 'Elegí el departamento que expidió tu cédula.',
+        'El departamento que emitió su cédula: distingue dos documentos con el mismo número.',
+      mensajeDeError: 'Elija el departamento que expidió su cédula.',
     } as const;
 
     return this.catalogoDepartamentosCaido()
@@ -1392,7 +1392,7 @@ export class RegisterPatient {
           ...base,
           control: 'select',
           options: this.opcionesDepartamento(),
-          placeholder: 'Elegí el departamento',
+          placeholder: 'Elija el departamento',
           testId,
           icono: 'pin',
           // La otra mitad del renglón del documento. Ver la página que lo usa.
@@ -1429,8 +1429,8 @@ export class RegisterPatient {
   private campoRelacionDelContacto(): CampoDeFormulario {
     const base = {
       key: 'guardianRelationshipConceptId',
-      label: 'Su relación con vos (opcional)',
-      hint: 'Qué es tuyo el contacto de emergencia: madre, pareja, una amistad…',
+      label: 'Su relación con usted (opcional)',
+      hint: 'Qué es suyo el contacto de emergencia: madre, pareja, una amistad…',
       description: 'Sirve para saber cómo presentarnos cuando llamemos a esa persona.',
     } as const;
 
@@ -1462,8 +1462,8 @@ export class RegisterPatient {
     const base = {
       key: 'occupationConceptId',
       label: 'Ocupación (opcional)',
-      hint: 'En qué trabajás. Ayuda a tu médico con los riesgos propios de cada oficio.',
-      description: 'Tu oficio le dice a tu médico qué riesgos son propios de tu trabajo.',
+      hint: 'En qué trabaja. Ayuda a su médico con los riesgos propios de cada oficio.',
+      description: 'Su oficio le dice a su médico qué riesgos son propios de su trabajo.',
     } as const;
 
     // Siempre `custom`: son cientos de ocupaciones y el registro del cliente
@@ -1502,8 +1502,8 @@ export class RegisterPatient {
       {
         key: 'occupationFreeText',
         label: '¿Cuál?',
-        hint: 'Escribí tu oficio como lo dirías vos.',
-        description: 'El oficio que no encontraste en la lista: se guarda tal cual lo escribas.',
+        hint: 'Escriba su oficio como lo diría usted.',
+        description: 'El oficio que no encontró en la lista: se guarda tal cual lo escriba.',
         control: 'text',
         placeholder: 'Apicultor',
         testId: 'registro-ocupacion-otra',
@@ -1515,8 +1515,8 @@ export class RegisterPatient {
   private campoEmpresa(): CampoDeFormulario {
     return {
       key: 'workEmployerConceptId',
-      label: 'Empresa donde trabajás (opcional)',
-      hint: 'Buscá el nombre. Si no está, elegí «Otra empresa» y la escribís.',
+      label: 'Empresa donde trabaja (opcional)',
+      hint: 'Busque el nombre. Si no está, elija «Otra empresa» y la escribe.',
       description: 'Sirve para los convenios con empresas y los controles de salud laboral.',
       control: 'custom',
     };
@@ -1535,7 +1535,7 @@ export class RegisterPatient {
       {
         key: 'workEmployerFreeText',
         label: '¿En cuál?',
-        hint: 'Escribí el nombre como lo conocés.',
+        hint: 'Escriba el nombre como lo conoce.',
         description: 'El nombre de la empresa que no está en la lista, como figura en su cartel.',
         control: 'text',
         placeholder: 'Ferretería San Martín',
@@ -1561,15 +1561,15 @@ export class RegisterPatient {
       ? {
           key: 'privateInsurancePlanId',
           label: 'Seguro privado (opcional)',
-          hint: 'La compañía con la que tenés tu póliza de salud.',
-          description: 'Con tu póliza declarada, la cobertura se aplica cuando reservás o comprás.',
+          hint: 'La compañía con la que tiene su póliza de salud.',
+          description: 'Con su póliza declarada, la cobertura se aplica cuando reserva o compra.',
         }
       : {
           key: 'publicInsurancePlanId',
           label: 'Seguro público (opcional)',
-          hint: 'La caja o el seguro estatal al que estás afiliado.',
+          hint: 'La caja o el seguro estatal al que está afiliado.',
           description:
-            'La caja o el seguro del Estado al que aportás por tu trabajo o el de tu familia.',
+            'La caja o el seguro del Estado al que aporta por su trabajo o el de su familia.',
         };
 
     return this.catalogoAseguradorasCaido()
@@ -1667,7 +1667,7 @@ export class RegisterPatient {
     if (!cumplioEsteAno) edad -= 1;
 
     if (edad < 0 || edad > 130) return null;
-    return edad === 1 ? 'Tenés 1 año.' : `Tenés ${edad} años.`;
+    return edad === 1 ? 'Tiene 1 año.' : `Tiene ${edad} años.`;
   });
 
   /**
@@ -2072,7 +2072,7 @@ export class RegisterPatient {
    * correo», y mientras las dos vivían en el mismo componente esto era un
    * `computed` sobre el tipo de cuenta.
    */
-  readonly accessHint = 'tu documento';
+  readonly accessHint = 'su documento';
 
   /**
    * La clave de la página que se está contestando, tal como la avisa el motor.
@@ -2100,7 +2100,7 @@ export class RegisterPatient {
       return state.issues[0]?.message ?? null;
     }
     if (state.status === 'offline') {
-      return 'No pudimos conectarnos. Revisá tu conexión y reintentá.';
+      return 'No pudimos conectarnos. Revise su conexión y reintente.';
     }
     if (state.status === 'error') {
       return `${state.message || 'Ocurrió un error inesperado.'} (${state.requestId})`;

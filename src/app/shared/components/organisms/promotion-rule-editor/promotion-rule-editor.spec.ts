@@ -100,7 +100,7 @@ describe('PromotionRuleEditor', () => {
 
       expect(host.fields()).toMatchObject({ family: 'QUANTITY', kind: 'BUY_X_PAY_Y' });
       expect(root().querySelectorAll('[data-testid="regla-mecanicas"] input[type="radio"]')).toHaveLength(3);
-      expect(text()).toContain('Llevá X, pagá Y');
+      expect(text()).toContain('Lleve X, pague Y');
     });
 
     it('el desplegable de pantalla angosta elige la misma familia, con su nombre completo', () => {
@@ -149,7 +149,7 @@ describe('PromotionRuleEditor', () => {
       expect(editor.text('7')).toBe('7');
     });
 
-    it('«llevá X, pagá Y» pide las dos cantidades y nada más', () => {
+    it('«lleve X, pague Y» pide las dos cantidades y nada más', () => {
       elegirFamilia('QUANTITY');
 
       expect(text()).toContain('Unidades que lleva');
@@ -188,7 +188,7 @@ describe('PromotionRuleEditor', () => {
     it('un precio de campaña manda a escribirlos en la lista de productos', () => {
       elegirMecanica('Precio de campaña por producto');
 
-      expect(text()).toContain('lo escribís abajo, en la lista de productos');
+      expect(text()).toContain('lo escribe abajo, en la lista de productos');
     });
   });
 
@@ -264,7 +264,7 @@ describe('PromotionRuleEditor', () => {
       host.items.set([ITEMS[0]]);
       render();
 
-      expect(text()).toContain('Elegí al menos dos productos abajo');
+      expect(text()).toContain('Elija al menos dos productos abajo');
     });
 
     it('un regalo ofrece los productos elegidos en dos selectores', () => {
@@ -298,7 +298,7 @@ describe('PromotionRuleEditor', () => {
       elegirFamilia('COMBO');
       // El combo recién elegido no tiene precio escrito todavía.
       expect(byId('regla-vista-badge')).toBeNull();
-      expect(byId('regla-vista-pendiente')?.textContent).toContain('Completá los datos de arriba');
+      expect(byId('regla-vista-pendiente')?.textContent).toContain('Complete los datos de arriba');
       expect(text()).not.toContain('Combo a Bs :');
       expect(text()).not.toContain('NaN');
 
@@ -324,7 +324,7 @@ describe('PromotionRuleEditor', () => {
       render();
 
       // 20 % de 22.50 = 450 centavos de descuento → 18.00.
-      expect(byId('regla-vista-ejemplo')?.textContent).toContain('pagás Bs 18 en vez de Bs 22.50');
+      expect(byId('regla-vista-ejemplo')?.textContent).toContain('paga Bs 18 en vez de Bs 22.50');
     });
 
     it('se actualiza al cambiar la mecánica', () => {
@@ -357,7 +357,7 @@ describe('PromotionRuleEditor', () => {
       host.failures.set(['BUY_QUANTITIES_INVALID']);
       render();
 
-      expect(text()).not.toContain('pagás al menos una unidad');
+      expect(text()).not.toContain('paga al menos una unidad');
     });
   });
 

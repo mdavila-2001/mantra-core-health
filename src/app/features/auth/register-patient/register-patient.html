@@ -1,6 +1,6 @@
 <app-auth-split
-  claim="Tu salud, en un solo lugar"
-  tagline="Llevá tu historia clínica, tus turnos y tus estudios siempre con vos."
+  claim="Su salud, en un solo lugar"
+  tagline="Lleve su historia clínica, sus turnos y sus estudios siempre con usted."
   contentWidth="full"
   [plainSurface]="true"
 >
@@ -14,13 +14,13 @@
       @if (registered()) {
         <div class="registro__header">
           <h1 appAnuncio [asertivo]="false" class="registro__title" data-testid="registro-exito">
-            Tu cuenta está lista
+            Su cuenta está lista
           </h1>
           <p class="registro__subtitle">
-            Ya podés entrar con {{ accessHint }} y la contraseña que elegiste.
+            Ya puede entrar con {{ accessHint }} y la contraseña que eligió.
             @if (verificationSent()) {
-              Te mandamos un correo para verificar tu dirección; podés hacerlo cuando quieras, no
-              hace falta para usar tu cuenta.
+              Le mandamos un correo para verificar su dirección; puede hacerlo cuando quiera, no
+              hace falta para usar su cuenta.
             }
           </p>
         </div>
@@ -86,7 +86,7 @@
                 <app-form-field
                   class="registro__nombre"
                   label="Primer nombre"
-                  description="Tu primer nombre, tal como figura en tu documento."
+                  description="Su primer nombre, tal como figura en su documento."
                   [required]="true"
                 >
                   <app-input
@@ -104,8 +104,8 @@
                 <app-form-field
                   class="registro__nombre"
                   label="Segundo nombre"
-                  hint="Si no tenés, dejalo vacío."
-                  description="Tu segundo nombre, tal como figura en tu documento."
+                  hint="Si no tiene, déjelo vacío."
+                  description="Su segundo nombre, tal como figura en su documento."
                 >
                   <app-input
                     testId="registro-segundo-nombre"
@@ -121,7 +121,7 @@
                 <app-form-field
                   class="registro__nombre"
                   label="Tercer nombre"
-                  description="Tu tercer nombre, tal como figura en tu documento."
+                  description="Su tercer nombre, tal como figura en su documento."
                 >
                   <app-input
                     testId="registro-tercer-nombre"
@@ -139,7 +139,7 @@
                   <app-form-field
                     class="registro__nombre"
                     [label]="'Nombre ' + ($index + 4)"
-                    description="Otro nombre más, tal como figura en tu documento."
+                    description="Otro nombre más, tal como figura en su documento."
                   >
                     <div class="registro__nombre-extra">
                       <app-input
@@ -233,8 +233,8 @@
                 <app-reference-combobox
                   data-testid="registro-ocupacion"
                   label="Ocupación"
-                  placeholder="Buscá tu profesión u oficio…"
-                  emptyMessage="Ninguna ocupación coincide. Podés dejarlo vacío."
+                  placeholder="Busque su profesión u oficio…"
+                  emptyMessage="Ninguna ocupación coincide. Puede dejarlo vacío."
                   [options]="ocupacionesFiltradas()"
                   [selected]="ocupacionElegida()"
                   [minQueryLength]="0"
@@ -264,9 +264,9 @@
               } @else {
                 <app-reference-combobox
                   data-testid="registro-empresa"
-                  label="Empresa donde trabajás"
-                  placeholder="Buscá tu empresa…"
-                  emptyMessage="Ninguna empresa coincide. Elegí «Otra empresa» para escribirla."
+                  label="Empresa donde trabaja"
+                  placeholder="Busque su empresa…"
+                  emptyMessage="Ninguna empresa coincide. Elija «Otra empresa» para escribirla."
                   [options]="empresasFiltradas()"
                   [selected]="empresaElegida()"
                   [minQueryLength]="0"
@@ -309,7 +309,7 @@
                     [centro]="gpsDomicilio()"
                     [zoom]="17"
                     [seleccionable]="true"
-                    etiqueta="Tu ubicación en el mapa"
+                    etiqueta="Su ubicación en el mapa"
                     (pointPicked)="fijarPuntoDomicilio($event)"
                   />
 
@@ -318,7 +318,7 @@
                       class="registro__ubicacion-estado"
                       data-testid="registration-home-location-pick-hint"
                     >
-                      Tocá el mapa en el lugar donde vivís para poner el pin.
+                      Toque el mapa en el lugar donde vive para poner el pin.
                     </p>
                     <div class="registro__ubicacion-acciones">
                       <button
@@ -337,7 +337,7 @@
                         app-button
                         variant="ghost"
                         size="sm"
-                        aria-label="Cerrar el mapa de tu domicilio"
+                        aria-label="Cerrar el mapa de su domicilio"
                         data-testid="registration-home-location-remove"
                         (clicked)="quitarUbicacion()"
                       >
@@ -350,7 +350,7 @@
                     </div>
                     @if (gpsRechazado()) {
                       <p class="registro__ubicacion-aviso">
-                        No pudimos obtener tu ubicación. Podés marcar el punto tocando el mapa.
+                        No pudimos obtener su ubicación. Puede marcar el punto tocando el mapa.
                       </p>
                     }
                   } @else if (direccionConfirmada()) {
@@ -385,7 +385,7 @@
                         app-button
                         variant="ghost"
                         size="sm"
-                        aria-label="Quitar la ubicación de tu domicilio"
+                        aria-label="Quitar la ubicación de su domicilio"
                         data-testid="registration-home-location-remove"
                         (clicked)="quitarUbicacion()"
                       >
@@ -420,7 +420,7 @@
                         app-button
                         variant="ghost"
                         size="sm"
-                        aria-label="Quitar la ubicación de tu domicilio"
+                        aria-label="Quitar la ubicación de su domicilio"
                         data-testid="registration-home-location-remove"
                         (clicked)="quitarUbicacion()"
                       >
@@ -457,7 +457,7 @@
                   </button>
                   @if (gpsRechazado()) {
                     <span class="registro__ubicacion-aviso">
-                      No pudimos obtener tu ubicación. Podés marcarla en el mapa, o seguir sin esto.
+                      No pudimos obtener su ubicación. Puede marcarla en el mapa, o seguir sin esto.
                     </span>
                   }
                 </p>
@@ -470,7 +470,7 @@
                  poner. El campo es opcional: el alta sigue sin él. -->
             <ng-template appCampoPersonalizado="guardianRelationshipConceptId">
               <p class="registro__catalogo-caido">
-                No pudimos traer las opciones de relación. Podés seguir sin esto.
+                No pudimos traer las opciones de relación. Puede seguir sin esto.
                 <button app-button variant="ghost" size="sm" (clicked)="reintentarParentescos()">
                   Reintentar
                 </button>
@@ -503,7 +503,7 @@
             <ng-template appCampoPersonalizado="residenceMunicipalityConceptId">
               @if (catalogoMunicipiosCaido()) {
                 <p class="registro__catalogo-caido">
-                  No pudimos traer el catálogo de ciudades, y tu localidad hace falta para
+                  No pudimos traer el catálogo de ciudades, y su localidad hace falta para
                   seguir.
                   <button app-button variant="ghost" size="sm" (clicked)="reintentarMunicipios()">
                     Reintentar
@@ -516,10 +516,10 @@
                   [value]="municipioPaciente()"
                   [punto]="gpsDomicilio()"
                   (valueChange)="elegirMunicipio($event)"
-                  mapLabel="Mapa de Bolivia: elegí el departamento donde vivís"
+                  mapLabel="Mapa de Bolivia: elija el departamento donde vive"
                   municipalityLabel="Localidad de residencia"
-                  municipalityHint="Sólo se ofrecen las del departamento que elegiste."
-                  municipalityDescription="La localidad donde vivís. El departamento sale de ella, así que no se pregunta aparte."
+                  municipalityHint="Sólo se ofrecen las del departamento que eligió."
+                  municipalityDescription="La localidad donde vive. El departamento sale de ella, así que no se pregunta aparte."
                   [required]="true"
                   [errorMessage]="errorDeMunicipio()"
                 >
@@ -532,7 +532,7 @@
             <ng-template appCampoPersonalizado="workMunicipalityConceptId">
               @if (catalogoMunicipiosCaido()) {
                 <p class="registro__catalogo-caido">
-                  No pudimos traer el catálogo de ciudades. Podés seguir sin esto.
+                  No pudimos traer el catálogo de ciudades. Puede seguir sin esto.
                   <button app-button variant="ghost" size="sm" (clicked)="reintentarMunicipios()">
                     Reintentar
                   </button>
@@ -544,10 +544,10 @@
                   [value]="municipioTrabajo()"
                   [punto]="gpsTrabajo()"
                   (valueChange)="elegirMunicipioDeTrabajo($event)"
-                  mapLabel="Mapa de Bolivia: elegí el departamento donde trabajás"
+                  mapLabel="Mapa de Bolivia: elija el departamento donde trabaja"
                   municipalityLabel="Localidad de trabajo (opcional)"
-                  municipalityHint="Sólo se ofrecen las del departamento que elegiste."
-                  municipalityDescription="La localidad donde trabajás, que puede no ser la misma en la que vivís."
+                  municipalityHint="Sólo se ofrecen las del departamento que eligió."
+                  municipalityDescription="La localidad donde trabaja, que puede no ser la misma en la que vive."
                 >
                   <app-nav-icon slot="icon-start" name="pin" class="registro__campo-icono" />
                 </app-location-picker>
@@ -580,7 +580,7 @@
                     [centro]="gpsTrabajo()"
                     [zoom]="17"
                     [seleccionable]="true"
-                    etiqueta="El lugar donde trabajás, en el mapa"
+                    etiqueta="El lugar donde trabaja, en el mapa"
                     (pointPicked)="fijarPuntoDeTrabajo($event)"
                   />
 
@@ -589,7 +589,7 @@
                       class="registro__ubicacion-estado"
                       data-testid="registration-work-location-pick-hint"
                     >
-                      Tocá el mapa en el lugar donde trabajás para poner el pin.
+                      Toque el mapa en el lugar donde trabaja para poner el pin.
                     </p>
                     <div class="registro__ubicacion-acciones">
                       <button
@@ -608,7 +608,7 @@
                         app-button
                         variant="ghost"
                         size="sm"
-                        aria-label="Cerrar el mapa de tu lugar de trabajo"
+                        aria-label="Cerrar el mapa de su lugar de trabajo"
                         data-testid="registration-work-location-remove"
                         (clicked)="quitarUbicacionDeTrabajo()"
                       >
@@ -621,7 +621,7 @@
                     </div>
                     @if (gpsTrabajoRechazado()) {
                       <p class="registro__ubicacion-aviso">
-                        No pudimos obtener tu ubicación. Podés marcar el punto tocando el mapa.
+                        No pudimos obtener su ubicación. Puede marcar el punto tocando el mapa.
                       </p>
                     }
                   } @else if (direccionTrabajoConfirmada()) {
@@ -652,7 +652,7 @@
                         app-button
                         variant="ghost"
                         size="sm"
-                        aria-label="Quitar la ubicación de tu lugar de trabajo"
+                        aria-label="Quitar la ubicación de su lugar de trabajo"
                         data-testid="registration-work-location-remove"
                         (clicked)="quitarUbicacionDeTrabajo()"
                       >
@@ -687,7 +687,7 @@
                         app-button
                         variant="ghost"
                         size="sm"
-                        aria-label="Quitar la ubicación de tu lugar de trabajo"
+                        aria-label="Quitar la ubicación de su lugar de trabajo"
                         data-testid="registration-work-location-remove"
                         (clicked)="quitarUbicacionDeTrabajo()"
                       >
@@ -720,7 +720,7 @@
                   </button>
                   @if (gpsTrabajoRechazado()) {
                     <span class="registro__ubicacion-aviso">
-                      No pudimos obtener tu ubicación. Podés marcarla en el mapa, o seguir sin esto.
+                      No pudimos obtener su ubicación. Puede marcarla en el mapa, o seguir sin esto.
                     </span>
                   }
                 </p>
@@ -731,7 +731,7 @@
 
         <div class="registro__footer">
           <p class="registro__pie">
-            ¿Ya tenés cuenta? <a app-link routerLink="/auth">Iniciá sesión</a>
+            ¿Ya tiene cuenta? <a app-link routerLink="/auth">Inicie sesión</a>
           </p>
         </div>
       }

@@ -177,7 +177,7 @@ describe('errorToViewState · catálogo real de la API', () => {
       const state = errorToViewState(
         apiError(403, {
           code: 'IDENTITY_VERIFICATION_REQUIRED',
-          message: 'Necesitás verificar tu identidad',
+          message: 'Necesita verificar su identidad',
           details: { reason: 'NO_ASSERTION' },
           timestamp: 't',
           path: '/clinical/records',
@@ -277,7 +277,7 @@ describe('errorToViewState · catálogo real de la API', () => {
       );
 
       if (isUnexpectedError(state)) {
-        expect(state.message).toContain('Reintentá');
+        expect(state.message).toContain('Reintente');
       } else {
         throw new Error('esperaba S9');
       }

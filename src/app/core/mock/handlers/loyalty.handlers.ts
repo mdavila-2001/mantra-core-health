@@ -197,7 +197,7 @@ export function registerLoyalty(router: MockRouter): void {
     const patientProfileId = ownPatientProfileId(request);
     if (patientProfileId === null) return preconditionFailed('La cuenta no tiene perfil de paciente');
     const membership = ownMembership(patientProfileId);
-    if (membership === undefined) return preconditionFailed('No tenés una membresía de lealtad en este programa');
+    if (membership === undefined) return preconditionFailed('No tiene una membresía de lealtad en este programa');
 
     const body = (request.body ?? {}) as { points?: unknown; idempotencyKey?: unknown };
     const invalid = [

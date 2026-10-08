@@ -123,7 +123,7 @@ export class GrantForm {
   protected readonly created = signal<CreatedResource | null>(null);
 
   protected readonly errorMessage = computed(() =>
-    errorMessageOf(this.state(), 'No tenés permiso para otorgar concesiones.'),
+    errorMessageOf(this.state(), 'No tiene permiso para otorgar concesiones.'),
   );
 
   protected submit(): void {

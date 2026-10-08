@@ -50,9 +50,9 @@ const TITULOS = [
 ] as const;
 
 const DESCRIPCIONES = [
-  'Lo que tenés que revisar antes de la próxima consulta.',
-  'Se actualiza cada vez que registrás una atención.',
-  'Sólo vos y el equipo del consultorio pueden verlo.',
+  'Lo que tiene que revisar antes de la próxima consulta.',
+  'Se actualiza cada vez que registra una atención.',
+  'Sólo usted y el equipo del consultorio pueden verlo.',
   'Los datos verificados llevan sello; el resto va rotulado como declarado.',
 ] as const;
 
@@ -191,8 +191,8 @@ export function generarEntrada(entrada: EntradaAGenerar, semilla: string): Valor
   if (/^(name|displayName|nombre)$/i.test(nombre)) {
     return porNombre(`${f.person.firstName()} ${f.person.lastName().split(' ')[0]}`, entrada);
   }
-  if (/placeholder/i.test(nombre)) return porNombre('Escribí para buscar…', entrada);
-  if (/errorMessage|error/i.test(nombre)) return porNombre('Revisá este campo: falta completarlo.', entrada);
+  if (/placeholder/i.test(nombre)) return porNombre('Escriba para buscar…', entrada);
+  if (/errorMessage|error/i.test(nombre)) return porNombre('Revise este campo: falta completarlo.', entrada);
   if (/phone|telefono/i.test(nombre)) return porNombre(bo.celular(f), entrada);
   if (/email|correo/i.test(nombre)) return porNombre(`${f.internet.username().toLowerCase()}@alovida.mock`, entrada);
   if (/direccion|address/i.test(nombre)) return porNombre(bo.direccion(f, bo.lugar(f)), entrada);

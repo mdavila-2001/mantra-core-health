@@ -36,7 +36,7 @@
        la receta dice cuál las tiene. Va antes del catálogo porque quien llega
        con una receta primero elige mostrador.
        ========================================================================== -->
-  <section aria-label="Sucursales y tu receta">
+  <section aria-label="Sucursales y su receta">
     <div class="ficha-publica__encabezado">
       <app-section-heading
         class="ficha-publica__titulo"
@@ -52,18 +52,18 @@
           Usar mi ubicación para ver la más cercana
         </button>
       } @else if (pidiendoUbicacion()) {
-        <p class="ficha-publica__cuenta" role="status">Esperando tu ubicación…</p>
+        <p class="ficha-publica__cuenta" role="status">Esperando su ubicación…</p>
       } @else {
         <p class="ficha-publica__cuenta" role="status">
-          Distancias desde donde estás, en línea recta.
+          Distancias desde donde está, en línea recta.
         </p>
       }
     </div>
 
     @if (ubicacionRechazada()) {
       <p class="ficha-publica__nota" role="status">
-        No pudimos leer tu ubicación. Las sucursales se listan igual, con su
-        dirección; podés habilitarla desde la configuración del navegador.
+        No pudimos leer su ubicación. Las sucursales se listan igual, con su
+        dirección; puede habilitarla desde la configuración del navegador.
       </p>
     }
 
@@ -85,8 +85,8 @@
 
                 <div class="ficha-publica__titular">
                   <h3 class="rejilla__nombre">{{ sucursal.siteName }}</h3>
-                  <app-chip class="ficha-publica__grupo-chip" size="sm" variant="info" label="Estás viendo ésta">
-                    Estás viendo ésta
+                  <app-chip class="ficha-publica__grupo-chip" size="sm" variant="info" label="Está viendo ésta">
+                    Está viendo ésta
                   </app-chip>
                 </div>
 
@@ -144,17 +144,17 @@
 
     <!-- ---- la receta ---------------------------------------------------- -->
 
-    <h3 class="ficha-publica__subtitulo">¿Cuál tiene lo de tu receta?</h3>
+    <h3 class="ficha-publica__subtitulo">¿Cuál tiene lo de su receta?</h3>
     <p class="ficha-publica__nota">
-      Escribí los medicamentos de tu receta, uno por línea. Buscamos en el
-      catálogo publicado de cada sucursal y te decimos cuál los tiene; con tu
-      ubicación, además, cuál te queda más cerca.
+      Escriba los medicamentos de su receta, uno por línea. Buscamos en el
+      catálogo publicado de cada sucursal y le decimos cuál los tiene; con su
+      ubicación, además, cuál le queda más cerca.
     </p>
 
     <div class="ficha-publica__receta">
       <app-form-field
         class="ficha-publica__receta-campo"
-        label="Medicamentos de tu receta"
+        label="Medicamentos de su receta"
         hint="Uno por línea. También sirven separados por coma."
       >
         <app-textarea
@@ -182,7 +182,7 @@
 
     @if (falloLaBusqueda()) {
       <p class="ficha-publica__vacio" role="status">
-        No pudimos consultar las sucursales. Probá de nuevo en un momento.
+        No pudimos consultar las sucursales. Pruebe de nuevo en un momento.
       </p>
     }
 
@@ -191,7 +191,7 @@
         <!-- La recomendación va primero y con su motivo: una sugerencia sin
              por qué obliga a creerle o a ignorarla, y las dos son malas. -->
         <div class="ficha-publica__recomendacion" role="status" data-testid="pharmacy-recommended">
-          <p class="ficha-publica__recomendacion-rotulo">Te recomendamos</p>
+          <p class="ficha-publica__recomendacion-rotulo">Le recomendamos</p>
           <p class="ficha-publica__recomendacion-nombre">{{ elegida.branch.siteName }}</p>
           <p class="ficha-publica__recomendacion-motivo">
             {{ dondeQueda(elegida.branch) }} — {{ motivoDeLaRecomendacion() }}
@@ -208,7 +208,7 @@
         <p class="ficha-publica__cuenta" role="status">
           Las {{ resultadosVisibles().length }} mejores de {{ encontrado.length }} sucursales.
           @if (ubicacion() === null) {
-            Compartí tu ubicación para ordenarlas por cercanía.
+            Comparta su ubicación para ordenarlas por cercanía.
           }
         </p>
       }

@@ -40,7 +40,7 @@ describe('NotificationsStore', () => {
       {
         id: 'n-1',
         category: 'CLINICAL',
-        subject: 'Tu receta está lista',
+        subject: 'Su receta está lista',
         bodyText: null,
         destination: { type: 'PRESCRIPTION', id: 'rx-1' },
         payloadJson: null,
@@ -63,7 +63,7 @@ describe('NotificationsStore', () => {
         actorProfileId: null,
         sourceTypeConceptId: 'c-post',
         sourceRefId: 'p-1',
-        previewText: 'Alguien comentó tu publicación',
+        previewText: 'Alguien comentó su publicación',
         isRead: false,
         readAt: null,
         createdAt: '2026-08-18T11:00:00.000Z',
@@ -160,7 +160,7 @@ describe('NotificationsStore', () => {
     });
 
     expect(store.sinLeer()).toBe(1);
-    expect(store.avisos()[0].titulo).toBe('Tu receta está lista');
+    expect(store.avisos()[0].titulo).toBe('Su receta está lista');
     // El fallo de lo social no se le cuenta a nadie: la campana trajo lo que
     // importaba.
     expect(store.error()).toBe('');
@@ -241,7 +241,7 @@ describe('NotificationsStore', () => {
         {
           id: 'n-7',
           category: 'CLINICAL',
-          subject: 'Te quieren registrar como dependiente',
+          subject: 'Le quieren registrar como dependiente',
           bodyText: null,
           destination: { type: 'DEPENDENT_LINK_REQUEST', id: 'sol-1' },
           payloadJson: null,

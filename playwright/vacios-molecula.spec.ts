@@ -102,7 +102,7 @@ test.describe('Vacío · la molécula', () => {
     /* ---- 2 · la indicación NO es prosa ----------------------------------- */
     const indicacion = page.locator('.view-state-host__next-action').first();
     await expect(indicacion).toBeVisible();
-    await expect(indicacion).toContainText('Escribí para buscar');
+    await expect(indicacion).toContainText('Escriba para buscar');
     expect(await estilo(indicacion, 'border-top-style'), 'la cápsula va punteada').toBe('dashed');
     // `inline-flex` declarado; el navegador lo devuelve como `flex` porque es
     // hijo de un contenedor flex —la fila de acciones—, que bloquifica.

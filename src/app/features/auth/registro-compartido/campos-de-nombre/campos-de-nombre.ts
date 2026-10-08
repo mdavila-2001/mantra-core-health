@@ -56,7 +56,7 @@ export class CamposDeNombre {
     const esNombre = clave === 'name';
     const propio = mensajeDeError(this.grupo().controls[clave], {
       label: esNombre ? 'Primer nombre' : 'Apellido paterno',
-      mensajeDeError: esNombre ? 'Escribí el primer nombre.' : 'Escribí el apellido paterno.',
+      mensajeDeError: esNombre ? 'Escriba el primer nombre.' : 'Escriba el apellido paterno.',
     });
     if (propio !== '' || esNombre) return propio;
     const grupo = this.grupo();

@@ -87,7 +87,7 @@ describe('ClinicalRecord', () => {
 
     const actual = estado();
     expect(actual.status).toBe('empty');
-    expect(actual.message).toContain('Buscá por nombre, código o documento');
+    expect(actual.message).toContain('Busque por nombre, código o documento');
   });
 
   it('el buscador por nombre y el de documento están siempre disponibles, aun sin criterio', () => {
@@ -170,7 +170,7 @@ describe('ClinicalRecord', () => {
     const html = harness.fixture.nativeElement as HTMLElement;
     // La tabla sigue montada: es ella quien resuelve el estado, no un `@if` del componente.
     expect(html.querySelector('app-data-table')).not.toBeNull();
-    expect(html.textContent).toContain('No tenés acceso a esta sección');
+    expect(html.textContent).toContain('No tiene acceso a esta sección');
   });
 
   /** AC-07-1: encuentra por documento exacto, aunque el nombre no coincida. */

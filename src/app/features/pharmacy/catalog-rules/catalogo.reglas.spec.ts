@@ -330,7 +330,7 @@ describe('revisarCarga', () => {
       const rechazada = revisadas[0]!;
       expect(rechazada.lista).toBe(false);
       expect(rechazada.lista === false && rechazada.motivo).toBe('NO_EN_EL_CATALOGO');
-      expect(rechazada.lista === false && rechazada.errores[0]).toContain('NUEVO-1 no está en tu catálogo');
+      expect(rechazada.lista === false && rechazada.errores[0]).toContain('NUEVO-1 no está en su catálogo');
     });
 
     it('con el catálogo vacío rechaza todas las filas válidas', () => {

@@ -145,19 +145,19 @@ export class OrganizationBranches {
   protected readonly nameError = computed(() => {
     const name = this.form().name.trim();
     if (name === '') {
-      return 'Escribí el nombre de la sucursal.';
+      return 'Escriba el nombre de la sucursal.';
     }
     const editing = this.editing();
     const ownId = editing?.mode === 'edit' ? editing.branch.id : null;
     const repeated = this.loaded().some(
       (branch) => branch.id !== ownId && nameKey(branch.name) === nameKey(name),
     );
-    return repeated ? 'Ya tenés una sucursal con ese nombre.' : '';
+    return repeated ? 'Ya tiene una sucursal con ese nombre.' : '';
   });
 
   protected readonly urlError = computed(() => {
     const url = this.form().locationUrl.trim();
-    return url === '' || isWebUrl(url) ? '' : 'Pegá un enlace que empiece con https://.';
+    return url === '' || isWebUrl(url) ? '' : 'Pegue un enlace que empiece con https://.';
   });
 
   /** Si el enlace escrito trae el punto: se lo dice antes de guardar. */
@@ -209,7 +209,7 @@ export class OrganizationBranches {
     if (tenantId === null) {
       this.branches.set(
         empty(
-          { label: 'Elegí la organización en el selector de arriba' },
+          { label: 'Elija la organización en el selector de arriba' },
           'Sin una organización activa no hay sucursales que mostrar.',
         ),
       );
@@ -222,8 +222,8 @@ export class OrganizationBranches {
           list.items.length > 0
             ? ready(list.items)
             : empty(
-                { label: 'Usá «Agregar sucursal» o «Subir sucursales (CSV)»' },
-                'Todavía no cargaste sucursales.',
+                { label: 'Use «Agregar sucursal» o «Subir sucursales (CSV)»' },
+                'Todavía no cargó sucursales.',
               ),
         ),
       error: (error: unknown) =>
@@ -325,7 +325,7 @@ export class OrganizationBranches {
       next: () => {
         this.saving.set(false);
         this.toasts.success(
-          editing.mode === 'edit' ? 'Guardaste los cambios de la sucursal.' : 'Agregaste la sucursal.',
+          editing.mode === 'edit' ? 'Guardó los cambios de la sucursal.' : 'Agregó la sucursal.',
         );
         this.dialog()?.close(true);
         this.reload();

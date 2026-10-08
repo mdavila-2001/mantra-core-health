@@ -61,7 +61,7 @@ export class InsurancePortabilityCard {
    */
   protected readonly coverageSummary = computed(() => {
     const total = this.coverages().length;
-    if (total === 0) return 'No tenés coberturas declaradas.';
+    if (total === 0) return 'No tiene coberturas declaradas.';
 
     const currentCount = this.coverages().filter(
       (coverage) => coverage.validityStatus === 'CURRENT',

@@ -181,8 +181,8 @@ describe('Recorrido · armazón', () => {
     // persona buscando una puerta que no está.
     cy.contains('dd', 'Ana Salas').should('be.visible');
     cy.contains('Pendiente de verificación').should('not.exist');
-    cy.contains('a', 'Verificá tu identidad para ver tu código de paciente').should('not.exist');
-    cy.contains('cuando tu identidad esté verificada').should('not.exist');
+    cy.contains('a', 'Verifique su identidad para ver su código de paciente').should('not.exist');
+    cy.contains('cuando su identidad esté verificada').should('not.exist');
 
     capturar(pantalla, 'mi perfil con identidad sin verificar');
   });

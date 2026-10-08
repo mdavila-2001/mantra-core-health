@@ -122,7 +122,7 @@ export class Progress {
   private warnIfMissingLabel(): void {
     if (!this.label().trim()) {
       console.warn(
-        '[app-progress] sin `label`: la barra no tiene nombre accesible. Decí qué avanza.',
+        '[app-progress] sin `label`: la barra no tiene nombre accesible. Diga qué avanza.',
       );
     }
   }

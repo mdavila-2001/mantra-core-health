@@ -1,6 +1,6 @@
 <app-content-dialog
   [heading]="'Dónde conseguir ' + medicationName()"
-  description="Cada farmacia reporta su precio y su stock, y pueden cambiar entre que lo ves y que llegás. Si el viaje es largo, llamá antes."
+  description="Cada farmacia reporta su precio y su stock, y pueden cambiar entre que lo ve y que llega. Si el viaje es largo, llame antes."
   (opened)="handleOpened()"
   (closed)="handleClosed()"
 >
@@ -15,13 +15,13 @@
     <div class="app-alert" app-alert="" data-tono="error" role="alert">
       <div class="app-alert__cuerpo">
         <strong>No pudimos consultar las farmacias.</strong>
-        <p>Volvé a intentarlo en un momento.</p>
+        <p>Vuelva a intentarlo en un momento.</p>
       </div>
     </div>
   } @else if (visibleOffers().length === 0) {
     <p class="farmacias__vacio">
       Ninguna farmacia de la red publicó este medicamento hoy. Puede que alguna lo tenga sin
-      publicar su inventario: preguntá por el principio activo, que es como figura en tu receta.
+      publicar su inventario: pregunte por el principio activo, que es como figura en su receta.
     </p>
   } @else {
     <!-- El mapa. Se monta recién con el diálogo abierto: Leaflet mide el

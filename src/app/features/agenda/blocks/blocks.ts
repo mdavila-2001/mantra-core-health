@@ -183,7 +183,7 @@ export class Blocks {
           this.guardando.set(false);
           this.toast.error(
             errorToViewState(error).status === 'forbidden'
-              ? 'Esa agenda no es tuya.'
+              ? 'Esa agenda no es suya.'
               : 'No se pudo guardar el cambio.',
             'No se guardó',
           );
@@ -214,7 +214,7 @@ export class Blocks {
           this.guardando.set(false);
           this.toast.error(
             errorToViewState(error).status === 'forbidden'
-              ? 'Esa agenda no es tuya.'
+              ? 'Esa agenda no es suya.'
               : 'No se pudo crear el bloqueo.',
             'No se creó',
           );
@@ -257,7 +257,7 @@ export class Blocks {
           this.estado.set(
             empty(
               { label: 'Publicar mi agenda', route: '/schedule/new' },
-              'Todavía no publicaste tu agenda: no hay nada que bloquear.',
+              'Todavía no publicó su agenda: no hay nada que bloquear.',
             ),
           );
           return;
@@ -309,8 +309,8 @@ export class Blocks {
                 // no desde una dirección propia (ver el comentario de
                 // `creando`). `ViewStateNextAction` sin ruta se pinta como
                 // texto, así que la etiqueta queda en modo indicación.
-                { label: 'Usá «Bloquear días u horarios», arriba' },
-                'No tenés ningún bloqueo. Cuando cierres un rato, aparece acá.',
+                { label: 'Use «Bloquear días u horarios», arriba' },
+                'No tiene ningún bloqueo. Cuando cierre un rato, aparece acá.',
               )
             : ready(filas),
         );
@@ -392,7 +392,7 @@ export class Blocks {
         this.borrando.set(null);
         this.toast.error(
           errorToViewState(error).status === 'forbidden'
-            ? 'Esa agenda no es tuya.'
+            ? 'Esa agenda no es suya.'
             : 'No se pudo quitar el bloqueo.',
           'No se quitó',
         );

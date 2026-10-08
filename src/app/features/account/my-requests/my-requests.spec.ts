@@ -142,7 +142,7 @@ describe('MyRequests', () => {
 
   it('una cuenta que no presenta solicitudes ve un vacío que dice por qué', () => {
     responder('NONE', []);
-    expect(texto()).toContain('Tu cuenta no presenta solicitudes a aseguradoras');
+    expect(texto()).toContain('Su cuenta no presenta solicitudes a aseguradoras');
   });
 
   it('el buscador acota por motivo', () => {

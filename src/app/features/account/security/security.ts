@@ -110,8 +110,8 @@ export class AccountSecurity {
         this.form.reset();
         this.toasts.success(
           resultado.revokedSessions > 0
-            ? `Cambiamos tu contraseña y cerramos ${resultado.revokedSessions} sesión(es) en otros dispositivos.`
-            : 'Cambiamos tu contraseña.',
+            ? `Cambiamos su contraseña y cerramos ${resultado.revokedSessions} sesión(es) en otros dispositivos.`
+            : 'Cambiamos su contraseña.',
         );
         this.cargarSesiones();
       },
@@ -143,7 +143,7 @@ export class AccountSecurity {
       },
       error: () => {
         this.cerrando.set(null);
-        this.toasts.warning('No pudimos cerrar esa sesión. Probá de nuevo.');
+        this.toasts.warning('No pudimos cerrar esa sesión. Pruebe de nuevo.');
       },
     });
   }
@@ -152,7 +152,7 @@ export class AccountSecurity {
     const confirmado = await this.dialogs.confirm({
       title: 'Cerrar sesión en todos lados',
       message:
-        'Vas a salir de todos tus dispositivos, incluido este. Para volver a entrar vas a necesitar tu contraseña.',
+        'Va a salir de todos sus dispositivos, incluido este. Para volver a entrar va a necesitar su contraseña.',
       confirmLabel: 'Cerrar todas las sesiones',
       destructive: true,
     });
@@ -170,7 +170,7 @@ export class AccountSecurity {
       },
       error: () => {
         this.cerrandoTodas.set(false);
-        this.toasts.warning('No pudimos cerrar las sesiones. Probá de nuevo.');
+        this.toasts.warning('No pudimos cerrar las sesiones. Pruebe de nuevo.');
       },
     });
   }
@@ -187,11 +187,11 @@ function mensajeDeContrasena(error: unknown): string {
       return 'La contraseña nueva tiene que ser distinta de la actual.';
     }
     if (error.status === 429) {
-      return 'Hiciste demasiados intentos seguidos. Esperá un minuto y volvé a probar.';
+      return 'Hizo demasiados intentos seguidos. Espere un minuto y vuelva a probar.';
     }
     if (error.status === 0) {
-      return 'No pudimos conectarnos. Revisá tu conexión y reintentá.';
+      return 'No pudimos conectarnos. Revise su conexión y reintente.';
     }
   }
-  return 'No pudimos cambiar tu contraseña. Probá de nuevo.';
+  return 'No pudimos cambiar su contraseña. Pruebe de nuevo.';
 }

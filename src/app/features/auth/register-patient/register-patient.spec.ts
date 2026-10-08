@@ -1068,7 +1068,7 @@ describe('RegisterPatient', () => {
       const fecha = new Date(hoy.getFullYear() - 30, hoy.getMonth(), hoy.getDate());
       component.formPaciente.controls.birthDate.setValue(fecha);
 
-      expect(component.edadEnPalabras()).toBe('Tenés 30 años.');
+      expect(component.edadEnPalabras()).toBe('Tiene 30 años.');
     });
 
     it('el día antes del cumpleaños todavía es un año menos', () => {
@@ -1079,7 +1079,7 @@ describe('RegisterPatient', () => {
       component.formPaciente.controls.birthDate.setValue(fecha);
 
       expect(component.edadEnPalabras()).toBe(
-        manana.getFullYear() === hoy.getFullYear() ? 'Tenés 29 años.' : 'Tenés 30 años.',
+        manana.getFullYear() === hoy.getFullYear() ? 'Tiene 29 años.' : 'Tiene 30 años.',
       );
     });
 
@@ -1088,7 +1088,7 @@ describe('RegisterPatient', () => {
       const fecha = new Date(hoy.getFullYear() - 1, hoy.getMonth(), hoy.getDate());
       component.formPaciente.controls.birthDate.setValue(fecha);
 
-      expect(component.edadEnPalabras()).toBe('Tenés 1 año.');
+      expect(component.edadEnPalabras()).toBe('Tiene 1 año.');
     });
   });
 
@@ -1320,7 +1320,7 @@ describe('RegisterPatient', () => {
     expect(component.marcandoDomicilio()).toBe(false);
     expect(component.direccionConfirmada()).toBe(false);
     // El pin puesto a mano no se llama «Acá te encontramos»: eso sería mentir.
-    expect(component.pinesDomicilio()[0].titulo).toBe('El punto que marcaste');
+    expect(component.pinesDomicilio()[0].titulo).toBe('El punto que marcó');
 
     component.submit();
     const sinConfirmar = http.expectOne('/iam/auth/register-patient');
@@ -1402,7 +1402,7 @@ describe('RegisterPatient', () => {
     component.fijarPuntoDeTrabajo({ lat: -17.4, lng: -66.1 });
     expect(component.gpsTrabajo()).toEqual({ lat: -17.4, lng: -66.1 });
     expect(component.direccionTrabajoConfirmada()).toBe(false);
-    expect(component.pinesTrabajo()[0].titulo).toBe('El punto que marcaste');
+    expect(component.pinesTrabajo()[0].titulo).toBe('El punto que marcó');
     expect(component.gpsDomicilio()).toBeNull();
 
     component.quitarUbicacionDeTrabajo();
@@ -1726,7 +1726,7 @@ describe('RegisterPatient', () => {
       // El texto sale del catálogo de errores del alta (`registration-errors.ts`):
       // dice qué dato está repetido y qué hacer.
       expect(component.errorMessage()).toContain('Ya hay una cuenta registrada con este número de documento');
-      expect(component.errorMessage()).toContain('iniciá sesión');
+      expect(component.errorMessage()).toContain('inicie sesión');
       expect(component.registered()).toBe(false);
     });
 
@@ -1745,7 +1745,7 @@ describe('RegisterPatient', () => {
       );
 
       expect(component.errorMessage()).toBe(
-        'Revisá este dato y volvé a enviar. Contraseña: tiene que tener al menos 8 caracteres.',
+        'Revise este dato y vuelva a enviar. Contraseña: tiene que tener al menos 8 caracteres.',
       );
     });
 

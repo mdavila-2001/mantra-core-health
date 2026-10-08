@@ -358,7 +358,7 @@ export class AgendaDeHoy {
   protected readonly resumenDeLaCinta = computed(() => {
     const total = this.cifras().total;
     const consultas = total === 1 ? '1 consulta' : `${total} consultas`;
-    return `Tu jornada: ${consultas}, entre las ${horaCorta(this.desdeLasHoras())} y las ${horaCorta(this.hastaLasHoras())}.`;
+    return `Su jornada: ${consultas}, entre las ${horaCorta(this.desdeLasHoras())} y las ${horaCorta(this.hastaLasHoras())}.`;
   });
 
   /** Dónde cae el reloj en la cinta, o `null` si el día todavía no empezó o ya terminó. */
@@ -416,7 +416,7 @@ export class AgendaDeHoy {
             this.estado.set(
               empty(
                 { label: 'Publicar mi horario', route: AGENDA_CREATE_ROUTE },
-                'Todavía no tenés una agenda publicada, así que nadie puede reservarte hora.',
+                'Todavía no tiene una agenda publicada, así que nadie puede reservarle hora.',
               ),
             );
             return;
@@ -434,7 +434,7 @@ export class AgendaDeHoy {
                 // No es «Ver la agenda»: ése es el botón del encabezado, que
                 // sigue ahí. Un día vacío tiene otra próxima acción — llenarlo.
                 { label: 'Agendar una consulta', route: APPOINTMENT_NEW_ROUTE },
-                'Hoy no tenés ninguna consulta reservada.',
+                'Hoy no tiene ninguna consulta reservada.',
               ),
             );
             return;

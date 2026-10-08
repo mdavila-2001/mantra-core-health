@@ -252,7 +252,7 @@ function validarDuraciones(min: number, max: number) {
 export function registrarServiciosDeAgenda(router: MockRouter): void {
   router.get('/scheduling/service-offerings', (request) => {
     const pedido = texto(request.query, 'practitionerProfileId') ?? request.user?.practitionerProfileId;
-    if (pedido === undefined || pedido === null) return preconditionFailed422('Indicá de qué profesional querés ver los servicios.');
+    if (pedido === undefined || pedido === null) return preconditionFailed422('Indique de qué profesional quiere ver los servicios.');
     const veTodo = administra(request) || request.user?.practitionerProfileId === pedido;
     const items = ofertas
       .filtrar((o) => o.practitionerProfileId === pedido)
@@ -278,11 +278,11 @@ export function registrarServiciosDeAgenda(router: MockRouter): void {
     // agendas (el consultorio propio), y exigirle su propio id es pedirle lo que ya se sabe.
     const propio = request.user?.practitionerProfileId;
     if (datos.practitionerProfileId !== undefined && datos.practitionerProfileId !== propio && !administra(request)) {
-      return forbidden('Sólo podés crear ofertas para vos.');
+      return forbidden('Sólo puede crear ofertas para usted.');
     }
     const dueno = datos.practitionerProfileId ?? propio;
     if (dueno === undefined) {
-      return administra(request) ? preconditionFailed422('Indicá de qué profesional es la oferta.') : forbidden('Sólo un profesional ofrece servicios.');
+      return administra(request) ? preconditionFailed422('Indique de qué profesional es la oferta.') : forbidden('Sólo un profesional ofrece servicios.');
     }
 
     const servicio = servicios.get(datos.serviceCatalogId ?? '');
@@ -291,7 +291,7 @@ export function registrarServiciosDeAgenda(router: MockRouter): void {
     if (invalida !== null) return invalida;
     if (!servicio.isActive) return preconditionFailed422('Ese servicio está inactivo en el catálogo.');
     const existente = ofertas.todos().find((o) => o.practitionerProfileId === dueno && o.serviceCatalogId === servicio.id);
-    if (existente !== undefined) return conflict('Ya ofrecés ese servicio. Editá la oferta que ya tenés.', { offeringId: existente.id });
+    if (existente !== undefined) return conflict('Ya ofrece ese servicio. Edite la oferta que ya tiene.', { offeringId: existente.id });
 
     const nueva = ofertas.agregar({
       id: nuevoId('offering'),
@@ -376,7 +376,7 @@ export function registrarServiciosDeAgenda(router: MockRouter): void {
     const ocupado = ocupadoDelProfesional(todasLasSedes, inicio, fin);
     const franjas = franjasDeServicios([sede], inicio - MS_POR_DIA, fin + MS_POR_DIA).flatMap((g) => g.franjas);
     if (!cabe(franjas, ocupado, duracion, inicio)) {
-      return conflict('Ese horario ya no está disponible para este servicio. Elegí otro.', { offeringId: oferta.id, startAt: new Date(inicio).toISOString() });
+      return conflict('Ese horario ya no está disponible para este servicio. Elija otro.', { offeringId: oferta.id, startAt: new Date(inicio).toISOString() });
     }
 
     const retractedSlots = retraerConsultas(todasLasSedes, tramoOcupado(inicio, fin, duracion));

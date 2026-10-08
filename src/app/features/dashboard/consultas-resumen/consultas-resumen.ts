@@ -163,7 +163,7 @@ export class ConsultasResumen {
       .subscribe({
         next: (paginas) => {
           if (paginas === null) {
-            this.estado.set(empty({ label: 'Publicar mi horario', route: '/schedule' }, 'Todavía no tenés una agenda publicada.'));
+            this.estado.set(empty({ label: 'Publicar mi horario', route: '/schedule' }, 'Todavía no tiene una agenda publicada.'));
             return;
           }
           const citas = paginas.flatMap((pagina) => pagina.items);

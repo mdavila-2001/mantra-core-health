@@ -20,7 +20,7 @@
   title="Contabilidad · libros"
   [subtitle]="
     esMedico()
-      ? 'Lo que cobraste y todavía no pasaste a los libros, mes por mes.'
+      ? 'Lo que cobró y todavía no pasó a los libros, mes por mes.'
       : 'Balance de sumas y saldos y libro diario de la práctica'
   "
 />
@@ -55,12 +55,12 @@
 @if (esMedico()) {
   <app-alert tone="info" class="explicacion">
     <p>
-      Cada consulta que un paciente te pagó queda acá hasta que la registrás.
-      <strong>Registrarla</strong> es lo que la pasa a los libros de la práctica: elegís la
-      factura, elegís las cuentas y confirmás.
+      Cada consulta que un paciente le pagó queda acá hasta que la registra.
+      <strong>Registrarla</strong> es lo que la pasa a los libros de la práctica: elige la
+      factura, elige las cuentas y confirma.
     </p>
     <p>
-      Lo que registrás queda en <strong>borrador</strong> y lo aprueba después quien lleva la
+      Lo que registra queda en <strong>borrador</strong> y lo aprueba después quien lleva la
       contabilidad — como en cualquier práctica real, donde un profesional no se autoaprueba
       sus propios asientos.
     </p>
@@ -68,14 +68,14 @@
 } @else {
   <app-alert tone="info" class="explicacion">
     <p>
-      Acá ves el balance y el libro diario de tu práctica, y registrás vos mismo tus
+      Acá ve el balance y el libro diario de su práctica, y registra usted mismo sus
       movimientos: el ingreso de una consulta ya pagada, o un gasto.
-      <strong>Ejemplo:</strong> atendiste una consulta y el paciente ya pagó — elegí esa
-      factura abajo, elegí las cuentas (caja/banco e ingresos por consultas) y confirmá; el
+      <strong>Ejemplo:</strong> atendió una consulta y el paciente ya pagó — elija esa
+      factura abajo, elija las cuentas (caja/banco e ingresos por consultas) y confirme; el
       asiento queda en borrador y anclado a esa factura.
     </p>
     <p>
-      Lo que registrás acá queda en <strong>borrador</strong>: el flujo canónico es
+      Lo que registra acá queda en <strong>borrador</strong>: el flujo canónico es
       borrador → clasificado → en revisión → aprobado → posteado, y el posteo final lo hace
       quien tiene autoridad contable — igual que en cualquier práctica real, donde un
       profesional no se autoaprueba sus propios asientos.
@@ -88,7 +88,7 @@
   <app-select
     [options]="opcionesDePractica()"
     [(value)]="practicaElegida"
-    placeholder="Elegí una práctica"
+    placeholder="Elija una práctica"
   />
 </app-form-field>
 
@@ -111,8 +111,8 @@
 
     @if (porMes().length === 0) {
       <p class="nota">
-        No tenés consultas cobradas pendientes de registrar en esta práctica. Cuando un paciente
-        pague una consulta tuya, va a aparecer acá.
+        No tiene consultas cobradas pendientes de registrar en esta práctica. Cuando un paciente
+        pague una consulta suya, va a aparecer acá.
       </p>
     } @else {
       <ul class="facturacion__meses">
@@ -168,7 +168,7 @@
       <!-- Un balance recortado en silencio es un balance que miente. -->
       <app-alert tone="warning">
         El balance alcanzó su tope de filas y está <strong>incompleto</strong>:
-        acotá la ventana de fechas o el período fiscal para verlo entero.
+        acote la ventana de fechas o el período fiscal para verlo entero.
       </app-alert>
     }
 
@@ -267,21 +267,21 @@
           <app-select
             formControlName="invoiceId"
             [options]="opcionesDeConsulta()"
-            placeholder="Elegí una factura"
+            placeholder="Elija una factura"
           />
         </app-form-field>
         <app-form-field icon="billing" label="Cuenta a debitar (caja/banco)" [required]="true">
           <app-select
             formControlName="debitAccountId"
             [options]="opcionesDeCuenta()"
-            placeholder="Elegí una cuenta"
+            placeholder="Elija una cuenta"
           />
         </app-form-field>
         <app-form-field icon="billing" label="Cuenta a acreditar (ingresos por consultas)" [required]="true">
           <app-select
             formControlName="creditAccountId"
             [options]="opcionesDeCuenta()"
-            placeholder="Elegí una cuenta"
+            placeholder="Elija una cuenta"
           />
         </app-form-field>
         <button app-button variant="primary" type="submit" [disabled]="enviandoIngreso()">
@@ -308,14 +308,14 @@
         <app-select
           formControlName="debitAccountId"
           [options]="opcionesDeCuenta()"
-          placeholder="Elegí una cuenta"
+          placeholder="Elija una cuenta"
         />
       </app-form-field>
       <app-form-field icon="billing" label="Cuenta a acreditar (caja/banco)" [required]="true">
         <app-select
           formControlName="creditAccountId"
           [options]="opcionesDeCuenta()"
-          placeholder="Elegí una cuenta"
+          placeholder="Elija una cuenta"
         />
       </app-form-field>
       <app-form-field icon="chart" label="Importe" [required]="true" hint="Decimal, hasta dos posiciones.">
@@ -382,7 +382,7 @@
             </div>
             @if (!datos.balanceado) {
               <app-alert tone="warning">
-                El balance general no cuadra: revisalo en su propia pestaña antes de confiar en
+                El balance general no cuadra: revíselo en su propia pestaña antes de confiar en
                 estos totales.
               </app-alert>
             }
@@ -398,11 +398,11 @@
       @if (pestanaActiva() === 0) {
         <div #ledgerPdf data-pdf-root>
         <div class="informe-encabezado">
-          <app-form-field icon="billing" label="Cuenta" hint="El libro mayor es por cuenta: elegí cuál mirar">
+          <app-form-field icon="billing" label="Cuenta" hint="El libro mayor es por cuenta: elija cuál mirar">
             <app-select
               [options]="opcionesDeCuentaParaMayor()"
               [(value)]="cuentaDelMayor"
-              placeholder="Elegí una cuenta"
+              placeholder="Elija una cuenta"
             />
           </app-form-field>
           <app-pdf-export-button [target]="ledgerPdf" filename="libro-mayor" title="Libro mayor" />
@@ -535,11 +535,11 @@
              propia persona elige como su caja o su banco. -->
         <div #cashFlowPdf data-pdf-root>
         <div class="informe-encabezado">
-          <app-form-field icon="billing" label="Cuenta" hint="Elegí la cuenta que usás como caja o banco">
+          <app-form-field icon="billing" label="Cuenta" hint="Elija la cuenta que usa como caja o banco">
             <app-select
               [options]="opcionesDeCuentaParaMayor()"
               [(value)]="cuentaDeCaja"
-              placeholder="Elegí una cuenta"
+              placeholder="Elija una cuenta"
             />
           </app-form-field>
           <app-pdf-export-button [target]="cashFlowPdf" filename="flujo-de-caja" title="Flujo de caja" />
@@ -611,7 +611,7 @@
 
       <h3>Filas del asiento</h3>
       @if (filasDelAsiento().length === 0) {
-        <p class="nota">Todavía no agregaste ninguna fila.</p>
+        <p class="nota">Todavía no agregó ninguna fila.</p>
       } @else {
         <ul class="filas-del-asiento">
           @for (fila of filasDelAsiento(); track $index) {
@@ -657,7 +657,7 @@
           <app-select
             formControlName="accountId"
             [options]="opcionesDeCuenta()"
-            placeholder="Elegí una cuenta"
+            placeholder="Elija una cuenta"
           />
         </app-form-field>
         <app-form-field icon="pin" label="Dirección" [required]="true">

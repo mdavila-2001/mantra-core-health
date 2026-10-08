@@ -509,7 +509,7 @@ describe('NavigationService', () => {
       expect(service.menu().map((g) => g.label)).toEqual(['General', 'Mi cuenta']);
     });
 
-    it('con membresía pero sin rol global sí se ve «Tu organización»', () => {
+    it('con membresía pero sin rol global sí se ve «Su organización»', () => {
       // El caso que F-31 no podía romper: la recepcionista. Su permiso es una
       // fila de `tenant_memberships`, no un rol del token — filtrar la sección
       // por `roles` la habría dejado afuera de la pantalla que es suya.
@@ -684,7 +684,7 @@ describe('NavigationService', () => {
     });
   });
 
-  describe('dónde estás parado', () => {
+  describe('dónde está parado', () => {
     it('fuera del armazón no hay sección ni ruta de navegación', async () => {
       await router.navigateByUrl('/design-system');
 
@@ -692,13 +692,13 @@ describe('NavigationService', () => {
       expect(service.breadcrumbs()).toEqual([]);
     });
 
-    it('en el panel el breadcrumb es un solo escalón, y sin enlace: es donde estás', async () => {
+    it('en el panel el breadcrumb es un solo escalón, y sin enlace: es donde está', async () => {
       await router.navigateByUrl('/dashboard');
 
       expect(service.breadcrumbs()).toEqual([{ label: 'Panel' }]);
     });
 
-    it('en una sección el breadcrumb dice de dónde venís, el dominio y dónde estás', async () => {
+    it('en una sección el breadcrumb dice de dónde viene, el dominio y dónde está', async () => {
       await router.navigateByUrl('/administration/users');
 
       expect(service.breadcrumbs()).toEqual([

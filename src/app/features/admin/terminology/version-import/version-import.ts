@@ -285,7 +285,7 @@ export class VersionImport {
     const filas = validacion.preview ?? [];
     if (filas.length === 0) {
       return empty(
-        { label: 'Elegí otro archivo' },
+        { label: 'Elija otro archivo' },
         'El archivo no trajo ninguna fila que se pueda importar.',
       );
     }
@@ -522,7 +522,7 @@ export class VersionImport {
       },
       error: () => {
         this.descargandoPlantilla.set(false);
-        this.toast.error('No pudimos preparar la plantilla. Reintentá en un momento.', 'Error');
+        this.toast.error('No pudimos preparar la plantilla. Reintente en un momento.', 'Error');
       },
     });
   }
@@ -669,13 +669,13 @@ export class VersionImport {
   /** Qué hacer ante cada código, no qué salió mal por dentro. */
   private mensajeDeImportacion(codigo: string): string {
     if (codigo === 'IMPORT_FORMAT_UNSUPPORTED') {
-      return 'Ese archivo no es CSV, XLSX ni NDJSON. Bajá la plantilla y volvé a intentar.';
+      return 'Ese archivo no es CSV, XLSX ni NDJSON. Baje la plantilla y vuelva a intentar.';
     }
     if (codigo === 'IMPORT_EMPTY_FILE') {
       return 'El archivo no tiene filas: sólo trae el encabezado.';
     }
     if (codigo === 'IMPORT_PROFILE_UNKNOWN') {
-      return 'Elegí qué vas a cargar antes de mandar el archivo.';
+      return 'Elija qué va a cargar antes de mandar el archivo.';
     }
     return 'El importador no pudo leer el archivo.';
   }
@@ -693,7 +693,7 @@ export class VersionImport {
       return estado.message || 'Hace falta administración de seguridad para importar terminología.';
     }
     if (estado.status === 'offline') {
-      return 'No pudimos conectarnos. Revisá tu conexión y reintentá: tu archivo y tus selecciones siguen acá.';
+      return 'No pudimos conectarnos. Revise su conexión y reintente: su archivo y sus selecciones siguen acá.';
     }
     if (estado.status === 'error') {
       return `${estado.message || 'Ocurrió un error inesperado.'} (${estado.requestId})`;

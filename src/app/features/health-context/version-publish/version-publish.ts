@@ -65,7 +65,7 @@ export class VersionPublish {
   protected readonly published = signal<VersionPublished | null>(null);
 
   protected readonly errorMessage = computed(() =>
-    errorMessageOf(this.state(), 'No tenés permiso para publicar versiones.'),
+    errorMessageOf(this.state(), 'No tiene permiso para publicar versiones.'),
   );
 
   protected submit(): void {

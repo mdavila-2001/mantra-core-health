@@ -129,7 +129,7 @@ describe('buildAccessTree', () => {
     ['administration/pharmacy-categories', 'PHARMACY'],
     ['administration/pharmacy-import', 'PHARMACY'],
     ['administration/pharmacy-inventory', 'PHARMACY'],
-  ])('no ofrece %s en «Tus accesos» aunque la sesión lo alcance', (ruta, tipo) => {
+  ])('no ofrece %s en «Sus accesos» aunque la sesión lo alcance', (ruta, tipo) => {
     expect(seccionesDe(['PRACTITIONER'], tipo).map((s) => s.path)).toContain(ruta);
     expect(rutasRepartidas(['PRACTITIONER'], tipo)).not.toContain(ruta);
   });

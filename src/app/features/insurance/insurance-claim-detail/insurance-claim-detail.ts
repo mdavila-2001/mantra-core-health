@@ -363,7 +363,7 @@ export class InsuranceClaimDetail {
     const confirmed = await this.dialogs.confirm({
       title: 'Aprobar solicitud de cobertura',
       message:
-        `¿Confirmás la aprobación total de la solicitud por ${this.money(detail.header.billedTotal)}? ` +
+        `¿Confirma la aprobación total de la solicitud por ${this.money(detail.header.billedTotal)}? ` +
         'Se generará el dictamen de cobertura completa y se publicará la liquidación (EOB) correspondiente.',
       confirmLabel: 'Aprobar cobertura',
     });
@@ -432,7 +432,7 @@ export class InsuranceClaimDetail {
     if (!rationale) {
       this.toast.show({
         type: 'warning',
-        message: 'Por favor ingresá la fundamentación técnica o motivo circunstanciado del rechazo.',
+        message: 'Por favor ingrese la fundamentación técnica o motivo circunstanciado del rechazo.',
       });
       return;
     }

@@ -44,8 +44,8 @@ const XML_DE_EJEMPLO_OFICIAL = `<?xml version="1.0" encoding="UTF-8" standalone=
         <descuentoAdicional>1</descuentoAdicional>
         <codigoExcepcion xsi:nil="true"/>
         <cafc xsi:nil="true"/>
-        <leyenda>Ley N° 453: Tienes derecho a recibir información sobre las características y contenidos de los
-            servicios que utilices.
+        <leyenda>Ley N° 453: Tiene derecho a recibir información sobre las características y contenidos de los
+            servicios que utilice.
         </leyenda>
         <usuario>pperez</usuario>
         <codigoDocumentoSector>1</codigoDocumentoSector>

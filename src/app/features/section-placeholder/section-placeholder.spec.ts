@@ -27,7 +27,7 @@ const SECCION: AppSection = {
   group: 'Atención',
   icon: 'calendar',
   availability: 'planificada',
-  summary: 'Gestioná disponibilidad, reservas y confirmaciones de turno.',
+  summary: 'Gestione disponibilidad, reservas y confirmaciones de turno.',
   module: 'M41 scheduling',
 };
 
@@ -65,7 +65,7 @@ describe('SectionPlaceholder', () => {
     const fixture = await montar();
 
     const texto = fixture.nativeElement.textContent as string;
-    expect(texto).toContain('Gestioná disponibilidad, reservas y confirmaciones de turno.');
+    expect(texto).toContain('Gestione disponibilidad, reservas y confirmaciones de turno.');
     // Y es explícito sobre por qué está vacía, en vez de sugerir que no hay datos.
     expect(texto).toContain('La pantalla todavía no está construida.');
   });

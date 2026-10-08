@@ -107,7 +107,7 @@ describe('PharmacyHub', () => {
     // Es «Mis pedidos» de `PharmacyOrders` embebida, sin su propio membrete
     // encima del de esta pantalla: un único `h1`, el de `PharmacyHub`.
     expect(raiz().querySelectorAll('h1').length).toBe(1);
-    expect(texto()).toContain('Todavía no enviaste ningún pedido');
+    expect(texto()).toContain('Todavía no envió ningún pedido');
 
     // La pestaña inactiva no se montó: nada que responder del lado de
     // Cotizaciones, y `afterEach` lo confirma si algo quedó pendiente.

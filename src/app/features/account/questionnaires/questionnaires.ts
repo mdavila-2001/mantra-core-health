@@ -162,7 +162,7 @@ export class Questionnaires {
           this.estado.set(
             empty(
               { label: 'Ver mis turnos', route: this.rutaDeTurnos },
-              'Todavía no tenés cuestionarios. Aparecen acá cuando el profesional cierra una consulta que tiene encuesta asociada.',
+              'Todavía no tiene cuestionarios. Aparecen acá cuando el profesional cierra una consulta que tiene encuesta asociada.',
             ),
           );
           return;

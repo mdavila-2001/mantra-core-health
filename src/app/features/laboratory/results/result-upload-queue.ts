@@ -315,7 +315,7 @@ export class ResultUploadQueue {
 function messageOf(error: unknown): string {
   if (error instanceof HttpErrorResponse) {
     if (error.status === 0) {
-      return 'Se cortó la conexión. Reintentá: sigue desde donde quedó.';
+      return 'Se cortó la conexión. Reintente: sigue desde donde quedó.';
     }
     const body = error.error as { message?: unknown } | null;
     if (body !== null && typeof body === 'object' && typeof body.message === 'string') {

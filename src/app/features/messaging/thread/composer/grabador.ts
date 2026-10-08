@@ -108,7 +108,7 @@ export class Grabador {
     try {
       this.pista = await navigator.mediaDevices.getUserMedia({ audio: true });
     } catch {
-      this.fallo.emit('No pudimos usar el micrófono. Revisá el permiso del navegador.');
+      this.fallo.emit('No pudimos usar el micrófono. Revise el permiso del navegador.');
       return;
     }
 

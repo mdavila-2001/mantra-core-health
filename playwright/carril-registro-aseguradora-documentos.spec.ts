@@ -190,7 +190,7 @@ test.describe('alta pública de aseguradora — documentación legal en PDF (sub
     await expect(page.locator('.paginated-form__titulo')).toContainText('Directorio ejecutivo');
     await completarGerencias(page);
 
-    await expect(page.locator('.paginated-form__titulo')).toContainText('Tu cuenta');
+    await expect(page.locator('.paginated-form__titulo')).toContainText('Su cuenta');
     await completarCuentaDelOwner(page, { email: 'admin@andina.test' });
 
     await expect(page.getByTestId('registro-organizacion-exito')).toBeVisible({ timeout: 20_000 });

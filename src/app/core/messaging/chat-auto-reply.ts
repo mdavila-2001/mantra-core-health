@@ -11,7 +11,7 @@ const CLAVE_ACTIVIDAD = 'alovida.chat-ultima-actividad';
 
 /** El texto por defecto. Se puede cambiar entero; esto es sólo el arranque. */
 export const RESPUESTA_POR_DEFECTO =
-  'Gracias por escribir. En este momento no estoy disponible; te respondo apenas pueda. Si es una urgencia, llamá al servicio de emergencias.';
+  'Gracias por escribir. En este momento no estoy disponible; le respondo apenas pueda. Si es una urgencia, llame al servicio de emergencias.';
 
 /** Entre cuánto y cuánto se puede pedir la espera, en minutos. */
 export const MINUTOS_MINIMO = 1;

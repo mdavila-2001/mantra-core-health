@@ -66,7 +66,7 @@ export const CATALOGOS_SIMULADOS: CatalogosFiscales = {
   leyendas: [
     {
       descripcionLeyenda:
-        'Ley N° 453: Tienes derecho a recibir información sobre las características y contenidos de los servicios que utilices.',
+        'Ley N° 453: Tiene derecho a recibir información sobre las características y contenidos de los servicios que utilice.',
       origen: 'EJEMPLO_OFICIAL',
       fuente: 'XML de ejemplo oficial facturaComputarizadaCompraVenta.xml (CompraVentaXML.zip)',
     },

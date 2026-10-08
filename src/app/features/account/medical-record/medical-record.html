@@ -1,13 +1,13 @@
 <app-page-header
   title="Mi historia clínica"
-  subtitle="Tus atenciones, tus recetas y lo que quedó registrado de cada consulta."
+  subtitle="Sus atenciones, sus recetas y lo que quedó registrado de cada consulta."
 />
 
 @if (sinPerfilDePaciente) {
   <!-- Sesión válida de una cuenta que no es de un paciente. No es un 403: es
        que esta pantalla no le corresponde. -->
   <app-alert tone="info" title="Esta sección es para pacientes">
-    Tu cuenta no tiene un perfil de paciente, así que no hay una historia clínica propia que
+    Su cuenta no tiene un perfil de paciente, así que no hay una historia clínica propia que
     mostrar.
   </app-alert>
   <a app-button variant="primary" [routerLink]="rutaDeTurnos">Ir a mis turnos</a>
@@ -27,7 +27,7 @@
 
            Trae órdenes y resultados al tocarse, no al abrir la pantalla: son dos
            lecturas más que la mayoría de las visitas no necesita. -->
-      <aside class="historia__barra" aria-label="Descargar tu historia">
+      <aside class="historia__barra" aria-label="Descargar su historia">
         <div class="historia__descarga-total">
           <button
             app-button
@@ -39,7 +39,7 @@
             Descargar mi historia completa
           </button>
           <p class="historia__descarga-nota">
-            Un solo PDF con tus atenciones, recetas, órdenes y resultados.
+            Un solo PDF con sus atenciones, recetas, órdenes y resultados.
           </p>
         </div>
       </aside>
@@ -107,13 +107,13 @@
         </h2>
 
         @if (atenciones().length === 0) {
-          <p class="historia__vacio">Todavía no tenés atenciones registradas.</p>
+          <p class="historia__vacio">Todavía no tiene atenciones registradas.</p>
         } @else {
           @if (falloElDetalle()) {
             <!-- La línea se dibuja igual con lo que el resumen ya trajo: perder
                  las notas y los estudios no justifica perder las atenciones. -->
             <app-alert tone="warning" title="Falta parte del detalle">
-              No pudimos traer las notas ni los estudios de tus atenciones. Lo demás se muestra
+              No pudimos traer las notas ni los estudios de sus atenciones. Lo demás se muestra
               igual.
             </app-alert>
           }
@@ -184,7 +184,7 @@
 
         @if (sinDiagnosticos()) {
           <p class="historia__vacio">
-            Todavía no tenés diagnósticos registrados. Aparecen acá después de una consulta.
+            Todavía no tiene diagnósticos registrados. Aparecen acá después de una consulta.
           </p>
         } @else {
           @for (bloque of diagnosticos(); track bloque.estado) {
@@ -219,7 +219,7 @@
         </h2>
 
         @if (recetas().length === 0) {
-          <p class="historia__vacio">Todavía no tenés recetas registradas.</p>
+          <p class="historia__vacio">Todavía no tiene recetas registradas.</p>
         } @else {
           <ul class="historia__lista" data-testid="historia-recetas">
             @for (receta of recetas(); track receta.id) {
@@ -293,7 +293,7 @@
           Alergias ({{ alergias().length }})
         </h2>
         @if (alergias().length === 0) {
-          <p class="historia__vacio">No tenés alergias registradas.</p>
+          <p class="historia__vacio">No tiene alergias registradas.</p>
         } @else {
           <ul class="historia__lista historia__lista--simple" data-testid="historia-alergias">
             @for (fila of alergias(); track fila.id) {
@@ -313,7 +313,7 @@
           Resultados ({{ resultados().length }})
         </h2>
         @if (resultados().length === 0) {
-          <p class="historia__vacio">Todavía no tenés resultados registrados.</p>
+          <p class="historia__vacio">Todavía no tiene resultados registrados.</p>
         } @else {
           <ul class="historia__lista historia__lista--simple" data-testid="historia-resultados">
             @for (fila of resultados(); track fila.id) {

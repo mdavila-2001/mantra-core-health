@@ -1,7 +1,7 @@
 <app-auth-split
   scene="stage"
-  claim="Tu salud, conectada"
-  tagline="Entrá y encontrá tu historia clínica, tus turnos y tus estudios en un solo lugar."
+  claim="Su salud, conectada"
+  tagline="Entre y encuentre su historia clínica, sus turnos y sus estudios en un solo lugar."
 >
   <!-- `appPointerScene` acá además del de la escena: la tarjeta necesita la
        posición del puntero medida contra SU rectángulo, no contra la pantalla,
@@ -14,7 +14,7 @@
          la persona vino a hacer acá es entrar. El título es el ancla. -->
     <div class="login__header">
       <h1 class="login__title">Iniciar sesión</h1>
-      <p class="login__subtitle">Ingresá con tu correo o tu documento de identidad.</p>
+      <p class="login__subtitle">Ingrese con su correo o su documento de identidad.</p>
     </div>
 
     @if (errorMessage(); as mensaje) {
@@ -27,7 +27,7 @@
         [required]="true"
         [errorMessage]="
           form.controls.identifier.touched && form.controls.identifier.invalid
-            ? 'Ingresá tu correo o tu documento.'
+            ? 'Ingrese su correo o su documento.'
             : ''
         "
       >
@@ -52,7 +52,7 @@
         [required]="true"
         [errorMessage]="
           form.controls.password.touched && form.controls.password.invalid
-            ? 'Ingresá tu contraseña.'
+            ? 'Ingrese su contraseña.'
             : ''
         "
       >
@@ -60,7 +60,7 @@
           formControlName="password"
           type="password"
           autocomplete="current-password"
-          placeholder="Tu contraseña"
+          placeholder="Su contraseña"
           testId="login-password"
         >
           <!-- Candado y no llave: la llave es el acceso que se presta. -->
@@ -75,7 +75,7 @@
         <app-form-field
           label="Código de verificación"
           [required]="true"
-          hint="Los seis dígitos que muestra tu aplicación de autenticación."
+          hint="Los seis dígitos que muestra su aplicación de autenticación."
         >
           <app-input
             formControlName="mfaCode"
@@ -102,7 +102,7 @@
 
     <div class="login__footer">
       <p class="login__pie">
-        <a app-link routerLink="/auth/forgot-password" data-testid="login-recuperar">¿Olvidaste tu contraseña?</a>
+        <a app-link routerLink="/auth/forgot-password" data-testid="login-recuperar">¿Olvidó su contraseña?</a>
       </p>
 
       <!-- Los dos accesos de alta van con su glifo: son dos caminos distintos y
@@ -110,7 +110,7 @@
       <a class="login__anexo" routerLink="/auth/register" data-testid="login-registro">
         <app-nav-icon name="patients" class="login__anexo-icono" />
         <span class="login__anexo-texto">
-          <span class="login__anexo-titulo">Creá tu cuenta</span>
+          <span class="login__anexo-titulo">Cree su cuenta</span>
           <span class="login__anexo-detalle">Paciente o profesional</span>
         </span>
         <svg
@@ -135,7 +135,7 @@
       >
         <app-nav-icon name="umbrella" class="login__anexo-icono" />
         <span class="login__anexo-texto">
-          <span class="login__anexo-titulo">Registrá tu organización</span>
+          <span class="login__anexo-titulo">Registre su organización</span>
           <span class="login__anexo-detalle">Aseguradoras</span>
         </span>
         <svg

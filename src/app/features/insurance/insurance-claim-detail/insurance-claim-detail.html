@@ -86,7 +86,7 @@
       <h2 id="claim-contact" class="claim__section-title">Asistencia y soporte de la aseguradora</h2>
       <p class="claim__note">
         ¿Consultas sobre copagos, coberturas o requisitos adicionales de esta solicitud?
-        Contactá a {{ detail.header.carrierName }} por sus canales oficiales.
+        Contacte a {{ detail.header.carrierName }} por sus canales oficiales.
       </p>
       <app-insurance-contact-channels [header]="detail.header" />
     </section>
@@ -435,7 +435,7 @@
       <section class="claim__adjudication-actions" aria-labelledby="claim-carrier-actions" data-testid="carrier-adjudication-panel">
         <h2 id="claim-carrier-actions" class="claim__section-title">Dictamen de cobertura</h2>
         <p class="claim__note">
-          Como representante o auditor médico de la aseguradora, evaluá las prestaciones presentadas y emití el dictamen correspondiente.
+          Como representante o auditor médico de la aseguradora, evaluá las prestaciones presentadas y emita el dictamen correspondiente.
         </p>
 
         <div class="claim__action-buttons">
@@ -564,7 +564,7 @@
               (valueChange)="denialRationale.set($event)"
               [rows]="4"
               [maxLength]="1000"
-              placeholder="Explicá el motivo técnico o legal de la denegación..."
+              placeholder="Explique el motivo técnico o legal de la denegación..."
             />
           </app-form-field>
 

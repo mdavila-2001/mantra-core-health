@@ -443,7 +443,7 @@ export class ProceduresBlock {
     }
     return mensajeDeFalloDeEscritura(state, {
       accion: 'registrar tratamientos odontológicos',
-      sinPermiso: 'Tu rol no permite registrar tratamientos odontológicos.',
+      sinPermiso: 'Su rol no permite registrar tratamientos odontológicos.',
     });
   });
 

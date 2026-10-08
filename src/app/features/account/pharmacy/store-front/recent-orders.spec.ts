@@ -108,7 +108,7 @@ describe('RecentOrders', () => {
     http.expectOne((r) => r.url === '/pharmacy/orders/me').flush({ items: [] });
     fixture.detectChanges();
 
-    expect(raiz().textContent).toContain('Todavía no pediste nada');
+    expect(raiz().textContent).toContain('Todavía no pidió nada');
     const enlace = raiz().querySelector<HTMLAnchorElement>('.pedidos__vacio a');
     expect(enlace?.getAttribute('href')).toBe('/my-account/pharmacy');
   });
@@ -131,7 +131,7 @@ describe('RecentOrders', () => {
       .flush('boom', { status: 500, statusText: 'Server Error' });
     fixture.detectChanges();
 
-    expect(raiz().textContent).not.toContain('Todavía no pediste nada');
+    expect(raiz().textContent).not.toContain('Todavía no pidió nada');
     expect(raiz().querySelector('.pedidos__lista')).toBeNull();
   });
 });

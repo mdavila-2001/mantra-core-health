@@ -3,7 +3,7 @@
 <app-directory-page
   [embebido]="embebido()"
   titulo="Directorio de clínicas"
-  subtitulo="Clínicas, hospitales y centros de salud con ficha pública. Tocá un departamento en el mapa y aparecen sus ciudades para acotar más."
+  subtitulo="Clínicas, hospitales y centros de salud con ficha pública. Toque un departamento en el mapa y aparecen sus ciudades para acotar más."
   etiquetaBusqueda="Buscar por nombre de la clínica o el hospital"
   [filtros]="filtros()"
   [estado]="estado()"
@@ -39,7 +39,7 @@
         [departamentos]="departamentos()"
         [value]="departamentoElegido()"
         (valueChange)="elegirDepartamento($event)"
-        etiqueta="Mapa de Bolivia: elegí el departamento donde buscás"
+        etiqueta="Mapa de Bolivia: elija el departamento donde busca"
       />
       @if (resumenDelMapa(); as resumen) {
         <p class="mapa-directorio__resumen" data-testid="clinicas-mapa-resumen">{{ resumen }}</p>

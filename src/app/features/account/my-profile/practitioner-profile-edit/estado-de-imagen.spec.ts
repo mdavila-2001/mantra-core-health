@@ -61,7 +61,7 @@ describe('EstadoDeImagen', () => {
     estado.elegir([archivo()], () => throwError(() => new Error('500')));
     await esperar(estado);
 
-    expect(estado.error()).toBe('No se pudo subir la firma. Probá de nuevo.');
+    expect(estado.error()).toBe('No se pudo subir la firma. Pruebe de nuevo.');
     expect(estado.cambio).toBeUndefined();
     expect(estado.subiendo()).toBe(false);
   });

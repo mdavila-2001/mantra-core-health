@@ -80,7 +80,7 @@ export class ObservationForm {
       titulo: 'Qué se observó',
       hint: 'El hash identifica el contenido: el mismo documento dos veces se deduplica.',
       campos: [
-        { key: 'contentHash', label: 'Hash del contenido', hint: 'La huella del documento leído, como un SHA-256. Máx. 200 caracteres.', control: 'text', required: true, mensajeDeError: 'Escribí el hash del contenido (máx. 200 caracteres).' },
+        { key: 'contentHash', label: 'Hash del contenido', hint: 'La huella del documento leído, como un SHA-256. Máx. 200 caracteres.', control: 'text', required: true, mensajeDeError: 'Escriba el hash del contenido (máx. 200 caracteres).' },
         { key: 'status', label: 'Veredicto', control: 'radio', options: [{ value: 'ACCEPTED', label: 'Aceptada: la fuente merece confianza' }, { value: 'REJECTED', label: 'Rechazada: queda registrada pero no respalda hechos' }], required: true },
       ],
     },
@@ -141,7 +141,7 @@ export class ObservationForm {
   protected readonly recorded = signal<ObservationRecorded | null>(null);
 
   protected readonly errorMessage = computed(() =>
-    errorMessageOf(this.state(), 'No tenés permiso para registrar observaciones.'),
+    errorMessageOf(this.state(), 'No tiene permiso para registrar observaciones.'),
   );
 
   protected submit(): void {

@@ -139,7 +139,7 @@ describe('PractitionerInsurers', () => {
     await respond([]);
 
     expect(text()).toContain('Sin seguros informados');
-    expect(text()).toContain('Preguntá en el consultorio');
+    expect(text()).toContain('Pregunte en el consultorio');
     expect(text().toLowerCase()).not.toContain('no acepta');
     expect(host().querySelector('[data-testid="practitioner-insurer"]')).toBeNull();
   });

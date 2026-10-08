@@ -1080,9 +1080,9 @@ describe('PractitionerProfileEdit', () => {
       h.textContent?.trim(),
     );
     expect(titulos).toEqual([
-      'Tus matrículas cargadas',
-      'Tus títulos cargados',
-      'Idiomas en los que atendés',
+      'Sus matrículas cargadas',
+      'Sus títulos cargados',
+      'Idiomas en los que atiende',
     ]);
     // Cada bloque ofrece su alta a la derecha de su barra; el formulario vive en un modal (D-04).
     expect(panel.querySelector('app-filter-bar [data-testid="matricula-agregar"]')).not.toBeNull();
@@ -1271,7 +1271,7 @@ describe('PractitionerProfileEdit', () => {
       expect(interno<() => string>('nuevoNumeroCredencial')()).toBe('Médico cirujano');
     });
 
-    it('la pregunta es «¿Confirmás estos datos?»', async () => {
+    it('la pregunta es «¿Confirma estos datos?»', async () => {
       montarYCargar();
       señal<string>('nuevoTipoCredencial').set('cred-titulo');
       señal<string>('nuevoNumeroCredencial').set('Médico cirujano');
@@ -1284,7 +1284,7 @@ describe('PractitionerProfileEdit', () => {
 
       await interno<() => Promise<void>>('agregarCredencial')();
 
-      expect(titulo).toBe('¿Confirmás estos datos?');
+      expect(titulo).toBe('¿Confirma estos datos?');
     });
 
     it('al agregar se cierra el modal y el próximo alta empieza en blanco', async () => {
@@ -1421,7 +1421,7 @@ describe('PractitionerProfileEdit', () => {
       expect(señal<string | null>('nuevaEspecialidad')()).toBe('esp-cardio');
     });
 
-    it('pregunta «¿Confirmás estos datos?» y, guardadas, cierra el modal y lo deja en blanco', async () => {
+    it('pregunta «¿Confirma estos datos?» y, guardadas, cierra el modal y lo deja en blanco', async () => {
       montarYCargar(CON_TITULOS);
       interno<() => void>('abrirAltaDeEspecialidad')();
       señal<string>('nuevaEspecialidad').set('esp-cardio');
@@ -1436,7 +1436,7 @@ describe('PractitionerProfileEdit', () => {
       cuerpos();
       http.expectOne('/profiles/practitioners/me/summary').flush(PERFIL_BASE);
 
-      expect(titulos).toEqual(['¿Confirmás estos datos?']);
+      expect(titulos).toEqual(['¿Confirma estos datos?']);
       expect(interno<() => boolean>('altaDeEspecialidadAbierta')()).toBe(false);
       expect(señal<string | null>('nuevaEspecialidad')()).toBeNull();
       expect(señal<string | null>('tituloDeRespaldo')()).toBeNull();
@@ -1590,7 +1590,7 @@ describe('PractitionerProfileEdit', () => {
       expect(señal<string>('nuevoNumeroDeMatricula')()).toBe('LIC-9');
     });
 
-    it('pregunta «¿Confirmás estos datos?» y, guardada, cierra el modal y lo deja en blanco', async () => {
+    it('pregunta «¿Confirma estos datos?» y, guardada, cierra el modal y lo deja en blanco', async () => {
       montarYCargar();
       interno<() => void>('abrirAltaDeMatricula')();
       señal<string>('nuevoNumeroDeMatricula').set('LIC-9');
@@ -1607,7 +1607,7 @@ describe('PractitionerProfileEdit', () => {
         .flush({ id: 'ja-1' });
       http.expectOne('/profiles/practitioners/me/summary').flush(PERFIL_BASE);
 
-      expect(titulos).toEqual(['¿Confirmás estos datos?']);
+      expect(titulos).toEqual(['¿Confirma estos datos?']);
       expect(interno<() => boolean>('altaDeMatriculaAbierta')()).toBe(false);
       expect(señal<string>('nuevoNumeroDeMatricula')()).toBe('');
       expect(señal<string>('nuevaAutoridad')()).toBe('');
@@ -2985,13 +2985,13 @@ describe('PractitionerProfileEdit', () => {
     });
 
     it.each([
-      ['vacío', '   ', 'Escribí tu correo de trabajo.'],
+      ['vacío', '   ', 'Escriba su correo de trabajo.'],
       [
         'sin dominio con punto',
         'dra.salas@clinica',
-        'Revisá el correo: le falta algo, como la @ o el dominio.',
+        'Revise el correo: le falta algo, como la @ o el dominio.',
       ],
-      ['sin @', 'dra.salas.clinica.bo', 'Revisá el correo: le falta algo, como la @ o el dominio.'],
+      ['sin @', 'dra.salas.clinica.bo', 'Revise el correo: le falta algo, como la @ o el dominio.'],
     ])('%s no viaja: se marca y lleva a «Contacto»', (_caso, valor, mensaje) => {
       montarYCargar(CON_CORREO);
       señal<number>('pestana').set(0);
@@ -3079,7 +3079,7 @@ describe('PractitionerProfileEdit', () => {
     it('unas violaciones con la forma equivocada tampoco rompen nada', () => {
       rechazar({
         code: 'VALIDATION_ERROR',
-        message: 'Revisá los datos',
+        message: 'Revise los datos',
         timestamp: '2026-09-21T00:00:00.000Z',
         path: '/profiles/practitioners/me',
         details: { violations: { taxId: 'no es una lista' } },

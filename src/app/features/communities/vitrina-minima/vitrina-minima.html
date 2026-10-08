@@ -3,19 +3,19 @@
      lo demás —titular, biografía, portada, reseñas— se sacó el 2026-09-10 a
      pedido del propietario y no vuelve por acá. -->
 <section class="vitrina" aria-labelledby="vitrina-titulo">
-  <h3 class="vitrina__titulo" id="vitrina-titulo">Creá tu vitrina pública</h3>
+  <h3 class="vitrina__titulo" id="vitrina-titulo">Cree su vitrina pública</h3>
   <p class="vitrina__ayuda">
     @if (motivo() === 'grupos') {
       Un grupo público lo puede encontrar cualquiera, así que tiene que saber quién lo abrió.
     } @else {
-      Los artículos se publican con tu firma, así que hace falta saber quién los firma.
+      Los artículos se publican con su firma, así que hace falta saber quién los firma.
     }
   </p>
 
   @if (sinOrganizacion()) {
-    <app-alert tone="warning" title="Elegí una organización primero">
-      Tu vitrina cuelga de la organización con la que estés trabajando. Elegí una desde el
-      encabezado y volvé acá.
+    <app-alert tone="warning" title="Elija una organización primero">
+      Su vitrina cuelga de la organización con la que esté trabajando. Elija una desde el
+      encabezado y vuelva acá.
     </app-alert>
   } @else {
     @if (error(); as mensaje) {
@@ -23,7 +23,7 @@
     }
 
     <form class="vitrina__form" (submit)="$event.preventDefault()">
-      <app-form-field label="Nombre visible" hint="Con el que firmás. Podés cambiarlo después.">
+      <app-form-field label="Nombre visible" hint="Con el que firma. Puede cambiarlo después.">
         <app-input
           [value]="displayName()"
           (valueChange)="alEscribirNombre($any($event) ?? '')"
@@ -37,7 +37,7 @@
            inventar una URL, y quien la quiere distinta no tiene por qué
            aguantarse la propuesta. -->
       <app-form-field
-        label="Tu enlace"
+        label="Su enlace"
         hint="Minúsculas, números y guiones."
         [errorMessage]="slugValido() ? '' : 'Sólo minúsculas, números y guiones.'"
       >
@@ -53,11 +53,11 @@
            la trajo hasta acá. -->
       <app-form-field
         class="vitrina__ancho"
-        [label]="fotoObligatoria() ? 'Tu foto' : 'Tu foto (opcional)'"
+        [label]="fotoObligatoria() ? 'Su foto' : 'Su foto (opcional)'"
         [hint]="
           fotoObligatoria()
             ? 'JPG, PNG o WEBP. Hasta 5 MB. Un grupo público la exige: es la cara de quien lo abrió.'
-            : 'JPG, PNG o WEBP. Hasta 5 MB. Es la que aparece junto a tu firma.'
+            : 'JPG, PNG o WEBP. Hasta 5 MB. Es la que aparece junto a su firma.'
         "
       >
         <app-file-input
@@ -67,7 +67,7 @@
           [accept]="formatosDeFoto"
           [maxSizeBytes]="maxBytesDeFoto"
           [maxFiles]="1"
-          accessibleLabel="Tu foto de vitrina"
+          accessibleLabel="Su foto de vitrina"
         />
       </app-form-field>
 

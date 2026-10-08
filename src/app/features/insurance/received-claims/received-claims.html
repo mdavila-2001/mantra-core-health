@@ -1,6 +1,6 @@
 <app-page-header
   title="Solicitudes recibidas"
-  subtitle="Lo que cada prestador le pidió a tu aseguradora: quién se atendió, con qué médico, qué servicio y cuánto."
+  subtitle="Lo que cada prestador le pidió a su aseguradora: quién se atendió, con qué médico, qué servicio y cuánto."
 />
 
 <!-- ADR-0015: una tarjeta a lo ancho con barra arriba, tabla sin scroll lateral
@@ -16,7 +16,7 @@
     @if (state().status === 'ready') {
       @if (truncated()) {
         <app-alert tone="info" data-testid="received-claims-truncated">
-          Mostramos las solicitudes más recientes. Si buscás una más antigua, acotá por fecha.
+          Mostramos las solicitudes más recientes. Si busca una más antigua, acote por fecha.
         </app-alert>
       }
 
@@ -488,7 +488,7 @@
   >
     <form class="received__partial" (ngSubmit)="submitPartial(claim)">
       <app-form-field
-        label="Monto que aprobás"
+        label="Monto que aprueba"
         [hint]="'Menor que ' + claim.billedTotal.amount + '. La factura sale por este monto.'"
         [required]="true"
         [errorMessage]="partialTouched() ? partialAmountError(claim) : ''"

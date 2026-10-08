@@ -451,7 +451,7 @@ describe('PharmacyDetail', () => {
 
     expect(sucursalesVisibles()).toEqual(['Centro', 'Norte', 'Sur']);
     const texto = fixture.nativeElement.textContent as string;
-    expect(texto).toContain('Estás viendo ésta');
+    expect(texto).toContain('Está viendo ésta');
     expect(texto).toContain('Av. Banzer N.º 900 · Santa Cruz de la Sierra');
     // La que se está mirando no enlaza a sí misma; las otras sí.
     const enlaces = fixture.nativeElement.querySelectorAll(
@@ -505,7 +505,7 @@ describe('PharmacyDetail', () => {
     tocarBoton('Usar mi ubicación');
 
     expect(fixture.nativeElement.textContent as string).toContain(
-      'No pudimos leer tu ubicación',
+      'No pudimos leer su ubicación',
     );
     // Las sucursales siguen ahí, con su dirección.
     expect(sucursalesVisibles()).toEqual(['Centro', 'Norte', 'Sur']);
@@ -532,7 +532,7 @@ describe('PharmacyDetail', () => {
     // La recomendada es la que el servidor puso primera, no la más barata ni
     // la que se está mirando.
     expect(recomendada?.textContent).toContain('Norte');
-    expect(recomendada?.textContent).toContain('tiene todo lo de tu receta');
+    expect(recomendada?.textContent).toContain('tiene todo lo de su receta');
 
     const filas = fixture.nativeElement.querySelectorAll(
       '[data-testid="pharmacy-availability-row"]',

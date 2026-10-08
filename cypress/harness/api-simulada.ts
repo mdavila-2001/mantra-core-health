@@ -243,7 +243,7 @@ export function crearApiSimulada(): Router {
     await demorar(escenarioDe(req));
     // La API real responde lo mismo exista o no la cuenta: lo contrario
     // permitiría averiguar quién está registrado probando direcciones.
-    res.json({ message: 'Si la cuenta existe, te enviamos un enlace.' });
+    res.json({ message: 'Si la cuenta existe, le enviamos un enlace.' });
   });
 
   router.post('/iam/auth/reset-password', async (req, res) => {
@@ -296,11 +296,11 @@ export function crearApiSimulada(): Router {
     const espera = escenario.esperaReenvioSegundos;
     if (espera !== undefined) {
       res.set('Retry-After', String(espera));
-      error(res, 429, 'RATE_LIMITED', 'Probaste demasiadas veces seguidas.');
+      error(res, 429, 'RATE_LIMITED', 'Probó demasiadas veces seguidas.');
       return;
     }
     // Como en `forgot-password`, la respuesta no delata si la cuenta existe.
-    res.json({ message: 'Si la cuenta existe, te enviamos el enlace otra vez.' });
+    res.json({ message: 'Si la cuenta existe, le enviamos el enlace otra vez.' });
   });
 
   router.post('/iam/auth/verify-email', async (req, res) => {
