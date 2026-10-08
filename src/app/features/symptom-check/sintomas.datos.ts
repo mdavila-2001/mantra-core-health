@@ -2234,6 +2234,11 @@ export const SINTOMAS: readonly Sintoma[] = [
       'me arde la cuca',
       'me arde la chucha',
       'me pica la chucha',
+      // «Cocho» = vagina: reportado por el propietario (2026-10-08) como habla real en Bolivia; ninguna
+      // fuente consultada lo registra (en Perú es «viejito», en México «cerdo»). Siempre con la molestia.
+      'me pica el cocho',
+      'me arde el cocho',
+      'flujo en el cocho',
       'candidiasis',
       'mal olor vaginal',
       'ardor vaginal',
