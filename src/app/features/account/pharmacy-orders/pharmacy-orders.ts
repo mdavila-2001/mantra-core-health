@@ -98,7 +98,7 @@ export class PharmacyOrders {
               // La salida es la historia clínica: un pedido nace de una receta,
               // así que la puerta correcta es donde viven las recetas.
               { label: 'Ir a mi historia clínica', route: MI_HISTORIA_ROUTE },
-              'Todavía no enviaste ningún pedido. Desde una receta de tu historia clínica podés ver qué farmacias la tienen y mandarles tu pedido.',
+              'Todavía no envió ningún pedido. Desde una receta de su historia clínica puede ver qué farmacias la tienen y mandarles su pedido.',
             ),
           );
           return;

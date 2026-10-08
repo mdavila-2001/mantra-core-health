@@ -81,7 +81,7 @@ const NOMBRE_LLANO: Readonly<Record<string, string>> = {
  */
 const ACLARACION: Readonly<Record<string, string>> = {
   '5.5':
-    'No sale plata de tu cuenta: es lo que tus equipos perdieron de valor este mes por usarlos.',
+    'No sale plata de su cuenta: es lo que sus equipos perdieron de valor este mes por usarlos.',
   '5.6': 'Es sólo el interés del préstamo. La cuota que devuelve el capital no es un gasto.',
 };
 
@@ -507,7 +507,7 @@ export class Resumen {
           this.saldando.set(null);
           this.toasts.show({
             type: 'error',
-            message: 'No se pudo registrar. Probá de nuevo en un momento.',
+            message: 'No se pudo registrar. Pruebe de nuevo en un momento.',
           });
         },
       });

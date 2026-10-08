@@ -83,7 +83,7 @@ describe('MyInvoices', () => {
   it('el paciente ve el emisor de cada factura', () => {
     montar();
     responder(pagina('RECEIVED', [item(1, 'Consulta médica · 2026-09-10')]));
-    expect(texto()).toContain('Las facturas que te emitieron');
+    expect(texto()).toContain('Las facturas que le emitieron');
     expect(texto()).toContain('Emisor');
     expect(texto()).toContain('CONSULTORIO DEMO');
   });
@@ -91,7 +91,7 @@ describe('MyInvoices', () => {
   it('quien factura ve a qué paciente se la emitió', () => {
     montar();
     responder(pagina('ISSUED', [item(1, 'Consulta médica · 2026-09-10', 'Germán Vargas')]));
-    expect(texto()).toContain('Las facturas que emitiste');
+    expect(texto()).toContain('Las facturas que emitió');
     expect(texto()).toContain('Paciente');
     expect(texto()).toContain('Germán Vargas');
   });
@@ -99,7 +99,7 @@ describe('MyInvoices', () => {
   it('sin facturas, el vacío explica cuándo aparecen', () => {
     montar();
     responder(pagina('ISSUED', []));
-    expect(texto()).toContain('Todavía no emitiste facturas');
+    expect(texto()).toContain('Todavía no emitió facturas');
   });
 
   it('el buscador acota sin distinguir acentos', () => {

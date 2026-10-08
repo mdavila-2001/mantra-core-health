@@ -85,15 +85,15 @@ const PAGINAS_CON_ADORNOS: readonly PaginaDeFormulario[] = [
         control: 'text',
         required: true,
         icono: 'patients',
-        hint: 'Con este número vas a iniciar sesión.',
-        description: 'El número de tu cédula de identidad, sin puntos ni guiones.',
+        hint: 'Con este número va a iniciar sesión.',
+        description: 'El número de su cédula de identidad, sin puntos ni guiones.',
       },
       {
         key: 'genero',
         label: 'Género',
         control: 'select',
         icono: 'people',
-        description: 'Como figura en tu documento.',
+        description: 'Como figura en su documento.',
         options: [
           { value: 'f', label: 'Femenino' },
           { value: 'm', label: 'Masculino' },
@@ -486,7 +486,7 @@ describe('PaginatedForm', () => {
     it('un paso al que nunca se llegó no se abre, y lo dice', () => {
       const siguiente = pasos()[1];
       expect(siguiente.getAttribute('aria-disabled')).toBe('true');
-      expect(siguiente.getAttribute('aria-label')).toContain('Todavía no llegaste');
+      expect(siguiente.getAttribute('aria-label')).toContain('Todavía no llegó');
 
       siguiente.click();
       fixtureC.detectChanges();
@@ -702,7 +702,7 @@ describe('PaginatedForm', () => {
 
       // El hint sigue abajo del campo, visible y sin puntero de por medio.
       expect(hint).not.toBeNull();
-      expect(hint!.textContent).toContain('Con este número vas a iniciar sesión');
+      expect(hint!.textContent).toContain('Con este número va a iniciar sesión');
       expect(descripcion).not.toBeNull();
 
       // Y las dos describen al control: el hint no perdió su aria-describedby.
@@ -716,7 +716,7 @@ describe('PaginatedForm', () => {
         .nativeElement as HTMLInputElement;
 
       expect(input.placeholder).toBe(
-        'El número de tu cédula de identidad, sin puntos ni guiones.',
+        'El número de su cédula de identidad, sin puntos ni guiones.',
       );
     });
   });
@@ -858,7 +858,7 @@ const PAGINAS_DE_SI_NO: readonly PaginaDeFormulario[] = [
   {
     titulo: 'Antecedentes',
     campos: [
-      { key: 'fuma', label: '¿Fumás?', control: 'yes-no', required: true },
+      { key: 'fuma', label: '¿Fuma?', control: 'yes-no', required: true },
       {
         key: 'frecuencia',
         label: '¿Con qué frecuencia?',

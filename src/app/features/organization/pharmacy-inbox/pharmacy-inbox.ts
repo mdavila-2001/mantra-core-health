@@ -439,7 +439,7 @@ export class PharmacyInbox {
     this.posiblementeCortado.set(pedidos.length >= LIMITE_DE_PEDIDOS);
     // El S3 exige salida por contrato: la puerta natural es el panel org.
     const volverAlPanel = {
-      label: 'Ver tu organización',
+      label: 'Ver su organización',
       route: '/administration/my-organization',
     };
     this.detectarNuevos(pedidos);

@@ -88,7 +88,7 @@ export class PublicProfileReviews implements OnInit {
   protected readonly error = computed<string | null>(() => {
     const estado = this.estado();
     if (estado.status === 'offline') {
-      return 'No pudimos conectarnos. Revisá tu conexión y reintentá.';
+      return 'No pudimos conectarnos. Revise su conexión y reintente.';
     }
     if (estado.status === 'error') {
       return 'No pudimos traer las opiniones.';

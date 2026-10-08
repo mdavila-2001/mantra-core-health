@@ -28,7 +28,7 @@ describe('Centro de tutoriales', () => {
 
   it('lista los tutoriales con su avance', () => {
     cy.contains('h1', 'Centro de tutoriales').should('be.visible');
-    cy.contains('Tu avance').should('be.visible');
+    cy.contains('Su avance').should('be.visible');
     cy.contains('Primeros pasos en AloVida').should('be.visible');
   });
 

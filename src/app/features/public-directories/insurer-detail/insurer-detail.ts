@@ -428,7 +428,7 @@ export class InsurerDetail extends PublicCatalogDetail<PlanDelMercado> {
     const total = plan.plan.clausulas.length;
     return plan.clausulas.length === total
       ? null
-      : `Se ven ${plan.clausulas.length} de ${total} coberturas: las que coinciden con tu búsqueda.`;
+      : `Se ven ${plan.clausulas.length} de ${total} coberturas: las que coinciden con su búsqueda.`;
   }
 
   /**

@@ -287,7 +287,7 @@ export class Composer {
       return;
     }
     if (!TIPOS_ACEPTADOS.some((tipo) => archivo.type.startsWith(tipo))) {
-      this.error.set('Podés mandar imágenes, videos, audios y PDF.');
+      this.error.set('Puede mandar imágenes, videos, audios y PDF.');
       return;
     }
     this.error.set('');

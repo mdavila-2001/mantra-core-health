@@ -522,7 +522,7 @@ const ETIQUETA: Record<EstadoPedido, string> = {
   ENVIADO: 'Enviado',
   EN_REVISION: 'En revisión',
   CONFIRMADO: 'Confirmado',
-  ACEPTACION_PENDIENTE: 'Esperando tu aceptación',
+  ACEPTACION_PENDIENTE: 'Esperando su aceptación',
   ACEPTADO: 'Aceptado',
   LISTO_PARA_RETIRO: 'Listo para retirar',
   RETIRADO: 'Retirado',
@@ -642,7 +642,7 @@ function pedidoDelTablero(clave: string, estado: EstadoPedido, n: number, create
     patientProfileId: uuid(`pid-tablero-${clave}-${n}`),
     patientName: `${NOMBRES_DE_EJEMPLO[n % NOMBRES_DE_EJEMPLO.length]} ${APELLIDOS_DE_EJEMPLO[(n * 3) % APELLIDOS_DE_EJEMPLO.length]}`,
     pickupCode: `AV-${7000 + n}`,
-    rejectionReasonText: estado === 'RECHAZADO' ? 'La receta adjunta está vencida. Pedí una nueva a tu médico.' : null,
+    rejectionReasonText: estado === 'RECHAZADO' ? 'La receta adjunta está vencida. Pida una nueva a su médico.' : null,
     lineas: [{ productId: productoDe(f0.id, med).id, requestedQuantity: 1 + (n % 3), reservedQuantity: terminado ? 0 : 1, fulfilledQuantity: estado === 'RETIRADO' ? 1 : 0, status: estado === 'RETIRADO' ? ('FULFILLED' as const) : terminado ? ('RELEASED' as const) : ('RESERVED' as const) }],
     sustituciones: [],
   };
@@ -689,7 +689,7 @@ const pedidos = new Coleccion<PedidoSimulado>(
       { id: uuid('pharmacy-order-1'), estado: 'LISTO_PARA_RETIRO' as const, createdAt: iso(-4, 15), expiresAt: iso(1, 15), pharmacyId: f0.id, medicationRequestId: receta?.id ?? null, patientProfileId: PACIENTE.id, patientName: PACIENTE.displayName, pickupCode: 'AV-4821', rejectionReasonText: null, lineas: [{ productId: productoDe(f0.id, 'MED-ENALAPRIL').id, requestedQuantity: 1, reservedQuantity: 1, fulfilledQuantity: 0, status: 'RESERVED' as const }, { productId: productoDe(f0.id, 'MED-ATORVASTATINA').id, requestedQuantity: 1, reservedQuantity: 1, fulfilledQuantity: 0, status: 'RESERVED' as const }], sustituciones: [] },
       { id: uuid('pharmacy-order-2'), estado: 'ACEPTACION_PENDIENTE' as const, createdAt: iso(-1, 10), expiresAt: iso(2, 10), pharmacyId: f1.id, medicationRequestId: null, patientProfileId: PACIENTE.id, patientName: PACIENTE.displayName, pickupCode: 'AV-5107', rejectionReasonText: null, lineas: [{ productId: productoDe(f1.id, 'MED-PARACETAMOL').id, requestedQuantity: 2, reservedQuantity: 2, fulfilledQuantity: 0, status: 'RESERVED' as const }, { productId: productoDe(f1.id, 'MED-LORATADINA').id, requestedQuantity: 1, reservedQuantity: 0, fulfilledQuantity: 0, status: 'OUT_OF_STOCK' as const }], sustituciones: [{ id: uuid('subst-1'), originalProductId: productoDe(f1.id, 'MED-LORATADINA').id, proposedProductId: productoDe(f1.id, 'MED-IBUPROFENO').id, status: 'PROPOSED' as const, decidedAt: null }] },
       { id: uuid('pharmacy-order-3'), estado: 'RETIRADO' as const, createdAt: iso(-20, 9), expiresAt: iso(-15, 9), pharmacyId: f0.id, medicationRequestId: null, patientProfileId: PACIENTE.id, patientName: PACIENTE.displayName, pickupCode: 'AV-3390', rejectionReasonText: null, lineas: [{ productId: productoDe(f0.id, 'MED-OMEPRAZOL').id, requestedQuantity: 1, reservedQuantity: 0, fulfilledQuantity: 1, status: 'FULFILLED' as const }], sustituciones: [] },
-      { id: uuid('pharmacy-order-4'), estado: 'RECHAZADO' as const, createdAt: iso(-30, 11), expiresAt: iso(-25, 11), pharmacyId: f0.id, medicationRequestId: null, patientProfileId: PACIENTE.id, patientName: PACIENTE.displayName, pickupCode: 'AV-2214', rejectionReasonText: 'La receta adjunta está vencida. Pedí una nueva a tu médico.', lineas: [{ productId: productoDe(f0.id, 'MED-SERTRALINA').id, requestedQuantity: 1, reservedQuantity: 0, fulfilledQuantity: 0, status: 'RELEASED' as const }], sustituciones: [] },
+      { id: uuid('pharmacy-order-4'), estado: 'RECHAZADO' as const, createdAt: iso(-30, 11), expiresAt: iso(-25, 11), pharmacyId: f0.id, medicationRequestId: null, patientProfileId: PACIENTE.id, patientName: PACIENTE.displayName, pickupCode: 'AV-2214', rejectionReasonText: 'La receta adjunta está vencida. Pida una nueva a su médico.', lineas: [{ productId: productoDe(f0.id, 'MED-SERTRALINA').id, requestedQuantity: 1, reservedQuantity: 0, fulfilledQuantity: 0, status: 'RELEASED' as const }], sustituciones: [] },
       { id: uuid('pharmacy-order-5'), estado: 'ENVIADO' as const, createdAt: iso(0, 8, 20), expiresAt: iso(3, 8), pharmacyId: f0.id, medicationRequestId: null, patientProfileId: uuid('pid-p-flores'), patientName: 'Daniela Flores Cuéllar', pickupCode: 'AV-6001', rejectionReasonText: null, lineas: [{ productId: productoDe(f0.id, 'MED-SALBUTAMOL').id, requestedQuantity: 1, reservedQuantity: 1, fulfilledQuantity: 0, status: 'RESERVED' as const }], sustituciones: [] },
       { id: uuid('pharmacy-order-6'), estado: 'EN_REVISION' as const, createdAt: iso(0, 9, 5), expiresAt: iso(3, 9), pharmacyId: f0.id, medicationRequestId: null, patientProfileId: uuid('pid-p-mamani'), patientName: 'Jorge Luis Mamani Choque', pickupCode: 'AV-6002', rejectionReasonText: null, lineas: [{ productId: productoDe(f0.id, 'MED-METFORMINA').id, requestedQuantity: 2, reservedQuantity: 2, fulfilledQuantity: 0, status: 'RESERVED' as const }, { productId: productoDe(f0.id, 'MED-LOSARTAN').id, requestedQuantity: 1, reservedQuantity: 1, fulfilledQuantity: 0, status: 'RESERVED' as const }], sustituciones: [] },
       // T-I3 · el pedido de una persona CON seguro: la bandeja del mostrador lo usa para mostrar
@@ -1021,7 +1021,7 @@ export function registrarFarmacia(router: MockRouter): void {
       ]);
     }
     const nueva = solicitudesDeAlta.agregar({ id: nuevoId('catalog-request'), pharmacyId, name: nombre, creadaEn: ahora() });
-    registrarActividad(pharmacyId, 'ALTA', `Pediste incorporar «${nombre}» al catálogo.`);
+    registrarActividad(pharmacyId, 'ALTA', `Pidió incorporar «${nombre}» al catálogo.`);
     return { status: 201, body: { id: nueva.id, status: 'PENDING', createdAt: nueva.creadaEn } };
   });
 
@@ -1088,7 +1088,7 @@ export function registrarFarmacia(router: MockRouter): void {
         (p) => p.pharmacyId === pharmacyId && p.catalogProductId === entrada.id && (p.catalogPresentationCode ?? null) === (datos.catalogPresentationCode ?? null),
       );
       if (repetido.length > 0) {
-        return conflict('Ya cargaste ese producto y presentación', { catalogProductId: entrada.id });
+        return conflict('Ya cargó ese producto y presentación', { catalogProductId: entrada.id });
       }
     }
     // Los topes del DTO (`MaxLength`): el simulador no deja pasar lo que la
@@ -1137,7 +1137,7 @@ export function registrarFarmacia(router: MockRouter): void {
       ...(datos.minStock === undefined ? {} : { minStock: datos.minStock }),
       ...(datos.imageFileIds === undefined ? {} : { imageFileIds: datos.imageFileIds }),
     });
-    registrarActividad(pharmacyId, 'ALTA', `${datos.status === 'DRAFT' ? 'Guardaste como borrador' : 'Publicaste'} «${nombreDelProducto(nuevo)}».`);
+    registrarActividad(pharmacyId, 'ALTA', `${datos.status === 'DRAFT' ? 'Guardó como borrador' : 'Publicó'} «${nombreDelProducto(nuevo)}».`);
     return {
       status: 201,
       body: {
@@ -1226,8 +1226,8 @@ export function registrarFarmacia(router: MockRouter): void {
       actualizado.pharmacyId,
       datos.status === 'WITHDRAWN' ? 'RETIRO' : 'EDICION',
       datos.status === 'PUBLISHED' && producto.retirado === true
-        ? `Volviste a publicar «${nombreDelProducto(actualizado)}».`
-        : `Editaste «${nombreDelProducto(actualizado)}».`,
+        ? `Volvió a publicar «${nombreDelProducto(actualizado)}».`
+        : `Editó «${nombreDelProducto(actualizado)}».`,
     );
     return productoDeGestion(actualizado);
   });
@@ -1243,7 +1243,7 @@ export function registrarFarmacia(router: MockRouter): void {
       return preconditionFailed('El producto no está activo', { productId: producto.id });
     }
     productos.actualizar(producto.id, { retirado: true });
-    registrarActividad(producto.pharmacyId, 'RETIRO', `Retiraste «${nombreDelProducto(producto)}».`);
+    registrarActividad(producto.pharmacyId, 'RETIRO', `Retiró «${nombreDelProducto(producto)}».`);
     return { ok: true };
   });
 
@@ -1262,17 +1262,17 @@ export function registrarFarmacia(router: MockRouter): void {
     lines.forEach((linea, i) => {
       const producto = productos.get(linea.productId);
       if (producto === undefined || producto.pharmacyId !== pharmacyId || producto.retirado === true) {
-        errores.push({ field: `lines.${i}.productId`, message: 'El producto no está en tu catálogo.' });
+        errores.push({ field: `lines.${i}.productId`, message: 'El producto no está en su catálogo.' });
       }
       const traeCantidades = linea.stock !== undefined || linea.minStock !== undefined;
       if (linea.inStock === undefined && !traeCantidades) {
-        errores.push({ field: `lines.${i}`, message: 'La línea no dice qué cambiar: mandá existencias, umbral o si hay.' });
+        errores.push({ field: `lines.${i}`, message: 'La línea no dice qué cambiar: mande existencias, umbral o si hay.' });
       }
       if (linea.inStock !== undefined && typeof linea.inStock !== 'boolean') {
         errores.push({ field: `lines.${i}.inStock`, message: 'Hay o no hay: un sí o un no.' });
       }
       if (linea.inStock !== undefined && linea.stock !== undefined) {
-        errores.push({ field: `lines.${i}.inStock`, message: 'Mandá las existencias o si hay, no las dos: dirían dos cosas a la vez.' });
+        errores.push({ field: `lines.${i}.inStock`, message: 'Mande las existencias o si hay, no las dos: dirían dos cosas a la vez.' });
       }
       if (linea.stock !== undefined && !esEnteroEntre(linea.stock, 0, STOCK_MAXIMO)) {
         errores.push({ field: `lines.${i}.stock`, message: `Las existencias son un número entero de 0 a ${STOCK_MAXIMO}.` });
@@ -1298,7 +1298,7 @@ export function registrarFarmacia(router: MockRouter): void {
       }
       productos.actualizar(producto.id, cambios);
     }
-    registrarActividad(pharmacyId, 'INVENTARIO', `Actualizaste el inventario de ${lines.length} ${lines.length === 1 ? 'producto' : 'productos'}.`);
+    registrarActividad(pharmacyId, 'INVENTARIO', `Actualizó el inventario de ${lines.length} ${lines.length === 1 ? 'producto' : 'productos'}.`);
     return { updated: lines.length };
   });
 
@@ -1322,7 +1322,7 @@ export function registrarFarmacia(router: MockRouter): void {
       return conflict('Ya existe una categoría con ese nombre', { name: nombre });
     }
     const nueva = categorias.agregar({ id: nuevoId('pharmacy-category'), pharmacyId, name: nombre });
-    registrarActividad(pharmacyId, 'CATEGORIA', `Creaste la categoría «${nombre}».`);
+    registrarActividad(pharmacyId, 'CATEGORIA', `Creó la categoría «${nombre}».`);
     return { status: 201, body: { id: nueva.id, name: nueva.name, productCount: 0 } };
   });
 
@@ -1342,7 +1342,7 @@ export function registrarFarmacia(router: MockRouter): void {
     const propios = productosDeLaCategoria(categoria.pharmacyId, categoria.name);
     for (const producto of propios) productos.actualizar(producto.id, { category: nombre });
     categorias.actualizar(categoria.id, { name: nombre });
-    registrarActividad(categoria.pharmacyId, 'CATEGORIA', `Renombraste «${categoria.name}» a «${nombre}».`);
+    registrarActividad(categoria.pharmacyId, 'CATEGORIA', `Renombró «${categoria.name}» a «${nombre}».`);
     return { id: categoria.id, name: nombre, productCount: propios.length };
   });
 
@@ -1353,10 +1353,10 @@ export function registrarFarmacia(router: MockRouter): void {
     }
     const usados = productosDeLaCategoria(categoria.pharmacyId, categoria.name).length;
     if (usados > 0) {
-      return conflict('La categoría tiene productos: pasalos a otra antes de eliminarla', { productCount: usados });
+      return conflict('La categoría tiene productos: páselos a otra antes de eliminarla', { productCount: usados });
     }
     categorias.borrar(categoria.id);
-    registrarActividad(categoria.pharmacyId, 'CATEGORIA', `Eliminaste la categoría «${categoria.name}».`);
+    registrarActividad(categoria.pharmacyId, 'CATEGORIA', `Eliminó la categoría «${categoria.name}».`);
     return { ok: true };
   });
 

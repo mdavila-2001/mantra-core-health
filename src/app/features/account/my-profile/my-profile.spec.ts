@@ -346,7 +346,7 @@ describe('MyProfile', () => {
     it('pero una sección entera sin contenido no aparece', () => {
       const texto = conPerfil({});
 
-      expect(texto).not.toContain('Tus seguros');
+      expect(texto).not.toContain('Sus seguros');
       expect(texto).not.toContain('Contactos y tutores');
     });
 
@@ -453,7 +453,7 @@ describe('MyProfile', () => {
     http.expectOne('/profiles/patients/me/summary').flush(
       {
         code: 'IDENTITY_VERIFICATION_REQUIRED',
-        message: 'Necesitás verificar tu identidad para continuar.',
+        message: 'Necesita verificar su identidad para continuar.',
       },
       { status: 403, statusText: 'Forbidden' },
     );
@@ -468,7 +468,7 @@ describe('MyProfile', () => {
     http
       .expectOne('/profiles/patients/me/summary')
       .flush(
-        { code: 'FORBIDDEN', message: 'No tenés acceso a este recurso.' },
+        { code: 'FORBIDDEN', message: 'No tiene acceso a este recurso.' },
         { status: 403, statusText: 'Forbidden' },
       );
     fixture.detectChanges();
@@ -517,7 +517,7 @@ describe('MyProfile', () => {
     http
       .expectOne('/profiles/patients/me/summary')
       .flush(
-        { code: 'IDENTITY_VERIFICATION_REQUIRED', message: 'Verificá tu identidad.' },
+        { code: 'IDENTITY_VERIFICATION_REQUIRED', message: 'Verifique su identidad.' },
         { status: 403, statusText: 'Forbidden' },
       );
     fixture.detectChanges();
@@ -550,7 +550,7 @@ describe('MyProfile', () => {
    * Se prueba con un rol de trabajo a propósito: era el único caso en que la
    * tarjeta se dibujaba, así que es el que demuestra que ya no queda ninguno.
    */
-  it('«Tu acceso» ya no se muestra, tampoco a quien viene a trabajar', () => {
+  it('«Su acceso» ya no se muestra, tampoco a quien viene a trabajar', () => {
     TestBed.inject(SessionStore).start({
       accessToken: jwt({
         sub: 'u-1',
@@ -564,7 +564,7 @@ describe('MyProfile', () => {
 
     const raiz = fixture.nativeElement as HTMLElement;
     expect(raiz.querySelector('[data-testid="mi-perfil-acceso"]')).toBeNull();
-    expect(raiz.textContent).not.toContain('Tu acceso');
+    expect(raiz.textContent).not.toContain('Su acceso');
     expect(raiz.textContent).not.toContain('Care Default Tenant');
     expect(raiz.textContent).not.toContain('Organización');
     // Sin lateral que dibujar, la ficha ocupa el ancho entero (REGLA DE LA CASA).
@@ -590,7 +590,7 @@ describe('MyProfile', () => {
     );
   }
 
-  it('sin identidad verificada, «Tus datos» lo dice en neutro y con la salida a mano', () => {
+  it('sin identidad verificada, «Sus datos» lo dice en neutro y con la salida a mano', () => {
     // Todo paciente recién registrado pasa por acá: pintarlo como «No tenés
     // acceso» en rojo lee como que algo se rompió, y el mensaje crudo del
     // backend habla de usted (feedback de la analista, barrido del 18/08/2026).
@@ -604,8 +604,8 @@ describe('MyProfile', () => {
 
     const alerta = alertaDeDatos();
     expect(alerta?.classList.contains('alert--info')).toBe(true);
-    expect(alerta?.textContent).toContain('cuando tu identidad esté verificada');
-    expect(alerta?.textContent).not.toContain('No tenés acceso');
+    expect(alerta?.textContent).toContain('cuando su identidad esté verificada');
+    expect(alerta?.textContent).not.toContain('No tiene acceso');
     expect(alerta?.textContent).not.toContain('Verifique su identidad');
     expect(alerta?.querySelector('a[href="/my-account/identity"]')).not.toBeNull();
   });
@@ -614,16 +614,16 @@ describe('MyProfile', () => {
     http
       .expectOne('/profiles/patients/me/summary')
       .flush(
-        { code: 'FORBIDDEN', message: 'No tenés acceso a este recurso.' },
+        { code: 'FORBIDDEN', message: 'No tiene acceso a este recurso.' },
         { status: 403, statusText: 'Forbidden' },
       );
     fixture.detectChanges();
 
     const alerta = alertaDeDatos();
     expect(alerta?.classList.contains('alert--error')).toBe(true);
-    expect(alerta?.textContent).toContain('No tenés acceso a esta sección');
+    expect(alerta?.textContent).toContain('No tiene acceso a esta sección');
     // El motivo que dio el backend se conserva, como lo haría el host de estados.
-    expect(alerta?.textContent).toContain('No tenés acceso a este recurso.');
+    expect(alerta?.textContent).toContain('No tiene acceso a este recurso.');
     expect(alerta?.querySelector('a')).toBeNull();
   });
 
@@ -681,7 +681,7 @@ describe('MyProfile', () => {
     expect(texto).not.toContain('Código de paciente');
     expect(texto).not.toContain('Pendiente de verificación');
     expect(texto).not.toContain('PAC-');
-    expect(texto).not.toContain('cuando tu identidad esté verificada');
+    expect(texto).not.toContain('cuando su identidad esté verificada');
     expect(invitacionAVerificar()).toBeNull();
   });
 
@@ -703,12 +703,12 @@ describe('MyProfile', () => {
     http
       .expectOne('/profiles/patients/me/summary')
       .flush(
-        { code: 'IDENTITY_VERIFICATION_REQUIRED', message: 'Verificá tu identidad.' },
+        { code: 'IDENTITY_VERIFICATION_REQUIRED', message: 'Verifique su identidad.' },
         { status: 403, statusText: 'Forbidden' },
       );
     fixture.detectChanges();
 
-    expect(alertaDeDatos()?.textContent).toContain('cuando tu identidad esté verificada');
+    expect(alertaDeDatos()?.textContent).toContain('cuando su identidad esté verificada');
     expect(listaDeDatos()).toBeNull();
     expect(invitacionAVerificar()).toBeNull();
   });
@@ -1338,7 +1338,7 @@ describe('MyProfile · los accesos de quien atiende', () => {
     const raiz = fixture.nativeElement as HTMLElement;
 
     // La barra entera se fue: no queda un `nav` vacío ocupando el margen.
-    expect(raiz.querySelector('nav[aria-label="Dónde ejercés"]')).toBeNull();
+    expect(raiz.querySelector('nav[aria-label="Dónde ejerce"]')).toBeNull();
 
     // Y ningún enlace de la pantalla —esté donde esté— salta a las dos
     // pantallas que C-02 nombra. Se mira por destino y no por `data-testid`,

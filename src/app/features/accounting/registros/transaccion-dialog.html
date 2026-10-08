@@ -15,7 +15,7 @@
       [required]="true"
       [errorMessage]="
         form.controls.description.touched && form.controls.description.invalid
-          ? 'Escribí una descripción de hasta 160 caracteres.'
+          ? 'Escriba una descripción de hasta 160 caracteres.'
           : ''
       "
     >
@@ -34,14 +34,14 @@
         [required]="true"
         [errorMessage]="
           form.controls.debitAccountId.touched && form.controls.debitAccountId.invalid
-            ? 'Elegí la cuenta del debe.'
+            ? 'Elija la cuenta del debe.'
             : ''
         "
       >
         <app-select
           formControlName="debitAccountId"
           [options]="opciones()"
-          placeholder="Elegí la cuenta"
+          placeholder="Elija la cuenta"
           ariaLabel="Cuenta del debe"
           data-testid="transaccion-debe"
         />
@@ -52,7 +52,7 @@
         [required]="true"
         [errorMessage]="
           form.controls.creditAccountId.touched && form.controls.creditAccountId.invalid
-            ? 'Elegí la cuenta del haber.'
+            ? 'Elija la cuenta del haber.'
             : mismaCuenta()
               ? 'El debe y el haber tienen que ser cuentas distintas.'
               : ''
@@ -61,7 +61,7 @@
         <app-select
           formControlName="creditAccountId"
           [options]="opciones()"
-          placeholder="Elegí la cuenta"
+          placeholder="Elija la cuenta"
           ariaLabel="Cuenta del haber"
           data-testid="transaccion-haber"
         />
@@ -72,7 +72,7 @@
       <app-form-field
         label="Fecha"
         [required]="true"
-        [errorMessage]="fechaTocada() && fecha() === null ? 'Elegí la fecha.' : ''"
+        [errorMessage]="fechaTocada() && fecha() === null ? 'Elija la fecha.' : ''"
       >
         <app-date-picker
           [value]="fecha()"
@@ -85,7 +85,7 @@
         [required]="true"
         hint="En bolivianos."
         [errorMessage]="
-          montoInvalido() ? 'Escribí un monto mayor a cero, con hasta dos decimales.' : ''
+          montoInvalido() ? 'Escriba un monto mayor a cero, con hasta dos decimales.' : ''
         "
       >
         <app-input

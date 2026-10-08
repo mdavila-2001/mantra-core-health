@@ -138,7 +138,7 @@ export function tokenDe(identificador: string, clave: string): Cypress.Chainable
           `La API rechazó las credenciales de «${identificador}».\n` +
             'Esta suite necesita una cuenta con permisos de administración, y la que trae por ' +
             'defecto no existe en esta base. Exportá E2E_ADMIN_EMAIL y E2E_ADMIN_PASSWORD con ' +
-            'las de tu entorno (o declaralas en `.env.e2e`) antes de correrla.',
+            'las de su entorno (o declaralas en `.env.e2e`) antes de correrla.',
         );
       }
       if (respuesta.status >= 400) {

@@ -103,7 +103,7 @@ export class OrgAssignmentUpdate {
   protected readonly updated = signal<string | null>(null);
 
   protected readonly errorMessage = computed(() =>
-    errorMessageOf(this.state(), 'No tenés permiso para editar asignaciones de organización.'),
+    errorMessageOf(this.state(), 'No tiene permiso para editar asignaciones de organización.'),
   );
 
   /** La regla del backend: al menos un cambio entre supervisor, alcance y suspensión. */

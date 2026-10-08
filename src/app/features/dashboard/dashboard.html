@@ -31,8 +31,8 @@
   }
 
   @if (altaPendiente(); as alta) {
-    <app-alert tone="warning" title="Completá tu perfil para recibir pacientes">
-      Llevás {{ alta.cumplidas }} de {{ alta.total }} pasos. Hasta terminarlos no aparecés cuando
+    <app-alert tone="warning" title="Complete su perfil para recibir pacientes">
+      Lleva {{ alta.cumplidas }} de {{ alta.total }} pasos. Hasta terminarlos no aparece cuando
       alguien busca un profesional.
       <a app-button variant="primary" size="sm" [routerLink]="['/onboarding']">
         Ver qué me falta
@@ -80,10 +80,10 @@
       class="panel__bloque--ancho"
       data-testid="panel-accesos"
     >
-      <h2 class="panel__card-title">Tus accesos</h2>
+      <h2 class="panel__card-title">Sus accesos</h2>
       <p class="panel__nota">
-        Lo que tu cuenta habilita en esta organización, repartido por lo que vas a hacer con ello.
-        Abrí una zona para ver sus secciones.
+        Lo que su cuenta habilita en esta organización, repartido por lo que va a hacer con ello.
+        Abra una zona para ver sus secciones.
       </p>
 
       <!-- ALV-018 ponía acá un atajo «Ver mi agenda de hoy». Se retira con el

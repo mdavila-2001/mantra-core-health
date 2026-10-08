@@ -146,7 +146,7 @@ describe('DiagnosticResults', () => {
 
     const aviso = fixture.nativeElement.querySelector('[data-testid="resultado-sin-archivos"]');
     expect(aviso?.textContent).toContain('no tiene archivos para descargar');
-    expect(aviso?.textContent).toContain('consultá con el centro que lo emitió');
+    expect(aviso?.textContent).toContain('consulte con el centro que lo emitió');
   });
 
   it('refactor UX: descargar y compartir nombran el estudio para el lector de pantalla', () => {

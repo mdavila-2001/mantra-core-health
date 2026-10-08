@@ -1,6 +1,6 @@
 <app-page-header
   title="Campañas preventivas"
-  subtitle="Prevención junto a laboratorios e importadoras: tus afiliados se cuidan a tiempo y el seguro no eroga por lo evitable."
+  subtitle="Prevención junto a laboratorios e importadoras: sus afiliados se cuidan a tiempo y el seguro no eroga por lo evitable."
   [breadcrumbs]="breadcrumbs()"
 >
   <button
@@ -32,17 +32,17 @@
 
       <app-form-section
         legend="Nueva campaña preventiva"
-        description="Aparece en el panel de todos tus afiliados con cobertura vigente. La patología que elijas describe la campaña: no filtra afiliados por su historia clínica."
+        description="Aparece en el panel de todos sus afiliados con cobertura vigente. La patología que elija describe la campaña: no filtra afiliados por su historia clínica."
       >
         <app-form-field
           label="Código"
-          hint="Único en tu aseguradora. Mayúsculas, números y guiones, por ejemplo CMP-CARDIO-2026."
+          hint="Único en su aseguradora. Mayúsculas, números y guiones, por ejemplo CMP-CARDIO-2026."
           [required]="true"
           [errorMessage]="
             codeConflict()
-              ? 'Ya tenés una campaña con este código. Probá con otro.'
+              ? 'Ya tiene una campaña con este código. Pruebe con otro.'
               : showError(form.controls.code)
-                ? 'Usá de 3 a 40 caracteres: mayúsculas, números y guiones (por ejemplo CMP-CARDIO-2026).'
+                ? 'Use de 3 a 40 caracteres: mayúsculas, números y guiones (por ejemplo CMP-CARDIO-2026).'
                 : ''
           "
         >
@@ -53,7 +53,7 @@
           label="Título"
           [required]="true"
           [errorMessage]="
-            showError(form.controls.title) ? 'Escribí el título, de 3 a 200 caracteres.' : ''
+            showError(form.controls.title) ? 'Escriba el título, de 3 a 200 caracteres.' : ''
           "
         >
           <app-input formControlName="title" type="text" testId="campaign-form-title" />
@@ -98,7 +98,7 @@
           [required]="true"
           [errorMessage]="
             showError(form.controls.copayBonusPercentage)
-              ? 'Escribí un porcentaje entre 0 y 100, con hasta dos decimales.'
+              ? 'Escriba un porcentaje entre 0 y 100, con hasta dos decimales.'
               : ''
           "
         >
@@ -157,7 +157,7 @@
                 label="Nombre"
                 [required]="true"
                 [errorMessage]="
-                  showError(group.controls.name) ? 'Escribí el nombre del aliado.' : ''
+                  showError(group.controls.name) ? 'Escriba el nombre del aliado.' : ''
                 "
               >
                 <app-input
@@ -195,7 +195,7 @@
 
       <app-checkbox
         formControlName="activate"
-        label="Activar al crear: tus afiliados la ven desde ya"
+        label="Activar al crear: sus afiliados la ven desde ya"
         data-testid="campaign-form-activate"
       />
 
@@ -239,7 +239,7 @@
     [columns]="columns()"
     [trackBy]="trackById"
     [rowLabel]="rowName"
-    caption="Campañas preventivas de tu aseguradora"
+    caption="Campañas preventivas de su aseguradora"
     [cursor]="cursor()"
     (cursorChanged)="move($event)"
     (retry)="reload()"

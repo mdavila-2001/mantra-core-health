@@ -532,7 +532,7 @@ describe('BookingNew', () => {
       http.expectOne(`/scheduling/service-offerings/${OFERTA}/holds`).flush(
         {
           code: 'CONFLICT',
-          message: 'Ese horario ya no está disponible para este servicio. Elegí otro.',
+          message: 'Ese horario ya no está disponible para este servicio. Elija otro.',
           timestamp: '2026-08-12T12:00:00.000Z',
           path: `/scheduling/service-offerings/${OFERTA}/holds`,
         },

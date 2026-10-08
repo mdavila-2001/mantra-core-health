@@ -38,13 +38,13 @@ export const CONTADORES_DE_ACTIVIDAD: readonly ContadorDeActividad[] = [
   {
     clave: 'encuentros',
     rotulo: 'Encuentros atendidos',
-    pie: 'Consultas que cerraste con una persona atendida.',
+    pie: 'Consultas que cerró con una persona atendida.',
     campo: 'encounters',
   },
   {
     clave: 'recetas',
     rotulo: 'Recetas emitidas',
-    pie: 'Prescripciones firmadas desde tu cuenta.',
+    pie: 'Prescripciones firmadas desde su cuenta.',
     campo: 'medicationRequests',
   },
   {
@@ -56,7 +56,7 @@ export const CONTADORES_DE_ACTIVIDAD: readonly ContadorDeActividad[] = [
   {
     clave: 'documentos',
     rotulo: 'Documentos publicados',
-    pie: 'Informes, certificados y adjuntos que emitiste.',
+    pie: 'Informes, certificados y adjuntos que emitió.',
     campo: 'documents',
   },
 ];

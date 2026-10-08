@@ -87,13 +87,13 @@ const SIN_SERVICIOS: ViewStateNextAction = {
 
 /** Qué se ofrece cuando no hay ninguna práctica de la que colgar el catálogo. */
 const SIN_PRACTICAS: ViewStateNextAction = {
-  label: 'Pedile a tu organización que te asocie a una práctica.',
+  label: 'Pedile a su organización que le asocie a una práctica.',
 };
 
 /** Hay prácticas, pero ninguna elegida: sin `practiceId` no hay qué pedir. */
 const SIN_PRACTICA_ELEGIDA = empty(
   { label: 'Elegir una práctica' },
-  'Elegí una práctica para ver su catálogo de servicios.',
+  'Elija una práctica para ver su catálogo de servicios.',
 );
 
 /**
@@ -266,7 +266,7 @@ export class MyServices {
     const min = entero(this.minimo());
     const max = entero(this.maximo());
     if (min === null || max === null || min < 1 || max < 1) {
-      this.errorDeLaOferta.set('Escribí cuántos minutos dura como mínimo y como máximo.');
+      this.errorDeLaOferta.set('Escriba cuántos minutos dura como mínimo y como máximo.');
       return;
     }
     if (min > max) {
@@ -327,7 +327,7 @@ export class MyServices {
         this.guardandoOferta.set(false);
         this.errorDeLaOferta.set(
           (error instanceof HttpErrorResponse ? readApiError(error)?.message : null) ??
-            'No se pudo guardar. Probá de nuevo.',
+            'No se pudo guardar. Pruebe de nuevo.',
         );
       },
     });
@@ -467,7 +467,7 @@ export class MyServices {
     if (practicas.data.length === 0) {
       return empty(
         SIN_PRACTICAS,
-        'Tu organización todavía no tiene prácticas, así que no hay catálogo de servicios que mostrar.',
+        'Su organización todavía no tiene prácticas, así que no hay catálogo de servicios que mostrar.',
       );
     }
 
@@ -540,7 +540,7 @@ export class MyServices {
 
     const escrito = this.borrador().trim();
     if (!IMPORTE.test(escrito)) {
-      this.errorDelPrecio.set('Escribí un importe positivo con hasta dos decimales.');
+      this.errorDelPrecio.set('Escriba un importe positivo con hasta dos decimales.');
       return;
     }
 
@@ -701,8 +701,8 @@ export class MyServices {
   private vacio(): ViewState<readonly ServiceCatalogItem[]> {
     return this.hayCriterios()
       ? empty(
-          { label: 'Probá con otra palabra o quitá el filtro.' },
-          'Ningún servicio de esta práctica coincide con lo que buscaste.',
+          { label: 'Pruebe con otra palabra o quite el filtro.' },
+          'Ningún servicio de esta práctica coincide con lo que buscó.',
         )
       : empty(SIN_SERVICIOS, 'Esta práctica todavía no tiene servicios en su catálogo.');
   }
@@ -739,5 +739,5 @@ function mensajeDelServidor(error: unknown): string {
       return cuerpo.message;
     }
   }
-  return 'No pudimos guardar el precio. Probá de nuevo.';
+  return 'No pudimos guardar el precio. Pruebe de nuevo.';
 }

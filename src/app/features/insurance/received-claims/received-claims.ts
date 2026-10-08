@@ -246,7 +246,7 @@ export class ReceivedClaims {
             ? ready(list.items)
             : empty(
                 { label: 'Volver al panel', route: '/dashboard' },
-                'Todavía ningún prestador le presentó una solicitud a tu aseguradora.',
+                'Todavía ningún prestador le presentó una solicitud a su aseguradora.',
               ),
         );
       },
@@ -490,7 +490,7 @@ export class ReceivedClaims {
       title: `Aprobar la solicitud ${claim.claimIdentifier}`,
       message:
         `${IRREVERSIBLE} Aprobarla produce un evento de facturación: se emite la factura del ` +
-        `prestador a tu aseguradora por ${formatMoney(claim.billedTotal)}.`,
+        `prestador a su aseguradora por ${formatMoney(claim.billedTotal)}.`,
       details: this.summaryOf(claim),
       confirmLabel: 'Aprobar y facturar',
       cancelLabel: 'Volver',
@@ -503,7 +503,7 @@ export class ReceivedClaims {
     const reason = await this.dialogs.confirmWithReason(
       {
         title: `Rechazar la solicitud ${claim.claimIdentifier}`,
-        message: `${IRREVERSIBLE} El prestador recibe el rechazo con tu motivo y no se emite factura.`,
+        message: `${IRREVERSIBLE} El prestador recibe el rechazo con su motivo y no se emite factura.`,
         details: this.summaryOf(claim),
         confirmLabel: 'Rechazar',
         cancelLabel: 'Volver',
@@ -534,11 +534,11 @@ export class ReceivedClaims {
   /** El error del monto, o `''`. */
   protected partialAmountError(claim: ReceivedClaim): string {
     const value = this.partialAmount.value.trim().replace(',', '.');
-    if (!/^\d+(\.\d{1,2})?$/.test(value)) return 'Escribí un importe, con hasta dos decimales.';
+    if (!/^\d+(\.\d{1,2})?$/.test(value)) return 'Escriba un importe, con hasta dos decimales.';
     const amount = Number(value);
     if (amount <= 0) return 'Tiene que ser mayor que cero.';
     if (amount >= Number(claim.billedTotal.amount)) {
-      return `Tiene que ser menor que lo solicitado (${claim.billedTotal.amount}). Si es todo, usá «Aprobar».`;
+      return `Tiene que ser menor que lo solicitado (${claim.billedTotal.amount}). Si es todo, use «Aprobar».`;
     }
     return '';
   }
@@ -587,7 +587,7 @@ export class ReceivedClaims {
         title: `Anular la factura ${invoice.invoiceNumber}`,
         message:
           'La factura queda anulada y no se puede recuperar. El dictamen no cambia: ' +
-          'la solicitud sigue aprobada y después podés emitir la factura corregida.',
+          'la solicitud sigue aprobada y después puede emitir la factura corregida.',
         details: [
           { label: 'Solicitud', value: claim.claimIdentifier },
           { label: 'Paciente', value: claim.patient.displayName ?? 'Sin nombre registrado' },
@@ -635,7 +635,7 @@ export class ReceivedClaims {
       error: (error: unknown) => {
         this.busyId.set(null);
         const body = error instanceof HttpErrorResponse ? readApiError(error) : null;
-        this.toasts.error(body?.message ?? 'No se pudo completar. Probá de nuevo en un momento.');
+        this.toasts.error(body?.message ?? 'No se pudo completar. Pruebe de nuevo en un momento.');
         // Un 409 dice que alguien más ya la movió: se trae la lista de nuevo.
         if (error instanceof HttpErrorResponse && error.status === 409) this.load();
       },

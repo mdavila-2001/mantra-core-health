@@ -33,7 +33,7 @@ export function dependentLinkActionHandlers(): readonly NotificationActionHandle
       run: (destino) =>
         profiles.acceptDependentLinkRequest(destino.id).pipe(
           map(() => ({
-            message: 'Aceptaste la solicitud: ya puede actuar por vos.',
+            message: 'Aceptó la solicitud: ya puede actuar por usted.',
             tone: 'success' as const,
           })),
         ),
@@ -43,7 +43,7 @@ export function dependentLinkActionHandlers(): readonly NotificationActionHandle
       key: DEPENDENT_LINK_ACTION.reject,
       run: (destino) =>
         profiles.rejectDependentLinkRequest(destino.id).pipe(
-          map(() => ({ message: 'Rechazaste la solicitud.', tone: 'info' as const })),
+          map(() => ({ message: 'Rechazó la solicitud.', tone: 'info' as const })),
         ),
     },
   ];

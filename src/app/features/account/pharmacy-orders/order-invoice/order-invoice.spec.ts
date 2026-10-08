@@ -111,7 +111,7 @@ describe('OrderInvoice over the real pharmacy-orders contract', () => {
       { status: 404, statusText: 'Not Found' },
     );
     harness.detectChanges();
-    expect(text()).toContain('No encontramos lo que buscás');
+    expect(text()).toContain('No encontramos lo que busca');
     expect(documento()).toBeNull();
   });
 

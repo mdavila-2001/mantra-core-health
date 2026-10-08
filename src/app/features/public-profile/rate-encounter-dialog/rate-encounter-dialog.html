@@ -1,30 +1,30 @@
 <app-content-dialog
   heading="Calificar la atención"
-  [description]="'Tu opinión va a figurar en la ficha de ' + professionalName() + '.'"
+  [description]="'Su opinión va a figurar en la ficha de ' + professionalName() + '.'"
   size="md"
   (closed)="closed.emit()"
 >
   @if (cargandoAtenciones()) {
-    <p data-testid="calificar-cargando">Buscando tus atenciones…</p>
+    <p data-testid="calificar-cargando">Buscando sus atenciones…</p>
   } @else if (atenciones().length === 0) {
     <!-- Sin atenciones cerradas no hay formulario que mostrar: el servidor lo
          rechazaría, y ofrecerlo sería invitar a un error que sólo se descubre
          al enviar. -->
     <p data-testid="calificar-sin-atenciones">
-      Todavía no tenés ninguna atención cerrada. Se puede calificar recién cuando el
+      Todavía no tiene ninguna atención cerrada. Se puede calificar recién cuando el
       profesional cierra la consulta en el sistema.
     </p>
   } @else {
     <form class="calificar" (submit)="$event.preventDefault()">
       <app-form-field
-        label="Qué atención estás calificando"
-        hint="Sólo aparecen las tuyas que ya están cerradas."
+        label="Qué atención está calificando"
+        hint="Sólo aparecen las suyas que ya están cerradas."
         data-testid="calificar-atencion"
       >
         <app-select
           [options]="opciones()"
           [value]="encuentro()"
-          placeholder="Elegí la atención"
+          placeholder="Elija la atención"
           (valueChange)="encuentro.set($event)"
         />
       </app-form-field>
@@ -49,8 +49,8 @@
       </app-form-field>
 
       <app-form-field
-        label="Qué querés contar"
-        hint="Opcional. Contá cómo fue la atención."
+        label="Qué quiere contar"
+        hint="Opcional. Cuente cómo fue la atención."
       >
         <app-textarea
           [value]="comentario()"
@@ -70,7 +70,7 @@
           data-testid="calificar-anonimo"
         />
         <p class="calificar__ayuda">
-          Si la dejás marcada, tu opinión sale como «Paciente verificado».
+          Si la deja marcada, su opinión sale como «Paciente verificado».
         </p>
       </div>
 

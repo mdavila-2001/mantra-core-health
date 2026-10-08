@@ -179,7 +179,7 @@ describe('NewOrder', () => {
     montar();
 
     // El copy fijo de S6 más la salida: quien entra por URL directa no queda preso.
-    expect(texto()).toContain('No encontramos lo que buscás');
+    expect(texto()).toContain('No encontramos lo que busca');
     expect(texto()).toContain('Ir a mi historia clínica');
     expect(uno('pedido-confirmacion')).toBeNull();
   });
@@ -207,7 +207,7 @@ describe('NewOrder', () => {
 
     expect(uno('pedido-modalidad')).toBeNull();
     expect(raiz().querySelectorAll('input[type="radio"]')).toHaveLength(0);
-    expect(uno('pedido-modalidad-retiro')?.textContent).toContain('Retirás el pedido en la farmacia');
+    expect(uno('pedido-modalidad-retiro')?.textContent).toContain('Retira el pedido en la farmacia');
     expect(texto()).not.toMatch(/delivery|domicilio|envío a mi trabajo/i);
   });
 
@@ -379,7 +379,7 @@ describe('NewOrder', () => {
       montar();
 
       expect(uno('pedido-linea-descuento', renglon(0))).toBeNull();
-      expect(uno('pedido-aviso-promocion')?.textContent).toContain('Agregá 1 unidad más y llevás 2 pagando 1.');
+      expect(uno('pedido-aviso-promocion')?.textContent).toContain('Agregue 1 unidad más y lleva 2 pagando 1.');
     });
 
     it('una compra mínima descuenta sobre el total y lo muestra aparte', async () => {
@@ -399,7 +399,7 @@ describe('NewOrder', () => {
 
       expect(uno('pedido-descuento-total')).toBeNull();
       expect(uno('pedido-banner-promo')).toBeNull();
-      expect(uno('pedido-aviso-promocion')?.textContent).toContain('Te faltan Bs 32 para que te descontemos Bs 10.');
+      expect(uno('pedido-aviso-promocion')?.textContent).toContain('Le faltan Bs 32 para que le descontemos Bs 10.');
     });
 
     it('los puntos multiplicados se dicen sin tocar el precio', async () => {
@@ -504,7 +504,7 @@ describe('NewOrder', () => {
       expect(todos('alternativa', panel!)).toHaveLength(3);
       expect(panel?.textContent).toContain('Amoxicilina · Genérico');
       expect(panel?.textContent).toContain('57.80 Bs');
-      expect(panel?.textContent).toContain('Ahorrás 10.20 Bs por unidad');
+      expect(panel?.textContent).toContain('Ahorra 10.20 Bs por unidad');
       expect(panel?.textContent).toContain('Datos de ejemplo');
     });
 
@@ -567,7 +567,7 @@ describe('NewOrder', () => {
       expect(uno('pedido-linea-subtotal', renglon(0))).toBeNull();
       expect(uno('pedido-total')?.textContent).toContain('Total estimado de lo no aprobado');
       expect(uno('pedido-total-con-cambios')?.textContent).toContain('40.00 Bs');
-      expect(texto()).toContain('no la respuesta de tu aseguradora');
+      expect(texto()).toContain('no la respuesta de su aseguradora');
     });
 
     it('con seguro, lo que la sede no tiene no se da por cubierto aunque figure aprobado', () => {

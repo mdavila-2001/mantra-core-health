@@ -226,7 +226,7 @@ test('servicio de una sola instancia sin cobrar: el modal cobra y factura', asyn
 
   // Sin medio de pago no sale nada: lo pide.
   await page.getByTestId('factura-confirmar').click();
-  await expect(page.getByTestId('factura-formulario')).toContainText('Elegí cómo pagó');
+  await expect(page.getByTestId('factura-formulario')).toContainText('Elija cómo pagó');
   await medir(page, '8a-falta-medio-de-pago', 'factura-formulario');
   await page.getByTestId('factura-formulario').getByLabel('Medio de pago').selectOption({ index: 1 });
 

@@ -59,7 +59,7 @@ export class RadioOtro {
   /** Los valores de la lista: cualquier otro valor del grupo es «Otro». */
   readonly valores = input.required<readonly string[]>();
   readonly label = input<string>('Otro:');
-  readonly placeholder = input<string>('Escribí tu respuesta');
+  readonly placeholder = input<string>('Escriba su respuesta');
   readonly disabled = input<boolean>(false);
 
   protected readonly inputId = nextControlId('radio');

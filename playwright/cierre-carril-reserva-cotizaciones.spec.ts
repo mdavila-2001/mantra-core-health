@@ -450,7 +450,7 @@ test('teclado: Directorio y Cotizaciones se usan sin mouse', async ({ page }) =>
     'de ejemplo de la maqueta',
   );
   pasos.push(
-    'Cotizaciones: foco en «Qué querés cotizar», escribir «paracetamol» → resultados con precio y procedencia',
+    'Cotizaciones: foco en «Qué quiere cotizar», escribir «paracetamol» → resultados con precio y procedencia',
   );
 
   const vertical = page.getByLabel('Vertical');

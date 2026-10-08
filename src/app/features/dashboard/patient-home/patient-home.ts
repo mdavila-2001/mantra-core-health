@@ -177,7 +177,7 @@ export class PatientHome {
       this.estado.set(
         empty(
           { label: 'Ir a mis turnos', route: MIS_TURNOS_ROUTE },
-          'Tu cuenta todavía no tiene una ficha de paciente.',
+          'Su cuenta todavía no tiene una ficha de paciente.',
         ),
       );
       return;

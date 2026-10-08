@@ -189,7 +189,7 @@ test.describe('Ajustes', () => {
     await social.click();
     await expect(social).toBeChecked({ checked: !before });
     await page.getByTestId('pref-save').click();
-    await expect(page.getByText('Guardamos tus preferencias.')).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByText('Guardamos sus preferencias.')).toBeVisible({ timeout: 30_000 });
 
     // `page.reload()` canjea el refresh token — el mismo cupo de 10/min que el
     // login (ver `sesion.ts`) — así que se recarga una sola vez acá.
@@ -204,7 +204,7 @@ test.describe('Ajustes', () => {
     // corren después de ella (mode: 'serial', misma sesión).
     await page.getByTestId('pref-SOCIAL').locator('input[role="switch"]').click();
     await page.getByTestId('pref-save').click();
-    await expect(page.getByText('Guardamos tus preferencias.')).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByText('Guardamos sus preferencias.')).toBeVisible({ timeout: 30_000 });
   });
 
   test('un switch se alterna con Espacio desde el teclado, con foco visible', async () => {
@@ -245,7 +245,7 @@ test.describe('Ajustes', () => {
     await expect(clinical).toBeChecked({ checked: !before });
     await page.getByTestId('pref-save').click();
 
-    await expect(page.getByText('No pudimos guardar tus preferencias.')).toBeVisible({
+    await expect(page.getByText('No pudimos guardar sus preferencias.')).toBeVisible({
       timeout: 30_000,
     });
     // Nada quedó guardado (el PUT es todo-o-nada): vuelve a lo último
@@ -276,13 +276,13 @@ test.describe('Ajustes', () => {
     // con `isLoading` lo intercepta (AC-17-8), así que no debería sumar otro.
     await saveButton.click({ force: true });
 
-    await expect(page.getByText('Guardamos tus preferencias.')).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByText('Guardamos sus preferencias.')).toBeVisible({ timeout: 30_000 });
     expect(puts).toBe(1);
 
     // Se deja como estaba.
     await scheduling.click();
     await saveButton.click();
-    await expect(page.getByText('Guardamos tus preferencias.')).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByText('Guardamos sus preferencias.')).toBeVisible({ timeout: 30_000 });
   });
 
   test('«el de mi dispositivo» recarga sin parpadeo, en claro y en oscuro', async () => {

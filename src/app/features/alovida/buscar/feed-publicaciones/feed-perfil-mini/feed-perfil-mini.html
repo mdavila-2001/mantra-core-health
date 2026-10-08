@@ -1,7 +1,7 @@
-<section class="mini" aria-label="Tu perfil" data-testid="feed-perfil-mini">
+<section class="mini" aria-label="Su perfil" data-testid="feed-perfil-mini">
   @if (!resuelto()) {
     <div class="mini__esqueleto" aria-live="polite" aria-busy="true">
-      <span class="solo-lectores">Cargando tu perfil…</span>
+      <span class="solo-lectores">Cargando su perfil…</span>
       <span class="app-skeleton mini__esqueleto-portada"></span>
       <span class="app-skeleton"></span>
       <span class="app-skeleton"></span>
@@ -58,7 +58,7 @@
       }
     </dl>
 
-    <nav class="mini__accesos" aria-label="Accesos de tu cuenta">
+    <nav class="mini__accesos" aria-label="Accesos de su cuenta">
       <a routerLink="/feed" class="mini__acceso">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 5.5h16M4 12h16M4 18.5h10"/></svg>
         Mi muro
@@ -78,10 +78,10 @@
     <div class="mini__identidad">
       <span class="mini__avatar mini__avatar--iniciales" aria-hidden="true">{{ iniciales() }}</span>
       <p class="mini__nombre" data-testid="feed-perfil-mini-nombre">{{ nombre() }}</p>
-      <p class="mini__titular">Todavía no tenés vitrina pública.</p>
+      <p class="mini__titular">Todavía no tiene vitrina pública.</p>
     </div>
     <p class="mini__invitacion">
-      Con una vitrina podés publicar, reaccionar y comentar en la red.
+      Con una vitrina puede publicar, reaccionar y comentar en la red.
     </p>
     <a app-button data-variante="primario" data-tam="sm" class="mini__crear" routerLink="/my-account/profile/edit">
       Crear mi vitrina

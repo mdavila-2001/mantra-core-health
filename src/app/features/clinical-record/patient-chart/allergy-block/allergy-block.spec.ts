@@ -208,7 +208,7 @@ describe('AllergyBlock', () => {
 
     expect(interno<() => boolean>('registrando')()).toBe(false);
     expect(interno<() => string | null>('errorDeLaAlergia')()).toBe(
-      'No pudimos conectarnos. Revisá tu conexión y reintentá.',
+      'No pudimos conectarnos. Revise su conexión y reintente.',
     );
   });
 
@@ -229,7 +229,7 @@ describe('AllergyBlock', () => {
     fixture.detectChanges();
 
     expect(interno<() => string | null>('errorDeLaAlergia')()).toBe(
-      'Tu rol no permite registrar alergias.',
+      'Su rol no permite registrar alergias.',
     );
   });
 

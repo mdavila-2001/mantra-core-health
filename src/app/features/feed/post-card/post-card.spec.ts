@@ -84,7 +84,7 @@ describe('PostCard', () => {
   it('sin perfil público no ofrece escribir: lo explica', () => {
     montar(null);
 
-    expect(texto()).toContain('Creá tu perfil público para reaccionar');
+    expect(texto()).toContain('Cree su perfil público para reaccionar');
     // Queda el botón de abrir comentarios —leer no exige perfil—, pero ninguno
     // de los que escriben.
     const etiquetas: string[] = Array.from(
@@ -286,7 +286,7 @@ describe('PostCard', () => {
       .flush({}, { status: 500, statusText: 'Server Error' });
     fixture.detectChanges();
 
-    expect(texto()).toContain('No pudimos guardar tu reacción');
+    expect(texto()).toContain('No pudimos guardar su reacción');
     // El conteo volvió a cero: no queda un «1» que nadie guardó.
     const conteo = fixture.nativeElement.querySelector('.publicacion__conteo');
     expect(conteo).toBeNull();

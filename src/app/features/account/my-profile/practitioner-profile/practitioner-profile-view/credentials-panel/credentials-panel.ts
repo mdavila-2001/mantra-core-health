@@ -165,7 +165,7 @@ export class CredentialsPanel {
       case 'declared':
         return 'No hay nada pendiente de verificación.';
       default:
-        return 'Todavía no cargaste credenciales. Son las que habilitan a ejercer: sin ninguna verificada el perfil queda pendiente.';
+        return 'Todavía no cargó credenciales. Son las que habilitan a ejercer: sin ninguna verificada el perfil queda pendiente.';
     }
   });
 

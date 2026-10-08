@@ -3,7 +3,7 @@
     <app-badge variant="info">{{ nota }}</app-badge>
     <span>
       Marcas del mismo genérico que {{ recetada() }}. La farmacia confirma precio y existencia
-      al revisar tu pedido.
+      al revisar su pedido.
     </span>
   </p>
 
@@ -23,7 +23,7 @@
         <div class="alternativas__precio">
           <strong class="cifras-tabulares">{{ alternativa.precio }} {{ monedaVisible() }}</strong>
           <span class="alternativas__ahorro cifras-tabulares">
-            Ahorrás {{ alternativa.ahorro }} {{ monedaVisible() }} por unidad
+            Ahorra {{ alternativa.ahorro }} {{ monedaVisible() }} por unidad
           </span>
         </div>
         @if (alternativa.id === elegidaId()) {

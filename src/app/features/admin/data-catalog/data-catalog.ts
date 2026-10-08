@@ -209,8 +209,8 @@ export class DataCatalog {
             page.items.length === 0
               ? empty(
                   this.hayFiltros()
-                    ? { label: 'Quitá o cambiá los filtros de arriba.' }
-                    : { label: 'Usá «Solicitar escaneo» arriba a la derecha.' },
+                    ? { label: 'Quite o cambie los filtros de arriba.' }
+                    : { label: 'Use «Solicitar escaneo» arriba a la derecha.' },
                   this.hayFiltros()
                     ? 'Ningún objeto coincide con los filtros elegidos.'
                     : 'Todavía no hay objetos catalogados: el catálogo se llena con un escaneo técnico.',
@@ -261,7 +261,7 @@ export class DataCatalog {
       next: (lista) =>
         this.escaneos.set(
           lista.length === 0
-            ? empty({ label: 'Usá «Solicitar escaneo» arriba a la derecha.' }, 'Nunca se escaneó la base.')
+            ? empty({ label: 'Use «Solicitar escaneo» arriba a la derecha.' }, 'Nunca se escaneó la base.')
             : ready(lista),
         ),
       error: (e: unknown) => this.escaneos.set(errorToViewState<readonly Scan[]>(e)),
@@ -287,7 +287,7 @@ export class DataCatalog {
       error: (e: unknown) => {
         this.pidiendoEscaneo.set(false);
         this.errorEscaneo.set(
-          errorDeApi(e).status === 409 ? 'Ya hay un escaneo en curso. Esperá a que termine.' : 'No se pudo solicitar el escaneo.',
+          errorDeApi(e).status === 409 ? 'Ya hay un escaneo en curso. Espere a que termine.' : 'No se pudo solicitar el escaneo.',
         );
       },
     });

@@ -72,15 +72,15 @@ export class RegistroAyuda {
 }
 
 const PROMESAS_A_LA_PERSONA = [
-  'Todo lo que escribís viaja cifrado hasta nuestros servidores.',
-  'Tu información clínica la ve el profesional que te atiende, nadie más.',
-  'No vendemos tus datos ni los usamos para publicidad.',
-  'Podés corregirlos cuando quieras desde tu perfil.',
+  'Todo lo que escribe viaja cifrado hasta nuestros servidores.',
+  'Su información clínica la ve el profesional que le atiende, nadie más.',
+  'No vendemos sus datos ni los usamos para publicidad.',
+  'Puede corregirlos cuando quiera desde su perfil.',
 ] as const;
 
 const PROMESAS_A_LA_EMPRESA = [
-  'Todo lo que escribís viaja cifrado hasta nuestros servidores.',
-  'Los papeles de la empresa los revisa sólo el equipo que aprueba tu alta.',
-  'No vendemos los datos de tu empresa ni de tus gerentes.',
-  'Podés corregirlos cuando quieras desde la ficha de tu empresa.',
+  'Todo lo que escribe viaja cifrado hasta nuestros servidores.',
+  'Los papeles de la empresa los revisa sólo el equipo que aprueba su alta.',
+  'No vendemos los datos de su empresa ni de sus gerentes.',
+  'Puede corregirlos cuando quiera desde la ficha de su empresa.',
 ] as const;

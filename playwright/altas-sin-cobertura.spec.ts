@@ -72,7 +72,7 @@ test.describe('dónde se elige el tipo de alta', () => {
     }
   });
 
-  test('«Registrá tu organización» del acceso lleva a las cuatro altas de organización', async ({ page }) => {
+  test('«Registre su organización» del acceso lleva a las cuatro altas de organización', async ({ page }) => {
     await page.goto('/auth', { waitUntil: 'domcontentloaded' });
     await page.getByTestId('login-registro-organizacion').click();
     await expect(page).toHaveURL(/\/auth\/register\/organization-type$/);
@@ -103,7 +103,7 @@ test.describe('altas públicas sin cobertura previa: paciente, laboratorio, imag
     await page.getByTestId('registro-documento').fill('9876543');
     await page.getByTestId('registro-departamento-ci').locator('select').selectOption({ index: 1 });
     await continuar(page);
-    await enLaPagina(page, 'Contanos un poco sobre vos');
+    await enLaPagina(page, 'Cuéntenos un poco sobre usted');
 
     const fecha = page.getByPlaceholder('DD/MM/AAAA');
     await fecha.click();
@@ -114,9 +114,9 @@ test.describe('altas públicas sin cobertura previa: paciente, laboratorio, imag
   test('paciente: lo obligatorio alcanza para crear la cuenta', async ({ page }) => {
     await empezarElAlta(page, `CI-ALTA-${Date.now()}`);
 
-    await avanzarHasta(page, '¿Dónde vivís?');
+    await avanzarHasta(page, '¿Dónde vive?');
     await elegirLocalidadDeResidencia(page);
-    await continuarHasta(page, 'Tu acceso');
+    await continuarHasta(page, 'Su acceso');
 
     await page.getByTestId('registro-correo').fill(`paciente-${Date.now()}@alovida.test`);
     await page.getByTestId('registro-password').fill('Alta-Paciente1!');
@@ -145,7 +145,7 @@ test.describe('altas públicas sin cobertura previa: paciente, laboratorio, imag
 
     await escribirNombre(page, 'registro-lab-representante', 'Mariana', 'Siles');
     await page.getByTestId('registro-lab-representante-correo').fill(`legal-${Date.now()}@lab-andino.test`);
-    await continuarHasta(page, 'Tu acceso');
+    await continuarHasta(page, 'Su acceso');
 
     await page.getByTestId('registro-lab-password').fill('secreto12');
     await continuar(page);
@@ -167,7 +167,7 @@ test.describe('altas públicas sin cobertura previa: paciente, laboratorio, imag
     await page.getByTestId('registro-imagen-nit').fill('1023456789');
     await continuar(page);
 
-    await enLaPagina(page, 'Qué estudios hacés');
+    await enLaPagina(page, 'Qué estudios hace');
     // Se hace clic en el rótulo, como una persona: el `<input>` nativo va oculto
     // bajo el dibujo propio del checkbox.
     await page.getByTestId('registro-imagen-modalidades').getByText('Ecografía', { exact: true }).click();
@@ -188,7 +188,7 @@ test.describe('altas públicas sin cobertura previa: paciente, laboratorio, imag
     await page
       .getByTestId('registro-imagen-representante-correo')
       .fill(`legal-${Date.now()}@imagen-oriente.test`);
-    await continuarHasta(page, 'Tu acceso');
+    await continuarHasta(page, 'Su acceso');
 
     await page.getByTestId('registro-imagen-password').fill('secreto12');
     await continuar(page);

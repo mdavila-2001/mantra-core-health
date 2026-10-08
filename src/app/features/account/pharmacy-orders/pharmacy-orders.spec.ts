@@ -72,7 +72,7 @@ describe('PharmacyOrders', () => {
     http.expectOne('/pharmacy/orders/me').flush({ items: [], count: 0 });
     fixture.detectChanges();
 
-    expect(texto()).toContain('Todavía no enviaste ningún pedido');
+    expect(texto()).toContain('Todavía no envió ningún pedido');
     expect(texto()).toContain('Ir a mi historia clínica');
   });
 

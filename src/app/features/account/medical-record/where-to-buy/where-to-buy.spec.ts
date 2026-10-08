@@ -638,7 +638,7 @@ describe('WhereToBuy', () => {
     consulta.flush(DISPONIBILIDAD_FIXTURE);
     harness.detectChanges();
 
-    expect(texto()).toContain('Distancias medidas desde tu ubicación actual');
+    expect(texto()).toContain('Distancias medidas desde su ubicación actual');
   });
 
   it('destildar un renglón lo saca de la consulta', async () => {
@@ -777,7 +777,7 @@ describe('WhereToBuy', () => {
       consulta.flush(DISPONIBILIDAD_FIXTURE);
       harness.detectChanges();
 
-      expect(texto()).toContain('Distancias medidas desde tu casa');
+      expect(texto()).toContain('Distancias medidas desde su casa');
       // Con un origen ya elegido, la sección muestra el aviso y «Dejar de usar
       // este punto» — no los botones de elección, que viven en la otra rama.
       expect(
@@ -943,7 +943,7 @@ describe('WhereToBuy', () => {
     http.expectNone((r) => r.url === '/pharmacy-inventory/availability');
   });
 
-  it('con seguro: cobertura de lo aprobado, desglose «aprobado / a tu cargo» y renglones rotulados', async () => {
+  it('con seguro: cobertura de lo aprobado, desglose «aprobado / a su cargo» y renglones rotulados', async () => {
     await montarConTresSedes();
     conmutarSeguro();
 
@@ -951,7 +951,7 @@ describe('WhereToBuy', () => {
     const renglones = todas('[data-testid="compra-item-seguro"]').map((nodo) =>
       nodo.textContent?.trim(),
     );
-    expect(renglones).toEqual(['Aprobado por el seguro', 'A tu cargo']);
+    expect(renglones).toEqual(['Aprobado por el seguro', 'A su cargo']);
     expect(texto()).toContain('Demostración');
 
     const centro = tarjetaDe('Sucursal Centro');
@@ -961,20 +961,20 @@ describe('WhereToBuy', () => {
       centro
         ?.querySelector('[data-testid="compra-desglose-seguro"]')
         ?.textContent?.replace(/\s+/g, ' '),
-    ).toContain('Aprobado: 68.00 Bs A tu cargo: 28.50 Bs');
+    ).toContain('Aprobado: 68.00 Bs A su cargo: 28.50 Bs');
 
     const planTresMil = tarjetaDe('Plan Tres Mil');
     expect(planTresMil?.textContent).toContain('Cobertura de lo aprobado: 0 de 1');
     expect(planTresMil?.textContent).toContain('Le falta de lo aprobado: Amoxicilina');
     expect(planTresMil?.textContent).toContain('Le falta algo aprobado');
     // El ibuprofeno está pero sin precio publicado: se dice, no se estima.
-    expect(planTresMil?.textContent).toContain('A tu cargo: no disponible, falta algún precio');
+    expect(planTresMil?.textContent).toContain('A su cargo: no disponible, falta algún precio');
     // La sede no publica moneda: el importe va sin ella, no con una supuesta.
     expect(planTresMil?.textContent).toContain('Aprobado: 0.00');
 
     const norte = tarjetaDe('Sucursal Norte');
     expect(norte?.textContent).toContain('Cobertura de lo aprobado: 0 de 1');
-    expect(norte?.textContent).toContain('A tu cargo: 28.50 Bs');
+    expect(norte?.textContent).toContain('A su cargo: 28.50 Bs');
 
     // El total de la sede no cambia: el desglose se suma, no lo reemplaza.
     expect(centro?.textContent).toContain('Total estimado: 96.50 Bs');
@@ -1038,7 +1038,7 @@ describe('WhereToBuy', () => {
       .flush(DISPONIBILIDAD_CON_NORTE);
     harness.detectChanges();
 
-    expect(texto()).toContain('ninguno de los medicamentos que elegiste está aprobado');
+    expect(texto()).toContain('ninguno de los medicamentos que eligió está aprobado');
     expect(texto()).toContain('Volver a mi historia');
     expect(todas('.compra__sede')).toHaveLength(0);
     // El conmutador sigue a mano: el vacío no encierra a nadie.
@@ -1059,9 +1059,9 @@ describe('WhereToBuy', () => {
     harness.detectChanges();
 
     expect(texto()).toContain(
-      'Ninguna sucursal puede confirmar hoy los medicamentos de tu receta.',
+      'Ninguna sucursal puede confirmar hoy los medicamentos de su receta.',
     );
-    expect(texto()).not.toContain('ninguno de los medicamentos que elegiste está aprobado');
+    expect(texto()).not.toContain('ninguno de los medicamentos que eligió está aprobado');
   });
 
   it('con seguro, un error de disponibilidad queda como error recuperable', async () => {
@@ -1201,7 +1201,7 @@ describe('coberturaConSeguro (T-E2)', () => {
   const [SEDE_COMPLETA, SEDE_PARCIAL] = DISPONIBILIDAD_FIXTURE.items;
   const soloAmoxicilina = new Set([FIXTURE_IDS.conceptoAmoxicilina]);
 
-  it('parte el precio de lo disponible en aprobado y a tu cargo', () => {
+  it('parte el precio de lo disponible en aprobado y a su cargo', () => {
     const cobertura = coberturaConSeguro(SEDE_COMPLETA, CONSULTABLES, [], soloAmoxicilina);
     expect(cobertura).toEqual({
       aprobados: 1,
@@ -1213,7 +1213,7 @@ describe('coberturaConSeguro (T-E2)', () => {
     });
   });
 
-  it('todo aprobado: nada a tu cargo es 0.00, no una ausencia', () => {
+  it('todo aprobado: nada a su cargo es 0.00, no una ausencia', () => {
     const todo = new Set(CONSULTABLES.map((item) => item.conceptId));
     const cobertura = coberturaConSeguro(SEDE_COMPLETA, CONSULTABLES, [], todo);
     expect(cobertura.aprobado).toBe('96.50 Bs');

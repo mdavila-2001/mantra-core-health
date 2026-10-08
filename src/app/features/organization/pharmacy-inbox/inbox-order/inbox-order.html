@@ -1,6 +1,6 @@
 <app-page-header
   title="Pedido en el mostrador"
-  subtitle="Revisalo, confirmalo con lo que tenés y registrá la entrega."
+  subtitle="Revíselo, confírmelo con lo que tiene y registre la entrega."
   [breadcrumbs]="breadcrumbs()"
 />
 
@@ -96,7 +96,7 @@
                           }
                           @case ('error') {
                             <app-alert tone="error" title="No se pudo consultar el catálogo">
-                              Reintentá la búsqueda antes de confirmar.
+                              Reintente la búsqueda antes de confirmar.
                             </app-alert>
                             <button
                               app-button
@@ -122,7 +122,7 @@
                               <app-form-field label="Producto sustituto">
                                 <app-select
                                   [attr.data-testid]="'mostrador-sustituto-' + i"
-                                  placeholder="Elegí un producto"
+                                  placeholder="Elija un producto"
                                   [options]="search.options"
                                   [value]="ajuste.propuesta?.productId ?? null"
                                   (valueChange)="selectSubstitute(i, $event)"
@@ -250,7 +250,7 @@
       <!-- ─── Esperando la decisión del paciente ─────────────────────────── -->
       @if (abierto.estado === 'ACEPTACION_PENDIENTE') {
         <app-alert tone="info" title="La decisión es del paciente">
-          Le propusiste una alternativa: puede aceptarla, quedarse con su receta original o
+          Le propuso una alternativa: puede aceptarla, quedarse con su receta original o
           cancelar. La pantalla se actualiza cuando decida.
         </app-alert>
       }

@@ -128,7 +128,7 @@ describe('LabServicesImport', () => {
     expect(problems).toContain('Falta el nombre.');
     expect(problems).toContain('El precio va en bolivianos');
     expect(problems).toContain('El descuento es un número de 0 a 100');
-    expect(problems).toContain('La categoría «Genética» no existe. Usá una de: Hematología, Química sanguínea.');
+    expect(problems).toContain('La categoría «Genética» no existe. Use una de: Hematología, Química sanguínea.');
     expect(problems).toContain('El código se repite más arriba en el mismo archivo.');
     expect(text('lab-import-confirm')).toBe('Cargar 2 análisis');
     expect(importServices).not.toHaveBeenCalled();
@@ -197,7 +197,7 @@ describe('LabServicesImport', () => {
         { line: 2, code: 'LAB-A', outcome: 'CREATED', reason: null },
         { line: 3, code: 'LAB-B', outcome: 'UPDATED', reason: null },
         { line: 4, code: 'LAB-C', outcome: 'UNCHANGED', reason: null },
-        { line: 5, code: 'LAB-D', outcome: 'REJECTED', reason: 'Ya tenés un servicio con el código «LAB-D».' },
+        { line: 5, code: 'LAB-D', outcome: 'REJECTED', reason: 'Ya tiene un servicio con el código «LAB-D».' },
       ],
     });
     await upload('codigo,nombre,precio_bs\nLAB-A,Alfa,1\nLAB-B,Beta,2\nLAB-C,Gama,3\nLAB-D,Delta,4\n');
@@ -211,7 +211,7 @@ describe('LabServicesImport', () => {
     expect(table).toContain('Actualizado');
     expect(table).toContain('Sin cambios');
     expect(table).toContain('Rechazado');
-    expect(table).toContain('Ya tenés un servicio con el código «LAB-D».');
+    expect(table).toContain('Ya tiene un servicio con el código «LAB-D».');
     expect(table).toContain('Delta');
     expect(byTestId('lab-import-confirm')).toBeNull();
 

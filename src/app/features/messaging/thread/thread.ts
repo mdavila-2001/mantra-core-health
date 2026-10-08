@@ -332,7 +332,7 @@ export class Thread {
     const nombres = activa.peers
       .map((peer) => peer.displayName)
       .filter((nombre): nombre is string => nombre !== undefined && nombre !== null);
-    return [...nombres, 'Tú'].join(', ');
+    return [...nombres, 'Usted'].join(', ');
   });
 
   protected readonly esGrupo = computed(() => {
@@ -487,7 +487,7 @@ export class Thread {
   /** El nombre de quien escribió, para el rótulo de un grupo. */
   private nombreDe(profileId: string): string {
     if (profileId === this.store.perfil()) {
-      return 'Tú';
+      return 'Usted';
     }
     const activa = this.store.conversacionActiva();
     const peer = activa?.peers.find((p) => p.profileId === profileId);

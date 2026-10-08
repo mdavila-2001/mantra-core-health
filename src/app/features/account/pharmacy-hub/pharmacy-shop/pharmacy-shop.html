@@ -1,6 +1,6 @@
 @if (sinPerfilDePaciente) {
   <app-alert tone="info" title="Esta sección es para pacientes">
-    Tu cuenta no tiene un perfil de paciente, así que no hay nada que comprar a su nombre.
+    Su cuenta no tiene un perfil de paciente, así que no hay nada que comprar a su nombre.
   </app-alert>
 } @else if (farmaciaElegida(); as farmacia) {
   <section class="tienda__catalogo" aria-label="Catálogo de la farmacia elegida">
@@ -64,7 +64,7 @@
 
             @if (producto.requiresPrescription === true) {
               <a class="tienda__pedir-con-receta" [routerLink]="rutaHistoriaClinica">
-                Pedila desde tu historia clínica
+                Pídala desde su historia clínica
               </a>
             } @else {
               <div
@@ -107,10 +107,10 @@
       </ul>
     </app-view-state-host>
 
-    <aside class="tienda__carrito" aria-label="Tu carrito" data-testid="tienda-carrito">
+    <aside class="tienda__carrito" aria-label="Su carrito" data-testid="tienda-carrito">
       @if (hayCarrito()) {
         <p class="tienda__carrito-resumen">
-          {{ unidadesEnCarrito() }} unidad{{ unidadesEnCarrito() === 1 ? '' : 'es' }} en tu carrito.
+          {{ unidadesEnCarrito() }} unidad{{ unidadesEnCarrito() === 1 ? '' : 'es' }} en su carrito.
           El precio y el total salen en el próximo paso, con la disponibilidad real de la sede.
         </p>
         @if (errorAlContinuar(); as error) {
@@ -129,7 +129,7 @@
           {{ enviando() ? 'Confirmando disponibilidad…' : 'Continuar' }}
         </button>
       } @else {
-        <p class="tienda__carrito-vacio">Tu carrito está vacío. Elegí una cantidad de algún producto.</p>
+        <p class="tienda__carrito-vacio">Su carrito está vacío. Elija una cantidad de algún producto.</p>
       }
     </aside>
   </section>

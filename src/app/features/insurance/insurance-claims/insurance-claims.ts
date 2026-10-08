@@ -326,7 +326,7 @@ export class InsuranceClaims {
         )
       : empty(
           { label: 'Ver todas las aseguradoras' },
-          'Ninguna solicitud de esa aseguradora. Quitá el filtro para ver el resto.',
+          'Ninguna solicitud de esa aseguradora. Quite el filtro para ver el resto.',
         );
   }
 }

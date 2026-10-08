@@ -179,8 +179,8 @@ describe('PatientHome', () => {
       fixture.detectChanges();
 
       const raiz = fixture.nativeElement as HTMLElement;
-      expect(texto()).toContain('Beneficios preventivos de tu seguro');
-      expect(texto()).toContain('100% Cubierto por tu Seguro');
+      expect(texto()).toContain('Beneficios preventivos de su seguro');
+      expect(texto()).toContain('100% Cubierto por su Seguro');
       expect(raiz.querySelector('[data-testid="btn-campaign-action"]')?.textContent).toContain(
         'Agendar chequeo preventivo',
       );
@@ -226,7 +226,7 @@ describe('PatientHome', () => {
 
     expect(texto()).toContain('Ana Quispe');
     // El subtítulo cambió con C5: el panel ahora encabeza con los síntomas.
-    expect(texto()).toContain('Contanos qué te pasa');
+    expect(texto()).toContain('Cuéntenos qué le pasa');
   });
 
   /**
@@ -276,12 +276,12 @@ describe('PatientHome', () => {
    * FT-03-R01. El texto es el pedido literal del cliente: «Tu próximo turno»
    * no puede quedar en ninguna parte de la pantalla.
    */
-  it('llama al bloque «Tu próxima cita» y no «Tu próximo turno»', async () => {
+  it('llama al bloque «Su próxima cita» y no «Su próximo turno»', async () => {
     await montar();
     responder([{ id: 'b-1', statusConceptId: 'c-1', startAt: '2099-01-01T13:00:00.000Z' }], null);
 
-    expect(texto()).toContain('Tu próxima cita');
-    expect(texto()).not.toContain('Tu próximo turno');
+    expect(texto()).toContain('Su próxima cita');
+    expect(texto()).not.toContain('Su próximo turno');
   });
 
   /**
@@ -342,7 +342,7 @@ describe('PatientHome', () => {
       '[data-testid="mi-salud-proxima-cita"]',
     );
     expect(bloque?.getAttribute('data-estado')).toBe('empty');
-    expect(bloque?.textContent).toContain('No tenés citas pedidas');
+    expect(bloque?.textContent).toContain('No tiene citas pedidas');
     expect(bloque?.textContent).toContain('Pedir una cita');
   });
 

@@ -80,9 +80,9 @@
             label="Medio de pago"
             [required]="true"
             hint="Catálogo simulado · se registra el pago y se emite la factura"
-            [errorMessage]="formulario.controls.methodCode.touched && formulario.controls.methodCode.invalid ? 'Elegí cómo pagó.' : ''"
+            [errorMessage]="formulario.controls.methodCode.touched && formulario.controls.methodCode.invalid ? 'Elija cómo pagó.' : ''"
           >
-            <app-select formControlName="methodCode" [options]="opcionesDeMetodo()" placeholder="Elegí un medio" />
+            <app-select formControlName="methodCode" [options]="opcionesDeMetodo()" placeholder="Elija un medio" />
           </app-form-field>
         }
 
@@ -92,7 +92,7 @@
             <app-form-field
               label="Nombre o razón social"
               [required]="true"
-              [errorMessage]="formulario.controls.name.touched && formulario.controls.name.invalid ? 'Escribí a nombre de quién va la factura.' : ''"
+              [errorMessage]="formulario.controls.name.touched && formulario.controls.name.invalid ? 'Escriba a nombre de quién va la factura.' : ''"
             >
               <app-input formControlName="name" autocomplete="off" />
             </app-form-field>

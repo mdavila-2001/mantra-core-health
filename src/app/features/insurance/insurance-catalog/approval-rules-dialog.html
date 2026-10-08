@@ -15,14 +15,14 @@
 
     <app-form-field
       label="Documentos requeridos"
-      hint="Seleccioná todos los que debe presentar el prestador."
+      hint="Seleccione todos los que debe presentar el prestador."
     >
       <app-checkbox-group formControlName="requiredDocuments" [options]="documentOptions" />
     </app-form-field>
 
     <app-form-field
       label="Cláusula de exclusión"
-      hint="Dejala vacía para eliminar la exclusión vigente."
+      hint="Déjela vacía para eliminar la exclusión vigente."
       [errorMessage]="
         form.controls.exclusionNotes.touched && form.controls.exclusionNotes.invalid
           ? 'La exclusión no puede superar 1.000 caracteres.'

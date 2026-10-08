@@ -75,7 +75,7 @@ export class CartPage {
   protected async vaciar(): Promise<void> {
     const confirmado = await this.dialogs.confirm({
       title: 'Vaciar el carrito',
-      message: 'Se quitan todas las líneas. Podés volver a agregarlas desde la tienda.',
+      message: 'Se quitan todas las líneas. Puede volver a agregarlas desde la tienda.',
       confirmLabel: 'Vaciar',
       destructive: true,
     });
@@ -105,7 +105,7 @@ export class CartPage {
           const sede = resultado.items.find((item) => item.siteId === carrito.site.siteId);
           if (sede === undefined) {
             this.errorAlContinuar.set(
-              'Esa sede ya no publica disponibilidad. Volvé a la tienda para elegir otra.',
+              'Esa sede ya no publica disponibilidad. Vuelva a la tienda para elegir otra.',
             );
             return;
           }
@@ -114,7 +114,7 @@ export class CartPage {
         },
         error: () => {
           this.continuando.set(false);
-          this.errorAlContinuar.set('No pudimos revisar la disponibilidad. Probá de nuevo.');
+          this.errorAlContinuar.set('No pudimos revisar la disponibilidad. Pruebe de nuevo.');
         },
       });
   }

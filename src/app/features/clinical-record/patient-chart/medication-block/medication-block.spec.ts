@@ -201,7 +201,7 @@ describe('MedicationBlock', () => {
     responderCatalogo();
     fixture.detectChanges();
 
-    expect(texto()).toContain('Abrí el encuentro para recetar');
+    expect(texto()).toContain('Abra el encuentro para recetar');
     expect(interno<() => boolean>('puedeRecetar')()).toBe(false);
   });
 
@@ -616,7 +616,7 @@ describe('MedicationBlock', () => {
     );
     fixture.detectChanges();
 
-    expect(interno<() => string | null>('avisoDePrecondicion')()).toContain('necesita tu firma');
+    expect(interno<() => string | null>('avisoDePrecondicion')()).toContain('necesita su firma');
     // Y no se pinta además en rojo: sería decir dos veces lo mismo con dos
     // tonos que se contradicen.
     expect(interno<() => string | null>('errorDeLaReceta')()).toBeNull();
@@ -648,7 +648,7 @@ describe('MedicationBlock', () => {
     );
 
     expect(interno<() => string | null>('avisoDePrecondicion')()).toBeNull();
-    expect(interno<() => string | null>('errorDeLaReceta')()).toContain('Recargá el expediente');
+    expect(interno<() => string | null>('errorDeLaReceta')()).toContain('Recargue el expediente');
   });
 
   it('una receta emitida no ofrece firmar ni emitir: es inmutable', () => {

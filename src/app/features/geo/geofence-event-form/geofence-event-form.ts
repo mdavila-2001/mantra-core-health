@@ -100,7 +100,7 @@ export class GeofenceEventForm {
   protected readonly created = signal<GeofenceEvent | null>(null);
 
   protected readonly errorMessage = computed(() =>
-    errorMessageOf(this.state(), 'No tenés permiso para registrar cruces de geocerca.'),
+    errorMessageOf(this.state(), 'No tiene permiso para registrar cruces de geocerca.'),
   );
 
   protected submit(): void {

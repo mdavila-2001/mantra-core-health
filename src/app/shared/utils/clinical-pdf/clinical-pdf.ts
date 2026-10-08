@@ -333,7 +333,7 @@ export function bloquesDeOrden(orden: DocumentoDeOrden): readonly PdfBlock[] {
     // indicaciones publicadas. En un ayuno, la diferencia importa.
     bloques.push(
       aviso(
-        'El centro no publicó indicaciones de preparación para este estudio. Consultá al laboratorio antes de asistir.',
+        'El centro no publicó indicaciones de preparación para este estudio. Consulte al laboratorio antes de asistir.',
       ),
     );
   } else {

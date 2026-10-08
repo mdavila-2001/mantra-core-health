@@ -11,7 +11,7 @@
 @if (!disponible) {
   <app-card>
     <p class="vacio-honesto" data-testid="facturacion-no-conectada">
-      La facturación todavía no está conectada. Emití comprobantes y seguí los cobros de la organización cuando el
+      La facturación todavía no está conectada. Emita comprobantes y siga los cobros de la organización cuando el
       backend de facturación esté disponible.
     </p>
   </app-card>
@@ -168,7 +168,7 @@
               <h3>Registrar pago (SIMULADO)</h3>
               <p class="nota">Simula el cobro al paciente. No mueve dinero ni usa ninguna pasarela real.</p>
               <app-form-field label="Medio de pago" [required]="true">
-                <app-select formControlName="methodCode" [options]="opcionesDeMetodo()" placeholder="Elegí un medio" />
+                <app-select formControlName="methodCode" [options]="opcionesDeMetodo()" placeholder="Elija un medio" />
               </app-form-field>
               <button app-button type="submit" [isLoading]="operando() === 'pago'" [disabled]="operando() !== null">
                 Registrar pago (SIMULADO)
@@ -289,7 +289,7 @@
               @if (f.status === 'VALIDATED' || f.status === 'OBSERVED') {
                 <form class="acciones" [formGroup]="formularioDeAnulacion" (ngSubmit)="anular(f)" data-testid="formulario-de-anulacion">
                   <app-form-field label="Motivo de anulación" hint="Catálogo simulado · plazo: día 9 del mes siguiente">
-                    <app-select formControlName="reasonCode" [options]="opcionesDeMotivo()" placeholder="Elegí un motivo" />
+                    <app-select formControlName="reasonCode" [options]="opcionesDeMotivo()" placeholder="Elija un motivo" />
                   </app-form-field>
                   <button app-button variant="danger" size="sm" type="submit" [disabled]="operando() !== null">
                     Anular (SIMULADO)

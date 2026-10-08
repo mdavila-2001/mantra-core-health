@@ -196,7 +196,7 @@ describe('AccessTree', () => {
     // foco**, y el `aria-label` cubre a quien nunca llega a enfocar el enlace.
     const agenda = accesos().find((a) => a.dataset['ruta'] === '/schedule');
     expect(agenda?.getAttribute('aria-label')).toBe(
-      'Consultas médicas. Gestioná disponibilidad, reservas y confirmaciones de turno.',
+      'Consultas médicas. Gestione disponibilidad, reservas y confirmaciones de turno.',
     );
   });
 

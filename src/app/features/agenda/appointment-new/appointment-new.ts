@@ -422,7 +422,7 @@ export class AppointmentNew {
     const donde = porVideo
       ? ' Va por videollamada.'
       : aDomicilio
-        ? ' Vas a su domicilio.'
+        ? ' Va a su domicilio.'
         : '';
     // Con un paciente nuevo pasan dos cosas y no una, así que se dicen las dos.
     // «Le avisamos al paciente» sería mentira acá: todavía no tiene cuenta por
@@ -660,7 +660,7 @@ export class AppointmentNew {
           this.guardando.set(false);
           if (error instanceof HttpErrorResponse && error.status === 409) {
             this.error.set(
-              'Ese documento ya está registrado. Buscalo arriba por su cédula y agendale el turno.',
+              'Ese documento ya está registrado. Búsquelo arriba por su cédula y agendale el turno.',
             );
             return;
           }

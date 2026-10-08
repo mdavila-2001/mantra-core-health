@@ -1,13 +1,13 @@
 <app-page-header
   title="Activos y pasivos"
-  subtitle="Tus activos fijos y tus deudas, con su avance y su automatización."
+  subtitle="Sus activos fijos y sus deudas, con su avance y su automatización."
 />
 
 <app-form-field icon="building" label="Práctica" hint="Los activos y pasivos que se muestran son los de esta práctica">
   <app-select
     [options]="opcionesDePractica()"
     [(value)]="practicaElegida"
-    placeholder="Elegí una práctica"
+    placeholder="Elija una práctica"
   />
 </app-form-field>
 
@@ -45,18 +45,18 @@
               <app-select
                 [options]="opcionesDeCuenta()"
                 [(value)]="cuentaDeGastoDepreciacion"
-                placeholder="Elegí una cuenta"
+                placeholder="Elija una cuenta"
               />
             </app-form-field>
             <app-form-field icon="billing" label="Cuenta de depreciación acumulada">
               <app-select
                 [options]="opcionesDeCuenta()"
                 [(value)]="cuentaDeDepreciacionAcumulada"
-                placeholder="Elegí una cuenta"
+                placeholder="Elija una cuenta"
               />
             </app-form-field>
             <p class="nota">
-              Se usan para cualquier activo en el que toques "Registrar avance" — elegilas una vez.
+              Se usan para cualquier activo en el que toque "Registrar avance" — elegilas una vez.
             </p>
           </div>
         </app-card>
@@ -74,7 +74,7 @@
               <p class="nota">{{ estado.message }}</p>
             }
             @case ('error') {
-              <app-alert tone="error">No pudimos cargar tus activos.</app-alert>
+              <app-alert tone="error">No pudimos cargar sus activos.</app-alert>
             }
             @case ('ready') {
               <ul class="lista-de-items">
@@ -145,18 +145,18 @@
             <app-select
               [options]="opcionesDeCuenta()"
               [(value)]="cuentaDeBanco"
-              placeholder="Elegí una cuenta"
+              placeholder="Elija una cuenta"
             />
           </app-form-field>
           <app-form-field icon="billing" label="Cuenta de gasto por interés">
             <app-select
               [options]="opcionesDeCuenta()"
               [(value)]="cuentaDeGastoPorInteres"
-              placeholder="Elegí una cuenta"
+              placeholder="Elija una cuenta"
             />
           </app-form-field>
           <p class="nota">
-            Se usan para cualquier pasivo en el que toques "Registrar avance" — elegilas una vez.
+            Se usan para cualquier pasivo en el que toque "Registrar avance" — elegilas una vez.
           </p>
         </app-card>
         @if (errorDeAvanceDePasivo(); as mensaje) {
@@ -173,7 +173,7 @@
               <p class="nota">{{ estado.message }}</p>
             }
             @case ('error') {
-              <app-alert tone="error">No pudimos cargar tus pasivos.</app-alert>
+              <app-alert tone="error">No pudimos cargar sus pasivos.</app-alert>
             }
             @case ('ready') {
               <ul class="lista-de-items">

@@ -112,7 +112,7 @@ export class ActorEvaluation {
   protected readonly veredicto = signal<ActorEvaluationResult | null>(null);
 
   protected readonly errorMessage = computed(() =>
-    errorMessageOf(this.state(), 'No tenés permiso para evaluar actores efectivos.'),
+    errorMessageOf(this.state(), 'No tiene permiso para evaluar actores efectivos.'),
   );
 
   /** El tono del veredicto; las palabras del template cargan el significado. */

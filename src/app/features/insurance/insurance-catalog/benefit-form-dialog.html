@@ -15,7 +15,7 @@
         [required]="true"
         [errorMessage]="
           serviceConceptId() === null && form.touched
-            ? 'Elegí el servicio que cubre la cláusula.'
+            ? 'Elija el servicio que cubre la cláusula.'
             : ''
         "
       >
@@ -23,7 +23,7 @@
           [(value)]="serviceConceptId"
           [options]="serviceOptions()"
           [loading]="searchingServices()"
-          placeholder="Buscá por nombre o código"
+          placeholder="Busque por nombre o código"
           emptyMessage="Ningún servicio del arancel coincide"
           (searched)="searchServices($event)"
         />
@@ -32,13 +32,13 @@
         label="Categoría"
         [required]="true"
         [errorMessage]="
-          categoryConceptId() === null && form.touched ? 'Seleccioná una categoría.' : ''
+          categoryConceptId() === null && form.touched ? 'Seleccione una categoría.' : ''
         "
       >
         <app-concept-select
           target="insurance.insurance_plan_benefits.benefit_category_concept_id"
           [(value)]="categoryConceptId"
-          placeholder="Seleccioná una categoría"
+          placeholder="Seleccione una categoría"
         />
       </app-form-field>
       <div class="insurance-form__columns">
@@ -70,7 +70,7 @@
         [required]="true"
         [errorMessage]="
           form.controls.coveragePercent.touched && form.controls.coveragePercent.invalid
-            ? 'Ingresá un porcentaje entre 0 y 100.'
+            ? 'Ingrese un porcentaje entre 0 y 100.'
             : ''
         "
       >
@@ -84,7 +84,7 @@
         label="Copago"
         [errorMessage]="
           form.controls.copayAmount.touched && form.controls.copayAmount.invalid
-            ? 'Ingresá un importe no negativo con hasta dos decimales.'
+            ? 'Ingrese un importe no negativo con hasta dos decimales.'
             : ''
         "
       >
@@ -94,7 +94,7 @@
         label="Deducible"
         [errorMessage]="
           form.controls.deductibleAmount.touched && form.controls.deductibleAmount.invalid
-            ? 'Ingresá un importe no negativo con hasta dos decimales.'
+            ? 'Ingrese un importe no negativo con hasta dos decimales.'
             : ''
         "
       >
@@ -108,7 +108,7 @@
         label="Tope anual"
         [errorMessage]="
           form.controls.annualLimitAmount.touched && form.controls.annualLimitAmount.invalid
-            ? 'Ingresá un importe no negativo con hasta dos decimales.'
+            ? 'Ingrese un importe no negativo con hasta dos decimales.'
             : ''
         "
       >

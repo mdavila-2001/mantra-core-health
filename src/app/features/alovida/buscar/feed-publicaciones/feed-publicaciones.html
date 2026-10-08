@@ -62,7 +62,7 @@
           </button>
         </p>
       } @else {
-        <p class="feed__fin caption">Llegaste al final de lo publicado.</p>
+        <p class="feed__fin caption">Llegó al final de lo publicado.</p>
       }
     }
 
@@ -74,7 +74,7 @@
         <h2>Todavía no hay publicaciones</h2>
         <p>
           Cuando los profesionales empiecen a publicar, lo último va a aparecer acá. Mientras tanto,
-          podés buscarlos por nombre o especialidad.
+          puede buscarlos por nombre o especialidad.
         </p>
         <a app-button data-variante="secundario" routerLink="/search/practitioners"
           >Ver profesionales</a
@@ -97,7 +97,7 @@
           <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4.5 21 19.5H3z"></path><path d="M12 10v4"></path><circle cx="12" cy="17" r=".9" fill="currentColor" stroke="none"></circle></svg>
           <div class="app-alert__cuerpo">
             <strong>No pudimos cargar las publicaciones.</strong>
-            <p>El directorio no respondió a tiempo. Volvé a intentarlo en un momento.</p>
+            <p>El directorio no respondió a tiempo. Vuelva a intentarlo en un momento.</p>
           </div>
         </div>
         <div style="margin-top: var(--e5)">
@@ -112,7 +112,7 @@
   </div>
 
   @if (conSesion()) {
-    <aside class="red__derecha" aria-label="Tu perfil">
+    <aside class="red__derecha" aria-label="Su perfil">
       <app-feed-perfil-mini [perfil]="perfil()" [resuelto]="perfilResuelto()" [detalle]="detalle()" />
     </aside>
   }

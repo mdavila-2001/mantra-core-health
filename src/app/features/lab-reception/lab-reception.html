@@ -1,6 +1,6 @@
 <app-page-header
   title="Recepción de muestras"
-  subtitle="Las órdenes que te derivaron y todavía no tienen accesión: recibí la muestra y registrala."
+  subtitle="Las órdenes que le derivaron y todavía no tienen accesión: reciba la muestra y regístrela."
   [breadcrumbs]="breadcrumbs()"
 />
 
@@ -193,7 +193,7 @@
           [options]="specimenTypeOptions()"
           [disabled]="catalogsLoading()"
           [hasError]="specimenTypeError() !== ''"
-          placeholder="Elegí el tipo de muestra"
+          placeholder="Elija el tipo de muestra"
         />
       </app-form-field>
 
@@ -210,7 +210,7 @@
           [options]="containerTypeOptions()"
           [disabled]="catalogsLoading()"
           [hasError]="containerTypeError() !== ''"
-          placeholder="Elegí el tubo o frasco"
+          placeholder="Elija el tubo o frasco"
         />
       </app-form-field>
 

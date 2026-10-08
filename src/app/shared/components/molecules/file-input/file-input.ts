@@ -99,15 +99,15 @@ export class FileInput {
 
   protected readonly textoDeArrastre = computed(() => {
     if (this.isDragging()) {
-      return this.multiple() ? 'Soltá los archivos acá' : 'Soltá el archivo acá';
+      return this.multiple() ? 'Suelte los archivos acá' : 'Suelte el archivo acá';
     }
-    return this.multiple() ? 'Arrastrá uno o varios archivos acá' : 'Arrastrá tu archivo acá';
+    return this.multiple() ? 'Arrastre uno o varios archivos acá' : 'Arrastre su archivo acá';
   });
 
   protected readonly textoSecundario = computed(() =>
     this.multiple()
-      ? 'o seleccioná archivos desde tu dispositivo'
-      : 'o seleccioná desde tu dispositivo',
+      ? 'o seleccione archivos desde su dispositivo'
+      : 'o seleccione desde su dispositivo',
   );
 
   /**
@@ -217,7 +217,7 @@ export class FileInput {
           tipo: 'Formato no permitido.',
           tamaño: `Supera el límite de ${this.formatFileSize(this.maxSizeBytes() ?? 0)}.`,
           duplicado: 'Este archivo ya está adjunto.',
-          cupo: 'Alcanzaste el máximo de archivos.',
+          cupo: 'Alcanzó el máximo de archivos.',
         };
         return `${file.name}: ${messages[reason]}`;
       }),

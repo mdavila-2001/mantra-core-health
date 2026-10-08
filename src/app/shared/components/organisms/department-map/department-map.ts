@@ -125,7 +125,7 @@ export class DepartmentMap {
   readonly value = model<string | null>(null);
 
   /** Nombre accesible del mapa entero. */
-  readonly etiqueta = input('Mapa de Bolivia: elegí tu departamento');
+  readonly etiqueta = input('Mapa de Bolivia: elija su departamento');
 
   /** Prefijo del `data-testid` de cada departamento; el sufijo es la sigla. */
   readonly testId = input('department-map');

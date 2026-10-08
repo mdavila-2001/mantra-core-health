@@ -54,7 +54,7 @@ const FORMATO = new Intl.DateTimeFormat('es-BO', {
     @if (encounterId() === null) {
       <app-alert
         tone="info"
-        title="Abrí el encuentro primero"
+        title="Abra el encuentro primero"
         data-testid="respuesta-sin-encuentro"
       >
         Lo que se emite en la cita cuelga de la respuesta del formulario médico, y esa respuesta es
@@ -68,12 +68,12 @@ const FORMATO = new Intl.DateTimeFormat('es-BO', {
         title="No pudimos traer la respuesta del formulario"
         data-testid="respuesta-error"
       >
-        Sin saber a qué respuesta pertenece no se puede emitir. Cerrá y volvé a abrir para
+        Sin saber a qué respuesta pertenece no se puede emitir. Cierre y vuelva a abrir para
         reintentar.
       </app-alert>
     } @else if (respuestas().length === 0) {
       <app-alert tone="warning" title="Falta el formulario médico" data-testid="respuesta-falta">
-        Completá primero el «Formulario médico» de esta cita. Todo lo que se emite queda asociado a
+        Complete primero el «Formulario médico» de esta cita. Todo lo que se emite queda asociado a
         esa respuesta.
       </app-alert>
     } @else {
@@ -84,7 +84,7 @@ const FORMATO = new Intl.DateTimeFormat('es-BO', {
         [hint]="
           respuestas().length === 1
             ? 'La única respuesta de esta cita; queda asociada sola.'
-            : 'Hay más de una respuesta en esta cita: elegí de cuál sale.'
+            : 'Hay más de una respuesta en esta cita: elija de cuál sale.'
         "
       >
         <app-select

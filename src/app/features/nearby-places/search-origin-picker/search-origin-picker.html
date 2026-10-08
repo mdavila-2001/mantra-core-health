@@ -1,7 +1,7 @@
 <div class="origen" data-testid="search-origin-picker">
   @if (places() === null) {
     <p class="origen__nota" role="status" data-testid="search-origin-status">
-      Buscando tus lugares guardados…
+      Buscando sus lugares guardados…
     </p>
   } @else if (hasSavedPlace()) {
     <app-segmented-control
@@ -12,12 +12,12 @@
     />
     @if (locating()) {
       <p class="origen__nota" role="status" data-testid="search-origin-status">
-        Buscando tu ubicación actual…
+        Buscando su ubicación actual…
       </p>
     }
     @if (denied()) {
       <app-alert tone="warning" data-testid="search-origin-status">
-        No pudimos usar tu ubicación actual. La búsqueda sigue desde el punto que ya estaba elegido.
+        No pudimos usar su ubicación actual. La búsqueda sigue desde el punto que ya estaba elegido.
         <button app-button variant="ghost" size="sm" type="button" (clicked)="useCurrentLocation()">
           Reintentar
         </button>
@@ -36,13 +36,13 @@
         Usar mi ubicación actual
       </button>
       <p class="origen__nota">
-        Guardá tu casa en
+        Guarde su casa en
         <a app-link routerLink="/my-account/profile/edit" data-testid="search-origin-profile-link">Mi perfil</a>
         para buscar desde ahí sin usar el GPS.
       </p>
       @if (denied()) {
         <p class="origen__nota" role="status" data-testid="search-origin-status">
-          No pudimos usar tu ubicación. Revisá el permiso de ubicación del navegador y volvé a
+          No pudimos usar su ubicación. Revise el permiso de ubicación del navegador y vuelva a
           intentar.
         </p>
       }

@@ -246,7 +246,7 @@ describe('WalkInForm', () => {
     http.expectOne('/scheduling/appointments/direct').flush(
       {
         code: 'CONFLICT',
-        message: 'Ya tenés una consulta a las 10:00 en Consultorio Centro.',
+        message: 'Ya tiene una consulta a las 10:00 en Consultorio Centro.',
       },
       { status: 422, statusText: 'Unprocessable Entity' },
     );

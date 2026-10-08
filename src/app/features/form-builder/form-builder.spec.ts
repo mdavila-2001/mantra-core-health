@@ -409,9 +409,9 @@ describe('FormBuilder', () => {
     // y lo que evita que una relectura pise lo que se está escribiendo.
     abrirPlantilla({ ...PLANTILLA, fields: [ELECCION] });
 
-    guardar(ELECCION, { name: '¿Fumás?' });
+    guardar(ELECCION, { name: '¿Fuma?' });
 
-    expect(campoPropio()['name']).toBe('¿Fumás?');
+    expect(campoPropio()['name']).toBe('¿Fuma?');
     http.expectOne((r) => r.method === 'PATCH').flush({ ok: true });
   });
 
@@ -500,10 +500,10 @@ describe('FormBuilder', () => {
   it('la descripción se sirve como la ayuda bajo el campo', () => {
     abrirPlantilla({
       ...PLANTILLA,
-      fields: [{ ...ELECCION, description: 'Contá desde el último cigarrillo.' }],
+      fields: [{ ...ELECCION, description: 'Cuente desde el último cigarrillo.' }],
     });
 
-    expect(camposDeLaPrevia()[0]!['hint']).toBe('Contá desde el último cigarrillo.');
+    expect(camposDeLaPrevia()[0]!['hint']).toBe('Cuente desde el último cigarrillo.');
   });
 
   it('con «Otro» se sirve a la vista aunque tenga muchas opciones: un desplegable no tiene dónde escribir', () => {
@@ -656,7 +656,7 @@ describe('FormBuilder', () => {
     abrirPlantilla();
 
     const aviso = harness.routeNativeElement?.querySelector('[data-testid="aviso-estandar"]');
-    expect(aviso?.textContent).toContain('No podés modificar esto');
+    expect(aviso?.textContent).toContain('No puede modificar esto');
     expect(interno<() => unknown>('procedencia')()).toBeNull();
   });
 

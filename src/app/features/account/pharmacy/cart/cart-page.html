@@ -1,4 +1,4 @@
-<app-page-header title="Tu carrito" subtitle="Revisá las líneas antes de continuar." [breadcrumbs]="breadcrumbs()" />
+<app-page-header title="Su carrito" subtitle="Revise las líneas antes de continuar." [breadcrumbs]="breadcrumbs()" />
 
 @if (cart(); as carrito) {
   <div class="cart-page" data-testid="pharmacy-cart-page">
@@ -104,8 +104,8 @@
 } @else {
   <app-empty-state
     variant="empty"
-    title="Tu carrito está vacío"
-    description="Agregá medicamentos desde la tienda de una farmacia para armar tu pedido."
+    title="Su carrito está vacío"
+    description="Agregue medicamentos desde la tienda de una farmacia para armar su pedido."
   >
     <a app-button empty-actions variant="primary" [routerLink]="pharmacyRoute">Ir a la tienda</a>
   </app-empty-state>

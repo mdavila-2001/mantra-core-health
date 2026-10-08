@@ -35,9 +35,9 @@ import { LocationPicker } from '../../../../../auth/registro-compartido/location
         [ramas]="ramas()"
         [value]="municipioId()"
         [punto]="punto()"
-        mapLabel="Mapa de Bolivia con el departamento y el municipio donde vivís"
+        mapLabel="Mapa de Bolivia con el departamento y el municipio donde vive"
         municipalityLabel="Localidad de residencia"
-        municipalityHint="Para cambiarla, entrá a «Editar perfil»."
+        municipalityHint="Para cambiarla, entre a «Editar perfil»."
       />
     }
   `,

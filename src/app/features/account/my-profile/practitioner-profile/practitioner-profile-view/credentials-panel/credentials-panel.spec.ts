@@ -194,6 +194,6 @@ describe('CredentialsPanel', () => {
 
     expect(
       (fixture.nativeElement as HTMLElement).querySelector('.credenciales__vacio')?.textContent,
-    ).toContain('Todavía no cargaste credenciales');
+    ).toContain('Todavía no cargó credenciales');
   });
 });

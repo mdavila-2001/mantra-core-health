@@ -165,13 +165,13 @@ const FECHA = /^\d{4}-\d{2}-\d{2}$/u;
 
 function problemaDeImporte(amount: string | undefined): string | null {
   if (amount === undefined || !IMPORTE.test(amount))
-    return 'Escribí un monto, con hasta dos decimales.';
+    return 'Escriba un monto, con hasta dos decimales.';
   if (Number(amount) <= 0) return 'El monto tiene que ser mayor a cero.';
   return null;
 }
 
 function problemaDeFecha(date: string | undefined): string | null {
-  return date === undefined || !FECHA.test(date) ? 'Elegí la fecha.' : null;
+  return date === undefined || !FECHA.test(date) ? 'Elija la fecha.' : null;
 }
 
 function cuentasDe(practiceId: string | null): CuentaSimulada[] {
@@ -268,14 +268,14 @@ export function registrarContabilidadSimple(router: MockRouter): void {
     const nombre = datos.name?.trim() ?? '';
     const clase = datos.accountClass;
     if (nombre === '' || nombre.length > 80)
-      return validation('Escribí un nombre de hasta 80 caracteres.');
+      return validation('Escriba un nombre de hasta 80 caracteres.');
     if (clase === undefined || !(clase in PREFIJO))
-      return validation('Elegí la clase de la cuenta.');
+      return validation('Elija la clase de la cuenta.');
     const practica = datos.practiceId ?? PRACTICA;
     const repetida = cuentasDe(practica).some(
       (c) => c.accountClass === clase && sinTilde(c.name) === sinTilde(nombre),
     );
-    if (repetida) return conflict('Ya tenés una cuenta con ese nombre en esa clase.');
+    if (repetida) return conflict('Ya tiene una cuenta con ese nombre en esa clase.');
     const nueva = cuentas.agregar({
       id: nuevoId('simple-account'),
       code: siguienteCodigo(clase),
@@ -293,7 +293,7 @@ export function registrarContabilidadSimple(router: MockRouter): void {
     const datos = cuerpo<{ name: string; accountClass: Clase }>(request);
     const nombre = datos.name?.trim() ?? '';
     if (nombre === '' || nombre.length > 80)
-      return validation('Escribí un nombre de hasta 80 caracteres.');
+      return validation('Escriba un nombre de hasta 80 caracteres.');
     const clase = datos.accountClass ?? actual.accountClass;
     if (clase !== actual.accountClass && (actual.seeded || usos(actual.id) > 0)) {
       return conflict('No se puede cambiar la clase de una cuenta general o que ya se usa.');
@@ -302,7 +302,7 @@ export function registrarContabilidadSimple(router: MockRouter): void {
       (c) =>
         c.id !== actual.id && c.accountClass === clase && sinTilde(c.name) === sinTilde(nombre),
     );
-    if (repetida) return conflict('Ya tenés una cuenta con ese nombre en esa clase.');
+    if (repetida) return conflict('Ya tiene una cuenta con ese nombre en esa clase.');
     return aCuenta(cuentas.actualizar(actual.id, { name: nombre, accountClass: clase })!);
   });
 
@@ -326,11 +326,11 @@ export function registrarContabilidadSimple(router: MockRouter): void {
     if (datos.kind === undefined || !(datos.kind in CLASE_DEL_REGISTRO))
       return 'Falta qué es: gasto, activo o deuda.';
     const cuenta = datos.accountId === undefined ? undefined : cuentas.get(datos.accountId);
-    if (cuenta === undefined) return 'Elegí el tipo.';
+    if (cuenta === undefined) return 'Elija el tipo.';
     if (cuenta.accountClass !== CLASE_DEL_REGISTRO[datos.kind]) return 'Ese tipo no corresponde.';
     const descripcion = datos.description?.trim() ?? '';
     if (descripcion === '' || descripcion.length > 160)
-      return 'Escribí una descripción de hasta 160 caracteres.';
+      return 'Escriba una descripción de hasta 160 caracteres.';
     return problemaDeFecha(datos.date) ?? problemaDeImporte(datos.amount);
   }
 
@@ -386,11 +386,11 @@ export function registrarContabilidadSimple(router: MockRouter): void {
   function problemaDeTransaccion(datos: Partial<Omit<TransaccionSimulada, 'id'>>): string | null {
     const descripcion = datos.description?.trim() ?? '';
     if (descripcion === '' || descripcion.length > 160)
-      return 'Escribí una descripción de hasta 160 caracteres.';
+      return 'Escriba una descripción de hasta 160 caracteres.';
     if (datos.debitAccountId === undefined || !cuentas.has(datos.debitAccountId))
-      return 'Elegí la cuenta del debe.';
+      return 'Elija la cuenta del debe.';
     if (datos.creditAccountId === undefined || !cuentas.has(datos.creditAccountId))
-      return 'Elegí la cuenta del haber.';
+      return 'Elija la cuenta del haber.';
     if (datos.debitAccountId === datos.creditAccountId)
       return 'El debe y el haber tienen que ser cuentas distintas.';
     return problemaDeFecha(datos.date) ?? problemaDeImporte(datos.amount);

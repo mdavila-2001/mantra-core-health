@@ -78,14 +78,14 @@ describe('paginarCampos', () => {
 
     it('la ayuda de la sección viaja a todas sus páginas', () => {
       const paginas = paginarCampos([
-        { titulo: 'Habilitación', hint: 'Tal como figura en tu matrícula.', campos: campos(5) },
+        { titulo: 'Habilitación', hint: 'Tal como figura en su matrícula.', campos: campos(5) },
       ]);
 
       // Quien llega a la segunda página no vio la primera hace un rato: una
       // explicación que sólo sale en el primer trozo es una que la mitad no lee.
       expect(paginas.map((pagina) => pagina.hint)).toEqual([
-        'Tal como figura en tu matrícula.',
-        'Tal como figura en tu matrícula.',
+        'Tal como figura en su matrícula.',
+        'Tal como figura en su matrícula.',
       ]);
     });
 
@@ -118,9 +118,9 @@ describe('paginarCampos', () => {
     });
 
     it('una lista suelta de campos toma el título que se le dé', () => {
-      const [pagina] = paginarCampos(campos(2), { tituloPorDefecto: 'Tus datos' });
+      const [pagina] = paginarCampos(campos(2), { tituloPorDefecto: 'Sus datos' });
 
-      expect(pagina.titulo).toBe('Tus datos');
+      expect(pagina.titulo).toBe('Sus datos');
     });
   });
 

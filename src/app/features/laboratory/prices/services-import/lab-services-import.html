@@ -1,6 +1,6 @@
 <app-content-dialog
   heading="Importar análisis desde un CSV"
-  description="Tu lista de análisis y precios de una vez. Revisamos el archivo antes de cargar nada."
+  description="Su lista de análisis y precios de una vez. Revisamos el archivo antes de cargar nada."
   size="xl"
   [dismissible]="!pending()"
   data-testid="lab-import-dialog"
@@ -31,10 +31,10 @@
 
         @if (r.rejected > 0) {
           <app-alert tone="warning" title="Algunas filas no entraron">
-            Corregilas en tu planilla y volvé a subir el archivo: las que ya entraron quedan sin cambios.
+            Corregilas en su planilla y vuelva a subir el archivo: las que ya entraron quedan sin cambios.
           </app-alert>
         } @else {
-          <app-alert tone="success" title="Tu catálogo quedó al día">
+          <app-alert tone="success" title="Su catálogo quedó al día">
             Los análisis nuevos ya aparecen en la lista de precios al cerrar.
           </app-alert>
         }
@@ -55,7 +55,7 @@
           <!-- Paso 1 · qué columnas lee y la plantilla. -->
           <div class="import__template">
             <p class="import__note">
-              Bajá la plantilla, llenala en Excel o Google Sheets y guardala como <strong>CSV</strong>.
+              Baje la plantilla, llénela en Excel o Google Sheets y guárdela como <strong>CSV</strong>.
               Hasta {{ maxRows }} análisis por archivo. Si un código ya existe, se actualiza.
             </p>
             <button

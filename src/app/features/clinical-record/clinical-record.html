@@ -1,6 +1,6 @@
 <app-page-header
   title="Archivo clínico"
-  subtitle="Elegí a la persona cuyo expediente querés consultar."
+  subtitle="Elija a la persona cuyo expediente quiere consultar."
   [breadcrumbs]="breadcrumbs()"
 />
 
@@ -27,7 +27,7 @@
       <app-form-field
         icon="patients"
         label="Nombre o código"
-        hint="Filtra la lista mientras escribís."
+        hint="Filtra la lista mientras escribe."
         (keydown.enter)="$event.preventDefault()"
       >
         <app-search-field

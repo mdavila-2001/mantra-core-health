@@ -174,7 +174,7 @@ export class AccessRequestResolution {
   protected readonly esAprobacion = computed(() => this.decidido() === 'APPROVED');
 
   protected readonly errorMessage = computed(() =>
-    errorMessageOf(this.state(), 'No tenés permiso para resolver solicitudes de acceso.'),
+    errorMessageOf(this.state(), 'No tiene permiso para resolver solicitudes de acceso.'),
   );
 
   protected submit(): void {

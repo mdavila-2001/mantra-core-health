@@ -78,7 +78,7 @@ test.describe('Carril C6 · mi historia clínica con diagnósticos y encuentros'
       await expect(page.getByTestId('historia-activas')).toBeVisible();
       await expect(page.getByTestId('historia-historicos')).toBeVisible();
     } else {
-      await expect(page.getByText('Todavía no tenés diagnósticos registrados')).toBeVisible();
+      await expect(page.getByText('Todavía no tiene diagnósticos registrados')).toBeVisible();
     }
   });
 
@@ -163,7 +163,7 @@ test.describe('Carril C6 · mi historia clínica con diagnósticos y encuentros'
     }
   });
 
-  test('«Descargar tu historia» entrega un PDF', async ({ page }) => {
+  test('«Descargar su historia» entrega un PDF', async ({ page }) => {
     await abrirMiHistoria(page);
 
     const descarga = page.waitForEvent('download');

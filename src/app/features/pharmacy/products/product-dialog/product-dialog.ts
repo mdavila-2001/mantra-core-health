@@ -206,7 +206,7 @@ export class ProductDialog implements OnInit {
     const chosen = this.selectedProduct();
     if (chosen === null) return [];
     return [
-      { value: '', label: 'Elegí la presentación que vendés' },
+      { value: '', label: 'Elija la presentación que vende' },
       ...sellablePresentations(chosen).map((p) => ({ value: p.code!, label: p.name })),
     ];
   });
@@ -232,7 +232,7 @@ export class ProductDialog implements OnInit {
 
   protected readonly statusOptions = computed<readonly SelectOption<string>[]>(() => [
     { value: 'PUBLISHED', label: 'Publicado — lo ven los pacientes' },
-    { value: 'DRAFT', label: 'Borrador — sólo lo ves vos' },
+    { value: 'DRAFT', label: 'Borrador — sólo lo ve usted' },
     ...(this.isEditing() ? [{ value: 'WITHDRAWN', label: 'Retirado — ya no se vende' }] : []),
   ]);
 
@@ -259,7 +259,7 @@ export class ProductDialog implements OnInit {
     }
     return this.dialogs.confirm({
       title: '¿Descartar los cambios?',
-      message: 'Escribiste cosas que todavía no guardaste. Si cerrás ahora se pierden.',
+      message: 'Escribió cosas que todavía no guardó. Si cierra ahora se pierden.',
       confirmLabel: 'Descartar',
       destructive: true,
     });
@@ -348,7 +348,7 @@ export class ProductDialog implements OnInit {
     if (this.sendingRequest()) return;
     const fields = this.requestFields();
     if (fields.name.trim().length < 2) {
-      this.requestError.set('Escribí el nombre del medicamento (al menos 2 letras).');
+      this.requestError.set('Escriba el nombre del medicamento (al menos 2 letras).');
       return;
     }
     this.requestError.set(null);
@@ -367,7 +367,7 @@ export class ProductDialog implements OnInit {
           this.sendingRequest.set(false);
           this.requestFields.set(REQUEST_VACIA);
           this.requestOpen.set(false);
-          this.toasts.success('Pedimos incorporar el medicamento al catálogo. Te avisamos cuando esté.');
+          this.toasts.success('Pedimos incorporar el medicamento al catálogo. Le avisamos cuando esté.');
         },
         error: (error: unknown) => {
           this.sendingRequest.set(false);
@@ -439,8 +439,8 @@ export class ProductDialog implements OnInit {
         this.saving.set(false);
         this.toasts.success(
           editing === null
-            ? `«${this.selectedProduct()?.display ?? review.borrador.brandName ?? review.borrador.genericName ?? review.borrador.productCode}» ya está en tu catálogo.`
-            : 'Guardaste los cambios del producto.',
+            ? `«${this.selectedProduct()?.display ?? review.borrador.brandName ?? review.borrador.genericName ?? review.borrador.productCode}» ya está en su catálogo.`
+            : 'Guardó los cambios del producto.',
         );
         this.saved.emit();
         this.dialog().close(true);
@@ -464,14 +464,14 @@ export class ProductDialog implements OnInit {
     const chosen = this.selectedProduct();
     if (chosen === null) {
       this.errors.set([
-        'Elegí el medicamento del catálogo oficial. Si no aparece, pedí que lo incorporen.',
+        'Elija el medicamento del catálogo oficial. Si no aparece, pida que lo incorporen.',
       ]);
       this.tab.set(0);
       return 'missing';
     }
     const code = this.presentationCode();
     if (code === '' && sellablePresentations(chosen).length > 1) {
-      this.errors.set(['Elegí la presentación que vendés: el catálogo trae más de una.']);
+      this.errors.set(['Elija la presentación que vende: el catálogo trae más de una.']);
       this.tab.set(0);
       return 'missing';
     }

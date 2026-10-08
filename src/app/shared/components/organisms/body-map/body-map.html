@@ -132,7 +132,7 @@
       @if (nombreElegido(); as nombre) {
         Zona elegida: <strong>{{ nombre }}</strong>
       } @else {
-        Tocá una parte del cuerpo.
+        Toque una parte del cuerpo.
       }
     </p>
 
@@ -142,7 +142,7 @@
     @if (nombresMarcados(); as marcados) {
       <p class="body-map__marcadas" aria-live="polite" [attr.data-testid]="testId() + '-marcadas'">
         <span class="body-map__marca" aria-hidden="true"></span>
-        Por lo que contaste: <strong>{{ marcados }}</strong>
+        Por lo que contó: <strong>{{ marcados }}</strong>
       </p>
     }
   </div>

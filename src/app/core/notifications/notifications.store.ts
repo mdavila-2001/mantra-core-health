@@ -184,7 +184,7 @@ export class NotificationsStore {
         this.cargando.set(false);
         // No se vacía lo que ya había: un tic fallido no es motivo para
         // borrarle a alguien los avisos que estaba leyendo.
-        this.error.set('No pudimos actualizar tus notificaciones.');
+        this.error.set('No pudimos actualizar sus notificaciones.');
       },
     });
 
@@ -247,7 +247,7 @@ export class NotificationsStore {
   marcarTodasLeidas(): void {
     this.notifications.markAllRead().subscribe({
       next: () => this.refrescar(),
-      error: () => this.error.set('No pudimos marcar tus notificaciones.'),
+      error: () => this.error.set('No pudimos marcar sus notificaciones.'),
     });
   }
 
@@ -319,7 +319,7 @@ function deCommunity(aviso: {
     id: aviso.id,
     fuente: 'community',
     categoria: 'SOCIAL',
-    titulo: aviso.previewText ?? 'Novedad en tu perfil',
+    titulo: aviso.previewText ?? 'Novedad en su perfil',
     // Al muro, que es donde vive lo social. No al objeto concreto: el aviso
     // trae `sourceRefId` con el id de una publicación o un comentario, y el
     // muro no tiene todavía pantalla de publicación suelta.

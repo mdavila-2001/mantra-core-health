@@ -53,7 +53,7 @@ test.describe('Auditoría Técnica y Suite de Pruebas: Flujo Mockup', () => {
 
     // El motor bloquea la transición de página: permanece en paso 1
     const tituloPaso = page.locator('.paginated-form__titulo');
-    await expect(tituloPaso).toHaveText('¿Cómo te llamás?');
+    await expect(tituloPaso).toHaveText('¿Cómo se llama?');
 
     await page.screenshot({ path: path.join(EVIDENCE_DIR, 'tc02-edge-paciente-vacios.png') });
   });
@@ -68,26 +68,26 @@ test.describe('Auditoría Técnica y Suite de Pruebas: Flujo Mockup', () => {
     await page.screenshot({ path: path.join(EVIDENCE_DIR, 'tc03-paso4-contactos.png') });
 
     // Paso 5: Residencia y mapa
-    await avanzarHasta(page, '¿Dónde vivís?');
+    await avanzarHasta(page, '¿Dónde vive?');
     await elegirLocalidadDeResidencia(page);
     await page.screenshot({ path: path.join(EVIDENCE_DIR, 'tc03-paso5-residencia-mapa.png') });
 
     // Paso 6: Trabajo (empresa)
-    await avanzarHasta(page, '¿Dónde trabajás?');
+    await avanzarHasta(page, '¿Dónde trabaja?');
     await page.screenshot({ path: path.join(EVIDENCE_DIR, 'tc03-paso6-trabajo.png') });
 
     // Paso 7: Lugar de trabajo
-    await avanzarHasta(page, 'El lugar donde trabajás');
+    await avanzarHasta(page, 'El lugar donde trabaja');
     await page.screenshot({ path: path.join(EVIDENCE_DIR, 'tc03-paso7-lugar-trabajo.png') });
 
     // Paso 8: Cuenta de acceso
-    await avanzarHasta(page, 'Tu acceso');
+    await avanzarHasta(page, 'Su acceso');
     await page.getByTestId('registro-correo').fill(emailPrueba);
     await page.getByTestId('registro-password').fill('P@ssword1234!');
     await page.screenshot({ path: path.join(EVIDENCE_DIR, 'tc03-paso8-cuenta.png') });
 
     // Paso 9: Seguro de salud
-    await avanzarHasta(page, 'Tu seguro de salud');
+    await avanzarHasta(page, 'Su seguro de salud');
     await page.screenshot({ path: path.join(EVIDENCE_DIR, 'tc03-paso9-seguro.png') });
 
     // Paso 10: Datos de facturación
@@ -111,11 +111,11 @@ test.describe('Auditoría Técnica y Suite de Pruebas: Flujo Mockup', () => {
 
   test('TC-04 [Edge Case] Formato Inválido de Correo y Clave Corta en Registro', async ({ page }) => {
     await empezarElAlta(page, '1234567');
-    await avanzarHasta(page, '¿Dónde vivís?');
+    await avanzarHasta(page, '¿Dónde vive?');
     await elegirLocalidadDeResidencia(page);
-    await avanzarHasta(page, '¿Dónde trabajás?');
-    await avanzarHasta(page, 'El lugar donde trabajás');
-    await avanzarHasta(page, 'Tu acceso');
+    await avanzarHasta(page, '¿Dónde trabaja?');
+    await avanzarHasta(page, 'El lugar donde trabaja');
+    await avanzarHasta(page, 'Su acceso');
 
     await page.getByTestId('registro-correo').fill('correo-sin-formato');
     await page.getByTestId('registro-password').fill('123');
@@ -125,7 +125,7 @@ test.describe('Auditoría Técnica y Suite de Pruebas: Flujo Mockup', () => {
 
     // No debe avanzar a la página de seguros
     const tituloPaso = page.locator('.paginated-form__titulo');
-    await expect(tituloPaso).toHaveText('Tu acceso');
+    await expect(tituloPaso).toHaveText('Su acceso');
 
     await page.screenshot({ path: path.join(EVIDENCE_DIR, 'tc04-edge-acceso-invalido.png') });
   });
@@ -134,14 +134,14 @@ test.describe('Auditoría Técnica y Suite de Pruebas: Flujo Mockup', () => {
     await page.goto('/auth/register/practitioner');
     await expect(page.getByTestId('registro-form-profesional')).toBeVisible();
 
-    await expect(page.locator('.paginated-form__titulo')).toHaveText('¿Cómo te llamás?');
+    await expect(page.locator('.paginated-form__titulo')).toHaveText('¿Cómo se llama?');
     await page.getByTestId('registro-pro-nombre').fill('Mariana');
     await page.getByTestId('registro-pro-apellido-paterno').fill('Justiniano');
 
     const btnContinuar = page.getByTestId('paginated-form-continuar');
     await btnContinuar.click();
 
-    await expect(page.locator('.paginated-form__titulo')).toHaveText('Tu documento de identidad');
+    await expect(page.locator('.paginated-form__titulo')).toHaveText('Su documento de identidad');
     await page.screenshot({ path: path.join(EVIDENCE_DIR, 'tc05-alta-medico-paso2.png') });
   });
 

@@ -62,7 +62,7 @@ describe('pedido-status', () => {
     expect(enviado.tone).toBe('info');
 
     const pendiente = toPedidoStatusPresentation('ACEPTACION_PENDIENTE');
-    expect(pendiente.label).toBe('Esperando tu decisión');
+    expect(pendiente.label).toBe('Esperando su decisión');
     expect(pendiente.tone).toBe('warning');
     expect(pendiente.descripcion).not.toContain('_');
   });
@@ -143,14 +143,14 @@ describe('pedido-status', () => {
   it('la decisión pendiente aparece como paso actual', () => {
     const pasos = pasosDeLaLineaDeTiempo(pedido('ACEPTACION_PENDIENTE', 1));
 
-    expect(pasos.map((p) => p.label)).toContain('Tu decisión');
-    expect(pasos.find((p) => p.label === 'Tu decisión')?.status).toBe('current');
+    expect(pasos.map((p) => p.label)).toContain('Su decisión');
+    expect(pasos.find((p) => p.label === 'Su decisión')?.status).toBe('current');
   });
 
   it('quien prefirió el original sigue derecho: la propuesta es historia, no etapa', () => {
     const pasos = pasosDeLaLineaDeTiempo(pedido('CONFIRMADO', 1));
 
-    expect(pasos.map((p) => p.label)).not.toContain('Tu decisión');
+    expect(pasos.map((p) => p.label)).not.toContain('Su decisión');
     expect(pasos.find((p) => p.label === 'En preparación')?.status).toBe('current');
   });
 
@@ -196,7 +196,7 @@ describe('pedido-status', () => {
     expect(pasos.every((p) => p.status === 'complete')).toBe(true);
   });
 
-  it('listo y pagado ya no dice «pagás al retirar» (FAR-I5)', () => {
+  it('listo y pagado ya no dice «paga al retirar» (FAR-I5)', () => {
     const pagadoListo: PedidoFarmacia = {
       ...pedido('LISTO_PARA_RETIRO'),
       pago: {
@@ -210,7 +210,7 @@ describe('pedido-status', () => {
     expect(presentacionDePedido(pagadoListo).descripcion).toContain('Ya está pagado');
     // Pendiente, la frase del mostrador de siempre.
     expect(presentacionDePedido(pedido('LISTO_PARA_RETIRO')).descripcion).toContain(
-      'Pagás al retirar',
+      'Paga al retirar',
     );
   });
 

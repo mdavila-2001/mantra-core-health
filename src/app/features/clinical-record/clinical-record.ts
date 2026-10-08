@@ -312,8 +312,8 @@ export class ClinicalRecord {
     if (documento === '' && texto === '') {
       this.resultados.set(
         empty(
-          { label: 'Escribí un nombre, un código o un documento arriba' },
-          'Buscá por nombre, código o documento para ver a una persona.',
+          { label: 'Escriba un nombre, un código o un documento arriba' },
+          'Busque por nombre, código o documento para ver a una persona.',
         ),
       );
       return;

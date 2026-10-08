@@ -216,7 +216,7 @@ describe('LaboratoryDirectory', () => {
         (fixture.nativeElement as HTMLElement)
           .querySelector('[data-testid="laboratorios-mapa-resumen"]')
           ?.textContent?.trim(),
-      ).toBe('1 en Santa Cruz. Tocá otra vez el departamento para ver todo el país.');
+      ).toBe('1 en Santa Cruz. Toque otra vez el departamento para ver todo el país.');
     });
 
     it('says so when the chosen department has no centres', () => {

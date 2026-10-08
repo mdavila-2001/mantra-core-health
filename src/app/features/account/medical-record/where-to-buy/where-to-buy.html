@@ -1,13 +1,13 @@
 <app-page-header
   title="Dónde conseguir lo de mi receta"
-  subtitle="Lo que te recetaron y lo que te pidieron, cerca tuyo: primero los lugares que tienen todo, con lo que falta dicho por su nombre."
+  subtitle="Lo que le recetaron y lo que le pidieron, cerca de usted: primero los lugares que tienen todo, con lo que falta dicho por su nombre."
 />
 
 @if (sinPerfilDePaciente) {
   <!-- Sesión válida de una cuenta que no es de un paciente. No es un 403: es
        que esta pantalla no le corresponde. -->
   <app-alert tone="info" title="Esta sección es para pacientes">
-    Tu cuenta no tiene un perfil de paciente, así que no hay una receta propia que comprar.
+    Su cuenta no tiene un perfil de paciente, así que no hay una receta propia que comprar.
   </app-alert>
 } @else {
   <!-- ─── Las tres pestañas ──────────────────────────────────────────────────
@@ -23,8 +23,8 @@
         <div class="compra">
           <!-- ─── Los renglones de la receta ─────────────────────────────────── -->
           <section class="compra__bloque" aria-labelledby="compra-receta">
-            <h2 id="compra-receta" class="compra__titulo">Qué vas a comprar</h2>
-            <p class="compra__nota">Destildá lo que no vayas a comprar ahora.</p>
+            <h2 id="compra-receta" class="compra__titulo">Qué va a comprar</h2>
+            <p class="compra__nota">Destilde lo que no vaya a comprar ahora.</p>
             <ul class="compra__items" data-testid="compra-items">
               @for (item of items(); track item.conceptId) {
                 <li class="compra__item">
@@ -49,7 +49,7 @@
                         @if (estaAprobado(item)) {
                           <app-badge variant="success">Aprobado por el seguro</app-badge>
                         } @else {
-                          <app-badge variant="secondary">A tu cargo</app-badge>
+                          <app-badge variant="secondary">A su cargo</app-badge>
                         }
                       </span>
                     }
@@ -77,9 +77,9 @@
               </p>
             } @else {
               <p class="compra__nota">
-                Las sucursales ya vienen ordenadas: primero las que tienen todo. Si además querés
-                verlas por cercanía, compartí tu ubicación — se usa una sola vez para calcular
-                distancias y no se guarda —, o medí desde una ciudad sin dar tu ubicación.
+                Las sucursales ya vienen ordenadas: primero las que tienen todo. Si además quiere
+                verlas por cercanía, comparta su ubicación — se usa una sola vez para calcular
+                distancias y no se guarda —, o mida desde una ciudad sin dar su ubicación.
               </p>
               <div class="compra__ubicacion-acciones">
                 @for (lugar of lugaresGuardados(); track lugar.etiqueta) {
@@ -89,11 +89,11 @@
                     size="sm"
                     type="button"
                     [attr.data-testid]="
-                      lugar.etiqueta === 'tu casa' ? 'where-to-buy-origin-home' : 'where-to-buy-origin-work'
+                      lugar.etiqueta === 'su casa' ? 'where-to-buy-origin-home' : 'where-to-buy-origin-work'
                     "
                     (clicked)="medirDesde(lugar)"
                   >
-                    {{ lugar.etiqueta === 'tu casa' ? 'Tu casa' : 'Tu trabajo' }}
+                    {{ lugar.etiqueta === 'su casa' ? 'Su casa' : 'Su trabajo' }}
                   </button>
                 }
                 <button
@@ -121,7 +121,7 @@
               </div>
               @if (ubicacionDenegada()) {
                 <p class="compra__nota" role="status">
-                  No pudimos leer tu ubicación. Podés medir desde una ciudad, o seguir sin
+                  No pudimos leer su ubicación. Puede medir desde una ciudad, o seguir sin
                   distancias: el orden por cobertura no cambia.
                 </p>
               }
@@ -155,7 +155,7 @@
                 />
                 <app-badge variant="info">{{ notaDeDemostracion }}</app-badge>
                 <span class="compra__secundario">
-                  Qué aprueba el seguro es un dato de ejemplo, no la respuesta de tu aseguradora.
+                  Qué aprueba el seguro es un dato de ejemplo, no la respuesta de su aseguradora.
                   Las sucursales, existencias y precios son los de la consulta.
                 </span>
               </div>
@@ -241,7 +241,7 @@
                               {{ sede.conSeguro.aprobado ?? 'no disponible, falta algún precio' }}
                             </span>
                             <span>
-                              A tu cargo:
+                              A su cargo:
                               {{ sede.conSeguro.aCargo ?? 'no disponible, falta algún precio' }}
                             </span>
                           </p>
@@ -360,8 +360,8 @@
          con ningún endpoint de hoy. Se dice, y se ofrece lo que sí hay. -->
     <app-tab label="Centros de imagenología">
       <app-empty-state
-        title="Todavía no podemos decirte cuál te queda más cerca"
-        description="Los centros de diagnóstico aún no publican su dirección, así que no hay forma de ordenarlos por cercanía ni de saber cuál tiene todos tus estudios juntos. Mientras tanto podés ver qué te pidieron y buscar un laboratorio a mano."
+        title="Todavía no podemos decirle cuál le queda más cerca"
+        description="Los centros de diagnóstico aún no publican su dirección, así que no hay forma de ordenarlos por cercanía ni de saber cuál tiene todos sus estudios juntos. Mientras tanto puede ver qué le pidieron y buscar un laboratorio a mano."
       >
         <a app-button variant="secondary" [routerLink]="rutaDeEstudios">Ver mis estudios pedidos</a>
         <a app-button variant="ghost" [routerLink]="rutaDeLaboratorios">Buscar un laboratorio</a>
@@ -377,7 +377,7 @@
     <app-tab label="Centros médicos">
       <app-empty-state
         title="Esta parte todavía no está"
-        description="Acá van a aparecer los centros donde te pueden hacer los procedimientos que te indicaron. Todavía no está definido de dónde salen esos procedimientos ni qué centros los declaran, así que preferimos no mostrarte una lista que no sea la tuya."
+        description="Acá van a aparecer los centros donde le pueden hacer los procedimientos que le indicaron. Todavía no está definido de dónde salen esos procedimientos ni qué centros los declaran, así que preferimos no mostrarle una lista que no sea la suya."
       >
         <a app-button variant="ghost" [routerLink]="rutaDeClinicas">Ver clínicas y hospitales</a>
       </app-empty-state>

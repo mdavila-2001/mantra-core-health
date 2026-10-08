@@ -289,7 +289,7 @@ export class Cotizaciones {
     // encontró» (S2, ADR-0005): lo pinta la pantalla con su propio vacío, no
     // el genérico del host («Todavía no hay nada acá»).
     return this.resultados().length === 0
-      ? empty({ label: 'Probá con otra palabra' }, 'No encontramos cotizaciones.')
+      ? empty({ label: 'Pruebe con otra palabra' }, 'No encontramos cotizaciones.')
       : ready(this.resultadosPaginados());
   });
 
@@ -356,7 +356,7 @@ export class Cotizaciones {
     // Sin origen la API de farmacias no calcula distancia: la falta es del
     // origen, no de la sede, y decirlo así es lo que deja saber qué hacer.
     if (fila.distanceKm === null && fila.vertical === 'MEDICAMENTOS' && this.origen() === null) {
-      return 'Elegí desde dónde medir';
+      return 'Elija desde dónde medir';
     }
     return fila.distanceKm === null
       ? (fila.sinDistancia ?? 'Sin distancia publicada')
@@ -386,7 +386,7 @@ export class Cotizaciones {
     if (resultado === 'conflict') {
       const confirmado = await this.dialogs.confirm({
         title: 'Vaciar y cambiar de farmacia',
-        message: `Tu carrito es de otra farmacia. Si seguís, se vacía y queda sólo ${carrito.linea.name} de ${carrito.sede.pharmacyName}.`,
+        message: `Su carrito es de otra farmacia. Si sigue, se vacía y queda sólo ${carrito.linea.name} de ${carrito.sede.pharmacyName}.`,
         confirmLabel: 'Vaciar y cambiar',
         cancelLabel: 'Dejarlo como está',
         destructive: true,
@@ -399,7 +399,7 @@ export class Cotizaciones {
     }
     if (resultado === 'added') {
       this.toast.success(
-        `${carrito.linea.name} quedó en tu carrito de ${carrito.sede.pharmacyName}.`,
+        `${carrito.linea.name} quedó en su carrito de ${carrito.sede.pharmacyName}.`,
         'Agregado al carrito',
       );
     }

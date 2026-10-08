@@ -3,11 +3,11 @@
      páginas pegadas. Por su ruta propia sigue teniéndolo. -->
 @if (!embebido()) {
   <app-page-header
-    title="Editar tus datos"
-    subtitle="Lo que nos contaste al registrarte. Corregilo cuando quieras."
+    title="Editar sus datos"
+    subtitle="Lo que nos contó al registrarse. Corríjalo cuando quiera."
     [breadcrumbs]="breadcrumbs()"
   >
-    <app-back-link page-actions [fallback]="rutaDeMiPerfil" label="Volver a tu perfil" />
+    <app-back-link page-actions [fallback]="rutaDeMiPerfil" label="Volver a su perfil" />
   </app-page-header>
 }
 
@@ -31,14 +31,14 @@
           <!-- Las cuatro partes del nombre por separado, como las guarda el
                modelo: el nombre que se muestra lo compone el backend con ellas. -->
           <section class="datos__seccion">
-            <h3 class="datos__titulo">Tu nombre</h3>
-            <p class="datos__nota">Como figura en tu documento de identidad.</p>
+            <h3 class="datos__titulo">Su nombre</h3>
+            <p class="datos__nota">Como figura en su documento de identidad.</p>
 
             <div class="datos__campos">
               <app-form-field
                 label="Nombre"
                 [required]="true"
-                [errorMessage]="nombreVacio() ? 'Ingresá tu nombre.' : ''"
+                [errorMessage]="nombreVacio() ? 'Ingrese su nombre.' : ''"
               >
                 <app-input
                   testId="perfil-nombre"
@@ -48,7 +48,7 @@
                 />
               </app-form-field>
 
-              <app-form-field label="Segundo nombre" hint="Si no llevás, dejalo vacío.">
+              <app-form-field label="Segundo nombre" hint="Si no lleva, déjelo vacío.">
                 <app-input
                   testId="perfil-segundo-nombre"
                   autocomplete="additional-name"
@@ -57,7 +57,7 @@
                 />
               </app-form-field>
 
-              <app-form-field label="Tercer nombre" hint="Si no llevás, dejalo vacío.">
+              <app-form-field label="Tercer nombre" hint="Si no lleva, déjelo vacío.">
                 <app-input
                   testId="perfil-tercer-nombre"
                   placeholder="María"
@@ -116,7 +116,7 @@
               <app-form-field
                 label="Apellido paterno"
                 [required]="true"
-                [errorMessage]="apellidoVacio() ? 'Ingresá tu apellido paterno.' : ''"
+                [errorMessage]="apellidoVacio() ? 'Ingrese su apellido paterno.' : ''"
               >
                 <app-input
                   testId="perfil-apellido-paterno"
@@ -126,7 +126,7 @@
                 />
               </app-form-field>
 
-              <app-form-field label="Apellido materno" hint="Si no llevás, dejalo vacío.">
+              <app-form-field label="Apellido materno" hint="Si no lleva, déjelo vacío.">
                 <app-input
                   testId="perfil-apellido-materno"
                   autocomplete="family-name"
@@ -140,8 +140,8 @@
           <!-- Datos con consecuencia clínica: cambian dosis, valores de
                referencia y tamizajes. -->
           <section class="datos__seccion">
-            <h3 class="datos__titulo">Sobre vos</h3>
-            <p class="datos__nota">Sirve para atenderte mejor. Todo esto es opcional.</p>
+            <h3 class="datos__titulo">Sobre usted</h3>
+            <p class="datos__nota">Sirve para atenderle mejor. Todo esto es opcional.</p>
 
             <div class="datos__campos">
               <app-form-field
@@ -165,13 +165,13 @@
                 label="Sexo"
                 [required]="true"
                 hint="Dato clínico: cambia las dosis, los valores de referencia y los tamizajes."
-                [errorMessage]="sexoVacio() ? 'Elegí una opción.' : ''"
+                [errorMessage]="sexoVacio() ? 'Elija una opción.' : ''"
               >
                 <app-select
                   data-testid="perfil-genero"
                   [options]="opcionesSexoAlNacer"
                   [(value)]="sexoAlNacer"
-                  placeholder="Elegí una opción"
+                  placeholder="Elija una opción"
                 />
               </app-form-field>
 
@@ -197,8 +197,8 @@
                   <app-reference-combobox
                     data-testid="perfil-ocupacion"
                     label="Ocupación"
-                    placeholder="Buscá tu profesión u oficio…"
-                    emptyMessage="Ninguna ocupación coincide. Podés dejarlo vacío."
+                    placeholder="Busque su profesión u oficio…"
+                    emptyMessage="Ninguna ocupación coincide. Puede dejarlo vacío."
                     [options]="ocupacionesFiltradas()"
                     [selected]="ocupacionElegida()"
                     [minQueryLength]="0"
@@ -208,8 +208,8 @@
                 </app-form-field>
                 @if (ocupacionEsOtra()) {
                   <app-form-field
-                    label="Especificá tu ocupación"
-                    hint="Escribí tu profesión u oficio como lo dirías vos."
+                    label="Especifique su ocupación"
+                    hint="Escriba su profesión u oficio como lo diría usted."
                   >
                     <app-input
                       testId="perfil-ocupacion-otra"
@@ -229,12 +229,12 @@
                código del INE, así que el par no puede llegar incoherente. -->
           <section class="datos__seccion">
             <h3 class="datos__titulo">Contacto</h3>
-            <p class="datos__nota">Cómo ubicarte y dónde vivís.</p>
+            <p class="datos__nota">Cómo ubicarle y dónde vive.</p>
 
             <div class="datos__campos">
               <app-form-field
                 label="Teléfono"
-                hint="Con el que podamos llamarte. Vaciarlo te deja sin teléfono."
+                hint="Con el que podamos llamarle. Vaciarlo le deja sin teléfono."
                 [errorMessage]="
                   telefonoMalEscrito() ? 'El número está incompleto para el país elegido.' : ''
                 "
@@ -251,7 +251,7 @@
               </app-form-field>
 
               @if (catalogoMunicipiosCaido()) {
-                <app-form-field label="¿Dónde vivís?">
+                <app-form-field label="¿Dónde vive?">
                   <p class="datos__aviso" data-testid="perfil-municipios-caidos">
                     No pudimos traer el catálogo de municipios.
                     <button app-button variant="ghost" size="sm" (clicked)="reintentarMunicipios()">
@@ -265,15 +265,15 @@
                      una casilla de texto: el valor es un concepto del catálogo,
                      y así lo que se elija se lee igual en la ficha. -->
                 <app-form-field
-                  label="¿Dónde vivís?"
-                  hint="Buscá tu municipio, o abrí tu departamento."
+                  label="¿Dónde vive?"
+                  hint="Busque su municipio, o abra su departamento."
                 >
                   <app-tree-select
                     data-testid="perfil-municipio"
                     [groups]="arbolMunicipios()"
                     [(value)]="municipio"
                     placeholder="Sin especificar"
-                    dialogTitle="¿Dónde vivís?"
+                    dialogTitle="¿Dónde vive?"
                     searchPlaceholder="Buscar municipio o departamento…"
                     emptyMessage="Ningún municipio coincide con esa búsqueda."
                   />
@@ -291,7 +291,7 @@
               <div class="datos__direccion">
                 <app-form-field
                   label="Domicilio"
-                  hint="Calle, número y zona. Vaciarlo lo quita de tu ficha."
+                  hint="Calle, número y zona. Vaciarlo lo quita de su ficha."
                 >
                   <app-input
                     data-testid="perfil-domicilio"
@@ -318,11 +318,11 @@
                      Es el MISMO bloque del alta, no una copia. -->
                 <app-ubicacion-picker
                   pinId="perfil-domicilio"
-                  etiquetaConfirmada="Tu casa"
-                  etiquetaQuitar="Quitar la ubicación de tu casa"
-                  etiquetaMapa="La ubicación de tu casa en el mapa"
+                  etiquetaConfirmada="Su casa"
+                  etiquetaQuitar="Quitar la ubicación de su casa"
+                  etiquetaMapa="La ubicación de su casa en el mapa"
                   etiquetaMarcar="Marcar mi casa en el mapa"
-                  indicacionMarcar="Tocá el mapa en la puerta de tu casa para poner el pin."
+                  indicacionMarcar="Toque el mapa en la puerta de su casa para poner el pin."
                   [ids]="idsGpsDomicilio"
                   [inicial]="gpsDomicilioGuardado()"
                   (confirmado)="gpsDomicilio.set($event)"
@@ -333,7 +333,7 @@
               <div class="datos__direccion">
                 <app-form-field
                   label="Dirección de trabajo"
-                  hint="Si trabajás fuera de Bolivia, sumá ciudad y país a la dirección."
+                  hint="Si trabaja fuera de Bolivia, sume ciudad y país a la dirección."
                 >
                   <app-input
                     data-testid="perfil-trabajo"
@@ -357,11 +357,11 @@
 
                 <app-ubicacion-picker
                   pinId="perfil-trabajo"
-                  etiquetaConfirmada="Tu trabajo"
-                  etiquetaQuitar="Quitar la ubicación de tu trabajo"
-                  etiquetaMapa="La ubicación de tu trabajo en el mapa"
+                  etiquetaConfirmada="Su trabajo"
+                  etiquetaQuitar="Quitar la ubicación de su trabajo"
+                  etiquetaMapa="La ubicación de su trabajo en el mapa"
                   etiquetaMarcar="Marcar mi trabajo en el mapa"
-                  indicacionMarcar="Tocá el mapa en la puerta de tu trabajo para poner el pin."
+                  indicacionMarcar="Toque el mapa en la puerta de su trabajo para poner el pin."
                   [ids]="idsGpsTrabajo"
                   [inicial]="gpsTrabajoGuardado()"
                   (confirmado)="gpsTrabajo.set($event)"
@@ -380,7 +380,7 @@
                    está pendiente. -->
               <app-form-field
                 label="Correo"
-                hint="Con este correo entrás. Cambiarlo pide verificar el nuevo antes de soltar el viejo, así que todavía no se hace desde acá."
+                hint="Con este correo entra. Cambiarlo pide verificar el nuevo antes de soltar el viejo, así que todavía no se hace desde acá."
               >
                 <app-input
                   data-testid="perfil-correo"
@@ -397,12 +397,12 @@
         <app-tab [label]="pestanas[2]">
           <section class="datos__seccion">
             <h3 class="datos__titulo">Facturación</h3>
-            <p class="datos__nota">A nombre de quién salen tus comprobantes.</p>
+            <p class="datos__nota">A nombre de quién salen sus comprobantes.</p>
 
             <div class="datos__campos">
               <app-form-field
                 label="NIT"
-                hint="Para que las facturas salgan a tu nombre. Vaciarlo lo quita."
+                hint="Para que las facturas salgan a su nombre. Vaciarlo lo quita."
               >
                 <app-input data-testid="perfil-nit" [(value)]="nit" placeholder="1234567" />
               </app-form-field>

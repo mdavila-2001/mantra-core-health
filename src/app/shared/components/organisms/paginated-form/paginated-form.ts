@@ -219,7 +219,7 @@ export class PaginatedForm {
    */
   readonly destructive = input(false, { transform: booleanAttribute });
 
-  readonly confirmTitle = input<string>('¿Confirmás la acción?');
+  readonly confirmTitle = input<string>('¿Confirma la acción?');
   readonly confirmMessage = input<string>('Esta acción no se puede deshacer.');
 
   /**
@@ -420,7 +420,7 @@ export class PaginatedForm {
       ...(posicion > this.visitedIndex()
         ? {
             disabled: true,
-            disabledReason: 'Todavía no llegaste acá: completá los pasos anteriores.',
+            disabledReason: 'Todavía no llegó acá: complete los pasos anteriores.',
           }
         : {}),
     })),
@@ -449,7 +449,7 @@ export class PaginatedForm {
         const principales = pagina.campos.filter(esPreguntaPrincipal).length;
         if (principales > MAX_CAMPOS_POR_PAGINA) {
           console.error(
-            `[app-paginated-form] La página «${pagina.titulo}» trae ${principales} campos y el tope es ${MAX_CAMPOS_POR_PAGINA}. Pasalos por paginarCampos().`,
+            `[app-paginated-form] La página «${pagina.titulo}» trae ${principales} campos y el tope es ${MAX_CAMPOS_POR_PAGINA}. Páselos por paginarCampos().`,
           );
         }
       }

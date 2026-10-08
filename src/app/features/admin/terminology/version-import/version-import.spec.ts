@@ -577,8 +577,8 @@ describe('VersionImport', () => {
     expect(señal<string | null>('sistema')).toBe('cs-1');
     expect(señal<boolean>('validando')).toBe(false);
     const raiz = (fixture.nativeElement as HTMLElement).textContent ?? '';
-    expect(raiz).toContain('Revisá tu conexión');
-    expect(raiz).toContain('Lo que elegiste sigue acá');
+    expect(raiz).toContain('Revise su conexión');
+    expect(raiz).toContain('Lo que eligió sigue acá');
   });
 
   it('un 413 se explica con el tope y conserva el archivo', () => {
@@ -632,7 +632,7 @@ describe('VersionImport', () => {
       .expectOne(IMPORT_URL)
       .flush({ code: 'IMPORT_PROFILE_UNKNOWN', message: 'x' }, { status: 422, statusText: 'x' });
     fixture.detectChanges();
-    expect((fixture.nativeElement as HTMLElement).textContent).toContain('Elegí qué vas a cargar');
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain('Elija qué va a cargar');
   });
 
   it('un 403 es el muro del M34: dice que falta permiso y no ofrece una salida falsa', () => {

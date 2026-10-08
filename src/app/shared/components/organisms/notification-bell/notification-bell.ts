@@ -59,8 +59,8 @@ export class NotificationBell {
 
   protected readonly etiqueta = computed(() =>
     this.sinLeer() === 0
-      ? 'Notificaciones. No tenés ninguna sin leer'
-      : `Notificaciones. Tenés ${this.sinLeer()} sin leer`,
+      ? 'Notificaciones. No tiene ninguna sin leer'
+      : `Notificaciones. Tiene ${this.sinLeer()} sin leer`,
   );
 
   constructor() {

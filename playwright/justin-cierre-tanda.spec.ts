@@ -480,7 +480,7 @@ test.describe('Carril C — historia del paciente y reconsulta', () => {
     await sesion(page, 'paciente');
     await abrir(page, '/my-account/medical-record', 'light');
 
-    const boton = page.getByRole('button', { name: /Descargar (mi|tu) historia/i }).first();
+    const boton = page.getByRole('button', { name: /Descargar (mi|su) historia/i }).first();
     const hay = (await boton.count()) > 0;
     anotar(`[C6/H3.M4] botón de descarga presente: ${hay}`);
     test.skip(!hay, 'La pantalla no ofreció el botón de descarga');

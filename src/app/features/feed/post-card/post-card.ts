@@ -243,7 +243,7 @@ export class PostCard {
           this.reaccionLocal.set(anterior);
           this.deltaReacciones.set(deltaAnterior);
           this.reaccionando.set(false);
-          this.error.set('No pudimos guardar tu reacción.');
+          this.error.set('No pudimos guardar su reacción.');
         },
       });
   }
@@ -335,7 +335,7 @@ export class PostCard {
         },
         error: () => {
           this.comentando.set(false);
-          this.error.set('No pudimos publicar tu comentario.');
+          this.error.set('No pudimos publicar su comentario.');
         },
       });
   }

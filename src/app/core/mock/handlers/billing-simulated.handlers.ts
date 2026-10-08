@@ -207,7 +207,7 @@ export function registrarFacturacionSimulada(router: MockRouter, opciones: Opcio
       if (consultorio && profesional !== undefined && roles.some((rol) => ROLES_DEL_CONSULTORIO.includes(rol))) {
         return manejador(request, facturacion(), { todo: false, profesional });
       }
-      return forbidden('Tu rol no permite operar la facturación');
+      return forbidden('Su rol no permite operar la facturación');
     };
 
   /**

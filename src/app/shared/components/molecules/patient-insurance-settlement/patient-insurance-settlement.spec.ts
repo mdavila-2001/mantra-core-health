@@ -16,7 +16,7 @@ describe('PatientInsuranceSettlement', () => {
     fixture.detectChanges();
     const element = fixture.nativeElement as HTMLElement;
     const rows = [...element.querySelectorAll('dl > div')];
-    expect(rows.find((row) => row.textContent?.includes('A tu cargo'))?.textContent).toContain(
+    expect(rows.find((row) => row.textContent?.includes('A su cargo'))?.textContent).toContain(
       '0.00 Bs',
     );
     expect(

@@ -1,6 +1,6 @@
 <app-page-header
   title="Horarios y equipos"
-  subtitle="Cuándo atiende tu centro cada servicio, y con cuántos equipos: de eso salen los turnos que ven los pacientes."
+  subtitle="Cuándo atiende su centro cada servicio, y con cuántos equipos: de eso salen los turnos que ven los pacientes."
 />
 
 <app-view-state-host [state]="estado()" (retry)="cargar()">
@@ -163,7 +163,7 @@
           <app-tab label="Equipos">
             <div class="centro__panel">
               <p class="seccion__ayuda">
-                Cada equipo operativo atiende a un paciente por turno. Si uno se rompe o entra en mantenimiento, marcalo: el cupo baja solo.
+                Cada equipo operativo atiende a un paciente por turno. Si uno se rompe o entra en mantenimiento, márquelo: el cupo baja solo.
               </p>
               @if (errorDeEquipo(); as error) {
                 <app-alert tone="error" title="No se cambió el estado" data-testid="centro-equipo-error">{{ error }}</app-alert>
@@ -172,7 +172,7 @@
                 <app-alert tone="warning" title="Hay turnos sin equipo" data-testid="centro-turnos-sin-equipo">
                   {{ c.bookingsWithoutEquipment }} turno{{ c.bookingsWithoutEquipment === 1 ? '' : 's' }} ya reservado{{ c.bookingsWithoutEquipment === 1 ? '' : 's' }} no
                   tiene{{ c.bookingsWithoutEquipment === 1 ? '' : 'n' }} un equipo operativo que lo{{ c.bookingsWithoutEquipment === 1 ? '' : 's' }} atienda. Avisale a cada
-                  paciente y reprogramalo, o volvé a poner el equipo en servicio.
+                  paciente y reprográmelo, o vuelva a poner el equipo en servicio.
                 </app-alert>
               }
               @for (m of modalidades(); track m.code) {

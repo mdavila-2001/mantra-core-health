@@ -94,7 +94,7 @@ describe('OrderPayment', () => {
 
     expect(texto()).toContain('A pagar:');
     expect(texto()).toContain('60.00 Bs');
-    expect(texto()).toContain('Pagás al retirar, en la farmacia.');
+    expect(texto()).toContain('Paga al retirar, en la farmacia.');
     // Las DOS pestañas existen (gate encendido en dev) y la abierta es la
     // del mostrador: sin esta aserción, un gate roto pasaría en silencio.
     const pestanas = [...elemento().querySelectorAll('[role="tab"]')].map((boton) =>
@@ -118,7 +118,7 @@ describe('OrderPayment', () => {
     abrirPestanaQr();
 
     expect(texto()).toContain('DEMO — el pago real llega con la pasarela');
-    expect(texto()).toContain('Escaneá con tu banca móvil.');
+    expect(texto()).toContain('Escanee con su banca móvil.');
     expect(texto()).toContain('Esperando la confirmación del banco…');
     expect(elemento().querySelector('[data-testid="pago-simular"]')).not.toBeNull();
   });

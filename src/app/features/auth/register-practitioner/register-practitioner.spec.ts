@@ -1065,7 +1065,7 @@ describe('RegisterPractitioner', () => {
         continuar.click();
         fixture.detectChanges();
       }
-      throw new Error('No se llegó al paso «Tus títulos»');
+      throw new Error('No se llegó al paso «Sus títulos»');
     }
 
     /** Un elemento del paso por su `data-testid`, o nada. */
@@ -1342,7 +1342,7 @@ describe('RegisterPractitioner', () => {
         expect(component.valorDeEstudio('professionalTitleCity')).toBe('');
       });
 
-      it('vale igual en cada fila de «Tus títulos»', () => {
+      it('vale igual en cada fila de «Sus títulos»', () => {
         component.agregarTitulo('UNIVERSITARIO');
         const [{ id }] = component.titulosDe('UNIVERSITARIO');
         const fila = () => component.titulosDe('UNIVERSITARIO')[0];
@@ -1573,7 +1573,7 @@ describe('RegisterPractitioner', () => {
       // cualquier paso, y `appAnuncio` lo anuncia a lectores de pantalla.
       expect(avisoVisible()).toContain('número del diploma');
       // 2) Y dirige al paso donde está el campo: el índice de pasos es navegable.
-      expect(avisoVisible()).toContain('Tus títulos');
+      expect(avisoVisible()).toContain('Sus títulos');
       // 3) La fila señalada es la que está mal, EN el DOM: `aria-invalid`,
       //    el borde de peligro y el mensaje propio, enlazado por
       //    `aria-describedby` para que el lector lo diga junto a la casilla.
@@ -1878,7 +1878,7 @@ describe('RegisterPractitioner', () => {
       expect(alcance).toBe(
         'De cada título se guardan el tipo, el número, la profesión, la universidad, el ' +
           'país, la ciudad y el PDF. Lo único obligatorio de una fila es el número del ' +
-          'diploma: si no lo tenés a mano, quitá la fila y cargala después desde «Mi perfil».',
+          'diploma: si no lo tiene a mano, quite la fila y cárguela después desde «Mi perfil».',
       );
       expect(alcance).not.toContain('todavía no se guardan');
     });
@@ -1956,7 +1956,7 @@ describe('RegisterPractitioner', () => {
       req.flush(RESPUESTA_PRO);
     });
 
-    it('una fila sin número frena «Siguiente» en «Tus títulos» y nombra la sección', () => {
+    it('una fila sin número frena «Siguiente» en «Sus títulos» y nombra la sección', () => {
       catalogoDeTiposDeTitulo();
       completarProfesional();
       irAlPasoDeTitulos();
@@ -2093,7 +2093,7 @@ describe('RegisterPractitioner', () => {
         // Frenado y dicho, nombrando el botón.
         http.expectNone('/iam/auth/register-practitioner');
         expect(avisoVisible()).toContain('Reintentar');
-        expect(avisoVisible()).not.toContain('reintentá en unos segundos');
+        expect(avisoVisible()).not.toContain('reintente en unos segundos');
 
         // El botón existe donde el aviso manda a buscarlo, y es el mismo
         // estado: si el alert está, el botón está.
@@ -2331,7 +2331,7 @@ describe('RegisterPractitioner', () => {
     http.expectOne('/iam/auth/register-practitioner').flush(RESPUESTA_PRO);
 
     expect(component.registered()).toBe(true);
-    expect(component.accessHint).toBe('tu correo');
+    expect(component.accessHint).toBe('su correo');
   });
 
   it('tras registrarse, lleva al login en vez de entrar solo', () => {

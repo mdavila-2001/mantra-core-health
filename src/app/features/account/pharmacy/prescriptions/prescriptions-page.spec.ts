@@ -204,7 +204,7 @@ describe('PrescriptionsPage', () => {
     fixture.detectChanges();
 
     const texto = raiz().textContent ?? '';
-    expect(texto).not.toContain('Todavía no tenés recetas');
+    expect(texto).not.toContain('Todavía no tiene recetas');
     expect(texto).toContain('Reintentar');
   });
 

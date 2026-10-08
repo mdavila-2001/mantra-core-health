@@ -8,7 +8,7 @@
       <h2 id="person-report-title" class="person-report__title">Siniestralidad por persona</h2>
       <p class="person-report__note">
         Lo aprobado a cada persona frente a la prima del período, con el plan, el periodo y el
-        filtro que elegiste arriba. La prima es estimada: prima mensual de lista × meses.
+        filtro que eligió arriba. La prima es estimada: prima mensual de lista × meses.
       </p>
     </div>
     <div class="person-report__actions">
@@ -37,8 +37,8 @@
 
   @if (state() === null) {
     <app-empty-state
-      title="Todavía no generaste el informe"
-      description="Elegí el período y el plan, y apretá «Generar informe» para ver la siniestralidad de cada persona."
+      title="Todavía no generó el informe"
+      description="Elija el período y el plan, y apriete «Generar informe» para ver la siniestralidad de cada persona."
     />
   } @else {
     <app-view-state-host [state]="state()!" (retry)="retry()">
@@ -49,7 +49,7 @@
             role="status"
             data-testid="person-report-stale"
           >
-            Cambiaste el período o el plan: este informe es del filtro anterior. Apretá «Volver a
+            Cambió el período o el plan: este informe es del filtro anterior. Apriete «Volver a
             generar» para actualizarlo.
           </p>
         }

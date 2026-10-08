@@ -128,7 +128,7 @@ const TERMINOS: readonly Termino[] = [
     esName: 'Toma de muestras (modalidad)',
     synonyms: ['extracción', 'laboratorio'],
     definition: 'La atención en la que un laboratorio obtiene la muestra del paciente. Lo que limita los turnos son los puestos de extracción, no los analizadores.',
-    plainSummaryEs: 'Cuando el laboratorio te saca sangre u otra muestra para analizarla después.',
+    plainSummaryEs: 'Cuando el laboratorio le saca sangre u otra muestra para analizarla después.',
     relations: [],
   },
 
@@ -205,7 +205,7 @@ const TERMINOS: readonly Termino[] = [
     categoryKey: 'equipment',
     esName: 'Puesto de extracción',
     definition: 'El lugar donde el laboratorio toma la muestra del paciente. Cada muestra se rotula y queda trazada hasta el analizador.',
-    plainSummaryEs: 'Donde te sacan la muestra en el laboratorio.',
+    plainSummaryEs: 'Donde le sacan la muestra en el laboratorio.',
     relations: [
       ['PERFORMS', 'modalidad-toma-de-muestras'],
       ['SENDS_DATA_TO', 'datos-muestra'],
@@ -237,7 +237,7 @@ const TERMINOS: readonly Termino[] = [
     esName: 'Archivo de imágenes (PACS/VNA)',
     synonyms: ['PACS', 'VNA'],
     definition: 'El sistema donde quedan guardadas las imágenes. La historia clínica guarda la referencia; las imágenes se consultan y descargan del archivo con DICOMweb.',
-    plainSummaryEs: 'Donde quedan guardadas las imágenes de tus estudios.',
+    plainSummaryEs: 'Donde quedan guardadas las imágenes de sus estudios.',
     relations: [['SENDS_DATA_TO', 'datos-informe-del-estudio']],
   },
   {
@@ -245,7 +245,7 @@ const TERMINOS: readonly Termino[] = [
     categoryKey: 'equipment',
     esName: 'Muestra rotulada',
     definition: 'La muestra del paciente con su rótulo y su cadena de custodia, desde la extracción hasta el analizador.',
-    plainSummaryEs: 'Tu muestra, con su etiqueta, camino al análisis.',
+    plainSummaryEs: 'Su muestra, con su etiqueta, camino al análisis.',
     relations: [['SENDS_DATA_TO', 'equipo-analizador-de-laboratorio']],
   },
   {
@@ -261,7 +261,7 @@ const TERMINOS: readonly Termino[] = [
     categoryKey: 'equipment',
     esName: 'Observación de laboratorio',
     definition: 'El valor del análisis ya validado y asociado a la orden del paciente.',
-    plainSummaryEs: 'El valor de tu análisis, ya revisado.',
+    plainSummaryEs: 'El valor de su análisis, ya revisado.',
     relations: [['SENDS_DATA_TO', 'datos-informe-del-estudio']],
   },
   {
@@ -269,7 +269,7 @@ const TERMINOS: readonly Termino[] = [
     categoryKey: 'equipment',
     esName: 'Informe del estudio',
     definition: 'El informe que firma el profesional. Se guarda en versiones que no se pisan: una corrección es una versión nueva.',
-    plainSummaryEs: 'Lo que el profesional escribe sobre tu estudio.',
+    plainSummaryEs: 'Lo que el profesional escribe sobre su estudio.',
     relations: [['SENDS_DATA_TO', 'datos-resultado-del-paciente']],
   },
   {
@@ -277,7 +277,7 @@ const TERMINOS: readonly Termino[] = [
     categoryKey: 'equipment',
     esName: 'Resultado del paciente',
     definition: 'El resultado liberado que el paciente ve en «Mis resultados» y puede compartir.',
-    plainSummaryEs: 'Lo que ves en «Mis resultados».',
+    plainSummaryEs: 'Lo que ve en «Mis resultados».',
     relations: [],
   },
 ];

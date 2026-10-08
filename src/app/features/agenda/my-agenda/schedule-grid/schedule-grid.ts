@@ -428,7 +428,7 @@ export class ScheduleGrid {
           top: ((inicio - arranque) / total) * 100,
           alto: ((fin - inicio) / total) * 100,
           etiqueta:
-            `${LARGO[r.dayOfWeek]} de ${hhmm(r.startTime)} a ${hhmm(r.endTime)}: atendés` +
+            `${LARGO[r.dayOfWeek]} de ${hhmm(r.startTime)} a ${hhmm(r.endTime)}: atiende` +
             QUE_ATIENDE[modo] +
             (this.sede() ? ` en ${this.sede()}` : ''),
           detalle: detalleDe(modo, tamano),
@@ -654,7 +654,7 @@ export class ScheduleGrid {
           (bloqueo.motivo ? ` (${bloqueo.motivo})` : ''),
       );
     } else if (bloque !== null) {
-      partes.push(`atendés${QUE_ATIENDE[bloque.mode]} de ${bloque.desde} a ${bloque.hasta}`);
+      partes.push(`atiende${QUE_ATIENDE[bloque.mode]} de ${bloque.desde} a ${bloque.hasta}`);
       const sede = this.sede();
       if (sede) partes.push(sede);
     } else {

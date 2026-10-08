@@ -153,7 +153,7 @@ test.describe('C4 · el sello se ve en las dos agendas', () => {
 
     await expect(page.getByTestId('mis-citas-reconsulta-sello').first()).toBeVisible();
     await expect(page.getByTestId('mis-citas-reconsulta-frase').first()).toContainText(
-      /Tu médico te citó de nuevo/i,
+      /Su médico le citó de nuevo/i,
     );
   });
 
@@ -198,6 +198,6 @@ async function elegirPrimerDiaConHorarios(page: Page): Promise<void> {
 
   throw new Error(
     'Ningún día de los próximos tres meses quedó en verde en la agenda de la médica: ' +
-      'revisá el fixture de cupos antes de culpar a la pantalla.',
+      'revise el fixture de cupos antes de culpar a la pantalla.',
   );
 }

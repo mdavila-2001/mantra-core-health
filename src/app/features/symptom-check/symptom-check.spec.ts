@@ -331,7 +331,7 @@ describe('SymptomCheck · el área de texto', () => {
     expect(html.querySelector('details')).toBeNull();
 
     const rotulo = html.querySelector<HTMLLabelElement>(`label[for="${area().id}"]`);
-    expect(rotulo?.textContent).toContain('Contanos con tus palabras');
+    expect(rotulo?.textContent).toContain('Cuéntenos con sus palabras');
   });
 
   it('lo que se escribe llega a `texto()`', () => {
@@ -472,8 +472,8 @@ describe('SymptomCheck · dictar', () => {
     const aviso = html.querySelector('#sintomas-dictado-aviso');
     // Dice las tres cosas que la persona tiene que saber antes de hablar: quién
     // transcribe, que el texto se analiza para entenderla y que no se guarda.
-    expect(aviso?.textContent).toContain('lo transcribe tu navegador');
-    expect(aviso?.textContent).toContain('lo analizamos para entenderte');
+    expect(aviso?.textContent).toContain('lo transcribe su navegador');
+    expect(aviso?.textContent).toContain('lo analizamos para entenderle');
     expect(aviso?.textContent).toContain('no lo guardamos');
     expect(boton().getAttribute('aria-describedby')).toBe('sintomas-dictado-aviso');
     // El aviso está ANTES del botón en el DOM: el botón «sigue» al aviso.
@@ -515,7 +515,7 @@ describe('SymptomCheck · dictar', () => {
     fixture.detectChanges();
 
     expect(html.querySelector('[data-testid="sintomas-dictado-estado"]')?.textContent).toContain(
-      'Activá el micrófono en el navegador o escribí',
+      'Active el micrófono en el navegador o escriba',
     );
     expect(boton().textContent).toContain('Dictar');
   });

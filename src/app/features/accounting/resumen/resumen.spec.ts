@@ -180,7 +180,7 @@ describe('Resumen contable', () => {
       http.verify();
     });
 
-    it('cada tramo muestra SU cifra, y «te quedó» sale de la API sin restar acá', () => {
+    it('cada tramo muestra SU cifra, y «le quedó» sale de la API sin restar acá', () => {
       const { fixture, http } = montar();
       responderPracticas(http, fixture);
       responderTablero(http, [
@@ -402,7 +402,7 @@ describe('Resumen contable', () => {
     });
   });
 
-  describe('lo que tenés y lo que debés', () => {
+  describe('lo que tiene y lo que debe', () => {
     it('deja fuera los equipos dados de baja y los que ya no valen nada', () => {
       const { fixture, http } = montar();
       responderPracticas(http, fixture);
@@ -458,7 +458,7 @@ describe('Resumen contable', () => {
 
       expect(rotulos(fixture)).toEqual(['Resumen', 'Registros']);
       const texto = (fixture.nativeElement as HTMLElement).textContent ?? '';
-      expect(texto).toContain('¿Cuánto hiciste?');
+      expect(texto).toContain('¿Cuánto hizo?');
       expect(texto).toContain('Lo que está pendiente');
     });
 
@@ -483,7 +483,7 @@ describe('Resumen contable', () => {
 
       const raiz = fixture.nativeElement as HTMLElement;
       expect(raiz.querySelector('[data-testid="contabilidad-registros"]')).not.toBeNull();
-      expect(raiz.textContent).not.toContain('¿Cuánto hiciste?');
+      expect(raiz.textContent).not.toContain('¿Cuánto hizo?');
       expect(raiz.textContent).not.toContain('Lo que está pendiente');
       http.verify();
     });

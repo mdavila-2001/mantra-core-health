@@ -176,7 +176,7 @@ const SUFIJO = String(Date.now()).slice(-6);
 
 /** El campo de búsqueda del catálogo (el `placeholder` también lo lleva el host). */
 function buscador(page: Page): Locator {
-  return page.getByRole('textbox', { name: 'Buscar en tu catálogo' });
+  return page.getByRole('textbox', { name: 'Buscar en su catálogo' });
 }
 
 async function escribirTitulo(page: Page, titulo: string): Promise<void> {
@@ -219,8 +219,8 @@ test.describe('promociones: publicar cada familia y verla como la ve el paciente
     await lista.getByRole('link', { name: titulo }).click();
     await page.waitForURL(/\/promotions\//);
     await expect(page.locator('[data-testid="promo-mecanica-etiqueta"]')).toHaveText('2x1');
-    await expect(page.locator('[data-testid="promo-mecanica-frase"]')).toContainText('Llevá 2 y pagá 1.');
-    await expect(page.locator('[data-testid="promo-ejemplo"]')).toContainText('pagás Bs 50 en vez de Bs 100');
+    await expect(page.locator('[data-testid="promo-mecanica-frase"]')).toContainText('Lleve 2 y pague 1.');
+    await expect(page.locator('[data-testid="promo-ejemplo"]')).toContainText('paga Bs 50 en vez de Bs 100');
     await page.screenshot({ path: join(EVIDENCIA, 'ficha-2x1-1440.png'), fullPage: true });
   });
 
@@ -238,7 +238,7 @@ test.describe('promociones: publicar cada familia y verla como la ve el paciente
     await expect(lista).toContainText(titulo, { timeout: 30_000 });
     await lista.getByRole('link', { name: titulo }).click();
     await page.waitForURL(/\/promotions\//);
-    await expect(page.locator('[data-testid="promo-sin-productos"]')).toContainText('vale sobre toda tu compra');
+    await expect(page.locator('[data-testid="promo-sin-productos"]')).toContainText('vale sobre toda su compra');
     await expect(page.locator('[data-testid="promo-ejemplo"]')).toContainText('En una compra justo en el mínimo');
   });
 
@@ -264,7 +264,7 @@ test.describe('promociones: publicar cada familia y verla como la ve el paciente
     await expect(lista).toContainText('Combo');
     await lista.getByRole('link', { name: titulo }).click();
     await page.waitForURL(/\/promotions\//);
-    await expect(page.locator('[data-testid="promo-ejemplo"]')).toContainText('pagás Bs 40 en vez de Bs 50');
+    await expect(page.locator('[data-testid="promo-ejemplo"]')).toContainText('paga Bs 40 en vez de Bs 50');
   });
 
   test('un error se marca en su campo y se dice todo junto', async ({ page }) => {

@@ -143,7 +143,7 @@
       </h4>
       <p class="dia__mover-nota">
         Los turnos cambian de hora y se le avisa a cada paciente. Si alguno choca con otra cita
-        tuya, <strong>no se mueve ninguno</strong>.
+        suya, <strong>no se mueve ninguno</strong>.
       </p>
       <div class="dia__mover-opciones">
         @for (minutos of desplazamientos; track minutos) {
@@ -185,7 +185,7 @@
 
   @if (bloques().length === 0) {
     <div class="dia__vacio">
-      <p>No atendés este día.</p>
+      <p>No atiende este día.</p>
       <button app-button variant="ghost" size="sm" type="button" (clicked)="crear()">
         Agregar una cita o un rato ocupado
       </button>
@@ -194,7 +194,7 @@
     <!-- Una sola parada de `Tab` para la línea (roving tabindex): el control
          principal de cada rato. Ver «Con el teclado» en el componente. -->
     <p class="solo-lectores" [id]="ayudaId">
-      Usá las flechas arriba y abajo para recorrer los ratos del día, e izquierda y derecha para
+      Use las flechas arriba y abajo para recorrer los ratos del día, e izquierda y derecha para
       cambiar de día.
     </p>
     <ol class="dia__linea" [attr.aria-describedby]="ayudaId">

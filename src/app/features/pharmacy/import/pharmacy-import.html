@@ -1,6 +1,6 @@
 <app-page-header
   title="Importación masiva"
-  subtitle="Cargá o actualizá de a cientos los productos de tu farmacia con un archivo CSV. Revisás todo antes de que se publique nada."
+  subtitle="Cargue o actualice de a cientos los productos de su farmacia con un archivo CSV. Revisa todo antes de que se publique nada."
 />
 
 <app-view-state-host [state]="scope.options()" (retry)="scope.retry()">
@@ -12,7 +12,7 @@
           [value]="scope.pharmacyId()"
           (valueChange)="choosePharmacy($event)"
           [disabled]="publishing()"
-          placeholder="Elegí tu farmacia"
+          placeholder="Elija su farmacia"
         />
       </app-form-field>
     </div>
@@ -28,9 +28,9 @@
           @case ('file') {
             <div class="import__upload">
               <div class="import__upload-main">
-                <h2 class="import__subtitle">Subí tu archivo de productos</h2>
+                <h2 class="import__subtitle">Suba su archivo de productos</h2>
                 <p class="import__secondary">
-                  Un CSV con una fila por producto, hasta {{ maxRows }} por archivo. Si trabajás en
+                  Un CSV con una fila por producto, hasta {{ maxRows }} por archivo. Si trabaja en
                   Excel: Archivo → Guardar como → CSV UTF-8.
                 </p>
 
@@ -46,7 +46,7 @@
                 @switch (categories().status) {
                   @case ('loading') {
                     <p class="import__secondary" role="status" data-testid="import-categories-loading">
-                      Cargando las categorías de tu farmacia…
+                      Cargando las categorías de su farmacia…
                     </p>
                   }
                   @case ('ready') {
@@ -63,7 +63,7 @@
                     />
                   }
                   @default {
-                    <app-alert tone="error" title="No pudimos cargar tus categorías" data-testid="import-categories-error">
+                    <app-alert tone="error" title="No pudimos cargar sus categorías" data-testid="import-categories-error">
                       Sin ellas no se puede revisar la columna «categoria» del archivo.
                       <button app-button variant="outline" size="sm" type="button" (clicked)="loadCategories()">
                         Reintentar
@@ -127,9 +127,9 @@
             </div>
 
             <p class="import__secondary">
-              Reconocimos las columnas de tu archivo por su encabezado. Si alguna quedó ignorada
-              y tiene un dato que querés cargar, cambiale el nombre por el de la plantilla y
-              subí el archivo de nuevo.
+              Reconocimos las columnas de su archivo por su encabezado. Si alguna quedó ignorada
+              y tiene un dato que quiere cargar, cambiale el nombre por el de la plantilla y
+              suba el archivo de nuevo.
             </p>
 
             <app-data-table
@@ -149,15 +149,15 @@
             }
 
             @if (lacksAvailability()) {
-              <app-alert tone="warning" title="Tu archivo no trae «disponible»" data-testid="import-no-availability">
-                Sin esa columna, cada fila se lee como «disponible»: un producto de tu catálogo
+              <app-alert tone="warning" title="Su archivo no trae «disponible»" data-testid="import-no-availability">
+                Sin esa columna, cada fila se lee como «disponible»: un producto de su catálogo
                 que hoy esté sin stock volvería a mostrarse disponible al actualizarlo.
               </app-alert>
             }
 
             @if (missingFields().length > 0) {
               <p class="import__secondary" data-testid="import-missing">
-                Campos que tu archivo no trae: {{ missingFields().join(', ') }}. En un producto
+                Campos que su archivo no trae: {{ missingFields().join(', ') }}. En un producto
                 nuevo quedan vacíos; en uno que ya existe se conserva lo que tiene.
               </p>
             }
@@ -203,14 +203,14 @@
             </app-form-field>
 
             @if (encoding() === 'windows-1252') {
-              <app-alert tone="info" title="Leímos tu archivo como texto de Excel (Windows-1252)" data-testid="import-encoding">
-                No venía en UTF-8. Revisá en la lista de abajo que las tildes y las eñes se vean
+              <app-alert tone="info" title="Leímos su archivo como texto de Excel (Windows-1252)" data-testid="import-encoding">
+                No venía en UTF-8. Revise en la lista de abajo que las tildes y las eñes se vean
                 bien antes de cargar.
               </app-alert>
             }
 
             @if (catalogTruncated()) {
-              <app-alert tone="warning" title="Tu catálogo tiene más de 500 productos" data-testid="import-truncated">
+              <app-alert tone="warning" title="Su catálogo tiene más de 500 productos" data-testid="import-truncated">
                 Sólo se compararon los primeros 500: un código que ya exista fuera de ellos se
                 tomaría por nuevo y, en «sólo actualizar», se rechazaría por error.
               </app-alert>
@@ -226,7 +226,7 @@
             }
 
             @if (notInCatalog() > 0) {
-              <app-alert tone="warning" title="Códigos que no están en tu catálogo" data-testid="import-not-in-catalog">
+              <app-alert tone="warning" title="Códigos que no están en su catálogo" data-testid="import-not-in-catalog">
                 {{ notInCatalog() }}
                 {{ notInCatalog() === 1 ? 'fila' : 'filas' }} no se {{ notInCatalog() === 1 ? 'actualiza' : 'actualizan' }}
                 porque su código no existe. Con «Crear y actualizar» se crearían.
@@ -234,7 +234,7 @@
             }
 
             @if (alreadyInCatalog() > 0) {
-              <app-alert tone="warning" title="Códigos que ya están en tu catálogo" data-testid="import-already-in-catalog">
+              <app-alert tone="warning" title="Códigos que ya están en su catálogo" data-testid="import-already-in-catalog">
                 {{ alreadyInCatalog() }}
                 {{ alreadyInCatalog() === 1 ? 'fila' : 'filas' }} no se {{ alreadyInCatalog() === 1 ? 'crea' : 'crean' }}
                 porque su código ya existe. Con «Crear y actualizar» se actualizarían.
@@ -276,14 +276,14 @@
 
             @if (nothingToLoad()) {
               <app-alert tone="error" title="No hay nada para cargar" data-testid="import-nothing">
-                Ninguna fila del archivo se puede cargar con «{{ modeLabel() }}». Corregí las de
-                abajo o cambiá lo que se hace con los productos.
+                Ninguna fila del archivo se puede cargar con «{{ modeLabel() }}». Corrija las de
+                abajo o cambie lo que se hace con los productos.
               </app-alert>
             }
 
             @if (withProblems() > 0) {
               <app-alert tone="warning" title="Estas filas no se van a cargar">
-                Las demás sí. Descargá los errores, corregilos y subí ese archivo después: ya viene
+                Las demás sí. Descargue los errores, corríjalos y suba ese archivo después: ya viene
                 con los encabezados correctos.
               </app-alert>
               <app-data-table
@@ -325,7 +325,7 @@
           @case ('publishing') {
             <div class="import__progress">
               <p>
-                Cargando {{ results().length }} de {{ readyRows().length }}… No cierres esta
+                Cargando {{ results().length }} de {{ readyRows().length }}… No cierre esta
                 pestaña hasta que termine.
               </p>
               <app-progress [value]="progress()" label="Avance de la carga" />
@@ -370,15 +370,15 @@
             @if (generalFailure(); as failure) {
               <app-alert tone="error" title="La carga se cortó" data-testid="import-general-failure">
                 {{ failure }} No es un problema de una fila: las demás iban a fallar igual, así
-                que no se enviaron. Resolvelo y subí el archivo de nuevo; lo ya cargado se va a
+                que no se enviaron. Resuélvalo y suba el archivo de nuevo; lo ya cargado se va a
                 marcar como repetido.
               </app-alert>
             }
 
             @if (stopped()) {
-              <app-alert tone="warning" title="Detuviste la carga" data-testid="import-stopped">
+              <app-alert tone="warning" title="Detuvo la carga" data-testid="import-stopped">
                 La fila que estaba en camino terminó y se cuenta arriba; las que faltaban no se
-                enviaron. Subí el archivo de nuevo y las ya cargadas se van a marcar como
+                enviaron. Suba el archivo de nuevo y las ya cargadas se van a marcar como
                 repetidas.
               </app-alert>
             }

@@ -169,8 +169,8 @@ const PARAM_DE_TURNO = 'turno';
 export const RESOURCE_PARAM = 'resource';
 
 /** El vacío de horarios antes de elegir con quién; su par de laboratorio abajo. */
-const ELEGIR_CON_QUIEN = 'Elegí con quién te querés atender para ver los horarios libres.';
-const ELEGIR_LABORATORIO = 'Elegí un laboratorio para ver los horarios libres.';
+const ELEGIR_CON_QUIEN = 'Elija con quién se quiere atender para ver los horarios libres.';
+const ELEGIR_LABORATORIO = 'Elija un laboratorio para ver los horarios libres.';
 export const LAB_RESOURCE = 'lab';
 
 /* ---- FT-05 · los cuatro filtros, también en la URL ------------------------ */
@@ -488,12 +488,12 @@ export class Appointments {
 
   /** Las dos formas de mirar la misma colección (FT-04). */
   protected readonly vistasDisponibles: readonly SegmentedOption<VistaDeTurnos>[] = [
-    { value: 'lista', label: 'Lista', icon: 'orders', description: 'Ver tus citas como lista' },
+    { value: 'lista', label: 'Lista', icon: 'orders', description: 'Ver sus citas como lista' },
     {
       value: 'calendario',
       label: 'Calendario',
       icon: 'calendar',
-      description: 'Ver tus citas en un calendario',
+      description: 'Ver sus citas en un calendario',
     },
   ];
 
@@ -1075,7 +1075,7 @@ export class Appointments {
    * agenda. No lleva `route` porque el control ya está acá arriba, en la misma
    * vista: mandar a otra ruta para volver al mismo lugar sería un rodeo.
    */
-  private readonly pasoElegirAgenda = { label: 'Elegí una agenda' } as const;
+  private readonly pasoElegirAgenda = { label: 'Elija una agenda' } as const;
 
   protected readonly horarios = signal<ViewState<readonly HorarioVisible[]>>(
     empty(this.pasoElegirAgenda, ELEGIR_CON_QUIEN),
@@ -1278,7 +1278,7 @@ export class Appointments {
       .subscribe({
         next: (pagina) => {
           if (pagina.items.length === 0) {
-            this.turnos.set(empty(this.pasoElegirAgenda, 'Todavía no pediste ningún turno.'));
+            this.turnos.set(empty(this.pasoElegirAgenda, 'Todavía no pidió ningún turno.'));
             return;
           }
           this.traducirEstados(pagina.items);
@@ -1452,7 +1452,7 @@ export class Appointments {
         if (libres.length === 0) {
           this.horarios.set(
             empty(
-              { label: 'Probá con otra agenda' },
+              { label: 'Pruebe con otra agenda' },
               'No hay horarios libres en las próximas dos semanas.',
             ),
           );
@@ -1526,7 +1526,7 @@ export class Appointments {
         if (libres.length === 0) {
           this.horarios.set(
             empty(
-              { label: 'Probá con otro servicio o profesional' },
+              { label: 'Pruebe con otro servicio o profesional' },
               `No hay horarios para ${servicio.serviceName} en las próximas dos semanas.`,
             ),
           );
@@ -1580,11 +1580,11 @@ export class Appointments {
 
     const agenda = this.nombreDeLaAgenda(resourceId);
     const confirmado = await this.dialogs.confirm({
-      title: 'Anotarte en la lista de espera',
+      title: 'Anotarse en la lista de espera',
       message:
         agenda === ''
-          ? 'Te avisamos apenas se libere un horario. No reserva el turno: lo confirmás vos cuando llegue el aviso.'
-          : `Te avisamos apenas se libere un horario con ${agenda}. No reserva el turno: lo confirmás vos cuando llegue el aviso.`,
+          ? 'Le avisamos apenas se libere un horario. No reserva el turno: lo confirma usted cuando llegue el aviso.'
+          : `Le avisamos apenas se libere un horario con ${agenda}. No reserva el turno: lo confirma usted cuando llegue el aviso.`,
       confirmLabel: 'Anotarme',
       cancelLabel: 'Volver',
     });
@@ -1608,8 +1608,8 @@ export class Appointments {
         next: () => {
           this.anotandose.set(false);
           this.toast.success(
-            'Te avisamos apenas se libere un horario.',
-            'Estás en lista de espera',
+            'Le avisamos apenas se libere un horario.',
+            'Está en lista de espera',
           );
           this.cargarEsperas();
         },
@@ -1621,7 +1621,7 @@ export class Appointments {
               ? (estado.message ?? '')
               : '';
           this.toast.error(
-            detalle === '' ? 'No pudimos anotarte en la lista de espera.' : detalle,
+            detalle === '' ? 'No pudimos anotarse en la lista de espera.' : detalle,
             'Lista de espera',
           );
         },
@@ -1659,13 +1659,13 @@ export class Appointments {
     const motivo = await this.dialogs.confirmWithReason(
       {
         title: 'Cancelar el turno',
-        message: `Vas a cancelar ${this.nombreDelTurno(turno)}. El horario queda libre para otra persona.`,
+        message: `Va a cancelar ${this.nombreDelTurno(turno)}. El horario queda libre para otra persona.`,
         confirmLabel: 'Cancelar el turno',
         cancelLabel: 'Volver',
       },
       {
         label: 'Motivo de la cancelación',
-        placeholder: 'Contá brevemente por qué no vas a poder ir',
+        placeholder: 'Cuente brevemente por qué no va a poder ir',
         hint: 'El profesional lo va a ver junto con la cancelación.',
       },
     );
@@ -1679,7 +1679,7 @@ export class Appointments {
       .subscribe({
         next: () => {
           this.operando.set(null);
-          this.toast.success('Cancelamos tu turno y liberamos el horario.', 'Turno cancelado');
+          this.toast.success('Cancelamos su turno y liberamos el horario.', 'Turno cancelado');
           // El servidor es la verdad: se relee en vez de tachar la fila y devolver
           // el cupo a mano. El turno reaparece como cancelado (por `includeCancelled`)
           // y el horario vuelve a ofrecerse.
@@ -1717,7 +1717,7 @@ export class Appointments {
     const codigos = estado.status === 'validation' ? estado.issues.map((issue) => issue.code) : [];
 
     if (codigos.includes('CONFLICT')) {
-      this.toast.info('Este turno ya estaba cancelado. Actualizamos tu lista.', 'Turno');
+      this.toast.info('Este turno ya estaba cancelado. Actualizamos su lista.', 'Turno');
       this.recargar();
       return;
     }
@@ -1734,7 +1734,7 @@ export class Appointments {
         return;
       }
 
-      this.toast.info('Este turno ya no se puede cancelar. Actualizamos tu lista.', 'Turno');
+      this.toast.info('Este turno ya no se puede cancelar. Actualizamos su lista.', 'Turno');
       this.recargar();
       return;
     }
@@ -1742,7 +1742,7 @@ export class Appointments {
     const detalle =
       estado.status === 'forbidden' || estado.status === 'error' ? (estado.message ?? '') : '';
     this.toast.error(
-      detalle === '' ? 'No pudimos cancelar el turno. Reintentá en un momento.' : detalle,
+      detalle === '' ? 'No pudimos cancelar el turno. Reintente en un momento.' : detalle,
       'Turno',
     );
   }
@@ -1947,7 +1947,7 @@ function avisoDelCambio(cita: Booking): string {
   if (cambio === undefined || cambio.reasonText.trim() === '') {
     return '';
   }
-  const quien = cambio.actorKind === 'PATIENT' ? 'Indicaste' : 'El profesional indicó';
+  const quien = cambio.actorKind === 'PATIENT' ? 'Indicó' : 'El profesional indicó';
   return `${quien}: ${cambio.reasonText}`;
 }
 

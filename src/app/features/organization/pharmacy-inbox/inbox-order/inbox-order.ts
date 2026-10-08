@@ -450,7 +450,7 @@ export class InboxOrder {
       {
         title: 'Rechazar el pedido',
         message:
-          'El paciente va a ver el motivo tal como lo escribas: contale por qué y qué puede hacer.',
+          'El paciente va a ver el motivo tal como lo escriba: contale por qué y qué puede hacer.',
         confirmLabel: 'Rechazar el pedido',
         destructive: true,
       },
@@ -521,7 +521,7 @@ export class InboxOrder {
    */
   protected avisarDescargaDeFactura(): void {
     this.toasts.info(
-      'La descarga del comprobante llega con el módulo de facturación. Lo que ves acá es un ejemplo.',
+      'La descarga del comprobante llega con el módulo de facturación. Lo que ve acá es un ejemplo.',
       'Factura de ejemplo',
     );
   }

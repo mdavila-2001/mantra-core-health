@@ -4,7 +4,7 @@
 <app-page-header
   data-testid="mi-salud"
   [title]="nombre() === '' ? 'Mi salud' : 'Hola, ' + nombre()"
-  subtitle="Contanos qué te pasa y te decimos a quién ver. Abajo, tus turnos y tu historia."
+  subtitle="Cuéntenos qué le pasa y le decimos a quién ver. Abajo, sus turnos y su historia."
 />
 
 <!-- ─── C5 del plan de UX del 22/08/2026 ────────────────────────────────────
@@ -34,7 +34,7 @@
   @defer (on immediate) {
     <app-symptom-check />
   } @placeholder {
-    <p class="mi-salud__texto">¿Qué te pasa? Contanos y te decimos a quién ver.</p>
+    <p class="mi-salud__texto">¿Qué le pasa? Cuéntenos y le decimos a quién ver.</p>
   }
 </app-card>
 
@@ -53,22 +53,22 @@
 
 @switch (estado().status) {
   @case ('loading') {
-    <p class="mi-salud__estado" role="status">Cargando lo tuyo…</p>
+    <p class="mi-salud__estado" role="status">Cargando lo suyo…</p>
   }
   @case ('empty') {
     <!-- Cuenta sin ficha de paciente: no es un error, es que todavía no hay
          nada que mostrarle. Se dice, en vez de dejar el panel en blanco. -->
     <app-card variant="outlined" padding="md" data-testid="mi-salud-sin-ficha">
       <p class="mi-salud__texto">
-        Tu cuenta todavía no tiene una ficha de paciente. Cuando te atiendas por primera vez, acá
-        vas a ver tu historia.
+        Su cuenta todavía no tiene una ficha de paciente. Cuando se atienda por primera vez, acá
+        va a ver su historia.
       </p>
     </app-card>
   }
   @case ('error') {
     <app-card variant="outlined" padding="md">
       <p class="mi-salud__estado">
-        No pudimos cargar tu información en este momento. Probá de nuevo en un rato.
+        No pudimos cargar su información en este momento. Pruebe de nuevo en un rato.
       </p>
     </app-card>
   }
@@ -77,10 +77,10 @@
       <!-- Todavía no pasó nada: en vez de tres tarjetas vacías, la invitación a
            empezar. Es la primera pantalla de quien recién se registró. -->
       <app-card variant="outlined" padding="lg" data-testid="mi-salud-primera-vez">
-        <h2 class="mi-salud__titulo">Todavía no tenés turnos</h2>
+        <h2 class="mi-salud__titulo">Todavía no tiene turnos</h2>
         <p class="mi-salud__texto">
-          Cuando pidas tu primer turno vas a ver acá cuándo es, y después de la consulta te van a
-          quedar tu receta y tu historia.
+          Cuando pida su primer turno va a ver acá cuándo es, y después de la consulta le van a
+          quedar su receta y su historia.
         </p>
         <a app-button variant="primary" [routerLink]="misTurnos">Pedir mi primer turno</a>
       </app-card>
@@ -113,23 +113,23 @@
           <span class="proxima-cita__titulo-icono" aria-hidden="true">
             <app-nav-icon name="calendar" />
           </span>
-          Tu próxima cita
+          Su próxima cita
         </h2>
 
         @switch (estadoDeLaCita()) {
           @case ('loading') {
             <!-- FT-03-R06 · el hueco se dice. Una banda vacía mientras carga se
                  lee como «no tenés citas», que es la respuesta contraria. -->
-            <p class="proxima-cita__estado" role="status">Buscando tu próxima cita…</p>
+            <p class="proxima-cita__estado" role="status">Buscando su próxima cita…</p>
           }
           @case ('error') {
             <p class="proxima-cita__estado proxima-cita__estado--error" role="alert">
-              No pudimos traer tu próxima cita. Podés verla igual en Mis citas.
+              No pudimos traer su próxima cita. Puede verla igual en Mis citas.
             </p>
             <a app-button variant="outline" size="sm" [routerLink]="misTurnos">Ir a Mis citas</a>
           }
           @case ('empty') {
-            <p class="proxima-cita__estado">No tenés citas pedidas.</p>
+            <p class="proxima-cita__estado">No tiene citas pedidas.</p>
             <a app-button variant="primary" [routerLink]="misTurnos">Pedir una cita</a>
           }
           @default {
@@ -195,7 +195,7 @@
                      que poder explicarse sola. -->
                 @if (turno.delayNotice; as demora) {
                   <p class="proxima-cita__demora" data-testid="mi-salud-cita-demora">
-                    Tu profesional avisó una demora de {{ demora.delayMinutes }} minutos.
+                    Su profesional avisó una demora de {{ demora.delayMinutes }} minutos.
                   </p>
                 }
               </div>
@@ -218,12 +218,12 @@
             <app-nav-icon name="pill" />
           </span>
           <span class="mi-salud__resumen-texto">
-            <span class="mi-salud__resumen-rotulo">Tu última receta</span>
+            <span class="mi-salud__resumen-rotulo">Su última receta</span>
             @if (resumen().ultimaReceta; as cuando) {
               <span class="mi-salud__resumen-dato">{{ cuando | date: "d 'de' MMMM, y" }}</span>
             } @else {
               <span class="mi-salud__resumen-dato mi-salud__resumen-dato--vacio">
-                Todavía no te recetaron nada
+                Todavía no le recetaron nada
               </span>
             }
           </span>
@@ -237,12 +237,12 @@
             <app-nav-icon name="history" />
           </span>
           <span class="mi-salud__resumen-texto">
-            <span class="mi-salud__resumen-rotulo">Tu última atención</span>
+            <span class="mi-salud__resumen-rotulo">Su última atención</span>
             @if (resumen().ultimaAtencion; as cuando) {
               <span class="mi-salud__resumen-dato">{{ cuando | date: "d 'de' MMMM, y" }}</span>
             } @else {
               <span class="mi-salud__resumen-dato mi-salud__resumen-dato--vacio">
-                Todavía no tenés atenciones registradas
+                Todavía no tiene atenciones registradas
               </span>
             }
           </span>

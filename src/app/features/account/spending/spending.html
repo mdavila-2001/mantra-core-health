@@ -1,12 +1,12 @@
 <app-page-header
   title="Mis gastos"
-  subtitle="Lo que gastaste en tu salud: consultas, farmacia, análisis, estudios y tu seguro."
+  subtitle="Lo que gastó en su salud: consultas, farmacia, análisis, estudios y su seguro."
   [breadcrumbs]="breadcrumbs()"
 />
 
 @if (withoutPatientProfile) {
   <app-alert tone="info" title="Esta sección es para pacientes">
-    Tu cuenta no tiene un perfil de paciente, así que no hay gastos propios que mirar.
+    Su cuenta no tiene un perfil de paciente, así que no hay gastos propios que mirar.
   </app-alert>
 } @else {
   <app-view-state-host [state]="state()" (retry)="load()">
@@ -82,7 +82,7 @@
               <p class="spending__label">Promedio mensual {{ d.currentYear }}</p>
               <p class="spending__value">{{ money(d.monthlyAverageCents, d) }}</p>
               <p class="spending__sub">
-                A este ritmo cerrarías el año en {{ wholeMoney(d.projectedYearCents, d) }}
+                A este ritmo cerraría el año en {{ wholeMoney(d.projectedYearCents, d) }}
               </p>
             </app-card>
           </li>
@@ -92,7 +92,7 @@
         <app-card class="spending__year" padding="lg" data-testid="spending-year-chart">
           <div class="spending__card-head">
             <h2 class="spending__title">Mes a mes</h2>
-            <p class="spending__sub">{{ d.currentYear }} contra {{ d.previousYear }}. Pasá el puntero o el foco por un mes para ver el detalle.</p>
+            <p class="spending__sub">{{ d.currentYear }} contra {{ d.previousYear }}. Pase el puntero o el foco por un mes para ver el detalle.</p>
           </div>
           <app-spending-year-chart
             [months]="d.months"
@@ -105,15 +105,15 @@
         <!-- ================= Lo que te ahorraste =========================== -->
         <app-card class="spending__savings" padding="lg" data-testid="spending-savings">
           <div class="spending__card-head">
-            <h2 class="spending__title">Lo que no pagaste vos</h2>
-            <p class="spending__sub">En {{ d.currentYear }}, entre tu seguro y las promociones.</p>
+            <h2 class="spending__title">Lo que no pagó usted</h2>
+            <p class="spending__sub">En {{ d.currentYear }}, entre su seguro y las promociones.</p>
           </div>
           <p class="spending__value spending__value--accent">{{ money(savedCents(), d) }}</p>
 
           <div
             class="spending__split"
             role="img"
-            [attr.aria-label]="'Pagaste ' + share(paidShare()) + ' de lo que costó tu atención; el resto lo cubrieron tu seguro y los descuentos.'"
+            [attr.aria-label]="'Pagó ' + share(paidShare()) + ' de lo que costó su atención; el resto lo cubrieron su seguro y los descuentos.'"
           >
             <span class="spending__split-paid" [style.flex-grow]="paidShare()"></span>
             <span class="spending__split-saved" [style.flex-grow]="1 - paidShare()"></span>
@@ -121,7 +121,7 @@
 
           <dl class="spending__facts">
             <div>
-              <dt><span class="spending__swatch spending__swatch--saved"></span>Cubrió tu seguro</dt>
+              <dt><span class="spending__swatch spending__swatch--saved"></span>Cubrió su seguro</dt>
               <dd>{{ money(d.yearCoveredCents, d) }}</dd>
             </div>
             <div>
@@ -129,11 +129,11 @@
               <dd>{{ money(d.yearDiscountCents, d) }}</dd>
             </div>
             <div>
-              <dt><span class="spending__swatch spending__swatch--paid"></span>Pagaste vos</dt>
+              <dt><span class="spending__swatch spending__swatch--paid"></span>Pagó usted</dt>
               <dd>{{ money(d.yearToDate.cents, d) }} · {{ share(paidShare()) }}</dd>
             </div>
             <div class="spending__facts-total">
-              <dt>Costo total de tu atención</dt>
+              <dt>Costo total de su atención</dt>
               <dd>{{ money(d.yearGrossCents, d) }}</dd>
             </div>
           </dl>
@@ -188,7 +188,7 @@
         <!-- ================= Dónde gastás más ============================== -->
         <app-card class="spending__providers" padding="lg" data-testid="spending-providers">
           <div class="spending__card-head">
-            <h2 class="spending__title">Dónde gastás más</h2>
+            <h2 class="spending__title">Dónde gasta más</h2>
             <p class="spending__sub">En {{ d.currentYear }}, {{ d.movementsThisYear }} pagos en total.</p>
           </div>
           <ol class="spending__provider-list">
@@ -208,7 +208,7 @@
 
           @if (d.biggestThisYear; as biggest) {
             <div class="spending__biggest">
-              <p class="spending__label">Tu mayor gasto del año</p>
+              <p class="spending__label">Su mayor gasto del año</p>
               <p class="spending__biggest-line">
                 <app-nav-icon [name]="biggest.categoryIcon" />
                 <span>
@@ -234,7 +234,7 @@
                   <th scope="col">Categoría</th>
                   <th scope="col" class="spending__num">Costo</th>
                   <th scope="col" class="spending__num">Cubierto</th>
-                  <th scope="col" class="spending__num">Pagaste</th>
+                  <th scope="col" class="spending__num">Pagó</th>
                 </tr>
               </thead>
               <tbody>

@@ -3,14 +3,14 @@
     @if (done()) {
       <div class="activar__header">
         <h1 appAnuncio [asertivo]="false" class="activar__title" data-testid="activar-ok">
-          Tu cuenta quedó activa
+          Su cuenta quedó activa
         </h1>
         <p class="activar__text">
-          Ya podés entrar con tu correo o documento y la contraseña que acabás de elegir. El código que usaste
+          Ya puede entrar con su correo o documento y la contraseña que acaba de elegir. El código que usó
           no vuelve a servir.
         </p>
         <p class="activar__text">
-          Al ingresar te guiaremos para completar tus datos de contacto, ocupación y domicilio.
+          Al ingresar le guiaremos para completar sus datos de contacto, ocupación y domicilio.
         </p>
       </div>
       <button
@@ -25,9 +25,9 @@
       </button>
     } @else {
       <div class="activar__header">
-        <h1 class="activar__title">Activá tu cuenta</h1>
+        <h1 class="activar__title">Active su cuenta</h1>
         <p class="activar__text">
-          Alguien creó esta cuenta a tu nombre. Elegí tu contraseña para terminar de activarla:
+          Alguien creó esta cuenta a su nombre. Elija su contraseña para terminar de activarla:
           <strong>nadie más la conoce ni puede verla</strong>.
         </p>
       </div>
@@ -36,7 +36,7 @@
            sirve, hay que pedir uno nuevo a quien creó la cuenta. -->
       @if (tokenInvalido()) {
         <app-alert appAnuncio tone="warning" class="activar__alert" data-testid="activar-token-malo">
-          Este código no sirve: puede haber vencido o haberse usado ya. Pedile uno nuevo a quien te
+          Este código no sirve: puede haber vencido o haberse usado ya. Pedile uno nuevo a quien le
           creó la cuenta.
         </app-alert>
       } @else if (errorMessage(); as mensaje) {
@@ -51,11 +51,11 @@
         @if (!tokenEnLaUrl) {
           <app-form-field
             label="Código de activación"
-            hint="Es el que te entregaron. Copialo tal cual, sin espacios."
+            hint="Es el que le entregaron. Cópielo tal cual, sin espacios."
             [required]="true"
             [errorMessage]="
               form.controls.activationToken.touched && form.controls.activationToken.invalid
-                ? 'Escribí el código de activación.'
+                ? 'Escriba el código de activación.'
                 : ''
             "
           >
@@ -63,7 +63,7 @@
               formControlName="activationToken"
               type="text"
               autocomplete="one-time-code"
-              placeholder="El código que te llegó por correo"
+              placeholder="El código que le llegó por correo"
               testId="activar-token"
             >
               <!-- Llave y no candado: esto es el acceso que alguien envió, no
@@ -74,8 +74,8 @@
         }
 
         <app-form-field
-          label="Tu contraseña"
-          hint="Al menos 8 caracteres. La elegís vos y no la ve nadie más."
+          label="Su contraseña"
+          hint="Al menos 8 caracteres. La elige usted y no la ve nadie más."
           [required]="true"
           [errorMessage]="
             form.controls.newPassword.touched && form.controls.newPassword.invalid
@@ -108,7 +108,7 @@
       </form>
 
       <p class="activar__pie">
-        ¿Ya la activaste antes? <a app-link routerLink="/auth">Iniciá sesión</a>
+        ¿Ya la activó antes? <a app-link routerLink="/auth">Inicie sesión</a>
       </p>
     }
   </div>

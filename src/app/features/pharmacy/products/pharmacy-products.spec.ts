@@ -138,7 +138,7 @@ describe('PharmacyProducts', () => {
   it('un catálogo vacío dice qué hacer', () => {
     mount([]);
 
-    expect(text()).toContain('Tu catálogo todavía no tiene productos.');
+    expect(text()).toContain('Su catálogo todavía no tiene productos.');
   });
 
   it('el filtro de estado viene de la URL y deja a la vista sólo lo que coincide', async () => {
@@ -290,7 +290,7 @@ describe('PharmacyProducts', () => {
 
       http.expectNone(`/pharmacies/${PHARMACY.id}/products`);
       expect(root().querySelector('[data-testid="product-dialog-errors"]')?.textContent).toContain(
-        'Elegí la presentación',
+        'Elija la presentación',
       );
     });
 
@@ -319,7 +319,7 @@ describe('PharmacyProducts', () => {
 
       http.expectNone(`/pharmacies/${PHARMACY.id}/products`);
       expect(root().querySelector('[data-testid="product-dialog-errors"]')?.textContent).toContain(
-        'Elegí el medicamento del catálogo oficial',
+        'Elija el medicamento del catálogo oficial',
       );
     });
 
@@ -369,13 +369,13 @@ describe('PharmacyProducts', () => {
       http
         .expectOne(`/pharmacies/${PHARMACY.id}/products`)
         .flush(
-          { statusCode: 409, code: 'CONFLICT', message: 'Ya cargaste ese producto y presentación' },
+          { statusCode: 409, code: 'CONFLICT', message: 'Ya cargó ese producto y presentación' },
           { status: 409, statusText: 'Conflict' },
         );
       fixture.detectChanges();
 
       expect(root().querySelector('[data-testid="product-dialog-errors"]')?.textContent).toContain(
-        'Ya cargaste ese producto',
+        'Ya cargó ese producto',
       );
       expect(root().querySelector('[data-testid="product-dialog"]')).not.toBeNull();
     });

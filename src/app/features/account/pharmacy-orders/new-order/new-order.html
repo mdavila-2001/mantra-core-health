@@ -1,6 +1,6 @@
 <app-page-header
-  title="Confirmá tu pedido"
-  subtitle="Revisá tu receta como pedido: cantidades y alternativas."
+  title="Confirme su pedido"
+  subtitle="Revise su receta como pedido: cantidades y alternativas."
   [breadcrumbs]="breadcrumbs()"
 />
 
@@ -16,7 +16,7 @@
     <div class="confirmacion" data-testid="pedido-confirmacion">
       <!-- ─── La receta (T-E1): de ejemplo y rotulada ─────────────────────── -->
       <section class="confirmacion__bloque" aria-labelledby="confirmacion-receta" data-testid="pedido-receta">
-        <h2 id="confirmacion-receta" class="confirmacion__titulo">Tu receta</h2>
+        <h2 id="confirmacion-receta" class="confirmacion__titulo">Su receta</h2>
         @if (datos()?.cabecera; as cabecera) {
           <p class="confirmacion__principal">Emitida por {{ cabecera.emitidaPor }}</p>
           <p class="confirmacion__secundario">
@@ -51,7 +51,7 @@
 
       <!-- ─── Los renglones ──────────────────────────────────────────────── -->
       <section class="confirmacion__bloque" aria-labelledby="confirmacion-renglones">
-        <h2 id="confirmacion-renglones" class="confirmacion__titulo">Qué pedís</h2>
+        <h2 id="confirmacion-renglones" class="confirmacion__titulo">Qué pide</h2>
 
         <!-- T-E1 · F2.2.4: el conmutador es de demostración y lo dice. Contra la
              API real no se ofrece: ningún contrato dice qué aprueba el seguro
@@ -67,7 +67,7 @@
           />
           <app-badge variant="info">Demostración</app-badge>
           <span class="confirmacion__secundario">
-            Qué aprueba el seguro es un criterio de ejemplo, no la respuesta de tu aseguradora.
+            Qué aprueba el seguro es un criterio de ejemplo, no la respuesta de su aseguradora.
           </span>
         </div>
         }
@@ -122,7 +122,7 @@
                 <div class="confirmacion__linea-precio">
                   @if (renglon.cubierto) {
                     <span class="confirmacion__secundario">
-                      Lo aprobado se reparte con tu seguro en el checkout
+                      Lo aprobado se reparte con su seguro en el checkout
                     </span>
                   } @else {
                     @if (renglon.precioPromocional; as promocional) {
@@ -300,12 +300,12 @@
         </p>
         @if (hayCambiosDeDemostracion()) {
           <p class="confirmacion__nota">
-            Recalculado con tus cambios. El precio final lo confirma la farmacia.
+            Recalculado con sus cambios. El precio final lo confirma la farmacia.
           </p>
         }
         @if (conSeguro() && renglonesCubiertos() > 0) {
           <p class="confirmacion__nota" data-testid="pedido-nota-seguro">
-            Lo aprobado por el seguro no suma a este total: el reparto con tu aseguradora se
+            Lo aprobado por el seguro no suma a este total: el reparto con su aseguradora se
             detalla en el checkout.
           </p>
         }
@@ -315,7 +315,7 @@
                exista, el congelado ya toma el promocional y esta aclaración
                se retira. -->
           <p class="confirmacion__nota">
-            El precio de campaña lo confirma la farmacia al revisar tu pedido.
+            El precio de campaña lo confirma la farmacia al revisar su pedido.
           </p>
         }
         <!-- D-FARMOCK-T-E1-01: el pedido se crea en la confirmación final del
@@ -327,9 +327,9 @@
 
       <!-- ─── La modalidad ───────────────────────────────────────────────── -->
       <section class="confirmacion__bloque" aria-labelledby="confirmacion-modalidad">
-        <h2 id="confirmacion-modalidad" class="confirmacion__titulo">Cómo lo recibís</h2>
+        <h2 id="confirmacion-modalidad" class="confirmacion__titulo">Cómo lo recibe</h2>
         <p class="confirmacion__nota" data-testid="pedido-modalidad-retiro">
-          Retirás el pedido en la farmacia.
+          Retira el pedido en la farmacia.
         </p>
       </section>
 

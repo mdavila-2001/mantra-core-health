@@ -1,7 +1,7 @@
 <section class="cuadricula" aria-labelledby="cuadricula-titulo">
   <h4 class="cuadricula__titulo" id="cuadricula-titulo">Cuadrícula de la consulta</h4>
   <p class="cuadricula__ayuda">
-    Elegí qué querés registrar en cada columna y cargá los valores de hoy. Lo de las consultas
+    Elija qué quiere registrar en cada columna y cargue los valores de hoy. Lo de las consultas
     anteriores se ve abajo y no se edita desde acá.
   </p>
 
@@ -42,12 +42,12 @@
         primera de la tabla.
       </app-alert>
     } @else if (!hayEncuentro()) {
-      <app-alert tone="info" title="Abrí el encuentro para cargar la fila">
-        La fila pertenece a una consulta. Registrá el encuentro y la cuadrícula se abre para cargar.
+      <app-alert tone="info" title="Abra el encuentro para cargar la fila">
+        La fila pertenece a una consulta. Registre el encuentro y la cuadrícula se abre para cargar.
       </app-alert>
     } @else if (sinOrganizacion()) {
-      <app-alert tone="info" title="Elegí una organización">
-        Lo registrado queda bajo la custodia de una organización. Elegí una en el encabezado.
+      <app-alert tone="info" title="Elija una organización">
+        Lo registrado queda bajo la custodia de una organización. Elija una en el encabezado.
       </app-alert>
     }
 
@@ -56,8 +56,8 @@
       <div class="cuadricula__vacio" data-testid="cuadricula-vacia">
         <p class="cuadricula__vacio-titulo">Todavía no hay ninguna columna</p>
         <p class="cuadricula__vacio-ayuda">
-          Una columna es algo que vas a querer comparar consulta a consulta —la presión, el peso,
-          una escala—. Elegí la primera abajo y cargá su valor de hoy.
+          Una columna es algo que va a querer comparar consulta a consulta —la presión, el peso,
+          una escala—. Elija la primera abajo y cargue su valor de hoy.
         </p>
       </div>
     }
@@ -74,7 +74,7 @@
             data-testid="cuadricula-columna"
             [target]="targetMedicion"
             [(value)]="columnaElegida"
-            placeholder="Elegí qué medir"
+            placeholder="Elija qué medir"
           />
         </app-form-field>
         <button

@@ -132,14 +132,14 @@ export function validarHorario(schedule: CenterSchedule, nombreDe: (donde: strin
   const revisar = (donde: string, block: ScheduleBlock): void => {
     const nombre = nombreDe(donde);
     if (block.windows.length === 0) {
-      problemas.push({ donde, mensaje: `${nombre}: marcá al menos un día de atención.` });
+      problemas.push({ donde, mensaje: `${nombre}: marque al menos un día de atención.` });
     }
     for (const franja of block.windows) {
       const desde = enMinutos(franja.startTime);
       const hasta = enMinutos(franja.endTime);
       const dia = DIAS_DE_LA_SEMANA.find((d) => d.dayOfWeek === franja.dayOfWeek)?.label ?? 'Un día';
       if (desde === null || hasta === null) {
-        problemas.push({ donde, mensaje: `${nombre}, ${dia}: completá la hora de inicio y de fin.` });
+        problemas.push({ donde, mensaje: `${nombre}, ${dia}: complete la hora de inicio y de fin.` });
       } else if (hasta <= desde) {
         problemas.push({ donde, mensaje: `${nombre}, ${dia}: la hora de fin tiene que ser posterior a la de inicio.` });
       } else if (hasta - desde < block.slotMinutes) {

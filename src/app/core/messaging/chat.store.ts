@@ -465,7 +465,7 @@ export class ChatStore {
       error: () => {
         this.perfilResuelto.set(true);
         this.esperandoPerfil = null;
-        this.error.set('No pudimos saber si tenés perfil público.');
+        this.error.set('No pudimos saber si tiene perfil público.');
       },
     });
   }
@@ -509,7 +509,7 @@ export class ChatStore {
     const tenantId = this.sesion.activeTenantId();
     if (tenantId === null || this.creandoPerfil()) {
       if (tenantId === null) {
-        this.error.set('No pudimos saber en qué organización estás.');
+        this.error.set('No pudimos saber en qué organización está.');
       }
       return;
     }
@@ -527,7 +527,7 @@ export class ChatStore {
         },
         error: () => {
           this.creandoPerfil.set(false);
-          this.error.set('No pudimos crear tu perfil. Probá de nuevo.');
+          this.error.set('No pudimos crear su perfil. Pruebe de nuevo.');
         },
       });
   }
@@ -594,7 +594,7 @@ export class ChatStore {
         next: () => undefined,
         error: () => {
           this.bloqueados.update((lista) => lista.filter((b) => b.profileId !== profileId));
-          this.error.set('No pudimos bloquear a esa persona. Probá de nuevo.');
+          this.error.set('No pudimos bloquear a esa persona. Pruebe de nuevo.');
         },
       });
   }
@@ -613,7 +613,7 @@ export class ChatStore {
         next: () => undefined,
         error: () => {
           this.bloqueados.update((lista) => [previo, ...lista]);
-          this.error.set('No pudimos desbloquear a esa persona. Probá de nuevo.');
+          this.error.set('No pudimos desbloquear a esa persona. Pruebe de nuevo.');
         },
       });
   }
@@ -664,7 +664,7 @@ export class ChatStore {
           this.bandejaCargada.set(true);
           // No se vacía lo que ya había: un tic fallido no es motivo para
           // borrarle a alguien la bandeja que estaba mirando.
-          this.error.set('No pudimos cargar tus conversaciones.');
+          this.error.set('No pudimos cargar sus conversaciones.');
         },
       });
   }
@@ -1061,7 +1061,7 @@ export class ChatStore {
         next: (actualizado) => this.aplicarReacciones(messageId, actualizado.reactions ?? []),
         error: () => {
           this.aplicarReacciones(messageId, anteriores ?? []);
-          this.error.set('No pudimos guardar tu reacción.');
+          this.error.set('No pudimos guardar su reacción.');
         },
       });
   }
@@ -1559,7 +1559,7 @@ export class ChatStore {
         // repetido y el backend devolvía **otra** conversación cualquiera.
         if (ficha.id === propio) {
           this.abriendo.set(false);
-          this.error.set('Ese es tu propio perfil: no podés escribirte.');
+          this.error.set('Ese es su propio perfil: no puede escribirle.');
           return;
         }
 

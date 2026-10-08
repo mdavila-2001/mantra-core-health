@@ -143,7 +143,7 @@ function aceptarYAvisar(id: string): void {
   const quien = recursos.get(r.resourceId)?.practitionerName ?? null;
   avisarPorChatDeSoporte(
     r.patientProfileId,
-    `${quien === null ? 'Tu cita' : `Tu solicitud de cita con ${quien}`} fue aceptada para el ${fechaDelAviso(r.startAt)}. Podés ver el detalle en «Mis citas».`,
+    `${quien === null ? 'Su cita' : `Su solicitud de cita con ${quien}`} fue aceptada para el ${fechaDelAviso(r.startAt)}. Puede ver el detalle en «Mis citas».`,
   );
 }
 
@@ -192,10 +192,10 @@ function avisarDemoraAlPaciente(
   emitirNotificacion({
     userId: paciente.userId,
     category: 'SCHEDULING',
-    subject: `Tu cita de las ${hora} se demora ${minutos} minutos`,
+    subject: `Su cita de las ${hora} se demora ${minutos} minutos`,
     // El nombre sale del RECURSO, que es donde vive: la reserva guarda el del
     // paciente, no el de quien atiende.
-    bodyText: `${recursos.get(reserva.resourceId)?.practitionerName ?? 'Tu profesional'} avisó una demora de ${minutos} minutos en tu cita de las ${hora}.${explicacion}`,
+    bodyText: `${recursos.get(reserva.resourceId)?.practitionerName ?? 'Su profesional'} avisó una demora de ${minutos} minutos en su cita de las ${hora}.${explicacion}`,
     destination: { type: 'APPOINTMENT', id: reserva.id },
     payloadJson: { bookingId: reserva.id, delayMinutes: minutos },
   });
@@ -585,7 +585,7 @@ export function registrarAgenda(router: MockRouter): void {
           .map((r) => r.id),
       );
       if (!propias.has(datos.resourceId ?? '')) {
-        return forbidden('La reconsulta se agenda en tu propia agenda, no en la de otro profesional');
+        return forbidden('La reconsulta se agenda en su propia agenda, no en la de otro profesional');
       }
 
       origen = reservas.get(origenPedido.bookingId ?? '');
@@ -729,7 +729,7 @@ export function registrarAgenda(router: MockRouter): void {
       const nationalId = patientData.nationalId!.trim();
       if (pacientes.todos().some((p) => p.nationalId === nationalId)) {
         return conflict(
-          'Ya existe un paciente con ese documento de identidad. Buscalo con ' +
+          'Ya existe un paciente con ese documento de identidad. Búsquelo con ' +
             'GET /profiles/patients?nationalId= en vez de registrarlo de nuevo.',
         );
       }
@@ -1063,7 +1063,7 @@ export function registrarAgenda(router: MockRouter): void {
     // 412 (domain.exception.ts:106-118)— y no una validación de forma: por
     // eso va después del `@IsIn` (400) y no junto a él.
     if (tipo.requiresText && (datos.reason === undefined || datos.reason.trim() === '')) {
-      return validation('Elegiste «Otro» como motivo: escribí cuál es.');
+      return validation('Eligió «Otro» como motivo: escriba cuál es.');
     }
     const inicio = datos.startAt ?? ahora();
     const fin = datos.endAt ?? masMinutos(inicio, 60);

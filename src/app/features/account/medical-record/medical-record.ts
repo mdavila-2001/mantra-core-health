@@ -550,7 +550,7 @@ export class MedicalRecord {
             estaVacia(resumen)
               ? empty(
                   { label: 'Pedir un turno', route: MIS_TURNOS_ROUTE },
-                  'Todavía no hay atenciones registradas en tu historia.',
+                  'Todavía no hay atenciones registradas en su historia.',
                 )
               : ready(resumen),
           );
@@ -648,12 +648,12 @@ export class MedicalRecord {
             ),
             seccionesNuevasDeLaHistoria(this.diagnosticos(), this.atenciones()),
           );
-          this.toasts.success('Descargamos tu historia completa.', 'Historia clínica');
+          this.toasts.success('Descargamos su historia completa.', 'Historia clínica');
         },
         error: () => {
           this.armandoHistoria.set(false);
           this.toasts.error(
-            'No pudimos armar el documento. Reintentá en un momento.',
+            'No pudimos armar el documento. Reintente en un momento.',
             'Historia clínica',
           );
         },
@@ -724,7 +724,7 @@ export class MedicalRecord {
   private fallaAlDescargarReceta(): void {
     this.descargandoReceta.set(null);
     this.toasts.error(
-      'No pudimos descargar la receta oficial. Reintentá en un momento.',
+      'No pudimos descargar la receta oficial. Reintente en un momento.',
       'Receta oficial',
     );
   }

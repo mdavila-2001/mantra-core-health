@@ -65,7 +65,7 @@ describe('Messaging', () => {
     lastMessage: {
       id: 'm-1',
       senderProfileId: 'pp-2',
-      bodyText: 'Hola, ¿cómo seguís?',
+      bodyText: 'Hola, ¿cómo sigue?',
       sentAt: '2026-08-18T10:00:00.000Z',
     },
     unreadCount,
@@ -133,7 +133,7 @@ describe('Messaging', () => {
 
     // Antes esto mandaba a «Mi perfil» a buscar un formulario. Ahora la puerta
     // está en la propia pantalla: quien entra a los chats quiere chatear.
-    expect(texto()).toContain('Te falta tu perfil público');
+    expect(texto()).toContain('Le falta su perfil público');
     expect(consultar('mensajeria-crear-perfil')).not.toBeNull();
     // Y no pide la bandeja: no hay a nombre de quién pedirla.
     http.expectNone((r) => r.url === '/community/conversations');
@@ -145,7 +145,7 @@ describe('Messaging', () => {
     ]);
 
     expect(texto()).toContain('Dra. Marisol Quispe');
-    expect(texto()).toContain('Hola, ¿cómo seguís?');
+    expect(texto()).toContain('Hola, ¿cómo sigue?');
     expect(consultar('conversacion-sin-leer')?.textContent?.trim()).toBe('2');
   });
 
@@ -156,7 +156,7 @@ describe('Messaging', () => {
     expect(texto()).not.toContain('pp-9');
   });
 
-  it('el buscador filtra los chats que ya tenés, sin pedirle nada al servidor', () => {
+  it('el buscador filtra los chats que ya tiene, sin pedirle nada al servidor', () => {
     conBandeja([
       conversacion('c-1', [{ profileId: 'pp-2', displayName: 'Dra. Marisol Quispe' }]),
       conversacion('c-2', [{ profileId: 'pp-3', displayName: 'Lic. Ana Rojas' }]),
@@ -303,7 +303,7 @@ describe('Messaging', () => {
     fixture.detectChanges();
 
     expect(texto()).toContain('Dra. Quispe');
-    expect(texto()).toContain('No pudimos cargar tus conversaciones.');
+    expect(texto()).toContain('No pudimos cargar sus conversaciones.');
   });
 
   function escribir(valor: string): void {

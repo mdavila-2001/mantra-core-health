@@ -150,7 +150,7 @@ export class PingIngest {
   protected readonly recorded = signal<number | null>(null);
 
   protected readonly errorMessage = computed(() =>
-    errorMessageOf(this.state(), 'No tenés permiso para ingerir posiciones.'),
+    errorMessageOf(this.state(), 'No tiene permiso para ingerir posiciones.'),
   );
 
   protected agregarFila(): void {

@@ -121,6 +121,6 @@ describe('PracticeSitesMap', () => {
     const fixture = montar([sede(), sede({ id: 'sede-2', punto: null })]);
 
     const pie = (fixture.nativeElement as HTMLElement).querySelector('.sedes__pie');
-    expect(pie?.textContent?.replace(/\s+/g, ' ')).toContain('1 de tus 2 sedes');
+    expect(pie?.textContent?.replace(/\s+/g, ' ')).toContain('1 de sus 2 sedes');
   });
 });

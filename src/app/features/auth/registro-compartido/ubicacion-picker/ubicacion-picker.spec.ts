@@ -30,7 +30,7 @@ describe('UbicacionPicker', () => {
     fixture = TestBed.createComponent(UbicacionPicker);
     component = fixture.componentInstance;
     fixture.componentRef.setInput('pinId', 'domicilio');
-    fixture.componentRef.setInput('etiquetaConfirmada', 'Tu dirección');
+    fixture.componentRef.setInput('etiquetaConfirmada', 'Su dirección');
     fixture.componentRef.setInput('etiquetaQuitar', 'Quitar la ubicación');
     fixture.componentRef.setInput('ids', IDS);
     fixture.detectChanges();
@@ -86,7 +86,7 @@ describe('UbicacionPicker', () => {
     expect(recibidos).toEqual([]);
     expect(raiz().querySelector(`[data-testid="${IDS.confirmar}"]`)).not.toBeNull();
     // El pin puesto a mano no se llama «Acá te encontramos»: eso sería mentir.
-    expect(component['pines']()[0].titulo).toBe('El punto que marcaste');
+    expect(component['pines']()[0].titulo).toBe('El punto que marcó');
   });
 
   it('tocar el mapa con un punto ya confirmado lo corre y suelta la confirmación', () => {
@@ -223,7 +223,7 @@ describe('UbicacionPicker', () => {
     expect(confirmacion?.classList.contains('solo-lectores')).toBe(true);
     expect(confirmacion?.getAttribute('aria-live')).toBe('assertive');
     // Lo que sí se ve es el pin con su nombre y el aviso de la calle.
-    expect(component['pines']()[0].titulo).toBe('Tu dirección');
+    expect(component['pines']()[0].titulo).toBe('Su dirección');
     expect(raiz().querySelector(`[data-testid="${IDS.avisoGeocodificacion}"]`)).not.toBeNull();
   });
 
@@ -295,7 +295,7 @@ describe('UbicacionPicker', () => {
 
     expect(component.rechazado()).toBe(true);
     expect(component.pidiendo()).toBe(false);
-    expect(raiz().textContent).toContain('No pudimos obtener tu ubicación');
+    expect(raiz().textContent).toContain('No pudimos obtener su ubicación');
   });
   /* ---- sin puntero (WCAG 2.1.1) ------------------------------------------ */
 
@@ -363,8 +363,8 @@ describe('UbicacionPicker', () => {
 
       expect(component.punto()).toBeNull();
       expect(elegidos).toEqual([]);
-      expect(raiz().textContent).toContain('Escribí un número entre −90 y 90');
-      expect(raiz().textContent).toContain('Escribí un número entre −180 y 180');
+      expect(raiz().textContent).toContain('Escriba un número entre −90 y 90');
+      expect(raiz().textContent).toContain('Escriba un número entre −180 y 180');
       expect(byTestId('location-coordinates-lat')?.getAttribute('aria-invalid')).toBe('true');
     });
 

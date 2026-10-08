@@ -155,7 +155,7 @@ export class OrganismsGallery {
   private readonly estados: readonly ViewState<readonly string[]>[] = [
     routeAuthPending(),
     loading(),
-    empty({ label: 'Registrar el primer paciente', route: '/design-system' }, 'Todavía no cargaste pacientes.'),
+    empty({ label: 'Registrar el primer paciente', route: '/design-system' }, 'Todavía no cargó pacientes.'),
     ready(['Peña, Andrea', 'Salas, Bruno']),
     stale(['Peña, Andrea'], new Date(2026, 6, 31, 9, 30)),
   ];
@@ -352,7 +352,7 @@ export class OrganismsGallery {
   protected readonly paginasDemo = paginarCampos([
     {
       titulo: 'Identidad',
-      hint: 'Como figura en tu documento.',
+      hint: 'Como figura en su documento.',
       campos: [
         { key: 'documento', label: 'Documento', control: 'text', required: true },
         { key: 'nombre', label: 'Nombre', control: 'text', required: true },

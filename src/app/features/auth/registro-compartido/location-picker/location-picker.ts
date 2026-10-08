@@ -82,7 +82,7 @@ export class LocationPicker {
   /** El error del municipio, cuando quien lo monta lo tiene. */
   readonly errorMessage = input('');
 
-  readonly mapLabel = input('Mapa de Bolivia: elegí tu departamento');
+  readonly mapLabel = input('Mapa de Bolivia: elija su departamento');
 
   /**
    * Sólo para mirar: el mapa marca el departamento y el select muestra el

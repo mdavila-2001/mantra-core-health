@@ -69,8 +69,8 @@
       } @else if (sinOrganizacion()) {
         <!-- `tenantId` es obligatorio en el check-in: decirlo antes y no con
              un error tras el envío. -->
-        <app-alert tone="info" title="Elegí una organización">
-          Un encuentro queda bajo la custodia de una organización. Elegí una en el selector del
+        <app-alert tone="info" title="Elija una organización">
+          Un encuentro queda bajo la custodia de una organización. Elija una en el selector del
           encabezado para poder registrarlo.
         </app-alert>
       } @else {
@@ -82,8 +82,8 @@
               label="Motivo de consulta"
               [hint]="
                 citaDeOrigen()
-                  ? 'El encuentro queda vinculado a la cita desde la que llegaste.'
-                  : 'Opcional. Si llegaste desde la agenda, viene el motivo de la cita.'
+                  ? 'El encuentro queda vinculado a la cita desde la que llegó.'
+                  : 'Opcional. Si llegó desde la agenda, viene el motivo de la cita.'
               "
             >
               <app-textarea
@@ -123,7 +123,7 @@
       aria-labelledby="consulta-rejilla-titulo"
       appTutorialTarget="consulta-rejilla"
     >
-      <h2 id="consulta-rejilla-titulo" class="consulta__titulo">Qué vas a registrar</h2>
+      <h2 id="consulta-rejilla-titulo" class="consulta__titulo">Qué va a registrar</h2>
 
       <ul class="consulta__rejilla" data-testid="consulta-rejilla">
         @for (casilla of casillas(); track casilla.clave) {

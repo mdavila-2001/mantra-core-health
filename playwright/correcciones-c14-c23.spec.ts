@@ -264,7 +264,7 @@ test.describe('C-23 · la hoja de internación', () => {
 
     await expect(page.getByTestId('internacion-lista')).toBeVisible({ timeout: 30_000 });
     const lista = page.getByTestId('internacion-lista');
-    await expect(lista).toContainText(/A tu cargo|A cargo de otro profesional|Sin responsable/);
+    await expect(lista).toContainText(/A su cargo|A cargo de otro profesional|Sin responsable/);
     console.log('LISTA DE INTERNACIONES:', ((await lista.textContent()) ?? '').replace(/\s+/g, ' '));
     await page.screenshot({ path: join(SALIDA, 'c23-3-lista-con-responsable.png') });
   });

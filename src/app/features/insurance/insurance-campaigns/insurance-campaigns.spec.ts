@@ -168,7 +168,7 @@ describe('InsuranceCampaigns', () => {
       await loadWith([]);
 
       expect(status()).toBe('empty');
-      expect(root().textContent).toContain('Todavía no creaste campañas preventivas');
+      expect(root().textContent).toContain('Todavía no creó campañas preventivas');
     });
 
     it('un fallo del servidor se dice y no deja la tabla en blanco', async () => {
@@ -361,7 +361,7 @@ describe('InsuranceCampaigns', () => {
         await settle();
 
         expect(control('code').invalid).toBe(true);
-        expect(root().textContent).toContain('Usá de 3 a 40 caracteres');
+        expect(root().textContent).toContain('Use de 3 a 40 caracteres');
       });
 
       it('un código válido no muestra error', async () => {
@@ -371,7 +371,7 @@ describe('InsuranceCampaigns', () => {
         await settle();
 
         expect(control('code').valid).toBe(true);
-        expect(root().textContent).not.toContain('Usá de 3 a 40 caracteres');
+        expect(root().textContent).not.toContain('Use de 3 a 40 caracteres');
       });
 
       it('fechas invertidas: el formulario es inválido y el error se dice en la fecha final', async () => {
@@ -424,7 +424,7 @@ describe('InsuranceCampaigns', () => {
         await settle();
 
         http.expectNone((r) => r.method === 'POST');
-        expect(root().textContent).toContain('Usá de 3 a 40 caracteres');
+        expect(root().textContent).toContain('Use de 3 a 40 caracteres');
       });
     });
 
@@ -538,7 +538,7 @@ describe('InsuranceCampaigns', () => {
           .flush(failure.body, failure.init);
         await settle();
 
-        expect(root().textContent).toContain('Ya tenés una campaña con este código');
+        expect(root().textContent).toContain('Ya tiene una campaña con este código');
         expect(byTestId('campaign-form')).not.toBeNull();
         expect(form().getRawValue()['code']).toBe('CMP-CARDIO-2026');
       });

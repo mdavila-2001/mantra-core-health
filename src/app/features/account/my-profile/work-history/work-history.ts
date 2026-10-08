@@ -356,7 +356,7 @@ export class WorkHistory implements OnInit {
   protected readonly avisoDeDuplicado = computed<string | null>(() => {
     const state = this.registro();
     if (state.status === 'validation' && state.issues.some((issue) => issue.code === 'CONFLICT')) {
-      return 'Ese vínculo ya está en tu historial: misma institución, mismo cargo y misma fecha de inicio.';
+      return 'Ese vínculo ya está en su historial: misma institución, mismo cargo y misma fecha de inicio.';
     }
     return null;
   });
@@ -702,8 +702,8 @@ export class WorkHistory implements OnInit {
     }
 
     const confirmado = await this.dialogs.confirm({
-      title: '¿Confirmás estos cambios?',
-      message: `Vas a agregar «${this.nombreDeLaInstitucion()}» a tu historial laboral.`,
+      title: '¿Confirma estos cambios?',
+      message: `Va a agregar «${this.nombreDeLaInstitucion()}» a su historial laboral.`,
       confirmLabel: 'Agregar',
       cancelLabel: 'Cancelar',
     });
@@ -736,7 +736,7 @@ export class WorkHistory implements OnInit {
           this.registro.set(ready(null));
           this.limpiar();
           this.altaDeVinculoAbierta.set(false);
-          this.toasts.success('Quedó en tu historial laboral.', 'Vínculo registrado');
+          this.toasts.success('Quedó en su historial laboral.', 'Vínculo registrado');
           this.cargar();
           this.added.emit();
         },
@@ -867,7 +867,7 @@ export class WorkHistory implements OnInit {
           this.registrando.set(false);
           this.registro.set(ready(null));
           this.cancelarEdicionDeVinculo();
-          this.toasts.success('Los cambios ya figuran en tu historial.', 'Vínculo corregido');
+          this.toasts.success('Los cambios ya figuran en su historial.', 'Vínculo corregido');
           this.cargar();
           this.added.emit();
         },
@@ -890,8 +890,8 @@ export class WorkHistory implements OnInit {
     const confirmado = await this.dialogs.confirm({
       title: 'Retirar del historial',
       message:
-        `¿Retirar «${afiliacion.organizationName}» de tu historial laboral? ` +
-        'Deja de figurar en tu ficha y en tu perfil público.',
+        `¿Retirar «${afiliacion.organizationName}» de su historial laboral? ` +
+        'Deja de figurar en su ficha y en su perfil público.',
       confirmLabel: 'Retirar',
       cancelLabel: 'Cancelar',
     });
@@ -906,7 +906,7 @@ export class WorkHistory implements OnInit {
         if (this.vinculoEnEdicion()?.id === afiliacion.id) {
           this.cancelarEdicionDeVinculo();
         }
-        this.toasts.success('Ya no figura en tu historial.', 'Vínculo retirado');
+        this.toasts.success('Ya no figura en su historial.', 'Vínculo retirado');
         this.cargar();
         this.added.emit();
       },
@@ -916,7 +916,7 @@ export class WorkHistory implements OnInit {
         // Ese error se lee dentro del modal del alta, que al retirar está
         // cerrado: sin el aviso, un retiro fallido no diría nada.
         this.toasts.error(
-          mensajeDe(estado) ?? 'No pudimos retirarlo. Probá de nuevo.',
+          mensajeDe(estado) ?? 'No pudimos retirarlo. Pruebe de nuevo.',
           'No se retiró el vínculo',
         );
       },
@@ -1075,7 +1075,7 @@ export class WorkHistory implements OnInit {
           this.registroDeSede.set(ready(null));
           this.lugarElegido.set(null);
           this.lugaresDelPadron.set([]);
-          this.toasts.success(`${lugar.label} ya figura entre los lugares donde atendés.`, 'Listo');
+          this.toasts.success(`${lugar.label} ya figura entre los lugares donde atiende.`, 'Listo');
           this.cargarSedes();
           this.cargar();
           this.added.emit();
@@ -1151,7 +1151,7 @@ export class WorkHistory implements OnInit {
         const corregido = enEdicion !== null;
         this.cerrarAltaDeSede();
         this.toasts.success(
-          corregido ? 'Guardamos los cambios.' : 'Ya figura entre tus consultorios.',
+          corregido ? 'Guardamos los cambios.' : 'Ya figura entre sus consultorios.',
           corregido ? 'Consultorio actualizado' : 'Consultorio registrado',
         );
         this.cargarSedes();
@@ -1230,8 +1230,8 @@ export class WorkHistory implements OnInit {
 
   private async confirmarYCorregirSede(enEdicion: PracticeSite): Promise<void> {
     const confirmado = await this.dialogs.confirm({
-      title: '¿Confirmás estos cambios?',
-      message: `Vas a actualizar «${enEdicion.name}» con los datos del formulario.`,
+      title: '¿Confirma estos cambios?',
+      message: `Va a actualizar «${enEdicion.name}» con los datos del formulario.`,
       confirmLabel: 'Guardar',
       cancelLabel: 'Cancelar',
     });
@@ -1280,7 +1280,7 @@ export class WorkHistory implements OnInit {
           this.registrandoSede.set(false);
           this.registroDeSede.set(ready(null));
           this.cerrarAltaDeSede();
-          this.toasts.success('Los cambios ya figuran en tu ficha.', 'Consultorio corregido');
+          this.toasts.success('Los cambios ya figuran en su ficha.', 'Consultorio corregido');
           this.cargarSedes();
           this.added.emit();
         },
@@ -1328,7 +1328,7 @@ export class WorkHistory implements OnInit {
   protected async quitarSede(sede: PracticeSite): Promise<void> {
     const confirmado = await this.dialogs.confirm({
       title: 'Dejar de atender acá',
-      message: `¿Retirar «${sede.name}» de tus consultorios? La sede no se borra; deja de figurar como un lugar donde atendés.`,
+      message: `¿Retirar «${sede.name}» de sus consultorios? La sede no se borra; deja de figurar como un lugar donde atiende.`,
       confirmLabel: 'Retirar',
       cancelLabel: 'Cancelar',
     });
@@ -1337,7 +1337,7 @@ export class WorkHistory implements OnInit {
     }
     this.sites.removeOwnSite(sede.id).subscribe({
       next: () => {
-        this.toasts.success('Ya no figura entre tus consultorios.', 'Consultorio retirado');
+        this.toasts.success('Ya no figura entre sus consultorios.', 'Consultorio retirado');
         this.cargarSedes();
         this.added.emit();
       },
@@ -1440,7 +1440,7 @@ export class WorkHistory implements OnInit {
     if (afiliacion.statusKind === 'pendiente') {
       return afiliacion.practiceSiteId === null
         ? 'Esperando que la institución confirme el vínculo.'
-        : 'Esperando que la organización te acepte. Hasta entonces no vas a poder publicar agenda ahí.';
+        : 'Esperando que la organización le acepte. Hasta entonces no va a poder publicar agenda ahí.';
     }
     // El motivo, cuando la organización lo dio, va DENTRO del aviso y no como
     // una línea aparte: leer «no aceptaron tu vínculo» y tener que buscar por
@@ -1451,13 +1451,13 @@ export class WorkHistory implements OnInit {
     if (afiliacion.statusKind === 'rechazado') {
       return (
         'La organización no aceptó este vínculo.' +
-        (motivo === '' ? ' Si creés que es un error, hablá con ellos.' : motivo)
+        (motivo === '' ? ' Si cree que es un error, hable con ellos.' : motivo)
       );
     }
     if (afiliacion.statusKind === 'revocado') {
       return (
         'La organización dio de baja este vínculo. Las citas que ya ' +
-        'confirmaste siguen en pie.' +
+        'confirmó siguen en pie.' +
         motivo
       );
     }
@@ -1466,7 +1466,7 @@ export class WorkHistory implements OnInit {
       // Lo que se cuenta es que la institución no lo confirmó —porque no tiene
       // a nadie que pueda hacerlo—, para que sepa por qué su ficha no muestra
       // el sello y no lo lea como un trámite trabado.
-      return 'Declarado por vos. Esta institución no tiene quién confirme vínculos, así que no lleva su sello.';
+      return 'Declarado por usted. Esta institución no tiene quién confirme vínculos, así que no lleva su sello.';
     }
     return null;
   }
@@ -1637,8 +1637,8 @@ export class WorkHistory implements OnInit {
       return;
     }
     const confirmado = await this.dialogs.confirm({
-      title: '¿Confirmás estos cambios?',
-      message: `Vas a actualizar el vínculo con «${afiliacion.organizationName}».`,
+      title: '¿Confirma estos cambios?',
+      message: `Va a actualizar el vínculo con «${afiliacion.organizationName}».`,
       confirmLabel: 'Guardar',
       cancelLabel: 'Cancelar',
     });
@@ -1651,7 +1651,7 @@ export class WorkHistory implements OnInit {
     const cargo = this.cargoEnEdicion().trim();
     this.profiles.updateAffiliation(afiliacion.id, { roleTitle: cargo }).subscribe({
       next: () => {
-        this.toasts.success('Los cambios ya figuran en tu historial.', 'Vínculo corregido');
+        this.toasts.success('Los cambios ya figuran en su historial.', 'Vínculo corregido');
         this.cerrarEdicionDeAfiliacion();
         this.cargar();
         this.added.emit();
@@ -1660,7 +1660,7 @@ export class WorkHistory implements OnInit {
         this.guardandoAfiliacion.set(false);
         this.errorDeEdicionDeAfiliacion.set(
           mensajeDe(errorToViewState<null>(error)) ??
-            'No pudimos guardar los cambios. Probá de nuevo.',
+            'No pudimos guardar los cambios. Pruebe de nuevo.',
         );
       },
     });
@@ -1765,10 +1765,10 @@ function mensajeDe(state: ViewState<null>): string | null {
     return state.issues.map((issue) => issue.message).join(' ') || null;
   }
   if (state.status === 'forbidden') {
-    return state.message ?? 'Tu cuenta no tiene un perfil profesional asociado.';
+    return state.message ?? 'Su cuenta no tiene un perfil profesional asociado.';
   }
   if (state.status === 'offline') {
-    return 'No pudimos conectarnos. Revisá tu conexión y reintentá.';
+    return 'No pudimos conectarnos. Revise su conexión y reintente.';
   }
   if (state.status === 'error') {
     return `${state.message || 'Ocurrió un error inesperado.'} (${state.requestId})`;

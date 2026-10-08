@@ -118,6 +118,6 @@ describe('RegisterAccountType · organizaciones', () => {
   it('titula la pantalla como el alta de una organización', () => {
     const titulo = fixture.debugElement.query(By.css('.tipos__title')).nativeElement as HTMLElement;
 
-    expect(titulo.textContent).toContain('Registrá tu organización');
+    expect(titulo.textContent).toContain('Registre su organización');
   });
 });

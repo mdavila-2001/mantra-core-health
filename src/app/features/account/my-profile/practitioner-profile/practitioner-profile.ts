@@ -87,7 +87,7 @@ const ETIQUETA_DE_CREDENCIALES = PESTANAS_DEL_PERFIL_MEDICO[PESTANA_MEDICO.crede
 
 /** Lo que dice ese aviso. Es el texto del bloque que reemplaza, sin el ejemplo. */
 const AVISO_DE_CREDENCIALES =
-  'Acá se separa lo que declaraste de lo que ya fue verificado contra una fuente ' +
+  'Acá se separa lo que declaró de lo que ya fue verificado contra una fuente ' +
   '—el colegio médico, el registro de matrículas—. Declarar no exige verificación previa.';
 
 /**
@@ -99,13 +99,13 @@ const AVISO_DE_CREDENCIALES =
 const ETIQUETA_DE_TRAYECTORIA = PESTANAS_DEL_PERFIL_MEDICO[PESTANA_MEDICO.trayectoria];
 
 const AVISO_DE_TRAYECTORIA =
-  'Dónde ejerciste antes y dónde ejercés hoy. Es lo que un paciente ve en el ' +
-  'Directorio de médicos antes de pedir una cita. Tus títulos están en «Credenciales».';
+  'Dónde ejerció antes y dónde ejerce hoy. Es lo que un paciente ve en el ' +
+  'Directorio de médicos antes de pedir una cita. Sus títulos están en «Credenciales».';
 
 /** Lo que se dice cuando la cuenta no tiene dónde guardar la foto. */
 const SIN_PERFIL_PARA_LA_FOTO =
-  'Tu cuenta todavía no está asociada a un perfil profesional, así que no hay ' +
-  'dónde guardar la foto. Escribinos para que la vinculemos.';
+  'Su cuenta todavía no está asociada a un perfil profesional, así que no hay ' +
+  'dónde guardar la foto. Escríbanos para que la vinculemos.';
 
 /** El perfil crudo junto a lo que se resolvió aparte para pintarlo. */
 interface PerfilResuelto {
@@ -269,7 +269,7 @@ export class PractitionerProfile {
         },
         error: () => {
           this.fotoSubiendo.set(false);
-          this.errorDeFoto.set('No pudimos subir la foto. Probá con otra imagen.');
+          this.errorDeFoto.set('No pudimos subir la foto. Pruebe con otra imagen.');
         },
       });
   }
@@ -329,7 +329,7 @@ export class PractitionerProfile {
   protected async retirarCredencial(estudio: FormacionVisible): Promise<void> {
     const confirmado = await this.dialogs.confirm({
       title: 'Retirar este título',
-      message: `¿Retirar «${estudio.tipo}» de tu formación? Todavía está pendiente de verificación.`,
+      message: `¿Retirar «${estudio.tipo}» de su formación? Todavía está pendiente de verificación.`,
       confirmLabel: 'Retirar',
       cancelLabel: 'Cancelar',
     });
@@ -342,7 +342,7 @@ export class PractitionerProfile {
         this.recargar();
       },
       error: () => {
-        this.toasts.error('No se pudo retirar el título. Probá de nuevo.', 'Formación');
+        this.toasts.error('No se pudo retirar el título. Pruebe de nuevo.', 'Formación');
       },
     });
   }
@@ -873,7 +873,7 @@ function indicadoresDeCalidad(
       clave: 'duracion',
       rotulo: 'Duración media de la consulta',
       valor: `${calidad.averageDurationMinutes} min`,
-      detalle: 'Desde que empieza hasta que la cerrás',
+      detalle: 'Desde que empieza hasta que la cierra',
       proporcion: null,
     });
   }

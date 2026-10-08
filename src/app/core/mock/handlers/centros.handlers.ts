@@ -160,12 +160,12 @@ function preparacionDe(code: string): string | null {
     case 'STUDY-ECO-ABD':
       return 'Ayuno de 6 a 8 horas.';
     case 'STUDY-ECO-OBSTETRICA':
-      return 'Tomá un litro de agua una hora antes y no orines.';
+      return 'Tome un litro de agua una hora antes y no orines.';
     case 'STUDY-GLUCOSA':
     case 'STUDY-PERFIL-LIPIDICO':
-      return 'Ayuno de 8 a 12 horas. Podés tomar agua.';
+      return 'Ayuno de 8 a 12 horas. Puede tomar agua.';
     case 'STUDY-MAMOGRAFIA':
-      return 'No uses desodorante ni talco ese día.';
+      return 'No use desodorante ni talco ese día.';
     default:
       return null;
   }
@@ -291,7 +291,7 @@ export function registrarCentros(router: MockRouter): void {
   router.get('/diagnostic-units/me/schedule', (request) => {
     const tenants = request.user?.tenants ?? [];
     const u = UNIDADES.find((x) => x.publiclyListed && tenants.includes(x.tenantId));
-    if (u === undefined) return notFound('Tu organización no tiene un centro de diagnóstico con agenda.');
+    if (u === undefined) return notFound('Su organización no tiene un centro de diagnóstico con agenda.');
     return vistaDelCentro(u);
   });
 
@@ -338,7 +338,7 @@ export function registrarCentros(router: MockRouter): void {
     if (equipo === undefined) return notFound('Equipo no encontrado');
     const { status } = cuerpo<{ status?: EquipmentStatus }>(request);
     if (status !== 'OPERATIONAL' && status !== 'MAINTENANCE' && status !== 'OUT_OF_SERVICE') {
-      return validation('Elegí un estado: operativo, en mantenimiento o fuera de servicio.');
+      return validation('Elija un estado: operativo, en mantenimiento o fuera de servicio.');
     }
     estadosDeEquipos.agregar({ id: equipo.id, status, updatedAt: ahora() });
     return vistaDelCentro(u);
@@ -397,14 +397,14 @@ export function registrarCentros(router: MockRouter): void {
   router.post('/diagnostic-results/me/orders/:orderId/booking', (request) => {
     const r = ordenDelPaciente(request);
     if ('error' in r) return r.error;
-    if (turnosDeOrdenes.has(r.orden.id)) return conflict('Esta orden ya tiene un turno. Cancelalo para elegir otro.');
+    if (turnosDeOrdenes.has(r.orden.id)) return conflict('Esta orden ya tiene un turno. Cancélelo para elegir otro.');
     const { unitId, startAt } = cuerpo<{ unitId?: string; startAt?: string }>(request);
     const u = unidadPorId(unitId ?? '');
     if (u === undefined) return notFound('Centro no encontrado');
     const inicio = new Date(startAt ?? '');
     if (Number.isNaN(inicio.getTime())) return validation('Falta el horario elegido.');
     const libre = disponibilidad(u, r.studyCode, inicio, inicio).items.find((i) => i.startAt === inicio.toISOString());
-    if (libre === undefined) return conflict('Ese horario se acaba de ocupar. Elegí otro.', { slotTaken: true });
+    if (libre === undefined) return conflict('Ese horario se acaba de ocupar. Elija otro.', { slotTaken: true });
     const paciente = pacientePorId(r.orden.patientProfileId);
     const estudio = estudiosDelCentro(u).find((e) => e.code === r.studyCode)!;
     const reserva: ReservaSimulada = {
@@ -445,9 +445,9 @@ export function registrarCentros(router: MockRouter): void {
     });
     avisarPorChatDeSoporte(
       r.orden.patientProfileId,
-      `Tu turno para ${estudio.name} en ${u.name} quedó confirmado para el ${fechaDelAviso(libre.startAt)}.` +
+      `Su turno para ${estudio.name} en ${u.name} quedó confirmado para el ${fechaDelAviso(libre.startAt)}.` +
         (estudio.preparation === null ? '' : ` Preparación: ${estudio.preparation}`) +
-        ' Podés verlo en «Mis órdenes».',
+        ' Puede verlo en «Mis órdenes».',
     );
     return { status: 201, body: turnoComoCita(turno) };
   });

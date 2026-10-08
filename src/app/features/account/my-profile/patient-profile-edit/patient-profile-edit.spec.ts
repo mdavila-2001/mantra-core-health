@@ -585,7 +585,7 @@ describe('PatientProfileEdit', () => {
       expect(señal<string>('domicilio')()).toBe('');
       expect(
         raiz.querySelector('[data-testid="perfil-domicilio-reescribir"]')?.textContent,
-      ).toContain('Volvé a escribir la dirección para este punto');
+      ).toContain('Vuelva a escribir la dirección para este punto');
       // El trabajo no se entera: cada mapa vacía sólo su campo.
       expect(señal<string>('direccionTrabajo')()).toBe('Calle Ayacucho 241');
       expect(raiz.querySelector('[data-testid="perfil-trabajo-reescribir"]')).toBeNull();
@@ -634,7 +634,7 @@ describe('PatientProfileEdit', () => {
       montarPintadoYCargado(CON_DIRECCIONES);
 
       expect(notaDelCampo('perfil-trabajo', '.form-field-hint')).toBe(
-        'Si trabajás fuera de Bolivia, sumá ciudad y país a la dirección.',
+        'Si trabaja fuera de Bolivia, sume ciudad y país a la dirección.',
       );
     });
   });
@@ -714,7 +714,7 @@ describe('PatientProfileEdit', () => {
 
     expect(señal<string>('nombre')()).toBe('Ana María');
     expect(interno<() => boolean>('guardando')()).toBe(false);
-    expect(toasts.toasts().at(-1)?.message).toBe('Tus datos quedaron actualizados.');
+    expect(toasts.toasts().at(-1)?.message).toBe('Sus datos quedaron actualizados.');
   });
 
   it('si el guardado falla lo dice y deja el formulario intacto para reintentar', () => {
@@ -724,7 +724,7 @@ describe('PatientProfileEdit', () => {
     interno<() => void>('guardar')();
     pedidoDeGuardado().error(new ProgressEvent('error'), { status: 500 });
 
-    expect(toasts.toasts().at(-1)?.message).toBe('No pudimos guardar los cambios. Probá de nuevo.');
+    expect(toasts.toasts().at(-1)?.message).toBe('No pudimos guardar los cambios. Pruebe de nuevo.');
     expect(interno<() => boolean>('guardando')()).toBe(false);
     expect(señal<string>('nombre')()).toBe('Ana María');
   });
@@ -1069,7 +1069,7 @@ describe('PatientProfileEdit', () => {
   it('el sexo se ofrece con las dos opciones del alta', () => {
     montarPintadoYCargado();
 
-    expect(opcionesDe('perfil-genero')).toEqual(['Elegí una opción', 'Masculino', 'Femenino']);
+    expect(opcionesDe('perfil-genero')).toEqual(['Elija una opción', 'Masculino', 'Femenino']);
   });
 
   /** Un valor heredado que ya no está en la lista se conserva: no se manda nada. */

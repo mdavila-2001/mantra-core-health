@@ -12,8 +12,8 @@
 </ng-template>
 
 <app-auth-split
-  claim="Sumá tu laboratorio a la red"
-  tagline="Recibí las órdenes médicas de toda la red y facturalas desde un solo lugar."
+  claim="Sume su laboratorio a la red"
+  tagline="Reciba las órdenes médicas de toda la red y facturalas desde un solo lugar."
   contentWidth="full"
   [plainSurface]="true"
 >
@@ -27,13 +27,13 @@
             class="registro__title"
             data-testid="registro-lab-exito"
           >
-            ¡Bienvenido a AloVida! Tu salud en un solo lugar
+            ¡Bienvenido a AloVida! Su salud en un solo lugar
           </h1>
-          <p class="registro__subtitle">Concluiste el registro de manera satisfactoria. Ya podés conectarte con el correo del representante legal y la contraseña que elegiste.</p>
+          <p class="registro__subtitle">Concluyó el registro de manera satisfactoria. Ya puede conectarse con el correo del representante legal y la contraseña que eligió.</p>
           @if (verificationSent()) {
-            <p class="registro__subtitle">Te enviamos un correo para confirmar tu dirección. Podés hacerlo cuando quieras: no es necesario para empezar a usar AloVida.</p>
+            <p class="registro__subtitle">Le enviamos un correo para confirmar su dirección. Puede hacerlo cuando quiera: no es necesario para empezar a usar AloVida.</p>
           }
-          <p class="registro__subtitle">Tu laboratorio está en revisión: en cuanto la plataforma lo apruebe, aparecerá en las búsquedas de pacientes. Mientras tanto, ya podés ingresar con tu cuenta.</p>
+          <p class="registro__subtitle">Su laboratorio está en revisión: en cuanto la plataforma lo apruebe, aparecerá en las búsquedas de pacientes. Mientras tanto, ya puede ingresar con su cuenta.</p>
         </div>
         <button
           app-button
@@ -47,12 +47,12 @@
         </button>
       } @else {
         <div class="registro__header">
-          <h1 class="registro__title">Registrá tu laboratorio</h1>
+          <h1 class="registro__title">Registre su laboratorio</h1>
           <!-- Sin contar los pasos: el indicador de arriba ya dice «Paso 1 de
                N» y lo calcula solo. Un número escrito acá se desincroniza el
                día que una sección se parta en dos. -->
           <p class="registro__subtitle">
-            Necesitamos lo básico para crear tu cuenta. Podés volver atrás en cualquier paso, y
+            Necesitamos lo básico para crear su cuenta. Puede volver atrás en cualquier paso, y
             completar el resto más adelante.
           </p>
         </div>
@@ -114,9 +114,9 @@
               }
               <app-ubicacion-picker
                 pinId="laboratorio-central"
-                etiquetaConfirmada="Tu laboratorio"
+                etiquetaConfirmada="Su laboratorio"
                 etiquetaQuitar="Quitar la ubicación de la central"
-                etiquetaMapa="La ubicación de tu laboratorio en el mapa"
+                etiquetaMapa="La ubicación de su laboratorio en el mapa"
                 [ids]="idsUbicacionCentral"
                 [inicial]="gpsCentral()"
                 (confirmado)="gpsCentral.set($event)"
@@ -211,7 +211,7 @@
                   </section>
                 } @empty {
                   <p class="lab-sucursales__vacio">
-                    Todavía no agregaste ninguna. Si atendés en un solo local, no hace falta.
+                    Todavía no agregó ninguna. Si atiende en un solo local, no hace falta.
                   </p>
                 }
 
@@ -253,7 +253,7 @@
 
         <div class="registro__footer">
           <p class="registro__pie">
-            ¿Ya tenés cuenta? <a app-link routerLink="/auth">Iniciá sesión</a>
+            ¿Ya tiene cuenta? <a app-link routerLink="/auth">Inicie sesión</a>
           </p>
         </div>
       }
