@@ -449,7 +449,7 @@ describe('AgendaCreate', () => {
 
       // La columna «Turnos» de la fila: el costo en el mismo renglón donde se
       // elige, que es donde se lo mira.
-      expect(fixture.nativeElement.textContent).toContain('Turnos');
+      expect(fixture.nativeElement.textContent).toContain('Horarios');
       expect(acc.turnosDelDia(0)).toBe(8);
 
       // Elegir respiro sobre una franja corta quita turnos, y ese número no se
@@ -480,7 +480,7 @@ describe('AgendaCreate', () => {
       expect(previa.textContent).toContain('Lunes');
       // Y el paso completo —30 + 15— se ve en el cierre.
       expect(texto).toContain('09:00 – 13:15');
-      expect(texto).toContain('6 turnos de 30 min');
+      expect(texto).toContain('6 citas de 30 min');
       // Y se dice que el último pasa la hora de fin.
       expect(
         fixture.nativeElement.querySelector('[data-testid="agenda-create-previa-extiende"]')
@@ -1293,7 +1293,7 @@ describe('AgendaCreate', () => {
       // «Atiendo» sí está: qué admite la franja (consultas, servicios o ambos) no
       // depende de si los turnos son fijos. Lo que NO aparece es duración ni descanso.
       expect(encabezados).toEqual(['Día', 'Desde', 'Hasta', 'Atiendo']);
-      expect(acc.resumen()).toContain('horario flexible sin turnos fijos');
+      expect(acc.resumen()).toContain('horario flexible sin citas de duración fija');
     });
 
     describe('qué se atiende en cada franja (v4.2.40)', () => {

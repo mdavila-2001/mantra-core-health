@@ -59,7 +59,7 @@ const ETAPAS: Readonly<
   },
   schedule: {
     titulo: 'Sus horarios',
-    explica: 'Publique su agenda para que puedan pedirle turno. Sin esto no aparece al reservar.',
+    explica: 'Publique su agenda para que puedan pedirle una cita. Sin esto no aparece al reservar.',
     accion: 'Publicar mi agenda',
     ruta: AGENDA_CREATE_ROUTE,
   },

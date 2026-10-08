@@ -168,7 +168,7 @@ test.describe('Carril J5 · la vertical P0 de punta a punta', () => {
    * Peldaños 2 y 3 — que un doctor recién registrado sea encontrable, y que se
    * le pueda pedir turno. Es el «médico invisible» mirado desde el paciente.
    */
-  test('el paciente encuentra a la doctora nueva y le pide turno', async ({ page }) => {
+  test('el paciente encuentra a la doctora nueva y le pide cita', async ({ page }) => {
     await entrar(page, paciente);
 
     await test.step('la doctora recién publicada aparece en el buscador', async () => {

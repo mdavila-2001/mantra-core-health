@@ -1139,7 +1139,7 @@ export function registrarPerfiles(router: MockRouter): void {
       userId: destinatario.userId,
       category: 'CLINICAL',
       subject: 'Le quieren registrar como dependiente',
-      bodyText: `${titular.displayName} pide registrarse como su dependiente. Si acepta, va a poder pedirle turnos y ver su historia clínica.`,
+      bodyText: `${titular.displayName} pide registrarse como su dependiente. Si acepta, va a poder pedirle citas y ver su historia clínica.`,
       destination: { type: 'DEPENDENT_LINK_REQUEST', id: solicitud.id },
       // Decidir desde la campana, sin abrir la pantalla de Dependientes.
       actions: [
