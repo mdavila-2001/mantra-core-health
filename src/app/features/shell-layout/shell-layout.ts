@@ -32,6 +32,7 @@ import { TutorialTarget } from '../../shared/components/organisms/tutorial-overl
 // declara hotspot— y se monta acá porque el armazón es lo único que existe
 // exactamente una vez por sesión con interfaz.
 import { NotificationBell } from '../../shared/components/organisms/notification-bell/notification-bell';
+import { PanicButton } from '../emergency/panic-button/panic-button';
 import { BackLink } from '../../shared/components/atoms/back-link/back-link';
 import { Badge } from '../../shared/components/atoms/badge/badge';
 import { NavIcon } from '../../shared/components/atoms/nav-icon/nav-icon';
@@ -93,6 +94,7 @@ const TIPO_DE_ORGANIZACION_LEGIBLE: Readonly<Record<string, string>> = {
     TutorialOverlay,
     TutorialTarget,
     NotificationBell,
+    PanicButton,
     BackLink,
     Badge,
     NavIcon,
