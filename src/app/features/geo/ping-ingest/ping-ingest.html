@@ -36,6 +36,7 @@
           <div [formGroup]="fila">
             <div class="m13__datos">
               <app-form-field
+                icon="pin"
                 label="Latitud (punto {{ indice + 1 }})"
                 [required]="true"
                 [errorMessage]="
@@ -48,6 +49,7 @@
               </app-form-field>
 
               <app-form-field
+                icon="pin"
                 label="Longitud"
                 [required]="true"
                 [errorMessage]="
@@ -60,6 +62,7 @@
               </app-form-field>
 
               <app-form-field
+                icon="sliders"
                 label="Precisión (metros)"
                 [errorMessage]="
                   fila.controls.accuracyM.touched && fila.controls.accuracyM.invalid
@@ -70,7 +73,7 @@
                 <app-input formControlName="accuracyM" type="text" />
               </app-form-field>
 
-              <app-form-field label="Capturado (ISO 8601)" hint="Como 2026-08-11T10:15:00Z.">
+              <app-form-field icon="calendar" label="Capturado (ISO 8601)" hint="Como 2026-08-11T10:15:00Z.">
                 <app-input formControlName="capturedAt" type="text" />
               </app-form-field>
             </div>

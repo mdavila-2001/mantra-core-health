@@ -65,11 +65,11 @@
     <app-card class="grupos__alta">
       <h2 class="grupos__alta-titulo">Nuevo grupo</h2>
 
-      <app-form-field label="Nombre" [required]="true">
+      <app-form-field icon="labels" label="Nombre" [required]="true">
         <app-input [(value)]="nombre" placeholder="Cardiología clínica" />
       </app-form-field>
 
-      <app-form-field label="De qué trata" hint="Opcional. Se ve en la tarjeta del directorio.">
+      <app-form-field icon="note" label="De qué trata" hint="Opcional. Se ve en la tarjeta del directorio.">
         <app-input [(value)]="descripcion" placeholder="Casos, guías y ateneos" />
       </app-form-field>
 

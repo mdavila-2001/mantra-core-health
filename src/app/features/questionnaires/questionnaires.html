@@ -19,6 +19,7 @@
   <app-card variant="outlined" padding="lg" class="encuestas__alta">
     <form [formGroup]="formulario" (ngSubmit)="crear()" data-testid="encuestas-form">
       <app-form-field
+        icon="labels"
         label="Título"
         hint="Lo primero que ve el paciente. Por ejemplo: «Satisfacción post-consulta»."
         [required]="true"
@@ -27,6 +28,7 @@
       </app-form-field>
 
       <app-form-field
+        icon="note"
         label="Consigna"
         hint="Opcional. Se muestra antes de las preguntas para orientar al paciente."
       >
@@ -34,6 +36,7 @@
       </app-form-field>
 
       <app-form-field
+        icon="history"
         label="Plazo para responder (días)"
         hint="Desde que se le ofrece el cuestionario al paciente. Se congela al emitirlo."
         [required]="true"

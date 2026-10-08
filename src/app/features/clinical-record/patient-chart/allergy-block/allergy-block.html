@@ -41,6 +41,7 @@
     <form class="alergia__form" (submit)="$event.preventDefault(); registrar()">
       @if (opcionesDeCita().length > 1) {
         <app-form-field
+          icon="calendar"
           label="¿En qué cita se detectó?"
           hint="Opcional. La consulta donde apareció, incluidas las ya finalizadas."
         >
@@ -54,6 +55,7 @@
       }
 
       <app-form-field
+        icon="flag"
         label="Sustancia"
         hint="A qué es alérgica la persona. Es lo único obligatorio."
         [required]="true"
@@ -66,7 +68,7 @@
         />
       </app-form-field>
 
-      <app-form-field label="Tipo" hint="Opcional. Alergia inmunológica o intolerancia.">
+      <app-form-field icon="labels" label="Tipo" hint="Opcional. Alergia inmunológica o intolerancia.">
         <app-concept-select
           [target]="targetTipo"
           [(value)]="tipo"
@@ -74,7 +76,7 @@
         />
       </app-form-field>
 
-      <app-form-field label="Categoría" hint="Opcional. Qué clase de alérgeno es.">
+      <app-form-field icon="scan" label="Categoría" hint="Opcional. Qué clase de alérgeno es.">
         <app-concept-select
           [target]="targetCategoria"
           [(value)]="categoria"
@@ -83,6 +85,7 @@
       </app-form-field>
 
       <app-form-field
+        icon="shield"
         label="Criticidad"
         hint="Opcional. El riesgo de una exposición futura. Es lo que decide una conducta."
       >
@@ -101,7 +104,7 @@
 
         @for (reaccion of reacciones(); track reaccion.clave) {
           <div class="alergia__reaccion" data-testid="alergia-reaccion">
-            <app-form-field label="Manifestación">
+            <app-form-field icon="note" label="Manifestación">
               <app-concept-select
                 [target]="targetManifestacion"
                 [value]="reaccion.manifestacion"
@@ -110,7 +113,7 @@
               />
             </app-form-field>
 
-            <app-form-field label="Gravedad">
+            <app-form-field icon="flag" label="Gravedad">
               <app-concept-select
                 [target]="targetSeveridad"
                 [value]="reaccion.severidad"
@@ -119,7 +122,7 @@
               />
             </app-form-field>
 
-            <app-form-field label="En palabras" hint="Opcional. Cómo fue, con las palabras de quien registra.">
+            <app-form-field icon="note" label="En palabras" hint="Opcional. Cómo fue, con las palabras de quien registra.">
               <app-textarea
                 [rows]="2"
                 [value]="reaccion.descripcion"

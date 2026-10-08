@@ -45,6 +45,7 @@
       description="El proveedor donde vive el sujeto externo que se quiere ligar a una cuenta local."
     >
       <app-form-field
+        icon="key"
         label="Identificador del proveedor"
         [required]="true"
         [hint]="uuidHint"
@@ -56,6 +57,7 @@
       </app-form-field>
 
       <app-form-field
+        icon="link"
         label="Sujeto externo"
         [required]="true"
         hint="El identificador del sujeto en el proveedor."
@@ -69,6 +71,7 @@
       </app-form-field>
 
       <app-form-field
+        icon="history"
         label="Minutos de validez del token"
         hint="Opcional: por defecto, 30 minutos. Hasta 1440 (un día)."
         [errorMessage]="

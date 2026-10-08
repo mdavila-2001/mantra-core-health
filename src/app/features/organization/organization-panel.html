@@ -47,6 +47,7 @@
         @if (puedeAdministrar()) {
           <form class="organizacion__formulario" (submit)="$event.preventDefault()">
             <app-form-field
+              icon="building"
               label="Razón social"
               hint="El nombre legal, tal como figura en los papeles."
             >
@@ -54,6 +55,7 @@
             </app-form-field>
 
             <app-form-field
+              icon="tag"
               label="Nombre comercial"
               hint="Con el que la conocen los pacientes. Es el que se muestra en el directorio."
             >
@@ -61,6 +63,7 @@
             </app-form-field>
 
             <app-form-field
+              icon="globe"
               label="Zona horaria"
               hint="No es un detalle: es la zona en la que se leen los horarios de sus agendas."
             >
@@ -69,6 +72,7 @@
 
             @if (esAseguradora()) {
               <app-form-field
+                icon="labels"
                 label="Sigla"
                 hint="Las pocas letras con las que se la nombra en tablas y comprobantes."
               >
@@ -76,6 +80,7 @@
               </app-form-field>
 
               <app-form-field
+                icon="labels"
                 label="NIT"
                 hint="El número de identificación tributaria, para la facturación."
               >
@@ -83,6 +88,7 @@
               </app-form-field>
 
               <app-form-field
+                icon="pin"
                 label="Dirección"
                 hint="La de la casa matriz. Las de cada sucursal se cargan en su sede."
               >
@@ -90,6 +96,7 @@
               </app-form-field>
 
               <app-form-field
+                icon="key"
                 label="Código de aseguradora"
                 hint="El código interno con el que la plataforma la identifica. No se edita desde acá."
               >
@@ -194,7 +201,7 @@
 
           <!-- El caso real de uso: «¿a qué hora viene X hoy?». Filtra sobre lo
                ya cargado, sin volver al servidor por cada tecla. -->
-          <app-form-field label="Buscar paciente">
+          <app-form-field icon="patients" label="Buscar paciente">
             <app-input [(value)]="buscaPaciente" placeholder="Nombre del paciente" />
           </app-form-field>
         </div>

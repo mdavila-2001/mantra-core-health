@@ -40,6 +40,7 @@
       description="Un segundo sujeto activo con el mismo tipo e identidad es un duplicado y se rechaza."
     >
       <app-form-field
+        icon="key"
         label="Identidad del sujeto"
         [required]="true"
         [hint]="uuidHint"
@@ -58,6 +59,7 @@
       </app-form-field>
 
       <app-form-field
+        icon="monitor"
         label="Dispositivo que reporta"
         hint="Opcional: el dispositivo registrado que va a mandar las posiciones."
         [errorMessage]="

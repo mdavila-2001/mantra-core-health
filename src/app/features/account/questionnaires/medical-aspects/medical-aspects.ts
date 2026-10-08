@@ -14,6 +14,7 @@ import { Textarea } from '../../../../shared/components/atoms/textarea/textarea'
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
 import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
+import type { NavIconName } from '../../../../shared/components/atoms/nav-icon/nav-icon.types';
 
 /** Un campo del formulario: qué se pregunta y dónde se guarda. */
 interface CampoDeAspectos {
@@ -22,6 +23,8 @@ interface CampoDeAspectos {
   readonly ayuda: string;
   /** Los textos largos van en área; el grupo sanguíneo es una línea. */
   readonly largo: boolean;
+  /** Regla de UI de ALOVIDA: todo campo lleva su ícono a la izquierda. */
+  readonly icono: NavIconName;
 }
 
 /**
@@ -36,42 +39,49 @@ const CAMPOS: readonly CampoDeAspectos[] = [
     rotulo: 'Grupo y factor sanguíneo',
     ayuda: 'Por ejemplo, O+. Si no lo sabe, déjelo vacío.',
     largo: false,
+    icono: 'flask',
   },
   {
     clave: 'allergiesText',
     rotulo: 'Alergias',
     ayuda: 'A medicamentos, alimentos o cualquier otra cosa. Cuente qué le pasó.',
     largo: true,
+    icono: 'flag',
   },
   {
     clave: 'currentMedicationsText',
     rotulo: 'Qué está tomando',
     ayuda: 'Incluya lo de venta libre, vitaminas y anticonceptivos.',
     largo: true,
+    icono: 'pill',
   },
   {
     clave: 'chronicConditionsText',
     rotulo: 'Enfermedades crónicas',
     ayuda: 'Lo que lleva hace tiempo: presión, diabetes, tiroides, asma.',
     largo: true,
+    icono: 'heart',
   },
   {
     clave: 'surgeriesText',
     rotulo: 'Cirugías e internaciones',
     ayuda: 'Qué le operaron y aproximadamente cuándo.',
     largo: true,
+    icono: 'scalpel',
   },
   {
     clave: 'familyHistoryText',
     rotulo: 'Antecedentes familiares',
     ayuda: 'Enfermedades importantes de padres, hermanos o abuelos.',
     largo: true,
+    icono: 'people',
   },
   {
     clave: 'habitsText',
     rotulo: 'Hábitos',
     ayuda: 'Tabaco, alcohol, actividad física, cómo come y cómo duerme.',
     largo: true,
+    icono: 'sliders',
   },
 ];
 
