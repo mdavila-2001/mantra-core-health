@@ -127,7 +127,7 @@ const VENTANA_MAXIMA_DIAS = 92;
  */
 const SIN_AGENDA = empty(
   { label: 'Publicar mi agenda', route: AGENDA_CREATE_ROUTE },
-  'Todavía no publicó su horario. Cuando lo haga, va a verlo acá y los pacientes van a poder pedirle turno.',
+  'Todavía no publicó su horario. Cuando lo haga, va a verlo acá y los pacientes van a poder pedirle una cita.',
 );
 
 /** Un día de la semanita, ya resuelto para pintar. */
@@ -960,8 +960,8 @@ export class MyAgenda implements OnInit {
         const cerrados = resultados.reduce((suma, r) => suma + r.blockedSlots, 0);
         this.toast.success(
           cerrados === 0
-            ? 'No había turnos libres que cerrar en ese período.'
-            : `Se cerraron ${cerrados} ${cerrados === 1 ? 'turno libre' : 'turnos libres'}.`,
+            ? 'No había horarios libres que cerrar en ese período.'
+            : `Se cerraron ${cerrados} ${cerrados === 1 ? 'horario libre' : 'horarios libres'}.`,
           `Bloqueó ${pedido.dias} ${pedido.dias === 1 ? 'día' : 'días'}`,
         );
         this.cargarMes();
@@ -1003,7 +1003,7 @@ export class MyAgenda implements OnInit {
       {
         title: `Bloquear el ${cuando}`,
         message:
-          'Los turnos libres de ese día dejan de ofrecerse. Las citas ya reservadas no se tocan: ' +
+          'Los horarios libres de ese día dejan de ofrecerse. Las citas ya reservadas no se tocan: ' +
           'si quiere cancelarlas, hágalo una por una.',
         confirmLabel: 'Bloquear el día',
       },
@@ -1552,7 +1552,7 @@ export class MyAgenda implements OnInit {
         this.operandoHorario.set(null);
         this.toast.success(
           res.slotsPendientes
-            ? 'Vuelva a publicarlo para abrir los turnos: reactivar no los repone.'
+            ? 'Vuelva a publicarlo para abrir los horarios: reactivar no los repone.'
             : 'Ya estaba vigente.',
           `«${plantilla.name}» volvió a estar vigente`,
         );
@@ -1682,7 +1682,7 @@ export class MyAgenda implements OnInit {
             res.notified === 0
               ? 'No había pacientes a quienes avisar.'
               : `Se le avisó a ${res.notified} ${res.notified === 1 ? 'persona' : 'personas'}.`,
-            `${res.movedSlots} ${res.movedSlots === 1 ? 'turno movido' : 'turnos movidos'}`,
+            `${res.movedSlots} ${res.movedSlots === 1 ? 'cita movida' : 'citas movidas'}`,
           );
           this.cargarMes();
           this.cargarDia(dia);
@@ -1944,15 +1944,15 @@ export class MyAgenda implements OnInit {
 
     const motivo = await this.dialogs.confirmWithReason(
       {
-        title: 'Cancelar este turno',
+        title: 'Cancelar esta cita',
         message: 'El paciente recibe el aviso con el motivo que escriba.',
-        confirmLabel: 'Cancelar el turno',
+        confirmLabel: 'Cancelar la cita',
         cancelLabel: 'No, volver',
       },
       {
         label: '¿Por qué?',
         placeholder: 'Una urgencia, un imprevisto…',
-        hint: 'Lo lee el paciente. Un turno cancelado sin explicación se siente como un plantón.',
+        hint: 'Lo lee el paciente. Una cita cancelada sin explicación se siente como un plantón.',
         minLength: 3,
         maxLength: 200,
       },
@@ -1963,10 +1963,10 @@ export class MyAgenda implements OnInit {
       .cancelBooking(pedido.bookingId, { cancelledBy: 'PROVIDER', reasonText: motivo })
       .subscribe({
         next: () => {
-          this.toast.success('El paciente recibe el aviso.', 'Turno cancelado');
+          this.toast.success('El paciente recibe el aviso.', 'Cita cancelada');
           this.cargarDia(dia);
         },
-        error: (error: unknown) => this.avisarFallo(error, 'cancelar el turno'),
+        error: (error: unknown) => this.avisarFallo(error, 'cancelar la cita'),
       });
   }
 
@@ -2012,7 +2012,7 @@ export class MyAgenda implements OnInit {
     const confirmado = await this.dialogs.confirm({
       title: 'Retirar este horario',
       message:
-        'Deja de publicarse y los turnos que nadie reservó se dan de baja. Los que ya tienen paciente se conservan. Para volver atrás hay que publicarlo de nuevo.',
+        'Deja de publicarse y los horarios que nadie reservó se dan de baja. Los que ya tienen paciente se conservan. Para volver atrás hay que publicarlo de nuevo.',
       confirmLabel: 'Retirar horario',
       destructive: true,
     });
@@ -2027,8 +2027,8 @@ export class MyAgenda implements OnInit {
         // horario que el médico acaba de retirar, y eso tiene que verlo.
         this.toast.success(
           retiro.keptSlots > 0
-            ? `Se dieron de baja ${retiro.releasedSlots} turnos libres. Quedan ${retiro.keptSlots} con paciente: siga atendiéndolos.`
-            : `Se dieron de baja ${retiro.releasedSlots} turnos libres.`,
+            ? `Se dieron de baja ${retiro.releasedSlots} horarios libres. Quedan ${retiro.keptSlots} con paciente: siga atendiéndolos.`
+            : `Se dieron de baja ${retiro.releasedSlots} horarios libres.`,
           'Horario retirado',
         );
         this.cargar();

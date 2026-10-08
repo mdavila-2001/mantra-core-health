@@ -513,7 +513,7 @@ export class MedicalRecord {
     } else {
       // No es un vacío de datos ni un error: la pantalla no le corresponde a
       // esta cuenta, y el aviso lo dice con su propia salida.
-      this.historia.set(empty({ label: 'Ir a mis turnos', route: MIS_TURNOS_ROUTE }));
+      this.historia.set(empty({ label: 'Ir a mis citas', route: MIS_TURNOS_ROUTE }));
       this.formularios.set(ready([]));
     }
   }
@@ -549,7 +549,7 @@ export class MedicalRecord {
           this.historia.set(
             estaVacia(resumen)
               ? empty(
-                  { label: 'Pedir un turno', route: MIS_TURNOS_ROUTE },
+                  { label: 'Pedir una cita', route: MIS_TURNOS_ROUTE },
                   'Todavía no hay atenciones registradas en su historia.',
                 )
               : ready(resumen),

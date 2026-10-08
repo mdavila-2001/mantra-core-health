@@ -727,6 +727,6 @@ function etiquetaDeLaCelda(
       return motivo === null ? `${cuando}: bloqueado` : `${cuando}: bloqueado — ${motivo}`;
   }
   if (disponibles === null) return `${cuando}: día pasado`;
-  if (disponibles === 0) return `${cuando}: sin turnos disponibles`;
-  return `${cuando}: ${disponibles} ${disponibles === 1 ? 'turno disponible' : 'turnos disponibles'}`;
+  if (disponibles === 0) return `${cuando}: sin horarios disponibles`;
+  return `${cuando}: ${disponibles} ${disponibles === 1 ? 'horario disponible' : 'horarios disponibles'}`;
 }

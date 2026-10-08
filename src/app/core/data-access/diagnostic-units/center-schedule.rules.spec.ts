@@ -113,8 +113,8 @@ describe('validarHorario', () => {
 
 describe('describirHorario', () => {
   it('agrupa días consecutivos con la misma franja', () => {
-    expect(describirHorario(GENERAL)).toBe('Lun a Vie 08:00–12:00 · turnos de 30 min');
-    expect(describirHorario(ECO)).toBe('Mar, Jue 14:00–18:00 · turnos de 20 min');
+    expect(describirHorario(GENERAL)).toBe('Lun a Vie 08:00–12:00 · citas de 30 min');
+    expect(describirHorario(ECO)).toBe('Mar, Jue 14:00–18:00 · citas de 20 min');
   });
 });
 

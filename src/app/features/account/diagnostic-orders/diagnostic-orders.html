@@ -182,11 +182,11 @@
         }
       </dl>
       @if (cancelacionFallida()) {
-        <app-alert tone="error">No pudimos cancelar el turno. Pruebe de nuevo en un momento.</app-alert>
+        <app-alert tone="error">No pudimos cancelar la cita. Pruebe de nuevo en un momento.</app-alert>
       }
       <div class="orden__turno-acciones">
         <button app-button variant="danger" [isLoading]="cancelando()" data-testid="mis-ordenes-cancelar-turno" (click)="cancelarTurno(fila)">
-          Cancelar turno
+          Cancelar cita
         </button>
       </div>
     </app-content-dialog>

@@ -144,7 +144,7 @@ describe('Recorrido real · el camino del consumidor', () => {
    * vaya.
    */
   function portalQuieto(): void {
-    cy.contains(/buscando sus turnos|buscando horarios libres/i, { timeout: 20_000 }).should(
+    cy.contains(/buscando sus citas|buscando horarios libres/i, { timeout: 20_000 }).should(
       'not.exist',
     );
   }
@@ -195,7 +195,7 @@ describe('Recorrido real · el camino del consumidor', () => {
           },
           { log: false },
         );
-        capturar({ carpeta: 'consumidor-03-turno', titulo: 'Pedir un turno' }, 'sin-horarios');
+        capturar({ carpeta: 'consumidor-03-turno', titulo: 'Pedir una cita' }, 'sin-horarios');
         return;
       }
 
@@ -254,7 +254,7 @@ describe('Recorrido real · el camino del consumidor', () => {
           'have.length.at.least',
           1,
         );
-        cy.contains(/todav[íi]a no tiene turnos/i).should('not.exist');
+        cy.contains(/todav[íi]a no tiene citas/i).should('not.exist');
         capturar({ carpeta: 'consumidor-03-turno', titulo: 'Mis turnos' }, 'turno-confirmado');
       });
     });
@@ -322,7 +322,7 @@ describe('Recorrido real · el camino del consumidor', () => {
           },
           { log: false },
         );
-        capturar({ carpeta: 'consumidor-03-turno', titulo: 'Pedir un turno' }, 'sin-agendas');
+        capturar({ carpeta: 'consumidor-03-turno', titulo: 'Pedir una cita' }, 'sin-agendas');
         return;
       }
       pedirYConfirmarUnTurno();
@@ -339,7 +339,7 @@ describe('Recorrido real · el camino del consumidor', () => {
     anotarTramoApagado(
       'TRAMO_E1_CANCELAR',
       'Mis turnos',
-      'cancelar el turno recién confirmado y ver el cupo volver a la grilla',
+      'cancelar la cita recién confirmado y ver el cupo volver a la grilla',
     );
 
     // ── 5. Subir la evidencia de identidad ─────────────────────────────────

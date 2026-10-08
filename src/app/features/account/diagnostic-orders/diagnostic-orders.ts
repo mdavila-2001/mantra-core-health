@@ -197,7 +197,7 @@ export class DiagnosticOrders {
         if (pagina.items.length === 0) {
           this.estado.set(
             empty(
-              { label: 'Ver mis turnos', route: '/my-account/appointments' },
+              { label: 'Ver mis citas', route: '/my-account/appointments' },
               'No tiene órdenes de laboratorio ni de imagen. Cuando un médico le pida un estudio en una consulta, aparece acá con las indicaciones para hacérselo.',
             ),
           );
@@ -456,7 +456,7 @@ export class DiagnosticOrders {
       acciones.push({ code: 'reservar', label: 'Reservar hora', icon: 'calendar' });
     }
     if (fila.appointment !== null) {
-      acciones.push({ code: 'ver-turno', label: 'Ver turno', icon: 'calendar' });
+      acciones.push({ code: 'ver-turno', label: 'Ver cita', icon: 'calendar' });
     }
     return acciones;
   }

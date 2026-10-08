@@ -767,12 +767,12 @@ function datosDe(
     const turnos = Math.floor((duracion + respiro) / (tamano + respiro));
     datos.push({ rotulo: 'Cada consulta', valor: `${tamano} min` });
     if (respiro > 0) datos.push({ rotulo: 'Respiro entre consultas', valor: `${respiro} min` });
-    datos.push({ rotulo: 'Turnos en la franja', valor: String(turnos) });
+    datos.push({ rotulo: 'Horarios en la franja', valor: String(turnos) });
   } else {
     datos.push({ rotulo: 'Cada consulta', valor: 'Tamaño libre' });
   }
   if (r.capacityPerSlot && r.capacityPerSlot > 1) {
-    datos.push({ rotulo: 'Pacientes por turno', valor: String(r.capacityPerSlot) });
+    datos.push({ rotulo: 'Pacientes por horario', valor: String(r.capacityPerSlot) });
   }
   return datos;
 }

@@ -50,7 +50,7 @@ const CUENTAS_PERSONALES: readonly TipoDeCuenta[] = [
   {
     icono: 'patient',
     titulo: 'Paciente',
-    detalle: 'Su historia clínica, sus turnos y sus estudios, siempre con usted.',
+    detalle: 'Su historia clínica, sus citas y sus estudios, siempre con usted.',
     ruta: '/auth/register/patient',
     testId: 'tipo-paciente',
   },

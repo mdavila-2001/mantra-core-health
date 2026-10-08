@@ -53,7 +53,7 @@ describe('CenterSchedulePage', () => {
   it('sin horarios propios, el general se llama «Horario general» y cubre todas las modalidades', async () => {
     const { el } = await montar({ getMySchedule: () => of(VISTA) });
     expect(el.querySelector('[data-testid="centro-horario-general-titulo"]')?.textContent?.trim()).toBe('Horario general');
-    expect(el.querySelector('[data-testid="centro-resumen"]')?.textContent).toContain('1 paciente por turno (1 ecógrafo)');
+    expect(el.querySelector('[data-testid="centro-resumen"]')?.textContent).toContain('1 paciente por horario (1 ecógrafo)');
   });
 
   it('dar horario propio a una modalidad convierte el general en «Resto de servicios» y publica ese horario', async () => {

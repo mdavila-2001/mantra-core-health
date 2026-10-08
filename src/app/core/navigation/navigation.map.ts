@@ -1211,7 +1211,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     roles: [ANY_ROLE],
     availability: 'disponible',
     summary:
-      'Registre a quienes están a su cargo y pida turnos o consulte su historia en su nombre.',
+      'Registre a quienes están a su cargo y pida citas o consulte su historia en su nombre.',
     module: 'M05 profiles',
   },
   {
@@ -1249,7 +1249,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     icon: 'calendar',
     roles: [ANY_ROLE],
     availability: 'disponible',
-    summary: 'Mire sus turnos y pida uno nuevo con los horarios disponibles.',
+    summary: 'Mire sus citas y pida una nueva con los horarios disponibles.',
     module: 'M41 scheduling',
   },
   {
@@ -1413,7 +1413,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     icon: 'bell',
     roles: [ANY_ROLE],
     availability: 'disponible',
-    summary: 'Revise todos sus avisos: recetas, consultas, turnos y mensajes.',
+    summary: 'Revise todos sus avisos: recetas, consultas, citas y mensajes.',
     module: 'M35 messaging',
   },
   {

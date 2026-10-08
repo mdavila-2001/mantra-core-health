@@ -139,7 +139,7 @@
               }
               @if (publicado()) {
                 <app-alert tone="success" title="Horarios publicados" data-testid="centro-publicado">
-                  Los pacientes ya ven los turnos nuevos.
+                  Los pacientes ya ven los horarios nuevos.
                 </app-alert>
               }
 
@@ -213,7 +213,7 @@
               }
               @if (otrosEquipos().length > 0) {
                 <section class="seccion" aria-label="Otros equipos">
-                  <h2 class="seccion__titulo">Otros equipos <span class="resumen__origen">· no limitan los turnos</span></h2>
+                  <h2 class="seccion__titulo">Otros equipos <span class="resumen__origen">· no limitan los horarios</span></h2>
                   <ul class="equipos" role="list">
                     @for (e of otrosEquipos(); track e.id) {
                       <li class="equipo">

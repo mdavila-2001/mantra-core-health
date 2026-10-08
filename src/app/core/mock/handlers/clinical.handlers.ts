@@ -214,7 +214,7 @@ export function registrarClinica(router: MockRouter): void {
   router.get('/clinical/patients/:id/summary', (request) => {
     const id = request.params['id']!;
     if (pacientePorId(id) === undefined) return notFound('Paciente no encontrado');
-    if (!puedeLeer(request, id)) return forbidden('No tiene turno hoy ni vínculo vigente con esta persona');
+    if (!puedeLeer(request, id)) return forbidden('No tiene cita hoy ni vínculo vigente con esta persona');
     const limit = Number(request.query.get('limit') ?? 50) || 50;
     return {
       patientProfileId: id,

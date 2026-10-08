@@ -60,8 +60,8 @@ export const PACK_DE_STICKERS: readonly Sticker[] = [
   {
     id: 'a7c1f0e2-0005-4a00-9000-5713ca110005',
     clave: 'confirmado',
-    nombre: "Turno confirmado",
-    frase: "Turno confirmado",
+    nombre: "Cita confirmada",
+    frase: "Cita confirmada",
     url: '/stickers/confirmado.svg',
   },
   {

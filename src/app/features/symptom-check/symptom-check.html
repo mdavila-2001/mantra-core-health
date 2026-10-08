@@ -439,7 +439,7 @@
     <section class="sintomas__guardadas" aria-labelledby="sintomas-guardadas-titulo" data-testid="sintomas-observaciones">
       <h3 id="sintomas-guardadas-titulo" class="sintomas__subtitulo">Sus observaciones guardadas</h3>
       <p class="sintomas__porque">
-        Están guardadas en este dispositivo. Cuando solicite un turno, la más reciente se envía al profesional
+        Están guardadas en este dispositivo. Cuando solicite una cita, la más reciente se envía al profesional
         como motivo de consulta; podrá editarla antes de enviarla.
       </p>
       <ul class="sintomas__lista">
@@ -449,7 +449,7 @@
               <p class="sintomas__especialidad">
                 {{ fechaDe(observacion) }}
                 @if (observacion.usada) {
-                  <span class="sintomas__porque"> · ya enviada con un turno</span>
+                  <span class="sintomas__porque"> · ya enviada con una cita</span>
                 }
               </p>
               @if (observacion.sintomas.length > 0) {

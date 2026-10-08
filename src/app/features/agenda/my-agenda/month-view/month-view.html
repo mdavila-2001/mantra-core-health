@@ -129,16 +129,16 @@
                 @if (dia.pasado && dia.total > 0) {
                   Día pasado: ya no se ofrecen turnos.
                 } @else if (dia.estado === 'lleno') {
-                  Sin turnos libres: están todos reservados.
+                  Sin horarios libres: están todos reservados.
                 } @else {
-                  Sin turnos disponibles.
+                  Sin horarios disponibles.
                 }
               }
               @case (1) {
-                1 turno disponible
+                1 horario disponible
               }
               @default {
-                {{ openDayRows().length }} turnos disponibles
+                {{ openDayRows().length }} horarios disponibles
               }
             }
           </p>

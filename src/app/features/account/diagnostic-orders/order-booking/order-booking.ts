@@ -132,7 +132,7 @@ export class OrderBooking implements OnInit {
   protected readonly ordenes: readonly SegmentedOption<Orden>[] = [
     // Rótulos cortos para que entren a 390 px sin cortarse; el nombre accesible
     // lleva la frase entera.
-    { value: 'pronto', label: 'Pronto', description: 'Primero el turno más pronto' },
+    { value: 'pronto', label: 'Pronto', description: 'Primero el horario más próximo' },
     { value: 'precio', label: 'Barato', description: 'Primero el más barato' },
     { value: 'cerca', label: 'Cerca', description: 'Primero el más cerca de su casa' },
   ];
@@ -247,13 +247,13 @@ export class OrderBooking implements OnInit {
               ? { tipo: 'ocupado', titulo: 'Ese horario se ocupó', texto: 'Alguien lo tomó recién. Elija otro de la lista.' }
               : {
                   tipo: 'ya-tiene-turno',
-                  titulo: 'Esta orden ya tiene turno',
-                  texto: 'Para cambiarlo, cancele el turno actual desde «Mis órdenes» y vuelva a reservar.',
+                  titulo: 'Esta orden ya tiene cita',
+                  texto: 'Para cambiarlo, cancele la cita actual desde «Mis órdenes» y vuelva a reservar.',
                 },
           );
           return;
         }
-        this.aviso.set({ tipo: 'error', titulo: 'No se confirmó el turno', texto: 'Pruebe de nuevo en un momento.' });
+        this.aviso.set({ tipo: 'error', titulo: 'No se confirmó la cita', texto: 'Pruebe de nuevo en un momento.' });
       },
     });
   }
