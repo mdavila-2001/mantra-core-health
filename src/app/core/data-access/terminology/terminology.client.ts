@@ -18,6 +18,8 @@ import type {
   GlossaryFacets,
   GlossaryQuery,
   GlossaryGraph,
+  GlossaryNeighborhood,
+  GlossaryNeighborhoodQuery,
   GlossaryTagPage,
   GlossaryTagQuery,
   GlossaryTermDetail,
@@ -400,6 +402,33 @@ export class TerminologyClient {
     return this.http.get<GlossaryTermDetail>(
       this.url(`/terminology/concepts/${encodeURIComponent(conceptId)}`),
       { params: new HttpParams().set('lang', IDIOMA_DEL_CATALOGO) },
+    );
+  }
+
+  /**
+   * El vecindario de un término: sus relaciones salientes y entrantes, por
+   * tipo y sentido (TAREA-41 §5). Con `perGroup` llega una muestra de cada
+   * grupo; con `type` y `direction`, una página de un solo grupo.
+   *
+   * @param conceptId - Término central.
+   * @param query - Muestra por grupo, o la página de un grupo.
+   * @returns Los grupos no vacíos, cada uno con su total real.
+   */
+  readGlossaryNeighborhood(
+    conceptId: string,
+    query: GlossaryNeighborhoodQuery = {},
+  ): Observable<GlossaryNeighborhood> {
+    let params = new HttpParams().set('lang', IDIOMA_DEL_CATALOGO);
+    if ('type' in query) {
+      params = params.set('type', query.type).set('direction', query.direction);
+      if (query.offset !== undefined) params = params.set('offset', String(query.offset));
+      if (query.limit !== undefined) params = params.set('limit', String(query.limit));
+    } else if (query.perGroup !== undefined) {
+      params = params.set('perGroup', String(query.perGroup));
+    }
+    return this.http.get<GlossaryNeighborhood>(
+      this.url(`/terminology/concepts/${encodeURIComponent(conceptId)}/glossary-neighborhood`),
+      { params },
     );
   }
 
