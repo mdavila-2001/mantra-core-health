@@ -573,6 +573,10 @@ export const SINTOMAS: readonly Sintoma[] = [
       'me late la cabeza',
       'me martillea la cabeza',
       'me revienta la cabeza',
+      // Fuente: «Locro e' letras» (M. Melgar Añez y A. Rodríguez Peña, Gob. Autónomo Municipal de Santa Cruz, 2022), sección «Partes del cuerpo humano en expresiones cambas».
+      // «Tari»: la cabeza de una persona (también la vasija).
+      'me duele el tari',
+      'me duele mucho el tari',
     ],
     // «nuca» va acá y no en el cuello: el dolor de nuca que alguien escribe en
     // una pantalla de síntomas casi siempre viene con la presión alta.
@@ -601,6 +605,10 @@ export const SINTOMAS: readonly Sintoma[] = [
       'me dio sorojchi',
       'mal de altura',
       'me apune',
+      // Fuente: «Palabras y frases del Oriente boliviano» (H. Sanabria Fernández, R. Gandarilla y J. Sánchez Suárez; eju.tv, 14/09/2021).
+      // «Turumba»: aturdido.
+      'estoy turumba',
+      'ando turumba',
     ],
     especialidades: [
       { nombre: 'Otorrinolaringología', peso: 3 },
@@ -732,6 +740,10 @@ export const SINTOMAS: readonly Sintoma[] = [
       'me cuesta tragar',
       'faringitis',
       'placas en la garganta',
+      // Fuente: «Locro e' letras» (M. Melgar Añez y A. Rodríguez Peña, Gob. Autónomo Municipal de Santa Cruz, 2022), sección «Partes del cuerpo humano en expresiones cambas».
+      // «Tacuara»: garganta.
+      'me duele la tacuara',
+      'tengo mal la tacuara',
     ],
     partes: ['garganta'],
     especialidades: [
@@ -856,6 +868,10 @@ export const SINTOMAS: readonly Sintoma[] = [
       'me cruje la mandibula',
       'me traba la mandibula',
       'no puedo abrir bien la boca',
+      // Fuente: «Locro e' letras» (M. Melgar Añez y A. Rodríguez Peña, Gob. Autónomo Municipal de Santa Cruz, 2022), sección «Partes del cuerpo humano en expresiones cambas».
+      // «Jajo»: mentón / mandíbula inferior.
+      'me duele el jajo',
+      'me duele mucho el jajo',
     ],
     partes: ['mandibula', 'quijada'],
     especialidades: [
@@ -1010,6 +1026,12 @@ export const SINTOMAS: readonly Sintoma[] = [
       'empacho',
       'estoy empachado',
       'me empache',
+      // Fuente: «Locro e' letras» (M. Melgar Añez y A. Rodríguez Peña, Gob. Autónomo Municipal de Santa Cruz, 2022), sección «Partes del cuerpo humano en expresiones cambas».
+      // «Buche»: estómago de las personas en habla camba. «Petaca»: barriga.
+      'me duele el buche',
+      'me duele la petaca',
+      'tengo el buche hinchado',
+      'tengo la petaca inflada',
     ],
     // Cada país tiene su palabra y ninguna se deduce de otra: van todas.
     partes: ['panza', 'estomago', 'barriga', 'guata', 'vientre', 'abdomen'],
@@ -1040,6 +1062,11 @@ export const SINTOMAS: readonly Sintoma[] = [
       'caca aguada',
       'popo aguado',
       'estomago suelto',
+      // Fuente: «Palabras y frases del Oriente boliviano» (H. Sanabria Fernández, R. Gandarilla y J. Sánchez Suárez; eju.tv, 14/09/2021).
+      // «Estar de banderita»: desarreglo gástrico con evacuaciones continuas.
+      'estoy de banderita',
+      'ando de banderita',
+      'estar de banderita',
     ],
     especialidades: [
       { nombre: 'Gastroenterología', peso: 3 },
@@ -1073,7 +1100,19 @@ export const SINTOMAS: readonly Sintoma[] = [
   {
     id: 'nauseas',
     nombre: 'náuseas o vómitos',
-    sinonimos: ['nauseas', 'ganas de vomitar', 'vomito', 'asco', 'descompostura', 'arcadas'],
+    sinonimos: [
+      'nauseas',
+      'ganas de vomitar',
+      'vomito',
+      'asco',
+      'descompostura',
+      'arcadas',
+      // Fuente: «Palabras y frases del Oriente boliviano» (H. Sanabria Fernández, R. Gandarilla y J. Sánchez Suárez; eju.tv, 14/09/2021).
+      // «Echar los turos»: vomitar largamente.
+      'echar los turos',
+      'estoy echando los turos',
+      'echo los turos',
+    ],
     especialidades: [
       { nombre: 'Gastroenterología', peso: 3 },
       { nombre: 'Medicina general', peso: 2 },
@@ -1308,7 +1347,16 @@ export const SINTOMAS: readonly Sintoma[] = [
   {
     id: 'dolor-de-pie',
     nombre: 'dolor de pie o tobillo',
-    sinonimos: ['fascitis plantar', 'me duele el talon', 'juanete', 'espolon'],
+    sinonimos: [
+      'fascitis plantar',
+      'me duele el talon',
+      'juanete',
+      'espolon',
+      // Fuente: «Palabras y frases del Oriente boliviano» (H. Sanabria Fernández, R. Gandarilla y J. Sánchez Suárez; eju.tv, 14/09/2021).
+      // «Patichi»: dolencia o defecto del pie que impide caminar con normalidad.
+      'estoy patichi',
+      'ando patichi',
+    ],
     partes: ['pie', 'tobillo'],
     especialidades: [
       { nombre: 'Traumatología', peso: 3 },
@@ -1352,6 +1400,10 @@ export const SINTOMAS: readonly Sintoma[] = [
       'se me doblo el tobillo',
       'me doble el tobillo',
       'se me doblo el pie',
+      // Fuente: «Palabras y frases del Oriente boliviano» (H. Sanabria Fernández, R. Gandarilla y J. Sánchez Suárez; eju.tv, 14/09/2021).
+      // «Taporito»: contusiones en el rostro por golpes recibidos.
+      'tengo la cara taporito',
+      'quede taporito',
     ],
     especialidades: [
       { nombre: 'Traumatología', peso: 3 },
@@ -1540,6 +1592,12 @@ export const SINTOMAS: readonly Sintoma[] = [
       'baja autoestima',
       'no tengo ganas de levantarme',
       'no disfruto nada',
+      // Fuente: «Palabras y frases del Oriente boliviano» (H. Sanabria Fernández, R. Gandarilla y J. Sánchez Suárez; eju.tv, 14/09/2021).
+      // «Estar a las cachuchas»: situación depresiva, como víctima de la mala suerte.
+      'estoy a las cachuchas',
+      'ando a las cachuchas',
+      // Fuente: ídem. «Amartelo»: malestar por la distancia de un ser querido (en el estudio, hijos que quedaron en Bolivia). Muestra pequeña: 27 personas.
+      'tengo amartelo',
     ],
     especialidades: [
       { nombre: 'Psicología', peso: 3 },
@@ -1562,6 +1620,9 @@ export const SINTOMAS: readonly Sintoma[] = [
       'no pego un ojo',
       'paso la noche en vela',
       'tengo el sueno cambiado',
+      // Fuente: «Palabras y frases del Oriente boliviano» (H. Sanabria Fernández, R. Gandarilla y J. Sánchez Suárez; eju.tv, 14/09/2021).
+      // «Dormir por enciminga»: tener el sueño muy leve.
+      'duermo por enciminga',
     ],
     especialidades: [
       { nombre: 'Psiquiatría', peso: 2 },
@@ -2031,6 +2092,10 @@ export const SINTOMAS: readonly Sintoma[] = [
       'control de embarazo',
       'semanas de embarazo',
       'ecografia del embarazo',
+      // Fuente: «Palabras y frases del Oriente boliviano» (H. Sanabria Fernández, R. Gandarilla y J. Sánchez Suárez; eju.tv, 14/09/2021).
+      // «Enbombada»: mujer preñada.
+      'estoy enbombada',
+      'estoy embombada',
     ],
     soloParaSexo: 'FEMALE',
     especialidades: [
@@ -2183,6 +2248,13 @@ export const SINTOMAS: readonly Sintoma[] = [
       'control de nino sano',
       'mi nene',
       'mi nena',
+      // Fuente: P. Rodríguez et al., síndromes de filiación cultural en inmigrantes bolivianos (Rev. Latino-Am. Enfermagem, 2017, PMC5511005): los pasmos son típicos del oriente (Beni y Santa Cruz) y de bebés.
+      // «Mocheó»: estado enfermizo de los niños (Sanabria Fernández et al.). «Pasmo» a secas NO: es también el espasmo.
+      'mi bebe tiene pasmo',
+      'pasmo de luna',
+      'pasmo de sol',
+      'pasmo de sereno',
+      'mi hijo tiene mocheo',
     ],
     especialidades: [{ nombre: 'Pediatría', peso: 3 }],
   },
