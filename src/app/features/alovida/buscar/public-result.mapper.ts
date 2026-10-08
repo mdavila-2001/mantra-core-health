@@ -265,7 +265,7 @@ function turnoDe(resultado: PublicSearchResult): string | null {
   if (!anio || !mes || !dia) return 'Con agenda publicada';
   const fecha = new Date(anio, mes - 1, dia);
   const corta = fecha.toLocaleDateString('es-BO', { day: 'numeric', month: 'short' });
-  return `Turno desde el ${corta}`;
+  return `Citas desde el ${corta}`;
 }
 
 /**

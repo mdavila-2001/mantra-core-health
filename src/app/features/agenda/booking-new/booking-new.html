@@ -1,5 +1,5 @@
 <app-page-header
-  title="Reservar un turno"
+  title="Reservar una cita"
   [subtitle]="
     esAutoservicio
       ? 'Se retiene el horario, se confirma, y el turno queda en su lista.'
@@ -12,7 +12,7 @@
   <!-- Sesión válida, pero de una cuenta que no es de un paciente: no hay perfil
        a nombre de quién reservar. Se dice acá y no en el `confirm`. -->
   <app-alert tone="warning" title="Su cuenta no reserva turnos propios" class="reserva__alert">
-    Esta cuenta no tiene un perfil de paciente. Si atiende turnos, reserve desde la agenda de la
+    Esta cuenta no tiene un perfil de paciente. Si atiende con cita, reserve desde la agenda de la
     organización.
   </app-alert>
   <a app-button variant="primary" [routerLink]="rutaDeAgenda">Ir a la agenda</a>
@@ -141,7 +141,7 @@
                   label="Paciente"
                   hint="Busque por nombre o por código de paciente."
                   [required]="true"
-                  [errorMessage]="pacienteFaltante() ? 'Elija para quién es el turno.' : ''"
+                  [errorMessage]="pacienteFaltante() ? 'Elija para quién es la cita.' : ''"
                 >
                   <app-reference-combobox
                     [selected]="paciente()"

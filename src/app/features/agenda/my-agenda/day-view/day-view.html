@@ -142,7 +142,7 @@
         }
       </h4>
       <p class="dia__mover-nota">
-        Los turnos cambian de hora y se le avisa a cada paciente. Si alguno choca con otra cita
+        Las citas cambian de hora y se le avisa a cada paciente. Si alguno choca con otra cita
         suya, <strong>no se mueve ninguno</strong>.
       </p>
       <div class="dia__mover-opciones">
@@ -526,7 +526,7 @@
               <button
                 class="dia__aire"
                 type="button"
-                [attr.aria-label]="'Agregar algo en este hueco: ' + contextoDe(bloque, 'sin turnos')"
+                [attr.aria-label]="'Agregar algo en este hueco: ' + contextoDe(bloque, 'sin horarios')"
                 [attr.data-linea]="bloque.clave"
                 [attr.tabindex]="tabindexDe(bloque)"
                 (click)="tocar(bloque)"

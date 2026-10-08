@@ -55,7 +55,7 @@
                   <div class="dependents__quien">
                     <p class="dependents__pedido">
                       <strong>{{ solicitud.requesterDisplayName }}</strong> pide registrarse como su
-                      dependiente. Si acepta, va a poder pedirle turnos y ver su historia clínica.
+                      dependiente. Si acepta, va a poder pedirle citas y ver su historia clínica.
                     </p>
                   </div>
                   <div class="dependents__acciones">
@@ -96,7 +96,7 @@
     } @else if (dependents().length === 0) {
       <app-empty-state
         title="Todavía no registró a nadie"
-        description="Registre a alguien con su CI: le llega una notificación y, cuando la acepta, va a poder pedirle turno y ver su historia sin cambiar de cuenta."
+        description="Registre a alguien con su CI: le llega una notificación y, cuando la acepta, va a poder pedirle una cita y ver su historia sin cambiar de cuenta."
       />
     } @else {
       <ul class="dependents__lista" data-testid="dependents-lista">

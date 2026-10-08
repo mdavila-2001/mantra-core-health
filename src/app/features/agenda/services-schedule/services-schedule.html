@@ -26,7 +26,7 @@
     data-testid="services-schedule-requests"
   >
     <h3 id="servicios-horario-solicitudes" class="servicios-horario__subtitulo">
-      Solicitudes y turnos de servicios
+      Solicitudes y citas de servicios
     </h3>
     <p class="servicios-horario__nota">
       Lo que los pacientes pidieron para sus servicios, de hoy a {{ weeks }} semanas. Las que
@@ -57,7 +57,7 @@
             </ul>
           }
           @if (upcoming().length > 0) {
-            <h4 class="servicios-horario__grupo">Próximos turnos ({{ upcoming().length }})</h4>
+            <h4 class="servicios-horario__grupo">Próximas citas ({{ upcoming().length }})</h4>
             <ul class="servicios-horario__reservas" data-testid="services-schedule-upcoming">
               @for (booking of upcoming(); track booking.id) {
                 <ng-container

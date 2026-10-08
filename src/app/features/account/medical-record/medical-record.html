@@ -10,7 +10,7 @@
     Su cuenta no tiene un perfil de paciente, así que no hay una historia clínica propia que
     mostrar.
   </app-alert>
-  <a app-button variant="primary" [routerLink]="rutaDeTurnos">Ir a mis turnos</a>
+  <a app-button variant="primary" [routerLink]="rutaDeTurnos">Ir a mis citas</a>
 } @else {
   <app-view-state-host [state]="historia()" (retry)="cargar()">
     <!-- ─── FT-20 · la historia por pestañas ──────────────────────────────
