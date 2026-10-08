@@ -328,7 +328,7 @@ export const SINTOMAS_DE_ALARMA: readonly Sintoma[] = [
     ],
     alarma: true,
     mensaje:
-      'No estás solo con esto y no hace falta esperar un turno. Hablá ahora con alguien: llamá a una línea de ayuda o andá a una guardia.',
+      'Usted no está solo con esto y no hace falta esperar una cita. Hable ahora con alguien: llame a una línea de ayuda o vaya a una guardia.',
     especialidades: [],
   },
   {
@@ -348,7 +348,7 @@ export const SINTOMAS_DE_ALARMA: readonly Sintoma[] = [
     ],
     alarma: true,
     mensaje:
-      'Lo que le pasó no es su culpa y no tiene que esperar un turno. Si está en peligro o fue hace poco, vaya ahora a una guardia: allí lo atienden, lo protegen y hay medicación que sirve sólo en las primeras horas.',
+      'Lo que le pasó no es su culpa y no tiene que esperar una cita. Si está en peligro o fue hace poco, vaya ahora a una guardia: allí lo atienden, lo protegen y hay medicación que sirve sólo en las primeras horas.',
     especialidades: [],
   },
   {
