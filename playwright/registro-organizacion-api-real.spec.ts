@@ -11,7 +11,6 @@ import {
   subirLosCincoDocumentos,
   testIdDeDocumento,
 } from './helpers/documentos-legales';
-import { completarCuentaDelOwner } from './helpers/owner';
 import { completarGerencias, completarRepresentanteLegal } from './helpers/representante-legal';
 
 /**
@@ -113,22 +112,22 @@ async function llegarADocumentos(page: Page, sigla: string): Promise<void> {
   );
 }
 
-/** Todo el camino hasta «Tu cuenta», con los 5 PDF, el poder y las 3 gerencias. */
-async function llegarATuCuenta(page: Page, sigla: string): Promise<void> {
+/**
+ * Todo el camino del alta, con los 5 PDF, el poder y las 3 gerencias, y la
+ * envía. El representante legal es el owner: `correo` es el de su login.
+ * El último «Continuar» —el de «Directorio ejecutivo»— es el envío, así que la
+ * escucha de la respuesta se arma antes de pulsarlo.
+ */
+async function llegarYEnviarElAlta(page: Page, sigla: string, correo: string): Promise<Response> {
   await llegarADocumentos(page, sigla);
   await subirLosCincoDocumentos(page);
-  await completarRepresentanteLegal(page);
-  await completarGerencias(page);
-  await expect(page.locator('.paginated-form__titulo')).toContainText('Tu cuenta');
-}
-
-/** Envía el alta y devuelve la respuesta del servidor. */
-async function enviarElAlta(page: Page, correo: string): Promise<Response> {
+  await completarRepresentanteLegal(page, { email: correo });
+  await expect(page.locator('.paginated-form__titulo')).toContainText('Directorio ejecutivo');
   const respuesta = page.waitForResponse(
     (r) => r.url().includes('/iam/auth/register-organization') && r.request().method() === 'POST',
     { timeout: 30_000 },
   );
-  await completarCuentaDelOwner(page, { email: correo });
+  await completarGerencias(page);
   return respuesta;
 }
 
@@ -145,9 +144,7 @@ test.describe('alta de aseguradora contra la API real', () => {
     const hallazgos = vigilar(page);
     const sigla = `OK${RUN}`;
     await abrirElAlta(page);
-    await llegarATuCuenta(page, sigla);
-
-    const respuesta = await enviarElAlta(page, correoDe('valido'));
+    const respuesta = await llegarYEnviarElAlta(page, sigla, correoDe('valido'));
 
     expect(respuesta.status(), await respuesta.text()).toBe(201);
     await expect(page.getByTestId('registro-organizacion-exito')).toBeVisible({ timeout: 20_000 });
@@ -157,8 +154,7 @@ test.describe('alta de aseguradora contra la API real', () => {
 
   test('válido: «Ir a iniciar sesión» lleva a la pantalla de acceso', async ({ page }) => {
     await abrirElAlta(page);
-    await llegarATuCuenta(page, `LG${RUN}`);
-    const respuesta = await enviarElAlta(page, correoDe('login'));
+    const respuesta = await llegarYEnviarElAlta(page, `LG${RUN}`, correoDe('login'));
     expect(respuesta.status(), await respuesta.text()).toBe(201);
 
     await expect(page.getByTestId('registro-organizacion-exito')).toBeVisible({ timeout: 20_000 });
@@ -170,8 +166,7 @@ test.describe('alta de aseguradora contra la API real', () => {
     page,
   }) => {
     await abrirElAlta(page);
-    await llegarATuCuenta(page, `VS${RUN}`);
-    const respuesta = await enviarElAlta(page, correoDe('visual'));
+    const respuesta = await llegarYEnviarElAlta(page, `VS${RUN}`, correoDe('visual'));
     expect(respuesta.status(), await respuesta.text()).toBe(201);
     const boton = page.getByTestId('registro-organizacion-ir-login');
     await expect(boton).toBeVisible({ timeout: 20_000 });
@@ -197,9 +192,7 @@ test.describe('alta de aseguradora contra la API real', () => {
     // 3 caracteres exactos, únicos por corrida dentro del alfabeto permitido.
     const corto = RUN.slice(-3).padStart(3, 'X');
     await abrirElAlta(page);
-    await llegarATuCuenta(page, corto);
-
-    const respuesta = await enviarElAlta(page, correoDe('corto'));
+    const respuesta = await llegarYEnviarElAlta(page, corto, correoDe('corto'));
 
     expect(respuesta.status(), await respuesta.text()).toBe(201);
     await expect(page.getByTestId('registro-organizacion-exito')).toBeVisible({ timeout: 20_000 });
@@ -239,13 +232,11 @@ test.describe('alta de aseguradora contra la API real', () => {
   }) => {
     const sigla = `DUP${RUN}`;
     await abrirElAlta(page);
-    await llegarATuCuenta(page, sigla);
-    const primera = await enviarElAlta(page, correoDe('dup-1'));
+    const primera = await llegarYEnviarElAlta(page, sigla, correoDe('dup-1'));
     expect(primera.status(), await primera.text()).toBe(201);
 
     await abrirElAlta(page);
-    await llegarATuCuenta(page, sigla);
-    const segunda = await enviarElAlta(page, correoDe('dup-2'));
+    const segunda = await llegarYEnviarElAlta(page, sigla, correoDe('dup-2'));
 
     expect(segunda.status()).toBe(409);
     await expect(page.getByTestId('registro-organizacion-error')).toContainText(sigla);
@@ -256,19 +247,18 @@ test.describe('alta de aseguradora contra la API real', () => {
   test('error: un correo ya registrado responde 409 y no pierde lo escrito', async ({ page }) => {
     const correo = correoDe('correo-repetido');
     await abrirElAlta(page);
-    await llegarATuCuenta(page, `C1${RUN}`);
-    const primera = await enviarElAlta(page, correo);
+    const primera = await llegarYEnviarElAlta(page, `C1${RUN}`, correo);
     expect(primera.status(), await primera.text()).toBe(201);
 
     await abrirElAlta(page);
-    await llegarATuCuenta(page, `C2${RUN}`);
-    const segunda = await enviarElAlta(page, correo);
+    const segunda = await llegarYEnviarElAlta(page, `C2${RUN}`, correo);
 
     expect(segunda.status()).toBe(409);
     await expect(page.getByTestId('registro-organizacion-error')).toBeVisible();
     await expect(page.getByTestId('registro-organizacion-exito')).toBeHidden();
-    // El formulario sigue en pantalla: se puede corregir el correo y reintentar.
-    await expect(page.getByTestId('registro-organizacion-owner-correo')).toBeVisible();
+    // El formulario sigue en pantalla: se puede volver a la página del
+    // representante legal, corregir el correo y reintentar.
+    await expect(page.getByTestId('paginated-form-continuar')).toBeVisible();
     await capturar(page, 'error-correo-repetido');
   });
 
