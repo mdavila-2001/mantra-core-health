@@ -77,12 +77,12 @@
       <!-- Todavía no pasó nada: en vez de tres tarjetas vacías, la invitación a
            empezar. Es la primera pantalla de quien recién se registró. -->
       <app-card variant="outlined" padding="lg" data-testid="mi-salud-primera-vez">
-        <h2 class="mi-salud__titulo">Todavía no tiene turnos</h2>
+        <h2 class="mi-salud__titulo">Todavía no tiene citas</h2>
         <p class="mi-salud__texto">
-          Cuando pida su primer turno va a ver acá cuándo es, y después de la consulta le van a
+          Cuando pida su primera cita va a ver acá cuándo es, y después de la consulta le van a
           quedar su receta y su historia.
         </p>
-        <a app-button variant="primary" [routerLink]="misTurnos">Pedir mi primer turno</a>
+        <a app-button variant="primary" [routerLink]="misTurnos">Pedir mi primera cita</a>
       </app-card>
     } @else {
       <!-- ─── FT-03 · Tu próxima cita ───────────────────────────────────────

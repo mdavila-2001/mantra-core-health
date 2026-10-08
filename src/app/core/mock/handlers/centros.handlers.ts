@@ -445,7 +445,7 @@ export function registrarCentros(router: MockRouter): void {
     });
     avisarPorChatDeSoporte(
       r.orden.patientProfileId,
-      `Su turno para ${estudio.name} en ${u.name} quedó confirmado para el ${fechaDelAviso(libre.startAt)}.` +
+      `Su cita para ${estudio.name} en ${u.name} quedó confirmado para el ${fechaDelAviso(libre.startAt)}.` +
         (estudio.preparation === null ? '' : ` Preparación: ${estudio.preparation}`) +
         ' Puede verlo en «Mis órdenes».',
     );
@@ -456,7 +456,7 @@ export function registrarCentros(router: MockRouter): void {
     const r = ordenDelPaciente(request);
     if ('error' in r) return r.error;
     const turno = turnosDeOrdenes.get(r.orden.id);
-    if (turno === undefined) return notFound('La orden no tiene turno');
+    if (turno === undefined) return notFound('La orden no tiene cita');
     reservas.actualizar(turno.bookingId, {
       statusConceptId: ESTADO_RESERVA['BK-CANCELLED']!,
       statusReason: { reasonText: 'Cancelado por el paciente', actorKind: 'PATIENT', toStateConceptId: ESTADO_RESERVA['BK-CANCELLED']!, changedAt: ahora() },

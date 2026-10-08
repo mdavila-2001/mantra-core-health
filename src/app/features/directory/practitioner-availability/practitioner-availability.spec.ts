@@ -282,7 +282,7 @@ describe('PractitionerAvailability', () => {
       '.disponibilidad__cupos button',
     );
     expect(chips).toHaveLength(1);
-    expect(texto()).not.toContain('Próximo turno');
+    expect(texto()).not.toContain('Próximo horario');
   });
 
   it('con la semana vacía ofrece el próximo hueco de la misma lectura', async () => {
@@ -297,7 +297,7 @@ describe('PractitionerAvailability', () => {
     });
     await asentar();
 
-    expect(texto()).toContain('Próximo turno');
+    expect(texto()).toContain('Próximo horario');
     http.expectNone((r) => r.url === '/scheduling/slots');
   });
 
@@ -307,7 +307,7 @@ describe('PractitionerAvailability', () => {
     await responderCupos([]);
     await asentar();
 
-    expect(texto()).toContain('No tiene turnos disponibles');
+    expect(texto()).toContain('No tiene horarios disponibles');
   });
 
   /**
@@ -330,7 +330,7 @@ describe('PractitionerAvailability', () => {
     expect(raiz.querySelectorAll('.disponibilidad__cupos button')).toHaveLength(1);
     const buscando = raiz.querySelectorAll('.disponibilidad__buscando[role="status"]');
     expect(buscando).toHaveLength(1);
-    expect(buscando[0]!.textContent).toContain('Buscando turnos en Consultorio Norte');
+    expect(buscando[0]!.textContent).toContain('Buscando horarios en Consultorio Norte');
 
     segunda!.flush({ items: [], count: 0, limit: 500, truncated: false });
     await asentar();
@@ -347,9 +347,9 @@ describe('PractitionerAvailability', () => {
 
     const raiz = fixture.nativeElement as HTMLElement;
     expect(raiz.querySelector('.disponibilidad__error')?.textContent).toContain(
-      'No pudimos traer los turnos de esta sede',
+      'No pudimos traer los horarios de esta sede',
     );
-    expect(texto()).toContain('No tiene turnos disponibles');
+    expect(texto()).toContain('No tiene horarios disponibles');
 
     const reintentar = Array.from(raiz.querySelectorAll('.disponibilidad__error button')).find(
       (b) => b.textContent?.includes('Reintentar'),

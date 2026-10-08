@@ -526,7 +526,7 @@ describe('BookingNew', () => {
       await montarServicio(disponibilidad('2026-08-12T15:00:00.000Z'));
 
       expect(interno<() => { status: string }>('cupo')().status).toBe('empty');
-      expect(harness.routeNativeElement!.textContent).toContain('otro turno lo ocupó');
+      expect(harness.routeNativeElement!.textContent).toContain('otra cita lo ocupó');
     });
 
     it('retener crea el cupo con el endpoint del servicio y manda sede, inicio y paciente', async () => {

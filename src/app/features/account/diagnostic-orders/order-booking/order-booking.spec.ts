@@ -116,7 +116,7 @@ describe('OrderBooking', () => {
     expect(el.querySelector('[data-testid="reserva-estudio-resumen"]')?.textContent).toContain('Ayuno de 6 a 8 horas.');
     await clic(el.querySelector<HTMLButtonElement>('[data-testid="reserva-estudio-confirmar"]')!);
     expect(bookOrder).toHaveBeenCalledWith('orden-1', 'sur', HORARIOS.items[0]!.startAt);
-    expect(el.querySelector('[data-testid="reserva-estudio-listo"]')?.textContent).toContain('Turno confirmado');
+    expect(el.querySelector('[data-testid="reserva-estudio-listo"]')?.textContent).toContain('Cita confirmada');
   });
 
   it('si el horario se ocupó en el medio, avisa y vuelve a los horarios', async () => {
@@ -143,7 +143,7 @@ describe('OrderBooking', () => {
     await clic(boton('Ver horarios de Centro de Imagen Sur'));
     await clic(el.querySelector<HTMLButtonElement>('[data-testid="reserva-estudio-horario"]')!);
     await clic(el.querySelector<HTMLButtonElement>('[data-testid="reserva-estudio-confirmar"]')!);
-    expect(el.querySelector('[data-testid="reserva-estudio-aviso"]')?.textContent).toContain('Esta orden ya tiene turno');
+    expect(el.querySelector('[data-testid="reserva-estudio-aviso"]')?.textContent).toContain('Esta orden ya tiene cita');
     expect(el.querySelector('[data-testid="reserva-estudio-confirmar"]')).toBeNull();
     expect(el.querySelector('[data-testid="reserva-estudio-ir-a-ordenes"]')?.getAttribute('href')).toBe('/my-account/diagnostic-orders');
   });

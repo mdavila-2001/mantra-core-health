@@ -38,11 +38,11 @@
   </ul>
 
   <div class="bloque__duracion">
-    <span class="bloque__rotulo" [id]="testPrefix() + '-duracion'">Cada turno dura</span>
+    <span class="bloque__rotulo" [id]="testPrefix() + '-duracion'">Cada cita dura</span>
     <app-select
       class="bloque__select"
       [attr.data-testid]="testPrefix() + '-duracion'"
-      [ariaLabel]="nombre() + ': duración de cada turno'"
+      [ariaLabel]="nombre() + ': duración de cada cita'"
       [options]="duraciones"
       [value]="'' + block().slotMinutes"
       (valueChange)="$event !== null && fijarDuracion($event)"

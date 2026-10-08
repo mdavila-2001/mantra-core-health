@@ -826,8 +826,8 @@ export class DayView {
     if (cupos.length > 0) {
       partes.push(
         conCita === 0
-          ? `${cupos.length} turnos publicados, ninguno reservado`
-          : `${conCita} de ${cupos.length} turnos reservados`,
+          ? `${cupos.length} horarios publicados, ninguno reservado`
+          : `${conCita} de ${cupos.length} horarios reservados`,
       );
     }
     if (ocupados > 0) {
@@ -920,7 +920,7 @@ export class DayView {
     if (minutos <= HUECO_LARGO_MIN) return null;
     const horas = Math.floor(minutos / 60);
     const resto = minutos % 60;
-    return `${horas} h${resto > 0 ? ` ${resto} min` : ''} sin turnos`;
+    return `${horas} h${resto > 0 ? ` ${resto} min` : ''} sin horarios`;
   }
 
   /** Los bloqueos que tocan el día mirado, recortados a sus límites. */

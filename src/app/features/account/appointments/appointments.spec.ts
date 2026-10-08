@@ -584,7 +584,7 @@ describe('Appointments', () => {
     ]);
 
     const turnos = interno<() => readonly { estado: string; tono: string }[]>('turnosListos')();
-    expect(turnos[0].estado).toBe('Confirmado');
+    expect(turnos[0].estado).toBe('Confirmada');
     expect(turnos[0].estado).not.toContain('Booking');
   });
 
@@ -650,7 +650,7 @@ describe('Appointments', () => {
 
     const texto = (fixture.nativeElement as HTMLElement).textContent ?? '';
     expect(texto).not.toContain(CONFIRMADO);
-    expect(texto).toContain('Confirmado');
+    expect(texto).toContain('Confirmada');
   });
 
   it('volver al placeholder de agendas no pide horarios de nadie', () => {
@@ -1424,7 +1424,7 @@ describe('Appointments', () => {
     it('el estado sigue viéndose: el sello lo acompaña, no lo reemplaza', () => {
       arrancarCon([reconsulta()]);
 
-      expect(raiz().textContent).toContain('Confirmado');
+      expect(raiz().textContent).toContain('Confirmada');
       expect(raiz().textContent).toContain('Reconsulta');
     });
   });
@@ -1805,14 +1805,14 @@ describe('booking-status · presentación por código normalizado', () => {
 
   it('nombra en castellano los estados que faltaban, con y sin prefijo', () => {
     const casos: readonly [string, string][] = [
-      ['BOOKING_REQUESTED', 'Pedido'],
-      ['scheduling:BOOKING_REQUESTED', 'Pedido'],
+      ['BOOKING_REQUESTED', 'Pedida'],
+      ['scheduling:BOOKING_REQUESTED', 'Pedida'],
       ['BOOKING_PENDING_CONFIRMATION', 'Por confirmar'],
       ['scheduling:BOOKING_PENDING_CONFIRMATION', 'Por confirmar'],
-      ['BOOKING_COMPLETED', 'Atendido'],
-      ['scheduling:BOOKING_COMPLETED', 'Atendido'],
+      ['BOOKING_COMPLETED', 'Atendida'],
+      ['scheduling:BOOKING_COMPLETED', 'Atendida'],
       // «Atendido» tiene un segundo código en el catálogo vivo: el evento.
-      ['EV_BOOKING_DONE', 'Atendido'],
+      ['EV_BOOKING_DONE', 'Atendida'],
       ['BOOKING_NO_SHOW', 'No asistió'],
       ['scheduling:BOOKING_NO_SHOW', 'No asistió'],
     ];
@@ -1825,7 +1825,7 @@ describe('booking-status · presentación por código normalizado', () => {
   it('los estados que ya se nombraban no cambian de palabra ni de tono', () => {
     expect(toBookingStatusPresentation(concepto('BOOKING_CONFIRMED'))).toEqual({
       tone: 'success',
-      label: 'Confirmado',
+      label: 'Confirmada',
     });
     expect(toBookingStatusPresentation(concepto('BOOKING_CHECKED_IN'))).toEqual({
       tone: 'info',
@@ -1833,11 +1833,11 @@ describe('booking-status · presentación por código normalizado', () => {
     });
     expect(toBookingStatusPresentation(concepto('BOOKING_CANCELLED'))).toEqual({
       tone: 'error',
-      label: 'Cancelado',
+      label: 'Cancelada',
     });
     expect(toBookingStatusPresentation(concepto('BOOKING_RESCHEDULED'))).toEqual({
       tone: 'warning',
-      label: 'Reprogramado',
+      label: 'Reprogramada',
     });
   });
 
@@ -1860,9 +1860,9 @@ describe('Appointments · estados con palabra y avisos con salida (E3)', () => {
     });
     fixture.detectChanges();
 
-    expect(api(comp).turnosListos()[0].estado).toBe('Pedido');
+    expect(api(comp).turnosListos()[0].estado).toBe('Pedida');
     const texto = (fixture.nativeElement as HTMLElement).textContent ?? '';
-    expect(texto).toContain('Pedido');
+    expect(texto).toContain('Pedida');
     expect(texto).not.toContain('Sin confirmar el estado');
     expect(fixture.nativeElement.querySelector('.turnos__cancelar')).not.toBeNull();
     expect(fixture.nativeElement.querySelector('.turnos__reprogramar')).toBeNull();
@@ -1875,7 +1875,7 @@ describe('Appointments · estados con palabra y avisos con salida (E3)', () => {
     });
     fixture.detectChanges();
 
-    expect(api(comp).turnosListos()[0].estado).toBe('Atendido');
+    expect(api(comp).turnosListos()[0].estado).toBe('Atendida');
     expect(fixture.nativeElement.querySelector('.turnos__cancelar')).toBeNull();
     expect(fixture.nativeElement.querySelector('.turnos__reprogramar')).toBeNull();
   });

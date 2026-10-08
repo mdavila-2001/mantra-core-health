@@ -22,7 +22,7 @@
           {{ a.texto }}
           @if (a.tipo === 'ya-tiene-turno') {
             <div class="reserva__aviso-accion">
-              <a app-button variant="primary" size="sm" [routerLink]="rutaDeOrdenes" data-testid="reserva-estudio-ir-a-ordenes">Ver mi turno en «Mis órdenes»</a>
+              <a app-button variant="primary" size="sm" [routerLink]="rutaDeOrdenes" data-testid="reserva-estudio-ir-a-ordenes">Ver mi cita en «Mis órdenes»</a>
             </div>
           }
         </app-alert>
@@ -53,9 +53,9 @@
                       <span>{{ distancia(opcion.distanceKm) }}</span>
                       <span>
                         @if (opcion.nextStartAt) {
-                          Próximo turno: {{ fechaLarga(opcion.nextStartAt) }}, {{ hora(opcion.nextStartAt) }}
+                          Próximo horario: {{ fechaLarga(opcion.nextStartAt) }}, {{ hora(opcion.nextStartAt) }}
                         } @else {
-                          Sin turnos libres en las próximas dos semanas
+                          Sin horarios libres en las próximas dos semanas
                         }
                       </span>
                     </p>
@@ -149,7 +149,7 @@
                     [isLoading]="confirmando()"
                     (click)="confirmar()"
                   >
-                    Confirmar turno
+                    Confirmar cita
                   </button>
                 </div>
               </section>
@@ -161,7 +161,7 @@
         @case ('listo') {
           @if (turno(); as t) {
             <section class="reserva__seccion reserva__listo" aria-labelledby="reserva-listo" data-testid="reserva-estudio-listo">
-              <h2 id="reserva-listo" class="reserva__titulo" tabindex="-1">Turno confirmado</h2>
+              <h2 id="reserva-listo" class="reserva__titulo" tabindex="-1">Cita confirmada</h2>
               <p>
                 {{ t.studyName }} en {{ t.unitName }}, el {{ fechaLarga(t.startAt) }} a las {{ hora(t.startAt) }}.
               </p>

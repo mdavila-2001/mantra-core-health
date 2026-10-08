@@ -1374,8 +1374,8 @@ export class Agenda {
     this.toast.success(
       turno.esAltaNueva
         ? `Quedó registrado con el código ${turno.patientCode} y la atención ya está abierta.${quitados}`
-        : `El turno quedó agendado y empieza ahora.${quitados}`,
-      turno.esAltaNueva ? 'Ingreso por mostrador' : 'Turno creado',
+        : `La cita quedó agendada y empieza ahora.${quitados}`,
+      turno.esAltaNueva ? 'Ingreso por mostrador' : 'Cita creada',
     );
     this.recargar();
   }
@@ -1443,7 +1443,7 @@ export class Agenda {
         // y quien atiende necesita saberlo para avisar por otro medio.
         this.toast.success(
           resultado.affected === 0
-            ? 'No había turnos vigentes en el horario informado.'
+            ? 'No había citas vigentes en el horario informado.'
             : `Avisamos a ${resultado.notified} de ${resultado.affected} pacientes.`,
           'Demora informada',
         );
@@ -2250,7 +2250,7 @@ export class Agenda {
       title: `Historial de ${cita.paciente}`,
       message:
         ordenadas.length === 0
-          ? 'Esta persona todavía no pidió ningún turno acá.'
+          ? 'Esta persona todavía no pidió ninguna cita acá.'
           : `${ordenadas.length} ${ordenadas.length === 1 ? 'solicitud' : 'solicitudes'}, de la más reciente a la más vieja. Incluye las rechazadas y canceladas.`,
       details: detalles,
       confirmLabel: 'Cerrar',
@@ -2273,7 +2273,7 @@ export class Agenda {
       },
       {
         label: 'Motivo del rechazo',
-        placeholder: 'Por qué no se puede tomar este turno',
+        placeholder: 'Por qué no se puede tomar este horario',
         hint: 'El paciente lo va a ver en el detalle de su turno.',
       },
     );

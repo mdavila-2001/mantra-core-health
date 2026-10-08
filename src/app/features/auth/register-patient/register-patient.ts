@@ -372,7 +372,7 @@ const AYUDA_PACIENTE: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
       icono: 'phone',
       titulo: 'Su celular hace falta',
       texto:
-        'Es por donde le avisamos de un turno, de un resultado listo o de un cambio de hora. No se muestra en ninguna ficha ni se comparte.',
+        'Es por donde le avisamos de una cita, de un resultado listo o de un cambio de hora. No se muestra en ninguna ficha ni se comparte.',
     },
     {
       icono: 'people',
@@ -1179,7 +1179,7 @@ export class RegisterPatient {
             label: 'Su celular',
             hint: 'Elija el país si su número no es de Bolivia.',
             description:
-              'Es por donde le avisamos de un turno o de un resultado. No se muestra a nadie más.',
+              'Es por donde le avisamos de una cita o de un resultado. No se muestra a nadie más.',
             // `tel` lo dibuja `app-phone-input`: ver el motor.
             control: 'tel',
             required: true,
