@@ -342,6 +342,21 @@ export interface Token {
  * encontrarse dentro de «ataques de pánico» — dos falsos positivos que el
  * motor viejo tenía, y el segundo mandaba a urgencias a alguien con ansiedad.
  */
+const PRONOMBRES_ATONOS: ReadonlySet<string> = new Set(['se', 'me', 'te', 'le', 'lo', 'la', 'nos', 'les']);
+
+/** Si lo anterior es «no», saltando pronombres átonos («no se me …»). */
+function negadoAntes(tokens: readonly Token[]): boolean {
+  for (let i = tokens.length - 1; i >= 0; i -= 1) {
+    if (tokens[i].texto === 'no') {
+      return true;
+    }
+    if (!PRONOMBRES_ATONOS.has(tokens[i].texto)) {
+      return false;
+    }
+  }
+  return false;
+}
+
 const FORMAS_DE_ESTAR: ReadonlySet<string> = new Set(['estoy', 'esta', 'estas', 'estaba', 'estuve', 'ando', 'anda', 'andaba']);
 
 export function tokenizar(normalizado: string): readonly Token[] {
@@ -362,7 +377,8 @@ export function tokenizar(normalizado: string): readonly Token[] {
     // «para» después de «no» es el verbo parar, no la preposición: «no para de sangrar», «sangro y
     // no para». Como preposición se descarta, y la alarma quedaba en «no» + «sangre» —que también
     // dice «no hay sangre»—.
-    const esVerboParar = texto === 'para' && tokens.at(-1)?.texto === 'no';
+    // También con pronombres en medio: «no se me para», «no te para».
+    const esVerboParar = texto === 'para' && negadoAntes(tokens);
     // Camba «estar de curso» = tener diarrea (Sanabria Fernández). Sólo en esa construcción: a
     // secas, «curso» es el de inglés.
     const esCursoCamba =
