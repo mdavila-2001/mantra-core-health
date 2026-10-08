@@ -161,7 +161,7 @@ export class Questionnaires {
         if (invitaciones.length === 0) {
           this.estado.set(
             empty(
-              { label: 'Ver mis turnos', route: this.rutaDeTurnos },
+              { label: 'Ver mis citas', route: this.rutaDeTurnos },
               'Todavía no tiene cuestionarios. Aparecen acá cuando el profesional cierra una consulta que tiene encuesta asociada.',
             ),
           );

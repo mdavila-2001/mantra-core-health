@@ -119,7 +119,7 @@ describe('AppointmentCalendar', () => {
 
     expect(eventos(fixture)).toHaveLength(0);
     const aviso = fixture.nativeElement.querySelector('[data-testid="calendario-sin-horario"]');
-    expect(aviso?.textContent).toContain('1 turno sin horario');
+    expect(aviso?.textContent).toContain('1 cita sin horario');
   });
 
   it('al cambiar de mes el turno de hoy deja de verse, y «Hoy» lo trae de vuelta', () => {
@@ -150,12 +150,12 @@ describe('AppointmentCalendar', () => {
     const conTurno = [...fixture.nativeElement.querySelectorAll('td')].find(
       (celda: HTMLElement) => celda.querySelector('.calendario__turno') !== null,
     );
-    expect(conTurno?.getAttribute('aria-label')).toContain('1 turno');
+    expect(conTurno?.getAttribute('aria-label')).toContain('1 cita');
 
     const sinTurnos = [...fixture.nativeElement.querySelectorAll('td')].find(
       (celda: HTMLElement) => celda.querySelector('.calendario__turno') === null,
     );
-    expect(sinTurnos?.getAttribute('aria-label')).toContain('sin turnos');
+    expect(sinTurnos?.getAttribute('aria-label')).toContain('sin citas');
   });
 
   it('el turno abierto en el detalle queda marcado también acá', () => {
@@ -190,7 +190,7 @@ describe('AppointmentCalendar', () => {
    * Antes el calendario sólo servía para mirar: para pedir turno había que
    * bajar al formulario y recorrer catorce días de horarios.
    */
-  it('señalar un día emite su fecha para pedir turno ahí', () => {
+  it('señalar un día emite su fecha para pedir cita ahí', () => {
     const { fixture } = montar([]);
     const dias: Date[] = [];
     fixture.componentInstance.diaElegido.subscribe((dia) => dias.push(dia));
@@ -207,7 +207,7 @@ describe('AppointmentCalendar', () => {
   });
 
   /** Hacia atrás no hay horario que pedir: el día pasado se mira, no se ofrece. */
-  it('los días pasados no ofrecen pedir turno', () => {
+  it('los días pasados no ofrecen pedir cita', () => {
     const { fixture } = montar([]);
 
     const anterior: HTMLButtonElement = fixture.nativeElement.querySelector(

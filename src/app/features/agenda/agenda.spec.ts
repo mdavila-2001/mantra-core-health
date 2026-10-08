@@ -819,7 +819,7 @@ describe('Agenda', () => {
     // que llevar directo al asistente.
     harness.fixture.detectChanges();
     const alerta = harness.fixture.nativeElement.querySelector('app-alert');
-    expect(alerta?.textContent).toContain('no pueden pedirle turno');
+    expect(alerta?.textContent).toContain('no pueden pedirle una cita');
     expect(alerta?.querySelector('a[app-button]')?.getAttribute('href')).toContain('/schedule/new');
     expect(citas().status).toBe('empty');
   });

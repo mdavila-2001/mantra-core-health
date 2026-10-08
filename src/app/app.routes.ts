@@ -982,7 +982,7 @@ const PANTALLAS_HIJAS: Routes = [
     // La reserva de un cupo concreto (V41-09 → V41-05). La franja viaja por
     // query string porque la pantalla relee el cupo para revalidarlo.
     path: 'schedule/book/:slotId',
-    title: `${APP_TITLE} - Reservar un turno`,
+    title: `${APP_TITLE} - Reservar una cita`,
     data: { entrada: 'DESK' },
     // Es la entrada de mostrador: hereda el rol de la agenda. El paciente tiene
     // la suya propia justo abajo, sin guard, porque su sección no declara roles.
@@ -998,7 +998,7 @@ const PANTALLAS_HIJAS: Routes = [
     // query param porque el destino del `routerLink` es lo que decide de qué
     // sección cuelga el breadcrumb.
     path: 'my-account/appointments/book/:slotId',
-    title: `${APP_TITLE} - Pedir un turno`,
+    title: `${APP_TITLE} - Pedir una cita`,
     data: { entrada: 'PORTAL' },
     loadComponent: () =>
       import('./features/agenda/booking-new/booking-new')

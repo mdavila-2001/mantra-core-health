@@ -84,7 +84,7 @@ describe('NotificationPreferences', () => {
     // Ni `CLINICAL` ni `SOCIAL`: son vocabulario del sistema, y quien configura
     // sus avisos razona en «recetas y consultas».
     expect(text()).toContain('Recetas y consultas');
-    expect(text()).toContain('Turnos');
+    expect(text()).toContain('Citas');
     // «Chats» y no «Mensajes» desde F1/§4.H del plan de UX del 22/08/2026: la
     // sección se llama así en el menú, y las preferencias de aviso tienen que
     // usar el mismo nombre o son dos cosas distintas para quien las lee.

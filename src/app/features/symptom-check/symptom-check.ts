@@ -408,7 +408,7 @@ export class SymptomCheck {
     }
     this.observacionesStore.guardar(this.texto(), sintomas);
     this.avisoDeObservacion.set(
-      'Guardamos su observación en este dispositivo. Cuando solicite un turno, se la enviaremos al profesional como motivo de consulta.',
+      'Guardamos su observación en este dispositivo. Cuando solicite una cita, se la enviaremos al profesional como motivo de consulta.',
     );
   }
 

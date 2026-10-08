@@ -1172,7 +1172,7 @@ export class Appointments {
       id: turno.id,
       cuando: turno.cuando,
       hasta: turno.hasta,
-      titulo: turno.agenda === '' ? 'Turno' : turno.agenda,
+      titulo: turno.agenda === '' ? 'Cita' : turno.agenda,
       estado: turno.estado,
       tono: turno.tono,
       // FT-07-R04 · lo que la tarjeta del día no puede mostrar sin cambiar de
@@ -1278,7 +1278,7 @@ export class Appointments {
       .subscribe({
         next: (pagina) => {
           if (pagina.items.length === 0) {
-            this.turnos.set(empty(this.pasoElegirAgenda, 'Todavía no pidió ningún turno.'));
+            this.turnos.set(empty(this.pasoElegirAgenda, 'Todavía no pidió ninguna cita.'));
             return;
           }
           this.traducirEstados(pagina.items);
@@ -1583,8 +1583,8 @@ export class Appointments {
       title: 'Anotarse en la lista de espera',
       message:
         agenda === ''
-          ? 'Le avisamos apenas se libere un horario. No reserva el turno: lo confirma usted cuando llegue el aviso.'
-          : `Le avisamos apenas se libere un horario con ${agenda}. No reserva el turno: lo confirma usted cuando llegue el aviso.`,
+          ? 'Le avisamos apenas se libere un horario. No reserva la cita: la confirma usted cuando llegue el aviso.'
+          : `Le avisamos apenas se libere un horario con ${agenda}. No reserva la cita: la confirma usted cuando llegue el aviso.`,
       confirmLabel: 'Anotarme',
       cancelLabel: 'Volver',
     });
@@ -1658,9 +1658,9 @@ export class Appointments {
     // en el mismo diálogo que confirma, no en un paso aparte ni después del 422.
     const motivo = await this.dialogs.confirmWithReason(
       {
-        title: 'Cancelar el turno',
+        title: 'Cancelar la cita',
         message: `Va a cancelar ${this.nombreDelTurno(turno)}. El horario queda libre para otra persona.`,
-        confirmLabel: 'Cancelar el turno',
+        confirmLabel: 'Cancelar la cita',
         cancelLabel: 'Volver',
       },
       {
@@ -1679,7 +1679,7 @@ export class Appointments {
       .subscribe({
         next: () => {
           this.operando.set(null);
-          this.toast.success('Cancelamos su turno y liberamos el horario.', 'Turno cancelado');
+          this.toast.success('Cancelamos su cita y liberamos el horario.', 'Cita cancelada');
           // El servidor es la verdad: se relee en vez de tachar la fila y devolver
           // el cupo a mano. El turno reaparece como cancelado (por `includeCancelled`)
           // y el horario vuelve a ofrecerse.
@@ -1695,10 +1695,10 @@ export class Appointments {
   /** Cómo nombrar el turno en la confirmación: por su fecha, o genérico. */
   private nombreDelTurno(turno: TurnoVisible): string {
     if (turno.cuando === null) {
-      return 'este turno';
+      return 'esta cita';
     }
     const cuando = this.fecha.transform(turno.cuando, "EEEE d 'de' MMM 'a las' HH:mm");
-    return cuando === null ? 'este turno' : `el turno del ${cuando}`;
+    return cuando === null ? 'esta cita' : `la cita del ${cuando}`;
   }
 
   /**
@@ -1717,7 +1717,7 @@ export class Appointments {
     const codigos = estado.status === 'validation' ? estado.issues.map((issue) => issue.code) : [];
 
     if (codigos.includes('CONFLICT')) {
-      this.toast.info('Este turno ya estaba cancelado. Actualizamos su lista.', 'Turno');
+      this.toast.info('Esta cita ya estaba cancelada. Actualizamos su lista.', 'Cita');
       this.recargar();
       return;
     }
@@ -1730,11 +1730,11 @@ export class Appointments {
       // recargar sólo haría parpadear la pantalla para mostrar lo mismo.
       const delServidor = estado.issues.find((issue) => issue.message.trim() !== '')?.message;
       if (delServidor !== undefined) {
-        this.toast.info(delServidor, 'Turno');
+        this.toast.info(delServidor, 'Cita');
         return;
       }
 
-      this.toast.info('Este turno ya no se puede cancelar. Actualizamos su lista.', 'Turno');
+      this.toast.info('Esta cita ya no se puede cancelar. Actualizamos su lista.', 'Cita');
       this.recargar();
       return;
     }
@@ -1742,8 +1742,8 @@ export class Appointments {
     const detalle =
       estado.status === 'forbidden' || estado.status === 'error' ? (estado.message ?? '') : '';
     this.toast.error(
-      detalle === '' ? 'No pudimos cancelar el turno. Reintente en un momento.' : detalle,
-      'Turno',
+      detalle === '' ? 'No pudimos cancelar la cita. Reintente en un momento.' : detalle,
+      'Cita',
     );
   }
 
