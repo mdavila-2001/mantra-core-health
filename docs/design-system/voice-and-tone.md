@@ -118,3 +118,6 @@ mostrar códigos.
   el mismo commit.
 - El pase masivo a usted del 2026-10-08 se hizo con un script que sólo toca textos visibles
   (cadenas de TypeScript y texto de plantillas, nunca comentarios ni identificadores).
+- **`node scripts/check-usted.mjs`** marca cualquier texto visible que vuelva a hablar de vos o
+  de tú, con archivo, línea y contexto. Sale en 1 si encuentra algo. Correrlo antes de abrir un
+  PR que toque textos, y después de mezclar ramas viejas, que pueden traer voseo.
