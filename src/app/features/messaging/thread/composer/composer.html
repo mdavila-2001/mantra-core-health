@@ -10,7 +10,7 @@
 @if (editando(); as enEdicion) {
   <div class="composer__respuesta composer__respuesta--edicion" data-testid="composer-editando">
     <div class="composer__respuesta-texto">
-      <span class="composer__respuesta-autor">Editando tu mensaje</span>
+      <span class="composer__respuesta-autor">Editando su mensaje</span>
       <span class="composer__respuesta-cuerpo">{{ enEdicion.bodyText }}</span>
     </div>
     <button type="button" data-testid="composer-editar-cancelar" aria-label="Cancelar la edición" (click)="cancelarEdicion()">
@@ -145,7 +145,7 @@
         <input
           type="text"
           data-testid="hilo-plantilla-nueva"
-          placeholder="Guardar una frase que uses seguido"
+          placeholder="Guardar una frase que use seguido"
           [ngModel]="plantillaNueva()"
           (ngModelChange)="plantillaNueva.set($event)"
           name="plantillaNueva"
@@ -186,12 +186,12 @@
   </button>
 
   <label class="composer__campo">
-    <span class="solo-lectores">Escribí tu mensaje</span>
+    <span class="solo-lectores">Escriba su mensaje</span>
     <textarea
       #campo
       data-testid="hilo-texto"
       rows="1"
-      [placeholder]="editando() === null ? 'Escribí un mensaje' : 'Editá tu mensaje'"
+      [placeholder]="editando() === null ? 'Escriba un mensaje' : 'Edite su mensaje'"
       title="Enter envía · Shift+Enter hace salto de línea"
       [ngModel]="texto()"
       (ngModelChange)="alEscribir($event)"

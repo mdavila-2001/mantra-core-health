@@ -290,15 +290,15 @@ export class MedicalArticles {
         next: () => {
           this.publicando.set(false);
           this.compositor()?.reset();
-          this.toasts.success('Tu artículo quedó publicado.', 'Artículos médicos');
+          this.toasts.success('Su artículo quedó publicado.', 'Artículos médicos');
           this.cargar();
         },
         error: (error: unknown) => {
           this.publicando.set(false);
           this.toasts.error(
             error instanceof SubidaFallida
-              ? `No se pudo subir la imagen ${error.numero}. Tu artículo no se publicó y sigue acá: probá de nuevo.`
-              : 'No se pudo publicar el artículo. Tu texto sigue acá: probá de nuevo.',
+              ? `No se pudo subir la imagen ${error.numero}. Su artículo no se publicó y sigue acá: pruebe de nuevo.`
+              : 'No se pudo publicar el artículo. Su texto sigue acá: pruebe de nuevo.',
             'Artículos médicos',
           );
         },
@@ -370,7 +370,7 @@ export class MedicalArticles {
         },
         error: () => {
           this.comentando.set(false);
-          this.toasts.error('No se pudo publicar el comentario. Probá de nuevo.', 'Comentarios');
+          this.toasts.error('No se pudo publicar el comentario. Pruebe de nuevo.', 'Comentarios');
         },
       });
   }

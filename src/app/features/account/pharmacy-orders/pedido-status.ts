@@ -32,54 +32,54 @@ const PRESENTACION_POR_ESTADO: Readonly<Record<EstadoDePedido, PedidoStatusPrese
     ENVIADO: {
       tone: 'info',
       label: 'Enviado',
-      descripcion: 'La farmacia todavía no abrió tu pedido.',
+      descripcion: 'La farmacia todavía no abrió su pedido.',
     },
     EN_REVISION: {
       tone: 'info',
       label: 'En revisión',
-      descripcion: 'La farmacia está revisando qué puede confirmarte.',
+      descripcion: 'La farmacia está revisando qué puede confirmarle.',
     },
     CONFIRMADO: {
       tone: 'success',
       // T-E4: lo que la persona necesita saber es que se está preparando; la
       // confirmación ya pasó. El código del contrato sigue siendo CONFIRMADO.
       label: 'En preparación',
-      descripcion: 'La farmacia confirmó tu pedido y lo está preparando.',
+      descripcion: 'La farmacia confirmó su pedido y lo está preparando.',
     },
     ACEPTACION_PENDIENTE: {
       tone: 'warning',
-      label: 'Esperando tu decisión',
-      descripcion: 'La farmacia te propone una alternativa más económica. La decisión es tuya.',
+      label: 'Esperando su decisión',
+      descripcion: 'La farmacia le propone una alternativa más económica. La decisión es suya.',
     },
     ACEPTADO: {
       tone: 'success',
       label: 'Propuesta aceptada',
-      descripcion: 'Aceptaste la alternativa y la farmacia sigue preparando tu pedido.',
+      descripcion: 'Aceptó la alternativa y la farmacia sigue preparando su pedido.',
     },
     LISTO_PARA_RETIRO: {
       tone: 'success',
       label: 'Listo para retirar',
-      descripcion: 'Tu pedido te espera en el mostrador. Pagás al retirar.',
+      descripcion: 'Su pedido le espera en el mostrador. Paga al retirar.',
     },
     RETIRADO: {
       tone: 'secondary',
       label: 'Retirado',
-      descripcion: 'Ya retiraste este pedido.',
+      descripcion: 'Ya retiró este pedido.',
     },
     RECHAZADO: {
       tone: 'error',
       label: 'Rechazado',
-      descripcion: 'La farmacia no pudo tomar tu pedido.',
+      descripcion: 'La farmacia no pudo tomar su pedido.',
     },
     VENCIDO: {
       tone: 'warning',
       label: 'Vencido',
-      descripcion: 'La reserva venció: pasaron las 48 horas y el mostrador liberó tu pedido.',
+      descripcion: 'La reserva venció: pasaron las 48 horas y el mostrador liberó su pedido.',
     },
     CANCELADO: {
       tone: 'error',
       label: 'Cancelado',
-      descripcion: 'Cancelaste este pedido.',
+      descripcion: 'Canceló este pedido.',
     },
   });
 
@@ -104,13 +104,13 @@ export function presentacionDePedido(
     pedido.estado === 'RETIRADO' &&
     (pedido.modalidad === 'DOMICILIO' || pedido.modalidad === 'TRABAJO')
   ) {
-    return { tone: 'secondary', label: 'Entregado', descripcion: 'Tu pedido llegó.' };
+    return { tone: 'secondary', label: 'Entregado', descripcion: 'Su pedido llegó.' };
   }
   if (pedido.estado === 'LISTO_PARA_RETIRO' && pagado) {
     return {
       tone: 'success',
       label: 'Listo para retirar',
-      descripcion: 'Tu pedido te espera en el mostrador. Ya está pagado: solo presentá tu código.',
+      descripcion: 'Su pedido le espera en el mostrador. Ya está pagado: solo presente su código.',
     };
   }
   return toPedidoStatusPresentation(pedido.estado);
@@ -119,7 +119,7 @@ export function presentacionDePedido(
 const ETIQUETA_DE_MODALIDAD: Readonly<Record<ModalidadDeEntrega, string>> = Object.freeze({
   RETIRO: 'Retiro en la farmacia',
   DOMICILIO: 'Envío a domicilio',
-  TRABAJO: 'Envío a tu trabajo',
+  TRABAJO: 'Envío a su trabajo',
 });
 
 /** La modalidad en palabras de mostrador — el código jamás se pinta. */
@@ -225,7 +225,7 @@ export function pasosDeLaLineaDeTiempo(
       ? [
           {
             estados: ['ACEPTACION_PENDIENTE', 'ACEPTADO'] as readonly EstadoDePedido[],
-            label: estado === 'ACEPTACION_PENDIENTE' ? 'Tu decisión' : 'Propuesta aceptada',
+            label: estado === 'ACEPTACION_PENDIENTE' ? 'Su decisión' : 'Propuesta aceptada',
             pasadoDemostrable: false,
           },
         ]

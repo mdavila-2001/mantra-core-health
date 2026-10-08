@@ -1,7 +1,7 @@
 @if (vista(); as estado) {
   <app-page-header
     [title]="estado.status === 'ready' ? estado.data.title : 'Cuestionario'"
-    subtitle="Tus respuestas son privadas: solo las ve el profesional que te atendió."
+    subtitle="Sus respuestas son privadas: solo las ve el profesional que le atendió."
     [breadcrumbs]="breadcrumbs()"
   >
     <app-back-link

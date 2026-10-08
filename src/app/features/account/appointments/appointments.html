@@ -4,15 +4,15 @@
   <app-alert
     class="turnos__campana"
     tone="info"
-    title="Chequeo preventivo de tu seguro"
+    title="Chequeo preventivo de su seguro"
     data-testid="turnos-campana"
   >
-    Estás agendando por la campaña <strong>{{ campaign }}</strong> de tu seguro. Elegí el
-    laboratorio y el horario que mejor te quede.
+    Está agendando por la campaña <strong>{{ campaign }}</strong> de su seguro. Elija el
+    laboratorio y el horario que mejor le quede.
   </app-alert>
 }
 
-<app-page-header title="Mis citas" subtitle="Las citas que pediste y los horarios que podés pedir.">
+<app-page-header title="Mis citas" subtitle="Las citas que pidió y los horarios que puede pedir.">
   <!-- R-01 del refactor UX, corregido: el botón ya no bajaba con scroll hasta
        «Agendar una cita» —con varios turnos y la lista de espera de por medio
        esa sección podía quedar a miles de píxeles, y bajar hasta ahí seguía
@@ -28,7 +28,7 @@
       [attr.aria-pressed]="enPedirTurno()"
       (clicked)="alternarSeccion()"
     >
-      {{ enPedirTurno() ? 'Tus citas' : 'Pedir una cita' }}
+      {{ enPedirTurno() ? 'Sus citas' : 'Pedir una cita' }}
     </button>
   }
 </app-page-header>
@@ -37,7 +37,7 @@
   <!-- Sesión válida de una cuenta que no es de un paciente. No es un 403: es
        que esta pantalla no le corresponde. -->
   <app-alert tone="info" title="Esta sección es para pacientes">
-    Tu cuenta no tiene un perfil de paciente. Si atendés turnos, entrá por la agenda de la
+    Su cuenta no tiene un perfil de paciente. Si atiende turnos, entre por la agenda de la
     organización.
   </app-alert>
   <!-- La salida, no solo la explicación: el mismo destino que el aviso nombra.
@@ -47,7 +47,7 @@
   @if (!enPedirTurno()) {
     <section class="turnos__bloque" aria-labelledby="turnos-propios">
       <div class="turnos__cabecera">
-        <h2 id="turnos-propios" class="turnos__titulo" tabindex="-1">Tus citas</h2>
+        <h2 id="turnos-propios" class="turnos__titulo" tabindex="-1">Sus citas</h2>
 
         <!-- Lista y calendario son la MISMA colección vista de dos formas
              (corrección #10). La elegida vive en la URL, así que el enlace se
@@ -61,7 +61,7 @@
           data-testid="turnos-vistas"
           [options]="vistasDisponibles"
           [value]="vista()"
-          ariaLabel="Cómo ver tus citas"
+          ariaLabel="Cómo ver sus citas"
           (valueChange)="elegirVista($event)"
         />
       </div>
@@ -79,8 +79,8 @@
           <app-search-field
             class="turnos__buscador"
             data-testid="turnos-buscar"
-            label="Buscar en tus citas"
-            placeholder="Buscá por doctor o consultorio"
+            label="Buscar en sus citas"
+            placeholder="Busque por doctor o consultorio"
             [value]="busqueda()"
             (searched)="cambiarBusqueda($event)"
           />
@@ -150,7 +150,7 @@
 
       @switch (turnos().status) {
         @case ('loading') {
-          <p class="turnos__estado" role="status">Buscando tus citas…</p>
+          <p class="turnos__estado" role="status">Buscando sus citas…</p>
         }
         @case ('ready') {
           <!-- FT-05-R07 · el vacío de un filtro no es el vacío de «no tenés
@@ -158,7 +158,7 @@
                filtro. Decir el equivocado manda a la persona al lugar que no es. -->
           @if (sinResultados()) {
             <app-alert tone="info" title="Ninguna cita coincide" data-testid="turnos-sin-resultados">
-              Probá con otro texto o quitá alguno de los filtros.
+              Pruebe con otro texto o quite alguno de los filtros.
             </app-alert>
             <button
               app-button
@@ -207,10 +207,10 @@
                   </app-badge>
                   <p class="turnos__reconsulta">
                     @if (turno.reconsultaDe; as origen) {
-                      Tu médico te citó de nuevo por la consulta del
+                      Su médico le citó de nuevo por la consulta del
                       {{ origen | date: "d 'de' MMMM" }}.
                     } @else {
-                      Tu médico te citó de nuevo por una consulta anterior.
+                      Su médico le citó de nuevo por una consulta anterior.
                     }
                   </p>
                 }
@@ -340,10 +340,10 @@
                                con un hueco. -->
                           <p class="turnos__reconsulta" data-testid="mis-citas-reconsulta-frase">
                             @if (turno.reconsultaDe; as origen) {
-                              Tu médico te citó de nuevo por la consulta del
+                              Su médico le citó de nuevo por la consulta del
                               {{ origen | date: "d 'de' MMMM" }}.
                             } @else {
-                              Tu médico te citó de nuevo por una consulta anterior.
+                              Su médico le citó de nuevo por una consulta anterior.
                             }
                           </p>
                         }
@@ -387,8 +387,8 @@
           }
         }
         @case ('empty') {
-          <app-alert tone="info" title="Todavía no tenés citas">
-            Cuando pidas uno, lo vas a ver acá con su fecha y su estado.
+          <app-alert tone="info" title="Todavía no tiene citas">
+            Cuando pida uno, lo va a ver acá con su fecha y su estado.
           </app-alert>
           <button
             app-button
@@ -400,8 +400,8 @@
           </button>
         }
         @default {
-          <app-alert tone="error" title="No pudimos traer tus citas">
-            Reintentá en un momento.
+          <app-alert tone="error" title="No pudimos traer sus citas">
+            Reintente en un momento.
           </app-alert>
           <button app-button variant="outline" (clicked)="cargarTurnos()">Reintentar</button>
         }
@@ -430,7 +430,7 @@
                 <app-badge variant="info">En espera</app-badge>
               </div>
               <p class="turnos__motivo">
-                Te avisamos apenas se libere un horario. La reserva la confirmás vos.
+                Le avisamos apenas se libere un horario. La reserva la confirma usted.
               </p>
             </li>
           }
@@ -444,17 +444,17 @@
       <h2 id="pedir-turno" class="turnos__titulo" tabindex="-1">Agendar una cita</h2>
 
       @if (organizacion() === null) {
-        <app-alert tone="warning" title="Elegí una organización">
+        <app-alert tone="warning" title="Elija una organización">
           <!-- El selector vive en el encabezado: decir sólo «elegí una» sin decir
                dónde dejaba a la persona buscando un control que acá no está. -->
-          Elegí una organización desde el selector del encabezado para ver los horarios disponibles.
+          Elija una organización desde el selector del encabezado para ver los horarios disponibles.
         </app-alert>
       } @else {
         <!-- J2 · con quién se pide el turno. Va ANTES del buscador porque decide
              qué lista se busca: elegirlo después sería buscar en el conjunto
              equivocado. Dos opciones y no un desplegable — son dos, y un
              desplegable de dos esconde la mitad. -->
-        <div class="turnos__tipo" role="group" aria-label="Con quién querés la cita">
+        <div class="turnos__tipo" role="group" aria-label="Con quién quiere la cita">
           <button
             app-button
             [variant]="esLaboratorio() ? 'ghost' : 'primary'"
@@ -481,7 +481,7 @@
       @if (organizacion() !== null && sinRecursos()) {
         @if (esLaboratorio()) {
           <app-alert tone="info" title="Todavía no hay laboratorios con horarios">
-            Ningún laboratorio de esta organización publicó horarios todavía. Podés llevar tu orden al
+            Ningún laboratorio de esta organización publicó horarios todavía. Puede llevar su orden al
             mostrador mientras tanto.
           </app-alert>
         } @else {
@@ -489,7 +489,7 @@
             <!-- Antes decía «no hay agendas publicadas», que es la jerga interna:
                  para quien pide un turno, lo que falta son profesionales entre los
                  cuales elegir. -->
-            Ningún profesional de esta organización publicó horarios todavía. Volvé a probar más
+            Ningún profesional de esta organización publicó horarios todavía. Vuelva a probar más
             adelante.
           </app-alert>
         }
@@ -498,11 +498,11 @@
              entera hasta dar con el profesional propio (F-13). Se escribe el
              nombre y la lista se acota sola; en blanco los ofrece a todos. -->
         <app-form-field
-          [label]="esLaboratorio() ? '¿En qué laboratorio?' : '¿Con quién te querés atender?'"
+          [label]="esLaboratorio() ? '¿En qué laboratorio?' : '¿Con quién se quiere atender?'"
           [hint]="
             esLaboratorio()
-              ? 'Escribí el nombre del laboratorio para encontrarlo más rápido.'
-              : 'Escribí su nombre para encontrarlo más rápido.'
+              ? 'Escriba el nombre del laboratorio para encontrarlo más rápido.'
+              : 'Escriba su nombre para encontrarlo más rápido.'
           "
           class="turnos__filtro"
         >
@@ -515,7 +515,7 @@
             [selected]="recursoSeleccionado()"
             [options]="opcionesBuscadas()"
             [minQueryLength]="0"
-            [placeholder]="esLaboratorio() ? 'Buscá por nombre del laboratorio' : 'Buscá por nombre'"
+            [placeholder]="esLaboratorio() ? 'Busque por nombre del laboratorio' : 'Busque por nombre'"
             [emptyMessage]="
               esLaboratorio()
                 ? 'No encontramos ese laboratorio entre los que publicaron horarios. Puede que todavía no los haya publicado.'
@@ -533,8 +533,8 @@
              un consultorio en particular. -->
         @if (preguntaPorSede()) {
           <app-form-field
-            label="¿Dónde querés atenderte?"
-            hint="Atiende en más de un lugar. Podés ver todos los horarios juntos o mirar uno solo."
+            label="¿Dónde quiere atenderle?"
+            hint="Atiende en más de un lugar. Puede ver todos los horarios juntos o mirar uno solo."
             class="turnos__filtro"
           >
             <app-select
@@ -553,7 +553,7 @@
              elegir un estudio sin saber cuánto tarda es elegir a ciegas. -->
         @if (ofertasDelProfesional().length > 0) {
           <app-form-field
-            label="¿Qué querés pedir?"
+            label="¿Qué quiere pedir?"
             hint="Una consulta o uno de sus servicios. Cada servicio tiene su propia duración."
             class="turnos__filtro"
           >
@@ -599,7 +599,7 @@
           <div class="turnos__espera-accion">
             @if (yaEnEspera()) {
               <p class="turnos__estado" data-testid="turnos-ya-en-espera">
-                Ya estás en la lista de espera de esta agenda. Te avisamos apenas se libere un
+                Ya está en la lista de espera de esta agenda. Le avisamos apenas se libere un
                 horario.
               </p>
             } @else {
@@ -614,7 +614,7 @@
                 Anotarme en la lista de espera
               </button>
               <p class="turnos__estado">
-                No reserva la cita: te avisamos cuando se libere un horario y lo confirmás vos.
+                No reserva la cita: le avisamos cuando se libere un horario y lo confirma usted.
               </p>
             }
           </div>
@@ -622,8 +622,8 @@
 
         @if (horariosIncompletos()) {
           <app-alert tone="warning" title="Faltan horarios de un lugar">
-            No pudimos traer los horarios de uno de sus consultorios. Los que ves son de los demás:
-            probá con un lugar en concreto para verlos todos.
+            No pudimos traer los horarios de uno de sus consultorios. Los que ve son de los demás:
+            pruebe con un lugar en concreto para verlos todos.
           </app-alert>
         }
 
@@ -669,7 +669,7 @@
           }
           @default {
             <app-alert tone="error" title="No pudimos traer los horarios">
-              Reintentá en un momento.
+              Reintente en un momento.
             </app-alert>
             <button app-button variant="outline" (clicked)="cargarHorarios()">Reintentar</button>
           }

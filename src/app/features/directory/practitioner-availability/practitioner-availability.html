@@ -2,13 +2,13 @@
   <!-- `GET /scheduling/slots` exige sesión: prometer horarios y que la llamada
        vuelva 401 sería peor que decirlo de entrada. -->
   <app-empty-state
-    title="Entrá para ver los horarios"
-    description="Los turnos disponibles se ven con la sesión iniciada. Vas a volver a esta ficha."
+    title="Entre para ver los horarios"
+    description="Los turnos disponibles se ven con la sesión iniciada. Va a volver a esta ficha."
   />
 } @else if (tenantId() === null) {
   <app-empty-state
-    title="Elegí una organización"
-    description="Los horarios dependen de la organización desde la que mirás."
+    title="Elija una organización"
+    description="Los horarios dependen de la organización desde la que mira."
   />
 } @else {
   <div class="disponibilidad">

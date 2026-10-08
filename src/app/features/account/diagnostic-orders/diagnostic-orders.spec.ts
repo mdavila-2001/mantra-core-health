@@ -169,7 +169,7 @@ describe('DiagnosticOrders', () => {
     await mount();
     responder([]);
 
-    expect(texto()).toContain('Cuando un médico te pida un estudio');
+    expect(texto()).toContain('Cuando un médico le pida un estudio');
   });
 
   /* ---- C9.H2.M1: derivación del tipo, con y sin category ------------------- */

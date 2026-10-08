@@ -1,19 +1,19 @@
 @if (sinPerfilDePaciente) {
   <p class="pedidos__sin-perfil">
-    Tus pedidos de farmacia aparecen acá cuando entrás con tu cuenta de paciente.
+    Sus pedidos de farmacia aparecen acá cuando entra con su cuenta de paciente.
   </p>
 } @else {
   <section class="pedidos" aria-labelledby="pedidos-recientes-titulo">
     <div class="pedidos__encabezado">
-      <h2 class="pedidos__titulo" id="pedidos-recientes-titulo">Tus últimos pedidos</h2>
+      <h2 class="pedidos__titulo" id="pedidos-recientes-titulo">Sus últimos pedidos</h2>
       <a app-link [routerLink]="rutaDePedidos">Ver todos</a>
     </div>
 
     <app-view-state-host [state]="estado()" (retry)="cargar()">
       @if (sinPedidos()) {
         <p class="pedidos__vacio">
-          Todavía no pediste nada.
-          <a app-link [routerLink]="rutaDeLaTienda">Buscá un medicamento para empezar</a>.
+          Todavía no pidió nada.
+          <a app-link [routerLink]="rutaDeLaTienda">Busque un medicamento para empezar</a>.
         </p>
       } @else if (estado().status === 'ready') {
         <ul class="pedidos__lista" data-testid="pharmacy-recent-orders">

@@ -141,7 +141,7 @@ export function verificarEntornoSeguro(config: ConfiguracionE2e = configuracion(
 
   throw new Error(
     `E2E_BASE_URL apunta fuera de la máquina local (${config.baseUrl}). ` +
-      'Si es un entorno de ensayo y sabés lo que hacés, exportá E2E_ALLOW_REMOTE=true.',
+      'Si es un entorno de ensayo y sabe lo que hace, exportá E2E_ALLOW_REMOTE=true.',
   );
 }
 

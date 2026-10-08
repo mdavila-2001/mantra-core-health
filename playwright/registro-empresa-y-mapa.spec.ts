@@ -41,7 +41,7 @@ test.describe('alta pública — la empresa y el mapa', () => {
     await context.setGeolocation(PUNTO_DE_PRUEBA);
 
     await empezarElAlta(page);
-    await avanzarHasta(page, '¿Dónde vivís?');
+    await avanzarHasta(page, '¿Dónde vive?');
 
     // Antes de pedirla no hay mapa: sólo la invitación.
     await expect(page.getByTestId('registro-mapa-domicilio')).toHaveCount(0);
@@ -77,7 +77,7 @@ test.describe('alta pública — la empresa y el mapa', () => {
   test('la página del trabajo pregunta la empresa, no dónde queda', async ({ page }) => {
     await empezarElAlta(page);
     await elegirLocalidadDeResidencia(page);
-    await avanzarHasta(page, '¿Dónde trabajás?');
+    await avanzarHasta(page, '¿Dónde trabaja?');
 
     // Lo que ya no se pregunta: ni el municipio del trabajo ni su calle.
     await expect(page.getByTestId('registro-municipio-trabajo')).toHaveCount(0);
@@ -103,7 +103,7 @@ test.describe('alta pública — la empresa y el mapa', () => {
   test('«Otra empresa» abre el campo para escribirla', async ({ page }) => {
     await empezarElAlta(page);
     await elegirLocalidadDeResidencia(page);
-    await avanzarHasta(page, '¿Dónde trabajás?');
+    await avanzarHasta(page, '¿Dónde trabaja?');
 
     // Mientras no se elija la salida, el campo del nombre a mano no existe: no
     // está escondido con CSS, no está en la página.
@@ -132,7 +132,7 @@ test.describe('alta pública — la empresa y el mapa', () => {
   test('el lugar de trabajo se elige con el mismo mapa que la residencia', async ({ page }) => {
     await empezarElAlta(page);
     await elegirLocalidadDeResidencia(page);
-    await avanzarHasta(page, 'El lugar donde trabajás');
+    await avanzarHasta(page, 'El lugar donde trabaja');
 
     // Antes de elegir el departamento no hay select de ciudad: igual que en
     // residencia, es un mismo dato con dos formas de llegar a él.

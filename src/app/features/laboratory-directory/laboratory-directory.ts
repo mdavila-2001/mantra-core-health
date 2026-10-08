@@ -283,13 +283,13 @@ export class LaboratoryDirectory {
     if (cuantos === 0) {
       return `Todavía no hay nada publicado en ${nombre}.`;
     }
-    return `${cuantos} en ${nombre}. Tocá otra vez el departamento para ver todo el país.`;
+    return `${cuantos} en ${nombre}. Toque otra vez el departamento para ver todo el país.`;
   });
 
   /** Sin centros en el departamento elegido: lo dice la lista, no un vacío genérico. */
   protected readonly sinCoincidencias = computed<string | null>(() =>
     this.state().status === 'ready' && this.groups().length === 0
-      ? 'No hay centros publicados en ese departamento con los filtros que pusiste. Tocalo otra vez en el mapa para ver todo el país.'
+      ? 'No hay centros publicados en ese departamento con los filtros que puso. Tóquelo otra vez en el mapa para ver todo el país.'
       : null,
   );
 
@@ -381,8 +381,8 @@ export class LaboratoryDirectory {
    */
   protected readonly subtitulo = computed(() =>
     this.enPortada()
-      ? `Elegí qué necesitás hacerte o buscá el centro por su nombre. ${this.totalDeCentros()} centros verificados en la red.`
-      : 'Centros verificados de toda la red, agrupados por categoría. Tocá un chip para acotar.',
+      ? `Elija qué necesita hacerse o busque el centro por su nombre. ${this.totalDeCentros()} centros verificados en la red.`
+      : 'Centros verificados de toda la red, agrupados por categoría. Toque un chip para acotar.',
   );
 
   /**
@@ -452,7 +452,7 @@ export class LaboratoryDirectory {
                 ? empty(
                     { label: 'Volver al panel', route: '/dashboard' },
                     hayFiltros(this.activos())
-                      ? 'Ningún centro verificado coincide con esa búsqueda. Probá quitando algún filtro.'
+                      ? 'Ningún centro verificado coincide con esa búsqueda. Pruebe quitando algún filtro.'
                       : 'Todavía no hay centros verificados publicados.',
                   )
                 : ready(pagina.items),

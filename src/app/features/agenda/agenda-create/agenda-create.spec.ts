@@ -282,7 +282,7 @@ describe('AgendaCreate', () => {
       http.expectOne('/scheduling/templates/tpl-1').flush(
         {
           code: 'CONFLICT',
-          message: 'El horario tiene 3 citas comprometidas: resolvelas antes de cambiarlo.',
+          message: 'El horario tiene 3 citas comprometidas: resuélvalas antes de cambiarlo.',
           details: { bookingIds: ['b-1', 'b-2', 'b-3'] },
         },
         { status: 409, statusText: 'Conflict' },
@@ -297,8 +297,8 @@ describe('AgendaCreate', () => {
       crearConHorarioVigente(VIGENTE);
 
       const texto: string = fixture.nativeElement.textContent;
-      expect(texto).toContain('Cambiá tu horario');
-      expect(texto).not.toContain('Publicá tu agenda');
+      expect(texto).toContain('Cambie su horario');
+      expect(texto).not.toContain('Publique su agenda');
     });
 
     it('carga la semanita con el horario vigente, para poder editarlo', () => {
@@ -543,7 +543,7 @@ describe('AgendaCreate', () => {
 
   it('sin organización activa bloquea y explica, en vez de dejar avanzar hasta un 400', () => {
     crear(['PRACTITIONER'], null);
-    expect(fixture.nativeElement.textContent).toContain('Elegí una organización primero');
+    expect(fixture.nativeElement.textContent).toContain('Elija una organización primero');
   });
 
   it('un profesional sin perfil en la sesión ve el aviso y no el formulario', () => {
@@ -564,7 +564,7 @@ describe('AgendaCreate', () => {
 
   it('le dice de quién es la agenda, con su nombre', () => {
     crear();
-    expect(fixture.nativeElement.textContent).toContain('Vas a publicar tu propia agenda');
+    expect(fixture.nativeElement.textContent).toContain('Va a publicar su propia agenda');
     expect(fixture.nativeElement.textContent).toContain('Dra. Elena Salas');
   });
 
@@ -877,14 +877,14 @@ describe('AgendaCreate', () => {
     http.expectOne('/scheduling/resources/res-1/templates').flush(
       {
         code: 'PRECONDITION_FAILED',
-        message: 'Ya tenés un horario los martes de 10:00 a 12:00 que se cruza con éste',
+        message: 'Ya tiene un horario los martes de 10:00 a 12:00 que se cruza con éste',
       },
       { status: 422, statusText: 'Unprocessable' },
     );
     fixture.detectChanges();
 
     const texto: string = fixture.nativeElement.textContent;
-    expect(texto).toContain('Ya tenés un horario los martes');
+    expect(texto).toContain('Ya tiene un horario los martes');
     expect(texto).not.toContain('{');
   });
 
@@ -920,7 +920,7 @@ describe('AgendaCreate', () => {
     publicarCompleto();
 
     const texto: string = fixture.nativeElement.textContent;
-    expect(texto).toContain('tu agenda ya está publicada');
+    expect(texto).toContain('su agenda ya está publicada');
     expect(texto).toContain('lunes de 9 a 13, consultas de 30 minutos');
     expect(texto).toContain('40');
   });
@@ -1124,7 +1124,7 @@ describe('AgendaCreate', () => {
         expect(texto).toContain(dia);
       }
       // Y los apagados lo dicen, en vez de desaparecer.
-      expect(texto).toContain('No atendés');
+      expect(texto).toContain('No atiende');
     });
 
     it('las columnas son las que pidió el original', () => {
@@ -1163,7 +1163,7 @@ describe('AgendaCreate', () => {
       acc.avanzadasAbiertas.set(true);
       fixture.detectChanges();
       const texto: string = fixture.nativeElement.textContent;
-      expect(texto).not.toContain('¿En qué sede atendés?');
+      expect(texto).not.toContain('¿En qué sede atiende?');
       expect(texto).not.toContain('¿Cuántos pacientes por turno?');
     });
 
@@ -1405,7 +1405,7 @@ describe('AgendaCreate', () => {
       crear();
       const fila = fixture.nativeElement.querySelector('[data-testid="agenda-create-dia-0"]');
       expect(fila.querySelector('[role="radiogroup"]').getAttribute('aria-label')).toBe(
-        '¿Atendés el lunes?',
+        '¿Atiende el lunes?',
       );
       fila.querySelector('[data-value="si"]').click();
       fixture.detectChanges();

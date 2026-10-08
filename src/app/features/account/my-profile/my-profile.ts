@@ -662,7 +662,7 @@ export class MyProfile {
         },
         error: () => {
           this.subiendoFoto.set(false);
-          this.errorDeFoto.set('No pudimos subir la foto. Probá con otra imagen.');
+          this.errorDeFoto.set('No pudimos subir la foto. Pruebe con otra imagen.');
         },
       });
   }

@@ -48,7 +48,7 @@ export class FilePreview {
       };
       const fail = () => {
         if (active) {
-          this.error.set('No pudimos mostrar la vista previa. Revisá el archivo o elegí otro.');
+          this.error.set('No pudimos mostrar la vista previa. Revise el archivo o elija otro.');
           this.loading.set(false);
         }
       };
@@ -114,7 +114,7 @@ export class FilePreview {
       } else {
         this.loading.set(false);
         this.error.set(
-          'Este formato no tiene vista previa. Podés adjuntarlo y abrirlo con su aplicación.',
+          'Este formato no tiene vista previa. Puede adjuntarlo y abrirlo con su aplicación.',
         );
       }
     });
@@ -123,6 +123,6 @@ export class FilePreview {
   protected imageFailed(): void {
     this.preview.set('');
     this.mediaUrl.set('');
-    this.error.set('No pudimos reproducir este archivo. Revisalo o elegí otro.');
+    this.error.set('No pudimos reproducir este archivo. Revíselo o elija otro.');
   }
 }

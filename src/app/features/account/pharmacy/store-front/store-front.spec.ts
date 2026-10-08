@@ -232,7 +232,7 @@ describe('StoreFront', () => {
     harness.detectChanges();
 
     expect(raiz().querySelector('[data-testid="pharmacy-sin-origen"]')).not.toBeNull();
-    expect(texto()).toContain('Elegí desde dónde medir');
+    expect(texto()).toContain('Elija desde dónde medir');
   });
 
   it('«Buscar toda una receta» y «Mis pedidos» apuntan a sus rutas', async () => {
@@ -267,7 +267,7 @@ describe('StoreFront', () => {
       .flush('boom', { status: 500, statusText: 'Server Error' });
     harness.detectChanges();
 
-    expect(texto()).not.toContain('Probá con otra palabra');
+    expect(texto()).not.toContain('Pruebe con otra palabra');
     expect(texto()).toContain('Reintentar');
   });
 
@@ -283,7 +283,7 @@ describe('StoreFront', () => {
       .flush({ items: [], limit: 20, truncated: false });
     harness.detectChanges();
 
-    expect(texto()).toContain('Probá con otra palabra');
+    expect(texto()).toContain('Pruebe con otra palabra');
   });
 
   /**

@@ -206,8 +206,8 @@ test.describe('ALV-025 · las pantallas profundas tienen salida', () => {
     };
     const pantallas: readonly PantallaProfunda[] = [
       bloqueos,
-      { ruta: '/my-account/preview', reserva: '/my-account', texto: 'Volver a tu perfil' },
-      { ruta: '/my-account/articles', reserva: '/my-account', texto: 'Volver a tu perfil' },
+      { ruta: '/my-account/preview', reserva: '/my-account', texto: 'Volver a su perfil' },
+      { ruta: '/my-account/articles', reserva: '/my-account', texto: 'Volver a su perfil' },
     ];
 
     for (const pantalla of pantallas) {
@@ -255,7 +255,7 @@ test.describe('ALV-025 · las pantallas profundas tienen salida', () => {
     const edicion: PantallaProfunda = {
       ruta: '/my-account/profile/edit',
       reserva: '/my-account',
-      texto: 'Volver a tu perfil',
+      texto: 'Volver a su perfil',
     };
 
     await vuelveDeshaciendoElPaso(page, 'patient', edicion);

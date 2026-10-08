@@ -13,7 +13,7 @@ import { AuthLayout } from './auth-layout';
   `,
 })
 class HostComponent {
-  readonly title = signal('Ingresá a tu cuenta');
+  readonly title = signal('Ingrese a su cuenta');
   readonly subtitle = signal('');
   readonly showBrand = signal(true);
 }
@@ -38,7 +38,7 @@ describe('AuthLayout', () => {
       const encabezados = root().querySelectorAll('h1');
 
       expect(encabezados).toHaveLength(1);
-      expect(encabezados[0].textContent?.trim()).toBe('Ingresá a tu cuenta');
+      expect(encabezados[0].textContent?.trim()).toBe('Ingrese a su cuenta');
     });
 
     it('el contenido vive dentro de un main con una card', () => {

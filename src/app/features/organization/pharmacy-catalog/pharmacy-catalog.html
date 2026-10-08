@@ -1,18 +1,18 @@
 <app-page-header
   title="Catálogo de productos"
-  subtitle="Lo que vende tu farmacia. Cargalo producto por producto o de a cientos con un archivo CSV; los pacientes lo encuentran al buscar dónde comprar su receta."
+  subtitle="Lo que vende su farmacia. Cárguelo producto por producto o de a cientos con un archivo CSV; los pacientes lo encuentran al buscar dónde comprar su receta."
 />
 
 <app-view-state-host [state]="farmacias()" (retry)="reintentarFarmacias()">
   @if (hayVariasFarmacias()) {
     <div class="catalogo__farmacia">
-      <app-form-field label="Farmacia" hint="El catálogo que vas a ver y cargar es el de esta farmacia.">
+      <app-form-field label="Farmacia" hint="El catálogo que va a ver y cargar es el de esta farmacia.">
         <app-select
           [options]="opcionesDeFarmacia()"
           [value]="farmaciaElegida()"
           (valueChange)="elegirFarmacia($event)"
           [disabled]="publicando()"
-          placeholder="Elegí tu farmacia"
+          placeholder="Elija su farmacia"
         />
       </app-form-field>
     </div>
@@ -59,13 +59,13 @@
 
             @if (truncado()) {
               <app-alert tone="warning" title="Se muestran los primeros 500">
-                Tu catálogo tiene más productos de los que entran en un listado. Buscá por marca,
+                Su catálogo tiene más productos de los que entran en un listado. Busque por marca,
                 genérico o código para llegar a los demás.
               </app-alert>
             }
 
             <app-data-table
-              caption="Productos publicados por tu farmacia"
+              caption="Productos publicados por su farmacia"
               [state]="filasDeLaPagina()"
               [columns]="columnas()"
               [trackBy]="idDe"
@@ -90,8 +90,8 @@
         <app-tab label="Nuevo producto">
           <form class="catalogo__panel" (submit)="$event.preventDefault(); guardarProducto()" novalidate>
             <p class="catalogo__secundario">
-              El producto se publica apenas lo guardás. Revisalo antes: por ahora no se puede
-              editar, y el código es único en tu catálogo y queda reservado aunque retires el
+              El producto se publica apenas lo guarda. Revíselo antes: por ahora no se puede
+              editar, y el código es único en su catálogo y queda reservado aunque retires el
               producto.
             </p>
 
@@ -110,7 +110,7 @@
               <div class="catalogo__campos">
                 <app-form-field
                   label="Código interno (SKU)"
-                  [hint]="'Único en tu catálogo. Hasta ' + largoDelCodigo + ' caracteres: letras, números, punto, guion o barra.'"
+                  [hint]="'Único en su catálogo. Hasta ' + largoDelCodigo + ' caracteres: letras, números, punto, guion o barra.'"
                   [required]="true"
                 >
                   <app-input
@@ -216,10 +216,10 @@
               @case ('archivo') {
                 <div class="catalogo__importar">
                   <div class="catalogo__carga">
-                    <h2 class="catalogo__subtitulo">Subí tu archivo de productos</h2>
+                    <h2 class="catalogo__subtitulo">Suba su archivo de productos</h2>
                     <p class="catalogo__secundario">
                       Un CSV con una fila por producto, hasta {{ filasMaximas }} por archivo. Si
-                      trabajás en Excel: Archivo → Guardar como → CSV UTF-8.
+                      trabaja en Excel: Archivo → Guardar como → CSV UTF-8.
                     </p>
                     <app-file-input
                       label="Elegir archivo CSV"
@@ -273,8 +273,8 @@
                 </div>
 
                 @if (codificacion() === 'windows-1252') {
-                  <app-alert tone="info" title="Leímos tu archivo como texto de Excel (Windows-1252)" data-testid="catalogo-codificacion">
-                    No venía en UTF-8. Revisá en la lista de abajo que las tildes y las eñes se
+                  <app-alert tone="info" title="Leímos su archivo como texto de Excel (Windows-1252)" data-testid="catalogo-codificacion">
+                    No venía en UTF-8. Revise en la lista de abajo que las tildes y las eñes se
                     vean bien antes de publicar.
                   </app-alert>
                 }
@@ -309,7 +309,7 @@
 
                 @if (cuantosConProblemas() > 0) {
                   <app-alert tone="warning" title="Estas filas no se van a publicar">
-                    Las demás sí. Descargá las filas a corregir, arreglalas y subí ese archivo
+                    Las demás sí. Descargue las filas a corregir, arreglalas y suba ese archivo
                     después: ya viene con los encabezados correctos.
                   </app-alert>
                   <app-data-table
@@ -346,7 +346,7 @@
               @case ('publicando') {
                 <div class="catalogo__progreso">
                   <p>
-                    Publicando {{ resultados().length }} de {{ listas().length }}… No cierres esta
+                    Publicando {{ resultados().length }} de {{ listas().length }}… No cierre esta
                     pestaña hasta que termine.
                   </p>
                   <app-progress [value]="avance()" label="Avance de la publicación" />
@@ -386,15 +386,15 @@
                 @if (fallaGeneral(); as falla) {
                   <app-alert tone="error" title="La carga se cortó" data-testid="catalogo-falla-general">
                     {{ falla }} No es un problema de una fila: las demás iban a fallar igual, así
-                    que no se enviaron. Resolvelo y subí el archivo de nuevo; lo ya publicado se va
+                    que no se enviaron. Resuélvalo y suba el archivo de nuevo; lo ya publicado se va
                     a marcar como repetido.
                   </app-alert>
                 }
 
                 @if (detenido()) {
-                  <app-alert tone="warning" title="Detuviste la carga">
+                  <app-alert tone="warning" title="Detuvo la carga">
                     La fila que estaba en camino terminó y se cuenta arriba; las que faltaban no
-                    se enviaron. Subí el archivo de nuevo y las ya publicadas se van a marcar como
+                    se enviaron. Suba el archivo de nuevo y las ya publicadas se van a marcar como
                     repetidas.
                   </app-alert>
                 }

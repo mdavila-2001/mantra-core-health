@@ -14,8 +14,8 @@
     @case ('forbidden') {
       <!-- S5, y separado de S3 a propósito: «no hay cirugías» y «no podés ver
            las cirugías» son estados opuestos para quien mira. -->
-      <app-alert tone="info" title="No podés ver el histórico quirúrgico">
-        Tu rol no incluye el registro perioperatorio de esta persona. El resto de la ficha
+      <app-alert tone="info" title="No puede ver el histórico quirúrgico">
+        Su rol no incluye el registro perioperatorio de esta persona. El resto de la ficha
         sigue disponible.
       </app-alert>
     }
@@ -119,8 +119,8 @@
       <p class="procedimientos__secundario">Cargando el histórico odontológico…</p>
     }
     @case ('forbidden') {
-      <app-alert tone="info" title="No podés ver el histórico odontológico">
-        Tu rol no incluye el registro odontológico de esta persona.
+      <app-alert tone="info" title="No puede ver el histórico odontológico">
+        Su rol no incluye el registro odontológico de esta persona.
       </app-alert>
     }
     @case ('offline') {
@@ -199,8 +199,8 @@
     }
 
     @if (sinOrganizacion()) {
-      <app-alert tone="info" title="Elegí una organización">
-        Un tratamiento queda bajo la custodia de una organización. Elegí una en el selector
+      <app-alert tone="info" title="Elija una organización">
+        Un tratamiento queda bajo la custodia de una organización. Elija una en el selector
         del encabezado para poder registrarlo.
       </app-alert>
     } @else if (opcionesDeCodigo().length === 0) {

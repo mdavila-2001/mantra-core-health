@@ -95,11 +95,11 @@ export function reviewInventoryCsv(
   };
 
   if (index.code < 0) {
-    throw new ArchivoInvalido('Falta la columna «codigo». Descargá el inventario para ver los encabezados.');
+    throw new ArchivoInvalido('Falta la columna «codigo». Descargue el inventario para ver los encabezados.');
   }
   const columns = (['stock', 'minimum', 'available'] as const).filter((field) => index[field] >= 0);
   if (columns.length === 0) {
-    throw new ArchivoInvalido('Falta qué actualizar: agregá «existencias», «umbral» o «disponible».');
+    throw new ArchivoInvalido('Falta qué actualizar: agregue «existencias», «umbral» o «disponible».');
   }
   // «producto» es el nombre que trae el archivo exportado: se entiende y no se usa.
   const nameColumn = table.encabezados.findIndex((header) => ['producto', 'nombre', 'name'].includes(header));
@@ -126,7 +126,7 @@ export function reviewInventoryCsv(
 
     const product = alive.get(code.toLowerCase());
     if (code === '' || product === undefined) {
-      fail('NOT_IN_CATALOG', `El código «${code}» no está en tu catálogo.`);
+      fail('NOT_IN_CATALOG', `El código «${code}» no está en su catálogo.`);
       continue;
     }
     if (seen.has(product.id)) {
@@ -151,7 +151,7 @@ export function reviewInventoryCsv(
       continue;
     }
     if (stock !== null && available !== null && (stock > 0) !== available) {
-      fail('CONTRADICTION', `«${code}» dice ${stock} unidades y a la vez ${available ? 'que hay' : 'que no hay'}: corregí una de las dos.`);
+      fail('CONTRADICTION', `«${code}» dice ${stock} unidades y a la vez ${available ? 'que hay' : 'que no hay'}: corrija una de las dos.`);
       continue;
     }
     if (stock === null && minimum === null && available === null) {

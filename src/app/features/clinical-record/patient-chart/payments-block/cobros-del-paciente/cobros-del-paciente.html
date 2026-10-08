@@ -16,8 +16,8 @@
     }
     @case ('forbidden') {
       <!-- S5 y no S3: «no podés verlo» no es «no hay nada». -->
-      <app-alert tone="info" title="No podés operar los cobros">
-        Tu rol no incluye la facturación de este consultorio. El resto de la consulta sigue disponible.
+      <app-alert tone="info" title="No puede operar los cobros">
+        Su rol no incluye la facturación de este consultorio. El resto de la consulta sigue disponible.
       </app-alert>
     }
     @case ('offline') {
@@ -50,7 +50,7 @@
     @default {
       @if (atrasadoDesde(); as desde) {
         <!-- S7: el dato puede estar atrasado, y se dice de cuándo es. -->
-        <app-alert tone="warning" title="Lo que ves puede estar atrasado" data-testid="cobros-atrasado">
+        <app-alert tone="warning" title="Lo que ve puede estar atrasado" data-testid="cobros-atrasado">
           No pudimos releer los cobros; son los leídos el {{ fechaYHora(desde.toISOString()) }}.
           <button app-button variant="outline" type="button" (clicked)="recargar()">Reintentar</button>
         </app-alert>

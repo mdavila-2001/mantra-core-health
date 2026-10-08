@@ -200,7 +200,7 @@ for (const viewport of VIEWPORTS) {
 
       // Código inválido: el error sale al escribir, sin esperar al envío.
       await page.getByTestId('campaign-form-code').fill('código inválido');
-      await expect(page.getByTestId('campaign-form')).toContainText('Usá de 3 a 40 caracteres');
+      await expect(page.getByTestId('campaign-form')).toContainText('Use de 3 a 40 caracteres');
 
       // Fechas invertidas.
       await page.getByTestId('campaign-form-valid-from').fill('2027-01-31');
@@ -212,7 +212,7 @@ for (const viewport of VIEWPORTS) {
       // Porcentaje fuera de rango.
       await page.getByTestId('campaign-form-bonus').fill('101');
       await expect(page.getByTestId('campaign-form')).toContainText(
-        'Escribí un porcentaje entre 0 y 100',
+        'Escriba un porcentaje entre 0 y 100',
       );
 
       await page
@@ -259,7 +259,7 @@ for (const viewport of VIEWPORTS) {
       const tarjeta = page.locator('[data-testid="campaign-card"][data-campaign-code="CMP-CARDIO-2026"]');
       await expect(tarjeta).toBeVisible({ timeout: 30_000 });
       await expect(tarjeta.getByTestId('campaign-badge-coverage')).toContainText(
-        '100% Cubierto por tu Seguro',
+        '100% Cubierto por su Seguro',
       );
       await expect(tarjeta).toContainText('Chequeo Preventivo Cardiovascular y Perfil Lipídico');
       await expect(tarjeta).toContainText('Laboratorio Central AloVida');
@@ -320,7 +320,7 @@ for (const viewport of VIEWPORTS) {
       const tarjeta = page.locator('[data-testid="campaign-card"][data-campaign-code="CMP-CARDIO-2026"]');
       await expect(tarjeta).toBeVisible({ timeout: 30_000 });
       await expect(tarjeta.getByTestId('campaign-badge-coverage')).toContainText(
-        '100% Cubierto por tu Seguro',
+        '100% Cubierto por su Seguro',
       );
       await expect(page.locator('[data-campaign-code="CMP-VITALICIA-OSTEO"]')).toHaveCount(0);
 

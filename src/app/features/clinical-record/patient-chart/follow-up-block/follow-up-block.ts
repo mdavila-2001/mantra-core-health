@@ -517,7 +517,7 @@ export class FollowUpBlock {
   protected readonly avisoDeDuplicado = computed<string | null>(() => {
     const state = this.registro();
     if (state.status === 'validation' && state.issues.some((issue) => issue.code === 'CONFLICT')) {
-      return 'Esta consulta ya tiene una reconsulta agendada. No hace falta otra: si la fecha ya no sirve, reprogramá la que está.';
+      return 'Esta consulta ya tiene una reconsulta agendada. No hace falta otra: si la fecha ya no sirve, reprograme la que está.';
     }
     return null;
   });
@@ -532,7 +532,7 @@ export class FollowUpBlock {
     }
     return mensajeDeFalloDeEscritura(state, {
       accion: 'agendar reconsultas',
-      sinPermiso: 'La reconsulta se agenda en tu propia agenda: ésta es de otro profesional.',
+      sinPermiso: 'La reconsulta se agenda en su propia agenda: ésta es de otro profesional.',
     });
   });
 
@@ -576,7 +576,7 @@ export class FollowUpBlock {
           this.agendadaAhora.set(cupo);
           this.cupoElegido.set(null);
           this.toasts.success(
-            'La persona la ve en «Mis citas» y vos en Consultas médicas.',
+            'La persona la ve en «Mis citas» y usted en Consultas médicas.',
             'Reconsulta agendada',
           );
           // Relee la consulta de origen: desde ahora tiene reconsulta, y esa

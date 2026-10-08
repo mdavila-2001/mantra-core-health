@@ -52,7 +52,7 @@ export function subirDocumento(): Cypress.Chainable<string> {
 
   // El alta encadena dos peticiones —subir el archivo y abrir el caso— y la
   // segunda espera a la primera, así que el margen es más ancho que el normal.
-  cy.contains('Tu solicitud quedó registrada', { timeout: 20_000 }).should('exist');
+  cy.contains('Su solicitud quedó registrada', { timeout: 20_000 }).should('exist');
 
   return cy
     .contains('dt', 'Código del caso')

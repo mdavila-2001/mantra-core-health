@@ -136,7 +136,7 @@ export class VitrinaMinima {
       next: ({ id }) => this.guardarVitrina(tenantId, id),
       error: () => {
         this.guardando.set(false);
-        this.error.set('No pudimos subir la foto, así que no se creó la vitrina. Probá de nuevo.');
+        this.error.set('No pudimos subir la foto, así que no se creó la vitrina. Pruebe de nuevo.');
       },
     });
   }
@@ -167,8 +167,8 @@ export class VitrinaMinima {
           const esConflicto = fallo instanceof HttpErrorResponse && fallo.status === 409;
           this.error.set(
             esConflicto
-              ? 'Ese enlace ya lo usa otra persona. Probá con otro.'
-              : 'No se pudo crear tu vitrina. Probá de nuevo.',
+              ? 'Ese enlace ya lo usa otra persona. Pruebe con otro.'
+              : 'No se pudo crear su vitrina. Pruebe de nuevo.',
           );
         },
       });

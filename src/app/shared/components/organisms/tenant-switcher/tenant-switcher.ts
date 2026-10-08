@@ -73,7 +73,7 @@ export class TenantSwitcher {
   );
 
   protected readonly triggerLabel = computed(
-    () => this.activeTenant()?.name ?? 'Elegí una organización',
+    () => this.activeTenant()?.name ?? 'Elija una organización',
   );
 
   protected readonly switcherClasses = computed(
@@ -98,7 +98,7 @@ export class TenantSwitcher {
     if (this.isIndeterminate()) {
       console.warn(
         '[app-tenant-switcher] `activeTenantId` no está entre los tenants recibidos: ' +
-          'se muestra sin resolver. Corregilo en el origen, no acá.',
+          'se muestra sin resolver. Corríjalo en el origen, no acá.',
         this.activeTenantId(),
       );
     }

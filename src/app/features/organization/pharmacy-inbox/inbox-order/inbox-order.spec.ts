@@ -134,8 +134,8 @@ describe('InboxOrder with the real pharmacy-orders contract', () => {
         { status: 404, statusText: 'Not Found' },
       );
     harness.detectChanges();
-    expect(text()).toContain('No encontramos lo que buscás');
-    expect(text()).toContain('Verificá la dirección o volvé al listado');
+    expect(text()).toContain('No encontramos lo que busca');
+    expect(text()).toContain('Verifique la dirección o vuelva al listado');
   });
 
   it('opens a submitted order via review and never renders pickupCode to staff', async () => {
@@ -456,7 +456,7 @@ describe('InboxOrder with the real pharmacy-orders contract', () => {
     expect(element('[data-testid="mostrador-listo"]')).toBeNull();
     expect(text()).not.toContain('Marcar listo para retirar');
     // Y el texto tampoco se lo pide: no hay botón que respalde esa frase.
-    expect(text()).not.toContain('marcalo como listo');
+    expect(text()).not.toContain('márquelo como listo');
     expect(text()).toContain('sale por reparto, no se retira en el mostrador');
   });
 
@@ -472,7 +472,7 @@ describe('InboxOrder with the real pharmacy-orders contract', () => {
     expect(element('[data-testid="mostrador-listo"]')).not.toBeNull();
     expect(text()).toContain('Marcar listo para retirar');
     // Y sigue leyendo la frase de siempre, palabra por palabra.
-    expect(text()).toContain('Confirmado. Cuando esté armado, marcalo como listo.');
+    expect(text()).toContain('Confirmado. Cuando esté armado, márquelo como listo.');
   });
 
   it('un pedido sin cobertura no inventa un seguro', async () => {

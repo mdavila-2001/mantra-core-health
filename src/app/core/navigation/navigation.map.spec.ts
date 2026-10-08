@@ -85,7 +85,7 @@ describe('APP_SECTIONS', () => {
     expect(
       sinRoles,
       `Estas secciones no declaran \`roles\`: ${sinRoles.join(', ')}. Si la ve ` +
-        'cualquier sesión, declaralo con `roles: [ANY_ROLE]`; si no, poné los roles ' +
+        'cualquier sesión, declárelo con `roles: [ANY_ROLE]`; si no, ponga los roles ' +
         'del token que pueden verla.',
     ).toEqual([]);
   });

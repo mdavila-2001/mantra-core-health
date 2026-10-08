@@ -258,7 +258,7 @@ function filasDeSede(
       return {
         ...fila,
         advertencia: 'Requiere receta',
-        accion: { etiqueta: 'Buscá tu receta para comprarlo', ruta: PHARMACY_PRESCRIPTIONS_ROUTE },
+        accion: { etiqueta: 'Busque su receta para comprarlo', ruta: PHARMACY_PRESCRIPTIONS_ROUTE },
       };
     }
     if (precio === null) {

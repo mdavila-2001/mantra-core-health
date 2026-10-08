@@ -242,7 +242,7 @@
                         <app-radio value="bloqueado" label="Bloqueado (deshabilitado)" [disabled]="true" />
                     </app-radio-group>
                 </app-form-field>
-                <app-form-field label="Tipo de usuario" errorMessage="Elegí una opción">
+                <app-form-field label="Tipo de usuario" errorMessage="Elija una opción">
                     <app-radio-group [(value)]="radioVal" [hasError]="true">
                         <app-radio value="paciente" label="Paciente" />
                         <app-radio value="medico" label="Médico" />
@@ -579,7 +579,7 @@
                 Directiva de atributo. El globo se cuelga del <code>&lt;body&gt;</code> con
                 <code>position: fixed</code>, así que no lo recorta ninguna tabla con
                 <code>overflow</code>; si el lado pedido no entra, <strong>voltea al
-                opuesto</strong>. Aparece al instante con el foco (probá con Tab) y tras una
+                opuesto</strong>. Aparece al instante con el foco (pruebe con Tab) y tras una
                 espera corta con el puntero. <kbd>Escape</kbd> lo cierra.
             </p>
             <div class="sandbox-grid">
@@ -837,8 +837,8 @@
                 <app-search-field label="Deshabilitado" [disabled]="true" value="Cardiología" />
             </div>
             <p class="sandbox-note">
-                Última búsqueda emitida: <strong>{{ ultimaBusqueda() }}</strong> — tipeá rápido y
-                vas a ver que sale <em>una sola</em>.
+                Última búsqueda emitida: <strong>{{ ultimaBusqueda() }}</strong> — escriba rápido y
+                va a ver que sale <em>una sola</em>.
             </p>
         </section>
 
@@ -864,7 +864,7 @@
                         [dismissible]="true"
                         (dismissed)="avisoVisible.set(false)"
                     >
-                        El servidor rechazó la operación. Reintentá en unos segundos.
+                        El servidor rechazó la operación. Reintente en unos segundos.
                         <div alert-actions>
                             <button app-button size="sm" variant="danger">Reintentar</button>
                             <button app-button size="sm" variant="ghost">Ver detalle</button>
@@ -887,7 +887,7 @@
             <p class="sandbox-note">
                 Sin CDK. El panel <strong>se muda al <code>&lt;body&gt;</code></strong> mientras
                 está abierto y vuelve a su lugar al cerrarse, así no lo recorta ninguna fila de
-                tabla con <code>overflow</code>. Probá con teclado:
+                tabla con <code>overflow</code>. Pruebe con teclado:
                 <kbd>↓</kbd> <kbd>↑</kbd> <kbd>Home</kbd> <kbd>End</kbd>, <kbd>Escape</kbd>
                 devuelve el foco al disparador.
             </p>
@@ -1006,7 +1006,7 @@
             <div class="empty-demo">
                 <app-empty-state
                     title="Todavía no hay evoluciones"
-                    description="Las evoluciones que registres van a aparecer acá, ordenadas por fecha."
+                    description="Las evoluciones que registre van a aparecer acá, ordenadas por fecha."
                 >
                     <svg empty-icon viewBox="0 0 24 24" fill="none" stroke="currentColor"
                          stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -1019,7 +1019,7 @@
                 <app-empty-state
                     variant="no-results"
                     title="Sin resultados"
-                    description="Probá con otro documento o apellido."
+                    description="Pruebe con otro documento o apellido."
                 >
                     <button app-button empty-actions variant="ghost">Limpiar filtros</button>
                 </app-empty-state>
@@ -1027,7 +1027,7 @@
                 <app-empty-state
                     variant="error"
                     title="No se pudo cargar el listado"
-                    description="El servidor no respondió. Reintentá en unos segundos."
+                    description="El servidor no respondió. Reintente en unos segundos."
                 >
                     <svg empty-icon viewBox="0 0 24 24" fill="none" stroke="currentColor"
                          stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -1117,7 +1117,7 @@
                 </app-form-field>
 
                 <app-form-field label="Correo electrónico" [required]="true"
-                    [errorMessage]="demoForm.controls.correo.touched && demoForm.controls.correo.invalid ? 'Ingresá un correo válido' : ''">
+                    [errorMessage]="demoForm.controls.correo.touched && demoForm.controls.correo.invalid ? 'Ingrese un correo válido' : ''">
                     <app-input formControlName="correo" type="email" placeholder="nombre@dominio.bo" />
                 </app-form-field>
 
@@ -1196,7 +1196,7 @@
                 />
             </div>
             <p class="sandbox-note">
-                Escribí <em>«pe»</em>, <em>«cardio»</em> o <em>«MP 4»</em>. Valor guardado:
+                Escriba <em>«pe»</em>, <em>«cardio»</em> o <em>«MP 4»</em>. Valor guardado:
                 <code>{{ medicoElegido() ?? 'null' }}</code> — es un uuid, no el nombre.
             </p>
         </section>
@@ -1238,7 +1238,7 @@
                 fondo se detiene con ella.
             </p>
             <p class="sandbox-note">
-                <strong>La gota de agua</strong> es lo otro que se ve acá: hacé clic en cualquier
+                <strong>La gota de agua</strong> es lo otro que se ve acá: haga clic en cualquier
                 parte de esta página y una onda se abre desde donde cayó el puntero. Es un anillo
                 que crece y se desvanece en 900 ms, no una mancha más — el fondo ya tiene cuatro, y
                 un quinto foco habría sido más de lo mismo. Se dispara con el <strong>clic</strong>

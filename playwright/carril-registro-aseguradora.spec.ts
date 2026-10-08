@@ -144,7 +144,7 @@ test.describe('alta pública de aseguradora — tipo societario (subtarea 1.1)',
     // País queda en Bolivia por defecto; el tipo societario, sin elegir.
     await page.getByTestId('paginated-form-continuar').click();
 
-    await expect(page.getByText('Elegí el tipo societario.')).toBeVisible();
+    await expect(page.getByText('Elija el tipo societario.')).toBeVisible();
     // Sigue en el primer paso: el título de la sección no cambió.
     await expect(page.locator('.paginated-form__titulo')).toHaveText('La empresa');
   });
@@ -226,7 +226,7 @@ test.describe('alta pública de aseguradora — tipo societario (subtarea 1.1)',
     });
     await page.getByTestId('paginated-form-continuar').click();
 
-    await expect(page.getByText('Escribí la sigla: de 3 a 20 letras o números.')).toBeVisible();
+    await expect(page.getByText('Escriba la sigla: de 3 a 20 letras o números.')).toBeVisible();
     await expect(page.locator('.paginated-form__titulo')).toHaveText('La empresa');
   });
 

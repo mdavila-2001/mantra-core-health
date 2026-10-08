@@ -182,7 +182,7 @@ export class FacturaSimuladaDialog implements OnInit {
           this.emitida.emit(factura);
           if (factura.status === 'REJECTED') {
             this.error.set(
-              `El SIAT simulado rechazó la factura (${factura.siatResponse.codigoEstado} · ${factura.siatResponse.codigoDescripcion}). Revisá los datos y volvé a intentar.`,
+              `El SIAT simulado rechazó la factura (${factura.siatResponse.codigoEstado} · ${factura.siatResponse.codigoDescripcion}). Revise los datos y vuelva a intentar.`,
             );
             return;
           }
@@ -195,7 +195,7 @@ export class FacturaSimuladaDialog implements OnInit {
           if (!this.pagoRegistrado() && yaEstabaPagado(e)) {
             this.pagoRegistrado.set(true);
             this.pagado.emit();
-            this.error.set('El cobro ya estaba pagado. Confirmá de nuevo para emitir la factura.');
+            this.error.set('El cobro ya estaba pagado. Confirme de nuevo para emitir la factura.');
             return;
           }
           this.error.set(mensajeDeError(e, 'No se pudo emitir la factura en el simulador.'));

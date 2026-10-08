@@ -45,6 +45,6 @@ export const DEMO_TOAST_TYPES: readonly ToastType[] = ['success', 'warning', 'er
 export const PERSISTENT_DEMO_TOAST: Omit<ToastMessage, 'id'> = {
   type: 'error',
   title: 'Sin conexión con el servidor',
-  message: 'Los cambios no se están guardando. Revisá la conexión y reintentá.',
+  message: 'Los cambios no se están guardando. Revise la conexión y reintente.',
   durationMs: null,
 };

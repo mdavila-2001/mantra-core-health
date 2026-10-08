@@ -104,7 +104,7 @@ export class QaPlanDetail {
         title: decision === 'APPROVED' ? 'Aprobar el plan' : 'Rechazar el plan',
         message:
           decision === 'APPROVED'
-            ? `Vas a aprobar exactamente este plan (hash ${p.planHash.slice(0, 12)}…). Si cambia la suite o el destino, la aprobación deja de valer.`
+            ? `Va a aprobar exactamente este plan (hash ${p.planHash.slice(0, 12)}…). Si cambia la suite o el destino, la aprobación deja de valer.`
             : 'El plan no se va a ejecutar.',
         confirmLabel: decision === 'APPROVED' ? 'Aprobar' : 'Rechazar',
         cancelLabel: 'Volver',
@@ -128,9 +128,9 @@ export class QaPlanDetail {
                 (v) => v.reason === 'SELF_APPROVAL',
               )
               ? 'Quien pidió el plan no puede aprobarlo: tiene que hacerlo otra persona.'
-              : 'Tu rol no permite aprobar planes de ejecución.'
+              : 'Su rol no permite aprobar planes de ejecución.'
             : api.status === 409
-              ? 'El plan cambió o ya no está esperando aprobación. Recargá.'
+              ? 'El plan cambió o ya no está esperando aprobación. Recargue.'
               : (api.message ?? 'No se pudo registrar la decisión.'),
         );
       },

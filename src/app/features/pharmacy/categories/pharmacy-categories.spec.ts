@@ -102,7 +102,7 @@ describe('PharmacyCategories', () => {
     fixture.detectChanges();
 
     http.expectNone(CATEGORIES_URL);
-    expect(root().textContent).toContain('Escribí un nombre');
+    expect(root().textContent).toContain('Escriba un nombre');
   });
 
   it('un nombre repetido es un 409 que se dice en el modal', () => {
@@ -149,7 +149,7 @@ describe('PharmacyCategories', () => {
     http
       .expectOne(`${CATEGORIES_URL}/c-1`)
       .flush(
-        { statusCode: 409, code: 'CONFLICT', message: 'La categoría tiene productos: pasalos a otra antes de eliminarla' },
+        { statusCode: 409, code: 'CONFLICT', message: 'La categoría tiene productos: páselos a otra antes de eliminarla' },
         { status: 409, statusText: 'Conflict' },
       );
     fixture.detectChanges();

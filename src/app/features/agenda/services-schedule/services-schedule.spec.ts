@@ -240,14 +240,14 @@ describe('ServicesSchedule', () => {
     responder([MANANAS].map((t) => ({ ...t, rules: [t.rules[0]!] })));
 
     expect(todos('services-schedule-grid')).toHaveLength(0);
-    expect(raiz().textContent).toContain('Todavía no declaraste horarios para otros servicios');
+    expect(raiz().textContent).toContain('Todavía no declaró horarios para otros servicios');
     const enlaces = [...raiz().querySelectorAll('a')].map((a) => a.getAttribute('href'));
     expect(enlaces).toContain('/schedule/edit');
   });
 
   it('una sesión sin perfil profesional no pide nada al servidor', () => {
     montar({});
-    expect(raiz().textContent).toContain('Todavía no publicaste tu horario');
+    expect(raiz().textContent).toContain('Todavía no publicó su horario');
   });
   describe('solicitudes y turnos de servicios', () => {
     it('pone primero las que esperan respuesta y deja afuera las consultas', () => {
@@ -269,7 +269,7 @@ describe('ServicesSchedule', () => {
       expect(esperan?.textContent).toContain('Paciente b-sol');
       expect(proximos?.textContent).toContain('Electrocardiograma');
       expect(raiz().textContent).not.toContain('Paciente b-consulta');
-      expect(raiz().textContent).toContain('Esperan tu respuesta (1)');
+      expect(raiz().textContent).toContain('Esperan su respuesta (1)');
     });
 
     it('avisa a /schedule cuántas esperan y qué estados resolvió', () => {

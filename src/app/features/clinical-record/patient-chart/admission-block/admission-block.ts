@@ -223,7 +223,7 @@ export class AdmissionBlock {
     if (state.status === 'validation') {
       return state.issues.map((issue) => issue.message).join(' ') || null;
     }
-    return mensajeDeFalloDeEscritura(state, { accion: 'dar de alta internaciones', sinPermiso: 'Tu rol no permite dar de alta internaciones.' });
+    return mensajeDeFalloDeEscritura(state, { accion: 'dar de alta internaciones', sinPermiso: 'Su rol no permite dar de alta internaciones.' });
   });
 
   /**

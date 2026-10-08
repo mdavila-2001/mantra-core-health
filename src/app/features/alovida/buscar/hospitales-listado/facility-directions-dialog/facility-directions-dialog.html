@@ -7,11 +7,11 @@
   <!-- Desde dónde salís. Se pide, no se toma: la API de geolocalización del
        navegador no se toca hasta que alguien aprieta el botón. -->
   <section class="llegar__origen" aria-labelledby="llegar-origen-titulo">
-    <h3 id="llegar-origen-titulo" class="llegar__titulo">Desde dónde salís</h3>
+    <h3 id="llegar-origen-titulo" class="llegar__titulo">Desde dónde sale</h3>
 
     @if (origin(); as desde) {
       <p class="llegar__activo" data-testid="directions-origin">
-        Estás midiendo desde <strong>{{ desde.label }}</strong
+        Está midiendo desde <strong>{{ desde.label }}</strong
         >.
         @if (distanceText(); as texto) {
           <!-- El rótulo dice QUÉ distancia es. No hay cálculo de recorrido en
@@ -24,8 +24,8 @@
       </p>
     } @else {
       <p class="llegar__nota">
-        Podés compartir tu ubicación —se usa una sola vez para medir y no se guarda— o marcar en
-        el mapa desde dónde salís. Las dos son opcionales: el establecimiento ya está en el mapa.
+        Puede compartir su ubicación —se usa una sola vez para medir y no se guarda— o marcar en
+        el mapa desde dónde sale. Las dos son opcionales: el establecimiento ya está en el mapa.
       </p>
       <div class="llegar__acciones">
         <button
@@ -48,7 +48,7 @@
           [attr.aria-pressed]="pickingOnMap()"
           (clicked)="togglePickOnMap()"
         >
-          {{ pickingOnMap() ? 'Tocá el mapa para marcar' : 'Marcar un punto en el mapa' }}
+          {{ pickingOnMap() ? 'Toque el mapa para marcar' : 'Marcar un punto en el mapa' }}
         </button>
       </div>
 
@@ -56,7 +56,7 @@
         <!-- Denegar el permiso NO rompe la pantalla (AC-06-16): el mapa sigue
              mostrando el establecimiento y queda la otra vía. -->
         <p class="llegar__nota" role="status" data-testid="directions-location-denied">
-          No pudimos leer tu ubicación. Podés marcar en el mapa desde dónde salís, o seguir sin
+          No pudimos leer su ubicación. Puede marcar en el mapa desde dónde sale, o seguir sin
           medir distancia: el establecimiento se sigue viendo.
         </p>
       }

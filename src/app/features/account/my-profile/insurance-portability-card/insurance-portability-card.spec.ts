@@ -143,7 +143,7 @@ describe('InsurancePortabilityCard', () => {
       montar({ coverages: [] });
 
       expect(query('portability-coverage-summary')?.textContent?.trim()).toBe(
-        'No tenés coberturas declaradas.',
+        'No tiene coberturas declaradas.',
       );
       // El derecho de portabilidad no depende de tener una cobertura.
       expect(query('btn-download-portability-pdf')).not.toBeNull();
@@ -264,7 +264,7 @@ describe('InsurancePortabilityCard', () => {
     http.expectOne('/insurance/portability/export').flush(
       {
         code: 'FORBIDDEN',
-        message: 'No podés exportar este historial.',
+        message: 'No puede exportar este historial.',
         timestamp: '',
         path: '',
       },
@@ -273,7 +273,7 @@ describe('InsurancePortabilityCard', () => {
     fixture.detectChanges();
 
     expect(query('portability-export-error')?.textContent).toContain(
-      'No podés exportar este historial.',
+      'No puede exportar este historial.',
     );
     expect(query('btn-download-portability-pdf')?.getAttribute('aria-disabled')).not.toBe('true');
   });

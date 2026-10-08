@@ -6,7 +6,7 @@
   @if (borradorPendiente(); as borrador) {
     <div class="compositor-articulo__borrador" role="status" data-testid="article-draft-offer">
       <p class="compositor-articulo__borrador-texto">
-        Tenés un borrador sin publicar guardado el {{ borrador.savedAt | date: 'dd/MM/yyyy' }} a las
+        Tiene un borrador sin publicar guardado el {{ borrador.savedAt | date: 'dd/MM/yyyy' }} a las
         {{ borrador.savedAt | date: 'HH:mm' }}. Las imágenes no se guardan: si tenía, hay que volver a agregarlas.
       </p>
       <div class="compositor-articulo__borrador-acciones">
@@ -51,7 +51,7 @@
       [allowImages]="true"
       [markdownShortcuts]="true"
       label="Contenido del artículo"
-      placeholder="Escribí tu artículo médico… Usá Título, Subtítulo y Apartado para armar secciones que el lector podrá desplegar. También podés escribir ## al empezar un renglón."
+      placeholder="Escriba su artículo médico… Use Título, Subtítulo y Apartado para armar secciones que el lector podrá desplegar. También puede escribir ## al empezar un renglón."
     >
       <span editorTools class="compositor-articulo__extras">
         <button
@@ -125,7 +125,7 @@
               testId="article-link-url"
             />
           </app-form-field>
-          <app-form-field label="Texto que se lee" hint="Si lo dejás vacío, se muestra la dirección." class="compositor-articulo__enlace-texto">
+          <app-form-field label="Texto que se lee" hint="Si lo deja vacío, se muestra la dirección." class="compositor-articulo__enlace-texto">
             <app-input
               [value]="enlaceTexto()"
               (valueChange)="alCambiarTextoDelEnlace($event)"
@@ -145,7 +145,7 @@
   @if (modo() === 'vista') {
     <div class="compositor-articulo__vista" data-testid="article-preview">
       @if (draft().bodyText.trim() === '') {
-        <p class="compositor-articulo__vista-vacia">Todavía no hay nada para mostrar. Volvé a «Escribir» para empezar.</p>
+        <p class="compositor-articulo__vista-vacia">Todavía no hay nada para mostrar. Vuelva a «Escribir» para empezar.</p>
       } @else {
         <app-article-body [body]="draft().bodyText" [images]="urlsDeVista()" [headingLevel]="3" />
       }
@@ -219,7 +219,7 @@
     <p class="compositor-articulo__contador" [class.compositor-articulo__contador--excedido]="excedido()" aria-live="polite">
       {{ stats().words }} palabras · {{ stats().minutes }} min de lectura ·
       @if (excedido()) {
-        te pasaste por {{ largo() - maxLength() }} caracteres
+        se pasó por {{ largo() - maxLength() }} caracteres
       } @else {
         {{ maxLength() - largo() }} caracteres disponibles
       }

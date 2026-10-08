@@ -3,21 +3,21 @@
      bajan a `h3`. Un segundo `h1` rompería el esquema de encabezados de la
      página y le mentiría al lector de pantalla sobre dónde está parado. -->
 <h2 class="prefs__encabezado">Avisos</h2>
-<p class="prefs__intro">Elegí de qué querés que te avisemos y cuándo.</p>
+<p class="prefs__intro">Elija de qué quiere que le avisemos y cuándo.</p>
 
 @if (error(); as message) {
   <app-alert tone="error" class="prefs__alerta">{{ message }}</app-alert>
 }
 
 @if (saved()) {
-  <app-alert tone="success" class="prefs__alerta">Guardamos tus preferencias.</app-alert>
+  <app-alert tone="success" class="prefs__alerta">Guardamos sus preferencias.</app-alert>
 }
 
 @if (loading()) {
-  <p class="prefs__cargando" role="status">Cargando tus preferencias…</p>
+  <p class="prefs__cargando" role="status">Cargando sus preferencias…</p>
 } @else {
   <section class="prefs__bloque">
-    <h3 class="prefs__titulo">Qué avisos recibís</h3>
+    <h3 class="prefs__titulo">Qué avisos recibe</h3>
 
     <ul class="prefs__lista">
       @for (row of rows(); track row.category) {
@@ -90,7 +90,7 @@
           />
         </label>
       </div>
-      <p class="prefs__nota">Se usa la hora de tu dispositivo.</p>
+      <p class="prefs__nota">Se usa la hora de su dispositivo.</p>
     }
   </section>
 

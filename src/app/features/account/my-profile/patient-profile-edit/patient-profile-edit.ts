@@ -87,7 +87,7 @@ const NACIMIENTO_MAS_ANTIGUO = new Date(1900, 0, 1);
  * No es celo de copista: el editor corrige lo que el alta declaró, y dos textos
  * distintos para el mismo dato hacen dudar de si se trata del mismo campo.
  */
-const HINT_OCUPACION = 'En qué trabajás. Ayuda a tu médico con los riesgos propios de cada oficio.';
+const HINT_OCUPACION = 'En qué trabaja. Ayuda a su médico con los riesgos propios de cada oficio.';
 
 /** Los cambios mientras se arman: el contrato que sale es de solo lectura. */
 type CambiosEnCurso = {
@@ -688,7 +688,7 @@ export class PatientProfileEdit {
         this.guardando.set(false);
         this.sembrarFormulario(perfil);
         this.perfil.set(ready(perfil));
-        this.toasts.success('Tus datos quedaron actualizados.', AMBITO);
+        this.toasts.success('Sus datos quedaron actualizados.', AMBITO);
         // FT-11-R05 · embebido, guardar devuelve el perfil a sólo lectura: es
         // la señal de que terminó. En su propia pantalla se queda, que es lo
         // que hacía y lo que espera quien llegó por la ruta directa.
@@ -698,7 +698,7 @@ export class PatientProfileEdit {
       },
       error: () => {
         this.guardando.set(false);
-        this.toasts.error('No pudimos guardar los cambios. Probá de nuevo.', AMBITO);
+        this.toasts.error('No pudimos guardar los cambios. Pruebe de nuevo.', AMBITO);
       },
     });
   }
@@ -751,7 +751,7 @@ export class PatientProfileEdit {
       return `Falta completar «${PESTANAS_DEL_PERFIL[PESTANA.personales]}».`;
     }
     if (abierta !== PESTANA.contacto && this.telefonoMalEscrito()) {
-      return `Revisá el teléfono en «${PESTANAS_DEL_PERFIL[PESTANA.contacto]}».`;
+      return `Revise el teléfono en «${PESTANAS_DEL_PERFIL[PESTANA.contacto]}».`;
     }
     return null;
   });

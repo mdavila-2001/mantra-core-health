@@ -272,7 +272,7 @@ test.describe('C8 · lo que el paquete «Encuentro clínico» entregó de verdad
       await expect(page.getByTestId('historia-activas')).toBeVisible();
       await expect(page.getByTestId('historia-historicos')).toBeVisible();
     } else {
-      await expect(page.getByText('Todavía no tenés diagnósticos registrados')).toBeVisible();
+      await expect(page.getByText('Todavía no tiene diagnósticos registrados')).toBeVisible();
     }
 
     // La pestaña vive en la URL: recargar no la pierde.

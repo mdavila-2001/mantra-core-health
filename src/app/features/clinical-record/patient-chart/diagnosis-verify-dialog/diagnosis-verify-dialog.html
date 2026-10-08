@@ -13,11 +13,11 @@
     <!-- La evidencia primero: es lo que respalda la decisión. Sale del circuito
          y de las notas de esta persona; no hay dónde pegar un identificador. -->
     <app-form-field
-      label="En qué te basás"
+      label="En qué se basa"
       [hint]="
         cargandoEvidencia()
           ? 'Buscando las órdenes, los informes y las notas de esta persona…'
-          : 'Una orden, un informe o una nota de esta persona. Opcional si escribís el motivo.'
+          : 'Una orden, un informe o una nota de esta persona. Opcional si escribe el motivo.'
       "
     >
       <app-select
@@ -33,7 +33,7 @@
     <app-form-field
       label="Motivo o conclusión"
       [hint]="
-        motivo().length + ' / ' + maxMotivo + ' caracteres. Obligatorio si no elegís una evidencia.'
+        motivo().length + ' / ' + maxMotivo + ' caracteres. Obligatorio si no elige una evidencia.'
       "
       [errorMessage]="errorDeMotivo()"
     >

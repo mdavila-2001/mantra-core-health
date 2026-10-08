@@ -1,4 +1,4 @@
-<section class="semana" aria-label="Tu semana">
+<section class="semana" aria-label="Su semana">
   <header class="semana__barra">
     <button
       app-button
@@ -54,7 +54,7 @@
   <!-- Una sola parada de `Tab` para toda la semana (roving tabindex): ←/→
        cambian de día, ↑/↓ bajan a las citas. Ver el componente. -->
   <p class="solo-lectores" [id]="ayudaId">
-    Usá las flechas izquierda y derecha para cambiar de día, y arriba y abajo para recorrer sus
+    Use las flechas izquierda y derecha para cambiar de día, y arriba y abajo para recorrer sus
     turnos.
   </p>
   <ol class="semana__dias" [attr.aria-describedby]="ayudaId">
@@ -91,7 +91,7 @@
                 {{ dia.motivo ?? 'Cerrado' }}
               }
               @case ('sin-agenda') {
-                No atendés
+                No atiende
               }
               @case ('lleno') {
                 Lleno · {{ dia.tomados }}

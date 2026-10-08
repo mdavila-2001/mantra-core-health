@@ -64,7 +64,7 @@ test('cancelar protege el borrador y conserva el perfil persistido al recargar',
   await name.fill('Borrador sintético');
   await page.getByRole('button', { name: 'Cancelar edición', exact: true }).click();
   const dialog = page.getByRole('dialog');
-  await expect(dialog).toContainText('¿Descartás lo que escribiste?');
+  await expect(dialog).toContainText('¿Descarta lo que escribió?');
   await dialog.getByRole('button', { name: 'Seguir editando', exact: true }).click();
   await expect(name).toHaveValue('Borrador sintético');
   await page.getByRole('button', { name: 'Cancelar edición', exact: true }).click();

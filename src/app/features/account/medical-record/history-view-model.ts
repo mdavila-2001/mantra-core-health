@@ -166,9 +166,9 @@ const TESTID_DEL_BLOQUE: Readonly<Record<HistoryDiagnosisGroup, string>> = Objec
 
 /** Qué dice cada bloque vacío. Ninguno se calla: un bloque mudo no es un dato. */
 const VACIO_DEL_BLOQUE: Readonly<Record<HistoryDiagnosisGroup, string>> = Object.freeze({
-  'en-estudio': 'No tenés diagnósticos en estudio.',
-  activa: 'No tenés enfermedades activas registradas.',
-  historico: 'No tenés diagnósticos históricos.',
+  'en-estudio': 'No tiene diagnósticos en estudio.',
+  activa: 'No tiene enfermedades activas registradas.',
+  historico: 'No tiene diagnósticos históricos.',
 });
 
 /* ---- la pestaña «Diagnósticos» ------------------------------------------- */
@@ -434,7 +434,7 @@ function notaDeLaLinea(nota: ChartNote): TimelineNote {
   const filas: Hecho[] = [
     ...entradas.map((fila) => ({ etiqueta: fila.label, valor: fila.value })),
     { etiqueta: 'Motivo de la consulta', valor: nota.chiefComplaintText || null },
-    { etiqueta: entradas.length > 0 ? 'Lo que anotó' : 'Lo que contaste', valor: nota.subjectiveText || null },
+    { etiqueta: entradas.length > 0 ? 'Lo que anotó' : 'Lo que contó', valor: nota.subjectiveText || null },
     { etiqueta: 'Lo que se observó', valor: nota.objectiveText || null },
     { etiqueta: 'Evaluación', valor: nota.assessmentText || null },
     { etiqueta: 'Plan', valor: nota.planText || null },

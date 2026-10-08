@@ -193,12 +193,12 @@ export class TarjetaDelDia {
       const donde = porVideo
         ? ' Va por videollamada.'
         : aDomicilio
-          ? ' Vas a su domicilio.'
+          ? ' Va a su domicilio.'
           : '';
       return `Se agenda la cita y le avisamos al paciente. No tiene que confirmar nada.${donde}`;
     }
     if (this.motivo().trim() !== '') {
-      return 'Queda como tiempo ocupado tuyo. El paciente no ve nada en ese rato.';
+      return 'Queda como tiempo ocupado suyo. El paciente no ve nada en ese rato.';
     }
     return null;
   });
@@ -227,7 +227,7 @@ export class TarjetaDelDia {
     if (pisa === null) return null;
     const cuando = `(${horaDe(pisa.desde)}–${horaDe(pisa.hasta)})`;
     return pisa.tipo === 'bloqueo'
-      ? `Ese rato está bloqueado por ${pisa.rotulo} ${cuando}. No se puede agendar ahí: quitá el bloqueo primero, o elegí otro rato.`
+      ? `Ese rato está bloqueado por ${pisa.rotulo} ${cuando}. No se puede agendar ahí: quite el bloqueo primero, o elija otro rato.`
       : `Ese rato pisa ${pisa.rotulo} ${cuando}.`;
   });
 
@@ -387,8 +387,8 @@ export class TarjetaDelDia {
   protected pedirDescarte(): void {
     void this.dialogs
       .confirm({
-        title: '¿Descartar lo que escribiste?',
-        message: 'Lo que cargaste en esta tarjeta se pierde y no se crea nada.',
+        title: '¿Descartar lo que escribió?',
+        message: 'Lo que cargó en esta tarjeta se pierde y no se crea nada.',
         confirmLabel: 'Descartar',
         cancelLabel: 'Seguir editando',
         destructive: true,
@@ -406,7 +406,7 @@ export class TarjetaDelDia {
       'error' in error &&
       typeof (error as { error?: { message?: unknown } }).error?.message === 'string'
         ? ((error as { error: { message: string } }).error.message)
-        : 'No se pudo guardar. Probá de nuevo.';
+        : 'No se pudo guardar. Pruebe de nuevo.';
     this.error.set(mensaje);
   }
 }

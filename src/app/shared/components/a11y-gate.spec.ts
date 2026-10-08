@@ -54,7 +54,7 @@ import { ToastContainer } from './organisms/toast-container/toast-container';
   template: `
     <app-content-dialog
       heading="Editar el motivo de la consulta"
-      description="El cambio queda en la historia clínica con tu firma."
+      description="El cambio queda en la historia clínica con su firma."
     >
       <app-form-field label="Motivo" hint="Máximo 200 caracteres" [required]="true">
         <app-input type="text" />
@@ -72,7 +72,7 @@ class ContentDialogHost {}
   imports: [ContentDialog],
   template: `
     <app-content-dialog heading="Aviso de privacidad" closeLabel="Entendido" [dismissible]="false">
-      <p>Tus datos se usan sólo para la atención.</p>
+      <p>Sus datos se usan sólo para la atención.</p>
     </app-content-dialog>
   `,
 })
@@ -83,13 +83,13 @@ class BlockingDialogHost {}
 @Component({
   imports: [FormField, Input, Select],
   template: `
-    <app-form-field label="Correo" hint="Lo usamos para avisarte del turno">
+    <app-form-field label="Correo" hint="Lo usamos para avisarle del turno">
       <app-input type="email" autocomplete="email" [disabled]="true" />
     </app-form-field>
-    <app-form-field label="Documento" description="Figura en tu cédula">
+    <app-form-field label="Documento" description="Figura en su cédula">
       <app-input type="text" [readonly]="true" />
     </app-form-field>
-    <app-form-field label="Especialidad" errorMessage="Elegí una especialidad" [required]="true">
+    <app-form-field label="Especialidad" errorMessage="Elija una especialidad" [required]="true">
       <app-select [options]="options" [hasError]="true" />
     </app-form-field>
     <app-form-field label="Sede">
@@ -125,7 +125,7 @@ class ToastHost {
     toasts.show({
       type: 'error',
       title: 'No pudimos guardar',
-      message: 'Probá de nuevo',
+      message: 'Pruebe de nuevo',
       durationMs: null,
     });
   }

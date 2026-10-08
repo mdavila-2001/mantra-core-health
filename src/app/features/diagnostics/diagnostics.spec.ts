@@ -168,7 +168,7 @@ describe('Diagnostics', () => {
       }
       const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
       expect(text).toContain('¿De dónde salen estas órdenes?');
-      expect(text).not.toContain('¿Buscás los estudios de un paciente?');
+      expect(text).not.toContain('¿Busca los estudios de un paciente?');
     });
   });
 });

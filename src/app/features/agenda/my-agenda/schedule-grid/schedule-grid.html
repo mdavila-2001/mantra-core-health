@@ -1,13 +1,13 @@
 @if (horas().length === 0) {
-  <p class="grilla__vacio">Todavía no publicaste horarios.</p>
+  <p class="grilla__vacio">Todavía no publicó horarios.</p>
 } @else {
   <div class="grilla">
     @if (conFechas()) {
       <p class="grilla__semana">{{ rotuloDeSemana() }}</p>
     }
     <p class="grilla__caption" [id]="ayudaId">
-      Tus horas de atención. Las resaltadas son las que atendés; pasá el mouse por una franja o
-      recorré la grilla con las flechas para ver su detalle.
+      Sus horas de atención. Las resaltadas son las que atiende; pase el mouse por una franja o
+      recorra la grilla con las flechas para ver su detalle.
     </p>
 
     <!-- La leyenda del segundo tono (propietario, 04/10/2026): «otros
@@ -50,7 +50,7 @@
         aria-readonly="true"
         [attr.aria-describedby]="ayudaId"
         data-testid="schedule-grid"
-        [attr.aria-label]="conFechas() ? rotuloDeSemana() : 'Tu horario semanal'"
+        [attr.aria-label]="conFechas() ? rotuloDeSemana() : 'Su horario semanal'"
         [attr.aria-rowcount]="filas().length + 1"
         [attr.aria-colcount]="8"
         [style.grid-template-columns]="columnas().plantilla"

@@ -65,8 +65,8 @@
        `GET /scheduling/resources` exige `tenantId`. Decirlo así, y no con un
        estado de error, es la diferencia entre «falta un paso» y «esto falló». -->
   @if (sinOrganizacion()) {
-    <app-alert tone="info" title="Elegí una organización">
-      La agenda pertenece a una organización concreta. Elegí una en el selector del encabezado para
+    <app-alert tone="info" title="Elija una organización">
+      La agenda pertenece a una organización concreta. Elija una en el selector del encabezado para
       ver sus citas y sus cupos.
     </app-alert>
   } @else {
@@ -92,14 +92,14 @@
          le mostraba la agenda del primer consultorio de la lista —los pacientes
          y los motivos de consulta de un colega— sin que hubiera pedido nada. -->
     @if (sinAgendaPropia()) {
-      <app-alert tone="info" title="Todavía no publicaste tu agenda">
+      <app-alert tone="info" title="Todavía no publicó su agenda">
         <!-- Antes decía «pedíselo a quien administra la agenda»: era cierto
              cuando publicar exigía SCHEDULING_ADMIN. Ahora el profesional puede
              crear la suya, y lo que importa decirle es la consecuencia: sin
              horarios publicados, los pacientes no pueden pedirle turno. -->
-        Los pacientes todavía no pueden pedirte turno: tu agenda no tiene horarios publicados en
-        esta organización. Creala con tus días y franjas — lleva un par de minutos. Mientras tanto
-        no se muestra ninguna otra: la agenda de otro profesional no es la tuya.
+        Los pacientes todavía no pueden pedirle turno: su agenda no tiene horarios publicados en
+        esta organización. Créela con sus días y franjas — lleva un par de minutos. Mientras tanto
+        no se muestra ninguna otra: la agenda de otro profesional no es la suya.
         <a app-button alert-actions variant="primary" size="sm" [routerLink]="rutaCrearAgenda">
           Publicar mi agenda
         </a>
@@ -127,7 +127,7 @@
         </p>
 
         <div class="agenda__demora-campos">
-          <app-form-field label="Cuánto te demorás" class="agenda__filtro">
+          <app-form-field label="Cuánto se demora" class="agenda__filtro">
             <app-select
               [options]="opcionesDeDemora()"
               [value]="minutosDeDemora()"
@@ -178,17 +178,17 @@
         aria-labelledby="reprogramando-titulo"
         role="status"
       >
-        <h2 id="reprogramando-titulo" class="agenda__reprogramando-titulo">Elegí el horario nuevo</h2>
+        <h2 id="reprogramando-titulo" class="agenda__reprogramando-titulo">Elija el horario nuevo</h2>
         <p class="agenda__reprogramando-ayuda">
           @if (citaEnReprogramacion(); as origen) {
-            Estás moviendo la cita de <strong>{{ origen.paciente }}</strong>
+            Está moviendo la cita de <strong>{{ origen.paciente }}</strong>
             @if (origen.cuando !== null) {
               del {{ origen.cuando | date: "EEEE d 'de' MMMM, HH:mm" }}
             }
-            . Tocá «Mover acá» en el cupo que quieras: el horario anterior queda libre y la cita
+            . Toque «Mover acá» en el cupo que quiera: el horario anterior queda libre y la cita
             conserva su estado.
           } @else {
-            Tocá «Mover acá» en el cupo que quieras. El horario anterior queda libre y la cita
+            Toque «Mover acá» en el cupo que quiera. El horario anterior queda libre y la cita
             conserva su estado.
           }
         </p>

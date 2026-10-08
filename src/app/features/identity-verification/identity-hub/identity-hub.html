@@ -1,6 +1,6 @@
 <app-page-header
   title="Verificación de identidad"
-  subtitle="Pedí una verificación y seguí el estado de tus trámites."
+  subtitle="Pida una verificación y siga el estado de sus trámites."
   [breadcrumbs]="breadcrumbs()"
 />
 
@@ -30,9 +30,9 @@
       @defer (when pestana() === 1) {
         <app-verification-cases [embedded]="true" />
       } @placeholder {
-        <p class="identidad__cargando">Abrí esta pestaña para ver tus trámites.</p>
+        <p class="identidad__cargando">Abra esta pestaña para ver sus trámites.</p>
       } @loading {
-        <app-spinner label="Cargando tus trámites" />
+        <app-spinner label="Cargando sus trámites" />
       }
     </app-tab>
   </app-tabs>

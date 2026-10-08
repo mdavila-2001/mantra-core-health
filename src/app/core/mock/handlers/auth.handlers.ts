@@ -224,7 +224,7 @@ export function registrarAuth(router: MockRouter): void {
     const identificador = datos.email ?? datos.nationalId ?? '';
     const user = buscarUsuario(identificador);
     if (user === undefined || (datos.password ?? '') === '') {
-      return unauthorized('Credenciales inválidas. Probá con una de las cuentas de prueba.');
+      return unauthorized('Credenciales inválidas. Pruebe con una de las cuentas de prueba.');
     }
     contrasenaVigente.set(user.id, datos.password ?? '');
     return sesionDe(user);
@@ -679,11 +679,11 @@ export function registrarAuth(router: MockRouter): void {
   });
 
   router.post('/iam/auth/resend-verification', () => ({
-    message: 'Si la cuenta existe, te reenviamos el correo de verificación.',
+    message: 'Si la cuenta existe, le reenviamos el correo de verificación.',
   }));
 
   router.post('/iam/auth/forgot-password', () => ({
-    message: 'Si la cuenta existe, te enviamos un enlace para restablecer la contraseña.',
+    message: 'Si la cuenta existe, le enviamos un enlace para restablecer la contraseña.',
   }));
 
   router.post('/iam/auth/reset-password', ({ body }) => {

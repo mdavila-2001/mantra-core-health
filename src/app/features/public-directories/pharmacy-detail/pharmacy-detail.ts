@@ -179,7 +179,7 @@ export class PharmacyDetail extends PublicCatalogDetail<PublicPharmacyProduct> {
           titulo: sucursal.name,
           ...(sucursal.addressText === null ? {} : { subtitulo: sucursal.addressText }),
           estado: sucursal.isCurrent
-            ? { etiqueta: 'Estás viendo ésta', tono: 'info' as const }
+            ? { etiqueta: 'Está viendo ésta', tono: 'info' as const }
             : { etiqueta: 'Otra sucursal', tono: 'neutral' as const },
         }));
     }
@@ -439,9 +439,9 @@ export class PharmacyDetail extends PublicCatalogDetail<PublicPharmacyProduct> {
   protected readonly motivoDeLaRecomendacion = computed(() => {
     const elegida = this.recomendada();
     if (elegida === null) return '';
-    const completa = elegida.complete ? 'tiene todo lo de tu receta' : 'es la que más tiene';
+    const completa = elegida.complete ? 'tiene todo lo de su receta' : 'es la que más tiene';
     if (elegida.distanceKm === null) {
-      return `${completa}. Compartí tu ubicación para saber cuál te queda más cerca.`;
+      return `${completa}. Comparta su ubicación para saber cuál le queda más cerca.`;
     }
     return `${completa} y es la más cercana: ${this.distancia(elegida.distanceKm)} en línea recta.`;
   });

@@ -152,14 +152,14 @@ describe('OrganizationPanel', () => {
     montar();
     responder([]);
 
-    expect(texto()).toContain('No administrás ninguna organización');
+    expect(texto()).toContain('No administra ninguna organización');
   });
 
   it('muestra los datos de la organización y su gente', () => {
     montar();
     responder([organizacion()]);
 
-    expect(texto()).toContain('Datos de tu organización');
+    expect(texto()).toContain('Datos de su organización');
     expect(texto()).toContain('Su gente');
   });
 

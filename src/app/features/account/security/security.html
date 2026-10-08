@@ -1,6 +1,6 @@
 <app-page-header
   title="Seguridad de la cuenta"
-  subtitle="Cambiá tu contraseña y revisá en qué dispositivos tenés la sesión abierta."
+  subtitle="Cambie su contraseña y revise en qué dispositivos tiene la sesión abierta."
   [breadcrumbs]="breadcrumbs()"
 />
 
@@ -8,7 +8,7 @@
   <app-card class="seguridad__tarjeta">
     <h2 class="seguridad__titulo">Cambiar la contraseña</h2>
     <p class="seguridad__ayuda">
-      Al cambiarla cerramos tus sesiones en los otros dispositivos. Esta sigue abierta.
+      Al cambiarla cerramos sus sesiones en los otros dispositivos. Esta sigue abierta.
     </p>
 
     @if (errorDeContrasena(); as mensaje) {
@@ -27,7 +27,7 @@
         [required]="true"
         [errorMessage]="
           form.controls.currentPassword.touched && form.controls.currentPassword.invalid
-            ? 'Ingresá tu contraseña actual.'
+            ? 'Ingrese su contraseña actual.'
             : ''
         "
       >
@@ -80,15 +80,15 @@
 
   <app-card class="seguridad__tarjeta">
     <h2 class="seguridad__titulo">Sesiones abiertas</h2>
-    <p class="seguridad__ayuda">Si no reconocés alguna, cerrala y cambiá tu contraseña.</p>
+    <p class="seguridad__ayuda">Si no reconocés alguna, cerrala y cambie su contraseña.</p>
 
     @switch (estado()) {
       @case ('cargando') {
-        <p class="seguridad__estado" role="status">Cargando tus sesiones…</p>
+        <p class="seguridad__estado" role="status">Cargando sus sesiones…</p>
       }
       @case ('error') {
         <app-alert tone="error" data-testid="seguridad-sesiones-error">
-          No pudimos traer tus sesiones.
+          No pudimos traer sus sesiones.
           <button app-button variant="secondary" size="sm" type="button" (click)="cargarSesiones()">
             Reintentar
           </button>
@@ -98,7 +98,7 @@
         @if (sesiones().length === 0) {
           <app-empty-state
             title="No hay sesiones abiertas"
-            description="Cuando inicies sesión en un dispositivo, la vas a ver acá."
+            description="Cuando inicie sesión en un dispositivo, la va a ver acá."
           />
         } @else {
           <ul class="seguridad__sesiones" data-testid="seguridad-sesiones">

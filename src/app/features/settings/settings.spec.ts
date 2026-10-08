@@ -143,7 +143,7 @@ describe('Settings', () => {
     fixture.detectChanges();
 
     expect(fixture.nativeElement.querySelector('app-notification-preferences')).not.toBeNull();
-    expect(text()).toContain('Qué avisos recibís');
+    expect(text()).toContain('Qué avisos recibe');
   });
 
   it('el único h1 es el de Ajustes: el panel de avisos bajó a h2', () => {
@@ -188,7 +188,7 @@ describe('Settings', () => {
     theme.useSystemTheme();
     fixture.detectChanges();
 
-    expect(text()).toContain('Sigue a tu dispositivo');
+    expect(text()).toContain('Sigue a su dispositivo');
     expect(query('theme-use-system')).toBeNull();
   });
 
@@ -245,7 +245,7 @@ describe('Settings', () => {
     mount();
     goTo('Permisos');
 
-    expect(text()).toContain('configuración de este sitio en tu navegador');
+    expect(text()).toContain('configuración de este sitio en su navegador');
   });
 
   it('encender un permiso se lo pide al navegador, no lo da por concedido', () => {
@@ -288,7 +288,7 @@ describe('Settings', () => {
     expect(query('settings-roles')?.textContent?.trim()).not.toBe('');
   });
 
-  it('no promete una lista de quién ve tus datos: la API no se la responde a la persona', () => {
+  it('no promete una lista de quién ve sus datos: la API no se la responde a la persona', () => {
     mount(['PATIENT']);
     goTo('Permisos');
 

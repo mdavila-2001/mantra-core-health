@@ -1,7 +1,7 @@
 <section class="sintomas" aria-labelledby="sintomas-titulo">
-  <h2 class="sintomas__titulo" id="sintomas-titulo">¿Cómo te sentís?</h2>
+  <h2 class="sintomas__titulo" id="sintomas-titulo">¿Cómo se siente?</h2>
   <p class="sintomas__texto">
-    Tocá en la figura dónde te pasa —de frente, de espaldas o la cara— y te decimos a qué especialidad ir.
+    Toque en la figura dónde le pasa —de frente, de espaldas o la cara— y le decimos a qué especialidad ir.
   </p>
 
   <!-- ─── Elegir sin escribir ───────────────────────────────────────────────
@@ -27,7 +27,7 @@
       <!-- Sin zona elegida no hay pista acá: la figura ya dice «Tocá una
            parte del cuerpo», y repetirlo al lado era decirlo dos veces. -->
       @if (nombreDeLaZonaAbierta(); as zona) {
-        <h3 class="sintomas__lado-titulo">{{ zona }}: ¿qué sentís?</h3>
+        <h3 class="sintomas__lado-titulo">{{ zona }}: ¿qué siente?</h3>
       }
       @if (sintomasDeLaZona().length > 0) {
         <ul class="sintomas__opciones" data-testid="zona-abierta">
@@ -222,8 +222,8 @@
   <div class="sintomas__escribir" data-testid="sintomas-escribir">
     <app-form-field
       icon="note"
-      label="Contanos con tus palabras"
-      hint="Podés escribir varios síntomas; no hace falta que sea exacto."
+      label="Cuéntenos con sus palabras"
+      hint="Puede escribir varios síntomas; no hace falta que sea exacto."
     >
       <app-textarea
         data-testid="sintomas-texto"
@@ -245,7 +245,7 @@
     @if (dictado.soportado) {
       <div class="sintomas__dictado" data-testid="sintomas-dictado">
         <p class="sintomas__dictado-aviso" id="sintomas-dictado-aviso">
-          Lo que dictás lo transcribe tu navegador y lo analizamos para entenderte; no lo guardamos.
+          Lo que dicta lo transcribe su navegador y lo analizamos para entenderle; no lo guardamos.
         </p>
         <button
           app-button
@@ -283,19 +283,19 @@
           @switch (dictado.estado()) {
             @case ('escuchando') {
               <span class="sintomas__dictado-punto" aria-hidden="true"></span>
-              Escuchando… decí qué te pasa.
+              Escuchando… diga qué le pasa.
               @if (dictado.parcial(); as parcial) {
                 <em>{{ parcial }}</em>
               }
             }
             @case ('sin-permiso') {
-              Activá el micrófono en el navegador o escribí.
+              Active el micrófono en el navegador o escriba.
             }
             @case ('sin-resultado') {
-              No te escuchamos, probá de nuevo.
+              No le escuchamos, pruebe de nuevo.
             }
             @case ('sin-red') {
-              Sin conexión para transcribir; escribí.
+              Sin conexión para transcribir; escriba.
             }
           }
         </p>
@@ -309,7 +309,7 @@
 
   @if (sintomas().length > 0) {
     <div class="sintomas__chips">
-      <span class="sintomas__chips-rotulo">Te entendimos</span>
+      <span class="sintomas__chips-rotulo">Le entendimos</span>
       @for (sintoma of sintomas(); track sintoma.id) {
         <!-- Cada chip se puede quitar: un falso positivo no puede quedar
              atrapado dentro de la recomendación. -->
@@ -355,12 +355,12 @@
         <p>{{ mensaje }}</p>
       } @else {
         <p>
-          Lo que contás
+          Lo que cuenta
           @if (alarmas().length === 1) {
             —{{ alarmas()[0].nombre }}—
           }
           puede ser una urgencia.
-          <strong>Andá ahora a una guardia o llamá a emergencias.</strong>
+          <strong>Vaya ahora a una guardia o llame a emergencias.</strong>
         </p>
       }
       <!-- Llamar, a un toque, sin salir de acá (propietario, 2026-10-08). -->
@@ -372,10 +372,10 @@
         <!-- Sin certeza no se deja a la persona sin camino: Medicina general,
              y la pista para que pruebe de nuevo si quiere. -->
         <p class="sintomas__sin-coincidencias" role="status" data-testid="sintomas-sin-certeza">
-          No reconocimos un síntoma concreto. Podés probar con otras palabras o tocar una zona de arriba.
+          No reconocimos un síntoma concreto. Puede probar con otras palabras o tocar una zona de arriba.
         </p>
       }
-      <h3 class="sintomas__subtitulo">Conviene que veas a</h3>
+      <h3 class="sintomas__subtitulo">Conviene que vea a</h3>
       <ul class="sintomas__lista">
         @for (recomendacion of recomendaciones(); track recomendacion.nombre) {
           <li class="sintomas__opcion">
@@ -402,16 +402,16 @@
   } @else if (texto().trim() !== '' && sintomas().length === 0 && leyendoConIa()) {
     <p class="sintomas__leyendo" role="status" data-testid="sintomas-leyendo">
       <app-spinner size="sm" decorative />
-      <span>Estamos leyendo lo que escribiste… puede tardar unos segundos.</span>
+      <span>Estamos leyendo lo que escribió… puede tardar unos segundos.</span>
     </p>
   } @else if (texto().trim() !== '' && sintomas().length === 0) {
     <p class="sintomas__sin-coincidencias" role="status">
       @if (descartados() !== '') {
         <!-- Leímos el texto y entendimos que lo negaba. Decirlo es lo que evita
              que «no reconocimos nada» se lea como «no te leímos». -->
-        Entendimos que <strong>no</strong> tenés {{ descartados() }}. Contanos qué sí sentís.
+        Entendimos que <strong>no</strong> tiene {{ descartados() }}. Cuéntenos qué sí siente.
       } @else {
-        No reconocimos ningún síntoma. Probá con palabras más simples, o tocá una zona de arriba.
+        No reconocimos ningún síntoma. Pruebe con palabras más simples, o toque una zona de arriba.
       }
     </p>
   }

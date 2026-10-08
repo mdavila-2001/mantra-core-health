@@ -501,10 +501,10 @@ export function registrarComunidad(router: MockRouter): void {
     const propias = publicaciones.filtrar((p) => p.authorPublicProfileId === profileId).slice(0, 3);
     const items = [
       ...propias.flatMap((p, i) => [
-        { id: uuid(`snotif-r-${p.id}`), notificationTypeConceptId: CONCEPTO.notifReaction, actorProfileId: vitrinas.todos()[(i + 1) % 5]!.id, sourceTypeConceptId: CONCEPTO.sourcePost, sourceRefId: p.id, previewText: `Le gustó tu publicación «${p.bodyText.slice(0, 40)}…»`, isRead: i > 0, readAt: i > 0 ? iso(-i) : null, createdAt: iso(-i, 8) },
+        { id: uuid(`snotif-r-${p.id}`), notificationTypeConceptId: CONCEPTO.notifReaction, actorProfileId: vitrinas.todos()[(i + 1) % 5]!.id, sourceTypeConceptId: CONCEPTO.sourcePost, sourceRefId: p.id, previewText: `Le gustó su publicación «${p.bodyText.slice(0, 40)}…»`, isRead: i > 0, readAt: i > 0 ? iso(-i) : null, createdAt: iso(-i, 8) },
         { id: uuid(`snotif-c-${p.id}`), notificationTypeConceptId: CONCEPTO.notifComment, actorProfileId: vitrinas.todos()[(i + 2) % 5]!.id, sourceTypeConceptId: CONCEPTO.sourceComment, sourceRefId: p.id, previewText: 'Comentó: «Excelente explicación, gracias por compartir.»', isRead: i > 1, readAt: i > 1 ? iso(-i) : null, createdAt: iso(-i, 12) },
       ]),
-      { id: uuid(`snotif-f-${profileId}`), notificationTypeConceptId: CONCEPTO.notifFollow, actorProfileId: vitrinas.todos()[3]!.id, sourceTypeConceptId: CONCEPTO.sourcePost, sourceRefId: profileId, previewText: 'Empezó a seguirte', isRead: false, readAt: null, createdAt: iso(-1, 19) },
+      { id: uuid(`snotif-f-${profileId}`), notificationTypeConceptId: CONCEPTO.notifFollow, actorProfileId: vitrinas.todos()[3]!.id, sourceTypeConceptId: CONCEPTO.sourcePost, sourceRefId: profileId, previewText: 'Empezó a seguirle', isRead: false, readAt: null, createdAt: iso(-1, 19) },
     ];
     return { ...paginar(items, query, 20), unreadCount: items.filter((n) => !n.isRead).length };
   });
@@ -523,7 +523,7 @@ export function registrarComunidad(router: MockRouter): void {
     const datos = cuerpo<{ verifiedEncounterId: string; overallRating: number; reviewText?: string; displayMode?: string; dimensions?: { dimension: keyof typeof CONCEPTO.reviewDim; score: number }[] }>(request);
     const actor = vitrinaDeSesion(request);
     if (resenas.filtrar((r) => r.targetPublicProfileId === request.params['id'] && r.reviewerProfileId === actor?.id && r.id.startsWith('n')).length > 0) {
-      return conflict('Ya publicaste una reseña de esta atención');
+      return conflict('Ya publicó una reseña de esta atención');
     }
     const nueva = resenas.agregar({
       id: nuevoId('review'),
@@ -559,15 +559,15 @@ export function registrarComunidad(router: MockRouter): void {
     const atencion = encuentros.get(atencionId);
     if (atencion === undefined) return notFound('Esa atención no existe');
     const destino = vitrinaDe(atencion.primaryPractitionerId);
-    if (destino === undefined) return notFound('Quien te atendió no tiene ficha pública');
+    if (destino === undefined) return notFound('Quien le atendió no tiene ficha pública');
     const actor = vitrinaDeSesion(request);
     if (actor !== undefined && actor.id !== atencion.patientProfileId && vitrinaDe(atencion.patientProfileId)?.id !== actor.id) {
-      return forbidden('Esa atención no es tuya');
+      return forbidden('Esa atención no es suya');
     }
     const yaCalificada = resenas.filtrar(
       (r) => r.targetPublicProfileId === destino.id && r.reviewerProfileId === (actor?.id ?? ''),
     );
-    if (yaCalificada.length > 0) return conflict('Ya calificaste esta atención');
+    if (yaCalificada.length > 0) return conflict('Ya calificó esta atención');
     const nueva = resenas.agregar({
       id: nuevoId('review'),
       targetPublicProfileId: destino.id,
@@ -629,7 +629,7 @@ export function registrarComunidad(router: MockRouter): void {
         body: {
           statusCode: 422,
           code: PERFIL_PUBLICO_REQUERIDO,
-          message: 'Necesitás tu perfil público completo para crear un grupo público',
+          message: 'Necesita su perfil público completo para crear un grupo público',
           error: 'Unprocessable Entity',
         },
       };
@@ -810,7 +810,7 @@ export function registrarComunidad(router: MockRouter): void {
     const bloqueado = c.participantes.some(
       (p) => p !== (datos.senderProfileId ?? '') && conjunto(bloqueos, datos.senderProfileId ?? '').has(p),
     );
-    if (bloqueado) return forbidden('Bloqueaste a esta persona: desbloquéala para escribirle');
+    if (bloqueado) return forbidden('Bloqueó a esta persona: desbloquéela para escribirle');
     const nuevo: MensajeSimulado = {
       id: nuevoId('msg'),
       conversationId: c.id,
@@ -834,7 +834,7 @@ export function registrarComunidad(router: MockRouter): void {
     // Soporte responde solo, para que el chat se sienta vivo.
     if (c.participantes.includes(SOPORTE_ID) && nuevo.senderProfileId !== SOPORTE_ID) {
       setTimeout(() => {
-        mensajes.agregar({ ...nuevo, id: nuevoId('msg-soporte'), senderProfileId: SOPORTE_ID, bodyText: 'Gracias por escribirnos. Un agente va a responderte en breve.', sentAt: ahora() });
+        mensajes.agregar({ ...nuevo, id: nuevoId('msg-soporte'), senderProfileId: SOPORTE_ID, bodyText: 'Gracias por escribirnos. Un agente va a responderle en breve.', sentAt: ahora() });
       }, 1500);
     }
     // El otro lado también contesta, para poder ver la respuesta automática
@@ -849,7 +849,7 @@ export function registrarComunidad(router: MockRouter): void {
             ...nuevo,
             id: nuevoId('msg-eco'),
             senderProfileId: otro,
-            bodyText: 'Hola, ¿estás por ahí?',
+            bodyText: 'Hola, ¿está por ahí?',
             attachmentFileId: null,
             contentTypeConceptId: CONCEPTO.messageText,
             sentAt: ahora(),
@@ -900,7 +900,7 @@ export function registrarComunidad(router: MockRouter): void {
     }
     const datos = cuerpo<{ profileId?: string; emoji?: string | null }>(request);
     const yo = datos.profileId ?? vitrinaDeSesion(request)?.id ?? '';
-    if (!c.participantes.includes(yo)) return forbidden('No participás de esta conversación');
+    if (!c.participantes.includes(yo)) return forbidden('No participa de esta conversación');
     const emoji = (datos.emoji ?? '').trim();
     const sinYo = (m.reactions ?? [])
       .map((r) => ({ emoji: r.emoji, profileIds: r.profileIds.filter((p) => p !== yo) }))
@@ -999,7 +999,7 @@ export function registrarComunidad(router: MockRouter): void {
     }
     const isPlatform = ['PLATFORM_ADMIN', 'SUPERADMIN'].some((role) => request.user?.roles.includes(role));
     if (!isPlatform && vitrinaDeSesion(request)?.id !== profileId) {
-      return forbidden('Sólo podés ver las sanciones de tu propio perfil');
+      return forbidden('Sólo puede ver las sanciones de su propio perfil');
     }
     const decisionIds = new Set(strikes.filter((s) => s.subjectProfileId === profileId).map((s) => s.moderationDecisionId));
     const own = decisiones

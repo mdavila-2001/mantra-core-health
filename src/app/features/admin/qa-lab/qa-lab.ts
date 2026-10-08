@@ -77,7 +77,7 @@ export class QaLab {
     const vacio = <T>(lista: readonly T[], mensaje: string, accion: string): ViewState<readonly T[]> =>
       lista.length === 0 ? empty({ label: accion }, mensaje) : ready(lista);
     this.qa.plans().subscribe({
-      next: (p) => this.planes.set(vacio(p, 'Todavía no se pidió ningún plan.', 'Usá «Pedir ejecución» arriba.')),
+      next: (p) => this.planes.set(vacio(p, 'Todavía no se pidió ningún plan.', 'Use «Pedir ejecución» arriba.')),
       error: (e: unknown) => this.planes.set(errorToViewState<readonly PlanSummary[]>(e)),
     });
     this.qa.suites().subscribe({
@@ -85,7 +85,7 @@ export class QaLab {
       error: (e: unknown) => this.suites.set(errorToViewState<readonly QaSuite[]>(e)),
     });
     this.qa.runs().subscribe({
-      next: (r) => this.corridas.set(vacio(r, 'No hay corridas.', 'Pedí una ejecución.')),
+      next: (r) => this.corridas.set(vacio(r, 'No hay corridas.', 'Pida una ejecución.')),
       error: (e: unknown) => this.corridas.set(errorToViewState<readonly QaRunSummary[]>(e)),
     });
     this.qa.defects().subscribe({

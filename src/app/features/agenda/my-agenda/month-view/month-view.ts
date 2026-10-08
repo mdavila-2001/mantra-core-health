@@ -661,7 +661,7 @@ function resumenDelDia(
   });
   return {
     title: fechaLarga(fecha),
-    hours: franjas.length === 0 ? 'No atendés.' : `Atendés ${listaDeFranjas(franjas)}.`,
+    hours: franjas.length === 0 ? 'No atiende.' : `Atiende ${listaDeFranjas(franjas)}.`,
     blocks,
   };
 }
@@ -715,7 +715,7 @@ function etiquetaDeLaCelda(
   const cuando = fechaLarga(fecha);
   switch (estado) {
     case 'sin-agenda':
-      return `${cuando}: no atendés`;
+      return `${cuando}: no atiende`;
     case 'bloqueado':
       return motivo === null ? `${cuando}: bloqueado` : `${cuando}: bloqueado — ${motivo}`;
   }

@@ -136,7 +136,7 @@ test('la firma y el sello se ven, se cambian y se quitan desde el perfil y salen
   await expect(page.getByTestId('edicion-firma-vista').locator('img')).toHaveAttribute('src', /^data:image\/png/);
   await expect(page.getByTestId('edicion-sello-vista').locator('img')).toHaveAttribute('src', /^data:image\/png/);
   await page.getByRole('button', { name: 'Guardar cambios' }).click();
-  await expect(page.getByText('Tu perfil quedó actualizado.')).toBeVisible();
+  await expect(page.getByText('Su perfil quedó actualizado.')).toBeVisible();
   await editor.screenshot({ path: join(EVIDENCIA, 'editor-con-firma-y-sello-nuevos.png') });
 
   bloque = await abrirDatosPersonales(page);
@@ -152,7 +152,7 @@ test('la firma y el sello se ven, se cambian y se quitan desde el perfil y salen
   await expect(page.getByTestId('firma-o-sello-vacio-firma')).toBeVisible();
   await expect(page.getByTestId('firma-o-sello-vacio-sello')).toBeVisible();
   await page.getByRole('button', { name: 'Guardar cambios' }).click();
-  await expect(page.getByText('Tu perfil quedó actualizado.')).toBeVisible();
+  await expect(page.getByText('Su perfil quedó actualizado.')).toBeVisible();
   await editor.screenshot({ path: join(EVIDENCIA, 'editor-sin-firma-ni-sello.png') });
 
   bloque = await abrirDatosPersonales(page);
@@ -185,10 +185,10 @@ test('el alta del doctor ofrece la firma y el sello como paso opcional y se pued
   await expect(page.getByTestId('registro-form-profesional')).toBeVisible();
   await page.getByTestId('registro-pro-nombre').fill('Ana');
   await page.getByTestId('registro-pro-apellido-paterno').fill('Paz');
-  await avanzar('Tu documento de identidad');
+  await avanzar('Su documento de identidad');
   await page.getByTestId('registro-pro-documento').fill('1234567');
   await page.getByTestId('registro-pro-departamento-ci').locator('select').selectOption({ index: 1 });
-  await avanzar('Contanos un poco sobre vos');
+  await avanzar('Cuéntenos un poco sobre usted');
   await page
     .getByTestId('registration-practitioner-sex')
     .locator('select')
@@ -199,25 +199,25 @@ test('el alta del doctor ofrece la firma y el sello como paso opcional y se pued
     setter.call(el, '12/05/1985');
     el.dispatchEvent(new Event('input', { bubbles: true }));
   });
-  await avanzar('Cómo te contactamos en privado');
+  await avanzar('Cómo le contactamos en privado');
   await page.getByTestId('registro-pro-celular-personal').fill('70012345');
   await page.getByTestId('registro-pro-correo-personal').fill('ana.paz@example.test');
-  await avanzar('El contacto de tu trabajo');
-  await avanzar('¿Dónde vivís?');
-  await avanzar('¿Dónde trabajás?');
-  await avanzar('Tu consultorio propio');
-  await avanzar('Tu título profesional y foto');
+  await avanzar('El contacto de su trabajo');
+  await avanzar('¿Dónde vive?');
+  await avanzar('¿Dónde trabaja?');
+  await avanzar('Su consultorio propio');
+  await avanzar('Su título profesional y foto');
   await page.getByTestId('registro-pro-titulo').getByRole('combobox').fill('Médico');
   await page.getByRole('option', { name: 'Médico / Médica', exact: true }).click();
-  await avanzar('Tu habilitación para ejercer');
+  await avanzar('Su habilitación para ejercer');
   await page.getByTestId('registro-pro-matricula').fill('MP-12345');
   await page.getByTestId('registro-pro-credencial').fill('T.I. 538/14');
-  await avanzar('Los respaldos de tu habilitación');
-  await avanzar('Tus títulos');
-  await avanzar('Tus especialidades');
+  await avanzar('Los respaldos de su habilitación');
+  await avanzar('Sus títulos');
+  await avanzar('Sus especialidades');
 
   // El paso nuevo: opcional, con las dos cajas vacías.
-  await avanzar('Tu firma y tu sello');
+  await avanzar('Su firma y su sello');
   await expect(page.getByTestId('firma-o-sello-vacio-firma')).toBeVisible();
   await expect(page.getByTestId('firma-o-sello-vacio-sello')).toBeVisible();
   await page.screenshot({ path: join(EVIDENCIA, 'alta-paso-firma-y-sello-vacio.png') });
@@ -245,7 +245,7 @@ test('el alta del doctor ofrece la firma y el sello como paso opcional y se pued
   await expect(page.getByRole('alert').filter({ hasText: 'JPG, PNG o WebP' })).toBeVisible();
 
   // Y termina el alta con el paso cargado (la firma se quitó y el sello sigue).
-  await avanzar('Tu contraseña');
+  await avanzar('Su contraseña');
   await page.getByTestId('registro-pro-password').fill('una-clave-segura-1');
   await page.getByTestId('paginated-form-continuar').click();
   await expect(page.getByTestId('registro-exito')).toBeVisible({ timeout: 30_000 });
@@ -265,10 +265,10 @@ test('el alta se completa sin cargar firma ni sello: el paso se salta', async ({
   await page.goto('/auth/register/practitioner');
   await page.getByTestId('registro-pro-nombre').fill('Ana');
   await page.getByTestId('registro-pro-apellido-paterno').fill('Paz');
-  await avanzar('Tu documento de identidad');
+  await avanzar('Su documento de identidad');
   await page.getByTestId('registro-pro-documento').fill('1234567');
   await page.getByTestId('registro-pro-departamento-ci').locator('select').selectOption({ index: 1 });
-  await avanzar('Contanos un poco sobre vos');
+  await avanzar('Cuéntenos un poco sobre usted');
   await page
     .getByTestId('registration-practitioner-sex')
     .locator('select')
@@ -278,25 +278,25 @@ test('el alta se completa sin cargar firma ni sello: el paso se salta', async ({
     setter.call(el, '12/05/1985');
     el.dispatchEvent(new Event('input', { bubbles: true }));
   });
-  await avanzar('Cómo te contactamos en privado');
+  await avanzar('Cómo le contactamos en privado');
   await page.getByTestId('registro-pro-celular-personal').fill('70012345');
   await page.getByTestId('registro-pro-correo-personal').fill('ana.saltea@example.test');
-  await avanzar('El contacto de tu trabajo');
-  await avanzar('¿Dónde vivís?');
-  await avanzar('¿Dónde trabajás?');
-  await avanzar('Tu consultorio propio');
-  await avanzar('Tu título profesional y foto');
+  await avanzar('El contacto de su trabajo');
+  await avanzar('¿Dónde vive?');
+  await avanzar('¿Dónde trabaja?');
+  await avanzar('Su consultorio propio');
+  await avanzar('Su título profesional y foto');
   await page.getByTestId('registro-pro-titulo').getByRole('combobox').fill('Médico');
   await page.getByRole('option', { name: 'Médico / Médica', exact: true }).click();
-  await avanzar('Tu habilitación para ejercer');
+  await avanzar('Su habilitación para ejercer');
   await page.getByTestId('registro-pro-matricula').fill('MP-12345');
   await page.getByTestId('registro-pro-credencial').fill('T.I. 538/14');
-  await avanzar('Los respaldos de tu habilitación');
-  await avanzar('Tus títulos');
-  await avanzar('Tus especialidades');
-  await avanzar('Tu firma y tu sello');
+  await avanzar('Los respaldos de su habilitación');
+  await avanzar('Sus títulos');
+  await avanzar('Sus especialidades');
+  await avanzar('Su firma y su sello');
   // Sin tocar nada, el motor deja pasar.
-  await avanzar('Tu contraseña');
+  await avanzar('Su contraseña');
   await page.getByTestId('registro-pro-password').fill('una-clave-segura-1');
   await page.getByTestId('paginated-form-continuar').click();
   await expect(page.getByTestId('registro-exito')).toBeVisible({ timeout: 30_000 });

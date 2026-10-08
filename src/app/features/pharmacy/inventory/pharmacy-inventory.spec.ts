@@ -188,7 +188,7 @@ describe('PharmacyInventory', () => {
 
       expect(root().querySelector('[data-testid="inventory-stock-PAR-500"]')).toBeNull();
       expect(root().querySelector('[data-testid="inventory-has-PAR-500"]')).not.toBeNull();
-      expect(root().textContent).toContain('¿Lo tenés?');
+      expect(root().textContent).toContain('¿Lo tiene?');
     });
 
     it('la forma elegida se recuerda para la próxima vez', () => {

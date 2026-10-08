@@ -556,7 +556,7 @@ describe('SpecialtyFormBlock', () => {
 
       expect(
         html.querySelector('[data-testid="pendiente-en-la-otra-pestana"]')?.textContent?.trim(),
-      ).toBe('Corregí una fila de «Flexible».');
+      ).toBe('Corrija una fila de «Flexible».');
       expect(interno<() => boolean>('puedeCompletar')()).toBe(false);
     });
 
@@ -654,7 +654,7 @@ describe('SpecialtyFormBlock', () => {
       fixture.detectChanges();
 
       expect(interno<() => boolean>('puedeCompletar')()).toBe(false);
-      expect(pendiente()).toBe('Completá al menos un campo de «Plantilla».');
+      expect(pendiente()).toBe('Complete al menos un campo de «Plantilla».');
 
       // Sin la fila (esta sesión no tiene perfil profesional, así que lo
       // flexible tiene su propio impedimento) y con un valor, se habilita.
@@ -1189,7 +1189,7 @@ describe('SpecialtyFormBlock', () => {
 
   /* ---- los dos copys, que no dicen lo mismo -------------------------------- */
 
-  it('«tu especialidad no tiene ficha» se avisa discreto y el formulario sigue', () => {
+  it('«su especialidad no tiene ficha» se avisa discreto y el formulario sigue', () => {
     peticionDePlantillas().flush(CATALOGO);
     responderEspecialidad('sp-sin-ficha');
     fixture.detectChanges();
@@ -1330,7 +1330,7 @@ describe('SpecialtyFormBlock', () => {
     expect(html.querySelector('app-form-actions')).toBeNull();
   });
 
-  it('«el catálogo está vacío» es otro caso, y no habla de tu especialidad', () => {
+  it('«el catálogo está vacío» es otro caso, y no habla de su especialidad', () => {
     peticionDePlantillas().flush([]);
     responderEspecialidad('sp-1');
     fixture.detectChanges();
@@ -1358,7 +1358,7 @@ describe('SpecialtyFormBlock', () => {
    */
   it('si el catálogo no se pudo traer, lo dice y ofrece reintentar', () => {
     peticionDePlantillas().flush(
-      { code: 'FORBIDDEN', message: 'Tu rol no permite verlas.', timestamp: '', path: '' },
+      { code: 'FORBIDDEN', message: 'Su rol no permite verlas.', timestamp: '', path: '' },
       { status: 403, statusText: 'Forbidden' },
     );
     fixture.detectChanges();

@@ -37,14 +37,14 @@ const ETAPAS: Readonly<
   >
 > = {
   'professional-data': {
-    titulo: 'Tus datos profesionales',
-    explica: 'Tu matrícula y al menos una especialidad. Es lo que te identifica ante un paciente.',
+    titulo: 'Sus datos profesionales',
+    explica: 'Su matrícula y al menos una especialidad. Es lo que le identifica ante un paciente.',
     accion: 'Completar mis datos',
     ruta: '/my-account/edit',
   },
   photo: {
-    titulo: 'Tu foto',
-    explica: 'Una foto tuya. Quien busca médico elige a una persona, no a un nombre en una lista.',
+    titulo: 'Su foto',
+    explica: 'Una foto suya. Quien busca médico elige a una persona, no a un nombre en una lista.',
     accion: 'Subir mi foto',
     // No es `/my-account/edit`: ahí no hay control de foto. El retrato de
     // «Mi perfil» (`/my-account`) es el disparador de la subida — el paso
@@ -52,20 +52,20 @@ const ETAPAS: Readonly<
     ruta: '/my-account',
   },
   organizations: {
-    titulo: 'Dónde atendés',
-    explica: 'Tu consultorio propio o la organización donde trabajás.',
+    titulo: 'Dónde atiende',
+    explica: 'Su consultorio propio o la organización donde trabaja.',
     accion: 'Publicar mi agenda',
     ruta: AGENDA_CREATE_ROUTE,
   },
   schedule: {
-    titulo: 'Tus horarios',
-    explica: 'Publicá tu agenda para que puedan pedirte turno. Sin esto no aparecés al reservar.',
+    titulo: 'Sus horarios',
+    explica: 'Publique su agenda para que puedan pedirle turno. Sin esto no aparece al reservar.',
     accion: 'Publicar mi agenda',
     ruta: AGENDA_CREATE_ROUTE,
   },
   review: {
     titulo: 'Listo',
-    explica: 'Tu perfil está completo y ya podés recibir pacientes.',
+    explica: 'Su perfil está completo y ya puede recibir pacientes.',
     accion: 'Ver mi perfil',
     ruta: '/my-account',
   },

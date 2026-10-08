@@ -6,15 +6,15 @@
   <!-- Sin encuentro no hay nota: la nota es de una consulta, no de una
        persona suelta. Se dice antes y no con un 422 después. -->
   @if (!hayEncuentro()) {
-    <app-alert tone="info" title="Abrí el encuentro para registrar" data-testid="nota-medica-sin-encuentro">
-      La nota pertenece a una consulta. Registrá el encuentro y el formulario se habilita.
+    <app-alert tone="info" title="Abra el encuentro para registrar" data-testid="nota-medica-sin-encuentro">
+      La nota pertenece a una consulta. Registre el encuentro y el formulario se habilita.
     </app-alert>
   }
 
   <!-- ─── La tabla que se escribe ────────────────────────────────────────── -->
   <form class="nota__form" data-testid="nota-medica-form" (submit)="$event.preventDefault(); guardar()">
     <div class="nota__encabezado">
-      <h3 class="nota__titulo">Lo que observaste, campo por campo</h3>
+      <h3 class="nota__titulo">Lo que observó, campo por campo</h3>
       <span class="nota__contador" data-testid="nota-medica-contador">
         {{ filasConContenido().length }} de {{ tope }}
       </span>

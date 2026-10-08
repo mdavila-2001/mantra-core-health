@@ -66,7 +66,7 @@ describe('Recorrido real · portal de turnos del paciente', () => {
 
     // Recién registrado no tiene ninguno, y el vacío lo dice en vez de quedar
     // en blanco.
-    cy.contains(/todav[íi]a no ten[ée]s turnos|todav[íi]a no pediste/i).should('exist');
+    cy.contains(/todav[íi]a no tiene turnos|todav[íi]a no pidió/i).should('exist');
 
     /* -- La reserva sin contexto explica cómo se llega -------------------- */
 
@@ -76,7 +76,7 @@ describe('Recorrido real · portal de turnos del paciente', () => {
 
     // Entrando sin la franja en la URL, la pantalla manda de vuelta a elegir un
     // horario en lugar de mostrar un formulario que no puede completarse.
-    cy.contains(/eleg[íi] primero un horario/i).should('exist');
+    cy.contains(/elija primero un horario/i).should('exist');
     // Y por el portal jamás se pide elegir paciente: ya se sabe quién es.
     cy.contains(/buscá por nombre o por código de paciente/i).should('not.exist');
   });
@@ -158,7 +158,7 @@ describe('Recorrido real · portal de turnos del paciente', () => {
   function comprobarQueElTurnoQuedo(): void {
     // Confirmar devuelve a «Mis turnos», y el vacío ya no está.
     cy.location('pathname').should('include', '/my-account/appointments');
-    cy.contains(/todav[íi]a no ten[ée]s turnos|todav[íi]a no pediste/i).should('not.exist');
+    cy.contains(/todav[íi]a no tiene turnos|todav[íi]a no pidió/i).should('not.exist');
 
     // El estado sale de terminología y lo nombra la interfaz: si volviera el
     // `display` del catálogo, acá se leería «Booking confirmed».

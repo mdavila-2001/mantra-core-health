@@ -19,7 +19,7 @@
        de dejar un desplegable vacío que parece roto. -->
   @if (departamentoElegido() === null) {
     <p class="location-picker__pendiente" [attr.data-testid]="testId() + '-pendiente'">
-      Elegí primero tu departamento en el mapa y acá aparecen sus ciudades.
+      Elija primero su departamento en el mapa y acá aparecen sus ciudades.
     </p>
   } @else {
     <app-form-field
@@ -34,7 +34,7 @@
         [value]="value()"
         [disabled]="readonly()"
         (valueChange)="elegirMunicipio($event)"
-        placeholder="Elegí tu ciudad o municipio"
+        placeholder="Elija su ciudad o municipio"
         [attr.data-testid]="testId() + '-municipio'"
       >
         <!-- El glifo del campo, cuando quien monta el control lo proyecta. Se

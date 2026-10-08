@@ -72,7 +72,7 @@ const GPS_MAX_AGE_MS = 300_000;
  * porque nadie la vuelve a mirar.
  */
 export const AVISO_SIN_GEOCODIFICACION =
-  'El punto del mapa se guarda tal cual, pero no podemos convertirlo en el nombre de la calle: escribila vos arriba.';
+  'El punto del mapa se guarda tal cual, pero no podemos convertirlo en el nombre de la calle: escríbala usted arriba.';
 
 /**
  * Lo que el formulario pone junto al campo de dirección después de vaciarlo
@@ -81,7 +81,7 @@ export const AVISO_SIN_GEOCODIFICACION =
  * Vive acá y no en cada formulario para que las ocho instancias digan lo
  * mismo: el aviso es parte de la regla, no de cada pantalla.
  */
-export const AVISO_REESCRIBIR_DIRECCION = 'Volvé a escribir la dirección para este punto.';
+export const AVISO_REESCRIBIR_DIRECCION = 'Vuelva a escribir la dirección para este punto.';
 
 /**
  * Lee una coordenada escrita a mano: acepta coma o punto decimal («-17,7833»
@@ -203,13 +203,13 @@ export class UbicacionPicker {
   readonly etiquetaPedir = input('Usar mi ubicación');
 
   /** Rótulo del mapa, para quien no lo ve. */
-  readonly etiquetaMapa = input('Tu ubicación actual en el mapa');
+  readonly etiquetaMapa = input('Su ubicación actual en el mapa');
 
   /** Rótulo del botón que abre el mapa vacío para marcar el punto a mano. */
   readonly etiquetaMarcar = input('Marcar en el mapa');
 
   /** Lo que se le dice sobre el mapa vacío («Tocá el mapa donde queda tu casa»). */
-  readonly indicacionMarcar = input('Tocá el mapa en el lugar exacto para poner el pin.');
+  readonly indicacionMarcar = input('Toque el mapa en el lugar exacto para poner el pin.');
 
   readonly ids = input.required<IdsDePrueba>();
 
@@ -342,9 +342,9 @@ export class UbicacionPicker {
     evento?.preventDefault();
     const lat = parseCoordinate(this.latitudEscrita(), 90);
     const lng = parseCoordinate(this.longitudEscrita(), 180);
-    this.errorLatitud.set(lat === null ? 'Escribí un número entre −90 y 90, por ejemplo −17,7833.' : '');
+    this.errorLatitud.set(lat === null ? 'Escriba un número entre −90 y 90, por ejemplo −17,7833.' : '');
     this.errorLongitud.set(
-      lng === null ? 'Escribí un número entre −180 y 180, por ejemplo −63,1821.' : '',
+      lng === null ? 'Escriba un número entre −180 y 180, por ejemplo −63,1821.' : '',
     );
     if (lat === null || lng === null) return;
     this.fijarPunto({ lat, lng });
@@ -375,8 +375,8 @@ export class UbicacionPicker {
         titulo: this.confirmada()
           ? this.etiquetaConfirmada()
           : this.vieneDelNavegador()
-            ? 'Acá te encontramos'
-            : 'El punto que marcaste',
+            ? 'Acá le encontramos'
+            : 'El punto que marcó',
       },
     ];
   });

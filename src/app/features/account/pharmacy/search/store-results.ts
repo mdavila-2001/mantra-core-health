@@ -55,7 +55,7 @@ export class StoreResults {
 
   protected distanciaDe(sede: StoreHit): string {
     if (sede.distanceKm === null) {
-      return 'Elegí desde dónde medir';
+      return 'Elija desde dónde medir';
     }
     return `${sede.distanceKm.toLocaleString('es-BO', { maximumFractionDigits: 1 })} km`;
   }

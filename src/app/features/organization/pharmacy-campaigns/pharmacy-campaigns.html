@@ -1,11 +1,11 @@
 <app-page-header
   title="Promociones de mi farmacia"
-  subtitle="Armá una campaña con productos de tu catálogo y decidí hasta cuándo vale. Los pacientes la ven en tu ficha y en su pedido."
+  subtitle="Arme una campaña con productos de su catálogo y decida hasta cuándo vale. Los pacientes la ven en su ficha y en su pedido."
 />
 
 @if (!activo) {
   <app-alert tone="info" title="Las promociones están apagadas en este entorno">
-    Cuando se enciendan vas a poder crear campañas y verlas acá. Nada de lo que armes ahora se
+    Cuando se enciendan va a poder crear campañas y verlas acá. Nada de lo que arme ahora se
     guardaría.
   </app-alert>
 } @else {
@@ -27,7 +27,7 @@
             [options]="opcionesDeFarmacia()"
             [value]="farmaciaElegida()"
             (valueChange)="elegirFarmacia($event)"
-            placeholder="Elegí tu farmacia"
+            placeholder="Elija su farmacia"
           />
         </app-form-field>
       </section>
@@ -35,7 +35,7 @@
 
     @if (farmaciaElegida() !== null) {
       <section class="campanas__bloque" aria-labelledby="campanas-publicadas">
-        <h2 id="campanas-publicadas" class="campanas__titulo">Tus campañas</h2>
+        <h2 id="campanas-publicadas" class="campanas__titulo">Sus campañas</h2>
 
         <app-view-state-host [state]="lista()">
           <ul class="campanas__lista" data-testid="campanas-lista">
@@ -68,8 +68,8 @@
           </ul>
 
           <p vsh-empty class="campanas__secundario" data-testid="campanas-sin-campanas">
-            Todavía no publicaste ninguna campaña. Armá la primera con el formulario de abajo:
-            elegí productos de tu catálogo y hasta cuándo vale.
+            Todavía no publicó ninguna campaña. Arme la primera con el formulario de abajo:
+            elija productos de su catálogo y hasta cuándo vale.
           </p>
         </app-view-state-host>
       </section>
@@ -119,7 +119,7 @@
           <h3 class="campanas__subtitulo">Productos incluidos</h3>
 
           <app-search-field
-            label="Buscar en tu catálogo"
+            label="Buscar en su catálogo"
             placeholder="Nombre del medicamento o código"
             [value]="termino()"
             (valueChange)="termino.set($event)"
@@ -148,7 +148,7 @@
               </ul>
             } @else {
               <p class="campanas__secundario" role="status">
-                No hay productos de tu catálogo con ese nombre que no estén ya en la campaña.
+                No hay productos de su catálogo con ese nombre que no estén ya en la campaña.
               </p>
             }
           }
@@ -191,7 +191,7 @@
         } @else {
           <p class="campanas__secundario" data-testid="campanas-sin-productos">
             @if (regla().allItems) {
-              Esta campaña vale para todos los productos de tu farmacia: no hace falta elegirlos.
+              Esta campaña vale para todos los productos de su farmacia: no hace falta elegirlos.
             } @else {
               Esta campaña se calcula sobre el total de la compra: no apunta a productos.
             }

@@ -25,7 +25,7 @@ const SUMMARY: PharmacySummary = {
     { category: 'Bienestar', count: 10 },
   ],
   recentActivity: [
-    { id: 'a-1', at: '2026-09-29T15:00:00.000Z', kind: 'ALTA', text: 'Publicaste «Ibuprofeno».' },
+    { id: 'a-1', at: '2026-09-29T15:00:00.000Z', kind: 'ALTA', text: 'Publicó «Ibuprofeno».' },
   ],
 };
 
@@ -88,7 +88,7 @@ describe('PharmacySummaryPage', () => {
 
   it('muestra la actividad reciente, y si no hay dice cuándo aparece', () => {
     mount();
-    expect(root().querySelector('[data-testid="summary-activity"]')?.textContent).toContain('Publicaste «Ibuprofeno».');
+    expect(root().querySelector('[data-testid="summary-activity"]')?.textContent).toContain('Publicó «Ibuprofeno».');
   });
 
   it('sin actividad lo dice en vez de dejar un hueco', () => {

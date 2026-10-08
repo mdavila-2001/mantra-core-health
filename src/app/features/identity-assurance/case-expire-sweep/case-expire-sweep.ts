@@ -41,7 +41,7 @@ export class CaseExpireSweep {
   protected readonly resultado = signal<ExpireSweepResult | null>(null);
 
   protected readonly errorMessage = computed(() =>
-    errorMessageOf(this.state(), 'No tenés permiso para administrar la verificación de identidad.'),
+    errorMessageOf(this.state(), 'No tiene permiso para administrar la verificación de identidad.'),
   );
 
   protected async ejecutar(): Promise<void> {

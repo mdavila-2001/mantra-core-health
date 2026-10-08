@@ -351,7 +351,7 @@ export class AttachmentUploader {
         error: () => {
           this.marcar(clave, {
             estado: 'error',
-            error: 'No pudimos subir el archivo. Reintentá.',
+            error: 'No pudimos subir el archivo. Reintente.',
             fileId: '',
           });
           this.siguiente(resto);
@@ -376,7 +376,7 @@ export class AttachmentUploader {
         // reintento lo vuelva a subir y queden dos copias.
         this.marcar(clave, {
           estado: 'error',
-          error: 'El archivo se subió pero no se pudo adjuntar. Reintentá: no se vuelve a subir.',
+          error: 'El archivo se subió pero no se pudo adjuntar. Reintente: no se vuelve a subir.',
           fileId,
         });
         this.siguiente(resto);

@@ -1,7 +1,7 @@
 @if (!embedded()) {
   <app-page-header
     title="Verificar identidad"
-    subtitle="Subí la documentación y la revisamos. Verificás tu identidad, tu matrícula o una organización a tu cargo."
+    subtitle="Suba la documentación y la revisamos. Verifica su identidad, su matrícula o una organización a su cargo."
   />
 }
 
@@ -9,10 +9,10 @@
   @if (caso(); as abierto) {
     <!-- Enviado. La respuesta es toda la pantalla, así que se anuncia. -->
     <app-card appAnuncio [asertivo]="false" variant="outlined" padding="lg">
-      <h2 class="verificar__titulo">Tu solicitud quedó registrada</h2>
+      <h2 class="verificar__titulo">Su solicitud quedó registrada</h2>
       <p class="verificar__texto">
-        La revisa la autoridad correspondiente. No hace falta que hagas nada más;
-        podés volver a esta pantalla para ver cómo va.
+        La revisa la autoridad correspondiente. No hace falta que haga nada más;
+        puede volver a esta pantalla para ver cómo va.
       </p>
 
       <dl class="verificar__datos">
@@ -61,7 +61,7 @@
       }
 
       <div class="verificar__formulario">
-        <app-form-field label="¿Qué querés verificar?" [required]="true">
+        <app-form-field label="¿Qué quiere verificar?" [required]="true">
           <app-radio-group [value]="tramite()" [disabled]="enviando()" (valueChange)="alElegirTramite($event)">
             <app-radio value="patient" label="Mi identidad como paciente" />
             <app-radio value="practitioner" label="Mi identidad como profesional" />
@@ -73,7 +73,7 @@
         @if (tramite() === 'tenant') {
           @if (sinOrganizaciones()) {
             <app-alert appAnuncio tone="info" class="verificar__alert">
-              Tu sesión no tiene organizaciones a cargo, así que no hay nada para
+              Su sesión no tiene organizaciones a cargo, así que no hay nada para
               verificar acá.
             </app-alert>
           } @else {
@@ -82,7 +82,7 @@
                 [(value)]="organizacionId"
                 [options]="organizaciones()"
                 [disabled]="enviando()"
-                placeholder="Elegí la organización"
+                placeholder="Elija la organización"
               />
             </app-form-field>
           }
@@ -124,7 +124,7 @@
          siempre y esta pantalla no pedía. -->
     @if (historialOrdenado().length > 0) {
       <app-card variant="outlined" padding="lg">
-        <h2 class="verificar__titulo">Tus trámites anteriores</h2>
+        <h2 class="verificar__titulo">Sus trámites anteriores</h2>
 
         <ul class="verificar__historial">
           @for (previo of historialOrdenado(); track previo.id) {
@@ -152,7 +152,7 @@
            la información. -->
       <ol class="verificar__pasos">
         <li>
-          <span class="verificar__paso-titulo">Subís el documento</span>
+          <span class="verificar__paso-titulo">Sube el documento</span>
           <span class="verificar__paso-texto">
             Se guarda como información de salud protegida, cifrada y con acceso
             registrado.
@@ -161,21 +161,21 @@
         <li>
           <span class="verificar__paso-titulo">Lo revisa la autoridad</span>
           <span class="verificar__paso-texto">
-            No es automático ni instantáneo. No hace falta que hagas nada
+            No es automático ni instantáneo. No hace falta que haga nada
             mientras tanto.
           </span>
         </li>
         <li>
-          <span class="verificar__paso-titulo">Se habilita tu acceso</span>
+          <span class="verificar__paso-titulo">Se habilita su acceso</span>
           <span class="verificar__paso-texto">
-            Con la identidad verificada podés ver tus datos clínicos y tu
+            Con la identidad verificada puede ver sus datos clínicos y su
             resumen de paciente.
           </span>
         </li>
       </ol>
 
       <p class="verificar__texto">
-        Sólo vos podés verificar tu identidad: ninguna de estas operaciones
+        Sólo usted puede verificar su identidad: ninguna de estas operaciones
         admite hacerlo en nombre de otra persona.
       </p>
     </app-card>

@@ -273,7 +273,7 @@ test.describe('alta pública de aseguradora — representante legal y gerencias 
     await correo.fill('gerente.general@');
     await correo.blur();
 
-    await expect(page.getByText('Revisá el correo: falta el arroba o el dominio.')).toBeVisible();
+    await expect(page.getByText('Revise el correo: falta el arroba o el dominio.')).toBeVisible();
   });
 
   test('el alta se completa hasta la confirmación', async ({ page }) => {
@@ -288,7 +288,7 @@ test.describe('alta pública de aseguradora — representante legal y gerencias 
     await capturar(page, 'exito-con-representante');
   });
 
-  test('no hay página «Tu cuenta»: la contraseña se pide junto al correo del representante', async ({
+  test('no hay página «Su cuenta»: la contraseña se pide junto al correo del representante', async ({
     page,
   }) => {
     await abrirElAlta(page);
@@ -312,7 +312,7 @@ test.describe('alta pública de aseguradora — representante legal y gerencias 
     }
     // Y ninguno de los campos del antiguo «Tu cuenta» sigue en el DOM.
     await expect(page.locator('[data-testid^="registro-organizacion-owner-"]')).toHaveCount(0);
-    await expect(page.getByText('Tu cuenta', { exact: true })).toHaveCount(0);
+    await expect(page.getByText('Su cuenta', { exact: true })).toHaveCount(0);
   });
 
   test('sin contraseña, el representante no avanza de la primera página', async ({ page }) => {

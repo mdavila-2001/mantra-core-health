@@ -2,8 +2,8 @@
   heading="Registrar dependiente"
   [description]="
     modo() === 'ci'
-      ? 'Escribí su CI. Si tiene una cuenta registrada, le vamos a enviar una notificación para que acepte ser tu dependiente.'
-      : 'Buscala por nombre y elegí su cuenta. Le vamos a enviar una notificación para que acepte ser tu dependiente.'
+      ? 'Escriba su CI. Si tiene una cuenta registrada, le vamos a enviar una notificación para que acepte ser su dependiente.'
+      : 'Búsquela por nombre y elija su cuenta. Le vamos a enviar una notificación para que acepte ser su dependiente.'
   "
   [dismissible]="!saving()"
   (closed)="closed.emit()"
@@ -49,16 +49,16 @@
         <!-- Lo que ve quien todavía no escribió lo suficiente: sin esto el
              cuadro vacío no dice por qué no pasa nada. -->
         @if (candidatos() === null && !buscando() && errorBusqueda() === null) {
-          <p class="dependents-form__pista">Escribí al menos 3 letras del nombre.</p>
+          <p class="dependents-form__pista">Escriba al menos 3 letras del nombre.</p>
         }
 
         @if (candidatos(); as filas) {
           <p class="dependents-form__pista" role="status">
             @if (filas.length === 0) {
-              No encontramos ninguna cuenta con ese nombre. Probá con el CI.
+              No encontramos ninguna cuenta con ese nombre. Pruebe con el CI.
             } @else {
               {{ filas.length === 1 ? '1 cuenta encontrada' : filas.length + ' cuentas encontradas' }}.
-              Elegí la correcta.
+              Elija la correcta.
             }
           </p>
 

@@ -47,7 +47,7 @@ describe('ResendVerification', () => {
     // (barrido del 18/08/2026). Lo que a la persona le sirve saber es a dónde va.
     const texto = (fixture.nativeElement as HTMLElement).textContent ?? '';
 
-    expect(texto).toContain('El enlace va al correo de tu cuenta');
+    expect(texto).toContain('El enlace va al correo de su cuenta');
     expect(texto).not.toContain('lo decide el sistema');
   });
 
@@ -99,7 +99,7 @@ describe('ResendVerification', () => {
     expect(interno<() => boolean>('done')()).toBe(true);
     expect(texto).toContain('Si hay una cuenta');
     // Nada que confirme el envío como hecho: eso delataría la existencia.
-    expect(texto).not.toContain('Te lo mandamos');
+    expect(texto).not.toContain('Se lo mandamos');
   });
 
   /**

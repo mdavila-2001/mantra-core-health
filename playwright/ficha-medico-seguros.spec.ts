@@ -173,7 +173,7 @@ test.describe('la ficha del médico dice con qué seguros trabaja', () => {
     const tarjeta = await abrirFicha(page, MEDICA_SIN_RED);
 
     await expect(tarjeta).toContainText('Sin seguros informados');
-    await expect(tarjeta).toContainText('Preguntá en el consultorio');
+    await expect(tarjeta).toContainText('Pregunte en el consultorio');
     await expect(tarjeta).not.toContainText(/no acepta/i);
     await expect(tarjeta.getByTestId('practitioner-insurer')).toHaveCount(0);
 

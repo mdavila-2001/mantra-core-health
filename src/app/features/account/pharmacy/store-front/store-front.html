@@ -1,12 +1,12 @@
 <app-page-header
   title="Farmacia"
-  subtitle="Buscá un medicamento y compará precio y distancia entre las farmacias de la red. Si una sede no publica el precio, te lo decimos: no lo inventamos."
+  subtitle="Busque un medicamento y compare precio y distancia entre las farmacias de la red. Si una sede no publica el precio, se lo decimos: no lo inventamos."
 />
 
 <main class="tienda" aria-label="Tienda de farmacia">
   <app-card class="tienda__tarjeta" padding="lg">
     <section class="tienda__controles" aria-label="Qué buscar y cómo ordenar">
-      <app-form-field label="Qué estás buscando" class="tienda__busqueda">
+      <app-form-field label="Qué está buscando" class="tienda__busqueda">
         <app-search-field
           [attr.data-testid]="testids.searchTerm"
           placeholder="Paracetamol, ibuprofeno, Farmacorp…"
@@ -61,7 +61,7 @@
 
     @if (sinPerfilDePaciente) {
       <p class="tienda__sin-perfil" data-testid="pharmacy-sin-perfil">
-        Esta tienda es de la cuenta del paciente. Entrá con tu cuenta de paciente para buscar
+        Esta tienda es de la cuenta del paciente. Entre con su cuenta de paciente para buscar
         medicamentos y armar un pedido.
       </p>
     } @else {
@@ -70,10 +70,10 @@
            término dejaría el orden elegido sin explicación. -->
       @if (faltaOrigen()) {
         <p class="tienda__sin-origen" data-testid="pharmacy-sin-origen" role="status">
-          Para ordenar por cercanía necesitamos un punto de partida. Elegí desde dónde medir, acá
+          Para ordenar por cercanía necesitamos un punto de partida. Elija desde dónde medir, acá
           arriba, o
           <button type="button" class="tienda__enlace-accion" (click)="ordenarPorPrecio()">
-            ordená por precio
+            ordene por precio
           </button>
           .
         </p>
@@ -81,7 +81,7 @@
 
       @if (esperandoTermino()) {
         <p class="tienda__sin-termino" data-testid="pharmacy-sin-termino">
-          Escribí qué buscás. Con dos letras ya empezamos a buscar en las farmacias de la red.
+          Escriba qué busca. Con dos letras ya empezamos a buscar en las farmacias de la red.
         </p>
       } @else {
         <app-view-state-host [state]="estado()" (retry)="reintentar()">

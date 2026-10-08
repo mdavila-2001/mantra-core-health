@@ -1,21 +1,21 @@
 <div class="app-page-header" app-page-header="">
       <span class="app-page-header__icono" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg></span>
       <div class="app-page-header__texto">
-        <div class="app-page-header__titulo"><h1>Buscá salud cerca tuyo</h1></div>
-        <p class="caption">Profesionales, medicamentos, hospitales, laboratorios y aseguradoras en un solo lugar. No hace falta cuenta para buscar: la cuenta hace falta para pedir turno, seguir a alguien o guardar lo que encontraste.</p>
+        <div class="app-page-header__titulo"><h1>Busque salud cerca de usted</h1></div>
+        <p class="caption">Profesionales, medicamentos, hospitales, laboratorios y aseguradoras en un solo lugar. No hace falta cuenta para buscar: la cuenta hace falta para pedir turno, seguir a alguien o guardar lo que encontró.</p>
       </div>
 
     </div>
     <section class="app-filter-bar" app-filter-bar="" aria-label="Filtros de la búsqueda">
       <label class="app-search-field" app-search-field="">
-        <span class="solo-lectores">Buscá un médico, un remedio, un hospital, un estudio o una aseguradora</span>
+        <span class="solo-lectores">Busque un médico, un remedio, un hospital, un estudio o una aseguradora</span>
         <svg class="icono icono--busqueda" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
         <input
           class="app-input"
           app-input=""
           type="search"
           name="q"
-          placeholder="Buscá un médico, un remedio, un hospital, un estudio o una aseguradora"
+          placeholder="Busque un médico, un remedio, un hospital, un estudio o una aseguradora"
           [value]="busqueda.texto()"
           (input)="alEscribir($any($event.target).value)"
         />
@@ -67,8 +67,8 @@
       <div class="app-empty-state" app-empty-state="">
         <span class="app-empty-state__icono"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg></span>
         <h2>No encontramos nada con esa búsqueda</h2>
-        <p>Probá con menos palabras, revisá la ortografía del nombre o ampliá la distancia. Si buscabas un medicamento, escribí el principio activo —losartán, metformina— en vez de la marca: así aparecen todas las presentaciones equivalentes.</p>
-        <a app-button="" data-variante="secundario" routerLink="/search"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 11a8 8 0 1 0-.7 4.2"></path><path d="M20 5v6h-6"></path></svg>Probá con otra búsqueda</a>
+        <p>Pruebe con menos palabras, revise la ortografía del nombre o amplíe la distancia. Si buscaba un medicamento, escriba el principio activo —losartán, metformina— en vez de la marca: así aparecen todas las presentaciones equivalentes.</p>
+        <a app-button="" data-variante="secundario" routerLink="/search"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 11a8 8 0 1 0-.7 4.2"></path><path d="M20 5v6h-6"></path></svg>Pruebe con otra búsqueda</a>
       </div>
       </div>
         }
@@ -92,7 +92,7 @@
           <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4.5 21 19.5H3z"></path><path d="M12 10v4"></path><circle cx="12" cy="17" r=".9" fill="currentColor" stroke="none"></circle></svg>
           <div class="app-alert__cuerpo">
             <strong>No pudimos completar la búsqueda de resultados.</strong>
-            <p>El directorio no respondió a tiempo. Volvé a intentarlo en un momento; tu búsqueda se mantiene escrita.</p>
+            <p>El directorio no respondió a tiempo. Vuelva a intentarlo en un momento; su búsqueda se mantiene escrita.</p>
           </div>
         </div>
         <div style="margin-top:var(--e5)">

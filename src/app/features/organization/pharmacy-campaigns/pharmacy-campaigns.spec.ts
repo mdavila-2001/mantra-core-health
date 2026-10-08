@@ -110,7 +110,7 @@ describe('PharmacyCampaigns', () => {
     fixture.detectChanges();
 
     const fallos = elemento('[data-testid="campanas-fallos"]');
-    expect(fallos?.textContent).toContain('Elegí desde qué día');
+    expect(fallos?.textContent).toContain('Elija desde qué día');
     expect(fallos?.textContent).not.toContain('anterior a la de inicio');
     // Y los otros dos siguen dichos: tres problemas, un solo intento.
     expect(fallos?.querySelectorAll('li')).toHaveLength(3);

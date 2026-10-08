@@ -268,7 +268,7 @@ const relaciones = new Coleccion<RelacionSimulada>([
     validFrom: iso(0, 8, 30),
     validTo: null,
     reasonText:
-      'Te encontré por la derivación de la Dra. Rojas: quisiera ver tu expediente antes de la consulta de salud mental.',
+      'Le encontré por la derivación de la Dra. Rojas: quisiera ver su expediente antes de la consulta de salud mental.',
   },
   ...PACIENTES.slice(1, 6).map((p, i) => ({
     id: uuid(`care-rel-medica-${p.id}`),
@@ -495,7 +495,7 @@ export function registrarVarios(router: MockRouter): void {
       Omit<FavoritaSimulada, 'id' | 'userId'> & { quantityDecimal?: number | string }
     >(request);
     if (favoritas.filtrar((f) => f.userId === request.user?.id && f.name === datos.name).length > 0)
-      return conflict('Ya tenés una favorita con ese nombre');
+      return conflict('Ya tiene una favorita con ese nombre');
     const nueva = favoritas.agregar({
       id: nuevoId('fav'),
       userId: request.user?.id ?? MEDICA.userId,

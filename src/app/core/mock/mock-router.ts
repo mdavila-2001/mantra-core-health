@@ -76,7 +76,7 @@ export function preconditionFailed(message: string, details: unknown = {}): Mock
   });
 }
 
-export function forbidden(message = 'No tenés permiso para esta operación'): MockReply {
+export function forbidden(message = 'No tiene permiso para esta operación'): MockReply {
   return reply(403, { statusCode: 403, code: 'FORBIDDEN', message, error: 'Forbidden' });
 }
 

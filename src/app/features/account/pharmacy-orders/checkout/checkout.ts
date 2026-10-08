@@ -201,7 +201,7 @@ export class Checkout {
       label: ROTULO_DEL_PASO[paso],
       status: indice < actual ? 'complete' : indice === actual ? 'current' : 'upcoming',
       disabled: indice > actual,
-      disabledReason: indice > actual ? 'Completá el paso actual primero' : undefined,
+      disabledReason: indice > actual ? 'Complete el paso actual primero' : undefined,
     }));
   });
 

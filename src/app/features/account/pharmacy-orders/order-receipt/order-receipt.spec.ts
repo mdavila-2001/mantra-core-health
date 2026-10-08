@@ -58,6 +58,6 @@ describe('OrderReceipt with an orders API that has no payment contract', () => {
       { status: 404, statusText: 'Not Found' },
     );
     harness.detectChanges();
-    expect(text()).toContain('No encontramos lo que buscás');
+    expect(text()).toContain('No encontramos lo que busca');
   });
 });

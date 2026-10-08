@@ -116,7 +116,7 @@ export class FraudSignalForm {
   protected readonly raised = signal<RaisedFraudSignal | null>(null);
 
   protected readonly errorMessage = computed(() =>
-    errorMessageOf(this.state(), 'No tenés permiso para administrar la verificación de identidad.'),
+    errorMessageOf(this.state(), 'No tiene permiso para administrar la verificación de identidad.'),
   );
 
   protected submit(): void {

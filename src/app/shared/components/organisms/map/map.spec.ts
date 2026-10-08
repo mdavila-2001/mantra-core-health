@@ -389,7 +389,7 @@ async function mountForPicking(
   });
   const fixture = TestBed.createComponent(AppMap);
   fixture.componentRef.setInput('pines', []);
-  fixture.componentRef.setInput('etiqueta', 'Tu ubicación en el mapa');
+  fixture.componentRef.setInput('etiqueta', 'Su ubicación en el mapa');
   fixture.componentRef.setInput('seleccionable', seleccionable);
   fixture.componentRef.setInput('centro', centro);
   const puntos: { lat: number; lng: number }[] = [];

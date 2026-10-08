@@ -150,7 +150,7 @@ export class InsuranceCatalog {
         this.toasts.success('El producto seguro se eliminó.');
         this.reloadCarrier();
       },
-      error: () => this.toasts.error('No se pudo eliminar el producto seguro. Intentá de nuevo.'),
+      error: () => this.toasts.error('No se pudo eliminar el producto seguro. Intente de nuevo.'),
     });
   }
 

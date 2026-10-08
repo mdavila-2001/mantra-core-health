@@ -101,11 +101,11 @@ describe('MonthView', () => {
     expect(texto).not.toContain('s-11');
   });
 
-  it('un día sin cupos dice «no atendés», no «libre»', () => {
+  it('un día sin cupos dice «no atiende», no «libre»', () => {
     // No es que nadie reservó: es que ese día no atiende. Son cosas distintas.
     montar([cupo(11, 4, 4)]);
 
-    expect(celda(12)?.getAttribute('aria-label')).toContain('no atendés');
+    expect(celda(12)?.getAttribute('aria-label')).toContain('no atiende');
   });
 
   it('un día con cupos y nadie anotado muestra todos como disponibles', () => {
@@ -244,14 +244,14 @@ describe('MonthView', () => {
 
     const texto = await globoDe(11);
     expect(texto).toContain('11 de agosto');
-    expect(texto).toContain('Atendés 08:00–09:00 y 14:00–15:00');
+    expect(texto).toContain('Atiende 08:00–09:00 y 14:00–15:00');
     expect(texto).not.toContain('Bloqueado');
   });
 
   it('un día sin cupos dice en el globo que no atiende', async () => {
     montar();
 
-    expect(await globoDe(12)).toContain('No atendés');
+    expect(await globoDe(12)).toContain('No atiende');
   });
 
   it('el globo dice qué parte del día está bloqueada, y por qué', async () => {
@@ -261,7 +261,7 @@ describe('MonthView', () => {
     );
 
     const texto = await globoDe(11);
-    expect(texto).toContain('Atendés 08:00–12:00');
+    expect(texto).toContain('Atiende 08:00–12:00');
     expect(texto).toContain('Bloqueado 10:00–11:00 (Trámite)');
   });
 

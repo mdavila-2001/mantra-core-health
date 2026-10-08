@@ -255,7 +255,7 @@ export class AnnotationDialog implements OnInit {
         if (api.status === 409) {
           this.conflicto.set(true);
           this.error.set(
-            'Otra persona cambió esta ficha mientras la editabas. Tus cambios siguen acá: recargá para ver la versión vigente.',
+            'Otra persona cambió esta ficha mientras la editaba. Sus cambios siguen acá: recargue para ver la versión vigente.',
           );
           return;
         }
@@ -274,13 +274,13 @@ export class AnnotationDialog implements OnInit {
           this.errores.set(porCampo);
           this.error.set(
             [
-              api.message ?? 'Revisá los campos marcados.',
+              api.message ?? 'Revise los campos marcados.',
               ...Object.entries(porCampo).map(([campo, texto]) => `${ETIQUETA[campo as Campo]}: ${texto}`),
             ].join(' · '),
           );
           return;
         }
-        this.error.set(api.status === 403 ? 'Tu rol no permite editar fichas.' : 'No se pudo guardar la ficha.');
+        this.error.set(api.status === 403 ? 'Su rol no permite editar fichas.' : 'No se pudo guardar la ficha.');
       },
     });
   }

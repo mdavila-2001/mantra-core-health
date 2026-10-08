@@ -106,13 +106,13 @@ async function altaPaciente(page: Page, datos: DatosPaciente): Promise<Response>
   await page.goto('/auth/register/patient', { waitUntil: 'domcontentloaded' });
   await escribirNombre(page, 'registro', 'Lucía', 'Mamani');
   await continuar(page);
-  await enLaPagina(page, 'Tu documento');
+  await enLaPagina(page, 'Su documento');
   await page.getByTestId('registro-documento').fill(datos.documento);
   const depto = page.getByTestId('registro-departamento-ci').locator('select');
   await expect(depto.locator('option').nth(1)).toBeAttached({ timeout: 20_000 });
   await depto.selectOption({ index: 1 });
   await continuar(page);
-  await enLaPagina(page, 'Contanos');
+  await enLaPagina(page, 'Cuéntenos');
   const fecha = page.getByPlaceholder('DD/MM/AAAA');
   await fecha.click();
   await page.keyboard.type('15031988', { delay: 60 });
@@ -122,9 +122,9 @@ async function altaPaciente(page: Page, datos: DatosPaciente): Promise<Response>
   await enLaPagina(page, 'contactamos');
   await page.getByTestId('registro-telefono').fill('70012345');
   await continuar(page);
-  await enLaPagina(page, 'Dónde vivís');
+  await enLaPagina(page, 'Dónde vive');
   await elegirLocalidadDeResidencia(page);
-  await continuarHasta(page, 'Tu acceso');
+  await continuarHasta(page, 'Su acceso');
   await page.getByTestId('registro-correo').fill(datos.correo);
   await page.getByTestId('registro-password').fill(datos.password);
   await continuarHasta(page, 'Datos de facturación');
@@ -165,7 +165,7 @@ test.describe('paciente', () => {
     await expect(page.getByTestId('registro-error')).toContainText(
       'Ya hay una cuenta registrada con este número de documento',
     );
-    await expect(page.getByTestId('registro-error')).toContainText('iniciá sesión');
+    await expect(page.getByTestId('registro-error')).toContainText('inicie sesión');
     await expect(page.getByTestId('registro-exito')).toHaveCount(0);
   });
 
@@ -199,30 +199,30 @@ async function altaMedico(page: Page, datos: DatosMedico): Promise<Response> {
   await page.getByTestId('registro-pro-nombre').fill('Ana');
   await page.getByTestId('registro-pro-apellido-paterno').fill('Paz');
   await continuar(page);
-  await enLaPagina(page, 'Tu documento');
+  await enLaPagina(page, 'Su documento');
   await page.getByTestId('registro-pro-documento').fill(datos.documento);
   const depto = page.getByTestId('registro-pro-departamento-ci').locator('select');
   await expect(depto.locator('option').nth(1)).toBeAttached({ timeout: 20_000 });
   await depto.selectOption({ index: 1 });
   await continuar(page);
-  await enLaPagina(page, 'Contanos');
+  await enLaPagina(page, 'Cuéntenos');
   await page.getByTestId('registration-practitioner-sex').locator('select').selectOption({ index: 1 });
   const fecha = page.getByPlaceholder('DD/MM/AAAA');
   await fecha.click();
   await page.keyboard.type('12051985', { delay: 60 });
   await expect(fecha).toHaveValue('12/05/1985');
   await continuar(page);
-  await enLaPagina(page, 'Cómo te contactamos en privado');
+  await enLaPagina(page, 'Cómo le contactamos en privado');
   await page.getByTestId('registro-pro-celular-personal').fill('70012345');
   await page.getByTestId('registro-pro-correo-personal').fill(datos.correo);
-  await continuarHasta(page, 'Tu título profesional');
+  await continuarHasta(page, 'Su título profesional');
   await page.getByTestId('registro-pro-titulo').getByRole('combobox').fill('Médico');
   await page.getByRole('option').first().click();
   await continuar(page);
-  await enLaPagina(page, 'Tu habilitación');
+  await enLaPagina(page, 'Su habilitación');
   await page.getByTestId('registro-pro-matricula').fill(datos.matricula);
   await page.getByTestId('registro-pro-credencial').fill(datos.sedes);
-  await continuarHasta(page, 'Tu contraseña');
+  await continuarHasta(page, 'Su contraseña');
   await page.getByTestId('registro-pro-password').fill(datos.password);
   return enviar(page, '/iam/auth/register-practitioner');
 }
@@ -257,7 +257,7 @@ test.describe('médico', () => {
     await expect(page.getByTestId('registro-error')).toContainText(
       'Ya hay una cuenta registrada con este correo electrónico',
     );
-    await expect(page.getByTestId('registro-error')).toContainText('¿Olvidaste tu contraseña?');
+    await expect(page.getByTestId('registro-error')).toContainText('¿Olvidó su contraseña?');
     await expect(page.getByTestId('registro-exito')).toHaveCount(0);
   });
 });
@@ -286,7 +286,7 @@ async function subirPdf(page: Page, testId: string, nombre: string): Promise<voi
 }
 
 async function papelesDeImagen(page: Page): Promise<void> {
-  await enLaPagina(page, 'Qué estudios hacés');
+  await enLaPagina(page, 'Qué estudios hace');
   await page.getByTestId('registro-imagen-modalidades').getByText('Ecografía', { exact: true }).click();
   await continuar(page);
   await enLaPagina(page, 'Los papeles de la empresa');
@@ -367,7 +367,7 @@ async function altaOrganizacion(
     await subirPdf(page, org.poder.testId, 'poder-notariado');
     await expect(page.getByTestId(org.poder.quitar)).toBeVisible({ timeout: 15_000 });
   }
-  await continuarHasta(page, 'Tu acceso');
+  await continuarHasta(page, 'Su acceso');
   await page.getByTestId(`${org.prefijo}-password`).fill(datos.password);
   return enviar(page, '/iam/auth/register-organization');
 }
@@ -408,7 +408,7 @@ for (const org of ORGANIZACIONES) {
       await expect(page.getByTestId(org.error)).toContainText(
         'Ya hay una cuenta registrada con el correo del representante legal',
       );
-      await expect(page.getByTestId(org.error)).toContainText('¿Olvidaste tu contraseña?');
+      await expect(page.getByTestId(org.error)).toContainText('¿Olvidó su contraseña?');
       await page.screenshot({ path: `artifacts/errores-alta/${org.prefijo}-correo-repetido.png`, fullPage: true });
       await expect(page.getByTestId(org.exito)).toHaveCount(0);
     });

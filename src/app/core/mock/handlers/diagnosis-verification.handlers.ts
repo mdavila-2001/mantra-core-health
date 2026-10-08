@@ -112,7 +112,7 @@ export function registerDiagnosisVerification(router: MockRouter): void {
     const datos = cuerpo<CuerpoDeVerificacion>(request);
     const outcome = datos.outcome;
     if (outcome !== 'CONFIRMED' && outcome !== 'REFUTED') {
-      return validation('Indicá si el diagnóstico se confirma o se rechaza.', [
+      return validation('Indique si el diagnóstico se confirma o se rechaza.', [
         { field: 'outcome', message: 'outcome debe ser CONFIRMED o REFUTED.' },
       ]);
     }
@@ -131,7 +131,7 @@ export function registerDiagnosisVerification(router: MockRouter): void {
     if (motivo === '' && resuelta.evidencia === null) {
       return validation(
         'Para decidir hace falta un motivo o una evidencia: una orden, un informe o una nota.',
-        [{ field: 'reasonText', message: 'Escribí el motivo o elegí una evidencia.' }],
+        [{ field: 'reasonText', message: 'Escriba el motivo o elija una evidencia.' }],
       );
     }
 

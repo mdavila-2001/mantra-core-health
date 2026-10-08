@@ -339,9 +339,9 @@ function enPalabrasLosCampos(datos: FormularioParaPdf): string {
     return `${preguntas}, todas del estándar`;
   }
   if (datos.camposEstandar === 0) {
-    return `${preguntas}, todas de tu organización`;
+    return `${preguntas}, todas de su organización`;
   }
-  return `${preguntas} · ${datos.camposEstandar} del estándar y ${datos.camposPropios} de tu organización`;
+  return `${preguntas} · ${datos.camposEstandar} del estándar y ${datos.camposPropios} de su organización`;
 }
 
 /** Arma el PDF. No lo guarda: devuelve el documento. */

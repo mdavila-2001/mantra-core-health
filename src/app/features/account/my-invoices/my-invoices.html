@@ -15,7 +15,7 @@
     <app-view-state-host [state]="estado()" (retry)="cargar()">
       @if (estado().status === 'ready') {
         <app-filter-bar
-          searchLabel="Buscar en tus facturas"
+          searchLabel="Buscar en sus facturas"
           searchPlaceholder="Número, concepto, emisor o paciente"
           [filters]="filtros()"
           [wrap]="true"
@@ -32,7 +32,7 @@
           </p>
         } @else {
           <app-data-table
-            caption="Tus facturas emitidas"
+            caption="Sus facturas emitidas"
             [state]="filasDeTabla()"
             [columns]="columnas()"
             [trackBy]="porId"

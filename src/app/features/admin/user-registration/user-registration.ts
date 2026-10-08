@@ -71,14 +71,14 @@ export class UserRegistration {
       titulo: 'Identificación',
       hint: 'Con qué entra y cómo se lo nombra.',
       campos: [
-        { key: 'displayName', testId: 'alta-usuario-nombre', label: 'Nombre visible', control: 'text', required: true, mensajeDeError: 'Escribí el nombre con el que se va a mostrar la cuenta.' },
-        { key: 'email', testId: 'alta-usuario-correo', label: 'Correo', autocomplete: 'off', hint: 'Es el identificador con el que va a iniciar sesión.', control: 'email', required: true, mensajeDeError: 'Ingresá un correo válido.' },
+        { key: 'displayName', testId: 'alta-usuario-nombre', label: 'Nombre visible', control: 'text', required: true, mensajeDeError: 'Escriba el nombre con el que se va a mostrar la cuenta.' },
+        { key: 'email', testId: 'alta-usuario-correo', label: 'Correo', autocomplete: 'off', hint: 'Es el identificador con el que va a iniciar sesión.', control: 'email', required: true, mensajeDeError: 'Ingrese un correo válido.' },
         { key: 'phone', testId: 'alta-usuario-telefono', label: 'Teléfono', autocomplete: 'tel', hint: 'Opcional. Queda como punto de contacto.', control: 'text', mensajeDeError: 'El teléfono sólo admite dígitos, espacios, paréntesis, + y guion.' },
       ],
     },
     {
       titulo: 'Acceso',
-      hint: 'La contraseña es provisional: entregala por un canal seguro.',
+      hint: 'La contraseña es provisional: entréguela por un canal seguro.',
       campos: [
         { key: 'password', testId: 'alta-usuario-clave', label: 'Contraseña inicial', autocomplete: 'new-password', hint: 'Mínimo 8 caracteres.', control: 'password', required: true, mensajeDeError: 'La contraseña necesita al menos 8 caracteres.' },
         { key: 'initialRole', testId: 'alta-usuario-rol', label: 'Rol inicial', hint: 'Los demás roles se conceden después.', control: 'radio', options: [{ value: 'USER', label: 'Usuario' }, { value: 'SECURITY_ADMIN', label: 'Administrador de seguridad' }] },
@@ -120,10 +120,10 @@ export class UserRegistration {
       return state.issues.map((issue) => issue.message).join(' ') || null;
     }
     if (state.status === 'forbidden') {
-      return state.message ?? 'No tenés permiso para dar de alta cuentas.';
+      return state.message ?? 'No tiene permiso para dar de alta cuentas.';
     }
     if (state.status === 'offline') {
-      return 'No pudimos conectarnos. Revisá tu conexión y reintentá.';
+      return 'No pudimos conectarnos. Revise su conexión y reintente.';
     }
     if (state.status === 'error') {
       // El identificador es lo único que conecta este fallo con los registros
