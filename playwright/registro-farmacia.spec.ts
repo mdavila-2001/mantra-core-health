@@ -19,7 +19,7 @@ import { centroDelPin, tocar } from './helpers/mapa';
  * representante, correo de acceso y contraseña) alcanza para terminar el
  * alta, que los seis papeles/el mapa/las sucursales/las tres gerencias son
  * opcionales, y que el `POST` a `/iam/auth/register-organization` con
- * `tenantType: 'PHARMACY'` responde 201 → pantalla «Tu cuenta está lista».
+ * `tenantType: 'PHARMACY'` responde 201 → pantalla «¡Bienvenido a AloVida!».
  *
  * El mock corre dentro de la cadena de interceptores de Angular: no hay una
  * petición HTTP real que Playwright pueda observar. Que el cuerpo exacto
@@ -164,7 +164,7 @@ test.describe('alta pública de farmacia (Módulo Farmacia §1)', () => {
     await completarAccesoYEnviar(page);
 
     await expect(page.getByTestId('registro-farmacia-exito')).toBeVisible({ timeout: 20_000 });
-    await expect(page.getByText('Ya podés entrar con el correo del representante legal')).toBeVisible();
+    await expect(page.getByText('Ya podés conectarte con el correo del representante legal')).toBeVisible();
     await capturar(page, 'exito-minimo');
 
     await page.getByTestId('registro-farmacia-ir-login').click();
