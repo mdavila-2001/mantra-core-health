@@ -28,6 +28,7 @@ import {
 } from '../../../../shared/components/organisms/status-seal/status-seal.types';
 import { statusLabelOf, statusVariantOf } from '../../booking-status';
 import type { BloqueoDelMes } from '../calendar-view.types';
+import { StaggerList } from '../../../../shared/motion/stagger-list.directive';
 
 export type { EstadoResuelto } from '../calendar-view.types';
 
@@ -250,7 +251,7 @@ const WITH_MAIN_CONTROL: ReadonlySet<BloqueDelDia['tipo']> = new Set([
  */
 @Component({
   selector: 'app-day-view',
-  imports: [AppButton, Badge, DatePipe, NgTemplateOutlet, RouterLink, StatusSeal, Tooltip],
+  imports: [AppButton, Badge, DatePipe, NgTemplateOutlet, RouterLink, StaggerList, StatusSeal, Tooltip],
   templateUrl: './day-view.html',
   styleUrl: './day-view.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

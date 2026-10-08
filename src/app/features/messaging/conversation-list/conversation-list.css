@@ -32,6 +32,10 @@
   background: var(--sup-inset);
 }
 
+.conversaciones__item:active {
+  background: var(--bg-active);
+}
+
 /* La abierta se marca con fondo **y** con la barra de marca: el fondo solo es
    demasiado sutil en una lista larga, y `aria-current` ya lo dice para quien
    no lo ve. */
@@ -160,6 +164,16 @@
   font-size: var(--fs-overline);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
+  /* ALOVIDA Pulse · lo que espera respuesta late dos veces al aparecer y se
+     posa. El contador no se anima: sólo el aro. */
+  animation: pulse-ring 1.6s var(--pulse-ease) 2 both;
+  --pulse-aura: color-mix(in srgb, var(--chat-no-leido) 65%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .conversaciones__sin-leer {
+    animation: none;
+  }
 }
 
 .conversaciones__fila.is-sin-leer .conversaciones__texto-previa,

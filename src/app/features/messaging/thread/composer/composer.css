@@ -30,7 +30,23 @@
   background: none;
   color: var(--tinta-2);
   cursor: pointer;
-  transition: background var(--mov-rapido) var(--curva);
+  transition:
+    background var(--mov-rapido) var(--curva),
+    transform var(--dur-fast) var(--ease-standard);
+}
+
+/* ALOVIDA Pulse · el dedo hunde el botón: respuesta en 120 ms, que es lo que se
+   percibe como inmediato. */
+.composer__icono:active,
+.composer__enviar:active {
+  transform: scale(0.92);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .composer__icono:active,
+  .composer__enviar:active {
+    transform: none;
+  }
 }
 
 .composer__icono:hover,

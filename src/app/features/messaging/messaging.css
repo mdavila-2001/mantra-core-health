@@ -315,6 +315,32 @@
   block-size: 88px;
 }
 
+.mensajeria__vacio-pulso {
+  inline-size: 160px;
+  block-size: 28px;
+  color: var(--aguamarina);
+  stroke-dasharray: 1;
+  stroke-dashoffset: 0;
+  /* Visible por defecto: la animación sólo lo dibuja (`backwards`). */
+  animation: mensajeria-traza var(--pulse-dur-moment) var(--pulse-ease) 120ms backwards;
+}
+
+@keyframes mensajeria-traza {
+  from {
+    stroke-dashoffset: 1;
+  }
+
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mensajeria__vacio-pulso {
+    animation: none;
+  }
+}
+
 .mensajeria__vacio-titulo {
   font-family: var(--f-titulo);
   font-size: var(--fs-h3);

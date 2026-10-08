@@ -114,7 +114,9 @@
    El color NO porta información solo: la leyenda de abajo repite cada tono en
    palabras y la lista trae el sello de cada cita. */
 .cinta {
-  margin-block-start: var(--sp-6);
+  /* 32 px y no 24: la etiqueta del reloj sobresale por arriba del riel y tiene
+     que respirar respecto al botón de la cabecera. */
+  margin-block-start: var(--sp-8);
 }
 
 .cinta__riel {
@@ -122,6 +124,11 @@
   block-size: 18px;
   border-radius: var(--r-full);
   background: var(--bg-inset);
+  /* ALOVIDA Pulse · el único momento autorado de esta pantalla: la jornada se
+     descubre de izquierda a derecha, como el barrido de un monitor. Dura
+     `--pulse-dur-moment` y corre una vez por navegación. La etiqueta del
+     reloj y las muescas sobresalen del riel, por eso el recorte deja margen. */
+  animation: pulse-draw var(--pulse-dur-moment) var(--pulse-ease) both;
 }
 
 /* `inset-block: 3px` deja el tramo más fino que el riel: así el riel se sigue
@@ -168,6 +175,35 @@
   border-radius: var(--r-full);
   box-shadow: 0 0 0 2px var(--bg-surface-alt);
   z-index: 1;
+}
+
+/* Las horas en punto: una muesca de 5 px bajo el riel. Dan el «cuándo» sin
+   obligar a restar los dos extremos de la escala. */
+.cinta__marca {
+  position: absolute;
+  inset-block-start: calc(100% + 3px);
+  inline-size: 1px;
+  block-size: 5px;
+  background: var(--border-strong);
+  pointer-events: none;
+}
+
+/* La hora de ahora, sobre el reloj. Tinta sobre papel invertidos: es la única
+   etiqueta de la cinta y tiene que leerse antes que los tramos. */
+.cinta__ahora-hora {
+  position: absolute;
+  inset-block-end: calc(100% + 3px);
+  inset-inline-start: 50%;
+  translate: -50% 0;
+  padding: 0 var(--sp-2);
+  border-radius: var(--r-full);
+  background: var(--text-primary);
+  color: var(--bg-surface);
+  font-size: var(--fs-overline);
+  line-height: 16px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .cinta__ahora::after {
@@ -312,6 +348,22 @@
   background: var(--st-warning-bg);
   border-color: var(--st-warning-bd);
   box-shadow: inset 3px 0 0 var(--st-warning-bd), var(--shadow-sm);
+}
+
+.ahora--en-curso::after {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  content: '';
+  /* Late después de que la cinta terminó de dibujarse: el ojo ya llegó. */
+  animation: pulse-ring 1.6s var(--pulse-ease) var(--pulse-dur-moment) 3 both;
+  --pulse-aura: color-mix(in srgb, var(--st-warning-bd) 80%, transparent);
+}
+
+.cifras__dato--curso::before {
+  animation: pulse-ring 1.6s var(--pulse-ease) var(--pulse-dur-moment) 3 both;
+  --pulse-aura: color-mix(in srgb, var(--brand-accent) 70%, transparent);
 }
 
 .ahora__rotulo {
@@ -557,12 +609,32 @@
 
 .ahora {
   cursor: pointer;
-  transition: border-color var(--dur-fast) ease, box-shadow var(--dur-fast) ease;
+  transition:
+    border-color var(--dur-fast) ease,
+    box-shadow var(--dur-base) var(--pulse-ease),
+    transform var(--dur-base) var(--pulse-ease);
 }
 
-.ahora:hover {
-  border-color: var(--border-strong);
+@media (hover: hover) and (pointer: fine) {
+  .ahora:hover {
+    border-color: var(--border-strong);
+    box-shadow: var(--pulse-lift);
+    transform: translateY(var(--pulse-lift-distance));
+  }
+
+  .ahora--en-curso:hover {
+    box-shadow: inset 3px 0 0 var(--st-warning-bd), var(--pulse-lift);
+  }
+}
+
+.ahora:active {
+  transform: none;
   box-shadow: var(--shadow-sm);
+  transition-duration: var(--dur-fast);
+}
+
+.lista__fila:active {
+  background: var(--bg-active);
 }
 
 .ahora:hover .enlace-a-la-cita,
@@ -591,7 +663,15 @@
     transition: none;
   }
 
-  .cinta__ahora::after {
+  .ahora:hover,
+  .ahora:active {
+    transform: none;
+  }
+
+  .cinta__ahora::after,
+  .cinta__riel,
+  .ahora--en-curso::after,
+  .cifras__dato--curso::before {
     animation: none;
   }
 }

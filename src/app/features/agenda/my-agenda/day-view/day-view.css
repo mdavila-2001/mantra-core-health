@@ -205,14 +205,49 @@
   box-shadow: var(--shadow-sm);
   color: var(--text-primary);
   transition:
-    box-shadow var(--dur-fast) var(--ease-standard),
-    border-color var(--dur-fast) var(--ease-standard);
+    box-shadow var(--dur-base) var(--pulse-ease),
+    border-color var(--dur-fast) var(--ease-standard),
+    transform var(--dur-base) var(--pulse-ease);
 }
 
-.dia__bloque[data-tipo='cita']:hover {
-  border-color: var(--border-default);
-  border-inline-start-color: var(--dia-acento);
-  box-shadow: var(--shadow-md);
+/* ALOVIDA Pulse · la cita se levanta al apuntarla y se hunde al pulsarla.
+   Sólo con puntero fino: en táctil el hover se queda pegado tras el toque. */
+@media (hover: hover) and (pointer: fine) {
+  .dia__bloque[data-tipo='cita']:hover {
+    border-color: var(--border-default);
+    border-inline-start-color: var(--dia-acento);
+    box-shadow: var(--pulse-lift);
+    transform: translateY(var(--pulse-lift-distance));
+  }
+}
+
+.dia__bloque[data-tipo='cita']:active {
+  transform: none;
+  box-shadow: var(--shadow-sm);
+  transition-duration: var(--dur-fast);
+}
+
+/* La cita que está ocurriendo late tres veces al aparecer y se posa. El color
+   del latido es el del estado (ámbar), no uno nuevo. */
+.dia__bloque[data-en-curso]::after {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--r-md);
+  pointer-events: none;
+  content: '';
+  animation: pulse-ring 1.6s var(--pulse-ease) 3 both;
+  --pulse-aura: color-mix(in srgb, var(--st-warning-bd) 80%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dia__bloque[data-tipo='cita']:hover,
+  .dia__bloque[data-tipo='cita']:active {
+    transform: none;
+  }
+
+  .dia__bloque[data-en-curso]::after {
+    animation: none;
+  }
 }
 
 .dia__bloque[data-sello='approved'] {

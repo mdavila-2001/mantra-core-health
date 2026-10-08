@@ -1,0 +1,159 @@
+/* ============================================================================
+    ALOVIDA Pulse — capa de profundidad, respuesta y latido.
+
+    El logotipo de la marca ES un pulso (la línea del electrocardiograma). Pulse
+    parte de ahí: lo que está vivo late, lo que se toca responde, y nada más se
+    mueve. No introduce un color, una tipografía ni una curva de movimiento que
+    `styles.css` no tenga: sólo compone los tokens existentes en tres ideas.
+
+      1. LATIDO   — un estado real (en curso, ahora, sin leer, escribiendo) lo
+                    anuncia un anillo que late TRES veces y se posa. Nunca en
+                    bucle: un bucle sólo es válido para la carga (motion.md §4).
+      2. ELEVACIÓN— lo que se puede pulsar se levanta al apuntarlo y se hunde al
+                    pulsarlo. Sólo `transform` y `box-shadow`.
+      3. MOMENTO  — UNA entrada autorada por pantalla (la cinta del día, la
+                    llegada de un mensaje). Es lo único que supera los 320 ms.
+
+    Contenido clínico: no se anima. Un valor que se desliza se lee mal
+    (motion.md §5). Pulse anima el continente y el estado, jamás la cifra.
+
+    Documentación y reglas de uso: docs/design-system/pulse.md
+   ========================================================================== */
+
+:root {
+    /* Desaceleración exponencial: arranca decidida y se posa sin rebote. Es la
+       curva de las llegadas; `--ease-spring` sigue reservada para confirmar un
+       gesto del dedo. */
+    --pulse-ease: cubic-bezier(0.16, 1, 0.3, 1);
+
+    /* El momento autorado. Por encima de `--dur-slow` (320) a propósito y
+       acotado a 480: es la excepción documentada a la regla «nada sobre ~320 ms»
+       y sólo vale para una entrada no clínica por pantalla. */
+    --pulse-dur-moment: 480ms;
+
+    /* Lo que late hereda el color del estado: aguamarina por defecto. */
+    --pulse-aura: color-mix(in srgb, var(--brand-secondary) 70%, transparent);
+
+    /* Elevación al apuntar: sombra con desplazamiento y difusión, tintada de
+       petróleo. Una sola declaración de elevación por pieza (sin borde + sombra
+       ancha a la vez: la tarjeta fantasma). */
+    --pulse-lift: 0 10px 24px rgba(11, 85, 126, 0.14), 0 2px 6px rgba(11, 85, 126, 0.08);
+    --pulse-lift-distance: -2px;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme='light']) {
+        --pulse-lift: 0 14px 30px rgba(0, 0, 0, 0.45), 0 2px 8px rgba(0, 0, 0, 0.3);
+        --pulse-aura: color-mix(in srgb, var(--brand-primary) 60%, transparent);
+    }
+}
+
+:root[data-theme='dark'] {
+    --pulse-lift: 0 14px 30px rgba(0, 0, 0, 0.45), 0 2px 8px rgba(0, 0, 0, 0.3);
+    --pulse-aura: color-mix(in srgb, var(--brand-primary) 60%, transparent);
+}
+
+/* ── Keyframes ─────────────────────────────────────────────────────────────
+   Todos arrancan en un estado ya visible o con `fill: backwards`: si la
+   animación no corre (movimiento reducido, JS caído) el contenido está ahí. */
+
+/* El anillo del latido: nace del borde del elemento y se disuelve. Se usa
+   `box-shadow` en el propio elemento para no crear capas extra. */
+@keyframes pulse-ring {
+    0% {
+        box-shadow: 0 0 0 0 var(--pulse-aura);
+    }
+
+    70%,
+    100% {
+        box-shadow: 0 0 0 9px transparent;
+    }
+}
+
+/* El trazo de una cinta: se descubre de izquierda a derecha, como el barrido de
+   un monitor. `clip-path` no dispara layout. El margen negativo deja pasar lo
+   que sobresale del riel (la etiqueta del reloj y las muescas). */
+@keyframes pulse-draw {
+    from {
+        clip-path: inset(-32px 100% -12px 0);
+    }
+
+    to {
+        clip-path: inset(-32px -32px -12px -32px);
+    }
+}
+
+/* Una llegada: lo que acaba de aparecer sube 8 px y se aclara. */
+@keyframes pulse-arrive {
+    from {
+        opacity: 0;
+        transform: translateY(8px) scale(0.98);
+    }
+
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+/* ── Utilidades ────────────────────────────────────────────────────────────*/
+
+/* LATIDO. Se pone en el elemento que representa un estado vivo. Tres latidos y
+   se posa; si el estado cambia y el elemento se vuelve a pintar, late otra vez. */
+.pulse-live {
+    animation: pulse-ring 1.6s var(--pulse-ease) 3 both;
+    border-radius: inherit;
+}
+
+/* ELEVACIÓN. Sólo donde hay un puntero fino: en táctil el «hover» se queda
+   pegado tras el toque y la tarjeta parecería rota. */
+.pulse-lift {
+    transition:
+        transform var(--dur-base) var(--pulse-ease),
+        box-shadow var(--dur-base) var(--pulse-ease);
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .pulse-lift:hover {
+        transform: translateY(var(--pulse-lift-distance));
+        box-shadow: var(--pulse-lift);
+    }
+}
+
+.pulse-lift:active {
+    transform: translateY(0) scale(0.995);
+    box-shadow: var(--shadow-sm);
+    transition-duration: var(--dur-fast);
+}
+
+/* PULSACIÓN. Para botones y chips: el dedo «hunde» la pieza 3 %. Respuesta en
+   120 ms, que es lo que se percibe como inmediato. */
+.pulse-press {
+    transition: transform var(--dur-fast) var(--ease-standard);
+}
+
+.pulse-press:active {
+    transform: scale(0.97);
+}
+
+/* LLEGADA. Lo que se inserta después de que la pantalla ya estaba lista. */
+.pulse-arrive {
+    animation: pulse-arrive var(--dur-slow) var(--pulse-ease) backwards;
+}
+
+/* Movimiento reducido: sin desplazamiento ni escala ni anillo. Lo que confirma
+   un estado (color, borde) se queda; lo que se movía deja de moverse. La regla
+   global de `styles.css` ya reduce las duraciones; ésta quita además el
+   desplazamiento, que a 0,01 ms seguiría teniendo un cuadro intermedio. */
+@media (prefers-reduced-motion: reduce) {
+    .pulse-live,
+    .pulse-arrive {
+        animation: none;
+    }
+
+    .pulse-lift:hover,
+    .pulse-lift:active,
+    .pulse-press:active {
+        transform: none;
+    }
+}

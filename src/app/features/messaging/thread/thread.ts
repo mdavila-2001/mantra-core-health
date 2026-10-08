@@ -8,6 +8,7 @@ import {
   inject,
   PLATFORM_ID,
   signal,
+  untracked,
   viewChild,
 } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
@@ -292,6 +293,20 @@ export class Thread {
   /** El mensaje al que saltó una cita, para destellarlo. */
   protected readonly destellando = signal<string | null>(null);
 
+  /**
+   * ALOVIDA Pulse · las burbujas AJENAS que llegaron con el hilo ya abierto.
+   *
+   * Sólo ésas entran con `pulse-arrive`: el historial que se carga al abrir la
+   * conversación aparece quieto —animar cincuenta burbujas es una cortina, no
+   * una señal— y lo que llega en vivo por el socket o el sondeo es justo lo que
+   * hay que notar. Las propias no animan: su clave cambia de temporal a
+   * definitiva al confirmarse y se reanimarían dos veces.
+   */
+  protected readonly llegadas = signal<ReadonlySet<string>>(new Set());
+
+  /** La última clave que se vio, para distinguir lo nuevo de lo que sube con el historial. */
+  private ultimaClaveVista: string | null = null;
+
   /** Si está abierta la búsqueda dentro de la conversación. */
   protected readonly buscando = signal(false);
 
@@ -476,11 +491,54 @@ export class Thread {
       this.alCambiarElHilo(total);
     });
 
+    effect(() => {
+      const cargado = this.store.hiloCargado();
+      const mensajes = this.store.enOrden();
+      untracked(() => this.marcarLlegadas(cargado, mensajes));
+    });
+
     // El reloj de la ventana de edición. Sólo en el navegador: bajo SSR no hay
     // menú que actualizar y un intervalo dejaría colgada la renderización.
     if (this.isBrowser) {
       const tic = setInterval(() => this.ahora.set(Date.now()), TIC_DE_EDICION_MS);
       inject(DestroyRef).onDestroy(() => clearInterval(tic));
+    }
+  }
+
+  /**
+   * Decide qué burbujas son «llegadas». Con el hilo sin cargar se reinicia (otra
+   * conversación); en la primera carga sólo se anota hasta dónde llega el hilo;
+   * después, lo que aparece DESPUÉS de la última clave vista es nuevo. Las
+   * páginas de historial se agregan antes, así que no cuentan.
+   */
+  private marcarLlegadas(
+    cargado: boolean,
+    mensajes: readonly { readonly clave: string; readonly senderProfileId: string }[],
+  ): void {
+    if (!cargado) {
+      this.ultimaClaveVista = null;
+      if (this.llegadas().size > 0) {
+        this.llegadas.set(new Set());
+      }
+      return;
+    }
+    const claves = mensajes.map((m) => m.clave);
+    const ultima = this.ultimaClaveVista;
+    this.ultimaClaveVista = claves.length > 0 ? claves[claves.length - 1] : null;
+    if (ultima === null) {
+      return;
+    }
+    const desde = claves.indexOf(ultima);
+    if (desde < 0) {
+      return;
+    }
+    const propio = this.store.perfil();
+    const nuevas = mensajes
+      .slice(desde + 1)
+      .filter((m) => m.senderProfileId !== propio)
+      .map((m) => m.clave);
+    if (nuevas.length > 0) {
+      this.llegadas.update((previas) => new Set([...previas, ...nuevas]));
     }
   }
 
