@@ -14,15 +14,12 @@
       @if (registered()) {
         <div class="registro__header">
           <h1 appAnuncio [asertivo]="false" class="registro__title" data-testid="registro-exito">
-            Tu cuenta está lista
+            ¡Bienvenido a AloVida! Tu salud en un solo lugar
           </h1>
-          <p class="registro__subtitle">
-            Ya podés entrar con {{ accessHint }} y la contraseña que elegiste.
-            @if (verificationSent()) {
-              Te mandamos un correo para verificar tu dirección; podés hacerlo cuando quieras, no
-              hace falta para usar tu cuenta.
-            }
-          </p>
+          <p class="registro__subtitle">Concluiste el registro de manera satisfactoria. Ya podés conectarte con {{ accessHint }} y la contraseña que elegiste.</p>
+          @if (verificationSent()) {
+            <p class="registro__subtitle">Te enviamos un correo para confirmar tu dirección. Podés hacerlo cuando quieras: no es necesario para empezar a usar AloVida.</p>
+          }
         </div>
         <button
           app-button

@@ -473,10 +473,10 @@ describe('RegisterLaboratory', () => {
 
     const exito = fixture.debugElement.query(By.css('[data-testid="registro-lab-exito"]'));
     expect(exito).not.toBeNull();
-    expect((exito.nativeElement as HTMLElement).textContent).toContain('Tu cuenta está lista');
+    expect((exito.nativeElement as HTMLElement).textContent).toContain('¡Bienvenido a AloVida!');
     const texto = (fixture.nativeElement as HTMLElement).textContent ?? '';
-    expect(texto).toContain('revisá tu bandeja de entrada');
-    expect(texto).toContain('pendiente de aprobación');
+    expect(texto).toContain('Te enviamos un correo para confirmar tu dirección');
+    expect(texto).toContain('está en revisión');
   });
 
   it('mientras no se envía, el formulario está a la vista', () => {
