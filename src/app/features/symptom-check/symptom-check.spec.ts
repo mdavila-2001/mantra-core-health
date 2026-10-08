@@ -641,12 +641,28 @@ describe('SymptomCheck · lo que entiende el servicio de triage', () => {
     expect(html.querySelector('.sintomas__especialidad')?.textContent).toContain('Medicina general');
   });
 
-  it('con un síntoma reconocido con certeza el especialista va primero, como siempre', () => {
+  it('los síntomas reconocidos se muestran con su término del glosario médico y la forma llana', () => {
+    escribir('eyaculo sangre y me duele la cabeza');
+    vi.advanceTimersByTime(600);
+    http.match('/ai/v1/triage/analyze').forEach((req) => req.flush({ symptoms: [], urgency: 'programada', source: 'catalog' }));
+    fixture.detectChanges();
+    const chips = [...html.querySelectorAll('[data-testid="sintoma-reconocido"]')];
+    const textos = chips.map((c) => c.textContent?.trim());
+    expect(textos).toContain('Cefalea (dolor de cabeza)');
+    expect(textos).toContain('Hematospermia (sangre en el semen)');
+    expect(chips.find((c) => c.textContent?.includes('Cefalea'))?.getAttribute('data-glossary-code')).toBe('CIE-10 R51');
+  });
+
+  it('con un síntoma reconocido con certeza Medicina general igual va primero, y el especialista debajo', () => {
+    // Decisión del propietario (2026-10-08): Medicina general siempre primero.
     escribir('me salieron granos en la cara');
     vi.advanceTimersByTime(600);
     http.match('/ai/v1/triage/analyze').forEach((req) => req.flush({ symptoms: [], urgency: 'programada', source: 'catalog' }));
     fixture.detectChanges();
-    expect(html.querySelector('.sintomas__especialidad')?.textContent).not.toContain('Medicina general');
+    const especialidades = [...html.querySelectorAll('.sintomas__especialidad')].map((e) => e.textContent?.trim());
+    expect(especialidades[0]).toBe('Medicina general');
+    expect(especialidades).toContain('Dermatología');
+    expect(html.querySelector('[data-testid="sintomas-sin-certeza"]')).toBeNull();
   });
 
   it('con menos de tres letras no pregunta nada', () => {

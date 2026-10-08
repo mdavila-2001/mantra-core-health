@@ -16,6 +16,10 @@ import { PublicDirectoryClient } from '@core/data-access/public-directory/public
 import { TerminologyClient } from '@core/data-access/terminology/terminology.client';
 import type { ConceptLabels } from '@core/data-access/terminology/terminology.types';
 import { TriageIaClient } from '@core/data-access/triage-ia/triage-ia.client';
+import {
+  SymptomObservationsStore,
+  type ObservacionDeSintomas,
+} from '@core/symptom-notes/symptom-observations.store';
 import { ZONAS_DEL_CUERPO, type ZonaDelCuerpo } from './zonas.datos';
 import { AppButton } from '@shared/components/atoms/button/button';
 import { Chip } from '@shared/components/atoms/chip/chip';
@@ -34,6 +38,9 @@ import {
 import {
   conceptIdDe,
   conMedicinaGeneralPrimero,
+  GENERAL_PRIMERO,
+  codigoDelGlosario,
+  nombreParaMostrar,
   enumerar,
   explicar,
   normalizar,
@@ -56,6 +63,7 @@ import {
   type LecturaDelTexto,
 } from './lectura-ia';
 import { ultimaFrase } from './texto';
+import { EmergencyPanel } from '../emergency/emergency-panel/emergency-panel';
 
 /**
  * Cuánto se espera a que la persona haga una pausa antes de preguntarle al
@@ -119,7 +127,7 @@ const VACIO: ReadonlyMap<string, string> = new Map();
  */
 @Component({
   selector: 'app-symptom-check',
-  imports: [Alert, AppButton, BodyMap, Card, Chip, FormField, RouterLink, Spinner, Textarea],
+  imports: [Alert, AppButton, BodyMap, Card, Chip, EmergencyPanel, FormField, RouterLink, Spinner, Textarea],
   templateUrl: './symptom-check.html',
   // El dictado vive y muere con la pantalla: ver `Dictado`.
   providers: [Dictado],
@@ -133,6 +141,7 @@ export class SymptomCheck {
   private readonly router = inject(Router);
   private readonly triageIa = inject(TriageIaClient);
   protected readonly dictado = inject(Dictado);
+  private readonly observacionesStore = inject(SymptomObservationsStore);
 
   constructor() {
     /* El índice del motor se arma la primera vez que se lo usa, y armarlo
@@ -376,6 +385,50 @@ export class SymptomCheck {
    * Lo negado a secas («no tengo fiebre») no cuenta: ahí la pantalla ya dice
    * qué entendió y pide lo que sí se siente.
    */
+  /* ---- guardar la observación (propietario, 2026-10-08) ------------------ */
+
+  /** Las observaciones guardadas en este dispositivo, la más nueva primero. */
+  protected readonly observaciones = this.observacionesStore.lista;
+
+  /** Lo que se le confirma a quien guardó: dónde quedó y adónde va a viajar. */
+  protected readonly avisoDeObservacion = signal('');
+
+  /**
+   * Guarda lo que la persona describió y los síntomas reconocidos, con su término del glosario.
+   * Queda en este dispositivo y viaja como motivo de consulta cuando pide un turno (ver el store).
+   */
+  protected guardarObservacion(): void {
+    const sintomas = this.sintomas().map((s) => ({
+      id: s.id,
+      nombre: nombreParaMostrar(s),
+      codigo: codigoDelGlosario(s.id),
+    }));
+    if (this.texto().trim() === '' && sintomas.length === 0) {
+      return;
+    }
+    this.observacionesStore.guardar(this.texto(), sintomas);
+    this.avisoDeObservacion.set(
+      'Guardamos su observación en este dispositivo. Cuando solicite un turno, se la enviaremos al profesional como motivo de consulta.',
+    );
+  }
+
+  protected borrarObservacion(id: string): void {
+    this.observacionesStore.borrar(id);
+    this.avisoDeObservacion.set('La observación se eliminó de este dispositivo.');
+  }
+
+  protected fechaDe(observacion: ObservacionDeSintomas): string {
+    return new Date(observacion.creada).toLocaleString('es-BO', { dateStyle: 'medium', timeStyle: 'short' });
+  }
+
+  protected nombresDe(observacion: ObservacionDeSintomas): string {
+    return observacion.sintomas.map((s) => s.nombre).join(' · ');
+  }
+
+  /** Para el template: el término del glosario (ver `nombreParaMostrar` en sintomas.ts). */
+  protected readonly nombreParaMostrar = nombreParaMostrar;
+  protected readonly codigoDelGlosario = codigoDelGlosario;
+
   protected readonly faltaDeCerteza = computed<string | null>(() => {
     if (this.texto().trim() === '' || this.agregados().length > 0) {
       return null;
@@ -402,7 +455,12 @@ export class SymptomCheck {
     const disponibles = new Set(this.especialidadesDisponibles().keys());
     const lista = recomendar(this.sintomas(), disponibles);
     const motivo = this.faltaDeCerteza();
-    return motivo === null ? lista : conMedicinaGeneralPrimero(lista, motivo, disponibles);
+    if (lista.length === 0 && motivo === null) {
+      return lista;
+    }
+    // Medicina general va SIEMPRE primero (propietario, 2026-10-08); el motivo cambia si además
+    // no hay certeza. Los especialistas siguen debajo, con su porqué.
+    return conMedicinaGeneralPrimero(lista, motivo ?? GENERAL_PRIMERO, disponibles);
   });
 
   /**

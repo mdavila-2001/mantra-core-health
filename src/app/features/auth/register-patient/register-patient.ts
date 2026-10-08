@@ -27,6 +27,7 @@ import {
   BoOccupationsCatalog,
   CODIGO_OCUPACION_OTRA,
 } from '../../../core/data-access/terminology/bo-occupations.service';
+import { TrustedAmbulanceStore } from '../../../core/emergency/trusted-ambulance.store';
 import { telefonoCompleto } from '../../../shared/components/molecules/phone-input/phone-input';
 import {
   BoMunicipalitiesCatalog,
@@ -458,6 +459,7 @@ const AYUDA_PACIENTE: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
 export class RegisterPatient {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly ambulanciaDeConfianza = inject(TrustedAmbulanceStore);
 
   readonly formPaciente = new FormGroup(
     {
@@ -583,6 +585,13 @@ export class RegisterPatient {
       // Sin parentesco declarado la API escribe «tutor o representante legal»,
       // que es lo que escribía siempre.
       guardianRelationshipConceptId: new FormControl<string | null>(null),
+      // La ambulancia de confianza (propietario, 2026-10-08). NO viaja al servidor —el modelo no
+      // tiene dónde guardarla—: se guarda en este dispositivo al registrarse (`TrustedAmbulanceStore`).
+      trustedAmbulanceName: new FormControl('', { nonNullable: true }),
+      trustedAmbulancePhone: new FormControl('', {
+        nonNullable: true,
+        validators: [telefonoCompleto],
+      }),
       // Los seguros declarados: el valor es el **plan**, no la compañía.
       privateInsurancePlanId: new FormControl<string | null>(null),
       publicInsurancePlanId: new FormControl<string | null>(null),
@@ -1204,6 +1213,35 @@ export class RegisterPatient {
           // son cuatro campos, así que agregar un quinto acá partiría la
           // pregunta del contacto en dos páginas.
           this.campoRelacionDelContacto(),
+        ],
+      },
+      {
+        titulo: 'Su ambulancia de confianza',
+        clave: 'ambulance',
+        icon: 'phone',
+        hint: 'Opcional. Si la carga, el botón de emergencia la llama directamente.',
+        campos: [
+          {
+            key: 'trustedAmbulanceName',
+            label: 'Nombre de la ambulancia (opcional)',
+            hint: 'Por ejemplo, la de su seguro o la de su clínica.',
+            description: 'Se guarda sólo en este dispositivo.',
+            control: 'text',
+            placeholder: 'Ambulancias de mi seguro',
+            testId: 'registro-ambulancia-nombre',
+            icono: 'heart',
+            ancho: 'mitad',
+          },
+          {
+            key: 'trustedAmbulancePhone',
+            label: 'Teléfono de la ambulancia (opcional)',
+            hint: 'Elija el país si el número no es de Bolivia.',
+            description: 'Con este número, el botón de emergencia llama sin mostrar la lista de números.',
+            control: 'tel',
+            testId: 'registro-ambulancia-telefono',
+            ancho: 'mitad',
+            mensajeDeError: 'Ingrese el número completo para el país elegido.',
+          },
         ],
       },
       {
@@ -2364,6 +2402,8 @@ export class RegisterPatient {
         this.state.set(ready(null));
         this.verificationSent.set(resultado.emailVerificationSent);
         this.registered.set(true);
+        const { trustedAmbulanceName, trustedAmbulancePhone } = this.formPaciente.getRawValue();
+        this.ambulanciaDeConfianza.guardar(trustedAmbulanceName, trustedAmbulancePhone);
       },
       error: (error: unknown) => this.state.set(registrationErrorToViewState(error, 'patient')),
     });
