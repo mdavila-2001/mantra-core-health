@@ -97,7 +97,7 @@
              cuando publicar exigía SCHEDULING_ADMIN. Ahora el profesional puede
              crear la suya, y lo que importa decirle es la consecuencia: sin
              horarios publicados, los pacientes no pueden pedirle turno. -->
-        Los pacientes todavía no pueden pedirle turno: su agenda no tiene horarios publicados en
+        Los pacientes todavía no pueden pedirle una cita: su agenda no tiene horarios publicados en
         esta organización. Créela con sus días y franjas — lleva un par de minutos. Mientras tanto
         no se muestra ninguna otra: la agenda de otro profesional no es la suya.
         <a app-button alert-actions variant="primary" size="sm" [routerLink]="rutaCrearAgenda">
@@ -116,13 +116,13 @@
           @if (demoraDeTodaLaAgenda()) {
             Avisar demora de la agenda
           } @else {
-            Avisar demora de este turno
+            Avisar demora de esta cita
           }
         </h2>
         <p class="agenda__demora-ayuda">
-          El turno no se mueve ni pierde su lugar: al paciente le llega que empieza más tarde.
+          La cita no se mueve ni pierde su lugar: al paciente le llega que empieza más tarde.
           @if (demoraDeTodaLaAgenda()) {
-            Alcanza a los turnos vigentes de hoy en «{{ nombreDelRecurso() }}».
+            Alcanza a las citas vigentes de hoy en «{{ nombreDelRecurso() }}».
           }
         </p>
 

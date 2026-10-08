@@ -36,7 +36,7 @@
        está parado. -->
   <table class="calendario__grilla">
     <caption class="calendario__leyenda">
-      Sus turnos de {{ titulo() | date: 'MMMM yyyy' }}: {{ resumenDelMes() }}
+      Sus citas de {{ titulo() | date: 'MMMM yyyy' }}: {{ resumenDelMes() }}
     </caption>
     <thead>
       <tr>
@@ -151,9 +151,9 @@
   @if (sinHorario() > 0) {
     <p class="calendario__aviso" data-testid="calendario-sin-horario">
       @if (sinHorario() === 1) {
-        Hay 1 turno sin horario asignado: se ve en la lista.
+        Hay 1 cita sin horario asignado: se ve en la lista.
       } @else {
-        Hay {{ sinHorario() }} turnos sin horario asignado: se ven en la lista.
+        Hay {{ sinHorario() }} citas sin horario asignado: se ven en la lista.
       }
     </p>
   }

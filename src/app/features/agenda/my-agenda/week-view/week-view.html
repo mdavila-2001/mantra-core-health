@@ -22,7 +22,7 @@
       </h3>
       <p class="semana__resumen" role="status">
         @if (totalLibres() === 0) {
-          Sin turnos libres esta semana.
+          Sin horarios libres esta semana.
         } @else {
           {{ totalLibres() }} {{ totalLibres() === 1 ? 'turno libre' : 'turnos libres' }}.
         }
@@ -180,7 +180,7 @@
                   [attr.tabindex]="tabindexDe(col, dia.citas.length + 1)"
                   (focus)="alEnfocar(col, dia.citas.length + 1)"
                   (keydown)="alTeclear($event, col, dia.citas.length + 1)"
-                  [attr.aria-label]="'Ver los ' + (dia.masCitas + dia.citas.length) + ' turnos del ' + (dia.fecha | date: 'EEEE d')"
+                  [attr.aria-label]="'Ver los ' + (dia.masCitas + dia.citas.length) + ' citas del ' + (dia.fecha | date: 'EEEE d')"
                   (click)="diaElegido.emit(dia.fecha)"
                 >
                   +{{ dia.masCitas }} {{ dia.masCitas === 1 ? 'turno más' : 'turnos más' }}

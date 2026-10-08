@@ -982,7 +982,7 @@ describe('MyAgenda', () => {
     conCuposHasta(new Date(Date.now() + 10 * 24 * 60 * 60 * 1000));
 
     const aviso: HTMLElement = fixture.nativeElement.querySelector('[data-testid="aviso-agotan"]');
-    expect(aviso.textContent?.trim()).toBe('Turnos por agotarse');
+    expect(aviso.textContent?.trim()).toBe('Horarios por agotarse');
     expect(aviso.querySelector('svg')).not.toBeNull();
     expect(aviso.classList.contains('mi-agenda__accion--aviso')).toBe(true);
   });
@@ -1144,7 +1144,7 @@ describe('MyAgenda', () => {
 
     const texto: string = fixture.nativeElement.textContent;
     expect(texto).not.toContain('se están por agotar');
-    expect(texto).toContain('Tiene turnos abiertos hasta el');
+    expect(texto).toContain('Tiene horarios abiertos hasta el');
   });
 
   it('si la lectura de cupos falla, la tarjeta sigue sirviendo', () => {

@@ -1,6 +1,6 @@
 <app-page-header
   title="Complete su perfil"
-  subtitle="Cinco pasos para que un paciente pueda encontrarle y pedirle turno."
+  subtitle="Cinco pasos para que un paciente pueda encontrarle y pedirle una cita."
 />
 
 @switch (estado().status) {
@@ -11,7 +11,7 @@
   @case ('ready') {
     @if (completo()) {
       <app-alert tone="success" title="Su perfil está completo">
-        Ya aparece en la guía y pueden pedirle turno. Puede seguir editando sus datos cuando
+        Ya aparece en la guía y pueden pedirle una cita. Puede seguir editando sus datos cuando
         quiera desde su perfil.
         <a app-link [routerLink]="['/my-account']">Ir a mi perfil</a>
       </app-alert>

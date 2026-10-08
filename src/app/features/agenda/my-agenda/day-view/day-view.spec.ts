@@ -119,7 +119,7 @@ describe('DayView', () => {
     expect(aire.getAttribute('data-tipo')).toBe('aire');
     // No los 624 px de seis horas y media: la altura de una hora.
     expect(Number.parseInt(aire.style.minHeight, 10)).toBeLessThanOrEqual(96);
-    expect(aire.textContent).toContain('6 h 30 min sin turnos');
+    expect(aire.textContent).toContain('6 h 30 min sin horarios');
   });
 
   it('las citas van en orden de reloj, aunque los cupos no vengan ordenados', () => {
@@ -325,7 +325,7 @@ describe('DayView', () => {
     );
 
     const texto: string = fixture.nativeElement.textContent;
-    expect(texto).toContain('1 de 3 turnos reservados');
+    expect(texto).toContain('1 de 3 horarios reservados');
     expect(texto).toContain('1 rato ocupado');
   });
 
@@ -677,7 +677,7 @@ describe('DayView', () => {
 
       const hueco = fixture.nativeElement.querySelector('.dia__aire') as HTMLElement;
       expect(hueco.getAttribute('aria-label')).toBe(
-        'Agregar algo en este hueco: Martes 25 de agosto, 09:30 a 14:00, sin turnos',
+        'Agregar algo en este hueco: Martes 25 de agosto, 09:30 a 14:00, sin horarios',
       );
       const atender = fixture.nativeElement.querySelector('[data-testid="dia-ir-a-atender"]') as HTMLElement;
       expect(atender.getAttribute('aria-label')).toBe('Atender a Ana Quispe, Martes 25 de agosto, 14:00 a 14:30');

@@ -29,7 +29,7 @@ export const DEMO_TOASTS: Readonly<Record<ToastType, Omit<ToastMessage, 'id'>>> 
   },
   info: {
     type: 'info',
-    message: 'El turno de cardiología se reprogramó para el 12/08 a las 09:30.',
+    message: 'La cita de cardiología se reprogramó para el 12/08 a las 09:30.',
     durationMs: 5000,
   },
 };
