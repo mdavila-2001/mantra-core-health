@@ -250,3 +250,102 @@ export function fichaEnLinea(fila: FilaDeGlosario, manifiesto: ManifiestoDelGlos
     ...(imagen === undefined ? {} : { image: imagen }),
   };
 }
+
+/* ---- vecindario del mapa (TAREA-41 §5) ------------------------------------- */
+
+/** Los tipos de relación que el contrato publica; uno desconocido no viaja. */
+export const TIPOS_DEL_VECINDARIO: ReadonlySet<string> = new Set([
+  'RELATED_TERM',
+  'DISEASE',
+  'PROCEDURE',
+  'TREATMENT',
+  'ANATOMY',
+  'DIAGNOSTIC_TEST',
+  'SYMPTOM',
+  'SPECIALTY',
+  'INCLUDES',
+  'PERFORMS',
+  'SENDS_DATA_TO',
+]);
+
+export const VECINOS_POR_GRUPO = { porDefecto: 8, minimo: 1, maximo: 50 } as const;
+export const PAGINA_DE_GRUPO = { porDefecto: 50, minimo: 1, maximo: 200 } as const;
+
+/** Un vecino ya resuelto, venga de una relación saliente o entrante. */
+export interface VecinoSimulado {
+  readonly type: string;
+  readonly direction: 'outgoing' | 'incoming';
+  readonly conceptId: string;
+  readonly slug: string;
+  readonly display: string;
+  readonly categoryKey: string | null;
+}
+
+/** Qué parte del vecindario se pidió. */
+export type PedidoDeVecindario =
+  | { readonly modo: 'muestra'; readonly porGrupo: number }
+  | {
+      readonly modo: 'grupo';
+      readonly type: string;
+      readonly direction: 'outgoing' | 'incoming';
+      readonly offset: number;
+      readonly limit: number;
+    };
+
+/**
+ * El vecindario como lo devuelve `GET /terminology/concepts/:id/glossary-neighborhood`.
+ *
+ * Agrupa por tipo y sentido, descarta las autorreferencias y los tipos que el
+ * contrato no publica, y saca los repetidos dentro de un grupo. El orden es
+ * alfabético (`es`) hasta que las relaciones traigan peso (TAREA-41 F1).
+ */
+export function vecindarioEnLinea(
+  foco: FilaDeGlosario,
+  manifiesto: ManifiestoDelGlosario,
+  vecinos: readonly VecinoSimulado[],
+  pedido: PedidoDeVecindario,
+) {
+  const grupos = new Map<string, Map<string, VecinoSimulado>>();
+  for (const vecino of vecinos) {
+    if (vecino.conceptId === foco.id || !TIPOS_DEL_VECINDARIO.has(vecino.type)) continue;
+    if (pedido.modo === 'grupo' && (vecino.type !== pedido.type || vecino.direction !== pedido.direction)) {
+      continue;
+    }
+    const clave = `${vecino.type}|${vecino.direction}`;
+    if (!grupos.has(clave)) grupos.set(clave, new Map());
+    grupos.get(clave)!.set(vecino.conceptId, vecino);
+  }
+
+  const categoria = (key: string | null) => {
+    const encontrada = key === null ? undefined : manifiesto.categories.find((c) => c.key === key);
+    return encontrada === undefined ? null : { internalCode: encontrada.internalCode, name: encontrada.name };
+  };
+  const termino = terminoEnLinea(foco, manifiesto);
+
+  return {
+    focus: {
+      conceptId: termino.conceptId,
+      slug: termino.slug,
+      display: termino.display,
+      category: termino.category,
+      shortDefinition: termino.shortDefinition ?? '',
+    },
+    groups: [...grupos.values()].map((porId) => {
+      const todos = [...porId.values()].sort((a, b) => a.display.localeCompare(b.display, 'es'));
+      const desde = pedido.modo === 'grupo' ? pedido.offset : 0;
+      const cuantos = pedido.modo === 'grupo' ? pedido.limit : pedido.porGrupo;
+      const primero = todos[0]!;
+      return {
+        type: primero.type,
+        direction: primero.direction,
+        total: todos.length,
+        items: todos.slice(desde, desde + cuantos).map((vecino) => ({
+          conceptId: vecino.conceptId,
+          slug: vecino.slug,
+          display: vecino.display,
+          category: categoria(vecino.categoryKey),
+        })),
+      };
+    }),
+  };
+}

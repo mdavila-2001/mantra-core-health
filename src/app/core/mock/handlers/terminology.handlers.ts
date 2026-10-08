@@ -12,7 +12,13 @@ import {
   conjuntosEnLinea,
   facetasEnLinea,
   fichaEnLinea,
+  PAGINA_DE_GRUPO,
   terminoEnLinea,
+  TIPOS_DEL_VECINDARIO,
+  vecindarioEnLinea,
+  VECINOS_POR_GRUPO,
+  type PedidoDeVecindario,
+  type VecinoSimulado,
 } from '../glossary-en-linea';
 import {
   AlmacenDeGlosario,
@@ -20,6 +26,7 @@ import {
   idDeVersion,
   leerConFetch,
   PARAGUAS_DEL_GLOSARIO,
+  type FilaDeGlosario,
   type ManifiestoDelGlosario,
 } from '../glossary-shards';
 import { AlmacenConCapasDeLaMaqueta, type FuenteDeGlosario } from '../glossary-capa-de-equipos';
@@ -30,6 +37,7 @@ import {
   preconditionFailed,
   reply,
   unauthorized,
+  validation,
   type MockReply,
   type MockRouter,
 } from '../mock-router';
@@ -64,6 +72,71 @@ function conjuntoDelGlosario(
   const etiqueta = manifiesto.tags.find((t) => coincide(t.internalCode));
   if (etiqueta !== undefined) return { tipo: 'etiqueta', key: etiqueta.key };
   return null;
+}
+
+/** Un entero de la query dentro de `[minimo, maximo]`, el valor por defecto si falta, o `null` si no sirve. */
+function enteroEnRango(
+  query: URLSearchParams,
+  clave: string,
+  rango: { readonly porDefecto: number; readonly minimo: number; readonly maximo: number },
+): number | null {
+  const crudo = texto(query, clave);
+  if (crudo === null) return rango.porDefecto;
+  const valor = Number(crudo);
+  return Number.isInteger(valor) && valor >= rango.minimo && valor <= rango.maximo ? valor : null;
+}
+
+/** Lee la query del vecindario; un texto es el motivo del 422. */
+function pedidoDeVecindario(query: URLSearchParams): PedidoDeVecindario | string {
+  const tipo = texto(query, 'type');
+  const sentido = texto(query, 'direction');
+  if (tipo === null && sentido === null) {
+    const porGrupo = enteroEnRango(query, 'perGroup', VECINOS_POR_GRUPO);
+    return porGrupo === null
+      ? `perGroup debe ser un entero entre ${VECINOS_POR_GRUPO.minimo} y ${VECINOS_POR_GRUPO.maximo}.`
+      : { modo: 'muestra', porGrupo };
+  }
+  if (tipo === null || !TIPOS_DEL_VECINDARIO.has(tipo)) return 'type no es un tipo de relación del glosario.';
+  if (sentido !== 'outgoing' && sentido !== 'incoming') return 'direction debe ser outgoing o incoming.';
+  const limit = enteroEnRango(query, 'limit', PAGINA_DE_GRUPO);
+  if (limit === null) {
+    return `limit debe ser un entero entre ${PAGINA_DE_GRUPO.minimo} y ${PAGINA_DE_GRUPO.maximo}.`;
+  }
+  const offset = enteroEnRango(query, 'offset', { porDefecto: 0, minimo: 0, maximo: Number.MAX_SAFE_INTEGER });
+  if (offset === null) return 'offset debe ser un entero mayor o igual a cero.';
+  return { modo: 'grupo', type: tipo, direction: sentido, offset, limit };
+}
+
+/**
+ * Los vecinos de un término en los dos sentidos: las relaciones que trae su
+ * fila (salientes) y las del índice inverso (entrantes). La categoría de un
+ * destino saliente sale de `mock/ids`, sin abrir su shard.
+ */
+async function vecinosDe(glosario: FuenteDeGlosario, fila: FilaDeGlosario): Promise<VecinoSimulado[]> {
+  const [salientes, entrantes] = await Promise.all([
+    Promise.all(
+      fila.relations.map(async (relacion): Promise<VecinoSimulado> => ({
+        type: relacion.type,
+        direction: 'outgoing',
+        conceptId: relacion.targetId,
+        slug: relacion.targetSlug,
+        display: relacion.targetName,
+        categoryKey: await glosario.categoriaDe(relacion.targetId),
+      })),
+    ),
+    glosario.entrantes(fila.id),
+  ]);
+  return [
+    ...salientes,
+    ...entrantes.map(([conceptId, type, slug, display, categoryKey]): VecinoSimulado => ({
+      type,
+      direction: 'incoming',
+      conceptId,
+      slug,
+      display,
+      categoryKey,
+    })),
+  ];
 }
 
 /** El fallo de lectura del glosario, con el sobre de error del repo. */
@@ -435,6 +508,19 @@ export function registrarTerminologia(
         limit,
         possiblyTruncated: total > nodes.length,
       };
+    } catch (error: unknown) {
+      return glosarioNoDisponible(error);
+    }
+  });
+
+  router.get('/terminology/concepts/:id/glossary-neighborhood', async ({ params, query }) => {
+    const pedido = pedidoDeVecindario(query);
+    if (typeof pedido === 'string') return validation(pedido);
+    try {
+      const fila = await glosario.porId(params['id']!);
+      if (fila === null) return notFound('Término del glosario no encontrado');
+      const manifiesto = await glosario.manifiesto();
+      return vecindarioEnLinea(fila, manifiesto, await vecinosDe(glosario, fila), pedido);
     } catch (error: unknown) {
       return glosarioNoDisponible(error);
     }
