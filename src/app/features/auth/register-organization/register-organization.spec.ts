@@ -202,9 +202,6 @@ describe('RegisterOrganization', () => {
       Record<
         | 'tradeName'
         | 'timeZone'
-        | 'middleName'
-        | 'thirdName'
-        | 'motherLastName'
         | 'incorporationCountry'
         | 'legalEntityType'
         | 'legalRepresentativePhone'
@@ -213,7 +210,11 @@ describe('RegisterOrganization', () => {
         string
       >
     > & {
-      /** Sobrescribe alguna de las cinco partes del nombre del representante legal. */
+      /**
+       * Sobrescribe alguna de las cinco partes del nombre del representante
+       * legal, que es también el del owner: la aseguradora no tiene otra
+       * persona que inicie sesión.
+       */
       legalRepresentativeNombre?: Partial<typeof NOMBRE_REPRESENTANTE_DE_PRUEBA>;
       /** Sobrescribe las tres gerencias enteras (para probar combinaciones de partes). */
       executives?: typeof GERENCIAS_DE_PRUEBA;
@@ -233,15 +234,6 @@ describe('RegisterOrganization', () => {
       // el valor explícito de acá siempre gana sobre el default que dispara
       // la suscripción al cambiar de país (ver `acomodarPaisYTipoSocietario`).
       timeZone: extra.timeZone ?? 'America/La_Paz',
-      ownerName: {
-        name: 'Ana',
-        middleName: extra.middleName ?? '',
-        thirdName: extra.thirdName ?? '',
-        extraNames: [] as string[],
-        lastName: 'Paz',
-        motherLastName: extra.motherLastName ?? '',
-      },
-      email: 'admin@andina.test',
       password: 'secreto12',
       constitutionFileId: extra.constitutionFileId ?? DOCUMENTOS_DE_PRUEBA.constitutionFileId,
       taxIdentifierFileId: extra.taxIdentifierFileId ?? DOCUMENTOS_DE_PRUEBA.taxIdentifierFileId,
@@ -373,11 +365,13 @@ describe('RegisterOrganization', () => {
         },
         executives: GERENCIAS_ESPERADAS,
       },
+      // El owner es el representante legal: mismo correo, mismo nombre.
       owner: {
-        email: 'admin@andina.test',
+        email: REPRESENTANTE_DE_PRUEBA.legalRepresentativeEmail,
         password: 'secreto12',
-        name: 'Ana',
-        lastName: 'Paz',
+        name: 'Mariana',
+        lastName: 'Siles',
+        motherLastName: 'Justiniano',
       },
     });
 
@@ -389,9 +383,7 @@ describe('RegisterOrganization', () => {
     completar({
       tradeName: 'Andina',
       timeZone: 'America/La_Paz',
-      middleName: 'María',
-      thirdName: 'José',
-      motherLastName: 'Quiroga',
+      legalRepresentativeNombre: { middleName: 'María', thirdName: 'José', motherLastName: 'Quiroga' },
     });
     component.submit();
 
@@ -409,7 +401,7 @@ describe('RegisterOrganization', () => {
 
   it('el owner con sólo tercer nombre lo manda como middleName', () => {
     fixture.detectChanges();
-    completar({ thirdName: 'José' });
+    completar({ legalRepresentativeNombre: { thirdName: 'José' } });
     component.submit();
 
     const req = http.expectOne('/iam/auth/register-organization');
@@ -896,7 +888,6 @@ describe('RegisterOrganization', () => {
       completar();
       fixture.detectChanges();
       avanzarHasta('Directorio ejecutivo');
-      avanzarHasta('Tu cuenta');
       fixture.debugElement
         .query(By.css('[data-testid="paginated-form-atras"]'))
         .nativeElement.click();
@@ -986,10 +977,10 @@ describe('RegisterOrganization', () => {
       req.flush(RESPUESTA);
     });
 
-    it('el segundo, tercero y nombres extra del owner respetan el límite agregado del backend', () => {
+    it('el segundo, tercero y nombres extra del representante (el owner) respetan el límite agregado del backend', () => {
       fixture.detectChanges();
       completar();
-      const grupo = component.form.controls.ownerName;
+      const grupo = component.form.controls.legalRepresentative;
       grupo.controls.middleName.setValue('a'.repeat(50));
       grupo.controls.thirdName.setValue('b'.repeat(50));
       component.submit();
@@ -997,11 +988,11 @@ describe('RegisterOrganization', () => {
       http.expectNone('/iam/auth/register-organization');
     });
 
-    it('los nombres agregados del owner se pliegan en middleName', () => {
+    it('los nombres agregados del representante se pliegan en el middleName del owner', () => {
       fixture.detectChanges();
-      completar({ middleName: 'María' });
-      component.form.controls.ownerName.controls.extraNames.push(controlDeNombreExtra());
-      component.form.controls.ownerName.controls.extraNames.at(0).setValue('Luz');
+      completar({ legalRepresentativeNombre: { middleName: 'María' } });
+      component.form.controls.legalRepresentative.controls.extraNames.push(controlDeNombreExtra());
+      component.form.controls.legalRepresentative.controls.extraNames.at(0).setValue('Luz');
       component.submit();
 
       const req = http.expectOne('/iam/auth/register-organization');
@@ -1129,39 +1120,59 @@ describe('RegisterOrganization', () => {
     });
   });
 
-  describe('nombre en cinco partes del owner', () => {
-    it('«Tu cuenta» es UNA sola página y trae las cinco partes del nombre juntas', () => {
+  describe('el representante legal es el owner (no hay «Tu cuenta»)', () => {
+    it('no existe una página «Tu cuenta» ni un segundo juego de nombre y correo', () => {
       fixture.detectChanges();
       completar();
       fixture.detectChanges();
-      avanzarHasta('Tu cuenta');
 
-      // Era la sección que el motor partía en dos, con el apellido materno
-      // huérfano al principio de la segunda página. Las cinco casillas —y el
-      // correo y la contraseña— tienen que verse a la vez.
+      // Se recorre el asistente como lo haría una persona: con el formulario
+      // completo cada página es válida y «Continuar» nunca se bloquea. El
+      // total sale del anuncio `aria-live`; en la última página no se hace
+      // clic, porque ahí el botón envía.
+      const anuncio: string =
+        fixture.nativeElement.querySelector('.paginated-form__anuncio')?.textContent ?? '';
+      const total = Number(/de (\d+)/.exec(anuncio)?.[1]);
+      const titulos: string[] = [];
+      for (let paso = 0; paso < total; paso += 1) {
+        titulos.push(
+          fixture.nativeElement.querySelector('.paginated-form__titulo')?.textContent ?? '',
+        );
+        if (paso === total - 1) break;
+        fixture.nativeElement.querySelector('[data-testid="paginated-form-continuar"]')?.click();
+        fixture.detectChanges();
+      }
+      expect(titulos.length).toBe(7);
+      expect(titulos.some((titulo) => titulo.includes('Tu cuenta'))).toBe(false);
+      expect('ownerName' in component.form.controls).toBe(false);
+      expect('email' in component.form.controls).toBe(false);
+    });
+
+    it('«Representante legal (1 de 2)» trae juntos el nombre, el correo y la contraseña', () => {
+      fixture.detectChanges();
+      completar();
+      fixture.detectChanges();
+      avanzarHasta('Representante legal (1 de 2)');
+
       for (const testId of [
-        'registro-organizacion-owner-nombre',
-        'registro-organizacion-owner-segundo-nombre',
-        'registro-organizacion-owner-tercer-nombre',
-        'registro-organizacion-owner-apellido-paterno',
-        'registro-organizacion-owner-apellido-materno',
-        'registro-organizacion-owner-correo',
-        'registro-organizacion-owner-password',
+        'registro-organizacion-representante-nombre',
+        'registro-organizacion-representante-segundo-nombre',
+        'registro-organizacion-representante-tercer-nombre',
+        'registro-organizacion-representante-apellido-paterno',
+        'registro-organizacion-representante-apellido-materno',
+        'registro-organizacion-representante-ci',
+        'registro-organizacion-representante-correo',
+        'registro-organizacion-representante-password',
       ]) {
         expect(fixture.nativeElement.querySelector(`[data-testid="${testId}"]`)).not.toBeNull();
       }
-
-      // Y el título no lleva numeración: «(1 de 2)» era justamente el síntoma.
-      const titulo = fixture.nativeElement.querySelector('.paginated-form__titulo')?.textContent;
-      expect(titulo).toContain('Tu cuenta');
-      expect(titulo).not.toContain('de 2');
     });
 
     it('los tres nombres ocupan un tercio y los dos apellidos una mitad', () => {
       fixture.detectChanges();
       completar();
       fixture.detectChanges();
-      avanzarHasta('Tu cuenta');
+      avanzarHasta('Representante legal (1 de 2)');
 
       const grilla: HTMLElement = fixture.nativeElement.querySelector(
         'app-campos-de-nombre-en-linea .nombres',
@@ -1171,61 +1182,48 @@ describe('RegisterOrganization', () => {
       expect(grilla.querySelectorAll('.nombres__campo--mitad').length).toBe(2);
     });
 
-    it('con los nombres vacíos, «Continuar» no avanza y las cinco casillas quedan marcadas', () => {
+    it('sin contraseña, «Continuar» no avanza de la página del representante', () => {
       fixture.detectChanges();
       completar();
+      component.form.controls.password.setValue('');
       fixture.detectChanges();
-      avanzarHasta('Tu cuenta');
-
-      const grupo = component.form.controls.ownerName;
-      grupo.reset({ name: '', middleName: '', thirdName: '', lastName: '', motherLastName: '' });
-      fixture.detectChanges();
+      avanzarHasta('Representante legal (1 de 2)');
 
       fixture.nativeElement.querySelector('[data-testid="paginated-form-continuar"]')?.click();
       fixture.detectChanges();
 
-      // El motor sólo marca el GRUPO; `alRechazarPagina` es quien alcanza a
-      // sus cinco hijos — sin eso las casillas vacías no se pintarían.
-      expect(grupo.controls.name.touched).toBe(true);
-      expect(grupo.controls.motherLastName.touched).toBe(true);
-      expect(fixture.nativeElement.querySelector('.paginated-form__titulo')?.textContent).toContain(
-        'Tu cuenta',
-      );
+      expect(
+        fixture.nativeElement.querySelector('.paginated-form__titulo')?.textContent,
+      ).toContain('Representante legal (1 de 2)');
     });
 
-    it('el owner compone su nombre en las claves del contrato, sin fullName', () => {
+    it('el owner copia el nombre y el correo del representante, y trae la contraseña', () => {
       fixture.detectChanges();
-      completar({ middleName: 'María', thirdName: 'José', motherLastName: 'Quiroga' });
+      completar({
+        legalRepresentativeEmail: 'mariana@andina.test',
+        legalRepresentativeNombre: {
+          middleName: 'María',
+          thirdName: 'José',
+          motherLastName: 'Quiroga',
+        },
+      });
 
       component.submit();
       const req = http.expectOne('/iam/auth/register-organization');
 
-      expect(req.request.body.owner.name).toBe('Ana');
-      expect(req.request.body.owner.lastName).toBe('Paz');
+      expect(req.request.body.owner.email).toBe('mariana@andina.test');
+      expect(req.request.body.owner.password).toBe('secreto12');
+      expect(req.request.body.owner.name).toBe('Mariana');
+      expect(req.request.body.owner.lastName).toBe('Siles');
       // El backend no tiene columna de tercer nombre: se pliega en `middleName`.
       expect(req.request.body.owner.middleName).toBe('María José');
       expect(req.request.body.owner.motherLastName).toBe('Quiroga');
       // El owner viaja en partes, no compuesto: `fullName` es de los contactos
       // (representante legal y gerencias), no de la cuenta.
       expect('fullName' in req.request.body.owner).toBe(false);
+      // Y el representante legal viaja igual que siempre, con el mismo correo.
+      expect(req.request.body.organization.legalRepresentative.email).toBe('mariana@andina.test');
       req.flush(RESPUESTA);
-    });
-
-    it('el tope de 200 caracteres del nombre compuesto alcanza también al owner', () => {
-      fixture.detectChanges();
-      completar();
-
-      const grupo = component.form.controls.ownerName;
-      grupo.controls.name.setValue('A'.repeat(60));
-      grupo.controls.middleName.setValue('B'.repeat(60));
-      grupo.controls.thirdName.setValue('C'.repeat(60));
-      grupo.controls.lastName.setValue('D'.repeat(60));
-
-      // Antes no había dónde ponerlo: eran cinco controles sueltos, y el tope
-      // depende de las cinco partes juntas. Como grupo, lo hereda de
-      // `grupoDeNombre()` igual que el representante legal.
-      expect(grupo.hasError('nombreCompletoLargo')).toBe(true);
-      expect(component.form.invalid).toBe(true);
     });
   });
 
@@ -1377,15 +1375,14 @@ describe('RegisterOrganization', () => {
       http.expectNone('/iam/auth/register-organization');
     });
 
-    it('AC-02 y AC-04: Bolivia (zona única) queda en 8 páginas, sin «Cómo se la identifica» y sin selector de zona', () => {
+    it('AC-02 y AC-04: Bolivia (zona única) queda en 7 páginas, sin «Cómo se la identifica», sin «Tu cuenta» y sin selector de zona', () => {
       fixture.detectChanges();
       completar();
       fixture.detectChanges();
 
-      // Ocho, no nueve: «Tu cuenta» dejó de partirse en dos cuando los cinco
-      // nombres del owner pasaron a viajar como un único campo (`ownerName`),
-      // que es lo que los deja en una sola pantalla con su reparto de anchos.
-      expect(totalDePaginas()).toBe(8);
+      // Siete: ya no hay «Tu cuenta». La única persona que inicia sesión es el
+      // representante legal, y su contraseña se pide en su propia página.
+      expect(totalDePaginas()).toBe(7);
       expect(titulosDeLosPasos().some((titulo) => titulo.includes('identifica'))).toBe(false);
 
       // «La empresa»: nombre, sigla, país, tipo societario — sin código ni
@@ -1432,7 +1429,7 @@ describe('RegisterOrganization', () => {
 
       // Una más que Bolivia: el selector de zona horaria es el quinto campo
       // de «Datos de la aseguradora», y el motor parte esa sección en dos.
-      expect(totalDePaginas()).toBe(9);
+      expect(totalDePaginas()).toBe(8);
 
       avanzarHasta('Datos de la aseguradora');
       // `[data-testid]` va en el host `<app-select>`; el `<select>` nativo

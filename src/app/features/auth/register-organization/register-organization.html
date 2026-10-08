@@ -29,8 +29,8 @@
       <div class="registro__header">
         <h1 class="registro__title">Registrá tu aseguradora</h1>
         <p class="registro__subtitle">
-          Creá la cuenta de tu organización, adjuntá sus documentos legales y dala de alta con su
-          usuario administrador en un solo paso.
+          Creá la cuenta de tu organización, adjuntá sus documentos legales y dala de alta en un solo
+          paso. Su representante legal es quien inicia sesión.
         </p>
       </div>
 
@@ -125,13 +125,6 @@
               [grupo]="form.controls.legalRepresentative"
               [obligatorio]="true"
               prefijoTestId="registro-organizacion-representante"
-            />
-          </ng-template>
-          <ng-template appCampoPersonalizado="ownerName">
-            <app-campos-de-nombre-en-linea
-              [grupo]="form.controls.ownerName"
-              [obligatorio]="true"
-              prefijoTestId="registro-organizacion-owner"
             />
           </ng-template>
           <ng-template appCampoPersonalizado="powerOfAttorneyFileId">
