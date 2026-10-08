@@ -117,9 +117,9 @@ export const VACIAS: ReadonlySet<string> = new Set([
   'se',
   'su',
   'sus',
-  'le',
-  'su',
-  'sus',
+  'te',
+  'tu',
+  'tus',
   'yo',
   // Los verbos que sólo sostienen la frase.
   'era',
@@ -143,7 +143,7 @@ export const VACIAS: ReadonlySet<string> = new Set([
   'tengo',
   'tiene',
   'tienen',
-  'tiene',
+  'tienes',
   'tuve',
   // Tiempo y cantidad: «hace tres días», «desde el lunes», «muy fuerte».
   'ahora',
@@ -342,7 +342,7 @@ export interface Token {
  * encontrarse dentro de «ataques de pánico» — dos falsos positivos que el
  * motor viejo tenía, y el segundo mandaba a urgencias a alguien con ansiedad.
  */
-const PRONOMBRES_ATONOS: ReadonlySet<string> = new Set(['se', 'me', 'le', 'le', 'lo', 'la', 'nos', 'les']);
+const PRONOMBRES_ATONOS: ReadonlySet<string> = new Set(['se', 'me', 'te', 'le', 'lo', 'la', 'nos', 'les']);
 
 /** Si lo anterior es «no», saltando pronombres átonos («no se me …»). */
 function negadoAntes(tokens: readonly Token[]): boolean {
