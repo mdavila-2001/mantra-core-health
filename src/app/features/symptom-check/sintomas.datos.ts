@@ -1005,6 +1005,9 @@ export const SINTOMAS: readonly Sintoma[] = [
       'me late a mil',
       'el corazon se me sale',
       'se me sale el corazon',
+      'el corazon me late raro',
+      'me late raro el corazon',
+      'el corazon me late rapido',
     ],
     especialidades: [
       { nombre: 'Cardiología', peso: 3 },
