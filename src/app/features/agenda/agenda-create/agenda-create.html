@@ -37,7 +37,7 @@
     </p>
     @if (cuposCreados(); as cupos) {
       <p class="agenda-create__cupos">
-        Se abrieron <strong>{{ cupos }}</strong> turnos para los próximos meses.
+        Se abrieron <strong>{{ cupos }}</strong> horarios para los próximos meses.
       </p>
     }
     <!-- La salida natural después de tocar el horario es mirarlo, no ir al
@@ -119,7 +119,7 @@
           </app-form-field>
 
           <p class="agenda-create__nota">
-            Se crea una agenda aparte de la que ya tenía. La otra sigue con sus turnos abiertos:
+            Se crea una agenda aparte de la que ya tenía. La otra sigue con sus horarios abiertos:
             publicar acá no la toca.
           </p>
 
@@ -146,16 +146,16 @@
       <div class="agenda-create__pregunta">
         <div class="agenda-create__pregunta-texto">
           <span class="agenda-create__pregunta-titulo" id="agenda-create-flexible-titulo">
-            Horario flexible, sin turnos fijos
+            Horario flexible, sin citas de duración fija
           </span>
           <span class="agenda-create__pregunta-ayuda">
-            Atiende dentro de su horario y el paciente pide la hora que quiera, sin turnos de
+            Atiende dentro de su horario y el paciente pide la hora que quiera, sin citas de
             duración fija.
           </span>
         </div>
         <app-segmented-control
           data-testid="agenda-create-flexible"
-          ariaLabel="Horario flexible, sin turnos fijos"
+          ariaLabel="Horario flexible, sin citas de duración fija"
           [options]="siNo"
           [value]="flexible() ? 'si' : 'no'"
           (valueChange)="flexible.set($event === 'si')"
@@ -209,7 +209,7 @@
               @if (!flexible()) {
                 <th scope="col">Dura</th>
                 <th scope="col">Descanso</th>
-                <th scope="col">Turnos</th>
+                <th scope="col">Horarios</th>
               }
             </tr>
           </thead>
@@ -289,7 +289,7 @@
                       @if (soloServicios(dia.indice)) {
                         <!-- Sin turnos fijos: cada servicio dura lo que declaró su
                            profesional y el turno nace al reservarlo. -->
-                        <span title="Los turnos de servicios nacen al reservar">—</span>
+                        <span title="Las citas de servicios se crean al reservar">—</span>
                       } @else {
                         <strong>{{ turnosDelDia(dia.indice) }}</strong>
                       }
@@ -374,7 +374,7 @@
               <circle cx="12" cy="12" r="9" />
               <path d="M12 7v5l3 2" />
             </svg>
-            Así van a quedar sus turnos
+            Así van a quedar sus horarios
           </h3>
 
           <!-- Una fila por día, en columnas: el día, el rango y la cuenta
@@ -395,19 +395,19 @@
                     {{ grupoDe(diasActivos()[$index].indice).controls.desde.value }} –
                     {{ grupoDe(diasActivos()[$index].indice).controls.hasta.value }}
                   </span>
-                  <span class="agenda-create__previa-detalle">Sin turnos fijos</span>
+                  <span class="agenda-create__previa-detalle">Sin citas de duración fija</span>
                 } @else if (dia.turnos.length > 0) {
                   <span class="agenda-create__previa-horas">
                     {{ dia.turnos[0].desde }} – {{ dia.turnos[dia.turnos.length - 1].hasta }}
                   </span>
                   <span class="agenda-create__previa-detalle">
                     {{ dia.turnos.length }}
-                    {{ dia.turnos.length === 1 ? 'turno' : 'turnos' }} de
+                    {{ dia.turnos.length === 1 ? 'cita' : 'citas' }} de
                     {{ dia.turnos[0].minutos }} min
                   </span>
                 } @else {
                   <span class="agenda-create__previa-horas agenda-create__previa-horas--vacia">
-                    No entra ningún turno
+                    No entra ninguna cita
                   </span>
                 }
 
@@ -441,7 +441,7 @@
                     class="agenda-create__previa-resto"
                     data-testid="agenda-create-previa-extiende"
                   >
-                    El último turno termina a las {{ dia.turnos[dia.turnos.length - 1].hasta }}: se
+                    La última cita termina a las {{ dia.turnos[dia.turnos.length - 1].hasta }}: se
                     completa aunque pase su hora de fin, para que no pierda ese tiempo.
                   </p>
                 }
@@ -534,7 +534,7 @@
               <app-form-field
                 class="agenda-create__regla"
                 label="Anticipación mínima"
-                hint="Hasta cuánto antes del turno se puede pedir."
+                hint="Hasta cuánto antes de la cita se puede pedir."
               >
                 <div class="agenda-create__con-unidad">
                   <app-input
@@ -571,8 +571,8 @@
               </app-form-field>
               <app-form-field
                 class="agenda-create__regla"
-                label="Turnos activos por paciente"
-                hint="Máximo de turnos pendientes a la vez."
+                label="Citas activas por paciente"
+                hint="Máximo de citas pendientes a la vez."
               >
                 <div class="agenda-create__con-unidad">
                   <app-input
@@ -580,7 +580,7 @@
                     placeholder="Ej.: 2"
                     formControlName="maxActivePerPatient"
                   />
-                  <span class="agenda-create__unidad" aria-hidden="true">turnos</span>
+                  <span class="agenda-create__unidad" aria-hidden="true">citas</span>
                 </div>
               </app-form-field>
             </div>
@@ -753,12 +753,12 @@
           <!-- En horario flexible no hay turnos que contar: la franja se
                atiende entera y la hora la elige el paciente. -->
           @if (flexible()) {
-            Horario flexible: sin turnos fijos, el paciente pide la hora que quiera.
+            Horario flexible: sin citas de duración fija, el paciente pide la hora que quiera.
           } @else if (vistaPrevia().total === 0) {
-            Con estas horas no entra ningún turno: revise las duraciones.
+            Con estas horas no entra ninguna cita: revise las duraciones.
           } @else {
             {{ vistaPrevia().total }}
-            {{ vistaPrevia().total === 1 ? 'turno' : 'turnos' }} por semana.
+            {{ vistaPrevia().total === 1 ? 'horario' : 'horarios' }} por semana.
           }
           {{ vigenciaDeLaPrevia() }}
         </p>

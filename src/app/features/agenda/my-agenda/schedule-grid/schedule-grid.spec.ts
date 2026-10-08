@@ -416,7 +416,7 @@ describe('ScheduleGrid', () => {
         fixture.nativeElement.querySelector('[data-testid="horario-globo"]')?.textContent ?? '';
       expect(texto).toContain('Atiende');
       expect(texto).toContain('Otros servicios');
-      expect(texto).not.toContain('Turnos en la franja');
+      expect(texto).not.toContain('Horarios en la franja');
       expect(texto).not.toContain('Cada consulta');
     });
 
@@ -430,7 +430,7 @@ describe('ScheduleGrid', () => {
       const texto =
         fixture.nativeElement.querySelector('[data-testid="horario-globo"]')?.textContent ?? '';
       expect(texto).toContain('Consultas y otros servicios');
-      expect(texto).toContain('Turnos en la franja');
+      expect(texto).toContain('Horarios en la franja');
     });
 
     it('con otros servicios en la semana, la leyenda explica el segundo tono', () => {
@@ -478,7 +478,7 @@ describe('ScheduleGrid', () => {
     expect(texto).toContain('20 min');
     expect(texto).toContain('10 min');
     expect(texto).toContain('8');
-    expect(texto).toContain('Pacientes por turno');
+    expect(texto).toContain('Pacientes por horario');
     expect(texto).toContain('Hasta el 30/6/2027');
     // El bloque queda descrito por el globo, para el lector de pantalla.
     expect(bloques()[0].getAttribute('aria-describedby')).toBe('grilla-globo');

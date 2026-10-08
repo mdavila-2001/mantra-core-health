@@ -315,7 +315,7 @@
                     type="button"
                     class="mi-agenda__accion mi-agenda__accion--aviso"
                     data-testid="aviso-agotan"
-                    aria-label="Turnos por agotarse — advertencia"
+                    aria-label="Horarios por agotarse — advertencia"
                     aria-controls="aviso-agotan-globo"
                     [attr.aria-expanded]="avisoAbierto()"
                     (clicked)="alternarAviso()"
@@ -337,7 +337,7 @@
                       />
                       <path d="M12 9.5v4.5M12 17.5h.01" />
                     </svg>
-                    Turnos por agotarse
+                    Horarios por agotarse
                   </button>
                   <!-- Oculto y no ausente: el texto sigue en el documento para el
                      lector de pantalla que recorre la barra. -->
@@ -432,7 +432,7 @@
                se lee en el globo de cada franja. -->
           @if (!seAgotan() && cuposHastaTexto()) {
             <p class="mi-agenda__cupos" role="status">
-              Tiene turnos abiertos hasta el <strong>{{ cuposHastaTexto() }}</strong
+              Tiene horarios abiertos hasta el <strong>{{ cuposHastaTexto() }}</strong
               >.
             </p>
           }
@@ -445,7 +445,7 @@
           <section class="mi-agenda__historicos">
             <h2 class="mi-agenda__historicos-titulo">Horarios anteriores</h2>
             <p class="mi-agenda__historicos-nota">
-              Ya no se publican. Los turnos que tenían paciente se conservan.
+              Ya no se publican. Las citas que tenían paciente se conservan.
             </p>
             <!-- Punto 2: «tabla inferior con históricos». Antes era una lista;
                  ahora es una tabla real — con `overflow-x:auto` propio para que

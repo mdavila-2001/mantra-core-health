@@ -195,7 +195,7 @@ export class DiagnosticOrders {
         if (pagina.items.length === 0) {
           this.estado.set(
             empty(
-              { label: 'Ver mis turnos', route: '/my-account/appointments' },
+              { label: 'Ver mis citas', route: '/my-account/appointments' },
               'No tiene órdenes de laboratorio ni de imagen. Cuando un médico le pida un estudio en una consulta, aparece acá con las indicaciones para hacérselo.',
             ),
           );

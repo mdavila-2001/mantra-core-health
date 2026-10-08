@@ -46,17 +46,17 @@ const PRESENTACION_POR_CODIGO: Readonly<Record<string, BookingStatusPresentation
   // «Por confirmar» y con la lista de espera porque comparten la
   // situación —depende de que el consultorio responda— y leerlos con el
   // mismo color es lo que deja ver de un vistazo qué está pendiente.
-  BOOKING_REQUESTED: { tone: 'warning', label: 'Pedido' },
+  BOOKING_REQUESTED: { tone: 'warning', label: 'Pedida' },
   BOOKING_PENDING_CONFIRMATION: { tone: 'warning', label: 'Por confirmar' },
-  BOOKING_CONFIRMED: { tone: 'success', label: 'Confirmado' },
+  BOOKING_CONFIRMED: { tone: 'success', label: 'Confirmada' },
   BOOKING_CHECKED_IN: { tone: 'info', label: 'Ya llegó' },
-  // «Atendido» tiene dos códigos en el catálogo vivo: el estado de la cita y
+  // «Atendida» tiene dos códigos en el catálogo vivo: el estado de la cita y
   // el evento con que el flujo la dio por hecha. Para el titular son lo mismo.
-  BOOKING_COMPLETED: { tone: 'secondary', label: 'Atendido' },
-  EV_BOOKING_DONE: { tone: 'secondary', label: 'Atendido' },
+  BOOKING_COMPLETED: { tone: 'secondary', label: 'Atendida' },
+  EV_BOOKING_DONE: { tone: 'secondary', label: 'Atendida' },
   BOOKING_NO_SHOW: { tone: 'warning', label: 'No asistió' },
-  BOOKING_CANCELLED: { tone: 'error', label: 'Cancelado' },
-  BOOKING_RESCHEDULED: { tone: 'warning', label: 'Reprogramado' },
+  BOOKING_CANCELLED: { tone: 'error', label: 'Cancelada' },
+  BOOKING_RESCHEDULED: { tone: 'warning', label: 'Reprogramada' },
 });
 
 /**
