@@ -1124,6 +1124,12 @@ export const SINTOMAS: readonly Sintoma[] = [
       // Camba «chupeé»: recto, porción final del intestino (Sanabria Fernández).
       'me duele el chupee',
       'me arde el chupee',
+      // Registro popular (2026-10-08): quien lo dice así no por eso está menos enfermo.
+      'me arde el culo al cagar',
+      'me duele el culo al cagar',
+      'me duele el poto al cagar',
+      'bolitas en el culo',
+      'bolitas en el poto',
     ],
     especialidades: [
       { nombre: 'Gastroenterología', peso: 3 },
@@ -1140,6 +1146,10 @@ export const SINTOMAS: readonly Sintoma[] = [
       'heces con sangre',
       'cago sangre',
       'cagar sangre',
+      'me sangra el culo',
+      'me sangra el poto',
+      'sangre en el culo',
+      'sangre en el poto',
       'estoy cagando sangre',
       'caca con sangre',
       'sangre en la caca',
@@ -1905,7 +1915,20 @@ export const SINTOMAS: readonly Sintoma[] = [
   {
     id: 'dolor-de-testiculos',
     nombre: 'dolor o bulto en los testículos',
-    sinonimos: ['bulto en el testiculo', 'varicocele', 'me duelen los testiculos'],
+    sinonimos: [
+      'bulto en el testiculo',
+      'varicocele',
+      'me duelen los testiculos',
+      // Registro popular (2026-10-08). «Huevos» a secas NO: es también el alimento.
+      'me duelen los huevos',
+      'me duelen las bolas',
+      'me duelen las pelotas',
+      'me duelen los cojones',
+      'huevos hinchados',
+      'bolas hinchadas',
+      'bulto en los huevos',
+      'bulto en la bola',
+    ],
     partes: ['testiculo'],
     soloParaSexo: 'MALE',
     especialidades: [{ nombre: 'Urología', peso: 3 }],
@@ -1918,6 +1941,15 @@ export const SINTOMAS: readonly Sintoma[] = [
       'disfuncion erectil',
       'no puedo tener ereccion',
       'impotencia',
+      // Registro popular (2026-10-08). Ninguna se apoya en «no» + una palabra («no se me para» a
+      // secas cazaba cualquier negación): siempre nombran la parte y el verbo.
+      'la pilila no se me pone dura',
+      'la paloma no se me pone dura',
+      'la paloma no se me endurece',
+      'la pilila no me responde',
+      'la paloma no me responde',
+      'no se me levanta la paloma',
+      'no se me levanta la pilila',
       'eyaculacion precoz',
       // «no se me para» a secas NO: el motor se queda con «no» y cazaba cualquier negación.
       // Ninguna se apoya en «no» + «pene» solos: cazaban «me duele el pene y no …».
@@ -2014,6 +2046,12 @@ export const SINTOMAS: readonly Sintoma[] = [
       'flujo',
       'descenso',
       'me pica la vagina',
+      // Registro popular (2026-10-08). «Concha» NO está acá: a una letra de «roncha» mandaba las erupciones
+      // a Ginecología (la capa anatómica del servicio sí la entiende, por palabra exacta). «Cuca» a secas tampoco.
+      'me pica la cuca',
+      'me arde la cuca',
+      'me arde la chucha',
+      'me pica la chucha',
       'candidiasis',
       'mal olor vaginal',
       'ardor vaginal',
@@ -2111,6 +2149,13 @@ export const SINTOMAS: readonly Sintoma[] = [
       'tuve relaciones sin cuidarme',
       'me sale pus del pene',
       'pus del pene',
+      'pus de la pilila',
+      'pus de la paloma',
+      'me sale pus de la chota',
+      'me gotea la pilila',
+      'me gotea la paloma',
+      'me sale algo de la pilila',
+      'me sale algo de la paloma',
       'secrecion del pene',
       'goteo en el pene',
       'purgaciones',
