@@ -37,7 +37,7 @@
   <!-- Sesión válida de una cuenta que no es de un paciente. No es un 403: es
        que esta pantalla no le corresponde. -->
   <app-alert tone="info" title="Esta sección es para pacientes">
-    Su cuenta no tiene un perfil de paciente. Si atiende turnos, entre por la agenda de la
+    Su cuenta no tiene un perfil de paciente. Si atiende con cita, entre por la agenda de la
     organización.
   </app-alert>
   <!-- La salida, no solo la explicación: el mismo destino que el aviso nombra.
@@ -192,7 +192,7 @@
                       <span>–{{ turno.hasta | date: 'HH:mm' }}</span>
                     }
                   } @else {
-                    Turno sin horario asignado
+                    Cita sin horario asignado
                   }
                 </h3>
                 @if (turno.agenda !== '') {

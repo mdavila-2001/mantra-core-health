@@ -36,7 +36,7 @@ const LABELS: Readonly<
       'Cuando su médico emite una receta o cierra una consulta suya.',
   },
   SCHEDULING: {
-    title: 'Turnos',
+    title: 'Citas',
     detail:
       'Recordatorios, cambios de cita, demoras y cupos que se liberan.',
   },

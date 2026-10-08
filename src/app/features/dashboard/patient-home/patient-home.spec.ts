@@ -354,7 +354,7 @@ describe('PatientHome', () => {
       '[data-testid="mi-salud-primera-vez"]',
     );
     expect(primera).not.toBeNull();
-    expect(primera?.textContent).toContain('Pedir mi primer turno');
+    expect(primera?.textContent).toContain('Pedir mi primera cita');
   });
 
   it('con historia, ofrece ver y descargar la última receta', async () => {
@@ -412,7 +412,7 @@ describe('PatientHome', () => {
     expect(texto()).toContain('Ver y descargar');
   });
 
-  it('sin ficha de paciente no pide turnos ni historia', async () => {
+  it('sin ficha de paciente no pide citas ni historia', async () => {
     await montar({ pid: undefined });
 
     // El panel no sale a la red por lo suyo: sin ficha no hay turnos ni

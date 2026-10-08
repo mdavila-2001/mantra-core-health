@@ -1250,7 +1250,7 @@ export class AgendaCreate {
       message: `${this.resumen()}. Los pacientes ya pueden reservar.`,
       details: [
         {
-          label: 'Turnos abiertos',
+          label: 'Horarios abiertos',
           value: `${cupos} para los próximos meses`,
         },
         // Lo que pasó con el horario anterior, dicho y no callado: los turnos
@@ -1261,7 +1261,7 @@ export class AgendaCreate {
           : [
               {
                 label: 'Del horario anterior',
-                value: `${this.cuposSoltados()} turnos libres se retiraron; ${this.cuposConservados()} con cita siguen en pie`,
+                value: `${this.cuposSoltados()} horarios libres se retiraron; ${this.cuposConservados()} con cita siguen en pie`,
               },
             ]),
       ],
@@ -1292,7 +1292,7 @@ export class AgendaCreate {
     if (generados % porSemana === 0) return;
 
     console.warn(
-      `[agenda] La vista previa calculó ${porSemana} turnos por semana y el ` +
+      `[agenda] La vista previa calculó ${porSemana} horarios por semana y el ` +
         `servidor generó ${generados}, que no es múltiplo. Puede haber cambiado ` +
         'la regla del resto: ver calcularTurnos.',
     );
@@ -1355,7 +1355,7 @@ export class AgendaCreate {
       this.conAlmuerzo() && !this.almuerzoInvalido()
         ? `, almuerzo de ${enHoras(this.almuerzoDesde())} a ${enHoras(this.almuerzoHasta())}`
         : '';
-    if (this.flexible()) return `${dias}${horario}${almuerzo}, horario flexible sin turnos fijos`;
+    if (this.flexible()) return `${dias}${horario}${almuerzo}, horario flexible sin citas de duración fija`;
     // Con franjas de servicios la frase no puede decir «consultas de 30 minutos» de
     // todo el horario: ni todo es consulta, ni los servicios tienen un largo único.
     const hayServicios = activos.some(

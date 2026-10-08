@@ -173,8 +173,8 @@ export class Blocks {
           this.editando.set(null);
           this.toast.success(
             res.blockedSlots > 0
-              ? `Se cerraron ${res.blockedSlots} ${res.blockedSlots === 1 ? 'turno' : 'turnos'} que quedaron dentro.`
-              : 'Los turnos que ya estaban cerrados siguen cerrados.',
+              ? `Se cerraron ${res.blockedSlots} ${res.blockedSlots === 1 ? 'horario' : 'horarios'} que quedaron dentro.`
+              : 'Los horarios que ya estaban cerrados siguen cerrados.',
             'Bloqueo corregido',
           );
           this.cargar();
@@ -369,7 +369,7 @@ export class Blocks {
     const seguro = await this.dialogs.confirm({
       title: 'Quitar este bloqueo',
       message:
-        'El rato deja de estar cerrado. Los turnos que se cerraron al crearlo no vuelven solos: ' +
+        'El rato deja de estar cerrado. Los horarios que se cerraron al crearlo no vuelven solos: ' +
         'hay que volver a publicar el horario para abrirlos.',
       details: [
         { label: 'Motivo', value: bloqueo.motivo },

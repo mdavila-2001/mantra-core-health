@@ -176,7 +176,7 @@ export class PatientHome {
     if (perfil === null) {
       this.estado.set(
         empty(
-          { label: 'Ir a mis turnos', route: MIS_TURNOS_ROUTE },
+          { label: 'Ir a mis citas', route: MIS_TURNOS_ROUTE },
           'Su cuenta todavía no tiene una ficha de paciente.',
         ),
       );

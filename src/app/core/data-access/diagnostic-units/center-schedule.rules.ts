@@ -143,7 +143,7 @@ export function validarHorario(schedule: CenterSchedule, nombreDe: (donde: strin
       } else if (hasta <= desde) {
         problemas.push({ donde, mensaje: `${nombre}, ${dia}: la hora de fin tiene que ser posterior a la de inicio.` });
       } else if (hasta - desde < block.slotMinutes) {
-        problemas.push({ donde, mensaje: `${nombre}, ${dia}: no entra ni un turno de ${block.slotMinutes} min.` });
+        problemas.push({ donde, mensaje: `${nombre}, ${dia}: no entra ni una cita de ${block.slotMinutes} min.` });
       }
     }
   };
@@ -165,7 +165,7 @@ export function describirHorario(block: ScheduleBlock): string {
     porFranja.set(clave, [...(porFranja.get(clave) ?? []), w.dayOfWeek]);
   }
   const partes = [...porFranja.entries()].map(([franja, dias]) => `${agruparDias(dias)} ${franja}`);
-  return `${partes.join(' · ')} · turnos de ${block.slotMinutes} min`;
+  return `${partes.join(' · ')} · citas de ${block.slotMinutes} min`;
 }
 
 function agruparDias(dias: readonly number[]): string {

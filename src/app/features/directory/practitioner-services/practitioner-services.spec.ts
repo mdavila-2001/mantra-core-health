@@ -108,7 +108,7 @@ describe('PractitionerServices', () => {
     expect(q('servicio-duracion')?.textContent).not.toContain('–');
   });
 
-  it('«Pedir turno» lleva a agendar con el profesional y el servicio ya elegidos', () => {
+  it('«Pedir cita» lleva a agendar con el profesional y el servicio ya elegidos', () => {
     montar();
     responder([oferta()]);
 
@@ -119,7 +119,7 @@ describe('PractitionerServices', () => {
     expect(url.searchParams.get('profesional')).toBe('prof-1');
     expect(url.searchParams.get('servicio')).toBe('of-1');
     // El nombre accesible dice QUÉ se pide: «Pedir turno» repetido no se distingue.
-    expect(enlace.getAttribute('aria-label')).toBe('Pedir turno: Ecocardiograma Doppler');
+    expect(enlace.getAttribute('aria-label')).toBe('Pedir cita: Ecocardiograma Doppler');
   });
 
   it('avisa cuando el profesional tiene que confirmarlo', () => {

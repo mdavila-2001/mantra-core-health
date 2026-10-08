@@ -343,7 +343,7 @@ describe('DiagnosticOrders', () => {
     expect(codigos(OTRA)).not.toContain('reservar');
   });
 
-  it('una orden con turno muestra «Con turno» y cambia «Reservar hora» por «Ver turno»', async () => {
+  it('una orden con turno muestra «Con turno» y cambia «Reservar hora» por «Ver cita»', async () => {
     configurar(PROFILE_ID);
     const componente = await mount();
     const conTurno = orden({

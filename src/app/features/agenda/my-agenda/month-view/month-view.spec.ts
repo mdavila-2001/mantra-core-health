@@ -112,14 +112,14 @@ describe('MonthView', () => {
     montar([cupoFuturo(11, 4, 4)], [], MES_FUTURO);
 
     expect(celda(11)?.querySelector('.mes__cuenta-larga')?.textContent?.trim()).toBe('4 cupos disponibles');
-    expect(celda(11)?.getAttribute('aria-label')).toContain('4 turnos disponibles');
+    expect(celda(11)?.getAttribute('aria-label')).toContain('4 horarios disponibles');
   });
 
   it('un día sin capacidad restante muestra cero disponibles', () => {
     montar([cupoFuturo(11, 4, 0)], [], MES_FUTURO);
 
     expect(celda(11)?.querySelector('.mes__cuenta-larga')?.textContent?.trim()).toBe('0 cupos disponibles');
-    expect(celda(11)?.getAttribute('aria-label')).toContain('sin turnos disponibles');
+    expect(celda(11)?.getAttribute('aria-label')).toContain('sin horarios disponibles');
   });
 
   it('un solo cupo libre va en singular', () => {
@@ -134,7 +134,7 @@ describe('MonthView', () => {
     const etiqueta = celda(11)?.getAttribute('aria-label') ?? '';
     // `es-BO` formatea con coma: «viernes, 11 de enero».
     expect(etiqueta).toContain('11 de enero');
-    expect(etiqueta).toContain('2 turnos disponibles');
+    expect(etiqueta).toContain('2 horarios disponibles');
     expect(etiqueta).not.toContain('reservad');
   });
 
@@ -288,7 +288,7 @@ describe('MonthView', () => {
     };
   }
 
-  it('en horarios, el globo lista los turnos disponibles publicados, no los tomados', async () => {
+  it('en horarios, el globo lista los horarios disponibles publicados, no los tomados', async () => {
     montar(
       [
         turno(15, 10, 1, 0, 'tomado'),
@@ -300,7 +300,7 @@ describe('MonthView', () => {
     );
 
     const texto = await globoDe(15);
-    expect(texto).toContain('2 turnos disponibles');
+    expect(texto).toContain('2 horarios disponibles');
     expect(filasDelGlobo()).toEqual(['08:00–08:30 Libre', '09:00–09:30 1 de 2 lugares libres']);
   });
 
@@ -312,7 +312,7 @@ describe('MonthView', () => {
     const texto = await globoDe(11);
     expect(texto).not.toContain('reservado');
     expect(texto).toContain('Día pasado: ya no se ofrecen turnos.');
-    expect(texto).not.toContain('Sin turnos disponibles');
+    expect(texto).not.toContain('Sin horarios disponibles');
   });
 
   /** Una caja de día, como la da `getBoundingClientRect`. */

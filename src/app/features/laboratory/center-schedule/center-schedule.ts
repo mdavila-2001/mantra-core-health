@@ -175,8 +175,8 @@ export class CenterSchedulePage implements OnInit {
         sinTurnos: m.operativos === 0,
         cupo:
           m.operativos === 0
-            ? `Sin ${m.equipoPlural} operativos: no se dan turnos`
-            : `${m.operativos} ${m.operativos === 1 ? 'paciente' : 'pacientes'} por turno (${m.operativos} ${m.operativos === 1 ? m.equipoSingular : m.equipoPlural})`,
+            ? `Sin ${m.equipoPlural} operativos: no se dan citas`
+            : `${m.operativos} ${m.operativos === 1 ? 'paciente' : 'pacientes'} por horario (${m.operativos} ${m.operativos === 1 ? m.equipoSingular : m.equipoPlural})`,
         excepciones: m.estudios
           .filter((s) => borrador.studies.some((x) => x.studyCode === s.code))
           .map((s) => ({ nombre: s.name, horario: describirHorario(resolverHorario(borrador, s.code, m.code).block) })),
