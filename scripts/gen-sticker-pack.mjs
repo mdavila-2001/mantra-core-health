@@ -71,7 +71,7 @@ const PACK = [
   { clave: 'gracias', hex: '1F64F', frase: '¡Gracias!', nombre: 'Gracias', id: 'a7c1f0e2-0002-4a00-9000-5713ca110002' },
   { clave: 'en-camino', hex: '1F697', frase: 'Ya voy en camino', nombre: 'Ya voy en camino', id: 'a7c1f0e2-0003-4a00-9000-5713ca110003' },
   { clave: 'llegando-tarde', hex: '23F0', frase: 'Llego unos minutos tarde', nombre: 'Llego tarde', id: 'a7c1f0e2-0004-4a00-9000-5713ca110004' },
-  { clave: 'confirmado', hex: '2705', frase: 'Turno confirmado', nombre: 'Turno confirmado', id: 'a7c1f0e2-0005-4a00-9000-5713ca110005' },
+  { clave: 'confirmado', hex: '2705', frase: 'Cita confirmada', nombre: 'Cita confirmada', id: 'a7c1f0e2-0005-4a00-9000-5713ca110005' },
   { clave: 'te-espero', hex: '1FA7A', frase: 'Le espero en la consulta', nombre: 'Le espero en la consulta', id: 'a7c1f0e2-0006-4a00-9000-5713ca110006' },
   { clave: 'receta-lista', hex: '1F48A', frase: 'Su receta está lista', nombre: 'Receta lista', id: 'a7c1f0e2-0007-4a00-9000-5713ca110007' },
   { clave: 'tomar-remedio', hex: '1F552', frase: 'Recuerde su medicamento', nombre: 'Recuerde su medicamento', id: 'a7c1f0e2-0008-4a00-9000-5713ca110008' },
