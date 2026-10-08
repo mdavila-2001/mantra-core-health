@@ -1,7 +1,7 @@
 # Reporte — El alta de aseguradora sin «Tu cuenta»: el representante legal es el owner
 
 - **Fecha:** 2026-10-08
-- **Rama:** `marcelo/alta-aseguradora-solo-representante` → PR a `mockup`
+- **Rama:** `marcelo/alta-aseguradora-solo-representante-dev` → PR a `dev` (el mismo cambio de la rama de `mockup`, portado; ver «Port a dev»)
 - **Pedido:** el único que inicia sesión por una aseguradora es su representante legal. El paso «Tu cuenta» (un segundo juego de nombre, correo y contraseña para «quien administra») ya no va.
 - **Peldaño de evidencia:** **VERIFIED** en el navegador contra el simulador (`mockup`). **No** se probó contra la API real (ver «No cubierto»).
 
@@ -63,3 +63,20 @@ Capturas del navegador, en [evidencia/](./evidencia/): `01` el representante con
 - **El MP4 completo del video.** Se ensayó hasta «Mi perfil»; el tramo posterior (Mis productos, solicitudes, siniestralidad, directorio) no se tocó y no se regrabó.
 - **Doble revisión** (`NO_SELF_APPROVAL`): quien implementó no aprueba; falta el pase de `visual-reviewer` y `frontend-reviewer`.
 - Los checks de CI del PR, que el repo tiene caídos.
+
+## Port a `dev`
+
+- `dev` tenía el mismo «Tu cuenta», más un validador sobre el nombre del owner (`nombresAdicionalesLargos`, tope de 100 en el `middleName` del back). Como el owner ahora es el representante legal, el validador pasa a `legalRepresentative` (y su prueba, también).
+- `tools/video-aseguradora/` no existe en `dev` (es de `mockup`): esos cambios no viajan.
+- `dev` sirve contra la API real por defecto (`mockBackend: false`); los e2e de este reporte se corrieron con `ng serve --configuration demo`, que trae el simulador.
+
+```
+$ ng test --include 'src/app/features/auth/**/*.spec.ts'     (sobre dev)
+ Test Files  22 passed (22)
+      Tests  570 passed (570)
+
+$ playwright test carril-registro-aseguradora*.spec.ts registro-farmacia.spec.ts   (ng serve --configuration demo)
+ 38 passed · 1 failed
+```
+
+El rojo es `registro-farmacia.spec.ts › kill-test mínimo` (`.paginated-form__titulo` resuelve a dos títulos durante la transición, antes del mensaje de éxito). **Falla igual en `origin/dev` sin estos cambios** (comprobado en un worktree limpio): no es de este PR.
