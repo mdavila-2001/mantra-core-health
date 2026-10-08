@@ -7,8 +7,8 @@
 
     Tres valores tienen que coincidir con lo que después muestra «Mi perfil»,
     así que `grabar.mjs` reescribe la cuenta de prueba con ellos (ver
-    `ASEGURADORA`): razón social, NIT, sigla y dirección. El dueño se registra
-    como `aseguradora@…` porque el simulador resuelve el login por la parte
+    `ASEGURADORA`): razón social, NIT, sigla y dirección. El representante legal,
+    que es quien inicia sesión, se registra como `aseguradora@…` porque el simulador resuelve el login por la parte
     local del correo (`buscarUsuario`, mock-session.ts): es lo que hace que la
     cuenta «recién creada» pueda entrar.
     ========================================================================== */
@@ -31,21 +31,19 @@ export const ALTA = {
     apellidoPaterno: 'Salvatierra',
     apellidoMaterno: 'Peña',
     ci: '4872190 LP',
-    correo: 'rsalvatierra@mail.com',
+    /**
+     * El representante legal es el único que inicia sesión por la aseguradora
+     * (es el owner de la cuenta): este correo y esta contraseña son los del
+     * login. Ver el encabezado: el login simulado resuelve `aseguradora@…`.
+     */
+    correo: 'aseguradora@mail.com',
+    contrasena: 'Alianza2026!',
     celular: '71234567',
   },
   gerencias: {
     'general-manager': { nombre: 'Andrés', apellido: 'Villarroel', apellidoMaterno: 'Soto', celular: '72345678', correo: 'gerencia.general@mail.com' },
     'commercial-manager': { nombre: 'Claudia', apellido: 'Mendieta', apellidoMaterno: 'Ríos', celular: '73456789', correo: 'gerencia.comercial@mail.com' },
     'marketing-manager': { nombre: 'Fernando', apellido: 'Terán', apellidoMaterno: 'Vaca', celular: '74567890', correo: 'gerencia.marketing@mail.com' },
-  },
-  dueno: {
-    nombre: 'Mariana',
-    apellidoPaterno: 'Quiroga',
-    apellidoMaterno: 'Blanco',
-    /** Ver el encabezado: el login simulado resuelve `aseguradora@…`. */
-    correo: 'aseguradora@mail.com',
-    contrasena: 'Alianza2026!',
   },
 };
 

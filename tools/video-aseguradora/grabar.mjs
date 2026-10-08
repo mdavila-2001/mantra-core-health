@@ -3,7 +3,7 @@
     Video del módulo de aseguradora, presentada como Alianza Seguros.
 
     Graba el app REAL de la rama `mockup` (con `yarn start:dev` corriendo) y
-    recorre: registro de la aseguradora (8 páginas, con sus PDF) → login con la
+    recorre: registro de la aseguradora (7 páginas, con sus PDF) → login con la
     cuenta recién creada → Mi perfil → Mis productos → Solicitudes recibidas
     (aprobar y rechazar) → Siniestralidad («Por persona») → Directorio de
     pacientes. Salida en artifacts/ (ignorado).
@@ -381,9 +381,14 @@ async function main() {
   await pausa(2000);
   await revisar('inicio-de-sesion');
   // Si el clic se perdió, se repite: la pantalla de registro es la que tiene que aparecer.
+  // «Registrá tu organización» abre primero el selector de tipo de organización
+  // (`/auth/register/organization-type`); la tarjeta «Aseguradora» lleva al alta.
   for (let intento = 1; ; intento++) {
     await clic(page.getByTestId('login-registro-organizacion'), true);
     try {
+      await page.getByTestId('tipo-aseguradora').waitFor({ timeout: 7_000 });
+      await pausa(1200);
+      await clic(page.getByTestId('tipo-aseguradora'), true);
       await page.getByTestId('registro-organizacion-form').waitFor({ timeout: 7_000 });
       break;
     } catch (error) {
@@ -421,21 +426,24 @@ async function main() {
   await revisar('alta-4-documento-sedes');
   await siguiente();
 
-  // Pasos 5 y 6: el representante legal y su poder notariado.
+  // Pasos 5 y 6: el representante legal —que es quien inicia sesión: su correo
+  // y su contraseña son los del login— y su poder notariado.
   marcar('representante-legal');
   await pagina('Representante legal');
   await nombreCompleto('registro-organizacion-representante', ALTA.representante);
   await escribir('registro-organizacion-representante-ci', ALTA.representante.ci);
   await escribir('registro-organizacion-representante-correo', ALTA.representante.correo);
-  await escribir('registro-organizacion-representante-telefono', ALTA.representante.celular);
+  await escribir('registro-organizacion-representante-password', ALTA.representante.contrasena);
   await revisar('alta-5-representante-legal');
   await siguiente();
   await pagina('Representante legal');
+  await escribir('registro-organizacion-representante-telefono', ALTA.representante.celular);
   await subir(DOCUMENTOS[5]);
   await revisar('alta-6-poder-notariado');
   await siguiente();
 
-  // Paso 7: las tres gerencias, una por panel del acordeón.
+  // Paso 7: las tres gerencias, una por panel del acordeón. Es la última
+  // página: «Continuar» envía el alta (no hay un paso «Tu cuenta»).
   marcar('directorio-ejecutivo');
   await pagina('Directorio ejecutivo');
   for (const [clave, g] of Object.entries(ALTA.gerencias)) {
@@ -449,28 +457,18 @@ async function main() {
   await revisar('alta-7-directorio-ejecutivo');
   await siguiente();
 
-  // Paso 8: la cuenta de quien administra.
-  marcar('cuenta-del-dueno');
-  await pagina('Tu cuenta');
-  await nombreCompleto('registro-organizacion-owner', ALTA.dueno);
-  await escribir('registro-organizacion-owner-correo', ALTA.dueno.correo);
-  await escribir('registro-organizacion-owner-password', ALTA.dueno.contrasena);
-  await pausa(700);
-  await revisar('alta-8-cuenta-del-dueno');
-  await siguiente();
-
   await page.getByTestId('registro-organizacion-exito').waitFor();
   marcar('alta-confirmada');
   await pausa(2200);
-  await revisar('alta-9-confirmada');
+  await revisar('alta-8-confirmada');
   await clic(page.getByTestId('registro-organizacion-ir-login'), true);
 
   // Login con el correo y la contraseña del alta.
   await page.getByTestId('login-form').waitFor();
   marcar('login');
   await pausa(1000);
-  await escribirConMouse('login-identifier', ALTA.dueno.correo, 45);
-  await escribirConMouse('login-password', ALTA.dueno.contrasena, 60);
+  await escribirConMouse('login-identifier', ALTA.representante.correo, 45);
+  await escribirConMouse('login-password', ALTA.representante.contrasena, 60);
   await pausa(600);
   await revisar('login');
   await clic(page.getByTestId('login-submit'), true);

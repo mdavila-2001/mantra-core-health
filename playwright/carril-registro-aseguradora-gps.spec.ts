@@ -5,7 +5,6 @@ import { expect, test, type Page } from '@playwright/test';
 
 import { subirLosCincoDocumentos } from './helpers/documentos-legales';
 import { centroDelPin, tocar } from './helpers/mapa';
-import { completarCuentaDelOwner } from './helpers/owner';
 import { completarGerencias, completarRepresentanteLegal } from './helpers/representante-legal';
 
 /**
@@ -196,8 +195,6 @@ test.describe('alta pública de aseguradora — casa matriz georreferenciada (su
     await expect(page.locator('.paginated-form__titulo')).toContainText('Directorio ejecutivo');
     await completarGerencias(page);
 
-    await expect(page.locator('.paginated-form__titulo')).toContainText('Tu cuenta');
-    await completarCuentaDelOwner(page, { email: 'sin-casa-matriz@andina.test' });
 
     await expect(page.getByTestId('registro-organizacion-exito')).toBeVisible({ timeout: 20_000 });
   });
@@ -237,8 +234,6 @@ test.describe('alta pública de aseguradora — casa matriz georreferenciada (su
     await expect(page.locator('.paginated-form__titulo')).toContainText('Directorio ejecutivo');
     await completarGerencias(page);
 
-    await expect(page.locator('.paginated-form__titulo')).toContainText('Tu cuenta');
-    await completarCuentaDelOwner(page, { email: 'con-casa-matriz@andina.test' });
 
     await expect(page.getByTestId('registro-organizacion-exito')).toBeVisible({ timeout: 20_000 });
     await capturar(page, 'exito-con-casa-matriz');
