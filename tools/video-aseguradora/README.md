@@ -3,7 +3,7 @@
 Graba una interacción continua sobre el app real de la rama `mockup`: la aseguradora se registra, entra con su cuenta y recorre el módulo, presentada como **Alianza Seguros y Reaseguros S.A.**:
 
 1. **Registro.** Desde el inicio de sesión entra a «Registrá tu organización · Aseguradoras» y completa las 8 páginas del alta: la empresa, sus datos, los cinco documentos legales, el representante legal con su poder notariado, las tres gerencias y la cuenta del administrador.
-2. **Login.** Tras «Tu cuenta está lista», entra con el correo y la contraseña que acaba de registrar.
+2. **Login.** Tras «¡Bienvenido a AloVida!», entra con el correo y la contraseña que acaba de registrar.
 3. **Mi perfil.** Muestra lo registrado: razón social, NIT, sigla y dirección.
 4. **Mis productos.** Recorre los siete planes.
 5. **Solicitudes recibidas.** Muestra la tarjeta del paciente, **aprueba** una solicitud abierta («Aprobar y facturar», que emite la factura) y **rechaza** otra con su motivo.
