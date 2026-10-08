@@ -30,7 +30,7 @@ Escritas para AloVida. No provienen de ninguna fuente de terceros.
 | `gracias.svg` | Gracias | OpenMoji `1F64F` |
 | `en-camino.svg` | Ya voy en camino | OpenMoji `1F697` |
 | `llegando-tarde.svg` | Llego tarde | OpenMoji `23F0` |
-| `confirmado.svg` | Turno confirmado | OpenMoji `2705` |
+| `confirmado.svg` | Cita confirmada | OpenMoji `2705` |
 | `te-espero.svg` | Le espero en la consulta | OpenMoji `1FA7A` |
 | `receta-lista.svg` | Receta lista | OpenMoji `1F48A` |
 | `tomar-remedio.svg` | Recuerde su medicamento | OpenMoji `1F552` |
