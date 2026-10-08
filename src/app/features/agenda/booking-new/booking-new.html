@@ -171,6 +171,12 @@
               >
                 <app-textarea formControlName="motivo" [maxLength]="maxMotivo" [rows]="5" />
               </app-form-field>
+              @if (observacionPrecargada) {
+                <p class="reserva__nota" data-testid="reserva-observacion-precargada">
+                  Completamos el motivo con la observación de síntomas que guardó. Puede editarla antes de solicitar
+                  el turno.
+                </p>
+              }
             </app-form-section>
 
             <app-form-actions

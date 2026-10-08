@@ -348,7 +348,7 @@ export const SINTOMAS_DE_ALARMA: readonly Sintoma[] = [
     ],
     alarma: true,
     mensaje:
-      'Lo que te pasó no es tu culpa y no tenés que esperar un turno. Si estás en peligro o fue hace poco, andá ahora a una guardia: te atienden, te protegen y hay medicación que sirve sólo en las primeras horas.',
+      'Lo que le pasó no es su culpa y no tiene que esperar un turno. Si está en peligro o fue hace poco, vaya ahora a una guardia: allí lo atienden, lo protegen y hay medicación que sirve sólo en las primeras horas.',
     especialidades: [],
   },
   {
@@ -370,7 +370,7 @@ export const SINTOMAS_DE_ALARMA: readonly Sintoma[] = [
     ],
     alarma: true,
     mensaje:
-      'Andá ahora a una guardia: una mordedura de serpiente o de murciélago puede necesitar suero o vacuna que sólo sirven si se ponen a tiempo. Lavá la herida con agua y jabón y no hagas cortes ni torniquetes.',
+      'Vaya ahora a una guardia: una mordedura de serpiente o de murciélago puede necesitar suero o vacuna que sólo sirven si se aplican a tiempo. Lave la herida con agua y jabón, y no haga cortes ni torniquetes.',
     especialidades: [],
   },
 ];

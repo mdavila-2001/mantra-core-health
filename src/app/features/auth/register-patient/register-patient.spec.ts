@@ -4,6 +4,7 @@ import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 
 import { RegisterPatient } from './register-patient';
+import { TrustedAmbulanceStore } from '../../../core/emergency/trusted-ambulance.store';
 import { CODIGO_OCUPACION_OTRA } from '../../../core/data-access/terminology/bo-occupations.service';
 import { CODIGO_EMPRESA_OTRA } from '../../../core/data-access/terminology/bo-employers.service';
 import { EMPLEADOR, OCUPACION } from '../../../core/mock/fixtures/conceptos';
@@ -442,7 +443,8 @@ describe('RegisterPatient', () => {
     it('ninguna página pide más de cuatro cosas', () => {
       const paginas = component.paginasPaciente();
 
-      expect(paginas.length).toBe(10);
+      // Once desde la ambulancia de confianza (propietario, 2026-10-08).
+      expect(paginas.length).toBe(11);
       for (const pagina of paginas) {
         expect(
           pagina.campos.length,
@@ -461,7 +463,7 @@ describe('RegisterPatient', () => {
       const html = fixture.nativeElement as HTMLElement;
 
       expect(html.querySelector('app-stepper .stepper--compact')).not.toBeNull();
-      expect(html.querySelectorAll('[data-testid^="stepper-paso-"]')).toHaveLength(10);
+      expect(html.querySelectorAll('[data-testid^="stepper-paso-"]')).toHaveLength(11);
       expect(html.querySelector('.paginated-form__contador')).toBeNull();
     });
 
@@ -469,6 +471,8 @@ describe('RegisterPatient', () => {
      * AC-03-1, el orden que pidió el propietario: nombres y apellidos → CI +
      * expedición → fecha de nacimiento → sexo → ocupación → celular → contacto
      * de emergencia → residencia → trabajo → correo → seguros → facturación.
+     * La ambulancia de confianza (propietario, 2026-10-08) va pegada al contacto
+     * de emergencia: es la misma pregunta —a quién llamar si pasa algo—.
      *
      * Se comprueba por `clave` y no por título: el título es prosa que se
      * reescribe cuando se lee mal, y `paginarCampos` además le agrega «(1 de
@@ -480,6 +484,7 @@ describe('RegisterPatient', () => {
         'document',
         'profile',
         'contact',
+        'ambulance',
         'residence',
         'work',
         'work-location',
@@ -837,6 +842,24 @@ describe('RegisterPatient', () => {
     expect(req.request.body).toEqual(OBLIGATORIOS_ENVIADOS);
 
     req.flush(RESPUESTA);
+  });
+
+  it('la ambulancia de confianza se guarda en el dispositivo al registrarse y NO viaja al servidor', () => {
+    completar();
+    component.formPaciente.patchValue({
+      trustedAmbulanceName: 'Ambulancias de mi seguro',
+      trustedAmbulancePhone: '+591 70099887',
+    });
+    component.submit();
+
+    const req = http.expectOne('/iam/auth/register-patient');
+    expect(Object.keys(req.request.body as object).some((clave) => clave.startsWith('trustedAmbulance'))).toBe(false);
+    req.flush(RESPUESTA);
+
+    expect(TestBed.inject(TrustedAmbulanceStore).ambulancia()).toEqual({
+      nombre: 'Ambulancias de mi seguro',
+      telefono: '+591 70099887',
+    });
   });
 
   /* ---- AC-03-3 / AC-03-4: qué es obligatorio, y qué no ---- */

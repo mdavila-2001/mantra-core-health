@@ -1,3 +1,5 @@
+import type { FormControl } from '@angular/forms';
+import { SymptomObservationsStore } from '../../../core/symptom-notes/symptom-observations.store';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
@@ -377,6 +379,40 @@ describe('BookingNew', () => {
     expect(ayuda).toContain('Contale al profesional');
     expect(ayuda).toContain('opcional');
     expect(ayuda).not.toContain('Acompaña a la cita');
+  });
+
+  describe('la observación de síntomas guardada (propietario, 2026-10-08)', () => {
+    function guardarObservacion(): void {
+      const store = TestBed.inject(SymptomObservationsStore);
+      TestBed.tick();
+      store.guardar('me duele la cabeza hace tres dias', [
+        { id: 'dolor-de-cabeza', nombre: 'Cefalea (dolor de cabeza)', codigo: 'CIE-10 R51' },
+      ]);
+    }
+
+    it('desde el portal precarga el motivo con la observación pendiente, y lo dice', async () => {
+      guardarObservacion();
+      await montar(RUTA_PORTAL);
+      responderCupo();
+      expect(crudo<FormControl<string>>('motivo').value).toBe(
+        'Síntomas: Cefalea (dolor de cabeza) [CIE-10 R51]. Lo que contó el paciente: «me duele la cabeza hace tres dias»',
+      );
+      expect(crudo<unknown>('observacionPrecargada')).not.toBeNull();
+    });
+
+    it('desde el mostrador no precarga la observación de quien está en el mostrador', async () => {
+      guardarObservacion();
+      await montar();
+      responderCupo();
+      expect(crudo<FormControl<string>>('motivo').value).toBe('');
+    });
+
+    it('un motivo que llega por la URL manda sobre la observación', async () => {
+      guardarObservacion();
+      await montar(`${RUTA_PORTAL}${RUTA_PORTAL.includes('?') ? '&' : '?'}motivo=Hemograma`);
+      responderCupo();
+      expect(crudo<FormControl<string>>('motivo').value).toBe('Hemograma');
+    });
   });
 
   /** …y desde el mostrador se le habla a quien anota lo que el paciente cuenta. */

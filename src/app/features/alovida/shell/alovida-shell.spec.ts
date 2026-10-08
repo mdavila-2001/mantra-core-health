@@ -264,10 +264,12 @@ describe('AlovidaPublicShell', () => {
 
   it('ofrece entrar y crear cuenta, contra las rutas de sesión que ya existen', () => {
     const enlaces = [
-      ...(fixture.nativeElement as HTMLElement).querySelectorAll('.app-public-header__acciones a'),
+      // Los hijos directos: los `tel:` del botón de emergencia viven dentro de su componente.
+      ...(fixture.nativeElement as HTMLElement).querySelectorAll('.app-public-header__acciones > a'),
     ].map((a) => a.getAttribute('href'));
 
     expect(enlaces).toEqual(['/auth', '/auth/register']);
+    expect((fixture.nativeElement as HTMLElement).querySelector('.app-public-header__acciones app-panic-button')).not.toBeNull();
   });
 
   it('también declara que el buscador público es una referencia de diseño', () => {
