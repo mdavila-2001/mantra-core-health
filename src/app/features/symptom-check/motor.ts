@@ -145,6 +145,10 @@ const NO_CONFUNDIR: ReadonlyMap<string, ReadonlySet<string>> = new Map([
   ['huevo', new Set(['hueso'])],
   ['roncha', new Set(['concha'])],
   ['concha', new Set(['roncha'])],
+  // «Grados» (de fiebre) y «graso» (hígado graso) están a una letra de «granos».
+  ['grado', new Set(['grano'])],
+  ['graso', new Set(['grano'])],
+  ['corro', new Set(['chorro'])],
 ]);
 
 /* --- El índice ------------------------------------------------------------ */
@@ -529,6 +533,9 @@ function evaluar(
     if (contenido[primera].frase !== contenido[ultima].frase) {
       continue;
     }
+    if (!negacionPegada(patron, elegidas)) {
+      continue;
+    }
 
     const suma = elegidas.reduce((total, elegida) => total + elegida.puntaje, 0);
     const hueco = ultima - primera - (patron.lemas.length - 1);
@@ -562,6 +569,29 @@ function evaluar(
   }
 
   return mejor;
+}
+
+/**
+ * Un patrón que se apoya en «no» exige que la palabra que le sigue en el patrón venga **pegada**
+ * después del «no» en el texto.
+ *
+ * Sin esto, el motor emparejaba sin orden y con hueco: «no tengo hambre» (`no` + `hambre`) cazaba
+ * «tengo hambre y no engordo», y «no para de sangrar» mandaba a urgencias a quien escribía «no hay
+ * nadie, y kgo sangre». Por eso la tabla no podía tener «no tengo hambre», «no tengo fuerzas» ni
+ * «no escucho bien», que es como lo dice la gente. «Pegada» cuenta palabras con contenido: «no me
+ * baja la regla» sigue siendo `no` + `bajar`.
+ */
+function negacionPegada(
+  patron: Patron,
+  elegidas: readonly { readonly donde: number; readonly lema: string }[],
+): boolean {
+  const cual = patron.lemas.indexOf('no');
+  if (cual === -1 || cual === patron.lemas.length - 1) {
+    return true;
+  }
+  const no = elegidas.find((elegida) => elegida.lema === 'no');
+  const siguiente = elegidas.find((elegida) => elegida.lema === patron.lemas[cual + 1]);
+  return no !== undefined && siguiente !== undefined && siguiente.donde === no.donde + 1;
 }
 
 /**
