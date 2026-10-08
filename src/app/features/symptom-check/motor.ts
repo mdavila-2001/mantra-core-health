@@ -141,6 +141,10 @@ const NO_CONFUNDIR: ReadonlyMap<string, ReadonlySet<string>> = new Map([
   ['sano', new Set(['mano'])],
   ['casa', new Set(['caida', 'cara'])],
   ['modelo', new Set(['mareo'])],
+  // «Huevos» y «huesos» están a una letra: «me duelen los huevos» no es dolor de huesos.
+  ['huevo', new Set(['hueso'])],
+  ['roncha', new Set(['concha'])],
+  ['concha', new Set(['roncha'])],
 ]);
 
 /* --- El índice ------------------------------------------------------------ */
