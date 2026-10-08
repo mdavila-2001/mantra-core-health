@@ -55,7 +55,7 @@ describe('Formularios · activar cuenta', () => {
      * diferencia no es de redacción: manda a pedirle otro a quien creó la
      * cuenta, en vez de a reintentar algo que nunca va a funcionar.
      */
-    ActivateAccountPage.esperarTokenInvalido().should('match', /no sirve|pedile uno nuevo/i);
+    ActivateAccountPage.esperarTokenInvalido().should('match', /no sirve|pídale uno nuevo/i);
     // Y no puede salir además el error genérico: serían dos mensajes distintos
     // para el mismo hecho.
     ActivateAccountPage.sinErrorGenerico();
