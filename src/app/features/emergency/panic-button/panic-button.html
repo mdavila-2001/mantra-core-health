@@ -1,0 +1,25 @@
+<button
+  app-button
+  variant="danger"
+  size="sm"
+  type="button"
+  data-testid="boton-emergencia"
+  [attr.aria-label]="etiqueta()"
+  [attr.title]="etiqueta()"
+  (clicked)="activar()"
+>
+  Emergencia
+</button>
+
+<dialog #dialogo class="panico__dialogo" aria-labelledby="panico-titulo" data-testid="dialogo-emergencia">
+  <div class="panico__panel">
+    <h2 id="panico-titulo" class="panico__titulo">¿A quién quiere llamar?</h2>
+    <p class="panico__texto">Toque un número para llamar ahora. Si alguien está grave, no espere: llame.</p>
+    <app-emergency-panel (llamando)="cerrar()" />
+    <div class="panico__cierre">
+      <button app-button variant="ghost" size="sm" type="button" data-testid="dialogo-emergencia-cerrar" (clicked)="cerrar()">
+        Cerrar
+      </button>
+    </div>
+  </div>
+</dialog>

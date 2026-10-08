@@ -32,6 +32,10 @@ import { FormActions } from '../../../shared/components/organisms/form-actions/f
 import { FormSection } from '../../../shared/components/organisms/form-section/form-section';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { MIS_TURNOS_ROUTE } from '../../account/appointments/appointments.routes';
+import {
+  SymptomObservationsStore,
+  comoMotivoDeConsulta,
+} from '../../../core/symptom-notes/symptom-observations.store';
 import { AGENDA_ROUTE } from '../agenda.routes';
 
 /** Largo que declara `ConfirmBookingDto` para el motivo. */
@@ -123,8 +127,18 @@ export class BookingNew {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly toast = inject(ToastService);
+  private readonly observaciones = inject(SymptomObservationsStore);
 
   /* ---- por dónde entró quien reserva ------------------------------------- */
+
+  private motivoInicial(): string {
+    const porUrl = this.route.snapshot.queryParamMap.get('motivo');
+    if (porUrl !== null) {
+      return porUrl.slice(0, MAX_MOTIVO);
+    }
+    const pendiente = this.route.snapshot.data['entrada'] === 'PORTAL' ? this.observaciones.pendiente() : null;
+    return pendiente === null ? '' : comoMotivoDeConsulta(pendiente);
+  }
 
   private readonly entrada: Entrada =
     this.route.snapshot.data['entrada'] === 'PORTAL' ? 'PORTAL' : 'DESK';
@@ -298,10 +312,15 @@ export class BookingNew {
    * El motivo, que puede llegar escrito por query string (`motivo`): desde
    * Cotizaciones, el estudio que se eligió. Queda editable.
    */
-  protected readonly motivo = new FormControl(
-    (this.route.snapshot.queryParamMap.get('motivo') ?? '').slice(0, MAX_MOTIVO),
-    { nonNullable: true },
-  );
+  protected readonly motivo = new FormControl(this.motivoInicial(), { nonNullable: true });
+
+  /**
+   * La observación de síntomas que el paciente guardó en «¿A qué especialista consultar?» y todavía
+   * no envió (propietario, 2026-10-08). Sólo cuando reserva para sí mismo y no llegó un motivo por
+   * la URL; queda editable, y al solicitar el turno se marca como enviada.
+   */
+  protected readonly observacionPrecargada =
+    this.esAutoservicio && !this.route.snapshot.queryParamMap.has('motivo') ? this.observaciones.pendiente() : null;
 
   /**
    * El formulario que envuelve al motivo. Un solo control, pero declarado como
@@ -637,6 +656,10 @@ export class BookingNew {
           this.esAutoservicio ? 'Turno solicitado' : 'Reserva confirmada',
         );
         if (this.esAutoservicio) {
+          const precargada = this.observacionPrecargada;
+          if (precargada !== null && motivo !== '') {
+            this.observaciones.marcarUsada(precargada.id);
+          }
           void this.router.navigateByUrl(MIS_TURNOS_ROUTE);
           return;
         }

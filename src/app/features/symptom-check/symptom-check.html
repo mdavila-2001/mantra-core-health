@@ -313,13 +313,17 @@
       @for (sintoma of sintomas(); track sintoma.id) {
         <!-- Cada chip se puede quitar: un falso positivo no puede quedar
              atrapado dentro de la recomendación. -->
+        <!-- Con el término del glosario médico oficial; la forma llana, entre paréntesis. -->
         <app-chip
           variant="info"
           [removable]="true"
-          [label]="sintoma.nombre"
+          [label]="nombreParaMostrar(sintoma)"
+          [attr.title]="codigoDelGlosario(sintoma.id)"
+          [attr.data-glossary-code]="codigoDelGlosario(sintoma.id)"
+          data-testid="sintoma-reconocido"
           (removed)="quitar(sintoma)"
         >
-          {{ sintoma.nombre }}
+          {{ nombreParaMostrar(sintoma) }}
         </app-chip>
       }
       <button app-button variant="ghost" size="sm" type="button" (clicked)="empezarDeNuevo()">
@@ -359,6 +363,8 @@
           <strong>Andá ahora a una guardia o llamá a emergencias.</strong>
         </p>
       }
+      <!-- Llamar, a un toque, sin salir de acá (propietario, 2026-10-08). -->
+      <app-emergency-panel class="sintomas__emergencia" [configurable]="false" />
     </app-alert>
   } @else if (recomendaciones().length > 0) {
     <div class="sintomas__recomendaciones">
@@ -408,6 +414,65 @@
         No reconocimos ningún síntoma. Probá con palabras más simples, o tocá una zona de arriba.
       }
     </p>
+  }
+
+  <!-- ─── Guardar la observación (propietario, 2026-10-08) ─────────────────
+       Queda en el dispositivo y viaja como motivo de consulta al pedir turno:
+       el modelo no tiene dónde guarde el paciente una observación libre. -->
+  @if (texto().trim() !== '' || sintomas().length > 0) {
+    <div class="sintomas__observacion">
+      <button
+        app-button
+        variant="secondary"
+        size="sm"
+        type="button"
+        data-testid="sintomas-guardar-observacion"
+        (clicked)="guardarObservacion()"
+      >
+        Guardar observación
+      </button>
+    </div>
+  }
+  <p class="sintomas__porque" role="status" data-testid="sintomas-observacion-aviso">{{ avisoDeObservacion() }}</p>
+
+  @if (observaciones().length > 0) {
+    <section class="sintomas__guardadas" aria-labelledby="sintomas-guardadas-titulo" data-testid="sintomas-observaciones">
+      <h3 id="sintomas-guardadas-titulo" class="sintomas__subtitulo">Sus observaciones guardadas</h3>
+      <p class="sintomas__porque">
+        Están guardadas en este dispositivo. Cuando solicite un turno, la más reciente se envía al profesional
+        como motivo de consulta; podrá editarla antes de enviarla.
+      </p>
+      <ul class="sintomas__lista">
+        @for (observacion of observaciones().slice(0, 5); track observacion.id) {
+          <li class="sintomas__opcion" data-testid="sintomas-observacion">
+            <div class="sintomas__opcion-texto">
+              <p class="sintomas__especialidad">
+                {{ fechaDe(observacion) }}
+                @if (observacion.usada) {
+                  <span class="sintomas__porque"> · ya enviada con un turno</span>
+                }
+              </p>
+              @if (observacion.sintomas.length > 0) {
+                <p class="sintomas__porque">{{ nombresDe(observacion) }}</p>
+              }
+              @if (observacion.texto !== '') {
+                <p class="sintomas__porque">«{{ observacion.texto }}»</p>
+              }
+            </div>
+            <button
+              app-button
+              variant="ghost"
+              size="sm"
+              type="button"
+              [attr.aria-label]="'Eliminar la observación del ' + fechaDe(observacion)"
+              (clicked)="borrarObservacion(observacion.id)"
+            >
+              Eliminar observación
+            </button>
+          </li>
+        }
+      </ul>
+    </section>
   }
 
   <!-- El descargo es FIJO y no depende de que nadie se acuerde de ponerlo. -->
