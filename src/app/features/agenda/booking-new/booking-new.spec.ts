@@ -374,7 +374,7 @@ describe('BookingNew', () => {
     responderCupo();
 
     const ayuda = crudo<string>('ayudaDelMotivo');
-    expect(ayuda).toContain('Contale al profesional');
+    expect(ayuda).toContain('Cuéntele al profesional');
     expect(ayuda).toContain('opcional');
     expect(ayuda).not.toContain('Acompaña a la cita');
   });

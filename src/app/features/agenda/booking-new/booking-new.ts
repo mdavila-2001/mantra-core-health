@@ -143,7 +143,7 @@ export class BookingNew {
    * contar lo que a uno le pasa que anotar lo que dijo el paciente por teléfono.
    */
   protected readonly ayudaDelMotivo = this.esAutoservicio
-    ? 'Contale al profesional qué le pasa o qué quiere consultar. Es opcional, y lo lee antes de atenderle.'
+    ? 'Cuéntele al profesional qué le pasa o qué quiere consultar. Es opcional, y lo lee antes de atenderle.'
     : 'Lo que cuenta el paciente sobre su consulta. Es opcional, y el profesional lo lee antes de atenderlo.';
 
   /**

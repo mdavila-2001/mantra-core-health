@@ -451,7 +451,7 @@ export class SurveyDetailScreen {
     this.surveys.createNextVersion(this.surveyId).subscribe({
       next: () => {
         this.creandoVersion.set(false);
-        this.toast.success('Versión nueva creada. Agregale preguntas y publíquela.');
+        this.toast.success('Versión nueva creada. Agréguele preguntas y publíquela.');
         this.cargar();
       },
       error: (error: unknown) => {

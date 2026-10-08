@@ -185,7 +185,7 @@ describe('Dashboard', () => {
         .flush({ items: [], count: 0, limit: 5, nextCursor: null });
 
       expect(hayJornada()).toBe(false);
-      expect(raiz().textContent).toContain('Todo lo que su cuenta habilita');
+      expect(raiz().textContent).toContain('Todo lo que puede hacer en esta organización');
     });
   });
 

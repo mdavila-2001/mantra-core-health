@@ -282,7 +282,7 @@ describe('AgendaCreate', () => {
       http.expectOne('/scheduling/templates/tpl-1').flush(
         {
           code: 'CONFLICT',
-          message: 'El horario tiene 3 citas comprometidas: resolvelas antes de cambiarlo.',
+          message: 'El horario tiene 3 citas comprometidas: resuélvalas antes de cambiarlo.',
           details: { bookingIds: ['b-1', 'b-2', 'b-3'] },
         },
         { status: 409, statusText: 'Conflict' },

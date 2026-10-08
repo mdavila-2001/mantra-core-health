@@ -660,7 +660,7 @@ export class AppointmentNew {
           this.guardando.set(false);
           if (error instanceof HttpErrorResponse && error.status === 409) {
             this.error.set(
-              'Ese documento ya está registrado. Búsquelo arriba por su cédula y agendale el turno.',
+              'Ese documento ya está registrado. Búsquelo arriba por su cédula y agéndele el turno.',
             );
             return;
           }

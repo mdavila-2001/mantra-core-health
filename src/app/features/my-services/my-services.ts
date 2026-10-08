@@ -87,7 +87,7 @@ const SIN_SERVICIOS: ViewStateNextAction = {
 
 /** Qué se ofrece cuando no hay ninguna práctica de la que colgar el catálogo. */
 const SIN_PRACTICAS: ViewStateNextAction = {
-  label: 'Pedile a su organización que le asocie a una práctica.',
+  label: 'Pídale a su organización que le asocie a una práctica.',
 };
 
 /** Hay prácticas, pero ninguna elegida: sin `practiceId` no hay qué pedir. */

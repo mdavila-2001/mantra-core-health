@@ -544,7 +544,7 @@ export class ReceivedClaims {
   }
 
   protected partialReasonError(): string {
-    return this.partialReason.value.trim().length < 5 ? 'Contale al prestador por qué no se aprueba todo.' : '';
+    return this.partialReason.value.trim().length < 5 ? 'Cuéntele al prestador por qué no se aprueba todo.' : '';
   }
 
   protected async submitPartial(claim: ReceivedClaim): Promise<void> {

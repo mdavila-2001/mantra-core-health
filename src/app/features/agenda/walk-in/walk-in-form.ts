@@ -338,7 +338,7 @@ export class WalkInForm {
       this.ultimaBusqueda.set(this.nuevoDocumento().trim());
       this.paso.set('buscando');
       this.error.set(
-        'Ese documento ya está registrado. Búsquelo por su cédula acá arriba y agendale el turno.',
+        'Ese documento ya está registrado. Búsquelo por su cédula acá arriba y agéndele el turno.',
       );
       return;
     }

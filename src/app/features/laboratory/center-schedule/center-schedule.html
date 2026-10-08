@@ -18,7 +18,7 @@
                   <h2 id="horario-general" class="seccion__titulo" data-testid="centro-horario-general-titulo">{{ nombreGeneral() }}</h2>
                   <p class="seccion__ayuda">
                     @if (enElGeneral().length === modalidades().length && (borrador()?.studies ?? []).length === 0) {
-                      Vale para todos los servicios del centro. Si alguno atiende en otro horario, ponele horario propio abajo.
+                      Vale para todos los servicios del centro. Si alguno atiende en otro horario, póngale horario propio abajo.
                     } @else {
                       Vale para los servicios que no tienen horario propio:
                     }
@@ -43,7 +43,7 @@
                 <div class="seccion__cabecera">
                   <h2 id="horarios-propios" class="seccion__titulo">Servicios con horario propio</h2>
                   <p class="seccion__ayuda">
-                    Una modalidad con horario propio aplica a todos sus estudios. Si un estudio puntual necesita otro horario, agregale una excepción.
+                    Una modalidad con horario propio aplica a todos sus estudios. Si un estudio puntual necesita otro horario, agréguele una excepción.
                   </p>
                 </div>
 
@@ -171,7 +171,7 @@
               @if ((c.bookingsWithoutEquipment ?? 0) > 0) {
                 <app-alert tone="warning" title="Hay turnos sin equipo" data-testid="centro-turnos-sin-equipo">
                   {{ c.bookingsWithoutEquipment }} turno{{ c.bookingsWithoutEquipment === 1 ? '' : 's' }} ya reservado{{ c.bookingsWithoutEquipment === 1 ? '' : 's' }} no
-                  tiene{{ c.bookingsWithoutEquipment === 1 ? '' : 'n' }} un equipo operativo que lo{{ c.bookingsWithoutEquipment === 1 ? '' : 's' }} atienda. Avisale a cada
+                  tiene{{ c.bookingsWithoutEquipment === 1 ? '' : 'n' }} un equipo operativo que lo{{ c.bookingsWithoutEquipment === 1 ? '' : 's' }} atienda. Avísele a cada
                   paciente y reprográmelo, o vuelva a poner el equipo en servicio.
                 </app-alert>
               }

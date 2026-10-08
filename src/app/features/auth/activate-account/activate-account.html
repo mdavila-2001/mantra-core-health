@@ -36,7 +36,7 @@
            sirve, hay que pedir uno nuevo a quien creó la cuenta. -->
       @if (tokenInvalido()) {
         <app-alert appAnuncio tone="warning" class="activar__alert" data-testid="activar-token-malo">
-          Este código no sirve: puede haber vencido o haberse usado ya. Pedile uno nuevo a quien le
+          Este código no sirve: puede haber vencido o haberse usado ya. Pídale uno nuevo a quien le
           creó la cuenta.
         </app-alert>
       } @else if (errorMessage(); as mensaje) {

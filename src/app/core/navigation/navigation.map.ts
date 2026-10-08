@@ -147,7 +147,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     icon: 'chat',
     roles: [ANY_ROLE],
     availability: 'disponible',
-    summary: 'Escribile a su médico y siga la conversación, en vivo.',
+    summary: 'Escríbale a su médico y siga la conversación, en vivo.',
     module: 'M19 community',
   },
   {
@@ -1675,7 +1675,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // 29/09/2026). La sección sigue existiendo para quien sí la usa.
     hiddenForTenantTypes: ['PHARMACY', 'DIAGNOSTIC_CENTER'],
     roles: [ANY_ROLE],
-    label: 'Su organización',
+    label: 'Mi organización',
     group: 'Administración',
     icon: 'building',
     requiresTenant: true,

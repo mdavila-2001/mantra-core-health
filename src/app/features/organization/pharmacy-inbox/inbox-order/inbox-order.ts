@@ -450,7 +450,7 @@ export class InboxOrder {
       {
         title: 'Rechazar el pedido',
         message:
-          'El paciente va a ver el motivo tal como lo escriba: contale por qué y qué puede hacer.',
+          'El paciente va a ver el motivo tal como lo escriba: cuéntele por qué y qué puede hacer.',
         confirmLabel: 'Rechazar el pedido',
         destructive: true,
       },

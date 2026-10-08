@@ -241,7 +241,7 @@
                 @if (cargaEnLoteAbierta()) {
                   <app-branch-bulk-import
                     testIdPrefix="registro-farmacia-lote"
-                    contextNote="En farmacia una sucursal se registra con su punto en el mapa. A las que no lo traigan en el enlace, marcales el pin antes de terminar."
+                    contextNote="En farmacia una sucursal se registra con su punto en el mapa. A las que no lo traigan en el enlace, márqueles el pin antes de terminar."
                     [existingNames]="nombresDeSucursales()"
                     (imported)="agregarSucursalesEnLote($event)"
                     (closed)="cargaEnLoteAbierta.set(false)"

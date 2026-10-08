@@ -315,7 +315,7 @@ export class SurveysHome {
           // borrador— podría no entrar en el grupo visible y el alta parecería
           // no haber hecho nada.
           this.limpiarFiltros();
-          this.toast.success('Encuesta creada. Agregale preguntas y publíquela.');
+          this.toast.success('Encuesta creada. Agréguele preguntas y publíquela.');
           this.cargar();
         },
         error: (error: unknown) => {

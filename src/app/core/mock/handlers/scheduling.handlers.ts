@@ -532,7 +532,7 @@ export function registrarAgenda(router: MockRouter): void {
     const minutos = datos.delayMinutes ?? 15;
     reservas.actualizar(r.id, { delayNotice: { delayMinutes: minutos, message: datos.message ?? 'Demora en la atención', announcedAt: ahora() } });
     const avisado = avisarDemoraAlPaciente(r, minutos, datos.message);
-    return { notified: avisado ? 1 : 0, affected: 1, bookingIds: [r.id], detail: avisado ? `Se avisó a ${r.patientName} una demora de ${minutos} minutos.` : `${r.patientName} no tiene cuenta de portal: avisale por otro medio.` };
+    return { notified: avisado ? 1 : 0, affected: 1, bookingIds: [r.id], detail: avisado ? `Se avisó a ${r.patientName} una demora de ${minutos} minutos.` : `${r.patientName} no tiene cuenta de portal: avísele por otro medio.` };
   });
 
   router.post('/scheduling/resources/:id/delay', (request) => {
@@ -912,7 +912,7 @@ export function registrarAgenda(router: MockRouter): void {
     );
     if (comprometidas.length > 0) {
       return conflict(
-        `El horario tiene ${comprometidas.length} ${comprometidas.length === 1 ? 'cita comprometida' : 'citas comprometidas'}: resolvelas antes de cambiarlo.`,
+        `El horario tiene ${comprometidas.length} ${comprometidas.length === 1 ? 'cita comprometida' : 'citas comprometidas'}: resuélvalas antes de cambiarlo.`,
         { bookingIds: comprometidas.map((r) => r.id) },
       );
     }
