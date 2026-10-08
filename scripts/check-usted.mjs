@@ -26,6 +26,7 @@
  * - El corpus de síntomas: son frases del paciente en primera persona.
  * - Catálogos de universidades y la clave de los stickers (`'cuidate'` es un
  *   identificador, no un texto).
+ * - El índice de la vitrina de componentes: sale de los JSDoc del equipo.
  *
  * Guía completa: docs/design-system/voice-and-tone.md.
  *
@@ -46,6 +47,9 @@ const EXCLUIDOS = [
   /instituciones-educativas/,
   /emoji/i,
   /anatom/i,
+  // Se arma con los JSDoc de los componentes —prosa del equipo— y sólo se ve en
+  // la vitrina interna «Ver componentes». Mismo criterio que los comentarios.
+  /component-index\.generated\.ts$/,
 ];
 
 /** Formas de voseo y tuteo. Lista cerrada: agregar acá lo que aparezca nuevo. */
