@@ -685,4 +685,7 @@ export const BANCO: readonly CasoDelBanco[] = [
   { texto: 'a mi hijo lo mordio un murcielago anoche', sintomas: ['control-de-nino'], alarmas: ['mordedura-peligrosa'] },
   { texto: 'me mordio un gato', sintomas: ['picadura'] },
   { texto: 'el corazon me late raro y me mareo', sintomas: ['palpitaciones', 'mareo'] },
+  { texto: 'me pica el cocho y tengo flujo', sintomas: ['flujo-vaginal'] },
+  // «Cocho» sin molestia no es el cuerpo (en Perú es «viejito»).
+  { texto: 'mi cocho vino a visitarme', sintomas: [] },
 ];
