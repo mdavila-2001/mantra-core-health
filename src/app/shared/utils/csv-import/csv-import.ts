@@ -86,7 +86,7 @@ export function leerTablaCsv(
   }
   if (datos.length > filasMaximas) {
     throw new ArchivoInvalido(
-      `El archivo tiene ${datos.length} filas y el tope es ${filasMaximas}. Partilo en varios.`,
+      `El archivo tiene ${datos.length} filas y el tope es ${filasMaximas}. Divídalo en varios.`,
     );
   }
   return {

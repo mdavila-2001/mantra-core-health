@@ -1,13 +1,13 @@
 <app-card class="consentimiento">
   <h3 class="consentimiento__titulo">Consentimiento informado</h3>
   <p class="consentimiento__ayuda">
-    Dejá constancia de la decisión de la persona sobre el tratamiento. Se guarda ligado a esta
+    Deje constancia de la decisión de la persona sobre el tratamiento. Se guarda ligado a esta
     consulta y ella lo ve en «Mi privacidad».
   </p>
 
   @if (encounterId() === null) {
     <app-alert tone="info" data-testid="consentimiento-sin-encuentro">
-      Abrí la consulta para registrar el consentimiento informado: se liga al encuentro en curso.
+      Abra la consulta para registrar el consentimiento informado: se liga al encuentro en curso.
     </app-alert>
   } @else {
     @if (registrados().length > 0) {
@@ -36,7 +36,7 @@
       <app-form-field label="Decisión de la persona" [required]="true">
         <app-select
           data-testid="consentimiento-decision"
-          placeholder="Elegí una decisión"
+          placeholder="Elija una decisión"
           [value]="decision()"
           (valueChange)="decision.set($event)"
           [options]="opciones"

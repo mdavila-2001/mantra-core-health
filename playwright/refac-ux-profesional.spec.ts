@@ -210,7 +210,7 @@ test.describe('refactor UX · piloto «Mis citas»', () => {
     );
     await expect(page.getByRole('heading', { name: 'Agendar una cita' })).toBeFocused();
     await expect(
-      page.getByText('Elegí un laboratorio para ver los horarios libres.'),
+      page.getByText('Elija un laboratorio para ver los horarios libres.'),
     ).toBeVisible();
   });
 });

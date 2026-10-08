@@ -223,7 +223,7 @@ export class AdditionalFields implements OnInit {
       } else if (vistos.has(clave)) {
         problema = 'Ese campo ya está en otra fila.';
       } else if (fila.valor.trim() === '' && fila.archivos.length === 0) {
-        problema = 'Escribí un valor o adjuntá un archivo.';
+        problema = 'Escriba un valor o adjunte un archivo.';
       } else if (fila.valor.trim().length > TOPE_DEL_VALOR) {
         problema = `El valor admite hasta ${TOPE_DEL_VALOR} caracteres.`;
       }
@@ -392,10 +392,10 @@ export class AdditionalFields implements OnInit {
       return null;
     }
     if (this.auth.practitionerProfileId() === null) {
-      return 'Los campos adicionales se guardan como nota médica, y tu perfil no es de profesional.';
+      return 'Los campos adicionales se guardan como nota médica, y su perfil no es de profesional.';
     }
     if (this.totalDeArchivos() > 0 && this.auth.activeTenantId() === null) {
-      return 'Para adjuntar archivos elegí una organización en el encabezado.';
+      return 'Para adjuntar archivos elija una organización en el encabezado.';
     }
     return null;
   });

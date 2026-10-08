@@ -418,7 +418,7 @@ export class ComponentStock implements OnDestroy {
             ? 'con valores generados nadie escucha sus salidas'
             : salidas > 0
               ? `${salidas} salida(s) registradas en esta sesión`
-              : 'todavía no emitió nada: tocá el componente en el marco',
+              : 'todavía no emitió nada: toque el componente en el marco',
       },
       {
         clave: 'visual',

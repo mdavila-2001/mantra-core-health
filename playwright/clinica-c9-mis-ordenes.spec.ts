@@ -53,7 +53,7 @@ test.describe('C9 · Mis órdenes', () => {
     // reaccionar, y recién ahí se cuentan las filas.
     const resumen = page.locator('.ordenes__resumen');
     const totalSinFiltro = await resumen.textContent();
-    await page.getByLabel('Buscar en tus órdenes').fill('hemo');
+    await page.getByLabel('Buscar en sus órdenes').fill('hemo');
     await expect(resumen).not.toHaveText(totalSinFiltro ?? '');
     const filas = page.locator('[data-testid="mis-ordenes-tabla"] tbody tr');
     const total = await filas.count();

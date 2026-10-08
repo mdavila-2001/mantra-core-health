@@ -40,8 +40,8 @@
   <div class="formulario-especialidad__selector">
     <app-form-field
       icon="survey"
-      label="Qué vas a completar"
-      [hint]="especialidad() === null ? 'Se muestran las fichas generales disponibles.' : 'Se muestran las fichas de tu especialidad y las generales.'"
+      label="Qué va a completar"
+      [hint]="especialidad() === null ? 'Se muestran las fichas generales disponibles.' : 'Se muestran las fichas de su especialidad y las generales.'"
     >
       <app-select
         [options]="opcionesDePlantilla()"
@@ -97,8 +97,8 @@
          en este encuentro no lo tapa, se puede registrar cuantas veces haga
          falta. -->
     @if (!hayEncuentro()) {
-      <app-alert tone="info" title="Abrí el encuentro para completar">
-        El formulario libre se registra dentro de la consulta que lo motivó. Registrá el encuentro
+      <app-alert tone="info" title="Abra el encuentro para completar">
+        El formulario libre se registra dentro de la consulta que lo motivó. Registre el encuentro
         acá arriba y el formulario aparece.
       </app-alert>
     } @else {
@@ -145,8 +145,8 @@
       }
     }
   } @else if (!hayEncuentro()) {
-    <app-alert tone="info" title="Abrí el encuentro para completar">
-      El formulario clínico se completa dentro de la consulta que lo motivó. Registrá el encuentro
+    <app-alert tone="info" title="Abra el encuentro para completar">
+      El formulario clínico se completa dentro de la consulta que lo motivó. Registre el encuentro
       acá arriba y el formulario aparece.
     </app-alert>
   } @else if (buscandoRespuesta()) {
@@ -277,14 +277,14 @@
     </app-alert>
   } @else if (sinPlantillasVisibles()) {
     <app-alert tone="info" title="Sin ficha para esta especialidad">
-      No hay formularios propios ni generales en el catálogo. Activá «Ver todas las especialidades» para elegir otra ficha.
+      No hay formularios propios ni generales en el catálogo. Active «Ver todas las especialidades» para elegir otra ficha.
     </app-alert>
   } @else {
     <form class="formulario-especialidad__formulario" (submit)="$event.preventDefault()">
       @if (sinFichaPropia()) {
         <!-- Situación normal, no un error: se avisa discreto y se sigue. -->
         <p class="formulario-especialidad__aviso" data-testid="sin-ficha-propia">
-          Tu especialidad todavía no tiene una ficha específica. Te ofrecemos las fichas generales,
+          Su especialidad todavía no tiene una ficha específica. Le ofrecemos las fichas generales,
           que sirven para cualquier consulta.
         </p>
       }
@@ -299,7 +299,7 @@
             <div class="formulario-especialidad__vista">
               <div class="formulario-especialidad__ficha">
                 <h3>{{ plantilla.name }}</h3>
-                <p>Completá los datos de esta consulta. Los campos obligatorios están marcados.</p>
+                <p>Complete los datos de esta consulta. Los campos obligatorios están marcados.</p>
               </div>
               @for (campo of plantilla.fields; track campo.fieldId) {
                 <!-- El odontograma no entra en un `app-form-field`: no es un control
@@ -321,7 +321,7 @@
                       @if (piezaAbierta(); as fdi) {
                         <div class="formulario-especialidad__estados">
                           <p class="formulario-especialidad__ayuda" id="ayuda-estado-dental">
-                            Pieza {{ fdi }} — elegí su estado. Volver a elegir el mismo lo borra.
+                            Pieza {{ fdi }} — elija su estado. Volver a elegir el mismo lo borra.
                           </p>
                           @for (estado of estadosDentales; track estado.codigo) {
                             <button
@@ -338,7 +338,7 @@
                         </div>
                       } @else {
                         <p class="formulario-especialidad__ayuda">
-                          Elegí una pieza para registrar su estado.
+                          Elija una pieza para registrar su estado.
                         </p>
                       }
                     </fieldset>

@@ -474,7 +474,7 @@ describe('PharmacyProfile contra la API real', () => {
     responderFicha(DETALLE);
 
     expect(texto()).toContain('Sin registrar');
-    expect(texto()).toContain('Tu organización todavía no registró el punto de la central.');
+    expect(texto()).toContain('Su organización todavía no registró el punto de la central.');
     expect(texto()).not.toContain('1028394027');
   });
 
@@ -487,8 +487,8 @@ describe('PharmacyProfile contra la API real', () => {
     responderDirectorio([]);
     fixture.detectChanges();
 
-    expect(texto()).toContain('Tu farmacia todavía no figura en el directorio publicado');
-    expect(texto()).toContain('Ver tu organización');
+    expect(texto()).toContain('Su farmacia todavía no figura en el directorio publicado');
+    expect(texto()).toContain('Ver su organización');
   });
 
   it('si el directorio falla, ofrece reintentar y el reintento vuelve a pedir', () => {
@@ -532,7 +532,7 @@ describe('PharmacyProfile contra la API real', () => {
     pestanas()[1]!.click();
     fixture.detectChanges();
     expect(root().querySelector('[data-testid="profile-licenses-empty"]')).not.toBeNull();
-    expect(texto()).toContain('Tu farmacia todavía no tiene licencias registradas.');
+    expect(texto()).toContain('Su farmacia todavía no tiene licencias registradas.');
     expect(root().querySelector('[data-testid="ficha-cargar-primer-documento"]')).toBeNull();
   });
 

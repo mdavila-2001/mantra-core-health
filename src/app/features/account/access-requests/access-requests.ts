@@ -114,7 +114,7 @@ export class AccessRequests {
 
   protected aceptar(item: SolicitudEnPantalla): void {
     if (item.elegidas.size === 0) {
-      this.toasts.warning('Elegí al menos una especialidad para autorizar, o rechazá la solicitud.');
+      this.toasts.warning('Elija al menos una especialidad para autorizar, o rechace la solicitud.');
       return;
     }
     this.actualizar(item, { decidiendo: true });
@@ -125,11 +125,11 @@ export class AccessRequests {
       })
       .subscribe({
         next: () => {
-          this.toasts.success('Autorizaste el acceso. Ya podés retirarlo cuando quieras.');
+          this.toasts.success('Autorizó el acceso. Ya puede retirarlo cuando quiera.');
           this.quitar(item);
         },
         error: () => {
-          this.toasts.warning('No se pudo guardar tu decisión. Probá de nuevo.');
+          this.toasts.warning('No se pudo guardar su decisión. Pruebe de nuevo.');
           this.actualizar(item, { decidiendo: false });
         },
       });
@@ -139,11 +139,11 @@ export class AccessRequests {
     this.actualizar(item, { decidiendo: true });
     this.authz.respondToCareRelationshipRequest(item.solicitud.id, { decision: 'REJECT' }).subscribe({
       next: () => {
-        this.toasts.success('Rechazaste la solicitud.');
+        this.toasts.success('Rechazó la solicitud.');
         this.quitar(item);
       },
       error: () => {
-        this.toasts.warning('No se pudo guardar tu decisión. Probá de nuevo.');
+        this.toasts.warning('No se pudo guardar su decisión. Pruebe de nuevo.');
         this.actualizar(item, { decidiendo: false });
       },
     });

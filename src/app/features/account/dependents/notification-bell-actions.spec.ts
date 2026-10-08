@@ -28,8 +28,8 @@ describe('NotificationBell · acciones de la notificación', () => {
   const CON_ACCIONES = {
     id: 'n-9',
     category: 'CLINICAL',
-    subject: 'Te quieren registrar como dependiente',
-    bodyText: 'Ana pide registrarte como su dependiente.',
+    subject: 'Le quieren registrar como dependiente',
+    bodyText: 'Ana pide registrarse como su dependiente.',
     destination: { type: 'DEPENDENT_LINK_REQUEST', id: 'sol-1' },
     payloadJson: null,
     actions: [
@@ -110,7 +110,7 @@ describe('NotificationBell · acciones de la notificación', () => {
     resolver(pagina([{ ...CON_ACCIONES, actions: undefined, unread: false }], 0));
     fixture.detectChanges();
 
-    expect(toast.toasts()[0]!.message).toContain('Aceptaste');
+    expect(toast.toasts()[0]!.message).toContain('Aceptó');
     expect(navegar).not.toHaveBeenCalled();
     // La decisión ya está tomada: la bandeja ya no ofrece los botones.
     expect(consultar('notificacion-accion-accept')).toBeNull();

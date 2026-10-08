@@ -1,6 +1,6 @@
 <app-content-dialog
   [heading]="heading()"
-  description="Lo que cargues acá es lo que ven los pacientes al buscar dónde comprar su receta."
+  description="Lo que cargue acá es lo que ven los pacientes al buscar dónde comprar su receta."
   size="lg"
   [dismissible]="!saving()"
   [closeGuard]="confirmClose"
@@ -27,7 +27,7 @@
               class="product-dialog__wide"
               label="Medicamento del catálogo oficial"
               [required]="true"
-              hint="Buscá por nombre, principio activo o código ATC. No escribís los datos del producto: los trae el registro sanitario."
+              hint="Busque por nombre, principio activo o código ATC. No escribe los datos del producto: los trae el registro sanitario."
             >
               <app-reference-combobox
                 [(value)]="catalogId"
@@ -37,7 +37,7 @@
                 [minQueryLength]="2"
                 label="Medicamento del catálogo oficial"
                 placeholder="Ej. paracetamol 500"
-                [emptyMessage]="catalogSearchFailed() ? 'No se pudo consultar el catálogo. Probá de nuevo.' : 'No está en el catálogo oficial'"
+                [emptyMessage]="catalogSearchFailed() ? 'No se pudo consultar el catálogo. Pruebe de nuevo.' : 'No está en el catálogo oficial'"
                 (searched)="searchCatalog($event)"
                 (selectionChange)="chooseCatalog($event)"
               />
@@ -95,19 +95,19 @@
                 }
               </div>
               <p class="product-dialog__note product-dialog__official-lock">
-                Estos datos vienen del registro oficial y no se editan. Lo tuyo —precio, existencias,
+                Estos datos vienen del registro oficial y no se editan. Lo suyo —precio, existencias,
                 fotos y descripción— está en las otras pestañas.
               </p>
             </section>
           }
 
           @if (!isEditing() && selectedProduct() && presentationOptions().length > 2) {
-            <app-form-field class="product-dialog__wide" label="Presentación que vendés" [required]="true">
+            <app-form-field class="product-dialog__wide" label="Presentación que vende" [required]="true">
               <app-select
                 [options]="presentationOptions()"
                 [value]="presentationCode()"
                 (valueChange)="setPresentation($event)"
-                ariaLabel="Presentación que vendés"
+                ariaLabel="Presentación que vende"
                 data-testid="product-field-presentation"
               />
             </app-form-field>
@@ -115,7 +115,7 @@
 
           <app-form-field
             label="Código interno (SKU)"
-            [hint]="'Tu propio código. Único en tu catálogo, hasta ' + codeMaxLength + ' caracteres: letras, números, punto, guion o barra.'"
+            [hint]="'Su propio código. Único en su catálogo, hasta ' + codeMaxLength + ' caracteres: letras, números, punto, guion o barra.'"
             [required]="true"
           >
             <app-input
@@ -145,7 +145,7 @@
               @if (requestOpen()) {
                 <div id="product-request-form" class="product-dialog__request-form" data-testid="product-request-form">
                   <p class="product-dialog__note">
-                    No se publica un producto suelto: pedís que lo incorporen al catálogo oficial y un
+                    No se publica un producto suelto: pide que lo incorporen al catálogo oficial y un
                     administrador lo revisa.
                   </p>
                   @if (requestError(); as message) {
@@ -167,7 +167,7 @@
                   <app-form-field label="Presentación">
                     <app-input [value]="requestFields().presentation" (valueChange)="setRequestField('presentation', $event)" />
                   </app-form-field>
-                  <app-form-field label="Nº de registro sanitario" hint="Si lo tenés a mano acelera la revisión.">
+                  <app-form-field label="Nº de registro sanitario" hint="Si lo tiene a mano acelera la revisión.">
                     <app-input [value]="requestFields().registrationNumber" (valueChange)="setRequestField('registrationNumber', $event)" />
                   </app-form-field>
                   <app-form-field label="Algo más que debamos saber">
@@ -195,7 +195,7 @@
           </app-alert>
           <app-form-field
             label="Código interno (SKU)"
-            [hint]="'Único en tu catálogo. Hasta ' + codeMaxLength + ' caracteres: letras, números, punto, guion o barra.'"
+            [hint]="'Único en su catálogo. Hasta ' + codeMaxLength + ' caracteres: letras, números, punto, guion o barra.'"
             [required]="true"
           >
             <app-input
@@ -260,7 +260,7 @@
             </p>
           } @else {
             <p class="product-dialog__note product-dialog__wide">
-              Elegí primero el medicamento en la pestaña General: acá se ve su ficha oficial.
+              Elija primero el medicamento en la pestaña General: acá se ve su ficha oficial.
             </p>
           }
         } @else {
@@ -314,7 +314,7 @@
     <app-tab [label]="tabs[3]">
       <div class="product-dialog__panel" data-testid="product-images">
         <p class="product-dialog__note">
-          Hasta {{ maxImages }} imágenes JPG, PNG o WEBP. Si todavía no tenés fotos, dejalo vacío:
+          Hasta {{ maxImages }} imágenes JPG, PNG o WEBP. Si todavía no tiene fotos, déjelo vacío:
           el listado muestra un marcador.
         </p>
 
@@ -366,7 +366,7 @@
       <div class="product-dialog__panel">
         <app-form-field
           label="Estado"
-          hint="Un borrador no lo ven los pacientes hasta que lo publiques."
+          hint="Un borrador no lo ven los pacientes hasta que lo publique."
         >
           <app-select
             [options]="statusOptions()"
@@ -395,7 +395,7 @@
         </app-form-field>
         <app-form-field
           label="Disponibilidad"
-          hint="Como en los pedidos: sólo decís si hoy lo tenés o no. Las existencias se llevan en Inventario."
+          hint="Como en los pedidos: sólo dice si hoy lo tiene o no. Las existencias se llevan en Inventario."
         >
           <app-select
             [options]="availabilityOptions"

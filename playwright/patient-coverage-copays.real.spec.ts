@@ -212,7 +212,7 @@ for (const viewport of [
         }
         if (state === 'denied') {
           await expect(
-            settlement.locator('dl > div').filter({ hasText: 'A tu cargo' }).locator('dd'),
+            settlement.locator('dl > div').filter({ hasText: 'A su cargo' }).locator('dd'),
           ).toHaveText(/^0(?:\.0+)? Bs$/);
         }
         if (state === 'pending') await expect(settlement.locator('dl')).toHaveCount(0);

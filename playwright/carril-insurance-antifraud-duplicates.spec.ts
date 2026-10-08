@@ -69,7 +69,7 @@ async function abrirEncuentroDelPaciente(page: Page): Promise<void> {
 
 /** Elige «Laboratorio e imagenología» en el selector de plantilla del formulario clínico. */
 async function abrirLaboratorio(page: Page): Promise<void> {
-  await page.getByLabel('Qué vas a completar').selectOption({ label: 'Laboratorio e imagenología' });
+  await page.getByLabel('Qué va a completar').selectOption({ label: 'Laboratorio e imagenología' });
   await expect(page.getByRole('heading', { name: 'Laboratorio e imagenología' })).toBeVisible();
 }
 

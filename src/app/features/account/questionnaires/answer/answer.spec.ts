@@ -14,7 +14,7 @@ import { QuestionnaireAnswer } from './answer';
  */
 const CUESTIONARIO = {
   id: 'inv-1',
-  title: 'Cómo te sentiste después de la consulta',
+  title: 'Cómo se sintió después de la consulta',
   description: '',
   status: 'PENDING',
   issuedAt: '2026-08-10T12:00:00.000Z',
@@ -25,7 +25,7 @@ const CUESTIONARIO = {
     {
       id: 'q-1',
       position: 1,
-      questionText: '¿Te atendieron a horario?',
+      questionText: '¿Le atendieron a horario?',
       answerType: 'TEXT',
       required: false,
       options: [],

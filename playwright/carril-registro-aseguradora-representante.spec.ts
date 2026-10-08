@@ -257,7 +257,7 @@ test.describe('alta pública de aseguradora — representante legal y gerencias 
     await completarRepresentanteLegal(page);
     await completarGerencias(page);
 
-    await expect(page.locator('.paginated-form__titulo')).toContainText('Tu cuenta');
+    await expect(page.locator('.paginated-form__titulo')).toContainText('Su cuenta');
   });
 
   test('un correo de gerencia mal escrito se marca al salir del campo', async ({ page }) => {
@@ -269,7 +269,7 @@ test.describe('alta pública de aseguradora — representante legal y gerencias 
     await correo.fill('gerente.general@');
     await correo.blur();
 
-    await expect(page.getByText('Revisá el correo: falta el arroba o el dominio.')).toBeVisible();
+    await expect(page.getByText('Revise el correo: falta el arroba o el dominio.')).toBeVisible();
   });
 
   test('el alta se completa hasta la confirmación', async ({ page }) => {
@@ -278,20 +278,20 @@ test.describe('alta pública de aseguradora — representante legal y gerencias 
     await completarRepresentanteLegal(page);
     await completarGerencias(page);
 
-    await expect(page.locator('.paginated-form__titulo')).toContainText('Tu cuenta');
+    await expect(page.locator('.paginated-form__titulo')).toContainText('Su cuenta');
     await completarCuentaDelOwner(page, { email: 'con-representante@andina.test' });
 
     await expect(page.getByTestId('registro-organizacion-exito')).toBeVisible({ timeout: 20_000 });
     await capturar(page, 'exito-con-representante');
   });
 
-  test('«Tu cuenta» trae los cinco nombres del owner en una sola página', async ({ page }) => {
+  test('«Su cuenta» trae los cinco nombres del owner en una sola página', async ({ page }) => {
     await abrirElAlta(page);
     await llegarARepresentanteLegal(page);
     await completarRepresentanteLegal(page);
     await completarGerencias(page);
 
-    await expect(page.locator('.paginated-form__titulo')).toHaveText('Tu cuenta');
+    await expect(page.locator('.paginated-form__titulo')).toHaveText('Su cuenta');
 
     // Las cinco partes del nombre, el correo y la contraseña, a la vez: era
     // la sección que el motor partía en dos por el tope de cuatro campos, y
@@ -309,13 +309,13 @@ test.describe('alta pública de aseguradora — representante legal y gerencias 
     }
   });
 
-  test('«Tu cuenta» no se desborda en teléfono ni en tablet', async ({ page }) => {
+  test('«Su cuenta» no se desborda en teléfono ni en tablet', async ({ page }) => {
     await abrirElAlta(page);
     await llegarARepresentanteLegal(page);
     await completarRepresentanteLegal(page);
     await completarGerencias(page);
 
-    await expect(page.locator('.paginated-form__titulo')).toHaveText('Tu cuenta');
+    await expect(page.locator('.paginated-form__titulo')).toHaveText('Su cuenta');
 
     for (const [nombre, tamano] of [
       ['movil-390x844', { width: 390, height: 844 }],

@@ -101,7 +101,7 @@ test.describe('catálogo universal · nuevo producto de la farmacia', () => {
         .toBe(true);
     }
 
-    const presentacion = modal.getByLabel('Presentación que vendés');
+    const presentacion = modal.getByLabel('Presentación que vende');
     if (await presentacion.isVisible()) await presentacion.selectOption({ index: 1 });
 
     const codigo = `CAT-${SUFIJO}`;
@@ -147,7 +147,7 @@ test.describe('catálogo universal · nuevo producto de la farmacia', () => {
     await modal.getByTestId('product-field-code').fill(`LIBRE-${SUFIJO}`);
     await modal.getByTestId('product-dialog-save').click();
 
-    await expect(modal.getByTestId('product-dialog-errors')).toContainText('Elegí el medicamento del catálogo oficial');
+    await expect(modal.getByTestId('product-dialog-errors')).toContainText('Elija el medicamento del catálogo oficial');
     await expect(modal).toBeVisible();
   });
 
@@ -157,7 +157,7 @@ test.describe('catálogo universal · nuevo producto de la farmacia', () => {
     await expect(modal.getByTestId('product-request-form')).toBeVisible();
 
     await modal.getByTestId('product-request-send').click();
-    await expect(modal.getByTestId('product-request-form')).toContainText('Escribí el nombre del medicamento');
+    await expect(modal.getByTestId('product-request-form')).toContainText('Escriba el nombre del medicamento');
 
     // El simulador vive dentro de la app (no hay respuesta de red que esperar): el resultado
     // visible es que el formulario se cierra y la persona recibe el aviso.

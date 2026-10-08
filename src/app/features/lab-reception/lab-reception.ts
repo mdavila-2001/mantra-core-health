@@ -202,14 +202,14 @@ export class LabReception {
   protected readonly receiveError = signal<string | null>(null);
 
   protected readonly specimenTypeError = computed(() =>
-    this.receiveSubmitted() && this.specimenType() === null ? 'Elegí el tipo de muestra.' : '',
+    this.receiveSubmitted() && this.specimenType() === null ? 'Elija el tipo de muestra.' : '',
   );
   protected readonly containerTypeError = computed(() =>
-    this.receiveSubmitted() && this.containerType() === null ? 'Elegí el contenedor.' : '',
+    this.receiveSubmitted() && this.containerType() === null ? 'Elija el contenedor.' : '',
   );
   protected readonly containerLabelError = computed(() =>
     this.receiveSubmitted() && labelText(this.containerLabel()) === ''
-      ? 'Escribí la etiqueta del tubo o frasco.'
+      ? 'Escriba la etiqueta del tubo o frasco.'
       : '',
   );
 
@@ -285,7 +285,7 @@ export class LabReception {
       },
       error: () => {
         this.loadingMore.set(false);
-        this.loadMoreError.set('No pudimos traer más órdenes. Probá de nuevo.');
+        this.loadMoreError.set('No pudimos traer más órdenes. Pruebe de nuevo.');
       },
     });
   }
@@ -345,14 +345,14 @@ export class LabReception {
   private emptyState(): ViewState<readonly LabInboxItem[]> {
     if (this.patientQuery() !== '') {
       return empty(
-        { label: 'Probá con otro nombre o con el código de historia clínica' },
+        { label: 'Pruebe con otro nombre o con el código de historia clínica' },
         `Ninguna orden pendiente coincide con «${this.patientQuery()}».`,
       );
     }
     return empty(
       { label: 'Las órdenes nuevas aparecen acá solas al actualizar' },
       'No hay órdenes esperando muestra. Cuando una organización derive un análisis a este ' +
-        'laboratorio, lo vas a ver en esta bandeja.',
+        'laboratorio, lo va a ver en esta bandeja.',
     );
   }
 
@@ -360,7 +360,7 @@ export class LabReception {
     if (error instanceof HttpErrorResponse && error.status === 403) {
       return forbidden({
         message:
-          'Esta bandeja es del personal del laboratorio. Si trabajás en uno, elegí su ' +
+          'Esta bandeja es del personal del laboratorio. Si trabaja en uno, elija su ' +
           'organización en el selector de arriba.',
       });
     }
@@ -400,7 +400,7 @@ export class LabReception {
     }
     const tenantId = this.auth.activeTenantId();
     if (tenantId === null) {
-      this.receiveError.set('Elegí la organización del laboratorio antes de recibir la muestra.');
+      this.receiveError.set('Elija la organización del laboratorio antes de recibir la muestra.');
       return;
     }
 
@@ -430,7 +430,7 @@ export class LabReception {
           }));
           this.receiveOrder.set(null);
           this.toasts.success(
-            `Recibiste la muestra de ${this.patientName(row)}. Falta registrar la accesión.`,
+            `Recibió la muestra de ${this.patientName(row)}. Falta registrar la accesión.`,
           );
         },
         error: (error: unknown) => {
@@ -453,11 +453,11 @@ export class LabReception {
           }
           this.receiveError.set(
             reason === SPECIMEN_TYPE_NOT_IN_CATALOG
-              ? 'Ese tipo de muestra ya no está en el catálogo. Actualizamos la lista: elegí otro.'
+              ? 'Ese tipo de muestra ya no está en el catálogo. Actualizamos la lista: elija otro.'
               : reason === CONTAINER_TYPE_NOT_IN_CATALOG
-                ? 'La muestra quedó registrada, pero ese tipo de contenedor ya no está en el catálogo. Actualizamos la lista: elegí otro contenedor.'
+                ? 'La muestra quedó registrada, pero ese tipo de contenedor ya no está en el catálogo. Actualizamos la lista: elija otro contenedor.'
                 : (apiMessage(error) ??
-                  'No pudimos registrar la muestra. Revisá los datos y probá de nuevo.'),
+                  'No pudimos registrar la muestra. Revise los datos y pruebe de nuevo.'),
           );
         },
       });
@@ -486,7 +486,7 @@ export class LabReception {
           this.containerTypeOptions.set(this.optionsOf(container));
           if (specimen.options.length === 0 || container.options.length === 0) {
             this.catalogsError.set(
-              'Los catálogos de muestras todavía no están publicados. Avisá a quien administra la plataforma.',
+              'Los catálogos de muestras todavía no están publicados. Avise a quien administra la plataforma.',
             );
           }
         },
@@ -556,15 +556,15 @@ export class LabReception {
           this.removeRow(row.serviceRequestId);
           this.toasts.success(
             accessionNumber === null
-              ? `Registraste la accesión de ${this.patientName(row)}.`
-              : `Registraste la accesión ${accessionNumber} de ${this.patientName(row)}.`,
+              ? `Registró la accesión de ${this.patientName(row)}.`
+              : `Registró la accesión ${accessionNumber} de ${this.patientName(row)}.`,
             'La orden pasó a la cola del laboratorio',
           );
         },
         error: (error: unknown) => {
           this.accessioning.set(false);
           this.accessionError.set(
-            apiMessage(error) ?? 'No pudimos registrar la accesión. Probá de nuevo.',
+            apiMessage(error) ?? 'No pudimos registrar la accesión. Pruebe de nuevo.',
           );
         },
       });

@@ -56,8 +56,8 @@ export class SourceForm {
       titulo: 'Identidad de la fuente',
       hint: 'El código es único; el nombre es el que se lee en los reportes.',
       campos: [
-        { key: 'code', label: 'Código', hint: 'Único y estable, como boletin-epidemiologico-msal. Máx. 100 caracteres.', control: 'text', required: true, mensajeDeError: 'Escribí el código de la fuente (máx. 100 caracteres).' },
-        { key: 'name', label: 'Nombre', control: 'text', required: true, mensajeDeError: 'Escribí el nombre de la fuente (máx. 200 caracteres).' },
+        { key: 'code', label: 'Código', hint: 'Único y estable, como boletin-epidemiologico-msal. Máx. 100 caracteres.', control: 'text', required: true, mensajeDeError: 'Escriba el código de la fuente (máx. 100 caracteres).' },
+        { key: 'name', label: 'Nombre', control: 'text', required: true, mensajeDeError: 'Escriba el nombre de la fuente (máx. 200 caracteres).' },
         { key: 'sourceTypeConceptId', label: 'Tipo de fuente', hint: 'Identificador del concepto de tipo (UUID).', control: 'text', required: true, mensajeDeError: UUID_ERROR },
       ],
     },
@@ -116,7 +116,7 @@ export class SourceForm {
   protected readonly created = signal<SourceCreated | null>(null);
 
   protected readonly errorMessage = computed(() =>
-    errorMessageOf(this.state(), 'No tenés permiso para registrar fuentes.'),
+    errorMessageOf(this.state(), 'No tiene permiso para registrar fuentes.'),
   );
 
   protected submit(): void {

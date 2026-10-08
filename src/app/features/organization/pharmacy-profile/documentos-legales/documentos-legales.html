@@ -185,11 +185,11 @@
     <div class="papeles__alta" data-testid="ficha-alta-documento">
       <app-form-field
         icon="clipboard"
-        label="Qué documento estás cargando"
-        hint="Sólo aparecen los papeles del registro que todavía no cargaste."
+        label="Qué documento está cargando"
+        hint="Sólo aparecen los papeles del registro que todavía no cargó."
       >
         <app-select
-          placeholder="Elegí el documento"
+          placeholder="Elija el documento"
           [options]="papelesQueFaltan()"
           [value]="papelElegido()"
           (valueChange)="elegirPapel($event)"

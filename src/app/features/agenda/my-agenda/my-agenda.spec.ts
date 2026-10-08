@@ -678,7 +678,7 @@ describe('MyAgenda', () => {
       await extra().agregarHorarioExtra(new Date());
       fixture.detectChanges();
 
-      expect(dialogo.config()?.message).toContain('no atendés');
+      expect(dialogo.config()?.message).toContain('no atiende');
 
       const req = http.expectOne(
         (r) => r.url === '/scheduling/resources/res-1/exceptions' && r.method === 'POST',
@@ -704,7 +704,7 @@ describe('MyAgenda', () => {
       const dialogo = conDialogo(false);
       await extra().agregarHorarioExtra(new Date());
 
-      expect(dialogo.config()?.title).toContain('fuera de tu horario de atención');
+      expect(dialogo.config()?.title).toContain('fuera de su horario de atención');
       expect(dialogo.config()?.message).toContain('termina a las 13:00');
       expect(dialogo.config()?.message).toContain('se puede reservar');
       // Y el botón dice qué hace, no «Aceptar».
@@ -750,7 +750,7 @@ describe('MyAgenda', () => {
           '.mi-agenda__tarjeta [data-testid="horario-bloque"]',
         ) as NodeListOf<HTMLElement>,
       ).map((b) => b.getAttribute('aria-label') ?? '');
-      expect(franjas).toEqual(['lunes de 09:00 a 13:00: atendés']);
+      expect(franjas).toEqual(['lunes de 09:00 a 13:00: atiende']);
     });
 
     it('las franjas de otros servicios aparecen en «Mis horarios», con su tono', () => {
@@ -931,7 +931,7 @@ describe('MyAgenda', () => {
     const disparador = barra?.querySelector<HTMLElement>('[data-testid="row-actions-trigger"]');
     expect(disparador, 'sin disparador del desplegable').not.toBeNull();
     expect(disparador?.textContent?.trim()).toBe('Acciones');
-    expect(disparador?.getAttribute('aria-label')).toBe('Acciones de tu horario');
+    expect(disparador?.getAttribute('aria-label')).toBe('Acciones de su horario');
     expect(disparador?.querySelector('svg'), 'el disparador lleva ícono').not.toBeNull();
 
     const acciones = accionesDelHorario();
@@ -1064,7 +1064,7 @@ describe('MyAgenda', () => {
     conCuposHasta(new Date(Date.now() + 90 * 24 * 60 * 60 * 1000));
 
     expect(fixture.nativeElement.querySelector('.mi-agenda__semana')).toBeNull();
-    expect(fixture.nativeElement.textContent).not.toContain('rige hasta que lo cambies');
+    expect(fixture.nativeElement.textContent).not.toContain('rige hasta que lo cambie');
   });
 
   it('la barra lleva los estados a la izquierda y las acciones a la derecha, separados', () => {
@@ -1144,7 +1144,7 @@ describe('MyAgenda', () => {
 
     const texto: string = fixture.nativeElement.textContent;
     expect(texto).not.toContain('se están por agotar');
-    expect(texto).toContain('Tenés turnos abiertos hasta el');
+    expect(texto).toContain('Tiene turnos abiertos hasta el');
   });
 
   it('si la lectura de cupos falla, la tarjeta sigue sirviendo', () => {

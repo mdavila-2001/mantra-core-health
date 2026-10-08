@@ -1,6 +1,6 @@
 <app-page-header
   title="Encuesta"
-  subtitle="Componé el cuestionario, publicalo, asociálo a un servicio y leé lo que respondieron."
+  subtitle="Componga el cuestionario, publíquelo, asociálo a un servicio y lea lo que respondieron."
   [breadcrumbs]="breadcrumbs()"
 >
   <app-back-link page-actions [fallback]="rutaDeLasEncuestas" label="Volver a las encuestas" />
@@ -78,8 +78,8 @@
           <!-- La previa es el MISMO componente con el que responde el paciente:
                `app-survey-form`. No es una imitación — no puede desviarse. -->
           <p class="encuesta__previa-nota">
-            Así lo va a ver quien responda. Podés tocar los controles: nada de lo
-            que marques acá se guarda.
+            Así lo va a ver quien responda. Puede tocar los controles: nada de lo
+            que marque acá se guarda.
           </p>
           @if (encuesta.description) {
             <p class="encuesta__consigna">{{ encuesta.description }}</p>
@@ -91,7 +91,7 @@
           />
         } @else if (encuesta.questions.length === 0) {
           <p class="encuesta__vacio">
-            Todavía no tiene preguntas. Agregá la primera con el botón de abajo.
+            Todavía no tiene preguntas. Agregue la primera con el botón de abajo.
           </p>
         } @else {
           <ol class="encuesta__preguntas">

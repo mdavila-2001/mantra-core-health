@@ -215,7 +215,7 @@ export const ACCESS_AREAS: readonly AccessArea[] = [
   {
     id: 'consulta',
     label: 'Consultas',
-    tagline: 'Tu agenda, lo que escribís y el expediente de cada paciente.',
+    tagline: 'Su agenda, lo que escribe y el expediente de cada paciente.',
     icon: 'stethoscope',
     tone: 'info',
     // Dos y no diez (19/09/2026, y sin «Notas médicas» desde el 25/09): lo que
@@ -230,7 +230,7 @@ export const ACCESS_AREAS: readonly AccessArea[] = [
   {
     id: 'gente',
     label: 'Pacientes y equipo',
-    tagline: 'A quién atendés y con quién trabajás: pacientes, equipo y conversaciones.',
+    tagline: 'A quién atiende y con quién trabaja: pacientes, equipo y conversaciones.',
     icon: 'people',
     tone: 'secondary',
     paths: ['messaging', 'groups', 'administration/patients', 'administration/users'],
@@ -256,7 +256,7 @@ export const ACCESS_AREAS: readonly AccessArea[] = [
   {
     id: 'organizacion',
     label: 'Administración',
-    tagline: 'Lo que sostiene tu práctica: sedes, cobros, catálogos y permisos.',
+    tagline: 'Lo que sostiene su práctica: sedes, cobros, catálogos y permisos.',
     icon: 'building',
     tone: 'success',
     paths: [

@@ -160,11 +160,11 @@ describe('OrganizationBranches', () => {
     internal().openCreate();
     internal().setField('name', '   ');
     internal().save();
-    expect(internal().nameError()).toBe('Escribí el nombre de la sucursal.');
+    expect(internal().nameError()).toBe('Escriba el nombre de la sucursal.');
 
     internal().setField('name', 'central');
     internal().save();
-    expect(internal().nameError()).toBe('Ya tenés una sucursal con ese nombre.');
+    expect(internal().nameError()).toBe('Ya tiene una sucursal con ese nombre.');
 
     internal().setField('name', 'Norte');
     internal().setField('locationUrl', 'javascript:alert(1)');

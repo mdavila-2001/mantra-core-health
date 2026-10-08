@@ -235,14 +235,14 @@ describe('Thread', () => {
   });
 
   it('responder manda la cita, y la burbuja la muestra', () => {
-    abrir([mensaje('m-1', 'pp-2', 'Traé los estudios')]);
+    abrir([mensaje('m-1', 'pp-2', 'Traiga los estudios')]);
 
     consultar('hilo-menu-mensaje')?.click();
     fixture.detectChanges();
     consultar('hilo-responder')?.click();
     fixture.detectChanges();
 
-    expect(consultar('composer-respuesta')?.textContent).toContain('Traé los estudios');
+    expect(consultar('composer-respuesta')?.textContent).toContain('Traiga los estudios');
 
     escribir('Los llevo');
     (consultar('hilo-enviar') as HTMLButtonElement).click();
@@ -272,7 +272,7 @@ describe('Thread', () => {
     store.noLeidosAlAbrir.set(2);
     abrir([
       mensaje('m-3', 'pp-2', 'Y esto tampoco'),
-      mensaje('m-2', 'pp-2', 'Esto no lo viste'),
+      mensaje('m-2', 'pp-2', 'Esto no lo vio'),
       mensaje('m-1', 'pp-1', 'Lo último que leíste'),
     ]);
 
@@ -309,9 +309,9 @@ describe('Thread', () => {
 
   it('buscar en la conversación deja sólo las coincidencias, resaltadas', () => {
     abrir([
-      mensaje('m-3', 'pp-2', 'Te mando el Holter mañana'),
+      mensaje('m-3', 'pp-2', 'Le mando el Holter mañana'),
       mensaje('m-2', 'pp-1', 'Perfecto, gracias'),
-      mensaje('m-1', 'pp-2', 'Hola, ¿pudiste ver el hólter?'),
+      mensaje('m-1', 'pp-2', 'Hola, ¿pudo ver el hólter?'),
     ]);
 
     consultar('hilo-buscar-abrir')?.click();
@@ -335,21 +335,21 @@ describe('Thread', () => {
   });
 
   it('una URL en el texto se vuelve enlace, y no se resalta por dentro', () => {
-    const trozos = trocear('Mirá https://alovida.bo/mi-historia y avisame', 'historia');
+    const trozos = trocear('Mire https://alovida.bo/mi-historia y avíseme', 'historia');
     expect(trozos).toEqual([
-      { tipo: 'texto', valor: 'Mirá ' },
+      { tipo: 'texto', valor: 'Mire ' },
       { tipo: 'enlace', valor: 'https://alovida.bo/mi-historia' },
-      { tipo: 'texto', valor: ' y avisame' },
+      { tipo: 'texto', valor: ' y avíseme' },
     ]);
 
-    abrir([mensaje('m-1', 'pp-2', 'Entrá a https://alovida.bo/turnos')]);
+    abrir([mensaje('m-1', 'pp-2', 'Entre a https://alovida.bo/turnos')]);
     const enlace = fixture.nativeElement.querySelector('a.hilo__enlace') as HTMLAnchorElement | null;
     expect(enlace?.getAttribute('href')).toBe('https://alovida.bo/turnos');
     expect(enlace?.getAttribute('rel')).toContain('noopener');
   });
 
   it('reenviar manda el mismo texto a la conversación elegida', () => {
-    abrir([mensaje('m-1', 'pp-2', 'Te dejo la orden en la historia clínica')]);
+    abrir([mensaje('m-1', 'pp-2', 'Le dejo la orden en la historia clínica')]);
     // Otra conversación en la bandeja, para tener a quién reenviar.
     store.conversaciones.update((lista) => [
       ...lista,
@@ -385,7 +385,7 @@ describe('Thread', () => {
     );
     expect(enviado.request.body).toEqual({
       senderProfileId: 'pp-1',
-      bodyText: 'Te dejo la orden en la historia clínica',
+      bodyText: 'Le dejo la orden en la historia clínica',
     });
     enviado.flush({ id: 'm-9', conversationId: 'c-2', sentAt: '2026-08-18T12:00:00.000Z' });
     fixture.detectChanges();
@@ -397,7 +397,7 @@ describe('Thread', () => {
   });
 
   it('el foco vuelve a «Opciones del mensaje» al cancelar el reenvío', async () => {
-    abrir([mensaje('m-1', 'pp-2', 'Te dejo la orden en la historia clínica')]);
+    abrir([mensaje('m-1', 'pp-2', 'Le dejo la orden en la historia clínica')]);
     store.conversaciones.update((lista) => [
       ...lista,
       {
@@ -725,11 +725,11 @@ describe('Thread', () => {
     });
 
     it('un adjunto que falla lo avisa y el resto de la conversación sigue', async () => {
-      abrir([conAdjunto('m-2', 'f-roto'), mensaje('m-1', 'pp-1', 'Te lo mando')]);
+      abrir([conAdjunto('m-2', 'f-roto'), mensaje('m-1', 'pp-1', 'Se lo mando')]);
       await servir('f-roto', null, true);
 
       expect(fixture.nativeElement.textContent).toContain('Archivo no disponible');
-      expect(fixture.nativeElement.textContent).toContain('Te lo mando');
+      expect(fixture.nativeElement.textContent).toContain('Se lo mando');
       expect(consultar('hilo-documento-ver')).toBeNull();
     });
 

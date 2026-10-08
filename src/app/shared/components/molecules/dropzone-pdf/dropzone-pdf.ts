@@ -209,9 +209,9 @@ export class DropzonePdf {
         if (mensajeDelBackend) return mensajeDelBackend;
       }
       if (error.status === 0) {
-        return 'No pudimos subir el archivo: revisá tu conexión.';
+        return 'No pudimos subir el archivo: revise su conexión.';
       }
     }
-    return 'No pudimos subir el archivo. Reintentá.';
+    return 'No pudimos subir el archivo. Reintente.';
   }
 }

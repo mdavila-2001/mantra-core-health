@@ -145,6 +145,6 @@ describe('DiagnosticResults · descarga por blob (CL-40)', () => {
     http.expectOne(RUTA_DEL_CONTEXTO).error(new ProgressEvent('error'), { status: 0 });
 
     expect(avisos[0]?.tipo).toBe('error');
-    expect(avisos[0]?.texto).toContain('Reintentá');
+    expect(avisos[0]?.texto).toContain('Reintente');
   });
 });

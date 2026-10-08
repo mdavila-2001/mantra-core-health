@@ -41,7 +41,7 @@ class Anfitrion {
   readonly pregunta = signal<SurveyQuestion>({
     id: 'q-1',
     position: 1,
-    questionText: '¿Cómo calificarías la atención?',
+    questionText: '¿Cómo calificaría la atención?',
     answerType: 'SCALE',
     required: true,
     scaleMin: 1,
@@ -81,7 +81,7 @@ describe('QuestionEditor', () => {
   const PREGUNTA: SurveyQuestion = {
     id: 'q-1',
     position: 1,
-    questionText: '¿Cómo calificarías la atención?',
+    questionText: '¿Cómo calificaría la atención?',
     answerType: 'SCALE',
     required: true,
     scaleMin: 1,
@@ -113,7 +113,7 @@ describe('QuestionEditor', () => {
   it('plegada muestra el enunciado, el tipo y su detalle', () => {
     const host = montar(PREGUNTA, false);
 
-    expect(host.textContent).toContain('¿Cómo calificarías la atención?');
+    expect(host.textContent).toContain('¿Cómo calificaría la atención?');
     expect(host.textContent).toContain('Escala');
     expect(host.textContent).toContain('De 1 a 5');
     expect(host.querySelector('.editor-pregunta__edicion')).toBeNull();
@@ -153,7 +153,7 @@ describe('QuestionEditor', () => {
   it('al abrirse precarga lo que la pregunta ya tiene', () => {
     montar();
 
-    expect(interno<() => string>('texto')()).toBe('¿Cómo calificarías la atención?');
+    expect(interno<() => string>('texto')()).toBe('¿Cómo calificaría la atención?');
     expect(interno<() => string>('tipo')()).toBe('SCALE');
     expect(interno<() => boolean>('obligatoria')()).toBe(true);
     expect(interno<() => number>('minimo')()).toBe(1);
@@ -176,7 +176,7 @@ describe('QuestionEditor', () => {
     interno<(v: string) => void>('cambiarTexto')('   ');
     fixture.detectChanges();
 
-    expect(interno<() => string | null>('problema')()).toBe('Escribí la pregunta.');
+    expect(interno<() => string | null>('problema')()).toBe('Escriba la pregunta.');
   });
 
   it('una elección con menos de dos opciones no se puede guardar', () => {
@@ -216,7 +216,7 @@ describe('QuestionEditor', () => {
     interno<() => void>('confirmar')();
 
     expect(emitido).toEqual({
-      questionText: '¿Cómo calificarías la atención?',
+      questionText: '¿Cómo calificaría la atención?',
       answerType: 'SCALE',
       required: true,
       scaleMin: 1,
@@ -238,7 +238,7 @@ describe('QuestionEditor', () => {
     interno<() => void>('confirmar')();
 
     expect(emitido).toEqual({
-      questionText: '¿Cómo calificarías la atención?',
+      questionText: '¿Cómo calificaría la atención?',
       answerType: 'MULTIPLE_CHOICE',
       required: true,
       options: ['Tiempo de espera', 'Claridad'],
@@ -384,7 +384,7 @@ describe('QuestionEditor', () => {
 
       expect(anfitrion.componentInstance.guardados).toHaveLength(0);
       expect(anfitrion.componentInstance.pregunta().questionText).toBe(
-        '¿Cómo calificarías la atención?',
+        '¿Cómo calificaría la atención?',
       );
     });
 
@@ -404,7 +404,7 @@ describe('QuestionEditor', () => {
       // Y al volver a abrir está lo guardado, no lo que se descartó.
       await abrir();
       const campo = modal()?.querySelector<HTMLInputElement>('[data-testid="editor-texto"] input');
-      expect(campo?.value).toBe('¿Cómo calificarías la atención?');
+      expect(campo?.value).toBe('¿Cómo calificaría la atención?');
     });
 
     it('si el descarte se rechaza, el modal sigue abierto y no se emitió nada', async () => {

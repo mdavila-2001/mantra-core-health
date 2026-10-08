@@ -90,7 +90,7 @@ export class InventoryUploadDialog {
   protected reject(rejected: readonly RejectedFile[]): void {
     const first = rejected[0];
     this.fileError.set(
-      first === undefined ? null : 'Ese archivo no sirve: elegí un CSV de hasta 1 MB.',
+      first === undefined ? null : 'Ese archivo no sirve: elija un CSV de hasta 1 MB.',
     );
   }
 
@@ -128,8 +128,8 @@ export class InventoryUploadDialog {
         this.applying.set(false);
         this.toasts.success(
           result.updated === 1
-            ? 'Actualizaste el inventario de 1 producto.'
-            : `Actualizaste el inventario de ${result.updated} productos.`,
+            ? 'Actualizó el inventario de 1 producto.'
+            : `Actualizó el inventario de ${result.updated} productos.`,
         );
         this.applied.emit();
         this.dialog().close(true);

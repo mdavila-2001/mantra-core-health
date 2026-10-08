@@ -60,15 +60,15 @@ const TRES_PASOS: readonly StepperStep[] = [
  * El tercero es el actual: los dos primeros ya se contestaron.
  */
 const DIEZ_PASOS: readonly StepperStep[] = [
-  { label: '¿Cómo te llamás?', status: 'complete' },
-  { label: 'Tu documento de identidad', status: 'complete' },
-  { label: 'Contanos un poco sobre vos', status: 'current' },
-  { label: '¿Cómo te contactamos?', status: 'upcoming' },
-  { label: '¿Dónde vivís?', status: 'upcoming' },
-  { label: '¿Dónde trabajás?', status: 'upcoming' },
-  { label: 'El lugar donde trabajás', status: 'upcoming' },
-  { label: 'Tu acceso', status: 'upcoming' },
-  { label: 'Tu seguro de salud', status: 'upcoming' },
+  { label: '¿Cómo se llama?', status: 'complete' },
+  { label: 'Su documento de identidad', status: 'complete' },
+  { label: 'Cuéntenos un poco sobre usted', status: 'current' },
+  { label: '¿Cómo le contactamos?', status: 'upcoming' },
+  { label: '¿Dónde vive?', status: 'upcoming' },
+  { label: '¿Dónde trabaja?', status: 'upcoming' },
+  { label: 'El lugar donde trabaja', status: 'upcoming' },
+  { label: 'Su acceso', status: 'upcoming' },
+  { label: 'Su seguro de salud', status: 'upcoming' },
   { label: 'Datos de facturación', status: 'upcoming' },
 ];
 
@@ -198,7 +198,7 @@ describe('Stepper', () => {
           label: 'Plantilla',
           status: 'upcoming',
           disabled: true,
-          disabledReason: 'Todavía no llegaste acá: completá los pasos anteriores.',
+          disabledReason: 'Todavía no llegó acá: complete los pasos anteriores.',
         },
       ]);
 
@@ -210,7 +210,7 @@ describe('Stepper', () => {
       expect(cerrado.getAttribute('aria-disabled')).toBe('true');
       expect(cerrado.hasAttribute('disabled')).toBe(false);
       expect(cerrado.getAttribute('aria-label')).toContain(
-        'Todavía no llegaste acá',
+        'Todavía no llegó acá',
       );
 
       cerrado.click();
@@ -297,10 +297,10 @@ describe('Stepper', () => {
         .nativeElement as HTMLButtonElement;
       // El nombre accesible sigue entero: es lo que anuncia el lector.
       expect(actual.getAttribute('aria-label')).toBe(
-        'Paso 3 de 10: Contanos un poco sobre vos, paso actual',
+        'Paso 3 de 10: Cuéntenos un poco sobre usted, paso actual',
       );
       // Y el texto sigue en el DOM: `sr-only` lo esconde de la vista y de nada más.
-      expect(actual.textContent).toContain('Contanos un poco sobre vos');
+      expect(actual.textContent).toContain('Cuéntenos un poco sobre usted');
     });
 
     it('devuelve el rótulo como globo al enfocar el paso', async () => {
@@ -311,7 +311,7 @@ describe('Stepper', () => {
       paso.dispatchEvent(new FocusEvent('focus'));
       await fixture.whenStable();
 
-      expect(globo()?.textContent?.trim()).toBe('¿Dónde vivís?');
+      expect(globo()?.textContent?.trim()).toBe('¿Dónde vive?');
       expect(paso.getAttribute('aria-describedby')).toBe(globo()?.id);
 
       paso.dispatchEvent(new FocusEvent('blur'));
@@ -333,7 +333,7 @@ describe('Stepper', () => {
         vi.advanceTimersByTime(1000);
         fixture.detectChanges();
 
-        expect(globo()?.textContent?.trim()).toBe('¿Dónde vivís?');
+        expect(globo()?.textContent?.trim()).toBe('¿Dónde vive?');
       } finally {
         vi.useRealTimers();
       }
@@ -354,7 +354,7 @@ describe('Stepper', () => {
     it('sigue proponiendo el índice, y sigue sin proponer el paso cerrado', () => {
       const cerrado = DIEZ_PASOS.map((paso, i) =>
         i === 6
-          ? { ...paso, disabled: true, disabledReason: 'Todavía no llegaste acá.' }
+          ? { ...paso, disabled: true, disabledReason: 'Todavía no llegó acá.' }
           : paso,
       );
       const fixture = montar(cerrado);

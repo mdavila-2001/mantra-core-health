@@ -5,9 +5,9 @@ const RUTAS = [
   ['/auth/register', 'Crear cuenta'],
   ['/auth/register/patient', 'Crear cuenta de paciente'],
   ['/auth/register/practitioner', 'Crear cuenta de profesional'],
-  ['/auth/register/organization', 'Registrá tu aseguradora'],
-  ['/auth/register/laboratory', 'Registrá tu laboratorio'],
-  ['/auth/register/imaging-center', 'Registrá tu centro de imagenología'],
+  ['/auth/register/organization', 'Registre su aseguradora'],
+  ['/auth/register/laboratory', 'Registre su laboratorio'],
+  ['/auth/register/imaging-center', 'Registre su centro de imagenología'],
 ] as const;
 const VIEWPORTS = [
   { nombre: '375 claro', width: 375, height: 812, colorScheme: 'light' as const },

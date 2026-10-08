@@ -199,7 +199,7 @@ function problemaDe(
     const repetido = serviciosDeLaboratorio.filtrar(
       (s) => s.tenantId === tenantId && s.code.toLowerCase() === code.toLowerCase() && s.id !== propioId,
     );
-    if (repetido.length > 0) return `Ya tenés un servicio con el código «${code}».`;
+    if (repetido.length > 0) return `Ya tiene un servicio con el código «${code}».`;
   }
   if (!parcial || datos.name !== undefined) {
     if ((datos.name ?? '').trim() === '') return 'Falta el nombre del servicio.';
@@ -562,7 +562,7 @@ export function registrarPortalDeLaboratorio(router: MockRouter): void {
     const problema = problemaDe(tenantId, datos, false, null);
     if (problema !== null) return validation(problema);
     const nuevo = serviciosDeLaboratorio.agregar(servicioNuevo(tenantId, datos as LabServiceDraft));
-    anotar(tenantId, 'SERVICE_CREATED', `Diste de alta «${nuevo.name}».`);
+    anotar(tenantId, 'SERVICE_CREATED', `Dio de alta «${nuevo.name}».`);
     return reply(201, servicioDeRespuesta(nuevo));
   });
 
@@ -626,7 +626,7 @@ export function registrarPortalDeLaboratorio(router: MockRouter): void {
       anotar(
         tenantId,
         'SERVICES_IMPORTED',
-        `Importaste un archivo: ${creados} servicios nuevos y ${actualizados} actualizados.`,
+        `Importó un archivo: ${creados} servicios nuevos y ${actualizados} actualizados.`,
       );
     }
     return {
@@ -647,7 +647,7 @@ export function registrarPortalDeLaboratorio(router: MockRouter): void {
     const problema = problemaDe(tenantId, datos, true, s.id);
     if (problema !== null) return validation(problema);
     const actualizado = serviciosDeLaboratorio.actualizar(s.id, { ...cambiosDe(datos), updatedAt: ahora() })!;
-    anotar(tenantId, 'SERVICE_UPDATED', `Actualizaste «${actualizado.name}».`);
+    anotar(tenantId, 'SERVICE_UPDATED', `Actualizó «${actualizado.name}».`);
     return servicioDeRespuesta(actualizado);
   });
 
@@ -657,7 +657,7 @@ export function registrarPortalDeLaboratorio(router: MockRouter): void {
     const s = serviciosDeLaboratorio.get(request.params['id']!);
     if (s === undefined || s.tenantId !== tenantId) return notFound('Servicio no encontrado');
     const retirado = serviciosDeLaboratorio.actualizar(s.id, { status: 'WITHDRAWN', updatedAt: ahora() })!;
-    anotar(tenantId, 'SERVICE_WITHDRAWN', `Retiraste «${retirado.name}».`);
+    anotar(tenantId, 'SERVICE_WITHDRAWN', `Retiró «${retirado.name}».`);
     return servicioDeRespuesta(retirado);
   });
 
@@ -712,7 +712,7 @@ export function registrarPortalDeLaboratorio(router: MockRouter): void {
     if (c === undefined || c.tenantId !== tenantId) return notFound('Categoría no encontrada');
     const enUso = categoriaDeRespuesta(c).serviceCount;
     if (enUso > 0) {
-      return conflict(`«${c.name}» tiene ${enUso} servicios. Movelos a otra categoría antes de borrarla.`);
+      return conflict(`«${c.name}» tiene ${enUso} servicios. Muévalos a otra categoría antes de borrarla.`);
     }
     categoriasDeLaboratorio.borrar(c.id);
     return { ok: true };
@@ -753,7 +753,7 @@ export function registrarPortalDeLaboratorio(router: MockRouter): void {
       .slice(0, 8)
       .map(({ tenantId: _t, ...resto }) => resto);
     return {
-      labName: TENANT_NAMES[tenantId] ?? 'Tu laboratorio',
+      labName: TENANT_NAMES[tenantId] ?? 'Su laboratorio',
       published: servicios.filter((s) => s.status === 'PUBLISHED').length,
       drafts: servicios.filter((s) => s.status === 'DRAFT').length,
       withdrawn: servicios.filter((s) => s.status === 'WITHDRAWN').length,
@@ -966,10 +966,10 @@ export function registrarPortalDeLaboratorio(router: MockRouter): void {
     const r = resultadosDeLaboratorio.get(request.params['id']!);
     if (r === undefined || r.tenantId !== tenantId) return notFound('Archivo no encontrado');
     const motivo = (cuerpo<{ reason: string }>(request).reason ?? '').trim();
-    if (motivo === '') return validation('Contá por qué retirás el archivo.');
+    if (motivo === '') return validation('Cuente por qué retira el archivo.');
     if (r.status === 'WITHDRAWN') return conflict('El archivo ya estaba retirado.');
     const retirado = resultadosDeLaboratorio.actualizar(r.id, { status: 'WITHDRAWN', withdrawnReason: motivo })!;
-    anotar(tenantId, 'RESULT_WITHDRAWN', `Retiraste ${r.fileName}: ${motivo}`);
+    anotar(tenantId, 'RESULT_WITHDRAWN', `Retiró ${r.fileName}: ${motivo}`);
     return resultadoDeRespuesta(retirado);
   });
 }
@@ -983,8 +983,8 @@ function avisarResultado(tenantId: string, orderId: string, fileName: string): v
     emitirNotificacion({
       userId: destino.patientUserId,
       category: 'CLINICAL',
-      subject: `Tu resultado de ${destino.studyName} está listo`,
-      bodyText: `${laboratorio} subió ${fileName}. Ya lo podés ver en tus resultados.`,
+      subject: `Su resultado de ${destino.studyName} está listo`,
+      bodyText: `${laboratorio} subió ${fileName}. Ya lo puede ver en sus resultados.`,
       destination: { type: 'DIAGNOSTIC_ORDER', id: orderId },
     });
   }
@@ -993,7 +993,7 @@ function avisarResultado(tenantId: string, orderId: string, fileName: string): v
       userId: destino.requesterUserId,
       category: 'CLINICAL',
       subject: `Resultado de ${destino.studyName} de ${destino.patientName}`,
-      bodyText: `${laboratorio} subió ${fileName} para la orden que pediste.`,
+      bodyText: `${laboratorio} subió ${fileName} para la orden que pidió.`,
       destination: { type: 'DIAGNOSTIC_ORDER', id: orderId },
     });
   }

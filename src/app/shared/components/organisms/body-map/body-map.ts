@@ -118,7 +118,7 @@ export class BodyMap {
   readonly value = model<string | null>(null);
 
   /** Nombre accesible de la silueta entera. */
-  readonly etiqueta = input('Silueta del cuerpo: tocá dónde te pasa');
+  readonly etiqueta = input('Silueta del cuerpo: toque dónde le pasa');
 
   /** Prefijo del `data-testid` de cada zona; el sufijo es su `id`. */
   readonly testId = input('body-map');
@@ -255,7 +255,7 @@ export class BodyMap {
 
   /** El nombre que se anuncia: el de la zona y, si lo contado la nombra, eso también. */
   protected nombreAccesible(zona: ZonaDibujable): string {
-    return this.estaMarcada(zona.id) ? `${zona.nombre} (por lo que contaste)` : zona.nombre;
+    return this.estaMarcada(zona.id) ? `${zona.nombre} (por lo que contó)` : zona.nombre;
   }
 
   protected apuntar(id: string | null): void {

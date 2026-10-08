@@ -90,7 +90,7 @@ describe('PatientCampaignsWidget', () => {
       await settle();
     });
 
-    it('muestra el sello «100% Cubierto por tu Seguro», la descripción y el botón', async () => {
+    it('muestra el sello «100% Cubierto por su Seguro», la descripción y el botón', async () => {
       mount();
       http.expectOne(REQUEST_URL).flush([campaignWire()]);
       await settle();
@@ -99,7 +99,7 @@ describe('PatientCampaignsWidget', () => {
       const text = root().textContent ?? '';
       expect(
         root().querySelector('[data-testid="campaign-badge-coverage"]')?.textContent,
-      ).toContain('100% Cubierto por tu Seguro');
+      ).toContain('100% Cubierto por su Seguro');
       expect(text).toContain('Chequeo Preventivo Cardiovascular y Perfil Lipídico');
       expect(text).toContain('Hipertensión esencial');
       expect(text).toContain('Seguros Andina');
@@ -238,12 +238,12 @@ describe('PatientCampaignsWidget', () => {
     });
 
     it('en la pestaña de seguros dice que hoy no hay campañas', async () => {
-      mount('Tu seguro no tiene campañas preventivas activas hoy.');
+      mount('Su seguro no tiene campañas preventivas activas hoy.');
       http.expectOne(REQUEST_URL).flush([]);
       await settle();
 
       expect(root().querySelector('[data-testid="campaigns-empty"]')?.textContent).toContain(
-        'Tu seguro no tiene campañas preventivas activas hoy.',
+        'Su seguro no tiene campañas preventivas activas hoy.',
       );
     });
 

@@ -64,7 +64,7 @@ type InventoryView = 'COUNT' | 'AVAILABILITY';
 
 const VIEW_OPTIONS: readonly SegmentedOption<InventoryView>[] = [
   { value: 'COUNT', label: 'Con cantidades', description: 'Existencias y umbral de alerta de cada producto' },
-  { value: 'AVAILABILITY', label: 'Hay / no hay', description: 'Sólo si lo tenés o no, sin contar unidades' },
+  { value: 'AVAILABILITY', label: 'Hay / no hay', description: 'Sólo si lo tiene o no, sin contar unidades' },
 ];
 
 /** Dónde se recuerda la forma elegida: es una preferencia de la persona, no un dato. */
@@ -177,7 +177,7 @@ export class PharmacyInventory {
       return ready(list);
     }
     return term !== ''
-      ? empty({ label: 'Probá con otra palabra' }, `Nada coincide con «${this.term().trim()}».`)
+      ? empty({ label: 'Pruebe con otra palabra' }, `Nada coincide con «${this.term().trim()}».`)
       : empty({ label: 'Mostrar todo el inventario' }, 'Ningún producto está en alerta.');
   });
 
@@ -203,7 +203,7 @@ export class PharmacyInventory {
     this.view() === 'AVAILABILITY'
       ? [
           { key: 'name', header: 'Producto', priority: 1, cell: this.nameCell() },
-          { key: 'has', header: '¿Lo tenés?', priority: 1, cell: this.hasCell() },
+          { key: 'has', header: '¿Lo tiene?', priority: 1, cell: this.hasCell() },
         ]
       : [
           { key: 'name', header: 'Producto', priority: 1, cell: this.nameCell() },
@@ -241,7 +241,7 @@ export class PharmacyInventory {
         this.products.set(
           alive.length > 0
             ? ready(alive)
-            : empty({ label: 'Cargá productos en «Productos»' }, 'Todavía no hay productos con inventario.'),
+            : empty({ label: 'Cargue productos en «Productos»' }, 'Todavía no hay productos con inventario.'),
         );
       },
       error: (error: unknown) =>
@@ -393,7 +393,7 @@ export class PharmacyInventory {
         this.edits.set({});
         this.availabilityEdits.set({});
         this.toasts.success(
-          result.updated === 1 ? 'Guardaste el inventario de 1 producto.' : `Guardaste el inventario de ${result.updated} productos.`,
+          result.updated === 1 ? 'Guardó el inventario de 1 producto.' : `Guardó el inventario de ${result.updated} productos.`,
         );
         // La prueba es la tabla releída de la API.
         this.reload();

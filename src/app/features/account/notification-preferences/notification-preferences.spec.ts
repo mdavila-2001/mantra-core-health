@@ -125,7 +125,7 @@ describe('NotificationPreferences', () => {
     saveRequest.flush(preferences());
     fixture.detectChanges();
 
-    expect(text()).toContain('Guardamos tus preferencias.');
+    expect(text()).toContain('Guardamos sus preferencias.');
   });
 
   it('convierte la hora local a UTC al guardar el silencio', () => {
@@ -147,7 +147,7 @@ describe('NotificationPreferences', () => {
     fixture.detectChanges();
   });
 
-  it('apagar el silencio manda `null`, que es «quitala»', () => {
+  it('apagar el silencio manda `null`, que es «quítela»', () => {
     http
       .expectOne('/notifications/preferences/me')
       .flush(preferences({ start: toUtc('22:00'), end: toUtc('07:00') }));
@@ -185,7 +185,7 @@ describe('NotificationPreferences', () => {
       .error(new ProgressEvent('error'));
     fixture.detectChanges();
 
-    expect(text()).toContain('No pudimos guardar tus preferencias.');
+    expect(text()).toContain('No pudimos guardar sus preferencias.');
     // Nada quedó guardado (el PUT es todo-o-nada): el switch no se queda
     // «encendido de mentira», vuelve a lo último que el servidor confirmó.
     expect(querySwitch('pref-CLINICAL')?.checked).toBe(true);

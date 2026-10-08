@@ -104,7 +104,7 @@ describe('PractitionerServiceSchedule', () => {
 
   it('sin sesión no pide nada y lo dice', () => {
     montar(false);
-    expect(raiz().textContent).toContain('Entrá para ver los horarios');
+    expect(raiz().textContent).toContain('Entre para ver los horarios');
   });
 
   it('un profesional sin servicios lo dice en vez de mostrar una grilla vacía', async () => {

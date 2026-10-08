@@ -1,7 +1,7 @@
 @if (!embedded()) {
   <app-page-header
     title="Mis pedidos"
-    subtitle="Tus pedidos de farmacia, del envío al retiro, con su estado en palabras."
+    subtitle="Sus pedidos de farmacia, del envío al retiro, con su estado en palabras."
     [breadcrumbs]="breadcrumbs()"
   />
 }
@@ -10,7 +10,7 @@
   <!-- Sesión válida de una cuenta que no es de un paciente: la pantalla no le
        corresponde, y no es un error. -->
   <app-alert tone="info" title="Esta sección es para pacientes">
-    Tu cuenta no tiene un perfil de paciente, así que no hay pedidos propios que mirar.
+    Su cuenta no tiene un perfil de paciente, así que no hay pedidos propios que mirar.
   </app-alert>
 } @else {
   <app-view-state-host [state]="pedidos()" (retry)="cargar()">
@@ -31,7 +31,7 @@
               }
               @if (pedido.insuranceSettlementAvailability === 'AVAILABLE') {
                 @if (pedido.insuranceSettlement; as settlement) {
-                  <span class="pedidos__secundario cifras-tabulares">A tu cargo: {{ settlement.totalPatientAmount }} {{ moneda(settlement.currencyCode) }}</span>
+                  <span class="pedidos__secundario cifras-tabulares">A su cargo: {{ settlement.totalPatientAmount }} {{ moneda(settlement.currencyCode) }}</span>
                 }
               } @else if (pedido.insuranceSettlementAvailability === 'PENDING_PUBLICATION') {
                 <span class="pedidos__secundario">Liquidación pendiente de publicación</span>

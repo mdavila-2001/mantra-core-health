@@ -263,7 +263,7 @@ describe('AppointmentNew', () => {
       http.expectOne('/scheduling/appointments/direct').flush(
         {
           code: 'CONFLICT',
-          message: 'Tenés una cita confirmada en ese rato en «Consultorio Norte».',
+          message: 'Tiene una cita confirmada en ese rato en «Consultorio Norte».',
         },
         { status: 409, statusText: 'Conflict' },
       );
@@ -374,7 +374,7 @@ describe('AppointmentNew', () => {
      * escondido igual se tabula y el buscador dejaría de ser la única respuesta
      * a «¿con quién?».
      */
-    it('al elegirlo, el buscador deja lugar al alta y vuelve si te arrepentís', () => {
+    it('al elegirlo, el buscador deja lugar al alta y vuelve si se arrepiente', () => {
       crear();
       conAgendas([{ id: 'res-1', name: 'Consultorio Centro' }]);
 

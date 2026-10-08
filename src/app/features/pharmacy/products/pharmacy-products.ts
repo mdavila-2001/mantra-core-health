@@ -210,7 +210,7 @@ export class PharmacyProducts {
       return ready(list);
     }
     return empty(
-      { label: 'Quitá algún filtro', route: this.router.url.split('?')[0] },
+      { label: 'Quite algún filtro', route: this.router.url.split('?')[0] },
       'Ningún producto coincide con estos filtros.',
     );
   });
@@ -310,8 +310,8 @@ export class PharmacyProducts {
             page.items.length > 0
               ? ready(page.items)
               : empty(
-                  { label: 'Usá «Nuevo producto» o «Importación masiva»' },
-                  'Tu catálogo todavía no tiene productos.',
+                  { label: 'Use «Nuevo producto» o «Importación masiva»' },
+                  'Su catálogo todavía no tiene productos.',
                 ),
           );
         },
@@ -431,7 +431,7 @@ export class PharmacyProducts {
       message:
         `${one} deja${list.length === 1 ? '' : 'n'} de publicarse y sus precios vigentes quedan ` +
         'reemplazados. Los pedidos ya hechos no cambian. El código queda reservado: no se puede ' +
-        'volver a usar para otro producto. Podés volver a publicarlo cuando quieras.',
+        'volver a usar para otro producto. Puede volver a publicarlo cuando quiera.',
       confirmLabel: 'Retirar',
       destructive: true,
     });
@@ -487,7 +487,7 @@ export class PharmacyProducts {
     }
     if (failed > 0) {
       this.toasts.error(
-        failed === 1 ? 'Un producto no se pudo cambiar. Probá de nuevo.' : `${failed} productos no se pudieron cambiar. Probá de nuevo.`,
+        failed === 1 ? 'Un producto no se pudo cambiar. Pruebe de nuevo.' : `${failed} productos no se pudieron cambiar. Pruebe de nuevo.`,
       );
     }
     this.reload();

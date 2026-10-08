@@ -51,7 +51,7 @@ describe('registrationErrorToViewState — catálogo de errores del alta', () =>
 
       expect(estado.status).toBe('validation');
       expect(textoDe(estado)).toBe(
-        'Revisá este dato y volvé a enviar. Documento de identidad del representante legal: falta completarlo (entre 4 y 50 caracteres).',
+        'Revise este dato y vuelva a enviar. Documento de identidad del representante legal: falta completarlo (entre 4 y 50 caracteres).',
       );
       expect(textoDe(estado)).not.toMatch(/must|organization\.|idNumber/);
     });
@@ -68,7 +68,7 @@ describe('registrationErrorToViewState — catálogo de errores del alta', () =>
       );
 
       const texto = textoDe(estado);
-      expect(texto).toContain('Revisá estos 2 datos');
+      expect(texto).toContain('Revise estos 2 datos');
       expect(texto).toContain('Correo electrónico: no es un correo válido');
       expect(texto).toContain('Contraseña: tiene que tener al menos 8 caracteres');
       if (estado.status === 'validation') {
@@ -110,7 +110,7 @@ describe('registrationErrorToViewState — catálogo de errores del alta', () =>
         traducir(respuesta(409, 'CONFLICT', 'Ya existe una cuenta con ese correo')),
       );
       expect(texto).toContain('correo del representante legal');
-      expect(texto).toContain('¿Olvidaste tu contraseña?');
+      expect(texto).toContain('¿Olvidó su contraseña?');
     });
 
     it('documento repetido del paciente: ofrece entrar con el documento', () => {
@@ -139,7 +139,7 @@ describe('registrationErrorToViewState — catálogo de errores del alta', () =>
           'patient',
         ),
       );
-      expect(texto).toContain('iniciá sesión con tu número de documento');
+      expect(texto).toContain('inicie sesión con su número de documento');
     });
   });
 
@@ -155,7 +155,7 @@ describe('registrationErrorToViewState — catálogo de errores del alta', () =>
         ),
       );
       expect(textoDe(estado)).toBe(
-        'Falta el poder notariado del representante legal. Sólo una empresa unipersonal puede registrarse sin él. Adjuntalo en el paso «Representante legal» (PDF, hasta 10 MB) y volvé a enviar.',
+        'Falta el poder notariado del representante legal. Sólo una empresa unipersonal puede registrarse sin él. Adjúntelo en el paso «Representante legal» (PDF, hasta 10 MB) y vuelva a enviar.',
       );
     });
 
@@ -184,7 +184,7 @@ describe('registrationErrorToViewState — catálogo de errores del alta', () =>
           'practitioner',
         ),
       );
-      expect(texto).toContain('departamento donde se emitió tu carnet');
+      expect(texto).toContain('departamento donde se emitió su carnet');
     });
 
     it('una regla que la pantalla debía cumplir sola se presenta como error nuestro, con código para soporte', () => {
@@ -201,7 +201,7 @@ describe('registrationErrorToViewState — catálogo de errores del alta', () =>
         ),
       );
       expect(estado.status).toBe('error');
-      expect(textoDe(estado)).toContain('no es un error en tus datos');
+      expect(textoDe(estado)).toContain('no es un error en sus datos');
       expect(textoDe(estado)).not.toContain('tenant');
       if (estado.status === 'error') expect(estado.requestId).toBe('corr-123');
     });
@@ -216,7 +216,7 @@ describe('registrationErrorToViewState — catálogo de errores del alta', () =>
           ),
         ),
       );
-      expect(texto).toContain('Subí el documento en PDF');
+      expect(texto).toContain('Suba el documento en PDF');
     });
   });
 
@@ -228,7 +228,7 @@ describe('registrationErrorToViewState — catálogo de errores del alta', () =>
         }),
       );
       expect(textoDe(estado)).toBe(
-        'Hubo demasiados intentos seguidos desde tu conexión. Por seguridad, esperá 60 segundos y volvé a enviar: tus datos siguen cargados.',
+        'Hubo demasiados intentos seguidos desde su conexión. Por seguridad, espere 60 segundos y vuelva a enviar: sus datos siguen cargados.',
       );
       if (estado.status === 'validation') expect(estado.retryAfterSeconds).toBe(60);
     });
@@ -246,7 +246,7 @@ describe('registrationErrorToViewState — catálogo de errores del alta', () =>
     it('500 o respuesta sin contrato: no culpa a la persona y da el código para soporte', () => {
       const estado = traducir(respuesta(500, 'INTERNAL', 'Error interno del servidor'));
       expect(estado.status).toBe('error');
-      expect(textoDe(estado)).toContain('no es un error en tus datos');
+      expect(textoDe(estado)).toContain('no es un error en sus datos');
       expect(textoDe(estado)).not.toContain('Error interno del servidor');
 
       const sinContrato = traducir(
@@ -257,7 +257,7 @@ describe('registrationErrorToViewState — catálogo de errores del alta', () =>
 
     it('un error que no es HTTP tampoco se muestra crudo', () => {
       const estado = traducir(new TypeError('x is undefined'));
-      expect(textoDe(estado)).toContain('Tus datos siguen cargados');
+      expect(textoDe(estado)).toContain('Sus datos siguen cargados');
       expect(textoDe(estado)).not.toContain('undefined');
     });
   });

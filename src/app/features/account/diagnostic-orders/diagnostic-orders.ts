@@ -196,7 +196,7 @@ export class DiagnosticOrders {
           this.estado.set(
             empty(
               { label: 'Ver mis turnos', route: '/my-account/appointments' },
-              'No tenés órdenes de laboratorio ni de imagen. Cuando un médico te pida un estudio en una consulta, aparece acá con las indicaciones para hacértelo.',
+              'No tiene órdenes de laboratorio ni de imagen. Cuando un médico le pida un estudio en una consulta, aparece acá con las indicaciones para hacérselo.',
             ),
           );
           return;

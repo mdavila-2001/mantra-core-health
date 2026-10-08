@@ -265,7 +265,7 @@ export class Accounting {
           return of(
             empty(
               { label: 'Elegir una práctica' },
-              'Elegí una práctica para ver sus libros.',
+              'Elija una práctica para ver sus libros.',
             ),
           );
         }
@@ -488,7 +488,7 @@ export class Accounting {
     () => this.estadoDeIngreso().status === 'loading',
   );
   protected readonly errorDeIngreso = computed(() =>
-    errorMessageOf(this.estadoDeIngreso(), 'No tenés permiso para registrar este ingreso.'),
+    errorMessageOf(this.estadoDeIngreso(), 'No tiene permiso para registrar este ingreso.'),
   );
   protected readonly ingresoRegistrado = signal(false);
 
@@ -553,7 +553,7 @@ export class Accounting {
   protected readonly estadoDeGasto = signal<ViewState<null>>(ready(null));
   protected readonly enviandoGasto = computed(() => this.estadoDeGasto().status === 'loading');
   protected readonly errorDeGasto = computed(() =>
-    errorMessageOf(this.estadoDeGasto(), 'No tenés permiso para registrar este gasto.'),
+    errorMessageOf(this.estadoDeGasto(), 'No tiene permiso para registrar este gasto.'),
   );
   protected readonly gastoRegistrado = signal(false);
 

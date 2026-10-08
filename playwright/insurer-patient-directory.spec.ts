@@ -203,13 +203,13 @@ test.describe('Directorio de pacientes @ui-mock', () => {
       if (scenario === 'loading') await expect(page.getByLabel('Cargando pacientes')).toBeVisible();
       if (scenario === 'empty')
         await expect(
-          page.getByRole('heading', { name: 'Tu directorio todavía no tiene pacientes' }),
+          page.getByRole('heading', { name: 'Su directorio todavía no tiene pacientes' }),
         ).toBeVisible();
       if (scenario === 'error')
         await expect(page.getByRole('button', { name: 'Reintentar carga' })).toBeVisible();
       if (scenario === 'forbidden')
         await expect(
-          page.getByText('No tenés acceso a esta sección', { exact: true }),
+          page.getByText('No tiene acceso a esta sección', { exact: true }),
         ).toBeVisible();
       for (const theme of ['light', 'dark']) {
         if (theme === 'dark')

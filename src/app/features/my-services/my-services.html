@@ -1,6 +1,6 @@
 <app-page-header
   title="Mis servicios"
-  subtitle="Lo que ofrece tu práctica y su precio de referencia. Al armar el presupuesto podés cotizar otro."
+  subtitle="Lo que ofrece su práctica y su precio de referencia. Al armar el presupuesto puede cotizar otro."
   [breadcrumbs]="breadcrumbs()"
 />
 
@@ -11,7 +11,7 @@
         [value]="practicaElegida()"
         (valueChange)="cambiarPractica($event)"
         [options]="opcionesDePractica()"
-        placeholder="Elegí una práctica"
+        placeholder="Elija una práctica"
         data-testid="my-services-practice"
       />
     </app-form-field>
@@ -82,7 +82,7 @@
                 class="rejilla__dato tarjeta-servicio__pendiente"
                 data-testid="my-services-duration-missing"
               >
-                Todavía no declaraste cuánto dura
+                Todavía no declaró cuánto dura
               </p>
             }
 
@@ -139,7 +139,7 @@
                   @if (sinPrecio(servicio)) {
                     <!-- Un «0.00» se lee como que la consulta no se cobra. Lo
                          que pasa de verdad es que nadie declaró el arancel. -->
-                    <span class="tarjeta-servicio__pendiente">Definí el precio</span>
+                    <span class="tarjeta-servicio__pendiente">Defina el precio</span>
                   } @else {
                     {{ precio(servicio) }}
                   }
@@ -206,7 +206,7 @@
 @if (ofreciendo(); as servicio) {
   <app-content-dialog
     [heading]="'Cómo ofrezco · ' + servicio.name"
-    description="Los turnos de este servicio duran entre un mínimo y un máximo; en tu agenda se reserva el máximo."
+    description="Los turnos de este servicio duran entre un mínimo y un máximo; en su agenda se reserva el máximo."
     size="lg"
     (closed)="cerrarOferta()"
   >
@@ -226,7 +226,7 @@
         <app-form-field
           label="Dura como máximo (min)"
           [required]="true"
-          hint="Es lo que se reserva en tu agenda."
+          hint="Es lo que se reserva en su agenda."
         >
           <app-input
             inputMode="numeric"
@@ -296,7 +296,7 @@
            horarios» (consultas, servicios o ambos). Decirlo evita buscar el
            control donde no está. -->
       <p class="oferta-servicio__nota">
-        El horario donde se atiende lo elegís en «Mis horarios»: cada franja admite consultas,
+        El horario donde se atiende lo elige en «Mis horarios»: cada franja admite consultas,
         servicios o ambos.
       </p>
 

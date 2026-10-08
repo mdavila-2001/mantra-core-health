@@ -58,7 +58,7 @@
         <dd class="cifras-tabulares">{{ importe(resumen().coaseguro) }}</dd>
       </div>
       <div class="resumen__cuenta resumen__cuenta--nota" data-testid="resumen-cubre-el-seguro">
-        <dt>Lo cubre tu aseguradora</dt>
+        <dt>Lo cubre su aseguradora</dt>
         <dd class="cifras-tabulares">{{ importe(resumen().cubreElSeguro) }}</dd>
       </div>
     }
@@ -76,7 +76,7 @@
 
   @if (resumen().puntos !== null) {
     <p class="resumen__puntos" data-testid="resumen-puntos">
-      Puntos AloVida que ganás: <strong class="cifras-tabulares">{{ resumen().puntos }}</strong>
+      Puntos AloVida que gana: <strong class="cifras-tabulares">{{ resumen().puntos }}</strong>
       <span class="resumen__secundario"> (valor de ejemplo)</span>
     </p>
   }

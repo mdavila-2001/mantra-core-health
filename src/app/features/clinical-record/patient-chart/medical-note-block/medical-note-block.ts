@@ -246,7 +246,7 @@ export class MedicalNoteBlock implements DraftBlock {
   protected readonly errorDeLaNota = computed(() =>
     mensajeDeEscritura(this.resultado(), {
       accion: 'escribir la nota',
-      sinPermiso: 'Tu rol no permite escribir notas médicas.',
+      sinPermiso: 'Su rol no permite escribir notas médicas.',
     }),
   );
 
@@ -423,7 +423,7 @@ export class MedicalNoteBlock implements DraftBlock {
         this.notas.set(
           page.items.length === 0
             ? empty(
-                { label: 'Escribí la primera nota' },
+                { label: 'Escriba la primera nota' },
                 'Todavía no hay ninguna nota de esta persona.',
               )
             : ready(page.items),
@@ -458,7 +458,7 @@ export class MedicalNoteBlock implements DraftBlock {
         nota.authorProfileId === undefined
           ? 'Sin autor'
           : nota.authorProfileId === propio
-            ? 'Vos'
+            ? 'Usted'
             : 'Otro profesional',
       hechos: [
         ...entradas.map((fila) => ({ etiqueta: fila.label, valor: fila.value })),

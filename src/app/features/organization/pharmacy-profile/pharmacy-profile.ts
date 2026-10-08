@@ -177,8 +177,8 @@ export function peopleFromContacts(
 ): ViewState<GenteDeLaEmpresa> {
   if (contacts.legalRepresentative === null) {
     return empty(
-      { label: 'Ver tu organización', route: ORGANIZATION_PANEL_ROUTE },
-      'Tu organización todavía no registró a su representante legal.',
+      { label: 'Ver su organización', route: ORGANIZATION_PANEL_ROUTE },
+      'Su organización todavía no registró a su representante legal.',
     );
   }
   return ready({
@@ -207,7 +207,7 @@ export function estadoDeLaCarpeta(
   return documentos.length === 0
     ? empty(
         { label: 'Cargar el primer documento' },
-        'Todavía no hay ningún papel en la carpeta legal de tu farmacia.',
+        'Todavía no hay ningún papel en la carpeta legal de su farmacia.',
       )
     : ready(documentos);
 }
@@ -251,7 +251,7 @@ export function avisoDeLaCarpeta(
   return {
     tono: vencidos.length > 0 ? 'error' : 'warning',
     titulo: vencidos.length > 0 ? 'Hay documentos vencidos' : 'Hay documentos por vencer',
-    mensaje: `Tenés ${partes.join(' y ')}: ${nombres}.`,
+    mensaje: `Tiene ${partes.join(' y ')}: ${nombres}.`,
   };
 }
 
@@ -384,8 +384,8 @@ export class PharmacyProfile {
           const first = page.items[0];
           if (first === undefined) {
             const unpublished = empty(
-              { label: 'Ver tu organización', route: ORGANIZATION_PANEL_ROUTE },
-              'Tu farmacia todavía no figura en el directorio publicado. Cuando se verifique, sus datos van a aparecer acá.',
+              { label: 'Ver su organización', route: ORGANIZATION_PANEL_ROUTE },
+              'Su farmacia todavía no figura en el directorio publicado. Cuando se verifique, sus datos van a aparecer acá.',
             );
             this.empresa.set(unpublished);
             this.documentos.set(unpublished);
@@ -420,8 +420,8 @@ export class PharmacyProfile {
           this.documentos.set(
             page.items.length === 0
               ? empty(
-                  { label: 'Ver tu organización', route: ORGANIZATION_PANEL_ROUTE },
-                  'Tu farmacia todavía no tiene licencias registradas.',
+                  { label: 'Ver su organización', route: ORGANIZATION_PANEL_ROUTE },
+                  'Su farmacia todavía no tiene licencias registradas.',
                 )
               : ready(documentsFromLicenses(page.items)),
           ),

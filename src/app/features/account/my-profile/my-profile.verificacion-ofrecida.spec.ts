@@ -129,7 +129,7 @@ describe('MyProfile · con la verificación ofrecida', () => {
       '.mi-perfil__principal p.mi-perfil__nota a',
     );
     expect(invitacion?.textContent?.trim()).toBe(
-      'Verificá tu identidad para ver tu código de paciente',
+      'Verifique su identidad para ver su código de paciente',
     );
     expect(invitacion?.getAttribute('href')).toBe('/my-account/identity');
   });
@@ -142,6 +142,6 @@ describe('MyProfile · con la verificación ofrecida', () => {
 
     const lateral = (fixture.nativeElement as HTMLElement).querySelector('.mi-perfil__lateral');
     expect(lateral?.textContent).toContain('Verificación de identidad');
-    expect(lateral?.textContent).toContain('Todavía no iniciaste ninguna verificación');
+    expect(lateral?.textContent).toContain('Todavía no inició ninguna verificación');
   });
 });

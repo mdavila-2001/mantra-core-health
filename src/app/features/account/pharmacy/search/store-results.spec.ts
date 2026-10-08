@@ -85,7 +85,7 @@ describe('StoreResults', () => {
     fixture.detectChanges();
 
     expect(raiz().textContent).toContain('no están ordenadas por cercanía');
-    expect(raiz().textContent).toContain('Elegí desde dónde medir');
+    expect(raiz().textContent).toContain('Elija desde dónde medir');
   });
 
   it('«Entrar» apunta a la tienda de esa farmacia, con la sede en la query', () => {

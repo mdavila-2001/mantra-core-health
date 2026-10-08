@@ -5,11 +5,11 @@
       <a app-link="" routerLink="/search"><svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m15 18-6-6 6-6"></path></svg>Volver a los resultados</a>
     </p>
     <div class="app-page-header__titulo"><h1>Cerca mío</h1></div>
-    <p class="caption">Lo que tenés a mano ahora mismo: farmacias abiertas, emergencias, laboratorios. Pensada para el momento en que algo pasa y hay que decidir rápido a dónde ir.</p>
+    <p class="caption">Lo que tiene a mano ahora mismo: farmacias abiertas, emergencias, laboratorios. Pensada para el momento en que algo pasa y hay que decidir rápido a dónde ir.</p>
   </div>
 </div>
 
-<p class="app-revelacion"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4.5 21 19.5H3z"></path><path d="M12 10v4"></path><circle cx="12" cy="17" r=".9" fill="currentColor" stroke="none"></circle></svg>Si es una emergencia con riesgo de vida, no busques acá: llamá al 165 o andá a la emergencia más cercana. Esta pantalla orienta, no reemplaza al servicio de urgencias.</p>
+<p class="app-revelacion"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4.5 21 19.5H3z"></path><path d="M12 10v4"></path><circle cx="12" cy="17" r=".9" fill="currentColor" stroke="none"></circle></svg>Si es una emergencia con riesgo de vida, no busque acá: llame al 165 o vaya a la emergencia más cercana. Esta pantalla orienta, no reemplaza al servicio de urgencias.</p>
 
 <div class="app-view-state-host" app-view-state-host="">
   @switch (estado()) {
@@ -17,7 +17,7 @@
       <div data-estado="datos" class="pila">
         <section class="app-card">
           <div class="app-card__cabecera">
-            <h2>Lo que hay a tu alrededor</h2>
+            <h2>Lo que hay a su alrededor</h2>
             <span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 21s-6.5-5.5-6.5-10a6.5 6.5 0 1 1 13 0c0 4.5-6.5 10-6.5 10z"></path><circle cx="12" cy="11" r="2.5"></circle></svg>{{ cuantos() }} lugares a menos de {{ radioKm }} km</span>
           </div>
           <div class="app-mapa">
@@ -96,10 +96,10 @@
     @case ('consentimiento') {
       <div data-estado="consentimiento" class="pila">
         <section class="app-card">
-          <div class="app-card__cabecera"><h2>Para mostrarte lo que tenés cerca, necesitamos tu ubicación</h2></div>
+          <div class="app-card__cabecera"><h2>Para mostrarle lo que tiene cerca, necesitamos su ubicación</h2></div>
           <p class="caption">
-            Se usa una sola vez para calcular distancias y no se guarda. Tu ubicación no sale de este
-            dispositivo salvo que la compartas.
+            Se usa una sola vez para calcular distancias y no se guarda. Su ubicación no sale de este
+            dispositivo salvo que la comparta.
           </p>
           <div style="margin-top: var(--e5)">
             <button app-button="" data-variante="primario" type="button" (click)="compartirUbicacion()">
@@ -110,11 +110,11 @@
         </section>
 
         <section class="app-card app-card--inset">
-          <div class="app-card__cabecera"><h2>O buscá por zona, sin dar tu ubicación</h2></div>
-          <p class="caption">Escribí tu barrio o tu zona —«Miraflores», «Equipetrol»— y el resultado es el mismo.</p>
+          <div class="app-card__cabecera"><h2>O busque por zona, sin dar su ubicación</h2></div>
+          <p class="caption">Escriba su barrio o su zona —«Miraflores», «Equipetrol»— y el resultado es el mismo.</p>
           <form (submit)="buscarPorZona($event)" style="margin-top: var(--e4)">
             <label class="app-search-field" app-search-field="">
-              <span class="solo-lectores">Tu zona o barrio</span>
+              <span class="solo-lectores">Su zona o barrio</span>
               <svg class="icono icono--busqueda" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
               <input class="app-input" app-input="" type="search" name="zona" placeholder="Miraflores, Equipetrol, Sopocachi…" />
             </label>
@@ -126,7 +126,7 @@
     @case ('localizando') {
       <div data-estado="localizando">
         <section class="app-card">
-          <p class="caption" aria-live="polite">Esperando que tu navegador confirme la ubicación…</p>
+          <p class="caption" aria-live="polite">Esperando que su navegador confirme la ubicación…</p>
         </section>
       </div>
     }
@@ -135,7 +135,7 @@
       <div data-estado="carga">
         <section class="app-card">
           <div class="app-skeleton-grupo" aria-live="polite" aria-busy="true">
-            <span class="solo-lectores">Buscando lo que tenés cerca…</span>
+            <span class="solo-lectores">Buscando lo que tiene cerca…</span>
             <span class="app-skeleton app-skeleton--titulo"></span>
             <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
             <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
@@ -149,11 +149,11 @@
       <div data-estado="vacio">
         <div class="app-empty-state" app-empty-state="">
           <span class="app-empty-state__icono"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 21s-6.5-5.5-6.5-10a6.5 6.5 0 1 1 13 0c0 4.5-6.5 10-6.5 10z"></path><circle cx="12" cy="11" r="2.5"></circle></svg></span>
-          <h2>Todavía no hay lugares con ubicación publicada cerca tuyo</h2>
+          <h2>Todavía no hay lugares con ubicación publicada cerca de usted</h2>
           <p>
             Un lugar aparece en el mapa cuando publicó su ficha pública <em>y</em> cargó su
             dirección con coordenadas. El directorio recién está cargando esa parte, así que hoy la
-            búsqueda por cercanía devuelve poco o nada aunque haya prestadores en tu zona. Buscalos
+            búsqueda por cercanía devuelve poco o nada aunque haya prestadores en su zona. Búsquelos
             por nombre o por especialidad mientras tanto: esa búsqueda sí los encuentra.
           </p>
           <a app-button="" data-variante="secundario" routerLink="/search"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>Buscar por nombre o especialidad</a>
@@ -167,13 +167,13 @@
           <div class="app-alert" app-alert="" data-tono="info" role="status">
             <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v5"></path><circle cx="12" cy="8" r=".9" fill="currentColor" stroke="none"></circle></svg>
             <div class="app-alert__cuerpo">
-              <strong>Seguimos sin tu ubicación, y no hace falta.</strong>
-              <p>Escribí tu barrio o tu zona y el resultado es el mismo.</p>
+              <strong>Seguimos sin su ubicación, y no hace falta.</strong>
+              <p>Escriba su barrio o su zona y el resultado es el mismo.</p>
             </div>
           </div>
           <form (submit)="buscarPorZona($event)" style="margin-top: var(--e5)">
             <label class="app-search-field" app-search-field="">
-              <span class="solo-lectores">Tu zona o barrio</span>
+              <span class="solo-lectores">Su zona o barrio</span>
               <svg class="icono icono--busqueda" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
               <input class="app-input" app-input="" type="search" name="zona" placeholder="Miraflores, Equipetrol, Sopocachi…" />
             </label>
@@ -188,8 +188,8 @@
           <div class="app-alert" app-alert="" data-tono="error" role="alert">
             <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4.5 21 19.5H3z"></path><path d="M12 10v4"></path><circle cx="12" cy="17" r=".9" fill="currentColor" stroke="none"></circle></svg>
             <div class="app-alert__cuerpo">
-              <strong>No pudimos buscar lo que tenés cerca.</strong>
-              <p>El directorio no respondió a tiempo. Volvé a intentarlo en un momento.</p>
+              <strong>No pudimos buscar lo que tiene cerca.</strong>
+              <p>El directorio no respondió a tiempo. Vuelva a intentarlo en un momento.</p>
             </div>
           </div>
           <div style="margin-top: var(--e5)">

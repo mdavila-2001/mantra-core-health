@@ -25,7 +25,7 @@
             >
               Hablar con el broker
             </a>
-            <span class="ficha-publica__nota">Te atiende {{ broker.legalName }} por el chat.</span>
+            <span class="ficha-publica__nota">Le atiende {{ broker.legalName }} por el chat.</span>
           </div>
         }
       </app-card>
@@ -36,7 +36,7 @@
     <app-section-heading icono="shield" titulo="Productos y planes" [cuantos]="items().length" />
     <p class="ficha-publica__nota">
       Lo que cubre cada plan y lo que no, tal como lo publicó la aseguradora. La prima es de lista:
-      el broker te confirma la tuya.
+      el broker le confirma la suya.
     </p>
 
     <app-view-state-host [state]="estadoDelCatalogo()" (retry)="recargarCatalogo()">
@@ -46,7 +46,7 @@
 
       @if (items().length === 0) {
         <p class="ficha-publica__vacio" role="status" data-testid="aseguradora-sin-productos">
-          Esta aseguradora todavía no publicó sus productos. Su broker te puede contar qué ofrece.
+          Esta aseguradora todavía no publicó sus productos. Su broker le puede contar qué ofrece.
         </p>
       } @else {
         <!-- Buscador y filtros arriba (ADR-0015, regla 5). Sólo lectura: sin
@@ -67,7 +67,7 @@
             role="status"
             data-testid="aseguradora-sin-coincidencias"
           >
-            <p>Ningún plan coincide con tu búsqueda. Probá con otra palabra o sacá algún filtro.</p>
+            <p>Ningún plan coincide con su búsqueda. Pruebe con otra palabra o saque algún filtro.</p>
             <button app-button variant="outline" size="sm" (click)="limpiarFiltros()">
               Ver todos los planes
             </button>
@@ -266,7 +266,7 @@
     <section aria-label="Brokers">
       <app-section-heading icono="people" titulo="Brokers" [cuantos]="brokers().length" />
       <p class="ficha-publica__nota">
-        El broker te asesora para elegir el plan, te acompaña al contratarlo y en cada reclamo.
+        El broker le asesora para elegir el plan, le acompaña al contratarlo y en cada reclamo.
       </p>
 
       <ul class="rejilla ficha-publica__rejilla" data-testid="aseguradora-brokers">

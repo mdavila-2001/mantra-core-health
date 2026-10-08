@@ -880,20 +880,20 @@ export class PatientChart {
   protected async pedirAccesoDeEmergencia(): Promise<void> {
     const tenantId = this.auth.activeTenantId();
     if (tenantId === null || this.pidiendoEmergencia()) {
-      this.toasts.warning('Elegí una organización antes de pedir el acceso de emergencia.', 'Acceso de emergencia');
+      this.toasts.warning('Elija una organización antes de pedir el acceso de emergencia.', 'Acceso de emergencia');
       return;
     }
     const justificacion = await this.dialogs.confirmWithReason(
       {
         title: 'Acceso de emergencia',
         message:
-          'Vas a ver esta historia sin un vínculo ni un turno. Queda auditado, el acceso dura una hora y la persona lo ve en «Quién ve mi historia».',
+          'Va a ver esta historia sin un vínculo ni un turno. Queda auditado, el acceso dura una hora y la persona lo ve en «Quién ve mi historia».',
         confirmLabel: 'Pedir acceso',
         destructive: true,
       },
       {
         label: 'Justificación',
-        placeholder: 'Por qué necesitás ver esta historia ahora',
+        placeholder: 'Por qué necesita ver esta historia ahora',
         hint: 'Obligatoria: al menos 10 caracteres.',
         minLength: PatientChart.MINIMO_DE_JUSTIFICACION,
         maxLength: 1000,
@@ -943,14 +943,14 @@ export class PatientChart {
       error: (error: unknown) => {
         this.bajando.set(null);
         if (isScanPending(error)) {
-          this.toasts.info('El archivo todavía está en análisis. Probá de nuevo en un momento.', 'Documento');
+          this.toasts.info('El archivo todavía está en análisis. Pruebe de nuevo en un momento.', 'Documento');
           return;
         }
         const estado = errorToViewState<null>(error);
         this.toasts.warning(
           estado.status === 'forbidden'
-            ? 'No tenés permiso para abrir este archivo.'
-            : 'No pudimos bajar el archivo. Reintentá en un momento.',
+            ? 'No tiene permiso para abrir este archivo.'
+            : 'No pudimos bajar el archivo. Reintente en un momento.',
           'Documento',
         );
       },
@@ -1053,7 +1053,7 @@ export class PatientChart {
   protected async pedirDescarteDelAlta(): Promise<void> {
     const descartar = await this.dialogs.confirm({
       title: '¿Descartar lo escrito?',
-      message: 'Todavía no se registró. Si cerrás, lo que cargaste en este formulario se pierde.',
+      message: 'Todavía no se registró. Si cierra, lo que cargó en este formulario se pierde.',
       confirmLabel: 'Descartar',
       cancelLabel: 'Seguir escribiendo',
       destructive: true,
@@ -1368,10 +1368,10 @@ export class PatientChart {
     const state = this.formulariosDelEncuentro();
     switch (state?.status) {
       case 'offline':
-        return 'No pudimos conectarnos. Revisá tu conexión y reintentá.';
+        return 'No pudimos conectarnos. Revise su conexión y reintente.';
       case 'forbidden':
         // `||` y no `??`: un 403 con `message: ''` dejaba el aviso vacío.
-        return state.message || 'Tu rol no permite ver formularios clínicos.';
+        return state.message || 'Su rol no permite ver formularios clínicos.';
       case 'not-found':
         return 'No encontramos los formularios de este encuentro.';
       case 'validation':
@@ -1570,7 +1570,7 @@ export class PatientChart {
       );
     }
     if (enCurso) {
-      this.toasts.info('Tenés una consulta en curso con esta persona.', 'Consulta en curso');
+      this.toasts.info('Tiene una consulta en curso con esta persona.', 'Consulta en curso');
     }
   }
 
@@ -1634,7 +1634,7 @@ export class PatientChart {
   protected async pedirDescarteDelEstado(): Promise<void> {
     const descartar = await this.dialogs.confirm({
       title: '¿Descartar el cambio de estado?',
-      message: 'Elegiste un estado y no lo aplicaste. Si cerrás, el diagnóstico queda como está.',
+      message: 'Eligió un estado y no lo aplicó. Si cierra, el diagnóstico queda como está.',
       confirmLabel: 'Descartar',
       cancelLabel: 'Seguir editando',
       destructive: true,
@@ -2015,7 +2015,7 @@ export class PatientChart {
       },
       {
         label: 'Motivo del cambio',
-        hint: 'Explicá brevemente por qué deja de contar con el estado anterior.',
+        hint: 'Explique brevemente por qué deja de contar con el estado anterior.',
       },
     );
     if (motivo === null) {
@@ -2061,8 +2061,8 @@ export class PatientChart {
     return (
       mensajeDeFalloDeEscritura(state, {
         accion: 'cambiar el estado clínico',
-        sinPermiso: 'Tu rol no permite cambiar el estado clínico.',
-        yaNoExiste: 'La condición ya no existe. Recargá la pantalla.',
+        sinPermiso: 'Su rol no permite cambiar el estado clínico.',
+        yaNoExiste: 'La condición ya no existe. Recargue la pantalla.',
       }) ?? 'Ocurrió un error inesperado.'
     );
   }

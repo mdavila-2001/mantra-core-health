@@ -1,6 +1,6 @@
 <app-page-header
   title="Mi privacidad"
-  subtitle="Los consentimientos que diste, las autorizaciones de divulgación y lo que firmaste en tus consultas."
+  subtitle="Los consentimientos que dio, las autorizaciones de divulgación y lo que firmaste en sus consultas."
   [breadcrumbs]="breadcrumbs()"
 />
 
@@ -8,13 +8,13 @@
   @switch (estado().status) {
     @case ('cargando') {
       <p class="privacidad__estado" role="status" data-testid="privacidad-cargando">
-        Cargando tu información de privacidad…
+        Cargando su información de privacidad…
       </p>
     }
     @case ('error') {
       <app-alert tone="error" data-testid="privacidad-error">
         @if (sinPermiso()) {
-          Esta sección es para pacientes. Tu cuenta no tiene un perfil de paciente.
+          Esta sección es para pacientes. Su cuenta no tiene un perfil de paciente.
         } @else {
           {{ errorMensaje() }}
           @if (errorRequestId(); as id) {
@@ -32,8 +32,8 @@
           <app-tab [label]="'Consentimientos (' + consentimientos().length + ')'">
             @if (consentimientos().length === 0) {
               <app-empty-state
-                title="Todavía no diste ningún consentimiento"
-                description="Cuando una organización te pida tu consentimiento para tratar tus datos, lo vas a ver acá."
+                title="Todavía no dio ningún consentimiento"
+                description="Cuando una organización le pida su consentimiento para tratar sus datos, lo va a ver acá."
               />
             } @else {
               <ul class="privacidad__lista" data-testid="privacidad-consentimientos">
@@ -76,8 +76,8 @@
           <app-tab [label]="'Autorizaciones (' + autorizaciones().length + ')'">
             @if (autorizaciones().length === 0) {
               <app-empty-state
-                title="No tenés autorizaciones de divulgación"
-                description="Acá vas a ver a quién autorizaste a recibir información tuya y hasta cuándo."
+                title="No tiene autorizaciones de divulgación"
+                description="Acá va a ver a quién autorizó a recibir información suya y hasta cuándo."
               />
             } @else {
               <ul class="privacidad__lista" data-testid="privacidad-autorizaciones">
@@ -106,7 +106,7 @@
             @if (objeciones().length === 0) {
               <app-empty-state
                 title="No planteaste ninguna objeción"
-                description="Si te oponés a que traten tus datos para un propósito, se registra acá."
+                description="Si le oponés a que traten sus datos para un propósito, se registra acá."
               />
             } @else {
               <ul class="privacidad__lista" data-testid="privacidad-objeciones">
@@ -132,7 +132,7 @@
             @if (informados().length === 0) {
               <app-empty-state
                 title="Todavía no firmaste ningún consentimiento informado"
-                description="El que firmes en una consulta antes de un tratamiento queda registrado acá."
+                description="El que firme en una consulta antes de un tratamiento queda registrado acá."
               />
             } @else {
               <ul class="privacidad__lista" data-testid="privacidad-informados">

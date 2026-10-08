@@ -121,14 +121,14 @@ describe('PractitionerAvailability', () => {
   it('sin sesión no promete horarios: ofrece entrar', async () => {
     await montar(false);
 
-    expect(texto()).toContain('Entrá para ver los horarios');
+    expect(texto()).toContain('Entre para ver los horarios');
     http.expectNone((r) => r.url === '/scheduling/resources');
   });
 
   it('sin organización activa lo dice', async () => {
     await montar(true, null);
 
-    expect(texto()).toContain('Elegí una organización');
+    expect(texto()).toContain('Elija una organización');
     http.expectNone((r) => r.url === '/scheduling/resources');
   });
 

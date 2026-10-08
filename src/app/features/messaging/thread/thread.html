@@ -119,7 +119,7 @@
   @if (vacio()) {
     <app-empty-state
       title="Todavía no se escribieron nada"
-      description="Escribí el primer mensaje abajo."
+      description="Escriba el primer mensaje abajo."
       variant="empty"
     />
   } @else {
@@ -226,7 +226,7 @@
                                  aviso si no puede: acá sólo se le pasa el archivo. -->
                             <app-file-preview class="hilo__documento-preview" data-testid="hilo-documento-preview" [file]="archivo" />
                           } @else {
-                            <p class="hilo__subiendo" role="status">No pudimos preparar la vista previa. Podés descargarlo.</p>
+                            <p class="hilo__subiendo" role="status">No pudimos preparar la vista previa. Puede descargarlo.</p>
                           }
                         }
                       }
@@ -249,7 +249,7 @@
               <!-- La hora flota a la derecha de la última línea: es lo que hace
                    que un mensaje corto ocupe una línea y no dos. -->
               <span class="hilo__meta">
-                <span class="solo-lectores">{{ linea.propio ? 'Vos' : linea.autor }}, </span>
+                <span class="solo-lectores">{{ linea.propio ? 'Usted' : linea.autor }}, </span>
                 @if (linea.mensaje.isEdited) {
                   <span class="hilo__editado" data-testid="hilo-editado">editado</span>
                 }
@@ -444,7 +444,7 @@
   <!-- Bloqueada la persona, el campo de escribir se cambia por esto: dejarlo
        habilitado para que el envío fallara sería una trampa. -->
   <div class="hilo__bloqueado" data-testid="hilo-bloqueado" role="status">
-    <p>Bloqueaste a {{ conQuien() }}. No podés enviarle mensajes ni recibir los suyos.</p>
+    <p>Bloqueó a {{ conQuien() }}. No puede enviarle mensajes ni recibir los suyos.</p>
     <button type="button" data-testid="hilo-desbloquear-aviso" (click)="desbloquear()">Desbloquear</button>
   </div>
 } @else {
@@ -531,7 +531,7 @@
 @if (confirmandoBloqueo()) {
   <app-content-dialog
     heading="¿Bloquear a {{ conQuien() }}?"
-    description="No vas a poder enviarle mensajes ni recibir los suyos. Podés desbloquear cuando quieras desde «Bloqueados»."
+    description="No va a poder enviarle mensajes ni recibir los suyos. Puede desbloquear cuando quiera desde «Bloqueados»."
     size="sm"
     closeLabel="Cancelar"
     data-testid="thread-block-dialog"

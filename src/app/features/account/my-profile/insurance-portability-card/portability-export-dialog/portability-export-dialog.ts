@@ -112,10 +112,10 @@ export class PortabilityExportDialog {
     if (error instanceof HttpErrorResponse) {
       return (
         readApiError(error)?.message ??
-        'No se pudo generar la exportación. Probá de nuevo.'
+        'No se pudo generar la exportación. Pruebe de nuevo.'
       );
     }
-    return 'No se pudo generar la exportación. Probá de nuevo.';
+    return 'No se pudo generar la exportación. Pruebe de nuevo.';
   }
 
   /** Vuelve a descargar el/los archivo(s) del certificado ya emitido. */
@@ -149,7 +149,7 @@ export class PortabilityExportDialog {
         this.saveBlob(blob, fileName ?? `portabilidad-${certificateId}.pdf`),
       error: () =>
         this.toasts.error(
-          'No se pudo descargar el PDF. Probá de nuevo con "Volver a descargar".',
+          'No se pudo descargar el PDF. Pruebe de nuevo con "Volver a descargar".',
         ),
     });
   }
@@ -160,7 +160,7 @@ export class PortabilityExportDialog {
         this.saveBlob(blob, fileName ?? `portabilidad-${certificateId}.json`),
       error: () =>
         this.toasts.error(
-          'No se pudo descargar el JSON. Probá de nuevo con "Volver a descargar".',
+          'No se pudo descargar el JSON. Pruebe de nuevo con "Volver a descargar".',
         ),
     });
   }

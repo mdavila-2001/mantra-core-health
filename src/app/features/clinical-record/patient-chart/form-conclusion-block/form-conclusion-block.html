@@ -2,7 +2,7 @@
   <h3 class="cierre__titulo">Cierre del formulario</h3>
   <p class="cierre__intro">
     Con lo respondido en «{{ nombreDeFicha() }}», la IA sugiere diagnósticos tentativos y análisis.
-    Elegí lo que corresponda o dejá los dos campos vacíos: la ficha se completa igual.
+    Elija lo que corresponda o deje los dos campos vacíos: la ficha se completa igual.
   </p>
 
   <!-- ─── Las sugerencias ───────────────────────────────────────────────────
@@ -11,7 +11,7 @@
        mano; sin sugerencias se dice; con datos, la lista y el disclaimer. -->
   @if (!hayRespuestas()) {
     <p class="cierre__estado" data-testid="cierre-sin-respuestas">
-      Respondé la ficha y acá aparecen las sugerencias.
+      Responda la ficha y acá aparecen las sugerencias.
     </p>
   } @else if (consultando()) {
     <p class="cierre__estado" role="status" data-testid="cierre-cargando">
@@ -19,12 +19,12 @@
     </p>
   } @else if (sinServicio()) {
     <app-alert tone="info" title="La IA no está disponible" data-testid="cierre-sin-servicio">
-      No pudimos pedir sugerencias ahora. Elegí el diagnóstico y la orden a mano; la ficha se
+      No pudimos pedir sugerencias ahora. Elija el diagnóstico y la orden a mano; la ficha se
       completa igual.
     </app-alert>
   } @else if (sinSugerencias()) {
     <p class="cierre__estado" data-testid="cierre-vacio">
-      Sin sugerencias para estas respuestas. Elegí a mano si corresponde.
+      Sin sugerencias para estas respuestas. Elija a mano si corresponde.
     </p>
   } @else if (sugerencia(); as sugerencia) {
     <ul class="cierre__tentativos" data-testid="cierre-tentativos">
@@ -126,7 +126,7 @@
 
     @if (ordenIncompleta()) {
       <p class="cierre__aviso" role="status" data-testid="cierre-orden-incompleta">
-        Elegí la categoría para que la orden se pida al completar.
+        Elija la categoría para que la orden se pida al completar.
       </p>
     }
   </div>

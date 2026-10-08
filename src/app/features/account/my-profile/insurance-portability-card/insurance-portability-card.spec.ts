@@ -89,7 +89,7 @@ describe('InsurancePortabilityCard', () => {
       montar({ coverages: [] });
 
       expect(query('portability-coverage-summary')?.textContent?.trim()).toBe(
-        'No tenés coberturas declaradas.',
+        'No tiene coberturas declaradas.',
       );
       // El derecho de portabilidad no depende de tener una cobertura.
       expect(query('btn-open-portability-dialog')).not.toBeNull();

@@ -3,7 +3,7 @@
 <app-directory-page
   [embebido]="embebido()"
   titulo="Directorio de aseguradoras"
-  subtitulo="Seguros de salud con ficha pública. Abrí una para ver sus productos, lo que cubre cada plan y lo que no, y hablar con su broker."
+  subtitulo="Seguros de salud con ficha pública. Abra una para ver sus productos, lo que cubre cada plan y lo que no, y hablar con su broker."
   etiquetaBusqueda="Buscar por nombre de la aseguradora"
   [filtros]="filtros()"
   [estado]="estado()"
@@ -39,7 +39,7 @@
           [departamentos]="departamentos()"
           [value]="departamentoElegido()"
           (valueChange)="elegirDepartamento($event)"
-          etiqueta="Mapa de Bolivia: elegí el departamento donde buscás"
+          etiqueta="Mapa de Bolivia: elija el departamento donde busca"
         />
         @if (resumenDelMapa(); as resumen) {
           <p class="mapa-directorio__resumen" data-testid="aseguradoras-mapa-resumen">

@@ -3,15 +3,15 @@
     @if (registered()) {
       <div class="registro__header">
         <h1 appAnuncio [asertivo]="false" class="registro__title" data-testid="registro-organizacion-exito">
-          Tu cuenta está lista
+          Su cuenta está lista
         </h1>
         <p class="registro__subtitle">
-          Ya podés entrar con tu correo y la contraseña que elegiste.
+          Ya puede entrar con su correo y la contraseña que eligió.
           @if (verificationSent()) {
-            Te mandamos un correo para verificar tu dirección; podés hacerlo cuando quieras, no hace
-            falta para usar tu cuenta.
+            Le mandamos un correo para verificar su dirección; puede hacerlo cuando quiera, no hace
+            falta para usar su cuenta.
           }
-          Tu organización queda pendiente de aprobación: mientras la plataforma no la apruebe, no
+          Su organización queda pendiente de aprobación: mientras la plataforma no la apruebe, no
           aparece en las búsquedas de pacientes.
         </p>
       </div>
@@ -27,9 +27,9 @@
       </button>
     } @else {
       <div class="registro__header">
-        <h1 class="registro__title">Registrá tu aseguradora</h1>
+        <h1 class="registro__title">Registre su aseguradora</h1>
         <p class="registro__subtitle">
-          Creá la cuenta de tu organización, adjuntá sus documentos legales y dala de alta con su
+          Cree la cuenta de su organización, adjunte sus documentos legales y dela de alta con su
           usuario administrador en un solo paso.
         </p>
       </div>
@@ -83,7 +83,7 @@
               etiquetaConfirmada="Casa matriz"
               etiquetaQuitar="Quitar la ubicación de la casa matriz"
               etiquetaMapa="La casa matriz en el mapa"
-              indicacionMarcar="Tocá el mapa en el lugar exacto de la casa matriz."
+              indicacionMarcar="Toque el mapa en el lugar exacto de la casa matriz."
               [ids]="idsUbicacionCasaMatriz"
               [inicial]="gpsCasaMatriz()"
               (confirmado)="gpsCasaMatriz.set($event)"
@@ -198,7 +198,7 @@
 
       <div class="registro__footer">
         <p class="registro__pie">
-          ¿Ya tenés cuenta? <a app-link routerLink="/auth">Iniciá sesión</a>
+          ¿Ya tiene cuenta? <a app-link routerLink="/auth">Inicie sesión</a>
         </p>
       </div>
     }

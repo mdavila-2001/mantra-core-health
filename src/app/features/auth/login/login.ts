@@ -109,7 +109,7 @@ export class Login {
       return state.issues[0]?.message ?? null;
     }
     if (state.status === 'offline') {
-      return 'No pudimos conectarnos. Revisá tu conexión y reintentá.';
+      return 'No pudimos conectarnos. Revise su conexión y reintente.';
     }
     if (state.status === 'error') {
       return `${state.message ?? 'Ocurrió un error inesperado.'} (${state.requestId})`;
@@ -233,8 +233,8 @@ export class Login {
           {
             message:
               reason === 'MFA_REQUIRED'
-                ? 'Ingresá el código de verificación de tu aplicación de autenticación.'
-                : 'El código de verificación no es válido. Revisalo y volvé a intentar.',
+                ? 'Ingrese el código de verificación de su aplicación de autenticación.'
+                : 'El código de verificación no es válido. Revíselo y vuelva a intentar.',
             code: body.code,
           },
         ]);

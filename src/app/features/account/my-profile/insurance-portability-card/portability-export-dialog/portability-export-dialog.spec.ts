@@ -319,13 +319,13 @@ describe('PortabilityExportDialog', () => {
     http
       .expectOne((r) => r.url === '/insurance/portability/export')
       .flush(
-        { code: 'FORBIDDEN', message: 'No podés exportar el historial de otra persona.', timestamp: '', path: '' },
+        { code: 'FORBIDDEN', message: 'No puede exportar el historial de otra persona.', timestamp: '', path: '' },
         { status: 403, statusText: 'Forbidden' },
       );
     fixture.detectChanges();
 
     expect(query('portability-export-error')?.textContent).toContain(
-      'No podés exportar el historial de otra persona.',
+      'No puede exportar el historial de otra persona.',
     );
     const boton = query('btn-generate-portability-download');
     expect(boton?.getAttribute('aria-disabled')).not.toBe('true');

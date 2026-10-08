@@ -395,7 +395,7 @@ export class PharmacyCatalog {
                   label: 'Ir al panel de mi organización',
                   route: '/administration/my-organization',
                 },
-                'Tu organización todavía no tiene una farmacia publicada.',
+                'Su organización todavía no tiene una farmacia publicada.',
               )
             : ready(opciones),
         );
@@ -458,10 +458,10 @@ export class PharmacyCatalog {
               ? ready(pagina.items)
               : busqueda === ''
                 ? empty(
-                    { label: 'Usá «Nuevo producto» o «Importación masiva»' },
-                    'Tu catálogo todavía no tiene productos.',
+                    { label: 'Use «Nuevo producto» o «Importación masiva»' },
+                    'Su catálogo todavía no tiene productos.',
                   )
-                : empty({ label: 'Probá con otra palabra' }, `Nada coincide con «${busqueda}».`),
+                : empty({ label: 'Pruebe con otra palabra' }, `Nada coincide con «${busqueda}».`),
           );
         },
         error: (error: unknown) => {
@@ -553,7 +553,7 @@ export class PharmacyCatalog {
       next: () => {
         this.guardando.set(false);
         this.campos.set(CAMPOS_VACIOS);
-        this.toasts.success(`«${nombreDelBorrador(revision.borrador)}» ya está en tu catálogo.`);
+        this.toasts.success(`«${nombreDelBorrador(revision.borrador)}» ya está en su catálogo.`);
         // La prueba del alta es verla en el listado, releído de la API.
         this.busqueda.set('');
         this.recargarProductos();
@@ -584,8 +584,8 @@ export class PharmacyCatalog {
     }
     this.errorDelArchivo.set(
       primero.reason === 'tamaño'
-        ? 'El archivo pasa de 1 MB. Partilo en varios.'
-        : 'Subí un archivo .csv (en Excel: Guardar como → CSV UTF-8).',
+        ? 'El archivo pasa de 1 MB. Divídalo en varios.'
+        : 'Suba un archivo .csv (en Excel: Guardar como → CSV UTF-8).',
     );
   }
 
@@ -710,7 +710,7 @@ export class PharmacyCatalog {
       return mensaje;
     }
     return estado.issues.some((issue) => issue.code === 'CONFLICT')
-      ? `${mensaje} Un código retirado también sigue reservado: usá otro.`
+      ? `${mensaje} Un código retirado también sigue reservado: use otro.`
       : mensaje;
   }
 
@@ -841,11 +841,11 @@ function mensajeDeError(error: unknown, porDefecto: string): string {
     case 'validation':
       return estado.issues.map((issue) => issue.message).join(' ') || porDefecto;
     case 'forbidden':
-      return estado.message ?? 'Tu usuario no tiene permiso para cambiar el catálogo de esta farmacia.';
+      return estado.message ?? 'Su usuario no tiene permiso para cambiar el catálogo de esta farmacia.';
     case 'not-found':
       return 'La farmacia o el producto ya no existen.';
     case 'offline':
-      return 'Sin conexión con el servidor. Revisá tu red y probá de nuevo.';
+      return 'Sin conexión con el servidor. Revise su red y pruebe de nuevo.';
     case 'error':
       return `${estado.message ?? porDefecto} (petición ${estado.requestId})`;
     default:

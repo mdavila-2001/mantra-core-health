@@ -57,7 +57,7 @@ describe('NotificationsClient', () => {
         {
           id: 'n-1',
           category: 'CLINICAL',
-          subject: 'Tu receta está lista',
+          subject: 'Su receta está lista',
           bodyText: null,
           destination: { type: 'PRESCRIPTION', id: 'rx-1' },
           payloadJson: null,
@@ -75,7 +75,7 @@ describe('NotificationsClient', () => {
     expect(recibido).toEqual({
       id: 'n-1',
       category: 'CLINICAL',
-      subject: 'Tu receta está lista',
+      subject: 'Su receta está lista',
       destination: { type: 'PRESCRIPTION', id: 'rx-1' },
       unread: true,
       availableAt: new Date('2026-08-18T10:00:00.000Z'),

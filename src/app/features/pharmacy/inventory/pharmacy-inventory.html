@@ -1,6 +1,6 @@
 <app-page-header
   title="Inventario"
-  subtitle="Llevalo con cantidades o sólo con un «hay / no hay». Lo que no tenés deja de ofrecerse a los pacientes. Podés editarlo acá o subirlo con un CSV."
+  subtitle="Llévelo con cantidades o sólo con un «hay / no hay». Lo que no tiene deja de ofrecerse a los pacientes. Puede editarlo acá o subirlo con un CSV."
 />
 
 <app-view-state-host [state]="scope.options()" (retry)="scope.retry()">
@@ -11,7 +11,7 @@
           [options]="scope.selectOptions()"
           [value]="scope.pharmacyId()"
           (valueChange)="scope.choose($event)"
-          placeholder="Elegí tu farmacia"
+          placeholder="Elija su farmacia"
         />
       </app-form-field>
     </div>
@@ -21,7 +21,7 @@
     <app-card class="inventory" padding="lg" data-testid="inventory-card">
       <div class="inventory__panel">
         <app-alert tone="info" data-testid="inventory-sync-notice">
-          Cuando exista la sincronización con tu sistema, esta pantalla pasa a ser sólo de lectura.
+          Cuando exista la sincronización con su sistema, esta pantalla pasa a ser sólo de lectura.
         </app-alert>
 
         @if (errors().length > 0) {
@@ -35,9 +35,9 @@
         }
 
         <div class="inventory__mode">
-          <span class="inventory__mode-label" id="inventory-mode-label">Cómo llevás tu inventario</span>
+          <span class="inventory__mode-label" id="inventory-mode-label">Cómo lleva su inventario</span>
           <app-segmented-control
-            ariaLabel="Cómo llevás tu inventario"
+            ariaLabel="Cómo lleva su inventario"
             [options]="viewOptions"
             [value]="view()"
             (valueChange)="setView($event)"
@@ -91,7 +91,7 @@
         </div>
 
         <app-data-table
-          caption="Inventario de tu farmacia"
+          caption="Inventario de su farmacia"
           [state]="pageRows()"
           [columns]="columns()"
           [trackBy]="rowId"
@@ -139,7 +139,7 @@
 <ng-template #hasCell let-product>
   <app-switch
     [label]="hasNow(product) ? 'Hay' : 'No hay'"
-    [ariaLabel]="'¿Tenés ' + name(product) + '?'"
+    [ariaLabel]="'¿Tiene ' + name(product) + '?'"
     [checked]="hasNow(product)"
     (checkedChange)="setHas(product, $event)"
     [attr.data-testid]="'inventory-has-' + product.productCode"

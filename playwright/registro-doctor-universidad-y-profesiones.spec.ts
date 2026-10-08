@@ -120,31 +120,31 @@ async function llegarAlTitulo(page: Page): Promise<void> {
 
   await page.getByTestId('registro-pro-nombre').fill('Ana');
   await page.getByTestId('registro-pro-apellido-paterno').fill('Paz');
-  await avanzar(page, 'Tu documento de identidad');
+  await avanzar(page, 'Su documento de identidad');
 
   await page.getByTestId('registro-pro-documento').fill('1234567');
   await page
     .getByTestId('registro-pro-departamento-ci')
     .locator('select')
     .selectOption({ index: 1 });
-  await avanzar(page, 'Contanos un poco sobre vos');
+  await avanzar(page, 'Cuéntenos un poco sobre usted');
 
   await page
     .getByTestId('registration-practitioner-sex')
     .locator('select')
     .selectOption({ label: 'Femenino' });
   await escribirFecha(page, '12/05/1985');
-  await avanzar(page, 'Cómo te contactamos en privado');
+  await avanzar(page, 'Cómo le contactamos en privado');
 
   await page.getByTestId('registro-pro-celular-personal').fill('70012345');
   await page.getByTestId('registro-pro-correo-personal').fill('ana.paz@example.test');
-  await avanzar(page, 'El contacto de tu trabajo');
+  await avanzar(page, 'El contacto de su trabajo');
 
   // Trabajo, domicilio, lugar de trabajo y consultorio son opcionales: se pasan de largo.
-  await avanzar(page, '¿Dónde vivís?');
-  await avanzar(page, '¿Dónde trabajás?');
-  await avanzar(page, 'Tu consultorio propio');
-  await avanzar(page, 'Tu título profesional y foto');
+  await avanzar(page, '¿Dónde vive?');
+  await avanzar(page, '¿Dónde trabaja?');
+  await avanzar(page, 'Su consultorio propio');
+  await avanzar(page, 'Su título profesional y foto');
 }
 
 /**
@@ -164,12 +164,12 @@ async function elegirTituloProfesional(page: Page): Promise<void> {
 async function llegarALosTitulos(page: Page): Promise<void> {
   await llegarAlTitulo(page);
   await elegirTituloProfesional(page);
-  await avanzar(page, 'Tu habilitación para ejercer');
+  await avanzar(page, 'Su habilitación para ejercer');
 
   await page.getByTestId('registro-pro-matricula').fill('MP-12345');
   await page.getByTestId('registro-pro-credencial').fill('T.I. 538/14');
-  await avanzar(page, 'Los respaldos de tu habilitación');
-  await avanzar(page, 'Tus títulos');
+  await avanzar(page, 'Los respaldos de su habilitación');
+  await avanzar(page, 'Sus títulos');
 }
 
 /** Lo que se declara de una fila de título: nombre, país, universidad y ciudad. */
@@ -243,8 +243,8 @@ test.describe('alta de doctor · universidad, lugar de estudio y segunda profesi
     // Y son opcionales de verdad: sin elegir nada, el motor deja avanzar en
     // cuanto está el título, que es lo único obligatorio de esta página.
     await elegirTituloProfesional(page);
-    await avanzar(page, 'Tu habilitación para ejercer');
-    await retroceder(page, 'Tu título profesional y foto');
+    await avanzar(page, 'Su habilitación para ejercer');
+    await retroceder(page, 'Su título profesional y foto');
 
     const [pais, universidad, ciudad] = CAMPOS_DE_ESTUDIO.map((campo) =>
       campoDeEstudio(page, campo),
@@ -276,8 +276,8 @@ test.describe('alta de doctor · universidad, lugar de estudio y segunda profesi
     await universidad.selectOption({ label: UMSA });
     await ciudad.fill('La Paz');
 
-    await avanzar(page, 'Tu habilitación para ejercer');
-    await retroceder(page, 'Tu título profesional y foto');
+    await avanzar(page, 'Su habilitación para ejercer');
+    await retroceder(page, 'Su título profesional y foto');
 
     await expect(elegidoEn(pais)).toHaveText('Bolivia');
     await expect(elegidoEn(universidad)).toHaveText(UMSA);
@@ -385,9 +385,9 @@ test.describe('alta de doctor · universidad, lugar de estudio y segunda profesi
 
     await expect(page.getByTestId('registro-pro-fila-UNIVERSITARIO')).toHaveCount(0);
 
-    await avanzar(page, 'Tus especialidades');
-    await avanzar(page, 'Tu firma y tu sello');
-    await avanzar(page, 'Tu contraseña');
+    await avanzar(page, 'Sus especialidades');
+    await avanzar(page, 'Su firma y su sello');
+    await avanzar(page, 'Su contraseña');
 
     await page.getByTestId('registro-pro-password').fill('secreto12');
     const enviar = page.getByTestId('paginated-form-continuar');
@@ -413,7 +413,7 @@ test.describe('alta de doctor · universidad, lugar de estudio y segunda profesi
       'la universidad y el PDF de cada título',
     );
     await expect(page.getByTestId('registro-pro-titulos-alcance')).toContainText(
-      'podés reintentar y se conservan las que ya subieron',
+      'puede reintentar y se conservan las que ya subieron',
     );
     await expect(fila.locator('input[type="file"]')).toHaveAttribute(
       'accept',

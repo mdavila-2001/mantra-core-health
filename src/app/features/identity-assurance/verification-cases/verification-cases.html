@@ -1,7 +1,7 @@
 @if (!embedded()) {
   <app-page-header
     title="Mis verificaciones"
-    subtitle="El estado de tus trámites de verificación de identidad, y el detalle de cada uno."
+    subtitle="El estado de sus trámites de verificación de identidad, y el detalle de cada uno."
     [breadcrumbs]="breadcrumbs()"
   />
 }
@@ -12,7 +12,7 @@
       [state]="state()"
       [columns]="columns()"
       [trackBy]="byId"
-      caption="Tus casos de verificación de identidad"
+      caption="Sus casos de verificación de identidad"
     />
   </app-view-state-host>
 </div>
@@ -113,13 +113,13 @@
 @if (avisoDe(); as caso) {
   <app-content-dialog
     heading="Todavía no hay un veredicto"
-    [description]="'Tu trámite ' + caso.id + ' está en ' + caso.statusLabel + '.'"
+    [description]="'Su trámite ' + caso.id + ' está en ' + caso.statusLabel + '.'"
     closeLabel="Entendido"
     (closed)="cerrarAviso()"
   >
     <p>
-      Cuando termine de revisarse vas a poder abrir el detalle con el resultado y, si
-      corresponde, la evidencia que quedó registrada. No hace falta que hagas nada.
+      Cuando termine de revisarse va a poder abrir el detalle con el resultado y, si
+      corresponde, la evidencia que quedó registrada. No hace falta que haga nada.
     </p>
   </app-content-dialog>
 }

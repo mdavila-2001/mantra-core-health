@@ -75,7 +75,7 @@ export class StickerPicker {
   protected mandarPropio(sticker: MiSticker): void {
     const archivo = MisStickers.archivoDe(sticker);
     if (archivo === null) {
-      this.rechazado.emit('No pudimos leer ese sticker. Volvé a subirlo.');
+      this.rechazado.emit('No pudimos leer ese sticker. Vuelva a subirlo.');
       return;
     }
     this.propio.emit(archivo);

@@ -7,8 +7,8 @@
         Horarios de otros servicios
       </h2>
       <p class="servicios-horario__nota">
-        Los días y horas en que atendés estudios, procedimientos y demás servicios que no son una
-        consulta. Los pacientes los ven en tu ficha, en la pestaña «Otros servicios».
+        Los días y horas en que atiende estudios, procedimientos y demás servicios que no son una
+        consulta. Los pacientes los ven en su ficha, en la pestaña «Otros servicios».
       </p>
     </div>
     <a app-button variant="secondary" size="sm" [routerLink]="editRoute" data-testid="services-schedule-edit">
@@ -29,8 +29,8 @@
       Solicitudes y turnos de servicios
     </h3>
     <p class="servicios-horario__nota">
-      Lo que los pacientes pidieron para tus servicios, de hoy a {{ weeks }} semanas. Las que
-      esperan tu respuesta van primero.
+      Lo que los pacientes pidieron para sus servicios, de hoy a {{ weeks }} semanas. Las que
+      esperan su respuesta van primero.
     </p>
 
     @switch (bookings().status) {
@@ -40,12 +40,12 @@
       @case ('ready') {
         @if (awaiting().length === 0 && upcoming().length === 0) {
           <p class="servicios-horario__nota" data-testid="services-schedule-requests-empty">
-            Todavía nadie pidió tus servicios en las próximas {{ weeks }} semanas.
+            Todavía nadie pidió sus servicios en las próximas {{ weeks }} semanas.
           </p>
         } @else {
           @if (awaiting().length > 0) {
             <h4 class="servicios-horario__grupo">
-              Esperan tu respuesta ({{ awaiting().length }})
+              Esperan su respuesta ({{ awaiting().length }})
             </h4>
             <ul class="servicios-horario__reservas" data-testid="services-schedule-awaiting">
               @for (booking of awaiting(); track booking.id) {
@@ -80,7 +80,7 @@
     }
   </section>
 
-  <h3 class="servicios-horario__subtitulo">Tu horario para otros servicios</h3>
+  <h3 class="servicios-horario__subtitulo">Su horario para otros servicios</h3>
   <app-view-state-host [state]="state()" (retry)="load()" data-testid="services-schedule-state">
     @for (site of sites(); track site.resource.id) {
       <div class="servicios-horario__sede">
@@ -96,7 +96,7 @@
     }
     <p class="servicios-horario__ayuda">
       Una franja «Ambos» comparte el tiempo con las consultas: quien reserva primero se la lleva.
-      Para cambiar qué atendés en cada franja, usá «Cambiar mi horario».
+      Para cambiar qué atiende en cada franja, use «Cambiar mi horario».
     </p>
   </app-view-state-host>
 
@@ -106,10 +106,10 @@
     </h3>
     @switch (offerings().status) {
       @case ('loading') {
-        <p class="servicios-horario__nota" role="status">Buscando tus servicios…</p>
+        <p class="servicios-horario__nota" role="status">Buscando sus servicios…</p>
       }
       @case ('error') {
-        <app-alert tone="warning" title="No pudimos traer tus servicios" data-testid="services-schedule-offerings-error">
+        <app-alert tone="warning" title="No pudimos traer sus servicios" data-testid="services-schedule-offerings-error">
           El horario de arriba sigue siendo el vigente.
           <button app-button variant="ghost" size="sm" type="button" (clicked)="reloadOfferings()">
             Reintentar
@@ -119,7 +119,7 @@
       @default {
         @if (activeOfferings().length === 0) {
           <p class="servicios-horario__nota" data-testid="services-schedule-no-offerings">
-            Todavía no ofrecés servicios aparte de la consulta. Los declarás en «Mis servicios».
+            Todavía no ofrece servicios aparte de la consulta. Los declara en «Mis servicios».
           </p>
         } @else {
           <ul class="servicios-horario__lista">
@@ -130,7 +130,7 @@
                   <p class="servicios-horario__dato">
                     Dura {{ duration(offering) }}<span aria-hidden="true"> · </span>{{ price(offering) }}
                     @if (!offering.isPatientBookable) {
-                      <span aria-hidden="true"> · </span>Sólo lo agendás vos
+                      <span aria-hidden="true"> · </span>Sólo lo agenda usted
                     }
                   </p>
                 </app-card>

@@ -154,8 +154,8 @@ export class DiagnosisVerifyDialog {
 
   protected readonly bajada = computed(() =>
     this.confirma()
-      ? 'Queda como enfermedad activa en la historia. Decí en qué te basás y hasta cuándo se espera.'
-      : 'Queda como rechazado en la historia. Decí en qué te basás.',
+      ? 'Queda como enfermedad activa en la historia. Diga en qué se basa y hasta cuándo se espera.'
+      : 'Queda como rechazado en la historia. Diga en qué se basa.',
   );
 
   /* -- Lo que se escribe --------------------------------------------------- */
@@ -250,17 +250,17 @@ export class DiagnosisVerifyDialog {
 
   protected readonly errorDeMotivo = computed(() =>
     this.intentado() && this.faltaSustento()
-      ? 'Escribí el motivo o elegí una evidencia: al menos uno de los dos.'
+      ? 'Escriba el motivo o elija una evidencia: al menos uno de los dos.'
       : '',
   );
   protected readonly errorDeInicio = computed(() =>
     this.intentado() && this.faltaInicio()
-      ? 'Indicá desde cuándo la persona presenta la condición.'
+      ? 'Indique desde cuándo la persona presenta la condición.'
       : '',
   );
   protected readonly errorDeFin = computed(() =>
     this.intentado() && this.faltaFin()
-      ? 'Indicá hasta cuándo se espera la condición, o marcala como crónica.'
+      ? 'Indique hasta cuándo se espera la condición, o márquela como crónica.'
       : '',
   );
 
@@ -274,8 +274,8 @@ export class DiagnosisVerifyDialog {
     }
     return mensajeDeFalloDeEscritura(estado, {
       accion: 'confirmar o rechazar diagnósticos',
-      sinPermiso: 'Tu rol no permite confirmar ni rechazar diagnósticos.',
-      yaNoExiste: 'El diagnóstico ya no existe: alguien lo quitó mientras lo decidías.',
+      sinPermiso: 'Su rol no permite confirmar ni rechazar diagnósticos.',
+      yaNoExiste: 'El diagnóstico ya no existe: alguien lo quitó mientras lo decidía.',
     });
   });
 
@@ -295,7 +295,7 @@ export class DiagnosisVerifyDialog {
     if (!this.tieneCambios()) return true;
     return this.dialogs.confirm({
       title: '¿Descartar la decisión?',
-      message: 'Lo que escribiste no se guardó. Si cerrás, el diagnóstico sigue en estudio.',
+      message: 'Lo que escribió no se guardó. Si cierra, el diagnóstico sigue en estudio.',
       confirmLabel: 'Descartar',
       cancelLabel: 'Seguir editando',
       destructive: true,

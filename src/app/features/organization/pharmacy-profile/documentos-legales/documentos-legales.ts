@@ -279,7 +279,7 @@ export class DocumentosLegales {
   /** El PDF definitivo lo guarda el módulo de documentos legales, que todavía no existe. */
   protected avisarDescarga(fila: FilaDeDocumento): void {
     this.toasts.info(
-      `«${fila.archivo}» no se puede abrir desde acá todavía: los archivos llegan con el módulo de documentos legales. Lo que ves es un ejemplo.`,
+      `«${fila.archivo}» no se puede abrir desde acá todavía: los archivos llegan con el módulo de documentos legales. Lo que ve es un ejemplo.`,
       'Documento de ejemplo',
     );
   }

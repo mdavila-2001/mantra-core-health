@@ -163,7 +163,7 @@ export class Loyalty {
               { label: 'Ver mis pedidos', route: MIS_PEDIDOS_ROUTE },
               // Ahora sí lo sabemos: la lectura real responde `enrolled: false`
               // cuando la persona no tiene membresía en el programa del tenant.
-              `Todavía no hay un programa de ${this.nombreDelPrograma} activo para tu cuenta. Cuando lo haya, vas a sumar puntos con cada compra en las farmacias de la red.`,
+              `Todavía no hay un programa de ${this.nombreDelPrograma} activo para su cuenta. Cuando lo haya, va a sumar puntos con cada compra en las farmacias de la red.`,
             ),
           );
           return;
@@ -225,18 +225,18 @@ export class Loyalty {
     }
     const cifra = cifraDe(this.puntosACanjear());
     if (cifra === null || cifra <= 0) {
-      this.errorDeCanje.set('Escribí cuántos puntos querés canjear.');
+      this.errorDeCanje.set('Escriba cuántos puntos quiere canjear.');
       return;
     }
     // Los puntos son unidades enteras: el ledger no guarda medios puntos.
     // Truncar en silencio canjearía una cantidad distinta de la pedida, así
     // que se rechaza y se dice por qué.
     if (!Number.isInteger(cifra)) {
-      this.errorDeCanje.set('Los puntos son enteros: escribí una cantidad sin decimales.');
+      this.errorDeCanje.set('Los puntos son enteros: escriba una cantidad sin decimales.');
       return;
     }
     if (cifra > Number(cuenta.saldo)) {
-      this.errorDeCanje.set(`Te alcanza para canjear hasta ${cuenta.saldo} puntos.`);
+      this.errorDeCanje.set(`Le alcanza para canjear hasta ${cuenta.saldo} puntos.`);
       return;
     }
 
@@ -259,7 +259,7 @@ export class Loyalty {
           this.errorDeCanje.set(
             error instanceof SaldoInsuficienteError
               ? error.message
-              : 'No pudimos registrar el canje. Probá de nuevo en un momento.',
+              : 'No pudimos registrar el canje. Pruebe de nuevo en un momento.',
           );
         },
       });

@@ -20,8 +20,8 @@ import { esperarAplicacionLista, irA } from './support/sesion';
 const SYNTHETIC_DEPENDENT = { name: 'Jorge Luis Mamani Choque', nationalId: '5009871' };
 const DEPENDENTS = '/my-account/dependents';
 const NOTIFICATIONS = '/notification-center';
-const ACTION_SUBJECT = 'Te quieren registrar como dependiente';
-const ACCEPTED_MESSAGE = 'Aceptaste la solicitud: ya puede actuar por vos.';
+const ACTION_SUBJECT = 'Le quieren registrar como dependiente';
+const ACCEPTED_MESSAGE = 'Aceptó la solicitud: ya puede actuar por usted.';
 
 async function signInDemo(page: Page, identifier: string): Promise<void> {
   await page.goto('/auth');
@@ -211,7 +211,7 @@ test.describe('Hito 2 · accesibilidad y acciones de notificación · solo demo'
       await expect(badge).toHaveAttribute('aria-label', /^\d+ notificaciones sin leer$/);
       const initialUnread = Number((await badge.getAttribute('aria-label'))!.split(' ')[0]);
       expect(initialUnread).toBeGreaterThan(0);
-      await expect(bell).toHaveAttribute('aria-label', 'Notificaciones. Tenés ' + initialUnread + ' sin leer');
+      await expect(bell).toHaveAttribute('aria-label', 'Notificaciones. Tiene ' + initialUnread + ' sin leer');
       await expectPanelInsideViewport(panel, page);
       await capture(page, 'accessibility-notification-before-action', viewport.width, info);
 
@@ -227,10 +227,10 @@ test.describe('Hito 2 · accesibilidad y acciones de notificación · solo demo'
       const remaining = initialUnread - 1;
       if (remaining === 0) {
         await expect(badge).toHaveCount(0);
-        await expect(bell).toHaveAttribute('aria-label', 'Notificaciones. No tenés ninguna sin leer');
+        await expect(bell).toHaveAttribute('aria-label', 'Notificaciones. No tiene ninguna sin leer');
       } else {
         await expect(badge).toHaveAttribute('aria-label', remaining + ' notificaciones sin leer');
-        await expect(bell).toHaveAttribute('aria-label', 'Notificaciones. Tenés ' + remaining + ' sin leer');
+        await expect(bell).toHaveAttribute('aria-label', 'Notificaciones. Tiene ' + remaining + ' sin leer');
       }
       await expectLiveRegions(page);
       await capture(page, 'accessibility-notification-action-announced', viewport.width, info);

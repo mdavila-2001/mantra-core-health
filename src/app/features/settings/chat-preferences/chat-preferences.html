@@ -1,8 +1,8 @@
 <section class="ajustes__bloque">
   <h2 class="ajustes__titulo">Respuesta automática</h2>
   <p class="ajustes__detalle">
-    Si alguien te escribe y hace un rato que no entrás a los chats, se le contesta sola con tu
-    texto. Es para avisar que no estás mirando, no para responder por vos.
+    Si alguien le escribe y hace un rato que no entra a los chats, se le contesta sola con su
+    texto. Es para avisar que no está mirando, no para responder por usted.
   </p>
 
   <!-- Lo que se promete cambia según dónde esté guardada, y se dice en la
@@ -11,13 +11,13 @@
        fuera lo primero sería mentir. -->
   @if (enElServidor()) {
     <p class="chat-prefs__aviso is-ok" data-testid="chat-prefs-limite">
-      Guardada en tu cuenta: contesta aunque tengas AloVida cerrado, y vale en todos tus
+      Guardada en su cuenta: contesta aunque tengas AloVida cerrado, y vale en todos sus
       dispositivos.
     </p>
   } @else {
     <p class="chat-prefs__aviso" data-testid="chat-prefs-limite">
-      Guardada sólo en este navegador: funciona mientras tengas AloVida abierto, y en otro
-      dispositivo vas a tener que configurarla de nuevo. Creá tu perfil público desde los chats
+      Guardada sólo en este navegador: funciona mientras tenga AloVida abierto, y en otro
+      dispositivo va a tener que configurarla de nuevo. Cree su perfil público desde los chats
       para que conteste siempre.
     </p>
   }
@@ -63,7 +63,7 @@
           }
         </div>
         <label class="chat-prefs__campo">
-          <span class="ajustes__detalle">O el tiempo que quieras, en minutos</span>
+          <span class="ajustes__detalle">O el tiempo que quiera, en minutos</span>
           <input
             type="number"
             data-testid="chat-prefs-minutos"
@@ -85,12 +85,12 @@
           (ngModelChange)="texto.set($event)"
           name="textoAutomatico"
         ></textarea>
-        <span class="ajustes__detalle">Te quedan {{ restantes() }} caracteres.</span>
+        <span class="ajustes__detalle">Le quedan {{ restantes() }} caracteres.</span>
       </label>
 
       @if (plantillasDeFabrica.length > 0) {
         <div class="chat-prefs__sugerencias">
-          <p class="ajustes__detalle">O usá una de tus frases guardadas:</p>
+          <p class="ajustes__detalle">O use una de sus frases guardadas:</p>
           <ul class="chat-prefs__pastillas">
             @for (plantilla of plantillasDeFabrica; track plantilla) {
               <li>
@@ -130,7 +130,7 @@
         <span class="chat-prefs__interruptor-texto">
           <span class="ajustes__nombre">Sólo fuera de mi horario de atención</span>
           <span class="ajustes__detalle">
-            Dentro del horario no contesta sola, aunque no estés mirando.
+            Dentro del horario no contesta sola, aunque no esté mirando.
           </span>
         </span>
         <app-switch
@@ -187,7 +187,7 @@
   <h2 class="ajustes__titulo">Frases guardadas</h2>
   <p class="ajustes__detalle">
     Las que aparecen en el chat con el botón de plantillas. Las del producto no se pueden borrar;
-    las tuyas, sí.
+    las suyas, sí.
   </p>
 
   <ul class="chat-prefs__plantillas">
@@ -205,7 +205,7 @@
         </button>
       </li>
     } @empty {
-      <li class="ajustes__nota">Todavía no guardaste ninguna frase propia.</li>
+      <li class="ajustes__nota">Todavía no guardó ninguna frase propia.</li>
     }
   </ul>
 
@@ -215,7 +215,7 @@
       <input
         type="text"
         data-testid="chat-prefs-plantilla-nueva"
-        placeholder="Una frase que uses seguido"
+        placeholder="Una frase que use seguido"
         [ngModel]="plantillaNueva()"
         (ngModelChange)="plantillaNueva.set($event)"
         name="plantillaNueva"

@@ -106,7 +106,7 @@ for (const cuenta of CUENTAS) {
 
       await expect(page.getByRole('heading', { level: 1, name: cuenta.titulo })).toBeVisible();
       // No es el perfil de una persona.
-      await expect(page.getByText('Tus datos, tu verificación de identidad')).toHaveCount(0);
+      await expect(page.getByText('Sus datos, su verificación de identidad')).toHaveCount(0);
       await expect(page.getByText(cuenta.organizacion).first()).toBeVisible();
 
       await page.screenshot({

@@ -52,13 +52,13 @@ export function mensajeDeFalloDeEscritura(
       // faltó. Con `??` bastaba un `message: ''` —que es lo que manda el
       // backend cuando el 403 no trae detalle— para pintar un aviso en blanco:
       // un recuadro rojo vacío no es un mensaje, es un susto.
-      return estado.message || textos.sinPermiso || `Tu rol no permite ${textos.accion}.`;
+      return estado.message || textos.sinPermiso || `Su rol no permite ${textos.accion}.`;
     case 'not-found':
       // Sin detalle del recurso a propósito: S6 no confirma que exista.
-      return textos.yaNoExiste ?? 'El expediente ya no existe. Recargá la pantalla.';
+      return textos.yaNoExiste ?? 'El expediente ya no existe. Recargue la pantalla.';
     case 'offline':
       // No falló el servidor: la petición no llegó, así que reintentar sirve.
-      return 'No pudimos conectarnos. Revisá tu conexión y reintentá.';
+      return 'No pudimos conectarnos. Revise su conexión y reintente.';
     case 'error':
       // El identificador de petición es obligatorio en S9: sin él, quien
       // reporta el problema y quien lo busca en los registros no se encuentran.

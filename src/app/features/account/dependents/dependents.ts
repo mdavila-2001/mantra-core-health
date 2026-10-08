@@ -97,7 +97,7 @@ export class Dependents {
     this.registrando.set(false);
     this.toast.show({
       type: 'success',
-      message: `Enviamos la solicitud a ${envio.destinatario}. Cuando la acepte, va a aparecer en tu lista.`,
+      message: `Enviamos la solicitud a ${envio.destinatario}. Cuando la acepte, va a aparecer en su lista.`,
     });
   }
 
@@ -114,15 +114,15 @@ export class Dependents {
         this.toast.show({
           type: aceptar ? 'success' : 'info',
           message: aceptar
-            ? `Aceptaste: ${solicitud.requesterDisplayName} ahora puede actuar por vos.`
-            : `Rechazaste la solicitud de ${solicitud.requesterDisplayName}.`,
+            ? `Aceptó: ${solicitud.requesterDisplayName} ahora puede actuar por usted.`
+            : `Rechazó la solicitud de ${solicitud.requesterDisplayName}.`,
         });
       },
       error: () => {
         this.respondiendo.set(null);
         this.toast.show({
           type: 'error',
-          message: 'No se pudo responder la solicitud. Intentá de nuevo.',
+          message: 'No se pudo responder la solicitud. Intente de nuevo.',
         });
         this.cargarSolicitudes();
       },
@@ -134,14 +134,14 @@ export class Dependents {
     this.contexto.selectPatient(dependiente.patientProfileId);
     this.toast.show({
       type: 'success',
-      message: `Ahora estás actuando por ${dependiente.fullName}.`,
+      message: `Ahora está actuando por ${dependiente.fullName}.`,
     });
   }
 
   /** Vuelve a operar por uno mismo. */
   protected volverAMi(): void {
     this.contexto.resetToSelf();
-    this.toast.show({ type: 'info', message: 'Volviste a tu propio perfil.' });
+    this.toast.show({ type: 'info', message: 'Volvió a su propio perfil.' });
   }
 
   /** Cómo se dice la edad de alguien en la tarjeta. */

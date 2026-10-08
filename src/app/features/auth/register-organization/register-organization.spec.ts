@@ -751,7 +751,7 @@ describe('RegisterOrganization', () => {
       campo.dispatchEvent(new FocusEvent('blur'));
       fixture.detectChanges();
 
-      expect(errorDe(campo)).toBe('Escribí la dirección (hasta 300 caracteres).');
+      expect(errorDe(campo)).toBe('Escriba la dirección (hasta 300 caracteres).');
       expect(fixture.nativeElement.querySelector(AVISO)).not.toBeNull();
     });
 
@@ -765,7 +765,7 @@ describe('RegisterOrganization', () => {
       expect(fixture.nativeElement.querySelector('.paginated-form__titulo').textContent).toContain(
         'Datos de la aseguradora',
       );
-      expect(errorDe(campo)).toBe('Escribí la dirección (hasta 300 caracteres).');
+      expect(errorDe(campo)).toBe('Escriba la dirección (hasta 300 caracteres).');
     });
   });
 
@@ -872,7 +872,7 @@ describe('RegisterOrganization', () => {
       ).toContain('Directorio ejecutivo');
       expect(paneles()[2].classList.contains('is-expanded')).toBe(true);
       expect((fixture.nativeElement as HTMLElement).textContent).toContain(
-        'Escribí el apellido paterno.',
+        'Escriba el apellido paterno.',
       );
     });
 
@@ -887,7 +887,7 @@ describe('RegisterOrganization', () => {
       fixture.detectChanges();
 
       expect((fixture.nativeElement as HTMLElement).textContent).toContain(
-        'Revisá el correo: falta el arroba o el dominio.',
+        'Revise el correo: falta el arroba o el dominio.',
       );
     });
 
@@ -896,7 +896,7 @@ describe('RegisterOrganization', () => {
       completar();
       fixture.detectChanges();
       avanzarHasta('Directorio ejecutivo');
-      avanzarHasta('Tu cuenta');
+      avanzarHasta('Su cuenta');
       fixture.debugElement
         .query(By.css('[data-testid="paginated-form-atras"]'))
         .nativeElement.click();
@@ -1130,11 +1130,11 @@ describe('RegisterOrganization', () => {
   });
 
   describe('nombre en cinco partes del owner', () => {
-    it('«Tu cuenta» es UNA sola página y trae las cinco partes del nombre juntas', () => {
+    it('«Su cuenta» es UNA sola página y trae las cinco partes del nombre juntas', () => {
       fixture.detectChanges();
       completar();
       fixture.detectChanges();
-      avanzarHasta('Tu cuenta');
+      avanzarHasta('Su cuenta');
 
       // Era la sección que el motor partía en dos, con el apellido materno
       // huérfano al principio de la segunda página. Las cinco casillas —y el
@@ -1153,7 +1153,7 @@ describe('RegisterOrganization', () => {
 
       // Y el título no lleva numeración: «(1 de 2)» era justamente el síntoma.
       const titulo = fixture.nativeElement.querySelector('.paginated-form__titulo')?.textContent;
-      expect(titulo).toContain('Tu cuenta');
+      expect(titulo).toContain('Su cuenta');
       expect(titulo).not.toContain('de 2');
     });
 
@@ -1161,7 +1161,7 @@ describe('RegisterOrganization', () => {
       fixture.detectChanges();
       completar();
       fixture.detectChanges();
-      avanzarHasta('Tu cuenta');
+      avanzarHasta('Su cuenta');
 
       const grilla: HTMLElement = fixture.nativeElement.querySelector(
         'app-campos-de-nombre-en-linea .nombres',
@@ -1175,7 +1175,7 @@ describe('RegisterOrganization', () => {
       fixture.detectChanges();
       completar();
       fixture.detectChanges();
-      avanzarHasta('Tu cuenta');
+      avanzarHasta('Su cuenta');
 
       const grupo = component.form.controls.ownerName;
       grupo.reset({ name: '', middleName: '', thirdName: '', lastName: '', motherLastName: '' });
@@ -1189,7 +1189,7 @@ describe('RegisterOrganization', () => {
       expect(grupo.controls.name.touched).toBe(true);
       expect(grupo.controls.motherLastName.touched).toBe(true);
       expect(fixture.nativeElement.querySelector('.paginated-form__titulo')?.textContent).toContain(
-        'Tu cuenta',
+        'Su cuenta',
       );
     });
 
@@ -1285,7 +1285,7 @@ describe('RegisterOrganization', () => {
       );
 
       expect(component.errorMessage()).toContain('correo del representante legal');
-      expect(component.errorMessage()).toContain('¿Olvidaste tu contraseña?');
+      expect(component.errorMessage()).toContain('¿Olvidó su contraseña?');
       expect(component.registered()).toBe(false);
     });
 
@@ -1306,7 +1306,7 @@ describe('RegisterOrganization', () => {
       );
 
       expect(component.errorMessage()).toBe(
-        'La sigla «ANDINA» ya está en uso en la plataforma. Elegí otra.',
+        'La sigla «ANDINA» ya está en uso en la plataforma. Elija otra.',
       );
     });
 

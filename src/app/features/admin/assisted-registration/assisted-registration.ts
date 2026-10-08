@@ -105,15 +105,15 @@ export class AssistedRegistration {
       campos: [
         // El nombre es el mismo bloque que usan paciente, médico y aseguradora:
         // tres nombres, «+ Agregar otro nombre» y los dos apellidos.
-        { key: 'patientName', label: '', control: 'custom', mensajeDeError: 'Completá el primer nombre y el apellido paterno del paciente.' },
-        { key: 'email', testId: 'alta-paciente-correo', label: 'Correo', hint: 'Con este correo va a activar la cuenta e iniciar sesión.', control: 'email', required: true, mensajeDeError: 'Ingresá un correo válido.' },
+        { key: 'patientName', label: '', control: 'custom', mensajeDeError: 'Complete el primer nombre y el apellido paterno del paciente.' },
+        { key: 'email', testId: 'alta-paciente-correo', label: 'Correo', hint: 'Con este correo va a activar la cuenta e iniciar sesión.', control: 'email', required: true, mensajeDeError: 'Ingrese un correo válido.' },
       ],
     },
     {
       titulo: 'Justificación',
-      hint: 'Estás creando una cuenta a nombre de otra persona: queda registrado quién y por qué.',
+      hint: 'Está creando una cuenta a nombre de otra persona: queda registrado quién y por qué.',
       campos: [
-        { key: 'reason', testId: 'alta-paciente-motivo', label: 'Motivo del registro asistido', hint: 'Queda en la trazabilidad. Máximo 500 caracteres.', control: 'textarea', required: true, mensajeDeError: 'Explicá por qué el paciente no puede registrarse por sí mismo (máximo 500 caracteres).' },
+        { key: 'reason', testId: 'alta-paciente-motivo', label: 'Motivo del registro asistido', hint: 'Queda en la trazabilidad. Máximo 500 caracteres.', control: 'textarea', required: true, mensajeDeError: 'Explique por qué el paciente no puede registrarse por sí mismo (máximo 500 caracteres).' },
       ],
     },
   ]);
@@ -148,10 +148,10 @@ export class AssistedRegistration {
       return state.issues.map((issue) => issue.message).join(' ') || null;
     }
     if (state.status === 'forbidden') {
-      return state.message ?? 'No tenés permiso para registrar pacientes.';
+      return state.message ?? 'No tiene permiso para registrar pacientes.';
     }
     if (state.status === 'offline') {
-      return 'No pudimos conectarnos. Revisá tu conexión y reintentá.';
+      return 'No pudimos conectarnos. Revise su conexión y reintente.';
     }
     if (state.status === 'error') {
       return `${state.message || 'Ocurrió un error inesperado.'} (${state.requestId})`;

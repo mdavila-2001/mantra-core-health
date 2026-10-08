@@ -147,7 +147,7 @@ export class PharmacyShop {
           .pipe(
             map((page) =>
               page.items.length === 0
-                ? empty({ label: 'Probá con otro nombre' }, 'No encontramos farmacias con ese nombre.')
+                ? empty({ label: 'Pruebe con otro nombre' }, 'No encontramos farmacias con ese nombre.')
                 : ready(page.items),
             ),
             catchError((error: unknown) => of(errorToViewState<readonly PharmacySite[]>(error))),
@@ -206,7 +206,7 @@ export class PharmacyShop {
           .pipe(
             map((page) =>
               page.items.length === 0
-                ? empty({ label: 'Probá con otro nombre' }, 'No encontramos productos con ese nombre.')
+                ? empty({ label: 'Pruebe con otro nombre' }, 'No encontramos productos con ese nombre.')
                 : ready(page.items),
             ),
             catchError((error: unknown) => of(errorToViewState<readonly PharmacyProduct[]>(error))),
@@ -279,7 +279,7 @@ export class PharmacyShop {
           const sitio = resultado.items.find((candidato) => candidato.siteId === farmacia.siteId);
           if (sitio === undefined) {
             this.errorAlContinuar.set(
-              'Esa sede ya no está publicando disponibilidad. Elegí otra farmacia.',
+              'Esa sede ya no está publicando disponibilidad. Elija otra farmacia.',
             );
             return;
           }
@@ -288,7 +288,7 @@ export class PharmacyShop {
         },
         error: () => {
           this.enviando.set(false);
-          this.errorAlContinuar.set('No pudimos confirmar la disponibilidad. Probá de nuevo.');
+          this.errorAlContinuar.set('No pudimos confirmar la disponibilidad. Pruebe de nuevo.');
         },
       });
   }

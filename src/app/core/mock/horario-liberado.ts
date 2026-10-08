@@ -145,7 +145,7 @@ export function avisoDeHorarioLiberado(hueco: HorarioLiberado) {
     userId: PACIENTE.userId,
     category: 'SCHEDULING' as const,
     subject: 'Se liberó un horario',
-    bodyText: `Un paciente no confirmó su cita del ${cuando(hueco.startAt)} con la ${MEDICA.professionalTitle} ${MEDICA.displayName}. Si te sirve mejor que la tuya, podés tomarla.`,
+    bodyText: `Un paciente no confirmó su cita del ${cuando(hueco.startAt)} con la ${MEDICA.professionalTitle} ${MEDICA.displayName}. Si le sirve mejor que la suya, puede tomarla.`,
     // Mismo literal que `RECURSO_CUPO` en la API real
     // (`scheduling/notices/agenda-notices.ts`): AG-06, mock honesto.
     destination: { type: 'scheduling.bookable_slots', id: hueco.bookableSlotId },

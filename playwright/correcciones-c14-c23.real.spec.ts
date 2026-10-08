@@ -81,7 +81,7 @@ test.describe('C-14/C-23 · contra la API real', () => {
    */
   async function abrirLaNota(page: Page) {
     const modal = await abrirCasilla(page, 'formulario');
-    await modal.getByLabel('Qué vas a completar').selectOption({ label: 'Hoja en blanco — escribir sin campos' });
+    await modal.getByLabel('Qué va a completar').selectOption({ label: 'Hoja en blanco — escribir sin campos' });
     return modal;
   }
 

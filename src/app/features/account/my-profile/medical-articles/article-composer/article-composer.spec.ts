@@ -137,7 +137,7 @@ describe('ArticleComposer', () => {
     fixture.componentRef.setInput('maxLength', 10);
     escribir('<p>un texto bastante más largo</p>');
     expect(composer.ready()).toBe(false);
-    expect(html.querySelector('.compositor-articulo__contador--excedido')?.textContent).toContain('te pasaste por');
+    expect(html.querySelector('.compositor-articulo__contador--excedido')?.textContent).toContain('se pasó por');
   });
 
   it('ofrece la barra completa: historial, tachado, tres niveles de título, cita y separador', () => {
@@ -160,7 +160,7 @@ describe('ArticleComposer', () => {
     fixture.detectChanges();
     (html.querySelector('[data-testid="article-link-insert"]') as HTMLButtonElement).click();
     fixture.detectChanges();
-    expect(html.textContent).toContain('Escribí una dirección web');
+    expect(html.textContent).toContain('Escriba una dirección web');
 
     url.value = 'www.who.int/guia';
     url.dispatchEvent(new Event('input'));

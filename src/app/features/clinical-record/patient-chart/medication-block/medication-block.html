@@ -33,7 +33,7 @@
        paso que falta, y su salida —firmar— está en la lista de abajo. -->
   @if (avisoDePrecondicion(); as aviso) {
     <app-alert tone="warning" title="Falta la firma" data-testid="receta-precondicion">
-      {{ aviso }} Firmala con el botón «Firmar» y volvé a emitirla.
+      {{ aviso }} Fírmela con el botón «Firmar» y vuelva a emitirla.
     </app-alert>
   }
 
@@ -125,13 +125,13 @@
        Tres condiciones antes del formulario, y cada una se dice con su propia
        explicación: «no se puede» sin decir qué falta obliga a adivinar. -->
   @if (sinOrganizacion()) {
-    <app-alert tone="info" title="Elegí una organización">
-      Una receta queda bajo la custodia de una organización. Elegí una en el selector del encabezado
+    <app-alert tone="info" title="Elija una organización">
+      Una receta queda bajo la custodia de una organización. Elija una en el selector del encabezado
       para poder prescribir.
     </app-alert>
   } @else if (!hayEncuentro() && !sinExigirEncuentro()) {
-    <app-alert tone="info" title="Abrí el encuentro para recetar">
-      La receta se registra dentro de la consulta que la motivó. Registrá el encuentro acá abajo y
+    <app-alert tone="info" title="Abra el encuentro para recetar">
+      La receta se registra dentro de la consulta que la motivó. Registre el encuentro acá abajo y
       el formulario aparece.
     </app-alert>
   } @else if (catalogoListo() === false) {
@@ -140,7 +140,7 @@
          catálogo no está, lo honesto es no ofrecer el formulario y decir por qué. -->
     <app-alert tone="warning" title="El catálogo de medicamentos no está publicado">
       El medicamento se elige del catálogo y esa columna todavía no tiene un conjunto de valores
-      declarado, así que no se puede prescribir desde acá. No es algo que puedas resolver en esta
+      declarado, así que no se puede prescribir desde acá. No es algo que pueda resolver en esta
       pantalla: hay que declarar el catálogo del lado del servidor. Firmar y emitir las recetas ya
       cargadas sí funciona.
     </app-alert>
@@ -179,7 +179,7 @@
            guarda es el `conceptId` de lo elegido. -->
       <app-form-field icon="pill"
         label="Medicamento"
-        hint="Buscá por nombre o código. Es lo único obligatorio."
+        hint="Busque por nombre o código. Es lo único obligatorio."
         [required]="true"
       >
         <app-reference-combobox
@@ -187,7 +187,7 @@
           [selected]="medicamentoElegido()"
           [options]="opcionesDeMedicamento()"
           [loading]="buscandoMedicamento()"
-          placeholder="Buscá un medicamento"
+          placeholder="Busque un medicamento"
           emptyMessage="Ningún medicamento coincide"
           (searched)="buscarMedicamento($event)"
           (selectionChange)="onMedicamentoElegido($event)"
@@ -221,7 +221,7 @@
         }
       }
 
-      <app-form-field icon="pill" label="Dosis" hint="Opcional. En tus palabras: «500 mg».">
+      <app-form-field icon="pill" label="Dosis" hint="Opcional. En sus palabras: «500 mg».">
         <app-input
           type="text"
           autocomplete="off"
@@ -231,7 +231,7 @@
         />
       </app-form-field>
 
-      <app-form-field icon="history" label="Frecuencia" hint="Opcional. En tus palabras: «cada 8 horas».">
+      <app-form-field icon="history" label="Frecuencia" hint="Opcional. En sus palabras: «cada 8 horas».">
         <app-input
           type="text"
           autocomplete="off"
@@ -243,7 +243,7 @@
         <app-select
           [value]="frecuencia()"
           [options]="opcionesFrecuenciaRapida"
-          placeholder="Elegí una pauta frecuente"
+          placeholder="Elija una pauta frecuente"
           (valueChange)="fijarFrecuenciaRapida($event ?? '')"
         />
       </app-form-field>
@@ -275,7 +275,7 @@
         <app-select
           [value]="duracionRapidaElegida()"
           [options]="opcionesDuracionRapida"
-          placeholder="Elegí una duración"
+          placeholder="Elija una duración"
           (valueChange)="elegirDuracionRapida($event)"
         />
       </app-form-field>
@@ -308,14 +308,14 @@
            Ya no hay opción vacía. -->
       <app-form-field icon="heart"
         label="¿Para qué es esta receta?"
-        hint="Elegí un diagnóstico confirmado o «Otro motivo» para escribirlo."
+        hint="Elija un diagnóstico confirmado o «Otro motivo» para escribirlo."
       >
         <app-select
           data-testid="receta-diagnostico"
           [value]="indicacion()"
           (valueChange)="elegirIndicacion($event)"
           [options]="opcionesDeIndicacion()"
-          placeholder="Elegí un diagnóstico o un motivo"
+          placeholder="Elija un diagnóstico o un motivo"
         />
       </app-form-field>
 

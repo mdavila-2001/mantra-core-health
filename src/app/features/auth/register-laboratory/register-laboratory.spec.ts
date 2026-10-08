@@ -444,7 +444,7 @@ describe('RegisterLaboratory', () => {
     expect(component.registered()).toBe(false);
     // El catálogo explica de quién es el correo y qué hacer, sin repetir la API.
     expect(component.errorMessage()).toContain('Ya hay una cuenta registrada con el correo del representante legal');
-    expect(component.errorMessage()).toContain('¿Olvidaste tu contraseña?');
+    expect(component.errorMessage()).toContain('¿Olvidó su contraseña?');
     const alerta = fixture.debugElement.query(By.css('[data-testid="registro-lab-error"]'));
     expect(alerta).not.toBeNull();
   });
@@ -510,9 +510,9 @@ describe('RegisterLaboratory', () => {
 
     const exito = fixture.debugElement.query(By.css('[data-testid="registro-lab-exito"]'));
     expect(exito).not.toBeNull();
-    expect((exito.nativeElement as HTMLElement).textContent).toContain('Tu cuenta está lista');
+    expect((exito.nativeElement as HTMLElement).textContent).toContain('Su cuenta está lista');
     const texto = (fixture.nativeElement as HTMLElement).textContent ?? '';
-    expect(texto).toContain('revisá tu bandeja de entrada');
+    expect(texto).toContain('revise su bandeja de entrada');
     expect(texto).toContain('pendiente de aprobación');
   });
 
@@ -583,7 +583,7 @@ describe('RegisterLaboratory', () => {
       campo.dispatchEvent(new FocusEvent('blur'));
       fixture.detectChanges();
 
-      expect(errorDe(campo)).toBe('Escribí la dirección legal de la central.');
+      expect(errorDe(campo)).toBe('Escriba la dirección legal de la central.');
       expect(
         fixture.nativeElement.querySelector('[data-testid="registro-lab-direccion-reescribir"]'),
       ).not.toBeNull();
@@ -599,7 +599,7 @@ describe('RegisterLaboratory', () => {
       expect(fixture.nativeElement.querySelector('.paginated-form__titulo').textContent).toContain(
         'Dónde está la central',
       );
-      expect(errorDe(campo)).toBe('Escribí la dirección legal de la central.');
+      expect(errorDe(campo)).toBe('Escriba la dirección legal de la central.');
     });
   });
 

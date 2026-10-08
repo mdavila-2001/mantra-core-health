@@ -393,7 +393,7 @@ export class WhereToBuy {
     ) {
       return empty(
         { label: 'Volver a mi historia', route: MI_HISTORIA_ROUTE },
-        'Con el seguro, ninguno de los medicamentos que elegiste está aprobado. Apagá la variante con seguro para ver la receta completa.',
+        'Con el seguro, ninguno de los medicamentos que eligió está aprobado. Apague la variante con seguro para ver la receta completa.',
       );
     }
     return estado;
@@ -558,7 +558,7 @@ export class WhereToBuy {
       this.resultados.set(
         empty(
           { label: 'Volver a mi historia', route: MI_HISTORIA_ROUTE },
-          'Elegí al menos un medicamento para consultar dónde comprarlo.',
+          'Elija al menos un medicamento para consultar dónde comprarlo.',
         ),
       );
       return;
@@ -600,7 +600,7 @@ export class WhereToBuy {
             this.resultados.set(
               empty(
                 { label: 'Volver a mi historia', route: MI_HISTORIA_ROUTE },
-                'Ninguna sucursal puede confirmar hoy los medicamentos de tu receta.',
+                'Ninguna sucursal puede confirmar hoy los medicamentos de su receta.',
               ),
             );
             return;
@@ -730,7 +730,7 @@ export class WhereToBuy {
     if (carrito !== null && carrito.site.siteId !== sitio.siteId) {
       const confirmado = await this.dialogs.confirm({
         title: 'Vaciar y cambiar de farmacia',
-        message: `Tu carrito es de otra farmacia. Si seguís, se vacía y queda la receta de ${sede.farmacia} · ${sede.sede}.`,
+        message: `Su carrito es de otra farmacia. Si sigue, se vacía y queda la receta de ${sede.farmacia} · ${sede.sede}.`,
         confirmLabel: 'Vaciar y cambiar',
         cancelLabel: 'Dejarlo como está',
         destructive: true,
@@ -765,14 +765,14 @@ export class WhereToBuy {
   private sembrarLugaresGuardados(places: SavedPlaces): void {
     const referencias: PuntoDeReferencia[] = [];
     if (places.home !== null) {
-      referencias.push({ etiqueta: 'tu casa', ...places.home });
+      referencias.push({ etiqueta: 'su casa', ...places.home });
     }
     if (places.work !== null) {
-      referencias.push({ etiqueta: 'tu trabajo', ...places.work });
+      referencias.push({ etiqueta: 'su trabajo', ...places.work });
     }
     this.lugaresGuardados.set(referencias);
     if (places.home !== null) {
-      this.origen.set({ etiqueta: 'tu casa', ...places.home });
+      this.origen.set({ etiqueta: 'su casa', ...places.home });
     }
   }
 
@@ -792,7 +792,7 @@ export class WhereToBuy {
         this.pidiendoUbicacion.set(false);
         this.ubicacionDenegada.set(false);
         this.medirDesde({
-          etiqueta: 'tu ubicación actual',
+          etiqueta: 'su ubicación actual',
           lat: posicion.coords.latitude,
           lng: posicion.coords.longitude,
         });
@@ -1083,7 +1083,7 @@ function evaluar(
   const sedes = respuesta.items.map((sede, indice): SedeVisible => {
     const faltantes = [
       ...sede.missingProductIds.map(
-        (productId) => nombrePorProducto.get(productId) ?? 'Un medicamento de tu receta',
+        (productId) => nombrePorProducto.get(productId) ?? 'Un medicamento de su receta',
       ),
       ...sinProducto,
     ];

@@ -55,12 +55,12 @@ const ESTADOS: Readonly<Record<ViewStateStatus, ViewState<ResumenDeMuestra>>> = 
   validation: validation(
     [
       { field: 'fecha', message: 'La fecha de alta no puede ser anterior al ingreso.' },
-      { message: 'Otra persona modificó este registro: volvé a cargarlo.', code: 'CONFLICT' },
+      { message: 'Otra persona modificó este registro: vuelva a cargarlo.', code: 'CONFLICT' },
     ],
     30,
   ),
   forbidden: forbidden({
-    message: 'Tu propósito de uso declarado no alcanza para ver este resumen.',
+    message: 'Su propósito de uso declarado no alcanza para ver este resumen.',
     nextAction: { label: 'Declarar propósito de uso', route: '/clinical-record/request-access' },
   }),
   'not-found': notFound({ label: 'Volver al panel', route: '/dashboard' }),
@@ -138,7 +138,7 @@ const FICHAS: Readonly<
   },
   validation: {
     titulo: 'S4 · validación y conflicto',
-    seVe: 'La alerta con dos problemas —uno anclado a «fecha»— y «Reintentá en 30 segundos». El foco cae en la alerta.',
+    seVe: 'La alerta con dos problemas —uno anclado a «fecha»— y «Reintente en 30 segundos». El foco cae en la alerta.',
     salidas: [],
   },
   forbidden: {

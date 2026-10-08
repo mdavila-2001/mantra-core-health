@@ -51,7 +51,7 @@ function encuestaEnCable(
  * que son dos para que «Borradores» y «Todas» no den lo mismo por casualidad.
  */
 const CATALOGO: readonly Record<string, unknown>[] = [
-  encuestaEnCable('s-1', 'Satisfacción post-consulta', 'DRAFT', 'Cómo te fue con el turno.'),
+  encuestaEnCable('s-1', 'Satisfacción post-consulta', 'DRAFT', 'Cómo le fue con el turno.'),
   encuestaEnCable('s-2', 'Adherencia al tratamiento', 'DRAFT'),
   encuestaEnCable('s-3', 'Encuesta de ingreso', 'ACTIVE', 'Antecedentes y medicación.'),
   encuestaEnCable('s-4', 'Derivación a kinesiología', 'INACTIVE'),
@@ -202,7 +202,7 @@ describe('SurveysHome · buscar, filtrar y los vacíos que no se confunden', () 
       // El corazón del criterio: NO es el vacío del dominio. Quien tiene cuatro
       // encuestas no puede leer «todavía no tenés encuestas».
       expect(buscar('[data-testid="encuestas-sin-encuestas"]')).toBeNull();
-      expect(raiz().textContent).not.toContain('Todavía no tenés encuestas');
+      expect(raiz().textContent).not.toContain('Todavía no tiene encuestas');
 
       // Y la salida está a mano: los controles siguen en pantalla.
       expect(buscar('[data-testid="encuestas-buscar"]')).not.toBeNull();

@@ -1,17 +1,17 @@
 <app-page-header
   title="Quién ve mi historia"
-  subtitle="Los profesionales vinculados y los accesos concedidos a tu historia clínica. Podés revocar cualquiera."
+  subtitle="Los profesionales vinculados y los accesos concedidos a su historia clínica. Puede revocar cualquiera."
   [breadcrumbs]="breadcrumbs()"
 />
 
 <div class="acceso">
   @if (cargando()) {
     <p class="acceso__estado" role="status" data-testid="acceso-cargando">
-      Cargando quién ve tu historia…
+      Cargando quién ve su historia…
     </p>
   } @else if (sinPermiso()) {
     <app-alert tone="info" data-testid="acceso-sin-permiso">
-      Esta sección es para pacientes. Tu cuenta no tiene un perfil de paciente.
+      Esta sección es para pacientes. Su cuenta no tiene un perfil de paciente.
     </app-alert>
   } @else if (error(); as falla) {
     <app-alert tone="error" data-testid="acceso-error">
@@ -26,8 +26,8 @@
   } @else {
     @if (cuantosDeEmergencia() > 0) {
       <app-alert tone="warning" data-testid="acceso-aviso-emergencia">
-        Hay {{ cuantosDeEmergencia() }} acceso(s) de emergencia a tu historia. Los concede un
-        profesional sin tu consentimiento previo y quedan auditados.
+        Hay {{ cuantosDeEmergencia() }} acceso(s) de emergencia a su historia. Los concede un
+        profesional sin su consentimiento previo y quedan auditados.
       </app-alert>
     }
 
@@ -36,8 +36,8 @@
         <app-tab [label]="'Profesionales vinculados (' + relaciones().length + ')'">
           @if (relaciones().length === 0) {
             <app-empty-state
-              title="Ningún profesional está vinculado a tu historia"
-              description="Cuando aceptes la solicitud de un profesional, lo vas a ver acá."
+              title="Ningún profesional está vinculado a su historia"
+              description="Cuando aceptes la solicitud de un profesional, lo va a ver acá."
             />
           } @else {
             <ul class="acceso__lista" data-testid="acceso-relaciones">
@@ -81,7 +81,7 @@
           @if (accesos().length === 0) {
             <app-empty-state
               title="No hay accesos concedidos"
-              description="Los accesos que compartas o que un profesional pida en una emergencia figuran acá."
+              description="Los accesos que comparta o que un profesional pida en una emergencia figuran acá."
             />
           } @else {
             <ul class="acceso__lista" data-testid="acceso-accesos">

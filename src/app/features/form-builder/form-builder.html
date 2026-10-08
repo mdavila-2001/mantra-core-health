@@ -1,6 +1,6 @@
 <app-page-header
   title="Formularios"
-  subtitle="Agregá tus propios campos a los formularios estándar de tu especialidad."
+  subtitle="Agregue sus propios campos a los formularios estándar de su especialidad."
   [breadcrumbs]="breadcrumbs()"
 />
 
@@ -61,8 +61,8 @@
           </app-alert>
         } @else if (!quedanCampos()) {
           <app-alert tone="warning" data-testid="presupuesto-agotado">
-            Llegaste al tope de campos propios de este formulario. Para agregar otro hay que quitar
-            uno o pedir más presupuesto a tu organización.
+            Llegó al tope de campos propios de este formulario. Para agregar otro hay que quitar
+            uno o pedir más presupuesto a su organización.
           </app-alert>
         }
       </app-card>
@@ -77,13 +77,13 @@
       <section class="constructor__previa">
         <p class="constructor__previa-nota">
           Así lo va a ver quien complete el formulario: de a una página, con un tope de cuatro
-          campos y una barra que dice cuánto falta. Podés tocar los controles: nada de lo que
-          escribas acá se guarda.
+          campos y una barra que dice cuánto falta. Puede tocar los controles: nada de lo que
+          escriba acá se guarda.
         </p>
         @if (paginas().length === 0) {
           <app-empty-state
             title="Todavía no hay nada que mostrar"
-            description="Agregá un campo y la vista previa aparece."
+            description="Agregue un campo y la vista previa aparece."
           />
         } @else {
           <div class="constructor__previa-marco" data-testid="vista-previa">
@@ -112,7 +112,7 @@
           </span>
           <div class="constructor__bloqueado-texto">
             <p class="constructor__bloqueado-titulo">
-              No podés modificar esto: es un formulario estándar internacional.
+              No puede modificar esto: es un formulario estándar internacional.
             </p>
             @if (procedencia(); as origen) {
               <!-- La procedencia no es un adorno legal: muchos de estos
@@ -123,7 +123,7 @@
               </p>
             }
             <p class="constructor__bloqueado-fuente">
-              Sus campos son la parte que hace comparable una ficha entre consultorios. Lo tuyo se
+              Sus campos son la parte que hace comparable una ficha entre consultorios. Lo suyo se
               agrega más abajo.
             </p>
           </div>
@@ -144,10 +144,10 @@
           </ul>
         }
 
-        <h3 class="constructor__subtitulo">Campos de tu organización</h3>
+        <h3 class="constructor__subtitulo">Campos de su organización</h3>
         @if (camposPropios().length === 0) {
           <p class="constructor__vacio" data-testid="sin-campos-propios">
-            Todavía no agregaste ninguno. Los que agregues acá los ve tu organización y nadie más.
+            Todavía no agregó ninguno. Los que agregue acá los ve su organización y nadie más.
           </p>
         } @else {
           <!-- Arrastrable sólo mientras el agarre está apretado: ver `agarrado`.
@@ -210,7 +210,7 @@
   <!-- ─── La lista de formularios estándar ─────────────────────────────────── -->
   <div class="constructor">
     <p class="constructor__nota">
-      Elegí un formulario estándar para verlo y agregarle tus campos. Los campos del estándar no se
+      Elija un formulario estándar para verlo y agregarle sus campos. Los campos del estándar no se
       tocan: son la parte que hace comparable una ficha entre consultorios.
     </p>
 
@@ -257,13 +257,13 @@
                coincide es el filtro manda a pedirle a la organización algo que
                ya tiene. -->
           <p class="constructor__vacio" role="status" data-testid="sin-coincidencias">
-            Ningún formulario coincide con lo que buscaste. Probá con otra palabra o quitá algún
+            Ningún formulario coincide con lo que buscó. Pruebe con otra palabra o quite algún
             filtro.
           </p>
         } @else {
           <app-empty-state
             title="Todavía no hay formularios estándar"
-            description="Cuando tu organización tenga plantillas por especialidad, aparecen acá."
+            description="Cuando su organización tenga plantillas por especialidad, aparecen acá."
           />
         }
       } @else {

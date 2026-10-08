@@ -14,13 +14,13 @@
         [label]="textos().tipo"
         [required]="true"
         [errorMessage]="
-          form.controls.accountId.touched && form.controls.accountId.invalid ? 'Elegí el tipo.' : ''
+          form.controls.accountId.touched && form.controls.accountId.invalid ? 'Elija el tipo.' : ''
         "
       >
         <app-select
           formControlName="accountId"
           [options]="opcionesDeTipo()"
-          placeholder="Elegí el tipo"
+          placeholder="Elija el tipo"
           [ariaLabel]="textos().tipo"
           data-testid="registro-tipo"
         />
@@ -45,7 +45,7 @@
       [required]="true"
       [errorMessage]="
         form.controls.description.touched && form.controls.description.invalid
-          ? 'Escribí una descripción de hasta 160 caracteres.'
+          ? 'Escriba una descripción de hasta 160 caracteres.'
           : ''
       "
     >
@@ -61,7 +61,7 @@
       <app-form-field
         label="Fecha"
         [required]="true"
-        [errorMessage]="fechaTocada() && fecha() === null ? 'Elegí la fecha.' : ''"
+        [errorMessage]="fechaTocada() && fecha() === null ? 'Elija la fecha.' : ''"
       >
         <app-date-picker
           [value]="fecha()"
@@ -74,7 +74,7 @@
         [required]="true"
         hint="En bolivianos."
         [errorMessage]="
-          montoInvalido() ? 'Escribí un monto mayor a cero, con hasta dos decimales.' : ''
+          montoInvalido() ? 'Escriba un monto mayor a cero, con hasta dos decimales.' : ''
         "
       >
         <app-input

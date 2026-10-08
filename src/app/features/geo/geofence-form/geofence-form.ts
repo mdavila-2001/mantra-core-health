@@ -95,7 +95,7 @@ export class GeofenceForm {
   protected readonly created = signal<Geofence | null>(null);
 
   protected readonly errorMessage = computed(() =>
-    errorMessageOf(this.state(), 'No tenés permiso para crear geocercas.'),
+    errorMessageOf(this.state(), 'No tiene permiso para crear geocercas.'),
   );
 
   /**
@@ -117,7 +117,7 @@ export class GeofenceForm {
             label: 'Nombre',
             control: 'text' as const,
             required: true,
-            mensajeDeError: 'Escribí el nombre de la geocerca (máx. 200 caracteres).',
+            mensajeDeError: 'Escriba el nombre de la geocerca (máx. 200 caracteres).',
           },
           {
             key: 'shapeType',
@@ -142,21 +142,21 @@ export class GeofenceForm {
                   label: 'Radio (metros)',
                   control: 'text' as const,
                   required: true,
-                  mensajeDeError: 'Ingresá el radio en metros, como 500.',
+                  mensajeDeError: 'Ingrese el radio en metros, como 500.',
                 },
                 {
                   key: 'centerLat',
                   label: 'Latitud del centro',
                   control: 'text' as const,
                   required: true,
-                  mensajeDeError: 'Ingresá la latitud en grados decimales, como -34.603765.',
+                  mensajeDeError: 'Ingrese la latitud en grados decimales, como -34.603765.',
                 },
                 {
                   key: 'centerLng',
                   label: 'Longitud del centro',
                   control: 'text' as const,
                   required: true,
-                  mensajeDeError: 'Ingresá la longitud en grados decimales, como -58.381592.',
+                  mensajeDeError: 'Ingrese la longitud en grados decimales, como -58.381592.',
                 },
               ],
             },
@@ -222,7 +222,7 @@ export class GeofenceForm {
       // Sin organización activa el cuerpo nace condenado al 403: se dice acá.
       this.state.set(
         forbidden({
-          message: 'Elegí una organización antes de crear geocercas.',
+          message: 'Elija una organización antes de crear geocercas.',
           nextAction: { label: 'Elegir organización', route: '/auth/organization' },
         }),
       );

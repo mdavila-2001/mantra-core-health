@@ -1,6 +1,6 @@
 <app-page-header
   title="Nueva cotización"
-  subtitle="Elegí paciente y tratamiento, armá un plan de pagos a su medida y guardá la oferta."
+  subtitle="Elija paciente y tratamiento, arme un plan de pagos a su medida y guarde la oferta."
   [breadcrumbs]="breadcrumbs()"
 />
 
@@ -11,7 +11,7 @@
         [value]="practicaElegida()"
         (valueChange)="cambiarPractica($event)"
         [options]="opcionesDePractica()"
-        placeholder="Elegí una práctica"
+        placeholder="Elija una práctica"
       />
     </app-form-field>
   }
@@ -130,8 +130,8 @@
     <div class="cotizacion__encabezado-plan">
       <h2 id="cotizacion-plan-titulo">Plan de pagos</h2>
       <p class="cotizacion__bajada">
-        Sin interés. Armá el plan con lo que le sirva a la persona: cambiá la fecha o el monto
-        de cualquier cuota, sacá o agregá cuotas.
+        Sin interés. Arme el plan con lo que le sirva a la persona: cambie la fecha o el monto
+        de cualquier cuota, saque o agregue cuotas.
       </p>
     </div>
 
@@ -156,7 +156,7 @@
 
       <app-form-field
         label="Primer vencimiento"
-        hint="Si lo dejás vacío, un período después de la atención."
+        hint="Si lo deja vacío, un período después de la atención."
       >
         <app-date-picker
           [value]="primerVencimiento()"

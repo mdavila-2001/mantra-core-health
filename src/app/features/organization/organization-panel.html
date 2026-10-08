@@ -1,5 +1,5 @@
 <app-page-header
-  title="Tu organización"
+  title="Mi organización"
   subtitle="Sus datos, su gente y quiénes piden trabajar con ella."
 />
 
@@ -10,7 +10,7 @@
            del mismo grupo, y elegir por esa persona sería inventar cuál es «la»
            suya. Con una sola no hay nada que elegir y el selector no aparece. -->
       @if (hayVarias()) {
-        <nav class="organizacion__selector" aria-label="Elegí tu organización">
+        <nav class="organizacion__selector" aria-label="Elija su organización">
           @for (candidata of lista(); track candidata.id) {
             <button
               app-button
@@ -27,8 +27,8 @@
 
       @if (!estaVerificada()) {
         <app-alert tone="warning" title="Todavía no está aprobada">
-          Mientras la plataforma no apruebe tu organización, no aparece en las búsquedas de
-          pacientes. Podés seguir cargando sus datos y su gente: cuando la aprueben, se publica con
+          Mientras la plataforma no apruebe su organización, no aparece en las búsquedas de
+          pacientes. Puede seguir cargando sus datos y su gente: cuando la aprueben, se publica con
           lo que ya tengas.
         </app-alert>
       }
@@ -36,7 +36,7 @@
       <!-- ─── Datos ─────────────────────────────────────────────────────── -->
       <app-card variant="outlined" padding="lg" class="organizacion__bloque">
         <header class="organizacion__encabezado">
-          <h2 class="organizacion__titulo">Datos de tu organización</h2>
+          <h2 class="organizacion__titulo">Datos de su organización</h2>
           @if (estaVerificada()) {
             <app-badge variant="success">Aprobada</app-badge>
           } @else {
@@ -164,7 +164,7 @@
             } @else {
               <app-empty-state
                 title="Todavía no hay nadie más"
-                description="Cuando sumes gente a tu organización, la vas a ver acá."
+                description="Cuando sume gente a su organización, la va a ver acá."
               />
             }
           }
@@ -226,12 +226,12 @@
                    que el día está vacío. -->
               <app-empty-state
                 title="Nadie con ese nombre en este día"
-                description="Probá con otro nombre o mirá otro día."
+                description="Pruebe con otro nombre o mire otro día."
               />
             } @else {
               <app-empty-state
                 title="No hay citas en este día"
-                description="Cuando alguien reserve con tus profesionales, vas a verlo acá."
+                description="Cuando alguien reserve con sus profesionales, va a verlo acá."
               />
             }
           }
@@ -301,7 +301,7 @@
             } @else {
               <app-empty-state
                 title="No hay solicitudes pendientes"
-                description="Cuando un profesional pida atender en alguna de tus sedes, lo vas a ver acá."
+                description="Cuando un profesional pida atender en alguna de sus sedes, lo va a ver acá."
               />
             }
           }
@@ -312,8 +312,8 @@
     <!-- Lista vacía: quien no pertenece a ninguna organización no tiene panel.
          No es un error, así que no se dibuja como tal. -->
     <app-empty-state
-      title="No administrás ninguna organización"
-      description="Esta sección es para clínicas, hospitales y centros de salud. Si trabajás en uno y no lo ves acá, pedile a quien lo administra que te sume."
+      title="No administra ninguna organización"
+      description="Esta sección es para clínicas, hospitales y centros de salud. Si trabaja en uno y no lo ve acá, pídale a quien lo administra que le sume."
     />
   }
 </app-view-state-host>

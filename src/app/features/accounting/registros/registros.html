@@ -6,7 +6,7 @@
 @if (parte() !== 'registros') {
 <section class="numeros" aria-labelledby="titulo-numeros">
   <div class="numeros__cabecera">
-    <app-section-heading icono="chart" titulo="Tu práctica en tres números" id="titulo-numeros" />
+    <app-section-heading icono="chart" titulo="Su práctica en tres números" id="titulo-numeros" />
     <app-segmented-control
       [options]="periodos"
       [value]="periodo()"
@@ -27,12 +27,12 @@
           </p>
         </app-card>
         <app-card variant="elevated" class="numero numero--destacado" data-testid="numero-cobrado">
-          <p class="numero__rotulo">Cobraste</p>
+          <p class="numero__rotulo">Cobró</p>
           <p class="numero__cifra">{{ importe(n.collected) }}</p>
           <p class="numero__pie">consultas pagadas del período</p>
         </app-card>
         <app-card variant="outlined" class="numero" data-testid="numero-aseguradoras">
-          <p class="numero__rotulo">Esperás de las aseguradoras</p>
+          <p class="numero__rotulo">Espera de las aseguradoras</p>
           <p class="numero__cifra">{{ importe(n.expectedFromInsurers) }}</p>
           <p class="numero__pie">
             a hoy, en {{ n.pendingClaims }}
@@ -51,7 +51,7 @@
      transacción, debe y haber; y las cuentas, que son también los tipos. -->
 @if (parte() !== 'numeros') {
 <app-card variant="outlined" padding="lg" class="registros" data-testid="contabilidad-registros">
-  <app-section-heading card-header icono="billing" titulo="Tus registros" />
+  <app-section-heading card-header icono="billing" titulo="Sus registros" />
   <app-tabs [selectedIndex]="pestana()" (selectedIndexChange)="pestana.set($event)">
     @for (kind of kinds; track kind) {
       <app-tab
@@ -110,7 +110,7 @@
       <div class="registros__panel">
         <div class="registros__barra">
           <p class="registros__nota">
-            Las generales vienen cargadas y se pueden renombrar; las tuyas, también borrar.
+            Las generales vienen cargadas y se pueden renombrar; las suyas, también borrar.
           </p>
           <button
             app-button

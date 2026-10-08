@@ -362,7 +362,7 @@ describe('WorkHistory', () => {
     const texto: string = fixture.nativeElement.textContent;
     expect(texto).not.toContain('Historial laboral');
     expect(texto).not.toContain('Hospital Obrero N.º 1');
-    expect(texto).toContain('Añadir elemento a tu historial');
+    expect(texto).toContain('Añadir elemento a su historial');
 
     http.verify();
   });
@@ -395,13 +395,13 @@ describe('WorkHistory', () => {
       // Cerrado: ni el modal ni sus campos existen en el DOM. Es la diferencia
       // con un panel plegable, que los deja montados y sólo los esconde.
       expect(fixture.nativeElement.querySelector('app-content-dialog')).toBeNull();
-      expect(fixture.nativeElement.textContent).not.toContain('Cuándo empezaste');
+      expect(fixture.nativeElement.textContent).not.toContain('Cuándo empezó');
 
       fixture.nativeElement.querySelector('[data-testid="abrir-alta-vinculo"]').click();
       fixture.detectChanges();
 
       expect(fixture.nativeElement.querySelectorAll('app-content-dialog')).toHaveLength(1);
-      expect(fixture.nativeElement.textContent).toContain('Cuándo empezaste');
+      expect(fixture.nativeElement.textContent).toContain('Cuándo empezó');
 
       http.verify();
     });
@@ -667,9 +667,9 @@ describe('WorkHistory', () => {
       });
 
       expect(fixture.nativeElement.textContent).toContain(
-        'Esperando que la organización te acepte',
+        'Esperando que la organización le acepte',
       );
-      expect(fixture.nativeElement.textContent).toContain('no vas a poder publicar agenda');
+      expect(fixture.nativeElement.textContent).toContain('no va a poder publicar agenda');
       http.verify();
     });
 
@@ -677,7 +677,7 @@ describe('WorkHistory', () => {
       const { fixture, http } = await conHistorial({ statusKind: 'rechazado' });
 
       expect(fixture.nativeElement.textContent).toContain('no aceptó este vínculo');
-      expect(fixture.nativeElement.textContent).toContain('hablá con ellos');
+      expect(fixture.nativeElement.textContent).toContain('hable con ellos');
       http.verify();
     });
 
@@ -697,7 +697,7 @@ describe('WorkHistory', () => {
       // como un trámite trabado.
       const { fixture, http } = await conHistorial({ statusKind: 'declarado' });
 
-      expect(fixture.nativeElement.textContent).toContain('Declarado por vos');
+      expect(fixture.nativeElement.textContent).toContain('Declarado por usted');
       expect(fixture.nativeElement.textContent).toContain('no lleva su sello');
       expect(fixture.nativeElement.textContent).not.toContain('Esperando');
       http.verify();
@@ -717,11 +717,11 @@ describe('WorkHistory', () => {
       // renglón parte en dos una sola noticia.
       const { fixture, http } = await conHistorial({
         statusKind: 'rechazado',
-        decisionReasonText: 'No figurás en nuestro plantel de cardiología',
+        decisionReasonText: 'No figura en nuestro plantel de cardiología',
       });
 
       expect(fixture.nativeElement.textContent).toContain('no aceptó este vínculo');
-      expect(fixture.nativeElement.textContent).toContain('No figurás en nuestro plantel');
+      expect(fixture.nativeElement.textContent).toContain('No figura en nuestro plantel');
       http.verify();
     });
 
@@ -731,7 +731,7 @@ describe('WorkHistory', () => {
         decisionReasonText: null,
       });
 
-      expect(fixture.nativeElement.textContent).toContain('hablá con ellos');
+      expect(fixture.nativeElement.textContent).toContain('hable con ellos');
       expect(fixture.nativeElement.textContent).not.toContain('Motivo:');
       http.verify();
     });
@@ -1035,7 +1035,7 @@ describe('WorkHistory — las dos puertas de «Dónde atiendo» (13/09/2026)', (
     fixture.detectChanges();
 
     expect(fixture.nativeElement.querySelector('[data-testid="sedes-propias"]')).not.toBeNull();
-    expect(fixture.nativeElement.textContent).not.toContain('Añadir elemento a tu historial');
+    expect(fixture.nativeElement.textContent).not.toContain('Añadir elemento a su historial');
     http.verify();
   });
 
@@ -1044,14 +1044,14 @@ describe('WorkHistory — las dos puertas de «Dónde atiendo» (13/09/2026)', (
    * consultorio propio, sino agregar lugar de atención en general». La tabla
    * ya no etiqueta los lugares por tipo ni tiene columna «Tipo».
    */
-  it('no etiqueta los lugares como «Tu consultorio» o «Trabajás acá»', async () => {
+  it('no etiqueta los lugares como «Su consultorio» o «Trabaja acá»', async () => {
     const { fixture, http } = await montarConSedes();
     http.expectOne(SITIOS).flush({ items: [propia(), ajena()], count: 2 });
     fixture.detectChanges();
 
     const texto: string = fixture.nativeElement.textContent;
-    expect(texto).not.toContain('Tu consultorio');
-    expect(texto).not.toContain('Trabajás acá');
+    expect(texto).not.toContain('Su consultorio');
+    expect(texto).not.toContain('Trabaja acá');
     const encabezados = [
       ...fixture.nativeElement.querySelectorAll('[data-testid="sedes-propias"] th'),
     ].map((th) => (th as HTMLElement).textContent?.trim());

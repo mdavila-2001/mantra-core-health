@@ -183,7 +183,7 @@ describe('FollowUpBlock', () => {
 
     const tarjeta = fixture.nativeElement.querySelector('[data-testid="reconsulta-ya-agendada"]');
     expect(tarjeta).not.toBeNull();
-    expect(tarjeta.textContent).toContain('Ya la citaste de nuevo');
+    expect(tarjeta.textContent).toContain('Ya la citó de nuevo');
     expect(tarjeta.textContent).toContain('Reprogramar');
     expect(fixture.nativeElement.querySelector('[data-testid="reconsulta-guardar"]')).toBeNull();
     http.verify();
@@ -455,7 +455,7 @@ describe('FollowUpBlock', () => {
 
     const error = fixture.nativeElement.querySelector('[data-testid="reconsulta-error"]');
     expect(error).not.toBeNull();
-    expect(error.textContent).toContain('tu propia agenda');
+    expect(error.textContent).toContain('su propia agenda');
     http.verify();
   });
 });

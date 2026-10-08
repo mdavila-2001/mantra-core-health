@@ -46,7 +46,7 @@ test('el alta persiste contra la API: un login nuevo devuelve la misma localidad
 
   await empezarElAlta(page, documento);
 
-  await avanzarHasta(page, '¿Dónde vivís?');
+  await avanzarHasta(page, '¿Dónde vive?');
   await elegirLocalidadDeResidencia(page);
   // El nombre de la ciudad que el `<select>` acotado ofreció para Santa Cruz:
   // se lee de la propia pantalla para comparar contra lo que devuelva la API,
@@ -63,13 +63,13 @@ test('el alta persiste contra la API: un login nuevo devuelve la misma localidad
   // son lo que esta prueba verifica. Un paso por página, con el título exacto
   // de la que sigue (ver `avanzarUnPaso`): así una carga lenta de catálogo no
   // hace que un reintento a ciegas se salte una página.
-  await avanzarUnPaso(page, '¿Dónde trabajás?');
-  await avanzarUnPaso(page, 'El lugar donde trabajás');
-  await avanzarUnPaso(page, 'Tu acceso');
+  await avanzarUnPaso(page, '¿Dónde trabaja?');
+  await avanzarUnPaso(page, 'El lugar donde trabaja');
+  await avanzarUnPaso(page, 'Su acceso');
 
   await page.getByTestId('registro-correo').fill(email);
   await page.getByTestId('registro-password').fill(password);
-  await avanzarUnPaso(page, 'Tu seguro de salud');
+  await avanzarUnPaso(page, 'Su seguro de salud');
   await avanzarUnPaso(page, 'Datos de facturación');
 
   // Última página: el mismo botón, con el texto de envío.
@@ -135,7 +135,7 @@ test('el GPS del domicilio, confirmado sobre el mapa, persiste contra la API', a
 
   await empezarElAlta(page, documento);
 
-  await avanzarHasta(page, '¿Dónde vivís?');
+  await avanzarHasta(page, '¿Dónde vive?');
   await elegirLocalidadDeResidencia(page);
 
   await page.getByTestId('registro-usar-ubicacion').click();
@@ -144,13 +144,13 @@ test('el GPS del domicilio, confirmado sobre el mapa, persiste contra la API', a
   await page.getByTestId('registro-confirmar-direccion').click();
   await expect(page.getByTestId('registro-direccion-confirmada')).toBeVisible();
 
-  await avanzarUnPaso(page, '¿Dónde trabajás?');
-  await avanzarUnPaso(page, 'El lugar donde trabajás');
-  await avanzarUnPaso(page, 'Tu acceso');
+  await avanzarUnPaso(page, '¿Dónde trabaja?');
+  await avanzarUnPaso(page, 'El lugar donde trabaja');
+  await avanzarUnPaso(page, 'Su acceso');
 
   await page.getByTestId('registro-correo').fill(email);
   await page.getByTestId('registro-password').fill(password);
-  await avanzarUnPaso(page, 'Tu seguro de salud');
+  await avanzarUnPaso(page, 'Su seguro de salud');
   await avanzarUnPaso(page, 'Datos de facturación');
 
   const enviar = page.getByTestId('paginated-form-continuar');

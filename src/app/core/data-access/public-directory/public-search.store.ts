@@ -422,7 +422,7 @@ export class BusquedaPublica {
     if (cuantos === 0) {
       return `Todavía no hay nada publicado en ${nombre}.`;
     }
-    return `${cuantos} ${cuantos === 1 ? 'resultado' : 'resultados'} en ${nombre}. Tocá otra vez el departamento para ver todo el país.`;
+    return `${cuantos} ${cuantos === 1 ? 'resultado' : 'resultados'} en ${nombre}. Toque otra vez el departamento para ver todo el país.`;
   });
 
   /**
@@ -440,7 +440,7 @@ export class BusquedaPublica {
     const avisos: string[] = [];
     if (this._recortada()) {
       avisos.push(
-        'Se muestran los primeros resultados del directorio: usá el buscador para encontrar lo que no aparezca.',
+        'Se muestran los primeros resultados del directorio: use el buscador para encontrar lo que no aparezca.',
       );
     }
     if (this.territorio.departamentoElegido() !== null) {

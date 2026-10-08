@@ -218,7 +218,7 @@ describe('BodyMap', () => {
 
     const rodillas = formaDe('rodillas');
     expect(rodillas.closest('g')?.classList).toContain('body-map__zona--marcada');
-    expect(rodillas.getAttribute('aria-label')).toBe('Rodillas (por lo que contaste)');
+    expect(rodillas.getAttribute('aria-label')).toBe('Rodillas (por lo que contó)');
     expect(rodillas.getAttribute('aria-pressed')).toBe('false');
     expect(component.value()).toBeNull();
     // Nombra también la que no se ve de frente (glúteos) y la que no tiene forma (piel).
@@ -306,7 +306,7 @@ describe('BodyMap', () => {
    */
   it('dice en palabras cuál quedó elegida', () => {
     const linea = html.querySelector('[data-testid="body-map-elegida"]');
-    expect(linea?.textContent).toContain('Tocá una parte del cuerpo');
+    expect(linea?.textContent).toContain('Toque una parte del cuerpo');
 
     formaDe('intima').dispatchEvent(new MouseEvent('click'));
     fixture.detectChanges();
@@ -330,7 +330,7 @@ describe('BodyMap', () => {
 
     expect(html.querySelectorAll('[aria-pressed="true"]')).toHaveLength(0);
     expect(html.querySelector('[data-testid="body-map-elegida"]')?.textContent).toContain(
-      'Tocá una parte del cuerpo',
+      'Toque una parte del cuerpo',
     );
   });
 

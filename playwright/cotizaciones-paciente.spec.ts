@@ -25,7 +25,7 @@ test.describe('Cotizaciones del paciente', () => {
     await estable(page);
 
     await expect(page.getByRole('heading', { name: 'Cotizaciones' })).toBeVisible();
-    await expect(page.getByText('Estudios en tus documentos actuales')).toHaveCount(0);
+    await expect(page.getByText('Estudios en sus documentos actuales')).toHaveCount(0);
     expect(pedidosDeOrdenes).toEqual([]);
 
     // Sin término no se lista nada: se pide qué cotizar.

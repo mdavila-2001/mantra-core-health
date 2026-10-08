@@ -157,7 +157,7 @@ export class BookingNew {
    * contar lo que a uno le pasa que anotar lo que dijo el paciente por teléfono.
    */
   protected readonly ayudaDelMotivo = this.esAutoservicio
-    ? 'Contale al profesional qué te pasa o qué querés consultar. Es opcional, y lo lee antes de atenderte.'
+    ? 'Cuéntele al profesional qué le pasa o qué quiere consultar. Es opcional, y lo lee antes de atenderle.'
     : 'Lo que cuenta el paciente sobre su consulta. Es opcional, y el profesional lo lee antes de atenderlo.';
 
   /**
@@ -360,10 +360,10 @@ export class BookingNew {
       return state.issues.map((issue) => issue.message).join(' ') || null;
     }
     if (state.status === 'forbidden') {
-      return state.message ?? 'Tu rol no puede reservar turnos.';
+      return state.message ?? 'Su rol no puede reservar turnos.';
     }
     if (state.status === 'offline') {
-      return 'No pudimos conectarnos. Revisá tu conexión y reintentá.';
+      return 'No pudimos conectarnos. Revise su conexión y reintente.';
     }
     if (state.status === 'error') {
       return `${state.message || 'Ocurrió un error inesperado.'} (${state.requestId})`;
@@ -383,7 +383,7 @@ export class BookingNew {
       if (perfil !== null) {
         this.paciente.set({
           value: perfil,
-          label: this.contexto.activePatientName() ?? 'Vos',
+          label: this.contexto.activePatientName() ?? 'Usted',
         });
       }
     }
@@ -455,8 +455,8 @@ export class BookingNew {
                   ? { label: 'Elegir otro horario', route: MIS_TURNOS_ROUTE }
                   : { label: 'Volver a la agenda', route: AGENDA_ROUTE },
                 this.esAutoservicio
-                  ? 'Ese horario ya no está disponible: alguien lo tomó primero. Elegí otro de la lista.'
-                  : 'Ese cupo ya no está disponible: alguien lo tomó primero o se bloqueó. Elegí otro desde la agenda.',
+                  ? 'Ese horario ya no está disponible: alguien lo tomó primero. Elija otro de la lista.'
+                  : 'Ese cupo ya no está disponible: alguien lo tomó primero o se bloqueó. Elija otro desde la agenda.',
               ),
             );
             return;
@@ -587,7 +587,7 @@ export class BookingNew {
                 this.esAutoservicio
                   ? { label: 'Elegir otro horario', route: MIS_TURNOS_ROUTE }
                   : { label: 'Volver a la agenda', route: AGENDA_ROUTE },
-                'Ese horario ya no está disponible: otro turno lo ocupó. Elegí otro de la lista.',
+                'Ese horario ya no está disponible: otro turno lo ocupó. Elija otro de la lista.',
               ),
             );
             return;
@@ -651,7 +651,7 @@ export class BookingNew {
         this.state.set(ready(null));
         this.toast.success(
           this.esAutoservicio
-            ? 'Enviamos tu solicitud. El profesional la confirma o te propone otro horario.'
+            ? 'Enviamos su solicitud. El profesional la confirma o le propone otro horario.'
             : `El turno de ${paciente.label} quedó confirmado.`,
           this.esAutoservicio ? 'Turno solicitado' : 'Reserva confirmada',
         );
