@@ -50,7 +50,7 @@ describe('Recorrido real · portal de turnos del paciente', () => {
 
     /* -- La sección existe para él ---------------------------------------- */
 
-    cy.get('nav').contains(/mis turnos/i).should('exist');
+    cy.get('nav').contains(/mis citas/i).should('exist');
     capturar({ carpeta: 'turnos-01-menu', titulo: 'El menú del paciente' }, 'con-turnos');
 
     /* -- La pantalla del portal ------------------------------------------- */
@@ -62,11 +62,11 @@ describe('Recorrido real · portal de turnos del paciente', () => {
     cy.get('h1').first().invoke('text').should('match', /\S/);
     // Los dos bloques que responden las dos preguntas de quien entra.
     cy.contains(/tus turnos/i).should('exist');
-    cy.contains(/pedir un turno/i).should('exist');
+    cy.contains(/pedir una cita/i).should('exist');
 
     // Recién registrado no tiene ninguno, y el vacío lo dice en vez de quedar
     // en blanco.
-    cy.contains(/todav[íi]a no tiene turnos|todav[íi]a no pidió/i).should('exist');
+    cy.contains(/todav[íi]a no tiene citas|todav[íi]a no pidió/i).should('exist');
 
     /* -- La reserva sin contexto explica cómo se llega -------------------- */
 
@@ -136,7 +136,7 @@ describe('Recorrido real · portal de turnos del paciente', () => {
   function reservarElPrimerHorario(): void {
     cy.contains('a', 'Pedir este horario').first().click();
     estable();
-    capturar({ carpeta: 'turnos-05-reserva', titulo: 'Reservar un turno' }, 'antes-de-retener');
+    capturar({ carpeta: 'turnos-05-reserva', titulo: 'Reservar una cita' }, 'antes-de-retener');
 
     // La misma pantalla del mostrador, con la otra entrada: acá no se elige
     // paciente porque la sesión ya dice quién es.
@@ -158,7 +158,7 @@ describe('Recorrido real · portal de turnos del paciente', () => {
   function comprobarQueElTurnoQuedo(): void {
     // Confirmar devuelve a «Mis turnos», y el vacío ya no está.
     cy.location('pathname').should('include', '/my-account/appointments');
-    cy.contains(/todav[íi]a no tiene turnos|todav[íi]a no pidió/i).should('not.exist');
+    cy.contains(/todav[íi]a no tiene citas|todav[íi]a no pidió/i).should('not.exist');
 
     // El estado sale de terminología y lo nombra la interfaz: si volviera el
     // `display` del catálogo, acá se leería «Booking confirmed».
@@ -167,6 +167,6 @@ describe('Recorrido real · portal de turnos del paciente', () => {
     // Y el turno dice con quién es. Una lista que sólo da fecha y hora obliga a
     // recordar a qué médico se pidió, que es justo lo que nadie recuerda.
     cy.get('.turnos__agenda').first().invoke('text').should('match', /\S/);
-    capturar({ carpeta: 'turnos-07-confirmado', titulo: 'Turno confirmado' }, 'en-mis-turnos');
+    capturar({ carpeta: 'turnos-07-confirmado', titulo: 'Cita confirmada' }, 'en-mis-turnos');
   }
 });

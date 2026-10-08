@@ -587,7 +587,7 @@ export class BookingNew {
                 this.esAutoservicio
                   ? { label: 'Elegir otro horario', route: MIS_TURNOS_ROUTE }
                   : { label: 'Volver a la agenda', route: AGENDA_ROUTE },
-                'Ese horario ya no está disponible: otro turno lo ocupó. Elija otro de la lista.',
+                'Ese horario ya no está disponible: otra cita lo ocupó. Elija otro de la lista.',
               ),
             );
             return;
@@ -652,8 +652,8 @@ export class BookingNew {
         this.toast.success(
           this.esAutoservicio
             ? 'Enviamos su solicitud. El profesional la confirma o le propone otro horario.'
-            : `El turno de ${paciente.label} quedó confirmado.`,
-          this.esAutoservicio ? 'Turno solicitado' : 'Reserva confirmada',
+            : `La cita de ${paciente.label} quedó confirmada.`,
+          this.esAutoservicio ? 'Cita solicitada' : 'Reserva confirmada',
         );
         if (this.esAutoservicio) {
           const precargada = this.observacionPrecargada;

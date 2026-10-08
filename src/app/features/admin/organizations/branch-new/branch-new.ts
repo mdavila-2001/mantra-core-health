@@ -180,7 +180,7 @@ export class BranchNew {
       },
       {
         titulo: 'Datos operativos',
-        hint: 'Se pueden completar después, pero la zona horaria es lo que hace que un turno signifique la misma hora para todos.',
+        hint: 'Se pueden completar después, pero la zona horaria es lo que hace que una cita signifique la misma hora para todos.',
         campos: [
           {
             key: 'timeZone',

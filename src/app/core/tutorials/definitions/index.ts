@@ -113,7 +113,7 @@ const AGENDA_DEL_DIA: TutorialDefinition = {
   version: '1.0',
   title: 'Su agenda del día',
   description:
-    'Ver sus turnos, cambiar la ventana de consulta y entrar al expediente de quien llega.',
+    'Ver sus citas, cambiar la ventana de consulta y entrar al expediente de quien llega.',
   category: 'Atención',
   route: '/schedule',
   roles: ['PRACTITIONER', 'CLINICIAN', 'SCHEDULING_ADMIN', 'SCHEDULING_AGENT'],
@@ -138,13 +138,13 @@ const AGENDA_DEL_DIA: TutorialDefinition = {
     {
       id: 'pestanas',
       title: 'Citas y cupos',
-      body: 'Las citas son turnos ya tomados. Los cupos son huecos libres: desde ahí se reserva.',
+      body: 'Las citas son horarios ya tomados. Los cupos son huecos libres: desde ahí se reserva.',
       target: 'agenda-pestanas',
       placement: 'bottom',
     },
     {
       id: 'expediente',
-      title: 'Del turno al expediente',
+      title: 'De la cita al expediente',
       body: 'Cada cita enlaza al expediente de la persona, con el motivo de consulta ya cargado. Es por donde sigue su día.',
       target: 'agenda-tabla-citas',
       placement: 'top',
@@ -398,12 +398,12 @@ const NOTIFICACIONES: TutorialDefinition = {
     {
       id: 'que-es',
       title: 'Notificaciones',
-      body: 'Acá ve sus avisos: recetas, consultas, turnos y mensajes. Toque uno para abrir lo que anuncia, y márquelos leídos de a uno o todos juntos.',
+      body: 'Acá ve sus avisos: recetas, consultas, citas y mensajes. Toque uno para abrir lo que anuncia, y márquelos leídos de a uno o todos juntos.',
     },
     {
       id: 'preferencias',
       title: 'Elija de qué le avisamos',
-      body: 'Desde el ícono de Ajustes, arriba a la derecha, en «Avisos» activa o silencia cada familia: recetas y consultas, turnos, mensajes y actividad social.',
+      body: 'Desde el ícono de Ajustes, arriba a la derecha, en «Avisos» activa o silencia cada familia: recetas y consultas, citas, mensajes y actividad social.',
     },
     {
       id: 'silencio',

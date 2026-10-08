@@ -3,7 +3,7 @@
        vuelva 401 sería peor que decirlo de entrada. -->
   <app-empty-state
     title="Entre para ver los horarios"
-    description="Los turnos disponibles se ven con la sesión iniciada. Va a volver a esta ficha."
+    description="Los horarios disponibles se ven con la sesión iniciada. Va a volver a esta ficha."
   />
 } @else if (tenantId() === null) {
   <app-empty-state
@@ -56,7 +56,7 @@
               @if (sede.cupos.status === 'loading') {
                 <p class="disponibilidad__buscando" role="status" aria-live="polite">
                   <app-spinner size="sm" decorative />
-                  Buscando turnos en {{ sede.recurso.name }}…
+                  Buscando horarios en {{ sede.recurso.name }}…
                 </p>
               } @else if (datosDe(sede); as datos) {
                 @if (datos.cupos.length > 0) {
@@ -102,7 +102,7 @@
                   </ul>
                 } @else if (datos.proximo; as proximo) {
                   <p class="disponibilidad__proximo">
-                    Esta semana no tiene lugar. Próximo turno:
+                    Esta semana no tiene lugar. Próximo horario:
                     <button
                       app-button
                       type="button"
@@ -119,12 +119,12 @@
                   </p>
                 } @else {
                   <p class="disponibilidad__vacio">
-                    No tiene turnos disponibles en los próximos dos meses.
+                    No tiene horarios disponibles en los próximos dos meses.
                   </p>
                 }
               } @else {
                 <p class="disponibilidad__error" role="alert">
-                  No pudimos traer los turnos de esta sede.
+                  No pudimos traer los horarios de esta sede.
                   <button
                     app-button
                     type="button"
