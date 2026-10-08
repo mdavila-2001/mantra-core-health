@@ -1992,7 +1992,7 @@ export const TERMINOS_DE_GLOSARIO: readonly TerminoDeGlosario[] = [
     enDisplay: "Medical discharge",
     esName: "Alta médica",
     clinicalDefinitionEs: "Decisión clínica que da por finalizada una internación o un episodio de atención, porque el estado del paciente ya no requiere ese nivel de cuidado.",
-    plainSummaryEs: "Es cuando el médico determina que ya puede irte del hospital o terminar un tratamiento.",
+    plainSummaryEs: "Es cuando el médico determina que ya puede irse del hospital o terminar un tratamiento.",
     relations: [],
   },
 {
