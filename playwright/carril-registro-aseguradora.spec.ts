@@ -4,7 +4,6 @@ import { join } from 'node:path';
 import { expect, test, type Locator, type Page } from '@playwright/test';
 
 import { subirLosCincoDocumentos } from './helpers/documentos-legales';
-import { completarCuentaDelOwner } from './helpers/owner';
 import { completarGerencias, completarRepresentanteLegal } from './helpers/representante-legal';
 
 /**
@@ -196,8 +195,9 @@ test.describe('alta pública de aseguradora — tipo societario (subtarea 1.1)',
     await expect(page.locator('.paginated-form__titulo')).toContainText('Directorio ejecutivo');
     await completarGerencias(page);
 
-    // Paso 6 · Tu cuenta: una sola página, con los cinco nombres del owner
-    // juntos. `completarCuentaDelOwner` la completa y pulsa el envío.
+    // «Directorio ejecutivo» es la última página: su «Continuar» envía el
+    // alta. No hay un paso «Tu cuenta»: el representante legal, que ya dio su
+    // correo y su contraseña, es el owner.
     //
     // El backend simulado responde **dentro** de la cadena de interceptores de
     // Angular (`mock-backend.interceptor.ts`): nunca sale a la red del
@@ -207,9 +207,6 @@ test.describe('alta pública de aseguradora — tipo societario (subtarea 1.1)',
     // `HttpTestingController`, que sí intercepta antes del mock); esta prueba
     // demuestra el resultado observable en el navegador: el alta con S.R.L.
     // llega a la confirmación.
-    await expect(page.locator('.paginated-form__titulo')).toContainText('Tu cuenta');
-    await completarCuentaDelOwner(page, { email: 'admin@andina.test' });
-
     await expect(page.getByTestId('registro-organizacion-exito')).toBeVisible({
       timeout: 20_000,
     });

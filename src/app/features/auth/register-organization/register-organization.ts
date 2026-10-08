@@ -308,22 +308,11 @@ export class RegisterOrganization {
       commercialManager: grupoDeGerente(),
       marketingManager: grupoDeGerente(),
     }),
-    // Datos del owner. El nombre va en sus cinco partes como un ÚNICO grupo
-    // (`grupoDeNombre`), igual que el representante legal y las tres
-    // gerencias. Eran cinco controles sueltos, y el motor —que corta de a
-    // cuatro— dejaba el apellido materno en la página siguiente, separado
-    // del paterno. Como grupo entran los cinco en una sola página, con el
-    // mismo reparto de anchos que el resto del alta, y de paso alcanza al
-    // owner el tope de 200 caracteres del nombre compuesto, que depende de
-    // las cinco partes juntas y por eso no puede vivir en un control suelto.
-    //
-    // El backend sigue sin columna de tercer nombre: `thirdName` se pliega
-    // en `middleName` al enviar — ver `datos()` y `unirNombres`.
-    ownerName: grupoDeNombre(true),
-    email: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.email],
-    }),
+    // La contraseña del representante legal. El representante ES el owner:
+    // es la única persona que inicia sesión por la aseguradora, así que ya
+    // no hay un segundo juego de nombre y correo («Tu cuenta»). El nombre y
+    // el correo salen de `legalRepresentative` y `legalRepresentativeEmail`;
+    // acá sólo falta la clave con la que va a entrar. Ver `datos()`.
     password: new FormControl('', {
       nonNullable: true,
       validators: [...validadoresDeContrasena],
@@ -381,22 +370,19 @@ export class RegisterOrganization {
    * mitad, y este es el alta pública de una aseguradora: quien la abre no
    * tiene ninguna obligación de terminarla. Las secciones son las que ya
    * separaban visualmente el formulario —la empresa, sus datos, su
-   * documentación, sus personas, y la cuenta de quien la administra—; el
-   * motor las parte en páginas de cuatro conservando el nombre.
+   * documentación y sus personas—; el motor las parte en páginas de cuatro
+   * conservando el nombre.
    *
    * Ya no hay un paso de «Cómo se la identifica»: el código de tenant y el
    * de aseguradora se derivan de la sigla (`codigoDesdeSigla`, en `datos()`)
-   * y no son algo que la persona escriba. Para un país de zona única
-   * (Bolivia, Argentina…) el alta queda en **8 páginas**; para uno
-   * multizona (Estados Unidos, Brasil, México) el selector de zona horaria
-   * en «Datos de la aseguradora» suma un quinto campo a esa sección, que el
-   * motor parte en dos — **9 páginas** sólo ahí.
-   *
-   * Eran 9 y 10: «Tu cuenta» tenía siete campos —los cinco nombres del
-   * owner, el correo y la contraseña— y el motor la partía en dos, con el
-   * apellido materno huérfano al principio de la segunda. Desde que los
-   * cinco nombres viajan como un único campo `custom` (el grupo
-   * `ownerName`), la sección son tres campos y entra en una sola página.
+   * y no son algo que la persona escriba. Tampoco hay un paso de «Tu
+   * cuenta»: la única persona que inicia sesión por una aseguradora es su
+   * representante legal, y su contraseña se pide en la misma sección que su
+   * nombre y su correo. Para un país de zona única (Bolivia, Argentina…) el
+   * alta queda en **7 páginas**; para uno multizona (Estados Unidos, Brasil,
+   * México) el selector de zona horaria en «Datos de la aseguradora» suma un
+   * quinto campo a esa sección, que el motor parte en dos — **8 páginas**
+   * sólo ahí.
    *
    * `computed`, y no una constante: las opciones del tipo societario y de
    * zona horaria cambian con el país elegido (subtareas 1.1 y ésta).
@@ -517,7 +503,7 @@ export class RegisterOrganization {
       {
         titulo: 'Representante legal',
         clave: 'legal-representative',
-        hint: 'Quien está facultado para firmar en nombre de la aseguradora.',
+        hint: 'Quien está facultado para firmar en nombre de la aseguradora. Es la única persona que inicia sesión por ella.',
         campos: [
           {
             // Sin rótulo, mismo motivo que `executives` más abajo: el
@@ -542,11 +528,23 @@ export class RegisterOrganization {
           },
           {
             key: 'legalRepresentativeEmail',
-            label: 'Correo oficial de notificaciones',
+            label: 'Correo',
+            hint: 'Con este correo y la contraseña de abajo se inicia sesión. También recibe las notificaciones oficiales.',
             control: 'email' as const,
             required: true,
+            autocomplete: 'username',
             testId: 'registro-organizacion-representante-correo',
             mensajeDeError: 'Ingresá un correo válido.',
+          },
+          {
+            key: 'password',
+            label: 'Contraseña',
+            hint: 'Al menos 8 caracteres.',
+            control: 'password' as const,
+            required: true,
+            autocomplete: 'new-password',
+            testId: 'registro-organizacion-representante-password',
+            mensajeDeError: MENSAJE_CONTRASENA_CORTA,
           },
           {
             key: 'legalRepresentativePhone',
@@ -577,50 +575,6 @@ export class RegisterOrganization {
           },
         ],
       },
-      {
-        titulo: 'Tu cuenta',
-        clave: 'owner',
-        hint: 'Quien administra la aseguradora en la plataforma.',
-        campos: [
-          {
-            // Sin rótulo, mismo motivo que `legalRepresentative` y
-            // `executives`: el `app-form-field` externo de un campo
-            // `custom` pintaría un `<label for>` hacia un control que no
-            // existe, y el título de la página ya dice de qué se trata.
-            //
-            // Los cinco nombres entran como UN campo —el grupo
-            // `ownerName`— para que el motor no los reparta en dos
-            // páginas. La plantilla los pinta con la misma grilla que el
-            // representante legal, y los `data-testid` siguen siendo los
-            // de antes (`registro-organizacion-owner-…`).
-            key: 'ownerName',
-            label: '',
-            control: 'custom' as const,
-            ancho: 'completo' as const,
-            mensajeDeError: 'Completá tu nombre y tu apellido paterno.',
-          },
-          {
-            key: 'email',
-            label: 'Correo',
-            hint: 'Con este correo vas a iniciar sesión.',
-            control: 'email' as const,
-            required: true,
-            autocomplete: 'username',
-            testId: 'registro-organizacion-owner-correo',
-            mensajeDeError: 'Ingresá un correo válido.',
-          },
-          {
-            key: 'password',
-            label: 'Contraseña',
-            hint: 'Al menos 8 caracteres.',
-            control: 'password' as const,
-            required: true,
-            autocomplete: 'new-password',
-            testId: 'registro-organizacion-owner-password',
-            mensajeDeError: MENSAJE_CONTRASENA_CORTA,
-          },
-        ],
-    },
     ]),
   );
 
@@ -898,12 +852,6 @@ export class RegisterOrganization {
    * que esto viva acá y no escuchando el propio `FormGroup`.
    */
   protected alRechazarPagina(pagina: PaginaDeFormulario): void {
-    if (pagina.clave === 'owner') {
-      // Mismo motivo que abajo: el motor sólo marca el GRUPO
-      // (`markAsTouched`), y sin esto las casillas vacías no se pintarían.
-      this.form.controls.ownerName.markAllAsTouched();
-      return;
-    }
     if (pagina.clave === 'legal-representative') {
       // Mismo motivo que para `executives`: el motor sólo marca el GRUPO
       // (`markAsTouched`), no a sus cinco hijos.
@@ -964,14 +912,20 @@ export class RegisterOrganization {
     // El código de tenant y el de aseguradora nacen de la sigla: la persona
     // ya no escribe ninguno de los dos. Ver el JSDoc de `codigoDesdeSigla`.
     const codigo = codigoDesdeSigla(raw.sigla);
+    // El owner ES el representante legal: la API pide una cuenta owner con
+    // su correo y su clave, y la aseguradora sólo tiene una persona que
+    // inicia sesión. Su nombre y su correo viajan dos veces —como `owner`,
+    // que es la cuenta, y como `legalRepresentative`, que es el vínculo
+    // legal—, sin pedirlos dos veces.
+    //
     // El backend no tiene columna de tercer nombre: se pliega en
     // `middleName`, igual que en el alta de paciente y de médico.
     const segundoNombre = unirNombres([
-      raw.ownerName.middleName,
-      raw.ownerName.thirdName,
-      ...raw.ownerName.extraNames,
+      raw.legalRepresentative.middleName,
+      raw.legalRepresentative.thirdName,
+      ...raw.legalRepresentative.extraNames,
     ]);
-    const apellidoMaterno = raw.ownerName.motherLastName.trim();
+    const apellidoMaterno = raw.legalRepresentative.motherLastName.trim();
     const casaMatriz = this.gpsCasaMatriz();
     const telefonoRepresentante = raw.legalRepresentativePhone.trim();
     const gerente = (g: { nombre: ValorDeNombre; phone: string; email: string }) => ({
@@ -996,10 +950,10 @@ export class RegisterOrganization {
           : { latitude: casaMatriz.lat, longitude: casaMatriz.lng }),
       },
       owner: {
-        email: raw.email.trim(),
+        email: raw.legalRepresentativeEmail.trim(),
         password: raw.password,
-        name: raw.ownerName.name.trim(),
-        lastName: raw.ownerName.lastName.trim(),
+        name: raw.legalRepresentative.name.trim(),
+        lastName: raw.legalRepresentative.lastName.trim(),
         ...(segundoNombre === '' ? {} : { middleName: segundoNombre }),
         ...(apellidoMaterno === '' ? {} : { motherLastName: apellidoMaterno }),
       },

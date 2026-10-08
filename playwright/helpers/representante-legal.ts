@@ -4,10 +4,18 @@ import { esperarSubidaLista, pdfDePrueba, subirArchivo } from './documentos-lega
 
 /**
  * Completa las dos páginas del representante legal (subtarea 1.4 + desglose
- * de nombre): las cinco partes del nombre, CI y correo en «(1 de 2)», el
- * poder notariado en «(2 de 2)». Deja el asistente en «Directorio ejecutivo».
+ * de nombre): las cinco partes del nombre, CI, correo y contraseña en
+ * «(1 de 2)», el poder notariado en «(2 de 2)». Deja el asistente en
+ * «Directorio ejecutivo».
+ *
+ * El representante legal es también el owner: es la única persona que inicia
+ * sesión por la aseguradora, así que el correo y la contraseña de acá son los
+ * del login. No hay una página «Tu cuenta» aparte.
  */
-export async function completarRepresentanteLegal(page: Page): Promise<void> {
+export async function completarRepresentanteLegal(
+  page: Page,
+  opciones: { readonly email?: string } = {},
+): Promise<void> {
   await page.getByTestId('registro-organizacion-representante-nombre').fill('Mariana');
   await page.getByTestId('registro-organizacion-representante-apellido-paterno').fill('Siles');
   await page
@@ -16,7 +24,8 @@ export async function completarRepresentanteLegal(page: Page): Promise<void> {
   await page.getByTestId('registro-organizacion-representante-ci').fill('4872190 SC');
   await page
     .getByTestId('registro-organizacion-representante-correo')
-    .fill('legal@andina.test');
+    .fill(opciones.email ?? 'legal@andina.test');
+  await page.getByTestId('registro-organizacion-representante-password').fill('secreto12');
   await page.getByTestId('paginated-form-continuar').click();
 
   await subirArchivo(page, 'powerOfAttorneyFileId', pdfDePrueba('poder-notariado'));
@@ -29,7 +38,7 @@ export async function completarRepresentanteLegal(page: Page): Promise<void> {
  * nombre): la General ya está abierta y trae las cinco partes del nombre
  * (AC-01); Comercial y Marketing se abren por su cabecera antes de escribir
  * y sólo llevan nombre y apellido paterno, las dos partes obligatorias
- * (AC-02). Deja el asistente en la página siguiente («Tu cuenta»).
+ * (AC-02). Es la última página del alta: su «Continuar» **envía** el alta.
  */
 export async function completarGerencias(page: Page): Promise<void> {
   // La General trae las cinco partes (AC-01): es la que demuestra el
