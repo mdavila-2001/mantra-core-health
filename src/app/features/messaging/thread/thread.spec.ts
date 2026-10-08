@@ -9,6 +9,7 @@ import { of } from 'rxjs';
 
 import { Thread, trocear } from './thread';
 import { ChatStore } from '../../../core/messaging/chat.store';
+import { ChatSocketService } from '../../../core/messaging/chat-socket.service';
 import { ChatPreferencias } from '../../../core/messaging/chat-preferencias';
 import { PACK_DE_STICKERS } from '../../../core/messaging/sticker-pack.generated';
 
@@ -156,6 +157,60 @@ describe('Thread', () => {
     const propios = burbujas().map((b) => b.getAttribute('data-propio'));
     // El primero en pantalla es el más viejo: `m-2`, que es del otro.
     expect(propios).toEqual(['false', 'true']);
+  });
+
+  it('Pulse: el historial no anima; sólo la burbuja ajena que llega después entra con pulse-arrive', () => {
+    abrir([mensaje('m-2', 'pp-2', 'El segundo'), mensaje('m-1', 'pp-1', 'El primero')]);
+
+    // Lo que se carga al abrir aparece quieto.
+    expect(burbujas().filter((b) => b.classList.contains('pulse-arrive'))).toHaveLength(0);
+
+    // Llega en vivo, por el socket, un mensaje del otro lado.
+    const cable = TestBed.inject(ChatSocketService) as unknown as {
+      messages$: { next: (m: unknown) => void };
+    };
+    cable.messages$.next({ ...mensaje('m-3', 'pp-2', 'Recién llegado'), sentAt: '2026-08-18T13:00:00.000Z' });
+    fixture.detectChanges();
+
+    const llegadas = burbujas().filter((b) => b.classList.contains('pulse-arrive'));
+    expect(llegadas).toHaveLength(1);
+    expect(llegadas[0].textContent).toContain('Recién llegado');
+
+    // Y un mensaje propio, aunque sea nuevo, no se marca como llegada.
+    cable.messages$.next({ ...mensaje('m-4', 'pp-1', 'Mío nuevo'), sentAt: '2026-08-18T14:00:00.000Z' });
+    fixture.detectChanges();
+    expect(burbujas().filter((b) => b.classList.contains('pulse-arrive'))).toHaveLength(1);
+
+    // Un mensaje en vivo con el hilo abierto lo marca leído y refresca la
+    // bandeja: se contestan los dos pedidos como lo haría el servidor.
+    http
+      .match((r) => r.url === '/community/conversations/c-1/read')
+      .forEach((pedido) =>
+        pedido.flush({ receiptsRecorded: 1, lastReadMessageId: 'm-4' }),
+      );
+    const bandeja = {
+      items: [
+        {
+          id: 'c-1',
+          conversationTypeConceptId: 'c-direct',
+          groupId: null,
+          lastMessageAt: null,
+          messageCount: 4,
+          lastMessage: null,
+          unreadCount: 0,
+          peers: [{ profileId: 'pp-2', displayName: 'Dra. Quispe' }],
+        },
+      ],
+      count: 1,
+      limit: 50,
+      nextCursor: null,
+    };
+    for (let ronda = 0; ronda < 3; ronda++) {
+      http
+        .match((r) => r.url === '/community/conversations')
+        .forEach((pedido) => pedido.flush(bandeja));
+      fixture.detectChanges();
+    }
   });
 
   it('marca leído una sola vez al abrir, no en cada carga', () => {

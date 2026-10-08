@@ -92,6 +92,24 @@ número.
 5. **Nada de movimiento en el contenido clínico.** Un valor que se desliza al
    actualizarse es un valor que se lee mal.
 
+## Excepciones documentadas de Pulse
+
+Desde la capa **ALOVIDA Pulse** (`pulse.md`, `src/styles/pulse.css`) rigen dos
+excepciones **acotadas**. Ninguna regla de arriba se borra.
+
+| Regla | Excepción | Límite |
+|---|---|---|
+| 2 · «nada por encima de ~320 ms» | **Un momento autorado por pantalla**, `--pulse-dur-moment` = 480 ms | sólo sobre una región **no clínica**; una vez por navegación; nunca al hacer scroll ni al refrescar datos |
+| 4 · «bucles infinitos sólo para carga» | **Sin excepción.** El latido de estado (`pulse-ring`) son 3 repeticiones y se posa; no es un bucle | — |
+
+Pulse añade `clip-path` y `box-shadow` a la paleta de la regla 1 (sólo
+`transform` y `opacity`): ninguna dispara layout. La regla 5 (nada de movimiento
+en contenido clínico) **no se modifica**: Pulse anima el continente y el
+estado, jamás la cifra.
+
+Deuda conocida: el reloj de la cinta de «Hoy» (`cinta-pulso`) sigue siendo un
+bucle infinito, anterior a Pulse.
+
 ## Verificación
 
 | Comprobación | Estado |
