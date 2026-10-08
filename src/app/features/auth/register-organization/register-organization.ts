@@ -190,9 +190,9 @@ export class RegisterOrganization {
   private readonly router = inject(Router);
   private readonly legalEntityTypes = inject(LegalEntityTypesCatalog);
 
-  protected readonly claim = 'Gestioná tu aseguradora en un solo lugar';
+  protected readonly claim = 'Gestione su aseguradora en un solo lugar';
   protected readonly tagline =
-    'Sumate a la red de salud y conectá con miles de pacientes y prestadores.';
+    'Súmese a la red de salud y conecte con miles de pacientes y prestadores.';
 
   readonly form = new FormGroup({
     legalName: new FormControl('', {
@@ -393,7 +393,7 @@ export class RegisterOrganization {
             control: 'text' as const,
             required: true,
             testId: 'registro-organizacion-nombre',
-            mensajeDeError: 'Escribí el nombre de la empresa.',
+            mensajeDeError: 'Escriba el nombre de la empresa.',
           },
           {
             // La sigla es lo único que la persona escribe para identificarse
@@ -405,7 +405,7 @@ export class RegisterOrganization {
             control: 'text' as const,
             required: true,
             testId: 'registro-organizacion-sigla',
-            mensajeDeError: 'Escribí la sigla: de 3 a 20 letras o números.',
+            mensajeDeError: 'Escriba la sigla: de 3 a 20 letras o números.',
           },
           {
             key: 'incorporationCountry',
@@ -415,7 +415,7 @@ export class RegisterOrganization {
             options: this.opcionesPaisSocietario,
             required: true,
             testId: 'registro-organizacion-pais',
-            mensajeDeError: 'Elegí el país de constitución.',
+            mensajeDeError: 'Elija el país de constitución.',
           },
           {
             key: 'legalEntityType',
@@ -425,7 +425,7 @@ export class RegisterOrganization {
             options: this.opcionesTipoSocietario(),
             required: true,
             testId: 'registro-organizacion-tipo-societario',
-            mensajeDeError: 'Elegí el tipo societario.',
+            mensajeDeError: 'Elija el tipo societario.',
           },
         ],
       },
@@ -440,7 +440,7 @@ export class RegisterOrganization {
             control: 'text' as const,
             required: true,
             testId: 'registro-organizacion-nit',
-            mensajeDeError: 'Escribí el NIT de la empresa.',
+            mensajeDeError: 'Escriba el NIT de la empresa.',
           },
           {
             key: 'address',
@@ -449,7 +449,7 @@ export class RegisterOrganization {
             control: 'text' as const,
             required: true,
             testId: 'registro-organizacion-direccion',
-            mensajeDeError: 'Escribí la dirección (hasta 300 caracteres).',
+            mensajeDeError: 'Escriba la dirección (hasta 300 caracteres).',
           },
           // El mapa va pegado a «Dirección», como en las otras altas: cuando lo
           // tocan, vacía el campo y lo dice arriba del plano, y ese aviso tiene
@@ -457,7 +457,7 @@ export class RegisterOrganization {
           {
             key: 'gpsCasaMatriz',
             label: 'Ubicación de la casa matriz en el mapa (opcional)',
-            hint: 'Usá tu GPS o tocá el plano. Sin el punto, la aseguradora no aparece cuando alguien busca la más cercana.',
+            hint: 'Use su GPS o toque el plano. Sin el punto, la aseguradora no aparece cuando alguien busca la más cercana.',
             control: 'custom' as const,
             ancho: 'completo' as const,
           },
@@ -469,12 +469,12 @@ export class RegisterOrganization {
                 {
                   key: 'timeZone',
                   label: 'Zona horaria de la casa matriz',
-                  hint: 'Elegí el huso horario en el que opera la sede principal.',
+                  hint: 'Elija el huso horario en el que opera la sede principal.',
                   control: 'select' as const,
                   options: this.opcionesZonaHoraria(),
                   required: true,
                   testId: 'registro-organizacion-zona',
-                  mensajeDeError: 'Elegí la zona horaria de la casa matriz.',
+                  mensajeDeError: 'Elija la zona horaria de la casa matriz.',
                 },
               ]
             : []),
@@ -508,7 +508,7 @@ export class RegisterOrganization {
             label: '',
             control: 'custom' as const,
             ancho: 'completo' as const,
-            mensajeDeError: 'Completá el nombre y el apellido paterno del representante legal.',
+            mensajeDeError: 'Complete el nombre y el apellido paterno del representante legal.',
           },
           {
             key: 'legalRepresentativeIdNumber',
@@ -517,7 +517,7 @@ export class RegisterOrganization {
             control: 'text' as const,
             required: true,
             testId: 'registro-organizacion-representante-ci',
-            mensajeDeError: 'Escribí el número de cédula.',
+            mensajeDeError: 'Escriba el número de cédula.',
           },
           {
             key: 'legalRepresentativeEmail',
@@ -527,7 +527,7 @@ export class RegisterOrganization {
             required: true,
             autocomplete: 'username',
             testId: 'registro-organizacion-representante-correo',
-            mensajeDeError: 'Ingresá un correo válido.',
+            mensajeDeError: 'Ingrese un correo válido.',
           },
           {
             key: 'password',
@@ -544,7 +544,7 @@ export class RegisterOrganization {
             label: 'Teléfono de contacto (opcional)',
             control: 'tel' as const,
             testId: 'registro-organizacion-representante-telefono',
-            mensajeDeError: 'Completá el número.',
+            mensajeDeError: 'Complete el número.',
           },
           campoDelPoderNotariado(this.incorporationCountryElegido(), uiLanguage()),
         ],
@@ -564,7 +564,7 @@ export class RegisterOrganization {
             label: '',
             control: 'custom' as const,
             ancho: 'completo' as const,
-            mensajeDeError: 'Completá nombre, celular y correo de las tres gerencias.',
+            mensajeDeError: 'Complete nombre, celular y correo de las tres gerencias.',
           },
         ],
       },
@@ -588,12 +588,12 @@ export class RegisterOrganization {
       // la API.
       if (state.issues[0]?.field === 'code') {
         const sigla = this.form.controls.sigla.value.trim();
-        return `La sigla «${sigla}» ya está en uso en la plataforma. Elegí otra.`;
+        return `La sigla «${sigla}» ya está en uso en la plataforma. Elija otra.`;
       }
       return mensaje;
     }
     if (state.status === 'offline') {
-      return 'No pudimos conectarnos. Revisá tu conexión y reintentá.';
+      return 'No pudimos conectarnos. Revise su conexión y reintente.';
     }
     if (state.status === 'error') {
       return `${state.message || 'Ocurrió un error inesperado.'} (${state.requestId})`;
@@ -840,7 +840,7 @@ export class RegisterOrganization {
   ): string {
     return mensajeDeError(this.controlDeGerencia(gerenciaKey, campo.key), {
       label: campo.label,
-      mensajeDeError: campo.key === 'phone' ? 'Completá el número.' : undefined,
+      mensajeDeError: campo.key === 'phone' ? 'Complete el número.' : undefined,
     });
   }
 

@@ -819,7 +819,7 @@ describe('Agenda', () => {
     // que llevar directo al asistente.
     harness.fixture.detectChanges();
     const alerta = harness.fixture.nativeElement.querySelector('app-alert');
-    expect(alerta?.textContent).toContain('no pueden pedirte turno');
+    expect(alerta?.textContent).toContain('no pueden pedirle turno');
     expect(alerta?.querySelector('a[app-button]')?.getAttribute('href')).toContain('/schedule/new');
     expect(citas().status).toBe('empty');
   });
@@ -2148,7 +2148,7 @@ describe('Agenda', () => {
 
       // Nada salio a la red: el `http.verify()` del afterEach lo confirma.
       const config = confirmar.mock.calls[0]?.[0];
-      expect(config?.title).toContain('Ya tenés una consulta en curso');
+      expect(config?.title).toContain('Ya tiene una consulta en curso');
       // «Paciente asignado» y no el nombre: esta sesión no tiene permiso de
       // padrón, y la compuerta del nombre es la misma de siempre. Lo que el
       // aviso tiene que decir es CUÁL está abierta, no quién es.
@@ -2357,7 +2357,7 @@ describe('Agenda', () => {
       expect(navegar).not.toHaveBeenCalled();
       const config = confirmar.mock.calls[0]?.[0];
       expect(config?.title).toContain('todavía no se atiende');
-      expect(config?.message).toContain('aceptala primero');
+      expect(config?.message).toContain('acéptela primero');
     });
 
     it('sin permiso de expediente la atención se inicia igual, y se DICE que no se entró', async () => {

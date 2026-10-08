@@ -287,7 +287,7 @@ describe('Promotions contra la API real', () => {
     fixture.detectChanges();
 
     expect(texto()).toContain('Descuento de primavera');
-    expect(texto()).toContain('Tu cupón: BIENV-7Q2X');
+    expect(texto()).toContain('Su cupón: BIENV-7Q2X');
     expect(texto()).toContain('Sin ciudad declarada');
     for (const promo of promocionesDeEjemplo()) {
       expect(texto()).not.toContain(promo.titulo);
@@ -298,7 +298,7 @@ describe('Promotions contra la API real', () => {
     http.expectOne('/promotions/me').flush({ items: [], count: 0 });
     fixture.detectChanges();
 
-    expect(texto()).toContain('Por ahora no tenés promociones vigentes');
+    expect(texto()).toContain('Por ahora no tiene promociones vigentes');
     expect(texto()).toContain('Buscar farmacias');
   });
 

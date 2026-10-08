@@ -211,7 +211,7 @@ export class NotificationCenter {
         this.store.refrescar();
         this.recargar();
       },
-      error: () => this.error.set('No pudimos marcar tus notificaciones.'),
+      error: () => this.error.set('No pudimos marcar sus notificaciones.'),
     });
   }
 
@@ -240,7 +240,7 @@ export class NotificationCenter {
         error: () => {
           this.cargando.set(false);
           this.cargoAlgunaVez.set(true);
-          this.error.set('No pudimos cargar tus notificaciones.');
+          this.error.set('No pudimos cargar sus notificaciones.');
         },
       });
   }

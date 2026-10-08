@@ -1,7 +1,7 @@
 @if (noExiste()) {
   <app-empty-state
     title="No encontramos ese grupo"
-    description="Puede que no exista, o que sea un grupo al que no fuiste invitado."
+    description="Puede que no exista, o que sea un grupo al que no fue invitado."
     variant="empty"
   />
 } @else if (grupo(); as g) {
@@ -33,7 +33,7 @@
       @if (puedeUnirse()) {
         <button app-button (clicked)="unirse()">Unirme al grupo</button>
       } @else if (esperandoAprobacion()) {
-        <span class="grupo__estado">Tu ingreso está en revisión</span>
+        <span class="grupo__estado">Su ingreso está en revisión</span>
       } @else if (g.viewer.isMember) {
         <button app-button variant="ghost" (clicked)="salir()">Salir del grupo</button>
       }
@@ -52,7 +52,7 @@
         <!-- 403 en un grupo privado es la respuesta correcta, no una falla. -->
         <app-empty-state
           title="Este grupo es privado"
-          description="Pedí el ingreso para ver lo que se publica y participar."
+          description="Pida el ingreso para ver lo que se publica y participar."
           variant="empty"
         />
       } @else if (publicaciones().length === 0 && !cargando()) {
@@ -73,7 +73,7 @@
               @if (respondiendoA() === publicacion.id) {
                 <app-group-composer
                   accion="Responder"
-                  placeholder="Escribí tu respuesta…"
+                  placeholder="Escriba su respuesta…"
                   [cancelable]="true"
                   [enviando]="enviando()"
                   (publicado)="publicar($event)"

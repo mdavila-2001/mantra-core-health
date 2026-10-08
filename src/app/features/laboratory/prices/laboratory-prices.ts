@@ -101,7 +101,7 @@ export class LaboratoryPrices {
     );
     return list.length > 0
       ? ready(list)
-      : empty({ label: 'Probá con otra palabra' }, `Nada coincide con «${this.term().trim()}».`);
+      : empty({ label: 'Pruebe con otra palabra' }, `Nada coincide con «${this.term().trim()}».`);
   });
 
   protected readonly pageRows = computed<ViewState<readonly LabService[]>>(() =>
@@ -149,7 +149,7 @@ export class LaboratoryPrices {
           alive.length > 0
             ? ready(alive)
             : empty(
-                { label: 'Cargá tus servicios en el catálogo del laboratorio' },
+                { label: 'Cargue sus servicios en el catálogo del laboratorio' },
                 'Todavía no hay servicios a los que ponerles precio.',
               ),
         );
@@ -276,7 +276,7 @@ export class LaboratoryPrices {
         const saved = results.length - rejected.length;
         if (saved > 0) {
           this.toasts.success(
-            saved === 1 ? 'Guardaste el precio de 1 servicio.' : `Guardaste el precio de ${saved} servicios.`,
+            saved === 1 ? 'Guardó el precio de 1 servicio.' : `Guardó el precio de ${saved} servicios.`,
           );
         }
         this.rejected.set(rejected);

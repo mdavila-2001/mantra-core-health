@@ -59,10 +59,10 @@ test.describe('H6 · recorrido de #561 (Itzan, perfil médico)', () => {
     await abrirMiPerfil(page);
   });
 
-  test('C-01 · «Dónde atiendo» ya no tiene la sección «Cómo atendés»', async ({ page }) => {
+  test('C-01 · «Dónde atiendo» ya no tiene la sección «Cómo atiende»', async ({ page }) => {
     await page.getByRole('tab', { name: 'Dónde atiendo' }).click();
     await estable(page);
-    await expect(page.getByText('Cómo atendés', { exact: false })).toHaveCount(0);
+    await expect(page.getByText('Cómo atiende', { exact: false })).toHaveCount(0);
     await expect(page.getByTestId('perfil-sedes')).toBeVisible({ timeout: 15_000 });
     await page.screenshot({ path: join(SALIDA, 'c01-sin-como-atendes.png') });
   });

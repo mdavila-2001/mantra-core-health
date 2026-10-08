@@ -256,7 +256,7 @@ export class DiagnosticResults {
         if (pagina.items.length === 0) {
           this.resultados.set(
             empty(
-              { label: 'Buscar dónde hacerte un estudio', route: '/laboratory-directory' },
+              { label: 'Buscar dónde hacerse un estudio', route: '/laboratory-directory' },
               'Todavía no hay resultados liberados. Un estudio en curso aparece acá cuando el profesional lo valida.',
             ),
           );
@@ -296,19 +296,19 @@ export class DiagnosticResults {
       error: (error: unknown) => {
         this.operando.set(null);
         if (isScanPending(error)) {
-          this.toast.info('El archivo todavía está en análisis. Probá de nuevo en un momento.', 'Resultado');
+          this.toast.info('El archivo todavía está en análisis. Pruebe de nuevo en un momento.', 'Resultado');
           return;
         }
         const estado = errorToViewState<null>(error);
         if (estado.status === 'forbidden') {
-          this.toast.info('No tenés permiso para descargar este archivo.', 'Resultado');
+          this.toast.info('No tiene permiso para descargar este archivo.', 'Resultado');
           return;
         }
         if (error instanceof HttpErrorResponse && error.status === 404) {
-          this.toast.info('Este archivo todavía no está disponible para vos.', 'Resultado');
+          this.toast.info('Este archivo todavía no está disponible para usted.', 'Resultado');
           return;
         }
-        this.toast.error('No pudimos bajar el archivo. Reintentá en un momento.', 'Resultado');
+        this.toast.error('No pudimos bajar el archivo. Reintente en un momento.', 'Resultado');
       },
     });
   }
@@ -399,7 +399,7 @@ export class DiagnosticResults {
     const confirmado = await this.dialogs.confirm({
       title: 'Dejar de compartir',
       message:
-        'El profesional deja de ver este resultado desde ahora. El registro de que lo compartiste se conserva.',
+        'El profesional deja de ver este resultado desde ahora. El registro de que lo compartió se conserva.',
       confirmLabel: 'Dejar de compartir',
       cancelLabel: 'Volver',
     });
@@ -448,7 +448,7 @@ export class DiagnosticResults {
     const detalle =
       estado.status === 'forbidden' || estado.status === 'error' ? (estado.message ?? '') : '';
     this.toast.error(
-      detalle === '' ? 'No pudimos completar la operación. Reintentá en un momento.' : detalle,
+      detalle === '' ? 'No pudimos completar la operación. Reintente en un momento.' : detalle,
       'Resultado',
     );
   }

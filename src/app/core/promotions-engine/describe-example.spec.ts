@@ -19,30 +19,30 @@ function example(
 
 describe('exampleFor', () => {
   it('un porcentaje: una unidad con su descuento', () => {
-    expect(example({ kind: 'PERCENT_OFF', percent: 20 })).toBe('Llevando una unidad, pagás Bs 36 en vez de Bs 45.');
+    expect(example({ kind: 'PERCENT_OFF', percent: 20 })).toBe('Llevando una unidad, paga Bs 36 en vez de Bs 45.');
   });
 
   it('el monto fijo por unidad', () => {
     expect(example({ kind: 'AMOUNT_OFF_PER_UNIT', amount: '5.00' })).toBe(
-      'Llevando una unidad, pagás Bs 40 en vez de Bs 45.',
+      'Llevando una unidad, paga Bs 40 en vez de Bs 45.',
     );
   });
 
   it('el precio de campaña, con el que se fijó para ese producto', () => {
     expect(example({ kind: 'CAMPAIGN_PRICE', prices: { a: '38.00' } })).toBe(
-      'Llevando una unidad, pagás Bs 38 en vez de Bs 45.',
+      'Llevando una unidad, paga Bs 38 en vez de Bs 45.',
     );
   });
 
-  it('llevá X, pagá Y: las unidades que hacen falta para que se note', () => {
+  it('lleve X, pague Y: las unidades que hacen falta para que se note', () => {
     expect(example({ kind: 'BUY_X_PAY_Y', take: 3, pay: 2 })).toBe(
-      'Llevando 3 unidades, pagás Bs 90 en vez de Bs 135.',
+      'Llevando 3 unidades, paga Bs 90 en vez de Bs 135.',
     );
   });
 
   it('la segunda unidad con descuento', () => {
     expect(example({ kind: 'NTH_UNIT_PERCENT', nth: 2, percent: 50 }, [item('a', '10.00')])).toBe(
-      'Llevando 2 unidades, pagás Bs 15 en vez de Bs 20.',
+      'Llevando 2 unidades, paga Bs 15 en vez de Bs 20.',
     );
   });
 
@@ -58,12 +58,12 @@ describe('exampleFor', () => {
         },
         [item('a', '10.00')],
       ),
-    ).toBe('Llevando 3 unidades, pagás Bs 25.50 en vez de Bs 30.');
+    ).toBe('Llevando 3 unidades, paga Bs 25.50 en vez de Bs 30.');
   });
 
   it('una compra mínima: una compra justo en el umbral', () => {
     expect(example({ kind: 'ORDER_PERCENT_OVER', minSpend: '200.00', percent: 10 }, [])).toBe(
-      'En una compra justo en el mínimo, pagás Bs 180 en vez de Bs 200.',
+      'En una compra justo en el mínimo, paga Bs 180 en vez de Bs 200.',
     );
   });
 
@@ -79,12 +79,12 @@ describe('exampleFor', () => {
         },
         [],
       ),
-    ).toBe('En una compra justo en el mínimo, pagás Bs 180 en vez de Bs 200.');
+    ).toBe('En una compra justo en el mínimo, paga Bs 180 en vez de Bs 200.');
   });
 
   it('un combo con todos sus productos', () => {
     expect(example({ kind: 'BUNDLE_PRICE', bundlePrice: '24.00' }, [item('a', '10.00'), item('b', '20.00')])).toBe(
-      'Llevando 2 unidades, pagás Bs 24 en vez de Bs 30.',
+      'Llevando 2 unidades, paga Bs 24 en vez de Bs 30.',
     );
   });
 
@@ -94,13 +94,13 @@ describe('exampleFor', () => {
         { kind: 'GIFT_WITH_PURCHASE', triggerItemId: 'a', rewardItemId: 'b' },
         [item('a', '20.00'), item('b', '5.00')],
       ),
-    ).toBe('Llevando 2 unidades, pagás Bs 20 en vez de Bs 25.');
+    ).toBe('Llevando 2 unidades, paga Bs 20 en vez de Bs 25.');
   });
 
   it('el tope cuenta, porque cambia lo que se paga', () => {
     expect(
       example({ kind: 'PERCENT_OFF', percent: 50 }, [item('a', '100.00')], { ...NO_CONDITIONS, maxDiscount: '10.00' }),
-    ).toBe('Llevando una unidad, pagás Bs 90 en vez de Bs 100.');
+    ).toBe('Llevando una unidad, paga Bs 90 en vez de Bs 100.');
   });
 
   it('el calendario no esconde el ejemplo: se muestra la mecánica, no el horario', () => {

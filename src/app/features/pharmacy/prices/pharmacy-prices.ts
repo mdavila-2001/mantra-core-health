@@ -114,7 +114,7 @@ export class PharmacyPrices {
     );
     return list.length > 0
       ? ready(list)
-      : empty({ label: 'Probá con otra palabra' }, `Nada coincide con «${this.term().trim()}».`);
+      : empty({ label: 'Pruebe con otra palabra' }, `Nada coincide con «${this.term().trim()}».`);
   });
 
   protected readonly pageRows = computed<ViewState<readonly PharmacyProduct[]>>(() =>
@@ -173,7 +173,7 @@ export class PharmacyPrices {
           alive.length > 0
             ? ready(alive)
             : empty(
-                { label: 'Cargá productos en «Productos»', route: '/administration/pharmacy-catalog' },
+                { label: 'Cargue productos en «Productos»', route: '/administration/pharmacy-catalog' },
                 'Todavía no hay productos a los que ponerles precio.',
               ),
         );
@@ -275,7 +275,7 @@ export class PharmacyPrices {
         const saved = results.length - rejected.length;
         if (saved > 0) {
           this.toasts.success(
-            saved === 1 ? 'Guardaste el precio de 1 producto.' : `Guardaste el precio de ${saved} productos.`,
+            saved === 1 ? 'Guardó el precio de 1 producto.' : `Guardó el precio de ${saved} productos.`,
           );
         }
         this.rejected.set(rejected);

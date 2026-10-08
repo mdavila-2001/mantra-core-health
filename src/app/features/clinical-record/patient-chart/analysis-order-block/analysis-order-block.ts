@@ -363,7 +363,7 @@ export class AnalysisOrderBlock {
     if (state.status === 'validation') {
       return state.issues.map((issue) => issue.message).join(' ') || null;
     }
-    return mensajeDeFalloDeEscritura(state, { accion: 'pedir estudios', sinPermiso: 'Tu rol no permite pedir estudios.' });
+    return mensajeDeFalloDeEscritura(state, { accion: 'pedir estudios', sinPermiso: 'Su rol no permite pedir estudios.' });
   });
 
   /**
@@ -376,10 +376,10 @@ export class AnalysisOrderBlock {
   protected readonly errorDelHistorico = computed<string | null>(() => {
     const state = this.circuito();
     if (state.status === 'forbidden') {
-      return 'Tu rol no permite ver los estudios de esta persona.';
+      return 'Su rol no permite ver los estudios de esta persona.';
     }
     if (state.status === 'offline') {
-      return 'No pudimos conectarnos. Revisá tu conexión y reintentá.';
+      return 'No pudimos conectarnos. Revise su conexión y reintente.';
     }
     if (state.status === 'error') {
       return `${state.message || 'No pudimos leer los estudios.'} (${state.requestId})`;
@@ -552,7 +552,7 @@ export class AnalysisOrderBlock {
             windowDays: DEFAULT_DUPLICATE_STUDY_WINDOW_DAYS,
           });
           this.toasts.info(
-            'Justo ahora apareció un estudio igual reciente. Revisá la alerta antes de seguir.',
+            'Justo ahora apareció un estudio igual reciente. Revise la alerta antes de seguir.',
             'Duplicado detectado',
           );
           return;
@@ -702,7 +702,7 @@ function mensajeDeAlta(decision: {
     ];
   }
   if (decision.duplicateOverrideReason !== undefined) {
-    return ['Queda pedido con tu justificación; la aseguradora la va a ver.', 'Estudio solicitado'];
+    return ['Queda pedido con su justificación; la aseguradora la va a ver.', 'Estudio solicitado'];
   }
-  return ['Queda pedido y vas a verlo acá abajo con su resultado.', 'Estudio solicitado'];
+  return ['Queda pedido y va a verlo acá abajo con su resultado.', 'Estudio solicitado'];
 }

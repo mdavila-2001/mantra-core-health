@@ -164,7 +164,7 @@ describe('DepartmentMap', () => {
    */
   it('dice en palabras cuál quedó elegido', () => {
     const linea = html.querySelector('[data-testid="department-map-elegido"]');
-    expect(linea?.textContent).toContain('Todavía no elegiste');
+    expect(linea?.textContent).toContain('Todavía no eligió');
 
     formaDe('BE').dispatchEvent(new MouseEvent('click'));
     fixture.detectChanges();

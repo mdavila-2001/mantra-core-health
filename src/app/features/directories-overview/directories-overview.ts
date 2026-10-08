@@ -334,7 +334,7 @@ export class DirectoriesOverview {
               return grupos.length === 0
                 ? empty(
                     { label: 'Ver los directorios', route: '/directories' },
-                    `No encontramos nada que coincida con «${termino}». Probá con otra palabra.`,
+                    `No encontramos nada que coincida con «${termino}». Pruebe con otra palabra.`,
                   )
                 : ready<readonly GrupoDeDirectorio[]>(grupos);
             }),

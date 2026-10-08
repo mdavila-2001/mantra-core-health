@@ -166,7 +166,7 @@ export class AttachmentDialog {
     const descartar = await this.dialogs.confirm({
       title: '¿Descartar los archivos elegidos?',
       message:
-        'Todavía no se adjuntaron. Si cerrás, la selección se pierde y hay que volver a elegirlos.',
+        'Todavía no se adjuntaron. Si cierra, la selección se pierde y hay que volver a elegirlos.',
       confirmLabel: 'Descartar',
       cancelLabel: 'Seguir adjuntando',
       destructive: true,

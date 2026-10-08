@@ -4,7 +4,7 @@
   </h3>
   <p class="bloqueo__texto">
     Los turnos libres del período dejan de ofrecerse. Las citas ya reservadas
-    <strong>no se tocan</strong>: si querés cancelarlas, hacelo una por una desde el día.
+    <strong>no se tocan</strong>: si quiere cancelarlas, hágalo una por una desde el día.
   </p>
 
   <form class="bloqueo__form" (submit)="$event.preventDefault(); enviar()">
@@ -54,10 +54,10 @@
 
     @if (porFranja()) {
       <div class="bloqueo__horas">
-        <app-form-field label="Desde" hint="HH:MM — a partir de qué hora dejás de atender.">
+        <app-form-field label="Desde" hint="HH:MM — a partir de qué hora deja de atender.">
           <app-input type="text" [value]="horaDesde()" (valueChange)="fijarHoraDesde($event)" />
         </app-form-field>
-        <app-form-field label="Hasta" hint="HH:MM — a partir de qué hora volvés.">
+        <app-form-field label="Hasta" hint="HH:MM — a partir de qué hora vuelve.">
           <app-input type="text" [value]="horaHasta()" (valueChange)="fijarHoraHasta($event)" />
         </app-form-field>
       </div>
@@ -70,7 +70,7 @@
     @if (opcionesDeMotivo().length > 0) {
       <app-form-field
         label="¿Por qué?"
-        hint="El motivo se guarda con el bloqueo y es lo que ve tu paciente."
+        hint="El motivo se guarda con el bloqueo y es lo que ve su paciente."
       >
         <app-select
           [options]="opcionesDeMotivo()"
@@ -88,11 +88,11 @@
          había hecho excluyente —texto sólo con «Otro»— y eso no era lo pedido.
          Sigue siendo opcional salvo que el motivo elegido exija explicación. -->
     <app-form-field
-      [label]="exigeTexto() ? 'Contá de qué se trata' : 'Descripción'"
+      [label]="exigeTexto() ? 'Cuente de qué se trata' : 'Descripción'"
       [hint]="
         exigeTexto()
-          ? 'Elegiste «Otro»: hace falta para que se entienda.'
-          : 'Opcional. Queda para vos y para quien administre la agenda: tu paciente ve el motivo, no esto.'
+          ? 'Eligió «Otro»: hace falta para que se entienda.'
+          : 'Opcional. Queda para usted y para quien administre la agenda: su paciente ve el motivo, no esto.'
       "
       [required]="exigeTexto()"
     >
@@ -110,8 +110,8 @@
          esperando turnos que no van a volver. -->
     @if (esEdicion()) {
       <p class="bloqueo__nota">
-        Si <strong>agrandás</strong> el rango se cierran los turnos nuevos que queden adentro. Si
-        lo <strong>achicás</strong>, los que ya estaban cerrados <strong>no vuelven</strong>: para
+        Si <strong>agranda</strong> el rango se cierran los turnos nuevos que queden adentro. Si
+        lo <strong>achica</strong>, los que ya estaban cerrados <strong>no vuelven</strong>: para
         reabrirlos hay que volver a publicar el horario.
       </p>
     }

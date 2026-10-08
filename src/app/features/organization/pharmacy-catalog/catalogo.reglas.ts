@@ -95,7 +95,7 @@ export function revisarProducto(campos: CamposDelProducto): RevisionDelProducto 
   }
 
   if (marca === '' && generico === '') {
-    errores.push('Poné la marca, el nombre genérico o los dos: sin nombre nadie lo encuentra.');
+    errores.push('Ponga la marca, el nombre genérico o los dos: sin nombre nadie lo encuentra.');
   }
   if (marca.length > LARGO_MAXIMO_DEL_NOMBRE) {
     errores.push(`La marca no puede pasar de ${LARGO_MAXIMO_DEL_NOMBRE} caracteres.`);
@@ -197,7 +197,7 @@ export const COLUMNAS_DEL_CSV: readonly ColumnaDelCsv[] = [
     encabezado: 'codigo',
     campo: 'codigo',
     alias: ['sku', 'codigo_interno', 'codigo_de_producto', 'product_code'],
-    descripcion: 'Obligatorio. Único en tu catálogo.',
+    descripcion: 'Obligatorio. Único en su catálogo.',
   },
   {
     encabezado: 'marca',
@@ -336,7 +336,7 @@ export function leerCsv(contenido: string): LecturaDelCsv {
   const destino = nombres.map((nombre) => columnaPorNombre(nombre)?.campo ?? null);
   if (!destino.includes('codigo')) {
     throw new ArchivoInvalido(
-      'Falta la columna «codigo». Descargá la plantilla para ver los encabezados.',
+      'Falta la columna «codigo». Descargue la plantilla para ver los encabezados.',
     );
   }
   if (new Set(destino.filter((campo) => campo !== null)).size !== destino.filter((c) => c !== null).length) {
@@ -348,7 +348,7 @@ export function leerCsv(contenido: string): LecturaDelCsv {
   }
   if (datos.length > FILAS_MAXIMAS_POR_CARGA) {
     throw new ArchivoInvalido(
-      `El archivo tiene ${datos.length} productos y el tope por carga es ${FILAS_MAXIMAS_POR_CARGA}. Partilo en varios archivos.`,
+      `El archivo tiene ${datos.length} productos y el tope por carga es ${FILAS_MAXIMAS_POR_CARGA}. Divídalo en varios archivos.`,
     );
   }
 
@@ -371,7 +371,7 @@ export function leerCsv(contenido: string): LecturaDelCsv {
       : {
           numero: linea,
           campos,
-          errorDeForma: `Tiene ${celdas.length} columnas y el encabezado ${nombres.length}: revisá si hay un separador de más o una comilla sin cerrar.`,
+          errorDeForma: `Tiene ${celdas.length} columnas y el encabezado ${nombres.length}: revise si hay un separador de más o una comilla sin cerrar.`,
         };
   });
 
@@ -580,7 +580,7 @@ export function revisarCarga(
         ...fila,
         lista: false,
         motivo: 'YA_EN_EL_CATALOGO',
-        errores: [`El código ${codigo} ya está en tu catálogo.`],
+        errores: [`El código ${codigo} ya está en su catálogo.`],
       };
     }
     return { ...fila, lista: true, borrador: revision.borrador };

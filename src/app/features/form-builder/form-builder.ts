@@ -254,7 +254,7 @@ export class FormBuilder {
   protected readonly especialidadFiltrada = computed<string | null>(() => {
     const id = this.criterios()['especialidad'] ?? '';
     if (id === '' || id === this.conceptoTransversal()) return null;
-    return this.especialidades().get(id) ?? 'tu especialidad';
+    return this.especialidades().get(id) ?? 'su especialidad';
   });
 
   /** «Todas las especialidades»: quita el filtro. */
@@ -648,11 +648,11 @@ export class FormBuilder {
     if (state.status === 'forbidden') {
       return (
         state.message ??
-        'Tu organización no puede agregar campos a este formulario.'
+        'Su organización no puede agregar campos a este formulario.'
       );
     }
     if (state.status === 'offline') {
-      return 'No pudimos conectarnos. Revisá tu conexión y reintentá.';
+      return 'No pudimos conectarnos. Revise su conexión y reintente.';
     }
     if (state.status === 'error') {
       return `${state.message || 'Ocurrió un error inesperado.'} (${state.requestId})`;
@@ -1120,7 +1120,7 @@ export class FormBuilder {
     const secciones: { titulo: string; campos: CampoDeFormulario[] }[] = [];
     for (const campo of plantilla.fields) {
       const titulo =
-        campo.own && seccionada ? 'Campos de tu organización' : (campo.section ?? plantilla.name);
+        campo.own && seccionada ? 'Campos de su organización' : (campo.section ?? plantilla.name);
       const ultima = secciones.at(-1);
       if (ultima?.titulo === titulo) ultima.campos.push(aCampoDelMotor(campo));
       else secciones.push({ titulo, campos: [aCampoDelMotor(campo)] });

@@ -980,7 +980,7 @@ describe('ShellLayout', () => {
      * estás». Es exactamente lo que hace `routerLinkActive`, que compara por
      * prefijo — y por eso el marco no lo usa.
      */
-    describe('la marca de «acá estás»', () => {
+    describe('la marca de «acá está»', () => {
       async function ir(url: string) {
         await router.navigateByUrl(url);
         fixture.detectChanges();

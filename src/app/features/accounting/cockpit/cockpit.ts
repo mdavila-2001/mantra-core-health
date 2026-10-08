@@ -485,7 +485,7 @@ export class Cockpit {
           this.corriendo.set(null);
           this.toasts.show({
             type: 'error',
-            message: 'No se corrió la amortización. Revisá que el período esté abierto.',
+            message: 'No se corrió la amortización. Revise que el período esté abierto.',
           });
         },
       });
@@ -519,7 +519,7 @@ export class Cockpit {
           this.corriendo.set(null);
           this.toasts.show({
             type: 'error',
-            message: 'No se corrió el devengo. Revisá que el período esté abierto.',
+            message: 'No se corrió el devengo. Revise que el período esté abierto.',
           });
         },
       });

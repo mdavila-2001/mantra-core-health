@@ -50,10 +50,10 @@ import { entrar, esperarAplicacionLista, estable, irA } from './support/sesion';
 const CAPTURAS = process.env['E2E_SHOTS'] ?? join('artifacts', 'playwright', 'it1');
 
 /** El texto exacto de la invitación del pie de la tarjeta. */
-const INVITACION = 'Verificá tu identidad para ver tu código de paciente';
+const INVITACION = 'Verifique su identidad para ver su código de paciente';
 
 /** El copy de la tarjeta vacía de antes: si aparece, el muro sigue en pie. */
-const TARJETA_VACIA = 'cuando tu identidad esté verificada';
+const TARJETA_VACIA = 'cuando su identidad esté verificada';
 
 /* Los valores con los que se corrige el alta en el tramo (c). El nombre no
    comparte prefijo con el que siembra `crearPaciente` («Ana»), para que
@@ -86,7 +86,7 @@ test.afterAll(async () => {
 async function irAMiPerfil(page: Page): Promise<void> {
   await irA(page, '/my-account');
   await estable(page);
-  await expect(page.getByRole('heading', { name: 'Tus datos' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Sus datos' })).toBeVisible();
 }
 
 async function capturar(page: Page, nombre: string): Promise<void> {
@@ -194,7 +194,7 @@ test.describe('IT-1 · «Mi perfil» del paciente, con y sin identidad verificad
 
     // 1 · La salida está donde la persona ya estaba mirando sus datos.
     await page.getByTestId('mi-perfil-editar').click();
-    await expect(page.getByRole('heading', { name: 'Editar tus datos' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Editar sus datos' })).toBeVisible();
     await estable(page);
 
     // 2 · Se corrigen campos de naturaleza distinta a propósito: un texto, un
@@ -243,7 +243,7 @@ test.describe('IT-1 · «Mi perfil» del paciente, con y sin identidad verificad
 
     // 3 · Guardar lo dice con palabras, no con un cambio silencioso.
     await page.getByRole('button', { name: 'Guardar cambios' }).click();
-    await expect(page.getByTestId('toast-mensaje')).toHaveText('Tus datos quedaron actualizados.');
+    await expect(page.getByTestId('toast-mensaje')).toHaveText('Sus datos quedaron actualizados.');
 
     // 4 · Y quedaron: al volver, «Mi perfil» los muestra.
     await irAMiPerfil(page);

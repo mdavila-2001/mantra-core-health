@@ -225,7 +225,7 @@ export class TutorialOverlay {
       const confirmado = await this.dialogs.confirm({
         title: 'Dejar el tutorial',
         message:
-          'Se guarda el paso en el que quedaste: vas a poder continuarlo desde el centro de tutoriales.',
+          'Se guarda el paso en el que quedó: va a poder continuarlo desde el centro de tutoriales.',
         confirmLabel: 'Dejarlo',
         cancelLabel: 'Seguir',
       });

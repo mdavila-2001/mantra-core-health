@@ -2,7 +2,7 @@
      buscador, chips y grilla por ciudad. Pedido del cliente, 25/09/2026. -->
 <app-directory-page
   titulo="Promociones"
-  subtitulo="Las promociones de las farmacias. Tocá un departamento en el mapa y aparecen sus ciudades para acotar más."
+  subtitulo="Las promociones de las farmacias. Toque un departamento en el mapa y aparecen sus ciudades para acotar más."
   etiquetaBusqueda="Buscar por promoción, farmacia o medicamento"
   [filtros]="filtros()"
   [estado]="estado()"
@@ -28,7 +28,7 @@
           [departamentos]="departamentos()"
           [value]="departamentoElegido()"
           (valueChange)="elegirDepartamento($event)"
-          etiqueta="Mapa de Bolivia: elegí el departamento donde buscás"
+          etiqueta="Mapa de Bolivia: elija el departamento donde busca"
         />
         @if (resumenDelMapa(); as resumen) {
           <p class="mapa-directorio__resumen" data-testid="promociones-mapa-resumen">

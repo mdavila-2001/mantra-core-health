@@ -280,7 +280,7 @@ export class FormConclusionBlock {
     const conceptId = this.conceptoDelDiagnostico(tentativo.code);
     if (conceptId === null) {
       this.toasts.warning(
-        `«${tentativo.label}»${tentativo.code === null ? '' : ` (${tentativo.code})`} no está en el catálogo de diagnósticos. Elegilo a mano.`,
+        `«${tentativo.label}»${tentativo.code === null ? '' : ` (${tentativo.code})`} no está en el catálogo de diagnósticos. Elíjalo a mano.`,
         'Sin correspondencia en el catálogo',
       );
       return;
@@ -300,7 +300,7 @@ export class FormConclusionBlock {
     const conceptId = this.conceptoDelEstudio(orden);
     if (conceptId === null) {
       this.toasts.warning(
-        `«${orden.label}» no está en el catálogo de estudios. Elegilo a mano.`,
+        `«${orden.label}» no está en el catálogo de estudios. Elíjalo a mano.`,
         'Sin correspondencia en el catálogo',
       );
       return;

@@ -286,7 +286,7 @@ export class BuscarMedicamentosListado {
         this.pidiendoUbicacion.set(false);
         this.ubicacionDenegada.set(false);
         this.medirDesde({
-          etiqueta: 'tu ubicación',
+          etiqueta: 'su ubicación',
           lat: posicion.coords.latitude,
           lng: posicion.coords.longitude,
         });

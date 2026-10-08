@@ -132,7 +132,7 @@ test('#841 · los idiomas se eligen en el editor, se guardan, sobreviven a la re
 
   const bloque = page.getByTestId('edicion-idiomas');
   await expect(bloque).toBeVisible();
-  await expect(bloque.getByText('Idiomas en los que atendés')).toBeVisible();
+  await expect(bloque.getByText('Idiomas en los que atiende')).toBeVisible();
   await bloque.scrollIntoViewIfNeeded();
   await esperarAQueSeAsiente(page);
   await page.screenshot({ path: join(FOTOS, 'idiomas-editor-antes-1440.png'), fullPage: true });

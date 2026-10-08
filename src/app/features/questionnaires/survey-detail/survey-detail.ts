@@ -171,7 +171,7 @@ export class SurveyDetailScreen {
     const actual = this.estadoRespuestas();
     return actual.status === 'forbidden'
       ? (actual.message ??
-          'Tu rol o el propósito de uso declarado no alcanzan para ver este contenido.')
+          'Su rol o el propósito de uso declarado no alcanzan para ver este contenido.')
       : '';
   });
 
@@ -451,7 +451,7 @@ export class SurveyDetailScreen {
     this.surveys.createNextVersion(this.surveyId).subscribe({
       next: () => {
         this.creandoVersion.set(false);
-        this.toast.success('Versión nueva creada. Agregale preguntas y publicala.');
+        this.toast.success('Versión nueva creada. Agréguele preguntas y publíquela.');
         this.cargar();
       },
       error: (error: unknown) => {

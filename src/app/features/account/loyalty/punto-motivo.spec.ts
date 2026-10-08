@@ -51,10 +51,10 @@ describe('presentación del movimiento de puntos', () => {
 
   it('lo que escucha un lector de pantalla dice el verbo, no el signo', () => {
     expect(movimientoEnPalabras('POINTS_EARN', '45', 'REASON_EVENT')).toBe(
-      'Sumaste 45 puntos — actividad en la app',
+      'Sumó 45 puntos — actividad en la app',
     );
     expect(movimientoEnPalabras('POINTS_REDEEM', '150', 'REASON_REDEMPTION')).toBe(
-      'Restaste 150 puntos — canje',
+      'Restó 150 puntos — canje',
     );
   });
 
@@ -84,7 +84,7 @@ describe('presentación del movimiento de puntos', () => {
 
   it('la concordancia llega al anuncio para lector de pantalla', () => {
     expect(movimientoEnPalabras('POINTS_REDEEM', '1', 'REASON_REDEMPTION')).toBe(
-      'Restaste 1 punto — canje',
+      'Restó 1 punto — canje',
     );
   });
 

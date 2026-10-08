@@ -111,7 +111,7 @@ export class OrganizationLogo {
         },
         error: () => {
           this.ocupado.set(false);
-          this.error.set('No se pudo guardar el logo. Probá de nuevo.');
+          this.error.set('No se pudo guardar el logo. Pruebe de nuevo.');
         },
       });
   }
@@ -121,7 +121,7 @@ export class OrganizationLogo {
     const motivo = rechazados[0]?.reason;
     this.error.set(
       motivo === 'tamaño'
-        ? 'El logo pesa más de 2 MB. Elegí una imagen más liviana.'
+        ? 'El logo pesa más de 2 MB. Elija una imagen más liviana.'
         : 'El logo tiene que ser una imagen PNG, JPG o WEBP.',
     );
   }
@@ -139,7 +139,7 @@ export class OrganizationLogo {
       },
       error: () => {
         this.ocupado.set(false);
-        this.error.set('No se pudo quitar el logo. Probá de nuevo.');
+        this.error.set('No se pudo quitar el logo. Pruebe de nuevo.');
       },
     });
   }

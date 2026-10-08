@@ -189,7 +189,7 @@ describe('DiagnosisVerifyDialog', () => {
     enviar();
 
     http.expectNone((r) => r.url.includes('/verification'));
-    expect(texto()).toContain('Escribí el motivo o elegí una evidencia');
+    expect(texto()).toContain('Escriba el motivo o elija una evidencia');
   });
 
   it('confirmar sin fin esperado ni crónica no manda: marca el campo', () => {
@@ -199,7 +199,7 @@ describe('DiagnosisVerifyDialog', () => {
     enviar();
 
     http.expectNone((r) => r.url.includes('/verification'));
-    expect(texto()).toContain('Indicá hasta cuándo se espera la condición');
+    expect(texto()).toContain('Indique hasta cuándo se espera la condición');
   });
 
   it('confirma con motivo, informe y fin esperado: manda el contrato y emite la condición decidida', () => {

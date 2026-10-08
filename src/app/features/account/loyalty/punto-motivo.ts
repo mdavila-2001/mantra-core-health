@@ -99,10 +99,10 @@ export function movimientoEnPalabras(
 ): string {
   const cola = etiquetaDeMotivo(motivo).toLowerCase();
   if (direccion === 'POINTS_EARN') {
-    return `Sumaste ${puntosEnPalabras(puntos)} — ${cola}`;
+    return `Sumó ${puntosEnPalabras(puntos)} — ${cola}`;
   }
   if (direccion === 'POINTS_REDEEM' || direccion === 'POINTS_EXPIRE') {
-    return `Restaste ${puntosEnPalabras(puntos)} — ${cola}`;
+    return `Restó ${puntosEnPalabras(puntos)} — ${cola}`;
   }
   // Sin dirección conocida no se afirma el sentido del movimiento.
   return `Movimiento de ${puntosEnPalabras(puntos)} — ${cola}`;

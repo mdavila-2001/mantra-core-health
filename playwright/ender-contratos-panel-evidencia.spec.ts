@@ -79,7 +79,7 @@ test.describe('H1.S1.M3 — las dos cuentas entran y ven lo suyo', () => {
   });
 });
 
-test.describe('H5/H6 — "Tus consultas" en el panel: 5 anchos, claro y oscuro', () => {
+test.describe('H5/H6 — "Sus consultas" en el panel: 5 anchos, claro y oscuro', () => {
   test('el bloque nuevo se ve sin desborde horizontal en ningún ancho, en los dos temas', async ({ page }) => {
     test.setTimeout(3 * 60_000);
 

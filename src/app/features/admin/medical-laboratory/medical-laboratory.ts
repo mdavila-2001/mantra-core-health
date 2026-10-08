@@ -603,7 +603,7 @@ export class MedicalLaboratory {
       if (filas.length === 0) {
         return empty(
           { label: 'Crear un tarifario' },
-          'Un tarifario agrupa los precios de un mismo acuerdo: el público que ve cualquier paciente, o el de un convenio. Sin ninguno no hay dónde cargar un precio. Acá ves los que ya tienen algún precio y los que creaste en esta pestaña: la plataforma todavía no devuelve la lista de tarifarios, así que uno recién creado y sin precios no se ve desde otra pestaña hasta que le cargues el primero.',
+          'Un tarifario agrupa los precios de un mismo acuerdo: el público que ve cualquier paciente, o el de un convenio. Sin ninguno no hay dónde cargar un precio. Acá ve los que ya tienen algún precio y los que creó en esta pestaña: la plataforma todavía no devuelve la lista de tarifarios, así que uno recién creado y sin precios no se ve desde otra pestaña hasta que le cargue el primero.',
         );
       }
       return estado.status === 'stale' ? stale(filas, estado.asOf) : ready(filas);
@@ -763,7 +763,7 @@ export class MedicalLaboratory {
     const estudio = this.estudioElegido();
     if (detalle === null || estudio === null || this.guardandoOferta()) return;
     if (!this.ofertaEsValida()) {
-      this.errorDeLaOferta.set('Revisá el estudio, su código y su nombre visible.');
+      this.errorDeLaOferta.set('Revise el estudio, su código y su nombre visible.');
       return;
     }
 

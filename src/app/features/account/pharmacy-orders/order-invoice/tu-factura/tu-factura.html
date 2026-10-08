@@ -1,6 +1,6 @@
 <section class="tu-factura" aria-labelledby="tu-factura-titulo" data-testid="tu-factura">
   <div class="tu-factura__encabezado">
-    <h3 id="tu-factura-titulo" class="tu-factura__titulo">Tu factura</h3>
+    <h3 id="tu-factura-titulo" class="tu-factura__titulo">Su factura</h3>
     @if (factura()) {
       <app-chip variant="neutral" size="sm">{{ nota }}</app-chip>
     }
@@ -55,7 +55,7 @@
 
   @if (descargaFallida()) {
     <p class="tu-factura__vacio" role="alert">
-      No pudimos preparar el PDF. Probá de nuevo desde «Ver factura».
+      No pudimos preparar el PDF. Pruebe de nuevo desde «Ver factura».
     </p>
   }
 </section>

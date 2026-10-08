@@ -3,15 +3,15 @@
     title="Cotizaciones"
     [subtitle]="
       esMaqueta
-        ? 'Compará dónde conseguirlo y cuánto cuesta. En esta maqueta, los precios de farmacias y de estudios son de ejemplo; el arancel de referencia es el real.'
-        : 'Compará dónde conseguirlo y cuánto cuesta. Si un precio no está publicado, te lo decimos: no lo inventamos.'
+        ? 'Compare dónde conseguirlo y cuánto cuesta. En esta maqueta, los precios de farmacias y de estudios son de ejemplo; el arancel de referencia es el real.'
+        : 'Compare dónde conseguirlo y cuánto cuesta. Si un precio no está publicado, se lo decimos: no lo inventamos.'
     "
   />
 }
 
 <main class="cotizaciones" aria-label="Cotizaciones del paciente">
   <section class="cotizaciones__controles" aria-label="Qué buscar y cómo ordenar">
-    <app-form-field label="Qué querés cotizar" class="cotizaciones__busqueda">
+    <app-form-field label="Qué quiere cotizar" class="cotizaciones__busqueda">
       <app-search-field
         data-testid="cotizaciones-busqueda"
         placeholder="Paracetamol, hemograma, consulta…"
@@ -55,7 +55,7 @@
   @if (!terminoValido()) {
     <app-empty-state
       data-testid="cotizaciones-sin-termino"
-      title="Escribí qué querés cotizar"
+      title="Escriba qué quiere cotizar"
       [description]="
         fixedVertical() === 'MEDICAMENTOS'
           ? 'Un medicamento. Buscamos en las farmacias de la plataforma.'
@@ -65,8 +65,8 @@
   } @else if (faltaOrigen()) {
     <app-empty-state
       data-testid="cotizaciones-sin-ubicacion"
-      title="Elegí desde dónde medir la distancia"
-      description="Para ordenar por cercanía necesitamos un punto de partida. Elegí desde dónde medir, arriba, o seguí ordenando por precio."
+      title="Elija desde dónde medir la distancia"
+      description="Para ordenar por cercanía necesitamos un punto de partida. Elija desde dónde medir, arriba, o siga ordenando por precio."
     >
       <button
         app-button
@@ -97,7 +97,7 @@
         title="Una parte no respondió"
         data-testid="cotizaciones-fuente-caida"
       >
-        No pudimos consultar: {{ fuentesCaidas() }}. Te mostramos el resto.
+        No pudimos consultar: {{ fuentesCaidas() }}. Le mostramos el resto.
         <button app-button type="button" size="sm" variant="secondary" (clicked)="reintentar()">
           <svg
             viewBox="0 0 24 24"
@@ -125,7 +125,7 @@
           termino() +
           '»' +
           (vertical() === 'TODAS' ? '' : ' en esta vertical') +
-          '. Probá con el nombre genérico o con otra palabra.'
+          '. Pruebe con el nombre genérico o con otra palabra.'
         "
       >
         <button
@@ -289,7 +289,7 @@
           data-testid="cotizaciones-ver-carrito"
           [routerLink]="rutaDelCarrito"
         >
-          En tu carrito · Ver carrito
+          En su carrito · Ver carrito
         </a>
       }
     </div>
@@ -343,7 +343,7 @@
     size="lg"
     [heading]="'Reservar ' + reserva.estudio"
     [description]="
-      reserva.centro + '. Elegí un horario; en el paso siguiente confirmás la reserva.'
+      reserva.centro + '. Elija un horario; en el paso siguiente confirma la reserva.'
     "
     (closed)="cerrarReserva()"
   >
@@ -353,7 +353,7 @@
         [tenantId]="tenantActivo()"
         [resourceRefTypes]="tablasDeCentro"
         [motivo]="'Estudio: ' + reserva.estudio"
-        sinAgenda="Este centro todavía no publicó horarios. Volvé a mirar más adelante."
+        sinAgenda="Este centro todavía no publicó horarios. Vuelva a mirar más adelante."
       />
     </div>
   </app-content-dialog>

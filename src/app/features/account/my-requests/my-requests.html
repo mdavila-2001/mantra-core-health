@@ -7,7 +7,7 @@
     @if (estado().status === 'ready') {
       @if (truncada()) {
         <app-alert tone="info" title="Se muestran las 500 más recientes" data-testid="mis-solicitudes-recortada">
-          Tenés más solicitudes que las que entran en esta lista. Usá el buscador o el período para acotarla.
+          Tiene más solicitudes que las que entran en esta lista. Use el buscador o el período para acotarla.
         </app-alert>
       }
 
@@ -33,7 +33,7 @@
   <app-view-state-host [state]="estadoDePestana()" (retry)="cargar()">
     @if (estadoDePestana().status === 'ready') {
       <app-filter-bar
-        searchLabel="Buscar en tus solicitudes"
+        searchLabel="Buscar en sus solicitudes"
         searchPlaceholder="Número, servicio, paciente, médico o motivo"
         [filters]="filtros()"
         [wrap]="true"

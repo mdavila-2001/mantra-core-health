@@ -1,6 +1,6 @@
 <app-page-header
   title="Entrega y pago"
-  subtitle="Elegí cómo lo pagás, revisá el resumen y confirmá."
+  subtitle="Elija cómo lo paga, revise el resumen y confirme."
   [breadcrumbs]="breadcrumbs()"
 />
 
@@ -32,16 +32,16 @@
         @switch (pasoActual()) {
           <!-- ─── 1 · Entrega ────────────────────────────────────────────── -->
           @case ('ENTREGA') {
-            <h2 id="checkout-paso-titulo" class="checkout__titulo" tabindex="-1">Cómo lo recibís</h2>
+            <h2 id="checkout-paso-titulo" class="checkout__titulo" tabindex="-1">Cómo lo recibe</h2>
             <p class="checkout__nota" data-testid="checkout-entrega-retiro">
-              Retirás tu pedido en {{ pedido.farmacia }} · {{ pedido.sede }}.
+              Retira su pedido en {{ pedido.farmacia }} · {{ pedido.sede }}.
             </p>
           }
 
           <!-- ─── 2 · Medio de pago (maqueta) ───────────────────────────── -->
           @case ('PAGO') {
             <h2 id="checkout-paso-titulo" class="checkout__titulo" tabindex="-1">Medio de pago</h2>
-            <app-form-field label="Cómo pagás">
+            <app-form-field label="Cómo paga">
               <app-radio-group
                 data-testid="checkout-medio-de-pago"
                 [value]="medioDePago()"
@@ -102,7 +102,7 @@
 
           <!-- ─── 3 · Resumen y confirmación final ───────────────────────── -->
           @case ('RESUMEN') {
-            <h2 id="checkout-paso-titulo" class="checkout__titulo" tabindex="-1">Revisá y confirmá</h2>
+            <h2 id="checkout-paso-titulo" class="checkout__titulo" tabindex="-1">Revise y confirme</h2>
             <p class="checkout__etiquetas">
               <app-badge variant="info">{{ notaDeEjemplo }}</app-badge>
               <span class="checkout__secundario">
@@ -138,8 +138,8 @@
             }
 
             @if (falloAlConfirmar()) {
-              <app-alert tone="error" title="No pudimos confirmar tu pedido" data-testid="checkout-error-al-confirmar">
-                No se creó ningún pedido duplicado. Podés reintentar.
+              <app-alert tone="error" title="No pudimos confirmar su pedido" data-testid="checkout-error-al-confirmar">
+                No se creó ningún pedido duplicado. Puede reintentar.
               </app-alert>
             }
 

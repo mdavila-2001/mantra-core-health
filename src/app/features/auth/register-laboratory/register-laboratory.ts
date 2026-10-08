@@ -151,7 +151,7 @@ const AYUDA: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
       icono: 'building',
       titulo: 'La empresa, no el local',
       texto:
-        'Acá va la razón social tal como figura en tu matrícula de comercio. Los locales donde atendés se cargan más adelante, cada uno con su punto en el mapa.',
+        'Acá va la razón social tal como figura en su matrícula de comercio. Los locales donde atiende se cargan más adelante, cada uno con su punto en el mapa.',
     },
     {
       icono: 'labels',
@@ -163,23 +163,23 @@ const AYUDA: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
   documentos: [
     {
       icono: 'folder',
-      titulo: 'Ningún papel frena tu alta',
+      titulo: 'Ningún papel frena su alta',
       texto:
-        'Podés adjuntarlos ahora o más adelante. Sí van a hacer falta para que tu laboratorio quede habilitado a atender: el SEPREC, la licencia y el certificado del SEDES prueban que está registrado y habilitado para operar.',
+        'Puede adjuntarlos ahora o más adelante. Sí van a hacer falta para que su laboratorio quede habilitado a atender: el SEPREC, la licencia y el certificado del SEDES prueban que está registrado y habilitado para operar.',
     },
     {
       icono: 'shield',
       titulo: 'Quién los ve',
       texto:
-        'Los mira el equipo que aprueba el alta. No se publican en tu ficha ni los ve un paciente.',
+        'Los mira el equipo que aprueba el alta. No se publican en su ficha ni los ve un paciente.',
     },
   ],
   ubicacion: [
     {
       icono: 'pin',
-      titulo: 'El punto es lo que te hace aparecer',
+      titulo: 'El punto es lo que le hace aparecer',
       texto:
-        'Cuando un paciente busca dónde hacerse un estudio, la app ordena por cercanía. Sin el punto en el mapa tu laboratorio queda fuera de esa lista, aunque la dirección esté escrita.',
+        'Cuando un paciente busca dónde hacerse un estudio, la app ordena por cercanía. Sin el punto en el mapa su laboratorio queda fuera de esa lista, aunque la dirección esté escrita.',
     },
   ],
   sucursales: [
@@ -201,7 +201,7 @@ const AYUDA: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
       icono: 'folder',
       titulo: 'El poder va con quien lo firma',
       texto:
-        'Adjuntalo acá, junto a los datos del representante. Es opcional: si el dueño se representa a sí mismo, no hace falta.',
+        'Adjúntelo acá, junto a los datos del representante. Es opcional: si el dueño se representa a sí mismo, no hace falta.',
     },
   ],
   'gerencia-general': [
@@ -217,7 +217,7 @@ const AYUDA: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
       icono: 'chart',
       titulo: 'A quién le llega la liquidación',
       texto:
-        'El resumen semanal de ventas y comisiones se manda a este correo cuando está cargado. Si lo dejás vacío, va al del representante legal.',
+        'El resumen semanal de ventas y comisiones se manda a este correo cuando está cargado. Si lo deja vacío, va al del representante legal.',
     },
   ],
   'gerencia-marketing': [
@@ -398,7 +398,7 @@ export class RegisterLaboratory {
         titulo: 'La empresa',
         clave: 'empresa',
         icon: 'building' as const,
-        hint: 'Los datos con los que figura en tu matrícula de comercio.',
+        hint: 'Los datos con los que figura en su matrícula de comercio.',
         campos: [
           {
             key: 'legalName',
@@ -408,19 +408,19 @@ export class RegisterLaboratory {
             icono: 'building' as const,
             placeholder: 'Laboratorio Clínico del Sur S.R.L.',
             testId: 'registro-lab-razon-social',
-            mensajeDeError: 'Escribí el nombre o la razón social de la empresa.',
+            mensajeDeError: 'Escriba el nombre o la razón social de la empresa.',
           },
           {
             key: 'companyType',
             label: 'Tipo de sociedad',
-            hint: 'El que figura en tu matrícula de comercio.',
+            hint: 'El que figura en su matrícula de comercio.',
             control: 'select' as const,
             options: TIPOS_DE_SOCIEDAD,
             required: true,
             icono: 'labels' as const,
-            placeholder: 'Elegí el tipo de sociedad',
+            placeholder: 'Elija el tipo de sociedad',
             testId: 'registro-lab-tipo-sociedad',
-            mensajeDeError: 'Elegí el tipo de sociedad.',
+            mensajeDeError: 'Elija el tipo de sociedad.',
           },
           {
             key: 'taxId',
@@ -431,7 +431,7 @@ export class RegisterLaboratory {
             icono: 'billing' as const,
             placeholder: '1023456789',
             testId: 'registro-lab-nit',
-            mensajeDeError: 'Escribí el NIT: sólo números, al menos cuatro dígitos.',
+            mensajeDeError: 'Escriba el NIT: sólo números, al menos cuatro dígitos.',
           },
         ],
       },
@@ -439,7 +439,7 @@ export class RegisterLaboratory {
         titulo: 'Los papeles de la empresa',
         clave: 'documentos',
         icon: 'folder' as const,
-        hint: 'Opcionales: podés adjuntarlos ahora o más adelante. PDF, hasta 10 MB por archivo.',
+        hint: 'Opcionales: puede adjuntarlos ahora o más adelante. PDF, hasta 10 MB por archivo.',
         // Los seis, en el orden del registro de procesos: el motor parte la
         // página sola en «(1 de 2)» y «(2 de 2)».
         campos: camposDeDocumentosLegales(PAIS, uiLanguage(), false),
@@ -452,27 +452,27 @@ export class RegisterLaboratory {
           {
             key: 'addressLines',
             label: 'Dirección legal de la central',
-            hint: 'Calle, número y zona. Es la que figura en tus papeles.',
+            hint: 'Calle, número y zona. Es la que figura en sus papeles.',
             control: 'text' as const,
             required: true,
             icono: 'pin' as const,
             placeholder: 'Av. Cañoto esq. Ballivián 234, Zona Central',
             testId: 'registro-lab-direccion',
-            mensajeDeError: 'Escribí la dirección legal de la central.',
+            mensajeDeError: 'Escriba la dirección legal de la central.',
           },
           {
             key: 'gpsCentral',
             label: 'Ubicación en el mapa (opcional)',
-            hint: 'Sin el punto, tu laboratorio no aparece cuando alguien busca el más cercano.',
+            hint: 'Sin el punto, su laboratorio no aparece cuando alguien busca el más cercano.',
             control: 'custom' as const,
           },
         ],
       },
       {
-        titulo: 'Tus sucursales',
+        titulo: 'Sus sucursales',
         clave: 'sucursales',
         icon: 'hospital' as const,
-        hint: 'Si sólo atendés en la central, seguí de largo.',
+        hint: 'Si sólo atiende en la central, siga de largo.',
         campos: [
           {
             key: 'sucursales',
@@ -502,18 +502,18 @@ export class RegisterLaboratory {
             required: true,
             icono: 'people' as const,
             testId: 'registro-lab-representante-documento',
-            mensajeDeError: 'Escribí el documento del representante (al menos cuatro caracteres).',
+            mensajeDeError: 'Escriba el documento del representante (al menos cuatro caracteres).',
           },
           {
             key: 'legalRepEmail',
             label: 'Correo del representante legal',
-            hint: 'Con este correo vas a entrar a la plataforma.',
+            hint: 'Con este correo va a entrar a la plataforma.',
             control: 'email' as const,
             required: true,
             icono: 'mail' as const,
             autocomplete: 'username',
             testId: 'registro-lab-representante-correo',
-            mensajeDeError: 'Escribí un correo válido: es el usuario de la cuenta.',
+            mensajeDeError: 'Escriba un correo válido: es el usuario de la cuenta.',
           },
           // El poder (4.1.8.1) se pide junto a quien lo firma, no con los papeles de la empresa.
           campoDelPoderNotariado(PAIS, uiLanguage(), this.poderObligatorio()),
@@ -523,7 +523,7 @@ export class RegisterLaboratory {
         titulo: 'Gerencia general',
         clave: 'gerencia-general',
         icon: 'briefcase' as const,
-        hint: 'Todo este paso es opcional: podés completarlo después.',
+        hint: 'Todo este paso es opcional: puede completarlo después.',
         campos: [
           {
             key: 'generalManagerName',
@@ -545,7 +545,7 @@ export class RegisterLaboratory {
             control: 'email' as const,
             icono: 'mail' as const,
             testId: 'registro-lab-gerente-general-correo',
-            mensajeDeError: 'Escribí un correo válido o dejalo vacío.',
+            mensajeDeError: 'Escriba un correo válido o déjelo vacío.',
           },
         ],
       },
@@ -575,7 +575,7 @@ export class RegisterLaboratory {
             control: 'email' as const,
             icono: 'mail' as const,
             testId: 'registro-lab-gerente-comercial-correo',
-            mensajeDeError: 'Escribí un correo válido o dejalo vacío.',
+            mensajeDeError: 'Escriba un correo válido o déjelo vacío.',
           },
         ],
       },
@@ -605,15 +605,15 @@ export class RegisterLaboratory {
             control: 'email' as const,
             icono: 'mail' as const,
             testId: 'registro-lab-gerente-marketing-correo',
-            mensajeDeError: 'Escribí un correo válido o dejalo vacío.',
+            mensajeDeError: 'Escriba un correo válido o déjelo vacío.',
           },
         ],
       },
       {
-        titulo: 'Tu acceso',
+        titulo: 'Su acceso',
         clave: 'acceso',
         icon: 'lock' as const,
-        hint: 'Entrás con el correo del representante legal y esta contraseña.',
+        hint: 'Entra con el correo del representante legal y esta contraseña.',
         campos: [
           {
             key: 'password',
@@ -891,7 +891,7 @@ export class RegisterLaboratory {
     const state = this.state();
     if (state.status === 'validation') return state.issues[0]?.message ?? null;
     if (state.status === 'offline')
-      return 'No pudimos conectarnos. Revisá tu conexión y reintentá.';
+      return 'No pudimos conectarnos. Revise su conexión y reintente.';
     if (state.status === 'error')
       return `${state.message || 'Ocurrió un error inesperado.'} (${state.requestId})`;
     return null;

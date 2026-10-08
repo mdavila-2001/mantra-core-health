@@ -366,7 +366,7 @@ export class MeasurementGrid {
       error: () => {
         this.guardando.set(false);
         this.errorAlGuardar.set(
-          'No pudimos registrar la fila. Lo que escribiste sigue acá: probá de nuevo.',
+          'No pudimos registrar la fila. Lo que escribió sigue acá: pruebe de nuevo.',
         );
       },
     });

@@ -87,7 +87,7 @@ export class FormActions {
   readonly showSubmit = input(true, { transform: booleanAttribute });
 
   /** Texto y mensaje del diálogo cuando la acción es destructiva. */
-  readonly confirmTitle = input<string>('¿Confirmás la acción?');
+  readonly confirmTitle = input<string>('¿Confirma la acción?');
   readonly confirmMessage = input<string>('Esta acción no se puede deshacer.');
 
   readonly submitted = output<void>();

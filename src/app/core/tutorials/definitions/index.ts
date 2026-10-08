@@ -28,7 +28,7 @@ const BIENVENIDA: TutorialDefinition = {
   version: '1.0',
   title: 'Primeros pasos en AloVida',
   description:
-    'Qué es cada parte de la pantalla y cómo moverte. Cinco minutos para no tener que adivinar nada.',
+    'Qué es cada parte de la pantalla y cómo moverse. Cinco minutos para no tener que adivinar nada.',
   category: 'General',
   route: '/dashboard',
   estimatedMinutes: 3,
@@ -39,19 +39,19 @@ const BIENVENIDA: TutorialDefinition = {
     {
       id: 'saludo',
       title: 'Bienvenida',
-      body: 'Te voy a mostrar las cuatro cosas que necesitás para empezar a usar la plataforma. Podés dejarlo cuando quieras y retomarlo después desde el centro de tutoriales.',
+      body: 'Le voy a mostrar las cuatro cosas que necesita para empezar a usar la plataforma. Puede dejarlo cuando quiera y retomarlo después desde el centro de tutoriales.',
     },
     {
       id: 'panel',
       title: 'El panel',
-      body: 'Es tu punto de partida: qué secciones tenés habilitadas, en qué organización estás trabajando y cómo va tu verificación de identidad.',
+      body: 'Es su punto de partida: qué secciones tiene habilitadas, en qué organización está trabajando y cómo va su verificación de identidad.',
       target: 'panel-accesos',
       placement: 'top',
     },
     {
       id: 'organizacion',
       title: 'La organización activa',
-      body: 'Casi todo lo que ves depende de la organización en la que estás. Si trabajás en más de una, se cambia acá.',
+      body: 'Casi todo lo que ve depende de la organización en la que está. Si trabaja en más de una, se cambia acá.',
       target: 'shell-selector-organizacion',
       placement: 'bottom',
     },
@@ -63,7 +63,7 @@ const BIENVENIDA: TutorialDefinition = {
     {
       id: 'ayuda',
       title: 'Dónde volver',
-      body: 'Todos los tutoriales viven en el centro de tutoriales. Podés repetir cualquiera las veces que quieras.',
+      body: 'Todos los tutoriales viven en el centro de tutoriales. Puede repetir cualquiera las veces que quiera.',
       target: 'nav-tutorials',
       placement: 'right',
     },
@@ -74,9 +74,9 @@ const BIENVENIDA: TutorialDefinition = {
 const NAVEGACION: TutorialDefinition = {
   id: 'navegacion',
   version: '1.0',
-  title: 'Moverte por la aplicación',
+  title: 'Moverse por la aplicación',
   description:
-    'Cómo está organizado el menú, por qué ves unas secciones y no otras, y cómo volver sobre tus pasos.',
+    'Cómo está organizado el menú, por qué ve unas secciones y no otras, y cómo volver sobre sus pasos.',
   category: 'General',
   route: '/dashboard',
   estimatedMinutes: 2,
@@ -86,21 +86,21 @@ const NAVEGACION: TutorialDefinition = {
     {
       id: 'grupos',
       title: 'El menú, por dominios',
-      body: 'Las secciones están agrupadas por lo que hacés con ellas: atención, facturación, administración y tu cuenta.',
+      body: 'Las secciones están agrupadas por lo que hace con ellas: atención, facturación, administración y su cuenta.',
       target: 'shell-nav',
       placement: 'right',
     },
     {
       id: 'roles',
-      title: 'Por qué ves estas secciones',
-      body: 'El menú se arma con los roles de tu sesión. Si una sección no aparece, es porque tu rol no la puede abrir, no porque no exista.',
+      title: 'Por qué ve estas secciones',
+      body: 'El menú se arma con los roles de su sesión. Si una sección no aparece, es porque su rol no la puede abrir, no porque no exista.',
       target: 'panel-accesos',
       placement: 'top',
     },
     {
       id: 'migas',
-      title: 'Volver sobre tus pasos',
-      body: 'La ruta de navegación de cada pantalla te dice dónde estás y te deja subir un nivel sin usar el botón de atrás del navegador.',
+      title: 'Volver sobre sus pasos',
+      body: 'La ruta de navegación de cada pantalla le dice dónde está y le deja subir un nivel sin usar el botón de atrás del navegador.',
       target: 'panel-titulo',
       placement: 'bottom',
     },
@@ -111,9 +111,9 @@ const NAVEGACION: TutorialDefinition = {
 const AGENDA_DEL_DIA: TutorialDefinition = {
   id: 'agenda-del-dia',
   version: '1.0',
-  title: 'Tu agenda del día',
+  title: 'Su agenda del día',
   description:
-    'Ver tus turnos, cambiar la ventana de consulta y entrar al expediente de quien llega.',
+    'Ver sus turnos, cambiar la ventana de consulta y entrar al expediente de quien llega.',
   category: 'Atención',
   route: '/schedule',
   roles: ['PRACTITIONER', 'CLINICIAN', 'SCHEDULING_ADMIN', 'SCHEDULING_AGENT'],
@@ -124,16 +124,16 @@ const AGENDA_DEL_DIA: TutorialDefinition = {
     {
       id: 'que-es',
       title: 'La agenda',
-      body: 'Acá están tus citas comprometidas y los cupos que todavía podés ofrecer. Son dos pestañas de la misma agenda.',
+      body: 'Acá están sus citas comprometidas y los cupos que todavía puede ofrecer. Son dos pestañas de la misma agenda.',
     },
     {
       id: 'ventana',
-      title: 'Cambiá la ventana',
-      body: 'Elegí «Hoy» para ver sólo lo de hoy. Probalo: el listado se recarga solo.',
+      title: 'Cambie la ventana',
+      body: 'Elija «Hoy» para ver sólo lo de hoy. Pruébelo: el listado se recarga solo.',
       target: 'agenda-ventana',
       placement: 'bottom',
       advanceOn: 'input',
-      hint: 'Si no pasa nada, abrí el desplegable y elegí una opción distinta a la actual.',
+      hint: 'Si no pasa nada, abra el desplegable y elija una opción distinta a la actual.',
     },
     {
       id: 'pestanas',
@@ -145,7 +145,7 @@ const AGENDA_DEL_DIA: TutorialDefinition = {
     {
       id: 'expediente',
       title: 'Del turno al expediente',
-      body: 'Cada cita enlaza al expediente de la persona, con el motivo de consulta ya cargado. Es por donde sigue tu día.',
+      body: 'Cada cita enlaza al expediente de la persona, con el motivo de consulta ya cargado. Es por donde sigue su día.',
       target: 'agenda-tabla-citas',
       placement: 'top',
       roles: ['PRACTITIONER', 'CLINICIAN'],
@@ -197,7 +197,7 @@ const ATENCION_CLINICA: TutorialDefinition = {
   version: '1.1',
   title: 'Registrar una atención',
   description:
-    'Abrir el encuentro, elegir en la rejilla qué le vas a registrar a la persona y cerrar cuando terminás.',
+    'Abrir el encuentro, elegir en la rejilla qué le va a registrar a la persona y cerrar cuando termina.',
   category: 'Atención',
   roles: ['PRACTITIONER', 'CLINICIAN'],
   estimatedMinutes: 3,
@@ -207,14 +207,14 @@ const ATENCION_CLINICA: TutorialDefinition = {
     {
       id: 'encuentro',
       title: 'Dejar constancia',
-      body: 'El encuentro es el registro de que atendiste a esta persona. Se abre al empezar y se cierra al terminar; todo lo demás cuelga de él.',
+      body: 'El encuentro es el registro de que atendió a esta persona. Se abre al empezar y se cierra al terminar; todo lo demás cuelga de él.',
       target: 'consulta-encuentro',
       placement: 'bottom',
     },
     {
       id: 'receta',
-      title: 'Qué le vas a registrar',
-      body: 'Cada casilla de la rejilla es algo que se puede registrar en esta consulta: formulario médico, orden de análisis, diagnóstico (también alergias), receta, plan de cuidados o reconsulta. Tocá una y se abre su formulario.',
+      title: 'Qué le va a registrar',
+      body: 'Cada casilla de la rejilla es algo que se puede registrar en esta consulta: formulario médico, orden de análisis, diagnóstico (también alergias), receta, plan de cuidados o reconsulta. Toque una y se abre su formulario.',
       target: 'consulta-rejilla',
       placement: 'top',
     },
@@ -233,9 +233,9 @@ const ATENCION_CLINICA: TutorialDefinition = {
 const PERFIL_PROFESIONAL: TutorialDefinition = {
   id: 'perfil-profesional',
   version: '2.0',
-  title: 'Tu perfil profesional',
+  title: 'Su perfil profesional',
   description:
-    'Tu trayectoria, tus credenciales y cómo se ve tu perfil público para un paciente.',
+    'Su trayectoria, sus credenciales y cómo se ve su perfil público para un paciente.',
   category: 'Mi cuenta',
   route: '/my-account',
   roles: ['PRACTITIONER', 'CLINICIAN'],
@@ -244,22 +244,22 @@ const PERFIL_PROFESIONAL: TutorialDefinition = {
   steps: [
     {
       id: 'portada',
-      title: 'Cómo te ven',
-      body: 'Tu nombre, tu título y la especialidad con la que te presentás. También si estás tomando pacientes nuevos.',
+      title: 'Cómo le ven',
+      body: 'Su nombre, su título y la especialidad con la que se presenta. También si está tomando pacientes nuevos.',
       target: 'perfil-portada',
       placement: 'bottom',
     },
     {
       id: 'actividad',
-      title: 'Lo que llevás registrado',
-      body: 'Encuentros, recetas, notas y documentos que dejaste asentados con esta cuenta. No es un ranking: es tu historial.',
+      title: 'Lo que lleva registrado',
+      body: 'Encuentros, recetas, notas y documentos que dejó asentados con esta cuenta. No es un ranking: es su historial.',
       target: 'perfil-actividad',
       placement: 'top',
     },
     {
       id: 'trayectoria',
-      title: 'Tu trayectoria',
-      body: 'Formación, dónde ejerciste antes y dónde ejercés hoy, en una línea de tiempo. Acá también agregás vínculos laborales nuevos.',
+      title: 'Su trayectoria',
+      body: 'Formación, dónde ejerció antes y dónde ejerce hoy, en una línea de tiempo. Acá también agrega vínculos laborales nuevos.',
       target: 'perfil-trayectoria',
       placement: 'top',
     },
@@ -278,7 +278,7 @@ const CENTRO_DE_AYUDA: TutorialDefinition = {
   id: 'centro-de-ayuda',
   version: '1.0',
   title: 'Usar el centro de tutoriales',
-  description: 'Buscar, filtrar, continuar lo empezado y repetir lo que ya hiciste.',
+  description: 'Buscar, filtrar, continuar lo empezado y repetir lo que ya hizo.',
   category: 'General',
   route: '/tutorials',
   estimatedMinutes: 2,
@@ -286,15 +286,15 @@ const CENTRO_DE_AYUDA: TutorialDefinition = {
   steps: [
     {
       id: 'avance',
-      title: 'Cuánto llevás',
-      body: 'El avance general cuenta los tutoriales que completaste sobre los que tenés disponibles según tu rol.',
+      title: 'Cuánto lleva',
+      body: 'El avance general cuenta los tutoriales que completó sobre los que tiene disponibles según su rol.',
       target: 'tutoriales-avance',
       placement: 'bottom',
     },
     {
       id: 'buscador',
       title: 'Buscar',
-      body: 'Escribí lo que querés aprender. Busca en el título y en la descripción.',
+      body: 'Escriba lo que quiere aprender. Busca en el título y en la descripción.',
       target: 'tutoriales-busqueda',
       placement: 'bottom',
       advanceOn: 'input',
@@ -302,14 +302,14 @@ const CENTRO_DE_AYUDA: TutorialDefinition = {
     {
       id: 'filtros',
       title: 'Filtrar',
-      body: 'Por categoría y por estado, para encontrar lo que dejaste a medias.',
+      body: 'Por categoría y por estado, para encontrar lo que dejó a medias.',
       target: 'tutoriales-filtros',
       placement: 'bottom',
     },
     {
       id: 'tarjeta',
       title: 'Empezar, continuar o repetir',
-      body: 'Cada tutorial te ofrece lo que corresponde según cómo lo dejaste. Repetir uno completado no borra que lo hiciste.',
+      body: 'Cada tutorial le ofrece lo que corresponde según cómo lo dejó. Repetir uno completado no borra que lo hizo.',
       target: 'tutoriales-lista',
       placement: 'top',
     },
@@ -324,9 +324,9 @@ const CENTRO_DE_AYUDA: TutorialDefinition = {
 const CONTABILIDAD: TutorialDefinition = {
   id: 'contabilidad',
   version: '1.1',
-  title: 'Registrar tus movimientos contables',
+  title: 'Registrar sus movimientos contables',
   description:
-    'El balance de sumas y saldos y el libro diario de tu práctica, y cómo registrar un ingreso o un gasto.',
+    'El balance de sumas y saldos y el libro diario de su práctica, y cómo registrar un ingreso o un gasto.',
   category: 'Facturación',
   // Los pasos explican el balance, el diario y cómo registrar un movimiento:
   // eso vive en los libros, que desde el 2026-09-12 están un clic adentro de
@@ -339,17 +339,17 @@ const CONTABILIDAD: TutorialDefinition = {
     {
       id: 'que-es',
       title: 'Contabilidad',
-      body: 'Acá revisás lo que tu práctica facturó y cobró, y registrás vos mismo tus movimientos.',
+      body: 'Acá revisa lo que su práctica facturó y cobró, y registra usted mismo sus movimientos.',
     },
     {
       id: 'registrar-ingreso',
       title: 'Ingreso de una consulta pagada',
-      body: 'Elegí la factura ya pagada, elegí las cuentas de debe y haber, y confirmá. Queda en borrador, anclado a esa factura.',
+      body: 'Elija la factura ya pagada, elija las cuentas de debe y haber, y confirme. Queda en borrador, anclado a esa factura.',
     },
     {
       id: 'aprobacion',
       title: 'Quién lo aprueba',
-      body: 'Un borrador no es un hecho contable todavía: el posteo final lo hace quien tiene autoridad contable en tu práctica.',
+      body: 'Un borrador no es un hecho contable todavía: el posteo final lo hace quien tiene autoridad contable en su práctica.',
     },
   ],
 };
@@ -358,7 +358,7 @@ const CONTABILIDAD: TutorialDefinition = {
 const ORGANIZACIONES: TutorialDefinition = {
   id: 'mis-organizaciones',
   version: '1.0',
-  title: 'Vincularte a una organización',
+  title: 'Vincularse a una organización',
   description: 'Pedir una vinculación y entender qué implica (y qué no).',
   category: 'Administración',
   route: '/administration/medical-organization',
@@ -369,17 +369,17 @@ const ORGANIZACIONES: TutorialDefinition = {
     {
       id: 'que-es',
       title: 'Mis vinculaciones',
-      body: 'Podés ejercer en más de una organización a la vez. En la pestaña «Mis vinculaciones» de este panel pedís vincularte a una y ves el estado de todas.',
+      body: 'Puede ejercer en más de una organización a la vez. En la pestaña «Mis vinculaciones» de este panel pide vincularse a una y ve el estado de todas.',
     },
     {
       id: 'pendiente',
       title: 'Queda pendiente',
-      body: 'Pedir una vinculación no te agrega de inmediato: la organización tiene que aprobarla, igual que en la vida real.',
+      body: 'Pedir una vinculación no le agrega de inmediato: la organización tiene que aprobarla, igual que en la vida real.',
     },
     {
       id: 'no-da-acceso',
       title: 'No da acceso a pacientes',
-      body: 'Estar vinculado a una organización nunca te da acceso a sus pacientes. Eso depende siempre de una cita, derivación, intervención o autorización concreta con ese paciente.',
+      body: 'Estar vinculado a una organización nunca le da acceso a sus pacientes. Eso depende siempre de una cita, derivación, intervención o autorización concreta con ese paciente.',
     },
   ],
 };
@@ -388,8 +388,8 @@ const ORGANIZACIONES: TutorialDefinition = {
 const NOTIFICACIONES: TutorialDefinition = {
   id: 'notificaciones',
   version: '1.1',
-  title: 'Tus notificaciones',
-  description: 'La bandeja de avisos y tus preferencias por categoría.',
+  title: 'Sus notificaciones',
+  description: 'La bandeja de avisos y sus preferencias por categoría.',
   category: 'General',
   route: '/notification-center',
   estimatedMinutes: 2,
@@ -398,17 +398,17 @@ const NOTIFICACIONES: TutorialDefinition = {
     {
       id: 'que-es',
       title: 'Notificaciones',
-      body: 'Acá ves tus avisos: recetas, consultas, turnos y mensajes. Tocá uno para abrir lo que anuncia, y marcalos leídos de a uno o todos juntos.',
+      body: 'Acá ve sus avisos: recetas, consultas, turnos y mensajes. Toque uno para abrir lo que anuncia, y márquelos leídos de a uno o todos juntos.',
     },
     {
       id: 'preferencias',
-      title: 'Elegí de qué te avisamos',
-      body: 'Desde el ícono de Ajustes, arriba a la derecha, en «Avisos» activás o silenciás cada familia: recetas y consultas, turnos, mensajes y actividad social.',
+      title: 'Elija de qué le avisamos',
+      body: 'Desde el ícono de Ajustes, arriba a la derecha, en «Avisos» activa o silencia cada familia: recetas y consultas, turnos, mensajes y actividad social.',
     },
     {
       id: 'silencio',
       title: 'Ventana de silencio',
-      body: 'También podés fijar un horario de silencio, que se escribe en tu hora local: en esa ventana no te avisamos, y lo pendiente te espera en la bandeja.',
+      body: 'También puede fijar un horario de silencio, que se escribe en su hora local: en esa ventana no le avisamos, y lo pendiente le espera en la bandeja.',
     },
   ],
 };

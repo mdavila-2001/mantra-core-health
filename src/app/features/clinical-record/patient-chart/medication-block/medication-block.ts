@@ -688,7 +688,7 @@ export class MedicationBlock implements DraftBlock {
     if (receta === null) {
       return null;
     }
-    return `«${receta.medicamento}» necesita tu firma antes de emitirse.`;
+    return `«${receta.medicamento}» necesita su firma antes de emitirse.`;
   });
 
   /**
@@ -717,17 +717,17 @@ export class MedicationBlock implements DraftBlock {
         if (this.falloAlPrescribir()) {
           return (
             state.issues.map((issue) => issue.message).join(' ') ||
-            'El diagnóstico elegido no corresponde a esta persona. Elegí otro o dejá la receta sin diagnóstico.'
+            'El diagnóstico elegido no corresponde a esta persona. Elija otro o deje la receta sin diagnóstico.'
           );
         }
-        return 'Esa receta ya no está en borrador: alguien la emitió o la invalidó antes. Recargá el expediente.';
+        return 'Esa receta ya no está en borrador: alguien la emitió o la invalidó antes. Recargue el expediente.';
       }
       return state.issues.map((issue) => issue.message).join(' ') || null;
     }
     return mensajeDeFalloDeEscritura(state, {
       accion: 'recetar',
-      sinPermiso: 'Tu rol no permite recetar.',
-      yaNoExiste: 'La receta ya no existe. Recargá el expediente.',
+      sinPermiso: 'Su rol no permite recetar.',
+      yaNoExiste: 'La receta ya no existe. Recargue el expediente.',
     });
   });
 
@@ -1032,7 +1032,7 @@ export class MedicationBlock implements DraftBlock {
           // ofrecerse acá. No se cierra solo: elegir los archivos lleva su
           // tiempo, y cerrarlo por cuenta propia perdería la referencia.
           this.recetaRecienCreada.set(creada.id);
-          this.toasts.success('Queda en borrador hasta que la firmes.', 'Receta creada');
+          this.toasts.success('Queda en borrador hasta que la firme.', 'Receta creada');
           this.cambio.emit();
         },
         error: (error: unknown) => {
@@ -1180,7 +1180,7 @@ export class MedicationBlock implements DraftBlock {
         this.errorDeVincular.set(
           estado.status === 'validation'
             ? 'La receta sólo se liga a un diagnóstico confirmado.'
-            : 'No se pudo vincular. Probá de nuevo.',
+            : 'No se pudo vincular. Pruebe de nuevo.',
         );
       },
     });
@@ -1242,7 +1242,7 @@ export class MedicationBlock implements DraftBlock {
           ? 'Se detectó una interacción'
           : `Se detectaron ${chequeo.count} interacciones`,
       message:
-        'El motor de decisión clínica encontró interacción entre este medicamento y la medicación activa de la persona. Revisala antes de seguir.',
+        'El motor de decisión clínica encontró interacción entre este medicamento y la medicación activa de la persona. Revísela antes de seguir.',
       confirmLabel: 'Prescribir de todas formas',
     });
   }

@@ -2,7 +2,7 @@
       <span class="app-page-header__icono" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3.2 19 6v5c0 4.5-3 8-7 9.8-4-1.8-7-5.3-7-9.8V6z"></path><path d="M9 12l2 2 4-4"></path></svg></span>
       <div class="app-page-header__texto">
         <div class="app-page-header__titulo"><h1>Aseguradoras y convenios</h1></div>
-        <p class="caption">Qué cubre cada seguro y en qué clínicas te lo aceptan. La red de prestadores es el dato que más se consulta y el que más cambia: cada ficha dice cuándo la actualizó la aseguradora.</p>
+        <p class="caption">Qué cubre cada seguro y en qué clínicas se lo aceptan. La red de prestadores es el dato que más se consulta y el que más cambia: cada ficha dice cuándo la actualizó la aseguradora.</p>
       </div>
 
     </div>
@@ -25,7 +25,7 @@
           [departamentos]="lugar.departamentos()"
           [value]="lugar.departamentoElegido()"
           (valueChange)="lugar.elegirDepartamento($event)"
-          etiqueta="Mapa de Bolivia: elegí el departamento donde buscás"
+          etiqueta="Mapa de Bolivia: elija el departamento donde busca"
         />
         @if (busqueda.resumenDelLugar(); as resumen) {
           <p class="mapa-directorio__resumen" data-testid="aseguradoras-mapa-resumen">{{ resumen }}</p>
@@ -34,14 +34,14 @@
     }
     <section class="app-filter-bar" app-filter-bar="" aria-label="Filtros de la búsqueda">
       <label class="app-search-field" app-search-field="">
-        <span class="solo-lectores">Buscá por aseguradora, plan o prestador en convenio</span>
+        <span class="solo-lectores">Busque por aseguradora, plan o prestador en convenio</span>
         <svg class="icono icono--busqueda" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
         <input
           class="app-input"
           app-input=""
           type="search"
           name="q"
-          placeholder="Buscá por aseguradora, plan o prestador en convenio"
+          placeholder="Busque por aseguradora, plan o prestador en convenio"
           [value]="busqueda.texto()"
           (input)="alEscribir($any($event.target).value)"
         />
@@ -156,8 +156,8 @@
       <div class="app-empty-state" app-empty-state="">
         <span class="app-empty-state__icono"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3.2 19 6v5c0 4.5-3 8-7 9.8-4-1.8-7-5.3-7-9.8V6z"></path><path d="M9 12l2 2 4-4"></path></svg></span>
         <h2>Ninguna aseguradora coincide con esos filtros</h2>
-        <p>El filtro de prestador es el más estricto: la red la carga cada aseguradora y no todas la tienen al día. Si buscás por una clínica concreta y no aparece nada, mirá la ficha de esa clínica —ahí figuran los convenios que la propia clínica declara, que a veces están más actualizados.</p>
-        <a app-button="" data-variante="secundario" routerLink="/search"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 11a8 8 0 1 0-.7 4.2"></path><path d="M20 5v6h-6"></path></svg>Probá con otra búsqueda</a>
+        <p>El filtro de prestador es el más estricto: la red la carga cada aseguradora y no todas la tienen al día. Si busca por una clínica concreta y no aparece nada, mire la ficha de esa clínica —ahí figuran los convenios que la propia clínica declara, que a veces están más actualizados.</p>
+        <a app-button="" data-variante="secundario" routerLink="/search"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 11a8 8 0 1 0-.7 4.2"></path><path d="M20 5v6h-6"></path></svg>Pruebe con otra búsqueda</a>
       </div>
       </div>
         }
@@ -185,7 +185,7 @@
           <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4.5 21 19.5H3z"></path><path d="M12 10v4"></path><circle cx="12" cy="17" r=".9" fill="currentColor" stroke="none"></circle></svg>
           <div class="app-alert__cuerpo">
             <strong>No pudimos completar la búsqueda de aseguradoras.</strong>
-            <p>El directorio no respondió a tiempo. Volvé a intentarlo en un momento; tu búsqueda se mantiene escrita.</p>
+            <p>El directorio no respondió a tiempo. Vuelva a intentarlo en un momento; su búsqueda se mantiene escrita.</p>
           </div>
         </div>
         <div style="margin-top:var(--e5)">

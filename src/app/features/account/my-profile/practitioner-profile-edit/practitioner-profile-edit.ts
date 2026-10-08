@@ -656,7 +656,7 @@ export class PractitionerProfileEdit {
         this.guardandoIdiomas.set(false);
         this.sembrarIdiomas(perfil);
         this.perfil.set(ready(perfil));
-        this.toasts.success('Tus idiomas quedaron guardados.', 'Perfil');
+        this.toasts.success('Sus idiomas quedaron guardados.', 'Perfil');
       },
       error: (error: unknown) => {
         this.guardandoIdiomas.set(false);
@@ -1662,7 +1662,7 @@ export class PractitionerProfileEdit {
         },
         error: () => {
           this.subiendoLogo.set(false);
-          this.errorDelLogo.set('No se pudo subir el logo. Probá de nuevo.');
+          this.errorDelLogo.set('No se pudo subir el logo. Pruebe de nuevo.');
         },
       });
   }
@@ -1672,7 +1672,7 @@ export class PractitionerProfileEdit {
     const motivo = rechazados[0]?.reason;
     this.errorDelLogo.set(
       motivo === 'tamaño'
-        ? 'El logo pesa más de 2 MB. Elegí una imagen más liviana.'
+        ? 'El logo pesa más de 2 MB. Elija una imagen más liviana.'
         : 'El logo tiene que ser una imagen PNG, JPG o WEBP.',
     );
   }
@@ -1865,10 +1865,10 @@ export class PractitionerProfileEdit {
       this.firma.descartar();
       this.sello.descartar();
       if (!(await this.router.navigate(['/account/profile']))) {
-        this.toasts.error('No pudimos volver a tu perfil. Probá de nuevo.', 'Perfil');
+        this.toasts.error('No pudimos volver a su perfil. Pruebe de nuevo.', 'Perfil');
       }
     } catch {
-      this.toasts.error('No pudimos volver a tu perfil. Probá de nuevo.', 'Perfil');
+      this.toasts.error('No pudimos volver a su perfil. Pruebe de nuevo.', 'Perfil');
     } finally {
       this.cancelandoEdicion.set(false);
     }
@@ -1902,7 +1902,7 @@ export class PractitionerProfileEdit {
     if (telefonos.some((telefono) => telefono.invalid)) {
       telefonos.forEach((telefono) => telefono.markAsTouched());
       this.pestana.set(PESTANA_EDITOR.contacto);
-      this.toasts.error('Hay un teléfono incompleto. Revisalo en «Contacto».', 'Perfil');
+      this.toasts.error('Hay un teléfono incompleto. Revíselo en «Contacto».', 'Perfil');
       return;
     }
 
@@ -1913,14 +1913,14 @@ export class PractitionerProfileEdit {
       !correoTrabajoCambio
         ? ''
         : correoTrabajo === ''
-          ? 'Escribí tu correo de trabajo.'
+          ? 'Escriba su correo de trabajo.'
           : PATRON_CORREO.test(correoTrabajo)
             ? ''
-            : 'Revisá el correo: le falta algo, como la @ o el dominio.',
+            : 'Revise el correo: le falta algo, como la @ o el dominio.',
     );
     if (this.errorCorreoTrabajo()) {
       this.pestana.set(PESTANA_EDITOR.contacto);
-      this.toasts.error('El correo de trabajo no es válido. Revisalo en «Contacto».', 'Perfil');
+      this.toasts.error('El correo de trabajo no es válido. Revíselo en «Contacto».', 'Perfil');
       return;
     }
 
@@ -2067,7 +2067,7 @@ export class PractitionerProfileEdit {
       return;
     }
     if (this.subiendoLogo() || this.firma.subiendo() || this.sello.subiendo()) {
-      this.toasts.error('Esperá a que termine de subir la imagen.', 'Perfil');
+      this.toasts.error('Espere a que termine de subir la imagen.', 'Perfil');
       return;
     }
 
@@ -2103,7 +2103,7 @@ export class PractitionerProfileEdit {
           }
           this.sembrarFormulario(perfil);
           this.perfil.set(ready(perfil));
-          this.toasts.success('Tu perfil quedó actualizado.', 'Perfil');
+          this.toasts.success('Su perfil quedó actualizado.', 'Perfil');
         },
         error: (error: unknown) => {
           this.guardandoPresentacion.set(false);
@@ -2153,11 +2153,11 @@ export class PractitionerProfileEdit {
     this.erroresDelServidor.set(porCampo);
 
     if (porCampo.size > 0) {
-      this.toasts.error('Revisá los campos marcados y volvé a guardar.', 'Perfil');
+      this.toasts.error('Revise los campos marcados y vuelva a guardar.', 'Perfil');
       return;
     }
     const sueltos = problemas.map((problema) => problema.message).join(' ');
-    this.toasts.error(sueltos || 'No se pudo guardar el cambio. Probá de nuevo.', 'Perfil');
+    this.toasts.error(sueltos || 'No se pudo guardar el cambio. Pruebe de nuevo.', 'Perfil');
   }
 
   /**
@@ -2189,7 +2189,7 @@ export class PractitionerProfileEdit {
 
     const varias = elegidas.length > 1;
     const confirmado = await this.dialogs.confirmarCambios({
-      title: '¿Confirmás estos datos?',
+      title: '¿Confirma estos datos?',
       message: varias
         ? `Se agregan ${elegidas.length} especialidades y quedan pendientes de verificación.`
         : 'La especialidad se agrega y queda pendiente de verificación.',
@@ -2227,8 +2227,8 @@ export class PractitionerProfileEdit {
         this.guardandoEspecialidad.set(false);
         this.toasts.error(
           varias
-            ? 'No se pudieron agregar todas las especialidades. Revisá cuáles quedaron y probá de nuevo.'
-            : 'No se pudo agregar la especialidad. Probá de nuevo.',
+            ? 'No se pudieron agregar todas las especialidades. Revise cuáles quedaron y pruebe de nuevo.'
+            : 'No se pudo agregar la especialidad. Pruebe de nuevo.',
           'Especialidades',
         );
         this.cargar();
@@ -2262,8 +2262,8 @@ export class PractitionerProfileEdit {
     }
 
     const confirmado = await this.dialogs.confirmarCambios({
-      title: '¿Confirmás estos datos?',
-      message: 'La matrícula se agrega a tus credenciales y queda pendiente de verificación.',
+      title: '¿Confirma estos datos?',
+      message: 'La matrícula se agrega a sus credenciales y queda pendiente de verificación.',
     });
     if (!confirmado) {
       return;
@@ -2283,7 +2283,7 @@ export class PractitionerProfileEdit {
       error: () => {
         this.guardandoMatricula.set(false);
         this.toasts.error(
-          'No pudimos subir el respaldo, así que no se agregó la matrícula. Probá de nuevo.',
+          'No pudimos subir el respaldo, así que no se agregó la matrícula. Pruebe de nuevo.',
           'Matrículas',
         );
       },
@@ -2314,7 +2314,7 @@ export class PractitionerProfileEdit {
         },
         error: () => {
           this.guardandoMatricula.set(false);
-          this.toasts.error('No se pudo agregar la matrícula. Probá de nuevo.', 'Matrículas');
+          this.toasts.error('No se pudo agregar la matrícula. Pruebe de nuevo.', 'Matrículas');
         },
       });
   }
@@ -2349,8 +2349,8 @@ export class PractitionerProfileEdit {
     }
 
     const confirmado = await this.dialogs.confirmarCambios({
-      title: '¿Confirmás estos datos?',
-      message: 'El título se agrega a tus credenciales y queda pendiente de verificación.',
+      title: '¿Confirma estos datos?',
+      message: 'El título se agrega a sus credenciales y queda pendiente de verificación.',
     });
     if (!confirmado) {
       return;
@@ -2370,7 +2370,7 @@ export class PractitionerProfileEdit {
       error: () => {
         this.guardandoCredencial.set(false);
         this.toasts.error(
-          'No pudimos subir el diploma, así que no se agregó el título. Probá de nuevo.',
+          'No pudimos subir el diploma, así que no se agregó el título. Pruebe de nuevo.',
           'Formación',
         );
       },
@@ -2401,7 +2401,7 @@ export class PractitionerProfileEdit {
         },
         error: () => {
           this.guardandoCredencial.set(false);
-          this.toasts.error('No se pudo agregar el título. Probá de nuevo.', 'Formación');
+          this.toasts.error('No se pudo agregar el título. Pruebe de nuevo.', 'Formación');
         },
       });
   }
@@ -2784,7 +2784,7 @@ export class PractitionerProfileEdit {
       },
       error: () => {
         this.descargando.set(null);
-        this.toasts.error('No pudimos traer el archivo. Probá de nuevo en un momento.', bloque);
+        this.toasts.error('No pudimos traer el archivo. Pruebe de nuevo en un momento.', bloque);
       },
     });
   }
@@ -2842,7 +2842,7 @@ export class PractitionerProfileEdit {
       },
       error: () => {
         this.retirando.set(null);
-        this.toasts.error('No se pudo retirar. Probá de nuevo.', bloque);
+        this.toasts.error('No se pudo retirar. Pruebe de nuevo.', bloque);
       },
     });
   }
@@ -2999,7 +2999,7 @@ export class PractitionerProfileEdit {
       error: () => {
         this.guardandoEdicion.set(false);
         this.toasts.error(
-          'No pudimos subir el archivo, así que no se guardaron los cambios. Probá de nuevo.',
+          'No pudimos subir el archivo, así que no se guardaron los cambios. Pruebe de nuevo.',
           BLOQUE_DE_RECURSO[enCurso.recurso],
         );
       },
@@ -3020,7 +3020,7 @@ export class PractitionerProfileEdit {
       },
       error: () => {
         this.guardandoEdicion.set(false);
-        this.toasts.error('No se pudieron guardar los cambios. Probá de nuevo.', bloque);
+        this.toasts.error('No se pudieron guardar los cambios. Pruebe de nuevo.', bloque);
       },
     });
   }

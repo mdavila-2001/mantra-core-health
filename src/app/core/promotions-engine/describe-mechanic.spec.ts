@@ -43,8 +43,8 @@ describe('describeMechanic', () => {
       'Bs 10 menos',
       'Bs 10 menos en cada unidad.',
     ],
-    ['BUY_X_PAY_Y 2x1', { kind: 'BUY_X_PAY_Y', take: 2, pay: 1 }, '2x1', 'Llevá 2 y pagá 1.'],
-    ['BUY_X_PAY_Y 3x2', { kind: 'BUY_X_PAY_Y', take: 3, pay: 2 }, '3x2', 'Llevá 3 y pagá 2.'],
+    ['BUY_X_PAY_Y 2x1', { kind: 'BUY_X_PAY_Y', take: 2, pay: 1 }, '2x1', 'Lleve 2 y pague 1.'],
+    ['BUY_X_PAY_Y 3x2', { kind: 'BUY_X_PAY_Y', take: 3, pay: 2 }, '3x2', 'Lleve 3 y pague 2.'],
     [
       'NTH_UNIT_PERCENT 2',
       { kind: 'NTH_UNIT_PERCENT', nth: 2, percent: 50 },
@@ -67,19 +67,19 @@ describe('describeMechanic', () => {
         ],
       },
       'Más unidades, más descuento',
-      'Cuantas más unidades llevás, más descuento: desde 2 unidades, 10 %; desde 3 unidades, 15 %.',
+      'Cuantas más unidades lleva, más descuento: desde 2 unidades, 10 %; desde 3 unidades, 15 %.',
     ],
     [
       'ORDER_PERCENT_OVER',
       { kind: 'ORDER_PERCENT_OVER', minSpend: '200.00', percent: 10 },
       '10 % desde Bs 200',
-      '10 % de descuento en tu compra desde Bs 200.',
+      '10 % de descuento en su compra desde Bs 200.',
     ],
     [
       'ORDER_AMOUNT_OVER',
       { kind: 'ORDER_AMOUNT_OVER', minSpend: '250.00', amount: '30.00' },
       'Bs 30 menos desde Bs 250',
-      'Bs 30 menos en tu compra desde Bs 250.',
+      'Bs 30 menos en su compra desde Bs 250.',
     ],
     [
       'SPEND_TIERS',
@@ -90,8 +90,8 @@ describe('describeMechanic', () => {
           { minSpend: '200.00', percent: 10 },
         ],
       },
-      'Más gastás, más ahorrás',
-      'Cuanto más compres, más ahorrás: desde Bs 100, 5 %; desde Bs 200, 10 %.',
+      'Más gasta, más ahorra',
+      'Cuanto más compres, más ahorra: desde Bs 100, 5 %; desde Bs 200, 10 %.',
     ],
     [
       'BUNDLE_PRICE',
@@ -115,7 +115,7 @@ describe('describeMechanic', () => {
       'POINTS_MULTIPLIER',
       { kind: 'POINTS_MULTIPLIER', multiplier: 2 },
       'Puntos ×2',
-      'Sumás 2 veces más puntos en esta compra.',
+      'Suma 2 veces más puntos en esta compra.',
     ],
   ];
 
@@ -140,7 +140,7 @@ describe('describeNudge', () => {
       missingAmount: '23.00',
       reward: { kind: 'ORDER_PERCENT_OVER', minSpend: '200.00', percent: 10 },
     };
-    expect(describeNudge(nudge, CONTEXT)).toBe('Te faltan Bs 23 para el 10 % de descuento.');
+    expect(describeNudge(nudge, CONTEXT)).toBe('Le faltan Bs 23 para el 10 % de descuento.');
   });
 
   it('dice cuánto falta para un monto fijo y para el siguiente tramo', () => {
@@ -154,7 +154,7 @@ describe('describeNudge', () => {
         },
         CONTEXT,
       ),
-    ).toBe('Te faltan Bs 5.50 para que te descontemos Bs 30.');
+    ).toBe('Le faltan Bs 5.50 para que le descontemos Bs 30.');
     expect(
       describeNudge(
         {
@@ -165,7 +165,7 @@ describe('describeNudge', () => {
         },
         CONTEXT,
       ),
-    ).toBe('Te faltan Bs 50 para el siguiente descuento.');
+    ).toBe('Le faltan Bs 50 para el siguiente descuento.');
   });
 
   it('dice cuántas unidades faltan, en singular y en plural', () => {
@@ -175,8 +175,8 @@ describe('describeNudge', () => {
       missingUnits,
       reward: { kind: 'BUY_X_PAY_Y', take: 3, pay: 2 },
     });
-    expect(describeNudge(buy(1), CONTEXT)).toBe('Agregá 1 unidad más y llevás 3 pagando 2.');
-    expect(describeNudge(buy(2), CONTEXT)).toBe('Agregá 2 unidades más y llevás 3 pagando 2.');
+    expect(describeNudge(buy(1), CONTEXT)).toBe('Agregue 1 unidad más y lleva 3 pagando 2.');
+    expect(describeNudge(buy(2), CONTEXT)).toBe('Agregue 2 unidades más y lleva 3 pagando 2.');
   });
 
   it('cubre la enésima unidad y los tramos por cantidad', () => {
@@ -190,13 +190,13 @@ describe('describeNudge', () => {
         },
         CONTEXT,
       ),
-    ).toBe('Agregá 1 unidad más y la segunda unidad sale con 50 % de descuento.');
+    ).toBe('Agregue 1 unidad más y la segunda unidad sale con 50 % de descuento.');
     expect(
       describeNudge(
         { kind: 'ADD_UNITS', campaignId: 'c', missingUnits: 2, reward: { kind: 'VOLUME_TIERS', tiers: [] } },
         CONTEXT,
       ),
-    ).toBe('Agregá 2 unidades más y mejorás tu descuento por cantidad.');
+    ).toBe('Agregue 2 unidades más y mejora su descuento por cantidad.');
   });
 });
 

@@ -121,7 +121,7 @@ test('el logo del consultorio se ve, se cambia, se quita y sale en el PDF', asyn
   // La vista previa pasa del SVG sembrado al PNG recién elegido: recién ahí terminó de subir.
   await expect(page.getByTestId('edicion-logo-vista').locator('img')).toHaveAttribute('src', /^data:image\/png/);
   await page.getByRole('button', { name: 'Guardar cambios' }).click();
-  await expect(page.getByText('Tu perfil quedó actualizado.')).toBeVisible();
+  await expect(page.getByText('Su perfil quedó actualizado.')).toBeVisible();
   await page.getByTestId('edicion-logo').screenshot({ path: join(EVIDENCIA, 'editor-datos-personales-logo-cuadrado-1440.png') });
 
   await abrirDatosPersonales(page);
@@ -136,7 +136,7 @@ test('el logo del consultorio se ve, se cambia, se quita y sale en el PDF', asyn
   await irA(page, '/my-account/edit?pestana=0');
   await page.getByTestId('edicion-logo-quitar').click();
   await page.getByRole('button', { name: 'Guardar cambios' }).click();
-  await expect(page.getByText('Tu perfil quedó actualizado.')).toBeVisible();
+  await expect(page.getByText('Su perfil quedó actualizado.')).toBeVisible();
   await page.getByTestId('edicion-logo').screenshot({ path: join(EVIDENCIA, 'editor-datos-personales-sin-logo-1440.png') });
 
   await abrirDatosPersonales(page);

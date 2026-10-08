@@ -119,7 +119,7 @@ describe('Spending', () => {
     montar();
     responder([]);
 
-    expect(texto()).toContain('Todavía no tenés gastos registrados');
+    expect(texto()).toContain('Todavía no tiene gastos registrados');
     expect(texto()).toContain('Buscar un profesional');
     expect(raiz().querySelector('[data-testid="spending-dashboard"]')).toBeNull();
   });
@@ -181,6 +181,6 @@ describe('Spending', () => {
     fixture.detectChanges();
 
     expect(raiz().querySelector('[data-testid="spending-dashboard"]')).toBeNull();
-    expect(texto()).not.toContain('Todavía no tenés gastos registrados');
+    expect(texto()).not.toContain('Todavía no tiene gastos registrados');
   });
 });

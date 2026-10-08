@@ -125,7 +125,7 @@ describe('handlers del portal de laboratorio', () => {
       body: {
         statusCode: 400,
         code: 'VALIDATION_FAILED',
-        details: { violations: ['Contá por qué retirás el archivo.'] },
+        details: { violations: ['Cuente por qué retira el archivo.'] },
       },
     });
     expect(pedir('GET', '/diagnostics/lab/result-files')).toEqual(before);

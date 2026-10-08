@@ -1572,7 +1572,7 @@ describe('PatientChart', () => {
         .flush({ code: 'FORBIDDEN', message: '' }, { status: 403, statusText: 'Forbidden' });
 
       expect(interno<() => string | null>('errorDeFormularios')()).toBe(
-        'Tu rol no permite ver formularios clínicos.',
+        'Su rol no permite ver formularios clínicos.',
       );
     });
 

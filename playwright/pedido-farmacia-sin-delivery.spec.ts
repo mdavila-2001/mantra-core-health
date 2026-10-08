@@ -46,7 +46,7 @@ async function irAlPedido(page: Page): Promise<void> {
     timeout: 30_000,
   });
   await page.getByRole('button', { name: 'Enviar pedido' }).first().click();
-  await expect(page.getByRole('heading', { level: 1, name: 'Confirmá tu pedido' })).toBeVisible({
+  await expect(page.getByRole('heading', { level: 1, name: 'Confirme su pedido' })).toBeVisible({
     timeout: 30_000,
   });
 }
@@ -71,8 +71,8 @@ for (const vista of [
 
       // 2 · Checkout, paso «Entrega».
       await page.getByRole('button', { name: /^Continuar/ }).click();
-      await expect(page.locator('#checkout-paso-titulo')).toHaveText('Cómo lo recibís');
-      await expect(page.getByTestId('checkout-entrega-retiro')).toContainText('Retirás tu pedido en');
+      await expect(page.locator('#checkout-paso-titulo')).toHaveText('Cómo lo recibe');
+      await expect(page.getByTestId('checkout-entrega-retiro')).toContainText('Retira su pedido en');
       expect(await textoDeLaPantalla(page)).not.toMatch(SIN_DELIVERY);
       await capturar(page, `${vista.nombre}-2-checkout-entrega`);
 
@@ -83,7 +83,7 @@ for (const vista of [
 
       // 4 · Resumen: sin línea de envío, y se puede confirmar.
       await page.getByTestId('checkout-siguiente').click();
-      await expect(page.locator('#checkout-paso-titulo')).toHaveText('Revisá y confirmá');
+      await expect(page.locator('#checkout-paso-titulo')).toHaveText('Revise y confirme');
       await expect(page.getByTestId('resumen-envio')).toHaveCount(0);
       await expect(page.getByTestId('checkout-resumen-entrega')).toContainText('Recojo en');
       await expect(page.getByTestId('checkout-confirmar')).toBeEnabled();

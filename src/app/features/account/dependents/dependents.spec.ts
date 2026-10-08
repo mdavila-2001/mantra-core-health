@@ -149,7 +149,7 @@ describe('Dependents', () => {
     montar();
     responder([]);
 
-    expect(texto()).toContain('Todavía no registraste a nadie');
+    expect(texto()).toContain('Todavía no registró a nadie');
     expect(
       (fixture.nativeElement as HTMLElement).querySelector('[data-testid="dependents-nuevo"]'),
     ).not.toBeNull();
@@ -218,7 +218,7 @@ describe('Dependents', () => {
     });
     responder([]);
 
-    expect(texto()).toContain('Te quieren registrar como dependiente');
+    expect(texto()).toContain('Le quieren registrar como dependiente');
     expect(texto()).toContain('Rosa Choque');
 
     const raiz = fixture.nativeElement as HTMLElement;

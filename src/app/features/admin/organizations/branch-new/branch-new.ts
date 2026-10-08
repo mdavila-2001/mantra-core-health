@@ -157,8 +157,8 @@ export class BranchNew {
             required: true,
             testId: 'alta-sucursal-codigo',
             mensajeDeError: this.codigoEnConflicto()
-              ? 'Ya existe una sede con este código en la organización. Probá con otro.'
-              : 'Escribí el código de la sede.',
+              ? 'Ya existe una sede con este código en la organización. Pruebe con otro.'
+              : 'Escriba el código de la sede.',
           },
           {
             key: 'name',
@@ -166,7 +166,7 @@ export class BranchNew {
             control: 'text' as const,
             required: true,
             testId: 'alta-sucursal-nombre',
-            mensajeDeError: 'Escribí el nombre de la sede (hasta 300 caracteres).',
+            mensajeDeError: 'Escriba el nombre de la sede (hasta 300 caracteres).',
           },
           {
             key: 'tipo',
@@ -174,7 +174,7 @@ export class BranchNew {
             hint: 'Opcional. Cómo se atiende en esta dirección.',
             control: 'select' as const,
             options: this.opcionesDeTipo,
-            placeholder: 'Elegí un tipo',
+            placeholder: 'Elija un tipo',
           },
         ],
       },
@@ -197,7 +197,7 @@ export class BranchNew {
             control: 'number' as const,
             testId: 'alta-sucursal-latitud',
             mensajeDeError: this.coordenadaIncompleta()
-              ? 'Cargá las dos coordenadas o ninguna: una sola no ubica la sede.'
+              ? 'Cargue las dos coordenadas o ninguna: una sola no ubica la sede.'
               : 'La latitud va entre -90 y 90.',
           },
           {
@@ -240,10 +240,10 @@ export class BranchNew {
       return state.issues.map((issue) => issue.message).join(' ') || null;
     }
     if (state.status === 'forbidden') {
-      return state.message || 'Necesitás pertenecer a esta organización para abrir una sede.';
+      return state.message || 'Necesita pertenecer a esta organización para abrir una sede.';
     }
     if (state.status === 'offline') {
-      return 'No pudimos conectarnos. Revisá tu conexión y reintentá.';
+      return 'No pudimos conectarnos. Revise su conexión y reintente.';
     }
     if (state.status === 'error') {
       return `${state.message || 'Ocurrió un error inesperado.'} (${state.requestId})`;

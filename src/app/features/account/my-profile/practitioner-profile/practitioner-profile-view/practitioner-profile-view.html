@@ -40,7 +40,7 @@
             [alt]="'Foto de ' + perfil().nombre"
           />
           <span class="solo-lectores">
-            {{ fotoSubiendo() ? 'Subiendo tu foto…' : 'Cambiar mi foto de perfil' }}
+            {{ fotoSubiendo() ? 'Subiendo su foto…' : 'Cambiar mi foto de perfil' }}
           </span>
           <input
             #entradaDeFoto
@@ -54,7 +54,7 @@
         </label>
 
         <div class="mi-perfil__rotulo">
-          <h2 class="mi-perfil__titulo">Tus datos</h2>
+          <h2 class="mi-perfil__titulo">Sus datos</h2>
           <p class="mi-perfil__nombre">{{ perfil().nombre }}</p>
           <!-- «Telemedicina», reubicada acá al quitar «Cómo atendés» de la
                pestaña «Dónde atiendo» (C-01, 20/09/2026).
@@ -73,7 +73,7 @@
                dejó «Acepto pacientes nuevos». -->
           @if (perfil().telemedicina) {
             <app-chip class="mi-perfil__modalidad" variant="info">
-              Atendés por telemedicina
+              Atiende por telemedicina
             </app-chip>
           }
           @if (errorVisible(); as fallo) {
@@ -177,7 +177,7 @@
                 @if (datos.edad !== null) {
                   {{ datos.edad }} años
                 } @else {
-                  <span class="mi-perfil__ausente">Falta tu fecha de nacimiento</span>
+                  <span class="mi-perfil__ausente">Falta su fecha de nacimiento</span>
                 }
               </dd>
             </div>
@@ -277,12 +277,12 @@
                     </div>
                   } @else {
                     <span class="mi-perfil__ausente">
-                      Ninguna aseguradora te tiene en su red todavía
+                      Ninguna aseguradora le tiene en su red todavía
                     </span>
                   }
                 } @else {
                   <span class="mi-perfil__ausente" data-testid="perfil-seguros-error">
-                    No pudimos traer tus seguros. Recargá la página para reintentar.
+                    No pudimos traer sus seguros. Recargue la página para reintentar.
                   </span>
                 }
               </dd>
@@ -315,7 +315,7 @@
               [src]="consultorio.logoUrl"
               [nombre]="consultorio.nombre"
             />
-            <p class="mi-perfil__nota">Sale en el membrete de tus PDF. Se cambia desde «Editar».</p>
+            <p class="mi-perfil__nota">Sale en el membrete de sus PDF. Se cambia desde «Editar».</p>
           </section>
         }
 
@@ -338,7 +338,7 @@
                 [src]="firmaYSello.selloUrl"
               />
             </div>
-            <p class="mi-perfil__nota">Salen al pie de tus recetas y documentos. Se cambian desde «Editar».</p>
+            <p class="mi-perfil__nota">Salen al pie de sus recetas y documentos. Se cambian desde «Editar».</p>
           </section>
         }
 
@@ -478,7 +478,7 @@
         <app-tab [label]="pestanas[2]">
           <section class="mi-perfil__seccion" data-testid="perfil-facturacion">
             <p class="mi-perfil__nota mi-perfil__nota--primera">
-              A nombre de quién salen los comprobantes que emitís.
+              A nombre de quién salen los comprobantes que emite.
             </p>
 
             <!-- Los dos datos van en un recuadro propio y no en la lista
@@ -532,7 +532,7 @@
                  «Dónde atiendo»: la ficha muestra, y el camino se dice. -->
             @if (!facturacion.nit) {
               <p class="mi-perfil__nota" data-testid="perfil-factura-falta">
-                Todavía no cargaste tu NIT. Se carga desde «Editar tu info», en «Facturación».
+                Todavía no cargó su NIT. Se carga desde «Editar su info», en «Facturación».
               </p>
             }
           </section>
@@ -664,8 +664,8 @@
             </ol>
           } @else {
             <p class="mi-perfil__nota">
-              No hay actividad actual registrada. Es dónde ejercés hoy: el hospital o centro donde
-              atendés en este momento.
+              No hay actividad actual registrada. Es dónde ejerce hoy: el hospital o centro donde
+              atiende en este momento.
             </p>
           }
         </section>
@@ -695,7 +695,7 @@
             </ol>
           } @else {
             <p class="mi-perfil__nota">
-              No hay experiencia histórica registrada. Son los hospitales o centros donde ejerciste
+              No hay experiencia histórica registrada. Son los hospitales o centros donde ejerció
               antes de la actividad actual.
             </p>
           }
@@ -759,7 +759,7 @@
         />
 
         <p class="mi-perfil__nota">
-          Son los registros que dejaste asentados con esta cuenta. El detalle de cada uno vive en el
+          Son los registros que dejó asentados con esta cuenta. El detalle de cada uno vive en el
           expediente de la persona atendida.
         </p>
       </app-tab>
@@ -817,7 +817,7 @@
               </svg>
             </span>
             <span class="solo-lectores">
-              {{ fotoSubiendo() ? 'Subiendo tu foto…' : 'Cambiar mi foto de perfil' }}
+              {{ fotoSubiendo() ? 'Subiendo su foto…' : 'Cambiar mi foto de perfil' }}
             </span>
             <input
               #dropInput1
@@ -939,7 +939,7 @@
              accionable. -->
           @if (tieneDatosDeFiliacion()) {
             <section>
-              <h2 class="profesional__bloque-titulo">Tus datos</h2>
+              <h2 class="profesional__bloque-titulo">Sus datos</h2>
               <dl class="profesional__datos">
                 @if (datos.documento) {
                   <div class="profesional__dato">
@@ -980,7 +980,7 @@
                 }
                 @if (datos.domicilio) {
                   <div class="profesional__dato">
-                    <dt>Dónde vivís</dt>
+                    <dt>Dónde vive</dt>
                     <dd>{{ datos.domicilio }}</dd>
                   </div>
                 }
@@ -1017,7 +1017,7 @@
              esto viene a evitar. Por eso abajo la sub-pestaña «Matrículas» ya
              no se dibuja en la ficha propia. -->
           <section appTutorialTarget="perfil-matriculas">
-            <h2 class="profesional__bloque-titulo">Tu habilitación</h2>
+            <h2 class="profesional__bloque-titulo">Su habilitación</h2>
             @if (perfil().matriculas.length > 0) {
               <ul class="profesional__lista">
                 @for (matricula of perfil().matriculas; track matricula.id) {
@@ -1040,8 +1040,8 @@
               </ul>
             } @else {
               <p class="profesional__nota">
-                Todavía no registraste ninguna matrícula. Es lo que declara en qué jurisdicción está
-                habilitado tu ejercicio.
+                Todavía no registró ninguna matrícula. Es lo que declara en qué jurisdicción está
+                habilitado su ejercicio.
               </p>
             }
           </section>
@@ -1090,7 +1090,7 @@
        del carril 05, que son sobre trayectoria/credenciales/vista pública. -->
     <app-card class="profesional__bloque" variant="outlined" padding="lg">
       <h2 class="profesional__bloque-titulo" appTutorialTarget="perfil-actividad">
-        {{ esPropio() ? 'Tu actividad en la plataforma' : 'Actividad en la plataforma' }}
+        {{ esPropio() ? 'Su actividad en la plataforma' : 'Actividad en la plataforma' }}
       </h2>
 
       <dl class="profesional__cifras">
@@ -1105,7 +1105,7 @@
       <p class="profesional__nota">
         {{
           esPropio()
-            ? 'Son los registros que dejaste asentados con esta cuenta. El detalle de cada uno vive en el expediente de la persona atendida.'
+            ? 'Son los registros que dejó asentados con esta cuenta. El detalle de cada uno vive en el expediente de la persona atendida.'
             : 'Son los registros asentados con esta cuenta. El detalle de cada uno vive en el expediente de la persona atendida.'
         }}
       </p>

@@ -109,7 +109,7 @@ describe('handlers de la contabilidad simple', () => {
       call('POST', '/accounting/practitioner/simple/records', {
         ...base, date: '', amount: '100',
       }),
-      'Elegí la fecha.',
+      'Elija la fecha.',
     );
     expect(call('GET', '/accounting/practitioner/simple/records')).toEqual(before);
   });

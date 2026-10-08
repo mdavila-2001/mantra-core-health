@@ -518,7 +518,7 @@ const PANTALLAS_HIJAS: Routes = [
     // §4.1). Hija de «Farmacia» (`my-account/pharmacy`), con `seccionRolesGuard`
     // porque esa sección declara `roles: ['PATIENT']`.
     path: 'my-account/pharmacy/cart',
-    title: `${APP_TITLE} - Tu carrito`,
+    title: `${APP_TITLE} - Su carrito`,
     canActivate: [seccionRolesGuard],
     loadComponent: () =>
       import('./features/account/pharmacy/cart/cart-page')
@@ -532,7 +532,7 @@ const PANTALLAS_HIJAS: Routes = [
     // sección es la única de «Mi cuenta» que declara roles, y la regla de
     // `app.routes.spec.ts` exige cumplirlos también en la hija.
     path: 'my-account/pharmacy-orders/new',
-    title: `${APP_TITLE} - Confirmá tu pedido`,
+    title: `${APP_TITLE} - Confirme su pedido`,
     canActivate: [seccionRolesGuard],
     loadComponent: () =>
       import('./features/account/pharmacy-orders/new-order/new-order')
@@ -544,7 +544,7 @@ const PANTALLAS_HIJAS: Routes = [
     // pago y resumen. Sin `:orderId`: el pedido se crea recién en su
     // confirmación final (D-FARMOCK-T-E1-01). Antes de `:orderId`, como `new`.
     path: 'my-account/pharmacy-orders/checkout',
-    title: `${APP_TITLE} - Confirmá tu pedido`,
+    title: `${APP_TITLE} - Confirme su pedido`,
     canActivate: [seccionRolesGuard],
     loadComponent: () =>
       import('./features/account/pharmacy-orders/checkout/checkout')
@@ -823,7 +823,7 @@ const PANTALLAS_HIJAS: Routes = [
     // es un dato que se consulta: es una tarea con principio y fin. Sólo la abre
     // quien atiende — a un paciente no le corresponde.
     path: 'onboarding',
-    title: `${APP_TITLE} - Completá tu perfil`,
+    title: `${APP_TITLE} - Complete su perfil`,
     ...soloDeQuienAtiende(),
     loadComponent: () =>
       import('./features/onboarding-practitioner/onboarding-practitioner')
@@ -832,7 +832,7 @@ const PANTALLAS_HIJAS: Routes = [
   },
   {
     path: 'my-account/edit',
-    title: `${APP_TITLE} - Configurar tu perfil`,
+    title: `${APP_TITLE} - Configurar su perfil`,
     ...soloDeQuienAtiende(),
     loadComponent: () =>
       import('./features/account/my-profile/practitioner-profile-edit/practitioner-profile-edit')
@@ -846,7 +846,7 @@ const PANTALLAS_HIJAS: Routes = [
     // verificación de identidad. El sujeto lo resuelve el backend desde la
     // sesión, así que no hay perfil ajeno que abrir escribiendo la URL.
     path: 'my-account/profile/edit',
-    title: `${APP_TITLE} - Editar tus datos`,
+    title: `${APP_TITLE} - Editar sus datos`,
     loadComponent: () =>
       import('./features/account/my-profile/patient-profile-edit/patient-profile-edit')
         .then((m) => m.PatientProfileEdit)
@@ -2092,7 +2092,7 @@ export const routes: Routes = [
     // La ruta la fija `TENANT_SELECTION_ROUTE`, que es a donde manda el guard.
     path: 'auth/organization',
     component: TenantSelection,
-    title: 'AloVida - Elegí tu organización',
+    title: 'AloVida - Elija su organización',
   },
   {
     // La elección de tipo de cuenta. Cada alta cuelga de acá con URL propia, así

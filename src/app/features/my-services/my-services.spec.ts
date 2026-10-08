@@ -349,7 +349,7 @@ describe('MyServices', () => {
       peticionDelCatalogo().flush(pagina([servicio({ defaultPrice: '0.00' })]));
       harness.detectChanges();
 
-      expect(texto()).toContain('Definí el precio');
+      expect(texto()).toContain('Defina el precio');
       expect(texto()).not.toContain('0.00');
     });
 
@@ -621,7 +621,7 @@ describe('MyServices · cómo ofrezco un servicio (v4.2.40)', () => {
   it('un servicio sin declarar lo dice, en vez de dejar un hueco', async () => {
     await montar([]);
     expect(enDocumento('my-services-duration-missing')?.textContent).toContain(
-      'Todavía no declaraste cuánto dura',
+      'Todavía no declaró cuánto dura',
     );
     expect(enDocumento('my-services-offer')?.textContent).toContain('Declarar duración');
   });
@@ -711,7 +711,7 @@ describe('MyServices · cómo ofrezco un servicio (v4.2.40)', () => {
     api<() => void>('guardarOferta')();
 
     http.expectNone((r) => r.method === 'POST');
-    expect(api<() => string | null>('errorDeLaOferta')()).toContain('Escribí cuántos minutos');
+    expect(api<() => string | null>('errorDeLaOferta')()).toContain('Escriba cuántos minutos');
   });
 
   it.each([['720.5'], ['abc'], ['-5'], ['0']])('rechaza la duración «%s» antes de viajar', async (valor) => {
@@ -748,7 +748,7 @@ describe('MyServices · cómo ofrezco un servicio (v4.2.40)', () => {
       .flush(
         {
           code: 'CONFLICT',
-          message: 'Ya ofrecés ese servicio. Editá la oferta que ya tenés.',
+          message: 'Ya ofrece ese servicio. Edite la oferta que ya tiene.',
           timestamp: '2026-10-01T12:00:00.000Z',
           path: '/scheduling/service-offerings',
         },
@@ -756,7 +756,7 @@ describe('MyServices · cómo ofrezco un servicio (v4.2.40)', () => {
       );
     harness.detectChanges();
 
-    expect(api<() => string | null>('errorDeLaOferta')()).toContain('Ya ofrecés ese servicio');
+    expect(api<() => string | null>('errorDeLaOferta')()).toContain('Ya ofrece ese servicio');
     expect(api<() => unknown>('ofreciendo')()).not.toBeNull();
     expect(api<() => string>('minimo')()).toBe('30');
     expect(api<() => boolean>('guardandoOferta')()).toBe(false);

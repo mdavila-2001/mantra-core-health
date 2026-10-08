@@ -152,7 +152,7 @@ export class PractitionerAvailability {
 
   /** Qué decir cuando no hay agenda publicada. Cambia según de quién sea. */
   readonly sinAgenda = input(
-    'Este profesional aún no abrió su agenda. Volvé a mirar más adelante.',
+    'Este profesional aún no abrió su agenda. Vuelva a mirar más adelante.',
   );
 
   protected readonly estado = signal<ViewState<readonly SedeConCupos[]>>(loading());

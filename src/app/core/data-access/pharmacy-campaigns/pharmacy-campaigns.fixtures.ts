@@ -99,8 +99,8 @@ export const CAMPANAS_SEMBRADAS: readonly PlantillaDeCampana[] = [
   },
   {
     slug: 'dos-por-uno',
-    titulo: 'Llevá 2 y pagá 1',
-    descripcion: 'Quien lleva dos unidades de este producto paga una. Cuenta de a dos: con cuatro, pagás dos.',
+    titulo: 'Lleve 2 y pague 1',
+    descripcion: 'Quien lleva dos unidades de este producto paga una. Cuenta de a dos: con cuatro, paga dos.',
     desdeEnDias: -5,
     hastaEnDias: 15,
     productos: { desde: 0, cuantos: 1 },
@@ -109,7 +109,7 @@ export const CAMPANAS_SEMBRADAS: readonly PlantillaDeCampana[] = [
   {
     slug: 'segunda-unidad',
     titulo: 'La segunda unidad al 50 %',
-    descripcion: 'Llevás dos y la segunda sale a mitad de precio.',
+    descripcion: 'Lleva dos y la segunda sale a mitad de precio.',
     desdeEnDias: -6,
     hastaEnDias: 12,
     productos: { desde: 1, cuantos: 1 },
@@ -133,7 +133,7 @@ export const CAMPANAS_SEMBRADAS: readonly PlantillaDeCampana[] = [
   {
     slug: 'compra-minima',
     titulo: '10 % menos desde Bs 100 de compra',
-    descripcion: 'Sobre el total de tu pedido, sin elegir productos.',
+    descripcion: 'Sobre el total de su pedido, sin elegir productos.',
     desdeEnDias: -8,
     hastaEnDias: 30,
     productos: { desde: 0, cuantos: 0 },
@@ -141,7 +141,7 @@ export const CAMPANAS_SEMBRADAS: readonly PlantillaDeCampana[] = [
   },
   {
     slug: 'ahorro-por-monto',
-    titulo: 'Más comprás, más ahorrás',
+    titulo: 'Más compra, más ahorra',
     descripcion: 'Desde Bs 100, 5 % menos; desde Bs 200, 10 % menos, con un tope de Bs 50 por pedido.',
     desdeEnDias: -9,
     hastaEnDias: 30,
@@ -184,8 +184,8 @@ export const CAMPANAS_SEMBRADAS: readonly PlantillaDeCampana[] = [
   },
   {
     slug: 'puntos-dobles',
-    titulo: 'Puntos dobles en tu compra',
-    descripcion: 'Todo lo que comprás en esta farmacia suma el doble de puntos a tu billetera.',
+    titulo: 'Puntos dobles en su compra',
+    descripcion: 'Todo lo que compra en esta farmacia suma el doble de puntos a su billetera.',
     desdeEnDias: -5,
     hastaEnDias: 20,
     productos: { desde: 0, cuantos: 0 },

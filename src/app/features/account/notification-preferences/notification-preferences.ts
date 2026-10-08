@@ -33,7 +33,7 @@ const LABELS: Readonly<
   CLINICAL: {
     title: 'Recetas y consultas',
     detail:
-      'Cuando tu médico emite una receta o cierra una consulta tuya.',
+      'Cuando su médico emite una receta o cierra una consulta suya.',
   },
   SCHEDULING: {
     title: 'Turnos',
@@ -42,11 +42,11 @@ const LABELS: Readonly<
   },
   MESSAGES: {
     title: 'Chats',
-    detail: 'Cuando alguien te escribe por la mensajería.',
+    detail: 'Cuando alguien le escribe por la mensajería.',
   },
   SOCIAL: {
     title: 'Actividad social',
-    detail: 'Reacciones, comentarios y seguidores en tus publicaciones.',
+    detail: 'Reacciones, comentarios y seguidores en sus publicaciones.',
   },
 };
 
@@ -199,7 +199,7 @@ export class NotificationPreferences {
           // mentira» (AC-17-7).
           this.restoreConfirmed();
           this.saving.set(false);
-          this.error.set('No pudimos guardar tus preferencias.');
+          this.error.set('No pudimos guardar sus preferencias.');
         },
       });
   }
@@ -212,7 +212,7 @@ export class NotificationPreferences {
       },
       error: () => {
         this.loading.set(false);
-        this.error.set('No pudimos cargar tus preferencias.');
+        this.error.set('No pudimos cargar sus preferencias.');
       },
     });
   }

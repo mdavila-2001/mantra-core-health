@@ -133,7 +133,7 @@ async function openTab(
       page.getByRole('table', { name: 'Experiencia histórica', exact: true }),
     ).toBeVisible();
     await expect(
-      page.getByRole('table', { name: 'Tu historial laboral', exact: true }),
+      page.getByRole('table', { name: 'Su historial laboral', exact: true }),
     ).toBeVisible();
   } else {
     await expect(
@@ -380,7 +380,7 @@ test('listados densos, respaldo autorizado y matriz visual conservan los datos r
           await name.fill('Borrador sintético sin guardar');
           await page.getByRole('button', { name: 'Cancelar edición', exact: true }).click();
           const dialog = page.getByRole('dialog');
-          await expect(dialog).toContainText('¿Descartás lo que escribiste?');
+          await expect(dialog).toContainText('¿Descarta lo que escribió?');
           await dialog.getByRole('button', { name: 'Descartar', exact: true }).focus();
           await page.keyboard.press('Tab');
           // Chromium pasa por su chrome al salir del último control; el siguiente Tab vuelve al diálogo nativo.

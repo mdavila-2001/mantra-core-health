@@ -114,7 +114,7 @@ export class WebAnalytics {
   });
 
   protected readonly opcionesEmbudo = computed(() => [
-    { value: null, label: 'Elegí un embudo' },
+    { value: null, label: 'Elija un embudo' },
     ...this.embudos().map((f) => ({ value: f.id as string | null, label: `${f.name} (v${f.version})` })),
   ]);
 
@@ -152,7 +152,7 @@ export class WebAnalytics {
     this.analytics.webVitals(w).subscribe({
       next: (r) =>
         this.vitales.set(
-          r.metrics.length === 0 ? empty({ label: 'Ampliá la ventana de tiempo.' }, 'Sin muestras de rendimiento en esta ventana.') : ready(r),
+          r.metrics.length === 0 ? empty({ label: 'Amplíe la ventana de tiempo.' }, 'Sin muestras de rendimiento en esta ventana.') : ready(r),
         ),
       error: (e: unknown) => this.vitales.set(errorToViewState<WebVitals>(e)),
     });
@@ -162,7 +162,7 @@ export class WebAnalytics {
     });
     this.analytics.sessions(w).subscribe({
       next: (r) =>
-        this.sesiones.set(r.items.length === 0 ? empty({ label: 'Ampliá la ventana de tiempo.' }, 'Sin sesiones en esta ventana.') : ready(r.items)),
+        this.sesiones.set(r.items.length === 0 ? empty({ label: 'Amplíe la ventana de tiempo.' }, 'Sin sesiones en esta ventana.') : ready(r.items)),
       error: (e: unknown) => this.sesiones.set(errorToViewState<readonly SessionSummary[]>(e)),
     });
     this.cargarInforme();

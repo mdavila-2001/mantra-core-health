@@ -161,7 +161,7 @@ export class Spending {
           this.state.set(
             empty(
               EMPTY_ACTION,
-              'Todavía no tenés gastos registrados. Cuando pagues una consulta, una compra de farmacia o un análisis, lo vas a ver acá.',
+              'Todavía no tiene gastos registrados. Cuando pague una consulta, una compra de farmacia o un análisis, lo va a ver acá.',
             ),
           );
           return;

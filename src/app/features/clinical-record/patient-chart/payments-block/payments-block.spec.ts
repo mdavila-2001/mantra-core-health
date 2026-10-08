@@ -107,7 +107,7 @@ describe('PaymentsBlock', () => {
     http
       .expectOne((r) => r.url === '/accounting/practitioner/paid-consultations')
       .flush(
-        { code: 'FORBIDDEN', message: 'Tu rol no incluye la caja de esta práctica.' },
+        { code: 'FORBIDDEN', message: 'Su rol no incluye la caja de esta práctica.' },
         { status: 403, statusText: 'Forbidden' },
       );
     fixture.detectChanges();

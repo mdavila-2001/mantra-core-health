@@ -219,7 +219,7 @@ test.describe('Hito 2 · laboratorio y aseguradora · solo demo', () => {
       await expect(page.getByTestId('dialogo')).toContainText('El dictamen no cambia');
       await page.getByTestId('dialogo-confirmar').click();
       await expect(page.getByTestId('dialogo')).toBeVisible();
-      await expect(page.getByTestId('dialogo')).toContainText('Escribí el motivo');
+      await expect(page.getByTestId('dialogo')).toContainText('Escriba el motivo');
       await expect(detail.getByTestId('received-claim-invoices')).toContainText('vigente');
       await page.getByTestId('dialogo-motivo').locator('textarea').fill(ANNULMENT_REASON);
       await page.getByTestId('dialogo-confirmar').click();

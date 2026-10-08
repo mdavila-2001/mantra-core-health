@@ -101,7 +101,7 @@ test.describe('portal de la cuenta de farmacia', () => {
     const oficial = modal.getByTestId('product-official');
     await expect(oficial).toContainText(NOMBRE);
     await expect(oficial).toContainText('Estos datos vienen del registro oficial');
-    const presentacion = modal.getByLabel('Presentación que vendés');
+    const presentacion = modal.getByLabel('Presentación que vende');
     if (await presentacion.isVisible()) {
       await presentacion.selectOption({ index: 1 });
     }
@@ -201,7 +201,7 @@ test.describe('portal de la cuenta de farmacia', () => {
     await anfitrion.click();
     await expect(interruptor).not.toBeChecked();
     await page.getByTestId('inventory-save').click();
-    await expect(page.getByText('Guardaste el inventario de 1 producto.')).toBeVisible();
+    await expect(page.getByText('Guardó el inventario de 1 producto.')).toBeVisible();
     await page.screenshot({ path: join(EVIDENCIA, 'inventario-despues-de-guardar-1440-claro.png') });
     await expect(page.getByRole('row').filter({ hasText: codigo })).toContainText('No hay');
 

@@ -69,7 +69,7 @@ export class VerificationPolicyForm {
       titulo: 'Qué política',
       hint: 'Cómo se identifica y qué versión es.',
       campos: [
-        { key: 'policyCode', label: 'Código de la política', hint: 'Único; hasta 100 caracteres. Por ejemplo, IAL2-PACIENTE.', control: 'text', required: true, mensajeDeError: 'Ingresá el código (hasta 100 caracteres).' },
+        { key: 'policyCode', label: 'Código de la política', hint: 'Único; hasta 100 caracteres. Por ejemplo, IAL2-PACIENTE.', control: 'text', required: true, mensajeDeError: 'Ingrese el código (hasta 100 caracteres).' },
         { key: 'versionNumber', label: 'Número de versión', hint: 'Opcional: si no se indica, arranca en 1.', control: 'number', mensajeDeError: 'La versión empieza en 1.' },
       ],
     },
@@ -144,7 +144,7 @@ export class VerificationPolicyForm {
   protected readonly created = signal<CreatedVerificationPolicy | null>(null);
 
   protected readonly errorMessage = computed(() =>
-    errorMessageOf(this.state(), 'No tenés permiso para administrar la verificación de identidad.'),
+    errorMessageOf(this.state(), 'No tiene permiso para administrar la verificación de identidad.'),
   );
 
   protected submit(): void {

@@ -92,7 +92,7 @@ describe('reconocerAlarmas', () => {
 });
 
 describe('conMedicinaGeneralPrimero (sin certeza, Medicina general)', () => {
-  const MOTIVO = 'No pudimos identificar con certeza qué te pasa.';
+  const MOTIVO = 'No pudimos identificar con certeza qué le pasa.';
 
   it('sin ninguna recomendación agrega Medicina general con su motivo', () => {
     const lista = conMedicinaGeneralPrimero([], MOTIVO);

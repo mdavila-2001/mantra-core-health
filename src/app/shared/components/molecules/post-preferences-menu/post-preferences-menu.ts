@@ -178,7 +178,7 @@ export class PostPreferencesMenu {
       await this.document.defaultView?.navigator.clipboard.writeText(url);
       this.toasts.success('Enlace copiado');
     } catch {
-      this.toasts.error('No se pudo copiar el enlace. Copialo de la barra de direcciones.');
+      this.toasts.error('No se pudo copiar el enlace. Cópielo de la barra de direcciones.');
     }
   }
 

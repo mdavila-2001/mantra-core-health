@@ -6,7 +6,7 @@
            la tabla de Consultas detrás de un ícono. Es la versión cliqueable
            que salió de «Cómo viene el mes»: tocar un día en la semana o en el
            mes lo abre. -->
-      <section class="calendario" aria-label="Tu agenda" data-testid="agenda-calendario">
+      <section class="calendario" aria-label="Su agenda" data-testid="agenda-calendario">
         <div class="calendario__barra">
           <div class="calendario__vistas" role="group" aria-label="Cómo mirar la agenda">
             <button
@@ -349,9 +349,9 @@
                     data-testid="aviso-agotan-globo"
                     [hidden]="!avisoAbierto()"
                   >
-                    <app-alert tone="warning" title="Tus turnos publicados se están por agotar">
+                    <app-alert tone="warning" title="Sus turnos publicados se están por agotar">
                       Llegan hasta el <strong>{{ cuposHastaTexto() }}</strong
-                      >. Después de esa fecha nadie va a poder reservarte, aunque tu horario siga
+                      >. Después de esa fecha nadie va a poder reservarle, aunque su horario siga
                       publicado.
                       <div alert-actions>
                         <button
@@ -374,13 +374,13 @@
               <app-row-actions
                 data-testid="horario-acciones-menu"
                 [actions]="accionesDelHorario()"
-                fila="tu horario"
+                fila="su horario"
                 (actionSelected)="ejecutarAccionDelHorario($event)"
               />
             </div>
           </div>
 
-          <h2 class="mi-agenda__titulo">Atendés estos días</h2>
+          <h2 class="mi-agenda__titulo">Atiende estos días</h2>
 
           <!-- La grilla por horas, que es lo que el pedido original pide en su
                punto 1. Las 24 horas, el tamaño de turno en cada franja y los
@@ -424,7 +424,7 @@
             [bloqueos]="bloqueosDeLaSemana()"
             [rango]="rangoDeGrilla()"
             [nombre]="nombreDelHorario()"
-            [vigencia]="p.vigencia ?? 'Sin fecha de fin: rige hasta que lo cambies.'"
+            [vigencia]="p.vigencia ?? 'Sin fecha de fin: rige hasta que lo cambie.'"
           />
 
           <!-- Debajo de la grilla no va la semanita de círculos ni la vigencia
@@ -432,7 +432,7 @@
                se lee en el globo de cada franja. -->
           @if (!seAgotan() && cuposHastaTexto()) {
             <p class="mi-agenda__cupos" role="status">
-              Tenés turnos abiertos hasta el <strong>{{ cuposHastaTexto() }}</strong
+              Tiene turnos abiertos hasta el <strong>{{ cuposHastaTexto() }}</strong
               >.
             </p>
           }

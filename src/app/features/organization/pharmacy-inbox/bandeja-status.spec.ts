@@ -64,14 +64,14 @@ describe('bandeja-status', () => {
     }
     // La frase que la pantalla venía mostrando, literal.
     expect(toBandejaStatusPresentation('CONFIRMADO').descripcion).toBe(
-      'Confirmado. Cuando esté armado, marcalo como listo.',
+      'Confirmado. Cuando esté armado, márquelo como listo.',
     );
   });
 
   it('lo que sale por reparto no pide marcarlo listo, porque nadie lo va a retirar', () => {
     for (const modalidad of ['DOMICILIO', 'TRABAJO'] as const) {
       const confirmado = toBandejaStatusPresentation('CONFIRMADO', modalidad);
-      expect(confirmado.descripcion, modalidad).not.toContain('marcalo como listo');
+      expect(confirmado.descripcion, modalidad).not.toContain('márquelo como listo');
       expect(confirmado.descripcion, modalidad).toContain('reparto');
     }
   });

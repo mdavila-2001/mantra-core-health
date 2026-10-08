@@ -1,11 +1,11 @@
 <app-page-header
   title="Mis órdenes"
-  subtitle="Los análisis que te pidieron y qué tenés que hacer con cada uno."
+  subtitle="Los análisis que le pidieron y qué tiene que hacer con cada uno."
 />
 
 @if (sinPerfilDePaciente) {
   <app-alert tone="info" title="Esta sección es para pacientes">
-    Tu cuenta no tiene un perfil de paciente. Si emitís órdenes, entrá por la ficha del paciente.
+    Su cuenta no tiene un perfil de paciente. Si emite órdenes, entre por la ficha del paciente.
   </app-alert>
 } @else {
   <!-- Regla 8: una sola tarjeta centrada a lo ancho, con las cuatro pestañas dentro. -->
@@ -43,7 +43,7 @@
           }
 
           <app-filter-bar
-            searchLabel="Buscar en tus órdenes"
+            searchLabel="Buscar en sus órdenes"
             searchPlaceholder="Estudio, estado o consulta"
             [filters]="filtros()"
             (filtersChanged)="onFiltrosCambiaron($event)"
@@ -73,7 +73,7 @@
               [columns]="columnas()"
               [trackBy]="porId"
               [rowLabel]="nombreDeFila"
-              caption="Tus órdenes de laboratorio e imagen"
+              caption="Sus órdenes de laboratorio e imagen"
               maxHeight="480px"
               data-testid="mis-ordenes-tabla"
             />
@@ -127,7 +127,7 @@
 
 @if (preparacionAbierta(); as fila) {
   <app-content-dialog
-    heading="Cómo prepararte"
+    heading="Cómo prepararse"
     [description]="fila.studyLabel"
     data-testid="mis-ordenes-preparacion-dialog"
     (dismissAttempt)="preparacionAbierta.set(null)"

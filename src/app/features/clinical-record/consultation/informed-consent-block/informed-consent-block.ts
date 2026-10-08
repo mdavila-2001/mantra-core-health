@@ -123,10 +123,10 @@ export class InformedConsentBlock {
           const vista = errorToViewState<null>(falla);
           this.error.set(
             vista.status === 'forbidden'
-              ? 'No tenés acceso para escribir en la historia de esta persona.'
+              ? 'No tiene acceso para escribir en la historia de esta persona.'
               : vista.status === 'offline'
-                ? 'No pudimos conectarnos. Revisá tu conexión y reintentá.'
-                : 'No pudimos registrar el consentimiento informado. Probá de nuevo.',
+                ? 'No pudimos conectarnos. Revise su conexión y reintente.'
+                : 'No pudimos registrar el consentimiento informado. Pruebe de nuevo.',
           );
         },
       });

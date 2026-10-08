@@ -86,7 +86,7 @@ describe('ProductResults', () => {
     host.items.set([fila({ distanceKm: null })]);
     fixture.detectChanges();
 
-    expect(raiz().textContent).toContain('Elegí desde dónde medir');
+    expect(raiz().textContent).toContain('Elija desde dónde medir');
   });
 
   it('«Agregar» suma la línea al carrito', () => {

@@ -35,7 +35,7 @@ interface Shortcut {
 const SHORTCUTS: readonly Shortcut[] = [
   {
     label: 'Completar borradores',
-    hint: 'Terminá los productos que dejaste sin publicar.',
+    hint: 'Termine los productos que dejó sin publicar.',
     route: '/administration/pharmacy-catalog',
     queryParams: { status: 'DRAFT' },
   },
@@ -47,7 +47,7 @@ const SHORTCUTS: readonly Shortcut[] = [
   },
   {
     label: 'Actualizar en lote',
-    hint: 'Cargá o corregí cientos de productos con un CSV.',
+    hint: 'Cargue o corrija cientos de productos con un CSV.',
     route: '/administration/pharmacy-import',
   },
 ];

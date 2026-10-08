@@ -1,6 +1,6 @@
 <app-page-header
   title="Dependientes"
-  subtitle="Las personas a tu cargo. Podés pedirles turno y ver su historia clínica en su nombre."
+  subtitle="Las personas a su cargo. Puede pedirles turno y ver su historia clínica en su nombre."
 >
   <!-- La acción principal, en la ranura del encabezado como en el resto de la
        aplicación: suelta debajo quedaba corrida del título (refactor UX). -->
@@ -33,8 +33,8 @@
 <div class="dependents">
   @if (sinPerfilDePaciente()) {
     <app-alert tone="info">
-      Esta cuenta no tiene perfil de paciente, así que no puede registrar dependientes. Si atendés
-      en la plataforma, tus pacientes se gestionan desde
+      Esta cuenta no tiene perfil de paciente, así que no puede registrar dependientes. Si atiende
+      en la plataforma, sus pacientes se gestionan desde
       <a routerLink="/agenda">la agenda</a>.
     </app-alert>
   } @else {
@@ -45,7 +45,7 @@
         data-testid="dependents-solicitudes"
       >
         <h2 id="dependents-solicitudes-titulo" class="dependents__nombre">
-          Te quieren registrar como dependiente
+          Le quieren registrar como dependiente
         </h2>
         <ul class="dependents__lista">
           @for (solicitud of solicitudes(); track solicitud.id) {
@@ -54,19 +54,19 @@
                 <div class="dependents__ficha">
                   <div class="dependents__quien">
                     <p class="dependents__pedido">
-                      <strong>{{ solicitud.requesterDisplayName }}</strong> pide registrarte como su
-                      dependiente. Si aceptás, va a poder pedirte turnos y ver tu historia clínica.
+                      <strong>{{ solicitud.requesterDisplayName }}</strong> pide registrarse como su
+                      dependiente. Si acepta, va a poder pedirle turnos y ver su historia clínica.
                     </p>
                     <app-form-field
-                      [label]="'Relación de ' + solicitud.requesterDisplayName + ' contigo'"
-                      hint="Se mostrará en la sección Tutores de tu perfil."
+                      [label]="'Relación de ' + solicitud.requesterDisplayName + ' con usted'"
+                      hint="Se mostrará en la sección Tutores de su perfil."
                       [required]="true"
                     >
                       <app-select
                         [attr.data-testid]="'dependents-relacion-' + solicitud.id"
                         [options]="opcionesDeRelacion()"
                         [value]="relacionDe(solicitud.id)"
-                        placeholder="Elegí la relación"
+                        placeholder="Elija la relación"
                         (valueChange)="cambiarRelacion(solicitud.id, $event)"
                       />
                     </app-form-field>
@@ -109,11 +109,11 @@
     }
 
     @if (loading() && !loaded()) {
-      <p class="dependents__estado" role="status">Buscando a quiénes representás…</p>
+      <p class="dependents__estado" role="status">Buscando a quiénes representa…</p>
     } @else if (dependents().length === 0) {
       <app-empty-state
-        title="Todavía no registraste a nadie"
-        description="Registrá a alguien con su CI: le llega una notificación y, cuando la acepta, vas a poder pedirle turno y ver su historia sin cambiar de cuenta."
+        title="Todavía no registró a nadie"
+        description="Registre a alguien con su CI: le llega una notificación y, cuando la acepta, va a poder pedirle turno y ver su historia sin cambiar de cuenta."
       />
     } @else {
       <ul class="dependents__lista" data-testid="dependents-lista">

@@ -114,7 +114,7 @@ describe('ChatPreferences', () => {
 
   it('las frases propias se agregan y se quitan', () => {
     const campo = consultar('chat-prefs-plantilla-nueva') as HTMLInputElement;
-    campo.value = 'Traé tu carnet de la obra social.';
+    campo.value = 'Traiga su carnet de la obra social.';
     campo.dispatchEvent(new Event('input'));
     fixture.detectChanges();
 
@@ -122,7 +122,7 @@ describe('ChatPreferences', () => {
     fixture.detectChanges();
 
     expect(fixture.nativeElement.textContent).toContain(
-      'Traé tu carnet de la obra social.',
+      'Traiga su carnet de la obra social.',
     );
 
     (consultar('chat-prefs-quitar-plantilla') as HTMLElement).click();

@@ -261,7 +261,7 @@ describe('PharmacyShop', () => {
     raiz().querySelector<HTMLButtonElement>('[data-testid="tienda-continuar"]')?.click();
     await asentar();
 
-    expect(texto()).toContain('Elegí otra farmacia');
+    expect(texto()).toContain('Elija otra farmacia');
     expect(router.navigate).not.toHaveBeenCalled();
   });
 

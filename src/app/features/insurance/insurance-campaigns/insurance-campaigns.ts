@@ -293,7 +293,7 @@ export class InsuranceCampaigns {
       ? empty({ label: 'Ver todas las campañas' }, 'Ninguna campaña coincide con los filtros.')
       : empty(
           { label: 'Crear la primera campaña' },
-          'Todavía no creaste campañas preventivas. Sumá una junto a un laboratorio o una importadora.',
+          'Todavía no creó campañas preventivas. Sume una junto a un laboratorio o una importadora.',
         );
   }
 
@@ -472,7 +472,7 @@ export class InsuranceCampaigns {
     return [
       {
         titulo: 'Nueva campaña preventiva',
-        hint: 'Aparece en el panel de todos tus afiliados con cobertura vigente. La patología que elijas describe la campaña: no filtra afiliados por su historia clínica.',
+        hint: 'Aparece en el panel de todos sus afiliados con cobertura vigente. La patología que elija describe la campaña: no filtra afiliados por su historia clínica.',
         campos: ['code', 'title', 'description', 'campaignType'].map(field),
       },
       { titulo: 'Prevención y vigencia', campos: ['targetConditionCode', 'copayBonusPercentage', 'validFrom', 'validTo'].map(field) },
@@ -525,13 +525,13 @@ export class InsuranceCampaigns {
   private messageOf(state: ViewState<unknown>): string {
     switch (state.status) {
       case 'validation':
-        return state.issues.map((issue) => issue.message).join(' ') || 'Revisá los datos.';
+        return state.issues.map((issue) => issue.message).join(' ') || 'Revise los datos.';
       case 'forbidden':
         return (
           state.message ?? 'Sólo quien administra la aseguradora puede crear o cambiar campañas.'
         );
       case 'offline':
-        return 'No pudimos conectarnos. Revisá tu conexión y reintentá.';
+        return 'No pudimos conectarnos. Revise su conexión y reintente.';
       case 'error':
         return `${state.message || 'Ocurrió un error inesperado.'} (${state.requestId})`;
       default:
@@ -607,7 +607,7 @@ export class InsuranceCampaigns {
       next: (created) => {
         this.toast.success(
           raw.activate
-            ? `«${created.code}» se creó y ya la ven tus afiliados.`
+            ? `«${created.code}» se creó y ya la ven sus afiliados.`
             : `«${created.code}» se guardó como borrador.`,
           'Campaña creada',
         );

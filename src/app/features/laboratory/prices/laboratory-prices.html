@@ -33,7 +33,7 @@
     />
 
     <div class="prices__bar">
-      <p class="prices__hint">Dejá el descuento vacío si ese servicio no tiene precio AloVida.</p>
+      <p class="prices__hint">Deje el descuento vacío si ese servicio no tiene precio AloVida.</p>
       <div class="prices__save">
         @if (dirtyCount() > 0) {
           <span class="prices__dirty" role="status">
@@ -105,7 +105,7 @@
   @if (alovidaPriceOf(service); as price) {
     <span class="prices__amount" [attr.data-testid]="'lab-prices-alovida-' + service.code">{{ price }}</span>
   } @else {
-    <span class="prices__muted">Revisá el precio</span>
+    <span class="prices__muted">Revise el precio</span>
   }
 </ng-template>
 

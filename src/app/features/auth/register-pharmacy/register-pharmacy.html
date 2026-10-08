@@ -12,8 +12,8 @@
 </ng-template>
 
 <app-auth-split
-  claim="Sumá tu farmacia a la red"
-  tagline="Publicá tu catálogo, recibí pedidos con receta y atendé desde un solo lugar."
+  claim="Sume su farmacia a la red"
+  tagline="Publique su catálogo, reciba pedidos con receta y atienda desde un solo lugar."
   contentWidth="full"
   [plainSurface]="true"
 >
@@ -22,13 +22,13 @@
       @if (registered()) {
         <div class="registro__header">
           <h1 appAnuncio [asertivo]="false" class="registro__title" data-testid="registro-farmacia-exito">
-            ¡Bienvenido a AloVida! Tu salud en un solo lugar
+            ¡Bienvenido a AloVida! Su salud en un solo lugar
           </h1>
-          <p class="registro__subtitle">Concluiste el registro de manera satisfactoria. Ya podés conectarte con el correo del representante legal y la contraseña que elegiste.</p>
+          <p class="registro__subtitle">Concluyó el registro de manera satisfactoria. Ya puede conectarse con el correo del representante legal y la contraseña que eligió.</p>
           @if (verificationSent()) {
-            <p class="registro__subtitle">Te enviamos un correo para confirmar tu dirección. Podés hacerlo cuando quieras: no es necesario para empezar a usar AloVida.</p>
+            <p class="registro__subtitle">Le enviamos un correo para confirmar su dirección. Puede hacerlo cuando quiera: no es necesario para empezar a usar AloVida.</p>
           }
-          <p class="registro__subtitle">Tu farmacia está en revisión: en cuanto la plataforma la apruebe, aparecerá en las búsquedas de pacientes. Mientras tanto, ya podés ingresar con tu cuenta.</p>
+          <p class="registro__subtitle">Su farmacia está en revisión: en cuanto la plataforma la apruebe, aparecerá en las búsquedas de pacientes. Mientras tanto, ya puede ingresar con su cuenta.</p>
         </div>
         <button
           app-button
@@ -42,10 +42,10 @@
         </button>
       } @else {
         <div class="registro__header">
-          <h1 class="registro__title">Registrá tu farmacia</h1>
+          <h1 class="registro__title">Registre su farmacia</h1>
           <p class="registro__subtitle">
-            Necesitamos lo básico para crear tu cuenta. Podés volver atrás en cualquier paso, y
-            completar el resto más adelante desde la Ficha de tu farmacia.
+            Necesitamos lo básico para crear su cuenta. Puede volver atrás en cualquier paso, y
+            completar el resto más adelante desde la Ficha de su farmacia.
           </p>
         </div>
 
@@ -116,9 +116,9 @@
               }
               <app-ubicacion-picker
                 pinId="farmacia-central"
-                etiquetaConfirmada="Tu farmacia"
+                etiquetaConfirmada="Su farmacia"
                 etiquetaQuitar="Quitar la ubicación de la central"
-                etiquetaMapa="La ubicación de tu farmacia en el mapa"
+                etiquetaMapa="La ubicación de su farmacia en el mapa"
                 [ids]="idsUbicacionCentral"
                 [inicial]="gpsCentral()"
                 (confirmado)="gpsCentral.set($event)"
@@ -210,7 +210,7 @@
                   </section>
                 } @empty {
                   <p class="farmacia-sucursales__vacio">
-                    Todavía no agregaste ninguna. Si atendés en un solo local, no hace falta.
+                    Todavía no agregó ninguna. Si atiende en un solo local, no hace falta.
                   </p>
                 }
 
@@ -240,7 +240,7 @@
                 @if (cargaEnLoteAbierta()) {
                   <app-branch-bulk-import
                     testIdPrefix="registro-farmacia-lote"
-                    contextNote="En farmacia una sucursal se registra con su punto en el mapa. A las que no lo traigan en el enlace, marcales el pin antes de terminar."
+                    contextNote="En farmacia una sucursal se registra con su punto en el mapa. A las que no lo traigan en el enlace, márqueles el pin antes de terminar."
                     [existingNames]="nombresDeSucursales()"
                     (imported)="agregarSucursalesEnLote($event)"
                     (closed)="cargaEnLoteAbierta.set(false)"
@@ -253,7 +253,7 @@
 
         <div class="registro__footer">
           <p class="registro__pie">
-            ¿Ya tenés cuenta? <a app-link routerLink="/auth">Iniciá sesión</a>
+            ¿Ya tiene cuenta? <a app-link routerLink="/auth">Inicie sesión</a>
           </p>
         </div>
       }

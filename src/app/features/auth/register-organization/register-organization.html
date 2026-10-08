@@ -3,13 +3,13 @@
     @if (registered()) {
       <div class="registro__header">
         <h1 appAnuncio [asertivo]="false" class="registro__title" data-testid="registro-organizacion-exito">
-          ¡Bienvenido a AloVida! Tu salud en un solo lugar
+          ¡Bienvenido a AloVida! Su salud en un solo lugar
         </h1>
-        <p class="registro__subtitle">Concluiste el registro de manera satisfactoria. Ya podés conectarte con tu correo y la contraseña que elegiste.</p>
+        <p class="registro__subtitle">Concluyó el registro de manera satisfactoria. Ya puede conectarse con su correo y la contraseña que eligió.</p>
         @if (verificationSent()) {
-          <p class="registro__subtitle">Te enviamos un correo para confirmar tu dirección. Podés hacerlo cuando quieras: no es necesario para empezar a usar AloVida.</p>
+          <p class="registro__subtitle">Le enviamos un correo para confirmar su dirección. Puede hacerlo cuando quiera: no es necesario para empezar a usar AloVida.</p>
         }
-        <p class="registro__subtitle">Tu organización está en revisión: en cuanto la plataforma la apruebe, aparecerá en las búsquedas de pacientes. Mientras tanto, ya podés ingresar con tu cuenta.</p>
+        <p class="registro__subtitle">Su organización está en revisión: en cuanto la plataforma la apruebe, aparecerá en las búsquedas de pacientes. Mientras tanto, ya puede ingresar con su cuenta.</p>
       </div>
       <button
         app-button
@@ -23,9 +23,9 @@
       </button>
     } @else {
       <div class="registro__header">
-        <h1 class="registro__title">Registrá tu aseguradora</h1>
+        <h1 class="registro__title">Registre su aseguradora</h1>
         <p class="registro__subtitle">
-          Creá la cuenta de tu organización, adjuntá sus documentos legales y dala de alta en un solo
+          Cree la cuenta de su organización, adjunte sus documentos legales y dela de alta en un solo
           paso. Su representante legal es quien inicia sesión.
         </p>
       </div>
@@ -79,7 +79,7 @@
               etiquetaConfirmada="Casa matriz"
               etiquetaQuitar="Quitar la ubicación de la casa matriz"
               etiquetaMapa="La casa matriz en el mapa"
-              indicacionMarcar="Tocá el mapa en el lugar exacto de la casa matriz."
+              indicacionMarcar="Toque el mapa en el lugar exacto de la casa matriz."
               [ids]="idsUbicacionCasaMatriz"
               [inicial]="gpsCasaMatriz()"
               (confirmado)="gpsCasaMatriz.set($event)"
@@ -187,7 +187,7 @@
 
       <div class="registro__footer">
         <p class="registro__pie">
-          ¿Ya tenés cuenta? <a app-link routerLink="/auth">Iniciá sesión</a>
+          ¿Ya tiene cuenta? <a app-link routerLink="/auth">Inicie sesión</a>
         </p>
       </div>
     }

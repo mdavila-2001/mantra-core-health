@@ -1,7 +1,7 @@
 <div class="regla" data-testid="regla-editor">
   <app-form-field
     label="Tipo de campaña"
-    hint="Elegí cómo se promociona: con el precio, con las unidades, con el total de la compra, con combos o con puntos."
+    hint="Elija cómo se promociona: con el precio, con las unidades, con el total de la compra, con combos o con puntos."
   >
     <!-- Dos presentaciones del mismo control: cinco segmentos no entran en una
          pantalla angosta sin recortar sus nombres («Canti…»), así que debajo de
@@ -70,7 +70,7 @@
     }
     @case ('CAMPAIGN_PRICE') {
       <p class="regla__nota">
-        El precio de campaña de cada producto lo escribís abajo, en la lista de productos.
+        El precio de campaña de cada producto lo escribe abajo, en la lista de productos.
       </p>
     }
     @case ('BUY_X_PAY_Y') {
@@ -154,7 +154,7 @@
         label="Precio del combo"
         [hint]="
           bundleListTotal() === null || items().length < 2
-            ? 'Elegí al menos dos productos abajo.'
+            ? 'Elija al menos dos productos abajo.'
             : 'Por separado suman ' + currency() + ' ' + bundleListTotal() + '. El combo tiene que costar menos.'
         "
         [errorMessage]="errorOf('bundle')"
@@ -228,7 +228,7 @@
         <app-form-field
           class="regla__campo"
           label="Código de cupón"
-          hint="Si lo ponés, la campaña sólo vale cuando el pedido trae este código."
+          hint="Si lo pone, la campaña sólo vale cuando el pedido trae este código."
           [errorMessage]="errorOf('coupon')"
         >
           <app-input
@@ -324,7 +324,7 @@
       }
     } @else {
       <p class="regla__vista-ejemplo" data-testid="regla-vista-pendiente">
-        Completá los datos de arriba para ver cómo lo lee quien compra.
+        Complete los datos de arriba para ver cómo lo lee quien compra.
       </p>
     }
   </section>
@@ -372,11 +372,11 @@
   <app-form-field
     class="regla__campo"
     label="Producto que se compra"
-    [hint]="items().length < 2 ? 'Elegí al menos dos productos abajo.' : ''"
+    [hint]="items().length < 2 ? 'Elija al menos dos productos abajo.' : ''"
     [errorMessage]="errorOf('pair')"
   >
     <app-select
-      placeholder="Elegí el producto"
+      placeholder="Elija el producto"
       [options]="itemOptions()"
       [hasError]="hasErrorIn('pair')"
       [value]="fields().triggerItemId"
@@ -388,7 +388,7 @@
     [label]="fields().kind === 'GIFT_WITH_PURCHASE' ? 'Producto de regalo' : 'Producto con descuento'"
   >
     <app-select
-      placeholder="Elegí el producto"
+      placeholder="Elija el producto"
       [options]="itemOptions()"
       [hasError]="hasErrorIn('pair')"
       [value]="fields().rewardItemId"

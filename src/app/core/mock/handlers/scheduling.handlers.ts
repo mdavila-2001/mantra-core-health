@@ -161,10 +161,10 @@ function avisarDemoraAlPaciente(
   emitirNotificacion({
     userId: paciente.userId,
     category: 'SCHEDULING',
-    subject: `Tu cita de las ${hora} se demora ${minutos} minutos`,
+    subject: `Su cita de las ${hora} se demora ${minutos} minutos`,
     // El nombre sale del RECURSO, que es donde vive: la reserva guarda el del
     // paciente, no el de quien atiende.
-    bodyText: `${recursos.get(reserva.resourceId)?.practitionerName ?? 'Tu profesional'} avisó una demora de ${minutos} minutos en tu cita de las ${hora}.${explicacion}`,
+    bodyText: `${recursos.get(reserva.resourceId)?.practitionerName ?? 'Su profesional'} avisó una demora de ${minutos} minutos en su cita de las ${hora}.${explicacion}`,
     // Mismo literal que emite `RECURSO_CITA` en la API real
     // (`scheduling/notices/agenda-notices.ts`): el mock honesto no inventa
     // vocabulario (AG-06).
@@ -494,7 +494,7 @@ export function registrarAgenda(router: MockRouter): void {
     const minutos = datos.delayMinutes ?? 15;
     reservas.actualizar(r.id, { delayNotice: { delayMinutes: minutos, message: datos.message ?? 'Demora en la atención', announcedAt: ahora() } });
     const avisado = avisarDemoraAlPaciente(r, minutos, datos.message);
-    return { notified: avisado ? 1 : 0, affected: 1, bookingIds: [r.id], detail: avisado ? `Se avisó a ${r.patientName} una demora de ${minutos} minutos.` : `${r.patientName} no tiene cuenta de portal: avisale por otro medio.` };
+    return { notified: avisado ? 1 : 0, affected: 1, bookingIds: [r.id], detail: avisado ? `Se avisó a ${r.patientName} una demora de ${minutos} minutos.` : `${r.patientName} no tiene cuenta de portal: avísele por otro medio.` };
   });
 
   router.post('/scheduling/resources/:id/delay', (request) => {
@@ -547,7 +547,7 @@ export function registrarAgenda(router: MockRouter): void {
           .map((r) => r.id),
       );
       if (!propias.has(datos.resourceId ?? '')) {
-        return forbidden('La reconsulta se agenda en tu propia agenda, no en la de otro profesional');
+        return forbidden('La reconsulta se agenda en su propia agenda, no en la de otro profesional');
       }
 
       origen = reservas.get(origenPedido.bookingId ?? '');
@@ -691,7 +691,7 @@ export function registrarAgenda(router: MockRouter): void {
       const nationalId = patientData.nationalId!.trim();
       if (pacientes.todos().some((p) => p.nationalId === nationalId)) {
         return conflict(
-          'Ya existe un paciente con ese documento de identidad. Buscalo con ' +
+          'Ya existe un paciente con ese documento de identidad. Búsquelo con ' +
             'GET /profiles/patients?nationalId= en vez de registrarlo de nuevo.',
         );
       }
@@ -874,7 +874,7 @@ export function registrarAgenda(router: MockRouter): void {
     );
     if (comprometidas.length > 0) {
       return conflict(
-        `El horario tiene ${comprometidas.length} ${comprometidas.length === 1 ? 'cita comprometida' : 'citas comprometidas'}: resolvelas antes de cambiarlo.`,
+        `El horario tiene ${comprometidas.length} ${comprometidas.length === 1 ? 'cita comprometida' : 'citas comprometidas'}: resuélvalas antes de cambiarlo.`,
         { bookingIds: comprometidas.map((r) => r.id) },
       );
     }
@@ -1025,7 +1025,7 @@ export function registrarAgenda(router: MockRouter): void {
     // 412 (domain.exception.ts:106-118)— y no una validación de forma: por
     // eso va después del `@IsIn` (400) y no junto a él.
     if (tipo.requiresText && (datos.reason === undefined || datos.reason.trim() === '')) {
-      return validation('Elegiste «Otro» como motivo: escribí cuál es.');
+      return validation('Eligió «Otro» como motivo: escriba cuál es.');
     }
     const inicio = datos.startAt ?? ahora();
     const fin = datos.endAt ?? masMinutos(inicio, 60);

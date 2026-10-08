@@ -84,7 +84,7 @@ export class ProductResults {
   /** «1,2 km», o por qué no hay distancia. */
   protected distanciaDe(fila: ProductHit): string {
     if (fila.distanceKm === null) {
-      return 'Elegí desde dónde medir';
+      return 'Elija desde dónde medir';
     }
     return `${fila.distanceKm.toLocaleString('es-BO', { maximumFractionDigits: 1 })} km`;
   }
@@ -103,7 +103,7 @@ export class ProductResults {
     }
     const confirmado = await this.dialogs.confirm({
       title: 'Vaciar y cambiar de farmacia',
-      message: `Tu carrito es de otra farmacia. Si seguís, se vacía y queda sólo ${fila.name} de ${fila.pharmacyName}.`,
+      message: `Su carrito es de otra farmacia. Si sigue, se vacía y queda sólo ${fila.name} de ${fila.pharmacyName}.`,
       confirmLabel: 'Vaciar y cambiar',
       cancelLabel: 'Dejarlo como está',
       destructive: true,

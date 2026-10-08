@@ -128,7 +128,7 @@ describe('CampaignDetail', () => {
   it('distingue un enlace roto de una promoción que se cumplió', async () => {
     await montar('no-existe');
 
-    expect(texto()).toContain('No encontramos lo que buscás');
+    expect(texto()).toContain('No encontramos lo que busca');
     expect(texto()).not.toContain('Esta promoción terminó');
   });
 
@@ -200,9 +200,9 @@ describe('CampaignDetail', () => {
       await montar(sembrada('dos-por-uno'));
 
       expect(elemento('[data-testid="promo-mecanica-etiqueta"]')?.textContent?.trim()).toBe('2x1');
-      expect(elemento('[data-testid="promo-mecanica-frase"]')?.textContent).toContain('Llevá 2 y pagá 1.');
+      expect(elemento('[data-testid="promo-mecanica-frase"]')?.textContent).toContain('Lleve 2 y pague 1.');
       // 2 × 48.00 = 96.00; pagando 1: 48.00.
-      expect(elemento('[data-testid="promo-ejemplo"]')?.textContent).toContain('pagás Bs 48 en vez de Bs 96');
+      expect(elemento('[data-testid="promo-ejemplo"]')?.textContent).toContain('paga Bs 48 en vez de Bs 96');
       // No inventa un precio por unidad que la mecánica no tiene.
       expect(elemento('.promo__precios s')).toBeNull();
       expect(elemento('.promo__precios')?.textContent).toContain('48.00');
@@ -220,7 +220,7 @@ describe('CampaignDetail', () => {
       await montar(sembrada('compra-minima'));
 
       expect(elemento('[data-testid="promo-productos"]')).toBeNull();
-      expect(elemento('[data-testid="promo-sin-productos"]')?.textContent).toContain('vale sobre toda tu compra');
+      expect(elemento('[data-testid="promo-sin-productos"]')?.textContent).toContain('vale sobre toda su compra');
       expect(elemento('[data-testid="promo-ejemplo"]')?.textContent).toContain('En una compra justo en el mínimo');
     });
 
@@ -229,7 +229,7 @@ describe('CampaignDetail', () => {
 
       expect(elemento('[data-testid="promo-mecanica-etiqueta"]')?.textContent?.trim()).toBe('Combo');
       // 48.00 + 22.50 = 70.50; el combo cuesta 63.45.
-      expect(elemento('[data-testid="promo-ejemplo"]')?.textContent).toContain('pagás Bs 63.45 en vez de Bs 70.50');
+      expect(elemento('[data-testid="promo-ejemplo"]')?.textContent).toContain('paga Bs 63.45 en vez de Bs 70.50');
     });
 
     it('dice las condiciones y NUNCA el código del cupón', async () => {

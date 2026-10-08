@@ -297,7 +297,7 @@ export class ArticleComposer {
     let url = this.enlaceUrl().trim();
     if (url !== '' && !/^[a-z]+:/i.test(url)) url = `https://${url}`;
     if (!ENLACE_SEGURO.test(url)) {
-      this.enlaceError.set('Escribí una dirección web, por ejemplo https://www.who.int');
+      this.enlaceError.set('Escriba una dirección web, por ejemplo https://www.who.int');
       return;
     }
     if (this.editor().insertLink(url, this.enlaceTexto())) {

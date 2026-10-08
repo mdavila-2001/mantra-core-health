@@ -77,7 +77,7 @@ describe('CartPage', () => {
     montar();
 
     const accion = raiz().querySelector('a[href="/my-account/pharmacy"]');
-    expect(raiz().textContent).toContain('Tu carrito está vacío');
+    expect(raiz().textContent).toContain('Su carrito está vacío');
     expect(accion?.textContent).toContain('Ir a la tienda');
   });
 

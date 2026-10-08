@@ -69,10 +69,10 @@ export class CatalogoIncompleto extends Error {
 
 /** Lo que dice la pantalla cuando el catálogo no sirve. Un solo texto para las dos altas. */
 export const AVISO_CATALOGO_DE_DIAGNOSTICO =
-  'No pudimos cargar los catálogos del alta. Revisá tu conexión y volvé a enviar.';
+  'No pudimos cargar los catálogos del alta. Revise su conexión y vuelva a enviar.';
 
 /** Lo que dice la pantalla cuando una subida no pudo confirmarse. */
-export const AVISO_SUBIDA_SIN_CONFIRMAR = 'No pudimos confirmar la carga del PDF. Volvé a intentarlo.';
+export const AVISO_SUBIDA_SIN_CONFIRMAR = 'No pudimos confirmar la carga del PDF. Vuelva a intentarlo.';
 
 /**
  * Los pasos comunes de las dos altas públicas de diagnóstico: leer el catálogo y

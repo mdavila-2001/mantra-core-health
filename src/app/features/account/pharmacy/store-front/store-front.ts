@@ -245,7 +245,7 @@ export class StoreFront {
       return actual;
     }
     return empty(
-      { label: 'Probá con otra palabra' },
+      { label: 'Pruebe con otra palabra' },
       this.modo() === 'products'
         ? 'Ninguna farmacia publica algo con ese nombre.'
         : 'Ninguna farmacia coincide con ese nombre.',

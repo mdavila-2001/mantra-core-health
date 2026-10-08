@@ -165,7 +165,7 @@ describe('CobrosDelPaciente', () => {
     montar('p-1');
     http
       .expectOne((r) => r.url === '/billing/simulated/charges')
-      .flush({ code: 'FORBIDDEN', message: 'Tu rol no permite operar la facturación' }, { status: 403, statusText: 'Forbidden' });
+      .flush({ code: 'FORBIDDEN', message: 'Su rol no permite operar la facturación' }, { status: 403, statusText: 'Forbidden' });
     // `forkJoin` cancela las otras dos lecturas al primer error: sólo se
     // responde lo que siga abierto.
     for (const r of http.match((req) => req.url.startsWith('/billing/simulated/'))) {
@@ -173,7 +173,7 @@ describe('CobrosDelPaciente', () => {
     }
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.textContent).toContain('No podés operar los cobros');
+    expect(fixture.nativeElement.textContent).toContain('No puede operar los cobros');
     expect(el('cobros-vacio')).toBeNull();
   });
 });

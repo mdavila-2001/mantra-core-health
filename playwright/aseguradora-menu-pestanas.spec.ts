@@ -123,7 +123,7 @@ for (const ancho of [1440, 390]) {
     // 4 · El informe por persona: se genera, se lee y se exporta.
     await pestanas.nth(3).click();
     await expect(page).toHaveURL(/tab=by-person/);
-    await expect(page.getByText('Todavía no generaste el informe')).toBeVisible();
+    await expect(page.getByText('Todavía no generó el informe')).toBeVisible();
     await page.screenshot({ path: join(SALIDA, `${ancho}-7-por-persona-vacio.png`), animations: 'disabled' });
 
     await page.getByTestId('btn-generate-person-report').click();

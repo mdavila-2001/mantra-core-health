@@ -1,6 +1,6 @@
 <app-page-header
   title="Sucursales"
-  subtitle="Las sedes de tu organización: nombre, descripción y ubicación. Editá cada una o subí varias de una vez con un CSV."
+  subtitle="Las sedes de su organización: nombre, descripción y ubicación. Edite cada una o suba varias de una vez con un CSV."
 />
 
 <app-card class="branches" padding="lg" data-testid="branches-card">
@@ -45,7 +45,7 @@
     }
 
     <app-data-table
-      caption="Sucursales de tu organización"
+      caption="Sucursales de su organización"
       [state]="branches()"
       [columns]="columns()"
       [trackBy]="rowId"
@@ -99,7 +99,7 @@
     [closeOnConfirm]="false"
     [pending]="bulkSaving()"
     [existingNames]="existingNames()"
-    contextNote="Cada fila se crea como una sucursal activa de tu organización."
+    contextNote="Cada fila se crea como una sucursal activa de su organización."
     (imported)="createBatch($event)"
     (closed)="bulkOpen.set(false)"
   />
@@ -134,7 +134,7 @@
       @if (current.mode === 'create') {
         <app-form-field
           label="Código"
-          hint="Opcional. Si lo dejás vacío, lo armamos a partir del nombre."
+          hint="Opcional. Si lo deja vacío, lo armamos a partir del nombre."
         >
           <app-input
             [value]="form().code"
@@ -156,7 +156,7 @@
 
       <app-form-field
         label="Enlace de ubicación"
-        [hint]="urlHasPoint() ? 'El enlace trae el punto: la sucursal queda marcada en el mapa.' : 'Pegá el enlace de Google Maps u OpenStreetMap.'"
+        [hint]="urlHasPoint() ? 'El enlace trae el punto: la sucursal queda marcada en el mapa.' : 'Pegue el enlace de Google Maps u OpenStreetMap.'"
         [errorMessage]="urlError()"
       >
         <app-input
