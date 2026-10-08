@@ -197,7 +197,7 @@
       Use las flechas arriba y abajo para recorrer los ratos del día, e izquierda y derecha para
       cambiar de día.
     </p>
-    <ol class="dia__linea" [attr.aria-describedby]="ayudaId">
+    <ol class="dia__linea" [attr.aria-describedby]="ayudaId" appStaggerList>
       @for (bloque of bloques(); track bloque.clave) {
         <!-- Cliqueable sólo lo que TIENE detalle: el aire entre bloques no es
              una actividad, y un clic que no hace nada enseña a no confiar en
@@ -208,6 +208,7 @@
           [class.dia__bloque--cliqueable]="bloque.tipo === 'cita' || bloque.tipo === 'ocupado'"
           [attr.data-tipo]="bloque.tipo"
           [attr.data-sello]="bloque.tipo === 'cita' ? bloque.statusVariant : null"
+          [attr.data-en-curso]="bloque.tipo === 'cita' && bloque.statusCode.endsWith('BOOKING_IN_PROGRESS') ? '' : null"
           [style.min-height.px]="bloque.alturaPx"
         >
           @if (

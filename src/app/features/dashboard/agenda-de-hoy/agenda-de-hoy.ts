@@ -36,6 +36,7 @@ import {
   type BookingStatusPresentation,
 } from '../../agenda/booking-status';
 import { misRecursosDeAgenda } from '../../agenda/mi-recurso';
+import { StaggerList } from '../../../shared/motion/stagger-list.directive';
 
 /**
  * Cuántas citas se enumeran debajo de la destacada.
@@ -152,7 +153,7 @@ interface JornadaCruda {
  */
 @Component({
   selector: 'app-agenda-de-hoy',
-  imports: [AppButtonLink, DatePipe, NavIcon, RouterLink, StatusSeal, ViewStateHost],
+  imports: [AppButtonLink, DatePipe, NavIcon, RouterLink, StaggerList, StatusSeal, ViewStateHost],
   templateUrl: './agenda-de-hoy.html',
   styleUrl: './agenda-de-hoy.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -360,6 +361,30 @@ export class AgendaDeHoy {
     const consultas = total === 1 ? '1 consulta' : `${total} consultas`;
     return `Su jornada: ${consultas}, entre las ${horaCorta(this.desdeLasHoras())} y las ${horaCorta(this.hastaLasHoras())}.`;
   });
+
+  /**
+   * Las horas en punto de la cinta, como muescas bajo el riel.
+   *
+   * Sin ellas la tira dice «cuánto» pero no «cuándo»: hay que ir a los dos
+   * extremos de la escala y hacer la cuenta. Una muesca por hora —cada dos si la
+   * jornada pasa de diez horas, para que no se amontonen— devuelve la lectura
+   * a un vistazo. Decorativas para el lector de pantalla: la cinta ya tiene su
+   * descripción hablada.
+   */
+  protected readonly marcasDeHora = computed<readonly { readonly izquierda: number }[]>(() => {
+    const { inicio, fin } = this.ventana();
+    const total = fin - inicio;
+    const HORA_MS = 3_600_000;
+    const paso = total > 10 * HORA_MS ? 2 * HORA_MS : HORA_MS;
+    const marcas: { izquierda: number }[] = [];
+    for (let t = inicio + paso; t < fin; t += paso) {
+      marcas.push({ izquierda: ((t - inicio) / total) * 100 });
+    }
+    return marcas;
+  });
+
+  /** El instante de ahora, para la etiqueta del reloj de la cinta (se formatea en 24 h con `date`, como la escala). */
+  protected readonly horaDeAhora = computed(() => this.ahora());
 
   /** Dónde cae el reloj en la cinta, o `null` si el día todavía no empezó o ya terminó. */
   protected readonly marcaDeAhora = computed<number | null>(() => {
