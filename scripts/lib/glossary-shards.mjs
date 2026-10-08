@@ -16,6 +16,7 @@
  *                                        después las que sólo tienen su nombre original;
  *                                        cada grupo por esName (localeCompare 'es')
  *   mock/ids/<hh>.json            id de concepto → [categoría, página, posición]
+ *   mock/incoming/<hh>.json       id destino → [[id, tipo, slug, nombre, categoría] del origen]
  *   mock/order/page-<n>.json      orden alfabético global, en referencias
  *   mock/tags/<tagKey>.json       los términos de cada etiqueta, en referencias
  *   mock/search/<xx>.json         índice por las dos primeras letras de cada palabra
@@ -122,6 +123,44 @@ export function normalizeRow(raw) {
 }
 
 const collator = new Intl.Collator('es');
+
+/**
+ * El índice inverso de relaciones: destino → orígenes.
+ *
+ * Las relaciones viajan en la fila de su ORIGEN («neumonía → síntoma →
+ * fiebre»), así que sin este índice abrir «fiebre» no puede decir qué
+ * enfermedades la presentan. Mismas cubetas que `mock/ids` (dos primeros hex
+ * del id destino): el mapa de un término baja ~1/256 del índice.
+ *
+ * Se deriva sólo de las filas ya resueltas (`targetId`), así que también sirve
+ * para reconstruirlo a partir de shards existentes
+ * (`scripts/glossary-incoming-index.mjs`).
+ *
+ * Cada entrada lleva lo necesario para pintar el origen sin abrir su shard
+ * (`[id, tipo, slug, nombre, categoría]`): el mapa de «Cardiología» tiene 187
+ * orígenes repartidos en 21 páginas de enfermedades.
+ *
+ * @param {ReadonlyArray<{ id: string, slug: string, esName: string, categoryKey: string, relations?: ReadonlyArray<{ type: string, targetId?: string }> }>} rows
+ * @returns {Map<string, Record<string, Array<[string, string, string, string, string]>>>} Ruta → cubeta.
+ */
+export function buildIncomingIndex(rows) {
+  const cubetas = new Map();
+  for (const row of rows) {
+    for (const relacion of row.relations ?? []) {
+      if (typeof relacion.targetId !== 'string' || relacion.targetId === '') continue;
+      const ruta = `mock/incoming/${relacion.targetId.slice(0, 2)}.json`;
+      if (!cubetas.has(ruta)) cubetas.set(ruta, {});
+      (cubetas.get(ruta)[relacion.targetId] ??= []).push([
+        row.id,
+        relacion.type,
+        row.slug,
+        row.esName,
+        row.categoryKey,
+      ]);
+    }
+  }
+  return cubetas;
+}
 
 /**
  * Construye el conjunto completo de archivos a partir de las filas.
@@ -233,6 +272,7 @@ export function buildGlossaryDataset(rawRows, taxonomy) {
   for (const [cubeta, contenido] of Object.entries(ids)) {
     archivos.set(`mock/ids/${cubeta}.json`, contenido);
   }
+  for (const [ruta, contenido] of buildIncomingIndex(rows)) archivos.set(ruta, contenido);
 
   // El orden alfabético global, para «Todos los términos» sin categoría.
   const orden = rows.map((row) => referencia.get(row.id));

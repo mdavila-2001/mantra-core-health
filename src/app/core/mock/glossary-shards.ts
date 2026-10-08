@@ -74,6 +74,15 @@ export interface RelacionDeFila {
   readonly targetName: string;
 }
 
+/** Una relación entrante, como la escribe `buildIncomingIndex`: el origen ya pintable. */
+export type RelacionEntrante = readonly [
+  sourceId: string,
+  type: string,
+  sourceSlug: string,
+  sourceName: string,
+  sourceCategoryKey: string,
+];
+
 /** Una fila de shard (esquema de `data/glossary/00_README.md` + `SCHEMA.md`). */
 export interface FilaDeGlosario {
   readonly id: string;
@@ -269,6 +278,29 @@ export class AlmacenDeGlosario {
    * tarjeta no carga (secciones, presentaciones); la de la tarjeta conserva lo
    * que calculó el constructor (id, relaciones resueltas, etiquetas).
    */
+  /**
+   * Las relaciones que APUNTAN a este término (`mock/incoming/<hh>.json`).
+   *
+   * Una raíz generada antes de que existiera el índice no lo tiene: devuelve
+   * `[]` y el mapa muestra sólo las salientes, en vez de fallar.
+   */
+  async entrantes(id: string): Promise<readonly RelacionEntrante[]> {
+    const cubeta = await this.archivoOVacio<Record<string, RelacionEntrante[]>>(
+      `mock/incoming/${id.slice(0, 2).toLowerCase()}.json`,
+      {},
+    );
+    return cubeta[id] ?? [];
+  }
+
+  /** La categoría de un término sin abrir su shard: la saca de `mock/ids`. */
+  async categoriaDe(id: string): Promise<string | null> {
+    const cubeta = await this.archivoOVacio<Record<string, RefDeFila>>(
+      `mock/ids/${id.slice(0, 2).toLowerCase()}.json`,
+      {},
+    );
+    return cubeta[id]?.[0] ?? null;
+  }
+
   async porId(id: string): Promise<FilaDeGlosario | null> {
     const cubeta = await this.archivoOVacio<Record<string, RefDeFila>>(
       `mock/ids/${id.slice(0, 2).toLowerCase()}.json`,

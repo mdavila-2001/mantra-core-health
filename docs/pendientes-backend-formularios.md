@@ -1,7 +1,9 @@
 # Pendientes de backend — campos de elección del generador (`forms`)
 
-**Estado:** el cliente y el simulador ya los implementan. El backend real
-todavía no.
+**Estado (2026-10-05):** implementado en `mantra-core-health-redesa-api`
+(commit `b74203f3`). El cliente y el simulador ya los implementaban; ahora el
+backend real también — con una salvedad de esquema, ver «Lo que cambió del
+plan original» más abajo.
 
 ## Por qué
 
@@ -31,9 +33,30 @@ existe para evitar.
 Los campos del **estándar** sí pueden seguir usando `value_set_id`: los arma
 quien administra y viven en el catálogo. Los dos caminos conviven.
 
+## Lo que cambió del plan original
+
+Este documento proponía guardar la opción elegida en `value_concept_id` (la
+columna que ya usa `dataType: "code"`). **No se puede**: esa columna es
+`uuid` con FK a `terminology.catalog_concepts`, y una opción tecleada a mano
+como «Ex fumador» no es un concepto — la base rechazaría el insert por tipo
+y por la FK.
+
+Se agregó una columna nueva, `field_values.value_code` (texto, sin FK),
+exclusiva con `value_concept_id` dentro del mismo `value[x]`: un campo `code`
+llena una u otra según declare `valueSetId` (value set administrado,
+`value_concept_id`) u `options` propias (texto libre, `value_code`), nunca
+las dos. `buildValueColumns` decide cuál mirando si el campo tiene
+`valueSetId`.
+
+Es, igual que el resto de este documento, un adelanto de la entidad al
+esquema (`database/README.md` de la API: el DDL canónico se edita en
+`mantra-core-health-model` y se vendorea acá) — se materializa de forma
+aditiva por `ORM_SCHEMA_SYNC=safe` hasta que alguien promueva la columna al
+repo del modelo.
+
 ## Lo que falta
 
-### 1. Guardar las opciones de una definición propia
+### 1. Guardar las opciones de una definición propia — ✅ hecho
 
 ```
 POST /forms/field-definitions
@@ -45,19 +68,28 @@ se van a leer en la ficha. `multiple` distingue «una sola respuesta» de «vari
 —en la pantalla, «Opción múltiple» frente a «Casillas de verificación»—; es
 cardinalidad, no tipo, y por eso viaja aparte y no como otro `dataType`.
 
-Sugerencia de esquema: una columna `options jsonb` y `cardinality_max` en
-`dynamic_field_definitions`, o una tabla `dynamic_field_options` con su
-`ordinal` si se quiere poder referenciar cada opción por id más adelante.
+Esquema real: `options jsonb` y `cardinality_min`/`cardinality_max` (estos
+dos ya existían) en `dynamic_field_definitions`, no una tabla aparte — no
+hacía falta referenciar cada opción por id.
 
-Validaciones que el front ya aplica y que el servidor debería repetir, porque es
-el que manda:
+Las tres validaciones que el front ya aplicaba, el servidor las repite
+(`ChartTemplatesService.validateChoiceField` / `FormsFieldsService.
+validateChoiceField` — duplicada a propósito entre los dos módulos, ver el
+comentario en el código):
 
 - `dataType: "code"` sin `options` (ni `valueSetId`) se rechaza: un campo
   codificado sin nada entre qué elegir no se puede responder.
 - menos de **dos** opciones se rechaza: elegir entre una no es elegir.
 - una opción vacía o repetida se rechaza.
 
-### 1b. Lo demás que una pregunta declara (lo de Google Forms)
+Falta todavía: `POST /charts/templates` acepta `options`/`multiple`/
+`allowOther`/`description` en el campo inline (es el camino que usa el
+generador real), pero **no** hay un `POST /forms/field-definitions` suelto
+que el frontend ya pueda llamar aparte de crear la plantilla entera —existe
+en la API, con las mismas validaciones, pero nadie en este repo lo invoca
+todavía. Conectarlo es trabajo de frontend, no de backend.
+
+### 1b. Lo demás que una pregunta declara (lo de Google Forms) — ✅ hecho, con una excepción
 
 El generador ofrece, además de las opciones, lo que cualquier editor de
 formularios ofrece por pregunta. Todo viaja en la **definición** —es de la
@@ -74,21 +106,24 @@ PATCH /forms/field-definitions/:id
 }
 ```
 
-- `description` se sirve como `hint` del campo (y por lo tanto en el
-  `aria-describedby` del control). En el `PATCH`, `null` la **quita**: «no
-  viene» significa «no cambió».
-- `allowOther` sólo tiene sentido con `dataType: "code"`. Lo que se captura
-  cuando el paciente elige «Otro» es **el texto escrito**, no un código
-  «otro»: en un campo de una sola respuesta es el valor; en uno de varias es
-  un elemento más del array, después de los de la lista. Se reconoce por no
-  estar entre las opciones. El backend tiene que aceptar ese valor fuera del
-  set aunque el campo sea `code` — hoy `field_values` lo rechazaría.
-- `cardinalityMin` / `cardinalityMax` ya existen en el contrato de creación y
-  son los topes de «validación de respuesta» de las casillas: al menos, como
-  máximo, y **exactamente** cuando los dos coinciden. Sólo aplican con
-  `multiple: true`; el front no los manda en «una sola». `null` en el `PATCH`
-  quita el tope. La cantidad nunca supera las opciones ofrecidas (más «Otro»
-  si lo hay): el front lo acota, el servidor debería rechazarlo.
+- `description` se sirve como `hint` del campo. En el `PATCH`, `null` la
+  **quita**; ausente, no la toca. Implementado tal cual.
+- `allowOther` sólo tiene sentido con `dataType: "code"` y se valida contra
+  eso. Lo que faltaba de verdad —que el backend acepte un valor fuera del set
+  cuando el campo lo permite— **está**: `FormsValuesService.validateCodeValue`
+  acepta cualquier texto no vacío cuando `allowOther: true`, y si no, exige
+  que esté entre `options`.
+- `cardinalityMin`/`cardinalityMax`: la columna y la validación de «al menos
+  N, como máximo N» **ya existían** de una ronda anterior (no las agregó esta
+  pasada); lo que faltaba y se agregó fue que viajen también por el camino
+  inline de `POST /charts/templates`.
+- **Lo que NO se implementó:** que el servidor rechace una cantidad de
+  respuestas marcadas por fuera de `cardinalityMin`/`cardinalityMax` al
+  **capturar** un valor (`POST /forms/instances/:id/values`). Hoy valida que
+  cada opción capturada esté en la lista (o sea «Otro» permitido), pero no
+  cuenta cuántas filas llegaron para el mismo campo contra esos topes. El
+  front sigue siendo quien acota eso; que el servidor lo repita queda
+  pendiente.
 
 ### 1c. Las cuadrículas (19/09)
 
@@ -161,59 +196,70 @@ No hace falta nada nuevo del contrato: `dataType: "boolean"` ya lo admite. Lo
 que sí hace falta es que el backend **no** trate «ausente» como `false` al
 capturar el valor.
 
-### 2. Corregirlas
+### 2. Corregirlas — ✅ hecho, con la decisión tomada
 
 ```
 PATCH /forms/field-definitions/:id
-{ "name"?, "dataType"?, "options"?, "multiple"? }
+{ "name"?, "dataType"?, "options"?, "multiple"?, "allowOther"?, "description"? }
 ```
 
-`options` se reemplaza **entera**, nunca por índice: el orden importa y un
-parche por posición se rompe en cuanto alguien inserta una en el medio. Es la
-misma regla que ya sigue `PATCH /surveys/templates/:id/questions/:questionId`.
+`options` se reemplaza **entera**, nunca por índice — implementado tal cual.
 
-Falta decidir —y es la pregunta de verdad, no una de implementación— **qué pasa
-con los valores ya capturados** cuando se quita o se renombra una opción que
-alguien ya respondió. Tres salidas, en orden de preferencia:
+La pregunta de verdad sí se decidió, de las tres salidas que este documento
+dejaba planteadas: se tomó la **2** («se rechaza quitar una opción con
+respuestas y se dice por qué»), no la 1 («se marca como retirada pero sigue
+existiendo»). Motivo: la 1 es la correcta para un registro clínico a largo
+plazo, pero exige que `options` deje de ser `string[]` plano —cada opción
+necesita un `retired: boolean` propio, lo que es una forma de dato distinta,
+no sólo una columna más— y eso es otra decisión de esquema, no una de
+validación. La 2 no exige nada nuevo y nunca deja un valor capturado
+apuntando a una opción que desapareció, que es la garantía que de verdad
+importa. Si más adelante hace falta poder retirar una opción respondida sin
+perder el historial, ahí sí conviene encarar el cambio de forma de `options`.
 
-1. La opción se marca como retirada y deja de ofrecerse, pero sigue existiendo
-   para poder leer lo respondido. Es lo correcto en un registro clínico.
-2. Se rechaza quitar una opción con respuestas y se dice por qué.
-3. Se permite y lo respondido queda apuntando a un código que ya no está
-   descrito. **Esto no.**
+`FieldValuesRepository.findCodesInUseByField` es la consulta que lo
+respalda: antes de reemplazar `options`, compara lo que se va a quitar
+contra lo que ya tiene al menos una respuesta.
 
-Mientras no se decida, el simulador permite quitarla: es una base en memoria y
-no hay historia clínica que preservar.
-
-### 3. Devolverlas al leer la plantilla
+### 3. Devolverlas al leer la plantilla — ✅ hecho
 
 ```
 GET /charts/templates/:id
-→ fields: [{ …, "options"?: string[], "multiple"?: boolean }]
+→ fields: [{ …, "options"?, "multiple"?, "allowOther"?, "description"?,
+             "cardinalityMin"?, "cardinalityMax"? }]
 ```
 
-Sin esto la pantalla no puede dibujar lo que ya se guardó: un campo de elección
-volvería como texto y las opciones escritas desaparecerían de la vista sin un
-solo error.
+`ChartTemplatesService.resolveSchema` las lee de vuelta de la misma entidad
+en la que `createTemplate` las escribió.
 
-### 4. Aceptarlas al capturar un valor
+### 4. Aceptarlas al capturar un valor — hecho a medias
 
-`POST /forms/instances/:id/values` recibe `dataType: "code"` y el valor. Para un
-campo de varias respuestas, lo capturado es **un array**; hoy el contrato
-declara un valor único con `ordinal`, así que la vía natural es una fila por
-opción marcada, con su `ordinal`, y no un array en una sola.
+`POST /forms/instances/:id/values` recibe `dataType: "code"` y valida que el
+valor esté entre las opciones declaradas (o sea el texto de «Otro», si el
+campo lo permite) — rechaza si no, en captura, corrección e importación.
 
-El servidor debería rechazar un valor que no esté entre las opciones declaradas:
-si no, el campo cerrado no cierra nada.
+**La vía de «una fila por opción marcada» no necesitó código nuevo**: el
+contrato de captura ya es una lista de `{ fieldId, dataType, value, ordinal
+}`, así que un campo `multiple` simplemente manda varias entradas con el
+mismo `fieldId` y distinto `ordinal` — es exactamente lo que el motor ya
+hacía para cualquier campo repetible.
+
+**Lo que sigue sin hacer:** el servidor no cuenta cuántas opciones llegaron
+para un mismo campo contra `cardinalityMin`/`cardinalityMax` — ver la nota
+en §1b. Es la validación de «al menos N, como máximo N» de las casillas, y
+hoy sólo la aplica el front.
 
 ## Mientras tanto
 
-`src/app/core/mock/handlers/surveys-forms.handlers.ts` guarda `options`,
-`multiple`, `rows` y las dos restricciones de cuadrícula en la definición y los
-cuelga de la plantilla, así que la pantalla se puede recorrer entera contra el
-simulador. Contra el backend real, las claves
-viajan y **se ignoran**: el campo se crea como `code` sin opciones y la tarjeta
-vuelve sin ellas. No rompe nada, pero tampoco guarda lo que se escribió.
+`src/app/core/mock/handlers/surveys-forms.handlers.ts` sigue siendo el
+simulador (guarda `options`, `multiple`, `rows` y las dos restricciones de
+cuadrícula), y la pantalla puede seguir recorriéndose contra él. Contra el
+backend real, las claves **ya no se ignoran**: `options`/`multiple`/
+`allowOther`/`description`/`cardinalityMin`/`cardinalityMax` viajan, se
+validan y se guardan — ver el commit `b74203f3` de
+`mantra-core-health-redesa-api`. Lo único que falta del lado del frontend es
+conectar la pantalla del generador contra el endpoint real en vez del mock,
+que es trabajo de este repo, no del backend.
 
 Los campos de elección del catálogo sembrado
 (`src/app/core/mock/handlers/clinical.handlers.ts`) están puestos con nombres

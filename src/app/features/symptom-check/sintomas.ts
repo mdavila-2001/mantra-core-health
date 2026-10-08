@@ -13,6 +13,7 @@
 import { analizar, sugerirDe, type Analisis, type Coincidencia } from './motor';
 import { SINTOMAS, SINTOMAS_DE_ALARMA, type Sintoma } from './sintomas.datos';
 import { distancia, normalizar } from './texto';
+import { GLOSARIO_DE_SINTOMAS } from './glosario-de-sintomas.generated';
 
 export type { EspecialidadSugerida, Sintoma } from './sintomas.datos';
 export type { Analisis, Coincidencia } from './motor';
@@ -199,6 +200,12 @@ export function recomendar(
 export const MEDICINA_GENERAL = 'Medicina general';
 
 /**
+ * Por qué Medicina general va primero aunque el síntoma se haya reconocido con certeza (decisión del
+ * propietario, 2026-10-08: «siempre que ponga de primero al médico de medicina general»).
+ */
+export const GENERAL_PRIMERO = 'Primero lo evalúa un médico general y, si hace falta, lo deriva al especialista.';
+
+/**
  * Sin certeza, Medicina general **primero** (decisión del propietario, 2026-10-04: «cuando no
  * sepas a ciencia cierta, mandalo a medicina general»). Un médico general evalúa y deriva; un
  * especialista elegido a partir de una lectura dudosa puede ser el equivocado.
@@ -326,4 +333,25 @@ export function sugerir(
   tope = 6,
 ): readonly Sintoma[] {
   return sugerirDe(parcial, SINTOMAS, new Set(yaPuestos.map((sintoma) => sintoma.id)), tope);
+}
+
+/**
+ * Cómo se muestra un síntoma reconocido: con su término del **glosario médico oficial** (pedido del
+ * propietario, 2026-10-08) y, si se llama distinto, la forma llana entre paréntesis — «Hematospermia
+ * (sangre en el semen)» —, porque quien escribió «eyaculo sangre» tiene que reconocer lo que dijo.
+ * Sin término exacto en el glosario (o en los sensibles, que no lo tienen a propósito) queda el
+ * nombre del catálogo. El mapa sale de `scripts/export-symptom-glossary.mjs` del AI service.
+ */
+export function nombreParaMostrar(sintoma: Pick<Sintoma, 'id' | 'nombre'>): string {
+  const termino = GLOSARIO_DE_SINTOMAS[sintoma.id];
+  if (!termino) {
+    return sintoma.nombre;
+  }
+  return normalizar(termino.name) === normalizar(sintoma.nombre) ? termino.name : `${termino.name} (${sintoma.nombre})`;
+}
+
+/** El código del término del glosario (CIE-10-ES, MedlinePlus…), para el lector y el tooltip. */
+export function codigoDelGlosario(id: string): string | null {
+  const termino = GLOSARIO_DE_SINTOMAS[id];
+  return termino?.code ? `${termino.system === 'cie10es' ? 'CIE-10' : (termino.system ?? '')} ${termino.code}`.trim() : null;
 }

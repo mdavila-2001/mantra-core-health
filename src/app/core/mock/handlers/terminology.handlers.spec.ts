@@ -546,3 +546,117 @@ describe('búsqueda del glosario: tildes y castellano primero', () => {
     expect(items.filter((t) => !t.translated)).toEqual([]);
   });
 });
+
+/**
+ * TAREA-41 F0 — el vecindario del mapa contra la semilla commiteada.
+ *
+ * Fija el contrato de §5 (`GET /terminology/concepts/:id/glossary-neighborhood`)
+ * y el caso que lo motivó: un término sin relaciones salientes que sólo se
+ * alcanza por el índice inverso (`mock/incoming/`).
+ */
+describe('vecindario del glosario (mapa de relaciones)', () => {
+  const PUBLICO = join(process.cwd(), 'public');
+  const leerSemilla: LectorDeArchivos = (ruta) => {
+    const archivo = join(PUBLICO, ruta);
+    if (ruta.startsWith('glossary-data/') || !existsSync(archivo)) {
+      return Promise.reject(new ArchivoAusente(ruta));
+    }
+    return Promise.resolve(JSON.parse(readFileSync(archivo, 'utf8')) as unknown);
+  };
+  const router = new MockRouter();
+  registrarTerminologia(router, new AlmacenDeGlosario(leerSemilla));
+
+  interface Grupo {
+    readonly type: string;
+    readonly direction: 'outgoing' | 'incoming';
+    readonly total: number;
+    readonly items: readonly {
+      readonly conceptId: string;
+      readonly slug: string;
+      readonly display: string;
+      readonly category: { readonly internalCode: string; readonly name: string } | null;
+    }[];
+  }
+  interface Vecindario {
+    readonly focus: { readonly conceptId: string; readonly display: string };
+    readonly groups: readonly Grupo[];
+  }
+
+  async function get<T>(path: string, query: Record<string, string> = {}): Promise<T> {
+    const match = router.match('GET', path);
+    if (match === null) throw new Error(`No existe GET ${path}`);
+    return (await match.handler({
+      method: 'GET',
+      path,
+      params: match.params,
+      query: new URLSearchParams(query),
+      body: null,
+      headers: new HttpHeaders(),
+      user: null,
+    })) as T;
+  }
+
+  // Semilla del 2026-10-01. «Tos» (MedlinePlus) tiene 47 enfermedades; «Virus
+  // del Zika» no tiene relaciones propias y la nombran otros 3 términos.
+  const TOS = '3cea6ad4-d83f-4d1c-a8a2-0cc8991b59b0';
+  const ZIKA = '9f83635f-7f80-4979-a069-c1fa170fb468';
+  const ruta = (id: string) => `/terminology/concepts/${id}/glossary-neighborhood`;
+
+  it('gana a la ruta de la ficha: no la confunde con un :id', () => {
+    expect(router.match('GET', ruta(TOS))?.params['id']).toBe(TOS);
+  });
+
+  it('devuelve el término central y sus grupos con el total real y una muestra acotada', async () => {
+    const vecindario = await get<Vecindario>(ruta(TOS), { perGroup: '5' });
+
+    expect(vecindario.focus.conceptId).toBe(TOS);
+    expect(vecindario.focus.display).toBe('Tos');
+    const enfermedades = vecindario.groups.find(
+      (g) => g.type === 'DISEASE' && g.direction === 'outgoing',
+    );
+    expect(enfermedades?.total).toBe(47);
+    expect(enfermedades?.items).toHaveLength(5);
+    expect(enfermedades?.items[0]?.category?.internalCode).toBe('glossary-category-disease');
+    const nombres = enfermedades!.items.map((item) => item.display);
+    expect(nombres).toEqual([...nombres].sort((a, b) => a.localeCompare(b, 'es')));
+  });
+
+  it('trae las relaciones entrantes de un término que no tiene salientes', async () => {
+    const vecindario = await get<Vecindario>(ruta(ZIKA));
+
+    expect(vecindario.groups.every((g) => g.direction === 'incoming')).toBe(true);
+    const relacionados = vecindario.groups.find((g) => g.type === 'RELATED_TERM');
+    expect(relacionados?.total).toBe(3);
+    expect(relacionados?.items.every((item) => item.slug !== '' && item.category !== null)).toBe(true);
+  });
+
+  it('pagina un solo grupo cuando se piden tipo y sentido', async () => {
+    const pagina = await get<Vecindario>(ruta(TOS), {
+      type: 'DISEASE',
+      direction: 'outgoing',
+      offset: '40',
+      limit: '200',
+    });
+
+    expect(pagina.groups).toHaveLength(1);
+    expect(pagina.groups[0]?.total).toBe(47);
+    expect(pagina.groups[0]?.items).toHaveLength(7);
+  });
+
+  it.each([
+    [{ perGroup: '0' }],
+    [{ perGroup: '51' }],
+    [{ type: 'NO_EXISTE', direction: 'incoming' }],
+    [{ type: 'SYMPTOM', direction: 'sideways' }],
+    [{ type: 'SYMPTOM', direction: 'incoming', limit: '201' }],
+    [{ type: 'SYMPTOM', direction: 'incoming', offset: '-1' }],
+  ])('rechaza con 422 una consulta inválida (%o)', async (query) => {
+    const respuesta = await get<{ status: number }>(ruta(TOS), query);
+    expect(respuesta.status).toBe(422);
+  });
+
+  it('responde 404 a un id que no es del glosario', async () => {
+    const respuesta = await get<{ status: number }>(ruta('00000000-0000-4000-a000-000000000000'));
+    expect(respuesta.status).toBe(404);
+  });
+});

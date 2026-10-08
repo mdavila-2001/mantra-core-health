@@ -6,6 +6,7 @@ import {
   type ManifiestoDelGlosario,
   type PedidoDePagina,
   type RefDeFila,
+  type RelacionEntrante,
 } from './glossary-shards';
 
 /* ============================================================================
@@ -22,7 +23,10 @@ import {
     ========================================================================== */
 
 /** Lo que los handlers de terminología le piden al glosario. */
-export type FuenteDeGlosario = Pick<AlmacenDeGlosario, 'manifiesto' | 'origen' | 'filas' | 'porId' | 'pagina'>;
+export type FuenteDeGlosario = Pick<
+  AlmacenDeGlosario,
+  'manifiesto' | 'origen' | 'filas' | 'porId' | 'pagina' | 'entrantes' | 'categoriaDe'
+>;
 
 export class AlmacenConCapasDeLaMaqueta implements FuenteDeGlosario {
   private extras: Promise<readonly FilaDeGlosario[]> | null = null;
@@ -66,6 +70,24 @@ export class AlmacenConCapasDeLaMaqueta implements FuenteDeGlosario {
   async porId(id: string): Promise<FilaDeGlosario | null> {
     const propia = (await this.capa()).find((f) => f.id === id);
     return propia ?? this.base.porId(id);
+  }
+
+  /** Las entrantes de los shards más las que salen de las filas de la capa. */
+  async entrantes(id: string): Promise<readonly RelacionEntrante[]> {
+    const [base, capa] = await Promise.all([this.base.entrantes(id), this.capa()]);
+    const propias = capa.flatMap((fila) =>
+      fila.relations
+        .filter((relacion) => relacion.targetId === id)
+        .map(
+          (relacion): RelacionEntrante => [fila.id, relacion.type, fila.slug, fila.esName, fila.categoryKey],
+        ),
+    );
+    return [...base, ...propias];
+  }
+
+  async categoriaDe(id: string): Promise<string | null> {
+    const propia = (await this.capa()).find((f) => f.id === id);
+    return propia?.categoryKey ?? this.base.categoriaDe(id);
   }
 
   async pagina(pedido: PedidoDePagina): Promise<{ filas: FilaDeGlosario[]; total: number }> {
