@@ -69,7 +69,7 @@ export const LAB_IMPORT_COLUMNS: readonly LabImportColumn[] = [
     field: 'code',
     aliases: ['code', 'cod', 'codigo_interno', 'codigo_del_analisis'],
     required: true,
-    hint: `Tu código interno, hasta ${LAB_CODE_MAX_LENGTH} caracteres. Si ya existe, se actualiza.`,
+    hint: `Su código interno, hasta ${LAB_CODE_MAX_LENGTH} caracteres. Si ya existe, se actualiza.`,
   },
   {
     header: 'nombre',
@@ -83,7 +83,7 @@ export const LAB_IMPORT_COLUMNS: readonly LabImportColumn[] = [
     field: 'category',
     aliases: ['category', 'area', 'seccion'],
     required: false,
-    hint: 'Una de las categorías de tu catálogo. Vacía: sin categoría.',
+    hint: 'Una de las categorías de su catálogo. Vacía: sin categoría.',
   },
   {
     header: 'tipo_muestra',
@@ -238,7 +238,7 @@ export function reviewLabServicesCsv(content: string, context: LabImportContext)
   for (const column of LAB_IMPORT_COLUMNS) {
     if (column.required && !targets.includes(column.field)) {
       throw new ArchivoInvalido(
-        `Falta la columna «${column.header}». Descargá la plantilla para ver los encabezados.`,
+        `Falta la columna «${column.header}». Descargue la plantilla para ver los encabezados.`,
       );
     }
   }
@@ -310,8 +310,8 @@ export function reviewLabServicesCsv(content: string, context: LabImportContext)
         if (id === undefined) {
           errors.push(
             categoryNames === ''
-              ? `La categoría «${text}» no existe: todavía no tenés categorías.`
-              : `La categoría «${text}» no existe. Usá una de: ${categoryNames}.`,
+              ? `La categoría «${text}» no existe: todavía no tiene categorías.`
+              : `La categoría «${text}» no existe. Use una de: ${categoryNames}.`,
           );
         } else {
           service.categoryId = id;

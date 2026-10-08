@@ -69,8 +69,8 @@ export class ProviderForm {
       titulo: 'Qué proveedor',
       hint: 'Cómo se identifica y se muestra.',
       campos: [
-        { key: 'code', label: 'Código del proveedor', hint: 'Único; el login federado lo usa para elegir el proveedor.', control: 'text', required: true, mensajeDeError: 'Ingresá el código (hasta 100 caracteres).' },
-        { key: 'name', label: 'Nombre', control: 'text', required: true, mensajeDeError: 'Ingresá el nombre (hasta 200 caracteres).' },
+        { key: 'code', label: 'Código del proveedor', hint: 'Único; el login federado lo usa para elegir el proveedor.', control: 'text', required: true, mensajeDeError: 'Ingrese el código (hasta 100 caracteres).' },
+        { key: 'name', label: 'Nombre', control: 'text', required: true, mensajeDeError: 'Ingrese el nombre (hasta 200 caracteres).' },
         { key: 'issuer', label: 'Emisor declarado por el proveedor', hint: 'Opcional: el issuer con el que firma sus tokens.', control: 'textarea' },
       ],
     },
@@ -86,7 +86,7 @@ export class ProviderForm {
       titulo: 'Disponibilidad',
       hint: 'Global lo ven todas las organizaciones; si no, necesita una dueña.',
       campos: [
-        { key: 'tenantId', label: 'Organización dueña', hint: 'Si el proveedor no es global, necesita una dueña: pegá su identificador (UUID).', control: 'text', mensajeDeError: UUID_ERROR },
+        { key: 'tenantId', label: 'Organización dueña', hint: 'Si el proveedor no es global, necesita una dueña: pegue su identificador (UUID).', control: 'text', mensajeDeError: UUID_ERROR },
         { key: 'isGlobal', label: 'Disponible para todas las organizaciones sin vínculo explícito', control: 'switch' },
       ],
     },
@@ -123,7 +123,7 @@ export class ProviderForm {
   protected readonly created = signal<CreatedProvider | null>(null);
 
   protected readonly errorMessage = computed(() =>
-    errorMessageOf(this.state(), 'No tenés permiso para registrar proveedores de identidad.'),
+    errorMessageOf(this.state(), 'No tiene permiso para registrar proveedores de identidad.'),
   );
 
   protected submit(): void {

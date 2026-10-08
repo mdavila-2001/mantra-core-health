@@ -13,11 +13,11 @@ export function pharmacyErrorMessage(error: unknown, fallback: string): string {
     case 'validation':
       return state.issues.map((issue) => issue.message).join(' ') || fallback;
     case 'forbidden':
-      return state.message ?? 'Tu usuario no tiene permiso para cambiar el catálogo de esta farmacia.';
+      return state.message ?? 'Su usuario no tiene permiso para cambiar el catálogo de esta farmacia.';
     case 'not-found':
       return 'La farmacia o el producto ya no existen.';
     case 'offline':
-      return 'Sin conexión con el servidor. Revisá tu red y probá de nuevo.';
+      return 'Sin conexión con el servidor. Revise su red y pruebe de nuevo.';
     case 'error':
       return `${state.message ?? fallback} (petición ${state.requestId})`;
     default:

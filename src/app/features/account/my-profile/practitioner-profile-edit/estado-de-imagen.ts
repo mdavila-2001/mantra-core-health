@@ -73,7 +73,7 @@ export class EstadoDeImagen {
         },
         error: () => {
           this.subiendo.set(false);
-          this.error.set(`No se pudo subir ${this.nombre}. Probá de nuevo.`);
+          this.error.set(`No se pudo subir ${this.nombre}. Pruebe de nuevo.`);
         },
       });
   }
@@ -82,7 +82,7 @@ export class EstadoDeImagen {
   rechazar(rechazados: readonly RejectedFile[]): void {
     this.error.set(
       rechazados[0]?.reason === 'tamaño'
-        ? `La imagen pesa más de 2 MB. Elegí una más liviana para ${this.nombre}.`
+        ? `La imagen pesa más de 2 MB. Elija una más liviana para ${this.nombre}.`
         : `${this.nombre[0]!.toUpperCase()}${this.nombre.slice(1)} tiene que ser una imagen PNG, JPG o WEBP.`,
     );
   }

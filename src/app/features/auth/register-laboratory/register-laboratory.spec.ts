@@ -475,7 +475,7 @@ describe('RegisterLaboratory', () => {
     expect(exito).not.toBeNull();
     expect((exito.nativeElement as HTMLElement).textContent).toContain('¡Bienvenido a AloVida!');
     const texto = (fixture.nativeElement as HTMLElement).textContent ?? '';
-    expect(texto).toContain('Te enviamos un correo para confirmar tu dirección');
+    expect(texto).toContain('Le enviamos un correo para confirmar su dirección');
     expect(texto).toContain('está en revisión');
   });
 
@@ -546,7 +546,7 @@ describe('RegisterLaboratory', () => {
       campo.dispatchEvent(new FocusEvent('blur'));
       fixture.detectChanges();
 
-      expect(errorDe(campo)).toBe('Escribí la dirección legal de la central.');
+      expect(errorDe(campo)).toBe('Escriba la dirección legal de la central.');
       expect(
         fixture.nativeElement.querySelector('[data-testid="registro-lab-direccion-reescribir"]'),
       ).not.toBeNull();
@@ -562,7 +562,7 @@ describe('RegisterLaboratory', () => {
       expect(fixture.nativeElement.querySelector('.paginated-form__titulo').textContent).toContain(
         'Dónde está la central',
       );
-      expect(errorDe(campo)).toBe('Escribí la dirección legal de la central.');
+      expect(errorDe(campo)).toBe('Escriba la dirección legal de la central.');
     });
   });
 });

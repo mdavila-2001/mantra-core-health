@@ -1,12 +1,12 @@
 @if (!hasSession()) {
   <app-empty-state
-    title="Entrá para ver los horarios"
-    description="Los horarios de sus servicios se ven con la sesión iniciada. Vas a volver a esta ficha."
+    title="Entre para ver los horarios"
+    description="Los horarios de sus servicios se ven con la sesión iniciada. Va a volver a esta ficha."
   />
 } @else if (tenantId() === null) {
   <app-empty-state
-    title="Elegí una organización"
-    description="Los horarios dependen de la organización desde la que mirás."
+    title="Elija una organización"
+    description="Los horarios dependen de la organización desde la que mira."
   />
 } @else {
   <div class="otros-servicios" data-testid="service-schedule">
@@ -38,7 +38,7 @@
           </p>
 
           <p class="otros-servicios__nota">
-            Lo que ya pediste, y si el profesional lo confirmó, está en
+            Lo que ya pidió, y si el profesional lo confirmó, está en
             <a app-link [routerLink]="myAppointmentsPath" data-testid="service-schedule-my-requests">Mis citas</a>.
           </p>
 
@@ -91,7 +91,7 @@
                 @if (siteList().length === 0) {
                   <app-empty-state
                     title="Todavía no publicó horarios"
-                    description="Cuando publique su horario, vas a ver acá cuándo podés pedir este servicio."
+                    description="Cuando publique su horario, va a ver acá cuándo puede pedir este servicio."
                   />
                 }
                 @for (site of siteList(); track site.resource.id) {
@@ -101,7 +101,7 @@
                       @case ('ready') {
                         @if (site.starts.data.length === 0) {
                           <p class="otros-servicios__nota" data-testid="service-schedule-week-empty">
-                            Esta semana no tiene lugar para este servicio en esta sede. Probá con la
+                            Esta semana no tiene lugar para este servicio en esta sede. Pruebe con la
                             semana siguiente.
                           </p>
                         } @else {

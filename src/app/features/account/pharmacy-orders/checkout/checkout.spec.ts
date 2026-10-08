@@ -245,12 +245,12 @@ describe('Checkout', () => {
       montar();
 
       expect(pasos()).toEqual(['Entrega', 'Medio de pago', 'Resumen']);
-      expect(tituloDelPaso()).toBe('Cómo lo recibís');
+      expect(tituloDelPaso()).toBe('Cómo lo recibe');
 
       clic(uno('checkout-siguiente'));
       expect(tituloDelPaso()).toBe('Medio de pago');
       clic(uno('checkout-siguiente'));
-      expect(tituloDelPaso()).toBe('Revisá y confirmá');
+      expect(tituloDelPaso()).toBe('Revise y confirme');
       clic(uno('checkout-anterior'));
       expect(tituloDelPaso()).toBe('Medio de pago');
     });
@@ -285,12 +285,12 @@ describe('Checkout', () => {
       montar();
 
       clic(uno('stepper-paso-2'));
-      expect(tituloDelPaso()).toBe('Cómo lo recibís');
+      expect(tituloDelPaso()).toBe('Cómo lo recibe');
 
       clic(uno('checkout-siguiente'));
       clic(uno('checkout-siguiente'));
       clic(uno('stepper-paso-0'));
-      expect(tituloDelPaso()).toBe('Cómo lo recibís');
+      expect(tituloDelPaso()).toBe('Cómo lo recibe');
     });
 
     it('el medio de pago ofrece QR de demostración y tarjeta como maqueta deshabilitada', () => {

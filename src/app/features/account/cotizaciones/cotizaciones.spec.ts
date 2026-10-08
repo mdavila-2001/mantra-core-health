@@ -288,7 +288,7 @@ describe('Cotizaciones', () => {
     componente().buscar('para');
     await asentar();
 
-    expect(texto()).toContain('Elegí desde dónde medir');
+    expect(texto()).toContain('Elija desde dónde medir');
   });
 
   it('cambiar la vertical consulta sólo esa', async () => {
@@ -401,7 +401,7 @@ describe('Cotizaciones', () => {
 
     expect(agregar).toHaveBeenCalledWith(FARMACIA.carrito!.sede, FARMACIA.carrito!.linea);
     expect(exito).toHaveBeenCalledWith(
-      'Paracetamol quedó en tu carrito de Farmacia Central.',
+      'Paracetamol quedó en su carrito de Farmacia Central.',
       'Agregado al carrito',
     );
   });
@@ -485,6 +485,6 @@ describe('Cotizaciones', () => {
     await montar();
 
     expect(getOwnOrders).not.toHaveBeenCalled();
-    expect(texto()).not.toContain('Estudios en tus documentos actuales');
+    expect(texto()).not.toContain('Estudios en sus documentos actuales');
   });
 });

@@ -1,6 +1,6 @@
 @if (visible()) {
   <section class="benefits" aria-labelledby="benefits-title" data-testid="campaigns-widget">
-    <h2 id="benefits-title" class="benefits__title">Beneficios preventivos de tu seguro</h2>
+    <h2 id="benefits-title" class="benefits__title">Beneficios preventivos de su seguro</h2>
 
     @if (campaigns().length > 0) {
       <ul class="benefits__list">
@@ -37,7 +37,7 @@
 
               @if (providersOf(campaign).length > 0) {
                 <p class="benefit__fact" data-testid="campaign-providers">
-                  <span class="benefit__label">Dónde te atendés</span>
+                  <span class="benefit__label">Dónde se atiende</span>
                   {{ partnerNames(providersOf(campaign)) }}
                 </p>
               }
@@ -71,7 +71,7 @@
       </ul>
     } @else if (failed()) {
       <p class="benefits__empty" role="status" data-testid="campaigns-error">
-        No pudimos traer las campañas de tu seguro.
+        No pudimos traer las campañas de su seguro.
       </p>
       <button app-button type="button" variant="secondary" (clicked)="retry()">Reintentar</button>
     } @else {

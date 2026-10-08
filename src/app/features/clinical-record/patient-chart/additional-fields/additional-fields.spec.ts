@@ -97,7 +97,7 @@ describe('AdditionalFields', () => {
     ]);
 
     const problemas = interno<() => ReadonlyMap<number, string | null>>('problemas')();
-    expect(problemas.get(0)).toBe('Escribí un valor o adjuntá un archivo.');
+    expect(problemas.get(0)).toBe('Escriba un valor o adjunte un archivo.');
     expect(problemas.get(1)).toBe('Falta el campo.');
     expect(componente.hayProblemas()).toBe(true);
   });

@@ -48,7 +48,7 @@ export class FeedCrearPublicacion {
   protected readonly abierto = signal(false);
 
   protected readonly nombre = computed(
-    () => this.perfil()?.displayName ?? this.sesion.displayName() ?? 'Tu cuenta',
+    () => this.perfil()?.displayName ?? this.sesion.displayName() ?? 'Su cuenta',
   );
 
   protected readonly iniciales = computed(() => inicialesDe(this.nombre()));

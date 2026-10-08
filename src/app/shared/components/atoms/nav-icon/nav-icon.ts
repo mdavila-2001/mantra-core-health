@@ -350,7 +350,7 @@ import type { NavIconName } from './nav-icon.types';
           <path d="M10.2 18.6a2.1 2.1 0 0 0 3.6 0" />
         }
         @case ('sliders') {
-          <!-- Controles: elegir cuáles de esos avisos querés. -->
+          <!-- Controles: elegir cuáles de esos avisos quiere. -->
           <path d="M3.5 7.5h9.5M17.5 7.5h3M3.5 16.5h3M11.5 16.5h9" />
           <circle cx="15.2" cy="7.5" r="2.3" />
           <circle cx="8.8" cy="16.5" r="2.3" />
@@ -377,7 +377,7 @@ import type { NavIconName } from './nav-icon.types';
           <path d="m10.6 5.8-6.2 6.2 6.2 6.2" />
         }
         @case ('remove') {
-          <!-- Un menos dentro de un aro: «sacá esto de la lista». No es una
+          <!-- Un menos dentro de un aro: «saque esto de la lista». No es una
                papelera —no se borra nada— ni una cruz, que a este tamaño se
                confunde con «cerrar». El aro le da el mismo peso visual que el
                resto del set, que casi todo dibuja una figura cerrada. -->
@@ -385,7 +385,7 @@ import type { NavIconName } from './nav-icon.types';
           <path d="M8.4 12h7.2" />
         }
         @case ('edit') {
-          <!-- Un lápiz inclinado, con la punta apoyada en un renglón: «editá
+          <!-- Un lápiz inclinado, con la punta apoyada en un renglón: «edite
                esto». Sin hoja debajo —esa es «note», la sección de
                evoluciones— para que los dos glifos no se confundan en la misma
                pantalla. Misma caja de 24 y el mismo aire que el resto. -->
@@ -423,7 +423,7 @@ import type { NavIconName } from './nav-icon.types';
 
         <!-- ---- Acciones de desplegable --------------------------------- -->
         @case ('eye') {
-          <!-- Ojo: «mirá el detalle» sin cambiar nada. -->
+          <!-- Ojo: «mire el detalle» sin cambiar nada. -->
           <path d="M2.6 12S6 5.6 12 5.6 21.4 12 21.4 12 18 18.4 12 18.4 2.6 12 2.6 12z" />
           <circle cx="12" cy="12" r="2.8" />
         }

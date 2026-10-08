@@ -108,13 +108,13 @@ export class RelatedPersonForm {
       return state.issues.map((issue) => issue.message).join(' ') || null;
     }
     if (state.status === 'forbidden') {
-      return state.message ?? 'No tenés permiso para registrar contactos.';
+      return state.message ?? 'No tiene permiso para registrar contactos.';
     }
     if (state.status === 'not-found') {
-      return 'El paciente ya no existe. Volvé al listado.';
+      return 'El paciente ya no existe. Vuelva al listado.';
     }
     if (state.status === 'offline') {
-      return 'No pudimos conectarnos. Revisá tu conexión y reintentá.';
+      return 'No pudimos conectarnos. Revise su conexión y reintente.';
     }
     if (state.status === 'error') {
       return `${state.message || 'Ocurrió un error inesperado.'} (${state.requestId})`;

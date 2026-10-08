@@ -79,7 +79,7 @@ export class InsurancePortabilityCard {
    */
   protected readonly coverageSummary = computed(() => {
     const total = this.coverages().length;
-    if (total === 0) return 'No tenés coberturas declaradas.';
+    if (total === 0) return 'No tiene coberturas declaradas.';
 
     const currentCount = this.coverages().filter(
       (coverage) => coverage.validityStatus === 'CURRENT',
@@ -132,8 +132,8 @@ export class InsurancePortabilityCard {
 
   private downloadErrorMessage(error: unknown): string {
     if (error instanceof HttpErrorResponse) {
-      return readApiError(error)?.message ?? 'No se pudo descargar el PDF. Probá de nuevo.';
+      return readApiError(error)?.message ?? 'No se pudo descargar el PDF. Pruebe de nuevo.';
     }
-    return 'No se pudo descargar el PDF. Probá de nuevo.';
+    return 'No se pudo descargar el PDF. Pruebe de nuevo.';
   }
 }

@@ -69,7 +69,7 @@ async function completarCentralSinMapa(page: Page): Promise<void> {
 
 /** Página «Tus sucursales»: seguir de largo sin agregar ninguna. */
 async function saltarSucursales(page: Page): Promise<void> {
-  await expect(page.locator('.paginated-form__titulo')).toContainText('Tus sucursales');
+  await expect(page.locator('.paginated-form__titulo')).toContainText('Sus sucursales');
   await page.getByTestId('paginated-form-continuar').click();
 }
 
@@ -103,7 +103,7 @@ async function saltarGerencias(page: Page): Promise<void> {
 
 /** Página «Tu acceso»: la contraseña y el envío. */
 async function completarAccesoYEnviar(page: Page): Promise<void> {
-  await expect(page.locator('.paginated-form__titulo')).toContainText('Tu acceso');
+  await expect(page.locator('.paginated-form__titulo')).toContainText('Su acceso');
   await page.getByTestId('registro-farmacia-password').fill('secreto12');
   await page.getByTestId('paginated-form-continuar').click();
 }
@@ -111,7 +111,7 @@ async function completarAccesoYEnviar(page: Page): Promise<void> {
 test.describe('alta pública de farmacia (Módulo Farmacia §1)', () => {
   test.describe.configure({ mode: 'serial' });
 
-  test('la tarjeta «Farmacia» está en «Registrá tu organización», junto a las otras tres', async ({ page }) => {
+  test('la tarjeta «Farmacia» está en «Registre su organización», junto a las otras tres', async ({ page }) => {
     await page.goto(RUTA_TIPOS, { waitUntil: 'domcontentloaded' });
     await expect(page.locator('app-root')).not.toBeEmpty({ timeout: 30_000 });
 
@@ -150,7 +150,7 @@ test.describe('alta pública de farmacia (Módulo Farmacia §1)', () => {
     await abrirElAlta(page);
     await page.getByTestId('paginated-form-continuar').click();
 
-    await expect(page.getByText('Escribí el nombre o la razón social de la farmacia.')).toBeVisible();
+    await expect(page.getByText('Escriba el nombre o la razón social de la farmacia.')).toBeVisible();
     await expect(page.locator('.paginated-form__titulo')).toHaveText('La empresa');
   });
 
@@ -165,7 +165,7 @@ test.describe('alta pública de farmacia (Módulo Farmacia §1)', () => {
     await completarAccesoYEnviar(page);
 
     await expect(page.getByTestId('registro-farmacia-exito')).toBeVisible({ timeout: 20_000 });
-    await expect(page.getByText('Ya podés conectarte con el correo del representante legal')).toBeVisible();
+    await expect(page.getByText('Ya puede conectarse con el correo del representante legal')).toBeVisible();
     await capturar(page, 'exito-minimo');
 
     await page.getByTestId('registro-farmacia-ir-login').click();
@@ -236,7 +236,7 @@ test.describe('alta pública de farmacia (Módulo Farmacia §1)', () => {
     await page.getByTestId('paginated-form-continuar').click();
 
     // Una sucursal, con su propio mapa.
-    await expect(page.locator('.paginated-form__titulo')).toContainText('Tus sucursales');
+    await expect(page.locator('.paginated-form__titulo')).toContainText('Sus sucursales');
     await page.getByTestId('registro-farmacia-agregar-sucursal').click();
     await page.getByTestId('registro-farmacia-sucursal-1-nombre').fill('Sucursal Equipetrol');
     await page.getByTestId('registro-farmacia-sucursal-1-direccion').fill('Av. San Martín 456');

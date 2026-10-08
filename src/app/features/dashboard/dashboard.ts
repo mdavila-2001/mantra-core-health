@@ -140,8 +140,8 @@ export class Dashboard {
   /** El subtítulo dice lo que la pantalla trae, y eso depende de quién entró. */
   protected readonly subtituloDelPanel = computed(() =>
     this.atiendePacientes()
-      ? 'Tu jornada de hoy y todo lo que tu cuenta habilita.'
-      : 'Todo lo que tu cuenta habilita en esta organización.',
+      ? 'Su jornada de hoy y sus herramientas de trabajo, en un solo lugar.'
+      : 'Todo lo que puede hacer en esta organización, en un solo lugar.',
   );
 
   /**

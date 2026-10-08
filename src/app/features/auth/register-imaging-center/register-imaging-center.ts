@@ -191,7 +191,7 @@ const AYUDA: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
       icono: 'building',
       titulo: 'La empresa, no el local',
       texto:
-        'Acá va la razón social tal como figura en tu matrícula de comercio. Los locales donde atendés se cargan más adelante, cada uno con su punto en el mapa.',
+        'Acá va la razón social tal como figura en su matrícula de comercio. Los locales donde atiende se cargan más adelante, cada uno con su punto en el mapa.',
     },
     {
       icono: 'labels',
@@ -203,15 +203,15 @@ const AYUDA: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
   estudios: [
     {
       icono: 'scan',
-      titulo: 'Es lo que te hace aparecer en la orden correcta',
+      titulo: 'Es lo que le hace aparecer en la orden correcta',
       texto:
-        'Cuando llega una orden médica, la app ofrece sólo los centros que pueden hacer ese estudio. Si no marcás ninguno, tu centro no entra en ninguna búsqueda.',
+        'Cuando llega una orden médica, la app ofrece sólo los centros que pueden hacer ese estudio. Si no marca ninguno, su centro no entra en ninguna búsqueda.',
     },
     {
       icono: 'sliders',
-      titulo: 'Marcá lo que hacés hoy',
+      titulo: 'Marque lo que hace hoy',
       texto:
-        'No hace falta que esté todo: el detalle por estudio, con sus precios y sus equipos, se carga después desde tu panel. Acá alcanza con las áreas grandes.',
+        'No hace falta que esté todo: el detalle por estudio, con sus precios y sus equipos, se carga después desde su panel. Acá alcanza con las áreas grandes.',
     },
   ],
   documentos: [
@@ -219,29 +219,29 @@ const AYUDA: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
       icono: 'folder',
       titulo: 'Tres papeles frenan, tres no',
       texto:
-        'Sin SEPREC, licencia de funcionamiento y certificado del SEDES no podemos publicar un centro: son los que prueban que está registrado y habilitado para operar. Los otros tres los podés traer después.',
+        'Sin SEPREC, licencia de funcionamiento y certificado del SEDES no podemos publicar un centro: son los que prueban que está registrado y habilitado para operar. Los otros tres los puede traer después.',
     },
     {
       icono: 'shield',
       titulo: 'Quién los ve',
       texto:
-        'Los mira el equipo que aprueba el alta. No se publican en tu ficha ni los ve un paciente.',
+        'Los mira el equipo que aprueba el alta. No se publican en su ficha ni los ve un paciente.',
     },
   ],
   radioproteccion: [
     {
       icono: 'shield',
-      titulo: 'Sólo si usás radiación ionizante',
+      titulo: 'Sólo si usa radiación ionizante',
       texto:
-        'Rayos X, tomografía y mamografía la usan; la ecografía y la resonancia, no. Si tenés la autorización, adjuntala: es lo que el equipo de verificación va a pedir primero.',
+        'Rayos X, tomografía y mamografía la usan; la ecografía y la resonancia, no. Si tiene la autorización, adjúntela: es lo que el equipo de verificación va a pedir primero.',
     },
   ],
   ubicacion: [
     {
       icono: 'pin',
-      titulo: 'El punto es lo que te hace aparecer',
+      titulo: 'El punto es lo que le hace aparecer',
       texto:
-        'Cuando un paciente busca dónde hacerse un estudio, la app ordena por cercanía. Sin el punto en el mapa tu centro queda fuera de esa lista, aunque la dirección esté escrita.',
+        'Cuando un paciente busca dónde hacerse un estudio, la app ordena por cercanía. Sin el punto en el mapa su centro queda fuera de esa lista, aunque la dirección esté escrita.',
     },
   ],
   sucursales: [
@@ -263,7 +263,7 @@ const AYUDA: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
       icono: 'folder',
       titulo: 'El poder va con quien lo firma',
       texto:
-        'Adjuntalo acá, junto a los datos del representante. Es opcional: si el dueño se representa a sí mismo, no hace falta.',
+        'Adjúntelo acá, junto a los datos del representante. Es opcional: si el dueño se representa a sí mismo, no hace falta.',
     },
   ],
   'gerencia-general': [
@@ -279,7 +279,7 @@ const AYUDA: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
       icono: 'chart',
       titulo: 'A quién le llega la liquidación',
       texto:
-        'El resumen semanal de ventas y comisiones se manda a este correo cuando está cargado. Si lo dejás vacío, va al del representante legal.',
+        'El resumen semanal de ventas y comisiones se manda a este correo cuando está cargado. Si lo deja vacío, va al del representante legal.',
     },
   ],
   'gerencia-marketing': [
@@ -522,7 +522,7 @@ export class RegisterImagingCenter {
       titulo: 'La empresa',
       clave: 'empresa',
       icon: 'building' as const,
-      hint: 'Los datos con los que figura en tu matrícula de comercio.',
+      hint: 'Los datos con los que figura en su matrícula de comercio.',
       campos: [
         {
           key: 'legalName',
@@ -532,19 +532,19 @@ export class RegisterImagingCenter {
           icono: 'building' as const,
           placeholder: 'Centro de Imagenología del Oriente S.R.L.',
           testId: 'registro-imagen-razon-social',
-          mensajeDeError: 'Escribí el nombre o la razón social de la empresa.',
+          mensajeDeError: 'Escriba el nombre o la razón social de la empresa.',
         },
         {
           key: 'companyType',
           label: 'Tipo de sociedad',
-          hint: 'El que figura en tu matrícula de comercio.',
+          hint: 'El que figura en su matrícula de comercio.',
           control: 'select' as const,
           options: TIPOS_DE_SOCIEDAD,
           required: true,
           icono: 'labels' as const,
-          placeholder: 'Elegí el tipo de sociedad',
+          placeholder: 'Elija el tipo de sociedad',
           testId: 'registro-imagen-tipo-sociedad',
-          mensajeDeError: 'Elegí el tipo de sociedad.',
+          mensajeDeError: 'Elija el tipo de sociedad.',
         },
         {
           key: 'taxId',
@@ -555,26 +555,26 @@ export class RegisterImagingCenter {
           icono: 'billing' as const,
           placeholder: '1023456789',
           testId: 'registro-imagen-nit',
-          mensajeDeError: 'Escribí el NIT: sólo números, al menos cuatro dígitos.',
+          mensajeDeError: 'Escriba el NIT: sólo números, al menos cuatro dígitos.',
         },
       ],
     },
     {
-      titulo: 'Qué estudios hacés',
+      titulo: 'Qué estudios hace',
       clave: 'estudios',
       icon: 'scan' as const,
-      hint: 'Marcá todos los que tu centro pueda realizar hoy.',
+      hint: 'Marque todos los que su centro pueda realizar hoy.',
       campos: [
         {
           key: 'modalidades',
           label: 'Estudios que realiza el centro',
-          hint: 'Si hacés alguno que no está en la lista, agregalo en «Otro».',
+          hint: 'Si hace alguno que no está en la lista, agréguelo en «Otro».',
           control: 'checkboxes' as const,
           options: MODALIDADES,
           otro: true,
           required: true,
           testId: 'registro-imagen-modalidades',
-          mensajeDeError: 'Marcá al menos un estudio: es lo que hace que tu centro aparezca.',
+          mensajeDeError: 'Marque al menos un estudio: es lo que hace que su centro aparezca.',
         },
       ],
     },
@@ -591,16 +591,16 @@ export class RegisterImagingCenter {
           hint: 'La matrícula de comercio vigente.',
           control: 'custom' as const,
           required: true,
-          mensajeDeError: 'Adjuntá el SEPREC: sin la matrícula no podemos publicar el centro.',
+          mensajeDeError: 'Adjunte el SEPREC: sin la matrícula no podemos publicar el centro.',
         },
         {
           key: 'licenciaFile',
           ancho: 'mitad' as const,
           label: 'Licencia de funcionamiento',
-          hint: 'La que emite tu municipio.',
+          hint: 'La que emite su municipio.',
           control: 'custom' as const,
           required: true,
-          mensajeDeError: 'Adjuntá la licencia de funcionamiento.',
+          mensajeDeError: 'Adjunte la licencia de funcionamiento.',
         },
         {
           key: 'sedesFile',
@@ -610,13 +610,13 @@ export class RegisterImagingCenter {
           control: 'custom' as const,
           required: true,
           mensajeDeError:
-            'Adjuntá el certificado del SEDES: es lo que habilita a un centro a atender.',
+            'Adjunte el certificado del SEDES: es lo que habilita a un centro a atender.',
         },
         {
           key: 'nitFile',
           ancho: 'mitad' as const,
           label: 'NIT en PDF (opcional)',
-          hint: 'El respaldo del número que escribiste antes.',
+          hint: 'El respaldo del número que escribió antes.',
           control: 'custom' as const,
         },
       ],
@@ -638,7 +638,7 @@ export class RegisterImagingCenter {
           key: 'radioproteccionFile',
           ancho: 'mitad' as const,
           label: 'Autorización de radioprotección (opcional)',
-          hint: 'La que habilita a operar equipos con radiación ionizante. No la necesitás si sólo hacés ecografía o resonancia.',
+          hint: 'La que habilita a operar equipos con radiación ionizante. No la necesita si sólo hace ecografía o resonancia.',
           control: 'custom' as const,
         },
       ],
@@ -651,27 +651,27 @@ export class RegisterImagingCenter {
         {
           key: 'addressLines',
           label: 'Dirección legal de la central',
-          hint: 'Calle, número y zona. Es la que figura en tus papeles.',
+          hint: 'Calle, número y zona. Es la que figura en sus papeles.',
           control: 'text' as const,
           required: true,
           icono: 'pin' as const,
           placeholder: 'Av. Cañoto esq. Ballivián 234, Zona Central',
           testId: 'registro-imagen-direccion',
-          mensajeDeError: 'Escribí la dirección legal de la central.',
+          mensajeDeError: 'Escriba la dirección legal de la central.',
         },
         {
           key: 'gpsCentral',
           label: 'Ubicación en el mapa (opcional)',
-          hint: 'Sin el punto, tu centro no aparece cuando alguien busca el más cercano.',
+          hint: 'Sin el punto, su centro no aparece cuando alguien busca el más cercano.',
           control: 'custom' as const,
         },
       ],
     },
     {
-      titulo: 'Tus sucursales',
+      titulo: 'Sus sucursales',
       clave: 'sucursales',
       icon: 'hospital' as const,
-      hint: 'Si sólo atendés en la central, seguí de largo.',
+      hint: 'Si sólo atiende en la central, siga de largo.',
       campos: [
         {
           key: 'sucursales',
@@ -696,13 +696,13 @@ export class RegisterImagingCenter {
         {
           key: 'legalRepEmail',
           label: 'Correo del representante legal',
-          hint: 'Con este correo vas a entrar a la plataforma.',
+          hint: 'Con este correo va a entrar a la plataforma.',
           control: 'email' as const,
           required: true,
           icono: 'mail' as const,
           autocomplete: 'username',
           testId: 'registro-imagen-representante-correo',
-          mensajeDeError: 'Escribí un correo válido: es el usuario de la cuenta.',
+          mensajeDeError: 'Escriba un correo válido: es el usuario de la cuenta.',
         },
         // El poder (1.8.1) se pide junto a quien lo firma, no con los papeles de la empresa.
         {
@@ -717,7 +717,7 @@ export class RegisterImagingCenter {
       titulo: 'Gerencia general',
       clave: 'gerencia-general',
       icon: 'briefcase' as const,
-      hint: 'Todo este paso es opcional: podés completarlo después.',
+      hint: 'Todo este paso es opcional: puede completarlo después.',
       campos: [
         {
           key: 'generalManagerName',
@@ -739,7 +739,7 @@ export class RegisterImagingCenter {
           control: 'email' as const,
           icono: 'mail' as const,
           testId: 'registro-imagen-gerente-general-correo',
-          mensajeDeError: 'Escribí un correo válido o dejalo vacío.',
+          mensajeDeError: 'Escriba un correo válido o déjelo vacío.',
         },
       ],
     },
@@ -769,7 +769,7 @@ export class RegisterImagingCenter {
           control: 'email' as const,
           icono: 'mail' as const,
           testId: 'registro-imagen-gerente-comercial-correo',
-          mensajeDeError: 'Escribí un correo válido o dejalo vacío.',
+          mensajeDeError: 'Escriba un correo válido o déjelo vacío.',
         },
       ],
     },
@@ -799,15 +799,15 @@ export class RegisterImagingCenter {
           control: 'email' as const,
           icono: 'mail' as const,
           testId: 'registro-imagen-gerente-marketing-correo',
-          mensajeDeError: 'Escribí un correo válido o dejalo vacío.',
+          mensajeDeError: 'Escriba un correo válido o déjelo vacío.',
         },
       ],
     },
     {
-      titulo: 'Tu acceso',
+      titulo: 'Su acceso',
       clave: 'acceso',
       icon: 'lock' as const,
-      hint: 'Entrás con el correo del representante legal y esta contraseña.',
+      hint: 'Entra con el correo del representante legal y esta contraseña.',
       campos: [
         {
           key: 'password',

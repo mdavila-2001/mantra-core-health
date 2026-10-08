@@ -139,7 +139,7 @@ describe('TarjetaDelDia', () => {
    * descarta en silencio lo que no nombra), y que se dice antes de guardar.
    */
   describe('la modalidad de la atención', () => {
-    it('no se ofrece sin paciente: un rato tuyo no se atiende por videollamada', async () => {
+    it('no se ofrece sin paciente: un rato suyo no se atiende por videollamada', async () => {
       await montar();
       api().motivo.set('Reunión de equipo');
       fixture.detectChanges();
@@ -220,7 +220,7 @@ describe('TarjetaDelDia', () => {
 
       api().modalidad.set('DOMICILIO');
       fixture.detectChanges();
-      expect(inferencia()).toContain('Vas a su domicilio');
+      expect(inferencia()).toContain('Va a su domicilio');
     });
   });
 
@@ -421,7 +421,7 @@ describe('TarjetaDelDia', () => {
 
       const texto = (fixture.nativeElement as HTMLElement).textContent ?? '';
       expect(texto).toContain('está bloqueado por «Reunión de equipo»');
-      expect(texto).toContain('quitá el bloqueo primero');
+      expect(texto).toContain('quite el bloqueo primero');
     });
 
     it('llamar a guardar igual NO manda nada: la regla no es el botón', async () => {
@@ -467,7 +467,7 @@ describe('TarjetaDelDia', () => {
     expect(raiz.querySelectorAll('input[type="radio"]')).toHaveLength(0);
     // Se anuncia como grupo y con su pregunta: un grupo sin nombre no se lee.
     const grupo = raiz.querySelector('[role="radiogroup"]');
-    expect(grupo?.getAttribute('aria-label')).toBe('¿Cómo lo atendés?');
+    expect(grupo?.getAttribute('aria-label')).toBe('¿Cómo lo atiende?');
   });
 
   it('un rango invertido no deja guardar', async () => {

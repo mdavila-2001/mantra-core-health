@@ -87,14 +87,14 @@ export class RequestAccess {
       })
       .subscribe({
         next: () => {
-          this.toasts.success('Solicitud enviada. El paciente va a decidir qué áreas te autoriza.');
+          this.toasts.success('Solicitud enviada. El paciente va a decidir qué áreas le autoriza.');
           void this.router.navigate([CLINICAL_RECORD_ROUTE]);
         },
         error: (err: unknown) => {
           this.enviando.set(false);
           const http = err instanceof HttpErrorResponse ? err.status : 0;
           if (http === 403) {
-            this.error.set('No tenés permiso para pedir este vínculo.');
+            this.error.set('No tiene permiso para pedir este vínculo.');
           } else if (http === 409) {
             // El backend rechaza por duplicado: ya hay un vínculo activo o un
             // pedido sin responder con esta persona.
@@ -102,9 +102,9 @@ export class RequestAccess {
               'Ya existe una solicitud pendiente o un vínculo activo con este paciente.',
             );
           } else if (http === 412) {
-            this.error.set('Tu cuenta no tiene un perfil profesional propio para pedir el vínculo.');
+            this.error.set('Su cuenta no tiene un perfil profesional propio para pedir el vínculo.');
           } else {
-            this.error.set('No se pudo enviar la solicitud. Probá de nuevo en un momento.');
+            this.error.set('No se pudo enviar la solicitud. Pruebe de nuevo en un momento.');
           }
         },
       });

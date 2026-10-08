@@ -1,8 +1,8 @@
 <header class="catalogo__encabezado">
   <h2 class="catalogo__titulo">Catálogo de formularios estándar</h2>
   <p class="catalogo__bajada">
-    La versión general base de cada formulario por especialidad, ya cargada. Usala tal cual o
-    duplicala para adaptarla a tu organización.
+    La versión general base de cada formulario por especialidad, ya cargada. Úsela tal cual o
+    duplíquela para adaptarla a su organización.
   </p>
 
   @if (total() > 0) {
@@ -20,7 +20,7 @@
   [collapsible]="true"
   [expandAll]="hayBusqueda()"
   searchLabel="Buscar un formulario por nombre, código o especialidad"
-  noMatchesText="Ningún formulario coincide con lo que buscaste. Probá con otra palabra."
+  noMatchesText="Ningún formulario coincide con lo que buscó. Pruebe con otra palabra."
   (retry)="recargar()"
 >
   <ng-template let-formulario>

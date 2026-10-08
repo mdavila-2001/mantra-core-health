@@ -234,7 +234,7 @@ export class FormsCatalog {
   protected adaptar(plantilla: ChartTemplate): void {
     this.duplicar.emit(plantilla);
     this.toasts.info(
-      'Cargamos sus campos arriba, en «Nueva plantilla». Cambiá lo que quieras y guardá.',
+      'Cargamos sus campos arriba, en «Nueva plantilla». Cambie lo que quiera y guarde.',
       `«${plantilla.name}» lista para adaptar`,
     );
   }
@@ -276,10 +276,10 @@ function coincide(plantilla: ChartTemplate, especialidad: string, busqueda: stri
 function mensajeDeError(error: unknown): string {
   const state = errorToViewState<null>(error);
   if (state.status === 'forbidden') {
-    return state.message ?? 'Tu rol no permite asignar plantillas.';
+    return state.message ?? 'Su rol no permite asignar plantillas.';
   }
   if (state.status === 'offline') {
-    return 'No pudimos conectarnos. Revisá tu conexión y reintentá.';
+    return 'No pudimos conectarnos. Revise su conexión y reintente.';
   }
   if (state.status === 'validation') {
     return state.issues.map((issue) => issue.message).join(' ') || 'La asignación fue rechazada.';

@@ -142,8 +142,8 @@ export class ChildOrganizationNew {
             required: true,
             testId: 'alta-filial-codigo',
             mensajeDeError: this.codigoEnConflicto()
-              ? 'Ya existe una organización con este código. Probá con otro.'
-              : 'Escribí el código de la sub-organización.',
+              ? 'Ya existe una organización con este código. Pruebe con otro.'
+              : 'Escriba el código de la sub-organización.',
           },
           {
             key: 'legalName',
@@ -151,7 +151,7 @@ export class ChildOrganizationNew {
             control: 'text' as const,
             required: true,
             testId: 'alta-filial-razon',
-            mensajeDeError: 'Escribí la razón social (hasta 300 caracteres).',
+            mensajeDeError: 'Escriba la razón social (hasta 300 caracteres).',
           },
         ],
       },
@@ -165,8 +165,8 @@ export class ChildOrganizationNew {
             control: 'select' as const,
             required: true,
             options: this.opcionesDeTipo,
-            placeholder: 'Elegí un tipo',
-            mensajeDeError: 'Elegí el tipo de la sub-organización.',
+            placeholder: 'Elija un tipo',
+            mensajeDeError: 'Elija el tipo de la sub-organización.',
           },
         ],
       },
@@ -179,7 +179,7 @@ export class ChildOrganizationNew {
                 {
                   key: 'pais',
                   label: 'País',
-                  hint: 'Buscá por nombre; el código acompaña para distinguir homónimos.',
+                  hint: 'Busque por nombre; el código acompaña para distinguir homónimos.',
                   control: 'custom' as const,
                   required: true,
                 },
@@ -201,7 +201,7 @@ export class ChildOrganizationNew {
           {
             key: 'administrador',
             label: 'Administrador',
-            hint: 'Buscá por nombre o correo y elegí de la lista.',
+            hint: 'Busque por nombre o correo y elija de la lista.',
             control: 'custom' as const,
             required: true,
           },
@@ -253,10 +253,10 @@ export class ChildOrganizationNew {
       return state.issues.map((issue) => issue.message).join(' ') || null;
     }
     if (state.status === 'forbidden') {
-      return state.message || 'Necesitás administración de seguridad para crear una filial.';
+      return state.message || 'Necesita administración de seguridad para crear una filial.';
     }
     if (state.status === 'offline') {
-      return 'No pudimos conectarnos. Revisá tu conexión y reintentá.';
+      return 'No pudimos conectarnos. Revise su conexión y reintente.';
     }
     if (state.status === 'error') {
       return `${state.message || 'Ocurrió un error inesperado.'} (${state.requestId})`;

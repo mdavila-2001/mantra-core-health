@@ -491,7 +491,7 @@ describe('LabReception', () => {
       fixture.detectChanges();
 
       expect(component['receiveError']()).toBe(
-        'Ese tipo de muestra ya no está en el catálogo. Actualizamos la lista: elegí otro.',
+        'Ese tipo de muestra ya no está en el catálogo. Actualizamos la lista: elija otro.',
       );
       expect(component['receiveOrder']()).not.toBeNull();
       // Los dos catálogos se piden de nuevo; la bandeja no, porque no se creó nada.

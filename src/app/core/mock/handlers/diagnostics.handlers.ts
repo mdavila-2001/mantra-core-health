@@ -1437,7 +1437,7 @@ export function registrarDiagnostico(router: MockRouter): void {
         statusConceptId: o.statusConceptId,
         priorityConceptId: o.priorityConceptId,
         createdAt: o.createdAt,
-        preparationInstructions: o.codeConceptId === ESTUDIO['STUDY-GLUCOSA'] || o.codeConceptId === ESTUDIO['STUDY-PERFIL-LIPIDICO'] ? 'Ayuno de 8 a 12 horas. Podés tomar agua.' : undefined,
+        preparationInstructions: o.codeConceptId === ESTUDIO['STUDY-GLUCOSA'] || o.codeConceptId === ESTUDIO['STUDY-PERFIL-LIPIDICO'] ? 'Ayuno de 8 a 12 horas. Puede tomar agua.' : undefined,
         hasReleasedResult: informe?.released ?? false,
         reportId: informe?.released ? informe.id : undefined,
         // El turno que el paciente reservó en un centro para esta orden.

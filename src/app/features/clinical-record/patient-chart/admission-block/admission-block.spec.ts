@@ -78,14 +78,14 @@ describe('AdmissionBlock', () => {
     const { fixture } = await montar({ encounterId: null });
 
     expect(api(fixture)['puedeRegistrar']()).toBe(false);
-    expect(fixture.nativeElement.textContent).toContain('Abrí el encuentro para internar');
+    expect(fixture.nativeElement.textContent).toContain('Abra el encuentro para internar');
   });
 
   it('no ofrece el alta sin organización activa', async () => {
     const { fixture } = await montar({ tenantId: null });
 
     expect(api(fixture)['puedeRegistrar']()).toBe(false);
-    expect(fixture.nativeElement.textContent).toContain('Elegí una organización');
+    expect(fixture.nativeElement.textContent).toContain('Elija una organización');
   });
 
   /**

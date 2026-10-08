@@ -9,13 +9,13 @@
        Tres condiciones antes del formulario, y cada una se dice con su propia
        explicación: «no se puede» sin decir qué falta obliga a adivinar. -->
   @if (sinOrganizacion()) {
-    <app-alert tone="info" title="Elegí una organización">
-      El pedido queda bajo la custodia de una organización. Elegí una en el selector del
+    <app-alert tone="info" title="Elija una organización">
+      El pedido queda bajo la custodia de una organización. Elija una en el selector del
       encabezado para poder solicitarlo.
     </app-alert>
   } @else if (!hayEncuentro()) {
-    <app-alert tone="info" title="Abrí el encuentro para pedir">
-      El estudio se pide dentro de la consulta que lo motivó. Registrá el encuentro acá arriba y
+    <app-alert tone="info" title="Abra el encuentro para pedir">
+      El estudio se pide dentro de la consulta que lo motivó. Registre el encuentro acá arriba y
       el formulario aparece. El histórico de abajo se ve igual.
     </app-alert>
   } @else if (catalogoListo() === false) {
@@ -24,7 +24,7 @@
          catálogo no está, lo honesto es no ofrecer el formulario y decir por qué. -->
     <app-alert tone="warning" title="El catálogo de estudios no está publicado">
       El estudio se elige del catálogo y esa columna todavía no tiene un conjunto de valores
-      declarado, así que no se puede pedir desde acá. No es algo que puedas resolver en esta
+      declarado, así que no se puede pedir desde acá. No es algo que pueda resolver en esta
       pantalla: hay que declarar el catálogo del lado del servidor.
     </app-alert>
   } @else {
@@ -46,7 +46,7 @@
         <app-concept-select
           [target]="targetEstudio"
           [(value)]="estudio"
-          placeholder="Elegí un estudio"
+          placeholder="Elija un estudio"
         />
       </app-form-field>
 
@@ -61,11 +61,11 @@
           [target]="targetCategoria"
           [(value)]="categoria"
           [labels]="etiquetasDeCategoria"
-          placeholder="Elegí el tipo"
+          placeholder="Elija el tipo"
         />
       </app-form-field>
 
-      <app-form-field label="Prioridad" hint="Opcional. Según tu criterio clínico.">
+      <app-form-field label="Prioridad" hint="Opcional. Según su criterio clínico.">
         <app-concept-select
           [target]="targetPrioridad"
           [(value)]="prioridad"

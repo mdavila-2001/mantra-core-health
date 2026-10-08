@@ -134,7 +134,7 @@ export class OrderBooking implements OnInit {
     // lleva la frase entera.
     { value: 'pronto', label: 'Pronto', description: 'Primero el turno más pronto' },
     { value: 'precio', label: 'Barato', description: 'Primero el más barato' },
-    { value: 'cerca', label: 'Cerca', description: 'Primero el más cerca de tu casa' },
+    { value: 'cerca', label: 'Cerca', description: 'Primero el más cerca de su casa' },
   ];
 
   protected readonly centrosOrdenados = computed<readonly OrderBookingOption[]>(() => {
@@ -199,7 +199,7 @@ export class OrderBooking implements OnInit {
         this.horarios.set(
           items.length === 0
             ? empty(
-                { label: 'Elegí otro centro con «Cambiar de centro»' },
+                { label: 'Elija otro centro con «Cambiar de centro»' },
                 `${centro.unitName} no tiene horarios libres para ${opciones.studyName} en las próximas dos semanas.`,
               )
             : ready(agruparPorDia(items)),
@@ -244,16 +244,16 @@ export class OrderBooking implements OnInit {
           if (ocupado) this.volverA('horario');
           this.aviso.set(
             ocupado
-              ? { tipo: 'ocupado', titulo: 'Ese horario se ocupó', texto: 'Alguien lo tomó recién. Elegí otro de la lista.' }
+              ? { tipo: 'ocupado', titulo: 'Ese horario se ocupó', texto: 'Alguien lo tomó recién. Elija otro de la lista.' }
               : {
                   tipo: 'ya-tiene-turno',
                   titulo: 'Esta orden ya tiene turno',
-                  texto: 'Para cambiarlo, cancelá el turno actual desde «Mis órdenes» y volvé a reservar.',
+                  texto: 'Para cambiarlo, cancele el turno actual desde «Mis órdenes» y vuelva a reservar.',
                 },
           );
           return;
         }
-        this.aviso.set({ tipo: 'error', titulo: 'No se confirmó el turno', texto: 'Probá de nuevo en un momento.' });
+        this.aviso.set({ tipo: 'error', titulo: 'No se confirmó el turno', texto: 'Pruebe de nuevo en un momento.' });
       },
     });
   }
@@ -276,7 +276,7 @@ export class OrderBooking implements OnInit {
   }
 
   protected distancia(km: number | null): string {
-    return km === null ? 'Distancia no disponible' : `a ${km.toString().replace('.', ',')} km de tu casa`;
+    return km === null ? 'Distancia no disponible' : `a ${km.toString().replace('.', ',')} km de su casa`;
   }
 }
 

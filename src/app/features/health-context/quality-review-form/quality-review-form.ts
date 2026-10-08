@@ -114,7 +114,7 @@ export class QualityReviewForm {
   protected readonly recorded = signal<QualityReviewRecorded | null>(null);
 
   protected readonly errorMessage = computed(() =>
-    errorMessageOf(this.state(), 'No tenés permiso para registrar revisiones de calidad.'),
+    errorMessageOf(this.state(), 'No tiene permiso para registrar revisiones de calidad.'),
   );
 
   protected submit(): void {

@@ -50,8 +50,8 @@ const PERIODOS: readonly { readonly value: string; readonly label: string; reado
 ];
 
 const SUBTITULO: Readonly<Record<MyInvoicesView, string>> = {
-  RECEIVED: 'Las facturas que te emitieron por tus consultas y tus compras en farmacia.',
-  ISSUED: 'Las facturas que emitiste: a quién, por qué y en qué estado quedaron ante el SIAT.',
+  RECEIVED: 'Las facturas que le emitieron por sus consultas y sus compras en farmacia.',
+  ISSUED: 'Las facturas que emitió: a quién, por qué y en qué estado quedaron ante el SIAT.',
 };
 
 /**
@@ -138,11 +138,11 @@ export class MyInvoices {
               pagina.view === 'RECEIVED'
                 ? empty(
                     { label: 'Ver mis gastos', route: '/my-account/spending' },
-                    'Todavía no te emitieron facturas. Cuando pagues una consulta o un pedido de farmacia y te lo facturen, la factura aparece acá.',
+                    'Todavía no le emitieron facturas. Cuando pague una consulta o un pedido de farmacia y se lo facturen, la factura aparece acá.',
                   )
                 : empty(
                     { label: 'Volver al panel', route: '/dashboard' },
-                    'Todavía no emitiste facturas. Cuando factures una consulta o un pedido, aparece acá con su PDF y su XML.',
+                    'Todavía no emitió facturas. Cuando facture una consulta o un pedido, aparece acá con su PDF y su XML.',
                   ),
             );
             return;

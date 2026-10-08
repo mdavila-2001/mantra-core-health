@@ -111,7 +111,7 @@ export class TenantBindingForm {
   protected readonly bound = signal<TenantBindingResult | null>(null);
 
   protected readonly errorMessage = computed(() =>
-    errorMessageOf(this.state(), 'No tenés permiso para configurar proveedores de identidad.'),
+    errorMessageOf(this.state(), 'No tiene permiso para configurar proveedores de identidad.'),
   );
 
   protected submit(): void {

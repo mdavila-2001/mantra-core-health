@@ -820,7 +820,7 @@ export class DayView {
     const cupos = bloques.filter((b) => b.tipo === 'cita' || b.tipo === 'libre');
     const conCita = bloques.filter((b) => b.tipo === 'cita').length;
     const ocupados = bloques.filter((b) => b.tipo === 'ocupado').length;
-    if (cupos.length === 0 && ocupados === 0) return 'No atendés este día.';
+    if (cupos.length === 0 && ocupados === 0) return 'No atiende este día.';
     const partes: string[] = [];
     if (cupos.length > 0) {
       partes.push(

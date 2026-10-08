@@ -701,7 +701,7 @@ describe('RegisterOrganization', () => {
       campo.dispatchEvent(new FocusEvent('blur'));
       fixture.detectChanges();
 
-      expect(errorDe(campo)).toBe('Escribí la dirección (hasta 300 caracteres).');
+      expect(errorDe(campo)).toBe('Escriba la dirección (hasta 300 caracteres).');
       expect(fixture.nativeElement.querySelector(AVISO)).not.toBeNull();
     });
 
@@ -715,7 +715,7 @@ describe('RegisterOrganization', () => {
       expect(fixture.nativeElement.querySelector('.paginated-form__titulo').textContent).toContain(
         'Datos de la aseguradora',
       );
-      expect(errorDe(campo)).toBe('Escribí la dirección (hasta 300 caracteres).');
+      expect(errorDe(campo)).toBe('Escriba la dirección (hasta 300 caracteres).');
     });
   });
 
@@ -820,7 +820,7 @@ describe('RegisterOrganization', () => {
       ).toContain('Directorio ejecutivo');
       expect(paneles()[2].classList.contains('is-expanded')).toBe(true);
       expect((fixture.nativeElement as HTMLElement).textContent).toContain(
-        'Escribí el apellido paterno.',
+        'Escriba el apellido paterno.',
       );
     });
 
@@ -835,7 +835,7 @@ describe('RegisterOrganization', () => {
       fixture.detectChanges();
 
       expect((fixture.nativeElement as HTMLElement).textContent).toContain(
-        'Revisá el correo: falta el arroba o el dominio.',
+        'Revise el correo: falta el arroba o el dominio.',
       );
     });
 
@@ -1070,8 +1070,8 @@ describe('RegisterOrganization', () => {
     });
   });
 
-  describe('el representante legal es el owner (no hay «Tu cuenta»)', () => {
-    it('no existe una página «Tu cuenta» ni un segundo juego de nombre y correo', () => {
+  describe('el representante legal es el owner (no hay «Su cuenta»)', () => {
+    it('no existe una página «Su cuenta» ni un segundo juego de nombre y correo', () => {
       fixture.detectChanges();
       completar();
       fixture.detectChanges();
@@ -1093,7 +1093,7 @@ describe('RegisterOrganization', () => {
         fixture.detectChanges();
       }
       expect(titulos.length).toBe(7);
-      expect(titulos.some((titulo) => titulo.includes('Tu cuenta'))).toBe(false);
+      expect(titulos.some((titulo) => titulo.includes('Su cuenta'))).toBe(false);
       expect('ownerName' in component.form.controls).toBe(false);
       expect('email' in component.form.controls).toBe(false);
     });
@@ -1257,7 +1257,7 @@ describe('RegisterOrganization', () => {
       );
 
       expect(component.errorMessage()).toBe(
-        'La sigla «ANDINA» ya está en uso en la plataforma. Elegí otra.',
+        'La sigla «ANDINA» ya está en uso en la plataforma. Elija otra.',
       );
     });
 
@@ -1328,7 +1328,7 @@ describe('RegisterOrganization', () => {
       http.expectNone('/iam/auth/register-organization');
     });
 
-    it('AC-02 y AC-04: Bolivia (zona única) queda en 7 páginas, sin «Cómo se la identifica», sin «Tu cuenta» y sin selector de zona', () => {
+    it('AC-02 y AC-04: Bolivia (zona única) queda en 7 páginas, sin «Cómo se la identifica», sin «Su cuenta» y sin selector de zona', () => {
       fixture.detectChanges();
       completar();
       fixture.detectChanges();

@@ -29,27 +29,27 @@ const PRESENTACION_POR_ESTADO: Readonly<Record<EstadoDePedido, BandejaStatusPres
     ENVIADO: {
       tone: 'info',
       label: 'Pendiente',
-      descripcion: 'Nadie lo abrió todavía. Abrilo para empezar a revisarlo.',
+      descripcion: 'Nadie lo abrió todavía. Ábralo para empezar a revisarlo.',
     },
     EN_REVISION: {
       tone: 'info',
       label: 'Revisión de receta',
-      descripcion: 'Lo estás revisando: confirmá, proponé una alternativa o rechazalo.',
+      descripcion: 'Lo está revisando: confirme, proponga una alternativa o recháselo.',
     },
     CONFIRMADO: {
       tone: 'success',
       label: 'En preparación',
-      descripcion: 'Confirmado. Cuando esté armado, marcalo como listo.',
+      descripcion: 'Confirmado. Cuando esté armado, márquelo como listo.',
     },
     ACEPTACION_PENDIENTE: {
       tone: 'warning',
       label: 'Esperando al paciente',
-      descripcion: 'Le propusiste una alternativa. La decisión es suya.',
+      descripcion: 'Le propuso una alternativa. La decisión es suya.',
     },
     ACEPTADO: {
       tone: 'success',
       label: 'Propuesta aceptada',
-      descripcion: 'Aceptó la alternativa. Seguí preparando el pedido.',
+      descripcion: 'Aceptó la alternativa. Siga preparando el pedido.',
     },
     LISTO_PARA_RETIRO: {
       tone: 'success',
@@ -64,7 +64,7 @@ const PRESENTACION_POR_ESTADO: Readonly<Record<EstadoDePedido, BandejaStatusPres
     RECHAZADO: {
       tone: 'error',
       label: 'Rechazado',
-      descripcion: 'Lo rechazaste; el paciente ve el motivo en palabras.',
+      descripcion: 'Lo rechazó; el paciente ve el motivo en palabras.',
     },
     VENCIDO: {
       tone: 'warning',
@@ -96,7 +96,7 @@ const DESCRIPCION_SI_SALE_POR_REPARTO: Readonly<Partial<Record<EstadoDePedido, s
     // ofrece «Marcar listo para retirar» sólo si el pedido se retira.
     CONFIRMADO: 'Confirmado. Este pedido sale por reparto, no se retira en el mostrador.',
     ACEPTADO:
-      'Aceptó la alternativa. Seguí preparándolo: sale por reparto, no se retira en el mostrador.',
+      'Aceptó la alternativa. Siga preparándolo: sale por reparto, no se retira en el mostrador.',
     // Y el estado en el que el detalle pide el código de retiro, que un
     // pedido de reparto no tiene a quién pedírselo.
     LISTO_PARA_RETIRO: 'El pedido está armado y sale por reparto; nadie lo retira del mostrador.',

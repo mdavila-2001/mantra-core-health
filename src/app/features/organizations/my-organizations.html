@@ -1,7 +1,7 @@
 @if (!embedded()) {
   <app-page-header
     title="Mis organizaciones"
-    subtitle="Dónde tenés una vinculación, y pedir una nueva"
+    subtitle="Dónde tiene una vinculación, y pedir una nueva"
   />
 
   <!-- La explicación larga sólo fuera del panel: adentro es una pestaña de un
@@ -11,13 +11,13 @@
        al lado del formulario. -->
   <app-alert tone="info" class="explicacion">
     <p>
-      Un profesional puede ejercer en más de una organización a la vez. Acá ves todas tus
-      vinculaciones —incluidas las pendientes de aprobación— y pedís vincularte a una nueva.
-      <strong>Ejemplo:</strong> elegís «Hospital Central», confirmás, y la vinculación queda
+      Un profesional puede ejercer en más de una organización a la vez. Acá ve todas sus
+      vinculaciones —incluidas las pendientes de aprobación— y pide vincularse a una nueva.
+      <strong>Ejemplo:</strong> elige «Hospital Central», confirma, y la vinculación queda
       <em>pendiente</em> hasta que esa organización la apruebe.
     </p>
     <p>
-      <strong>Importante:</strong> pertenecer a una organización no te da acceso a sus
+      <strong>Importante:</strong> pertenecer a una organización no le da acceso a sus
       pacientes. El acceso a un paciente concreto depende siempre de una cita, derivación,
       intervención o autorización con ese paciente.
     </p>
@@ -38,7 +38,7 @@
     <app-select
       [options]="opcionesDeOrganizacion()"
       [(value)]="organizacionElegida"
-      placeholder="Elegí una organización"
+      placeholder="Elija una organización"
     />
     <button
       app-button
@@ -63,15 +63,15 @@
      propietario marcó como «totalmente detonada» (2026-09-10). -->
 @if (filas().length === 0 && !cargandoVinculaciones()) {
   <app-empty-state
-    title="Todavía no tenés vinculaciones"
-    description="Pedí una arriba para empezar."
+    title="Todavía no tiene vinculaciones"
+    description="Pida una arriba para empezar."
   />
 } @else {
   <app-data-table
     [state]="estadoDeLaTabla()"
     [columns]="columnas()"
     [trackBy]="porId"
-    caption="Tus vinculaciones con organizaciones"
+    caption="Sus vinculaciones con organizaciones"
     data-testid="mis-vinculaciones"
   />
 }

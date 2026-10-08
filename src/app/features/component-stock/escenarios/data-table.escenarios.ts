@@ -418,7 +418,7 @@ export class EscenarioDataTable implements AnfitrionDeEscenario {
         ]);
       case 'forbidden':
         return forbidden({
-          message: 'Tu rol no alcanza para ver el listado de pacientes.',
+          message: 'Su rol no alcanza para ver el listado de pacientes.',
           nextAction: { label: 'Verificar mi identidad', route: '/identity' },
         });
       case 'not-found':
@@ -481,19 +481,19 @@ const ESTADOS_SIN_FILAS: readonly {
   {
     variante: 'validation',
     titulo: 'S4 · validación',
-    seVe: 'La alerta «Revisá lo ingresado» con el campo «documento» y su mensaje. El foco cae en la alerta.',
+    seVe: 'La alerta «Revise lo ingresado» con el campo «documento» y su mensaje. El foco cae en la alerta.',
     salidas: [],
   },
   {
     variante: 'forbidden',
     titulo: 'S5 · prohibido, con puerta',
-    seVe: '«No tenés acceso a esta sección» y el enlace «Verificar mi identidad»: es una puerta, no un muro.',
+    seVe: '«No tiene acceso a esta sección» y el enlace «Verificar mi identidad»: es una puerta, no un muro.',
     salidas: [],
   },
   {
     variante: 'not-found',
     titulo: 'S6 · no encontrado',
-    seVe: '«No encontramos lo que buscás» con copy fijo —no dice si existe— y «Volver al panel».',
+    seVe: '«No encontramos lo que busca» con copy fijo —no dice si existe— y «Volver al panel».',
     salidas: [],
   },
   {

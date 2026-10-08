@@ -1,7 +1,7 @@
 <!-- `aria-label` y no un `<h2>` visible: la columna es apoyo del formulario, y
      un titular más compitiendo con el del paso es ruido para todos. Quien
      navega con lector la encuentra igual, por su nombre de región. -->
-<aside class="ayuda" aria-label="Por qué te pedimos estos datos y cómo los cuidamos">
+<aside class="ayuda" aria-label="Por qué le pedimos estos datos y cómo los cuidamos">
   <!-- `track` sobre el propio título: al cambiar de paso el nodo se rehace y la
        entrada vuelve a correr, así se ve que la explicación cambió con la
        pregunta en vez de reemplazarse de golpe. -->
@@ -25,7 +25,7 @@
       <app-nav-icon name="shield" />
     </span>
     <div class="ayuda__cuerpo">
-      <h3 class="ayuda__titulo">Tus datos están a salvo</h3>
+      <h3 class="ayuda__titulo">Sus datos están a salvo</h3>
       <ul class="ayuda__lista">
         @for (promesa of promesas(); track promesa) {
           <li>{{ promesa }}</li>

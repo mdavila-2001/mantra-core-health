@@ -96,7 +96,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     icon: 'home',
     roles: [ANY_ROLE],
     availability: 'disponible',
-    summary: 'Tu punto de partida: la sesión activa y el estado del sistema.',
+    summary: 'Su punto de partida: la sesión activa y el estado del sistema.',
     module: 'M30 read_models',
   },
   {
@@ -122,7 +122,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     icon: 'teach',
     roles: [ANY_ROLE],
     availability: 'disponible',
-    summary: 'Aprendé a usar cada sección con recorridos guiados sobre la aplicación real.',
+    summary: 'Aprenda a usar cada sección con recorridos guiados sobre la aplicación real.',
     module: '—  ayuda en producto',
   },
 
@@ -147,7 +147,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     icon: 'chat',
     roles: [ANY_ROLE],
     availability: 'disponible',
-    summary: 'Escribile a tu médico y seguí la conversación, en vivo.',
+    summary: 'Escríbale a su médico y siga la conversación, en vivo.',
     module: 'M19 community',
   },
   {
@@ -440,7 +440,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // pero no había forma de verlos— y era eso, y no un `GET` de colección
     // faltante en general, lo que la tenía en espera.
     availability: 'disponible',
-    summary: 'Gestioná disponibilidad, reservas y confirmaciones de turno.',
+    summary: 'Gestione disponibilidad, reservas y confirmaciones de turno.',
     module: 'M41 scheduling',
   },
   {
@@ -454,7 +454,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // listado de todas las historias: se entra por persona, y la pantalla de la
     // sección es justamente la que elige a quién se mira.
     availability: 'disponible',
-    summary: 'Consultá la historia clínica de los pacientes que atendés.',
+    summary: 'Consulte la historia clínica de los pacientes que atiende.',
     module: 'M08 clinical · M15 chart',
   },
   // «Notas médicas» (`progress-notes`) vivió acá como sección propia entre el
@@ -483,7 +483,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // una persona ni qué volvió. Se pedía un laboratorio y el pedido dejaba de
     // existir para la pantalla apenas se enviaba.
     availability: 'disponible',
-    summary: 'Seguí la cola del laboratorio y los estudios que pediste.',
+    summary: 'Siga la cola del laboratorio y los estudios que pidió.',
     module: 'M20 diagnostics · M08 clinical',
   },
   {
@@ -502,7 +502,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     icon: 'scalpel',
     roles: ['SURGEON', 'ANESTHESIOLOGIST', 'PERIOP_NURSE', 'SURGERY_SCHEDULER', 'PERIOP_ADMIN'],
     availability: 'disponible',
-    summary: 'Mirá las intervenciones programadas y confirmá tu participación.',
+    summary: 'Mire las intervenciones programadas y confirme su participación.',
     module: 'M53 procedures_perioperative',
   },
   {
@@ -527,7 +527,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     icon: 'route',
     roles: ['PRACTITIONER', 'CLINICIAN'],
     availability: 'disponible',
-    summary: 'Aceptá o rechazá visitas de visitadores médicos y mirá tu agenda de visitas.',
+    summary: 'Acepte o rechace visitas de visitadores médicos y mire su agenda de visitas.',
     module: 'M62 pharma_lab',
   },
   {
@@ -543,7 +543,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     icon: 'route',
     roles: ['MEDICAL_VISITOR'],
     availability: 'disponible',
-    summary: 'Consultá el estado de las visitas que solicitaste a los médicos.',
+    summary: 'Consulte el estado de las visitas que solicitó a los médicos.',
     module: 'M62 pharma_lab',
   },
   {
@@ -566,7 +566,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     icon: 'book',
     roles: ROLES_QUE_EJERCEN_O_ADMINISTRAN,
     availability: 'disponible',
-    summary: 'Buscá un término médico y su significado en lenguaje llano.',
+    summary: 'Busque un término médico y su significado en lenguaje llano.',
     module: 'M03 terminology',
   },
 
@@ -591,7 +591,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     roles: ROLES_DE_QUIEN_ATIENDE,
     exclusiveRoles: true,
     availability: 'disponible',
-    summary: 'Agregá tus propios campos a los formularios estándar de tu especialidad.',
+    summary: 'Agregue sus propios campos a los formularios estándar de su especialidad.',
     module: 'M09 forms · M15 chart',
   },
 
@@ -617,7 +617,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     icon: 'tag',
     roles: ROLES_DE_QUIEN_ATIENDE,
     availability: 'disponible',
-    summary: 'Mirá los servicios de tu práctica y poné el precio de cada uno.',
+    summary: 'Mire los servicios de su práctica y ponga el precio de cada uno.',
     module: 'M17 billing',
   },
 
@@ -650,7 +650,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     icon: 'billing',
     roles: ROLES_DE_QUIEN_ATIENDE,
     availability: 'disponible',
-    summary: 'Armá el presupuesto de un servicio con su plan de pagos y compartilo.',
+    summary: 'Arme el presupuesto de un servicio con su plan de pagos y compártalo.',
     module: 'M17 billing',
   },
 
@@ -671,7 +671,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // `SurveysAssignmentsController`.
     roles: ['PRACTITIONER', 'CLINICIAN'],
     availability: 'disponible',
-    summary: 'Creá encuestas para tus pacientes y revisá lo que respondieron.',
+    summary: 'Cree encuestas para sus pacientes y revise lo que respondieron.',
     module: 'M-surveys',
   },
 
@@ -686,7 +686,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // es administrativa: el clínico llega por su propio flujo, no por este menú.
     roles: ['SECURITY_ADMIN'],
     availability: 'disponible',
-    summary: 'Registrá y mantené la filiación de las personas atendidas.',
+    summary: 'Registre y mantenga la filiación de las personas atendidas.',
     module: 'M05 profiles',
   },
   {
@@ -696,7 +696,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     icon: 'people',
     roles: ['SECURITY_ADMIN'],
     availability: 'disponible',
-    summary: 'Dá de alta cuentas y revisá quién tiene acceso a la organización.',
+    summary: 'Dé de alta cuentas y revise quién tiene acceso a la organización.',
     module: 'M01 iam',
   },
   {
@@ -711,7 +711,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // desde los PRs #28/#29 del backend. Sucursales y membresías siguen
     // planificadas dentro de la sección: entran con sus propias vistas.
     availability: 'disponible',
-    summary: 'Dá de alta clínicas, farmacias y aseguradoras, y seguí su verificación.',
+    summary: 'Dé de alta clínicas, farmacias y aseguradoras, y siga su verificación.',
     module: 'M04 directory',
   },
   {
@@ -744,7 +744,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     requiresTenant: true,
     hiddenFor: ['PATIENT', 'PRACTITIONER'],
     availability: 'disponible',
-    summary: 'Revisá tus productos, planes, coberturas y la red de prestadores.',
+    summary: 'Revise sus productos, planes, coberturas y la red de prestadores.',
     module: 'M26 insurance',
   },
   {
@@ -757,7 +757,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     icon: 'briefcase',
     roles: ['SECURITY_ADMIN'],
     availability: 'disponible',
-    summary: 'Consultá tus corredores, sus vinculaciones vigentes y su cartera.',
+    summary: 'Consulte sus corredores, sus vinculaciones vigentes y su cartera.',
     module: 'M26 insurance',
   },
   {
@@ -778,7 +778,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     icon: 'clipboard',
     roles: ['BILLING_OPERATOR', 'SECURITY_ADMIN'],
     availability: 'disponible',
-    summary: 'Lo que presentaste a cada aseguradora, con lo que aprobó.',
+    summary: 'Lo que presentó a cada aseguradora, con lo que aprobó.',
     module: 'M26 insurance',
   },
   {
@@ -823,7 +823,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     requiresTenant: true,
     hiddenFor: ['PATIENT', 'PRACTITIONER'],
     availability: 'disponible',
-    summary: 'Lo que cada prestador le pidió a tu aseguradora, con médico, servicio y monto.',
+    summary: 'Lo que cada prestador le pidió a su aseguradora, con médico, servicio y monto.',
     module: 'M26 insurance',
   },
   {
@@ -841,7 +841,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     platformAccessRoles: ['SUPERADMIN', 'SECURITY_ADMIN'],
     hiddenFor: ['PATIENT', 'PRACTITIONER'],
     availability: 'disponible',
-    summary: 'Consultá pacientes autorizados y contactalos por mensajería interna.',
+    summary: 'Consulte pacientes autorizados y contáctelos por mensajería interna.',
     module: 'M26 insurance',
   },
   {
@@ -863,7 +863,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     hiddenFor: ['PATIENT', 'PRACTITIONER'],
     availability: 'disponible',
     summary:
-      'Campañas de prevención con laboratorios e importadoras, con copago bonificado para tus afiliados.',
+      'Campañas de prevención con laboratorios e importadoras, con copago bonificado para sus afiliados.',
     module: 'M26 insurance',
   },
   {
@@ -876,7 +876,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     icon: 'key',
     roles: ['SECURITY_ADMIN'],
     availability: 'disponible',
-    summary: 'Delegá acceso con alcance y vigencia, y administrá sus permisos.',
+    summary: 'Delegue acceso con alcance y vigencia, y administre sus permisos.',
     module: 'M29 delegated_access',
   },
   {
@@ -890,7 +890,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     icon: 'link',
     roles: ['IDENTITY_ADMIN'],
     availability: 'disponible',
-    summary: 'Configurá el login federado: proveedores, claves y vinculación.',
+    summary: 'Configure el login federado: proveedores, claves y vinculación.',
     module: 'M40 auth_providers',
   },
   {
@@ -905,7 +905,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     icon: 'shield',
     roles: ['SECURITY_ADMIN'],
     availability: 'disponible',
-    summary: 'Administrá autoridades, políticas y casos de verificación de identidad.',
+    summary: 'Administre autoridades, políticas y casos de verificación de identidad.',
     module: 'M27 identity_assurance',
   },
   {
@@ -923,7 +923,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // por el que 674 vistas siguen en espera— sino que el cliente implementaba
     // sólo la mitad del endpoint: resolvía `?ids=` y nunca `?q=`.
     availability: 'disponible',
-    summary: 'Consultá los catálogos que alimentan todos los selectores.',
+    summary: 'Consulte los catálogos que alimentan todos los selectores.',
     module: 'M03 terminology',
   },
   {
@@ -936,7 +936,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // de plataforma que el aprovisionamiento de organizaciones.
     roles: ['SUPERADMIN'],
     availability: 'disponible',
-    summary: 'Cargá los catálogos que el arranque ya no trae solo.',
+    summary: 'Cargue los catálogos que el arranque ya no trae solo.',
     module: 'M03 terminology',
   },
   {
@@ -953,7 +953,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // decidir sobre una entrada cuyo uuid ya se conociera, pero no había forma
     // de saber qué entradas había. Una cola que no se puede leer no es una cola.
     availability: 'disponible',
-    summary: 'Trabajá la cola de contenido reportado y las apelaciones.',
+    summary: 'Trabaje la cola de contenido reportado y las apelaciones.',
     module: 'M19 community',
   },
   {
@@ -1025,7 +1025,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
       'PLATFORM_ADMIN',
     ],
     availability: 'disponible',
-    summary: 'Recolectá y publicá el contexto sanitario de cada país, con su evidencia.',
+    summary: 'Recolecte y publique el contexto sanitario de cada país, con su evidencia.',
     module: 'M44 health_context',
   },
   {
@@ -1043,7 +1043,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // Los cuatro controllers del módulo exigen el mismo rol, sin excepción.
     roles: ['SECURITY_ADMIN'],
     availability: 'disponible',
-    summary: 'Seguí sujetos rastreados, sus recorridos y las geocercas de la organización.',
+    summary: 'Siga sujetos rastreados, sus recorridos y las geocercas de la organización.',
     module: 'M13 geo',
   },
   {
@@ -1058,7 +1058,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     icon: 'tag',
     roles: ['SECURITY_ADMIN'],
     availability: 'disponible',
-    summary: 'Mantené la lista fija de servicios sobre la que se arman los presupuestos.',
+    summary: 'Mantenga la lista fija de servicios sobre la que se arman los presupuestos.',
     module: 'M17 billing',
   },
   {
@@ -1086,7 +1086,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     roles: ['SECURITY_ADMIN', 'PERIOP_ADMIN', 'PRACTITIONER'],
     availability: 'disponible',
     summary:
-      'Administrá sedes, áreas, quirófanos, consultorios, plantilla, legajo y tus vinculaciones.',
+      'Administre sedes, áreas, quirófanos, consultorios, plantilla, legajo y sus vinculaciones.',
     module: 'M14 practice',
   },
   {
@@ -1103,7 +1103,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // El mismo rol que exigen las dos lecturas administrativas del módulo.
     roles: ['SECURITY_ADMIN'],
     availability: 'disponible',
-    summary: 'Configurá sucursales, equipos, estudios, precios y personal de tu laboratorio.',
+    summary: 'Configure sucursales, equipos, estudios, precios y personal de su laboratorio.',
     module: 'M23 diagnostic_units',
   },
   {
@@ -1119,7 +1119,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // Mismo rol que exige el backend en `ChartTemplatesController`.
     roles: ['SECURITY_ADMIN'],
     availability: 'disponible',
-    summary: 'Armá las plantillas de campos propios de cada especialidad.',
+    summary: 'Arme las plantillas de campos propios de cada especialidad.',
     module: 'M15 chart · M09 forms',
   },
 
@@ -1134,7 +1134,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // FACT-SIAT-MOCK: la pantalla existe; lo fiscal va contra el SIAT SIMULADO
     // y, sin `billingSiatDemo`, dice que la facturación no está conectada.
     availability: 'disponible',
-    summary: 'Emití comprobantes y seguí los cobros de la organización.',
+    summary: 'Emita comprobantes y siga los cobros de la organización.',
     module: 'M26 billing · M42 payments',
   },
 
@@ -1155,7 +1155,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     roles: ['PHARMA_LAB_ADMIN', 'BUSINESS_ADMIN', 'PLATFORM_ADMIN'],
     availability: 'disponible',
     summary:
-      'Administrá visitadores, medicamentos, material aprobado, farmacovigilancia y documentación regulatoria.',
+      'Administre visitadores, medicamentos, material aprobado, farmacovigilancia y documentación regulatoria.',
     module: 'M62 pharma_lab',
   },
 
@@ -1170,7 +1170,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     roles: ['SECURITY_ADMIN', 'ACCOUNTING_APPROVER', 'PRACTITIONER'],
     availability: 'disponible',
     summary:
-      'Cuánto entró hoy, esta semana y este mes; en qué se te va; quién te debe y a quién le debés.',
+      'Cuánto entró hoy, esta semana y este mes; en qué se le va; quién le debe y a quién le debe.',
     module: 'M16 accounting',
   },
 
@@ -1211,7 +1211,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     roles: [ANY_ROLE],
     availability: 'disponible',
     summary:
-      'Registrá a quienes están a tu cargo y pedí turnos o consultá su historia en su nombre.',
+      'Registre a quienes están a su cargo y pida turnos o consulte su historia en su nombre.',
     module: 'M05 profiles',
   },
   {
@@ -1225,7 +1225,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // Encendida con V05-03: `GET /profiles/patients/me/summary` existe y no
     // pide rol, sólo identidad verificada — y ese 403 ya tiene su puerta.
     availability: 'disponible',
-    summary: 'Revisá tus datos personales y el resumen de tu cuenta.',
+    summary: 'Revise sus datos personales y el resumen de su cuenta.',
     module: 'M05 profiles',
   },
   {
@@ -1249,7 +1249,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     icon: 'calendar',
     roles: [ANY_ROLE],
     availability: 'disponible',
-    summary: 'Mirá tus turnos y pedí uno nuevo con los horarios disponibles.',
+    summary: 'Mire sus turnos y pida uno nuevo con los horarios disponibles.',
     module: 'M41 scheduling',
   },
   {
@@ -1275,7 +1275,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     icon: 'heart',
     roles: [ANY_ROLE],
     availability: 'disponible',
-    summary: 'Tus atenciones y tus recetas, con la descarga en PDF de cada una.',
+    summary: 'Sus atenciones y sus recetas, con la descarga en PDF de cada una.',
     module: 'M08 clinical',
   },
   {
@@ -1295,7 +1295,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     icon: 'results',
     roles: [ANY_ROLE],
     availability: 'disponible',
-    summary: 'Mirá y descargá tus resultados, y compartilos por un tiempo con un profesional.',
+    summary: 'Mire y descargue sus resultados, y compártalos por un tiempo con un profesional.',
     module: 'M20 diagnostics',
   },
   {
@@ -1317,7 +1317,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     icon: 'orders',
     roles: [ANY_ROLE],
     availability: 'disponible',
-    summary: 'Los estudios que te pidió un médico, con las indicaciones para hacértelos.',
+    summary: 'Los estudios que le pidió un médico, con las indicaciones para hacérselos.',
     module: 'M20 diagnostics',
   },
   {
@@ -1331,7 +1331,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     icon: 'billing',
     roles: [ANY_ROLE],
     availability: 'disponible',
-    summary: 'Compará referencias de precio y cercanía con su procedencia visible.',
+    summary: 'Compare referencias de precio y cercanía con su procedencia visible.',
     module: 'M-cotizaciones',
   },
   {
@@ -1360,7 +1360,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     icon: 'survey',
     roles: [ANY_ROLE],
     availability: 'disponible',
-    summary: 'Respondé los cuestionarios de las consultas que ya tuviste.',
+    summary: 'Responda los cuestionarios de las consultas que ya tuvo.',
     module: 'M-surveys',
   },
   {
@@ -1386,7 +1386,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     roles: [ANY_ROLE],
     fueraDelMenuPara: [ANY_ROLE],
     availability: 'disponible',
-    summary: 'Configurá tus avisos, la apariencia y los permisos de tu cuenta.',
+    summary: 'Configure sus avisos, la apariencia y los permisos de su cuenta.',
     module: 'M35 messaging',
   },
   {
@@ -1413,7 +1413,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     icon: 'bell',
     roles: [ANY_ROLE],
     availability: 'disponible',
-    summary: 'Revisá todos tus avisos: recetas, consultas, turnos y mensajes.',
+    summary: 'Revise todos sus avisos: recetas, consultas, turnos y mensajes.',
     module: 'M35 messaging',
   },
   {
@@ -1441,7 +1441,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // la pantalla y la salida del 403—, lo único que pierde es el renglón.
     ...(VERIFICACION_DE_IDENTIDAD_OFRECIDA ? {} : { fueraDelMenuPara: [ANY_ROLE] }),
     availability: 'disponible',
-    summary: 'Validá tu identidad o tu matrícula, y seguí el estado de tus trámites.',
+    summary: 'Valide su identidad o su matrícula, y siga el estado de sus trámites.',
     module: 'M27 identity_assurance',
   },
   {
@@ -1466,7 +1466,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     icon: 'bag',
     roles: ['PATIENT'],
     availability: 'disponible',
-    summary: 'Tus pedidos de farmacia y cuánto cuesta comprar, en un solo lugar.',
+    summary: 'Sus pedidos de farmacia y cuánto cuesta comprar, en un solo lugar.',
     module: 'M24 pharmacy',
   },
   {
@@ -1493,7 +1493,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     roles: ['PATIENT'],
     fueraDelMenuPara: [ANY_ROLE],
     availability: 'disponible',
-    summary: 'Seguí tus pedidos de farmacia: del envío al retiro.',
+    summary: 'Siga sus pedidos de farmacia: del envío al retiro.',
     module: 'M24 pharmacy',
   },
   {
@@ -1521,7 +1521,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     icon: 'star',
     roles: ['PATIENT'],
     availability: 'disponible',
-    summary: 'Tus puntos: lo que sumaste con tus compras y cómo canjearlo.',
+    summary: 'Sus puntos: lo que sumó con sus compras y cómo canjearlo.',
     module: 'M51 promotions',
   },
   {
@@ -1538,7 +1538,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     icon: 'tag',
     roles: ['PATIENT'],
     availability: 'disponible',
-    summary: 'Las promociones que te mandaron las farmacias.',
+    summary: 'Las promociones que le mandaron las farmacias.',
     module: 'M51 promotions',
   },
   {
@@ -1556,7 +1556,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     icon: 'wallet',
     roles: ['PATIENT'],
     availability: 'disponible',
-    summary: 'Cuánto gastaste en tu salud: este mes, el año contra el pasado y por categoría.',
+    summary: 'Cuánto gastó en su salud: este mes, el año contra el pasado y por categoría.',
     module: 'M17 billing',
   },
   {
@@ -1575,7 +1575,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     icon: 'receipt',
     roles: [ANY_ROLE],
     availability: 'disponible',
-    summary: 'Las facturas emitidas: las que te hicieron o las que hiciste, con su PDF y su XML.',
+    summary: 'Las facturas emitidas: las que le hicieron o las que hizo, con su PDF y su XML.',
     module: 'M26 billing',
   },
   {
@@ -1595,7 +1595,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     icon: 'umbrella',
     roles: [ANY_ROLE],
     availability: 'disponible',
-    summary: 'Tus solicitudes de seguro y lo que decidió la aseguradora: si cubre, cuánto y por qué.',
+    summary: 'Sus solicitudes de seguro y lo que decidió la aseguradora: si cubre, cuánto y por qué.',
     module: 'M26 insurance',
   },
   {
@@ -1630,7 +1630,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // a buscar «¿dónde atiendo?».
     fueraDelMenuPara: ['PRACTITIONER'],
     availability: 'disponible',
-    summary: 'Dónde atendés: tu consultorio y las organizaciones donde trabajás.',
+    summary: 'Dónde atiende: su consultorio y las organizaciones donde trabaja.',
     module: 'M14 practice',
   },
   {
@@ -1675,12 +1675,12 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // 29/09/2026). La sección sigue existiendo para quien sí la usa.
     hiddenForTenantTypes: ['PHARMACY', 'DIAGNOSTIC_CENTER'],
     roles: [ANY_ROLE],
-    label: 'Tu organización',
+    label: 'Mi organización',
     group: 'Administración',
     icon: 'building',
     requiresTenant: true,
     availability: 'disponible',
-    summary: 'Los datos de tu organización, su gente y las solicitudes de médicos.',
+    summary: 'Los datos de su organización, su gente y las solicitudes de médicos.',
     module: 'M04 directory',
   },
   {
@@ -1704,7 +1704,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     icon: 'home',
     requiresTenant: true,
     availability: 'disponible',
-    summary: 'Cómo va tu farmacia hoy: productos, alertas de inventario y actividad reciente.',
+    summary: 'Cómo va su farmacia hoy: productos, alertas de inventario y actividad reciente.',
     module: 'M24 pharmacy',
   },
   {
@@ -1729,7 +1729,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     icon: 'package',
     requiresTenant: true,
     availability: 'disponible',
-    summary: 'Los productos que vende tu farmacia: alta, edición, publicación y retiro.',
+    summary: 'Los productos que vende su farmacia: alta, edición, publicación y retiro.',
     module: 'M24 pharmacy',
   },
   {
@@ -1750,7 +1750,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     icon: 'tag',
     requiresTenant: true,
     availability: 'disponible',
-    summary: 'Las categorías con las que ordenás tus productos.',
+    summary: 'Las categorías con las que ordena sus productos.',
     module: 'M24 pharmacy',
   },
   {
@@ -1771,7 +1771,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     icon: 'clipboard',
     requiresTenant: true,
     availability: 'disponible',
-    summary: 'Cargá o actualizá tus productos de a cientos con un archivo CSV.',
+    summary: 'Cargue o actualice sus productos de a cientos con un archivo CSV.',
     module: 'M24 pharmacy',
   },
   {
@@ -1852,7 +1852,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     icon: 'megaphone',
     requiresTenant: true,
     availability: 'disponible',
-    summary: 'Las campañas de tu farmacia: qué productos, con qué descuento y hasta cuándo.',
+    summary: 'Las campañas de su farmacia: qué productos, con qué descuento y hasta cuándo.',
     module: 'M51 promotions',
   },
   {
@@ -1878,7 +1878,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     icon: 'building',
     requiresTenant: true,
     availability: 'disponible',
-    summary: 'Los datos legales de tu farmacia, su carpeta de documentos y sus responsables.',
+    summary: 'Los datos legales de su farmacia, su carpeta de documentos y sus responsables.',
     module: 'M24 pharmacy',
   },  {
     // Las sucursales de la farmacia (01/10/2026): verlas, editarlas y subirlas en
@@ -1893,7 +1893,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     icon: 'pin',
     requiresTenant: true,
     availability: 'disponible',
-    summary: 'Editá tus sucursales o subí varias de una vez con un CSV.',
+    summary: 'Edite sus sucursales o suba varias de una vez con un CSV.',
     module: 'M04 directory',
   },
 
@@ -1914,7 +1914,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     icon: 'home',
     requiresTenant: true,
     availability: 'disponible',
-    summary: 'Cómo va tu laboratorio: servicios, órdenes sin resultado y lo último que pasó.',
+    summary: 'Cómo va su laboratorio: servicios, órdenes sin resultado y lo último que pasó.',
     module: 'M20 diagnostics',
   },
   {
@@ -1942,7 +1942,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     hiddenFor: ['PATIENT'],
     onlyForTenantTypes: ['DIAGNOSTIC_CENTER'],
     availability: 'disponible',
-    summary: 'Recibí las muestras de las órdenes que te derivaron y registrá su acesión.',
+    summary: 'Reciba las muestras de las órdenes que le derivaron y registre su acesión.',
     module: 'M20 diagnostics',
   },
   {
@@ -1966,7 +1966,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     hiddenFor: ['PATIENT'],
     onlyForTenantTypes: ['DIAGNOSTIC_CENTER'],
     availability: 'disponible',
-    summary: 'Seguí las órdenes de trabajo de las muestras que acesionaste.',
+    summary: 'Siga las órdenes de trabajo de las muestras que acesionaste.',
     module: 'M20 diagnostics',
   },
   {
@@ -1984,7 +1984,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     icon: 'results',
     requiresTenant: true,
     availability: 'disponible',
-    summary: 'Subí los resultados en cualquier formato y mirá todo lo que ya subiste.',
+    summary: 'Suba los resultados en cualquier formato y mire todo lo que ya subió.',
     module: 'M20 diagnostics',
   },
   {
@@ -2033,7 +2033,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     icon: 'pin',
     requiresTenant: true,
     availability: 'disponible',
-    summary: 'Editá tus sucursales o subí varias de una vez con un CSV.',
+    summary: 'Edite sus sucursales o suba varias de una vez con un CSV.',
     module: 'M04 directory',
   },
 ];

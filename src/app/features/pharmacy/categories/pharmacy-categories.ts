@@ -131,7 +131,7 @@ export class PharmacyCategories {
         this.categories.set(
           page.items.length > 0
             ? ready(page.items)
-            : empty({ label: 'Usá «Nueva categoría»' }, 'Todavía no tenés categorías.'),
+            : empty({ label: 'Use «Nueva categoría»' }, 'Todavía no tiene categorías.'),
         ),
       error: (error: unknown) =>
         this.categories.set(errorToViewState<readonly PharmacyCategory[]>(error)),
@@ -158,7 +158,7 @@ export class PharmacyCategories {
       return;
     }
     if (name === '') {
-      this.dialogError.set('Escribí un nombre para la categoría.');
+      this.dialogError.set('Escriba un nombre para la categoría.');
       return;
     }
     this.saving.set(true);
@@ -170,7 +170,7 @@ export class PharmacyCategories {
     request.subscribe({
       next: () => {
         this.saving.set(false);
-        this.toasts.success(target === null ? `Creaste «${name}».` : `Renombraste la categoría a «${name}».`);
+        this.toasts.success(target === null ? `Creó «${name}».` : `Renombró la categoría a «${name}».`);
         this.notice.set(null);
         this.reload();
         this.closeDialog();
@@ -213,7 +213,7 @@ export class PharmacyCategories {
     this.pharmacy.deleteCategory(pharmacyId, category.id).subscribe({
       next: () => {
         this.notice.set(null);
-        this.toasts.success(`Eliminaste «${category.name}».`);
+        this.toasts.success(`Eliminó «${category.name}».`);
         this.reload();
       },
       error: (error: unknown) => {

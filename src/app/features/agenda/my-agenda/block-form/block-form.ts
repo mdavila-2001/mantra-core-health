@@ -215,7 +215,7 @@ export class BlockForm {
 
   protected readonly error = computed<string | null>(() => {
     if (this.desde() === null || this.hasta() === null) {
-      return 'Elegí el primer y el último día que querés bloquear.';
+      return 'Elija el primer y el último día que quiere bloquear.';
     }
     if (this.dias() === 0) {
       return 'El último día no puede ser anterior al primero.';
@@ -229,7 +229,7 @@ export class BlockForm {
       }
     }
     if (this.exigeTexto() && this.motivo().trim().length < 3) {
-      return 'Elegiste «Otro»: contá en una línea de qué se trata.';
+      return 'Eligió «Otro»: cuente en una línea de qué se trata.';
     }
     return null;
   });

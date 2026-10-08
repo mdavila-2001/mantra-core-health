@@ -218,7 +218,7 @@ export class CatalogObjectDetail {
       comentario = await this.dialogs.confirmWithReason(
         {
           title: 'Rechazar la ficha',
-          message: `Vas a rechazar la revisión ${ficha.currentRevisionNo}. Quien la escribió verá tu comentario.`,
+          message: `Va a rechazar la revisión ${ficha.currentRevisionNo}. Quien la escribió verá su comentario.`,
           confirmLabel: 'Rechazar',
           cancelLabel: 'Volver',
           destructive: true,
@@ -229,7 +229,7 @@ export class CatalogObjectDetail {
     } else {
       const ok = await this.dialogs.confirm({
         title: 'Aprobar la ficha',
-        message: `Vas a aprobar la revisión ${ficha.currentRevisionNo}. Si alguien la edita después, vuelve a necesitar revisión.`,
+        message: `Va a aprobar la revisión ${ficha.currentRevisionNo}. Si alguien la edita después, vuelve a necesitar revisión.`,
         confirmLabel: 'Aprobar',
         cancelLabel: 'Volver',
       });
@@ -253,10 +253,10 @@ export class CatalogObjectDetail {
           this.error.set(
             api.status === 403
               ? esAutoRevision(api)
-                ? 'No podés revisar una revisión que escribiste vos: tiene que hacerlo otra persona.'
-                : 'Tu rol no permite revisar fichas.'
+                ? 'No puede revisar una revisión que escribió usted: tiene que hacerlo otra persona.'
+                : 'Su rol no permite revisar fichas.'
               : api.status === 409
-                ? 'La ficha cambió mientras la revisabas. Recargá y revisá la versión vigente.'
+                ? 'La ficha cambió mientras la revisaba. Recargue y revise la versión vigente.'
                 : (api.message ?? 'No se pudo registrar la revisión.'),
           );
         },

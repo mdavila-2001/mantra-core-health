@@ -261,7 +261,7 @@ describe('PharmacyImport', () => {
     it('la ayuda de columnas dice las categorías de la farmacia, no las fijas', () => {
       mount();
 
-      expect(text()).toContain('Una de las tuyas: Ortopedia · Óptica.');
+      expect(text()).toContain('Una de las suyas: Ortopedia · Óptica.');
       expect(text()).not.toContain('Dermocosmética');
     });
   });
@@ -338,7 +338,7 @@ describe('PharmacyImport', () => {
       fixture.detectChanges();
 
       expect(internal().step()).toBe('file');
-      expect(textOf('import-file-error')).toContain('No pudimos leer tu catálogo');
+      expect(textOf('import-file-error')).toContain('No pudimos leer su catálogo');
     });
 
     it('cambiar de farmacia con un archivo leído lo suelta y vuelve al primer paso', async () => {
@@ -462,14 +462,14 @@ describe('PharmacyImport', () => {
         .filter((option) => !option.hidden)
         .map((option) => option.textContent?.trim());
       expect(labels).toEqual(['Crear y actualizar', 'Sólo crear', 'Sólo actualizar']);
-      expect(text()).toContain('Los códigos nuevos se crean y los que ya están en tu catálogo se actualizan');
+      expect(text()).toContain('Los códigos nuevos se crean y los que ya están en su catálogo se actualizan');
 
       select.value = String(labels.indexOf('Sólo actualizar'));
       select.dispatchEvent(new Event('change'));
       fixture.detectChanges();
 
       expect(internal().mode()).toBe('SOLO_ACTUALIZAR');
-      expect(text()).toContain('Sólo se actualizan los productos que ya están en tu catálogo');
+      expect(text()).toContain('Sólo se actualizan los productos que ya están en su catálogo');
     });
 
     it('«sólo actualizar» rechaza el código que no existe, con un mensaje claro, y actualiza el que sí', async () => {
@@ -482,7 +482,7 @@ describe('PharmacyImport', () => {
       expect(revision).toMatch(/0\s+productos nuevos/);
       expect(revision).toMatch(/1\s+se actualiza/);
       expect(revision).toMatch(/1\s+fila a corregir/);
-      expect(textOf('import-problems')).toContain('El código A-1 no está en tu catálogo (elegiste «sólo actualizar»).');
+      expect(textOf('import-problems')).toContain('El código A-1 no está en su catálogo (eligió «sólo actualizar»).');
       expect(textOf('import-not-in-catalog')).toMatch(/1\s+fila no se actualiza/);
 
       publishByClick();
@@ -522,7 +522,7 @@ describe('PharmacyImport', () => {
       expect(textOf('import-review')).toMatch(/1\s+producto nuevo/);
       expect(textOf('import-review')).toMatch(/0\s+se actualizan/);
       expect(textOf('import-review')).toMatch(/1\s+fila a corregir/);
-      expect(textOf('import-problems')).toContain('El código PAR-500 ya está en tu catálogo');
+      expect(textOf('import-problems')).toContain('El código PAR-500 ya está en su catálogo');
       http.expectNone((r) => r.url.endsWith('/pharmacy/products'));
     });
   });
@@ -568,7 +568,7 @@ describe('PharmacyImport', () => {
       review();
 
       expect(textOf('import-review')).toMatch(/1\s+producto nuevo/);
-      expect(textOf('import-problems')).toContain('Tu farmacia todavía no tiene categorías');
+      expect(textOf('import-problems')).toContain('Su farmacia todavía no tiene categorías');
     });
   });
 

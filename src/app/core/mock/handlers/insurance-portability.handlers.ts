@@ -290,7 +290,7 @@ export function registerInsurancePortability(router: MockRouter): void {
       return forbidden('Falta el perfil de paciente a exportar.');
     }
     if (!isOwnerOrPlatform(request, patientProfileId)) {
-      return forbidden('No podés exportar el historial de otra persona.');
+      return forbidden('No puede exportar el historial de otra persona.');
     }
 
     const format: PortabilityExportFormat = datos.format ?? 'BUNDLE';

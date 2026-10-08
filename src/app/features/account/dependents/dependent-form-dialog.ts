@@ -124,7 +124,7 @@ export class DependentFormDialog {
     const control = this.form.controls.nationalId;
     if (this.errorDelCampo() !== null) return this.errorDelCampo()!;
     if (!control.touched || control.valid) return '';
-    if (control.hasError('required')) return 'Escribí el CI de la persona.';
+    if (control.hasError('required')) return 'Escriba el CI de la persona.';
     return 'El CI sólo admite letras, dígitos, punto y guion (4 a 40 caracteres).';
   }
 
@@ -156,7 +156,7 @@ export class DependentFormDialog {
       error: () => {
         this.buscando.set(false);
         this.candidatos.set(null);
-        this.errorBusqueda.set('No pudimos buscar en este momento. Intentá de nuevo.');
+        this.errorBusqueda.set('No pudimos buscar en este momento. Intente de nuevo.');
       },
     });
   }
@@ -229,9 +229,9 @@ function mensajeDeError(error: unknown): { mensaje: string; delCampo: boolean } 
       return { mensaje: api.message, delCampo: true };
     }
     return {
-      mensaje: api?.message ?? 'No se pudo enviar la solicitud. Intentá de nuevo.',
+      mensaje: api?.message ?? 'No se pudo enviar la solicitud. Intente de nuevo.',
       delCampo: false,
     };
   }
-  return { mensaje: 'No se pudo enviar la solicitud. Intentá de nuevo.', delCampo: false };
+  return { mensaje: 'No se pudo enviar la solicitud. Intente de nuevo.', delCampo: false };
 }

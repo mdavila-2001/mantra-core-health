@@ -150,7 +150,7 @@ const MUNICIPIO_DE_CIUDAD: Readonly<Record<string, string>> = {
 function especialidadDeLaRed(rotulo: string) {
   const fila = ESPECIALIDADES_DE_LA_RED[rotulo];
   if (fila === undefined) {
-    throw new Error(`Especialidad de la red sin mapear: «${rotulo}». Agregala a ESPECIALIDADES_DE_LA_RED.`);
+    throw new Error(`Especialidad de la red sin mapear: «${rotulo}». Agréguela a ESPECIALIDADES_DE_LA_RED.`);
   }
   return fila;
 }

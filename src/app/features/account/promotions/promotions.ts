@@ -53,7 +53,7 @@ const SEARCH_PHARMACIES_ACTION = { label: 'Buscar farmacias', route: '/search/me
 
 /** El vacío contra la API real: la consulta se hizo y no hay ninguna vigente. */
 const NONE_CURRENT_MESSAGE =
-  'Por ahora no tenés promociones vigentes. Cuando haya una para vos, va a aparecer acá.';
+  'Por ahora no tiene promociones vigentes. Cuando haya una para usted, va a aparecer acá.';
 
 /**
  * El grupo de las promociones que no declaran ciudad. El contrato no relaciona
@@ -145,7 +145,7 @@ export class Promotions {
       : this.todas().length === 0
         ? empty(
             SEARCH_PHARMACIES_ACTION,
-            'Cuando las farmacias te manden promociones, van a aparecer acá.',
+            'Cuando las farmacias le manden promociones, van a aparecer acá.',
           )
         : ready(this.todas()),
   );
@@ -213,7 +213,7 @@ export class Promotions {
     const cuantas = this.cuentaPorDepartamento().get(elegido) ?? 0;
     return cuantas === 0
       ? `Todavía no hay promociones en ${nombre}.`
-      : `${cuantas} en ${nombre}. Tocá otra vez el departamento para ver todo el país.`;
+      : `${cuantas} en ${nombre}. Toque otra vez el departamento para ver todo el país.`;
   });
 
   /** Con el departamento, sin la ciudad ni la categoría: base de los chips. */
@@ -293,8 +293,8 @@ export class Promotions {
   protected readonly sinCoincidencias = computed<string | null>(() => {
     if (this.tramos().length > 0 || this.estado().status !== 'ready') return null;
     return this.departamentoElegido() === null
-      ? 'Ninguna promoción coincide con los filtros que pusiste. Probá quitando alguno.'
-      : 'No hay promociones en ese departamento con los filtros que pusiste. Tocalo otra vez en el mapa para ver todo el país.';
+      ? 'Ninguna promoción coincide con los filtros que puso. Pruebe quitando alguno.'
+      : 'No hay promociones en ese departamento con los filtros que puso. Tóquelo otra vez en el mapa para ver todo el país.';
   });
 
   constructor() {
@@ -397,7 +397,7 @@ function aTarjeta(promo: Promocion): SearchResultItem {
   // ni medicamento).
   const subtitle =
     [promo.farmacia, promo.medicamento].filter(Boolean).join(' · ') ||
-    (promo.cupones.length === 0 ? '' : `Tu cupón: ${promo.cupones.join(', ')}`);
+    (promo.cupones.length === 0 ? '' : `Su cupón: ${promo.cupones.join(', ')}`);
   return {
     id: promo.id,
     title: promo.titulo,

@@ -286,8 +286,8 @@ export class InsurancePatients {
                       result: null,
                       message:
                       error instanceof HttpErrorResponse && readApiError(error)?.code === 'PRECONDITION_FAILED'
-                          ? 'Para conversar, ambos deben tener la mensajería activa y permitir el contacto. Revisá tu perfil de mensajería.'
-                          : 'No pudimos abrir la conversación. Verificá que el paciente siga disponible e intentá nuevamente.',
+                          ? 'Para conversar, ambos deben tener la mensajería activa y permitir el contacto. Revise su perfil de mensajería.'
+                          : 'No pudimos abrir la conversación. Verifique que el paciente siga disponible e intente nuevamente.',
                     }),
                   ),
                 ),
@@ -383,7 +383,7 @@ export class InsurancePatients {
       await navigator.clipboard.writeText(value);
       this.notice.set(`${kind} copiado.`);
     } catch {
-      this.notice.set('No pudimos copiar. Seleccioná el dato y copialo a mano.');
+      this.notice.set('No pudimos copiar. Seleccione el dato y cópielo a mano.');
     }
   }
   protected message(row: InsurerPatientListItem): void {
@@ -432,7 +432,7 @@ export class InsurancePatients {
         )
       : empty(
           { label: 'Actualizar directorio' },
-          'Todavía no hay pacientes disponibles en tu directorio autorizado.',
+          'Todavía no hay pacientes disponibles en su directorio autorizado.',
         );
   }
 }

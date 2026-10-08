@@ -2352,9 +2352,9 @@ export class Agenda {
    */
   private async avisarConsultaAbierta(abierta: CitaVisible): Promise<void> {
     const ir = await this.dialogs.confirm({
-      title: 'Ya tenés una consulta en curso',
+      title: 'Ya tiene una consulta en curso',
       message:
-        `No se puede iniciar una segunda: primero cerrá la que está abierta, o volvé a ella ` +
+        `No se puede iniciar una segunda: primero cierre la que está abierta, o vuelva a ella ` +
         `para terminarla.`,
       details: [
         { label: 'En curso con', value: abierta.paciente },
@@ -2462,7 +2462,7 @@ export class Agenda {
     const atender = await this.dialogs.confirm({
       title: enCurso ? 'Consulta en curso' : 'Iniciar la consulta',
       message: enCurso
-        ? 'Esta consulta ya empezó. Podés volver a ella y seguir registrando.'
+        ? 'Esta consulta ya empezó. Puede volver a ella y seguir registrando.'
         : 'Al iniciarla se abre la pantalla de atención de este paciente.',
       details: this.detalleDeSolicitud(cita),
       confirmLabel: enCurso ? 'Continuar consulta' : 'Iniciar consulta',
@@ -2492,7 +2492,7 @@ export class Agenda {
     await this.dialogs.confirm({
       title: yaPaso ? 'Esta cita ya está cerrada' : 'Esta cita todavía no se atiende',
       message: this.porResponder(cita)
-        ? 'Está esperando respuesta: aceptala primero y ahí se puede iniciar la atención.'
+        ? 'Está esperando respuesta: acéptela primero y ahí se puede iniciar la atención.'
         : `Su estado es «${cita.estado.label}», y desde ese estado no se entra a atender.`,
       details: [
         { label: 'Paciente', value: cita.paciente },
@@ -2518,7 +2518,7 @@ export class Agenda {
       // expedientes, o la reserva no tiene paciente al que abrirle uno.
       this.toast.info(
         cita.rutaExpediente === null && !this.puedeVerExpedientes()
-          ? 'La atención quedó iniciada, pero esta sesión no puede abrir expedientes: pedí el permiso de historia clínica para entrar a atender.'
+          ? 'La atención quedó iniciada, pero esta sesión no puede abrir expedientes: pida el permiso de historia clínica para entrar a atender.'
           : 'La atención quedó iniciada, pero esta reserva no tiene un paciente registrado al que abrirle el expediente.',
         'No se pudo entrar a atender',
       );
@@ -2598,7 +2598,7 @@ export class Agenda {
     if (registros === null) {
       return {
         ...base,
-        message: `No pudimos revisar si la cita de ${cita.paciente} tiene algo registrado. ¿La completás igual?`,
+        message: `No pudimos revisar si la cita de ${cita.paciente} tiene algo registrado. ¿La completa igual?`,
         confirmLabel: 'Completar la cita',
       };
     }
@@ -2613,14 +2613,14 @@ export class Agenda {
     if (lineas.length === 0) {
       return {
         ...base,
-        message: `La cita de ${cita.paciente} no tiene nada registrado: ni encuentro, ni recetas, ni diagnósticos, ni observaciones. Si tocaste «Completar la cita» sin querer, volvé. ¿La completás igual?`,
+        message: `La cita de ${cita.paciente} no tiene nada registrado: ni encuentro, ni recetas, ni diagnósticos, ni observaciones. Si tocó «Completar la cita» sin querer, vuelva. ¿La completa igual?`,
         confirmLabel: 'Completar igual',
       };
     }
 
     return {
       ...base,
-      message: `¿Completás la cita de ${cita.paciente}? Esto es lo que quedó registrado en esta consulta.`,
+      message: `¿Completa la cita de ${cita.paciente}? Esto es lo que quedó registrado en esta consulta.`,
       details: lineas,
       confirmLabel: 'Completar la cita',
     };
@@ -2768,7 +2768,7 @@ export class Agenda {
                 // tiene agendas» y «no tenés una vos». Decir el primero cuando
                 // pasa el segundo manda a reportar un problema que no existe.
                 this.sinAgendaPropia()
-                  ? 'Esta organización no tiene ninguna agenda a tu nombre.'
+                  ? 'Esta organización no tiene ninguna agenda a su nombre.'
                   : 'Esta organización todavía no tiene recursos agendables cargados.',
               )
             : loading();
@@ -2854,7 +2854,7 @@ export class Agenda {
       this.cupos.set(
         empty(
           { label: 'Ampliar a 30 días', route: '/schedule' },
-          `No hay cupos generados ${this.resumenDeVentana()} para lo que estás mirando.`,
+          `No hay cupos generados ${this.resumenDeVentana()} para lo que está mirando.`,
         ),
       );
       return;

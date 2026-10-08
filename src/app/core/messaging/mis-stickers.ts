@@ -66,10 +66,10 @@ export class MisStickers {
    */
   static rechazo(archivo: File): string | null {
     if (!(TIPOS_DE_STICKER as readonly string[]).includes(archivo.type)) {
-      return 'Elegí una imagen PNG, WEBP, GIF o JPG.';
+      return 'Elija una imagen PNG, WEBP, GIF o JPG.';
     }
     if (archivo.size > TOPE_DE_STICKER_BYTES) {
-      return 'El sticker pesa más de 1 MB. Probá con uno más liviano.';
+      return 'El sticker pesa más de 1 MB. Pruebe con uno más liviano.';
     }
     return null;
   }

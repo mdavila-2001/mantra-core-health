@@ -234,7 +234,7 @@ export class PractitionersDirectory {
 
   protected readonly aviso = computed(() =>
     this.recortada()
-      ? 'Se muestran los primeros médicos del directorio. Usá el buscador para encontrar a alguien que no aparezca en la lista.'
+      ? 'Se muestran los primeros médicos del directorio. Use el buscador para encontrar a alguien que no aparezca en la lista.'
       : null,
   );
 
@@ -289,11 +289,11 @@ export class PractitionersDirectory {
     }
     const texto = this.filtro().trim();
     if (texto !== '') {
-      return `Ningún médico coincide con «${texto}». Probá con otro nombre o con la especialidad.`;
+      return `Ningún médico coincide con «${texto}». Pruebe con otro nombre o con la especialidad.`;
     }
     return this.especialidad() === null
       ? null
-      : 'Ningún médico de esa especialidad está publicado todavía. Probá quitando el chip.';
+      : 'Ningún médico de esa especialidad está publicado todavía. Pruebe quitando el chip.';
   });
 
   /**

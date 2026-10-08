@@ -286,7 +286,7 @@ export class Tooltip implements OnDestroy {
     if (!focusable && !hasVisibleText) {
       console.warn(
         '[appTooltip] el host no es enfocable ni tiene texto visible: la ayuda queda ' +
-          'fuera del alcance del teclado. Agregá tabindex="0" o un nombre accesible.',
+          'fuera del alcance del teclado. Agregue tabindex="0" o un nombre accesible.',
         host,
       );
     }

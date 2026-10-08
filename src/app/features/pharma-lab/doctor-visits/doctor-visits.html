@@ -1,6 +1,6 @@
 <app-page-header
   title="Visitas de laboratorio"
-  subtitle="Solicitudes de visitadores médicos, separadas de tu agenda de pacientes."
+  subtitle="Solicitudes de visitadores médicos, separadas de su agenda de pacientes."
 />
 
 <app-view-state-host [state]="state()" (retry)="retry()">
@@ -19,7 +19,7 @@
         <section class="doctor-visits__section" aria-label="Solicitudes de visita recibidas">
           @if (panel.requests.length === 0) {
             <p class="doctor-visits__empty" data-testid="requests-empty">
-              No recibiste solicitudes de visita.
+              No recibió solicitudes de visita.
             </p>
           } @else {
             @if (porResponder() > 0) {
@@ -54,7 +54,7 @@
         <section class="doctor-visits__section" aria-label="Agenda de visitas">
           @if (panel.agenda === null) {
             <p class="doctor-visits__empty" data-testid="agenda-empty">
-              Todavía no configuraste horarios para visitadores, así que no recibís visitas de
+              Todavía no configuró horarios para visitadores, así que no recibe visitas de
               laboratorio.
             </p>
           } @else {
@@ -70,7 +70,7 @@
               [columns]="columnasDeFranjas()"
               [trackBy]="porId"
               [rowLabel]="nombreDeFranja"
-              caption="Franjas en las que recibís visitadores"
+              caption="Franjas en las que recibe visitadores"
               (retry)="retry()"
             />
           }

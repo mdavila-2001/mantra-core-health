@@ -507,7 +507,7 @@ describe('CommunityClient', () => {
     req.flush({
       id: 'poll-1',
       postId: 'post-1',
-      question: '¿Cuál preferís?',
+      question: '¿Cuál prefiere?',
       allowsMultiple: false,
       closesAt: null,
       statusConceptId: 'c-abierta',

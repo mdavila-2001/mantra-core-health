@@ -26,7 +26,7 @@
       [value]="unidadElegida()"
       (valueChange)="elegirUnidad($event)"
       [options]="opcionesDeUnidad()"
-      placeholder="Elegí una unidad"
+      placeholder="Elija una unidad"
       data-testid="lab-unit"
     />
   </app-form-field>
@@ -149,7 +149,7 @@
   }
   @case ('forbidden') {
     <section class="laboratorio__ambito laboratorio__ambito--error" role="alert">
-      <p>{{ estado.message ?? 'No administrás este laboratorio.' }}</p>
+      <p>{{ estado.message ?? 'No administra este laboratorio.' }}</p>
     </section>
   }
   @case ('not-found') {
@@ -228,7 +228,7 @@
           @if (catalogoFallo()) {
             <app-alert tone="warning" title="El catálogo de estudios no está disponible">
               Sin él no se puede decir qué estudio es este, así que la oferta no se puede publicar
-              todavía. Volvé a intentarlo más tarde.
+              todavía. Vuelva a intentarlo más tarde.
             </app-alert>
           }
 
@@ -242,7 +242,7 @@
               [options]="opcionesDeEstudio()"
               [value]="estudioElegido()"
               [disabled]="catalogoCargando() || catalogoFallo()"
-              [placeholder]="catalogoCargando() ? 'Cargando el catálogo…' : 'Elegí el estudio'"
+              [placeholder]="catalogoCargando() ? 'Cargando el catálogo…' : 'Elija el estudio'"
               (valueChange)="elegirEstudio($event)"
             />
           </app-form-field>
@@ -269,7 +269,7 @@
             <app-form-field
               icon="hospital"
               label="Sucursal"
-              hint="Dejalo sin elegir si el estudio se hace en todas."
+              hint="Déjelo sin elegir si el estudio se hace en todas."
             >
               <app-select
                 [options]="opcionesDeSede()"
@@ -471,7 +471,7 @@
             <app-form-field
               icon="hospital"
               label="Sucursal"
-              hint="Dejalo sin elegir si rige en todas."
+              hint="Déjelo sin elegir si rige en todas."
             >
               <app-select
                 [options]="opcionesDeSede()"
@@ -592,9 +592,9 @@
         <dt>La lista de tarifarios</dt>
         <dd>
           La plataforma todavía no devuelve los tarifarios de una unidad: la ficha trae los precios,
-          y de ahí se deduce cuáles existen. Por eso acá ves los que ya tienen algún precio y los
-          que creaste en esta pestaña. Uno recién creado y sin ningún precio no se ve desde otra
-          pestaña ni desde otra computadora hasta que le cargues el primero.
+          y de ahí se deduce cuáles existen. Por eso acá ve los que ya tienen algún precio y los
+          que creó en esta pestaña. Uno recién creado y sin ningún precio no se ve desde otra
+          pestaña ni desde otra computadora hasta que le cargue el primero.
         </dd>
       </div>
       <div>

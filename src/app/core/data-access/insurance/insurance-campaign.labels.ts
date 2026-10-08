@@ -80,7 +80,7 @@ export const CAMPAIGN_PARTNER_TYPE_LABELS: Readonly<Record<CampaignPartnerType, 
  */
 export function copayBonusLabel(percentage: number): string {
   if (percentage >= 100) {
-    return '100% Cubierto por tu Seguro';
+    return '100% Cubierto por su Seguro';
   }
   return `${formatPercentage(percentage)}% de bonificación en copago`;
 }

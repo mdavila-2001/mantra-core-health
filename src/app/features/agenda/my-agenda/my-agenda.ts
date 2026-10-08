@@ -127,7 +127,7 @@ const VENTANA_MAXIMA_DIAS = 92;
  */
 const SIN_AGENDA = empty(
   { label: 'Publicar mi agenda', route: AGENDA_CREATE_ROUTE },
-  'Todavía no publicaste tu horario. Cuando lo hagas, vas a verlo acá y los pacientes van a poder pedirte turno.',
+  'Todavía no publicó su horario. Cuando lo haga, va a verlo acá y los pacientes van a poder pedirle turno.',
 );
 
 /** Un día de la semanita, ya resuelto para pintar. */
@@ -962,7 +962,7 @@ export class MyAgenda implements OnInit {
           cerrados === 0
             ? 'No había turnos libres que cerrar en ese período.'
             : `Se cerraron ${cerrados} ${cerrados === 1 ? 'turno libre' : 'turnos libres'}.`,
-          `Bloqueaste ${pedido.dias} ${pedido.dias === 1 ? 'día' : 'días'}`,
+          `Bloqueó ${pedido.dias} ${pedido.dias === 1 ? 'día' : 'días'}`,
         );
         this.cargarMes();
       },
@@ -1004,13 +1004,13 @@ export class MyAgenda implements OnInit {
         title: `Bloquear el ${cuando}`,
         message:
           'Los turnos libres de ese día dejan de ofrecerse. Las citas ya reservadas no se tocan: ' +
-          'si querés cancelarlas, hacelo una por una.',
+          'si quiere cancelarlas, hágalo una por una.',
         confirmLabel: 'Bloquear el día',
       },
       {
         label: '¿Por qué?',
         placeholder: 'Congreso, vacaciones, trámite…',
-        hint: 'Lo ves sólo vos, para acordarte cuando mires el mes.',
+        hint: 'Lo ve sólo usted, para acordarse cuando mire el mes.',
         minLength: 3,
         maxLength: 200,
       },
@@ -1117,14 +1117,14 @@ export class MyAgenda implements OnInit {
     const hora = (f: Date): string => formatDate(f, 'HH:mm', this.idioma);
 
     const confirmado = await this.dialogs.confirm({
-      title: 'Agregar un horario fuera de tu horario de atención',
+      title: 'Agregar un horario fuera de su horario de atención',
       message:
         finPublicado === null
-          ? `Este día no está en tu horario publicado: no atendés. Si seguís, queda abierto de ` +
+          ? `Este día no está en su horario publicado: no atiende. Si sigue, queda abierto de ` +
             `${hora(desde)} a ${hora(hasta)} como horario extra, y ese rato se puede reservar.`
-          : `Tu horario de atención de este día termina a las ${hora(finPublicado)}. Si seguís, ` +
+          : `Su horario de atención de este día termina a las ${hora(finPublicado)}. Si sigue, ` +
             `queda abierto de ${hora(desde)} a ${hora(hasta)} como horario extra, y ese rato se ` +
-            `puede reservar. No cambia tu horario publicado: vale sólo para este día.`,
+            `puede reservar. No cambia su horario publicado: vale sólo para este día.`,
       confirmLabel: 'Agregar el horario extra',
       cancelLabel: 'No agregar nada',
     });
@@ -1141,7 +1141,7 @@ export class MyAgenda implements OnInit {
       .subscribe({
         next: () => {
           this.toast.success(
-            `Queda abierto de ${hora(desde)} a ${hora(hasta)}, fuera de tu horario de atención.`,
+            `Queda abierto de ${hora(desde)} a ${hora(hasta)}, fuera de su horario de atención.`,
             'Horario extra agregado',
           );
           this.cargarDia(dia);
@@ -1324,7 +1324,7 @@ export class MyAgenda implements OnInit {
     this.scheduling.deleteException(exceptionId).subscribe({
       next: () => {
         this.toast.success(
-          'Los horarios que retiró no vuelven solos: se regeneran con tu plantilla.',
+          'Los horarios que retiró no vuelven solos: se regeneran con su plantilla.',
           'Rato ocupado quitado',
         );
         if (dia !== null) this.cargarDia(dia);
@@ -1552,7 +1552,7 @@ export class MyAgenda implements OnInit {
         this.operandoHorario.set(null);
         this.toast.success(
           res.slotsPendientes
-            ? 'Volvé a publicarlo para abrir los turnos: reactivar no los repone.'
+            ? 'Vuelva a publicarlo para abrir los turnos: reactivar no los repone.'
             : 'Ya estaba vigente.',
           `«${plantilla.name}» volvió a estar vigente`,
         );
@@ -1713,7 +1713,7 @@ export class MyAgenda implements OnInit {
       title: 'Cerrar este rato',
       message:
         'Deja de ofrecerse, y no vuelve aunque republiques el horario. ' +
-        'Podés reabrirlo quitando el bloqueo desde «Ver mis bloqueos».',
+        'Puede reabrirlo quitando el bloqueo desde «Ver mis bloqueos».',
       details: [
         {
           label: 'Cuándo',
@@ -1923,7 +1923,7 @@ export class MyAgenda implements OnInit {
         {
           label: '¿Qué le decimos?',
           placeholder: 'Voy con unos minutos de retraso…',
-          hint: 'Lo lee el paciente, así que escribilo como se lo dirías.',
+          hint: 'Lo lee el paciente, así que escríbalo como se lo diría.',
           minLength: 3,
           maxLength: 200,
         },
@@ -1945,7 +1945,7 @@ export class MyAgenda implements OnInit {
     const motivo = await this.dialogs.confirmWithReason(
       {
         title: 'Cancelar este turno',
-        message: 'El paciente recibe el aviso con el motivo que escribas.',
+        message: 'El paciente recibe el aviso con el motivo que escriba.',
         confirmLabel: 'Cancelar el turno',
         cancelLabel: 'No, volver',
       },
@@ -1983,7 +1983,7 @@ export class MyAgenda implements OnInit {
       estado.status === 'validation'
         ? estado.issues.map((i) => i.message).join(' ')
         : estado.status === 'forbidden'
-          ? 'No tenés permiso para esta operación.'
+          ? 'No tiene permiso para esta operación.'
           : '';
     this.toast.error(mensaje === '' ? `No pudimos ${queSeIntentaba}.` : mensaje, 'No se pudo');
   }
@@ -2027,7 +2027,7 @@ export class MyAgenda implements OnInit {
         // horario que el médico acaba de retirar, y eso tiene que verlo.
         this.toast.success(
           retiro.keptSlots > 0
-            ? `Se dieron de baja ${retiro.releasedSlots} turnos libres. Quedan ${retiro.keptSlots} con paciente: seguí atendiéndolos.`
+            ? `Se dieron de baja ${retiro.releasedSlots} turnos libres. Quedan ${retiro.keptSlots} con paciente: siga atendiéndolos.`
             : `Se dieron de baja ${retiro.releasedSlots} turnos libres.`,
           'Horario retirado',
         );

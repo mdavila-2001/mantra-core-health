@@ -77,7 +77,7 @@ describe('CenterSchedulePage', () => {
     }
     await clic(el.querySelector<HTMLButtonElement>('[data-testid="centro-publicar"]')!);
     expect(saveSchedule).not.toHaveBeenCalled();
-    expect(el.querySelector('[data-testid="centro-problemas"]')?.textContent).toContain('Ecografía: marcá al menos un día de atención.');
+    expect(el.querySelector('[data-testid="centro-problemas"]')?.textContent).toContain('Ecografía: marque al menos un día de atención.');
   });
 
   it('marcar un equipo como operativo lo manda al servidor', async () => {

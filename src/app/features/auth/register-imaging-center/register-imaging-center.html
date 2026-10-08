@@ -14,8 +14,8 @@
 </ng-template>
 
 <app-auth-split
-  claim="Sumá tu centro de imagenología a la red"
-  tagline="Rayos X, ecografía, tomografía y resonancia: recibí las órdenes médicas de toda la red y facturalas desde un solo lugar."
+  claim="Sume su centro de imagenología a la red"
+  tagline="Rayos X, ecografía, tomografía y resonancia: reciba las órdenes médicas de toda la red y factúrelas desde un solo lugar."
   contentWidth="full"
   [plainSurface]="true"
 >
@@ -29,10 +29,10 @@
             class="registro__title"
             data-testid="registro-imagen-exito"
           >
-            Recibimos la solicitud de tu centro
+            Recibimos la solicitud de su centro
           </h1>
           <p class="registro__subtitle">
-            Vamos a revisar los papeles que adjuntaste y te escribimos al correo del representante
+            Vamos a revisar los papeles que adjuntó y le escribimos al correo del representante
             legal. Hasta que la solicitud se apruebe, el centro no aparece en las búsquedas de
             pacientes.
           </p>
@@ -49,12 +49,12 @@
         </button>
       } @else {
         <div class="registro__header">
-          <h1 class="registro__title">Registrá tu centro de imagenología</h1>
+          <h1 class="registro__title">Registre su centro de imagenología</h1>
           <!-- Sin contar los pasos: el indicador de arriba ya dice «Paso 1 de
                N» y lo calcula solo. Un número escrito acá se desincroniza el
                día que una sección se parta en dos. -->
           <p class="registro__subtitle">
-            Necesitamos los datos legales de la empresa y qué estudios hacés. Podés volver atrás en
+            Necesitamos los datos legales de la empresa y qué estudios hace. Puede volver atrás en
             cualquier paso.
           </p>
         </div>
@@ -152,9 +152,9 @@
               }
               <app-ubicacion-picker
                 pinId="imagenologia-central"
-                etiquetaConfirmada="Tu centro"
+                etiquetaConfirmada="Su centro"
                 etiquetaQuitar="Quitar la ubicación de la central"
-                etiquetaMapa="La ubicación de tu centro en el mapa"
+                etiquetaMapa="La ubicación de su centro en el mapa"
                 [ids]="idsUbicacionCentral"
                 (confirmado)="gpsCentral.set($event)"
                 (puntoElegido)="vaciarDireccionPorElMapa()"
@@ -248,7 +248,7 @@
                   </section>
                 } @empty {
                   <p class="imagen-sucursales__vacio">
-                    Todavía no agregaste ninguna. Si atendés en un solo local, no hace falta.
+                    Todavía no agregó ninguna. Si atiende en un solo local, no hace falta.
                   </p>
                 }
 
@@ -299,7 +299,7 @@
 
         <div class="registro__footer">
           <p class="registro__pie">
-            ¿Ya tenés cuenta? <a app-link routerLink="/auth">Iniciá sesión</a>
+            ¿Ya tiene cuenta? <a app-link routerLink="/auth">Inicie sesión</a>
           </p>
         </div>
       }

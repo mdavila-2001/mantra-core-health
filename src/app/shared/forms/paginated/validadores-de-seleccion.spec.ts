@@ -30,21 +30,21 @@ describe('validadorDeSeleccion', () => {
   it('«al menos N» falla por debajo y se dice así', () => {
     const c = control(['a'], 2);
     expect(c.errors).toEqual({ minSelections: { min: 2, actual: 1 } });
-    expect(mensajeDeError(c, CAMPO)).toBe('Marcá al menos 2 opciones.');
+    expect(mensajeDeError(c, CAMPO)).toBe('Marque al menos 2 opciones.');
     expect(control(['a', 'b'], 2).errors).toBeNull();
   });
 
   it('«como máximo N» falla por encima y se dice así', () => {
     const c = control(['a', 'b', 'c'], undefined, 2);
     expect(c.errors).toEqual({ maxSelections: { max: 2, actual: 3 } });
-    expect(mensajeDeError(c, CAMPO)).toBe('Marcá como máximo 2 opciones.');
+    expect(mensajeDeError(c, CAMPO)).toBe('Marque como máximo 2 opciones.');
     expect(control(['a', 'b'], undefined, 2).errors).toBeNull();
   });
 
   it('«exactamente N» no es la suma de los otros dos: tiene su propio mensaje', () => {
     const c = control(['a'], 2, 2);
     expect(c.errors).toEqual({ exactSelections: { required: 2, actual: 1 } });
-    expect(mensajeDeError(c, CAMPO)).toBe('Marcá exactamente 2 opciones.');
+    expect(mensajeDeError(c, CAMPO)).toBe('Marque exactamente 2 opciones.');
     expect(control(['a', 'b', 'c'], 2, 2).errors).toEqual({
       exactSelections: { required: 2, actual: 3 },
     });
@@ -53,7 +53,7 @@ describe('validadorDeSeleccion', () => {
 
   it('con uno solo el mensaje va en singular', () => {
     expect(mensajeDeError(control(['a', 'b'], undefined, 1), CAMPO)).toBe(
-      'Marcá como máximo 1 opción.',
+      'Marque como máximo 1 opción.',
     );
   });
 });

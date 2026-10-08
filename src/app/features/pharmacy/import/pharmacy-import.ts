@@ -131,10 +131,10 @@ const MODE_OPTIONS: readonly SelectOption<ModoDeCarga>[] = [
 
 const MODE_HINTS: Readonly<Record<ModoDeCarga, string>> = {
   CREAR_Y_ACTUALIZAR:
-    'Los códigos nuevos se crean y los que ya están en tu catálogo se actualizan con lo que traiga el archivo.',
-  SOLO_CREAR: 'Sólo se crean los códigos nuevos; los que ya están en tu catálogo se rechazan.',
+    'Los códigos nuevos se crean y los que ya están en su catálogo se actualizan con lo que traiga el archivo.',
+  SOLO_CREAR: 'Sólo se crean los códigos nuevos; los que ya están en su catálogo se rechazan.',
   SOLO_ACTUALIZAR:
-    'Sólo se actualizan los productos que ya están en tu catálogo; los códigos nuevos se rechazan.',
+    'Sólo se actualizan los productos que ya están en su catálogo; los códigos nuevos se rechazan.',
 };
 
 /**
@@ -447,8 +447,8 @@ export class PharmacyImport {
             ...column,
             descripcion:
               categories.length === 0
-                ? 'Tu farmacia todavía no tiene categorías: dejala vacía.'
-                : `Una de las tuyas: ${categories.join(' · ')}.`,
+                ? 'Su farmacia todavía no tiene categorías: déjela vacía.'
+                : `Una de las suyas: ${categories.join(' · ')}.`,
           },
     );
   });
@@ -534,8 +534,8 @@ export class PharmacyImport {
     }
     this.fileError.set(
       first.reason === 'tamaño'
-        ? 'El archivo pasa de 1 MB. Partilo en varios.'
-        : 'Subí un archivo .csv (en Excel: Guardar como → CSV UTF-8).',
+        ? 'El archivo pasa de 1 MB. Divídalo en varios.'
+        : 'Suba un archivo .csv (en Excel: Guardar como → CSV UTF-8).',
     );
   }
 
@@ -604,7 +604,7 @@ export class PharmacyImport {
           // Sin catálogo no hay qué comparar, y en «sólo actualizar» todas las
           // filas saldrían «no está»: mejor no seguir que mostrar eso.
           this.fileError.set(
-            'No pudimos leer tu catálogo para comparar los códigos. Probá de nuevo en un momento.',
+            'No pudimos leer su catálogo para comparar los códigos. Pruebe de nuevo en un momento.',
           );
           return;
         }
@@ -715,7 +715,7 @@ export class PharmacyImport {
       return message;
     }
     return state.issues.some((issue) => issue.code === 'CONFLICT')
-      ? `${message} Un código retirado también sigue reservado: usá otro.`
+      ? `${message} Un código retirado también sigue reservado: use otro.`
       : message;
   }
 

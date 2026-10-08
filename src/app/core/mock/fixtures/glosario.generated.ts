@@ -1125,7 +1125,7 @@ export const TERMINOS_DE_GLOSARIO: readonly TerminoDeGlosario[] = [
     enDisplay: "Spirometry",
     esName: "Espirometría",
     clinicalDefinitionEs: "Prueba funcional respiratoria que mide los volúmenes y flujos de aire movilizados durante una maniobra inspiratoria y espiratoria forzada, esencial para el diagnóstico y seguimiento del asma y la EPOC.",
-    plainSummaryEs: "Es un examen en el que soplás fuerte en un aparato para medir qué tan bien funcionan tus pulmones.",
+    plainSummaryEs: "Es un examen en el que sopla fuerte en un aparato para medir qué tan bien funcionan sus pulmones.",
     relations: [
       {
         type: "ANATOMY",
@@ -1966,7 +1966,7 @@ export const TERMINOS_DE_GLOSARIO: readonly TerminoDeGlosario[] = [
       "Consentimiento del paciente",
     ],
     clinicalDefinitionEs: "Proceso por el cual una persona autoriza un procedimiento, estudio o tratamiento después de haber recibido información comprensible sobre su naturaleza, beneficios, riesgos y alternativas, y de haber tenido oportunidad de resolver sus dudas.",
-    plainSummaryEs: "Es cuando el equipo de salud te explica bien un estudio o tratamiento, y vos decidís si lo aceptás después de entenderlo.",
+    plainSummaryEs: "Es cuando el equipo de salud le explica bien un estudio o tratamiento, y usted decide si lo acepta después de entenderlo.",
     relations: [],
   },
 {
@@ -1981,7 +1981,7 @@ export const TERMINOS_DE_GLOSARIO: readonly TerminoDeGlosario[] = [
       "Ficha clínica",
     ],
     clinicalDefinitionEs: "Documento —físico o electrónico— que reúne de forma cronológica los datos clínicos, diagnósticos, tratamientos y evolución de una persona a lo largo de su atención en salud.",
-    plainSummaryEs: "Es el registro donde queda anotado todo lo que te atendieron: consultas, diagnósticos y tratamientos.",
+    plainSummaryEs: "Es el registro donde queda anotado todo lo que le atendieron: consultas, diagnósticos y tratamientos.",
     relations: [],
   },
 {
@@ -1992,7 +1992,7 @@ export const TERMINOS_DE_GLOSARIO: readonly TerminoDeGlosario[] = [
     enDisplay: "Medical discharge",
     esName: "Alta médica",
     clinicalDefinitionEs: "Decisión clínica que da por finalizada una internación o un episodio de atención, porque el estado del paciente ya no requiere ese nivel de cuidado.",
-    plainSummaryEs: "Es cuando el médico determina que ya podés irte del hospital o terminar un tratamiento.",
+    plainSummaryEs: "Es cuando el médico determina que ya puede irte del hospital o terminar un tratamiento.",
     relations: [],
   },
 {
@@ -2006,7 +2006,7 @@ export const TERMINOS_DE_GLOSARIO: readonly TerminoDeGlosario[] = [
       "Prescripción médica",
     ],
     clinicalDefinitionEs: "Documento emitido por un profesional habilitado que indica el medicamento, la dosis y la duración del tratamiento que una persona debe seguir.",
-    plainSummaryEs: "Es el papel (o mensaje digital) donde el médico te indica qué medicamento tomar y cómo.",
+    plainSummaryEs: "Es el papel (o mensaje digital) donde el médico le indica qué medicamento tomar y cómo.",
     relations: [
       {
         type: "RELATED_TERM",
@@ -2025,7 +2025,7 @@ export const TERMINOS_DE_GLOSARIO: readonly TerminoDeGlosario[] = [
       "Referencia médica",
     ],
     clinicalDefinitionEs: "Solicitud que hace un profesional de salud para que otra especialidad evalúe a un paciente y aporte su criterio sobre el diagnóstico o el tratamiento.",
-    plainSummaryEs: "Es cuando tu médico te deriva a otro especialista para que también te revise.",
+    plainSummaryEs: "Es cuando su médico le deriva a otro especialista para que también le revise.",
     relations: [],
   },
   {"key":"resfrio-comun","slug":"resfrio-comun","categoryKey":"disease","tagKeys":["respiratory","infectious"],"enDisplay":"Acute nasopharyngitis [common cold]","esName":"Resfrío común","esSynonyms":["resfrío","resfriado","catarro","rinofaringitis","constipado"],"clinicalDefinitionEs":"Infección viral aguda y autolimitada de las vías respiratorias superiores, con rinorrea, congestión nasal, estornudos y odinofagia leve. Cursa sin fiebre alta y resuelve en una semana con tratamiento sintomático.","plainSummaryEs":"El resfrío de siempre: nariz tapada, mocos y molestia de garganta que pasan solos en pocos días.","relations":[{"type":"RELATED_TERM","targetSlug":"fiebre"},{"type":"TREATMENT","targetSlug":"paracetamol"}],"externalCode":{"system":"icd10cm","code":"J00"},"lang":"es","symptomIds":["resfrio","congestion-nasal","dolor-de-garganta","tos"],"reviewStatus":"pending-medical-review","source":"alovida-curated-2026-09-25"},

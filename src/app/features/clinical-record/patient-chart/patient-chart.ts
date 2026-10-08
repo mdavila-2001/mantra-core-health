@@ -921,7 +921,7 @@ export class PatientChart {
   protected async pedirDescarteDelAlta(): Promise<void> {
     const descartar = await this.dialogs.confirm({
       title: '¿Descartar lo escrito?',
-      message: 'Todavía no se registró. Si cerrás, lo que cargaste en este formulario se pierde.',
+      message: 'Todavía no se registró. Si cierra, lo que cargó en este formulario se pierde.',
       confirmLabel: 'Descartar',
       cancelLabel: 'Seguir escribiendo',
       destructive: true,
@@ -1236,10 +1236,10 @@ export class PatientChart {
     const state = this.formulariosDelEncuentro();
     switch (state?.status) {
       case 'offline':
-        return 'No pudimos conectarnos. Revisá tu conexión y reintentá.';
+        return 'No pudimos conectarnos. Revise su conexión y reintente.';
       case 'forbidden':
         // `||` y no `??`: un 403 con `message: ''` dejaba el aviso vacío.
-        return state.message || 'Tu rol no permite ver formularios clínicos.';
+        return state.message || 'Su rol no permite ver formularios clínicos.';
       case 'not-found':
         return 'No encontramos los formularios de este encuentro.';
       case 'validation':
@@ -1438,7 +1438,7 @@ export class PatientChart {
       );
     }
     if (enCurso) {
-      this.toasts.info('Tenés una consulta en curso con esta persona.', 'Consulta en curso');
+      this.toasts.info('Tiene una consulta en curso con esta persona.', 'Consulta en curso');
     }
   }
 
@@ -1502,7 +1502,7 @@ export class PatientChart {
   protected async pedirDescarteDelEstado(): Promise<void> {
     const descartar = await this.dialogs.confirm({
       title: '¿Descartar el cambio de estado?',
-      message: 'Elegiste un estado y no lo aplicaste. Si cerrás, el diagnóstico queda como está.',
+      message: 'Eligió un estado y no lo aplicó. Si cierra, el diagnóstico queda como está.',
       confirmLabel: 'Descartar',
       cancelLabel: 'Seguir editando',
       destructive: true,
@@ -1883,7 +1883,7 @@ export class PatientChart {
       },
       {
         label: 'Motivo del cambio',
-        hint: 'Explicá brevemente por qué deja de contar con el estado anterior.',
+        hint: 'Explique brevemente por qué deja de contar con el estado anterior.',
       },
     );
     if (motivo === null) {
@@ -1929,8 +1929,8 @@ export class PatientChart {
     return (
       mensajeDeFalloDeEscritura(state, {
         accion: 'cambiar el estado clínico',
-        sinPermiso: 'Tu rol no permite cambiar el estado clínico.',
-        yaNoExiste: 'La condición ya no existe. Recargá la pantalla.',
+        sinPermiso: 'Su rol no permite cambiar el estado clínico.',
+        yaNoExiste: 'La condición ya no existe. Recargue la pantalla.',
       }) ?? 'Ocurrió un error inesperado.'
     );
   }

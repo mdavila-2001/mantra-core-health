@@ -16,13 +16,13 @@ function montar(para?: 'persona' | 'empresa'): string {
 
 describe('RegistroAyuda', () => {
   it('a una persona le promete que su información clínica la ve sólo quien la atiende', () => {
-    expect(montar()).toContain('Tu información clínica la ve el profesional que te atiende');
+    expect(montar()).toContain('Su información clínica la ve el profesional que le atiende');
   });
 
   it('a una empresa no le habla de información clínica sino de sus papeles', () => {
     const texto = montar('empresa');
     expect(texto).not.toContain('información clínica');
     expect(texto).toContain('Los papeles de la empresa');
-    expect(texto).toContain('ficha de tu empresa');
+    expect(texto).toContain('ficha de su empresa');
   });
 });

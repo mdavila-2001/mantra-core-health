@@ -55,7 +55,7 @@ test('el doctor ve sus tres números y lleva gastos, activos, deudas, transaccio
   await expect(page.getByTestId('numero-pacientes')).toContainText('Pacientes atendidos');
   await expect(page.getByTestId('numero-cobrado')).toContainText('Bs');
   await expect(page.getByTestId('numero-aseguradoras')).toContainText(
-    'Esperás de las aseguradoras',
+    'Espera de las aseguradoras',
   );
   await page.screenshot({ path: join(SALIDA, '1-tres-numeros.png') });
 
@@ -64,7 +64,7 @@ test('el doctor ve sus tres números y lleva gastos, activos, deudas, transaccio
   // …y en «Registros» no hay tableros.
   await page.getByRole('tab', { name: 'Registros', exact: true }).click();
   await expect(page.getByTestId('contabilidad-numeros')).toHaveCount(0);
-  await expect(page.getByRole('heading', { name: '¿Cuánto hiciste?' })).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: '¿Cuánto hizo?' })).toHaveCount(0);
   const registros = page.getByTestId('contabilidad-registros');
   await registros.scrollIntoViewIfNeeded();
   await expect(registros.getByTestId('tabla-EXPENSE')).toContainText('Alquiler de septiembre');

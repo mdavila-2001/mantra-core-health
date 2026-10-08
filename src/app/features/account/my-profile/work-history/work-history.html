@@ -25,8 +25,8 @@
     <section class="historial__sedes" data-testid="sedes-propias">
       <h2 class="historial__titulo">Dónde atiendo</h2>
       <p class="historial__intro">
-        Los lugares donde atendés hoy: tu consultorio, una clínica, un hospital o donde hagas
-        cualquiera de tus servicios. Es lo que ve un paciente al reservar y lo que la agenda usa
+        Los lugares donde atiende hoy: su consultorio, una clínica, un hospital o donde haga
+        cualquiera de sus servicios. Es lo que ve un paciente al reservar y lo que la agenda usa
         para decir dónde es la atención.
       </p>
 
@@ -60,14 +60,14 @@
         [columns]="columnasSedes()"
         [trackBy]="porIdDeSede"
         [rowLabel]="nombreAccesibleDeSede"
-        caption="Tus lugares de atención"
+        caption="Sus lugares de atención"
         maxHeight="420px"
       />
 
       @if (sedes().length === 0) {
         <p class="historial__vacio" data-testid="sedes-vacio">
-          Todavía no cargaste ningún lugar de atención. Sin uno, tu ficha no dice dónde
-          encontrarte.
+          Todavía no cargó ningún lugar de atención. Sin uno, su ficha no dice dónde
+          encontrarle.
         </p>
       } @else if (sedesFiltradas().length === 0) {
         <p class="historial__vacio" data-testid="sedes-sin-resultados">
@@ -93,12 +93,12 @@
         <div class="historial__padron" data-testid="sede-padron">
           <h3 class="historial__subtitulo">Agregar lugar de atención</h3>
           <p class="historial__intro">
-            Buscalo por su nombre en el padrón oficial de salud: clínicas, hospitales, consultorios y
-            laboratorios ya están cargados. Si es tu consultorio y no aparece, cargalo vos.
+            Búsquelo por su nombre en el padrón oficial de salud: clínicas, hospitales, consultorios y
+            laboratorios ya están cargados. Si es su consultorio y no aparece, cárguelo usted.
           </p>
           <app-form-field
             label="Buscar el establecimiento"
-            hint="Escribí el nombre y elegilo de la lista."
+            hint="Escriba el nombre y elíjalo de la lista."
           >
             <app-reference-combobox
               [selected]="lugarElegido()"
@@ -167,8 +167,8 @@
         >
           @if (sedeEnEdicion()) {
             <p class="historial__intro" data-testid="sede-edicion-aviso">
-              Los campos vienen con lo que ya tenías cargado: corregí lo que haga falta. Lo que
-              dejes en blanco queda como está, y para cambiar la dirección escribila entera de
+              Los campos vienen con lo que ya tenía cargado: corrija lo que haga falta. Lo que
+              deje en blanco queda como está, y para cambiar la dirección escríbala entera de
               nuevo.
             </p>
           }
@@ -201,7 +201,7 @@
                 data-testid="sede-direccion-vaciada"
                 aria-live="polite"
               >
-                Volvé a escribir la dirección: marcar el mapa reemplaza el texto anterior.
+                Vuelva a escribir la dirección: marcar el mapa reemplaza el texto anterior.
               </p>
             }
 
@@ -218,7 +218,7 @@
                    departamento se deduce de él, sin preguntarlo dos veces. -->
               @if (catalogoMunicipiosCaido()) {
                 <p class="historial__escape">
-                  No pudimos traer el catálogo de municipios. Podés seguir sin esto.
+                  No pudimos traer el catálogo de municipios. Puede seguir sin esto.
                   <button
                     app-button
                     variant="ghost"
@@ -236,9 +236,9 @@
                   [value]="municipioDeSede()"
                   [punto]="puntoDeSede()"
                   (valueChange)="municipioDeSede.set($event)"
-                  mapLabel="Mapa de Bolivia: elegí el departamento del lugar de atención"
+                  mapLabel="Mapa de Bolivia: elija el departamento del lugar de atención"
                   municipalityLabel="Municipio (opcional)"
-                  municipalityHint="Sólo se ofrecen los del departamento que elegiste."
+                  municipalityHint="Sólo se ofrecen los del departamento que eligió."
                 />
               }
 
@@ -354,7 +354,7 @@
     @if (layout() === 'flat' || layout() === 'tabla') {
       <h2 class="historial__titulo">Historial laboral</h2>
       <p class="historial__intro">
-        Los hospitales y entidades médicas donde ejerciste. Lo administrás vos: es tu trayectoria,
+        Los hospitales y entidades médicas donde ejerció. Lo administra usted: es su trayectoria,
         no un dato que cargue la organización.
       </p>
     }
@@ -376,14 +376,14 @@
         [columns]="columnasHistorial()"
         [trackBy]="porIdDeAfiliacion"
         [rowLabel]="nombreAccesibleDeAfiliacion"
-        caption="Tu historial laboral"
+        caption="Su historial laboral"
         maxHeight="420px"
       />
 
       @if (afiliaciones().length === 0) {
         <p class="historial__vacio" data-testid="historial-tabla-vacio">
-          Todavía no cargaste ningún vínculo laboral. Es lo que le dice a un paciente dónde
-          ejerciste antes de llegar acá.
+          Todavía no cargó ningún vínculo laboral. Es lo que le dice a un paciente dónde
+          ejerció antes de llegar acá.
         </p>
       } @else if (historialFiltrado().length === 0) {
         <p class="historial__vacio" data-testid="historial-tabla-sin-resultados">
@@ -407,7 +407,7 @@
     @if (layout() === 'timeline' && vinculosEditables().length > 0) {
       <h3 class="historial__subtitulo">Corregir o retirar</h3>
       <p class="historial__intro">
-        Lo que declaraste vos, y las solicitudes que todavía nadie contestó. Lo que una institución
+        Lo que declaró usted, y las solicitudes que todavía nadie contestó. Lo que una institución
         ya confirmó o rechazó no se edita desde acá.
       </p>
       <ul class="historial__lista" data-testid="vinculos-editables">
@@ -548,14 +548,14 @@
         </ul>
       } @else if (historial().status === 'ready') {
         <p class="historial__vacio">
-          Todavía no cargaste ningún vínculo laboral. Es lo que le dice a un paciente dónde
-          ejerciste antes de llegar acá.
+          Todavía no cargó ningún vínculo laboral. Es lo que le dice a un paciente dónde
+          ejerció antes de llegar acá.
         </p>
       } @else if (historial().status !== 'loading') {
         <!-- El fallo de la lectura no tumba el formulario: cargar un vínculo
                nuevo sigue siendo posible aunque no se hayan podido leer los viejos. -->
         <p class="historial__vacio">
-          No pudimos leer tu historial.
+          No pudimos leer su historial.
           <button type="button" class="historial__reintento" (click)="recargar()">
             Reintentar
           </button>
@@ -578,7 +578,7 @@
         data-testid="abrir-alta-vinculo"
         (clicked)="abrirAltaDeVinculo()"
       >
-        Añadir elemento a tu historial
+        Añadir elemento a su historial
       </button>
     </p>
 
@@ -590,10 +590,10 @@
       <app-content-dialog
         [heading]="
           vinculoEnEdicion() === null
-            ? 'Añadir elemento a tu historial'
+            ? 'Añadir elemento a su historial'
             : 'Corregir «' + vinculoEnEdicion()?.organizationName + '»'
         "
-        description="El hospital, la clínica o el consultorio donde ejerciste, y desde cuándo."
+        description="El hospital, la clínica o el consultorio donde ejerció, y desde cuándo."
         size="md"
         closeLabel="Cancelar"
         [dismissible]="false"
@@ -624,7 +624,7 @@
           @if (modoDeInstitucion() === 'padron') {
             <app-form-field
               label="Institución"
-              hint="Escribí el nombre y elegila del padrón oficial de salud."
+              hint="Escriba el nombre y elíjala del padrón oficial de salud."
               [required]="true"
             >
               <app-reference-combobox
@@ -660,7 +660,7 @@
           }
 
           <!-- ALV-007: opcional. Un vínculo con tu propio consultorio no tiene cargo. -->
-          <app-form-field label="Cargo" hint="Opcional. El puesto que ejerciste ahí, si aplica.">
+          <app-form-field label="Cargo" hint="Opcional. El puesto que ejerció ahí, si aplica.">
             <app-input [(value)]="cargo" placeholder="Médico de planta" />
           </app-form-field>
 
@@ -669,7 +669,7 @@
           @if (opcionesDeSede().length > 0 && vinculoEnEdicion() === null) {
             <app-form-field
               label="Consultorio de la plataforma"
-              hint="Opcional. Si la institución es una de las sedes donde ya atendés, atalo acá."
+              hint="Opcional. Si la institución es una de las sedes donde ya atiende, atalo acá."
             >
               <app-select
                 [(value)]="sede"
@@ -679,7 +679,7 @@
             </app-form-field>
           }
 
-          <app-form-field label="Desde" hint="Cuándo empezaste." [required]="true">
+          <app-form-field label="Desde" hint="Cuándo empezó." [required]="true">
             <app-date-picker [(value)]="desde" />
           </app-form-field>
 
@@ -687,7 +687,7 @@
                suelto: el error está ahí y ahí hay que corregirlo. -->
           <app-form-field
             label="Hasta"
-            hint="Dejalo vacío si seguís ejerciendo ahí."
+            hint="Déjelo vacío si sigue ejerciendo ahí."
             [errorMessage]="periodoInvertido() ? 'El fin no puede ser anterior al inicio.' : ''"
           >
             <app-date-picker [(value)]="hasta" [hasError]="periodoInvertido()" />
@@ -728,7 +728,7 @@
           class="historial__formulario"
           (submit)="$event.preventDefault(); guardarEdicionDeAfiliacion()"
         >
-          <app-form-field label="Cargo" hint="Opcional. El puesto que ejerciste ahí, si aplica.">
+          <app-form-field label="Cargo" hint="Opcional. El puesto que ejerció ahí, si aplica.">
             <app-input [(value)]="cargoEnEdicion" placeholder="Médico de planta" />
           </app-form-field>
         </form>

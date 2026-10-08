@@ -1,6 +1,6 @@
 <app-page-header
   title="Resultados"
-  subtitle="Subí los resultados en cualquier formato y sin límite de tamaño. Todo lo que subiste queda abajo, para verlo o descargarlo."
+  subtitle="Suba los resultados en cualquier formato y sin límite de tamaño. Todo lo que subió queda abajo, para verlo o descargarlo."
 />
 
 <div class="results">
@@ -12,7 +12,7 @@
       <div class="results__target">
         <app-form-field
           label="¿De qué orden es?"
-          hint="Si elegís una orden, el archivo queda en la ficha del paciente y en la del médico que lo pidió."
+          hint="Si elige una orden, el archivo queda en la ficha del paciente y en la del médico que lo pidió."
         >
           <app-select
             [options]="targetOptions()"
@@ -54,10 +54,10 @@
           <polyline points="7 9 12 4 17 9" />
           <path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3" />
         </svg>
-        <p class="results__drop-title">Arrastrá archivos o carpetas enteras acá</p>
+        <p class="results__drop-title">Arrastre archivos o carpetas enteras acá</p>
         <p class="results__drop-hint">
           Cualquier formato —PDF, imágenes, DICOM, video, audio, planillas, HL7, ZIP…— y
-          <strong>sin límite de tamaño</strong>. Los archivos grandes se suben por partes: podés pausar y
+          <strong>sin límite de tamaño</strong>. Los archivos grandes se suben por partes: puede pausar y
           seguir después.
         </p>
         <div class="results__drop-actions">
@@ -98,7 +98,7 @@
               {{ formatBytes(totals.sentBytes) }} de {{ formatBytes(totals.totalBytes) }}
             </p>
             @if (queue.active()) {
-              <p class="results__note">No cierres esta pestaña mientras sube.</p>
+              <p class="results__note">No cierre esta pestaña mientras sube.</p>
             } @else {
               <button app-button variant="ghost" size="sm" (clicked)="queue.clearFinished()">Limpiar la lista</button>
             }
@@ -324,7 +324,7 @@
               }
               @case ('TEXT') {
                 @if (content.truncated) {
-                  <p class="results__note">Se muestran los primeros 2 MB. Descargalo para verlo completo.</p>
+                  <p class="results__note">Se muestran los primeros 2 MB. Descárguelo para verlo completo.</p>
                 }
                 <pre class="viewer__text" tabindex="0">{{ content.text }}</pre>
               }
@@ -336,8 +336,8 @@
                   <p class="results__note">
                     {{
                       file.kind === 'DICOM'
-                        ? 'Descargalo para abrirlo con un visor DICOM (OsiriX, Horos, RadiAnt…).'
-                        : 'Descargalo para abrirlo con el programa que corresponda.'
+                        ? 'Descárguelo para abrirlo con un visor DICOM (OsiriX, Horos, RadiAnt…).'
+                        : 'Descárguelo para abrirlo con el programa que corresponda.'
                     }}
                   </p>
                 </div>

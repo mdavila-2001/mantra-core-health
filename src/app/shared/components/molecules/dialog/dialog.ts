@@ -91,7 +91,7 @@ export class Dialog {
 
   protected readonly reasonError = computed(() =>
     this.reasonTouched() && !this.reasonIsValid()
-      ? `Escribí el motivo (al menos ${this.reasonMinLength()} caracteres). La otra parte lo va a ver.`
+      ? `Escriba el motivo (al menos ${this.reasonMinLength()} caracteres). La otra parte lo va a ver.`
       : '',
   );
 

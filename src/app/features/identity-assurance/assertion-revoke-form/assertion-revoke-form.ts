@@ -99,7 +99,7 @@ export class AssertionRevokeForm {
   protected readonly revoked = signal<RevokedAssertion | null>(null);
 
   protected readonly errorMessage = computed(() =>
-    errorMessageOf(this.state(), 'No tenés permiso para administrar la verificación de identidad.'),
+    errorMessageOf(this.state(), 'No tiene permiso para administrar la verificación de identidad.'),
   );
 
   protected submit(): void {

@@ -369,7 +369,7 @@ describe('InsuranceAnalytics', () => {
       fixture.detectChanges();
       abrirPestana('Por persona');
 
-      expect(fixture.nativeElement.textContent).toContain('Todavía no generaste el informe');
+      expect(fixture.nativeElement.textContent).toContain('Todavía no generó el informe');
       expect(fixture.nativeElement.querySelector('[data-testid="table-person-loss"]')).toBeNull();
       const exportar: HTMLButtonElement = fixture.nativeElement.querySelector(
         '[data-testid="btn-export-person-report"]',

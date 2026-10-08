@@ -223,7 +223,7 @@ export class QuestionEditor {
 
   /** Lo que impide guardar, o `null`. Se muestra en el pie del modal. */
   protected readonly problema = computed<string | null>(() => {
-    if (this.texto().trim() === '') return 'Escribí la pregunta.';
+    if (this.texto().trim() === '') return 'Escriba la pregunta.';
     if (this.pideOpciones()) {
       const utiles = this.opciones().filter((o) => o.trim() !== '');
       if (utiles.length < 2) return 'Una pregunta de elección necesita al menos dos opciones.';
@@ -341,7 +341,7 @@ export class QuestionEditor {
     if (!this.conCambios()) return true;
     return this.dialogs.confirm({
       title: '¿Descartar los cambios?',
-      message: 'Lo que escribiste no se guardó y se va a perder.',
+      message: 'Lo que escribió no se guardó y se va a perder.',
       confirmLabel: 'Descartar',
       destructive: true,
     });

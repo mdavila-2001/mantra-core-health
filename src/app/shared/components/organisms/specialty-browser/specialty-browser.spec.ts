@@ -53,7 +53,7 @@ class VistaPrueba {}
       [hasMore]="hayMas()"
       [collapsible]="plegable()"
       [expandAll]="abrirTodos()"
-      noMatchesText="Nada coincide con lo que buscaste."
+      noMatchesText="Nada coincide con lo que buscó."
       (filtersChanged)="emisiones.push($event)"
       (retry)="reintentos = reintentos + 1"
       (moreRequested)="pedidosDeMas = pedidosDeMas + 1"
@@ -194,7 +194,7 @@ describe('SpecialtyBrowser', () => {
 
       expect(
         root().querySelector('[data-testid="specialty-browser-empty"]')?.textContent,
-      ).toContain('Nada coincide con lo que buscaste.');
+      ).toContain('Nada coincide con lo que buscó.');
     });
 
     it('el término de búsqueda también cuenta como filtro puesto', async () => {

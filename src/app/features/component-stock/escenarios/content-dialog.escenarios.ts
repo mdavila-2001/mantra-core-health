@@ -64,7 +64,7 @@ export type VarianteDeContentDialog = (typeof VARIANTES_DE_CONTENT_DIALOG)[numbe
             <app-input [(value)]="titulo" placeholder="Control de presión" />
           </app-form-field>
           <app-form-field label="Nota" hint="Lo que se escriba acá no se guarda en ningún lado.">
-            <app-input [(value)]="nota" placeholder="Escribí algo…" />
+            <app-input [(value)]="nota" placeholder="Escriba algo…" />
           </app-form-field>
 
           @if (preguntandoDescarte()) {

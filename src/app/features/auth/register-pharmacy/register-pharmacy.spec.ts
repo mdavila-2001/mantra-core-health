@@ -366,7 +366,7 @@ describe('RegisterPharmacy', () => {
     expect(nombre.name.touched && nombre.lastName.touched).toBe(true);
   });
 
-  it('201: pasa a la pantalla de "revisá tu correo" y el botón vuelve a /auth', () => {
+  it('201: pasa a la pantalla de "revise su correo" y el botón vuelve a /auth', () => {
     completarObligatorio();
     component.submit();
 

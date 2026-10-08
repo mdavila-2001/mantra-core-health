@@ -88,22 +88,22 @@ test('alta del médico: profesión COB-2023, ciudad derivada, filtro de salud, f
   await page.getByTestId('registro-pro-nombre').fill('Lucía');
   await page.getByTestId('registro-pro-apellido-paterno').fill('Correcciones');
   await continuar(page);
-  await enLaPagina(page, 'Tu documento');
+  await enLaPagina(page, 'Su documento');
   await page.getByTestId('registro-pro-documento').fill(`COR${RUN}`);
   const depto = page.getByTestId('registro-pro-departamento-ci').locator('select');
   await expect(depto.locator('option').nth(1)).toBeAttached({ timeout: 20_000 });
   await depto.selectOption({ index: 1 });
   await continuar(page);
-  await enLaPagina(page, 'Contanos');
+  await enLaPagina(page, 'Cuéntenos');
   await page.getByTestId('registration-practitioner-sex').locator('select').selectOption({ index: 1 });
   const fecha = page.getByPlaceholder('DD/MM/AAAA');
   await fecha.click();
   await page.keyboard.type('12051985', { delay: 60 });
   await continuar(page);
-  await enLaPagina(page, 'Cómo te contactamos en privado');
+  await enLaPagina(page, 'Cómo le contactamos en privado');
   await page.getByTestId('registro-pro-celular-personal').fill('70012345');
   await page.getByTestId('registro-pro-correo-personal').fill(CORREO);
-  await continuarHasta(page, 'Tu título profesional');
+  await continuarHasta(page, 'Su título profesional');
   await page.getByTestId('registro-pro-titulo').getByRole('combobox').fill('Médico / Médica');
   await page.getByRole('option', { name: 'Médico / Médica', exact: true }).click();
 
@@ -124,10 +124,10 @@ test('alta del médico: profesión COB-2023, ciudad derivada, filtro de salud, f
   await fotoDe(page.locator('.registro__estudio'), '03-titulo-principal-ciudad-derivada');
 
   await continuar(page);
-  await enLaPagina(page, 'Tu habilitación');
+  await enLaPagina(page, 'Su habilitación');
   await page.getByTestId('registro-pro-matricula').fill(`MP-${RUN}`);
   await page.getByTestId('registro-pro-credencial').fill(`T.I. ${RUN}`);
-  await continuarHasta(page, 'Tus títulos');
+  await continuarHasta(page, 'Sus títulos');
 
   // 2 · «Otra profesión» es un combobox de la COB-2023, no texto libre.
   await page.getByTestId('registro-pro-agregar-UNIVERSITARIO').click();
@@ -150,13 +150,13 @@ test('alta del médico: profesión COB-2023, ciudad derivada, filtro de salud, f
   // 4 · Sin número, el paso se frena AHÍ y nombra la sección que se ve.
   await expect(page.getByTestId('registro-pro-titulos-incompletos')).toContainText('«Otra profesión»');
   await continuar(page);
-  await enLaPagina(page, 'Tus títulos');
+  await enLaPagina(page, 'Sus títulos');
   await fotoDe(page.locator('.registro-titulos'), '04-titulos-frenado-en-su-paso');
 
   await fila.locator('input.registro-titulo__dato').first().fill(`DIP-${RUN}`);
   await expect(page.getByTestId('registro-pro-titulos-incompletos')).toHaveCount(0);
   await fotoDe(fila, '02-otra-profesion-cob-2023');
-  await continuarHasta(page, 'Tu contraseña');
+  await continuarHasta(page, 'Su contraseña');
   await page.getByTestId('registro-pro-password').fill(CLAVE);
   await page.waitForTimeout(7_000); // límite de altas por IP: se respeta
   const respuesta = page.waitForResponse(
@@ -196,7 +196,7 @@ test('«Dónde atiendo»: una sola puerta, sin filtro ni Tipo; los seguros se le
   await entrar(page, CORREO, CLAVE);
   await page.goto('/my-account', { waitUntil: 'domcontentloaded' });
   expect((await seguros).status()).toBe(200);
-  await expect(page.getByText('No pudimos traer tus seguros')).toHaveCount(0);
+  await expect(page.getByText('No pudimos traer sus seguros')).toHaveCount(0);
 
   const sedes = page.getByTestId('sedes-propias');
   if (!(await sedes.isVisible())) {
@@ -239,7 +239,7 @@ test('horarios: repetir arriba con modal, otros servicios y el último turno se 
   await expect(page.getByTestId('agenda-create-previa-extiende').first()).toContainText('17:15');
   // 7 · El miércoles, sólo otros servicios.
   await page.getByTestId('agenda-create-modo-2').locator('select').selectOption({ label: 'Otros servicios' });
-  await expect(page.getByText('«Otros servicios» son los que ofrecés además de la consulta')).toBeVisible();
+  await expect(page.getByText('«Otros servicios» son los que ofrece además de la consulta')).toBeVisible();
   await foto(page, '06-redondeo-hacia-adelante');
 
   const generacion = page.waitForResponse((r) => r.url().includes('/generate-slots'), { timeout: 60_000 });

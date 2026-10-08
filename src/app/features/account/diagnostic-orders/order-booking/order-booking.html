@@ -1,6 +1,6 @@
 <app-page-header
   title="Reservar estudio"
-  subtitle="Elegí dónde y cuándo hacerte el estudio de tu orden. No hace falta escribir nada: la orden ya dice qué es."
+  subtitle="Elija dónde y cuándo hacerse el estudio de su orden. No hace falta escribir nada: la orden ya dice qué es."
 />
 
 <app-view-state-host [state]="estado()" (retry)="cargar()">
@@ -8,7 +8,7 @@
     <app-card class="reserva" padding="lg" data-testid="reserva-estudio">
       <!-- Lo que la orden fija y el paciente no edita. -->
       <div class="reserva__orden" data-testid="reserva-estudio-orden">
-        <p class="reserva__rotulo">Tu orden</p>
+        <p class="reserva__rotulo">Su orden</p>
         <p class="reserva__estudio">{{ op.studyName }}</p>
         <p class="reserva__secundario">{{ op.modalityLabel }}</p>
       </div>
@@ -32,7 +32,7 @@
         @case ('centro') {
           <section class="reserva__seccion" aria-labelledby="reserva-centros">
             <div class="reserva__cabecera">
-              <h2 id="reserva-centros" class="reserva__titulo" tabindex="-1">¿Dónde te lo hacés?</h2>
+              <h2 id="reserva-centros" class="reserva__titulo" tabindex="-1">¿Dónde puede hacérselo?</h2>
               <app-segmented-control
                 ariaLabel="Ordenar los centros"
                 [options]="ordenes"
@@ -127,7 +127,7 @@
                    confirmar de nuevo choca con lo mismo. El aviso de arriba lleva a «Mis órdenes». -->
               @if (!yaTieneTurno()) {
               <section class="reserva__seccion" aria-labelledby="reserva-confirmar">
-                <h2 id="reserva-confirmar" class="reserva__titulo" tabindex="-1">Revisá y confirmá</h2>
+                <h2 id="reserva-confirmar" class="reserva__titulo" tabindex="-1">Revise y confirme</h2>
                 <dl class="resumen" data-testid="reserva-estudio-resumen">
                   <div class="resumen__fila"><dt>Estudio</dt><dd>{{ op.studyName }}</dd></div>
                   <div class="resumen__fila"><dt>Centro</dt><dd>{{ c.unitName }}</dd></div>
@@ -168,7 +168,7 @@
               @if (t.preparation) {
                 <p class="centro__preparacion">Preparación: {{ t.preparation }}</p>
               }
-              <p class="reserva__secundario">Te mandamos la confirmación por el chat de la app.</p>
+              <p class="reserva__secundario">Le mandamos la confirmación por el chat de la app.</p>
               <div class="reserva__acciones">
                 <a app-button variant="secondary" routerLink="/messaging">Ver el chat</a>
                 <a app-button variant="primary" [routerLink]="rutaDeOrdenes">Volver a mis órdenes</a>

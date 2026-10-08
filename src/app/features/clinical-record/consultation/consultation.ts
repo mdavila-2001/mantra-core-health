@@ -193,7 +193,7 @@ const CASILLAS: Readonly<Record<CasillaDeConsulta, DefinicionDeCasilla>> = {
   },
   formulario: {
     titulo: 'Formulario médico',
-    descripcion: 'La ficha de la especialidad, con tus campos, notas y archivos.',
+    descripcion: 'La ficha de la especialidad, con sus campos, notas y archivos.',
     tituloDelModal: 'Llenar el formulario médico',
     icono: 'M4 4h16v16H4V4Zm4 5h8M8 12h8M8 15h5',
     testId: 'consulta-casilla-formulario',
@@ -394,14 +394,14 @@ export class Consultation {
     const state = this.registro();
     if (state.status === 'validation') {
       if (state.issues.some((issue) => issue.code === 'PRECONDITION_FAILED')) {
-        return 'Ese encuentro ya no está en curso: alguien lo cerró antes. Recargá la consulta.';
+        return 'Ese encuentro ya no está en curso: alguien lo cerró antes. Recargue la consulta.';
       }
       return state.issues.map((issue) => issue.message).join(' ') || null;
     }
     return mensajeDeFalloDeEscritura(state, {
       accion: 'registrar encuentros',
-      sinPermiso: 'Tu rol no permite registrar encuentros.',
-      yaNoExiste: 'El encuentro ya no existe. Recargá la consulta.',
+      sinPermiso: 'Su rol no permite registrar encuentros.',
+      yaNoExiste: 'El encuentro ya no existe. Recargue la consulta.',
     });
   });
 
@@ -689,7 +689,7 @@ export class Consultation {
           this.registrando.set(false);
           this.registro.set(ready(null));
           this.motivo.set('');
-          this.toasts.success('Queda en curso hasta que lo cierres.', 'Encuentro abierto');
+          this.toasts.success('Queda en curso hasta que lo cierre.', 'Encuentro abierto');
           this.cargar();
         },
         error: (error: unknown) => {

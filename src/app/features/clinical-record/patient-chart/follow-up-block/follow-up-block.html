@@ -8,7 +8,7 @@
          que el servidor va a rechazar. -->
     @if (sinCitaDeOrigen()) {
       <app-alert tone="info" title="La reconsulta se agenda desde una cita" data-testid="reconsulta-sin-cita">
-        Abrí la consulta desde «Mis citas» —o desde tu agenda, con «Iniciar la consulta»— y acá vas
+        Abra la consulta desde «Mis citas» —o desde su agenda, con «Iniciar la consulta»— y acá va
         a poder citar de nuevo a la persona por este mismo motivo.
       </app-alert>
     } @else if (consulta(); as origen) {
@@ -18,7 +18,7 @@
            para moverla. -->
       @if (yaAgendada(); as reconsulta) {
         <div class="reconsulta__agendada" data-testid="reconsulta-ya-agendada">
-          <p class="reconsulta__agendada-titulo">Ya la citaste de nuevo</p>
+          <p class="reconsulta__agendada-titulo">Ya la citó de nuevo</p>
           <p class="reconsulta__agendada-cuando">
             @if (reconsulta.startAt) {
               {{ reconsulta.startAt | date: "EEEE d 'de' MMMM 'a las' HH:mm" }}
@@ -64,7 +64,7 @@
           @if (origen.cuando) {
             De la consulta del {{ origen.cuando | date: "d 'de' MMMM 'de' y" }}.
           }
-          Elegí el día y el horario que acordaste con la persona.
+          Elija el día y el horario que acordó con la persona.
         </p>
 
         <form class="reconsulta__formulario" (submit)="$event.preventDefault()">
@@ -114,7 +114,7 @@
 
               <table class="reconsulta__grilla">
                 <caption class="sr-only">
-                  Días del mes con los horarios que te quedan libres.
+                  Días del mes con los horarios que le quedan libres.
                 </caption>
                 <thead>
                   <tr>
@@ -187,8 +187,8 @@
 
           @if (dia()) {
             @if (sinCupos()) {
-              <app-alert tone="info" title="Ese día no te queda ningún horario" data-testid="reconsulta-sin-cupos">
-                Probá con otro día: sólo se ofrecen los ratos que siguen libres en tu agenda.
+              <app-alert tone="info" title="Ese día no le queda ningún horario" data-testid="reconsulta-sin-cupos">
+                Pruebe con otro día: sólo se ofrecen los ratos que siguen libres en su agenda.
               </app-alert>
             } @else {
               <!-- Mañana y tarde: es como se piensa una jornada de consultorio,
@@ -196,7 +196,7 @@
                    para encontrar «a la tarde». Van en tarjetas como las de la
                    agenda, no en radios: es la misma decisión —«a qué hora lo
                    atiendo»— y se toma mirando los ratos. -->
-              <app-form-field label="Horario" hint="Sólo los que te quedan libres.">
+              <app-form-field label="Horario" hint="Sólo los que le quedan libres.">
                 <div data-testid="reconsulta-cupo">
                   @if (franjas().manana.length > 0) {
                     <p class="reconsulta__franja">Mañana</p>
@@ -231,7 +231,7 @@
 
           <app-form-field
             label="Motivo de la reconsulta"
-            hint="Viene del motivo de esta consulta. Cambialo si van a ver otra cosa."
+            hint="Viene del motivo de esta consulta. Cámbielo si van a ver otra cosa."
           >
             <app-textarea
               data-testid="reconsulta-motivo"

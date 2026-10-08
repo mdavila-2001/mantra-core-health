@@ -56,7 +56,7 @@ export function describeMechanic(mechanic: Mechanic, context: DescribeContext): 
     case 'BUY_X_PAY_Y':
       return {
         badge: `${mechanic.take}x${mechanic.pay}`,
-        sentence: `Llevá ${mechanic.take} y pagá ${mechanic.pay}.`,
+        sentence: `Lleve ${mechanic.take} y pague ${mechanic.pay}.`,
       };
     case 'NTH_UNIT_PERCENT':
       return {
@@ -66,24 +66,24 @@ export function describeMechanic(mechanic: Mechanic, context: DescribeContext): 
     case 'VOLUME_TIERS':
       return {
         badge: 'Más unidades, más descuento',
-        sentence: `Cuantas más unidades llevás, más descuento: ${mechanic.tiers
+        sentence: `Cuantas más unidades lleva, más descuento: ${mechanic.tiers
           .map((tier) => `desde ${tier.minQuantity} unidades, ${tier.percent} %`)
           .join('; ')}.`,
       };
     case 'ORDER_PERCENT_OVER':
       return {
         badge: `${mechanic.percent} % desde ${money(mechanic.minSpend)}`,
-        sentence: `${mechanic.percent} % de descuento en tu compra desde ${money(mechanic.minSpend)}.`,
+        sentence: `${mechanic.percent} % de descuento en su compra desde ${money(mechanic.minSpend)}.`,
       };
     case 'ORDER_AMOUNT_OVER':
       return {
         badge: `${money(mechanic.amount)} menos desde ${money(mechanic.minSpend)}`,
-        sentence: `${money(mechanic.amount)} menos en tu compra desde ${money(mechanic.minSpend)}.`,
+        sentence: `${money(mechanic.amount)} menos en su compra desde ${money(mechanic.minSpend)}.`,
       };
     case 'SPEND_TIERS':
       return {
-        badge: 'Más gastás, más ahorrás',
-        sentence: `Cuanto más compres, más ahorrás: ${mechanic.tiers
+        badge: 'Más gasta, más ahorra',
+        sentence: `Cuanto más compres, más ahorra: ${mechanic.tiers
           .map((tier) => `desde ${money(tier.minSpend)}, ${tier.percent} %`)
           .join('; ')}.`,
       };
@@ -105,7 +105,7 @@ export function describeMechanic(mechanic: Mechanic, context: DescribeContext): 
     case 'POINTS_MULTIPLIER':
       return {
         badge: `Puntos ×${mechanic.multiplier}`,
-        sentence: `Sumás ${mechanic.multiplier} veces más puntos en esta compra.`,
+        sentence: `Suma ${mechanic.multiplier} veces más puntos en esta compra.`,
       };
   }
 }
@@ -166,16 +166,16 @@ export function describeNudge(nudge: Nudge, context: DescribeContext): string {
   const reward = nudge.reward;
 
   if (nudge.kind === 'SPEND_MORE') {
-    return `Te faltan ${money(nudge.missingAmount)} para ${spendReward(reward, money)}.`;
+    return `Le faltan ${money(nudge.missingAmount)} para ${spendReward(reward, money)}.`;
   }
   const units = `${nudge.missingUnits} ${nudge.missingUnits === 1 ? 'unidad' : 'unidades'}`;
   switch (reward.kind) {
     case 'BUY_X_PAY_Y':
-      return `Agregá ${units} más y llevás ${reward.take} pagando ${reward.pay}.`;
+      return `Agregue ${units} más y lleva ${reward.take} pagando ${reward.pay}.`;
     case 'NTH_UNIT_PERCENT':
-      return `Agregá ${units} más y la ${ordinal(reward.nth)} unidad sale con ${reward.percent} % de descuento.`;
+      return `Agregue ${units} más y la ${ordinal(reward.nth)} unidad sale con ${reward.percent} % de descuento.`;
     default:
-      return `Agregá ${units} más y mejorás tu descuento por cantidad.`;
+      return `Agregue ${units} más y mejora su descuento por cantidad.`;
   }
 }
 
@@ -184,7 +184,7 @@ function spendReward(reward: Mechanic, money: (amount: string) => string): strin
     case 'ORDER_PERCENT_OVER':
       return `el ${reward.percent} % de descuento`;
     case 'ORDER_AMOUNT_OVER':
-      return `que te descontemos ${money(reward.amount)}`;
+      return `que le descontemos ${money(reward.amount)}`;
     default:
       return 'el siguiente descuento';
   }

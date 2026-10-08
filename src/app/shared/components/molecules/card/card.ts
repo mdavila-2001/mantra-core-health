@@ -95,7 +95,7 @@ export class Card {
     if (anidados.length > 0) {
       console.warn(
         '[app-card] `interactive` con controles enfocables adentro: quedan inalcanzables. ' +
-          'Usá una card estática con un botón explícito.',
+          'Use una card estática con un botón explícito.',
         this.hostElement.nativeElement,
       );
     }

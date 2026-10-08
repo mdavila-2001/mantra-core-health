@@ -3,13 +3,13 @@
 }
 
 @if (!store.perfilResuelto()) {
-  <p class="mensajeria__cargando" role="status">Cargando tus conversaciones…</p>
+  <p class="mensajeria__cargando" role="status">Cargando sus conversaciones…</p>
 } @else if (store.perfil() === null) {
   <!-- Una puerta, no un error: la mensajería necesita el perfil público de
        `community`, que es una entidad aparte del perfil de paciente del token. -->
   <app-empty-state
-    title="Te falta tu perfil público"
-    description="Los chats usan tu perfil de la red social: es lo que ve la otra persona cuando le escribís. Se crea en un paso y después podés completarlo."
+    title="Le falta su perfil público"
+    description="Los chats usan su perfil de la red social: es lo que ve la otra persona cuando le escribe. Se crea en un paso y después puede completarlo."
     variant="empty"
   >
     <button
@@ -26,7 +26,7 @@
 } @else {
   <div class="mensajeria" [class.is-hilo-abierto]="hayHiloAbierto()">
     <!-- ── Columna izquierda: la bandeja ──────────────────────────────── -->
-    <section class="mensajeria__panel" aria-label="Tus conversaciones">
+    <section class="mensajeria__panel" aria-label="Sus conversaciones">
       <header class="mensajeria__cabecera">
         <h1 class="mensajeria__titulo">Chats</h1>
       </header>
@@ -151,7 +151,7 @@
                el chat nunca se borró. -->
           @if (store.bloqueados().length === 0) {
             <p class="mensajeria__sin-nada" data-testid="mensajeria-sin-bloqueados">
-              No bloqueaste a nadie. Podés bloquear a alguien desde el menú de su conversación.
+              No bloqueó a nadie. Puede bloquear a alguien desde el menú de su conversación.
             </p>
           } @else {
             <ul class="mensajeria__bloqueados" data-testid="mensajeria-lista-bloqueados">
@@ -185,11 +185,11 @@
               }
             </p>
           } @else if (verArchivados()) {
-            <p class="mensajeria__sin-nada">No tenés conversaciones archivadas.</p>
+            <p class="mensajeria__sin-nada">No tiene conversaciones archivadas.</p>
           } @else {
             <app-empty-state
-              title="No tenés conversaciones"
-              description="Buscá a un profesional acá arriba y escribile: la conversación va a aparecer en esta lista."
+              title="No tiene conversaciones"
+              description="Busque a un profesional acá arriba y escríbale: la conversación va a aparecer en esta lista."
               variant="empty"
             />
           }
@@ -217,7 +217,7 @@
           </p>
           <p class="mensajeria__vacio-titulo">Alovida · Chats</p>
           <p class="mensajeria__vacio-texto">
-            Elegí una conversación de la izquierda para leerla acá, o buscá a un profesional
+            Elija una conversación de la izquierda para leerla acá, o busque a un profesional
             para empezar una nueva.
           </p>
         </div>

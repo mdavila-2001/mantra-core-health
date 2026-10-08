@@ -524,11 +524,11 @@ export class SpecialtyFormBlock {
     // La respuesta de la plantilla es lo que se guarda primero: sin ningún
     // valor no hay a qué atar lo flexible, y el botón no enviaría nada.
     if (this.camposObligatoriosCompletos() && !this.hayValoresDePlantilla()) {
-      return adicionales.tieneContenido() ? 'Completá al menos un campo de «Plantilla».' : null;
+      return adicionales.tieneContenido() ? 'Complete al menos un campo de «Plantilla».' : null;
     }
     if (this.pestana() !== PESTANA_PLANTILLA) return null;
     if (adicionales.hayProblemas()) {
-      return 'Corregí una fila de «Flexible».';
+      return 'Corrija una fila de «Flexible».';
     }
     // No se corrige en la pestaña: es de la sesión. Se dice tal cual.
     return adicionales.impedimento();
@@ -591,10 +591,10 @@ export class SpecialtyFormBlock {
   protected readonly errorDePlantillas = computed<string | null>(() => {
     const state = this.plantillas();
     if (state.status === 'offline') {
-      return 'No pudimos conectarnos. Revisá tu conexión y reintentá.';
+      return 'No pudimos conectarnos. Revise su conexión y reintente.';
     }
     if (state.status === 'forbidden') {
-      return state.message ?? 'Tu rol no permite ver las plantillas de formulario.';
+      return state.message ?? 'Su rol no permite ver las plantillas de formulario.';
     }
     if (state.status === 'not-found') {
       return 'No encontramos el catálogo de plantillas.';
@@ -794,10 +794,10 @@ export class SpecialtyFormBlock {
   protected readonly errorDeConsulta = computed<string | null>(() => {
     const state = this.respondido();
     if (state.status === 'offline') {
-      return 'No pudimos conectarnos. Revisá tu conexión y reintentá.';
+      return 'No pudimos conectarnos. Revise su conexión y reintente.';
     }
     if (state.status === 'forbidden') {
-      return state.message ?? 'Tu rol no permite ver formularios clínicos.';
+      return state.message ?? 'Su rol no permite ver formularios clínicos.';
     }
     if (state.status === 'not-found') {
       return 'No encontramos el encuentro de este formulario.';
@@ -842,9 +842,9 @@ export class SpecialtyFormBlock {
       case 'ready':
         return null;
       case 'offline':
-        return 'No pudimos conectarnos. Revisá tu conexión y reintentá.';
+        return 'No pudimos conectarnos. Revise su conexión y reintente.';
       case 'forbidden':
-        return state.message ?? 'Tu rol no permite leer las notas de esta consulta.';
+        return state.message ?? 'Su rol no permite leer las notas de esta consulta.';
       case 'not-found':
         return 'No encontramos las notas de esta consulta.';
       case 'validation':
@@ -1383,10 +1383,10 @@ export class SpecialtyFormBlock {
       return state.issues.map((issue) => issue.message).join(' ') || null;
     }
     if (state.status === 'forbidden') {
-      return state.message ?? 'Tu rol no permite completar formularios clínicos.';
+      return state.message ?? 'Su rol no permite completar formularios clínicos.';
     }
     if (state.status === 'offline') {
-      return 'No pudimos conectarnos. Revisá tu conexión y reintentá.';
+      return 'No pudimos conectarnos. Revise su conexión y reintente.';
     }
     if (state.status === 'error') {
       return `${state.message || 'Ocurrió un error inesperado.'} (${state.requestId})`;
@@ -1417,7 +1417,7 @@ export class SpecialtyFormBlock {
     // Sin organización la ficha se guarda igual; el cierre no, y se dice.
     const impedimento =
       (diagnostico !== null || orden !== null) && this.auth.activeTenantId() === null
-        ? 'Elegí una organización en el encabezado para registrar el cierre.'
+        ? 'Elija una organización en el encabezado para registrar el cierre.'
         : null;
     // Los campos adicionales van después del cierre y no dependen de él: un
     // cierre frenado no se lleva puesta la nota ni los archivos.
@@ -1548,7 +1548,7 @@ export class SpecialtyFormBlock {
       pasos.push({
         nombre: 'el diagnóstico tentativo',
         titulo: 'Diagnóstico tentativo registrado',
-        exito: 'Nace presuntivo: confirmalo o rechazalo en la casilla «Diagnóstico».',
+        exito: 'Nace presuntivo: confírmelo o recháselo en la casilla «Diagnóstico».',
         ejecutar: () =>
           this.clinical.createCondition({
             custodianTenantId,

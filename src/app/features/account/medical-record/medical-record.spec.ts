@@ -596,7 +596,7 @@ describe('MedicalRecord', () => {
     harness.detectChanges();
 
     expect(toasts.error).toHaveBeenCalledWith(
-      'No pudimos descargar la receta oficial. Reintentá en un momento.',
+      'No pudimos descargar la receta oficial. Reintente en un momento.',
       'Receta oficial',
     );
     expect(toasts.success).not.toHaveBeenCalled();
@@ -1016,7 +1016,7 @@ describe('MedicalRecord', () => {
 
     // Sin ni un diagnóstico, la pestaña lo dice con su orientación (S3).
     const texto = harness.routeNativeElement?.textContent ?? '';
-    expect(texto).toContain('Todavía no tenés diagnósticos registrados');
+    expect(texto).toContain('Todavía no tiene diagnósticos registrados');
   });
 
   it('ningún uuid llega al HTML de la pestaña de diagnósticos', async () => {

@@ -53,7 +53,7 @@ describe('DependentFormDialog', () => {
   it('sin CI no sale a la red', () => {
     enviar();
     http.expectNone('/profiles/patients/me/dependent-requests');
-    expect(host.textContent).toContain('Escribí el CI de la persona.');
+    expect(host.textContent).toContain('Escriba el CI de la persona.');
   });
 
   it('envía sólo el CI y avisa con él al terminar', () => {
@@ -118,7 +118,7 @@ describe('DependentFormDialog', () => {
 
       expect(host.querySelector('[data-testid="dependent-national-id"]')).toBeNull();
       expect(host.querySelector('[data-testid="dependent-name-search"]')).not.toBeNull();
-      expect(host.textContent).toContain('Escribí al menos 3 letras');
+      expect(host.textContent).toContain('Escriba al menos 3 letras');
       expect(host.querySelector('[data-testid="dependent-submit"]')!.getAttribute('aria-disabled')).toBe('true');
 
       enviar();
@@ -196,12 +196,12 @@ describe('DependentFormDialog', () => {
       http
         .expectOne('/profiles/patients/me/dependent-requests')
         .flush(
-          { statusCode: 409, code: 'CONFLICT', message: 'Ya le enviaste una solicitud a esa persona. Falta que la acepte.', error: 'Conflict' },
+          { statusCode: 409, code: 'CONFLICT', message: 'Ya le envió una solicitud a esa persona. Falta que la acepte.', error: 'Conflict' },
           { status: 409, statusText: 'Conflict' },
         );
       fixture.detectChanges();
 
-      expect(host.querySelector('app-alert')?.textContent).toContain('Ya le enviaste una solicitud');
+      expect(host.querySelector('app-alert')?.textContent).toContain('Ya le envió una solicitud');
     });
   });
 });

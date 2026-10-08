@@ -49,13 +49,13 @@ export function registrarFirmaYSello(router: MockRouter): void {
   router.get('/profiles/practitioners/me/signature-assets', (request) => {
     const profileId = perfilDeSesion(request);
     return profileId === undefined
-      ? notFound('No tenés perfil profesional')
+      ? notFound('No tiene perfil profesional')
       : activosDeFirmaDe(profileId);
   });
 
   router.put('/profiles/practitioners/me/signature-assets', (request) => {
     const profileId = perfilDeSesion(request);
-    if (profileId === undefined) return notFound('No tenés perfil profesional');
+    if (profileId === undefined) return notFound('No tiene perfil profesional');
     const datos = cuerpo<{ signatureFileId?: string | null; sealFileId?: string | null }>(request);
     return guardarActivosDeFirma(profileId, {
       ...(datos.signatureFileId === undefined ? {} : { signatureFileId: datos.signatureFileId }),

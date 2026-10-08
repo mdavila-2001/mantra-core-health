@@ -95,7 +95,7 @@ export class NotificationActions {
         this.enCurso.set(null);
         this.toast.show({
           type: 'error',
-          message: `No se pudo completar «${accion.label}». Intentá de nuevo.`,
+          message: `No se pudo completar «${accion.label}». Intente de nuevo.`,
         });
       },
     });

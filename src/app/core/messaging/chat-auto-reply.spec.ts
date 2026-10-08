@@ -71,7 +71,7 @@ describe('ChatAutoReply', () => {
     expect(servicio.configuracion().activa).toBe(false);
   });
 
-  it('apagada no contesta, por más ausente que estés', () => {
+  it('apagada no contesta, por más ausente que esté', () => {
     servicio.marcarActividad();
     expect(servicio.corresponde(AHORA + 10 * HORA, null)).toBe(false);
   });

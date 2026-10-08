@@ -238,7 +238,7 @@ describe('Appointments', () => {
       ).not.toBeNull();
       expect(document.activeElement?.id).toBe('pedir-turno');
       expect(document.activeElement?.textContent?.trim()).toBe('Agendar una cita');
-      expect(boton()?.textContent?.trim()).toBe('Tus citas');
+      expect(boton()?.textContent?.trim()).toBe('Sus citas');
 
       // Y el mismo botón vuelve, con el foco en el título de «Tus citas».
       boton()?.click();
@@ -334,7 +334,7 @@ describe('Appointments', () => {
         status: 422,
         error: {
           message:
-            'Podés cancelar hasta 24 horas antes del turno. Si ya no podés asistir, comunicate con el consultorio.',
+            'Puede cancelar hasta 24 horas antes del turno. Si ya no puede asistir, comuníquese con el consultorio.',
         },
       });
       fixture.detectChanges();
@@ -573,7 +573,7 @@ describe('Appointments', () => {
 
     const estado = interno<() => { status: string; nextAction?: { label: string } }>('turnos')();
     expect(estado.status).toBe('empty');
-    expect(estado.nextAction?.label).toBe('Elegí una agenda');
+    expect(estado.nextAction?.label).toBe('Elija una agenda');
   });
 
   it('dice el estado en castellano, no el «display» en inglés del catálogo', () => {
@@ -1396,7 +1396,7 @@ describe('Appointments', () => {
 
       const frase = raiz().querySelector('[data-testid="mis-citas-reconsulta-frase"]');
       expect(frase).not.toBeNull();
-      expect(frase!.textContent).toContain('Tu médico te citó de nuevo por la consulta del');
+      expect(frase!.textContent).toContain('Su médico le citó de nuevo por la consulta del');
       expect(frase!.textContent).toContain('12');
     });
 
@@ -1410,7 +1410,7 @@ describe('Appointments', () => {
 
       const frase = raiz().querySelector('[data-testid="mis-citas-reconsulta-frase"]');
       expect(frase!.textContent?.replace(/\s+/g, ' ').trim()).toBe(
-        'Tu médico te citó de nuevo por una consulta anterior.',
+        'Su médico le citó de nuevo por una consulta anterior.',
       );
     });
 
@@ -1676,7 +1676,7 @@ describe('Appointments · cancelar turno propio', () => {
       });
   });
 
-  it('tras cancelar releé turnos y horarios y avisa el éxito', async () => {
+  it('tras cancelar relea turnos y horarios y avisa el éxito', async () => {
     const { comp, searchBookings, toast } = montarCancelacion({
       bookings: [citaMock('b1', 's1')],
       labels: [etiqueta('s1', 'BOOKING_CONFIRMED')],
@@ -1813,8 +1813,8 @@ describe('booking-status · presentación por código normalizado', () => {
       ['scheduling:BOOKING_COMPLETED', 'Atendido'],
       // «Atendido» tiene un segundo código en el catálogo vivo: el evento.
       ['EV_BOOKING_DONE', 'Atendido'],
-      ['BOOKING_NO_SHOW', 'No asististe'],
-      ['scheduling:BOOKING_NO_SHOW', 'No asististe'],
+      ['BOOKING_NO_SHOW', 'No asistió'],
+      ['scheduling:BOOKING_NO_SHOW', 'No asistió'],
     ];
 
     for (const [code, label] of casos) {
@@ -1829,7 +1829,7 @@ describe('booking-status · presentación por código normalizado', () => {
     });
     expect(toBookingStatusPresentation(concepto('BOOKING_CHECKED_IN'))).toEqual({
       tone: 'info',
-      label: 'Ya llegaste',
+      label: 'Ya llegó',
     });
     expect(toBookingStatusPresentation(concepto('BOOKING_CANCELLED'))).toEqual({
       tone: 'error',
@@ -1891,7 +1891,7 @@ describe('Appointments · estados con palabra y avisos con salida (E3)', () => {
     fixture.detectChanges();
 
     const texto = (fixture.nativeElement as HTMLElement).textContent ?? '';
-    expect(texto).toContain('Elegí una organización');
+    expect(texto).toContain('Elija una organización');
     expect(texto).toContain('encabezado');
   });
 });
@@ -1984,7 +1984,7 @@ describe('Appointments · el motivo del cambio llega al paciente', () => {
     fixture.detectChanges();
 
     const aviso = fixture.nativeElement.querySelector('[data-testid="turnos-motivo-cambio"]');
-    expect(aviso?.textContent).toContain('Indicaste');
+    expect(aviso?.textContent).toContain('Indicó');
     expect(aviso?.textContent).not.toContain('El profesional');
   });
 

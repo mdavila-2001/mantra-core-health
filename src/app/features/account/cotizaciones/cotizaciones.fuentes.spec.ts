@@ -147,7 +147,7 @@ describe('CotizacionesFuentes', () => {
     expect(fila!.carrito).toBeUndefined();
     expect(fila!.advertencia).toBe('Requiere receta');
     expect(fila!.accion).toEqual({
-      etiqueta: 'Buscá tu receta para comprarlo',
+      etiqueta: 'Busque su receta para comprarlo',
       ruta: '/my-account/pharmacy/prescriptions',
     });
   });

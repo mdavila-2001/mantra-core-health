@@ -1,6 +1,6 @@
 <app-auth-split
-  claim="Potenciá tu práctica médica"
-  tagline="Sumate a la red de salud más grande de Bolivia y conectá con miles de pacientes."
+  claim="Potencie su práctica médica"
+  tagline="Súmese a la red de salud más grande de Bolivia y conecte con miles de pacientes."
   contentWidth="full"
   [plainSurface]="true"
 >
@@ -14,9 +14,9 @@
       @if (registered()) {
         <div class="registro__header">
           <h1 appAnuncio [asertivo]="false" class="registro__title" data-testid="registro-exito">
-            ¡Bienvenido a AloVida! Tu salud en un solo lugar
+            ¡Bienvenido a AloVida! Su salud en un solo lugar
           </h1>
-          <p class="registro__subtitle">Concluiste el registro de manera satisfactoria. Ya podés conectarte con {{ accessHint }} y la contraseña que elegiste.</p>
+          <p class="registro__subtitle">Concluyó el registro de manera satisfactoria. Ya puede conectarse con {{ accessHint }} y la contraseña que eligió.</p>
         </div>
         <button
           app-button
@@ -79,7 +79,7 @@
                 <app-form-field
                   class="registro__nombre"
                   label="Segundo nombre"
-                  hint="Si no tenés, dejalo vacío."
+                  hint="Si no tiene, déjelo vacío."
                 >
                   <app-input
                     testId="registro-pro-segundo-nombre"
@@ -149,7 +149,7 @@
               <app-reference-combobox
                 data-testid="registro-pro-titulo"
                 label="Título profesional"
-                placeholder="Buscá tu título profesional…"
+                placeholder="Busque su título profesional…"
                 emptyMessage="Ningún título profesional coincide."
                 [options]="titulosProfesionalesFiltrados()"
                 [selected]="tituloProfesionalSeleccionado()"
@@ -174,14 +174,14 @@
                   >
                     <app-select
                       data-testid="registro-pro-titulo-pais"
-                      placeholder="Elegí el país"
+                      placeholder="Elija el país"
                       [options]="opcionesDePais()"
                       [value]="paisDelTituloElegido()"
                       (valueChange)="elegirPaisDelTitulo($event)"
                     />
                   </app-form-field>
                   @if (paisDelTituloEsOtro()) {
-                    <app-form-field label="¿Qué país?" hint="Como figura en tu diploma.">
+                    <app-form-field label="¿Qué país?" hint="Como figura en su diploma.">
                       <app-input
                         testId="registro-pro-titulo-pais-otro"
                         placeholder="Nombre del país"
@@ -195,11 +195,11 @@
                 <div class="registro__estudio-campo">
                   <app-form-field
                     label="Universidad"
-                    [hint]="paisDelTituloElegido() === null ? 'Opcional. Elegí primero el país.' : 'Opcional.'"
+                    [hint]="paisDelTituloElegido() === null ? 'Opcional. Elija primero el país.' : 'Opcional.'"
                   >
                     <app-select
                       data-testid="registro-pro-titulo-universidad"
-                      placeholder="Elegí la universidad"
+                      placeholder="Elija la universidad"
                       [options]="opcionesDeUniversidadDelTitulo()"
                       [disabled]="paisDelTituloElegido() === null"
                       [value]="universidadDelTituloElegida()"
@@ -209,7 +209,7 @@
                   @if (universidadDelTituloEsOtra()) {
                     <app-form-field
                       label="¿Cuál?"
-                      hint="El nombre completo de la institución, como figura en tu diploma."
+                      hint="El nombre completo de la institución, como figura en su diploma."
                     >
                       <app-input
                         testId="registro-pro-titulo-universidad-otra"
@@ -229,10 +229,10 @@
                     label="Ciudad de estudio"
                     [hint]="
                       ciudadesDelTitulo().length === 0
-                        ? 'Sale de la universidad que elijas.'
+                        ? 'Sale de la universidad que elija.'
                         : ciudadesDelTitulo().length === 1
                           ? 'La sede de esa universidad.'
-                          : 'Elegí en qué sede estudiaste.'
+                          : 'Elija en qué sede estudió.'
                     "
                   >
                     <app-select
@@ -352,7 +352,7 @@
                       Quitar firma
                     </button>
                   }
-                  <p class="registro-foto__ayuda">Tu firma de puño y letra, escaneada o fotografiada. JPG, PNG o WebP, máximo 2 MB.</p>
+                  <p class="registro-foto__ayuda">Su firma de puño y letra, escaneada o fotografiada. JPG, PNG o WebP, máximo 2 MB.</p>
                   @if (errorFirma(); as error) {
                     <p class="registro-foto__error" role="alert">{{ error }}</p>
                   }
@@ -395,7 +395,7 @@
                       Quitar sello
                     </button>
                   }
-                  <p class="registro-foto__ayuda">Tu sello médico. JPG, PNG o WebP, máximo 2 MB.</p>
+                  <p class="registro-foto__ayuda">Su sello médico. JPG, PNG o WebP, máximo 2 MB.</p>
                   @if (errorSello(); as error) {
                     <p class="registro-foto__error" role="alert">{{ error }}</p>
                   }
@@ -447,7 +447,7 @@
                 <p class="registro-titulos__ayuda" data-testid="registro-pro-titulos-alcance">
                   De cada título se guardan el tipo, el número, la profesión, la universidad, el
                   país, la ciudad y el PDF. Lo único obligatorio de una fila es el número del
-                  diploma: si no lo tenés a mano, quitá la fila y cargala después desde «Mi perfil».
+                  diploma: si no lo tiene a mano, quite la fila y cárguela después desde «Mi perfil».
                 </p>
                 <!-- Sin catálogo de tipos, una fila con número no se puede
                      mandar: el contrato exige el concepto. Se avisa acá, donde
@@ -493,7 +493,7 @@
                             <app-reference-combobox
                               [attr.data-testid]="'registro-pro-titulo-profesion-' + titulo.id"
                               label="Profesión"
-                              placeholder="Buscá la carrera: abogado, ingeniero civil…"
+                              placeholder="Busque la carrera: abogado, ingeniero civil…"
                               emptyMessage="Ninguna profesión de la clasificación oficial coincide."
                               [options]="profesionesDeFila(titulo.id)"
                               [selected]="profesionElegidaDeFila(titulo)"
@@ -602,7 +602,7 @@
                           <div class="registro-titulo__estudio-campo">
                             <app-select
                               [ariaLabel]="'Universidad de ' + tipo.singular"
-                              [placeholder]="titulo.paisElegido === null ? 'Elegí primero el país' : 'Universidad'"
+                              [placeholder]="titulo.paisElegido === null ? 'Elija primero el país' : 'Universidad'"
                               [options]="opcionesDeUniversidadDeFila(titulo)"
                               [disabled]="titulo.paisElegido === null"
                               [value]="titulo.universidadElegida"
@@ -762,7 +762,7 @@
             <ng-template appCampoPersonalizado="municipio">
               @if (catalogoMunicipiosCaido()) {
                 <p class="registro__catalogo-caido">
-                  No pudimos traer el catálogo de ciudades. Podés seguir sin esto.
+                  No pudimos traer el catálogo de ciudades. Puede seguir sin esto.
                   <button app-button variant="ghost" size="sm" (clicked)="reintentarMunicipios()">
                     Reintentar
                   </button>
@@ -774,9 +774,9 @@
                   [value]="municipioProfesional()"
                   [punto]="gpsDomicilio()"
                   (valueChange)="municipioProfesional.set($event)"
-                  mapLabel="Mapa de Bolivia: elegí el departamento donde vivís"
+                  mapLabel="Mapa de Bolivia: elija el departamento donde vive"
                   municipalityLabel="Localidad de residencia (opcional)"
-                  municipalityHint="Sólo se ofrecen las del departamento que elegiste."
+                  municipalityHint="Sólo se ofrecen las del departamento que eligió."
                 />
               }
             </ng-template>
@@ -791,7 +791,7 @@
             <ng-template appCampoPersonalizado="municipioConsultorio">
               @if (catalogoMunicipiosCaido()) {
                 <p class="registro__catalogo-caido">
-                  No pudimos traer el catálogo de ciudades. Podés seguir sin esto.
+                  No pudimos traer el catálogo de ciudades. Puede seguir sin esto.
                   <button app-button variant="ghost" size="sm" (clicked)="reintentarMunicipios()">
                     Reintentar
                   </button>
@@ -803,9 +803,9 @@
                   [value]="municipioConsultorio()"
                   [punto]="gpsConsultorio()"
                   (valueChange)="municipioConsultorio.set($event)"
-                  mapLabel="Mapa de Bolivia: elegí el departamento donde está tu consultorio"
+                  mapLabel="Mapa de Bolivia: elija el departamento donde está su consultorio"
                   municipalityLabel="Localidad del consultorio (opcional)"
-                  municipalityHint="Sólo se ofrecen las del departamento que elegiste."
+                  municipalityHint="Sólo se ofrecen las del departamento que eligió."
                 />
               }
             </ng-template>
@@ -815,9 +815,9 @@
             <ng-template appCampoPersonalizado="gpsConsultorio">
               <app-ubicacion-picker
                 pinId="consultorio"
-                etiquetaConfirmada="Tu consultorio"
-                etiquetaQuitar="Quitar la ubicación de tu consultorio"
-                etiquetaMapa="La ubicación de tu consultorio en el mapa"
+                etiquetaConfirmada="Su consultorio"
+                etiquetaQuitar="Quitar la ubicación de su consultorio"
+                etiquetaMapa="La ubicación de su consultorio en el mapa"
                 [ids]="idsUbicacionConsultorio"
                 (confirmado)="gpsConsultorio.set($event)"
               />
@@ -826,9 +826,9 @@
             <ng-template appCampoPersonalizado="gpsDomicilio">
               <app-ubicacion-picker
                 pinId="domicilio"
-                etiquetaConfirmada="Tu dirección"
-                etiquetaQuitar="Quitar la ubicación de tu domicilio"
-                etiquetaMapa="Tu ubicación actual en el mapa"
+                etiquetaConfirmada="Su dirección"
+                etiquetaQuitar="Quitar la ubicación de su domicilio"
+                etiquetaMapa="Su ubicación actual en el mapa"
                 [ids]="idsUbicacionDomicilio"
                 (confirmado)="gpsDomicilio.set($event)"
               />
@@ -837,9 +837,9 @@
             <ng-template appCampoPersonalizado="gpsTrabajo">
               <app-ubicacion-picker
                 pinId="trabajo"
-                etiquetaConfirmada="Tu lugar de trabajo"
-                etiquetaQuitar="Quitar la ubicación de tu trabajo"
-                etiquetaMapa="La ubicación de tu trabajo en el mapa"
+                etiquetaConfirmada="Su lugar de trabajo"
+                etiquetaQuitar="Quitar la ubicación de su trabajo"
+                etiquetaMapa="La ubicación de su trabajo en el mapa"
                 [ids]="idsUbicacionTrabajo"
                 (confirmado)="gpsTrabajo.set($event)"
               />
@@ -849,7 +849,7 @@
 
         <div class="registro__footer">
           <p class="registro__pie">
-            ¿Ya tenés cuenta? <a app-link routerLink="/auth">Iniciá sesión</a>
+            ¿Ya tiene cuenta? <a app-link routerLink="/auth">Inicie sesión</a>
           </p>
         </div>
       }

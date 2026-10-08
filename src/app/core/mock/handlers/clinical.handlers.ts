@@ -92,7 +92,7 @@ export function avisarFichaAlPaciente(datos: {
 
   // Sin «Dr.» ni «Dra.»: los fixtures no declaran el tratamiento de nadie, y
   // deducirlo del nombre es equivocarse con la mitad de la gente.
-  const autor = profesionalPorId(datos.autorProfileId)?.displayName ?? 'Tu profesional';
+  const autor = profesionalPorId(datos.autorProfileId)?.displayName ?? 'Su profesional';
 
   emitirNotificacion({
     userId: paciente.userId,
@@ -100,8 +100,8 @@ export function avisarFichaAlPaciente(datos: {
     // El asunto dice qué pasó; el cuerpo, quién y dónde leerlo. Ninguno de los
     // dos adelanta el diagnóstico: un renglón de la campana es lo que se ve
     // desde la pantalla bloqueada del teléfono, y ahí no va un dato clínico.
-    subject: 'Tu ficha de la consulta ya está lista',
-    bodyText: `${autor} guardó la ficha de tu consulta con su diagnóstico. Ya podés leerla en tu historia clínica.`,
+    subject: 'Su ficha de la consulta ya está lista',
+    bodyText: `${autor} guardó la ficha de su consulta con su diagnóstico. Ya puede leerla en su historia clínica.`,
     destination: { type: 'ENCOUNTER', id: encuentro },
     payloadJson: { encounterId: encuentro },
   });
@@ -214,7 +214,7 @@ export function registrarClinica(router: MockRouter): void {
   router.get('/clinical/patients/:id/summary', (request) => {
     const id = request.params['id']!;
     if (pacientePorId(id) === undefined) return notFound('Paciente no encontrado');
-    if (!puedeLeer(request, id)) return forbidden('No tenés turno hoy ni vínculo vigente con esta persona');
+    if (!puedeLeer(request, id)) return forbidden('No tiene turno hoy ni vínculo vigente con esta persona');
     const limit = Number(request.query.get('limit') ?? 50) || 50;
     return {
       patientProfileId: id,

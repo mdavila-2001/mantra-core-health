@@ -1,6 +1,6 @@
 <app-page-header
-  title="Configurar tu perfil"
-  subtitle="Tu presentación, tus especialidades y tus matrículas."
+  title="Configurar su perfil"
+  subtitle="Su presentación, sus especialidades y sus matrículas."
   [breadcrumbs]="breadcrumbs()"
 />
 
@@ -26,7 +26,7 @@
         >
           <!-- ─── Datos personales ──────────────────────────────────────── -->
           <app-tab [label]="pestanas[0]">
-            <p class="edicion__nota">Cómo te ven las personas que consultan tu perfil.</p>
+            <p class="edicion__nota">Cómo le ven las personas que consultan su perfil.</p>
 
             <!-- El logo del consultorio: se carga y se cambia SÓLO desde acá. La misma
                  caja que ve la ficha (en «Datos personales» y, de lectura, en
@@ -35,7 +35,7 @@
             <section class="edicion__logo" data-testid="edicion-logo">
               <h3 class="edicion__logo-titulo">Logo del consultorio</h3>
               <p class="edicion__logo-nota">
-                Sale en el membrete de tus PDF. PNG, JPG o WEBP, hasta 2 MB. Si no cargás ninguno,
+                Sale en el membrete de sus PDF. PNG, JPG o WEBP, hasta 2 MB. Si no carga ninguno,
                 el espacio queda vacío y el documento se ve igual.
               </p>
 
@@ -86,7 +86,7 @@
               <!-- Vacío BORRA el dato opcional, que es cómo se quita un segundo
                    nombre que no se lleva. -->
               <app-form-field label="Nombre" [errorMessage]="errorDelServidor('name')">
-                <app-input [(value)]="nombre" placeholder="Tu nombre" />
+                <app-input [(value)]="nombre" placeholder="Su nombre" />
               </app-form-field>
               <app-form-field
                 label="Segundo nombre (opcional)"
@@ -95,7 +95,7 @@
                 <app-input
                   data-testid="edicion-segundo-nombre"
                   [(value)]="segundoNombre"
-                  placeholder="Si tenés"
+                  placeholder="Si tiene"
                 />
               </app-form-field>
 
@@ -107,7 +107,7 @@
                 <app-input
                   data-testid="edicion-tercer-nombre"
                   [(value)]="tercerNombre"
-                  placeholder="Si tenés"
+                  placeholder="Si tiene"
                 />
               </app-form-field>
 
@@ -167,7 +167,7 @@
               <app-form-field
                 label="Fecha de nacimiento"
                 [errorMessage]="errorDelServidor('birthDate')"
-                hint="Se usa para calcular tu edad en la ficha. No se publica."
+                hint="Se usa para calcular su edad en la ficha. No se publica."
               >
                 <app-date-picker [(value)]="fechaNacimiento" data-testid="edicion-nacimiento" />
               </app-form-field>
@@ -185,7 +185,7 @@
                   data-testid="edicion-titulo"
                   [options]="titulosProfesionales"
                   [(value)]="titulo"
-                  placeholder="Elegí tu título profesional"
+                  placeholder="Elija su título profesional"
                 />
               </app-form-field>
 
@@ -193,7 +193,7 @@
                 <!-- Un título viejo escrito a mano. No se borra ni se corrige solo:
                      se avisa y la persona elige cuando quiera. -->
                 <p class="edicion__aviso" role="status" data-testid="edicion-titulo-fuera-de-lista">
-                  Tu título figura como «{{ titulo() }}», que no está en la lista. Elegí el que
+                  Su título figura como «{{ titulo() }}», que no está en la lista. Elija el que
                   corresponda para que aparezca igual que en el registro.
                 </p>
               }
@@ -202,14 +202,14 @@
                 class="edicion__campo-ancho"
                 label="Biografía"
                 [errorMessage]="errorDelServidor('professionalBio')"
-                hint="Tu presentación en pocas palabras. Es lo que hace que tu perfil se lea como vos."
+                hint="Su presentación en pocas palabras. Es lo que hace que su perfil se lea como usted."
               >
                 <app-textarea
                   [(value)]="bio"
                   [rows]="5"
                   [maxLength]="bioLargoMaximo"
                   [autoResize]="true"
-                  placeholder="Contá tu trayectoria, tu enfoque, lo que te interesa de tu especialidad."
+                  placeholder="Cuente su trayectoria, su enfoque, lo que le interesa de su especialidad."
                 />
               </app-form-field>
 
@@ -229,8 +229,8 @@
             <section class="edicion__logo" data-testid="edicion-firma-y-sello">
               <h3 class="edicion__logo-titulo">Firma y sello médico</h3>
               <p class="edicion__logo-nota">
-                Salen al pie de tus recetas y documentos. PNG, JPG o WEBP, hasta 2 MB cada una. Si
-                no cargás ninguna, el documento sale igual, con la línea de firma vacía.
+                Salen al pie de sus recetas y documentos. PNG, JPG o WEBP, hasta 2 MB cada una. Si
+                no carga ninguna, el documento sale igual, con la línea de firma vacía.
               </p>
 
               <div class="edicion__logo-cuerpo" data-testid="edicion-firma">
@@ -339,9 +339,9 @@
                  apagado invita a buscar cómo encenderlo, y acá no hay forma. -->
             @if (soloLectura(); as fijos) {
               <section class="edicion__fijos" data-testid="edicion-documento">
-                <h3 class="edicion__subtitulo">Tu documento</h3>
+                <h3 class="edicion__subtitulo">Su documento</h3>
                 <p class="edicion__nota">
-                  Sale de tu documento de identidad y no se corrige desde el perfil.
+                  Sale de su documento de identidad y no se corrige desde el perfil.
                 </p>
                 <dl class="edicion__fijo">
                   <dt>Documento de identidad</dt>
@@ -363,11 +363,11 @@
                  junto con la matrícula. Su tabla, su barra y el alta en un
                  modal siguen iguales (D-04, ADR-0015). -->
             <section class="edicion__seccion" data-testid="edicion-especialidades-cargadas">
-              <h3 class="edicion__titulo">Tus especialidades cargadas</h3>
+              <h3 class="edicion__titulo">Sus especialidades cargadas</h3>
               <p class="edicion__nota">
-                Podés cargar hasta cuatro especialidades en total, como en el registro. Cada una se
+                Puede cargar hasta cuatro especialidades en total, como en el registro. Cada una se
                 guarda al agregarla, sin pasar por «Guardar cambios», y queda pendiente de
-                verificación hasta que se compruebe contra tu credencial.
+                verificación hasta que se compruebe contra su credencial.
               </p>
 
               <app-filter-bar
@@ -406,12 +406,12 @@
                    apagado sin motivo se lee como una falla. -->
               @if (!canDeclareSpecialty()) {
                 <p class="edicion__nota" data-testid="limite-especialidades-alcanzado">
-                  Ya alcanzaste el máximo de cuatro especialidades.
+                  Ya alcanzó el máximo de cuatro especialidades.
                 </p>
               }
 
               @if (filasEspecialidades().length === 0) {
-                <p class="edicion__vacio">Todavía no cargaste ninguna especialidad.</p>
+                <p class="edicion__vacio">Todavía no cargó ninguna especialidad.</p>
               } @else if (filasEspecialidadesVisibles().length === 0) {
                 <p class="edicion__vacio" data-testid="especialidades-sin-coincidencias">
                   Ninguna especialidad coincide con la búsqueda o el filtro.
@@ -448,7 +448,7 @@
                  no se pierde: vive en señales y controles del componente. -->
             @if (pestana() === pestanaEditor.contacto) {
               <p class="edicion__nota">
-                Dónde te ubican y por dónde te contactan. Se guarda junto con tus datos personales.
+                Dónde le ubican y por dónde le contactan. Se guarda junto con sus datos personales.
               </p>
 
               <form class="edicion__formulario" (submit)="$event.preventDefault()">
@@ -470,9 +470,9 @@
                     [ramas]="ramasMunicipios()"
                     [value]="municipioResidencia()"
                     (valueChange)="municipioResidencia.set($event)"
-                    mapLabel="Mapa de Bolivia: elegí el departamento donde vivís"
+                    mapLabel="Mapa de Bolivia: elija el departamento donde vive"
                     municipalityLabel="Localidad de residencia (opcional)"
-                    municipalityHint="Sólo se ofrecen las del departamento que elegiste."
+                    municipalityHint="Sólo se ofrecen las del departamento que eligió."
                   />
                 }
 
@@ -483,7 +483,7 @@
                   class="edicion__campo-ancho"
                   label="Dirección"
                   [errorMessage]="errorDelServidor('homeAddressLines')"
-                  hint="Tu domicilio particular."
+                  hint="Su domicilio particular."
                 >
                   <app-input
                     data-testid="edicion-direccion"
@@ -500,11 +500,11 @@
                 <app-ubicacion-picker
                   class="edicion__campo-ancho"
                   pinId="edicion-domicilio"
-                  etiquetaConfirmada="Tu domicilio"
-                  etiquetaQuitar="Quitar la ubicación de tu domicilio"
-                  etiquetaMapa="La ubicación de tu domicilio en el mapa"
+                  etiquetaConfirmada="Su domicilio"
+                  etiquetaQuitar="Quitar la ubicación de su domicilio"
+                  etiquetaMapa="La ubicación de su domicilio en el mapa"
                   etiquetaMarcar="Marcar mi domicilio en el mapa"
-                  indicacionMarcar="Tocá el mapa en la puerta de tu casa para poner el pin."
+                  indicacionMarcar="Toque el mapa en la puerta de su casa para poner el pin."
                   [ids]="idsGpsDomicilio"
                   [inicial]="gpsDomicilioInicial()"
                   (confirmado)="gpsDomicilio.set($event)"
@@ -517,7 +517,7 @@
                   class="edicion__campo-ancho"
                   label="Dirección del trabajo"
                   [errorMessage]="errorDelServidor('workAddressLines')"
-                  hint="Dónde atendés en tu lugar de trabajo; no es tu domicilio personal."
+                  hint="Dónde atiende en su lugar de trabajo; no es su domicilio personal."
                 >
                   <app-input
                     data-testid="edicion-direccion-trabajo"
@@ -529,11 +529,11 @@
                 <app-ubicacion-picker
                   class="edicion__campo-ancho"
                   pinId="edicion-trabajo"
-                  etiquetaConfirmada="Tu lugar de trabajo"
-                  etiquetaQuitar="Quitar la ubicación de tu trabajo"
-                  etiquetaMapa="La ubicación de tu trabajo en el mapa"
-                  etiquetaMarcar="Marcar tu lugar de trabajo en el mapa"
-                  indicacionMarcar="Tocá el mapa en la puerta del lugar de trabajo para poner el pin."
+                  etiquetaConfirmada="Su lugar de trabajo"
+                  etiquetaQuitar="Quitar la ubicación de su trabajo"
+                  etiquetaMapa="La ubicación de su trabajo en el mapa"
+                  etiquetaMarcar="Marcar su lugar de trabajo en el mapa"
+                  indicacionMarcar="Toque el mapa en la puerta del lugar de trabajo para poner el pin."
                   [ids]="idsGpsTrabajo"
                   [inicial]="gpsTrabajoInicial()"
                   (confirmado)="gpsTrabajo.set($event)"
@@ -546,7 +546,7 @@
                      maneras. -->
                 <app-form-field
                   label="Celular personal"
-                  hint="Elegí el país si tu número no es de Bolivia. No se publica en tu ficha."
+                  hint="Elija el país si su número no es de Bolivia. No se publica en su ficha."
                   [errorMessage]="
                     enRojo(celularPersonal)
                       ? mensajeTelefonoIncompleto
@@ -562,16 +562,16 @@
                 <app-form-field
                   label="Correo personal"
                   [errorMessage]="errorDelServidor('personalEmail')"
-                  hint="Distinto del de trabajo. No se publica en tu ficha."
+                  hint="Distinto del de trabajo. No se publica en su ficha."
                 >
-                  <app-input [(value)]="correoPersonal" placeholder="tu.correo@ejemplo.com" />
+                  <app-input [(value)]="correoPersonal" placeholder="su.correo@ejemplo.com" />
                 </app-form-field>
                 <!-- El correo de trabajo es un contacto, no la cuenta: el alta lo
                      siembra con el mismo valor que el login, pero cambiarlo acá
                      no cambia con qué correo se entra. -->
                 <app-form-field
                   label="Correo de trabajo"
-                  hint="El que se muestra en tu perfil. No cambia el correo con el que entrás."
+                  hint="El que se muestra en su perfil. No cambia el correo con el que entra."
                   [errorMessage]="errorCorreoTrabajo() || errorDelServidor('workEmail')"
                 >
                   <app-input
@@ -579,7 +579,7 @@
                     autocomplete="work email"
                     [(value)]="correoTrabajo"
                     [hasError]="!!(errorCorreoTrabajo() || errorDelServidor('workEmail'))"
-                    placeholder="tu.nombre@consultorio.com"
+                    placeholder="su.nombre@consultorio.com"
                     testId="edicion-correo-trabajo"
                   />
                 </app-form-field>
@@ -602,7 +602,7 @@
                su caja al montarse, que es lo único que obliga a diferir. -->
           <app-tab [label]="pestanas[2]">
             <p class="edicion__nota">
-              A nombre de quién salen los comprobantes que emitís. Se guarda junto con tus datos
+              A nombre de quién salen los comprobantes que emite. Se guarda junto con sus datos
               personales.
             </p>
 
@@ -610,7 +610,7 @@
               <app-form-field
                 label="NIT"
                 [errorMessage]="errorDelServidor('taxId')"
-                hint="Para que las facturas salgan a tu nombre. Vaciarlo lo quita."
+                hint="Para que las facturas salgan a su nombre. Vaciarlo lo quita."
               >
                 <app-input data-testid="edicion-nit" [(value)]="nit" placeholder="1234567" />
               </app-form-field>
@@ -629,13 +629,13 @@
 
               <app-form-field
                 label="Frecuencia de facturación al seguro"
-                hint="Cada cuánto presentás tu facturación a las aseguradoras."
+                hint="Cada cuánto presenta su facturación a las aseguradoras."
               >
                 <app-select
                   data-testid="edicion-frecuencia-facturacion-seguro"
                   [options]="opcionesFrecuenciaFacturacion"
                   [(value)]="frecuenciaFacturacionSeguro"
-                  placeholder="Elegí la frecuencia"
+                  placeholder="Elija la frecuencia"
                 />
               </app-form-field>
             </form>
@@ -690,9 +690,9 @@
                  y el alta en un modal. Su búsqueda tiene clave propia en la URL,
                  como la de cada tabla de esta pantalla. -->
             <section class="edicion__seccion" data-testid="edicion-matriculas-cargadas">
-              <h3 class="edicion__titulo">Tus matrículas cargadas</h3>
+              <h3 class="edicion__titulo">Sus matrículas cargadas</h3>
               <p class="edicion__nota">
-                Dónde estás habilitado a ejercer. Lo que agregás queda pendiente de verificación.
+                Dónde está habilitado a ejercer. Lo que agrega queda pendiente de verificación.
               </p>
 
               <app-filter-bar
@@ -727,7 +727,7 @@
               </app-filter-bar>
 
               @if (filasMatriculas().length === 0) {
-                <p class="edicion__vacio">Todavía no cargaste ninguna matrícula.</p>
+                <p class="edicion__vacio">Todavía no cargó ninguna matrícula.</p>
               } @else if (filasMatriculasVisibles().length === 0) {
                 <p class="edicion__vacio" data-testid="matriculas-sin-coincidencias">
                   Ninguna matrícula coincide con la búsqueda o el filtro.
@@ -760,10 +760,10 @@
                  esta tabla, quien agregaba un título no veía dónde había quedado
                  y lo volvía a cargar (propietario, 13/09/2026). -->
             <section class="edicion__seccion" data-testid="edicion-formacion-cargada">
-              <h3 class="edicion__titulo">Tus títulos cargados</h3>
+              <h3 class="edicion__titulo">Sus títulos cargados</h3>
               <p class="edicion__nota">
                 Títulos, diplomados, maestrías y doctorados, del más reciente al más antiguo. Lo que
-                agregás queda pendiente de verificación: lo revisa el equipo que verifica.
+                agrega queda pendiente de verificación: lo revisa el equipo que verifica.
               </p>
 
               <!-- La barra se dibuja siempre, aun sin títulos: es la que ofrece
@@ -800,7 +800,7 @@
               </app-filter-bar>
 
               @if (filasFormacion().length === 0) {
-                <p class="edicion__vacio">Todavía no cargaste ningún título.</p>
+                <p class="edicion__vacio">Todavía no cargó ningún título.</p>
               } @else if (filasFormacionVisibles().length === 0) {
                 <p class="edicion__vacio" data-testid="formacion-sin-coincidencias">
                   Ningún título coincide con la búsqueda o el filtro.
@@ -834,10 +834,10 @@
                  `PATCH` del perfil, con su propio botón, igual que los otros
                  bloques de esta pestaña. -->
             <section class="edicion__seccion" data-testid="edicion-idiomas">
-              <h3 class="edicion__titulo">Idiomas en los que atendés</h3>
+              <h3 class="edicion__titulo">Idiomas en los que atiende</h3>
               <p class="edicion__nota">
                 Los que un paciente puede elegir para la consulta. «Interpreta en consulta» dice
-                que podés sostener una consulta clínica en ese idioma, no sólo hablarlo.
+                que puede sostener una consulta clínica en ese idioma, no sólo hablarlo.
               </p>
 
               @if (catalogoIdiomasCaido()) {
@@ -851,7 +851,7 @@
                 <form class="edicion__formulario" (submit)="$event.preventDefault()">
                   @if (idiomas().length === 0) {
                     <p class="edicion__vacio edicion__campo-ancho" data-testid="idiomas-vacio">
-                      Todavía no declaraste ningún idioma.
+                      Todavía no declaró ningún idioma.
                     </p>
                   }
 
@@ -864,7 +864,7 @@
                         <app-select
                           [attr.data-testid]="'idioma-select-' + $index"
                           [options]="opcionesDeIdioma()"
-                          placeholder="Elegí un idioma"
+                          placeholder="Elija un idioma"
                           [value]="fila.idioma"
                           (valueChange)="elegirIdioma($index, $event)"
                         />
@@ -980,7 +980,7 @@
       </app-card>
 
       <p class="edicion__volver">
-        <a routerLink="/my-account">Volver a tu perfil</a>
+        <a routerLink="/my-account">Volver a su perfil</a>
       </p>
     </div>
   }
@@ -1161,14 +1161,14 @@
               data-testid="edicion-credencial-tipo"
               [target]="targetCredencial"
               [(value)]="edicionTipo"
-              placeholder="Elegí un tipo"
+              placeholder="Elija un tipo"
             />
           </app-form-field>
 
           <app-form-field
             label="Número / título obtenido"
             [required]="true"
-            hint="El número de tu diploma, o el nombre del título si no tiene número."
+            hint="El número de su diploma, o el nombre del título si no tiene número."
           >
             <app-input data-testid="edicion-credencial-numero" [(value)]="edicionNumero" />
           </app-form-field>
@@ -1178,7 +1178,7 @@
               data-testid="edicion-credencial-institucion"
               [options]="opcionesInstitucion"
               [(value)]="edicionInstitucionElegida"
-              placeholder="Elegí dónde lo cursaste"
+              placeholder="Elija dónde lo cursó"
             />
           </app-form-field>
 
@@ -1187,7 +1187,7 @@
           <app-form-field
             class="edicion__campo-ancho"
             label="Ciudad de estudio"
-            hint="Sale de la institución que elijas."
+            hint="Sale de la institución que elija."
           >
             <app-select
               data-testid="edicion-credencial-ciudad"
@@ -1223,8 +1223,8 @@
             "
             [hint]="
               enCurso.archivoActual
-                ? 'Ya hay uno cargado. Elegí otro sólo si querés reemplazarlo. PDF, JPG o PNG, hasta 5 MB.'
-                : 'Todavía no adjuntaste el diploma. PDF, JPG o PNG, hasta 5 MB.'
+                ? 'Ya hay uno cargado. Elija otro sólo si quiere reemplazarlo. PDF, JPG o PNG, hasta 5 MB.'
+                : 'Todavía no adjuntó el diploma. PDF, JPG o PNG, hasta 5 MB.'
             "
           >
             <app-file-input
@@ -1246,7 +1246,7 @@
               data-testid="edicion-especialidad"
               [options]="especialidades()"
               [(value)]="edicionEspecialidad"
-              placeholder="Elegí la especialidad"
+              placeholder="Elija la especialidad"
             />
           </app-form-field>
         }
@@ -1261,7 +1261,7 @@
               data-testid="edicion-matricula-autoridad"
               [options]="opcionesAutoridad()"
               [value]="edicionAutoridad() === '' ? null : edicionAutoridad()"
-              placeholder="Elegí la autoridad"
+              placeholder="Elija la autoridad"
               (valueChange)="edicionAutoridad.set($event ?? '')"
             />
           </app-form-field>
@@ -1279,8 +1279,8 @@
             "
             [hint]="
               enCurso.archivoActual
-                ? 'Ya hay uno cargado. Elegí otro sólo si querés reemplazarlo. PDF, JPG o PNG, hasta 5 MB.'
-                : 'Todavía no adjuntaste el respaldo. PDF, JPG o PNG, hasta 5 MB.'
+                ? 'Ya hay uno cargado. Elija otro sólo si quiere reemplazarlo. PDF, JPG o PNG, hasta 5 MB.'
+                : 'Todavía no adjuntó el respaldo. PDF, JPG o PNG, hasta 5 MB.'
             "
           >
             <app-file-input
@@ -1321,7 +1321,7 @@
     #dialogoAltaDeTitulo
     size="md"
     heading="Agregar título"
-    description="Títulos, diplomados, maestrías y doctorados. Queda pendiente de verificación; podés cargar varios de cada clase."
+    description="Títulos, diplomados, maestrías y doctorados. Queda pendiente de verificación; puede cargar varios de cada clase."
     data-testid="alta-titulo-dialogo"
     [closeGuard]="guardaDeAltaDeTitulo"
     (closed)="cerrarAltaDeTitulo()"
@@ -1332,14 +1332,14 @@
           data-testid="credencial-tipo"
           [target]="targetCredencial"
           [(value)]="nuevoTipoCredencial"
-          placeholder="Elegí un tipo"
+          placeholder="Elija un tipo"
         />
       </app-form-field>
 
       <app-form-field
         label="Número / título obtenido"
         [required]="true"
-        hint="El número de tu diploma, o el nombre del título si no tiene número."
+        hint="El número de su diploma, o el nombre del título si no tiene número."
       >
         <app-input
           data-testid="credencial-numero"
@@ -1361,7 +1361,7 @@
           data-testid="credencial-institucion"
           [options]="opcionesInstitucion"
           [(value)]="institucionElegida"
-          placeholder="Elegí dónde lo cursaste"
+          placeholder="Elija dónde lo cursó"
         />
       </app-form-field>
 
@@ -1370,7 +1370,7 @@
       <app-form-field
         class="edicion__campo-ancho"
         label="Ciudad de estudio"
-        hint="Sale de la institución que elijas."
+        hint="Sale de la institución que elija."
       >
         <app-select
           data-testid="credencial-ciudad"
@@ -1389,7 +1389,7 @@
         <app-form-field
           class="edicion__campo-ancho"
           label="¿Cuál?"
-          hint="El nombre completo de la institución, como figura en tu diploma."
+          hint="El nombre completo de la institución, como figura en su diploma."
         >
           <app-input
             data-testid="credencial-institucion-otra"
@@ -1447,7 +1447,7 @@
     #dialogoAltaDeMatricula
     size="md"
     heading="Agregar matrícula"
-    description="Dónde estás habilitado a ejercer. Queda pendiente de verificación."
+    description="Dónde está habilitado a ejercer. Queda pendiente de verificación."
     data-testid="alta-matricula-dialogo"
     [closeGuard]="guardaDeAltaDeMatricula"
     (closed)="cerrarAltaDeMatricula()"
@@ -1461,7 +1461,7 @@
       <app-form-field
         label="Nº de matrícula"
         [required]="true"
-        hint="Como figura en tu credencial."
+        hint="Como figura en su credencial."
       >
         <app-input
           testId="matricula-numero"
@@ -1475,20 +1475,20 @@
            `core/profesion/autoridades-reguladoras.ts`. -->
       <app-form-field
         label="Autoridad que la emitió"
-        hint="El Ministerio de Salud, el SEDES de tu gobernación o el colegio de tu profesión."
+        hint="El Ministerio de Salud, el SEDES de su gobernación o el colegio de su profesión."
       >
         <app-select
           data-testid="matricula-autoridad"
           [options]="opcionesAutoridad()"
           [value]="nuevaAutoridad() === '' ? null : nuevaAutoridad()"
           (valueChange)="nuevaAutoridad.set($event ?? '')"
-          placeholder="Elegí quién la emitió"
+          placeholder="Elija quién la emitió"
         />
       </app-form-field>
 
       <app-form-field
         label="Fecha de inscripción (opcional)"
-        hint="Cuándo te registraste, no cuándo vence."
+        hint="Cuándo se registró, no cuándo vence."
       >
         <app-date-picker [(value)]="nuevaFechaInscripcion" placeholder="Seleccionar fecha" />
       </app-form-field>
@@ -1536,7 +1536,7 @@
     #dialogoAltaDeEspecialidad
     size="md"
     heading="Agregar especialidades"
-    description="Podés cargar varias de una vez, como en el registro. Quedan pendientes de verificación hasta que se comprueben contra tu credencial."
+    description="Puede cargar varias de una vez, como en el registro. Quedan pendientes de verificación hasta que se comprueben contra su credencial."
     data-testid="alta-especialidad-dialogo"
     [closeGuard]="guardaDeAltaDeEspecialidad"
     (closed)="cerrarAltaDeEspecialidad()"
@@ -1560,7 +1560,7 @@
             data-testid="especialidad-select"
             [options]="especialidades()"
             [(value)]="nuevaEspecialidad"
-            placeholder="Elegí una especialidad"
+            placeholder="Elija una especialidad"
           />
         </app-form-field>
 
@@ -1574,7 +1574,7 @@
               <app-select
                 [attr.data-testid]="'especialidad-extra-' + $index"
                 [options]="especialidades()"
-                placeholder="Elegí una especialidad"
+                placeholder="Elija una especialidad"
                 [value]="extra === '' ? null : extra"
                 (valueChange)="elegirEspecialidadExtra($index, $event)"
               />
@@ -1620,19 +1620,19 @@
         <app-form-field
           class="edicion__campo-ancho"
           label="Título que las respalda (opcional)"
-          hint="Uno de tus títulos ya verificados. Vale para todas las que agregues ahora."
+          hint="Uno de sus títulos ya verificados. Vale para todas las que agregue ahora."
         >
           <app-select
             data-testid="especialidad-respaldo"
             [options]="opcionesDeRespaldo()"
             [(value)]="tituloDeRespaldo"
-            placeholder="Elegí un título"
+            placeholder="Elija un título"
           />
         </app-form-field>
       } @else {
         <p class="edicion__nota edicion__campo-ancho" data-testid="especialidad-sin-respaldo">
-          Podés respaldarlas con un título ya verificado. Todavía no tenés ninguno: cuando se
-          verifique uno, lo vas a poder elegir acá.
+          Puede respaldarlas con un título ya verificado. Todavía no tiene ninguno: cuando se
+          verifique uno, lo va a poder elegir acá.
         </p>
       }
 

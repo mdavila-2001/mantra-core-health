@@ -110,7 +110,7 @@ describe('TenantSwitcher', () => {
       const componente = fixture.debugElement.children[0].componentInstance as TenantSwitcher;
       expect(componente.isIndeterminate()).toBe(true);
       expect(root().querySelector('.tenant-switcher__trigger-label')?.textContent?.trim()).toBe(
-        'Elegí una organización',
+        'Elija una organización',
       );
       // no eligió ninguna por su cuenta
       expect(host.cambios).toEqual([]);

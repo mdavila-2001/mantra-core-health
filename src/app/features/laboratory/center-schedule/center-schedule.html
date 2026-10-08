@@ -1,6 +1,6 @@
 <app-page-header
   title="Horarios y equipos"
-  subtitle="Cuándo atiende tu centro cada servicio, y con cuántos equipos: de eso salen los turnos que ven los pacientes."
+  subtitle="Cuándo atiende su centro cada servicio, y con cuántos equipos: de eso salen los turnos que ven los pacientes."
 />
 
 <app-view-state-host [state]="estado()" (retry)="cargar()">
@@ -18,7 +18,7 @@
                   <h2 id="horario-general" class="seccion__titulo" data-testid="centro-horario-general-titulo">{{ nombreGeneral() }}</h2>
                   <p class="seccion__ayuda">
                     @if (enElGeneral().length === modalidades().length && (borrador()?.studies ?? []).length === 0) {
-                      Vale para todos los servicios del centro. Si alguno atiende en otro horario, ponele horario propio abajo.
+                      Vale para todos los servicios del centro. Si alguno atiende en otro horario, póngale horario propio abajo.
                     } @else {
                       Vale para los servicios que no tienen horario propio:
                     }
@@ -43,7 +43,7 @@
                 <div class="seccion__cabecera">
                   <h2 id="horarios-propios" class="seccion__titulo">Servicios con horario propio</h2>
                   <p class="seccion__ayuda">
-                    Una modalidad con horario propio aplica a todos sus estudios. Si un estudio puntual necesita otro horario, agregale una excepción.
+                    Una modalidad con horario propio aplica a todos sus estudios. Si un estudio puntual necesita otro horario, agréguele una excepción.
                   </p>
                 </div>
 
@@ -163,7 +163,7 @@
           <app-tab label="Equipos">
             <div class="centro__panel">
               <p class="seccion__ayuda">
-                Cada equipo operativo atiende a un paciente por turno. Si uno se rompe o entra en mantenimiento, marcalo: el cupo baja solo.
+                Cada equipo operativo atiende a un paciente por turno. Si uno se rompe o entra en mantenimiento, márquelo: el cupo baja solo.
               </p>
               @if (errorDeEquipo(); as error) {
                 <app-alert tone="error" title="No se cambió el estado" data-testid="centro-equipo-error">{{ error }}</app-alert>
@@ -171,8 +171,8 @@
               @if ((c.bookingsWithoutEquipment ?? 0) > 0) {
                 <app-alert tone="warning" title="Hay turnos sin equipo" data-testid="centro-turnos-sin-equipo">
                   {{ c.bookingsWithoutEquipment }} turno{{ c.bookingsWithoutEquipment === 1 ? '' : 's' }} ya reservado{{ c.bookingsWithoutEquipment === 1 ? '' : 's' }} no
-                  tiene{{ c.bookingsWithoutEquipment === 1 ? '' : 'n' }} un equipo operativo que lo{{ c.bookingsWithoutEquipment === 1 ? '' : 's' }} atienda. Avisale a cada
-                  paciente y reprogramalo, o volvé a poner el equipo en servicio.
+                  tiene{{ c.bookingsWithoutEquipment === 1 ? '' : 'n' }} un equipo operativo que lo{{ c.bookingsWithoutEquipment === 1 ? '' : 's' }} atienda. Avísele a cada
+                  paciente y reprográmelo, o vuelva a poner el equipo en servicio.
                 </app-alert>
               }
               @for (m of modalidades(); track m.code) {

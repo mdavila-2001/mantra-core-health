@@ -35,8 +35,8 @@ describe('NotificationBell', () => {
       {
         id: 'n-1',
         category: 'CLINICAL',
-        subject: 'Tu receta está lista',
-        bodyText: 'Podés verla en tu historia clínica.',
+        subject: 'Su receta está lista',
+        bodyText: 'Puede verla en su historia clínica.',
         destination: { type: 'PRESCRIPTION', id: 'rx-1' },
         payloadJson: null,
         unread: true,
@@ -116,7 +116,7 @@ describe('NotificationBell', () => {
     fixture.detectChanges();
 
     expect(consultar('campana-item')?.textContent).toContain(
-      'Tu receta está lista',
+      'Su receta está lista',
     );
     expect(consultar('campana')?.getAttribute('aria-expanded')).toBe('true');
   });

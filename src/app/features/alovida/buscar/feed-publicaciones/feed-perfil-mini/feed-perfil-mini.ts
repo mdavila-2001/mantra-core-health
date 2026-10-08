@@ -40,7 +40,7 @@ export class FeedPerfilMini {
   readonly detalle = input<PublicProfileDetail | null>(null);
 
   /** El nombre para saludar cuando no hay vitrina: el del token. */
-  protected readonly nombreDeSesion = computed(() => this.sesion.displayName() ?? 'Tu cuenta');
+  protected readonly nombreDeSesion = computed(() => this.sesion.displayName() ?? 'Su cuenta');
 
   protected readonly nombre = computed(
     () => this.perfil()?.displayName ?? this.nombreDeSesion(),

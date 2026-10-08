@@ -207,7 +207,7 @@ describe('DialogService', () => {
       // Sigue abierto: cerrar y mostrar después el rechazo del servidor haría
       // perder lo escrito.
       expect(resuelto).toBe(false);
-      expect(dialogo().textContent).toContain('Escribí el motivo');
+      expect(dialogo().textContent).toContain('Escriba el motivo');
 
       boton('Cancelar').click();
       await expect(respuesta).resolves.toBeNull();
@@ -293,7 +293,7 @@ describe('DialogService', () => {
    * «Guardar» dentro de otro modal, la persona no quede parada en el `<body>`.
    */
   describe('confirmar cambios y descarte (D-08)', () => {
-    it('«¿Confirmás estos cambios?» trae los textos por omisión y Confirmar resuelve true', async () => {
+    it('«¿Confirma estos cambios?» trae los textos por omisión y Confirmar resuelve true', async () => {
       const respuesta = service.confirmarCambios();
       await esperarRender();
 
@@ -363,7 +363,7 @@ describe('DialogService', () => {
       await respuesta;
     });
 
-    it('«¿Descartás lo que escribiste?» es destructiva: Descartar en tono de peligro y sin autofoco', async () => {
+    it('«¿Descarta lo que escribió?» es destructiva: Descartar en tono de peligro y sin autofoco', async () => {
       const respuesta = service.confirmarDescarte();
       await esperarRender();
 

@@ -119,7 +119,7 @@ export class CommentMediaPicker {
       this.adjuntos.update((previos) => [...previos, adjunto]);
       this.emitirCambio();
     } catch {
-      this.error.set(`No pudimos subir "${file.name}". Reintentá.`);
+      this.error.set(`No pudimos subir "${file.name}". Reintente.`);
     } finally {
       this.subiendo.set(false);
     }

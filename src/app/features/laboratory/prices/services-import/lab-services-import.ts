@@ -233,7 +233,7 @@ export class LabServicesImport {
 
   protected reject(rejected: readonly RejectedFile[]): void {
     this.fileError.set(
-      rejected.length === 0 ? null : 'Ese archivo no sirve: elegí un CSV de hasta 1 MB.',
+      rejected.length === 0 ? null : 'Ese archivo no sirve: elija un CSV de hasta 1 MB.',
     );
   }
 

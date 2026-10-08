@@ -353,7 +353,7 @@ function mensajeDeError(error: unknown): string {
     const cuerpo = error.error as { message?: string } | null;
     if (typeof cuerpo?.message === 'string' && cuerpo.message !== '') return cuerpo.message;
   }
-  return 'No pudimos guardar los cambios. Probá de nuevo en un momento.';
+  return 'No pudimos guardar los cambios. Pruebe de nuevo en un momento.';
 }
 
 function mensajeDeErrorDeEquipo(error: unknown): string {
@@ -361,5 +361,5 @@ function mensajeDeErrorDeEquipo(error: unknown): string {
     const cuerpo = error.error as { message?: string } | null;
     if (typeof cuerpo?.message === 'string' && cuerpo.message !== '') return cuerpo.message;
   }
-  return 'No pudimos cambiar el estado del equipo. Probá de nuevo en un momento.';
+  return 'No pudimos cambiar el estado del equipo. Pruebe de nuevo en un momento.';
 }

@@ -14,7 +14,7 @@ describe('DocumentosLegales', () => {
   /** La carpeta vacía, tal como la declara la ficha. */
   const CARPETA_VACIA = empty(
     { label: 'Cargar el primer documento' },
-    'Todavía no hay ningún papel en la carpeta legal de tu farmacia.',
+    'Todavía no hay ningún papel en la carpeta legal de su farmacia.',
   );
 
   function montar(state: ViewState<readonly DocumentoLegal[]>): HTMLElement {
@@ -254,7 +254,7 @@ describe('DocumentosLegales', () => {
 
       const opciones = Array.from(root.querySelectorAll('option'))
         .map((opcion) => opcion.textContent?.trim())
-        .filter((texto) => texto !== 'Elegí el documento');
+        .filter((texto) => texto !== 'Elija el documento');
       expect(opciones).toEqual(['Certificado SEDES', 'Poder del representante legal']);
     });
 

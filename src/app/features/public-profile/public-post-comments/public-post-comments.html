@@ -8,13 +8,13 @@
     <!-- El redactor arriba del hilo, como en una red profesional: quien abrió
          los comentarios está a un toque de escribir el suyo. -->
     <form class="comentarios__redactor" data-testid="comment-composer" (submit)="enviar($event)">
-      <label class="solo-lectores" [attr.for]="'comentario-' + postId()">Tu comentario</label>
+      <label class="solo-lectores" [attr.for]="'comentario-' + postId()">Su comentario</label>
       <textarea
         class="comentarios__campo"
         data-testid="comment-composer-body"
         [id]="'comentario-' + postId()"
         rows="1"
-        placeholder="Agregá un comentario…"
+        placeholder="Agregue un comentario…"
         [value]="borrador()"
         [disabled]="enviando()"
         (input)="escribir($event)"
@@ -33,7 +33,7 @@
       }
     </form>
     @if (falloAlEnviar()) {
-      <p class="comentarios__fallo" role="alert">No pudimos publicar tu comentario. Lo escrito sigue ahí: volvé a intentarlo.</p>
+      <p class="comentarios__fallo" role="alert">No pudimos publicar su comentario. Lo escrito sigue ahí: vuelva a intentarlo.</p>
     }
   }
 
@@ -98,7 +98,7 @@
       <div class="app-alert" app-alert data-tono="error" role="alert">
         <div class="app-alert__cuerpo">
           <strong>No pudimos leer los comentarios.</strong>
-          <p>Volvé a intentarlo en un momento.</p>
+          <p>Vuelva a intentarlo en un momento.</p>
         </div>
       </div>
       <p class="comentarios__mas">

@@ -206,7 +206,7 @@ test.describe('refactor UX · piloto «Mis citas»', () => {
 
     await expect(page).toHaveURL(/\/my-account\/diagnostic-orders\/[^/]+\/book$/);
     await expect(page.getByTestId('reserva-estudio-orden')).toBeVisible({ timeout: 20_000 });
-    await expect(page.getByRole('heading', { name: '¿Dónde te lo hacés?' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: '¿Dónde puede hacérselo?' })).toBeVisible();
     await expect(page.getByTestId('reserva-estudio-centro').first()).toBeVisible();
     await expect(page.getByTestId('reserva-estudio').getByRole('textbox')).toHaveCount(0);
   });

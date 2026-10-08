@@ -49,7 +49,7 @@ export function exampleFor(
     return null;
   }
   const quantity = lines.reduce((sum, line) => sum + line.quantity, 0);
-  return `${exampleLead(mechanic, quantity)} pagás ${formatMoney(result.total, currency)} en vez de ${formatMoney(result.listSubtotal, currency)}.`;
+  return `${exampleLead(mechanic, quantity)} paga ${formatMoney(result.total, currency)} en vez de ${formatMoney(result.listSubtotal, currency)}.`;
 }
 
 function scopeOf(mechanic: Mechanic, items: readonly PromotableItem[], allItems: boolean): CampaignScope {

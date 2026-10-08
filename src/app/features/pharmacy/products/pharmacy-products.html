@@ -1,17 +1,17 @@
 <app-page-header
   title="Productos"
-  subtitle="Lo que vende tu farmacia: publicados, borradores y retirados. Los pacientes encuentran lo publicado al buscar dónde comprar su receta."
+  subtitle="Lo que vende su farmacia: publicados, borradores y retirados. Los pacientes encuentran lo publicado al buscar dónde comprar su receta."
 />
 
 <app-view-state-host [state]="scope.options()" (retry)="scope.retry()">
   @if (scope.hasSeveral()) {
     <div class="products__pharmacy">
-      <app-form-field label="Farmacia" hint="El catálogo que vas a ver y cargar es el de esta farmacia.">
+      <app-form-field label="Farmacia" hint="El catálogo que va a ver y cargar es el de esta farmacia.">
         <app-select
           [options]="scope.selectOptions()"
           [value]="scope.pharmacyId()"
           (valueChange)="scope.choose($event)"
-          placeholder="Elegí tu farmacia"
+          placeholder="Elija su farmacia"
         />
       </app-form-field>
     </div>
@@ -38,7 +38,7 @@
 
         @if (truncated()) {
           <app-alert tone="warning" title="Se muestran los primeros 500">
-            Tu catálogo tiene más productos de los que entran en un listado. Buscá por marca,
+            Su catálogo tiene más productos de los que entran en un listado. Busque por marca,
             genérico o código para llegar a los demás.
           </app-alert>
         }
@@ -74,7 +74,7 @@
         }
 
         <app-data-table
-          caption="Productos de tu farmacia"
+          caption="Productos de su farmacia"
           [state]="pageRows()"
           [columns]="columns()"
           [trackBy]="rowId"

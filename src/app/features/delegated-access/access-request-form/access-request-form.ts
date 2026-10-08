@@ -101,7 +101,7 @@ export class AccessRequestForm {
   protected readonly created = signal<CreatedResource | null>(null);
 
   protected readonly errorMessage = computed(() =>
-    errorMessageOf(this.state(), 'No tenés permiso para solicitar accesos.'),
+    errorMessageOf(this.state(), 'No tiene permiso para solicitar accesos.'),
   );
 
   protected submit(): void {

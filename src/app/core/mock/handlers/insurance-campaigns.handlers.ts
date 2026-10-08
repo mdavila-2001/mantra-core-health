@@ -135,7 +135,7 @@ function seedCampaigns(): readonly MockCampaign[] {
       code: 'CMP-CARDIO-2026',
       title: 'Chequeo Preventivo Cardiovascular y Perfil Lipídico',
       description:
-        'Presión arterial, perfil lipídico y glicemia en ayunas, sin costo para vos. Detectar a tiempo evita internaciones.',
+        'Presión arterial, perfil lipídico y glicemia en ayunas, sin costo para usted. Detectar a tiempo evita internaciones.',
       campaignType: 'LABORATORY',
       status: 'ACTIVE',
       targetCondition: { code: 'I10', display: ICD10['I10']! },

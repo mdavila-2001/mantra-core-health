@@ -91,7 +91,7 @@ for (const viewport of [
         }
         if (text.includes('Rechazado por el seguro')) {
           await expect(
-            settlement.locator('dl > div').filter({ hasText: 'A tu cargo' }),
+            settlement.locator('dl > div').filter({ hasText: 'A su cargo' }),
           ).toContainText('0.00 Bs');
         }
         if (await page.getByText('La receta adjunta está vencida.', { exact: false }).count()) {
