@@ -345,7 +345,7 @@ describe('la tabla', () => {
         .sort();
 
     expect(porSexo('MALE')).toEqual(
-      ['dolor-de-testiculos', 'problemas-de-ereccion', 'prostata', 'sangre-en-el-semen'].sort(),
+      ['dolor-de-testiculos', 'fimosis', 'problemas-de-ereccion', 'prostata', 'sangre-en-el-semen'].sort(),
     );
     expect(porSexo('FEMALE')).toEqual(
       [
@@ -353,7 +353,9 @@ describe('la tabla', () => {
         'control-embarazo',
         'dolor-menstrual',
         'flujo-vaginal',
+        'lactancia-posparto',
         'menopausia',
+        'miomas-quistes',
         'sangrado-menstrual-abundante',
       ].sort(),
     );
