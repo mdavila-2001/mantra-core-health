@@ -41,6 +41,7 @@
   <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
     <app-form-section legend="Qué caso" description="El expediente cuyos checks se planifican.">
       <app-form-field
+        icon="shield"
         label="Caso de verificación"
         [required]="true"
         [hint]="uuidHint"
@@ -69,6 +70,7 @@
             </div>
 
             <app-form-field
+              icon="labels"
               label="Tipo de check (concepto)"
               [required]="true"
               [hint]="uuidHint"
@@ -83,6 +85,7 @@
             </app-form-field>
 
             <app-form-field
+              icon="shield"
               label="Autoridad"
               hint="Opcional: contra qué autoridad registrada se ejecuta."
               [errorMessage]="

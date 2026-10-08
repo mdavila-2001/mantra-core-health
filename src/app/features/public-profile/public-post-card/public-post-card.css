@@ -198,6 +198,16 @@
   gap: 4px;
 }
 
+/* Mismo glifo de trazo que «Recomendar» (.publicacion__accion svg), a juego
+   con el texto de caption que lo acompaña acá: 20px se veía pesado en esta
+   fila chica. Antes era el emoji 👍, que no sigue el tema (color fijo de la
+   fuente del sistema) y se dibuja distinto en cada plataforma. */
+.publicacion__pulgar {
+  flex: none;
+  inline-size: 14px;
+  block-size: 14px;
+}
+
 /* Los contadores son botones y tienen que verse como el texto que eran: lo que
    cambia al pasar el puntero es el subrayado, no una caja nueva. */
 .publicacion__contador-boton {

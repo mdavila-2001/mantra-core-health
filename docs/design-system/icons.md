@@ -24,8 +24,12 @@ adicional**.
 
 ## El set del menú es cerrado y tipado
 
-`atoms/nav-icon/nav-icon.types.ts` declara **cuarenta y cuatro** nombres y nada
-más —`side-nav.types.ts` los re-exporta, por quien ya los importaba de ahí—:
+`atoms/nav-icon/nav-icon.types.ts` declara **cincuenta y cinco** nombres y nada
+más —`side-nav.types.ts` los re-exporta, por quien ya los importaba de ahí—.
+El listado completo y comentado vive sólo ahí (no se duplica acá, por la misma
+razón que `design-tokens.types.ts` no duplica valores): cuarenta y siete
+nombran una sección, y ocho más no nombran ninguna —son los que siguen, cada
+uno con su propia historia:
 
 ```ts
 /**
@@ -33,14 +37,18 @@ más —`side-nav.types.ts` los re-exporta, por quien ya los importaba de ahí�
  * string libre terminaría en nombres que no existen y en íconos mudos.
  */
 export const NAV_ICON_NAMES = [
-  'home', 'patients', 'calendar', 'orders', 'results', 'billing', 'settings',
-  'people', 'chat', 'directory',
-  'stethoscope', 'hospital', 'flask', 'scan', 'scalpel', 'pill', 'heart', 'folder', 'note',
-  'clipboard', 'survey', 'book', 'labels',
-  'building', 'factory', 'package', 'bag', 'tag', 'megaphone', 'pin', 'route', 'globe',
-  'chart', 'star',
-  'shield', 'key', 'link', 'flag', 'umbrella', 'briefcase',
-  'bell', 'sliders', 'history', 'teach',
+  // 47 nombres de sección: home, patients, calendar, orders, results,
+  // billing, settings, people, chat, directory, stethoscope, hospital,
+  // flask, scan, scalpel, pill, heart, folder, note, clipboard, survey,
+  // book, labels, building, factory, package, bag, tag, megaphone, pin,
+  // route, globe, chart, star, shield, key, lock, link, flag, umbrella,
+  // briefcase, mail, phone, bell, sliders, history, teach,
+
+  // + 4 glifos de dirección/acción (no nombran sección): arrow-left,
+  // arrow-right, remove, edit — ver "Los glifos de acción" más abajo.
+
+  // + 4 de preferencia del dispositivo (tampoco nombran sección):
+  // monitor, sun, moon, camera — el panel «Apariencia» y «Permisos».
 ] as const;
 export type NavIconName = (typeof NAV_ICON_NAMES)[number];
 ```
@@ -61,7 +69,7 @@ sustituye.
 **`icon` es opcional.** Sin él, el ítem colapsado muestra la inicial de su
 etiqueta en vez de un hueco.
 
-### Por qué son cuarenta y cuatro y fueron siete
+### Por qué son cincuenta y cinco y fueron siete
 
 Los siete originales se eligieron cuando el menú tenía dos entradas y el set
 «anticipaba los portales del modelo». Con **cincuenta y cinco secciones** eso
@@ -91,9 +99,18 @@ No se usa `note` para eso, aunque tenga un lápiz dibujado: `note` es la
 sección «Evoluciones», y el mismo glifo para «esta sección» y para «editar
 esto» rompe el reconocimiento.
 
+### Preferencia del dispositivo
+
+Cuatro nombres más por el mismo motivo que los de arriba: `monitor`, `sun`,
+`moon` y `camera` tampoco nombran una sección del menú, nombran un valor de
+una preferencia —los tres del panel «Apariencia» y el que le faltaba a
+«Permisos»—. `camera` no es lo mismo que `scan`: una es la cámara del
+dispositivo, la otra la imagenología clínica, y confundirlas en el set sería
+el mismo error que ya resolvió `lock` frente a `key`.
+
 ### Cómo se dibuja uno (28/08/2026)
 
-Tener cuarenta y cuatro nombres distintos no alcanzaba si los dibujos no se
+Tener cincuenta y cinco nombres distintos no alcanzaba si los dibujos no se
 leían. Tres reglas, que salieron de mirarlos al tamaño en que se ven de verdad
 —20 px en el menú, 22 px dentro de una zona del árbol de accesos—:
 
@@ -104,7 +121,7 @@ leían. Tres reglas, que salieron de mirarlos al tamaño en que se ven de verdad
    los hombros llegando a x=1: en una fila de íconos se veía torcido sin que se
    supiera por qué.
 3. **Un detalle interior que lo distinga.** Una silueta sola no basta cuando hay
-   cuarenta y cuatro: el calendario lleva los días marcados, la orden dos
+   cincuenta y cinco: el calendario lleva los días marcados, la orden dos
    renglones escritos, el globo de diálogo tres puntos, la carpeta su tapa. Sin
    eso, a 20 px `orders`, `note` y `clipboard` son el mismo rectángulo.
 
@@ -160,10 +177,10 @@ Coherente con [no tener biblioteca de interfaz](../adr/ADR-0004-sistema-de-disen
 | Sin dependencia que actualizar | Sin consistencia garantizada entre íconos de distintas fuentes |
 | Sin petición de red ni de fuente de íconos | |
 
-Con cuarenta y cuatro íconos de navegación, once de categoría del glosario y
+Con cincuenta y cinco íconos de navegación, once de categoría del glosario y
 unos pocos sueltos en los componentes, la columna derecha ya pesa: no hay
 catálogo que explorar y cada forma se dibuja a mano. Sigue ganando la izquierda
-—los cuarenta y cuatro son trazos de dos o tres `path`, no una dependencia que
+—los cincuenta y cinco son trazos de dos o tres `path`, no una dependencia que
 actualizar ni una petición de red—, pero la próxima vez que el set se duplique
 conviene volver a mirar esta tabla en vez de darla por saldada.
 

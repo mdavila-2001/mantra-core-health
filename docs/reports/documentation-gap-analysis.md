@@ -144,8 +144,8 @@ acción — y con la columna que más importa: **si cambia el producto**.
 | **L-02** | Tres tipografías instaladas y sin importar | Usarlas o quitarlas |
 | **L-03** | `register-patient/` da de alta dos perfiles; el nombre miente | Renombrar |
 | **L-04** | `ForgotPassword` y `ResetPassword` sin `AuthSplit` | Inconsistencia visual del mismo flujo |
-| **L-05** | Sin tokens de movimiento (`--duration-*`, `--ease-*`) | Añadirlos cuando la repetición duela |
-| **L-06** | Sin tokens de apilamiento (`--z-*`) | **El de mayor riesgo de los LOW**: dos capas pueden coincidir |
+| **L-05** | ~~Sin tokens de movimiento~~ — **cerrado**: `--dur-*`/`--ease-*` existen en `styles.css`, tipados en `design-tokens.types.ts`, usados en 26 hojas de estilo (verificado 2026-10-04) | Ninguna; ver `docs/design-system/motion.md` |
+| **L-06** | ~~Sin tokens de apilamiento~~ — **cerrado**: `--z-*` (`base`…`dialog`) ya declarados en `styles.css` y tipados (`LAYER_NAMES`) (verificado 2026-10-04) | Ninguna |
 | **L-07** | El favicon no lleva hash y se cachea un año | Renombrarlo al cambiarlo |
 | **L-08** | Los dos proxys pueden separarse sin aviso | Comprobación que compare las listas |
 | **L-09** | `forgot-password`/`reset-password` no están en las rutas públicas del interceptor | Caso de borde sin consecuencia observada |

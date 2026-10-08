@@ -148,7 +148,7 @@
                       </button>
                     </header>
 
-                    <app-form-field [label]="'Nombre de la sucursal ' + (i + 1)">
+                    <app-form-field icon="building" [label]="'Nombre de la sucursal ' + (i + 1)">
                       <app-input
                         [testId]="'registro-lab-' + sucursal.id + '-nombre'"
                         placeholder="Sucursal Equipetrol"
@@ -166,7 +166,7 @@
                       />
                     </app-form-field>
 
-                    <app-form-field [label]="'Dirección de la sucursal ' + (i + 1)">
+                    <app-form-field icon="pin" [label]="'Dirección de la sucursal ' + (i + 1)">
                       <app-input
                         [testId]="'registro-lab-' + sucursal.id + '-direccion'"
                         placeholder="Av. San Martín 456"

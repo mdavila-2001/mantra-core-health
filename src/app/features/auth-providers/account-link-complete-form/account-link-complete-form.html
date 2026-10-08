@@ -45,6 +45,7 @@
       description="El que devolvió la solicitud de vinculación; es de un solo uso."
     >
       <app-form-field
+        icon="key"
         label="Token de vinculación"
         [required]="true"
         hint="Va enmascarado: es un secreto, no un dato para mostrar."
@@ -63,6 +64,7 @@
       description="Datos del sujeto externo; los que falten no viajan."
     >
       <app-form-field
+        icon="mail"
         label="Correo del sujeto externo"
         hint="Opcional: vacío, no viaja."
         [errorMessage]="
@@ -75,6 +77,7 @@
       </app-form-field>
 
       <app-form-field
+        icon="patients"
         label="Nombre visible"
         hint="Opcional: cómo se muestra el sujeto en la plataforma."
         [errorMessage]="
@@ -87,6 +90,7 @@
       </app-form-field>
 
       <app-form-field
+        icon="sliders"
         label="Claims con los que se completa (JSON)"
         hint="Opcional: un objeto JSON. Vacío, no viaja."
         [errorMessage]="

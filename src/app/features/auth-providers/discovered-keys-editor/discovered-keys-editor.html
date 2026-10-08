@@ -15,6 +15,7 @@
       </div>
 
       <app-form-field
+        icon="key"
         label="Identificador en el JWKS (kid)"
         [required]="true"
         [errorMessage]="
@@ -27,6 +28,7 @@
       </app-form-field>
 
       <app-form-field
+        icon="shield"
         label="Algoritmo de firma"
         [required]="true"
         hint="Por ejemplo RS256 o ES256."
@@ -40,6 +42,7 @@
       </app-form-field>
 
       <app-form-field
+        icon="key"
         label="Clave pública"
         [required]="true"
         hint="En formato PEM o JWK."
@@ -52,7 +55,7 @@
         <app-textarea formControlName="publicKey" [rows]="3" [autoResize]="true" />
       </app-form-field>
 
-      <app-form-field label="Certificado asociado" hint="Opcional.">
+      <app-form-field icon="shield" label="Certificado asociado" hint="Opcional.">
         <app-textarea formControlName="certificate" [rows]="2" [autoResize]="true" />
       </app-form-field>
     </div>

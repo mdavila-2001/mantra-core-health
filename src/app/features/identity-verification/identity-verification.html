@@ -77,7 +77,7 @@
               verificar acá.
             </app-alert>
           } @else {
-            <app-form-field label="Organización" [required]="true">
+            <app-form-field icon="building" label="Organización" [required]="true">
               <app-select
                 [(value)]="organizacionId"
                 [options]="organizaciones()"
@@ -88,7 +88,7 @@
           }
         }
 
-        <app-form-field [label]="textos().label" [required]="true" hint="Imagen o PDF, hasta 10 MB.">
+        <app-form-field icon="folder" [label]="textos().label" [required]="true" hint="Imagen o PDF, hasta 10 MB.">
           <app-file-input
             [(files)]="evidencia"
             accept="image/*,application/pdf"
