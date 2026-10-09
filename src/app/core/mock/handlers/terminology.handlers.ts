@@ -526,6 +526,21 @@ export function registrarTerminologia(
     }
   });
 
+  /**
+   * El artículo enciclopédico de un término (TAREA-41 §12.3, F9). 404 si el
+   * término no tiene artículo: la pantalla conserva entonces su ficha de
+   * siempre. El backend real todavía no lo sirve; la maqueta lo lee de
+   * `mock/articles/` (`scripts/glossary-articles.mjs`).
+   */
+  router.get('/terminology/concepts/:id/article', async ({ params }) => {
+    try {
+      const articulo = await glosario.articulo(params['id']!);
+      return articulo ?? notFound('El término no tiene artículo');
+    } catch (error: unknown) {
+      return glosarioNoDisponible(error);
+    }
+  });
+
   router.get('/terminology/concepts/:id', async ({ params }) => {
     const c = conceptoPorId(params['id']!);
     if (c === undefined) {

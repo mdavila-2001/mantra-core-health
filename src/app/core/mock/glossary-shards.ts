@@ -1,3 +1,4 @@
+import type { GlossaryArticle } from '../data-access/terminology/glossary-article.types';
 import { uuid } from './mock-store';
 
 /* ============================================================================
@@ -290,6 +291,38 @@ export class AlmacenDeGlosario {
       {},
     );
     return cubeta[id] ?? [];
+  }
+
+  /**
+   * El artículo enciclopédico de un término (`mock/articles/<hh>.json`), o `null`.
+   *
+   * Se busca en las dos raíces, no sólo en la que sirve el manifiesto: el
+   * conjunto completo de artículos pesa ~10 MB y vive fuera de git en
+   * `glossary-data/`, que puede no tener manifiesto propio; la semilla trae una
+   * muestra chica. Sin artículo en ninguna, el término conserva su ficha de
+   * siempre.
+   */
+  async articulo(id: string): Promise<GlossaryArticle | null> {
+    const ruta = `mock/articles/${id.slice(0, 2).toLowerCase()}.json`;
+    for (const base of RAICES_DEL_GLOSARIO) {
+      const cubeta = await this.cubetaDeArticulos(`${base}/${ruta}`);
+      const articulo = cubeta[id];
+      if (articulo !== undefined) return articulo;
+    }
+    return null;
+  }
+
+  private async cubetaDeArticulos(clave: string): Promise<Record<string, GlossaryArticle>> {
+    let promesa = this.cache.get(clave);
+    if (promesa === undefined) {
+      promesa = this.leer(clave).catch((error: unknown) => {
+        if (error instanceof ArchivoAusente) return {};
+        this.cache.delete(clave);
+        throw error;
+      });
+      this.cache.set(clave, promesa);
+    }
+    return promesa as Promise<Record<string, GlossaryArticle>>;
   }
 
   /** La categoría de un término sin abrir su shard: la saca de `mock/ids`. */

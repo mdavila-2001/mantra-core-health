@@ -25,7 +25,7 @@ import {
 /** Lo que los handlers de terminología le piden al glosario. */
 export type FuenteDeGlosario = Pick<
   AlmacenDeGlosario,
-  'manifiesto' | 'origen' | 'filas' | 'porId' | 'pagina' | 'entrantes' | 'categoriaDe'
+  'manifiesto' | 'origen' | 'filas' | 'porId' | 'pagina' | 'entrantes' | 'categoriaDe' | 'articulo'
 >;
 
 export class AlmacenConCapasDeLaMaqueta implements FuenteDeGlosario {
@@ -83,6 +83,11 @@ export class AlmacenConCapasDeLaMaqueta implements FuenteDeGlosario {
         ),
     );
     return [...base, ...propias];
+  }
+
+  /** Los equipos de la capa no tienen artículo: sólo los términos de los shards. */
+  articulo(id: string) {
+    return this.base.articulo(id);
   }
 
   async categoriaDe(id: string): Promise<string | null> {
