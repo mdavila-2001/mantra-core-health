@@ -2,7 +2,7 @@ import { HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 import { throwError, type Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
-import { forcedRealApi } from '../mock/api-mode';
+import { apiRealForzada } from '../mock/modo-api';
 
 /* ============================================================================
     Lo que sólo existe en el simulador, dicho en código y no sólo en un JSDoc.
@@ -31,10 +31,10 @@ export const NOT_AVAILABLE_IN_API = 'NOT_AVAILABLE_IN_API';
  * Si las rutas y claves «sólo simulador» llegan a destino.
  *
  * Es `false` contra la API real y también con el interruptor del stock de
- * componentes (`forcedRealApi`), que manda la petición a la red.
+ * componentes (`apiRealForzada`), que manda la petición a la red.
  */
 export function simulatorAvailable(): boolean {
-  return environment.mockBackend && !forcedRealApi();
+  return environment.mockBackend && !apiRealForzada();
 }
 
 /** El aviso, en usted, de una función que la API todavía no ofrece. */
