@@ -59,11 +59,12 @@ function redactar(url: string): string {
     .replace(/\?.*$/, '');
 }
 
-test.describe('mobile-parity · referencia web', () => {
-  // La traza la gestiona este spec (siempre, al paquete de evidencia); se apaga
-  // la del config (retain-on-failure) para no arrancarla dos veces.
-  test.use({ trace: 'off', ...(baseURL ? { baseURL } : {}) });
+// La traza la gestiona este spec (siempre, al paquete de evidencia); se apaga la
+// del config (retain-on-failure) para no arrancarla dos veces. Va a nivel de
+// archivo porque `use({ trace })` dentro de un describe fuerza otro worker.
+test.use({ trace: 'off', ...(baseURL ? { baseURL } : {}) });
 
+test.describe('mobile-parity · referencia web', () => {
   test(`referencia web de ${taskId ?? '(sin ALOVIDA_TASK_ID)'}`, async ({ page, context }) => {
     const card = leerFicha();
     if (!evidenceDir) throw new Error('ALOVIDA_EVIDENCE_DIR es obligatorio');
