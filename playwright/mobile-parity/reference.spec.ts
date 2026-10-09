@@ -60,7 +60,9 @@ function redactar(url: string): string {
 }
 
 test.describe('mobile-parity · referencia web', () => {
-  test.use(baseURL ? { baseURL } : {});
+  // La traza la gestiona este spec (siempre, al paquete de evidencia); se apaga
+  // la del config (retain-on-failure) para no arrancarla dos veces.
+  test.use({ trace: 'off', ...(baseURL ? { baseURL } : {}) });
 
   test(`referencia web de ${taskId ?? '(sin ALOVIDA_TASK_ID)'}`, async ({ page, context }) => {
     const card = leerFicha();
