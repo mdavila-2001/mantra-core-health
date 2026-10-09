@@ -11,7 +11,7 @@ import { ToastService } from '../../../../shared/components/molecules/toast/toas
 import { FilterBar } from '../../../../shared/components/organisms/filter-bar/filter-bar';
 import { WorkHistory } from '../work-history/work-history';
 
-import { PESTANAS_DEL_EDITOR_MEDICO } from '../pestanas-del-perfil-medico';
+import { PESTANAS_DEL_EDITOR_MEDICO } from '../doctor-profile-tabs';
 import { PractitionerProfileEdit } from './practitioner-profile-edit';
 
 /**
@@ -1137,8 +1137,8 @@ describe('PractitionerProfileEdit', () => {
     fixture.detectChanges();
 
     const panel = panelAbierto(fixture);
-    expect(panel.querySelector('app-ubicacion-picker[pinid="edicion-domicilio"]')).not.toBeNull();
-    expect(panel.querySelector('app-ubicacion-picker[pinid="edicion-trabajo"]')).not.toBeNull();
+    expect(panel.querySelector('app-map-location-picker[pinid="edicion-domicilio"]')).not.toBeNull();
+    expect(panel.querySelector('app-map-location-picker[pinid="edicion-trabajo"]')).not.toBeNull();
   });
 
   /* ---- Trayectoria son los cargos; los títulos, Credenciales -------------- */

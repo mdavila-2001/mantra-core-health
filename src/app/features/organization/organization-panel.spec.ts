@@ -5,7 +5,7 @@ import { TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { provideRouter } from '@angular/router';
 
-import { LogoDeOrganizacionClient } from '../../core/data-access/directory/logo-de-organizacion.client';
+import { LogoDeOrganizacionClient } from '../../core/data-access/directory/organization-logo.client';
 import { ToastService } from '../../shared/components/molecules/toast/toast.service';
 import { OrganizationPanel } from './organization-panel';
 

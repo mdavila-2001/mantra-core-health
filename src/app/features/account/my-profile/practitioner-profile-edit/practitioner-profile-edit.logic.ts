@@ -2,7 +2,7 @@ import {
   OPCIONES_INSTITUCION_EDUCATIVA,
   UNIVERSIDADES_DEL_SISTEMA,
   UNIVERSIDADES_PRIVADAS,
-} from '../../../../core/profesion/instituciones-educativas';
+} from '../../../../core/profession/educational-institutions';
 import type { SelectOption } from '../../../../shared/components/atoms/select/select.types';
 
 /*
@@ -148,7 +148,7 @@ export function coincideConElEstado(filtro: string | null, pendiente: boolean): 
 /*
  * La institución con su código (Q-8).
  *
- * El catálogo de `core/profesion/instituciones-educativas.ts` no tiene un campo
+ * El catálogo de `core/profession/educational-institutions.ts` no tiene un campo
  * de código, y ninguna capa del proyecto tiene un padrón de instituciones con
  * id. Lo que sí tiene cada casa de estudios es su sigla dentro de la etiqueta,
  * entre paréntesis —«Universidad Mayor de San Andrés (UMSA) — La Paz»—. El

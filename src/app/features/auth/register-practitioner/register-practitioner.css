@@ -1,5 +1,5 @@
 /* El cascarón —la tarjeta, el membrete, el pie y la columna de ayuda— es
-   `../registro-compartido/registro.css`, que esta pantalla y el alta de
+   `../shared-registration/registration.css`, que esta pantalla y el alta de
    paciente declaran las dos en su `styleUrls`. */
 
 /* Las casillas de nombre: entran como UN campo de la página para que los

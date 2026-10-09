@@ -18,7 +18,7 @@ import { nextControlId } from '@shared/forms/form-control.context';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { statusLabelOf, sufijoDeCodigo } from '../../booking-status';
 import type { EstadoResuelto } from '../day-view/day-view';
-import { detalleDeLaCita, pacienteDeLaCita, type ParDelDetalle } from '../detalle-de-la-cita';
+import { detalleDeLaCita, pacienteDeLaCita, type ParDelDetalle } from '../appointment-detail';
 import type { BloqueoDelMes, EstadoDelDia } from '../month-view/month-view';
 
 /** Una cita de la semana, reducida a lo que entra en una celda de siete. */

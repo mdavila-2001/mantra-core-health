@@ -38,7 +38,7 @@ import type {
   MatriculaVisible,
   PerfilProfesionalVisible,
 } from '../../account/my-profile/practitioner-profile/practitioner-profile-view/practitioner-profile-view.types';
-import { subtituloProfesional } from '../subtitulo-profesional';
+import { subtituloProfesional } from '../professional-subtitle';
 
 /** Lo que se muestra cuando el registro no trae ese dato. */
 const SIN_DATO = 'Sin registrar';

@@ -20,7 +20,7 @@ import { AppButtonLink } from '../../../../shared/components/atoms/button/button
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
 import { MIS_PEDIDOS_ROUTE } from '../pharmacy-orders.routes';
-import { HojaDeFactura } from './hoja-de-factura/hoja-de-factura';
+import { HojaDeFactura } from './invoice-sheet/invoice-sheet';
 import { facturaDelPedido, NOTA_DE_EJEMPLO } from './order-invoice.fixtures';
 import { downloadInvoicePdf } from './order-invoice.pdf';
 import type { DocumentoDeFactura } from './order-invoice.types';

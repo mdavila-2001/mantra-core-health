@@ -18,7 +18,7 @@ import type { BreadcrumbItem } from '../../../../shared/components/molecules/bre
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import { PaginatedForm } from '../../../../shared/components/organisms/paginated-form/paginated-form';
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
-import { paginarCampos } from '../../../../shared/forms/paginated/paginar-campos';
+import { paginarCampos } from '../../../../shared/forms/paginated/paginate-fields';
 import { ORGANIZATIONS_ROUTE, organizationDetailRoute } from '../organizations.routes';
 
 /** Largos que declara `CreateBranchDto`. */

@@ -1,4 +1,4 @@
-import { PROFESIONALES } from './personas';
+import { PROFESIONALES } from './people';
 import { recursos, cupos } from './agenda';
 
 /**

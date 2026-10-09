@@ -41,7 +41,7 @@ import { ToastService } from '../../../shared/components/molecules/toast/toast.s
 import { DatePicker } from '../../../shared/components/organisms/date-picker/date-picker';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { AGENDA_ROUTE } from '../agenda.routes';
-import { misRecursosDeAgenda } from '../mi-recurso';
+import { misRecursosDeAgenda } from '../my-resource';
 
 /**
  * Duraciones ofrecidas, en minutos.

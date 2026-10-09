@@ -7,7 +7,7 @@ import { RegisterPatient } from './register-patient';
 import { TrustedAmbulanceStore } from '../../../core/emergency/trusted-ambulance.store';
 import { CODIGO_OCUPACION_OTRA } from '../../../core/data-access/terminology/bo-occupations.service';
 import { CODIGO_EMPRESA_OTRA } from '../../../core/data-access/terminology/bo-employers.service';
-import { EMPLEADOR, OCUPACION } from '../../../core/mock/fixtures/conceptos';
+import { EMPLEADOR, OCUPACION } from '../../../core/mock/fixtures/concepts';
 import { RefreshTokenStorage } from '../../../core/auth/refresh-token.storage';
 
 const RESPUESTA = {

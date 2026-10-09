@@ -64,7 +64,7 @@
        panel viaja en el paquete inicial. -->
   @if (atiendePacientes()) {
     @defer (on immediate) {
-      <app-agenda-de-hoy class="panel__hoy" />
+      <app-today-agenda class="panel__hoy" />
     }
   }
 
@@ -106,7 +106,7 @@
          que reportar (mismo criterio que la franja de arriba). -->
     @if (atiendePacientes()) {
       @defer (on immediate) {
-        <app-consultas-resumen class="panel__bloque--ancho" />
+        <app-consultations-summary class="panel__bloque--ancho" />
       }
     }
 

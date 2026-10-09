@@ -21,7 +21,7 @@ import {
   ArchivoInvalido,
   BYTES_MAXIMOS_DEL_ARCHIVO,
   decodificarCsv,
-} from '../../catalog-rules/catalogo.reglas';
+} from '../../catalog-rules/catalog.rules';
 import { pharmacyErrorMessage } from '../../pharmacy-error-message';
 import { reviewInventoryCsv, type InventoryCsvReview } from '../inventory-csv';
 

@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, signal } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 
-import { paginarCampos } from '../../../shared/forms/paginated/paginar-campos';
+import { paginarCampos } from '../../../shared/forms/paginated/paginate-fields';
 
 import {
   empty,
@@ -22,7 +22,7 @@ import type {
 import { FilterBar } from '../../../shared/components/organisms/filter-bar/filter-bar';
 import type { FilterDef } from '../../../shared/components/organisms/filter-bar/filter-bar';
 import { AppMap } from '../../../shared/components/organisms/map/map';
-import type { PinMapa } from '../../../shared/components/organisms/map/pin-mapa.types';
+import type { PinMapa } from '../../../shared/components/organisms/map/map-pin.types';
 import { FormActions } from '../../../shared/components/organisms/form-actions/form-actions';
 import { FormSection } from '../../../shared/components/organisms/form-section/form-section';
 import { Header } from '../../../shared/components/organisms/header/header';

@@ -2,9 +2,9 @@ import { HttpHeaders } from '@angular/common/http';
 
 import { SITIO_CONSULTORIO } from './fixtures/agenda';
 import { sedesDe } from './handlers/practice.handlers';
-import { TIPO_CREDENCIAL } from './fixtures/conceptos';
-import { credencialesDe, especialidadesDe, licenciasDe, PACIENTE, PACIENTES, PROFESIONALES, PROFESIONALES_DEMO_REGISTRADOS } from './fixtures/personas';
-import { ESPECIALIDAD } from './fixtures/conceptos';
+import { TIPO_CREDENCIAL } from './fixtures/concepts';
+import { credencialesDe, especialidadesDe, licenciasDe, PACIENTE, PACIENTES, PROFESIONALES, PROFESIONALES_DEMO_REGISTRADOS } from './fixtures/people';
+import { ESPECIALIDAD } from './fixtures/concepts';
 import {
   cupos,
   plantillas,
@@ -16,7 +16,7 @@ import {
   SITIO_OLIVOS,
   ZONA_HORARIA_POR_OMISION,
 } from './fixtures/agenda';
-import { publicaciones, vitrinas } from './fixtures/comunidad';
+import { publicaciones, vitrinas } from './fixtures/community';
 import { crearRouterSimulado } from './handlers';
 import { isMockReply, type MockMethod, type MockRequest } from './mock-router';
 import {

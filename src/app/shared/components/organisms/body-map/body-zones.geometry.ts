@@ -27,7 +27,7 @@
     ## Por qué el `id` es el de la tabla de zonas
 
     El organismo no sabe de síntomas: dibuja sólo las zonas cuyo `id` le pasa
-    quien lo monta (`features/symptom-check/zonas.datos.ts`). Una misma zona
+    quien lo monta (`features/symptom-check/zones.data.ts`). Una misma zona
     puede aparecer en más de una vista —los brazos se ven de frente y de
     espaldas— y es el mismo control lógico.
 

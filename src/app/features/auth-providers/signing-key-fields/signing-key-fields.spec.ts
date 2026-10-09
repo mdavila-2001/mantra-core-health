@@ -6,7 +6,7 @@ import {
   SECCION_CLAVE_DE_FIRMA,
 } from './signing-key-fields';
 import { MAX_CAMPOS_POR_PAGINA } from '../../../shared/forms/paginated/paginated-form.types';
-import { paginarCampos } from '../../../shared/forms/paginated/paginar-campos';
+import { paginarCampos } from '../../../shared/forms/paginated/paginate-fields';
 
 /**
  * Los campos de una clave de firma, compartidos por publicar y rotar.

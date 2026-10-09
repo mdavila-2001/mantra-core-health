@@ -65,7 +65,7 @@ async function enviar(page: Page, ruta: string): Promise<Response> {
 }
 
 /**
- * Nombre desglosado. En `test`, `app-campos-de-nombre` es un mini-asistente
+ * Nombre desglosado. En `test`, `app-name-fields` es un mini-asistente
  * («Nombres» → «Apellidos») con su propio «Siguiente»: si el apellido no está
  * a la vista, se avanza dentro del componente, no del formulario.
  */
@@ -75,7 +75,7 @@ async function escribirNombre(page: Page, prefijo: string, nombre: string, apell
   const apellidoPaterno = page.getByTestId(`${prefijo}-apellido-paterno`);
   if (!(await apellidoPaterno.isVisible())) {
     await page
-      .locator('app-campos-de-nombre')
+      .locator('app-name-fields')
       .filter({ has: primerNombre })
       .getByRole('button', { name: 'Siguiente', exact: true })
       .click();

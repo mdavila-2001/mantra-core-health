@@ -5,8 +5,8 @@ import { By } from '@angular/platform-browser';
 import { Router, provideRouter } from '@angular/router';
 
 import { BodyMap } from '@shared/components/organisms/body-map/body-map';
-import { RECONOCEDOR_DE_VOZ } from './dictado';
-import type { EventoDeErrorDeVoz, EventoDeResultadoDeVoz, ReconocedorDeVoz } from './dictado.types';
+import { RECONOCEDOR_DE_VOZ } from './dictation';
+import type { EventoDeErrorDeVoz, EventoDeResultadoDeVoz, ReconocedorDeVoz } from './dictation.types';
 import { SymptomCheck } from './symptom-check';
 
 /**

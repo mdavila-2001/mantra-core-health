@@ -6,7 +6,7 @@ import { uuid } from './mock-store';
     El glosario del simulador, **bajo demanda**.
 
     Hasta el 2026-09-30 el simulador importaba el glosario entero
-    (`fixtures/glosario.generated.ts`, 1 MB, y el atlas anatómico, otro
+    (`fixtures/glossary.generated.ts`, 1 MB, y el atlas anatómico, otro
     1,7 MB) dentro del trozo de los manejadores. Con el glosario en castellano
     de cientos de miles de términos eso ya no entra en un bundle: ahora lee
     **shards** estáticos con `fetch` diferido, igual que la API pagina en la

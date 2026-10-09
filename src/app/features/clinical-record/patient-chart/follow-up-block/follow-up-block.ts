@@ -31,7 +31,7 @@ import { Card } from '../../../../shared/components/molecules/card/card';
 import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
-import { mensajeDeFalloDeEscritura } from '../../mensaje-de-escritura';
+import { mensajeDeFalloDeEscritura } from '../../write-message';
 import { FormResponsePicker } from '../form-response-picker/form-response-picker';
 
 /** Cuántos días adelante se puede citar de nuevo a alguien. */

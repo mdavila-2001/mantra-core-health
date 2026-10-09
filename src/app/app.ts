@@ -7,7 +7,7 @@ import { AlovidaRuntimeService } from '@core/alovida/alovida-runtime.service';
 import { ToastContainer } from '@shared/components/organisms/toast-container/toast-container';
 import { environment } from '../environments/environment';
 import { MockBanner } from './core/mock/mock-banner';
-import { AvisoDeHuecoLibre } from './features/notifications/aviso-de-hueco-libre';
+import { AvisoDeHuecoLibre } from './features/notifications/free-slot-notice';
 
 @Component({
   selector: 'app-root',
@@ -38,7 +38,7 @@ export class App {
     this.alovida.instalar();
     /* El aviso de cupo libre del punto 3.4 del registro de procesos. Se
        enciende solo en la maqueta y sólo con sesión abierta: contra la API real
-       el empujón lo da el servidor (módulo 35). Ver `aviso-de-hueco-libre.ts`. */
+       el empujón lo da el servidor (módulo 35). Ver `free-slot-notice.ts`. */
     this.huecosLibres.empezar();
     this.aplicarPantalla();
     this.router.events

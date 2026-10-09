@@ -1,6 +1,6 @@
 import { HttpHeaders } from '@angular/common/http';
 
-import { vitrinas } from './fixtures/comunidad';
+import { vitrinas } from './fixtures/community';
 import { crearRouterSimulado } from './handlers';
 import { isMockReply, type MockMethod } from './mock-router';
 

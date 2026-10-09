@@ -10,8 +10,8 @@ import type {
 import { MockRouter, isMockReply, type MockMethod, type MockReply } from '../mock-router';
 import { buscarUsuario, type MockUser } from '../mock-session';
 import { uuid } from '../mock-store';
-import { ESQUEMA_COMPRA_VENTA } from '../siat-sim/esquema-siat';
-import { facturaDesdeXml, leerXmlFactura } from '../siat-sim/factura-xml';
+import { ESQUEMA_COMPRA_VENTA } from '../siat-sim/siat-schema';
+import { facturaDesdeXml, leerXmlFactura } from '../siat-sim/invoice-xml';
 import { registrarFacturacionSimulada } from './billing-simulated.handlers';
 import { crearRouterSimulado } from './index';
 import { registrarFarmacia } from './pharmacy.handlers';

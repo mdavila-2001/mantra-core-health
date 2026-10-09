@@ -2,16 +2,16 @@ import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 
-import { establecerFirmaDeDocumentos, firmaDeDocumentos } from '../../shared/utils/pdf-export/pdf-firma';
+import { establecerFirmaDeDocumentos, firmaDeDocumentos } from '../../shared/utils/pdf-export/pdf-signature';
 import {
   establecerFuentesDeDocumentos,
   fuentesDeDocumentos,
-} from '../../shared/utils/pdf-export/pdf-fuentes';
+} from '../../shared/utils/pdf-export/pdf-fonts';
 import { establecerLogoDeDocumentos, logoDeDocumentos } from '../../shared/utils/pdf-export/pdf-logo';
 import { AuthService } from '../auth/auth.service';
-import { FirmaYSelloClient } from '../data-access/profiles/firma-y-sello.client';
+import { FirmaYSelloClient } from '../data-access/profiles/signature-and-seal.client';
 import { ProfilesClient } from '../data-access/profiles/profiles.client';
-import { LogoDelConsultorioClient } from '../data-access/practice-sites/logo-del-consultorio.client';
+import { LogoDelConsultorioClient } from '../data-access/practice-sites/practice-logo.client';
 import { PdfBrandingService, PREPARAR_FUENTES, PREPARAR_LOGO } from './pdf-branding.service';
 
 const LOGO = { dataUrl: 'data:image/png;base64,AAAA', formato: 'PNG' as const, ancho: 3, alto: 1 };

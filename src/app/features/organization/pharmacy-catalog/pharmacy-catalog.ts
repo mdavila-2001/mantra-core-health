@@ -60,7 +60,7 @@ import {
   type CamposDelProducto,
   type CodificacionDelCsv,
   type FilaRevisada,
-} from './catalogo.reglas';
+} from './catalog.rules';
 
 /** Tope del listado: el máximo que acepta `GET /pharmacy/products`. */
 const TOPE_DEL_LISTADO = 500;

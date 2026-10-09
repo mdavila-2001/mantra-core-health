@@ -11,7 +11,7 @@ import type {
   DiagnosticUnitBranchRegistration,
   LaboratoryOrganizationRegistration,
 } from '../../../core/data-access/iam/iam.types';
-import { registrationErrorToViewState } from '../registro-compartido/registration-errors';
+import { registrationErrorToViewState } from '../shared-registration/registration-errors';
 import { uiLanguage } from '../../../core/i18n/ui-language';
 import { loading, ready, validation } from '../../../core/view-state/view-state';
 import {
@@ -20,7 +20,7 @@ import {
   CODIGOS_DE_DIAGNOSTICO,
   CatalogoIncompleto,
   type CatalogosDeDiagnostico,
-} from '../registro-compartido/alta-de-centro-diagnostico';
+} from '../shared-registration/diagnostic-center-enrollment';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
 import { AppButton } from '../../../shared/components/atoms/button/button';
@@ -39,36 +39,36 @@ import { telefonoCompleto } from '../../../shared/components/molecules/phone-inp
 import { AuthSplit } from '../../../shared/components/organisms/auth-split/auth-split';
 import { BranchBulkImport } from '../../../shared/components/organisms/branch-bulk-import/branch-bulk-import';
 import type { BranchDraft } from '../../../shared/utils/branch-import/branch-import';
-import { CampoPersonalizado } from '../../../shared/components/organisms/paginated-form/campo-personalizado';
+import { CampoPersonalizado } from '../../../shared/components/organisms/paginated-form/custom-field';
 import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
 import {
   RegistroAyuda,
   type TarjetaDeAyuda,
-} from '../../../shared/components/organisms/registro-ayuda/registro-ayuda';
+} from '../../../shared/components/organisms/registration-help/registration-help';
 import {
   campoDelPoderNotariado,
   camposDeDocumentosLegales,
   DOCUMENTOS_LEGALES_DEL_REGISTRO,
   type ClaveDeDocumentoDelAlta,
-} from '../registro-compartido/documentos-legales';
+} from '../shared-registration/legal-documents';
 import {
   MENSAJE_CONTRASENA_CORTA,
   validadoresDeContrasena,
-} from '../registro-compartido/politica-de-contrasena';
-import { paginarCampos } from '../../../shared/forms/paginated/paginar-campos';
+} from '../shared-registration/password-policy';
+import { paginarCampos } from '../../../shared/forms/paginated/paginate-fields';
 import type { PaginaDeFormulario } from '../../../shared/forms/paginated/paginated-form.types';
 import {
   AVISO_REESCRIBIR_DIRECCION,
   UbicacionPicker,
   type Coordenadas,
   type IdsDePrueba,
-} from '../registro-compartido/ubicacion-picker/ubicacion-picker';
+} from '../shared-registration/map-location-picker/map-location-picker';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
-import { CamposDeNombre } from '../registro-compartido/campos-de-nombre/campos-de-nombre';
+import { CamposDeNombre } from '../shared-registration/name-fields/name-fields';
 import {
   grupoDeNombre,
   nombreCompleto,
-} from '../registro-compartido/campos-de-nombre/nombre-de-persona';
+} from '../shared-registration/name-fields/person-name';
 
 /* ============================================================================
     Alta del laboratorio de sangre — proceso 4.1 del registro del stakeholder.
@@ -299,7 +299,7 @@ const AYUDA: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
     CamposDeNombre,
   ],
   templateUrl: './register-laboratory.html',
-  styleUrls: ['../registro-compartido/registro.css', './register-laboratory.css'],
+  styleUrls: ['../shared-registration/registration.css', './register-laboratory.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RegisterLaboratory {
@@ -487,7 +487,7 @@ export class RegisterLaboratory {
         icon: 'shield' as const,
         campos: [
           {
-            // Sin rótulo ni error propios: `app-campos-de-nombre` pinta cada casilla
+            // Sin rótulo ni error propios: `app-name-fields` pinta cada casilla
             // con el suyo, y un `<label for>` externo apuntaría a un control que no existe.
             key: 'legalRepName',
             label: '',
@@ -678,7 +678,7 @@ export class RegisterLaboratory {
   /**
    * El punto de la central, ya confirmado sobre el mapa.
    *
-   * Fuera del formulario, como en el alta de profesional: `app-ubicacion-picker`
+   * Fuera del formulario, como en el alta de profesional: `app-map-location-picker`
    * emite **sólo lo confirmado** y se guarda para sí el estado intermedio.
    */
   readonly gpsCentral = signal<Coordenadas | null>(null);

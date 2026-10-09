@@ -8,14 +8,14 @@ import { PractitionerActivity } from './practitioner-activity/practitioner-activ
 import { PracticeSitesMap } from './practice-sites-map/practice-sites-map';
 import { ResidenceReadonly } from './residence-readonly/residence-readonly';
 import { AppMap } from '../../../../../shared/components/organisms/map/map';
-import type { PinMapa } from '../../../../../shared/components/organisms/map/pin-mapa.types';
+import type { PinMapa } from '../../../../../shared/components/organisms/map/map-pin.types';
 import { CredentialsPanel } from './credentials-panel/credentials-panel';
 import {
   PESTANAS_DEL_EDITOR_MEDICO,
   PESTANAS_DEL_PERFIL_MEDICO,
   PESTANA_EDITOR,
   PESTANA_MEDICO,
-} from '../../pestanas-del-perfil-medico';
+} from '../../doctor-profile-tabs';
 import { Avatar } from '../../../../../shared/components/atoms/avatar/avatar';
 import { Badge } from '../../../../../shared/components/atoms/badge/badge';
 import { AppButton } from '../../../../../shared/components/atoms/button/button';
@@ -23,8 +23,8 @@ import { AppButtonLink } from '../../../../../shared/components/atoms/button/but
 import { Chip } from '../../../../../shared/components/atoms/chip/chip';
 import { NavIcon } from '../../../../../shared/components/atoms/nav-icon/nav-icon';
 import { Card } from '../../../../../shared/components/molecules/card/card';
-import { FirmaOSello } from '../../../../../shared/components/molecules/firma-o-sello/firma-o-sello';
-import { LogoConsultorio } from '../../../../../shared/components/molecules/logo-consultorio/logo-consultorio';
+import { FirmaOSello } from '../../../../../shared/components/molecules/signature-or-seal/signature-or-seal';
+import { LogoConsultorio } from '../../../../../shared/components/molecules/practice-logo/practice-logo';
 import { TabHelpBlock } from '../../../../../shared/components/molecules/tab-help-block/tab-help-block';
 import { Tabs } from '../../../../../shared/components/molecules/tabs/tabs';
 import { Tab } from '../../../../../shared/components/molecules/tabs/tab/tab';

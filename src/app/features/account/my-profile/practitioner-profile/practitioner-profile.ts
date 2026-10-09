@@ -14,8 +14,8 @@ import { CommunityClient } from '../../../../core/data-access/community/communit
 import { FilesClient } from '../../../../core/data-access/files/files.client';
 import { InsuranceClient } from '../../../../core/data-access/insurance/insurance.client';
 import type { PractitionerInsuranceNetwork } from '../../../../core/data-access/insurance/insurance.types';
-import { FirmaYSelloClient, type FirmaYSello } from '../../../../core/data-access/profiles/firma-y-sello.client';
-import { LogoDelConsultorioClient } from '../../../../core/data-access/practice-sites/logo-del-consultorio.client';
+import { FirmaYSelloClient, type FirmaYSello } from '../../../../core/data-access/profiles/signature-and-seal.client';
+import { LogoDelConsultorioClient } from '../../../../core/data-access/practice-sites/practice-logo.client';
 import { PracticeSitesClient } from '../../../../core/data-access/practice-sites/practice-sites.client';
 import type { PracticeSite } from '../../../../core/data-access/practice-sites/practice-sites.types';
 import { ProfilesClient } from '../../../../core/data-access/profiles/profiles.client';
@@ -34,7 +34,7 @@ import { TerminologyClient } from '../../../../core/data-access/terminology/term
 import type { ConceptLabels } from '../../../../core/data-access/terminology/terminology.types';
 import { describeApiFailure } from '../../../../core/http/api-failure';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
-import { insuranceBillingFrequencyLabel } from '../../../../core/profesion/insurance-billing-frequency';
+import { insuranceBillingFrequencyLabel } from '../../../../core/profession/insurance-billing-frequency';
 import { HelpBlockDismissalStore } from '../../../../core/tutorials/help-block-dismissal.store';
 import { dataOf, loading, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
@@ -44,8 +44,8 @@ import type { StatusSealVariant } from '../../../../shared/components/organisms/
 import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
 import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
-import { CONTADORES_DE_ACTIVIDAD } from '../contadores-de-actividad';
-import { PESTANAS_DEL_PERFIL_MEDICO, PESTANA_MEDICO } from '../pestanas-del-perfil-medico';
+import { CONTADORES_DE_ACTIVIDAD } from '../activity-counters';
+import { PESTANAS_DEL_PERFIL_MEDICO, PESTANA_MEDICO } from '../doctor-profile-tabs';
 import { PractitionerProfileView } from './practitioner-profile-view/practitioner-profile-view';
 import type {
   AfiliacionVisible,

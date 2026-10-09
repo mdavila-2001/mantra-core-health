@@ -39,7 +39,7 @@ import {
   signoDe,
   tonoDeMovimiento,
   unidadDePuntos,
-} from './punto-motivo';
+} from './point-reason';
 import { RedeemCode } from './redeem-code/redeem-code';
 
 /** En qué parte de la billetera está la persona. */

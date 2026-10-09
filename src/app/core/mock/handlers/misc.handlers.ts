@@ -8,7 +8,7 @@ import {
   PARENTESCO,
   UNIDAD,
   VIA,
-} from '../fixtures/conceptos';
+} from '../fixtures/concepts';
 import {
   MEDICA,
   PACIENTE,
@@ -16,7 +16,7 @@ import {
   PROFESIONALES,
   pacientePorId,
   profesionalPorId,
-} from '../fixtures/personas';
+} from '../fixtures/people';
 import { conflict, forbidden, noContent, notFound, preconditionFailed, reply, unauthorized, type MockRouter } from '../mock-router';
 import { TENANT_CLINICA } from '../mock-session';
 import { ahora, Coleccion, cuerpo, iso, nuevoId, uuid } from '../mock-store';

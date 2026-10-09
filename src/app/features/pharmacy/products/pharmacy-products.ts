@@ -44,7 +44,7 @@ import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { dataOf, empty, loading, mapData, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 
-import { COLUMNAS_DEL_CSV } from '../catalog-rules/catalogo.reglas';
+import { COLUMNAS_DEL_CSV } from '../catalog-rules/catalog.rules';
 import { pharmacyErrorMessage } from '../pharmacy-error-message';
 import { PharmacyScope } from '../pharmacy-scope';
 import { ProductDialog } from './product-dialog/product-dialog';

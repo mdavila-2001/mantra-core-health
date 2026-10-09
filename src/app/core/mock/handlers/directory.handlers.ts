@@ -1,6 +1,6 @@
 import { reservas, recursos } from '../fixtures/agenda';
-import { CARGO, ESTADO, TIPO_ORGANIZACION } from '../fixtures/conceptos';
-import { afiliaciones, MEDICA, PROFESIONALES, profesionalPorId } from '../fixtures/personas';
+import { CARGO, ESTADO, TIPO_ORGANIZACION } from '../fixtures/concepts';
+import { afiliaciones, MEDICA, PROFESIONALES, profesionalPorId } from '../fixtures/people';
 import {
   conflict,
   forbidden,

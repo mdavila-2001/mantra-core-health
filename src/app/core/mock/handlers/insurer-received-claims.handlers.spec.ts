@@ -1,6 +1,6 @@
 import { HttpHeaders } from '@angular/common/http';
 
-import { PROFESIONALES } from '../fixtures/personas';
+import { PROFESIONALES } from '../fixtures/people';
 import { MockRouter, type MockReply } from '../mock-router';
 import { buscarUsuario, type MockUser } from '../mock-session';
 import { registerInsurerReceivedClaims } from './insurer-received-claims.handlers';

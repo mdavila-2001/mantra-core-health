@@ -11,7 +11,7 @@ import {
 
 import { AppButton } from '@shared/components/atoms/button/button';
 import { AppMap } from '@shared/components/organisms/map/map';
-import type { PinMapa, PuntoGeo } from '@shared/components/organisms/map/pin-mapa.types';
+import type { PinMapa, PuntoGeo } from '@shared/components/organisms/map/map-pin.types';
 import { ContentDialog } from '@shared/components/organisms/content-dialog/content-dialog';
 
 /** Radio de la Tierra en kilómetros, el valor medio de la esfera. */

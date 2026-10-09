@@ -28,7 +28,7 @@ import {
   DepartmentMap,
   type DepartamentoElegible,
 } from '@shared/components/organisms/department-map/department-map';
-import { departamentoPorCiudad, normalizarLugar } from '@shared/geo/departamento-de-ciudad';
+import { departamentoPorCiudad, normalizarLugar } from '@shared/geo/city-department';
 
 import { CentroCard } from '../centro-card/centro-card';
 import { toFacilityCard, type FacilityCard } from './facility-card.mapper';
@@ -140,7 +140,7 @@ type EstadoDeBusqueda = 'carga' | 'datos' | 'vacio' | 'error';
   styleUrls: [
     './hospitales-listado.css',
     '../centro-card/centro-grid.css',
-    '../../../public-directories/mapa-directorio.css',
+    '../../../public-directories/directory-map.css',
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

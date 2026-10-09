@@ -20,7 +20,7 @@ import {
   SymptomObservationsStore,
   type ObservacionDeSintomas,
 } from '@core/symptom-notes/symptom-observations.store';
-import { ZONAS_DEL_CUERPO, type ZonaDelCuerpo } from './zonas.datos';
+import { ZONAS_DEL_CUERPO, type ZonaDelCuerpo } from './zones.data';
 import { AppButton } from '@shared/components/atoms/button/button';
 import { Chip } from '@shared/components/atoms/chip/chip';
 import { Spinner } from '@shared/components/atoms/spinner/spinner';
@@ -53,16 +53,16 @@ import {
   type Recomendacion,
   type Sintoma,
   TODOS_LOS_SINTOMAS,
-} from './sintomas';
-import { Dictado } from './dictado';
+} from './symptoms';
+import { Dictado } from './dictation';
 import {
   combinar,
   lecturaVigente,
   sintomasDeLaLectura,
   zonasDeLaLectura,
   type LecturaDelTexto,
-} from './lectura-ia';
-import { ultimaFrase } from './texto';
+} from './ai-reading';
+import { ultimaFrase } from './text';
 import { EmergencyPanel } from '../emergency/emergency-panel/emergency-panel';
 
 /**
@@ -273,7 +273,7 @@ export class SymptomCheck {
    * El motor local reconoce las filas de la tabla al instante; el servicio suma
    * lo que la tabla no tiene —«me duele la pantorrilla», «manchas en la
    * espalda»— y ubica lo que sí tiene («hormigueo · mano izquierda»). Ver
-   * `lectura-ia.ts`.
+   * `ai-reading.ts`.
    *
    * Con menos de tres letras no se pregunta nada, y así en el servidor (texto
    * vacío) no se programa ni un temporizador. Si el servicio falla o tarda,
@@ -425,7 +425,7 @@ export class SymptomCheck {
     return observacion.sintomas.map((s) => s.nombre).join(' · ');
   }
 
-  /** Para el template: el término del glosario (ver `nombreParaMostrar` en sintomas.ts). */
+  /** Para el template: el término del glosario (ver `nombreParaMostrar` en symptoms.ts). */
   protected readonly nombreParaMostrar = nombreParaMostrar;
   protected readonly codigoDelGlosario = codigoDelGlosario;
 

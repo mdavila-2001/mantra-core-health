@@ -48,7 +48,7 @@ async function continuarHasta(page: Page, titulo: string): Promise<void> {
   await enLaPagina(page, titulo);
 }
 
-/** Nombre desglosado (`app-campos-de-nombre`): las dos partes obligatorias. */
+/** Nombre desglosado (`app-name-fields`): las dos partes obligatorias. */
 async function escribirNombre(page: Page, prefijo: string, nombre: string, apellido: string): Promise<void> {
   await page.getByTestId(`${prefijo}-nombre`).fill(nombre);
   await page.getByTestId(`${prefijo}-apellido-paterno`).fill(apellido);

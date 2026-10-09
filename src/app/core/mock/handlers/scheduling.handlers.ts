@@ -12,12 +12,12 @@ import {
   type ReservaSimulada,
 } from '../fixtures/agenda';
 import { TIPO_CITA_RECONSULTA } from '../fixtures/agenda';
-import { ACTIVIDAD, CANAL, CLASE_ENCUENTRO, ESTADO, ESTADO_ENCUENTRO, ESTADO_RESERVA, TIPO_BLOQUEO, TIPO_CITA } from '../fixtures/conceptos';
-import { encuentros, type EncuentroSimulado } from '../fixtures/clinica';
+import { ACTIVIDAD, CANAL, CLASE_ENCUENTRO, ESTADO, ESTADO_ENCUENTRO, ESTADO_RESERVA, TIPO_BLOQUEO, TIPO_CITA } from '../fixtures/concepts';
+import { encuentros, type EncuentroSimulado } from '../fixtures/clinic';
 import type { FollowUpOrigin } from '../../data-access/scheduling/scheduling.types';
 import { emitirNotificacion } from './notifications.handlers';
 import { solicitudDeLaCita } from './insurance.handlers';
-import { pacientePorId, pacientes } from '../fixtures/personas';
+import { pacientePorId, pacientes } from '../fixtures/people';
 import { representaA } from './profiles.handlers';
 import { conflict, forbidden, noContent, notFound, preconditionFailed, reply, validation, type MockReply, type MockRequest, type MockRouter } from '../mock-router';
 import { ahora, cuerpo, masMinutos, nuevoId, texto, uuid } from '../mock-store';

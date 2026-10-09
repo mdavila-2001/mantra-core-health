@@ -39,7 +39,7 @@ import { ToastService } from '../../../../shared/components/molecules/toast/toas
 import { AttachmentDialog } from '../../../../shared/components/organisms/attachment-dialog/attachment-dialog';
 import { FormActions } from '../../../../shared/components/organisms/form-actions/form-actions';
 import { Odontogram } from '../odontogram/odontogram';
-import { mensajeDeFalloDeEscritura } from '../../mensaje-de-escritura';
+import { mensajeDeFalloDeEscritura } from '../../write-message';
 
 /**
  * Cuántos casos quirúrgicos se traen, y de cuántos se pide el detalle.

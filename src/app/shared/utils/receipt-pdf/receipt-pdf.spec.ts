@@ -1,5 +1,5 @@
 import type { PedidoFarmacia } from '../../../core/data-access/pharmacy-orders/pharmacy-orders.types';
-import { comprobanteDesdePedido } from './from-pedido';
+import { comprobanteDesdePedido } from './from-order';
 import { bloquesDeComprobante } from './receipt-pdf';
 import type { DocumentoDeComprobante } from './receipt-pdf.types';
 

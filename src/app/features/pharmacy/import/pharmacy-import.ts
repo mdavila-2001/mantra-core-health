@@ -60,7 +60,7 @@ import {
   type FilaRevisada,
   type LecturaDelCsv,
   type ModoDeCarga,
-} from '../catalog-rules/catalogo.reglas';
+} from '../catalog-rules/catalog.rules';
 import { PharmacyScope } from '../pharmacy-scope';
 import { pharmacyErrorMessage } from '../pharmacy-error-message';
 

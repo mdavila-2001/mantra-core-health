@@ -43,7 +43,7 @@ import {
   revisarProducto,
   type CamposDelProducto,
   type VinculoConElCatalogo,
-} from '../../catalog-rules/catalogo.reglas';
+} from '../../catalog-rules/catalog.rules';
 import { pharmacyErrorMessage } from '../../pharmacy-error-message';
 import {
   CATALOG_SEARCH_LIMIT,

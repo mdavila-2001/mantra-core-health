@@ -4,7 +4,7 @@ import { RouterLink } from '@angular/router';
 import { SessionStore } from '@core/auth/session.store';
 import { ROLES_DE_QUIEN_ATIENDE } from '@core/navigation/navigation.map';
 import type { OwnPublicProfile } from '@core/data-access/community/community.types';
-import { inicialesDe } from '@shared/text/iniciales';
+import { inicialesDe } from '@shared/text/initials';
 import { Composer } from '../../../../feed/composer/composer';
 
 /**

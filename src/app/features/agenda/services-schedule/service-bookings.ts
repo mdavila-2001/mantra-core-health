@@ -6,7 +6,7 @@ import type { TerminologyClient } from '@core/data-access/terminology/terminolog
 import type { ConceptLabels } from '@core/data-access/terminology/terminology.types';
 
 import { AWAITING_RESPONSE_CODES, sufijoDeCodigo } from '../booking-status';
-import { misRecursosDeAgenda } from '../mi-recurso';
+import { misRecursosDeAgenda } from '../my-resource';
 
 /** Cuántas semanas hacia adelante se juntan las solicitudes y los turnos. */
 export const SERVICE_BOOKINGS_WEEKS = 8;

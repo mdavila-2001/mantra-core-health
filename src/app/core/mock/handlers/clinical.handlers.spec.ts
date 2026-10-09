@@ -1,9 +1,9 @@
 import { HttpHeaders } from '@angular/common/http';
 
 import type { ClinicalNoteVersionRef } from '../../data-access/chart-notes/chart-notes.types';
-import { condiciones, notas, NOTA_TIPO_EVOLUCION, type CondicionSimulada, type NotaSimulada } from '../fixtures/clinica';
-import { ESTADO, ESTUDIO, VERIFICACION_DX } from '../fixtures/conceptos';
-import { PACIENTE, PACIENTES } from '../fixtures/personas';
+import { condiciones, notas, NOTA_TIPO_EVOLUCION, type CondicionSimulada, type NotaSimulada } from '../fixtures/clinic';
+import { ESTADO, ESTUDIO, VERIFICACION_DX } from '../fixtures/concepts';
+import { PACIENTE, PACIENTES } from '../fixtures/people';
 import { MockRouter, type MockMethod, type MockReply } from '../mock-router';
 import { buscarUsuario, type MockUser } from '../mock-session';
 import { registrarClinica } from './clinical.handlers';

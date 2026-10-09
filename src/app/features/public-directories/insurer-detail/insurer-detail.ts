@@ -50,7 +50,7 @@ import {
   filtrosDelCatalogo,
   hayCriterio,
   type PlanFiltrado,
-} from './insurer-detail.filtros';
+} from './insurer-detail.filters';
 
 /** Los documentos que una cláusula puede exigir, dichos para el paciente. */
 const DOCUMENTOS: Readonly<Record<ApprovalDocumentCode, string>> = {
@@ -233,8 +233,8 @@ const COLUMNAS: readonly ColumnDef<FilaDeClausula>[] = [
   ],
   templateUrl: './insurer-detail.html',
   styleUrls: [
-    '../../../shared/styles/rejilla-de-tarjetas.css',
-    '../../../shared/styles/ficha-publica.css',
+    '../../../shared/styles/card-grid.css',
+    '../../../shared/styles/public-sheet.css',
     './insurer-detail.css',
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,

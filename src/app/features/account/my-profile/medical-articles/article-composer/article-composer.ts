@@ -25,7 +25,7 @@ import {
 } from '../../../../../shared/components/molecules/rich-text-editor/rich-text-editor.types';
 import { ArticleBody } from '../../../../../shared/components/organisms/article-body/article-body';
 import { articleStats, htmlToArticle } from '../../../../../shared/text/article-markup';
-import { SelectorEmojis } from '../../../../messaging/thread/composer/selector-emojis';
+import { SelectorEmojis } from '../../../../messaging/thread/composer/emoji-picker';
 
 /**
  * Tope real de imágenes por publicación (`CreatePostDto.media`,

@@ -1,5 +1,5 @@
-import { conceptoPorId } from '../fixtures/conceptos';
-import { MEDICA, PACIENTE, PACIENTES, PROFESIONALES, type ProfesionalSimulado } from '../fixtures/personas';
+import { conceptoPorId } from '../fixtures/concepts';
+import { MEDICA, PACIENTE, PACIENTES, PROFESIONALES, type ProfesionalSimulado } from '../fixtures/people';
 import { conflict, forbidden, notFound, unauthorized, validation, type MockRequest, type MockRouter } from '../mock-router';
 import { TENANT_LABORATORIO, type MockUser } from '../mock-session';
 import { ahora, Coleccion, cuerpo, iso, isoDia, uuid } from '../mock-store';

@@ -19,7 +19,7 @@ import {
 } from '@core/data-access/terminology/bo-municipalities.service';
 import type { DepartamentoElegible } from '@shared/components/organisms/department-map/department-map';
 
-import { departamentoPorCiudad, normalizarLugar } from '@shared/geo/departamento-de-ciudad';
+import { departamentoPorCiudad, normalizarLugar } from '@shared/geo/city-department';
 
 import { aTarjeta } from '../alovida/buscar/public-result.mapper';
 

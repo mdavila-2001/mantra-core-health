@@ -20,7 +20,7 @@
            tabla de datos, la paginación y el selector de origen, y no es la
            primera pestaña de nadie. -->
       @defer (when pestana() === 1) {
-        <app-cotizaciones [embedded]="true" fixedVertical="MEDICAMENTOS" />
+        <app-quotations [embedded]="true" fixedVertical="MEDICAMENTOS" />
       } @placeholder {
         <p class="farmacia__cargando">Abra esta pestaña para comparar precios de farmacia.</p>
       } @loading {

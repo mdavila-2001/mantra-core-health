@@ -163,7 +163,7 @@ test('2b · el cambio se relee del servidor, no es sólo de la pantalla', async 
   // `UI → request → response → relectura → UI`.
   //
   // **Sin recargar la página, a propósito.** La maqueta guarda los mensajes en
-  // memoria —`mensajes` de `fixtures/comunidad.ts` no declara clave de sesión—,
+  // memoria —`mensajes` de `fixtures/community.ts` no declara clave de sesión—,
   // así que recargar los devuelve al fixture: una prueba de persistencia tras
   // recarga acá mediría el simulador, no el producto. Lo que sí se puede
   // demostrar es que el texto nuevo vuelve del servidor: salir del hilo y

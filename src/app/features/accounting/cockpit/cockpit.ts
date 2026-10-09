@@ -52,7 +52,7 @@ import {
   ETIQUETA_DE_ESTADO,
   TONO_DEL_ESTADO,
   type AccionDisponible,
-} from './flujo-del-documento';
+} from './document-flow';
 
 /**
  * El **cockpit contable**: la pantalla que responde «¿cómo va el ejercicio?»

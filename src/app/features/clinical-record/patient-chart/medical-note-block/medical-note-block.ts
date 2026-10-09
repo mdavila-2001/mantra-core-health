@@ -40,7 +40,7 @@ import { FormActions } from '../../../../shared/components/organisms/form-action
 import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
 import type { CitaDelPaciente } from '../diagnosis-block/diagnosis-block';
 import { DRAFT_BLOCK, type DraftBlock } from '../draft-block';
-import { mensajeDeEscritura } from '../../mensaje-de-escritura';
+import { mensajeDeEscritura } from '../../write-message';
 
 /** Hasta cuántas filas admite una nota. Más que eso ya es un formulario. */
 export const TOPE_DE_FILAS = 40;

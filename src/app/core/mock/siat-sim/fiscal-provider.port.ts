@@ -21,8 +21,8 @@
     ignora.
     ========================================================================== */
 
-import type { CatalogosFiscales } from './catalogos-simulados';
-import type { CodigoEstadoSiat } from './codigos-siat';
+import type { CatalogosFiscales } from './simulated-catalogs';
+import type { CodigoEstadoSiat } from './siat-codes';
 
 /** Identifica al contribuyente, su sistema y el lugar de emisión. */
 export interface ContextoFiscal {

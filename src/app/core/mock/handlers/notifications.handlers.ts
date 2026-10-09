@@ -1,12 +1,12 @@
 import { reservas } from '../fixtures/agenda';
-import { conversaciones } from '../fixtures/comunidad';
-import { recetas } from '../fixtures/clinica';
-import { MEDICA, PACIENTE } from '../fixtures/personas';
+import { conversaciones } from '../fixtures/community';
+import { recetas } from '../fixtures/clinic';
+import { MEDICA, PACIENTE } from '../fixtures/people';
 import {
   avisoDeHorarioLiberado,
   esperaUnHueco,
   horariosLiberados,
-} from '../horario-liberado';
+} from '../released-slot';
 import { notFound, type MockRequest, type MockRouter } from '../mock-router';
 import { ahora, Coleccion, cuerpo, iso, paginar, uuid } from '../mock-store';
 
@@ -153,7 +153,7 @@ function propias(request: MockRequest): NotificacionSimulada[] {
  * Los avisos de cupo libre, calculados **en cada lectura**.
  *
  * No se siembran con el resto porque no son un dato: son una conclusión sobre
- * el reloj (ver `horario-liberado.ts`). Sembrarlos al arrancar los dejaría
+ * el reloj (ver `released-slot.ts`). Sembrarlos al arrancar los dejaría
  * ahí desde el primer render, y lo que hay que poder mostrar es que *llegan*.
  *
  * Se guardan la primera vez que se los ve —y sólo entonces— para que marcarlos

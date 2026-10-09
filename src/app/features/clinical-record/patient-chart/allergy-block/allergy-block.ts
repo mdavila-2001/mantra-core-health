@@ -28,7 +28,7 @@ import { AttachmentUploader } from '../../../../shared/components/organisms/atta
 import { FormActions } from '../../../../shared/components/organisms/form-actions/form-actions';
 import type { CitaDelPaciente } from '../diagnosis-block/diagnosis-block';
 import { DRAFT_BLOCK, type DraftBlock } from '../draft-block';
-import { mensajeDeEscritura } from '../../mensaje-de-escritura';
+import { mensajeDeEscritura } from '../../write-message';
 
 /** El alérgeno. Los medicamentos salen del vademécum; el resto, de este set. */
 export const TARGET_SUSTANCIA = 'clinical.allergy_intolerances.substance_concept_id';

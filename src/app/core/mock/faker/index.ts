@@ -6,7 +6,7 @@
     proyectos antes:
 
       1. **La semilla.** `faker` a secas arranca aleatorio y rompe el
-         determinismo del que depende todo el mock (ver `semilla.ts`). Pasando
+         determinismo del que depende todo el mock (ver `seed.ts`). Pasando
          por `fk.conSemilla(...)` no hay forma de olvidarlo.
 
       2. **El peso.** `@faker-js/faker` no es pequeño. Todo esto vive detrás del
@@ -19,10 +19,10 @@
     Se importa el locale español, no el genérico: `fakerES` trae nombres y
     apellidos que un lector boliviano reconoce. Lo que el locale no cubre
     —cédulas, NIT, celulares +591, municipios, mapas— lo pone `bolivia.ts`, y
-    lo clínico lo pone `clinico.ts` eligiendo siempre del catálogo real.
+    lo clínico lo pone `clinical.ts` eligiendo siempre del catálogo real.
     ========================================================================== */
 
-export { apellido, conSemilla, semillaDe, slugDeNombre } from './semilla';
+export { apellido, conSemilla, semillaDe, slugDeNombre } from './seed';
 
 export {
   ASEGURADORAS,
@@ -71,4 +71,4 @@ export {
   unidadId,
   viaId,
   type SignoVital,
-} from './clinico';
+} from './clinical';

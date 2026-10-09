@@ -28,8 +28,8 @@ import { Switch } from '../../../shared/components/atoms/switch/switch';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
-import { tiempoRelativo } from '../../../shared/date/tiempo-relativo';
-import { AlarmaDePedidos } from './alarma-de-pedidos';
+import { tiempoRelativo } from '../../../shared/date/relative-time';
+import { AlarmaDePedidos } from './order-alarm';
 import {
   GRUPOS_DE_BANDEJA,
   etiquetaDeGrupo,
@@ -37,7 +37,7 @@ import {
   toBandejaStatusPresentation,
   type BandejaStatusPresentation,
   type GrupoDeBandeja,
-} from './bandeja-status';
+} from './inbox-status';
 import {
   RECORTES_DE_CERRADOS,
   TODAS_LAS_SEDES,
@@ -49,8 +49,8 @@ import {
   sedesDeFarmacias,
   type RecorteDeCerrados,
   type SedeDeBandeja,
-} from './bandeja-filtros';
-import { entregaEnPantalla, type EntregaEnPantalla } from './entrega-status';
+} from './inbox-filters';
+import { entregaEnPantalla, type EntregaEnPantalla } from './delivery-status';
 import { withDisplayCurrency } from '../../../core/money/display-currency';
 
 /**

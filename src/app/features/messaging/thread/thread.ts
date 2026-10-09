@@ -24,18 +24,18 @@ import type {
   ConversationListItem,
   MessageReaction,
 } from '../../../core/data-access/community/community.types';
-import { ChatPreferencias } from '../../../core/messaging/chat-preferencias';
+import { ChatPreferencias } from '../../../core/messaging/chat-preferences';
 import {
   avatarDeConQuien as avatarDeConQuienDe,
   conQuien as conQuienDe,
-} from '../../../core/messaging/con-quien';
-import { etiquetaDeDia, horaDelReloj } from '../../../shared/date/hora-de-chat';
+} from '../../../core/messaging/conversation-label';
+import { etiquetaDeDia, horaDelReloj } from '../../../shared/date/chat-time';
 import { Avatar } from '../../../shared/components/atoms/avatar/avatar';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { EmptyState } from '../../../shared/components/molecules/empty-state/empty-state';
 import { ContentDialog } from '../../../shared/components/organisms/content-dialog/content-dialog';
 import { Composer } from './composer/composer';
-import { SelectorEmojis } from './composer/selector-emojis';
+import { SelectorEmojis } from './composer/emoji-picker';
 import { ContactPanel } from './contact-panel/contact-panel';
 import { FilePreview } from '../../../shared/components/molecules/file-preview/file-preview';
 import { formatearTamano } from '../../../core/data-access/files/upload-policy';
@@ -45,7 +45,7 @@ import {
   metadatosDeDataUrl,
   nombreDelTipo,
   type MetadatosDeAdjunto,
-} from '../../../core/messaging/adjunto-metadata';
+} from '../../../core/messaging/attachment-metadata';
 
 /**
  * Una línea del hilo: un separador —de día o de «no leídos»— o un mensaje con
@@ -209,7 +209,7 @@ function resaltar(texto: string, termino: string): readonly TrozoDeTexto[] {
     SelectorEmojis,
   ],
   templateUrl: './thread.html',
-  styleUrls: ['./thread.css', './thread-capas.css'],
+  styleUrls: ['./thread.css', './thread-layers.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Thread {

@@ -19,46 +19,46 @@ import { telefonoCompleto } from '../../../shared/components/molecules/phone-inp
 import { AuthSplit } from '../../../shared/components/organisms/auth-split/auth-split';
 import { BranchBulkImport } from '../../../shared/components/organisms/branch-bulk-import/branch-bulk-import';
 import type { BranchDraft } from '../../../shared/utils/branch-import/branch-import';
-import { CampoPersonalizado } from '../../../shared/components/organisms/paginated-form/campo-personalizado';
+import { CampoPersonalizado } from '../../../shared/components/organisms/paginated-form/custom-field';
 import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
 import {
   RegistroAyuda,
   type TarjetaDeAyuda,
-} from '../../../shared/components/organisms/registro-ayuda/registro-ayuda';
-import { MAX_ATTACHMENT_BYTES } from '../registro-compartido/credenciales-del-medico';
+} from '../../../shared/components/organisms/registration-help/registration-help';
+import { MAX_ATTACHMENT_BYTES } from '../shared-registration/doctor-credentials';
 import {
   MENSAJE_CONTRASENA_CORTA,
   validadoresDeContrasena,
-} from '../registro-compartido/politica-de-contrasena';
-import { paginarCampos } from '../../../shared/forms/paginated/paginar-campos';
+} from '../shared-registration/password-policy';
+import { paginarCampos } from '../../../shared/forms/paginated/paginate-fields';
 import type { PaginaDeFormulario } from '../../../shared/forms/paginated/paginated-form.types';
 import {
   AVISO_REESCRIBIR_DIRECCION,
   UbicacionPicker,
   type Coordenadas,
   type IdsDePrueba,
-} from '../registro-compartido/ubicacion-picker/ubicacion-picker';
+} from '../shared-registration/map-location-picker/map-location-picker';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
-import { generarCodigoLegible } from '../../../core/codigo-legible/codigo-legible';
+import { generarCodigoLegible } from '../../../core/readable-code/readable-code';
 import { IamClient } from '../../../core/data-access/iam/iam.client';
 import type {
   DiagnosticCenterRegistration,
   OrganizationContactPerson,
   OrganizationExecutives,
 } from '../../../core/data-access/iam/iam.types';
-import { registrationErrorToViewState } from '../registro-compartido/registration-errors';
+import { registrationErrorToViewState } from '../shared-registration/registration-errors';
 import { loading, ready, validation } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
-import { codigoDesdeSigla } from '../register-organization/codigo-desde-sigla';
+import { codigoDesdeSigla } from '../register-organization/code-from-acronym';
 import {
   AVISO_CATALOGO_DE_DIAGNOSTICO,
   AltaDeCentroDiagnostico,
   CODIGOS_DE_DIAGNOSTICO,
   CatalogoIncompleto,
   type CatalogosDeDiagnostico,
-} from '../registro-compartido/alta-de-centro-diagnostico';
-import { CamposDeNombre } from '../registro-compartido/campos-de-nombre/campos-de-nombre';
-import { grupoDeNombre, nombreCompleto } from '../registro-compartido/campos-de-nombre/nombre-de-persona';
+} from '../shared-registration/diagnostic-center-enrollment';
+import { CamposDeNombre } from '../shared-registration/name-fields/name-fields';
+import { grupoDeNombre, nombreCompleto } from '../shared-registration/name-fields/person-name';
 
 /* ============================================================================
     Alta del centro de imagenología — «MODULO ANALISIS MEDICOS (RAYOS X,
@@ -446,7 +446,7 @@ const AYUDA: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
     CamposDeNombre,
   ],
   templateUrl: './register-imaging-center.html',
-  styleUrls: ['../registro-compartido/registro.css', './register-imaging-center.css'],
+  styleUrls: ['../shared-registration/registration.css', './register-imaging-center.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RegisterImagingCenter {
@@ -753,7 +753,7 @@ export class RegisterImagingCenter {
       icon: 'shield' as const,
       campos: [
         {
-          // Sin rótulo ni error propios: `app-campos-de-nombre` pinta cada casilla
+          // Sin rótulo ni error propios: `app-name-fields` pinta cada casilla
           // con el suyo, y un `<label for>` externo apuntaría a un control que no existe.
           key: 'legalRepName',
           label: '',
@@ -945,7 +945,7 @@ export class RegisterImagingCenter {
   /**
    * El punto de la central, ya confirmado sobre el mapa.
    *
-   * Fuera del formulario, como en las otras altas: `app-ubicacion-picker` emite
+   * Fuera del formulario, como en las otras altas: `app-map-location-picker` emite
    * **sólo lo confirmado** y se guarda para sí el estado intermedio.
    */
   readonly gpsCentral = signal<Coordenadas | null>(null);

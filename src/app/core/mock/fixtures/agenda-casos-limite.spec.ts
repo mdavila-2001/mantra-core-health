@@ -1,4 +1,4 @@
-import { PROFESIONALES, PROFESIONALES_DEMO_REGISTRADOS } from './personas';
+import { PROFESIONALES, PROFESIONALES_DEMO_REGISTRADOS } from './people';
 import { recursos } from './agenda';
 
 /**
@@ -12,7 +12,7 @@ import { recursos } from './agenda';
  */
 describe('agenda de los registrados — casos límite', () => {
   it('un médico sin ninguna especialidad sigue sin recurso', () => {
-    // El médico escrito sin especialidad (`personas.ts`, clave
+    // El médico escrito sin especialidad (`people.ts`, clave
     // `sinespecialidad`): el filtro de `recursos` lo deja afuera a propósito,
     // porque no hay nada que reservarle. El caso se prueba con él y no con
     // uno de los 13 de demostración, que tienen todos especialidad.

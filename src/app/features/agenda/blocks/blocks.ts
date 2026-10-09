@@ -27,7 +27,7 @@ import { PageHeader } from '../../../shared/components/organisms/page-header/pag
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
 import { AGENDA_ROUTE } from '../agenda.routes';
-import { misRecursosDeAgenda } from '../mi-recurso';
+import { misRecursosDeAgenda } from '../my-resource';
 import {
   BlockForm,
   type BloqueoEnEdicion,

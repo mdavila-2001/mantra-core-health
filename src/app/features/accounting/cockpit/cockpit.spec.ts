@@ -8,7 +8,7 @@ import { API_BASE_URL } from '../../../core/data-access/api';
 import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
 import { Cockpit } from './cockpit';
-import { ACCION_DEL_ESTADO, ETIQUETA_DE_ESTADO, TONO_DEL_ESTADO } from './flujo-del-documento';
+import { ACCION_DEL_ESTADO, ETIQUETA_DE_ESTADO, TONO_DEL_ESTADO } from './document-flow';
 
 /* ============================================================================
     El cockpit contable.

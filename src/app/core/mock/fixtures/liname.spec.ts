@@ -2,7 +2,7 @@ import { HttpHeaders } from '@angular/common/http';
 
 import { registrarVarios } from '../handlers/misc.handlers';
 import { MockRouter } from '../mock-router';
-import { conceptoPorCodigo, miembrosDe } from './conceptos';
+import { conceptoPorCodigo, miembrosDe } from './concepts';
 import { MEDICAMENTOS_LINAME } from './liname.generated';
 
 describe('vademécum de la receta: la LINAME 2022-2024', () => {

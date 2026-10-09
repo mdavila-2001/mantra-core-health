@@ -6,7 +6,7 @@ import {
   ArchivoInvalido,
   leerTablaCsv,
   sinTildes,
-} from '../catalog-rules/catalogo.reglas';
+} from '../catalog-rules/catalog.rules';
 import { productName, productStatus } from '../products/product-view';
 
 /** Tope de existencias y de umbral: el mismo del servidor. */

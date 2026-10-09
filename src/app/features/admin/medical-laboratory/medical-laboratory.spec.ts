@@ -6,7 +6,7 @@ import { RouterTestingHarness } from '@angular/router/testing';
 
 import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
 import { MedicalLaboratory } from './medical-laboratory';
-import { TarifariosRecordados } from './tarifarios-recordados';
+import { TarifariosRecordados } from './remembered-price-lists';
 
 /**
  * Consola de administración del laboratorio (CARRIL 16) contra

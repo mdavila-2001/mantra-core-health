@@ -84,8 +84,8 @@ import {
   downloadVisitPdf,
   VALOR_ENMASCARADO,
 } from '../../../shared/utils/clinical-pdf/clinical-pdf';
-import { esCodigoDeAlergia } from '../../../shared/utils/alergias/alergias';
-import { contextoDeLaSesion } from '../../../shared/utils/clinical-pdf/firma-de-la-sesion';
+import { esCodigoDeAlergia } from '../../../shared/utils/allergies/allergies';
+import { contextoDeLaSesion } from '../../../shared/utils/clinical-pdf/session-signature';
 import {
   atencionDesdeResumen,
   recetaDesdeResumen,
@@ -96,7 +96,7 @@ import type { ColumnDef } from '../../../shared/components/organisms/data-table/
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { TutorialTarget } from '../../../shared/components/organisms/tutorial-overlay/tutorial-target.directive';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
-import { mensajeDeFalloDeEscritura } from '../mensaje-de-escritura';
+import { mensajeDeFalloDeEscritura } from '../write-message';
 import { CLINICAL_RECORD_ROUTE } from '../clinical-record.routes';
 import { CarePlanBlock } from './care-plan-block/care-plan-block';
 import type { DiagnosticoDelPlan } from './care-plan-block/care-plan-block';
@@ -113,7 +113,7 @@ import {
   plantillaPorCobertura,
   respuestasDe,
   type RespuestaVisible,
-} from './specialty-form-block/lectura-de-formulario';
+} from './specialty-form-block/form-reading';
 import { PdfExportButton } from '../../../shared/components/molecules/pdf-export-button/pdf-export-button';
 
 /** Tope por bloque. La API aplica 50 si no se pide otro. */

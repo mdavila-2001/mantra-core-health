@@ -1,5 +1,5 @@
 import { reservas } from '../fixtures/agenda';
-import { ESTADO_RESERVA } from '../fixtures/conceptos';
+import { ESTADO_RESERVA } from '../fixtures/concepts';
 import { conflict, noContent, notFound, validation, type MockRouter } from '../mock-router';
 import { Coleccion, cuerpo, hoy, isoDia, nuevoId, texto, uuid } from '../mock-store';
 import { consultasPagadas } from './finance.handlers';

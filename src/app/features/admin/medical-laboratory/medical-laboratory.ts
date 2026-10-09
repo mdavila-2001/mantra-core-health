@@ -61,7 +61,7 @@ import { FormActions } from '../../../shared/components/organisms/form-actions/f
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import type { TarifarioDeLaUnidad } from './medical-laboratory.types';
-import { TarifariosRecordados } from './tarifarios-recordados';
+import { TarifariosRecordados } from './remembered-price-lists';
 import { withDisplayCurrency } from '../../../core/money/display-currency';
 
 /**
@@ -209,8 +209,8 @@ const LARGO_MAXIMO_DE_NOMBRE = 200;
   // `.laboratorio__rejilla` —misma especificidad— y el ancho de columna de
   // esta pantalla no se aplicaría.
   styleUrls: [
-    '../../../shared/styles/rejilla-de-tarjetas.css',
-    '../../../shared/styles/tarjeta-de-servicio.css',
+    '../../../shared/styles/card-grid.css',
+    '../../../shared/styles/service-card.css',
     './medical-laboratory.css',
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,

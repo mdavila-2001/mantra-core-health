@@ -17,14 +17,14 @@ import {
   type CondicionSimulada,
   type EncuentroSimulado,
   type RecetaSimulada,
-} from '../fixtures/clinica';
-import { CLASE_ENCUENTRO, displayDe, ESPECIALIDAD, ESTADO, ESTADO_CONDICION, ESTADO_ENCUENTRO, ESTADO_RECETA, INTENCION_DEL_PLAN, SEVERIDAD, VERIFICACION_DX } from '../fixtures/conceptos';
-import { MEDICA, PACIENTE, pacientePorId, profesionalPorId } from '../fixtures/personas';
+} from '../fixtures/clinic';
+import { CLASE_ENCUENTRO, displayDe, ESPECIALIDAD, ESTADO, ESTADO_CONDICION, ESTADO_ENCUENTRO, ESTADO_RECETA, INTENCION_DEL_PLAN, SEVERIDAD, VERIFICACION_DX } from '../fixtures/concepts';
+import { MEDICA, PACIENTE, pacientePorId, profesionalPorId } from '../fixtures/people';
 import { conflict, forbidden, notFound, preconditionFailed, validation, type MockReply, type MockRequest, type MockRouter } from '../mock-router';
 import { ahora, Coleccion, cuerpo, isoDia, nuevoId, uuid } from '../mock-store';
 import { emitirNotificacion } from './notifications.handlers';
 import { enlazarArchivo, pdfMinimo } from './files.handlers';
-import { FICHAS_ESTANDAR, type CampoDeFicha } from '../fixtures/fichas-estandar.generated';
+import { FICHAS_ESTANDAR, type CampoDeFicha } from '../fixtures/standard-sheets.generated';
 import { representaA } from './profiles.handlers';
 import { accesoDeEmergenciaVigente, relacionDelProfesional } from './misc.handlers';
 

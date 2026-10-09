@@ -1,12 +1,12 @@
 import { HttpHeaders } from '@angular/common/http';
 
-import type { PacienteSimulado } from '../fixtures/personas';
+import type { PacienteSimulado } from '../fixtures/people';
 import { MockRouter, type MockMethod, type MockReply } from '../mock-router';
 import type { MockUser } from '../mock-session';
 
 let PACIENTE: PacienteSimulado;
 /**
- * `p-mamani` (índice fijo — `personas.ts` preserva el orden de los pacientes
+ * `p-mamani` (índice fijo — `people.ts` preserva el orden de los pacientes
  * escritos «para no mover los índices»): no declara `aseguradora`, es la
  * persona sin coberturas del fixture.
  */
@@ -40,7 +40,7 @@ describe('handlers de portabilidad de póliza y siniestralidad (subtarea 3.3)', 
     previousClaims = sessionStorage.getItem(claimsStorageKey);
     sessionStorage.removeItem(claimsStorageKey);
     vi.resetModules();
-    const { PACIENTES } = await import('../fixtures/personas');
+    const { PACIENTES } = await import('../fixtures/people');
     const { buscarUsuario } = await import('../mock-session');
     const { registrarPerfiles } = await import('./profiles.handlers');
     const { registrarSeguros } = await import('./insurance.handlers');

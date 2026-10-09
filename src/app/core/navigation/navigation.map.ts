@@ -1,4 +1,4 @@
-import { VERIFICACION_DE_IDENTIDAD_OFRECIDA } from '../identity-assurance/verificacion-ofrecida';
+import { VERIFICACION_DE_IDENTIDAD_OFRECIDA } from '../identity-assurance/offered-verification';
 import { ANY_ROLE } from './navigation.types';
 import type { AppSection } from './navigation.types';
 

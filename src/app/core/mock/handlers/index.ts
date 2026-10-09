@@ -21,7 +21,7 @@ import { registrarPortalDeLaboratorio } from './lab-portal.handlers';
 import { registerLoyalty } from './loyalty.handlers';
 import { registrarModulosAdministrativos } from './admin-modules.handlers';
 import { registrarNotificaciones } from './notifications.handlers';
-import { registrarFirmaYSello } from './firma-y-sello.handlers';
+import { registrarFirmaYSello } from './signature-and-seal.handlers';
 import { registrarPerfiles } from './profiles.handlers';
 import { registrarPracticas } from './practice.handlers';
 import { registrarProcedimientos } from './procedures.handlers';

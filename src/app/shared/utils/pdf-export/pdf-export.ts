@@ -25,8 +25,8 @@ import {
   RITMO,
   TIPOGRAFIA,
 } from './pdf-theme';
-import { firmaDeDocumentos, type PdfFirma } from './pdf-firma';
-import { fuentesDeDocumentos, type PdfFuentes } from './pdf-fuentes';
+import { firmaDeDocumentos, type PdfFirma } from './pdf-signature';
+import { fuentesDeDocumentos, type PdfFuentes } from './pdf-fonts';
 import { contenerLogo, logoDeDocumentos, type PdfLogo } from './pdf-logo';
 
 /**

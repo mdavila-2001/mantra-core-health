@@ -1,5 +1,5 @@
 import { BANCO, type CasoDelBanco } from './corpus.fixture';
-import { reconocer, reconocerAlarmas } from './sintomas';
+import { reconocer, reconocerAlarmas } from './symptoms';
 
 /**
  * La medición del reconocimiento de síntomas.

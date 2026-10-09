@@ -1,4 +1,4 @@
-import { DEPARTAMENTO, ESPECIALIDAD, MUNICIPIO } from './conceptos';
+import { DEPARTAMENTO, ESPECIALIDAD, MUNICIPIO } from './concepts';
 import {
   INSURER_NETWORK_PRACTITIONERS,
   type InsurerNetworkPractitioner,

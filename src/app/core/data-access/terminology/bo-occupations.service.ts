@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 
-import { CatalogoDeConjunto } from './catalogo-de-conjunto';
+import { CatalogoDeConjunto } from './value-set-catalog';
 
 /**
  * El código interno del catálogo de ocupaciones de Bolivia.

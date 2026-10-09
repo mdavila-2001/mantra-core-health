@@ -1,7 +1,7 @@
-import { encuentros } from './clinica';
-import { ACTIVIDAD, CANAL, ESTADO, ESTADO_RESERVA, TIPO_BLOQUEO, TIPO_CITA } from './conceptos';
-import { MEDICA, PACIENTE, PACIENTES, PROFESIONALES, type ProfesionalSimulado } from './personas';
-import { ofertas } from './servicios-ofrecidos';
+import { encuentros } from './clinic';
+import { ACTIVIDAD, CANAL, ESTADO, ESTADO_RESERVA, TIPO_BLOQUEO, TIPO_CITA } from './concepts';
+import { MEDICA, PACIENTE, PACIENTES, PROFESIONALES, type ProfesionalSimulado } from './people';
+import { ofertas } from './offered-services';
 import type { FollowUpOrigin } from '../../data-access/scheduling/scheduling.types';
 import { TENANT_CLINICA } from '../mock-session';
 import { ahora, Coleccion, fecha, iso, isoDia, masMinutos, uuid } from '../mock-store';
@@ -228,11 +228,11 @@ export const RECURSO_CONSULTORIO_MEDICA = uuid(`resource-consultorio-${MEDICA.id
  * El tipo de cita de una **reconsulta** (C4).
  *
  * Se deriva acá y no se lee de `TIPO_CITA` porque `VS_APPOINTMENT_TYPE` todavía
- * no la declara: `conceptos.ts` tiene `APT-PRIMERA`, `APT-CONTROL` y
+ * no la declara: `concepts.ts` tiene `APT-PRIMERA`, `APT-CONTROL` y
  * `APT-URGENCIA`, y ese archivo es de C0, que no publicó.
  *
  * El id que sale de acá es **exactamente** el que produciría `definir()` allá
- * —misma semilla `concept-<código>`, `conceptos.ts:69—`, así que el día que la
+ * —misma semilla `concept-<código>`, `concepts.ts:69—`, así que el día que la
  * entrada exista el identificador coincide y no hay nada que migrar. Lo único
  * que falta hasta entonces es la etiqueta del catálogo, y por eso la pantalla
  * escribe «Reconsulta» literal en vez de buscarla: un uuid crudo en la agenda
@@ -459,7 +459,7 @@ const MOTIVOS = [
  * La tipología de actividad de una reserva generada, determinista (C-24 /
  * hallazgo D5 post-#559): antes las tres asignaciones de `serviceConceptId`
  * de este archivo eran `ACT-CONSULTA` fijo, así que "otras atenciones" del
- * panel (`consultas-resumen.ts`) nunca tenía nada que clasificar — la lógica
+ * panel (`consultations-summary.ts`) nunca tenía nada que clasificar — la lógica
  * era correcta, faltaba el dato. La teleconsulta se deduce del canal, que ya
  * la distingue; procedimientos y exámenes salen con una cadencia fija sobre
  * el índice, para que la cifra del panel se pueda contar a mano dos veces y
@@ -645,7 +645,7 @@ function reservasDeServicios(): ReservaSimulada[] {
 
    Nace **nueve minutos antes de ahora** y con su reserva confirmada, así que
    cruza los diez minutos de gracia alrededor de un minuto después de abrir la
-   aplicación. Ahí la regla de `horario-liberado.ts` lo da por libre y el aviso
+   aplicación. Ahí la regla de `released-slot.ts` lo da por libre y el aviso
    *llega* mientras alguien está mirando — que es lo que había que poder
    mostrar. Si naciera ya vencido, la notificación estaría desde el primer
    render y no se vería llegar nada.
@@ -659,7 +659,7 @@ function reservasDeServicios(): ReservaSimulada[] {
 
 const CUPO_POR_LIBERARSE = uuid('slot-a-punto-de-liberarse');
 
-/* Los mismos diez minutos que `horario-liberado.ts`, declarados acá y no
+/* Los mismos diez minutos que `released-slot.ts`, declarados acá y no
    importados de allá: aquel archivo lee este fixture, y traerlo de vuelta
    cerraría un ciclo de importación —lo que `check-architecture` prohíbe—. Una
    prueba comprueba que los dos números coinciden. */
@@ -770,7 +770,7 @@ function sembrarReconsulta(): void {
       // pantalla. Así que la reconsulta se cuelga de un encuentro **real** de la
       // misma paciente, y como el origen de arriba, se **busca**: el más
       // reciente ya cerrado. Fijarlo por índice o derivar su id por convención
-      // de texto lo ataría a cómo `clinica.ts` genera los suyos hoy.
+      // de texto lo ataría a cómo `clinic.ts` genera los suyos hoy.
       followUpOf: { bookingId: origen.id, encounterId: encuentroDeOrigen() },
       createdAt: ahora(),
     }),

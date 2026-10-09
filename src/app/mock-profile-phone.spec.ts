@@ -1,6 +1,6 @@
-import { PROFESIONALES } from './core/mock/fixtures/personas';
+import { PROFESIONALES } from './core/mock/fixtures/people';
 import { perfilProfesionalDe } from './core/mock/handlers/profiles.handlers';
-import { esTelefonoCompleto } from './shared/components/molecules/phone-input/phone-input.paises';
+import { esTelefonoCompleto } from './shared/components/molecules/phone-input/phone-input.countries';
 
 /**
  * Los teléfonos que sirve el perfil profesional.

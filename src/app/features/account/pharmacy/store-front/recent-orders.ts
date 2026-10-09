@@ -14,7 +14,7 @@ import type { BadgeVariant } from '../../../../shared/components/atoms/badge/bad
 import { Link } from '../../../../shared/components/atoms/link/link';
 import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
 import { MIS_PEDIDOS_ROUTE } from '../../pharmacy-orders/pharmacy-orders.routes';
-import { presentacionDePedido } from '../../pharmacy-orders/pedido-status';
+import { presentacionDePedido } from '../../pharmacy-orders/order-status';
 import { PHARMACY_ROUTE } from '../pharmacy.routes';
 
 /** Cuántos pedidos entran en el bloque: es un recordatorio, no un listado. */
@@ -36,7 +36,7 @@ interface PedidoVisible {
  * del listado completo.
  *
  * Tres filas como máximo: no es un listado, es un recordatorio. El estado se
- * dice con las palabras de `pedido-status.ts` —la misma tabla que usan «Mis
+ * dice con las palabras de `order-status.ts` —la misma tabla que usan «Mis
  * pedidos» y el detalle—, nunca con el código del contrato.
  *
  * Sin perfil de paciente no consulta nada: la lectura es de los pedidos de esa

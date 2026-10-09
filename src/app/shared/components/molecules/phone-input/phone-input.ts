@@ -18,7 +18,7 @@ import {
 } from '@angular/forms';
 
 import { Input } from '../../atoms/input/input';
-import { PaisBandera } from './pais-bandera';
+import { PaisBandera } from './country-flag';
 import {
   PAISES_TELEFONO,
   PAIS_POR_DEFECTO,
@@ -28,10 +28,10 @@ import {
   nacionalDelNumero,
   paisDelNumero,
   type PaisTelefono,
-} from './phone-input.paises';
+} from './phone-input.countries';
 
-export { PAISES_TELEFONO, PAIS_POR_DEFECTO } from './phone-input.paises';
-export type { IsoPais, PaisTelefono } from './phone-input.paises';
+export { PAISES_TELEFONO, PAIS_POR_DEFECTO } from './phone-input.countries';
+export type { IsoPais, PaisTelefono } from './phone-input.countries';
 
 /** Prefijo internacional de Bolivia, el país por defecto del campo. */
 export const PREFIJO_BOLIVIA = PAIS_POR_DEFECTO.prefijo;
@@ -100,7 +100,7 @@ export function telefonoCompleto(control: AbstractControl): ValidationErrors | n
  * sigue exponiendo un `ControlValueAccessor` de string y sigue abriendo en
  * Bolivia; lo único nuevo es que se puede cambiar.
  *
- * El catálogo es corto y cerrado a propósito — ver `phone-input.paises.ts`.
+ * El catálogo es corto y cerrado a propósito — ver `phone-input.countries.ts`.
  *
  * ## Lo que se guarda no es lo que se ve
  *

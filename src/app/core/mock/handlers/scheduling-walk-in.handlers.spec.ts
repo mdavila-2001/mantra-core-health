@@ -2,9 +2,9 @@ import { HttpHeaders } from '@angular/common/http';
 
 import { registrarAgenda } from './scheduling.handlers';
 import { RECURSO_MEDICA, reservas } from '../fixtures/agenda';
-import { encuentros } from '../fixtures/clinica';
-import { ESTADO_ENCUENTRO, ESTADO_RESERVA } from '../fixtures/conceptos';
-import { PACIENTE, pacientePorId } from '../fixtures/personas';
+import { encuentros } from '../fixtures/clinic';
+import { ESTADO_ENCUENTRO, ESTADO_RESERVA } from '../fixtures/concepts';
+import { PACIENTE, pacientePorId } from '../fixtures/people';
 import { MockRouter, isMockReply, preconditionFailed, validation, type MockReply } from '../mock-router';
 import { buscarUsuario } from '../mock-session';
 

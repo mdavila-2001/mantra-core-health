@@ -3,7 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 
-import { controlDeNombreExtra } from '../../auth/registro-compartido/campos-de-nombre/nombre-de-persona';
+import { controlDeNombreExtra } from '../../auth/shared-registration/name-fields/person-name';
 import { AssistedRegistration } from './assisted-registration';
 
 /**

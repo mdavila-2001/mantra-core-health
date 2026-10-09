@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { RouterLink } from '@angular/router';
 import { catchError, forkJoin, map, of, switchMap } from 'rxjs';
 
-import { CODIGO_DEL_TENANT_SEMILLA } from './tenant-semilla';
+import { CODIGO_DEL_TENANT_SEMILLA } from './seed-tenant';
 import { DirectoryClient } from '../../../core/data-access/directory/directory.client';
 import type { TenantListItem } from '../../../core/data-access/directory/directory.types';
 import { TerminologyClient } from '../../../core/data-access/terminology/terminology.client';

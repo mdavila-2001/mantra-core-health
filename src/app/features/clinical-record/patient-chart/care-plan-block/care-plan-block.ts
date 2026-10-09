@@ -28,7 +28,7 @@ import { DatePicker } from '../../../../shared/components/organisms/date-picker/
 import { FormActions } from '../../../../shared/components/organisms/form-actions/form-actions';
 import { FormResponsePicker } from '../form-response-picker/form-response-picker';
 import { DRAFT_BLOCK, type DraftBlock } from '../draft-block';
-import { mensajeDeEscritura } from '../../mensaje-de-escritura';
+import { mensajeDeEscritura } from '../../write-message';
 
 /** Un diagnóstico del expediente, para colgar el plan de él. */
 export interface DiagnosticoDelPlan {

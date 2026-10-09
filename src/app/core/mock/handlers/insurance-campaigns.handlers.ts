@@ -1,4 +1,4 @@
-import { pacientePorId } from '../fixtures/personas';
+import { pacientePorId } from '../fixtures/people';
 import {
   conflict,
   forbidden,
@@ -50,7 +50,7 @@ interface MockPartner {
 /** Lo que guarda el simulador: la forma de la API más la aseguradora dueña. */
 interface MockCampaign {
   readonly id: string;
-  /** El simulador identifica la aseguradora por nombre, como `personas.ts`. */
+  /** El simulador identifica la aseguradora por nombre, como `people.ts`. */
   readonly carrierName: string;
   readonly code: string;
   readonly title: string;

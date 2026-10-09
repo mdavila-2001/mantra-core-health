@@ -57,7 +57,7 @@ import { AppMap } from '../../../../shared/components/organisms/map/map';
 import type {
   EstadoDePin,
   PinMapa,
-} from '../../../../shared/components/organisms/map/pin-mapa.types';
+} from '../../../../shared/components/organisms/map/map-pin.types';
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
 import { DialogService } from '../../../../shared/components/molecules/dialog/dialog-service';

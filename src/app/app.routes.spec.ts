@@ -16,7 +16,7 @@ import {
   indiceDePestana,
   PESTANA,
   PESTANAS_DEL_PERFIL,
-} from './features/account/my-profile/pestanas-del-perfil';
+} from './features/account/my-profile/profile-tabs';
 import { SectionPlaceholder } from './features/section-placeholder/section-placeholder';
 import { routes, SECCIONES_REDIRIGIDAS } from './app.routes';
 

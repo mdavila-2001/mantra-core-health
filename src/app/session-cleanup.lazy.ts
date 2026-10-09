@@ -2,7 +2,7 @@ import type { Injector } from '@angular/core';
 
 import { ChatAutoReply } from './core/messaging/chat-auto-reply';
 import { MessageTemplates } from './core/messaging/message-templates';
-import { TarifariosRecordados } from './features/admin/medical-laboratory/tarifarios-recordados';
+import { TarifariosRecordados } from './features/admin/medical-laboratory/remembered-price-lists';
 
 /**
  * Lo sensible que otras piezas dejan en el navegador y que **cerrar sesión debe

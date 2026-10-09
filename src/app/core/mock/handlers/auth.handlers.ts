@@ -1,7 +1,7 @@
-import { ESTADO, TIPO_SOCIETARIO } from '../fixtures/conceptos';
-import { pacientes, type PacienteSimulado } from '../fixtures/personas';
+import { ESTADO, TIPO_SOCIETARIO } from '../fixtures/concepts';
+import { pacientes, type PacienteSimulado } from '../fixtures/people';
 import { guardarImagenDeDataUrl } from './files.handlers';
-import { guardarActivosDeFirma } from './firma-y-sello.handlers';
+import { guardarActivosDeFirma } from './signature-and-seal.handlers';
 import { conflict, notFound, preconditionFailed, reply, unauthorized, type MockRouter } from '../mock-router';
 import type { MockUser as CuentaSimulada } from '../mock-session';
 import {

@@ -5,8 +5,8 @@ import { provideRouter } from '@angular/router';
 import { By } from '@angular/platform-browser';
 
 import { MAX_CAMPOS_POR_PAGINA } from '../../../shared/forms/paginated/paginated-form.types';
-import { UbicacionPicker } from '../registro-compartido/ubicacion-picker/ubicacion-picker';
-import { CODIGOS_DE_DIAGNOSTICO } from '../registro-compartido/alta-de-centro-diagnostico';
+import { UbicacionPicker } from '../shared-registration/map-location-picker/map-location-picker';
+import { CODIGOS_DE_DIAGNOSTICO } from '../shared-registration/diagnostic-center-enrollment';
 import {
   altaPendiente,
   atenderSubida,

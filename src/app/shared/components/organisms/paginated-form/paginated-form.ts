@@ -17,9 +17,9 @@ import {
 } from '@angular/core';
 import { FormGroup, ReactiveFormsModule } from '@angular/forms';
 
-import { mensajeDeError } from '../../../forms/paginated/mensaje-de-error';
-import { camposOcultos } from '../../../forms/paginated/visibilidad-condicional';
-import { esPreguntaPrincipal } from '../../../forms/paginated/paginar-campos';
+import { mensajeDeError } from '../../../forms/paginated/error-message';
+import { camposOcultos } from '../../../forms/paginated/conditional-visibility';
+import { esPreguntaPrincipal } from '../../../forms/paginated/paginate-fields';
 import {
   MAX_CAMPOS_POR_PAGINA,
   type CampoDeFormulario,
@@ -42,13 +42,13 @@ import { GridGroup } from '../../molecules/grid-group/grid-group';
 import { PhoneInput } from '../../molecules/phone-input/phone-input';
 import { Radio } from '../../molecules/radio/radio';
 import { RadioGroup } from '../../molecules/radio-group/radio-group';
-import { RadioOtro } from '../../molecules/radio-otro/radio-otro';
+import { RadioOtro } from '../../molecules/other-radio/other-radio';
 import { SegmentedControl } from '../../molecules/segmented-control/segmented-control';
 import type { SegmentedOption } from '../../molecules/segmented-control/segmented-control.types';
 import { Stepper } from '../../molecules/stepper/stepper';
 import type { StepperStep } from '../../molecules/stepper/stepper.types';
 import { DatePicker } from '../date-picker/date-picker';
-import { CampoPersonalizado } from './campo-personalizado';
+import { CampoPersonalizado } from './custom-field';
 
 /**
  * Cuántas páginas admite el stepper **con rótulos** antes de estorbar.

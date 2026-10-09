@@ -7,7 +7,7 @@ import { Router, RouterLink } from '@angular/router';
 import { IamClient } from '../../../core/data-access/iam/iam.client';
 import type { OrganizationRegistration } from '../../../core/data-access/iam/iam.types';
 import { LegalEntityTypesCatalog } from '../../../core/data-access/system-context/legal-entity-types.service';
-import { registrationErrorToViewState } from '../registro-compartido/registration-errors';
+import { registrationErrorToViewState } from '../shared-registration/registration-errors';
 import { uiLanguage } from '../../../core/i18n/ui-language';
 import { loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
@@ -28,14 +28,14 @@ import {
   telefonoCompleto,
 } from '../../../shared/components/molecules/phone-input/phone-input';
 import { AuthSplit } from '../../../shared/components/organisms/auth-split/auth-split';
-import { CampoPersonalizado } from '../../../shared/components/organisms/paginated-form/campo-personalizado';
+import { CampoPersonalizado } from '../../../shared/components/organisms/paginated-form/custom-field';
 import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
-import { mensajeDeError } from '../../../shared/forms/paginated/mensaje-de-error';
+import { mensajeDeError } from '../../../shared/forms/paginated/error-message';
 import {
   MENSAJE_CONTRASENA_CORTA,
   validadoresDeContrasena,
-} from '../registro-compartido/politica-de-contrasena';
-import { paginarCampos } from '../../../shared/forms/paginated/paginar-campos';
+} from '../shared-registration/password-policy';
+import { paginarCampos } from '../../../shared/forms/paginated/paginate-fields';
 import type { PaginaDeFormulario } from '../../../shared/forms/paginated/paginated-form.types';
 import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
 import {
@@ -43,26 +43,26 @@ import {
   campoDelPoderNotariado,
   DOCUMENTOS_LEGALES_DEL_REGISTRO,
   type ClaveDeDocumentoDelAlta,
-} from '../registro-compartido/documentos-legales';
+} from '../shared-registration/legal-documents';
 import {
   AVISO_REESCRIBIR_DIRECCION,
   UbicacionPicker,
   type Coordenadas,
   type IdsDePrueba,
-} from '../registro-compartido/ubicacion-picker/ubicacion-picker';
-import { unirNombres } from '../../../core/profesion/nombres-adicionales';
+} from '../shared-registration/map-location-picker/map-location-picker';
+import { unirNombres } from '../../../core/profession/additional-names';
 import {
   esPaisMultizona,
   obtenerZonaHorariaDefectoDePais,
   obtenerZonasHorariasDePais,
 } from '../../../core/i18n/timezone-by-country';
-import { CamposDeNombreEnLinea } from '../registro-compartido/campos-de-nombre-en-linea/campos-de-nombre-en-linea';
+import { CamposDeNombreEnLinea } from '../shared-registration/inline-name-fields/inline-name-fields';
 import {
   grupoDeNombre,
   nombreCompleto,
   type ValorDeNombre,
-} from '../registro-compartido/campos-de-nombre/nombre-de-persona';
-import { codigoDesdeSigla, MAX_SIGLA, MIN_SIGLA, siglaDerivaCodigo } from './codigo-desde-sigla';
+} from '../shared-registration/name-fields/person-name';
+import { codigoDesdeSigla, MAX_SIGLA, MIN_SIGLA, siglaDerivaCodigo } from './code-from-acronym';
 
 /** Largos que declara el bloque `organization` de `RegisterOrganizationDto`. */
 const MAX_NOMBRE = 300;
@@ -716,7 +716,7 @@ export class RegisterOrganization {
    * La ubicación de la casa matriz, si la persona la confirmó (subtarea 1.3).
    *
    * Una señal y no un `FormControl`: el campo es `custom` (lo pinta
-   * `app-ubicacion-picker`, no un control de texto), y `app-paginated-form`
+   * `app-map-location-picker`, no un control de texto), y `app-paginated-form`
    * tolera un campo `custom` sin control homónimo en el `FormGroup`. Pasarla
    * como `[inicial]` al picker es lo que le permite sobrevivir a que el
    * asistente destruya y recree esta página al navegar (misma lección que

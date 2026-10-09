@@ -7,13 +7,13 @@ import {
   miembrosDe,
   todosLosConjuntos,
   type ConceptoSimulado,
-} from '../fixtures/conceptos';
+} from '../fixtures/concepts';
 import {
   conjuntosEnLinea,
   facetasEnLinea,
   fichaEnLinea,
   terminoEnLinea,
-} from '../glossary-en-linea';
+} from '../inline-glossary';
 import {
   AlmacenDeGlosario,
   idDeConjunto,
@@ -40,7 +40,7 @@ import { contiene, iso, paginar, texto, uuid } from '../mock-store';
     demanda, con `fetch`, desde `public/glossary-data/` (el completo, fuera de
     git) o `public/glossary-seed/` (la semilla commiteada). Este archivo sólo
     traduce cada pedido a una lectura de shards y le da la forma de la API.
-    Hasta el 2026-09-30 importaba `fixtures/glosario.ts` y `fixtures/anatomia.ts`
+    Hasta el 2026-09-30 importaba `fixtures/glossary.ts` y `fixtures/anatomy.ts`
     —casi 3 MB de fixtures en el trozo de los manejadores—.
     ========================================================================== */
 

@@ -1,8 +1,8 @@
 import { ChangeDetectionStrategy, Component, computed, effect, input, model, signal } from '@angular/core';
 
-import { normalizarLugar } from '@shared/geo/departamento-de-ciudad';
+import { normalizarLugar } from '@shared/geo/city-department';
 
-import type { PuntoGeo } from '../map/pin-mapa.types';
+import type { PuntoGeo } from '../map/map-pin.types';
 import {
   BOLIVIA_VIEW_BOX,
   SILUETAS_DE_BOLIVIA,
@@ -99,7 +99,7 @@ interface DepartamentoDibujable extends DepartamentoElegible {
  * las dos altas que lo montan ya tienen su lectura del catálogo con su
  * «Reintentar».
  *
- * ## Por qué vive acá y ya no en `registro-compartido/`
+ * ## Por qué vive acá y ya no en `shared-registration/`
  *
  * Vivía allá mientras sus dos únicos consumidores eran las dos altas —paciente
  * y profesional—, con la condición escrita de que subiera «el día que una

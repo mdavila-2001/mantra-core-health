@@ -23,12 +23,12 @@ import { filter, map } from 'rxjs';
 
 import { SessionStore, type SessionTokens } from '../../core/auth/session.store';
 import { generarEntradas, type ValorGenerado } from '../../core/mock/faker';
-import { apiRealForzada } from '../../core/mock/modo-api';
+import { apiRealForzada } from '../../core/mock/api-mode';
 import { MOCK_USERS, emitirAccessToken, emitirRefreshToken } from '../../core/mock/mock-session';
 
 import { COMPONENTES } from './component-index.generated';
-import type { AnfitrionDeEscenario, EscenarioDeComponente } from './escenarios/escenario.types';
-import { escenariosDe } from './escenarios/escenarios';
+import type { AnfitrionDeEscenario, EscenarioDeComponente } from './scenarios/scenario.types';
+import { escenariosDe } from './scenarios/scenarios';
 import {
   ETIQUETA_DE_NIVEL,
   type ComponenteDelStock,

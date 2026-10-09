@@ -30,7 +30,7 @@ const GPS_MAX_AGE_MS = 300_000;
  * al navegador: quien la negaba, o entraba desde un escritorio sin antena,
  * se quedaba sin poder ver nada cercano. El paciente ya declara su domicilio
  * y su trabajo en «Mi perfil» —con coordenadas, desde que existe
- * `app-ubicacion-picker`— y ese dato es justo lo que hacía falta para no
+ * `app-map-location-picker`— y ese dato es justo lo que hacía falta para no
  * depender del permiso del navegador.
  *
  * ## Qué hace, y qué no hace

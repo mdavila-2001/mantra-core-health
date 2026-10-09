@@ -7,15 +7,15 @@ import {
   ordenes,
   type CondicionSimulada,
   type VerificacionSimulada,
-} from '../fixtures/clinica';
+} from '../fixtures/clinic';
 import {
   CURSO_CLINICO,
   DIAGNOSTICO,
   ESTADO_CONDICION,
   SEVERIDAD,
   VERIFICACION_DX,
-} from '../fixtures/conceptos';
-import { PACIENTE, PACIENTES } from '../fixtures/personas';
+} from '../fixtures/concepts';
+import { PACIENTE, PACIENTES } from '../fixtures/people';
 import { MockRouter, type MockMethod, type MockReply } from '../mock-router';
 import { buscarUsuario, type MockUser } from '../mock-session';
 import { uuid } from '../mock-store';

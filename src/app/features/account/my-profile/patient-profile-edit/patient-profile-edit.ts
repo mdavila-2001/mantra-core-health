@@ -49,10 +49,10 @@ import {
   UbicacionPicker,
   type Coordenadas,
   type IdsDePrueba,
-} from '../../../auth/registro-compartido/ubicacion-picker/ubicacion-picker';
+} from '../../../auth/shared-registration/map-location-picker/map-location-picker';
 import { AnnounceOnAppear } from '../../../../shared/a11y/announce-on-appear';
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
-import { PESTANA, PESTANAS_DEL_PERFIL } from '../pestanas-del-perfil';
+import { PESTANA, PESTANAS_DEL_PERFIL } from '../profile-tabs';
 import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
 import {
   PhoneInput,
@@ -61,7 +61,7 @@ import {
 import {
   nacionalDelNumero,
   paisDelNumero,
-} from '../../../../shared/components/molecules/phone-input/phone-input.paises';
+} from '../../../../shared/components/molecules/phone-input/phone-input.countries';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import { DatePicker } from '../../../../shared/components/organisms/date-picker/date-picker';
 import { FormActions } from '../../../../shared/components/organisms/form-actions/form-actions';
@@ -327,7 +327,7 @@ export class PatientProfileEdit {
    *
    * Es el patrón de una app de pedidos, y a propósito: se pide la ubicación al
    * navegador o se marca el pin a mano sobre el mapa, y se confirma mirándolo.
-   * El mismo bloque que usa el registro (`app-ubicacion-picker`), no una copia:
+   * El mismo bloque que usa el registro (`app-map-location-picker`), no una copia:
    * la dirección se escribe igual en los dos lados y ninguno adivina la calle a
    * partir del punto —eso necesita un geocodificador que la política de
    * seguridad del servidor no permite—.

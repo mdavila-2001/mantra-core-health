@@ -1,7 +1,7 @@
-import { ESTADO, ESTADO_RESERVA } from '../fixtures/conceptos';
+import { ESTADO, ESTADO_RESERVA } from '../fixtures/concepts';
 import { bloqueos, cupos, plantillas, recursos, reservas, type CupoSimulado, type RecursoSimulado, type ReservaSimulada } from '../fixtures/agenda';
-import { ofertas, type OfertaSimulada } from '../fixtures/servicios-ofrecidos';
-import { cabe, proponerInicios, sePuedenReabrir, tramoOcupado, type DuracionDeServicio, type Tramo } from '../disponibilidad-de-servicios';
+import { ofertas, type OfertaSimulada } from '../fixtures/offered-services';
+import { cabe, proponerInicios, sePuedenReabrir, tramoOcupado, type DuracionDeServicio, type Tramo } from '../service-availability';
 import { conflict, forbidden, notFound, reply, type MockRequest, type MockRouter } from '../mock-router';
 import { ahora, cuerpo, nuevoId, texto } from '../mock-store';
 import { servicios } from './practice.handlers';

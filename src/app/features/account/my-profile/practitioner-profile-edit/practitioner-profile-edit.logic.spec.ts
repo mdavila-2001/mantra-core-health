@@ -1,7 +1,7 @@
 import {
   UNIVERSIDADES_DEL_SISTEMA,
   UNIVERSIDADES_PRIVADAS,
-} from '../../../../core/profesion/instituciones-educativas';
+} from '../../../../core/profession/educational-institutions';
 import {
   codigoDeInstitucion,
   coincideConElConcepto,

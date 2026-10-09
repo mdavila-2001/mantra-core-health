@@ -6,7 +6,7 @@ import {
   PARENTESCO,
   TIPO_VINCULO,
   displayDe,
-} from '../fixtures/conceptos';
+} from '../fixtures/concepts';
 import { contactChannelsOfCarrier } from './insurance.handlers';
 import {
   afiliaciones,
@@ -26,7 +26,7 @@ import {
   type AfiliacionSimulada,
   type PacienteSimulado,
   type ProfesionalSimulado,
-} from '../fixtures/personas';
+} from '../fixtures/people';
 import { conflict, forbidden, noContent, notFound, preconditionFailed, reply, validation, type MockRequest, type MockRouter } from '../mock-router';
 import { cerrarAcciones, emitirNotificacion } from './notifications.handlers';
 import {
