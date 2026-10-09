@@ -73,7 +73,8 @@ test.describe('mobile-parity · referencia web', () => {
     const red: { method: string; url: string; status: number }[] = [];
     page.on('response', (r) => {
       const url = r.url();
-      if (url.includes('/iam/') || url.includes('/api/') || /:\d+\/[a-z]/.test(url)) {
+      // Solo llamadas de datos: los assets del dev-server (js/css/fuentes/imágenes) no son contrato.
+      if (!/\.(m?js|css|map|png|jpe?g|svg|ico|woff2?|ttf|json)(\?|$)/.test(url) && !url.includes('/@') && !url.includes('/node_modules/')) {
         red.push({ method: r.request().method(), url: redactar(url.replace(/^https?:\/\/[^/]+/, '')), status: r.status() });
       }
     });
