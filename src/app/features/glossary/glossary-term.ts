@@ -36,6 +36,8 @@ import {
   type GlossaryDrugFacts,
 } from './glossary-drug-facts';
 import { GlossaryCategoryIcon } from './glossary-category-icon';
+import { GlossaryArticleView } from './glossary-article';
+import type { GlossaryArticle } from '../../core/data-access/terminology/glossary-article.types';
 
 /**
  * Rótulo en castellano de cada tipo de relación clínica, en el orden en que se
@@ -153,6 +155,7 @@ export interface GrupoDeRelaciones {
     Card,
     Chip,
     ContentDialog,
+    GlossaryArticleView,
     GlossaryCategoryIcon,
     PageHeader,
     RouterLink,
@@ -288,6 +291,12 @@ export class GlossaryTerm {
   /** El resumen en lenguaje llano, o vacío si el término no lo tiene. */
   protected readonly resumen = computed(() => this.ficha()?.plainSummary?.text.trim() ?? '');
 
+  protected readonly articulo = signal<GlossaryArticle | null>(null);
+
+  protected readonly nombresAlternativos = computed(() =>
+    (this.ficha()?.synonyms ?? []).map((sinonimo) => sinonimo.value),
+  );
+
   /** La pestaña que se está mirando. Vuelve a «Definición» al cambiar de término. */
   protected readonly pestana = signal(0);
 
@@ -356,8 +365,16 @@ export class GlossaryTerm {
     if (conceptId === '') return;
 
     this.termino.set(loading());
+    this.articulo.set(null);
     this.pestana.set(0);
     this.ampliada.set(false);
+
+    this.terminology.readGlossaryArticle(conceptId).subscribe({
+      next: (article) => {
+        if (conceptId === this.conceptId()) this.articulo.set(article);
+      },
+      error: () => this.articulo.set(null),
+    });
 
     this.terminology.readGlossaryTerm(conceptId).subscribe({
       next: (ficha) => this.termino.set(ready(ficha)),
