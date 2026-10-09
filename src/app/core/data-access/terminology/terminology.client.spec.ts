@@ -355,6 +355,41 @@ describe('TerminologyClient', () => {
     req.flush({ items: [], count: 0, limit: 50 });
   });
 
+  it('readGlossaryNeighborhood pide una muestra por grupo, en castellano', () => {
+    client.readGlossaryNeighborhood('c-A', { perGroup: 8 }).subscribe();
+
+    const req = http.expectOne(
+      (r) => r.url === '/terminology/concepts/c-A/glossary-neighborhood',
+    );
+    expect(req.request.params.get('lang')).toBe('ES');
+    expect(req.request.params.get('perGroup')).toBe('8');
+    expect(req.request.params.has('type')).toBe(false);
+
+    req.flush({ focus: null, groups: [] });
+  });
+
+  it('readGlossaryNeighborhood pide la página de un solo grupo con su sentido', () => {
+    client
+      .readGlossaryNeighborhood('c/A', {
+        type: 'SYMPTOM',
+        direction: 'incoming',
+        offset: 0,
+        limit: 200,
+      })
+      .subscribe();
+
+    const req = http.expectOne(
+      (r) => r.url === '/terminology/concepts/c%2FA/glossary-neighborhood',
+    );
+    expect(req.request.params.get('type')).toBe('SYMPTOM');
+    expect(req.request.params.get('direction')).toBe('incoming');
+    expect(req.request.params.get('offset')).toBe('0');
+    expect(req.request.params.get('limit')).toBe('200');
+    expect(req.request.params.has('perGroup')).toBe(false);
+
+    req.flush({ focus: null, groups: [] });
+  });
+
   it('readGlossaryTerm pide la ficha por su id, en castellano', () => {
     client.readGlossaryTerm('c-A').subscribe();
 
