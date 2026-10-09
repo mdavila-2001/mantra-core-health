@@ -1,6 +1,9 @@
-import { HttpRequest } from '@angular/common/http';
+import { HttpRequest, type HttpHandlerFn } from '@angular/common/http';
+import { TestBed } from '@angular/core/testing';
 import { firstValueFrom } from 'rxjs';
 import { vi } from 'vitest';
+
+import { environment } from '../../../../environments/environment';
 
 import { mockBackendInterceptor } from '../mock-backend.interceptor';
 import { buscarUsuario, emitirAccessToken } from '../mock-session';
@@ -14,6 +17,10 @@ import { SIMULATOR_EXTENSIONS } from './simulator-extensions';
  * fallado en `mockup` y no recién contra la API.
  */
 describe('validador de contrato de la maqueta', () => {
+  const originalMockBackend = environment.mockBackend;
+  beforeAll(() => Object.assign(environment, { mockBackend: true }));
+  afterAll(() => Object.assign(environment, { mockBackend: originalMockBackend }));
+
   const REPORT = '00000000-0000-4000-8000-000000000001';
 
   it('C4 · la forma vieja de compartir un resultado es un 400 con el campo nombrado', () => {
@@ -108,14 +115,13 @@ describe('validador de contrato de la maqueta', () => {
       practitionerUserId: 'u',
       validUntil: '2026-12-31T23:59:59.000Z',
     }).clone({ setHeaders: { Authorization: `Bearer ${token}` } });
-    const siguiente = () => {
+    const siguiente: HttpHandlerFn = () => {
       throw new Error('no debería salir a la red');
     };
     vi.spyOn(console, 'warn').mockImplementation(() => undefined);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const error = await firstValueFrom(mockBackendInterceptor(request, siguiente as any)).catch(
-      (e: unknown) => e,
-    );
+    const error = await firstValueFrom(
+      TestBed.runInInjectionContext(() => mockBackendInterceptor(request, siguiente)),
+    ).catch((e: unknown) => e);
     expect(error).toMatchObject({ status: 400, error: { code: 'VALIDATION_FAILED' } });
   }, 30_000);
 });

@@ -5,6 +5,7 @@ import { provideRouter, Router } from '@angular/router';
 
 import type { ReferenceOption } from '../../../../shared/components/molecules/reference-combobox/reference-combobox.types';
 import { OrganizationNew } from './organization-new';
+import { environment } from '../../../../../environments/environment';
 
 /**
  * El alta es una sola petición contra `POST /admin/tenants`: organización y
@@ -26,6 +27,14 @@ const RESPUESTA = {
 const OWNER: ReferenceOption = { value: 'u-1', label: 'María Condori' };
 const PAIS: ReferenceOption = { value: 'c-pe', label: 'Peru', hint: 'PE' };
 const JURISDICCION: ReferenceOption = { value: 'c-jur-bo', label: 'Bolivia', hint: 'JUR_BO' };
+
+
+// Estas pruebas ejercitan funciones que hoy sólo existen en la maqueta (informe B):
+// contra la API real sus claves no viajan, y eso lo cubren simulator-only.spec y
+// contract-drift.spec. En esta rama la maqueta viene apagada: se enciende acá.
+const mockBackendOriginal = environment.mockBackend;
+beforeAll(() => Object.assign(environment, { mockBackend: true }));
+afterAll(() => Object.assign(environment, { mockBackend: mockBackendOriginal }));
 
 describe('OrganizationNew', () => {
   let fixture: ComponentFixture<OrganizationNew>;

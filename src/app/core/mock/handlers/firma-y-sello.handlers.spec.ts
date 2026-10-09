@@ -92,25 +92,8 @@ describe('firma y sello en el simulador', () => {
         ...body,
       }) as { practitionerProfileId: string };
 
-    /**
-     * Como la API (informe B, C3): la imagen se pre-carga en
-     * `/iam/auth/upload-registration-signature-image` y el alta lleva su id.
-     * El base64 en el alta lo rechaza el validador de contrato.
-     */
-    const subir = async (dataUrl: string): Promise<string> => {
-      const blob = await (await fetch(dataUrl)).blob();
-      const form = new FormData();
-      form.append('file', new File([blob], 'firma.png', { type: 'image/png' }));
-      const respuesta = (await pedir('POST', '/iam/auth/upload-registration-signature-image', null, form)) as {
-        status: number;
-        body: { fileId: string };
-      };
-      expect(respuesta.status).toBe(201);
-      return respuesta.body.fileId;
-    };
-
-    it('guarda la firma y el sello pre-cargados, bajo el perfil recién creado', async () => {
-      const creado = alta({ signatureFileId: await subir(PNG), sealFileId: await subir(PNG) });
+    it('guarda la firma y el sello que vinieron como imágenes, bajo el perfil recién creado', () => {
+      const creado = alta({ signatureImageBase64: PNG, sealImageBase64: PNG });
 
       const activos = activosDeFirmaDe(creado.practitionerProfileId);
       expect(activos.signatureFileId).not.toBeNull();
@@ -118,20 +101,12 @@ describe('firma y sello en el simulador', () => {
       expect(fileContent(activos.signatureFileId!)).toBeDefined();
     });
 
-    it('con sólo la firma, el sello queda sin cargar', async () => {
-      const creado = alta({ signatureFileId: await subir(PNG) });
+    it('con sólo la firma, el sello queda sin cargar', () => {
+      const creado = alta({ signatureImageBase64: PNG });
 
       const activos = activosDeFirmaDe(creado.practitionerProfileId);
       expect(activos.signatureFileId).not.toBeNull();
       expect(activos.sealFileId).toBeNull();
-    });
-
-    it('la pre-carga rechaza lo que no es imagen', () => {
-      const form = new FormData();
-      form.append('file', new File(['%PDF'], 'firma.pdf', { type: 'application/pdf' }));
-      expect(pedir('POST', '/iam/auth/upload-registration-signature-image', null, form)).toMatchObject({
-        status: 415,
-      });
     });
 
     it('sin ninguna de las dos el alta sigue igual y no crea nada', () => {
