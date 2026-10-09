@@ -39,7 +39,7 @@ import { ToastService } from '../../../../shared/components/molecules/toast/toas
 import { AttachmentDialog } from '../../../../shared/components/organisms/attachment-dialog/attachment-dialog';
 import { FormActions } from '../../../../shared/components/organisms/form-actions/form-actions';
 import { Odontogram } from '../odontogram/odontogram';
-import { mensajeDeFalloDeEscritura } from '../../mensaje-de-escritura';
+import { writeFailureMessage } from '../../write-message';
 
 /**
  * Cuántos casos quirúrgicos se traen, y de cuántos se pide el detalle.
@@ -441,7 +441,7 @@ export class ProceduresBlock {
     if (state.status === 'validation') {
       return state.issues.map((issue) => issue.message).join(' ') || null;
     }
-    return mensajeDeFalloDeEscritura(state, {
+    return writeFailureMessage(state, {
       accion: 'registrar tratamientos odontológicos',
       sinPermiso: 'Su rol no permite registrar tratamientos odontológicos.',
     });

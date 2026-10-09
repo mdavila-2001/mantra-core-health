@@ -21,8 +21,8 @@ import {
 import type * as Leaflet from 'leaflet';
 
 import { nextControlId } from '@shared/forms/form-control.context';
-import type { PinMapa, PuntoGeo } from './pin-mapa.types';
-import { CARGADOR_DE_PROVINCIAS, type ProvinciasDeBolivia, provinciaEn } from './provincias';
+import type { PinMap, PuntoGeo } from './map-pin.types';
+import { CARGADOR_DE_PROVINCIAS, type ProvinciasDeBolivia, provinceIn } from './provinces';
 
 /**
  * Mosaicos del servidor comunitario de OpenStreetMap, sin clave de API.
@@ -128,7 +128,7 @@ export const CARGADOR_DE_LEAFLET = new InjectionToken<CargadorDeLeaflet>('CARGAD
  */
 export function construirPopup(
   documento: Document,
-  pin: PinMapa,
+  pin: PinMap,
   alElegir: () => void,
 ): HTMLElement {
   const caja = documento.createElement('div');
@@ -208,7 +208,7 @@ export function construirPopup(
   encapsulation: ViewEncapsulation.None,
 })
 export class AppMap implements OnDestroy {
-  readonly pines = input.required<readonly PinMapa[]>();
+  readonly pines = input.required<readonly PinMap[]>();
 
   /** Nombre accesible del mapa; debe remitir a la lista que repite el dato. */
   readonly etiqueta = input.required<string>();
@@ -270,7 +270,7 @@ export class AppMap implements OnDestroy {
   private mapa: Leaflet.Map | null = null;
   private capaDePines: Leaflet.LayerGroup | null = null;
   private readonly marcadores = new Map<string, Leaflet.Marker>();
-  private pinesDibujados: readonly PinMapa[] | null = null;
+  private pinesDibujados: readonly PinMap[] | null = null;
   private destruido = false;
   private observadorDeTamano: ResizeObserver | null = null;
   /** Si el lienzo llegó a medir algo alguna vez. Ver {@link vigilarElTamano}. */
@@ -431,7 +431,7 @@ export class AppMap implements OnDestroy {
     panel.style.pointerEvents = 'none';
 
     // `L.geoJSON` pide el tipo de `@types/geojson`; el nuestro es el mismo
-    // contrato escrito en `provincias.ts`, sin depender de ese paquete.
+    // contrato escrito en `provinces.ts`, sin depender de ese paquete.
     L.geoJSON(provincias as unknown as Parameters<typeof L.geoJSON>[0], {
       pane: PANEL_DE_PROVINCIAS,
       interactive: false,
@@ -462,7 +462,7 @@ export class AppMap implements OnDestroy {
   }
 
   private nombrarProvincia(provincias: ProvinciasDeBolivia, centro: PuntoGeo): string | null {
-    const provincia = provinciaEn(provincias, centro);
+    const provincia = provinceIn(provincias, centro);
     return provincia === null
       ? null
       : `Provincia ${provincia.properties.nombre} · ${provincia.properties.departamento}`;
@@ -514,7 +514,7 @@ export class AppMap implements OnDestroy {
     this.documento.head.appendChild(enlace);
   }
 
-  private dibujar(pines: readonly PinMapa[]): void {
+  private dibujar(pines: readonly PinMap[]): void {
     const L = this.leaflet;
     const mapa = this.mapa;
     if (L === null || mapa === null) {
@@ -564,7 +564,7 @@ export class AppMap implements OnDestroy {
     this.encuadrar(L, mapa, pines);
   }
 
-  private encuadrar(L: typeof Leaflet, mapa: Leaflet.Map, pines: readonly PinMapa[]): void {
+  private encuadrar(L: typeof Leaflet, mapa: Leaflet.Map, pines: readonly PinMap[]): void {
     const centro = this.centro();
     if (centro !== null) {
       mapa.setView([centro.lat, centro.lng], this.zoom() ?? ZOOM_POR_DEFECTO);
@@ -583,7 +583,7 @@ export class AppMap implements OnDestroy {
     );
   }
 
-  private iconoDe(L: typeof Leaflet, pin: PinMapa): Leaflet.DivIcon {
+  private iconoDe(L: typeof Leaflet, pin: PinMap): Leaflet.DivIcon {
     const cara = this.documento.createElement('span');
     // La letra del pin es un dibujo: el nombre lo da `aria-label` en el botón.
     cara.setAttribute('aria-hidden', 'true');
@@ -612,7 +612,7 @@ export class AppMap implements OnDestroy {
 }
 
 /** «Farmacia Central · Sede Centro, Tiene todo, 1,2 km en línea recta»: lo que dice el pin enfocado. */
-function pinAccessibleName(pin: PinMapa): string {
+function pinAccessibleName(pin: PinMap): string {
   return [pin.titulo, pin.estado?.etiqueta, pin.subtitulo]
     .filter((parte): parte is string => parte !== undefined && parte !== '')
     .join(', ');

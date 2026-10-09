@@ -26,9 +26,9 @@ import type {
   RegisterPaymentInput,
   SimulatedCharge,
 } from '../../data-access/billing-simulated/billing-simulated.types';
-import { cobrosIniciales, EMISORES_SIMULADOS, PADRON_SIMULADO } from '../billing-sim/datos-simulados';
-import { PACIENTE } from '../fixtures/personas';
-import { FacturacionSimulada, type ErrorDeFacturacion, type Resultado } from '../billing-sim/facturacion-simulada';
+import { initialCharges, SIMULATED_ISSUERS, SIMULATED_REGISTRY } from '../billing-sim/simulated-data';
+import { PACIENTE } from '../fixtures/people';
+import { SimulatedInvoicing, type InvoicingError, type Result } from '../billing-sim/simulated-invoicing';
 import {
   conflict,
   forbidden,
@@ -44,7 +44,7 @@ import {
 } from '../mock-router';
 import { TENANT_FARMACIA, type MockUser } from '../mock-session';
 import { cuerpo } from '../mock-store';
-import { SiatSimuladoAdapter } from '../siat-sim/siat-simulado.adapter';
+import { SiatSimulatedAdapter } from '../siat-sim/siat-simulated.adapter';
 
 export const ROLES_DE_FACTURACION: readonly string[] = ['BILLING', 'FINANCE', 'CASHIER', 'PAYMENTS_ADMIN', 'SUPERADMIN'];
 
@@ -107,8 +107,8 @@ const FACTURAS_SEMBRADAS_DE_OTROS = 6;
  * —mismo SIAT simulado, mismo correlativo—, así que Facturación las muestra
  * emitidas y se pueden anular.
  */
-function sembrarFacturas(motor: FacturacionSimulada, pacienteDeLaDemo: string | undefined): void {
-  const cobros = motor.listarCobros();
+function sembrarFacturas(motor: SimulatedInvoicing, pacienteDeLaDemo: string | undefined): void {
+  const cobros = motor.listCharges();
   if (cobros.some((c) => c.latestInvoice !== null)) return;
   const facturables = cobros
     .filter((c) => c.payment !== null && c.suggestedBuyer.documentNumber !== '')
@@ -118,7 +118,7 @@ function sembrarFacturas(motor: FacturacionSimulada, pacienteDeLaDemo: string | 
   const elegidos = new Set([...deLaDemo, ...deOtros].map((c) => c.id));
   for (const cobro of facturables.filter((c) => elegidos.has(c.id))) {
     const { name, documentTypeCode, documentNumber, email } = cobro.suggestedBuyer;
-    motor.emitirFactura(cobro.id, { buyer: { name, documentTypeCode, documentNumber, complement: null, email } }, 'semilla-demo');
+    motor.issueInvoice(cobro.id, { buyer: { name, documentTypeCode, documentNumber, complement: null, email } }, 'semilla-demo');
   }
 }
 
@@ -133,28 +133,28 @@ export interface OpcionesDeFacturacionSimulada {
   readonly pacienteDeLaDemo?: string;
 }
 
-function crearMotor(opciones: OpcionesDeFacturacionSimulada): FacturacionSimulada {
+function crearMotor(opciones: OpcionesDeFacturacionSimulada): SimulatedInvoicing {
   const persistir = opciones.persistir ?? true;
-  const siat = new SiatSimuladoAdapter({
-    padron: PADRON_SIMULADO,
+  const siat = new SiatSimulatedAdapter({
+    padron: SIMULATED_REGISTRY,
     ...(opciones.reloj === undefined ? {} : { reloj: opciones.reloj }),
     ...(persistir ? { clavePersistencia: 'mock.billingSim.siat' } : {}),
   });
-  return new FacturacionSimulada({
+  return new SimulatedInvoicing({
     siat,
-    emisores: EMISORES_SIMULADOS,
-    cobros: cobrosIniciales(),
+    emisores: SIMULATED_ISSUERS,
+    cobros: initialCharges(),
     ...(opciones.reloj === undefined ? {} : { reloj: opciones.reloj }),
     ...(persistir ? { clavePersistencia: 'mock.billingSim.mantra' } : {}),
   });
 }
 
-function aRespuesta<T>(resultado: Resultado<T>, estadoOk = 200): MockReply {
+function aRespuesta<T>(resultado: Result<T>, estadoOk = 200): MockReply {
   if (resultado.ok) return reply(estadoOk, resultado.value);
   return errorHttp(resultado.error);
 }
 
-function errorHttp(error: ErrorDeFacturacion): MockReply {
+function errorHttp(error: InvoicingError): MockReply {
   switch (error.code) {
     case 'NOT_FOUND':
       return notFound(error.message);
@@ -175,10 +175,10 @@ function errorHttp(error: ErrorDeFacturacion): MockReply {
 
 export function registrarFacturacionSimulada(router: MockRouter, opciones: OpcionesDeFacturacionSimulada = {}): void {
   const activa = opciones.activa ?? (() => environment.billingSiatDemo);
-  let motor: FacturacionSimulada | null = null;
+  let motor: SimulatedInvoicing | null = null;
   // Perezoso: los cobros salen de fixtures de agenda y farmacia; no se arman
   // hasta que alguien entra a facturación.
-  const facturacion = (): FacturacionSimulada => {
+  const facturacion = (): SimulatedInvoicing => {
     if (motor === null) {
       motor = crearMotor(opciones);
       if (opciones.sembrarFacturas ?? opciones.persistir ?? true) {
@@ -195,7 +195,7 @@ export function registrarFacturacionSimulada(router: MockRouter, opciones: Opcio
    */
   const con =
     (
-      manejador: (request: MockRequest, motor: FacturacionSimulada, alcance: Alcance) => MockReply | unknown,
+      manejador: (request: MockRequest, motor: SimulatedInvoicing, alcance: Alcance) => MockReply | unknown,
       { consultorio = false }: { readonly consultorio?: boolean } = {},
     ) =>
     (request: MockRequest): MockReply | unknown => {
@@ -214,8 +214,8 @@ export function registrarFacturacionSimulada(router: MockRouter, opciones: Opcio
    * El cobro de la ruta, o 404: si no existe **o** si está fuera del alcance
    * de quien lo pide. Un 403 diría que el cobro de otro profesional existe.
    */
-  const cobroDe = (m: FacturacionSimulada, id: string, alcance: Alcance): SimulatedCharge | MockReply => {
-    const cobro = m.cobro(id);
+  const cobroDe = (m: SimulatedInvoicing, id: string, alcance: Alcance): SimulatedCharge | MockReply => {
+    const cobro = m.charge(id);
     if (cobro === null || !dentroDelAlcance(cobro, alcance)) return notFound('El cobro no existe');
     return cobro;
   };
@@ -224,7 +224,7 @@ export function registrarFacturacionSimulada(router: MockRouter, opciones: Opcio
     '/billing/simulated/status',
     con(
       (_, m, alcance) => {
-        const estado = m.estadoFiscal();
+        const estado = m.statusFiscal();
         // Quien atiende necesita el emisor de su consultorio para la nota de
         // venta; no las credenciales fiscales ni el emisor de farmacia.
         return alcance.todo
@@ -237,7 +237,7 @@ export function registrarFacturacionSimulada(router: MockRouter, opciones: Opcio
 
   router.get(
     '/billing/simulated/catalogs',
-    con((_, m) => m.catalogos(), { consultorio: true }),
+    con((_, m) => m.catalogs(), { consultorio: true }),
   );
 
   // `?patientProfileId=` acota a una persona: es la lectura de «Pagos» dentro
@@ -248,7 +248,7 @@ export function registrarFacturacionSimulada(router: MockRouter, opciones: Opcio
       (request, m, alcance) => {
         const paciente = request.query.get('patientProfileId');
         const items = m
-          .listarCobros()
+          .listCharges()
           .filter((c) => dentroDelAlcance(c, alcance))
           .filter((c) => paciente === null || paciente === '' || c.patientProfileId === paciente);
         return { items, count: items.length, simulated: true };
@@ -264,7 +264,7 @@ export function registrarFacturacionSimulada(router: MockRouter, opciones: Opcio
         const cobro = cobroDe(m, request.params['chargeId']!, alcance);
         if (isMockReply(cobro)) return cobro;
         const datos = cuerpo<RegisterPaymentInput>(request);
-        return aRespuesta(m.registrarPago(cobro.id, Number(datos.methodCode)), 201);
+        return aRespuesta(m.registerPayment(cobro.id, Number(datos.methodCode)), 201);
       },
       { consultorio: true },
     ),
@@ -279,7 +279,7 @@ export function registrarFacturacionSimulada(router: MockRouter, opciones: Opcio
         if (isMockReply(cobro)) return cobro;
         const datos = cuerpo<RegisterInstancePaymentInput>(request);
         return aRespuesta(
-          m.registrarPagoDeInstancia(cobro.id, request.params['instanceId']!, {
+          m.instanceRegisterPayment(cobro.id, request.params['instanceId']!, {
             methodCode: Number(datos.methodCode),
             amount: String(datos.amount ?? ''),
           }),
@@ -298,7 +298,7 @@ export function registrarFacturacionSimulada(router: MockRouter, opciones: Opcio
         if (isMockReply(cobro)) return cobro;
         const datos = cuerpo<IssueInvoiceInput>(request) as IssueInvoiceInput;
         const usuario = request.user?.email.split('@')[0] ?? 'operador-simulado';
-        return aRespuesta(m.emitirFactura(cobro.id, datos, usuario), 201);
+        return aRespuesta(m.issueInvoice(cobro.id, datos, usuario), 201);
       },
       { consultorio: true },
     ),
@@ -308,7 +308,7 @@ export function registrarFacturacionSimulada(router: MockRouter, opciones: Opcio
     '/billing/simulated/invoices/:invoiceId',
     con(
       (request, m, alcance) => {
-        const factura = m.factura(request.params['invoiceId']!);
+        const factura = m.invoice(request.params['invoiceId']!);
         if (factura === null) return notFound('La factura no existe');
         const cobro = cobroDe(m, factura.chargeId, alcance);
         return isMockReply(cobro) ? cobro : factura;
@@ -321,20 +321,20 @@ export function registrarFacturacionSimulada(router: MockRouter, opciones: Opcio
     '/billing/simulated/invoices/:invoiceId/annulment',
     con((request, m) => {
       const datos = cuerpo<AnnulInvoiceInput>(request);
-      return aRespuesta(m.anular(request.params['invoiceId']!, Number(datos.reasonCode)));
+      return aRespuesta(m.void(request.params['invoiceId']!, Number(datos.reasonCode)));
     }),
   );
 
   router.post(
     '/billing/simulated/invoices/:invoiceId/annulment-reversal',
-    con((request, m) => aRespuesta(m.revertirAnulacion(request.params['invoiceId']!))),
+    con((request, m) => aRespuesta(m.revertVoiding(request.params['invoiceId']!))),
   );
 
   router.post(
     '/billing/simulated/invoices/:invoiceId/email',
     con((request, m) => {
       const datos = cuerpo<EmailInvoiceInput>(request);
-      return aRespuesta(m.encolarCorreo(request.params['invoiceId']!, String(datos.to ?? '')), 201);
+      return aRespuesta(m.enqueueEmail(request.params['invoiceId']!, String(datos.to ?? '')), 201);
     }),
   );
 
@@ -347,9 +347,9 @@ export function registrarFacturacionSimulada(router: MockRouter, opciones: Opcio
     if (request.user === null) return unauthorized('Sin sesión');
     const alcance = alcanceDeMisFacturas(request.user);
     const m = facturacion();
-    const emisores = new Map(EMISORES_SIMULADOS.map((e) => [e.issuer.id, e.issuer]));
+    const emisores = new Map(SIMULATED_ISSUERS.map((e) => [e.issuer.id, e.issuer]));
     const items: MyInvoiceItem[] = m
-      .listarCobros()
+      .listCharges()
       .filter((c) => c.latestInvoice !== null && alcance.incluye(c))
       .map((c) => ({
         invoice: c.latestInvoice!,
@@ -369,8 +369,8 @@ export function registrarFacturacionSimulada(router: MockRouter, opciones: Opcio
     if (!activa()) return notFound('La facturación simulada está apagada (billingSiatDemo = false)');
     if (request.user === null) return unauthorized('Sin sesión');
     const m = facturacion();
-    const factura = m.factura(request.params['invoiceId']!);
-    const cobro = factura === null ? null : m.cobro(factura.chargeId);
+    const factura = m.invoice(request.params['invoiceId']!);
+    const cobro = factura === null ? null : m.charge(factura.chargeId);
     if (factura === null || cobro === null || !alcanceDeMisFacturas(request.user).incluye(cobro)) {
       return notFound('La factura no existe');
     }
@@ -380,7 +380,7 @@ export function registrarFacturacionSimulada(router: MockRouter, opciones: Opcio
   router.get(
     '/billing/simulated/outbox',
     con((_, m) => {
-      const items = m.bandejaDeSalida();
+      const items = m.outputInbox();
       return { items, count: items.length, simulated: true };
     }),
   );

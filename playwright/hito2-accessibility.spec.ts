@@ -11,7 +11,7 @@ import { esperarAplicacionLista, irA } from './support/sesion';
  * b1-dependientes.spec.ts (aceptación desde Dependientes). Las acciones desde
  * campana sólo tenían cobertura unitaria en notification-bell.acciones.spec.ts.
  *
- * Titular y destinatario pertenecen a PACIENTES_ESCRITOS de personas.ts:
+ * Titular y destinatario pertenecen a PACIENTES_ESCRITOS de people.ts:
  * datos sintéticos, ajenos a pacientesRegistrados/USUARIO_PACIENTES_1.md.
  * La solicitud se crea por UI y se acepta por UI; persistencia de demo en
  * sessionStorage. Esto no certifica el contrato de dependientes en API real.

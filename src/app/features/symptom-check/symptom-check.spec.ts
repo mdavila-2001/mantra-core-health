@@ -5,8 +5,8 @@ import { By } from '@angular/platform-browser';
 import { Router, provideRouter } from '@angular/router';
 
 import { BodyMap } from '@shared/components/organisms/body-map/body-map';
-import { RECONOCEDOR_DE_VOZ } from './dictado';
-import type { EventoDeErrorDeVoz, EventoDeResultadoDeVoz, ReconocedorDeVoz } from './dictado.types';
+import { VOICE_RECOGNIZER } from './dictation';
+import type { VoiceErrorEvent, VoiceResultEvent, VoiceRecognizer } from './dictation.types';
 import { SymptomCheck } from './symptom-check';
 
 /**
@@ -402,13 +402,13 @@ describe('SymptomCheck · mientras la IA lee', () => {
  * reconocedor real está en `evidencia/h3/dictado/`, no acá.
  */
 describe('SymptomCheck · dictar', () => {
-  class ReconocedorDoble implements ReconocedorDeVoz {
+  class ReconocedorDoble implements VoiceRecognizer {
     static ultimo: ReconocedorDoble | null = null;
     lang = '';
     continuous = false;
     interimResults = false;
-    onresult: ((evento: EventoDeResultadoDeVoz) => void) | null = null;
-    onerror: ((evento: EventoDeErrorDeVoz) => void) | null = null;
+    onresult: ((evento: VoiceResultEvent) => void) | null = null;
+    onerror: ((evento: VoiceErrorEvent) => void) | null = null;
     onend: (() => void) | null = null;
     constructor() {
       ReconocedorDoble.ultimo = this;
@@ -428,13 +428,13 @@ describe('SymptomCheck · dictar', () => {
   let html: HTMLElement;
   let http: HttpTestingController;
 
-  function montar(constructor: (new () => ReconocedorDeVoz) | null): void {
+  function montar(constructor: (new () => VoiceRecognizer) | null): void {
     TestBed.configureTestingModule({
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
         provideRouter([]),
-        { provide: RECONOCEDOR_DE_VOZ, useValue: constructor },
+        { provide: VOICE_RECOGNIZER, useValue: constructor },
       ],
     });
     http = TestBed.inject(HttpTestingController);
@@ -452,7 +452,7 @@ describe('SymptomCheck · dictar', () => {
     return control;
   }
 
-  function fraseFinal(texto: string): EventoDeResultadoDeVoz {
+  function fraseFinal(texto: string): VoiceResultEvent {
     const results = [Object.assign([{ transcript: texto, confidence: 1 }], { isFinal: true })];
     return { resultIndex: 0, results: results as unknown as SpeechRecognitionResultList };
   }
@@ -977,13 +977,13 @@ describe('SymptomCheck · el área de texto', () => {
  * reconocedor real está en `evidencia/h3/dictado/`, no acá.
  */
 describe('SymptomCheck · dictar', () => {
-  class ReconocedorDoble implements ReconocedorDeVoz {
+  class ReconocedorDoble implements VoiceRecognizer {
     static ultimo: ReconocedorDoble | null = null;
     lang = '';
     continuous = false;
     interimResults = false;
-    onresult: ((evento: EventoDeResultadoDeVoz) => void) | null = null;
-    onerror: ((evento: EventoDeErrorDeVoz) => void) | null = null;
+    onresult: ((evento: VoiceResultEvent) => void) | null = null;
+    onerror: ((evento: VoiceErrorEvent) => void) | null = null;
     onend: (() => void) | null = null;
     constructor() {
       ReconocedorDoble.ultimo = this;
@@ -1003,13 +1003,13 @@ describe('SymptomCheck · dictar', () => {
   let html: HTMLElement;
   let http: HttpTestingController;
 
-  function montar(constructor: (new () => ReconocedorDeVoz) | null): void {
+  function montar(constructor: (new () => VoiceRecognizer) | null): void {
     TestBed.configureTestingModule({
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
         provideRouter([]),
-        { provide: RECONOCEDOR_DE_VOZ, useValue: constructor },
+        { provide: VOICE_RECOGNIZER, useValue: constructor },
       ],
     });
     http = TestBed.inject(HttpTestingController);
@@ -1027,7 +1027,7 @@ describe('SymptomCheck · dictar', () => {
     return control;
   }
 
-  function fraseFinal(texto: string): EventoDeResultadoDeVoz {
+  function fraseFinal(texto: string): VoiceResultEvent {
     const results = [Object.assign([{ transcript: texto, confidence: 1 }], { isFinal: true })];
     return { resultIndex: 0, results: results as unknown as SpeechRecognitionResultList };
   }

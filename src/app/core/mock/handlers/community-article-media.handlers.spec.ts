@@ -1,6 +1,6 @@
 import { HttpHeaders } from '@angular/common/http';
 
-import { vitrinas } from '../fixtures/comunidad';
+import { showcases } from '../fixtures/community';
 import { MockRouter, isMockReply, validation, type MockMethod } from '../mock-router';
 import { buscarUsuario } from '../mock-session';
 import { registrarComunidad } from './community.handlers';
@@ -44,7 +44,7 @@ describe('POST /community/profiles/:id/posts con imágenes (maqueta)', () => {
     return call<{ id: string }>('POST', '/common/files/upload', form).body.id;
   }
 
-  const perfil = vitrinas.todos()[0]!.id;
+  const perfil = showcases.todos()[0]!.id;
 
   it('devuelve las imágenes con su archivo, su descripción y en orden', () => {
     const a = subir('a.png');

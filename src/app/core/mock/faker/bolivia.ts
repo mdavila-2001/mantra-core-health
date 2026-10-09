@@ -1,6 +1,6 @@
 import type { fakerES } from '@faker-js/faker';
 
-import { DEPARTAMENTO, MUNICIPIO } from '../fixtures/conceptos';
+import { DEPARTMENT, MUNICIPALITY } from '../fixtures/concepts';
 
 /* ============================================================================
     Lo boliviano, que `faker` no trae.
@@ -9,7 +9,7 @@ import { DEPARTAMENTO, MUNICIPIO } from '../fixtures/conceptos';
     teléfonos y sus calles. Nada de eso pasa por paciente en Santa Cruz. Este
     módulo es la capa que sí: cédulas con extensión departamental, NIT,
     celulares +591, municipios reales tomados del **mismo catálogo** que usa la
-    aplicación (`fixtures/conceptos.ts`), y direcciones con las avenidas que
+    aplicación (`fixtures/concepts.ts`), y direcciones con las avenidas que
     existen.
 
     Regla que se hereda de `demo-presets.ts` y que aquí también manda: nada de
@@ -40,8 +40,8 @@ export interface LugarBoliviano {
 export const LUGARES: readonly LugarBoliviano[] = [
   {
     ciudad: 'Santa Cruz de la Sierra',
-    municipioId: MUNICIPIO['SC-SCZ']!,
-    departamentoId: DEPARTAMENTO['geo:bo:department:SC']!,
+    municipioId: MUNICIPALITY['SC-SCZ']!,
+    departamentoId: DEPARTMENT['geo:bo:department:SC']!,
     extension: 'SC',
     lat: -17.7833,
     lng: -63.1821,
@@ -49,8 +49,8 @@ export const LUGARES: readonly LugarBoliviano[] = [
   },
   {
     ciudad: 'La Paz',
-    municipioId: MUNICIPIO['LP-LPZ']!,
-    departamentoId: DEPARTAMENTO['geo:bo:department:LP']!,
+    municipioId: MUNICIPALITY['LP-LPZ']!,
+    departamentoId: DEPARTMENT['geo:bo:department:LP']!,
     extension: 'LP',
     lat: -16.4897,
     lng: -68.1193,
@@ -58,8 +58,8 @@ export const LUGARES: readonly LugarBoliviano[] = [
   },
   {
     ciudad: 'Cochabamba',
-    municipioId: MUNICIPIO['CB-CBB']!,
-    departamentoId: DEPARTAMENTO['geo:bo:department:CB']!,
+    municipioId: MUNICIPALITY['CB-CBB']!,
+    departamentoId: DEPARTMENT['geo:bo:department:CB']!,
     extension: 'CB',
     lat: -17.3895,
     lng: -66.1568,
@@ -67,8 +67,8 @@ export const LUGARES: readonly LugarBoliviano[] = [
   },
   {
     ciudad: 'El Alto',
-    municipioId: MUNICIPIO['LP-ELA']!,
-    departamentoId: DEPARTAMENTO['geo:bo:department:LP']!,
+    municipioId: MUNICIPALITY['LP-ELA']!,
+    departamentoId: DEPARTMENT['geo:bo:department:LP']!,
     extension: 'LP',
     lat: -16.5,
     lng: -68.1633,
@@ -76,8 +76,8 @@ export const LUGARES: readonly LugarBoliviano[] = [
   },
   {
     ciudad: 'Sucre',
-    municipioId: MUNICIPIO['CH-SRE']!,
-    departamentoId: DEPARTAMENTO['geo:bo:department:CH']!,
+    municipioId: MUNICIPALITY['CH-SRE']!,
+    departamentoId: DEPARTMENT['geo:bo:department:CH']!,
     extension: 'CH',
     lat: -19.0421,
     lng: -65.2559,
@@ -85,8 +85,8 @@ export const LUGARES: readonly LugarBoliviano[] = [
   },
   {
     ciudad: 'Tarija',
-    municipioId: MUNICIPIO['TJ-TJA']!,
-    departamentoId: DEPARTAMENTO['geo:bo:department:TJ']!,
+    municipioId: MUNICIPALITY['TJ-TJA']!,
+    departamentoId: DEPARTMENT['geo:bo:department:TJ']!,
     extension: 'TJ',
     lat: -21.5355,
     lng: -64.7296,
@@ -94,8 +94,8 @@ export const LUGARES: readonly LugarBoliviano[] = [
   },
   {
     ciudad: 'Oruro',
-    municipioId: MUNICIPIO['OR-ORU']!,
-    departamentoId: DEPARTAMENTO['geo:bo:department:OR']!,
+    municipioId: MUNICIPALITY['OR-ORU']!,
+    departamentoId: DEPARTMENT['geo:bo:department:OR']!,
     extension: 'OR',
     lat: -17.9833,
     lng: -67.15,
@@ -103,8 +103,8 @@ export const LUGARES: readonly LugarBoliviano[] = [
   },
   {
     ciudad: 'Potosí',
-    municipioId: MUNICIPIO['PT-PTS']!,
-    departamentoId: DEPARTAMENTO['geo:bo:department:PT']!,
+    municipioId: MUNICIPALITY['PT-PTS']!,
+    departamentoId: DEPARTMENT['geo:bo:department:PT']!,
     extension: 'PT',
     lat: -19.5836,
     lng: -65.7531,
@@ -112,8 +112,8 @@ export const LUGARES: readonly LugarBoliviano[] = [
   },
   {
     ciudad: 'Trinidad',
-    municipioId: MUNICIPIO['BE-TRI']!,
-    departamentoId: DEPARTAMENTO['geo:bo:department:BE']!,
+    municipioId: MUNICIPALITY['BE-TRI']!,
+    departamentoId: DEPARTMENT['geo:bo:department:BE']!,
     extension: 'BE',
     lat: -14.8333,
     lng: -64.9,

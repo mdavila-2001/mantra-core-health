@@ -66,7 +66,7 @@ export type { HeaderUser } from './header/header.types';
 export { AppMap, CARGADOR_DE_LEAFLET, construirPopup } from './map/map';
 export type { CargadorDeLeaflet } from './map/map';
 export { distanciaEnLineaRectaKm, ordenarPorCercania } from './map/geo';
-export type { EstadoDePin, PinMapa, PuntoGeo } from './map/pin-mapa.types';
+export type { PinStatus as EstadoDePin, PinMap as PinMapa, PuntoGeo } from './map/map-pin.types';
 
 /**
  * El rail de la superficie pública. Reemplaza las ocho copias de `app-tabs`

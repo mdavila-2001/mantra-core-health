@@ -2,7 +2,7 @@ import type {
   PortabilityExportFormat,
   PortabilityExportInput,
 } from '../../data-access/insurance/insurance-portability.types';
-import { PACIENTE, pacientePorId } from '../fixtures/personas';
+import { PACIENTE, patientById } from '../fixtures/people';
 import { forbidden, notFound, type MockRequest, type MockRouter } from '../mock-router';
 import { ahora, Coleccion, cuerpo, iso, nuevoId, uuid } from '../mock-store';
 import { sha256Hex } from '../sha256';
@@ -185,7 +185,7 @@ function buildReport(patientProfileId: string, certificateId: string, generatedA
   // paciente fijo: sin esto, exportar con otro `patientProfileId` (otro
   // titular, o el de demostración) devolvía el nombre y las coberturas de
   // `PACIENTE` sin importar a quién pertenecía el historial.
-  const perfil = perfilPropioDe(pacientePorId(patientProfileId) ?? PACIENTE);
+  const perfil = perfilPropioDe(patientById(patientProfileId) ?? PACIENTE);
   const reclamos = reportClaims(patientProfileId);
   const hace36Meses = new Date(Date.now() - 36 * 30.44 * 24 * 60 * 60 * 1000).toISOString();
   const ultimos36 = reclamos.filter((r) => r.submittedAt >= hace36Meses);

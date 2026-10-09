@@ -24,8 +24,8 @@ describe('comunidad demo: publicaciones, grupos y conversación', () => {
     previousAutoReply = localStorage.getItem('alovida.chat-respuesta-automatica');
     localStorage.removeItem('alovida.chat-respuesta-automatica');
     vi.resetModules();
-    const [{ VITRINA_MEDICA, VITRINA_PACIENTE }, { registrarComunidad }] = await Promise.all([
-      import('../fixtures/comunidad'), import('./community.handlers'),
+    const [{ MEDICAL_SHOWCASE: VITRINA_MEDICA, PATIENT_SHOWCASE: VITRINA_PACIENTE }, { registrarComunidad }] = await Promise.all([
+      import('../fixtures/community'), import('./community.handlers'),
     ]);
     medicalProfileId = VITRINA_MEDICA.id;
     patientProfileId = VITRINA_PACIENTE.id;

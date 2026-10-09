@@ -48,7 +48,7 @@ const DESTINO = join(
   'core',
   'mock',
   'fixtures',
-  'anatomia-atlas.generated.ts',
+  'anatomy-atlas.generated.ts',
 );
 
 const leer = (...p) => readFileSync(join(ORIGEN, ...p), 'utf8');

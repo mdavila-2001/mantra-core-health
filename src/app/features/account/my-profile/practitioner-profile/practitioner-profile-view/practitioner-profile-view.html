@@ -7,7 +7,7 @@
      que dispara la subida, misma cabecera con «Tus datos» y el lápiz a la
      derecha, mismas pestañas, mismos renglones `dt`/`dd` y el mismo
      «Sin registrar» en cursiva para lo que falta. El CSS es literalmente el
-     mismo archivo (`ficha-de-perfil.css`), importado por los dos componentes.
+     mismo archivo (`profile-sheet.css`), importado por los dos componentes.
 
      Lo que cambia es QUÉ dice cada renglón: los doce pasos de
      `auth/register-practitioner`, repartidos por `PESTANAS_DEL_PERFIL_MEDICO`.
@@ -299,7 +299,7 @@
         @if (perfil().consultorio; as consultorio) {
           <section class="mi-perfil__logo" data-testid="perfil-logo-consultorio">
             <h3 class="mi-perfil__subtitulo">Logo del consultorio</h3>
-            <app-logo-consultorio
+            <app-practice-logo
               data-testid="perfil-logo-consultorio-vista"
               [src]="consultorio.logoUrl"
               [nombre]="consultorio.nombre"
@@ -316,12 +316,12 @@
           <section class="mi-perfil__firma" data-testid="perfil-firma-y-sello">
             <h3 class="mi-perfil__subtitulo">Firma y sello médico</h3>
             <div class="mi-perfil__firma-cajas">
-              <app-firma-o-sello
+              <app-signature-or-seal
                 tipo="firma"
                 data-testid="perfil-firma-vista"
                 [src]="firmaYSello.firmaUrl"
               />
-              <app-firma-o-sello
+              <app-signature-or-seal
                 tipo="sello"
                 data-testid="perfil-sello-vista"
                 [src]="firmaYSello.selloUrl"
@@ -479,7 +479,7 @@
                  tamaño fijo: con o sin logo el recuadro mide lo mismo. **No se
                  corrige acá**: se carga y se cambia desde «Datos personales». -->
             <div class="mi-perfil__factura factura--con-logo" data-testid="perfil-factura-recuadro">
-              <app-logo-consultorio
+              <app-practice-logo
                 class="factura__logo"
                 data-testid="perfil-factura-logo"
                 [src]="perfil().consultorio?.logoUrl ?? null"
@@ -615,7 +615,7 @@
              van en orden.
 
              Las clases son propias (`trayecto__*`) y no `mi-perfil__*` a
-             propósito: ese prefijo vive en `ficha-de-perfil.css`, que esta
+             propósito: ese prefijo vive en `profile-sheet.css`, que esta
              ficha **comparte literalmente con la del paciente** —el cliente
              pidió que las dos se vean igual—, así que retocarlo acá le
              cambiaría el dibujo a una pantalla que nadie tocó. -->

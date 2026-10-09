@@ -78,7 +78,7 @@
                 {{ avisoReescribir }}
               </app-alert>
             }
-            <app-ubicacion-picker
+            <app-map-location-picker
               pinId="casa-matriz"
               etiquetaConfirmada="Casa matriz"
               etiquetaQuitar="Quitar la ubicación de la casa matriz"
@@ -121,14 +121,14 @@
             />
           </ng-template>
           <ng-template appCampoPersonalizado="legalRepresentative">
-            <app-campos-de-nombre-en-linea
+            <app-inline-name-fields
               [grupo]="form.controls.legalRepresentative"
               [obligatorio]="true"
               prefijoTestId="registro-organizacion-representante"
             />
           </ng-template>
           <ng-template appCampoPersonalizado="ownerName">
-            <app-campos-de-nombre-en-linea
+            <app-inline-name-fields
               [grupo]="form.controls.ownerName"
               [obligatorio]="true"
               prefijoTestId="registro-organizacion-owner"
@@ -148,7 +148,7 @@
                   [(expanded)]="gerencia.expanded"
                   [attr.data-testid]="'registro-organizacion-executives-' + gerencia.testId"
                 >
-                  <app-campos-de-nombre-en-linea
+                  <app-inline-name-fields
                     [grupo]="form.controls.executives.controls[gerencia.key].controls.nombre"
                     [obligatorio]="true"
                     [prefijoTestId]="'registro-organizacion-executives-' + gerencia.testId"

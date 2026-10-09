@@ -28,7 +28,7 @@
       (click)="alternar()"
       (keydown)="alTeclearEnDisparador($event)"
     >
-      <app-pais-bandera [iso]="pais().iso" />
+      <app-country-flag [iso]="pais().iso" />
       <span class="pais__prefijo">{{ pais().prefijo }}</span>
       <svg class="pais__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <polyline points="6 9 12 15 18 9" />
@@ -63,7 +63,7 @@
             (click)="elegir(opcion)"
             (mouseenter)="resaltado.set(i)"
           >
-            <app-pais-bandera [iso]="opcion.iso" />
+            <app-country-flag [iso]="opcion.iso" />
             <span class="pais__nombre">{{ opcion.nombre }}</span>
             <span class="pais__codigo">{{ opcion.prefijo }}</span>
           </li>

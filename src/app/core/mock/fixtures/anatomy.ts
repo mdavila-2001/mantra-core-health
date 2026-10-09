@@ -1,0 +1,244 @@
+import { contieneSinTildes, uuid } from '../mock-store';
+import {
+  DEFINICIONES_DE_TIPO,
+  ENTRADAS_ANATOMICAS,
+  LAMINAS_ANATOMICAS,
+  NOTAS_CLINICAS_ANATOMICAS,
+  REGIONES_ANATOMICAS,
+  SUBREGIONES_ANATOMICAS,
+  type EntradaAnatomica,
+} from './anatomy.generated';
+import { CATEGORIES, UMBRELLA, type GlossarySet } from './glossary';
+
+/* ============================================================================
+    La taxonomía de Netter, con la forma con la que el glosario sale por la API.
+
+    Indexa `anatomy.generated.ts` —8 regiones, 65 subregiones, 548 láminas y
+    3 161 entradas del índice— y la publica como miembros de la categoría
+    «Anatomía», que ya existía en la grilla con tres términos curados.
+
+    ## Por qué no se mezclan con el catálogo curado
+
+    `glossary.ts` sirve 69 términos escritos por alguien: bilingües, con
+    definición clínica y resumen llano. Una entrada del índice de Netter tiene
+    nombre, tipo y láminas. Son dos cosas distintas y se mantienen separadas;
+    lo único que comparten es el conjunto de valores por el que se las busca.
+
+    ## La regla que gobierna este archivo
+
+    El corpus **no publica una definición por entrada**: publica una por tipo.
+    Así que el texto que viaja como definición se rotula a sí mismo —«Qué es un
+    músculo», y la aclaración de que no es la definición de *ese* músculo—.
+    Ninguna pantalla puede mostrarlo como si fuera otra cosa, ni aunque cambie.
+
+    Nada de lo que el Atlas no dice se completa acá: no hay origen, inserción,
+    inervación, irrigación, función ni patología.
+    ========================================================================== */
+
+/** La categoría «Anatomía», que ya estaba en la grilla del glosario. */
+const ANATOMY_CATEGORY: GlossarySet = (() => {
+  const categoria = CATEGORIES.find((c) => c.key === 'anatomy');
+  if (categoria === undefined) {
+    throw new Error('El glosario no declara la categoría «anatomy».');
+  }
+  return categoria;
+})();
+
+const proseByType = new Map(DEFINICIONES_DE_TIPO.map((d) => [d.type, d.definition]));
+const clinicalNoteByPlate = new Map(NOTAS_CLINICAS_ANATOMICAS.map((n) => [n.plate, n]));
+const plateByNumber = new Map(LAMINAS_ANATOMICAS.map((l) => [l.plate, l]));
+
+/** El nombre legible de un tipo: `conducto_canal` → «conducto canal». */
+function readableType(tipo: string): string {
+  return tipo.replace(/_/g, ' ');
+}
+
+/** Una entrada del índice, ya con su identidad derivada. */
+export interface AnatomicalConcept extends EntradaAnatomica {
+  readonly id: string;
+  /** `NETTER_<id de la entrada>` — no colisiona con los `GLOSSARY_*` curados. */
+  readonly code: string;
+}
+
+export const ENTRIES: readonly AnatomicalConcept[] = ENTRADAS_ANATOMICAS.map((entrada) => ({
+  ...entrada,
+  id: uuid(`concept-anatomy-${entrada.slug}`),
+  code: `NETTER_${entrada.id.toUpperCase()}`,
+})).sort((a, b) => a.name.localeCompare(b.name, 'es'));
+
+const byId = new Map(ENTRIES.map((e) => [e.id, e]));
+const bySlug = new Map(ENTRIES.map((e) => [e.slug, e]));
+
+/** Una entrada anatómica por su identificador de concepto, o `undefined`. */
+export function entryById(id: string): AnatomicalConcept | undefined {
+  return byId.get(id);
+}
+
+/** Una entrada anatómica por su slug, o `undefined`. */
+export function entryBySlug(slug: string): AnatomicalConcept | undefined {
+  return bySlug.get(slug);
+}
+
+/** Si un conjunto de valores es el que contiene las entradas anatómicas. */
+export function isSetWithAnatomy(conjunto: GlossarySet): boolean {
+  return (
+    conjunto.internalCode === UMBRELLA.internalCode ||
+    conjunto.internalCode === ANATOMY_CATEGORY.internalCode
+  );
+}
+
+/**
+ * Dónde está la entrada, dicho con los datos que el Atlas sí publica.
+ *
+ * Es la línea que acompaña al nombre en el listado. No afirma nada sobre la
+ * estructura: enumera su tipo, su bloque editorial y las láminas del índice.
+ */
+function locationOf(entrada: AnatomicalConcept): string {
+  const partes = [readableType(entrada.type)];
+  if (entrada.region !== null) {
+    partes.push(entrada.subregion === null
+      ? entrada.region
+      : `${entrada.region} › ${entrada.subregion}`);
+  }
+  if (entrada.plates.length > 0) {
+    partes.push(entrada.plates.length === 1
+      ? `lámina ${entrada.plates[0]}`
+      : `láminas ${entrada.plates.join(', ')}`);
+  }
+  return partes.join(' · ');
+}
+
+/**
+ * La prosa del tipo, rotulada como lo que es.
+ *
+ * El rótulo va **dentro** del texto y no en la plantilla a propósito: así
+ * ninguna pantalla —ni una futura— puede presentarlo como la definición de esta
+ * estructura en particular. El corpus no la tiene.
+ */
+function typeDefinition(entrada: AnatomicalConcept): string {
+  const prosa = proseByType.get(entrada.type);
+  const nombre = readableType(entrada.type);
+  if (prosa === undefined) {
+    return `El índice del Atlas clasifica esta entrada como «${nombre}».`;
+  }
+  return (
+    `Qué es un «${nombre}»: ${prosa} — Esta descripción es del tipo de estructura, ` +
+    `no de «${entrada.name}» en particular: el índice del Atlas no publica una ` +
+    `definición por entrada.`
+  );
+}
+
+/** De dónde salió el nombre, y con cuánto acuerdo entre las dos pasadas de OCR. */
+function provenanceOf(entrada: AnatomicalConcept): string {
+  const acuerdo = {
+    consensus_high: 'Dos extracciones OCR independientes coinciden en el término y sus láminas.',
+    consensus_medium: 'Las dos extracciones OCR difieren: el término está pendiente de revisión.',
+    new_ocr_only: 'Sólo una extracción OCR reconoció este término.',
+  }[entrada.confidence] ?? 'Nivel de acuerdo no declarado.';
+  return (
+    `${acuerdo} La forma se conserva tal como aparece en el índice del Atlas, sin ` +
+    `corregir: normalizarla contra Terminologia Anatomica (FIPAT) exige cotejarla ` +
+    `con la lámina original. Ningún nivel equivale a revisión humana término por término.`
+  );
+}
+
+/** Las láminas de una entrada, con su título y la nota clínica si la hubiera. */
+function platesOf(entrada: AnatomicalConcept) {
+  return entrada.plates.flatMap((numero) => {
+    const lamina = plateByNumber.get(numero);
+    if (lamina === undefined) return [];
+    const clinica = clinicalNoteByPlate.get(numero);
+    return [{
+      plate: numero,
+      title: lamina.title,
+      ...(clinica === undefined ? {} : { clinicalTitle: clinica.title }),
+    }];
+  });
+}
+
+/* ---- las dos formas con las que la anatomía viaja por la API -------------- */
+
+/** Una entrada anatómica como la devuelve la búsqueda de términos. */
+export function inlineEntry(entrada: AnatomicalConcept) {
+  return {
+    conceptId: entrada.id,
+    code: entrada.code,
+    display: entrada.name,
+    slug: entrada.slug,
+    // El Atlas del que sale este índice es la edición en castellano.
+    translated: true,
+    category: {
+      internalCode: ANATOMY_CATEGORY.internalCode,
+      name: ANATOMY_CATEGORY.name,
+    },
+    shortDefinition: locationOf(entrada),
+    tags: [] as readonly string[],
+    relationsCount: 0,
+    status: 'active' as const,
+    valueSets: [UMBRELLA, ANATOMY_CATEGORY].map((conjunto) => ({
+      id: conjunto.id,
+      internalCode: conjunto.internalCode,
+      name: conjunto.name,
+    })),
+  };
+}
+
+/** La ficha completa de una entrada anatómica. */
+export function inlineAnatomicalSheet(entrada: AnatomicalConcept) {
+  const referencia = (conjunto: GlossarySet) => ({
+    valueSetId: conjunto.id,
+    internalCode: conjunto.internalCode,
+    name: conjunto.name,
+  });
+
+  return {
+    conceptId: entrada.id,
+    code: entrada.code,
+    display: entrada.name,
+    slug: entrada.slug,
+    translated: true,
+    valueSets: [UMBRELLA, ANATOMY_CATEGORY].map((conjunto) => ({
+      id: conjunto.id,
+      internalCode: conjunto.internalCode,
+      name: conjunto.name,
+    })),
+    // El índice no publica sinónimos: publica formas fuente. No se inventan.
+    synonyms: [] as readonly { value: string; language: string; preferred: boolean }[],
+    category: referencia(ANATOMY_CATEGORY),
+    tags: [] as readonly ReturnType<typeof referencia>[],
+    clinicalDefinition: { text: typeDefinition(entrada), translated: true },
+    plainSummary: { text: locationOf(entrada), translated: true },
+    // El corpus prohíbe inferir relaciones entre estructuras: que dos términos
+    // compartan lámina es representación, no causalidad.
+    relations: [] as readonly { type: string; conceptId: string; slug: string; display: string }[],
+    properties: {
+      source_form: entrada.name,
+      structure_type: readableType(entrada.type),
+      ...(entrada.region === null ? {} : { region: entrada.region }),
+      ...(entrada.subregion === null ? {} : { subregion: entrada.subregion }),
+      plates: platesOf(entrada),
+      provenance: provenanceOf(entrada),
+    },
+  };
+}
+
+/**
+ * Una entrada coincide por nombre, tipo, región o código, sin distinguir
+ * tildes ni la ñ —la misma regla que el resto del glosario—.
+ */
+export function anatomyMatches(entrada: AnatomicalConcept, q: string | null): boolean {
+  if (q === null || q === '') return true;
+  return (
+    contieneSinTildes(entrada.name, q) ||
+    contieneSinTildes(readableType(entrada.type), q) ||
+    contieneSinTildes(entrada.region, q) ||
+    contieneSinTildes(entrada.subregion, q) ||
+    contieneSinTildes(entrada.code, q)
+  );
+}
+
+/** Las regiones y subregiones, para quien quiera navegar la taxonomía. */
+export const ANATOMICAL_TAXONOMY = {
+  regions: REGIONES_ANATOMICAS,
+  subregions: SUBREGIONES_ANATOMICAS,
+} as const;

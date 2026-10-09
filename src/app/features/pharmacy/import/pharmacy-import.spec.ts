@@ -10,7 +10,7 @@ import type {
   PharmacyProductSearchPage,
 } from '../../../core/data-access/pharmacy/pharmacy.types';
 import { CsvExportService } from '../../../shared/utils/csv-export/csv-export';
-import type { CamposDelProducto, ModoDeCarga } from '../catalog-rules/catalogo.reglas';
+import type { ProductFields, LoadMode } from '../catalog-rules/catalog.rules';
 import { PharmacyImport } from './pharmacy-import';
 
 /**
@@ -81,12 +81,12 @@ function page(items: readonly PharmacyProduct[], truncated = false): PharmacyPro
 /** Lo que la spec toca del componente: señales y métodos protegidos. */
 interface Internal {
   step: () => string;
-  mode: () => ModoDeCarga;
+  mode: () => LoadMode;
   onFilesChange: (files: readonly File[]) => Promise<void>;
   publish: () => void;
   stop: () => void;
   goTo: (step: 'file' | 'columns' | 'review') => void;
-  setMode: (mode: ModoDeCarga | null) => void;
+  setMode: (mode: LoadMode | null) => void;
   choosePharmacy: (id: string | null) => void;
   downloadTemplate: () => void;
 }
@@ -250,7 +250,7 @@ describe('PharmacyImport', () => {
       expect(download).toHaveBeenCalledTimes(1);
       const [rows, columns, filename] = download.mock.calls[0]!;
       expect(filename).toBe('plantilla-catalogo-farmacia.csv');
-      expect((rows as CamposDelProducto[]).map((row) => row.categoria)).toEqual([
+      expect((rows as ProductFields[]).map((row) => row.categoria)).toEqual([
         'Ortopedia',
         'Ortopedia',
         'Ortopedia',

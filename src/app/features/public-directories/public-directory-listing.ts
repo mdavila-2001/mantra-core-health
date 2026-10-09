@@ -19,7 +19,7 @@ import {
 } from '@core/data-access/terminology/bo-municipalities.service';
 import type { DepartamentoElegible } from '@shared/components/organisms/department-map/department-map';
 
-import { departamentoPorCiudad, normalizarLugar } from '@shared/geo/departamento-de-ciudad';
+import { departmentByCity, normalizePlace } from '@shared/geo/city-department';
 
 import { aTarjeta } from '../alovida/buscar/public-result.mapper';
 
@@ -162,7 +162,7 @@ export abstract class PublicDirectoryListing {
   );
 
   /** De cada ciudad publicada al `conceptId` de su departamento. */
-  private readonly porCiudad = computed(() => departamentoPorCiudad(this.ramas()));
+  private readonly porCiudad = computed(() => departmentByCity(this.ramas()));
 
   /**
    * Los parámetros de la URL, que son **la** fuente de los tres cortes en
@@ -215,7 +215,7 @@ export abstract class PublicDirectoryListing {
     const porCiudad = this.porCiudad();
     const cuenta = new Map<string, number>();
     for (const fila of this.paraElMapa()) {
-      const conceptId = fila.city === null ? undefined : porCiudad.get(normalizarLugar(fila.city));
+      const conceptId = fila.city === null ? undefined : porCiudad.get(normalizePlace(fila.city));
       if (conceptId === undefined) continue;
       cuenta.set(conceptId, (cuenta.get(conceptId) ?? 0) + 1);
     }
@@ -333,7 +333,7 @@ export abstract class PublicDirectoryListing {
     }
     const porCiudad = this.porCiudad();
     return todas.filter(
-      (fila) => fila.city !== null && porCiudad.get(normalizarLugar(fila.city)) === departamento,
+      (fila) => fila.city !== null && porCiudad.get(normalizePlace(fila.city)) === departamento,
     );
   });
 

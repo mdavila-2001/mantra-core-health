@@ -20,7 +20,7 @@ import { expect, test, type Page } from '@playwright/test';
 
 /** La titular: la cuenta de paciente de la maqueta. */
 const TITULAR = { documento: '7654321', nombre: 'Ana Lucía Pérez Quiroga' };
-/** Un paciente del padrón con cuenta (índice 1 de `personas.ts`). */
+/** Un paciente del padrón con cuenta (índice 1 de `people.ts`). */
 const DEPENDIENTE = { documento: '5009871', nombre: 'Jorge Luis Mamani Choque' };
 
 /**

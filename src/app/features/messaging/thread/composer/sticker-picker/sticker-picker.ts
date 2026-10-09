@@ -1,10 +1,10 @@
 import { ChangeDetectionStrategy, Component, inject, output } from '@angular/core';
 
 import {
-  MisStickers,
-  TIPOS_DE_STICKER,
-  type MiSticker,
-} from '../../../../../core/messaging/mis-stickers';
+  MyStickers,
+  STICKER_TYPES,
+  type MySticker,
+} from '../../../../../core/messaging/my-stickers';
 import {
   PACK_DE_STICKERS,
   type Sticker,
@@ -40,7 +40,7 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class StickerPicker {
-  private readonly propios = inject(MisStickers);
+  private readonly propios = inject(MyStickers);
 
   /** Un sticker del pack. */
   readonly elegido = output<Sticker>();
@@ -52,8 +52,8 @@ export class StickerPicker {
   readonly rechazado = output<string>();
 
   protected readonly stickers = PACK_DE_STICKERS;
-  protected readonly misStickers = this.propios.lista;
-  protected readonly aceptados = TIPOS_DE_STICKER.join(',');
+  protected readonly misStickers = this.propios.list;
+  protected readonly aceptados = STICKER_TYPES.join(',');
 
   protected async alElegirArchivo(evento: Event): Promise<void> {
     const entrada = evento.target as HTMLInputElement;
@@ -62,18 +62,18 @@ export class StickerPicker {
     if (archivo === undefined) {
       return;
     }
-    const motivo = MisStickers.rechazo(archivo);
+    const motivo = MyStickers.rejection(archivo);
     if (motivo !== null) {
       this.rechazado.emit(motivo);
       return;
     }
     // Se guarda para la próxima y se manda ya: guardarlo no bloquea el envío.
-    void this.propios.guardar(archivo);
+    void this.propios.save(archivo);
     this.propio.emit(archivo);
   }
 
-  protected mandarPropio(sticker: MiSticker): void {
-    const archivo = MisStickers.archivoDe(sticker);
+  protected mandarPropio(sticker: MySticker): void {
+    const archivo = MyStickers.fileOf(sticker);
     if (archivo === null) {
       this.rechazado.emit('No pudimos leer ese sticker. Vuelva a subirlo.');
       return;
@@ -81,7 +81,7 @@ export class StickerPicker {
     this.propio.emit(archivo);
   }
 
-  protected quitarPropio(sticker: MiSticker): void {
-    this.propios.quitar(sticker.id);
+  protected quitarPropio(sticker: MySticker): void {
+    this.propios.remove(sticker.id);
   }
 }

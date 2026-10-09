@@ -242,7 +242,7 @@
          quien va a hablar de su salud tiene que saber a dónde va lo que dice
          antes de decirlo (Q-M1). Lo transcribe el navegador; después el
          servicio de triage lo analiza sin guardarlo, como a lo tecleado. -->
-    @if (dictado.soportado) {
+    @if (dictado.supported) {
       <div class="sintomas__dictado" data-testid="sintomas-dictado">
         <p class="sintomas__dictado-aviso" id="sintomas-dictado-aviso">
           Lo que dicta lo transcribe su navegador y lo analizamos para entenderle; no lo guardamos.
@@ -254,7 +254,7 @@
           type="button"
           data-testid="sintomas-dictar"
           aria-describedby="sintomas-dictado-aviso"
-          [attr.aria-pressed]="dictado.escuchando()"
+          [attr.aria-pressed]="dictado.listening()"
           (clicked)="alternarDictado()"
         >
           <svg
@@ -271,7 +271,7 @@
             <rect x="9" y="3" width="6" height="11" rx="3" />
             <path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v3" />
           </svg>
-          {{ dictado.escuchando() ? 'Detener' : 'Dictar' }}
+          {{ dictado.listening() ? 'Detener' : 'Dictar' }}
         </button>
         <!-- Los tres errores dicen qué hacer, no qué falló por dentro. -->
         <p
@@ -280,11 +280,11 @@
           aria-live="polite"
           data-testid="sintomas-dictado-estado"
         >
-          @switch (dictado.estado()) {
+          @switch (dictado.status()) {
             @case ('escuchando') {
               <span class="sintomas__dictado-punto" aria-hidden="true"></span>
               Escuchando… diga qué le pasa.
-              @if (dictado.parcial(); as parcial) {
+              @if (dictado.partial(); as parcial) {
                 <em>{{ parcial }}</em>
               }
             }

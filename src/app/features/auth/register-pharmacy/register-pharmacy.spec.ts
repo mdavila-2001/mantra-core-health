@@ -6,7 +6,7 @@ import { provideRouter, Router } from '@angular/router';
 import { of } from 'rxjs';
 
 import { CARGADOR_DE_LEAFLET } from '../../../shared/components/organisms/map/map';
-import { AltaDeCentroDiagnostico } from '../registro-compartido/alta-de-centro-diagnostico';
+import { DiagnosisCenterEnrollment } from '../shared-registration/diagnostic-center-enrollment';
 import { RegisterPharmacy } from './register-pharmacy';
 
 /** La forma que espera `IamClient.registerPharmacyOrganization`, según lo arma el cliente. */
@@ -69,7 +69,7 @@ describe('RegisterPharmacy', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         provideRouter([]),
-        { provide: AltaDeCentroDiagnostico, useValue: { catalogos: () => of(CATALOGOS_DE_PRUEBA) } },
+        { provide: DiagnosisCenterEnrollment, useValue: { catalogs: () => of(CATALOGOS_DE_PRUEBA) } },
         // El mapa (GPS de la central/sucursales) no debe cargar Leaflet de
         // verdad en jsdom: ver el mismo provider en `register-organization.spec.ts`.
         { provide: CARGADOR_DE_LEAFLET, useValue: () => new Promise<never>(() => undefined) },

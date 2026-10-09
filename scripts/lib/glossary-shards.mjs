@@ -53,7 +53,7 @@ export function mockUuid(seed) {
   return `${raw.slice(0, 8)}-${raw.slice(8, 12)}-4${raw.slice(13, 16)}-a${raw.slice(17, 20)}-${raw.slice(20, 32)}`;
 }
 
-/** El id de concepto de un término sin id propio: la fórmula de `fixtures/glosario.ts`. */
+/** El id de concepto de un término sin id propio: la fórmula de `fixtures/glossary.ts`. */
 export function conceptIdOf(slug) {
   return mockUuid(`concept-glossary-${slug}`);
 }

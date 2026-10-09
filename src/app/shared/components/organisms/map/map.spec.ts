@@ -10,8 +10,8 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { AppMap, CARGADOR_DE_LEAFLET, construirPopup } from './map';
 import type { CargadorDeLeaflet } from './map';
-import type { PinMapa } from './pin-mapa.types';
-import { CARGADOR_DE_PROVINCIAS, type ProvinciasDeBolivia } from './provincias';
+import type { PinMap } from './map-pin.types';
+import { CARGADOR_DE_PROVINCIAS, type ProvinciasDeBolivia } from './provinces';
 
 /* ---- el doble de Leaflet -------------------------------------------------- */
 
@@ -101,7 +101,7 @@ function leafletFalso(registro: RegistroLeaflet): unknown {
 
 /* ---- arnés ---------------------------------------------------------------- */
 
-const PINES: readonly PinMapa[] = [
+const PINES: readonly PinMap[] = [
   {
     id: 'A',
     codigo: 'A',
@@ -123,7 +123,7 @@ const PINES: readonly PinMapa[] = [
 ];
 
 async function crearMontado(
-  pines: readonly PinMapa[] = PINES,
+  pines: readonly PinMap[] = PINES,
 ): Promise<{ fixture: ComponentFixture<AppMap>; registro: RegistroLeaflet }> {
   const registro = new RegistroLeaflet();
   TestBed.configureTestingModule({

@@ -2,16 +2,16 @@ import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 
-import { establecerFirmaDeDocumentos, firmaDeDocumentos } from '../../shared/utils/pdf-export/pdf-firma';
+import { setDocumentSignature, documentSignature } from '../../shared/utils/pdf-export/pdf-signature';
 import {
-  establecerFuentesDeDocumentos,
-  fuentesDeDocumentos,
-} from '../../shared/utils/pdf-export/pdf-fuentes';
+  setDocumentFonts,
+  documentFonts,
+} from '../../shared/utils/pdf-export/pdf-fonts';
 import { establecerLogoDeDocumentos, logoDeDocumentos } from '../../shared/utils/pdf-export/pdf-logo';
 import { AuthService } from '../auth/auth.service';
-import { FirmaYSelloClient } from '../data-access/profiles/firma-y-sello.client';
+import { SignatureAndSealClient } from '../data-access/profiles/signature-and-seal.client';
 import { ProfilesClient } from '../data-access/profiles/profiles.client';
-import { LogoDelConsultorioClient } from '../data-access/practice-sites/logo-del-consultorio.client';
+import { PracticeLogoClient } from '../data-access/practice-sites/practice-logo.client';
 import { PdfBrandingService, PREPARAR_FUENTES, PREPARAR_LOGO } from './pdf-branding.service';
 
 const LOGO = { dataUrl: 'data:image/png;base64,AAAA', formato: 'PNG' as const, ancho: 3, alto: 1 };
@@ -22,10 +22,10 @@ const FUENTES = {
 
 describe('PdfBrandingService', () => {
   const perfil = signal<string | null>(null);
-  const cliente = { obtenerUrl: vi.fn() };
+  const cliente = { getUrl: vi.fn() };
   const prepararLogo = vi.fn();
   const prepararFuentes = vi.fn();
-  const firmaYSello = { obtener: vi.fn() };
+  const firmaYSello = { get: vi.fn() };
   const perfiles = { getOwnPractitionerProfile: vi.fn() };
 
   /** Deja correr los efectos y las promesas pendientes. */
@@ -39,22 +39,22 @@ describe('PdfBrandingService', () => {
     vi.resetAllMocks();
     perfil.set(null);
     establecerLogoDeDocumentos(null);
-    establecerFirmaDeDocumentos(null);
-    establecerFuentesDeDocumentos(null);
+    setDocumentSignature(null);
+    setDocumentFonts(null);
     prepararFuentes.mockResolvedValue(FUENTES);
-    firmaYSello.obtener.mockReturnValue(of({ firmaUrl: null, selloUrl: null }));
+    firmaYSello.get.mockReturnValue(of({ firmaUrl: null, selloUrl: null }));
     perfiles.getOwnPractitionerProfile.mockReturnValue(
       of({ displayName: 'Dra. Valeria Rojas', licenses: [{ licenseNumber: 'M-1234' }] }),
     );
-    cliente.obtenerUrl.mockReturnValue(of('data:image/svg+xml;utf8,x'));
+    cliente.getUrl.mockReturnValue(of('data:image/svg+xml;utf8,x'));
     prepararLogo.mockResolvedValue(LOGO);
     TestBed.configureTestingModule({
       providers: [
         { provide: AuthService, useValue: { practitionerProfileId: perfil } },
-        { provide: LogoDelConsultorioClient, useValue: cliente },
+        { provide: PracticeLogoClient, useValue: cliente },
         { provide: PREPARAR_LOGO, useValue: prepararLogo },
         { provide: PREPARAR_FUENTES, useValue: prepararFuentes },
-        { provide: FirmaYSelloClient, useValue: firmaYSello },
+        { provide: SignatureAndSealClient, useValue: firmaYSello },
         { provide: ProfilesClient, useValue: perfiles },
       ],
     });
@@ -67,7 +67,7 @@ describe('PdfBrandingService', () => {
   it('baja las fuentes de marca una sola vez, haya o no profesional', async () => {
     TestBed.inject(PdfBrandingService);
     await asentar();
-    expect(fuentesDeDocumentos()).toEqual(FUENTES);
+    expect(documentFonts()).toEqual(FUENTES);
 
     perfil.set('per-1');
     await asentar();
@@ -75,7 +75,7 @@ describe('PdfBrandingService', () => {
     await asentar();
 
     expect(prepararFuentes).toHaveBeenCalledTimes(1);
-    expect(fuentesDeDocumentos()).toEqual(FUENTES);
+    expect(documentFonts()).toEqual(FUENTES);
   });
 
   it('si las fuentes no se pudieron bajar, los PDF salen en Helvetica', async () => {
@@ -83,14 +83,14 @@ describe('PdfBrandingService', () => {
     TestBed.inject(PdfBrandingService);
     await asentar();
 
-    expect(fuentesDeDocumentos()).toBeNull();
+    expect(documentFonts()).toBeNull();
   });
 
   it('sin profesional en la sesión no pide nada y deja los PDF sin logo', async () => {
     TestBed.inject(PdfBrandingService);
     await asentar();
 
-    expect(cliente.obtenerUrl).not.toHaveBeenCalled();
+    expect(cliente.getUrl).not.toHaveBeenCalled();
     expect(logoDeDocumentos()).toBeNull();
   });
 
@@ -99,7 +99,7 @@ describe('PdfBrandingService', () => {
     perfil.set('per-1');
     await asentar();
 
-    expect(cliente.obtenerUrl).toHaveBeenCalledWith('per-1');
+    expect(cliente.getUrl).toHaveBeenCalledWith('per-1');
     expect(logoDeDocumentos()).toEqual(LOGO);
   });
 
@@ -115,14 +115,14 @@ describe('PdfBrandingService', () => {
   });
 
   it('sin logo cargado o con una imagen ilegible los PDF salen sin logo', async () => {
-    cliente.obtenerUrl.mockReturnValue(of(null));
+    cliente.getUrl.mockReturnValue(of(null));
     TestBed.inject(PdfBrandingService);
     perfil.set('per-1');
     await asentar();
     expect(logoDeDocumentos()).toBeNull();
 
     prepararLogo.mockResolvedValue(null);
-    cliente.obtenerUrl.mockReturnValue(of('data:image/png;base64,roto'));
+    cliente.getUrl.mockReturnValue(of('data:image/png;base64,roto'));
     TestBed.inject(PdfBrandingService).recargar();
     await asentar();
     expect(logoDeDocumentos()).toBeNull();
@@ -150,12 +150,12 @@ describe('PdfBrandingService', () => {
     const servicio = TestBed.inject(PdfBrandingService);
     perfil.set('per-1');
     await asentar();
-    cliente.obtenerUrl.mockClear();
+    cliente.getUrl.mockClear();
 
     servicio.recargar();
     await asentar();
 
-    expect(cliente.obtenerUrl).toHaveBeenCalledTimes(1);
+    expect(cliente.getUrl).toHaveBeenCalledTimes(1);
   });
 
   describe('la firma y el sello de los documentos', () => {
@@ -163,7 +163,7 @@ describe('PdfBrandingService', () => {
       TestBed.inject(PdfBrandingService);
       await asentar();
 
-      expect(firmaDeDocumentos()).toBeNull();
+      expect(documentSignature()).toBeNull();
     });
 
     it('con profesional y sin imágenes deja el nombre y la matrícula, con la línea vacía', async () => {
@@ -171,7 +171,7 @@ describe('PdfBrandingService', () => {
       perfil.set('per-1');
       await asentar();
 
-      expect(firmaDeDocumentos()).toEqual({
+      expect(documentSignature()).toEqual({
         nombre: 'Dra. Valeria Rojas',
         matricula: 'M-1234',
         firma: null,
@@ -180,14 +180,14 @@ describe('PdfBrandingService', () => {
     });
 
     it('con las dos imágenes las deja listas para el PDF', async () => {
-      firmaYSello.obtener.mockReturnValue(of({ firmaUrl: 'data:image/png;base64,F', selloUrl: 'data:image/png;base64,S' }));
+      firmaYSello.get.mockReturnValue(of({ firmaUrl: 'data:image/png;base64,F', selloUrl: 'data:image/png;base64,S' }));
       prepararLogo.mockImplementation(async (url: string) => ({ ...LOGO, dataUrl: url }));
       TestBed.inject(PdfBrandingService);
       perfil.set('per-1');
       await asentar();
 
-      expect(firmaDeDocumentos()?.firma?.dataUrl).toBe('data:image/png;base64,F');
-      expect(firmaDeDocumentos()?.sello?.dataUrl).toBe('data:image/png;base64,S');
+      expect(documentSignature()?.firma?.dataUrl).toBe('data:image/png;base64,F');
+      expect(documentSignature()?.sello?.dataUrl).toBe('data:image/png;base64,S');
     });
 
     it('si el perfil no se puede leer el bloque sale igual, sin nombre ni matrícula', async () => {
@@ -196,7 +196,7 @@ describe('PdfBrandingService', () => {
       perfil.set('per-1');
       await asentar();
 
-      expect(firmaDeDocumentos()).toEqual({ nombre: '', matricula: null, firma: null, sello: null });
+      expect(documentSignature()).toEqual({ nombre: '', matricula: null, firma: null, sello: null });
     });
 
     it('sin matrícula cargada la deja en null', async () => {
@@ -205,17 +205,17 @@ describe('PdfBrandingService', () => {
       perfil.set('per-1');
       await asentar();
 
-      expect(firmaDeDocumentos()?.matricula).toBeNull();
+      expect(documentSignature()?.matricula).toBeNull();
     });
 
     it('una imagen ilegible queda en null y no impide el bloque', async () => {
-      firmaYSello.obtener.mockReturnValue(of({ firmaUrl: 'data:image/png;base64,roto', selloUrl: null }));
+      firmaYSello.get.mockReturnValue(of({ firmaUrl: 'data:image/png;base64,roto', selloUrl: null }));
       prepararLogo.mockResolvedValue(null);
       TestBed.inject(PdfBrandingService);
       perfil.set('per-1');
       await asentar();
 
-      expect(firmaDeDocumentos()).toMatchObject({ nombre: 'Dra. Valeria Rojas', firma: null });
+      expect(documentSignature()).toMatchObject({ nombre: 'Dra. Valeria Rojas', firma: null });
     });
 
     it('al cerrar sesión limpia el bloque: no sobrevive a su dueño', async () => {
@@ -226,19 +226,19 @@ describe('PdfBrandingService', () => {
       perfil.set(null);
       await asentar();
 
-      expect(firmaDeDocumentos()).toBeNull();
+      expect(documentSignature()).toBeNull();
     });
 
     it('recargar vuelve a leer la firma, para cuando se guarda una nueva', async () => {
       const servicio = TestBed.inject(PdfBrandingService);
       perfil.set('per-1');
       await asentar();
-      firmaYSello.obtener.mockClear();
+      firmaYSello.get.mockClear();
 
       servicio.recargar();
       await asentar();
 
-      expect(firmaYSello.obtener).toHaveBeenCalledTimes(1);
+      expect(firmaYSello.get).toHaveBeenCalledTimes(1);
     });
   });
 });

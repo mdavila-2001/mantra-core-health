@@ -2,9 +2,9 @@ import { pharmacyOrderFromDto } from '../../../core/data-access/pharmacy-orders/
 import { pharmacyOrderDtoFixture } from '../../../core/data-access/pharmacy-orders/pharmacy-orders.spec-fixtures';
 import type { PedidoFarmacia } from '../../../core/data-access/pharmacy-orders/pharmacy-orders.types';
 import {
-  ID_PEDIDO_CON_DELIVERY,
-  ID_PEDIDO_CON_SEGURO,
-} from '../../../core/mock/fixtures/pedidos-de-farmacia';
+  ID_ORDER_WITH_DELIVERY,
+  ID_ORDER_WITH_INSURANCE,
+} from '../../../core/mock/fixtures/pharmacy-orders';
 import {
   PEDIDO_CON_DELIVERY,
   PEDIDO_CON_SEGURO,
@@ -36,7 +36,7 @@ describe('pharmacy-inbox.fixtures · la respuesta del seguro', () => {
   });
 
   it('el identificador es el que siembra el backend simulado, desde un solo lugar', () => {
-    expect(PEDIDO_CON_SEGURO.id).toBe(ID_PEDIDO_CON_SEGURO);
+    expect(PEDIDO_CON_SEGURO.id).toBe(ID_ORDER_WITH_INSURANCE);
   });
 
   it('dice lo aprobado y lo NO aprobado, renglón por renglón', () => {
@@ -109,7 +109,7 @@ describe('pharmacy-inbox.fixtures · la respuesta del seguro', () => {
 
 describe('pharmacy-inbox.fixtures · el pedido a domicilio de la maqueta', () => {
   it('se declara como lo devuelve el backend simulado: modalidad y dirección del contrato', () => {
-    expect(PEDIDO_CON_DELIVERY.id).toBe(ID_PEDIDO_CON_DELIVERY);
+    expect(PEDIDO_CON_DELIVERY.id).toBe(ID_ORDER_WITH_DELIVERY);
     expect(PEDIDO_CON_DELIVERY.modalidad).toBe('DOMICILIO');
     expect((PEDIDO_CON_DELIVERY.direccionDeEntrega ?? '').length).toBeGreaterThan(10);
   });

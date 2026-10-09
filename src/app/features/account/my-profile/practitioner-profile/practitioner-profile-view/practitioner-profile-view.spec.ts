@@ -6,7 +6,7 @@ import { TestBed, type ComponentFixture } from '@angular/core/testing';
 
 import { AuthService } from '../../../../../core/auth/auth.service';
 import { DialogService } from '../../../../../shared/components/molecules/dialog/dialog-service';
-import { PESTANAS_DEL_PERFIL_MEDICO } from '../../pestanas-del-perfil-medico';
+import { DOCTOR_PROFILE_TABS } from '../../doctor-profile-tabs';
 import { PractitionerProfileView } from './practitioner-profile-view';
 import type {
   AfiliacionVisible,
@@ -429,7 +429,7 @@ describe('PractitionerProfileView', () => {
     const pestanas = Array.from(host.querySelectorAll('[role="tab"]')).map(
       (boton) => boton.textContent?.trim() ?? '',
     );
-    expect(pestanas).toEqual([...PESTANAS_DEL_PERFIL_MEDICO]);
+    expect(pestanas).toEqual([...DOCTOR_PROFILE_TABS]);
     expect(pestanas).not.toContain('Vista previa del perfil público');
   });
 
@@ -974,7 +974,7 @@ describe('PractitionerProfileView', () => {
       const pestanas = Array.from(host.querySelectorAll('[role="tab"]')).map(
         (boton) => boton.textContent?.trim() ?? '',
       );
-      expect(pestanas).toEqual([...PESTANAS_DEL_PERFIL_MEDICO]);
+      expect(pestanas).toEqual([...DOCTOR_PROFILE_TABS]);
       // El número, con su rótulo: a secas aparecería también dentro de la URL
       // de la fuente de verificación de la formación, que es otro dato.
       // Desde el 19/09/2026 el rótulo lo pone la tarjeta: «Matrícula N.º LIC-3».

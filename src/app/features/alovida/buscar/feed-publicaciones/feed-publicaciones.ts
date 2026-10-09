@@ -10,7 +10,7 @@ import type {
   PublicProfileDetail,
 } from '@core/data-access/public-directory/public-directory.types';
 import { ToastService } from '@shared/components/molecules/toast/toast.service';
-import { inicialesDe } from '@shared/text/iniciales';
+import { initialsOf } from '@shared/text/initials';
 import { ReportPost } from '../../../feed/report-post/report-post';
 import { PublicPostCard } from '../../../public-profile/public-post-card/public-post-card';
 import { FeedBanner } from './feed-banner/feed-banner';
@@ -188,7 +188,7 @@ export class FeedPublicaciones {
 
   /** Las iniciales del autor, para cuando no tiene foto. */
   protected iniciales(post: PublicFeedPost): string {
-    return inicialesDe(post.authorDisplayName);
+    return initialsOf(post.authorDisplayName);
   }
 
   protected reintentar(): void {

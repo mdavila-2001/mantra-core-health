@@ -11,8 +11,8 @@ import { from, Observable, of, throwError, timer } from 'rxjs';
 import { mergeMap } from 'rxjs/operators';
 
 import { environment } from '../../../environments/environment';
-import { cuerpoDelFallo, falloPara, type FalloSimulado } from './fallos-simulados';
-import { apiRealForzada } from './modo-api';
+import { failureBody, failureFor, type SimulatedFailure } from './simulated-failures';
+import { forcedRealApi } from './api-mode';
 import { isMockReply, type MockMethod, type MockReply, type MockRequest, type MockRouter } from './mock-router';
 import { usuarioDeAccessToken } from './mock-session';
 
@@ -51,8 +51,8 @@ export const MOCK_ROUTER_LOADER = new InjectionToken<() => Promise<MockRouter>>(
 export const mockBackendInterceptor: HttpInterceptorFn = (request, next) => {
   // `apiRealForzada` es el interruptor del stock de componentes: deja pasar la
   // petición a la red para poder comparar una pantalla con datos simulados y
-  // con datos de verdad. Apagado por omisión y sin persistir. Ver `modo-api.ts`.
-  if (!environment.mockBackend || apiRealForzada()) {
+  // con datos de verdad. Apagado por omisión y sin persistir. Ver `api-mode.ts`.
+  if (!environment.mockBackend || forcedRealApi()) {
     return next(request);
   }
 
@@ -70,8 +70,8 @@ function atender(router: MockRouter, request: HttpRequest<unknown>, path: string
   // El fallo a propósito va **antes** de buscar el manejador: lo que se quiere
   // mirar es la pantalla contra una petición que sale mal, no el manejador
   // devolviendo un error. Apagado salvo que la sesión lo declare; ver
-  // `fallos-simulados.ts`.
-  const fallo = falloPara(method, path);
+  // `simulated-failures.ts`.
+  const fallo = failureFor(method, path);
   if (fallo !== null) {
     return timer(latencia(path)).pipe(mergeMap(() => emitirFallo(request, path, fallo)));
   }
@@ -129,7 +129,7 @@ function comoRespuesta(resultado: unknown): MockReply {
 function emitirFallo(
   request: HttpRequest<unknown>,
   path: string,
-  fallo: FalloSimulado,
+  fallo: SimulatedFailure,
 ): Observable<HttpEvent<unknown>> {
   if (fallo.modo === 'red') {
     return throwError(
@@ -142,7 +142,7 @@ function emitirFallo(
         }),
     );
   }
-  const { status, body } = cuerpoDelFallo(fallo, path);
+  const { status, body } = failureBody(fallo, path);
   return emitir(request, { status, body });
 }
 

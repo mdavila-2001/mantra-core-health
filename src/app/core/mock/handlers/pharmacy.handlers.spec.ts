@@ -4,7 +4,7 @@ import { crearRouterSimulado } from './index';
 import { buscarUsuario, TENANT_FARMACIA } from '../mock-session';
 import { isMockReply, type MockMethod, type MockRequest } from '../mock-router';
 import { uuid } from '../mock-store';
-import { ID_PEDIDO_CON_DELIVERY, ID_PEDIDO_CON_SEGURO } from '../fixtures/pedidos-de-farmacia';
+import { ID_ORDER_WITH_DELIVERY, ID_ORDER_WITH_INSURANCE } from '../fixtures/pharmacy-orders';
 
 /**
  * H3.S2 (carril A, 2026-09-25) — coherencia del mock de farmacia: el precio
@@ -186,14 +186,14 @@ describe('handlers de farmacia: coherencia de precio y disponibilidad', () => {
 
     it('correcto — el pedido de ejemplo a domicilio responde PINV_DELIVERY_DOMICILIO', () => {
       const order = cuerpoDe<WithDeliveryMode>(
-        pedir('GET', `/pharmacy/orders/${ID_PEDIDO_CON_DELIVERY}`, undefined, {}, null),
+        pedir('GET', `/pharmacy/orders/${ID_ORDER_WITH_DELIVERY}`, undefined, {}, null),
       );
       expect(order.deliveryMode?.code).toBe('PINV_DELIVERY_DOMICILIO');
     });
 
     it('límite — el resto de los pedidos sigue siendo retiro en la farmacia', () => {
       const order = cuerpoDe<WithDeliveryMode>(
-        pedir('GET', `/pharmacy/orders/${ID_PEDIDO_CON_SEGURO}`, undefined, {}, null),
+        pedir('GET', `/pharmacy/orders/${ID_ORDER_WITH_INSURANCE}`, undefined, {}, null),
       );
       expect(order.deliveryMode?.code).toBe('PINV_DELIVERY_RETIRO');
 
@@ -203,7 +203,7 @@ describe('handlers de farmacia: coherencia de precio y disponibilidad', () => {
       const aDomicilio = bandeja.items.filter(
         (item) => item.deliveryMode?.code !== 'PINV_DELIVERY_RETIRO',
       );
-      expect(aDomicilio.map((item) => item.id)).toEqual([ID_PEDIDO_CON_DELIVERY]);
+      expect(aDomicilio.map((item) => item.id)).toEqual([ID_ORDER_WITH_DELIVERY]);
     });
 
     it('inválido — un pedido inexistente responde 404, no un retiro inventado', () => {
@@ -311,14 +311,14 @@ describe('handlers de farmacia: coherencia de precio y disponibilidad', () => {
 
     it('correcto — el pedido a domicilio trae su dirección guardada', () => {
       const order = cuerpoDe<OrderReads>(
-        pedir('GET', `/pharmacy/orders/${ID_PEDIDO_CON_DELIVERY}`, undefined, {}, null),
+        pedir('GET', `/pharmacy/orders/${ID_ORDER_WITH_DELIVERY}`, undefined, {}, null),
       );
       expect(order.deliveryAddressText).toContain('Cristo Redentor');
     });
 
     it('límite — sin receta no hay prescriptor, y un retiro no trae dirección', () => {
       const order = cuerpoDe<OrderReads>(
-        pedir('GET', `/pharmacy/orders/${ID_PEDIDO_CON_SEGURO}`, undefined, {}, null),
+        pedir('GET', `/pharmacy/orders/${ID_ORDER_WITH_INSURANCE}`, undefined, {}, null),
       );
       expect(order.medicationRequestId).toBeNull();
       expect(order.prescriber).toBeNull();

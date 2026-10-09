@@ -1,32 +1,32 @@
 import { environment } from '../../../../environments/environment';
 import {
-  ESTABLECIMIENTO,
-  ESTADO,
-  JURISDICCION,
-  PARENTESCO,
-  TIPO_VINCULO,
-  displayDe,
-} from '../fixtures/conceptos';
+  FACILITY,
+  STATUS,
+  JURISDICTION,
+  KINSHIP,
+  LINK_TYPE,
+  displayOf,
+} from '../fixtures/concepts';
 import { contactChannelsOfCarrier } from './insurance.handlers';
 import {
-  afiliaciones,
-  CATEGORIA_MEDICO,
-  credencialesDe,
-  especialidadesDe,
-  idiomasDe,
-  licenciasDe,
-  MEDICA,
+  affiliationList,
+  DOCTOR_CATEGORY,
+  credentialsOf,
+  specialtiesOf,
+  languagesOf,
+  licensesOf,
+  MEDICAL,
   PACIENTE,
-  PACIENTES,
-  pacientePorId,
-  pacientes,
-  personasRelacionadasDe,
-  PROFESIONALES,
-  profesionalPorId,
-  type AfiliacionSimulada,
+  PATIENTS,
+  patientById,
+  patientList,
+  relatedPeopleOf,
+  PROFESSIONALS,
+  professionalById,
+  type SimulatedAffiliation,
   type PacienteSimulado,
   type ProfesionalSimulado,
-} from '../fixtures/personas';
+} from '../fixtures/people';
 import { conflict, forbidden, noContent, notFound, preconditionFailed, reply, validation, type MockRequest, type MockRouter } from '../mock-router';
 import { cerrarAcciones, emitirNotificacion } from './notifications.handlers';
 import {
@@ -49,7 +49,7 @@ import {
 
 function pacienteDeSesion(request: MockRequest): PacienteSimulado | undefined {
   const pid = request.user?.patientProfileId;
-  if (pid !== undefined) return pacientePorId(pid);
+  if (pid !== undefined) return patientById(pid);
   // Un profesional también puede tener su propio perfil de paciente.
   if (request.user?.key === 'medica') return PACIENTE;
   return undefined;
@@ -177,7 +177,7 @@ function propiedadSobrante(clave: string): { readonly field: string; readonly me
 
 /** Si el estado de verificación de una fila del perfil es «pendiente»: lo único corregible o retirable. */
 function estaPendiente(estadoConceptId: string | undefined): boolean {
-  return estadoConceptId === ESTADO['ST-PENDING'];
+  return estadoConceptId === STATUS['ST-PENDING'];
 }
 
 /** La fila tal como la devuelve el perfil: sin el dueño, que es de la maqueta. */
@@ -208,20 +208,20 @@ function conElegidaAlFrente<T extends { readonly id: string; readonly isPrimary?
    escriben, y separarse sería servir una lista y escribir sobre otra. */
 
 function especialidadesPropiasDe(p: ProfesionalSimulado) {
-  return [...especialidadesDe(p), ...especialidadesAgregadas.filtrar((e) => e.profileId === p.id).map(sinDueno)];
+  return [...specialtiesOf(p), ...especialidadesAgregadas.filtrar((e) => e.profileId === p.id).map(sinDueno)];
 }
 
 function credencialesPropiasDe(p: ProfesionalSimulado) {
-  return [...credencialesDe(p), ...credencialesAgregadas.filtrar((c) => c.profileId === p.id).map(sinDueno)];
+  return [...credentialsOf(p), ...credencialesAgregadas.filtrar((c) => c.profileId === p.id).map(sinDueno)];
 }
 
 function matriculasPropiasDe(p: ProfesionalSimulado) {
-  return [...licenciasDe(p), ...matriculasAgregadas.filtrar((m) => m.profileId === p.id).map(sinDueno)];
+  return [...licensesOf(p), ...matriculasAgregadas.filtrar((m) => m.profileId === p.id).map(sinDueno)];
 }
 
 function profesionalDeSesion(request: MockRequest): ProfesionalSimulado | undefined {
   const hpid = request.user?.practitionerProfileId;
-  return hpid === undefined ? undefined : profesionalPorId(hpid);
+  return hpid === undefined ? undefined : professionalById(hpid);
 }
 
 function itemDeLista(p: PacienteSimulado) {
@@ -236,7 +236,7 @@ function itemDeLista(p: PacienteSimulado) {
     ...(p.aboGroupId === undefined ? {} : { aboGroupConceptId: p.aboGroupId }),
     ...(p.rhFactorId === undefined ? {} : { rhFactorConceptId: p.rhFactorId }),
     ...(p.idiomaClinicoId === undefined ? {} : { clinicalLanguageConceptId: p.idiomaClinicoId }),
-    personStatusConceptId: p.deceased ? ESTADO['ST-INACTIVE']! : ESTADO['ST-ACTIVE']!,
+    personStatusConceptId: p.deceased ? STATUS['ST-INACTIVE']! : STATUS['ST-ACTIVE']!,
     deceased: p.deceased,
   };
 }
@@ -254,15 +254,15 @@ function fichaDe(p: PacienteSimulado) {
     genderIdentityConceptId: null,
     nationalityConceptId: null,
     preferredLanguageConceptId: null,
-    personStatusConceptId: p.deceased ? ESTADO['ST-INACTIVE']! : ESTADO['ST-ACTIVE']!,
-    vitalStatusConceptId: p.deceased ? ESTADO['ST-DECEASED']! : ESTADO['ST-ALIVE']!,
+    personStatusConceptId: p.deceased ? STATUS['ST-INACTIVE']! : STATUS['ST-ACTIVE']!,
+    vitalStatusConceptId: p.deceased ? STATUS['ST-DECEASED']! : STATUS['ST-ALIVE']!,
     deceasedAt: p.deceased ? iso(-40) : null,
     aboGroupConceptId: p.aboGroupId ?? null,
     rhFactorConceptId: p.rhFactorId ?? null,
-    insuranceStatusConceptId: p.aseguradora === undefined ? null : ESTADO['ST-ACTIVE']!,
+    insuranceStatusConceptId: p.aseguradora === undefined ? null : STATUS['ST-ACTIVE']!,
     clinicalLanguageConceptId: p.idiomaClinicoId ?? null,
-    recordLinkageStatusConceptId: ESTADO['ST-LINKED']!,
-    relatedPersons: personasRelacionadasDe(p),
+    recordLinkageStatusConceptId: STATUS['ST-LINKED']!,
+    relatedPersons: relatedPeopleOf(p),
     createdAt: iso(-400),
     updatedAt: iso(-3),
   };
@@ -317,7 +317,7 @@ export function perfilPropioDe(p: PacienteSimulado) {
     // punto de la plaza principal en el siguiente `GET`.
     homeAddress: {
       lines: p.direccion,
-      city: displayDe(p.municipioId),
+      city: displayOf(p.municipioId),
       municipalityConceptId: p.municipioId,
       ...(p.homeLat === null && p.homeLng === null
         ? {}
@@ -327,7 +327,7 @@ export function perfilPropioDe(p: PacienteSimulado) {
     },
     workAddress: {
       lines: p.direccionTrabajo ?? 'Av. Cañoto esq. Landívar, piso 3',
-      city: displayDe(p.municipioId),
+      city: displayOf(p.municipioId),
       municipalityConceptId: p.municipioId,
       ...(p.workLat === null || p.workLat === undefined || p.workLng === null || p.workLng === undefined
         ? {}
@@ -366,7 +366,7 @@ export function perfilPropioDe(p: PacienteSimulado) {
               statusCode: 'COVERAGE_ACTIVE', validityStatus: 'UPCOMING', effectiveFrom: '2027-01-01', effectiveTo: '2027-12-31',
               currencyCode: 'USD', carrierCallCenterPhone: canales.callCenter, benefits: [],
             }],
-    guardians: personasRelacionadasDe(p).map((r) => ({
+    guardians: relatedPeopleOf(p).map((r) => ({
       displayName: r.displayName,
       relationshipConceptId: r.relationshipConceptId,
       isEmergencyContact: r.isEmergencyContact,
@@ -492,16 +492,16 @@ function perfilProfesionalBase(p: ProfesionalSimulado) {
     taxHolderName: p.displayName,
     insuranceBillingFrequency: 'MONTHLY',
     homeAddress: { lines: p.direccion, city: p.ciudad, municipalityConceptId: p.municipioId, latitude: p.lat, longitude: p.lng },
-    practitionerCategoryConceptId: CATEGORIA_MEDICO,
-    verificationStatusConceptId: p.verified ? ESTADO['ST-VERIFIED']! : ESTADO['ST-PENDING']!,
-    practiceStatusConceptId: ESTADO['ST-ACTIVE']!,
+    practitionerCategoryConceptId: DOCTOR_CATEGORY,
+    verificationStatusConceptId: p.verified ? STATUS['ST-VERIFIED']! : STATUS['ST-PENDING']!,
+    practiceStatusConceptId: STATUS['ST-ACTIVE']!,
     acceptsNewPatients: p.acceptsNewPatients,
     telehealthAvailable: p.telehealthAvailable,
     specialties: conElegidaAlFrente(p.id, visiblesDelPerfil(especialidadesPropiasDe(p))),
     credentials: visiblesDelPerfil(credencialesPropiasDe(p)),
     licenses: visiblesDelPerfil(matriculasPropiasDe(p)),
-    languages: idiomasDe(p),
-    affiliations: afiliaciones.filtrar((a) => a.practitionerProfileId === p.id),
+    languages: languagesOf(p),
+    affiliations: affiliationList.filtrar((a) => a.practitionerProfileId === p.id),
     // Un médico real de la red de una aseguradora no atendió a nadie en
     // AloVida: su actividad en la plataforma es cero, no una cifra de ejemplo.
     // Y sin actividad tampoco hay serie ni indicadores: un gráfico de doce
@@ -531,7 +531,7 @@ function itemDeGuia(p: ProfesionalSimulado) {
     displayName: p.displayName,
     professionalTitle: p.professionalTitle,
     photoFileId: p.photoFileId,
-    verificationStatusConceptId: p.verified ? ESTADO['ST-VERIFIED']! : ESTADO['ST-PENDING']!,
+    verificationStatusConceptId: p.verified ? STATUS['ST-VERIFIED']! : STATUS['ST-PENDING']!,
     verified: p.verified,
     acceptsNewPatients: p.acceptsNewPatients,
     telehealthAvailable: p.telehealthAvailable,
@@ -583,7 +583,7 @@ solicitudes.persistirEn('mock.profiles.solicitudes-de-dependiente');
 
 /** Una cuenta registrada: el alta de un dependiente sin cuenta deja el correo vacío. */
 function cuentaConDocumento(documento: string): PacienteSimulado | undefined {
-  return pacientes.todos().find((p) => p.nationalId === documento && p.email !== '');
+  return patientList.todos().find((p) => p.nationalId === documento && p.email !== '');
 }
 
 /** Minúsculas y sin tildes, para que «maria» encuentre a «María». */
@@ -608,7 +608,7 @@ function documentoEnmascarado(documento: string): string {
 /** Los apoderamientos de un titular. */
 function dependientesDe(titularId: string): readonly ApoderamientoSimulado[] {
   return apoderamientos.filtrar(
-    (a) => a.titularId === titularId && pacientePorId(a.dependienteId) !== undefined,
+    (a) => a.titularId === titularId && patientById(a.dependienteId) !== undefined,
   );
 }
 
@@ -634,7 +634,7 @@ export function representaA(titularId: string | undefined, pacienteId: string): 
  * corra.
  */
 function parentescoInvertido(conceptId: string): { code: string; display: string } {
-  const codigo = Object.entries(PARENTESCO).find(([, id]) => id === conceptId)?.[0];
+  const codigo = Object.entries(KINSHIP).find(([, id]) => id === conceptId)?.[0];
   if (codigo === 'RELATIONSHIP_MOTHER' || codigo === 'RELATIONSHIP_FATHER') {
     return { code: 'CHILD', display: 'Hijo/a' };
   }
@@ -646,7 +646,7 @@ function parentescoInvertido(conceptId: string): { code: string; display: string
 
 /** El resumen que devuelve la API para cada dependiente. */
 function resumenDeDependiente(apoderamiento: ApoderamientoSimulado) {
-  const p = pacientePorId(apoderamiento.dependienteId);
+  const p = patientById(apoderamiento.dependienteId);
   const relacion = parentescoInvertido(apoderamiento.relationshipConceptId);
   return {
     id: apoderamiento.id,
@@ -695,7 +695,7 @@ export function registrarPerfiles(router: MockRouter): void {
     const aboGroup = texto(query, 'aboGroupConceptId');
     const rhFactor = texto(query, 'rhFactorConceptId');
     const idiomaClinico = texto(query, 'clinicalLanguageConceptId');
-    const todos = pacientes
+    const todos = patientList
       .todos()
       .filter((p) => contiene(p.displayName, q) || contiene(p.patientCode, q) || contiene(p.nationalId, q))
       .filter((p) => nationalId === null || p.nationalId === nationalId)
@@ -763,7 +763,7 @@ export function registrarPerfiles(router: MockRouter): void {
     const p = pacienteDeSesion(request);
     if (p === undefined) return notFound('No tiene perfil de paciente');
     const cambios = cuerpo<Record<string, unknown>>(request);
-    const actualizado = pacientes.actualizar(p.id, {
+    const actualizado = patientList.actualizar(p.id, {
       ...(typeof cambios['name'] === 'string' ? { name: cambios['name'] } : {}),
       // El segundo nombre viaja como `middleName` y con `''` se borra: sin
       // esta línea la pantalla decía «actualizado» y al releer volvía el viejo.
@@ -787,24 +787,24 @@ export function registrarPerfiles(router: MockRouter): void {
       ...coordenadasDelCuerpo(cambios, 'work'),
     });
     const conNombre = actualizado!;
-    pacientes.actualizar(p.id, { displayName: `${conNombre.name}${conNombre.middleName ? ` ${conNombre.middleName}` : ''} ${conNombre.lastName} ${conNombre.motherLastName}` });
-    return perfilPropioDe(pacientes.get(p.id)!);
+    patientList.actualizar(p.id, { displayName: `${conNombre.name}${conNombre.middleName ? ` ${conNombre.middleName}` : ''} ${conNombre.lastName} ${conNombre.motherLastName}` });
+    return perfilPropioDe(patientList.get(p.id)!);
   });
 
   router.put('/profiles/patients/me/photo', (request) => {
     const p = pacienteDeSesion(request);
     if (p === undefined) return notFound();
     const { fileId } = cuerpo<{ fileId: string }>(request);
-    pacientes.actualizar(p.id, { photoFileId: fileId ?? uuid('foto-nueva') });
-    return perfilPropioDe(pacientes.get(p.id)!);
+    patientList.actualizar(p.id, { photoFileId: fileId ?? uuid('foto-nueva') });
+    return perfilPropioDe(patientList.get(p.id)!);
   });
 
   router.delete('/profiles/patients/me/photo', (request) => {
     const p = pacienteDeSesion(request);
     if (p === undefined) return notFound();
-    const { photoFileId: _quitada, ...resto } = pacientes.get(p.id)!;
-    pacientes.agregar(resto as PacienteSimulado);
-    return perfilPropioDe(pacientes.get(p.id)!);
+    const { photoFileId: _quitada, ...resto } = patientList.get(p.id)!;
+    patientList.agregar(resto as PacienteSimulado);
+    return perfilPropioDe(patientList.get(p.id)!);
   });
 
   router.get('/profiles/patients/merge-events', ({ query }) =>
@@ -812,14 +812,14 @@ export function registrarPerfiles(router: MockRouter): void {
       [
         {
           id: uuid('merge-1'),
-          survivingPatientProfileId: PACIENTES[2]!.id,
+          survivingPatientProfileId: PATIENTS[2]!.id,
           mergedPatientProfileId: uuid('pid-duplicado-1'),
           decisionStatus: 'MERGED',
           recordedAt: iso(-20),
         },
         {
           id: uuid('merge-2'),
-          survivingPatientProfileId: PACIENTES[5]!.id,
+          survivingPatientProfileId: PATIENTS[5]!.id,
           mergedPatientProfileId: uuid('pid-duplicado-2'),
           decisionStatus: 'REVERSED',
           reversalOfEventId: uuid('merge-1'),
@@ -847,7 +847,7 @@ export function registrarPerfiles(router: MockRouter): void {
 
   router.post('/profiles/patients/merge/:id/reverse', ({ params }) => ({
     id: nuevoId('merge-reverso'),
-    survivingPatientProfileId: PACIENTES[2]!.id,
+    survivingPatientProfileId: PATIENTS[2]!.id,
     mergedPatientProfileId: uuid('pid-duplicado-1'),
     decisionStatus: 'REVERSED',
     reversalOfEventId: params['id'],
@@ -855,7 +855,7 @@ export function registrarPerfiles(router: MockRouter): void {
   }));
 
   router.get('/profiles/patients/:id', ({ params }) => {
-    const p = pacientePorId(params['id']!);
+    const p = patientById(params['id']!);
     return p === undefined ? notFound('Paciente no encontrado') : fichaDe(p);
   });
 
@@ -900,7 +900,7 @@ export function registrarPerfiles(router: MockRouter): void {
     }>(request);
 
     const documento = datos.nationalId ?? '';
-    if (documento !== '' && pacientes.todos().some((p) => p.nationalId === documento)) {
+    if (documento !== '' && patientList.todos().some((p) => p.nationalId === documento)) {
       return conflict('Ese documento ya está registrado en la plataforma', {
         nationalId: documento,
       });
@@ -933,7 +933,7 @@ export function registrarPerfiles(router: MockRouter): void {
       deceased: false,
       identityVerified: false,
     };
-    pacientes.agregar(nuevo);
+    patientList.agregar(nuevo);
     const apoderamiento = apoderamientos.agregar({
       id: nuevoId('proxy'),
       titularId: titular.id,
@@ -973,7 +973,7 @@ export function registrarPerfiles(router: MockRouter): void {
     const destinatario =
       perfilElegido === ''
         ? cuentaConDocumento(documento)
-        : pacientes.todos().find((p) => p.id === perfilElegido && p.email !== '');
+        : patientList.todos().find((p) => p.id === perfilElegido && p.email !== '');
     const esElPropio =
       (documento !== '' && documento === request.user?.nationalId) ||
       destinatario?.id === titular.id;
@@ -1040,7 +1040,7 @@ export function registrarPerfiles(router: MockRouter): void {
       .split(/\s+/)
       .filter((p) => p !== '');
     if (palabras.join('').length < MINIMO_BUSQUEDA_POR_NOMBRE) return [];
-    return pacientes
+    return patientList
       .todos()
       .filter((p) => p.email !== '' && p.id !== titular.id && !representaA(titular.id, p.id))
       .filter((p) => {
@@ -1062,7 +1062,7 @@ export function registrarPerfiles(router: MockRouter): void {
       .filtrar((s) => s.dependienteId === yo.id && s.estado === 'PENDING')
       .map((s) => ({
         id: s.id,
-        requesterDisplayName: pacientePorId(s.titularId)?.displayName ?? '',
+        requesterDisplayName: patientById(s.titularId)?.displayName ?? '',
         createdAt: s.createdAt,
       }));
   });
@@ -1080,7 +1080,7 @@ export function registrarPerfiles(router: MockRouter): void {
     solicitudes.actualizar(solicitud.id, { estado });
     // La decisión ya está tomada: el aviso que la pedía deja de ofrecerla.
     cerrarAcciones({ type: 'DEPENDENT_LINK_REQUEST', id: solicitud.id });
-    const titular = pacientePorId(solicitud.titularId);
+    const titular = patientById(solicitud.titularId);
     if (estado === 'ACCEPTED') {
       apoderamientos.agregar({
         id: nuevoId('proxy'),
@@ -1171,7 +1171,7 @@ export function registrarPerfiles(router: MockRouter): void {
       // Nace sin identidad probada: nadie verificó nada en el mostrador.
       identityVerified: false,
     };
-    pacientes.agregar(nuevo);
+    patientList.agregar(nuevo);
     return {
       status: 201,
       body: { profileId: nuevo.id, personId: nuevo.personId, patientCode: nuevo.patientCode, recordLinkageStatus: 'UNLINKED', createdAt: ahora() },
@@ -1188,7 +1188,7 @@ export function registrarPerfiles(router: MockRouter): void {
   router.get('/profiles/practitioners/me/onboarding', (request) => {
     const p = profesionalDeSesion(request);
     if (p === undefined) return notFound('No tiene perfil profesional');
-    const completo = p.id === MEDICA.id;
+    const completo = p.id === MEDICAL.id;
     return {
       practitionerProfileId: p.id,
       steps: [
@@ -1217,13 +1217,13 @@ export function registrarPerfiles(router: MockRouter): void {
 
   router.get('/profiles/practitioners/specialty-counts', () => {
     const conteo = new Map<string, number>();
-    for (const p of PROFESIONALES) {
+    for (const p of PROFESSIONALS) {
       for (const e of p.especialidades) conteo.set(e, (conteo.get(e) ?? 0) + 1);
     }
     return {
       items: [...conteo.entries()].map(([specialtyConceptId, practitionerCount]) => ({ specialtyConceptId, practitionerCount })),
-      practitionerTotal: PROFESIONALES.length,
-      withoutSpecialtyCount: PROFESIONALES.filter((p) => p.especialidades.length === 0).length,
+      practitionerTotal: PROFESSIONALS.length,
+      withoutSpecialtyCount: PROFESSIONALS.filter((p) => p.especialidades.length === 0).length,
     };
   });
 
@@ -1232,7 +1232,7 @@ export function registrarPerfiles(router: MockRouter): void {
     const especialidad = texto(query, 'specialtyConceptId');
     const sinEspecialidad = query.get('withoutSpecialty') === 'true';
     const soloVerificados = query.get('verified') === 'true';
-    const todos = PROFESIONALES.filter((p) => contiene(p.displayName, q) || contiene(p.professionalTitle, q))
+    const todos = PROFESSIONALS.filter((p) => contiene(p.displayName, q) || contiene(p.professionalTitle, q))
       .filter((p) => especialidad === null || p.especialidades.includes(especialidad))
       .filter((p) => !sinEspecialidad || p.especialidades.length === 0)
       .filter((p) => !soloVerificados || p.verified)
@@ -1242,7 +1242,7 @@ export function registrarPerfiles(router: MockRouter): void {
 
   router.get('/profiles/practitioners/me/affiliations', (request) => {
     const p = profesionalDeSesion(request);
-    const items = p === undefined ? [] : afiliaciones.filtrar((a) => a.practitionerProfileId === p.id);
+    const items = p === undefined ? [] : affiliationList.filtrar((a) => a.practitionerProfileId === p.id);
     return { items, count: items.length };
   });
 
@@ -1250,16 +1250,16 @@ export function registrarPerfiles(router: MockRouter): void {
     const p = profesionalDeSesion(request);
     if (p === undefined) return forbidden();
     const datos = cuerpo<{ organizationName: string; roleTitle?: string; startDate: string; endDate?: string; practiceSiteId?: string; affiliationTypeConceptId?: string }>(request);
-    if (afiliaciones.filtrar((a) => a.practitionerProfileId === p.id && a.organizationName === datos.organizationName && a.startDate === datos.startDate).length > 0) {
+    if (affiliationList.filtrar((a) => a.practitionerProfileId === p.id && a.organizationName === datos.organizationName && a.startDate === datos.startDate).length > 0) {
       return conflict('Ese vínculo ya está en el historial laboral');
     }
-    const nueva: AfiliacionSimulada = {
+    const nueva: SimulatedAffiliation = {
       id: nuevoId('aff'),
       practitionerProfileId: p.id,
       organizationName: datos.organizationName ?? 'Organización',
       roleTitle: datos.roleTitle ?? null,
       practiceSiteId: datos.practiceSiteId ?? null,
-      affiliationTypeConceptId: datos.affiliationTypeConceptId ?? TIPO_VINCULO['AFF-PLANTA']!,
+      affiliationTypeConceptId: datos.affiliationTypeConceptId ?? LINK_TYPE['AFF-PLANTA']!,
       startDate: datos.startDate ?? isoDia(0),
       endDate: datos.endDate ?? null,
       current: datos.endDate === undefined,
@@ -1268,19 +1268,19 @@ export function registrarPerfiles(router: MockRouter): void {
       decisionReasonText: null,
       createdAt: ahora(),
     };
-    afiliaciones.agregar(nueva);
+    affiliationList.agregar(nueva);
     return { status: 201, body: nueva };
   });
 
   router.patch('/profiles/practitioners/me/affiliations/:id', (request) => {
-    const actual = afiliaciones.get(request.params['id']!);
+    const actual = affiliationList.get(request.params['id']!);
     if (actual === undefined) return notFound();
-    const datos = cuerpo<Partial<AfiliacionSimulada>>(request);
-    return afiliaciones.actualizar(actual.id, { ...datos, current: (datos.endDate ?? actual.endDate) === null });
+    const datos = cuerpo<Partial<SimulatedAffiliation>>(request);
+    return affiliationList.actualizar(actual.id, { ...datos, current: (datos.endDate ?? actual.endDate) === null });
   });
 
   router.delete('/profiles/practitioners/me/affiliations/:id', ({ params }) => {
-    afiliaciones.borrar(params['id']!);
+    affiliationList.borrar(params['id']!);
     return noContent();
   });
 
@@ -1298,7 +1298,7 @@ export function registrarPerfiles(router: MockRouter): void {
       // El diploma se devuelve en la lectura: sin esto, el título recién
       // cargado se quedaba sin nada que descargar aunque se hubiera adjuntado.
       ...(datos.fileId === undefined ? {} : { fileId: datos.fileId }),
-      stateConceptId: ESTADO['ST-PENDING']!,
+      stateConceptId: STATUS['ST-PENDING']!,
     });
     return { status: 201, body: { id: nueva.id } };
   });
@@ -1394,11 +1394,11 @@ export function registrarPerfiles(router: MockRouter): void {
 
   router.get('/profiles/practitioners/me/linkable-organizations', ({ query }) => {
     const q = texto(query, 'query') ?? texto(query, 'q');
-    const items = Object.entries(ESTABLECIMIENTO)
+    const items = Object.entries(FACILITY)
       .map(([code, facilityConceptId], i) => ({
         facilityConceptId,
         code,
-        name: displayDe(facilityConceptId),
+        name: displayOf(facilityConceptId),
         municipality: ['Santa Cruz de la Sierra', 'La Paz', 'Cochabamba'][i % 3]!,
         type: ['Clínica', 'Hospital', 'Hospital', 'Clínica', 'Laboratorio', 'Centro de imagen'][i]!,
         address: `Av. Principal N.º ${100 + i * 40}`,
@@ -1408,12 +1408,12 @@ export function registrarPerfiles(router: MockRouter): void {
   });
 
   router.get('/profiles/practitioners/:id/summary', ({ params }) => {
-    const p = profesionalPorId(params['id']!);
+    const p = professionalById(params['id']!);
     return p === undefined ? notFound('Profesional no encontrado') : perfilProfesionalDe(p);
   });
 
   router.put('/profiles/practitioners/:id/photo', ({ params }) => {
-    const p = profesionalPorId(params['id']!);
+    const p = professionalById(params['id']!);
     return p === undefined ? notFound() : perfilProfesionalDe(p);
   });
 
@@ -1425,7 +1425,7 @@ export function registrarPerfiles(router: MockRouter): void {
       specialtyConceptId: datos.specialtyConceptId ?? '',
       isPrimary: datos.isPrimary ?? false,
       boardCertified: datos.boardCertified ?? false,
-      verificationStatusConceptId: ESTADO['ST-PENDING']!,
+      verificationStatusConceptId: STATUS['ST-PENDING']!,
       verified: false,
       validFrom: isoDia(0),
     });
@@ -1448,10 +1448,10 @@ export function registrarPerfiles(router: MockRouter): void {
     const nueva = matriculasAgregadas.agregar({
       id: nuevoId('jur'),
       profileId: request.params['id']!,
-      jurisdictionConceptId: datos.jurisdictionConceptId ?? JURISDICCION['JUR-BO']!,
+      jurisdictionConceptId: datos.jurisdictionConceptId ?? JURISDICTION['JUR-BO']!,
       licenseNumber: datos.licenseNumber ?? '',
       ...(datos.regulatoryAuthority === undefined ? {} : { regulatoryAuthority: datos.regulatoryAuthority }),
-      stateConceptId: ESTADO['ST-PENDING']!,
+      stateConceptId: STATUS['ST-PENDING']!,
       ...(datos.validFrom === undefined ? {} : { validFrom: datos.validFrom }),
       ...(datos.fileId === undefined ? {} : { fileId: datos.fileId }),
     });

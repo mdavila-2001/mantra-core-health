@@ -10,8 +10,8 @@
 
 import type { TarjetaDeMedicamento } from '@core/data-access/public-marketplace/public-marketplace.types';
 import type { CardDetailRow } from '@shared/components/molecules/card-detail-panel/card-detail-panel.types';
-import { inicialesDe } from '@shared/text/iniciales';
-import { fotoDeDirectorio } from '@shared/utils/foto-de-directorio';
+import { initialsOf } from '@shared/text/initials';
+import { directoryPhoto } from '@shared/utils/directory-photo';
 
 import type { CentroAtributo, CentroTarjeta } from '../centro-card/centro-card.types';
 import { addRow } from '../centro-card/directory-card.mapper';
@@ -176,9 +176,9 @@ export function toMedicationCard(medication: TarjetaDeMedicamento): MedicationCa
       // Un medicamento no queda en ningún lado: dónde se consigue es el modal
       // de farmacias, no un renglón de la tarjeta.
       donde: null,
-      portada: fotoDeDirectorio('farmacia', medication.conceptId),
+      portada: directoryPhoto('farmacia', medication.conceptId),
       logo: null,
-      iniciales: inicialesDe(medication.genericName),
+      iniciales: initialsOf(medication.genericName),
       sellos: seals,
       atributos: medicationAttributes(medication),
     },

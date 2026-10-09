@@ -25,9 +25,9 @@ import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { Card } from '../../../shared/components/molecules/card/card';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
-import { CampoPersonalizado } from '../../../shared/components/organisms/paginated-form/campo-personalizado';
+import { CustomField } from '../../../shared/components/organisms/paginated-form/custom-field';
 import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
-import { paginarCampos } from '../../../shared/forms/paginated/paginar-campos';
+import { paginateFields } from '../../../shared/forms/paginated/paginate-fields';
 import {
   errorMessageOf,
   NUMBER_STRING_PATTERN,
@@ -118,7 +118,7 @@ function nuevoHecho(): FilaDeHecho {
     Card,
     FormField,
     Input,
-    CampoPersonalizado,
+    CustomField,
     PageHeader,
     PaginatedForm,
     Textarea,
@@ -166,7 +166,7 @@ export class VersionForm {
    * procedencia. Lo que gana la pantalla es que las cinco preguntas del
    * encabezado dejan de llegar junto con el árbol.
    */
-  protected readonly paginas = paginarCampos([
+  protected readonly paginas = paginateFields([
     {
       titulo: 'De dónde sale',
       hint: 'La versión se redacta desde una corrida del mismo país del contexto.',

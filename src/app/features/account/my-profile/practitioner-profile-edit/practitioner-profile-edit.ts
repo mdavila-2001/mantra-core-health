@@ -21,8 +21,8 @@ import { catchError, forkJoin, map, of, switchMap, type Observable } from 'rxjs'
 import { blobToDataUrl } from '../../../../core/data-access/files/blob-to-data-url';
 import { FilesClient } from '../../../../core/data-access/files/files.client';
 import { PdfBrandingService } from '../../../../core/pdf-branding/pdf-branding.service';
-import { FirmaYSelloClient } from '../../../../core/data-access/profiles/firma-y-sello.client';
-import { LogoDelConsultorioClient } from '../../../../core/data-access/practice-sites/logo-del-consultorio.client';
+import { SignatureAndSealClient } from '../../../../core/data-access/profiles/signature-and-seal.client';
+import { PracticeLogoClient } from '../../../../core/data-access/practice-sites/practice-logo.client';
 import { FileDownloader } from '../../../../core/data-access/files/file-downloader';
 import { ProfilesClient } from '../../../../core/data-access/profiles/profiles.client';
 import { BIRTH_SEX_OPTIONS } from '../../../../core/data-access/iam/birth-sex.options';
@@ -30,11 +30,11 @@ import type { BirthSexCode } from '../../../../core/data-access/iam/iam.types';
 import { BoDepartmentsCatalog } from '../../../../core/data-access/terminology/bo-departments.service';
 import { BoMunicipalitiesCatalog } from '../../../../core/data-access/terminology/bo-municipalities.service';
 import type { RamaDepartamento } from '../../../../core/data-access/terminology/bo-municipalities.service';
-import { LocationPicker } from '../../../auth/registro-compartido/location-picker/location-picker';
+import { LocationPicker } from '../../../auth/shared-registration/location-picker/location-picker';
 import {
   MAX_ATTACHMENT_BYTES,
   SUPPORT_FILE_FORMATS,
-} from '../../../auth/registro-compartido/credenciales-del-medico';
+} from '../../../auth/shared-registration/doctor-credentials';
 import { LanguagesCatalog } from '../../../../core/data-access/terminology/languages.service';
 import { MedicalSpecialtiesCatalog } from '../../../../core/data-access/terminology/medical-specialties.service';
 import { TerminologyClient } from '../../../../core/data-access/terminology/terminology.client';
@@ -44,7 +44,7 @@ import type {
   OwnPractitionerProfile,
   PractitionerLanguage,
 } from '../../../../core/data-access/profiles/profiles.types';
-import { INSURANCE_BILLING_FREQUENCY_OPTIONS } from '../../../../core/profesion/insurance-billing-frequency';
+import { INSURANCE_BILLING_FREQUENCY_OPTIONS } from '../../../../core/profession/insurance-billing-frequency';
 import { describeApiFailure, fieldErrorsOf } from '../../../../core/http/api-failure';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
 import { NavigationService } from '../../../../core/navigation/navigation.service';
@@ -68,8 +68,8 @@ import {
   FileInput,
   type RejectedFile,
 } from '../../../../shared/components/molecules/file-input/file-input';
-import { FirmaOSello } from '../../../../shared/components/molecules/firma-o-sello/firma-o-sello';
-import { LogoConsultorio } from '../../../../shared/components/molecules/logo-consultorio/logo-consultorio';
+import { SignatureOrSeal } from '../../../../shared/components/molecules/signature-or-seal/signature-or-seal';
+import { PracticeLogo } from '../../../../shared/components/molecules/practice-logo/practice-logo';
 import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
 import { Pagination } from '../../../../shared/components/molecules/pagination/pagination';
 import { RowActions } from '../../../../shared/components/molecules/row-actions/row-actions';
@@ -78,21 +78,21 @@ import { Tab } from '../../../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../../../shared/components/molecules/tabs/tabs';
 import { DialogService } from '../../../../shared/components/molecules/dialog/dialog-service';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
-import { separarNombres, unirNombres } from '../../../../core/profesion/nombres-adicionales';
-import { opcionesAutoridadReguladora } from '../../../../core/profesion/autoridades-reguladoras';
+import { splitNames, joinNames } from '../../../../core/profession/additional-names';
+import { optionsRegulatoryAuthority } from '../../../../core/profession/regulatory-authorities';
 import {
-  INSTITUCION_FUERA_DE_CATALOGO,
-  esInstitucionDelCatalogo,
-} from '../../../../core/profesion/instituciones-educativas';
+  CATALOG_OUTSIDE_INSTITUTION,
+  isCatalogInstitution,
+} from '../../../../core/profession/educational-institutions';
 import {
-  OPCIONES_TITULO_PROFESIONAL,
-  esTituloDeLaLista,
-} from '../../../../core/profesion/titulos-profesionales';
+  PROFESSIONAL_TITLE_OPTIONS,
+  isListedTitle,
+} from '../../../../core/profession/professional-degrees';
 import {
-  UbicacionPicker,
-  type Coordenadas,
-  type IdsDePrueba,
-} from '../../../auth/registro-compartido/ubicacion-picker/ubicacion-picker';
+  MapLocationPicker,
+  type Coordinates,
+  type TestIds,
+} from '../../../auth/shared-registration/map-location-picker/map-location-picker';
 import { ContentDialog } from '../../../../shared/components/organisms/content-dialog/content-dialog';
 import { DataTable } from '../../../../shared/components/organisms/data-table/data-table';
 import {
@@ -106,11 +106,11 @@ import { FormActions } from '../../../../shared/components/organisms/form-action
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
 import {
-  EstadoDeImagen,
-  FORMATOS_DE_IMAGEN_DE_FIRMA,
-  MAX_BYTES_DE_IMAGEN_DE_FIRMA,
-} from './estado-de-imagen';
-import { PESTANA_EDITOR, PESTANAS_DEL_EDITOR_MEDICO } from '../pestanas-del-perfil-medico';
+  ImageStatus,
+  SIGNATURE_IMAGE_FORMATS,
+  SIGNATURE_IMAGE_MAX_BYTES,
+} from './image-status';
+import { TAB_EDITOR, EDITOR_DOCTOR_TABS } from '../doctor-profile-tabs';
 import { WorkHistory } from '../work-history/work-history';
 import {
   OPCIONES_DE_ESTADO,
@@ -125,7 +125,7 @@ import {
   OPCIONES_DE_INSTITUCION_CON_SIGLA,
   ciudadesDeInstitucion,
 } from './practitioner-profile-edit.logic';
-import { ciudadAlElegirUniversidad } from '../../../../core/profesion/padron-de-universidades';
+import { cityToChooseUniversity } from '../../../../core/profession/university-registry';
 
 /** El tipo de título (formación), del catálogo dinámico: los cinco `CREDENTIAL_TYPE_*`. */
 const TARGET_CREDENCIAL = 'profiles.professional_credentials.credential_type_concept_id';
@@ -241,21 +241,21 @@ const BLOQUE_DE_RECURSO: Readonly<Record<RecursoEditable, string>> = {
  * pintarse, así que su mensaje va entero en el aviso.
  */
 const PESTANA_DEL_CAMPO: Readonly<Record<string, number>> = {
-  name: PESTANA_EDITOR.personales,
-  middleName: PESTANA_EDITOR.personales,
-  lastName: PESTANA_EDITOR.personales,
-  motherLastName: PESTANA_EDITOR.personales,
-  birthDate: PESTANA_EDITOR.personales,
-  professionalTitle: PESTANA_EDITOR.personales,
-  professionalBio: PESTANA_EDITOR.personales,
-  homeAddressLines: PESTANA_EDITOR.contacto,
-  workAddressLines: PESTANA_EDITOR.contacto,
-  mobilePhone: PESTANA_EDITOR.contacto,
-  personalEmail: PESTANA_EDITOR.contacto,
-  workEmail: PESTANA_EDITOR.contacto,
-  taxId: PESTANA_EDITOR.facturacion,
-  taxHolderName: PESTANA_EDITOR.facturacion,
-  languages: PESTANA_EDITOR.credenciales,
+  name: TAB_EDITOR.personales,
+  middleName: TAB_EDITOR.personales,
+  lastName: TAB_EDITOR.personales,
+  motherLastName: TAB_EDITOR.personales,
+  birthDate: TAB_EDITOR.personales,
+  professionalTitle: TAB_EDITOR.personales,
+  professionalBio: TAB_EDITOR.personales,
+  homeAddressLines: TAB_EDITOR.contacto,
+  workAddressLines: TAB_EDITOR.contacto,
+  mobilePhone: TAB_EDITOR.contacto,
+  personalEmail: TAB_EDITOR.contacto,
+  workEmail: TAB_EDITOR.contacto,
+  taxId: TAB_EDITOR.facturacion,
+  taxHolderName: TAB_EDITOR.facturacion,
+  languages: TAB_EDITOR.credenciales,
 };
 
 /**
@@ -476,8 +476,8 @@ function soloFecha(fecha: Date): string {
     FilterBar,
     FormActions,
     FileInput,
-    LogoConsultorio,
-    FirmaOSello,
+    PracticeLogo,
+    SignatureOrSeal,
     FormField,
     Input,
     LocationPicker,
@@ -494,7 +494,7 @@ function soloFecha(fecha: Date): string {
     Tabs,
     Textarea,
     Tooltip,
-    UbicacionPicker,
+    MapLocationPicker,
     ViewStateHost,
     WorkHistory,
   ],
@@ -505,8 +505,8 @@ function soloFecha(fecha: Date): string {
 export class PractitionerProfileEdit {
   private readonly profiles = inject(ProfilesClient);
   private readonly files = inject(FilesClient);
-  private readonly logo = inject(LogoDelConsultorioClient);
-  private readonly firmaYSello = inject(FirmaYSelloClient);
+  private readonly logo = inject(PracticeLogoClient);
+  private readonly firmaYSello = inject(SignatureAndSealClient);
   private readonly membretePdf = inject(PdfBrandingService);
   private readonly descargas = inject(FileDownloader);
   private readonly dialogs = inject(DialogService);
@@ -536,9 +536,9 @@ export class PractitionerProfileEdit {
    * El valor se acota al rango: un `?pestana=99` escrito a mano no puede dejar
    * el editor sin ningún panel abierto.
    */
-  readonly pestana = model<number>(PESTANA_EDITOR.personales);
-  protected readonly pestanas = PESTANAS_DEL_EDITOR_MEDICO;
-  protected readonly pestanaEditor = PESTANA_EDITOR;
+  readonly pestana = model<number>(TAB_EDITOR.personales);
+  protected readonly pestanas = EDITOR_DOCTOR_TABS;
+  protected readonly pestanaEditor = TAB_EDITOR;
 
   /**
    * Si la pestaña abierta es de las que se corrigen.
@@ -552,9 +552,9 @@ export class PractitionerProfileEdit {
    */
   protected readonly editandoPresentacion = computed(
     () =>
-      this.pestana() === PESTANA_EDITOR.personales ||
-      this.pestana() === PESTANA_EDITOR.contacto ||
-      this.pestana() === PESTANA_EDITOR.facturacion,
+      this.pestana() === TAB_EDITOR.personales ||
+      this.pestana() === TAB_EDITOR.contacto ||
+      this.pestana() === TAB_EDITOR.facturacion,
   );
 
   private readonly municipios = inject(BoMunicipalitiesCatalog);
@@ -841,10 +841,10 @@ export class PractitionerProfileEdit {
      Dos imágenes —**no** una firma electrónica— que salen al pie de los PDF.
      Misma vida que el logo: se suben al elegir y se escriben con «Guardar
      cambios». Ver `EstadoDeImagen` y `FirmaYSelloClient`. */
-  protected readonly firma = new EstadoDeImagen('la firma');
-  protected readonly sello = new EstadoDeImagen('el sello');
-  protected readonly formatosDeFirma = FORMATOS_DE_IMAGEN_DE_FIRMA;
-  protected readonly maxBytesDeFirma = MAX_BYTES_DE_IMAGEN_DE_FIRMA;
+  protected readonly firma = new ImageStatus('la firma');
+  protected readonly sello = new ImageStatus('el sello');
+  protected readonly formatosDeFirma = SIGNATURE_IMAGE_FORMATS;
+  protected readonly maxBytesDeFirma = SIGNATURE_IMAGE_MAX_BYTES;
   /**
    * La calle, ALV-009.
    *
@@ -868,11 +868,11 @@ export class PractitionerProfileEdit {
    * estados que en el editor del paciente: sin tocar no viaja, quitado viaja
    * como par de `null`, movido viaja como par.
    */
-  protected readonly gpsDomicilio = signal<Coordenadas | null | undefined>(undefined);
-  protected readonly gpsDomicilioGuardado = signal<Coordenadas | null>(null);
+  protected readonly gpsDomicilio = signal<Coordinates | null | undefined>(undefined);
+  protected readonly gpsDomicilioGuardado = signal<Coordinates | null>(null);
   /** El GPS laboral se guarda por separado del punto del domicilio. */
-  protected readonly gpsTrabajo = signal<Coordenadas | null | undefined>(undefined);
-  protected readonly gpsTrabajoGuardado = signal<Coordenadas | null>(null);
+  protected readonly gpsTrabajo = signal<Coordinates | null | undefined>(undefined);
+  protected readonly gpsTrabajoGuardado = signal<Coordinates | null>(null);
 
   /**
    * El punto con el que abre el mapa: lo último que la persona dejó, o lo guardado.
@@ -891,7 +891,7 @@ export class PractitionerProfileEdit {
     return elegido === undefined ? this.gpsTrabajoGuardado() : elegido;
   });
 
-  protected readonly idsGpsDomicilio: IdsDePrueba = {
+  protected readonly idsGpsDomicilio: TestIds = {
     mapa: 'edicion-domicilio-mapa',
     confirmada: 'edicion-domicilio-confirmada',
     avisoGeocodificacion: 'edicion-domicilio-aviso-geo',
@@ -901,7 +901,7 @@ export class PractitionerProfileEdit {
     marcarEnMapa: 'edicion-domicilio-marcar',
   };
 
-  protected readonly idsGpsTrabajo: IdsDePrueba = {
+  protected readonly idsGpsTrabajo: TestIds = {
     mapa: 'edicion-trabajo-mapa',
     confirmada: 'edicion-trabajo-confirmada',
     avisoGeocodificacion: 'edicion-trabajo-aviso-geo',
@@ -912,7 +912,7 @@ export class PractitionerProfileEdit {
   };
 
   /** Las doce opciones del alta, compartidas: ver `titulos-profesionales`. */
-  protected readonly titulosProfesionales = OPCIONES_TITULO_PROFESIONAL;
+  protected readonly titulosProfesionales = PROFESSIONAL_TITLE_OPTIONS;
 
   /**
    * Si el título guardado no está en la lista cerrada.
@@ -923,7 +923,7 @@ export class PractitionerProfileEdit {
    * pantalla sería cambiar el perfil sin que nadie lo pidiera.
    */
   protected readonly tituloFueraDeLista = computed(
-    () => this.titulo() !== '' && !esTituloDeLaLista(this.titulo()),
+    () => this.titulo() !== '' && !isListedTitle(this.titulo()),
   );
   protected readonly guardandoPresentacion = signal(false);
 
@@ -967,7 +967,7 @@ export class PractitionerProfileEdit {
 
   /** Los nombres adicionales tal como los guarda el contrato: una sola cadena. */
   private nombresAdicionales(): string {
-    return unirNombres([this.segundoNombre(), this.tercerNombre(), ...this.nombresExtra()]);
+    return joinNames([this.segundoNombre(), this.tercerNombre(), ...this.nombresExtra()]);
   }
 
   /* -- Nueva especialidad ---------------------------------------------------- */
@@ -1139,7 +1139,7 @@ export class PractitionerProfileEdit {
    * Las tres autoridades del alta: Ministerio de Salud, SEDES y el colegio de
    * la profesión, con el colegio resuelto por el título elegido arriba.
    */
-  protected readonly opcionesAutoridad = computed(() => opcionesAutoridadReguladora(this.titulo()));
+  protected readonly opcionesAutoridad = computed(() => optionsRegulatoryAuthority(this.titulo()));
   protected readonly nuevaFechaInscripcion = signal<Date | null>(null);
   /** El carnet del colegio. Viaja como `fileId`, igual que el diploma. */
   protected readonly archivoDeMatricula = signal<readonly File[]>([]);
@@ -1183,7 +1183,7 @@ export class PractitionerProfileEdit {
   protected readonly nuevoNumeroCredencial = signal('');
   /* -- Institución, como lista y no como texto ---------------------------
      Pedido del propietario (13/09/2026). El catálogo y el porqué de la salida
-     a mano viven en `core/profesion/instituciones-educativas.ts`; acá sólo se
+     a mano viven en `core/profession/educational-institutions.ts`; acá sólo se
      decide cuál de los dos campos responde. */
 
   /** Con la sigla adelante, para que se lea aunque el desplegable cerrado recorte el nombre. */
@@ -1197,7 +1197,7 @@ export class PractitionerProfileEdit {
 
   /** Si hay que mostrar el campo escrito a mano. */
   protected readonly institucionFueraDeCatalogo = computed(
-    () => this.institucionElegida() === INSTITUCION_FUERA_DE_CATALOGO,
+    () => this.institucionElegida() === CATALOG_OUTSIDE_INSTITUTION,
   );
 
   /**
@@ -1212,7 +1212,7 @@ export class PractitionerProfileEdit {
     if (elegida === null) {
       return '';
     }
-    return elegida === INSTITUCION_FUERA_DE_CATALOGO ? this.institucionEscrita().trim() : elegida;
+    return elegida === CATALOG_OUTSIDE_INSTITUTION ? this.institucionEscrita().trim() : elegida;
   });
 
   /** Las ciudades de la institución elegida: sus sedes. */
@@ -1227,14 +1227,14 @@ export class PractitionerProfileEdit {
   >({
     source: this.ciudadesDeLaInstitucion,
     computation: (opciones, previa) =>
-      ciudadAlElegirUniversidad(
+      cityToChooseUniversity(
         previa?.value ?? '',
         opciones.map((o) => o.value),
       ) || null,
   });
 
   /** Si la institución se eligió del catálogo, para el aviso de la ficha vieja. */
-  protected readonly esInstitucionDelCatalogo = esInstitucionDelCatalogo;
+  protected readonly esInstitucionDelCatalogo = isCatalogInstitution;
   protected readonly nuevaFechaEmisionCredencial = signal<Date | null>(null);
   protected readonly guardandoCredencial = signal(false);
 
@@ -1650,7 +1650,7 @@ export class PractitionerProfileEdit {
    */
   private abrirEnLaPestanaPedida(): void {
     const pedida = Number(this.ruta.snapshot.queryParamMap.get('pestana'));
-    if (Number.isInteger(pedida) && pedida >= 0 && pedida < PESTANAS_DEL_EDITOR_MEDICO.length) {
+    if (Number.isInteger(pedida) && pedida >= 0 && pedida < EDITOR_DOCTOR_TABS.length) {
       this.pestana.set(pedida);
     }
   }
@@ -1709,23 +1709,23 @@ export class PractitionerProfileEdit {
 
   /** Trae la firma y el sello guardados. Sin ellos o con un error, las cajas dicen «Sin …». */
   private cargarFirmaYSello(): void {
-    this.firmaYSello.obtener().subscribe((guardados) => {
-      this.firma.cargar(guardados.firmaUrl);
-      this.sello.cargar(guardados.selloUrl);
+    this.firmaYSello.get().subscribe((guardados) => {
+      this.firma.load(guardados.firmaUrl);
+      this.sello.load(guardados.selloUrl);
     });
   }
 
   protected alElegirFirma(archivos: readonly File[]): void {
-    this.firma.elegir(archivos, (archivo) => this.firmaYSello.subir(archivo));
+    this.firma.choose(archivos, (archivo) => this.firmaYSello.upload(archivo));
   }
 
   protected alElegirSello(archivos: readonly File[]): void {
-    this.sello.elegir(archivos, (archivo) => this.firmaYSello.subir(archivo));
+    this.sello.choose(archivos, (archivo) => this.firmaYSello.upload(archivo));
   }
 
   /** Trae el logo guardado. Sin logo o con un error, la tile muestra «Sin logo». */
   private cargarLogo(profileId: string): void {
-    this.logo.obtenerUrl(profileId).subscribe((url) => {
+    this.logo.getUrl(profileId).subscribe((url) => {
       this.logoGuardado.set(url);
       // Si la persona ya eligió otro mientras cargaba, no se lo pisa.
       if (this.logoPendiente() === null) {
@@ -1749,7 +1749,7 @@ export class PractitionerProfileEdit {
     this.errorDelLogo.set('');
     this.subiendoLogo.set(true);
     this.logo
-      .subir(archivo)
+      .upload(archivo)
       .pipe(switchMap((fileId) => blobToDataUrl(archivo).pipe(map((vista) => ({ fileId, vista })))))
       .subscribe({
         next: ({ fileId, vista }) => {
@@ -1793,7 +1793,7 @@ export class PractitionerProfileEdit {
     this.nombre.set(perfil.name ?? '');
     // `middleName` trae TODOS los nombres que no son el primero, separados por
     // espacio: se reparten en las mismas casillas que el alta ofrece.
-    const adicionales = separarNombres(perfil.middleName);
+    const adicionales = splitNames(perfil.middleName);
     this.segundoNombre.set(adicionales.segundo);
     this.tercerNombre.set(adicionales.tercero);
     this.nombresExtra.set(adicionales.extra);
@@ -1902,8 +1902,8 @@ export class PractitionerProfileEdit {
     this.logoPendiente.set(null);
     this.logoVisible.set(this.logoGuardado());
     this.errorDelLogo.set('');
-    this.firma.descartar();
-    this.sello.descartar();
+    this.firma.discard();
+    this.sello.discard();
     this.toasts.success('Descartamos los cambios sin guardar.', 'Edición cancelada');
   }
 
@@ -1934,7 +1934,7 @@ export class PractitionerProfileEdit {
     const telefonos = [this.celularPersonal];
     if (telefonos.some((telefono) => telefono.invalid)) {
       telefonos.forEach((telefono) => telefono.markAsTouched());
-      this.pestana.set(PESTANA_EDITOR.contacto);
+      this.pestana.set(TAB_EDITOR.contacto);
       this.toasts.error('Hay un teléfono incompleto. Revíselo en «Contacto».', 'Perfil');
       return;
     }
@@ -1952,7 +1952,7 @@ export class PractitionerProfileEdit {
             : 'Revise el correo: le falta algo, como la @ o el dominio.',
     );
     if (this.errorCorreoTrabajo()) {
-      this.pestana.set(PESTANA_EDITOR.contacto);
+      this.pestana.set(TAB_EDITOR.contacto);
       this.toasts.error('El correo de trabajo no es válido. Revíselo en «Contacto».', 'Perfil');
       return;
     }
@@ -2091,15 +2091,15 @@ export class PractitionerProfileEdit {
     const logoPendiente = this.logoPendiente();
     // La firma y el sello tampoco viajan en el PATCH del perfil: otra escritura.
     const cambiosDeFirma = {
-      ...(this.firma.cambio === undefined ? {} : { firmaFileId: this.firma.cambio }),
-      ...(this.sello.cambio === undefined ? {} : { selloFileId: this.sello.cambio }),
+      ...(this.firma.change === undefined ? {} : { firmaFileId: this.firma.change }),
+      ...(this.sello.change === undefined ? {} : { selloFileId: this.sello.change }),
     };
     const hayCambiosDeFirma = Object.keys(cambiosDeFirma).length > 0;
     if (Object.keys(cambios).length === 0 && logoPendiente === null && !hayCambiosDeFirma) {
       this.toasts.success('No había ningún cambio para guardar.', 'Perfil');
       return;
     }
-    if (this.subiendoLogo() || this.firma.subiendo() || this.sello.subiendo()) {
+    if (this.subiendoLogo() || this.firma.uploading() || this.sello.uploading()) {
       this.toasts.error('Espere a que termine de subir la imagen.', 'Perfil');
       return;
     }
@@ -2115,9 +2115,9 @@ export class PractitionerProfileEdit {
     const logo$ =
       logoPendiente === null
         ? of(undefined)
-        : this.logo.guardar(original.profileId, logoPendiente.fileId);
+        : this.logo.save(original.profileId, logoPendiente.fileId);
     const firmaYSello$ = hayCambiosDeFirma
-      ? this.firmaYSello.guardar(cambiosDeFirma)
+      ? this.firmaYSello.save(cambiosDeFirma)
       : of(undefined);
     forkJoin([perfil$, logo$, firmaYSello$])
       .pipe(map(([perfil]) => perfil))
@@ -2128,8 +2128,8 @@ export class PractitionerProfileEdit {
             this.logoGuardado.set(this.logoVisible());
             this.logoPendiente.set(null);
           }
-          this.firma.confirmar();
-          this.sello.confirmar();
+          this.firma.confirm();
+          this.sello.confirm();
           if (logoPendiente !== null || hayCambiosDeFirma) {
             // Los PDF que se emitan desde ahora llevan lo nuevo.
             this.membretePdf.recargar();
@@ -2223,7 +2223,7 @@ export class PractitionerProfileEdit {
     if (!pestanas.includes(this.pestana())) {
       this.pestana.set(pestanas[0]);
     }
-    return ` en ${enumerar(pestanas.map((indice) => `«${PESTANAS_DEL_EDITOR_MEDICO[indice]}»`))}`;
+    return ` en ${enumerar(pestanas.map((indice) => `«${EDITOR_DOCTOR_TABS[indice]}»`))}`;
   }
 
   /**
@@ -2750,7 +2750,7 @@ export class PractitionerProfileEdit {
   protected readonly edicionInscripcion = signal<Date | null>(null);
 
   protected readonly edicionInstitucionFueraDeCatalogo = computed(
-    () => this.edicionInstitucionElegida() === INSTITUCION_FUERA_DE_CATALOGO,
+    () => this.edicionInstitucionElegida() === CATALOG_OUTSIDE_INSTITUTION,
   );
 
   /** La institución que viaja en el `PATCH`. Mismo criterio que en el alta. */
@@ -2759,7 +2759,7 @@ export class PractitionerProfileEdit {
     if (elegida === null) {
       return '';
     }
-    return elegida === INSTITUCION_FUERA_DE_CATALOGO
+    return elegida === CATALOG_OUTSIDE_INSTITUTION
       ? this.edicionInstitucionEscrita().trim()
       : elegida;
   });
@@ -2776,7 +2776,7 @@ export class PractitionerProfileEdit {
   >({
     source: this.edicionCiudades,
     computation: (opciones, previa) =>
-      ciudadAlElegirUniversidad(
+      cityToChooseUniversity(
         previa?.value ?? '',
         opciones.map((o) => o.value),
       ) || null,
@@ -2986,9 +2986,9 @@ export class PractitionerProfileEdit {
     this.edicionTipo.set(credencial.credentialTypeConceptId);
     this.edicionNumero.set(credencial.number);
     const institucion = credencial.issuingInstitutionText ?? '';
-    const delCatalogo = institucion !== '' && esInstitucionDelCatalogo(institucion);
+    const delCatalogo = institucion !== '' && isCatalogInstitution(institucion);
     this.edicionInstitucionElegida.set(
-      institucion === '' ? null : delCatalogo ? institucion : INSTITUCION_FUERA_DE_CATALOGO,
+      institucion === '' ? null : delCatalogo ? institucion : CATALOG_OUTSIDE_INSTITUTION,
     );
     this.edicionInstitucionEscrita.set(delCatalogo ? '' : institucion);
     // Una ciudad ya guardada se respeta; sin ella queda la sede principal de

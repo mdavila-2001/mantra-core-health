@@ -31,7 +31,7 @@ import { AuthService } from '../../../../core/auth/auth.service';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
 import { loading, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
-import { LocationPicker } from '../../../auth/registro-compartido/location-picker/location-picker';
+import { LocationPicker } from '../../../auth/shared-registration/location-picker/location-picker';
 import { SiteBankQrDialog } from './site-bank-qr-dialog/site-bank-qr-dialog';
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
 import { Card } from '../../../../shared/components/molecules/card/card';
@@ -49,7 +49,7 @@ import { ToastService } from '../../../../shared/components/molecules/toast/toas
 import { DatePicker } from '../../../../shared/components/organisms/date-picker/date-picker';
 import { AppMap } from '../../../../shared/components/organisms/map/map';
 import { ContentDialog } from '../../../../shared/components/organisms/content-dialog/content-dialog';
-import type { PinMapa, PuntoGeo } from '../../../../shared/components/organisms/map/pin-mapa.types';
+import type { PinMap, PuntoGeo } from '../../../../shared/components/organisms/map/map-pin.types';
 import { DataTable } from '../../../../shared/components/organisms/data-table/data-table';
 import type { ColumnDef } from '../../../../shared/components/organisms/data-table/data-table.types';
 import {
@@ -443,7 +443,7 @@ export class WorkHistory implements OnInit {
   protected readonly errorDeSede = computed<string | null>(() => mensajeDe(this.registroDeSede()));
 
   /** El punto marcado, como el único pin del mapa. */
-  protected readonly pinesDeSede = computed<readonly PinMapa[]>(() => {
+  protected readonly pinesDeSede = computed<readonly PinMap[]>(() => {
     const punto = this.puntoDeSede();
     if (punto === null) {
       return [];
@@ -1819,8 +1819,8 @@ function comoOpcion(establecimiento: LinkableOrganization): ReferenceOption {
 /**
  * Sin acentos y en minúsculas, para que el buscador de «Dónde atiendo»
  * encuentre «clinica» aunque se haya guardado «Clínica» (ADR-0015, regla 5).
- * Misma receta que ya usa el resto del proyecto (`symptom-check/texto.ts`,
- * `shared/geo/departamento-de-ciudad.ts`); se repite acá en vez de importar
+ * Misma receta que ya usa el resto del proyecto (`symptom-check/text.ts`,
+ * `shared/geo/city-department.ts`); se repite acá en vez de importar
  * de una feature ajena.
  */
 function normalizarTexto(texto: string): string {

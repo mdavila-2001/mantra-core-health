@@ -21,7 +21,7 @@ import { Badge } from '../../../../shared/components/atoms/badge/badge';
 import { Spinner } from '../../../../shared/components/atoms/spinner/spinner';
 import { Tab } from '../../../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../../../shared/components/molecules/tabs/tabs';
-import { dibujarQr } from '../../../../shared/utils/qr/dibujar-qr';
+import { drawQr } from '../../../../shared/utils/qr/draw-qr';
 import { displayCurrency } from '../../../../core/money/display-currency';
 import { withDisplayCurrency } from '../../../../core/money/display-currency';
 
@@ -98,7 +98,7 @@ export class OrderPayment {
       if (!this.esBrowser || lienzo === undefined) {
         return;
       }
-      dibujarQr(lienzo.nativeElement, contenidoDelQr(pedido), LADO_DEL_QR).catch(() =>
+      drawQr(lienzo.nativeElement, contenidoDelQr(pedido), LADO_DEL_QR).catch(() =>
         this.qrDisponible.set(false),
       );
     });

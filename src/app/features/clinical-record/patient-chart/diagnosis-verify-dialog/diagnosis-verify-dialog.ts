@@ -39,7 +39,7 @@ import { DialogService } from '../../../../shared/components/molecules/dialog/di
 import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
 import { ContentDialog } from '../../../../shared/components/organisms/content-dialog/content-dialog';
 import { DatePicker } from '../../../../shared/components/organisms/date-picker/date-picker';
-import { mensajeDeFalloDeEscritura } from '../../mensaje-de-escritura';
+import { writeFailureMessage } from '../../write-message';
 
 /** Hasta cuánto puede decir el motivo. Es el tope del contrato (§3.4). */
 export const MAX_MOTIVO = 500;
@@ -272,7 +272,7 @@ export class DiagnosisVerifyDialog {
         estado.issues.map((issue) => issue.message).join(' ') || 'El servidor rechazó la decisión.'
       );
     }
-    return mensajeDeFalloDeEscritura(estado, {
+    return writeFailureMessage(estado, {
       accion: 'confirmar o rechazar diagnósticos',
       sinPermiso: 'Su rol no permite confirmar ni rechazar diagnósticos.',
       yaNoExiste: 'El diagnóstico ya no existe: alguien lo quitó mientras lo decidía.',

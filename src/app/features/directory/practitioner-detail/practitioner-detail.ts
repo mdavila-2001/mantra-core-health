@@ -38,7 +38,7 @@ import type {
   MatriculaVisible,
   PerfilProfesionalVisible,
 } from '../../account/my-profile/practitioner-profile/practitioner-profile-view/practitioner-profile-view.types';
-import { subtituloProfesional } from '../subtitulo-profesional';
+import { professionalSubtitle } from '../professional-subtitle';
 
 /** Lo que se muestra cuando el registro no trae ese dato. */
 const SIN_DATO = 'Sin registrar';
@@ -198,7 +198,7 @@ function convertir(resuelto: PerfilResuelto): PerfilProfesionalVisible {
     nombre,
     // Mismo guardia que la tarjeta de la Guía (F-25): la ficha tampoco puede
     // presentar a alguien con el nombre de otra persona debajo del suyo.
-    titulo: subtituloProfesional(perfil.professionalTitle, nombre) ?? '',
+    titulo: professionalSubtitle(perfil.professionalTitle, nombre) ?? '',
     especialidadPrincipal: especialidadPrincipal(especialidades),
     codigo: perfil.practitionerCode,
     fotoUrl,

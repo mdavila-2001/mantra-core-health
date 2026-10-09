@@ -1,8 +1,8 @@
 import { HttpHeaders } from '@angular/common/http';
 
-import { ordenes, type OrdenSimulada } from '../fixtures/clinica';
-import { ESTADO, ESTUDIO } from '../fixtures/conceptos';
-import { MEDICA, PACIENTE, profesionalPorId } from '../fixtures/personas';
+import { orderList, type SimulatedOrder } from '../fixtures/clinic';
+import { STATUS, ESTUDIO } from '../fixtures/concepts';
+import { MEDICAL, PACIENTE, professionalById } from '../fixtures/people';
 import { MockRouter, type MockMethod } from '../mock-router';
 import { buscarUsuario, type MockUser } from '../mock-session';
 import { registrarDiagnostico } from './diagnostics.handlers';
@@ -180,17 +180,17 @@ describe('GET /diagnostics/patients/:id/imaging-studies', () => {
     // El fixture sólo siembra RX/ECO/TAC/RMN en estado PENDIENTE (la orden que
     // el caso "límite" verifica); se agrega una completada para probar el
     // camino contrario sin tocar las demás pruebas del corpus.
-    const completada = ordenes.agregar({
+    const completada = orderList.agregar({
       id: 'orden-imagen-completada-test',
       patientProfileId: PACIENTE.id,
       codeConceptId: ESTUDIO['STUDY-RX-TORAX']!,
       categoryConceptId: ESTUDIO['STUDY-RX-TORAX']!,
       priorityConceptId: ESTUDIO['STUDY-RX-TORAX']!,
-      statusConceptId: ESTADO['ST-COMPLETED']!,
-      requesterProfileId: MEDICA.id,
+      statusConceptId: STATUS['ST-COMPLETED']!,
+      requesterProfileId: MEDICAL.id,
       reasonText: 'Control',
       createdAt: '2026-01-01T00:00:00.000Z',
-    } satisfies OrdenSimulada);
+    } satisfies SimulatedOrder);
 
     const items = call<EstudioWire[]>(`/diagnostics/patients/${PACIENTE.id}/imaging-studies`);
     const encontrado = items.find((i) => i.serviceRequestId === completada.id);
@@ -199,9 +199,9 @@ describe('GET /diagnostics/patients/:id/imaging-studies', () => {
   });
 
   it('límite: una orden de imagen pendiente no aparece (CL-56)', () => {
-    const pendiente = ordenes
+    const pendiente = orderList
       .todos()
-      .find((o) => o.patientProfileId === PACIENTE.id && o.statusConceptId !== ESTADO['ST-COMPLETED'] && IMAGENOLOGIA.includes(o.codeConceptId));
+      .find((o) => o.patientProfileId === PACIENTE.id && o.statusConceptId !== STATUS['ST-COMPLETED'] && IMAGENOLOGIA.includes(o.codeConceptId));
     expect(pendiente).toBeDefined();
 
     const items = call<EstudioWire[]>(`/diagnostics/patients/${PACIENTE.id}/imaging-studies`);
@@ -245,7 +245,7 @@ describe('POST /diagnostic-results/me/:id/shares', () => {
   }
 
   it('aceptado: resuelve el nombre del profesional a partir de su perfil', () => {
-    const profesional = profesionalPorId(MEDICA.id)!;
+    const profesional = professionalById(MEDICAL.id)!;
     const compartido = call<ShareWire>({
       practitionerProfileId: profesional.id,
       validUntil: '2030-01-01T00:00:00.000Z',
@@ -261,7 +261,7 @@ describe('POST /diagnostic-results/me/:id/shares', () => {
       validUntil: '2030-01-01T00:00:00.000Z',
     });
 
-    expect(compartido.practitionerUserId).toBe(MEDICA.userId);
+    expect(compartido.practitionerUserId).toBe(MEDICAL.userId);
   });
 });
 

@@ -12,7 +12,7 @@ import { entrar, estable, irA } from './support/sesion';
  * con los cupos por sede y el recorrido de teclado.
  *
  * Sólo `paciente@alovida.mock` (sintética) y la profesional sintética de
- * `fixtures/personas.ts`: la ficha se abre filtrando por ella para que no
+ * `fixtures/people.ts`: la ficha se abre filtrando por ella para que no
  * entren en cuadro los médicos reales del catálogo de aseguradoras.
  */
 const PACIENTE: Actor = {

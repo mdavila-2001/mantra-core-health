@@ -1,5 +1,5 @@
 /* El cascarón —la tarjeta, el membrete, el pie, el aviso de catálogo caído y
-   la columna de ayuda— es `../registro-compartido/registro.css`, que esta
+   la columna de ayuda— es `../shared-registration/registration.css`, que esta
    pantalla y el alta de profesional declaran las dos en su `styleUrls`. Vivía
    acá mientras las dos altas eran un solo componente.
 
