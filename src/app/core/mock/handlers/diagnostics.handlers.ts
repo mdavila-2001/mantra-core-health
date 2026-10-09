@@ -1492,7 +1492,12 @@ export function registrarDiagnostico(router: MockRouter): void {
     };
   });
 
-  router.get('/diagnostic-results/me/:id/shares', ({ params }) => compartidos.filtrar((s) => s.reportId === params['id']));
+  // La forma del contrato (`{ reportId, items }`): el cliente lee `body.items`
+  // y con el arreglo pelado la lista de compartidos fallaba en la maqueta.
+  router.get('/diagnostic-results/me/:id/shares', ({ params }) => ({
+    reportId: params['id'],
+    items: compartidos.filtrar((s) => s.reportId === params['id']),
+  }));
 
   /**
    * CL-48/CL-50: el cuerpo trae `practitionerProfileId` (el mismo id que ya

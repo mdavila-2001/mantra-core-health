@@ -26,7 +26,8 @@ import { agendaResourcesMy } from '../my-resource';
 import { ScheduleGrid } from '../my-agenda/schedule-grid/schedule-grid';
 import { calculateSlots, type Calculation, type CalculatedDay } from './agenda-slots';
 import { NavigationService } from '../../../core/navigation/navigation.service';
-import { loading, ready } from '../../../core/view-state/view-state';
+import { simulatorAvailable } from '../../../core/data-access/simulator-only';
+import { loading, ready, validation } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
 import { AppButton } from '../../../shared/components/atoms/button/button';
@@ -1033,6 +1034,20 @@ export class AgendaCreate {
 
     const tenantId = this.organizacion();
     if (tenantId === null) return;
+
+    // `flexibleHours` es P36: la API real no lo recibe y sin él publicaría
+    // turnos fijos sin duración. Se frena acá, antes de retirar el vigente.
+    if (this.flexible() && !simulatorAvailable()) {
+      this.estado.set(
+        validation([
+          {
+            message:
+              'El horario flexible todavía no está disponible: el servidor aún no lo recibe. Elija citas de duración fija para publicar.',
+          },
+        ]),
+      );
+      return;
+    }
 
     this.estado.set(loading());
     this.crearRecurso(tenantId);

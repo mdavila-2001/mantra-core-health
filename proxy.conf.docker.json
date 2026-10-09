@@ -79,7 +79,9 @@
       "/patient-spending",
       "/promotions/me",
       "/loyalty",
-      "/patients/me/reviews"
+      "/patients/me/reviews",
+      "/patients/me/",
+      "/insurance/patients"
     ],
     "target": "__BACKEND_ORIGIN__",
     "secure": false,

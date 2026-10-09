@@ -122,7 +122,9 @@
       "/diagnostics/lab",
       "/patient-spending",
       "/promotions/me",
-      "/patients/me/reviews"
+      "/patients/me/reviews",
+      "/patients/me/",
+      "/insurance/patients"
     ],
     "target": "http://localhost:3000",
     "secure": false,

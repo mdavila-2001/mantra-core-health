@@ -34,7 +34,10 @@ import {
   type CatalogProduct,
   type PharmacyProduct,
   type PharmacyProductStatus,
+  PHARMACY_PRODUCT_SIMULATOR_EXTENSIONS,
+  pharmacyProductExtensionsLabel,
 } from '../../../../core/data-access/pharmacy/pharmacy.types';
+import { droppedSimulatorExtensions } from '../../../../core/data-access/simulator-only';
 import {
   EMPTY_FIELDS,
   DESCRIPTION_LONG_MAX,
@@ -434,9 +437,18 @@ export class ProductDialog implements OnInit {
             ...draftChanges(review.borrador, true, this.isLinked()),
             ...extras,
           });
+    const unsaved = droppedSimulatorExtensions(
+      { ...review.borrador, ...extras },
+      PHARMACY_PRODUCT_SIMULATOR_EXTENSIONS,
+    );
     request.subscribe({
       next: () => {
         this.saving.set(false);
+        if (unsaved.length > 0) {
+          this.toasts.warning(
+            `Quedaron sin guardar ${pharmacyProductExtensionsLabel(unsaved)}: el servidor todavía no recibe esos datos. Sí se guardaron los del catálogo.`,
+          );
+        }
         this.toasts.success(
           editing === null
             ? `«${this.selectedProduct()?.display ?? review.borrador.brandName ?? review.borrador.genericName ?? review.borrador.productCode}» ya está en su catálogo.`

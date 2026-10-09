@@ -101,13 +101,15 @@ export class ChartNotesClient {
    * @param versionId - La versión que se firma; tiene que ser la vigente.
    * @returns La nota, ya con `signedAt`.
    */
-  signVersion(noteId: string, versionId: string): Observable<ChartNote> {
+  signVersion(noteId: string, versionId: string, signerProfileId: string): Observable<ChartNote> {
+    // `signerProfileId` es obligatorio en `SignVersionDto`: con `{}` la API
+    // respondía 400 siempre y no se podía firmar ninguna nota (informe B, C5).
     return this.http
       .post<WireChartNote>(
         this.url(
           `/charts/notes/${encodeURIComponent(noteId)}/versions/${encodeURIComponent(versionId)}/sign`,
         ),
-        {},
+        { signerProfileId },
       )
       .pipe(map(toNote));
   }
