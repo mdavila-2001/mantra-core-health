@@ -22,6 +22,7 @@ import type {
   OpenItemsPage,
   Practice,
 } from '../../../core/data-access/accounting/accounting.types';
+import { describeApiFailure } from '../../../core/http/api-failure';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
@@ -503,11 +504,16 @@ export class Resumen {
           });
           this.recargar();
         },
-        error: () => {
+        error: (error: unknown) => {
           this.saldando.set(null);
           this.toasts.show({
             type: 'error',
-            message: 'No se pudo registrar. Pruebe de nuevo en un momento.',
+            message: describeApiFailure(
+              error,
+              lado === 'cobro'
+                ? `No se pudo registrar el cobro de ${partida.quien}. Intente de nuevo.`
+                : `No se pudo registrar el pago a ${partida.quien}. Intente de nuevo.`,
+            ),
           });
         },
       });

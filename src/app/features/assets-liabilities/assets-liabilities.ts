@@ -10,6 +10,7 @@ import type {
   AssetSummary,
   LiabilitySummary,
 } from '../../core/data-access/assets-liabilities/assets-liabilities.types';
+import { describeApiFailure } from '../../core/http/api-failure';
 import { errorToViewState } from '../../core/http/error-to-view-state';
 import { empty, loading, ready } from '../../core/view-state/view-state';
 import type { ViewState } from '../../core/view-state/view-state.types';
@@ -284,8 +285,26 @@ export class AssetsLiabilities {
   protected readonly avanceDeActivoEnCurso = signal<string | null>(null);
   protected readonly errorDeAvanceDeActivo = signal<string | null>(null);
 
+  protected readonly errorDeAutomatizacionDeActivo = signal<string | null>(null);
+
+  /**
+   * Si el PATCH falla, el interruptor ya quedó movido en pantalla —`checked` es
+   * un `model` del átomo— y `[checked]` no vuelve a empujar el valor viejo
+   * porque el dato no cambió. Releer la lista lo devuelve a lo que dice el
+   * servidor, que es la posición real (con un corte de red ni siquiera se sabe
+   * si el cambio llegó a aplicarse).
+   */
   protected alternarAutomatizacionDeActivo(asset: AssetSummary, automated: boolean): void {
-    this.client.setAssetAutomation(asset.id, automated).subscribe({ next: () => this.reintentar() });
+    this.errorDeAutomatizacionDeActivo.set(null);
+    this.client.setAssetAutomation(asset.id, automated).subscribe({
+      next: () => this.reintentar(),
+      error: (error: unknown) => {
+        this.errorDeAutomatizacionDeActivo.set(
+          describeApiFailure(error, `No se pudo cambiar la automatización de «${asset.name}». Intente de nuevo.`),
+        );
+        this.reintentar();
+      },
+    });
   }
 
   protected registrarAvanceDeActivo(asset: AssetSummary): void {
@@ -474,8 +493,20 @@ export class AssetsLiabilities {
   protected readonly avanceDePasivoEnCurso = signal<string | null>(null);
   protected readonly errorDeAvanceDePasivo = signal<string | null>(null);
 
+  protected readonly errorDeAutomatizacionDePasivo = signal<string | null>(null);
+
+  /** Mismo motivo que `alternarAutomatizacionDeActivo`: el fallo relee para devolver el interruptor. */
   protected alternarAutomatizacionDePasivo(liability: LiabilitySummary, automated: boolean): void {
-    this.client.setLiabilityAutomation(liability.id, automated).subscribe({ next: () => this.reintentar() });
+    this.errorDeAutomatizacionDePasivo.set(null);
+    this.client.setLiabilityAutomation(liability.id, automated).subscribe({
+      next: () => this.reintentar(),
+      error: (error: unknown) => {
+        this.errorDeAutomatizacionDePasivo.set(
+          describeApiFailure(error, `No se pudo cambiar la automatización de «${liability.name}». Intente de nuevo.`),
+        );
+        this.reintentar();
+      },
+    });
   }
 
   protected registrarAvanceDePasivo(liability: LiabilitySummary): void {

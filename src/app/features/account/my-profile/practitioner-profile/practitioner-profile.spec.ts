@@ -426,6 +426,15 @@ describe('PractitionerProfile', () => {
       .error(new ProgressEvent('error'), { status: 500, statusText: 'Server Error' });
 
     expect(visible().especialidades[0].nombre).toBe('Sin registrar');
+    // …pero se dice: «Sin registrar» en un dato que sí está es un dato falso.
+    expect(interno<() => string>('lecturasIncompletas')()).toContain('los nombres del catálogo');
+  });
+
+  it('con todas las lecturas al día no hay aviso de lectura incompleta', () => {
+    montar();
+    responder();
+
+    expect(interno<() => string>('lecturasIncompletas')()).toBe('');
   });
 
   /** Las cuentas de actividad son de la persona, no un ranking. */
@@ -502,6 +511,9 @@ describe('PractitionerProfile', () => {
 
     expect(visible().fotoUrl).toBeNull();
     expect(visible().nombre).toBe('Dra. Lucía Salas');
+    expect(interno<() => string>('lecturasIncompletas')()).toBe(
+      'No pudimos cargar su foto. El resto de su perfil está al día.',
+    );
   });
 
   /**
@@ -615,7 +627,7 @@ describe('PractitionerProfile · las operaciones que la vista pide', () => {
   function montar(
     profileId: string | null = 'prac-1',
     redes: RespuestaDeRedes = { items: [], count: 0 },
-    sedes: readonly object[] = [],
+    sedes: readonly object[] | 'falla' = [],
   ): void {
     // El módulo se arma DENTRO de cada prueba, porque la sesión cambia entre
     // ellas y un proveedor no se puede reemplazar una vez instanciado. El reset
@@ -642,7 +654,7 @@ describe('PractitionerProfile · las operaciones que la vista pide', () => {
   function responderLaCarga(
     profileId: string | null,
     redes: RespuestaDeRedes = { items: [], count: 0 },
-    sedes: readonly object[] = [],
+    sedes: readonly object[] | 'falla' = [],
   ): void {
     http.expectOne((r) => r.url === '/profiles/practitioners/me/summary').flush(PERFIL);
     http.expectOne((r) => r.url === '/terminology/concepts').flush(CONCEPTOS);
@@ -651,7 +663,11 @@ describe('PractitionerProfile · las operaciones que la vista pide', () => {
       // consultorio (`LogoDelConsultorioClient`, que pregunta por su cuenta).
       const lecturas = http.match((r) => r.url === `/practitioners/${profileId}/sites`);
       expect(lecturas).toHaveLength(2);
-      lecturas.forEach((lectura) => lectura.flush({ items: sedes, count: sedes.length }));
+      lecturas.forEach((lectura) =>
+        sedes === 'falla'
+          ? lectura.flush('caída', { status: 503, statusText: 'Service Unavailable' })
+          : lectura.flush({ items: sedes, count: sedes.length }),
+      );
       // Y la firma y el sello, que la ficha propia pide aparte.
       http
         .expectOne((r) => r.url === '/profiles/practitioners/me/signature-assets')
@@ -812,7 +828,100 @@ describe('PractitionerProfile · las operaciones que la vista pide', () => {
     // El fallo fue accesorio: no queda como mensaje de error de la subida, que
     // sí funcionó.
     expect(operacion<() => string>('errorDeFoto')()).toBe('');
+    // Pero ya no se traga (C4): la persona se entera de que la vitrina sigue
+    // con la foto vieja, en vez de leer un éxito total.
+    expect(operacion<() => string>('errorDeVitrina')()).toContain('foto anterior');
     responderLoQueDibujoLaFicha();
+  });
+
+  /** Sube una foto cuya propagación falla en el `PUT` de la vitrina. */
+  async function subirConVitrinaQueFalla(cuerpo: object | string, status: number, headers = {}) {
+    montar();
+    operacion<(archivo: File) => void>('subirFoto')(archivoFoto());
+    http.expectOne('/common/files/upload').flush({ id: 'file-1' });
+    http.expectOne('/profiles/practitioners/prac-1/photo').flush(respuestaFoto('file-1'));
+    http.expectOne('/community/profiles/me').flush(VITRINA);
+    http
+      .expectOne((r) => r.url === '/community/profiles/me' && r.method === 'PUT')
+      .flush(cuerpo, { status, statusText: 'Error', headers });
+    http.expectOne('/common/files/file-1/content').flush(pngFalso());
+    await esperarLaFoto(() => operacion<() => string | null>('fotoRecien')() !== null);
+  }
+
+  const VITRINA = {
+    id: 'vit-1',
+    tenantId: 'ten-1',
+    targetId: 'prac-1',
+    slug: 'dra-lucia-salas',
+    displayName: 'Dra. Lucía Salas',
+    visibility: 'PUBLIC',
+    statusConceptId: 'st-1',
+  };
+
+  it('el aviso de la vitrina lleva el código de soporte que mandó la API', async () => {
+    await subirConVitrinaQueFalla(
+      { code: 'INTERNAL', message: 'boom', correlationId: 'corr-vit-1' },
+      500,
+    );
+
+    expect(operacion<() => string>('errorDeVitrina')()).toBe(
+      'Su perfil público sigue mostrando la foto anterior. Puede volver a intentarlo desde aquí. ' +
+        '(Código de soporte: corr-vit-1)',
+    );
+    responderLoQueDibujoLaFicha();
+  });
+
+  it('reintentar repite sólo la vitrina, no la subida, y al lograrlo retira el aviso', async () => {
+    await subirConVitrinaQueFalla('boom', 500);
+    responderLoQueDibujoLaFicha();
+
+    operacion<() => void>('reintentarVitrina')();
+
+    http.expectNone('/common/files/upload');
+    http.expectOne('/community/profiles/me').flush(VITRINA);
+    const puesta = http.expectOne((r) => r.url === '/community/profiles/me' && r.method === 'PUT');
+    expect(puesta.request.body).toMatchObject({ avatarFileId: 'file-1' });
+    puesta.flush({ ...VITRINA, avatarFileId: 'file-1' });
+
+    expect(operacion<() => string>('errorDeVitrina')()).toBe('');
+    expect(avisos().some((a) => a.message.includes('ya muestra la foto nueva'))).toBe(true);
+  });
+
+  it('si el reintento vuelve a fallar, el aviso sigue y el botón se libera', async () => {
+    await subirConVitrinaQueFalla('boom', 500);
+    responderLoQueDibujoLaFicha();
+
+    operacion<() => void>('reintentarVitrina')();
+    http
+      .expectOne('/community/profiles/me')
+      .flush('caída', { status: 503, statusText: 'Service Unavailable' });
+
+    expect(operacion<() => string>('errorDeVitrina')()).toContain('foto anterior');
+    expect(operacion<() => boolean>('reintentandoVitrina')()).toBe(false);
+  });
+
+  it('una subida que falla dice el motivo de la API, no «pruebe con otra imagen» a ciegas', () => {
+    montar();
+    operacion<(archivo: File) => void>('subirFoto')(archivoFoto());
+    http
+      .expectOne('/common/files/upload')
+      .flush(
+        { code: 'PAYLOAD_TOO_LARGE', message: 'La imagen supera los 5 MB.', correlationId: 'c-9' },
+        { status: 413, statusText: 'Payload Too Large' },
+      );
+
+    expect(operacion<() => string>('errorDeFoto')()).toBe(
+      'La imagen supera los 5 MB. (Código de soporte: c-9)',
+    );
+    expect(operacion<() => boolean>('fotoSubiendo')()).toBe(false);
+  });
+
+  it('sedes que no se pudieron leer se avisan, no se pintan como «no atiende en ningún lado»', () => {
+    montar('prac-1', { items: [], count: 0 }, 'falla');
+
+    expect(operacion<() => string>('lecturasIncompletas')()).toContain(
+      'los lugares donde atiende',
+    );
   });
 
   /* -- Con qué seguros trabaja (28/09/2026) ------------------------------- */
@@ -904,6 +1013,22 @@ describe('PractitionerProfile · las operaciones que la vista pide', () => {
 
     expect(dialogs.confirm).toHaveBeenCalled();
     http.expectNone('/profiles/practitioners/me/credentials/cr-2');
+  });
+
+  it('si retirar falla, el aviso lleva el motivo de negocio de la API', async () => {
+    montar();
+
+    await operacion<(e: FormacionVisible) => Promise<void>>('retirarCredencial')(
+      FORMACION_PENDIENTE,
+    );
+    http
+      .expectOne('/profiles/practitioners/me/credentials/cr-2')
+      .flush(
+        { code: 'PRECONDITION_FAILED', message: 'El título ya fue verificado.', correlationId: 'c-3' },
+        { status: 422, statusText: 'Unprocessable Entity' },
+      );
+
+    expect(avisos().at(-1)?.message).toBe('El título ya fue verificado. (Código de soporte: c-3)');
   });
 
   /* -- El aviso único de «Credenciales» (19/09/2026) ---------------------- */

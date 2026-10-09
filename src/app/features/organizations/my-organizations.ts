@@ -9,8 +9,6 @@ import {
   viewChild,
   type TemplateRef,
 } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { catchError, of } from 'rxjs';
 
 import { AccountingClient } from '../../core/data-access/accounting/accounting.client';
 import type { Practice } from '../../core/data-access/accounting/accounting.types';
@@ -20,6 +18,7 @@ import {
   roleAssignmentStatusLabel,
 } from '../../core/data-access/practice-sites/role-assignment-concepts';
 import type { MyRoleAssignment } from '../../core/data-access/practice-sites/practice-sites.types';
+import { describeApiFailure } from '../../core/http/api-failure';
 import { errorToViewState } from '../../core/http/error-to-view-state';
 import { loading, ready } from '../../core/view-state/view-state';
 import type { ViewState } from '../../core/view-state/view-state.types';
@@ -132,6 +131,14 @@ export class MyOrganizations {
    */
   private readonly vinculaciones = signal<readonly MyRoleAssignment[] | undefined>(undefined);
 
+  /**
+   * El fallo de la lectura de vinculaciones, o `null`.
+   *
+   * Regla 14 del criterio humano: antes la caída se convertía en `[]` y la
+   * pantalla decía «Todavía no tiene vinculaciones» a quien tenía tres.
+   */
+  private readonly falloDeVinculaciones = signal<ViewState<readonly AssignmentRow[]> | null>(null);
+
   protected readonly cargandoVinculaciones = computed(() => this.vinculaciones() === undefined);
 
   protected readonly filas = computed<readonly AssignmentRow[]>(() =>
@@ -168,14 +175,29 @@ export class MyOrganizations {
   protected readonly porId = (fila: AssignmentRow): string => fila.id;
 
   /** El estado de la tabla, en los términos del M34. */
-  protected readonly estadoDeLaTabla = computed<ViewState<readonly AssignmentRow[]>>(() =>
-    this.vinculaciones() === undefined ? loading() : ready(this.filas()),
+  protected readonly estadoDeLaTabla = computed<ViewState<readonly AssignmentRow[]>>(
+    () =>
+      this.falloDeVinculaciones() ??
+      (this.vinculaciones() === undefined ? loading() : ready(this.filas())),
   );
 
-  private readonly practicas = toSignal(
-    this.accounting.listPractices().pipe(catchError(() => of<readonly Practice[]>([]))),
-    { initialValue: undefined },
+  /** «Todavía no tiene vinculaciones» sólo cuando la lectura respondió vacía. */
+  protected readonly sinVinculaciones = computed(
+    () =>
+      this.falloDeVinculaciones() === null &&
+      !this.cargandoVinculaciones() &&
+      this.filas().length === 0,
   );
+
+  private readonly practicas = signal<readonly Practice[] | undefined>(undefined);
+
+  /**
+   * Por qué no hay organizaciones para elegir; vacío si la lista llegó.
+   *
+   * Sin esto, una caída dejaba el selector vacío y no había forma de saber si
+   * no existía ninguna organización o si no se pudo preguntar.
+   */
+  protected readonly errorDeOrganizaciones = signal('');
 
   protected readonly opcionesDeOrganizacion = computed<readonly SelectOption<string>[]>(() =>
     (this.practicas() ?? []).map((p) => ({ value: p.id, label: p.name })),
@@ -191,6 +213,30 @@ export class MyOrganizations {
   protected readonly solicitudEnviada = signal(false);
 
   constructor() {
+    this.recargarVinculaciones();
+    this.cargarOrganizaciones();
+  }
+
+  /** Vuelve a pedir la lista de organizaciones que se pueden elegir. */
+  protected cargarOrganizaciones(): void {
+    this.errorDeOrganizaciones.set('');
+    this.accounting.listPractices().subscribe({
+      next: (practicas) => this.practicas.set(practicas),
+      error: (error: unknown) => {
+        this.practicas.set([]);
+        this.errorDeOrganizaciones.set(
+          describeApiFailure(
+            error,
+            'No pudimos traer la lista de organizaciones, así que todavía no puede pedir una vinculación.',
+          ),
+        );
+      },
+    });
+  }
+
+  /** Vuelve a leer las vinculaciones; lo usa el reintento de la tabla. */
+  protected reintentarVinculaciones(): void {
+    this.vinculaciones.set(undefined);
     this.recargarVinculaciones();
   }
 
@@ -213,9 +259,11 @@ export class MyOrganizations {
   }
 
   private recargarVinculaciones(): void {
-    this.practiceSites
-      .listMyRoleAssignments()
-      .pipe(catchError(() => of<readonly MyRoleAssignment[]>([])))
-      .subscribe((items) => this.vinculaciones.set(items));
+    this.falloDeVinculaciones.set(null);
+    this.practiceSites.listMyRoleAssignments().subscribe({
+      next: (items) => this.vinculaciones.set(items),
+      error: (error: unknown) =>
+        this.falloDeVinculaciones.set(errorToViewState<readonly AssignmentRow[]>(error)),
+    });
   }
 }

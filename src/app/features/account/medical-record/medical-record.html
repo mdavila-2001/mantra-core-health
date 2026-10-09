@@ -118,6 +118,31 @@
             </app-alert>
           }
 
+          <!-- Sin las citas, la línea no puede decir qué atención tuvo
+               reconsulta. Se avisa: un hueco callado se lee como «no hubo». -->
+          @if (citasSinCargar(); as motivo) {
+            <app-alert
+              tone="warning"
+              title="Faltan las reconsultas"
+              data-testid="historia-citas-sin-cargar"
+            >
+              {{ motivo }} Sus atenciones se muestran igual, pero sin indicar cuáles tuvieron
+              reconsulta.
+              <div alert-actions>
+                <button
+                  app-button
+                  variant="secondary"
+                  size="sm"
+                  type="button"
+                  data-testid="historia-citas-reintentar"
+                  (clicked)="recargarDetalle()"
+                >
+                  Volver a cargar
+                </button>
+              </div>
+            </app-alert>
+          }
+
           <!-- C6 · cada atención se despliega en su línea del encuentro. El
                acordeón y no una lista: el contenido plegado NO está en el DOM,
                así que una historia de cuarenta consultas no dibuja cuarenta

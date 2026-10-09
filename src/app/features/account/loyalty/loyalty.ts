@@ -20,6 +20,7 @@ import {
   type Membresia,
   type MovimientoDePuntos,
 } from '../../../core/data-access/loyalty/loyalty.types';
+import { describeApiFailure } from '../../../core/http/api-failure';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { NavigationService } from '../../../core/navigation/navigation.service';
 import { empty, loading, ready } from '../../../core/view-state/view-state';
@@ -114,6 +115,11 @@ export class Loyalty {
   protected readonly movimientos = signal<readonly MovimientoDePuntos[]>([]);
   protected readonly cursor = signal<string | null>(null);
   protected readonly cargandoMas = signal(false);
+  /**
+   * Por qué no se pudieron traer los movimientos, o `null`. Sin esto, una
+   * lectura caída se pintaba como «Todavía no hay movimientos».
+   */
+  protected readonly errorDeMovimientos = signal<string | null>(null);
 
   protected readonly paso = signal<PasoDeLaBilletera>('saldo');
 
@@ -177,9 +183,14 @@ export class Loyalty {
 
   /** La primera página del ledger; «Ver más» sigue desde el cursor. */
   protected cargarMovimientos(): void {
-    this.loyalty.misMovimientos(null).subscribe((pagina) => {
-      this.movimientos.set(pagina.movimientos);
-      this.cursor.set(pagina.nextCursor);
+    this.errorDeMovimientos.set(null);
+    this.loyalty.misMovimientos(null).subscribe({
+      next: (pagina) => {
+        this.movimientos.set(pagina.movimientos);
+        this.cursor.set(pagina.nextCursor);
+      },
+      error: (error: unknown) =>
+        this.errorDeMovimientos.set(describeApiFailure(error, 'No pudimos traer sus movimientos.')),
     });
   }
 
@@ -189,13 +200,18 @@ export class Loyalty {
       return;
     }
     this.cargandoMas.set(true);
+    this.errorDeMovimientos.set(null);
     this.loyalty.misMovimientos(desde).subscribe({
       next: (pagina) => {
         this.movimientos.set([...this.movimientos(), ...pagina.movimientos]);
         this.cursor.set(pagina.nextCursor);
         this.cargandoMas.set(false);
       },
-      error: () => this.cargandoMas.set(false),
+      // Lo ya leído se queda; el aviso explica por qué no llegó lo siguiente.
+      error: (error: unknown) => {
+        this.cargandoMas.set(false);
+        this.errorDeMovimientos.set(describeApiFailure(error, 'No pudimos traer más movimientos.'));
+      },
     });
   }
 

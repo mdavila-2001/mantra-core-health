@@ -79,6 +79,8 @@ describe('TarjetaDelDia', () => {
      * miembro que no declara». Se descubrió compilando.
      */
     readonly candidatos: Signal<readonly ReferenceOption[]>;
+    /** Por qué la búsqueda no trajo nada cuando fue un fallo, no un «sin coincidencias». */
+    readonly busquedaFallida: Signal<string | null>;
     /** Si hay algo que se perdería al cerrar: decide si `Escape` pregunta (C-10). */
     readonly hayAlgoEscrito: Signal<boolean>;
     /** Si el alta salió de un cupo ya programado: la franja no se pregunta (C-10). */
@@ -497,6 +499,73 @@ describe('TarjetaDelDia', () => {
     const opciones = api().candidatos();
     expect(opciones[0].label).toBe('Ana Quispe');
     expect(opciones[0].value).toBe('pp-1');
+    expect(api().busquedaFallida()).toBeNull();
+    http.verify();
+  });
+
+  /**
+   * Una búsqueda caída decía «Ningún paciente coincide»: el profesional
+   * concluía que la persona no estaba registrada. El fallo tiene que leerse
+   * como fallo, con el código de soporte.
+   */
+  it('si la búsqueda de pacientes falla, no lo presenta como «ningún paciente coincide»', async () => {
+    await montar();
+    api().buscarPaciente('ana');
+
+    http.expectOne((r) => r.url === '/profiles/patients/search').flush(
+      {
+        code: 'INTERNAL',
+        message: 'Error interno',
+        timestamp: '',
+        path: '',
+        correlationId: 'corr-busca-1',
+      },
+      { status: 500, statusText: 'Internal Server Error' },
+    );
+
+    expect(api().candidatos()).toEqual([]);
+    expect(api().busquedaFallida()).toBe(
+      'No se pudo buscar pacientes. (Código de soporte: corr-busca-1)',
+    );
+    http.verify();
+  });
+
+  it('el fallo del guardado trae el código de soporte junto al motivo del servidor', async () => {
+    await montar();
+    api().paciente.set({ value: 'pp-ana', label: 'Ana Quispe' });
+
+    api().guardar();
+    http.expectOne((r) => r.url === '/scheduling/appointments/direct').flush(
+      {
+        code: 'CONFLICT',
+        message: 'El profesional ya tiene a Beto de 10:00 a 13:00 en «Hospital».',
+        timestamp: '',
+        path: '',
+        correlationId: 'corr-cita-1',
+      },
+      { status: 409, statusText: 'Conflict' },
+    );
+    fixture.detectChanges();
+
+    const texto: string = fixture.nativeElement.textContent;
+    expect(texto).toContain('ya tiene a Beto de 10:00 a 13:00');
+    expect(texto).toContain('Código de soporte: corr-cita-1');
+    http.verify();
+  });
+
+  it('un 500 sin motivo para la persona no se muestra como «Error interno» a secas', async () => {
+    await montar();
+    api().paciente.set({ value: 'pp-ana', label: 'Ana Quispe' });
+
+    api().guardar();
+    http
+      .expectOne((r) => r.url === '/scheduling/appointments/direct')
+      .flush(null, { status: 500, statusText: 'Internal Server Error' });
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain(
+      'No se pudo guardar la cita. Intente de nuevo.',
+    );
     http.verify();
   });
 });

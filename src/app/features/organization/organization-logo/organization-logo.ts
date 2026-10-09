@@ -10,6 +10,7 @@ import {
 import { map, switchMap } from 'rxjs';
 
 import { LogoDeOrganizacionClient } from '../../../core/data-access/directory/logo-de-organizacion.client';
+import { describeApiFailure } from '../../../core/http/api-failure';
 import { blobToDataUrl } from '../../../core/data-access/files/blob-to-data-url';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Card } from '../../../shared/components/molecules/card/card';
@@ -109,9 +110,9 @@ export class OrganizationLogo {
           this.ocupado.set(false);
           this.vista.set(url);
         },
-        error: () => {
+        error: (error: unknown) => {
           this.ocupado.set(false);
-          this.error.set('No se pudo guardar el logo. Pruebe de nuevo.');
+          this.error.set(describeApiFailure(error, 'No se pudo guardar el logo. Pruebe de nuevo.'));
         },
       });
   }
@@ -137,9 +138,9 @@ export class OrganizationLogo {
         this.ocupado.set(false);
         this.vista.set(null);
       },
-      error: () => {
+      error: (error: unknown) => {
         this.ocupado.set(false);
-        this.error.set('No se pudo quitar el logo. Pruebe de nuevo.');
+        this.error.set(describeApiFailure(error, 'No se pudo quitar el logo. Pruebe de nuevo.'));
       },
     });
   }

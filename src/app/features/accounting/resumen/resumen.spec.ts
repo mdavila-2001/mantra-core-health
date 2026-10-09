@@ -8,6 +8,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { API_BASE_URL } from '../../../core/data-access/api';
 import { SimpleAccountingClient } from '../../../core/data-access/simple-accounting/simple-accounting.client';
+import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
 import { Resumen } from './resumen';
 
 /* ============================================================================
@@ -400,6 +401,51 @@ describe('Resumen contable', () => {
       // cambia la cartera **y** los saldos.
       expect(http.match((r) => r.url === `${BASE}/accounting/income-statement`)).toHaveLength(6);
       expect(http.match((r) => r.url === `${BASE}/accounting/open-items`)).toHaveLength(1);
+    });
+
+    it('si saldar falla, dice qué no se registró, con el código de soporte, y no relee', () => {
+      const { fixture, http } = montarConCartera();
+      const avisos = vi.spyOn(TestBed.inject(ToastService), 'show');
+      const c = fixture.componentInstance as unknown as {
+        teDeben: () => readonly { id: string; quien: string }[];
+        saldar: (p: unknown, lado: 'cobro' | 'pago') => void;
+        saldando: () => string | null;
+      };
+
+      c.saldar(c.teDeben()[0], 'cobro');
+      http
+        .expectOne(`${BASE}/accounting/clearing-documents`)
+        .flush(
+          { code: 'INTERNAL', message: 'Internal server error', correlationId: 'corr-cobro', timestamp: '', path: '' },
+          { status: 500, statusText: 'Server Error' },
+        );
+
+      expect(avisos).toHaveBeenLastCalledWith({
+        type: 'error',
+        message: 'No se pudo registrar el cobro de Seguros Andina. Intente de nuevo. (Código de soporte: corr-cobro)',
+      });
+      // El botón vuelve a estar disponible y el tablero sigue como estaba.
+      expect(c.saldando()).toBeNull();
+      expect(http.match((r) => r.url === `${BASE}/accounting/open-items`)).toHaveLength(0);
+    });
+
+    it('si la partida ya estaba saldada, el aviso es el motivo de la API', () => {
+      const { fixture, http } = montarConCartera();
+      const avisos = vi.spyOn(TestBed.inject(ToastService), 'show');
+      const c = fixture.componentInstance as unknown as {
+        tenesQuePagar: () => readonly { id: string }[];
+        saldar: (p: unknown, lado: 'cobro' | 'pago') => void;
+      };
+
+      c.saldar(c.tenesQuePagar()[0], 'pago');
+      http
+        .expectOne(`${BASE}/accounting/clearing-documents`)
+        .flush(
+          { code: 'CONFLICT', message: 'La partida ya está compensada', timestamp: '', path: '' },
+          { status: 409, statusText: 'Conflict' },
+        );
+
+      expect(avisos).toHaveBeenLastCalledWith({ type: 'error', message: 'La partida ya está compensada' });
     });
   });
 

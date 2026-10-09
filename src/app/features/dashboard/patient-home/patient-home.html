@@ -66,10 +66,20 @@
     </app-card>
   }
   @case ('error') {
-    <app-card variant="outlined" padding="md">
-      <p class="mi-salud__estado">
-        No pudimos cargar su información en este momento. Pruebe de nuevo en un rato.
+    <app-card variant="outlined" padding="md" data-testid="mi-salud-error">
+      <p class="mi-salud__estado" role="alert">
+        {{ falloGeneral() ?? 'No pudimos cargar su información en este momento.' }}
       </p>
+      <button
+        app-button
+        variant="secondary"
+        size="sm"
+        type="button"
+        data-testid="mi-salud-reintentar"
+        (clicked)="cargar()"
+      >
+        Volver a cargar
+      </button>
     </app-card>
   }
   @default {
@@ -123,8 +133,14 @@
             <p class="proxima-cita__estado" role="status">Buscando su próxima cita…</p>
           }
           @case ('error') {
-            <p class="proxima-cita__estado proxima-cita__estado--error" role="alert">
-              No pudimos traer su próxima cita. Puede verla igual en Mis citas.
+            <!-- Nunca «No tiene citas pedidas»: la lectura falló, no está vacía. -->
+            <p
+              class="proxima-cita__estado proxima-cita__estado--error"
+              role="alert"
+              data-testid="mi-salud-cita-error"
+            >
+              {{ falloDeCitas() ?? 'No pudimos traer su próxima cita.' }} Puede verla igual en Mis
+              citas.
             </p>
             <a app-button variant="outline" size="sm" [routerLink]="misTurnos">Ir a Mis citas</a>
           }
@@ -221,6 +237,10 @@
             <span class="mi-salud__resumen-rotulo">Su última receta</span>
             @if (resumen().ultimaReceta; as cuando) {
               <span class="mi-salud__resumen-dato">{{ cuando | date: "d 'de' MMMM, y" }}</span>
+            } @else if (falloDeHistoria()) {
+              <span class="mi-salud__resumen-dato mi-salud__resumen-dato--vacio">
+                No se pudo consultar
+              </span>
             } @else {
               <span class="mi-salud__resumen-dato mi-salud__resumen-dato--vacio">
                 Todavía no le recetaron nada
@@ -240,6 +260,10 @@
             <span class="mi-salud__resumen-rotulo">Su última atención</span>
             @if (resumen().ultimaAtencion; as cuando) {
               <span class="mi-salud__resumen-dato">{{ cuando | date: "d 'de' MMMM, y" }}</span>
+            } @else if (falloDeHistoria()) {
+              <span class="mi-salud__resumen-dato mi-salud__resumen-dato--vacio">
+                No se pudo consultar
+              </span>
             } @else {
               <span class="mi-salud__resumen-dato mi-salud__resumen-dato--vacio">
                 Todavía no tiene atenciones registradas
@@ -251,6 +275,24 @@
           }
         </li>
       </ul>
+
+      <!-- La historia que no se pudo leer se dice, con su código de soporte:
+           «Todavía no le recetaron nada» sería afirmar lo que no se sabe. -->
+      @if (falloDeHistoria(); as motivo) {
+        <p class="mi-salud__estado" role="alert" data-testid="mi-salud-historia-error">
+          {{ motivo }}
+          <button
+            app-button
+            variant="ghost"
+            size="sm"
+            type="button"
+            data-testid="mi-salud-historia-reintentar"
+            (clicked)="cargar()"
+          >
+            Volver a cargar
+          </button>
+        </p>
+      }
     }
   }
 }

@@ -16,10 +16,13 @@ import { SchedulingClient } from '@core/data-access/scheduling/scheduling.client
 import type { AgendaResource, Booking } from '@core/data-access/scheduling/scheduling.types';
 import { TerminologyClient } from '@core/data-access/terminology/terminology.client';
 import type { ValueSetOption } from '@core/data-access/terminology/terminology.types';
+import { describeApiFailure } from '@core/http/api-failure';
 import { errorToViewState } from '@core/http/error-to-view-state';
 import { empty, loading, ready } from '@core/view-state/view-state';
 import type { ViewState } from '@core/view-state/view-state.types';
+import { AppButton } from '@shared/components/atoms/button/button';
 import { AppButtonLink } from '@shared/components/atoms/button/button-link';
+import { Alert } from '@shared/components/molecules/alert/alert';
 import { NavIcon } from '@shared/components/atoms/nav-icon/nav-icon';
 import { StatusSeal } from '@shared/components/organisms/status-seal/status-seal';
 import { ViewStateHost } from '@shared/components/organisms/view-state-host/view-state-host';
@@ -152,7 +155,16 @@ interface JornadaCruda {
  */
 @Component({
   selector: 'app-agenda-de-hoy',
-  imports: [AppButtonLink, DatePipe, NavIcon, RouterLink, StatusSeal, ViewStateHost],
+  imports: [
+    Alert,
+    AppButton,
+    AppButtonLink,
+    DatePipe,
+    NavIcon,
+    RouterLink,
+    StatusSeal,
+    ViewStateHost,
+  ],
   templateUrl: './agenda-de-hoy.html',
   styleUrl: './agenda-de-hoy.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -176,6 +188,16 @@ export class AgendaDeHoy {
   }
 
   protected readonly estado = signal<ViewState<JornadaCruda>>(loading());
+
+  /**
+   * Las sedes cuya lectura falló, dichas para la persona (con código de
+   * soporte cuando la API lo manda).
+   *
+   * Una sede caída no tumba el día —las demás se muestran—, pero tampoco puede
+   * desaparecer en silencio: sus citas faltarían y el día se leería con menos
+   * consultas de las que tiene.
+   */
+  protected readonly sedesSinCargar = signal<readonly string[]>([]);
 
   /**
    * El reloj, en su propia señal.
@@ -386,6 +408,7 @@ export class AgendaDeHoy {
     }
 
     this.estado.set(loading());
+    this.sedesSinCargar.set([]);
 
     const desde = this.hoy();
     const hasta = new Date(desde.getFullYear(), desde.getMonth(), desde.getDate() + 1);
@@ -397,14 +420,17 @@ export class AgendaDeHoy {
 
           // Una lectura por agenda: `GET /scheduling/bookings` filtra por UN
           // recurso, y sin filtro la API responde 422. Se piden en paralelo y
-          // se juntan; si una sede falla, el día no se pierde entero.
+          // se juntan; si una sede falla, el día no se pierde entero — pero el
+          // fallo viaja con ella para avisarlo.
           return forkJoin(
             recursos.map((recurso) =>
               this.scheduling
                 .searchBookings({ resourceId: recurso.id, from: desde, to: hasta, limit: 100 })
                 .pipe(
-                  map((pagina) => ({ recurso, citas: pagina.items })),
-                  catchError(() => of({ recurso, citas: [] as readonly Booking[] })),
+                  map((pagina): LecturaDeSede => ({ recurso, citas: pagina.items, fallo: null })),
+                  catchError((error: unknown) =>
+                    of<LecturaDeSede>({ recurso, citas: [], fallo: { error } }),
+                  ),
                 ),
             ),
           );
@@ -422,6 +448,23 @@ export class AgendaDeHoy {
             return;
           }
 
+          const fallidas = porRecurso.filter((lectura) => lectura.fallo !== null);
+          // Si no se pudo leer ninguna, no hay «día parcial» que mostrar: es
+          // el error de la pantalla, con su reintento.
+          const primerFallo = fallidas[0]?.fallo;
+          if (primerFallo != null && fallidas.length === porRecurso.length) {
+            this.estado.set(errorToViewState<JornadaCruda>(primerFallo.error));
+            return;
+          }
+          this.sedesSinCargar.set(
+            fallidas.map(({ recurso, fallo }) =>
+              describeApiFailure(
+                fallo?.error,
+                `No se pudieron cargar las citas de ${nombreDeLaSede(recurso) ?? 'una de sus agendas'}.`,
+              ),
+            ),
+          );
+
           const citas = porRecurso
             .flatMap(({ recurso, citas: delRecurso }) =>
               delRecurso.map((cita) => ({ cita, sede: nombreDeLaSede(recurso) })),
@@ -434,7 +477,10 @@ export class AgendaDeHoy {
                 // No es «Ver la agenda»: ése es el botón del encabezado, que
                 // sigue ahí. Un día vacío tiene otra próxima acción — llenarlo.
                 { label: 'Agendar una consulta', route: APPOINTMENT_NEW_ROUTE },
-                'Hoy no tiene ninguna consulta reservada.',
+                // Con una sede sin leer, «ninguna» sería afirmar lo que no se sabe.
+                fallidas.length > 0
+                  ? 'No tiene consultas reservadas hoy en las agendas que se pudieron cargar.'
+                  : 'Hoy no tiene ninguna consulta reservada.',
               ),
             );
             return;
@@ -481,6 +527,13 @@ function orden(cita: Booking): number {
 }
 
 /** Cómo se nombra la sede de una agenda; `null` cuando el recurso no declara ninguna. */
+/** Lo que trajo la lectura de una agenda: sus citas, o el fallo que la dejó vacía. */
+interface LecturaDeSede {
+  readonly recurso: AgendaResource;
+  readonly citas: readonly Booking[];
+  readonly fallo: { readonly error: unknown } | null;
+}
+
 function nombreDeLaSede(recurso: AgendaResource): string | null {
   return recurso.site?.name ?? null;
 }

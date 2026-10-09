@@ -63,6 +63,9 @@
         @if (errorDeAvanceDeActivo(); as mensaje) {
           <app-alert appAnuncio tone="error" class="alerta-de-formulario">{{ mensaje }}</app-alert>
         }
+        @if (errorDeAutomatizacionDeActivo(); as mensaje) {
+          <app-alert appAnuncio tone="error" class="alerta-de-formulario">{{ mensaje }}</app-alert>
+        }
 
         <h2 class="titulo-de-seccion">Mis activos</h2>
         @if (assets(); as estado) {
@@ -160,6 +163,9 @@
           </p>
         </app-card>
         @if (errorDeAvanceDePasivo(); as mensaje) {
+          <app-alert appAnuncio tone="error" class="alerta-de-formulario">{{ mensaje }}</app-alert>
+        }
+        @if (errorDeAutomatizacionDePasivo(); as mensaje) {
           <app-alert appAnuncio tone="error" class="alerta-de-formulario">{{ mensaje }}</app-alert>
         }
 

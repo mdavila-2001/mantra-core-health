@@ -38,6 +38,7 @@ import { NgTemplateOutlet } from '@angular/common';
 import { RouterLink } from '@angular/router';
 
 import { PublicDirectoryClient } from '@core/data-access/public-directory/public-directory.client';
+import { describeApiFailure } from '@core/http/api-failure';
 import {
   PUBLIC_PROFILE_PREFIX,
   type PublicPostReaction,
@@ -73,6 +74,8 @@ export class PublicPostReactions implements OnInit {
   protected readonly cargando = signal(true);
   protected readonly cargandoMas = signal(false);
   protected readonly fallo = signal(false);
+  /** Qué decir cuando la lectura falló: el motivo de la API o qué hacer, con el código de soporte. */
+  protected readonly motivoDelFallo = signal('');
 
   protected readonly estado = computed<EstadoLista>(() => {
     if (this.fallo()) return 'error';
@@ -136,10 +139,10 @@ export class PublicPostReactions implements OnInit {
         this.cursor.set(pagina.nextCursor);
         this.cargandoMas.set(false);
       },
-      error: () => {
+      error: (error: unknown) => {
         // Un fallo al pedir MÁS no borra lo que ya se estaba leyendo.
         this.cargandoMas.set(false);
-        this.fallo.set(true);
+        this.fallar(error);
       },
     });
   }
@@ -153,10 +156,15 @@ export class PublicPostReactions implements OnInit {
         this.cursor.set(pagina.nextCursor);
         this.cargando.set(false);
       },
-      error: () => {
+      error: (error: unknown) => {
         this.cargando.set(false);
-        this.fallo.set(true);
+        this.fallar(error);
       },
     });
+  }
+
+  private fallar(error: unknown): void {
+    this.motivoDelFallo.set(describeApiFailure(error, 'Vuelva a intentarlo en un momento.'));
+    this.fallo.set(true);
   }
 }
