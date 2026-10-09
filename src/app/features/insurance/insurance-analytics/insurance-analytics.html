@@ -37,6 +37,15 @@
     </app-form-field>
   </form>
 
+  @if (carrierError(); as message) {
+    <app-alert tone="warning" data-testid="analytics-carrier-error">
+      {{ message }}
+      <button alert-actions app-button type="button" variant="outline" size="sm" (clicked)="loadCarrier()">
+        Volver a intentar
+      </button>
+    </app-alert>
+  }
+
   <app-view-state-host [state]="data()" (retry)="retry()">
     @if (data(); as estado) {
       @if (estado.status === 'ready') {

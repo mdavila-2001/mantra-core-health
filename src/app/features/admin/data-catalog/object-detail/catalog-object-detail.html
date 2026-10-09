@@ -116,7 +116,14 @@
           </app-tab>
 
           <app-tab label="Evidencia">
-            @if (evidencia().length === 0) {
+            @if (errorDeEvidencia(); as mensaje) {
+              <app-alert tone="error" data-testid="object-evidence-error">
+                {{ mensaje }}
+                <button alert-actions app-button type="button" variant="outline" size="sm" (clicked)="leerEvidencia()">
+                  Volver a intentar
+                </button>
+              </app-alert>
+            } @else if (evidencia().length === 0) {
               <p class="ficha-objeto__vacio">Sin evidencia. Una ficha no se aprueba sin al menos una.</p>
             } @else {
               <ul class="ficha-objeto__lista" data-testid="object-evidence">
@@ -132,7 +139,14 @@
           </app-tab>
 
           <app-tab label="Historial">
-            @if (historial().revisions.length === 0) {
+            @if (errorDeHistorial(); as mensaje) {
+              <app-alert tone="error" data-testid="object-history-error">
+                {{ mensaje }}
+                <button alert-actions app-button type="button" variant="outline" size="sm" (clicked)="leerHistorial()">
+                  Volver a intentar
+                </button>
+              </app-alert>
+            } @else if (historial().revisions.length === 0) {
               <p class="ficha-objeto__vacio">La ficha no tiene revisiones.</p>
             } @else {
               <ol class="ficha-objeto__lista" data-testid="object-history">
@@ -193,7 +207,14 @@
           </app-tab>
 
           <app-tab label="Cambios">
-            @if (cambios().length === 0) {
+            @if (errorDeCambios(); as mensaje) {
+              <app-alert tone="error" data-testid="object-changes-error">
+                {{ mensaje }}
+                <button alert-actions app-button type="button" variant="outline" size="sm" (clicked)="leerCambios()">
+                  Volver a intentar
+                </button>
+              </app-alert>
+            } @else if (cambios().length === 0) {
               <p class="ficha-objeto__vacio">Sin cambios estructurales detectados.</p>
             } @else {
               <ol class="ficha-objeto__lista">

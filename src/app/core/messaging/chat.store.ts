@@ -10,6 +10,7 @@ import { isPlatformBrowser } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { CommunityClient } from '../data-access/community/community.client';
+import { describeApiFailure } from '../http/api-failure';
 import { FilesClient } from '../data-access/files/files.client';
 import { SessionStore } from '../auth/session.store';
 import { ChatSocketService } from './chat-socket.service';
@@ -183,7 +184,13 @@ export class ChatStore {
   readonly perfilResuelto = signal(false);
   readonly creandoPerfil = signal(false);
 
-  /** Lo último que salió mal, para que la pantalla lo diga. */
+  /**
+   * Lo último que salió mal, para que la pantalla lo diga.
+   *
+   * Se escribe sólo con {@link fallar}: el motivo lo pone la API cuando lo
+   * explica (el plazo de edición vencido, un bloqueo que ya existía) y el
+   * código de soporte va siempre que lo haya.
+   */
   readonly error = signal('');
 
   /* --- Bandeja ------------------------------------------------------------ */
@@ -247,6 +254,11 @@ export class ChatStore {
    */
   readonly bloqueados = signal<readonly PerfilBloqueado[]>([]);
   readonly bloqueadosCargados = signal(false);
+  /**
+   * La lectura de bloqueos falló: la lista vacía NO significa «no bloqueó a
+   * nadie». Distinto de `bloqueadosCargados`, que sólo dice que ya contestó.
+   */
+  readonly bloqueosFallaron = signal(false);
 
   private readonly idsBloqueados = computed(
     () => new Set(this.bloqueados().map((b) => b.profileId)),
@@ -462,10 +474,10 @@ export class ChatStore {
         // Sin perfil no hay bandeja que leer: cada espera lo comprueba.
         esperan.forEach((correr) => correr());
       },
-      error: () => {
+      error: (error: unknown) => {
         this.perfilResuelto.set(true);
         this.esperandoPerfil = null;
-        this.error.set('No pudimos saber si tiene perfil público.');
+        this.fallar(error, 'No pudimos saber si tiene perfil público.');
       },
     });
   }
@@ -525,9 +537,9 @@ export class ChatStore {
           this.error.set('');
           this.arrancarConPerfil();
         },
-        error: () => {
+        error: (error: unknown) => {
           this.creandoPerfil.set(false);
-          this.error.set('No pudimos crear su perfil. Pruebe de nuevo.');
+          this.fallar(error, 'No pudimos crear su perfil. Intente de nuevo.');
         },
       });
   }
@@ -558,6 +570,7 @@ export class ChatStore {
           })),
         );
         this.bloqueadosCargados.set(true);
+        this.bloqueosFallaron.set(false);
         // Los que aún no tienen nombre se le piden a su ficha, uno por uno: es
         // una lista corta y cada ficha se pide una sola vez.
         for (const bloqueado of this.bloqueados()) {
@@ -566,8 +579,10 @@ export class ChatStore {
           }
         }
       },
-      error: () => {
+      error: (error: unknown) => {
         this.bloqueadosCargados.set(true);
+        this.bloqueosFallaron.set(true);
+        this.fallar(error, 'No pudimos leer las personas que bloqueó.');
       },
     });
   }
@@ -592,9 +607,9 @@ export class ChatStore {
       .block({ blockerProfileId: propio, blockedProfileId: profileId })
       .subscribe({
         next: () => undefined,
-        error: () => {
+        error: (error: unknown) => {
           this.bloqueados.update((lista) => lista.filter((b) => b.profileId !== profileId));
-          this.error.set('No pudimos bloquear a esa persona. Pruebe de nuevo.');
+          this.fallar(error, 'No pudimos bloquear a esa persona. Intente de nuevo.');
         },
       });
   }
@@ -611,9 +626,9 @@ export class ChatStore {
       .unblock({ blockerProfileId: propio, blockedProfileId: profileId })
       .subscribe({
         next: () => undefined,
-        error: () => {
+        error: (error: unknown) => {
           this.bloqueados.update((lista) => [previo, ...lista]);
-          this.error.set('No pudimos desbloquear a esa persona. Pruebe de nuevo.');
+          this.fallar(error, 'No pudimos desbloquear a esa persona. Intente de nuevo.');
         },
       });
   }
@@ -659,12 +674,12 @@ export class ChatStore {
           this.cargandoBandeja.set(false);
           this.error.set('');
         },
-        error: () => {
+        error: (error: unknown) => {
           this.cargandoBandeja.set(false);
           this.bandejaCargada.set(true);
           // No se vacía lo que ya había: un tic fallido no es motivo para
           // borrarle a alguien la bandeja que estaba mirando.
-          this.error.set('No pudimos cargar sus conversaciones.');
+          this.fallar(error, 'No pudimos cargar sus conversaciones.');
         },
       });
   }
@@ -822,14 +837,14 @@ export class ChatStore {
             this.marcarLeido();
           }
         },
-        error: () => {
+        error: (error: unknown) => {
           if (this.activaId() !== conversationId) {
             this.descartarYPedirElActual();
             return;
           }
           this.cargandoHilo.set(false);
           this.hiloCargado.set(true);
-          this.error.set('No pudimos cargar la conversación.');
+          this.fallar(error, 'No pudimos cargar la conversación.');
         },
       });
   }
@@ -1014,9 +1029,11 @@ export class ChatStore {
           this.aplicarTexto(messageId, editado.bodyText ?? cuerpo, true);
           this.recargarBandeja();
         },
-        error: () => {
+        // El plazo de cinco minutos lo explica la API cuando es eso
+        // (`PRECONDITION_FAILED`); un corte de red no es un plazo vencido.
+        error: (error: unknown) => {
           this.aplicarTexto(messageId, anterior, mensaje.isEdited ?? false);
-          this.error.set('No pudimos editar el mensaje. Pasaron más de 5 minutos o ya no se puede cambiar.');
+          this.fallar(error, 'No pudimos editar el mensaje. Intente de nuevo.');
         },
       });
   }
@@ -1059,9 +1076,9 @@ export class ChatStore {
       .reactToMessage(conversationId, messageId, { profileId: propio, emoji: elegido })
       .subscribe({
         next: (actualizado) => this.aplicarReacciones(messageId, actualizado.reactions ?? []),
-        error: () => {
+        error: (error: unknown) => {
           this.aplicarReacciones(messageId, anteriores ?? []);
-          this.error.set('No pudimos guardar su reacción.');
+          this.fallar(error, 'No pudimos guardar su reacción.');
         },
       });
   }
@@ -1171,6 +1188,8 @@ export class ChatStore {
           : p,
       ),
     );
+    // La persona ya está actuando sobre el fallo: el aviso anterior sobra.
+    this.error.set('');
     this.despachar(pendiente);
   }
 
@@ -1236,7 +1255,7 @@ export class ChatStore {
             setTimeout(() => this.refrescarHilo(), ESPERA_DE_RECIBOS_MS);
           }
         },
-        error: () => {
+        error: (error: unknown) => {
           this.enviando.set(false);
           this.pendientes.update((lista) =>
             lista.map((p) =>
@@ -1245,6 +1264,8 @@ export class ChatStore {
                 : p,
             ),
           );
+          // La burbuja dice que no salió; el aviso dice por qué.
+          this.fallar(error, 'No pudimos enviar el mensaje. Puede reintentarlo desde la conversación.');
         },
       });
   }
@@ -1324,7 +1345,7 @@ export class ChatStore {
         );
         this.despachar(conFileId);
       },
-      error: () => {
+      error: (error: unknown) => {
         this.pendientes.update((lista) =>
           lista.map((p) =>
             p.claveTemporal === pendiente.claveTemporal
@@ -1332,7 +1353,7 @@ export class ChatStore {
               : p,
           ),
         );
-        this.error.set('No pudimos subir el archivo.');
+        this.fallar(error, 'No pudimos subir el archivo.');
       },
     });
   }
@@ -1501,9 +1522,9 @@ export class ChatStore {
               ),
             );
           },
-          error: () => {
+          error: (error: unknown) => {
             this.exportando.set(false);
-            this.error.set('No pudimos descargar la conversación.');
+            this.fallar(error, 'No pudimos descargar la conversación.');
             alTerminar(null);
           },
         });
@@ -1526,9 +1547,9 @@ export class ChatStore {
         this.resultados.set(items);
         this.buscandoAhora.set(false);
       },
-      error: () => {
+      error: (error: unknown) => {
         this.buscandoAhora.set(false);
-        this.error.set('No pudimos buscar profesionales.');
+        this.fallar(error, 'No pudimos buscar profesionales.');
       },
     });
   }
@@ -1571,15 +1592,15 @@ export class ChatStore {
               this.recargarBandeja();
               alAbrir(id);
             },
-            error: () => {
+            error: (error: unknown) => {
               this.abriendo.set(false);
-              this.error.set('No pudimos abrir la conversación.');
+              this.fallar(error, 'No pudimos abrir la conversación.');
             },
           });
       },
-      error: () => {
+      error: (error: unknown) => {
         this.abriendo.set(false);
-        this.error.set('No pudimos encontrar a esa persona.');
+        this.fallar(error, 'No pudimos encontrar a esa persona.');
       },
     });
   }
@@ -1644,6 +1665,15 @@ export class ChatStore {
         },
         error: () => undefined,
       });
+  }
+
+  /**
+   * El único punto por donde un fallo de la API llega a `error`: el motivo de
+   * la API si lo explica, si no el texto de quien llama, y el código de
+   * soporte siempre que lo haya.
+   */
+  private fallar(error: unknown, queNoSePudo: string): void {
+    this.error.set(describeApiFailure(error, queNoSePudo));
   }
 
   private pararTemporizadores(): void {
