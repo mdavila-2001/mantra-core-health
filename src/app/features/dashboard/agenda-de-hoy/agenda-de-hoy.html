@@ -24,6 +24,37 @@
     </a>
   </header>
 
+  <!-- Una sede que no respondió no tumba el día, pero tampoco desaparece en
+       silencio: sin este aviso, sus citas faltaban y la jornada parecía
+       completa. -->
+  @if (sedesSinCargar().length > 0) {
+    <app-alert
+      tone="error"
+      title="Parte de su jornada no se pudo cargar"
+      class="hoy__aviso"
+      data-testid="panel-hoy-sedes-sin-cargar"
+    >
+      La jornada que ve puede estar incompleta.
+      <ul class="hoy__sedes-sin-cargar">
+        @for (aviso of sedesSinCargar(); track aviso) {
+          <li>{{ aviso }}</li>
+        }
+      </ul>
+      <div alert-actions>
+        <button
+          app-button
+          variant="secondary"
+          size="sm"
+          type="button"
+          data-testid="panel-hoy-reintentar-sedes"
+          (clicked)="cargar()"
+        >
+          Volver a cargar
+        </button>
+      </div>
+    </app-alert>
+  }
+
   <app-view-state-host [state]="estado()" (retry)="cargar()" (refresh)="cargar()">
     <div vsh-skeleton class="hoy__esqueleto">
       <div class="hoy__esqueleto-cinta"></div>

@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
 import {
   ChangeDetectionStrategy,
@@ -11,6 +12,7 @@ import {
 
 import { SchedulingClient } from '../../../../core/data-access/scheduling/scheduling.client';
 import { ProfilesClient } from '../../../../core/data-access/profiles/profiles.client';
+import { describeApiFailure, fieldErrorsOf } from '../../../../core/http/api-failure';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import { DialogService } from '../../../../shared/components/molecules/dialog/dialog-service';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
@@ -159,6 +161,14 @@ export class TarjetaDelDia {
   );
   protected readonly candidatos = signal<readonly ReferenceOption[]>([]);
   protected readonly buscando = signal(false);
+
+  /**
+   * Por qué la última búsqueda de pacientes no trajo nada, si fue un fallo.
+   *
+   * Sin esto, una búsqueda caída decía «Ningún paciente coincide»: el
+   * profesional concluía que la persona no estaba registrada.
+   */
+  protected readonly busquedaFallida = signal<string | null>(null);
   protected readonly guardando = signal(false);
 
   /** El fallo del guardado, con el mensaje del servidor tal cual. */
@@ -261,6 +271,7 @@ export class TarjetaDelDia {
     this.profiles.searchPatients({ query: texto.trim(), limit: 10 }).subscribe({
       next: (pagina) => {
         this.buscando.set(false);
+        this.busquedaFallida.set(null);
         this.candidatos.set(
           pagina.items.map((item) => ({
             value: item.profileId,
@@ -271,9 +282,10 @@ export class TarjetaDelDia {
           })),
         );
       },
-      error: () => {
+      error: (error: unknown) => {
         this.buscando.set(false);
         this.candidatos.set([]);
+        this.busquedaFallida.set(describeApiFailure(error, 'No se pudo buscar pacientes.'));
       },
     });
   }
@@ -398,17 +410,37 @@ export class TarjetaDelDia {
       });
   }
 
+  /**
+   * El fallo del guardado, con el motivo del servidor y el código de soporte.
+   *
+   * La regla madre ya responde con qué, cuándo y dónde: ese texto se muestra
+   * tal cual. Las violaciones por campo se juntan en una frase (el formulario
+   * no tiene campos que se llamen como los del DTO), y siempre que la API lo
+   * mande se agrega el código con que se encuentra la línea del log.
+   */
   private fallo(error: unknown): void {
     this.guardando.set(false);
-    const mensaje =
-      typeof error === 'object' &&
-      error !== null &&
-      'error' in error &&
-      typeof (error as { error?: { message?: unknown } }).error?.message === 'string'
-        ? ((error as { error: { message: string } }).error.message)
-        : 'No se pudo guardar. Pruebe de nuevo.';
-    this.error.set(mensaje);
+    const campos = Object.values(fieldErrorsOf(error));
+    const delServidor =
+      campos.length > 0
+        ? campos.join(' ')
+        : (mensajeDelCuerpo(error) ?? 'No se pudo guardar la cita. Intente de nuevo.');
+    this.error.set(describeApiFailure(error, delServidor));
   }
+}
+
+/**
+ * El `message` de un cuerpo de error **sin `code`** (un proxy, una regla que
+ * responde texto suelto). Con `code`, quien decide si el mensaje es para la
+ * persona es `describeApiFailure`: un «Error interno» no lo es.
+ */
+function mensajeDelCuerpo(error: unknown): string | null {
+  if (!(error instanceof HttpErrorResponse)) return null;
+  const cuerpo: unknown = error.error;
+  if (typeof cuerpo !== 'object' || cuerpo === null || 'code' in cuerpo || !('message' in cuerpo)) {
+    return null;
+  }
+  return typeof cuerpo.message === 'string' && cuerpo.message.trim() !== '' ? cuerpo.message : null;
 }
 
 /** `HH:mm` de un instante, para los campos de hora. */

@@ -1,18 +1,25 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { catchError, forkJoin, of, switchMap } from 'rxjs';
+import { catchError, forkJoin, map, of, switchMap } from 'rxjs';
 
 import { AuthService } from '@core/auth/auth.service';
 import { SchedulingClient } from '@core/data-access/scheduling/scheduling.client';
-import type { ActivityTypeOption, Booking } from '@core/data-access/scheduling/scheduling.types';
+import type {
+  ActivityTypeOption,
+  AgendaResource,
+  Booking,
+} from '@core/data-access/scheduling/scheduling.types';
 import { TerminologyClient } from '@core/data-access/terminology/terminology.client';
 import type { ValueSetOption } from '@core/data-access/terminology/terminology.types';
+import { describeApiFailure } from '@core/http/api-failure';
 import { errorToViewState } from '@core/http/error-to-view-state';
 import { dataOf, empty, loading, ready } from '@core/view-state/view-state';
 import type { ViewState } from '@core/view-state/view-state.types';
+import { AppButton } from '@shared/components/atoms/button/button';
 import { Chip } from '@shared/components/atoms/chip/chip';
 import type { ChipVariant } from '@shared/components/atoms/chip/chip.types';
 import { Switch } from '@shared/components/atoms/switch/switch';
 import { Tooltip } from '@shared/components/atoms/tooltip/tooltip';
+import { Alert } from '@shared/components/molecules/alert/alert';
 import { Card } from '@shared/components/molecules/card/card';
 import { NEUTRAL_TONE, TONES } from '@shared/components/tone/tone.types';
 import { StatusSeal } from '@shared/components/organisms/status-seal/status-seal';
@@ -50,7 +57,7 @@ import { misRecursosDeAgenda } from '../../agenda/mi-recurso';
  */
 @Component({
   selector: 'app-consultas-resumen',
-  imports: [Card, Chip, StatusSeal, Switch, Tooltip, ViewStateHost],
+  imports: [Alert, AppButton, Card, Chip, StatusSeal, Switch, Tooltip, ViewStateHost],
   templateUrl: './consultas-resumen.html',
   styleUrl: './consultas-resumen.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -61,6 +68,15 @@ export class ConsultasResumen {
   private readonly terminology = inject(TerminologyClient);
 
   protected readonly estado = signal<ViewState<ResumenDatos>>(loading());
+
+  /**
+   * Las sedes cuya lectura falló, dichas para la persona.
+   *
+   * Una sede caída no tumba el resumen, pero sus consultas faltan en las
+   * cifras: sin este aviso, «12 este mes» se leía como el total cuando era el
+   * total de las sedes que respondieron.
+   */
+  protected readonly sedesSinCargar = signal<readonly string[]>([]);
 
   /**
    * «Las canceladas se pueden ver» (H5.S2.M1): mismo criterio que
@@ -145,6 +161,7 @@ export class ConsultasResumen {
     }
 
     this.estado.set(loading());
+    this.sedesSinCargar.set([]);
     const { desde, hasta } = this.ventanaMes();
 
     misRecursosDeAgenda(this.scheduling, tenantId, perfil)
@@ -155,18 +172,37 @@ export class ConsultasResumen {
             recursos.map((recurso) =>
               this.scheduling
                 .searchBookings({ resourceId: recurso.id, from: desde, to: hasta, includeCancelled: true, limit: 500 })
-                .pipe(catchError(() => of({ items: [] as readonly Booking[], count: 0, limit: 500, truncated: false }))),
+                .pipe(
+                  map((pagina): LecturaDeSede => ({ recurso, citas: pagina.items, fallo: null })),
+                  // La sede caída no tumba el resumen, pero su fallo viaja con
+                  // ella para avisarlo: si no, sus consultas faltan sin rastro.
+                  catchError((error: unknown) => of<LecturaDeSede>({ recurso, citas: [], fallo: { error } })),
+                ),
             ),
           );
         }),
       )
       .subscribe({
-        next: (paginas) => {
-          if (paginas === null) {
+        next: (lecturas) => {
+          if (lecturas === null) {
             this.estado.set(empty({ label: 'Publicar mi horario', route: '/schedule' }, 'Todavía no tiene una agenda publicada.'));
             return;
           }
-          const citas = paginas.flatMap((pagina) => pagina.items);
+          const fallidas = lecturas.filter((lectura) => lectura.fallo !== null);
+          const primerFallo = fallidas[0]?.fallo;
+          if (primerFallo != null && fallidas.length === lecturas.length) {
+            this.estado.set(errorToViewState<ResumenDatos>(primerFallo.error));
+            return;
+          }
+          this.sedesSinCargar.set(
+            fallidas.map(({ recurso, fallo }) =>
+              describeApiFailure(
+                fallo?.error,
+                `No se pudieron cargar las consultas de ${recurso.site?.name ?? 'una de sus agendas'}.`,
+              ),
+            ),
+          );
+          const citas = lecturas.flatMap((lectura) => lectura.citas);
           this.terminology.readConceptLabels(citas.map((c) => c.statusConceptId)).subscribe({
             next: (etiquetas) => this.conceptos.set(etiquetas),
             error: () => undefined,
@@ -174,7 +210,14 @@ export class ConsultasResumen {
           this.scheduling.listActivityTypes().subscribe({
             next: ({ items: actividades }) => {
               if (citas.length === 0) {
-                this.estado.set(empty({ label: 'Agendar una consulta', route: '/schedule' }, 'Todavía no hay consultas este mes.'));
+                this.estado.set(
+                  empty(
+                    { label: 'Agendar una consulta', route: '/schedule' },
+                    fallidas.length > 0
+                      ? 'No hay consultas este mes en las agendas que se pudieron cargar.'
+                      : 'Todavía no hay consultas este mes.',
+                  ),
+                );
                 return;
               }
               this.estado.set(ready({ citas, actividades }));
@@ -288,4 +331,11 @@ interface HeatmapData {
 function dentroDe(cita: Booking, desde: Date, hasta: Date): boolean {
   const inicio = cita.startAt;
   return inicio !== undefined && inicio >= desde && inicio < hasta;
+}
+
+/** Lo que trajo la lectura de una agenda: sus citas, o el fallo que la dejó vacía. */
+interface LecturaDeSede {
+  readonly recurso: AgendaResource;
+  readonly citas: readonly Booking[];
+  readonly fallo: { readonly error: unknown } | null;
 }

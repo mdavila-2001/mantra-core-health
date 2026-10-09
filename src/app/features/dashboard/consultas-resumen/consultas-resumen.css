@@ -158,3 +158,14 @@
   color: var(--heat-4-fg);
   font-weight: 700;
 }
+
+.consultas-resumen__aviso {
+  margin-block-end: var(--sp-4);
+}
+
+/* Un código de soporte largo se parte en vez de desbordar el aviso. */
+.consultas-resumen__sedes-sin-cargar {
+  margin: var(--sp-2) 0 0;
+  padding-inline-start: var(--sp-5);
+  overflow-wrap: anywhere;
+}

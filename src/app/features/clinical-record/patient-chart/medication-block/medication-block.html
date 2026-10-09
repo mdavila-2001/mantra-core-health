@@ -37,6 +37,23 @@
     </app-alert>
   }
 
+  <!-- La revisión de interacciones falla abierta (no bloquea la receta), pero
+       nunca en silencio: sin este aviso, un chequeo caído se leía igual que
+       «sin interacciones». Persiste hasta que se cierre o el próximo chequeo
+       responda. -->
+  @if (interaccionesSinRevisar(); as aviso) {
+    <app-alert
+      tone="warning"
+      title="No se pudieron revisar las interacciones"
+      dismissible
+      data-testid="receta-interacciones-sin-revisar"
+      (dismissed)="descartarAvisoDeInteracciones()"
+    >
+      La receta de {{ aviso.medicamento }} no pasó por la revisión de interacciones con la
+      medicación activa de la persona. Compruébelas usted antes de firmarla. {{ aviso.causa }}
+    </app-alert>
+  }
+
   @if (errorDeLaReceta(); as mensaje) {
     <app-alert tone="error" data-testid="receta-error">{{ mensaje }}</app-alert>
   }
