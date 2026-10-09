@@ -307,6 +307,90 @@ describe('MeasurementGrid', () => {
     ).toBe('118');
   });
 
+  /**
+   * El texto fijo «No pudimos registrar la fila» descartaba lo que la API
+   * manda: el motivo, la columna rechazada y el código de soporte.
+   */
+  it('si el guardado falla, el aviso trae el código de soporte', async () => {
+    const { fixture, http } = await montar({
+      resumen: expediente({
+        observations: [observacion(ANTES, PRESION, '120')],
+        encounters: [encuentro(ANTES, '2026-09-10T10:00:00.000Z', 'Control')],
+      }),
+    });
+
+    interno<(c: string, v: string) => void>(fixture, 'escribir').call(
+      fixture.componentInstance,
+      PRESION,
+      '118',
+    );
+    fixture.detectChanges();
+    interno<() => void>(fixture, 'guardar').call(fixture.componentInstance);
+
+    http.expectOne((r) => r.url.endsWith('/clinical/observations')).flush(
+      { code: 'INTERNAL', message: 'Error interno', timestamp: '', path: '', correlationId: 'corr-obs-1' },
+      { status: 500, statusText: 'Server Error' },
+    );
+    fixture.detectChanges();
+
+    const aviso = (fixture.nativeElement as HTMLElement).querySelector(
+      '[data-testid="cuadricula-error-guardar"]',
+    );
+    expect(aviso?.textContent).toContain('No pudimos registrar la fila. (Código de soporte: corr-obs-1)');
+    expect(aviso?.textContent).toContain('sigue acá');
+  });
+
+  it('si la API rechaza un campo, el aviso nombra la columna y conserva lo escrito', async () => {
+    const { fixture, http } = await montar({
+      resumen: expediente({
+        observations: [observacion(ANTES, PRESION, '120')],
+        encounters: [encuentro(ANTES, '2026-09-10T10:00:00.000Z', 'Control')],
+      }),
+      etiquetas: [
+        { conceptId: PRESION, code: 'BP', display: 'Presión arterial', codeSystemVersionId: 'v1' },
+      ],
+    });
+
+    interno<(c: string, v: string) => void>(fixture, 'escribir').call(
+      fixture.componentInstance,
+      PRESION,
+      '9999',
+    );
+    fixture.detectChanges();
+    interno<() => void>(fixture, 'guardar').call(fixture.componentInstance);
+
+    http.expectOne((r) => r.url.endsWith('/clinical/observations')).flush(
+      {
+        code: 'VALIDATION_FAILED',
+        message: 'Error de validación',
+        timestamp: '',
+        path: '',
+        correlationId: 'corr-obs-2',
+        details: {
+          fields: [
+            {
+              field: 'quantityValue',
+              constraints: ['max'],
+              messages: ['El valor está fuera del rango permitido.'],
+            },
+          ],
+        },
+      },
+      { status: 400, statusText: 'Bad Request' },
+    );
+    fixture.detectChanges();
+
+    expect(interno<() => string | null>(fixture, 'errorAlGuardar')()).toBe(
+      'Presión arterial: El valor está fuera del rango permitido. (Código de soporte: corr-obs-2) Lo que escribió sigue acá: pruebe de nuevo.',
+    );
+    expect(
+      interno<(c: string) => string>(fixture, 'valorDeColumna').call(
+        fixture.componentInstance,
+        PRESION,
+      ),
+    ).toBe('9999');
+  });
+
   it('sin organización no se puede cargar la fila', async () => {
     const { fixture } = await montar({
       tenantId: null,

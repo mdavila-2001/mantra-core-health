@@ -30,6 +30,7 @@ import {
   BoOccupationsCatalog,
   CODIGO_OCUPACION_OTRA,
 } from '../../../../core/data-access/terminology/bo-occupations.service';
+import { describeApiFailure, fieldErrorsOf } from '../../../../core/http/api-failure';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
 import { NavigationService } from '../../../../core/navigation/navigation.service';
 import { loading, ready } from '../../../../core/view-state/view-state';
@@ -77,6 +78,31 @@ const MI_PERFIL = '/my-account';
 
 /** El rótulo con el que se agrupan los avisos de esta pantalla. */
 const AMBITO = 'Mi perfil';
+
+/**
+ * En qué pestaña se ve cada campo del `PATCH` que la plantilla ancla con
+ * `errorDelServidor`. Un campo que no figura acá no tiene dónde pintarse, así
+ * que su mensaje va entero en el aviso.
+ */
+const PESTANA_DEL_CAMPO: Readonly<Record<string, number>> = {
+  name: PESTANA.personales,
+  middleName: PESTANA.personales,
+  lastName: PESTANA.personales,
+  motherLastName: PESTANA.personales,
+  birthDate: PESTANA.personales,
+  sexAtBirth: PESTANA.personales,
+  occupationConceptId: PESTANA.personales,
+  occupationFreeText: PESTANA.personales,
+  phone: PESTANA.contacto,
+  residenceMunicipalityConceptId: PESTANA.contacto,
+  homeAddressLines: PESTANA.contacto,
+  workAddressLines: PESTANA.contacto,
+  taxId: PESTANA.facturacion,
+  taxHolderName: PESTANA.facturacion,
+};
+
+/** «a», «a y b», «a, b y c». */
+const LISTA = new Intl.ListFormat('es', { type: 'conjunction' });
 
 /** Nadie nació antes de 1900 y sigue usando la plataforma. El mismo tope del alta. */
 const NACIMIENTO_MAS_ANTIGUO = new Date(1900, 0, 1);
@@ -682,6 +708,7 @@ export class PatientProfileEdit {
       return;
     }
 
+    this.erroresDelServidor.set({});
     this.guardando.set(true);
     this.profiles.updateOwnPatientProfile(cambios).subscribe({
       next: (perfil) => {
@@ -696,11 +723,61 @@ export class PatientProfileEdit {
           this.cerrado.emit();
         }
       },
-      error: () => {
+      error: (error: unknown) => {
+        // El formulario no se toca: lo escrito sigue ahí para corregirlo.
         this.guardando.set(false);
-        this.toasts.error('No pudimos guardar los cambios. Pruebe de nuevo.', AMBITO);
+        this.avisarRechazo(error);
       },
     });
+  }
+
+  /**
+   * Los rechazos del servidor, por campo del contrato (`taxId`, `phone`…).
+   *
+   * Antes, cualquier fallo decía «No pudimos guardar los cambios» y nada más:
+   * con catorce campos en tres pestañas, la persona no sabía qué corregir.
+   */
+  private readonly erroresDelServidor = signal<Readonly<Record<string, string>>>({});
+
+  /** El mensaje que el servidor dio para ese campo, o vacío. */
+  protected errorDelServidor(campo: string): string {
+    return this.erroresDelServidor()[campo] ?? '';
+  }
+
+  /**
+   * Ancla el rechazo a sus campos y avisa una vez, en la pestaña donde está.
+   *
+   * Regla 6 del criterio humano: el error se dice donde se comete. Si el campo
+   * rechazado está en otra pestaña, el aviso la nombra y la pantalla la abre
+   * —lo mismo que ya hace {@link pendienteEnOtraPestana} con lo que falta
+   * antes de guardar—. Lo que no nombra campo sale con el motivo de la API y
+   * el código de soporte.
+   */
+  private avisarRechazo(error: unknown): void {
+    const porCampo = fieldErrorsOf(error);
+    this.erroresDelServidor.set(porCampo);
+
+    const campos = Object.keys(porCampo);
+    const anclados = campos.filter((campo) => campo in PESTANA_DEL_CAMPO);
+    const sinLugar = campos.filter((campo) => !(campo in PESTANA_DEL_CAMPO)).map((campo) => porCampo[campo]);
+
+    if (anclados.length > 0) {
+      const pestanas = [...new Set(anclados.map((campo) => PESTANA_DEL_CAMPO[campo]))].sort((a, b) => a - b);
+      if (!pestanas.includes(this.pestana())) {
+        this.pestana.set(pestanas[0]);
+      }
+      const donde = LISTA.format(pestanas.map((indice) => `«${PESTANAS_DEL_PERFIL[indice]}»`));
+      this.toasts.error(
+        [`Revise los campos marcados en ${donde} y vuelva a guardar.`, ...sinLugar].join(' '),
+        AMBITO,
+      );
+      return;
+    }
+    if (sinLugar.length > 0) {
+      this.toasts.error(sinLugar.join(' '), AMBITO);
+      return;
+    }
+    this.toasts.error(describeApiFailure(error, 'No pudimos guardar los cambios. Pruebe de nuevo.'), AMBITO);
   }
 
   /**

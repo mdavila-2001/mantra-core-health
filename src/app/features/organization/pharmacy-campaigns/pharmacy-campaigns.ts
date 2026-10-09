@@ -43,6 +43,7 @@ import type {
   RenglonDeBorrador,
 } from '../../../core/data-access/pharmacy-campaigns/pharmacy-campaigns.types';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
+import { describeApiFailure } from '../../../core/http/api-failure';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { dataOf, empty, loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
@@ -331,11 +332,14 @@ export class PharmacyCampaigns {
         this.seBusco.set(true);
         this.buscando.set(false);
       },
-      error: () => {
+      error: (error: unknown) => {
+        // `seBusco` queda en falso: con verdadero, la pantalla decía «No hay
+        // productos de su catálogo con ese nombre», que es falso cuando la
+        // búsqueda ni siquiera llegó a responder (regla 14).
         this.resultados.set([]);
-        this.seBusco.set(true);
+        this.seBusco.set(false);
         this.buscando.set(false);
-        this.toasts.error('No se pudo consultar el catálogo. Pruebe de nuevo.');
+        this.toasts.error(describeApiFailure(error, 'No se pudo consultar el catálogo. Pruebe de nuevo.'));
       },
     });
   }
@@ -432,9 +436,10 @@ export class PharmacyCampaigns {
         this.recargarLista(pharmacyId);
         this.toasts.success('Su campaña ya está publicada.');
       },
-      error: () => {
+      error: (error: unknown) => {
+        // El borrador no se toca: lo escrito sigue ahí para volver a publicar.
         this.publicando.set(false);
-        this.toasts.error('No se pudo publicar la campaña. Pruebe de nuevo.');
+        this.toasts.error(describeApiFailure(error, 'No se pudo publicar la campaña. Pruebe de nuevo.'));
       },
     });
   }

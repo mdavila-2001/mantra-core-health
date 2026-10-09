@@ -254,11 +254,80 @@ describe('AgendaDeHoy', () => {
         (request) =>
           request.url.endsWith('/scheduling/bookings') && request.params.get('resourceId') === 'r-2',
       )
-      .flush(null, { status: 500, statusText: 'Server Error' });
+      .flush(
+        {
+          code: 'INTERNAL',
+          message: 'Error interno',
+          timestamp: '',
+          path: '',
+          correlationId: 'corr-sede-2',
+        },
+        { status: 500, statusText: 'Server Error' },
+      );
     responderCatalogo();
 
     expect(estado().status).toBe('ready');
     expect(citas()).toHaveLength(1);
+
+    // …pero la sede caída no desaparece en silencio: el aviso la nombra, con
+    // el código de soporte, para que el día no se lea como completo.
+    const aviso = (fixture.nativeElement as HTMLElement).querySelector(
+      '[data-testid="panel-hoy-sedes-sin-cargar"]',
+    );
+    expect(aviso).not.toBeNull();
+    expect(aviso?.getAttribute('role')).toBe('alert');
+    expect(aviso?.textContent).toContain(
+      'No se pudieron cargar las citas de Consultorio. (Código de soporte: corr-sede-2)',
+    );
+  });
+
+  it('con una sede caída y la otra sin citas, no afirma que el día está vacío', () => {
+    crear();
+    responderRecursos({ id: 'r-1', sede: 'Clínica' }, { id: 'r-2', sede: 'Consultorio' });
+    responderCitas('r-1', []);
+    http
+      .expectOne(
+        (request) =>
+          request.url.endsWith('/scheduling/bookings') && request.params.get('resourceId') === 'r-2',
+      )
+      .flush(null, { status: 503, statusText: 'Service Unavailable' });
+    fixture.detectChanges();
+
+    expect(estado().status).toBe('empty');
+    const texto = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(texto).not.toContain('Hoy no tiene ninguna consulta reservada.');
+    expect(texto).toContain('en las agendas que se pudieron cargar');
+    expect(texto).toContain('No se pudieron cargar las citas de Consultorio.');
+  });
+
+  it('si fallan TODAS las sedes, es el error de la pantalla y no un día vacío', () => {
+    crear();
+    responderRecursos({ id: 'r-1', sede: 'Clínica' });
+    http
+      .expectOne((request) => request.url.endsWith('/scheduling/bookings'))
+      .flush(null, { status: 500, statusText: 'Server Error' });
+    fixture.detectChanges();
+
+    expect(estado().status).not.toBe('empty');
+    expect(estado().status).not.toBe('ready');
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelector(
+        '[data-testid="panel-hoy-sedes-sin-cargar"]',
+      ),
+    ).toBeNull();
+  });
+
+  it('con todas las sedes leídas no muestra ningún aviso de sede', () => {
+    crear();
+    responderRecursos({ id: 'r-1', sede: 'Clínica' });
+    responderCitas('r-1', []);
+    fixture.detectChanges();
+
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelector(
+        '[data-testid="panel-hoy-sedes-sin-cargar"]',
+      ),
+    ).toBeNull();
   });
 
   /* -- 2 · qué manda ahora -------------------------------------------------- */

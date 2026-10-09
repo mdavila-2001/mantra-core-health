@@ -9,6 +9,7 @@ import { toObservable } from '@angular/core/rxjs-interop';
 
 import { AccountingClient } from '../../../core/data-access/accounting/accounting.client';
 import { readApiError } from '../../../core/http/api-error';
+import { describeApiFailure } from '../../../core/http/api-failure';
 import type {
   AccrualRegister,
   BalanceSheet,
@@ -376,8 +377,11 @@ export class Cockpit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (cadena) => this.cadenaDelFlujo.set(cadena),
-        error: () =>
-          this.toasts.show({ type: 'error', message: 'No se pudo leer el flujo del documento.' }),
+        error: (error: unknown) =>
+          this.toasts.show({
+            type: 'error',
+            message: describeApiFailure(error, 'No se pudo leer el flujo del documento. Intente de nuevo.'),
+          }),
       });
   }
 
@@ -416,15 +420,20 @@ export class Cockpit {
           });
           this.recargar();
         },
-        error: () =>
+        // La causa la dice la API (período cerrado, transición no permitida…);
+        // la pantalla no la adivina.
+        error: (error: unknown) =>
           this.toasts.show({
             type: 'error',
-            message: 'No se pudo mover el documento. El período puede estar cerrado.',
+            message: describeApiFailure(error, `No se pudo mover el documento ${numero}. Intente de nuevo.`),
           }),
       });
   }
 
-  /** Cerrar el mes. Falla si queda un documento sin postear — y eso es correcto. */
+  /**
+   * Cerrar el mes. La API sólo cierra un período abierto (`PRECONDITION_FAILED`
+   * si no lo está); el motivo de un rechazo lo da ella, no esta pantalla.
+   */
   async cerrarPeriodo(): Promise<void> {
     const periodo = this.periodoActivo();
     if (periodo === null) return;
@@ -444,10 +453,10 @@ export class Cockpit {
           this.toasts.show({ type: 'success', message: `Período cerrado: ${periodo.name}` });
           this.recargar();
         },
-        error: () =>
+        error: (error: unknown) =>
           this.toasts.show({
             type: 'error',
-            message: 'No se cerró: quedan documentos sin postear en el período.',
+            message: describeApiFailure(error, `No se pudo cerrar el período ${periodo.name}. Intente de nuevo.`),
           }),
       });
   }
@@ -481,11 +490,11 @@ export class Cockpit {
           });
           this.recargar();
         },
-        error: () => {
+        error: (error: unknown) => {
           this.corriendo.set(null);
           this.toasts.show({
             type: 'error',
-            message: 'No se corrió la amortización. Revise que el período esté abierto.',
+            message: describeApiFailure(error, 'No se pudo correr la amortización. Intente de nuevo.'),
           });
         },
       });
@@ -515,11 +524,11 @@ export class Cockpit {
           });
           this.recargar();
         },
-        error: () => {
+        error: (error: unknown) => {
           this.corriendo.set(null);
           this.toasts.show({
             type: 'error',
-            message: 'No se corrió el devengo. Revise que el período esté abierto.',
+            message: describeApiFailure(error, 'No se pudo correr el devengo. Intente de nuevo.'),
           });
         },
       });
@@ -544,8 +553,14 @@ export class Cockpit {
           });
           this.recargar();
         },
-        error: () =>
-          this.toasts.show({ type: 'error', message: 'No se pudo compensar la partida.' }),
+        error: (error: unknown) =>
+          this.toasts.show({
+            type: 'error',
+            message: describeApiFailure(
+              error,
+              `No se pudo compensar la partida ${partida.documentNumber}. Intente de nuevo.`,
+            ),
+          }),
       });
   }
 
