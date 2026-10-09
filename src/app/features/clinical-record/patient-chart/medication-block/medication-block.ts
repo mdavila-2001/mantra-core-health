@@ -18,6 +18,7 @@ import {
   listaDeTextos,
   valorDeTexto,
 } from '../../../../core/data-access/terminology/terminology.types';
+import { describeApiFailure } from '../../../../core/http/api-failure';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
 import { loading, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
@@ -584,6 +585,23 @@ export class MedicationBlock implements DraftBlock {
    * lado se recuerda de dónde salió en vez de leer el texto.
    */
   private readonly falloAlPrescribir = signal(false);
+
+  /**
+   * La revisión de interacciones que **no se pudo hacer**, o `null`.
+   *
+   * El chequeo falla abierto (ver {@link sinInteraccionesOConfirmadas}), pero
+   * en silencio era indistinguible de «no hay interacciones». Este aviso es lo
+   * que los separa: dice qué medicamento quedó sin revisar, por qué —con el
+   * código de soporte— y que la revisión queda a cargo de quien prescribe.
+   *
+   * **No se borra al limpiar el formulario**: la receta recién creada es
+   * justamente la que hay que revisar antes de firmar. Se va cuando quien
+   * prescribe lo cierra o cuando el próximo chequeo sí responde.
+   */
+  protected readonly interaccionesSinRevisar = signal<{
+    readonly medicamento: string;
+    readonly causa: string;
+  } | null>(null);
 
   /** La cita elegida, o `null` por «sin cita asociada». */
   protected readonly citaElegida = signal<string | null>(null);
@@ -1218,6 +1236,7 @@ export class MedicationBlock implements DraftBlock {
     }
 
     let chequeo;
+    this.interaccionesSinRevisar.set(null);
     try {
       chequeo = await firstValueFrom(
         this.clinical.checkInteractions({
@@ -1228,7 +1247,13 @@ export class MedicationBlock implements DraftBlock {
           ...(encounterId === null ? {} : { encounterId }),
         }),
       );
-    } catch {
+    } catch (error: unknown) {
+      // Falla abierta, pero a la vista: la decisión de no bloquear se mantiene
+      // y quien prescribe sabe que la revisión no corrió.
+      this.interaccionesSinRevisar.set({
+        medicamento: this.medicamentoElegido()?.label ?? 'este medicamento',
+        causa: describeApiFailure(error, 'El servicio que revisa interacciones no respondió.'),
+      });
       return true;
     }
 
@@ -1245,6 +1270,10 @@ export class MedicationBlock implements DraftBlock {
         'El motor de decisión clínica encontró interacción entre este medicamento y la medicación activa de la persona. Revísela antes de seguir.',
       confirmLabel: 'Prescribir de todas formas',
     });
+  }
+
+  protected descartarAvisoDeInteracciones(): void {
+    this.interaccionesSinRevisar.set(null);
   }
 
   /** Vacía el formulario tras un alta. El siguiente medicamento arranca limpio. */

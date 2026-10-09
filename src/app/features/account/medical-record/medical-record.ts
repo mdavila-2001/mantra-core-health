@@ -24,6 +24,7 @@ import type { Booking } from '../../../core/data-access/scheduling/scheduling.ty
 import { TerminologyClient } from '../../../core/data-access/terminology/terminology.client';
 import type { ConceptLabels } from '../../../core/data-access/terminology/terminology.types';
 import { esCodigoDeAlergia } from '../../../shared/utils/alergias/alergias';
+import { describeApiFailure } from '../../../core/http/api-failure';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { empty, loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
@@ -267,6 +268,15 @@ export class MedicalRecord {
    */
   private readonly detalle = signal<ViewState<DetalleDeAtenciones> | null>(null);
 
+  /**
+   * Por qué no se pudieron leer las citas del titular, o `null`.
+   *
+   * La línea de cada atención se dibuja igual sin ellas —lo único que aportan
+   * es la reconsulta—, pero antes el fallo caía a `{ items: [] }` y una
+   * atención con reconsulta se leía como una sin ella. Ahora se dice.
+   */
+  protected readonly citasSinCargar = signal<string | null>(null);
+
   /** Lo que ya llegó. Sin nada pedido —o con la lectura fallada— va vacío. */
   private readonly detalleCargado = computed<DetalleDeAtenciones>(() => {
     const estado = this.detalle();
@@ -299,18 +309,29 @@ export class MedicalRecord {
     this.cargarDetalle(this.perfil);
   }
 
+  /** Vuelve a pedir el detalle de las atenciones, desde el aviso de lo que faltó. */
+  protected recargarDetalle(): void {
+    if (this.perfil === null) return;
+    this.cargarDetalle(this.perfil);
+  }
+
   private cargarDetalle(perfil: string): void {
     this.detalle.set(loading());
+    this.citasSinCargar.set(null);
 
     forkJoin({
       expediente: this.clinical.getChart(perfil, TOPE),
       ordenes: this.diagnostics.getOwnOrders(TOPE),
       // C8: las citas del titular, de donde sale la reconsulta de cada
       // atención. Si esta lectura falla la historia no se pierde: la línea se
-      // dibuja sin el hecho de la reconsulta, que es lo único que aporta.
-      citas: this.scheduling
-        .searchBookings({ patientProfileId: perfil, limit: TOPE })
-        .pipe(catchError(() => of({ items: [] as readonly Booking[] }))),
+      // dibuja sin el hecho de la reconsulta, que es lo único que aporta —y el
+      // aviso dice que falta, para que no se lea como «sin reconsulta»—.
+      citas: this.scheduling.searchBookings({ patientProfileId: perfil, limit: TOPE }).pipe(
+        catchError((error: unknown) => {
+          this.citasSinCargar.set(describeApiFailure(error, 'No pudimos traer sus citas.'));
+          return of({ items: [] as readonly Booking[] });
+        }),
+      ),
     })
       .pipe(
         switchMap(({ expediente, ordenes, citas }) =>
@@ -605,11 +626,23 @@ export class MedicalRecord {
     }
     this.armandoHistoria.set(true);
 
+    // Lo que no se pudo traer, para decirlo junto con la descarga: el documento
+    // se arma igual, pero un PDF sin las órdenes no puede anunciarse como la
+    // historia completa.
+    const faltantes: { readonly que: string; readonly error: unknown }[] = [];
     forkJoin({
-      ordenes: this.diagnostics.getOwnOrders().pipe(catchError(() => of({ items: [] as never[] }))),
-      resultados: this.diagnostics
-        .getOwnResults()
-        .pipe(catchError(() => of({ items: [] as never[] }))),
+      ordenes: this.diagnostics.getOwnOrders().pipe(
+        catchError((error: unknown) => {
+          faltantes.push({ que: 'las órdenes de estudios', error });
+          return of({ items: [] as never[] });
+        }),
+      ),
+      resultados: this.diagnostics.getOwnResults().pipe(
+        catchError((error: unknown) => {
+          faltantes.push({ que: 'los resultados de estudios', error });
+          return of({ items: [] as never[] });
+        }),
+      ),
     })
       .pipe(
         // C6: los estudios traen conceptos que el resumen no tenía. Sin esta
@@ -648,12 +681,21 @@ export class MedicalRecord {
             ),
             seccionesNuevasDeLaHistoria(this.diagnosticos(), this.atenciones()),
           );
-          this.toasts.success('Descargamos su historia completa.', 'Historia clínica');
+          const primerFaltante = faltantes[0];
+          if (primerFaltante === undefined) {
+            this.toasts.success('Descargamos su historia completa.', 'Historia clínica');
+            return;
+          }
+          this.toasts.warning(
+            `Descargamos su historia, pero sin ${faltantes.map((f) => f.que).join(' ni ')}. ` +
+              describeApiFailure(primerFaltante.error, 'No se pudieron traer.'),
+            'Historia clínica incompleta',
+          );
         },
-        error: () => {
+        error: (error: unknown) => {
           this.armandoHistoria.set(false);
           this.toasts.error(
-            'No pudimos armar el documento. Reintente en un momento.',
+            describeApiFailure(error, 'No pudimos armar el documento. Reintente en un momento.'),
             'Historia clínica',
           );
         },

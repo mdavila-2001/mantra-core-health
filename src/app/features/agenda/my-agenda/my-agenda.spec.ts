@@ -6,6 +6,7 @@ import { provideRouter, Router } from '@angular/router';
 
 import { AuthService } from '../../../core/auth/auth.service';
 import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
+import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
 import type { DialogConfig } from '../../../shared/components/molecules/dialog/dialog.types';
 import { APPOINTMENT_NEW_ROUTE } from '../agenda.routes';
 import { MyAgenda } from './my-agenda';
@@ -264,7 +265,10 @@ describe('MyAgenda', () => {
           r.url === '/visit-requests/inbox' ||
           r.url === '/pharma-labs/reference/concepts',
       )) {
-        req.flush({ items: [], count: 0 });
+        // La bandeja de visitas responde un ARREGLO, no una página: con
+        // `{ items: [] }` el cliente fallaba al mapearla, y mientras ese fallo
+        // se tragaba en silencio el fixture equivocado pasaba inadvertido.
+        req.flush(req.request.url === '/visit-requests/inbox' ? [] : { items: [], count: 0 });
       }
       fixture.detectChanges();
     }
@@ -289,6 +293,125 @@ describe('MyAgenda', () => {
       // No es la solapa del horario: ni sus pestañas ni su grilla.
       expect($('.mi-agenda__solapas')).toBeNull();
       expect($('app-schedule-grid')).toBeNull();
+    });
+
+    /**
+     * Un fallo de lectura no puede parecer un día libre.
+     *
+     * Antes cada `error` hacía `.set([])` y nada más: el día cuya lectura de
+     * citas había fallado se veía idéntico a uno sin pacientes. La lista sigue
+     * vacía —no hay nada que pintar—, pero la pantalla lo dice, con el código
+     * de soporte y la opción de pedir de nuevo.
+     */
+    describe('una lectura que falla no se ve como un día libre', () => {
+      const AVISO = '[data-testid="agenda-lecturas-fallidas"]';
+
+      /** Responde vacío todo, salvo las citas del día (limit 100), que fallan. */
+      function conCitasDelDiaCaidas(): void {
+        for (const req of http.match(
+          (r) =>
+            r.url === '/scheduling/slots' ||
+            r.url === '/scheduling/bookings' ||
+            r.url === '/scheduling/resources/res-1/exceptions' ||
+            r.url === '/visit-requests/inbox' ||
+            r.url === '/pharma-labs/reference/concepts',
+        )) {
+          if (
+            req.request.url === '/scheduling/bookings' &&
+            req.request.params.get('limit') === '100'
+          ) {
+            req.flush(
+              {
+                code: 'INTERNAL',
+                message: 'Error interno',
+                timestamp: '',
+                path: '',
+                correlationId: 'corr-dia-1',
+              },
+              { status: 500, statusText: 'Internal Server Error' },
+            );
+          } else {
+            req.flush(req.request.url === '/visit-requests/inbox' ? [] : { items: [], count: 0 });
+          }
+        }
+        fixture.detectChanges();
+      }
+
+      it('dice qué no se cargó, con el código de soporte, y sigue mostrando el día', () => {
+        crearCalendario();
+        conRecurso();
+        conPlantilla([{ dayOfWeek: 1, startTime: '09:00:00', endTime: '13:00:00' }]);
+        conCitasDelDiaCaidas();
+
+        const aviso = $(AVISO);
+        expect(aviso).not.toBeNull();
+        expect(aviso?.getAttribute('role')).toBe('alert');
+        expect(aviso?.textContent).toContain('Parte de su agenda no se pudo cargar');
+        expect(aviso?.textContent).toContain('un día sin citas aquí no significa que esté libre');
+        expect(aviso?.textContent).toContain(
+          'No se pudieron cargar las citas del día. (Código de soporte: corr-dia-1)',
+        );
+        // Lo que sí se leyó sigue a la vista.
+        expect($('app-day-view')).not.toBeNull();
+      });
+
+      it('«Volver a cargar» pide sólo lo que falló y el aviso se va cuando llega', () => {
+        crearCalendario();
+        conRecurso();
+        conPlantilla([{ dayOfWeek: 1, startTime: '09:00:00', endTime: '13:00:00' }]);
+        conCitasDelDiaCaidas();
+
+        ($('[data-testid="agenda-reintentar-lecturas"]') as HTMLButtonElement).click();
+        fixture.detectChanges();
+
+        // Sólo el día: ni el mes ni las visitas, que salieron bien.
+        const citas = http.match((r) => r.url === '/scheduling/bookings');
+        expect(citas.map((r) => r.request.params.get('limit'))).toEqual(['100']);
+        for (const req of http.match((r) => r.url === '/scheduling/slots')) {
+          req.flush({ items: [], count: 0 });
+        }
+        citas[0].flush({ items: [], count: 0 });
+        fixture.detectChanges();
+
+        expect($(AVISO)).toBeNull();
+      });
+
+      it('un día que de veras está vacío no muestra el aviso', () => {
+        abrir();
+
+        expect($(AVISO)).toBeNull();
+      });
+    });
+
+    /**
+     * Las escrituras del día (llegada, demora, cancelar) avisaban «No pudimos
+     * …» y descartaban el motivo y el código de soporte que manda la API.
+     */
+    it('el fallo de registrar la llegada dice el motivo de la API y el código de soporte', async () => {
+      abrir();
+      const errores: string[] = [];
+      TestBed.inject(ToastService).error = (mensaje: string) => {
+        errores.push(mensaje);
+        return 't-1';
+      };
+
+      await (
+        fixture.componentInstance as unknown as {
+          ejecutar(p: { bookingId: string; accion: 'llegó' }): Promise<void>;
+        }
+      ).ejecutar({ bookingId: 'bk-1', accion: 'llegó' });
+      http.expectOne('/scheduling/bookings/bk-1/check-in').flush(
+        {
+          code: 'CONFLICT',
+          message: 'La cita ya fue cancelada.',
+          timestamp: '',
+          path: '',
+          correlationId: 'corr-llegada-1',
+        },
+        { status: 409, statusText: 'Conflict' },
+      );
+
+      expect(errores).toEqual(['La cita ya fue cancelada. (Código de soporte: corr-llegada-1)']);
     });
 
     /**
@@ -618,7 +741,8 @@ describe('MyAgenda', () => {
           r.url === '/visit-requests/inbox' ||
           r.url === '/pharma-labs/reference/concepts',
       )) {
-        req.flush({ items: [], count: 0 });
+        // La bandeja de visitas responde un arreglo (ver `sinOcupacion`).
+        req.flush(req.request.url === '/visit-requests/inbox' ? [] : { items: [], count: 0 });
       }
       fixture.detectChanges();
     }

@@ -247,4 +247,95 @@ describe('ConsultasResumen', () => {
     expect(otras[0]?.label).toBe('Procedimiento');
     expect(otras[0]?.total).toBe(1);
   });
+
+  /* -- una sede que falla no desaparece en silencio ------------------------- */
+
+  /** Dos agendas propias, cada una en su sede. */
+  function responderDosSedes(): void {
+    const agenda = (id: string, sede: string) => ({
+      id,
+      name: 'Agenda',
+      resourceTypeConceptId: 'rt-1',
+      resourceRefType: 'health_practitioner_profiles',
+      resourceRefId: PERFIL,
+      practitionerName: 'Dra. Prueba',
+      practiceId: null,
+      timeZone: 'America/La_Paz',
+      capacity: 1,
+      stateConceptId: 'st-activo',
+      site: { id: `site-${id}`, name: sede },
+    });
+    http.expectOne((r) => r.url.endsWith('/scheduling/resources')).flush({
+      items: [agenda('r-1', 'Clínica'), agenda('r-2', 'Consultorio')],
+      count: 2,
+    });
+  }
+
+  function citasDe(resourceId: string) {
+    return http.expectOne(
+      (r) => r.url.endsWith('/scheduling/bookings') && r.params.get('resourceId') === resourceId,
+    );
+  }
+
+  it('si una sede falla, cuenta las demás y AVISA cuál faltó, con código de soporte', () => {
+    crear();
+    responderDosSedes();
+    citasDe('r-1').flush({
+      items: [wire({ id: 'b-1', desde: unLunesDeEsteMesA(9), estado: ESTADO_CONFIRMADA })],
+      count: 1,
+      limit: 500,
+      truncated: false,
+    });
+    citasDe('r-2').flush(
+      {
+        code: 'INTERNAL',
+        message: 'Error interno',
+        timestamp: '',
+        path: '',
+        correlationId: 'corr-resumen-2',
+      },
+      { status: 500, statusText: 'Server Error' },
+    );
+    responderCatalogoYActividades();
+
+    expect(estado().status).toBe('ready');
+    expect(resumenMes().total).toBe(1);
+    const aviso = (fixture.nativeElement as HTMLElement).querySelector(
+      '[data-testid="consultas-resumen-sedes-sin-cargar"]',
+    );
+    expect(aviso).not.toBeNull();
+    expect(aviso?.getAttribute('role')).toBe('alert');
+    expect(aviso?.textContent).toContain('Las cifras pueden estar incompletas.');
+    expect(aviso?.textContent).toContain(
+      'No se pudieron cargar las consultas de Consultorio. (Código de soporte: corr-resumen-2)',
+    );
+  });
+
+  it('si fallan todas las sedes, es el error del resumen y no «todavía no hay consultas»', () => {
+    crear();
+    responderRecursos();
+    http
+      .expectOne((r) => r.url.endsWith('/scheduling/bookings'))
+      .flush(null, { status: 500, statusText: 'Server Error' });
+    fixture.detectChanges();
+
+    expect(estado().status).not.toBe('empty');
+    expect(estado().status).not.toBe('ready');
+    expect((fixture.nativeElement as HTMLElement).textContent).not.toContain(
+      'Todavía no hay consultas este mes.',
+    );
+  });
+
+  it('con todas las sedes leídas no hay aviso de sede', () => {
+    crear();
+    responderRecursos();
+    responderCitas([{ id: 'b-1', desde: unLunesDeEsteMesA(9), estado: ESTADO_CONFIRMADA }]);
+    responderCatalogoYActividades();
+
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelector(
+        '[data-testid="consultas-resumen-sedes-sin-cargar"]',
+      ),
+    ).toBeNull();
+  });
 });

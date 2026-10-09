@@ -417,6 +417,83 @@ describe('PatientHome', () => {
     expect(texto()).toContain('Ver y descargar');
   });
 
+  /**
+   * El fallo de la lectura de citas dejaba `proximoTurno` en `null` y la banda
+   * decía «No tiene citas pedidas»: la respuesta contraria para quien tiene
+   * consulta mañana.
+   */
+  it('si fallan las citas, no dice «No tiene citas pedidas»: dice que no pudo traerlas', async () => {
+    await montar();
+    http.expectOne((r) => r.url === '/scheduling/bookings').flush(
+      { code: 'INTERNAL', message: 'Error interno', timestamp: '', path: '', correlationId: 'corr-citas-1' },
+      { status: 500, statusText: 'Server Error' },
+    );
+    http
+      .expectOne((r) => r.url === `/clinical/patients/${PERFIL}/summary`)
+      .flush(historiaVacia());
+    fixture.detectChanges();
+
+    const html = fixture.nativeElement as HTMLElement;
+    // Tampoco la bienvenida de «recién llega»: no se sabe si tiene citas.
+    expect(html.querySelector('[data-testid="mi-salud-primera-vez"]')).toBeNull();
+    const bloque = html.querySelector('[data-testid="mi-salud-proxima-cita"]');
+    expect(bloque?.getAttribute('data-estado')).toBe('error');
+    expect(bloque?.textContent).not.toContain('No tiene citas pedidas');
+    const aviso = html.querySelector('[data-testid="mi-salud-cita-error"]');
+    expect(aviso?.getAttribute('role')).toBe('alert');
+    expect(aviso?.textContent).toContain(
+      'No pudimos traer su próxima cita. (Código de soporte: corr-citas-1)',
+    );
+  });
+
+  it('si falla la historia, no dice «Todavía no le recetaron nada»', async () => {
+    await montar();
+    http
+      .expectOne((r) => r.url === '/scheduling/bookings')
+      .flush({ items: [], count: 0, limit: 20, truncated: false });
+    http.expectOne((r) => r.url === `/clinical/patients/${PERFIL}/summary`).flush(
+      { code: 'INTERNAL', message: 'Error interno', timestamp: '', path: '', correlationId: 'corr-hist-1' },
+      { status: 500, statusText: 'Server Error' },
+    );
+    fixture.detectChanges();
+
+    const html = fixture.nativeElement as HTMLElement;
+    expect(html.querySelector('[data-testid="mi-salud-primera-vez"]')).toBeNull();
+    expect(texto()).not.toContain('Todavía no le recetaron nada');
+    expect(texto()).not.toContain('Todavía no tiene atenciones registradas');
+    expect(html.querySelector('[data-testid="mi-salud-historia-error"]')?.textContent).toContain(
+      'Código de soporte: corr-hist-1',
+    );
+    // Las citas sí se leyeron: su vacío es cierto y se dice.
+    expect(
+      html.querySelector('[data-testid="mi-salud-proxima-cita"]')?.getAttribute('data-estado'),
+    ).toBe('empty');
+  });
+
+  it('si fallan las dos, el error del panel trae el código de soporte y un reintento que relee', async () => {
+    await montar();
+    http.expectOne((r) => r.url === '/scheduling/bookings').flush(
+      { code: 'INTERNAL', message: 'Error interno', timestamp: '', path: '', correlationId: 'corr-panel-1' },
+      { status: 500, statusText: 'Server Error' },
+    );
+    http
+      .expectOne((r) => r.url === `/clinical/patients/${PERFIL}/summary`)
+      .flush(null, { status: 503, statusText: 'Service Unavailable' });
+    fixture.detectChanges();
+
+    const html = fixture.nativeElement as HTMLElement;
+    expect(html.querySelector('[data-testid="mi-salud-error"]')?.textContent).toContain(
+      'No pudimos cargar su información en este momento. (Código de soporte: corr-panel-1)',
+    );
+
+    (html.querySelector('[data-testid="mi-salud-reintentar"]') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    responder([], null);
+
+    expect(html.querySelector('[data-testid="mi-salud-error"]')).toBeNull();
+    expect(html.querySelector('[data-testid="mi-salud-primera-vez"]')).not.toBeNull();
+  });
+
   it('sin ficha de paciente no pide citas ni historia', async () => {
     await montar({ pid: undefined });
 

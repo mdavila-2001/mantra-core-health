@@ -11,6 +11,36 @@
     </span>
   </h2>
 
+  <!-- Una sede que no respondió no tumba el resumen, pero sus consultas faltan
+       en las cifras: el aviso lo dice en vez de dejar un total incompleto. -->
+  @if (sedesSinCargar().length > 0) {
+    <app-alert
+      tone="error"
+      title="Parte de sus consultas no se pudo cargar"
+      class="consultas-resumen__aviso"
+      data-testid="consultas-resumen-sedes-sin-cargar"
+    >
+      Las cifras pueden estar incompletas.
+      <ul class="consultas-resumen__sedes-sin-cargar">
+        @for (aviso of sedesSinCargar(); track aviso) {
+          <li>{{ aviso }}</li>
+        }
+      </ul>
+      <div alert-actions>
+        <button
+          app-button
+          variant="secondary"
+          size="sm"
+          type="button"
+          data-testid="consultas-resumen-reintentar-sedes"
+          (clicked)="reintentar()"
+        >
+          Volver a cargar
+        </button>
+      </div>
+    </app-alert>
+  }
+
   <app-view-state-host [state]="estado()" (retry)="reintentar()">
     <div vsh-skeleton class="consultas-resumen__skeleton"></div>
 
