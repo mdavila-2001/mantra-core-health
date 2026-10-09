@@ -14,6 +14,13 @@ import type { ChartNote, MedicalNoteEntry } from '../clinical/clinical.types';
     escribe las filas y, si hay texto libre, lo manda en `subjectiveText`.
    ========================================================================== */
 
+/**
+ * Las claves de la nota que `CreateNoteDto`/`AddVersionDto` no declaran
+ * (P39): la maqueta las guarda, la API real todavía no. Ver
+ * `withSimulatorExtensions()`.
+ */
+export const CHART_NOTE_SIMULATOR_EXTENSIONS: readonly string[] = ['entries'];
+
 /** Lo que se manda para abrir una nota nueva. */
 export interface CreateClinicalNoteInput {
   /** De qué paciente es la historia. */

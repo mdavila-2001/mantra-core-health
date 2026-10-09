@@ -5,6 +5,7 @@ import { map, type Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { API_BASE_URL, apiUrl } from '../api';
 import { sinNulos, type ConNulos } from '../wire';
+import { simulatorOnly } from '../simulator-only';
 import type {
   AccountActivation,
   ActivationResult,
@@ -698,7 +699,13 @@ export class IamClient {
     if (query.cursor !== undefined) filters['cursor'] = query.cursor;
     if (query.limit !== undefined) filters['limit'] = query.limit;
 
-    return this.http.post<RespuestaPaginaUsuarios>(this.url('/iam/users/search'), filters).pipe(
+    // Sólo simulador: `POST /iam/users/search` vive en una rama de la API que
+    // no llegó a dev (informe B, §2). Contra la API real el error dice qué no
+    // está disponible en vez de un 404 genérico.
+    const url = this.url('/iam/users/search');
+    return simulatorOnly('Buscar personas registradas', url, () =>
+      this.http.post<RespuestaPaginaUsuarios>(url, filters),
+    ).pipe(
       map((body) => ({
         ...body,
         items: body.items.map(toUserListItem),

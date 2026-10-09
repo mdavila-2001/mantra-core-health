@@ -22,6 +22,9 @@ export interface NewCarePlanActivity {
   readonly detailText?: string;
 }
 
+/** Claves de {@link NewCarePlan} que `CreateCarePlanDto` no declara: sólo van a la maqueta. */
+export const CARE_PLAN_SIMULATOR_EXTENSIONS: readonly string[] = ['reasonText'];
+
 /**
  * Lo que hace falta para abrir un plan de cuidados (`POST /charts/care-plans`).
  *
@@ -45,7 +48,8 @@ export interface NewCarePlan {
    *
    * **Todavía no existe en la API real**: el DTO de `POST /charts/care-plans`
    * no lo declara y valida con `forbidNonWhitelisted`. Por ahora vive sólo en
-   * la maqueta (`mock/handlers/clinical.handlers.ts`).
+   * la maqueta; el cliente lo quita del cuerpo que va a la API real
+   * ({@link CARE_PLAN_SIMULATOR_EXTENSIONS}).
    */
   readonly reasonText?: string;
   /** La consulta en la que se acordó, si nace dentro de una. */

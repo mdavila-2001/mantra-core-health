@@ -407,6 +407,9 @@ export interface BranchList {
 /** Tipos de sede que acepta el alta. */
 export type BranchTypeCode = 'CLINIC' | 'OFFICE';
 
+/** Claves de {@link NewBranch} que `CreateBranchDto` no declara (P54): sólo van a la maqueta. */
+export const BRANCH_SIMULATOR_EXTENSIONS: readonly string[] = ['description', 'locationUrl'];
+
 /**
  * Alta de una sucursal (`POST /tenants/{id}/branches`, UC-04-04).
  *

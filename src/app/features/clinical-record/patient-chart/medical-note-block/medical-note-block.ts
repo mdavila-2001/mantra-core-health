@@ -391,12 +391,14 @@ export class MedicalNoteBlock implements DraftBlock {
   }
 
   protected firmar(nota: NotaVisible): void {
-    if (nota.versionId === null || this.firmando() !== null) {
+    // `SignVersionDto` exige el perfil de quien firma (informe B, C5).
+    const firmante = this.auth.practitionerProfileId();
+    if (nota.versionId === null || this.firmando() !== null || firmante === null) {
       return;
     }
     this.firmando.set(nota.id);
     this.resultado.set(ready(null));
-    this.notes.signVersion(nota.id, nota.versionId).subscribe({
+    this.notes.signVersion(nota.id, nota.versionId, firmante).subscribe({
       next: () => {
         this.firmando.set(null);
         this.toasts.success(`${nota.rotulo} quedó firmada.`);

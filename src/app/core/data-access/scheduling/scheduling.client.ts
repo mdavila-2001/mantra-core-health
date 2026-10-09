@@ -71,6 +71,8 @@ import type {
   ServiceOffering,
   ServiceOfferingChanges,
 } from './scheduling.types';
+import { SCHEDULE_TEMPLATE_SIMULATOR_EXTENSIONS } from './scheduling.types';
+import { withSimulatorExtensions } from '../simulator-only';
 
 /**
  * Cliente de `scheduling` (M41): la lectura de la agenda y el ciclo de la
@@ -290,7 +292,7 @@ export class SchedulingClient {
   ): Observable<ScheduleTemplateCreated> {
     return this.http.post<ScheduleTemplateCreated>(
       this.url(`/scheduling/resources/${encodeURIComponent(resourceId)}/templates`),
-      {
+      withSimulatorExtensions({
         name: template.name,
         rules: template.rules.map((rule) => ({
           dayOfWeek: rule.dayOfWeek,
@@ -313,7 +315,7 @@ export class SchedulingClient {
         ...(template.validFrom === undefined ? {} : { validFrom: template.validFrom }),
         ...(template.validTo === undefined ? {} : { validTo: template.validTo }),
         ...(template.flexibleHours === true ? { flexibleHours: true } : {}),
-      },
+      }, SCHEDULE_TEMPLATE_SIMULATOR_EXTENSIONS),
     );
   }
 
