@@ -1,7 +1,4 @@
-/* Artículo enciclopédico de un término. Mobile-first: el índice es una fila
-   desplazable arriba y pasa a columna fija desde escritorio. Sólo
-   distribución y lectura; los colores son los tokens del sistema (claro y
-   oscuro salen solos). */
+/* Artículo enciclopédico (F9). Mobile-first; colores = tokens del sistema. */
 
 :host {
   display: block;
