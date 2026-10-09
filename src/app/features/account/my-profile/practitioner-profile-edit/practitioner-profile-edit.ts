@@ -42,6 +42,7 @@ import type {
   PractitionerLanguage,
 } from '../../../../core/data-access/profiles/profiles.types';
 import { INSURANCE_BILLING_FREQUENCY_OPTIONS } from '../../../../core/profesion/insurance-billing-frequency';
+import { describeApiFailure, fieldErrorsOf } from '../../../../core/http/api-failure';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
 import { NavigationService } from '../../../../core/navigation/navigation.service';
 import { loading, ready } from '../../../../core/view-state/view-state';
@@ -225,6 +226,106 @@ const BLOQUE_DE_RECURSO: Readonly<Record<RecursoEditable, string>> = {
   especialidad: 'Especialidades',
   matricula: 'Matrículas',
 };
+
+/**
+ * En qué pestaña del editor se ve cada campo del `PATCH` del perfil que la
+ * plantilla ancla con `errorDelServidor`.
+ *
+ * Regla 6 del criterio humano: el error se dice en el paso donde se comete,
+ * nombrando la sección visible. Con siete pestañas, «revise los campos
+ * marcados» no alcanza si el campo está en una pestaña cerrada: el aviso la
+ * nombra y la pantalla la abre. Un campo que no figura acá no tiene dónde
+ * pintarse, así que su mensaje va entero en el aviso.
+ */
+const PESTANA_DEL_CAMPO: Readonly<Record<string, number>> = {
+  name: PESTANA_EDITOR.personales,
+  middleName: PESTANA_EDITOR.personales,
+  lastName: PESTANA_EDITOR.personales,
+  motherLastName: PESTANA_EDITOR.personales,
+  birthDate: PESTANA_EDITOR.personales,
+  professionalTitle: PESTANA_EDITOR.personales,
+  professionalBio: PESTANA_EDITOR.personales,
+  homeAddressLines: PESTANA_EDITOR.contacto,
+  workAddressLines: PESTANA_EDITOR.contacto,
+  mobilePhone: PESTANA_EDITOR.contacto,
+  personalEmail: PESTANA_EDITOR.contacto,
+  workEmail: PESTANA_EDITOR.contacto,
+  taxId: PESTANA_EDITOR.facturacion,
+  taxHolderName: PESTANA_EDITOR.facturacion,
+  languages: PESTANA_EDITOR.credenciales,
+};
+
+/**
+ * Los campos que cada diálogo ancla debajo de su control. En un diálogo la
+ * sección visible es el diálogo mismo, así que no hace falta nombrarla.
+ */
+const CAMPOS_DEL_TITULO = [
+  'credentialTypeConceptId',
+  'number',
+  'issuingInstitutionText',
+  'issuingCityText',
+  'issueDate',
+  'fileId',
+] as const;
+const CAMPOS_DE_LA_MATRICULA = ['licenseNumber', 'regulatoryAuthority', 'validFrom', 'fileId'] as const;
+const CAMPOS_DE_LA_ESPECIALIDAD = ['specialtyConceptId'] as const;
+
+/** Qué campos del contrato tiene a la vista cada diálogo de corrección. */
+const CAMPOS_DE_RECURSO: Readonly<Record<RecursoEditable, readonly string[]>> = {
+  formacion: CAMPOS_DEL_TITULO,
+  especialidad: CAMPOS_DE_LA_ESPECIALIDAD,
+  matricula: CAMPOS_DE_LA_MATRICULA,
+};
+
+/** Dónde se pintan los rechazos de un envío: en las pestañas o en un diálogo. */
+type AnclajeDeRechazos =
+  | { readonly en: 'pestanas' }
+  | { readonly en: 'dialogo'; readonly campos: readonly string[] };
+
+/** El título del aviso y qué decir si la API no explicó el motivo. */
+interface AvisoDeRechazo {
+  readonly bloque: string;
+  readonly fallback: string;
+}
+
+const AVISO_DEL_PERFIL: AvisoDeRechazo = {
+  bloque: 'Perfil',
+  fallback: 'No se pudo guardar el cambio. Intente de nuevo.',
+};
+
+/**
+ * El rechazo leído por campo y lo que no nombra ninguno.
+ *
+ * `fieldErrorsOf` primero: es la forma estructurada (`details.fields`) con la
+ * ruta exacta. La forma vieja (`details.violations`, el campo deducido del
+ * mensaje) queda de respaldo vía `errorToViewState`, para los endpoints que
+ * todavía la emitan — es un solo lector con dos formatos, no dos anclajes.
+ */
+function leerRechazo(error: unknown): {
+  readonly porCampo: ReadonlyMap<string, string>;
+  readonly sinCampo: readonly string[];
+} {
+  const estructurado = Object.entries(fieldErrorsOf(error));
+  if (estructurado.length > 0) {
+    return { porCampo: new Map(estructurado), sinCampo: [] };
+  }
+  const estado = errorToViewState<unknown>(error);
+  const problemas = estado.status === 'validation' ? estado.issues : [];
+  const porCampo = new Map<string, string>();
+  const sinCampo: string[] = [];
+  for (const problema of problemas) {
+    if (problema.field === undefined) {
+      sinCampo.push(problema.message);
+    } else if (!porCampo.has(problema.field)) {
+      porCampo.set(problema.field, problema.message);
+    }
+  }
+  return { porCampo, sinCampo };
+}
+
+/** «a», «a y b», «a, b y c». */
+const enumerar = (partes: readonly string[]): string =>
+  new Intl.ListFormat('es', { type: 'conjunction' }).format(partes);
 
 /** Lo que dice la columna «Estado» mientras el concepto no tiene etiqueta. */
 const PENDIENTE_DE_VERIFICACION = 'Pendiente de verificación';
@@ -2025,28 +2126,61 @@ export class PractitionerProfileEdit {
    * Reparte el rechazo entre los campos que nombra, y avisa una sola vez.
    *
    * Lo que no se puede anclar a un campo —un conflicto, un 500, un problema de
-   * red— sigue saliendo por el aviso general, que es donde se puede leer sin
-   * tener que buscar en siete pestañas. Y se avisa **igual** aunque el detalle
-   * sí tenga campo, porque el campo puede estar en una pestaña cerrada: sin el
-   * aviso, guardar parecería no haber hecho nada.
+   * red— sale por el aviso general con el motivo de la API y el código de
+   * soporte (`describeApiFailure`). Y se avisa **igual** aunque el detalle sí
+   * tenga campo, nombrando la pestaña donde está y abriéndola si estaba
+   * cerrada: sin eso, guardar parecería no haber hecho nada.
+   *
+   * Es el único anclaje de la pantalla: el perfil, los idiomas y los diálogos
+   * de título, matrícula y especialidad pasan todos por acá.
+   *
+   * @param aviso - El bloque del aviso y qué no se pudo hacer.
+   * @param anclaje - Dónde se pintan los campos: en las pestañas o en un diálogo.
    */
-  private anclarErroresDelServidor(error: unknown): void {
-    const estado = errorToViewState<unknown>(error);
-    const problemas = estado.status === 'validation' ? estado.issues : [];
-    const porCampo = new Map<string, string>();
-    for (const problema of problemas) {
-      if (problema.field !== undefined && !porCampo.has(problema.field)) {
-        porCampo.set(problema.field, problema.message);
-      }
-    }
+  private anclarErroresDelServidor(
+    error: unknown,
+    aviso: AvisoDeRechazo = AVISO_DEL_PERFIL,
+    anclaje: AnclajeDeRechazos = { en: 'pestanas' },
+  ): void {
+    const { porCampo, sinCampo } = leerRechazo(error);
     this.erroresDelServidor.set(porCampo);
 
-    if (porCampo.size > 0) {
-      this.toasts.error('Revise los campos marcados y vuelva a guardar.', 'Perfil');
+    const seVe = (campo: string) =>
+      anclaje.en === 'pestanas' ? campo in PESTANA_DEL_CAMPO : anclaje.campos.includes(campo);
+    const anclados = [...porCampo.keys()].filter(seVe);
+    // Lo que el servidor rechazó y la pantalla no tiene dónde pintar va en el
+    // aviso, con su mensaje: «revise los campos marcados» sin campo marcado
+    // dejaría a la persona buscando algo que no existe.
+    const sinLugar = [...porCampo].filter(([campo]) => !seVe(campo)).map(([, mensaje]) => mensaje);
+
+    if (anclados.length > 0) {
+      const donde = anclaje.en === 'pestanas' ? this.abrirPestanaDelRechazo(anclados) : '';
+      this.toasts.error(
+        [`Revise los campos marcados${donde} y vuelva a guardar.`, ...sinLugar].join(' '),
+        aviso.bloque,
+      );
       return;
     }
-    const sueltos = problemas.map((problema) => problema.message).join(' ');
-    this.toasts.error(sueltos || 'No se pudo guardar el cambio. Pruebe de nuevo.', 'Perfil');
+    if (sinLugar.length > 0) {
+      this.toasts.error(sinLugar.join(' '), aviso.bloque);
+      return;
+    }
+    this.toasts.error(describeApiFailure(error, sinCampo.join(' ') || aviso.fallback), aviso.bloque);
+  }
+
+  /**
+   * Nombra las pestañas de los campos rechazados y, si la abierta no tiene
+   * ninguno, abre la del primero — lo mismo que ya hace la validación local
+   * del correo y el teléfono con «Contacto».
+   *
+   * @returns « en «Contacto»», listo para ir dentro del aviso.
+   */
+  private abrirPestanaDelRechazo(campos: readonly string[]): string {
+    const pestanas = [...new Set(campos.map((campo) => PESTANA_DEL_CAMPO[campo]))].sort((a, b) => a - b);
+    if (!pestanas.includes(this.pestana())) {
+      this.pestana.set(pestanas[0]);
+    }
+    return ` en ${enumerar(pestanas.map((indice) => `«${PESTANAS_DEL_EDITOR_MEDICO[indice]}»`))}`;
   }
 
   /**
@@ -2088,6 +2222,7 @@ export class PractitionerProfileEdit {
     }
 
     const respaldo = this.tituloDeRespaldo();
+    this.erroresDelServidor.set(new Map());
     this.guardandoEspecialidad.set(true);
     forkJoin(
       elegidas.map((especialidad) =>
@@ -2112,13 +2247,19 @@ export class PractitionerProfileEdit {
         );
         this.cargar();
       },
-      error: () => {
+      error: (error: unknown) => {
         this.guardandoEspecialidad.set(false);
-        this.toasts.error(
-          varias
-            ? 'No se pudieron agregar todas las especialidades. Revise cuáles quedaron y pruebe de nuevo.'
-            : 'No se pudo agregar la especialidad. Pruebe de nuevo.',
-          'Especialidades',
+        // Sin anclaje por campo: con varias en un solo envío, el rechazo de
+        // `specialtyConceptId` no dice de cuál de los selectores es.
+        this.anclarErroresDelServidor(
+          error,
+          {
+            bloque: 'Especialidades',
+            fallback: varias
+              ? 'No se pudieron agregar todas las especialidades. Revise cuáles quedaron e intente de nuevo.'
+              : 'No se pudo agregar la especialidad. Intente de nuevo.',
+          },
+          { en: 'dialogo', campos: [] },
         );
         this.cargar();
       },
@@ -2158,6 +2299,7 @@ export class PractitionerProfileEdit {
       return;
     }
 
+    this.erroresDelServidor.set(new Map());
     this.guardandoMatricula.set(true);
     const archivo = this.archivoDeMatricula()[0];
     if (archivo === undefined) {
@@ -2169,10 +2311,13 @@ export class PractitionerProfileEdit {
     // par con el que sube su diploma el título de acá abajo.
     this.files.upload(archivo, 'DOCUMENT', 'PHI').subscribe({
       next: ({ id }) => this.crearMatricula(profileId, numero, id),
-      error: () => {
+      error: (error: unknown) => {
         this.guardandoMatricula.set(false);
         this.toasts.error(
-          'No pudimos subir el respaldo, así que no se agregó la matrícula. Pruebe de nuevo.',
+          describeApiFailure(
+            error,
+            'No pudimos subir el respaldo, así que no se agregó la matrícula. Intente de nuevo.',
+          ),
           'Matrículas',
         );
       },
@@ -2201,9 +2346,13 @@ export class PractitionerProfileEdit {
           );
           this.cargar();
         },
-        error: () => {
+        error: (error: unknown) => {
           this.guardandoMatricula.set(false);
-          this.toasts.error('No se pudo agregar la matrícula. Pruebe de nuevo.', 'Matrículas');
+          this.anclarErroresDelServidor(
+            error,
+            { bloque: 'Matrículas', fallback: 'No se pudo agregar la matrícula. Intente de nuevo.' },
+            { en: 'dialogo', campos: CAMPOS_DE_LA_MATRICULA },
+          );
         },
       });
   }
@@ -2245,6 +2394,7 @@ export class PractitionerProfileEdit {
       return;
     }
 
+    this.erroresDelServidor.set(new Map());
     this.guardandoCredencial.set(true);
     const archivo = this.archivoDeCredencial()[0];
     if (archivo === undefined) {
@@ -2256,10 +2406,13 @@ export class PractitionerProfileEdit {
     // par con el que sube su evidencia la verificación de identidad.
     this.files.upload(archivo, 'DOCUMENT', 'PHI').subscribe({
       next: ({ id }) => this.crearCredencial(tipo, numero, id),
-      error: () => {
+      error: (error: unknown) => {
         this.guardandoCredencial.set(false);
         this.toasts.error(
-          'No pudimos subir el diploma, así que no se agregó el título. Pruebe de nuevo.',
+          describeApiFailure(
+            error,
+            'No pudimos subir el diploma, así que no se agregó el título. Intente de nuevo.',
+          ),
           'Formación',
         );
       },
@@ -2288,9 +2441,13 @@ export class PractitionerProfileEdit {
           this.toasts.success('Se agregó el título. Queda pendiente de verificación.', 'Formación');
           this.cargar();
         },
-        error: () => {
+        error: (error: unknown) => {
           this.guardandoCredencial.set(false);
-          this.toasts.error('No se pudo agregar el título. Pruebe de nuevo.', 'Formación');
+          this.anclarErroresDelServidor(
+            error,
+            { bloque: 'Formación', fallback: 'No se pudo agregar el título. Intente de nuevo.' },
+            { en: 'dialogo', campos: CAMPOS_DEL_TITULO },
+          );
         },
       });
   }
@@ -2307,6 +2464,7 @@ export class PractitionerProfileEdit {
   /** El modal ya se cerró: se desmonta y el próximo alta empieza en blanco. */
   protected cerrarAltaDeTitulo(): void {
     this.altaDeTituloAbierta.set(false);
+    this.erroresDelServidor.set(new Map());
     this.nuevoTipoCredencial.set(null);
     this.nuevoNumeroCredencial.set('');
     this.institucionElegida.set(null);
@@ -2357,6 +2515,7 @@ export class PractitionerProfileEdit {
   /** El modal ya se cerró: se desmonta y el próximo alta empieza en blanco. */
   protected cerrarAltaDeMatricula(): void {
     this.altaDeMatriculaAbierta.set(false);
+    this.erroresDelServidor.set(new Map());
     this.nuevoNumeroDeMatricula.set('');
     this.nuevaAutoridad.set('');
     this.nuevaFechaInscripcion.set(null);
@@ -2852,6 +3011,8 @@ export class PractitionerProfileEdit {
   protected cerrarEdicion(): void {
     this.edicion.set(null);
     this.archivoDeEdicion.set([]);
+    // Los rechazos eran de lo que estaba en el diálogo: cerrado, ya no señalan nada.
+    this.erroresDelServidor.set(new Map());
   }
 
   /**
@@ -2876,6 +3037,7 @@ export class PractitionerProfileEdit {
     if (!(await this.dialogs.confirmarCambios())) {
       return;
     }
+    this.erroresDelServidor.set(new Map());
     this.guardandoEdicion.set(true);
 
     const archivo = this.archivoDeEdicion()[0];
@@ -2885,10 +3047,13 @@ export class PractitionerProfileEdit {
     }
     this.files.upload(archivo, 'DOCUMENT', 'PHI').subscribe({
       next: ({ id }) => this.enviarEdicion(enCurso, id),
-      error: () => {
+      error: (error: unknown) => {
         this.guardandoEdicion.set(false);
         this.toasts.error(
-          'No pudimos subir el archivo, así que no se guardaron los cambios. Pruebe de nuevo.',
+          describeApiFailure(
+            error,
+            'No pudimos subir el archivo, así que no se guardaron los cambios. Intente de nuevo.',
+          ),
           BLOQUE_DE_RECURSO[enCurso.recurso],
         );
       },
@@ -2907,9 +3072,13 @@ export class PractitionerProfileEdit {
         this.toasts.success('Se guardaron los cambios.', bloque);
         this.cargar();
       },
-      error: () => {
+      error: (error: unknown) => {
         this.guardandoEdicion.set(false);
-        this.toasts.error('No se pudieron guardar los cambios. Pruebe de nuevo.', bloque);
+        this.anclarErroresDelServidor(
+          error,
+          { bloque, fallback: 'No se pudieron guardar los cambios. Intente de nuevo.' },
+          { en: 'dialogo', campos: CAMPOS_DE_RECURSO[enCurso.recurso] },
+        );
       },
     });
   }

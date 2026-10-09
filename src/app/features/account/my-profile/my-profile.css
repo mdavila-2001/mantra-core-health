@@ -136,3 +136,8 @@
   padding-block-start: var(--sp-5);
   border-block-start: 1px solid var(--border-default);
 }
+
+/* El aviso de ficha incompleta va arriba de los datos, separado de ellos. */
+.mi-perfil__aviso {
+  margin-block-end: var(--sp-4);
+}
