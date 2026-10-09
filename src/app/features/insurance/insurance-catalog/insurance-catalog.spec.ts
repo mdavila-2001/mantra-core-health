@@ -3,6 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 
+import { environment } from '../../../../environments/environment';
 import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
 import type {
   CarrierDetail,
@@ -253,17 +254,35 @@ describe('InsuranceCatalog', () => {
   });
 
   it('elimina el producto seguro sólo después de confirmar, y recarga la ficha', async () => {
+    // `DELETE /insurance-plans/:id` sólo existe en la maqueta (informe B):
+    // contra ella sale la petición.
+    const originalMockBackend = environment.mockBackend;
+    Object.assign(environment, { mockBackend: true });
+    try {
+      mountAsAdmin();
+      confirm.mockResolvedValue(true);
+      const plan = internal<() => CarrierDetail | null>('carrier')()!.products[0]!.plans[0]!;
+
+      await internal<(plan: unknown) => Promise<void>>('deletePlan')(plan);
+
+      expect(confirm).toHaveBeenCalledWith(expect.objectContaining({ destructive: true }));
+      const request = http.expectOne('/insurance-plans/pl-1');
+      expect(request.request.method).toBe('DELETE');
+      request.flush(null);
+      http.expectOne(`/insurance-carriers/${CARRIER_ID}`).flush({ ...FICHA, canAdminister: true });
+    } finally {
+      Object.assign(environment, { mockBackend: originalMockBackend });
+    }
+  });
+
+  it('contra la API real no manda la baja: la ruta todavía no existe', async () => {
     mountAsAdmin();
     confirm.mockResolvedValue(true);
     const plan = internal<() => CarrierDetail | null>('carrier')()!.products[0]!.plans[0]!;
 
     await internal<(plan: unknown) => Promise<void>>('deletePlan')(plan);
 
-    expect(confirm).toHaveBeenCalledWith(expect.objectContaining({ destructive: true }));
-    const request = http.expectOne('/insurance-plans/pl-1');
-    expect(request.request.method).toBe('DELETE');
-    request.flush(null);
-    http.expectOne(`/insurance-carriers/${CARRIER_ID}`).flush({ ...FICHA, canAdminister: true });
+    http.expectNone('/insurance-plans/pl-1');
   });
 
   it('no elimina nada si se cancela la confirmación', async () => {

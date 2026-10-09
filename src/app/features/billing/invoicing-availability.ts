@@ -9,7 +9,7 @@ import { forcedRealApi } from '../../core/mock/api-mode';
  * Tres condiciones, todas necesarias (FACT-SIAT-MOCK):
  * - `billingSiatDemo`: la demo está encendida en este despliegue;
  * - `mockBackend`: hay backend simulado que responda `/billing/simulated/*`;
- * - `!apiRealForzada()`: nadie desvió las peticiones a la API real desde el
+ * - `!forcedRealApi()`: nadie desvió las peticiones a la API real desde el
  *   stock de componentes.
  *
  * Si cualquiera falla, la pantalla dice que la facturación no está conectada

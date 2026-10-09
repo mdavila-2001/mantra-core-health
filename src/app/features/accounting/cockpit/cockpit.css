@@ -830,3 +830,22 @@ td.tabla__sub {
     transition: none;
   }
 }
+
+/* Cuentas que asientan una compensación o una corrida (informe B, C9–C10). */
+.cuentas {
+  display: grid;
+  gap: var(--sp-3);
+  margin-block: var(--sp-3);
+}
+
+@media (min-width: 48rem) {
+  .cuentas {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.cuentas__aviso {
+  margin: 0 0 var(--sp-3);
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}

@@ -29,7 +29,10 @@ import type {
   PharmacySummary,
   PharmacyStatusResult,
 } from './pharmacy.types';
-import { PHARMACY_PRODUCT_SIMULATOR_EXTENSIONS, pharmacyProductExtensionsLabel } from './pharmacy.types';
+import {
+  PHARMACY_PRODUCT_SIMULATOR_EXTENSIONS,
+  pharmacyProductExtensionsLabel,
+} from './pharmacy.types';
 import {
   droppedSimulatorExtensions,
   simulatorOnly,
@@ -208,9 +211,7 @@ export class PharmacyClient {
   availability(query: AvailabilityQuery): Observable<AvailabilityResult> {
     let params = new HttpParams().set('products', query.productIds.join(','));
     if (query.origin !== undefined) {
-      params = params
-        .set('lat', String(query.origin.lat))
-        .set('lng', String(query.origin.lng));
+      params = params.set('lat', String(query.origin.lat)).set('lng', String(query.origin.lng));
     }
     if (query.limit !== undefined) {
       params = params.set('limit', String(query.limit));
@@ -262,7 +263,10 @@ export class PharmacyClient {
     const unsaved = droppedSimulatorExtensions(changes, PHARMACY_PRODUCT_SIMULATOR_EXTENSIONS);
     if (unsaved.length > 0 && Object.keys(body).length === 0) {
       return throwError(() =>
-        unavailableInApiError(`Cambiar ${pharmacyProductExtensionsLabel(unsaved)} de un producto`, url),
+        unavailableInApiError(
+          `Cambiar ${pharmacyProductExtensionsLabel(unsaved)} de un producto`,
+          url,
+        ),
       );
     }
     return this.http.patch<PharmacyProduct>(url, body);
@@ -288,7 +292,10 @@ export class PharmacyClient {
 
   /** `POST /pharmacies/:id/categories` — crea una categoría. 409 si el nombre ya existe. */
   createCategory(pharmacyId: string, name: string): Observable<PharmacyCategory> {
-    return this.http.post<PharmacyCategory>(this.categoriesUrl(pharmacyId), { name });
+    const url = this.categoriesUrl(pharmacyId);
+    return simulatorOnly('Crear una categoría de la farmacia', url, () =>
+      this.http.post<PharmacyCategory>(url, { name }),
+    );
   }
 
   /** `PATCH /pharmacies/:id/categories/:categoryId` — renombra; los productos siguen. */
@@ -297,16 +304,17 @@ export class PharmacyClient {
     categoryId: string,
     name: string,
   ): Observable<PharmacyCategory> {
-    return this.http.patch<PharmacyCategory>(
-      `${this.categoriesUrl(pharmacyId)}/${encodeURIComponent(categoryId)}`,
-      { name },
+    const url = `${this.categoriesUrl(pharmacyId)}/${encodeURIComponent(categoryId)}`;
+    return simulatorOnly('Renombrar una categoría de la farmacia', url, () =>
+      this.http.patch<PharmacyCategory>(url, { name }),
     );
   }
 
   /** `DELETE /pharmacies/:id/categories/:categoryId` — 409 si tiene productos. */
   deleteCategory(pharmacyId: string, categoryId: string): Observable<PharmacyStatusResult> {
-    return this.http.delete<PharmacyStatusResult>(
-      `${this.categoriesUrl(pharmacyId)}/${encodeURIComponent(categoryId)}`,
+    const url = `${this.categoriesUrl(pharmacyId)}/${encodeURIComponent(categoryId)}`;
+    return simulatorOnly('Eliminar una categoría de la farmacia', url, () =>
+      this.http.delete<PharmacyStatusResult>(url),
     );
   }
 
@@ -318,9 +326,9 @@ export class PharmacyClient {
     pharmacyId: string,
     lines: readonly PharmacyInventoryLine[],
   ): Observable<{ readonly updated: number }> {
-    return this.http.patch<{ readonly updated: number }>(
-      this.url(`/pharmacies/${encodeURIComponent(pharmacyId)}/inventory`),
-      { lines },
+    const url = this.url(`/pharmacies/${encodeURIComponent(pharmacyId)}/inventory`);
+    return simulatorOnly('Guardar las existencias de la farmacia', url, () =>
+      this.http.patch<{ readonly updated: number }>(url, { lines }),
     );
   }
 

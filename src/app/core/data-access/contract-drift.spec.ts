@@ -3,7 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 import { firstValueFrom } from 'rxjs';
 
-import { apiRealForzada } from '../mock/modo-api';
+import { forcedRealApi } from '../mock/api-mode';
 import { contractViolations } from '../mock/contract/contract-validator';
 import { ChartNotesClient } from './chart-notes/chart-notes.client';
 import { DiagnosticsClient } from './diagnostics/diagnostics.client';
@@ -18,7 +18,7 @@ import { unavailableMessageOf } from './simulator-only';
     Las roturas del informe B de deriva de contratos (2026-10-08), una por una,
     contra el cliente: qué cuerpo sale hacia la API real y qué no sale.
 
-    La API real se simula con `apiRealForzada` (el interruptor del stock de
+    La API real se simula con `forcedRealApi` (el interruptor del stock de
     componentes) y `HttpTestingController`: ninguna petición va a la red. El
     cuerpo que sale se compara además contra el catálogo generado del
     `openapi.json` de `origin/dev`, que es lo que la API valida con
@@ -31,7 +31,7 @@ describe('deriva de contratos — lo que el cliente manda a la API real', () => 
   let http: HttpTestingController;
 
   beforeEach(() => {
-    apiRealForzada.set(true);
+    forcedRealApi.set(true);
     TestBed.configureTestingModule({
       providers: [provideHttpClient(), provideHttpClientTesting()],
     });
@@ -40,7 +40,7 @@ describe('deriva de contratos — lo que el cliente manda a la API real', () => 
 
   afterEach(() => {
     http.verify();
-    apiRealForzada.set(false);
+    forcedRealApi.set(false);
   });
 
   /** El cuerpo de la única petición a `url`, y que la API lo aceptaría. */
