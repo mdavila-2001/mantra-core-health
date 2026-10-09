@@ -57,13 +57,17 @@ export function errorToViewState<T>(error: unknown): ViewState<T> {
     return unexpectedError(correlationOf(error, null), 'No pudimos completar la operación.');
   }
 
+  // Sólo el id que mandó la API: en S4 y S5 es opcional, así que no se inventa
+  // un «sin-id» que nadie podría buscar.
+  const requestId = body.correlationId;
+
   switch (body.code) {
     // --- S4 · validación o conflicto ---------------------------------------
     case 'VALIDATION_FAILED':
-      return validation(issuesOf(body));
+      return validation(issuesOf(body), undefined, requestId);
 
     case 'CONFLICT':
-      return validation([{ message: body.message, code: body.code }]);
+      return validation([{ message: body.message, code: body.code }], undefined, requestId);
 
     /**
      * Escritura concurrente: para la persona es «alguien cambió esto mientras
@@ -76,18 +80,20 @@ export function errorToViewState<T>(error: unknown): ViewState<T> {
           message: body.message || 'Otra persona modificó este dato mientras lo editaba.',
           code: body.code,
         },
-      ]);
+      ], undefined, requestId);
 
     case 'PRECONDITION_FAILED':
-      return validation([{ message: body.message, code: body.code }]);
+      return validation([{ message: body.message, code: body.code }], undefined, requestId);
 
     case 'PAYLOAD_TOO_LARGE':
-      return validation([
-        { message: body.message || 'El archivo es demasiado grande.', code: body.code },
-      ]);
+      return validation(
+        [{ message: body.message || 'El archivo es demasiado grande.', code: body.code }],
+        undefined,
+        requestId,
+      );
 
     case 'RATE_LIMITED':
-      return validation([{ message: body.message, code: body.code }], retryAfterOf(error));
+      return validation([{ message: body.message, code: body.code }], retryAfterOf(error), requestId);
 
     // --- S5 · prohibido ----------------------------------------------------
     /**
@@ -96,7 +102,7 @@ export function errorToViewState<T>(error: unknown): ViewState<T> {
      * donde tampoco va a poder.
      */
     case 'FORBIDDEN':
-      return forbidden({ message: body.message });
+      return forbidden({ message: body.message, ...(requestId === undefined ? {} : { requestId }) });
 
     /**
      * La puerta. Mismo 403, estado opuesto: hay algo que la persona puede hacer,
@@ -106,6 +112,7 @@ export function errorToViewState<T>(error: unknown): ViewState<T> {
       return forbidden({
         message: body.message || 'Necesita verificar su identidad para continuar.',
         nextAction: { label: 'Verificar identidad', route: IDENTITY_VERIFICATION_ROUTE },
+        ...(requestId === undefined ? {} : { requestId }),
       });
 
     // --- S6 · no encontrado, sin filtrar existencia -------------------------

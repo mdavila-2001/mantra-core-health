@@ -49,7 +49,7 @@
         [options]="candidatos()"
         [loading]="buscando()"
         placeholder="Nombre o código del paciente"
-        emptyMessage="Ningún paciente coincide"
+        [emptyMessage]="busquedaFallida() ?? 'Ningún paciente coincide'"
         (searched)="buscarPaciente($event)"
         (selectionChange)="paciente.set($event)"
       />
