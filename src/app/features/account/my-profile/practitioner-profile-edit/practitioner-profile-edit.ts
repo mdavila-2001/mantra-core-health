@@ -47,6 +47,7 @@ import type {
 import { INSURANCE_BILLING_FREQUENCY_OPTIONS } from '../../../../core/profesion/insurance-billing-frequency';
 import { describeApiFailure, fieldErrorsOf } from '../../../../core/http/api-failure';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
+import { avisarExtensionesSinGuardar } from './practitioner-profile-extensions';
 import { NavigationService } from '../../../../core/navigation/navigation.service';
 import { loading, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
@@ -2137,6 +2138,7 @@ export class PractitionerProfileEdit {
           this.sembrarFormulario(perfil);
           this.perfil.set(ready(perfil));
           this.toasts.success('Su perfil quedó actualizado.', 'Perfil');
+          avisarExtensionesSinGuardar(this.toasts, cambios);
         },
         error: (error: unknown) => {
           this.guardandoPresentacion.set(false);

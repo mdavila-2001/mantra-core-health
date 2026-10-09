@@ -16,13 +16,17 @@ import { DatePipe, NgTemplateOutlet } from '@angular/common';
 
 import { AuthService } from '../../../../core/auth/auth.service';
 import { ChartNotesClient } from '../../../../core/data-access/chart-notes/chart-notes.client';
-import type { CreateClinicalNoteInput } from '../../../../core/data-access/chart-notes/chart-notes.types';
+import {
+  CHART_NOTE_SIMULATOR_EXTENSIONS,
+  type CreateClinicalNoteInput,
+} from '../../../../core/data-access/chart-notes/chart-notes.types';
+import { droppedSimulatorExtensions } from '../../../../core/data-access/simulator-only';
 import type {
   ChartNote,
   MedicalNoteEntry,
 } from '../../../../core/data-access/clinical/clinical.types';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
-import { empty, loading, ready } from '../../../../core/view-state/view-state';
+import { empty, loading, ready, validation } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
 import { Badge } from '../../../../shared/components/atoms/badge/badge';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
@@ -46,6 +50,10 @@ import { mensajeDeEscritura } from '../../mensaje-de-escritura';
 export const TOPE_DE_FILAS = 40;
 const TOPE_DEL_ROTULO = 60;
 const TOPE_DEL_VALOR = 500;
+
+/** Las filas campo/valor (P39) todavía no tienen dónde guardarse en la API real. */
+const AVISO_FILAS_SIN_API =
+  'Las filas de la nota todavía no se guardan: el servidor aún no las recibe. Escriba el contenido en el texto libre.';
 
 /** Una fila a medio escribir, tal como la sostiene el formulario. */
 export interface FilaEnCurso {
@@ -371,6 +379,15 @@ export class MedicalNoteBlock implements DraftBlock {
       ...(texto === '' ? {} : { subjectiveText: texto }),
     };
 
+    // Las filas son P39: la API real todavía no las recibe. Sin texto libre,
+    // la nota llegaría vacía; con texto, se guarda y se avisa qué faltó.
+    const filasSinGuardar =
+      droppedSimulatorExtensions(input, CHART_NOTE_SIMULATOR_EXTENSIONS).length > 0;
+    if (filasSinGuardar && texto === '') {
+      this.resultado.set(validation([{ message: AVISO_FILAS_SIN_API }]));
+      return;
+    }
+
     this.guardando.set(true);
     this.resultado.set(loading());
     this.notes.createNote(input).subscribe({
@@ -379,7 +396,13 @@ export class MedicalNoteBlock implements DraftBlock {
         this.resultado.set(ready(null));
         this.filas.set([filaVacia(this.proximaClave++)]);
         this.textoLibre.set('');
-        this.toasts.success('La nota quedó guardada en esta consulta.');
+        if (filasSinGuardar) {
+          this.toasts.warning(
+            `La nota quedó guardada sólo con el texto libre. ${AVISO_FILAS_SIN_API}`,
+          );
+        } else {
+          this.toasts.success('La nota quedó guardada en esta consulta.');
+        }
         this.guardada.emit();
         this.cargar();
       },
@@ -391,12 +414,13 @@ export class MedicalNoteBlock implements DraftBlock {
   }
 
   protected firmar(nota: NotaVisible): void {
-    if (nota.versionId === null || this.firmando() !== null) {
+    const firmante = this.auth.practitionerProfileId();
+    if (nota.versionId === null || this.firmando() !== null || firmante === null) {
       return;
     }
     this.firmando.set(nota.id);
     this.resultado.set(ready(null));
-    this.notes.signVersion(nota.id, nota.versionId).subscribe({
+    this.notes.signVersion(nota.id, nota.versionId, firmante).subscribe({
       next: () => {
         this.firmando.set(null);
         this.toasts.success(`${nota.rotulo} quedó firmada.`);

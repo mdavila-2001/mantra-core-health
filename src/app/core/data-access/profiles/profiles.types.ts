@@ -481,6 +481,12 @@ export interface PatientSearchQuery {
    * de valores real para «estado de seguro» (Asegurada/Particular/En trámite)
    * en el catálogo — inventarlo sería un catálogo sin procedencia. Queda
    * registrado como ambigüedad para producto, no simulado.
+   *
+   * **Sólo los entiende la maqueta** (informe B, C14): `SearchPatientsQueryDto`
+   * de `origin/dev` no los declara —viven en la rama sin mergear
+   * `pablo/patient-search-blood-language-filters-2026-09-26`—. Contra la API
+   * real el cliente no manda la búsqueda filtrada: devolvería a todos sin
+   * filtrar, que es peor que decir que el filtro no está.
    */
   readonly aboGroupConceptId?: string;
   readonly rhFactorConceptId?: string;
@@ -1289,3 +1295,30 @@ export interface IncomingDependentLinkRequest {
   readonly requesterDisplayName: string;
   readonly createdAt: Date;
 }
+
+/**
+ * Claves del `PATCH /profiles/practitioners/me` que
+ * `UpdateOwnPractitionerProfileDto` no declara (informe B, C13): la maqueta
+ * las guarda, la API real todavía no.
+ */
+export const PRACTITIONER_PROFILE_SIMULATOR_EXTENSIONS: readonly string[] = [
+  'languages',
+  'insuranceBillingFrequency',
+];
+
+const PRACTITIONER_PROFILE_EXTENSION_LABELS: Readonly<Record<string, string>> = {
+  languages: 'Los idiomas de atención',
+  insuranceBillingFrequency: 'La frecuencia de facturación a seguros',
+};
+
+/** Cómo se nombran, para la persona, las extensiones que no se guardaron. */
+export function practitionerProfileExtensionsLabel(keys: readonly string[]): string {
+  return keys.map((key) => PRACTITIONER_PROFILE_EXTENSION_LABELS[key] ?? key).join(' y ');
+}
+
+/** Filtros de {@link PatientSearchQuery} que `SearchPatientsQueryDto` no declara (C14). */
+export const PATIENT_SEARCH_SIMULATOR_EXTENSIONS: readonly string[] = [
+  'aboGroupConceptId',
+  'rhFactorConceptId',
+  'clinicalLanguageConceptId',
+];
