@@ -8,7 +8,7 @@ import {
   validation,
 } from '../view-state/view-state';
 import type { ViewState, ViewStateIssue } from '../view-state/view-state.types';
-import { readApiError, type ApiErrorBody } from './api-error';
+import { readApiError, readFieldViolations, type ApiErrorBody } from './api-error';
 
 /**
  * A dónde lleva la puerta cuando falta verificar la identidad.
@@ -157,6 +157,15 @@ export function errorToViewState<T>(error: unknown): ViewState<T> {
  * > cualquier endpoint que use esa forma.
  */
 function issuesOf(body: ApiErrorBody): readonly ViewStateIssue[] {
+  // Primero la forma estructurada (`details.fields`, desde el 2026-10-08): trae
+  // la ruta exacta del campo, incluidos los anidados, y no hay que adivinarla.
+  const fields = readFieldViolations(body);
+  if (fields.length > 0) {
+    return fields.flatMap(({ field, messages }) =>
+      (messages.length > 0 ? messages : [body.message]).map((message) => ({ field, message, code: body.code })),
+    );
+  }
+
   const messages = body.details?.['violations'] ?? body.details?.['messages'];
 
   if (Array.isArray(messages) && messages.length > 0) {
