@@ -73,6 +73,12 @@ describe('GlossaryTerm', () => {
     http = TestBed.inject(HttpTestingController);
     harness = await RouterTestingHarness.create();
     componente = await harness.navigateByUrl(`/glossary/${FICHA.conceptId}`, GlossaryTerm);
+    // El artículo enciclopédico se pide aparte: estas pruebas son de la ficha
+    // de siempre, o sea, un término SIN artículo (404). Su pantalla se prueba
+    // en `glossary-article.spec.ts`.
+    http
+      .expectOne((r) => r.url.endsWith('/article'))
+      .flush(null, { status: 404, statusText: 'Not Found' });
   });
 
   afterEach(() => http.verify());
@@ -87,7 +93,9 @@ describe('GlossaryTerm', () => {
   }
 
   function peticion() {
-    return http.expectOne((r) => r.url.includes('/terminology/concepts/'));
+    return http.expectOne(
+      (r) => r.url.includes('/terminology/concepts/') && !r.url.endsWith('/article'),
+    );
   }
 
   /**

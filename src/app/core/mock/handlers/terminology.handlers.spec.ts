@@ -660,3 +660,58 @@ describe('vecindario del glosario (mapa de relaciones)', () => {
     expect(respuesta.status).toBe(404);
   });
 });
+
+/**
+ * F9 · el artículo enciclopédico de un término (TAREA-41 §12.3). La maqueta lo
+ * lee de `mock/articles/<hh>.json`; la semilla commiteada trae una muestra de
+ * artículos de MedlinePlus (`scripts/glossary-articles.mjs --slugs …`).
+ */
+describe('artículo enciclopédico del glosario', () => {
+  const PUBLICO = join(process.cwd(), 'public');
+  const leerSemilla: LectorDeArchivos = (ruta) => {
+    const archivo = join(PUBLICO, ruta);
+    if (ruta.startsWith('glossary-data/') || !existsSync(archivo)) {
+      return Promise.reject(new ArchivoAusente(ruta));
+    }
+    return Promise.resolve(JSON.parse(readFileSync(archivo, 'utf8')) as unknown);
+  };
+  const router = new MockRouter();
+  registrarTerminologia(router, new AlmacenDeGlosario(leerSemilla));
+
+  // Amigdalitis (MedlinePlus 6441): 10 secciones y una imagen.
+  const AMIGDALITIS = '5b49faa0-dafb-4630-a8f1-0f90e60113d0';
+
+  async function get(path: string): Promise<{ status?: number; body?: unknown } & Record<string, unknown>> {
+    const match = router.match('GET', path);
+    if (match === null) throw new Error(`No existe GET ${path}`);
+    return (await match.handler({
+      method: 'GET',
+      path,
+      params: match.params,
+      query: new URLSearchParams(),
+      body: null,
+      headers: new HttpHeaders(),
+      user: null,
+    })) as never;
+  }
+
+  it('sirve el artículo de un término que lo tiene, tal como está en la muestra', async () => {
+    const articulo = (await get(`/terminology/concepts/${AMIGDALITIS}/article`)) as unknown as {
+      conceptRef: { slug: string };
+      sections: { source: string; sourceUrl: string; license: string; retrievedAt: string }[];
+    };
+    expect(articulo.conceptRef.slug).toBe('medlineplus-es-6441');
+    expect(articulo.sections).toHaveLength(10);
+    for (const seccion of articulo.sections) {
+      expect(seccion.source).not.toBe('');
+      expect(seccion.sourceUrl).toMatch(/^https:\/\//);
+      expect(seccion.license).not.toBe('');
+      expect(seccion.retrievedAt).not.toBe('');
+    }
+  });
+
+  it('responde 404 a un término que no tiene artículo, sin inventarlo', async () => {
+    const respuesta = await get('/terminology/concepts/00000000-0000-4000-a000-000000000000/article');
+    expect(respuesta.status).toBe(404);
+  });
+});
