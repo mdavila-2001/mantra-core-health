@@ -117,7 +117,12 @@
                 </button>
                 <figcaption class="articulo__pie">
                   @if (imagen.caption !== '') {
-                    <span class="articulo__leyenda">{{ imagen.caption }}</span>
+                    <span class="articulo__leyenda" [attr.lang]="imagen.captionLang ?? null">{{
+                      imagen.caption
+                    }}</span>
+                    @if (imagen.captionLang === 'en') {
+                      <span class="articulo__sin-traducir">Pie de foto en inglés: sin traducción oficial.</span>
+                    }
                   }
                   <span>
                     {{ imagen.author }} ·

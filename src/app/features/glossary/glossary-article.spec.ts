@@ -121,6 +121,13 @@ describe('GlossaryArticleView', () => {
     expect(el.innerHTML).not.toContain('No debe verse');
   });
 
+  it('el pie de foto en inglés se marca como sin traducción oficial', () => {
+    const el = montar({ ...ARTICULO, images: [{ ...IMG, captionLang: 'en' }] });
+    expect(el.querySelector('.articulo__figura')?.textContent).toContain('Pie de foto en inglés');
+    const sinMarca = montar({ ...ARTICULO, images: [{ ...IMG, captionLang: 'es' }] });
+    expect(sinMarca.querySelector('.articulo__figura')?.textContent).not.toContain('Pie de foto en inglés');
+  });
+
   it('la miniatura abre el modal con la imagen entera', () => {
     const fixture = TestBed.createComponent(GlossaryArticleView);
     fixture.componentRef.setInput('articulo', ARTICULO);

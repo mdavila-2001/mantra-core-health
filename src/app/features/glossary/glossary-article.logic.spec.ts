@@ -136,7 +136,7 @@ describe('glossary-article.logic', () => {
     expect(fechaLegible('hoy')).toBe('hoy');
     const fuentes = fuentesDeLosDatos([
       { label: 'a', value: '1', source: 'nlm-medlineplus-es', sourceUrl: 'https://x/1' },
-      { label: 'b', value: '2', source: 'nlm-medlineplus-es', sourceUrl: 'https://x/1' },
+      { label: 'b', value: '2', source: 'nlm-medlineplus-es', sourceUrl: 'https://x/3' },
       { label: 'c', value: '3', source: 'otra', sourceUrl: 'https://x/2' },
     ]);
     expect(fuentes).toEqual([

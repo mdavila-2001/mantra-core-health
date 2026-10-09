@@ -213,15 +213,18 @@ export function seccionesPintables(articulo: GlossaryArticle): readonly SeccionP
   });
 }
 
-/** Los nombres y enlaces distintos de las fuentes de los datos (`facts`). */
+/**
+ * Las fuentes distintas de los datos (`facts`), una por nombre: varios datos de
+ * la misma fuente apuntan a páginas distintas (la española y la inglesa) y
+ * repetir el mismo nombre cuatro veces no informa. Gana el primer enlace.
+ */
 export function fuentesDeLosDatos(
   datos: readonly GlossaryArticleFact[],
 ): readonly { readonly nombre: string; readonly url: string }[] {
   const vistas = new Map<string, { nombre: string; url: string }>();
   for (const dato of datos) {
-    if (!vistas.has(dato.sourceUrl)) {
-      vistas.set(dato.sourceUrl, { nombre: nombreDeFuente(dato.source), url: dato.sourceUrl });
-    }
+    const nombre = nombreDeFuente(dato.source);
+    if (!vistas.has(nombre)) vistas.set(nombre, { nombre, url: dato.sourceUrl });
   }
   return [...vistas.values()];
 }
