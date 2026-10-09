@@ -132,6 +132,15 @@ const EQUIPOS = {
  * Contesta las nueve lecturas del tablero. Los seis estados de resultados se
  * responden **en el orden en que salieron**, que es el del `forkJoin`.
  */
+/** El plan de cuentas de la práctica: de acá sale la cuenta del dinero. */
+function responderCuentas(http: HttpTestingController): void {
+  http.expectOne((r) => r.url === `${BASE}/accounting/accounts`).flush({
+    items: [{ id: 'acc-banco', code: '1.2', name: 'Banco', accountTypeConceptId: 't', normalBalanceConceptId: 'n' }],
+    count: 1,
+    limit: 200,
+  });
+}
+
 function responderTablero(
   http: HttpTestingController,
   estados: readonly object[],
@@ -143,6 +152,7 @@ function responderTablero(
   http.expectOne((r) => r.url === `${BASE}/accounting/open-items`).flush(opciones.cartera ?? CARTERA_VACIA);
   http.expectOne((r) => r.url === `${BASE}/accounting/balance-sheet`).flush(SITUACION);
   http.expectOne((r) => r.url === `${BASE}/accounting/assets`).flush(EQUIPOS);
+  responderCuentas(http);
 }
 
 describe('Resumen contable', () => {
@@ -179,6 +189,7 @@ describe('Resumen contable', () => {
       http.expectOne((r) => r.url === `${BASE}/accounting/open-items`).flush(CARTERA_VACIA);
       http.expectOne((r) => r.url === `${BASE}/accounting/balance-sheet`).flush(SITUACION);
       http.expectOne((r) => r.url === `${BASE}/accounting/assets`).flush(EQUIPOS);
+  responderCuentas(http);
       http.verify();
     });
 
@@ -387,14 +398,27 @@ describe('Resumen contable', () => {
       const c = fixture.componentInstance as unknown as {
         teDeben: () => readonly { id: string }[];
         settle: (p: unknown, lado: 'cobro' | 'pago') => void;
+        settlementAccount: { set: (id: string) => void };
       };
 
+      // Sin la cuenta del dinero no se asienta nada: la pantalla no la adivina.
+      c.settle(c.teDeben()[0], 'cobro');
+      http.expectNone(`${BASE}/accounting/clearing-documents`);
+
+      c.settlementAccount.set('acc-banco');
       c.settle(c.teDeben()[0], 'cobro');
 
       const compensacion = http.expectOne(`${BASE}/accounting/clearing-documents`);
       expect(compensacion.request.method).toBe('POST');
-      expect(compensacion.request.body).toEqual({ openItemIds: ['oi-1'] });
-      compensacion.flush({ clearingDocumentId: 'cd-1', clearedItems: 1, clearedAmount: '4820.00' });
+      // El cuerpo de `CreateClearingDto` (informe B, C9), con el saldo abierto
+      // de la partida y la fecha de hoy.
+      expect(compensacion.request.body).toEqual({
+        practiceId: 'prac-1',
+        bankAccountId: 'acc-banco',
+        clearingDate: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/),
+        items: [{ openItemId: 'oi-1', clearedAmount: '4820.00' }],
+      });
+      compensacion.flush({ id: 'cd-1', clearingNumber: 'CLR-1', transactionId: 'tx-1', clearedItems: 1 });
       fixture.detectChanges();
 
       // Y no se queda con la pantalla vieja: relee todo, porque compensar
@@ -410,8 +434,10 @@ describe('Resumen contable', () => {
         teDeben: () => readonly { id: string; quien: string }[];
         settle: (p: unknown, lado: 'cobro' | 'pago') => void;
         settling: () => string | null;
+        settlementAccount: { set: (id: string) => void };
       };
 
+      c.settlementAccount.set('acc-banco');
       c.settle(c.teDeben()[0], 'cobro');
       http
         .expectOne(`${BASE}/accounting/clearing-documents`)
@@ -435,8 +461,10 @@ describe('Resumen contable', () => {
       const c = fixture.componentInstance as unknown as {
         amountToPay: () => readonly { id: string }[];
         settle: (p: unknown, lado: 'cobro' | 'pago') => void;
+        settlementAccount: { set: (id: string) => void };
       };
 
+      c.settlementAccount.set('acc-banco');
       c.settle(c.amountToPay()[0], 'pago');
       http
         .expectOne(`${BASE}/accounting/clearing-documents`)
@@ -468,6 +496,7 @@ describe('Resumen contable', () => {
         totalNetBookValue: '41250.00',
         monthlyCharge: '750.00',
       });
+      responderCuentas(http);
       fixture.detectChanges();
 
       const equipos = (
