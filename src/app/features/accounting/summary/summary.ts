@@ -12,12 +12,14 @@ import { forkJoin, of } from 'rxjs';
 import { catchError, map, startWith, switchMap } from 'rxjs/operators';
 
 import { AccountingClient } from '../../../core/data-access/accounting/accounting.client';
+import { SessionStore } from '../../../core/auth/session.store';
 import { SimpleAccounting } from '../records/records';
 import type {
   BalanceSheet,
   FinancialStatementLine,
   FixedAssetRegister,
   IncomeStatement,
+  LedgerAccount,
   OpenItem,
   OpenItemsPage,
   Practice,
@@ -43,6 +45,7 @@ import {
   daysUntil,
   esCero,
   isNegative,
+  aIsoLocal,
   amountBs,
   percentageOf,
   dayWindows,
@@ -141,6 +144,7 @@ interface Dinero {
   readonly partidas: OpenItemsPage;
   readonly situacion: BalanceSheet;
   readonly equipos: FixedAssetRegister;
+  readonly cuentas: readonly LedgerAccount[];
 }
 
 /**
@@ -228,6 +232,7 @@ export class Summary {
   private readonly accounting = inject(AccountingClient);
   private readonly toasts = inject(ToastService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly session = inject(SessionStore);
 
   /**
    * El día que manda, congelado al construir.
@@ -251,6 +256,21 @@ export class Summary {
 
   /** Qué partida se está saldando, para apagar su botón mientras tanto. */
   readonly settling = signal<string | null>(null);
+
+  /**
+   * La cuenta donde entra un cobro o de donde sale un pago. Dar por saldada
+   * una factura es un asiento contra el banco (informe B, C9), y cuál es el
+   * banco lo dice la persona: la pantalla no lo adivina.
+   */
+  readonly settlementAccount = signal<string | null>(null);
+
+  /** El plan de cuentas de la práctica como opciones: `código · nombre`. */
+  readonly accountOptions = computed(() => {
+    const estado = this.dinero();
+    return estado.status === 'ready' || estado.status === 'stale'
+      ? estado.data.cuentas.map((c) => ({ value: c.id, label: `${c.code} · ${c.name}` }))
+      : [];
+  });
 
   readonly practiceOptions = computed(() => {
     const estado = this.practices();
@@ -463,6 +483,7 @@ export class Summary {
             partidas: this.accounting.openItems(practiceId),
             situacion: this.accounting.balanceSheet(practiceId, {}),
             equipos: this.accounting.fixedAssets(practiceId),
+            cuentas: this.accounting.chartOfAccounts(practiceId).pipe(map((c) => c.items)),
           }).pipe(
             map((datos): ViewState<Dinero> => ready(datos)),
             startWith(loading() as ViewState<Dinero>),
@@ -487,10 +508,19 @@ export class Summary {
    * que un médico diga nunca.
    */
   settle(partida: EntryRow, lado: 'cobro' | 'pago'): void {
-    if (this.settling() !== null) return;
+    const practiceId = this.chosenPractice();
+    const bankAccountId = this.settlementAccount();
+    if (this.settling() !== null || practiceId === null || bankAccountId === null) return;
     this.settling.set(partida.id);
+    const tenantId = this.session.activeTenantId();
     this.accounting
-      .clearOpenItems([partida.id])
+      .clearOpenItems({
+        ...(tenantId === null ? {} : { tenantId }),
+        practiceId,
+        bankAccountId,
+        clearingDate: aIsoLocal(this.today),
+        items: [{ openItemId: partida.id, clearedAmount: partida.importe }],
+      })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
