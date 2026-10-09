@@ -1,11 +1,13 @@
-import { provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, throwError } from 'rxjs';
+import { vi } from 'vitest';
 
 import type { PharmacyDirectoryPage } from '../../../core/data-access/pharmacy/pharmacy.types';
 import { PharmacyCampaignsClient } from '../../../core/data-access/pharmacy-campaigns/pharmacy-campaigns.client';
+import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
 import { PharmacyCampaigns } from './pharmacy-campaigns';
 
 /**
@@ -165,6 +167,59 @@ describe('PharmacyCampaigns', () => {
     // Y aparece en la lista de la propia farmacia, no sólo en el cliente.
     expect(await firstValueFrom(client.campanasDeFarmacia(FARMACIA.id))).toHaveLength(1);
     expect(texto()).toContain('Cuidado diario');
+  });
+
+  /* -- Los fallos dicen su causa (2026-10-08) ------------------------------ */
+
+  function ultimoAviso(): string | undefined {
+    return TestBed.inject(ToastService).toasts().at(-1)?.message;
+  }
+
+  it('si publicar falla, dice el motivo de la API y deja el borrador como estaba', () => {
+    montar();
+    vi.spyOn(client, 'crear').mockReturnValue(
+      throwError(
+        () =>
+          new HttpErrorResponse({
+            status: 409,
+            error: {
+              code: 'CONFLICT',
+              message: 'Ya hay una campaña con ese título en esas fechas.',
+              correlationId: 'c-camp',
+            },
+          }),
+      ),
+    );
+    const componente = fixture.componentInstance as unknown as {
+      titulo: { (): string; set: (valor: string) => void };
+      publicar: () => void;
+    };
+    componente.titulo.set('Cuidado diario');
+    componente.publicar();
+    fixture.detectChanges();
+
+    expect(ultimoAviso()).toBe(
+      'Ya hay una campaña con ese título en esas fechas. (Código de soporte: c-camp)',
+    );
+    expect(componente.titulo()).toBe('Cuidado diario');
+  });
+
+  it('si la búsqueda en el catálogo falla, no dice «no hay productos con ese nombre»', () => {
+    montar();
+    (fixture.componentInstance as unknown as { buscarEnElCatalogo: (t: string) => void })
+      .buscarEnElCatalogo('metformina');
+    http
+      .expectOne((peticion) => peticion.params.get('search') === 'metformina')
+      .flush(
+        { code: 'INTERNAL', message: 'boom', correlationId: 'c-cat' },
+        { status: 500, statusText: 'Server Error' },
+      );
+    fixture.detectChanges();
+
+    expect(texto()).not.toContain('No hay productos de su catálogo con ese nombre');
+    expect(ultimoAviso()).toBe(
+      'No se pudo consultar el catálogo. Pruebe de nuevo. (Código de soporte: c-cat)',
+    );
   });
 
   it('publica cuando el campo numérico devuelve un número, no su texto', async () => {

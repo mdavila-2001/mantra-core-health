@@ -1,5 +1,13 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { catchError, forkJoin, map, of, switchMap, type Observable } from 'rxjs';
+import {
+  catchError,
+  forkJoin,
+  map,
+  of,
+  switchMap,
+  type MonoTypeOperatorFunction,
+  type Observable,
+} from 'rxjs';
 
 import { AuthService } from '../../../../core/auth/auth.service';
 import { CommunityClient } from '../../../../core/data-access/community/community.client';
@@ -24,6 +32,7 @@ import type {
 } from '../../../../core/data-access/profiles/profiles.types';
 import { TerminologyClient } from '../../../../core/data-access/terminology/terminology.client';
 import type { ConceptLabels } from '../../../../core/data-access/terminology/terminology.types';
+import { describeApiFailure } from '../../../../core/http/api-failure';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
 import { insuranceBillingFrequencyLabel } from '../../../../core/profesion/insurance-billing-frequency';
 import { HelpBlockDismissalStore } from '../../../../core/tutorials/help-block-dismissal.store';
@@ -32,6 +41,8 @@ import type { ViewState } from '../../../../core/view-state/view-state.types';
 import { DialogService } from '../../../../shared/components/molecules/dialog/dialog-service';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import type { StatusSealVariant } from '../../../../shared/components/organisms/status-seal/status-seal.types';
+import { AppButton } from '../../../../shared/components/atoms/button/button';
+import { Alert } from '../../../../shared/components/molecules/alert/alert';
 import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
 import { CONTADORES_DE_ACTIVIDAD } from '../contadores-de-actividad';
 import { PESTANAS_DEL_PERFIL_MEDICO, PESTANA_MEDICO } from '../pestanas-del-perfil-medico';
@@ -107,6 +118,37 @@ const SIN_PERFIL_PARA_LA_FOTO =
   'Su cuenta todavía no está asociada a un perfil profesional, así que no hay ' +
   'dónde guardar la foto. Escríbanos para que la vinculemos.';
 
+/**
+ * El fallo de la propagación a la vitrina, o `null` si quedó al día (o si no
+ * había vitrina que actualizar). Envuelto para que `unknown` no se trague el
+ * `null`.
+ */
+type FalloDeVitrina = { readonly error: unknown } | null;
+
+/** Qué se dice cuando la vitrina pública no tomó la foto nueva. */
+const VITRINA_SIN_ACTUALIZAR =
+  'Su perfil público sigue mostrando la foto anterior. Puede volver a intentarlo desde aquí.';
+
+/**
+ * Las lecturas laterales de la ficha, dichas como las nombra la persona.
+ *
+ * Cada una degrada sin tumbar la ficha, pero **se dice** que degradó: un
+ * catálogo caído pinta «Sin registrar» en datos que sí están, y una lista de
+ * sedes vacía por un fallo se lee igual que «no atiendo en ningún lado».
+ * Los seguros no figuran: su sección ya avisa por su cuenta.
+ */
+const LECTURA = {
+  etiquetas: 'los nombres del catálogo (por eso algunos datos figuran como «Sin registrar»)',
+  foto: 'su foto',
+  sedes: 'los lugares donde atiende',
+} as const;
+
+type LecturaLateral = keyof typeof LECTURA;
+
+/** «a», «a y b», «a, b y c». */
+const enumerar = (partes: readonly string[]): string =>
+  new Intl.ListFormat('es', { type: 'conjunction' }).format(partes);
+
 /** El perfil crudo junto a lo que se resolvió aparte para pintarlo. */
 interface PerfilResuelto {
   readonly perfil: OwnPractitionerProfile;
@@ -120,6 +162,8 @@ interface PerfilResuelto {
   readonly sedes: readonly PracticeSite[];
   /** Con qué aseguradoras trabaja; `null` si la lectura falló. */
   readonly seguros: readonly PractitionerInsuranceNetwork[] | null;
+  /** Las lecturas laterales que fallaron y quedaron degradadas. */
+  readonly faltantes: readonly LecturaLateral[];
 }
 
 /**
@@ -168,7 +212,7 @@ function edadDe(nacimiento?: Date): number | null {
 
 @Component({
   selector: 'app-practitioner-profile',
-  imports: [PractitionerProfileView, ViewStateHost],
+  imports: [Alert, AppButton, PractitionerProfileView, ViewStateHost],
   templateUrl: './practitioner-profile.html',
   styleUrl: './practitioner-profile.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -193,6 +237,20 @@ export class PractitionerProfile {
   protected readonly visible = computed<PerfilProfesionalVisible | null>(() => {
     const resuelto = dataOf(this.perfil());
     return resuelto === null ? null : this.convertir(resuelto);
+  });
+
+  /**
+   * Qué parte de la ficha no se pudo leer, en una frase; vacío si todo llegó.
+   *
+   * Regla 14 del criterio humano: un fallo de carga no se disfraza de dato
+   * vacío. La ficha sigue en pie, pero la persona sabe que lo que falta no
+   * falta de verdad, y puede volver a pedirlo.
+   */
+  protected readonly lecturasIncompletas = computed(() => {
+    const faltantes = dataOf(this.perfil())?.faltantes ?? [];
+    return faltantes.length === 0
+      ? ''
+      : `No pudimos cargar ${enumerar(faltantes.map((clave) => LECTURA[clave]))}. El resto de su perfil está al día.`;
   });
 
   constructor() {
@@ -258,20 +316,79 @@ export class PractitionerProfile {
       .pipe(
         switchMap((subido) => this.profiles.setPractitionerPhoto(profileId, subido.id)),
         switchMap((guardado) =>
-          this.propagarAVitrina(guardado.photoFileId).pipe(map(() => guardado)),
+          this.propagarAVitrina(guardado.photoFileId).pipe(
+            map((falloDeVitrina) => ({ guardado, falloDeVitrina })),
+          ),
         ),
-        switchMap((guardado) => this.files.imageDataUrl(guardado.photoFileId ?? '')),
+        switchMap(({ guardado, falloDeVitrina }) =>
+          // La foto ya quedó guardada: si sólo falla la lectura para pintarla,
+          // no se dice «no pudimos subir la foto», que sería falso.
+          this.files.imageDataUrl(guardado.photoFileId ?? '').pipe(
+            catchError(() => of<string | null>(null)),
+            map((fotoUrl) => ({ fotoUrl, fileId: guardado.photoFileId, falloDeVitrina })),
+          ),
+        ),
       )
       .subscribe({
-        next: (fotoUrl) => {
+        next: ({ fotoUrl, fileId, falloDeVitrina }) => {
           this.fotoSubiendo.set(false);
-          this.fotoRecien.set(fotoUrl);
+          if (fotoUrl === null) {
+            this.toasts.info('Su foto se guardó. Recargue la página para verla.', 'Foto de perfil');
+          } else {
+            this.fotoRecien.set(fotoUrl);
+          }
+          this.anotarVitrina(fileId, falloDeVitrina);
         },
-        error: () => {
+        error: (error: unknown) => {
           this.fotoSubiendo.set(false);
-          this.errorDeFoto.set('No pudimos subir la foto. Pruebe con otra imagen.');
+          this.errorDeFoto.set(
+            describeApiFailure(error, 'No pudimos guardar la foto. Intente de nuevo o pruebe con otra imagen.'),
+          );
         },
       });
+  }
+
+  /* -- La vitrina pública que no tomó la foto (C4) ------------------------ */
+
+  /** El archivo que falta repetir en la vitrina; `null` si está al día. */
+  private readonly vitrinaPendiente = signal<string | null>(null);
+
+  /** Por qué la vitrina no se actualizó. Vacío es que está al día. */
+  protected readonly errorDeVitrina = signal('');
+
+  /** Mientras se reintenta. Bloquea el botón para no mandar dos `PUT`. */
+  protected readonly reintentandoVitrina = signal(false);
+
+  /**
+   * Vuelve a repetir la foto en la vitrina pública.
+   *
+   * Repite sólo la propagación, no la subida: la foto profesional ya está
+   * guardada y volver a mandarla crearía otro archivo idéntico.
+   */
+  protected reintentarVitrina(): void {
+    const fileId = this.vitrinaPendiente();
+    if (fileId === null || this.reintentandoVitrina()) {
+      return;
+    }
+    this.reintentandoVitrina.set(true);
+    this.propagarAVitrina(fileId).subscribe((fallo) => {
+      this.reintentandoVitrina.set(false);
+      this.anotarVitrina(fileId, fallo);
+      if (fallo === null) {
+        this.toasts.success('Su perfil público ya muestra la foto nueva.', 'Foto de perfil');
+      }
+    });
+  }
+
+  /** Deja dicho si la vitrina quedó atrás, con el motivo que dio la API. */
+  private anotarVitrina(fileId: string | undefined, fallo: FalloDeVitrina): void {
+    if (fallo === null || !fileId) {
+      this.vitrinaPendiente.set(null);
+      this.errorDeVitrina.set('');
+      return;
+    }
+    this.vitrinaPendiente.set(fileId);
+    this.errorDeVitrina.set(describeApiFailure(fallo.error, VITRINA_SIN_ACTUALIZAR));
   }
 
   /**
@@ -287,20 +404,24 @@ export class PractitionerProfile {
    * (no un `PATCH`): mandar sólo `{ avatarFileId }` borraría `visibility` y
    * cualquier otro campo que la persona haya declarado en otra pantalla.
    *
-   * **Best-effort.** Un fallo acá no debe tumbar la foto profesional, que ya
-   * quedó guardada en el paso anterior — se traga el error y se sigue.
+   * **No tumba la foto, pero no se calla.** Un fallo acá no debe deshacer la
+   * foto profesional, que ya quedó guardada en el paso anterior; antes se
+   * tragaba y la persona veía «foto subida» con la vitrina vieja (éxito
+   * parcial presentado como total, hallazgo C4). Ahora el fallo sale como
+   * valor y el contenedor lo avisa con un reintento.
    *
    * @param fileId - El id del archivo recién fijado como foto profesional.
-   * @returns Un observable que siempre completa, nunca falla.
+   * @returns `null` si quedó al día o no había vitrina; el fallo si no. Nunca
+   *   falla el observable.
    */
-  private propagarAVitrina(fileId: string | undefined): Observable<unknown> {
+  private propagarAVitrina(fileId: string | undefined): Observable<FalloDeVitrina> {
     if (!fileId) {
-      return of(undefined);
+      return of(null);
     }
     return this.community.getOwnProfile().pipe(
       switchMap((vitrina) => {
         if (!vitrina) {
-          return of(undefined);
+          return of(null);
         }
         return this.community.upsertOwnProfile({
           tenantId: vitrina.tenantId,
@@ -310,9 +431,9 @@ export class PractitionerProfile {
           biography: vitrina.biography,
           acceptsReviews: vitrina.acceptsReviews,
           avatarFileId: fileId,
-        });
+        }).pipe(map((): FalloDeVitrina => null));
       }),
-      catchError(() => of(undefined)),
+      catchError((error: unknown) => of<FalloDeVitrina>({ error })),
     );
   }
 
@@ -341,8 +462,11 @@ export class PractitionerProfile {
         this.toasts.success('Se retiró el título.', 'Formación');
         this.recargar();
       },
-      error: () => {
-        this.toasts.error('No se pudo retirar el título. Pruebe de nuevo.', 'Formación');
+      error: (error: unknown) => {
+        this.toasts.error(
+          describeApiFailure(error, 'No se pudo retirar el título. Intente de nuevo.'),
+          'Formación',
+        );
       },
     });
   }
@@ -385,6 +509,14 @@ export class PractitionerProfile {
 
   private cargar(): void {
     this.perfil.set(loading());
+    // Cada lectura lateral que degrada se anota acá; viaja con el perfil
+    // resuelto para que la ficha diga qué no llegó.
+    const faltantes: LecturaLateral[] = [];
+    const degradarA = <T>(clave: LecturaLateral, valor: T): MonoTypeOperatorFunction<T> =>
+      catchError<T, Observable<T>>(() => {
+        faltantes.push(clave);
+        return of(valor);
+      });
 
     this.profiles
       .getOwnPractitionerProfile()
@@ -396,7 +528,7 @@ export class PractitionerProfile {
             // puede tumbar la pantalla que muestra la trayectoria de alguien.
             etiquetas: this.terminology
               .readConceptLabels(conceptosDe(perfil))
-              .pipe(catchError(() => of<ConceptLabels>(new Map()))),
+              .pipe(degradarA<ConceptLabels>('etiquetas', new Map())),
             // La foto es un adorno con el mismo criterio: si la URL no sale,
             // queda el avatar de iniciales, que es el caso vacío correcto.
             fotoUrl:
@@ -407,7 +539,7 @@ export class PractitionerProfile {
                   // `FilesClient.imageDataUrl`.
                   this.files
                     .imageDataUrl(perfil.photoFileId)
-                    .pipe(catchError(() => of<string | null>(null))),
+                    .pipe(degradarA<string | null>('foto', null)),
             // El logo del consultorio: mismo criterio que la foto. La fachada
             // ya devuelve `null` si falla, así que no rompe la ficha.
             logoUrl: this.logoPropio(),
@@ -416,12 +548,12 @@ export class PractitionerProfile {
             // ALV-005: dónde atiende. Mismo criterio que la foto: es una
             // sección más de la ficha, no la ficha; si no se puede leer, la
             // sección no se dibuja y el resto sigue.
-            sedes: this.sedesPropias(),
+            sedes: this.sedesPropias().pipe(degradarA<readonly PracticeSite[]>('sedes', [])),
             // Los seguros, con el mismo criterio, salvo en una cosa: el fallo
             // queda como `null` y no como vacío, porque «ninguna aseguradora»
             // dicho de quien trabaja con tres es un dato falso, no un hueco.
             seguros: this.segurosPropios(),
-          }),
+          }).pipe(map((resuelto): PerfilResuelto => ({ ...resuelto, faltantes: [...faltantes] }))),
         ),
       )
       .subscribe({
@@ -447,17 +579,15 @@ export class PractitionerProfile {
 
   /**
    * Las sedes donde atiende hoy, o vacío si la sesión no tiene perfil
-   * profesional o la lectura falló.
+   * profesional. El fallo de la lectura NO se convierte acá en vacío: lo
+   * degrada `cargar`, que además lo anota para decirlo.
    */
-  private sedesPropias() {
+  private sedesPropias(): Observable<readonly PracticeSite[]> {
     const profileId = this.auth.practitionerProfileId();
     if (profileId === null) {
       return of<readonly PracticeSite[]>([]);
     }
-    return this.sites.listSitesOfPractitioner(profileId).pipe(
-      map((pagina) => pagina.items),
-      catchError(() => of<readonly PracticeSite[]>([])),
-    );
+    return this.sites.listSitesOfPractitioner(profileId).pipe(map((pagina) => pagina.items));
   }
 
   /**

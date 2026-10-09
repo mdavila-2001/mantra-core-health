@@ -12,6 +12,7 @@ import type {
   Evidence,
   Impact,
 } from '../../../../core/data-access/admin-portal/data-catalog.types';
+import { describeApiFailure } from '../../../../core/http/api-failure';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
 import { loading, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
@@ -96,6 +97,13 @@ export class CatalogObjectDetail {
   protected readonly anadiendoEvidencia = signal(false);
   protected readonly aviso = signal<string | null>(null);
   protected readonly error = signal<string | null>(null);
+  /*
+   * Una lista vacía de evidencia, historial o cambios es una afirmación («no
+   * hay»). Si la lectura falló, se dice eso en su lugar.
+   */
+  protected readonly errorDeEvidencia = signal<string | null>(null);
+  protected readonly errorDeHistorial = signal<string | null>(null);
+  protected readonly errorDeCambios = signal<string | null>(null);
 
   protected readonly objeto = computed(() => {
     const d = this.detalle();
@@ -168,10 +176,37 @@ export class CatalogObjectDetail {
       next: (c) => this.columnas.set(ready(c)),
       error: (e: unknown) => this.columnas.set(errorToViewState<readonly CatalogColumn[]>(e)),
     });
-    this.catalog.listEvidence(this.objectId).subscribe({ next: (e) => this.evidencia.set(e), error: () => undefined });
-    this.catalog.history(this.objectId).subscribe({ next: (h) => this.historial.set(h), error: () => undefined });
-    this.catalog.changes(this.objectId).subscribe({ next: (p) => this.cambios.set(p.items), error: () => undefined });
+    this.leerEvidencia();
+    this.leerHistorial();
+    this.leerCambios();
     this.cargarImpacto();
+  }
+
+  protected leerEvidencia(): void {
+    this.errorDeEvidencia.set(null);
+    this.catalog.listEvidence(this.objectId).subscribe({
+      next: (e) => this.evidencia.set(e),
+      error: (e: unknown) =>
+        this.errorDeEvidencia.set(describeApiFailure(e, 'No pudimos traer la evidencia de este objeto.')),
+    });
+  }
+
+  protected leerHistorial(): void {
+    this.errorDeHistorial.set(null);
+    this.catalog.history(this.objectId).subscribe({
+      next: (h) => this.historial.set(h),
+      error: (e: unknown) =>
+        this.errorDeHistorial.set(describeApiFailure(e, 'No pudimos traer el historial de la ficha.')),
+    });
+  }
+
+  protected leerCambios(): void {
+    this.errorDeCambios.set(null);
+    this.catalog.changes(this.objectId).subscribe({
+      next: (p) => this.cambios.set(p.items),
+      error: (e: unknown) =>
+        this.errorDeCambios.set(describeApiFailure(e, 'No pudimos traer los cambios estructurales.')),
+    });
   }
 
   protected cargarImpacto(): void {
@@ -205,8 +240,11 @@ export class CatalogObjectDetail {
   protected evidenciaAnadida(): void {
     this.anadiendoEvidencia.set(false);
     this.aviso.set('Evidencia añadida.');
-    this.catalog.listEvidence(this.objectId).subscribe({ next: (e) => this.evidencia.set(e) });
-    this.catalog.getObject(this.objectId).subscribe({ next: (d) => this.detalle.set(ready(d)) });
+    this.leerEvidencia();
+    this.catalog.getObject(this.objectId).subscribe({
+      next: (d) => this.detalle.set(ready(d)),
+      error: (e: unknown) => this.detalle.set(errorToViewState<ObjectDetailData>(e)),
+    });
   }
 
   /** Aprobar o rechazar la revisión vigente. El servidor decide si quien revisa puede. */
@@ -257,7 +295,7 @@ export class CatalogObjectDetail {
                 : 'Su rol no permite revisar fichas.'
               : api.status === 409
                 ? 'La ficha cambió mientras la revisaba. Recargue y revise la versión vigente.'
-                : (api.message ?? 'No se pudo registrar la revisión.'),
+                : describeApiFailure(e, 'No se pudo registrar la revisión.'),
           );
         },
       });

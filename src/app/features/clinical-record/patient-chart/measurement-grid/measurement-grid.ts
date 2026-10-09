@@ -9,7 +9,7 @@ import {
   output,
   signal,
 } from '@angular/core';
-import { forkJoin, of } from 'rxjs';
+import { forkJoin, of, throwError } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
 
 import { AuthService } from '../../../../core/auth/auth.service';
@@ -20,6 +20,7 @@ import type {
 } from '../../../../core/data-access/clinical/clinical.types';
 import { TerminologyClient } from '../../../../core/data-access/terminology/terminology.client';
 import type { ConceptLabels } from '../../../../core/data-access/terminology/terminology.types';
+import { describeApiFailure, fieldErrorsOf } from '../../../../core/http/api-failure';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { Input } from '../../../../shared/components/atoms/input/input';
 import { Spinner } from '../../../../shared/components/atoms/spinner/spinner';
@@ -341,15 +342,23 @@ export class MeasurementGrid {
       celdas.map((celda) => {
         const numero = Number(celda.valor.replace(',', '.'));
         const esNumero = celda.valor !== '' && Number.isFinite(numero);
-        return this.clinical.createObservation({
-          custodianTenantId,
-          patientProfileId,
-          codeConceptId: celda.codeConceptId,
-          encounterId,
-          // Las familias de valor del contrato son excluyentes, y se elige la
-          // misma que la casilla «Observación»: gana el número cuando lo hay.
-          ...(esNumero ? { quantityValue: numero } : { valueText: celda.valor }),
-        });
+        return this.clinical
+          .createObservation({
+            custodianTenantId,
+            patientProfileId,
+            codeConceptId: celda.codeConceptId,
+            encounterId,
+            // Las familias de valor del contrato son excluyentes, y se elige la
+            // misma que la casilla «Observación»: gana el número cuando lo hay.
+            ...(esNumero ? { quantityValue: numero } : { valueText: celda.valor }),
+          })
+          // El fallo sale marcado con su columna: es lo que permite decir
+          // CUÁL celda rechazó la API y no sólo que algo falló.
+          .pipe(
+            catchError((error: unknown) =>
+              throwError(() => new FalloDeCelda(celda.codeConceptId, error)),
+            ),
+          );
       }),
     ).subscribe({
       next: () => {
@@ -363,13 +372,33 @@ export class MeasurementGrid {
         this.releer(patientProfileId);
         this.guardada.emit();
       },
-      error: () => {
+      error: (fallo: unknown) => {
         this.guardando.set(false);
         this.errorAlGuardar.set(
-          'No pudimos registrar la fila. Lo que escribió sigue acá: pruebe de nuevo.',
+          `${this.motivoDelFallo(fallo)} Lo que escribió sigue acá: pruebe de nuevo.`,
         );
       },
     });
+  }
+
+  /**
+   * Por qué no se guardó, con el código de soporte cuando la API lo manda.
+   *
+   * Si el rechazo fue de un campo, se nombra la columna: «Peso: debe ser un
+   * número» dice qué corregir; «No pudimos registrar la fila» no.
+   */
+  private motivoDelFallo(fallo: unknown): string {
+    const error = fallo instanceof FalloDeCelda ? fallo.error : fallo;
+    const campos = Object.values(fieldErrorsOf(error));
+    if (campos.length === 0) {
+      return describeApiFailure(error, 'No pudimos registrar la fila.');
+    }
+    const columna =
+      fallo instanceof FalloDeCelda
+        ? this.columnas().find((c) => c.conceptId === fallo.conceptId)?.nombre
+        : undefined;
+    const detalle = campos.join(' ');
+    return describeApiFailure(error, columna === undefined ? detalle : `${columna}: ${detalle}`);
   }
 
   protected reintentar(): void {
@@ -437,4 +466,12 @@ export class MeasurementGrid {
     }
     return CELDA_VACIA;
   }
+}
+
+/** El fallo de una celda, con la columna a la que pertenece. */
+class FalloDeCelda {
+  constructor(
+    readonly conceptId: string,
+    readonly error: unknown,
+  ) {}
 }

@@ -273,6 +273,21 @@ describe('PostCard', () => {
     expect(texto()).toContain('Ocultar (1)');
   });
 
+  it('el aviso de un fallo trae el código de soporte', () => {
+    montar('pp-1');
+    pulsar('Me sirve');
+
+    http
+      .expectOne((r) => r.url === '/community/reactions')
+      .flush(
+        { code: 'INTERNAL', message: 'x', correlationId: 'corr-reac', timestamp: '', path: '' },
+        { status: 500, statusText: 'Server Error' },
+      );
+    fixture.detectChanges();
+
+    expect(texto()).toContain('No pudimos guardar su reacción. (Código de soporte: corr-reac)');
+  });
+
   /**
    * Lo que hace honesto al optimismo. Si el servidor falla y el conteo se queda
    * subido, la pantalla afirma algo que no ocurrió.

@@ -4,6 +4,7 @@ import { catchError, of } from 'rxjs';
 
 import { AuthService } from '../../../../core/auth/auth.service';
 import { ClinicalClient } from '../../../../core/data-access/clinical/clinical.client';
+import { describeApiFailure, fieldErrorsOf } from '../../../../core/http/api-failure';
 import type {
   OwnMedicalAspects,
   OwnMedicalAspectsChanges,
@@ -33,6 +34,9 @@ interface CampoDeAspectos {
  * De lo que decide una urgencia a lo que aporta contexto: si alguien abandona el
  * formulario a la mitad, lo que queda cargado es lo que más importa.
  */
+/** Lo que dice un campo que la API no aceptó. */
+const CAMPO_RECHAZADO = 'No se pudo guardar así. Revise este dato.';
+
 const CAMPOS: readonly CampoDeAspectos[] = [
   {
     clave: 'bloodType',
@@ -128,6 +132,15 @@ export class MedicalAspects {
 
   protected readonly cargando = signal(true);
   protected readonly guardando = signal(false);
+
+  /**
+   * Los campos que la API rechazó en el último intento.
+   *
+   * Se guarda sólo QUÉ campo falló, no el texto de la API: el validador
+   * responde en inglés técnico («must be shorter than…»), que no es para
+   * mostrarle a un paciente. El texto lo pone la pantalla.
+   */
+  protected readonly camposRechazados = signal<ReadonlySet<string>>(new Set());
   protected readonly falloLaLectura = signal(false);
 
   /** Lo último que confirmó el servidor. Es contra esto que se compara y se cancela. */
@@ -183,6 +196,15 @@ export class MedicalAspects {
 
   protected escribir(clave: string, valor: string): void {
     this.borrador.update((actual) => ({ ...actual, [clave]: valor }));
+    // Al corregirlo, el campo deja de estar marcado: la marca era del intento anterior.
+    if (this.camposRechazados().has(clave)) {
+      this.camposRechazados.update((previos) => new Set([...previos].filter((c) => c !== clave)));
+    }
+  }
+
+  /** El aviso bajo un campo que la API rechazó; vacío si no lo rechazó. */
+  protected errorDe(clave: string): string {
+    return this.camposRechazados().has(clave) ? CAMPO_RECHAZADO : '';
   }
 
   /** El valor que va en el campo. Nunca `undefined`: el control es controlado. */
@@ -200,6 +222,7 @@ export class MedicalAspects {
       return;
     }
     this.guardando.set(true);
+    this.camposRechazados.set(new Set());
     const cambios: Record<string, string> = {};
     for (const campo of CAMPOS) {
       // Los siete van siempre, vacíos incluidos: el contrato dice que `''`
@@ -215,11 +238,20 @@ export class MedicalAspects {
         this.aplicar(aspectos);
         this.toast.success('Guardamos sus aspectos médicos.');
       },
-      error: () => {
+      error: (error: unknown) => {
         this.guardando.set(false);
         // El borrador NO se pierde: si falla la red, lo escrito sigue en pantalla
         // para poder reintentar sin volver a tipearlo.
-        this.toast.error('No pudimos guardar. Lo que escribió sigue acá: pruebe de nuevo.');
+        const rechazados = new Set(Object.keys(fieldErrorsOf(error)));
+        this.camposRechazados.set(rechazados);
+        this.toast.error(
+          describeApiFailure(
+            error,
+            rechazados.size > 0
+              ? 'No pudimos guardar: revise los datos marcados. Lo que escribió sigue aquí.'
+              : 'No pudimos guardar. Lo que escribió sigue aquí: intente de nuevo.',
+          ),
+        );
       },
     });
   }

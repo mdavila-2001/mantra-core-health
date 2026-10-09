@@ -288,6 +288,13 @@
 
 /* Cuatro verbos repartidos a lo ancho, con ícono y rótulo, como en cualquier
    red profesional. El filete de arriba la separa del resumen de contadores. */
+.publicacion__fallo {
+  margin: 0;
+  padding: 0 var(--e2) var(--e2);
+  color: var(--st-error-fg, var(--tinta));
+  font-size: var(--fs-caption);
+}
+
 .publicacion__acciones {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

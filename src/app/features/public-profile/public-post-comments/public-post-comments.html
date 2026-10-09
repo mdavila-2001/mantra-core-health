@@ -32,8 +32,8 @@
         </button>
       }
     </form>
-    @if (falloAlEnviar()) {
-      <p class="comentarios__fallo" role="alert">No pudimos publicar su comentario. Lo escrito sigue ahí: vuelva a intentarlo.</p>
+    @if (falloAlEnviar(); as motivo) {
+      <p class="comentarios__fallo" role="alert">{{ motivo }} Lo escrito sigue ahí: vuelva a intentarlo.</p>
     }
   }
 
@@ -98,7 +98,7 @@
       <div class="app-alert" app-alert data-tono="error" role="alert">
         <div class="app-alert__cuerpo">
           <strong>No pudimos leer los comentarios.</strong>
-          <p>Vuelva a intentarlo en un momento.</p>
+          <p>{{ motivoDelFallo() }}</p>
         </div>
       </div>
       <p class="comentarios__mas">

@@ -5,6 +5,7 @@ import { Router, RouterLink } from '@angular/router';
 import { SessionStore } from '@core/auth/session.store';
 import { CommunityClient } from '@core/data-access/community/community.client';
 import type { PublicPostSummary } from '@core/data-access/public-directory/public-directory.types';
+import { describeApiFailure } from '@core/http/api-failure';
 import { PostPreferencesMenu } from '@shared/components/molecules/post-preferences-menu/post-preferences-menu';
 import { ArticleBody } from '@shared/components/organisms/article-body/article-body';
 import { hasArticleStructure } from '@shared/text/article-markup';
@@ -119,6 +120,9 @@ export class PublicPostCard {
    * tipo la retira, así que el mismo botón pone y saca. Si falla, el contador
    * vuelve a donde estaba: un número que miente es peor que un gesto lento.
    */
+  /** Por qué no se pudo recomendar (o quitar la recomendación), o `null`. */
+  protected readonly errorAlRecomendar = signal<string | null>(null);
+
   protected recomendar(): void {
     const actor = this.actorProfileId();
     if (actor === null) {
@@ -128,6 +132,7 @@ export class PublicPostCard {
     if (this.recomendando()) return;
 
     const antes = this.recomendada();
+    this.errorAlRecomendar.set(null);
     this.recomendando.set(true);
     this.recomendada.set(!antes);
     this.deltaReacciones.update((d) => d + (antes ? -1 : 1));
@@ -136,10 +141,18 @@ export class PublicPostCard {
       .react({ actorProfileId: actor, reactableType: 'POST', reactableRefId: this.post().id, reactionType: 'LIKE' })
       .subscribe({
         next: () => this.recomendando.set(false),
-        error: () => {
+        error: (error: unknown) => {
           this.recomendada.set(antes);
           this.deltaReacciones.update((d) => d + (antes ? 1 : -1));
           this.recomendando.set(false);
+          // El botón vuelve a su estado; sin este aviso, la vuelta parecía un
+          // clic que no llegó a registrarse.
+          this.errorAlRecomendar.set(
+            describeApiFailure(
+              error,
+              antes ? 'No pudimos quitar su recomendación.' : 'No pudimos guardar su recomendación.',
+            ),
+          );
         },
       });
   }

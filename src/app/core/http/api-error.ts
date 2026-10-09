@@ -76,6 +76,46 @@ export function readApiError(error: HttpErrorResponse): ApiErrorBody | null {
   };
 }
 
+/**
+ * Un campo del cuerpo que el DTO rechazó, tal como lo manda la API en
+ * `details.fields` (`createGlobalValidationPipe`, desde el 2026-10-08).
+ */
+export interface ApiFieldViolation {
+  /** Ruta en el cuerpo enviado: `email`, `address.city`, `items.0.quantity`. */
+  readonly field: string;
+  /**
+   * Restricciones incumplidas. `whitelistValidation` es una propiedad que el
+   * DTO no declara: el front mandó algo que la API no espera.
+   */
+  readonly constraints: readonly string[];
+  readonly messages: readonly string[];
+}
+
+/** Restricción con la que la API marca una propiedad que su DTO no declara. */
+export const UNKNOWN_PROPERTY_CONSTRAINT = 'whitelistValidation';
+
+/**
+ * Los campos rechazados de un error de la API, o una lista vacía si el cuerpo
+ * no los trae (validación de dominio, otro código, otra API).
+ */
+export function readFieldViolations(body: ApiErrorBody | null): readonly ApiFieldViolation[] {
+  const fields = body?.details?.['fields'];
+  if (!Array.isArray(fields)) {
+    return [];
+  }
+  return fields.filter(isRecord).flatMap((item) => {
+    const field = item['field'];
+    if (typeof field !== 'string' || field === '') {
+      return [];
+    }
+    return [{ field, constraints: stringsOf(item['constraints']), messages: stringsOf(item['messages']) }];
+  });
+}
+
+function stringsOf(value: unknown): readonly string[] {
+  return Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : [];
+}
+
 function isApiErrorCode(value: string): value is ApiErrorCode {
   return (API_ERROR_CODES as readonly string[]).includes(value);
 }

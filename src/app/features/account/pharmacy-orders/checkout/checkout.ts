@@ -28,6 +28,7 @@ import {
 } from '../../../../core/data-access/pharmacy-campaigns/pharmacy-campaigns.money';
 import type { OrderLine } from '../../../../core/promotions-engine/promotion-mechanics.types';
 import { PharmacyOrdersClient } from '../../../../core/data-access/pharmacy-orders/pharmacy-orders.client';
+import { describeApiFailure } from '../../../../core/http/api-failure';
 import type { BorradorDePedido } from '../../../../core/data-access/pharmacy-orders/pharmacy-orders.types';
 import { NavigationService } from '../../../../core/navigation/navigation.service';
 import { empty, notFound, ready } from '../../../../core/view-state/view-state';
@@ -232,7 +233,12 @@ export class Checkout {
   /* ---- la confirmación final ------------------------------------------------ */
 
   protected readonly enviando = signal(false);
-  protected readonly falloAlConfirmar = signal(false);
+  /**
+   * Por qué no se pudo confirmar —el motivo de la API o el texto de la
+   * pantalla, con el código de soporte— o `null` si no falló. El carrito no se
+   * toca: el reintento manda el mismo borrador con la misma clave.
+   */
+  protected readonly falloAlConfirmar = signal<string | null>(null);
 
   protected readonly puedeConfirmar = computed(
     () =>
@@ -316,7 +322,7 @@ export class Checkout {
       return;
     }
     this.enviando.set(true);
-    this.falloAlConfirmar.set(false);
+    this.falloAlConfirmar.set(null);
     this.ordersClient
       .enviar({ borrador, modalidad: 'RETIRO', direccionDeEntrega: null })
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -324,9 +330,9 @@ export class Checkout {
         next: (pedido) => {
           void this.router.navigate([MIS_PEDIDOS_ROUTE, pedido.id]);
         },
-        error: () => {
+        error: (error: unknown) => {
           this.enviando.set(false);
-          this.falloAlConfirmar.set(true);
+          this.falloAlConfirmar.set(describeApiFailure(error, 'No se pudo enviar el pedido a la farmacia.'));
         },
       });
   }

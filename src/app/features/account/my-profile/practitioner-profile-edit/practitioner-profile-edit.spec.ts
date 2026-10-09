@@ -7,6 +7,7 @@ import { By } from '@angular/platform-browser';
 import { ActivatedRoute, convertToParamMap, provideRouter, Router } from '@angular/router';
 import { of } from 'rxjs';
 
+import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import { FilterBar } from '../../../../shared/components/organisms/filter-bar/filter-bar';
 import { WorkHistory } from '../work-history/work-history';
 
@@ -270,6 +271,23 @@ describe('PractitionerProfileEdit', () => {
    * veces que se preguntó. `confirmarCambios` y `confirmarDescarte` pasan por
    * `confirm`, así que alcanza con reemplazar ése.
    */
+  /** El último aviso encolado, sin pasar por el contenedor que lo pinta. */
+  function ultimoAviso(): { readonly title?: string; readonly message: string } | undefined {
+    return TestBed.inject(ToastService).toasts().at(-1);
+  }
+
+  /** Un rechazo de validación con la forma estructurada (`details.fields`). */
+  function rechazoPorCampo(field: string, mensaje: string): object {
+    return {
+      code: 'VALIDATION_FAILED',
+      message: 'Error de validación',
+      correlationId: 'corr-val',
+      details: { fields: [{ field, constraints: ['isValid'], messages: [mensaje] }] },
+      timestamp: '2026-10-08T00:00:00.000Z',
+      path: '/profiles',
+    };
+  }
+
   function responderConfirmacion(respuesta: boolean): { preguntas: number } {
     const registro = { preguntas: 0 };
     const dialogos = interno<{ confirm: () => Promise<boolean> }>('dialogs');
@@ -809,6 +827,81 @@ describe('PractitionerProfileEdit', () => {
     expect(interno<() => boolean>('guardandoMatricula')()).toBe(false);
   });
 
+  /* ---- el rechazo del alta de matrícula, dicho en el diálogo (2026-10-08) ----
+     Antes: «No se pudo agregar la matrícula. Pruebe de nuevo.» ante cualquier
+     fallo. Es el defecto del «paso 15»: el alta se caía sin decir por qué. */
+
+  it('un número rechazado queda pegado al campo del diálogo y lo escrito sigue ahí', async () => {
+    montarYCargar();
+    señal<string>('nuevoNumeroDeMatricula').set('LIC-9');
+
+    responderConfirmacion(true);
+    await interno<() => Promise<void>>('agregarMatricula')();
+    http
+      .expectOne('/profiles/practitioners/per-1/jurisdiction-authorizations')
+      .flush(rechazoPorCampo('licenseNumber', 'El número de matrícula ya está registrado.'), {
+        status: 400,
+        statusText: 'Bad Request',
+      });
+
+    expect(interno<(c: string) => string>('errorDelServidor')('licenseNumber')).toBe(
+      'El número de matrícula ya está registrado.',
+    );
+    // En el diálogo la sección visible es el diálogo: no se nombra pestaña.
+    expect(ultimoAviso()).toEqual(
+      expect.objectContaining({
+        title: 'Matrículas',
+        message: 'Revise los campos marcados y vuelva a guardar.',
+      }),
+    );
+    expect(señal<string>('nuevoNumeroDeMatricula')()).toBe('LIC-9');
+    expect(interno<() => boolean>('guardandoMatricula')()).toBe(false);
+  });
+
+  it('un rechazo de negocio de la matrícula dice el motivo y el código de soporte', async () => {
+    montarYCargar();
+    señal<string>('nuevoNumeroDeMatricula').set('LIC-9');
+
+    responderConfirmacion(true);
+    await interno<() => Promise<void>>('agregarMatricula')();
+    http.expectOne('/profiles/practitioners/per-1/jurisdiction-authorizations').flush(
+      {
+        code: 'CONFLICT',
+        message: 'Esa matrícula ya figura en su perfil.',
+        correlationId: 'corr-mat',
+        timestamp: '2026-10-08T00:00:00.000Z',
+        path: '/profiles',
+      },
+      { status: 409, statusText: 'Conflict' },
+    );
+
+    expect(ultimoAviso()?.message).toBe(
+      'Esa matrícula ya figura en su perfil. (Código de soporte: corr-mat)',
+    );
+  });
+
+  it('un respaldo demasiado grande lo dice, en vez de un genérico', async () => {
+    montarYCargar();
+    señal<string>('nuevoNumeroDeMatricula').set('LIC-9');
+    señal<readonly File[]>('archivoDeMatricula').set([
+      new File(['x'], 'matricula.pdf', { type: 'application/pdf' }),
+    ]);
+
+    responderConfirmacion(true);
+    await interno<() => Promise<void>>('agregarMatricula')();
+    http.expectOne((r) => r.url.endsWith('/common/files/upload')).flush(
+      {
+        code: 'PAYLOAD_TOO_LARGE',
+        message: 'El archivo supera los 5 MB.',
+        timestamp: '2026-10-08T00:00:00.000Z',
+        path: '/common/files/upload',
+      },
+      { status: 413, statusText: 'Payload Too Large' },
+    );
+
+    expect(ultimoAviso()?.message).toBe('El archivo supera los 5 MB.');
+  });
+
   it('la matrícula ofrece tres autoridades, con el colegio del título', () => {
     montarYCargar({ professionalTitle: 'Odontólogo / Odontóloga' });
 
@@ -1191,6 +1284,51 @@ describe('PractitionerProfileEdit', () => {
 
     expect(http.match('/profiles/practitioners/me/credentials')).toHaveLength(0);
     expect(interno<() => boolean>('guardandoCredencial')()).toBe(false);
+  });
+
+  it('un título rechazado por campo ancla el mensaje y cerrar el diálogo lo limpia', async () => {
+    montarYCargar();
+    señal<string>('nuevoTipoCredencial').set('cred-titulo');
+    señal<string>('nuevoNumeroCredencial').set('Médico cirujano');
+
+    responderConfirmacion(true);
+    await interno<() => Promise<void>>('agregarCredencial')();
+    http
+      .expectOne('/profiles/practitioners/me/credentials')
+      .flush(rechazoPorCampo('number', 'El número no puede superar 60 caracteres.'), {
+        status: 400,
+        statusText: 'Bad Request',
+      });
+
+    expect(interno<(c: string) => string>('errorDelServidor')('number')).toContain('60 caracteres');
+    expect(ultimoAviso()?.title).toBe('Formación');
+    expect(señal<string>('nuevoNumeroCredencial')()).toBe('Médico cirujano');
+
+    interno<() => void>('cerrarAltaDeTitulo')();
+    expect(interno<(c: string) => string>('errorDelServidor')('number')).toBe('');
+  });
+
+  it('un 500 del título lleva el código de soporte con el que se encuentra en el log', async () => {
+    montarYCargar();
+    señal<string>('nuevoTipoCredencial').set('cred-titulo');
+    señal<string>('nuevoNumeroCredencial').set('Médico cirujano');
+
+    responderConfirmacion(true);
+    await interno<() => Promise<void>>('agregarCredencial')();
+    http.expectOne('/profiles/practitioners/me/credentials').flush(
+      {
+        code: 'INTERNAL',
+        message: 'Internal server error',
+        correlationId: 'corr-500',
+        timestamp: '2026-10-08T00:00:00.000Z',
+        path: '/profiles',
+      },
+      { status: 500, statusText: 'Server Error' },
+    );
+
+    expect(ultimoAviso()?.message).toBe(
+      'No se pudo agregar el título. Intente de nuevo. (Código de soporte: corr-500)',
+    );
   });
 
   /* ======================================================================
@@ -2155,6 +2293,48 @@ describe('PractitionerProfileEdit', () => {
       expect(interno<() => boolean>('guardandoEdicion')()).toBe(false);
     });
 
+    it('una corrección rechazada se pinta debajo del campo del diálogo, que sigue abierto', async () => {
+      const fixture = montarConVista(PERFIL_CON_FILAS);
+      abrirTitulo();
+      fixture.detectChanges();
+      // El selector de tipo del diálogo pide su catálogo al dibujarse.
+      for (const pendiente of http.match((r) => r.url.startsWith('/system-context/'))) {
+        pendiente.flush({
+          code: 'credential-type',
+          name: 'Tipo de credencial',
+          definitionId: 'def-1',
+          valueSetId: 'vs-1',
+          allowCustomValue: false,
+          options: [],
+        });
+      }
+      fixture.detectChanges();
+      señal<string>('edicionNumero').set('TIT-1-corregido');
+      responderConfirmacion(true);
+
+      await interno<() => Promise<void>>('guardarEdicion')();
+      http
+        .expectOne('/profiles/practitioners/me/credentials/cred-9')
+        .flush(rechazoPorCampo('number', 'Ese número ya está en otro título.'), {
+          status: 400,
+          statusText: 'Bad Request',
+        });
+      fixture.detectChanges();
+
+      const dialogo: HTMLElement = fixture.nativeElement.querySelector(
+        '[data-testid="edicion-dialogo"]',
+      );
+      const campos = [...dialogo.querySelectorAll('app-form-field')];
+      const numero = campos.find((c) => (c.textContent ?? '').includes('Número / título obtenido'));
+      const fecha = campos.find((c) => (c.textContent ?? '').includes('Fecha de emisión'));
+      expect(numero?.textContent).toContain('Ese número ya está en otro título.');
+      expect(fecha?.textContent).not.toContain('Ese número');
+      expect(ultimoAviso()?.title).toBe('Formación');
+      // Lo corregido no se pierde: se ajusta y se vuelve a guardar.
+      expect(señal<string>('edicionNumero')()).toBe('TIT-1-corregido');
+      expect(señal<unknown>('edicion')()).not.toBeNull();
+    });
+
     it('corregir una matrícula con un respaldo nuevo también manda fileId', async () => {
       montarYCargar(PERFIL_CON_FILAS);
       const fila = interno<() => readonly { id: string }[]>('filasMatriculas')().find(
@@ -2963,6 +3143,82 @@ describe('PractitionerProfileEdit', () => {
       http.expectOne('/profiles/practitioners/me').flush(PERFIL_BASE);
 
       expect(interno<(c: string) => string>('errorDelServidor')('taxId')).toBe('');
+    });
+
+    /**
+     * Regla 6 del criterio humano: el error se dice donde se comete. El NIT
+     * vive en «Facturación»; si la persona guardó desde «Datos personales», el
+     * aviso nombra la pestaña y la pantalla la abre.
+     */
+    it('un campo rechazado en otra pestaña la nombra en el aviso y la abre', () => {
+      montarYCargar();
+      señal<number>('pestana').set(0);
+      señal<string>('nit').set('12345678');
+      interno<() => void>('guardarPresentacion')();
+      http
+        .expectOne('/profiles/practitioners/me')
+        .flush(rechazoPorCampo('taxId', 'El NIT no figura en el padrón.'), {
+          status: 400,
+          statusText: 'Bad Request',
+        });
+
+      expect(interno<(c: string) => string>('errorDelServidor')('taxId')).toBe(
+        'El NIT no figura en el padrón.',
+      );
+      expect(señal<number>('pestana')()).toBe(2);
+      expect(ultimoAviso()?.message).toBe(
+        `Revise los campos marcados en «${PESTANAS_DEL_EDITOR_MEDICO[2]}» y vuelva a guardar.`,
+      );
+    });
+
+    it('un campo rechazado en la pestaña abierta no mueve a la persona de donde está', () => {
+      montarYCargar();
+      señal<number>('pestana').set(2);
+      señal<string>('nit').set('12345678');
+      interno<() => void>('guardarPresentacion')();
+      http
+        .expectOne('/profiles/practitioners/me')
+        .flush(rechazoPorCampo('taxId', 'El NIT no figura en el padrón.'), {
+          status: 400,
+          statusText: 'Bad Request',
+        });
+
+      expect(señal<number>('pestana')()).toBe(2);
+    });
+
+    it('un campo que la pantalla no muestra va con su mensaje en el aviso', () => {
+      montarYCargar();
+      señal<string>('nit').set('12345678');
+      interno<() => void>('guardarPresentacion')();
+      http
+        .expectOne('/profiles/practitioners/me')
+        .flush(rechazoPorCampo('practiceStatus', 'El estado de práctica no admite ese valor.'), {
+          status: 400,
+          statusText: 'Bad Request',
+        });
+
+      // Nada de «revise los campos marcados» sin campo marcado.
+      expect(ultimoAviso()?.message).toBe('El estado de práctica no admite ese valor.');
+    });
+
+    it('un rechazo sin campo dice qué no se pudo hacer y el código de soporte', () => {
+      rechazar(
+        {
+          code: 'INTERNAL',
+          message: 'Algo salió mal',
+          correlationId: 'corr-perfil',
+          timestamp: '2026-09-21T00:00:00.000Z',
+          path: '/profiles/practitioners/me',
+        },
+        500,
+      );
+
+      expect(ultimoAviso()).toEqual(
+        expect.objectContaining({
+          title: 'Perfil',
+          message: 'No se pudo guardar el cambio. Intente de nuevo. (Código de soporte: corr-perfil)',
+        }),
+      );
     });
 
     /**

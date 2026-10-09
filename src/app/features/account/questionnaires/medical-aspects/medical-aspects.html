@@ -34,6 +34,7 @@
         [icon]="campo.icono"
         [label]="campo.rotulo"
         [hint]="campo.ayuda"
+        [errorMessage]="errorDe(campo.clave)"
       >
         @if (campo.largo) {
           <app-textarea
