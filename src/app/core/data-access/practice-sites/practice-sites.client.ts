@@ -3,6 +3,7 @@ import { inject, Injectable } from '@angular/core';
 import { map, type Observable } from 'rxjs';
 
 import { API_BASE_URL, apiUrl } from '../api';
+import { simulatorOnly } from '../simulator-only';
 import { maybeDate, maybeDateOnly, sinNulos, type ConNulos } from '../wire';
 import type {
   MyRoleAssignment,
@@ -71,9 +72,7 @@ export class PracticeSitesClient {
    */
   listMyRoleAssignments(): Observable<readonly MyRoleAssignment[]> {
     return this.http
-      .get<readonly ConNulos<WireRoleAssignment>[]>(
-        this.url('/practitioners/me/role-assignments'),
-      )
+      .get<readonly ConNulos<WireRoleAssignment>[]>(this.url('/practitioners/me/role-assignments'))
       .pipe(map((items) => items.map(aVinculacion)));
   }
 
@@ -169,9 +168,9 @@ export class PracticeSitesClient {
    * @returns La sede con el logo aplicado.
    */
   setSiteLogo(siteId: string, fileId: string | null): Observable<PracticeSite> {
-    return this.http.put<PracticeSite>(
-      this.url(`/practitioners/me/sites/${encodeURIComponent(siteId)}/logo`),
-      { fileId },
+    const url = this.url(`/practitioners/me/sites/${encodeURIComponent(siteId)}/logo`);
+    return simulatorOnly('Cambiar el logo del consultorio', url, () =>
+      this.http.put<PracticeSite>(url, { fileId }),
     );
   }
 
@@ -230,9 +229,7 @@ function aVinculacion(body: ConNulos<WireRoleAssignment>): MyRoleAssignment {
   };
 }
 
-function aResultadoDeVinculacion(
-  body: ConNulos<WireRoleAssignmentResult>,
-): RoleAssignmentResult {
+function aResultadoDeVinculacion(body: ConNulos<WireRoleAssignmentResult>): RoleAssignmentResult {
   const { createdAt, ...resto } = body;
   return {
     ...sinNulos(resto),

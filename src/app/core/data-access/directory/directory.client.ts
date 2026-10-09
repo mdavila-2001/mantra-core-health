@@ -32,7 +32,7 @@ import type {
   VerifyTenantConfirmation,
 } from './directory.types';
 import { BRANCH_SIMULATOR_EXTENSIONS } from './directory.types';
-import { withSimulatorExtensions } from '../simulator-only';
+import { simulatorOnly, withSimulatorExtensions } from '../simulator-only';
 
 /**
  * Cliente de `directory`: organizaciones de la plataforma y lo que hay dentro
@@ -159,13 +159,12 @@ export class DirectoryClient {
     branchId: string,
     changes: BranchChanges,
   ): Observable<BranchListItem> {
-    return this.http
-      .patch<ConNulos<WireBranchListItem>>(
-        this.url(`/tenants/${tenantId}/branches/${encodeURIComponent(branchId)}`),
-        stripUndefined(changes),
-        { headers: deLaOrganizacion(tenantId) },
-      )
-      .pipe(map(toBranchListItem));
+    const url = this.url(`/tenants/${tenantId}/branches/${encodeURIComponent(branchId)}`);
+    return simulatorOnly('Editar una sucursal', url, () =>
+      this.http.patch<ConNulos<WireBranchListItem>>(url, stripUndefined(changes), {
+        headers: deLaOrganizacion(tenantId),
+      }),
+    ).pipe(map(toBranchListItem));
   }
 
   /**

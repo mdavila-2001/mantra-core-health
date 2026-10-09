@@ -332,9 +332,9 @@ export class InsuranceClient {
    * producto seguro. **Sólo existe en la maqueta**: la API todavía no lo expone.
    */
   updatePlan(planId: string, body: UpdateInsurancePlanInput): Observable<{ readonly ok: true }> {
-    return this.http.put<{ readonly ok: true }>(
-      this.url(`/insurance-plans/${encodeURIComponent(planId)}`),
-      body,
+    const url = this.url(`/insurance-plans/${encodeURIComponent(planId)}`);
+    return simulatorOnly('Corregir los datos de un producto seguro', url, () =>
+      this.http.put<{ readonly ok: true }>(url, body),
     );
   }
 
@@ -343,7 +343,8 @@ export class InsuranceClient {
    * cláusulas. **Sólo existe en la maqueta**: la API todavía no lo expone.
    */
   deletePlan(planId: string): Observable<void> {
-    return this.http.delete<void>(this.url(`/insurance-plans/${encodeURIComponent(planId)}`));
+    const url = this.url(`/insurance-plans/${encodeURIComponent(planId)}`);
+    return simulatorOnly('Dar de baja un producto seguro', url, () => this.http.delete<void>(url));
   }
 
   /** Crea una cobertura dentro de un plan del carrier del tenant activo. */
