@@ -1,8 +1,9 @@
 import { HttpClient, HttpEvent } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { map, type Observable } from 'rxjs';
+import { forkJoin, map, of, switchMap, type Observable } from 'rxjs';
 
 import { API_BASE_URL, apiUrl } from '../api';
+import { simulatorOnly } from '../simulator-only';
 import { sinNulos, type ConNulos } from '../wire';
 import type {
   AccountActivation,
@@ -204,6 +205,38 @@ export class IamClient {
    * diferencia con el alta de paciente.
    */
   registerPractitioner(registration: PractitionerRegistration): Observable<RegisteredPractitioner> {
+    // La firma y el sello no viajan en base64: el DTO lo rechaza (informe B,
+    // C3). Primero se suben como imagen del registro y el alta lleva su id.
+    return forkJoin([
+      this.uploadSignatureImage(registration.signatureImageBase64, 'firma'),
+      this.uploadSignatureImage(registration.sealImageBase64, 'sello'),
+    ]).pipe(
+      switchMap(([signatureFileId, sealFileId]) =>
+        this.sendPractitionerRegistration(registration, signatureFileId, sealFileId),
+      ),
+    );
+  }
+
+  /**
+   * `POST /iam/auth/upload-registration-signature-image` — pre-carga pública
+   * de la firma o el sello del alta (PNG, JPEG o WebP, hasta 2 MB). Devuelve
+   * `null` sin subir nada si la persona no cargó la imagen.
+   */
+  private uploadSignatureImage(dataUrl: string | undefined, name: string): Observable<string | null> {
+    if (dataUrl === undefined) return of(null);
+    const blob = dataUrlToBlob(dataUrl);
+    const form = new FormData();
+    form.append('file', blob, `${name}.${blob.type.split('/')[1] ?? 'png'}`);
+    return this.http
+      .post<UploadedRegistrationDocument>(this.url('/iam/auth/upload-registration-signature-image'), form)
+      .pipe(map((uploaded) => uploaded.fileId));
+  }
+
+  private sendPractitionerRegistration(
+    registration: PractitionerRegistration,
+    signatureFileId: string | null,
+    sealFileId: string | null,
+  ): Observable<RegisteredPractitioner> {
     return this.http.post<RegisteredPractitioner>(this.url('/iam/auth/register-practitioner'), {
       email: registration.email,
       password: registration.password,
@@ -275,12 +308,8 @@ export class IamClient {
       ...(registration.profilePhotoBase64 === undefined
         ? {}
         : { profilePhotoBase64: registration.profilePhotoBase64 }),
-      ...(registration.signatureImageBase64 === undefined
-        ? {}
-        : { signatureImageBase64: registration.signatureImageBase64 }),
-      ...(registration.sealImageBase64 === undefined
-        ? {}
-        : { sealImageBase64: registration.sealImageBase64 }),
+      ...(signatureFileId === null ? {} : { signatureFileId }),
+      ...(sealFileId === null ? {} : { sealFileId }),
       ...(registration.occupationConceptId === undefined
         ? {}
         : { occupationConceptId: registration.occupationConceptId }),
@@ -650,8 +679,13 @@ export class IamClient {
    * Busca por `q` sobre el nombre visible o el correo de acceso; pagina por
    * cursor, sin total. Exige `SECURITY_ADMIN`. El texto viaja en el cuerpo y
    * no en la URL: un nombre o un correo en la query string queda en los logs
-   * de acceso de cualquier proxy. El `GET /iam/users?q=` de antes sigue vivo
-   * en la API pero obsoleto.
+   * de acceso de cualquier proxy.
+   *
+   * **Sólo existe en el simulador** (informe B, §2): en `origin/dev` la API
+   * publica sólo `GET /iam/users?q=`; el `POST` vive en `5f6cd06b`, en ramas
+   * de la API que no llegaron a `dev`. No se vuelve al `GET` a propósito: es
+   * justo el nombre o el correo en la URL que este `POST` vino a sacar.
+   * Contra la API real la petición no sale y el error dice qué falta.
    */
   searchUsers(query: UserSearchQuery = {}): Observable<UserPage> {
     // Clave a clave: el backend valida con `forbidNonWhitelisted` y un
@@ -662,9 +696,10 @@ export class IamClient {
     if (query.cursor !== undefined) filters['cursor'] = query.cursor;
     if (query.limit !== undefined) filters['limit'] = query.limit;
 
-    return this.http
-      .post<RespuestaPaginaUsuarios>(this.url('/iam/users/search'), filters)
-      .pipe(
+    const url = this.url('/iam/users/search');
+    return simulatorOnly('Buscar personas registradas', url, () =>
+      this.http.post<RespuestaPaginaUsuarios>(url, filters),
+    ).pipe(
         map((body) => ({
           ...body,
           items: body.items.map(toUserListItem),
@@ -732,4 +767,15 @@ function toAssistedResult(body: AssistedRegistrationBody): AssistedRegistrationR
     activationExpiresAt: new Date(body.activationExpiresAt),
     status: body.status,
   };
+}
+
+/** Un Data URI como `Blob`, para subirlo como archivo y no como texto. */
+function dataUrlToBlob(dataUrl: string): Blob {
+  const [header = '', content = ''] = dataUrl.split(',', 2);
+  const type = /^data:([^;,]+)/.exec(header)?.[1] ?? 'image/png';
+  if (!header.includes(';base64')) {
+    return new Blob([decodeURIComponent(content)], { type });
+  }
+  const binary = atob(content);
+  return new Blob([Uint8Array.from(binary, (c) => c.charCodeAt(0))], { type });
 }

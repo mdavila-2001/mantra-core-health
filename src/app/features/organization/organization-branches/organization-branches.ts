@@ -247,8 +247,9 @@ export class OrganizationBranches {
     this.rejected.set([]);
     const takenCodes = this.loaded().map((branch) => branch.code);
     createBranchesInSeries(this.directory, tenantId, drafts, takenCodes).subscribe(
-      ({ created, rejected }) => {
+      ({ created, rejected, unsavedNotice }) => {
         this.bulkSaving.set(false);
+        if (unsavedNotice !== null) this.toasts.warning(unsavedNotice);
         if (created > 0) {
           this.toasts.success(
             created === 1 ? 'Se creó 1 sucursal.' : `Se crearon ${created} sucursales.`,

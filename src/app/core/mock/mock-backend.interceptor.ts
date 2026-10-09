@@ -41,6 +41,18 @@ function routerSimulado(): Promise<MockRouter> {
   return router;
 }
 
+/**
+ * El catálogo de claves del contrato (`contract/`), en su propio trozo: son
+ * unos 260 kB generados desde el `openapi.json` de la API.
+ */
+type Validador = typeof import('./contract/contract-validator');
+let validador: Promise<Validador> | null = null;
+
+function validadorSimulado(): Promise<Validador> {
+  validador ??= import('./contract/contract-validator');
+  return validador;
+}
+
 export const mockBackendInterceptor: HttpInterceptorFn = (request, next) => {
   // `apiRealForzada` es el interruptor del stock de componentes: deja pasar la
   // petición a la red para poder comparar una pantalla con datos simulados y
@@ -54,10 +66,17 @@ export const mockBackendInterceptor: HttpInterceptorFn = (request, next) => {
     return next(request);
   }
 
-  return from(routerSimulado()).pipe(mergeMap((tabla) => atender(tabla, request, path)));
+  return from(Promise.all([routerSimulado(), validadorSimulado()])).pipe(
+    mergeMap(([tabla, contrato]) => atender(tabla, contrato, request, path)),
+  );
 };
 
-function atender(router: MockRouter, request: HttpRequest<unknown>, path: string): Observable<HttpEvent<unknown>> {
+function atender(
+  router: MockRouter,
+  contrato: Validador,
+  request: HttpRequest<unknown>,
+  path: string,
+): Observable<HttpEvent<unknown>> {
   const method = request.method.toUpperCase() as MockMethod;
 
   // El fallo a propósito va **antes** de buscar el manejador: lo que se quiere
@@ -67,6 +86,16 @@ function atender(router: MockRouter, request: HttpRequest<unknown>, path: string
   const fallo = falloPara(method, path);
   if (fallo !== null) {
     return timer(latencia(path)).pipe(mergeMap(() => emitirFallo(request, path, fallo)));
+  }
+
+  // `forbidNonWhitelisted`, como la API: una clave que el DTO no declara es
+  // un 400 acá también, y no recién en producción. Ver `contract/`.
+  const rechazo = contrato.contractViolations(method, path, request.body);
+  if (rechazo !== null && rechazo.length > 0) {
+    console.warn(`[mock] ${method} ${path} no cumple el contrato de la API:`, rechazo.map((v) => v.messages[0]).join(' · '));
+    return timer(latencia(path)).pipe(
+      mergeMap(() => emitir(request, { status: 400, body: contrato.validationFailedBody(rechazo) })),
+    );
   }
 
   const coincidencia = router.match(method, path);

@@ -383,14 +383,17 @@ export interface PractitionerRegistration {
   /** Foto de perfil en formato Base64 (Data URI o base64 plano). */
   readonly profilePhotoBase64?: string;
   /**
-   * La **imagen** de la firma manuscrita, en base64 (Data URI). Opcional.
+   * La **imagen** de la firma manuscrita, como la lee la pantalla (Data URI).
+   * Opcional. No es una firma electrónica.
    *
-   * **Sólo simulador**: el DTO real no la declara ni el backend tiene dónde
-   * guardarla (ver `docs/pendientes-backend-perfil-profesional.md`). No es una
-   * firma electrónica.
+   * **No viaja así**: `RegisterPractitionerDto` rechaza el base64 a propósito
+   * (`register-practitioner.dto.spec.ts`, informe B C3). El cliente la sube
+   * antes a `POST /iam/auth/upload-registration-signature-image` y manda el
+   * `signatureFileId` que devuelve; el alta reclama el archivo dentro de su
+   * transacción.
    */
   readonly signatureImageBase64?: string;
-  /** La **imagen** del sello médico, en base64. Mismas reservas que la firma. */
+  /** La **imagen** del sello médico. Mismo camino que la firma: viaja como `sealFileId`. */
   readonly sealImageBase64?: string;
   /** Ocupación del catálogo (VS_BO_OCCUPATION). */
   readonly occupationConceptId?: string;

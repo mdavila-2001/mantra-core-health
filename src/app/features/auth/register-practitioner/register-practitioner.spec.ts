@@ -2383,16 +2383,28 @@ describe('RegisterPractitioner', () => {
       expect(pagina.campos.some((c) => c.required === true)).toBe(false);
     });
 
-    it('envía las dos imágenes en el cuerpo cuando se cargan', () => {
+    it('sube las dos imágenes y el alta lleva su fileId, nunca el base64 (informe B, C3)', () => {
       completarProfesional();
       component.formProfesional.controls.signatureImageBase64.setValue(FIRMA);
       component.formProfesional.controls.sealImageBase64.setValue(SELLO);
 
       component.submit();
 
+      // El DTO real rechaza el base64 a propósito: primero se pre-cargan.
+      const subidas = http.match('/iam/auth/upload-registration-signature-image');
+      expect(subidas).toHaveLength(2);
+      for (const subida of subidas) {
+        expect(subida.request.body).toBeInstanceOf(FormData);
+        expect((subida.request.body as FormData).get('file')).toBeInstanceOf(Blob);
+      }
+      subidas[0]!.flush({ fileId: 'file-firma', originalName: 'firma.png', sizeBytes: 1, mimeType: 'image/png' });
+      subidas[1]!.flush({ fileId: 'file-sello', originalName: 'sello.png', sizeBytes: 1, mimeType: 'image/png' });
+
       const req = http.expectOne('/iam/auth/register-practitioner');
-      expect(req.request.body.signatureImageBase64).toBe(FIRMA);
-      expect(req.request.body.sealImageBase64).toBe(SELLO);
+      expect(req.request.body.signatureFileId).toBe('file-firma');
+      expect(req.request.body.sealFileId).toBe('file-sello');
+      expect(req.request.body.signatureImageBase64).toBeUndefined();
+      expect(req.request.body.sealImageBase64).toBeUndefined();
       req.flush(RESPUESTA_PRO);
     });
 
@@ -2401,9 +2413,10 @@ describe('RegisterPractitioner', () => {
 
       component.submit();
 
+      http.expectNone('/iam/auth/upload-registration-signature-image');
       const req = http.expectOne('/iam/auth/register-practitioner');
-      expect(req.request.body.signatureImageBase64).toBeUndefined();
-      expect(req.request.body.sealImageBase64).toBeUndefined();
+      expect(req.request.body.signatureFileId).toBeUndefined();
+      expect(req.request.body.sealFileId).toBeUndefined();
       req.flush(RESPUESTA_PRO);
     });
 

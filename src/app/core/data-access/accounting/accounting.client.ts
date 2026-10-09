@@ -300,7 +300,16 @@ export class AccountingClient {
     });
   }
 
-  /** `POST /accounting/clearing-documents` — compensar partidas contra su cobro. */
+  /**
+   * `POST /accounting/clearing-documents` — compensar partidas contra su cobro.
+   *
+   * **Contrato roto, declarado** (informe B, C9): `CreateClearingDto` de
+   * `origin/dev` exige `tenantId`, `practiceId`, `bankAccountId`,
+   * `clearingDate` e `items[]` con el importe de cada partida, y no declara
+   * `openItemIds`: la API real responde 400 siempre. Las pantallas que
+   * compensan (tablero y resumen) no preguntan la cuenta bancaria del cobro.
+   * La maqueta ya lo rechaza igual (`core/mock/contract/`).
+   */
   clearOpenItems(openItemIds: readonly string[]): Observable<ClearingResult> {
     return this.http.post<ClearingResult>(this.url('/accounting/clearing-documents'), {
       openItemIds,
@@ -355,6 +364,11 @@ export class AccountingClient {
    *
    * No es un informe: crea el asiento del período y mueve los saldos. Por eso
    * falla si el período está cerrado, igual que cualquier otro posteo.
+   *
+   * **Contrato roto, declarado** (informe B, C10): `RunDepreciationDto` exige
+   * además `fiscalPeriodId`, `depreciationExpenseAccountId`,
+   * `accumulatedDepreciationAccountId` y `postingDate`; con sólo `practiceId`
+   * la API real responde 400 siempre. El tablero no pregunta las dos cuentas.
    */
   runDepreciation(practiceId: string): Observable<RunResult> {
     return this.http.post<RunResult>(this.url('/accounting/depreciation/run'), { practiceId });
@@ -367,7 +381,14 @@ export class AccountingClient {
     });
   }
 
-  /** `POST /accounting/accruals/run` — reconoce el período de cada devengo. */
+  /**
+   * `POST /accounting/accruals/run` — reconoce el período de cada devengo.
+   *
+   * **Contrato roto, declarado** (informe B, C11): `RunAccrualsDto` corre
+   * **un** objeto por vez y exige `accrualObjectId`, `fiscalPeriodId` y
+   * `postingDate`; devuelve `{ postedLines, transactionIds }`, no este
+   * `RunResult`. Con sólo `practiceId` la API real responde 400 siempre.
+   */
   runAccruals(practiceId: string): Observable<RunResult> {
     return this.http.post<RunResult>(this.url('/accounting/accruals/run'), { practiceId });
   }

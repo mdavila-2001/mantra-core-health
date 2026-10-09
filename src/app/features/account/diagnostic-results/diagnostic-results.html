@@ -146,10 +146,10 @@
                   quiera.
                 </p>
 
-                <app-form-field label="Cuenta del profesional" for="destinatario">
+                <app-form-field label="Perfil del profesional" for="destinatario">
                   <app-input
                     id="destinatario"
-                    placeholder="Identificador de la cuenta"
+                    placeholder="Identificador del perfil profesional"
                     [value]="destinatario()"
                     (valueChange)="destinatario.set($any($event))"
                   />
@@ -175,7 +175,7 @@
                   <ul class="resultados__compartidos">
                     @for (share of compartidos(); track share.id) {
                       <li class="resultados__compartido">
-                        <span class="resultados__cuenta">{{ share.practitionerUserId }}</span>
+                        <span class="resultados__cuenta">{{ share.practitionerName ?? share.practitionerUserId }}</span>
                         <span class="resultados__vigencia">
                           @if (share.validTo !== undefined) {
                             hasta el {{ share.validTo | date: 'd MMM y' }}
