@@ -13,6 +13,7 @@ import { WorkHistory } from '../work-history/work-history';
 
 import { EDITOR_DOCTOR_TABS } from '../doctor-profile-tabs';
 import { PractitionerProfileEdit } from './practitioner-profile-edit';
+import { environment } from '../../../../../environments/environment';
 
 /**
  * Configurar el perfil profesional.
@@ -54,6 +55,14 @@ const PERFIL_BASE = {
   activity: { encounters: 0, medicationRequests: 0, clinicalNotes: 0, documents: 0 },
   createdAt: '2024-02-01T00:00:00.000Z',
 };
+
+
+// Estas pruebas ejercitan funciones que hoy sólo existen en la maqueta (informe B):
+// contra la API real sus claves no viajan, y eso lo cubren simulator-only.spec y
+// contract-drift.spec. En esta rama la maqueta viene apagada: se enciende acá.
+const mockBackendOriginal = environment.mockBackend;
+beforeAll(() => Object.assign(environment, { mockBackend: true }));
+afterAll(() => Object.assign(environment, { mockBackend: mockBackendOriginal }));
 
 describe('PractitionerProfileEdit', () => {
   let componente: PractitionerProfileEdit;

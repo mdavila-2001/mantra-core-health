@@ -18,9 +18,14 @@ import {
  * el error nombra lo que falta en vez de un 404 o un 400 genérico.
  */
 describe('simulator-only', () => {
+  // En esta rama la maqueta viene apagada por defecto: se enciende para el
+  // archivo, y «contra la API real» la vuelve a cortar con `forcedRealApi`.
+  const originalMockBackend = environment.mockBackend;
+  beforeAll(() => Object.assign(environment, { mockBackend: true }));
+  afterAll(() => Object.assign(environment, { mockBackend: originalMockBackend }));
   afterEach(() => forcedRealApi.set(false));
 
-  it('la maqueta de esta rama está encendida (si no, el resto no prueba nada)', () => {
+  it('con la maqueta encendida (si no, el resto no prueba nada)', () => {
     expect(environment.mockBackend).toBe(true);
   });
 
