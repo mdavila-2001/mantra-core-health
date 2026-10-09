@@ -139,6 +139,18 @@
             (cerrado)="terminarEdicion()"
           />
         } @else {
+          <!-- Regla 14: la ficha completa que no llegó se dice, con su
+               reintento; si no, faltan datos y parece que nunca existieron. -->
+          @if (errorDePerfil(); as motivo) {
+            <app-alert tone="warning" class="mi-perfil__aviso" data-testid="mi-perfil-ficha-incompleta">
+              {{ motivo }}
+              <div alert-actions>
+                <button app-button type="button" variant="outline" size="sm" (clicked)="recargar()">
+                  Volver a cargar
+                </button>
+              </div>
+            </app-alert>
+          }
           <app-view-state-host [state]="resumen()" (retry)="recargar()">
             <!-- El 403 por identidad ya no debería llegar: desde F-34 el resumen
              propio responde 200 a todo paciente. Se conserva **tal cual** para

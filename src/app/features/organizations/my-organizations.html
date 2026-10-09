@@ -29,6 +29,16 @@
   @if (errorDeSolicitud(); as mensaje) {
     <app-alert appAnuncio tone="error" class="alerta-de-formulario">{{ mensaje }}</app-alert>
   }
+  @if (errorDeOrganizaciones(); as motivo) {
+    <app-alert tone="warning" class="alerta-de-formulario" data-testid="organizaciones-no-cargaron">
+      {{ motivo }}
+      <div alert-actions>
+        <button app-button type="button" variant="outline" size="sm" (clicked)="cargarOrganizaciones()">
+          Volver a cargar
+        </button>
+      </div>
+    </app-alert>
+  }
   @if (solicitudEnviada()) {
     <app-alert appAnuncio [asertivo]="false" tone="success" class="alerta-de-formulario">
       Solicitud enviada. Queda pendiente hasta que la organización la apruebe.
@@ -61,7 +71,9 @@
 
 <!-- El organismo de tabla del sistema, en vez de la lista de tarjetas que el
      propietario marcó como «totalmente detonada» (2026-09-10). -->
-@if (filas().length === 0 && !cargandoVinculaciones()) {
+<!-- El vacío se dice sólo si la lectura respondió vacía: una caída va por el
+     estado de error de la tabla, con su reintento (regla 14). -->
+@if (sinVinculaciones()) {
   <app-empty-state
     title="Todavía no tiene vinculaciones"
     description="Pida una arriba para empezar."
@@ -73,6 +85,7 @@
     [trackBy]="porId"
     caption="Sus vinculaciones con organizaciones"
     data-testid="mis-vinculaciones"
+    (retry)="reintentarVinculaciones()"
   />
 }
 

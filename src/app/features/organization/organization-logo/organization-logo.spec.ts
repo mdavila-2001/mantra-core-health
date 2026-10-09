@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { of, throwError } from 'rxjs';
@@ -99,6 +100,49 @@ describe('OrganizationLogo', () => {
       'No se pudo guardar el logo',
     );
     expect(imagen()).toBeNull();
+  });
+
+  it('si la API explica por qué no lo guardó, lo dice con el código de soporte', async () => {
+    cliente.subir.mockReturnValue(
+      throwError(
+        () =>
+          new HttpErrorResponse({
+            status: 413,
+            error: { code: 'PAYLOAD_TOO_LARGE', message: 'La imagen supera los 2 MB.', correlationId: 'c-logo' },
+          }),
+      ),
+    );
+    await montar({ editar: true });
+
+    elegir([archivo()]);
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(el().querySelector('[data-testid="logo-organizacion-error"]')?.textContent).toContain(
+      'La imagen supera los 2 MB. (Código de soporte: c-logo)',
+    );
+  });
+
+  it('si quitar falla, lo dice y el logo sigue', async () => {
+    cliente.guardar.mockReturnValue(
+      throwError(
+        () =>
+          new HttpErrorResponse({
+            status: 500,
+            error: { code: 'INTERNAL', message: 'boom', correlationId: 'c-quitar' },
+          }),
+      ),
+    );
+    await montar({ editar: true, url: PNG_1X1 });
+
+    (el().querySelector('[data-testid="logo-organizacion-quitar"]') as HTMLElement).click();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(el().querySelector('[data-testid="logo-organizacion-error"]')?.textContent).toContain(
+      'No se pudo quitar el logo. Pruebe de nuevo. (Código de soporte: c-quitar)',
+    );
+    expect(imagen()).not.toBeNull();
   });
 
   it('quitar deja la organización sin logo', async () => {
