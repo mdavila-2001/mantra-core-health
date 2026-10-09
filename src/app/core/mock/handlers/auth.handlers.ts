@@ -202,6 +202,18 @@ resolverCuentasDePacientes(({ identificador, id, key }) => {
   return p === undefined ? undefined : cuentaDe(p);
 });
 
+/** El tope de `uploadSignatureImage` en la API. */
+const MAX_SIGNATURE_IMAGE_BYTES = 2 * 1024 * 1024;
+
+function leerComoDataUrl(archivo: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const lector = new FileReader();
+    lector.onload = () => resolve(String(lector.result));
+    lector.onerror = () => reject(lector.error ?? new Error('No se pudo leer la imagen'));
+    lector.readAsDataURL(archivo);
+  });
+}
+
 export function registrarAuth(router: MockRouter): void {
   router.post('/iam/auth/login', ({ body }) => {
     const datos = cuerpo<LoginBody>({ body });
@@ -242,24 +254,21 @@ export function registrarAuth(router: MockRouter): void {
     const datos = cuerpo<{
       email?: string;
       photoFileId?: string;
-      // Sólo simulador (el DTO real no los declara): la firma y el sello del alta,
-      // como imágenes en base64 igual que `profilePhotoBase64`.
-      signatureImageBase64?: string;
-      sealImageBase64?: string;
+      // Como `RegisterPractitionerDto`: la firma y el sello llegan como id de
+      // un archivo ya pre-cargado. El base64 de antes lo rechaza el validador
+      // de contrato (informe B, C3).
+      signatureFileId?: string;
+      sealFileId?: string;
     }>({ body });
     if (datos.email !== undefined && MOCK_USERS.some((u) => u.email === datos.email)) {
       return conflict('Ya existe una cuenta con ese correo', { email: datos.email });
     }
     const id = nuevoId('profesional-nuevo');
     const practitionerProfileId = uuid(`hpid-${id}`);
-    if (datos.signatureImageBase64 !== undefined || datos.sealImageBase64 !== undefined) {
+    if (datos.signatureFileId !== undefined || datos.sealFileId !== undefined) {
       guardarActivosDeFirma(practitionerProfileId, {
-        ...(datos.signatureImageBase64 === undefined
-          ? {}
-          : { signatureFileId: guardarImagenDeDataUrl(datos.signatureImageBase64, 'firma.png') }),
-        ...(datos.sealImageBase64 === undefined
-          ? {}
-          : { sealFileId: guardarImagenDeDataUrl(datos.sealImageBase64, 'sello.png') }),
+        ...(datos.signatureFileId === undefined ? {} : { signatureFileId: datos.signatureFileId }),
+        ...(datos.sealFileId === undefined ? {} : { sealFileId: datos.sealFileId }),
       });
     }
     return {
@@ -586,6 +595,35 @@ export function registrarAuth(router: MockRouter): void {
       // Como la API: la unidad sólo nace si el alta declaró el bloque.
       ...(diagnosticUnit === undefined ? {} : { diagnosticUnitId: nuevoId('unidad-diagnostica') }),
     };
+  });
+
+  // La firma o el sello del alta de médico (`uploadSignatureImage` de la API):
+  // sólo imagen, hasta 2 MB. Devuelve el `fileId` que el alta reclama.
+  router.post('/iam/auth/upload-registration-signature-image', ({ body }) => {
+    const archivo = typeof FormData !== 'undefined' && body instanceof FormData ? body.get('file') : null;
+    if (!(archivo instanceof Blob)) {
+      return reply(422, {
+        statusCode: 422,
+        code: 'PRECONDITION_FAILED',
+        message: 'No se recibió contenido en el campo "file"',
+        error: 'Unprocessable Entity',
+      });
+    }
+    if (!['image/png', 'image/jpeg', 'image/webp'].includes(archivo.type)) {
+      return reply(415, { statusCode: 415, code: 'VALIDATION_FAILED', message: 'La imagen debe ser PNG, JPEG o WebP' });
+    }
+    if (archivo.size > MAX_SIGNATURE_IMAGE_BYTES) {
+      return reply(422, { statusCode: 422, code: 'PRECONDITION_FAILED', message: 'La imagen supera el límite de 2 MB' });
+    }
+    return leerComoDataUrl(archivo).then((dataUrl) => ({
+      status: 201,
+      body: {
+        fileId: guardarImagenDeDataUrl(dataUrl, archivo instanceof File ? archivo.name : 'firma.png'),
+        originalName: archivo instanceof File ? archivo.name : 'firma.png',
+        sizeBytes: archivo.size,
+        mimeType: archivo.type,
+      },
+    }));
   });
 
   router.post('/iam/auth/upload-registration-document', ({ body }) => {

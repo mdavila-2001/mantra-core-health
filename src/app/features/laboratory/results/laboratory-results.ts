@@ -41,6 +41,7 @@ import type {
   LabResultKind,
   LabResultTarget,
 } from '../../../core/data-access/lab-portal/lab-portal.types';
+import { unavailableMessageOf } from '../../../core/data-access/simulator-only';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { dataOf, empty, loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
@@ -444,7 +445,8 @@ export class LaboratoryResults {
         this.loadFiles();
         this.loadTargets();
       },
-      error: () => this.toast.error('No se pudo retirar el archivo. Pruebe de nuevo.'),
+      error: (error: unknown) =>
+        this.toast.error(unavailableMessageOf(error) ?? 'No se pudo retirar el archivo. Pruebe de nuevo.'),
     });
   }
 
@@ -461,7 +463,8 @@ export class LaboratoryResults {
         link.remove();
         setTimeout(() => URL.revokeObjectURL(url), 60_000);
       },
-      error: () => this.toast.error(`No se pudo descargar ${file.fileName}.`),
+      error: (error: unknown) =>
+        this.toast.error(unavailableMessageOf(error) ?? `No se pudo descargar ${file.fileName}.`),
     });
   }
 

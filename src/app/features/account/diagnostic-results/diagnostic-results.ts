@@ -177,7 +177,7 @@ export class DiagnosticResults {
   /** Los compartidos del resultado abierto. */
   protected readonly compartidos = signal<readonly DiagnosticResultShare[]>([]);
 
-  /** Con quién se está por compartir: la cuenta del profesional. */
+  /** Con quién se está por compartir: el perfil del profesional. */
   protected readonly destinatario = signal('');
 
   /** Hasta cuándo vale el acceso que se está por dar. */
@@ -327,7 +327,7 @@ export class DiagnosticResults {
 
     this.operando.set(reportId);
     this.diagnostics
-      .shareResult(reportId, { practitionerUserId: destinatario, validUntil: hasta })
+      .shareResult(reportId, { practitionerProfileId: destinatario, validUntil: hasta })
       .subscribe({
         next: (share) => {
           this.operando.set(null);

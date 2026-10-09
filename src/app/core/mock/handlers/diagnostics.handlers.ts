@@ -1454,11 +1454,19 @@ export function registrarDiagnostico(router: MockRouter): void {
     return resultadoPropio(r);
   });
 
-  router.get('/diagnostic-results/me/:id/shares', ({ params }) => compartidos.filtrar((s) => s.reportId === params['id']));
+  router.get('/diagnostic-results/me/:id/shares', ({ params }) => ({
+    reportId: params['id'],
+    items: compartidos.filtrar((s) => s.reportId === params['id']),
+  }));
 
+  // `ShareDiagnosticResultDto`: el profesional va por su perfil, sin motivo.
+  // La forma vieja (`practitionerUserId`, `reason`) la rechaza el validador de
+  // contrato antes de llegar acá.
   router.post('/diagnostic-results/me/:id/shares', (request) => {
-    const datos = cuerpo<{ practitionerUserId: string; validUntil: string }>(request);
-    const nuevo = compartidos.agregar({ id: nuevoId('share'), reportId: request.params['id']!, practitionerUserId: datos.practitionerUserId ?? MEDICA.userId, validFrom: ahora(), validTo: datos.validUntil ?? iso(30), active: true });
+    const datos = cuerpo<{ practitionerProfileId: string; validUntil: string }>(request);
+    const profesional = PROFESIONALES.find((p) => p.id === datos.practitionerProfileId);
+    if (profesional === undefined) return notFound('No encontramos ese perfil profesional.');
+    const nuevo = compartidos.agregar({ id: nuevoId('share'), reportId: request.params['id']!, practitionerUserId: profesional.userId, validFrom: ahora(), validTo: datos.validUntil ?? iso(30), active: true });
     return { status: 201, body: nuevo };
   });
 

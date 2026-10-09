@@ -11,6 +11,8 @@ import type {
   CreateClinicalNoteInput,
   ListChartNotesParams,
 } from './chart-notes.types';
+import { CHART_NOTE_SIMULATOR_EXTENSIONS } from './chart-notes.types';
+import { withSimulatorExtensions } from '../simulator-only';
 
 /** La nota como viaja: las fechas son texto ISO. */
 type WireChartNote = Omit<ChartNote, 'signedAt' | 'createdAt'> & {
@@ -72,7 +74,10 @@ export class ChartNotesClient {
    * @returns La nota y la versión recién creadas.
    */
   createNote(input: CreateClinicalNoteInput): Observable<ClinicalNoteVersionRef> {
-    return this.http.post<ClinicalNoteVersionRef>(this.url('/charts/notes'), input);
+    return this.http.post<ClinicalNoteVersionRef>(
+      this.url('/charts/notes'),
+      withSimulatorExtensions(input, CHART_NOTE_SIMULATOR_EXTENSIONS),
+    );
   }
 
   /**
@@ -88,7 +93,7 @@ export class ChartNotesClient {
   ): Observable<ClinicalNoteVersionRef> {
     return this.http.put<ClinicalNoteVersionRef>(
       this.url(`/charts/notes/${encodeURIComponent(noteId)}/versions`),
-      input,
+      withSimulatorExtensions(input, CHART_NOTE_SIMULATOR_EXTENSIONS),
     );
   }
 
@@ -98,15 +103,17 @@ export class ChartNotesClient {
    *
    * @param noteId - La nota.
    * @param versionId - La versión que se firma; tiene que ser la vigente.
+   * @param signerProfileId - El perfil profesional de quien firma. Es
+   *   obligatorio en `SignVersionDto`: sin él la API responde 400.
    * @returns La nota, ya con `signedAt`.
    */
-  signVersion(noteId: string, versionId: string): Observable<ChartNote> {
+  signVersion(noteId: string, versionId: string, signerProfileId: string): Observable<ChartNote> {
     return this.http
       .post<WireChartNote>(
         this.url(
           `/charts/notes/${encodeURIComponent(noteId)}/versions/${encodeURIComponent(versionId)}/sign`,
         ),
-        {},
+        { signerProfileId },
       )
       .pipe(map(toNote));
   }

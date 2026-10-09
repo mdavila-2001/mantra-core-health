@@ -1,6 +1,6 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { type Observable } from 'rxjs';
+import { throwError, type Observable } from 'rxjs';
 
 import { API_BASE_URL, apiUrl } from '../api';
 import type {
@@ -29,6 +29,13 @@ import type {
   PharmacySummary,
   PharmacyStatusResult,
 } from './pharmacy.types';
+import { PHARMACY_PRODUCT_SIMULATOR_EXTENSIONS, pharmacyProductExtensionsLabel } from './pharmacy.types';
+import {
+  droppedSimulatorExtensions,
+  simulatorOnly,
+  unavailableInApiError,
+  withSimulatorExtensions,
+} from '../simulator-only';
 
 /**
  * Cliente del directorio de farmacias y su disponibilidad (carril E3).
@@ -108,14 +115,18 @@ export class PharmacyClient {
    * `POST /pharmacies/:pharmacyId/catalog-requests` — «no encuentro mi
    * medicamento»: pide que un administrador lo incorpore al catálogo. La
    * farmacia no publica un producto libre.
+   *
+   * **Sólo existe en el simulador**: la API de `origin/dev` no publica esta
+   * ruta (informe B, §2). Contra la API real no sale la petición y el error
+   * dice que la función no está disponible.
    */
   requestCatalogEntry(
     pharmacyId: string,
     draft: CatalogRequestDraft,
   ): Observable<CatalogRequestCreated> {
-    return this.http.post<CatalogRequestCreated>(
-      this.url(`/pharmacies/${encodeURIComponent(pharmacyId)}/catalog-requests`),
-      sinVaciosDeSolicitud(draft),
+    const url = this.url(`/pharmacies/${encodeURIComponent(pharmacyId)}/catalog-requests`);
+    return simulatorOnly('Pedir que se incorpore un medicamento al catálogo', url, () =>
+      this.http.post<CatalogRequestCreated>(url, sinVaciosDeSolicitud(draft)),
     );
   }
 
@@ -224,29 +235,37 @@ export class PharmacyClient {
   ): Observable<PharmacyProductCreated> {
     return this.http.post<PharmacyProductCreated>(
       this.url(`/pharmacies/${encodeURIComponent(pharmacyId)}/products`),
-      sinVacios(draft),
+      withSimulatorExtensions(sinVacios(draft), PHARMACY_PRODUCT_SIMULATOR_EXTENSIONS),
     );
   }
 
   /**
    * `PATCH /pharmacies/:pharmacyId/products/:productId` — edita un producto
-   * del catálogo: nombre, presentación, precio, categoría, descripción y si
-   * hoy lo tiene o no (`inStock`).
+   * del catálogo.
    *
-   * **Sólo existe en el simulador** (P47): la API real no publica edición de
-   * productos. Devuelve el producto como lo lista la búsqueda.
+   * La API real **sí** publica esta ruta, pero `PharmacyUpdateProductDto` sólo
+   * acepta los datos del catálogo (`brandName`, `genericName`, `strengthText`,
+   * `packageSizeText`, `requiresPrescription`). Precio, categoría,
+   * descripción, disponibilidad, publicación, existencias e imágenes son
+   * extensión de la maqueta (P47): contra la API real no viajan, y si el
+   * cambio no tenía otra cosa, el error dice qué no está disponible.
    */
   updateProduct(
     pharmacyId: string,
     productId: string,
     changes: PharmacyProductChanges,
   ): Observable<PharmacyProduct> {
-    return this.http.patch<PharmacyProduct>(
-      this.url(
-        `/pharmacies/${encodeURIComponent(pharmacyId)}/products/${encodeURIComponent(productId)}`,
-      ),
-      changes,
+    const url = this.url(
+      `/pharmacies/${encodeURIComponent(pharmacyId)}/products/${encodeURIComponent(productId)}`,
     );
+    const body = withSimulatorExtensions(changes, PHARMACY_PRODUCT_SIMULATOR_EXTENSIONS);
+    const unsaved = droppedSimulatorExtensions(changes, PHARMACY_PRODUCT_SIMULATOR_EXTENSIONS);
+    if (unsaved.length > 0 && Object.keys(body).length === 0) {
+      return throwError(() =>
+        unavailableInApiError(`Cambiar ${pharmacyProductExtensionsLabel(unsaved)} de un producto`, url),
+      );
+    }
+    return this.http.patch<PharmacyProduct>(url, body);
   }
 
   /**

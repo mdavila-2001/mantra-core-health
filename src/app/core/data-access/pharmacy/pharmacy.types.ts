@@ -102,6 +102,41 @@ export interface PharmacyProduct {
   readonly imageFileIds?: readonly string[];
 }
 
+/**
+ * Claves del producto que `PharmacyCreateProductDto` y
+ * `PharmacyUpdateProductDto` de `origin/dev` no declaran (P47; informe B, C1 y
+ * C2). La maqueta las guarda; contra la API real no viajan. El precio real
+ * vive en `POST /pharmacies/:id/price-lists/:listId/prices`, que este portal
+ * todavía no usa.
+ */
+export const PHARMACY_PRODUCT_SIMULATOR_EXTENSIONS: readonly string[] = [
+  'unitPrice',
+  'category',
+  'description',
+  'inStock',
+  'status',
+  'stock',
+  'minStock',
+  'imageFileIds',
+];
+
+const PHARMACY_PRODUCT_EXTENSION_LABELS: Readonly<Record<string, string>> = {
+  unitPrice: 'el precio',
+  category: 'la categoría',
+  description: 'la descripción',
+  inStock: 'la disponibilidad',
+  status: 'el estado de publicación',
+  stock: 'las existencias',
+  minStock: 'el umbral de existencias',
+  imageFileIds: 'las imágenes',
+};
+
+/** Cómo se nombran, para la persona, los datos del producto que la API no guarda. */
+export function pharmacyProductExtensionsLabel(keys: readonly string[]): string {
+  const labels = keys.map((key) => PHARMACY_PRODUCT_EXTENSION_LABELS[key] ?? key);
+  return labels.length === 1 ? labels[0]! : `${labels.slice(0, -1).join(', ')} y ${labels.at(-1)!}`;
+}
+
 /** El estado de un producto en el catálogo de la farmacia (P47). */
 export type PharmacyProductStatus = 'PUBLISHED' | 'DRAFT' | 'WITHDRAWN';
 

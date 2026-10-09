@@ -337,16 +337,24 @@ export interface PatientOwnOrders {
 export interface DiagnosticResultShare {
   readonly id: string;
   readonly reportId: string;
+  /** La cuenta del profesional con acceso; la API la resuelve del perfil. */
   readonly practitionerUserId: string;
+  /** Nombre del profesional, si la API lo resolvió. */
+  readonly practitionerName?: string;
   readonly validFrom: Date;
   readonly validTo?: Date;
   readonly active: boolean;
 }
 
-/** Compartir un resultado: con quién y hasta cuándo. */
+/**
+ * Compartir un resultado: con quién y hasta cuándo.
+ *
+ * Espejo de `ShareDiagnosticResultDto` (`origin/dev`): el profesional va por
+ * su **perfil** y no hay motivo — la API lo cambió en `e57b3aaa`
+ * (2026-09-26, «compartir por perfil y sin motivo inventado»).
+ */
 export interface NewDiagnosticResultShare {
-  readonly practitionerUserId: string;
+  readonly practitionerProfileId: string;
   /** Obligatorio: no existe compartir sin plazo. */
   readonly validUntil: Date;
-  readonly reason?: string;
 }

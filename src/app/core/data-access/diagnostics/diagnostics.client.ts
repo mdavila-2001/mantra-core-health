@@ -271,9 +271,8 @@ export class DiagnosticsClient {
       .post<WireShare>(
         this.url(`/diagnostic-results/me/${encodeURIComponent(reportId)}/shares`),
         {
-          practitionerUserId: compartir.practitionerUserId,
+          practitionerProfileId: compartir.practitionerProfileId,
           validUntil: compartir.validUntil.toISOString(),
-          ...(compartir.reason === undefined ? {} : { reason: compartir.reason }),
         },
       )
       .pipe(map(toShare));
