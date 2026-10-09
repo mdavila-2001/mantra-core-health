@@ -596,6 +596,11 @@ function asientoDeCorrida(descripcion: string, debito: string, credito: string, 
   };
 }
 
+/** El código de una cuenta del plan simulado, o `undefined` si el id no es de ninguna. */
+function codigoDeCuenta(id: string | undefined): string | undefined {
+  return CUENTAS.find((c) => c.id === id)?.code;
+}
+
 /** El período corriente, o `undefined` si el ejercicio no tiene ninguno abierto. */
 function periodoAbierto(): { id: string; name: string; status: string } | undefined {
   return periodos.todos().find((p) => p.status === 'OPEN');
@@ -697,28 +702,43 @@ export function registrarFinanzas(router: MockRouter): void {
   });
 
   router.post('/accounting/clearing-documents', (request) => {
-    const datos = cuerpo<{ openItemIds?: string[] }>(request);
-    const ids = datos.openItemIds ?? [];
-    const encontradas = ids.map((id) => partidasAbiertas.get(id)).filter((p) => p !== undefined);
-    if (encontradas.length === 0) {
-      return preconditionFailed('No se indicó ninguna partida a compensar', { openItemIds: ids });
+    // Mismo cuerpo que `CreateClearingDto` (informe B, C9): la cuenta de banco
+    // y el importe de cada partida, que puede ser parcial.
+    const datos = cuerpo<{ items?: { openItemId: string; clearedAmount: string }[] }>(request);
+    const items = datos.items ?? [];
+    for (const item of items) {
+      const partida = partidasAbiertas.get(item.openItemId);
+      if (partida === undefined) {
+        return notFound('Partida abierta no encontrada');
+      }
+      const pendiente = Number(partida.amount) - Number(partida.clearedAmount);
+      const importe = Number(item.clearedAmount);
+      if (importe <= 0 || importe > pendiente + 0.001) {
+        return preconditionFailed('Importe compensado inválido', {
+          openItemId: item.openItemId,
+          clearedAmount: item.clearedAmount,
+          outstanding: d(pendiente),
+        });
+      }
+    }
+    if (items.length === 0) {
+      return preconditionFailed('No se indicó ninguna partida a compensar', {});
     }
     const documento = nuevoId('clearing');
-    let total = 0;
-    for (const partida of encontradas) {
-      total += Number(partida.amount) - Number(partida.clearedAmount);
+    for (const item of items) {
+      const partida = partidasAbiertas.get(item.openItemId)!;
       partidasAbiertas.actualizar(partida.id, {
-        clearedAmount: partida.amount,
+        clearedAmount: d(Number(partida.clearedAmount) + Number(item.clearedAmount)),
         clearingDocumentId: documento,
       });
     }
     return {
       status: 201,
       body: {
-        clearingDocumentId: documento,
-        clearedItems: encontradas.length,
-        clearedAmount: d(total),
-        clearedAt: ahora(),
+        id: documento,
+        clearingNumber: `CLR-${documento.slice(-6).toUpperCase()}`,
+        transactionId: nuevoId('journal'),
+        clearedItems: items.length,
       },
     };
   });
@@ -790,7 +810,9 @@ export function registrarFinanzas(router: MockRouter): void {
     };
   });
 
-  router.post('/accounting/depreciation/run', () => {
+  router.post('/accounting/depreciation/run', (request) => {
+    // Las dos cuentas vienen en el cuerpo (informe B, C10), como en la real.
+    const datos = cuerpo<{ depreciationExpenseAccountId: string; accumulatedDepreciationAccountId: string }>(request);
     const periodo = periodoAbierto();
     if (periodo === undefined) {
       return preconditionFailed('No hay período abierto: la amortización no tiene dónde postearse', {});
@@ -799,34 +821,29 @@ export function registrarFinanzas(router: MockRouter): void {
       (a) => a.statusConceptId === ESTADO['ST-ACTIVE'] && Number(a.bookValue) > 0.01,
     );
     if (elegibles.length === 0) {
-      return preconditionFailed('No hay activos amortizables', {});
+      return preconditionFailed('No hay activos elegibles para depreciar en el periodo', {});
     }
-    let total = 0;
+    const gasto = codigoDeCuenta(datos.depreciationExpenseAccountId) ?? '5.5';
+    const acumulada = codigoDeCuenta(datos.accumulatedDepreciationAccountId) ?? '1.5';
+    const transactionIds: string[] = [];
     for (const activo of elegibles) {
       // La última cuota nunca deja el valor neto en negativo: amortiza lo que
       // queda y el activo termina en cero, que es donde tiene que terminar.
       const cuota = Math.min(cuotaMensualDe(activo), Number(activo.bookValue));
-      total += cuota;
       activos.actualizar(activo.id, { bookValue: d(Number(activo.bookValue) - cuota) });
+      // Un asiento por activo, como la corrida real.
+      const asiento = asientoDeCorrida(
+        `Depreciación ${activo.code} · ${periodo.name}`,
+        gasto,
+        acumulada,
+        cuota,
+      );
+      asientos.agregar(asiento);
+      transactionIds.push(asiento.id);
     }
-    // Un solo documento colectivo, como la corrida real: gasto contra
-    // amortización acumulada.
-    const asiento = asientoDeCorrida(
-      `Amortización del período · ${periodo.name} · ${elegibles.length} activos`,
-      '5.5',
-      '1.5',
-      total,
-    );
-    asientos.agregar(asiento);
     return {
       status: 201,
-      body: {
-        transactionId: asiento.id,
-        transactionNumber: asiento.transactionNumber,
-        assets: elegibles.length,
-        amount: d(total),
-        periodName: periodo.name,
-      },
+      body: { depreciatedAssets: elegibles.length, transactionIds },
     };
   });
 
@@ -858,41 +875,29 @@ export function registrarFinanzas(router: MockRouter): void {
     };
   });
 
-  router.post('/accounting/accruals/run', () => {
+  router.post('/accounting/accruals/run', (request) => {
+    // Un objeto por llamada, con sus propias cuentas (informe B, C11).
+    const datos = cuerpo<{ accrualObjectId: string }>(request);
     const periodo = periodoAbierto();
     if (periodo === undefined) {
       return preconditionFailed('No hay período abierto: el devengo no tiene dónde postearse', {});
     }
-    const pendientes = devengos.filtrar((dev) => dev.postedPeriods < dev.periods);
-    if (pendientes.length === 0) {
-      return preconditionFailed('No queda ningún devengo con períodos pendientes', {});
+    const dev = datos.accrualObjectId === undefined ? undefined : devengos.get(datos.accrualObjectId);
+    if (dev === undefined) return notFound('Objeto de devengo no encontrado');
+    if (dev.postedPeriods >= dev.periods) {
+      return preconditionFailed('No hay líneas de devengo pendientes en el periodo', {
+        accrualObjectId: dev.id,
+      });
     }
-    const creados: string[] = [];
-    let total = 0;
-    for (const dev of pendientes) {
-      const cuota = Number(dev.totalAmount) / dev.periods;
-      total += cuota;
-      // Un documento por objeto y no uno colectivo: cada devengo va contra sus
-      // propias cuentas, y juntarlos escondería contra qué se imputó cada uno.
-      const asiento = asientoDeCorrida(
-        `Devengo ${dev.code} · ${dev.name} · período ${dev.postedPeriods + 1}/${dev.periods}`,
-        dev.debitAccount,
-        dev.creditAccount,
-        cuota,
-      );
-      asientos.agregar(asiento);
-      creados.push(asiento.transactionNumber);
-      devengos.actualizar(dev.id, { postedPeriods: dev.postedPeriods + 1 });
-    }
-    return {
-      status: 201,
-      body: {
-        objects: pendientes.length,
-        amount: d(total),
-        transactionNumbers: creados,
-        periodName: periodo.name,
-      },
-    };
+    const asiento = asientoDeCorrida(
+      `Devengo ${dev.code} · ${dev.name} · período ${dev.postedPeriods + 1}/${dev.periods}`,
+      dev.debitAccount,
+      dev.creditAccount,
+      Number(dev.totalAmount) / dev.periods,
+    );
+    asientos.agregar(asiento);
+    devengos.actualizar(dev.id, { postedPeriods: dev.postedPeriods + 1 });
+    return { status: 201, body: { postedLines: 1, transactionIds: [asiento.id] } };
   });
 
   /* ---- el flujo del documento ---------------------------------------------
