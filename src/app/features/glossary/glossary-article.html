@@ -121,9 +121,13 @@
                   }
                   <span>
                     {{ imagen.author }} ·
-                    <a [href]="imagen.licenseUrl" target="_blank" rel="noopener noreferrer">{{
-                      imagen.license
-                    }}</a>
+                    @if (enlaceWeb(imagen.licenseUrl); as licencia) {
+                      <a [href]="licencia" target="_blank" rel="noopener noreferrer">{{
+                        imagen.license
+                      }}</a>
+                    } @else {
+                      {{ imagen.license }}
+                    }
                     ·
                     <a [href]="imagen.sourcePage" target="_blank" rel="noopener noreferrer"
                       >página de origen</a
@@ -178,7 +182,11 @@
       <img [src]="imagen.url" [alt]="imagen.altText" />
       <figcaption class="articulo__pie">
         {{ imagen.author }} ·
-        <a [href]="imagen.licenseUrl" target="_blank" rel="noopener noreferrer">{{ imagen.license }}</a>
+        @if (enlaceWeb(imagen.licenseUrl); as licencia) {
+          <a [href]="licencia" target="_blank" rel="noopener noreferrer">{{ imagen.license }}</a>
+        } @else {
+          {{ imagen.license }}
+        }
         ·
         <a [href]="imagen.sourcePage" target="_blank" rel="noopener noreferrer">página de origen</a>
       </figcaption>

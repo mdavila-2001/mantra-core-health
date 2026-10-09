@@ -102,7 +102,8 @@ export interface GlossaryArticleImage {
   readonly altTextQuality: 'caption' | 'generic';
   readonly author: string;
   readonly license: string;
-  readonly licenseUrl: string;
+  /** `null` en las de dominio público: la fuente no trae enlace de licencia. */
+  readonly licenseUrl: string | null;
   readonly sourcePage: string;
   readonly retrievedAt: string;
   /** Cómo se enlazó la imagen al término. `label-match` no se muestra sin revisión humana. */

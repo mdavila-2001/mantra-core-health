@@ -98,8 +98,10 @@ export function fechaLegible(iso: string): string {
  * Una `label-match` (enlazada por el nombre del ítem de Wikidata, no por un
  * identificador) queda apagada hasta que una revisión humana por muestreo la
  * apruebe (DECISIONS.md, 2026-10-09, D3): se descarta por `match` y por
- * `enabled === false`. Una imagen cuya URL, miniatura, licencia u origen no es `https://` tampoco
- * se pinta: sin licencia ni origen verificables no se muestra (regla 12.2.7).
+ * `enabled === false`. Una imagen cuya URL, miniatura o página de origen no es `https://` tampoco
+ * se pinta. El enlace de licencia es opcional (las de dominio público no lo
+ * traen, y Commons publica los de CC con `http://`): si existe, tiene que ser
+ * `http(s)://`; nunca `javascript:` ni `data:`.
  */
 export function imagenesVisibles(
   imagenes: readonly GlossaryArticleImage[],
@@ -108,9 +110,10 @@ export function imagenesVisibles(
     (imagen) =>
       imagen.enabled !== false &&
       imagen.match !== 'label-match' &&
-      [imagen.url, imagen.thumbUrl, imagen.licenseUrl, imagen.sourcePage].every(
+      [imagen.url, imagen.thumbUrl, imagen.sourcePage].every(
         (enlace) => enlaceSeguro(enlace) !== null,
-      ),
+      ) &&
+      (imagen.licenseUrl === null || enlaceWeb(imagen.licenseUrl) !== null),
   );
 }
 
@@ -226,4 +229,9 @@ export function fuentesDeLosDatos(
 /** Sólo `https://`: la URL de una fuente nunca se pinta como `javascript:` ni `data:`. */
 export function enlaceSeguro(url: string): string | null {
   return /^https:\/\//i.test(url) ? url : null;
+}
+
+/** Un enlace que no ejecuta código: `http://` o `https://` (los enlaces de licencia de Commons son `http://`). */
+export function enlaceWeb(url: string | null | undefined): string | null {
+  return typeof url === 'string' && /^https?:\/\//i.test(url) ? url : null;
 }

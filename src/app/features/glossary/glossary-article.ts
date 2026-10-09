@@ -7,6 +7,7 @@ import type { Hecho } from '../../shared/components/molecules/fact-list/fact-lis
 import { ContentDialog } from '../../shared/components/organisms/content-dialog/content-dialog';
 import {
   enlaceSeguro,
+  enlaceWeb,
   fechaLegible,
   fuentesDeLosDatos,
   imagenesVisibles,
@@ -59,6 +60,7 @@ export class GlossaryArticleView {
   protected readonly fechaLegible = fechaLegible;
   protected readonly nombreDeFuente = nombreDeFuente;
   protected readonly enlaceSeguro = enlaceSeguro;
+  protected readonly enlaceWeb = enlaceWeb;
 
   /** Lleva a una sección: la desplaza a la vista y le da el foco a su título. */
   protected irA(ancla: string): void {

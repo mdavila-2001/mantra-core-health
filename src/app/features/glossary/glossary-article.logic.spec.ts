@@ -63,6 +63,12 @@ describe('glossary-article.logic', () => {
     expect(imagenesVisibles([imagen({ thumbUrl: 'http://x/y.jpg' })])).toEqual([]);
     // Los enlaces de licencia y de origen van al `href`: tampoco pueden ser `javascript:`.
     expect(imagenesVisibles([imagen({ licenseUrl: 'javascript:alert(1)' })])).toEqual([]);
+    // Dominio público: la fuente no trae enlace de licencia y la imagen SÍ se muestra.
+    expect(imagenesVisibles([imagen({ license: 'Public domain', licenseUrl: null })])).toHaveLength(1);
+    // Commons publica los enlaces de CC con http://: es un enlace web, no código.
+    expect(
+      imagenesVisibles([imagen({ licenseUrl: 'http://creativecommons.org/licenses/by-sa/3.0/' })]),
+    ).toHaveLength(1);
     expect(imagenesVisibles([imagen({ sourcePage: 'data:text/html,x' })])).toEqual([]);
   });
 
