@@ -548,3 +548,46 @@ describe('búsqueda del glosario: tildes y castellano primero', () => {
     expect(items.filter((t) => !t.translated)).toEqual([]);
   });
 });
+
+/** F9: la maqueta sirve el artículo con el mismo contrato que la API. */
+describe('artículo enciclopédico del glosario', () => {
+  const publicDirectory = join(process.cwd(), 'public');
+  const readSeed: LectorDeArchivos = (path) => {
+    const file = join(publicDirectory, path);
+    if (path.startsWith('glossary-data/') || !existsSync(file)) {
+      return Promise.reject(new ArchivoAusente(path));
+    }
+    return Promise.resolve(JSON.parse(readFileSync(file, 'utf8')) as unknown);
+  };
+  const router = new MockRouter();
+  registrarTerminologia(router, new AlmacenDeGlosario(readSeed));
+
+  async function get(path: string): Promise<{ status?: number; [key: string]: unknown }> {
+    const match = router.match('GET', path);
+    if (match === null) throw new Error(`No existe GET ${path}`);
+    return (await match.handler({
+      method: 'GET',
+      path,
+      params: match.params,
+      query: new URLSearchParams(),
+      body: null,
+      headers: new HttpHeaders(),
+      user: null,
+    })) as { status?: number; [key: string]: unknown };
+  }
+
+  const tonsillitisId = '5b49faa0-dafb-4630-a8f1-0f90e60113d0';
+
+  it('devuelve el artículo de la semilla con sus secciones y fuentes', async () => {
+    const article = await get(`/terminology/concepts/${tonsillitisId}/glossary-article`);
+    expect(article['conceptRef']).toEqual(expect.objectContaining({ slug: 'medlineplus-es-6441' }));
+    expect(article['sections']).toHaveLength(10);
+  });
+
+  it('responde 404 cuando no hay artículo', async () => {
+    const response = await get(
+      '/terminology/concepts/00000000-0000-4000-a000-000000000000/glossary-article',
+    );
+    expect(response.status).toBe(404);
+  });
+});
