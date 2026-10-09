@@ -98,7 +98,8 @@ export function fechaLegible(iso: string): string {
  * Una `label-match` (enlazada por el nombre del ítem de Wikidata, no por un
  * identificador) queda apagada hasta que una revisión humana por muestreo la
  * apruebe (DECISIONS.md, 2026-10-09, D3): se descarta por `match` y por
- * `enabled === false`. Una URL que no es `https://` tampoco se pinta.
+ * `enabled === false`. Una imagen cuya URL, miniatura, licencia u origen no es `https://` tampoco
+ * se pinta: sin licencia ni origen verificables no se muestra (regla 12.2.7).
  */
 export function imagenesVisibles(
   imagenes: readonly GlossaryArticleImage[],
@@ -107,8 +108,9 @@ export function imagenesVisibles(
     (imagen) =>
       imagen.enabled !== false &&
       imagen.match !== 'label-match' &&
-      enlaceSeguro(imagen.url) !== null &&
-      enlaceSeguro(imagen.thumbUrl) !== null,
+      [imagen.url, imagen.thumbUrl, imagen.licenseUrl, imagen.sourcePage].every(
+        (enlace) => enlaceSeguro(enlace) !== null,
+      ),
   );
 }
 

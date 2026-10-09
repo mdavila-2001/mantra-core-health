@@ -61,6 +61,9 @@ describe('glossary-article.logic', () => {
   it('imagenesVisibles no pinta una URL que no es https', () => {
     expect(imagenesVisibles([imagen({ url: 'javascript:alert(1)' })])).toEqual([]);
     expect(imagenesVisibles([imagen({ thumbUrl: 'http://x/y.jpg' })])).toEqual([]);
+    // Los enlaces de licencia y de origen van al `href`: tampoco pueden ser `javascript:`.
+    expect(imagenesVisibles([imagen({ licenseUrl: 'javascript:alert(1)' })])).toEqual([]);
+    expect(imagenesVisibles([imagen({ sourcePage: 'data:text/html,x' })])).toEqual([]);
   });
 
   it('enlaceSeguro sólo deja pasar https', () => {
