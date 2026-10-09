@@ -2,7 +2,7 @@ import { PLATFORM_ID } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 
 import type { TarifarioDeLaUnidad } from './medical-laboratory.types';
-import { TarifariosRecordados } from './remembered-price-lists';
+import { RememberedPriceLists } from './remembered-price-lists';
 
 /**
  * La memoria de los tarifarios recién creados.
@@ -54,12 +54,12 @@ describe('TarifariosRecordados', () => {
   }
 
   /** Una instancia nueva, como la que hay tras recargar la página. */
-  function servicio(plataforma: 'browser' | 'server' = 'browser'): TarifariosRecordados {
+  function servicio(plataforma: 'browser' | 'server' = 'browser'): RememberedPriceLists {
     TestBed.resetTestingModule();
     TestBed.configureTestingModule({
       providers: plataforma === 'server' ? [{ provide: PLATFORM_ID, useValue: 'server' }] : [],
     });
-    return TestBed.inject(TarifariosRecordados);
+    return TestBed.inject(RememberedPriceLists);
   }
 
   beforeEach(() => {
@@ -76,31 +76,31 @@ describe('TarifariosRecordados', () => {
   it('devuelve lo recordado para cada unidad, sin mezclarlas', () => {
     const recordados = servicio();
 
-    recordados.recordar('unit-1', PUBLICO);
-    recordados.recordar('unit-2', CONVENIO);
+    recordados.remember('unit-1', PUBLICO);
+    recordados.remember('unit-2', CONVENIO);
 
-    expect(recordados.deLaUnidad('unit-1')).toEqual([PUBLICO]);
-    expect(recordados.deLaUnidad('unit-2')).toEqual([CONVENIO]);
+    expect(recordados.unit('unit-1')).toEqual([PUBLICO]);
+    expect(recordados.unit('unit-2')).toEqual([CONVENIO]);
     // Una unidad sin nada recordado no es un error: es lo normal.
-    expect(recordados.deLaUnidad('unit-3')).toEqual([]);
+    expect(recordados.unit('unit-3')).toEqual([]);
   });
 
   it('no repite el mismo tarifario recordado dos veces', () => {
     const recordados = servicio();
 
-    recordados.recordar('unit-1', PUBLICO);
-    recordados.recordar('unit-1', { ...PUBLICO, cantidadDePrecios: 1 });
+    recordados.remember('unit-1', PUBLICO);
+    recordados.remember('unit-1', { ...PUBLICO, cantidadDePrecios: 1 });
 
     // Es el mismo tarifario del servidor: la pantalla lo pinta una vez.
-    expect(recordados.deLaUnidad('unit-1')).toEqual([{ ...PUBLICO, cantidadDePrecios: 1 }]);
+    expect(recordados.unit('unit-1')).toEqual([{ ...PUBLICO, cantidadDePrecios: 1 }]);
   });
 
   it('sobrevive a la recarga de la pantalla', () => {
-    servicio().recordar('unit-1', PUBLICO);
+    servicio().remember('unit-1', PUBLICO);
 
     // El defecto que esto impide: el tarifario quedaba creado en el servidor,
     // invisible acá y con su código ocupado.
-    expect(servicio().deLaUnidad('unit-1')).toEqual([PUBLICO]);
+    expect(servicio().unit('unit-1')).toEqual([PUBLICO]);
   });
 
   it('sigue funcionando en memoria cuando no hay almacenamiento', () => {
@@ -111,21 +111,21 @@ describe('TarifariosRecordados', () => {
     });
     const recordados = servicio();
 
-    recordados.recordar('unit-1', PUBLICO);
+    recordados.remember('unit-1', PUBLICO);
 
     // Se pierde al recargar, que es exactamente lo que pasaba antes: no hay
     // nada roto que mostrarle a nadie.
-    expect(recordados.deLaUnidad('unit-1')).toEqual([PUBLICO]);
+    expect(recordados.unit('unit-1')).toEqual([PUBLICO]);
   });
 
   it('descarta lo espejado que ya no se puede leer', () => {
     conAlmacenamiento({ value: almacenFalso({ [CLAVE]: '{esto no es json' }) });
     const recordados = servicio();
 
-    expect(recordados.deLaUnidad('unit-1')).toEqual([]);
+    expect(recordados.unit('unit-1')).toEqual([]);
     // Y la pantalla puede seguir usándolo: lo ilegible se descarta, no bloquea.
-    recordados.recordar('unit-1', PUBLICO);
-    expect(recordados.deLaUnidad('unit-1')).toEqual([PUBLICO]);
+    recordados.remember('unit-1', PUBLICO);
+    expect(recordados.unit('unit-1')).toEqual([PUBLICO]);
   });
 
   it('descarta lo espejado que ya no tiene la forma de un tarifario', () => {
@@ -135,8 +135,8 @@ describe('TarifariosRecordados', () => {
 
     // Lo pudo dejar una versión anterior de la pantalla: se descarta en vez de
     // llegar a la tabla como un tarifario a medio hacer.
-    expect(servicio().deLaUnidad('unit-1')).toEqual([]);
-    expect(servicio().deLaUnidad('unit-2')).toEqual([]);
+    expect(servicio().unit('unit-1')).toEqual([]);
+    expect(servicio().unit('unit-2')).toEqual([]);
   });
 
   it('en el servidor ni siquiera pregunta por el almacenamiento', () => {
@@ -149,11 +149,11 @@ describe('TarifariosRecordados', () => {
     });
     const recordados = servicio('server');
 
-    recordados.recordar('unit-1', PUBLICO);
+    recordados.remember('unit-1', PUBLICO);
 
     // No alcanza con que el `try` lo atrape: bajo SSR no se toca, y por eso se
     // cuenta el acceso en vez de esperar a que reviente.
     expect(accesos).toBe(0);
-    expect(recordados.deLaUnidad('unit-1')).toEqual([PUBLICO]);
+    expect(recordados.unit('unit-1')).toEqual([PUBLICO]);
   });
 });

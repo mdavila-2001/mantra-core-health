@@ -1,6 +1,6 @@
 import { HttpHeaders } from '@angular/common/http';
 
-import { mensajes, VITRINA_MEDICA, VITRINA_PACIENTE } from '../fixtures/community';
+import { messageList, MEDICAL_SHOWCASE, PATIENT_SHOWCASE } from '../fixtures/community';
 import { MockRouter, type MockReply } from '../mock-router';
 import { buscarUsuario, type MockUser } from '../mock-session';
 import { uuid } from '../mock-store';
@@ -55,7 +55,7 @@ describe('adjuntos de conversación (simulador)', () => {
 
   describe('correcto', () => {
     it('quien participa lee la foto que mandó, con su nombre en Content-Disposition', () => {
-      const response = requestContent(DERMATOLOGY_CONVERSATION, MOLE_PHOTO, VITRINA_PACIENTE.id, patientUser) as {
+      const response = requestContent(DERMATOLOGY_CONVERSATION, MOLE_PHOTO, PATIENT_SHOWCASE.id, patientUser) as {
         body: unknown;
         headers: Record<string, string>;
       };
@@ -68,7 +68,7 @@ describe('adjuntos de conversación (simulador)', () => {
 
   describe('límite', () => {
     it('un documento del grupo llega como PDF, no como el dibujo de la miniatura', () => {
-      const response = requestContent(CARDIOLOGY_CONVERSATION, GUIDE_PDF, VITRINA_MEDICA.id, doctorUser) as { body: Blob };
+      const response = requestContent(CARDIOLOGY_CONVERSATION, GUIDE_PDF, MEDICAL_SHOWCASE.id, doctorUser) as { body: Blob };
 
       expect(statusOf(response)).toBe(200);
       expect(response.body).toBeInstanceOf(Blob);
@@ -77,37 +77,37 @@ describe('adjuntos de conversación (simulador)', () => {
 
     it('un mensaje que nombra un archivo que ya no existe responde 404, no bytes vacíos', () => {
       const orphanFileId = uuid('file-que-no-existe');
-      mensajes.agregar({
+      messageList.agregar({
         id: uuid('msg-adjunto-huerfano'),
         conversationId: DERMATOLOGY_CONVERSATION,
-        senderProfileId: VITRINA_PACIENTE.id,
+        senderProfileId: PATIENT_SHOWCASE.id,
         replyToMessageId: null,
-        contentTypeConceptId: mensajes.todos()[0]!.contentTypeConceptId,
+        contentTypeConceptId: messageList.todos()[0]!.contentTypeConceptId,
         bodyText: '',
         attachmentFileId: orphanFileId,
         isEdited: false,
         sentAt: new Date().toISOString(),
       });
 
-      expect(statusOf(requestContent(DERMATOLOGY_CONVERSATION, orphanFileId, VITRINA_PACIENTE.id, patientUser))).toBe(404);
+      expect(statusOf(requestContent(DERMATOLOGY_CONVERSATION, orphanFileId, PATIENT_SHOWCASE.id, patientUser))).toBe(404);
     });
   });
 
   describe('inválido / no autorizado', () => {
     it('quien no participa de la conversación recibe 404', () => {
-      expect(statusOf(requestContent(CARDIOLOGY_CONVERSATION, GUIDE_PDF, VITRINA_PACIENTE.id, patientUser))).toBe(404);
+      expect(statusOf(requestContent(CARDIOLOGY_CONVERSATION, GUIDE_PDF, PATIENT_SHOWCASE.id, patientUser))).toBe(404);
     });
 
     it('un perfil que no es el de la sesión recibe 404, aunque ese perfil participe', () => {
-      expect(statusOf(requestContent(DERMATOLOGY_CONVERSATION, MOLE_PHOTO, VITRINA_PACIENTE.id, doctorUser))).toBe(404);
+      expect(statusOf(requestContent(DERMATOLOGY_CONVERSATION, MOLE_PHOTO, PATIENT_SHOWCASE.id, doctorUser))).toBe(404);
     });
 
     it('un archivo de otra conversación no se lee por ésta', () => {
-      expect(statusOf(requestContent(DERMATOLOGY_CONVERSATION, GUIDE_PDF, VITRINA_PACIENTE.id, patientUser))).toBe(404);
+      expect(statusOf(requestContent(DERMATOLOGY_CONVERSATION, GUIDE_PDF, PATIENT_SHOWCASE.id, patientUser))).toBe(404);
     });
 
     it('sin sesión, 404', () => {
-      expect(statusOf(requestContent(DERMATOLOGY_CONVERSATION, MOLE_PHOTO, VITRINA_PACIENTE.id, null))).toBe(404);
+      expect(statusOf(requestContent(DERMATOLOGY_CONVERSATION, MOLE_PHOTO, PATIENT_SHOWCASE.id, null))).toBe(404);
     });
   });
 });

@@ -7,9 +7,9 @@ import { provideRouter, Router } from '@angular/router';
 import { CAMPO_TIPO_SOCIETARIO } from '../../../core/data-access/system-context/legal-entity-types.service';
 import { DropzonePdf } from '../../../shared/components/molecules/dropzone-pdf/dropzone-pdf';
 import { CARGADOR_DE_LEAFLET } from '../../../shared/components/organisms/map/map';
-import { UbicacionPicker } from '../shared-registration/map-location-picker/map-location-picker';
+import { MapLocationPicker } from '../shared-registration/map-location-picker/map-location-picker';
 import { RegisterOrganization } from './register-organization';
-import { controlDeNombreExtra } from '../shared-registration/name-fields/person-name';
+import { nameExtraControl } from '../shared-registration/name-fields/person-name';
 
 const RESPUESTA = {
   tenantId: 't-1',
@@ -680,8 +680,8 @@ describe('RegisterOrganization', () => {
     }
 
     function tocarElMapa(): void {
-      const mapa = fixture.debugElement.query(By.directive(UbicacionPicker));
-      (mapa.componentInstance as UbicacionPicker).puntoElegido.emit({
+      const mapa = fixture.debugElement.query(By.directive(MapLocationPicker));
+      (mapa.componentInstance as MapLocationPicker).puntoElegido.emit({
         lat: -17.7833,
         lng: -63.1821,
       });
@@ -959,10 +959,10 @@ describe('RegisterOrganization', () => {
     it('los nombres agregados con «+ Agregar otro nombre» viajan en el fullName del representante y de cada gerencia', () => {
       fixture.detectChanges();
       completar();
-      component.form.controls.legalRepresentative.controls.extraNames.push(controlDeNombreExtra());
+      component.form.controls.legalRepresentative.controls.extraNames.push(nameExtraControl());
       component.form.controls.legalRepresentative.controls.extraNames.at(0).setValue('Beatriz');
       const gerente = component.form.controls.executives.controls.commercialManager.controls.nombre;
-      gerente.controls.extraNames.push(controlDeNombreExtra());
+      gerente.controls.extraNames.push(nameExtraControl());
       gerente.controls.extraNames.at(0).setValue('Rocío');
       component.submit();
 
@@ -991,7 +991,7 @@ describe('RegisterOrganization', () => {
     it('los nombres agregados del representante se pliegan en el middleName del owner', () => {
       fixture.detectChanges();
       completar({ legalRepresentativeNombre: { middleName: 'María' } });
-      component.form.controls.legalRepresentative.controls.extraNames.push(controlDeNombreExtra());
+      component.form.controls.legalRepresentative.controls.extraNames.push(nameExtraControl());
       component.form.controls.legalRepresentative.controls.extraNames.at(0).setValue('Luz');
       component.submit();
 

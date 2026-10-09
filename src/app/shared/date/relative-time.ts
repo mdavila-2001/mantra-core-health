@@ -9,7 +9,7 @@
  * Más allá de una semana devuelve `null`: quien llama cae al formato de fecha
  * de siempre (`date:'short'`), que es más útil que «hace 12 d».
  */
-export function tiempoRelativo(fecha: Date, ahora = new Date()): string | null {
+export function relativeTime(fecha: Date, ahora = new Date()): string | null {
   const segundos = Math.max(0, Math.round((ahora.getTime() - fecha.getTime()) / 1000));
 
   if (segundos < 60) {

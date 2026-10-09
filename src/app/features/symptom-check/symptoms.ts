@@ -10,14 +10,14 @@
       médico.
     ========================================================================== */
 
-import { analizar, sugerirDe, type Analisis, type Coincidencia } from './engine';
-import { SINTOMAS, SINTOMAS_DE_ALARMA, type Sintoma } from './symptoms.data';
-import { distancia, normalizar } from './text';
+import { analyze, suggestOf, type Analysis, type Match } from './engine';
+import { SYMPTOMS, ALARM_SYMPTOMS, type Symptom } from './symptoms.data';
+import { distance, normalizar } from './text';
 import { GLOSARIO_DE_SINTOMAS } from './symptom-glossary.generated';
 
-export type { EspecialidadSugerida, Sintoma } from './symptoms.data';
-export type { Analisis, Coincidencia } from './engine';
-export { SINTOMAS, SINTOMAS_DE_ALARMA } from './symptoms.data';
+export type { SuggestedSpecialty as EspecialidadSugerida, Symptom as Sintoma } from './symptoms.data';
+export type { Analysis as Analisis, Match as Coincidencia } from './engine';
+export { SYMPTOMS as SINTOMAS, ALARM_SYMPTOMS as SINTOMAS_DE_ALARMA } from './symptoms.data';
 export { normalizar } from './text';
 
 /**
@@ -29,7 +29,7 @@ export { normalizar } from './text';
  * primera. Analizarlas por separado devolvía las dos cosas y la pantalla
  * mostraba un chip de vómito debajo del aviso de urgencias.
  */
-export const TODOS_LOS_SINTOMAS: readonly Sintoma[] = [...SINTOMAS_DE_ALARMA, ...SINTOMAS];
+export const SYMPTOMS_ALL: readonly Symptom[] = [...ALARM_SYMPTOMS, ...SYMPTOMS];
 
 /**
  * El último análisis, guardado.
@@ -38,16 +38,16 @@ export const TODOS_LOS_SINTOMAS: readonly Sintoma[] = [...SINTOMAS_DE_ALARMA, ..
  * distintos— y las dos preguntas se contestan con el mismo trabajo. Sin esta
  * memoria se analizaba el texto dos veces por tecla.
  */
-let ultimoTexto: string | null = null;
-let ultimoAnalisis: Analisis | null = null;
+let lastText: string | null = null;
+let lastAnalysis: Analysis | null = null;
 
-function analisisCompleto(texto: string): Analisis {
-  if (ultimoTexto === texto && ultimoAnalisis !== null) {
-    return ultimoAnalisis;
+function completeAnalysis(texto: string): Analysis {
+  if (lastText === texto && lastAnalysis !== null) {
+    return lastAnalysis;
   }
-  const analisis = analizar(texto, TODOS_LOS_SINTOMAS);
-  ultimoTexto = texto;
-  ultimoAnalisis = analisis;
+  const analisis = analyze(texto, SYMPTOMS_ALL);
+  lastText = texto;
+  lastAnalysis = analisis;
   return analisis;
 }
 
@@ -59,8 +59,8 @@ function analisisCompleto(texto: string): Analisis {
  * primera vez es la primera tecla, se siente. Llamando a esto cuando la
  * pantalla ya está pintada, no se siente nunca.
  */
-export function precalentar(): void {
-  analizar('fiebre', TODOS_LOS_SINTOMAS);
+export function preheat(): void {
+  analyze('fiebre', SYMPTOMS_ALL);
 }
 
 /**
@@ -70,7 +70,7 @@ export function precalentar(): void {
  * sienta una caja negra, que es el síntoma 1 del plan de UX —«la aplicación no
  * se explica sola»— aplicado al lugar donde más importa.
  */
-export interface Recomendacion {
+export interface Recommendation {
   readonly nombre: string;
   /** Suma de los pesos de los síntomas que la sostienen. Ordena la lista. */
   readonly peso: number;
@@ -95,7 +95,7 @@ export interface Recomendacion {
  * especialidad específica —«tengo fiebre» a secas— la generalista queda
  * primera porque es la única, y ahí sí es la respuesta correcta.
  */
-const GENERALISTAS: ReadonlySet<string> = new Set(['medicina general', 'medicina familiar']);
+const GENERALISTS: ReadonlySet<string> = new Set(['medicina general', 'medicina familiar']);
 
 /**
  * Reconoce síntomas dentro de un texto libre.
@@ -110,19 +110,19 @@ const GENERALISTAS: ReadonlySet<string> = new Set(['medicina general', 'medicina
  * @param texto - Lo que la persona escribió, tal cual.
  * @param tabla - La tabla contra la que se busca. Se inyecta para poder probar.
  */
-export function reconocer(texto: string, tabla: readonly Sintoma[] = SINTOMAS): readonly Sintoma[] {
-  return coincidencias(texto, tabla).map((coincidencia) => coincidencia.sintoma);
+export function recognize(texto: string, tabla: readonly Symptom[] = SYMPTOMS): readonly Symptom[] {
+  return matches(texto, tabla).map((coincidencia) => coincidencia.sintoma);
 }
 
-/** Lo mismo que {@link reconocer}, sin tirar la confianza ni la evidencia. */
-export function coincidencias(
+/** Lo mismo que {@link recognize}, sin tirar la confianza ni la evidencia. */
+export function matches(
   texto: string,
-  tabla: readonly Sintoma[] = SINTOMAS,
-): readonly Coincidencia[] {
+  tabla: readonly Symptom[] = SYMPTOMS,
+): readonly Match[] {
   const analisis =
-    tabla === SINTOMAS || tabla === SINTOMAS_DE_ALARMA || tabla === TODOS_LOS_SINTOMAS
-      ? analisisCompleto(texto)
-      : analizar(texto, tabla);
+    tabla === SYMPTOMS || tabla === ALARM_SYMPTOMS || tabla === SYMPTOMS_ALL
+      ? completeAnalysis(texto)
+      : analyze(texto, tabla);
   const cuales = new Set(tabla.map((sintoma) => sintoma.id));
   return [...analisis.sintomas, ...analisis.alarmas]
     .filter((coincidencia) => cuales.has(coincidencia.sintoma.id))
@@ -130,8 +130,8 @@ export function coincidencias(
 }
 
 /** Los síntomas de alarma que aparecen en el texto. Vacío es lo normal. */
-export function reconocerAlarmas(texto: string): readonly Sintoma[] {
-  return analisisCompleto(texto).alarmas.map((coincidencia) => coincidencia.sintoma);
+export function recognizeAlarms(texto: string): readonly Symptom[] {
+  return completeAnalysis(texto).alarmas.map((coincidencia) => coincidencia.sintoma);
 }
 
 /**
@@ -141,8 +141,8 @@ export function reconocerAlarmas(texto: string): readonly Sintoma[] {
  * bien; poder decir *por qué* no la reconoció es lo que evita que se lea como
  * que la pantalla no leyó.
  */
-export function reconocerNegados(texto: string): readonly Sintoma[] {
-  return analisisCompleto(texto).negados.map((coincidencia) => coincidencia.sintoma);
+export function recognizeNegated(texto: string): readonly Symptom[] {
+  return completeAnalysis(texto).negados.map((coincidencia) => coincidencia.sintoma);
 }
 
 /**
@@ -163,15 +163,15 @@ export function reconocerNegados(texto: string): readonly Sintoma[] {
  *   profesionales publicados, normalizadas. Vacío = no se filtra (sirve para
  *   probar la ordenación aislada). Ver el porqué en `symptoms.data.ts`.
  */
-export function recomendar(
-  sintomas: readonly Sintoma[],
+export function recommend(
+  sintomas: readonly Symptom[],
   disponibles: ReadonlySet<string> = new Set(),
-): readonly Recomendacion[] {
+): readonly Recommendation[] {
   const porNombre = new Map<string, { peso: number; porque: string[] }>();
 
   for (const sintoma of sintomas) {
     for (const especialidad of sintoma.especialidades) {
-      if (disponibles.size > 0 && !estaDisponible(especialidad.nombre, disponibles)) {
+      if (disponibles.size > 0 && !isAvailable(especialidad.nombre, disponibles)) {
         // Una especialidad que la plataforma no ofrece no se recomienda: el
         // camino terminaría en un directorio vacío.
         continue;
@@ -187,8 +187,8 @@ export function recomendar(
     .map(([nombre, datos]) => ({ nombre, peso: datos.peso, porque: datos.porque }))
     .sort((a, b) => {
       // La generalista va última aunque sume más. Ver {@link GENERALISTAS}.
-      const generalA = GENERALISTAS.has(normalizar(a.nombre)) ? 1 : 0;
-      const generalB = GENERALISTAS.has(normalizar(b.nombre)) ? 1 : 0;
+      const generalA = GENERALISTS.has(normalizar(a.nombre)) ? 1 : 0;
+      const generalB = GENERALISTS.has(normalizar(b.nombre)) ? 1 : 0;
       if (generalA !== generalB) {
         return generalA - generalB;
       }
@@ -197,33 +197,33 @@ export function recomendar(
 }
 
 /** La especialidad a la que se manda cuando no hay certeza. */
-export const MEDICINA_GENERAL = 'Medicina general';
+export const MEDICINE_GENERAL = 'Medicina general';
 
 /**
  * Por qué Medicina general va primero aunque el síntoma se haya reconocido con certeza (decisión del
  * propietario, 2026-10-08: «siempre que ponga de primero al médico de medicina general»).
  */
-export const GENERAL_PRIMERO = 'Primero lo evalúa un médico general y, si hace falta, lo deriva al especialista.';
+export const FIRST_GENERAL = 'Primero lo evalúa un médico general y, si hace falta, lo deriva al especialista.';
 
 /**
  * Sin certeza, Medicina general **primero** (decisión del propietario, 2026-10-04: «cuando no
  * sepas a ciencia cierta, mandalo a medicina general»). Un médico general evalúa y deriva; un
  * especialista elegido a partir de una lectura dudosa puede ser el equivocado.
  *
- * Es la excepción a {@link GENERALISTAS}, que la deja última cuando el síntoma SÍ se reconoció. Si
+ * Es la excepción a {@link GENERALISTS}, que la deja última cuando el síntoma SÍ se reconoció. Si
  * ya venía en la lista, se sube; si no, se agrega con su `motivo`. Si el directorio no la ofrece,
  * no se inventa: la lista queda como estaba.
  */
-export function conMedicinaGeneralPrimero(
-  recomendaciones: readonly Recomendacion[],
+export function withMedicineFirstGeneral(
+  recomendaciones: readonly Recommendation[],
   motivo: string,
   disponibles: ReadonlySet<string> = new Set(),
-): readonly Recomendacion[] {
-  const existente = recomendaciones.find((r) => normalizar(r.nombre) === normalizar(MEDICINA_GENERAL));
-  if (!existente && disponibles.size > 0 && !estaDisponible(MEDICINA_GENERAL, disponibles)) {
+): readonly Recommendation[] {
+  const existente = recomendaciones.find((r) => normalizar(r.nombre) === normalizar(MEDICINE_GENERAL));
+  if (!existente && disponibles.size > 0 && !isAvailable(MEDICINE_GENERAL, disponibles)) {
     return recomendaciones;
   }
-  const general: Recomendacion = { ...(existente ?? { nombre: MEDICINA_GENERAL, peso: 0, porque: [] }), motivo };
+  const general: Recommendation = { ...(existente ?? { nombre: MEDICINE_GENERAL, peso: 0, porque: [] }), motivo };
   return [general, ...recomendaciones.filter((r) => r !== existente)];
 }
 
@@ -237,7 +237,7 @@ export function conMedicinaGeneralPrimero(
  * existe para no mandar a un directorio vacío terminaba vaciando la
  * recomendación entera.
  *
- * La usan tanto `estaDisponible` (¿se recomienda?) como {@link conceptIdDe}
+ * La usan tanto `estaDisponible` (¿se recomienda?) como {@link conceptIdOf}
  * (¿a qué especialidad del directorio salto al tocarla?): antes cada una
  * tenía su propio criterio —uno tolerante, el otro exacto— y una especialidad
  * podía pasar el primero y fallar el segundo. El síntoma era «me recomienda
@@ -246,7 +246,7 @@ export function conMedicinaGeneralPrimero(
  * `conceptId`, caía al buscador por texto (`q`), y esa ruta nunca pone el
  * parámetro `especialidad` que saca de la portada agrupada.
  */
-function buscarClaveDisponible(
+function searchAvailableKey(
   nombre: string,
   disponibles: ReadonlySet<string>,
 ): string | undefined {
@@ -262,31 +262,31 @@ function buscarClaveDisponible(
       return ofrecida;
     }
     // «Cardióloga» y «Cardiología»: la misma especialidad dicha de dos maneras.
-    if (distancia(buscada, ofrecida, 2) <= 2) {
+    if (distance(buscada, ofrecida, 2) <= 2) {
       return ofrecida;
     }
   }
   return undefined;
 }
 
-/** Si el directorio tiene a alguien de esta especialidad. Ver {@link buscarClaveDisponible}. */
-function estaDisponible(nombre: string, disponibles: ReadonlySet<string>): boolean {
-  return buscarClaveDisponible(nombre, disponibles) !== undefined;
+/** Si el directorio tiene a alguien de esta especialidad. Ver {@link searchAvailableKey}. */
+function isAvailable(nombre: string, disponibles: ReadonlySet<string>): boolean {
+  return searchAvailableKey(nombre, disponibles) !== undefined;
 }
 
 /**
  * El `conceptId` de una especialidad recomendada, con la misma tolerancia que
- * decidió recomendarla (ver {@link buscarClaveDisponible}).
+ * decidió recomendarla (ver {@link searchAvailableKey}).
  *
  * `undefined` cuando no hay coincidencia: quien llama cae al buscador por
  * texto, que es el destino que ya existía para una especialidad sin
  * identificador.
  */
-export function conceptIdDe(
+export function conceptIdOf(
   nombre: string,
   disponibles: ReadonlyMap<string, string>,
 ): string | undefined {
-  const clave = buscarClaveDisponible(nombre, new Set(disponibles.keys()));
+  const clave = searchAvailableKey(nombre, new Set(disponibles.keys()));
   return clave === undefined ? undefined : disponibles.get(clave);
 }
 
@@ -296,11 +296,11 @@ export function conceptIdDe(
  * «Por fiebre y dolor de garganta» — la conjunción va en castellano, no con
  * comas hasta el final, porque se lee dentro de un renglón de la pantalla.
  */
-export function explicar(recomendacion: Recomendacion): string {
+export function explain(recomendacion: Recommendation): string {
   if (recomendacion.motivo) {
     return recomendacion.motivo;
   }
-  const cuales = enumerar(recomendacion.porque);
+  const cuales = enumerate(recomendacion.porque);
   return cuales === '' ? '' : `Por ${cuales}`;
 }
 
@@ -310,7 +310,7 @@ export function explicar(recomendacion: Recomendacion): string {
  * Con la conjunción al final y no con comas hasta el final, porque se lee
  * dentro de un renglón de la pantalla y no en una tabla.
  */
-export function enumerar(cosas: readonly string[]): string {
+export function enumerate(cosas: readonly string[]): string {
   if (cosas.length === 0) {
     return '';
   }
@@ -327,12 +327,12 @@ export function enumerar(cosas: readonly string[]): string {
  * decide `sugerirDe`, que busca por el comienzo de cualquier palabra y no sólo
  * por el comienzo de la frase.
  */
-export function sugerir(
+export function suggest(
   parcial: string,
-  yaPuestos: readonly Sintoma[],
+  yaPuestos: readonly Symptom[],
   tope = 6,
-): readonly Sintoma[] {
-  return sugerirDe(parcial, SINTOMAS, new Set(yaPuestos.map((sintoma) => sintoma.id)), tope);
+): readonly Symptom[] {
+  return suggestOf(parcial, SYMPTOMS, new Set(yaPuestos.map((sintoma) => sintoma.id)), tope);
 }
 
 /**
@@ -342,7 +342,7 @@ export function sugerir(
  * Sin término exacto en el glosario (o en los sensibles, que no lo tienen a propósito) queda el
  * nombre del catálogo. El mapa sale de `scripts/export-symptom-glossary.mjs` del AI service.
  */
-export function nombreParaMostrar(sintoma: Pick<Sintoma, 'id' | 'nombre'>): string {
+export function nameForShow(sintoma: Pick<Symptom, 'id' | 'nombre'>): string {
   const termino = GLOSARIO_DE_SINTOMAS[sintoma.id];
   if (!termino) {
     return sintoma.nombre;
@@ -351,7 +351,7 @@ export function nombreParaMostrar(sintoma: Pick<Sintoma, 'id' | 'nombre'>): stri
 }
 
 /** El código del término del glosario (CIE-10-ES, MedlinePlus…), para el lector y el tooltip. */
-export function codigoDelGlosario(id: string): string | null {
+export function glossaryCode(id: string): string | null {
   const termino = GLOSARIO_DE_SINTOMAS[id];
   return termino?.code ? `${termino.system === 'cie10es' ? 'CIE-10' : (termino.system ?? '')} ${termino.code}`.trim() : null;
 }

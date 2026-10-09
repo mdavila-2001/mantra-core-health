@@ -24,14 +24,14 @@
  * en Salud Pública»—, no una forma de dirigirse a alguien: que empiece con uno
  * de estos es la señal de que ahí quedó el nombre de una persona.
  */
-const TRATAMIENTOS =
+const TREATMENTS =
   /^(dr|dra|doctor|doctora|lic|licenciado|licenciada|mtro|mtra|ing|sr|sra|srta)\b\.?\s+/i;
 
 /** Lo que separa al nombre de la especialidad en los valores cruzados. */
-const SEPARADORES = /[—–\-·,|]/;
+const SEPARATORS = /[—–\-·,|]/;
 
 /** Sin tildes, sin mayúsculas y sin espacios de más: para comparar nombres. */
-function normalizar(texto: string): string {
+function normalize(texto: string): string {
   return texto
     .normalize('NFD')
     .replace(/\p{Diacritic}/gu, '')
@@ -58,7 +58,7 @@ function normalizar(texto: string): string {
  * @param nombresDeOtros - Nombres del resto de la respuesta, si se conocen.
  * @returns El subtítulo, o `undefined` para no mostrar ninguno.
  */
-export function subtituloProfesional(
+export function professionalSubtitle(
   professionalTitle: string | undefined,
   nombre: string,
   nombresDeOtros: Iterable<string> = [],
@@ -68,18 +68,18 @@ export function subtituloProfesional(
     return undefined;
   }
 
-  const normalizado = normalizar(texto);
-  const propio = normalizar(nombre);
+  const normalizado = normalize(texto);
+  const propio = normalize(nombre);
 
   for (const otro of nombresDeOtros) {
-    const ajeno = normalizar(otro);
+    const ajeno = normalize(otro);
     if (ajeno !== '' && ajeno !== propio && normalizado.includes(ajeno)) {
       return undefined;
     }
   }
 
-  if (TRATAMIENTOS.test(texto)) {
-    const persona = normalizar(texto.replace(TRATAMIENTOS, '').split(SEPARADORES)[0] ?? '');
+  if (TREATMENTS.test(texto)) {
+    const persona = normalize(texto.replace(TREATMENTS, '').split(SEPARATORS)[0] ?? '');
     // Sólo sobrevive si quien está nombrado ahí es el titular de la tarjeta.
     if (persona !== '' && !propio.includes(persona)) {
       return undefined;

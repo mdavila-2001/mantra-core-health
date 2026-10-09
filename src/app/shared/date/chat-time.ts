@@ -16,19 +16,19 @@
  * @param ahora - Con qué momento comparar. Parámetro para poder fijarlo en los
  *   tests sin tocar el reloj del sistema.
  */
-export function horaDeChat(fecha: Date, ahora = new Date()): string {
+export function chatTime(fecha: Date, ahora = new Date()): string {
   const dia = new Date(fecha);
   if (Number.isNaN(dia.getTime())) {
     return '';
   }
 
-  if (mismoDia(dia, ahora)) {
-    return horaDelReloj(dia);
+  if (daySame(dia, ahora)) {
+    return clockTime(dia);
   }
 
   const ayer = new Date(ahora);
   ayer.setDate(ahora.getDate() - 1);
-  if (mismoDia(dia, ayer)) {
+  if (daySame(dia, ayer)) {
     return 'Ayer';
   }
 
@@ -55,7 +55,7 @@ export function horaDeChat(fecha: Date, ahora = new Date()): string {
  * burbuja `09:12`: el mismo mensaje con dos horas distintas según dónde se
  * mirara, y el cero de adelante es justo lo que ningún chat escribe.
  */
-export function horaDelReloj(fecha: Date | string | undefined): string {
+export function clockTime(fecha: Date | string | undefined): string {
   if (fecha === undefined) {
     return '';
   }
@@ -76,7 +76,7 @@ export function horaDelReloj(fecha: Date | string | undefined): string {
  * chat, y leer «24/08/2026» para decir «hoy» obliga a comparar con el
  * calendario.
  */
-export function etiquetaDeDia(fecha: Date | undefined, ahora = new Date()): string {
+export function dayLabel(fecha: Date | undefined, ahora = new Date()): string {
   if (!fecha) {
     return '';
   }
@@ -88,10 +88,10 @@ export function etiquetaDeDia(fecha: Date | undefined, ahora = new Date()): stri
   const ayer = new Date(ahora);
   ayer.setDate(ahora.getDate() - 1);
 
-  if (mismoDia(dia, ahora)) {
+  if (daySame(dia, ahora)) {
     return 'Hoy';
   }
-  if (mismoDia(dia, ayer)) {
+  if (daySame(dia, ayer)) {
     return 'Ayer';
   }
   return dia.toLocaleDateString('es', {
@@ -101,7 +101,7 @@ export function etiquetaDeDia(fecha: Date | undefined, ahora = new Date()): stri
   });
 }
 
-function mismoDia(a: Date, b: Date): boolean {
+function daySame(a: Date, b: Date): boolean {
   return (
     a.getFullYear() === b.getFullYear() &&
     a.getMonth() === b.getMonth() &&

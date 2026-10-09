@@ -1,10 +1,10 @@
 import {
-  filtrarResultados,
-  ordenarResultados,
-  type CotizacionResultado,
+  filterResults,
+  sortResults,
+  type ResultQuotation,
 } from './quotations.logic';
 
-const RESULTADOS: readonly CotizacionResultado[] = [
+const RESULTADOS: readonly ResultQuotation[] = [
   {
     id: 'med-1',
     vertical: 'MEDICAMENTOS',
@@ -33,13 +33,13 @@ const RESULTADOS: readonly CotizacionResultado[] = [
 
 describe('cotizaciones logic', () => {
   it('busca ignorando mayúsculas y acentos', () => {
-    expect(filtrarResultados(RESULTADOS, 'tomografia', 'TODAS').map((item) => item.id)).toEqual([
+    expect(filterResults(RESULTADOS, 'tomografia', 'TODAS').map((item) => item.id)).toEqual([
       'img-1',
     ]);
   });
 
   it('ordena los precios conocidos antes que los no publicados', () => {
-    expect(ordenarResultados(RESULTADOS, 'PRECIO').map((item) => item.id)).toEqual([
+    expect(sortResults(RESULTADOS, 'PRECIO').map((item) => item.id)).toEqual([
       'med-1',
       'serv-1',
       'img-1',
@@ -47,7 +47,7 @@ describe('cotizaciones logic', () => {
   });
 
   it('no inventa un orden de distancia si todavía no hay origen', () => {
-    expect(ordenarResultados(RESULTADOS, 'CERCANIA', false).map((item) => item.id)).toEqual([
+    expect(sortResults(RESULTADOS, 'CERCANIA', false).map((item) => item.id)).toEqual([
       'med-1',
       'img-1',
       'serv-1',
@@ -56,15 +56,15 @@ describe('cotizaciones logic', () => {
 
   it('a igual distancia desempata por precio, y el orden no depende de la fuente', () => {
     const base = { vertical: 'MEDICAMENTOS' as const, donde: 'Sede', distanceKm: 0.4 };
-    const filas: CotizacionResultado[] = [
+    const filas: ResultQuotation[] = [
       { ...base, id: 'c', que: 'C', price: { amount: 163, currency: 'BOB', source: 'x' } },
       { ...base, id: 'a', que: 'A', price: { amount: 153, currency: 'BOB', source: 'x' } },
       { ...base, id: 'b', que: 'B', price: { amount: 157, currency: 'BOB', source: 'x' } },
     ];
 
-    const orden = ordenarResultados(filas, 'CERCANIA').map((fila) => fila.id);
+    const orden = sortResults(filas, 'CERCANIA').map((fila) => fila.id);
     expect(orden).toEqual(['a', 'b', 'c']);
-    expect(ordenarResultados([...filas].reverse(), 'CERCANIA').map((fila) => fila.id)).toEqual(
+    expect(sortResults([...filas].reverse(), 'CERCANIA').map((fila) => fila.id)).toEqual(
       orden,
     );
   });

@@ -2,9 +2,9 @@ import { HttpHeaders } from '@angular/common/http';
 
 import { registrarAgenda } from './scheduling.handlers';
 import { RECURSO_MEDICA, reservas } from '../fixtures/agenda';
-import { encuentros } from '../fixtures/clinic';
-import { ESTADO_ENCUENTRO, ESTADO_RESERVA } from '../fixtures/concepts';
-import { PACIENTE, pacientePorId } from '../fixtures/people';
+import { encounterList } from '../fixtures/clinic';
+import { ENCOUNTER_STATUS, BOOKING_STATUS } from '../fixtures/concepts';
+import { PACIENTE, patientById } from '../fixtures/people';
 import { MockRouter, isMockReply, preconditionFailed, validation, type MockReply } from '../mock-router';
 import { buscarUsuario } from '../mock-session';
 
@@ -85,10 +85,10 @@ describe('POST /scheduling/appointments/walk-in', () => {
 
     expect(result.status).toBe(201);
     const created = result.body as Created;
-    expect(created.statusConceptId).toBe(ESTADO_RESERVA['BK-IN-PROGRESS']);
+    expect(created.statusConceptId).toBe(BOOKING_STATUS['BK-IN-PROGRESS']);
     expect(created.patientCode).toMatch(/^PAT-/);
 
-    const patient = pacientePorId(created.patientProfileId);
+    const patient = patientById(created.patientProfileId);
     expect(patient?.nationalId).toBe('9100001');
     expect(patient?.displayName).toBe('Rosa Vaca');
     expect(patient?.identityVerified).toBe(false);
@@ -97,9 +97,9 @@ describe('POST /scheduling/appointments/walk-in', () => {
     expect(booking?.patientProfileId).toBe(created.patientProfileId);
     expect(booking?.reasonText).toBe('Dolor de garganta');
 
-    const encounter = encuentros.get(created.encounterId);
+    const encounter = encounterList.get(created.encounterId);
     expect(encounter?.patientProfileId).toBe(created.patientProfileId);
-    expect(encounter?.statusConceptId).toBe(ESTADO_ENCUENTRO['ENCST-IN-PROGRESS']);
+    expect(encounter?.statusConceptId).toBe(ENCOUNTER_STATUS['ENCST-IN-PROGRESS']);
   });
 
   it('límite — la misma Idempotency-Key repetida devuelve la misma respuesta y no duplica al paciente', () => {

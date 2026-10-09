@@ -3,7 +3,7 @@ import { inject, Injectable } from '@angular/core';
 import { catchError, map, throwError, type Observable } from 'rxjs';
 
 import { readApiError } from '../../http/api-error';
-import { generarCodigoLegible } from '../../readable-code/readable-code';
+import { generateReadableCode } from '../../readable-code/readable-code';
 import { API_BASE_URL, apiUrl } from '../api';
 import {
   canjeDesdeDto,
@@ -130,7 +130,7 @@ export class LoyaltyClient {
     const generadoEl = new Date();
     return {
       canje,
-      codigo: generarCodigoLegible(LARGO_DEL_CODIGO_DE_CANJE),
+      codigo: generateReadableCode(LARGO_DEL_CODIGO_DE_CANJE),
       generadoEl,
       venceEl: new Date(generadoEl.getTime() + MINUTOS_DE_VIGENCIA_DEL_CANJE * 60 * 1000),
     };

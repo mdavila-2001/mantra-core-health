@@ -1,6 +1,6 @@
-import { analizar, sugerirDe } from './engine';
-import { SINTOMAS, SINTOMAS_DE_ALARMA, type Sintoma } from './symptoms.data';
-import { TODOS_LOS_SINTOMAS } from './symptoms';
+import { analyze, suggestOf } from './engine';
+import { SYMPTOMS, ALARM_SYMPTOMS, type Symptom } from './symptoms.data';
+import { SYMPTOMS_ALL } from './symptoms';
 
 /**
  * El motor de reconocimiento.
@@ -10,10 +10,10 @@ import { TODOS_LOS_SINTOMAS } from './symptoms';
  * una de las cinco maneras en que fallaba.
  */
 const ids = (texto: string): readonly string[] =>
-  analizar(texto, TODOS_LOS_SINTOMAS).sintomas.map((c) => c.sintoma.id);
+  analyze(texto, SYMPTOMS_ALL).sintomas.map((c) => c.sintoma.id);
 
 const alarmas = (texto: string): readonly string[] =>
-  analizar(texto, TODOS_LOS_SINTOMAS).alarmas.map((c) => c.sintoma.id);
+  analyze(texto, SYMPTOMS_ALL).alarmas.map((c) => c.sintoma.id);
 
 describe('la gramática de verdad', () => {
   it('reconoce el plural y el verbo conjugado', () => {
@@ -92,7 +92,7 @@ describe('lo que la persona dice que NO tiene', () => {
   });
 
   it('lo negado se puede consultar aparte, para poder explicarlo', () => {
-    const negados = analizar('no tengo fiebre', TODOS_LOS_SINTOMAS).negados;
+    const negados = analyze('no tengo fiebre', SYMPTOMS_ALL).negados;
 
     expect(negados.map((c) => c.sintoma.id)).toEqual(['fiebre']);
   });
@@ -127,7 +127,7 @@ describe('las urgencias', () => {
   });
 
   it('una crisis de salud mental trae su propio mensaje', () => {
-    const crisis = SINTOMAS_DE_ALARMA.find((s) => s.id === 'ideas-suicidas');
+    const crisis = ALARM_SYMPTOMS.find((s) => s.id === 'ideas-suicidas');
 
     expect(alarmas('no quiero seguir viviendo')).toEqual(['ideas-suicidas']);
     expect(crisis?.mensaje).toBeDefined();
@@ -164,15 +164,15 @@ describe('el motivo genérico', () => {
 
 describe('la confianza y la evidencia', () => {
   it('una coincidencia exacta vale más que una por parecido', () => {
-    const exacta = analizar('dolor de cabeza', SINTOMAS).sintomas[0];
-    const aproximada = analizar('dolor de kbeza', SINTOMAS).sintomas[0];
+    const exacta = analyze('dolor de cabeza', SYMPTOMS).sintomas[0];
+    const aproximada = analyze('dolor de kbeza', SYMPTOMS).sintomas[0];
 
     expect(exacta.confianza).toBe(1);
     expect(aproximada.confianza).toBeLessThan(1);
   });
 
   it('dice qué trozo de texto la trajo', () => {
-    const [coincidencia] = analizar('desde el lunes me duele la cabeza', SINTOMAS).sintomas;
+    const [coincidencia] = analyze('desde el lunes me duele la cabeza', SYMPTOMS).sintomas;
 
     expect(coincidencia.evidencia).toBe('duele la cabeza');
   });
@@ -180,7 +180,7 @@ describe('la confianza y la evidencia', () => {
 
 describe('el motor contra una tabla cualquiera', () => {
   it('no sabe nada de la tabla real: se le inyecta', () => {
-    const tabla: readonly Sintoma[] = [
+    const tabla: readonly Symptom[] = [
       {
         id: 'inventado',
         nombre: 'algo inventado',
@@ -189,7 +189,7 @@ describe('el motor contra una tabla cualquiera', () => {
       },
     ];
 
-    expect(analizar('tengo la pata de palo rota', tabla).sintomas.map((c) => c.sintoma.id)).toEqual(
+    expect(analyze('tengo la pata de palo rota', tabla).sintomas.map((c) => c.sintoma.id)).toEqual(
       ['inventado'],
     );
   });
@@ -199,18 +199,18 @@ describe('sugerirDe', () => {
   it('busca por el comienzo de cualquier palabra, no de la frase', () => {
     // Quien escribió «cabe» espera ver «dolor de cabeza»; con la búsqueda vieja
     // —que exigía que el sinónimo empezara así— no lo veía nunca.
-    const sugeridos = sugerirDe('cabe', SINTOMAS, new Set(), 6).map((s) => s.id);
+    const sugeridos = suggestOf('cabe', SYMPTOMS, new Set(), 6).map((s) => s.id);
 
     expect(sugeridos[0]).toBe('dolor-de-cabeza');
   });
 
   it('sugiere aunque esté mal escrito', () => {
-    expect(sugerirDe('caveza', SINTOMAS, new Set(), 6).map((s) => s.id)).toContain(
+    expect(suggestOf('caveza', SYMPTOMS, new Set(), 6).map((s) => s.id)).toContain(
       'dolor-de-cabeza',
     );
   });
 
   it('no sugiere una urgencia: no es un chip que se elige', () => {
-    expect(sugerirDe('convul', SINTOMAS, new Set(), 6)).toEqual([]);
+    expect(suggestOf('convul', SYMPTOMS, new Set(), 6)).toEqual([]);
   });
 });

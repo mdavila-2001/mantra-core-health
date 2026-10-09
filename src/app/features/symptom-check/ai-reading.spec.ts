@@ -1,7 +1,7 @@
 import type { LecturaIa } from '@core/data-access/triage-ia/triage-ia.types';
 
-import { combinar, lecturaVigente, sintomasDeLaLectura } from './ai-reading';
-import { reconocer, recomendar } from './symptoms';
+import { combine, currentReading, readingSymptoms } from './ai-reading';
+import { recognize, recommend } from './symptoms';
 
 /** Lo que el servicio devolvió de verdad para las tres frases del pedido (2026-09-23). */
 const LECTURA: LecturaIa = {
@@ -42,7 +42,7 @@ const LECTURA: LecturaIa = {
 
 describe('sintomasDeLaLectura', () => {
   it('los de la tabla vuelven como su fila y los anatómicos como un síntoma nuevo con sus especialidades', () => {
-    const sintomas = sintomasDeLaLectura(LECTURA);
+    const sintomas = readingSymptoms(LECTURA);
     expect(sintomas.map((s) => s.id)).toEqual(['dolor-de-panza', 'mancha:espalda', 'tristeza']);
     const manchas = sintomas[1];
     expect(manchas.nombre).toBe('manchas en la espalda');
@@ -52,7 +52,7 @@ describe('sintomasDeLaLectura', () => {
   });
 
   it('ubica un síntoma de la tabla con la parte y el lado cuando el nombre no los dice', () => {
-    const [hormigueo] = sintomasDeLaLectura({
+    const [hormigueo] = readingSymptoms({
       urgency: 'programada',
       symptoms: [
         {
@@ -66,7 +66,7 @@ describe('sintomasDeLaLectura', () => {
   });
 
   it('un código que esta tabla no tiene se ignora', () => {
-    const sintomas = sintomasDeLaLectura({
+    const sintomas = readingSymptoms({
       urgency: 'programada',
       symptoms: [{ ...LECTURA.symptoms[0], code: 'fila-de-otro-build' }],
     });
@@ -74,28 +74,28 @@ describe('sintomasDeLaLectura', () => {
   });
 
   it('sin lectura no hay nada que sumar', () => {
-    expect(sintomasDeLaLectura(null)).toEqual([]);
+    expect(readingSymptoms(null)).toEqual([]);
   });
 });
 
 describe('combinar', () => {
   it('suma lo que el motor local no ve y recomienda con la misma lógica', () => {
     const texto = 'Me duele el estómago, no sé dónde exactamente. Me salieron unas manchas raras en la espalda. Me siento triste';
-    const locales = reconocer(texto);
+    const locales = recognize(texto);
     expect(locales.some((s) => s.id === 'mancha:espalda')).toBe(false);
 
-    const todos = combinar(locales, sintomasDeLaLectura(LECTURA));
+    const todos = combine(locales, readingSymptoms(LECTURA));
     expect(todos.map((s) => s.id)).toEqual(expect.arrayContaining(['dolor-de-panza', 'tristeza', 'mancha:espalda']));
     expect(new Set(todos.map((s) => s.id)).size).toBe(todos.length);
 
-    const especialidades = recomendar(todos).map((r) => r.nombre);
+    const especialidades = recommend(todos).map((r) => r.nombre);
     expect(especialidades).toContain('Dermatología');
     expect(especialidades).toContain('Gastroenterología');
   });
 
   it('un síntoma que vieron los dos queda en la versión del servicio y en su lugar', () => {
-    const locales = reconocer('me duele el estómago');
-    const todos = combinar(locales, sintomasDeLaLectura(LECTURA));
+    const locales = recognize('me duele el estómago');
+    const todos = combine(locales, readingSymptoms(LECTURA));
     expect(todos[0].id).toBe('dolor-de-panza');
     expect(todos[0].nombre).toBe('dolor de panza · estómago');
     expect(todos.filter((s) => s.id === 'dolor-de-panza')).toHaveLength(1);
@@ -106,13 +106,13 @@ describe('lecturaVigente', () => {
   const guardada = { texto: 'me duele el brazo', lectura: LECTURA };
 
   it('vale mientras se sigue escribiendo o dictando al final', () => {
-    expect(lecturaVigente(guardada, 'me duele el brazo')).toBe(LECTURA);
-    expect(lecturaVigente(guardada, 'me duele el brazo y la pierna')).toBe(LECTURA);
+    expect(currentReading(guardada, 'me duele el brazo')).toBe(LECTURA);
+    expect(currentReading(guardada, 'me duele el brazo y la pierna')).toBe(LECTURA);
   });
 
   it('deja de valer si se borró o cambió lo que la produjo', () => {
-    expect(lecturaVigente(guardada, 'me duele el')).toBeNull();
-    expect(lecturaVigente(guardada, 'me duele la pierna')).toBeNull();
-    expect(lecturaVigente(null, 'lo que sea')).toBeNull();
+    expect(currentReading(guardada, 'me duele el')).toBeNull();
+    expect(currentReading(guardada, 'me duele la pierna')).toBeNull();
+    expect(currentReading(null, 'lo que sea')).toBeNull();
   });
 });

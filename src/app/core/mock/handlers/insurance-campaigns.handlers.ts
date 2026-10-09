@@ -1,4 +1,4 @@
-import { pacientePorId } from '../fixtures/people';
+import { patientById } from '../fixtures/people';
 import {
   conflict,
   forbidden,
@@ -418,7 +418,7 @@ export function registerInsuranceCampaigns(router: MockRouter): void {
       return forbidden('Sólo el titular del perfil puede ver sus campañas');
     }
 
-    const carrierName = pacientePorId(profileId)?.aseguradora;
+    const carrierName = patientById(profileId)?.aseguradora;
     if (carrierName === undefined) return [];
 
     const today = isoDia(0);

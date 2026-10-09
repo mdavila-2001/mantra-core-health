@@ -44,15 +44,15 @@ import type { SelectOption } from '../../../../shared/components/atoms/select/se
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
-import { toBandejaStatusPresentation } from '../inbox-status';
-import { entregaEnPantalla } from '../delivery-status';
+import { toInboxStatusPresentation } from '../inbox-status';
+import { deliveryInScreen } from '../delivery-status';
 import {
   NOTA_DE_DATOS_DE_EJEMPLO,
   coberturaDeEjemplo,
   facturaDeEjemplo,
   type RenglonCubierto,
 } from '../pharmacy-inbox.fixtures';
-import { ResumenDeFactura } from './invoice-summary/invoice-summary';
+import { InvoiceSummary } from './invoice-summary/invoice-summary';
 import { displayCurrency } from '../../../../core/money/display-currency';
 
 /** A dónde vuelve quien llegó a un pedido que ya no está. */
@@ -116,7 +116,7 @@ const EMPTY_SUBSTITUTE_SEARCH: SubstituteSearch = {
     PageHeader,
     Radio,
     RadioGroup,
-    ResumenDeFactura,
+    InvoiceSummary,
     RouterLink,
     Select,
     ViewStateHost,
@@ -176,7 +176,7 @@ export class InboxOrder {
    */
   protected readonly entrega = computed(() => {
     const abierto = this.pedido();
-    return abierto === null ? null : entregaEnPantalla(abierto);
+    return abierto === null ? null : deliveryInScreen(abierto);
   });
 
   /**
@@ -193,7 +193,7 @@ export class InboxOrder {
     const abierto = this.pedido();
     return abierto === null
       ? null
-      : toBandejaStatusPresentation(abierto.estado, this.entrega()?.modalidad ?? null);
+      : toInboxStatusPresentation(abierto.estado, this.entrega()?.modalidad ?? null);
   });
 
   /**

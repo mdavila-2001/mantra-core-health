@@ -28,7 +28,7 @@ import { fakerES } from '@faker-js/faker';
  * base de todo el mock— a este módulo, que es una hoja. La propiedad que se
  * necesita es la misma: mismo texto, mismo número, siempre.
  */
-export function semillaDe(texto: string): number {
+export function seedOf(texto: string): number {
   let h = 0x811c9dc5;
   for (let i = 0; i < texto.length; i++) {
     h = Math.imul(h ^ texto.charCodeAt(i), 0x01000193) >>> 0;
@@ -44,8 +44,8 @@ export function semillaDe(texto: string): number {
  *   const f = conSemilla(`paciente-${indice}`);
  *   const nombre = f.person.firstName('female');
  */
-export function conSemilla(nombre: string): typeof fakerES {
-  fakerES.seed(semillaDe(nombre));
+export function withSeed(nombre: string): typeof fakerES {
+  fakerES.seed(seedOf(nombre));
   return fakerES;
 }
 
@@ -57,12 +57,12 @@ export function conSemilla(nombre: string): typeof fakerES {
  * apellidos son campos distintos (`lastName` y `motherLastName`, que es como
  * viaja en el modelo), así que se toma sólo el primero.
  */
-export function apellido(f: typeof fakerES): string {
+export function surname(f: typeof fakerES): string {
   return f.person.lastName().split(' ')[0]!;
 }
 
 /** El slug con el que viaja una persona en las URLs públicas. */
-export function slugDeNombre(nombre: string, apellidoPaterno: string): string {
+export function nameSlug(nombre: string, apellidoPaterno: string): string {
   return `${nombre.split(' ')[0]}-${apellidoPaterno}`
     .normalize('NFD')
     .replace(/[̀-ͯ]/g, '')

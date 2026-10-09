@@ -30,7 +30,7 @@ import {
 } from '../../../../core/data-access/scheduling/scheduling.types';
 
 /** Un rato ya tomado del día, para avisar el choque ANTES de guardar. */
-export interface RatoDelDia {
+export interface DayGap {
   readonly desde: Date;
   readonly hasta: Date;
   readonly rotulo: string;
@@ -87,7 +87,7 @@ export interface RatoDelDia {
   styleUrl: './day-card.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class TarjetaDelDia {
+export class DayCard {
   private readonly scheduling = inject(SchedulingClient);
   private readonly profiles = inject(ProfilesClient);
   private readonly toasts = inject(ToastService);
@@ -117,7 +117,7 @@ export class TarjetaDelDia {
   readonly cupoId = input<string | null>(null);
 
   /** Lo que el día ya tiene tomado, para avisar el choque antes de guardar. */
-  readonly ratosTomados = input<readonly RatoDelDia[]>([]);
+  readonly ratosTomados = input<readonly DayGap[]>([]);
 
   /** Se creó algo: el contenedor recarga el día. */
   readonly creada = output<void>();
@@ -127,10 +127,10 @@ export class TarjetaDelDia {
 
   /* -- El formulario ------------------------------------------------------- */
 
-  protected readonly desde = signal('');
+  protected readonly from = signal('');
   protected readonly hasta = signal('');
-  protected readonly motivo = signal('');
-  protected readonly paciente = signal<ReferenceOption | null>(null);
+  protected readonly reason = signal('');
+  protected readonly patient = signal<ReferenceOption | null>(null);
   /**
    * Por qué medio se atiende.
    *
@@ -138,8 +138,8 @@ export class TarjetaDelDia {
    * igualmente lo GUARDA, en vez de mandarlo vacío: «nadie lo dijo» y «dijeron
    * que es presencial» son cosas distintas en la historia del paciente.
    */
-  protected readonly modalidad = signal<ModalidadDeAtencion>('PRESENCIAL');
-  protected readonly modalidades = MODALIDADES;
+  protected readonly modality = signal<ModalidadDeAtencion>('PRESENCIAL');
+  protected readonly modalities = MODALIDADES;
 
   /**
    * Las modalidades como opciones del control segmentado.
@@ -149,18 +149,18 @@ export class TarjetaDelDia {
    * —con flechas y un solo tabulador—, en vez de escribir otro control: son
    * tres opciones excluyentes, que es exactamente para lo que existe.
    */
-  protected readonly opcionesDeModalidad: readonly SegmentedOption<ModalidadDeAtencion>[] =
+  protected readonly modalityOptions: readonly SegmentedOption<ModalidadDeAtencion>[] =
     MODALIDADES.map((m) => ({ value: m.valor, label: m.nombre }));
 
   /** Si el alta salió de un cupo ya programado: la franja no se pregunta. */
-  protected readonly desdeUnCupo = computed(() => this.cupoId() !== null);
+  protected readonly fromSlot = computed(() => this.cupoId() !== null);
 
   /** La franja del cupo, en palabras, para mostrarla como dato. */
-  protected readonly franjaDelCupo = computed(
-    () => `${horaDe(this.desdeInicial())}–${horaDe(this.hastaInicial())}`,
+  protected readonly slotBand = computed(
+    () => `${timeOf(this.desdeInicial())}–${timeOf(this.hastaInicial())}`,
   );
-  protected readonly candidatos = signal<readonly ReferenceOption[]>([]);
-  protected readonly buscando = signal(false);
+  protected readonly candidates = signal<readonly ReferenceOption[]>([]);
+  protected readonly searching = signal(false);
 
   /**
    * Por qué la última búsqueda de pacientes no trajo nada, si fue un fallo.
@@ -168,8 +168,8 @@ export class TarjetaDelDia {
    * Sin esto, una búsqueda caída decía «Ningún paciente coincide»: el
    * profesional concluía que la persona no estaba registrada.
    */
-  protected readonly busquedaFallida = signal<string | null>(null);
-  protected readonly guardando = signal(false);
+  protected readonly failedSearch = signal<string | null>(null);
+  protected readonly saving = signal(false);
 
   /** El fallo del guardado, con el mensaje del servidor tal cual. */
   protected readonly error = signal<string | null>(null);
@@ -178,12 +178,12 @@ export class TarjetaDelDia {
     // El prellenado va en el constructor y no en un effect: el rato tocado es
     // el estado INICIAL del formulario, no algo que lo pise mientras se edita.
     queueMicrotask(() => {
-      this.desde.set(horaDe(this.desdeInicial()));
-      this.hasta.set(horaDe(this.hastaInicial()));
+      this.from.set(timeOf(this.desdeInicial()));
+      this.hasta.set(timeOf(this.hastaInicial()));
     });
   }
 
-  protected readonly titulo = computed(() =>
+  protected readonly title = computed(() =>
     this.dia().toLocaleDateString('es-BO', { weekday: 'long', day: 'numeric', month: 'long' }),
   );
 
@@ -193,13 +193,13 @@ export class TarjetaDelDia {
    * Es la inferencia hecha visible: la tarjeta no tiene tipos, pero decirle a
    * la persona qué va a crear evita la sorpresa de una campana que no esperaba.
    */
-  protected readonly queVaAPasar = computed<string | null>(() => {
-    if (this.paciente() !== null) {
+  protected readonly willHappen = computed<string | null>(() => {
+    if (this.patient() !== null) {
       // La modalidad entra en la frase sólo cuando NO es la de siempre: decir
       // «en el consultorio» en cada cita presencial es ruido, y lo que la
       // persona necesita confirmar de un vistazo es lo que se sale de la norma.
-      const porVideo = this.modalidad() === 'TELECONSULTA';
-      const aDomicilio = this.modalidad() === 'DOMICILIO';
+      const porVideo = this.modality() === 'TELECONSULTA';
+      const aDomicilio = this.modality() === 'DOMICILIO';
       const donde = porVideo
         ? ' Va por videollamada.'
         : aDomicilio
@@ -207,7 +207,7 @@ export class TarjetaDelDia {
           : '';
       return `Se agenda la cita y le avisamos al paciente. No tiene que confirmar nada.${donde}`;
     }
-    if (this.motivo().trim() !== '') {
+    if (this.reason().trim() !== '') {
       return 'Queda como tiempo ocupado suyo. El paciente no ve nada en ese rato.';
     }
     return null;
@@ -220,8 +220,8 @@ export class TarjetaDelDia {
    * además las otras sedes al guardar.
    */
   /** El rato ya tomado que pisa lo que se está por crear, si hay alguno. */
-  private readonly loQuePisa = computed<RatoDelDia | null>(() => {
-    const rango = this.rango();
+  private readonly overlaps = computed<DayGap | null>(() => {
+    const rango = this.range();
     if (rango === null) return null;
     return (
       this.ratosTomados().find(
@@ -232,10 +232,10 @@ export class TarjetaDelDia {
     );
   });
 
-  protected readonly choqueEnVivo = computed<string | null>(() => {
-    const pisa = this.loQuePisa();
+  protected readonly clashInLive = computed<string | null>(() => {
+    const pisa = this.overlaps();
     if (pisa === null) return null;
-    const cuando = `(${horaDe(pisa.desde)}–${horaDe(pisa.hasta)})`;
+    const cuando = `(${timeOf(pisa.desde)}–${timeOf(pisa.hasta)})`;
     return pisa.tipo === 'bloqueo'
       ? `Ese rato está bloqueado por ${pisa.rotulo} ${cuando}. No se puede agendar ahí: quite el bloqueo primero, o elija otro rato.`
       : `Ese rato pisa ${pisa.rotulo} ${cuando}.`;
@@ -249,30 +249,30 @@ export class TarjetaDelDia {
    * encabezado con cualquier franja escrita a mano, y por ahí el bloqueo
    * quedaba sin defensa. El aviso dice además QUÉ lo bloquea y qué hacer.
    */
-  protected readonly bloqueadoPorUnRato = computed(() => this.loQuePisa()?.tipo === 'bloqueo');
+  protected readonly blockedByGap = computed(() => this.overlaps()?.tipo === 'bloqueo');
 
-  protected readonly puedeGuardar = computed(() => {
-    const rango = this.rango();
+  protected readonly canSave = computed(() => {
+    const rango = this.range();
     return (
       rango !== null &&
-      !this.guardando() &&
-      !this.bloqueadoPorUnRato() &&
-      (this.paciente() !== null || this.motivo().trim() !== '')
+      !this.saving() &&
+      !this.blockedByGap() &&
+      (this.patient() !== null || this.reason().trim() !== '')
     );
   });
 
   /** Busca pacientes por nombre o código. La molécula ya espera antes de emitir. */
-  protected buscarPaciente(texto: string): void {
+  protected searchPatient(texto: string): void {
     if (texto.trim() === '') {
-      this.candidatos.set([]);
+      this.candidates.set([]);
       return;
     }
-    this.buscando.set(true);
+    this.searching.set(true);
     this.profiles.searchPatients({ query: texto.trim(), limit: 10 }).subscribe({
       next: (pagina) => {
-        this.buscando.set(false);
-        this.busquedaFallida.set(null);
-        this.candidatos.set(
+        this.searching.set(false);
+        this.failedSearch.set(null);
+        this.candidates.set(
           pagina.items.map((item) => ({
             value: item.profileId,
             label: item.displayName ?? item.patientCode,
@@ -283,9 +283,9 @@ export class TarjetaDelDia {
         );
       },
       error: (error: unknown) => {
-        this.buscando.set(false);
-        this.candidatos.set([]);
-        this.busquedaFallida.set(describeApiFailure(error, 'No se pudo buscar pacientes.'));
+        this.searching.set(false);
+        this.candidates.set([]);
+        this.failedSearch.set(describeApiFailure(error, 'No se pudo buscar pacientes.'));
       },
     });
   }
@@ -296,17 +296,17 @@ export class TarjetaDelDia {
    * El 422 del servidor —la regla madre, con qué/cuándo/dónde— se muestra tal
    * cual: ese mensaje ya está escrito para una persona.
    */
-  protected guardar(): void {
-    const rango = this.rango();
+  protected save(): void {
+    const rango = this.range();
     // `puedeGuardar()` ya incluye el bloqueo; se vuelve a mirar acá porque un
     // botón deshabilitado no es una regla: esta función se puede invocar por
     // teclado, por `submit` del formulario y desde una prueba.
-    if (rango === null || this.bloqueadoPorUnRato() || !this.puedeGuardar()) return;
+    if (rango === null || this.blockedByGap() || !this.canSave()) return;
 
-    this.guardando.set(true);
+    this.saving.set(true);
     this.error.set(null);
 
-    const paciente = this.paciente();
+    const paciente = this.patient();
     if (paciente !== null) {
       const duracionMin = Math.round(
         (rango.hasta.getTime() - rango.desde.getTime()) / 60_000,
@@ -317,12 +317,12 @@ export class TarjetaDelDia {
           resourceId: this.resourceId(),
           startAt: rango.desde.toISOString(),
           durationMinutes: duracionMin,
-          ...(this.motivo().trim() === '' ? {} : { reasonText: this.motivo().trim() }),
-          channel: this.modalidad(),
+          ...(this.reason().trim() === '' ? {} : { reasonText: this.reason().trim() }),
+          channel: this.modality(),
         })
         .subscribe({
           next: (creado) => {
-            this.guardando.set(false);
+            this.saving.set(false);
             this.toasts.success(
               creado.retractedSlots > 0
                 ? `Le avisamos al paciente. Esto quitó ${creado.retractedSlots} ${
@@ -333,7 +333,7 @@ export class TarjetaDelDia {
             );
             this.creada.emit();
           },
-          error: (error: unknown) => this.fallo(error),
+          error: (error: unknown) => this.failure(error),
         });
       return;
     }
@@ -343,18 +343,18 @@ export class TarjetaDelDia {
         exceptionType: 'ABSENCE',
         startAt: rango.desde.toISOString(),
         endAt: rango.hasta.toISOString(),
-        reason: this.motivo().trim(),
+        reason: this.reason().trim(),
       })
       .subscribe({
         next: () => {
-          this.guardando.set(false);
+          this.saving.set(false);
           this.toasts.success(
             'El paciente no ve nada en ese rato.',
             'Tiempo ocupado guardado',
           );
           this.creada.emit();
         },
-        error: (error: unknown) => this.fallo(error),
+        error: (error: unknown) => this.failure(error),
       });
   }
 
@@ -366,12 +366,12 @@ export class TarjetaDelDia {
    * cualquier cosa que las escribiera terminaría en la cita. Acá se corta:
    * viniendo de un cupo, lo que se guarda es su franja, punto.
    */
-  private rango(): { desde: Date; hasta: Date } | null {
-    if (this.desdeUnCupo()) {
+  private range(): { desde: Date; hasta: Date } | null {
+    if (this.fromSlot()) {
       return { desde: this.desdeInicial(), hasta: this.hastaInicial() };
     }
-    const desde = conHora(this.dia(), this.desde());
-    const hasta = conHora(this.dia(), this.hasta());
+    const desde = withTime(this.dia(), this.from());
+    const hasta = withTime(this.dia(), this.hasta());
     if (desde === null || hasta === null || desde.getTime() >= hasta.getTime()) {
       return null;
     }
@@ -385,8 +385,8 @@ export class TarjetaDelDia {
    * modal vacío que exige confirmar para salir es una traba; uno con un
    * paciente ya elegido que se cierra de un `Escape` de reflejo es una pérdida.
    */
-  protected readonly hayAlgoEscrito = computed(
-    () => this.paciente() !== null || this.motivo().trim() !== '',
+  protected readonly hasWrittenContent = computed(
+    () => this.patient() !== null || this.reason().trim() !== '',
   );
 
   /**
@@ -396,7 +396,7 @@ export class TarjetaDelDia {
    * congela la página, no se puede recorrer con lector de pantalla y bloquea
    * cualquier automatización (regla 95.4.2).
    */
-  protected pedirDescarte(): void {
+  protected requestDiscard(): void {
     void this.dialogs
       .confirm({
         title: '¿Descartar lo que escribió?',
@@ -418,13 +418,13 @@ export class TarjetaDelDia {
    * no tiene campos que se llamen como los del DTO), y siempre que la API lo
    * mande se agrega el código con que se encuentra la línea del log.
    */
-  private fallo(error: unknown): void {
-    this.guardando.set(false);
+  private failure(error: unknown): void {
+    this.saving.set(false);
     const campos = Object.values(fieldErrorsOf(error));
     const delServidor =
       campos.length > 0
         ? campos.join(' ')
-        : (mensajeDelCuerpo(error) ?? 'No se pudo guardar la cita. Intente de nuevo.');
+        : (bodyMessage(error) ?? 'No se pudo guardar la cita. Intente de nuevo.');
     this.error.set(describeApiFailure(error, delServidor));
   }
 }
@@ -434,7 +434,7 @@ export class TarjetaDelDia {
  * responde texto suelto). Con `code`, quien decide si el mensaje es para la
  * persona es `describeApiFailure`: un «Error interno» no lo es.
  */
-function mensajeDelCuerpo(error: unknown): string | null {
+function bodyMessage(error: unknown): string | null {
   if (!(error instanceof HttpErrorResponse)) return null;
   const cuerpo: unknown = error.error;
   if (typeof cuerpo !== 'object' || cuerpo === null || 'code' in cuerpo || !('message' in cuerpo)) {
@@ -444,14 +444,14 @@ function mensajeDelCuerpo(error: unknown): string | null {
 }
 
 /** `HH:mm` de un instante, para los campos de hora. */
-function horaDe(instante: Date): string {
+function timeOf(instante: Date): string {
   const horas = String(instante.getHours()).padStart(2, '0');
   const minutos = String(instante.getMinutes()).padStart(2, '0');
   return `${horas}:${minutos}`;
 }
 
 /** El día con la hora `HH:mm` puesta, o `null` si el texto no es una hora. */
-function conHora(dia: Date, texto: string): Date | null {
+function withTime(dia: Date, texto: string): Date | null {
   const partes = /^([01]?\d|2[0-3]):([0-5]\d)$/.exec(texto.trim());
   if (partes === null) return null;
   const fecha = new Date(dia);

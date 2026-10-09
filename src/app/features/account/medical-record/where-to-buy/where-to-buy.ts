@@ -55,8 +55,8 @@ import { Tab } from '../../../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../../../shared/components/molecules/tabs/tabs';
 import { AppMap } from '../../../../shared/components/organisms/map/map';
 import type {
-  EstadoDePin,
-  PinMapa,
+  PinStatus,
+  PinMap,
 } from '../../../../shared/components/organisms/map/map-pin.types';
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
@@ -411,7 +411,7 @@ export class WhereToBuy {
   protected readonly sedeElegida = signal<string | null>(null);
 
   /** Las sedes ubicables, traducidas al contrato del organismo de mapa. */
-  protected readonly pinesDeSedes = computed<readonly PinMapa[]>(() =>
+  protected readonly pinesDeSedes = computed<readonly PinMap[]>(() =>
     this.sedesEnElMapa().map((sede) => ({
       // La letra de la tarjeta es la referencia compartida: ningún uuid
       // llega al mapa, la misma regla de cero identificadores visibles.
@@ -877,7 +877,7 @@ function subtituloDePin(sede: SedeVisible, conSeguro: boolean): string | undefin
 }
 
 /** El estado del pin: el mismo criterio que el badge de la tarjeta. */
-function estadoDePin(sede: SedeVisible, conSeguro: boolean): EstadoDePin {
+function estadoDePin(sede: SedeVisible, conSeguro: boolean): PinStatus {
   if (conSeguro) {
     return sede.conSeguro.completa
       ? { etiqueta: 'Tiene todo lo aprobado', tono: 'success' }

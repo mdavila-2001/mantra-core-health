@@ -20,7 +20,7 @@ import { Alert } from '../../../../shared/components/molecules/alert/alert';
 import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import { AppMap } from '../../../../shared/components/organisms/map/map';
-import type { PinMapa, PuntoGeo } from '../../../../shared/components/organisms/map/map-pin.types';
+import type { PinMap, PuntoGeo } from '../../../../shared/components/organisms/map/map-pin.types';
 import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
 import { dataOf } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
@@ -36,12 +36,12 @@ import {
  * propio cliente al pedir el campo, y va a la vista en las dos caras: quien
  * completa el formulario y quien después lee la ficha.
  */
-const NOTA_DEL_TIPO_DE_SOCIEDAD =
+const SOCIETY_TYPE_NOTE =
   'La lista es cerrada a propósito: la plataforma cuenta cuántos proveedores hay de cada tipo ' +
   'de sociedad, y para que esa cuenta sirva el valor tiene que ser uno de estos ocho.';
 
 /** El único pin de esta pantalla: la central de la empresa. */
-const PIN_DE_LA_CENTRAL = 'central';
+const CENTRAL_PIN = 'central';
 
 /**
  * **Los datos legales de la empresa**: razón social, tipo de sociedad, NIT,
@@ -79,7 +79,7 @@ const PIN_DE_LA_CENTRAL = 'central';
   styleUrl: './company-data.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class DatosDeLaEmpresa {
+export class CompanyData {
   private readonly toasts = inject(ToastService);
 
   readonly state = input.required<ViewState<DatosLegalesDeLaEmpresa>>();
@@ -96,11 +96,11 @@ export class DatosDeLaEmpresa {
   /** La persona pidió reintentar; el dueño de los datos decide qué hacer. */
   readonly retry = output<void>();
 
-  protected readonly notaDeEjemplo = NOTA_DE_DATOS_DE_EJEMPLO;
-  protected readonly notaDelTipo = NOTA_DEL_TIPO_DE_SOCIEDAD;
+  protected readonly exampleNote = NOTA_DE_DATOS_DE_EJEMPLO;
+  protected readonly typeNote = SOCIETY_TYPE_NOTE;
 
   /** Las ocho opciones salen de la lista cerrada, en su orden, sin traducir. */
-  protected readonly opcionesDeSociedad: readonly SelectOption<TipoDeSociedad>[] =
+  protected readonly societyOptions: readonly SelectOption<TipoDeSociedad>[] =
     TIPOS_DE_SOCIEDAD.map((tipo) => ({ value: tipo, label: tipo }));
 
   /**
@@ -110,9 +110,9 @@ export class DatosDeLaEmpresa {
    * quedar en `true` con el borrador vacío, y entonces el formulario se dibuja
    * sin nada que escribir.
    */
-  protected readonly borrador = signal<DatosLegalesDeLaEmpresa | null>(null);
+  protected readonly draft = signal<DatosLegalesDeLaEmpresa | null>(null);
 
-  protected readonly editando = computed(() => this.borrador() !== null);
+  protected readonly editing = computed(() => this.draft() !== null);
 
   /**
    * Lo aplicado en esta sesión de pantalla. Nada de esto se persiste.
@@ -124,27 +124,27 @@ export class DatosDeLaEmpresa {
    * recargando la página. Que no se resuelva con `linkedSignal`: en este repo
    * no reacciona bajo pruebas.
    */
-  private readonly aplicado = signal<DatosLegalesDeLaEmpresa | null>(null);
+  private readonly applied = signal<DatosLegalesDeLaEmpresa | null>(null);
 
-  private readonly recibido = computed(() => dataOf(this.state()));
+  private readonly received = computed(() => dataOf(this.state()));
 
   /** Lo que la ficha muestra: lo aplicado en pantalla, o lo que llegó. */
-  protected readonly empresa = computed(() => this.aplicado() ?? this.recibido());
+  protected readonly company = computed(() => this.applied() ?? this.received());
 
   /** El punto que el mapa dibuja: el del formulario si está abierto. */
   protected readonly punto = computed<PuntoGeo | null>(
-    () => (this.borrador() ?? this.empresa())?.puntoCentral ?? null,
+    () => (this.draft() ?? this.company())?.puntoCentral ?? null,
   );
 
-  protected readonly pines = computed<readonly PinMapa[]>(() => {
+  protected readonly pins = computed<readonly PinMap[]>(() => {
     const punto = this.punto();
-    const empresa = this.empresa();
+    const empresa = this.company();
     if (punto === null || empresa === null) {
       return [];
     }
     return [
       {
-        id: PIN_DE_LA_CENTRAL,
+        id: CENTRAL_PIN,
         lat: punto.lat,
         lng: punto.lng,
         titulo: empresa.razonSocial,
@@ -153,58 +153,58 @@ export class DatosDeLaEmpresa {
     ];
   });
 
-  protected editar(): void {
-    this.borrador.set(this.empresa());
+  protected edit(): void {
+    this.draft.set(this.company());
   }
 
-  protected descartar(): void {
-    this.borrador.set(null);
+  protected discard(): void {
+    this.draft.set(null);
   }
 
   /** Deja la ficha con lo escrito. En pantalla: no hay dónde guardarlo todavía. */
-  protected aplicar(): void {
-    const borrador = this.borrador();
+  protected apply(): void {
+    const borrador = this.draft();
     if (borrador === null) {
       return;
     }
-    this.aplicado.set(borrador);
-    this.borrador.set(null);
+    this.applied.set(borrador);
+    this.draft.set(null);
     this.toasts.info(
       'La ficha se ve con estos datos, pero todavía no se guardan: el guardado llega con el perfil de la farmacia.',
       'Cambios sólo en pantalla',
     );
   }
 
-  protected fijarRazonSocial(valor: ValorDeCampo): void {
-    this.actualizar({ razonSocial: textoDe(valor) });
+  protected setLegalName(valor: FieldValue): void {
+    this.update({ razonSocial: textOf(valor) });
   }
 
-  protected fijarNit(valor: ValorDeCampo): void {
-    this.actualizar({ nit: textoDe(valor) });
+  protected pinNit(valor: FieldValue): void {
+    this.update({ nit: textOf(valor) });
   }
 
-  protected fijarDireccion(valor: ValorDeCampo): void {
-    this.actualizar({ direccionLegal: textoDe(valor) });
+  protected pinAddress(valor: FieldValue): void {
+    this.update({ direccionLegal: textOf(valor) });
   }
 
   /**
    * El tipo sale de la lista o no sale: el desplegable devuelve el mismo valor
    * que entró en `options`, así que acá no hay ningún texto libre que validar.
    */
-  protected fijarTipoDeSociedad(valor: TipoDeSociedad | null): void {
-    this.actualizar({ tipoDeSociedad: valor });
+  protected societyPinType(valor: TipoDeSociedad | null): void {
+    this.update({ tipoDeSociedad: valor });
   }
 
   /**
    * El punto que se marcó en el mapa. Sólo con el formulario abierto: en
    * lectura el mapa muestra, no cambia la ficha por un clic al desplazarse.
    */
-  protected marcarPunto(punto: PuntoGeo): void {
-    this.actualizar({ puntoCentral: punto });
+  protected markPunto(punto: PuntoGeo): void {
+    this.update({ puntoCentral: punto });
   }
 
-  private actualizar(cambios: Partial<DatosLegalesDeLaEmpresa>): void {
-    this.borrador.update((actual) => (actual === null ? null : { ...actual, ...cambios }));
+  private update(cambios: Partial<DatosLegalesDeLaEmpresa>): void {
+    this.draft.update((actual) => (actual === null ? null : { ...actual, ...cambios }));
   }
 }
 
@@ -212,12 +212,12 @@ export class DatosDeLaEmpresa {
  * Lo que emite `app-input`: el átomo declara `string | number | null` y en un
  * campo numérico devuelve un número, no su texto.
  */
-type ValorDeCampo = string | number | null;
+type FieldValue = string | number | null;
 
 /**
  * Normaliza al borde lo que llega de un campo. La alternativa era un `$any()`
  * en la plantilla, que apaga justamente la comprobación que hace falta.
  */
-function textoDe(valor: ValorDeCampo): string {
+function textOf(valor: FieldValue): string {
   return valor === null ? '' : String(valor);
 }

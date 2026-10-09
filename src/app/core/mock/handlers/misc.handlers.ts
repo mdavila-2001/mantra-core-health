@@ -1,21 +1,21 @@
 import {
   CODE_SYSTEM_VERSION_ID,
-  conjuntoPorCodigo,
-  ESPECIALIDAD,
-  ESTADO,
+  setByCode,
+  SPECIALTY,
+  STATUS,
   MEDICAMENTO,
-  miembrosDe,
-  PARENTESCO,
+  membersOf,
+  KINSHIP,
   UNIDAD,
   VIA,
 } from '../fixtures/concepts';
 import {
-  MEDICA,
+  MEDICAL,
   PACIENTE,
-  PACIENTES,
-  PROFESIONALES,
-  pacientePorId,
-  profesionalPorId,
+  PATIENTS,
+  PROFESSIONALS,
+  patientById,
+  professionalById,
 } from '../fixtures/people';
 import { conflict, forbidden, noContent, notFound, preconditionFailed, reply, unauthorized, type MockRouter } from '../mock-router';
 import { TENANT_CLINICA } from '../mock-session';
@@ -173,7 +173,7 @@ interface FavoritaSimulada {
 const favoritas = new Coleccion<FavoritaSimulada>([
   {
     id: uuid('fav-1'),
-    userId: MEDICA.userId,
+    userId: MEDICAL.userId,
     name: 'Enalapril inicio',
     medicationConceptId: MEDICAMENTO['MED-ENALAPRIL']!,
     substanceAtcConceptId: null,
@@ -186,7 +186,7 @@ const favoritas = new Coleccion<FavoritaSimulada>([
   },
   {
     id: uuid('fav-2'),
-    userId: MEDICA.userId,
+    userId: MEDICAL.userId,
     name: 'Atorvastatina nocturna',
     medicationConceptId: MEDICAMENTO['MED-ATORVASTATINA']!,
     substanceAtcConceptId: null,
@@ -199,7 +199,7 @@ const favoritas = new Coleccion<FavoritaSimulada>([
   },
   {
     id: uuid('fav-3'),
-    userId: MEDICA.userId,
+    userId: MEDICAL.userId,
     name: 'Paracetamol a demanda',
     medicationConceptId: MEDICAMENTO['MED-PARACETAMOL']!,
     substanceAtcConceptId: null,
@@ -237,9 +237,9 @@ const relaciones = new Coleccion<RelacionSimulada>([
     id: uuid('care-rel-1'),
     tenantId: TENANT_CLINICA,
     patientProfileId: PACIENTE.id,
-    practitionerProfileId: MEDICA.id,
+    practitionerProfileId: MEDICAL.id,
     relationshipTypeConceptId: TIPO_RELACION.TREATING,
-    statusConceptId: ESTADO['ST-ACTIVE']!,
+    statusConceptId: STATUS['ST-ACTIVE']!,
     purposeConceptId: null,
     validFrom: iso(-400),
     validTo: null,
@@ -249,9 +249,9 @@ const relaciones = new Coleccion<RelacionSimulada>([
     id: uuid('care-rel-2'),
     tenantId: TENANT_CLINICA,
     patientProfileId: PACIENTE.id,
-    practitionerProfileId: PROFESIONALES[3]!.id,
+    practitionerProfileId: PROFESSIONALS[3]!.id,
     relationshipTypeConceptId: TIPO_RELACION.CONSULTING,
-    statusConceptId: ESTADO['ST-ACTIVE']!,
+    statusConceptId: STATUS['ST-ACTIVE']!,
     purposeConceptId: null,
     validFrom: iso(-12),
     validTo: iso(80),
@@ -261,22 +261,22 @@ const relaciones = new Coleccion<RelacionSimulada>([
     id: uuid('care-request-pendiente'),
     tenantId: TENANT_CLINICA,
     patientProfileId: PACIENTE.id,
-    practitionerProfileId: PROFESIONALES[6]!.id,
+    practitionerProfileId: PROFESSIONALS[6]!.id,
     relationshipTypeConceptId: TIPO_RELACION.TREATING,
-    statusConceptId: ESTADO['ST-PENDING']!,
+    statusConceptId: STATUS['ST-PENDING']!,
     purposeConceptId: null,
     validFrom: iso(0, 8, 30),
     validTo: null,
     reasonText:
       'Le encontré por la derivación de la Dra. Rojas: quisiera ver su expediente antes de la consulta de salud mental.',
   },
-  ...PACIENTES.slice(1, 6).map((p, i) => ({
+  ...PATIENTS.slice(1, 6).map((p, i) => ({
     id: uuid(`care-rel-medica-${p.id}`),
     tenantId: TENANT_CLINICA,
     patientProfileId: p.id,
-    practitionerProfileId: MEDICA.id,
+    practitionerProfileId: MEDICAL.id,
     relationshipTypeConceptId: TIPO_RELACION.TREATING,
-    statusConceptId: ESTADO['ST-ACTIVE']!,
+    statusConceptId: STATUS['ST-ACTIVE']!,
     purposeConceptId: null,
     validFrom: iso(-300 + i * 20),
     validTo: null,
@@ -298,22 +298,22 @@ const representaciones = new Coleccion<{
   {
     id: uuid('legal-rep-1'),
     tenantId: TENANT_CLINICA,
-    patientProfileId: PACIENTES[3]!.id,
+    patientProfileId: PATIENTS[3]!.id,
     representativeUserId: uuid('user-p-guzman'),
     representativeName: 'Elena María Guzmán Arauz',
-    relationshipConceptId: PARENTESCO['RELATIONSHIP_MOTHER']!,
-    statusConceptId: ESTADO['ST-ACTIVE']!,
+    relationshipConceptId: KINSHIP['RELATIONSHIP_MOTHER']!,
+    statusConceptId: STATUS['ST-ACTIVE']!,
     validFrom: iso(-800),
     validTo: null,
   },
   {
     id: uuid('legal-rep-2'),
     tenantId: TENANT_CLINICA,
-    patientProfileId: PACIENTES[11]!.id,
+    patientProfileId: PATIENTS[11]!.id,
     representativeUserId: uuid('user-p-soliz'),
     representativeName: 'Andrés Solíz Rojas',
-    relationshipConceptId: PARENTESCO['RELATIONSHIP_FATHER']!,
-    statusConceptId: ESTADO['ST-ACTIVE']!,
+    relationshipConceptId: KINSHIP['RELATIONSHIP_FATHER']!,
+    statusConceptId: STATUS['ST-ACTIVE']!,
     validFrom: iso(-500),
     validTo: null,
   },
@@ -337,9 +337,9 @@ const accesosClinicos = new Coleccion<AccesoClinicoSimulado>([
     id: uuid('clinical-grant-1'),
     tenantId: TENANT_CLINICA,
     patientProfileId: PACIENTE.id,
-    grantedUserId: MEDICA.userId,
+    grantedUserId: MEDICAL.userId,
     isEmergency: false,
-    stateConceptId: ESTADO['ST-ACTIVE']!,
+    stateConceptId: STATUS['ST-ACTIVE']!,
     validFrom: iso(-30),
     validTo: iso(60),
   },
@@ -348,9 +348,9 @@ const accesosClinicos = new Coleccion<AccesoClinicoSimulado>([
     id: uuid('clinical-grant-emergencia-vencida'),
     tenantId: TENANT_CLINICA,
     patientProfileId: PACIENTE.id,
-    grantedUserId: PROFESIONALES[3]!.userId,
+    grantedUserId: PROFESSIONALS[3]!.userId,
     isEmergency: true,
-    stateConceptId: ESTADO['ST-ACTIVE']!,
+    stateConceptId: STATUS['ST-ACTIVE']!,
     validFrom: iso(-40, 3, 10),
     validTo: iso(-40, 4, 10),
   },
@@ -369,8 +369,8 @@ export function relacionDelProfesional(
   const suyas = relaciones.filtrar(
     (r) => r.patientProfileId === patientProfileId && r.practitionerProfileId === practitionerProfileId,
   );
-  if (suyas.some((r) => r.statusConceptId === ESTADO['ST-ACTIVE'])) return 'ACTIVA';
-  return suyas.some((r) => r.statusConceptId === ESTADO['ST-REVOKED']) ? 'REVOCADA' : 'NINGUNA';
+  if (suyas.some((r) => r.statusConceptId === STATUS['ST-ACTIVE'])) return 'ACTIVA';
+  return suyas.some((r) => r.statusConceptId === STATUS['ST-REVOKED']) ? 'REVOCADA' : 'NINGUNA';
 }
 
 /** Si el usuario tiene un acceso de emergencia vigente sobre el paciente. */
@@ -378,13 +378,13 @@ export function accesoDeEmergenciaVigente(userId: string, patientProfileId: stri
   const ahoraMs = Date.now();
   return accesosClinicos
     .filtrar((a) => a.patientProfileId === patientProfileId && a.grantedUserId === userId && a.isEmergency)
-    .some((a) => a.stateConceptId === ESTADO['ST-ACTIVE'] && Date.parse(a.validTo) > ahoraMs);
+    .some((a) => a.stateConceptId === STATUS['ST-ACTIVE'] && Date.parse(a.validTo) > ahoraMs);
 }
 
 function estadoLegible(estadoConceptId: string, validTo: string | null): 'ACTIVE' | 'REVOKED' | 'EXPIRED' | 'OTHER' {
-  if (estadoConceptId === ESTADO['ST-REVOKED']) return 'REVOKED';
-  if (estadoConceptId === ESTADO['ST-EXPIRED']) return 'EXPIRED';
-  if (estadoConceptId === ESTADO['ST-ACTIVE']) {
+  if (estadoConceptId === STATUS['ST-REVOKED']) return 'REVOKED';
+  if (estadoConceptId === STATUS['ST-EXPIRED']) return 'EXPIRED';
+  if (estadoConceptId === STATUS['ST-ACTIVE']) {
     return validTo !== null && Date.parse(validTo) <= Date.now() ? 'EXPIRED' : 'ACTIVE';
   }
   return 'OTHER';
@@ -411,7 +411,7 @@ export function registrarVarios(router: MockRouter): void {
       'VS_RECORD_STATUS',
       'Estado',
     ];
-    const conjunto = conjuntoPorCodigo(valueSet);
+    const conjunto = setByCode(valueSet);
     return {
       code: target,
       name,
@@ -421,7 +421,7 @@ export function registrarVarios(router: MockRouter): void {
       versionId: conjunto?.defaultVersionId ?? CODE_SYSTEM_VERSION_ID,
       cacheToken: `v1-${valueSet}`,
       allowCustomValue: valueSet === 'VS_BO_OCCUPATION',
-      options: miembrosDe(valueSet).map((c, i) => ({
+      options: membersOf(valueSet).map((c, i) => ({
         conceptId: c.id,
         code: c.code,
         display: c.display,
@@ -486,7 +486,7 @@ export function registrarVarios(router: MockRouter): void {
       .filtrar(
         (f) =>
           f.userId === request.user?.id ||
-          (request.user?.practitionerProfileId !== undefined && f.userId === MEDICA.userId),
+          (request.user?.practitionerProfileId !== undefined && f.userId === MEDICAL.userId),
       )
       .map(({ userId: _u, ...f }) => f),
   );
@@ -498,7 +498,7 @@ export function registrarVarios(router: MockRouter): void {
       return conflict('Ya tiene una favorita con ese nombre');
     const nueva = favoritas.agregar({
       id: nuevoId('fav'),
-      userId: request.user?.id ?? MEDICA.userId,
+      userId: request.user?.id ?? MEDICAL.userId,
       name: datos.name ?? 'Favorita',
       medicationConceptId: datos.medicationConceptId ?? '',
       substanceAtcConceptId: datos.substanceAtcConceptId ?? null,
@@ -552,12 +552,12 @@ export function registrarVarios(router: MockRouter): void {
     if (pid === '') return forbidden('Esta sección es para pacientes');
     return {
       careRelationships: relaciones
-        .filtrar((r) => r.patientProfileId === pid && r.statusConceptId !== ESTADO['ST-PENDING'])
+        .filtrar((r) => r.patientProfileId === pid && r.statusConceptId !== STATUS['ST-PENDING'])
         .map((r) => ({
           id: r.id,
           tenantId: r.tenantId,
           practitionerProfileId: r.practitionerProfileId,
-          practitionerName: profesionalPorId(r.practitionerProfileId)?.displayName,
+          practitionerName: professionalById(r.practitionerProfileId)?.displayName,
           state: estadoLegible(r.statusConceptId, r.validTo),
           validFrom: r.validFrom,
           validTo: r.validTo ?? undefined,
@@ -568,7 +568,7 @@ export function registrarVarios(router: MockRouter): void {
           id: a.id,
           tenantId: a.tenantId,
           grantedUserId: a.grantedUserId,
-          grantedName: PROFESIONALES.find((p) => p.userId === a.grantedUserId)?.displayName,
+          grantedName: PROFESSIONALS.find((p) => p.userId === a.grantedUserId)?.displayName,
           isEmergency: a.isEmergency,
           state: estadoLegible(a.stateConceptId, a.validTo),
           validFrom: a.validFrom,
@@ -584,11 +584,11 @@ export function registrarVarios(router: MockRouter): void {
     const r = relaciones.get(params['id']!);
     // Lo ajeno o inexistente es 404: no se revela que existe.
     if (r === undefined || r.patientProfileId !== pacienteDeSesion(user)) return notFound('Relación asistencial no encontrada');
-    if (r.statusConceptId === ESTADO['ST-PENDING']) {
+    if (r.statusConceptId === STATUS['ST-PENDING']) {
       return preconditionFailed('La solicitud sigue pendiente: respóndala en lugar de revocarla');
     }
-    if (r.statusConceptId !== ESTADO['ST-ACTIVE']) return preconditionFailed('La relación asistencial no está activa');
-    relaciones.actualizar(r.id, { statusConceptId: ESTADO['ST-REVOKED']!, validTo: ahora() });
+    if (r.statusConceptId !== STATUS['ST-ACTIVE']) return preconditionFailed('La relación asistencial no está activa');
+    relaciones.actualizar(r.id, { statusConceptId: STATUS['ST-REVOKED']!, validTo: ahora() });
     return { ok: true, affected: 1 };
   });
 
@@ -596,8 +596,8 @@ export function registrarVarios(router: MockRouter): void {
     if (user === null) return unauthorized('Sesión vencida');
     const a = accesosClinicos.get(params['grantId']!);
     if (a === undefined || a.patientProfileId !== pacienteDeSesion(user)) return notFound('Acceso clínico no encontrado');
-    if (a.stateConceptId !== ESTADO['ST-ACTIVE']) return preconditionFailed('El acceso clínico no está activo');
-    accesosClinicos.actualizar(a.id, { stateConceptId: ESTADO['ST-REVOKED']!, validTo: ahora() });
+    if (a.stateConceptId !== STATUS['ST-ACTIVE']) return preconditionFailed('El acceso clínico no está activo');
+    accesosClinicos.actualizar(a.id, { stateConceptId: STATUS['ST-REVOKED']!, validTo: ahora() });
     return { ok: true, affected: 1 };
   });
 
@@ -628,7 +628,7 @@ export function registrarVarios(router: MockRouter): void {
       patientProfileId: request.params['patientProfileId']!,
       grantedUserId: user.id,
       isEmergency: true,
-      stateConceptId: ESTADO['ST-ACTIVE']!,
+      stateConceptId: STATUS['ST-ACTIVE']!,
       validFrom: ahora(),
       validTo: new Date(Date.now() + (datos.windowMinutes ?? 60) * 60_000).toISOString(),
     });
@@ -656,7 +656,7 @@ export function registrarVarios(router: MockRouter): void {
       practitionerProfileId: datos.practitionerProfileId ?? '',
       relationshipTypeConceptId:
         datos.relationshipType === 'CONSULTING' ? TIPO_RELACION.CONSULTING : TIPO_RELACION.TREATING,
-      statusConceptId: ESTADO['ST-ACTIVE']!,
+      statusConceptId: STATUS['ST-ACTIVE']!,
       purposeConceptId: null,
       validFrom: ahora(),
       validTo: datos.validTo ?? null,
@@ -667,7 +667,7 @@ export function registrarVarios(router: MockRouter): void {
   router.post('/authz/care-relationships/:id/revoke', ({ params }) => {
     const r = relaciones.get(params['id']!);
     if (r === undefined) return notFound('Relación no encontrada');
-    relaciones.actualizar(r.id, { statusConceptId: ESTADO['ST-REVOKED']!, validTo: ahora() });
+    relaciones.actualizar(r.id, { statusConceptId: STATUS['ST-REVOKED']!, validTo: ahora() });
     return { ok: true, affected: 1 };
   });
   router.post('/authz/care-relationships/request', (request) => {
@@ -679,14 +679,14 @@ export function registrarVarios(router: MockRouter): void {
       return preconditionFailed(
         'Sólo un practicante con perfil propio puede solicitar acceso a un expediente',
       );
-    if (pacientePorId(datos.patientProfileId ?? '') === undefined)
+    if (patientById(datos.patientProfileId ?? '') === undefined)
       return notFound('Paciente no encontrado');
     if (
       relaciones.filtrar(
         (r) =>
           r.patientProfileId === datos.patientProfileId &&
           r.practitionerProfileId === hpid &&
-          (r.statusConceptId === ESTADO['ST-ACTIVE'] || r.statusConceptId === ESTADO['ST-PENDING']),
+          (r.statusConceptId === STATUS['ST-ACTIVE'] || r.statusConceptId === STATUS['ST-PENDING']),
       ).length > 0
     ) {
       return conflict('Ya existe una solicitud pendiente o una relación activa con ese paciente');
@@ -697,7 +697,7 @@ export function registrarVarios(router: MockRouter): void {
       patientProfileId: datos.patientProfileId ?? '',
       practitionerProfileId: hpid,
       relationshipTypeConceptId: TIPO_RELACION.TREATING,
-      statusConceptId: ESTADO['ST-PENDING']!,
+      statusConceptId: STATUS['ST-PENDING']!,
       purposeConceptId: null,
       validFrom: ahora(),
       validTo: null,
@@ -709,20 +709,20 @@ export function registrarVarios(router: MockRouter): void {
     const pid =
       request.user?.patientProfileId ?? (request.user?.key === 'medica' ? PACIENTE.id : '');
     return relaciones
-      .filtrar((r) => r.patientProfileId === pid && r.statusConceptId === ESTADO['ST-PENDING'])
+      .filtrar((r) => r.patientProfileId === pid && r.statusConceptId === STATUS['ST-PENDING'])
       .map(vistaRelacion);
   });
   router.post('/authz/care-relationships/:id/respond', (request) => {
     const r = relaciones.get(request.params['id']!);
     if (r === undefined) return notFound('Solicitud no encontrada');
-    if (r.statusConceptId !== ESTADO['ST-PENDING'])
+    if (r.statusConceptId !== STATUS['ST-PENDING'])
       return preconditionFailed('La solicitud ya fue respondida');
     const datos = cuerpo<{ decision: 'ACCEPT' | 'REJECT' }>(request);
     relaciones.actualizar(
       r.id,
       datos.decision === 'REJECT'
-        ? { statusConceptId: ESTADO['ST-REVOKED']!, validTo: ahora() }
-        : { statusConceptId: ESTADO['ST-ACTIVE']!, validFrom: ahora() },
+        ? { statusConceptId: STATUS['ST-REVOKED']!, validTo: ahora() }
+        : { statusConceptId: STATUS['ST-ACTIVE']!, validFrom: ahora() },
     );
     return { ok: true, affected: 1 };
   });
@@ -746,8 +746,8 @@ export function registrarVarios(router: MockRouter): void {
       patientProfileId: datos.patientProfileId ?? '',
       representativeUserId: datos.representativeUserId ?? '',
       representativeName: 'Representante',
-      relationshipConceptId: datos.relationshipConceptId ?? PARENTESCO['RELATIONSHIP_GUARDIAN']!,
-      statusConceptId: ESTADO['ST-ACTIVE']!,
+      relationshipConceptId: datos.relationshipConceptId ?? KINSHIP['RELATIONSHIP_GUARDIAN']!,
+      statusConceptId: STATUS['ST-ACTIVE']!,
       validFrom: ahora(),
       validTo: null,
     });
@@ -756,12 +756,12 @@ export function registrarVarios(router: MockRouter): void {
   router.post('/authz/legal-representations/:id/revoke', ({ params }) => {
     const r = representaciones.get(params['id']!);
     if (r === undefined) return notFound('Representación no encontrada');
-    representaciones.actualizar(r.id, { statusConceptId: ESTADO['ST-REVOKED']!, validTo: ahora() });
+    representaciones.actualizar(r.id, { statusConceptId: STATUS['ST-REVOKED']!, validTo: ahora() });
     return { ok: true, affected: 1 };
   });
 
-  void ESPECIALIDAD;
-  void profesionalPorId;
+  void SPECIALTY;
+  void professionalById;
 }
 
 /* Sobreviven a F5 dentro de la pestaña: ver `Coleccion.persistirEn`. */

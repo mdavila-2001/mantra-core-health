@@ -1,6 +1,6 @@
 import { reservas } from '../fixtures/agenda';
-import { ESTADO } from '../fixtures/concepts';
-import { PACIENTES, pacientePorId } from '../fixtures/people';
+import { STATUS } from '../fixtures/concepts';
+import { PATIENTS, patientById } from '../fixtures/people';
 import { PRACTICAS, servicios } from './practice.handlers';
 import { notFound, preconditionFailed, validation, type MockRouter } from '../mock-router';
 import { ahora, Coleccion, cuerpo, hoy, iso, isoDia, nuevoId, texto, uuid } from '../mock-store';
@@ -121,7 +121,7 @@ function asiento(indice: number, dias: number, descripcion: string, debito: stri
     transactionNumber: `AS-2026-${String(1000 + indice).padStart(5, '0')}`,
     transactionDate: isoDia(dias),
     fiscalPeriodId: PERIODO_ACTUAL,
-    statusConceptId: borrador ? ESTADO['ST-DRAFT']! : ESTADO['ST-COMPLETED']!,
+    statusConceptId: borrador ? STATUS['ST-DRAFT']! : STATUS['ST-COMPLETED']!,
     transactionTypeConceptId: TIPO_ASIENTO,
     currencyConceptId: MONEDA_BOB,
     totalAmount: importe,
@@ -202,7 +202,7 @@ function saldoDe(
   let credit = 0;
   for (const a of asientos.filtrar(
     (x) =>
-      x.statusConceptId === ESTADO['ST-COMPLETED'] &&
+      x.statusConceptId === STATUS['ST-COMPLETED'] &&
       (hasta === null || x.transactionDate <= hasta) &&
       (desde === null || x.transactionDate >= desde),
   )) {
@@ -264,7 +264,7 @@ const cotizaciones = new Coleccion<CotizacionSimulada>(
     return {
       id: uuid(`quotation-${i}`),
       practiceId: servicio.practiceId,
-      patientProfileId: PACIENTES[pac as number]!.id,
+      patientProfileId: PATIENTS[pac as number]!.id,
       attentionDate: isoDia(dias as number),
       serviceCatalogId: servicio.id,
       serviceNameSnapshot: servicio.name,
@@ -283,17 +283,17 @@ const cotizaciones = new Coleccion<CotizacionSimulada>(
 /* ---- activos y pasivos ---------------------------------------------------------- */
 
 const activos = new Coleccion<{ id: string; practiceId: string; code: string; name: string; statusConceptId: string; bookValue: string; acquisitionCost: string; automated: boolean }>([
-  { id: uuid('asset-ecg'), practiceId: PRACTICAS[0]!.id, code: 'EQ-001', name: 'Electrocardiógrafo Nihon Kohden', statusConceptId: ESTADO['ST-ACTIVE']!, bookValue: '17883.34', acquisitionCost: '18500.00', automated: true },
-  { id: uuid('asset-eco'), practiceId: PRACTICAS[0]!.id, code: 'EQ-002', name: 'Ecógrafo portátil GE Vscan', statusConceptId: ESTADO['ST-ACTIVE']!, bookValue: '41250.00', acquisitionCost: '45000.00', automated: true },
-  { id: uuid('asset-camilla'), practiceId: PRACTICAS[0]!.id, code: 'MOB-001', name: 'Camilla de examen eléctrica', statusConceptId: ESTADO['ST-ACTIVE']!, bookValue: '5200.00', acquisitionCost: '6500.00', automated: false },
-  { id: uuid('asset-pc'), practiceId: PRACTICAS[2]!.id, code: 'IT-001', name: 'Computadora del consultorio', statusConceptId: ESTADO['ST-ACTIVE']!, bookValue: '2100.00', acquisitionCost: '4200.00', automated: true },
-  { id: uuid('asset-viejo'), practiceId: PRACTICAS[0]!.id, code: 'EQ-000', name: 'Tensiómetro de mercurio (dado de baja)', statusConceptId: ESTADO['ST-ARCHIVED']!, bookValue: '0.00', acquisitionCost: '350.00', automated: false },
+  { id: uuid('asset-ecg'), practiceId: PRACTICAS[0]!.id, code: 'EQ-001', name: 'Electrocardiógrafo Nihon Kohden', statusConceptId: STATUS['ST-ACTIVE']!, bookValue: '17883.34', acquisitionCost: '18500.00', automated: true },
+  { id: uuid('asset-eco'), practiceId: PRACTICAS[0]!.id, code: 'EQ-002', name: 'Ecógrafo portátil GE Vscan', statusConceptId: STATUS['ST-ACTIVE']!, bookValue: '41250.00', acquisitionCost: '45000.00', automated: true },
+  { id: uuid('asset-camilla'), practiceId: PRACTICAS[0]!.id, code: 'MOB-001', name: 'Camilla de examen eléctrica', statusConceptId: STATUS['ST-ACTIVE']!, bookValue: '5200.00', acquisitionCost: '6500.00', automated: false },
+  { id: uuid('asset-pc'), practiceId: PRACTICAS[2]!.id, code: 'IT-001', name: 'Computadora del consultorio', statusConceptId: STATUS['ST-ACTIVE']!, bookValue: '2100.00', acquisitionCost: '4200.00', automated: true },
+  { id: uuid('asset-viejo'), practiceId: PRACTICAS[0]!.id, code: 'EQ-000', name: 'Tensiómetro de mercurio (dado de baja)', statusConceptId: STATUS['ST-ARCHIVED']!, bookValue: '0.00', acquisitionCost: '350.00', automated: false },
 ]);
 
 const pasivos = new Coleccion<{ id: string; practiceId: string; code: string; name: string; creditorName: string; principalAmount: string; outstandingAmount: string; statusConceptId: string; automated: boolean; cuotas: number; pagadas: number; startDate: string; interestRate: string }>([
-  { id: uuid('liability-bnb'), practiceId: PRACTICAS[0]!.id, code: 'PR-001', name: 'Préstamo equipamiento BNB', creditorName: 'Banco Nacional de Bolivia', principalAmount: '40000.00', outstandingAmount: '36666.67', statusConceptId: ESTADO['ST-ACTIVE']!, automated: true, cuotas: 12, pagadas: 1, startDate: isoDia(-50), interestRate: '12.00' },
-  { id: uuid('liability-eco'), practiceId: PRACTICAS[0]!.id, code: 'PR-002', name: 'Financiación del ecógrafo', creditorName: 'GE Healthcare Bolivia', principalAmount: '45000.00', outstandingAmount: '30000.00', statusConceptId: ESTADO['ST-ACTIVE']!, automated: false, cuotas: 18, pagadas: 6, startDate: isoDia(-200), interestRate: '8.50' },
-  { id: uuid('liability-pagado'), practiceId: PRACTICAS[2]!.id, code: 'PR-000', name: 'Anticipo de alquiler (saldado)', creditorName: 'Inmobiliaria Urubó', principalAmount: '9000.00', outstandingAmount: '0.00', statusConceptId: ESTADO['ST-CLOSED']!, automated: false, cuotas: 3, pagadas: 3, startDate: isoDia(-400), interestRate: '0.00' },
+  { id: uuid('liability-bnb'), practiceId: PRACTICAS[0]!.id, code: 'PR-001', name: 'Préstamo equipamiento BNB', creditorName: 'Banco Nacional de Bolivia', principalAmount: '40000.00', outstandingAmount: '36666.67', statusConceptId: STATUS['ST-ACTIVE']!, automated: true, cuotas: 12, pagadas: 1, startDate: isoDia(-50), interestRate: '12.00' },
+  { id: uuid('liability-eco'), practiceId: PRACTICAS[0]!.id, code: 'PR-002', name: 'Financiación del ecógrafo', creditorName: 'GE Healthcare Bolivia', principalAmount: '45000.00', outstandingAmount: '30000.00', statusConceptId: STATUS['ST-ACTIVE']!, automated: false, cuotas: 18, pagadas: 6, startDate: isoDia(-200), interestRate: '8.50' },
+  { id: uuid('liability-pagado'), practiceId: PRACTICAS[2]!.id, code: 'PR-000', name: 'Anticipo de alquiler (saldado)', creditorName: 'Inmobiliaria Urubó', principalAmount: '9000.00', outstandingAmount: '0.00', statusConceptId: STATUS['ST-CLOSED']!, automated: false, cuotas: 3, pagadas: 3, startDate: isoDia(-400), interestRate: '0.00' },
 ]);
 
 function cronograma(principal: number, cuotas: number, pagadas: number, startDate: string, tasa: number) {
@@ -302,7 +302,7 @@ function cronograma(principal: number, cuotas: number, pagadas: number, startDat
     const due = new Date(startDate);
     due.setMonth(due.getMonth() + i + 1);
     const interes = ((principal - capital * i) * tasa) / 100 / 12;
-    return { id: uuid(`schedule-${startDate}-${i}`), installmentNumber: i + 1, dueDate: due.toISOString().slice(0, 10), principalDue: d(capital), interestDue: d(interes), paidAmount: i < pagadas ? d(capital + interes) : '0.00', statusConceptId: i < pagadas ? ESTADO['ST-COMPLETED']! : ESTADO['ST-PENDING']! };
+    return { id: uuid(`schedule-${startDate}-${i}`), installmentNumber: i + 1, dueDate: due.toISOString().slice(0, 10), principalDue: d(capital), interestDue: d(interes), paidAmount: i < pagadas ? d(capital + interes) : '0.00', statusConceptId: i < pagadas ? STATUS['ST-COMPLETED']! : STATUS['ST-PENDING']! };
   });
 }
 
@@ -583,7 +583,7 @@ function asientoDeCorrida(descripcion: string, debito: string, credito: string, 
     transactionNumber: `AS-2026-${String(1000 + asientos.tamano + 1).padStart(5, '0')}`,
     transactionDate: isoDia(0),
     fiscalPeriodId: PERIODO_ACTUAL,
-    statusConceptId: ESTADO['ST-COMPLETED']!,
+    statusConceptId: STATUS['ST-COMPLETED']!,
     transactionTypeConceptId: TIPO_ASIENTO,
     currencyConceptId: MONEDA_BOB,
     totalAmount: monto,
@@ -774,8 +774,8 @@ export function registrarFinanzas(router: MockRouter): void {
           netBookValue: a.bookValue,
           monthlyDepreciation: d(cuotaMensualDe(a)),
           // Amortizado del todo o dado de baja: ya no entra en la corrida.
-          depreciable: a.statusConceptId === ESTADO['ST-ACTIVE'] && Number(a.bookValue) > 0.01,
-          status: a.statusConceptId === ESTADO['ST-ACTIVE'] ? 'ACTIVE' : 'RETIRED',
+          depreciable: a.statusConceptId === STATUS['ST-ACTIVE'] && Number(a.bookValue) > 0.01,
+          status: a.statusConceptId === STATUS['ST-ACTIVE'] ? 'ACTIVE' : 'RETIRED',
         };
       })
       .sort((a, b) => a.code.localeCompare(b.code));
@@ -796,7 +796,7 @@ export function registrarFinanzas(router: MockRouter): void {
       return preconditionFailed('No hay período abierto: la amortización no tiene dónde postearse', {});
     }
     const elegibles = activos.filtrar(
-      (a) => a.statusConceptId === ESTADO['ST-ACTIVE'] && Number(a.bookValue) > 0.01,
+      (a) => a.statusConceptId === STATUS['ST-ACTIVE'] && Number(a.bookValue) > 0.01,
     );
     if (elegibles.length === 0) {
       return preconditionFailed('No hay activos amortizables', {});
@@ -914,7 +914,7 @@ export function registrarFinanzas(router: MockRouter): void {
         );
       }
       const cambios: Partial<AsientoSimulado> = alPostear
-        ? { flujo: hasta, statusConceptId: ESTADO['ST-COMPLETED']!, postedAt: ahora() }
+        ? { flujo: hasta, statusConceptId: STATUS['ST-COMPLETED']!, postedAt: ahora() }
         : { flujo: hasta };
       const actualizado = asientos.actualizar(a.id, cambios);
       return { status: 200, body: { id: a.id, transactionNumber: a.transactionNumber, status: actualizado?.flujo } };
@@ -995,7 +995,7 @@ export function registrarFinanzas(router: MockRouter): void {
     });
     const totalDebit = items.reduce((s, r) => s + Number(r.debit), 0);
     const totalCredit = items.reduce((s, r) => s + Number(r.credit), 0);
-    return { items, count: items.length, totalDebit: d(totalDebit), totalCredit: d(totalCredit), balanced: Math.abs(totalDebit - totalCredit) < 0.01, transactionsIncluded: asientos.filtrar((a) => a.statusConceptId === ESTADO['ST-COMPLETED']).length, truncated: false };
+    return { items, count: items.length, totalDebit: d(totalDebit), totalCredit: d(totalCredit), balanced: Math.abs(totalDebit - totalCredit) < 0.01, transactionsIncluded: asientos.filtrar((a) => a.statusConceptId === STATUS['ST-COMPLETED']).length, truncated: false };
   });
 
   router.get('/accounting/journal-transactions', ({ query }) => {
@@ -1038,7 +1038,7 @@ export function registrarFinanzas(router: MockRouter): void {
       transactionNumber: `AS-2026-${String(1000 + asientos.tamano + 1).padStart(5, '0')}`,
       transactionDate: datos.transactionDate ?? isoDia(0),
       fiscalPeriodId: PERIODO_ACTUAL,
-      statusConceptId: borrador ? ESTADO['ST-DRAFT']! : ESTADO['ST-COMPLETED']!,
+      statusConceptId: borrador ? STATUS['ST-DRAFT']! : STATUS['ST-COMPLETED']!,
       transactionTypeConceptId: TIPO_ASIENTO,
       currencyConceptId: MONEDA_BOB,
       totalAmount: d(debe),
@@ -1076,7 +1076,7 @@ export function registrarFinanzas(router: MockRouter): void {
       transactionNumber: `AS-2026-${String(1000 + asientos.tamano + 1).padStart(5, '0')}`,
       transactionDate: datos.transactionDate ?? isoDia(0),
       fiscalPeriodId: PERIODO_ACTUAL,
-      statusConceptId: ESTADO['ST-COMPLETED']!,
+      statusConceptId: STATUS['ST-COMPLETED']!,
       transactionTypeConceptId: TIPO_ASIENTO,
       currencyConceptId: MONEDA_BOB,
       totalAmount: importe,
@@ -1098,11 +1098,11 @@ export function registrarFinanzas(router: MockRouter): void {
     const to = texto(query, 'to');
     const deudora = c.normalBalanceConceptId === SALDO.DEUDOR;
     let saldo = 0;
-    const previos = asientos.filtrar((a) => a.statusConceptId === ESTADO['ST-COMPLETED'] && from !== null && a.transactionDate < from);
+    const previos = asientos.filtrar((a) => a.statusConceptId === STATUS['ST-COMPLETED'] && from !== null && a.transactionDate < from);
     for (const a of previos) for (const l of a.lines) if (l.accountId === accountId) saldo += (l.directionConceptId === DIRECCION.DEBIT ? 1 : -1) * (deudora ? 1 : -1) * Number(l.amountBase);
     const apertura = saldo;
     const items = asientos
-      .filtrar((a) => a.statusConceptId === ESTADO['ST-COMPLETED'] && (from === null || a.transactionDate >= from) && (to === null || a.transactionDate <= to))
+      .filtrar((a) => a.statusConceptId === STATUS['ST-COMPLETED'] && (from === null || a.transactionDate >= from) && (to === null || a.transactionDate <= to))
       .sort((a, b) => a.transactionDate.localeCompare(b.transactionDate))
       .flatMap((a) =>
         a.lines
@@ -1182,7 +1182,7 @@ export function registrarFinanzas(router: MockRouter): void {
     const patientProfileId = texto(query, 'patientProfileId');
     return cotizaciones
       .filtrar((q) => patientProfileId === null || q.patientProfileId === patientProfileId)
-      .map((q) => ({ id: q.id, patientProfileId: q.patientProfileId, serviceNameSnapshot: q.serviceNameSnapshot, offeredPrice: q.offeredPrice, status: q.status, attentionDate: q.attentionDate, validUntil: q.validUntil, patientName: pacientePorId(q.patientProfileId)?.displayName ?? null }));
+      .map((q) => ({ id: q.id, patientProfileId: q.patientProfileId, serviceNameSnapshot: q.serviceNameSnapshot, offeredPrice: q.offeredPrice, status: q.status, attentionDate: q.attentionDate, validUntil: q.validUntil, patientName: patientById(q.patientProfileId)?.displayName ?? null }));
   });
 
   router.get('/quotations/:id', ({ params }) => cotizaciones.get(params['id']!) ?? notFound('Cotización no encontrada'));
@@ -1203,7 +1203,7 @@ export function registrarFinanzas(router: MockRouter): void {
 
   router.post('/accounting/practitioner/assets', (request) => {
     const datos = cuerpo<{ practiceId: string; code: string; name: string; acquisitionCost: string }>(request);
-    const nuevo = activos.agregar({ id: nuevoId('asset'), practiceId: datos.practiceId ?? PRACTICAS[0]!.id, code: datos.code ?? 'EQ-NUEVO', name: datos.name ?? 'Activo nuevo', statusConceptId: ESTADO['ST-ACTIVE']!, bookValue: datos.acquisitionCost ?? '0.00', acquisitionCost: datos.acquisitionCost ?? '0.00', automated: true });
+    const nuevo = activos.agregar({ id: nuevoId('asset'), practiceId: datos.practiceId ?? PRACTICAS[0]!.id, code: datos.code ?? 'EQ-NUEVO', name: datos.name ?? 'Activo nuevo', statusConceptId: STATUS['ST-ACTIVE']!, bookValue: datos.acquisitionCost ?? '0.00', acquisitionCost: datos.acquisitionCost ?? '0.00', automated: true });
     return { status: 201, body: { id: nuevo.id } };
   });
 
@@ -1228,7 +1228,7 @@ export function registrarFinanzas(router: MockRouter): void {
 
   router.post('/accounting/practitioner/liabilities', (request) => {
     const datos = cuerpo<{ practiceId: string; code: string; name: string; creditorName?: string; principalAmount: string; interestRate?: string; installments: number; startDate: string; automated?: boolean }>(request);
-    const nuevo = pasivos.agregar({ id: nuevoId('liability'), practiceId: datos.practiceId ?? PRACTICAS[0]!.id, code: datos.code ?? 'PR-NUEVO', name: datos.name ?? 'Pasivo nuevo', creditorName: datos.creditorName ?? 'Acreedor', principalAmount: datos.principalAmount ?? '0.00', outstandingAmount: datos.principalAmount ?? '0.00', statusConceptId: ESTADO['ST-ACTIVE']!, automated: datos.automated ?? true, cuotas: datos.installments ?? 12, pagadas: 0, startDate: datos.startDate ?? isoDia(0), interestRate: datos.interestRate ?? '0' });
+    const nuevo = pasivos.agregar({ id: nuevoId('liability'), practiceId: datos.practiceId ?? PRACTICAS[0]!.id, code: datos.code ?? 'PR-NUEVO', name: datos.name ?? 'Pasivo nuevo', creditorName: datos.creditorName ?? 'Acreedor', principalAmount: datos.principalAmount ?? '0.00', outstandingAmount: datos.principalAmount ?? '0.00', statusConceptId: STATUS['ST-ACTIVE']!, automated: datos.automated ?? true, cuotas: datos.installments ?? 12, pagadas: 0, startDate: datos.startDate ?? isoDia(0), interestRate: datos.interestRate ?? '0' });
     return { status: 201, body: { id: nuevo.id, code: nuevo.code, schedule: cronograma(Number(nuevo.principalAmount), nuevo.cuotas, 0, nuevo.startDate, Number(nuevo.interestRate)) } };
   });
 
@@ -1243,7 +1243,7 @@ export function registrarFinanzas(router: MockRouter): void {
     if (p === undefined) return notFound('Pasivo no encontrado');
     if (p.pagadas >= p.cuotas) return preconditionFailed('El pasivo ya está saldado');
     const capital = Number(p.principalAmount) / p.cuotas;
-    pasivos.actualizar(p.id, { pagadas: p.pagadas + 1, outstandingAmount: d(Math.max(0, Number(p.outstandingAmount) - capital)), statusConceptId: p.pagadas + 1 >= p.cuotas ? ESTADO['ST-CLOSED']! : p.statusConceptId });
+    pasivos.actualizar(p.id, { pagadas: p.pagadas + 1, outstandingAmount: d(Math.max(0, Number(p.outstandingAmount) - capital)), statusConceptId: p.pagadas + 1 >= p.cuotas ? STATUS['ST-CLOSED']! : p.statusConceptId });
     return { status: 201, body: { transactionId: nuevoId('journal'), installmentNumber: p.pagadas + 1, amount: d(capital) } };
   });
 }

@@ -10,7 +10,7 @@
     ========================================================================== */
 
 /** Cuántos días entran en una semana dibujada. */
-export const DIAS_POR_SEMANA = 7;
+export const DAYS_BY_WEEK = 7;
 
 /**
  * Cuántas semanas se dibujan, siempre.
@@ -19,15 +19,15 @@ export const DIAS_POR_SEMANA = 7;
  * de mes mueve todo lo que tiene debajo, y el botón de «mes siguiente» se
  * escapa de abajo del dedo.
  */
-export const SEMANAS_POR_GRILLA = 6;
+export const WEEKS_BY_GRID = 6;
 
 /** La misma fecha a medianoche local: para comparar días y no instantes. */
-export function medianoche(fecha: Date): Date {
+export function midnight(fecha: Date): Date {
   return new Date(fecha.getFullYear(), fecha.getMonth(), fecha.getDate());
 }
 
 /** El día 1 del mes de una fecha, a medianoche. */
-export function primerDiaDelMes(fecha: Date): Date {
+export function monthFirstDay(fecha: Date): Date {
   return new Date(fecha.getFullYear(), fecha.getMonth(), 1);
 }
 
@@ -36,9 +36,9 @@ export function primerDiaDelMes(fecha: Date): Date {
  *
  * La semana empieza el lunes, como el calendario local; el domingo cierra.
  */
-export function primerDiaDeLaGrilla(mes: Date): Date {
-  const primero = primerDiaDelMes(mes);
-  const diaDeSemana = (primero.getDay() + 6) % DIAS_POR_SEMANA;
+export function gridFirstDay(mes: Date): Date {
+  const primero = monthFirstDay(mes);
+  const diaDeSemana = (primero.getDay() + 6) % DAYS_BY_WEEK;
   const inicio = new Date(primero);
   inicio.setDate(primero.getDate() - diaDeSemana);
   return inicio;
@@ -51,7 +51,7 @@ export function primerDiaDeLaGrilla(mes: Date): Date {
  * Como acá siempre se trabaja sobre el día 1, se construye la fecha entera en
  * vez de mutarla.
  */
-export function sumarMeses(mes: Date, cuantos: number): Date {
+export function sumMonths(mes: Date, cuantos: number): Date {
   return new Date(mes.getFullYear(), mes.getMonth() + cuantos, 1);
 }
 
@@ -61,12 +61,12 @@ export function sumarMeses(mes: Date, cuantos: number): Date {
  * **No sirve para ordenar**: comparadas como texto, `2026-7-9` y `2026-7-18`
  * dicen que el 9 es posterior.
  */
-export function claveDelDia(fecha: Date): string {
+export function dayKey(fecha: Date): string {
   return `${fecha.getFullYear()}-${fecha.getMonth()}-${fecha.getDate()}`;
 }
 
 /** La fecha dicha en palabras: «martes 19 de agosto». */
-export function fechaLarga(fecha: Date): string {
+export function longDate(fecha: Date): string {
   return fecha.toLocaleDateString('es-BO', {
     weekday: 'long',
     day: 'numeric',
@@ -83,15 +83,15 @@ export function fechaLarga(fecha: Date): string {
  * @param mes - Cualquier fecha del mes que se quiere dibujar.
  * @returns Seis semanas de siete días.
  */
-export function fechasDeLaGrilla(mes: Date): readonly (readonly Date[])[] {
-  const inicio = primerDiaDeLaGrilla(mes);
+export function gridDates(mes: Date): readonly (readonly Date[])[] {
+  const inicio = gridFirstDay(mes);
   const semanas: Date[][] = [];
 
-  for (let semana = 0; semana < SEMANAS_POR_GRILLA; semana += 1) {
+  for (let semana = 0; semana < WEEKS_BY_GRID; semana += 1) {
     const dias: Date[] = [];
-    for (let dia = 0; dia < DIAS_POR_SEMANA; dia += 1) {
+    for (let dia = 0; dia < DAYS_BY_WEEK; dia += 1) {
       const fecha = new Date(inicio);
-      fecha.setDate(inicio.getDate() + semana * DIAS_POR_SEMANA + dia);
+      fecha.setDate(inicio.getDate() + semana * DAYS_BY_WEEK + dia);
       dias.push(fecha);
     }
     semanas.push(dias);
@@ -101,7 +101,7 @@ export function fechasDeLaGrilla(mes: Date): readonly (readonly Date[])[] {
 }
 
 /** Los días de la semana, empezando el lunes como el calendario local. */
-export const DIAS_DE_LA_SEMANA: readonly { corto: string; largo: string }[] = [
+export const WEEK_DAYS: readonly { corto: string; largo: string }[] = [
   { corto: 'Lun', largo: 'lunes' },
   { corto: 'Mar', largo: 'martes' },
   { corto: 'Mié', largo: 'miércoles' },

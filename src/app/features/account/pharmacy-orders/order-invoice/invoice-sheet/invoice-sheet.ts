@@ -22,22 +22,22 @@ import { withDisplayCurrency } from '../../../../../core/money/display-currency'
   styleUrl: './invoice-sheet.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class HojaDeFactura {
+export class InvoiceSheet {
 
   /**
    * La moneda visible de un importe: «Bs» para el boliviano y la UMA del
    * arancel, el código tal cual para cualquier otra. Ver `display-currency.ts`.
    */
-  protected moneda(code?: string | null): string {
+  protected currency(code?: string | null): string {
     return displayCurrency(code);
   }
   readonly documento = input.required<DocumentoDeFactura>();
   readonly nota = input<string | null>(null);
 
-  protected readonly rotulos = ROTULOS_DE_FACTURA;
+  protected readonly labels = ROTULOS_DE_FACTURA;
 
   /** «61.20 BOB», o el vacío honesto cuando falta un precio publicado. */
-  protected importe(valor: string | null): string {
+  protected amount(valor: string | null): string {
     return valor === null
       ? 'No disponible: falta algún precio publicado'
       : withDisplayCurrency(valor, this.documento().moneda);

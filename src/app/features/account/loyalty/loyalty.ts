@@ -34,11 +34,11 @@ import { PageHeader } from '../../../shared/components/organisms/page-header/pag
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { MIS_PEDIDOS_ROUTE } from '../pharmacy-orders/pharmacy-orders.routes';
 import {
-  etiquetaDeMotivo,
-  movimientoEnPalabras,
-  signoDe,
-  tonoDeMovimiento,
-  unidadDePuntos,
+  reasonLabel,
+  movementInWords,
+  signOf,
+  movementTone,
+  pointsUnit,
 } from './point-reason';
 import { RedeemCode } from './redeem-code/redeem-code';
 
@@ -283,23 +283,23 @@ export class Loyalty {
 
   /** «1 punto», no «1 puntos», cuando la cifra va destacada aparte. */
   protected unidadDe(cifra: string): string {
-    return unidadDePuntos(cifra);
+    return pointsUnit(cifra);
   }
 
   protected etiquetaDe(movimiento: MovimientoDePuntos): string {
-    return etiquetaDeMotivo(movimiento.motivo);
+    return reasonLabel(movimiento.motivo);
   }
 
   protected tonoDe(movimiento: MovimientoDePuntos): 'success' | 'secondary' {
-    return tonoDeMovimiento(movimiento.direccion);
+    return movementTone(movimiento.direccion);
   }
 
   protected signoDe(movimiento: MovimientoDePuntos): string {
-    return signoDe(movimiento.direccion);
+    return signOf(movimiento.direccion);
   }
 
   protected enPalabras(movimiento: MovimientoDePuntos): string {
-    return movimientoEnPalabras(movimiento.direccion, movimiento.puntos, movimiento.motivo);
+    return movementInWords(movimiento.direccion, movimiento.puntos, movimiento.motivo);
   }
 }
 

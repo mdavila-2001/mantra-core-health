@@ -2,12 +2,12 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
 import {
-  CAMPO_DEL_ALTA_EN_PESTANA,
-  CAMPOS_DEL_ALTA_SIN_PESTANA,
-  PESTANAS_DEL_EDITOR_MEDICO,
-  PESTANAS_DEL_PERFIL_MEDICO,
-  PESTANA_EDITOR,
-  PESTANA_MEDICO,
+  ENROLLMENT_IN_TAB_FIELD,
+  ENROLLMENT_WITHOUT_TAB_FIELDS,
+  EDITOR_DOCTOR_TABS,
+  DOCTOR_PROFILE_TABS,
+  TAB_EDITOR,
+  DOCTOR_TAB,
 } from './doctor-profile-tabs';
 
 /**
@@ -53,7 +53,7 @@ describe('las pestañas de la ficha del médico', () => {
 
   it('todos los campos del alta tienen pestaña, salvo los declarados sin ella', () => {
     const huerfanos = camposDelAlta().filter(
-      (campo) => !(campo in CAMPO_DEL_ALTA_EN_PESTANA) && !(campo in CAMPOS_DEL_ALTA_SIN_PESTANA),
+      (campo) => !(campo in ENROLLMENT_IN_TAB_FIELD) && !(campo in ENROLLMENT_WITHOUT_TAB_FIELDS),
     );
 
     expect(huerfanos).toEqual([]);
@@ -73,7 +73,7 @@ describe('las pestañas de la ficha del médico', () => {
    * prueba y escribir el motivo, que es exactamente la fricción que se quiere.
    */
   it('las seis ausencias son las declaradas, y las seis dicen por qué', () => {
-    expect(Object.keys(CAMPOS_DEL_ALTA_SIN_PESTANA).sort()).toEqual([
+    expect(Object.keys(ENROLLMENT_WITHOUT_TAB_FIELDS).sort()).toEqual([
       'gpsTrabajo',
       'password',
       'sexAtBirth',
@@ -81,49 +81,49 @@ describe('las pestañas de la ficha del médico', () => {
       'workLandline',
       'workMobilePhone',
     ]);
-    expect(CAMPOS_DEL_ALTA_SIN_PESTANA['password']).toContain('Cambiar contraseña');
-    expect(CAMPOS_DEL_ALTA_SIN_PESTANA['sexAtBirth']).toContain('no lo devuelve');
+    expect(ENROLLMENT_WITHOUT_TAB_FIELDS['password']).toContain('Cambiar contraseña');
+    expect(ENROLLMENT_WITHOUT_TAB_FIELDS['sexAtBirth']).toContain('no lo devuelve');
     for (const campo of ['workMobilePhone', 'workLandline']) {
-      expect(CAMPOS_DEL_ALTA_SIN_PESTANA[campo], campo).toContain('(D-03)');
-      expect(CAMPOS_DEL_ALTA_SIN_PESTANA[campo], campo).toContain('«Contacto»');
+      expect(ENROLLMENT_WITHOUT_TAB_FIELDS[campo], campo).toContain('(D-03)');
+      expect(ENROLLMENT_WITHOUT_TAB_FIELDS[campo], campo).toContain('«Contacto»');
     }
     // El correo de trabajo es un contacto y se corrige en «Contacto» (#645).
-    expect(CAMPO_DEL_ALTA_EN_PESTANA['email']).toBe(PESTANA_MEDICO.contacto);
-    expect(CAMPOS_DEL_ALTA_SIN_PESTANA['workAddressLines']).toContain('dirección laboral');
-    expect(CAMPOS_DEL_ALTA_SIN_PESTANA['gpsTrabajo']).toContain('lugar de trabajo');
+    expect(ENROLLMENT_IN_TAB_FIELD['email']).toBe(DOCTOR_TAB.contacto);
+    expect(ENROLLMENT_WITHOUT_TAB_FIELDS['workAddressLines']).toContain('dirección laboral');
+    expect(ENROLLMENT_WITHOUT_TAB_FIELDS['gpsTrabajo']).toContain('lugar de trabajo');
   });
 
   /** Un campo no puede estar en los dos mapas: sería mostrarse y no mostrarse. */
   it('ninguna ausencia aparece además con pestaña', () => {
-    for (const campo of Object.keys(CAMPOS_DEL_ALTA_SIN_PESTANA)) {
-      expect(CAMPO_DEL_ALTA_EN_PESTANA[campo]).toBeUndefined();
+    for (const campo of Object.keys(ENROLLMENT_WITHOUT_TAB_FIELDS)) {
+      expect(ENROLLMENT_IN_TAB_FIELD[campo]).toBeUndefined();
     }
   });
 
   it('no mapea campos que el alta ya no pregunta', () => {
     const delAlta = new Set(camposDelAlta());
-    const sobrantes = Object.keys(CAMPO_DEL_ALTA_EN_PESTANA).filter((campo) => !delAlta.has(campo));
+    const sobrantes = Object.keys(ENROLLMENT_IN_TAB_FIELD).filter((campo) => !delAlta.has(campo));
 
     expect(sobrantes).toEqual([]);
   });
 
   it('cada pestaña mapeada existe en la tira', () => {
-    for (const [campo, indice] of Object.entries(CAMPO_DEL_ALTA_EN_PESTANA)) {
+    for (const [campo, indice] of Object.entries(ENROLLMENT_IN_TAB_FIELD)) {
       expect(
-        PESTANAS_DEL_PERFIL_MEDICO[indice],
+        DOCTOR_PROFILE_TABS[indice],
         `«${campo}» apunta a la pestaña ${indice}, que no existe`,
       ).toBeDefined();
     }
   });
 
   it('los índices con nombre coinciden con el orden de la tira', () => {
-    expect(PESTANAS_DEL_PERFIL_MEDICO[PESTANA_MEDICO.personales]).toBe('Datos personales');
-    expect(PESTANAS_DEL_PERFIL_MEDICO[PESTANA_MEDICO.contacto]).toBe('Contacto');
-    expect(PESTANAS_DEL_PERFIL_MEDICO[PESTANA_MEDICO.facturacion]).toBe('Facturación');
-    expect(PESTANAS_DEL_PERFIL_MEDICO[PESTANA_MEDICO.dondeAtiendo]).toBe('Dónde atiendo');
-    expect(PESTANAS_DEL_PERFIL_MEDICO[PESTANA_MEDICO.trayectoria]).toBe('Trayectoria');
-    expect(PESTANAS_DEL_PERFIL_MEDICO[PESTANA_MEDICO.credenciales]).toBe('Credenciales');
-    expect(PESTANAS_DEL_PERFIL_MEDICO[PESTANA_MEDICO.actividad]).toBe('Actividad');
+    expect(DOCTOR_PROFILE_TABS[DOCTOR_TAB.personales]).toBe('Datos personales');
+    expect(DOCTOR_PROFILE_TABS[DOCTOR_TAB.contacto]).toBe('Contacto');
+    expect(DOCTOR_PROFILE_TABS[DOCTOR_TAB.facturacion]).toBe('Facturación');
+    expect(DOCTOR_PROFILE_TABS[DOCTOR_TAB.dondeAtiendo]).toBe('Dónde atiendo');
+    expect(DOCTOR_PROFILE_TABS[DOCTOR_TAB.trayectoria]).toBe('Trayectoria');
+    expect(DOCTOR_PROFILE_TABS[DOCTOR_TAB.credenciales]).toBe('Credenciales');
+    expect(DOCTOR_PROFILE_TABS[DOCTOR_TAB.actividad]).toBe('Actividad');
   });
 
   /**
@@ -133,9 +133,9 @@ describe('las pestañas de la ficha del médico', () => {
    * habilitación ejerce?» que es lo que queda en Credenciales.
    */
   it('las especialidades viven en Datos personales, no en Credenciales', () => {
-    expect(CAMPO_DEL_ALTA_EN_PESTANA['especialidadesExtra']).toBe(PESTANA_MEDICO.personales);
+    expect(ENROLLMENT_IN_TAB_FIELD['especialidadesExtra']).toBe(DOCTOR_TAB.personales);
     // Y no hay «principal» que ubicar: el alta dejó de preguntarla (D-01, 23/09/2026).
-    expect(CAMPO_DEL_ALTA_EN_PESTANA['specialtyPrimary']).toBeUndefined();
+    expect(ENROLLMENT_IN_TAB_FIELD['specialtyPrimary']).toBeUndefined();
   });
 
   it('las tres primeras pestañas se llaman igual que las del paciente', async () => {
@@ -143,12 +143,12 @@ describe('las pestañas de la ficha del médico', () => {
     // el rótulo tiene que ser el mismo: «Datos personales», «Contacto» y
     // «Facturación» no pueden llamarse distinto de un lado y del otro, ni caer
     // en otro lugar de la tira.
-    const { PESTANAS_DEL_PERFIL, PESTANA } = await import('./profile-tabs');
+    const { PROFILE_TABS: PESTANAS_DEL_PERFIL, TAB: PESTANA } = await import('./profile-tabs');
 
-    expect(PESTANAS_DEL_PERFIL_MEDICO[0]).toBe(PESTANAS_DEL_PERFIL[0]);
-    expect(PESTANAS_DEL_PERFIL_MEDICO[1]).toBe(PESTANAS_DEL_PERFIL[1]);
-    expect(PESTANAS_DEL_PERFIL_MEDICO[2]).toBe(PESTANAS_DEL_PERFIL[2]);
-    expect(PESTANA_MEDICO.facturacion).toBe(PESTANA.facturacion);
+    expect(DOCTOR_PROFILE_TABS[0]).toBe(PESTANAS_DEL_PERFIL[0]);
+    expect(DOCTOR_PROFILE_TABS[1]).toBe(PESTANAS_DEL_PERFIL[1]);
+    expect(DOCTOR_PROFILE_TABS[2]).toBe(PESTANAS_DEL_PERFIL[2]);
+    expect(DOCTOR_TAB.facturacion).toBe(PESTANA.facturacion);
   });
 
   /**
@@ -157,7 +157,7 @@ describe('las pestañas de la ficha del médico', () => {
    * donde cargarlo.
    */
   it('el editor también pide la facturación', () => {
-    expect(PESTANAS_DEL_EDITOR_MEDICO[PESTANA_EDITOR.facturacion]).toBe('Facturación');
+    expect(EDITOR_DOCTOR_TABS[TAB_EDITOR.facturacion]).toBe('Facturación');
   });
 
   /**
@@ -172,16 +172,16 @@ describe('las pestañas de la ficha del médico', () => {
    * otra pestaña sin que nadie se entere.
    */
   it('el editor tiene las pestañas de la ficha, en el mismo orden, menos «Actividad»', () => {
-    expect([...PESTANAS_DEL_EDITOR_MEDICO]).toEqual(
-      PESTANAS_DEL_PERFIL_MEDICO.filter((pestana) => pestana !== 'Actividad'),
+    expect([...EDITOR_DOCTOR_TABS]).toEqual(
+      DOCTOR_PROFILE_TABS.filter((pestana) => pestana !== 'Actividad'),
     );
   });
 
   /** Y los índices con nombre no se pueden desincronizar de las dos listas. */
   it('los índices del editor y los de la ficha nombran la misma pestaña', () => {
-    for (const [nombre, indice] of Object.entries(PESTANA_EDITOR)) {
-      expect(PESTANAS_DEL_EDITOR_MEDICO[indice]).toBe(
-        PESTANAS_DEL_PERFIL_MEDICO[PESTANA_MEDICO[nombre as keyof typeof PESTANA_MEDICO]],
+    for (const [nombre, indice] of Object.entries(TAB_EDITOR)) {
+      expect(EDITOR_DOCTOR_TABS[indice]).toBe(
+        DOCTOR_PROFILE_TABS[DOCTOR_TAB[nombre as keyof typeof DOCTOR_TAB]],
       );
     }
   });

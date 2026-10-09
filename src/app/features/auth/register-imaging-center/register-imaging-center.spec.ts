@@ -5,8 +5,8 @@ import { provideRouter } from '@angular/router';
 import { By } from '@angular/platform-browser';
 
 import { MAX_CAMPOS_POR_PAGINA } from '../../../shared/forms/paginated/paginated-form.types';
-import { UbicacionPicker } from '../shared-registration/map-location-picker/map-location-picker';
-import { CODIGOS_DE_DIAGNOSTICO } from '../shared-registration/diagnostic-center-enrollment';
+import { MapLocationPicker } from '../shared-registration/map-location-picker/map-location-picker';
+import { DIAGNOSIS_CODES } from '../shared-registration/diagnostic-center-enrollment';
 import {
   altaPendiente,
   atenderSubida,
@@ -195,12 +195,12 @@ describe('RegisterImagingCenter', () => {
     expect(cuerpo.organization).toMatchObject({
       tenantType: 'DIAGNOSTIC_CENTER',
       legalEntityType: 'UNIPERSONAL',
-      countryConceptId: idDeConcepto(CODIGOS_DE_DIAGNOSTICO.pais),
+      countryConceptId: idDeConcepto(DIAGNOSIS_CODES.pais),
       diagnosticUnit: {
-        diagnosticUnitTypeConceptId: idDeConcepto(CODIGOS_DE_DIAGNOSTICO.imagenes),
+        diagnosticUnitTypeConceptId: idDeConcepto(DIAGNOSIS_CODES.imagenes),
         modalityConceptIds: [
-          idDeConcepto(CODIGOS_DE_DIAGNOSTICO.modalidades.tomografia),
-          idDeConcepto(CODIGOS_DE_DIAGNOSTICO.modalidades.resonancia),
+          idDeConcepto(DIAGNOSIS_CODES.modalidades.tomografia),
+          idDeConcepto(DIAGNOSIS_CODES.modalidades.resonancia),
         ],
       },
     });
@@ -223,7 +223,7 @@ describe('RegisterImagingCenter', () => {
 
     expect(cuerpo.organization.diagnosticUnit.modalityConceptIds).toEqual([
       idDeConcepto(
-        CODIGOS_DE_DIAGNOSTICO.modalidades[clave as keyof typeof CODIGOS_DE_DIAGNOSTICO.modalidades],
+        DIAGNOSIS_CODES.modalidades[clave as keyof typeof DIAGNOSIS_CODES.modalidades],
       ),
     ]);
   });
@@ -254,7 +254,7 @@ describe('RegisterImagingCenter', () => {
     completarLoObligatorio();
 
     component.submit();
-    responderCatalogos(http, [CODIGOS_DE_DIAGNOSTICO.modalidades.resonancia]);
+    responderCatalogos(http, [DIAGNOSIS_CODES.modalidades.resonancia]);
 
     http.expectNone((p) => p.url.endsWith('/iam/auth/upload-registration-document'));
     http.expectNone((p) => p.url.endsWith('/iam/auth/register-organization'));
@@ -502,8 +502,8 @@ describe('RegisterImagingCenter', () => {
     }
 
     function tocarElMapa(): void {
-      const mapa = fixture.debugElement.query(By.directive(UbicacionPicker));
-      (mapa.componentInstance as UbicacionPicker).puntoElegido.emit({ lat: -17.7833, lng: -63.1821 });
+      const mapa = fixture.debugElement.query(By.directive(MapLocationPicker));
+      (mapa.componentInstance as MapLocationPicker).puntoElegido.emit({ lat: -17.7833, lng: -63.1821 });
       fixture.detectChanges();
     }
 

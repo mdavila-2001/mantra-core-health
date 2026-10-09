@@ -1,8 +1,8 @@
-import { CORREDORES_CON_PERFIL, vitrinas, type VitrinaSimulada } from '../fixtures/community';
+import { BROKERS_WITH_PROFILE, showcases, type SimulatedShowcase } from '../fixtures/community';
 import { ASEGURADORAS_REALES, type AseguradoraReal } from '../fixtures/institutions.generated';
-import { conceptoPorId } from '../fixtures/concepts';
+import { conceptById } from '../fixtures/concepts';
 import { INSURER_NETWORK_PRACTITIONERS } from '../fixtures/insurer-network.generated';
-import { MEDICA, PACIENTES, PACIENTE, profesionalPorId } from '../fixtures/people';
+import { MEDICAL, PATIENTS, PACIENTE, professionalById } from '../fixtures/people';
 import { conflict, forbidden, noContent, notFound, preconditionFailed, validation, type MockRequest, type MockRouter } from '../mock-router';
 import { TENANT_ASEGURADORA } from '../mock-session';
 import { procedimientoPorConceptId } from './practice.handlers';
@@ -493,7 +493,7 @@ function actualizarProducto(
 }
 
 function concepto(id: string) {
-  const item = conceptoPorId(id);
+  const item = conceptById(id);
   return c(item?.code ?? id, item?.display ?? id);
 }
 
@@ -723,7 +723,7 @@ const solicitudes = new Coleccion<SolicitudSimulada>(
       // la titular de demostración suma exactamente sus 3 reclamos reales más
       // el relleno histórico (14 reclamos / Bs 12 450, ver
       // `insurance-portability.handlers.ts`), y un cuarto lo rompía.
-      patientProfileId: PACIENTES[[0, 5, 2, 0, 8, 0, 3, 5][i]!]!.id,
+      patientProfileId: PATIENTS[[0, 5, 2, 0, 8, 0, 3, 5][i]!]!.id,
       carrierIndex: carrierIndex as number,
       policyIdentifier: `POL-${100200 + i * 17}`,
       billed: billed as string,
@@ -770,7 +770,7 @@ export function solicitudDeLaCita(cita: { id: string; patientProfileId: string; 
 }
 
 function itemDeSolicitud(s: SolicitudSimulada) {
-  const paciente = PACIENTES.find((p) => p.id === s.patientProfileId) ?? PACIENTE;
+  const paciente = PATIENTS.find((p) => p.id === s.patientProfileId) ?? PACIENTE;
   const aseguradora = ASEGURADORAS[s.carrierIndex]!;
   return {
     id: s.id,
@@ -920,11 +920,11 @@ function redesImportadas(): ReadonlyMap<string, readonly RedDelProfesional[]> {
 
 /** Las redes en las que figura un profesional; vacío si no figura en ninguna. */
 export function redesDelProfesional(practitionerProfileId: string): readonly RedDelProfesional[] {
-  if (practitionerProfileId === MEDICA.id) {
+  if (practitionerProfileId === MEDICAL.id) {
     return [
-      redDelCatalogo(MEDICA.id, ASEGURADORAS[0]!, isoDia(-480)),
-      redDelCatalogo(MEDICA.id, ASEGURADORAS[2]!, isoDia(-300)),
-      redDelCatalogo(MEDICA.id, ASEGURADORAS[3]!, isoDia(-120)),
+      redDelCatalogo(MEDICAL.id, ASEGURADORAS[0]!, isoDia(-480)),
+      redDelCatalogo(MEDICAL.id, ASEGURADORAS[2]!, isoDia(-300)),
+      redDelCatalogo(MEDICAL.id, ASEGURADORAS[3]!, isoDia(-120)),
     ];
   }
   return redesImportadas().get(practitionerProfileId) ?? [];
@@ -947,7 +947,7 @@ function nombreComparable(nombre: string): string {
 }
 
 /** La aseguradora real de la planilla del propietario detrás de una ficha, si la hay. */
-function aseguradoraRealDe(ficha: VitrinaSimulada): AseguradoraReal | undefined {
+function aseguradoraRealDe(ficha: SimulatedShowcase): AseguradoraReal | undefined {
   return ASEGURADORAS_REALES.find((real) => uuid(`insurer-${real.id}`) === ficha.targetId);
 }
 
@@ -961,7 +961,7 @@ function aseguradoraRealDe(ficha: VitrinaSimulada): AseguradoraReal | undefined 
  * comparaba `displayName === name` al pie de la letra, y ninguna de las 19
  * aseguradoras reales calzaba: todas abrían «todavía no publicó sus productos».
  */
-function indiceDelCatalogo(ficha: VitrinaSimulada): number {
+function indiceDelCatalogo(ficha: SimulatedShowcase): number {
   const porSlug = ASEGURADORAS.findIndex((a) => a.fichas?.includes(ficha.slug) ?? false);
   if (porSlug >= 0) return porSlug;
   const nombres = new Set(
@@ -1014,7 +1014,7 @@ function aDecena(monto: number): string {
  * un producto que no tiene, y no lleva canales de contacto ni matrícula del
  * regulador por lo mismo.
  */
-function aseguradoraDeLaFicha(ficha: VitrinaSimulada): AseguradoraDelCatalogo {
+function aseguradoraDeLaFicha(ficha: SimulatedShowcase): AseguradoraDelCatalogo {
   const real = aseguradoraRealDe(ficha);
   const cubreSalud = real?.coversHealth ?? ficha.categoria?.code !== 'seguros-generales';
   const codigo = codigoDeAseguradora(ficha.slug);
@@ -1060,7 +1060,7 @@ function brokersDelMercado(indice: number, slug: string) {
   const conChat = (corredor: (typeof CORREDORES)[number]) => ({
     ...resumenDeCorredor(corredor, CORREDORES.indexOf(corredor)),
     chatSlug:
-      CORREDORES_CON_PERFIL.find((p) => p.brokerCode === corredor.brokerCode)?.slug ?? null,
+      BROKERS_WITH_PROFILE.find((p) => p.brokerCode === corredor.brokerCode)?.slug ?? null,
   });
   if (indice >= 0) {
     return CORREDORES.filter((corredor) => corredor.carriers.includes(indice)).map(conChat);
@@ -1087,7 +1087,7 @@ export function registrarSeguros(router: MockRouter): void {
 
   // La ficha del profesional: con qué aseguradoras trabaja (su red y planes).
   router.get('/practitioners/:id/insurance-carriers', ({ params }) => {
-    const practitioner = profesionalPorId(params['id']!);
+    const practitioner = professionalById(params['id']!);
     if (practitioner === undefined) return notFound('Profesional no encontrado');
     return { items: carriersOfPractitioner(practitioner.insurerNetworks ?? []) };
   });
@@ -1120,7 +1120,7 @@ export function registrarSeguros(router: MockRouter): void {
   // Una ficha sin catálogo sembrado recibe el de ejemplo: ninguna tarjeta del
   // directorio abre una página sin productos.
   router.get('/insurance-marketplace/insurers/:slug', ({ params }) => {
-    const ficha = vitrinas
+    const ficha = showcases
       .todos()
       .find((vitrina) => vitrina.slug === params['slug'] && vitrina.kind === 'INSURER');
     if (ficha === undefined) return notFound('Aseguradora no encontrada');
@@ -1361,7 +1361,7 @@ export function registrarSeguros(router: MockRouter): void {
   router.get('/insurance-brokers/:id/clients', ({ params }) => {
     const b = CORREDORES.find((x) => x.id === params['id']);
     if (b === undefined) return notFound('Corredor no encontrado');
-    const items = PACIENTES.filter((p) => p.aseguradora !== undefined)
+    const items = PATIENTS.filter((p) => p.aseguradora !== undefined)
       .slice(0, 4)
       .map((p, i) => ({
         id: uuid(`broker-client-${b.id}-${p.id}`),

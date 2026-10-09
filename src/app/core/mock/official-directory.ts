@@ -15,10 +15,10 @@ import { ArchivoAusente, leerConFetch, type LectorDeArchivos } from './glossary-
     ========================================================================== */
 
 /** El vertical de la ficha, el mismo `kind` del buscador público. */
-export type ClaseOficial = 'PHARMACY' | 'ORGANIZATION' | 'DIAGNOSTIC_UNIT';
+export type OfficialClass = 'PHARMACY' | 'ORGANIZATION' | 'DIAGNOSTIC_UNIT';
 
 /** Una ficha del directorio oficial, tal como la escribe el generador. */
-export interface FichaOficial {
+export interface OfficialSheet {
   readonly id: string;
   readonly slug: string;
   readonly name: string;
@@ -39,21 +39,21 @@ export interface FichaOficial {
   readonly officialCode?: string;
 }
 
-const ARCHIVO: Readonly<Record<ClaseOficial, string>> = {
+const FILE: Readonly<Record<OfficialClass, string>> = {
   PHARMACY: 'directorio-oficial/farmacias.json',
   ORGANIZATION: 'directorio-oficial/organizaciones.json',
   DIAGNOSTIC_UNIT: 'directorio-oficial/diagnostico.json',
 };
 
 /** Qué fuente, dicho para una persona. */
-export const NOMBRE_DE_FUENTE: Readonly<Record<FichaOficial['source'], string>> = {
+export const SOURCE_NAME: Readonly<Record<OfficialSheet['source'], string>> = {
   AGEMED: 'Lista de establecimientos farmacéuticos de AGEMED (vigente al 01/10/2026)',
   RUES: 'Registro Único de Establecimientos de Salud (RUES 2026, Ministerio de Salud y Deportes)',
   OVERTURE: 'Overture Maps Places (fuente comunitaria, CDLA-Permissive-2.0)',
 };
 
-export class DirectorioOficial {
-  private readonly cargas = new Map<ClaseOficial, Promise<readonly FichaOficial[]>>();
+export class OfficialDirectory {
+  private readonly loads = new Map<OfficialClass, Promise<readonly OfficialSheet[]>>();
 
   constructor(private readonly leer: LectorDeArchivos = leerConFetch) {}
 
@@ -62,25 +62,25 @@ export class DirectorioOficial {
    * o no hay de dónde leer (SSR), el directorio oficial simplemente no suma
    * nada: la búsqueda sigue respondiendo con lo de la comunidad.
    */
-  de(clase: ClaseOficial): Promise<readonly FichaOficial[]> {
-    let carga = this.cargas.get(clase);
+  of(clase: OfficialClass): Promise<readonly OfficialSheet[]> {
+    let carga = this.loads.get(clase);
     if (carga === undefined) {
-      carga = this.leer(ARCHIVO[clase]).then(
-        (datos) => (Array.isArray(datos) ? (datos as FichaOficial[]) : []),
+      carga = this.leer(FILE[clase]).then(
+        (datos) => (Array.isArray(datos) ? (datos as OfficialSheet[]) : []),
         (error: unknown) => {
           if (!(error instanceof ArchivoAusente)) console.warn('[mock] directorio oficial no disponible:', error);
           return [];
         },
       );
-      this.cargas.set(clase, carga);
+      this.loads.set(clase, carga);
     }
     return carga;
   }
 
   /** La ficha con ese slug, en cualquiera de los tres verticales. */
-  async porSlug(slug: string): Promise<(FichaOficial & { readonly kind: ClaseOficial }) | undefined> {
-    for (const clase of Object.keys(ARCHIVO) as ClaseOficial[]) {
-      const ficha = (await this.de(clase)).find((f) => f.slug === slug);
+  async bySlug(slug: string): Promise<(OfficialSheet & { readonly kind: OfficialClass }) | undefined> {
+    for (const clase of Object.keys(FILE) as OfficialClass[]) {
+      const ficha = (await this.of(clase)).find((f) => f.slug === slug);
       if (ficha !== undefined) return { ...ficha, kind: clase };
     }
     return undefined;

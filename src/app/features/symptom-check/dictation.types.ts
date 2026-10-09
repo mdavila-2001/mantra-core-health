@@ -11,27 +11,27 @@
  * `window` se hace por índice en `dictation.ts`, y es el único lugar donde el
  * navegador entra en juego.
  */
-export interface ReconocedorDeVoz {
+export interface VoiceRecognizer {
   lang: string;
   continuous: boolean;
   interimResults: boolean;
-  onresult: ((evento: EventoDeResultadoDeVoz) => void) | null;
-  onerror: ((evento: EventoDeErrorDeVoz) => void) | null;
+  onresult: ((evento: VoiceResultEvent) => void) | null;
+  onerror: ((evento: VoiceErrorEvent) => void) | null;
   onend: (() => void) | null;
   start(): void;
   stop(): void;
   abort(): void;
 }
 
-export interface EventoDeResultadoDeVoz {
+export interface VoiceResultEvent {
   /** Desde qué resultado cambió algo: los anteriores ya se entregaron. */
   readonly resultIndex: number;
   readonly results: SpeechRecognitionResultList;
 }
 
-export interface EventoDeErrorDeVoz {
+export interface VoiceErrorEvent {
   /** `not-allowed`, `no-speech`, `network`, `aborted`, `audio-capture`… según la especificación. */
   readonly error: string;
 }
 
-export type ConstructorDeReconocedor = new () => ReconocedorDeVoz;
+export type RecognizerConstructor = new () => VoiceRecognizer;

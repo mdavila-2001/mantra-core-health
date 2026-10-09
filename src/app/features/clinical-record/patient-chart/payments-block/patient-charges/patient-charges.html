@@ -10,7 +10,7 @@
     <span>Pagos, notas de venta y facturas contra un SIAT simulado: no se mueve dinero ni se informa al SIN.</span>
   </p>
 
-  @switch (estado().status) {
+  @switch (status().status) {
     @case ('loading') {
       <p class="cobros__secundario" data-testid="cobros-cargando">Buscando los cobros…</p>
     }
@@ -23,53 +23,53 @@
     @case ('offline') {
       <app-alert tone="warning" title="Sin conexión">
         No pudimos leer los cobros de esta persona.
-        <button app-button variant="outline" type="button" (clicked)="recargar()">Reintentar</button>
+        <button app-button variant="outline" type="button" (clicked)="reload()">Reintentar</button>
       </app-alert>
     }
     @case ('error') {
       <!-- S9: con el identificador de la petición, que es lo que se dicta a soporte. -->
       <app-alert tone="error" title="No pudimos leer los cobros" data-testid="cobros-error">
-        @if (idDePeticion(); as id) {
+        @if (requestId(); as id) {
           <p class="cobros__secundario">ID de petición: {{ id }}</p>
         }
-        <button app-button variant="outline" type="button" (clicked)="recargar()">Reintentar</button>
+        <button app-button variant="outline" type="button" (clicked)="reload()">Reintentar</button>
       </app-alert>
     }
     @case ('not-found') {
       <!-- S6: no se dice qué no existe; sólo que no hay cobros que leer acá. -->
       <app-alert tone="info" title="No encontramos cobros para esta persona">
-        <button app-button variant="outline" type="button" (clicked)="recargar()">Volver a buscar</button>
+        <button app-button variant="outline" type="button" (clicked)="reload()">Volver a buscar</button>
       </app-alert>
     }
     @case ('validation') {
       <!-- S4: la lectura fue rechazada por el servidor, no está vacía. -->
       <app-alert tone="warning" title="El servidor rechazó la lectura de los cobros">
-        <button app-button variant="outline" type="button" (clicked)="recargar()">Reintentar</button>
+        <button app-button variant="outline" type="button" (clicked)="reload()">Reintentar</button>
       </app-alert>
     }
     @default {
-      @if (atrasadoDesde(); as desde) {
+      @if (lateFrom(); as desde) {
         <!-- S7: el dato puede estar atrasado, y se dice de cuándo es. -->
         <app-alert tone="warning" title="Lo que ve puede estar atrasado" data-testid="cobros-atrasado">
-          No pudimos releer los cobros; son los leídos el {{ fechaYHora(desde.toISOString()) }}.
-          <button app-button variant="outline" type="button" (clicked)="recargar()">Reintentar</button>
+          No pudimos releer los cobros; son los leídos el {{ dateAndTime(desde.toISOString()) }}.
+          <button app-button variant="outline" type="button" (clicked)="reload()">Reintentar</button>
         </app-alert>
       }
-      @if (planAbierto(); as cobro) {
+      @if (openPlan(); as cobro) {
         <!-- ── El plan de un servicio con reconsultas ─────────────────────── -->
         <div class="cobros__plan">
-          <button #volver app-button variant="ghost" size="sm" type="button" (clicked)="cerrarPlan()" data-testid="cobros-volver">
+          <button #volver app-button variant="ghost" size="sm" type="button" (clicked)="closePlan()" data-testid="cobros-volver">
             ← Volver a los servicios
           </button>
           <app-payment-plan
             [cobro]="cobro"
-            [metodos]="metodos()"
-            [emisor]="emisorDe(cobro)"
-            (actualizado)="recargar()"
-            (facturar)="facturandoId.set(cobro.id)"
+            [metodos]="methods()"
+            [emisor]="issuerOf(cobro)"
+            (actualizado)="reload()"
+            (facturar)="invoicingId.set(cobro.id)"
           />
         </div>
-      } @else if (cobros().length === 0) {
+      } @else if (charges().length === 0) {
         <p class="cobros__vacio" data-testid="cobros-vacio">
           Esta persona todavía no tiene cobros. Aparecen acá cuando se atiende una cita: desde esta misma pestaña se
           cobra, se emite la nota de venta de cada pago del plan y la factura.
@@ -79,19 +79,19 @@
         <dl class="cobros__cifras" data-testid="cobros-cifras">
           <div class="cobros__cifra">
             <dt>Lleva pagado</dt>
-            <dd data-testid="cobros-pagado">{{ totales().cobrado }}</dd>
+            <dd data-testid="cobros-pagado">{{ totals().cobrado }}</dd>
           </div>
           <div class="cobros__cifra">
             <dt>Saldo por cobrar</dt>
-            <dd data-testid="cobros-saldo">{{ totales().saldo }}</dd>
+            <dd data-testid="cobros-saldo">{{ totals().saldo }}</dd>
           </div>
         </dl>
 
         <app-data-table
-          [state]="filas()"
-          [columns]="columnas()"
-          [trackBy]="porId"
-          [rowLabel]="nombreDeFila"
+          [state]="rows()"
+          [columns]="columns()"
+          [trackBy]="byId"
+          [rowLabel]="rowName"
           caption="Servicios de la persona: lo que se esperaba cobrar y lo pagado"
           fitContainer
           data-testid="cobros-tabla"
@@ -101,14 +101,14 @@
   }
 </section>
 
-@if (facturando(); as cobro) {
-  @if (datos(); as d) {
+@if (invoicing(); as cobro) {
+  @if (data(); as d) {
     <app-simulated-invoice-dialog
       [cobro]="cobro"
       [catalogos]="d.catalogos"
-      (pagado)="recargar()"
-      (emitida)="recargar()"
-      (cerrado)="cerrarFactura()"
+      (pagado)="reload()"
+      (emitida)="reload()"
+      (cerrado)="closeInvoice()"
     />
   }
 }
@@ -116,8 +116,8 @@
 <!-- Celdas con presentación propia: la tabla las instancia por fila. -->
 <ng-template #servicioCell let-cobro>
   <span class="cobros__servicio">{{ cobro.description }}</span>
-  <span class="cobros__secundario">{{ tipoDe(cobro) }}</span>
-  <span class="cobros__secundario cobros__solo-movil">Pagado {{ bs(cobradoDe(cobro)) }} de {{ bs(cobro.total) }}</span>
+  <span class="cobros__secundario">{{ typeOf(cobro) }}</span>
+  <span class="cobros__secundario cobros__solo-movil">Pagado {{ bs(chargedOf(cobro)) }} de {{ bs(cobro.total) }}</span>
 </ng-template>
 
 <ng-template #esperadoCell let-cobro>
@@ -125,22 +125,22 @@
 </ng-template>
 
 <ng-template #pagadoCell let-cobro>
-  <span class="cobros__importe">{{ bs(cobradoDe(cobro)) }}</span>
+  <span class="cobros__importe">{{ bs(chargedOf(cobro)) }}</span>
 </ng-template>
 
 <ng-template #estadoCell let-cobro>
-  <app-chip size="sm" [variant]="tonoDeEstado[estadoDe(cobro)]">{{ rotuloDeEstado[estadoDe(cobro)] }}</app-chip>
+  <app-chip size="sm" [variant]="statusTone[statusOf(cobro)]">{{ statusLabel[statusOf(cobro)] }}</app-chip>
 </ng-template>
 
 <ng-template #accionCell let-cobro>
   <button
     app-button
     size="sm"
-    [variant]="accionDe(cobro) === 'VER_FACTURA' ? 'ghost' : 'outline'"
+    [variant]="actionOf(cobro) === 'VER_FACTURA' ? 'ghost' : 'outline'"
     [attr.data-cobro-id]="cobro.id"
-    [attr.aria-label]="accionCompleta[accionDe(cobro)] + ': ' + cobro.description"
-    (clicked)="abrir(cobro)"
+    [attr.aria-label]="completeAction[actionOf(cobro)] + ': ' + cobro.description"
+    (clicked)="open(cobro)"
   >
-    {{ rotuloDeAccion[accionDe(cobro)] }}
+    {{ actionLabel[actionOf(cobro)] }}
   </button>
 </ng-template>

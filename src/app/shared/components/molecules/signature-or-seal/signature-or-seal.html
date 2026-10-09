@@ -1,8 +1,8 @@
-@if (src() && !fallo()) {
-  <img class="firma-o-sello__imagen" [src]="src()" [alt]="alt()" (error)="alFallar()" />
+@if (src() && !failure()) {
+  <img class="firma-o-sello__imagen" [src]="src()" [alt]="alt()" (error)="toFail()" />
 } @else {
   <!-- El marcador anuncia lo que falta; el dibujo es decoración. -->
-  <span class="firma-o-sello__vacio" [attr.data-testid]="'firma-o-sello-vacio-' + rotulo()">
+  <span class="firma-o-sello__vacio" [attr.data-testid]="'firma-o-sello-vacio-' + label()">
     <svg
       class="firma-o-sello__icono"
       viewBox="0 0 24 24"
@@ -21,6 +21,6 @@
         <circle cx="12" cy="12" r="5" />
       }
     </svg>
-    {{ vacio() }}
+    {{ empty() }}
   </span>
 }

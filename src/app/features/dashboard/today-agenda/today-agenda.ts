@@ -38,7 +38,7 @@ import {
   toBookingStatusPresentation,
   type BookingStatusPresentation,
 } from '../../agenda/booking-status';
-import { misRecursosDeAgenda } from '../../agenda/my-resource';
+import { agendaResourcesMy } from '../../agenda/my-resource';
 
 /**
  * Cuántas citas se enumeran debajo de la destacada.
@@ -48,16 +48,16 @@ import { misRecursosDeAgenda } from '../../agenda/my-resource';
  * anuncia por su número y se resuelve en «Ver agenda completa», que es la
  * pantalla que existe para eso.
  */
-const MAXIMO_EN_LA_LISTA = 5;
+const MAX_IN_LIST = 5;
 
 /** Cada cuánto se recoloca «ahora». Un minuto: es la resolución que se muestra. */
-const REFRESCO_DEL_RELOJ_MS = 60_000;
+const CLOCK_MS_REFRESH = 60_000;
 
 /** Lo que la cinta necesita para no degenerar cuando el día tiene una sola cita. */
-const MINIMO_DE_LA_VENTANA_MS = 60 * 60 * 1000;
+const WINDOW_MS_MIN = 60 * 60 * 1000;
 
 /** Una consulta de hoy, ya resuelta para la pantalla. */
-export interface CitaDeHoy {
+export interface TodayAppointment {
   readonly id: string;
   readonly desde: Date;
   readonly hasta: Date | null;
@@ -79,7 +79,7 @@ export interface CitaDeHoy {
 }
 
 /** Lo que se cuenta arriba, de un vistazo. */
-export interface CifrasDeHoy {
+export interface TodayFigures {
   readonly total: number;
   readonly atendidas: number;
   readonly enCurso: number;
@@ -89,7 +89,7 @@ export interface CifrasDeHoy {
 }
 
 /** Un tramo de la cinta de la jornada, en porcentaje del ancho. */
-export interface TramoDeLaJornada {
+export interface WorkdayBracket {
   readonly id: string;
   readonly izquierda: number;
   readonly ancho: number;
@@ -98,7 +98,7 @@ export interface TramoDeLaJornada {
 }
 
 /** Las citas de hoy tal como llegaron, con la agenda de la que salieron. */
-interface JornadaCruda {
+interface RawWorkday {
   readonly citas: readonly { readonly cita: Booking; readonly sede: string | null }[];
   /**
    * El día de hoy se reparte entre más de una sede.
@@ -169,25 +169,25 @@ interface JornadaCruda {
   styleUrl: './today-agenda.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class AgendaDeHoy {
+export class TodayAgenda {
   private readonly auth = inject(AuthService);
   private readonly scheduling = inject(SchedulingClient);
   private readonly terminology = inject(TerminologyClient);
 
   /** A dónde va «Ver agenda completa». De la tabla de rutas, no escrita a mano. */
-  protected readonly rutaDeLaAgenda = AGENDA_ROUTE;
+  protected readonly agendaPath = AGENDA_ROUTE;
 
   /** Los parámetros que abren una cita concreta en la agenda. */
-  protected paramsDeLaCita(cita: CitaDeHoy): Record<string, string> {
+  protected appointmentParams(cita: TodayAppointment): Record<string, string> {
     return { [AGENDA_BOOKING_PARAM]: cita.id };
   }
 
   /** El nombre del enlace: a quién y a qué hora, para no oír sólo un nombre suelto. */
-  protected nombreDelEnlace(cita: CitaDeHoy): string {
-    return `Abrir la consulta de ${cita.paciente}, a las ${horaCorta(cita.desde)}`;
+  protected linkName(cita: TodayAppointment): string {
+    return `Abrir la consulta de ${cita.paciente}, a las ${shortTime(cita.desde)}`;
   }
 
-  protected readonly estado = signal<ViewState<JornadaCruda>>(loading());
+  protected readonly status = signal<ViewState<RawWorkday>>(loading());
 
   /**
    * Las sedes cuya lectura falló, dichas para la persona (con código de
@@ -197,7 +197,7 @@ export class AgendaDeHoy {
    * desaparecer en silencio: sus citas faltarían y el día se leería con menos
    * consultas de las que tiene.
    */
-  protected readonly sedesSinCargar = signal<readonly string[]>([]);
+  protected readonly sitesWithoutLoad = signal<readonly string[]>([]);
 
   /**
    * El reloj, en su propia señal.
@@ -207,34 +207,34 @@ export class AgendaDeHoy {
    * cinta. Sin esto, el panel de un consultorio —que queda abierto toda la
    * mañana— seguiría anunciando como próxima una consulta de hace dos horas.
    */
-  protected readonly ahora = signal(new Date());
+  protected readonly now = signal(new Date());
 
   /** Las etiquetas de estado y de canal, por identificador de concepto. */
-  private readonly conceptos = signal<ReadonlyMap<string, ValueSetOption>>(new Map());
+  private readonly concepts = signal<ReadonlyMap<string, ValueSetOption>>(new Map());
 
   constructor() {
-    this.cargar();
+    this.load();
 
     // Sólo en el navegador: un intervalo en el render del servidor no lo ve
     // nadie y deja el proceso vivo.
     if (isPlatformBrowser(inject(PLATFORM_ID))) {
-      const reloj = setInterval(() => this.ahora.set(new Date()), REFRESCO_DEL_RELOJ_MS);
+      const reloj = setInterval(() => this.now.set(new Date()), CLOCK_MS_REFRESH);
       inject(DestroyRef).onDestroy(() => clearInterval(reloj));
     }
   }
 
   /** El día de hoy, escrito completo: es el título de la sección. */
-  protected readonly hoy = computed(() => {
-    const dia = this.ahora();
+  protected readonly today = computed(() => {
+    const dia = this.now();
     return new Date(dia.getFullYear(), dia.getMonth(), dia.getDate());
   });
 
-  protected readonly citas = computed<readonly CitaDeHoy[]>(() => {
-    const estado = this.estado();
+  protected readonly appointments = computed<readonly TodayAppointment[]>(() => {
+    const estado = this.status();
     if (estado.status !== 'ready' && estado.status !== 'stale') return [];
 
-    const conceptos = this.conceptos();
-    const ahora = this.ahora().getTime();
+    const conceptos = this.concepts();
+    const ahora = this.now().getTime();
     const variasSedes = estado.data.variasSedes;
 
     return estado.data.citas.map(({ cita, sede }) => {
@@ -259,8 +259,8 @@ export class AgendaDeHoy {
     });
   });
 
-  protected readonly cifras = computed<CifrasDeHoy>(() => {
-    const citas = this.citas();
+  protected readonly figures = computed<TodayFigures>(() => {
+    const citas = this.appointments();
     const cuenta = (codigo: string): number =>
       citas.filter((c) => c.estado.code === codigo).length;
 
@@ -281,9 +281,9 @@ export class AgendaDeHoy {
    * está ocurriendo gana sobre quien acaba de llegar, y quien llegó gana sobre
    * la próxima del horario. Sólo cuando no hay nada de eso se mira la hora.
    */
-  protected readonly destacada = computed<CitaDeHoy | null>(() => {
-    const citas = this.citas();
-    const ahora = this.ahora().getTime();
+  protected readonly highlighted = computed<TodayAppointment | null>(() => {
+    const citas = this.appointments();
+    const ahora = this.now().getTime();
 
     return (
       citas.find((c) => c.estado.code === 'BOOKING_IN_PROGRESS') ??
@@ -294,26 +294,26 @@ export class AgendaDeHoy {
   });
 
   /** Si la destacada es la que está ocurriendo o la que viene. Cambia el rótulo. */
-  protected readonly destacadaEnCurso = computed(() => {
-    const cita = this.destacada();
+  protected readonly highlightedInCourse = computed(() => {
+    const cita = this.highlighted();
     if (cita === null) return false;
     return cita.estado.code === 'BOOKING_IN_PROGRESS' || cita.estado.code === 'BOOKING_CHECKED_IN';
   });
 
   /** Lo que sigue después de la destacada, recortado. */
-  protected readonly siguientes = computed<readonly CitaDeHoy[]>(() => {
-    const citas = this.citas();
-    const destacada = this.destacada();
+  protected readonly next = computed<readonly TodayAppointment[]>(() => {
+    const citas = this.appointments();
+    const destacada = this.highlighted();
     const desde = destacada === null ? 0 : citas.indexOf(destacada) + 1;
-    return citas.slice(desde, desde + MAXIMO_EN_LA_LISTA);
+    return citas.slice(desde, desde + MAX_IN_LIST);
   });
 
   /** Cuántas quedaron fuera de la lista. Se dicen por número, no se esconden. */
-  protected readonly restantes = computed(() => {
-    const citas = this.citas();
-    const destacada = this.destacada();
+  protected readonly remaining = computed(() => {
+    const citas = this.appointments();
+    const destacada = this.highlighted();
     const desde = destacada === null ? 0 : citas.indexOf(destacada) + 1;
-    return Math.max(0, citas.length - desde - MAXIMO_EN_LA_LISTA);
+    return Math.max(0, citas.length - desde - MAX_IN_LIST);
   });
 
   /**
@@ -322,18 +322,18 @@ export class AgendaDeHoy {
    * No es lo mismo que un día vacío —eso es S3— y merece otra frase: a las
    * ocho de la noche «no tenés consultas» sería falso.
    */
-  protected readonly jornadaTerminada = computed(
-    () => this.citas().length > 0 && this.destacada() === null,
+  protected readonly finishedWorkday = computed(
+    () => this.appointments().length > 0 && this.highlighted() === null,
   );
 
   /* -- La cinta de la jornada ---------------------------------------------- */
 
   /** El principio y el fin de la tira: la primera hora en punto y la última. */
-  private readonly ventana = computed<{ inicio: number; fin: number }>(() => {
-    const citas = this.citas();
-    const ahora = this.ahora();
+  private readonly window = computed<{ inicio: number; fin: number }>(() => {
+    const citas = this.appointments();
+    const ahora = this.now();
     if (citas.length === 0) {
-      return { inicio: ahora.getTime(), fin: ahora.getTime() + MINIMO_DE_LA_VENTANA_MS };
+      return { inicio: ahora.getTime(), fin: ahora.getTime() + WINDOW_MS_MIN };
     }
 
     const primera = citas[0]!.desde;
@@ -342,19 +342,19 @@ export class AgendaDeHoy {
       (maximo, c) => Math.max(maximo, (c.hasta ?? c.desde).getTime()),
       inicio,
     );
-    return { inicio, fin: Math.max(haciaLaHoraSiguiente(ultimo), inicio + MINIMO_DE_LA_VENTANA_MS) };
+    return { inicio, fin: Math.max(towardNextTime(ultimo), inicio + WINDOW_MS_MIN) };
   });
 
-  protected readonly desdeLasHoras = computed(() => new Date(this.ventana().inicio));
-  protected readonly hastaLasHoras = computed(() => new Date(this.ventana().fin));
+  protected readonly fromHours = computed(() => new Date(this.window().inicio));
+  protected readonly untilHours = computed(() => new Date(this.window().fin));
 
-  protected readonly tramos = computed<readonly TramoDeLaJornada[]>(() => {
-    const { inicio, fin } = this.ventana();
+  protected readonly brackets = computed<readonly WorkdayBracket[]>(() => {
+    const { inicio, fin } = this.window();
     const total = fin - inicio;
 
-    return this.citas().map((cita) => {
+    return this.appointments().map((cita) => {
       const desde = cita.desde.getTime();
-      const hasta = (cita.hasta ?? new Date(desde + MINIMO_DE_LA_VENTANA_MS / 4)).getTime();
+      const hasta = (cita.hasta ?? new Date(desde + WINDOW_MS_MIN / 4)).getTime();
       const izquierda = ((desde - inicio) / total) * 100;
       return {
         id: cita.id,
@@ -363,8 +363,8 @@ export class AgendaDeHoy {
         // nueve horas da un 1,8 % y desaparece. Se le da cuerpo sin dejar que
         // se salga de la tira.
         ancho: Math.min(100 - izquierda, Math.max(1.5, ((hasta - desde) / total) * 100)),
-        tono: tonoDelEstado(cita.estado.code),
-        titulo: `${horaCorta(cita.desde)} · ${cita.paciente} · ${cita.estado.label}`,
+        tono: statusTone(cita.estado.code),
+        titulo: `${shortTime(cita.desde)} · ${cita.paciente} · ${cita.estado.label}`,
       };
     });
   });
@@ -377,28 +377,28 @@ export class AgendaDeHoy {
    * plural —«1 consultas» delata que nadie leyó la frase— y una concatenación
    * con condicionales dentro de un `[attr.aria-label]` no se puede probar.
    */
-  protected readonly resumenDeLaCinta = computed(() => {
-    const total = this.cifras().total;
+  protected readonly ribbonSummary = computed(() => {
+    const total = this.figures().total;
     const consultas = total === 1 ? '1 consulta' : `${total} consultas`;
-    return `Su jornada: ${consultas}, entre las ${horaCorta(this.desdeLasHoras())} y las ${horaCorta(this.hastaLasHoras())}.`;
+    return `Su jornada: ${consultas}, entre las ${shortTime(this.fromHours())} y las ${shortTime(this.untilHours())}.`;
   });
 
   /** Dónde cae el reloj en la cinta, o `null` si el día todavía no empezó o ya terminó. */
-  protected readonly marcaDeAhora = computed<number | null>(() => {
-    const { inicio, fin } = this.ventana();
-    const ahora = this.ahora().getTime();
+  protected readonly nowMark = computed<number | null>(() => {
+    const { inicio, fin } = this.window();
+    const ahora = this.now().getTime();
     if (ahora < inicio || ahora > fin) return null;
     return ((ahora - inicio) / (fin - inicio)) * 100;
   });
 
   /* -- Carga ---------------------------------------------------------------- */
 
-  protected cargar(): void {
+  protected load(): void {
     const perfil = this.auth.practitionerProfileId();
     const tenantId = this.auth.activeTenantId();
 
     if (perfil === null || tenantId === null) {
-      this.estado.set(
+      this.status.set(
         empty(
           { label: 'Ver la agenda', route: AGENDA_ROUTE },
           'Esta cuenta no atiende pacientes, así que no tiene una jornada propia.',
@@ -407,13 +407,13 @@ export class AgendaDeHoy {
       return;
     }
 
-    this.estado.set(loading());
-    this.sedesSinCargar.set([]);
+    this.status.set(loading());
+    this.sitesWithoutLoad.set([]);
 
-    const desde = this.hoy();
+    const desde = this.today();
     const hasta = new Date(desde.getFullYear(), desde.getMonth(), desde.getDate() + 1);
 
-    misRecursosDeAgenda(this.scheduling, tenantId, perfil)
+    agendaResourcesMy(this.scheduling, tenantId, perfil)
       .pipe(
         switchMap((recursos) => {
           if (recursos.length === 0) return of(null);
@@ -427,9 +427,9 @@ export class AgendaDeHoy {
               this.scheduling
                 .searchBookings({ resourceId: recurso.id, from: desde, to: hasta, limit: 100 })
                 .pipe(
-                  map((pagina): LecturaDeSede => ({ recurso, citas: pagina.items, fallo: null })),
+                  map((pagina): SiteReading => ({ recurso, citas: pagina.items, fallo: null })),
                   catchError((error: unknown) =>
-                    of<LecturaDeSede>({ recurso, citas: [], fallo: { error } }),
+                    of<SiteReading>({ recurso, citas: [], fallo: { error } }),
                   ),
                 ),
             ),
@@ -439,7 +439,7 @@ export class AgendaDeHoy {
       .subscribe({
         next: (porRecurso) => {
           if (porRecurso === null) {
-            this.estado.set(
+            this.status.set(
               empty(
                 { label: 'Publicar mi horario', route: AGENDA_CREATE_ROUTE },
                 'Todavía no tiene una agenda publicada, así que nadie puede reservarle hora.',
@@ -453,26 +453,26 @@ export class AgendaDeHoy {
           // el error de la pantalla, con su reintento.
           const primerFallo = fallidas[0]?.fallo;
           if (primerFallo != null && fallidas.length === porRecurso.length) {
-            this.estado.set(errorToViewState<JornadaCruda>(primerFallo.error));
+            this.status.set(errorToViewState<RawWorkday>(primerFallo.error));
             return;
           }
-          this.sedesSinCargar.set(
+          this.sitesWithoutLoad.set(
             fallidas.map(({ recurso, fallo }) =>
               describeApiFailure(
                 fallo?.error,
-                `No se pudieron cargar las citas de ${nombreDeLaSede(recurso) ?? 'una de sus agendas'}.`,
+                `No se pudieron cargar las citas de ${siteName(recurso) ?? 'una de sus agendas'}.`,
               ),
             ),
           );
 
           const citas = porRecurso
             .flatMap(({ recurso, citas: delRecurso }) =>
-              delRecurso.map((cita) => ({ cita, sede: nombreDeLaSede(recurso) })),
+              delRecurso.map((cita) => ({ cita, sede: siteName(recurso) })),
             )
-            .sort((a, b) => orden(a.cita) - orden(b.cita));
+            .sort((a, b) => order(a.cita) - order(b.cita));
 
           if (citas.length === 0) {
-            this.estado.set(
+            this.status.set(
               empty(
                 // No es «Ver la agenda»: ése es el botón del encabezado, que
                 // sigue ahí. Un día vacío tiene otra próxima acción — llenarlo.
@@ -487,10 +487,10 @@ export class AgendaDeHoy {
           }
 
           const sedes = new Set(citas.map(({ sede }) => sede));
-          this.estado.set(ready({ citas, variasSedes: sedes.size > 1 }));
-          this.traducirConceptos(citas.map(({ cita }) => cita));
+          this.status.set(ready({ citas, variasSedes: sedes.size > 1 }));
+          this.translateConcepts(citas.map(({ cita }) => cita));
         },
-        error: (error: unknown) => this.estado.set(errorToViewState<JornadaCruda>(error)),
+        error: (error: unknown) => this.status.set(errorToViewState<RawWorkday>(error)),
       });
   }
 
@@ -502,7 +502,7 @@ export class AgendaDeHoy {
    * filas se muestran igual con su texto de reserva — perder la etiqueta no
    * justifica perder la jornada.
    */
-  private traducirConceptos(citas: readonly Booking[]): void {
+  private translateConcepts(citas: readonly Booking[]): void {
     const ids = [
       ...new Set(
         citas.flatMap((cita) =>
@@ -515,26 +515,26 @@ export class AgendaDeHoy {
     if (ids.length === 0) return;
 
     this.terminology.readConceptLabels(ids).subscribe({
-      next: (etiquetas) => this.conceptos.set(new Map(etiquetas)),
+      next: (etiquetas) => this.concepts.set(new Map(etiquetas)),
       error: () => undefined,
     });
   }
 }
 
 /** Para ordenar: una cita sin hora va al final, no al principio. */
-function orden(cita: Booking): number {
+function order(cita: Booking): number {
   return cita.startAt?.getTime() ?? Number.MAX_SAFE_INTEGER;
 }
 
 /** Cómo se nombra la sede de una agenda; `null` cuando el recurso no declara ninguna. */
 /** Lo que trajo la lectura de una agenda: sus citas, o el fallo que la dejó vacía. */
-interface LecturaDeSede {
+interface SiteReading {
   readonly recurso: AgendaResource;
   readonly citas: readonly Booking[];
   readonly fallo: { readonly error: unknown } | null;
 }
 
-function nombreDeLaSede(recurso: AgendaResource): string | null {
+function siteName(recurso: AgendaResource): string | null {
   return recurso.site?.name ?? null;
 }
 
@@ -546,13 +546,13 @@ function nombreDeLaSede(recurso: AgendaResource): string | null {
  * 13:00 y regalaba un quinto del ancho a una hora en la que no pasa nada. La
  * marca de «ahora» se corría con ella, que es como se vio.
  */
-function haciaLaHoraSiguiente(instante: number): number {
+function towardNextTime(instante: number): number {
   const fecha = new Date(instante);
   const enPunto = fecha.getMinutes() === 0 && fecha.getSeconds() === 0 && fecha.getMilliseconds() === 0;
   return enPunto ? instante : fecha.setMinutes(60, 0, 0);
 }
 
-function horaCorta(fecha: Date): string {
+function shortTime(fecha: Date): string {
   return fecha.toLocaleTimeString('es-BO', { hour: '2-digit', minute: '2-digit' });
 }
 
@@ -565,7 +565,7 @@ function horaCorta(fecha: Date): string {
  * algo. El texto de cada estado lo sigue diciendo el sello de la lista, así
  * que acá el color no porta información solo.
  */
-function tonoDelEstado(codigo: string): string {
+function statusTone(codigo: string): string {
   switch (codigo) {
     case 'BOOKING_COMPLETED':
     case 'EV_BOOKING_DONE':

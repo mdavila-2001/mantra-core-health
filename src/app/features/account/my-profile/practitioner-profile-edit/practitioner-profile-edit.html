@@ -250,13 +250,13 @@
                   <app-file-input
                     data-testid="edicion-firma-archivo"
                     testId="edicion-firma-archivo"
-                    [files]="firma.archivos()"
+                    [files]="firma.files()"
                     (filesChange)="alElegirFirma($event)"
-                    (rejected)="firma.rechazar($event)"
+                    (rejected)="firma.reject($event)"
                     [accept]="formatosDeFirma"
                     [maxSizeBytes]="maxBytesDeFirma"
                     [maxFiles]="1"
-                    [disabled]="firma.subiendo()"
+                    [disabled]="firma.uploading()"
                     [showList]="false"
                     [showFeedback]="false"
                     [label]="firma.visible() ? 'Cambiar firma' : 'Subir firma'"
@@ -269,12 +269,12 @@
                       variant="neutral"
                       size="sm"
                       data-testid="edicion-firma-quitar"
-                      (clicked)="firma.quitar()"
+                      (clicked)="firma.remove()"
                     >
                       Quitar firma
                     </button>
                   }
-                  @if (firma.subiendo()) {
+                  @if (firma.uploading()) {
                     <p class="edicion__logo-estado" role="status">Subiendo firma…</p>
                   }
                   @if (firma.error()) {
@@ -296,13 +296,13 @@
                   <app-file-input
                     data-testid="edicion-sello-archivo"
                     testId="edicion-sello-archivo"
-                    [files]="sello.archivos()"
+                    [files]="sello.files()"
                     (filesChange)="alElegirSello($event)"
-                    (rejected)="sello.rechazar($event)"
+                    (rejected)="sello.reject($event)"
                     [accept]="formatosDeFirma"
                     [maxSizeBytes]="maxBytesDeFirma"
                     [maxFiles]="1"
-                    [disabled]="sello.subiendo()"
+                    [disabled]="sello.uploading()"
                     [showList]="false"
                     [showFeedback]="false"
                     [label]="sello.visible() ? 'Cambiar sello' : 'Subir sello'"
@@ -315,12 +315,12 @@
                       variant="neutral"
                       size="sm"
                       data-testid="edicion-sello-quitar"
-                      (clicked)="sello.quitar()"
+                      (clicked)="sello.remove()"
                     >
                       Quitar sello
                     </button>
                   }
-                  @if (sello.subiendo()) {
+                  @if (sello.uploading()) {
                     <p class="edicion__logo-estado" role="status">Subiendo sello…</p>
                   }
                   @if (sello.error()) {
@@ -1010,8 +1010,8 @@
             guardandoIdiomas() ||
             cancelandoEdicion() ||
             subiendoLogo() ||
-            firma.subiendo() ||
-            sello.subiendo()
+            firma.uploading() ||
+            sello.uploading()
           "
           (submitted)="guardarPresentacion()"
           (cancelled)="cancelarEdicion()"

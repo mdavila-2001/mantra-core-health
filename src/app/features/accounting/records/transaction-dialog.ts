@@ -1,5 +1,5 @@
 import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
-import { CampoPersonalizado } from '../../../shared/components/organisms/paginated-form/custom-field';
+import { CustomField } from '../../../shared/components/organisms/paginated-form/custom-field';
 import type { PaginaDeFormulario } from '../../../shared/forms/paginated/paginated-form.types';
 import {
   ChangeDetectionStrategy,
@@ -26,13 +26,13 @@ import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 import { ContentDialog } from '../../../shared/components/organisms/content-dialog/content-dialog';
 import { DatePicker } from '../../../shared/components/organisms/date-picker/date-picker';
-import { motivoDelError } from './errors';
+import { errorReason } from './errors';
 import {
-  aDia,
-  deDia,
-  montoEditable,
-  montoNormalizado,
-  opcionesDeCuentas,
+  toDay,
+  fromDay,
+  editableAmount,
+  normalizedAmount,
+  accountsOptions,
 } from './records.format';
 
 /**
@@ -42,7 +42,7 @@ import {
  */
 @Component({
   selector: 'app-transaction-dialog',
-  imports: [PaginatedForm, CampoPersonalizado,
+  imports: [PaginatedForm, CustomField,
     ReactiveFormsModule,
     AnnounceOnAppear,
     Alert,
@@ -56,7 +56,7 @@ import {
   styleUrl: './records-dialogs.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class TransaccionDialog implements OnInit {
+export class TransactionDialog implements OnInit {
   protected readonly transactionPages: readonly PaginaDeFormulario[] = [
     { titulo: 'Descripción y cuentas', campos: ['description', 'debitAccountId', 'creditAccountId'].map((key) => ({ key, label: '', control: 'custom' })) },
     { titulo: 'Fecha y monto', campos: ['date', 'amount'].map((key) => ({ key, label: '', control: 'custom' })) },
@@ -69,17 +69,17 @@ export class TransaccionDialog implements OnInit {
   readonly saved = output<SimpleTransaction>();
   readonly closed = output<void>();
 
-  private readonly contabilidad = inject(SimpleAccountingClient);
+  private readonly accounting = inject(SimpleAccountingClient);
   private readonly fb = inject(FormBuilder);
   protected readonly dialog = viewChild.required(ContentDialog);
 
-  protected readonly guardando = signal(false);
+  protected readonly saving = signal(false);
   protected readonly error = signal<string | null>(null);
-  protected readonly fecha = signal<Date | null>(new Date());
-  protected readonly fechaTocada = signal(false);
+  protected readonly date = signal<Date | null>(new Date());
+  protected readonly touchedDate = signal(false);
 
-  protected readonly opciones = computed(() => opcionesDeCuentas(this.cuentas()));
-  protected readonly titulo = computed(() =>
+  protected readonly options = computed(() => accountsOptions(this.cuentas()));
+  protected readonly title = computed(() =>
     this.transaccion() === null ? 'Nueva transacción' : 'Editar la transacción',
   );
 
@@ -90,15 +90,15 @@ export class TransaccionDialog implements OnInit {
     amount: ['', Validators.required],
   });
 
-  protected mismaCuenta(): boolean {
+  protected accountSame(): boolean {
     const { debitAccountId, creditAccountId } = this.form.getRawValue();
     return debitAccountId !== '' && debitAccountId === creditAccountId;
   }
 
-  protected montoInvalido(): boolean {
+  protected invalidAmount(): boolean {
     return (
       this.form.controls.amount.touched &&
-      montoNormalizado(this.form.controls.amount.value) === null
+      normalizedAmount(this.form.controls.amount.value) === null
     );
   }
 
@@ -109,26 +109,26 @@ export class TransaccionDialog implements OnInit {
         description: transaccion.description,
         debitAccountId: transaccion.debitAccountId,
         creditAccountId: transaccion.creditAccountId,
-        amount: montoEditable(transaccion.amount),
+        amount: editableAmount(transaccion.amount),
       });
-      this.fecha.set(deDia(transaccion.date));
+      this.date.set(fromDay(transaccion.date));
     }
   }
 
-  protected guardar(): void {
-    if (this.guardando()) return;
-    const fecha = this.fecha();
-    const monto = montoNormalizado(this.form.controls.amount.value);
-    if (this.form.invalid || fecha === null || monto === null || this.mismaCuenta()) {
+  protected save(): void {
+    if (this.saving()) return;
+    const fecha = this.date();
+    const monto = normalizedAmount(this.form.controls.amount.value);
+    if (this.form.invalid || fecha === null || monto === null || this.accountSame()) {
       this.form.markAllAsTouched();
-      this.fechaTocada.set(true);
+      this.touchedDate.set(true);
       return;
     }
-    this.guardando.set(true);
+    this.saving.set(true);
     this.error.set(null);
     const valor = this.form.getRawValue();
     const datos = {
-      date: aDia(fecha),
+      date: toDay(fecha),
       description: valor.description.trim(),
       debitAccountId: valor.debitAccountId,
       creditAccountId: valor.creditAccountId,
@@ -137,17 +137,17 @@ export class TransaccionDialog implements OnInit {
     const transaccion = this.transaccion();
     const pedido =
       transaccion === null
-        ? this.contabilidad.createTransaction(this.practiceId(), datos)
-        : this.contabilidad.updateTransaction(transaccion.id, datos);
+        ? this.accounting.createTransaction(this.practiceId(), datos)
+        : this.accounting.updateTransaction(transaccion.id, datos);
     pedido.subscribe({
       next: (guardada) => {
-        this.guardando.set(false);
+        this.saving.set(false);
         this.saved.emit(guardada);
         this.dialog().close(true);
       },
       error: (error: unknown) => {
-        this.guardando.set(false);
-        this.error.set(motivoDelError(error));
+        this.saving.set(false);
+        this.error.set(errorReason(error));
       },
     });
   }

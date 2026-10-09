@@ -1,11 +1,11 @@
 import { Injectable, computed, signal } from '@angular/core';
 
 import {
-  INSTITUCION_FUERA_DE_CATALOGO,
-  UNIVERSIDADES_DEL_SISTEMA,
-  UNIVERSIDADES_PRIVADAS,
-  type AreaDeSalud,
-  type OpcionDeInstitucion,
+  CATALOG_OUTSIDE_INSTITUTION,
+  SYSTEM_UNIVERSITIES,
+  PRIVATE_UNIVERSITIES,
+  type HealthArea,
+  type InstitutionOption,
 } from './educational-institutions';
 import type { PaisGenerado } from './universities-by-country.generated';
 
@@ -13,34 +13,34 @@ import type { PaisGenerado } from './universities-by-country.generated';
  * Un país del árbol «país → universidades» que alimenta los desplegables de
  * dónde se estudió un título.
  */
-export interface PaisDeEstudio {
+export interface StudyCountry {
   /** ISO 3166-1 alpha-2. */
   readonly iso: string;
   /** El nombre en español, que es también el valor que guarda el formulario. */
   readonly nombre: string;
   /** Sus universidades, ya como opciones de `app-select`, ordenadas. */
-  readonly universidades: readonly OpcionDeInstitucion[];
+  readonly universidades: readonly InstitutionOption[];
 }
 
 /**
  * El valor centinela de «mi país no está en la lista».
  *
- * Mismo criterio que {@link INSTITUCION_FUERA_DE_CATALOGO}: no es un país, es
+ * Mismo criterio que {@link CATALOG_OUTSIDE_INSTITUTION}: no es un país, es
  * la puerta al campo escrito a mano. La fuente trae 200 países, así que es un
  * caso raro, pero una lista cerrada que no se puede esquivar le niega el alta a
  * quien se formó en el que falta.
  */
-export const PAIS_FUERA_DE_CATALOGO = '__otro-pais__';
+export const CATALOG_OUTSIDE_COUNTRY = '__otro-pais__';
 
 /** La opción que abre el campo escrito a mano del país. */
-export const OPCION_OTRO_PAIS: OpcionDeInstitucion = {
-  value: PAIS_FUERA_DE_CATALOGO,
+export const COUNTRY_OTHER_OPTION: InstitutionOption = {
+  value: CATALOG_OUTSIDE_COUNTRY,
   label: 'Otro país…',
 };
 
 /** La opción que abre el campo escrito a mano de la universidad. */
-export const OPCION_OTRA_INSTITUCION: OpcionDeInstitucion = {
-  value: INSTITUCION_FUERA_DE_CATALOGO,
+export const INSTITUTION_OTHER_OPTION: InstitutionOption = {
+  value: CATALOG_OUTSIDE_INSTITUTION,
   label: 'Otra institución…',
 };
 
@@ -52,14 +52,14 @@ export const OPCION_OTRA_INSTITUCION: OpcionDeInstitucion = {
  * repetida por sede («Universidad Católica Boliviana, La Paz», «…, Cochabamba»).
  * Las etiquetas curadas traen sigla y ciudad; el valor sigue siendo el nombre.
  */
-export const BOLIVIA: PaisDeEstudio = {
+export const BOLIVIA: StudyCountry = {
   iso: 'BO',
   nombre: 'Bolivia',
-  universidades: [...UNIVERSIDADES_DEL_SISTEMA, ...UNIVERSIDADES_PRIVADAS],
+  universidades: [...SYSTEM_UNIVERSITIES, ...PRIVATE_UNIVERSITIES],
 };
 
 /** En qué está la carga del padrón importado. Bolivia está siempre, sin pedir. */
-export type EstadoDelPadron = 'sin-pedir' | 'cargando' | 'listo' | 'fallo';
+export type RegistryStatus = 'sin-pedir' | 'cargando' | 'listo' | 'fallo';
 
 /**
  * Qué opción del desplegable corresponde a un texto ya guardado.
@@ -74,7 +74,7 @@ export type EstadoDelPadron = 'sin-pedir' | 'cargando' | 'listo' | 'fallo';
  * @param enCatalogo - Si ese texto es una opción del desplegable.
  * @param centinela - El valor de la opción «Otro…» de ese desplegable.
  */
-export function eleccionDesdeTexto(
+export function choiceFromText(
   texto: string,
   enCatalogo: (texto: string) => boolean,
   centinela: string,
@@ -89,7 +89,7 @@ export function eleccionDesdeTexto(
  *
  * - `null`: todas (la «Otra profesión» puede ser Derecho o Ingeniería).
  * - `'salud'`: las que dictan alguna carrera de salud.
- * - un {@link AreaDeSalud}: las que dictan esa carrera («Odontólogo» →
+ * - un {@link HealthArea}: las que dictan esa carrera («Odontólogo» →
  *   las que tienen Odontología).
  *
  * El filtro sólo se aplica donde hay dato: la lista curada de Bolivia. El
@@ -97,10 +97,10 @@ export function eleccionDesdeTexto(
  * universidades argentinas, medido el 04/10/2026—, así que ahí se ofrece
  * entero en vez de vaciarlo.
  */
-export type FiltroDeSalud = null | 'salud' | AreaDeSalud;
+export type HealthFilter = null | 'salud' | HealthArea;
 
 /** Si la universidad pasa el filtro. Sin dato de carreras, pasa. */
-export function pasaElFiltro(opcion: OpcionDeInstitucion, filtro: FiltroDeSalud): boolean {
+export function filterPasses(opcion: InstitutionOption, filtro: HealthFilter): boolean {
   if (filtro === null || opcion.areasDeSalud === undefined) return true;
   return filtro === 'salud'
     ? opcion.areasDeSalud.length > 0
@@ -118,7 +118,7 @@ export function pasaElFiltro(opcion: OpcionDeInstitucion, filtro: FiltroDeSalud)
  * @param actual - La ciudad elegida hasta ahora.
  * @param sedes - Las ciudades de la universidad recién elegida.
  */
-export function ciudadAlElegirUniversidad(actual: string, sedes: readonly string[]): string {
+export function cityToChooseUniversity(actual: string, sedes: readonly string[]): string {
   return sedes.includes(actual) ? actual : (sedes[0] ?? '');
 }
 
@@ -147,17 +147,17 @@ export function ciudadAlElegirUniversidad(actual: string, sedes: readonly string
  * De dónde sale cada lista: `scripts/gen-universidades-por-pais.mjs`.
  */
 @Injectable({ providedIn: 'root' })
-export class PadronDeUniversidades {
-  private readonly generados = signal<readonly PaisGenerado[]>([]);
-  private readonly estadoInterno = signal<EstadoDelPadron>('sin-pedir');
-  private carga: Promise<void> | null = null;
+export class UniversitiesRegistry {
+  private readonly generated = signal<readonly PaisGenerado[]>([]);
+  private readonly internalStatus = signal<RegistryStatus>('sin-pedir');
+  private load: Promise<void> | null = null;
 
-  readonly estado = this.estadoInterno.asReadonly();
+  readonly status = this.internalStatus.asReadonly();
 
   /** Bolivia primero —es el caso mayoritario—, y el resto por nombre. */
-  readonly paises = computed<readonly PaisDeEstudio[]>(() => [
+  readonly countries = computed<readonly StudyCountry[]>(() => [
     BOLIVIA,
-    ...this.generados().map((pais) => ({
+    ...this.generated().map((pais) => ({
       iso: pais.iso,
       nombre: pais.nombre,
       universidades: pais.universidades.map((nombre) => {
@@ -169,43 +169,43 @@ export class PadronDeUniversidades {
     })),
   ]);
 
-  private readonly porNombre = computed(
-    () => new Map(this.paises().map((pais) => [pais.nombre, pais] as const)),
+  private readonly byName = computed(
+    () => new Map(this.countries().map((pais) => [pais.nombre, pais] as const)),
   );
 
   /** Las opciones del desplegable de país, con «Otro país…» al final. */
-  readonly opcionesDePais = computed<readonly OpcionDeInstitucion[]>(() => [
-    ...this.paises().map((pais) => ({ value: pais.nombre, label: pais.nombre })),
-    OPCION_OTRO_PAIS,
+  readonly countryOptions = computed<readonly InstitutionOption[]>(() => [
+    ...this.countries().map((pais) => ({ value: pais.nombre, label: pais.nombre })),
+    COUNTRY_OTHER_OPTION,
   ]);
 
   /**
    * Pide el padrón importado, una sola vez. Un fallo deja volver a intentar.
    */
   cargar(): Promise<void> {
-    if (this.carga !== null) return this.carga;
-    this.estadoInterno.set('cargando');
-    this.carga = import('./universities-by-country.generated').then(
+    if (this.load !== null) return this.load;
+    this.internalStatus.set('cargando');
+    this.load = import('./universities-by-country.generated').then(
       (modulo) => {
-        this.generados.set(modulo.PAISES_GENERADOS);
-        this.estadoInterno.set('listo');
+        this.generated.set(modulo.PAISES_GENERADOS);
+        this.internalStatus.set('listo');
       },
       () => {
-        this.estadoInterno.set('fallo');
-        this.carga = null;
+        this.internalStatus.set('fallo');
+        this.load = null;
       },
     );
-    return this.carga;
+    return this.load;
   }
 
   /** Si el nombre es uno de los países del árbol. */
-  esPaisDelCatalogo(nombre: string): boolean {
-    return this.porNombre().has(nombre);
+  isCatalogCountry(nombre: string): boolean {
+    return this.byName().has(nombre);
   }
 
   /** Las universidades de un país; vacío si el país no está o no se eligió. */
-  universidadesDe(pais: string): readonly OpcionDeInstitucion[] {
-    return this.porNombre().get(pais)?.universidades ?? [];
+  universitiesOf(pais: string): readonly InstitutionOption[] {
+    return this.byName().get(pais)?.universidades ?? [];
   }
 
   /**
@@ -213,32 +213,32 @@ export class PadronDeUniversidades {
    * mientras el padrón no cambie: las plantillas piden esto en cada detección
    * de cambios y un arreglo nuevo cada vez repintaría el desplegable entero.
    */
-  private readonly opcionesArmadas = computed(() => {
-    this.paises();
-    return new Map<string, readonly OpcionDeInstitucion[]>();
+  private readonly assembledOptions = computed(() => {
+    this.countries();
+    return new Map<string, readonly InstitutionOption[]>();
   });
 
   /**
    * Las opciones del desplegable de universidad para un país, acotadas por
-   * {@link FiltroDeSalud}, con «Otra institución…» siempre al final: con
+   * {@link HealthFilter}, con «Otra institución…» siempre al final: con
    * «Otro país…» elegido es la única.
    */
-  opcionesDeUniversidad(pais: string, filtro: FiltroDeSalud = null): readonly OpcionDeInstitucion[] {
+  universityOptions(pais: string, filtro: HealthFilter = null): readonly InstitutionOption[] {
     const clave = `${pais}\u0000${filtro ?? ''}`;
-    const armadas = this.opcionesArmadas();
+    const armadas = this.assembledOptions();
     const previa = armadas.get(clave);
     if (previa !== undefined) return previa;
     const opciones = [
-      ...this.universidadesDe(pais).filter((opcion) => pasaElFiltro(opcion, filtro)),
-      OPCION_OTRA_INSTITUCION,
+      ...this.universitiesOf(pais).filter((opcion) => filterPasses(opcion, filtro)),
+      INSTITUTION_OTHER_OPTION,
     ];
     armadas.set(clave, opciones);
     return opciones;
   }
 
   /** Si la universidad figura en la lista de ese país. */
-  esUniversidadDe(pais: string, universidad: string): boolean {
-    return this.universidadesDe(pais).some((opcion) => opcion.value === universidad);
+  isUniversityOf(pais: string, universidad: string): boolean {
+    return this.universitiesOf(pais).some((opcion) => opcion.value === universidad);
   }
 
   /**
@@ -246,12 +246,12 @@ export class PadronDeUniversidades {
    * universidad: sus sedes, la principal primero. Vacío si el padrón no las
    * conoce (universidad escrita a mano o sin ciudad en Wikidata).
    */
-  ciudadesDe(pais: string, universidad: string): readonly string[] {
+  citiesOf(pais: string, universidad: string): readonly string[] {
     return (
-      this.universidadesDe(pais).find((opcion) => opcion.value === universidad)?.sedes ?? SIN_CIUDADES
+      this.universitiesOf(pais).find((opcion) => opcion.value === universidad)?.sedes ?? WITHOUT_CITIES
     );
   }
 }
 
 /** Una sola referencia para «sin ciudades», por lo mismo que las opciones armadas. */
-const SIN_CIUDADES: readonly string[] = [];
+const WITHOUT_CITIES: readonly string[] = [];

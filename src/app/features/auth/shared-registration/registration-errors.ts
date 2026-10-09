@@ -35,7 +35,7 @@ import type { ViewState, ViewStateIssue } from '../../../core/view-state/view-st
 export type RegistrationKind = 'patient' | 'practitioner' | 'organization';
 
 /** Para que un mismo campo se lea igual en todos los mensajes. */
-const CAMPOS: Readonly<Record<string, string>> = {
+const FIELDS: Readonly<Record<string, string>> = {
   nationalId: 'Número de documento',
   issuerAdministrativeAreaConceptId: 'Departamento donde se emitió el documento',
   residenceMunicipalityConceptId: 'Ciudad donde vive',
@@ -84,7 +84,7 @@ const CAMPOS: Readonly<Record<string, string>> = {
 };
 
 /** De quién es el dato, según el bloque del cuerpo en el que viene. */
-const DUENOS: Readonly<Record<string, string>> = {
+const OWNERS: Readonly<Record<string, string>> = {
   legalRepresentative: 'del representante legal',
   owner: 'de la cuenta',
   generalManager: 'de la gerencia general',
@@ -94,7 +94,7 @@ const DUENOS: Readonly<Record<string, string>> = {
   address: '',
 };
 
-const SOPORTE = 'Si el problema sigue, escríbanos a soporte con este código:';
+const SUPPORT = 'Si el problema sigue, escríbanos a soporte con este código:';
 
 /**
  * El estado que la pantalla de alta muestra para un fallo del envío.
@@ -119,16 +119,16 @@ export function registrationErrorToViewState(
   const body = readApiError(error);
   const codigo = body?.correlationId ?? error.headers.get('x-request-id') ?? 'sin-id';
   if (body === null) {
-    return unexpectedError(codigo, servidorCaido());
+    return unexpectedError(codigo, downServer());
   }
 
   switch (body.code) {
     case 'VALIDATION_FAILED':
-      return validation(datosInvalidos(body));
+      return validation(invalidData(body));
     case 'CONFLICT':
-      return validation([datoRepetido(body, kind)]);
+      return validation([repeatedData(body, kind)]);
     case 'PRECONDITION_FAILED':
-      return reglaDeNegocio(body, codigo);
+      return businessRule(body, codigo);
     case 'PAYLOAD_TOO_LARGE':
       return validation([
         {
@@ -139,11 +139,11 @@ export function registrationErrorToViewState(
       ]);
     case 'RATE_LIMITED':
       return validation(
-        [{ code: body.code, message: demasiadosIntentos(error) }],
-        segundosDeEspera(error),
+        [{ code: body.code, message: attemptsTooMany(error) }],
+        waitingSeconds(error),
       );
     default:
-      return unexpectedError(codigo, servidorCaido());
+      return unexpectedError(codigo, downServer());
   }
 }
 
@@ -155,16 +155,16 @@ export function registrationErrorToViewState(
  * El primer `issue` lleva el mensaje completo —las pantallas muestran el
  * primero— y los siguientes, uno por campo, para quien los quiera anclar.
  */
-function datosInvalidos(body: ApiErrorBody): readonly ViewStateIssue[] {
+function invalidData(body: ApiErrorBody): readonly ViewStateIssue[] {
   const crudas = body.details?.['violations'] ?? body.details?.['messages'];
   const violaciones = Array.isArray(crudas)
     ? crudas.filter((v): v is string => typeof v === 'string')
     : [];
 
-  const porCampo = new Map<string, { etiqueta: string; reglas: Set<Regla>; libres: string[] }>();
+  const porCampo = new Map<string, { etiqueta: string; reglas: Set<Rule>; libres: string[] }>();
   const sueltas: string[] = [];
   for (const violacion of violaciones) {
-    const leida = leerViolacion(violacion);
+    const leida = readViolation(violacion);
     if (leida === null) {
       // Un mensaje propio del DTO, ya escrito en castellano: va tal cual.
       sueltas.push(violacion);
@@ -182,7 +182,7 @@ function datosInvalidos(body: ApiErrorBody): readonly ViewStateIssue[] {
 
   const problemas: { field?: string; texto: string }[] = [];
   for (const [ruta, { etiqueta, reglas, libres }] of porCampo) {
-    problemas.push({ field: ruta, texto: `${etiqueta}: ${explicarReglas(reglas, libres)}` });
+    problemas.push({ field: ruta, texto: `${etiqueta}: ${explainRules(reglas, libres)}` });
   }
   for (const suelta of sueltas) problemas.push({ texto: suelta });
 
@@ -211,7 +211,7 @@ function datosInvalidos(body: ApiErrorBody): readonly ViewStateIssue[] {
   ];
 }
 
-type Regla =
+type Rule =
   | { readonly tipo: 'obligatorio' }
   | { readonly tipo: 'minimo'; readonly n: number }
   | { readonly tipo: 'maximo'; readonly n: number }
@@ -227,17 +227,17 @@ type Regla =
  * `organization.legalRepresentative.idNumber must be …`. Si no empieza así, es
  * un mensaje propio del DTO y no se toca.
  */
-function leerViolacion(
+function readViolation(
   violacion: string,
-): { ruta: string; etiqueta: string; regla: Regla | null; resto: string } | null {
+): { ruta: string; etiqueta: string; regla: Rule | null; resto: string } | null {
   const m = /^([a-z][A-Za-z0-9]*(?:\.[A-Za-z0-9]+)*)\s+((?:must|should|each)\b.*)$/.exec(violacion);
   if (m === null) return null;
   const ruta = m[1];
   const resto = m[2];
-  return { ruta, etiqueta: etiquetaDe(ruta), regla: reglaDe(resto), resto };
+  return { ruta, etiqueta: labelOf(ruta), regla: ruleOf(resto), resto };
 }
 
-function reglaDe(texto: string): Regla | null {
+function ruleOf(texto: string): Rule | null {
   const min = /longer than or equal to (\d+)/.exec(texto);
   if (min) return { tipo: 'minimo', n: Number(min[1]) };
   const max = /shorter than or equal to (\d+)/.exec(texto);
@@ -257,11 +257,11 @@ function reglaDe(texto: string): Regla | null {
   return null;
 }
 
-function explicarReglas(reglas: ReadonlySet<Regla>, libres: readonly string[]): string {
+function explainRules(reglas: ReadonlySet<Rule>, libres: readonly string[]): string {
   const lista = [...reglas];
-  const min = lista.find((r): r is Extract<Regla, { tipo: 'minimo' }> => r.tipo === 'minimo')?.n;
-  const max = lista.find((r): r is Extract<Regla, { tipo: 'maximo' }> => r.tipo === 'maximo')?.n;
-  const tiene = (tipo: Regla['tipo']) => lista.some((r) => r.tipo === tipo);
+  const min = lista.find((r): r is Extract<Rule, { tipo: 'minimo' }> => r.tipo === 'minimo')?.n;
+  const max = lista.find((r): r is Extract<Rule, { tipo: 'maximo' }> => r.tipo === 'maximo')?.n;
+  const tiene = (tipo: Rule['tipo']) => lista.some((r) => r.tipo === tipo);
 
   const largo =
     min !== undefined && max !== undefined
@@ -288,21 +288,21 @@ function explicarReglas(reglas: ReadonlySet<Regla>, libres: readonly string[]): 
 }
 
 /** «organization.legalRepresentative.idNumber» → «Documento de identidad del representante legal». */
-function etiquetaDe(ruta: string): string {
+function labelOf(ruta: string): string {
   const segmentos = ruta.split('.');
   const hoja = segmentos[segmentos.length - 1];
-  const base = CAMPOS[hoja] ?? 'Uno de los datos';
+  const base = FIELDS[hoja] ?? 'Uno de los datos';
   const dueno = [...segmentos.slice(0, -1)]
     .reverse()
-    .find((s) => DUENOS[s] !== undefined && DUENOS[s] !== '');
+    .find((s) => OWNERS[s] !== undefined && OWNERS[s] !== '');
   const sucursal = /branches\.(\d+)/.exec(ruta);
   if (sucursal) return `${base} de la sucursal ${Number(sucursal[1]) + 1}`;
-  return dueno === undefined ? base : `${base} ${DUENOS[dueno]}`;
+  return dueno === undefined ? base : `${base} ${OWNERS[dueno]}`;
 }
 
 /* ---------------------------------------------------------------- 409 */
 
-function datoRepetido(body: ApiErrorBody, kind: RegistrationKind): ViewStateIssue {
+function repeatedData(body: ApiErrorBody, kind: RegistrationKind): ViewStateIssue {
   const texto = body.message;
   if (/correo/i.test(texto)) {
     return {
@@ -349,7 +349,7 @@ function datoRepetido(body: ApiErrorBody, kind: RegistrationKind): ViewStateIssu
 
 /* ---------------------------------------------------------------- 422 */
 
-function reglaDeNegocio(body: ApiErrorBody, codigo: string): ViewState<null> {
+function businessRule(body: ApiErrorBody, codigo: string): ViewState<null> {
   const texto = body.message;
   const documento =
     typeof body.details?.['document'] === 'string' ? body.details['document'] : null;
@@ -418,25 +418,25 @@ function reglaDeNegocio(body: ApiErrorBody, codigo: string): ViewState<null> {
   // pantalla debería cumplir sola. Si llegan acá, el error es nuestro.
   return unexpectedError(
     codigo,
-    `No pudimos completar el registro por un problema de configuración de nuestra parte; no es un error en sus datos. ${SOPORTE}`,
+    `No pudimos completar el registro por un problema de configuración de nuestra parte; no es un error en sus datos. ${SUPPORT}`,
   );
 }
 
 /* ---------------------------------------------------------- 429 · 5xx */
 
-function demasiadosIntentos(error: HttpErrorResponse): string {
-  const segundos = segundosDeEspera(error);
+function attemptsTooMany(error: HttpErrorResponse): string {
+  const segundos = waitingSeconds(error);
   const espera =
     segundos === undefined ? 'un minuto' : segundos === 1 ? '1 segundo' : `${segundos} segundos`;
   return `Hubo demasiados intentos seguidos desde su conexión. Por seguridad, espere ${espera} y vuelva a enviar: sus datos siguen cargados.`;
 }
 
-function segundosDeEspera(error: HttpErrorResponse): number | undefined {
+function waitingSeconds(error: HttpErrorResponse): number | undefined {
   const header = error.headers.get('retry-after');
   const segundos = header === null ? NaN : Number(header);
   return Number.isFinite(segundos) && segundos > 0 ? segundos : undefined;
 }
 
-function servidorCaido(): string {
-  return `No pudimos crear su cuenta por un problema en nuestros servidores; no es un error en sus datos. Sus datos siguen cargados: vuelva a intentar en unos minutos. ${SOPORTE}`;
+function downServer(): string {
+  return `No pudimos crear su cuenta por un problema en nuestros servidores; no es un error en sus datos. Sus datos siguen cargados: vuelva a intentar en unos minutos. ${SUPPORT}`;
 }

@@ -4,7 +4,7 @@ import { NavIcon } from '../../atoms/nav-icon/nav-icon';
 import type { NavIconName } from '../../atoms/nav-icon/nav-icon.types';
 
 /** Una explicación: por qué se pide lo que se está pidiendo en este paso. */
-export interface TarjetaDeAyuda {
+export interface HelpCard {
   readonly icono: NavIconName;
   readonly titulo: string;
   readonly texto: string;
@@ -48,7 +48,7 @@ export interface TarjetaDeAyuda {
   styleUrl: './registration-help.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class RegistroAyuda {
+export class RegistrationHelp {
   /**
    * Las explicaciones del paso que se está contestando.
    *
@@ -56,5 +56,5 @@ export class RegistroAyuda {
    * sólo queda el sello: la columna no se despuebla del todo, que se leería
    * como algo que no cargó.
    */
-  readonly tarjetas = input<readonly TarjetaDeAyuda[]>([]);
+  readonly tarjetas = input<readonly HelpCard[]>([]);
 }

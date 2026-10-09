@@ -21,19 +21,19 @@
  */
 
 /** La condición, por la clave con la que se lee el valor del padre. */
-export interface CondicionVisible {
+export interface ConditionVisible {
   readonly key: string;
   readonly equals: string | boolean | readonly (string | boolean)[];
 }
 
 /** Lo mínimo que esta función necesita saber de un campo. */
-export interface CampoCondicional {
+export interface ConditionalField {
   readonly key: string;
-  readonly showWhen?: CondicionVisible;
+  readonly showWhen?: ConditionVisible;
 }
 
 /** Si un valor contestado cumple la condición. */
-export function cumpleCondicion(valor: unknown, equals: CondicionVisible['equals']): boolean {
+export function conditionMeets(valor: unknown, equals: ConditionVisible['equals']): boolean {
   const esperados: readonly unknown[] = Array.isArray(equals) ? equals : [equals];
   const respuestas: readonly unknown[] = Array.isArray(valor) ? valor : [valor];
   return esperados.some((esperado) => respuestas.includes(esperado));
@@ -45,14 +45,14 @@ export function cumpleCondicion(valor: unknown, equals: CondicionVisible['equals
  * Se devuelven los **ocultos** y no los visibles porque es el conjunto chico:
  * casi todo formulario se ve entero y sólo los «¿cuál?» esperan respuesta.
  */
-export function camposOcultos(
-  campos: readonly CampoCondicional[],
+export function hiddenFields(
+  campos: readonly ConditionalField[],
   valorDe: (key: string) => unknown,
 ): ReadonlySet<string> {
   const porClave = new Map(campos.map((campo) => [campo.key, campo]));
   const memo = new Map<string, boolean>();
 
-  const visible = (campo: CampoCondicional, camino: ReadonlySet<string>): boolean => {
+  const visible = (campo: ConditionalField, camino: ReadonlySet<string>): boolean => {
     const guardado = memo.get(campo.key);
     if (guardado !== undefined) return guardado;
 
@@ -63,7 +63,7 @@ export function camposOcultos(
     if (condicion !== undefined && padre !== undefined && !camino.has(padre.key)) {
       resultado =
         visible(padre, new Set([...camino, campo.key])) &&
-        cumpleCondicion(valorDe(condicion.key), condicion.equals);
+        conditionMeets(valorDe(condicion.key), condicion.equals);
     }
     memo.set(campo.key, resultado);
     return resultado;

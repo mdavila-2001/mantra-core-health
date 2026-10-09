@@ -3,21 +3,21 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 import { firstValueFrom } from 'rxjs';
 
-import { LogoDeOrganizacionClient } from './organization-logo.client';
+import { OrganizationLogoClient } from './organization-logo.client';
 
 describe('LogoDeOrganizacionClient', () => {
-  let client: LogoDeOrganizacionClient;
+  let client: OrganizationLogoClient;
   let http: HttpTestingController;
 
   beforeEach(() => {
     TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting()] });
-    client = TestBed.inject(LogoDeOrganizacionClient);
+    client = TestBed.inject(OrganizationLogoClient);
     http = TestBed.inject(HttpTestingController);
   });
   afterEach(() => http.verify());
 
   it('lee bytes por pertenencia al tenant y los convierte a una URL de imagen', async () => {
-    const result = firstValueFrom(client.obtenerUrl('t-1'));
+    const result = firstValueFrom(client.getUrl('t-1'));
     const logo = http.expectOne('/tenants/t-1/logo');
     expect(logo.request.headers.get('X-Tenant-Id')).toBe('t-1');
     logo.flush({ fileId: 'subido-por-otro-miembro' });
@@ -30,14 +30,14 @@ describe('LogoDeOrganizacionClient', () => {
   });
 
   it('sin logo no pide bytes', async () => {
-    const result = firstValueFrom(client.obtenerUrl('t-1'));
+    const result = firstValueFrom(client.getUrl('t-1'));
     http.expectOne('/tenants/t-1/logo').flush({ fileId: null });
     expect(await result).toBeNull();
     http.expectNone('/tenants/t-1/logo/content');
   });
 
   it('un contenido no autorizado conserva el estado vacío de la ficha', async () => {
-    const result = firstValueFrom(client.obtenerUrl('t-1'));
+    const result = firstValueFrom(client.getUrl('t-1'));
     http.expectOne('/tenants/t-1/logo').flush({ fileId: 'f-1' });
     http.expectOne('/tenants/t-1/logo/content').flush(null, { status: 403, statusText: 'Forbidden' });
     expect(await result).toBeNull();

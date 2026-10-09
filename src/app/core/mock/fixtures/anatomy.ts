@@ -8,7 +8,7 @@ import {
   SUBREGIONES_ANATOMICAS,
   type EntradaAnatomica,
 } from './anatomy.generated';
-import { CATEGORIAS, PARAGUAS, type ConjuntoDeGlosario } from './glossary';
+import { CATEGORIES, UMBRELLA, type GlossarySet } from './glossary';
 
 /* ============================================================================
     La taxonomía de Netter, con la forma con la que el glosario sale por la API.
@@ -36,54 +36,54 @@ import { CATEGORIAS, PARAGUAS, type ConjuntoDeGlosario } from './glossary';
     ========================================================================== */
 
 /** La categoría «Anatomía», que ya estaba en la grilla del glosario. */
-const CATEGORIA_ANATOMIA: ConjuntoDeGlosario = (() => {
-  const categoria = CATEGORIAS.find((c) => c.key === 'anatomy');
+const ANATOMY_CATEGORY: GlossarySet = (() => {
+  const categoria = CATEGORIES.find((c) => c.key === 'anatomy');
   if (categoria === undefined) {
     throw new Error('El glosario no declara la categoría «anatomy».');
   }
   return categoria;
 })();
 
-const prosaPorTipo = new Map(DEFINICIONES_DE_TIPO.map((d) => [d.type, d.definition]));
-const notaClinicaPorLamina = new Map(NOTAS_CLINICAS_ANATOMICAS.map((n) => [n.plate, n]));
-const laminaPorNumero = new Map(LAMINAS_ANATOMICAS.map((l) => [l.plate, l]));
+const proseByType = new Map(DEFINICIONES_DE_TIPO.map((d) => [d.type, d.definition]));
+const clinicalNoteByPlate = new Map(NOTAS_CLINICAS_ANATOMICAS.map((n) => [n.plate, n]));
+const plateByNumber = new Map(LAMINAS_ANATOMICAS.map((l) => [l.plate, l]));
 
 /** El nombre legible de un tipo: `conducto_canal` → «conducto canal». */
-function tipoLegible(tipo: string): string {
+function readableType(tipo: string): string {
   return tipo.replace(/_/g, ' ');
 }
 
 /** Una entrada del índice, ya con su identidad derivada. */
-export interface ConceptoAnatomico extends EntradaAnatomica {
+export interface AnatomicalConcept extends EntradaAnatomica {
   readonly id: string;
   /** `NETTER_<id de la entrada>` — no colisiona con los `GLOSSARY_*` curados. */
   readonly code: string;
 }
 
-export const ENTRADAS: readonly ConceptoAnatomico[] = ENTRADAS_ANATOMICAS.map((entrada) => ({
+export const ENTRIES: readonly AnatomicalConcept[] = ENTRADAS_ANATOMICAS.map((entrada) => ({
   ...entrada,
   id: uuid(`concept-anatomy-${entrada.slug}`),
   code: `NETTER_${entrada.id.toUpperCase()}`,
 })).sort((a, b) => a.name.localeCompare(b.name, 'es'));
 
-const porId = new Map(ENTRADAS.map((e) => [e.id, e]));
-const porSlug = new Map(ENTRADAS.map((e) => [e.slug, e]));
+const byId = new Map(ENTRIES.map((e) => [e.id, e]));
+const bySlug = new Map(ENTRIES.map((e) => [e.slug, e]));
 
 /** Una entrada anatómica por su identificador de concepto, o `undefined`. */
-export function entradaPorId(id: string): ConceptoAnatomico | undefined {
-  return porId.get(id);
+export function entryById(id: string): AnatomicalConcept | undefined {
+  return byId.get(id);
 }
 
 /** Una entrada anatómica por su slug, o `undefined`. */
-export function entradaPorSlug(slug: string): ConceptoAnatomico | undefined {
-  return porSlug.get(slug);
+export function entryBySlug(slug: string): AnatomicalConcept | undefined {
+  return bySlug.get(slug);
 }
 
 /** Si un conjunto de valores es el que contiene las entradas anatómicas. */
-export function esConjuntoConAnatomia(conjunto: ConjuntoDeGlosario): boolean {
+export function isSetWithAnatomy(conjunto: GlossarySet): boolean {
   return (
-    conjunto.internalCode === PARAGUAS.internalCode ||
-    conjunto.internalCode === CATEGORIA_ANATOMIA.internalCode
+    conjunto.internalCode === UMBRELLA.internalCode ||
+    conjunto.internalCode === ANATOMY_CATEGORY.internalCode
   );
 }
 
@@ -93,8 +93,8 @@ export function esConjuntoConAnatomia(conjunto: ConjuntoDeGlosario): boolean {
  * Es la línea que acompaña al nombre en el listado. No afirma nada sobre la
  * estructura: enumera su tipo, su bloque editorial y las láminas del índice.
  */
-function ubicacionDe(entrada: ConceptoAnatomico): string {
-  const partes = [tipoLegible(entrada.type)];
+function locationOf(entrada: AnatomicalConcept): string {
+  const partes = [readableType(entrada.type)];
   if (entrada.region !== null) {
     partes.push(entrada.subregion === null
       ? entrada.region
@@ -115,9 +115,9 @@ function ubicacionDe(entrada: ConceptoAnatomico): string {
  * ninguna pantalla —ni una futura— puede presentarlo como la definición de esta
  * estructura en particular. El corpus no la tiene.
  */
-function definicionDeTipo(entrada: ConceptoAnatomico): string {
-  const prosa = prosaPorTipo.get(entrada.type);
-  const nombre = tipoLegible(entrada.type);
+function typeDefinition(entrada: AnatomicalConcept): string {
+  const prosa = proseByType.get(entrada.type);
+  const nombre = readableType(entrada.type);
   if (prosa === undefined) {
     return `El índice del Atlas clasifica esta entrada como «${nombre}».`;
   }
@@ -129,7 +129,7 @@ function definicionDeTipo(entrada: ConceptoAnatomico): string {
 }
 
 /** De dónde salió el nombre, y con cuánto acuerdo entre las dos pasadas de OCR. */
-function procedenciaDe(entrada: ConceptoAnatomico): string {
+function provenanceOf(entrada: AnatomicalConcept): string {
   const acuerdo = {
     consensus_high: 'Dos extracciones OCR independientes coinciden en el término y sus láminas.',
     consensus_medium: 'Las dos extracciones OCR difieren: el término está pendiente de revisión.',
@@ -143,11 +143,11 @@ function procedenciaDe(entrada: ConceptoAnatomico): string {
 }
 
 /** Las láminas de una entrada, con su título y la nota clínica si la hubiera. */
-function laminasDe(entrada: ConceptoAnatomico) {
+function platesOf(entrada: AnatomicalConcept) {
   return entrada.plates.flatMap((numero) => {
-    const lamina = laminaPorNumero.get(numero);
+    const lamina = plateByNumber.get(numero);
     if (lamina === undefined) return [];
-    const clinica = notaClinicaPorLamina.get(numero);
+    const clinica = clinicalNoteByPlate.get(numero);
     return [{
       plate: numero,
       title: lamina.title,
@@ -159,7 +159,7 @@ function laminasDe(entrada: ConceptoAnatomico) {
 /* ---- las dos formas con las que la anatomía viaja por la API -------------- */
 
 /** Una entrada anatómica como la devuelve la búsqueda de términos. */
-export function entradaEnLinea(entrada: ConceptoAnatomico) {
+export function inlineEntry(entrada: AnatomicalConcept) {
   return {
     conceptId: entrada.id,
     code: entrada.code,
@@ -168,14 +168,14 @@ export function entradaEnLinea(entrada: ConceptoAnatomico) {
     // El Atlas del que sale este índice es la edición en castellano.
     translated: true,
     category: {
-      internalCode: CATEGORIA_ANATOMIA.internalCode,
-      name: CATEGORIA_ANATOMIA.name,
+      internalCode: ANATOMY_CATEGORY.internalCode,
+      name: ANATOMY_CATEGORY.name,
     },
-    shortDefinition: ubicacionDe(entrada),
+    shortDefinition: locationOf(entrada),
     tags: [] as readonly string[],
     relationsCount: 0,
     status: 'active' as const,
-    valueSets: [PARAGUAS, CATEGORIA_ANATOMIA].map((conjunto) => ({
+    valueSets: [UMBRELLA, ANATOMY_CATEGORY].map((conjunto) => ({
       id: conjunto.id,
       internalCode: conjunto.internalCode,
       name: conjunto.name,
@@ -184,8 +184,8 @@ export function entradaEnLinea(entrada: ConceptoAnatomico) {
 }
 
 /** La ficha completa de una entrada anatómica. */
-export function fichaAnatomicaEnLinea(entrada: ConceptoAnatomico) {
-  const referencia = (conjunto: ConjuntoDeGlosario) => ({
+export function inlineAnatomicalSheet(entrada: AnatomicalConcept) {
+  const referencia = (conjunto: GlossarySet) => ({
     valueSetId: conjunto.id,
     internalCode: conjunto.internalCode,
     name: conjunto.name,
@@ -197,27 +197,27 @@ export function fichaAnatomicaEnLinea(entrada: ConceptoAnatomico) {
     display: entrada.name,
     slug: entrada.slug,
     translated: true,
-    valueSets: [PARAGUAS, CATEGORIA_ANATOMIA].map((conjunto) => ({
+    valueSets: [UMBRELLA, ANATOMY_CATEGORY].map((conjunto) => ({
       id: conjunto.id,
       internalCode: conjunto.internalCode,
       name: conjunto.name,
     })),
     // El índice no publica sinónimos: publica formas fuente. No se inventan.
     synonyms: [] as readonly { value: string; language: string; preferred: boolean }[],
-    category: referencia(CATEGORIA_ANATOMIA),
+    category: referencia(ANATOMY_CATEGORY),
     tags: [] as readonly ReturnType<typeof referencia>[],
-    clinicalDefinition: { text: definicionDeTipo(entrada), translated: true },
-    plainSummary: { text: ubicacionDe(entrada), translated: true },
+    clinicalDefinition: { text: typeDefinition(entrada), translated: true },
+    plainSummary: { text: locationOf(entrada), translated: true },
     // El corpus prohíbe inferir relaciones entre estructuras: que dos términos
     // compartan lámina es representación, no causalidad.
     relations: [] as readonly { type: string; conceptId: string; slug: string; display: string }[],
     properties: {
       source_form: entrada.name,
-      structure_type: tipoLegible(entrada.type),
+      structure_type: readableType(entrada.type),
       ...(entrada.region === null ? {} : { region: entrada.region }),
       ...(entrada.subregion === null ? {} : { subregion: entrada.subregion }),
-      plates: laminasDe(entrada),
-      provenance: procedenciaDe(entrada),
+      plates: platesOf(entrada),
+      provenance: provenanceOf(entrada),
     },
   };
 }
@@ -226,11 +226,11 @@ export function fichaAnatomicaEnLinea(entrada: ConceptoAnatomico) {
  * Una entrada coincide por nombre, tipo, región o código, sin distinguir
  * tildes ni la ñ —la misma regla que el resto del glosario—.
  */
-export function coincideAnatomia(entrada: ConceptoAnatomico, q: string | null): boolean {
+export function anatomyMatches(entrada: AnatomicalConcept, q: string | null): boolean {
   if (q === null || q === '') return true;
   return (
     contieneSinTildes(entrada.name, q) ||
-    contieneSinTildes(tipoLegible(entrada.type), q) ||
+    contieneSinTildes(readableType(entrada.type), q) ||
     contieneSinTildes(entrada.region, q) ||
     contieneSinTildes(entrada.subregion, q) ||
     contieneSinTildes(entrada.code, q)
@@ -238,7 +238,7 @@ export function coincideAnatomia(entrada: ConceptoAnatomico, q: string | null): 
 }
 
 /** Las regiones y subregiones, para quien quiera navegar la taxonomía. */
-export const TAXONOMIA_ANATOMICA = {
+export const ANATOMICAL_TAXONOMY = {
   regions: REGIONES_ANATOMICAS,
   subregions: SUBREGIONES_ANATOMICAS,
 } as const;

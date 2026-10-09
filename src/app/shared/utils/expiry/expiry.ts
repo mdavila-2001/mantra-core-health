@@ -21,7 +21,7 @@ import type { BadgeVariant } from '../../components/atoms/badge/badge.types';
  */
 
 /** Días de aviso previo al vencimiento de un documento legal. */
-export const AVISO_DE_VENCIMIENTO_DIAS = 30;
+export const DAYS_EXPIRY_NOTICE = 30;
 
 /**
  * Cuántos días faltan, en palabras.
@@ -29,7 +29,7 @@ export const AVISO_DE_VENCIMIENTO_DIAS = 30;
  * En palabras y no en la cifra cruda porque «-14» obliga a interpretar un
  * signo, y el aviso lo lee alguien que necesita saber si tiene que actuar hoy.
  */
-export function vencimientoEnPalabras(dias: number | null): string {
+export function expiryInWords(dias: number | null): string {
   if (dias === null) return 'sin vencimiento declarado';
   if (dias < 0) return `vencido hace ${Math.abs(dias)} día${Math.abs(dias) === 1 ? '' : 's'}`;
   if (dias === 0) return 'vence hoy';
@@ -37,9 +37,9 @@ export function vencimientoEnPalabras(dias: number | null): string {
 }
 
 /** La severidad con la que se pinta ese plazo. */
-export function varianteDeVencimiento(dias: number | null): BadgeVariant {
+export function expiryVariant(dias: number | null): BadgeVariant {
   if (dias === null) return 'info';
   if (dias < 0) return 'error';
-  if (dias <= AVISO_DE_VENCIMIENTO_DIAS) return 'warning';
+  if (dias <= DAYS_EXPIRY_NOTICE) return 'warning';
   return 'success';
 }

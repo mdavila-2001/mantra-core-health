@@ -21,8 +21,8 @@
     ignora.
     ========================================================================== */
 
-import type { CatalogosFiscales } from './simulated-catalogs';
-import type { CodigoEstadoSiat } from './siat-codes';
+import type { FiscalCatalogs } from './simulated-catalogs';
+import type { SiatStatusCode } from './siat-codes';
 
 /** Identifica al contribuyente, su sistema y el lugar de emisión. */
 export interface ContextoFiscal {
@@ -105,7 +105,7 @@ export interface SolicitudAnulacion extends SolicitudConCuf {
 /** `respuestaRecepcion` del WSDL. */
 export interface RespuestaRecepcion {
   readonly transaccion: boolean;
-  readonly codigoEstado: CodigoEstadoSiat;
+  readonly codigoEstado: SiatStatusCode;
   readonly codigoDescripcion: string;
   readonly codigoRecepcion: string | null;
   readonly mensajesList: readonly MensajeRecepcion[];
@@ -127,7 +127,7 @@ export interface FiscalProviderPort {
   solicitudCuis(contexto: ContextoFiscal): RespuestaCuis;
   solicitudCufd(solicitud: SolicitudCufd): RespuestaCufd;
   sincronizarFechaHora(contexto: ContextoFiscal): RespuestaFechaHora;
-  sincronizarParametricas(contexto: ContextoFiscal): CatalogosFiscales;
+  sincronizarParametricas(contexto: ContextoFiscal): FiscalCatalogs;
   recepcionFactura(solicitud: SolicitudRecepcionFactura, simulacion?: DirectivaDeSimulacion): RespuestaRecepcion;
   verificacionEstadoFactura(solicitud: SolicitudConCuf): RespuestaRecepcion;
   anulacionFactura(solicitud: SolicitudAnulacion): RespuestaRecepcion;

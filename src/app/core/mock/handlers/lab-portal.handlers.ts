@@ -1,6 +1,6 @@
-import { ESTUDIO, displayDe } from '../fixtures/concepts';
+import { ESTUDIO, displayOf } from '../fixtures/concepts';
 import { precioInlasaDe } from '../fixtures/inlasa';
-import { PROFESIONALES, pacientePorId } from '../fixtures/people';
+import { PROFESSIONALS, patientById } from '../fixtures/people';
 import {
   conflict,
   forbidden,
@@ -134,7 +134,7 @@ export const serviciosDeLaboratorio = new Coleccion<ServicioSimulado>(
     id: uuid(`lab-service-${TENANT_LABORATORIO}-${e.code}`),
     tenantId: TENANT_LABORATORIO,
     code: e.code.replace('STUDY-', ''),
-    name: displayDe(ESTUDIO[e.code]!),
+    name: displayOf(ESTUDIO[e.code]!),
     categoryId: idDeCategoria(TENANT_LABORATORIO, e.categoria),
     sampleType: e.muestra,
     preparation: e.preparacion,
@@ -452,11 +452,11 @@ export const TAMANO_DE_PARTE = 8 * 1024 * 1024;
 function destinoDeOrden(orderId: string) {
   const orden = labInboxOrders.get(orderId);
   if (orden === undefined) return undefined;
-  const paciente = pacientePorId(orden.patientProfileId);
-  const medico = PROFESIONALES.find((p) => p.id === orden.requesterProfileId);
+  const paciente = patientById(orden.patientProfileId);
+  const medico = PROFESSIONALS.find((p) => p.id === orden.requesterProfileId);
   return {
     orden,
-    studyName: displayDe(orden.codeConceptId),
+    studyName: displayOf(orden.codeConceptId),
     patientName: paciente?.displayName ?? 'Paciente',
     patientUserId: paciente?.userId ?? null,
     requesterName: medico?.displayName ?? 'Médico solicitante',

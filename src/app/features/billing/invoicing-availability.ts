@@ -1,7 +1,7 @@
 import { InjectionToken } from '@angular/core';
 
 import { environment } from '../../../environments/environment';
-import { apiRealForzada } from '../../core/mock/api-mode';
+import { forcedRealApi } from '../../core/mock/api-mode';
 
 /**
  * Si la pantalla de facturación puede hablar con el motor fiscal SIMULADO.
@@ -16,7 +16,7 @@ import { apiRealForzada } from '../../core/mock/api-mode';
  * y **no hace ninguna petición**. Es un token para que las pruebas fijen la
  * respuesta sin tocar el entorno.
  */
-export const FACTURACION_SIMULADA_DISPONIBLE = new InjectionToken<() => boolean>('FACTURACION_SIMULADA_DISPONIBLE', {
+export const SIMULATED_AVAILABLE_INVOICING = new InjectionToken<() => boolean>('FACTURACION_SIMULADA_DISPONIBLE', {
   providedIn: 'root',
-  factory: () => () => environment.billingSiatDemo && environment.mockBackend && !apiRealForzada(),
+  factory: () => () => environment.billingSiatDemo && environment.mockBackend && !forcedRealApi(),
 });

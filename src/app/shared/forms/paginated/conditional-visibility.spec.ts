@@ -1,4 +1,4 @@
-import { camposOcultos, cumpleCondicion } from './conditional-visibility';
+import { hiddenFields, conditionMeets } from './conditional-visibility';
 
 describe('visibilidad condicional (enableWhen =)', () => {
   const ficha = [
@@ -12,7 +12,7 @@ describe('visibilidad condicional (enableWhen =)', () => {
   ] as const;
 
   const ocultosCon = (valores: Record<string, unknown>) =>
-    [...camposOcultos(ficha, (key) => valores[key])].sort();
+    [...hiddenFields(ficha, (key) => valores[key])].sort();
 
   it('un «sí» muestra el «¿cuál?», y un «no» o la falta de respuesta lo esconden', () => {
     expect(ocultosCon({ alergias: true })).not.toContain('alergias_cual');
@@ -31,11 +31,11 @@ describe('visibilidad condicional (enableWhen =)', () => {
   });
 
   it('una condición a un campo que no está se ignora: el campo se ve', () => {
-    expect([...camposOcultos([{ key: 'x', showWhen: { key: 'nadie', equals: true } }], () => undefined)]).toEqual([]);
+    expect([...hiddenFields([{ key: 'x', showWhen: { key: 'nadie', equals: true } }], () => undefined)]).toEqual([]);
   });
 
   it('compara por igualdad estricta, sin confundir «true» con true', () => {
-    expect(cumpleCondicion('true', true)).toBe(false);
-    expect(cumpleCondicion(true, [false, true])).toBe(true);
+    expect(conditionMeets('true', true)).toBe(false);
+    expect(conditionMeets(true, [false, true])).toBe(true);
   });
 });

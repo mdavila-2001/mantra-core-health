@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 
-import { Dictado, RECONOCEDOR_DE_VOZ } from './dictation';
-import type { EventoDeErrorDeVoz, EventoDeResultadoDeVoz, ReconocedorDeVoz } from './dictation.types';
+import { Dictation, VOICE_RECOGNIZER } from './dictation';
+import type { VoiceErrorEvent, VoiceResultEvent, VoiceRecognizer } from './dictation.types';
 
 /**
  * El doble del reconocedor del navegador (regla 65: el real no se puede
@@ -9,15 +9,15 @@ import type { EventoDeErrorDeVoz, EventoDeResultadoDeVoz, ReconocedorDeVoz } fro
  * mano y cuenta las llamadas, que es lo que el contrato promete: `start`,
  * `stop`, `abort`, y `onend` después de cada corte.
  */
-class ReconocedorDoble implements ReconocedorDeVoz {
+class ReconocedorDoble implements VoiceRecognizer {
   static ultimo: ReconocedorDoble | null = null;
   static creados = 0;
 
   lang = '';
   continuous = false;
   interimResults = false;
-  onresult: ((evento: EventoDeResultadoDeVoz) => void) | null = null;
-  onerror: ((evento: EventoDeErrorDeVoz) => void) | null = null;
+  onresult: ((evento: VoiceResultEvent) => void) | null = null;
+  onerror: ((evento: VoiceErrorEvent) => void) | null = null;
   onend: (() => void) | null = null;
   arrancado = 0;
   detenido = 0;
@@ -47,7 +47,7 @@ class ReconocedorDoble implements ReconocedorDeVoz {
 function resultado(
   trozos: readonly { texto: string; final: boolean }[],
   desde = 0,
-): EventoDeResultadoDeVoz {
+): VoiceResultEvent {
   const results = trozos.map((trozo) => {
     const alternativas = [{ transcript: trozo.texto, confidence: 1 }];
     return Object.assign(alternativas, {
@@ -69,23 +69,23 @@ describe('Dictado', () => {
     ReconocedorDoble.creados = 0;
   });
 
-  function montar(constructor: (new () => ReconocedorDeVoz) | null): Dictado {
+  function montar(constructor: (new () => VoiceRecognizer) | null): Dictation {
     TestBed.configureTestingModule({
-      providers: [Dictado, { provide: RECONOCEDOR_DE_VOZ, useValue: constructor }],
+      providers: [Dictation, { provide: VOICE_RECOGNIZER, useValue: constructor }],
     });
-    return TestBed.inject(Dictado);
+    return TestBed.inject(Dictation);
   }
 
   /* ---- Correcto ---- */
 
   it('con reconocedor, escucha en español de Bolivia, continuo y con parciales', () => {
     const dictado = montar(ReconocedorDoble);
-    expect(dictado.soportado).toBe(true);
+    expect(dictado.supported).toBe(true);
 
-    dictado.empezar(() => undefined);
+    dictado.start(() => undefined);
 
     const r = ReconocedorDoble.ultimo;
-    expect(dictado.estado()).toBe('escuchando');
+    expect(dictado.status()).toBe('escuchando');
     expect(r?.arrancado).toBe(1);
     expect(r?.lang).toBe('es-BO');
     expect(r?.continuous).toBe(true);
@@ -95,10 +95,10 @@ describe('Dictado', () => {
   it('una frase cerrada llega a quien escucha; la parcial sólo se muestra', () => {
     const dictado = montar(ReconocedorDoble);
     const llegado: string[] = [];
-    dictado.empezar((final) => llegado.push(final));
+    dictado.start((final) => llegado.push(final));
 
     ReconocedorDoble.ultimo?.onresult?.(resultado([{ texto: 'me duele la ', final: false }]));
-    expect(dictado.parcial()).toBe('me duele la');
+    expect(dictado.partial()).toBe('me duele la');
     expect(llegado).toEqual([]);
 
     ReconocedorDoble.ultimo?.onresult?.(resultado([{ texto: 'me duele la panza', final: true }]));
@@ -107,14 +107,14 @@ describe('Dictado', () => {
 
   it('al detener, el navegador avisa que terminó y el estado vuelve a inactivo', () => {
     const dictado = montar(ReconocedorDoble);
-    dictado.empezar(() => undefined);
+    dictado.start(() => undefined);
     ReconocedorDoble.ultimo?.onresult?.(resultado([{ texto: 'hola', final: false }]));
 
-    dictado.detener();
+    dictado.stop();
 
     expect(ReconocedorDoble.ultimo?.detenido).toBe(1);
-    expect(dictado.estado()).toBe('inactivo');
-    expect(dictado.parcial()).toBe('');
+    expect(dictado.status()).toBe('inactivo');
+    expect(dictado.partial()).toBe('');
   });
 
   /* ---- Límite ---- */
@@ -122,7 +122,7 @@ describe('Dictado', () => {
   it('varios trozos en un evento: sólo los cerrados van al texto, desde `resultIndex`', () => {
     const dictado = montar(ReconocedorDoble);
     const llegado: string[] = [];
-    dictado.empezar((final) => llegado.push(final));
+    dictado.start((final) => llegado.push(final));
 
     ReconocedorDoble.ultimo?.onresult?.(
       resultado(
@@ -136,13 +136,13 @@ describe('Dictado', () => {
     );
 
     expect(llegado).toEqual(['tengo tos']);
-    expect(dictado.parcial()).toBe('y fie');
+    expect(dictado.partial()).toBe('y fie');
   });
 
   it('empezar dos veces no abre dos reconocedores', () => {
     const dictado = montar(ReconocedorDoble);
-    dictado.empezar(() => undefined);
-    dictado.empezar(() => undefined);
+    dictado.start(() => undefined);
+    dictado.start(() => undefined);
 
     expect(ReconocedorDoble.creados).toBe(1);
   });
@@ -150,20 +150,20 @@ describe('Dictado', () => {
   it('detener sin haber empezado no hace nada', () => {
     const dictado = montar(ReconocedorDoble);
 
-    expect(() => dictado.detener()).not.toThrow();
+    expect(() => dictado.stop()).not.toThrow();
     expect(ReconocedorDoble.creados).toBe(0);
   });
 
   it('si el navegador corta solo (silencio), se puede volver a empezar', () => {
     const dictado = montar(ReconocedorDoble);
-    dictado.empezar(() => undefined);
+    dictado.start(() => undefined);
     ReconocedorDoble.ultimo?.onend?.();
-    expect(dictado.estado()).toBe('inactivo');
+    expect(dictado.status()).toBe('inactivo');
 
-    dictado.empezar(() => undefined);
+    dictado.start(() => undefined);
 
     expect(ReconocedorDoble.creados).toBe(2);
-    expect(dictado.estado()).toBe('escuchando');
+    expect(dictado.status()).toBe('escuchando');
   });
 
   /* ---- Inválido ---- */
@@ -171,9 +171,9 @@ describe('Dictado', () => {
   it('sin reconocedor en el navegador no está soportado y empezar no rompe', () => {
     const dictado = montar(null);
 
-    expect(dictado.soportado).toBe(false);
-    expect(() => dictado.empezar(() => undefined)).not.toThrow();
-    expect(dictado.estado()).toBe('inactivo');
+    expect(dictado.supported).toBe(false);
+    expect(() => dictado.start(() => undefined)).not.toThrow();
+    expect(dictado.status()).toBe('inactivo');
   });
 
   it.each([
@@ -186,18 +186,18 @@ describe('Dictado', () => {
     ['algo-que-no-existe', 'sin-resultado'],
   ])('el error «%s» deja el estado accionable «%s»', (error, esperado) => {
     const dictado = montar(ReconocedorDoble);
-    dictado.empezar(() => undefined);
+    dictado.start(() => undefined);
 
     ReconocedorDoble.ultimo?.onerror?.({ error });
     ReconocedorDoble.ultimo?.onend?.();
 
-    expect(dictado.estado()).toBe(esperado);
+    expect(dictado.status()).toBe(esperado);
   });
 
   /** Salir de la pantalla no puede dejar el micrófono abierto. */
   it('al destruirse aborta la escucha', () => {
     const dictado = montar(ReconocedorDoble);
-    dictado.empezar(() => undefined);
+    dictado.start(() => undefined);
 
     TestBed.resetTestingModule();
 

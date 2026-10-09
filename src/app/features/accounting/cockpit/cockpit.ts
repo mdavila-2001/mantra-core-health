@@ -48,10 +48,10 @@ import { DialogService } from '../../../shared/components/molecules/dialog/dialo
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
 import {
-  ACCION_DEL_ESTADO,
-  ETIQUETA_DE_ESTADO,
-  TONO_DEL_ESTADO,
-  type AccionDisponible,
+  STATUS_ACTION,
+  STATUS_LABEL,
+  STATUS_TONE,
+  type AvailableAction,
 } from './document-flow';
 
 /**
@@ -201,7 +201,7 @@ export class Cockpit {
     if (datos === null) return [];
     return ORDEN_DEL_FLUJO.map((estado) => ({
       estado,
-      etiqueta: ETIQUETA_DE_ESTADO[estado],
+      etiqueta: STATUS_LABEL[estado],
       total: datos.diario.filter((a) => estadoDe(a) === estado).length,
     }));
   });
@@ -225,9 +225,9 @@ export class Cockpit {
       return {
         doc,
         estado,
-        etiqueta: ETIQUETA_DE_ESTADO[estado],
-        tono: TONO_DEL_ESTADO[estado],
-        accion: ACCION_DEL_ESTADO[estado],
+        etiqueta: STATUS_LABEL[estado],
+        tono: STATUS_TONE[estado],
+        accion: STATUS_ACTION[estado],
       };
     });
     return { filas, ocultos: todos.length - filas.length, total: todos.length };
@@ -396,7 +396,7 @@ export class Cockpit {
   }
 
   /** Mueve un documento un paso, y vuelve a leer: el mayor pudo cambiar. */
-  async avanzar(transactionId: string, numero: string, accion: AccionDisponible): Promise<void> {
+  async avanzar(transactionId: string, numero: string, accion: AvailableAction): Promise<void> {
     // Revertir es lo único del flujo que no tiene vuelta atrás: crea el
     // documento espejo y los dos quedan en el mayor para siempre.
     if (accion.action === 'reverse') {

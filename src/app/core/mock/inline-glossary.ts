@@ -21,10 +21,10 @@ import { uuid } from './mock-store';
     ========================================================================== */
 
 /** El code system del catálogo curado, espejo de `glossary-curated-es`. */
-export const GLOSARIO_CODE_SYSTEM_VERSION_ID = uuid('code-system-version-glossary-curated-es');
+export const GLOSSARY_CODE_SYSTEM_VERSION_ID = uuid('code-system-version-glossary-curated-es');
 
 /** Sistemas cuyo `code` es la clave de la plataforma, no un código externo publicable. */
-const SISTEMAS_INTERNOS: ReadonlySet<string> = new Set([
+const INTERNAL_SYSTEMS: ReadonlySet<string> = new Set([
   'glossary-curated-es',
   'netter-atlas-index',
 ]);
@@ -34,11 +34,11 @@ interface Conjunto {
   readonly name: string;
 }
 
-function referencia(conjunto: Conjunto) {
+function reference(conjunto: Conjunto) {
   return { id: idDeConjunto(conjunto.internalCode), internalCode: conjunto.internalCode, name: conjunto.name };
 }
 
-function referenciaConUuid(conjunto: Conjunto) {
+function referenceWithUuid(conjunto: Conjunto) {
   return {
     valueSetId: idDeConjunto(conjunto.internalCode),
     internalCode: conjunto.internalCode,
@@ -47,7 +47,7 @@ function referenciaConUuid(conjunto: Conjunto) {
 }
 
 /** Categoría y etiquetas de una fila, resueltas contra el manifiesto. */
-function taxonomiaDe(fila: FilaDeGlosario, manifiesto: ManifiestoDelGlosario) {
+function taxonomyOf(fila: FilaDeGlosario, manifiesto: ManifiestoDelGlosario) {
   const categoria = manifiesto.categories.find((c) => c.key === fila.categoryKey) ?? {
     internalCode: `glossary-category-${fila.categoryKey}`,
     name: fila.categoryKey,
@@ -65,7 +65,7 @@ function taxonomiaDe(fila: FilaDeGlosario, manifiesto: ManifiestoDelGlosario) {
  * Mismo criterio que `imageFromProperty` de la API: sin URL, atribución o
  * licencia no se publica. Una foto sin crédito no se muestra.
  */
-export function imagenDe(fila: FilaDeGlosario) {
+export function imageOf(fila: FilaDeGlosario) {
   // Los importadores escriben `null` donde no hay imagen (SCHEMA.md): null y
   // ausente valen lo mismo.
   if (!fila.imageUrl || !fila.imageAttribution || !fila.imageLicense) {
@@ -83,7 +83,7 @@ export function imagenDe(fila: FilaDeGlosario) {
 }
 
 /** Los value sets del glosario, como los devuelve el listado de conjuntos. */
-export function conjuntosEnLinea(manifiesto: ManifiestoDelGlosario) {
+export function inlineSets(manifiesto: ManifiestoDelGlosario) {
   const linea = (
     conjunto: Conjunto & { readonly count: number; readonly translatedCount?: number },
   ) => ({
@@ -113,7 +113,7 @@ export function conjuntosEnLinea(manifiesto: ManifiestoDelGlosario) {
 }
 
 /** Las facetas, como las devuelve `GET /terminology/value-sets/$glossary-facets`. */
-export function facetasEnLinea(manifiesto: ManifiestoDelGlosario) {
+export function inlineFacets(manifiesto: ManifiestoDelGlosario) {
   const etiquetaPorClave = new Map(manifiesto.tags.map((t) => [t.key, t]));
   const porFrecuencia = <T extends { count: number; name: string }>(a: T, b: T) =>
     b.count - a.count || a.name.localeCompare(b.name, 'es');
@@ -121,7 +121,7 @@ export function facetasEnLinea(manifiesto: ManifiestoDelGlosario) {
   const categories = manifiesto.categories
     .filter((categoria) => categoria.count > 0)
     .map((categoria) => ({
-      ...referencia(categoria),
+      ...reference(categoria),
       ...(categoria.description === undefined ? {} : { description: categoria.description }),
       count: categoria.count,
       ...(categoria.translatedCount === undefined
@@ -130,21 +130,21 @@ export function facetasEnLinea(manifiesto: ManifiestoDelGlosario) {
       tags: Object.entries(categoria.tags)
         .flatMap(([clave, count]) => {
           const etiqueta = etiquetaPorClave.get(clave);
-          return etiqueta === undefined || count === 0 ? [] : [{ ...referencia(etiqueta), count }];
+          return etiqueta === undefined || count === 0 ? [] : [{ ...reference(etiqueta), count }];
         })
         .sort(porFrecuencia),
     }));
   const tags = manifiesto.tags
     .filter((etiqueta) => etiqueta.count > 0)
-    .map((etiqueta) => ({ ...referencia(etiqueta), count: etiqueta.count }))
+    .map((etiqueta) => ({ ...reference(etiqueta), count: etiqueta.count }))
     .sort(porFrecuencia);
   return { categories, tags, total: manifiesto.total };
 }
 
 /** Una entrada de la lista, como la devuelve la búsqueda del glosario. */
-export function terminoEnLinea(fila: FilaDeGlosario, manifiesto: ManifiestoDelGlosario) {
-  const { categoria, etiquetas } = taxonomiaDe(fila, manifiesto);
-  const imagen = imagenDe(fila);
+export function inlineTerm(fila: FilaDeGlosario, manifiesto: ManifiestoDelGlosario) {
+  const { categoria, etiquetas } = taxonomyOf(fila, manifiesto);
+  const imagen = imageOf(fila);
   return {
     conceptId: fila.id,
     code: fila.code ?? '',
@@ -160,7 +160,7 @@ export function terminoEnLinea(fila: FilaDeGlosario, manifiesto: ManifiestoDelGl
     tags: etiquetas.map((etiqueta) => etiqueta.name),
     relationsCount: fila.relations.length,
     status: 'active' as const,
-    valueSets: [PARAGUAS_DEL_GLOSARIO, categoria, ...etiquetas].map(referencia),
+    valueSets: [PARAGUAS_DEL_GLOSARIO, categoria, ...etiquetas].map(reference),
     ...(imagen === undefined
       ? {}
       : { imageThumbnailUrl: imagen.thumbnailSource ?? imagen.source }),
@@ -168,9 +168,9 @@ export function terminoEnLinea(fila: FilaDeGlosario, manifiesto: ManifiestoDelGl
 }
 
 /** Las propiedades de la ficha: las que la fila trae, con los códigos de la API. */
-function propiedadesDe(fila: FilaDeGlosario): Record<string, unknown> {
+function propertiesOf(fila: FilaDeGlosario): Record<string, unknown> {
   const propiedades: Record<string, unknown> = { ...(fila.properties ?? {}) };
-  if (fila.code !== undefined && fila.codeSystem !== undefined && !SISTEMAS_INTERNOS.has(fila.codeSystem)) {
+  if (fila.code !== undefined && fila.codeSystem !== undefined && !INTERNAL_SYSTEMS.has(fila.codeSystem)) {
     propiedades['external_code'] = fila.code;
     propiedades['code_system'] = fila.codeSystem;
   }
@@ -199,7 +199,7 @@ function propiedadesDe(fila: FilaDeGlosario): Record<string, unknown> {
   if (fila.drugFacts !== undefined && fila.drugFacts !== null) {
     propiedades['drug_facts'] = fila.drugFacts;
   }
-  const imagen = imagenDe(fila);
+  const imagen = imageOf(fila);
   if (imagen !== undefined) {
     propiedades['glossary-image'] = {
       url: imagen.source,
@@ -213,17 +213,17 @@ function propiedadesDe(fila: FilaDeGlosario): Record<string, unknown> {
 }
 
 /** La ficha completa, como la devuelve `GET /terminology/concepts/:id`. */
-export function fichaEnLinea(fila: FilaDeGlosario, manifiesto: ManifiestoDelGlosario) {
-  const { categoria, etiquetas } = taxonomiaDe(fila, manifiesto);
-  const imagen = imagenDe(fila);
+export function inlineSheet(fila: FilaDeGlosario, manifiesto: ManifiestoDelGlosario) {
+  const { categoria, etiquetas } = taxonomyOf(fila, manifiesto);
+  const imagen = imageOf(fila);
   return {
     conceptId: fila.id,
     code: fila.code ?? '',
     display: fila.esName,
     slug: fila.slug,
     translated: fila.lang !== 'en',
-    codeSystemVersionId: GLOSARIO_CODE_SYSTEM_VERSION_ID,
-    valueSets: [PARAGUAS_DEL_GLOSARIO, categoria, ...etiquetas].map(referencia),
+    codeSystemVersionId: GLOSSARY_CODE_SYSTEM_VERSION_ID,
+    valueSets: [PARAGUAS_DEL_GLOSARIO, categoria, ...etiquetas].map(reference),
     // El nombre en inglés es una denominación más, con su idioma declarado. Si
     // ya es el nombre que se muestra (capa sin traducir), repetirlo no informa.
     synonyms: [
@@ -232,8 +232,8 @@ export function fichaEnLinea(fila: FilaDeGlosario, manifiesto: ManifiestoDelGlos
         ? []
         : [{ value: fila.enDisplay, language: 'EN', preferred: false }]),
     ],
-    category: referenciaConUuid(categoria),
-    tags: etiquetas.map(referenciaConUuid),
+    category: referenceWithUuid(categoria),
+    tags: etiquetas.map(referenceWithUuid),
     ...(fila.definition === ''
       ? {}
       : { clinicalDefinition: { text: fila.definition, translated: fila.lang !== 'en' } }),
@@ -246,7 +246,7 @@ export function fichaEnLinea(fila: FilaDeGlosario, manifiesto: ManifiestoDelGlos
       slug: relacion.targetSlug,
       display: relacion.targetName,
     })),
-    properties: propiedadesDe(fila),
+    properties: propertiesOf(fila),
     ...(imagen === undefined ? {} : { image: imagen }),
   };
 }

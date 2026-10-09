@@ -26,7 +26,7 @@ import { StatusSeal } from '@shared/components/organisms/status-seal/status-seal
 import { ViewStateHost } from '@shared/components/organisms/view-state-host/view-state-host';
 
 import { toBookingStatusPresentation } from '../../agenda/booking-status';
-import { misRecursosDeAgenda } from '../../agenda/my-resource';
+import { agendaResourcesMy } from '../../agenda/my-resource';
 
 /**
  * Reporte de consultas del panel de inicio (C-24, H5 del reparto de Ender
@@ -62,12 +62,12 @@ import { misRecursosDeAgenda } from '../../agenda/my-resource';
   styleUrl: './consultations-summary.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ConsultasResumen {
+export class SummaryConsultations {
   private readonly auth = inject(AuthService);
   private readonly scheduling = inject(SchedulingClient);
   private readonly terminology = inject(TerminologyClient);
 
-  protected readonly estado = signal<ViewState<ResumenDatos>>(loading());
+  protected readonly status = signal<ViewState<DataSummary>>(loading());
 
   /**
    * Las sedes cuya lectura falló, dichas para la persona.
@@ -76,7 +76,7 @@ export class ConsultasResumen {
    * cifras: sin este aviso, «12 este mes» se leía como el total cuando era el
    * total de las sedes que respondieron.
    */
-  protected readonly sedesSinCargar = signal<readonly string[]>([]);
+  protected readonly sitesWithoutLoad = signal<readonly string[]>([]);
 
   /**
    * «Las canceladas se pueden ver» (H5.S2.M1): mismo criterio que
@@ -85,42 +85,42 @@ export class ConsultasResumen {
    * Por defecto en `false`: un reporte que abre contando lo cancelado sobre-
    * cuenta la jornada real.
    */
-  protected readonly incluirCanceladas = signal(false);
+  protected readonly includeCancelled = signal(false);
 
-  protected readonly conceptos = signal<ReadonlyMap<string, ValueSetOption>>(new Map());
+  protected readonly concepts = signal<ReadonlyMap<string, ValueSetOption>>(new Map());
 
-  private readonly citasNoCanceladas = computed(() => {
-    const datos = dataOf(this.estado());
+  private readonly appointmentsNotCancelled = computed(() => {
+    const datos = dataOf(this.status());
     if (datos === null) return [] as readonly Booking[];
-    return datos.citas.filter((cita) => !this.esCancelada(cita));
+    return datos.citas.filter((cita) => !this.isCancelled(cita));
   });
 
-  private readonly citasVisibles = computed(() =>
-    this.incluirCanceladas() ? (dataOf(this.estado())?.citas ?? []) : this.citasNoCanceladas(),
+  private readonly visibleAppointments = computed(() =>
+    this.includeCancelled() ? (dataOf(this.status())?.citas ?? []) : this.appointmentsNotCancelled(),
   );
 
-  protected readonly resumenSemana = computed(() => this.contarEnVentana(this.ventanaSemana()));
-  protected readonly resumenMes = computed(() => this.contarEnVentana(this.ventanaMes()));
+  protected readonly weekSummary = computed(() => this.countInWindow(this.weekWindow()));
+  protected readonly monthSummary = computed(() => this.countInWindow(this.monthWindow()));
 
-  protected readonly canceladasDelMes = computed(() => {
-    const datos = dataOf(this.estado());
+  protected readonly monthCancelled = computed(() => {
+    const datos = dataOf(this.status());
     if (datos === null) return 0;
-    const { desde, hasta } = this.ventanaMes();
+    const { desde, hasta } = this.monthWindow();
     return datos.citas.filter(
-      (cita) => this.esCancelada(cita) && dentroDe(cita, desde, hasta),
+      (cita) => this.isCancelled(cita) && withinOf(cita, desde, hasta),
     ).length;
   });
 
   /** Hora × día de la semana, sobre el mes completo, sin contar canceladas. */
-  protected readonly mapaDeCalor = computed<HeatmapData>(() => {
-    const { desde, hasta } = this.ventanaMes();
-    const celdas = DIAS.map(() => new Array<number>(HORAS.length).fill(0));
-    for (const cita of this.citasNoCanceladas()) {
-      if (!dentroDe(cita, desde, hasta) || cita.startAt === undefined) continue;
+  protected readonly heatMap = computed<HeatmapData>(() => {
+    const { desde, hasta } = this.monthWindow();
+    const celdas = DAYS.map(() => new Array<number>(HOURS.length).fill(0));
+    for (const cita of this.appointmentsNotCancelled()) {
+      if (!withinOf(cita, desde, hasta) || cita.startAt === undefined) continue;
       const dia = (cita.startAt.getDay() + 6) % 7; // lunes=0 … domingo=6
       const hora = cita.startAt.getHours();
-      const columna = hora - HORA_INICIO;
-      if (columna < 0 || columna >= HORAS.length) continue;
+      const columna = hora - START_TIME;
+      if (columna < 0 || columna >= HOURS.length) continue;
       celdas[dia]![columna] += 1;
     }
     const maximo = Math.max(0, ...celdas.flat());
@@ -128,15 +128,15 @@ export class ConsultasResumen {
   });
 
   /** Actividades que no son consulta ni control: cirugías, tomas de muestra, etc. (C-24). */
-  protected readonly otrasAtenciones = computed<readonly ActividadResumen[]>(() => {
-    const datos = dataOf(this.estado());
+  protected readonly otherVisits = computed<readonly SummaryActivity[]>(() => {
+    const datos = dataOf(this.status());
     if (datos === null) return [];
-    const { desde, hasta } = this.ventanaMes();
+    const { desde, hasta } = this.monthWindow();
     const porTipo = new Map<string, number>();
-    for (const cita of this.citasVisibles()) {
-      if (!dentroDe(cita, desde, hasta)) continue;
+    for (const cita of this.visibleAppointments()) {
+      if (!withinOf(cita, desde, hasta)) continue;
       const tipo = datos.actividades.find((a) => a.conceptId === cita.serviceConceptId);
-      if (tipo === undefined || OTRAS_ATENCIONES_EXCLUIDAS.has(tipo.type)) continue;
+      if (tipo === undefined || OTHER_EXCLUDED_VISITS.has(tipo.type)) continue;
       porTipo.set(tipo.type, (porTipo.get(tipo.type) ?? 0) + 1);
     }
     return datos.actividades
@@ -145,26 +145,26 @@ export class ConsultasResumen {
   });
 
   constructor() {
-    this.cargar();
+    this.load();
   }
 
-  protected reintentar(): void {
-    this.cargar();
+  protected retry(): void {
+    this.load();
   }
 
-  private cargar(): void {
+  private load(): void {
     const perfil = this.auth.practitionerProfileId();
     const tenantId = this.auth.activeTenantId();
     if (perfil === null || tenantId === null) {
-      this.estado.set(empty({ label: 'Ver la agenda', route: '/schedule' }, 'Esta cuenta no tiene consultas propias.'));
+      this.status.set(empty({ label: 'Ver la agenda', route: '/schedule' }, 'Esta cuenta no tiene consultas propias.'));
       return;
     }
 
-    this.estado.set(loading());
-    this.sedesSinCargar.set([]);
-    const { desde, hasta } = this.ventanaMes();
+    this.status.set(loading());
+    this.sitesWithoutLoad.set([]);
+    const { desde, hasta } = this.monthWindow();
 
-    misRecursosDeAgenda(this.scheduling, tenantId, perfil)
+    agendaResourcesMy(this.scheduling, tenantId, perfil)
       .pipe(
         switchMap((recursos) => {
           if (recursos.length === 0) return of(null);
@@ -173,10 +173,10 @@ export class ConsultasResumen {
               this.scheduling
                 .searchBookings({ resourceId: recurso.id, from: desde, to: hasta, includeCancelled: true, limit: 500 })
                 .pipe(
-                  map((pagina): LecturaDeSede => ({ recurso, citas: pagina.items, fallo: null })),
+                  map((pagina): SiteReading => ({ recurso, citas: pagina.items, fallo: null })),
                   // La sede caída no tumba el resumen, pero su fallo viaja con
                   // ella para avisarlo: si no, sus consultas faltan sin rastro.
-                  catchError((error: unknown) => of<LecturaDeSede>({ recurso, citas: [], fallo: { error } })),
+                  catchError((error: unknown) => of<SiteReading>({ recurso, citas: [], fallo: { error } })),
                 ),
             ),
           );
@@ -185,16 +185,16 @@ export class ConsultasResumen {
       .subscribe({
         next: (lecturas) => {
           if (lecturas === null) {
-            this.estado.set(empty({ label: 'Publicar mi horario', route: '/schedule' }, 'Todavía no tiene una agenda publicada.'));
+            this.status.set(empty({ label: 'Publicar mi horario', route: '/schedule' }, 'Todavía no tiene una agenda publicada.'));
             return;
           }
           const fallidas = lecturas.filter((lectura) => lectura.fallo !== null);
           const primerFallo = fallidas[0]?.fallo;
           if (primerFallo != null && fallidas.length === lecturas.length) {
-            this.estado.set(errorToViewState<ResumenDatos>(primerFallo.error));
+            this.status.set(errorToViewState<DataSummary>(primerFallo.error));
             return;
           }
-          this.sedesSinCargar.set(
+          this.sitesWithoutLoad.set(
             fallidas.map(({ recurso, fallo }) =>
               describeApiFailure(
                 fallo?.error,
@@ -204,13 +204,13 @@ export class ConsultasResumen {
           );
           const citas = lecturas.flatMap((lectura) => lectura.citas);
           this.terminology.readConceptLabels(citas.map((c) => c.statusConceptId)).subscribe({
-            next: (etiquetas) => this.conceptos.set(etiquetas),
+            next: (etiquetas) => this.concepts.set(etiquetas),
             error: () => undefined,
           });
           this.scheduling.listActivityTypes().subscribe({
             next: ({ items: actividades }) => {
               if (citas.length === 0) {
-                this.estado.set(
+                this.status.set(
                   empty(
                     { label: 'Agendar una consulta', route: '/schedule' },
                     fallidas.length > 0
@@ -220,39 +220,39 @@ export class ConsultasResumen {
                 );
                 return;
               }
-              this.estado.set(ready({ citas, actividades }));
+              this.status.set(ready({ citas, actividades }));
             },
-            error: (error: unknown) => this.estado.set(errorToViewState<ResumenDatos>(error)),
+            error: (error: unknown) => this.status.set(errorToViewState<DataSummary>(error)),
           });
         },
-        error: (error: unknown) => this.estado.set(errorToViewState<ResumenDatos>(error)),
+        error: (error: unknown) => this.status.set(errorToViewState<DataSummary>(error)),
       });
   }
 
-  protected labelDeHora(hora: number): string {
+  protected timeLabel(hora: number): string {
     return `${String(hora).padStart(2, '0')}:00`;
   }
 
-  protected labelDeDia(indice: number): string {
-    return DIAS[indice]!;
+  protected dayLabel(indice: number): string {
+    return DAYS[indice]!;
   }
 
-  protected celdaAriaLabel(dia: number, hora: number, valor: number): string {
+  protected cellAriaLabel(dia: number, hora: number, valor: number): string {
     const cantidad = valor === 1 ? '1 consulta' : `${valor} consultas`;
-    return `${DIAS_LARGOS[dia]} a las ${this.labelDeHora(HORAS[hora]!)}: ${cantidad}`;
+    return `${LENGTHS_DAYS[dia]} a las ${this.timeLabel(HOURS[hora]!)}: ${cantidad}`;
   }
 
-  protected intensidad(valor: number, maximo: number): number {
+  protected intensity(valor: number, maximo: number): number {
     if (maximo === 0) return 0;
     return Math.min(4, Math.ceil((valor / maximo) * 4));
   }
 
-  private esCancelada(cita: Booking): boolean {
-    const presentacion = toBookingStatusPresentation(this.conceptos().get(cita.statusConceptId), '');
+  private isCancelled(cita: Booking): boolean {
+    const presentacion = toBookingStatusPresentation(this.concepts().get(cita.statusConceptId), '');
     return presentacion.code === 'BOOKING_CANCELLED';
   }
 
-  private ventanaSemana(): Ventana {
+  private weekWindow(): Window {
     const hoy = new Date();
     const diaSemanaLunes0 = (hoy.getDay() + 6) % 7;
     const desde = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() - diaSemanaLunes0);
@@ -260,26 +260,26 @@ export class ConsultasResumen {
     return { desde, hasta };
   }
 
-  private ventanaMes(): Ventana {
+  private monthWindow(): Window {
     const hoy = new Date();
     const desde = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
     const hasta = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 1);
     return { desde, hasta };
   }
 
-  private contarEnVentana(ventana: Ventana): ConteoDeVentana {
-    const citas = this.citasVisibles().filter((cita) => dentroDe(cita, ventana.desde, ventana.hasta));
-    const canceladas = citas.filter((cita) => this.esCancelada(cita)).length;
+  private countInWindow(ventana: Window): WindowCount {
+    const citas = this.visibleAppointments().filter((cita) => withinOf(cita, ventana.desde, ventana.hasta));
+    const canceladas = citas.filter((cita) => this.isCancelled(cita)).length;
     return { total: citas.length, canceladas };
   }
 }
 
 /** Lunes a las 06:00 hasta domingo 19:00 — mismo horario clínico que declara `AgendaDeHoy`. */
-const HORA_INICIO = 6;
-const HORA_FIN = 19;
-const HORAS: readonly number[] = Array.from({ length: HORA_FIN - HORA_INICIO }, (_, i) => HORA_INICIO + i);
-const DIAS: readonly string[] = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
-const DIAS_LARGOS: readonly string[] = [
+const START_TIME = 6;
+const END_TIME = 19;
+const HOURS: readonly number[] = Array.from({ length: END_TIME - START_TIME }, (_, i) => START_TIME + i);
+const DAYS: readonly string[] = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+const LENGTHS_DAYS: readonly string[] = [
   'Lunes',
   'Martes',
   'Miércoles',
@@ -290,24 +290,24 @@ const DIAS_LARGOS: readonly string[] = [
 ];
 
 /** `PROCEDURE`, `TELEHEALTH` y `EXAM` son "otras atenciones"; consulta y control no. */
-const OTRAS_ATENCIONES_EXCLUIDAS = new Set(['CONSULTATION', 'FOLLOW_UP']);
+const OTHER_EXCLUDED_VISITS = new Set(['CONSULTATION', 'FOLLOW_UP']);
 
-interface Ventana {
+interface Window {
   readonly desde: Date;
   readonly hasta: Date;
 }
 
-interface ResumenDatos {
+interface DataSummary {
   readonly citas: readonly Booking[];
   readonly actividades: readonly ActivityTypeOption[];
 }
 
-interface ConteoDeVentana {
+interface WindowCount {
   readonly total: number;
   readonly canceladas: number;
 }
 
-interface ActividadResumen {
+interface SummaryActivity {
   readonly label: string;
   readonly tone: ChipVariant;
   readonly total: number;
@@ -328,13 +328,13 @@ interface HeatmapData {
   readonly maximo: number;
 }
 
-function dentroDe(cita: Booking, desde: Date, hasta: Date): boolean {
+function withinOf(cita: Booking, desde: Date, hasta: Date): boolean {
   const inicio = cita.startAt;
   return inicio !== undefined && inicio >= desde && inicio < hasta;
 }
 
 /** Lo que trajo la lectura de una agenda: sus citas, o el fallo que la dejó vacía. */
-interface LecturaDeSede {
+interface SiteReading {
   readonly recurso: AgendaResource;
   readonly citas: readonly Booking[];
   readonly fallo: { readonly error: unknown } | null;

@@ -1,4 +1,4 @@
-import { cuerpoDelFallo, falloPara } from './simulated-failures';
+import { failureBody, failureFor } from './simulated-failures';
 
 /**
  * El simulador de fallos del backend de maqueta.
@@ -17,13 +17,13 @@ describe('fallos simulados del backend de maqueta', () => {
   }
 
   it('sin nada declarado, ninguna petición falla', () => {
-    expect(falloPara('POST', '/clinical/allergy-intolerances')).toBeNull();
+    expect(failureFor('POST', '/clinical/allergy-intolerances')).toBeNull();
   });
 
   it('casa por subcadena de la ruta', () => {
     declarar([{ patron: '/clinical/allergy-intolerances', modo: 'red' }]);
-    expect(falloPara('POST', '/clinical/allergy-intolerances')?.modo).toBe('red');
-    expect(falloPara('POST', '/clinical/conditions')).toBeNull();
+    expect(failureFor('POST', '/clinical/allergy-intolerances')?.modo).toBe('red');
+    expect(failureFor('POST', '/clinical/conditions')).toBeNull();
   });
 
   /**
@@ -32,8 +32,8 @@ describe('fallos simulados del backend de maqueta', () => {
    */
   it('puede limitarse a un método', () => {
     declarar([{ patron: '/clinical/patients', modo: 'error', metodos: ['post'] }]);
-    expect(falloPara('POST', '/clinical/patients/p-1/summary')?.modo).toBe('error');
-    expect(falloPara('GET', '/clinical/patients/p-1/summary')).toBeNull();
+    expect(failureFor('POST', '/clinical/patients/p-1/summary')?.modo).toBe('error');
+    expect(failureFor('GET', '/clinical/patients/p-1/summary')).toBeNull();
   });
 
   /**
@@ -42,13 +42,13 @@ describe('fallos simulados del backend de maqueta', () => {
    */
   it('la basura se lee como «sin fallos»', () => {
     declarar('esto no es json');
-    expect(falloPara('POST', '/clinical/allergy-intolerances')).toBeNull();
+    expect(failureFor('POST', '/clinical/allergy-intolerances')).toBeNull();
 
     declarar({ patron: '/clinical', modo: 'red' });
-    expect(falloPara('POST', '/clinical/allergy-intolerances')).toBeNull();
+    expect(failureFor('POST', '/clinical/allergy-intolerances')).toBeNull();
 
     declarar([{ patron: '/clinical', modo: 'inventado' }, { patron: '', modo: 'red' }, null, 7]);
-    expect(falloPara('POST', '/clinical/allergy-intolerances')).toBeNull();
+    expect(failureFor('POST', '/clinical/allergy-intolerances')).toBeNull();
   });
 
   /**
@@ -59,7 +59,7 @@ describe('fallos simulados del backend de maqueta', () => {
    */
   it('todos los cuerpos llevan identificador de petición', () => {
     for (const modo of ['forbidden', 'not-found', 'conflict', 'error'] as const) {
-      const { body } = cuerpoDelFallo({ patron: '/x', modo }, '/x');
+      const { body } = failureBody({ patron: '/x', modo }, '/x');
       expect((body as { correlationId?: string }).correlationId).toBe('mock-fallo');
     }
   });
@@ -70,19 +70,19 @@ describe('fallos simulados del backend de maqueta', () => {
    * caería en «error inesperado» y no en el estado que se quería mirar.
    */
   it('el cuerpo lleva el código del contrato, no sólo el estado HTTP', () => {
-    const permiso = cuerpoDelFallo({ patron: '/x', modo: 'forbidden' }, '/x');
+    const permiso = failureBody({ patron: '/x', modo: 'forbidden' }, '/x');
     expect(permiso.status).toBe(403);
     expect((permiso.body as { code: string }).code).toBe('FORBIDDEN');
 
-    const ausente = cuerpoDelFallo({ patron: '/x', modo: 'not-found' }, '/x');
+    const ausente = failureBody({ patron: '/x', modo: 'not-found' }, '/x');
     expect(ausente.status).toBe(404);
     expect((ausente.body as { code: string }).code).toBe('NOT_FOUND');
 
-    const conflicto = cuerpoDelFallo({ patron: '/x', modo: 'conflict' }, '/x');
+    const conflicto = failureBody({ patron: '/x', modo: 'conflict' }, '/x');
     expect(conflicto.status).toBe(409);
     expect((conflicto.body as { code: string }).code).toBe('CONFLICT');
 
-    const inesperado = cuerpoDelFallo({ patron: '/x', modo: 'error' }, '/x');
+    const inesperado = failureBody({ patron: '/x', modo: 'error' }, '/x');
     expect(inesperado.status).toBe(500);
     expect((inesperado.body as { code: string }).code).toBe('INTERNAL');
   });

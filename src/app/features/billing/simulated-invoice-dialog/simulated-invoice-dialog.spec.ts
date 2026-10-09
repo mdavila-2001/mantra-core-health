@@ -4,9 +4,9 @@ import { TestBed, type ComponentFixture } from '@angular/core/testing';
 
 import { API_BASE_URL } from '../../../core/data-access/api';
 import type { SimulatedCharge, SimulatedInvoice } from '../../../core/data-access/billing-simulated/billing-simulated.types';
-import type { FacturacionSimulada } from '../../../core/mock/billing-sim/simulated-invoicing';
+import type { SimulatedInvoicing } from '../../../core/mock/billing-sim/simulated-invoicing';
 import { motorDePrueba } from '../billing.spec-fixtures';
-import { FacturaSimuladaDialog } from './simulated-invoice-dialog';
+import { SimulatedInvoiceDialog } from './simulated-invoice-dialog';
 
 /**
  * El modal de la factura contra el SIAT simulado. Lo que fijan estas pruebas:
@@ -18,9 +18,9 @@ import { FacturaSimuladaDialog } from './simulated-invoice-dialog';
  * 4. **Un rechazo del motor se muestra con su mensaje**, sin fingir éxito.
  */
 describe('FacturaSimuladaDialog', () => {
-  let fixture: ComponentFixture<FacturaSimuladaDialog>;
+  let fixture: ComponentFixture<SimulatedInvoiceDialog>;
   let http: HttpTestingController;
-  let motor: FacturacionSimulada;
+  let motor: SimulatedInvoicing;
   let emitidas: SimulatedInvoice[];
 
   function montar(cobro: SimulatedCharge): void {
@@ -28,9 +28,9 @@ describe('FacturaSimuladaDialog', () => {
       providers: [provideHttpClient(), provideHttpClientTesting(), { provide: API_BASE_URL, useValue: '' }],
     });
     http = TestBed.inject(HttpTestingController);
-    fixture = TestBed.createComponent(FacturaSimuladaDialog);
+    fixture = TestBed.createComponent(SimulatedInvoiceDialog);
     fixture.componentRef.setInput('cobro', cobro);
-    fixture.componentRef.setInput('catalogos', motor.catalogos());
+    fixture.componentRef.setInput('catalogos', motor.catalogs());
     emitidas = [];
     fixture.componentInstance.emitida.subscribe((f) => emitidas.push(f));
     fixture.detectChanges();
@@ -57,7 +57,7 @@ describe('FacturaSimuladaDialog', () => {
   function responderFactura(cobroId: string): SimulatedInvoice {
     const req = http.expectOne(`/billing/simulated/charges/${cobroId}/invoices`);
     expect(req.request.method).toBe('POST');
-    const r = motor.emitirFactura(cobroId, req.request.body, 'prueba');
+    const r = motor.issueInvoice(cobroId, req.request.body, 'prueba');
     if (!r.ok) throw new Error(r.error.message);
     req.flush(r.value);
     fixture.detectChanges();
@@ -71,7 +71,7 @@ describe('FacturaSimuladaDialog', () => {
   afterEach(() => http.verify());
 
   it('sin pagar: registra el pago y después emite la factura, y muestra el CUF', () => {
-    const cobro = motor.listarCobros().find((c) => c.plan === null && c.payment === null && c.source === 'CONSULTATION')!;
+    const cobro = motor.listCharges().find((c) => c.plan === null && c.payment === null && c.source === 'CONSULTATION')!;
     montar(cobro);
     expect(el('factura-total')?.textContent).toContain(cobro.total.split('.')[0]!);
 
@@ -79,11 +79,11 @@ describe('FacturaSimuladaDialog', () => {
     confirmar();
     http.expectNone((r) => r.url.includes('/billing/simulated/'));
 
-    fixture.componentInstance['formulario'].controls.methodCode.setValue(1);
+    fixture.componentInstance['form'].controls.methodCode.setValue(1);
     confirmar();
     const pago = http.expectOne(`/billing/simulated/charges/${cobro.id}/payment`);
     expect(pago.request.body).toEqual({ methodCode: 1 });
-    const pagado = motor.registrarPago(cobro.id, 1);
+    const pagado = motor.registerPayment(cobro.id, 1);
     if (!pagado.ok) throw new Error(pagado.error.message);
     pago.flush(pagado.value);
 
@@ -95,11 +95,11 @@ describe('FacturaSimuladaDialog', () => {
   });
 
   it('un plan saldado se factura sin volver a cobrar, por el total del servicio', () => {
-    const conPlan = motor.listarCobros().find((c) => c.plan !== null)!;
+    const conPlan = motor.listCharges().find((c) => c.plan !== null)!;
     for (const i of conPlan.plan!.instances.filter((x) => x.balance !== '0.00')) {
-      motor.registrarPagoDeInstancia(conPlan.id, i.id, { methodCode: 1, amount: i.balance });
+      motor.instanceRegisterPayment(conPlan.id, i.id, { methodCode: 1, amount: i.balance });
     }
-    const saldado = motor.cobro(conPlan.id)!;
+    const saldado = motor.charge(conPlan.id)!;
     montar(saldado);
     expect(el('factura-notas-del-plan')?.textContent).toContain('NV-');
 
@@ -111,14 +111,14 @@ describe('FacturaSimuladaDialog', () => {
   });
 
   it('con factura vigente abre mostrándola, sin ofrecer otra', () => {
-    const pagado = motor.listarCobros().find((c) => c.plan === null && c.payment !== null && c.source === 'CONSULTATION')!;
-    const emitida = motor.emitirFactura(
+    const pagado = motor.listCharges().find((c) => c.plan === null && c.payment !== null && c.source === 'CONSULTATION')!;
+    const emitida = motor.issueInvoice(
       pagado.id,
       { buyer: { name: 'X', documentTypeCode: 1, documentNumber: '1234567' } },
       'prueba',
     );
     if (!emitida.ok) throw new Error(emitida.error.message);
-    montar(motor.cobro(pagado.id)!);
+    montar(motor.charge(pagado.id)!);
 
     http.expectOne(`/billing/simulated/invoices/${emitida.value.id}`).flush(emitida.value);
     fixture.detectChanges();
@@ -128,7 +128,7 @@ describe('FacturaSimuladaDialog', () => {
   });
 
   it('si el motor rechaza, muestra su mensaje y no finge la factura', () => {
-    const pagado = motor.listarCobros().find((c) => c.plan === null && c.payment !== null && c.source === 'CONSULTATION')!;
+    const pagado = motor.listCharges().find((c) => c.plan === null && c.payment !== null && c.source === 'CONSULTATION')!;
     montar(pagado);
     confirmar();
     http
@@ -145,11 +145,11 @@ describe('FacturaSimuladaDialog', () => {
   });
 
   it('si el pago pasa y la factura falla, el reintento sólo factura: no vuelve a cobrar', () => {
-    const cobro = motor.listarCobros().find((c) => c.plan === null && c.payment === null && c.source === 'CONSULTATION')!;
+    const cobro = motor.listCharges().find((c) => c.plan === null && c.payment === null && c.source === 'CONSULTATION')!;
     montar(cobro);
-    fixture.componentInstance['formulario'].controls.methodCode.setValue(1);
+    fixture.componentInstance['form'].controls.methodCode.setValue(1);
     confirmar();
-    const pagado = motor.registrarPago(cobro.id, 1);
+    const pagado = motor.registerPayment(cobro.id, 1);
     if (!pagado.ok) throw new Error(pagado.error.message);
     http.expectOne(`/billing/simulated/charges/${cobro.id}/payment`).flush(pagado.value);
     http
@@ -165,11 +165,11 @@ describe('FacturaSimuladaDialog', () => {
   });
 
   it('un 409 «ya estaba pagado» no traba el modal: el reintento sólo factura', () => {
-    const cobro = motor.listarCobros().find((c) => c.plan === null && c.payment === null && c.source === 'CONSULTATION')!;
+    const cobro = motor.listCharges().find((c) => c.plan === null && c.payment === null && c.source === 'CONSULTATION')!;
     montar(cobro);
-    fixture.componentInstance['formulario'].controls.methodCode.setValue(1);
+    fixture.componentInstance['form'].controls.methodCode.setValue(1);
     confirmar();
-    motor.registrarPago(cobro.id, 2); // lo pagó otra persona mientras tanto
+    motor.registerPayment(cobro.id, 2); // lo pagó otra persona mientras tanto
     http
       .expectOne(`/billing/simulated/charges/${cobro.id}/payment`)
       .flush(

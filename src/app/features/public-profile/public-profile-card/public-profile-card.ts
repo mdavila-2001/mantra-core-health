@@ -12,7 +12,7 @@ import {
 import { AppButton } from '@shared/components/atoms/button/button';
 import { Badge } from '@shared/components/atoms/badge/badge';
 import { AppMap } from '@shared/components/organisms/map/map';
-import type { PinMapa } from '@shared/components/organisms/map/map-pin.types';
+import type { PinMap } from '@shared/components/organisms/map/map-pin.types';
 import { PublicPostCard } from '../public-post-card/public-post-card';
 import { PublicProfilePager } from '../public-profile-pager/public-profile-pager';
 import {
@@ -25,7 +25,7 @@ import {
 } from '@core/data-access/public-directory/public-directory.types';
 import { AuthService } from '@core/auth/auth.service';
 import { RateEncounterDialog } from '../rate-encounter-dialog/rate-encounter-dialog';
-import { inicialesDe } from '@shared/text/initials';
+import { initialsOf } from '@shared/text/initials';
 
 /** Cuántas publicaciones se ven por página en la ficha. */
 export const PUBLICACIONES_POR_PAGINA = 3;
@@ -177,7 +177,7 @@ export class PublicProfileCard {
   });
 
   /** Las iniciales del cuadrado cuando no hay foto. Ver `shared/text/iniciales`. */
-  protected readonly iniciales = computed(() => inicialesDe(this.perfil().displayName));
+  protected readonly iniciales = computed(() => initialsOf(this.perfil().displayName));
 
   /** La puntuación con coma decimal, como se lee en castellano. */
   protected readonly puntuacion = computed(() => {
@@ -209,7 +209,7 @@ export class PublicProfileCard {
    * `tile.openstreetmap.org`. Sin coordenadas no hay pin que dibujar: a
    * diferencia de un *embed* de Google, Leaflet no busca por texto.
    */
-  protected readonly pines = computed<readonly PinMapa[]>(() => {
+  protected readonly pines = computed<readonly PinMap[]>(() => {
     const { location, displayName, practiceSites } = this.perfil();
     // Un pin por sede: son lugares distintos, y quien elige a quién consultar
     // los compara entre sí. Con una sola coordenada el mapa contestaba «dónde

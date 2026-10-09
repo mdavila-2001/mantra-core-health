@@ -1,6 +1,6 @@
 import { RECURSO_CONSULTORIO_MEDICA, RECURSO_MEDICA, reservas } from './fixtures/agenda';
-import { ESTADO_RESERVA } from './fixtures/concepts';
-import { MEDICA, PACIENTE } from './fixtures/people';
+import { BOOKING_STATUS } from './fixtures/concepts';
+import { MEDICAL, PACIENTE } from './fixtures/people';
 import { ahora, uuid } from './mock-store';
 
 /* ============================================================================
@@ -38,7 +38,7 @@ import { ahora, uuid } from './mock-store';
     ========================================================================== */
 
 /** Minutos de gracia antes de dar por libre un cupo que nadie inició. */
-export const MINUTOS_DE_GRACIA = 10;
+export const GRACE_MINUTES = 10;
 
 /**
  * Los estados en los que una reserva **todavía no empezó**.
@@ -48,10 +48,10 @@ export const MINUTOS_DE_GRACIA = 10;
  * a una reserva de esta lista es que la consulta arranque (`BK-IN-PROGRESS`) o
  * termine (`BK-COMPLETED`).
  */
-const SIN_EMPEZAR = ['BK-CONFIRMED', 'BK-CHECKED-IN'] as const;
+const NOT_STARTED = ['BK-CONFIRMED', 'BK-CHECKED-IN'] as const;
 
 /** Un cupo que quedó libre, con lo que hace falta para ofrecerlo. */
-export interface HorarioLiberado {
+export interface ReleasedSchedule {
   readonly bookableSlotId: string;
   readonly resourceId: string;
   readonly startAt: string;
@@ -77,9 +77,9 @@ export interface HorarioLiberado {
  * enteras—. Un aviso que ofrece algo que no se puede tomar es peor que ninguno:
  * enseña que los avisos de la aplicación no valen la pena de leerse.
  */
-export function horariosLiberados(): readonly HorarioLiberado[] {
+export function releasedSchedules(): readonly ReleasedSchedule[] {
   const ahoraMs = Date.parse(ahora());
-  const sinEmpezar = new Set(SIN_EMPEZAR.map((codigo) => ESTADO_RESERVA[codigo]));
+  const sinEmpezar = new Set(NOT_STARTED.map((codigo) => BOOKING_STATUS[codigo]));
 
   return reservas
     .filtrar(
@@ -88,7 +88,7 @@ export function horariosLiberados(): readonly HorarioLiberado[] {
         r.patientProfileId !== PACIENTE.id &&
         sinEmpezar.has(r.statusConceptId) &&
         // Ya pasó la gracia…
-        Date.parse(r.startAt) + MINUTOS_DE_GRACIA * 60_000 <= ahoraMs &&
+        Date.parse(r.startAt) + GRACE_MINUTES * 60_000 <= ahoraMs &&
         // …y el cupo todavía no terminó, así que se puede tomar.
         Date.parse(r.endAt) > ahoraMs,
     )
@@ -112,7 +112,7 @@ export function horariosLiberados(): readonly HorarioLiberado[] {
  *
  * @param patientProfileId - El perfil de quien está mirando la campana.
  */
-export function esperaUnHueco(patientProfileId: string): boolean {
+export function waitsForGap(patientProfileId: string): boolean {
   const ahoraMs = Date.parse(ahora());
   return reservas
     .filtrar((r) => r.patientProfileId === patientProfileId)
@@ -124,7 +124,7 @@ export function esperaUnHueco(patientProfileId: string): boolean {
 }
 
 /** Cómo se lee una hora en el aviso: «martes 10 a las 10:30». */
-function cuando(iso: string): string {
+function when(iso: string): string {
   const fecha = new Date(iso);
   const dia = fecha.toLocaleDateString('es-BO', { weekday: 'long', day: 'numeric', month: 'long' });
   const hora = fecha.toLocaleTimeString('es-BO', { hour: '2-digit', minute: '2-digit' });
@@ -139,13 +139,13 @@ function cuando(iso: string): string {
  * toast. Va en el `payload` y no en el asunto porque el asunto es prosa y
  * cambia; una condición no se cuelga de una frase.
  */
-export function avisoDeHorarioLiberado(hueco: HorarioLiberado) {
+export function releasedScheduleNotice(hueco: ReleasedSchedule) {
   return {
     id: uuid(`notif-hueco-${hueco.bookableSlotId}`),
     userId: PACIENTE.userId,
     category: 'SCHEDULING' as const,
     subject: 'Se liberó un horario',
-    bodyText: `Un paciente no confirmó su cita del ${cuando(hueco.startAt)} con la ${MEDICA.professionalTitle} ${MEDICA.displayName}. Si le sirve mejor que la suya, puede tomarla.`,
+    bodyText: `Un paciente no confirmó su cita del ${when(hueco.startAt)} con la ${MEDICAL.professionalTitle} ${MEDICAL.displayName}. Si le sirve mejor que la suya, puede tomarla.`,
     // Mismo literal que `RECURSO_CUPO` en la API real
     // (`scheduling/notices/agenda-notices.ts`): AG-06, mock honesto.
     destination: { type: 'scheduling.bookable_slots', id: hueco.bookableSlotId },

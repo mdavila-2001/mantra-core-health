@@ -5,7 +5,7 @@ import {
   CARGADOR_DE_LEAFLET,
   type CargadorDeLeaflet,
 } from '../../../../../../shared/components/organisms/map/map';
-import type { PinMapa } from '../../../../../../shared/components/organisms/map/map-pin.types';
+import type { PinMap } from '../../../../../../shared/components/organisms/map/map-pin.types';
 import type { SedeVisible } from '../practitioner-profile-view.types';
 
 /**
@@ -62,8 +62,8 @@ describe('PracticeSitesMap', () => {
   }
 
   /** Los pines que el componente le pasa al mapa. */
-  function pines(fixture: ReturnType<typeof montar>): readonly PinMapa[] {
-    return (fixture.componentInstance as unknown as { pines: () => readonly PinMapa[] }).pines();
+  function pines(fixture: ReturnType<typeof montar>): readonly PinMap[] {
+    return (fixture.componentInstance as unknown as { pines: () => readonly PinMap[] }).pines();
   }
 
   it('pone un pin por sede ubicada, con el mismo número que la lista', () => {

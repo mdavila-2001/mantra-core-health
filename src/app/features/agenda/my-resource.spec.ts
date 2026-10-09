@@ -1,6 +1,6 @@
 import { firstValueFrom, of } from 'rxjs';
 
-import { miRecursoDeAgenda, misRecursosDeAgenda } from './my-resource';
+import { agendaResourceMy, agendaResourcesMy } from './my-resource';
 import type { SchedulingClient } from '@core/data-access/scheduling/scheduling.client';
 import type { AgendaResource } from '@core/data-access/scheduling/scheduling.types';
 
@@ -38,7 +38,7 @@ describe('misRecursosDeAgenda', () => {
       recurso('r-3', 'Segundo turno propio'),
     ]);
 
-    const recursos = await firstValueFrom(misRecursosDeAgenda(cliente, 't-1', PERFIL));
+    const recursos = await firstValueFrom(agendaResourcesMy(cliente, 't-1', PERFIL));
 
     expect(recursos.map((r) => r.name)).toEqual([
       'Consultorio propio',
@@ -56,13 +56,13 @@ describe('misRecursosDeAgenda', () => {
       recurso('r-9', 'La de otro', 'hp-999'),
     ]);
 
-    const recursos = await firstValueFrom(misRecursosDeAgenda(cliente, 't-1', PERFIL));
+    const recursos = await firstValueFrom(agendaResourcesMy(cliente, 't-1', PERFIL));
 
     expect(recursos.map((r) => r.id)).toEqual(['r-1']);
   });
 
   it('sin ninguna agenda devuelve la lista vacía, no un error', async () => {
-    const recursos = await firstValueFrom(misRecursosDeAgenda(clienteCon([]), 't-1', PERFIL));
+    const recursos = await firstValueFrom(agendaResourcesMy(clienteCon([]), 't-1', PERFIL));
 
     expect(recursos).toEqual([]);
   });
@@ -75,13 +75,13 @@ describe('miRecursoDeAgenda', () => {
     // pidió para una — queda dicho, no hecho.
     const cliente = clienteCon([recurso('r-1', 'Primera'), recurso('r-2', 'Segunda')]);
 
-    const elegido = await firstValueFrom(miRecursoDeAgenda(cliente, 't-1', PERFIL));
+    const elegido = await firstValueFrom(agendaResourceMy(cliente, 't-1', PERFIL));
 
     expect(elegido?.id).toBe('r-1');
   });
 
   it('sin agendas devuelve null, como antes', async () => {
-    const elegido = await firstValueFrom(miRecursoDeAgenda(clienteCon([]), 't-1', PERFIL));
+    const elegido = await firstValueFrom(agendaResourceMy(clienteCon([]), 't-1', PERFIL));
 
     expect(elegido).toBeNull();
   });

@@ -25,7 +25,7 @@ import type { ContactoDeLaEmpresa } from '../../pharmacy-profile.types';
     class: 'contacto',
   },
 })
-export class FichaDeContacto {
+export class ContactSheet {
   readonly contacto = input.required<ContactoDeLaEmpresa>();
 
   /**
@@ -35,7 +35,7 @@ export class FichaDeContacto {
    * separadores). Casi todos los navegadores los toleran, pero el que no lo
    * hace deja el enlace muerto, y el texto visible se conserva igual.
    */
-  protected marcable(celular: string): string {
+  protected markable(celular: string): string {
     return celular.replace(/[^\d+]/g, '');
   }
 }

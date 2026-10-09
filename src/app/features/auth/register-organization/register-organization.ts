@@ -28,41 +28,41 @@ import {
   telefonoCompleto,
 } from '../../../shared/components/molecules/phone-input/phone-input';
 import { AuthSplit } from '../../../shared/components/organisms/auth-split/auth-split';
-import { CampoPersonalizado } from '../../../shared/components/organisms/paginated-form/custom-field';
+import { CustomField } from '../../../shared/components/organisms/paginated-form/custom-field';
 import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
 import { mensajeDeError } from '../../../shared/forms/paginated/error-message';
 import {
-  MENSAJE_CONTRASENA_CORTA,
-  validadoresDeContrasena,
+  MESSAGE_SHORT_PASSWORD,
+  passwordValidators,
 } from '../shared-registration/password-policy';
-import { paginarCampos } from '../../../shared/forms/paginated/paginate-fields';
+import { paginateFields } from '../../../shared/forms/paginated/paginate-fields';
 import type { PaginaDeFormulario } from '../../../shared/forms/paginated/paginated-form.types';
 import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
 import {
-  camposDeDocumentosLegales,
-  campoDelPoderNotariado,
-  DOCUMENTOS_LEGALES_DEL_REGISTRO,
-  type ClaveDeDocumentoDelAlta,
+  legalDocumentsFields,
+  notarizedPowerField,
+  RECORD_LEGAL_DOCUMENTS,
+  type EnrollmentDocumentKey,
 } from '../shared-registration/legal-documents';
 import {
-  AVISO_REESCRIBIR_DIRECCION,
-  UbicacionPicker,
-  type Coordenadas,
-  type IdsDePrueba,
+  NOTICE_REWRITE_ADDRESS,
+  MapLocationPicker,
+  type Coordinates,
+  type TestIds,
 } from '../shared-registration/map-location-picker/map-location-picker';
-import { unirNombres } from '../../../core/profession/additional-names';
+import { joinNames } from '../../../core/profession/additional-names';
 import {
   esPaisMultizona,
   obtenerZonaHorariaDefectoDePais,
   obtenerZonasHorariasDePais,
 } from '../../../core/i18n/timezone-by-country';
-import { CamposDeNombreEnLinea } from '../shared-registration/inline-name-fields/inline-name-fields';
+import { InlineNameFields } from '../shared-registration/inline-name-fields/inline-name-fields';
 import {
-  grupoDeNombre,
-  nombreCompleto,
-  type ValorDeNombre,
+  nameGroup,
+  completeName,
+  type NameValue,
 } from '../shared-registration/name-fields/person-name';
-import { codigoDesdeSigla, MAX_SIGLA, MIN_SIGLA, siglaDerivaCodigo } from './code-from-acronym';
+import { codeFromAcronym, MAX_ACRONYM, MIN_ACRONYM, codeDriftAcronym } from './code-from-acronym';
 
 /** Largos que declara el bloque `organization` de `RegisterOrganizationDto`. */
 const MAX_NOMBRE = 300;
@@ -98,7 +98,7 @@ const PAIS_POR_DEFECTO = 'BO';
  */
 function grupoDeGerente() {
   return new FormGroup({
-    nombre: grupoDeNombre(true),
+    nombre: nameGroup(true),
     phone: new FormControl('', {
       nonNullable: true,
       validators: [Validators.required, telefonoCompleto],
@@ -165,10 +165,10 @@ function grupoDeGerente() {
     AuthSplit,
     AnnounceOnAppear,
     PaginatedForm,
-    CampoPersonalizado,
+    CustomField,
     NgTemplateOutlet,
     DropzonePdf,
-    UbicacionPicker,
+    MapLocationPicker,
     // Representante legal y gerencias (subtarea 1.4): el acordeón se declara
     // fuera del `[formGroup]` del motor (como los demás `ng-template` de
     // `appCampoPersonalizado`), así que sus controles se enchufan con
@@ -179,7 +179,7 @@ function grupoDeGerente() {
     FormField,
     Input,
     PhoneInput,
-    CamposDeNombreEnLinea,
+    InlineNameFields,
   ],
   templateUrl: './register-organization.html',
   styleUrl: './register-organization.css',
@@ -211,9 +211,9 @@ export class RegisterOrganization {
       nonNullable: true,
       validators: [
         Validators.required,
-        Validators.minLength(MIN_SIGLA),
-        Validators.maxLength(MAX_SIGLA),
-        siglaDerivaCodigo,
+        Validators.minLength(MIN_ACRONYM),
+        Validators.maxLength(MAX_ACRONYM),
+        codeDriftAcronym,
       ],
     }),
     // País de constitución y tipo societario (subtarea 1.1). El país nunca
@@ -271,7 +271,7 @@ export class RegisterOrganization {
     // alta. El teléfono es el único dato de contacto opcional: el registro
     // de procesos no lo pide, y `telefonoCompleto` deja pasar la cadena
     // vacía (ver su JSDoc).
-    legalRepresentative: grupoDeNombre(true),
+    legalRepresentative: nameGroup(true),
     legalRepresentativeIdNumber: new FormControl('', {
       nonNullable: true,
       validators: [
@@ -309,7 +309,7 @@ export class RegisterOrganization {
     // acá sólo falta la clave con la que va a entrar. Ver `datos()`.
     password: new FormControl('', {
       nonNullable: true,
-      validators: [...validadoresDeContrasena],
+      validators: [...passwordValidators],
     }),
   });
 
@@ -382,7 +382,7 @@ export class RegisterOrganization {
    * zona horaria cambian con el país elegido (subtareas 1.1 y ésta).
    */
   protected readonly paginas = computed(() =>
-    paginarCampos([
+    paginateFields([
       {
         titulo: 'La empresa',
         hint: 'Cómo se llama y qué figura jurídica tiene.',
@@ -492,7 +492,7 @@ export class RegisterOrganization {
         clave: 'documentos-legales',
         icon: 'folder' as const,
         hint: 'Solo PDF, hasta 10 MB por archivo. Se suben al instante y quedan pendientes de verificación.',
-        campos: camposDeDocumentosLegales(this.incorporationCountryElegido(), uiLanguage()),
+        campos: legalDocumentsFields(this.incorporationCountryElegido(), uiLanguage()),
       },
       {
         titulo: 'Representante legal',
@@ -537,7 +537,7 @@ export class RegisterOrganization {
             required: true,
             autocomplete: 'new-password',
             testId: 'registro-organizacion-representante-password',
-            mensajeDeError: MENSAJE_CONTRASENA_CORTA,
+            mensajeDeError: MESSAGE_SHORT_PASSWORD,
           },
           {
             key: 'legalRepresentativePhone',
@@ -546,7 +546,7 @@ export class RegisterOrganization {
             testId: 'registro-organizacion-representante-telefono',
             mensajeDeError: 'Complete el número.',
           },
-          campoDelPoderNotariado(this.incorporationCountryElegido(), uiLanguage()),
+          notarizedPowerField(this.incorporationCountryElegido(), uiLanguage()),
         ],
       },
       {
@@ -605,8 +605,8 @@ export class RegisterOrganization {
     // El representante legal es el owner: sus nombres adicionales viajan
     // plegados en el `middleName` de la cuenta, que el backend topa en 100.
     this.form.controls.legalRepresentative.addValidators((grupo) => {
-      const nombre = grupo.getRawValue() as ValorDeNombre;
-      return unirNombres([nombre.middleName, nombre.thirdName, ...nombre.extraNames]).length > 100
+      const nombre = grupo.getRawValue() as NameValue;
+      return joinNames([nombre.middleName, nombre.thirdName, ...nombre.extraNames]).length > 100
         ? { nombresAdicionalesLargos: true }
         : null;
     });
@@ -678,7 +678,7 @@ export class RegisterOrganization {
    * asistente destruya y recree esta página al navegar (misma lección que
    * `documentosSubidos`, arriba).
    */
-  readonly gpsCasaMatriz = signal<Coordenadas | null>(null);
+  readonly gpsCasaMatriz = signal<Coordinates | null>(null);
 
   /**
    * Si el mapa vació la dirección escrita y todavía nadie la reescribió (D-06).
@@ -694,7 +694,7 @@ export class RegisterOrganization {
   readonly direccionPorReescribir = computed(
     () => this.direccionVaciadaPorElMapa() && this.direccionEscrita().trim() === '',
   );
-  protected readonly avisoReescribir = AVISO_REESCRIBIR_DIRECCION;
+  protected readonly avisoReescribir = NOTICE_REWRITE_ADDRESS;
 
   /** Tocaron el mapa de la casa matriz: la dirección escrita ya no vale (D-06). */
   vaciarDireccionPorElMapa(): void {
@@ -706,7 +706,7 @@ export class RegisterOrganization {
     this.direccionVaciadaPorElMapa.set(true);
   }
 
-  protected readonly idsUbicacionCasaMatriz: IdsDePrueba = {
+  protected readonly idsUbicacionCasaMatriz: TestIds = {
     mapa: 'registro-organizacion-casa-matriz-map',
     confirmada: 'registro-organizacion-casa-matriz-location-confirmed',
     avisoGeocodificacion: 'registro-organizacion-casa-matriz-geocoding-notice',
@@ -717,7 +717,7 @@ export class RegisterOrganization {
   };
 
   /** Los cinco documentos legales, en el orden del registro de procesos (subtarea 1.2). */
-  protected readonly documentosLegales = DOCUMENTOS_LEGALES_DEL_REGISTRO;
+  protected readonly documentosLegales = RECORD_LEGAL_DOCUMENTS;
 
   /** Cómo sube cada `app-dropzone-pdf`: delega en el mismo endpoint de pre-carga pública. */
   protected readonly subirDocumento: PdfUploader = (file) =>
@@ -729,11 +729,11 @@ export class RegisterOrganization {
    * Ver el JSDoc de `documentoInicial` en `DropzonePdf`.
    */
   protected readonly documentosSubidos = signal<
-    Partial<Record<ClaveDeDocumentoDelAlta, UploadedDocument>>
+    Partial<Record<EnrollmentDocumentKey, UploadedDocument>>
   >({});
 
   /** Guarda el `fileId` que la dropzone recordó, en el control que le corresponde. */
-  protected registrarDocumento(clave: ClaveDeDocumentoDelAlta, fileId: string | null): void {
+  protected registrarDocumento(clave: EnrollmentDocumentKey, fileId: string | null): void {
     const control = this.form.controls[clave];
     control.setValue(fileId ?? '');
     control.markAsTouched();
@@ -747,7 +747,7 @@ export class RegisterOrganization {
   }
 
   /** Recuerda el documento recién subido para poder restaurarlo tras ir y volver. */
-  protected recordarDocumento(clave: ClaveDeDocumentoDelAlta, documento: UploadedDocument): void {
+  protected recordarDocumento(clave: EnrollmentDocumentKey, documento: UploadedDocument): void {
     this.documentosSubidos.update((actual) => ({ ...actual, [clave]: documento }));
   }
 
@@ -759,18 +759,18 @@ export class RegisterOrganization {
    * contexto para un `ng-template` sin directiva propia), y TypeScript no
    * deja indexar un `Record` con una clave `any` bajo `noImplicitAny`.
    */
-  protected documentoInicialDe(clave: ClaveDeDocumentoDelAlta): UploadedDocument | null {
+  protected documentoInicialDe(clave: EnrollmentDocumentKey): UploadedDocument | null {
     return this.documentosSubidos()[clave] ?? null;
   }
 
   /** Si ese documento está tocado y vacío/incompleto — mismo criterio que el resto de los campos. */
-  protected esDocumentoInvalido(clave: ClaveDeDocumentoDelAlta): boolean {
+  protected esDocumentoInvalido(clave: EnrollmentDocumentKey): boolean {
     const control = this.form.controls[clave];
     return control.touched && control.invalid;
   }
 
   /** El rótulo ya traducido del documento, para pasárselo a su dropzone. */
-  protected etiquetaDeDocumento(clave: ClaveDeDocumentoDelAlta): string {
+  protected etiquetaDeDocumento(clave: EnrollmentDocumentKey): string {
     const campo = this.paginas()
       .flatMap((pagina) => pagina.campos)
       .find((c) => c.key === clave);
@@ -913,7 +913,7 @@ export class RegisterOrganization {
     const timeZone = raw.timeZone.trim();
     // El código de tenant y el de aseguradora nacen de la sigla: la persona
     // ya no escribe ninguno de los dos. Ver el JSDoc de `codigoDesdeSigla`.
-    const codigo = codigoDesdeSigla(raw.sigla);
+    const codigo = codeFromAcronym(raw.sigla);
     // El owner ES el representante legal: la API pide una cuenta owner con
     // su correo y su clave, y la aseguradora sólo tiene una persona que
     // inicia sesión. Su nombre y su correo viajan dos veces —como `owner`,
@@ -922,7 +922,7 @@ export class RegisterOrganization {
     //
     // El backend no tiene columna de tercer nombre: se pliega en
     // `middleName`, igual que en el alta de paciente y de médico.
-    const segundoNombre = unirNombres([
+    const segundoNombre = joinNames([
       raw.legalRepresentative.middleName,
       raw.legalRepresentative.thirdName,
       ...raw.legalRepresentative.extraNames,
@@ -930,8 +930,8 @@ export class RegisterOrganization {
     const apellidoMaterno = raw.legalRepresentative.motherLastName.trim();
     const casaMatriz = this.gpsCasaMatriz();
     const telefonoRepresentante = raw.legalRepresentativePhone.trim();
-    const gerente = (g: { nombre: ValorDeNombre; phone: string; email: string }) => ({
-      fullName: nombreCompleto(g.nombre),
+    const gerente = (g: { nombre: NameValue; phone: string; email: string }) => ({
+      fullName: completeName(g.nombre),
       phone: g.phone.trim(),
       email: g.email.trim(),
     });
@@ -967,7 +967,7 @@ export class RegisterOrganization {
       // Representante legal y gerencias (subtarea 1.4): al nivel de
       // `organization`, nunca dentro de `payer` — ver el JSDoc de la clase.
       legalRepresentative: {
-        fullName: nombreCompleto(raw.legalRepresentative),
+        fullName: completeName(raw.legalRepresentative),
         idNumber: raw.legalRepresentativeIdNumber.trim(),
         email: raw.legalRepresentativeEmail.trim(),
         ...(telefonoRepresentante === '' ? {} : { phone: telefonoRepresentante }),

@@ -20,14 +20,14 @@ import type { ChipVariant } from '../../../shared/components/atoms/chip/chip.typ
  * son el mismo trabajo — sale de la farmacia — y cambian sólo en la
  * dirección, que el detalle muestra cuando la API la trae.
  */
-export interface EntregaPresentation {
+export interface DeliveryPresentation {
   readonly tone: ChipVariant;
   readonly label: string;
   /** Qué implica para quien atiende. */
   readonly descripcion: string;
 }
 
-const PRESENTACION_POR_MODALIDAD: Readonly<Record<ModalidadDeEntrega, EntregaPresentation>> =
+const PRESENTATION_BY_MODALITY: Readonly<Record<ModalidadDeEntrega, DeliveryPresentation>> =
   Object.freeze({
     RETIRO: {
       tone: 'neutral',
@@ -51,20 +51,20 @@ const PRESENTACION_POR_MODALIDAD: Readonly<Record<ModalidadDeEntrega, EntregaPre
  * modalidad— y se resuelve no pintando nada: inventar «Recojo en mostrador»
  * donde el contrato no dice nada sería afirmar algo que nadie declaró.
  */
-export function toEntregaPresentation(
+export function toDeliveryPresentation(
   modalidad: ModalidadDeEntrega | null,
-): EntregaPresentation | null {
-  return modalidad === null ? null : PRESENTACION_POR_MODALIDAD[modalidad];
+): DeliveryPresentation | null {
+  return modalidad === null ? null : PRESENTATION_BY_MODALITY[modalidad];
 }
 
 /** El medio de entrega ya resuelto: por dónde sale, cómo se dice y a dónde. */
-export interface EntregaEnPantalla {
+export interface DeliveryInScreen {
   /**
    * **La modalidad efectiva del pedido.** Es la que manda para todo lo que la
    * pantalla haga con este pedido: lo que dibuja y lo que ofrece hacer.
    */
   readonly modalidad: ModalidadDeEntrega;
-  readonly presentacion: EntregaPresentation;
+  readonly presentacion: DeliveryPresentation;
   /**
    * La dirección de entrega del contrato (`deliveryAddressText`), cuando la
    * hay. A un retiro no se le pinta domicilio aunque el pedido traiga uno.
@@ -84,9 +84,9 @@ export interface EntregaEnPantalla {
  * domicilio y el botón ofreciendo prepararlo para retiro en mostrador. Lo que
  * la pantalla muestra y lo que ofrece hacer salen de la misma respuesta.
  */
-export function entregaEnPantalla(pedido: PedidoFarmacia): EntregaEnPantalla | null {
+export function deliveryInScreen(pedido: PedidoFarmacia): DeliveryInScreen | null {
   const modalidad = pedido.modalidad;
-  const presentacion = toEntregaPresentation(modalidad);
+  const presentacion = toDeliveryPresentation(modalidad);
   if (modalidad === null || presentacion === null) {
     return null;
   }

@@ -1,8 +1,8 @@
 <app-content-dialog
-  [heading]="titulo()"
+  [heading]="title()"
   description="Una cuenta recibe (debe) y otra entrega (haber), por el mismo monto."
   size="md"
-  [dismissible]="!guardando()"
+  [dismissible]="!saving()"
   data-testid="transaccion-dialog"
   (closed)="closed.emit()"
 >
@@ -16,9 +16,9 @@
     submitLabel="Guardar"
     submitTestId="transaccion-guardar"
     cancelLabel="Cancelar"
-    [pending]="guardando()"
+    [pending]="saving()"
     (cancelado)="dialog().close()"
-    (enviado)="guardar()"
+    (enviado)="save()"
   >
     <ng-template appCampoPersonalizado="description">
 <app-form-field
@@ -51,7 +51,7 @@
       >
         <app-select
           [formControl]="form.controls.debitAccountId"
-          [options]="opciones()"
+          [options]="options()"
           placeholder="Elija la cuenta"
           ariaLabel="Cuenta del debe"
           data-testid="transaccion-debe"
@@ -66,14 +66,14 @@
         [errorMessage]="
           form.controls.creditAccountId.touched && form.controls.creditAccountId.invalid
             ? 'Elija la cuenta del haber.'
-            : mismaCuenta()
+            : accountSame()
               ? 'El debe y el haber tienen que ser cuentas distintas.'
               : ''
         "
       >
         <app-select
           [formControl]="form.controls.creditAccountId"
-          [options]="opciones()"
+          [options]="options()"
           placeholder="Elija la cuenta"
           ariaLabel="Cuenta del haber"
           data-testid="transaccion-haber"
@@ -84,11 +84,11 @@
 <app-form-field
         label="Fecha"
         [required]="true"
-        [errorMessage]="fechaTocada() && fecha() === null ? 'Elija la fecha.' : ''"
+        [errorMessage]="touchedDate() && date() === null ? 'Elija la fecha.' : ''"
       >
         <app-date-picker
-          [value]="fecha()"
-          (valueChange)="fecha.set($event)"
+          [value]="date()"
+          (valueChange)="date.set($event)"
           data-testid="transaccion-fecha"
         />
       </app-form-field>
@@ -99,7 +99,7 @@
         [required]="true"
         hint="En bolivianos."
         [errorMessage]="
-          montoInvalido() ? 'Escriba un monto mayor a cero, con hasta dos decimales.' : ''
+          invalidAmount() ? 'Escriba un monto mayor a cero, con hasta dos decimales.' : ''
         "
       >
         <app-input

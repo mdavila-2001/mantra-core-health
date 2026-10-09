@@ -5,8 +5,8 @@ import { blobToDataUrl } from '../../../../core/data-access/files/blob-to-data-u
 import type { RejectedFile } from '../../../../shared/components/molecules/file-input/file-input';
 
 /** Formatos y peso que admite una imagen de firma o de sello. */
-export const FORMATOS_DE_IMAGEN_DE_FIRMA = 'image/png,image/jpeg,image/webp';
-export const MAX_BYTES_DE_IMAGEN_DE_FIRMA = 2 * 1024 * 1024;
+export const SIGNATURE_IMAGE_FORMATS = 'image/png,image/jpeg,image/webp';
+export const SIGNATURE_IMAGE_MAX_BYTES = 2 * 1024 * 1024;
 
 /**
  * El estado de **una** imagen editable del perfil —la firma o el sello— mientras
@@ -23,16 +23,16 @@ export const MAX_BYTES_DE_IMAGEN_DE_FIRMA = 2 * 1024 * 1024;
  * - Sube al elegir, no al guardar: un archivo que el servidor rechaza se dice en
  *   el momento y no después de haber escrito el resto del formulario.
  */
-export class EstadoDeImagen {
-  private readonly guardada = signal<string | null>(null);
-  private readonly pendiente = signal<{ readonly fileId: string | null } | null>(null);
+export class ImageStatus {
+  private readonly saved = signal<string | null>(null);
+  private readonly pending = signal<{ readonly fileId: string | null } | null>(null);
 
   /** Lo que la caja muestra ahora: puede ser una imagen recién elegida. */
   readonly visible = signal<string | null>(null);
-  readonly subiendo = signal(false);
+  readonly uploading = signal(false);
   readonly error = signal('');
   /** Vacío siempre: el selector sólo dispara; la imagen vive en `visible`. */
-  readonly archivos = signal<readonly File[]>([]);
+  readonly files = signal<readonly File[]>([]);
 
   /**
    * @param nombre - Cómo se la nombra en los avisos: «la firma», «el sello».
@@ -40,46 +40,46 @@ export class EstadoDeImagen {
   constructor(private readonly nombre: string) {}
 
   /** `undefined` = nada pendiente; `string` = id a guardar; `null` = quitarla. */
-  get cambio(): string | null | undefined {
-    const pendiente = this.pendiente();
+  get change(): string | null | undefined {
+    const pendiente = this.pending();
     return pendiente === null ? undefined : pendiente.fileId;
   }
 
   /** Lo que ya hay en el servidor. No pisa lo que la persona ya eligió. */
-  cargar(url: string | null): void {
-    this.guardada.set(url);
-    if (this.pendiente() === null) {
+  load(url: string | null): void {
+    this.saved.set(url);
+    if (this.pending() === null) {
       this.visible.set(url);
     }
   }
 
   /** Sube la imagen elegida y la deja pendiente de guardar. */
-  elegir(archivos: readonly File[], subir: (archivo: File) => Observable<string>): void {
+  choose(archivos: readonly File[], subir: (archivo: File) => Observable<string>): void {
     const archivo = archivos[0];
-    if (archivo === undefined || this.subiendo()) {
+    if (archivo === undefined || this.uploading()) {
       return;
     }
     this.error.set('');
-    this.subiendo.set(true);
+    this.uploading.set(true);
     subir(archivo)
       .pipe(
         switchMap((fileId) => blobToDataUrl(archivo).pipe(map((vista) => ({ fileId, vista })))),
       )
       .subscribe({
         next: ({ fileId, vista }) => {
-          this.subiendo.set(false);
-          this.pendiente.set({ fileId });
+          this.uploading.set(false);
+          this.pending.set({ fileId });
           this.visible.set(vista);
         },
         error: () => {
-          this.subiendo.set(false);
+          this.uploading.set(false);
           this.error.set(`No se pudo subir ${this.nombre}. Pruebe de nuevo.`);
         },
       });
   }
 
   /** El selector descartó un archivo: se dice por qué, sin tocar lo que hay. */
-  rechazar(rechazados: readonly RejectedFile[]): void {
+  reject(rechazados: readonly RejectedFile[]): void {
     this.error.set(
       rechazados[0]?.reason === 'tamaño'
         ? `La imagen pesa más de 2 MB. Elija una más liviana para ${this.nombre}.`
@@ -88,24 +88,24 @@ export class EstadoDeImagen {
   }
 
   /** Pide quitarla. Si nunca hubo una guardada, no hay nada que escribir. */
-  quitar(): void {
+  remove(): void {
     this.error.set('');
-    this.pendiente.set(this.guardada() === null ? null : { fileId: null });
+    this.pending.set(this.saved() === null ? null : { fileId: null });
     this.visible.set(null);
   }
 
   /** Vuelve a lo guardado. */
-  descartar(): void {
-    this.pendiente.set(null);
-    this.visible.set(this.guardada());
+  discard(): void {
+    this.pending.set(null);
+    this.visible.set(this.saved());
     this.error.set('');
   }
 
   /** Lo pendiente ya se guardó: lo que se ve pasa a ser lo guardado. */
-  confirmar(): void {
-    if (this.pendiente() !== null) {
-      this.guardada.set(this.visible());
-      this.pendiente.set(null);
+  confirm(): void {
+    if (this.pending() !== null) {
+      this.saved.set(this.visible());
+      this.pending.set(null);
     }
   }
 }

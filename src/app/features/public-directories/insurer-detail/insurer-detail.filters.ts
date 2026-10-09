@@ -15,23 +15,23 @@ import type { FilaDeClausula, PlanDelMercado } from './insurer-detail.types';
  */
 
 /** Las claves de la URL. `q` es la del buscador (`SEARCH_PARAM` de la barra). */
-export const CLAVE_TIPO = 'tipo';
-export const CLAVE_SEGMENTO = 'segmento';
-export const CLAVE_COBERTURA = 'cobertura';
+export const TYPE_KEY = 'tipo';
+export const SEGMENT_KEY = 'segmento';
+export const COVERAGE_KEY = 'cobertura';
 
-const DIACRITICOS = /\p{Diacritic}/gu;
+const DIACRITICS = /\p{Diacritic}/gu;
 
 /** «Maternidad» encuentra «maternidad» y «Odontologia» encuentra «Odontología». */
-export function normalizar(texto: string): string {
-  return texto.normalize('NFD').replace(DIACRITICOS, '').toLowerCase().replace(/\s+/g, ' ').trim();
+export function normalize(texto: string): string {
+  return texto.normalize('NFD').replace(DIACRITICS, '').toLowerCase().replace(/\s+/g, ' ').trim();
 }
 
-function incluye(texto: string | null, termino: string): boolean {
-  return texto !== null && normalizar(texto).includes(termino);
+function includes(texto: string | null, termino: string): boolean {
+  return texto !== null && normalize(texto).includes(termino);
 }
 
 /** Los valores distintos, en el orden en que aparecen por primera vez. */
-function distintos(valores: readonly (string | null)[]): readonly string[] {
+function distinct(valores: readonly (string | null)[]): readonly string[] {
   return [...new Set(valores.filter((valor): valor is string => valor !== null && valor !== ''))];
 }
 
@@ -40,28 +40,28 @@ function distintos(valores: readonly (string | null)[]): readonly string[] {
  * no acota nada —si todos los planes son de «Salud», «Tipo: Salud» sólo ocupa
  * lugar—, así que un filtro entra con dos opciones o más.
  */
-export function filtrosDelCatalogo(planes: readonly PlanDelMercado[]): readonly FilterDef[] {
+export function catalogFilters(planes: readonly PlanDelMercado[]): readonly FilterDef[] {
   const candidatos: readonly (FilterDef & { readonly opciones: readonly string[] })[] = [
     {
-      key: CLAVE_TIPO,
+      key: TYPE_KEY,
       label: 'Tipo de seguro',
       placeholder: 'Todos los tipos',
-      opciones: distintos(planes.map((plan) => plan.tipo)),
+      opciones: distinct(planes.map((plan) => plan.tipo)),
       options: [],
     },
     {
-      key: CLAVE_SEGMENTO,
+      key: SEGMENT_KEY,
       label: 'Para quién',
       placeholder: 'Todos los segmentos',
-      opciones: distintos(planes.map((plan) => plan.segmento)),
+      opciones: distinct(planes.map((plan) => plan.segmento)),
       options: [],
     },
     {
-      key: CLAVE_COBERTURA,
+      key: COVERAGE_KEY,
       label: 'Que cubra',
       placeholder: 'Cualquier cobertura',
       opciones: [
-        ...distintos(planes.flatMap((plan) => plan.clausulas.map((c) => c.categoria))),
+        ...distinct(planes.flatMap((plan) => plan.clausulas.map((c) => c.categoria))),
       ].sort((a, b) => a.localeCompare(b, 'es')),
       options: [],
     },
@@ -75,7 +75,7 @@ export function filtrosDelCatalogo(planes: readonly PlanDelMercado[]): readonly 
 }
 
 /** Lo que pidió quien busca, ya leído de la URL. */
-export interface Criterio {
+export interface Criterion {
   readonly termino: string;
   readonly tipo: string | null;
   readonly segmento: string | null;
@@ -87,10 +87,10 @@ export interface Criterio {
  * ofrece —la URL de otra aseguradora, o una editada a mano— no filtra: no hay
  * chip que lo muestre, y un listado vacío sin causa a la vista no se entiende.
  */
-export function criterioDe(
+export function criterionOf(
   params: Readonly<Record<string, string | undefined>>,
   filtros: readonly FilterDef[],
-): Criterio {
+): Criterion {
   const valor = (clave: string): string | null => {
     const filtro = filtros.find((candidato) => candidato.key === clave);
     const elegido = params[clave];
@@ -99,14 +99,14 @@ export function criterioDe(
       : null;
   };
   return {
-    termino: normalizar(params['q'] ?? ''),
-    tipo: valor(CLAVE_TIPO),
-    segmento: valor(CLAVE_SEGMENTO),
-    cobertura: valor(CLAVE_COBERTURA),
+    termino: normalize(params['q'] ?? ''),
+    tipo: valor(TYPE_KEY),
+    segmento: valor(SEGMENT_KEY),
+    cobertura: valor(COVERAGE_KEY),
   };
 }
 
-export function hayCriterio(criterio: Criterio): boolean {
+export function hasCriterion(criterio: Criterion): boolean {
   return (
     criterio.termino !== '' ||
     criterio.tipo !== null ||
@@ -116,20 +116,20 @@ export function hayCriterio(criterio: Criterio): boolean {
 }
 
 /** Si el término está en lo que dice el plan de sí mismo, sin mirar sus cláusulas. */
-function coincideElPlan(plan: PlanDelMercado, termino: string): boolean {
+function matchesPlan(plan: PlanDelMercado, termino: string): boolean {
   return [plan.nombre, plan.producto, plan.tipo, plan.segmento, plan.prima].some((campo) =>
-    incluye(campo, termino),
+    includes(campo, termino),
   );
 }
 
-function coincideLaClausula(fila: FilaDeClausula, termino: string): boolean {
+function clauseMatches(fila: FilaDeClausula, termino: string): boolean {
   return [fila.cobertura, fila.requisitos, fila.autorizacion].some((campo) =>
-    incluye(campo, termino),
+    includes(campo, termino),
   );
 }
 
 /** Un plan que pasó el filtro, con las cláusulas que corresponde mostrarle. */
-export interface PlanFiltrado {
+export interface FilteredPlan {
   readonly plan: PlanDelMercado;
   readonly clausulas: readonly FilaDeClausula[];
 }
@@ -144,11 +144,11 @@ export interface PlanFiltrado {
  * plan entra y su tabla muestra sólo ésas, que es la respuesta a la pregunta.
  * «Que cubra» acota las cláusulas de la misma manera.
  */
-export function filtrarPlanes(
+export function filterPlans(
   planes: readonly PlanDelMercado[],
-  criterio: Criterio,
-): readonly PlanFiltrado[] {
-  return planes.flatMap((plan): PlanFiltrado[] => {
+  criterio: Criterion,
+): readonly FilteredPlan[] {
+  return planes.flatMap((plan): FilteredPlan[] => {
     if (criterio.tipo !== null && plan.tipo !== criterio.tipo) return [];
     if (criterio.segmento !== null && plan.segmento !== criterio.segmento) return [];
 
@@ -157,8 +157,8 @@ export function filtrarPlanes(
       clausulas = clausulas.filter((fila) => fila.categoria === criterio.cobertura);
       if (clausulas.length === 0) return [];
     }
-    if (criterio.termino !== '' && !coincideElPlan(plan, criterio.termino)) {
-      clausulas = clausulas.filter((fila) => coincideLaClausula(fila, criterio.termino));
+    if (criterio.termino !== '' && !matchesPlan(plan, criterio.termino)) {
+      clausulas = clausulas.filter((fila) => clauseMatches(fila, criterio.termino));
       if (clausulas.length === 0) return [];
     }
     return [{ plan, clausulas }];

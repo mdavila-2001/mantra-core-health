@@ -1,6 +1,6 @@
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 
-import { FichaDeContacto } from './contact-sheet';
+import { ContactSheet } from './contact-sheet';
 import type { ContactoDeLaEmpresa } from '../../pharmacy-profile.types';
 
 /**
@@ -9,7 +9,7 @@ import type { ContactoDeLaEmpresa } from '../../pharmacy-profile.types';
  * eso: con celular se ofrece llamar, sin celular no queda una fila vacía.
  */
 describe('FichaDeContacto', () => {
-  let fixture: ComponentFixture<FichaDeContacto>;
+  let fixture: ComponentFixture<ContactSheet>;
 
   const GERENTE: ContactoDeLaEmpresa = {
     cargo: 'Gerente Comercial',
@@ -19,7 +19,7 @@ describe('FichaDeContacto', () => {
   };
 
   function montar(contacto: ContactoDeLaEmpresa): HTMLElement {
-    fixture = TestBed.createComponent(FichaDeContacto);
+    fixture = TestBed.createComponent(ContactSheet);
     fixture.componentRef.setInput('contacto', contacto);
     fixture.detectChanges();
     return fixture.nativeElement as HTMLElement;

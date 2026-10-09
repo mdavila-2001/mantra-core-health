@@ -1,7 +1,7 @@
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 
-import { DatosDeLaEmpresa } from './company-data';
+import { CompanyData } from './company-data';
 import { EMPRESA_DE_EJEMPLO } from '../pharmacy-profile.fixtures';
 import { AppMap, CARGADOR_DE_LEAFLET } from '../../../../shared/components/organisms/map/map';
 import type { CargadorDeLeaflet } from '../../../../shared/components/organisms/map/map';
@@ -37,7 +37,7 @@ function leafletDoblado(): unknown {
 }
 
 describe('DatosDeLaEmpresa', () => {
-  let fixture: ComponentFixture<DatosDeLaEmpresa>;
+  let fixture: ComponentFixture<CompanyData>;
   let toasts: ToastService;
 
   beforeEach(() => {
@@ -52,7 +52,7 @@ describe('DatosDeLaEmpresa', () => {
   });
 
   function montar(state: ViewState<DatosLegalesDeLaEmpresa> = ready(EMPRESA_DE_EJEMPLO)): HTMLElement {
-    fixture = TestBed.createComponent(DatosDeLaEmpresa);
+    fixture = TestBed.createComponent(CompanyData);
     toasts = TestBed.inject(ToastService);
     fixture.componentRef.setInput('state', state);
     fixture.detectChanges();

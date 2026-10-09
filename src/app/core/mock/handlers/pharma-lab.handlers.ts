@@ -1,5 +1,5 @@
-import { conceptos, ESPECIALIDAD, ESTADO } from '../fixtures/concepts';
-import { MEDICA, PROFESIONALES } from '../fixtures/people';
+import { conceptos, SPECIALTY, STATUS } from '../fixtures/concepts';
+import { MEDICAL, PROFESSIONALS } from '../fixtures/people';
 import { notFound, reply, validation, type MockRequest, type MockRouter } from '../mock-router';
 import { IDS, TENANT_FARMACIA } from '../mock-session';
 import { ahora, Coleccion, cuerpo, iso, isoDia, nuevoId, uuid } from '../mock-store';
@@ -17,8 +17,8 @@ const MODALIDAD = { PRESENCIAL: uuid('concept-visit-modality-onsite'), VIRTUAL: 
 const ESTADO_VISITA = { SOLICITADA: uuid('concept-visit-requested'), CONFIRMADA: uuid('concept-visit-confirmed'), REPROGRAMACION: uuid('concept-visit-reschedule-proposed'), RECHAZADA: uuid('concept-visit-rejected'), CANCELADA: uuid('concept-visit-cancelled'), REALIZADA: uuid('concept-visit-completed') } as const;
 
 const LABS = [
-  { id: LAB_ID, tenantId: TENANT_FARMACIA, labTypeConceptId: uuid('concept-lab-type-manufacturer'), legalName: 'Laboratorios Inti S.A.', tradeName: 'Inti', taxId: '1020304050', description: 'Laboratorio farmacéutico boliviano con más de 90 años. Genéricos y marcas propias.', researchAreas: ['Cardiovascular', 'Antibióticos', 'Analgésicos'], statusConceptId: ESTADO['ST-ACTIVE']! },
-  { id: LAB_2, tenantId: uuid('tenant-bago'), labTypeConceptId: uuid('concept-lab-type-manufacturer'), legalName: 'Laboratorios Bagó de Bolivia S.A.', tradeName: 'Bagó', taxId: '1030405060', description: 'Filial de Bagó con planta en Santa Cruz.', researchAreas: ['Diabetes', 'Salud mental'], statusConceptId: ESTADO['ST-ACTIVE']! },
+  { id: LAB_ID, tenantId: TENANT_FARMACIA, labTypeConceptId: uuid('concept-lab-type-manufacturer'), legalName: 'Laboratorios Inti S.A.', tradeName: 'Inti', taxId: '1020304050', description: 'Laboratorio farmacéutico boliviano con más de 90 años. Genéricos y marcas propias.', researchAreas: ['Cardiovascular', 'Antibióticos', 'Analgésicos'], statusConceptId: STATUS['ST-ACTIVE']! },
+  { id: LAB_2, tenantId: uuid('tenant-bago'), labTypeConceptId: uuid('concept-lab-type-manufacturer'), legalName: 'Laboratorios Bagó de Bolivia S.A.', tradeName: 'Bagó', taxId: '1030405060', description: 'Filial de Bagó con planta en Santa Cruz.', researchAreas: ['Diabetes', 'Salud mental'], statusConceptId: STATUS['ST-ACTIVE']! },
 ];
 
 const PRODUCTOS = [
@@ -35,7 +35,7 @@ const PRODUCTOS = [
   presentation: presentation!,
   concentration: concentration!,
   authorizedIndication: indication!,
-  regulatoryStatusConceptId: ESTADO['ST-VERIFIED']!,
+  regulatoryStatusConceptId: STATUS['ST-VERIFIED']!,
   sanitaryRegistryNumber: `RS-${20000 + i}`,
   registryExpiresOn: isoDia(365 * (2 + i)),
   disclosureLevelConceptId: uuid('concept-disclosure-public'),
@@ -61,15 +61,15 @@ interface SolicitudDeVisita {
 }
 
 const solicitudes = new Coleccion<SolicitudDeVisita>([
-  { id: uuid('visit-request-1'), medicalVisitorId: VISITADOR_ID, pharmaLabId: LAB_ID, doctorUserId: MEDICA.userId, doctorTenantId: MEDICA.tenantId, reason: 'Presentar Intipril 10 mg y estudios de bioequivalencia', requestedStartAt: iso(2, 13), durationMinutes: 20, timeZone: 'America/La_Paz', modalityConceptId: MODALIDAD.PRESENCIAL, location: 'Consultorio 3, Clínica Los Olivos', observations: 'Llevo muestras médicas.', statusConceptId: ESTADO_VISITA.SOLICITADA, proposedStartAt: null, confirmedAt: null },
-  { id: uuid('visit-request-2'), medicalVisitorId: VISITADOR_ID, pharmaLabId: LAB_ID, doctorUserId: MEDICA.userId, doctorTenantId: MEDICA.tenantId, reason: 'Novedades en el tratamiento de dislipidemia', requestedStartAt: iso(-7, 13), durationMinutes: 15, timeZone: 'America/La_Paz', modalityConceptId: MODALIDAD.PRESENCIAL, location: 'Consultorio 3', observations: '', statusConceptId: ESTADO_VISITA.REALIZADA, proposedStartAt: null, confirmedAt: iso(-9, 10) },
-  { id: uuid('visit-request-3'), medicalVisitorId: VISITADOR_ID, pharmaLabId: LAB_ID, doctorUserId: PROFESIONALES[9]!.userId, doctorTenantId: PROFESIONALES[9]!.tenantId, reason: 'Glucofen: nueva presentación de liberación prolongada', requestedStartAt: iso(4, 16), durationMinutes: 20, timeZone: 'America/La_Paz', modalityConceptId: MODALIDAD.VIRTUAL, location: '', observations: '', statusConceptId: ESTADO_VISITA.CONFIRMADA, proposedStartAt: null, confirmedAt: iso(-1, 9) },
-  { id: uuid('visit-request-4'), medicalVisitorId: VISITADOR_ID, pharmaLabId: LAB_ID, doctorUserId: PROFESIONALES[1]!.userId, doctorTenantId: PROFESIONALES[1]!.tenantId, reason: 'Amoxinti suspensión pediátrica', requestedStartAt: iso(-3, 12), durationMinutes: 15, timeZone: 'America/La_Paz', modalityConceptId: MODALIDAD.PRESENCIAL, location: 'Consultorio pediatría', observations: '', statusConceptId: ESTADO_VISITA.RECHAZADA, proposedStartAt: null, confirmedAt: null },
-  { id: uuid('visit-request-5'), medicalVisitorId: VISITADOR_ID, pharmaLabId: LAB_ID, doctorUserId: MEDICA.userId, doctorTenantId: MEDICA.tenantId, reason: 'Material sobre insuficiencia cardíaca', requestedStartAt: iso(9, 13), durationMinutes: 20, timeZone: 'America/La_Paz', modalityConceptId: MODALIDAD.PRESENCIAL, location: 'Consultorio 3', observations: '', statusConceptId: ESTADO_VISITA.REPROGRAMACION, proposedStartAt: iso(10, 13, 30), confirmedAt: null },
+  { id: uuid('visit-request-1'), medicalVisitorId: VISITADOR_ID, pharmaLabId: LAB_ID, doctorUserId: MEDICAL.userId, doctorTenantId: MEDICAL.tenantId, reason: 'Presentar Intipril 10 mg y estudios de bioequivalencia', requestedStartAt: iso(2, 13), durationMinutes: 20, timeZone: 'America/La_Paz', modalityConceptId: MODALIDAD.PRESENCIAL, location: 'Consultorio 3, Clínica Los Olivos', observations: 'Llevo muestras médicas.', statusConceptId: ESTADO_VISITA.SOLICITADA, proposedStartAt: null, confirmedAt: null },
+  { id: uuid('visit-request-2'), medicalVisitorId: VISITADOR_ID, pharmaLabId: LAB_ID, doctorUserId: MEDICAL.userId, doctorTenantId: MEDICAL.tenantId, reason: 'Novedades en el tratamiento de dislipidemia', requestedStartAt: iso(-7, 13), durationMinutes: 15, timeZone: 'America/La_Paz', modalityConceptId: MODALIDAD.PRESENCIAL, location: 'Consultorio 3', observations: '', statusConceptId: ESTADO_VISITA.REALIZADA, proposedStartAt: null, confirmedAt: iso(-9, 10) },
+  { id: uuid('visit-request-3'), medicalVisitorId: VISITADOR_ID, pharmaLabId: LAB_ID, doctorUserId: PROFESSIONALS[9]!.userId, doctorTenantId: PROFESSIONALS[9]!.tenantId, reason: 'Glucofen: nueva presentación de liberación prolongada', requestedStartAt: iso(4, 16), durationMinutes: 20, timeZone: 'America/La_Paz', modalityConceptId: MODALIDAD.VIRTUAL, location: '', observations: '', statusConceptId: ESTADO_VISITA.CONFIRMADA, proposedStartAt: null, confirmedAt: iso(-1, 9) },
+  { id: uuid('visit-request-4'), medicalVisitorId: VISITADOR_ID, pharmaLabId: LAB_ID, doctorUserId: PROFESSIONALS[1]!.userId, doctorTenantId: PROFESSIONALS[1]!.tenantId, reason: 'Amoxinti suspensión pediátrica', requestedStartAt: iso(-3, 12), durationMinutes: 15, timeZone: 'America/La_Paz', modalityConceptId: MODALIDAD.PRESENCIAL, location: 'Consultorio pediatría', observations: '', statusConceptId: ESTADO_VISITA.RECHAZADA, proposedStartAt: null, confirmedAt: null },
+  { id: uuid('visit-request-5'), medicalVisitorId: VISITADOR_ID, pharmaLabId: LAB_ID, doctorUserId: MEDICAL.userId, doctorTenantId: MEDICAL.tenantId, reason: 'Material sobre insuficiencia cardíaca', requestedStartAt: iso(9, 13), durationMinutes: 20, timeZone: 'America/La_Paz', modalityConceptId: MODALIDAD.PRESENCIAL, location: 'Consultorio 3', observations: '', statusConceptId: ESTADO_VISITA.REPROGRAMACION, proposedStartAt: iso(10, 13, 30), confirmedAt: null },
 ]);
 
 const agendas = new Map<string, { timeZone: string; autoConfirm: boolean; minNoticeHours: number; rescheduleCutoffHours: number; maxDurationMinutes: number; allowedSpecialtyConceptIds: string[]; windows: { weekday: number; startTime: string; endTime: string; slotDurationMinutes: number; modalityConceptId: string; location: string }[] }>();
-agendas.set(MEDICA.userId, { timeZone: 'America/La_Paz', autoConfirm: false, minNoticeHours: 24, rescheduleCutoffHours: 12, maxDurationMinutes: 20, allowedSpecialtyConceptIds: [ESPECIALIDAD['CARDIOLOGIA']!], windows: [{ weekday: 2, startTime: '13:00', endTime: '14:00', slotDurationMinutes: 20, modalityConceptId: MODALIDAD.PRESENCIAL, location: 'Consultorio 3, Clínica Los Olivos' }, { weekday: 4, startTime: '13:00', endTime: '14:00', slotDurationMinutes: 20, modalityConceptId: MODALIDAD.PRESENCIAL, location: 'Consultorio 3, Clínica Los Olivos' }] });
+agendas.set(MEDICAL.userId, { timeZone: 'America/La_Paz', autoConfirm: false, minNoticeHours: 24, rescheduleCutoffHours: 12, maxDurationMinutes: 20, allowedSpecialtyConceptIds: [SPECIALTY['CARDIOLOGIA']!], windows: [{ weekday: 2, startTime: '13:00', endTime: '14:00', slotDurationMinutes: 20, modalityConceptId: MODALIDAD.PRESENCIAL, location: 'Consultorio 3, Clínica Los Olivos' }, { weekday: 4, startTime: '13:00', endTime: '14:00', slotDurationMinutes: 20, modalityConceptId: MODALIDAD.PRESENCIAL, location: 'Consultorio 3, Clínica Los Olivos' }] });
 
 function agendaDe(doctorUserId: string) {
   const a = agendas.get(doctorUserId) ?? { timeZone: 'America/La_Paz', autoConfirm: true, minNoticeHours: 24, rescheduleCutoffHours: 12, maxDurationMinutes: 15, allowedSpecialtyConceptIds: [], windows: [{ weekday: 3, startTime: '12:00', endTime: '13:00', slotDurationMinutes: 15, modalityConceptId: MODALIDAD.PRESENCIAL, location: 'Consultorio' }] };
@@ -131,45 +131,45 @@ export function registrarLaboratorioFarmaceutico(router: MockRouter): void {
   router.get('/pharma-labs/:id', ({ params }) => LABS.find((l) => l.id === params['id']) ?? notFound('Laboratorio no encontrado'));
 
   router.get('/pharma-labs/:id/staff', ({ params }) => [
-    { id: uuid('lab-staff-1'), pharmaLabId: params['id'], userId: uuid('user-lab-gerente'), staffTypeConceptId: uuid('concept-staff-manager'), position: 'Gerente médico', area: 'Dirección médica', hiredOn: isoDia(-1500), permissions: ['MATERIALS', 'VISITORS', 'PHARMACOVIGILANCE'], statusConceptId: ESTADO['ST-ACTIVE']! },
-    { id: uuid('lab-staff-2'), pharmaLabId: params['id'], userId: uuid('user-lab-regulatorio'), staffTypeConceptId: uuid('concept-staff-regulatory'), position: 'Responsable de asuntos regulatorios', area: 'Regulatorio', hiredOn: isoDia(-900), permissions: ['REGULATORY'], statusConceptId: ESTADO['ST-ACTIVE']! },
-    { id: uuid('lab-staff-3'), pharmaLabId: params['id'], userId: IDS.visitador.userId, staffTypeConceptId: uuid('concept-staff-visitor'), position: 'Visitadora médica', area: 'Fuerza de ventas · Santa Cruz', hiredOn: isoDia(-400), permissions: ['VISITS'], statusConceptId: ESTADO['ST-ACTIVE']! },
+    { id: uuid('lab-staff-1'), pharmaLabId: params['id'], userId: uuid('user-lab-gerente'), staffTypeConceptId: uuid('concept-staff-manager'), position: 'Gerente médico', area: 'Dirección médica', hiredOn: isoDia(-1500), permissions: ['MATERIALS', 'VISITORS', 'PHARMACOVIGILANCE'], statusConceptId: STATUS['ST-ACTIVE']! },
+    { id: uuid('lab-staff-2'), pharmaLabId: params['id'], userId: uuid('user-lab-regulatorio'), staffTypeConceptId: uuid('concept-staff-regulatory'), position: 'Responsable de asuntos regulatorios', area: 'Regulatorio', hiredOn: isoDia(-900), permissions: ['REGULATORY'], statusConceptId: STATUS['ST-ACTIVE']! },
+    { id: uuid('lab-staff-3'), pharmaLabId: params['id'], userId: IDS.visitador.userId, staffTypeConceptId: uuid('concept-staff-visitor'), position: 'Visitadora médica', area: 'Fuerza de ventas · Santa Cruz', hiredOn: isoDia(-400), permissions: ['VISITS'], statusConceptId: STATUS['ST-ACTIVE']! },
   ]);
 
   router.get('/pharma-labs/:id/medical-visitors', ({ params }) => [
-    { id: VISITADOR_ID, pharmaLabId: params['id'], userId: IDS.visitador.userId, fullName: 'Carla Fernández Ríos', internalCode: 'VM-0031', position: 'Visitadora médica senior', region: 'Santa Cruz', commercialArea: 'Cardiología y medicina interna', assignedZone: 'Zona norte', startedOn: isoDia(-400), identityVerificationConceptId: ESTADO['ST-VERIFIED']!, contractVerificationConceptId: ESTADO['ST-VERIFIED']!, credentialVerificationConceptId: ESTADO['ST-VERIFIED']!, statusConceptId: ESTADO['ST-ACTIVE']!, publiclyListed: true },
-    { id: uuid('medical-visitor-2'), pharmaLabId: params['id'], userId: uuid('user-visitador-2'), fullName: 'Rubén Quispe Mamani', internalCode: 'VM-0044', position: 'Visitador médico', region: 'Cochabamba', commercialArea: 'Pediatría', assignedZone: 'Zona centro', startedOn: isoDia(-120), identityVerificationConceptId: ESTADO['ST-VERIFIED']!, contractVerificationConceptId: ESTADO['ST-PENDING']!, credentialVerificationConceptId: ESTADO['ST-PENDING']!, statusConceptId: ESTADO['ST-PENDING']!, publiclyListed: false },
-    { id: uuid('medical-visitor-3'), pharmaLabId: params['id'], userId: uuid('user-visitador-3'), fullName: 'Lucía Antelo Roca', internalCode: 'VM-0012', position: 'Visitadora médica', region: 'Santa Cruz', commercialArea: 'Ginecología', assignedZone: 'Zona sur', startedOn: isoDia(-1000), endedOn: isoDia(-30), identityVerificationConceptId: ESTADO['ST-VERIFIED']!, contractVerificationConceptId: ESTADO['ST-VERIFIED']!, credentialVerificationConceptId: ESTADO['ST-VERIFIED']!, statusConceptId: ESTADO['ST-INACTIVE']!, publiclyListed: false, unlinkReason: 'Fin de contrato' },
+    { id: VISITADOR_ID, pharmaLabId: params['id'], userId: IDS.visitador.userId, fullName: 'Carla Fernández Ríos', internalCode: 'VM-0031', position: 'Visitadora médica senior', region: 'Santa Cruz', commercialArea: 'Cardiología y medicina interna', assignedZone: 'Zona norte', startedOn: isoDia(-400), identityVerificationConceptId: STATUS['ST-VERIFIED']!, contractVerificationConceptId: STATUS['ST-VERIFIED']!, credentialVerificationConceptId: STATUS['ST-VERIFIED']!, statusConceptId: STATUS['ST-ACTIVE']!, publiclyListed: true },
+    { id: uuid('medical-visitor-2'), pharmaLabId: params['id'], userId: uuid('user-visitador-2'), fullName: 'Rubén Quispe Mamani', internalCode: 'VM-0044', position: 'Visitador médico', region: 'Cochabamba', commercialArea: 'Pediatría', assignedZone: 'Zona centro', startedOn: isoDia(-120), identityVerificationConceptId: STATUS['ST-VERIFIED']!, contractVerificationConceptId: STATUS['ST-PENDING']!, credentialVerificationConceptId: STATUS['ST-PENDING']!, statusConceptId: STATUS['ST-PENDING']!, publiclyListed: false },
+    { id: uuid('medical-visitor-3'), pharmaLabId: params['id'], userId: uuid('user-visitador-3'), fullName: 'Lucía Antelo Roca', internalCode: 'VM-0012', position: 'Visitadora médica', region: 'Santa Cruz', commercialArea: 'Ginecología', assignedZone: 'Zona sur', startedOn: isoDia(-1000), endedOn: isoDia(-30), identityVerificationConceptId: STATUS['ST-VERIFIED']!, contractVerificationConceptId: STATUS['ST-VERIFIED']!, credentialVerificationConceptId: STATUS['ST-VERIFIED']!, statusConceptId: STATUS['ST-INACTIVE']!, publiclyListed: false, unlinkReason: 'Fin de contrato' },
   ]);
 
-  router.post('/pharma-labs/:id/medical-visitors/:visitorId/unlink', ({ params }) => ({ id: params['visitorId'], statusConceptId: ESTADO['ST-INACTIVE']!, revokedSessions: 1, revokedRefreshTokens: 1, cancelledVisitRequests: solicitudes.filtrar((s) => s.medicalVisitorId === params['visitorId'] && s.statusConceptId === ESTADO_VISITA.SOLICITADA).length }));
+  router.post('/pharma-labs/:id/medical-visitors/:visitorId/unlink', ({ params }) => ({ id: params['visitorId'], statusConceptId: STATUS['ST-INACTIVE']!, revokedSessions: 1, revokedRefreshTokens: 1, cancelledVisitRequests: solicitudes.filtrar((s) => s.medicalVisitorId === params['visitorId'] && s.statusConceptId === ESTADO_VISITA.SOLICITADA).length }));
 
   router.get('/pharma-labs/:id/products', ({ params }) => PRODUCTOS.map((p) => ({ ...p, pharmaLabId: params['id'] })));
 
   router.get('/pharma-labs/:id/materials', ({ params }) => [
-    { id: uuid('material-1'), pharmaLabId: params['id'], pharmaProductId: PRODUCTOS[0]!.id, title: 'Monografía Intipril 10 mg', kindConceptId: uuid('concept-material-monograph'), version: '3.1', authorName: 'Dirección médica Inti', validFrom: isoDia(-200), validTo: isoDia(165), statusConceptId: ESTADO['ST-VERIFIED']!, approvedAt: iso(-200) },
-    { id: uuid('material-2'), pharmaLabId: params['id'], pharmaProductId: PRODUCTOS[3]!.id, title: 'Estudio de bioequivalencia Atorvin vs. referencia', kindConceptId: uuid('concept-material-study'), version: '1.0', authorName: 'Universidad Mayor de San Simón', validFrom: isoDia(-90), statusConceptId: ESTADO['ST-VERIFIED']!, approvedAt: iso(-90) },
-    { id: uuid('material-3'), pharmaLabId: params['id'], title: 'Guía de manejo de hipertensión 2026', kindConceptId: uuid('concept-material-guide'), version: '2026.1', authorName: 'Sociedad Boliviana de Cardiología', statusConceptId: ESTADO['ST-PENDING']!, approvedAt: null },
+    { id: uuid('material-1'), pharmaLabId: params['id'], pharmaProductId: PRODUCTOS[0]!.id, title: 'Monografía Intipril 10 mg', kindConceptId: uuid('concept-material-monograph'), version: '3.1', authorName: 'Dirección médica Inti', validFrom: isoDia(-200), validTo: isoDia(165), statusConceptId: STATUS['ST-VERIFIED']!, approvedAt: iso(-200) },
+    { id: uuid('material-2'), pharmaLabId: params['id'], pharmaProductId: PRODUCTOS[3]!.id, title: 'Estudio de bioequivalencia Atorvin vs. referencia', kindConceptId: uuid('concept-material-study'), version: '1.0', authorName: 'Universidad Mayor de San Simón', validFrom: isoDia(-90), statusConceptId: STATUS['ST-VERIFIED']!, approvedAt: iso(-90) },
+    { id: uuid('material-3'), pharmaLabId: params['id'], title: 'Guía de manejo de hipertensión 2026', kindConceptId: uuid('concept-material-guide'), version: '2026.1', authorName: 'Sociedad Boliviana de Cardiología', statusConceptId: STATUS['ST-PENDING']!, approvedAt: null },
   ]);
 
   router.get('/pharma-labs/:id/pharmacovigilance/reports', ({ params }) => [
-    { id: uuid('pv-1'), pharmaLabId: params['id'], pharmaProductId: PRODUCTOS[0]!.id, caseCode: 'FV-2026-0012', batchNumber: 'L2403', eventDate: isoDia(-20), eventTypeConceptId: uuid('concept-adverse-event-cough'), description: 'Tos seca persistente a las 3 semanas de iniciar el tratamiento.', severityConceptId: uuid('concept-severity-mild'), statusConceptId: ESTADO['ST-IN-PROGRESS']! },
-    { id: uuid('pv-2'), pharmaLabId: params['id'], pharmaProductId: PRODUCTOS[4]!.id, caseCode: 'FV-2026-0009', batchNumber: 'L2311', eventDate: isoDia(-45), eventTypeConceptId: uuid('concept-adverse-event-rash'), description: 'Exantema cutáneo leve; remitió al suspender.', severityConceptId: uuid('concept-severity-mild'), statusConceptId: ESTADO['ST-CLOSED']! },
+    { id: uuid('pv-1'), pharmaLabId: params['id'], pharmaProductId: PRODUCTOS[0]!.id, caseCode: 'FV-2026-0012', batchNumber: 'L2403', eventDate: isoDia(-20), eventTypeConceptId: uuid('concept-adverse-event-cough'), description: 'Tos seca persistente a las 3 semanas de iniciar el tratamiento.', severityConceptId: uuid('concept-severity-mild'), statusConceptId: STATUS['ST-IN-PROGRESS']! },
+    { id: uuid('pv-2'), pharmaLabId: params['id'], pharmaProductId: PRODUCTOS[4]!.id, caseCode: 'FV-2026-0009', batchNumber: 'L2311', eventDate: isoDia(-45), eventTypeConceptId: uuid('concept-adverse-event-rash'), description: 'Exantema cutáneo leve; remitió al suspender.', severityConceptId: uuid('concept-severity-mild'), statusConceptId: STATUS['ST-CLOSED']! },
   ]);
 
   router.get('/pharma-labs/:id/regulatory-documents', ({ params }) => [
-    { id: uuid('reg-1'), pharmaLabId: params['id'], name: 'Certificado de Buenas Prácticas de Manufactura', documentTypeConceptId: uuid('concept-doc-gmp'), code: 'BPM-2024-118', currentVersion: '2024', issuerName: 'AGEMED', issuedOn: isoDia(-300), expiresOn: isoDia(430), statusConceptId: ESTADO['ST-VERIFIED']! },
-    { id: uuid('reg-2'), pharmaLabId: params['id'], name: 'Licencia de funcionamiento de planta', documentTypeConceptId: uuid('concept-doc-license'), code: 'LF-SCZ-0092', currentVersion: '2023', issuerName: 'SEDES Santa Cruz', issuedOn: isoDia(-700), expiresOn: isoDia(30), statusConceptId: ESTADO['ST-VERIFIED']! },
-    { id: uuid('reg-3'), pharmaLabId: params['id'], name: 'Registro sanitario Intipril', documentTypeConceptId: uuid('concept-doc-registry'), code: 'RS-20000', currentVersion: '2', issuerName: 'AGEMED', issuedOn: isoDia(-1000), expiresOn: isoDia(-15), statusConceptId: ESTADO['ST-INACTIVE']! },
+    { id: uuid('reg-1'), pharmaLabId: params['id'], name: 'Certificado de Buenas Prácticas de Manufactura', documentTypeConceptId: uuid('concept-doc-gmp'), code: 'BPM-2024-118', currentVersion: '2024', issuerName: 'AGEMED', issuedOn: isoDia(-300), expiresOn: isoDia(430), statusConceptId: STATUS['ST-VERIFIED']! },
+    { id: uuid('reg-2'), pharmaLabId: params['id'], name: 'Licencia de funcionamiento de planta', documentTypeConceptId: uuid('concept-doc-license'), code: 'LF-SCZ-0092', currentVersion: '2023', issuerName: 'SEDES Santa Cruz', issuedOn: isoDia(-700), expiresOn: isoDia(30), statusConceptId: STATUS['ST-VERIFIED']! },
+    { id: uuid('reg-3'), pharmaLabId: params['id'], name: 'Registro sanitario Intipril', documentTypeConceptId: uuid('concept-doc-registry'), code: 'RS-20000', currentVersion: '2', issuerName: 'AGEMED', issuedOn: isoDia(-1000), expiresOn: isoDia(-15), statusConceptId: STATUS['ST-INACTIVE']! },
   ]);
 
   /* ---- agenda de visitas ------------------------------------------------- */
 
-  router.get('/visit-agenda/me', (request) => agendaDe(request.user?.id ?? MEDICA.userId));
+  router.get('/visit-agenda/me', (request) => agendaDe(request.user?.id ?? MEDICAL.userId));
   router.put('/visit-agenda/me', (request) => {
     const datos = cuerpo<{ timeZone?: string; autoConfirm?: boolean; minNoticeHours?: number; rescheduleCutoffHours?: number; maxDurationMinutes?: number; windows?: { weekday: number; startTime: string; endTime: string; slotDurationMinutes: number; modalityConceptId: string; location?: string }[] }>(request);
-    const actual = agendaDe(request.user?.id ?? MEDICA.userId);
-    agendas.set(request.user?.id ?? MEDICA.userId, {
+    const actual = agendaDe(request.user?.id ?? MEDICAL.userId);
+    agendas.set(request.user?.id ?? MEDICAL.userId, {
       timeZone: datos.timeZone ?? actual.timeZone,
       autoConfirm: datos.autoConfirm ?? actual.autoConfirm,
       minNoticeHours: datos.minNoticeHours ?? actual.minNoticeHours,
@@ -178,13 +178,13 @@ export function registrarLaboratorioFarmaceutico(router: MockRouter): void {
       allowedSpecialtyConceptIds: actual.allowedSpecialtyConceptIds,
       windows: (datos.windows ?? actual.windows).map((w) => ({ ...w, location: w.location ?? '' })),
     });
-    return { id: request.user?.id ?? MEDICA.userId, statusConceptId: ESTADO['ST-PUBLISHED']! };
+    return { id: request.user?.id ?? MEDICAL.userId, statusConceptId: STATUS['ST-PUBLISHED']! };
   });
   router.get('/visit-agenda/doctors/:id', ({ params }) => agendaDe(params['id']!));
 
   router.post('/visit-requests', (request) => {
     const datos = cuerpo<{ doctorUserId: string; doctorTenantId?: string; reason: string; requestedStartAt: string; durationMinutes: number; modalityConceptId: string; location?: string; observations?: string }>(request);
-    const agenda = agendaDe(datos.doctorUserId ?? MEDICA.userId);
+    const agenda = agendaDe(datos.doctorUserId ?? MEDICAL.userId);
     // 15 minutos por omisión (C-13): "cuando el profesional no definió nada,
     // dura 15; cuando definió otra cosa, dura eso" — el "otra cosa" es
     // `maxDurationMinutes` de SU política, no un número fijo del cliente.
@@ -211,7 +211,7 @@ export function registrarLaboratorioFarmaceutico(router: MockRouter): void {
       id: nuevoId('visit-request'),
       medicalVisitorId: VISITADOR_ID,
       pharmaLabId: LAB_ID,
-      doctorUserId: datos.doctorUserId ?? MEDICA.userId,
+      doctorUserId: datos.doctorUserId ?? MEDICAL.userId,
       doctorTenantId: datos.doctorTenantId ?? '',
       reason: datos.reason ?? '',
       requestedStartAt: datos.requestedStartAt ?? ahora(),
@@ -228,7 +228,7 @@ export function registrarLaboratorioFarmaceutico(router: MockRouter): void {
   });
 
   router.get('/visit-requests/mine', () => solicitudes.filtrar((s) => s.medicalVisitorId === VISITADOR_ID).sort((a, b) => b.requestedStartAt.localeCompare(a.requestedStartAt)));
-  router.get('/visit-requests/inbox', (request) => solicitudes.filtrar((s) => s.doctorUserId === (request.user?.id ?? MEDICA.userId)).sort((a, b) => b.requestedStartAt.localeCompare(a.requestedStartAt)));
+  router.get('/visit-requests/inbox', (request) => solicitudes.filtrar((s) => s.doctorUserId === (request.user?.id ?? MEDICAL.userId)).sort((a, b) => b.requestedStartAt.localeCompare(a.requestedStartAt)));
 
   router.post('/visit-requests/:id/accept', ({ params }) => {
     const s = solicitudes.get(params['id']!);
@@ -249,7 +249,7 @@ export function registrarLaboratorioFarmaceutico(router: MockRouter): void {
     return { id: s.id, statusConceptId: ESTADO_VISITA.CANCELADA };
   });
 
-  router.get('/visit-records/inbox', (request) => solicitudes.filtrar((s) => s.statusConceptId === ESTADO_VISITA.REALIZADA && (esVisitador(request) || s.doctorUserId === (request.user?.id ?? MEDICA.userId))).map(registroDe));
+  router.get('/visit-records/inbox', (request) => solicitudes.filtrar((s) => s.statusConceptId === ESTADO_VISITA.REALIZADA && (esVisitador(request) || s.doctorUserId === (request.user?.id ?? MEDICAL.userId))).map(registroDe));
   router.get('/visit-records/labs/:id', ({ params }) => solicitudes.filtrar((s) => s.pharmaLabId === params['id'] && s.statusConceptId === ESTADO_VISITA.REALIZADA).map(registroDe));
   router.get('/visit-records/labs/:id/rating-summary', () => ({ sampleSize: 14, punctuality: 4.6, informationQuality: 4.4, clarity: 4.7, relevance: 4.2, professionalConduct: 4.9, materialUsefulness: 4.1, overallSatisfaction: 4.5 }));
 }

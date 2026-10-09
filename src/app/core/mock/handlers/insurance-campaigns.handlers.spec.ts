@@ -1,6 +1,6 @@
 import { HttpHeaders } from '@angular/common/http';
 
-import { PACIENTES } from '../fixtures/people';
+import { PATIENTS } from '../fixtures/people';
 import { MockRouter, type MockMethod, type MockReply } from '../mock-router';
 import { buscarUsuario, type MockUser } from '../mock-session';
 import { isoDia } from '../mock-store';
@@ -28,10 +28,10 @@ describe('handlers de campañas preventivas de seguros (Tarea 4)', () => {
   const superadmin = buscarUsuario('superadmin')!;
 
   /** Una afiliada de OTRA aseguradora (La Vitalicia), con su propia sesión. */
-  const vitaliciaProfile = PACIENTES.find((p) => p.aseguradora === 'La Vitalicia')!;
+  const vitaliciaProfile = PATIENTS.find((p) => p.aseguradora === 'La Vitalicia')!;
   const vitaliciaPatient: MockUser = { ...patient, patientProfileId: vitaliciaProfile.id };
   /** Un afiliado sin seguro declarado. */
-  const uninsuredProfile = PACIENTES.find((p) => p.aseguradora === undefined)!;
+  const uninsuredProfile = PATIENTS.find((p) => p.aseguradora === undefined)!;
   const uninsuredPatient: MockUser = { ...patient, patientProfileId: uninsuredProfile.id };
 
   function call<T>(

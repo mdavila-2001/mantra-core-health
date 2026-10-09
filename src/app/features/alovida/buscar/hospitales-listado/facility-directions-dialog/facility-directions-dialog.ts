@@ -11,7 +11,7 @@ import {
 
 import { AppButton } from '@shared/components/atoms/button/button';
 import { AppMap } from '@shared/components/organisms/map/map';
-import type { PinMapa, PuntoGeo } from '@shared/components/organisms/map/map-pin.types';
+import type { PinMap, PuntoGeo } from '@shared/components/organisms/map/map-pin.types';
 import { ContentDialog } from '@shared/components/organisms/content-dialog/content-dialog';
 
 /** Radio de la Tierra en kilómetros, el valor medio de la esfera. */
@@ -131,9 +131,9 @@ export class FacilityDirectionsDialog {
   protected readonly facilityPinCode = FACILITY_PIN;
   protected readonly originPinCode = ORIGIN_PIN;
 
-  protected readonly pins = computed<readonly PinMapa[]>(() => {
+  protected readonly pins = computed<readonly PinMap[]>(() => {
     const address = this.facilityAddress();
-    const marks: PinMapa[] = [
+    const marks: PinMap[] = [
       {
         id: FACILITY_PIN,
         codigo: FACILITY_PIN,

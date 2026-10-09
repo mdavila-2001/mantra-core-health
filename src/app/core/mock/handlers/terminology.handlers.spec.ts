@@ -4,12 +4,12 @@ import { join } from 'node:path';
 
 import { registrarTerminologia } from './terminology.handlers';
 import {
-  ACTIVIDAD,
-  CATEGORIA_ORDEN,
-  conjuntoPorCodigo,
+  ACTIVITY,
+  ORDER_CATEGORY,
+  setByCode,
   MEDICAMENTO,
-  TIPO_CITA,
-  VERIFICACION_DX,
+  APPOINTMENT_TYPE,
+  VERIFICATION_DX,
 } from '../fixtures/concepts';
 import { valorDeTexto } from '../../data-access/terminology/terminology.types';
 import { AlmacenDeGlosario, ArchivoAusente, type LectorDeArchivos } from '../glossary-shards';
@@ -408,7 +408,7 @@ describe('contrato C0: expansión de conceptos clínicos', () => {
   async function expand(
     code: string,
   ): Promise<readonly { conceptId: string; code: string; display: string }[]> {
-    const valueSet = conjuntoPorCodigo(code);
+    const valueSet = setByCode(code);
     if (valueSet === undefined) throw new Error('No existe el conjunto ' + code);
     const path = '/terminology/value-sets/' + valueSet.id + '/$expand';
     const match = router.match('GET', path);
@@ -426,9 +426,9 @@ describe('contrato C0: expansión de conceptos clínicos', () => {
   }
 
   it.each([
-    ['VS_ACTIVITY_TYPE', 'ACT-FOLLOW-UP', 'Reconsulta', ACTIVIDAD['ACT-FOLLOW-UP']],
-    ['VS_APPOINTMENT_TYPE', 'APT-RECONSULTA', 'Reconsulta', TIPO_CITA['APT-RECONSULTA']],
-    ['VS_SERVICE_REQUEST_CATEGORY', 'SRQ-OTHER', 'Otro', CATEGORIA_ORDEN['SRQ-OTHER']],
+    ['VS_ACTIVITY_TYPE', 'ACT-FOLLOW-UP', 'Reconsulta', ACTIVITY['ACT-FOLLOW-UP']],
+    ['VS_APPOINTMENT_TYPE', 'APT-RECONSULTA', 'Reconsulta', APPOINTMENT_TYPE['APT-RECONSULTA']],
+    ['VS_SERVICE_REQUEST_CATEGORY', 'SRQ-OTHER', 'Otro', ORDER_CATEGORY['SRQ-OTHER']],
   ])('expande %s con un único %s, su etiqueta y su ID estable', async (valueSet, code, display, id) => {
     const items = await expand(valueSet!);
     expect(id).toEqual(expect.any(String));
@@ -440,7 +440,7 @@ describe('contrato C0: expansión de conceptos clínicos', () => {
 
   it('conserva todos los estados de verificación diagnóstica publicados', async () => {
     const items = await expand('VS_CONDITION_VERIFICATION');
-    for (const [code, conceptId] of Object.entries(VERIFICACION_DX)) {
+    for (const [code, conceptId] of Object.entries(VERIFICATION_DX)) {
       expect(items).toContainEqual(expect.objectContaining({ code, conceptId }));
     }
   });

@@ -11,8 +11,8 @@ import {
 } from '../../../../core/data-access/pharmacy-orders/pharmacy-orders.spec-fixtures';
 import type { PharmacyOrderDto } from '../../../../core/data-access/pharmacy-orders/pharmacy-orders.dto';
 import {
-  ID_PEDIDO_CON_DELIVERY,
-  ID_PEDIDO_CON_SEGURO,
+  ID_ORDER_WITH_DELIVERY,
+  ID_ORDER_WITH_INSURANCE,
 } from '../../../../core/mock/fixtures/pharmacy-orders';
 import { SAMPLE_DATA_ENABLED } from '../../../../core/mock/sample-data';
 import { DialogService } from '../../../../shared/components/molecules/dialog/dialog-service';
@@ -403,7 +403,7 @@ describe('InboxOrder with the real pharmacy-orders contract', () => {
   it('el pedido a domicilio se ve como delivery con la dirección que trae el contrato', async () => {
     await mount(
       pharmacyOrderDtoFixture({
-        id: ID_PEDIDO_CON_DELIVERY,
+        id: ID_ORDER_WITH_DELIVERY,
         deliveryMode: DOMICILIO,
         deliveryAddressText: 'Av. Cristo Redentor km 4 · Edificio Aurora, dpto. 3B',
         status: { code: 'PINV_ORDER_EN_REVISION', display: 'En revisión' },
@@ -446,7 +446,7 @@ describe('InboxOrder with the real pharmacy-orders contract', () => {
     // las dos salen de la misma respuesta.
     await mount(
       pharmacyOrderDtoFixture({
-        id: ID_PEDIDO_CON_DELIVERY,
+        id: ID_ORDER_WITH_DELIVERY,
         deliveryMode: DOMICILIO,
         status: { code: 'PINV_ORDER_CONFIRMADO', display: 'Confirmado' },
       }),
@@ -539,7 +539,7 @@ describe('InboxOrder with the real pharmacy-orders contract', () => {
     // cerrado de los dos lados, no de uno.
     await mount(
       pharmacyOrderDtoFixture({
-        id: ID_PEDIDO_CON_DELIVERY,
+        id: ID_ORDER_WITH_DELIVERY,
         deliveryMode: DOMICILIO,
         status: { code: 'PINV_ORDER_LISTO_PARA_RETIRO', display: 'Listo' },
         pickupCode: null,
@@ -653,7 +653,7 @@ describe('InboxOrder with the real pharmacy-orders contract', () => {
     it('un pedido a domicilio sin dirección guardada dice el medio, sin dirección inventada', async () => {
       await mount(
         pharmacyOrderDtoFixture({
-          id: ID_PEDIDO_CON_DELIVERY,
+          id: ID_ORDER_WITH_DELIVERY,
           deliveryMode: DOMICILIO,
           deliveryAddressText: null,
           status: { code: 'PINV_ORDER_EN_REVISION', display: 'En revisión' },
@@ -693,7 +693,7 @@ describe('InboxOrder with the real pharmacy-orders contract', () => {
     const base = pharmacyOrderDtoFixture();
     return pharmacyOrderDtoFixture({
       // Lo que lo identifica como el pedido con seguro es su id, no el nombre.
-      id: ID_PEDIDO_CON_SEGURO,
+      id: ID_ORDER_WITH_INSURANCE,
       status: { code: 'PINV_ORDER_EN_REVISION', display: 'En revisión' },
       patientName: 'Rosa Elena Quispe Vargas',
       lines: [

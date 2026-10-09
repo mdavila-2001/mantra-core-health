@@ -11,7 +11,7 @@ import {
 } from '@angular/core';
 
 import { AppMap } from '../../../../../../shared/components/organisms/map/map';
-import type { PinMapa } from '../../../../../../shared/components/organisms/map/map-pin.types';
+import type { PinMap } from '../../../../../../shared/components/organisms/map/map-pin.types';
 import type { SedeVisible } from '../practitioner-profile-view.types';
 
 /**
@@ -101,7 +101,7 @@ export class PracticeSitesMap implements OnDestroy {
    * El `codigo` es el ordinal que la lista muestra al lado del nombre: es lo
    * que ata un renglón a su pin sin obligar a leer el popup.
    */
-  protected readonly pines = computed<readonly PinMapa[]>(() =>
+  protected readonly pines = computed<readonly PinMap[]>(() =>
     this.sedes()
       .map((sede, indice) => ({ sede, orden: indice + 1 }))
       .filter(({ sede }) => sede.punto !== null)

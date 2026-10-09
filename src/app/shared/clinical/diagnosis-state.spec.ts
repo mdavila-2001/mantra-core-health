@@ -1,5 +1,5 @@
 import type { Condition } from '../../core/data-access/clinical/clinical.types';
-import { ESTADO_CONDICION, VERIFICACION_DX } from '../../core/mock/fixtures/concepts';
+import { CONDITION_STATUS, VERIFICATION_DX } from '../../core/mock/fixtures/concepts';
 import {
   CODIGO_ACTIVA,
   CODIGO_CONFIRMADO,
@@ -124,12 +124,12 @@ describe('códigos de estado: los de la API, y el simulador los mismos', () => {
 
   it('el simulador declara esos mismos códigos en sus catálogos', () => {
     for (const codigo of [CODIGO_CONFIRMADO, CODIGO_DESCARTADO, 'COND_PROVISIONAL']) {
-      expect(VERIFICACION_DX[codigo]).toBeDefined();
+      expect(VERIFICATION_DX[codigo]).toBeDefined();
     }
     for (const codigo of [CODIGO_ACTIVA, CODIGO_RESUELTA, CODIGO_REMISION]) {
-      expect(ESTADO_CONDICION[codigo]).toBeDefined();
+      expect(CONDITION_STATUS[codigo]).toBeDefined();
     }
-    expect(Object.keys(VERIFICACION_DX).some((codigo) => codigo.startsWith('DXV-'))).toBe(false);
-    expect(Object.keys(ESTADO_CONDICION).some((codigo) => codigo.startsWith('COND-'))).toBe(false);
+    expect(Object.keys(VERIFICATION_DX).some((codigo) => codigo.startsWith('DXV-'))).toBe(false);
+    expect(Object.keys(CONDITION_STATUS).some((codigo) => codigo.startsWith('COND-'))).toBe(false);
   });
 });

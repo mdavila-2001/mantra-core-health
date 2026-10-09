@@ -190,7 +190,7 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
   // `administration/accounting/cockpit` y los libros en `.../libros`, los dos
   // enlazados al pie del resumen.
   'administration/accounting': () =>
-    import('./features/accounting/summary/summary').then((m) => m.Resumen),
+    import('./features/accounting/summary/summary').then((m) => m.Summary),
   'my-organizations': () =>
     import('./features/organizations/my-organizations').then((m) => m.MyOrganizations),
   'administration/terminology': () =>
@@ -231,7 +231,7 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
       (m) => m.DiagnosticOrders,
     ),
   'my-account/cotizaciones': () =>
-    import('./features/account/quotations/quotations').then((m) => m.Cotizaciones),
+    import('./features/account/quotations/quotations').then((m) => m.Quotations),
   'my-account/pharmacy-orders': () =>
     import('./features/account/pharmacy-orders/pharmacy-orders').then((m) => m.PharmacyOrders),
   // «Farmacia»: el punto de entrada del menú desde el 24/09/2026 (pedido del

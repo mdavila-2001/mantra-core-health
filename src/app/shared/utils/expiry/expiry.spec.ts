@@ -1,7 +1,7 @@
 import {
-  AVISO_DE_VENCIMIENTO_DIAS,
-  varianteDeVencimiento,
-  vencimientoEnPalabras,
+  DAYS_EXPIRY_NOTICE,
+  expiryVariant,
+  expiryInWords,
 } from './expiry';
 
 /**
@@ -13,44 +13,44 @@ import {
 describe('vencimiento', () => {
   describe('vencimientoEnPalabras', () => {
     it('dice el vencido en positivo, sin obligar a interpretar un signo', () => {
-      expect(vencimientoEnPalabras(-14)).toBe('vencido hace 14 días');
+      expect(expiryInWords(-14)).toBe('vencido hace 14 días');
     });
 
     it('concuerda el singular en los dos sentidos del plazo', () => {
-      expect(vencimientoEnPalabras(-1)).toBe('vencido hace 1 día');
-      expect(vencimientoEnPalabras(1)).toBe('vence en 1 día');
+      expect(expiryInWords(-1)).toBe('vencido hace 1 día');
+      expect(expiryInWords(1)).toBe('vence en 1 día');
     });
 
     it('el día de hoy es su propia frase: ni vencido ni con plazo', () => {
-      expect(vencimientoEnPalabras(0)).toBe('vence hoy');
+      expect(expiryInWords(0)).toBe('vence hoy');
     });
 
     it('un documento sin fecha de caducidad lo dice, no finge un plazo', () => {
-      expect(vencimientoEnPalabras(null)).toBe('sin vencimiento declarado');
+      expect(expiryInWords(null)).toBe('sin vencimiento declarado');
     });
   });
 
   describe('varianteDeVencimiento', () => {
     it('lo vencido es un error, no un aviso', () => {
-      expect(varianteDeVencimiento(-1)).toBe('error');
+      expect(expiryVariant(-1)).toBe('error');
     });
 
     it('avisa desde un mes antes, y el día del umbral todavía avisa', () => {
-      expect(varianteDeVencimiento(10)).toBe('warning');
-      expect(varianteDeVencimiento(AVISO_DE_VENCIMIENTO_DIAS)).toBe('warning');
-      expect(varianteDeVencimiento(AVISO_DE_VENCIMIENTO_DIAS + 1)).toBe('success');
+      expect(expiryVariant(10)).toBe('warning');
+      expect(expiryVariant(DAYS_EXPIRY_NOTICE)).toBe('warning');
+      expect(expiryVariant(DAYS_EXPIRY_NOTICE + 1)).toBe('success');
     });
 
     it('lo que falta mucho está en orden', () => {
-      expect(varianteDeVencimiento(400)).toBe('success');
+      expect(expiryVariant(400)).toBe('success');
     });
 
     it('sin fecha no hay severidad que afirmar: informa', () => {
-      expect(varianteDeVencimiento(null)).toBe('info');
+      expect(expiryVariant(null)).toBe('info');
     });
   });
 
   it('el aviso previo es de un mes: es el plazo con el que se renueva un papel', () => {
-    expect(AVISO_DE_VENCIMIENTO_DIAS).toBe(30);
+    expect(DAYS_EXPIRY_NOTICE).toBe(30);
   });
 });

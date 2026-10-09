@@ -20,12 +20,12 @@ import type { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/fo
     ========================================================================== */
 
 /** La sigla es lo único que la persona ve: de 3 a 20 caracteres, como pide el DTO real de `sigla`. */
-export const MIN_SIGLA = 3;
-export const MAX_SIGLA = 20;
+export const MIN_ACRONYM = 3;
+export const MAX_ACRONYM = 20;
 
 /** Lo que el backend acepta en `code` (y, por herencia, lo que se manda como `carrierCode`). */
-const PATRON_CODIGO_VALIDO = /^[A-Za-z0-9._-]+$/;
-const MIN_CODIGO = 3;
+const PATTERN_VALID_CODE = /^[A-Za-z0-9._-]+$/;
+const MIN_CODE = 3;
 
 /**
  * Al menos un carácter alfanumérico. Punto y guion son parte válida del
@@ -33,7 +33,7 @@ const MIN_CODIGO = 3;
  * en un código que el patrón acepta sin decir nada: nunca identificaría una
  * organización. Esto es lo que distingue ese caso de uno realmente vacío.
  */
-const TIENE_ALFANUMERICO = /[A-Z0-9]/;
+const HAS_ALPHANUMERIC = /[A-Z0-9]/;
 
 /**
  * Deriva el código de plataforma a partir de la sigla: sin diacríticos, en
@@ -45,7 +45,7 @@ const TIENE_ALFANUMERICO = /[A-Z0-9]/;
  * vacía o más corta que `MIN_CODIGO` — por eso el validador de abajo, no
  * esta función, es quien decide si el resultado sirve.
  */
-export function codigoDesdeSigla(sigla: string): string {
+export function codeFromAcronym(sigla: string): string {
   return sigla
     .trim()
     .normalize('NFD')
@@ -61,7 +61,7 @@ export function codigoDesdeSigla(sigla: string): string {
  * de código visible en el que anclar el error— y es lo único que evita
  * mandar una sigla como `"---"` que derivaría en una cadena vacía.
  */
-export const siglaDerivaCodigo: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
+export const codeDriftAcronym: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
   const valor = typeof control.value === 'string' ? control.value : '';
   if (valor.trim() === '') {
     // Cadena vacía: la cubre `Validators.required` del propio control, no
@@ -69,10 +69,10 @@ export const siglaDerivaCodigo: ValidatorFn = (control: AbstractControl): Valida
     return null;
   }
 
-  const codigo = codigoDesdeSigla(valor);
+  const codigo = codeFromAcronym(valor);
   const valido =
-    codigo.length >= MIN_CODIGO &&
-    PATRON_CODIGO_VALIDO.test(codigo) &&
-    TIENE_ALFANUMERICO.test(codigo);
+    codigo.length >= MIN_CODE &&
+    PATTERN_VALID_CODE.test(codigo) &&
+    HAS_ALPHANUMERIC.test(codigo);
   return valido ? null : { siglaSinCodigo: true };
 };

@@ -1,11 +1,11 @@
 import { RECURSO_MEDICA, reservas } from './fixtures/agenda';
-import { ESTADO_RESERVA } from './fixtures/concepts';
+import { BOOKING_STATUS } from './fixtures/concepts';
 import { PACIENTE } from './fixtures/people';
 import {
-  avisoDeHorarioLiberado,
-  esperaUnHueco,
-  horariosLiberados,
-  MINUTOS_DE_GRACIA,
+  releasedScheduleNotice,
+  waitsForGap,
+  releasedSchedules,
+  GRACE_MINUTES,
 } from './released-slot';
 
 /**
@@ -28,7 +28,7 @@ describe('horariosLiberados', () => {
   });
 
   /** Una reserva de la médica, a `minutos` de ahora, en el estado que se pida. */
-  function sembrar(minutos: number, estado: keyof typeof ESTADO_RESERVA, id = 'prueba'): string {
+  function sembrar(minutos: number, estado: keyof typeof BOOKING_STATUS, id = 'prueba'): string {
     const inicio = new Date(AHORA.getTime() + minutos * 60_000).toISOString();
     const fila = reservas.todos()[0]!;
     const nueva = {
@@ -37,7 +37,7 @@ describe('horariosLiberados', () => {
       bookableSlotId: `slot-${id}`,
       resourceId: RECURSO_MEDICA,
       patientProfileId: 'otro-paciente',
-      statusConceptId: ESTADO_RESERVA[estado]!,
+      statusConceptId: BOOKING_STATUS[estado]!,
       startAt: inicio,
       endAt: new Date(AHORA.getTime() + (minutos + 30) * 60_000).toISOString(),
     };
@@ -46,11 +46,11 @@ describe('horariosLiberados', () => {
   }
 
   function liberados(): readonly string[] {
-    return horariosLiberados().map((h) => h.bookableSlotId);
+    return releasedSchedules().map((h) => h.bookableSlotId);
   }
 
   it('un cupo confirmado que pasó los diez minutos queda libre', () => {
-    const cupo = sembrar(-(MINUTOS_DE_GRACIA + 1), 'BK-CONFIRMED', 'vencido');
+    const cupo = sembrar(-(GRACE_MINUTES + 1), 'BK-CONFIRMED', 'vencido');
 
     expect(liberados()).toContain(cupo);
   });
@@ -58,7 +58,7 @@ describe('horariosLiberados', () => {
   it('a los nueve minutos todavía no: la gracia es la gracia', () => {
     // Es el caso que hace que el aviso **llegue** durante el recorrido en vez
     // de estar desde el primer render.
-    const cupo = sembrar(-(MINUTOS_DE_GRACIA - 1), 'BK-CONFIRMED', 'a-punto');
+    const cupo = sembrar(-(GRACE_MINUTES - 1), 'BK-CONFIRMED', 'a-punto');
 
     expect(liberados()).not.toContain(cupo);
 
@@ -77,7 +77,7 @@ describe('horariosLiberados', () => {
 
   it('mientras el cupo corre, sí se ofrece', () => {
     // El caso del medio: pasaron los diez de gracia y todavía queda hueco.
-    const cupo = sembrar(-(MINUTOS_DE_GRACIA + 2), 'BK-CONFIRMED', 'en-ventana');
+    const cupo = sembrar(-(GRACE_MINUTES + 2), 'BK-CONFIRMED', 'en-ventana');
 
     expect(liberados()).toContain(cupo);
   });
@@ -98,7 +98,7 @@ describe('horariosLiberados', () => {
   it('quien anunció su llegada y no fue atendido sí lo libera', () => {
     // `BK-CHECKED-IN` cuenta: llegó, avisó, y diez minutos después nadie
     // inició. El cupo no se está usando igual.
-    const cupo = sembrar(-(MINUTOS_DE_GRACIA + 5), 'BK-CHECKED-IN', 'anunciado');
+    const cupo = sembrar(-(GRACE_MINUTES + 5), 'BK-CHECKED-IN', 'anunciado');
 
     expect(liberados()).toContain(cupo);
   });
@@ -113,7 +113,7 @@ describe('horariosLiberados', () => {
       bookableSlotId: 'slot-propia',
       resourceId: RECURSO_MEDICA,
       patientProfileId: PACIENTE.id,
-      statusConceptId: ESTADO_RESERVA['BK-CONFIRMED']!,
+      statusConceptId: BOOKING_STATUS['BK-CONFIRMED']!,
       startAt: inicio,
       endAt: inicio,
     });
@@ -122,10 +122,10 @@ describe('horariosLiberados', () => {
   });
 
   it('el aviso nombra el día, la hora y a quién atiende', () => {
-    const cupo = sembrar(-(MINUTOS_DE_GRACIA + 1), 'BK-CONFIRMED', 'texto');
-    const hueco = horariosLiberados().find((h) => h.bookableSlotId === cupo)!;
+    const cupo = sembrar(-(GRACE_MINUTES + 1), 'BK-CONFIRMED', 'texto');
+    const hueco = releasedSchedules().find((h) => h.bookableSlotId === cupo)!;
 
-    const aviso = avisoDeHorarioLiberado(hueco);
+    const aviso = releasedScheduleNotice(hueco);
 
     expect(aviso.subject).toBe('Se liberó un horario');
     expect(aviso.bodyText).toContain('Rojas');
@@ -137,23 +137,23 @@ describe('horariosLiberados', () => {
   it('el aviso se distingue por su `kind`, no por su texto', () => {
     // Es lo que mira el anunciador. Si dependiera del asunto, reescribir una
     // frase apagaría el toast sin que nada avisara.
-    const cupo = sembrar(-(MINUTOS_DE_GRACIA + 1), 'BK-CONFIRMED', 'kind');
-    const hueco = horariosLiberados().find((h) => h.bookableSlotId === cupo)!;
+    const cupo = sembrar(-(GRACE_MINUTES + 1), 'BK-CONFIRMED', 'kind');
+    const hueco = releasedSchedules().find((h) => h.bookableSlotId === cupo)!;
 
-    expect(avisoDeHorarioLiberado(hueco).payloadJson.kind).toBe('SLOT_RELEASED');
+    expect(releasedScheduleNotice(hueco).payloadJson.kind).toBe('SLOT_RELEASED');
   });
 
   it('el mismo cupo da siempre el mismo aviso: no se duplica al releer', () => {
-    const cupo = sembrar(-(MINUTOS_DE_GRACIA + 1), 'BK-CONFIRMED', 'estable');
-    const hueco = horariosLiberados().find((h) => h.bookableSlotId === cupo)!;
+    const cupo = sembrar(-(GRACE_MINUTES + 1), 'BK-CONFIRMED', 'estable');
+    const hueco = releasedSchedules().find((h) => h.bookableSlotId === cupo)!;
 
-    expect(avisoDeHorarioLiberado(hueco).id).toBe(avisoDeHorarioLiberado(hueco).id);
+    expect(releasedScheduleNotice(hueco).id).toBe(releasedScheduleNotice(hueco).id);
   });
 
   it('sólo le interesa a quien tiene una cita futura con la misma médica', () => {
     // La condición del registro: «confirmas para otra fecha». A quien no la
     // espera, un hueco suyo no le dice nada.
-    expect(esperaUnHueco(PACIENTE.id)).toBe(true);
-    expect(esperaUnHueco('alguien-sin-citas')).toBe(false);
+    expect(waitsForGap(PACIENTE.id)).toBe(true);
+    expect(waitsForGap('alguien-sin-citas')).toBe(false);
   });
 });

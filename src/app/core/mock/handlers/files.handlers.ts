@@ -1,6 +1,6 @@
-import { vitrinas } from '../fixtures/community';
-import { ESTADO } from '../fixtures/concepts';
-import { PACIENTES, PROFESIONALES } from '../fixtures/people';
+import { showcases } from '../fixtures/community';
+import { STATUS } from '../fixtures/concepts';
+import { PATIENTS, PROFESSIONALS } from '../fixtures/people';
 import { forbidden, noContent, reply, type MockRouter } from '../mock-router';
 import { ahora, avatarSvg, Coleccion, firmaSvg, imagenSvg, iso, logoSvg, nuevoId, qrSvg, selloSvg, texto, uuid } from '../mock-store';
 
@@ -72,13 +72,13 @@ function escaneoPendiente(archivo: ArchivoSimulado): boolean {
 const MAX_BYTES_EN_DATA_URL = 400 * 1024;
 
 const archivos = new Coleccion<ArchivoSimulado>([
-  ...PROFESIONALES.map((p, i) => ({
+  ...PROFESSIONALS.map((p, i) => ({
     id: p.photoFileId,
     currentVersionId: uuid(`version-${p.photoFileId}`),
     originalName: `foto-${p.slug}.svg`,
     category: 'IMAGE' as const,
     sensitivity: 'NORMAL' as const,
-    lifecycleStatusConceptId: ESTADO['ST-ACTIVE']!,
+    lifecycleStatusConceptId: STATUS['ST-ACTIVE']!,
     createdAt: iso(-300),
     dataUrl: avatarSvg(p.displayName, ['#1f6f8b', '#0f766e', '#7c3aed', '#b45309', '#be123c'][i % 5]),
     ownerType: 'USER',
@@ -89,47 +89,47 @@ const archivos = new Coleccion<ArchivoSimulado>([
   // la misma semilla que `credencialesDe`/`licenciasDe` en `people.ts`, así que
   // la fila de la tabla y el archivo no pueden separarse.
   // Los médicos de la red no tienen diploma ni carnet: `credencialesDe` no los declara.
-  ...PROFESIONALES.filter((p) => p.origen === undefined).flatMap((p) => [
-    { id: uuid(`file-diploma-${p.id}`), currentVersionId: uuid(`v-file-diploma-${p.id}`), originalName: `diploma-${p.slug}.pdf`, category: 'DOCUMENT' as const, sensitivity: 'PHI' as const, lifecycleStatusConceptId: ESTADO['ST-ACTIVE']!, createdAt: iso(-300), dataUrl: imagenSvg('Diploma de médico cirujano (PDF)'), ownerType: 'USER', ownerId: p.userId },
-    { id: uuid(`file-matricula-${p.id}`), currentVersionId: uuid(`v-file-matricula-${p.id}`), originalName: `matricula-${p.slug}.pdf`, category: 'DOCUMENT' as const, sensitivity: 'PHI' as const, lifecycleStatusConceptId: ESTADO['ST-ACTIVE']!, createdAt: iso(-300), dataUrl: imagenSvg('Carnet del Colegio Médico (PDF)', '#eef2ff', '#3730a3'), ownerType: 'USER', ownerId: p.userId },
+  ...PROFESSIONALS.filter((p) => p.origen === undefined).flatMap((p) => [
+    { id: uuid(`file-diploma-${p.id}`), currentVersionId: uuid(`v-file-diploma-${p.id}`), originalName: `diploma-${p.slug}.pdf`, category: 'DOCUMENT' as const, sensitivity: 'PHI' as const, lifecycleStatusConceptId: STATUS['ST-ACTIVE']!, createdAt: iso(-300), dataUrl: imagenSvg('Diploma de médico cirujano (PDF)'), ownerType: 'USER', ownerId: p.userId },
+    { id: uuid(`file-matricula-${p.id}`), currentVersionId: uuid(`v-file-matricula-${p.id}`), originalName: `matricula-${p.slug}.pdf`, category: 'DOCUMENT' as const, sensitivity: 'PHI' as const, lifecycleStatusConceptId: STATUS['ST-ACTIVE']!, createdAt: iso(-300), dataUrl: imagenSvg('Carnet del Colegio Médico (PDF)', '#eef2ff', '#3730a3'), ownerType: 'USER', ownerId: p.userId },
   ]),
-  ...PACIENTES.filter((p) => p.photoFileId !== undefined).map((p) => ({
+  ...PATIENTS.filter((p) => p.photoFileId !== undefined).map((p) => ({
     id: p.photoFileId!,
     currentVersionId: uuid(`version-${p.photoFileId}`),
     originalName: 'foto-perfil.svg',
     category: 'IMAGE' as const,
     sensitivity: 'NORMAL' as const,
-    lifecycleStatusConceptId: ESTADO['ST-ACTIVE']!,
+    lifecycleStatusConceptId: STATUS['ST-ACTIVE']!,
     createdAt: iso(-200),
     dataUrl: avatarSvg(p.displayName, '#db2777'),
     ownerType: 'USER',
     ownerId: p.userId,
   })),
-  ...vitrinas.todos().flatMap((v) => [
-    { id: v.avatarFileId, currentVersionId: uuid(`version-${v.avatarFileId}`), originalName: 'avatar.svg', category: 'IMAGE' as const, sensitivity: 'NORMAL' as const, lifecycleStatusConceptId: ESTADO['ST-ACTIVE']!, createdAt: iso(-200), dataUrl: v.avatarUrl },
-    { id: v.coverFileId, currentVersionId: uuid(`version-${v.coverFileId}`), originalName: 'portada.svg', category: 'IMAGE' as const, sensitivity: 'NORMAL' as const, lifecycleStatusConceptId: ESTADO['ST-ACTIVE']!, createdAt: iso(-200), dataUrl: v.coverUrl },
+  ...showcases.todos().flatMap((v) => [
+    { id: v.avatarFileId, currentVersionId: uuid(`version-${v.avatarFileId}`), originalName: 'avatar.svg', category: 'IMAGE' as const, sensitivity: 'NORMAL' as const, lifecycleStatusConceptId: STATUS['ST-ACTIVE']!, createdAt: iso(-200), dataUrl: v.avatarUrl },
+    { id: v.coverFileId, currentVersionId: uuid(`version-${v.coverFileId}`), originalName: 'portada.svg', category: 'IMAGE' as const, sensitivity: 'NORMAL' as const, lifecycleStatusConceptId: STATUS['ST-ACTIVE']!, createdAt: iso(-200), dataUrl: v.coverUrl },
   ]),
-  ...PACIENTES.flatMap((p) => [
-    { id: uuid(`file-lab-${p.id}`), currentVersionId: uuid(`v-file-lab-${p.id}`), originalName: 'laboratorio-completo.pdf', category: 'DOCUMENT' as const, sensitivity: 'PHI' as const, lifecycleStatusConceptId: ESTADO['ST-ACTIVE']!, createdAt: iso(-47), dataUrl: imagenSvg('Laboratorio completo (PDF)'), ownerType: 'PATIENT', ownerId: p.id, uploaderUserId: LABORATORIO_UPLOADER },
-    { id: uuid(`file-ecg-${p.id}`), currentVersionId: uuid(`v-file-ecg-${p.id}`), originalName: 'electrocardiograma.png', category: 'IMAGE' as const, sensitivity: 'PHI' as const, lifecycleStatusConceptId: ESTADO['ST-ACTIVE']!, createdAt: iso(-2), dataUrl: imagenSvg('ECG de reposo', '#fff7ed', '#c2410c'), ownerType: 'PATIENT', ownerId: p.id, uploaderUserId: LABORATORIO_UPLOADER },
+  ...PATIENTS.flatMap((p) => [
+    { id: uuid(`file-lab-${p.id}`), currentVersionId: uuid(`v-file-lab-${p.id}`), originalName: 'laboratorio-completo.pdf', category: 'DOCUMENT' as const, sensitivity: 'PHI' as const, lifecycleStatusConceptId: STATUS['ST-ACTIVE']!, createdAt: iso(-47), dataUrl: imagenSvg('Laboratorio completo (PDF)'), ownerType: 'PATIENT', ownerId: p.id, uploaderUserId: LABORATORIO_UPLOADER },
+    { id: uuid(`file-ecg-${p.id}`), currentVersionId: uuid(`v-file-ecg-${p.id}`), originalName: 'electrocardiograma.png', category: 'IMAGE' as const, sensitivity: 'PHI' as const, lifecycleStatusConceptId: STATUS['ST-ACTIVE']!, createdAt: iso(-2), dataUrl: imagenSvg('ECG de reposo', '#fff7ed', '#c2410c'), ownerType: 'PATIENT', ownerId: p.id, uploaderUserId: LABORATORIO_UPLOADER },
   ]),
-  { id: uuid('file-lunar'), currentVersionId: uuid('v-file-lunar'), originalName: 'lunar.jpg', category: 'IMAGE', sensitivity: 'PHI', lifecycleStatusConceptId: ESTADO['ST-ACTIVE']!, createdAt: iso(-12), dataUrl: imagenSvg('Foto del lunar', '#fdf2f8', '#9d174d') },
-  { id: uuid('file-licencia'), currentVersionId: uuid('v-file-licencia'), originalName: 'licencia-funcionamiento.pdf', category: 'DOCUMENT', sensitivity: 'NORMAL', lifecycleStatusConceptId: ESTADO['ST-ACTIVE']!, createdAt: iso(-400), dataUrl: imagenSvg('Licencia de funcionamiento (PDF)') },
+  { id: uuid('file-lunar'), currentVersionId: uuid('v-file-lunar'), originalName: 'lunar.jpg', category: 'IMAGE', sensitivity: 'PHI', lifecycleStatusConceptId: STATUS['ST-ACTIVE']!, createdAt: iso(-12), dataUrl: imagenSvg('Foto del lunar', '#fdf2f8', '#9d174d') },
+  { id: uuid('file-licencia'), currentVersionId: uuid('v-file-licencia'), originalName: 'licencia-funcionamiento.pdf', category: 'DOCUMENT', sensitivity: 'NORMAL', lifecycleStatusConceptId: STATUS['ST-ACTIVE']!, createdAt: iso(-400), dataUrl: imagenSvg('Licencia de funcionamiento (PDF)') },
   // Los adjuntos del chat de grupo de la médica.
-  { id: uuid('file-guia-anticoagulacion'), currentVersionId: uuid('v-file-guia-anticoagulacion'), originalName: 'guia-anticoagulacion-2026.pdf', category: 'DOCUMENT', sensitivity: 'NORMAL', lifecycleStatusConceptId: ESTADO['ST-ACTIVE']!, createdAt: iso(-2), dataUrl: imagenSvg('Guía de anticoagulación 2026 (PDF)') },
-  { id: uuid('file-holter'), currentVersionId: uuid('v-file-holter'), originalName: 'holter-24h.png', category: 'IMAGE', sensitivity: 'PHI', lifecycleStatusConceptId: ESTADO['ST-ACTIVE']!, createdAt: iso(0), dataUrl: imagenSvg('Holter 24 h', '#f0fdf4', '#166534') },
+  { id: uuid('file-guia-anticoagulacion'), currentVersionId: uuid('v-file-guia-anticoagulacion'), originalName: 'guia-anticoagulacion-2026.pdf', category: 'DOCUMENT', sensitivity: 'NORMAL', lifecycleStatusConceptId: STATUS['ST-ACTIVE']!, createdAt: iso(-2), dataUrl: imagenSvg('Guía de anticoagulación 2026 (PDF)') },
+  { id: uuid('file-holter'), currentVersionId: uuid('v-file-holter'), originalName: 'holter-24h.png', category: 'IMAGE', sensitivity: 'PHI', lifecycleStatusConceptId: STATUS['ST-ACTIVE']!, createdAt: iso(0), dataUrl: imagenSvg('Holter 24 h', '#f0fdf4', '#166534') },
   // El QR bancario que la médica ya configuró para su consultorio propio. Uno
   // solo y no cuatro: con todas las sedes configuradas no se vería el aviso en
   // ámbar, que es el estado que la pantalla tiene que saber contar.
-  { id: uuid('file-qr-consultorio'), currentVersionId: uuid('v-file-qr-consultorio'), originalName: 'qr-banco-union.png', category: 'IMAGE', sensitivity: 'NORMAL', lifecycleStatusConceptId: ESTADO['ST-ACTIVE']!, createdAt: iso(-30), dataUrl: qrSvg('site-consultorio-rojas', 'Banco Unión · Cta. 1000-4477') },
+  { id: uuid('file-qr-consultorio'), currentVersionId: uuid('v-file-qr-consultorio'), originalName: 'qr-banco-union.png', category: 'IMAGE', sensitivity: 'NORMAL', lifecycleStatusConceptId: STATUS['ST-ACTIVE']!, createdAt: iso(-30), dataUrl: qrSvg('site-consultorio-rojas', 'Banco Unión · Cta. 1000-4477') },
   /* SIMULADOR del logo del consultorio propio. Cuando exista el campo real en
      el backend, esta fila y su gemela en `practice.handlers.ts` se borran: las
      pantallas y el PDF sólo hablan con `LogoDelConsultorioClient`. */
   /* SIMULADOR de la firma y el sello de la médica (imágenes, no firma
      electrónica). Ver `signature-and-seal.handlers.ts`. */
-  { id: uuid('file-firma-medica'), currentVersionId: uuid('v-file-firma-medica'), originalName: 'firma-rojas.svg', category: 'IMAGE', sensitivity: 'NORMAL', lifecycleStatusConceptId: ESTADO['ST-ACTIVE']!, createdAt: iso(-30), dataUrl: firmaSvg() },
-  { id: uuid('file-sello-medica'), currentVersionId: uuid('v-file-sello-medica'), originalName: 'sello-rojas.svg', category: 'IMAGE', sensitivity: 'NORMAL', lifecycleStatusConceptId: ESTADO['ST-ACTIVE']!, createdAt: iso(-30), dataUrl: selloSvg('Dra. V. Rojas', '1000') },
-  { id: uuid('file-logo-consultorio'), currentVersionId: uuid('v-file-logo-consultorio'), originalName: 'logo-consultorio-rojas.svg', category: 'IMAGE', sensitivity: 'NORMAL', lifecycleStatusConceptId: ESTADO['ST-ACTIVE']!, createdAt: iso(-30), dataUrl: logoSvg('Consultorio Rojas', 'Cardiología · Santa Cruz') },
+  { id: uuid('file-firma-medica'), currentVersionId: uuid('v-file-firma-medica'), originalName: 'firma-rojas.svg', category: 'IMAGE', sensitivity: 'NORMAL', lifecycleStatusConceptId: STATUS['ST-ACTIVE']!, createdAt: iso(-30), dataUrl: firmaSvg() },
+  { id: uuid('file-sello-medica'), currentVersionId: uuid('v-file-sello-medica'), originalName: 'sello-rojas.svg', category: 'IMAGE', sensitivity: 'NORMAL', lifecycleStatusConceptId: STATUS['ST-ACTIVE']!, createdAt: iso(-30), dataUrl: selloSvg('Dra. V. Rojas', '1000') },
+  { id: uuid('file-logo-consultorio'), currentVersionId: uuid('v-file-logo-consultorio'), originalName: 'logo-consultorio-rojas.svg', category: 'IMAGE', sensitivity: 'NORMAL', lifecycleStatusConceptId: STATUS['ST-ACTIVE']!, createdAt: iso(-30), dataUrl: logoSvg('Consultorio Rojas', 'Cardiología · Santa Cruz') },
 ]);
 
 /**
@@ -275,7 +275,7 @@ export function guardarImagenDeDataUrl(dataUrl: string, nombre: string): string 
     originalName: nombre,
     category: 'IMAGE',
     sensitivity: 'NORMAL',
-    lifecycleStatusConceptId: ESTADO['ST-ACTIVE']!,
+    lifecycleStatusConceptId: STATUS['ST-ACTIVE']!,
     createdAt: ahora(),
     dataUrl,
   });
@@ -307,7 +307,7 @@ export function registrarArchivos(router: MockRouter): void {
       originalName: nombre,
       category: categoria,
       sensitivity: sensibilidad,
-      lifecycleStatusConceptId: ESTADO['ST-ACTIVE']!,
+      lifecycleStatusConceptId: STATUS['ST-ACTIVE']!,
       createdAt: ahora(),
       dataUrl: categoria === 'IMAGE' ? avatarSvg(nombre.slice(0, 2).toUpperCase(), '#0ea5e9') : imagenSvg(nombre),
       // Se guardan los bytes reales: lo que el usuario subió es lo que tiene

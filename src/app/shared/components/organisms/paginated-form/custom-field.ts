@@ -24,7 +24,7 @@ import { Directive, inject, input, TemplateRef } from '@angular/core';
 @Directive({
   selector: '[appCampoPersonalizado]',
 })
-export class CampoPersonalizado {
+export class CustomField {
   /** La `key` del campo al que corresponde esta plantilla. */
   readonly key = input.required<string>({ alias: 'appCampoPersonalizado' });
 

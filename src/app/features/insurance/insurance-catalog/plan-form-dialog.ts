@@ -1,5 +1,5 @@
 import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
-import { CampoPersonalizado } from '../../../shared/components/organisms/paginated-form/custom-field';
+import { CustomField } from '../../../shared/components/organisms/paginated-form/custom-field';
 import type { PaginaDeFormulario } from '../../../shared/forms/paginated/paginated-form.types';
 import {
   ChangeDetectionStrategy,
@@ -40,7 +40,7 @@ const MONEY = /^\d+(?:\.\d{1,2})?$/;
  */
 @Component({
   selector: 'app-plan-form-dialog',
-  imports: [PaginatedForm, CampoPersonalizado,
+  imports: [PaginatedForm, CustomField,
     ReactiveFormsModule,
     AnnounceOnAppear,
     Input,

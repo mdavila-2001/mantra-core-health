@@ -1,12 +1,12 @@
 import { MOTIVOS_DE_PUNTOS } from '../../../core/data-access/loyalty/loyalty.types';
 import {
-  etiquetaDeMotivo,
-  etiquetaDeMultiplicador,
-  movimientoEnPalabras,
-  puntosEnPalabras,
-  signoDe,
-  tonoDeMovimiento,
-  unidadDePuntos,
+  reasonLabel,
+  multiplierLabel,
+  movementInWords,
+  pointsInWords,
+  signOf,
+  movementTone,
+  pointsUnit,
 } from './point-reason';
 
 /**
@@ -18,7 +18,7 @@ import {
 describe('presentación del movimiento de puntos', () => {
   it('todos los motivos del catálogo tienen etiqueta en castellano', () => {
     for (const motivo of MOTIVOS_DE_PUNTOS) {
-      const etiqueta = etiquetaDeMotivo(motivo);
+      const etiqueta = reasonLabel(motivo);
 
       expect(etiqueta).not.toBe('');
       // El código del catálogo jamás se muestra.
@@ -28,69 +28,69 @@ describe('presentación del movimiento de puntos', () => {
   });
 
   it('un motivo que la API no reconoció se dice sin adivinar', () => {
-    expect(etiquetaDeMotivo(null)).toBe('Movimiento');
+    expect(reasonLabel(null)).toBe('Movimiento');
   });
 
   it('nunca usa el tono ámbar: está reservado para la acción de la pantalla', () => {
-    expect(tonoDeMovimiento('POINTS_EARN')).toBe('success');
-    expect(tonoDeMovimiento('POINTS_REDEEM')).toBe('secondary');
-    expect(tonoDeMovimiento('POINTS_EXPIRE')).toBe('secondary');
-    expect(tonoDeMovimiento(null)).toBe('secondary');
+    expect(movementTone('POINTS_EARN')).toBe('success');
+    expect(movementTone('POINTS_REDEEM')).toBe('secondary');
+    expect(movementTone('POINTS_EXPIRE')).toBe('secondary');
+    expect(movementTone(null)).toBe('secondary');
   });
 
   it('el signo distingue sumar de restar en el texto, no sólo en el color', () => {
-    expect(signoDe('POINTS_EARN')).toBe('+');
-    expect(signoDe('POINTS_REDEEM')).toBe('−');
-    expect(signoDe('POINTS_EXPIRE')).toBe('−');
+    expect(signOf('POINTS_EARN')).toBe('+');
+    expect(signOf('POINTS_REDEEM')).toBe('−');
+    expect(signOf('POINTS_EXPIRE')).toBe('−');
   });
 
   it('un ajuste no lleva signo inventado: el catálogo no dice hacia dónde movió', () => {
-    expect(signoDe('POINTS_ADJUST')).toBe('');
-    expect(signoDe(null)).toBe('');
+    expect(signOf('POINTS_ADJUST')).toBe('');
+    expect(signOf(null)).toBe('');
   });
 
   it('lo que escucha un lector de pantalla dice el verbo, no el signo', () => {
-    expect(movimientoEnPalabras('POINTS_EARN', '45', 'REASON_EVENT')).toBe(
+    expect(movementInWords('POINTS_EARN', '45', 'REASON_EVENT')).toBe(
       'Sumó 45 puntos — actividad en la app',
     );
-    expect(movimientoEnPalabras('POINTS_REDEEM', '150', 'REASON_REDEMPTION')).toBe(
+    expect(movementInWords('POINTS_REDEEM', '150', 'REASON_REDEMPTION')).toBe(
       'Restó 150 puntos — canje',
     );
   });
 
   it('sin dirección conocida no se afirma el sentido del movimiento', () => {
-    expect(movimientoEnPalabras(null, '20', null)).toBe('Movimiento de 20 puntos — movimiento');
+    expect(movementInWords(null, '20', null)).toBe('Movimiento de 20 puntos — movimiento');
   });
 
   it('el vencimiento se dice como lo que es, sin alarmar', () => {
-    expect(etiquetaDeMotivo('REASON_EXPIRY')).toBe('Puntos vencidos');
-    expect(movimientoEnPalabras('POINTS_EXPIRE', '30', 'REASON_EXPIRY')).toContain(
+    expect(reasonLabel('REASON_EXPIRY')).toBe('Puntos vencidos');
+    expect(movementInWords('POINTS_EXPIRE', '30', 'REASON_EXPIRY')).toContain(
       'puntos vencidos',
     );
   });
 
   it('un solo punto se dice en singular', () => {
-    expect(puntosEnPalabras('1')).toBe('1 punto');
-    expect(unidadDePuntos('1')).toBe('punto');
+    expect(pointsInWords('1')).toBe('1 punto');
+    expect(pointsUnit('1')).toBe('punto');
   });
 
   it('cualquier otra cantidad va en plural, el cero incluido', () => {
-    expect(puntosEnPalabras('0')).toBe('0 puntos');
-    expect(puntosEnPalabras('2')).toBe('2 puntos');
-    expect(puntosEnPalabras('150')).toBe('150 puntos');
+    expect(pointsInWords('0')).toBe('0 puntos');
+    expect(pointsInWords('2')).toBe('2 puntos');
+    expect(pointsInWords('150')).toBe('150 puntos');
     // 21 no es «21 punto»: la concordancia mira la cifra entera, no su final.
-    expect(puntosEnPalabras('21')).toBe('21 puntos');
+    expect(pointsInWords('21')).toBe('21 puntos');
   });
 
   it('la concordancia llega al anuncio para lector de pantalla', () => {
-    expect(movimientoEnPalabras('POINTS_REDEEM', '1', 'REASON_REDEMPTION')).toBe(
+    expect(movementInWords('POINTS_REDEEM', '1', 'REASON_REDEMPTION')).toBe(
       'Restó 1 punto — canje',
     );
   });
 
   it('el multiplicador de promoción se dice «x2», un solo texto para reusar', () => {
-    expect(etiquetaDeMultiplicador('2')).toBe('x2');
-    expect(etiquetaDeMultiplicador('3')).toBe('x3');
-    expect(etiquetaDeMultiplicador(' 2 ')).toBe('x2');
+    expect(multiplierLabel('2')).toBe('x2');
+    expect(multiplierLabel('3')).toBe('x3');
+    expect(multiplierLabel(' 2 ')).toBe('x2');
   });
 });

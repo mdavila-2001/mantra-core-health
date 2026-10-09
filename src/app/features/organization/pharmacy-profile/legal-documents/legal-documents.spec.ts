@@ -1,14 +1,14 @@
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 
 import { DOCUMENTOS_DE_EJEMPLO } from '../pharmacy-profile.fixtures';
-import { DocumentosLegales } from './legal-documents';
+import { LegalDocuments } from './legal-documents';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import { empty, loading, ready } from '../../../../core/view-state/view-state';
 import type { DocumentoLegal } from '../pharmacy-profile.types';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
 
 describe('DocumentosLegales', () => {
-  let fixture: ComponentFixture<DocumentosLegales>;
+  let fixture: ComponentFixture<LegalDocuments>;
   let toasts: ToastService;
 
   /** La carpeta vacía, tal como la declara la ficha. */
@@ -18,7 +18,7 @@ describe('DocumentosLegales', () => {
   );
 
   function montar(state: ViewState<readonly DocumentoLegal[]>): HTMLElement {
-    fixture = TestBed.createComponent(DocumentosLegales);
+    fixture = TestBed.createComponent(LegalDocuments);
     toasts = TestBed.inject(ToastService);
     fixture.componentRef.setInput('state', state);
     fixture.detectChanges();

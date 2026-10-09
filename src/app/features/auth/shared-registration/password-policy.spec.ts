@@ -1,21 +1,21 @@
 import { FormControl } from '@angular/forms';
 
 import {
-  MENSAJE_CONTRASENA_CORTA,
-  MIN_CARACTERES_CONTRASENA,
-  validadoresDeContrasena,
+  MESSAGE_SHORT_PASSWORD,
+  MIN_CHARACTERS_PASSWORD,
+  passwordValidators,
 } from './password-policy';
 
 function control(valor: string): FormControl<string> {
   return new FormControl(valor, {
     nonNullable: true,
-    validators: [...validadoresDeContrasena],
+    validators: [...passwordValidators],
   });
 }
 
 describe('política de contraseña del alta', () => {
   it('exige los ocho caracteres que pide la API', () => {
-    expect(MIN_CARACTERES_CONTRASENA).toBe(8);
+    expect(MIN_CHARACTERS_PASSWORD).toBe(8);
   });
 
   it('rechaza una contraseña vacía por obligatoria', () => {
@@ -31,6 +31,6 @@ describe('política de contraseña del alta', () => {
   });
 
   it('dice lo mismo que decían las altas por separado', () => {
-    expect(MENSAJE_CONTRASENA_CORTA).toBe('La contraseña necesita al menos 8 caracteres.');
+    expect(MESSAGE_SHORT_PASSWORD).toBe('La contraseña necesita al menos 8 caracteres.');
   });
 });

@@ -21,7 +21,7 @@ import { registrarPortalDeLaboratorio } from './lab-portal.handlers';
 import { registerLoyalty } from './loyalty.handlers';
 import { registrarModulosAdministrativos } from './admin-modules.handlers';
 import { registrarNotificaciones } from './notifications.handlers';
-import { registrarFirmaYSello } from './signature-and-seal.handlers';
+import { registerSignatureAndSeal } from './signature-and-seal.handlers';
 import { registrarPerfiles } from './profiles.handlers';
 import { registrarPracticas } from './practice.handlers';
 import { registrarProcedimientos } from './procedures.handlers';
@@ -47,7 +47,7 @@ export function crearRouterSimulado(): MockRouter {
   registrarAuth(router);
   registrarTerminologia(router);
   registrarPerfiles(router);
-  registrarFirmaYSello(router);
+  registerSignatureAndSeal(router);
   registrarAgenda(router);
   registrarServiciosDeAgenda(router);
   registrarPracticas(router);

@@ -12,7 +12,7 @@
     }
   </p>
 
-  @if (sinOrganizacion()) {
+  @if (withoutOrganization()) {
     <app-alert tone="warning" title="Elija una organización primero">
       Su vitrina cuelga de la organización con la que esté trabajando. Elija una desde el
       encabezado y vuelva acá.
@@ -26,7 +26,7 @@
       <app-form-field label="Nombre visible" hint="Con el que firma. Puede cambiarlo después.">
         <app-input
           [value]="displayName()"
-          (valueChange)="alEscribirNombre($any($event) ?? '')"
+          (valueChange)="toWriteName($any($event) ?? '')"
           placeholder="Dra. Valeria Fuentes"
           data-testid="vitrina-nombre"
         />
@@ -39,13 +39,13 @@
       <app-form-field
         label="Su enlace"
         hint="Minúsculas, números y guiones."
-        [errorMessage]="slugValido() ? '' : 'Sólo minúsculas, números y guiones.'"
+        [errorMessage]="validSlug() ? '' : 'Sólo minúsculas, números y guiones.'"
       >
         <app-input [(value)]="slug" placeholder="tu-enlace" data-testid="vitrina-enlace" />
       </app-form-field>
 
       <p class="vitrina__enlace">
-        Va a quedar en <code>{{ enlace() }}</code>
+        Va a quedar en <code>{{ link() }}</code>
       </p>
 
       <!-- Obligatoria sólo para grupos públicos, porque el servidor la exige
@@ -53,9 +53,9 @@
            la trajo hasta acá. -->
       <app-form-field
         class="vitrina__ancho"
-        [label]="fotoObligatoria() ? 'Su foto' : 'Su foto (opcional)'"
+        [label]="requiredPhoto() ? 'Su foto' : 'Su foto (opcional)'"
         [hint]="
-          fotoObligatoria()
+          requiredPhoto()
             ? 'JPG, PNG o WEBP. Hasta 5 MB. Un grupo público la exige: es la cara de quien lo abrió.'
             : 'JPG, PNG o WEBP. Hasta 5 MB. Es la que aparece junto a su firma.'
         "
@@ -63,9 +63,9 @@
         <app-file-input
           testId="vitrina-foto"
           removeTestId="vitrina-foto-quitar"
-          [(files)]="foto"
-          [accept]="formatosDeFoto"
-          [maxSizeBytes]="maxBytesDeFoto"
+          [(files)]="photo"
+          [accept]="photoFormats"
+          [maxSizeBytes]="photoMaxBytes"
           [maxFiles]="1"
           accessibleLabel="Su foto de vitrina"
         />
@@ -76,10 +76,10 @@
           app-button
           type="button"
           variant="primary"
-          [isLoading]="guardando()"
-          [disabled]="!puedeCrear()"
+          [isLoading]="saving()"
+          [disabled]="!canCreate()"
           data-testid="vitrina-crear"
-          (clicked)="crear()"
+          (clicked)="create()"
         >
           Crear mi vitrina
         </button>

@@ -8,7 +8,7 @@ import type { ViewState } from '../../core/view-state/view-state.types';
  * rol no permite dar de alta internaciones»— y porque un texto genérico en esos
  * dos casos deja a quien lo lee sin saber qué recargar.
  */
-export interface TextosDelFallo {
+export interface FailureTexts {
   /** La acción en infinitivo: «registrar la alergia», «pedir estudios». */
   readonly accion: string;
   /** Qué decir en un 403. Sin él: «Tu rol no permite {accion}.» */
@@ -42,9 +42,9 @@ export interface TextosDelFallo {
  * @param textos - Cómo nombrar la acción y, si hace falta, el 403 y el 404.
  * @returns El mensaje, o `null` si el estado no es uno de esos cuatro fallos.
  */
-export function mensajeDeFalloDeEscritura(
+export function writeFailureMessage(
   estado: ViewState<null>,
-  textos: TextosDelFallo,
+  textos: FailureTexts,
 ): string | null {
   switch (estado.status) {
     case 'forbidden':
@@ -75,7 +75,7 @@ export function mensajeDeFalloDeEscritura(
  * El fallo de una escritura clínica **con su validación**, para el bloque que
  * no le da a la validación ningún trato propio.
  *
- * Es {@link mensajeDeFalloDeEscritura} más la rama `validation` resuelta de la
+ * Es {@link writeFailureMessage} más la rama `validation` resuelta de la
  * forma corriente: el primer problema y no todos. Los demás son del mismo envío
  * y se corrigen igual, y una lista dentro de un aviso se lee como un bloque de
  * texto que se saltea.
@@ -84,12 +84,12 @@ export function mensajeDeFalloDeEscritura(
  * @param textos - Cómo nombrar la acción y, si hace falta, el 403 y el 404.
  * @returns El mensaje, o `null` si la escritura no falló.
  */
-export function mensajeDeEscritura(
+export function writeMessage(
   estado: ViewState<null>,
-  textos: TextosDelFallo,
+  textos: FailureTexts,
 ): string | null {
   if (estado.status === 'validation') {
     return estado.issues[0]?.message ?? `No pudimos ${textos.accion}.`;
   }
-  return mensajeDeFalloDeEscritura(estado, textos);
+  return writeFailureMessage(estado, textos);
 }

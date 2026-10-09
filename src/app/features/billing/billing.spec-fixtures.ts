@@ -2,9 +2,9 @@ import type {
   SimulatedCharge,
   SimulatedInvoice,
 } from '../../core/data-access/billing-simulated/billing-simulated.types';
-import { cobrosIniciales, EMISORES_SIMULADOS, PADRON_SIMULADO } from '../../core/mock/billing-sim/simulated-data';
-import { FacturacionSimulada } from '../../core/mock/billing-sim/simulated-invoicing';
-import { SiatSimuladoAdapter } from '../../core/mock/siat-sim/siat-simulated.adapter';
+import { initialCharges, SIMULATED_ISSUERS, SIMULATED_REGISTRY } from '../../core/mock/billing-sim/simulated-data';
+import { SimulatedInvoicing } from '../../core/mock/billing-sim/simulated-invoicing';
+import { SiatSimulatedAdapter } from '../../core/mock/siat-sim/siat-simulated.adapter';
 
 /**
  * Datos de prueba de la pantalla, producidos por el **mismo motor** que
@@ -13,24 +13,24 @@ import { SiatSimuladoAdapter } from '../../core/mock/siat-sim/siat-simulated.ada
  */
 export const INSTANTE_DE_PRUEBA = new Date('2026-09-15T14:00:00.000Z');
 
-export function motorDePrueba(): FacturacionSimulada {
+export function motorDePrueba(): SimulatedInvoicing {
   const reloj = () => INSTANTE_DE_PRUEBA;
-  return new FacturacionSimulada({
-    siat: new SiatSimuladoAdapter({ padron: PADRON_SIMULADO, reloj }),
-    emisores: EMISORES_SIMULADOS,
-    cobros: cobrosIniciales(),
+  return new SimulatedInvoicing({
+    siat: new SiatSimulatedAdapter({ padron: SIMULATED_REGISTRY, reloj }),
+    emisores: SIMULATED_ISSUERS,
+    cobros: initialCharges(),
     reloj,
   });
 }
 
 export function cobrosDePrueba(): readonly SimulatedCharge[] {
-  return motorDePrueba().listarCobros();
+  return motorDePrueba().listCharges();
 }
 
 export function facturaDePrueba(source: 'CONSULTATION' | 'PHARMACY' = 'PHARMACY'): SimulatedInvoice {
   const motor = motorDePrueba();
-  const cobro = motor.listarCobros().find((c) => c.source === source && c.payment !== null)!;
-  const r = motor.emitirFactura(
+  const cobro = motor.listCharges().find((c) => c.source === source && c.payment !== null)!;
+  const r = motor.issueInvoice(
     cobro.id,
     { buyer: { name: cobro.suggestedBuyer.name, documentTypeCode: 1, documentNumber: cobro.suggestedBuyer.documentNumber || '1234567' } },
     'prueba',

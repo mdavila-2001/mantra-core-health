@@ -1,5 +1,5 @@
 import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
-import { CampoPersonalizado } from '../../../shared/components/organisms/paginated-form/custom-field';
+import { CustomField } from '../../../shared/components/organisms/paginated-form/custom-field';
 import type { PaginaDeFormulario } from '../../../shared/forms/paginated/paginated-form.types';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, input, output, signal, type OnInit } from '@angular/core';
@@ -23,9 +23,9 @@ import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 import { ContentDialog } from '../../../shared/components/organisms/content-dialog/content-dialog';
 import { ROTULO_DE_ESTADO, TONO_DE_ESTADO } from '../billing-summary';
-import { bs, fechaYHora, mensajeDeError, sinMarcaDeCatalogo, tieneFacturaVigente } from '../on-screen-charges';
-import { montoLiteral } from '../amount-in-words';
-import { descargarRepresentacionGrafica, descargarXml } from '../graphic-representation';
+import { bs, dateAndTime, errorMessage, catalogWithoutMark, hasCurrentInvoice } from '../on-screen-charges';
+import { amountLiteral } from '../amount-in-words';
+import { downloadGraphicRepresentation, downloadXml } from '../graphic-representation';
 
 /**
  * **El modal que emite la factura contra el SIAT simulado.**
@@ -52,15 +52,15 @@ import { descargarRepresentacionGrafica, descargarXml } from '../graphic-represe
  */
 @Component({
   selector: 'app-simulated-invoice-dialog',
-  imports: [PaginatedForm, CampoPersonalizado, ReactiveFormsModule, Alert, AppButton, Chip, ContentDialog, FormField, Input, Select],
+  imports: [PaginatedForm, CustomField, ReactiveFormsModule, Alert, AppButton, Chip, ContentDialog, FormField, Input, Select],
   templateUrl: './simulated-invoice-dialog.html',
   styleUrl: './simulated-invoice-dialog.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class FacturaSimuladaDialog implements OnInit {
+export class SimulatedInvoiceDialog implements OnInit {
   protected readonly invoicePages = computed<readonly PaginaDeFormulario[]>(() => [
     { titulo: 'Comprador', campos: ['name', 'documentTypeCode', 'documentNumber', 'complement'].map((key) => ({ key, label: '', control: 'custom' })) },
-    { titulo: 'Entrega y pago', campos: ['email', ...(this.pideMedioDePago() ? ['methodCode'] : [])].map((key) => ({ key, label: '', control: 'custom' })) },
+    { titulo: 'Entrega y pago', campos: ['email', ...(this.paymentMeansRequests() ? ['methodCode'] : [])].map((key) => ({ key, label: '', control: 'custom' })) },
   ]);
 
   private readonly client = inject(BillingSimulatedClient);
@@ -75,31 +75,31 @@ export class FacturaSimuladaDialog implements OnInit {
   readonly pagado = output<void>();
   readonly cerrado = output<void>();
 
-  protected readonly factura = signal<SimulatedInvoice | null>(null);
-  protected readonly cargandoFactura = signal(false);
-  protected readonly enviando = signal(false);
+  protected readonly invoice = signal<SimulatedInvoice | null>(null);
+  protected readonly invoiceLoading = signal(false);
+  protected readonly sending = signal(false);
   protected readonly error = signal<string | null>(null);
   /** El pago ya quedó registrado en este modal: un reintento sólo factura. */
-  private readonly pagoRegistrado = signal(false);
+  private readonly registeredPayment = signal(false);
 
-  protected readonly pideMedioDePago = computed(() => this.cobro().payment === null && !this.pagoRegistrado());
-  protected readonly literal = computed(() => montoLiteral(this.cobro().total));
+  protected readonly paymentMeansRequests = computed(() => this.cobro().payment === null && !this.registeredPayment());
+  protected readonly literal = computed(() => amountLiteral(this.cobro().total));
   protected readonly bs = bs;
-  protected readonly fechaYHora = fechaYHora;
-  protected readonly rotuloDeEstado = ROTULO_DE_ESTADO;
-  protected readonly tonoDeEstado = TONO_DE_ESTADO;
-  protected readonly notasDelPlan = computed(
+  protected readonly dateAndTime = dateAndTime;
+  protected readonly statusLabel = ROTULO_DE_ESTADO;
+  protected readonly statusTone = TONO_DE_ESTADO;
+  protected readonly planNotes = computed(
     () => this.cobro().plan?.instances.flatMap((i) => i.salesNotes.map((n) => n.number)) ?? [],
   );
 
-  protected readonly opcionesDeMetodo = computed(() =>
-    this.catalogos().paymentMethods.map((m) => ({ value: m.codigo, label: sinMarcaDeCatalogo(m.descripcion) })),
+  protected readonly methodOptions = computed(() =>
+    this.catalogos().paymentMethods.map((m) => ({ value: m.codigo, label: catalogWithoutMark(m.descripcion) })),
   );
-  protected readonly opcionesDeDocumento = computed(() =>
-    this.catalogos().identityDocumentTypes.map((m) => ({ value: m.codigo, label: sinMarcaDeCatalogo(m.descripcion) })),
+  protected readonly documentOptions = computed(() =>
+    this.catalogos().identityDocumentTypes.map((m) => ({ value: m.codigo, label: catalogWithoutMark(m.descripcion) })),
   );
 
-  protected readonly formulario = new FormGroup({
+  protected readonly form = new FormGroup({
     methodCode: new FormControl<number | null>(null),
     name: new FormControl('', { nonNullable: true, validators: [Validators.required, Validators.maxLength(500)] }),
     documentTypeCode: new FormControl<number | null>(1, Validators.required),
@@ -113,7 +113,7 @@ export class FacturaSimuladaDialog implements OnInit {
 
   ngOnInit(): void {
     const cobro = this.cobro();
-    this.formulario.reset({
+    this.form.reset({
       methodCode: null,
       name: cobro.suggestedBuyer.name,
       documentTypeCode: cobro.suggestedBuyer.documentTypeCode,
@@ -122,33 +122,33 @@ export class FacturaSimuladaDialog implements OnInit {
       email: cobro.suggestedBuyer.email ?? '',
     });
     if (cobro.payment === null) {
-      this.formulario.controls.methodCode.addValidators(Validators.required);
+      this.form.controls.methodCode.addValidators(Validators.required);
     }
     // Con factura vigente, el modal abre mostrándola: no se factura dos veces.
-    if (tieneFacturaVigente(cobro) && cobro.latestInvoice !== null) {
-      this.cargandoFactura.set(true);
+    if (hasCurrentInvoice(cobro) && cobro.latestInvoice !== null) {
+      this.invoiceLoading.set(true);
       this.client
         .invoice(cobro.latestInvoice.id)
         .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe({
           next: (f) => {
-            this.cargandoFactura.set(false);
-            this.factura.set(f);
+            this.invoiceLoading.set(false);
+            this.invoice.set(f);
           },
           error: (e: unknown) => {
-            this.cargandoFactura.set(false);
-            this.error.set(mensajeDeError(e, 'No se pudo leer la factura del simulador.'));
+            this.invoiceLoading.set(false);
+            this.error.set(errorMessage(e, 'No se pudo leer la factura del simulador.'));
           },
         });
     }
   }
 
-  protected confirmar(): void {
-    if (this.formulario.invalid) {
-      this.formulario.markAllAsTouched();
+  protected confirm(): void {
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
       return;
     }
-    const v = this.formulario.getRawValue();
+    const v = this.form.getRawValue();
     const entrada: IssueInvoiceInput = {
       buyer: {
         name: v.name.trim(),
@@ -159,17 +159,17 @@ export class FacturaSimuladaDialog implements OnInit {
       },
     };
     const id = this.cobro().id;
-    const pago: Observable<unknown> = this.pideMedioDePago()
+    const pago: Observable<unknown> = this.paymentMeansRequests()
       ? this.client.registerPayment(id, Number(v.methodCode))
       : of(null);
 
-    this.enviando.set(true);
+    this.sending.set(true);
     this.error.set(null);
     pago
       .pipe(
         switchMap((cobroPagado) => {
           if (cobroPagado !== null) {
-            this.pagoRegistrado.set(true);
+            this.registeredPayment.set(true);
             this.pagado.emit();
           }
           return this.client.issueInvoice(id, entrada);
@@ -178,7 +178,7 @@ export class FacturaSimuladaDialog implements OnInit {
       )
       .subscribe({
         next: (factura) => {
-          this.enviando.set(false);
+          this.sending.set(false);
           this.emitida.emit(factura);
           if (factura.status === 'REJECTED') {
             this.error.set(
@@ -186,34 +186,34 @@ export class FacturaSimuladaDialog implements OnInit {
             );
             return;
           }
-          this.factura.set(factura);
+          this.invoice.set(factura);
         },
         error: (e: unknown) => {
-          this.enviando.set(false);
+          this.sending.set(false);
           // El cobro ya estaba pagado (lo pagó otra persona, o el dato era
           // viejo): el reintento sólo tiene que facturar, no volver a cobrar.
-          if (!this.pagoRegistrado() && yaEstabaPagado(e)) {
-            this.pagoRegistrado.set(true);
+          if (!this.registeredPayment() && alreadyPaidWas(e)) {
+            this.registeredPayment.set(true);
             this.pagado.emit();
             this.error.set('El cobro ya estaba pagado. Confirme de nuevo para emitir la factura.');
             return;
           }
-          this.error.set(mensajeDeError(e, 'No se pudo emitir la factura en el simulador.'));
+          this.error.set(errorMessage(e, 'No se pudo emitir la factura en el simulador.'));
         },
       });
   }
 
-  protected async descargarPdf(factura: SimulatedInvoice): Promise<void> {
-    await descargarRepresentacionGrafica(factura);
+  protected async downloadPdf(factura: SimulatedInvoice): Promise<void> {
+    await downloadGraphicRepresentation(factura);
   }
 
-  protected descargarXml(factura: SimulatedInvoice): void {
-    descargarXml(factura);
+  protected downloadXml(factura: SimulatedInvoice): void {
+    downloadXml(factura);
   }
 }
 
 /** 409 con `reason: ALREADY_PAID`: el pago que se quería registrar ya existía. */
-function yaEstabaPagado(error: unknown): boolean {
+function alreadyPaidWas(error: unknown): boolean {
   if (!(error instanceof HttpErrorResponse) || error.status !== 409) return false;
   const cuerpo: unknown = error.error;
   if (typeof cuerpo !== 'object' || cuerpo === null) return false;

@@ -1,5 +1,5 @@
-@if (src() && !fallo()) {
-  <img class="logo-consultorio__imagen" [src]="src()" [alt]="alt()" (error)="alFallar()" />
+@if (src() && !failure()) {
+  <img class="logo-consultorio__imagen" [src]="src()" [alt]="alt()" (error)="toFail()" />
 } @else {
   <!-- El marcador anuncia lo que falta; el icono es decoración. -->
   <span class="logo-consultorio__vacio" data-testid="logo-consultorio-vacio">

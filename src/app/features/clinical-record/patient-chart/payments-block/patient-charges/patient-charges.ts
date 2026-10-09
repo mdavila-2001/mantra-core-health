@@ -32,25 +32,25 @@ import { DataTable } from '../../../../../shared/components/organisms/data-table
 import type { ColumnDef } from '../../../../../shared/components/organisms/data-table/data-table.types';
 import { estadoDeCobro, ROTULO_DE_ESTADO, TONO_DE_ESTADO } from '../../../../billing/billing-summary';
 import {
-  accionDeCobro,
+  chargeAction,
   bs,
-  centavos,
-  cobradoDeCobro,
-  deCentavos,
-  ACCION_COMPLETA,
-  ROTULO_DE_ACCION,
-  saldoDeCobro,
-  fechaYHora,
-  sinMarcaDeCatalogo,
-  tipoDeServicio,
+  cents,
+  chargeCharged,
+  fromCents,
+  COMPLETE_ACTION,
+  ACTION_LABEL,
+  chargeBalance,
+  dateAndTime,
+  catalogWithoutMark,
+  serviceType,
 } from '../../../../billing/on-screen-charges';
-import { FacturaSimuladaDialog } from '../../../../billing/simulated-invoice-dialog/simulated-invoice-dialog';
-import { PlanDePagos } from '../../../../billing/payment-plan/payment-plan';
+import { SimulatedInvoiceDialog } from '../../../../billing/simulated-invoice-dialog/simulated-invoice-dialog';
+import { PaymentsPlan } from '../../../../billing/payment-plan/payment-plan';
 
-type Celda = TemplateRef<{ $implicit: SimulatedCharge }>;
+type Cell = TemplateRef<{ $implicit: SimulatedCharge }>;
 
 /** Lo que la vista necesita, leído de una vez. */
-export interface CobrosDeLaPersona {
+export interface PersonCharges {
   readonly cobros: readonly SimulatedCharge[];
   readonly catalogos: SimulatedCatalogs;
   readonly emisores: readonly SimulatedIssuer[];
@@ -80,12 +80,12 @@ export interface CobrosDeLaPersona {
  */
 @Component({
   selector: 'app-patient-charges',
-  imports: [Alert, AppButton, Chip, DataTable, FacturaSimuladaDialog, PlanDePagos],
+  imports: [Alert, AppButton, Chip, DataTable, SimulatedInvoiceDialog, PaymentsPlan],
   templateUrl: './patient-charges.html',
   styleUrl: './patient-charges.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class CobrosDelPaciente {
+export class PatientCharges {
   private readonly client = inject(BillingSimulatedClient);
   private readonly destroyRef = inject(DestroyRef);
   private readonly injector = inject(Injector);
@@ -94,56 +94,56 @@ export class CobrosDelPaciente {
   readonly patientProfileId = input.required<string>();
 
   /** Reintento o relectura: cambiarlo vuelve a disparar la lectura. */
-  private readonly intento = signal(0);
+  private readonly attempt = signal(0);
 
-  protected readonly estado = signal<ViewState<CobrosDeLaPersona>>(loading());
+  protected readonly status = signal<ViewState<PersonCharges>>(loading());
   /**
    * S7 · cuándo se leyó por última vez lo que se ve, si una relectura falló.
    * Se dice dentro del bloque: el aviso flotante queda debajo del modal.
    */
-  protected readonly atrasadoDesde = signal<Date | null>(null);
-  private ultimaLectura: Date | null = null;
-  protected readonly fechaYHora = fechaYHora;
-  protected readonly datos = computed(() => dataOf(this.estado()));
-  protected readonly cobros = computed(() => this.datos()?.cobros ?? []);
-  protected readonly filas = computed(() => ready(this.cobros()));
+  protected readonly lateFrom = signal<Date | null>(null);
+  private ultimaReading: Date | null = null;
+  protected readonly dateAndTime = dateAndTime;
+  protected readonly data = computed(() => dataOf(this.status()));
+  protected readonly charges = computed(() => this.data()?.cobros ?? []);
+  protected readonly rows = computed(() => ready(this.charges()));
 
   /** El cobro cuyo plan está abierto; se busca por id para ver siempre el releído. */
-  protected readonly planAbiertoId = signal<string | null>(null);
-  protected readonly planAbierto = computed(() => this.cobros().find((c) => c.id === this.planAbiertoId()) ?? null);
+  protected readonly openPlanId = signal<string | null>(null);
+  protected readonly openPlan = computed(() => this.charges().find((c) => c.id === this.openPlanId()) ?? null);
   /** El cobro cuyo modal de factura está abierto. */
-  protected readonly facturandoId = signal<string | null>(null);
-  protected readonly facturando = computed(() => this.cobros().find((c) => c.id === this.facturandoId()) ?? null);
+  protected readonly invoicingId = signal<string | null>(null);
+  protected readonly invoicing = computed(() => this.charges().find((c) => c.id === this.invoicingId()) ?? null);
 
-  protected readonly metodos = computed(() =>
-    (this.datos()?.catalogos.paymentMethods ?? []).map((m) => ({ value: m.codigo, label: sinMarcaDeCatalogo(m.descripcion) })),
+  protected readonly methods = computed(() =>
+    (this.data()?.catalogos.paymentMethods ?? []).map((m) => ({ value: m.codigo, label: catalogWithoutMark(m.descripcion) })),
   );
 
-  protected readonly totales = computed(() => {
-    const cobros = this.cobros();
-    const suma = (f: (c: SimulatedCharge) => string) => deCentavos(cobros.reduce((s, c) => s + centavos(f(c)), 0));
-    return { cobrado: bs(suma(cobradoDeCobro)), saldo: bs(suma(saldoDeCobro)) };
+  protected readonly totals = computed(() => {
+    const cobros = this.charges();
+    const suma = (f: (c: SimulatedCharge) => string) => fromCents(cobros.reduce((s, c) => s + cents(f(c)), 0));
+    return { cobrado: bs(suma(chargeCharged)), saldo: bs(suma(chargeBalance)) };
   });
 
   protected readonly bs = bs;
-  protected readonly rotuloDeEstado = ROTULO_DE_ESTADO;
-  protected readonly tonoDeEstado = TONO_DE_ESTADO;
-  protected readonly rotuloDeAccion = ROTULO_DE_ACCION;
-  protected readonly accionCompleta = ACCION_COMPLETA;
-  protected readonly estadoDe = estadoDeCobro;
-  protected readonly accionDe = accionDeCobro;
-  protected readonly tipoDe = tipoDeServicio;
-  protected readonly cobradoDe = cobradoDeCobro;
+  protected readonly statusLabel = ROTULO_DE_ESTADO;
+  protected readonly statusTone = TONO_DE_ESTADO;
+  protected readonly actionLabel = ACTION_LABEL;
+  protected readonly completeAction = COMPLETE_ACTION;
+  protected readonly statusOf = estadoDeCobro;
+  protected readonly actionOf = chargeAction;
+  protected readonly typeOf = serviceType;
+  protected readonly chargedOf = chargeCharged;
 
-  private readonly servicioCell = viewChild<Celda>('servicioCell');
-  private readonly esperadoCell = viewChild<Celda>('esperadoCell');
-  private readonly pagadoCell = viewChild<Celda>('pagadoCell');
-  private readonly estadoCell = viewChild<Celda>('estadoCell');
-  private readonly accionCell = viewChild<Celda>('accionCell');
+  private readonly servicioCell = viewChild<Cell>('servicioCell');
+  private readonly esperadoCell = viewChild<Cell>('esperadoCell');
+  private readonly pagadoCell = viewChild<Cell>('pagadoCell');
+  private readonly estadoCell = viewChild<Cell>('estadoCell');
+  private readonly accionCell = viewChild<Cell>('accionCell');
   /** `read: ElementRef`: sobre `button[app-button]` la referencia sería el componente. */
   private readonly volver = viewChild<unknown, ElementRef<HTMLElement>>('volver', { read: ElementRef });
 
-  protected readonly columnas = computed<readonly ColumnDef<SimulatedCharge>[]>(() => [
+  protected readonly columns = computed<readonly ColumnDef<SimulatedCharge>[]>(() => [
     { key: 'service', header: 'Servicio', priority: 1, cell: this.servicioCell() },
     // Con poca caja (`fitContainer`: teléfono, o el modal a 1024 px) los
     // importes se pliegan al detalle de la fila y viajan en la primera celda
@@ -154,11 +154,11 @@ export class CobrosDelPaciente {
     { key: 'action', header: 'Acción', priority: 1, sticky: 'end', cell: this.accionCell() },
   ]);
 
-  protected readonly porId = (c: SimulatedCharge): string => c.id;
-  protected readonly nombreDeFila = (c: SimulatedCharge): string => c.description;
+  protected readonly byId = (c: SimulatedCharge): string => c.id;
+  protected readonly rowName = (c: SimulatedCharge): string => c.description;
 
   constructor() {
-    toObservable(computed(() => ({ paciente: this.patientProfileId(), intento: this.intento() })), {
+    toObservable(computed(() => ({ paciente: this.patientProfileId(), intento: this.attempt() })), {
       injector: this.injector,
     })
       .pipe(
@@ -171,7 +171,7 @@ export class CobrosDelPaciente {
             estadoFiscal: this.client.status().pipe(catchError(() => of(null))),
           }).pipe(
             map(({ cobros, catalogos, estadoFiscal }) =>
-              ready<CobrosDeLaPersona>({
+              ready<PersonCharges>({
                 // Los más recientes primero: es el servicio del que se está hablando.
                 cobros: [...cobros.items].sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
                 catalogos,
@@ -179,51 +179,51 @@ export class CobrosDelPaciente {
               }),
             ),
             // Una relectura no vuelve a «cargando»: la tabla no parpadea ni pierde el foco.
-            startWith(this.datos() === null ? loading() : this.estado()),
+            startWith(this.data() === null ? loading() : this.status()),
             catchError((error: unknown) => {
               // Si ya había datos, una relectura fallida no los borra: el modal
               // de la factura que esté abierto cuelga de ellos. Se dice cuándo
               // se leyeron, en el propio bloque.
-              if (this.datos() !== null) {
-                this.atrasadoDesde.set(this.ultimaLectura);
-                return of(this.estado());
+              if (this.data() !== null) {
+                this.lateFrom.set(this.ultimaReading);
+                return of(this.status());
               }
-              return of(errorToViewState<CobrosDeLaPersona>(error));
+              return of(errorToViewState<PersonCharges>(error));
             }),
           ),
         ),
         takeUntilDestroyed(this.destroyRef),
       )
       .subscribe((estado) => {
-        if (estado.status === 'ready' && estado !== this.estado()) {
-          this.ultimaLectura = new Date();
-          this.atrasadoDesde.set(null);
+        if (estado.status === 'ready' && estado !== this.status()) {
+          this.ultimaReading = new Date();
+          this.lateFrom.set(null);
         }
-        this.estado.set(estado);
+        this.status.set(estado);
       });
   }
 
-  protected recargar(): void {
-    this.intento.update((n) => n + 1);
+  protected reload(): void {
+    this.attempt.update((n) => n + 1);
   }
 
-  protected emisorDe(cobro: SimulatedCharge): SimulatedIssuer | null {
-    return this.datos()?.emisores.find((e) => e.id === cobro.issuerId) ?? null;
+  protected issuerOf(cobro: SimulatedCharge): SimulatedIssuer | null {
+    return this.data()?.emisores.find((e) => e.id === cobro.issuerId) ?? null;
   }
 
   /** Con plan se abre la tabla; sin plan, directamente el modal de la factura. */
-  protected abrir(cobro: SimulatedCharge): void {
+  protected open(cobro: SimulatedCharge): void {
     if (cobro.plan !== null) {
-      this.planAbiertoId.set(cobro.id);
+      this.openPlanId.set(cobro.id);
       afterNextRender(() => this.volver()?.nativeElement.focus(), { injector: this.injector });
       return;
     }
-    this.facturandoId.set(cobro.id);
+    this.invoicingId.set(cobro.id);
   }
 
-  protected cerrarPlan(): void {
-    const id = this.planAbiertoId();
-    this.planAbiertoId.set(null);
+  protected closePlan(): void {
+    const id = this.openPlanId();
+    this.openPlanId.set(null);
     // El foco vuelve a la acción de la fila que abrió el plan.
     afterNextRender(
       () => {
@@ -236,13 +236,13 @@ export class CobrosDelPaciente {
     );
   }
 
-  protected cerrarFactura(): void {
-    const id = this.facturandoId();
-    this.facturandoId.set(null);
+  protected closeInvoice(): void {
+    const id = this.invoicingId();
+    this.invoicingId.set(null);
     // El foco vuelve a donde se abrió: la vuelta del plan, o la fila.
     afterNextRender(
       () => {
-        if (this.planAbierto() !== null) {
+        if (this.openPlan() !== null) {
           this.volver()?.nativeElement.focus();
           return;
         }
@@ -255,8 +255,8 @@ export class CobrosDelPaciente {
   }
 
   /** El identificador de la petición que falló (S9), para dictárselo a soporte. */
-  protected readonly idDePeticion = computed(() => {
-    const estado = this.estado();
+  protected readonly requestId = computed(() => {
+    const estado = this.status();
     return estado.status === 'error' ? estado.requestId : null;
   });
 }

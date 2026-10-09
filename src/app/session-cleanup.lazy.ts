@@ -2,7 +2,7 @@ import type { Injector } from '@angular/core';
 
 import { ChatAutoReply } from './core/messaging/chat-auto-reply';
 import { MessageTemplates } from './core/messaging/message-templates';
-import { TarifariosRecordados } from './features/admin/medical-laboratory/remembered-price-lists';
+import { RememberedPriceLists } from './features/admin/medical-laboratory/remembered-price-lists';
 
 /**
  * Lo sensible que otras piezas dejan en el navegador y que **cerrar sesión debe
@@ -18,5 +18,5 @@ import { TarifariosRecordados } from './features/admin/medical-laboratory/rememb
 export function olvidarLoSensibleDelNavegador(injector: Injector): void {
   injector.get(MessageTemplates).olvidar();
   injector.get(ChatAutoReply).olvidar();
-  injector.get(TarifariosRecordados).olvidar();
+  injector.get(RememberedPriceLists).forget();
 }

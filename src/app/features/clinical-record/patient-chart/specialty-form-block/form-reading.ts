@@ -6,7 +6,7 @@ import type { FormInstanceDetail } from '../../../../core/data-access/forms/form
 import { textoDeValor } from '../../../../shared/utils/form-values/form-values';
 
 /** Una respuesta ya lista para leerse: etiqueta, texto y si está protegida. */
-export interface RespuestaVisible {
+export interface ResponseVisible {
   readonly id: string;
   readonly etiqueta: string;
   /** La respuesta en palabras. Vacía cuando `masked`: el marcador la reemplaza. */
@@ -15,7 +15,7 @@ export interface RespuestaVisible {
 }
 
 /** Todos los campos conocidos por las plantillas, para ponerle nombre a cada valor. */
-export function camposDe(
+export function fieldsOf(
   plantillas: readonly ChartTemplate[],
 ): ReadonlyMap<string, ChartTemplateField> {
   const campos = new Map<string, ChartTemplateField>();
@@ -39,7 +39,7 @@ export function camposDe(
  *
  * `null` si ninguna comparte un solo campo.
  */
-export function plantillaPorCobertura(
+export function templateByCoverage(
   detalle: FormInstanceDetail,
   plantillas: readonly ChartTemplate[],
 ): ChartTemplate | null {
@@ -66,10 +66,10 @@ export function plantillaPorCobertura(
 }
 
 /** Las respuestas de una instancia, en orden y en palabras. */
-export function respuestasDe(
+export function responsesOf(
   detalle: FormInstanceDetail,
   campos: ReadonlyMap<string, ChartTemplateField>,
-): readonly RespuestaVisible[] {
+): readonly ResponseVisible[] {
   return [...detalle.values]
     .sort((a, b) => a.ordinal - b.ordinal)
     .map((valor) => {

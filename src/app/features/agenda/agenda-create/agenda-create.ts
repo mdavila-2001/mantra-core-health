@@ -22,9 +22,9 @@ import type {
 import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { AGENDA_ROUTE } from '../agenda.routes';
 import type { AgendaResource, FranjaModo } from '@core/data-access/scheduling/scheduling.types';
-import { misRecursosDeAgenda } from '../my-resource';
+import { agendaResourcesMy } from '../my-resource';
 import { ScheduleGrid } from '../my-agenda/schedule-grid/schedule-grid';
-import { calcularTurnos, type Calculo, type DiaCalculado } from './agenda-slots';
+import { calculateSlots, type Calculation, type CalculatedDay } from './agenda-slots';
 import { NavigationService } from '../../../core/navigation/navigation.service';
 import { loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
@@ -514,13 +514,13 @@ export class AgendaCreate {
   }
 
   /** Un día calculado a partir de sus franjas, sumando lo de cada una. */
-  private calcularDia(indice: number, nombre: string): DiaCalculado {
+  private calcularDia(indice: number, nombre: string): CalculatedDay {
     const v = this.semana.at(indice).getRawValue();
     // Una franja sólo de servicios no se corta en turnos: cada servicio dura lo que
     // declaró su profesional y el turno nace al reservarlo.
     if (v.modo === 'SERVICES') return { dia: nombre, turnos: [], resto: 0, restoDesde: null };
     const franjas = this.franjasDe(indice);
-    const partes = calcularTurnos(
+    const partes = calculateSlots(
       franjas.map((franja, posicion) => ({
         dia: nombre,
         desde: franja.desde,
@@ -628,12 +628,12 @@ export class AgendaCreate {
   /**
    * Los turnos que van a salir, calculados en el navegador.
    *
-   * Sin una sola petición: los cupos son una división —{@link calcularTurnos}—,
+   * Sin una sola petición: los cupos son una división —{@link calculateSlots}—,
    * y esperarlos del servidor para poder mostrarlos convertiría cada tecla en
    * un viaje de red. El contraste contra lo que el backend generó de verdad se
    * hace después de publicar, en {@link compararConLoGenerado}.
    */
-  protected readonly vistaPrevia = computed<Calculo>(() => {
+  protected readonly vistaPrevia = computed<Calculation>(() => {
     // El almuerzo vive en señales y la semana en el formulario: se leen las
     // dos para que cambiar cualquiera recalcule. Cada día pasa por
     // `calcularTurnos` franja por franja — el respiro (AG-4) incluido.
@@ -712,7 +712,7 @@ export class AgendaCreate {
     // pantalla ya le está diciendo a esa sesión que la sección no es suya.
     if (perfil === null || tenantId === null || !this.puedeCrear()) return;
 
-    misRecursosDeAgenda(this.scheduling, tenantId, perfil).subscribe({
+    agendaResourcesMy(this.scheduling, tenantId, perfil).subscribe({
       next: (recursos) => {
         // Todas, no la primera: quien atiende en dos sedes tiene que poder
         // decir en cuál publica. Antes esta lectura hacía `.find()` y la
@@ -833,7 +833,7 @@ export class AgendaCreate {
   /**
    * Cuántos turnos entran en la franja de un día, con el respiro contado.
    *
-   * Delega en {@link calcularTurnos}, que es el mismo cálculo que alimenta la
+   * Delega en {@link calculateSlots}, que es el mismo cálculo que alimenta la
    * vista previa de más abajo. **No se reimplementa acá**: dos aritméticas para
    * el mismo número terminan dando dos números, y en esta pantalla los dos se
    * ven a la vez.
@@ -1299,7 +1299,7 @@ export class AgendaCreate {
   }
 
   /** «08:00 – 18:00 (almuerzo 13:00 – 14:00)»: el día dicho como rango. */
-  private rangoDe(dia: DiaCalculado): string {
+  private rangoDe(dia: CalculatedDay): string {
     const indice = DIAS.findIndex((d) => d.largo.toLowerCase() === dia.dia.toLowerCase());
     if (indice === -1) return '';
     const v = this.semana.at(indice).getRawValue();

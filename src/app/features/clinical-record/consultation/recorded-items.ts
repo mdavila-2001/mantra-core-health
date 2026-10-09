@@ -49,7 +49,7 @@ import {
    ========================================================================== */
 
 /** El tono de cada bloque, el mismo que usa la historia del paciente. */
-const TONO_DEL_ESTADO: Readonly<Record<DiagnosisState, Tone>> = Object.freeze({
+const STATUS_TONE: Readonly<Record<DiagnosisState, Tone>> = Object.freeze({
   IN_STUDY: 'warning',
   ACTIVE: 'success',
   HISTORIC: 'info',
@@ -57,10 +57,10 @@ const TONO_DEL_ESTADO: Readonly<Record<DiagnosisState, Tone>> = Object.freeze({
 });
 
 /** Resuelve un identificador de concepto a su etiqueta de pantalla. */
-export type ResolverEtiqueta = (conceptId: string | undefined) => string;
+export type ResolveLabel = (conceptId: string | undefined) => string;
 
 /** Lo que quedó registrado en el encuentro en curso, listo para el organismo. */
-export interface LoRegistrado {
+export interface RecordedItems {
   readonly encabezado: EncounterHeader;
   readonly notas: readonly TimelineNote[];
   readonly diagnosticos: readonly TimelineCondition[];
@@ -79,31 +79,31 @@ export interface LoRegistrado {
  * suyo. El filtro por `releasedToPatient` es de la historia del paciente, que
  * mira lo mismo desde el otro lado.
  */
-export function loRegistradoEnElEncuentro(
+export function recordedInEncounter(
   encounterId: string,
   resumen: ClinicalSummary,
   notas: readonly ChartNote[],
-  etiqueta: ResolverEtiqueta,
+  etiqueta: ResolveLabel,
   codigo: ResolverCodigo,
-): LoRegistrado | null {
+): RecordedItems | null {
   const encuentro = resumen.encounters.find((fila) => fila.id === encounterId);
   if (encuentro === undefined) {
     return null;
   }
 
   return {
-    encabezado: cabeceraDe(encuentro),
-    notas: notas.filter((nota) => nota.encounterId === encounterId).map((nota) => notaDeLaLinea(nota)),
+    encabezado: headerOf(encuentro),
+    notas: notas.filter((nota) => nota.encounterId === encounterId).map((nota) => lineaNote(nota)),
     diagnosticos: resumen.conditions
       .filter((condicion) => condicion.encounterId === encounterId)
-      .map((condicion) => diagnosticoDeLaLinea(condicion, etiqueta, codigo)),
+      .map((condicion) => lineaDiagnosis(condicion, etiqueta, codigo)),
     recetas: resumen.medicationRequests
       .filter((receta) => receta.encounterId === encounterId)
-      .map((receta) => recetaDeLaLinea(receta, resumen, etiqueta)),
+      .map((receta) => lineaPrescription(receta, resumen, etiqueta)),
   };
 }
 
-function cabeceraDe(encuentro: Encounter): EncounterHeader {
+function headerOf(encuentro: Encounter): EncounterHeader {
   return {
     id: encuentro.id,
     motivo: encuentro.reasonText ?? 'Consulta',
@@ -122,7 +122,7 @@ function cabeceraDe(encuentro: Encounter): EncounterHeader {
  * ya sabe callar lo vacío, y omitirlo acá haría que dos notas con distintos
  * apartados se leyeran como si el contrato fuera otro.
  */
-function notaDeLaLinea(nota: ChartNote): TimelineNote {
+function lineaNote(nota: ChartNote): TimelineNote {
   const entradas = nota.entries ?? [];
   const filas: Hecho[] = [
     ...entradas.map((fila) => ({ etiqueta: fila.label, valor: fila.value })),
@@ -144,16 +144,16 @@ function notaDeLaLinea(nota: ChartNote): TimelineNote {
 }
 
 /** «Diagnóstico confirmado: Faringitis aguda». */
-function diagnosticoDeLaLinea(
+function lineaDiagnosis(
   condicion: Condition,
-  etiqueta: ResolverEtiqueta,
+  etiqueta: ResolveLabel,
   codigo: ResolverCodigo,
 ): TimelineCondition {
   return {
     id: condicion.id,
     nombre: etiqueta(condicion.codeConceptId),
     estado: etiqueta(condicion.verificationStatusConceptId),
-    tono: TONO_DEL_ESTADO[diagnosisStateOf({
+    tono: STATUS_TONE[diagnosisStateOf({
       ...condicion,
       verificationStatusConceptId: codigo(condicion.verificationStatusConceptId),
       clinicalStatusConceptId: codigo(condicion.clinicalStatusConceptId),
@@ -171,10 +171,10 @@ function diagnosticoDeLaLinea(
  * `null`, que el organismo omite — inventarle un motivo a una prescripción es
  * exactamente lo que no se puede hacer.
  */
-function recetaDeLaLinea(
+function lineaPrescription(
   receta: MedicationRequest,
   resumen: ClinicalSummary,
-  etiqueta: ResolverEtiqueta,
+  etiqueta: ResolveLabel,
 ): TimelinePrescription {
   const diagnostico = resumen.conditions.find((fila) => fila.id === receta.indicationConditionId);
   const detalle = [receta.doseText, receta.frequencyText].filter(Boolean).join(' · ');

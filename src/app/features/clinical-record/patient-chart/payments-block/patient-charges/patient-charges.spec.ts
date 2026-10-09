@@ -4,13 +4,13 @@ import { TestBed, type ComponentFixture } from '@angular/core/testing';
 
 import { API_BASE_URL } from '../../../../../core/data-access/api';
 import type { SimulatedCharge } from '../../../../../core/data-access/billing-simulated/billing-simulated.types';
-import type { FacturacionSimulada } from '../../../../../core/mock/billing-sim/simulated-invoicing';
+import type { SimulatedInvoicing } from '../../../../../core/mock/billing-sim/simulated-invoicing';
 import { By } from '@angular/platform-browser';
 
 import { motorDePrueba } from '../../../../billing/billing.spec-fixtures';
-import { PlanDePagos } from '../../../../billing/payment-plan/payment-plan';
-import { bs, centavos, cobradoDeCobro, deCentavos, saldoDeCobro } from '../../../../billing/on-screen-charges';
-import { CobrosDelPaciente } from './patient-charges';
+import { PaymentsPlan } from '../../../../billing/payment-plan/payment-plan';
+import { bs, cents, chargeCharged, fromCents, chargeBalance } from '../../../../billing/on-screen-charges';
+import { PatientCharges } from './patient-charges';
 
 /**
  * «Pagos» con la facturación simulada, contra respuestas del mismo motor que
@@ -24,27 +24,27 @@ import { CobrosDelPaciente } from './patient-charges';
  * 4. **«No podés» no es «no hay nada»**: un 403 no se disfraza de vacío.
  */
 describe('CobrosDelPaciente', () => {
-  let fixture: ComponentFixture<CobrosDelPaciente>;
+  let fixture: ComponentFixture<PatientCharges>;
   let http: HttpTestingController;
-  let motor: FacturacionSimulada;
+  let motor: SimulatedInvoicing;
 
   function montar(patientProfileId: string): void {
     TestBed.configureTestingModule({
       providers: [provideHttpClient(), provideHttpClientTesting(), { provide: API_BASE_URL, useValue: '' }],
     });
     http = TestBed.inject(HttpTestingController);
-    fixture = TestBed.createComponent(CobrosDelPaciente);
+    fixture = TestBed.createComponent(PatientCharges);
     fixture.componentRef.setInput('patientProfileId', patientProfileId);
     fixture.detectChanges();
   }
 
   function responder(patientProfileId: string): readonly SimulatedCharge[] {
-    const suyos = motor.listarCobros().filter((c) => c.patientProfileId === patientProfileId);
+    const suyos = motor.listCharges().filter((c) => c.patientProfileId === patientProfileId);
     const lectura = http.expectOne((r) => r.url === '/billing/simulated/charges');
     expect(lectura.request.params.get('patientProfileId')).toBe(patientProfileId);
     lectura.flush({ items: suyos, count: suyos.length, simulated: true });
-    http.expectOne('/billing/simulated/catalogs').flush(motor.catalogos());
-    http.expectOne('/billing/simulated/status').flush(motor.estadoFiscal());
+    http.expectOne('/billing/simulated/catalogs').flush(motor.catalogs());
+    http.expectOne('/billing/simulated/status').flush(motor.statusFiscal());
     fixture.detectChanges();
     return suyos;
   }
@@ -64,20 +64,20 @@ describe('CobrosDelPaciente', () => {
   afterEach(() => http.verify());
 
   it('lista los servicios de la persona con lo esperado y lo pagado, y suma en centavos', () => {
-    const conPlan = motor.listarCobros().find((c) => c.plan !== null)!;
+    const conPlan = motor.listCharges().find((c) => c.plan !== null)!;
     montar(conPlan.patientProfileId);
     const suyos = responder(conPlan.patientProfileId);
 
     expect(fixture.nativeElement.querySelectorAll('[data-cobro-id]').length).toBe(suyos.length);
-    const suma = (f: (c: SimulatedCharge) => string) => bs(deCentavos(suyos.reduce((s, c) => s + centavos(f(c)), 0)));
-    expect(el('cobros-pagado')?.textContent?.trim()).toBe(suma(cobradoDeCobro));
-    expect(el('cobros-saldo')?.textContent?.trim()).toBe(suma(saldoDeCobro));
+    const suma = (f: (c: SimulatedCharge) => string) => bs(fromCents(suyos.reduce((s, c) => s + cents(f(c)), 0)));
+    expect(el('cobros-pagado')?.textContent?.trim()).toBe(suma(chargeCharged));
+    expect(el('cobros-saldo')?.textContent?.trim()).toBe(suma(chargeBalance));
     // El plan sembrado tiene saldo: el total por cobrar no puede ser cero.
     expect(el('cobros-saldo')?.textContent?.trim()).not.toBe(bs('0.00'));
   });
 
   it('un servicio con reconsultas abre la tabla del plan, no el modal de la factura', () => {
-    const conPlan = motor.listarCobros().find((c) => c.plan !== null)!;
+    const conPlan = motor.listCharges().find((c) => c.plan !== null)!;
     montar(conPlan.patientProfileId);
     responder(conPlan.patientProfileId);
 
@@ -92,7 +92,7 @@ describe('CobrosDelPaciente', () => {
   });
 
   it('un servicio de una sola instancia abre directamente el modal de la factura', () => {
-    const unico = motor.listarCobros().find((c) => c.plan === null && c.source === 'CONSULTATION' && c.payment === null)!;
+    const unico = motor.listCharges().find((c) => c.plan === null && c.source === 'CONSULTATION' && c.payment === null)!;
     montar(unico.patientProfileId);
     responder(unico.patientProfileId);
 
@@ -106,13 +106,13 @@ describe('CobrosDelPaciente', () => {
   });
 
   it('un pago registrado en el plan relee los cobros del backend', () => {
-    const conPlan = motor.listarCobros().find((c) => c.plan !== null)!;
+    const conPlan = motor.listCharges().find((c) => c.plan !== null)!;
     montar(conPlan.patientProfileId);
     responder(conPlan.patientProfileId);
     botonDe(conPlan).click();
     fixture.detectChanges();
 
-    const plan = fixture.debugElement.query(By.directive(PlanDePagos)).componentInstance as PlanDePagos;
+    const plan = fixture.debugElement.query(By.directive(PaymentsPlan)).componentInstance as PaymentsPlan;
     plan.actualizado.emit(conPlan);
     fixture.detectChanges();
 
@@ -122,16 +122,16 @@ describe('CobrosDelPaciente', () => {
   });
 
   it('una relectura fallida no borra lo que ya se veía', () => {
-    const conPlan = motor.listarCobros().find((c) => c.plan !== null)!;
+    const conPlan = motor.listCharges().find((c) => c.plan !== null)!;
     montar(conPlan.patientProfileId);
     responder(conPlan.patientProfileId);
-    fixture.componentInstance['recargar']();
+    fixture.componentInstance['reload']();
     fixture.detectChanges();
     http
       .expectOne((r) => r.url === '/billing/simulated/charges')
       .flush({ code: 'INTERNAL_ERROR', message: 'x' }, { status: 500, statusText: 'Error' });
     for (const r of http.match((req) => req.url.startsWith('/billing/simulated/'))) {
-      if (!r.cancelled) r.flush(r.request.url.endsWith('/catalogs') ? motor.catalogos() : motor.estadoFiscal());
+      if (!r.cancelled) r.flush(r.request.url.endsWith('/catalogs') ? motor.catalogs() : motor.statusFiscal());
     }
     fixture.detectChanges();
 
@@ -142,7 +142,7 @@ describe('CobrosDelPaciente', () => {
   });
 
   it('volver del plan devuelve la lista', () => {
-    const conPlan = motor.listarCobros().find((c) => c.plan !== null)!;
+    const conPlan = motor.listCharges().find((c) => c.plan !== null)!;
     montar(conPlan.patientProfileId);
     responder(conPlan.patientProfileId);
     botonDe(conPlan).click();
@@ -169,7 +169,7 @@ describe('CobrosDelPaciente', () => {
     // `forkJoin` cancela las otras dos lecturas al primer error: sólo se
     // responde lo que siga abierto.
     for (const r of http.match((req) => req.url.startsWith('/billing/simulated/'))) {
-      if (!r.cancelled) r.flush(r.request.url.endsWith('/catalogs') ? motor.catalogos() : motor.estadoFiscal());
+      if (!r.cancelled) r.flush(r.request.url.endsWith('/catalogs') ? motor.catalogs() : motor.statusFiscal());
     }
     fixture.detectChanges();
 

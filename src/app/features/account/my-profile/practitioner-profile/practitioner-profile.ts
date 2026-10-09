@@ -15,8 +15,8 @@ import { FilesClient } from '../../../../core/data-access/files/files.client';
 import { FileDownloader } from '../../../../core/data-access/files/file-downloader';
 import { InsuranceClient } from '../../../../core/data-access/insurance/insurance.client';
 import type { PractitionerInsuranceNetwork } from '../../../../core/data-access/insurance/insurance.types';
-import { FirmaYSelloClient, type FirmaYSello } from '../../../../core/data-access/profiles/signature-and-seal.client';
-import { LogoDelConsultorioClient } from '../../../../core/data-access/practice-sites/practice-logo.client';
+import { SignatureAndSealClient, type SignatureAndSeal } from '../../../../core/data-access/profiles/signature-and-seal.client';
+import { PracticeLogoClient } from '../../../../core/data-access/practice-sites/practice-logo.client';
 import { PracticeSitesClient } from '../../../../core/data-access/practice-sites/practice-sites.client';
 import type { PracticeSite } from '../../../../core/data-access/practice-sites/practice-sites.types';
 import { ProfilesClient } from '../../../../core/data-access/profiles/profiles.client';
@@ -45,8 +45,8 @@ import type { StatusSealVariant } from '../../../../shared/components/organisms/
 import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
 import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
-import { CONTADORES_DE_ACTIVIDAD } from '../activity-counters';
-import { PESTANAS_DEL_PERFIL_MEDICO, PESTANA_MEDICO } from '../doctor-profile-tabs';
+import { ACTIVITY_COUNTERS } from '../activity-counters';
+import { DOCTOR_PROFILE_TABS, DOCTOR_TAB } from '../doctor-profile-tabs';
 import { PractitionerProfileView } from './practitioner-profile-view/practitioner-profile-view';
 import type {
   AfiliacionVisible,
@@ -96,7 +96,7 @@ const AYUDA_DE_CREDENCIALES = 'perfil-credenciales-ayuda';
  * ficha sin facturación y salía en «Actividad» en una con ella. Lo destapó el
  * spec al juntar las dos correcciones del 19/09/2026.
  */
-const ETIQUETA_DE_CREDENCIALES = PESTANAS_DEL_PERFIL_MEDICO[PESTANA_MEDICO.credenciales];
+const ETIQUETA_DE_CREDENCIALES = DOCTOR_PROFILE_TABS[DOCTOR_TAB.credenciales];
 
 /** Lo que dice ese aviso. Es el texto del bloque que reemplaza, sin el ejemplo. */
 const AVISO_DE_CREDENCIALES =
@@ -109,7 +109,7 @@ const AVISO_DE_CREDENCIALES =
  * línea de tiempo. No reusa la clave del bloque cerrado, porque quien lo había
  * cerrado no lo vería nunca.
  */
-const ETIQUETA_DE_TRAYECTORIA = PESTANAS_DEL_PERFIL_MEDICO[PESTANA_MEDICO.trayectoria];
+const ETIQUETA_DE_TRAYECTORIA = DOCTOR_PROFILE_TABS[DOCTOR_TAB.trayectoria];
 
 const AVISO_DE_TRAYECTORIA =
   'Dónde ejerció antes y dónde ejerce hoy. Es lo que un paciente ve en el ' +
@@ -159,7 +159,7 @@ interface PerfilResuelto {
   /** El logo de su consultorio, o `null` si no cargó ninguno o no se pudo leer. */
   readonly logoUrl: string | null;
   /** Su firma y su sello (imágenes), o `null` si la cuenta no es de un profesional. */
-  readonly firmaYSello: FirmaYSello | null;
+  readonly firmaYSello: SignatureAndSeal | null;
   /** Dónde atiende hoy (ALV-005). Vacío si no tiene sedes o si la lectura falló. */
   readonly sedes: readonly PracticeSite[];
   /** Con qué aseguradoras trabaja; `null` si la lectura falló. */
@@ -244,8 +244,8 @@ export class PractitionerProfile {
     });
   }
   private readonly sites = inject(PracticeSitesClient);
-  private readonly logo = inject(LogoDelConsultorioClient);
-  private readonly firmaYSello = inject(FirmaYSelloClient);
+  private readonly logo = inject(PracticeLogoClient);
+  private readonly firmaYSello = inject(SignatureAndSealClient);
   private readonly insurance = inject(InsuranceClient);
   private readonly auth = inject(AuthService);
   private readonly community = inject(CommunityClient);
@@ -587,16 +587,16 @@ export class PractitionerProfile {
   /* -- Del perfil crudo al contrato de la vista --------------------------- */
 
   /** Su firma y su sello, o `null` sin perfil profesional en la sesión. */
-  private firmaYSelloPropios(): Observable<FirmaYSello | null> {
+  private firmaYSelloPropios(): Observable<SignatureAndSeal | null> {
     return this.auth.practitionerProfileId() === null
-      ? of<FirmaYSello | null>(null)
-      : this.firmaYSello.obtener();
+      ? of<SignatureAndSeal | null>(null)
+      : this.firmaYSello.get();
   }
 
   /** El logo de su consultorio, o `null` sin perfil profesional en la sesión. */
   private logoPropio(): Observable<string | null> {
     const profileId = this.auth.practitionerProfileId();
-    return profileId === null ? of<string | null>(null) : this.logo.obtenerUrl(profileId);
+    return profileId === null ? of<string | null>(null) : this.logo.getUrl(profileId);
   }
 
   /**
@@ -655,7 +655,7 @@ export class PractitionerProfile {
          lugar que los mostraba; con dos superficies, una lista sola se despega
          en el primer retoque. Acá se le agrega el valor; el editor no lo
          necesita. */
-      actividad: CONTADORES_DE_ACTIVIDAD.map(({ clave, rotulo, pie, campo }) => ({
+      actividad: ACTIVITY_COUNTERS.map(({ clave, rotulo, pie, campo }) => ({
         clave,
         rotulo,
         pie,

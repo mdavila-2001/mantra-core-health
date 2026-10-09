@@ -2,7 +2,7 @@ import { HttpHeaders } from '@angular/common/http';
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { DirectorioOficial } from './official-directory';
+import { OfficialDirectory } from './official-directory';
 import { ArchivoAusente, type LectorDeArchivos } from './glossary-shards';
 import { registrarPublico } from './handlers/public.handlers';
 import { MockRouter } from './mock-router';
@@ -20,7 +20,7 @@ const leerDeDisco: LectorDeArchivos = (ruta) => {
 
 function montar() {
   const router = new MockRouter();
-  registrarPublico(router, new DirectorioOficial(leerDeDisco));
+  registrarPublico(router, new OfficialDirectory(leerDeDisco));
   return async function get<T>(path: string, query: Record<string, string> = {}): Promise<T> {
     const match = router.match('GET', path);
     if (match === null) throw new Error(`No existe GET ${path}`);

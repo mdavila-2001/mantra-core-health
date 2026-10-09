@@ -1,7 +1,7 @@
 import { HttpHeaders } from '@angular/common/http';
 
-import { PARENTESCO } from '../fixtures/concepts';
-import { PACIENTES } from '../fixtures/people';
+import { KINSHIP } from '../fixtures/concepts';
+import { PATIENTS } from '../fixtures/people';
 import { MockRouter, type MockMethod, type MockReply } from '../mock-router';
 import { buscarUsuario, type MockUser } from '../mock-session';
 import { registrarNotificaciones } from './notifications.handlers';
@@ -19,7 +19,7 @@ describe('solicitudes de dependiente por CI (simulador)', () => {
   registrarNotificaciones(router);
 
   const titular = buscarUsuario('paciente')!;
-  const JORGE = PACIENTES[1]!;
+  const JORGE = PATIENTS[1]!;
   const jorge: MockUser = {
     ...titular,
     key: 'p-mamani',
@@ -79,7 +79,7 @@ describe('solicitudes de dependiente por CI (simulador)', () => {
   });
 
   it('el propio CI se rechaza con 422', () => {
-    const propio = PACIENTES[0]!.nationalId;
+    const propio = PATIENTS[0]!.nationalId;
     const respuesta = call(
       'POST',
       '/profiles/patients/me/dependent-requests',
@@ -142,7 +142,7 @@ describe('solicitudes de dependiente por CI (simulador)', () => {
     ) as { id: string; requesterDisplayName: string }[];
     expect(deJorge.map((s) => s.id)).toContain(solicitudId);
     expect(deJorge.find((s) => s.id === solicitudId)!.requesterDisplayName).toBe(
-      PACIENTES[0]!.displayName,
+      PATIENTS[0]!.displayName,
     );
 
     const delTitular = call<unknown[]>(
@@ -168,7 +168,7 @@ describe('solicitudes de dependiente por CI (simulador)', () => {
     const respuesta = call(
       'POST',
       `/profiles/patients/me/dependent-requests/${solicitudId}/accept`,
-      { relationshipConceptId: PARENTESCO['RELATIONSHIP_MOTHER'] },
+      { relationshipConceptId: KINSHIP['RELATIONSHIP_MOTHER'] },
       jorge,
     );
     expect(estado(respuesta)).toBe(200);
@@ -194,7 +194,7 @@ describe('solicitudes de dependiente por CI (simulador)', () => {
     expect(perfil.emergencyContacts.length).toBeGreaterThan(0);
     expect(perfil.guardians).toContainEqual(
       expect.objectContaining({
-        displayName: PACIENTES[0]!.displayName,
+        displayName: PATIENTS[0]!.displayName,
         relationshipDisplay: 'Madre',
       }),
     );

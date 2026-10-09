@@ -1,4 +1,4 @@
-@if (mapaAbierto()) {
+@if (openMap()) {
   <div class="registro__ubicacion">
     <!-- El mapa reemplazó al par de coordenadas como forma principal. Un
          «-17,7833, -63,1821» no le dice a nadie si el punto cayó en su casa;
@@ -12,12 +12,12 @@
     <app-map
       class="registro__mapa"
       [attr.data-testid]="ids().mapa"
-      [pines]="pines()"
+      [pines]="pins()"
       [centro]="punto()"
       [zoom]="17"
       [etiqueta]="etiquetaMapa()"
       [seleccionable]="true"
-      (pointPicked)="fijarPunto($event)"
+      (pointPicked)="pinPunto($event)"
     />
 
     <!-- El pin sin puntero (WCAG 2.1.1): además de las flechas sobre el plano
@@ -32,49 +32,49 @@
         size="sm"
         type="button"
         data-testid="location-coordinates-toggle"
-        [attr.aria-expanded]="coordenadasAbiertas()"
-        [attr.aria-controls]="coordenadasId"
-        (clicked)="alternarCoordenadas()"
+        [attr.aria-expanded]="openCoordinates()"
+        [attr.aria-controls]="coordinatesId"
+        (clicked)="toggleCoordinates()"
       >
         Escribir coordenadas
       </button>
-      @if (coordenadasAbiertas()) {
+      @if (openCoordinates()) {
         <div
           class="registro__coordenadas-campos"
           role="group"
           aria-label="Coordenadas del punto"
-          [id]="coordenadasId"
+          [id]="coordinatesId"
         >
           <app-form-field
             label="Latitud"
             hint="Entre −90 y 90. Al sur del ecuador es negativa."
-            [errorMessage]="errorLatitud()"
+            [errorMessage]="errorLatitude()"
           >
             <app-input
               testId="location-coordinates-lat"
               inputMode="decimal"
               autocomplete="off"
               placeholder="-17,7833"
-              [value]="latitudEscrita()"
-              [hasError]="errorLatitud() !== ''"
-              (valueChange)="escribirLatitud($event)"
-              (keydown.enter)="aplicarCoordenadas($event)"
+              [value]="writtenLatitude()"
+              [hasError]="errorLatitude() !== ''"
+              (valueChange)="writeLatitude($event)"
+              (keydown.enter)="applyCoordinates($event)"
             />
           </app-form-field>
           <app-form-field
             label="Longitud"
             hint="Entre −180 y 180. Al oeste de Greenwich es negativa."
-            [errorMessage]="errorLongitud()"
+            [errorMessage]="errorLongitude()"
           >
             <app-input
               testId="location-coordinates-lng"
               inputMode="decimal"
               autocomplete="off"
               placeholder="-63,1821"
-              [value]="longitudEscrita()"
-              [hasError]="errorLongitud() !== ''"
-              (valueChange)="escribirLongitud($event)"
-              (keydown.enter)="aplicarCoordenadas($event)"
+              [value]="writtenLongitude()"
+              [hasError]="errorLongitude() !== ''"
+              (valueChange)="writeLongitude($event)"
+              (keydown.enter)="applyCoordinates($event)"
             />
           </app-form-field>
           <button
@@ -83,7 +83,7 @@
             size="sm"
             type="button"
             data-testid="location-coordinates-apply"
-            (clicked)="aplicarCoordenadas()"
+            (clicked)="applyCoordinates()"
           >
             Poner el pin en estas coordenadas
           </button>
@@ -93,7 +93,7 @@
 
     <!-- Dónde quedó el pin, en palabras: se mueve en silencio para quien no
          ve el plano. Siempre en el DOM para que el lector escuche el cambio. -->
-    <p class="solo-lectores" role="status" data-testid="location-announcement">{{ anuncio() }}</p>
+    <p class="solo-lectores" role="status" data-testid="location-announcement">{{ announcement() }}</p>
 
     @if (punto() === null) {
       <p class="registro__ubicacion-estado" [attr.data-testid]="ids().marcarEnMapa + '-indicacion'">
@@ -105,8 +105,8 @@
           variant="ghost"
           size="sm"
           [attr.data-testid]="ids().usarUbicacion"
-          [isLoading]="pidiendo()"
-          (clicked)="usarMiUbicacion()"
+          [isLoading]="requesting()"
+          (clicked)="usarMyLocation()"
         >
           {{ etiquetaPedir() }}
         </button>
@@ -117,7 +117,7 @@
           variant="ghost"
           size="sm"
           [attr.data-testid]="ids().quitar"
-          (clicked)="quitarUbicacion()"
+          (clicked)="removeLocation()"
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <line x1="18" y1="6" x2="6" y2="18" />
@@ -126,12 +126,12 @@
           Cerrar el mapa
         </button>
       </div>
-      @if (rechazado()) {
+      @if (rejected()) {
         <p class="registro__ubicacion-aviso">
           No pudimos obtener su ubicación. Puede marcar el punto tocando el mapa.
         </p>
       }
-    } @else if (confirmada()) {
+    } @else if (confirmed()) {
       <!-- D-07 (pedido del cliente del 22/09/2026): «Listo, guardamos…» no se
            muestra: el pin ya se llama por su nombre y los botones cambian, así
            que el texto aclaraba lo obvio. Sigue en el DOM sólo para lectores de
@@ -143,15 +143,15 @@
            resuelve. Se dice acá, al lado del mapa, y el alta sigue. Nunca se
            rellena la dirección con un texto inventado. -->
       <p class="registro__ubicacion-aviso" [attr.data-testid]="ids().avisoGeocodificacion">
-        {{ avisoSinGeocodificacion }}
+        {{ noticeWithoutGeocoding }}
       </p>
       <div class="registro__ubicacion-acciones">
         <button
           app-button
           variant="ghost"
           size="sm"
-          [isLoading]="pidiendo()"
-          (clicked)="usarMiUbicacion()"
+          [isLoading]="requesting()"
+          (clicked)="usarMyLocation()"
         >
           Volver a ubicarme
         </button>
@@ -164,7 +164,7 @@
           size="sm"
           [attr.aria-label]="etiquetaQuitar()"
           [attr.data-testid]="ids().quitar"
-          (clicked)="quitarUbicacion()"
+          (clicked)="removeLocation()"
         >
           <app-nav-icon name="remove" />
           Quitar la ubicación
@@ -177,7 +177,7 @@
           variant="primary"
           size="sm"
           [attr.data-testid]="ids().confirmar"
-          (clicked)="confirmarDireccionActual()"
+          (clicked)="confirmAddressActual()"
         >
           Confirmar dirección actual
         </button>
@@ -185,8 +185,8 @@
           app-button
           variant="ghost"
           size="sm"
-          [isLoading]="pidiendo()"
-          (clicked)="usarMiUbicacion()"
+          [isLoading]="requesting()"
+          (clicked)="usarMyLocation()"
         >
           Volver a ubicarme
         </button>
@@ -199,7 +199,7 @@
           size="sm"
           [attr.aria-label]="etiquetaQuitar()"
           [attr.data-testid]="ids().quitar"
-          (clicked)="quitarUbicacion()"
+          (clicked)="removeLocation()"
         >
           <app-nav-icon name="remove" />
           Quitar la ubicación
@@ -218,8 +218,8 @@
       variant="secondary"
       size="sm"
       [attr.data-testid]="ids().usarUbicacion"
-      [isLoading]="pidiendo()"
-      (clicked)="usarMiUbicacion()"
+      [isLoading]="requesting()"
+      (clicked)="usarMyLocation()"
     >
       {{ etiquetaPedir() }}
     </button>
@@ -228,11 +228,11 @@
       variant="outline"
       size="sm"
       [attr.data-testid]="ids().marcarEnMapa"
-      (clicked)="marcarEnMapa()"
+      (clicked)="markInMap()"
     >
       {{ etiquetaMarcar() }}
     </button>
-    @if (rechazado()) {
+    @if (rejected()) {
       <span class="registro__ubicacion-aviso">
         No pudimos obtener su ubicación. Puede marcarla en el mapa, o seguir sin esto.
       </span>

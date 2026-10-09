@@ -31,7 +31,7 @@ import type {
   SustantivoDelDirectorio,
 } from '@shared/components/organisms/directory-page/directory-page.types';
 import { SEARCH_PARAM, type FilterDef } from '@shared/components/organisms/filter-bar/filter-bar';
-import { departamentoPorCiudad, normalizarLugar } from '@shared/geo/city-department';
+import { departmentByCity, normalizePlace } from '@shared/geo/city-department';
 
 import { promocionesDeEjemplo, type Promocion } from './promotions.fixtures';
 
@@ -163,7 +163,7 @@ export class Promotions {
     })),
   );
 
-  private readonly porCiudad = computed(() => departamentoPorCiudad(this.ramas()));
+  private readonly porCiudad = computed(() => departmentByCity(this.ramas()));
 
   /* ---- los cortes, leídos de la URL ------------------------------------- */
 
@@ -178,10 +178,10 @@ export class Promotions {
   protected readonly ciudad = computed(() => this.parametro(PARAM_CIUDAD));
   private readonly categoria = computed(() => this.parametro(PARAM_CATEGORIA));
   private readonly soloVigentes = computed(() => this.parametro(PARAM_VIGENTES) === 'true');
-  private readonly termino = computed(() => normalizarLugar(this.parametro(SEARCH_PARAM) ?? ''));
+  private readonly termino = computed(() => normalizePlace(this.parametro(SEARCH_PARAM) ?? ''));
 
   private departamentoDe(promo: Promocion): string | undefined {
-    return promo.ciudad === null ? undefined : this.porCiudad().get(normalizarLugar(promo.ciudad));
+    return promo.ciudad === null ? undefined : this.porCiudad().get(normalizePlace(promo.ciudad));
   }
 
   /** Texto, vigencia y categoría: los cortes que no dependen del lugar. */
@@ -247,7 +247,7 @@ export class Promotions {
     }
     return [...porCiudad.entries()]
       .map(([ciudad, promos]) => ({
-        id: normalizarLugar(ciudad).replace(/\s+/g, '-'),
+        id: normalizePlace(ciudad).replace(/\s+/g, '-'),
         nombre: ciudad,
         resultados: promos.sort(porVigenciaYDescuento).map(aTarjeta),
       }))
@@ -362,7 +362,7 @@ export class Promotions {
 
 function coincide(promo: Promocion, termino: string): boolean {
   return [promo.titulo, promo.farmacia, promo.medicamento, promo.categoria.label].some(
-    (campo) => campo !== null && normalizarLugar(campo).includes(termino),
+    (campo) => campo !== null && normalizePlace(campo).includes(termino),
   );
 }
 

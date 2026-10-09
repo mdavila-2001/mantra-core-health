@@ -1,6 +1,6 @@
 import { avatarSvg, imagenSvg, iso, isoDia } from '../mock-store';
 
-import { conSemilla } from './seed';
+import { withSeed } from './seed';
 import * as bo from './bolivia';
 import * as cl from './clinical';
 
@@ -135,7 +135,7 @@ function porNombre(valor: unknown, entrada: EntradaAGenerar): ValorGenerado {
  * Cuando es obligatoria, pone lo mínimo para que monte y LO DICE.
  */
 export function generarEntrada(entrada: EntradaAGenerar, semilla: string): ValorGenerado {
-  const f = conSemilla(`${semilla}-${entrada.nombre}`);
+  const f = withSeed(`${semilla}-${entrada.nombre}`);
   const { nombre, tipo } = entrada;
   const bajo = nombre.toLowerCase();
 
@@ -276,14 +276,14 @@ export function generarEntradas(entradas: readonly EntradaAGenerar[], semilla: s
 /** Datos sueltos para las fichas que los piden a mano. */
 export const muestras = {
   paciente: (semilla: string) => {
-    const f = conSemilla(`muestra-paciente-${semilla}`);
+    const f = withSeed(`muestra-paciente-${semilla}`);
     const l = bo.lugar(f);
     return {
       nombre: `${f.person.firstName('female')} ${f.person.lastName().split(' ')[0]}`,
       cedula: bo.cedula(f, l),
       telefono: bo.celular(f),
       ciudad: l.ciudad,
-      motivo: cl.motivoDeConsulta(f),
+      motivo: cl.consultationReason(f),
     };
   },
 };

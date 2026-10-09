@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 
 import { FilesClient } from '../files/files.client';
-import { LogoDelConsultorioClient } from './practice-logo.client';
+import { PracticeLogoClient } from './practice-logo.client';
 import { PracticeSitesClient } from './practice-sites.client';
 
 /**
@@ -17,7 +17,7 @@ describe('LogoDelConsultorioClient', () => {
 
   const sitios = { listSitesOfPractitioner: vi.fn(), setSiteLogo: vi.fn() };
   const archivos = { imageDataUrl: vi.fn(), upload: vi.fn() };
-  let cliente: LogoDelConsultorioClient;
+  let cliente: PracticeLogoClient;
 
   beforeEach(() => {
     vi.resetAllMocks();
@@ -31,13 +31,13 @@ describe('LogoDelConsultorioClient', () => {
         { provide: FilesClient, useValue: archivos },
       ],
     });
-    cliente = TestBed.inject(LogoDelConsultorioClient);
+    cliente = TestBed.inject(PracticeLogoClient);
   });
 
   describe('obtenerUrl', () => {
     it('lee el logo del consultorio PROPIO, no el de una sede ajena', () => {
       let url: string | null = '';
-      cliente.obtenerUrl('per-1').subscribe((valor) => (url = valor));
+      cliente.getUrl('per-1').subscribe((valor) => (url = valor));
 
       expect(archivos.imageDataUrl).toHaveBeenCalledWith('file-logo');
       expect(url).toBe('data:image/png;base64,AAAA');
@@ -48,7 +48,7 @@ describe('LogoDelConsultorioClient', () => {
         of({ items: [{ ...PROPIA, logoFileId: null }], count: 1 }),
       );
       let url: string | null = 'x';
-      cliente.obtenerUrl('per-1').subscribe((valor) => (url = valor));
+      cliente.getUrl('per-1').subscribe((valor) => (url = valor));
 
       expect(url).toBeNull();
       expect(archivos.imageDataUrl).not.toHaveBeenCalled();
@@ -57,7 +57,7 @@ describe('LogoDelConsultorioClient', () => {
     it('sin consultorio propio devuelve null', () => {
       sitios.listSitesOfPractitioner.mockReturnValue(of({ items: [AJENA], count: 1 }));
       let url: string | null = 'x';
-      cliente.obtenerUrl('per-1').subscribe((valor) => (url = valor));
+      cliente.getUrl('per-1').subscribe((valor) => (url = valor));
 
       expect(url).toBeNull();
     });
@@ -69,7 +69,7 @@ describe('LogoDelConsultorioClient', () => {
       romper();
       let url: string | null = 'x';
       let error: unknown = null;
-      cliente.obtenerUrl('per-1').subscribe({ next: (valor) => (url = valor), error: (e) => (error = e) });
+      cliente.getUrl('per-1').subscribe({ next: (valor) => (url = valor), error: (e) => (error = e) });
 
       expect(error).toBeNull();
       expect(url).toBeNull();
@@ -80,7 +80,7 @@ describe('LogoDelConsultorioClient', () => {
     it('sube como imagen de sensibilidad normal y devuelve sólo el id', () => {
       const archivo = new File(['x'], 'logo.png', { type: 'image/png' });
       let id = '';
-      cliente.subir(archivo).subscribe((valor) => (id = valor));
+      cliente.upload(archivo).subscribe((valor) => (id = valor));
 
       expect(archivos.upload).toHaveBeenCalledWith(archivo, 'IMAGE', 'NORMAL');
       expect(id).toBe('file-nuevo');
@@ -89,13 +89,13 @@ describe('LogoDelConsultorioClient', () => {
 
   describe('guardar', () => {
     it('asocia el archivo al consultorio propio', () => {
-      cliente.guardar('per-1', 'file-nuevo').subscribe();
+      cliente.save('per-1', 'file-nuevo').subscribe();
 
       expect(sitios.setSiteLogo).toHaveBeenCalledWith('site-1', 'file-nuevo');
     });
 
     it('con null quita el logo', () => {
-      cliente.guardar('per-1', null).subscribe();
+      cliente.save('per-1', null).subscribe();
 
       expect(sitios.setSiteLogo).toHaveBeenCalledWith('site-1', null);
     });
@@ -103,7 +103,7 @@ describe('LogoDelConsultorioClient', () => {
     it('sin consultorio propio no falla ni escribe nada', () => {
       sitios.listSitesOfPractitioner.mockReturnValue(of({ items: [AJENA], count: 1 }));
       let terminó = false;
-      cliente.guardar('per-1', 'file-nuevo').subscribe({ complete: () => (terminó = true) });
+      cliente.save('per-1', 'file-nuevo').subscribe({ complete: () => (terminó = true) });
 
       expect(terminó).toBe(true);
       expect(sitios.setSiteLogo).not.toHaveBeenCalled();

@@ -1,9 +1,9 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 
-import type { IsoPais } from './phone-input.countries';
+import type { IsoCountry } from './phone-input.countries';
 
 /** Ver `PaisBandera.id`: un id de `clipPath` distinto por instancia. */
-let siguienteId = 0;
+let nextId = 0;
 
 /**
  * La bandera de un país, dibujada a mano.
@@ -140,8 +140,8 @@ let siguienteId = 0;
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class PaisBandera {
-  readonly iso = input.required<IsoPais>();
+export class CountryFlag {
+  readonly iso = input.required<IsoCountry>();
 
   /**
    * El `clipPath` necesita un id único por instancia.
@@ -154,7 +154,7 @@ export class PaisBandera {
    * Un contador de módulo y no `crypto.randomUUID()`: esto se pinta también en
    * el servidor, y un id distinto en cada render rompería la hidratación.
    */
-  private readonly id = `bandera-${(siguienteId += 1)}`;
+  private readonly id = `bandera-${(nextId += 1)}`;
 
   protected readonly clipId = (): string => this.id;
 }

@@ -13,18 +13,18 @@
       <p class="mapa-directorio__caido" role="status">
         No pudimos leer el catálogo de departamentos, así que el mapa no está. El resto del
         directorio funciona igual.
-        <button app-button="" data-variante="secundario" data-tam="sm" type="button" (click)="lugar.reintentar()">
+        <button app-button="" data-variante="secundario" data-tam="sm" type="button" (click)="lugar.retry()">
           Reintentar
         </button>
       </p>
-    } @else if (lugar.departamentos().length > 0) {
+    } @else if (lugar.departments().length > 0) {
       <section class="mapa-directorio" aria-label="Filtrar por departamento">
         <app-department-map
           testId="aseguradoras-mapa"
-          [municipio]="lugar.ciudad()"
-          [departamentos]="lugar.departamentos()"
-          [value]="lugar.departamentoElegido()"
-          (valueChange)="lugar.elegirDepartamento($event)"
+          [municipio]="lugar.city()"
+          [departamentos]="lugar.departments()"
+          [value]="lugar.chosenDepartment()"
+          (valueChange)="lugar.chooseDepartment($event)"
           etiqueta="Mapa de Bolivia: elija el departamento donde busca"
         />
         @if (busqueda.resumenDelLugar(); as resumen) {
@@ -83,9 +83,9 @@
           <button
             type="button"
             class="centros__chip"
-            [class.centros__chip--activo]="lugar.ciudad() === null"
-            [attr.aria-pressed]="lugar.ciudad() === null"
-            (click)="lugar.elegirCiudad(null)"
+            [class.centros__chip--activo]="lugar.city() === null"
+            [attr.aria-pressed]="lugar.city() === null"
+            (click)="lugar.chooseCity(null)"
           >
             Todo el departamento
           </button>
@@ -94,9 +94,9 @@
               type="button"
               class="centros__chip"
               data-testid="aseguradoras-chip-ciudad"
-              [class.centros__chip--activo]="lugar.ciudad() === nombre"
-              [attr.aria-pressed]="lugar.ciudad() === nombre"
-              (click)="lugar.elegirCiudad(nombre)"
+              [class.centros__chip--activo]="lugar.city() === nombre"
+              [attr.aria-pressed]="lugar.city() === nombre"
+              (click)="lugar.chooseCity(nombre)"
             >
               {{ nombre }}
             </button>

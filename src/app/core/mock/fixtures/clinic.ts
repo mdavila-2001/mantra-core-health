@@ -1,25 +1,25 @@
 import {
-  ACTIVIDAD_DEL_PLAN,
-  CATEGORIA_ALERGIA,
-  CATEGORIA_DOCUMENTAL,
-  CATEGORIA_ORDEN,
-  CLASE_ENCUENTRO,
-  CRITICIDAD,
-  DIAGNOSTICO,
-  ESTADO,
-  ESTADO_CONDICION,
-  ESTADO_ENCUENTRO,
-  ESTADO_RECETA,
+  PLAN_ACTIVITY,
+  ALLERGY_CATEGORY,
+  CATEGORY_DOCUMENTAL,
+  ORDER_CATEGORY,
+  ENCOUNTER_CLASS,
+  CRITICALITY,
+  DIAGNOSIS,
+  STATUS,
+  CONDITION_STATUS,
+  ENCOUNTER_STATUS,
+  PRESCRIPTION_STATUS,
   ESTUDIO,
-  INTENCION_DEL_PLAN,
+  PLAN_INTENT,
   MEDICAMENTO,
-  OBSERVACION,
-  PRIORIDAD,
-  SEVERIDAD,
+  OBSERVATION,
+  PRIORITY,
+  SEVERITY,
   UNIDAD,
-  VERIFICACION_DX,
+  VERIFICATION_DX,
 } from './concepts';
-import { MEDICA, PACIENTES, PROFESIONALES, type PacienteSimulado } from './people';
+import { MEDICAL, PATIENTS, PROFESSIONALS, type PacienteSimulado } from './people';
 import { TENANT_CLINICA } from '../mock-session';
 import { Coleccion, iso, isoDia, uuid } from '../mock-store';
 
@@ -34,7 +34,7 @@ import { Coleccion, iso, isoDia, uuid } from '../mock-store';
  * La evidencia que respalda una decisión sobre un presuntivo (C3, P41): una
  * nota del expediente o un análisis —la orden y, si existe, su informe—.
  */
-export interface EvidenciaSimulada {
+export interface SimulatedEvidence {
   readonly kind: 'NOTE' | 'ANALYSIS';
   readonly noteId?: string;
   readonly encounterId?: string;
@@ -43,15 +43,15 @@ export interface EvidenciaSimulada {
 }
 
 /** La decisión de C3 sobre un presuntivo, con sus instantes en ISO. */
-export interface VerificacionSimulada {
+export interface SimulatedVerification {
   readonly outcome: 'CONFIRMED' | 'REFUTED';
   readonly decidedAt: string;
   readonly decidedByProfileId: string;
   readonly reasonText: string | null;
-  readonly basedOn: EvidenciaSimulada | null;
+  readonly basedOn: SimulatedEvidence | null;
 }
 
-export interface CondicionSimulada {
+export interface SimulatedCondition {
   readonly id: string;
   readonly patientProfileId: string;
   readonly codeConceptId: string;
@@ -59,7 +59,7 @@ export interface CondicionSimulada {
   readonly clinicalStatusConceptId: string;
   readonly verificationStatusConceptId: string;
   /** Sólo después de confirmar o rechazar (C3). Un presuntivo no la tiene. */
-  readonly verification?: VerificacionSimulada;
+  readonly verification?: SimulatedVerification;
   readonly severityConceptId: string;
   readonly lateralityConceptId?: string;
   /** Curso clínico: agudo, crónico, subagudo, recurrente (Patch v4.0.8). */
@@ -73,7 +73,7 @@ export interface CondicionSimulada {
   readonly createdAt: string;
 }
 
-export interface AlergiaSimulada {
+export interface SimulatedAllergy {
   readonly id: string;
   readonly patientProfileId: string;
   readonly substanceConceptId: string;
@@ -98,7 +98,7 @@ export interface AlergiaSimulada {
   readonly createdAt: string;
 }
 
-export interface RecetaSimulada {
+export interface SimulatedPrescription {
   /** La respuesta del formulario médico de la que sale (P43). */
   readonly formInstanceId?: string;
   readonly id: string;
@@ -122,7 +122,7 @@ export interface RecetaSimulada {
   readonly createdAt: string;
 }
 
-export interface ObservacionSimulada {
+export interface SimulatedObservation {
   readonly id: string;
   readonly patientProfileId: string;
   readonly codeConceptId: string;
@@ -138,7 +138,7 @@ export interface ObservacionSimulada {
   readonly categoryConceptId?: string;
 }
 
-export interface EncuentroSimulado {
+export interface SimulatedEncounter {
   readonly id: string;
   readonly patientProfileId: string;
   readonly episodeId?: string;
@@ -151,12 +151,12 @@ export interface EncuentroSimulado {
 }
 
 /** Una fila de la nota médica: el campo y lo que vale, como lo escribió la médica. */
-export interface FilaDeNotaSimulada {
+export interface SimulatedNoteRow {
   readonly label: string;
   readonly value: string;
 }
 
-export interface NotaSimulada {
+export interface SimulatedNote {
   readonly id: string;
   readonly noteId: string;
   readonly patientProfileId: string;
@@ -170,7 +170,7 @@ export interface NotaSimulada {
    * Las filas campo/valor de C1 (P39). Las notas viejas —las SOAP de antes del
    * 25/09/2026— no las tienen y traen su texto en los cinco apartados.
    */
-  readonly entries?: readonly FilaDeNotaSimulada[];
+  readonly entries?: readonly SimulatedNoteRow[];
   readonly chiefComplaintText: string;
   readonly subjectiveText: string;
   readonly objectiveText: string;
@@ -181,10 +181,10 @@ export interface NotaSimulada {
   readonly createdAt: string;
 }
 
-export const NOTA_TIPO_EVOLUCION = uuid('concept-note-type-evolution');
-export const CATEGORIA_DX = uuid('concept-condition-category-problem-list');
-export const TIPO_ALERGIA = uuid('concept-allergy-type-allergy');
-export const TIPO_EPISODIO = uuid('concept-episode-type-inpatient');
+export const PROGRESS_NOTE_TYPE = uuid('concept-note-type-evolution');
+export const DX_CATEGORY = uuid('concept-condition-category-problem-list');
+export const ALLERGY_TYPE = uuid('concept-allergy-type-allergy');
+export const EPISODE_TYPE = uuid('concept-episode-type-inpatient');
 /**
  * La categoría documental por omisión de la maqueta.
  *
@@ -193,11 +193,11 @@ export const TIPO_EPISODIO = uuid('concept-episode-type-inpatient');
  * categoría en palabras, y un identificador que no está en ningún conjunto se
  * leía como «Sin registrar».
  */
-export const CATEGORIA_DOCUMENTO = CATEGORIA_DOCUMENTAL['DOC-CAT-REPORT']!;
+export const DOCUMENT_CATEGORY = CATEGORY_DOCUMENTAL['DOC-CAT-REPORT']!;
 
-const PERFILES_CLINICOS: readonly {
+const CLINICAL_PROFILES: readonly {
   readonly dx: readonly (readonly [
-    keyof typeof DIAGNOSTICO,
+    keyof typeof DIAGNOSIS,
     'COND_ACTIVE' | 'COND_RESOLVED' | 'COND_REMISSION',
     string,
   ])[];
@@ -305,25 +305,25 @@ const PERFILES_CLINICOS: readonly {
   },
 ];
 
-export const SUSTANCIA_MANI = uuid('concept-allergen-peanut');
-export const SUSTANCIA_POLVO = uuid('concept-allergen-dust');
+export const PEANUT_SUBSTANCE = uuid('concept-allergen-peanut');
+export const POWDER_SUBSTANCE = uuid('concept-allergen-dust');
 
-function perfilClinicoDe(p: PacienteSimulado) {
-  const indice = PACIENTES.indexOf(p);
-  return PERFILES_CLINICOS[(indice < 0 ? 0 : indice) % PERFILES_CLINICOS.length]!;
+function clinicalProfileOf(p: PacienteSimulado) {
+  const indice = PATIENTS.indexOf(p);
+  return CLINICAL_PROFILES[(indice < 0 ? 0 : indice) % CLINICAL_PROFILES.length]!;
 }
 
-export const condiciones = new Coleccion<CondicionSimulada>(
-  PACIENTES.flatMap((p) =>
-    perfilClinicoDe(p).dx.map(([code, estado, nota], i) => ({
+export const conditionList = new Coleccion<SimulatedCondition>(
+  PATIENTS.flatMap((p) =>
+    clinicalProfileOf(p).dx.map(([code, estado, nota], i) => ({
       id: uuid(`condition-${p.id}-${code}`),
       patientProfileId: p.id,
-      codeConceptId: DIAGNOSTICO[code]!,
-      categoryConceptId: CATEGORIA_DX,
-      clinicalStatusConceptId: ESTADO_CONDICION[estado]!,
+      codeConceptId: DIAGNOSIS[code]!,
+      categoryConceptId: DX_CATEGORY,
+      clinicalStatusConceptId: CONDITION_STATUS[estado]!,
       verificationStatusConceptId:
-        i === 0 ? VERIFICACION_DX['COND_CONFIRMED']! : VERIFICACION_DX['COND_PROVISIONAL']!,
-      severityConceptId: i === 0 ? SEVERIDAD['SEV-MODERATE']! : SEVERIDAD['SEV-MILD']!,
+        i === 0 ? VERIFICATION_DX['COND_CONFIRMED']! : VERIFICATION_DX['COND_PROVISIONAL']!,
+      severityConceptId: i === 0 ? SEVERITY['SEV-MODERATE']! : SEVERITY['SEV-MILD']!,
       encounterId: uuid(`encounter-${p.id}-0`),
       onsetAt: iso(-400 + i * 90),
       ...(estado === 'COND_RESOLVED' ? { resolvedAt: iso(-30 - i * 10) } : {}),
@@ -333,39 +333,39 @@ export const condiciones = new Coleccion<CondicionSimulada>(
   ),
 );
 
-export const alergias = new Coleccion<AlergiaSimulada>(
-  PACIENTES.flatMap((p) =>
-    perfilClinicoDe(p).alergias.map(([sustancia, criticidad]) => ({
+export const allergyList = new Coleccion<SimulatedAllergy>(
+  PATIENTS.flatMap((p) =>
+    clinicalProfileOf(p).alergias.map(([sustancia, criticidad]) => ({
       id: uuid(`allergy-${p.id}-${sustancia}`),
       patientProfileId: p.id,
       substanceConceptId:
         sustancia === 'ALIMENTO-MANI'
-          ? SUSTANCIA_MANI
+          ? PEANUT_SUBSTANCE
           : sustancia === 'POLVO'
-            ? SUSTANCIA_POLVO
+            ? POWDER_SUBSTANCE
             : MEDICAMENTO[sustancia]!,
-      typeConceptId: TIPO_ALERGIA,
+      typeConceptId: ALLERGY_TYPE,
       categoryConceptId:
         sustancia === 'ALIMENTO-MANI'
-          ? CATEGORIA_ALERGIA['ALG-FOOD']!
+          ? ALLERGY_CATEGORY['ALG-FOOD']!
           : sustancia === 'POLVO'
-            ? CATEGORIA_ALERGIA['ALG-ENVIRONMENT']!
-            : CATEGORIA_ALERGIA['ALG-MEDICATION']!,
-      criticalityConceptId: CRITICIDAD[criticidad]!,
-      clinicalStatusConceptId: ESTADO_CONDICION['COND_ACTIVE']!,
+            ? ALLERGY_CATEGORY['ALG-ENVIRONMENT']!
+            : ALLERGY_CATEGORY['ALG-MEDICATION']!,
+      criticalityConceptId: CRITICALITY[criticidad]!,
+      clinicalStatusConceptId: CONDITION_STATUS['COND_ACTIVE']!,
       createdAt: iso(-500),
     })),
   ),
 );
 
-export const recetas = new Coleccion<RecetaSimulada>(
-  PACIENTES.flatMap((p, k) =>
-    perfilClinicoDe(p).recetas.map(([med, dosis, frecuencia, estado], i) => ({
+export const prescriptionList = new Coleccion<SimulatedPrescription>(
+  PATIENTS.flatMap((p, k) =>
+    clinicalProfileOf(p).recetas.map(([med, dosis, frecuencia, estado], i) => ({
       id: uuid(`rx-${p.id}-${med}`),
       patientProfileId: p.id,
       medicationConceptId: MEDICAMENTO[med]!,
-      statusConceptId: ESTADO_RECETA[estado]!,
-      prescriberProfileId: i === 0 ? MEDICA.id : PROFESIONALES[(k + i) % 5]!.id,
+      statusConceptId: PRESCRIPTION_STATUS[estado]!,
+      prescriberProfileId: i === 0 ? MEDICAL.id : PROFESSIONALS[(k + i) % 5]!.id,
       // La primera receta de cada persona cuelga de su primer diagnóstico, y la
       // segunda dice su motivo a mano: son los dos caminos que la tabla del
       // expediente tiene que poder mostrar. Sin datos así, la columna
@@ -373,7 +373,7 @@ export const recetas = new Coleccion<RecetaSimulada>(
       ...(i === 0
         ? {
             encounterId: uuid(`encounter-${p.id}-0`),
-            indicationConditionId: uuid(`condition-${p.id}-${perfilClinicoDe(p).dx[0]?.[0] ?? ''}`),
+            indicationConditionId: uuid(`condition-${p.id}-${clinicalProfileOf(p).dx[0]?.[0] ?? ''}`),
           }
         : { indicationText: 'Control sintomático' }),
       doseText: dosis,
@@ -388,8 +388,8 @@ export const recetas = new Coleccion<RecetaSimulada>(
   ),
 );
 
-export const observaciones = new Coleccion<ObservacionSimulada>(
-  PACIENTES.flatMap((p, k) => {
+export const observationList = new Coleccion<SimulatedObservation>(
+  PATIENTS.flatMap((p, k) => {
     const base = [
       ['OBS-BP-SYS', 118 + (k % 5) * 8, 'UNIT-MG'],
       ['OBS-BP-DIA', 76 + (k % 4) * 4, 'UNIT-MG'],
@@ -404,8 +404,8 @@ export const observaciones = new Coleccion<ObservacionSimulada>(
       [0, 1, 2].map((visita) => ({
         id: uuid(`obs-${p.id}-${code}-${visita}`),
         patientProfileId: p.id,
-        codeConceptId: OBSERVACION[code]!,
-        statusConceptId: ESTADO['ST-COMPLETED']!,
+        codeConceptId: OBSERVATION[code]!,
+        statusConceptId: STATUS['ST-COMPLETED']!,
         valueDecimal: String(Number((valor + visita * (i % 2 === 0 ? -1.5 : 1)).toFixed(1))),
         quantityValue: String(Number((valor + visita * (i % 2 === 0 ? -1.5 : 1)).toFixed(1))),
         quantityUnitConceptId: UNIDAD['UNIT-MG']!,
@@ -416,15 +416,15 @@ export const observaciones = new Coleccion<ObservacionSimulada>(
   }),
 );
 
-export const encuentros = new Coleccion<EncuentroSimulado>(
-  PACIENTES.flatMap((p, k) =>
+export const encounterList = new Coleccion<SimulatedEncounter>(
+  PATIENTS.flatMap((p, k) =>
     [0, 1, 2].map((visita) => ({
       id: uuid(`encounter-${p.id}-${visita}`),
       patientProfileId: p.id,
       ...(k % 4 === 3 && visita === 2 ? { episodeId: uuid(`episode-${p.id}`) } : {}),
-      statusConceptId: ESTADO_ENCUENTRO['ENCST-FINISHED']!,
-      classConceptId: visita === 1 ? CLASE_ENCUENTRO['ENC-VIRTUAL']! : CLASE_ENCUENTRO['ENC-AMB']!,
-      primaryPractitionerId: visita === 0 ? MEDICA.id : PROFESIONALES[(k + visita) % 6]!.id,
+      statusConceptId: ENCOUNTER_STATUS['ENCST-FINISHED']!,
+      classConceptId: visita === 1 ? ENCOUNTER_CLASS['ENC-VIRTUAL']! : ENCOUNTER_CLASS['ENC-AMB']!,
+      primaryPractitionerId: visita === 0 ? MEDICAL.id : PROFESSIONALS[(k + visita) % 6]!.id,
       reasonText: ['Control de rutina', 'Lectura de resultados', 'Consulta por síntomas'][visita]!,
       startAt: iso(-visita * 45 - 2, 9),
       endAt: iso(-visita * 45 - 2, 9, 35),
@@ -432,7 +432,7 @@ export const encuentros = new Coleccion<EncuentroSimulado>(
   ),
 );
 
-export const episodios = new Coleccion<{
+export const episodeList = new Coleccion<{
   id: string;
   patientProfileId: string;
   tenantId: string;
@@ -443,13 +443,13 @@ export const episodios = new Coleccion<{
   endAt: string | null;
   createdAt: string;
 }>(
-  PACIENTES.filter((_, k) => k % 4 === 3).map((p) => ({
+  PATIENTS.filter((_, k) => k % 4 === 3).map((p) => ({
     id: uuid(`episode-${p.id}`),
     patientProfileId: p.id,
     tenantId: TENANT_CLINICA,
-    typeConceptId: TIPO_EPISODIO,
-    statusConceptId: ESTADO['ST-CLOSED']!,
-    responsiblePractitionerId: MEDICA.id,
+    typeConceptId: EPISODE_TYPE,
+    statusConceptId: STATUS['ST-CLOSED']!,
+    responsiblePractitionerId: MEDICAL.id,
     startAt: iso(-95, 8),
     endAt: iso(-92, 12),
     createdAt: iso(-95, 8),
@@ -461,7 +461,7 @@ export const episodios = new Coleccion<{
  * juegos realistas de cuatro a siete filas: la semilla elige uno por paciente
  * y por visita, así dos notas de la misma persona nunca dicen lo mismo.
  */
-const FILAS_DE_NOTA: readonly (readonly FilaDeNotaSimulada[])[] = [
+const NOTE_ROWS: readonly (readonly SimulatedNoteRow[])[] = [
   [
     { label: 'Presión arterial', value: '120/80 mmHg' },
     { label: 'Frecuencia cardíaca', value: '72 lpm' },
@@ -502,21 +502,21 @@ const FILAS_DE_NOTA: readonly (readonly FilaDeNotaSimulada[])[] = [
   ],
 ];
 
-export const notas = new Coleccion<NotaSimulada>(
-  PACIENTES.flatMap((p, k) =>
+export const noteList = new Coleccion<SimulatedNote>(
+  PATIENTS.flatMap((p, k) =>
     [0, 1].map((visita) => ({
       noteId: uuid(`note-${p.id}-${visita}`),
       id: uuid(`note-${p.id}-${visita}`),
       patientProfileId: p.id,
       encounterId: uuid(`encounter-${p.id}-${visita}`),
-      noteTypeConceptId: NOTA_TIPO_EVOLUCION,
-      lifecycleStatusConceptId: visita === 0 ? ESTADO['ST-COMPLETED']! : ESTADO['ST-DRAFT']!,
+      noteTypeConceptId: PROGRESS_NOTE_TYPE,
+      lifecycleStatusConceptId: visita === 0 ? STATUS['ST-COMPLETED']! : STATUS['ST-DRAFT']!,
       currentVersionId: uuid(`note-version-${p.id}-${visita}`),
       versionNumber: visita === 0 ? 2 : 1,
-      authorProfileId: MEDICA.id,
+      authorProfileId: MEDICAL.id,
       // C1: la nota es la tabla de filas. Los apartados SOAP quedan vacíos
       // en las notas nuevas y la pantalla no los dibuja cuando están en blanco.
-      entries: FILAS_DE_NOTA[(k + visita * 2) % FILAS_DE_NOTA.length]!,
+      entries: NOTE_ROWS[(k + visita * 2) % NOTE_ROWS.length]!,
       chiefComplaintText: '',
       subjectiveText:
         visita === 0 ? '' : 'Refiere que el cuadro empezó tras un viaje largo en bus.',
@@ -527,7 +527,7 @@ export const notas = new Coleccion<NotaSimulada>(
       releasedToPatient: visita === 0,
       createdAt: iso(-visita * 45 - 2, 9, 40),
     })),
-  ) as (NotaSimulada & { id: string })[],
+  ) as (SimulatedNote & { id: string })[],
 );
 
 /* ---- planes de cuidados y documentos --------------------------------------
@@ -539,7 +539,7 @@ export const notas = new Coleccion<NotaSimulada>(
    guardar no sirve para demostrar una mutación de punta a punta—. El fixture
    sigue estando: es la semilla de la colección, no su contenido. */
 
-export interface PlanSimulado {
+export interface SimulatedPlan {
   /** La respuesta del formulario médico de la que sale (P43). */
   readonly formInstanceId?: string;
   readonly id: string;
@@ -563,7 +563,7 @@ export interface PlanSimulado {
   readonly createdAt: string;
 }
 
-export interface DocumentoSimulado {
+export interface SimulatedDocument {
   readonly id: string;
   readonly patientProfileId: string;
   readonly title: string;
@@ -582,46 +582,46 @@ export interface DocumentoSimulado {
   readonly createdAt: string;
 }
 
-function planesSemilla(p: PacienteSimulado): readonly PlanSimulado[] {
-  const perfil = perfilClinicoDe(p);
+function seedPlans(p: PacienteSimulado): readonly SimulatedPlan[] {
+  const perfil = clinicalProfileOf(p);
   if (perfil.dx.length < 2) return [];
   return [
     {
       id: uuid(`careplan-${p.id}`),
       patientProfileId: p.id,
-      statusConceptId: ESTADO['ST-ACTIVE']!,
-      intentConceptId: INTENCION_DEL_PLAN['CP-INTENT-PLAN']!,
+      statusConceptId: STATUS['ST-ACTIVE']!,
+      intentConceptId: PLAN_INTENT['CP-INTENT-PLAN']!,
       goalText: 'Presión arterial por debajo de 130/80 y LDL menor a 100 en 6 meses.',
       startDate: isoDia(-60),
       endDate: isoDia(120),
       activities: [
         {
           id: uuid(`cp-act-1-${p.id}`),
-          statusConceptId: ESTADO['ST-COMPLETED']!,
+          statusConceptId: STATUS['ST-COMPLETED']!,
           detailText: 'Perfil lipídico basal',
           scheduledAt: iso(-55),
-          activityConceptId: ACTIVIDAD_DEL_PLAN['CP-ACT-STUDY']!,
+          activityConceptId: PLAN_ACTIVITY['CP-ACT-STUDY']!,
         },
         {
           id: uuid(`cp-act-2-${p.id}`),
-          statusConceptId: ESTADO['ST-IN-PROGRESS']!,
+          statusConceptId: STATUS['ST-IN-PROGRESS']!,
           detailText: 'Caminata 30 minutos, 5 veces por semana',
           scheduledAt: iso(-50),
-          activityConceptId: ACTIVIDAD_DEL_PLAN['CP-ACT-TREATMENT']!,
+          activityConceptId: PLAN_ACTIVITY['CP-ACT-TREATMENT']!,
         },
         {
           id: uuid(`cp-act-3-${p.id}`),
-          statusConceptId: ESTADO['ST-PENDING']!,
+          statusConceptId: STATUS['ST-PENDING']!,
           detailText: 'Control con nutrición',
           scheduledAt: iso(12),
-          activityConceptId: ACTIVIDAD_DEL_PLAN['CP-ACT-CONTROL']!,
+          activityConceptId: PLAN_ACTIVITY['CP-ACT-CONTROL']!,
         },
         {
           id: uuid(`cp-act-4-${p.id}`),
-          statusConceptId: ESTADO['ST-PENDING']!,
+          statusConceptId: STATUS['ST-PENDING']!,
           detailText: 'Ecocardiograma de control',
           scheduledAt: iso(40),
-          activityConceptId: ACTIVIDAD_DEL_PLAN['CP-ACT-STUDY']!,
+          activityConceptId: PLAN_ACTIVITY['CP-ACT-STUDY']!,
         },
       ],
       createdAt: iso(-60),
@@ -629,14 +629,14 @@ function planesSemilla(p: PacienteSimulado): readonly PlanSimulado[] {
   ];
 }
 
-function documentosSemilla(p: PacienteSimulado): readonly DocumentoSimulado[] {
+function seedDocuments(p: PacienteSimulado): readonly SimulatedDocument[] {
   return [
     {
       id: uuid(`doc-lab-${p.id}`),
       patientProfileId: p.id,
       title: 'Laboratorio completo',
-      categoryConceptId: CATEGORIA_DOCUMENTAL['DOC-CAT-LAB']!,
-      statusConceptId: ESTADO['ST-PUBLISHED']!,
+      categoryConceptId: CATEGORY_DOCUMENTAL['DOC-CAT-LAB']!,
+      statusConceptId: STATUS['ST-PUBLISHED']!,
       authorText: 'Laboratorio Central',
       isExternal: true,
       documentDate: iso(-48),
@@ -648,9 +648,9 @@ function documentosSemilla(p: PacienteSimulado): readonly DocumentoSimulado[] {
       id: uuid(`doc-ecg-${p.id}`),
       patientProfileId: p.id,
       title: 'Electrocardiograma de reposo',
-      categoryConceptId: CATEGORIA_DOCUMENTAL['DOC-CAT-REPORT']!,
-      statusConceptId: ESTADO['ST-PUBLISHED']!,
-      authorText: MEDICA.displayName,
+      categoryConceptId: CATEGORY_DOCUMENTAL['DOC-CAT-REPORT']!,
+      statusConceptId: STATUS['ST-PUBLISHED']!,
+      authorText: MEDICAL.displayName,
       isExternal: false,
       documentDate: iso(-2),
       files: [{ fileId: uuid(`file-ecg-${p.id}`), contentRole: 'PRIMARY', ordinal: 0 }],
@@ -660,8 +660,8 @@ function documentosSemilla(p: PacienteSimulado): readonly DocumentoSimulado[] {
       id: uuid(`doc-rx-${p.id}`),
       patientProfileId: p.id,
       title: 'Radiografía de tórax — informe',
-      categoryConceptId: CATEGORIA_DOCUMENTAL['DOC-CAT-IMAGING']!,
-      statusConceptId: ESTADO['ST-DRAFT']!,
+      categoryConceptId: CATEGORY_DOCUMENTAL['DOC-CAT-IMAGING']!,
+      statusConceptId: STATUS['ST-DRAFT']!,
       authorText: 'Centro de Imagen Sur',
       isExternal: true,
       documentDate: iso(-100),
@@ -670,21 +670,21 @@ function documentosSemilla(p: PacienteSimulado): readonly DocumentoSimulado[] {
   ];
 }
 
-export const planes = new Coleccion<PlanSimulado>(PACIENTES.flatMap(planesSemilla));
+export const planList = new Coleccion<SimulatedPlan>(PATIENTS.flatMap(seedPlans));
 
-export const documentos = new Coleccion<DocumentoSimulado>(PACIENTES.flatMap(documentosSemilla));
+export const documentList = new Coleccion<SimulatedDocument>(PATIENTS.flatMap(seedDocuments));
 
 /** Los planes de una persona, del más nuevo al más viejo y sin su paciente. */
-export function planesDe(p: PacienteSimulado) {
-  return planes
+export function plansOf(p: PacienteSimulado) {
+  return planList
     .filtrar((plan) => plan.patientProfileId === p.id)
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
     .map(({ patientProfileId: _p, ...plan }) => plan);
 }
 
 /** Los documentos de una persona, del más nuevo al más viejo. */
-export function documentosDe(p: PacienteSimulado) {
-  return documentos
+export function documentsOf(p: PacienteSimulado) {
+  return documentList
     .filtrar((doc) => doc.patientProfileId === p.id)
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
     .map(({ patientProfileId: _p, ...doc }) => doc);
@@ -692,7 +692,7 @@ export function documentosDe(p: PacienteSimulado) {
 
 /* ---- órdenes (laboratorio e imagen) --------------------------------------- */
 
-export interface OrdenSimulada {
+export interface SimulatedOrder {
   /** La respuesta del formulario médico de la que sale (P43). */
   readonly formInstanceId?: string;
   readonly id: string;
@@ -715,8 +715,8 @@ export interface OrdenSimulada {
   readonly duplicateOverrideReason?: string;
 }
 
-export const ordenes = new Coleccion<OrdenSimulada>(
-  PACIENTES.flatMap((p, k) =>
+export const orderList = new Coleccion<SimulatedOrder>(
+  PATIENTS.flatMap((p, k) =>
     [
       ['STUDY-HEMOGRAMA', 'SRQ-LAB', 'ST-COMPLETED'],
       ['STUDY-PERFIL-LIPIDICO', 'SRQ-LAB', 'ST-COMPLETED'],
@@ -728,10 +728,10 @@ export const ordenes = new Coleccion<OrdenSimulada>(
       id: uuid(`order-${p.id}-${estudio}`),
       patientProfileId: p.id,
       codeConceptId: ESTUDIO[estudio as keyof typeof ESTUDIO]!,
-      categoryConceptId: CATEGORIA_ORDEN[categoria as keyof typeof CATEGORIA_ORDEN]!,
-      priorityConceptId: i === 3 ? PRIORIDAD['PRI-URGENT']! : PRIORIDAD['PRI-ROUTINE']!,
-      statusConceptId: ESTADO[estado as keyof typeof ESTADO]!,
-      requesterProfileId: MEDICA.id,
+      categoryConceptId: ORDER_CATEGORY[categoria as keyof typeof ORDER_CATEGORY]!,
+      priorityConceptId: i === 3 ? PRIORITY['PRI-URGENT']! : PRIORITY['PRI-ROUTINE']!,
+      statusConceptId: STATUS[estado as keyof typeof STATUS]!,
+      requesterProfileId: MEDICAL.id,
       encounterId: uuid(`encounter-${p.id}-${i % 3}`),
       reasonText: [
         'Control anual',
@@ -745,13 +745,13 @@ export const ordenes = new Coleccion<OrdenSimulada>(
 );
 
 /* Sobreviven a F5 dentro de la pestaña: ver `Coleccion.persistirEn`. */
-condiciones.persistirEn('mock.clinica.condiciones');
-alergias.persistirEn('mock.clinica.alergias');
-recetas.persistirEn('mock.clinica.recetas');
-observaciones.persistirEn('mock.clinica.observaciones');
-encuentros.persistirEn('mock.clinica.encuentros');
-episodios.persistirEn('mock.clinica.episodios');
-notas.persistirEn('mock.clinica.notas-medicas');
-planes.persistirEn('mock.clinica.planes');
-documentos.persistirEn('mock.clinica.documentos');
-ordenes.persistirEn('mock.clinica.ordenes');
+conditionList.persistirEn('mock.clinica.condiciones');
+allergyList.persistirEn('mock.clinica.alergias');
+prescriptionList.persistirEn('mock.clinica.recetas');
+observationList.persistirEn('mock.clinica.observaciones');
+encounterList.persistirEn('mock.clinica.encuentros');
+episodeList.persistirEn('mock.clinica.episodios');
+noteList.persistirEn('mock.clinica.notas-medicas');
+planList.persistirEn('mock.clinica.planes');
+documentList.persistirEn('mock.clinica.documentos');
+orderList.persistirEn('mock.clinica.ordenes');

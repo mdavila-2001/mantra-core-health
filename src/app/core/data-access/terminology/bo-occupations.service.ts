@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 
-import { CatalogoDeConjunto } from './value-set-catalog';
+import { ValueSetCatalog } from './value-set-catalog';
 import type { ValueSetOption } from './terminology.types';
 
 /**
@@ -36,9 +36,9 @@ export const CODIGO_OCUPACION_OTRA = 'occupation:bo:OTRA';
  * —pedirlo con `?target=` responde `404`—.
  */
 @Injectable({ providedIn: 'root' })
-export class BoOccupationsCatalog extends CatalogoDeConjunto {
-  protected readonly codigo = CODIGO_CATALOGO_OCUPACIONES;
-  protected override transformarOpciones(opciones: readonly ValueSetOption[]): readonly ValueSetOption[] {
+export class BoOccupationsCatalog extends ValueSetCatalog {
+  protected readonly code = CODIGO_CATALOGO_OCUPACIONES;
+  protected override transformOptions(opciones: readonly ValueSetOption[]): readonly ValueSetOption[] {
     return opciones.map((opcion) =>
       opcion.code === CODIGO_OCUPACION_OTRA ? { ...opcion, display: 'Otro' } : opcion,
     );

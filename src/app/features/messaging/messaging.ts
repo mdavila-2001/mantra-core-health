@@ -15,8 +15,8 @@ import { ActivatedRoute, NavigationEnd, Router, RouterOutlet } from '@angular/ro
 import { debounceTime, filter, map, Subject } from 'rxjs';
 
 import { ChatStore, SIN_NOMBRE } from '../../core/messaging/chat.store';
-import { ChatPreferencias } from '../../core/messaging/chat-preferences';
-import { conQuien } from '../../core/messaging/conversation-label';
+import { ChatPreferences } from '../../core/messaging/chat-preferences';
+import { conversationLabel } from '../../core/messaging/conversation-label';
 import type { ConversationListItem } from '../../core/data-access/community/community.types';
 import { AppButton } from '../../shared/components/atoms/button/button';
 import { Avatar } from '../../shared/components/atoms/avatar/avatar';
@@ -78,7 +78,7 @@ const ESPERA_DE_BUSQUEDA_MS = 300;
 })
 export class Messaging {
   protected readonly store = inject(ChatStore);
-  private readonly preferencias = inject(ChatPreferencias);
+  private readonly preferencias = inject(ChatPreferences);
   private readonly router = inject(Router);
   private readonly ruta = inject(ActivatedRoute);
   private readonly titulo = inject(Title);
@@ -119,7 +119,7 @@ export class Messaging {
   protected readonly archivadas = computed(() =>
     this.store
       .conversaciones()
-      .filter((c) => this.preferencias.estaArchivado(c.id)),
+      .filter((c) => this.preferencias.isArchived(c.id)),
   );
 
   /**
@@ -132,13 +132,13 @@ export class Messaging {
     const enArchivados = this.verArchivados();
 
     return this.store.conversaciones().filter((conversacion) => {
-      if (this.preferencias.estaArchivado(conversacion.id) !== enArchivados) {
+      if (this.preferencias.isArchived(conversacion.id) !== enArchivados) {
         return false;
       }
       if (filtro === 'no-leidos' && conversacion.unreadCount === 0) {
         return false;
       }
-      if (filtro === 'favoritos' && !this.preferencias.esFavorito(conversacion.id)) {
+      if (filtro === 'favoritos' && !this.preferencias.isFavorite(conversacion.id)) {
         return false;
       }
       if (
@@ -151,7 +151,7 @@ export class Messaging {
       if (consulta === '') {
         return true;
       }
-      const nombre = conQuien(conversacion).toLowerCase();
+      const nombre = conversationLabel(conversacion).toLowerCase();
       const ultimo = (conversacion.lastMessage?.bodyText ?? '').toLowerCase();
       return nombre.includes(consulta) || ultimo.includes(consulta);
     });
@@ -283,10 +283,10 @@ export class Messaging {
   protected atender(accion: AccionDeFila): void {
     switch (accion.tipo) {
       case 'favorito':
-        this.preferencias.alternarFavorito(accion.conversationId);
+        this.preferencias.toggleFavorite(accion.conversationId);
         break;
       case 'archivar':
-        this.preferencias.alternarArchivado(accion.conversationId);
+        this.preferencias.toggleArchived(accion.conversationId);
         break;
       case 'leer':
         this.store.marcarFilaLeida(accion.conversationId);

@@ -12,7 +12,7 @@ import type { DocumentoDeComprobante, LineaDeComprobante } from './receipt-pdf.t
  */
 
 /** Cómo se dice cada origen del contrato. El demo lo dice sin vueltas. */
-const MEDIO_POR_ORIGEN: Readonly<Record<string, string>> = {
+const MEANS_BY_ORIGIN: Readonly<Record<string, string>> = {
   MOSTRADOR: 'Pagado en mostrador',
   QR_DEMO: 'Pago demo — sin valor real',
 };
@@ -22,7 +22,7 @@ const MEDIO_POR_ORIGEN: Readonly<Record<string, string>> = {
  * pago detrás no existe — la pantalla muestra su vacío honesto y el PDF ni
  * se ofrece.
  */
-export function comprobanteDesdePedido(pedido: PedidoFarmacia): DocumentoDeComprobante | null {
+export function receiptFromOrder(pedido: PedidoFarmacia): DocumentoDeComprobante | null {
   const pago = pedido.pago;
   if (pago === null || pago.estado !== 'PAGADO' || pago.pagadoEl === null) {
     return null;
@@ -36,8 +36,8 @@ export function comprobanteDesdePedido(pedido: PedidoFarmacia): DocumentoDeCompr
     sede: pedido.sede,
     paciente: pedido.paciente,
     pagadoEl: pago.pagadoEl,
-    medioDePago: MEDIO_POR_ORIGEN[pago.origen ?? ''] ?? 'Pagado',
-    lineas: cobradas.map(lineaDeComprobante),
+    medioDePago: MEANS_BY_ORIGIN[pago.origen ?? ''] ?? 'Pagado',
+    lineas: cobradas.map(receiptLinea),
     // Lo CONGELADO al pagar, no el total vivo: si el pedido cambió después,
     // el papel sigue diciendo lo que de verdad se cobró.
     total: pago.total,
@@ -45,12 +45,12 @@ export function comprobanteDesdePedido(pedido: PedidoFarmacia): DocumentoDeCompr
   };
 }
 
-function lineaDeComprobante(linea: LineaDePedido): LineaDeComprobante {
+function receiptLinea(linea: LineaDePedido): LineaDeComprobante {
   const descripcion =
     linea.presentacion === null
       ? linea.medicamento
       : `${linea.medicamento} · ${linea.presentacion}`;
-  return { descripcion, cantidad: linea.cantidad, importe: importeDe(linea) };
+  return { descripcion, cantidad: linea.cantidad, importe: amountOf(linea) };
 }
 
 /**
@@ -59,7 +59,7 @@ function lineaDeComprobante(linea: LineaDePedido): LineaDeComprobante {
  * `Number('')` es 0 —finito— y facturaría «0.00»: el vacío también es
  * ausencia (mismo criterio que el cliente de pedidos).
  */
-function importeDe(linea: LineaDePedido): string | null {
+function amountOf(linea: LineaDePedido): string | null {
   if (linea.precio === null || linea.precio.trim() === '') {
     return null;
   }

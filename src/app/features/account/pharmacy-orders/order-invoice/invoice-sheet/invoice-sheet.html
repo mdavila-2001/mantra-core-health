@@ -9,17 +9,17 @@
     </div>
     <dl class="factura__datos">
       <div class="factura__dato">
-        <dt class="factura__etiqueta">{{ rotulos.numero }}</dt>
+        <dt class="factura__etiqueta">{{ labels.numero }}</dt>
         <dd class="factura__valor cifras-tabulares" data-testid="factura-numero">
           {{ documento().numero }}
         </dd>
       </div>
       <div class="factura__dato">
-        <dt class="factura__etiqueta">{{ rotulos.emitidaEl }}</dt>
+        <dt class="factura__etiqueta">{{ labels.emitidaEl }}</dt>
         <dd class="factura__valor">{{ documento().emitidaEl | date: 'dd/MM/yyyy' }}</dd>
       </div>
       <div class="factura__dato">
-        <dt class="factura__etiqueta">{{ rotulos.estado }}</dt>
+        <dt class="factura__etiqueta">{{ labels.estado }}</dt>
         <dd class="factura__valor">
           <app-badge variant="success">{{ documento().estado }}</app-badge>
         </dd>
@@ -64,31 +64,31 @@
             {{ linea.descripcion }}
             <span class="factura__secundario">x{{ linea.cantidad }}</span>
           </span>
-          <span class="cifras-tabulares">{{ importe(linea.importe) }}</span>
+          <span class="cifras-tabulares">{{ amount(linea.importe) }}</span>
         </li>
       }
     </ul>
 
     <dl class="factura__cuentas cifras-tabulares">
       <div class="factura__cuenta">
-        <dt>{{ rotulos.subtotal }}</dt>
-        <dd>{{ importe(documento().subtotal) }}</dd>
+        <dt>{{ labels.subtotal }}</dt>
+        <dd>{{ amount(documento().subtotal) }}</dd>
       </div>
       @if (documento().descuentoDeRed; as descuento) {
         <div class="factura__cuenta" data-testid="factura-descuento">
-          <dt>{{ rotulos.descuentoDeRed }}</dt>
-          <dd>−{{ descuento }} {{ moneda(documento().moneda) }}</dd>
+          <dt>{{ labels.descuentoDeRed }}</dt>
+          <dd>−{{ descuento }} {{ currency(documento().moneda) }}</dd>
         </div>
       }
       @if (documento().coaseguro; as coaseguro) {
         <div class="factura__cuenta" data-testid="factura-coaseguro">
-          <dt>{{ rotulos.coaseguro }} · {{ coaseguro.aseguradora }}</dt>
-          <dd>{{ coaseguro.importe }} {{ moneda(coaseguro.moneda) }}</dd>
+          <dt>{{ labels.coaseguro }} · {{ coaseguro.aseguradora }}</dt>
+          <dd>{{ coaseguro.importe }} {{ currency(coaseguro.moneda) }}</dd>
         </div>
       }
       <div class="factura__cuenta factura__cuenta--total" data-testid="factura-total">
-        <dt>{{ rotulos.total }}</dt>
-        <dd>{{ importe(documento().total) }}</dd>
+        <dt>{{ labels.total }}</dt>
+        <dd>{{ amount(documento().total) }}</dd>
       </div>
     </dl>
     @if (documento().coaseguro) {

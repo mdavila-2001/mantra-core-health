@@ -48,22 +48,22 @@ import { Card } from '../../../../shared/components/molecules/card/card';
 import { Tab } from '../../../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../../../shared/components/molecules/tabs/tabs';
 import {
-  AVISO_REESCRIBIR_DIRECCION,
-  UbicacionPicker,
-  type Coordenadas,
-  type IdsDePrueba,
+  NOTICE_REWRITE_ADDRESS,
+  MapLocationPicker,
+  type Coordinates,
+  type TestIds,
 } from '../../../auth/shared-registration/map-location-picker/map-location-picker';
 import { AnnounceOnAppear } from '../../../../shared/a11y/announce-on-appear';
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
-import { PESTANA, PESTANAS_DEL_PERFIL } from '../profile-tabs';
+import { TAB, PROFILE_TABS } from '../profile-tabs';
 import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
 import {
   PhoneInput,
   telefonoCompleto,
 } from '../../../../shared/components/molecules/phone-input/phone-input';
 import {
-  nacionalDelNumero,
-  paisDelNumero,
+  numberNational,
+  numberCountry,
 } from '../../../../shared/components/molecules/phone-input/phone-input.countries';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import { DatePicker } from '../../../../shared/components/organisms/date-picker/date-picker';
@@ -85,20 +85,20 @@ const AMBITO = 'Mi perfil';
  * que su mensaje va entero en el aviso.
  */
 const PESTANA_DEL_CAMPO: Readonly<Record<string, number>> = {
-  name: PESTANA.personales,
-  middleName: PESTANA.personales,
-  lastName: PESTANA.personales,
-  motherLastName: PESTANA.personales,
-  birthDate: PESTANA.personales,
-  sexAtBirth: PESTANA.personales,
-  occupationConceptId: PESTANA.personales,
-  occupationFreeText: PESTANA.personales,
-  phone: PESTANA.contacto,
-  residenceMunicipalityConceptId: PESTANA.contacto,
-  homeAddressLines: PESTANA.contacto,
-  workAddressLines: PESTANA.contacto,
-  taxId: PESTANA.facturacion,
-  taxHolderName: PESTANA.facturacion,
+  name: TAB.personales,
+  middleName: TAB.personales,
+  lastName: TAB.personales,
+  motherLastName: TAB.personales,
+  birthDate: TAB.personales,
+  sexAtBirth: TAB.personales,
+  occupationConceptId: TAB.personales,
+  occupationFreeText: TAB.personales,
+  phone: TAB.contacto,
+  residenceMunicipalityConceptId: TAB.contacto,
+  homeAddressLines: TAB.contacto,
+  workAddressLines: TAB.contacto,
+  taxId: TAB.facturacion,
+  taxHolderName: TAB.facturacion,
 };
 
 /** «a», «a y b», «a, b y c». */
@@ -165,7 +165,7 @@ function mismoDia(una: Date, otra: Date): boolean {
     Alert,
     AnnounceOnAppear,
     ReferenceCombobox,
-    UbicacionPicker,
+    MapLocationPicker,
     AppButton,
     BackLink,
     Card,
@@ -255,8 +255,8 @@ export class PatientProfileEdit {
    * el lápiz abre el formulario en la pestaña que se estaba mirando, y al
    * guardar o cancelar la ficha vuelve a esa misma.
    */
-  readonly pestana = model<number>(PESTANA.personales);
-  protected readonly pestanas = PESTANAS_DEL_PERFIL;
+  readonly pestana = model<number>(TAB.personales);
+  protected readonly pestanas = PROFILE_TABS;
 
   protected readonly perfil = signal<ViewState<OwnPatientProfile>>(loading());
 
@@ -335,8 +335,8 @@ export class PatientProfileEdit {
    * distintas al armar el cuerpo del PATCH, y confundirlas borraría la
    * ubicación de quien sólo vino a cambiar el teléfono.
    */
-  protected readonly gpsDomicilio = signal<Coordenadas | null | undefined>(undefined);
-  protected readonly gpsTrabajo = signal<Coordenadas | null | undefined>(undefined);
+  protected readonly gpsDomicilio = signal<Coordinates | null | undefined>(undefined);
+  protected readonly gpsTrabajo = signal<Coordinates | null | undefined>(undefined);
 
   /**
    * Si el mapa vació la dirección escrita y todavía nadie la reescribió (D-06).
@@ -354,7 +354,7 @@ export class PatientProfileEdit {
   protected readonly trabajoPorReescribir = computed(
     () => this.trabajoVaciadoPorElMapa() && this.direccionTrabajo().trim() === '',
   );
-  protected readonly avisoReescribir = AVISO_REESCRIBIR_DIRECCION;
+  protected readonly avisoReescribir = NOTICE_REWRITE_ADDRESS;
 
   /** Tocaron el mapa del domicilio: la dirección escrita ya no vale (D-06). */
   protected vaciarDomicilioPorElMapa(): void {
@@ -369,8 +369,8 @@ export class PatientProfileEdit {
   }
 
   /** El punto guardado que el selector muestra al abrir. */
-  protected readonly gpsDomicilioGuardado = signal<Coordenadas | null>(null);
-  protected readonly gpsTrabajoGuardado = signal<Coordenadas | null>(null);
+  protected readonly gpsDomicilioGuardado = signal<Coordinates | null>(null);
+  protected readonly gpsTrabajoGuardado = signal<Coordinates | null>(null);
 
   /**
    * Los identificadores de prueba de cada mapa.
@@ -379,7 +379,7 @@ export class PatientProfileEdit {
    * prefijo porque los que ya existen no son uniformes, y renombrarlos rompería
    * recorridos que hoy funcionan.
    */
-  protected readonly idsGpsDomicilio: IdsDePrueba = {
+  protected readonly idsGpsDomicilio: TestIds = {
     mapa: 'perfil-domicilio-mapa',
     confirmada: 'perfil-domicilio-confirmada',
     avisoGeocodificacion: 'perfil-domicilio-aviso-geo',
@@ -389,7 +389,7 @@ export class PatientProfileEdit {
     marcarEnMapa: 'perfil-domicilio-marcar',
   };
 
-  protected readonly idsGpsTrabajo: IdsDePrueba = {
+  protected readonly idsGpsTrabajo: TestIds = {
     mapa: 'perfil-trabajo-mapa',
     confirmada: 'perfil-trabajo-confirmada',
     avisoGeocodificacion: 'perfil-trabajo-aviso-geo',
@@ -642,7 +642,7 @@ export class PatientProfileEdit {
    * desplegable se dibuja con su marcador y se llena al hidratar.
    */
   protected cargarOcupaciones(): void {
-    this.ocupaciones.listar().subscribe({
+    this.ocupaciones.list().subscribe({
       next: (opciones) => {
         this.catalogoOcupacionesCaido.set(false);
         this.opcionesOcupacion.set(
@@ -663,7 +663,7 @@ export class PatientProfileEdit {
 
   /** Reintenta la lectura del catálogo de ocupaciones. Ver `reintentarMunicipios`. */
   protected reintentarOcupaciones(): void {
-    this.ocupaciones.olvidar();
+    this.ocupaciones.forget();
     this.cargarOcupaciones();
   }
 
@@ -766,7 +766,7 @@ export class PatientProfileEdit {
       if (!pestanas.includes(this.pestana())) {
         this.pestana.set(pestanas[0]);
       }
-      const donde = LISTA.format(pestanas.map((indice) => `«${PESTANAS_DEL_PERFIL[indice]}»`));
+      const donde = LISTA.format(pestanas.map((indice) => `«${PROFILE_TABS[indice]}»`));
       this.toasts.error(
         [`Revise los campos marcados en ${donde} y vuelva a guardar.`, ...sinLugar].join(' '),
         AMBITO,
@@ -822,13 +822,13 @@ export class PatientProfileEdit {
   protected readonly pendienteEnOtraPestana = computed<string | null>(() => {
     const abierta = this.pestana();
     if (
-      abierta !== PESTANA.personales &&
+      abierta !== TAB.personales &&
       (this.nombreVacio() || this.apellidoVacio() || this.sexoVacio())
     ) {
-      return `Falta completar «${PESTANAS_DEL_PERFIL[PESTANA.personales]}».`;
+      return `Falta completar «${PROFILE_TABS[TAB.personales]}».`;
     }
-    if (abierta !== PESTANA.contacto && this.telefonoMalEscrito()) {
-      return `Revise el teléfono en «${PESTANAS_DEL_PERFIL[PESTANA.contacto]}».`;
+    if (abierta !== TAB.contacto && this.telefonoMalEscrito()) {
+      return `Revise el teléfono en «${PROFILE_TABS[TAB.contacto]}».`;
     }
     return null;
   });
@@ -1046,8 +1046,8 @@ function telefonoCanonico(guardado: string | undefined): string {
   if (!/[0-9]/.test(crudo)) {
     return '';
   }
-  const pais = paisDelNumero(crudo);
-  return `${pais.prefijo} ${nacionalDelNumero(crudo, pais)}`;
+  const pais = numberCountry(crudo);
+  return `${pais.prefijo} ${numberNational(crudo, pais)}`;
 }
 
 /**
@@ -1070,7 +1070,7 @@ function textoCambiado(actual: string, guardado: string | undefined): string | u
  */
 function puntoDe(
   direccion: { latitude?: number; longitude?: number } | undefined,
-): Coordenadas | null {
+): Coordinates | null {
   if (direccion?.latitude === undefined || direccion.longitude === undefined) {
     return null;
   }
@@ -1086,7 +1086,7 @@ function puntoDe(
  */
 function coordenadasCambiadas(
   cual: 'home' | 'work',
-  intencion: Coordenadas | null | undefined,
+  intencion: Coordinates | null | undefined,
 ): Record<string, number | null> {
   if (intencion === undefined) return {};
   if (intencion === null) {

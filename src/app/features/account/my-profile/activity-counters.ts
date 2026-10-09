@@ -20,7 +20,7 @@ import type { PractitionerActivity } from '../../../core/data-access/profiles/pr
  * tiene pestaña «Actividad» y la ficha no ofrece el lápiz en ella. La forma de
  * cambiar un número es atender, prescribir o asentar; no corregirlo.
  */
-export interface ContadorDeActividad {
+export interface ActivityCounter {
   /** Identificador estable de la cifra, para `track` y para los tests. */
   readonly clave: string;
   /** Cómo se llama en pantalla. */
@@ -34,7 +34,7 @@ export interface ContadorDeActividad {
   >;
 }
 
-export const CONTADORES_DE_ACTIVIDAD: readonly ContadorDeActividad[] = [
+export const ACTIVITY_COUNTERS: readonly ActivityCounter[] = [
   {
     clave: 'encuentros',
     rotulo: 'Encuentros atendidos',

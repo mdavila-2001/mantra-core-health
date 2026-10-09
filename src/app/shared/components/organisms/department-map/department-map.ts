@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, effect, input, model, signal } from '@angular/core';
 
-import { normalizarLugar } from '@shared/geo/city-department';
+import { normalizePlace } from '@shared/geo/city-department';
 
 import type { PuntoGeo } from '../map/map-pin.types';
 import {
@@ -187,8 +187,8 @@ export class DepartmentMap {
     if (CODIGO_INE.test(buscado)) {
       return contornos.find((c) => c.ine === buscado && c.sigla === sigla) ?? null;
     }
-    const nombre = normalizarLugar(buscado);
-    return contornos.find((c) => c.sigla === sigla && normalizarLugar(c.nombre) === nombre) ?? null;
+    const nombre = normalizePlace(buscado);
+    return contornos.find((c) => c.sigla === sigla && normalizePlace(c.nombre) === nombre) ?? null;
   });
 
   /**

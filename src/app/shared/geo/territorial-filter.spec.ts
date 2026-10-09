@@ -8,7 +8,7 @@ import {
   type RamaDepartamento,
 } from '@core/data-access/terminology/bo-municipalities.service';
 
-import { FiltroTerritorial, PARAM_CIUDAD, PARAM_DEPARTAMENTO } from './territorial-filter';
+import { FilterTerritorial, PARAM_CITY, PARAM_DEPARTMENT } from './territorial-filter';
 
 const CB = 'geo:bo:department:CB';
 const LP = 'geo:bo:department:LP';
@@ -80,7 +80,7 @@ describe('FiltroTerritorial', () => {
   let listar: ReturnType<typeof vi.fn>;
   let olvidar: ReturnType<typeof vi.fn>;
 
-  function crear(url: Record<string, string> = {}): FiltroTerritorial {
+  function crear(url: Record<string, string> = {}): FilterTerritorial {
     parametros = new BehaviorSubject<Record<string, string>>(url);
     TestBed.configureTestingModule({
       providers: [
@@ -89,7 +89,7 @@ describe('FiltroTerritorial', () => {
         { provide: BoMunicipalitiesCatalog, useValue: { listar, olvidar } },
       ],
     });
-    return TestBed.runInInjectionContext(() => new FiltroTerritorial());
+    return TestBed.runInInjectionContext(() => new FilterTerritorial());
   }
 
   beforeEach(() => {
@@ -101,19 +101,19 @@ describe('FiltroTerritorial', () => {
   it('sin departamento no elige nada y no recorta nada (AC-2.3-07)', () => {
     const lugar = crear();
 
-    expect(lugar.departamentoElegido()).toBeNull();
-    expect(lugar.ciudad()).toBeNull();
+    expect(lugar.chosenDepartment()).toBeNull();
+    expect(lugar.city()).toBeNull();
     // Ningún municipio suelto que parezca de algún departamento.
-    expect(lugar.ciudades(FILAS)).toEqual([]);
-    expect(lugar.recortar(FILAS)).toEqual(FILAS);
+    expect(lugar.cities(FILAS)).toEqual([]);
+    expect(lugar.crop(FILAS)).toEqual(FILAS);
   });
 
   it('las opciones de municipio son sólo las del departamento elegido (AC-2.3-02)', () => {
-    const lugar = crear({ [PARAM_DEPARTAMENTO]: CB });
+    const lugar = crear({ [PARAM_DEPARTMENT]: CB });
 
     // Con el nombre del catálogo, el más cargado primero.
-    expect(lugar.ciudades(FILAS)).toEqual(['Cochabamba', 'Quillacollo']);
-    expect(lugar.recortar(FILAS).map((f) => f.city)).toEqual([
+    expect(lugar.cities(FILAS)).toEqual(['Cochabamba', 'Quillacollo']);
+    expect(lugar.crop(FILAS).map((f) => f.city)).toEqual([
       'Cochabamba',
       'Cochabamba',
       'quillacollo',
@@ -121,53 +121,53 @@ describe('FiltroTerritorial', () => {
   });
 
   it('el municipio acota dentro del departamento, sin distinguir tildes ni mayúsculas', () => {
-    const lugar = crear({ [PARAM_DEPARTAMENTO]: CB, [PARAM_CIUDAD]: 'QUILLACOLLO' });
+    const lugar = crear({ [PARAM_DEPARTMENT]: CB, [PARAM_CITY]: 'QUILLACOLLO' });
 
-    expect(lugar.ciudad()).toBe('Quillacollo');
-    expect(lugar.recortar(FILAS).map((f) => f.city)).toEqual(['quillacollo']);
+    expect(lugar.city()).toBe('Quillacollo');
+    expect(lugar.crop(FILAS).map((f) => f.city)).toEqual(['quillacollo']);
   });
 
   it('un municipio de otro departamento no forma una combinación (AC-2.3-03, AC-2.3-06)', () => {
-    const lugar = crear({ [PARAM_DEPARTAMENTO]: CB, [PARAM_CIUDAD]: 'La Paz' });
+    const lugar = crear({ [PARAM_DEPARTMENT]: CB, [PARAM_CITY]: 'La Paz' });
 
-    expect(lugar.ciudad()).toBeNull();
+    expect(lugar.city()).toBeNull();
     // Se ve el departamento entero, no una lista vacía sin explicación.
-    expect(lugar.recortar(FILAS)).toHaveLength(3);
+    expect(lugar.crop(FILAS)).toHaveLength(3);
   });
 
   it('un municipio sin departamento no se toma (AC-2.3-07)', () => {
-    const lugar = crear({ [PARAM_CIUDAD]: 'Quillacollo' });
+    const lugar = crear({ [PARAM_CITY]: 'Quillacollo' });
 
-    expect(lugar.ciudad()).toBeNull();
-    expect(lugar.recortar(FILAS)).toEqual(FILAS);
+    expect(lugar.city()).toBeNull();
+    expect(lugar.crop(FILAS)).toEqual(FILAS);
   });
 
   it('un departamento que no está en el catálogo no filtra', () => {
     const lugar = crear({
-      [PARAM_DEPARTAMENTO]: 'geo:bo:department:XX',
-      [PARAM_CIUDAD]: 'Cochabamba',
+      [PARAM_DEPARTMENT]: 'geo:bo:department:XX',
+      [PARAM_CITY]: 'Cochabamba',
     });
 
-    expect(lugar.departamentoElegido()).toBeNull();
-    expect(lugar.ciudad()).toBeNull();
-    expect(lugar.recortar(FILAS)).toEqual(FILAS);
+    expect(lugar.chosenDepartment()).toBeNull();
+    expect(lugar.city()).toBeNull();
+    expect(lugar.crop(FILAS)).toEqual(FILAS);
   });
 
   it('no convierte la falta de ubicación en coincidencia (AC-2.3-05)', () => {
-    const lugar = crear({ [PARAM_DEPARTAMENTO]: SC });
+    const lugar = crear({ [PARAM_DEPARTMENT]: SC });
 
     // «San Pedro» es de Santa Cruz y de Pando: no se asigna a ninguno. «Santa
     // Cruz» no es un municipio. Sin ciudad, o en blanco, no se ubica.
-    expect(lugar.recortar(FILAS)).toEqual([]);
-    expect(lugar.sinUbicar(FILAS)).toBe(4);
-    expect(lugar.cuentaPorDepartamento(FILAS).get(SC)).toBeUndefined();
-    expect(lugar.cuentaPorDepartamento(FILAS).get(PD)).toBeUndefined();
+    expect(lugar.crop(FILAS)).toEqual([]);
+    expect(lugar.withoutLocate(FILAS)).toBe(4);
+    expect(lugar.accountByDepartment(FILAS).get(SC)).toBeUndefined();
+    expect(lugar.accountByDepartment(FILAS).get(PD)).toBeUndefined();
   });
 
   it('cuenta por departamento sin aplicar el corte del propio mapa', () => {
-    const lugar = crear({ [PARAM_DEPARTAMENTO]: LP });
+    const lugar = crear({ [PARAM_DEPARTMENT]: LP });
 
-    const cuenta = lugar.cuentaPorDepartamento(FILAS);
+    const cuenta = lugar.accountByDepartment(FILAS);
     expect(cuenta.get(CB)).toBe(3);
     expect(cuenta.get(LP)).toBe(1);
   });
@@ -175,77 +175,77 @@ describe('FiltroTerritorial', () => {
   it('sigue a la URL: cambiar el parámetro cambia la elección', () => {
     const lugar = crear();
 
-    parametros.next({ [PARAM_DEPARTAMENTO]: LP });
+    parametros.next({ [PARAM_DEPARTMENT]: LP });
 
-    expect(lugar.departamentoElegido()).toBe(LP);
-    expect(lugar.nombreDelDepartamento()).toBe('La Paz');
+    expect(lugar.chosenDepartment()).toBe(LP);
+    expect(lugar.departmentName()).toBe('La Paz');
   });
 
   it('elegir otro departamento suelta el municipio del anterior (AC-2.3-03)', () => {
-    const lugar = crear({ [PARAM_DEPARTAMENTO]: CB, [PARAM_CIUDAD]: 'Quillacollo' });
+    const lugar = crear({ [PARAM_DEPARTMENT]: CB, [PARAM_CITY]: 'Quillacollo' });
 
-    lugar.elegirDepartamento(LP);
+    lugar.chooseDepartment(LP);
 
     expect(navegar).toHaveBeenCalledWith(
       [],
       expect.objectContaining({
-        queryParams: { [PARAM_DEPARTAMENTO]: LP, [PARAM_CIUDAD]: null },
+        queryParams: { [PARAM_DEPARTMENT]: LP, [PARAM_CITY]: null },
         queryParamsHandling: 'merge',
       }),
     );
   });
 
   it('volver a todo el país quita los dos parámetros', () => {
-    const lugar = crear({ [PARAM_DEPARTAMENTO]: CB });
+    const lugar = crear({ [PARAM_DEPARTMENT]: CB });
 
-    lugar.elegirDepartamento(null);
+    lugar.chooseDepartment(null);
 
     expect(navegar).toHaveBeenCalledWith(
       [],
       expect.objectContaining({
-        queryParams: { [PARAM_DEPARTAMENTO]: null, [PARAM_CIUDAD]: null },
+        queryParams: { [PARAM_DEPARTMENT]: null, [PARAM_CITY]: null },
       }),
     );
   });
 
   it('elegir un municipio lo escribe en la URL, y null vuelve a todo el departamento', () => {
-    const lugar = crear({ [PARAM_DEPARTAMENTO]: CB });
+    const lugar = crear({ [PARAM_DEPARTMENT]: CB });
 
-    lugar.elegirCiudad('Quillacollo');
+    lugar.chooseCity('Quillacollo');
     expect(navegar).toHaveBeenLastCalledWith(
       [],
-      expect.objectContaining({ queryParams: { [PARAM_CIUDAD]: 'Quillacollo' } }),
+      expect.objectContaining({ queryParams: { [PARAM_CITY]: 'Quillacollo' } }),
     );
 
-    lugar.elegirCiudad(null);
+    lugar.chooseCity(null);
     expect(navegar).toHaveBeenLastCalledWith(
       [],
-      expect.objectContaining({ queryParams: { [PARAM_CIUDAD]: null } }),
+      expect.objectContaining({ queryParams: { [PARAM_CITY]: null } }),
     );
   });
 
   it('las opciones salen del catálogo: sin catálogo no hay departamentos (AC-2.3-04)', () => {
     listar = vi.fn(() => throwError(() => new Error('catálogo no sembrado')));
-    const lugar = crear({ [PARAM_DEPARTAMENTO]: CB });
+    const lugar = crear({ [PARAM_DEPARTMENT]: CB });
 
     expect(lugar.catalogoCaido()).toBe(true);
-    expect(lugar.departamentos()).toEqual([]);
-    expect(lugar.departamentoElegido()).toBeNull();
+    expect(lugar.departments()).toEqual([]);
+    expect(lugar.chosenDepartment()).toBeNull();
     // El directorio sigue sirviendo sin el filtro.
-    expect(lugar.recortar(FILAS)).toEqual(FILAS);
+    expect(lugar.crop(FILAS)).toEqual(FILAS);
   });
 
   it('reintentar olvida la caché y vuelve a leer el catálogo', () => {
     let falla = true;
     listar = vi.fn(() => (falla ? throwError(() => new Error('sin red')) : of(RAMAS)));
-    const lugar = crear({ [PARAM_DEPARTAMENTO]: CB });
+    const lugar = crear({ [PARAM_DEPARTMENT]: CB });
     expect(lugar.catalogoCaido()).toBe(true);
 
     falla = false;
-    lugar.reintentar();
+    lugar.retry();
 
     expect(olvidar).toHaveBeenCalled();
     expect(lugar.catalogoCaido()).toBe(false);
-    expect(lugar.departamentoElegido()).toBe(CB);
+    expect(lugar.chosenDepartment()).toBe(CB);
   });
 });

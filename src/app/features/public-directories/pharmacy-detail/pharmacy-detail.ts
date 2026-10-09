@@ -36,7 +36,7 @@ import { FormField } from '@shared/components/molecules/form-field/form-field';
 import { SectionHeading } from '@shared/components/molecules/section-heading/section-heading';
 import { distanciaEnLineaRectaKm } from '@shared/components/organisms/map/geo';
 import { AppMap } from '@shared/components/organisms/map/map';
-import type { PinMapa } from '@shared/components/organisms/map/map-pin.types';
+import type { PinMap } from '@shared/components/organisms/map/map-pin.types';
 import { PageHeader } from '@shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '@shared/components/organisms/view-state-host/view-state-host';
 
@@ -165,7 +165,7 @@ export class PharmacyDetail extends PublicCatalogDetail<PublicPharmacyProduct> {
    * propia ficha: el mapa nunca se va en blanco por una lectura que es
    * adicional. Sin coordenadas no hay pin, y ahí no se dibuja nada.
    */
-  protected readonly pines = computed<readonly PinMapa[]>(() => {
+  protected readonly pines = computed<readonly PinMap[]>(() => {
     const sucursales = this.sucursales();
     if (sucursales.length > 0) {
       return sucursales

@@ -26,7 +26,7 @@
  * contacto de emergencia—. Van consecutivas, en el mismo lugar que ocupaba la
  * pestaña combinada.
  */
-export const PESTANAS_DEL_PERFIL = [
+export const PROFILE_TABS = [
   'Datos personales',
   'Contacto',
   'Facturación',
@@ -36,7 +36,7 @@ export const PESTANAS_DEL_PERFIL = [
 ] as const;
 
 /** Los índices con nombre, para no escribir `2` donde se quiere decir «Facturación». */
-export const PESTANA = {
+export const TAB = {
   personales: 0,
   contacto: 1,
   facturacion: 2,
@@ -53,9 +53,9 @@ export const PESTANA = {
  * para que reordenar la constante no rompa los enlaces guardados. Una clave
  * desconocida no es un error: es «la primera, como siempre».
  */
-export function indiceDePestana(clave: string | null): number | null {
+export function tabIndex(clave: string | null): number | null {
   if (clave === null) {
     return null;
   }
-  return Object.hasOwn(PESTANA, clave) ? PESTANA[clave as keyof typeof PESTANA] : null;
+  return Object.hasOwn(TAB, clave) ? TAB[clave as keyof typeof TAB] : null;
 }

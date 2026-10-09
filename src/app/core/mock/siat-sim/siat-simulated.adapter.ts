@@ -36,21 +36,21 @@
 
 import { Coleccion } from '../mock-store';
 import { sha256Hex } from '../sha256';
-import { CATALOGOS_SIMULADOS, existeEnCatalogo, type CatalogosFiscales } from './simulated-catalogs';
+import { SIMULATED_CATALOGS, existsInCatalog, type FiscalCatalogs } from './simulated-catalogs';
 import {
-  DESCRIPCION_ESTADO_SIAT,
-  DESCRIPCION_MENSAJE_SIAT,
-  ESTADO_SIAT,
-  MENSAJE_SIAT,
-  esAdvertencia,
-  esCodigoDeMensajeConocido,
-  type CodigoEstadoSiat,
-  type CodigoMensajeSiat,
+  SIAT_STATUS_DESCRIPTION,
+  SIAT_MESSAGE_DESCRIPTION,
+  SIAT_STATUS,
+  SIAT_MESSAGE,
+  isWarning,
+  isKnownMessageCode,
+  type SiatStatusCode,
+  type SiatMessageCode,
 } from './siat-codes';
 import { fechaHoraParaCuf, generarCuf } from './cuf';
-import { desempaquetarArchivo, ErrorDeEmpaquetado } from './packaging';
-import { esquemaDeSector, esquemaPorRaiz } from './siat-schema';
-import { ErrorDeLecturaXml, facturaDesdeXml, leerXmlFactura, type FilaXml } from './invoice-xml';
+import { unpackageFile, PackagingError } from './packaging';
+import { sectorSchema, schemaByRoot } from './siat-schema';
+import { ReadingXmlError, invoiceFromXml, readInvoiceXml, type RowXml } from './invoice-xml';
 import type {
   ContextoFiscal,
   DirectivaDeSimulacion,
@@ -69,7 +69,7 @@ import type {
 } from './fiscal-provider.port';
 
 /** Lo que el «padrón» simulado sabe de un contribuyente ficticio. */
-export interface ContribuyenteSimulado {
+export interface SimulatedTaxpayer {
   readonly nit: string;
   readonly razonSocial: string;
   readonly codigoSistema: string;
@@ -79,14 +79,14 @@ export interface ContribuyenteSimulado {
   readonly sectoresHabilitados: readonly number[];
 }
 
-interface RegistroCuis {
+interface RecordCuis {
   readonly id: string;
   readonly clave: string;
   readonly codigo: string;
   readonly fechaVigencia: string;
 }
 
-interface RegistroCufd {
+interface RecordCufd {
   readonly id: string;
   readonly clave: string;
   readonly codigo: string;
@@ -95,7 +95,7 @@ interface RegistroCufd {
   readonly fechaVigencia: string;
 }
 
-interface RegistroFactura {
+interface InvoiceRecord {
   /** El CUF. */
   readonly id: string;
   readonly clave: string;
@@ -104,30 +104,30 @@ interface RegistroFactura {
   readonly fechaEmision: string;
   readonly codigoRecepcion: string;
   /** 908 u 904: cómo quedó recibida. */
-  readonly estadoDeRecepcion: CodigoEstadoSiat;
+  readonly estadoDeRecepcion: SiatStatusCode;
   readonly anulada: boolean;
   readonly revertida: boolean;
 }
 
-export interface OpcionesSiatSimulado {
-  readonly padron: readonly ContribuyenteSimulado[];
+export interface SiatSimulatedOptions {
+  readonly padron: readonly SimulatedTaxpayer[];
   readonly reloj?: () => Date;
   /** Prefijo de `sessionStorage`; sin él, el estado vive sólo en memoria. */
   readonly clavePersistencia?: string;
 }
 
-const MS_DIA = 24 * 60 * 60 * 1000;
-const VIGENCIA_CUIS_MS = 365 * MS_DIA;
-const VIGENCIA_CUFD_MS = MS_DIA;
+const MS_DAY = 24 * 60 * 60 * 1000;
+const VALIDITY_CUIS_MS = 365 * MS_DAY;
+const VALIDITY_CUFD_MS = MS_DAY;
 /** Bolivia: UTC−4, sin horario de verano. */
 const DESFASE_BOLIVIA_MS = -4 * 60 * 60 * 1000;
 
 /** `yyyy-MM-ddTHH:mm:ss.SSS` en hora de Bolivia. */
-export function horaDeBolivia(instante: Date): string {
+export function boliviaTime(instante: Date): string {
   return new Date(instante.getTime() + DESFASE_BOLIVIA_MS).toISOString().slice(0, 23);
 }
 
-function claveDe(contexto: Pick<ContextoFiscal, 'nit' | 'codigoSucursal' | 'codigoPuntoVenta'>): string {
+function keyOf(contexto: Pick<ContextoFiscal, 'nit' | 'codigoSucursal' | 'codigoPuntoVenta'>): string {
   return `${contexto.nit}|${contexto.codigoSucursal}|${contexto.codigoPuntoVenta}`;
 }
 
@@ -137,24 +137,24 @@ function hexSintetico(semilla: string, largo: number): string {
   return hex.slice(0, largo).toUpperCase();
 }
 
-function mensaje(codigo: CodigoMensajeSiat): MensajeRecepcion {
-  return { codigo, descripcion: DESCRIPCION_MENSAJE_SIAT[codigo], advertencia: esAdvertencia(codigo) };
+function message(codigo: SiatMessageCode): MensajeRecepcion {
+  return { codigo, descripcion: SIAT_MESSAGE_DESCRIPTION[codigo], advertencia: isWarning(codigo) };
 }
 
-function respuesta(
-  codigoEstado: CodigoEstadoSiat,
+function response(
+  codigoEstado: SiatStatusCode,
   mensajesList: readonly MensajeRecepcion[] = [],
   codigoRecepcion: string | null = null,
 ): RespuestaRecepcion {
   const aceptada =
-    codigoEstado === ESTADO_SIAT.RECEPCION_VALIDADA ||
-    codigoEstado === ESTADO_SIAT.RECEPCION_OBSERVADA ||
-    codigoEstado === ESTADO_SIAT.ANULACION_CONFIRMADA ||
-    codigoEstado === ESTADO_SIAT.REVERSION_ANULACION_CONFIRMADA;
+    codigoEstado === SIAT_STATUS.RECEPCION_VALIDADA ||
+    codigoEstado === SIAT_STATUS.RECEPCION_OBSERVADA ||
+    codigoEstado === SIAT_STATUS.ANULACION_CONFIRMADA ||
+    codigoEstado === SIAT_STATUS.REVERSION_ANULACION_CONFIRMADA;
   return {
     transaccion: aceptada,
     codigoEstado,
-    codigoDescripcion: DESCRIPCION_ESTADO_SIAT[codigoEstado],
+    codigoDescripcion: SIAT_STATUS_DESCRIPTION[codigoEstado],
     codigoRecepcion,
     mensajesList,
     simulated: true,
@@ -162,45 +162,45 @@ function respuesta(
 }
 
 /** Importe en centavos. Admite los decimales del XSD (hasta 2). */
-function centavos(valor: string | number | null | undefined): number {
+function cents(valor: string | number | null | undefined): number {
   if (valor === null || valor === undefined) return 0;
   const [entero, decimales = ''] = String(valor).split('.');
   const signo = entero!.startsWith('-') ? -1 : 1;
   return signo * (Math.abs(Number(entero)) * 100 + Number(decimales.padEnd(2, '0').slice(0, 2)));
 }
 
-export class SiatSimuladoAdapter implements FiscalProviderPort {
+export class SiatSimulatedAdapter implements FiscalProviderPort {
   readonly ambiente = 'SIMULADO' as const;
 
-  private readonly padron: readonly ContribuyenteSimulado[];
-  private readonly reloj: () => Date;
-  private readonly cuis = new Coleccion<RegistroCuis>();
-  private readonly cufds = new Coleccion<RegistroCufd>();
-  private readonly facturas = new Coleccion<RegistroFactura>();
+  private readonly registry: readonly SimulatedTaxpayer[];
+  private readonly clock: () => Date;
+  private readonly cuis = new Coleccion<RecordCuis>();
+  private readonly cufds = new Coleccion<RecordCufd>();
+  private readonly invoices = new Coleccion<InvoiceRecord>();
 
-  constructor(opciones: OpcionesSiatSimulado) {
-    this.padron = opciones.padron;
-    this.reloj = opciones.reloj ?? (() => new Date());
+  constructor(opciones: SiatSimulatedOptions) {
+    this.registry = opciones.padron;
+    this.clock = opciones.reloj ?? (() => new Date());
     if (opciones.clavePersistencia !== undefined) {
       this.cuis.persistirEn(`${opciones.clavePersistencia}.cuis`);
       this.cufds.persistirEn(`${opciones.clavePersistencia}.cufd`);
-      this.facturas.persistirEn(`${opciones.clavePersistencia}.facturas`);
+      this.invoices.persistirEn(`${opciones.clavePersistencia}.facturas`);
     }
   }
 
   // ---- códigos ---------------------------------------------------------------
 
   solicitudCuis(contexto: ContextoFiscal): RespuestaCuis {
-    const errores = this.erroresDeContexto(contexto);
+    const errores = this.contextErrors(contexto);
     if (errores.length > 0) return { transaccion: false, codigo: null, fechaVigencia: null, mensajesList: errores, simulated: true };
-    const clave = claveDe(contexto);
-    const ahora = this.reloj();
-    if (this.cuisVigente(clave, ahora) !== null) {
+    const clave = keyOf(contexto);
+    const ahora = this.clock();
+    if (this.currentCuis(clave, ahora) !== null) {
       return {
         transaccion: false,
         codigo: null,
         fechaVigencia: null,
-        mensajesList: [this.mensajeServicio(MENSAJE_SIAT.EXISTE_CUIS_VIGENTE)],
+        mensajesList: [this.serviceMessage(SIAT_MESSAGE.EXISTE_CUIS_VIGENTE)],
         simulated: true,
       };
     }
@@ -208,20 +208,20 @@ export class SiatSimuladoAdapter implements FiscalProviderPort {
       id: `${clave}|${ahora.getTime()}`,
       clave,
       codigo: hexSintetico(`cuis|${clave}|${ahora.getTime()}`, 8),
-      fechaVigencia: new Date(ahora.getTime() + VIGENCIA_CUIS_MS).toISOString(),
+      fechaVigencia: new Date(ahora.getTime() + VALIDITY_CUIS_MS).toISOString(),
     });
     return { transaccion: true, codigo: registro.codigo, fechaVigencia: registro.fechaVigencia, mensajesList: [], simulated: true };
   }
 
   solicitudCufd(solicitud: SolicitudCufd): RespuestaCufd {
     const vacia = { transaccion: false, codigo: null, codigoControl: null, direccion: null, fechaVigencia: null, simulated: true } as const;
-    const errores = this.erroresDeContexto(solicitud);
-    const ahora = this.reloj();
-    const errorCuis = errores.length > 0 ? null : this.errorDeCuis(solicitud, ahora);
+    const errores = this.contextErrors(solicitud);
+    const ahora = this.clock();
+    const errorCuis = errores.length > 0 ? null : this.cuisError(solicitud, ahora);
     if (errores.length > 0 || errorCuis !== null) {
       return { ...vacia, mensajesList: errorCuis === null ? errores : [errorCuis] };
     }
-    const clave = claveDe(solicitud);
+    const clave = keyOf(solicitud);
     const contribuyente = this.contribuyente(solicitud.nit)!;
     const semilla = `cufd|${clave}|${ahora.getTime()}|${this.cufds.tamano}`;
     const registro = this.cufds.agregar({
@@ -230,7 +230,7 @@ export class SiatSimuladoAdapter implements FiscalProviderPort {
       codigo: `SIMCUFD${hexSintetico(semilla, 36)}`,
       codigoControl: hexSintetico(`${semilla}|control`, 15),
       direccion: contribuyente.direccion,
-      fechaVigencia: new Date(ahora.getTime() + VIGENCIA_CUFD_MS).toISOString(),
+      fechaVigencia: new Date(ahora.getTime() + VALIDITY_CUFD_MS).toISOString(),
     });
     return {
       transaccion: true,
@@ -244,47 +244,47 @@ export class SiatSimuladoAdapter implements FiscalProviderPort {
   }
 
   sincronizarFechaHora(): RespuestaFechaHora {
-    return { transaccion: true, fechaHora: horaDeBolivia(this.reloj()), simulated: true };
+    return { transaccion: true, fechaHora: boliviaTime(this.clock()), simulated: true };
   }
 
-  sincronizarParametricas(): CatalogosFiscales {
-    return CATALOGOS_SIMULADOS;
+  sincronizarParametricas(): FiscalCatalogs {
+    return SIMULATED_CATALOGS;
   }
 
   // ---- recepción ---------------------------------------------------------------
 
   recepcionFactura(solicitud: SolicitudRecepcionFactura, simulacion?: DirectivaDeSimulacion): RespuestaRecepcion {
-    const ahora = this.reloj();
-    const previos = this.erroresDeSolicitud(solicitud, ahora);
-    if (previos.length > 0) return respuesta(ESTADO_SIAT.RECEPCION_RECHAZADA, previos);
+    const ahora = this.clock();
+    const previos = this.requestErrors(solicitud, ahora);
+    if (previos.length > 0) return response(SIAT_STATUS.RECEPCION_RECHAZADA, previos);
 
     let xml: string;
     try {
-      xml = desempaquetarArchivo(solicitud.archivo, solicitud.hashArchivo);
+      xml = unpackageFile(solicitud.archivo, solicitud.hashArchivo);
     } catch (error: unknown) {
-      if (error instanceof ErrorDeEmpaquetado || error instanceof TypeError) {
-        return respuesta(ESTADO_SIAT.RECEPCION_RECHAZADA, [mensaje(MENSAJE_SIAT.ARCHIVO_INVALIDO)]);
+      if (error instanceof PackagingError || error instanceof TypeError) {
+        return response(SIAT_STATUS.RECEPCION_RECHAZADA, [message(SIAT_MESSAGE.ARCHIVO_INVALIDO)]);
       }
       throw error;
     }
 
-    let cabecera: FilaXml;
-    let detalle: readonly FilaXml[];
+    let cabecera: RowXml;
+    let detalle: readonly RowXml[];
     try {
-      const leido = leerXmlFactura(xml);
-      const esquema = esquemaPorRaiz(leido.raiz);
+      const leido = readInvoiceXml(xml);
+      const esquema = schemaByRoot(leido.raiz);
       if (esquema === null || esquema.codigoDocumentoSector !== solicitud.codigoDocumentoSector) {
-        return respuesta(ESTADO_SIAT.RECEPCION_RECHAZADA, [mensaje(MENSAJE_SIAT.NO_CUMPLE_XSD)]);
+        return response(SIAT_STATUS.RECEPCION_RECHAZADA, [message(SIAT_MESSAGE.NO_CUMPLE_XSD)]);
       }
-      const { factura, problemas } = facturaDesdeXml(esquema, leido);
+      const { factura, problemas } = invoiceFromXml(esquema, leido);
       if (problemas.length > 0) {
-        return respuesta(ESTADO_SIAT.RECEPCION_RECHAZADA, [mensaje(MENSAJE_SIAT.NO_CUMPLE_XSD)]);
+        return response(SIAT_STATUS.RECEPCION_RECHAZADA, [message(SIAT_MESSAGE.NO_CUMPLE_XSD)]);
       }
       cabecera = factura.cabecera;
       detalle = factura.detalle;
     } catch (error: unknown) {
-      if (error instanceof ErrorDeLecturaXml) {
-        return respuesta(ESTADO_SIAT.RECEPCION_RECHAZADA, [mensaje(MENSAJE_SIAT.NO_CUMPLE_XSD)]);
+      if (error instanceof ReadingXmlError) {
+        return response(SIAT_STATUS.RECEPCION_RECHAZADA, [message(SIAT_MESSAGE.NO_CUMPLE_XSD)]);
       }
       throw error;
     }
@@ -293,10 +293,10 @@ export class SiatSimuladoAdapter implements FiscalProviderPort {
     const advertencias: MensajeRecepcion[] = [];
     const cufd = this.cufds.filtrar((c) => c.codigo === solicitud.cufd)[0]!;
 
-    if (String(cabecera['nitEmisor']) !== solicitud.nit) errores.push(mensaje(MENSAJE_SIAT.NIT_NO_CORRESPONDE_AL_CUFD));
-    if (cabecera['cufd'] !== solicitud.cufd) errores.push(mensaje(MENSAJE_SIAT.CUFD_DEL_XML_INVALIDO));
+    if (String(cabecera['nitEmisor']) !== solicitud.nit) errores.push(message(SIAT_MESSAGE.NIT_NO_CORRESPONDE_AL_CUFD));
+    if (cabecera['cufd'] !== solicitud.cufd) errores.push(message(SIAT_MESSAGE.CUFD_DEL_XML_INVALIDO));
     if (Number(cabecera['codigoSucursal']) !== solicitud.codigoSucursal) {
-      errores.push(mensaje(MENSAJE_SIAT.SUCURSAL_NO_CORRESPONDE_AL_CUFD));
+      errores.push(message(SIAT_MESSAGE.SUCURSAL_NO_CORRESPONDE_AL_CUFD));
     }
 
     const cuf = String(cabecera['cuf']);
@@ -304,7 +304,7 @@ export class SiatSimuladoAdapter implements FiscalProviderPort {
     try {
       fechaHora = fechaHoraParaCuf(String(cabecera['fechaEmision']));
     } catch {
-      errores.push(mensaje(MENSAJE_SIAT.FORMATO_DE_FECHA_INCORRECTO));
+      errores.push(message(SIAT_MESSAGE.FORMATO_DE_FECHA_INCORRECTO));
     }
     if (fechaHora !== null) {
       const esperado = generarCuf(
@@ -321,31 +321,31 @@ export class SiatSimuladoAdapter implements FiscalProviderPort {
         },
         cufd.codigoControl,
       );
-      if (esperado !== cuf) errores.push(mensaje(MENSAJE_SIAT.CUF_INVALIDO));
+      if (esperado !== cuf) errores.push(message(SIAT_MESSAGE.CUF_INVALIDO));
     }
-    if (this.facturas.has(cuf)) errores.push(mensaje(MENSAJE_SIAT.CUF_YA_EXISTE));
+    if (this.invoices.has(cuf)) errores.push(message(SIAT_MESSAGE.CUF_YA_EXISTE));
 
-    errores.push(...this.erroresDeMontos(cabecera, detalle));
+    errores.push(...this.amountErrors(cabecera, detalle));
 
-    const clave = claveDe(solicitud);
+    const clave = keyOf(solicitud);
     const numeroFactura = Number(cabecera['numeroFactura']);
-    const anterior = this.ultimoNumero(clave, solicitud.codigoDocumentoSector);
+    const anterior = this.lastNumber(clave, solicitud.codigoDocumentoSector);
     if (anterior !== null && numeroFactura !== anterior + 1) {
-      advertencias.push(mensaje(MENSAJE_SIAT.ADVERTENCIA_CORRELATIVIDAD));
+      advertencias.push(message(SIAT_MESSAGE.ADVERTENCIA_CORRELATIVIDAD));
     }
 
     const forzado = simulacion?.forzarMensaje;
-    if (forzado !== undefined && esCodigoDeMensajeConocido(forzado)) {
-      const m: MensajeRecepcion = { ...mensaje(forzado), forzadoPorSimulacion: true };
+    if (forzado !== undefined && isKnownMessageCode(forzado)) {
+      const m: MensajeRecepcion = { ...message(forzado), forzadoPorSimulacion: true };
       (m.advertencia ? advertencias : errores).push(m);
     }
 
     if (errores.length > 0) {
-      return respuesta(ESTADO_SIAT.RECEPCION_RECHAZADA, [...errores, ...advertencias]);
+      return response(SIAT_STATUS.RECEPCION_RECHAZADA, [...errores, ...advertencias]);
     }
-    const estado = advertencias.length > 0 ? ESTADO_SIAT.RECEPCION_OBSERVADA : ESTADO_SIAT.RECEPCION_VALIDADA;
+    const estado = advertencias.length > 0 ? SIAT_STATUS.RECEPCION_OBSERVADA : SIAT_STATUS.RECEPCION_VALIDADA;
     const codigoRecepcion = `SIMREC-${hexSintetico(`recepcion|${cuf}`, 24)}`;
-    this.facturas.agregar({
+    this.invoices.agregar({
       id: cuf,
       clave,
       codigoDocumentoSector: solicitud.codigoDocumentoSector,
@@ -356,41 +356,41 @@ export class SiatSimuladoAdapter implements FiscalProviderPort {
       anulada: false,
       revertida: false,
     });
-    return respuesta(estado, advertencias, codigoRecepcion);
+    return response(estado, advertencias, codigoRecepcion);
   }
 
   verificacionEstadoFactura(solicitud: SolicitudConCuf): RespuestaRecepcion {
-    const registro = this.facturas.get(solicitud.cuf);
-    if (registro === undefined || registro.clave !== claveDe(solicitud)) {
-      return respuesta(ESTADO_SIAT.RECEPCION_RECHAZADA, [mensaje(MENSAJE_SIAT.FACTURA_INEXISTENTE)]);
+    const registro = this.invoices.get(solicitud.cuf);
+    if (registro === undefined || registro.clave !== keyOf(solicitud)) {
+      return response(SIAT_STATUS.RECEPCION_RECHAZADA, [message(SIAT_MESSAGE.FACTURA_INEXISTENTE)]);
     }
-    const estado = registro.anulada ? ESTADO_SIAT.ANULACION_CONFIRMADA : registro.estadoDeRecepcion;
-    return respuesta(estado, [], registro.codigoRecepcion);
+    const estado = registro.anulada ? SIAT_STATUS.ANULACION_CONFIRMADA : registro.estadoDeRecepcion;
+    return response(estado, [], registro.codigoRecepcion);
   }
 
   // ---- anulación ---------------------------------------------------------------
 
   anulacionFactura(solicitud: SolicitudAnulacion): RespuestaRecepcion {
-    const registro = this.facturas.get(solicitud.cuf);
-    if (registro === undefined || registro.clave !== claveDe(solicitud)) {
-      return respuesta(ESTADO_SIAT.ANULACION_RECHAZADA, [mensaje(MENSAJE_SIAT.FACTURA_INEXISTENTE)]);
+    const registro = this.invoices.get(solicitud.cuf);
+    if (registro === undefined || registro.clave !== keyOf(solicitud)) {
+      return response(SIAT_STATUS.ANULACION_RECHAZADA, [message(SIAT_MESSAGE.FACTURA_INEXISTENTE)]);
     }
-    if (!existeEnCatalogo(CATALOGOS_SIMULADOS.motivosDeAnulacion, solicitud.codigoMotivo)) {
-      return respuesta(ESTADO_SIAT.ANULACION_RECHAZADA, [mensaje(MENSAJE_SIAT.MOTIVO_ANULACION_INVALIDO)]);
+    if (!existsInCatalog(SIMULATED_CATALOGS.motivosDeAnulacion, solicitud.codigoMotivo)) {
+      return response(SIAT_STATUS.ANULACION_RECHAZADA, [message(SIAT_MESSAGE.MOTIVO_ANULACION_INVALIDO)]);
     }
     if (registro.anulada) {
-      return respuesta(ESTADO_SIAT.ANULACION_RECHAZADA, [mensaje(MENSAJE_SIAT.YA_ANULADA)]);
+      return response(SIAT_STATUS.ANULACION_RECHAZADA, [message(SIAT_MESSAGE.YA_ANULADA)]);
     }
     if (registro.revertida) {
       // «Un documento revertido no puede volver a anularse» (página oficial de
       // reversión). 941 es el código del catálogo para «no disponible para ser anulada».
-      return respuesta(ESTADO_SIAT.ANULACION_RECHAZADA, [mensaje(MENSAJE_SIAT.NO_DISPONIBLE_PARA_ANULAR)]);
+      return response(SIAT_STATUS.ANULACION_RECHAZADA, [message(SIAT_MESSAGE.NO_DISPONIBLE_PARA_ANULAR)]);
     }
-    if (this.fueraDePlazo(registro.fechaEmision)) {
-      return respuesta(ESTADO_SIAT.ANULACION_RECHAZADA, [mensaje(MENSAJE_SIAT.ANULACION_FUERA_DE_PLAZO)]);
+    if (this.outsideDeadline(registro.fechaEmision)) {
+      return response(SIAT_STATUS.ANULACION_RECHAZADA, [message(SIAT_MESSAGE.ANULACION_FUERA_DE_PLAZO)]);
     }
-    this.facturas.actualizar(registro.id, { anulada: true });
-    return respuesta(ESTADO_SIAT.ANULACION_CONFIRMADA, [], registro.codigoRecepcion);
+    this.invoices.actualizar(registro.id, { anulada: true });
+    return response(SIAT_STATUS.ANULACION_CONFIRMADA, [], registro.codigoRecepcion);
   }
 
   /**
@@ -401,108 +401,108 @@ export class SiatSimuladoAdapter implements FiscalProviderPort {
    * inventa uno.
    */
   reversionAnulacionFactura(solicitud: SolicitudConCuf): RespuestaRecepcion {
-    const registro = this.facturas.get(solicitud.cuf);
-    if (registro === undefined || registro.clave !== claveDe(solicitud)) {
-      return respuesta(ESTADO_SIAT.REVERSION_ANULACION_RECHAZADA, [mensaje(MENSAJE_SIAT.FACTURA_INEXISTENTE)]);
+    const registro = this.invoices.get(solicitud.cuf);
+    if (registro === undefined || registro.clave !== keyOf(solicitud)) {
+      return response(SIAT_STATUS.REVERSION_ANULACION_RECHAZADA, [message(SIAT_MESSAGE.FACTURA_INEXISTENTE)]);
     }
-    if (!registro.anulada || registro.revertida || this.fueraDePlazo(registro.fechaEmision)) {
-      return respuesta(ESTADO_SIAT.REVERSION_ANULACION_RECHAZADA);
+    if (!registro.anulada || registro.revertida || this.outsideDeadline(registro.fechaEmision)) {
+      return response(SIAT_STATUS.REVERSION_ANULACION_RECHAZADA);
     }
-    this.facturas.actualizar(registro.id, { anulada: false, revertida: true });
-    return respuesta(ESTADO_SIAT.REVERSION_ANULACION_CONFIRMADA, [], registro.codigoRecepcion);
+    this.invoices.actualizar(registro.id, { anulada: false, revertida: true });
+    return response(SIAT_STATUS.REVERSION_ANULACION_CONFIRMADA, [], registro.codigoRecepcion);
   }
 
   // ---- reglas ------------------------------------------------------------------
 
-  private contribuyente(nit: string): ContribuyenteSimulado | undefined {
-    return this.padron.find((c) => c.nit === nit);
+  private contribuyente(nit: string): SimulatedTaxpayer | undefined {
+    return this.registry.find((c) => c.nit === nit);
   }
 
-  private mensajeServicio(codigo: CodigoMensajeSiat): MensajeServicio {
-    return { codigo, descripcion: DESCRIPCION_MENSAJE_SIAT[codigo] };
+  private serviceMessage(codigo: SiatMessageCode): MensajeServicio {
+    return { codigo, descripcion: SIAT_MESSAGE_DESCRIPTION[codigo] };
   }
 
-  private erroresDeContexto(contexto: ContextoFiscal): MensajeRecepcion[] {
+  private contextErrors(contexto: ContextoFiscal): MensajeRecepcion[] {
     const contribuyente = this.contribuyente(contexto.nit);
-    if (contribuyente === undefined) return [mensaje(MENSAJE_SIAT.NIT_INVALIDO)];
+    if (contribuyente === undefined) return [message(SIAT_MESSAGE.NIT_INVALIDO)];
     const errores: MensajeRecepcion[] = [];
-    if (contribuyente.codigoSistema !== contexto.codigoSistema) errores.push(mensaje(MENSAJE_SIAT.SISTEMA_NO_ASOCIADO));
+    if (contribuyente.codigoSistema !== contexto.codigoSistema) errores.push(message(SIAT_MESSAGE.SISTEMA_NO_ASOCIADO));
     // CA-2: el simulador sólo atiende Computarizada en Línea.
-    if (contexto.codigoModalidad !== 2) errores.push(mensaje(MENSAJE_SIAT.MODALIDAD_INVALIDA));
-    if (!contribuyente.sucursales.includes(contexto.codigoSucursal)) errores.push(mensaje(MENSAJE_SIAT.SUCURSAL_INVALIDA));
+    if (contexto.codigoModalidad !== 2) errores.push(message(SIAT_MESSAGE.MODALIDAD_INVALIDA));
+    if (!contribuyente.sucursales.includes(contexto.codigoSucursal)) errores.push(message(SIAT_MESSAGE.SUCURSAL_INVALIDA));
     return errores;
   }
 
-  private cuisVigente(clave: string, ahora: Date): RegistroCuis | null {
+  private currentCuis(clave: string, ahora: Date): RecordCuis | null {
     return this.cuis.filtrar((c) => c.clave === clave && new Date(c.fechaVigencia) > ahora)[0] ?? null;
   }
 
-  private errorDeCuis(solicitud: ContextoFiscal & { readonly cuis: string }, ahora: Date): MensajeRecepcion | null {
+  private cuisError(solicitud: ContextoFiscal & { readonly cuis: string }, ahora: Date): MensajeRecepcion | null {
     const registro = this.cuis.filtrar((c) => c.codigo === solicitud.cuis)[0];
-    if (registro === undefined) return mensaje(MENSAJE_SIAT.CUIS_INVALIDO);
-    if (registro.clave !== claveDe(solicitud)) return mensaje(MENSAJE_SIAT.CUIS_NO_CORRESPONDE_A_SUCURSAL);
-    if (new Date(registro.fechaVigencia) <= ahora) return mensaje(MENSAJE_SIAT.CUIS_NO_VIGENTE);
+    if (registro === undefined) return message(SIAT_MESSAGE.CUIS_INVALIDO);
+    if (registro.clave !== keyOf(solicitud)) return message(SIAT_MESSAGE.CUIS_NO_CORRESPONDE_A_SUCURSAL);
+    if (new Date(registro.fechaVigencia) <= ahora) return message(SIAT_MESSAGE.CUIS_NO_VIGENTE);
     return null;
   }
 
-  private erroresDeSolicitud(solicitud: SolicitudRecepcion, ahora: Date): MensajeRecepcion[] {
-    const errores = this.erroresDeContexto(solicitud);
+  private requestErrors(solicitud: SolicitudRecepcion, ahora: Date): MensajeRecepcion[] {
+    const errores = this.contextErrors(solicitud);
     if (errores.length > 0) return errores;
     // CA-6: sin contingencia ni masiva en esta entrega.
-    if (solicitud.codigoEmision !== 1) errores.push(mensaje(MENSAJE_SIAT.TIPO_EMISION_INVALIDO));
-    if (solicitud.tipoFacturaDocumento !== 1) errores.push(mensaje(MENSAJE_SIAT.TIPO_FACTURA_DOCUMENTO_INVALIDO));
-    const esquema = esquemaDeSector(solicitud.codigoDocumentoSector);
+    if (solicitud.codigoEmision !== 1) errores.push(message(SIAT_MESSAGE.TIPO_EMISION_INVALIDO));
+    if (solicitud.tipoFacturaDocumento !== 1) errores.push(message(SIAT_MESSAGE.TIPO_FACTURA_DOCUMENTO_INVALIDO));
+    const esquema = sectorSchema(solicitud.codigoDocumentoSector);
     if (esquema === null) {
-      errores.push(mensaje(MENSAJE_SIAT.DOCUMENTO_SECTOR_INVALIDO));
+      errores.push(message(SIAT_MESSAGE.DOCUMENTO_SECTOR_INVALIDO));
     } else if (!esquema.activo || !this.contribuyente(solicitud.nit)!.sectoresHabilitados.includes(esquema.codigoDocumentoSector)) {
-      errores.push(mensaje(MENSAJE_SIAT.DOCUMENTO_SECTOR_NO_HABILITADO));
+      errores.push(message(SIAT_MESSAGE.DOCUMENTO_SECTOR_NO_HABILITADO));
     }
-    const errorCuis = this.errorDeCuis(solicitud, ahora);
+    const errorCuis = this.cuisError(solicitud, ahora);
     if (errorCuis !== null) errores.push(errorCuis);
     const cufd = this.cufds.filtrar((c) => c.codigo === solicitud.cufd)[0];
     if (cufd === undefined) {
-      errores.push(mensaje(MENSAJE_SIAT.CUFD_INVALIDO));
+      errores.push(message(SIAT_MESSAGE.CUFD_INVALIDO));
     } else if (new Date(cufd.fechaVigencia) <= ahora) {
-      errores.push(mensaje(MENSAJE_SIAT.CUFD_NO_VIGENTE));
-    } else if (cufd.clave !== claveDe(solicitud)) {
-      errores.push(mensaje(MENSAJE_SIAT.SUCURSAL_NO_CORRESPONDE_AL_CUFD));
+      errores.push(message(SIAT_MESSAGE.CUFD_NO_VIGENTE));
+    } else if (cufd.clave !== keyOf(solicitud)) {
+      errores.push(message(SIAT_MESSAGE.SUCURSAL_NO_CORRESPONDE_AL_CUFD));
     }
     return errores;
   }
 
-  private erroresDeMontos(cabecera: FilaXml, detalle: readonly FilaXml[]): MensajeRecepcion[] {
+  private amountErrors(cabecera: RowXml, detalle: readonly RowXml[]): MensajeRecepcion[] {
     const errores: MensajeRecepcion[] = [];
     let suma = 0;
     for (const fila of detalle) {
-      const esperado = Math.round((centavos(fila['cantidad']) * centavos(fila['precioUnitario'])) / 100) - centavos(fila['montoDescuento']);
-      if (centavos(fila['subTotal']) !== esperado) errores.push(mensaje(MENSAJE_SIAT.SUBTOTAL_ERRONEO));
-      suma += centavos(fila['subTotal']);
+      const esperado = Math.round((cents(fila['cantidad']) * cents(fila['precioUnitario'])) / 100) - cents(fila['montoDescuento']);
+      if (cents(fila['subTotal']) !== esperado) errores.push(message(SIAT_MESSAGE.SUBTOTAL_ERRONEO));
+      suma += cents(fila['subTotal']);
     }
-    const total = centavos(cabecera['montoTotal']);
-    if (total !== suma - centavos(cabecera['descuentoAdicional'])) errores.push(mensaje(MENSAJE_SIAT.MONTO_TOTAL_ERRONEO));
-    if (centavos(cabecera['montoTotalSujetoIva']) !== total - centavos(cabecera['montoGiftCard'])) {
-      errores.push(mensaje(MENSAJE_SIAT.MONTO_TOTAL_SUJETO_IVA_ERRONEO));
+    const total = cents(cabecera['montoTotal']);
+    if (total !== suma - cents(cabecera['descuentoAdicional'])) errores.push(message(SIAT_MESSAGE.MONTO_TOTAL_ERRONEO));
+    if (cents(cabecera['montoTotalSujetoIva']) !== total - cents(cabecera['montoGiftCard'])) {
+      errores.push(message(SIAT_MESSAGE.MONTO_TOTAL_SUJETO_IVA_ERRONEO));
     }
-    const tipoCambio = centavos(cabecera['tipoCambio']);
-    if (tipoCambio <= 0 || centavos(cabecera['montoTotalMoneda']) !== Math.round((total * 100) / tipoCambio)) {
-      errores.push(mensaje(MENSAJE_SIAT.MONTO_TOTAL_MONEDA_ERRONEO));
+    const tipoCambio = cents(cabecera['tipoCambio']);
+    if (tipoCambio <= 0 || cents(cabecera['montoTotalMoneda']) !== Math.round((total * 100) / tipoCambio)) {
+      errores.push(message(SIAT_MESSAGE.MONTO_TOTAL_MONEDA_ERRONEO));
     }
     // Un mismo código una sola vez, como una lista de mensajes legible.
     return errores.filter((m, i) => errores.findIndex((o) => o.codigo === m.codigo) === i);
   }
 
-  private ultimoNumero(clave: string, sector: number): number | null {
-    const numeros = this.facturas
+  private lastNumber(clave: string, sector: number): number | null {
+    const numeros = this.invoices
       .filtrar((f) => f.clave === clave && f.codigoDocumentoSector === sector)
       .map((f) => f.numeroFactura);
     return numeros.length === 0 ? null : Math.max(...numeros);
   }
 
   /** Plazo: hasta el día 9 del mes siguiente a la emisión, hora de Bolivia. */
-  private fueraDePlazo(fechaEmision: string): boolean {
+  private outsideDeadline(fechaEmision: string): boolean {
     const [anio, mes] = fechaEmision.slice(0, 7).split('-').map(Number) as [number, number];
     const siguiente = mes === 12 ? { anio: anio + 1, mes: 1 } : { anio, mes: mes + 1 };
     const limite = `${siguiente.anio}-${String(siguiente.mes).padStart(2, '0')}-09T23:59:59.999`;
-    return horaDeBolivia(this.reloj()) > limite;
+    return boliviaTime(this.clock()) > limite;
   }
 }

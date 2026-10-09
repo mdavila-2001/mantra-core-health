@@ -7,7 +7,7 @@ export interface PuntoGeo {
 }
 
 /** El estado de un lugar, siempre en palabras: el tono solo lo colorea. */
-export interface EstadoDePin {
+export interface PinStatus {
   readonly etiqueta: string;
   readonly tono: Tone | NeutralTone;
 }
@@ -20,14 +20,14 @@ export interface EstadoDePin {
  * corto de la lista, nunca un uuid — nada del mapa debe poder filtrar
  * identificadores.
  */
-export interface PinMapa extends PuntoGeo {
+export interface PinMap extends PuntoGeo {
   readonly id: string;
   /** La letra o código corto que la cara del pin muestra (el mismo de la lista). */
   readonly codigo?: string;
   readonly titulo: string;
   /** P. ej. «1,2 km en línea recta · Av. Busch 500». */
   readonly subtitulo?: string;
-  readonly estado?: EstadoDePin;
+  readonly estado?: PinStatus;
   /** Texto del botón del popup; al activarlo el mapa emite `pinElegido`. */
   readonly ctaEtiqueta?: string;
 }

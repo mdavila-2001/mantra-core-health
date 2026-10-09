@@ -4,7 +4,7 @@ import {
   PEDIDO_ENTREGADO_CON_FACTURA,
   facturaDeEjemplo,
 } from '../../pharmacy-inbox.fixtures';
-import { ResumenDeFactura } from './invoice-summary';
+import { InvoiceSummary } from './invoice-summary';
 
 /**
  * El resumen de factura del mostrador (FAR-I3): dice lo que hay que poder
@@ -13,13 +13,13 @@ import { ResumenDeFactura } from './invoice-summary';
  * decide.
  */
 describe('ResumenDeFactura', () => {
-  let fixture: ComponentFixture<ResumenDeFactura>;
+  let fixture: ComponentFixture<InvoiceSummary>;
 
   /** La emisión se inyecta: la maqueta la fecha, no el pedido. */
   const EMITIDA_EL = new Date('2026-09-04T15:00:00.000Z');
 
   function montar(): HTMLElement {
-    fixture = TestBed.createComponent(ResumenDeFactura);
+    fixture = TestBed.createComponent(InvoiceSummary);
     const factura = facturaDeEjemplo(PEDIDO_ENTREGADO_CON_FACTURA, EMITIDA_EL);
     expect(factura).not.toBeNull();
     fixture.componentRef.setInput('factura', factura);

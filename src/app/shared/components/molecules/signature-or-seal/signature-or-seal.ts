@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, input, linkedSignal } from '@angular/core';
 
 /** Qué imagen es: decide la proporción de la caja y el texto del marcador. */
-export type TipoDeFirmaOSello = 'firma' | 'sello';
+export type SignatureOrSealType = 'firma' | 'sello';
 
 /**
  * La firma o el sello médico del profesional dentro de su caja de tamaño fijo.
@@ -29,26 +29,26 @@ export type TipoDeFirmaOSello = 'firma' | 'sello';
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { '[class]': '"firma-o-sello firma-o-sello--" + tipo()' },
 })
-export class FirmaOSello {
-  readonly tipo = input.required<TipoDeFirmaOSello>();
+export class SignatureOrSeal {
+  readonly tipo = input.required<SignatureOrSealType>();
   /** La imagen como `data:` URL (la CSP no admite otra), o `null` si no hay. */
   readonly src = input<string | null>(null);
 
   /** Una imagen rota no puede dejar un hueco: cae al marcador. */
-  protected readonly fallo = linkedSignal({
+  protected readonly failure = linkedSignal({
     source: this.src,
     computation: () => false,
   });
 
-  protected readonly rotulo = computed(() => (this.tipo() === 'firma' ? 'firma' : 'sello'));
+  protected readonly label = computed(() => (this.tipo() === 'firma' ? 'firma' : 'sello'));
   protected readonly alt = computed(() =>
     this.tipo() === 'firma' ? 'Firma del médico' : 'Sello del médico',
   );
-  protected readonly vacio = computed(() =>
+  protected readonly empty = computed(() =>
     this.tipo() === 'firma' ? 'Sin firma' : 'Sin sello',
   );
 
-  protected alFallar(): void {
-    this.fallo.set(true);
+  protected toFail(): void {
+    this.failure.set(true);
   }
 }

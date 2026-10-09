@@ -19,30 +19,30 @@ import { environment } from '../../../../environments/environment';
 import type { SearchOrigin } from '../../nearby-places/search-origin-picker/search-origin-picker.types';
 import { PHARMACY_PRESCRIPTIONS_ROUTE } from '../pharmacy/pharmacy.routes';
 import {
-  normalizarCotizacion,
-  type CotizacionResultado,
-  type PrecioPublicado,
-  type VerticalCotizacion,
+  normalizeQuotation,
+  type ResultQuotation,
+  type PublishedPrice,
+  type VerticalQuotation,
 } from './quotations.logic';
 
 /** Cuántos productos de farmacia se cotizan por búsqueda. */
-const TOPE_DE_PRODUCTOS = 20;
+const PRODUCTS_LIMIT = 20;
 
 /** Cuántas sedes de farmacia devuelve la disponibilidad. */
-const TOPE_DE_FARMACIAS = 20;
+const PHARMACIES_LIMIT = 20;
 
 /** Cuántos centros diagnósticos se abren para buscar el estudio adentro. */
-const TOPE_DE_CENTROS = 10;
+const CENTERS_LIMIT = 10;
 
 /** Cuántas prestaciones del arancel de referencia se muestran. */
-const TOPE_DE_PRESTACIONES = 25;
+const BENEFITS_LIMIT = 25;
 
 /**
  * El rótulo del arancel en UMA. Lo fija el carril (Q-16) y la cabecera de
  * `fee-schedules.generated.ts`: «honorarios médicos del Colegio Médico de Santa
  * Cruz (2025, en UMA)». UMA no es una moneda y no se convierte.
  */
-const PROCEDENCIA_UMA = 'Referencia del Colegio Médico de Santa Cruz 2025, en UMA (sin conversión)';
+const PROVENANCE_UMA = 'Referencia del Colegio Médico de Santa Cruz 2025, en UMA (sin conversión)';
 
 /**
  * La procedencia de un precio servido por una sede.
@@ -56,17 +56,17 @@ const PROCEDENCIA_UMA = 'Referencia del Colegio Médico de Santa Cruz 2025, en U
  * **no** lo publicó. El arancel de referencia no pasa por acá: la maqueta sirve
  * la tabla real del propietario (`fee-schedules.generated.ts`).
  */
-function procedenciaDeSede(queFue: 'Precio' | 'Tarifario', sede: string): string {
+function siteProvenance(queFue: 'Precio' | 'Tarifario', sede: string): string {
   return environment.mockBackend
     ? `${queFue} de ejemplo de la maqueta: ${sede} no lo publicó`
     : `${queFue} publicado por ${sede}`;
 }
 
 /** Lo que devuelve una búsqueda: las filas y qué fuentes no respondieron. */
-export interface BusquedaDeCotizaciones {
-  readonly resultados: readonly CotizacionResultado[];
+export interface QuotationsSearch {
+  readonly resultados: readonly ResultQuotation[];
   /** Las verticales cuya fuente falló; las otras se muestran igual. */
-  readonly fuentesCaidas: readonly Exclude<VerticalCotizacion, 'TODAS'>[];
+  readonly fuentesCaidas: readonly Exclude<VerticalQuotation, 'TODAS'>[];
 }
 
 /**
@@ -85,10 +85,10 @@ export interface BusquedaDeCotizaciones {
  * «Precio no publicado» (regla 97.4.1).
  */
 @Injectable({ providedIn: 'root' })
-export class CotizacionesFuentes {
-  private readonly farmacia = inject(PharmacyClient);
-  private readonly diagnostico = inject(DiagnosticUnitsClient);
-  private readonly aranceles = inject(ServicesCatalogClient);
+export class QuotationSources {
+  private readonly pharmacy = inject(PharmacyClient);
+  private readonly diagnosis = inject(DiagnosticUnitsClient);
+  private readonly tariffs = inject(ServicesCatalogClient);
 
   /**
    * Busca un término en una vertical, o en las cuatro a la vez.
@@ -97,23 +97,23 @@ export class CotizacionesFuentes {
    * tira abajo a las otras: se anota en `fuentesCaidas`. Con una sola
    * vertical, su error se propaga para que la pantalla ofrezca reintentar.
    */
-  buscar(
+  search(
     termino: string,
-    vertical: VerticalCotizacion,
+    vertical: VerticalQuotation,
     origen: SearchOrigin | null,
-  ): Observable<BusquedaDeCotizaciones> {
+  ): Observable<QuotationsSearch> {
     if (vertical !== 'TODAS') {
-      return this.deVertical(vertical, termino, origen).pipe(
+      return this.vertical(vertical, termino, origen).pipe(
         map((resultados) => ({ resultados, fuentesCaidas: [] })),
       );
     }
     const verticales = ['MEDICAMENTOS', 'ANALISIS', 'IMAGENOLOGIA', 'SERVICIOS_MEDICOS'] as const;
     return forkJoin(
       verticales.map((una) =>
-        this.deVertical(una, termino, origen).pipe(
+        this.vertical(una, termino, origen).pipe(
           map((resultados) => ({ una, resultados, caida: false })),
           catchError(() =>
-            of({ una, resultados: [] as readonly CotizacionResultado[], caida: true }),
+            of({ una, resultados: [] as readonly ResultQuotation[], caida: true }),
           ),
         ),
       ),
@@ -130,39 +130,39 @@ export class CotizacionesFuentes {
     );
   }
 
-  private deVertical(
-    vertical: Exclude<VerticalCotizacion, 'TODAS'>,
+  private vertical(
+    vertical: Exclude<VerticalQuotation, 'TODAS'>,
     termino: string,
     origen: SearchOrigin | null,
-  ): Observable<readonly CotizacionResultado[]> {
+  ): Observable<readonly ResultQuotation[]> {
     switch (vertical) {
       case 'MEDICAMENTOS':
-        return this.medicamentos(termino, origen);
+        return this.medications(termino, origen);
       case 'ANALISIS':
-        return this.estudios(termino, 'LABORATORY', 'ANALISIS');
+        return this.studies(termino, 'LABORATORY', 'ANALISIS');
       case 'IMAGENOLOGIA':
-        return this.estudios(termino, 'IMAGING', 'IMAGENOLOGIA');
+        return this.studies(termino, 'IMAGING', 'IMAGENOLOGIA');
       case 'SERVICIOS_MEDICOS':
-        return this.serviciosMedicos(termino);
+        return this.medicalServices(termino);
     }
   }
 
   /** Productos que coinciden → qué sedes los tienen, a qué precio y a qué distancia. */
-  private medicamentos(
+  private medications(
     termino: string,
     origen: SearchOrigin | null,
-  ): Observable<readonly CotizacionResultado[]> {
-    return this.farmacia.searchProducts({ search: termino, limit: TOPE_DE_PRODUCTOS }).pipe(
+  ): Observable<readonly ResultQuotation[]> {
+    return this.pharmacy.searchProducts({ search: termino, limit: PRODUCTS_LIMIT }).pipe(
       switchMap((pagina) => {
         const productIds = [...new Set(pagina.items.map((producto) => producto.id))];
         if (productIds.length === 0) {
           return of([]);
         }
-        return this.farmacia
+        return this.pharmacy
           .availability({
             productIds,
             origin: origen === null ? undefined : { lat: origen.lat, lng: origen.lng },
-            limit: TOPE_DE_FARMACIAS,
+            limit: PHARMACIES_LIMIT,
           })
           .pipe(
             map((disponibilidad) => {
@@ -170,8 +170,8 @@ export class CotizacionesFuentes {
               // no se sabe si la fila lleva «Agregar al carrito» o el camino
               // de la receta.
               const catalogo = new Map(pagina.items.map((producto) => [producto.id, producto]));
-              return sinRepetir(
-                disponibilidad.items.flatMap((sede) => filasDeSede(sede, catalogo)),
+              return withoutRepeat(
+                disponibilidad.items.flatMap((sede) => siteRows(sede, catalogo)),
               );
             }),
           );
@@ -186,41 +186,41 @@ export class CotizacionesFuentes {
    * que se abren los primeros centros publicados —en paralelo— y se buscan
    * sus estudios por nombre o código.
    */
-  private estudios(
+  private studies(
     termino: string,
     kind: DiagnosticUnitKind,
     vertical: 'ANALISIS' | 'IMAGENOLOGIA',
-  ): Observable<readonly CotizacionResultado[]> {
-    return this.diagnostico.search({ kind, limit: TOPE_DE_CENTROS }).pipe(
+  ): Observable<readonly ResultQuotation[]> {
+    return this.diagnosis.search({ kind, limit: CENTERS_LIMIT }).pipe(
       switchMap((pagina) =>
         pagina.items.length === 0
           ? of([] as DiagnosticUnitDetail[])
-          : forkJoin(pagina.items.map((centro) => this.diagnostico.getById(centro.id))),
+          : forkJoin(pagina.items.map((centro) => this.diagnosis.getById(centro.id))),
       ),
       map((centros) => {
-        const buscado = normalizarCotizacion(termino);
+        const buscado = normalizeQuotation(termino);
         return centros.flatMap((centro) =>
           centro.studies
             .filter(
               (estudio) =>
-                normalizarCotizacion(estudio.name).includes(buscado) ||
-                normalizarCotizacion(estudio.code).includes(buscado),
+                normalizeQuotation(estudio.name).includes(buscado) ||
+                normalizeQuotation(estudio.code).includes(buscado),
             )
-            .map((estudio) => filaDeEstudio(centro, estudio, vertical)),
+            .map((estudio) => studyRow(centro, estudio, vertical)),
         );
       }),
     );
   }
 
-  private serviciosMedicos(termino: string): Observable<readonly CotizacionResultado[]> {
-    return this.aranceles
-      .searchProcedures({ query: termino, limit: TOPE_DE_PRESTACIONES })
-      .pipe(map((pagina) => pagina.items.map(filaDePrestacion)));
+  private medicalServices(termino: string): Observable<readonly ResultQuotation[]> {
+    return this.tariffs
+      .searchProcedures({ query: termino, limit: BENEFITS_LIMIT })
+      .pipe(map((pagina) => pagina.items.map(benefitRow)));
   }
 }
 
 /** Una fila por producto y sede aunque la respuesta lo repita. */
-function sinRepetir(filas: readonly CotizacionResultado[]): CotizacionResultado[] {
+function withoutRepeat(filas: readonly ResultQuotation[]): ResultQuotation[] {
   return [...new Map(filas.map((fila) => [fila.id, fila])).values()];
 }
 
@@ -233,17 +233,17 @@ function sinRepetir(filas: readonly CotizacionResultado[]): CotizacionResultado[
  * lo que exige receta no entra al carrito libre (se ofrece el camino de la
  * receta), y lo que no tiene precio publicado no se agrega a ciegas.
  */
-function filasDeSede(
+function siteRows(
   sede: AvailabilitySite,
   catalogo: ReadonlyMap<string, PharmacyProduct>,
-): CotizacionResultado[] {
+): ResultQuotation[] {
   return sede.products.map((producto) => {
-    const precio = precioDeProducto(producto, sede);
+    const precio = productPrice(producto, sede);
     const exigeReceta = catalogo.get(producto.productId)?.requiresPrescription === true;
-    const fila: CotizacionResultado = {
+    const fila: ResultQuotation = {
       id: `farmacia:${sede.siteId}:${producto.productId}`,
       vertical: 'MEDICAMENTOS',
-      que: nombreDeProducto(producto),
+      que: productName(producto),
       // El nombre de la farmacia puede traer ya la sucursal («Farmacorp ·
       // Grigotá»): no se repite («Farmacorp · Grigotá · Grigotá»).
       donde: sede.pharmacyName.includes(sede.siteName)
@@ -277,7 +277,7 @@ function filasDeSede(
         linea: {
           productId: producto.productId,
           name: producto.brandName ?? producto.genericName ?? producto.productCode,
-          presentation: presentacionDe(producto),
+          presentation: presentationOf(producto),
           // El texto exacto de la lista, no el número ya convertido: el
           // carrito suma en centavos a partir de él.
           unitAmount:
@@ -291,24 +291,24 @@ function filasDeSede(
   });
 }
 
-function presentacionDe(producto: AvailabilityProduct): string | null {
+function presentationOf(producto: AvailabilityProduct): string | null {
   const partes = [producto.strengthText, producto.packageSizeText].filter(
     (parte): parte is string => parte !== null && parte !== '',
   );
   return partes.length === 0 ? null : partes.join(' · ');
 }
 
-function nombreDeProducto(producto: AvailabilityProduct): string {
+function productName(producto: AvailabilityProduct): string {
   const nombre = producto.brandName ?? producto.genericName ?? producto.productCode;
   return [nombre, producto.strengthText, producto.packageSizeText]
     .filter((parte): parte is string => parte !== null && parte !== '')
     .join(' · ');
 }
 
-function precioDeProducto(
+function productPrice(
   producto: AvailabilityProduct,
   sede: AvailabilitySite,
-): PrecioPublicado | null {
+): PublishedPrice | null {
   const precio = producto.price;
   const importe = precio === null ? null : Number(precio.patientAmount ?? precio.unitAmount);
   if (
@@ -322,15 +322,15 @@ function precioDeProducto(
   return {
     amount: importe,
     currency: precio.currency.code,
-    source: procedenciaDeSede('Precio', sede.pharmacyName),
+    source: siteProvenance('Precio', sede.pharmacyName),
   };
 }
 
-function filaDeEstudio(
+function studyRow(
   centro: DiagnosticUnitDetail,
   estudio: DiagnosticStudy,
   vertical: 'ANALISIS' | 'IMAGENOLOGIA',
-): CotizacionResultado {
+): ResultQuotation {
   // El precio de la sede del estudio si la lista lo distingue; si no, el
   // general del centro. Nunca el de otra sede.
   const publicado =
@@ -349,7 +349,7 @@ function filaDeEstudio(
         : {
             amount: importe,
             currency: publicado.currency.code,
-            source: procedenciaDeSede('Tarifario', centro.name),
+            source: siteProvenance('Tarifario', centro.name),
           },
     distanceKm: null,
     sinPrecio: 'El centro no publicó el precio de este estudio',
@@ -360,7 +360,7 @@ function filaDeEstudio(
   };
 }
 
-function filaDePrestacion(prestacion: ProcedureNomenclatureItem): CotizacionResultado {
+function benefitRow(prestacion: ProcedureNomenclatureItem): ResultQuotation {
   const importe = prestacion.referencePrice === null ? null : Number(prestacion.referencePrice);
   const unidad = prestacion.priceUnit;
   return {
@@ -377,7 +377,7 @@ function filaDePrestacion(prestacion: ProcedureNomenclatureItem): CotizacionResu
         : {
             amount: importe,
             currency: unidad,
-            source: unidad === 'UMA' ? PROCEDENCIA_UMA : `Arancel de referencia, en ${unidad}`,
+            source: unidad === 'UMA' ? PROVENANCE_UMA : `Arancel de referencia, en ${unidad}`,
           },
     distanceKm: null,
     sinPrecio: 'El arancel de referencia no fija precio para esta prestación',

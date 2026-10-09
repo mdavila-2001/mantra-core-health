@@ -22,9 +22,9 @@
  * propias hoy. Por eso la tarjeta la pinta como decorativa (`alt=""`) y una
  * foto real (`coverUrl`) le gana cuando exista.
  */
-export type TemaDeFoto = 'medico' | 'laboratorio' | 'imagen' | 'farmacia' | 'clinica';
+export type PhotoTheme = 'medico' | 'laboratorio' | 'imagen' | 'farmacia' | 'clinica';
 
-const CANTIDAD_POR_TEMA: Readonly<Record<TemaDeFoto, number>> = {
+const QUANTITY_BY_THEME: Readonly<Record<PhotoTheme, number>> = {
   medico: 26,
   laboratorio: 15,
   imagen: 11,
@@ -43,26 +43,26 @@ function hash(clave: string): number {
 }
 
 /** La ruta de la foto que le toca a `clave` dentro de su `tema`. */
-export function fotoDeDirectorio(tema: TemaDeFoto, clave: string): string {
-  const numero = (hash(clave) % CANTIDAD_POR_TEMA[tema]) + 1;
+export function directoryPhoto(tema: PhotoTheme, clave: string): string {
+  const numero = (hash(clave) % QUANTITY_BY_THEME[tema]) + 1;
   return `/alovida/directorio/${tema}-${String(numero).padStart(2, '0')}.jpg`;
 }
 
 /** La foto de la tarjeta de una especialidad de la portada de médicos. */
-export function fotoDeEspecialidad(nombre: string): string {
-  return fotoDeDirectorio(temaDeCentroDiagnostico(nombre) === 'imagen' ? 'imagen' : 'medico', nombre);
+export function specialtyPhoto(nombre: string): string {
+  return directoryPhoto(diagnosisCenterTheme(nombre) === 'imagen' ? 'imagen' : 'medico', nombre);
 }
 
 /** La foto de cada puerta de la portada «Directorios». */
-export function fotoDeVertical(ruta: string): string {
-  const tema: TemaDeFoto = ruta.includes('laboratory')
+export function verticalPhoto(ruta: string): string {
+  const tema: PhotoTheme = ruta.includes('laboratory')
     ? 'laboratorio'
     : ruta.includes('clinic')
       ? 'clinica'
       : ruta.includes('pharmac')
         ? 'farmacia'
         : 'medico';
-  return fotoDeDirectorio(tema, ruta);
+  return directoryPhoto(tema, ruta);
 }
 
 /**
@@ -71,7 +71,7 @@ export function fotoDeVertical(ruta: string): string {
  * Mira el texto y no un código porque los dos mapeadores lo tienen a mano en
  * formas distintas —categoría de la API en uno, titular en el otro—.
  */
-export function temaDeCentroDiagnostico(texto: string): TemaDeFoto {
+export function diagnosisCenterTheme(texto: string): PhotoTheme {
   return /imagen|imaging|radiolog|rayos|resonancia|tomograf|ecograf|ultrasonid/i.test(texto)
     ? 'imagen'
     : 'laboratorio';

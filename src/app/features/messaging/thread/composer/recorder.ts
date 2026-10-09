@@ -10,7 +10,7 @@ import {
 import { isPlatformBrowser } from '@angular/common';
 
 /** Tope de una nota de voz. Más que esto es un audio, no un mensaje. */
-const TOPE_SEGUNDOS = 300;
+const SECONDS_LIMIT = 300;
 
 /**
  * El botón de nota de voz.
@@ -29,25 +29,25 @@ const TOPE_SEGUNDOS = 300;
   selector: 'app-recorder',
   imports: [],
   template: `
-    @if (disponible) {
-      @if (grabando()) {
+    @if (available) {
+      @if (recording()) {
         <div class="grabador">
           <button
             class="grabador__cancelar"
             type="button"
             aria-label="Cancelar la grabación"
-            (click)="cancelar()"
+            (click)="cancel()"
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12" /></svg>
           </button>
           <span class="grabador__punto" aria-hidden="true"></span>
-          <span class="grabador__tiempo" role="timer">{{ reloj() }}</span>
+          <span class="grabador__tiempo" role="timer">{{ clock() }}</span>
           <button
             class="grabador__enviar"
             type="button"
             data-testid="composer-audio-enviar"
             aria-label="Enviar la nota de voz"
-            (click)="terminar()"
+            (click)="finish()"
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m3.4 20.4 17.3-8.4L3.4 3.6 3.4 10l12 2-12 2z" /></svg>
           </button>
@@ -58,7 +58,7 @@ const TOPE_SEGUNDOS = 300;
           type="button"
           data-testid="composer-audio"
           aria-label="Grabar una nota de voz"
-          (click)="empezar()"
+          (click)="start()"
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="9" y="3" width="6" height="11" rx="3" /><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v3" /></svg>
         </button>
@@ -68,7 +68,7 @@ const TOPE_SEGUNDOS = 300;
   styleUrl: './recorder.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class Grabador {
+export class Recorder {
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
   /** La nota terminada, lista para mandar. */
@@ -77,77 +77,77 @@ export class Grabador {
   /** Cuando el micrófono no se pudo usar, con el motivo ya en castellano. */
   readonly fallo = output<string>();
 
-  protected readonly grabando = signal(false);
-  protected readonly segundos = signal(0);
+  protected readonly recording = signal(false);
+  protected readonly seconds = signal(0);
 
-  private grabadora: MediaRecorder | null = null;
-  private pista: MediaStream | null = null;
-  private trozos: Blob[] = [];
-  private cronometro: ReturnType<typeof setInterval> | null = null;
-  private cancelado = false;
+  private recorder: MediaRecorder | null = null;
+  private track: MediaStream | null = null;
+  private chunks: Blob[] = [];
+  private stopwatch: ReturnType<typeof setInterval> | null = null;
+  private cancelled = false;
 
   /** `MediaRecorder` no existe bajo SSR ni en navegadores viejos. */
-  protected readonly disponible =
+  protected readonly available =
     this.isBrowser && typeof MediaRecorder !== 'undefined';
 
   constructor() {
-    inject(DestroyRef).onDestroy(() => this.soltarTodo());
+    inject(DestroyRef).onDestroy(() => this.dropAll());
   }
 
-  protected reloj(): string {
-    const total = this.segundos();
+  protected clock(): string {
+    const total = this.seconds();
     const minutos = Math.floor(total / 60);
     const resto = total % 60;
     return `${minutos}:${resto.toString().padStart(2, '0')}`;
   }
 
-  protected async empezar(): Promise<void> {
-    if (!this.disponible || this.grabando()) {
+  protected async start(): Promise<void> {
+    if (!this.available || this.recording()) {
       return;
     }
     try {
-      this.pista = await navigator.mediaDevices.getUserMedia({ audio: true });
+      this.track = await navigator.mediaDevices.getUserMedia({ audio: true });
     } catch {
       this.fallo.emit('No pudimos usar el micrófono. Revise el permiso del navegador.');
       return;
     }
 
-    this.cancelado = false;
-    this.trozos = [];
-    this.grabadora = new MediaRecorder(this.pista);
-    this.grabadora.ondataavailable = (evento) => {
+    this.cancelled = false;
+    this.chunks = [];
+    this.recorder = new MediaRecorder(this.track);
+    this.recorder.ondataavailable = (evento) => {
       if (evento.data.size > 0) {
-        this.trozos.push(evento.data);
+        this.chunks.push(evento.data);
       }
     };
-    this.grabadora.onstop = () => this.alDetenerse();
-    this.grabadora.start();
+    this.recorder.onstop = () => this.toStop();
+    this.recorder.start();
 
-    this.grabando.set(true);
-    this.segundos.set(0);
-    this.cronometro = setInterval(() => {
-      this.segundos.update((s) => s + 1);
-      if (this.segundos() >= TOPE_SEGUNDOS) {
-        this.terminar();
+    this.recording.set(true);
+    this.seconds.set(0);
+    this.stopwatch = setInterval(() => {
+      this.seconds.update((s) => s + 1);
+      if (this.seconds() >= SECONDS_LIMIT) {
+        this.finish();
       }
     }, 1000);
   }
 
-  protected terminar(): void {
-    if (this.grabadora?.state === 'recording') {
-      this.grabadora.stop();
+  protected finish(): void {
+    if (this.recorder?.state === 'recording') {
+      this.recorder.stop();
     }
   }
 
-  protected cancelar(): void {
-    this.cancelado = true;
-    this.terminar();
+  protected cancel(): void {
+    this.cancelled = true;
+    this.finish();
   }
 
-  private alDetenerse(): void {
-    const trozos = this.trozos;
-    const cancelado = this.cancelado;
-    this.soltarTodo();
+  private toStop(): void {
+    const trozos = this.chunks;
+    const cancelado = this.cancelled;
+    this.dropAll();
 
     if (cancelado || trozos.length === 0) {
       return;
@@ -165,16 +165,16 @@ export class Grabador {
    * pista el navegador deja el indicador de grabación encendido aunque el
    * componente ya no exista.
    */
-  private soltarTodo(): void {
-    if (this.cronometro !== null) {
-      clearInterval(this.cronometro);
-      this.cronometro = null;
+  private dropAll(): void {
+    if (this.stopwatch !== null) {
+      clearInterval(this.stopwatch);
+      this.stopwatch = null;
     }
-    this.pista?.getTracks().forEach((track) => track.stop());
-    this.pista = null;
-    this.grabadora = null;
-    this.trozos = [];
-    this.grabando.set(false);
-    this.segundos.set(0);
+    this.track?.getTracks().forEach((track) => track.stop());
+    this.track = null;
+    this.recorder = null;
+    this.chunks = [];
+    this.recording.set(false);
+    this.seconds.set(0);
   }
 }

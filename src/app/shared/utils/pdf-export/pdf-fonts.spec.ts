@@ -1,10 +1,10 @@
 import {
   aBase64,
-  ARCHIVOS_DE_FUENTES,
-  establecerFuentesDeDocumentos,
-  fuentesDeDocumentos,
-  prepararFuentes,
-  RUTA_DE_TIPOGRAFIAS,
+  FONT_FILES,
+  setDocumentFonts,
+  documentFonts,
+  prepareFonts,
+  TYPEFACES_PATH,
 } from './pdf-fonts';
 
 /** Unos bytes cualesquiera que se reconocen al volver. */
@@ -13,24 +13,24 @@ function bytes(texto: string): ArrayBuffer {
 }
 
 describe('prepararFuentes', () => {
-  beforeEach(() => establecerFuentesDeDocumentos(null));
+  beforeEach(() => setDocumentFonts(null));
 
   it('baja las dos fuentes de la carpeta pública y las deja en base64', async () => {
     const pedidas: string[] = [];
     const bajar = vi.fn(async (url: string) => {
       pedidas.push(url);
-      return bytes(url.endsWith(ARCHIVOS_DE_FUENTES.titulos) ? 'poppins' : 'inter');
+      return bytes(url.endsWith(FONT_FILES.titulos) ? 'poppins' : 'inter');
     });
 
-    const fuentes = await prepararFuentes(bajar);
+    const fuentes = await prepareFonts(bajar);
 
     expect(pedidas).toEqual([
-      `${RUTA_DE_TIPOGRAFIAS}${ARCHIVOS_DE_FUENTES.titulos}`,
-      `${RUTA_DE_TIPOGRAFIAS}${ARCHIVOS_DE_FUENTES.cuerpo}`,
+      `${TYPEFACES_PATH}${FONT_FILES.titulos}`,
+      `${TYPEFACES_PATH}${FONT_FILES.cuerpo}`,
     ]);
     expect(fuentes).toEqual({
-      titulos: { archivo: ARCHIVOS_DE_FUENTES.titulos, base64: btoa('poppins') },
-      cuerpo: { archivo: ARCHIVOS_DE_FUENTES.cuerpo, base64: btoa('inter') },
+      titulos: { archivo: FONT_FILES.titulos, base64: btoa('poppins') },
+      cuerpo: { archivo: FONT_FILES.cuerpo, base64: btoa('inter') },
     });
   });
 
@@ -40,10 +40,10 @@ describe('prepararFuentes', () => {
    */
   it('si una sola falla no devuelve ninguna', async () => {
     const bajar = vi.fn(async (url: string) =>
-      url.endsWith(ARCHIVOS_DE_FUENTES.cuerpo) ? null : bytes('poppins'),
+      url.endsWith(FONT_FILES.cuerpo) ? null : bytes('poppins'),
     );
 
-    expect(await prepararFuentes(bajar)).toBeNull();
+    expect(await prepareFonts(bajar)).toBeNull();
   });
 
   it('nunca rechaza: un error de red deja el papel en Helvetica', async () => {
@@ -51,28 +51,28 @@ describe('prepararFuentes', () => {
       throw new Error('sin red');
     });
 
-    await expect(prepararFuentes(bajar)).resolves.toBeNull();
+    await expect(prepareFonts(bajar)).resolves.toBeNull();
   });
 
   it('un archivo vacío cuenta como ausente', async () => {
     const bajar = vi.fn(async () => new ArrayBuffer(0));
 
-    expect(await prepararFuentes(bajar)).toBeNull();
+    expect(await prepareFonts(bajar)).toBeNull();
   });
 });
 
 describe('el holder de fuentes', () => {
   it('arranca vacío y guarda lo que se le pone', () => {
-    establecerFuentesDeDocumentos(null);
-    expect(fuentesDeDocumentos()).toBeNull();
+    setDocumentFonts(null);
+    expect(documentFonts()).toBeNull();
 
     const fuentes = {
       titulos: { archivo: 'poppins-600.ttf', base64: 'AA==' },
       cuerpo: { archivo: 'inter-400.ttf', base64: 'AA==' },
     };
-    establecerFuentesDeDocumentos(fuentes);
-    expect(fuentesDeDocumentos()).toBe(fuentes);
-    establecerFuentesDeDocumentos(null);
+    setDocumentFonts(fuentes);
+    expect(documentFonts()).toBe(fuentes);
+    setDocumentFonts(null);
   });
 });
 

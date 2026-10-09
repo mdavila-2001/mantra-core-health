@@ -26,15 +26,15 @@ import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 import { ContentDialog } from '../../../shared/components/organisms/content-dialog/content-dialog';
 import { DatePicker } from '../../../shared/components/organisms/date-picker/date-picker';
-import { CuentaDialog } from './account-dialog';
-import { motivoDelError } from './errors';
+import { AccountDialog } from './account-dialog';
+import { errorReason } from './errors';
 import {
-  aDia,
-  deDia,
-  montoEditable,
-  montoNormalizado,
-  opcionesDeCuentas,
-  TEXTOS,
+  toDay,
+  fromDay,
+  editableAmount,
+  normalizedAmount,
+  accountsOptions,
+  TEXTS,
 } from './records.format';
 
 /**
@@ -53,7 +53,7 @@ import {
     AppButton,
     Alert,
     ContentDialog,
-    CuentaDialog,
+    AccountDialog,
     DatePicker,
     FormField,
     Input,
@@ -63,7 +63,7 @@ import {
   styleUrl: './records-dialogs.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class RegistroDialog implements OnInit {
+export class RecordDialog implements OnInit {
   readonly practiceId = input.required<string>();
   readonly kind = input.required<RecordKind>();
   readonly cuentas = input.required<readonly SimpleAccount[]>();
@@ -75,28 +75,28 @@ export class RegistroDialog implements OnInit {
   readonly cuentaCreada = output<SimpleAccount>();
   readonly closed = output<void>();
 
-  private readonly contabilidad = inject(SimpleAccountingClient);
+  private readonly accounting = inject(SimpleAccountingClient);
   private readonly fb = inject(FormBuilder);
   protected readonly dialog = viewChild.required(ContentDialog);
 
-  protected readonly guardando = signal(false);
+  protected readonly saving = signal(false);
   protected readonly error = signal<string | null>(null);
-  protected readonly fecha = signal<Date | null>(new Date());
-  protected readonly fechaTocada = signal(false);
-  protected readonly creandoCuenta = signal(false);
+  protected readonly date = signal<Date | null>(new Date());
+  protected readonly touchedDate = signal(false);
+  protected readonly accountCreating = signal(false);
   /** Las cuentas creadas desde este modal, hasta que la lista de afuera las traiga. */
-  private readonly nuevas = signal<readonly SimpleAccount[]>([]);
+  private readonly new = signal<readonly SimpleAccount[]>([]);
 
-  protected readonly textos = computed(() => TEXTOS[this.kind()]);
-  protected readonly clase = computed(() => CLASS_OF_KIND[this.kind()]);
-  protected readonly titulo = computed(() =>
-    this.registro() === null ? this.textos().nuevo : `Editar ${this.textos().conArticulo}`,
+  protected readonly texts = computed(() => TEXTS[this.kind()]);
+  protected readonly class = computed(() => CLASS_OF_KIND[this.kind()]);
+  protected readonly title = computed(() =>
+    this.registro() === null ? this.texts().nuevo : `Editar ${this.texts().conArticulo}`,
   );
-  protected readonly opcionesDeTipo = computed(() => {
+  protected readonly typeOptions = computed(() => {
     const conocidas = new Set(this.cuentas().map((cuenta) => cuenta.id));
-    return opcionesDeCuentas(
-      [...this.cuentas(), ...this.nuevas().filter((cuenta) => !conocidas.has(cuenta.id))],
-      this.clase(),
+    return accountsOptions(
+      [...this.cuentas(), ...this.new().filter((cuenta) => !conocidas.has(cuenta.id))],
+      this.class(),
     );
   });
 
@@ -107,12 +107,12 @@ export class RegistroDialog implements OnInit {
   });
 
   /** El monto escrito, ya normalizado; `null` si no es un monto válido. */
-  private monto(): string | null {
-    return montoNormalizado(this.form.controls.amount.value);
+  private amount(): string | null {
+    return normalizedAmount(this.form.controls.amount.value);
   }
 
-  protected montoInvalido(): boolean {
-    return this.form.controls.amount.touched && this.monto() === null;
+  protected invalidAmount(): boolean {
+    return this.form.controls.amount.touched && this.amount() === null;
   }
 
   ngOnInit(): void {
@@ -121,32 +121,32 @@ export class RegistroDialog implements OnInit {
       this.form.setValue({
         accountId: registro.accountId,
         description: registro.description,
-        amount: montoEditable(registro.amount),
+        amount: editableAmount(registro.amount),
       });
-      this.fecha.set(deDia(registro.date));
+      this.date.set(fromDay(registro.date));
     }
   }
 
-  protected alCrearCuenta(cuenta: SimpleAccount): void {
-    this.nuevas.update((nuevas) => [...nuevas, cuenta]);
+  protected toCreateAccount(cuenta: SimpleAccount): void {
+    this.new.update((nuevas) => [...nuevas, cuenta]);
     this.form.controls.accountId.setValue(cuenta.id);
     this.cuentaCreada.emit(cuenta);
   }
 
-  protected guardar(): void {
-    if (this.guardando()) return;
-    const fecha = this.fecha();
-    const monto = this.monto();
+  protected save(): void {
+    if (this.saving()) return;
+    const fecha = this.date();
+    const monto = this.amount();
     if (this.form.invalid || fecha === null || monto === null) {
       this.form.markAllAsTouched();
-      this.fechaTocada.set(true);
+      this.touchedDate.set(true);
       return;
     }
-    this.guardando.set(true);
+    this.saving.set(true);
     this.error.set(null);
     const datos = {
       kind: this.kind(),
-      date: aDia(fecha),
+      date: toDay(fecha),
       accountId: this.form.controls.accountId.value,
       description: this.form.controls.description.value.trim(),
       amount: monto,
@@ -154,17 +154,17 @@ export class RegistroDialog implements OnInit {
     const registro = this.registro();
     const pedido =
       registro === null
-        ? this.contabilidad.createRecord(this.practiceId(), datos)
-        : this.contabilidad.updateRecord(registro.id, datos);
+        ? this.accounting.createRecord(this.practiceId(), datos)
+        : this.accounting.updateRecord(registro.id, datos);
     pedido.subscribe({
       next: (guardado) => {
-        this.guardando.set(false);
+        this.saving.set(false);
         this.saved.emit(guardado);
         this.dialog().close(true);
       },
       error: (error: unknown) => {
-        this.guardando.set(false);
-        this.error.set(motivoDelError(error));
+        this.saving.set(false);
+        this.error.set(errorReason(error));
       },
     });
   }

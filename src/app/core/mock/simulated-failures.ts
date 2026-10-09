@@ -47,7 +47,7 @@
    ========================================================================== */
 
 /** La clave del almacenamiento de sesión. Única y con prefijo. */
-const CLAVE = 'mock:fallos';
+const KEY = 'mock:fallos';
 
 /**
  * Qué clase de fallo se quiere provocar.
@@ -56,14 +56,14 @@ const CLAVE = 'mock:fallos';
  * `red` es S8 —la petición no llegó—, y los otros cuatro son los estados HTTP
  * que el modelo de error del backend declara.
  */
-export const MODOS_DE_FALLO = ['red', 'forbidden', 'not-found', 'conflict', 'error'] as const;
-export type ModoDeFallo = (typeof MODOS_DE_FALLO)[number];
+export const FAILURE_MODES = ['red', 'forbidden', 'not-found', 'conflict', 'error'] as const;
+export type FailureMode = (typeof FAILURE_MODES)[number];
 
 /** Un fallo declarado: a qué rutas alcanza y de qué clase es. */
-export interface FalloSimulado {
+export interface SimulatedFailure {
   /** Subcadena de la ruta, p. ej. `/clinical/allergy-intolerances`. */
   readonly patron: string;
-  readonly modo: ModoDeFallo;
+  readonly modo: FailureMode;
   /**
    * A qué métodos alcanza. Sin él, a todos.
    *
@@ -80,8 +80,8 @@ export interface FalloSimulado {
  * @param path - La ruta ya normalizada, sin el origen ni la query.
  * @returns El fallo que corresponde, o `null` si la petición sigue su curso.
  */
-export function falloPara(method: string, path: string): FalloSimulado | null {
-  for (const fallo of declarados()) {
+export function failureFor(method: string, path: string): SimulatedFailure | null {
+  for (const fallo of declared()) {
     if (!path.includes(fallo.patron)) {
       continue;
     }
@@ -102,7 +102,7 @@ export function falloPara(method: string, path: string): FalloSimulado | null {
  * un cuerpo sin él caería en «error inesperado» y no en el estado que se quería
  * mirar.
  */
-export function cuerpoDelFallo(fallo: FalloSimulado, path: string): { status: number; body: unknown } {
+export function failureBody(fallo: SimulatedFailure, path: string): { status: number; body: unknown } {
   const base = { timestamp: new Date().toISOString(), path, correlationId: 'mock-fallo' };
   switch (fallo.modo) {
     case 'forbidden':
@@ -133,23 +133,23 @@ export function cuerpoDelFallo(fallo: FalloSimulado, path: string): { status: nu
  * privado, política del navegador— o traer algo que no es la lista esperada.
  * En cualquiera de los dos casos se sigue sin fallos, que es el estado normal.
  */
-function declarados(): readonly FalloSimulado[] {
+function declared(): readonly SimulatedFailure[] {
   if (typeof sessionStorage === 'undefined') {
     return [];
   }
   try {
-    const crudo = sessionStorage.getItem(CLAVE);
+    const crudo = sessionStorage.getItem(KEY);
     if (crudo === null) {
       return [];
     }
     const leido: unknown = JSON.parse(crudo);
-    return Array.isArray(leido) ? leido.filter(esFallo) : [];
+    return Array.isArray(leido) ? leido.filter(isFailure) : [];
   } catch {
     return [];
   }
 }
 
-function esFallo(valor: unknown): valor is FalloSimulado {
+function isFailure(valor: unknown): valor is SimulatedFailure {
   if (typeof valor !== 'object' || valor === null) {
     return false;
   }
@@ -158,6 +158,6 @@ function esFallo(valor: unknown): valor is FalloSimulado {
     typeof candidato['patron'] === 'string' &&
     candidato['patron'] !== '' &&
     typeof candidato['modo'] === 'string' &&
-    (MODOS_DE_FALLO as readonly string[]).includes(candidato['modo'])
+    (FAILURE_MODES as readonly string[]).includes(candidato['modo'])
   );
 }

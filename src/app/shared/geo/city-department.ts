@@ -19,7 +19,7 @@ import type { RamaDepartamento } from '@core/data-access/terminology/bo-municipa
  * ser la misma ciudad. Sin esto el mapa dejaría fuera justo a los
  * departamentos cuyo nombre lleva tilde, que son la mitad.
  */
-export function normalizarLugar(texto: string): string {
+export function normalizePlace(texto: string): string {
   return texto
     .normalize('NFD')
     .replace(/[̀-ͯ]/gu, '')
@@ -35,20 +35,20 @@ export function normalizarLugar(texto: string): string {
  * sembrara un municipio nuevo, y el directorio empezaría a esconder centros sin
  * que nadie lo notara.
  */
-export function departamentoPorCiudad(
+export function departmentByCity(
   ramas: readonly RamaDepartamento[],
 ): ReadonlyMap<string, string> {
   const mapa = new Map<string, string>();
   for (const rama of ramas) {
     for (const municipio of rama.municipios) {
-      mapa.set(normalizarLugar(municipio.nombre), rama.conceptId);
+      mapa.set(normalizePlace(municipio.nombre), rama.conceptId);
     }
   }
   return mapa;
 }
 
 /** Dónde queda una ciudad, cuando su nombre alcanza para saberlo. */
-export interface LugarDeCiudad {
+export interface CityPlace {
   /** `conceptId` del departamento. */
   readonly departamento: string;
   /** El nombre del municipio como lo escribe el catálogo, no como vino en la ficha. */
@@ -73,14 +73,14 @@ export interface LugarDeCiudad {
  * `departamentoPorCiudad` queda igual a propósito: la usan clínicas, farmacias
  * y hospitales, y cambiarles el comportamiento no es de la subtarea 2.3.
  */
-export function lugarInequivocoPorCiudad(
+export function placeUnambiguousByCity(
   ramas: readonly RamaDepartamento[],
-): ReadonlyMap<string, LugarDeCiudad> {
-  const lugares = new Map<string, LugarDeCiudad>();
+): ReadonlyMap<string, CityPlace> {
+  const lugares = new Map<string, CityPlace>();
   const ambiguos = new Set<string>();
   for (const rama of ramas) {
     for (const municipio of rama.municipios) {
-      const clave = normalizarLugar(municipio.nombre);
+      const clave = normalizePlace(municipio.nombre);
       const previo = lugares.get(clave);
       if (previo !== undefined) {
         if (previo.departamento !== rama.conceptId) {

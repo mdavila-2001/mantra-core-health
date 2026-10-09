@@ -15,7 +15,7 @@ import { blobToDataUrl } from '../files/blob-to-data-url';
  * `data:` y no una URL de archivo porque la CSP es `img-src 'self' data:`.
  */
 @Injectable({ providedIn: 'root' })
-export class LogoDeOrganizacionClient {
+export class OrganizationLogoClient {
   private readonly directory = inject(DirectoryClient);
   private readonly files = inject(FilesClient);
 
@@ -23,7 +23,7 @@ export class LogoDeOrganizacionClient {
    * El logo como `data:` URL, o `null` si no hay o no se pudo leer. **Nunca falla**: un
    * logo que no carga no puede romper una ficha.
    */
-  obtenerUrl(tenantId: string): Observable<string | null> {
+  getUrl(tenantId: string): Observable<string | null> {
     return this.directory.getOrganizationLogo(tenantId).pipe(
       switchMap(({ fileId }) =>
         fileId === null
@@ -43,12 +43,12 @@ export class LogoDeOrganizacionClient {
    *
    * @returns El id del archivo recién subido; todavía no está asociado a nada.
    */
-  subir(archivo: File): Observable<string> {
+  upload(archivo: File): Observable<string> {
     return this.files.upload(archivo, 'IMAGE', 'NORMAL').pipe(map((subido) => subido.id));
   }
 
   /** Deja el archivo ya subido como logo de la organización, o lo quita con `null`. */
-  guardar(tenantId: string, fileId: string | null): Observable<void> {
+  save(tenantId: string, fileId: string | null): Observable<void> {
     return this.directory.setOrganizationLogo(tenantId, fileId).pipe(map(() => undefined));
   }
 }

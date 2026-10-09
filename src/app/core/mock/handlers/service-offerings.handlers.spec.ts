@@ -4,9 +4,9 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { registrarAgenda } from './scheduling.handlers';
 import { registrarServiciosDeAgenda } from './service-offerings.handlers';
 import { cupos, reservas } from '../fixtures/agenda';
-import { ACTIVIDAD, ESTADO, ESTADO_RESERVA } from '../fixtures/concepts';
-import { MEDICA } from '../fixtures/people';
-import { ofertas } from '../fixtures/offered-services';
+import { ACTIVITY, STATUS, BOOKING_STATUS } from '../fixtures/concepts';
+import { MEDICAL } from '../fixtures/people';
+import { offers } from '../fixtures/offered-services';
 import { MockRouter, type MockMethod } from '../mock-router';
 import { buscarUsuario } from '../mock-session';
 import { servicios } from './practice.handlers';
@@ -46,9 +46,9 @@ describe('handlers de servicios con duración dinámica', () => {
     return { status: 200, body: resultado as T };
   }
 
-  const ECO = uuid(`offering-${MEDICA.id}-ECO-DOPPLER`);
-  const ECG = uuid(`offering-${MEDICA.id}-ECG`);
-  const HOLTER = uuid(`offering-${MEDICA.id}-HOLTER`);
+  const ECO = uuid(`offering-${MEDICAL.id}-ECO-DOPPLER`);
+  const ECG = uuid(`offering-${MEDICAL.id}-ECG`);
+  const HOLTER = uuid(`offering-${MEDICAL.id}-HOLTER`);
 
   interface Horarios {
     items: { resourceId: string; startAt: string; endAtMax: string; endAtMin: string }[];
@@ -73,7 +73,7 @@ describe('handlers de servicios con duración dinámica', () => {
    */
   const fotoDeCupos = cupos.todos();
   const fotoDeReservas = reservas.todos();
-  const fotoDeOfertas = ofertas.todos();
+  const fotoDeOfertas = offers.todos();
 
   function restaurar<T extends { readonly id: string }>(
     tabla: { todos(): T[]; has(id: string): boolean; borrar(id: string): boolean; agregar(f: T): T; actualizar(id: string, c: Partial<T>): T | undefined },
@@ -90,7 +90,7 @@ describe('handlers de servicios con duración dinámica', () => {
   function restaurarTodo(): void {
     restaurar(cupos, fotoDeCupos);
     restaurar(reservas, fotoDeReservas);
-    restaurar(ofertas, fotoDeOfertas);
+    restaurar(offers, fotoDeOfertas);
   }
 
   beforeEach(restaurarTodo);
@@ -114,7 +114,7 @@ describe('handlers de servicios con duración dinámica', () => {
         '/scheduling/service-offerings',
         paciente,
         {},
-        new URLSearchParams({ practitionerProfileId: MEDICA.id }),
+        new URLSearchParams({ practitionerProfileId: MEDICAL.id }),
       );
       expect(body.items.map((i) => i.id)).not.toContain(ECG);
       expect(body.items.map((i) => i.id)).toContain(ECO);
@@ -227,7 +227,7 @@ describe('handlers de servicios con duración dinámica', () => {
       expect(body.retractedSlots).toBeGreaterThan(0);
       const retraidos = cupos.filtrar((c) => c.retractedByService === true);
       expect(retraidos.length).toBe(body.retractedSlots);
-      expect(retraidos.every((c) => c.statusConceptId !== ESTADO['ST-ACTIVE'])).toBe(true);
+      expect(retraidos.every((c) => c.statusConceptId !== STATUS['ST-ACTIVE'])).toBe(true);
 
       const reserva = llamar<{ id: string }>('POST', `/scheduling/holds/${body.holdToken}/request`, paciente, { patientProfileId: paciente.patientProfileId, channel: 'PORTAL' });
       llamar('POST', `/scheduling/bookings/${reserva.body.id}/cancel`, paciente, { cancelledBy: 'PATIENT', reasonText: 'No puedo ir' });
@@ -235,7 +235,7 @@ describe('handlers de servicios con duración dinámica', () => {
       // El cupo del servicio muere con la cancelación y las consultas vuelven.
       expect(cupos.get(body.bookableSlotId)).toBeUndefined();
       expect(cupos.filtrar((c) => c.retractedByService === true)).toEqual([]);
-      expect(retraidos.map((c) => cupos.get(c.id)!.statusConceptId)).toEqual(retraidos.map(() => ESTADO['ST-ACTIVE']));
+      expect(retraidos.map((c) => cupos.get(c.id)!.statusConceptId)).toEqual(retraidos.map(() => STATUS['ST-ACTIVE']));
     });
 
     it('un segundo paciente no puede retener un horario que se pisa: 409', () => {
@@ -263,19 +263,19 @@ describe('handlers de servicios con duración dinámica', () => {
       const item = horarios(ECO).body.items[0]!;
       const { body } = retener(ECO, item);
       const reserva = llamar<{ statusConceptId: string }>('POST', `/scheduling/holds/${body.holdToken}/request`, paciente, { patientProfileId: paciente.patientProfileId, channel: 'PORTAL' });
-      expect(reserva.body.statusConceptId).toBe(ESTADO_RESERVA['BK-CONFIRMED']);
+      expect(reserva.body.statusConceptId).toBe(BOOKING_STATUS['BK-CONFIRMED']);
       const guardada = reservas.todos().find((r) => r.bookableSlotId === body.bookableSlotId)!;
       expect(guardada.service).toMatchObject({ name: 'Ecocardiograma Doppler', price: '480.00', minDurationMinutes: 30, maxDurationMinutes: 45 });
       // Un servicio es un procedimiento para la agenda, como lo clasifica la API: es lo que
       // la pinta con su tipología y no como una consulta más.
-      expect(guardada.typeConceptId).toBe(ACTIVIDAD['ACT-PROCEDIMIENTO']);
+      expect(guardada.typeConceptId).toBe(ACTIVITY['ACT-PROCEDIMIENTO']);
     });
 
     it('un servicio CON aprobación requerida queda pendiente de aceptación', () => {
       const item = horarios(HOLTER).body.items[0]!;
       const { body } = retener(HOLTER, item);
       const reserva = llamar<{ statusConceptId: string }>('POST', `/scheduling/holds/${body.holdToken}/request`, paciente, { patientProfileId: paciente.patientProfileId, channel: 'PORTAL' });
-      expect(reserva.body.statusConceptId).toBe(ESTADO_RESERVA['BK-REQUESTED']);
+      expect(reserva.body.statusConceptId).toBe(BOOKING_STATUS['BK-REQUESTED']);
     });
 
     it('una retención que nadie confirmó vence y libera el horario', () => {

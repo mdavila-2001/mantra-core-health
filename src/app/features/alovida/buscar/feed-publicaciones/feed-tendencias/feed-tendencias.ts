@@ -3,7 +3,7 @@ import { RouterLink } from '@angular/router';
 
 import { PublicDirectoryClient } from '@core/data-access/public-directory/public-directory.client';
 import type { PublicSearchResult } from '@core/data-access/public-directory/public-directory.types';
-import { inicialesDe } from '@shared/text/initials';
+import { initialsOf } from '@shared/text/initials';
 
 /** Cuántos profesionales se muestran. Cinco: los que entran sin scroll. */
 const CUANTOS = 5;
@@ -77,7 +77,7 @@ export class FeedTendencias {
   }
 
   protected iniciales(d: PublicSearchResult): string {
-    return inicialesDe(d.displayName);
+    return initialsOf(d.displayName);
   }
 
   protected reintentar(): void {

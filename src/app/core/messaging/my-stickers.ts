@@ -2,10 +2,10 @@ import { DOCUMENT, inject, Injectable, PLATFORM_ID, signal } from '@angular/core
 import { isPlatformBrowser } from '@angular/common';
 
 /** Dónde se guardan, en este navegador. */
-const CLAVE = 'alovida.chat-mis-stickers';
+const KEY = 'alovida.chat-mis-stickers';
 
 /** Cuántos se guardan. El más viejo sale cuando entra uno nuevo. */
-const TOPE_DE_STICKERS = 30;
+const STICKERS_LIMIT = 30;
 
 /**
  * Lo más pesado que se acepta como sticker o GIF de la persona.
@@ -14,7 +14,7 @@ const TOPE_DE_STICKERS = 30;
  * al instante. La subida en sí admite hasta 10 MB (`UPLOAD_MAX_BYTES`); el tope
  * de acá es de producto y no del servidor.
  */
-export const TOPE_DE_STICKER_BYTES = 1024 * 1024;
+export const STICKER_BYTES_LIMIT = 1024 * 1024;
 
 /**
  * Lo más pesado que se **guarda** en el navegador para reusarlo.
@@ -22,13 +22,13 @@ export const TOPE_DE_STICKER_BYTES = 1024 * 1024;
  * `localStorage` tiene unos 5 MB para todo el sitio y un GIF grande se los
  * come. Uno más pesado que esto se manda igual, pero no queda en «Míos».
  */
-const TOPE_PARA_GUARDAR_BYTES = 400 * 1024;
+const LIMIT_FOR_SAVE_BYTES = 400 * 1024;
 
 /** Los formatos que el almacenamiento reconoce por firma y sirven de sticker. */
-export const TIPOS_DE_STICKER = ['image/png', 'image/webp', 'image/gif', 'image/jpeg'] as const;
+export const STICKER_TYPES = ['image/png', 'image/webp', 'image/gif', 'image/jpeg'] as const;
 
 /** Un sticker o GIF que la persona subió desde su equipo. */
-export interface MiSticker {
+export interface MySticker {
   /** Estable dentro de este navegador; no viaja al servidor. */
   readonly id: string;
   readonly nombre: string;
@@ -53,22 +53,22 @@ export interface MiSticker {
  * correcta: el servidor no sabe de quién es la sesión que va a hidratar.
  */
 @Injectable({ providedIn: 'root' })
-export class MisStickers {
+export class MyStickers {
   private readonly document = inject(DOCUMENT);
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
-  readonly lista = signal<readonly MiSticker[]>(this.leer());
+  readonly list = signal<readonly MySticker[]>(this.read());
 
   /**
    * Revisa un archivo antes de aceptarlo como sticker.
    *
    * @returns El motivo del rechazo, o `null` si sirve.
    */
-  static rechazo(archivo: File): string | null {
-    if (!(TIPOS_DE_STICKER as readonly string[]).includes(archivo.type)) {
+  static rejection(archivo: File): string | null {
+    if (!(STICKER_TYPES as readonly string[]).includes(archivo.type)) {
       return 'Elija una imagen PNG, WEBP, GIF o JPG.';
     }
-    if (archivo.size > TOPE_DE_STICKER_BYTES) {
+    if (archivo.size > STICKER_BYTES_LIMIT) {
       return 'El sticker pesa más de 1 MB. Pruebe con uno más liviano.';
     }
     return null;
@@ -78,39 +78,39 @@ export class MisStickers {
    * Deja un sticker a mano para reusarlo. Devuelve `false` si no cupo: en ese
    * caso igual se puede mandar, pero no queda en la lista.
    */
-  async guardar(archivo: File): Promise<boolean> {
-    if (!this.isBrowser || archivo.size > TOPE_PARA_GUARDAR_BYTES) {
+  async save(archivo: File): Promise<boolean> {
+    if (!this.isBrowser || archivo.size > LIMIT_FOR_SAVE_BYTES) {
       return false;
     }
-    const url = await leerComoDataUrl(archivo);
+    const url = await readAsDataUrl(archivo);
     if (url === null) {
       return false;
     }
-    const sticker: MiSticker = {
+    const sticker: MySticker = {
       id: `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`,
       nombre: archivo.name,
       tipo: archivo.type,
       url,
     };
-    const previa = this.lista();
+    const previa = this.list();
     // El mismo archivo dos veces no ocupa dos lugares.
     const sinRepetido = previa.filter((s) => s.url !== url);
-    const nueva = [sticker, ...sinRepetido].slice(0, TOPE_DE_STICKERS);
-    this.lista.set(nueva);
-    if (!this.persistir()) {
-      this.lista.set(previa);
+    const nueva = [sticker, ...sinRepetido].slice(0, STICKERS_LIMIT);
+    this.list.set(nueva);
+    if (!this.persist()) {
+      this.list.set(previa);
       return false;
     }
     return true;
   }
 
-  quitar(id: string): void {
-    this.lista.update((lista) => lista.filter((s) => s.id !== id));
-    this.persistir();
+  remove(id: string): void {
+    this.list.update((lista) => lista.filter((s) => s.id !== id));
+    this.persist();
   }
 
   /** Vuelve a armar el `File` de uno guardado, para mandarlo otra vez. */
-  static archivoDe(sticker: MiSticker): File | null {
+  static fileOf(sticker: MySticker): File | null {
     const coma = sticker.url.indexOf(',');
     if (coma < 0 || typeof atob !== 'function') {
       return null;
@@ -127,12 +127,12 @@ export class MisStickers {
     }
   }
 
-  private persistir(): boolean {
+  private persist(): boolean {
     if (!this.isBrowser) {
       return false;
     }
     try {
-      this.document.defaultView?.localStorage.setItem(CLAVE, JSON.stringify(this.lista()));
+      this.document.defaultView?.localStorage.setItem(KEY, JSON.stringify(this.list()));
       return true;
     } catch {
       // Almacenamiento lleno o bloqueado: se sigue con lo que hay en memoria.
@@ -140,16 +140,16 @@ export class MisStickers {
     }
   }
 
-  private leer(): readonly MiSticker[] {
+  private read(): readonly MySticker[] {
     if (!this.isBrowser) {
       return [];
     }
     try {
-      const crudo = this.document.defaultView?.localStorage.getItem(CLAVE);
+      const crudo = this.document.defaultView?.localStorage.getItem(KEY);
       const guardado: unknown = crudo == null ? [] : JSON.parse(crudo);
       return Array.isArray(guardado)
         ? guardado.filter(
-            (s): s is MiSticker =>
+            (s): s is MySticker =>
               typeof s === 'object' &&
               s !== null &&
               typeof s.id === 'string' &&
@@ -165,7 +165,7 @@ export class MisStickers {
   }
 }
 
-function leerComoDataUrl(archivo: File): Promise<string | null> {
+function readAsDataUrl(archivo: File): Promise<string | null> {
   return new Promise((resolver) => {
     const lector = new FileReader();
     lector.onload = () => resolver(typeof lector.result === 'string' ? lector.result : null);

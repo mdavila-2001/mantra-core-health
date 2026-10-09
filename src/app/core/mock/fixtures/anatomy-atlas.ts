@@ -23,7 +23,7 @@ import type { EntradaDeTaxonomia, TerminoDeGlosario } from './glossary.generated
     ========================================================================== */
 
 /** `R01` → `anatomy-region-r01`, la clave con la que el glosario la filtra. */
-function claveDeRegion(regionId: string): string {
+function regionKey(regionId: string): string {
   return `anatomy-region-${regionId.toLowerCase()}`;
 }
 
@@ -34,16 +34,16 @@ function claveDeRegion(regionId: string): string {
  * 0..N etiquetas: la categoría de una lámina es Anatomía, y la región es la
  * faceta por la que se acota.
  */
-export const ETIQUETAS_DE_REGION: readonly EntradaDeTaxonomia[] = REGIONES_ANATOMICAS.map(
+export const REGION_LABELS: readonly EntradaDeTaxonomia[] = REGIONES_ANATOMICAS.map(
   (region) => ({
-    key: claveDeRegion(region.id),
-    internalCode: `glossary-tag-${claveDeRegion(region.id)}`,
+    key: regionKey(region.id),
+    internalCode: `glossary-tag-${regionKey(region.id)}`,
     name: region.name,
   }),
 );
 
 /** `Cráneo: visión anterior` → `lamina-002-craneo-vision-anterior`. */
-function slugDeLamina(lamina: LaminaAnatomica): string {
+function plateSlug(lamina: LaminaAnatomica): string {
   const texto = lamina.title
     .normalize('NFD')
     .replace(/[̀-ͯ]/g, '')
@@ -60,14 +60,14 @@ function slugDeLamina(lamina: LaminaAnatomica): string {
  * máquina, y quien consulta un atlas tiene derecho a saber cuál de las dos
  * está mirando.
  */
-const ORIGEN_DEL_TITULO: Readonly<Record<string, string>> = {
+const TITLE_ORIGIN: Readonly<Record<string, string>> = {
   gold_manual: 'título verificado a mano',
   gold_ocr_title: 'título leído del encabezado de la lámina',
   derived_from_toc: 'título derivado de la tabla de contenidos',
 };
 
-function origenDe(confianza: string): string {
-  return ORIGEN_DEL_TITULO[confianza] ?? confianza;
+function originOf(confianza: string): string {
+  return TITLE_ORIGIN[confianza] ?? confianza;
 }
 
 /**
@@ -78,29 +78,29 @@ function origenDe(confianza: string): string {
  * juntas, porque separarlas dejaría la primera sonando a más de lo que es: un
  * atlas muestra dónde está algo, no qué hace ni qué lo irriga.
  */
-function terminoDeLamina(lamina: LaminaAnatomica): TerminoDeGlosario {
+function plateTerm(lamina: LaminaAnatomica): TerminoDeGlosario {
   const bloque =
     lamina.subregionName === '' ? lamina.regionName : `${lamina.regionName} › ${lamina.subregionName}`;
 
   return {
     key: lamina.id,
-    slug: slugDeLamina(lamina),
+    slug: plateSlug(lamina),
     categoryKey: 'anatomy',
-    tagKeys: lamina.regionId === null ? [] : [claveDeRegion(lamina.regionId)],
+    tagKeys: lamina.regionId === null ? [] : [regionKey(lamina.regionId)],
     enDisplay: `Plate ${lamina.plate}`,
     esName: lamina.title,
     esSynonyms: [`Lámina ${lamina.plate}`],
     clinicalDefinitionEs: `${lamina.regionalContext} ${lamina.doNotInfer}`.trim(),
     plainSummaryEs:
       `Lámina ${lamina.plate} del ${ATLAS_META.source}. Bloque: ${bloque}. ` +
-      `Procedencia del título: ${origenDe(lamina.titleConfidence)}.`,
+      `Procedencia del título: ${originOf(lamina.titleConfidence)}.`,
     relations: [],
   };
 }
 
 /** Las 548 láminas, listas para sumarse al glosario. */
-export const TERMINOS_DE_LAMINA: readonly TerminoDeGlosario[] =
-  LAMINAS_ANATOMICAS.map(terminoDeLamina);
+export const PLATE_TERMS: readonly TerminoDeGlosario[] =
+  LAMINAS_ANATOMICAS.map(plateTerm);
 
 /** Las regiones, por si una pantalla quiere recorrerlas sin pasar por el glosario. */
 export { LAMINAS_ANATOMICAS, REGIONES_ANATOMICAS, ATLAS_META };

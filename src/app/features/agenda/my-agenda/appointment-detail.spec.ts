@@ -3,9 +3,9 @@ import localeEsBo from '@angular/common/locales/es-BO';
 
 import type { Booking } from '../../../core/data-access/scheduling/scheduling.types';
 import {
-  detalleDeLaCita,
-  pacienteDeLaCita,
-  SIN_NOMBRE_DE_PACIENTE,
+  appointmentDetail,
+  appointmentPatient,
+  PATIENT_WITHOUT_NAME,
 } from './appointment-detail';
 
 /**
@@ -42,14 +42,14 @@ function valorDe(pares: readonly { label: string; value: string }[], label: stri
 
 describe('detalleDeLaCita', () => {
   it('una cita común dice «Cita» en «Qué es» y no habla de ninguna consulta previa', () => {
-    const pares = detalleDeLaCita(cita(), 'Confirmada', IDIOMA);
+    const pares = appointmentDetail(cita(), 'Confirmada', IDIOMA);
 
     expect(valorDe(pares, 'Qué es')).toBe('Cita');
     expect(pares.map((p) => p.label)).not.toContain('De la cita del');
   });
 
   it('una reconsulta lo dice en «Qué es», que es lo primero que hay que saber', () => {
-    const pares = detalleDeLaCita(
+    const pares = appointmentDetail(
       cita({
         followUpOf: {
           bookingId: 'b-origen',
@@ -70,7 +70,7 @@ describe('detalleDeLaCita', () => {
    * Un par con un guión no dice nada que valga la línea.
    */
   it('sin la fecha del origen sigue diciendo «Reconsulta», pero omite el par', () => {
-    const pares = detalleDeLaCita(
+    const pares = appointmentDetail(
       cita({ followUpOf: { bookingId: 'b-origen', encounterId: null } }),
       'Confirmada',
       IDIOMA,
@@ -81,7 +81,7 @@ describe('detalleDeLaCita', () => {
   });
 
   it('el orden no cambia: el origen va después del paciente y antes del motivo', () => {
-    const pares = detalleDeLaCita(
+    const pares = appointmentDetail(
       cita({
         followUpOf: {
           bookingId: 'b-origen',
@@ -104,6 +104,6 @@ describe('detalleDeLaCita', () => {
   });
 
   it('sin nombre de paciente no inventa un relleno: dice que no está', () => {
-    expect(pacienteDeLaCita(cita({ patientName: undefined }))).toBe(SIN_NOMBRE_DE_PACIENTE);
+    expect(appointmentPatient(cita({ patientName: undefined }))).toBe(PATIENT_WITHOUT_NAME);
   });
 });

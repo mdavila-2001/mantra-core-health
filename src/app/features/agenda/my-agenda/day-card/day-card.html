@@ -12,27 +12,27 @@
      escrito **sólo si hay algo escrito**. Sin eso, un `Escape` de reflejo pierde
      el paciente y el motivo ya cargados. -->
 <app-content-dialog
-  [heading]="titulo()"
+  [heading]="title()"
   description="Agregue una cita o un rato ocupado a este día."
   size="md"
-  [dismissible]="!hayAlgoEscrito()"
-  (dismissAttempt)="pedirDescarte()"
+  [dismissible]="!hasWrittenContent()"
+  (dismissAttempt)="requestDiscard()"
   (closed)="cerrada.emit()"
 >
-  <form class="tarjeta__cuerpo" (submit)="$event.preventDefault(); guardar()">
+  <form class="tarjeta__cuerpo" (submit)="$event.preventDefault(); save()">
     <!-- C-10 · sobre un cupo ya programado la franja NO se pregunta: es dato.
          Sobre aire —un hueco sin cupo detrás— los campos siguen, porque ahí la
          franja no existe hasta que alguien la escriba. -->
-    @if (desdeUnCupo()) {
+    @if (fromSlot()) {
       <p class="tarjeta__franja" data-testid="tarjeta-franja-del-cupo">
         <span class="tarjeta__franja-rotulo">Franja</span>
-        <strong class="tarjeta__franja-valor">{{ franjaDelCupo() }}</strong>
+        <strong class="tarjeta__franja-valor">{{ slotBand() }}</strong>
         <span class="tarjeta__franja-nota">La pone el cupo del horario publicado.</span>
       </p>
     } @else {
       <div class="tarjeta__rango">
         <app-form-field label="Desde" [required]="true">
-          <app-input [(value)]="desde" placeholder="10:00" />
+          <app-input [(value)]="from" placeholder="10:00" />
         </app-form-field>
         <app-form-field label="Hasta" [required]="true">
           <app-input [(value)]="hasta" placeholder="10:45" />
@@ -45,13 +45,13 @@
       hint="Busque al paciente, o déjelo vacío si es un rato suyo."
     >
       <app-reference-combobox
-        [selected]="paciente()"
-        [options]="candidatos()"
-        [loading]="buscando()"
+        [selected]="patient()"
+        [options]="candidates()"
+        [loading]="searching()"
         placeholder="Nombre o código del paciente"
-        [emptyMessage]="busquedaFallida() ?? 'Ningún paciente coincide'"
-        (searched)="buscarPaciente($event)"
-        (selectionChange)="paciente.set($event)"
+        [emptyMessage]="failedSearch() ?? 'Ningún paciente coincide'"
+        (searched)="searchPatient($event)"
+        (selectionChange)="patient.set($event)"
       />
     </app-form-field>
 
@@ -62,16 +62,16 @@
          C-21 · alternancia y no radios: tres opciones excluyentes, que es para
          lo que existe `segmented-control`. Se elige con flechas y un solo
          tabulador, y anuncia su estado como `radiogroup`. -->
-    @if (paciente() !== null) {
+    @if (patient() !== null) {
       <div class="tarjeta__modalidad">
         <span class="tarjeta__modalidad-titulo" id="tarjeta-modalidad">¿Cómo lo atiende?</span>
         <app-segmented-control
           data-testid="tarjeta-modalidad"
           ariaLabel="¿Cómo lo atiende?"
           size="md"
-          [options]="opcionesDeModalidad"
-          [value]="modalidad()"
-          (valueChange)="modalidad.set($event)"
+          [options]="modalityOptions"
+          [value]="modality()"
+          (valueChange)="modality.set($event)"
         />
       </div>
     }
@@ -80,17 +80,17 @@
       label="¿Qué pasa?"
       hint="El motivo de la cita, o el rótulo del rato ocupado (reunión, guardia…)."
     >
-      <app-input [(value)]="motivo" placeholder="Control · Cirugía · Reunión de equipo…" />
+      <app-input [(value)]="reason" placeholder="Control · Cirugía · Reunión de equipo…" />
     </app-form-field>
 
     <!-- La inferencia hecha visible: qué va a crear, dicho ANTES de apretar. -->
-    @if (queVaAPasar(); as aviso) {
+    @if (willHappen(); as aviso) {
       <p class="tarjeta__inferencia" role="status">{{ aviso }}</p>
     }
 
     <!-- El choque con lo ya cargado del día, en vivo. El servidor cruza además
          las otras sedes al guardar: esto es el aviso temprano, no la regla. -->
-    @if (choqueEnVivo(); as choque) {
+    @if (clashInLive(); as choque) {
       <app-alert tone="warning" title="Ese rato ya está tomado">
         {{ choque }}
       </app-alert>
@@ -115,9 +115,9 @@
     variant="primary"
     type="button"
     data-testid="tarjeta-guardar"
-    [disabled]="!puedeGuardar()"
-    [isLoading]="guardando()"
-    (clicked)="guardar()"
+    [disabled]="!canSave()"
+    [isLoading]="saving()"
+    (clicked)="save()"
   >
     Guardar
   </button>

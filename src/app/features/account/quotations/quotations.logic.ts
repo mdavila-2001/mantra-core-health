@@ -4,11 +4,11 @@ import type {
 } from '../../../core/data-access/pharmacy-cart/pharmacy-cart.types';
 
 /** Las cuatro verticales explícitas de Cotizaciones del paciente. */
-export type VerticalCotizacion =
+export type VerticalQuotation =
   'TODAS' | 'MEDICAMENTOS' | 'ANALISIS' | 'IMAGENOLOGIA' | 'SERVICIOS_MEDICOS';
 
 /** La orden que puede elegir la persona. */
-export type OrdenCotizacion = 'PRECIO' | 'CERCANIA';
+export type QuotationOrder = 'PRECIO' | 'CERCANIA';
 
 /**
  * Un precio publicado con su unidad y procedencia; `null` significa no publicado.
@@ -16,14 +16,14 @@ export type OrdenCotizacion = 'PRECIO' | 'CERCANIA';
  * `currency` es el código que trae la fuente (`BOB`, `USD`, `UMA`…) y se
  * muestra tal cual: UMA no es una moneda y nada acá la convierte.
  */
-export interface PrecioPublicado {
+export interface PublishedPrice {
   readonly amount: number;
   readonly currency: string;
   readonly source: string;
 }
 
 /** A dónde lleva la fila: una pantalla existente, con ícono + texto. */
-export interface AccionDeCotizacion {
+export interface QuotationAction {
   readonly etiqueta: string;
   readonly ruta: string;
 }
@@ -33,7 +33,7 @@ export interface AccionDeCotizacion {
  * sede a la que queda atado y la línea sin cantidad, con la misma forma que
  * arma «Agregar» en la búsqueda de Farmacia (`product-results.ts`).
  */
-export interface CarritoDeCotizacion {
+export interface QuotationCart {
   readonly sede: CartSite;
   readonly linea: Omit<CartLine, 'quantity'>;
 }
@@ -42,19 +42,19 @@ export interface CarritoDeCotizacion {
  * Lo que hace falta para pedir un horario para un estudio: el centro (cuya
  * agenda se abre) y el estudio, que viaja como motivo de la reserva.
  */
-export interface ReservaDeCotizacion {
+export interface QuotationBooking {
   readonly centroId: string;
   readonly centro: string;
   readonly estudio: string;
 }
 
 /** La fila normalizada que una fuente existente entrega a la pantalla. */
-export interface CotizacionResultado {
+export interface ResultQuotation {
   readonly id: string;
-  readonly vertical: Exclude<VerticalCotizacion, 'TODAS'>;
+  readonly vertical: Exclude<VerticalQuotation, 'TODAS'>;
   readonly que: string;
   readonly donde: string;
-  readonly price: PrecioPublicado | null;
+  readonly price: PublishedPrice | null;
   readonly distanceKm: number | null;
   /** Quién no publicó el precio, dicho para la persona, cuando `price` es `null`. */
   readonly sinPrecio?: string;
@@ -62,15 +62,15 @@ export interface CotizacionResultado {
   readonly sinDistancia?: string;
   /** Aviso sobre la fila misma (p. ej. texto de un escaneo por revisar). */
   readonly advertencia?: string;
-  readonly accion?: AccionDeCotizacion;
+  readonly accion?: QuotationAction;
   /** Medicamento de venta libre con precio: se agrega al carrito ahí mismo. */
-  readonly carrito?: CarritoDeCotizacion;
+  readonly carrito?: QuotationCart;
   /** Análisis o imagen: se reserva un horario en la agenda del centro. */
-  readonly reserva?: ReservaDeCotizacion;
+  readonly reserva?: QuotationBooking;
 }
 
 /** Quita tildes, espacios laterales y diferencias de mayúscula antes de comparar. */
-export function normalizarCotizacion(texto: string): string {
+export function normalizeQuotation(texto: string): string {
   return texto
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/gu, '')
@@ -79,19 +79,19 @@ export function normalizarCotizacion(texto: string): string {
 }
 
 /** Aplica la búsqueda y vertical sin mutar la fuente. */
-export function filtrarResultados(
-  resultados: readonly CotizacionResultado[],
+export function filterResults(
+  resultados: readonly ResultQuotation[],
   termino: string,
-  vertical: VerticalCotizacion,
-): readonly CotizacionResultado[] {
-  const buscado = normalizarCotizacion(termino);
+  vertical: VerticalQuotation,
+): readonly ResultQuotation[] {
+  const buscado = normalizeQuotation(termino);
   return resultados.filter((resultado) => {
     const pertenece = vertical === 'TODAS' || resultado.vertical === vertical;
     return (
       pertenece &&
       (buscado === '' ||
-        normalizarCotizacion(resultado.que).includes(buscado) ||
-        normalizarCotizacion(resultado.donde).includes(buscado))
+        normalizeQuotation(resultado.que).includes(buscado) ||
+        normalizeQuotation(resultado.donde).includes(buscado))
     );
   });
 }
@@ -103,11 +103,11 @@ export function filtrarResultados(
  * código y sólo se ordenan por monto dentro de la misma unidad. Los precios no
  * publicados siempre cierran la lista.
  */
-export function ordenarResultados(
-  resultados: readonly CotizacionResultado[],
-  orden: OrdenCotizacion,
+export function sortResults(
+  resultados: readonly ResultQuotation[],
+  orden: QuotationOrder,
   hasOrigin = true,
-): readonly CotizacionResultado[] {
+): readonly ResultQuotation[] {
   if (orden === 'CERCANIA' && !hasOrigin) {
     return [...resultados];
   }
@@ -117,14 +117,14 @@ export function ordenarResultados(
   return [...resultados].sort(
     (izquierda, derecha) =>
       (orden === 'PRECIO'
-        ? compararPrecio(izquierda, derecha) || compararDistancia(izquierda, derecha)
-        : compararDistancia(izquierda, derecha) || compararPrecio(izquierda, derecha)) ||
+        ? comparePrice(izquierda, derecha) || compareDistance(izquierda, derecha)
+        : compareDistance(izquierda, derecha) || comparePrice(izquierda, derecha)) ||
       izquierda.que.localeCompare(derecha.que, 'es') ||
       izquierda.id.localeCompare(derecha.id),
   );
 }
 
-function compararPrecio(izquierda: CotizacionResultado, derecha: CotizacionResultado): number {
+function comparePrice(izquierda: ResultQuotation, derecha: ResultQuotation): number {
   if (izquierda.price === null && derecha.price === null) return 0;
   if (izquierda.price === null) return 1;
   if (derecha.price === null) return -1;
@@ -132,7 +132,7 @@ function compararPrecio(izquierda: CotizacionResultado, derecha: CotizacionResul
   return unidad === 0 ? izquierda.price.amount - derecha.price.amount : unidad;
 }
 
-function compararDistancia(izquierda: CotizacionResultado, derecha: CotizacionResultado): number {
+function compareDistance(izquierda: ResultQuotation, derecha: ResultQuotation): number {
   if (izquierda.distanceKm === null && derecha.distanceKm === null) return 0;
   if (izquierda.distanceKm === null) return 1;
   if (derecha.distanceKm === null) return -1;

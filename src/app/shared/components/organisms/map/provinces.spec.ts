@@ -7,7 +7,7 @@ import {
   CARGADOR_DE_PROVINCIAS,
   type ProvinciasDeBolivia,
   RUTA_DE_PROVINCIAS,
-  provinciaEn,
+  provinceIn,
 } from './provinces';
 
 /**
@@ -53,7 +53,7 @@ describe('las provincias de Bolivia', () => {
     for (const provincia of PROVINCIAS.features) {
       const [lng, lat] = provincia.properties.rotulo;
       expect(
-        provinciaEn(PROVINCIAS, { lat, lng })?.properties.nombre,
+        provinceIn(PROVINCIAS, { lat, lng })?.properties.nombre,
         provincia.properties.nombre,
       ).toBe(provincia.properties.nombre);
     }
@@ -67,12 +67,12 @@ describe('las provincias de Bolivia', () => {
     ['la plaza de Trinidad', -14.8333, -64.9, 'Cercado', 'Beni'],
     ['la plaza de Sucre', -19.0476, -65.2596, 'Oropeza', 'Chuquisaca'],
   ])('%s cae en %s', (_, lat, lng, nombre, departamento) => {
-    const provincia = provinciaEn(PROVINCIAS, { lat, lng });
+    const provincia = provinceIn(PROVINCIAS, { lat, lng });
     expect(provincia?.properties).toMatchObject({ nombre, departamento });
   });
 
   it('un punto fuera de Bolivia no cae en ninguna', () => {
-    expect(provinciaEn(PROVINCIAS, { lat: -34.6037, lng: -58.3816 })).toBeNull();
+    expect(provinceIn(PROVINCIAS, { lat: -34.6037, lng: -58.3816 })).toBeNull();
   });
 });
 

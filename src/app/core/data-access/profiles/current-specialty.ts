@@ -13,10 +13,10 @@ import type { PractitionerSpecialty } from './profiles.types';
  * cuándo vale—, y lo dejaría completando la anamnesis general. Vencida sí se
  * descarta: no debería decidir qué ficha se le ofrece hoy.
  */
-export function especialidadVigente(especialidades: readonly PractitionerSpecialty[]): string | null {
+export function currentSpecialty(especialidades: readonly PractitionerSpecialty[]): string | null {
   const ahora = Date.now();
   const vigentes = especialidades.filter((especialidad) =>
-    dentroDeLaVentana(especialidad.validFrom, especialidad.validTo, ahora),
+    withinWindow(especialidad.validFrom, especialidad.validTo, ahora),
   );
   const principal = vigentes.find((especialidad) => especialidad.isPrimary);
   return (principal ?? vigentes[0])?.specialtyConceptId ?? null;
@@ -28,7 +28,7 @@ export function especialidadVigente(especialidades: readonly PractitionerSpecial
  * Los dos extremos son opcionales y la ausencia de cada uno significa «no
  * empieza» y «no termina», que es cómo el contrato declara sus ventanas.
  */
-function dentroDeLaVentana(
+function withinWindow(
   desde: Date | undefined,
   hasta: Date | undefined,
   instante: number,

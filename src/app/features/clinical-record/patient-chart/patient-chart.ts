@@ -84,8 +84,8 @@ import {
   downloadVisitPdf,
   VALOR_ENMASCARADO,
 } from '../../../shared/utils/clinical-pdf/clinical-pdf';
-import { esCodigoDeAlergia } from '../../../shared/utils/allergies/allergies';
-import { contextoDeLaSesion } from '../../../shared/utils/clinical-pdf/session-signature';
+import { isAllergyCode } from '../../../shared/utils/allergies/allergies';
+import { sessionContext } from '../../../shared/utils/clinical-pdf/session-signature';
 import {
   atencionDesdeResumen,
   recetaDesdeResumen,
@@ -96,7 +96,7 @@ import type { ColumnDef } from '../../../shared/components/organisms/data-table/
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { TutorialTarget } from '../../../shared/components/organisms/tutorial-overlay/tutorial-target.directive';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
-import { mensajeDeFalloDeEscritura } from '../write-message';
+import { writeFailureMessage } from '../write-message';
 import { CLINICAL_RECORD_ROUTE } from '../clinical-record.routes';
 import { CarePlanBlock } from './care-plan-block/care-plan-block';
 import type { DiagnosticoDelPlan } from './care-plan-block/care-plan-block';
@@ -109,10 +109,10 @@ import { MedicationBlock } from './medication-block/medication-block';
 import type { DiagnosticoEnFicha, RecetaEnFicha } from './medication-block/medication-block';
 import { ObservationBlock } from './observation-block/observation-block';
 import {
-  camposDe,
-  plantillaPorCobertura,
-  respuestasDe,
-  type RespuestaVisible,
+  fieldsOf,
+  templateByCoverage,
+  responsesOf,
+  type ResponseVisible,
 } from './specialty-form-block/form-reading';
 import { PdfExportButton } from '../../../shared/components/molecules/pdf-export-button/pdf-export-button';
 
@@ -311,7 +311,7 @@ export interface FormularioDelEncuentro {
   readonly id: string;
   readonly titulo: string;
   readonly completadoEl: Date | null;
-  readonly respuestas: readonly RespuestaVisible[];
+  readonly respuestas: readonly ResponseVisible[];
 }
 
 /** Lo leído a demanda para un encuentro: lo que no viaja en el resumen. */
@@ -1450,7 +1450,7 @@ export class PatientChart {
       )
       .subscribe({
         next: ({ plantillas, detalles, catalogoDental, dentales, estudios, etiquetas }) => {
-          const campos = camposDe(plantillas);
+          const campos = fieldsOf(plantillas);
           const leidos = detalles.filter(
             (detalle): detalle is FormInstanceDetail => detalle !== null,
           );
@@ -1471,9 +1471,9 @@ export class PatientChart {
                 const fecha = new Date(detalle.closedAt ?? detalle.createdAt);
                 return {
                   id: detalle.id,
-                  titulo: plantillaPorCobertura(detalle, plantillas)?.name ?? 'Formulario clínico',
+                  titulo: templateByCoverage(detalle, plantillas)?.name ?? 'Formulario clínico',
                   completadoEl: Number.isNaN(fecha.getTime()) ? null : fecha,
-                  respuestas: respuestasDe(detalle, campos),
+                  respuestas: responsesOf(detalle, campos),
                 };
               }),
             }),
@@ -1532,7 +1532,7 @@ export class PatientChart {
    * cliente), así que el aviso junta dos fuentes:
    *
    * - los diagnósticos sin resolver cuyo código CIE-10 es de alergia
-   *   ({@link esCodigoDeAlergia}) — las de ahora en adelante;
+   *   ({@link isAllergyCode}) — las de ahora en adelante;
    * - las `AllergyIntolerance` ya registradas, que no tienen pestaña ni alta
    *   pero esconderlas sería peor que repetirlas.
    *
@@ -1545,7 +1545,7 @@ export class PatientChart {
         .filter(
           (condicion) =>
             condicion.resolvedAt === undefined &&
-            esCodigoDeAlergia(this.etiquetas().get(condicion.codeConceptId)?.code),
+            isAllergyCode(this.etiquetas().get(condicion.codeConceptId)?.code),
         )
         .map((condicion) => condicion.id),
     );
@@ -2059,7 +2059,7 @@ export class PatientChart {
       return state.issues.map((issue) => issue.message).join(' ') || 'Esa transición no es válida.';
     }
     return (
-      mensajeDeFalloDeEscritura(state, {
+      writeFailureMessage(state, {
         accion: 'cambiar el estado clínico',
         sinPermiso: 'Su rol no permite cambiar el estado clínico.',
         yaNoExiste: 'La condición ya no existe. Recargue la pantalla.',
@@ -2123,7 +2123,7 @@ export class PatientChart {
    * y el mismo acto clínico no puede salir firmado distinto en cada papel.
    */
   private contextoDelDocumento(): ContextoDelDocumento {
-    return contextoDeLaSesion({
+    return sessionContext({
       paciente: this.nombre(),
       practitionerProfileId: this.auth.practitionerProfileId(),
       displayName: this.auth.displayName(),

@@ -24,27 +24,27 @@ import type {
   ConversationListItem,
   MessageReaction,
 } from '../../../core/data-access/community/community.types';
-import { ChatPreferencias } from '../../../core/messaging/chat-preferences';
+import { ChatPreferences } from '../../../core/messaging/chat-preferences';
 import {
-  avatarDeConQuien as avatarDeConQuienDe,
-  conQuien as conQuienDe,
+  conversationAvatar as avatarDeConQuienDe,
+  conversationLabel as conQuienDe,
 } from '../../../core/messaging/conversation-label';
-import { etiquetaDeDia, horaDelReloj } from '../../../shared/date/chat-time';
+import { dayLabel, clockTime } from '../../../shared/date/chat-time';
 import { Avatar } from '../../../shared/components/atoms/avatar/avatar';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { EmptyState } from '../../../shared/components/molecules/empty-state/empty-state';
 import { ContentDialog } from '../../../shared/components/organisms/content-dialog/content-dialog';
 import { Composer } from './composer/composer';
-import { SelectorEmojis } from './composer/emoji-picker';
+import { EmojiPicker } from './composer/emoji-picker';
 import { ContactPanel } from './contact-panel/contact-panel';
 import { FilePreview } from '../../../shared/components/molecules/file-preview/file-preview';
 import { formatearTamano } from '../../../core/data-access/files/upload-policy';
 import {
-  archivoDeDataUrl,
+  dataUrlFile,
   esPdf,
-  metadatosDeDataUrl,
-  nombreDelTipo,
-  type MetadatosDeAdjunto,
+  dataUrlMetadata,
+  typeName,
+  type AttachmentMetadata,
 } from '../../../core/messaging/attachment-metadata';
 
 /**
@@ -206,7 +206,7 @@ function resaltar(texto: string, termino: string): readonly TrozoDeTexto[] {
     EmptyState,
     FilePreview,
     RouterLink,
-    SelectorEmojis,
+    EmojiPicker,
   ],
   templateUrl: './thread.html',
   styleUrls: ['./thread.css', './thread-layers.css'],
@@ -214,7 +214,7 @@ function resaltar(texto: string, termino: string): readonly TrozoDeTexto[] {
 })
 export class Thread {
   protected readonly store = inject(ChatStore);
-  private readonly preferencias = inject(ChatPreferencias);
+  private readonly preferencias = inject(ChatPreferences);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
@@ -265,12 +265,12 @@ export class Thread {
 
   protected readonly esFavorito = computed(() => {
     const id = this.store.activaId();
-    return id !== null && this.preferencias.favoritos().has(id);
+    return id !== null && this.preferencias.favorites().has(id);
   });
 
   protected readonly estaArchivado = computed(() => {
     const id = this.store.activaId();
-    return id !== null && this.preferencias.archivados().has(id);
+    return id !== null && this.preferencias.archived().has(id);
   });
 
   /** La imagen que se está mirando a tamaño completo. */
@@ -399,7 +399,7 @@ export class Thread {
         salida.push({
           tipo: 'fecha',
           clave: `f-${dia || mensaje.clave}`,
-          etiqueta: etiquetaDeDia(mensaje.sentAt),
+          etiqueta: dayLabel(mensaje.sentAt),
         });
         diaAnterior = dia;
         // Un día nuevo siempre abre bloque, aunque escriba el mismo.
@@ -607,7 +607,7 @@ export class Thread {
 
   /** «Hoy · 9:12 a. m.»: cuándo pasó, con día. */
   protected fechaYHora(fecha: Date | undefined): string {
-    return fecha === undefined ? '' : `${etiquetaDeDia(fecha)} · ${horaDelReloj(fecha)}`;
+    return fecha === undefined ? '' : `${dayLabel(fecha)} · ${clockTime(fecha)}`;
   }
 
   /** El mensaje al que responde otro, si está cargado. */
@@ -783,8 +783,8 @@ export class Thread {
    * local de un envío en curso (`blob:`) o cualquier contenido que no se pueda
    * leer con certeza.
    */
-  protected metadatosDelAdjunto(mensaje: MensajeDelHilo): MetadatosDeAdjunto | null {
-    return metadatosDeDataUrl(this.urlDelAdjunto(mensaje));
+  protected metadatosDelAdjunto(mensaje: MensajeDelHilo): AttachmentMetadata | null {
+    return dataUrlMetadata(this.urlDelAdjunto(mensaje));
   }
 
   /** «PDF · 2.1 KB», o `null` si no hay metadata que decir. */
@@ -792,7 +792,7 @@ export class Thread {
     const metadatos = this.metadatosDelAdjunto(mensaje);
     return metadatos === null
       ? null
-      : `${nombreDelTipo(metadatos.mimeType)} · ${formatearTamano(metadatos.sizeBytes)}`;
+      : `${typeName(metadatos.mimeType)} · ${formatearTamano(metadatos.sizeBytes)}`;
   }
 
   /**
@@ -817,7 +817,7 @@ export class Thread {
     const url = this.urlDelAdjunto(mensaje);
     if (url === null) return null;
     if (!this.archivosDeVistaPrevia.has(url)) {
-      this.archivosDeVistaPrevia.set(url, archivoDeDataUrl(url, this.nombreParaDescargar(mensaje)));
+      this.archivosDeVistaPrevia.set(url, dataUrlFile(url, this.nombreParaDescargar(mensaje)));
     }
     return this.archivosDeVistaPrevia.get(url) ?? null;
   }
@@ -850,7 +850,7 @@ export class Thread {
 
   /** La hora de la burbuja, con el mismo formato que la fila de la bandeja. */
   protected hora(fecha: Date | undefined): string {
-    return horaDelReloj(fecha);
+    return clockTime(fecha);
   }
 
   /* --- El menú de la cabecera --------------------------------------------- */
@@ -864,7 +864,7 @@ export class Thread {
     this.menuCabecera.set(false);
     const id = this.store.activaId();
     if (id !== null) {
-      this.preferencias.alternarFavorito(id);
+      this.preferencias.toggleFavorite(id);
     }
   }
 
@@ -872,7 +872,7 @@ export class Thread {
     this.menuCabecera.set(false);
     const id = this.store.activaId();
     if (id !== null) {
-      this.preferencias.alternarArchivado(id);
+      this.preferencias.toggleArchived(id);
     }
   }
 

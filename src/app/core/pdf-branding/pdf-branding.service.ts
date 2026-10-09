@@ -2,14 +2,14 @@ import { effect, inject, Injectable, InjectionToken, untracked } from '@angular/
 import { catchError, forkJoin, of } from 'rxjs';
 
 import { AuthService } from '../auth/auth.service';
-import { FirmaYSelloClient } from '../data-access/profiles/signature-and-seal.client';
+import { SignatureAndSealClient } from '../data-access/profiles/signature-and-seal.client';
 import { ProfilesClient } from '../data-access/profiles/profiles.client';
-import { LogoDelConsultorioClient } from '../data-access/practice-sites/practice-logo.client';
-import { establecerFirmaDeDocumentos } from '../../shared/utils/pdf-export/pdf-signature';
+import { PracticeLogoClient } from '../data-access/practice-sites/practice-logo.client';
+import { setDocumentSignature } from '../../shared/utils/pdf-export/pdf-signature';
 import {
-  establecerFuentesDeDocumentos,
-  prepararFuentes,
-  type PdfFuentes,
+  setDocumentFonts,
+  prepareFonts,
+  type PdfFonts,
 } from '../../shared/utils/pdf-export/pdf-fonts';
 import {
   establecerLogoDeDocumentos,
@@ -32,9 +32,9 @@ export const PREPARAR_LOGO = new InjectionToken<(dataUrl: string) => Promise<Pdf
  * `prepararFuentes` usa `fetch` contra la carpeta pública, que en una prueba no
  * existe.
  */
-export const PREPARAR_FUENTES = new InjectionToken<() => Promise<PdfFuentes | null>>(
+export const PREPARAR_FUENTES = new InjectionToken<() => Promise<PdfFonts | null>>(
   'PREPARAR_FUENTES',
-  { providedIn: 'root', factory: () => prepararFuentes },
+  { providedIn: 'root', factory: () => prepareFonts },
 );
 
 /**
@@ -64,8 +64,8 @@ export const PREPARAR_FUENTES = new InjectionToken<() => Promise<PdfFuentes | nu
 @Injectable({ providedIn: 'root' })
 export class PdfBrandingService {
   private readonly auth = inject(AuthService);
-  private readonly logo = inject(LogoDelConsultorioClient);
-  private readonly firmaYSello = inject(FirmaYSelloClient);
+  private readonly logo = inject(PracticeLogoClient);
+  private readonly firmaYSello = inject(SignatureAndSealClient);
   private readonly perfiles = inject(ProfilesClient);
   private readonly preparar = inject(PREPARAR_LOGO);
   private readonly prepararFuentes = inject(PREPARAR_FUENTES);
@@ -76,7 +76,7 @@ export class PdfBrandingService {
   constructor() {
     // Las fuentes no son de nadie: se bajan una vez por sesión, no por
     // profesional, y no se limpian al cerrar sesión.
-    void this.prepararFuentes().then(establecerFuentesDeDocumentos);
+    void this.prepararFuentes().then(setDocumentFonts);
     effect(() => {
       const profileId = this.auth.practitionerProfileId();
       untracked(() => this.cargar(profileId));
@@ -95,11 +95,11 @@ export class PdfBrandingService {
     const pedido = ++this.pedido;
     if (profileId === null) {
       establecerLogoDeDocumentos(null);
-      establecerFirmaDeDocumentos(null);
+      setDocumentSignature(null);
       return;
     }
     this.cargarFirma(pedido);
-    this.logo.obtenerUrl(profileId).subscribe((url) => {
+    this.logo.getUrl(profileId).subscribe((url) => {
       if (url === null) {
         if (pedido === this.pedido) establecerLogoDeDocumentos(null);
         return;
@@ -120,7 +120,7 @@ export class PdfBrandingService {
    */
   private cargarFirma(pedido: number): void {
     forkJoin([
-      this.firmaYSello.obtener(),
+      this.firmaYSello.get(),
       this.perfiles.getOwnPractitionerProfile().pipe(catchError(() => of(null))),
     ]).subscribe(([imagenes, perfil]) => {
       void Promise.all([
@@ -129,7 +129,7 @@ export class PdfBrandingService {
       ]).then(([firma, sello]) => {
         // Una respuesta lenta del pedido anterior no pisa a la del vigente.
         if (pedido !== this.pedido) return;
-        establecerFirmaDeDocumentos({
+        setDocumentSignature({
           nombre: perfil?.displayName ?? '',
           matricula: perfil?.licenses[0]?.licenseNumber ?? null,
           firma,

@@ -2,11 +2,11 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import {
-  FARMACIAS_DEL_CORPUS,
-  LABORATORIOS_DEL_CORPUS,
-  SEMILLAS_DE_VITRINA,
-  pruebaDelCorpus,
-  vigenciaDe,
+  CORPUS_PHARMACIES,
+  CORPUS_LABORATORIES,
+  SHOWCASE_SEEDS,
+  corpusTest,
+  validityOf,
 } from './bolivia-central-axis';
 import {
   CADENAS_DEL_CORPUS,
@@ -111,16 +111,16 @@ describe('las ubicaciones, que son capa derivada y no corpus', () => {
 
 describe('los laboratorios que llegan al directorio', () => {
   it('son los diez del corpus, cada uno con sus sedes', () => {
-    expect(LABORATORIOS_DEL_CORPUS).toHaveLength(ESTABLECIMIENTOS_DEL_CORPUS.length);
+    expect(CORPUS_LABORATORIES).toHaveLength(ESTABLECIMIENTOS_DEL_CORPUS.length);
 
-    for (const laboratorio of LABORATORIOS_DEL_CORPUS) {
+    for (const laboratorio of CORPUS_LABORATORIES) {
       expect(laboratorio.sites.length).toBeGreaterThan(0);
       expect(laboratorio.name).not.toBe('');
     }
   });
 
   it('el catálogo publicado de Plexus son sus 252 pruebas, no una derivación', () => {
-    const plexus = LABORATORIOS_DEL_CORPUS.find(
+    const plexus = CORPUS_LABORATORIES.find(
       (laboratorio) => laboratorio.corpusId === 'lab_plexus',
     );
 
@@ -129,7 +129,7 @@ describe('los laboratorios que llegan al directorio', () => {
   });
 
   it('los otros nueve declaran que su oferta es derivada, y no la disfrazan', () => {
-    const derivados = LABORATORIOS_DEL_CORPUS.filter(
+    const derivados = CORPUS_LABORATORIES.filter(
       (laboratorio) => laboratorio.corpusId !== 'lab_plexus',
     );
 
@@ -143,15 +143,15 @@ describe('los laboratorios que llegan al directorio', () => {
   });
 
   it('toda prueba ofrecida existe en el catálogo', () => {
-    for (const laboratorio of LABORATORIOS_DEL_CORPUS) {
+    for (const laboratorio of CORPUS_LABORATORIES) {
       for (const testId of laboratorio.testIds) {
-        expect(pruebaDelCorpus(testId)).toBeDefined();
+        expect(corpusTest(testId)).toBeDefined();
       }
     }
   });
 
   it('la toma a domicilio sale de lo que el laboratorio declara, no de una suposición', () => {
-    for (const laboratorio of LABORATORIOS_DEL_CORPUS) {
+    for (const laboratorio of CORPUS_LABORATORIES) {
       expect(laboratorio.homeCollection).toBe(laboratorio.services.includes('toma a domicilio'));
     }
   });
@@ -163,11 +163,11 @@ describe('las farmacias que llegan al directorio', () => {
       CADENAS_DEL_CORPUS.some((cadena) => cadena.id === sucursal.parentId),
     );
 
-    expect(FARMACIAS_DEL_CORPUS).toHaveLength(sucursalesDeFarmacia.length);
+    expect(CORPUS_PHARMACIES).toHaveLength(sucursalesDeFarmacia.length);
   });
 
   it('cada una tiene un slug único, porque es la URL de su ficha', () => {
-    const slugs = FARMACIAS_DEL_CORPUS.map((farmacia) => farmacia.slug);
+    const slugs = CORPUS_PHARMACIES.map((farmacia) => farmacia.slug);
 
     expect(new Set(slugs).size).toBe(slugs.length);
   });
@@ -175,7 +175,7 @@ describe('las farmacias que llegan al directorio', () => {
 
 describe('la vigencia, que es lo que el corpus se niega a afirmar', () => {
   it('distingue lo verificado en 2026 de la línea base histórica', () => {
-    const vigencias = SUCURSALES_DEL_CORPUS.map(vigenciaDe);
+    const vigencias = SUCURSALES_DEL_CORPUS.map(validityOf);
 
     // Las tres tienen que aparecer: si alguna desapareciera, o el corpus cambió
     // o la traducción dejó de distinguir, y en los dos casos hay que mirarlo.
@@ -185,8 +185,8 @@ describe('la vigencia, que es lo que el corpus se niega a afirmar', () => {
   });
 
   it('una sucursal sin vigencia confirmada nunca sale como verificada', () => {
-    for (const farmacia of FARMACIAS_DEL_CORPUS) {
-      const semilla = SEMILLAS_DE_VITRINA.find(
+    for (const farmacia of CORPUS_PHARMACIES) {
+      const semilla = SHOWCASE_SEEDS.find(
         (candidata) => candidata.targetId === farmacia.id,
       );
       expect(semilla?.verified).toBe(farmacia.vigencia === 'VERIFICADA');
@@ -196,13 +196,13 @@ describe('la vigencia, que es lo que el corpus se niega a afirmar', () => {
 
 describe('las fichas públicas del corpus', () => {
   it('son una por laboratorio y una por sucursal de farmacia', () => {
-    expect(SEMILLAS_DE_VITRINA).toHaveLength(
-      LABORATORIOS_DEL_CORPUS.length + FARMACIAS_DEL_CORPUS.length,
+    expect(SHOWCASE_SEEDS).toHaveLength(
+      CORPUS_LABORATORIES.length + CORPUS_PHARMACIES.length,
     );
   });
 
   it('no repiten slug entre sí', () => {
-    const slugs = SEMILLAS_DE_VITRINA.map((semilla) => semilla.slug);
+    const slugs = SHOWCASE_SEEDS.map((semilla) => semilla.slug);
 
     expect(new Set(slugs).size).toBe(slugs.length);
   });
@@ -211,7 +211,7 @@ describe('las fichas públicas del corpus', () => {
     // Un enlace copiado tiene que seguir abriendo el mismo laboratorio. Los
     // identificadores se derivan del id del corpus con `uuid()`, así que esto
     // falla si alguien los cambia por algo aleatorio.
-    const ids = LABORATORIOS_DEL_CORPUS.map((laboratorio) => laboratorio.id);
+    const ids = CORPUS_LABORATORIES.map((laboratorio) => laboratorio.id);
 
     expect(new Set(ids).size).toBe(ids.length);
     for (const id of ids) {

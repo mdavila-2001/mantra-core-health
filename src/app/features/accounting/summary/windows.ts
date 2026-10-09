@@ -19,15 +19,15 @@
     ========================================================================== */
 
 /** Un rango cerrado de fechas, `YYYY-MM-DD` las dos puntas. */
-export interface Ventana {
+export interface Window {
   readonly from: string;
   readonly to: string;
 }
 
 /** Una ventana y su comparable del período anterior, del mismo largo. */
-export interface ParDeVentanas {
-  readonly actual: Ventana;
-  readonly previa: Ventana;
+export interface WindowsPair {
+  readonly actual: Window;
+  readonly previa: Window;
   /** Cómo se nombra la ventana previa cuando se la menciona en pantalla. */
   readonly rotuloPrevio: string;
 }
@@ -39,15 +39,15 @@ export function aIsoLocal(fecha: Date): string {
   return `${fecha.getFullYear()}-${mes}-${dia}`;
 }
 
-function sumarDias(fecha: Date, dias: number): Date {
+function sumDays(fecha: Date, dias: number): Date {
   const copia = new Date(fecha.getFullYear(), fecha.getMonth(), fecha.getDate());
   copia.setDate(copia.getDate() + dias);
   return copia;
 }
 
 /** Hoy contra ayer. */
-export function ventanasDelDia(hoy: Date): ParDeVentanas {
-  const ayer = sumarDias(hoy, -1);
+export function dayWindows(hoy: Date): WindowsPair {
+  const ayer = sumDays(hoy, -1);
   return {
     actual: { from: aIsoLocal(hoy), to: aIsoLocal(hoy) },
     previa: { from: aIsoLocal(ayer), to: aIsoLocal(ayer) },
@@ -61,14 +61,14 @@ export function ventanasDelDia(hoy: Date): ParDeVentanas {
  * La semana arranca el **lunes**: es el primer día laboral del consultorio, y
  * una semana que empieza el domingo parte el fin de semana en dos.
  */
-export function ventanasDeLaSemana(hoy: Date): ParDeVentanas {
+export function weekWindows(hoy: Date): WindowsPair {
   const desdeElLunes = (hoy.getDay() + 6) % 7;
-  const lunes = sumarDias(hoy, -desdeElLunes);
+  const lunes = sumDays(hoy, -desdeElLunes);
   return {
     actual: { from: aIsoLocal(lunes), to: aIsoLocal(hoy) },
     previa: {
-      from: aIsoLocal(sumarDias(lunes, -7)),
-      to: aIsoLocal(sumarDias(hoy, -7)),
+      from: aIsoLocal(sumDays(lunes, -7)),
+      to: aIsoLocal(sumDays(hoy, -7)),
     },
     rotuloPrevio: 'la semana pasada',
   };
@@ -81,7 +81,7 @@ export function ventanasDeLaSemana(hoy: Date): ParDeVentanas {
  * compara contra el 28 de febrero, no contra un 31 de febrero que no existe
  * —y que `Date` resolvería, en silencio, como el 3 de marzo—.
  */
-export function ventanasDelMes(hoy: Date): ParDeVentanas {
+export function monthWindows(hoy: Date): WindowsPair {
   const primero = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
   const primeroPrevio = new Date(hoy.getFullYear(), hoy.getMonth() - 1, 1);
   const ultimoDiaPrevio = new Date(hoy.getFullYear(), hoy.getMonth(), 0).getDate();
@@ -98,7 +98,7 @@ export function ventanasDelMes(hoy: Date): ParDeVentanas {
 }
 
 /** Cómo le fue a una ventana contra su comparable. */
-export interface Comparacion {
+export interface Comparison {
   readonly direccion: 'sube' | 'baja' | 'igual';
   /** Cuánto cambió, en por ciento y sin signo: el signo lo dice `direccion`. */
   readonly porcentaje: number;
@@ -119,11 +119,11 @@ export interface Comparacion {
  * Sin comparable —el período anterior en cero, o un dato que no llegó— no se
  * inventa un «+100 %»: se devuelve `null` y la pantalla no dibuja el chip.
  */
-export function comparar(
+export function compare(
   actual: string,
   previo: string,
   rotuloPrevio: string,
-): Comparacion | null {
+): Comparison | null {
   const a = Number(actual);
   const p = Number(previo);
   if (!Number.isFinite(a) || !Number.isFinite(p) || p <= 0) return null;
@@ -142,7 +142,7 @@ export function comparar(
  * Es el ancho de una barra, no una cifra contable: misma licencia que
  * `comparar`, y por la misma razón.
  */
-export function porcentajeDe(parte: string, total: string): number {
+export function percentageOf(parte: string, total: string): number {
   const p = Number(parte);
   const t = Number(total);
   if (!Number.isFinite(p) || !Number.isFinite(t) || t <= 0) return 0;
@@ -150,7 +150,7 @@ export function porcentajeDe(parte: string, total: string): number {
 }
 
 /** Importe en bolivianos, formateado para leer. El texto no se convierte. */
-export function importeBs(valor: string): string {
+export function amountBs(valor: string): string {
   const negativo = valor.trim().startsWith('-');
   const limpio = negativo ? valor.trim().slice(1) : valor.trim();
   const partes = limpio.split('.');
@@ -165,7 +165,7 @@ export function esCero(valor: string): boolean {
 }
 
 /** Si un decimal como texto es negativo. */
-export function esNegativo(valor: string): boolean {
+export function isNegative(valor: string): boolean {
   const n = Number(valor);
   return Number.isFinite(n) && n < -0.005;
 }
@@ -177,7 +177,7 @@ export function esNegativo(valor: string): boolean {
  * el «vence en 8 días» no puede salir de ahí: se calcula con la fecha, que sí
  * viaja entera.
  */
-export function diasHasta(fechaIso: string, hoy: Date): number {
+export function daysUntil(fechaIso: string, hoy: Date): number {
   const partes = fechaIso.split('-').map(Number);
   const [anio, mes, dia] = partes;
   if (anio === undefined || mes === undefined || dia === undefined) return 0;

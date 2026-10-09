@@ -4,10 +4,10 @@ import { TestBed, type ComponentFixture } from '@angular/core/testing';
 
 import { API_BASE_URL } from '../../../core/data-access/api';
 import type { SimulatedCharge } from '../../../core/data-access/billing-simulated/billing-simulated.types';
-import type { FacturacionSimulada } from '../../../core/mock/billing-sim/simulated-invoicing';
+import type { SimulatedInvoicing } from '../../../core/mock/billing-sim/simulated-invoicing';
 import { motorDePrueba } from '../billing.spec-fixtures';
 import { bs } from '../on-screen-charges';
-import { PlanDePagos } from './payment-plan';
+import { PaymentsPlan } from './payment-plan';
 
 /**
  * El plan de pagos de un servicio con reconsultas, contra el mismo motor que
@@ -22,9 +22,9 @@ import { PlanDePagos } from './payment-plan';
  * 4. **Sin saldar no hay factura; saldado, sí.**
  */
 describe('PlanDePagos', () => {
-  let fixture: ComponentFixture<PlanDePagos>;
+  let fixture: ComponentFixture<PaymentsPlan>;
   let http: HttpTestingController;
-  let motor: FacturacionSimulada;
+  let motor: SimulatedInvoicing;
   let cobro: SimulatedCharge;
   let actualizado: SimulatedCharge | null;
   let facturar: number;
@@ -34,11 +34,11 @@ describe('PlanDePagos', () => {
       providers: [provideHttpClient(), provideHttpClientTesting(), { provide: API_BASE_URL, useValue: '' }],
     });
     http = TestBed.inject(HttpTestingController);
-    fixture = TestBed.createComponent(PlanDePagos);
+    fixture = TestBed.createComponent(PaymentsPlan);
     fixture.componentRef.setInput('cobro', c);
     fixture.componentRef.setInput(
       'metodos',
-      motor.catalogos().paymentMethods.map((m) => ({ value: m.codigo, label: m.descripcion })),
+      motor.catalogs().paymentMethods.map((m) => ({ value: m.codigo, label: m.descripcion })),
     );
     actualizado = null;
     facturar = 0;
@@ -65,7 +65,7 @@ describe('PlanDePagos', () => {
   beforeEach(() => {
     motor = motorDePrueba();
     // Un plan con la consulta pagada y las dos reconsultas con saldo.
-    cobro = motor.listarCobros().find((c) => c.plan !== null && c.plan.instances[1]!.paidAmount === '0.00')!;
+    cobro = motor.listCharges().find((c) => c.plan !== null && c.plan.instances[1]!.paidAmount === '0.00')!;
   });
 
   afterEach(() => http.verify());
@@ -93,7 +93,7 @@ describe('PlanDePagos', () => {
     const req = http.expectOne(`/billing/simulated/charges/${cobro.id}/instances/${reconsulta.id}/payments`);
     expect(req.request.method).toBe('POST');
     expect(req.request.body).toEqual({ methodCode: 1, amount: '80.00' });
-    const r = motor.registrarPagoDeInstancia(cobro.id, reconsulta.id, req.request.body);
+    const r = motor.instanceRegisterPayment(cobro.id, reconsulta.id, req.request.body);
     if (!r.ok) throw new Error(r.error.message);
     req.flush(r.value);
     fixture.detectChanges();
@@ -129,9 +129,9 @@ describe('PlanDePagos', () => {
     expect(el('plan-generar-factura')).toBeNull();
 
     for (const instancia of cobro.plan!.instances.filter((i) => i.balance !== '0.00')) {
-      motor.registrarPagoDeInstancia(cobro.id, instancia.id, { methodCode: 1, amount: instancia.balance });
+      motor.instanceRegisterPayment(cobro.id, instancia.id, { methodCode: 1, amount: instancia.balance });
     }
-    fixture.componentRef.setInput('cobro', motor.cobro(cobro.id)!);
+    fixture.componentRef.setInput('cobro', motor.charge(cobro.id)!);
     fixture.detectChanges();
 
     expect(el('plan-saldado')).not.toBeNull();
@@ -145,7 +145,7 @@ describe('PlanDePagos', () => {
     fixture.detectChanges();
     expect(el('plan-formulario-de-pago')).not.toBeNull();
 
-    const otro = motor.listarCobros().find((c) => c.plan !== null && c.id !== cobro.id)!;
+    const otro = motor.listCharges().find((c) => c.plan !== null && c.id !== cobro.id)!;
     fixture.componentRef.setInput('cobro', otro);
     fixture.detectChanges();
 

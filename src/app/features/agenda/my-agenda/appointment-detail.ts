@@ -25,16 +25,16 @@ import {
  * diálogo con sus botones y la semana en un globo; forzar el mismo dibujo en
  * los dos lugares sería el error contrario.
  */
-export interface ParDelDetalle {
+export interface DetailPair {
   readonly label: string;
   readonly value: string;
 }
 
 /** Lo que se muestra cuando la API no mandó el nombre. */
-export const SIN_NOMBRE_DE_PACIENTE = 'Paciente sin nombre registrado';
+export const PATIENT_WITHOUT_NAME = 'Paciente sin nombre registrado';
 
 /** Lo que se muestra cuando un dato del detalle no vino. */
-export const SIN_DATO_DEL_DETALLE = 'No informado';
+export const DETAIL_WITHOUT_DATA = 'No informado';
 
 /**
  * Cómo se nombra al paciente de una cita.
@@ -43,8 +43,8 @@ export const SIN_DATO_DEL_DETALLE = 'No informado';
  * está. Que falte es una condición del servidor —la API manda `patientName`
  * sólo al titular y al profesional de esa agenda—, no un error de la pantalla.
  */
-export function pacienteDeLaCita(cita: Booking): string {
-  return cita.patientName ?? SIN_NOMBRE_DE_PACIENTE;
+export function appointmentPatient(cita: Booking): string {
+  return cita.patientName ?? PATIENT_WITHOUT_NAME;
 }
 
 /**
@@ -53,14 +53,14 @@ export function pacienteDeLaCita(cita: Booking): string {
  * `estado` entra ya resuelto: traducir el `statusConceptId` es del catálogo de
  * terminología, y quien tiene el mapa es la pantalla, no esta función.
  */
-export function detalleDeLaCita(
+export function appointmentDetail(
   cita: Booking,
   estado: string,
   idioma: string,
   franja?: { readonly desde: Date; readonly hasta: Date },
-): readonly ParDelDetalle[] {
+): readonly DetailPair[] {
   const hora = (valor: Date | undefined): string =>
-    valor === undefined ? SIN_DATO_DEL_DETALLE : formatDate(valor, 'HH:mm', idioma);
+    valor === undefined ? DETAIL_WITHOUT_DATA : formatDate(valor, 'HH:mm', idioma);
   // La franja del bloque manda sobre la de la reserva: el día arma sus bloques
   // desde el CUPO, y la reserva puede traer otra hora si el servidor la movió.
   const desde = franja?.desde ?? cita.startAt;
@@ -69,11 +69,11 @@ export function detalleDeLaCita(
   // primero que hay que saber al abrir el globo: una reconsulta se atiende
   // sabiendo que ya hubo una consulta antes.
   const reconsulta = esReconsulta(cita);
-  const pares: ParDelDetalle[] = [
+  const pares: DetailPair[] = [
     { label: 'Cuándo', value: `${hora(desde)} – ${hora(hasta)}` },
     { label: 'Qué es', value: reconsulta ? 'Reconsulta' : 'Cita' },
     { label: 'Estado', value: estado },
-    { label: 'Paciente', value: pacienteDeLaCita(cita) },
+    { label: 'Paciente', value: appointmentPatient(cita) },
   ];
   // De cuándo era la consulta de la que salió. Se omite cuando aquélla quedó
   // sin horario: un par con un guión no dice nada que valga la línea.

@@ -12,9 +12,9 @@ import {
 } from './bolivia-central-axis.generated';
 import { avatarSvg, portadaSvg, uuid } from '../mock-store';
 import {
-  CATEGORIA,
-  categoriaDeCadena,
-  type CategoriaSimulada,
+  CATEGORY,
+  chainCategory,
+  type SimulatedCategory,
 } from './public-categories';
 
 /* ============================================================================
@@ -51,10 +51,10 @@ import {
 /* ---- vigencia ------------------------------------------------------------ */
 
 /** Qué tan al día está el registro de una sucursal, según el propio corpus. */
-export type VigenciaDeSucursal = 'VERIFICADA' | 'HISTORICA' | 'POR_RECONCILIAR';
+export type BranchValidity = 'VERIFICADA' | 'HISTORICA' | 'POR_RECONCILIAR';
 
 /** Lo que se le muestra a una persona sobre esa vigencia. */
-export const ETIQUETA_DE_VIGENCIA: Readonly<Record<VigenciaDeSucursal, string>> = {
+export const VALIDITY_LABEL: Readonly<Record<BranchValidity, string>> = {
   VERIFICADA: 'Verificada en 2026',
   HISTORICA: 'Registro histórico · vigencia no confirmada',
   POR_RECONCILIAR: 'Pendiente de reconciliar con el registro oficial',
@@ -68,14 +68,14 @@ export const ETIQUETA_DE_VIGENCIA: Readonly<Record<VigenciaDeSucursal, string>> 
  * afirmamos que siga abierto hoy». Esa frase no se puede perder por el camino:
  * una farmacia cerrada mostrada como abierta es un viaje en vano.
  */
-export function vigenciaDe(sucursal: SucursalDelCorpus): VigenciaDeSucursal {
+export function validityOf(sucursal: SucursalDelCorpus): BranchValidity {
   if (sucursal.verificationState.startsWith('verificado_')) return 'VERIFICADA';
   if (sucursal.verificationState.includes('vigencia_2026_no_inferida')) return 'HISTORICA';
   return 'POR_RECONCILIAR';
 }
 
 /** Lo que se le muestra a una persona sobre la precisión del punto en el mapa. */
-export const ETIQUETA_DE_PRECISION: Readonly<Record<PrecisionDeUbicacion, string>> = {
+export const PRECISION_LABEL: Readonly<Record<PrecisionDeUbicacion, string>> = {
   direccion: 'Ubicación exacta',
   via: 'Ubicación sobre la vía',
   zona: 'Ubicación aproximada · zona',
@@ -89,7 +89,7 @@ export const ETIQUETA_DE_PRECISION: Readonly<Record<PrecisionDeUbicacion, string
    nombre. Lo que esta tabla hace es traducir, y lo que no está en ella hace
    fallar la carga en vez de desaparecer en silencio. */
 
-const CATEGORIAS_BASICAS = [
+const BASIC_CATEGORIES = [
   'hematologia',
   'quimica_clinica',
   'uroanalisis',
@@ -98,13 +98,13 @@ const CATEGORIAS_BASICAS = [
   'serologia_infecciosas',
 ] as const;
 
-const CATEGORIAS_POR_SERVICIO: Readonly<Record<string, readonly string[]>> = {
+const CATEGORIES_BY_SERVICE: Readonly<Record<string, readonly string[]>> = {
   // Los genéricos abren el núcleo de rutina, que es lo que significan.
-  'laboratorio clínico': CATEGORIAS_BASICAS,
-  'laboratorio hospitalario': CATEGORIAS_BASICAS,
-  diagnóstico: CATEGORIAS_BASICAS,
-  referencia: CATEGORIAS_BASICAS,
-  'referencia nacional': CATEGORIAS_BASICAS,
+  'laboratorio clínico': BASIC_CATEGORIES,
+  'laboratorio hospitalario': BASIC_CATEGORIES,
+  diagnóstico: BASIC_CATEGORIES,
+  referencia: BASIC_CATEGORIES,
+  'referencia nacional': BASIC_CATEGORIES,
   'diagnóstico especializado': ['biologia_molecular', 'inmunologia_autoinmunidad', 'virologia'],
   'pruebas especializadas': ['endocrinologia', 'inmunologia_autoinmunidad', 'oncologia_marcadores'],
   // Los específicos, uno a uno.
@@ -134,12 +134,12 @@ const CATEGORIAS_POR_SERVICIO: Readonly<Record<string, readonly string[]>> = {
   investigación: [],
 };
 
-const TOMA_A_DOMICILIO = 'toma a domicilio';
-const RESULTADOS_EN_LINEA = 'resultados en línea';
+const HOME_SAMPLE_COLLECTION = 'toma a domicilio';
+const INLINE_RESULTS = 'resultados en línea';
 
 /* ---- índices del corpus -------------------------------------------------- */
 
-const SUCURSALES_POR_PADRE = SUCURSALES_DEL_CORPUS.reduce<Map<string, SucursalDelCorpus[]>>(
+const BRANCHES_BY_PARENT = SUCURSALES_DEL_CORPUS.reduce<Map<string, SucursalDelCorpus[]>>(
   (mapa, sucursal) => {
     const previas = mapa.get(sucursal.parentId);
     if (previas === undefined) mapa.set(sucursal.parentId, [sucursal]);
@@ -149,22 +149,22 @@ const SUCURSALES_POR_PADRE = SUCURSALES_DEL_CORPUS.reduce<Map<string, SucursalDe
   new Map(),
 );
 
-const PRUEBA_POR_ID = new Map(PRUEBAS_DEL_CORPUS.map((prueba) => [prueba.id, prueba]));
+const TEST_BY_ID = new Map(PRUEBAS_DEL_CORPUS.map((prueba) => [prueba.id, prueba]));
 
-export const NOMBRE_DE_CATEGORIA = new Map(
+export const CATEGORY_NAME = new Map(
   CATEGORIAS_DEL_CORPUS.map((categoria) => [categoria.id, categoria.name]),
 );
 
 /** Las pruebas cuya disponibilidad en Bolivia acredita alguna fuente. */
-const PRUEBAS_DISPONIBLES = PRUEBAS_DEL_CORPUS.filter((prueba) => prueba.availableInBolivia);
+const AVAILABLE_TESTS = PRUEBAS_DEL_CORPUS.filter((prueba) => prueba.availableInBolivia);
 
 /* ---- laboratorios -------------------------------------------------------- */
 
 /** De dónde sale la oferta de pruebas de un laboratorio. */
-export type EvidenciaDeOferta = 'CATALOGO_PUBLICADO' | 'DERIVADA_DE_SERVICIOS';
+export type OfferEvidence = 'CATALOGO_PUBLICADO' | 'DERIVADA_DE_SERVICIOS';
 
 /** Una sede real, con su dirección, su horario y la precisión de su punto. */
-export interface SedeDelCorpus {
+export interface CorpusSite {
   readonly id: string;
   readonly code: string;
   readonly name: string;
@@ -176,11 +176,11 @@ export interface SedeDelCorpus {
   readonly lat: number;
   readonly lng: number;
   readonly locationPrecision: PrecisionDeUbicacion;
-  readonly vigencia: VigenciaDeSucursal;
+  readonly vigencia: BranchValidity;
 }
 
 /** Un laboratorio del corpus, listo para el directorio de diagnóstico. */
-export interface LaboratorioDelCorpus {
+export interface CorpusLaboratory {
   readonly id: string;
   readonly corpusId: string;
   readonly tenantId: string;
@@ -193,24 +193,24 @@ export interface LaboratorioDelCorpus {
   readonly homeCollection: boolean;
   readonly onlineResults: boolean;
   readonly verified: boolean;
-  readonly sites: readonly SedeDelCorpus[];
+  readonly sites: readonly CorpusSite[];
   readonly lat: number;
   readonly lng: number;
   readonly locationPrecision: PrecisionDeUbicacion;
   readonly testIds: readonly string[];
-  readonly evidenciaDeOferta: EvidenciaDeOferta;
+  readonly evidenciaDeOferta: OfferEvidence;
   readonly sourceIds: readonly string[];
 }
 
 /** `lab_plexus` → `PLEXUS`. El código que se ve en la ficha y en el buscador. */
-function codigoDe(corpusId: string): string {
+function codeOf(corpusId: string): string {
   return corpusId.replace(/^(lab|farm)_/, '').toUpperCase().replace(/[^A-Z0-9]/g, '_');
 }
 
-function sedeDe(sucursal: SucursalDelCorpus, orden: number): SedeDelCorpus {
+function siteOf(sucursal: SucursalDelCorpus, orden: number): CorpusSite {
   return {
     id: uuid(`corpus-site-${sucursal.id}`),
-    code: `${codigoDe(sucursal.parentId).slice(0, 6)}-${orden + 1}`,
+    code: `${codeOf(sucursal.parentId).slice(0, 6)}-${orden + 1}`,
     name: sucursal.name,
     addressText: sucursal.addressText,
     city: sucursal.city,
@@ -220,7 +220,7 @@ function sedeDe(sucursal: SucursalDelCorpus, orden: number): SedeDelCorpus {
     lat: sucursal.lat,
     lng: sucursal.lng,
     locationPrecision: sucursal.locationPrecision,
-    vigencia: vigenciaDe(sucursal),
+    vigencia: validityOf(sucursal),
   };
 }
 
@@ -235,9 +235,9 @@ function sedeDe(sucursal: SucursalDelCorpus, orden: number): SedeDelCorpus {
  * Es una derivación, no un catálogo, y por eso vuelve acompañada de su
  * `EvidenciaDeOferta`: la ficha lo dice antes de listar nada.
  */
-function ofertaDe(establecimiento: EstablecimientoDelCorpus): {
+function offerOf(establecimiento: EstablecimientoDelCorpus): {
   readonly testIds: readonly string[];
-  readonly evidencia: EvidenciaDeOferta;
+  readonly evidencia: OfferEvidence;
 } {
   const publicadas = RELACIONES_DEL_CORPUS.filter(
     (relacion) => relacion.establishmentId === establecimiento.id,
@@ -248,7 +248,7 @@ function ofertaDe(establecimiento: EstablecimientoDelCorpus): {
 
   const categorias = new Set(
     establecimiento.services.flatMap((servicio) => {
-      const traduccion = CATEGORIAS_POR_SERVICIO[servicio];
+      const traduccion = CATEGORIES_BY_SERVICE[servicio];
       if (traduccion === undefined) {
         throw new Error(
           `El corpus declara el servicio «${servicio}» en ${establecimiento.id} y ` +
@@ -261,19 +261,19 @@ function ofertaDe(establecimiento: EstablecimientoDelCorpus): {
   );
 
   return {
-    testIds: PRUEBAS_DISPONIBLES.filter((prueba) => categorias.has(prueba.categoryId)).map(
+    testIds: AVAILABLE_TESTS.filter((prueba) => categorias.has(prueba.categoryId)).map(
       (prueba) => prueba.id,
     ),
     evidencia: 'DERIVADA_DE_SERVICIOS',
   };
 }
 
-export const LABORATORIOS_DEL_CORPUS: readonly LaboratorioDelCorpus[] =
+export const CORPUS_LABORATORIES: readonly CorpusLaboratory[] =
   ESTABLECIMIENTOS_DEL_CORPUS.map((establecimiento) => {
-    const sucursales = SUCURSALES_POR_PADRE.get(establecimiento.id) ?? [];
-    const sedes = sucursales.map(sedeDe);
+    const sucursales = BRANCHES_BY_PARENT.get(establecimiento.id) ?? [];
+    const sedes = sucursales.map(siteOf);
     const principal = sedes[0];
-    const { testIds, evidencia } = ofertaDe(establecimiento);
+    const { testIds, evidencia } = offerOf(establecimiento);
 
     if (principal === undefined) {
       throw new Error(`El establecimiento ${establecimiento.id} no tiene ninguna sucursal.`);
@@ -283,7 +283,7 @@ export const LABORATORIOS_DEL_CORPUS: readonly LaboratorioDelCorpus[] =
       id: uuid(`corpus-unit-${establecimiento.id}`),
       corpusId: establecimiento.id,
       tenantId: uuid(`corpus-tenant-${establecimiento.id}`),
-      code: codigoDe(establecimiento.id),
+      code: codeOf(establecimiento.id),
       name: establecimiento.name,
       description: establecimiento.description,
       // Los diez son laboratorios: el corpus no investigó centros de imagen, y
@@ -291,8 +291,8 @@ export const LABORATORIOS_DEL_CORPUS: readonly LaboratorioDelCorpus[] =
       kind: 'LABORATORY',
       cities: establecimiento.cities,
       services: establecimiento.services,
-      homeCollection: establecimiento.services.includes(TOMA_A_DOMICILIO),
-      onlineResults: establecimiento.services.includes(RESULTADOS_EN_LINEA),
+      homeCollection: establecimiento.services.includes(HOME_SAMPLE_COLLECTION),
+      onlineResults: establecimiento.services.includes(INLINE_RESULTS),
       verified: sedes.every((sede) => sede.vigencia === 'VERIFICADA'),
       sites: sedes,
       lat: principal.lat,
@@ -305,8 +305,8 @@ export const LABORATORIOS_DEL_CORPUS: readonly LaboratorioDelCorpus[] =
   });
 
 /** Una prueba del catálogo, por su id del corpus. */
-export function pruebaDelCorpus(id: string): PruebaDelCorpus | undefined {
-  return PRUEBA_POR_ID.get(id);
+export function corpusTest(id: string): PruebaDelCorpus | undefined {
+  return TEST_BY_ID.get(id);
 }
 
 /* ---- farmacias ----------------------------------------------------------- */
@@ -316,7 +316,7 @@ export function pruebaDelCorpus(id: string): PruebaDelCorpus | undefined {
  * que le sirve a una persona **es la sucursal**, no la cadena: quien busca
  * dónde comprar una receta busca un mostrador con una dirección, no una marca.
  */
-export interface FarmaciaDelCorpus {
+export interface CorpusPharmacy {
   readonly id: string;
   readonly corpusId: string;
   readonly tenantId: string;
@@ -346,14 +346,14 @@ export interface FarmaciaDelCorpus {
   readonly lat: number;
   readonly lng: number;
   readonly locationPrecision: PrecisionDeUbicacion;
-  readonly vigencia: VigenciaDeSucursal;
+  readonly vigencia: BranchValidity;
   readonly sourceIds: readonly string[];
 }
 
-const CADENA_POR_ID = new Map(CADENAS_DEL_CORPUS.map((cadena) => [cadena.id, cadena]));
+const CHAIN_BY_ID = new Map(CADENAS_DEL_CORPUS.map((cadena) => [cadena.id, cadena]));
 
 /** `farm_suc_farmacorp_001` → `farmacorp-san-miguel`, estable y legible. */
-function slugDe(cadena: string, sucursal: string): string {
+function slugOf(cadena: string, sucursal: string): string {
   const limpio = (texto: string) =>
     texto
       .normalize('NFD')
@@ -364,17 +364,17 @@ function slugDe(cadena: string, sucursal: string): string {
   return `${limpio(cadena)}-${limpio(sucursal)}`;
 }
 
-export const FARMACIAS_DEL_CORPUS: readonly FarmaciaDelCorpus[] = SUCURSALES_DEL_CORPUS.filter(
-  (sucursal) => CADENA_POR_ID.has(sucursal.parentId),
+export const CORPUS_PHARMACIES: readonly CorpusPharmacy[] = SUCURSALES_DEL_CORPUS.filter(
+  (sucursal) => CHAIN_BY_ID.has(sucursal.parentId),
 ).map((sucursal) => {
-  const cadena = CADENA_POR_ID.get(sucursal.parentId)!;
+  const cadena = CHAIN_BY_ID.get(sucursal.parentId)!;
   return {
     id: uuid(`corpus-pharmacy-${sucursal.id}`),
     corpusId: sucursal.id,
     tenantId: uuid(`corpus-tenant-${sucursal.parentId}`),
     siteId: uuid(`corpus-pharmacy-site-${sucursal.id}`),
-    code: `${codigoDe(sucursal.parentId).slice(0, 6)}_${sucursal.id.slice(-3)}`,
-    slug: slugDe(cadena.name, sucursal.name),
+    code: `${codeOf(sucursal.parentId).slice(0, 6)}_${sucursal.id.slice(-3)}`,
+    slug: slugOf(cadena.name, sucursal.name),
     name: `${cadena.name} · ${sucursal.name}`,
     chainId: cadena.id,
     chainName: cadena.name,
@@ -388,7 +388,7 @@ export const FARMACIAS_DEL_CORPUS: readonly FarmaciaDelCorpus[] = SUCURSALES_DEL
     lat: sucursal.lat,
     lng: sucursal.lng,
     locationPrecision: sucursal.locationPrecision,
-    vigencia: vigenciaDe(sucursal),
+    vigencia: validityOf(sucursal),
     sourceIds: sucursal.sourceIds,
   };
 });
@@ -400,7 +400,7 @@ export const FARMACIAS_DEL_CORPUS: readonly FarmaciaDelCorpus[] = SUCURSALES_DEL
    conoce a `community.ts`, así que no hay ciclo. */
 
 /** La forma mínima de una vitrina. `community.ts` la completa. */
-export interface SemillaDeVitrina {
+export interface ShowcaseSeed {
   readonly clave: string;
   readonly kind: 'DIAGNOSTIC_UNIT' | 'PHARMACY';
   readonly tenantId: string;
@@ -422,13 +422,13 @@ export interface SemillaDeVitrina {
    * esconde, y la única forma de que eso sea deliberado es que alguien lo
    * escriba.
    */
-  readonly categoria: CategoriaSimulada;
+  readonly categoria: SimulatedCategory;
 }
 
 /** El titular de un laboratorio: dónde está y en qué trabaja. */
-function titularDeLaboratorio(laboratorio: LaboratorioDelCorpus): string {
+function laboratoryHolder(laboratorio: CorpusLaboratory): string {
   const areas = laboratorio.services
-    .filter((servicio) => servicio !== TOMA_A_DOMICILIO && servicio !== RESULTADOS_EN_LINEA)
+    .filter((servicio) => servicio !== HOME_SAMPLE_COLLECTION && servicio !== INLINE_RESULTS)
     .slice(0, 3)
     .join(', ');
   const sedes =
@@ -436,15 +436,15 @@ function titularDeLaboratorio(laboratorio: LaboratorioDelCorpus): string {
   return areas === '' ? `Laboratorio · ${sedes}` : `Laboratorio · ${areas} · ${sedes}`;
 }
 
-export const SEMILLAS_DE_VITRINA: readonly SemillaDeVitrina[] = [
-  ...LABORATORIOS_DEL_CORPUS.map((laboratorio) => ({
+export const SHOWCASE_SEEDS: readonly ShowcaseSeed[] = [
+  ...CORPUS_LABORATORIES.map((laboratorio) => ({
     clave: `corpus-${laboratorio.corpusId}`,
     kind: 'DIAGNOSTIC_UNIT' as const,
     tenantId: laboratorio.tenantId,
     targetId: laboratorio.id,
-    slug: slugDe(laboratorio.name, laboratorio.cities[0] ?? 'bolivia'),
+    slug: slugOf(laboratorio.name, laboratorio.cities[0] ?? 'bolivia'),
     displayName: laboratorio.name,
-    headline: titularDeLaboratorio(laboratorio),
+    headline: laboratoryHolder(laboratorio),
     biography: laboratorio.description,
     city: laboratorio.sites[0]!.city,
     address: laboratorio.sites[0]!.addressText ?? '',
@@ -455,9 +455,9 @@ export const SEMILLAS_DE_VITRINA: readonly SemillaDeVitrina[] = [
     /* Los diez del corpus son laboratorios de análisis clínicos: ninguno
        declara servicios de imagen. El día que el corpus traiga un centro de
        imagenología, la categoría sale de sus servicios y no de esta constante. */
-    categoria: CATEGORIA.LABORATORIO_CLINICO,
+    categoria: CATEGORY.LABORATORIO_CLINICO,
   })),
-  ...FARMACIAS_DEL_CORPUS.map((farmacia) => ({
+  ...CORPUS_PHARMACIES.map((farmacia) => ({
     clave: `corpus-${farmacia.corpusId}`,
     kind: 'PHARMACY' as const,
     tenantId: farmacia.tenantId,
@@ -468,14 +468,14 @@ export const SEMILLAS_DE_VITRINA: readonly SemillaDeVitrina[] = [
       farmacia.openingHours === null
         ? `Farmacia · ${farmacia.city}`
         : `Farmacia · ${farmacia.openingHours}`,
-    biography: `${farmacia.chainName}, sucursal ${farmacia.siteName}. ${ETIQUETA_DE_VIGENCIA[farmacia.vigencia]}.`,
+    biography: `${farmacia.chainName}, sucursal ${farmacia.siteName}. ${VALIDITY_LABEL[farmacia.vigencia]}.`,
     city: farmacia.city,
     address: farmacia.addressText ?? '',
     lat: farmacia.lat,
     lng: farmacia.lng,
     verified: farmacia.vigencia === 'VERIFICADA',
     color: '#16a34a',
-    categoria: categoriaDeCadena(farmacia.chainName, farmacia.cadenaReconciliada),
+    categoria: chainCategory(farmacia.chainName, farmacia.cadenaReconciliada),
   })),
 ];
 
@@ -483,7 +483,7 @@ export const SEMILLAS_DE_VITRINA: readonly SemillaDeVitrina[] = [
 /* El parámetro es estructural y no `SemillaDeVitrina` porque las
    instituciones reales (`fixtures/institutions.ts`) también las necesitan y
    no son del corpus: lo único que esta función usa son el nombre y el color. */
-export function imagenesDeVitrina(semilla: {
+export function showcaseImages(semilla: {
   readonly displayName: string;
   readonly color: string;
 }): {

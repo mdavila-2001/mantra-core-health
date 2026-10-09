@@ -98,7 +98,7 @@ export type TipoDeControl =
   | 'textarea'
   | 'custom';
 
-import type { CondicionVisible } from './conditional-visibility';
+import type { ConditionVisible } from './conditional-visibility';
 
 /** Un campo del formulario, tal como el motor necesita conocerlo para pintarlo. */
 export interface CampoDeFormulario {
@@ -184,7 +184,7 @@ export interface CampoDeFormulario {
    * frena «Siguiente» y su valor no sale en `form.value`. Una página que se
    * queda sin campos visibles se salta.
    */
-  readonly showWhen?: CondicionVisible;
+  readonly showWhen?: ConditionVisible;
 
   /** Sólo para `text` y familia: el `autocomplete` del navegador. */
   readonly autocomplete?: string;

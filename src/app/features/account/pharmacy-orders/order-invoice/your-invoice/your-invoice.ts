@@ -38,13 +38,13 @@ import { displayCurrency } from '../../../../../core/money/display-currency';
   styleUrl: './your-invoice.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class TuFactura {
+export class YourInvoice {
 
   /**
    * La moneda visible de un importe: «Bs» para el boliviano y la UMA del
    * arancel, el código tal cual para cualquier otra. Ver `display-currency.ts`.
    */
-  protected moneda(code?: string | null): string {
+  protected currency(code?: string | null): string {
     return displayCurrency(code);
   }
   private readonly esBrowser = isPlatformBrowser(inject(PLATFORM_ID));
@@ -53,31 +53,31 @@ export class TuFactura {
   readonly estado = input.required<EstadoDePedido>();
   readonly factura = input<DocumentoDeFactura | null>(null);
 
-  protected readonly rotulos = ROTULOS_DE_FACTURA;
-  protected readonly nota = NOTA_DE_EJEMPLO;
+  protected readonly labels = ROTULOS_DE_FACTURA;
+  protected readonly note = NOTA_DE_EJEMPLO;
 
-  protected readonly rutaDeFactura = computed(() => `${MIS_PEDIDOS_ROUTE}/${this.orderId()}/invoice`);
-  protected readonly rutaDeComprobante = computed(
+  protected readonly invoicePath = computed(() => `${MIS_PEDIDOS_ROUTE}/${this.orderId()}/invoice`);
+  protected readonly receiptPath = computed(
     () => `${MIS_PEDIDOS_ROUTE}/${this.orderId()}/receipt`,
   );
 
   /** Por qué todavía no hay factura, dicho según dónde está el pedido. */
-  protected readonly motivoSinFactura = computed(() =>
+  protected readonly reasonWithoutInvoice = computed(() =>
     this.estado() === 'RETIRADO'
       ? 'La factura de este pedido todavía no está disponible en la app.'
       : 'La farmacia emite su factura cuando le entrega el pedido.',
   );
 
-  protected readonly descargaFallida = signal(false);
+  protected readonly failedDownload = signal(false);
 
-  protected descargar(): void {
+  protected download(): void {
     const factura = this.factura();
     if (!this.esBrowser || factura === null) {
       return;
     }
-    this.descargaFallida.set(false);
+    this.failedDownload.set(false);
     import('../order-invoice.pdf')
       .then((pdf) => pdf.downloadInvoicePdf(factura))
-      .catch(() => this.descargaFallida.set(true));
+      .catch(() => this.failedDownload.set(true));
   }
 }

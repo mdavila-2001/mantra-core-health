@@ -28,7 +28,7 @@ import { DatePicker } from '../../../../shared/components/organisms/date-picker/
 import { FormActions } from '../../../../shared/components/organisms/form-actions/form-actions';
 import { FormResponsePicker } from '../form-response-picker/form-response-picker';
 import { DRAFT_BLOCK, type DraftBlock } from '../draft-block';
-import { mensajeDeEscritura } from '../../write-message';
+import { writeMessage } from '../../write-message';
 
 /** Un diagnóstico del expediente, para colgar el plan de él. */
 export interface DiagnosticoDelPlan {
@@ -247,7 +247,7 @@ export class CarePlanBlock implements DraftBlock {
    * que no llega desbloqueaba el formulario sin decir nada.
    */
   protected readonly errorDelPlan = computed<string | null>(() =>
-    mensajeDeEscritura(this.registro(), { accion: 'abrir el plan' }),
+    writeMessage(this.registro(), { accion: 'abrir el plan' }),
   );
 
   protected registrar(): void {

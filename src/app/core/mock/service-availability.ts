@@ -18,13 +18,13 @@
  */
 
 /** Un rato de tiempo. */
-export interface Tramo {
+export interface Bracket {
   readonly desde: number;
   readonly hasta: number;
 }
 
 /** Lo que hace falta saber de una oferta para encontrarle lugar. */
-export interface DuracionDeServicio {
+export interface ServiceDuration {
   readonly min: number;
   readonly max: number;
   readonly preparacion: number;
@@ -32,7 +32,7 @@ export interface DuracionDeServicio {
 }
 
 /** Un inicio posible, con lo que el turno reserva. */
-export interface InicioPosible {
+export interface PossibleStart {
   readonly inicio: number;
   /** `inicio + máximo`: lo que se reserva. */
   readonly finMaximo: number;
@@ -40,18 +40,18 @@ export interface InicioPosible {
   readonly finMinimo: number;
 }
 
-const MS_POR_MINUTO = 60_000;
+const MS_BY_MINUTE = 60_000;
 
 /** Cada cuántos minutos se ofrece un inicio dentro de un hueco. */
-export const PASO_DE_INICIOS_MINUTOS = 15;
+export const MINUTES_STARTS_STEP = 15;
 
 /** Tope de horarios que se devuelven por consulta. */
-export const MAX_HORARIOS = 200;
+export const MAX_SCHEDULES = 200;
 
 /** Une los tramos que se tocan o se pisan; descarta los de largo cero. */
-export function unir(tramos: readonly Tramo[]): Tramo[] {
+export function join(tramos: readonly Bracket[]): Bracket[] {
   const ordenados = tramos.filter((t) => t.hasta > t.desde).sort((a, b) => a.desde - b.desde);
-  const unidos: Tramo[] = [];
+  const unidos: Bracket[] = [];
   for (const actual of ordenados) {
     const ultimo = unidos[unidos.length - 1];
     if (ultimo !== undefined && actual.desde <= ultimo.hasta) {
@@ -64,10 +64,10 @@ export function unir(tramos: readonly Tramo[]): Tramo[] {
 }
 
 /** Lo que queda de las franjas al quitarles lo ocupado. */
-export function restar(franjas: readonly Tramo[], ocupado: readonly Tramo[]): Tramo[] {
-  const bloqueos = unir(ocupado);
-  const libres: Tramo[] = [];
-  for (const franja of unir(franjas)) {
+export function subtract(franjas: readonly Bracket[], ocupado: readonly Bracket[]): Bracket[] {
+  const bloqueos = join(ocupado);
+  const libres: Bracket[] = [];
+  for (const franja of join(franjas)) {
     let cursor = franja.desde;
     for (const bloqueo of bloqueos) {
       if (bloqueo.hasta <= cursor) continue;
@@ -82,8 +82,8 @@ export function restar(franjas: readonly Tramo[], ocupado: readonly Tramo[]): Tr
 }
 
 /** El tramo que un turno acordado ocupa, con sus colchones. */
-export function tramoOcupado(inicio: number, finMaximo: number, d: Pick<DuracionDeServicio, 'preparacion' | 'limpieza'>): Tramo {
-  return { desde: inicio - d.preparacion * MS_POR_MINUTO, hasta: finMaximo + d.limpieza * MS_POR_MINUTO };
+export function busyBracket(inicio: number, finMaximo: number, d: Pick<ServiceDuration, 'preparacion' | 'limpieza'>): Bracket {
+  return { desde: inicio - d.preparacion * MS_BY_MINUTE, hasta: finMaximo + d.limpieza * MS_BY_MINUTE };
 }
 
 /**
@@ -93,29 +93,29 @@ export function tramoOcupado(inicio: number, finMaximo: number, d: Pick<Duracion
  * la preparación) y de ahí se avanza cada `paso`: anclar al hueco y no al reloj evita
  * los huecos muertos.
  */
-export function proponerInicios(entrada: {
-  readonly franjas: readonly Tramo[];
-  readonly ocupado: readonly Tramo[];
-  readonly duracion: DuracionDeServicio;
+export function proposeStarts(entrada: {
+  readonly franjas: readonly Bracket[];
+  readonly ocupado: readonly Bracket[];
+  readonly duracion: ServiceDuration;
   readonly noAntesDe: number;
   readonly noDespuesDe: number;
   readonly pasoMinutos?: number;
   readonly limite?: number;
-}): InicioPosible[] {
+}): PossibleStart[] {
   const d = entrada.duracion;
-  const paso = (entrada.pasoMinutos ?? PASO_DE_INICIOS_MINUTOS) * MS_POR_MINUTO;
-  const limite = entrada.limite ?? MAX_HORARIOS;
-  const ocupa = (d.preparacion + d.max + d.limpieza) * MS_POR_MINUTO;
-  const inicios: InicioPosible[] = [];
-  for (const hueco of restar(entrada.franjas, entrada.ocupado)) {
+  const paso = (entrada.pasoMinutos ?? MINUTES_STARTS_STEP) * MS_BY_MINUTE;
+  const limite = entrada.limite ?? MAX_SCHEDULES;
+  const ocupa = (d.preparacion + d.max + d.limpieza) * MS_BY_MINUTE;
+  const inicios: PossibleStart[] = [];
+  for (const hueco of subtract(entrada.franjas, entrada.ocupado)) {
     for (let desde = hueco.desde; desde + ocupa <= hueco.hasta; desde += paso) {
-      const inicio = desde + d.preparacion * MS_POR_MINUTO;
+      const inicio = desde + d.preparacion * MS_BY_MINUTE;
       if (inicio < entrada.noAntesDe) continue;
       if (inicio > entrada.noDespuesDe) break;
       inicios.push({
         inicio,
-        finMaximo: inicio + d.max * MS_POR_MINUTO,
-        finMinimo: inicio + d.min * MS_POR_MINUTO,
+        finMaximo: inicio + d.max * MS_BY_MINUTE,
+        finMinimo: inicio + d.min * MS_BY_MINUTE,
       });
       if (inicios.length >= limite) return inicios;
     }
@@ -124,14 +124,14 @@ export function proponerInicios(entrada: {
 }
 
 /** Si el turno cabe en ese inicio, ahora mismo. Es lo que repite el servidor al retener. */
-export function cabe(franjas: readonly Tramo[], ocupado: readonly Tramo[], d: DuracionDeServicio, inicio: number): boolean {
-  const desde = inicio - d.preparacion * MS_POR_MINUTO;
-  const hasta = inicio + (d.max + d.limpieza) * MS_POR_MINUTO;
-  return restar(franjas, ocupado).some((libre) => libre.desde <= desde && libre.hasta >= hasta);
+export function fits(franjas: readonly Bracket[], ocupado: readonly Bracket[], d: ServiceDuration, inicio: number): boolean {
+  const desde = inicio - d.preparacion * MS_BY_MINUTE;
+  const hasta = inicio + (d.max + d.limpieza) * MS_BY_MINUTE;
+  return subtract(franjas, ocupado).some((libre) => libre.desde <= desde && libre.hasta >= hasta);
 }
 
 /** Los ids de los cupos retraídos que ya no chocan con nada. */
-export function sePuedenReabrir(retraidos: readonly (Tramo & { readonly id: string })[], ocupado: readonly Tramo[]): string[] {
-  const bloqueos = unir(ocupado);
+export function canReopen(retraidos: readonly (Bracket & { readonly id: string })[], ocupado: readonly Bracket[]): string[] {
+  const bloqueos = join(ocupado);
   return retraidos.filter((c) => !bloqueos.some((b) => b.desde < c.hasta && b.hasta > c.desde)).map((c) => c.id);
 }

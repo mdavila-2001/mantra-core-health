@@ -23,7 +23,7 @@ import { SchedulingClient } from '../../../core/data-access/scheduling/schedulin
 import type { Booking } from '../../../core/data-access/scheduling/scheduling.types';
 import { TerminologyClient } from '../../../core/data-access/terminology/terminology.client';
 import type { ConceptLabels } from '../../../core/data-access/terminology/terminology.types';
-import { esCodigoDeAlergia } from '../../../shared/utils/allergies/allergies';
+import { isAllergyCode } from '../../../shared/utils/allergies/allergies';
 import { describeApiFailure } from '../../../core/http/api-failure';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { empty, loading, ready } from '../../../core/view-state/view-state';
@@ -49,7 +49,7 @@ import {
   type ContextoDelDocumento,
   historiaDesdeFuentes,
 } from '../../../shared/utils/clinical-pdf/from-summary';
-import { descargarHistoriaConEncuentros } from '../../../shared/utils/clinical-pdf/history-with-encounters';
+import { downloadHistoryWithEncounters } from '../../../shared/utils/clinical-pdf/history-with-encounters';
 import { textoDeValor } from '../../../shared/utils/form-values/form-values';
 import { MIS_TURNOS_ROUTE } from '../appointments/appointments.routes';
 import {
@@ -442,7 +442,7 @@ export class MedicalRecord {
       .filter(
         (condicion) =>
           condicion.resolvedAt === undefined &&
-          esCodigoDeAlergia(this.etiquetas().get(condicion.codeConceptId)?.code),
+          isAllergyCode(this.etiquetas().get(condicion.codeConceptId)?.code),
       )
       .map((condicion) => ({
         id: condicion.id,
@@ -665,7 +665,7 @@ export class MedicalRecord {
           // línea del encuentro necesita. Se guardan para que el documento y la
           // pantalla digan lo mismo, y para no volver a pedirlas al desplegar.
           this.adoptarOrdenes(ordenes.items);
-          descargarHistoriaConEncuentros(
+          downloadHistoryWithEncounters(
             historiaDesdeFuentes(
               {
                 resumen: datos,

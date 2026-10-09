@@ -1,5 +1,5 @@
-import { ESTADO_DE_CASO } from '../fixtures/concepts';
-import { MEDICA, PACIENTE, PACIENTES, PROFESIONALES } from '../fixtures/people';
+import { CASE_STATUS } from '../fixtures/concepts';
+import { MEDICAL, PACIENTE, PATIENTS, PROFESSIONALS } from '../fixtures/people';
 import { notFound, type MockRequest, type MockRouter } from '../mock-router';
 import { TENANT_CLINICA } from '../mock-session';
 import { ahora, Coleccion, cuerpo, iso, nuevoId, uuid } from '../mock-store';
@@ -38,16 +38,16 @@ export const POLITICA = {
  * el simulador ya usaba para estados que el catálogo llama distinto.
  */
 const CONCEPTO_DE_ESTADO: Readonly<Record<string, string>> = {
-  OPEN: ESTADO_DE_CASO['identity_assurance:CASE_OPEN']!,
-  CHECKS_PENDING: ESTADO_DE_CASO['identity_assurance:CASE_CHECKS_PENDING']!,
-  IN_REVIEW: ESTADO_DE_CASO['identity_assurance:CASE_IN_VERIFICATION']!,
-  MANUAL_REVIEW: ESTADO_DE_CASO['identity_assurance:CASE_MANUAL_REVIEW']!,
-  AT_RISK: ESTADO_DE_CASO['identity_assurance:CASE_AT_RISK']!,
-  VERIFIED: ESTADO_DE_CASO['identity_assurance:CASE_VERIFIED']!,
-  ASSERTED: ESTADO_DE_CASO['identity_assurance:CASE_ASSERTED']!,
-  REJECTED: ESTADO_DE_CASO['identity_assurance:CASE_REJECTED']!,
-  REVOKED: ESTADO_DE_CASO['identity_assurance:CASE_REVOKED']!,
-  EXPIRED: ESTADO_DE_CASO['identity_assurance:CASE_EXPIRED']!,
+  OPEN: CASE_STATUS['identity_assurance:CASE_OPEN']!,
+  CHECKS_PENDING: CASE_STATUS['identity_assurance:CASE_CHECKS_PENDING']!,
+  IN_REVIEW: CASE_STATUS['identity_assurance:CASE_IN_VERIFICATION']!,
+  MANUAL_REVIEW: CASE_STATUS['identity_assurance:CASE_MANUAL_REVIEW']!,
+  AT_RISK: CASE_STATUS['identity_assurance:CASE_AT_RISK']!,
+  VERIFIED: CASE_STATUS['identity_assurance:CASE_VERIFIED']!,
+  ASSERTED: CASE_STATUS['identity_assurance:CASE_ASSERTED']!,
+  REJECTED: CASE_STATUS['identity_assurance:CASE_REJECTED']!,
+  REVOKED: CASE_STATUS['identity_assurance:CASE_REVOKED']!,
+  EXPIRED: CASE_STATUS['identity_assurance:CASE_EXPIRED']!,
 };
 
 /** El concepto del estado, o el enum tal cual si es uno que no está en el catálogo. */
@@ -73,13 +73,13 @@ interface CasoSimulado {
 
 const casos = new Coleccion<CasoSimulado>([
   { id: uuid('case-paciente-identidad'), status: 'VERIFIED', subjectTypeConceptId: SUJETO.PATIENT, subjectEntityId: PACIENTE.id, identityVerificationPolicyId: POLITICA.paciente, riskScore: '0.12', openedAt: iso(-46, 10), expiresAt: iso(319), completedAt: iso(-45, 15), userId: PACIENTE.userId, type: 'PATIENT_IDENTITY', evidenceFileId: uuid('file-ci-paciente'), checkIds: [uuid('check-1')] },
-  { id: uuid('case-medica-identidad'), status: 'VERIFIED', subjectTypeConceptId: SUJETO.PRACTITIONER, subjectEntityId: MEDICA.id, identityVerificationPolicyId: POLITICA.profesional, riskScore: '0.05', openedAt: iso(-38, 9), expiresAt: iso(327), completedAt: iso(-37, 11), userId: MEDICA.userId, type: 'PRACTITIONER_IDENTITY', evidenceFileId: uuid('file-ci-medica'), checkIds: [uuid('check-2')] },
-  { id: uuid('case-medica-matricula'), status: 'VERIFIED', subjectTypeConceptId: SUJETO.PRACTITIONER, subjectEntityId: MEDICA.id, identityVerificationPolicyId: POLITICA.matricula, riskScore: '0.03', openedAt: iso(-12, 9), expiresAt: iso(353), completedAt: iso(-11, 16), userId: MEDICA.userId, type: 'PRACTITIONER_LICENSE', evidenceFileId: uuid('file-matricula-medica'), checkIds: [uuid('check-3')] },
-  { id: uuid('case-medica-sanlucas'), status: 'IN_REVIEW', subjectTypeConceptId: SUJETO.TENANT, subjectEntityId: TENANT_CLINICA, identityVerificationPolicyId: POLITICA.organizacion, riskScore: '0.20', openedAt: iso(-3, 12), expiresAt: iso(4), completedAt: null, userId: MEDICA.userId, type: 'TENANT', evidenceFileId: uuid('file-nit-olivos'), checkIds: [uuid('check-4')] },
-  { id: uuid('case-cola-1'), status: 'OPEN', subjectTypeConceptId: SUJETO.PRACTITIONER, subjectEntityId: PROFESIONALES[14]!.id, identityVerificationPolicyId: POLITICA.profesional, riskScore: '0.41', openedAt: iso(-2, 8), expiresAt: iso(5), completedAt: null, userId: PROFESIONALES[14]!.userId, type: 'PRACTITIONER_IDENTITY', evidenceFileId: uuid('file-ci-14'), checkIds: [uuid('check-5')] },
-  { id: uuid('case-cola-2'), status: 'MANUAL_REVIEW', subjectTypeConceptId: SUJETO.PATIENT, subjectEntityId: PACIENTES[6]!.id, identityVerificationPolicyId: POLITICA.paciente, riskScore: '0.67', openedAt: iso(-5, 14), expiresAt: iso(2), completedAt: null, userId: PACIENTES[6]!.userId, type: 'PATIENT_IDENTITY', evidenceFileId: uuid('file-ci-p6'), checkIds: [uuid('check-6')] },
+  { id: uuid('case-medica-identidad'), status: 'VERIFIED', subjectTypeConceptId: SUJETO.PRACTITIONER, subjectEntityId: MEDICAL.id, identityVerificationPolicyId: POLITICA.profesional, riskScore: '0.05', openedAt: iso(-38, 9), expiresAt: iso(327), completedAt: iso(-37, 11), userId: MEDICAL.userId, type: 'PRACTITIONER_IDENTITY', evidenceFileId: uuid('file-ci-medica'), checkIds: [uuid('check-2')] },
+  { id: uuid('case-medica-matricula'), status: 'VERIFIED', subjectTypeConceptId: SUJETO.PRACTITIONER, subjectEntityId: MEDICAL.id, identityVerificationPolicyId: POLITICA.matricula, riskScore: '0.03', openedAt: iso(-12, 9), expiresAt: iso(353), completedAt: iso(-11, 16), userId: MEDICAL.userId, type: 'PRACTITIONER_LICENSE', evidenceFileId: uuid('file-matricula-medica'), checkIds: [uuid('check-3')] },
+  { id: uuid('case-medica-sanlucas'), status: 'IN_REVIEW', subjectTypeConceptId: SUJETO.TENANT, subjectEntityId: TENANT_CLINICA, identityVerificationPolicyId: POLITICA.organizacion, riskScore: '0.20', openedAt: iso(-3, 12), expiresAt: iso(4), completedAt: null, userId: MEDICAL.userId, type: 'TENANT', evidenceFileId: uuid('file-nit-olivos'), checkIds: [uuid('check-4')] },
+  { id: uuid('case-cola-1'), status: 'OPEN', subjectTypeConceptId: SUJETO.PRACTITIONER, subjectEntityId: PROFESSIONALS[14]!.id, identityVerificationPolicyId: POLITICA.profesional, riskScore: '0.41', openedAt: iso(-2, 8), expiresAt: iso(5), completedAt: null, userId: PROFESSIONALS[14]!.userId, type: 'PRACTITIONER_IDENTITY', evidenceFileId: uuid('file-ci-14'), checkIds: [uuid('check-5')] },
+  { id: uuid('case-cola-2'), status: 'MANUAL_REVIEW', subjectTypeConceptId: SUJETO.PATIENT, subjectEntityId: PATIENTS[6]!.id, identityVerificationPolicyId: POLITICA.paciente, riskScore: '0.67', openedAt: iso(-5, 14), expiresAt: iso(2), completedAt: null, userId: PATIENTS[6]!.userId, type: 'PATIENT_IDENTITY', evidenceFileId: uuid('file-ci-p6'), checkIds: [uuid('check-6')] },
   { id: uuid('case-cola-3'), status: 'CHECKS_PENDING', subjectTypeConceptId: SUJETO.TENANT, subjectEntityId: uuid('tenant-clinica-nueva'), identityVerificationPolicyId: POLITICA.organizacion, riskScore: '0.30', openedAt: iso(-1, 16), expiresAt: iso(6), completedAt: null, userId: uuid('user-owner-nueva'), type: 'TENANT', evidenceFileId: uuid('file-nit-nueva'), checkIds: [] },
-  { id: uuid('case-cola-4'), status: 'EXPIRED', subjectTypeConceptId: SUJETO.PRACTITIONER, subjectEntityId: PROFESIONALES[13]!.id, identityVerificationPolicyId: POLITICA.matricula, riskScore: '0.15', openedAt: iso(-30, 9), expiresAt: iso(-23), completedAt: null, userId: PROFESIONALES[13]!.userId, type: 'PRACTITIONER_LICENSE', evidenceFileId: null, checkIds: [] },
+  { id: uuid('case-cola-4'), status: 'EXPIRED', subjectTypeConceptId: SUJETO.PRACTITIONER, subjectEntityId: PROFESSIONALS[13]!.id, identityVerificationPolicyId: POLITICA.matricula, riskScore: '0.15', openedAt: iso(-30, 9), expiresAt: iso(-23), completedAt: null, userId: PROFESSIONALS[13]!.userId, type: 'PRACTITIONER_LICENSE', evidenceFileId: null, checkIds: [] },
 ]);
 
 function casoPropio(c: CasoSimulado) {

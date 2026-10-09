@@ -11,7 +11,7 @@ import type { ConversationListItem } from '../data-access/community/community.ty
  * Sin ningún nombre resuelto se dice «Conversación» y **no** el uuid: un
  * identificador en la bandeja no le dice nada a nadie.
  */
-export function conQuien(conversacion: ConversationListItem): string {
+export function conversationLabel(conversacion: ConversationListItem): string {
   const nombres = conversacion.peers
     .map((peer) => peer.displayName)
     .filter((nombre): nombre is string => nombre !== undefined && nombre !== null);
@@ -27,7 +27,7 @@ export function conQuien(conversacion: ConversationListItem): string {
  * identidad al grupo entero. `app-avatar` ya sabe caer a iniciales sin foto,
  * así que `null` es una respuesta completa, no un caso a medias.
  */
-export function avatarDeConQuien(conversacion: ConversationListItem): string | null {
+export function conversationAvatar(conversacion: ConversationListItem): string | null {
   if (conversacion.peers.length !== 1) return null;
   return conversacion.peers[0].avatarUrl ?? null;
 }

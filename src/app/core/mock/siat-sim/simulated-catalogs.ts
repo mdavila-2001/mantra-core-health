@@ -13,36 +13,36 @@
       con el catálogo real.
     ========================================================================== */
 
-export type OrigenDeCatalogo = 'EJEMPLO_OFICIAL' | 'SIMULADO';
+export type CatalogOrigin = 'EJEMPLO_OFICIAL' | 'SIMULADO';
 
-export interface EntradaDeCatalogo {
+export interface CatalogEntry {
   readonly codigo: number;
   readonly descripcion: string;
-  readonly origen: OrigenDeCatalogo;
+  readonly origen: CatalogOrigin;
   /** Dónde aparece, si `origen` es `EJEMPLO_OFICIAL`. */
   readonly fuente?: string;
 }
 
-export interface LeyendaDeCatalogo {
+export interface CatalogLegend {
   readonly descripcionLeyenda: string;
-  readonly origen: OrigenDeCatalogo;
+  readonly origen: CatalogOrigin;
   readonly fuente?: string;
 }
 
-export interface CatalogosFiscales {
-  readonly metodosDePago: readonly EntradaDeCatalogo[];
-  readonly tiposDeDocumentoDeIdentidad: readonly EntradaDeCatalogo[];
-  readonly unidadesDeMedida: readonly EntradaDeCatalogo[];
-  readonly monedas: readonly EntradaDeCatalogo[];
-  readonly motivosDeAnulacion: readonly EntradaDeCatalogo[];
-  readonly leyendas: readonly LeyendaDeCatalogo[];
+export interface FiscalCatalogs {
+  readonly metodosDePago: readonly CatalogEntry[];
+  readonly tiposDeDocumentoDeIdentidad: readonly CatalogEntry[];
+  readonly unidadesDeMedida: readonly CatalogEntry[];
+  readonly monedas: readonly CatalogEntry[];
+  readonly motivosDeAnulacion: readonly CatalogEntry[];
+  readonly leyendas: readonly CatalogLegend[];
   readonly simulated: true;
 }
 
-const NOTA_HOSPITAL =
+const NOTE_HOSPITAL =
   'Nota de la página oficial «Factura Hospitales/Clínicas»: unidadMedida 58 («unidad servicio») para servicios.';
 
-export const CATALOGOS_SIMULADOS: CatalogosFiscales = {
+export const SIMULATED_CATALOGS: FiscalCatalogs = {
   metodosDePago: [
     { codigo: 1, descripcion: 'EFECTIVO (catálogo simulado)', origen: 'SIMULADO' },
     { codigo: 2, descripcion: 'TARJETA (catálogo simulado)', origen: 'SIMULADO' },
@@ -54,7 +54,7 @@ export const CATALOGOS_SIMULADOS: CatalogosFiscales = {
     { codigo: 5, descripcion: 'NIT (catálogo simulado)', origen: 'SIMULADO' },
   ],
   unidadesDeMedida: [
-    { codigo: 58, descripcion: 'UNIDAD (SERVICIOS)', origen: 'EJEMPLO_OFICIAL', fuente: NOTA_HOSPITAL },
+    { codigo: 58, descripcion: 'UNIDAD (SERVICIOS)', origen: 'EJEMPLO_OFICIAL', fuente: NOTE_HOSPITAL },
     { codigo: 1, descripcion: 'UNIDAD (catálogo simulado)', origen: 'SIMULADO' },
   ],
   monedas: [{ codigo: 1, descripcion: 'BOLIVIANO (catálogo simulado)', origen: 'SIMULADO' }],
@@ -80,6 +80,6 @@ export const CATALOGOS_SIMULADOS: CatalogosFiscales = {
   simulated: true,
 };
 
-export function existeEnCatalogo(catalogo: readonly EntradaDeCatalogo[], codigo: number): boolean {
+export function existsInCatalog(catalogo: readonly CatalogEntry[], codigo: number): boolean {
   return catalogo.some((e) => e.codigo === codigo);
 }

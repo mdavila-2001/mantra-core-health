@@ -2,12 +2,12 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import {
-  ENTRADAS,
-  coincideAnatomia,
-  entradaEnLinea,
-  entradaPorId,
-  entradaPorSlug,
-  fichaAnatomicaEnLinea,
+  ENTRIES,
+  anatomyMatches,
+  inlineEntry,
+  entryById,
+  entryBySlug,
+  inlineAnatomicalSheet,
 } from './anatomy';
 import {
   DEFINICIONES_DE_TIPO,
@@ -46,9 +46,9 @@ describe('la taxonomía anatómica de Netter portada al simulador', () => {
   });
 
   it('no pierde ninguna entrada al indexarlas', () => {
-    expect(ENTRADAS).toHaveLength(ENTRADAS_ANATOMICAS.length);
-    expect(new Set(ENTRADAS.map((e) => e.id)).size).toBe(ENTRADAS.length);
-    expect(new Set(ENTRADAS.map((e) => e.slug)).size).toBe(ENTRADAS.length);
+    expect(ENTRIES).toHaveLength(ENTRADAS_ANATOMICAS.length);
+    expect(new Set(ENTRIES.map((e) => e.id)).size).toBe(ENTRIES.length);
+    expect(new Set(ENTRIES.map((e) => e.slug)).size).toBe(ENTRIES.length);
   });
 
   it('cuelga cada subregión y cada lámina de algo que existe', () => {
@@ -78,14 +78,14 @@ describe('la taxonomía anatómica de Netter portada al simulador', () => {
   });
 
   it('resuelve una entrada por su identificador y por su slug', () => {
-    const alguna = ENTRADAS[0]!;
-    expect(entradaPorId(alguna.id)).toBe(alguna);
-    expect(entradaPorSlug(alguna.slug)).toBe(alguna);
-    expect(entradaPorId('no-existe')).toBeUndefined();
+    const alguna = ENTRIES[0]!;
+    expect(entryById(alguna.id)).toBe(alguna);
+    expect(entryBySlug(alguna.slug)).toBe(alguna);
+    expect(entryById('no-existe')).toBeUndefined();
   });
 
   it('publica la entrada dentro de la categoría Anatomía del glosario', () => {
-    const enLinea = entradaEnLinea(ENTRADAS[0]!);
+    const enLinea = inlineEntry(ENTRIES[0]!);
     expect(enLinea.category.internalCode).toBe('glossary-category-anatomy');
     expect(enLinea.valueSets.map((v) => v.internalCode)).toContain('glossary-category-anatomy');
     expect(enLinea.code.startsWith('NETTER_')).toBe(true);
@@ -96,8 +96,8 @@ describe('la taxonomía anatómica de Netter portada al simulador', () => {
   it('dice que la definición es del TIPO y no de la entrada', () => {
     // Si alguien «mejora» el texto quitándole el rótulo, la maqueta pasaría a
     // afirmar que ésa es la definición de esta estructura. No la tiene.
-    const conTipoConocido = ENTRADAS.find((e) => e.type === 'musculo')!;
-    const ficha = fichaAnatomicaEnLinea(conTipoConocido);
+    const conTipoConocido = ENTRIES.find((e) => e.type === 'musculo')!;
+    const ficha = inlineAnatomicalSheet(conTipoConocido);
 
     expect(ficha.clinicalDefinition.text).toContain('Qué es un «musculo»');
     expect(ficha.clinicalDefinition.text).toContain('no de');
@@ -106,21 +106,21 @@ describe('la taxonomía anatómica de Netter portada al simulador', () => {
 
   it('no inventa sinónimos ni relaciones entre estructuras', () => {
     // El corpus lo prohíbe: compartir lámina es representación, no causalidad.
-    for (const entrada of ENTRADAS.slice(0, 50)) {
-      const ficha = fichaAnatomicaEnLinea(entrada);
+    for (const entrada of ENTRIES.slice(0, 50)) {
+      const ficha = inlineAnatomicalSheet(entrada);
       expect(ficha.synonyms).toHaveLength(0);
       expect(ficha.relations).toHaveLength(0);
     }
   });
 
   it('conserva la forma fuente del término, sin corregirla', () => {
-    const conForma = ENTRADAS.find((e) => e.name.includes('('))!;
-    const ficha = fichaAnatomicaEnLinea(conForma);
+    const conForma = ENTRIES.find((e) => e.name.includes('('))!;
+    const ficha = inlineAnatomicalSheet(conForma);
     expect(ficha.properties.source_form).toBe(conForma.name);
   });
 
   it('declara de dónde salió el nombre y con cuánto acuerdo de OCR', () => {
-    const ficha = fichaAnatomicaEnLinea(ENTRADAS[0]!);
+    const ficha = inlineAnatomicalSheet(ENTRIES[0]!);
     expect(ficha.properties.provenance).toContain('OCR');
     expect(ficha.properties.provenance).toContain('revisión humana');
   });
@@ -144,10 +144,10 @@ describe('la taxonomía anatómica de Netter portada al simulador', () => {
   });
 
   it('encuentra una entrada por nombre, por tipo y por región', () => {
-    const entrada = ENTRADAS.find((e) => e.region === 'Tórax' && e.type === 'musculo')!;
-    expect(coincideAnatomia(entrada, entrada.name.slice(0, 6).toLowerCase())).toBe(true);
-    expect(coincideAnatomia(entrada, 'musculo')).toBe(true);
-    expect(coincideAnatomia(entrada, 'tórax')).toBe(true);
-    expect(coincideAnatomia(entrada, 'zzzz-no-existe')).toBe(false);
+    const entrada = ENTRIES.find((e) => e.region === 'Tórax' && e.type === 'musculo')!;
+    expect(anatomyMatches(entrada, entrada.name.slice(0, 6).toLowerCase())).toBe(true);
+    expect(anatomyMatches(entrada, 'musculo')).toBe(true);
+    expect(anatomyMatches(entrada, 'tórax')).toBe(true);
+    expect(anatomyMatches(entrada, 'zzzz-no-existe')).toBe(false);
   });
 });

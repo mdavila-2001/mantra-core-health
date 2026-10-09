@@ -22,12 +22,12 @@
 
 import type { HallazgoIa, LecturaIa } from '@core/data-access/triage-ia/triage-ia.types';
 
-import { normalizar, TODOS_LOS_SINTOMAS, type Sintoma } from './symptoms';
+import { normalizar, SYMPTOMS_ALL, type Sintoma } from './symptoms';
 
-const POR_ID: ReadonlyMap<string, Sintoma> = new Map(TODOS_LOS_SINTOMAS.map((s) => [s.id, s]));
+const BY_ID: ReadonlyMap<string, Sintoma> = new Map(SYMPTOMS_ALL.map((s) => [s.id, s]));
 
 /** Una lectura y el texto que la produjo. */
-export interface LecturaDelTexto {
+export interface TextReading {
   readonly texto: string;
   readonly lectura: LecturaIa;
 }
@@ -41,7 +41,7 @@ export interface LecturaDelTexto {
  * mostrar un chip de algo que la persona ya borró es peor que esperar un
  * instante.
  */
-export function lecturaVigente(guardada: LecturaDelTexto | null, texto: string): LecturaIa | null {
+export function currentReading(guardada: TextReading | null, texto: string): LecturaIa | null {
   if (guardada === null) {
     return null;
   }
@@ -49,23 +49,23 @@ export function lecturaVigente(guardada: LecturaDelTexto | null, texto: string):
 }
 
 /** Los hallazgos del servicio como síntomas de la tabla, en el orden en que llegaron. */
-export function sintomasDeLaLectura(lectura: LecturaIa | null): readonly Sintoma[] {
+export function readingSymptoms(lectura: LecturaIa | null): readonly Sintoma[] {
   if (lectura === null) {
     return [];
   }
-  return lectura.symptoms.map(comoSintoma).filter((s): s is Sintoma => s !== null);
+  return lectura.symptoms.map(symptomAs).filter((s): s is Sintoma => s !== null);
 }
 
-function comoSintoma(hallazgo: HallazgoIa): Sintoma | null {
+function symptomAs(hallazgo: HallazgoIa): Sintoma | null {
   if (hallazgo.kind === 'curated') {
-    const fila = POR_ID.get(hallazgo.code);
+    const fila = BY_ID.get(hallazgo.code);
     // Un código que la tabla de este build no tiene se ignora: la tabla del
     // servicio puede ir un commit adelante o atrás.
-    return fila === undefined ? null : { ...fila, nombre: conUbicacion(fila.nombre, hallazgo) };
+    return fila === undefined ? null : { ...fila, nombre: withLocation(fila.nombre, hallazgo) };
   }
   return {
     id: hallazgo.code,
-    nombre: conLado(hallazgo.label, hallazgo),
+    nombre: withSide(hallazgo.label, hallazgo),
     sinonimos: [],
     especialidades: hallazgo.especialidades.map(({ nombre, peso }) => ({ nombre, peso })),
     ...(hallazgo.alarm ? { alarma: true } : {}),
@@ -78,23 +78,23 @@ function comoSintoma(hallazgo: HallazgoIa): Sintoma | null {
  * Sólo se agrega la parte si el nombre no la dice ya: «dolor de rodilla» con la
  * rodilla sería repetir.
  */
-function conUbicacion(nombre: string, hallazgo: HallazgoIa): string {
+function withLocation(nombre: string, hallazgo: HallazgoIa): string {
   const parte = hallazgo.bodyPart;
   if (parte === null) {
     return nombre;
   }
   if (normalizar(nombre).includes(normalizar(parte.label))) {
-    return conLado(nombre, hallazgo);
+    return withSide(nombre, hallazgo);
   }
-  return `${nombre} · ${parte.label}${parte.side === null ? '' : ` (${ladoDicho(parte.side)})`}`;
+  return `${nombre} · ${parte.label}${parte.side === null ? '' : ` (${saidSide(parte.side)})`}`;
 }
 
-function conLado(nombre: string, hallazgo: HallazgoIa): string {
+function withSide(nombre: string, hallazgo: HallazgoIa): string {
   const lado = hallazgo.bodyPart?.side ?? null;
-  return lado === null ? nombre : `${nombre} (${ladoDicho(lado)})`;
+  return lado === null ? nombre : `${nombre} (${saidSide(lado)})`;
 }
 
-function ladoDicho(lado: string): string {
+function saidSide(lado: string): string {
   return lado === 'ambos' ? 'ambos lados' : `lado ${lado}`;
 }
 
@@ -104,7 +104,7 @@ function ladoDicho(lado: string): string {
  * El servicio ubica mejor que la tabla: «se me durmió la mano» es *manos*, no
  * las cuatro zonas donde la tabla ofrece «hormigueo».
  */
-export function zonasDeLaLectura(lectura: LecturaIa | null): ReadonlyMap<string, readonly string[]> {
+export function readingZones(lectura: LecturaIa | null): ReadonlyMap<string, readonly string[]> {
   return new Map((lectura?.symptoms ?? []).map((hallazgo) => [hallazgo.code, hallazgo.zones]));
 }
 
@@ -115,7 +115,7 @@ export function zonasDeLaLectura(lectura: LecturaIa | null): ReadonlyMap<string,
  * que trae la parte y el lado; y en el lugar en que lo puso el texto, para que
  * los chips no salten. Los que sólo vio el servicio van después.
  */
-export function combinar(delTexto: readonly Sintoma[], deLaLectura: readonly Sintoma[]): readonly Sintoma[] {
+export function combine(delTexto: readonly Sintoma[], deLaLectura: readonly Sintoma[]): readonly Sintoma[] {
   const lectura = new Map(deLaLectura.map((s) => [s.id, s]));
   const locales = delTexto.map((s) => lectura.get(s.id) ?? s);
   const yaEstan = new Set(locales.map((s) => s.id));
