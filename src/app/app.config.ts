@@ -17,6 +17,7 @@ import { provideClientHydration, withEventReplay } from '@angular/platform-brows
 import { ThemeService } from './core/tokens/theme.service';
 import { authInterceptor } from './core/http/auth.interceptor';
 import { timeoutInterceptor } from './core/http/timeout.interceptor';
+import { apiFailureLogInterceptor } from './core/http/api-failure-log.interceptor';
 import { AuthService } from './core/auth/auth.service';
 import { IdleLogout } from './core/auth/idle-logout';
 import { SessionEndedRedirect } from './core/auth/session-ended-redirect';
@@ -68,9 +69,13 @@ export const appConfig: ApplicationConfig = {
     // `withFetch` no es opcional bajo SSR: sin él el cliente usa XHR, que en el
     // servidor obliga a un reemplazo y rompe la transferencia de estado.
     //
-    // El orden de los tres interceptores importa, y ninguno de los tres está
-    // donde está por gusto:
+    // El orden de los interceptores importa, y ninguno está donde está por
+    // gusto:
     //
+    //   0. `apiFailureLogInterceptor` — por fuera de todo. Escribe en la
+    //      consola el fallo **final** que recibe la pantalla (después del
+    //      refresco de sesión y del tiempo de espera), con código, campos y
+    //      `correlationId`. Sólo en desarrollo o con `alovida.debugApi`.
     //   1. `tracingInterceptor` — el más externo. Mide la petición *lógica*:
     //      con él por dentro, un refresco de sesión con reintento produciría
     //      dos spans para lo que la pantalla vivió como una sola llamada. Y su
@@ -87,7 +92,13 @@ export const appConfig: ApplicationConfig = {
       withFetch(),
       // El simulado va último: la petición ya lleva trazas, tiempo de espera y
       // credenciales cuando llega a él, igual que si fuera la red.
-      withInterceptors([tracingInterceptor, timeoutInterceptor, authInterceptor, mockBackendInterceptor]),
+      withInterceptors([
+        apiFailureLogInterceptor,
+        tracingInterceptor,
+        timeoutInterceptor,
+        authInterceptor,
+        mockBackendInterceptor,
+      ]),
     ),
     // Trazas del Router y de la estabilidad de la aplicación. No bloquea el
     // arranque y, con la telemetría apagada, no engancha nada.
