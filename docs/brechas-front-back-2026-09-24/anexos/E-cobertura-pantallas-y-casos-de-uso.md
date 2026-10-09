@@ -459,7 +459,7 @@ Intención de producto (memoria `proposito-historia-clinica-paciente.md`, Justin
 | `ROUTE_HEALTH_MATRIX.md` | 2026-08-15 | `/my-account/medical-record` → `MedicalRecord` **ok** para paciente (línea 244). «ok» = navegó y pintó sin errores de consola ni 5xx; no mide contenido ni flujo. | Vieja: lista rutas que hoy redirigen (`/my-account/identity/verify`). |
 | `DESIGN_VIEW_INVENTORY.md` | 2026-09-05 | Sólo diseño: las 126 maquetas no persisten nada (H-1). No habla del flujo. | Vigente para las maquetas. |
 | `ESTADO-FRONTEND.md` | 2026-08-01 | «todo lo que se ve viene de la API: nada está simulado» (línea 12). | **Obsoleto y hoy falso** en `mockup`: `mockBackend: true` fijo. |
-| `INFORME_AVANCE_GLOBAL_Y_PROXIMOS_PASOS.md` | 2026-09-12 | Hito 1 = altas y documentos legales; próximos pasos = GPS de aseguradora, gerencias, claims del pagador, roles IAM. **No menciona la historia del paciente.** | El plan vigente no prioriza el propósito central. |
+| `docs/progress/archive/INFORME_AVANCE_GLOBAL_Y_PROXIMOS_PASOS.md` | 2026-09-12 | Hito 1 = altas y documentos legales; próximos pasos = GPS de aseguradora, gerencias, claims del pagador, roles IAM. **No menciona la historia del paciente.** | El plan vigente no prioriza el propósito central. |
 | Memoria `proposito-historia-clinica-paciente.md` | 2026-08-17 | Paso 1 roto (D-3, 403 al titular); pasos 2-4 sin verificar. | Ver abajo: D-3 tiene corrección en el código. |
 
 ### Estado paso a paso (código de `mockup` × `dev`)
@@ -713,7 +713,7 @@ Severidad: **Bloqueante demo** · **Alta** · **Media** · **Baja**. Evidencia `
   ```
 
 ### CV-21 · Documentación de estado desactualizada o contradictoria — **Baja**
-- **Evidencia:** `ESTADO-FRONTEND.md:12` («nada está simulado», 2026-08-01) contra `environment.ts:65`; `ROUTE_HEALTH_MATRIX.md` (2026-08-15) lista rutas que hoy redirigen y su «ok» no mide contenido; `INFORME_AVANCE_GLOBAL_Y_PROXIMOS_PASOS.md` (2026-09-12) no menciona la historia del paciente.
+- **Evidencia:** `ESTADO-FRONTEND.md:12` («nada está simulado», 2026-08-01) contra `environment.ts:65`; `ROUTE_HEALTH_MATRIX.md` (2026-08-15) lista rutas que hoy redirigen y su «ok» no mide contenido; `docs/progress/archive/INFORME_AVANCE_GLOBAL_Y_PROXIMOS_PASOS.md` (2026-09-12) no menciona la historia del paciente.
 - **Qué hacer:** regenerar la matriz (`yarn pw:rutas`) con estado de contenido, fechar `ESTADO-FRONTEND.md` como histórico y agregar el propósito central al plan.
 - **Criterios:**
   ```gherkin

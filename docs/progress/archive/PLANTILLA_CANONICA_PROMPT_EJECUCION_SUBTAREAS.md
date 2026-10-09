@@ -161,5 +161,5 @@ yarn typecheck
 ## 6. Ejemplo Canónico de Referencia
 
 Para consultar un ejemplo completo aplicado a esta plantilla, revisar el archivo:
-👉 [`PROMPT_SUBTAREA_1_4_DEPARTAMENTO_EMISION.md`](file:///C:/Users/Usuario/.gemini/antigravity-ide/brain/a03dcc71-c895-4a75-ad01-86307bdf85e4/PROMPT_SUBTAREA_1_4_DEPARTAMENTO_EMISION.md)
+👉 `PROMPT_SUBTAREA_1_4_DEPARTAMENTO_EMISION.md` (ruta local de otra máquina, no versionada)
 *(Abarca la obligatoriedad de extensión departamental en cédulas bolivianas, validación contra `VS_BO_DEPARTMENT`, protocolo Git y pruebas Jest).*
