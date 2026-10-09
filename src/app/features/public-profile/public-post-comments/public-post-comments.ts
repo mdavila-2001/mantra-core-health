@@ -42,6 +42,7 @@ import { Router, RouterLink } from '@angular/router';
 import { SessionStore } from '@core/auth/session.store';
 import { CommunityClient } from '@core/data-access/community/community.client';
 import { PublicDirectoryClient } from '@core/data-access/public-directory/public-directory.client';
+import { describeApiFailure } from '@core/http/api-failure';
 import {
   PUBLIC_PROFILE_PREFIX,
   type PublicComment,
@@ -106,7 +107,8 @@ export class PublicPostComments implements OnInit {
 
   protected readonly borrador = signal('');
   protected readonly enviando = signal(false);
-  protected readonly falloAlEnviar = signal(false);
+  /** Por qué no se publicó el comentario —con el código de soporte—, o `null`. */
+  protected readonly falloAlEnviar = signal<string | null>(null);
 
   /**
    * Publica el comentario y **relee** el hilo.
@@ -122,7 +124,7 @@ export class PublicPostComments implements OnInit {
     if (actor === null || texto.length === 0 || this.enviando()) return;
 
     this.enviando.set(true);
-    this.falloAlEnviar.set(false);
+    this.falloAlEnviar.set(null);
     this.community
       .createComment({ authorProfileId: actor, commentableRefId: this.postId(), bodyText: texto })
       .subscribe({
@@ -132,9 +134,9 @@ export class PublicPostComments implements OnInit {
           this.comentado.emit();
           this.leer();
         },
-        error: () => {
+        error: (error: unknown) => {
           this.enviando.set(false);
-          this.falloAlEnviar.set(true);
+          this.falloAlEnviar.set(describeApiFailure(error, 'No pudimos publicar su comentario.'));
         },
       });
   }
@@ -151,6 +153,8 @@ export class PublicPostComments implements OnInit {
   protected readonly cargando = signal(true);
   protected readonly cargandoMas = signal(false);
   protected readonly fallo = signal(false);
+  /** Qué decir cuando la lectura falló: el motivo de la API o qué hacer, con el código de soporte. */
+  protected readonly motivoDelFallo = signal('');
 
   /** Qué hilos de respuestas están abiertos, por id del comentario padre. */
   private readonly respuestas = signal<Readonly<Record<string, readonly PublicComment[]>>>({});
@@ -266,9 +270,9 @@ export class PublicPostComments implements OnInit {
         this.cursor.set(pagina.nextCursor);
         this.cargandoMas.set(false);
       },
-      error: () => {
+      error: (error: unknown) => {
         this.cargandoMas.set(false);
-        this.fallo.set(true);
+        this.fallar(error);
       },
     });
   }
@@ -286,10 +290,15 @@ export class PublicPostComments implements OnInit {
         this.cursor.set(pagina.nextCursor);
         this.cargando.set(false);
       },
-      error: () => {
+      error: (error: unknown) => {
         this.cargando.set(false);
-        this.fallo.set(true);
+        this.fallar(error);
       },
     });
+  }
+
+  private fallar(error: unknown): void {
+    this.motivoDelFallo.set(describeApiFailure(error, 'Vuelva a intentarlo en un momento.'));
+    this.fallo.set(true);
   }
 }

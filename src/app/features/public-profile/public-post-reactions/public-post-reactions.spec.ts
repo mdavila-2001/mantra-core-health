@@ -1,6 +1,7 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { readFileSync } from 'node:fs';
 
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { provideRouter, Router } from '@angular/router';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { of, throwError, type Observable } from 'rxjs';
@@ -33,10 +34,11 @@ function pagina(
   return { items, nextCursor, totalHint: null, generatedAt: new Date('2026-09-01T00:00:00Z') };
 }
 
-@Component({ template: '' })
+@Component({ template: '', changeDetection: ChangeDetectionStrategy.OnPush })
 class RutaVacia {}
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [PublicPostReactions],
   template: `
     <button type="button" id="disparador">4</button>
@@ -178,6 +180,17 @@ describe('PublicPostReactions', () => {
       await fixture.whenStable();
 
       expect(root().querySelectorAll('.reacciones__persona')).toHaveLength(1);
+    });
+
+    it('el fallo de lectura dice qué hacer y trae el código de soporte', async () => {
+      await montar(() => throwError(() => new HttpErrorResponse({
+        status: 503,
+        error: { code: 'DEPENDENCY_UNAVAILABLE', message: '', correlationId: 'corr-pub', timestamp: '', path: '' },
+      })));
+
+      expect(root().querySelector('[role="alert"]')?.textContent).toContain(
+        'Vuelva a intentarlo en un momento. (Código de soporte: corr-pub)',
+      );
     });
   });
 

@@ -5,6 +5,8 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { provideRouter } from '@angular/router';
 
 import { API_BASE_URL } from '../../../core/data-access/api';
+import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
+import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
 import { Cockpit } from './cockpit';
 import { ACCION_DEL_ESTADO, ETIQUETA_DE_ESTADO, TONO_DEL_ESTADO } from './flujo-del-documento';
 
@@ -328,5 +330,65 @@ describe('Cockpit contable', () => {
     expect(cockpit.esNegativo('-1.00')).toBe(true);
     expect(cockpit.esNegativo('0.00')).toBe(false);
     expect(cockpit.esNegativo('1250.00')).toBe(false);
+  });
+});
+
+/* ============================================================================
+    Los fallos de las acciones: la causa la dice la API, no la pantalla.
+    ========================================================================== */
+
+describe('Cockpit contable — fallos de las acciones', () => {
+  function apiError(status: number, code: string, message: string, correlationId?: string): object {
+    return { code, message, timestamp: '', path: '', ...(correlationId ? { correlationId } : {}) };
+  }
+
+  it('si mover un documento choca con una precondición, el aviso es el motivo de la API', async () => {
+    const { fixture, http } = montar();
+    responderPracticas(http);
+    const avisos = vi.spyOn(TestBed.inject(ToastService), 'show');
+
+    await fixture.componentInstance.avanzar('tx-1', 'AS-0001', {
+      action: 'post',
+      rotulo: 'Postear',
+      hecho: 'Posteado',
+      principal: true,
+    });
+    http
+      .expectOne((r) => r.url.includes('/accounting/journal-transactions/tx-1/'))
+      .flush(apiError(422, 'PRECONDITION_FAILED', 'El periodo no está ABIERTO', 'corr-412'), {
+        status: 422,
+        statusText: 'Unprocessable Entity',
+      });
+
+    expect(avisos).toHaveBeenLastCalledWith({
+      type: 'error',
+      message: 'El periodo no está ABIERTO (Código de soporte: corr-412)',
+    });
+  });
+
+  it('ante un fallo sin motivo, dice qué se intentaba y NO inventa una causa', async () => {
+    const { fixture, http } = montar();
+    responderPracticas(http);
+    const avisos = vi.spyOn(TestBed.inject(ToastService), 'show');
+    vi.spyOn(TestBed.inject(DialogService), 'confirm').mockResolvedValue(true);
+
+    await fixture.componentInstance.compensar({
+      id: 'oi-1',
+      documentNumber: 'FAC-7',
+      openAmount: '100.00',
+      partnerName: 'Clínica Norte',
+    } as Parameters<Cockpit['compensar']>[0]);
+    http
+      .expectOne(`${BASE}/accounting/clearing-documents`)
+      .flush(apiError(500, 'INTERNAL', 'Internal server error', 'corr-500'), {
+        status: 500,
+        statusText: 'Server Error',
+      });
+
+    const ultimo = avisos.mock.lastCall?.[0];
+    expect(ultimo?.message).toBe(
+      'No se pudo compensar la partida FAC-7. Intente de nuevo. (Código de soporte: corr-500)',
+    );
+    expect(ultimo?.message).not.toMatch(/período|postear|cerrad/i);
   });
 });

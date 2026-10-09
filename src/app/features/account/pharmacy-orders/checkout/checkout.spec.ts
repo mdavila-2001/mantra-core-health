@@ -516,12 +516,41 @@ describe('Checkout', () => {
       fixture.detectChanges();
 
       expect(uno('checkout-error-al-confirmar')).not.toBeNull();
+      expect(uno('checkout-error-al-confirmar')?.textContent).toContain('No se pudo enviar el pedido a la farmacia.');
       expect(texto('checkout-confirmar')).toBe('Reintentar');
 
       clic(uno('checkout-confirmar'));
       const segundo = http.expectOne('/pharmacy/orders');
       expect(segundo.request.body.idempotencyKey).toBe(primero.request.body.idempotencyKey);
       segundo.flush(pharmacyOrderDtoFixture());
+    });
+
+    it('si la API explica el motivo, lo muestra con el código de soporte y conserva el pedido', () => {
+      configurar();
+      client.prepararBorrador(BORRADOR);
+      montar();
+      vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+      irAlResumen();
+
+      clic(uno('checkout-confirmar'));
+      http.expectOne('/pharmacy/orders').flush(
+        {
+          code: 'CONFLICT',
+          message: 'La farmacia ya no tiene stock de uno de los productos.',
+          correlationId: 'corr-pedido-1',
+          timestamp: '',
+          path: '/pharmacy/orders',
+        },
+        { status: 409, statusText: 'Conflict' },
+      );
+      fixture.detectChanges();
+
+      expect(uno('checkout-error-al-confirmar')?.textContent).toContain(
+        'La farmacia ya no tiene stock de uno de los productos. (Código de soporte: corr-pedido-1)',
+      );
+      // El resumen sigue en pantalla: el pedido no se perdió.
+      expect(uno('checkout-confirmar')?.getAttribute('aria-disabled')).not.toBe('true');
+      expect(texto('checkout-confirmar')).toBe('Reintentar');
     });
 
     it('un renglón sin producto publicado bloquea la confirmación', () => {

@@ -75,6 +75,12 @@
               Reintente en {{ invalido.retryAfterSeconds }} segundos.
             </p>
           }
+          @if (invalido.requestId) {
+            <p class="view-state-host__request-id">
+              Código de soporte:
+              <code class="tabular-nums">{{ invalido.requestId }}</code>
+            </p>
+          }
         </app-alert>
       </ng-content>
     }
@@ -87,6 +93,12 @@
       <ng-content select="[vsh-forbidden]">
         <app-alert tone="error" title="No tiene acceso a esta sección">
           {{ prohibido.message ?? 'Su rol o el propósito de uso declarado no alcanzan para ver este contenido.' }}
+          @if (prohibido.requestId) {
+            <p class="view-state-host__request-id">
+              Código de soporte:
+              <code class="tabular-nums">{{ prohibido.requestId }}</code>
+            </p>
+          }
           @if (prohibido.nextAction; as accion) {
             <div alert-actions>
               @if (accion.route) {

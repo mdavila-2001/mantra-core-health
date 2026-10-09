@@ -1,9 +1,13 @@
 import { readFileSync } from 'node:fs';
 
-import { Component, signal } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
+import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 
+import { throwError } from 'rxjs';
+
+import { CommunityClient } from '@core/data-access/community/community.client';
 import type { PublicPostSummary } from '@core/data-access/public-directory/public-directory.types';
 
 import { PublicPostCard } from './public-post-card';
@@ -21,10 +25,11 @@ function unPost(mediaUrls: readonly string[]): PublicPostSummary {
   } as PublicPostSummary;
 }
 
-@Component({ template: '' })
+@Component({ template: '', changeDetection: ChangeDetectionStrategy.OnPush })
 class RutaVacia {}
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [PublicPostCard],
   template: `
     <app-public-post-card
@@ -217,5 +222,60 @@ describe('PublicPostCard', () => {
       expect(paso).toContain('inline-size: 44px');
       expect(paso).toContain('block-size: 44px');
     });
+  });
+});
+
+@Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [PublicPostCard],
+  template: `
+    <app-public-post-card
+      [post]="post"
+      slug="dra-lopez"
+      autorNombre="Dra. López"
+      autorIniciales="DL"
+      [autorEnlazado]="true"
+      [conAcciones]="true"
+      actorProfileId="pp-1"
+    />
+  `,
+})
+class HostConAcciones {
+  readonly post = unPost([]);
+}
+
+describe('PublicPostCard — «Recomendar» que falla', () => {
+  it('vuelve el botón a su estado y dice por qué, con el código de soporte', async () => {
+    await TestBed.configureTestingModule({
+      imports: [HostConAcciones],
+      providers: [
+        provideRouter([{ path: 'auth', component: RutaVacia }]),
+        {
+          provide: CommunityClient,
+          useValue: {
+            react: () =>
+              throwError(
+                () =>
+                  new HttpErrorResponse({
+                    status: 500,
+                    error: { code: 'INTERNAL', message: 'x', correlationId: 'corr-like', timestamp: '', path: '' },
+                  }),
+              ),
+          },
+        },
+      ],
+    }).compileComponents();
+    const fixture = TestBed.createComponent(HostConAcciones);
+    await fixture.whenStable();
+    const root = fixture.nativeElement as HTMLElement;
+
+    root.querySelector<HTMLButtonElement>('[data-testid="post-action-like"]')?.click();
+    await fixture.whenStable();
+
+    expect(root.querySelector('[data-testid="post-action-like"]')?.getAttribute('aria-pressed')).toBe('false');
+    expect(root.querySelector('[data-testid="post-action-like-error"]')?.textContent).toBe(
+      'No pudimos guardar su recomendación. (Código de soporte: corr-like)',
+    );
+    fixture.destroy();
   });
 });
