@@ -1074,6 +1074,65 @@ describe('MyProfile · foto de perfil', () => {
     expect(fotoDelPerfil(fixture)).toBeNull();
   });
 
+  /* ---- la ficha que no llega se dice (regla 14, 2026-10-08) -------------- */
+
+  it('si la ficha completa no llega, lo dice con el código de soporte y ofrece volver a cargar', () => {
+    http.expectOne('/profiles/patients/me').flush(
+      {
+        code: 'INTERNAL',
+        message: 'Internal server error',
+        correlationId: 'corr-ficha',
+        timestamp: '2026-10-08T00:00:00.000Z',
+        path: '/profiles/patients/me',
+      },
+      { status: 500, statusText: 'Server Error' },
+    );
+    fixture.detectChanges();
+
+    const aviso = (fixture.nativeElement as HTMLElement).querySelector(
+      '[data-testid="mi-perfil-ficha-incompleta"]',
+    );
+    expect(aviso?.textContent).toContain('No pudimos traer el resto de su ficha');
+    expect(aviso?.textContent).toContain('(Código de soporte: corr-ficha)');
+    expect(aviso?.getAttribute('role')).toBe('status');
+    expect(aviso?.textContent).toContain('Volver a cargar');
+  });
+
+  it('un 404 (cuenta sin perfil de paciente) sigue sin aviso: a esa persona no le falta nada', () => {
+    http
+      .expectOne('/profiles/patients/me')
+      .flush({ code: 'NOT_FOUND', message: 'No encontrado' }, { status: 404, statusText: 'Not Found' });
+    fixture.detectChanges();
+
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelector('[data-testid="mi-perfil-ficha-incompleta"]'),
+    ).toBeNull();
+  });
+
+  it('una subida de foto rechazada dice el motivo de la API', () => {
+    http.expectOne('/profiles/patients/me').flush(perfilCon({}));
+    fixture.detectChanges();
+
+    const alElegirFoto = (
+      fixture.componentInstance as unknown as { alElegirFoto: (e: Event) => void }
+    ).alElegirFoto.bind(fixture.componentInstance);
+    alElegirFoto(eventoDeArchivo(new File(['x'], 'foto.png', { type: 'image/png' })));
+    http.expectOne('/common/files/upload').flush(
+      {
+        code: 'PAYLOAD_TOO_LARGE',
+        message: 'La imagen supera los 5 MB.',
+        correlationId: 'corr-foto',
+        timestamp: '2026-10-08T00:00:00.000Z',
+        path: '/common/files/upload',
+      },
+      { status: 413, statusText: 'Payload Too Large' },
+    );
+    fixture.detectChanges();
+
+    const error = (fixture.nativeElement as HTMLElement).querySelector('.mi-perfil__foto-error');
+    expect(error?.textContent).toContain('La imagen supera los 5 MB. (Código de soporte: corr-foto)');
+  });
+
   it('sube la foto elegida, la fija y la pinta', async () => {
     http.expectOne('/profiles/patients/me').flush(perfilCon({}));
     fixture.detectChanges();

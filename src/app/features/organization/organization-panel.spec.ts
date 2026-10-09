@@ -6,6 +6,7 @@ import { of } from 'rxjs';
 import { provideRouter } from '@angular/router';
 
 import { LogoDeOrganizacionClient } from '../../core/data-access/directory/logo-de-organizacion.client';
+import { ToastService } from '../../shared/components/molecules/toast/toast.service';
 import { OrganizationPanel } from './organization-panel';
 
 /**
@@ -371,6 +372,76 @@ describe('OrganizationPanel', () => {
     http.expectOne((r) => r.url.includes('/practitioner-requests')).flush({ items: [] });
     fixture.detectChanges();
     responderAgenda();
+  });
+
+  /* -- El rechazo del guardado, con su causa (2026-10-08) ------------------- */
+
+  function guardarYRechazar(cuerpo: object, status: number): void {
+    montar();
+    responder([organizacion()]);
+    (
+      fixture.componentInstance as unknown as { nombreComercial: { set(v: string): void } }
+    ).nombreComercial.set('Clínica Nueva');
+    (fixture.componentInstance as unknown as { guardarDatos(): void }).guardarDatos();
+    http.expectOne((r) => r.url === '/tenants/ten-1').flush(cuerpo, { status, statusText: 'Error' });
+    fixture.detectChanges();
+  }
+
+  function ultimoAviso(): string | undefined {
+    return TestBed.inject(ToastService).toasts().at(-1)?.message;
+  }
+
+  it('un campo rechazado se pinta debajo de él y lo escrito sigue ahí', () => {
+    guardarYRechazar(
+      {
+        code: 'VALIDATION_FAILED',
+        message: 'Error de validación',
+        details: {
+          fields: [{ field: 'tradeName', constraints: ['maxLength'], messages: ['Máximo 120 caracteres.'] }],
+        },
+      },
+      400,
+    );
+
+    const campos = [...(fixture.nativeElement as HTMLElement).querySelectorAll('app-form-field')];
+    const comercial = campos.find((c) => (c.textContent ?? '').includes('Nombre comercial'));
+    const razon = campos.find((c) => (c.textContent ?? '').includes('Razón social'));
+    expect(comercial?.textContent).toContain('Máximo 120 caracteres.');
+    expect(razon?.textContent).not.toContain('Máximo 120');
+    expect(ultimoAviso()).toBe('Revise los campos marcados y vuelva a guardar.');
+    expect(
+      (fixture.componentInstance as unknown as { nombreComercial(): string }).nombreComercial(),
+    ).toBe('Clínica Nueva');
+  });
+
+  it('un rechazo de negocio dice el motivo de la API y el código de soporte', () => {
+    guardarYRechazar(
+      { code: 'FORBIDDEN', message: 'Sólo la administración de la organización puede editarla.', correlationId: 'c-ten' },
+      403,
+    );
+
+    expect(ultimoAviso()).toBe(
+      'Sólo la administración de la organización puede editarla. (Código de soporte: c-ten)',
+    );
+  });
+
+  it('decidir una solicitud que falla dice el motivo de la API', () => {
+    montar();
+    responder([organizacion()], [solicitud()]);
+
+    const boton = Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll('button'),
+    ).find((b) => b.textContent?.includes('Aprobar'));
+    boton?.click();
+    fixture.detectChanges();
+    http
+      .expectOne((r) => r.url === '/tenants/ten-1/practitioner-requests/af-1/approve')
+      .flush(
+        { code: 'CONFLICT', message: 'Otra persona ya decidió esta solicitud.', correlationId: 'c-dec' },
+        { status: 409, statusText: 'Conflict' },
+      );
+
+    expect(ultimoAviso()).toBe('Otra persona ya decidió esta solicitud. (Código de soporte: c-dec)');
   });
 
   /* -- Solicitudes de médicos (TP-2) ---------------------------------------- */

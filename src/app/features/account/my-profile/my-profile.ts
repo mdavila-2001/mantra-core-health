@@ -5,6 +5,7 @@ import { FileDropTarget } from '../../../shared/forms/file-drop-target';
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { HttpErrorResponse } from '@angular/common/http';
 import { catchError, forkJoin, of, switchMap } from 'rxjs';
 
 import { AuthService } from '../../../core/auth/auth.service';
@@ -24,6 +25,7 @@ import {
   IDENTITY_VERIFICATION_ROUTE,
 } from '../../../core/http/error-to-view-state';
 import { VERIFICACION_DE_IDENTIDAD_OFRECIDA } from '../../../core/identity-assurance/verificacion-ofrecida';
+import { describeApiFailure } from '../../../core/http/api-failure';
 import { NavigationService } from '../../../core/navigation/navigation.service';
 import { dataOf, loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
@@ -50,6 +52,11 @@ import { indiceDePestana, PESTANAS_DEL_PERFIL } from './pestanas-del-perfil';
 import { PractitionerProfile } from './practitioner-profile/practitioner-profile';
 import { ResidenceReadonly } from './practitioner-profile/practitioner-profile-view/residence-readonly/residence-readonly';
 import type { PuntoGeo } from '../../../shared/components/organisms/map/pin-mapa.types';
+
+/** Lo que se dice cuando la ficha completa no llegó y la API no explicó por qué. */
+const FICHA_INCOMPLETA =
+  'No pudimos traer el resto de su ficha: documento, contacto, domicilio, facturación, ' +
+  'seguros y tutores. Lo que se muestra está al día.';
 
 /**
  * Resumen propio — vista **V05-03** de `SALUD/Vistas/V05 profiles`
@@ -186,6 +193,15 @@ export class MyProfile {
    * no se dibujan.
    */
   protected readonly perfil = signal<OwnPatientProfile | null>(null);
+
+  /**
+   * Por qué no llegó la ficha completa; vacío si llegó o si no correspondía.
+   *
+   * Regla 14 del criterio humano: sin esto, una caída de
+   * `GET /profiles/patients/me` dejaba la tarjeta sin documento, contacto,
+   * domicilio ni facturación, y se leía igual que una ficha que nunca los tuvo.
+   */
+  protected readonly errorDePerfil = signal('');
 
   /* -- La foto de perfil ---------------------------------------------------
      Mismo patrón que `practitioner-profile-view` y `public-profile-preview`:
@@ -487,6 +503,7 @@ export class MyProfile {
   private cargarPerfil(): void {
     this.perfil.set(null);
     this.fotoUrl.set(null);
+    this.errorDePerfil.set('');
     if (!this.debeLeerResumenDePaciente()) return;
 
     this.profiles.getOwnPatientProfile().subscribe({
@@ -524,7 +541,15 @@ export class MyProfile {
           });
         }
       },
-      error: () => this.perfil.set(null),
+      error: (error: unknown) => {
+        this.perfil.set(null);
+        // El 404 de una cuenta sin perfil de paciente sigue siendo silencioso:
+        // a esa persona no le falta nada. Cualquier otro fallo se dice.
+        if (error instanceof HttpErrorResponse && error.status === 404) {
+          return;
+        }
+        this.errorDePerfil.set(describeApiFailure(error, FICHA_INCOMPLETA));
+      },
     });
   }
 
@@ -644,9 +669,11 @@ export class MyProfile {
           this.subiendoFoto.set(false);
           this.fotoUrl.set(url);
         },
-        error: () => {
+        error: (error: unknown) => {
           this.subiendoFoto.set(false);
-          this.errorDeFoto.set('No pudimos subir la foto. Pruebe con otra imagen.');
+          this.errorDeFoto.set(
+            describeApiFailure(error, 'No pudimos subir la foto. Pruebe de nuevo o con otra imagen.'),
+          );
         },
       });
   }

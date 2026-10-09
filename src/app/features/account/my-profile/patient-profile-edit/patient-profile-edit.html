@@ -38,7 +38,7 @@
               <app-form-field
                 label="Nombre"
                 [required]="true"
-                [errorMessage]="nombreVacio() ? 'Ingrese su nombre.' : ''"
+                [errorMessage]="nombreVacio() ? 'Ingrese su nombre.' : errorDelServidor('name')"
               >
                 <app-input
                   testId="perfil-nombre"
@@ -48,7 +48,11 @@
                 />
               </app-form-field>
 
-              <app-form-field label="Segundo nombre" hint="Si no lleva, déjelo vacío.">
+              <app-form-field
+                label="Segundo nombre"
+                hint="Si no lleva, déjelo vacío."
+                [errorMessage]="errorDelServidor('middleName')"
+              >
                 <app-input
                   testId="perfil-segundo-nombre"
                   autocomplete="additional-name"
@@ -112,7 +116,7 @@
               <app-form-field
                 label="Apellido paterno"
                 [required]="true"
-                [errorMessage]="apellidoVacio() ? 'Ingrese su apellido paterno.' : ''"
+                [errorMessage]="apellidoVacio() ? 'Ingrese su apellido paterno.' : errorDelServidor('lastName')"
               >
                 <app-input
                   testId="perfil-apellido-paterno"
@@ -122,7 +126,11 @@
                 />
               </app-form-field>
 
-              <app-form-field label="Apellido materno" hint="Si no lleva, déjelo vacío.">
+              <app-form-field
+                label="Apellido materno"
+                hint="Si no lleva, déjelo vacío."
+                [errorMessage]="errorDelServidor('motherLastName')"
+              >
                 <app-input
                   testId="perfil-apellido-materno"
                   autocomplete="family-name"
@@ -143,6 +151,7 @@
               <app-form-field
                 label="Fecha de nacimiento"
                 hint="Sirve para calcular dosis y valores de referencia."
+                [errorMessage]="errorDelServidor('birthDate')"
               >
                 <app-date-picker
                   [(value)]="fechaNacimiento"
@@ -161,7 +170,7 @@
                 label="Sexo"
                 [required]="true"
                 hint="Dato clínico: cambia las dosis, los valores de referencia y los tamizajes."
-                [errorMessage]="sexoVacio() ? 'Elija una opción.' : ''"
+                [errorMessage]="sexoVacio() ? 'Elija una opción.' : errorDelServidor('sexAtBirth')"
               >
                 <app-select
                   data-testid="perfil-genero"
@@ -195,7 +204,11 @@
                 <!-- La lupa que pide el registro del cliente (PACIENTE §1.4.2): son
                      cientos de oficios y un desplegable sin filtro no se recorre. El
                      alta ya la tenía; este editor había quedado con un `<select>`. -->
-                <app-form-field label="Ocupación (opcional)" [hint]="hintOcupacion()">
+                <app-form-field
+                  label="Ocupación (opcional)"
+                  [hint]="hintOcupacion()"
+                  [errorMessage]="errorDelServidor('occupationConceptId')"
+                >
                   <app-reference-combobox
                     data-testid="perfil-ocupacion"
                     label="Ocupación"
@@ -226,7 +239,9 @@
                 label="Teléfono"
                 hint="Con el que podamos llamarle. Vaciarlo le deja sin teléfono."
                 [errorMessage]="
-                  telefonoMalEscrito() ? 'El número está incompleto para el país elegido.' : ''
+                  telefonoMalEscrito()
+                    ? 'El número está incompleto para el país elegido.'
+                    : errorDelServidor('phone')
                 "
               >
                 <!-- El mismo campo del alta: el prefijo se elige y la persona teclea
@@ -254,7 +269,11 @@
                      departamento y dentro sus municipios, con buscador. No es
                      una casilla de texto: el valor es un concepto del catálogo,
                      y así lo que se elija se lee igual en la ficha. -->
-                <app-form-field label="¿Dónde vive?" hint="Busque su municipio, o abra su departamento.">
+                <app-form-field
+                  label="¿Dónde vive?"
+                  hint="Busque su municipio, o abra su departamento."
+                  [errorMessage]="errorDelServidor('residenceMunicipalityConceptId')"
+                >
                   <app-tree-select
                     data-testid="perfil-municipio"
                     [groups]="arbolMunicipios()"
@@ -279,6 +298,7 @@
                 <app-form-field
                   label="Domicilio"
                   hint="Calle, número y zona. Vaciarlo lo quita de su ficha."
+                  [errorMessage]="errorDelServidor('homeAddressLines')"
                 >
                   <app-input
                     data-testid="perfil-domicilio"
@@ -321,6 +341,7 @@
                 <app-form-field
                   label="Dirección de trabajo"
                   hint="Si trabaja fuera de Bolivia, sume ciudad y país a la dirección."
+                  [errorMessage]="errorDelServidor('workAddressLines')"
                 >
                   <app-input
                     data-testid="perfil-trabajo"
@@ -390,6 +411,7 @@
               <app-form-field
                 label="NIT"
                 hint="Para que las facturas salgan a su nombre. Vaciarlo lo quita."
+                [errorMessage]="errorDelServidor('taxId')"
               >
                 <app-input data-testid="perfil-nit" [(value)]="nit" placeholder="1234567" />
               </app-form-field>
@@ -397,6 +419,7 @@
               <app-form-field
                 label="Razón social"
                 hint="A nombre de quién sale el comprobante. Sin NIT no se guarda."
+                [errorMessage]="errorDelServidor('taxHolderName')"
               >
                 <app-input
                   data-testid="perfil-razon-social"
