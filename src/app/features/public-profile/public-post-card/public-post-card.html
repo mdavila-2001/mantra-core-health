@@ -222,6 +222,9 @@
         Compartir
       </button>
     </div>
+    @if (errorAlRecomendar(); as mensaje) {
+      <p class="publicacion__fallo" role="alert" data-testid="post-action-like-error">{{ mensaje }}</p>
+    }
   }
 
   @if (comentariosAbiertos()) {

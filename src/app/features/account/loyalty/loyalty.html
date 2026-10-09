@@ -120,10 +120,26 @@
           <section class="movimientos" aria-labelledby="movimientos-titulo">
             <h2 id="movimientos-titulo" class="movimientos__titulo">Sus movimientos</h2>
 
+            @if (errorDeMovimientos(); as mensaje) {
+              <app-alert tone="error" data-testid="movimientos-error">{{ mensaje }}</app-alert>
+            }
+
             @if (movimientos().length === 0) {
-              <p class="movimientos__vacio" data-testid="movimientos-vacio">
-                Todavía no hay movimientos para mostrar.
-              </p>
+              @if (errorDeMovimientos() === null) {
+                <p class="movimientos__vacio" data-testid="movimientos-vacio">
+                  Todavía no hay movimientos para mostrar.
+                </p>
+              } @else {
+                <button
+                  app-button
+                  variant="outline"
+                  type="button"
+                  data-testid="movimientos-reintentar"
+                  (clicked)="cargarMovimientos()"
+                >
+                  Volver a intentar
+                </button>
+              }
             } @else {
               <ul class="movimientos__lista" data-testid="movimientos-lista">
                 @for (movimiento of movimientos(); track movimiento.id) {

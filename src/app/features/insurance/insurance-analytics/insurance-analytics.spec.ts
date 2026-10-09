@@ -139,6 +139,31 @@ describe('InsuranceAnalytics', () => {
     req.flush(dashboardWire());
   });
 
+  it('si los planes de la aseguradora no llegan, lo avisa con su código y deja reintentar', () => {
+    fixture = TestBed.createComponent(InsuranceAnalytics);
+    fixture.detectChanges();
+    http
+      .expectOne('/insurance-carriers')
+      .flush(
+        { code: 'INTERNAL', message: 'x', correlationId: 'corr-ins', timestamp: '', path: '' },
+        { status: 500, statusText: 'Server Error' },
+      );
+    dashboardRequest().flush(dashboardWire());
+    fixture.detectChanges();
+
+    const aviso = fixture.nativeElement.querySelector('[data-testid="analytics-carrier-error"]') as HTMLElement;
+    expect(aviso.textContent).toContain(
+      'No pudimos traer los planes de su aseguradora, así que no se puede filtrar por plan. (Código de soporte: corr-ins)',
+    );
+
+    aviso.querySelector<HTMLButtonElement>('button')?.click();
+    http.expectOne('/insurance-carriers').flush(carriersWire());
+    http.expectOne(`/insurance-carriers/${CARRIER_ID}`).flush(carrierDetailWire());
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('[data-testid="analytics-carrier-error"]')).toBeNull();
+  });
+
   it('pinta las cinco tarjetas KPI con el formato boliviano, sin recalcular nada', () => {
     const req = mount();
     req.flush(dashboardWire());

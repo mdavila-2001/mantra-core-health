@@ -163,6 +163,34 @@ describe('CatalogObjectDetail', () => {
     await (fixture.componentInstance as unknown as { revisar(d: string): Promise<void> }).revisar('REJECTED');
     http.expectNone('/admin/catalog/annotations/a1/review');
   });
+
+  it('si la evidencia no llega, no se afirma «Sin evidencia»: se dice el fallo y se puede releer', () => {
+    http.expectOne('/admin/catalog/objects/o1').flush(DETALLE);
+    http.expectOne('/admin/catalog/objects/o1/columns').flush({ objectId: 'o1', items: [] });
+    http
+      .expectOne('/admin/catalog/objects/o1/evidence')
+      .flush(
+        { code: 'INTERNAL', message: 'x', correlationId: 'corr-evi', timestamp: '', path: '' },
+        { status: 500, statusText: 'Server Error' },
+      );
+    http.expectOne('/admin/catalog/objects/o1/history').flush({ revisions: [], decisions: [] });
+    http.expectOne((r) => r.url === '/admin/catalog/objects/o1/changes').flush({ items: [], nextCursor: null, limit: 50 });
+    http.match((r) => r.url === '/admin/catalog/objects/o1/impact').forEach((r) => r.flush(null));
+
+    const c = fixture.componentInstance as unknown as {
+      errorDeEvidencia: () => string | null;
+      errorDeHistorial: () => string | null;
+      leerEvidencia: () => void;
+    };
+    expect(c.errorDeEvidencia()).toBe(
+      'No pudimos traer la evidencia de este objeto. (Código de soporte: corr-evi)',
+    );
+    expect(c.errorDeHistorial()).toBeNull();
+
+    c.leerEvidencia();
+    expect(c.errorDeEvidencia()).toBeNull();
+    http.expectOne('/admin/catalog/objects/o1/evidence').flush([]);
+  });
 });
 
 describe('AnnotationDialog', () => {
